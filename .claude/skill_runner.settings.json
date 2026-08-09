@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "deny": [
+      "mcp__ida-pro-mcp__open_file"
+    ],
+    "allow": [
+      "Read(.claude/skills)",
+      "Read(bin)",
+      "Read(configs)",
+      "mcp__ida-pro-mcp__*"
+    ]
+  },
+  "claudeMdExcludes": [
+    ".claude/CLAUDE.md"
+  ],
+  "effortLevel": "high"
+}

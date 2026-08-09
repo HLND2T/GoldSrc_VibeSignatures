@@ -47,6 +47,11 @@ CLI 支持 `-configyaml`、逗号分隔的 `-platform` / `-modules`、`-skill`�
 `-console-events`。skill 显式 `max_retries` 优先于全局 `-maxretry`；`-skip_pp` 会跳过单一 Preprocessor 并直接
 运行 Agent；`-skip_error` 只控制继续执行，只要存在失败最终仍返回非零。
 
+Claude 与 OpenCode 会直接加载仓库内的 skill-runner policy。使用 Codex 前需把
+`.codex/skill_runner.config.toml` 复制到 `$CODEX_HOME/skill_runner.config.toml`；runner 会通过
+`--profile skill_runner` 选择该配置。Agent retry 会保持对应 CLI session、实时 drain 两条输出 pipe，并通过
+progress reporter 上报结构化 attempt failure。
+
 旧 `-config`、Analyzer 的 `all-platform` 和 `-plan-only` 已无 alias 删除。GoldSrc 排除 generic
 `-vcall_finder`。存在待执行工作时，每个 binary 会在 `127.0.0.1:13337` 启动一次 owned `idalib-mcp`
 生命周期，`-ida_args` 用于追加 IDA 启动参数。`-rename` 与 CS2 风格 process/Redis Reporter 的参数及环境变量

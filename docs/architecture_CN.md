@@ -24,6 +24,10 @@ download.yaml + configs/<tag>.yaml
    `llm_config` 才会收到 LLM runtime 配置，并返回 `success`、`absent_ok`、`no_script` 或 `failed`；
 2. 在需要 fallback 时通过 Agent runner 有界重试具体 skill。
 
+Agent runner 会校验各 CLI 的 model 参数、保持 Claude/OpenCode retry session 稳定、注入 Codex developer prompt、
+并发 drain stdout/stderr，并通过本地 reporter 发出 attempt 级结构化诊断。MCP list preflight 结果按 Agent 可执行文件
+和 server 分别缓存。
+
 旧 YAML 直接复制已禁用，因为携带地址的旧工件可能保留陈旧地址。旧版本自动选择仅限同一 game family 中更早的
 最高 build，并可通过 `major_update: true` 禁用；Analyzer 将 new-output 到 old-YAML 的映射交给 Preprocessor，
 由具体脚本通过 MCP 重新定位 signature 并重建地址。

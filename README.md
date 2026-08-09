@@ -76,6 +76,11 @@ matching `-llm_*` arguments, `-maxretry`, `-oldgamever`, `-ida_args`, `-debug`, 
 `-console-events` adapter. Per-skill `max_retries` overrides `-maxretry`. `-skip_pp` bypasses the single Preprocessor and
 runs the Agent directly; `-skip_error` continues after runtime failures but the final exit status remains nonzero.
 
+Claude and OpenCode load the project skill-runner policies directly. Before using Codex, copy
+`.codex/skill_runner.config.toml` to `$CODEX_HOME/skill_runner.config.toml`; the runner selects that profile with
+`--profile skill_runner`. Agent retries preserve their CLI session, stream both output pipes, and report structured
+attempt failures through the configured progress reporter.
+
 The old `-config`, analyzer `all-platform`, and `-plan-only` spellings are removed without aliases. Generic
 `-vcall_finder` is excluded for GoldSrc. Pending work starts one owned `idalib-mcp` lifecycle per binary on
 `127.0.0.1:13337`; `-ida_args` appends IDA startup arguments. `-rename`, CS2-style process/Redis Reporter arguments,

@@ -1203,6 +1203,23 @@ def run_analysis_pipeline(
             stage="agent",
         )
     )
+    last_agent_failure = {}
+
+    def report_agent_progress(*, event, **payload):
+        if payload.get("reason"):
+            last_agent_failure.clear()
+            last_agent_failure.update(payload)
+        reporter.emit(
+            ProgressEvent.create(
+                f"agent_{event}",
+                tag=game_root.name,
+                module=node.module,
+                platform=node.platform,
+                skill=node.skill,
+                **payload,
+            )
+        )
+
     succeeded = agent_skill_runner(
         node.skill,
         agent=agent,
@@ -1210,9 +1227,14 @@ def run_analysis_pipeline(
         max_retries=node.max_retries,
         model=agent_model,
         debug=debug,
+        progress_callback=report_agent_progress,
     )
     if not succeeded:
-        raise PipelineFailure("agent_failed", f"Agent skill {node.id} failed")
+        raise PipelineFailure(
+            "agent_failed",
+            f"Agent skill {node.id} failed",
+            {"agent_failure": dict(last_agent_failure)},
+        )
     missing_outputs = [str(path) for path in required if not path.is_file()]
     if missing_outputs:
         raise PipelineFailure(

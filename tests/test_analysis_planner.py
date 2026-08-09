@@ -414,8 +414,10 @@ class DagTests(unittest.TestCase):
     def test_codex_agent_command_uses_one_prompt(self):
         initial = build_agent_command("codex", "find-symbol")
         retry = build_agent_command("codex", "find-symbol", retry=True)
-        self.assertEqual(["codex", "exec", "Run SKILL: .claude/skills/find-symbol/SKILL.md"], initial)
-        self.assertEqual(["codex", "exec", "resume", "--last", "Run SKILL: .claude/skills/find-symbol/SKILL.md"], retry)
+        self.assertEqual(["codex", "--profile", "skill_runner", "-c"], initial[:4])
+        self.assertTrue(initial[4].startswith("developer_instructions="))
+        self.assertEqual(["exec", "-"], initial[-2:])
+        self.assertEqual(["exec", "resume", "--last", "-"], retry[-4:])
 
     def test_pipeline_stops_after_preprocessor_success(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -469,10 +471,21 @@ class DagTests(unittest.TestCase):
                 tag="game-2",
             ).nodes[0]
             calls = []
+            reporter = InMemoryReporter()
 
             def agent(_name, **kwargs):
                 calls.append(("agent", kwargs["model"], kwargs["debug"]))
+                kwargs["progress_callback"](
+                    event="attempt_started",
+                    attempt=1,
+                    max_attempts=2,
+                )
                 Path(kwargs["expected_yaml_paths"][0]).write_text("name: new\n", encoding="utf-8")
+                kwargs["progress_callback"](
+                    event="succeeded",
+                    attempt=1,
+                    max_attempts=2,
+                )
                 return True
 
             result = run_analysis_pipeline(
@@ -484,13 +497,16 @@ class DagTests(unittest.TestCase):
                 agent_model="gpt-5",
                 debug=True,
                 skip_preprocessors=True,
-                reporter=InMemoryReporter(),
+                reporter=reporter,
                 preprocessor_runner=lambda **_kwargs: calls.append("preprocessor"),
                 agent_skill_runner=agent,
             )
             self.assertEqual(PipelineResult("succeeded", "agent"), result)
             self.assertEqual([("agent", "gpt-5", True)], calls)
             self.assertEqual("name: new\n", (root / "engine" / "result.yaml").read_text(encoding="utf-8"))
+            agent_events = [event for event in reporter.events if event.event.startswith("agent_")]
+            self.assertEqual(["agent_attempt_started", "agent_succeeded"], [event.event for event in agent_events])
+            self.assertEqual(1, agent_events[0].detail["attempt"])
 
     def test_pipeline_forwards_flat_llm_and_symbol_alias_arguments(self):
         with tempfile.TemporaryDirectory() as temporary:

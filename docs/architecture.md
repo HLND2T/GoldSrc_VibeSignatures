@@ -25,6 +25,10 @@ For each DAG node, `ida_analyze_bin.py` currently attempts two executable layers
    or `failed`.
 2. Run the configured Agent skill with bounded retries when fallback is required.
 
+The Agent runner validates per-CLI model arguments, keeps Claude/OpenCode retry sessions stable, injects the Codex
+developer prompt, drains stdout/stderr concurrently, and emits attempt-level structured diagnostics through the local
+reporter. MCP list preflight results are cached per Agent executable and server.
+
 Raw old-YAML copying is disabled because copying address-bearing artifacts can preserve stale addresses. Automatic
 old-version discovery is restricted to an older build in the same game family and is disabled by `major_update: true`.
 The analyzer passes a new-output-to-old-YAML map to the Preprocessor so a skill-specific script can relocate signatures

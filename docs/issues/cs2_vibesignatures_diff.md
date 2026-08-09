@@ -47,7 +47,6 @@ self-hosted IDA 环境持续运行的 infrastructure 水平。
 | --- | --- | --- |
 | P0 | production config、preprocessor、Agent skill 为空 | Analyzer 无真实 DAG 节点，无法生成 production symbol YAML |
 | P0 | config schema 仍不兼容 | CS2 config 不能直接复用 |
-| P1 | Agent runner 诊断和 session 管理较弱 | 失败原因不可追踪，retry 可能恢复错误的全局 session |
 | P1 | execution plan 和 reporter contract 不兼容 | 无法接入 CS2 风格运行状态、任务图和可观测性消费者 |
 | P1 | 真实 IDA Preprocessor/validator smoke 缺失 | 自动化契约已对齐，但尚未证明真实 IDB 调用链 |
 | P2 | Redis scheduler/reporter、API、SSE、dashboard 缺失 | 无持久队列、恢复、heartbeat 和远程只读监控 |
@@ -66,12 +65,12 @@ skills: []
 symbols: []
 ```
 
-因此 `ida_analyze_bin.py` 当前只会解析配置、验证并哈希选中的二进制，然后完成空 DAG。仓库同时没有：
+因此 `ida_analyze_bin.py` 当前只会解析配置、验证并哈希选中的二进制，然后完成空 DAG。仓库仍没有：
 
 - `ida_preprocessor_scripts/`；
 - `.claude/skills/<skill>/SKILL.md`；
-- `.claude/agents/sig-finder.md`；
-- 可供 Codex、Claude 或 OpenCode 使用的 skill-runner settings。
+
+Agent profile、skill-runner settings 和通用 `<skill_error>` system prompt 已补齐，但尚无实际 production skill。
 
 `agent_runner.run_skill()` 强制要求 `.claude/skills/<skill>/SKILL.md` 存在，因而一旦 production config
 加入无法由前置阶段生成的 skill，Agent fallback 会直接失败。
@@ -441,28 +440,26 @@ GoldSrc 已支持默认 fail-fast、`-skip_error` opt-in continuation、success/
 
 ## 8. Agent runner 能力差异
 
-GoldSrc 已支持 Claude、Codex 和 OpenCode 命令构造、MCP preflight、有界 retry 和 required output existence check，
-但相对 CS2 仍缺少：
+### GoldSrc 对齐状态（2026-08-09）
 
-- `-agent_model` 和各 Agent 的 model 参数验证；
-- Claude 独立 UUID session 和稳定 `--resume`；
-- OpenCode session ID 提取和定向恢复；
-- Codex `sig-finder.md` developer instructions 注入；
-- Claude/OpenCode skill-runner settings；
-- subprocess stdout/stderr 实时 drain，避免 pipe 缓冲阻塞；
-- debug 时实时转发输出；
-- timeout 后显式 kill/wait；
-- `<skill_error>...</skill_error>` contract；
-- cybersecurity block 检测；
-- return code、timeout、missing output、missing Agent、missing skill 等结构化 reason；
-- MCP preflight 成功/失败缓存；
-- retry attempt 级 reporter event。
+本轮已补齐 Agent runner 运行时契约，同时保留 `run_skill(...) -> bool` 公共返回类型：
 
-GoldSrc 当前捕获了 Agent stdout/stderr，但失败时不会把内容写入错误或事件，诊断能力明显不足。
+- `-agent_model` 已贯通；Claude、Codex、OpenCode 使用各自 model flag，拒绝空白/option-like model，OpenCode
+  额外强制 `provider/model`；
+- Claude 每次 skill run 生成独立 UUID，首次使用 `--session-id`，retry 稳定使用同一 UUID 的 `--resume`；
+- OpenCode 从 JSONL stdout 提取首个有效 `sessionID` 并定向 `--session`，未取得时才回退 `--continue`；
+- Codex 从 `.claude/agents/sig-finder.md` 注入 `developer_instructions`，prompt 经 stdin 传输；
+- Claude、Codex、OpenCode 均有独立 skill-runner policy/config，OpenCode 通过隔离的 `OPENCODE_CONFIG` 加载；
+- subprocess stdout/stderr 由独立线程实时 drain；`-debug` 实时转发，timeout 后执行 kill/wait 并保留已捕获输出；
+- 支持 `<skill_error>...</skill_error>` 与 cybersecurity block 检测，后者不进入 retry；
+- unknown Agent、invalid model、missing skill、missing Agent、return code、timeout、missing output、MCP preflight
+  等失败均产生结构化 reason；attempt 失败事件附带截断后的 stdout/stderr 诊断；
+- MCP preflight 成功与失败均按 `(agent, server)` 缓存；
+- 每次 attempt 的 start/failure/success/final failure 通过 pipeline adapter 写入现有 reporter。
 
 出处：
 
-- GoldSrc：`agent_runner.py:14-100`
+- GoldSrc：`agent_runner.py`、`ida_analyze_bin.py:1206`、`tests/test_agent_runner.py`
 - CS2：`D:\CS2_VibeSignatures\agent_runner.py:15-29,110-205,219-365,434-629`
 
 ## 9. Reporter 与 execution plan contract 不兼容

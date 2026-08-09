@@ -9,6 +9,7 @@ from pathlib import Path
 
 GROUP_FILES = {
     "unit": (
+        "test_agent_runner.py",
         "test_config_and_depot.py",
         "test_binary_and_symbols.py",
         "test_ida_mcp_session.py",
