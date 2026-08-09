@@ -238,6 +238,16 @@ def _skill_paths(skill: dict, key: str, platform: str) -> list[str]:
     return [validate_artifact_path(value, key, platform) for value in values]
 
 
+def symbol_artifact_filename(symbol: dict, platform: str) -> str:
+    artifact = symbol.get("artifact")
+    if artifact:
+        return validate_artifact_path(artifact, "symbol.artifact", platform)
+    stem = re.sub(r"[^A-Za-z0-9_.@+-]+", "_", symbol["name"]).strip("_")
+    if not stem:
+        raise AnalysisPlanError(f"Symbol name cannot form a safe artifact: {symbol['name']!r}")
+    return f"{stem}.{platform}.yaml"
+
+
 def _node_id(module: str, platform: str, skill: str) -> str:
     return f"{module}:{platform}:{skill}"
 
@@ -376,14 +386,7 @@ def expected_symbol_artifacts(modules: list[dict]) -> tuple[set[str], set[str]]:
             for symbol in module["symbols"]:
                 if symbol.get("platform") not in {None, platform}:
                     continue
-                artifact = symbol.get("artifact")
-                if artifact:
-                    filename = validate_artifact_path(artifact, "symbol.artifact", platform)
-                else:
-                    stem = re.sub(r"[^A-Za-z0-9_.@+-]+", "_", symbol["name"]).strip("_")
-                    if not stem:
-                        raise AnalysisPlanError(f"Symbol name cannot form a safe artifact: {symbol['name']!r}")
-                    filename = f"{stem}.{platform}.yaml"
+                filename = symbol_artifact_filename(symbol, platform)
                 symbol_path = f"{module['name']}/{filename}"
                 prior_owner = symbol_owners.setdefault(symbol_path.casefold(), symbol["name"])
                 if prior_owner != symbol["name"]:

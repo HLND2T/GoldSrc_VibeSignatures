@@ -45,11 +45,10 @@ uv run python gamesymbol_snapshot.py check-contract -gamever cstrike-10120
 
 ## Analysis contract
 
-Analysis order is currently deterministic preprocessor, LLM preprocessor, then Agent skill. Unsafe raw history reuse is
-disabled: `-oldgamever` selects the latest older build from the same game family and exposes its directory to analysis
-context, but the analyzer never copies old YAML into the new build. Address-aware history reconstruction remains
-deferred until the IDA MCP runtime migration. A `major_update: true` download entry disables automatic old-version
-selection.
+Analysis order is one skill-specific Preprocessor followed by Agent fallback. The Preprocessor runs through a bound IDA
+MCP session, may explicitly opt into `llm_config`, and returns `success`, `absent_ok`, `no_script`, or `failed`. Unsafe
+raw history copying remains disabled: `-oldgamever` selects the latest older build from the same game family and passes
+an old-YAML map to the Preprocessor. A `major_update: true` download entry disables automatic old-version selection.
 
 Required and optional artifacts plus explicit prerequisites form one DAG. Unsafe paths, cycles, duplicate or
 case-colliding names, missing required inputs, wrong architectures, and binary mutation are fatal.
@@ -74,8 +73,8 @@ local template. The supported environment variables are:
 
 The analyzer accepts `-configyaml`, comma-separated `-platform` and `-modules`, `-skill`, `-agent`, `-agent_model`, the
 matching `-llm_*` arguments, `-maxretry`, `-oldgamever`, `-ida_args`, `-debug`, `-skip_error`, `-skip_pp`, and the local
-`-console-events` adapter. Per-skill `max_retries` overrides `-maxretry`. `-skip_pp` bypasses history, deterministic, and
-LLM preprocessing; `-skip_error` continues after runtime failures but the final exit status remains nonzero.
+`-console-events` adapter. Per-skill `max_retries` overrides `-maxretry`. `-skip_pp` bypasses the single Preprocessor and
+runs the Agent directly; `-skip_error` continues after runtime failures but the final exit status remains nonzero.
 
 The old `-config`, analyzer `all-platform`, and `-plan-only` spellings are removed without aliases. Generic
 `-vcall_finder` is excluded for GoldSrc. Pending work starts one owned `idalib-mcp` lifecycle per binary on

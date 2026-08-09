@@ -27,6 +27,8 @@ from ida_analyze_bin import (
     McpLifecycleError,
     McpRecoveryBudget,
     McpRuntime,
+    PipelineFailure,
+    PipelineResult,
     _is_major_update_gamever,
     analyze,
     ensure_mcp_available,
@@ -39,17 +41,23 @@ from ida_analyze_bin import (
     validate_opened_binary_identity,
 )
 from ida_mcp_session import McpDatabaseBinding
+from ida_skill_preprocessor import (
+    PREPROCESS_STATUS_ABSENT_OK,
+    PREPROCESS_STATUS_FAILED,
+    PREPROCESS_STATUS_NO_SCRIPT,
+    PREPROCESS_STATUS_SUCCESS,
+)
 from process_reporter import InMemoryReporter
 from tests.test_support import write_pe32
 
 
-def skill(name, *, output=(), required_input=(), optional_input=(), prerequisite=()):
+def skill(name, *, output=(), optional_output=(), required_input=(), optional_input=(), prerequisite=()):
     return {
         "name": name,
         "expected_output": list(output),
         "expected_output_windows": [],
         "expected_output_linux": [],
-        "optional_output": [],
+        "optional_output": list(optional_output),
         "expected_input": list(required_input),
         "expected_input_windows": [],
         "expected_input_linux": [],
@@ -401,7 +409,7 @@ class DagTests(unittest.TestCase):
             )
 
     def test_analysis_stage_order_is_contractual(self):
-        self.assertEqual(("history", "deterministic", "llm", "agent"), ANALYSIS_STAGES)
+        self.assertEqual(("preprocessor", "agent"), ANALYSIS_STAGES)
 
     def test_codex_agent_command_uses_one_prompt(self):
         initial = build_agent_command("codex", "find-symbol")
@@ -409,7 +417,7 @@ class DagTests(unittest.TestCase):
         self.assertEqual(["codex", "exec", "Run SKILL: .claude/skills/find-symbol/SKILL.md"], initial)
         self.assertEqual(["codex", "exec", "resume", "--last", "Run SKILL: .claude/skills/find-symbol/SKILL.md"], retry)
 
-    def test_pipeline_stops_after_deterministic_output(self):
+    def test_pipeline_stops_after_preprocessor_success(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "game-1"
             binary = root / "engine" / "hw.dll"
@@ -423,26 +431,25 @@ class DagTests(unittest.TestCase):
             ).nodes[0]
             calls = []
 
-            def deterministic(_name, *, context):
-                calls.append("deterministic")
-                Path(context["required_outputs"][0]).write_text("ok: true\n", encoding="utf-8")
-                return True
+            def preprocessor(**kwargs):
+                calls.append("preprocessor")
+                Path(kwargs["expected_outputs"][0]).write_text("ok: true\n", encoding="utf-8")
+                return PREPROCESS_STATUS_SUCCESS
 
-            stage = run_analysis_pipeline(
+            result = run_analysis_pipeline(
                 node,
                 binary_path=binary,
                 game_root=root,
                 old_game_root=None,
                 agent="codex",
                 reporter=InMemoryReporter(),
-                deterministic_runner=deterministic,
-                llm_runner=lambda *_args, **_kwargs: calls.append("llm"),
+                preprocessor_runner=preprocessor,
                 agent_skill_runner=lambda *_args, **_kwargs: calls.append("agent"),
             )
-            self.assertEqual("deterministic", stage)
-            self.assertEqual(["deterministic"], calls)
+            self.assertEqual(PipelineResult("succeeded", "preprocessor"), result)
+            self.assertEqual(["preprocessor"], calls)
 
-    def test_skip_pp_bypasses_history_and_both_preprocessors(self):
+    def test_skip_pp_bypasses_preprocessor_and_runs_agent(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "game-2"
             old_root = Path(temporary) / "game-1"
@@ -468,7 +475,7 @@ class DagTests(unittest.TestCase):
                 Path(kwargs["expected_yaml_paths"][0]).write_text("name: new\n", encoding="utf-8")
                 return True
 
-            stage = run_analysis_pipeline(
+            result = run_analysis_pipeline(
                 node,
                 binary_path=binary,
                 game_root=root,
@@ -478,15 +485,14 @@ class DagTests(unittest.TestCase):
                 debug=True,
                 skip_preprocessors=True,
                 reporter=InMemoryReporter(),
-                deterministic_runner=lambda *_args, **_kwargs: calls.append("deterministic"),
-                llm_runner=lambda *_args, **_kwargs: calls.append("llm"),
+                preprocessor_runner=lambda **_kwargs: calls.append("preprocessor"),
                 agent_skill_runner=agent,
             )
-            self.assertEqual("agent", stage)
+            self.assertEqual(PipelineResult("succeeded", "agent"), result)
             self.assertEqual([("agent", "gpt-5", True)], calls)
             self.assertEqual("name: new\n", (root / "engine" / "result.yaml").read_text(encoding="utf-8"))
 
-    def test_llm_runtime_config_is_passed_only_to_llm_preprocessor(self):
+    def test_pipeline_forwards_flat_llm_and_symbol_alias_arguments(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "game-1"
             binary = root / "engine" / "hw.dll"
@@ -500,17 +506,12 @@ class DagTests(unittest.TestCase):
             ).nodes[0]
             seen = {}
 
-            def deterministic(_name, *, context):
-                seen["deterministic_context"] = context
-                return False
+            def preprocessor(**kwargs):
+                seen.update(kwargs)
+                Path(kwargs["expected_outputs"][0]).write_text("ok: true\n", encoding="utf-8")
+                return PREPROCESS_STATUS_SUCCESS
 
-            def llm(_name, *, context, llm_config):
-                seen["llm_context"] = context
-                seen["llm_config"] = llm_config
-                Path(context["required_outputs"][0]).write_text("ok: true\n", encoding="utf-8")
-                return True
-
-            stage = run_analysis_pipeline(
+            result = run_analysis_pipeline(
                 node,
                 binary_path=binary,
                 game_root=root,
@@ -526,15 +527,302 @@ class DagTests(unittest.TestCase):
                     "fake_as": None,
                     "max_retries": 9,
                 },
-                deterministic_runner=deterministic,
-                llm_runner=llm,
+                symbol_aliases={"Symbol": ("Alias",)},
+                preprocessor_runner=preprocessor,
                 agent_skill_runner=lambda *_args, **_kwargs: False,
             )
-            self.assertEqual("llm", stage)
-            self.assertNotIn("llm_config", seen["deterministic_context"])
-            self.assertNotIn("api_key", seen["llm_context"])
-            self.assertEqual("secret", seen["llm_config"]["api_key"])
-            self.assertEqual(node.max_retries, seen["llm_config"]["max_retries"])
+            self.assertEqual(PipelineResult("succeeded", "preprocessor"), result)
+            self.assertEqual("test-model", seen["llm_model"])
+            self.assertEqual("secret", seen["llm_apikey"])
+            self.assertEqual(node.max_retries, seen["llm_max_retries"])
+            self.assertEqual({"Symbol": ("Alias",)}, seen["symbol_aliases"])
+
+    def test_missing_and_invalid_required_inputs_fail_before_dispatch(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "game-1"
+            binary = root / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"binary")
+            node = build_execution_plan(
+                module(
+                    [
+                        skill("produce", output=["input.yaml"]),
+                        skill("consume", output=["result.yaml"], required_input=["input.yaml"]),
+                    ]
+                ),
+                platforms=["windows"],
+                bin_dir=Path(temporary),
+                tag="game-1",
+            ).nodes[1]
+            with self.assertRaises(PipelineFailure) as missing:
+                run_analysis_pipeline(
+                    node,
+                    binary_path=binary,
+                    game_root=root,
+                    old_game_root=None,
+                    agent="codex",
+                    reporter=InMemoryReporter(),
+                )
+            self.assertEqual("missing_input", missing.exception.reason)
+
+            (binary.parent / "input.yaml").write_text("- invalid\n", encoding="utf-8")
+            with self.assertRaises(PipelineFailure) as invalid:
+                run_analysis_pipeline(
+                    node,
+                    binary_path=binary,
+                    game_root=root,
+                    old_game_root=None,
+                    agent="codex",
+                    reporter=InMemoryReporter(),
+                )
+            self.assertEqual("invalid_input", invalid.exception.reason)
+
+    def test_preprocessor_success_requires_valid_outputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "game-1"
+            binary = root / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"binary")
+            node = build_execution_plan(
+                module([skill("find", output=["result.yaml"])]),
+                platforms=["windows"],
+                bin_dir=Path(temporary),
+                tag="game-1",
+            ).nodes[0]
+
+            def preprocessor(**kwargs):
+                Path(kwargs["expected_outputs"][0]).write_text("- invalid\n", encoding="utf-8")
+                return PREPROCESS_STATUS_SUCCESS
+
+            with self.assertRaises(PipelineFailure) as raised:
+                run_analysis_pipeline(
+                    node,
+                    binary_path=binary,
+                    game_root=root,
+                    old_game_root=None,
+                    agent="codex",
+                    reporter=InMemoryReporter(),
+                    preprocessor_runner=preprocessor,
+                )
+            self.assertEqual("preprocess_contract_violation", raised.exception.reason)
+
+    def test_absent_ok_skips_even_when_preprocessor_writes_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "game-1"
+            binary = root / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"binary")
+            node = build_execution_plan(
+                module([skill("find", output=["result.yaml"])]),
+                platforms=["windows"],
+                bin_dir=Path(temporary),
+                tag="game-1",
+            ).nodes[0]
+            agent = MagicMock()
+
+            def preprocessor(**kwargs):
+                Path(kwargs["expected_outputs"][0]).write_text("preserved: true\n", encoding="utf-8")
+                return PREPROCESS_STATUS_ABSENT_OK
+
+            result = run_analysis_pipeline(
+                node,
+                binary_path=binary,
+                game_root=root,
+                old_game_root=None,
+                agent="codex",
+                reporter=InMemoryReporter(),
+                preprocessor_runner=preprocessor,
+                agent_skill_runner=agent,
+            )
+            self.assertEqual(PipelineResult("skipped", "preprocessor", "preprocess_absent"), result)
+            agent.assert_not_called()
+            self.assertTrue((binary.parent / "result.yaml").is_file())
+
+    def test_failed_preprocessor_output_is_preserved_until_agent_runs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "game-1"
+            binary = root / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"binary")
+            node = build_execution_plan(
+                module([skill("find", output=["result.yaml"])]),
+                platforms=["windows"],
+                bin_dir=Path(temporary),
+                tag="game-1",
+            ).nodes[0]
+            observed = {}
+
+            def preprocessor(**kwargs):
+                Path(kwargs["expected_outputs"][0]).write_text("source: preprocessor\n", encoding="utf-8")
+                return PREPROCESS_STATUS_FAILED
+
+            def agent(_name, **kwargs):
+                output = Path(kwargs["expected_yaml_paths"][0])
+                observed["before_agent"] = output.read_text(encoding="utf-8")
+                output.write_text("source: agent\n", encoding="utf-8")
+                return True
+
+            result = run_analysis_pipeline(
+                node,
+                binary_path=binary,
+                game_root=root,
+                old_game_root=None,
+                agent="codex",
+                reporter=InMemoryReporter(),
+                preprocessor_runner=preprocessor,
+                agent_skill_runner=agent,
+            )
+            self.assertEqual(PipelineResult("succeeded", "agent"), result)
+            self.assertEqual("source: preprocessor\n", observed["before_agent"])
+
+    def test_optional_only_normal_mode_skips_after_failed_or_missing_preprocessor(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "game-1"
+            binary = root / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"binary")
+            node = build_execution_plan(
+                module([skill("optional", optional_output=["optional.yaml"])]),
+                platforms=["windows"],
+                bin_dir=Path(temporary),
+                tag="game-1",
+            ).nodes[0]
+            agent = MagicMock()
+            for status in (PREPROCESS_STATUS_FAILED, PREPROCESS_STATUS_NO_SCRIPT):
+                with self.subTest(status=status):
+                    result = run_analysis_pipeline(
+                        node,
+                        binary_path=binary,
+                        game_root=root,
+                        old_game_root=None,
+                        agent="codex",
+                        reporter=InMemoryReporter(),
+                        preprocessor_runner=lambda status=status, **_kwargs: status,
+                        agent_skill_runner=agent,
+                    )
+                    self.assertEqual(
+                        PipelineResult("skipped", "preprocessor", "optional_output_absent"),
+                        result,
+                    )
+            agent.assert_not_called()
+
+    def test_skip_pp_optional_only_runs_agent_and_skips_without_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "game-1"
+            binary = root / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"binary")
+            node = build_execution_plan(
+                module([skill("optional", optional_output=["optional.yaml"])]),
+                platforms=["windows"],
+                bin_dir=Path(temporary),
+                tag="game-1",
+            ).nodes[0]
+            agent = MagicMock(return_value=True)
+            result = run_analysis_pipeline(
+                node,
+                binary_path=binary,
+                game_root=root,
+                old_game_root=None,
+                agent="codex",
+                reporter=InMemoryReporter(),
+                skip_preprocessors=True,
+                agent_skill_runner=agent,
+            )
+            self.assertEqual(PipelineResult("skipped", "agent", "optional_output_absent"), result)
+            agent.assert_called_once()
+
+    def test_zero_output_skill_uses_cs2_agent_semantics(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "game-1"
+            binary = root / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"binary")
+            node = build_execution_plan(
+                module([skill("zero")]),
+                platforms=["windows"],
+                bin_dir=Path(temporary),
+                tag="game-1",
+            ).nodes[0]
+            result = run_analysis_pipeline(
+                node,
+                binary_path=binary,
+                game_root=root,
+                old_game_root=None,
+                agent="codex",
+                reporter=InMemoryReporter(),
+                preprocessor_runner=lambda **_kwargs: PREPROCESS_STATUS_NO_SCRIPT,
+                agent_skill_runner=lambda *_args, **_kwargs: True,
+            )
+            self.assertEqual(PipelineResult("succeeded", "agent"), result)
+
+    def test_agent_output_uses_same_validator(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "game-1"
+            binary = root / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"binary")
+            node = build_execution_plan(
+                module([skill("find", output=["result.yaml"])]),
+                platforms=["windows"],
+                bin_dir=Path(temporary),
+                tag="game-1",
+            ).nodes[0]
+
+            def agent(_name, **kwargs):
+                Path(kwargs["expected_yaml_paths"][0]).write_text("- invalid\n", encoding="utf-8")
+                return True
+
+            with self.assertRaises(PipelineFailure) as raised:
+                run_analysis_pipeline(
+                    node,
+                    binary_path=binary,
+                    game_root=root,
+                    old_game_root=None,
+                    agent="codex",
+                    reporter=InMemoryReporter(),
+                    skip_preprocessors=True,
+                    agent_skill_runner=agent,
+                )
+            self.assertEqual("agent_output_invalid", raised.exception.reason)
+
+    def test_mcp_readiness_is_recovered_before_agent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "game-1"
+            binary = root / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"binary")
+            node = build_execution_plan(
+                module([skill("find", output=["result.yaml"])]),
+                platforms=["windows"],
+                bin_dir=Path(temporary),
+                tag="game-1",
+            ).nodes[0]
+            recovered_runtime = McpRuntime(
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                str(binary),
+                McpDatabaseBinding(True, "recovered-db", str(binary), "worker", True, True),
+            )
+            ensure_ready = MagicMock(return_value=recovered_runtime)
+
+            def agent(_name, **kwargs):
+                Path(kwargs["expected_yaml_paths"][0]).write_text("ok: true\n", encoding="utf-8")
+                return True
+
+            result = run_analysis_pipeline(
+                node,
+                binary_path=binary,
+                game_root=root,
+                old_game_root=None,
+                agent="codex",
+                reporter=InMemoryReporter(),
+                preprocessor_runner=lambda **_kwargs: PREPROCESS_STATUS_NO_SCRIPT,
+                ensure_mcp_ready=ensure_ready,
+                agent_skill_runner=agent,
+            )
+            self.assertEqual(PipelineResult("succeeded", "agent"), result)
+            ensure_ready.assert_called_once_with()
 
     def test_skip_error_continues_but_records_failure(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -564,7 +852,7 @@ class DagTests(unittest.TestCase):
                 patch("ida_analyze_bin.IdaMcpLifecycle", return_value=lifecycle),
                 patch(
                     "ida_analyze_bin.run_analysis_pipeline",
-                    side_effect=[AnalysisRunError("first failed"), "agent"],
+                    side_effect=[AnalysisRunError("first failed"), PipelineResult("succeeded", "agent")],
                 ) as pipeline,
             ):
                 analyze(
@@ -645,7 +933,7 @@ class DagTests(unittest.TestCase):
 
 
 class McpLifecycleTests(unittest.TestCase):
-    def test_runtime_is_exposed_to_preprocessor_context(self):
+    def test_runtime_binding_is_forwarded_to_preprocessor(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "game-1"
             binary = root / "engine" / "hw.dll"
@@ -665,13 +953,13 @@ class McpLifecycleTests(unittest.TestCase):
             )
             seen = {}
 
-            def deterministic(_name, *, context):
-                seen.update(context["mcp"])
-                Path(context["required_outputs"][0]).write_text("ok: true\n", encoding="utf-8")
-                return True
+            def preprocessor(**kwargs):
+                seen.update(kwargs)
+                Path(kwargs["expected_outputs"][0]).write_text("ok: true\n", encoding="utf-8")
+                return PREPROCESS_STATUS_SUCCESS
 
             self.assertEqual(
-                "deterministic",
+                PipelineResult("succeeded", "preprocessor"),
                 run_analysis_pipeline(
                     node,
                     binary_path=binary,
@@ -680,13 +968,13 @@ class McpLifecycleTests(unittest.TestCase):
                     agent="codex",
                     reporter=InMemoryReporter(),
                     mcp_runtime=runtime,
-                    deterministic_runner=deterministic,
+                    preprocessor_runner=preprocessor,
                 ),
             )
             self.assertEqual(DEFAULT_HOST, seen["host"])
             self.assertEqual(DEFAULT_PORT, seen["port"])
-            self.assertEqual("server-db", seen["database"])
-            self.assertTrue(seen["auto_started"])
+            self.assertEqual("server-db", seen["explicit_database"])
+            self.assertEqual(str(binary.resolve()), seen["expected_binary"])
 
     def test_all_existing_outputs_skip_ida_startup(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -704,7 +992,7 @@ class McpLifecycleTests(unittest.TestCase):
             )
             module_root = root / "bin" / "game-1" / "engine"
             write_pe32(module_root / "hw.dll")
-            (module_root / "result.yaml").write_text("ok: true\n", encoding="utf-8")
+            (module_root / "result.yaml").write_text("not: [valid\n", encoding="utf-8")
             summary = AnalysisSummary()
             with patch("ida_analyze_bin.IdaMcpLifecycle", side_effect=AssertionError("must not start")):
                 analyze(
@@ -725,6 +1013,10 @@ class McpLifecycleTests(unittest.TestCase):
                 """modules:
   - name: engine
     path_windows: Game/hw.dll
+    symbols:
+      - name: TestSymbol
+        type: func
+        alias: [TestAlias]
     skills:
       - name: first
       - name: second
@@ -742,10 +1034,14 @@ class McpLifecycleTests(unittest.TestCase):
             lifecycle = MagicMock()
             lifecycle.__enter__.return_value = lifecycle
             lifecycle.runtime = runtime
+            lifecycle.ensure_ready.return_value = runtime
             summary = AnalysisSummary()
             with (
                 patch("ida_analyze_bin.IdaMcpLifecycle", return_value=lifecycle) as lifecycle_type,
-                patch("ida_analyze_bin.run_analysis_pipeline", side_effect=["agent", "agent"]) as pipeline,
+                patch(
+                    "ida_analyze_bin.run_analysis_pipeline",
+                    side_effect=[PipelineResult("succeeded", "agent"), PipelineResult("succeeded", "agent")],
+                ) as pipeline,
             ):
                 analyze(
                     gamever="game-1",
@@ -760,6 +1056,15 @@ class McpLifecycleTests(unittest.TestCase):
             lifecycle.ensure_ready.assert_called_once_with()
             self.assertIs(runtime, pipeline.call_args_list[0].kwargs["mcp_runtime"])
             self.assertIs(runtime, pipeline.call_args_list[1].kwargs["mcp_runtime"])
+            self.assertIs(lifecycle.ensure_ready, pipeline.call_args_list[0].kwargs["ensure_mcp_ready"])
+            self.assertEqual(
+                {"TestSymbol": ("TestAlias",)},
+                pipeline.call_args_list[0].kwargs["symbol_aliases"],
+            )
+            self.assertIn(
+                os.path.normcase(str((binary.parent / "TestSymbol.windows.yaml").resolve())),
+                pipeline.call_args_list[0].kwargs["artifact_types"],
+            )
             self.assertEqual((2, 0, 0), (summary.successful, summary.failed, summary.skipped))
 
     def test_id0_lock_fails_before_process_start(self):

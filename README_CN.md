@@ -22,9 +22,10 @@ uv run python ida_analyze_bin.py -gamever cstrike-10120 -configyaml configs/cstr
 
 ## 分析与发布约束
 
-- 当前分析顺序为 deterministic preprocessor → LLM preprocessor → Agent skill。旧 YAML 直接复制已禁用；
-  `-oldgamever` 只选择同一 game family 的最近旧版本并写入分析上下文，地址感知的 history 重建延期到 IDA MCP
-  runtime 迁移。`download.yaml` 中的 `major_update: true` 会禁用自动旧版本选择。
+- 当前分析顺序为单一 skill-specific Preprocessor → Agent fallback。Preprocessor 在绑定的 IDA MCP session 中运行，
+  可显式声明 `llm_config` 以使用 LLM，并返回 `success`、`absent_ok`、`no_script` 或 `failed`。旧 YAML 不会被
+  直接复制；`-oldgamever` 只选择同一 game family 的最近旧版本并把 old-YAML map 交给 Preprocessor。
+  `download.yaml` 中的 `major_update: true` 会禁用自动旧版本选择。
 - 工件固定为 `bin/<tag>/<module>/<symbol>.<platform>.yaml`；跨目录路径、重复名称、大小写冲突、环路和缺失必需输入均拒绝。
 - 支持 `func`、`gv`、`vfunc`、`vtable`、`patch`、`struct`、`structmember`。
 - x86 `gv` 使用 `operand` 或排序后的 `data_xref`，可执行 0–2 次 32 位解引用。
@@ -43,8 +44,8 @@ uv run python ida_analyze_bin.py -gamever cstrike-10120 -configyaml configs/cstr
 
 CLI 支持 `-configyaml`、逗号分隔的 `-platform` / `-modules`、`-skill`、`-agent`、`-agent_model`、全部
 `-llm_*` 参数、`-maxretry`、`-oldgamever`、`-ida_args`、`-debug`、`-skip_error`、`-skip_pp` 和本地
-`-console-events`。skill 显式 `max_retries` 优先于全局 `-maxretry`；`-skip_pp` 会跳过 history、deterministic
-和 LLM preprocessing；`-skip_error` 只控制继续执行，只要存在失败最终仍返回非零。
+`-console-events`。skill 显式 `max_retries` 优先于全局 `-maxretry`；`-skip_pp` 会跳过单一 Preprocessor 并直接
+运行 Agent；`-skip_error` 只控制继续执行，只要存在失败最终仍返回非零。
 
 旧 `-config`、Analyzer 的 `all-platform` 和 `-plan-only` 已无 alias 删除。GoldSrc 排除 generic
 `-vcall_finder`。存在待执行工作时，每个 binary 会在 `127.0.0.1:13337` 启动一次 owned `idalib-mcp`

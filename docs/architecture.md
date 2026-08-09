@@ -18,25 +18,27 @@ reuse it, so an output accepted by analysis cannot silently acquire different ow
 
 ## Analysis layers
 
-For each DAG node, `ida_analyze_bin.py` currently attempts three executable layers in order:
+For each DAG node, `ida_analyze_bin.py` currently attempts two executable layers in order:
 
-1. Run an optional deterministic script from `ida_preprocessor_scripts/<skill>.py`.
-2. Run an optional LLM script from `ida_llm_preprocessor_scripts/<skill>.py` with explicit runtime LLM configuration.
-3. Run the configured Agent skill with bounded retries.
+1. Run and process-cache `ida_preprocessor_scripts/<skill>.py` through a bound IDA MCP session. A script receives LLM
+   runtime configuration only when it explicitly declares `llm_config`, and returns `success`, `absent_ok`, `no_script`,
+   or `failed`.
+2. Run the configured Agent skill with bounded retries when fallback is required.
 
-The history stage name remains reserved, but raw old-YAML reuse is disabled because copying address-bearing artifacts
-can preserve stale addresses. Automatic old-version discovery is restricted to an older build in the same game family
-and is disabled by `major_update: true`. The selected old directory is context only until an MCP-bound implementation
-can relocate signatures and rebuild addresses.
+Raw old-YAML copying is disabled because copying address-bearing artifacts can preserve stale addresses. Automatic
+old-version discovery is restricted to an older build in the same game family and is disabled by `major_update: true`.
+The analyzer passes a new-output-to-old-YAML map to the Preprocessor so a skill-specific script can relocate signatures
+through MCP and rebuild addresses.
 
 The binary is validated as 32-bit I386 before work and its SHA-256 is checked after every skill and again after the
 whole job. For each module/platform binary with pending work, the analyzer owns one `idalib-mcp` lifecycle: it checks
 the IDB lock and port, starts the supervisor, waits for the MCP contract, binds the exact active database, validates
-survey identity, allows one health recovery, and performs targeted owned-worker shutdown plus port release. Bound
-host/port/database metadata is exposed to preprocessors through `context["mcp"]`; `-ida_args` is supported while
-`-rename` remains deferred.
+survey identity, allows one health recovery, and performs targeted owned-worker shutdown plus port release. Every
+Preprocessor call binds that binary/database and receives a strictly parsed image base. Preprocessor and Agent outputs
+pass the same YAML, symbol-schema, and current-IDB address validator. `-ida_args` is supported while `-rename` remains
+deferred.
 
-`-skip_pp` bypasses history plus both preprocessor layers and runs Agent Skills directly. `-skip_error` allows later
+`-skip_pp` bypasses the single Preprocessor and runs Agent Skills directly. `-skip_error` allows later
 module/platform/skill work to continue after runtime failures, while configuration and DAG contract failures remain
 fatal and any recorded runtime failure still produces a nonzero final exit status.
 

@@ -7,15 +7,16 @@
 
 ## 结论
 
-当前 GoldSrc 实现已经具备严格的 x86 二进制校验、分析 DAG、四阶段回退、snapshot/candidate 和发布边界，
+当前 GoldSrc 实现已经具备严格的 x86 二进制校验、分析 DAG、单一 Preprocessor → Agent 回退、
+snapshot/candidate 和发布边界，
 但整体仍属于“经过验证的分析框架骨架”，尚未达到 CS2 仓库中可实际执行、可恢复、可调度和可在
 self-hosted IDA 环境持续运行的 infrastructure 水平。
 
 最关键的缺口不是单一启动脚本，而是一组相互依赖的运行时契约：
 
 1. production config、preprocessor 和 Agent skill 目前没有真实分析内容；
-2. GoldSrc preprocessor 接口仍未完全对齐 CS2 的 MCP-bound status/input contract；
-3. 旧版本工件复用会直接复制旧地址，存在生成陈旧 `VA/RVA` 的风险；
+2. Preprocessor 的 MCP-bound status/input contract 已完成自动化对齐，但仍缺真实 IDA smoke；
+3. 旧 YAML 原样复制已禁用，但尚无 production preprocessor 实际完成地址感知的 history rebuild；
 4. CLI 与环境变量已按本节决策对齐；配置 schema、artifact path、execution plan 和 reporter event 仍不兼容；
 5. Redis reporter/scheduler、进度 API、dashboard 和 self-hosted IDA CI 尚不存在；
 6. 部分缺口被当前文档和 repository-contract tests 明确禁止，不是偶然遗漏。
@@ -27,7 +28,7 @@ self-hosted IDA 环境持续运行的 infrastructure 水平。
 - `binary_format.py` 在分析前严格验证 Windows PE32/I386 和 Linux ELF32/I386；
 - `analysis_planner.py` 校验 tag、module/skill 名、artifact、重复 producer、大小写冲突、缺失输入和环路；
 - `ida_analyze_bin.py` 在每个 skill 后和整个 run 结束时重新核对二进制 SHA-256，防止分析期间修改输入；
-- 分析顺序固定为 history、deterministic、LLM、Agent；
+- 分析顺序固定为单一 skill-specific Preprocessor、Agent fallback；
 - `ida_mcp_session.py` 已接入主流程；Analyzer 按 binary 拥有 startup、binding、identity、recovery 和 shutdown；
 - snapshot schema 5、immutable candidate、gamedata guard 和原子发布已经建立；
 - GoldSrc 的 flat artifact 和 x86 symbol 约束比 CS2 更严格，其中部分约束应作为目标特性保留。
@@ -45,16 +46,16 @@ self-hosted IDA 环境持续运行的 infrastructure 水平。
 | 优先级 | 缺口 | 直接影响 |
 | --- | --- | --- |
 | P0 | production config、preprocessor、Agent skill 为空 | Analyzer 无真实 DAG 节点，无法生成 production symbol YAML |
-| P0 | history 直接复制旧 YAML | 新版本地址变化后可能保留陈旧 `VA/RVA` |
 | P0 | config schema 仍不兼容 | CS2 config 不能直接复用 |
-| P1 | runtime input/output validation 不完整 | 建图成功后仍可能在执行期消费缺失或失效工件 |
 | P1 | Agent runner 诊断和 session 管理较弱 | 失败原因不可追踪，retry 可能恢复错误的全局 session |
 | P1 | execution plan 和 reporter contract 不兼容 | 无法接入 CS2 风格运行状态、任务图和可观测性消费者 |
+| P1 | 真实 IDA Preprocessor/validator smoke 缺失 | 自动化契约已对齐，但尚未证明真实 IDB 调用链 |
 | P2 | Redis scheduler/reporter、API、SSE、dashboard 缺失 | 无持久队列、恢复、heartbeat 和远程只读监控 |
 | P2 | 缺少 Windows self-hosted IDA workflow | CI 无法证明真实 IDA 分析链可工作 |
 
-`idalib-mcp` lifecycle、database binding、identity validation、IDB lock、健康检查、一次恢复预算和 owned shutdown
-已于 2026-08-09 补齐；真实 IDA smoke/self-hosted CI 仍作为独立测试缺口保留。
+`idalib-mcp` lifecycle、database binding、identity validation、IDB lock、健康检查、一次恢复预算、owned shutdown、
+Preprocessor contract 和 runtime input/output validation 已于 2026-08-09 补齐；真实 IDA smoke/self-hosted CI
+仍作为独立测试缺口保留。
 
 ## 1. Production 分析内容缺失
 
@@ -68,7 +69,6 @@ symbols: []
 因此 `ida_analyze_bin.py` 当前只会解析配置、验证并哈希选中的二进制，然后完成空 DAG。仓库同时没有：
 
 - `ida_preprocessor_scripts/`；
-- `ida_llm_preprocessor_scripts/`；
 - `.claude/skills/<skill>/SKILL.md`；
 - `.claude/agents/sig-finder.md`；
 - 可供 Codex、Claude 或 OpenCode 使用的 skill-runner settings。
@@ -87,7 +87,7 @@ symbols: []
 
 - 至少为一个 GoldSrc module/platform 建立可真实运行的最小 production skill；
 - skill name、config entry、preprocessor filename 和 `SKILL.md` 必须形成一一对应关系；
-- deterministic preprocessor 优先，LLM 和 Agent 只作为有界 fallback；
+- 单一 skill-specific Preprocessor 优先，脚本按需显式使用 LLM，Agent 只作为有界 fallback；
 - 修改 `test_production_configs_are_valid_empty_scaffolds`，不再把空配置当作长期 contract。
 
 ## 2. CLI 与环境变量契约
@@ -134,7 +134,7 @@ symbols: []
 - unsupported Agent 在 CLI preflight 阶段明确报错；
 - 默认输出配置回显和 success/fail/skip summary；
 - `-skip_error` 只允许继续执行，最终只要存在失败仍返回非零状态；
-- `-skip_pp` 会跳过 history、deterministic 和 LLM，直接进入 Agent；
+- `-skip_pp` 会跳过单一 Preprocessor，直接进入 Agent；
 - CS2 scheduler 的 `-configyaml` 与逗号 platform 可以复用，但 Reporter 环境变量仍不能直接传给 GoldSrc。
 
 ### 已落实规则
@@ -281,19 +281,10 @@ GoldSrc session adapter 已补齐以下 CS2 语义，同时保留更严格的 `c
 对应 unit tests 位于 `tests/test_ida_mcp_session.py` 与 `tests/test_analysis_planner.py`。尚未完成的是需要本机 IDA
 license/`idalib-mcp` 的真实 smoke；该项仍保留在测试与 CI 缺口中。
 
-## 5. Preprocessor 契约不兼容
+## 5. Preprocessor 契约（自动化已对齐，真实 IDA smoke 待完成）
 
-GoldSrc 当前调用：
-
-```python
-preprocess_skill(skill_name, context=context) -> bool
-preprocess_skill_with_llm(skill_name, context=context) -> bool
-```
-
-`context` 包含 tag、module、platform、binary path、输入输出路径和 skill aliases，但不包含 active MCP session、
-image base、old YAML map、LLM runtime config 或 symbol alias map。
-
-CS2 当前调用：
+GoldSrc 已采用 CS2 的单一 skill-specific Preprocessor 模型，删除 deterministic / LLM 双目录与旧的布尔入口。
+Analyzer 当前调用：
 
 ```python
 await preprocess_single_skill_via_mcp(
@@ -307,41 +298,60 @@ await preprocess_single_skill_via_mcp(
     expected_inputs,
     optional_inputs,
     expected_binary,
-    llm_config,
+    llm_model,
+    llm_apikey,
+    llm_baseurl,
+    llm_temperature,
+    llm_effort,
+    llm_fake_as,
+    llm_max_retries,
     symbol_aliases,
 )
 ```
 
-返回值为：
+dispatcher 为每次调用绑定目标 binary/database 的 MCP session，严格解析 image base，并进程内缓存
+`ida_preprocessor_scripts/<skill>.py::preprocess_skill`。脚本只有显式声明 `llm_config` 参数时才会收到组装后的
+LLM runtime config；不再对 `unexpected keyword argument` 删除参数后重试。
+
+返回值统一归一化为：
 
 - `success`；
 - `absent_ok`；
 - `no_script`；
 - `failed`。
 
-该 status contract 决定是否成功、跳过、进入 Agent fallback 或报错。GoldSrc 的布尔值无法表达
-“目标在该版本中合法不存在”和“没有 preprocessor script”的区别。
+pipeline 采用结构化 `PipelineResult` / `PipelineFailure(reason, payload)`，并实现以下终态：
+
+- `success` 必须生成全部 required outputs；Preprocessor 与 Agent 输出使用同一层 YAML、symbol schema 与当前
+  IDB 地址校验；
+- `absent_ok` 无条件记为 skipped/`preprocess_absent`，即使脚本同时留下 YAML；
+- `failed` 留下的 YAML 不删除，但该失败不能凭文件存在在同一次运行中转成成功，required-output skill 必须进入
+  Agent fallback；
+- `no_script` 进入 Agent fallback；
+- optional-only skill 在正常模式下遇到 `failed` / `no_script` 记为 skipped/`optional_output_absent`；使用
+  `-skip_pp` 时仍运行 Agent，最终没有 optional output 时使用同一 skipped reason；
+- zero-output skill 按 CS2 语义允许执行；
+- 运行前 existing-output short circuit 仍只依据 YAML 文件存在，不附加内容校验。
+
+运行时还会拒绝 required/optional input 重叠、缺失 required input 与无效输入工件；MCP 地址校验不可用时由
+lifecycle owner 执行一次受预算约束的恢复。dispatcher 不增加独立 wall-clock timeout。
 
 出处：
 
-- GoldSrc：`ida_skill_preprocessor.py:16-48`
-- GoldSrc context：`ida_analyze_bin.py:170-182`
-- CS2：`D:\CS2_VibeSignatures\ida_skill_preprocessor.py:24-47,90-207`
+- GoldSrc dispatcher：`ida_skill_preprocessor.py`
+- GoldSrc pipeline：`ida_analyze_bin.py:788-1245`
+- GoldSrc tests：`tests/test_ida_skill_preprocessor.py`、`tests/test_analysis_planner.py`
+- CS2 reference：`D:\CS2_VibeSignatures\ida_skill_preprocessor.py:24-207`
 
-### 额外语义差异
-
-- GoldSrc 把 deterministic 和 LLM 分成两个目录及两个固定 stage；
-- CS2 将 LLM-assisted 逻辑作为同一个 skill-specific preprocessor 的可选能力；
-- GoldSrc 对只有 optional outputs 的 skill，Agent 成功退出即可被视为成功，即使没有生成 optional output；
-- CS2 对 optional-only preprocessor 的合法无输出使用 skipped/`optional_output_absent` 表达；
-- GoldSrc preprocessor runtime exception 的统一诊断范围不完整。
-
-对齐时可以保留 GoldSrc 显式四阶段模型，但对外 status、MCP session 和 LLM config contract 应兼容 CS2 语义。
+自动化 contract tests 已覆盖 loader cache、ABI、status normalization、LLM opt-in、session binding、image-base
+解析、输入输出验证、optional-only、zero-output、Agent fallback 与 MCP recovery。仍需在具备 IDA license 和
+`idalib-mcp` 的环境执行真实 binary smoke，完成后才能关闭本差异项。
 
 ## 6. History reuse 会复制陈旧地址
 
-当前缓解状态：旧 YAML 直接复制路径已禁用。Analyzer 仍解析/自动选择同 game family 的 `oldgamever` 并把旧目录
-提供给分析上下文，但在后续 MCP-bound history migration 完成前不会用旧工件生成新 YAML。
+当前缓解状态：旧 YAML 直接复制路径已禁用。Analyzer 解析/自动选择同 game family 的 `oldgamever`，并把
+new-output 到 old-YAML 的映射交给已对齐的 MCP-bound Preprocessor；仓库尚无 production preprocessor 实际
+执行 category-aware history rebuild。
 
 此前的 GoldSrc `reuse_unique_history_artifact()`：
 
@@ -366,7 +376,7 @@ function/global/patch metadata，并重建输出 YAML。例如 function reuse �
 
 出处：
 
-- GoldSrc 当前缓解：`ida_analyze_bin.py:156-190,236-238`
+- GoldSrc 当前缓解：`ida_analyze_bin.py:1090-1146`
 - GoldSrc 移除前基线：`cabdc95:ida_analyze_bin.py:117-141,183-191`
 - CS2 function reuse：`D:\CS2_VibeSignatures\ida_analyze_util.py:2839-2969,3238-3274`
 - CS2 global reuse：`D:\CS2_VibeSignatures\ida_analyze_util.py:4717`
@@ -374,40 +384,38 @@ function/global/patch metadata，并重建输出 YAML。例如 function reuse �
 
 ### 对齐目标
 
-- history stage 只复用可证明稳定的 signature/metadata，不复制旧绝对地址；
+- skill-specific Preprocessor 只复用可证明稳定的 signature/metadata，不复制旧绝对地址；
 - 每种 symbol category 通过 MCP 重新定位并重算派生字段；
-- 无法重建时进入 deterministic/LLM/Agent fallback；
+- 无法重建时由同一个 Preprocessor 可选使用 LLM，最终进入 Agent fallback；
 - old-version 自动选择必须限制在相同 GoldSrc game family；
 - `download.yaml` 应支持类似 `major_update` 的显式禁用策略；
 - 为地址变化但 signature 不变的场景增加回归测试。
 
-## 7. Runtime 输入、输出和失败语义不足
+## 7. Runtime 输入、输出和失败语义（核心自动化已对齐）
 
 ### Required input
 
-GoldSrc 在 plan 构建时检查 required input 是否存在或有 producer，但执行 node 前不会再次检查文件状态。
-它只把路径放入 preprocessor context。
-
-CS2 每个 skill 执行前会：
+GoldSrc 当前在每个 skill 执行前会：
 
 - 重新解析 required/optional input；
 - 拒绝同时声明为 required 和 optional 的同一路径；
 - 明确报告缺失 required input；
 - 记录缺失 optional input；
 - 对 `func` / `vfunc` artifact 检查 YAML、`func_va`、segment 和 function-start identity；
-- 对跨模块输入采用不同的地址验证边界。
+- 当前 DAG 仍只允许 module-local artifact；若未来允许跨模块输入，必须保持不同的地址验证边界。
 
 出处：
 
-- GoldSrc：`ida_analyze_bin.py:170-182`
+- GoldSrc：`ida_analyze_bin.py:1039-1088`
+- GoldSrc tests：`tests/test_analysis_planner.py`
 - CS2：`D:\CS2_VibeSignatures\ida_analyze_bin.py:3295-3420`
 - CS2 input artifact validation：`D:\CS2_VibeSignatures\ida_analyze_bin.py:451-536`
 
 ### Output
 
-GoldSrc 在分析阶段主要以 required output 文件是否存在判定成功，内容 schema 和 canonicalization 延迟到
-candidate build。CS2 同样依赖文件存在作为主要完成信号，但其 preprocessor、input validation 和 reporter
-提供更细的失败原因。
+Preprocessor 与 Agent 成功后均执行同一层 YAML mapping、symbol normalization、地址字段、segment、function-start
+和 VA/RVA consistency 校验；失败通过 `PipelineFailure(reason, payload)` 报告。运行前 existing-output short
+circuit 仍按已确认的 CS2 语义仅依据文件存在，不读取内容。
 
 ### Skip/cache
 
@@ -423,10 +431,9 @@ GoldSrc 额外提供 binary mutation SHA-256 guard，应保留。后续若加入
 
 ### Fail-fast 与异常边界
 
-GoldSrc 默认 fail-fast，但缺少 CS2 的：
+GoldSrc 已支持默认 fail-fast、`-skip_error` opt-in continuation、success/fail/skip 计数和结构化 skill reason。
+相对 CS2 完整 Reporter 生命周期仍缺少：
 
-- `-skip_error` opt-in continuation；
-- success/fail/skip 计数；
 - task abort reason；
 - pending task finalization；
 - reporter finalize/flush/close；
@@ -665,10 +672,10 @@ GoldSrc 应保留：
 
 ### Phase 3：统一 preprocessor 和 history
 
-- 定义 MCP-bound status contract；
-- 传递 old YAML map、expected/optional inputs、LLM config 和 symbol aliases；
+- 定义 MCP-bound status contract（已完成自动化对齐）；
+- 传递 old YAML map、expected/optional inputs、LLM config 和 symbol aliases（已完成）；
 - 将 history reuse 改为 category-aware 地址重建；
-- 增加 runtime input validation；
+- 增加 runtime input/output validation（已完成自动化对齐）；
 - 建立第一个 production preprocessor 和 skill。
 
 验收标准：旧 signature 地址发生变化时，新 YAML 中的 `VA/RVA` 来自新 IDB；无法证明唯一性时进入后续 fallback。
@@ -676,10 +683,10 @@ GoldSrc 应保留：
 ### Phase 4：补齐 Agent 和失败模型
 
 - port CS2 Agent session/model/output/error handling；
-- 添加 success/fail/skip summary；
-- 添加 fail-fast 与 `skip_error`；
+- 添加 success/fail/skip summary（已完成）；
+- 添加 fail-fast 与 `skip_error`（已完成）；
 - 确保所有 terminal task 和 run 都被 finalize；
-- 为 Agent、preprocessor、MCP 和 missing artifact 定义稳定 reason。
+- 为 Agent、preprocessor、MCP 和 missing artifact 定义稳定 reason（单进程 event 已完成，Reporter contract 待扩展）。
 
 验收标准：每种失败路径都有明确非零退出、结构化 reason 和足够诊断信息，retry 不会恢复无关 session。
 

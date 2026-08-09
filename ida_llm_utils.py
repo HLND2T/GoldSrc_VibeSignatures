@@ -1,4 +1,4 @@
-"""Small, testable helpers shared by optional LLM preprocessors."""
+"""Small, testable helpers for skill preprocessors that explicitly opt into LLM use."""
 
 from __future__ import annotations
 

@@ -12,6 +12,7 @@ GROUP_FILES = {
         "test_config_and_depot.py",
         "test_binary_and_symbols.py",
         "test_ida_mcp_session.py",
+        "test_ida_skill_preprocessor.py",
         "test_analysis_planner.py",
         "test_snapshot_candidate.py",
         "test_gamedata.py",

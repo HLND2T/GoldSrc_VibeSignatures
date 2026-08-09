@@ -18,23 +18,24 @@ download.yaml + configs/<tag>.yaml
 
 ## 分析层次
 
-`ida_analyze_bin.py` 当前对每个 DAG 节点依次执行三个可运行层次：
+`ida_analyze_bin.py` 当前对每个 DAG 节点依次执行两个可运行层次：
 
-1. 执行 `ida_preprocessor_scripts/<skill>.py` 的 deterministic preprocessor；
-2. 使用显式 LLM runtime 配置执行 `ida_llm_preprocessor_scripts/<skill>.py`；
-3. 通过 Agent runner 有界重试具体 skill。
+1. 在绑定的 IDA MCP session 中执行并进程内缓存 `ida_preprocessor_scripts/<skill>.py`；脚本只有显式声明
+   `llm_config` 才会收到 LLM runtime 配置，并返回 `success`、`absent_ok`、`no_script` 或 `failed`；
+2. 在需要 fallback 时通过 Agent runner 有界重试具体 skill。
 
-history stage 名称仍保留，但旧 YAML 直接复制已禁用，因为携带地址的旧工件可能保留陈旧地址。旧版本自动选择仅限
-同一 game family 中更早的最高 build，并可通过 `major_update: true` 禁用。当前只把选中的旧目录写入上下文，
-直到 MCP-bound 实现能够重新定位 signature 并重建地址。
+旧 YAML 直接复制已禁用，因为携带地址的旧工件可能保留陈旧地址。旧版本自动选择仅限同一 game family 中更早的
+最高 build，并可通过 `major_update: true` 禁用；Analyzer 将 new-output 到 old-YAML 的映射交给 Preprocessor，
+由具体脚本通过 MCP 重新定位 signature 并重建地址。
 
 二进制在分析前必须是 32 位 I386；每个 skill 后以及整个 job 结束时都会重新核对 SHA-256。对每个仍有待执行工作的
 module/platform binary，Analyzer 拥有一次完整 `idalib-mcp` 生命周期：检查 IDB lock 与端口、启动 supervisor、等待
 MCP contract ready、绑定唯一活动数据库、核对 survey identity、允许一次健康恢复，并定向关闭 owned worker、停止
-supervisor、等待端口释放。绑定后的 host/port/database 信息通过 `context["mcp"]` 传给 preprocessor；`-ida_args`
-已支持，`-rename` 仍延期。
+supervisor、等待端口释放。Preprocessor 每次调用都绑定该 binary/database，并获得严格解析的 image base；
+Preprocessor 与 Agent 产物经过同一层 YAML、symbol schema 与当前 IDB 地址校验。`-ida_args` 已支持，`-rename`
+仍延期。
 
-`-skip_pp` 跳过 history 与两个 preprocessor 层，直接运行 Agent Skill。`-skip_error` 允许运行期的后续
+`-skip_pp` 跳过单一 Preprocessor，直接运行 Agent Skill。`-skip_error` 允许运行期的后续
 module/platform/skill 继续，但 config 与 DAG contract 错误仍立即失败；任何已记录运行失败最终都会返回非零。
 
 ## Snapshot 边界

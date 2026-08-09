@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate x86 binaries and execute the deterministic/LLM/agent analysis DAG."""
+"""Validate x86 binaries and execute the preprocessor/agent analysis DAG."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ import json
 import os
 import socket
 import subprocess
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,12 +25,14 @@ from analysis_planner import (
     ExecutionPlan,
     load_config,
     parse_config_document,
+    symbol_artifact_filename,
     validate_artifact_path,
 )
 from analysis_planner import (
     build_execution_plan as _build_execution_plan,
 )
 from binary_format import BinaryFormatError, validate_binary
+from ida_analyze_util import SymbolArtifactError, normalize_symbol_artifact
 from ida_llm_utils import validated_temperature
 from ida_mcp_session import (
     McpConnectionError,
@@ -42,13 +45,20 @@ from ida_mcp_session import (
     normalize_binary_identity_path,
     open_ida_mcp_session,
 )
-from ida_skill_preprocessor import PreprocessorError, preprocess_skill, preprocess_skill_with_llm
+from ida_skill_preprocessor import (
+    PREPROCESS_STATUS_ABSENT_OK,
+    PREPROCESS_STATUS_NO_SCRIPT,
+    PREPROCESS_STATUS_SUCCESS,
+    _normalize_preprocess_status,
+    preprocess_single_skill_via_mcp,
+)
 from process_reporter import ConsoleReporter, NullReporter, ProgressEvent
+from trusted_yaml import load_yaml_file
 
 load_dotenv()
 
 PLATFORMS = ("windows", "linux")
-ANALYSIS_STAGES = ("history", "deterministic", "llm", "agent")
+ANALYSIS_STAGES = ("preprocessor", "agent")
 DEFAULT_BIN_DIR = "bin"
 DEFAULT_PLATFORM = "windows,linux"
 DEFAULT_MODULES = "*"
@@ -64,9 +74,21 @@ OPENED_BINARY_VERIFY_TIMEOUT = 60.0
 OPENED_BINARY_VERIFY_RETRY_INTERVAL = 2.0
 QEXIT_CONNECTION_RESET_MARKER = "[WinError 10054]"
 LLM_EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "xhigh"})
+REMOVED_CLI_OPTIONS = frozenset({"-config", "-plan-only", "-vcall_finder", "-rename", "-process_reporter", "-run_id"})
 
 
 class AnalysisRunError(RuntimeError):
+    pass
+
+
+class PipelineFailure(AnalysisRunError):
+    def __init__(self, reason: str, message: str, payload: dict | None = None) -> None:
+        super().__init__(message)
+        self.reason = reason
+        self.payload = dict(payload or {})
+
+
+class ArtifactValidationUnavailable(RuntimeError):
     pass
 
 
@@ -79,6 +101,13 @@ class AnalysisSummary:
     successful: int = 0
     failed: int = 0
     skipped: int = 0
+
+
+@dataclass(frozen=True)
+class PipelineResult:
+    status: str
+    stage: str
+    reason: str | None = None
 
 
 @dataclass(frozen=True)
@@ -757,6 +786,229 @@ def _node_has_existing_outputs(node, game_root: Path) -> bool:
     )
 
 
+def _artifact_path_key(path: str | Path) -> str:
+    return os.path.normcase(os.fspath(Path(path).resolve()))
+
+
+def _symbol_alias_map_from_document(document: dict) -> dict[str, tuple[str, ...]]:
+    aliases: dict[str, tuple[str, ...]] = {}
+    for module in document.get("modules", []) if isinstance(document, dict) else ():
+        if not isinstance(module, dict):
+            continue
+        for symbol in module.get("symbols", []) or ():
+            if not isinstance(symbol, dict):
+                continue
+            name = str(symbol.get("name", "")).strip()
+            if not name:
+                continue
+            values = symbol.get("alias")
+            raw_aliases = values if isinstance(values, (list, tuple)) else (values,)
+            aliases[name] = tuple(alias for value in raw_aliases if (alias := str(value or "").strip()))
+    return aliases
+
+
+def _artifact_type_map(modules: list[dict], game_root: Path) -> dict[str, str]:
+    result: dict[str, str] = {}
+    for module in modules:
+        for platform in PLATFORMS:
+            if not module.get(f"path_{platform}"):
+                continue
+            for symbol in module.get("symbols", ()):
+                if symbol.get("platform") not in {None, platform}:
+                    continue
+                filename = symbol_artifact_filename(symbol, platform)
+                result[_artifact_path_key(game_root / module["name"] / filename)] = symbol["type"]
+    return result
+
+
+def _parse_artifact_integer(value: object, field: str) -> int:
+    if isinstance(value, bool):
+        raise TypeError(f"{field} must be a non-negative integer")
+    if isinstance(value, int):
+        parsed = value
+    elif isinstance(value, str):
+        parsed = int(value, 0)
+    else:
+        raise TypeError(f"{field} must be a non-negative integer")
+    if parsed < 0:
+        raise ValueError(f"{field} must be a non-negative integer")
+    return parsed
+
+
+def _load_runtime_artifact(path: Path, expected_type: str | None):
+    try:
+        payload = load_yaml_file(path)
+    except Exception as exc:  # noqa: BLE001 - runtime validation reports a stable artifact issue.
+        return None, [f"{path}: unable to read YAML ({exc})"], []
+    if not isinstance(payload, dict):
+        return None, [f"{path}: YAML top level must be a mapping"], []
+
+    issues: list[str] = []
+    inspections: list[dict] = []
+    declared_type = payload.get("type", payload.get("kind"))
+    if expected_type is not None and declared_type != expected_type:
+        issues.append(f"{path}: expected symbol type {expected_type!r}, got {declared_type!r}")
+    symbol_type = expected_type or declared_type
+    if symbol_type is not None:
+        try:
+            normalized = normalize_symbol_artifact(payload)
+            if normalized != payload:
+                raise SymbolArtifactError("symbol fields are not normalized")
+        except SymbolArtifactError as exc:
+            issues.append(f"{path}: invalid symbol artifact ({exc})")
+
+    if symbol_type == "func" and not any(field in payload for field in ("func_va", "func_addr")):
+        issues.append(f"{path}: func artifact requires func_va or func_addr")
+
+    for field, raw_value in payload.items():
+        if not (field.endswith("_va") or field in {"func_addr", "gv_addr", "patch_addr", "vtable_addr"}):
+            continue
+        try:
+            address = _parse_artifact_integer(raw_value, field)
+        except (TypeError, ValueError) as exc:
+            issues.append(f"{path}: {exc}")
+            continue
+        rva_field = f"{field[:-3]}_rva" if field.endswith("_va") else None
+        rva = None
+        if rva_field and rva_field in payload:
+            try:
+                rva = _parse_artifact_integer(payload[rva_field], rva_field)
+            except (TypeError, ValueError) as exc:
+                issues.append(f"{path}: {exc}")
+        inspections.append(
+            {
+                "path": str(path),
+                "field": field,
+                "address": address,
+                "rva_field": rva_field,
+                "rva": rva,
+                "require_function": symbol_type in {"func", "vfunc"} and field in {"func_va", "func_addr", "vfunc_va"},
+            }
+        )
+    return payload, issues, inspections
+
+
+async def _inspect_runtime_addresses(mcp_runtime: McpRuntime, inspections: list[dict]) -> list[str]:
+    issues: list[str] = []
+    try:
+        async with open_ida_mcp_session(
+            mcp_runtime.host,
+            mcp_runtime.port,
+            expected_binary=mcp_runtime.expected_binary,
+            explicit_database=mcp_runtime.binding.session_id,
+        ) as session:
+            for inspection in inspections:
+                code = (
+                    "import ida_funcs, ida_segment, idaapi, json\n"
+                    f"ea = {inspection['address']}\n"
+                    "seg = ida_segment.getseg(ea)\n"
+                    "func = ida_funcs.get_func(ea)\n"
+                    "result = json.dumps({\n"
+                    "  'has_segment': seg is not None,\n"
+                    "  'segment_name': ida_segment.get_segm_name(seg) if seg is not None else '',\n"
+                    "  'image_base': hex(int(idaapi.get_imagebase())),\n"
+                    "  'has_function': func is not None,\n"
+                    "  'function_start': hex(int(func.start_ea)) if func is not None else '',\n"
+                    "  'is_function_start': bool(func is not None and int(func.start_ea) == ea),\n"
+                    "})\n"
+                )
+                payload = _parse_py_eval_json(await session.call_tool("py_eval", {"code": code}))
+                if not isinstance(payload, dict):
+                    raise ArtifactValidationUnavailable("py_eval returned no address inspection payload")
+                label = f"{inspection['path']}: {inspection['field']}={hex(inspection['address'])}"
+                if not payload.get("has_segment"):
+                    issues.append(f"{label} is not mapped to any segment")
+                    continue
+                if inspection["require_function"]:
+                    segment_name = str(payload.get("segment_name", ""))
+                    if segment_name != ".text":
+                        issues.append(f"{label} resolves to segment {segment_name!r} instead of '.text'")
+                    elif not payload.get("has_function"):
+                        issues.append(f"{label} does not resolve to a function")
+                    elif not payload.get("is_function_start"):
+                        issues.append(
+                            f"{label} resolves inside function {payload.get('function_start') or '<unknown>'}"
+                        )
+                if inspection["rva"] is not None:
+                    try:
+                        image_base = _parse_artifact_integer(payload.get("image_base"), "image_base")
+                    except (TypeError, ValueError) as exc:
+                        raise ArtifactValidationUnavailable(str(exc)) from exc
+                    if inspection["address"] - image_base != inspection["rva"]:
+                        issues.append(
+                            f"{inspection['path']}: {inspection['rva_field']} does not match "
+                            f"{inspection['field']} - image_base"
+                        )
+    except ArtifactValidationUnavailable:
+        raise
+    except Exception as exc:
+        raise ArtifactValidationUnavailable(str(exc)) from exc
+    return issues
+
+
+def validate_runtime_artifacts(
+    paths,
+    *,
+    module_dir: Path,
+    artifact_types: dict[str, str],
+    mcp_runtime: McpRuntime | None,
+) -> list[str]:
+    issues: list[str] = []
+    inspections: list[dict] = []
+    module_root = module_dir.resolve()
+    for raw_path in paths:
+        path = Path(raw_path).resolve()
+        _payload, artifact_issues, artifact_inspections = _load_runtime_artifact(
+            path,
+            artifact_types.get(_artifact_path_key(path)),
+        )
+        issues.extend(artifact_issues)
+        if path.parent == module_root:
+            inspections.extend(artifact_inspections)
+    if inspections:
+        if mcp_runtime is None:
+            raise ArtifactValidationUnavailable("MCP runtime is required for current-binary address validation")
+        issues.extend(asyncio.run(_inspect_runtime_addresses(mcp_runtime, inspections)))
+    return issues
+
+
+def _validate_artifacts_with_recovery(
+    paths,
+    *,
+    module_dir: Path,
+    artifact_types: dict[str, str],
+    mcp_runtime: McpRuntime | None,
+    ensure_mcp_ready=None,
+):
+    try:
+        return validate_runtime_artifacts(
+            paths,
+            module_dir=module_dir,
+            artifact_types=artifact_types,
+            mcp_runtime=mcp_runtime,
+        ), mcp_runtime
+    except ArtifactValidationUnavailable as first_error:
+        if ensure_mcp_ready is None:
+            raise PipelineFailure("mcp_unavailable", str(first_error)) from first_error
+        try:
+            recovered_runtime = ensure_mcp_ready()
+        except Exception as exc:
+            raise PipelineFailure("mcp_unavailable", str(exc)) from exc
+        try:
+            return validate_runtime_artifacts(
+                paths,
+                module_dir=module_dir,
+                artifact_types=artifact_types,
+                mcp_runtime=recovered_runtime,
+            ), recovered_runtime
+        except ArtifactValidationUnavailable as exc:
+            raise PipelineFailure("mcp_unavailable", str(exc)) from exc
+
+
+def _run_preprocessor(**kwargs):
+    return asyncio.run(preprocess_single_skill_via_mcp(**kwargs))
+
+
 def run_analysis_pipeline(
     node,
     *,
@@ -768,33 +1020,80 @@ def run_analysis_pipeline(
     agent_model: str = DEFAULT_AGENT_MODEL,
     llm_config: dict | None = None,
     mcp_runtime: McpRuntime | None = None,
+    ensure_mcp_ready=None,
     skip_preprocessors: bool = False,
     debug: bool = False,
-    deterministic_runner=preprocess_skill,
-    llm_runner=preprocess_skill_with_llm,
+    symbol_aliases: dict | None = None,
+    artifact_types: dict[str, str] | None = None,
+    preprocessor_runner=_run_preprocessor,
     agent_skill_runner=agent_runner.run_skill,
-) -> str:
+) -> PipelineResult:
+    binary_path = Path(binary_path).resolve()
+    game_root = Path(game_root).resolve()
+    module_dir = (game_root / node.module).resolve()
     required, optional = _outputs(node, game_root)
+    required = [path.resolve() for path in required]
+    optional = [path.resolve() for path in optional]
     if _node_has_existing_outputs(node, game_root):
-        return "existing"
-    context = {
-        "tag": game_root.name,
-        "module": node.module,
-        "platform": node.platform,
-        "skill": node.skill,
-        "binary_path": str(binary_path),
-        "module_dir": str(game_root / node.module),
-        "required_inputs": [str(game_root / node.module / name) for name in node.required_inputs],
-        "optional_inputs": [str(game_root / node.module / name) for name in node.optional_inputs],
-        "required_outputs": [str(path) for path in required],
-        "optional_outputs": [str(path) for path in optional],
-        "aliases": list(node.aliases),
-    }
-    if mcp_runtime is not None:
-        context["mcp"] = mcp_runtime.as_context()
+        return PipelineResult("skipped", "existing", "existing_outputs")
+
+    required_inputs = [(module_dir / name).resolve() for name in node.required_inputs]
+    optional_inputs = [(module_dir / name).resolve() for name in node.optional_inputs]
+    overlap = sorted(
+        {_artifact_path_key(path) for path in required_inputs} & {_artifact_path_key(path) for path in optional_inputs}
+    )
+    if overlap:
+        raise PipelineFailure(
+            "invalid_input",
+            f"Skill {node.id} declares the same artifact as required and optional input",
+            {"overlapping_inputs": overlap},
+        )
+    missing_inputs = [str(path) for path in required_inputs if not path.is_file()]
+    if missing_inputs:
+        raise PipelineFailure(
+            "missing_input",
+            f"Skill {node.id} is missing required inputs: {', '.join(Path(path).name for path in missing_inputs)}",
+            {"missing_inputs": missing_inputs},
+        )
+    existing_optional_inputs = [path for path in optional_inputs if path.is_file()]
+    missing_optional_inputs = [str(path) for path in optional_inputs if not path.is_file()]
+    if missing_optional_inputs:
+        reporter.emit(
+            ProgressEvent.create(
+                "optional_input_missing",
+                tag=game_root.name,
+                module=node.module,
+                platform=node.platform,
+                skill=node.skill,
+                missing_optional_inputs=missing_optional_inputs,
+            )
+        )
+
+    runtime = mcp_runtime
+    artifact_types = artifact_types or {}
+    input_paths = [*required_inputs, *existing_optional_inputs]
+    if input_paths:
+        input_issues, runtime = _validate_artifacts_with_recovery(
+            input_paths,
+            module_dir=module_dir,
+            artifact_types=artifact_types,
+            mcp_runtime=runtime,
+            ensure_mcp_ready=ensure_mcp_ready,
+        )
+        if input_issues:
+            raise PipelineFailure(
+                "invalid_input",
+                f"Skill {node.id} has invalid input artifacts",
+                {"invalid_inputs": input_issues},
+            )
+
+    expected_outputs = [str(path) for path in (*required, *optional)]
+    old_yaml_map = None
     if old_game_root is not None:
-        context["old_game_root"] = str(old_game_root)
-        context["old_module_dir"] = str(old_game_root / node.module)
+        old_module_dir = (Path(old_game_root).resolve() / node.module).resolve()
+        old_yaml_map = {path: str((old_module_dir / Path(path).name).resolve()) for path in expected_outputs}
+
+    preprocess_status = PREPROCESS_STATUS_NO_SCRIPT
     if not skip_preprocessors:
         reporter.emit(
             ProgressEvent.create(
@@ -803,27 +1102,97 @@ def run_analysis_pipeline(
                 module=node.module,
                 platform=node.platform,
                 skill=node.skill,
-                stage="deterministic",
+                stage="preprocessor",
             )
         )
-        deterministic_result = deterministic_runner(node.skill, context=context)
-        if all(path.is_file() for path in required) if required else bool(deterministic_result):
-            return "deterministic"
+
+        def report_preprocessor_diagnostic(payload):
+            detail = {key: value for key, value in payload.items() if key != "skill"}
+            reporter.emit(
+                ProgressEvent.create(
+                    "preprocessor_diagnostic",
+                    tag=game_root.name,
+                    module=node.module,
+                    platform=node.platform,
+                    skill=node.skill,
+                    **detail,
+                )
+            )
+
+        effective_llm_config = dict(llm_config or {})
+        preprocess_status = _normalize_preprocess_status(
+            preprocessor_runner(
+                host=runtime.host if runtime is not None else DEFAULT_HOST,
+                port=runtime.port if runtime is not None else DEFAULT_PORT,
+                skill_name=node.skill,
+                expected_outputs=expected_outputs,
+                expected_inputs=[str(path) for path in required_inputs],
+                optional_inputs=[str(path) for path in optional_inputs],
+                old_yaml_map=old_yaml_map,
+                new_binary_dir=str(module_dir),
+                platform=node.platform,
+                expected_binary=str(binary_path),
+                explicit_database=runtime.binding.session_id if runtime is not None else None,
+                llm_model=effective_llm_config.get("model"),
+                llm_apikey=effective_llm_config.get("api_key"),
+                llm_baseurl=effective_llm_config.get("base_url"),
+                llm_temperature=effective_llm_config.get("temperature"),
+                llm_effort=effective_llm_config.get("effort"),
+                llm_fake_as=effective_llm_config.get("fake_as"),
+                llm_max_retries=node.max_retries,
+                symbol_aliases=symbol_aliases,
+                debug=debug,
+                diagnostic_callback=report_preprocessor_diagnostic,
+            )
+        )
         reporter.emit(
             ProgressEvent.create(
-                "stage_started",
+                "preprocessor_completed",
                 tag=game_root.name,
                 module=node.module,
                 platform=node.platform,
                 skill=node.skill,
-                stage="llm",
+                status=str(preprocess_status),
             )
         )
-        effective_llm_config = dict(llm_config or {})
-        effective_llm_config["max_retries"] = node.max_retries
-        llm_result = llm_runner(node.skill, context=context, llm_config=effective_llm_config)
-        if all(path.is_file() for path in required) if required else bool(llm_result):
-            return "llm"
+
+        if preprocess_status is PREPROCESS_STATUS_SUCCESS:
+            missing_outputs = [str(path) for path in required if not path.is_file()]
+            if missing_outputs:
+                raise PipelineFailure(
+                    "preprocess_contract_violation",
+                    f"Preprocessor for {node.id} reported success but required outputs are missing",
+                    {"missing_outputs": missing_outputs},
+                )
+            present_optional = [path for path in optional if path.is_file()]
+            if not required and optional and not present_optional:
+                return PipelineResult("skipped", "preprocessor", "optional_output_absent")
+            output_paths = [*required, *present_optional]
+            if output_paths:
+                output_issues, runtime = _validate_artifacts_with_recovery(
+                    output_paths,
+                    module_dir=module_dir,
+                    artifact_types=artifact_types,
+                    mcp_runtime=runtime,
+                    ensure_mcp_ready=ensure_mcp_ready,
+                )
+                if output_issues:
+                    raise PipelineFailure(
+                        "preprocess_contract_violation",
+                        f"Preprocessor for {node.id} produced invalid outputs",
+                        {"invalid_outputs": output_issues},
+                    )
+            return PipelineResult("succeeded", "preprocessor")
+        if preprocess_status is PREPROCESS_STATUS_ABSENT_OK:
+            return PipelineResult("skipped", "preprocessor", "preprocess_absent")
+        if not required and optional:
+            return PipelineResult("skipped", "preprocessor", "optional_output_absent")
+
+    if ensure_mcp_ready is not None:
+        try:
+            runtime = ensure_mcp_ready()
+        except Exception as exc:
+            raise PipelineFailure("mcp_unavailable", str(exc)) from exc
     reporter.emit(
         ProgressEvent.create(
             "stage_started",
@@ -842,10 +1211,34 @@ def run_analysis_pipeline(
         model=agent_model,
         debug=debug,
     )
-    if succeeded and (not required or all(path.is_file() for path in required)):
-        return "agent"
-    missing = [path.name for path in required if not path.is_file()]
-    raise AnalysisRunError(f"Skill {node.id} did not produce required outputs: {', '.join(missing)}")
+    if not succeeded:
+        raise PipelineFailure("agent_failed", f"Agent skill {node.id} failed")
+    missing_outputs = [str(path) for path in required if not path.is_file()]
+    if missing_outputs:
+        raise PipelineFailure(
+            "agent_output_invalid",
+            f"Agent skill {node.id} did not produce required outputs",
+            {"missing_outputs": missing_outputs},
+        )
+    present_optional = [path for path in optional if path.is_file()]
+    if not required and optional and not present_optional:
+        return PipelineResult("skipped", "agent", "optional_output_absent")
+    output_paths = [*required, *present_optional]
+    if output_paths:
+        output_issues, runtime = _validate_artifacts_with_recovery(
+            output_paths,
+            module_dir=module_dir,
+            artifact_types=artifact_types,
+            mcp_runtime=runtime,
+            ensure_mcp_ready=ensure_mcp_ready,
+        )
+        if output_issues:
+            raise PipelineFailure(
+                "agent_output_invalid",
+                f"Agent skill {node.id} produced invalid outputs",
+                {"invalid_outputs": output_issues},
+            )
+    return PipelineResult("succeeded", "agent")
 
 
 def _select_execution_modules(modules, modules_filter=None, skill_filter=None):
@@ -887,6 +1280,9 @@ def _execute_analysis_node(
     run_summary,
     skip_error,
     mcp_runtime=None,
+    ensure_mcp_ready=None,
+    symbol_aliases=None,
+    artifact_types=None,
 ):
     reporter.emit(
         ProgressEvent.create(
@@ -898,7 +1294,7 @@ def _execute_analysis_node(
         )
     )
     try:
-        stage = run_analysis_pipeline(
+        result = run_analysis_pipeline(
             node,
             binary_path=binary,
             game_root=root,
@@ -907,10 +1303,43 @@ def _execute_analysis_node(
             agent_model=agent_model,
             llm_config=llm_config,
             mcp_runtime=mcp_runtime,
+            ensure_mcp_ready=ensure_mcp_ready,
             skip_preprocessors=skip_preprocessors,
             debug=debug,
+            symbol_aliases=symbol_aliases,
+            artifact_types=artifact_types,
             reporter=reporter,
         )
+        if _sha256(binary) != before:
+            raise PipelineFailure("binary_changed", f"Binary changed during analysis: {binary}")
+        if result.status == "succeeded":
+            run_summary.successful += 1
+        elif result.status == "skipped":
+            run_summary.skipped += 1
+        else:
+            raise PipelineFailure(
+                "invalid_pipeline_result",
+                f"Skill {node.id} returned unsupported pipeline status {result.status!r}",
+            )
+    except PipelineFailure as exc:
+        run_summary.failed += 1
+        reporter.emit(
+            ProgressEvent.create(
+                "skill_failed",
+                tag=root.name,
+                module=node.module,
+                platform=node.platform,
+                skill=node.skill,
+                reason=exc.reason,
+                payload=exc.payload,
+                error=str(exc),
+            )
+        )
+        message = f"Skill {node.id} failed [{exc.reason}]: {exc}"
+        if not skip_error:
+            raise AnalysisRunError(message) from exc
+        print(f"Error: {message}; continuing (-skip_error)")
+        return False
     except Exception as exc:
         run_summary.failed += 1
         reporter.emit(
@@ -920,6 +1349,7 @@ def _execute_analysis_node(
                 module=node.module,
                 platform=node.platform,
                 skill=node.skill,
+                reason="runtime_error",
                 error=str(exc),
             )
         )
@@ -928,12 +1358,6 @@ def _execute_analysis_node(
             raise AnalysisRunError(message) from exc
         print(f"Error: {message}; continuing (-skip_error)")
         return False
-    if _sha256(binary) != before:
-        raise AnalysisRunError(f"Binary changed during analysis: {binary}")
-    if stage == "existing":
-        run_summary.skipped += 1
-    else:
-        run_summary.successful += 1
     reporter.emit(
         ProgressEvent.create(
             "skill_completed",
@@ -941,7 +1365,9 @@ def _execute_analysis_node(
             module=node.module,
             platform=node.platform,
             skill=node.skill,
-            stage=stage,
+            stage=result.stage,
+            status=result.status,
+            reason=result.reason,
         )
     )
     return True
@@ -989,7 +1415,8 @@ def analyze(
         validated_tag(oldgamever)
         if _split_gamever(oldgamever)[0] != _split_gamever(tag)[0]:
             raise AnalysisRunError(f"Old game version must use the same game family as {tag}: {oldgamever}")
-    _document, modules = load_config(config_path)
+    document, modules = load_config(config_path)
+    symbol_aliases = _symbol_alias_map_from_document(document)
     modules = _select_execution_modules(modules, modules_filter, skill_filter)
     plan = _build_execution_plan(
         modules,
@@ -1002,6 +1429,7 @@ def analyze(
     run_summary = summary if summary is not None else AnalysisSummary()
     root = Path(bindir) / tag
     old_root = Path(bindir) / oldgamever if oldgamever else None
+    artifact_types = _artifact_type_map(modules, root)
     binary_identity: dict[tuple[str, str], tuple[Path, str]] = {}
     module_map = {module["name"]: module for module in modules}
     nodes_by_binary: dict[tuple[str, str], list] = {}
@@ -1050,6 +1478,8 @@ def analyze(
                 reporter=reporter,
                 run_summary=run_summary,
                 skip_error=skip_error,
+                symbol_aliases=symbol_aliases,
+                artifact_types=artifact_types,
             )
         if not pending_nodes:
             continue
@@ -1091,6 +1521,9 @@ def analyze(
                         run_summary=run_summary,
                         skip_error=skip_error,
                         mcp_runtime=lifecycle.runtime,
+                        ensure_mcp_ready=lifecycle.ensure_ready,
+                        symbol_aliases=symbol_aliases,
+                        artifact_types=artifact_types,
                     )
         except McpLifecycleError as exc:
             _record_lifecycle_failures(
@@ -1185,9 +1618,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("-debug", action="store_true", help="Enable debug diagnostics and Agent output")
     parser.add_argument("-ida_args", default="", help="Additional arguments for idalib-mcp")
     parser.add_argument("-skip_error", action="store_true", help="Continue after runtime failures")
-    parser.add_argument(
-        "-skip_pp", action="store_true", help="Skip history and preprocessors; run Agent Skills directly"
-    )
+    parser.add_argument("-skip_pp", action="store_true", help="Skip the single preprocessor and run Agent directly")
     parser.add_argument("-maxretry", type=int, default=3, help="Default total attempts per skill (1-20)")
     parser.add_argument(
         "-oldgamever",
@@ -1221,7 +1652,12 @@ def _optional_text(value):
 
 def parse_args(argv=None):
     parser = _parser()
-    args = parser.parse_args(argv)
+    raw_argv = list(sys.argv[1:] if argv is None else argv)
+    for token in raw_argv:
+        option = token.split("=", 1)[0]
+        if option in REMOVED_CLI_OPTIONS:
+            parser.error(f"unrecognized arguments: {token}")
+    args = parser.parse_args(raw_argv)
     args.gamever = _optional_text(args.gamever)
     if args.gamever is None:
         parser.error("-gamever is required, or set GSVIBE_GAMEVER")
@@ -1361,7 +1797,6 @@ def main(argv=None) -> int:
         AnalysisPlanError,
         AnalysisRunError,
         BinaryFormatError,
-        PreprocessorError,
         OSError,
         yaml.YAMLError,
     ) as exc:
