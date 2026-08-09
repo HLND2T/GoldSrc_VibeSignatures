@@ -2,16 +2,14 @@ downloads:
   - tag: "cstrike-10120"
     name: Counter-Strike buildnum 10120
     basepath: Half-Life
-    config: cstrike.yaml
     appid: 10
     manifests:
-      "2": "724247850320422500" # DepotDownloader -app 10 -depot 2 -manifest 724247850320422500 -os all-platform -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
-      "8": "1360709870205537514" # DepotDownloader -app 10 -depot 8 -manifest 1360709870205537514 -os all-platform -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
+      "2": "724247850320422500"
+      "8": "1360709870205537514"
   - tag: "svencoop-10257"
     name: Sven Co-op buildnum 10257
-    basepath: Sven-Co op
-    config: svencoop.yaml
+    basepath: Sven-Coop
     appid: 225840
     manifests:
-      "225842": "7714419150192498919" # DepotDownloader -app 225840 -depot 225842 -manifest 7714419150192498919 -os all-platform -dir depots/Sven-Co op
-      "225843": "6320191083261921291" # DepotDownloader -app 225840 -depot 225843 -manifest 6320191083261921291 -os all-platform -dir depots/Sven-Co op
+      "225842": "7714419150192498919"
+      "225843": "6320191083261921291"

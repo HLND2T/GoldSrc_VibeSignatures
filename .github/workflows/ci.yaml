@@ -1,0 +1,25 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Sync locked environment
+        run: uv sync --locked
+      - name: Check formatting
+        run: uv run python format_repo_files.py --check
+      - name: Unit tests
+        run: uv run python tests/run_test_suite.py unit -b --durations 30
+      - name: Repository contract
+        run: uv run python tests/run_test_suite.py repository-contract -b --durations 30
+      - name: Full non-commercial suite
+        run: uv run python tests/run_test_suite.py all -b --durations 30

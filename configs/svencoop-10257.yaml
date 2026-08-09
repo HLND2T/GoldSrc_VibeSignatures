@@ -1,0 +1,21 @@
+modules:
+  - name: engine
+    path_windows: Sven-Coop/hw.dll
+    path_linux: Sven-Coop/hw.so
+    skills: []
+    symbols: []
+  - name: client
+    path_windows: Sven-Coop/svencoop/cl_dlls/client.dll
+    path_linux: Sven-Coop/svencoop/cl_dlls/client.so
+    skills: []
+    symbols: []
+  - name: gameui
+    path_windows: Sven-Coop/svencoop/cl_dlls/GameUI.dll
+    path_linux: Sven-Coop/svencoop/cl_dlls/gameui.so
+    skills: []
+    symbols: []
+  - name: server
+    path_windows: Sven-Coop/svencoop/dlls/server.dll
+    path_linux: Sven-Coop/svencoop/dlls/server.so
+    skills: []
+    symbols: []
