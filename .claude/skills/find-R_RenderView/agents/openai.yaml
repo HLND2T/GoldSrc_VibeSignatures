@@ -1,0 +1,4 @@
+interface:
+  display_name: "Find R_RenderView"
+  short_description: "Locate R_RenderView in GoldSrc engine binaries"
+  default_prompt: "Use $find-R_RenderView to locate R_RenderView in the active GoldSrc engine IDB."

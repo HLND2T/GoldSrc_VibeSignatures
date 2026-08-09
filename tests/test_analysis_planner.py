@@ -30,6 +30,7 @@ from ida_analyze_bin import (
     PipelineFailure,
     PipelineResult,
     _is_major_update_gamever,
+    _parse_mcp_tool_json,
     analyze,
     ensure_mcp_available,
     main,
@@ -106,7 +107,10 @@ class ConfigValidationTests(unittest.TestCase):
                                 "optional_output_windows": ["optional.windows.yaml"],
                             }
                         ],
-                        "symbols": [{"name": "A::b", "type": "structmember", "struct": "A", "member": "b"}],
+                        "symbols": [
+                            {"name": "A", "category": "struct"},
+                            {"name": "A::b", "category": "structmember", "struct": "A", "member": "b"},
+                        ],
                     }
                 ]
             }
@@ -114,12 +118,12 @@ class ConfigValidationTests(unittest.TestCase):
         self.assertEqual(["old"], modules[0]["skills"][0]["aliases"])
         self.assertEqual(4, modules[0]["skills"][0]["max_retries"])
         self.assertEqual(["optional.windows.yaml"], modules[0]["skills"][0]["optional_output_windows"])
-        self.assertEqual("A", modules[0]["symbols"][0]["struct"])
+        self.assertEqual("A", modules[0]["symbols"][1]["struct"])
         required, optional = expected_symbol_artifacts(modules)
         self.assertIn("engine/A_b.windows.yaml", required)
         self.assertIn("engine/optional.windows.yaml", optional)
 
-    def test_rejects_cross_directory_and_absolute_artifacts(self):
+    def test_rejects_cross_directory_outputs_and_absolute_artifacts(self):
         for path in ("../other/a.yaml", "other/a.yaml", "C:/a.yaml", "/a.yaml"):
             with self.subTest(path=path), self.assertRaises(AnalysisPlanError):
                 parse_config_document(
@@ -129,6 +133,56 @@ class ConfigValidationTests(unittest.TestCase):
                                 "name": "engine",
                                 "path_windows": "Game/hw.dll",
                                 "skills": [{"name": "find", "expected_output": [path]}],
+                            }
+                        ]
+                    }
+                )
+
+    def test_accepts_sibling_module_inputs_but_rejects_game_root_escape(self):
+        modules = parse_config_document(
+            {
+                "modules": [
+                    {"name": "engine", "path_windows": "Game/hw.dll"},
+                    {
+                        "name": "client",
+                        "path_windows": "Game/client.dll",
+                        "skills": [
+                            {
+                                "name": "consume",
+                                "expected_input": ["../engine/a.{platform}.yaml"],
+                            }
+                        ],
+                    },
+                ]
+            }
+        )
+        self.assertEqual(
+            ["../engine/a.{platform}.yaml"],
+            modules[1]["skills"][0]["expected_input"],
+        )
+        with self.assertRaises(AnalysisPlanError):
+            parse_config_document(
+                {
+                    "modules": [
+                        {
+                            "name": "engine",
+                            "path_windows": "Game/hw.dll",
+                            "skills": [{"name": "escape", "expected_input": ["../../outside.yaml"]}],
+                        }
+                    ]
+                }
+            )
+
+    def test_requires_category_and_rejects_legacy_symbol_classification(self):
+        for legacy_key in ("type", "kind"):
+            with self.subTest(legacy_key=legacy_key), self.assertRaises(AnalysisPlanError):
+                parse_config_document(
+                    {
+                        "modules": [
+                            {
+                                "name": "engine",
+                                "path_windows": "Game/hw.dll",
+                                "symbols": [{"name": "R_RenderView", legacy_key: "func"}],
                             }
                         ]
                     }
@@ -382,6 +436,30 @@ class DagTests(unittest.TestCase):
         self.assertEqual(["produce", "consume", "finish"], [node.skill for node in plan.nodes])
         self.assertEqual({"artifact", "prerequisite"}, {edge.kind for edge in plan.edges})
 
+    def test_orders_cross_module_artifact_dependencies_by_resolved_owner_path(self):
+        modules = [
+            {
+                "stage_index": 0,
+                "name": "client",
+                "path_windows": "Game/client.dll",
+                "path_linux": None,
+                "skills": [skill("consume", output=["client.yaml"], required_input=["../engine/shared.yaml"])],
+                "symbols": [],
+            },
+            {
+                "stage_index": 1,
+                "name": "engine",
+                "path_windows": "Game/hw.dll",
+                "path_linux": None,
+                "skills": [skill("produce", output=["shared.yaml"])],
+                "symbols": [],
+            },
+        ]
+        plan = build_execution_plan(modules, platforms=["windows"], bin_dir="bin", tag="game-1")
+        self.assertEqual(["produce", "consume"], [node.skill for node in plan.nodes])
+        self.assertEqual(("engine/shared.yaml",), plan.nodes[1].required_inputs)
+        self.assertEqual("engine/shared.yaml", plan.edges[0].artifact)
+
     def test_rejects_cycle(self):
         modules = module(
             [
@@ -461,7 +539,7 @@ class DagTests(unittest.TestCase):
             old_output = old_root / "engine" / "result.yaml"
             old_output.parent.mkdir(parents=True)
             old_output.write_text(
-                "name: old\ntype: func\nfunc_sig: AA BB\nfunc_addr: '0x10'\n",
+                "func_name: old\nfunc_sig: AA BB\nfunc_va: '0x10'\n",
                 encoding="utf-8",
             )
             node = build_execution_plan(
@@ -480,7 +558,7 @@ class DagTests(unittest.TestCase):
                     attempt=1,
                     max_attempts=2,
                 )
-                Path(kwargs["expected_yaml_paths"][0]).write_text("name: new\n", encoding="utf-8")
+                Path(kwargs["expected_yaml_paths"][0]).write_text("ok: true\n", encoding="utf-8")
                 kwargs["progress_callback"](
                     event="succeeded",
                     attempt=1,
@@ -503,7 +581,7 @@ class DagTests(unittest.TestCase):
             )
             self.assertEqual(PipelineResult("succeeded", "agent"), result)
             self.assertEqual([("agent", "gpt-5", True)], calls)
-            self.assertEqual("name: new\n", (root / "engine" / "result.yaml").read_text(encoding="utf-8"))
+            self.assertEqual("ok: true\n", (root / "engine" / "result.yaml").read_text(encoding="utf-8"))
             agent_events = [event for event in reporter.events if event.event.startswith("agent_")]
             self.assertEqual(["agent_attempt_started", "agent_succeeded"], [event.event for event in agent_events])
             self.assertEqual(1, agent_events[0].detail["attempt"])
@@ -1031,7 +1109,7 @@ class McpLifecycleTests(unittest.TestCase):
     path_windows: Game/hw.dll
     symbols:
       - name: TestSymbol
-        type: func
+        category: func
         alias: [TestAlias]
     skills:
       - name: first
@@ -1139,6 +1217,11 @@ class McpLifecycleTests(unittest.TestCase):
             )
             self.assertFalse(ok)
             self.assertTrue(any("PE database" in reason for reason in reasons), reasons)
+
+    def test_mcp_tool_json_accepts_sdk_snake_case_structured_content(self):
+        payload = {"metadata": {"module": "hw.dll", "arch": "32"}}
+        result = SimpleNamespace(structuredContent=None, structured_content=payload, content=[])
+        self.assertEqual(payload, _parse_mcp_tool_json(result))
 
     def test_recovery_budget_allows_only_one_restart(self):
         process = MagicMock()

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import tempfile
 import unittest
 from contextlib import asynccontextmanager, redirect_stderr
@@ -9,11 +10,22 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import ida_skill_preprocessor
+import yaml
+from ida_analyze_util import (
+    _build_func_xref_py_eval,
+    parse_mcp_result,
+    preprocess_common_skill,
+    preprocess_func_xrefs_via_mcp,
+    preprocess_index_based_vfunc_via_mcp,
+)
+from ida_preprocessor_scripts._indirect_vcall_target_common import preprocess_indirect_vcall_target_skill
+from ida_preprocessor_scripts._ordinal_vtable_common import preprocess_ordinal_vtable_via_mcp
 from ida_skill_preprocessor import (
     PREPROCESS_STATUS_ABSENT_OK,
     PREPROCESS_STATUS_FAILED,
     PREPROCESS_STATUS_NO_SCRIPT,
     PREPROCESS_STATUS_SUCCESS,
+    _parse_image_base,
     _normalize_preprocess_status,
     preprocess_single_skill_via_mcp,
 )
@@ -46,6 +58,30 @@ class PreprocessStatusTests(unittest.TestCase):
         for raw, expected in cases:
             with self.subTest(raw=raw):
                 self.assertIs(expected, _normalize_preprocess_status(raw))
+
+    def test_sdk_snake_case_structured_content_is_unwrapped(self):
+        result = SimpleNamespace(
+            structuredContent=None,
+            structured_content={"result": json.dumps({"pointer_size": 4})},
+            content=[],
+        )
+        self.assertEqual({"pointer_size": 4}, parse_mcp_result(result))
+
+    def test_sdk_snake_case_structured_content_supplies_image_base(self):
+        result = SimpleNamespace(
+            structuredContent=None,
+            structured_content={"result": "0x1d00000"},
+            content=[],
+        )
+        self.assertEqual(0x1D00000, _parse_image_base(result))
+
+    def test_func_xref_py_eval_round_trips_json_only_values(self):
+        spec = {"inline_alias": None, "enabled": True, "values": [1, "anchor"]}
+        code = _build_func_xref_py_eval(spec, 0x400000)
+        spec_line = next(line for line in code.splitlines() if line.startswith("spec = "))
+        namespace = {"json": json}
+        exec(spec_line, namespace)  # noqa: S102 - validates generated IDAPython source.
+        self.assertEqual(spec, namespace["spec"])
 
 
 class PreprocessorLoaderTests(unittest.IsolatedAsyncioTestCase):
@@ -292,6 +328,323 @@ class PreprocessorDispatchTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("script_failed", diagnostics[-1]["reason"])
         self.assertNotIn("secret-key", diagnostics[-1]["message"])
         self.assertNotIn("secret-key", stderr.getvalue())
+
+
+class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
+    async def test_xref_string_function_uses_cs2_api_and_writes_canonical_yaml(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "R_RenderView.windows.yaml"
+
+            async def call_tool(name, arguments):
+                if name == "find_bytes":
+                    self.assertEqual(["55 8B EC ??"], arguments["patterns"])
+                    return {"matches": ["0x401000"], "n": 1}
+                self.assertEqual("py_eval", name)
+                self.assertIn("R_RenderView: NULL worldmodel", arguments["code"])
+                candidate = {
+                    "func_name": "R_RenderView",
+                    "func_va": "0x401000",
+                    "func_rva": "0x1000",
+                    "func_size": "0x80",
+                    "func_sig": "55 8B EC ??",
+                }
+                return SimpleNamespace(
+                    structuredContent={"result": json.dumps({"candidates": [candidate], "pointer_size": 4})},
+                    content=[],
+                    isError=False,
+                )
+
+            result = await preprocess_common_skill(
+                session=SimpleNamespace(call_tool=call_tool),
+                expected_outputs=[str(output)],
+                old_yaml_map=None,
+                new_binary_dir=temporary,
+                platform="windows",
+                image_base=0x400000,
+                func_names=["R_RenderView"],
+                func_xrefs=[
+                    {
+                        "func_name": "R_RenderView",
+                        "xref_strings": ["R_RenderView: NULL worldmodel"],
+                        "xref_gvs": [],
+                        "xref_signatures": [],
+                        "xref_funcs": [],
+                        "exclude_funcs": [],
+                        "exclude_strings": [],
+                        "exclude_gvs": [],
+                        "exclude_signatures": [],
+                    }
+                ],
+                generate_yaml_desired_fields=[
+                    ("R_RenderView", ["func_name", "func_sig", "func_va", "func_rva", "func_size"])
+                ],
+            )
+
+            self.assertTrue(result)
+            self.assertEqual(
+                {
+                    "func_name": "R_RenderView",
+                    "func_va": "0x401000",
+                    "func_rva": "0x1000",
+                    "func_size": "0x80",
+                    "func_sig": "55 8B EC ??",
+                },
+                yaml.safe_load(output.read_text(encoding="utf-8")),
+            )
+
+    async def test_func_xref_applies_signature_float_inline_alias_and_sibling_inputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            game_root = Path(temporary)
+            client_root = game_root / "client"
+            engine_root = game_root / "engine"
+            client_root.mkdir()
+            engine_root.mkdir()
+            (engine_root / "Alias.windows.yaml").write_text("func_name: Alias\nfunc_va: '0x401100'\n", encoding="utf-8")
+            calls = []
+
+            async def call_tool(name, arguments):
+                calls.append((name, arguments))
+                if name == "find_bytes":
+                    pattern = arguments["patterns"][0]
+                    address = {
+                        "DE AD ?? EF": "0x401020",
+                        "BA AD F0 0D": "0x401030",
+                        "55 8B EC 83 EC ??": "0x401000",
+                    }[pattern]
+                    return {"matches": [address], "n": 1}
+                self.assertIn("3735928559", arguments["code"])
+                self.assertIn("3.5", arguments["code"])
+                self.assertIn("4198656", arguments["code"])
+                candidate = {
+                    "func_name": "Target",
+                    "func_va": "0x401000",
+                    "func_rva": "0x1000",
+                    "func_size": "0x40",
+                    "func_sig": "55 8B EC 83 EC ??",
+                }
+                return {"pointer_size": 4, "candidates": [candidate]}
+
+            result = await preprocess_func_xrefs_via_mcp(
+                session=SimpleNamespace(call_tool=call_tool),
+                func_name="Target",
+                xref_strings=["anchor"],
+                xref_gvs=["0xDEADBEEF"],
+                xref_signatures=["DE AD ?? EF"],
+                xref_funcs=[],
+                exclude_funcs=[],
+                exclude_strings=[],
+                exclude_gvs=[],
+                exclude_signatures=["BA AD F0 0D"],
+                new_binary_dir=client_root,
+                platform="windows",
+                image_base=0x400000,
+                xref_floats=["3.5"],
+                exclude_floats=["4.5"],
+                inline_alias="../engine/Alias",
+            )
+            self.assertEqual("Target", result["func_name"])
+            self.assertEqual(["find_bytes", "find_bytes", "py_eval", "find_bytes"], [name for name, _ in calls])
+
+    async def test_pattern_d_llm_fallback_uses_dependency_contract_and_verified_call(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            prompt = root / "prompt.md"
+            reference = root / "reference.yaml"
+            current = root / "Predecessor.windows.yaml"
+            output = root / "Target.windows.yaml"
+            prompt.write_text("Compare reference and target.", encoding="utf-8")
+            reference.write_text(
+                "func_name: Predecessor\ndisasm_code: call Target\nprocedure: Target();\n",
+                encoding="utf-8",
+            )
+            current.write_text("func_name: Predecessor\nfunc_va: '0x401000'\n", encoding="utf-8")
+
+            async def call_tool(name, arguments):
+                self.assertEqual("py_eval", name)
+                code = arguments["code"]
+                if "ida_hexrays" in code:
+                    return {
+                        "pointer_size": 4,
+                        "function": {
+                            "func_start": "0x401000",
+                            "func_end": "0x401100",
+                            "disasm_code": "0x401020: call sub_402000",
+                            "procedure": "sub_402000();",
+                        },
+                    }
+                if "operand_targets" in code:
+                    return {
+                        "pointer_size": 4,
+                        "size": 5,
+                        "func_start": "0x401000",
+                        "func_end": "0x401100",
+                        "line": "call sub_402000",
+                        "mnemonic": "call",
+                        "code_refs": ["0x402000"],
+                        "data_refs": [],
+                        "operand_targets": ["0x402000"],
+                        "displacements": [],
+                        "operand_offsets": [1],
+                    }
+                return {
+                    "pointer_size": 4,
+                    "function": {
+                        "func_va": "0x402000",
+                        "func_rva": "0x2000",
+                        "func_size": "0x30",
+                        "func_sig": "55 8B EC 83 EC ??",
+                    },
+                }
+
+            llm_result = {"found_call": [{"func_name": "Target", "insn_va": "0x401020"}]}
+            with patch("ida_llm_decompile.request_json", return_value=llm_result):
+                result = await preprocess_common_skill(
+                    session=SimpleNamespace(call_tool=call_tool),
+                    expected_outputs=[str(output)],
+                    new_binary_dir=root,
+                    platform="windows",
+                    image_base=0x400000,
+                    func_names=["Target"],
+                    llm_decompile_specs=[
+                        {
+                            "symbol_name": "Target",
+                            "prompt_path": str(prompt),
+                            "reference_yaml_paths": [str(reference)],
+                            "expected_result_sections": ["found_call"],
+                            "dependency_policy": {"Predecessor.{platform}.yaml": "required"},
+                        }
+                    ],
+                    llm_config={
+                        "model": "test-model",
+                        "api_key": "test-key",
+                        "_expected_inputs": [str(current)],
+                        "_optional_inputs": [],
+                    },
+                    generate_yaml_desired_fields=[
+                        ("Target", ["func_name", "func_sig", "func_va", "func_rva", "func_size"])
+                    ],
+                )
+            self.assertTrue(result)
+            self.assertEqual("Target", yaml.safe_load(output.read_text(encoding="utf-8"))["func_name"])
+
+    async def test_common_preprocessor_rejects_non_x86_pointer_size(self):
+        async def call_tool(_name, _arguments):
+            return SimpleNamespace(
+                structuredContent={"result": json.dumps({"candidates": [], "pointer_size": 8})},
+                content=[],
+                isError=False,
+            )
+
+        result = await preprocess_common_skill(
+            session=SimpleNamespace(call_tool=call_tool),
+            expected_outputs=[],
+            platform="windows",
+            image_base=0x400000,
+            func_names=["R_RenderView"],
+            func_xrefs=[{"func_name": "R_RenderView", "xref_strings": ["anchor"]}],
+            generate_yaml_desired_fields=[("R_RenderView", ["func_name"])],
+        )
+        self.assertFalse(result)
+
+    async def test_inherited_slot_only_vfunc_uses_four_byte_slots(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "Base_Run.windows.yaml").write_text(
+                "func_name: Base_Run\nvtable_name: Base\nvfunc_offset: '0x14'\nvfunc_index: 5\n",
+                encoding="utf-8",
+            )
+            result = await preprocess_index_based_vfunc_via_mcp(
+                session=SimpleNamespace(call_tool=AsyncMock()),
+                target_func_name="Derived_Run",
+                target_output=root / "Derived_Run.windows.yaml",
+                old_yaml_map=None,
+                new_binary_dir=root,
+                platform="windows",
+                image_base=0x400000,
+                base_vfunc_name="Base_Run",
+                inherit_vtable_class="Derived",
+                generate_func_sig=False,
+                slot_only=True,
+            )
+            self.assertEqual(5, result["vfunc_index"])
+            self.assertEqual("0x14", result["vfunc_offset"])
+
+    async def test_indirect_vcall_helper_merges_pattern_i_and_l_on_x86(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "Thunk.windows.yaml").write_text(
+                "func_name: Thunk\nfunc_va: '0x401000'\n",
+                encoding="utf-8",
+            )
+
+            async def call_tool(_name, _arguments):
+                return SimpleNamespace(
+                    structuredContent={
+                        "result": json.dumps(
+                            {
+                                "pointer_size": 4,
+                                "targets": [
+                                    {
+                                        "source_ea": "0x401010",
+                                        "source_mnemonic": "jmp",
+                                        "vfunc_offset": "0x14",
+                                        "vfunc_index": 5,
+                                    }
+                                ],
+                            }
+                        )
+                    },
+                    content=[],
+                    isError=False,
+                )
+
+            output = root / "IThing_Run.windows.yaml"
+            result = await preprocess_indirect_vcall_target_skill(
+                session=SimpleNamespace(call_tool=call_tool),
+                expected_outputs=[str(output)],
+                new_binary_dir=root,
+                platform="windows",
+                source_yaml_stem="Thunk",
+                target_name="IThing_Run",
+                vtable_name="IThing",
+                generate_yaml_desired_fields=[
+                    ("IThing_Run", ["func_name", "vtable_name", "vfunc_offset", "vfunc_index"])
+                ],
+            )
+            self.assertTrue(result)
+            self.assertEqual(5, yaml.safe_load(output.read_text(encoding="utf-8"))["vfunc_index"])
+
+    async def test_ordinal_vtable_helper_rejects_x64_and_normalizes_x86(self):
+        async def call_tool(_name, _arguments):
+            return SimpleNamespace(
+                structuredContent={
+                    "result": json.dumps(
+                        {
+                            "pointer_size": 4,
+                            "selected": {
+                                "vtable_class": "Thing",
+                                "vtable_symbol": "??_7Thing@@6B@",
+                                "vtable_va": "0x402000",
+                                "vtable_size": "0x8",
+                                "vtable_numvfunc": 2,
+                                "vtable_entries": {"0": "0x401000", "1": "0x401100"},
+                            },
+                        }
+                    )
+                },
+                content=[],
+                isError=False,
+            )
+
+        result = await preprocess_ordinal_vtable_via_mcp(
+            session=SimpleNamespace(call_tool=call_tool),
+            class_name="Thing",
+            ordinal=0,
+            image_base=0x400000,
+            platform="windows",
+        )
+        self.assertEqual("0x2000", result["vtable_rva"])
+        self.assertEqual({0: "0x401000", 1: "0x401100"}, result["vtable_entries"])
 
 
 if __name__ == "__main__":

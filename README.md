@@ -4,8 +4,9 @@ GoldSrc VibeSignatures is a reproducible Python 3.10+ framework for producing an
 snapshots. It validates PE32/I386 and ELF32/I386 inputs, executes a dependency-checked analysis graph, records an
 immutable candidate, and exposes a strict local contract to downstream gamedata generators.
 
-The initial production configuration intentionally contains no signatures. It covers Counter-Strike build 10120 and
-Sven Co-op build 10257, with `engine`, `client`, `gameui`, and `server` modules on Windows and Linux.
+Production configuration covers Counter-Strike build 10120 and Sven Co-op build 10257, with `engine`, `client`,
+`gameui`, and `server` modules on Windows and Linux. Sven Co-op includes the first production finder,
+`engine/R_RenderView`, anchored by `"R_RenderView: NULL worldmodel"` in `hw.dll` and `hw.so`.
 
 ## Setup
 
@@ -23,6 +24,7 @@ uv run python download_depot.py -tag cstrike-10120 -depotdir depots
 uv run python copy_depot_bin.py -gamever cstrike-10120 -platform all-platform
 uv run python copy_depot_bin.py -gamever cstrike-10120 -platform windows -checkonly
 uv run python ida_analyze_bin.py -gamever cstrike-10120 -configyaml configs/cstrike-10120.yaml -platform windows,linux
+uv run python ida_analyze_bin.py -gamever svencoop-10257 -modules engine -skill find-R_RenderView -platform windows,linux -debug
 
 uv run python gamesymbol_candidate.py build -gamever cstrike-10120 -bindir bin -output .candidates/candidate.yaml -session .candidates/session.json
 uv run python gamesymbol_candidate.py guard -candidate .candidates/candidate.yaml -session .candidates/session.json
@@ -50,13 +52,17 @@ MCP session, may explicitly opt into `llm_config`, and returns `success`, `absen
 raw history copying remains disabled: `-oldgamever` selects the latest older build from the same game family and passes
 an old-YAML map to the Preprocessor. A `major_update: true` download entry disables automatic old-version selection.
 
-Required and optional artifacts plus explicit prerequisites form one DAG. Unsafe paths, cycles, duplicate or
-case-colliding names, missing required inputs, wrong architectures, and binary mutation are fatal.
+Required and optional artifacts plus explicit prerequisites form one DAG. Outputs stay module-local; inputs may use a
+safe sibling reference such as `../engine/X.{platform}.yaml`, normalized within the game-version root and connected as
+a real cross-module DAG edge. Unsafe paths, cycles, duplicate or case-colliding names, missing required inputs, wrong
+architectures, and binary mutation are fatal.
 
-The flat artifact path is `bin/<tag>/<module>/<symbol>.<platform>.yaml`. Supported categories are `func`, `gv`,
-`vfunc`, `vtable`, `patch`, `struct`, and `structmember`. There is no implicit RTTI or generic vtable finder; a
-specific skill, historical artifact, or explicit address must provide vtables and vfuncs. x86 virtual-function slots
-are four bytes.
+The artifact path is `bin/<tag>/<module>/<symbol>.<platform>.yaml`. Config symbols use `name` plus the sole classifier
+`category`; `type` and `kind` are rejected. Artifacts reject generic `name/type/kind` and use `func_name`, `gv_name`,
+`patch_name`, `vtable_class`, or `struct_name/member_name` according to category. Payload identity is not required to
+equal the config symbol name, matching the CS2 loader contract. Supported categories are `func`, `gv`, `vfunc`,
+`vtable`, `patch`, `struct`, and `structmember`. Shared primary/ordinal vtable helpers are explicit and fail closed;
+Source2-only dispatch protocols are excluded. x86 virtual-function slots are four bytes.
 
 See [docs/architecture.md](docs/architecture.md) and [docs/generator-contract.md](docs/generator-contract.md).
 
@@ -101,7 +107,8 @@ available. A skipped integration test is not evidence that real IDA analysis pas
 ## Scope
 
 This repository currently does not include a web service, cache-backed scheduler, Redis process Reporter, UI, C++
-layout extraction, automatic version bumping, hosted release promotion, production symbols, or a target-specific
-gamedata generator. Reporter migration is deferred rather than implemented by the analyzer CLI alignment.
+layout extraction, automatic version bumping, hosted release promotion, broad production symbol coverage, or a
+target-specific gamedata generator. Reporter migration is deferred rather than implemented by the analyzer CLI
+alignment.
 
 Licensed under the [MIT License](LICENSE.md).

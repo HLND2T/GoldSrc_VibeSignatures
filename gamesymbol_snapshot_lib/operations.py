@@ -61,11 +61,10 @@ def _load_yaml_mapping(path: Path) -> dict:
     if not isinstance(payload, dict):
         raise SnapshotMismatchError(f"Symbol YAML top level must be a mapping: {path}")
     try:
-        if "type" in payload or "kind" in payload:
-            normalized = normalize_symbol_artifact(payload)
-            if normalized != payload:
-                raise SymbolArtifactError("symbol fields are not normalized")
-        for key, value in payload.items():
+        normalized = normalize_symbol_artifact(payload)
+        if normalized != payload:
+            raise SymbolArtifactError("symbol fields are not normalized")
+        for key, value in normalized.items():
             if key.endswith("_sig") and normalize_signature(value) != value:
                 raise SymbolArtifactError(f"{key} is not normalized")
     except SymbolArtifactError as exc:

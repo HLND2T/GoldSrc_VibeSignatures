@@ -15,6 +15,12 @@ download.yaml + configs/<tag>.yaml
 
 `analysis_planner.py` is the single source for module, symbol, artifact-path, and DAG validation. Snapshot contracts
 reuse it, so an output accepted by analysis cannot silently acquire different ownership at publication time.
+Outputs are module-local. Inputs may reference a sibling module with `../<module>/<artifact>`; the planner normalizes
+both producer and consumer to one game-root-relative owner path and creates a real cross-module edge.
+
+Config symbols use `name + category` and reject `type/kind`. Artifact payloads use category-specific identities
+(`func_name`, `gv_name`, `patch_name`, `vtable_class`, or `struct_name/member_name`) and reject generic
+`name/type/kind`. Payload identity is deliberately not compared with config symbol identity.
 
 ## Analysis layers
 
@@ -32,7 +38,8 @@ reporter. MCP list preflight results are cached per Agent executable and server.
 Raw old-YAML copying is disabled because copying address-bearing artifacts can preserve stale addresses. Automatic
 old-version discovery is restricted to an older build in the same game family and is disabled by `major_update: true`.
 The analyzer passes a new-output-to-old-YAML map to the Preprocessor so a skill-specific script can relocate signatures
-through MCP and rebuild addresses.
+through MCP and rebuild addresses. The shared GoldSrc x86 helper preserves the CS2 Finder API for function/vfunc,
+global, patch, struct-member, primary/ordinal vtable, inherited slot, xref filtering, and validated LLM fallback.
 
 The binary is validated as 32-bit I386 before work and its SHA-256 is checked after every skill and again after the
 whole job. For each module/platform binary with pending work, the analyzer owns one `idalib-mcp` lifecycle: it checks
@@ -48,7 +55,7 @@ fatal and any recorded runtime failure still produces a nonzero final exit statu
 
 ## Snapshot boundary
 
-The writer emits schema 5 with config digest v2, analysis-output contract version, UTC publication time, canonical
+The writer emits schema 5 with config digest v2, analysis-output contract version 2, UTC publication time, canonical
 file payloads, and SHA-256/MD5/CRC32/CRC64/size metadata for every configured binary. The reader accepts schemas 1–5.
 Restore and verification reject links, path escapes, undeclared YAML, missing required YAML, non-canonical bytes, and
 contract drift.
@@ -63,4 +70,5 @@ the CLI does not expose its backend, Redis, or run-ID settings. Plan preview was
 internal execution-plan builder remains the source of the real DAG. Generic Source2 vcall finding is excluded.
 
 The repository currently does not include a service API, UI, remote release promotion, C++ layout analysis, automatic
-version bumping, or target-specific production signatures/generators.
+version bumping, broad production signature coverage, or target-specific generators. The first production finder is
+`svencoop-10257/engine/R_RenderView`.

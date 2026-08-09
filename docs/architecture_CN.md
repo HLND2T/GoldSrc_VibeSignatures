@@ -15,6 +15,12 @@ download.yaml + configs/<tag>.yaml
 
 `analysis_planner.py` 是模块、符号、工件路径与 DAG 校验的唯一来源。snapshot contract 复用同一实现，避免分析和
 发布阶段对工件归属产生不同解释。
+Output 只允许 module-local；input 可使用 `../<module>/<artifact>` sibling 引用。planner 将 producer 与 consumer
+统一规范化为 game-root 相对 owner path，并建立真实跨模块边。
+
+Config symbol 使用 `name + category` 并拒绝 `type/kind`；artifact payload 按类别使用 `func_name`、`gv_name`、
+`patch_name`、`vtable_class` 或 `struct_name/member_name`，拒绝通用 `name/type/kind`。Payload identity 不与
+config symbol identity 强制比较。
 
 ## 分析层次
 
@@ -30,7 +36,8 @@ Agent runner 会校验各 CLI 的 model 参数、保持 Claude/OpenCode retry se
 
 旧 YAML 直接复制已禁用，因为携带地址的旧工件可能保留陈旧地址。旧版本自动选择仅限同一 game family 中更早的
 最高 build，并可通过 `major_update: true` 禁用；Analyzer 将 new-output 到 old-YAML 的映射交给 Preprocessor，
-由具体脚本通过 MCP 重新定位 signature 并重建地址。
+由具体脚本通过 MCP 重新定位 signature 并重建地址。共享 GoldSrc x86 helper 保持 CS2 Finder API，覆盖
+func/vfunc、GV、patch、structmember、primary/ordinal vtable、继承 slot、xref filter 和受验证的 LLM fallback。
 
 二进制在分析前必须是 32 位 I386；每个 skill 后以及整个 job 结束时都会重新核对 SHA-256。对每个仍有待执行工作的
 module/platform binary，Analyzer 拥有一次完整 `idalib-mcp` 生命周期：检查 IDB lock 与端口、启动 supervisor、等待
@@ -44,7 +51,7 @@ module/platform/skill 继续，但 config 与 DAG contract 错误仍立即失败
 
 ## Snapshot 边界
 
-writer 输出 schema 5，包含 config digest v2、analysis output contract、UTC 发布时间、canonical YAML 工件，以及
+writer 输出 schema 5，包含 config digest v2、analysis output contract version 2、UTC 发布时间、canonical YAML 工件，以及
 每个配置二进制的 SHA-256、MD5、CRC32、CRC64 和 size。reader 兼容 schema 1–5。restore / verify 会拒绝链接、
 路径逃逸、未声明或缺失的 YAML、非 canonical bytes 与 contract drift。
 
@@ -57,5 +64,5 @@ candidate session 不包含 C++ 测试步骤。
 run-ID 参数。Plan preview 已明确删除，但真实执行仍复用内部 execution-plan builder；generic Source2 vcall finder
 保持排除。
 
-仓库当前不包含服务 API、UI、远程 release promotion、C++ layout、自动版本 bump，也不包含目标专属的生产签名
-和 generator。
+仓库当前不包含服务 API、UI、远程 release promotion、C++ layout、自动版本 bump、广泛 production signature
+覆盖或目标专属 generator。首个 production finder 是 `svencoop-10257/engine/R_RenderView`。

@@ -4,8 +4,9 @@ GoldSrc VibeSignatures 是面向 32 位 GoldSrc 游戏的可复现符号分析�
 Linux ELF32/I386，按依赖 DAG 执行分析，将平面 YAML 工件封装为 schema 5 快照，再通过不可变 candidate
 事务交给受控的 gamedata generator。
 
-首期正式配置覆盖 `cstrike-10120` 与 `svencoop-10257` 的 `engine`、`client`、`gameui`、`server` 四模块，
-但 `skills` 和 `symbols` 均为空；仓库不会虚构生产签名。
+正式配置覆盖 `cstrike-10120` 与 `svencoop-10257` 的 `engine`、`client`、`gameui`、`server` 四模块。
+Sven Co-op 已加入首个 production finder：通过 `"R_RenderView: NULL worldmodel"` 在 `hw.dll` / `hw.so`
+定位普通函数 `engine/R_RenderView`。
 
 ## 快速开始
 
@@ -14,6 +15,7 @@ uv sync --locked
 uv run python download_depot.py -tag cstrike-10120 -depotdir depots
 uv run python copy_depot_bin.py -gamever cstrike-10120 -platform all-platform
 uv run python ida_analyze_bin.py -gamever cstrike-10120 -configyaml configs/cstrike-10120.yaml -platform windows,linux
+uv run python ida_analyze_bin.py -gamever svencoop-10257 -modules engine -skill find-R_RenderView -platform windows,linux -debug
 ```
 
 完整候选构建、gamedata 门禁与发布命令见 [README.md](README.md)。架构和安全边界见
@@ -26,10 +28,14 @@ uv run python ida_analyze_bin.py -gamever cstrike-10120 -configyaml configs/cstr
   可显式声明 `llm_config` 以使用 LLM，并返回 `success`、`absent_ok`、`no_script` 或 `failed`。旧 YAML 不会被
   直接复制；`-oldgamever` 只选择同一 game family 的最近旧版本并把 old-YAML map 交给 Preprocessor。
   `download.yaml` 中的 `major_update: true` 会禁用自动旧版本选择。
-- 工件固定为 `bin/<tag>/<module>/<symbol>.<platform>.yaml`；跨目录路径、重复名称、大小写冲突、环路和缺失必需输入均拒绝。
+- 工件输出固定为 `bin/<tag>/<module>/<symbol>.<platform>.yaml`；输入可使用受限的
+  `../engine/X.{platform}.yaml` sibling 引用，并规范化为真实跨模块 DAG 边。逃逸 game-version root、重复名称、
+  大小写冲突、环路和缺失必需输入均拒绝。
+- Config symbol 只使用 `name + category`，严格拒绝 `type/kind`；artifact 按 category 使用 `func_name`、
+  `gv_name`、`patch_name`、`vtable_class` 或 `struct_name/member_name`，不要求与 config `name` 相等。
 - 支持 `func`、`gv`、`vfunc`、`vtable`、`patch`、`struct`、`structmember`。
 - x86 `gv` 使用 `operand` 或排序后的 `data_xref`，可执行 0–2 次 32 位解引用。
-- 不提供隐式 RTTI 或通用 vtable finder；x86 vfunc slot 固定为 4 字节。
+- primary/ordinal vtable helper 必须显式使用并 fail closed；不移植 Source2 专用 dispatcher；x86 vfunc slot 固定为 4 字节。
 - game-symbol 发布前必须通过受 guard 保护的 `gamedata` 步骤；零 generator 时允许空 inventory。
 
 ## Analyzer CLI 与环境变量

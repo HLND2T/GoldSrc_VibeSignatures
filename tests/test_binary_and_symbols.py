@@ -58,23 +58,52 @@ class SignatureAndSymbolTests(unittest.TestCase):
 
     def test_supports_all_symbol_categories(self):
         payloads = {
-            "func": {"func_sig": "aa bb"},
-            "gv": {"gv_sig": "aa bb"},
-            "vfunc": {"vfunc_sig": "aa bb"},
-            "vtable": {"vtable_sig": "aa bb"},
-            "patch": {"patch_sig": "aa bb"},
-            "struct": {"offset_sig": "aa bb"},
-            "structmember": {"offset_sig": "aa bb", "struct": "A", "member": "b"},
+            "func": {"func_name": "symbol", "func_sig": "aa bb"},
+            "gv": {"gv_name": "symbol", "gv_sig": "aa bb"},
+            "vfunc": {
+                "func_name": "symbol",
+                "vfunc_sig": "aa bb",
+                "vfunc_offset": "0x10",
+                "vfunc_index": 4,
+            },
+            "vtable": {"vtable_class": "symbol", "vtable_va": "0x10"},
+            "patch": {"patch_name": "symbol", "patch_sig": "aa bb"},
+            "structmember": {
+                "struct_name": "A",
+                "member_name": "b",
+                "offset": "0x10",
+                "offset_sig": "aa bb",
+            },
         }
-        for kind, extra in payloads.items():
-            with self.subTest(kind=kind):
-                result = normalize_symbol_artifact({"name": "symbol", "type": kind, **extra})
-                self.assertEqual(kind, result["type"])
-        self.assertEqual("0x4", normalize_symbol_artifact({"name": "v", "type": "vfunc"})["vfunc_slot_size"])
+        for category, payload in payloads.items():
+            with self.subTest(category=category):
+                result = normalize_symbol_artifact(payload, category=category)
+                self.assertNotIn("name", result)
+                self.assertNotIn("type", result)
+                self.assertNotIn("kind", result)
+
+    def test_rejects_legacy_identity_and_category_fields(self):
+        for payload in (
+            {"name": "symbol", "func_name": "symbol"},
+            {"type": "func", "func_name": "symbol"},
+            {"kind": "func", "func_name": "symbol"},
+        ):
+            with self.subTest(payload=payload), self.assertRaises(SymbolArtifactError):
+                normalize_symbol_artifact(payload, category="func")
 
     def test_rejects_non_x86_vfunc_slot(self):
         with self.assertRaises(SymbolArtifactError):
-            normalize_symbol_artifact({"name": "v", "type": "vfunc", "vfunc_slot_size": 8})
+            normalize_symbol_artifact(
+                {"func_name": "v", "vfunc_offset": "0x10", "vfunc_index": 4, "vfunc_slot_size": 8},
+                category="vfunc",
+            )
+
+    def test_rejects_vfunc_offset_index_mismatch(self):
+        with self.assertRaises(SymbolArtifactError):
+            normalize_symbol_artifact(
+                {"func_name": "v", "vfunc_offset": "0x10", "vfunc_index": 5},
+                category="vfunc",
+            )
 
 
 class X86GlobalResolverTests(unittest.TestCase):

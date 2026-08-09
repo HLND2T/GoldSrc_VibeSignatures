@@ -60,7 +60,9 @@ def detect_database_requirement(tools: Sequence[Any]) -> bool:
     for tool in tools:
         name = getattr(tool, "name", None)
         if name in WORKER_TOOL_NAMES:
-            schema = getattr(tool, "inputSchema", {})
+            schema = getattr(tool, "inputSchema", None)
+            if not isinstance(schema, dict):
+                schema = getattr(tool, "input_schema", {})
             requirements[name] = "database" in (schema.get("required", []) if isinstance(schema, dict) else [])
     if not requirements:
         raise McpContractError("MCP tools/list returned no known IDA worker tools")
@@ -182,7 +184,7 @@ class DatabaseBoundSession:
                 )
             routed["database"] = self.binding.session_id
         result = await self.raw_session.call_tool(name=name, arguments=routed, **kwargs)
-        if getattr(result, "isError", False):
+        if _tool_result_is_error(result):
             raise McpToolCallError(f"MCP tool {name} failed: {_tool_result_error_text(result)}")
         return result
 
@@ -192,6 +194,8 @@ class DatabaseBoundSession:
 
 def _tool_result_payload(result: Any) -> dict[str, Any] | None:
     structured = getattr(result, "structuredContent", None)
+    if not isinstance(structured, dict):
+        structured = getattr(result, "structured_content", None)
     if isinstance(structured, dict):
         return structured
     content = getattr(result, "content", None) or []
@@ -203,6 +207,10 @@ def _tool_result_payload(result: Any) -> dict[str, Any] | None:
     except json.JSONDecodeError:
         return None
     return parsed if isinstance(parsed, dict) else None
+
+
+def _tool_result_is_error(result: Any) -> bool:
+    return bool(getattr(result, "isError", False) or getattr(result, "is_error", False))
 
 
 def _tool_result_error_text(result: Any) -> str:
@@ -226,6 +234,12 @@ def _find_mcp_error(exception: Exception) -> Exception | None:
     return None
 
 
+def _split_streamable_http_result(value):
+    if not isinstance(value, (tuple, list)) or len(value) not in {2, 3}:
+        raise McpContractError("streamable_http_client returned an unsupported stream tuple")
+    return value[0], value[1]
+
+
 @asynccontextmanager
 async def _open_raw_ida_mcp_session(
     host: str,
@@ -245,13 +259,14 @@ async def _open_raw_ida_mcp_session(
                 trust_env=False,
             )
         )
-        read_stream, write_stream, _ = await stack.enter_async_context(
+        streams = await stack.enter_async_context(
             streamable_http_client(
                 f"http://{host}:{port}/mcp",
                 http_client=client,
                 terminate_on_close=False,
             )
         )
+        read_stream, write_stream = _split_streamable_http_result(streams)
         raw_session = await stack.enter_async_context(ClientSession(read_stream, write_stream))
         await raw_session.initialize()
         yield raw_session
@@ -287,7 +302,7 @@ async def open_ida_mcp_session(
                 required = detect_database_requirement(tools)
                 if required:
                     listed = await raw.call_tool(name="idb_list", arguments={})
-                    if getattr(listed, "isError", False):
+                    if _tool_result_is_error(listed):
                         raise McpToolCallError(f"MCP tool idb_list failed: {_tool_result_error_text(listed)}")
                     payload = _tool_result_payload(listed) or {}
                     selected = select_database_session(

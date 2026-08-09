@@ -2,24 +2,23 @@
 
 - 状态：Open
 - 对比基线：`D:\CS2_VibeSignatures`
-- 最后核对：2026-08-09
+- 最后核对：2026-08-10
 - 范围：`ida_analyze_bin` 入口、IDA/MCP 生命周期、preprocessor、Agent、配置与工件契约、进度上报、调度、测试和 CI
 
 ## 结论
 
-当前 GoldSrc 实现已经具备严格的 x86 二进制校验、分析 DAG、单一 Preprocessor → Agent 回退、
-snapshot/candidate 和发布边界，
-但整体仍属于“经过验证的分析框架骨架”，尚未达到 CS2 仓库中可实际执行、可恢复、可调度和可在
-self-hosted IDA 环境持续运行的 infrastructure 水平。
+当前 GoldSrc 实现已经具备严格的 x86 二进制校验、跨模块分析 DAG、单一 Preprocessor → Agent
+回退、category-aware history relocation、snapshot/candidate 和发布边界，并已加入首个双平台
+production finder `find-R_RenderView`。尚未对齐的主体已收敛到 Reporter/scheduler、self-hosted IDA CI
+以及更大规模的 production symbol coverage。
 
 最关键的缺口不是单一启动脚本，而是一组相互依赖的运行时契约：
 
-1. production config、preprocessor 和 Agent skill 目前没有真实分析内容；
-2. Preprocessor 的 MCP-bound status/input contract 已完成自动化对齐，但仍缺真实 IDA smoke；
-3. 旧 YAML 原样复制已禁用，但尚无 production preprocessor 实际完成地址感知的 history rebuild；
-4. CLI 与环境变量已按本节决策对齐；配置 schema、artifact path、execution plan 和 reporter event 仍不兼容；
-5. Redis reporter/scheduler、进度 API、dashboard 和 self-hosted IDA CI 尚不存在；
-6. 部分缺口被当前文档和 repository-contract tests 明确禁止，不是偶然遗漏。
+1. 首个 production config/preprocessor/skill 已建立，但覆盖面仍很小；
+2. Preprocessor 的 MCP-bound status/input/helper contract 与真实 Windows/Linux IDA smoke 均已完成；
+3. history reuse 已按 category 在新 IDB 中重建地址和派生字段，不再复制旧地址；
+4. config `name + category`、category-specific artifact identity、安全 sibling input 和跨模块 DAG 已对齐；
+5. Redis reporter/scheduler、进度 API、dashboard 和 self-hosted IDA CI 尚不存在。
 
 ## 当前已有基础
 
@@ -31,7 +30,7 @@ self-hosted IDA 环境持续运行的 infrastructure 水平。
 - 分析顺序固定为单一 skill-specific Preprocessor、Agent fallback；
 - `ida_mcp_session.py` 已接入主流程；Analyzer 按 binary 拥有 startup、binding、identity、recovery 和 shutdown；
 - snapshot schema 5、immutable candidate、gamedata guard 和原子发布已经建立；
-- GoldSrc 的 flat artifact 和 x86 symbol 约束比 CS2 更严格，其中部分约束应作为目标特性保留。
+- GoldSrc 保留 module-local output、PE32/ELF32 和 4-byte vfunc slot 约束；input 已支持受限 sibling-module path。
 
 关键出处：
 
@@ -45,49 +44,55 @@ self-hosted IDA 环境持续运行的 infrastructure 水平。
 
 | 优先级 | 缺口 | 直接影响 |
 | --- | --- | --- |
-| P0 | production config、preprocessor、Agent skill 为空 | Analyzer 无真实 DAG 节点，无法生成 production symbol YAML |
-| P0 | config schema 仍不兼容 | CS2 config 不能直接复用 |
+| 已完成 | 首个 production config/preprocessor/skill | `svencoop-10257/engine/R_RenderView` 已形成真实 DAG 节点 |
+| 已完成 | config/artifact/helper schema 对齐 | `category`、专用 identity、跨模块 input 和 Finder API 已对齐 |
 | P1 | execution plan 和 reporter contract 不兼容 | 无法接入 CS2 风格运行状态、任务图和可观测性消费者 |
-| P1 | 真实 IDA Preprocessor/validator smoke 缺失 | 自动化契约已对齐，但尚未证明真实 IDB 调用链 |
+| 已完成 | 真实 IDA Preprocessor/validator smoke | `hw.dll` / `hw.so` 双平台分析均由 Preprocessor 成功产出并通过 runtime validator |
 | P2 | Redis scheduler/reporter、API、SSE、dashboard 缺失 | 无持久队列、恢复、heartbeat 和远程只读监控 |
 | P2 | 缺少 Windows self-hosted IDA workflow | CI 无法证明真实 IDA 分析链可工作 |
 
 `idalib-mcp` lifecycle、database binding、identity validation、IDB lock、健康检查、一次恢复预算、owned shutdown、
-Preprocessor contract 和 runtime input/output validation 已于 2026-08-09 补齐；真实 IDA smoke/self-hosted CI
-仍作为独立测试缺口保留。
+Preprocessor contract 和 runtime input/output validation 已补齐；本地真实 IDA smoke 于 2026-08-10 完成。
+尚未完成的是把同一 smoke 固化为 Windows self-hosted CI。
 
-## 1. Production 分析内容缺失
+## 1. Production 分析内容（首个 finder 已建立）
 
-两份正式配置中的所有 module 都使用：
+`configs/svencoop-10257.yaml` 的 engine module 已注册：
 
 ```yaml
-skills: []
-symbols: []
+skills:
+  - name: find-R_RenderView
+    expected_output:
+      - R_RenderView.{platform}.yaml
+symbols:
+  - name: R_RenderView
+    category: func
 ```
 
-因此 `ida_analyze_bin.py` 当前只会解析配置、验证并哈希选中的二进制，然后完成空 DAG。仓库仍没有：
+对应实现：
 
-- `ida_preprocessor_scripts/`；
-- `.claude/skills/<skill>/SKILL.md`；
+- `ida_preprocessor_scripts/find-R_RenderView.py`；
+- `.claude/skills/find-R_RenderView/SKILL.md`；
+- `.claude/skills/create-preprocessor-scripts/` 及 A/B/C/D/E/F/H/I/L/M references。
 
-Agent profile、skill-runner settings 和通用 `<skill_error>` system prompt 已补齐，但尚无实际 production skill。
+Finder 通过 `xref_strings: ["R_RenderView: NULL worldmodel"]` 定位 `hw.dll` / `hw.so` 中的普通函数，
+artifact 使用 `func_name` 身份字段。
 
 `agent_runner.run_skill()` 强制要求 `.claude/skills/<skill>/SKILL.md` 存在，因而一旦 production config
 加入无法由前置阶段生成的 skill，Agent fallback 会直接失败。
 
-当前空配置还被 repository contract 明确锁定：
+Repository contract 已改为验证该 production finder，而不是锁定空配置：
 
 - `configs/cstrike-10120.yaml:1-21`
 - `configs/svencoop-10257.yaml:1-21`
-- `tests/test_repository_contract.py:29-36`
+- `tests/test_repository_contract.py` 的 `test_sven_engine_registers_r_renderview_production_finder`
 - `agent_runner.py:67-84`
 
-### 对齐目标
+### 后续目标
 
-- 至少为一个 GoldSrc module/platform 建立可真实运行的最小 production skill；
-- skill name、config entry、preprocessor filename 和 `SKILL.md` 必须形成一一对应关系；
-- 单一 skill-specific Preprocessor 优先，脚本按需显式使用 LLM，Agent 只作为有界 fallback；
-- 修改 `test_production_configs_are_valid_empty_scaffolds`，不再把空配置当作长期 contract。
+- 将已通过的 Windows/Linux 真实 IDA smoke 固化到受控 self-hosted workflow；
+- 继续按同一 contract 增加 production symbols；
+- 保持单一 skill-specific Preprocessor 优先，LLM 显式 opt-in，Agent 仅作有界 fallback。
 
 ## 2. CLI 与环境变量契约
 
@@ -143,11 +148,11 @@ Agent profile、skill-runner settings 和通用 `<skill_error>` system prompt �
 - Plan preview 删除，真实执行继续使用统一 plan builder；
 - 所有可预期配置、参数、Agent 和 preprocessor 错误应统一转为明确诊断和非零退出。
 
-## 3. Config schema 与 DAG 契约差异
+## 3. Config schema 与 DAG 契约（已对齐）
 
-### Symbol schema
+### Symbol 与 artifact schema
 
-CS2 config 使用：
+GoldSrc config 现在与 CS2 一样只接受：
 
 ```yaml
 - name: Example
@@ -156,74 +161,31 @@ CS2 config 使用：
     - Example::Alias
 ```
 
-GoldSrc parser 要求：
+`category` 是唯一分类字段，严格拒绝 `type/kind`。分类集合为
+`func/gv/vfunc/vtable/patch/structmember/struct`；`structmember` 必须引用同 module 已声明的 parent
+`struct`。
 
-```yaml
-- name: Example
-  type: func
-```
-
-GoldSrc 只读取 `type` 或 `kind`，不接受 CS2 的 `category`。同时两边对 `symbols` 的用途不同：
-
-- CS2 使用 symbol category/alias 为 input validation、LLM 和 downstream gamedata 提供 metadata；
-- GoldSrc 会根据 `symbols` 推导额外 required artifact，即使这些路径未由某个 skill output 声明；
-- GoldSrc skill 自身还有 `aliases` 字段，但这不等价于 CS2 的 symbol alias map。
-
-出处：
-
-- GoldSrc：`analysis_planner.py:162-184,349-388`
-- CS2 config 示例：`D:\CS2_VibeSignatures\configs\14174.yaml:51-73`
-- CS2 alias/category map：`D:\CS2_VibeSignatures\ida_analyze_bin.py:289-318`
+Artifact 严格拒绝通用 `name/type/kind`，按 category 使用 `func_name`、`gv_name`、`patch_name`、
+`vtable_class` 或 `struct_name/member_name`。与 CS2 loader 一致，payload identity 不强制等于 config
+symbol `name`。
 
 ### Artifact path
 
-GoldSrc 只允许 module 目录中的单层 `.yaml` 文件名，并明确拒绝 `../other/a.yaml`、`other/a.yaml`、绝对路径
-和反斜杠路径。
-
-CS2 允许 `../engine/Foo.{platform}.yaml` 形式的跨模块输入，只要解析后仍处于同一个 game-version root。
-当前 CS2 production config 大量依赖该行为。
-
-出处：
-
-- GoldSrc：`analysis_planner.py:87-98`
-- GoldSrc contract test：`tests/test_analysis_planner.py:81-94`
-- CS2 resolver：`D:\CS2_VibeSignatures\ida_analyze_bin.py:2289-2304`
-- CS2 config 示例：`D:\CS2_VibeSignatures\configs\14174.yaml:4099`
+Output、optional output、skip-if-exists 和 symbol artifact 仍只允许 module-local `.yaml` 文件名。Input
+允许 `../engine/Foo.{platform}.yaml` 形式的 sibling-module 引用；解析后必须仍位于同一个 game-version
+root。绝对路径、反斜杠与 root escape 继续拒绝。
 
 ### DAG 和 plan schema
 
-GoldSrc execution plan：
+Producer/input key 已规范化为 game-root 相对 artifact path。跨 module producer/consumer 会建立真实
+artifact edge，并参与重复 producer、缺失 input 与 cycle 检测。Snapshot formal paths 也使用规范化 owner
+path，因此 `../engine/X.yaml` 在 snapshot 中仍表示为 `engine/X.yaml`。
 
-```text
-ExecutionPlan(tag, nodes, edges)
-PlanNode(module, platform, skill, inputs, outputs, prerequisites, ...)
-```
+GoldSrc 仍未移植 CS2 Reporter 使用的 stage/job/task stable ID、layer 与 auxiliary nodes；这属于 Reporter
+contract 差异，不再是 artifact DAG 缺口。
 
-CS2 execution plan：
-
-```text
-ExecutionPlan(schema_version, stages, jobs, nodes, edges, warnings)
-stage -> module/platform job -> skill/vcall/post-process task
-```
-
-CS2 还建立 cross-stage artifact edge、stable task ID、layer 和 auxiliary nodes。GoldSrc 的 producer lookup 只在同一
-module/platform 范围内发生。
-
-出处：
-
-- GoldSrc：`analysis_planner.py:23-59,268-341`
-- CS2：`D:\CS2_VibeSignatures\process_reporter.py:69-151`
-- CS2 plan builder：`D:\CS2_VibeSignatures\ida_analyze_bin.py:2217-2264`
-
-### 对齐决策
-
-需要明确选择以下之一：
-
-1. 兼容 CS2 的跨模块 artifact contract，同时继续禁止逃逸 game-version root；
-2. 保留 GoldSrc flat module contract，并接受 config、scheduler plan 和相关工具无法直接兼容。
-
-如果目标是“尽可能贴近 CS2”，推荐第一种，但该改动属于 shared config/artifact contract 变更，必须同步修改
-planner、snapshot contract、candidate、tests 和文档。
+本次 shared contract 变更同步更新了 planner、runtime artifact map、snapshot/candidate tests 和文档，
+analysis output contract 升级为 version 2。
 
 ## 4. `idalib-mcp` 生命周期（已补齐）
 
@@ -276,11 +238,13 @@ GoldSrc session adapter 已补齐以下 CS2 语义，同时保留更严格的 `c
 - `idb_list` typed error；
 - nested `ExceptionGroup` 中 MCP contract error 的解包；
 - setup error 与 session body error 的异常边界，避免把业务异常误报为 connection error。
+- 同时兼容 MCP SDK 的 `inputSchema` / `input_schema`、`isError` / `is_error` 和
+  `structuredContent` / `structured_content` 字段形式。
 
-对应 unit tests 位于 `tests/test_ida_mcp_session.py` 与 `tests/test_analysis_planner.py`。尚未完成的是需要本机 IDA
-license/`idalib-mcp` 的真实 smoke；该项仍保留在测试与 CI 缺口中。
+对应 unit tests 位于 `tests/test_ida_mcp_session.py` 与 `tests/test_analysis_planner.py`。本机 IDA/
+`idalib-mcp` 的真实 smoke 已完成；CI 缺口只剩自动化 self-hosted 执行环境。
 
-## 5. Preprocessor 契约（自动化已对齐，真实 IDA smoke 待完成）
+## 5. Preprocessor 与 Finder/helper 契约（自动化与真实 IDA smoke 均已完成）
 
 GoldSrc 已采用 CS2 的单一 skill-specific Preprocessor 模型，删除 deterministic / LLM 双目录与旧的布尔入口。
 Analyzer 当前调用：
@@ -343,14 +307,27 @@ lifecycle owner 执行一次受预算约束的恢复。dispatcher 不增加独�
 - CS2 reference：`D:\CS2_VibeSignatures\ida_skill_preprocessor.py:24-207`
 
 自动化 contract tests 已覆盖 loader cache、ABI、status normalization、LLM opt-in、session binding、image-base
-解析、输入输出验证、optional-only、zero-output、Agent fallback 与 MCP recovery。仍需在具备 IDA license 和
-`idalib-mcp` 的环境执行真实 binary smoke，完成后才能关闭本差异项。
+解析、输入输出验证、optional-only、zero-output、Agent fallback、MCP recovery，以及 CS2-compatible
+`preprocess_common_skill` API。共享 runtime 已覆盖 func/vfunc/GV/patch/structmember/vtable、4-byte inherited
+slots、A/B xref filters、C/D/E LLM fallback、H ordinal vtable 和合并后的 I/L unique indirect vcall。
 
-## 6. History reuse 会复制陈旧地址
+2026-08-10 已在真实 IDA/`idalib-mcp` 环境执行：
 
-当前缓解状态：旧 YAML 直接复制路径已禁用。Analyzer 解析/自动选择同 game family 的 `oldgamever`，并把
-new-output 到 old-YAML 的映射交给已对齐的 MCP-bound Preprocessor；仓库尚无 production preprocessor 实际
-执行 category-aware history rebuild。
+```powershell
+uv run python ida_analyze_bin.py -gamever svencoop-10257 -modules engine `
+  -skill find-R_RenderView -platform windows,linux -debug
+```
+
+结果为 `Successful: 2 / Failed: 0 / Skipped: 0`。`hw.dll` 产出 `func_va: 0x1d537b0`、
+`func_rva: 0x537b0`；`hw.so` 产出 `func_va/func_rva: 0x13ba80`。两份 artifact 均只包含
+`func_name/func_va/func_rva/func_size/func_sig`，没有通用 `name/type/kind`，且 `func_sig` 经 MCP
+唯一性复核和 runtime 当前 IDB 地址验证。
+
+## 6. History reuse（category-aware 地址重建已完成）
+
+旧 YAML 直接复制路径已禁用。Analyzer 解析/自动选择同 game family 的 `oldgamever`，并把 new-output 到
+old-YAML 的映射交给 MCP-bound Preprocessor；共享 helper 会按 func/GV/patch/structmember/vfunc 类别在新
+IDB 中重新定位并重算地址与派生字段。`find-R_RenderView` 是首个 production 使用者。
 
 此前的 GoldSrc `reuse_unique_history_artifact()`：
 
@@ -401,7 +378,7 @@ GoldSrc 当前在每个 skill 执行前会：
 - 明确报告缺失 required input；
 - 记录缺失 optional input；
 - 对 `func` / `vfunc` artifact 检查 YAML、`func_va`、segment 和 function-start identity；
-- 当前 DAG 仍只允许 module-local artifact；若未来允许跨模块输入，必须保持不同的地址验证边界。
+- sibling-module input 已支持；仅做 schema/格式校验，不使用当前 IDB 验证另一 binary 的地址。
 
 出处：
 
@@ -598,12 +575,12 @@ self-hosted IDA smoke/analyze workflow，并明确区分“IDA 环境可 import�
 
 ## 当前仓库策略阻塞
 
-以下差异被当前仓库主动定义为 contract：
+当前仍被仓库主动定义为 contract 的差异：
 
-1. production config 必须保持空 `skills` / `symbols`；
-2. runtime 代码禁止包含 `process_reporter_redis`；
-3. README/architecture 明确排除 scheduler、service、UI、C++ layout 和 production symbols；
-4. flat artifact 必须留在当前 module 目录，禁止跨模块 artifact path。
+1. runtime 代码禁止包含 `process_reporter_redis`；
+2. README/architecture 仍排除 scheduler、service、UI 和 C++ layout；
+3. artifact output 必须留在当前 module；只有 input 可使用安全 sibling path；
+4. GoldSrc 始终保持 PE32/ELF32、x86 和 4-byte vfunc slot。
 
 相关出处：
 
@@ -636,7 +613,7 @@ GoldSrc 应保留：
 
 - x86 vfunc slot 固定 4 字节；
 - PE32/ELF32 格式门禁；
-- 不提供隐式通用 RTTI/vtable finder；
+- 提供受验证的 32-bit primary/ordinal vtable helper，不移植 Source2 专用 RTTI/dispatcher 语义；
 - GoldSrc game tag 和 depot 布局；
 - binary mutation 检测；
 - 当前 immutable candidate/gamedata guard。
@@ -648,9 +625,9 @@ GoldSrc 应保留：
 ### Phase 1：统一外部 contract
 
 - 兼容 CS2 语义的 CLI 和 `GSVIBE_*` 环境变量（已完成）；
-- 明确 `category` 与 `type/kind` 的兼容策略；
+- `category` 为唯一分类字段，严格拒绝 `type/kind`（已完成）；
 - module/skill validation 已修复，`plan-only` 已删除；
-- 决定是否支持 game-root 内跨模块 artifact；
+- 支持 game-root 内安全 sibling-module input（已完成）；
 - 定义 versioned execution plan 和 event schema（Reporter 本次延期）；
 - 更新 repository-contract tests 和架构文档。
 
@@ -663,7 +640,7 @@ GoldSrc 应保留：
 - 将 `ida_mcp_session` 接入 analyzer（已完成）；
 - 增加 bounded health recovery（已完成）；
 - 保留 binary mutation guard（已完成）；
-- 建立真实 IDA smoke test。
+- 建立真实 IDA smoke test（本地双平台已完成；self-hosted workflow 待完成）。
 
 验收标准：可以对一个已知 GoldSrc PE32/ELF32 binary 启动 MCP、验证打开目标、执行 `py_eval`，并只关闭本次拥有的 worker。
 
@@ -671,9 +648,9 @@ GoldSrc 应保留：
 
 - 定义 MCP-bound status contract（已完成自动化对齐）；
 - 传递 old YAML map、expected/optional inputs、LLM config 和 symbol aliases（已完成）；
-- 将 history reuse 改为 category-aware 地址重建；
+- 将 history reuse 改为 category-aware 地址重建（已完成）；
 - 增加 runtime input/output validation（已完成自动化对齐）；
-- 建立第一个 production preprocessor 和 skill。
+- 建立第一个 production preprocessor 和 skill（已完成：`R_RenderView`）。
 
 验收标准：旧 signature 地址发生变化时，新 YAML 中的 `VA/RVA` 来自新 IDB；无法证明唯一性时进入后续 fallback。
 
@@ -710,4 +687,4 @@ GoldSrc 应保留：
 - 失败状态、退出码、retry 和 skip 行为有测试覆盖；
 - Redis scheduler/reporter 或明确等价实现支持持久恢复；
 - Windows self-hosted workflow 至少验证一次真实 GoldSrc IDA 分析；
-- x86、flat output、candidate 和 GoldSrc-specific 安全边界未被 Source2 假设破坏。
+- x86、module-local output、安全 sibling input、candidate 和 GoldSrc-specific 安全边界未被 Source2 假设破坏。

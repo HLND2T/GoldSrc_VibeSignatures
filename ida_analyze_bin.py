@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import yaml
 from dotenv import load_dotenv
@@ -263,6 +263,8 @@ SURVEY_CURRENT_IDB_PATH_PY_EVAL = (
 
 def _parse_mcp_tool_json(result):
     structured = getattr(result, "structuredContent", None)
+    if not isinstance(structured, dict):
+        structured = getattr(result, "structured_content", None)
     if isinstance(structured, dict):
         return structured
     content = getattr(result, "content", None) or []
@@ -771,16 +773,15 @@ def _is_major_update_gamever(gamever: str, download_path: str | Path = DEFAULT_D
 
 
 def _outputs(node, root: Path) -> tuple[list[Path], list[Path]]:
-    module_root = root / node.module
     return (
-        [module_root / name for name in node.required_outputs],
-        [module_root / name for name in node.optional_outputs],
+        [root / Path(*PurePosixPath(name).parts) for name in node.required_outputs],
+        [root / Path(*PurePosixPath(name).parts) for name in node.optional_outputs],
     )
 
 
 def _node_has_existing_outputs(node, game_root: Path) -> bool:
     required, optional = _outputs(node, game_root)
-    skip_paths = [game_root / node.module / name for name in node.skip_if_exists]
+    skip_paths = [game_root / Path(*PurePosixPath(name).parts) for name in node.skip_if_exists]
     return should_skip_skill_for_existing_outputs(required, optional) or bool(
         skip_paths and all(path.is_file() for path in skip_paths)
     )
@@ -816,8 +817,12 @@ def _artifact_type_map(modules: list[dict], game_root: Path) -> dict[str, str]:
             for symbol in module.get("symbols", ()):
                 if symbol.get("platform") not in {None, platform}:
                     continue
-                filename = symbol_artifact_filename(symbol, platform)
-                result[_artifact_path_key(game_root / module["name"] / filename)] = symbol["type"]
+                if symbol["category"] == "struct":
+                    continue
+                filenames = [symbol_artifact_filename(symbol, platform)]
+                filenames.extend(f"{alias}.{platform}.yaml" for alias in symbol.get("source_alias", ()))
+                for filename in filenames:
+                    result[_artifact_path_key(game_root / module["name"] / filename)] = symbol["category"]
     return result
 
 
@@ -845,13 +850,13 @@ def _load_runtime_artifact(path: Path, expected_type: str | None):
 
     issues: list[str] = []
     inspections: list[dict] = []
-    declared_type = payload.get("type", payload.get("kind"))
-    if expected_type is not None and declared_type != expected_type:
-        issues.append(f"{path}: expected symbol type {expected_type!r}, got {declared_type!r}")
-    symbol_type = expected_type or declared_type
-    if symbol_type is not None:
+    if any(field in payload for field in ("name", "type", "kind")):
+        issues.append(f"{path}: legacy name/type/kind fields are not accepted")
+    symbol_type = expected_type
+    identity_fields = {"func_name", "gv_name", "patch_name", "vtable_class", "member_name", "struct_name"}
+    if symbol_type is not None or identity_fields.intersection(payload):
         try:
-            normalized = normalize_symbol_artifact(payload)
+            normalized = normalize_symbol_artifact(payload, category=symbol_type)
             if normalized != payload:
                 raise SymbolArtifactError("symbol fields are not normalized")
         except SymbolArtifactError as exc:
@@ -1037,8 +1042,8 @@ def run_analysis_pipeline(
     if _node_has_existing_outputs(node, game_root):
         return PipelineResult("skipped", "existing", "existing_outputs")
 
-    required_inputs = [(module_dir / name).resolve() for name in node.required_inputs]
-    optional_inputs = [(module_dir / name).resolve() for name in node.optional_inputs]
+    required_inputs = [(game_root / Path(*PurePosixPath(name).parts)).resolve() for name in node.required_inputs]
+    optional_inputs = [(game_root / Path(*PurePosixPath(name).parts)).resolve() for name in node.optional_inputs]
     overlap = sorted(
         {_artifact_path_key(path) for path in required_inputs} & {_artifact_path_key(path) for path in optional_inputs}
     )
@@ -1090,8 +1095,10 @@ def run_analysis_pipeline(
     expected_outputs = [str(path) for path in (*required, *optional)]
     old_yaml_map = None
     if old_game_root is not None:
-        old_module_dir = (Path(old_game_root).resolve() / node.module).resolve()
-        old_yaml_map = {path: str((old_module_dir / Path(path).name).resolve()) for path in expected_outputs}
+        old_root = Path(old_game_root).resolve()
+        old_yaml_map = {
+            path: str((old_root / Path(path).resolve().relative_to(game_root)).resolve()) for path in expected_outputs
+        }
 
     preprocess_status = PREPROCESS_STATUS_NO_SCRIPT
     if not skip_preprocessors:
@@ -1437,21 +1444,22 @@ def analyze(
         validated_tag(oldgamever)
         if _split_gamever(oldgamever)[0] != _split_gamever(tag)[0]:
             raise AnalysisRunError(f"Old game version must use the same game family as {tag}: {oldgamever}")
-    document, modules = load_config(config_path)
+    document, all_modules = load_config(config_path)
     symbol_aliases = _symbol_alias_map_from_document(document)
-    modules = _select_execution_modules(modules, modules_filter, skill_filter)
+    modules = _select_execution_modules(all_modules, modules_filter, skill_filter)
     plan = _build_execution_plan(
         modules,
         platforms=platforms,
         bin_dir=bindir,
         tag=tag,
         default_max_retries=max_retries,
+        declared_modules=[module["name"] for module in all_modules],
     )
     reporter = reporter or NullReporter()
     run_summary = summary if summary is not None else AnalysisSummary()
     root = Path(bindir) / tag
     old_root = Path(bindir) / oldgamever if oldgamever else None
-    artifact_types = _artifact_type_map(modules, root)
+    artifact_types = _artifact_type_map(all_modules, root)
     binary_identity: dict[tuple[str, str], tuple[Path, str]] = {}
     module_map = {module["name"]: module for module in modules}
     nodes_by_binary: dict[tuple[str, str], list] = {}

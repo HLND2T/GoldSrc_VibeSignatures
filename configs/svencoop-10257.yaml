@@ -2,8 +2,13 @@ modules:
   - name: engine
     path_windows: Sven-Coop/hw.dll
     path_linux: Sven-Coop/hw.so
-    skills: []
-    symbols: []
+    skills:
+      - name: find-R_RenderView
+        expected_output:
+          - R_RenderView.{platform}.yaml
+    symbols:
+      - name: R_RenderView
+        category: func
   - name: client
     path_windows: Sven-Coop/svencoop/cl_dlls/client.dll
     path_linux: Sven-Coop/svencoop/cl_dlls/client.so

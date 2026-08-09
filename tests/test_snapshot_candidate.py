@@ -38,8 +38,8 @@ def fixture(root: Path):
     game_root = root / "bin" / tag / "engine"
     write_pe32(game_root / "hw.dll")
     write_elf32(game_root / "hw.so")
-    (game_root / "symbol.windows.yaml").write_text("name: symbol\ntype: func\nfunc_addr: '0x10'\n", encoding="utf-8")
-    (game_root / "symbol.linux.yaml").write_text("name: symbol\ntype: func\nfunc_addr: '0x20'\n", encoding="utf-8")
+    (game_root / "symbol.windows.yaml").write_text("func_name: symbol\nfunc_va: '0x10'\n", encoding="utf-8")
+    (game_root / "symbol.linux.yaml").write_text("func_name: symbol\nfunc_va: '0x20'\n", encoding="utf-8")
     return tag, config, game_root
 
 
@@ -113,9 +113,7 @@ class SnapshotOperationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             tag, config, game_root = fixture(root)
-            (game_root / "symbol.windows.yaml").write_text(
-                "name: symbol\ntype: func\nfunc_sig: aa bb\n", encoding="utf-8"
-            )
+            (game_root / "symbol.windows.yaml").write_text("func_name: symbol\nfunc_sig: aa bb\n", encoding="utf-8")
             with self.assertRaises(SnapshotMismatchError):
                 pack_snapshot(tag, root / "bin", config, root / "snapshot.yaml")
 
@@ -127,8 +125,8 @@ class SnapshotOperationTests(unittest.TestCase):
             pack_snapshot(tag, root / "bin", config, snapshot)
             store = SnapshotSymbolStore.open(snapshot, expected_game_version=tag, config_path=config)
             first = store.require("engine", "symbol.windows.yaml")
-            first["name"] = "changed"
-            self.assertEqual("symbol", store.require("engine", "symbol.windows.yaml")["name"])
+            first["func_name"] = "changed"
+            self.assertEqual("symbol", store.require("engine", "symbol.windows.yaml")["func_name"])
             with self.assertRaises(InvalidSymbolPathError):
                 store.get("../engine", "symbol.windows.yaml")
 

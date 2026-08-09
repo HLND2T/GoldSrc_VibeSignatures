@@ -13,7 +13,10 @@ from ida_mcp_session import (
     McpDatabaseSelectionError,
     McpDatabaseUnavailableError,
     McpToolCallError,
+    _tool_result_is_error,
+    _tool_result_payload,
     check_ida_mcp_supervisor_health,
+    _split_streamable_http_result,
     detect_database_requirement,
     normalize_binary_identity_path,
     open_ida_mcp_session,
@@ -62,6 +65,17 @@ def _tool_result(payload: dict, *, is_error: bool = False) -> SimpleNamespace:
 
 
 class NormalizeAndContractTests(unittest.TestCase):
+    def test_accepts_two_and_three_item_streamable_http_results(self):
+        self.assertEqual(("read", "write"), _split_streamable_http_result(("read", "write")))
+        self.assertEqual(("read", "write"), _split_streamable_http_result(("read", "write", "session")))
+        with self.assertRaisesRegex(McpContractError, "unsupported stream tuple"):
+            _split_streamable_http_result(("read",))
+
+    def test_tool_result_payload_accepts_sdk_snake_case_structured_content(self):
+        payload = {"metadata": {"module": "hw.dll", "arch": "32"}}
+        result = SimpleNamespace(structuredContent=None, structured_content=payload, content=[])
+        self.assertEqual(payload, _tool_result_payload(result))
+
     def test_normalizes_database_suffix_case_and_wsl_mount(self):
         self.assertEqual(
             "d:/repo/bin/server.dll",
@@ -81,6 +95,14 @@ class NormalizeAndContractTests(unittest.TestCase):
         self.assertTrue(detect_database_requirement(supervisor))
         with self.assertRaisesRegex(McpContractError, "Inconsistent database requirement"):
             detect_database_requirement(mixed)
+
+    def test_detects_sdk_snake_case_input_schema(self):
+        supervisor = [SimpleNamespace(name="py_eval", input_schema={"required": ["code", "database"]})]
+        self.assertTrue(detect_database_requirement(supervisor))
+
+    def test_detects_sdk_snake_case_tool_errors(self):
+        self.assertTrue(_tool_result_is_error(SimpleNamespace(isError=None, is_error=True)))
+        self.assertFalse(_tool_result_is_error(SimpleNamespace(isError=False, is_error=False)))
 
 
 class DatabaseSelectionTests(unittest.TestCase):
@@ -163,6 +185,21 @@ class DatabaseBoundSessionTests(unittest.IsolatedAsyncioTestCase):
             return_value=SimpleNamespace(
                 isError=True,
                 structuredContent=None,
+                content=[SimpleNamespace(text='{"error":"database is required"}')],
+            )
+        )
+        bound = DatabaseBoundSession(raw, McpDatabaseBinding(False, None, None, "worker", True, True))
+        with self.assertRaisesRegex(McpToolCallError, "py_eval.*database is required"):
+            await bound.call_tool("py_eval", {"code": "1"})
+
+    async def test_snake_case_tool_error_includes_server_body(self):
+        raw = MagicMock()
+        raw.call_tool = AsyncMock(
+            return_value=SimpleNamespace(
+                isError=None,
+                is_error=True,
+                structuredContent=None,
+                structured_content=None,
                 content=[SimpleNamespace(text='{"error":"database is required"}')],
             )
         )
