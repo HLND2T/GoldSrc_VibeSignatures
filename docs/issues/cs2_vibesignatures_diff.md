@@ -17,7 +17,7 @@ self-hosted IDA 环境持续运行的 infrastructure 水平。
 2. 主流程没有启动、绑定、验证、恢复和关闭 `idalib-mcp`；
 3. GoldSrc preprocessor 接口与 CS2 的 MCP-bound 接口不兼容；
 4. 旧版本工件复用会直接复制旧地址，存在生成陈旧 `VA/RVA` 的风险；
-5. CLI、配置 schema、artifact path、execution plan 和 reporter event 均与 CS2 不兼容；
+5. CLI 与环境变量已按本节决策对齐；配置 schema、artifact path、execution plan 和 reporter event 仍不兼容；
 6. Redis reporter/scheduler、进度 API、dashboard 和 self-hosted IDA CI 尚不存在；
 7. 部分缺口被当前文档和 repository-contract tests 明确禁止，不是偶然遗漏。
 
@@ -48,7 +48,7 @@ self-hosted IDA 环境持续运行的 infrastructure 水平。
 | P0 | production config、preprocessor、Agent skill 为空 | Analyzer 无真实 DAG 节点，无法生成 production symbol YAML |
 | P0 | 缺少 `idalib-mcp` 生命周期 | deterministic/LLM preprocessor 和 Agent 无可靠 IDA backend |
 | P0 | history 直接复制旧 YAML | 新版本地址变化后可能保留陈旧 `VA/RVA` |
-| P0 | CLI、环境变量和 config schema 不兼容 | CS2 scheduler、CI 和操作脚本无法复用 |
+| P0 | config schema 仍不兼容 | CS2 config 不能直接复用 |
 | P1 | MCP binary identity、IDB lock、健康检查和恢复未接线 | 可能连错 IDB、与交互式 IDA 冲突或在 MCP 断线后中止 |
 | P1 | runtime input/output validation 不完整 | 建图成功后仍可能在执行期消费缺失或失效工件 |
 | P1 | Agent runner 诊断和 session 管理较弱 | 失败原因不可追踪，retry 可能恢复错误的全局 session |
@@ -90,45 +90,58 @@ symbols: []
 - deterministic preprocessor 优先，LLM 和 Agent 只作为有界 fallback；
 - 修改 `test_production_configs_are_valid_empty_scaffolds`，不再把空配置当作长期 contract。
 
-## 2. CLI 与环境变量契约不兼容
+## 2. CLI 与环境变量契约
+
+### GoldSrc 对齐状态（2026-08-09）
+
+本轮已完成通用 CLI/环境变量契约对齐，并作出以下明确边界：
+
+- 使用 `GSVIBE_*` namespace，不接受 `OPENAI_*` 或 `CS2VIBE_*` alias；
+- 不保留旧 `-config` 或 Analyzer `all-platform` alias；
+- `-plan-only` 和 preview 分支已删除，内部 DAG builder 只服务真实执行；
+- generic `-vcall_finder` 排除；
+- `-rename` 与 `-ida_args` 随 owned IDA MCP lifecycle 延期；
+- CS2 process/Redis Reporter 本次延期，现有 `-console-events` 保留；
+- old-version 自动选择限制在同 game family，`major_update: true` 可禁用；旧 YAML 直接复制先行禁用；
+- 有效输入按 CS2 语义对齐，非法输入使用更严格的 fail-fast 校验。
 
 ### 参数差异
 
 | 能力 | CS2 | GoldSrc |
 | --- | --- | --- |
-| Config 参数 | `-configyaml` | `-config` |
-| Platform | `-platform=windows,linux` | `windows`、`linux` 或 `all-platform` 单值 |
-| Game version fallback | `CS2VIBE_GAMEVER` | 必须显式传 `-gamever` |
-| Agent 默认值 | `claude` | `codex` |
-| Agent model | `-agent_model` / `CS2VIBE_AGENT_MODEL` | 缺失 |
-| LLM 参数 | `-llm_*` / `CS2VIBE_LLM_*` | CLI 缺失；helper 读取 `OPENAI_*` |
-| IDA 参数 | `-ida_args` | 缺失 |
-| Retry | `-maxretry` 和 per-skill override | 只有 config 中的 per-skill retry |
-| 控制行为 | `-skip_error`、`-skip_pp`、`-rename`、`-debug` | 缺失 |
+| Config 参数 | `-configyaml` | 已对齐，无 `-config` alias |
+| Platform | `-platform=windows,linux` | 已对齐；拒绝 Analyzer `all-platform` |
+| Game version fallback | `CS2VIBE_GAMEVER` | `GSVIBE_GAMEVER` |
+| Agent 默认值 | `claude` | 已对齐；支持 `GSVIBE_AGENT` |
+| Agent model | `-agent_model` / `CS2VIBE_AGENT_MODEL` | `-agent_model` / `GSVIBE_AGENT_MODEL` |
+| LLM 参数 | `-llm_*` / `CS2VIBE_LLM_*` | `-llm_*` / `GSVIBE_LLM_*`；不再读取 `OPENAI_*` |
+| IDA 参数 | `-ida_args` | 随 IDA MCP lifecycle 延期 |
+| Retry | `-maxretry` 和 per-skill override | 已对齐；per-skill 显式值优先 |
+| 控制行为 | `-skip_error`、`-skip_pp`、`-rename`、`-debug` | 已对齐 `skip_error` / `skip_pp` / `debug`；`rename` 延期 |
 | Reporter | `-process_reporter`、Redis 参数、`-run_id` | 只有 `-console-events` |
-| Old version | 自动寻找；`major_update` 可禁用 | 只能显式传入 |
-| Plan preview | 无独立参数 | `-plan-only`，但未应用 module/skill filter |
+| Old version | 自动寻找；`major_update` 可禁用 | 已对齐为同 game family 自动选择；原样复制旧 YAML 已禁用 |
+| Plan preview | 无独立参数 | 已删除 `-plan-only` |
 
 出处：
 
-- GoldSrc：`ida_analyze_bin.py:308-358`
+- GoldSrc：`ida_analyze_bin.py:443-688`
 - CS2：`D:\CS2_VibeSignatures\ida_analyze_bin.py:1362-1538`
-- GoldSrc LLM 环境：`ida_llm_decompile.py:22-38`
+- GoldSrc LLM 环境：`ida_llm_decompile.py:15-75`
 
-### 行为差异
+### 行为状态
 
-- GoldSrc 对不存在的 `-modules` 值会得到空 module list，而不是明确报错；
-- GoldSrc `-plan-only` 使用完整 config，没有应用 `-modules` 和 `-skill`；
-- `agent_runner.build_agent_command()` 的 unsupported agent 会抛 `ValueError`，但 GoldSrc `main()` 不捕获该异常；
-- GoldSrc 默认不输出 summary，除非启用 console events；
-- CS2 的 `-skip_error` 只允许继续执行，最终只要存在失败仍返回非零状态；GoldSrc 只有 fail-fast；
-- CS2 scheduler 构造的 `-configyaml`、逗号 platform 和 reporter 环境变量不能直接传给 GoldSrc。
+- 不存在的 `-modules`、空或不存在的 `-skill`、重复/空 platform/module 值现在明确报错；
+- unsupported Agent 在 CLI preflight 阶段明确报错；
+- 默认输出配置回显和 success/fail/skip summary；
+- `-skip_error` 只允许继续执行，最终只要存在失败仍返回非零状态；
+- `-skip_pp` 会跳过 history、deterministic 和 LLM，直接进入 Agent；
+- CS2 scheduler 的 `-configyaml` 与逗号 platform 可以复用，但 Reporter 环境变量仍不能直接传给 GoldSrc。
 
-### 对齐目标
+### 已落实规则
 
-- 统一外部语义并为现有 GoldSrc 参数保留兼容 alias；
-- 环境变量可以使用 GoldSrc-specific namespace，但字段语义应与 CS2 对齐；
-- `plan-only` 必须与真实执行使用同一 filter 和 plan builder；
+- 统一外部语义，不保留旧 GoldSrc CLI alias；
+- 环境变量固定使用 `GSVIBE_*`，字段语义与 CS2 对齐；
+- Plan preview 删除，真实执行继续使用统一 plan builder；
 - 所有可预期配置、参数、Agent 和 preprocessor 错误应统一转为明确诊断和非零退出。
 
 ## 3. Config schema 与 DAG 契约差异
@@ -322,7 +335,10 @@ await preprocess_single_skill_via_mcp(
 
 ## 6. History reuse 会复制陈旧地址
 
-GoldSrc `reuse_unique_history_artifact()`：
+当前缓解状态：旧 YAML 直接复制路径已禁用。Analyzer 仍解析/自动选择同 game family 的 `oldgamever` 并把旧目录
+提供给分析上下文，但在后续 MCP-bound history migration 完成前不会用旧工件生成新 YAML。
+
+此前的 GoldSrc `reuse_unique_history_artifact()`：
 
 1. 读取旧 YAML；
 2. 提取所有 `*_sig`；
@@ -345,7 +361,8 @@ function/global/patch metadata，并重建输出 YAML。例如 function reuse �
 
 出处：
 
-- GoldSrc：`ida_analyze_bin.py:117-141,183-191`
+- GoldSrc 当前缓解：`ida_analyze_bin.py:156-190,236-238`
+- GoldSrc 移除前基线：`cabdc95:ida_analyze_bin.py:117-141,183-191`
 - CS2 function reuse：`D:\CS2_VibeSignatures\ida_analyze_util.py:2839-2969,3238-3274`
 - CS2 global reuse：`D:\CS2_VibeSignatures\ida_analyze_util.py:4717`
 - CS2 patch reuse：`D:\CS2_VibeSignatures\ida_analyze_util.py:4883-4979`
@@ -621,14 +638,15 @@ GoldSrc 应保留：
 
 ### Phase 1：统一外部 contract
 
-- 兼容 CS2 语义的 CLI 和环境变量；
+- 兼容 CS2 语义的 CLI 和 `GSVIBE_*` 环境变量（已完成）；
 - 明确 `category` 与 `type/kind` 的兼容策略；
-- 修复 module validation 和 `plan-only` filter；
+- module/skill validation 已修复，`plan-only` 已删除；
 - 决定是否支持 game-root 内跨模块 artifact；
-- 定义 versioned execution plan 和 event schema；
+- 定义 versioned execution plan 和 event schema（Reporter 本次延期）；
 - 更新 repository-contract tests 和架构文档。
 
-验收标准：同一组 module/platform/skill filter 在 preview、直接执行和未来 scheduler 中生成相同 execution graph。
+验收标准：同一组 module/platform/skill filter 在直接执行和未来 scheduler 中生成相同 execution graph；不再提供
+独立 preview 入口。
 
 ### Phase 2：接入 IDA runtime
 
@@ -684,4 +702,3 @@ GoldSrc 应保留：
 - Redis scheduler/reporter 或明确等价实现支持持久恢复；
 - Windows self-hosted workflow 至少验证一次真实 GoldSrc IDA 分析；
 - x86、flat output、candidate 和 GoldSrc-specific 安全边界未被 Source2 假设破坏。
-

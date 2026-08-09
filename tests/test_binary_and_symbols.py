@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from binary_format import BinaryFormatError, inspect_binary, validate_binary
 from binary_hashing import hash_file
@@ -123,6 +125,45 @@ class OptionalIntegrationHelpersTests(unittest.TestCase):
             client=client,
         )
         self.assertEqual({"address": "0x10"}, result)
+
+    def test_llm_environment_uses_only_gsvibe_namespace(self):
+        with (
+            patch("ida_llm_decompile.load_dotenv"),
+            patch.dict(
+                os.environ,
+                {
+                    "GSVIBE_LLM_MODEL": "gsvibe-model",
+                    "GSVIBE_LLM_APIKEY": "gsvibe-key",
+                    "GSVIBE_LLM_BASEURL": "https://example.invalid/v1",
+                    "GSVIBE_LLM_TEMPERATURE": "0.5",
+                    "GSVIBE_LLM_FAKE_AS": "codex",
+                    "GSVIBE_LLM_EFFORT": "high",
+                    "OPENAI_MODEL": "ignored-model",
+                    "OPENAI_API_KEY": "ignored-key",
+                },
+                clear=True,
+            ),
+        ):
+            config = LlmConfig.from_environment()
+        self.assertEqual("gsvibe-model", config.model)
+        self.assertEqual("gsvibe-key", config.api_key)
+        self.assertEqual("https://example.invalid/v1", config.base_url)
+        self.assertEqual(0.5, config.temperature)
+        self.assertEqual("codex", config.fake_as)
+        self.assertEqual("high", config.effort)
+
+    def test_openai_environment_aliases_are_not_read(self):
+        with (
+            patch("ida_llm_decompile.load_dotenv"),
+            patch.dict(
+                os.environ,
+                {"OPENAI_MODEL": "ignored-model", "OPENAI_API_KEY": "ignored-key"},
+                clear=True,
+            ),
+        ):
+            config = LlmConfig.from_environment()
+        self.assertEqual("gpt-4o", config.model)
+        self.assertIsNone(config.api_key)
 
 
 if __name__ == "__main__":

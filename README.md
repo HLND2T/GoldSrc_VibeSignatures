@@ -22,7 +22,7 @@ Downloaded depots, binaries, IDA databases, candidates, and generated outputs ar
 uv run python download_depot.py -tag cstrike-10120 -depotdir depots
 uv run python copy_depot_bin.py -gamever cstrike-10120 -platform all-platform
 uv run python copy_depot_bin.py -gamever cstrike-10120 -platform windows -checkonly
-uv run python ida_analyze_bin.py -gamever cstrike-10120 -oldgamever cstrike-previous-10000
+uv run python ida_analyze_bin.py -gamever cstrike-10120 -configyaml configs/cstrike-10120.yaml -platform windows,linux
 
 uv run python gamesymbol_candidate.py build -gamever cstrike-10120 -bindir bin -output .candidates/candidate.yaml -session .candidates/session.json
 uv run python gamesymbol_candidate.py guard -candidate .candidates/candidate.yaml -session .candidates/session.json
@@ -45,8 +45,13 @@ uv run python gamesymbol_snapshot.py check-contract -gamever cstrike-10120
 
 ## Analysis contract
 
-Analysis order is fixed: a unique old-version signature, deterministic preprocessor, LLM preprocessor, then Agent
-skill. Required and optional artifacts plus explicit prerequisites form one DAG. Unsafe paths, cycles, duplicate or
+Analysis order is currently deterministic preprocessor, LLM preprocessor, then Agent skill. Unsafe raw history reuse is
+disabled: `-oldgamever` selects the latest older build from the same game family and exposes its directory to analysis
+context, but the analyzer never copies old YAML into the new build. Address-aware history reconstruction remains
+deferred until the IDA MCP runtime migration. A `major_update: true` download entry disables automatic old-version
+selection.
+
+Required and optional artifacts plus explicit prerequisites form one DAG. Unsafe paths, cycles, duplicate or
 case-colliding names, missing required inputs, wrong architectures, and binary mutation are fatal.
 
 The flat artifact path is `bin/<tag>/<module>/<symbol>.<platform>.yaml`. Supported categories are `func`, `gv`,
@@ -55,6 +60,27 @@ specific skill, historical artifact, or explicit address must provide vtables an
 are four bytes.
 
 See [docs/architecture.md](docs/architecture.md) and [docs/generator-contract.md](docs/generator-contract.md).
+
+## Analyzer CLI and environment
+
+`ida_analyze_bin.py` uses the CS2-style CLI contract with the GoldSrc-specific `GSVIBE_*` environment namespace.
+Explicit CLI values override environment values, which override program defaults. Copy `.env.example` to `.env` for a
+local template. The supported environment variables are:
+
+- `GSVIBE_GAMEVER`;
+- `GSVIBE_AGENT` and `GSVIBE_AGENT_MODEL`;
+- `GSVIBE_LLM_MODEL`, `GSVIBE_LLM_APIKEY`, `GSVIBE_LLM_BASEURL`, `GSVIBE_LLM_TEMPERATURE`,
+  `GSVIBE_LLM_FAKE_AS`, and `GSVIBE_LLM_EFFORT`.
+
+The analyzer accepts `-configyaml`, comma-separated `-platform` and `-modules`, `-skill`, `-agent`, `-agent_model`, the
+matching `-llm_*` arguments, `-maxretry`, `-oldgamever`, `-debug`, `-skip_error`, `-skip_pp`, and the local
+`-console-events` adapter. Per-skill `max_retries` overrides `-maxretry`. `-skip_pp` bypasses history, deterministic, and
+LLM preprocessing; `-skip_error` continues after runtime failures but the final exit status remains nonzero.
+
+The old `-config`, analyzer `all-platform`, and `-plan-only` spellings are removed without aliases. Generic
+`-vcall_finder` is excluded for GoldSrc. `-ida_args` and `-rename` are deferred with the owned IDA MCP lifecycle;
+CS2-style process/Redis Reporter arguments and environment variables are also deferred. The existing local
+`-console-events` reporter remains available.
 
 ## Verification
 
@@ -70,7 +96,8 @@ available. A skipped integration test is not evidence that real IDA analysis pas
 
 ## Scope
 
-This repository does not include a web service, cache-backed scheduler, UI, C++ layout extraction, automatic version
-bumping, hosted release promotion, production symbols, or a target-specific gamedata generator.
+This repository currently does not include a web service, cache-backed scheduler, Redis process Reporter, UI, C++
+layout extraction, automatic version bumping, hosted release promotion, production symbols, or a target-specific
+gamedata generator. Reporter migration is deferred rather than implemented by the analyzer CLI alignment.
 
 Licensed under the [MIT License](LICENSE.md).

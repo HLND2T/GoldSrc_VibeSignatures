@@ -74,6 +74,23 @@ class DownloadConfigTests(unittest.TestCase):
         self.assertEqual("Sven-Coop", by_tag["svencoop-10257"]["basepath"])
         self.assertNotIn("config", by_tag["svencoop-10257"])
 
+    def test_major_update_must_be_boolean_when_present(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "download.yaml"
+            path.write_text(
+                """downloads:
+  - tag: game-1
+    appid: 1
+    basepath: Game
+    major_update: invalid
+    manifests:
+      '1': '1'
+""",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(download_depot.ConfigError, "major_update"):
+                download_depot.load_downloads(path)
+
     def test_filelist_collects_both_platforms(self):
         root = Path(__file__).parents[1]
         paths = download_depot.load_module_filelist(root / "configs" / "cstrike-10120.yaml")

@@ -112,8 +112,8 @@ def _parse_skill(raw: object, context: str) -> dict:
     platform = raw.get("platform")
     if platform is not None and platform not in PLATFORMS:
         raise AnalysisPlanError(f"{context}.platform must be windows or linux")
-    retry = raw.get("max_retries", raw.get("retry", 3))
-    if isinstance(retry, bool) or not isinstance(retry, int) or not 1 <= retry <= 20:
+    retry = raw["max_retries"] if "max_retries" in raw else raw.get("retry")
+    if retry is not None and (isinstance(retry, bool) or not isinstance(retry, int) or not 1 <= retry <= 20):
         raise AnalysisPlanError(f"{context}.max_retries must be an integer from 1 to 20")
     aliases = _coalesced_list(raw, "aliases", ("alias",), context)
     normalized = {
@@ -266,11 +266,22 @@ def _topological_order(nodes: list[PlanNode], edges: list[PlanEdge]) -> list[Pla
 
 
 def build_execution_plan(
-    modules: list[dict], *, platforms: Iterable[str], bin_dir: str | Path, tag: str
+    modules: list[dict],
+    *,
+    platforms: Iterable[str],
+    bin_dir: str | Path,
+    tag: str,
+    default_max_retries: int = 3,
 ) -> ExecutionPlan:
     selected = tuple(platforms)
     if not selected or any(platform not in PLATFORMS for platform in selected):
         raise AnalysisPlanError("Platforms must contain windows and/or linux")
+    if (
+        isinstance(default_max_retries, bool)
+        or not isinstance(default_max_retries, int)
+        or not 1 <= default_max_retries <= 20
+    ):
+        raise AnalysisPlanError("default_max_retries must be an integer from 1 to 20")
     root = Path(bin_dir) / tag
     nodes: list[PlanNode] = []
     producers: dict[tuple[str, str, str], str] = {}
@@ -301,7 +312,7 @@ def build_execution_plan(
                     optional_outputs,
                     tuple(skill["prerequisite"]),
                     skip_paths,
-                    skill["max_retries"],
+                    skill["max_retries"] if skill["max_retries"] is not None else default_max_retries,
                     tuple(skill["aliases"]),
                     order,
                 )

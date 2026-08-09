@@ -13,7 +13,7 @@ Linux ELF32/I386，按依赖 DAG 执行分析，将平面 YAML 工件封装为 s
 uv sync --locked
 uv run python download_depot.py -tag cstrike-10120 -depotdir depots
 uv run python copy_depot_bin.py -gamever cstrike-10120 -platform all-platform
-uv run python ida_analyze_bin.py -gamever cstrike-10120
+uv run python ida_analyze_bin.py -gamever cstrike-10120 -configyaml configs/cstrike-10120.yaml -platform windows,linux
 ```
 
 完整候选构建、gamedata 门禁与发布命令见 [README.md](README.md)。架构和安全边界见
@@ -22,12 +22,33 @@ uv run python ida_analyze_bin.py -gamever cstrike-10120
 
 ## 分析与发布约束
 
-- 分析顺序固定为：旧版本唯一签名复用 → deterministic preprocessor → LLM preprocessor → Agent skill。
+- 当前分析顺序为 deterministic preprocessor → LLM preprocessor → Agent skill。旧 YAML 直接复制已禁用；
+  `-oldgamever` 只选择同一 game family 的最近旧版本并写入分析上下文，地址感知的 history 重建延期到 IDA MCP
+  runtime 迁移。`download.yaml` 中的 `major_update: true` 会禁用自动旧版本选择。
 - 工件固定为 `bin/<tag>/<module>/<symbol>.<platform>.yaml`；跨目录路径、重复名称、大小写冲突、环路和缺失必需输入均拒绝。
 - 支持 `func`、`gv`、`vfunc`、`vtable`、`patch`、`struct`、`structmember`。
 - x86 `gv` 使用 `operand` 或排序后的 `data_xref`，可执行 0–2 次 32 位解引用。
 - 不提供隐式 RTTI 或通用 vtable finder；x86 vfunc slot 固定为 4 字节。
 - game-symbol 发布前必须通过受 guard 保护的 `gamedata` 步骤；零 generator 时允许空 inventory。
+
+## Analyzer CLI 与环境变量
+
+`ida_analyze_bin.py` 采用 CS2 风格 CLI，并使用 GoldSrc 专属的 `GSVIBE_*` 环境变量。优先级为显式 CLI、环境
+变量、程序默认值；`.env.example` 是可复制的本地模板。支持：
+
+- `GSVIBE_GAMEVER`；
+- `GSVIBE_AGENT`、`GSVIBE_AGENT_MODEL`；
+- `GSVIBE_LLM_MODEL`、`GSVIBE_LLM_APIKEY`、`GSVIBE_LLM_BASEURL`、`GSVIBE_LLM_TEMPERATURE`、
+  `GSVIBE_LLM_FAKE_AS`、`GSVIBE_LLM_EFFORT`。
+
+CLI 支持 `-configyaml`、逗号分隔的 `-platform` / `-modules`、`-skill`、`-agent`、`-agent_model`、全部
+`-llm_*` 参数、`-maxretry`、`-oldgamever`、`-debug`、`-skip_error`、`-skip_pp` 和本地
+`-console-events`。skill 显式 `max_retries` 优先于全局 `-maxretry`；`-skip_pp` 会跳过 history、deterministic
+和 LLM preprocessing；`-skip_error` 只控制继续执行，只要存在失败最终仍返回非零。
+
+旧 `-config`、Analyzer 的 `all-platform` 和 `-plan-only` 已无 alias 删除。GoldSrc 排除 generic
+`-vcall_finder`。`-ida_args` 与 `-rename` 随 owned IDA MCP 生命周期延期；CS2 风格 process/Redis Reporter 的
+参数与环境变量也在本次延期，现有本地 `-console-events` 保留。
 
 ## 本地门禁
 

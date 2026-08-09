@@ -26,14 +26,12 @@ class RepositoryContractTests(unittest.TestCase):
                 self.assertTrue(module["path_windows"].startswith(entry["basepath"] + "/"))
                 self.assertTrue(module["path_linux"].startswith(entry["basepath"] + "/"))
 
-    def test_production_configs_are_valid_empty_scaffolds(self):
+    def test_production_configs_have_expected_modules_and_paths(self):
         for tag in TAGS:
             document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
             modules = parse_config_document(document)
             self.assertEqual(MODULES, {module["name"] for module in modules})
-            for module in document["modules"]:
-                self.assertEqual([], module["skills"])
-                self.assertEqual([], module["symbols"])
+            for module in modules:
                 self.assertTrue(module["path_windows"])
                 self.assertTrue(module["path_linux"])
 

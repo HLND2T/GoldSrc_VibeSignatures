@@ -42,7 +42,15 @@ def preprocess_skill(skill_name: str, *, context: dict, scripts_dir: str | Path 
 
 
 def preprocess_skill_with_llm(
-    skill_name: str, *, context: dict, scripts_dir: str | Path = "ida_llm_preprocessor_scripts"
+    skill_name: str,
+    *,
+    context: dict,
+    llm_config: dict | None = None,
+    scripts_dir: str | Path = "ida_llm_preprocessor_scripts",
 ) -> bool:
     function = _load_preprocessor(scripts_dir, skill_name, "preprocess_skill_with_llm")
-    return bool(function(context=context)) if function else False
+    if function is None:
+        return False
+    llm_context = dict(context)
+    llm_context["llm_config"] = dict(llm_config or {})
+    return bool(function(context=llm_context))

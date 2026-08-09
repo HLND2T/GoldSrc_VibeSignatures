@@ -64,6 +64,8 @@ def load_downloads(config_path: str | Path) -> list[dict]:
         if not isinstance(entry.get("basepath"), str) or not entry["basepath"]:
             raise ConfigError(f"downloads[{index}].basepath must be a non-empty string")
         _safe_relative(entry["basepath"], f"downloads[{index}].basepath")
+        if "major_update" in entry and not isinstance(entry["major_update"], bool):
+            raise ConfigError(f"downloads[{index}].major_update must be a boolean")
         manifests = entry.get("manifests")
         if not isinstance(manifests, dict) or not manifests:
             raise ConfigError(f"downloads[{index}].manifests must be a non-empty mapping")

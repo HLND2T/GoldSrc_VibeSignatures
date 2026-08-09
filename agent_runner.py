@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import sys
 from collections.abc import Callable
 from pathlib import Path
 
@@ -74,6 +75,7 @@ def run_skill(
     timeout: int = SKILL_TIMEOUT,
     progress_callback: Callable[..., None] | None = None,
     mcp_preflight: bool = True,
+    debug: bool = False,
 ) -> bool:
     skill_path = Path(".claude") / "skills" / skill_name / "SKILL.md"
     if not skill_path.is_file() or not 1 <= max_retries <= 20:
@@ -91,6 +93,11 @@ def run_skill(
             result = subprocess.run(command, capture_output=True, text=True, timeout=timeout, check=False)
         except (OSError, subprocess.TimeoutExpired):
             continue
+        if debug:
+            if result.stdout:
+                print(result.stdout, end="" if result.stdout.endswith("\n") else "\n")
+            if result.stderr:
+                print(result.stderr, end="" if result.stderr.endswith("\n") else "\n", file=sys.stderr)
         if result.returncode == 0 and all(path.is_file() for path in expected):
             if progress_callback:
                 progress_callback(event="succeeded", attempt=attempt + 1, max_attempts=max_retries)
