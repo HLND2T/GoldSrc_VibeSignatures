@@ -1,0 +1,7 @@
+modules:
+  - name: engine
+    path_windows: Half-Life/hw.dll
+    path_linux: Half-Life/hw.so
+    skills:
+
+    symbols:
