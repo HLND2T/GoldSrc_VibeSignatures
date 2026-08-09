@@ -73,14 +73,14 @@ local template. The supported environment variables are:
   `GSVIBE_LLM_FAKE_AS`, and `GSVIBE_LLM_EFFORT`.
 
 The analyzer accepts `-configyaml`, comma-separated `-platform` and `-modules`, `-skill`, `-agent`, `-agent_model`, the
-matching `-llm_*` arguments, `-maxretry`, `-oldgamever`, `-debug`, `-skip_error`, `-skip_pp`, and the local
+matching `-llm_*` arguments, `-maxretry`, `-oldgamever`, `-ida_args`, `-debug`, `-skip_error`, `-skip_pp`, and the local
 `-console-events` adapter. Per-skill `max_retries` overrides `-maxretry`. `-skip_pp` bypasses history, deterministic, and
 LLM preprocessing; `-skip_error` continues after runtime failures but the final exit status remains nonzero.
 
 The old `-config`, analyzer `all-platform`, and `-plan-only` spellings are removed without aliases. Generic
-`-vcall_finder` is excluded for GoldSrc. `-ida_args` and `-rename` are deferred with the owned IDA MCP lifecycle;
-CS2-style process/Redis Reporter arguments and environment variables are also deferred. The existing local
-`-console-events` reporter remains available.
+`-vcall_finder` is excluded for GoldSrc. Pending work starts one owned `idalib-mcp` lifecycle per binary on
+`127.0.0.1:13337`; `-ida_args` appends IDA startup arguments. `-rename`, CS2-style process/Redis Reporter arguments,
+and their environment variables remain deferred. The existing local `-console-events` reporter remains available.
 
 ## Verification
 

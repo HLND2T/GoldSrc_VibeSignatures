@@ -30,9 +30,11 @@ and is disabled by `major_update: true`. The selected old directory is context o
 can relocate signatures and rebuild addresses.
 
 The binary is validated as 32-bit I386 before work and its SHA-256 is checked after every skill and again after the
-whole job. `ida_mcp_session.py` can bind calls to one exact active database by normalized binary identity, but the
-analyzer does not yet own the IDA MCP startup, validation, recovery, or shutdown lifecycle. Consequently `-ida_args`
-and `-rename` remain deferred.
+whole job. For each module/platform binary with pending work, the analyzer owns one `idalib-mcp` lifecycle: it checks
+the IDB lock and port, starts the supervisor, waits for the MCP contract, binds the exact active database, validates
+survey identity, allows one health recovery, and performs targeted owned-worker shutdown plus port release. Bound
+host/port/database metadata is exposed to preprocessors through `context["mcp"]`; `-ida_args` is supported while
+`-rename` remains deferred.
 
 `-skip_pp` bypasses history plus both preprocessor layers and runs Agent Skills directly. `-skip_error` allows later
 module/platform/skill work to continue after runtime failures, while configuration and DAG contract failures remain

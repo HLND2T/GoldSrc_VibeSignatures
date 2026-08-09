@@ -28,9 +28,11 @@ history stage 名称仍保留，但旧 YAML 直接复制已禁用，因为携带
 同一 game family 中更早的最高 build，并可通过 `major_update: true` 禁用。当前只把选中的旧目录写入上下文，
 直到 MCP-bound 实现能够重新定位 signature 并重建地址。
 
-二进制在分析前必须是 32 位 I386；每个 skill 后以及整个 job 结束时都会重新核对 SHA-256。IDA MCP 会按规范化
-二进制路径绑定唯一活动数据库的 helper 已存在，但 Analyzer 尚未拥有 IDA MCP 的启动、校验、恢复与关闭生命周期，
-所以 `-ida_args` 和 `-rename` 仍延期。
+二进制在分析前必须是 32 位 I386；每个 skill 后以及整个 job 结束时都会重新核对 SHA-256。对每个仍有待执行工作的
+module/platform binary，Analyzer 拥有一次完整 `idalib-mcp` 生命周期：检查 IDB lock 与端口、启动 supervisor、等待
+MCP contract ready、绑定唯一活动数据库、核对 survey identity、允许一次健康恢复，并定向关闭 owned worker、停止
+supervisor、等待端口释放。绑定后的 host/port/database 信息通过 `context["mcp"]` 传给 preprocessor；`-ida_args`
+已支持，`-rename` 仍延期。
 
 `-skip_pp` 跳过 history 与两个 preprocessor 层，直接运行 Agent Skill。`-skip_error` 允许运行期的后续
 module/platform/skill 继续，但 config 与 DAG contract 错误仍立即失败；任何已记录运行失败最终都会返回非零。

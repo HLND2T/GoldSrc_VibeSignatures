@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import hashlib
 import io
 import os
 import tempfile
 import unittest
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import asynccontextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from agent_runner import build_agent_command
 from analysis_planner import (
@@ -17,15 +19,26 @@ from analysis_planner import (
 )
 from ida_analyze_bin import (
     ANALYSIS_STAGES,
+    DEFAULT_HOST,
+    DEFAULT_PORT,
     AnalysisRunError,
     AnalysisSummary,
+    IdaMcpLifecycle,
+    McpLifecycleError,
+    McpRecoveryBudget,
+    McpRuntime,
     _is_major_update_gamever,
     analyze,
+    ensure_mcp_available,
     main,
     parse_args,
+    quit_ida_via_mcp,
     resolve_oldgamever,
     run_analysis_pipeline,
+    start_idalib_mcp,
+    validate_opened_binary_identity,
 )
+from ida_mcp_session import McpDatabaseBinding
 from process_reporter import InMemoryReporter
 from tests.test_support import write_pe32
 
@@ -62,6 +75,11 @@ def module(skills):
             "symbols": [],
         }
     ]
+
+
+@asynccontextmanager
+async def bound_session_context(binding, call_tool):
+    yield SimpleNamespace(binding=binding, call_tool=call_tool)
 
 
 class ConfigValidationTests(unittest.TestCase):
@@ -154,9 +172,12 @@ class CliContractTests(unittest.TestCase):
             return parse_args(list(argv))
 
     def assert_parse_error(self, argv, env=None):
-        with patch.dict(os.environ, env or {}, clear=True), redirect_stderr(io.StringIO()):
-            with self.assertRaises(SystemExit) as raised:
-                parse_args(list(argv))
+        with (
+            patch.dict(os.environ, env or {}, clear=True),
+            redirect_stderr(io.StringIO()),
+            self.assertRaises(SystemExit) as raised,
+        ):
+            parse_args(list(argv))
         self.assertEqual(2, raised.exception.code)
 
     def test_cs2_style_defaults_use_gsvibe_namespace(self):
@@ -173,6 +194,7 @@ class CliContractTests(unittest.TestCase):
         self.assertIsNone(args.llm_fake_as)
         self.assertEqual("medium", args.llm_effort)
         self.assertEqual(3, args.maxretry)
+        self.assertEqual("", args.ida_args)
 
     def test_cli_values_override_gsvibe_environment(self):
         args = self.parse_args(
@@ -199,6 +221,8 @@ class CliContractTests(unittest.TestCase):
                 "high",
                 "-maxretry",
                 "4",
+                "-ida_args",
+                "quiet",
                 "-console-events",
             ],
             env={
@@ -224,6 +248,7 @@ class CliContractTests(unittest.TestCase):
         self.assertEqual("codex", args.llm_fake_as)
         self.assertEqual("high", args.llm_effort)
         self.assertEqual(4, args.maxretry)
+        self.assertEqual("quiet", args.ida_args)
         self.assertTrue(args.console_events)
 
     def test_removed_and_deferred_options_are_rejected(self):
@@ -232,7 +257,6 @@ class CliContractTests(unittest.TestCase):
             "-plan-only",
             "-vcall_finder",
             "-rename",
-            "-ida_args",
             "-process_reporter",
             "-run_id",
         ):
@@ -528,10 +552,21 @@ class DagTests(unittest.TestCase):
             )
             write_pe32(root / "bin" / "game-1" / "engine" / "hw.dll")
             summary = AnalysisSummary()
-            with patch(
-                "ida_analyze_bin.run_analysis_pipeline",
-                side_effect=[AnalysisRunError("first failed"), "agent"],
-            ) as pipeline:
+            lifecycle = MagicMock()
+            lifecycle.__enter__.return_value = lifecycle
+            lifecycle.runtime = McpRuntime(
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                "hw.dll",
+                McpDatabaseBinding(False, None, "hw.dll", "worker", True, True),
+            )
+            with (
+                patch("ida_analyze_bin.IdaMcpLifecycle", return_value=lifecycle),
+                patch(
+                    "ida_analyze_bin.run_analysis_pipeline",
+                    side_effect=[AnalysisRunError("first failed"), "agent"],
+                ) as pipeline,
+            ):
                 analyze(
                     gamever="game-1",
                     config_path=config,
@@ -560,7 +595,16 @@ class DagTests(unittest.TestCase):
             )
             write_pe32(root / "bin" / "game-1" / "engine" / "hw.dll")
             summary = AnalysisSummary()
+            lifecycle = MagicMock()
+            lifecycle.__enter__.return_value = lifecycle
+            lifecycle.runtime = McpRuntime(
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                "hw.dll",
+                McpDatabaseBinding(False, None, "hw.dll", "worker", True, True),
+            )
             with (
+                patch("ida_analyze_bin.IdaMcpLifecycle", return_value=lifecycle),
                 patch(
                     "ida_analyze_bin.run_analysis_pipeline",
                     side_effect=AnalysisRunError("first failed"),
@@ -598,6 +642,288 @@ class DagTests(unittest.TestCase):
                     platforms=["windows"],
                     modules_filter=["missing"],
                 )
+
+
+class McpLifecycleTests(unittest.TestCase):
+    def test_runtime_is_exposed_to_preprocessor_context(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "game-1"
+            binary = root / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"binary")
+            node = build_execution_plan(
+                module([skill("find", output=["result.yaml"])]),
+                platforms=["windows"],
+                bin_dir=Path(temporary),
+                tag="game-1",
+            ).nodes[0]
+            runtime = McpRuntime(
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                str(binary),
+                McpDatabaseBinding(True, "server-db", str(binary), "worker", True, True),
+            )
+            seen = {}
+
+            def deterministic(_name, *, context):
+                seen.update(context["mcp"])
+                Path(context["required_outputs"][0]).write_text("ok: true\n", encoding="utf-8")
+                return True
+
+            self.assertEqual(
+                "deterministic",
+                run_analysis_pipeline(
+                    node,
+                    binary_path=binary,
+                    game_root=root,
+                    old_game_root=None,
+                    agent="codex",
+                    reporter=InMemoryReporter(),
+                    mcp_runtime=runtime,
+                    deterministic_runner=deterministic,
+                ),
+            )
+            self.assertEqual(DEFAULT_HOST, seen["host"])
+            self.assertEqual(DEFAULT_PORT, seen["port"])
+            self.assertEqual("server-db", seen["database"])
+            self.assertTrue(seen["auto_started"])
+
+    def test_all_existing_outputs_skip_ida_startup(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text(
+                """modules:
+  - name: engine
+    path_windows: Game/hw.dll
+    skills:
+      - name: first
+        expected_output: [result.yaml]
+""",
+                encoding="utf-8",
+            )
+            module_root = root / "bin" / "game-1" / "engine"
+            write_pe32(module_root / "hw.dll")
+            (module_root / "result.yaml").write_text("ok: true\n", encoding="utf-8")
+            summary = AnalysisSummary()
+            with patch("ida_analyze_bin.IdaMcpLifecycle", side_effect=AssertionError("must not start")):
+                analyze(
+                    gamever="game-1",
+                    config_path=config,
+                    bindir=root / "bin",
+                    platforms=["windows"],
+                    reporter=InMemoryReporter(),
+                    summary=summary,
+                )
+            self.assertEqual((0, 0, 1), (summary.successful, summary.failed, summary.skipped))
+
+    def test_analyze_owns_one_lifecycle_per_binary(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text(
+                """modules:
+  - name: engine
+    path_windows: Game/hw.dll
+    skills:
+      - name: first
+      - name: second
+""",
+                encoding="utf-8",
+            )
+            binary = root / "bin" / "game-1" / "engine" / "hw.dll"
+            write_pe32(binary)
+            runtime = McpRuntime(
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                str(binary),
+                McpDatabaseBinding(False, None, str(binary), "worker", True, True),
+            )
+            lifecycle = MagicMock()
+            lifecycle.__enter__.return_value = lifecycle
+            lifecycle.runtime = runtime
+            summary = AnalysisSummary()
+            with (
+                patch("ida_analyze_bin.IdaMcpLifecycle", return_value=lifecycle) as lifecycle_type,
+                patch("ida_analyze_bin.run_analysis_pipeline", side_effect=["agent", "agent"]) as pipeline,
+            ):
+                analyze(
+                    gamever="game-1",
+                    config_path=config,
+                    bindir=root / "bin",
+                    platforms=["windows"],
+                    ida_args="quiet",
+                    reporter=InMemoryReporter(),
+                    summary=summary,
+                )
+            lifecycle_type.assert_called_once_with(binary, "windows", DEFAULT_HOST, DEFAULT_PORT, "quiet", False)
+            lifecycle.ensure_ready.assert_called_once_with()
+            self.assertIs(runtime, pipeline.call_args_list[0].kwargs["mcp_runtime"])
+            self.assertIs(runtime, pipeline.call_args_list[1].kwargs["mcp_runtime"])
+            self.assertEqual((2, 0, 0), (summary.successful, summary.failed, summary.skipped))
+
+    def test_id0_lock_fails_before_process_start(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary) / "hw.dll"
+            binary.write_bytes(b"binary")
+            Path(f"{binary}.id0").write_bytes(b"lock")
+            with (
+                patch("ida_analyze_bin.start_idalib_mcp") as start,
+                self.assertRaisesRegex(McpLifecycleError, "IDB lock file detected"),
+            ):
+                IdaMcpLifecycle(binary, "windows", DEFAULT_HOST, DEFAULT_PORT, "").__enter__()
+            start.assert_not_called()
+
+    def test_start_builds_argument_vector_and_requires_readiness(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        with (
+            patch("ida_analyze_bin.is_port_in_use", return_value=False),
+            patch("ida_analyze_bin.subprocess.Popen", return_value=process) as popen,
+            patch("ida_analyze_bin.wait_for_mcp_ready", return_value=True) as ready,
+        ):
+            result = start_idalib_mcp("hw.dll", DEFAULT_HOST, DEFAULT_PORT, "batch quiet")
+        self.assertIs(process, result)
+        self.assertEqual(
+            [
+                "idalib-mcp",
+                "--unsafe",
+                "--host",
+                DEFAULT_HOST,
+                "--port",
+                str(DEFAULT_PORT),
+                "batch",
+                "quiet",
+                "hw.dll",
+            ],
+            popen.call_args.args[0],
+        )
+        ready.assert_called_once_with(process, DEFAULT_HOST, DEFAULT_PORT)
+
+    def test_opened_binary_identity_uses_hash_and_platform_metadata(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary) / "hw.dll"
+            binary.write_bytes(b"binary")
+            sha256 = hashlib.sha256(b"binary").hexdigest()
+            ok, reasons = validate_opened_binary_identity(
+                binary,
+                "windows",
+                {"metadata": {"sha256": sha256, "arch": "32", "format": "PE"}},
+            )
+            self.assertTrue(ok, reasons)
+            ok, reasons = validate_opened_binary_identity(
+                binary,
+                "linux",
+                {"metadata": {"sha256": sha256, "arch": "32", "format": "PE"}},
+            )
+            self.assertFalse(ok)
+            self.assertTrue(any("PE database" in reason for reason in reasons), reasons)
+
+    def test_recovery_budget_allows_only_one_restart(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        restarted = MagicMock()
+        restarted.poll.return_value = None
+        budget = McpRecoveryBudget()
+        with (
+            patch("ida_analyze_bin.check_mcp_worker_health", new=AsyncMock(return_value=False)),
+            patch("ida_analyze_bin.quit_ida_gracefully"),
+            patch("ida_analyze_bin.is_port_in_use", return_value=False),
+            patch("ida_analyze_bin.start_idalib_mcp", return_value=restarted) as start,
+        ):
+            first_process, first_ok = ensure_mcp_available(
+                process,
+                "hw.dll",
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                "",
+                False,
+                recovery_budget=budget,
+            )
+            second_process, second_ok = ensure_mcp_available(
+                restarted,
+                "hw.dll",
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                "",
+                False,
+                recovery_budget=budget,
+            )
+        self.assertIs(restarted, first_process)
+        self.assertTrue(first_ok)
+        self.assertIs(restarted, second_process)
+        self.assertFalse(second_ok)
+        start.assert_called_once_with("hw.dll", DEFAULT_HOST, DEFAULT_PORT, "", False)
+
+    def test_verified_lifecycle_uses_targeted_graceful_shutdown(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        binding = McpDatabaseBinding(False, None, "hw.dll", "worker", True, True)
+        runtime = McpRuntime(DEFAULT_HOST, DEFAULT_PORT, "hw.dll", binding)
+        with (
+            patch("ida_analyze_bin.start_idalib_mcp", return_value=process),
+            patch("ida_analyze_bin.verify_owned_mcp_with_single_recovery", return_value=(process, runtime)),
+            patch("ida_analyze_bin.quit_ida_gracefully") as quit_gracefully,
+            IdaMcpLifecycle("hw.dll", "windows", DEFAULT_HOST, DEFAULT_PORT, ""),
+        ):
+            pass
+        quit_gracefully.assert_called_once_with(
+            process,
+            DEFAULT_HOST,
+            DEFAULT_PORT,
+            expected_binary=Path("hw.dll"),
+            debug=False,
+        )
+
+    def test_unverified_lifecycle_only_stops_its_supervisor(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        with (
+            patch("ida_analyze_bin.start_idalib_mcp", return_value=process),
+            patch("ida_analyze_bin.verify_owned_mcp_with_single_recovery", return_value=(process, None)),
+            patch("ida_analyze_bin.stop_idalib_mcp_process") as stop,
+            patch("ida_analyze_bin.wait_for_port_release", return_value=True),
+            patch("ida_analyze_bin.quit_ida_gracefully") as quit_gracefully,
+            self.assertRaisesRegex(McpLifecycleError, "identity verification failed"),
+        ):
+            IdaMcpLifecycle("hw.dll", "windows", DEFAULT_HOST, DEFAULT_PORT, "").__enter__()
+        stop.assert_called_once_with(process, debug=False)
+        quit_gracefully.assert_not_called()
+
+
+class McpShutdownTests(unittest.IsolatedAsyncioTestCase):
+    async def test_qexit_is_sent_only_to_owned_auto_started_worker(self):
+        call_tool = AsyncMock()
+        owned = McpDatabaseBinding(True, "server-db", "hw.dll", "worker", True, True)
+        with patch(
+            "ida_analyze_bin.open_ida_mcp_session",
+            return_value=bound_session_context(owned, call_tool),
+        ):
+            self.assertTrue(
+                await quit_ida_via_mcp(
+                    DEFAULT_HOST,
+                    DEFAULT_PORT,
+                    expected_binary="hw.dll",
+                    auto_started=True,
+                )
+            )
+        call_tool.assert_awaited_once_with("py_eval", {"code": "import idc; idc.qexit(0)"})
+
+        call_tool = AsyncMock()
+        unowned = McpDatabaseBinding(True, "server-db", "hw.dll", "worker", False, True)
+        with patch(
+            "ida_analyze_bin.open_ida_mcp_session",
+            return_value=bound_session_context(unowned, call_tool),
+        ):
+            self.assertFalse(
+                await quit_ida_via_mcp(
+                    DEFAULT_HOST,
+                    DEFAULT_PORT,
+                    expected_binary="hw.dll",
+                    auto_started=True,
+                )
+            )
+        call_tool.assert_not_awaited()
 
 
 if __name__ == "__main__":

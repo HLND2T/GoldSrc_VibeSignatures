@@ -42,13 +42,14 @@ uv run python ida_analyze_bin.py -gamever cstrike-10120 -configyaml configs/cstr
   `GSVIBE_LLM_FAKE_AS`、`GSVIBE_LLM_EFFORT`。
 
 CLI 支持 `-configyaml`、逗号分隔的 `-platform` / `-modules`、`-skill`、`-agent`、`-agent_model`、全部
-`-llm_*` 参数、`-maxretry`、`-oldgamever`、`-debug`、`-skip_error`、`-skip_pp` 和本地
+`-llm_*` 参数、`-maxretry`、`-oldgamever`、`-ida_args`、`-debug`、`-skip_error`、`-skip_pp` 和本地
 `-console-events`。skill 显式 `max_retries` 优先于全局 `-maxretry`；`-skip_pp` 会跳过 history、deterministic
 和 LLM preprocessing；`-skip_error` 只控制继续执行，只要存在失败最终仍返回非零。
 
 旧 `-config`、Analyzer 的 `all-platform` 和 `-plan-only` 已无 alias 删除。GoldSrc 排除 generic
-`-vcall_finder`。`-ida_args` 与 `-rename` 随 owned IDA MCP 生命周期延期；CS2 风格 process/Redis Reporter 的
-参数与环境变量也在本次延期，现有本地 `-console-events` 保留。
+`-vcall_finder`。存在待执行工作时，每个 binary 会在 `127.0.0.1:13337` 启动一次 owned `idalib-mcp`
+生命周期，`-ida_args` 用于追加 IDA 启动参数。`-rename` 与 CS2 风格 process/Redis Reporter 的参数及环境变量
+仍延期，现有本地 `-console-events` 保留。
 
 ## 本地门禁
 

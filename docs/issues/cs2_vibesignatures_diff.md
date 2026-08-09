@@ -14,12 +14,11 @@ self-hosted IDA 环境持续运行的 infrastructure 水平。
 最关键的缺口不是单一启动脚本，而是一组相互依赖的运行时契约：
 
 1. production config、preprocessor 和 Agent skill 目前没有真实分析内容；
-2. 主流程没有启动、绑定、验证、恢复和关闭 `idalib-mcp`；
-3. GoldSrc preprocessor 接口与 CS2 的 MCP-bound 接口不兼容；
-4. 旧版本工件复用会直接复制旧地址，存在生成陈旧 `VA/RVA` 的风险；
-5. CLI 与环境变量已按本节决策对齐；配置 schema、artifact path、execution plan 和 reporter event 仍不兼容；
-6. Redis reporter/scheduler、进度 API、dashboard 和 self-hosted IDA CI 尚不存在；
-7. 部分缺口被当前文档和 repository-contract tests 明确禁止，不是偶然遗漏。
+2. GoldSrc preprocessor 接口仍未完全对齐 CS2 的 MCP-bound status/input contract；
+3. 旧版本工件复用会直接复制旧地址，存在生成陈旧 `VA/RVA` 的风险；
+4. CLI 与环境变量已按本节决策对齐；配置 schema、artifact path、execution plan 和 reporter event 仍不兼容；
+5. Redis reporter/scheduler、进度 API、dashboard 和 self-hosted IDA CI 尚不存在；
+6. 部分缺口被当前文档和 repository-contract tests 明确禁止，不是偶然遗漏。
 
 ## 当前已有基础
 
@@ -29,7 +28,7 @@ self-hosted IDA 环境持续运行的 infrastructure 水平。
 - `analysis_planner.py` 校验 tag、module/skill 名、artifact、重复 producer、大小写冲突、缺失输入和环路；
 - `ida_analyze_bin.py` 在每个 skill 后和整个 run 结束时重新核对二进制 SHA-256，防止分析期间修改输入；
 - 分析顺序固定为 history、deterministic、LLM、Agent；
-- `ida_mcp_session.py` 已具备 database-bound session 和 binary identity 选择基础，但尚未接入主流程；
+- `ida_mcp_session.py` 已接入主流程；Analyzer 按 binary 拥有 startup、binding、identity、recovery 和 shutdown；
 - snapshot schema 5、immutable candidate、gamedata guard 和原子发布已经建立；
 - GoldSrc 的 flat artifact 和 x86 symbol 约束比 CS2 更严格，其中部分约束应作为目标特性保留。
 
@@ -46,15 +45,16 @@ self-hosted IDA 环境持续运行的 infrastructure 水平。
 | 优先级 | 缺口 | 直接影响 |
 | --- | --- | --- |
 | P0 | production config、preprocessor、Agent skill 为空 | Analyzer 无真实 DAG 节点，无法生成 production symbol YAML |
-| P0 | 缺少 `idalib-mcp` 生命周期 | deterministic/LLM preprocessor 和 Agent 无可靠 IDA backend |
 | P0 | history 直接复制旧 YAML | 新版本地址变化后可能保留陈旧 `VA/RVA` |
 | P0 | config schema 仍不兼容 | CS2 config 不能直接复用 |
-| P1 | MCP binary identity、IDB lock、健康检查和恢复未接线 | 可能连错 IDB、与交互式 IDA 冲突或在 MCP 断线后中止 |
 | P1 | runtime input/output validation 不完整 | 建图成功后仍可能在执行期消费缺失或失效工件 |
 | P1 | Agent runner 诊断和 session 管理较弱 | 失败原因不可追踪，retry 可能恢复错误的全局 session |
 | P1 | execution plan 和 reporter contract 不兼容 | 无法接入 CS2 风格运行状态、任务图和可观测性消费者 |
 | P2 | Redis scheduler/reporter、API、SSE、dashboard 缺失 | 无持久队列、恢复、heartbeat 和远程只读监控 |
 | P2 | 缺少 Windows self-hosted IDA workflow | CI 无法证明真实 IDA 分析链可工作 |
+
+`idalib-mcp` lifecycle、database binding、identity validation、IDB lock、健康检查、一次恢复预算和 owned shutdown
+已于 2026-08-09 补齐；真实 IDA smoke/self-hosted CI 仍作为独立测试缺口保留。
 
 ## 1. Production 分析内容缺失
 
@@ -100,7 +100,7 @@ symbols: []
 - 不保留旧 `-config` 或 Analyzer `all-platform` alias；
 - `-plan-only` 和 preview 分支已删除，内部 DAG builder 只服务真实执行；
 - generic `-vcall_finder` 排除；
-- `-rename` 与 `-ida_args` 随 owned IDA MCP lifecycle 延期；
+- `-ida_args` 已随 owned IDA MCP lifecycle 恢复；`-rename` 仍延期；
 - CS2 process/Redis Reporter 本次延期，现有 `-console-events` 保留；
 - old-version 自动选择限制在同 game family，`major_update: true` 可禁用；旧 YAML 直接复制先行禁用；
 - 有效输入按 CS2 语义对齐，非法输入使用更严格的 fail-fast 校验。
@@ -115,7 +115,7 @@ symbols: []
 | Agent 默认值 | `claude` | 已对齐；支持 `GSVIBE_AGENT` |
 | Agent model | `-agent_model` / `CS2VIBE_AGENT_MODEL` | `-agent_model` / `GSVIBE_AGENT_MODEL` |
 | LLM 参数 | `-llm_*` / `CS2VIBE_LLM_*` | `-llm_*` / `GSVIBE_LLM_*`；不再读取 `OPENAI_*` |
-| IDA 参数 | `-ida_args` | 随 IDA MCP lifecycle 延期 |
+| IDA 参数 | `-ida_args` | 已对齐 |
 | Retry | `-maxretry` 和 per-skill override | 已对齐；per-skill 显式值优先 |
 | 控制行为 | `-skip_error`、`-skip_pp`、`-rename`、`-debug` | 已对齐 `skip_error` / `skip_pp` / `debug`；`rename` 延期 |
 | Reporter | `-process_reporter`、Redis 参数、`-run_id` | 只有 `-console-events` |
@@ -226,9 +226,9 @@ module/platform 范围内发生。
 如果目标是“尽可能贴近 CS2”，推荐第一种，但该改动属于 shared config/artifact contract 变更，必须同步修改
 planner、snapshot contract、candidate、tests 和文档。
 
-## 4. `idalib-mcp` 生命周期缺失
+## 4. `idalib-mcp` 生命周期（已补齐）
 
-CS2 对每个 module/platform binary 执行以下流程：
+GoldSrc 现在与 CS2 一样，对每个仍有待执行节点的 module/platform binary 执行以下流程：
 
 ```text
 preflight skip
@@ -244,37 +244,42 @@ preflight skip
   -> 停止本次启动的 supervisor 并等待端口释放
 ```
 
-GoldSrc 当前只有 MCP client/session helper，`ida_analyze_bin.py` 没有：
+当前实现边界：
 
-- `start_idalib_mcp()`；
-- port availability/readiness 检查；
-- `.id0` lock 检查；
-- opened binary survey 和 identity validation；
-- supervisor/worker health check；
-- bounded MCP restart；
-- owned worker shutdown；
-- port release wait；
-- IDA startup timeout 和 shutdown timeout contract。
+- preflight 会在所有输出已存在时跳过 IDA startup；
+- `.id0` 与已占用端口都在启动前 fail closed；
+- readiness 同时要求 TCP port 和 MCP `initialize/list_tools` contract 可用；
+- session 按规范化 binary path 绑定唯一活动 database，并用 survey 的 SHA-256/MD5/path 与 platform metadata 核对；
+- 同一 binary 的所有节点共享一次 recovery restart budget；
+- preprocessor context 可读取绑定后的 host、port、database session id 与 ownership metadata；
+- identity 未验证时只停止本次 supervisor，不会向未知 endpoint 发送 `qexit`；
+- identity 已验证时只对 `auto_started && owned && backend == "worker"` 的 worker 发送定向 `qexit`，随后停止
+  supervisor 并等待端口释放；
+- `-ida_args` 已恢复，startup、opened metadata retry 和 shutdown timeout 均有明确上限。
 
 出处：
 
-- GoldSrc 未接线 session：`ida_mcp_session.py:152-204`
-- GoldSrc pipeline：`ida_analyze_bin.py:152-237`
+- GoldSrc lifecycle owner：`ida_analyze_bin.py` 中的 `IdaMcpLifecycle`、`start_idalib_mcp()`、
+  `verify_opened_binary_via_mcp()` 与 `ensure_mcp_available()`；
+- GoldSrc bound session：`ida_mcp_session.py` 中的 `open_ida_mcp_session()`；
 - CS2 startup：`D:\CS2_VibeSignatures\ida_analyze_bin.py:2797-2850`
 - CS2 binary processing：`D:\CS2_VibeSignatures\ida_analyze_bin.py:3105-3175`
 - CS2 shutdown：`D:\CS2_VibeSignatures\ida_analyze_bin.py:1081-1180,3942-3951`
 
-### `ida_mcp_session.py` 自身的版本差异
+### `ida_mcp_session.py` 版本差异（已补齐）
 
-GoldSrc session 实现也少于 CS2：
+GoldSrc session adapter 已补齐以下 CS2 语义，同时保留更严格的 `casefold()` path normalization 和 lazy imports：
 
-- 没有 `McpDatabaseBinding.should_auto_quit`；
-- tool error 不包含 MCP 返回的具体错误正文；
-- database selection error 不输出完整 candidate summary；
-- 没有 supervisor health helper；
-- 没有对 nested `ExceptionGroup` 中 MCP contract error 的解包。
+- `McpDatabaseBinding.should_auto_quit`；
+- tool error 的 server error body；
+- database selection 的完整 candidate summary 与空白 session id 拒绝；
+- supervisor health helper；
+- `idb_list` typed error；
+- nested `ExceptionGroup` 中 MCP contract error 的解包；
+- setup error 与 session body error 的异常边界，避免把业务异常误报为 connection error。
 
-这些不是主阻塞；应先把现有 session 接入主流程，再补齐诊断和生命周期所有权语义。
+对应 unit tests 位于 `tests/test_ida_mcp_session.py` 与 `tests/test_analysis_planner.py`。尚未完成的是需要本机 IDA
+license/`idalib-mcp` 的真实 smoke；该项仍保留在测试与 CI 缺口中。
 
 ## 5. Preprocessor 契约不兼容
 
@@ -650,10 +655,10 @@ GoldSrc 应保留：
 
 ### Phase 2：接入 IDA runtime
 
-- 实现 `idalib-mcp` start/readiness/lock/identity/shutdown；
-- 将 `ida_mcp_session` 接入 analyzer；
-- 增加 bounded health recovery；
-- 保留 binary mutation guard；
+- 实现 `idalib-mcp` start/readiness/lock/identity/shutdown（已完成）；
+- 将 `ida_mcp_session` 接入 analyzer（已完成）；
+- 增加 bounded health recovery（已完成）；
+- 保留 binary mutation guard（已完成）；
 - 建立真实 IDA smoke test。
 
 验收标准：可以对一个已知 GoldSrc PE32/ELF32 binary 启动 MCP、验证打开目标、执行 `py_eval`，并只关闭本次拥有的 worker。

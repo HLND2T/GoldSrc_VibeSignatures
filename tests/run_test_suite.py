@@ -11,6 +11,7 @@ GROUP_FILES = {
     "unit": (
         "test_config_and_depot.py",
         "test_binary_and_symbols.py",
+        "test_ida_mcp_session.py",
         "test_analysis_planner.py",
         "test_snapshot_candidate.py",
         "test_gamedata.py",

@@ -4,8 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import hashlib
+import json
 import os
+import socket
+import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -26,6 +31,17 @@ from analysis_planner import (
 )
 from binary_format import BinaryFormatError, validate_binary
 from ida_llm_utils import validated_temperature
+from ida_mcp_session import (
+    McpConnectionError,
+    McpContractError,
+    McpDatabaseBinding,
+    McpDatabaseSelectionError,
+    McpDatabaseUnavailableError,
+    McpToolCallError,
+    check_ida_mcp_supervisor_health,
+    normalize_binary_identity_path,
+    open_ida_mcp_session,
+)
 from ida_skill_preprocessor import PreprocessorError, preprocess_skill, preprocess_skill_with_llm
 from process_reporter import ConsoleReporter, NullReporter, ProgressEvent
 
@@ -40,10 +56,21 @@ DEFAULT_AGENT = "claude"
 DEFAULT_AGENT_MODEL = ""
 DEFAULT_LLM_MODEL = "gpt-4o"
 DEFAULT_DOWNLOAD_FILE = "download.yaml"
+DEFAULT_HOST = "127.0.0.1"
+DEFAULT_PORT = 13337
+MCP_STARTUP_TIMEOUT = 1200.0
+MCP_SHUTDOWN_TIMEOUT = 10.0
+OPENED_BINARY_VERIFY_TIMEOUT = 60.0
+OPENED_BINARY_VERIFY_RETRY_INTERVAL = 2.0
+QEXIT_CONNECTION_RESET_MARKER = "[WinError 10054]"
 LLM_EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "xhigh"})
 
 
 class AnalysisRunError(RuntimeError):
+    pass
+
+
+class McpLifecycleError(AnalysisRunError):
     pass
 
 
@@ -52,6 +79,38 @@ class AnalysisSummary:
     successful: int = 0
     failed: int = 0
     skipped: int = 0
+
+
+@dataclass(frozen=True)
+class McpRuntime:
+    host: str
+    port: int
+    expected_binary: str
+    binding: McpDatabaseBinding
+
+    def as_context(self) -> dict:
+        return {
+            "host": self.host,
+            "port": self.port,
+            "expected_binary": self.expected_binary,
+            "database": self.binding.session_id,
+            "backend": self.binding.backend,
+            "owned": self.binding.owned,
+            "auto_started": self.binding.auto_started,
+        }
+
+
+class McpRecoveryBudget:
+    """Limit lifecycle-owner MCP restarts for one binary processing run."""
+
+    def __init__(self, restart_limit: int = 1) -> None:
+        self.remaining_restarts = max(0, int(restart_limit))
+
+    def consume_restart(self) -> bool:
+        if self.remaining_restarts <= 0:
+            return False
+        self.remaining_restarts -= 1
+        return True
 
 
 def parse_config(config_path, config_document=None):
@@ -147,6 +206,498 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _md5(path: Path) -> str:
+    digest = hashlib.md5()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+SURVEY_CURRENT_IDB_PATH_PY_EVAL = (
+    "import json\n"
+    "path = ''\n"
+    "try:\n"
+    "    import idaapi\n"
+    "    path = idaapi.get_path(idaapi.PATH_TYPE_IDB) or ''\n"
+    "except Exception:\n"
+    "    pass\n"
+    "if not path:\n"
+    "    try:\n"
+    "        import idc\n"
+    "        path = idc.get_idb_path() or ''\n"
+    "    except Exception:\n"
+    "        pass\n"
+    "result = json.dumps({'metadata': {'path': path}})\n"
+)
+
+
+def _parse_mcp_tool_json(result):
+    structured = getattr(result, "structuredContent", None)
+    if isinstance(structured, dict):
+        return structured
+    content = getattr(result, "content", None) or []
+    raw = getattr(content[0], "text", None) if content else None
+    if not isinstance(raw, str):
+        return None
+    try:
+        parsed = json.loads(raw)
+    except (TypeError, json.JSONDecodeError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _parse_py_eval_json(result):
+    payload = _parse_mcp_tool_json(result)
+    if not isinstance(payload, dict):
+        return None
+    result_text = payload.get("result")
+    if not isinstance(result_text, str) or not result_text:
+        return None
+    try:
+        parsed = json.loads(result_text)
+    except (TypeError, json.JSONDecodeError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _merge_survey_path(payload, path_payload):
+    if not isinstance(path_payload, dict):
+        return payload
+    path_metadata = path_payload.get("metadata")
+    if not isinstance(path_metadata, dict):
+        return payload
+    current_path = path_metadata.get("path")
+    if not isinstance(current_path, str) or not current_path:
+        return payload
+    merged = dict(payload) if isinstance(payload, dict) else {}
+    metadata = merged.get("metadata")
+    merged_metadata = dict(metadata) if isinstance(metadata, dict) else {}
+    merged_metadata["path"] = current_path
+    merged["metadata"] = merged_metadata
+    return merged
+
+
+async def survey_binary_via_session(session, detail_level: str = "minimal"):
+    payload = None
+    try:
+        payload = _parse_mcp_tool_json(await session.call_tool("survey_binary", {"detail_level": detail_level}))
+    except (McpConnectionError, McpContractError, McpDatabaseSelectionError, McpToolCallError):
+        raise
+    except Exception:  # noqa: BLE001 - survey_binary is optional when py_eval can supply identity.
+        payload = None
+
+    try:
+        current_path = _parse_py_eval_json(
+            await session.call_tool("py_eval", {"code": SURVEY_CURRENT_IDB_PATH_PY_EVAL})
+        )
+    except (McpConnectionError, McpContractError, McpDatabaseSelectionError, McpToolCallError):
+        raise
+    except Exception:  # noqa: BLE001 - the path fallback is optional across MCP server versions.
+        current_path = None
+    return _merge_survey_path(payload, current_path)
+
+
+async def _survey_opened_binary_via_mcp(host, port, expected_binary, *, auto_started=False):
+    async with open_ida_mcp_session(
+        host,
+        port,
+        expected_binary=expected_binary,
+        auto_started=auto_started,
+    ) as session:
+        return await survey_binary_via_session(session), session.binding
+
+
+def _metadata_hash(metadata, key):
+    value = metadata.get(key)
+    return value.strip().casefold() if isinstance(value, str) and value.strip() else ""
+
+
+def validate_opened_binary_identity(binary_path, platform, survey_payload):
+    if not isinstance(survey_payload, dict):
+        return False, ["survey_binary returned no metadata"]
+    metadata = survey_payload.get("metadata")
+    if not isinstance(metadata, dict):
+        return False, ["survey_binary returned no metadata"]
+
+    reasons = []
+    architecture = str(metadata.get("arch", "")).strip().casefold()
+    if architecture and "64" in architecture:
+        reasons.append(f"unexpected 64-bit opened database architecture: {architecture}")
+    format_label = " ".join(
+        str(metadata.get(key, "")).strip().casefold() for key in ("format", "filetype", "file_type")
+    )
+    if platform == "linux" and ("portable executable" in format_label or " pe " in f" {format_label} "):
+        reasons.append(f"PE database opened for linux target: {format_label.strip()}")
+    if platform == "windows" and "elf" in format_label:
+        reasons.append(f"ELF database opened for windows target: {format_label.strip()}")
+
+    expected = Path(binary_path)
+    opened_sha256 = _metadata_hash(metadata, "sha256")
+    opened_md5 = _metadata_hash(metadata, "md5")
+    if opened_sha256:
+        expected_sha256 = _sha256(expected)
+        if opened_sha256 != expected_sha256:
+            reasons.append(f"sha256 mismatch: expected {expected_sha256}, opened {opened_sha256}")
+        return not reasons, reasons
+    if opened_md5:
+        expected_md5 = _md5(expected)
+        if opened_md5 != expected_md5:
+            reasons.append(f"md5 mismatch: expected {expected_md5}, opened {opened_md5}")
+        return not reasons, reasons
+
+    opened_path = metadata.get("path")
+    expected_path = normalize_binary_identity_path(os.path.abspath(os.path.normpath(os.fspath(expected))))
+    normalized_opened_path = normalize_binary_identity_path(opened_path) if isinstance(opened_path, str) else ""
+    if not normalized_opened_path:
+        reasons.append("path mismatch: opened metadata path is missing")
+    elif normalized_opened_path != expected_path:
+        reasons.append(f"path mismatch: expected {expected_path}, opened {normalized_opened_path}")
+    return not reasons, reasons
+
+
+def verify_opened_binary_via_mcp(
+    binary_path,
+    platform,
+    host=DEFAULT_HOST,
+    port=DEFAULT_PORT,
+    *,
+    debug=False,
+    verify_timeout=OPENED_BINARY_VERIFY_TIMEOUT,
+    retry_interval=OPENED_BINARY_VERIFY_RETRY_INTERVAL,
+):
+    deadline = time.monotonic() + max(0.0, verify_timeout)
+    last_reasons = ["survey_binary returned no metadata"]
+    while True:
+        try:
+            survey, binding = asyncio.run(_survey_opened_binary_via_mcp(host, port, binary_path, auto_started=True))
+        except McpDatabaseUnavailableError:
+            raise
+        except (McpConnectionError, McpContractError, McpDatabaseSelectionError, McpToolCallError) as exc:
+            if debug:
+                print(f"  Opened binary verification failed: {exc}")
+            return None
+        ok, last_reasons = validate_opened_binary_identity(binary_path, platform, survey)
+        if ok:
+            return McpRuntime(host, port, str(binary_path), binding)
+        retryable = last_reasons in (
+            ["survey_binary returned no metadata"],
+            ["path mismatch: opened metadata path is missing"],
+        )
+        if not retryable or time.monotonic() >= deadline:
+            break
+        if debug:
+            print("  Opened binary metadata is not ready; retrying verification...")
+        time.sleep(max(0.0, retry_interval))
+    if debug:
+        for reason in last_reasons:
+            print(f"  Opened binary verification failed: {reason}")
+    return None
+
+
+async def check_mcp_worker_health(host, port, expected_binary):
+    try:
+        async with open_ida_mcp_session(host, port, expected_binary=expected_binary) as session:
+            await session.call_tool("py_eval", {"code": "1"})
+            return True
+    except Exception:  # noqa: BLE001 - health probes must collapse transport failures to False.
+        return False
+
+
+def is_port_in_use(host, port):
+    try:
+        with socket.create_connection((host, port), timeout=1):
+            return True
+    except OSError:
+        return False
+
+
+def wait_for_port_release(host, port, timeout=MCP_SHUTDOWN_TIMEOUT, retry_interval=0.1):
+    deadline = time.monotonic() + max(0.0, timeout)
+    while is_port_in_use(host, port):
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(max(0.0, retry_interval))
+    return True
+
+
+def wait_for_mcp_ready(process, host, port, timeout=MCP_STARTUP_TIMEOUT, retry_interval=0.5):
+    deadline = time.monotonic() + max(0.0, timeout)
+    while True:
+        if process.poll() is not None:
+            return False
+        if is_port_in_use(host, port) and asyncio.run(check_ida_mcp_supervisor_health(host, port)):
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(max(0.0, retry_interval))
+
+
+def stop_idalib_mcp_process(process, debug=False):
+    if process is None or process.poll() is not None:
+        return
+    if debug:
+        print("  Stopping the current idalib-mcp process...")
+    try:
+        process.terminate()
+        process.wait(timeout=MCP_SHUTDOWN_TIMEOUT)
+        return
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    if process.poll() is None:
+        try:
+            process.kill()
+            process.wait(timeout=5.0)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+
+
+def start_idalib_mcp(
+    binary_path,
+    host=DEFAULT_HOST,
+    port=DEFAULT_PORT,
+    ida_args="",
+    debug=False,
+    stdout=None,
+    stderr=None,
+):
+    if is_port_in_use(host, port):
+        return None
+    command = ["idalib-mcp", "--unsafe", "--host", host, "--port", str(port)]
+    if ida_args:
+        command.extend(str(ida_args).split())
+    command.append(str(binary_path))
+    if debug:
+        print(f"  Starting idalib-mcp: {' '.join(command)}")
+    process = None
+    try:
+        output = stdout if stdout is not None else (None if debug else subprocess.DEVNULL)
+        errors = stderr if stderr is not None else (None if debug else subprocess.DEVNULL)
+        creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" and not debug else 0
+        process = subprocess.Popen(command, stdout=output, stderr=errors, creationflags=creationflags)
+        if wait_for_mcp_ready(process, host, port):
+            return process
+    except OSError as exc:
+        if debug:
+            print(f"  Unable to start idalib-mcp: {exc}")
+    stop_idalib_mcp_process(process, debug=debug)
+    wait_for_port_release(host, port)
+    return None
+
+
+async def quit_ida_via_mcp(host, port, *, expected_binary, auto_started):
+    try:
+        async with open_ida_mcp_session(
+            host,
+            port,
+            expected_binary=expected_binary,
+            auto_started=auto_started,
+        ) as session:
+            if not session.binding.should_auto_quit:
+                return False
+            try:
+                await session.call_tool("py_eval", {"code": "import idc; idc.qexit(0)"})
+            except Exception as exc:  # noqa: BLE001 - qexit commonly closes the transport mid-response.
+                return QEXIT_CONNECTION_RESET_MARKER in str(exc)
+            return True
+    except Exception:  # noqa: BLE001 - shutdown is best-effort and still stops the owned supervisor.
+        return False
+
+
+async def quit_ida_gracefully_async(process, host, port, *, expected_binary, debug=False):
+    if process is None or process.poll() is not None:
+        return
+    try:
+        await asyncio.wait_for(
+            quit_ida_via_mcp(host, port, expected_binary=expected_binary, auto_started=True),
+            timeout=5.0,
+        )
+    except Exception as exc:  # noqa: BLE001 - local supervisor cleanup must run after any qexit failure.
+        if debug:
+            print(f"  Graceful IDA worker shutdown failed: {exc}")
+    await asyncio.to_thread(stop_idalib_mcp_process, process, debug=debug)
+    released = await asyncio.to_thread(wait_for_port_release, host, port, MCP_SHUTDOWN_TIMEOUT)
+    if debug and not released:
+        print(f"  MCP port {host}:{port} remained in use after shutdown")
+
+
+def quit_ida_gracefully(process, host, port, *, expected_binary, debug=False):
+    if process is None or process.poll() is not None:
+        return
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        asyncio.run(
+            quit_ida_gracefully_async(
+                process,
+                host,
+                port,
+                expected_binary=expected_binary,
+                debug=debug,
+            )
+        )
+        return
+    raise RuntimeError(
+        "quit_ida_gracefully() cannot run inside an active event loop; use await quit_ida_gracefully_async() instead"
+    )
+
+
+def ensure_mcp_available(process, binary_path, host, port, ida_args, debug, *, recovery_budget):
+    if process is not None and process.poll() is not None:
+        process = None
+    if process is not None and asyncio.run(check_mcp_worker_health(host, port, binary_path)):
+        return process, True
+    if not recovery_budget.consume_restart():
+        return process, False
+    if process is not None:
+        quit_ida_gracefully(process, host, port, expected_binary=binary_path, debug=debug)
+        process = None
+    if is_port_in_use(host, port) and not wait_for_port_release(host, port):
+        return None, False
+    restarted = start_idalib_mcp(binary_path, host, port, ida_args, debug)
+    return restarted, restarted is not None
+
+
+def verify_owned_mcp_with_single_recovery(
+    process,
+    binary_path,
+    platform,
+    host,
+    port,
+    ida_args,
+    debug,
+    *,
+    recovery_budget,
+):
+    try:
+        return process, verify_opened_binary_via_mcp(binary_path, platform, host, port, debug=debug)
+    except McpDatabaseUnavailableError:
+        process, available = ensure_mcp_available(
+            process,
+            binary_path,
+            host,
+            port,
+            ida_args,
+            debug,
+            recovery_budget=recovery_budget,
+        )
+        if not available:
+            return process, None
+        try:
+            return process, verify_opened_binary_via_mcp(binary_path, platform, host, port, debug=debug)
+        except McpDatabaseUnavailableError:
+            return process, None
+
+
+class IdaMcpLifecycle:
+    """Own one idalib-mcp supervisor and its selected worker for a binary."""
+
+    def __init__(self, binary_path, platform, host, port, ida_args, debug=False) -> None:
+        self.binary_path = Path(binary_path)
+        self.platform = platform
+        self.host = host
+        self.port = port
+        self.ida_args = ida_args
+        self.debug = debug
+        self.process = None
+        self.runtime = None
+        self.recovery_budget = McpRecoveryBudget()
+        self._force_local_stop = True
+
+    def __enter__(self):
+        lock_file = Path(f"{self.binary_path}.id0")
+        if lock_file.exists():
+            raise McpLifecycleError(
+                f"IDB lock file detected ({lock_file}); another IDA instance has this database open"
+            )
+        try:
+            self.process = start_idalib_mcp(
+                self.binary_path,
+                self.host,
+                self.port,
+                self.ida_args,
+                self.debug,
+            )
+            if self.process is None:
+                raise McpLifecycleError(f"Unable to start idalib-mcp for {self.binary_path}")
+            self.process, self.runtime = verify_owned_mcp_with_single_recovery(
+                self.process,
+                self.binary_path,
+                self.platform,
+                self.host,
+                self.port,
+                self.ida_args,
+                self.debug,
+                recovery_budget=self.recovery_budget,
+            )
+            if self.runtime is None:
+                raise McpLifecycleError(f"Opened IDA database identity verification failed for {self.binary_path}")
+            self._force_local_stop = False
+            return self
+        except McpLifecycleError:
+            self._cleanup()
+            raise
+        except Exception as exc:
+            self._cleanup()
+            raise McpLifecycleError(f"Unable to initialize IDA MCP lifecycle for {self.binary_path}: {exc}") from exc
+
+    def ensure_ready(self):
+        try:
+            self.process, available = ensure_mcp_available(
+                self.process,
+                self.binary_path,
+                self.host,
+                self.port,
+                self.ida_args,
+                self.debug,
+                recovery_budget=self.recovery_budget,
+            )
+            if not available:
+                raise McpLifecycleError(f"MCP worker is unavailable for {self.binary_path}")
+            self.process, self.runtime = verify_owned_mcp_with_single_recovery(
+                self.process,
+                self.binary_path,
+                self.platform,
+                self.host,
+                self.port,
+                self.ida_args,
+                self.debug,
+                recovery_budget=self.recovery_budget,
+            )
+            if self.runtime is None:
+                raise McpLifecycleError(f"Opened IDA database identity verification failed for {self.binary_path}")
+            return self.runtime
+        except McpLifecycleError:
+            self._force_local_stop = True
+            raise
+        except Exception as exc:
+            self._force_local_stop = True
+            raise McpLifecycleError(f"Unable to verify IDA MCP lifecycle for {self.binary_path}: {exc}") from exc
+
+    def _cleanup(self):
+        process = self.process
+        if process is None:
+            return
+        try:
+            if self._force_local_stop:
+                stop_idalib_mcp_process(process, debug=self.debug)
+            else:
+                quit_ida_gracefully(
+                    process,
+                    self.host,
+                    self.port,
+                    expected_binary=self.binary_path,
+                    debug=self.debug,
+                )
+            wait_for_port_release(self.host, self.port)
+        finally:
+            self.process = None
+
+    def __exit__(self, exc_type, exc, traceback):
+        self._cleanup()
+        return False
+
+
 def _split_gamever(gamever: str) -> tuple[str, int]:
     normalized = validated_tag(gamever)
     family, build = normalized.rsplit("-", 1)
@@ -198,6 +749,14 @@ def _outputs(node, root: Path) -> tuple[list[Path], list[Path]]:
     )
 
 
+def _node_has_existing_outputs(node, game_root: Path) -> bool:
+    required, optional = _outputs(node, game_root)
+    skip_paths = [game_root / node.module / name for name in node.skip_if_exists]
+    return should_skip_skill_for_existing_outputs(required, optional) or bool(
+        skip_paths and all(path.is_file() for path in skip_paths)
+    )
+
+
 def run_analysis_pipeline(
     node,
     *,
@@ -208,6 +767,7 @@ def run_analysis_pipeline(
     reporter,
     agent_model: str = DEFAULT_AGENT_MODEL,
     llm_config: dict | None = None,
+    mcp_runtime: McpRuntime | None = None,
     skip_preprocessors: bool = False,
     debug: bool = False,
     deterministic_runner=preprocess_skill,
@@ -215,10 +775,7 @@ def run_analysis_pipeline(
     agent_skill_runner=agent_runner.run_skill,
 ) -> str:
     required, optional = _outputs(node, game_root)
-    skip_paths = [game_root / node.module / name for name in node.skip_if_exists]
-    if (required and all(path.is_file() for path in required)) or (
-        skip_paths and all(path.is_file() for path in skip_paths)
-    ):
+    if _node_has_existing_outputs(node, game_root):
         return "existing"
     context = {
         "tag": game_root.name,
@@ -233,6 +790,8 @@ def run_analysis_pipeline(
         "optional_outputs": [str(path) for path in optional],
         "aliases": list(node.aliases),
     }
+    if mcp_runtime is not None:
+        context["mcp"] = mcp_runtime.as_context()
     if old_game_root is not None:
         context["old_game_root"] = str(old_game_root)
         context["old_module_dir"] = str(old_game_root / node.module)
@@ -312,6 +871,97 @@ def _select_execution_modules(modules, modules_filter=None, skill_filter=None):
     return filtered
 
 
+def _execute_analysis_node(
+    node,
+    *,
+    binary,
+    before,
+    root,
+    old_root,
+    agent,
+    agent_model,
+    llm_config,
+    skip_preprocessors,
+    debug,
+    reporter,
+    run_summary,
+    skip_error,
+    mcp_runtime=None,
+):
+    reporter.emit(
+        ProgressEvent.create(
+            "skill_started",
+            tag=root.name,
+            module=node.module,
+            platform=node.platform,
+            skill=node.skill,
+        )
+    )
+    try:
+        stage = run_analysis_pipeline(
+            node,
+            binary_path=binary,
+            game_root=root,
+            old_game_root=old_root,
+            agent=agent,
+            agent_model=agent_model,
+            llm_config=llm_config,
+            mcp_runtime=mcp_runtime,
+            skip_preprocessors=skip_preprocessors,
+            debug=debug,
+            reporter=reporter,
+        )
+    except Exception as exc:
+        run_summary.failed += 1
+        reporter.emit(
+            ProgressEvent.create(
+                "skill_failed",
+                tag=root.name,
+                module=node.module,
+                platform=node.platform,
+                skill=node.skill,
+                error=str(exc),
+            )
+        )
+        message = f"Skill {node.id} failed: {exc}"
+        if not skip_error:
+            raise AnalysisRunError(message) from exc
+        print(f"Error: {message}; continuing (-skip_error)")
+        return False
+    if _sha256(binary) != before:
+        raise AnalysisRunError(f"Binary changed during analysis: {binary}")
+    if stage == "existing":
+        run_summary.skipped += 1
+    else:
+        run_summary.successful += 1
+    reporter.emit(
+        ProgressEvent.create(
+            "skill_completed",
+            tag=root.name,
+            module=node.module,
+            platform=node.platform,
+            skill=node.skill,
+            stage=stage,
+        )
+    )
+    return True
+
+
+def _record_lifecycle_failures(nodes, *, tag, error, reporter, run_summary):
+    for node in nodes:
+        run_summary.failed += 1
+        reporter.emit(
+            ProgressEvent.create(
+                "skill_failed",
+                tag=tag,
+                module=node.module,
+                platform=node.platform,
+                skill=node.skill,
+                error=str(error),
+            )
+        )
+
+
 def analyze(
     *,
     gamever: str,
@@ -328,6 +978,9 @@ def analyze(
     skip_error: bool = False,
     skip_preprocessors: bool = False,
     debug: bool = False,
+    host: str = DEFAULT_HOST,
+    port: int = DEFAULT_PORT,
+    ida_args: str = "",
     reporter=None,
     summary: AnalysisSummary | None = None,
 ) -> ExecutionPlan:
@@ -376,54 +1029,81 @@ def analyze(
                 raise AnalysisRunError(message) from exc
             print(f"Error: {message}; continuing (-skip_error)")
     reporter.emit(ProgressEvent.create("analysis_started", tag=tag, nodes=len(plan.nodes)))
-    for node in plan.nodes:
-        if (node.module, node.platform) not in binary_identity:
+    for binary_key, binary_nodes in nodes_by_binary.items():
+        if binary_key not in binary_identity:
             continue
-        binary, before = binary_identity[(node.module, node.platform)]
-        reporter.emit(
-            ProgressEvent.create("skill_started", tag=tag, module=node.module, platform=node.platform, skill=node.skill)
-        )
-        try:
-            stage = run_analysis_pipeline(
+        binary, before = binary_identity[binary_key]
+        existing_nodes = [node for node in binary_nodes if _node_has_existing_outputs(node, root)]
+        pending_nodes = [node for node in binary_nodes if node not in existing_nodes]
+        for node in existing_nodes:
+            _execute_analysis_node(
                 node,
-                binary_path=binary,
-                game_root=root,
-                old_game_root=old_root,
+                binary=binary,
+                before=before,
+                root=root,
+                old_root=old_root,
                 agent=agent,
                 agent_model=agent_model,
                 llm_config=llm_config,
                 skip_preprocessors=skip_preprocessors,
                 debug=debug,
                 reporter=reporter,
+                run_summary=run_summary,
+                skip_error=skip_error,
             )
-        except Exception as exc:
-            run_summary.failed += 1
-            reporter.emit(
-                ProgressEvent.create(
-                    "skill_failed",
-                    tag=tag,
-                    module=node.module,
-                    platform=node.platform,
-                    skill=node.skill,
-                    error=str(exc),
-                )
+        if not pending_nodes:
+            continue
+        try:
+            with IdaMcpLifecycle(binary, binary_key[1], host, port, ida_args, debug) as lifecycle:
+                for index, node in enumerate(pending_nodes):
+                    if index:
+                        try:
+                            lifecycle.ensure_ready()
+                        except McpLifecycleError as exc:
+                            remaining = pending_nodes[index:]
+                            _record_lifecycle_failures(
+                                remaining,
+                                tag=tag,
+                                error=exc,
+                                reporter=reporter,
+                                run_summary=run_summary,
+                            )
+                            message = (
+                                f"MCP lifecycle failed for {node.module}:{node.platform}; "
+                                f"aborting {len(remaining)} remaining skill(s): {exc}"
+                            )
+                            if not skip_error:
+                                raise AnalysisRunError(message) from exc
+                            print(f"Error: {message}; continuing (-skip_error)")
+                            break
+                    _execute_analysis_node(
+                        node,
+                        binary=binary,
+                        before=before,
+                        root=root,
+                        old_root=old_root,
+                        agent=agent,
+                        agent_model=agent_model,
+                        llm_config=llm_config,
+                        skip_preprocessors=skip_preprocessors,
+                        debug=debug,
+                        reporter=reporter,
+                        run_summary=run_summary,
+                        skip_error=skip_error,
+                        mcp_runtime=lifecycle.runtime,
+                    )
+        except McpLifecycleError as exc:
+            _record_lifecycle_failures(
+                pending_nodes,
+                tag=tag,
+                error=exc,
+                reporter=reporter,
+                run_summary=run_summary,
             )
-            message = f"Skill {node.id} failed: {exc}"
+            message = f"MCP lifecycle failed for {binary_key[0]}:{binary_key[1]}: {exc}"
             if not skip_error:
                 raise AnalysisRunError(message) from exc
             print(f"Error: {message}; continuing (-skip_error)")
-            continue
-        if _sha256(binary) != before:
-            raise AnalysisRunError(f"Binary changed during analysis: {binary}")
-        if stage == "existing":
-            run_summary.skipped += 1
-        else:
-            run_summary.successful += 1
-        reporter.emit(
-            ProgressEvent.create(
-                "skill_completed", tag=tag, module=node.module, platform=node.platform, skill=node.skill, stage=stage
-            )
-        )
     for binary, before in binary_identity.values():
         if _sha256(binary) != before:
             raise AnalysisRunError(f"Binary changed during analysis: {binary}")
@@ -503,6 +1183,7 @@ def _parser() -> argparse.ArgumentParser:
         help="LLM reasoning effort (default: medium, or set GSVIBE_LLM_EFFORT)",
     )
     parser.add_argument("-debug", action="store_true", help="Enable debug diagnostics and Agent output")
+    parser.add_argument("-ida_args", default="", help="Additional arguments for idalib-mcp")
     parser.add_argument("-skip_error", action="store_true", help="Continue after runtime failures")
     parser.add_argument(
         "-skip_pp", action="store_true", help="Skip history and preprocessors; run Agent Skills directly"
@@ -588,6 +1269,7 @@ def parse_args(argv=None):
         parser.error(f"-llm_effort must be one of: {', '.join(sorted(LLM_EFFORTS))}")
     if not 1 <= args.maxretry <= 20:
         parser.error("-maxretry must be an integer from 1 to 20")
+    args.ida_args = str(args.ida_args or "").strip()
 
     if args.oldgamever is None:
         args.oldgamever = (
@@ -632,6 +1314,8 @@ def _print_main_configuration(args) -> None:
     if args.skill:
         print(f"Skill filter: {args.skill}")
     print(f"Agent: {args.agent}")
+    if args.ida_args:
+        print(f"IDA arguments: {args.ida_args}")
     if args.debug:
         print("Debug mode: enabled")
     if args.skip_error:
@@ -668,6 +1352,7 @@ def main(argv=None) -> int:
             skip_error=args.skip_error,
             skip_preprocessors=args.skip_pp,
             debug=args.debug,
+            ida_args=args.ida_args,
             reporter=ConsoleReporter() if args.console_events else NullReporter(),
             summary=summary,
         )

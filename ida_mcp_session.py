@@ -69,6 +69,22 @@ def detect_database_requirement(tools: Sequence[Any]) -> bool:
     return next(iter(requirements.values()))
 
 
+def _session_summary(sessions: Sequence[Mapping[str, Any]]) -> str:
+    return "; ".join(
+        "session_id={session_id!r}, input_path={input_path!r}, backend={backend!r}, "
+        "owned={owned!r}, is_active={is_active!r}, pid={pid!r}, worker_pid={worker_pid!r}".format(
+            session_id=session.get("session_id"),
+            input_path=session.get("input_path"),
+            backend=session.get("backend"),
+            owned=session.get("owned"),
+            is_active=session.get("is_active"),
+            pid=session.get("pid"),
+            worker_pid=session.get("worker_pid"),
+        )
+        for session in sessions
+    )
+
+
 def select_database_session(
     sessions: Sequence[Mapping[str, Any]],
     *,
@@ -78,31 +94,63 @@ def select_database_session(
     routable = [
         session
         for session in sessions
-        if session.get("is_active") is True and isinstance(session.get("session_id"), str) and session["session_id"]
+        if session.get("is_active") is True
+        and isinstance(session.get("session_id"), str)
+        and session["session_id"].strip()
     ]
     if explicit_database:
         matches = [session for session in routable if session["session_id"] == explicit_database]
-    elif expected_binary:
+        if len(matches) == 1:
+            return matches[0]
+        discovered = [
+            session
+            for session in sessions
+            if session.get("session_id") == explicit_database and session.get("is_active") is not True
+        ]
+        if discovered:
+            raise McpDatabaseUnavailableError(
+                f"MCP database {explicit_database!r} exists but is inactive or unreachable; "
+                f"candidates: {_session_summary(sessions)}"
+            )
+        raise McpDatabaseSelectionError(
+            f"MCP database {explicit_database!r} is not an active routable session; "
+            f"candidates: {_session_summary(sessions)}"
+        )
+
+    if expected_binary:
         expected = normalize_binary_identity_path(expected_binary)
         matches = [
             session for session in routable if normalize_binary_identity_path(session.get("input_path", "")) == expected
         ]
-    else:
-        matches = routable
-    if len(matches) == 1:
-        return matches[0]
-    inactive_match = bool(
-        expected_binary
-        and any(
-            normalize_binary_identity_path(session.get("input_path", ""))
-            == normalize_binary_identity_path(expected_binary)
-            and session.get("is_active") is not True
+        if len(matches) == 1:
+            return matches[0]
+        discovered = [
+            session
             for session in sessions
+            if isinstance(session.get("session_id"), str)
+            and session["session_id"].strip()
+            and normalize_binary_identity_path(session.get("input_path", "")) == expected
+            and session.get("is_active") is not True
+        ]
+        if not matches and discovered:
+            raise McpDatabaseUnavailableError(
+                f"MCP database for expected binary {expected_binary!r} exists but is inactive or unreachable; "
+                f"candidates: {_session_summary(sessions)}"
+            )
+        label = "no" if not matches else "multiple"
+        raise McpDatabaseSelectionError(
+            f"{label} active MCP database matched expected binary {expected_binary!r}; "
+            f"candidates: {_session_summary(sessions)}"
         )
+
+    if len(routable) == 1:
+        return routable[0]
+    if not routable:
+        raise McpDatabaseSelectionError(f"no active routable MCP database; candidates: {_session_summary(sessions)}")
+    raise McpDatabaseSelectionError(
+        "multiple active MCP databases require an expected binary or explicit session id; "
+        f"candidates: {_session_summary(sessions)}"
     )
-    if inactive_match:
-        raise McpDatabaseUnavailableError("The matching IDA database is inactive or unreachable")
-    raise McpDatabaseSelectionError(f"Expected exactly one active IDA database, found {len(matches)}")
 
 
 @dataclass(frozen=True)
@@ -114,39 +162,108 @@ class McpDatabaseBinding:
     owned: bool
     auto_started: bool
 
+    @property
+    def should_auto_quit(self) -> bool:
+        return self.auto_started and self.owned and self.backend == "worker"
+
 
 class DatabaseBoundSession:
     def __init__(self, raw_session: Any, binding: McpDatabaseBinding) -> None:
         self.raw_session = raw_session
         self.binding = binding
 
-    async def call_tool(self, name: str, arguments: Mapping[str, Any] | None = None, **kwargs):
+    async def call_tool(self, name: str, arguments: Mapping[str, Any] | None = None, **kwargs: Any) -> Any:
         routed = dict(arguments or {})
         if self.binding.database_required and name not in MANAGEMENT_TOOL_NAMES:
             supplied = routed.get("database")
-            if supplied not in {None, self.binding.session_id}:
-                raise McpDatabaseSelectionError(f"Tool {name} conflicts with the bound database")
+            if supplied is not None and supplied != self.binding.session_id:
+                raise McpDatabaseSelectionError(
+                    f"Tool {name} database {supplied!r} conflicts with bound database {self.binding.session_id!r}"
+                )
             routed["database"] = self.binding.session_id
         result = await self.raw_session.call_tool(name=name, arguments=routed, **kwargs)
         if getattr(result, "isError", False):
-            raise McpToolCallError(f"MCP tool {name} failed")
+            raise McpToolCallError(f"MCP tool {name} failed: {_tool_result_error_text(result)}")
         return result
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         return getattr(self.raw_session, name)
 
 
-def _result_payload(result: Any) -> dict:
+def _tool_result_payload(result: Any) -> dict[str, Any] | None:
     structured = getattr(result, "structuredContent", None)
     if isinstance(structured, dict):
         return structured
     content = getattr(result, "content", None) or []
-    text = getattr(content[0], "text", "") if content else ""
+    text = getattr(content[0], "text", None) if content else None
+    if not isinstance(text, str):
+        return None
     try:
         parsed = json.loads(text)
-    except (TypeError, json.JSONDecodeError):
-        return {}
-    return parsed if isinstance(parsed, dict) else {}
+    except json.JSONDecodeError:
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _tool_result_error_text(result: Any) -> str:
+    payload = _tool_result_payload(result)
+    if isinstance(payload, dict) and isinstance(payload.get("error"), str):
+        return payload["error"]
+    content = getattr(result, "content", None) or []
+    text = getattr(content[0], "text", None) if content else None
+    return text if isinstance(text, str) and text else "unknown MCP tool error"
+
+
+def _find_mcp_error(exception: Exception) -> Exception | None:
+    known_errors = (McpContractError, McpDatabaseSelectionError, McpConnectionError, McpToolCallError)
+    if isinstance(exception, known_errors):
+        return exception
+    for nested in getattr(exception, "exceptions", ()):
+        if isinstance(nested, Exception):
+            found = _find_mcp_error(nested)
+            if found is not None:
+                return found
+    return None
+
+
+@asynccontextmanager
+async def _open_raw_ida_mcp_session(
+    host: str,
+    port: int,
+    connect_timeout: float,
+    read_timeout: float,
+):
+    import httpx
+    from mcp import ClientSession
+    from mcp.client.streamable_http import streamable_http_client
+
+    async with AsyncExitStack() as stack:
+        client = await stack.enter_async_context(
+            httpx.AsyncClient(
+                follow_redirects=True,
+                timeout=httpx.Timeout(connect_timeout, read=read_timeout),
+                trust_env=False,
+            )
+        )
+        read_stream, write_stream, _ = await stack.enter_async_context(
+            streamable_http_client(
+                f"http://{host}:{port}/mcp",
+                http_client=client,
+                terminate_on_close=False,
+            )
+        )
+        raw_session = await stack.enter_async_context(ClientSession(read_stream, write_stream))
+        await raw_session.initialize()
+        yield raw_session
+
+
+async def check_ida_mcp_supervisor_health(host: str, port: int) -> bool:
+    try:
+        async with _open_raw_ida_mcp_session(host, port, 10.0, 15.0) as raw_session:
+            await raw_session.list_tools()
+            return True
+    except Exception:  # noqa: BLE001 - a health probe converts every transport failure to False.
+        return False
 
 
 @asynccontextmanager
@@ -161,44 +278,47 @@ async def open_ida_mcp_session(
     read_timeout=300.0,
 ):
     try:
-        import httpx
-        from mcp import ClientSession
-        from mcp.client.streamable_http import streamable_http_client
-
         async with AsyncExitStack() as stack:
-            client = await stack.enter_async_context(
-                httpx.AsyncClient(
-                    follow_redirects=True,
-                    timeout=httpx.Timeout(connect_timeout, read=read_timeout),
-                    trust_env=False,
+            try:
+                raw = await stack.enter_async_context(
+                    _open_raw_ida_mcp_session(host, port, connect_timeout, read_timeout)
                 )
-            )
-            streams = await stack.enter_async_context(
-                streamable_http_client(f"http://{host}:{port}/mcp", http_client=client, terminate_on_close=False)
-            )
-            raw = await stack.enter_async_context(ClientSession(streams[0], streams[1]))
-            await raw.initialize()
-            tools = (await raw.list_tools()).tools
-            required = detect_database_requirement(tools)
-            if required:
-                listed = await raw.call_tool(name="idb_list", arguments={})
-                selected = select_database_session(
-                    _result_payload(listed).get("sessions", []),
-                    expected_binary=expected_binary,
-                    explicit_database=explicit_database,
-                )
-                binding = McpDatabaseBinding(
-                    True,
-                    selected["session_id"],
-                    selected.get("input_path"),
-                    selected.get("backend"),
-                    bool(selected.get("owned")),
-                    auto_started,
-                )
-            else:
-                binding = McpDatabaseBinding(False, None, str(expected_binary or ""), None, auto_started, auto_started)
+                tools = (await raw.list_tools()).tools
+                required = detect_database_requirement(tools)
+                if required:
+                    listed = await raw.call_tool(name="idb_list", arguments={})
+                    if getattr(listed, "isError", False):
+                        raise McpToolCallError(f"MCP tool idb_list failed: {_tool_result_error_text(listed)}")
+                    payload = _tool_result_payload(listed) or {}
+                    selected = select_database_session(
+                        payload.get("sessions", []),
+                        expected_binary=expected_binary,
+                        explicit_database=explicit_database,
+                    )
+                    binding = McpDatabaseBinding(
+                        True,
+                        selected["session_id"],
+                        selected.get("input_path"),
+                        selected.get("backend"),
+                        bool(selected.get("owned")),
+                        auto_started,
+                    )
+                else:
+                    binding = McpDatabaseBinding(
+                        False,
+                        None,
+                        str(expected_binary) if expected_binary else None,
+                        "worker" if auto_started else None,
+                        auto_started,
+                        auto_started,
+                    )
+            except (McpContractError, McpDatabaseSelectionError, McpToolCallError):
+                raise
+            except Exception as exc:
+                raise McpConnectionError(f"Unable to open IDA MCP session at {host}:{port}: {exc}") from exc
             yield DatabaseBoundSession(raw, binding)
-    except (McpContractError, McpDatabaseSelectionError, McpToolCallError):
-        raise
     except Exception as exc:
-        raise McpConnectionError(f"Unable to open IDA MCP session at {host}:{port}: {exc}") from exc
+        known_error = _find_mcp_error(exc)
+        if known_error is not None and known_error is not exc:
+            raise known_error from None
+        raise
