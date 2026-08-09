@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import tempfile
 from pathlib import Path, PurePosixPath
@@ -29,8 +30,8 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser.add_argument("-configyaml", default=None)
     parser.add_argument("-depotdir", default=DEFAULT_DEPOT_DIR)
     parser.add_argument("-os", default=DEFAULT_OS)
-    parser.add_argument("-username", default=None)
-    parser.add_argument("-password", default=None)
+    parser.add_argument("-username", default=os.environ.get("DEPOTDOWNLOADER_STEAM_USERNAME"))
+    parser.add_argument("-password", default=os.environ.get("DEPOTDOWNLOADER_STEAM_PASSWORD"))
     parser.add_argument("-remember-password", action="store_true")
     return parser.parse_args(argv)
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -29,6 +30,41 @@ class TagAndConfigTests(unittest.TestCase):
 
 
 class DownloadConfigTests(unittest.TestCase):
+    def test_auth_arguments_default_to_environment_variables(self):
+        with patch.dict(
+            "os.environ",
+            {
+                "DEPOTDOWNLOADER_STEAM_USERNAME": "env-user",
+                "DEPOTDOWNLOADER_STEAM_PASSWORD": "env-secret",
+            },
+            clear=False,
+        ):
+            args = download_depot.parse_args(["-tag", "cstrike-10120"])
+        self.assertEqual("env-user", args.username)
+        self.assertEqual("env-secret", args.password)
+
+    def test_auth_arguments_override_environment_variables(self):
+        with patch.dict(
+            "os.environ",
+            {
+                "DEPOTDOWNLOADER_STEAM_USERNAME": "env-user",
+                "DEPOTDOWNLOADER_STEAM_PASSWORD": "env-secret",
+            },
+            clear=False,
+        ):
+            args = download_depot.parse_args(
+                [
+                    "-tag",
+                    "cstrike-10120",
+                    "-username",
+                    "cli-user",
+                    "-password",
+                    "cli-secret",
+                ]
+            )
+        self.assertEqual("cli-user", args.username)
+        self.assertEqual("cli-secret", args.password)
+
     def test_production_downloads_have_exact_apps_and_manifests(self):
         entries = download_depot.load_downloads(Path(__file__).parents[1] / "download.yaml")
         by_tag = {entry["tag"]: entry for entry in entries}
