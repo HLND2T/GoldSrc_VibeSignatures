@@ -10,6 +10,7 @@ import tempfile
 from pathlib import Path, PurePosixPath
 
 import yaml
+from dotenv import load_dotenv
 
 from analysis_config import AnalysisConfigError, resolve_analysis_config, validated_tag
 from depot_util import append_auth_args, run_command
@@ -182,6 +183,7 @@ def download_manifests(
 
 
 def main(argv=None) -> int:
+    load_dotenv(Path(__file__).with_name(".env"))
     args = parse_args(argv)
     try:
         configyaml = resolve_analysis_config(args.tag, args.configyaml)
