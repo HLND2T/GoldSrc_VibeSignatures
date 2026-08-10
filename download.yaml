@@ -1,11 +1,17 @@
 downloads:
+  - tag: "hl-10120"
+    name: Half-Life buildnum 10120
+    basepath: Half-Life
+    appid: 70
+    manifests:
+      "2": "724247850320422500" # DepotDownloader -app 70 -depot 2 -manifest 724247850320422500 -os all-platform -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
+      "8": "1360709870205537514" # DepotDownloader -app 70 -depot 8 -manifest 1360709870205537514 -os all-platform -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
   - tag: "cstrike-10120"
     name: Counter-Strike buildnum 10120
     basepath: Half-Life
     appid: 10
     manifests:
-      "2": "724247850320422500" # DepotDownloader -app 10 -depot 2 -manifest 724247850320422500 -os all-platform -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
-      "8": "1360709870205537514" # DepotDownloader -app 10 -depot 8 -manifest 1360709870205537514 -os all-platform -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
+      "11": "3018093494972814332" # DepotDownloader -app 10 -depot 11 -manifest 3018093494972814332 -os all-platform -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
   - tag: "svencoop-10257"
     name: Sven Co-op buildnum 10257
     basepath: Sven-Coop
