@@ -1297,7 +1297,6 @@ def _execute_analysis_node(
     node,
     *,
     binary,
-    before,
     root,
     old_root,
     agent,
@@ -1339,8 +1338,6 @@ def _execute_analysis_node(
             artifact_types=artifact_types,
             reporter=reporter,
         )
-        if _sha256(binary) != before:
-            raise PipelineFailure("binary_changed", f"Binary changed during analysis: {binary}")
         if result.status == "succeeded":
             run_summary.successful += 1
         elif result.status == "skipped":
@@ -1460,7 +1457,7 @@ def analyze(
     root = Path(bindir) / tag
     old_root = Path(bindir) / oldgamever if oldgamever else None
     artifact_types = _artifact_type_map(all_modules, root)
-    binary_identity: dict[tuple[str, str], tuple[Path, str]] = {}
+    validated_binaries: dict[tuple[str, str], Path] = {}
     module_map = {module["name"]: module for module in modules}
     nodes_by_binary: dict[tuple[str, str], list] = {}
     for node in plan.nodes:
@@ -1470,7 +1467,7 @@ def analyze(
         binary = Path(get_binary_path(bindir, tag, module_name, configured))
         try:
             validate_binary(binary, platform)
-            binary_identity[(module_name, platform)] = (binary, _sha256(binary))
+            validated_binaries[(module_name, platform)] = binary
         except (BinaryFormatError, OSError) as exc:
             run_summary.failed += len(binary_nodes)
             reporter.emit(
@@ -1488,16 +1485,15 @@ def analyze(
             print(f"Error: {message}; continuing (-skip_error)")
     reporter.emit(ProgressEvent.create("analysis_started", tag=tag, nodes=len(plan.nodes)))
     for binary_key, binary_nodes in nodes_by_binary.items():
-        if binary_key not in binary_identity:
+        if binary_key not in validated_binaries:
             continue
-        binary, before = binary_identity[binary_key]
+        binary = validated_binaries[binary_key]
         existing_nodes = [node for node in binary_nodes if _node_has_existing_outputs(node, root)]
         pending_nodes = [node for node in binary_nodes if node not in existing_nodes]
         for node in existing_nodes:
             _execute_analysis_node(
                 node,
                 binary=binary,
-                before=before,
                 root=root,
                 old_root=old_root,
                 agent=agent,
@@ -1539,7 +1535,6 @@ def analyze(
                     _execute_analysis_node(
                         node,
                         binary=binary,
-                        before=before,
                         root=root,
                         old_root=old_root,
                         agent=agent,
@@ -1567,9 +1562,6 @@ def analyze(
             if not skip_error:
                 raise AnalysisRunError(message) from exc
             print(f"Error: {message}; continuing (-skip_error)")
-    for binary, before in binary_identity.values():
-        if _sha256(binary) != before:
-            raise AnalysisRunError(f"Binary changed during analysis: {binary}")
     reporter.emit(
         ProgressEvent.create(
             "analysis_completed",

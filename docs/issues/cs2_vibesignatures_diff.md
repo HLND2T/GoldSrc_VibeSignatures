@@ -398,7 +398,8 @@ circuit 仍按已确认的 CS2 语义仅依据文件存在，不读取内容。
 两边都主要以 output 是否存在作为幂等 skip，并且都没有独立 `--force`。因此“缺少 `--force`”不是当前
 GoldSrc 相对 CS2 的差异。共同风险是旧 artifact 可能因 binary/config/skill 变化而失效。
 
-GoldSrc 额外提供 binary mutation SHA-256 guard，应保留。后续若加入 cache key，应至少考虑：
+GoldSrc 不再额外执行分析期间的 binary mutation SHA-256 guard，以与 CS2 保持一致；SHA-256 仍用于
+opened binary identity 校验。后续若加入 cache key，应至少考虑：
 
 - binary identity；
 - config digest；
@@ -615,7 +616,6 @@ GoldSrc 应保留：
 - PE32/ELF32 格式门禁；
 - 提供受验证的 32-bit primary/ordinal vtable helper，不移植 Source2 专用 RTTI/dispatcher 语义；
 - GoldSrc game tag 和 depot 布局；
-- binary mutation 检测；
 - 当前 immutable candidate/gamedata guard。
 
 目标应是对齐“外部 contract、生命周期、恢复、可观测性和自动化”，而不是复制 Source2-specific 分析语义。
@@ -639,7 +639,7 @@ GoldSrc 应保留：
 - 实现 `idalib-mcp` start/readiness/lock/identity/shutdown（已完成）；
 - 将 `ida_mcp_session` 接入 analyzer（已完成）；
 - 增加 bounded health recovery（已完成）；
-- 保留 binary mutation guard（已完成）；
+- opened binary identity 校验（与 CS2 对齐）；
 - 建立真实 IDA smoke test（本地双平台已完成；self-hosted workflow 待完成）。
 
 验收标准：可以对一个已知 GoldSrc PE32/ELF32 binary 启动 MCP、验证打开目标、执行 `py_eval`，并只关闭本次拥有的 worker。

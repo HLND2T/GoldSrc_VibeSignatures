@@ -1161,6 +1161,51 @@ class McpLifecycleTests(unittest.TestCase):
             )
             self.assertEqual((2, 0, 0), (summary.successful, summary.failed, summary.skipped))
 
+    def test_analyze_allows_binary_mutation_during_skill_execution(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text(
+                """modules:
+  - name: engine
+    path_windows: Game/hw.dll
+    skills:
+      - name: mutate
+""",
+                encoding="utf-8",
+            )
+            binary = root / "bin" / "game-1" / "engine" / "hw.dll"
+            write_pe32(binary)
+            runtime = McpRuntime(
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                str(binary),
+                McpDatabaseBinding(False, None, str(binary), "worker", True, True),
+            )
+            lifecycle = MagicMock()
+            lifecycle.__enter__.return_value = lifecycle
+            lifecycle.runtime = runtime
+            lifecycle.ensure_ready.return_value = runtime
+
+            def mutate_binary(_node, **kwargs):
+                Path(kwargs["binary_path"]).write_bytes(b"mutated")
+                return PipelineResult("succeeded", "agent")
+
+            summary = AnalysisSummary()
+            with (
+                patch("ida_analyze_bin.IdaMcpLifecycle", return_value=lifecycle),
+                patch("ida_analyze_bin.run_analysis_pipeline", side_effect=mutate_binary),
+            ):
+                analyze(
+                    gamever="game-1",
+                    config_path=config,
+                    bindir=root / "bin",
+                    platforms=["windows"],
+                    reporter=InMemoryReporter(),
+                    summary=summary,
+                )
+            self.assertEqual((1, 0, 0), (summary.successful, summary.failed, summary.skipped))
+
     def test_id0_lock_fails_before_process_start(self):
         with tempfile.TemporaryDirectory() as temporary:
             binary = Path(temporary) / "hw.dll"
