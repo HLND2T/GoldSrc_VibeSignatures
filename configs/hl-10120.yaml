@@ -2,8 +2,13 @@ modules:
   - name: engine
     path_windows: Half-Life/hw.dll
     path_linux: Half-Life/hw.so
-    skills: []
-    symbols: []
+    skills:
+      - name: find-R_RenderView
+        expected_output:
+          - R_RenderView.{platform}.yaml
+    symbols:
+      - name: R_RenderView
+        category: func
   - name: client
     path_windows: Half-Life/valve/cl_dlls/client.dll
     path_linux: Half-Life/valve/cl_dlls/client.so

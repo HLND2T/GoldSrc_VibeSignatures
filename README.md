@@ -4,8 +4,9 @@ GoldSrc VibeSignatures is a reproducible Python 3.10+ framework for producing an
 snapshots. It validates PE32/I386 and ELF32/I386 inputs, executes a dependency-checked analysis graph, records an
 immutable candidate, and exposes a strict local contract to downstream gamedata generators.
 
-Production configuration covers Counter-Strike build 10120 and Sven Co-op build 10257, with `engine`, `client`,
-`gameui`, and `server` modules on Windows and Linux. Sven Co-op includes the first production finder,
+Production configuration covers Half-Life build 10120, Counter-Strike build 10120, and Sven Co-op build 10257.
+Half-Life and Sven Co-op include `engine`, `client`, `gameui`, and `server` modules on Windows and Linux;
+Counter-Strike includes `client` and `server`. Half-Life and Sven Co-op register the production finder
 `engine/R_RenderView`, anchored by `"R_RenderView: NULL worldmodel"` in `hw.dll` and `hw.so`.
 
 ## Setup
@@ -24,6 +25,7 @@ uv run python download_depot.py -tag cstrike-10120 -depotdir depots
 uv run python copy_depot_bin.py -gamever cstrike-10120 -platform all-platform
 uv run python copy_depot_bin.py -gamever cstrike-10120 -platform windows -checkonly
 uv run python ida_analyze_bin.py -gamever cstrike-10120 -configyaml configs/cstrike-10120.yaml -platform windows,linux
+uv run python ida_analyze_bin.py -gamever hl-10120 -modules engine -skill find-R_RenderView -platform windows,linux -debug
 uv run python ida_analyze_bin.py -gamever svencoop-10257 -modules engine -skill find-R_RenderView -platform windows,linux -debug
 
 uv run python gamesymbol_candidate.py build -gamever cstrike-10120 -bindir bin -output .candidates/candidate.yaml -session .candidates/session.json

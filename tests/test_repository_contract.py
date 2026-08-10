@@ -40,13 +40,15 @@ class RepositoryContractTests(unittest.TestCase):
                 self.assertTrue(module["path_windows"])
                 self.assertTrue(module["path_linux"])
 
-    def test_sven_engine_registers_r_renderview_production_finder(self):
-        document = yaml.safe_load((ROOT / "configs" / "svencoop-10257.yaml").read_text(encoding="utf-8"))
-        engine = next(module for module in document["modules"] if module["name"] == "engine")
-        finder = next(skill for skill in engine["skills"] if skill["name"] == "find-R_RenderView")
-        self.assertEqual(["R_RenderView.{platform}.yaml"], finder["expected_output"])
-        symbol = next(symbol for symbol in engine["symbols"] if symbol["name"] == "R_RenderView")
-        self.assertEqual("func", symbol["category"])
+    def test_goldsrc_engines_register_r_renderview_production_finder(self):
+        for tag in ("hl-10120", "svencoop-10257"):
+            with self.subTest(tag=tag):
+                document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
+                engine = next(module for module in document["modules"] if module["name"] == "engine")
+                finder = next(skill for skill in engine["skills"] if skill["name"] == "find-R_RenderView")
+                self.assertEqual(["R_RenderView.{platform}.yaml"], finder["expected_output"])
+                symbol = next(symbol for symbol in engine["symbols"] if symbol["name"] == "R_RenderView")
+                self.assertEqual("func", symbol["category"])
         self.assertTrue((ROOT / "ida_preprocessor_scripts" / "find-R_RenderView.py").is_file())
         self.assertTrue((ROOT / ".claude" / "skills" / "create-preprocessor-scripts" / "SKILL.md").is_file())
 

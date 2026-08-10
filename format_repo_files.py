@@ -21,7 +21,9 @@ def repository_format_files() -> tuple[list[str], list[str]]:
     yaml_files = sorted(
         path
         for path in paths
-        if path.endswith((".yaml", ".yml")) and not path.replace("\\", "/").startswith("gamesymbols/")
+        if path.endswith((".yaml", ".yml"))
+        and not path.replace("\\", "/").startswith("gamesymbols/")
+        and path.replace("\\", "/") != ".serena/project.yml"
     )
     return python_files, yaml_files
 
