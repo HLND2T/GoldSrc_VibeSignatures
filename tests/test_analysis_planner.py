@@ -14,6 +14,7 @@ from agent_runner import build_agent_command
 from analysis_planner import (
     AnalysisPlanError,
     build_execution_plan,
+    build_process_execution_plan,
     expected_symbol_artifacts,
     parse_config_document,
 )
@@ -48,7 +49,7 @@ from ida_skill_preprocessor import (
     PREPROCESS_STATUS_NO_SCRIPT,
     PREPROCESS_STATUS_SUCCESS,
 )
-from process_reporter import InMemoryReporter
+from process_reporter import RunStatus
 from tests.test_support import write_pe32
 
 
@@ -84,6 +85,47 @@ def module(skills):
             "symbols": [],
         }
     ]
+
+
+class RecordingAnalysisReporting:
+    def __init__(self) -> None:
+        self.events = []
+
+    def emit_task_status(self, task_id, status, phase, **details) -> None:
+        self.events.append(
+            {"event_type": "task.status_changed", "task_id": task_id, "status": status, "phase": phase, **details}
+        )
+
+    def emit_progress(self, task_id, phase, **payload) -> None:
+        self.events.append({"event_type": "skill.progress", "task_id": task_id, "phase": phase, "payload": payload})
+
+
+class RecordingProcessReporter:
+    def __init__(self) -> None:
+        self.plan = None
+        self.events = []
+        self.finalized = None
+        self.flushed = False
+        self.closed = False
+
+    def initialize_run(self, plan, run_id=None):
+        self.plan = plan
+        return run_id or "recorded-run"
+
+    def emit(self, event) -> None:
+        self.events.append(event)
+
+    def heartbeat(self, run_id) -> None:
+        self.heartbeat_run_id = run_id
+
+    def finalize_run(self, run_id, status, summary) -> None:
+        self.finalized = (run_id, status, summary)
+
+    def flush(self) -> None:
+        self.flushed = True
+
+    def close(self) -> None:
+        self.closed = True
 
 
 @asynccontextmanager
@@ -257,6 +299,10 @@ class CliContractTests(unittest.TestCase):
         self.assertEqual("medium", args.llm_effort)
         self.assertEqual(3, args.maxretry)
         self.assertEqual("", args.ida_args)
+        self.assertEqual("none", args.process_reporter)
+        self.assertEqual("redis://127.0.0.1:6379/0", args.redis_url)
+        self.assertEqual("gsvibe:analysis:v1", args.redis_prefix)
+        self.assertIsNone(args.run_id)
 
     def test_cli_values_override_gsvibe_environment(self):
         args = self.parse_args(
@@ -285,7 +331,14 @@ class CliContractTests(unittest.TestCase):
                 "4",
                 "-ida_args",
                 "quiet",
-                "-console-events",
+                "-process_reporter",
+                "console",
+                "-redis_url",
+                "redis://cli.invalid:6379/2",
+                "-redis_prefix",
+                "cli:prefix",
+                "-run_id",
+                "cli-run",
             ],
             env={
                 "GSVIBE_GAMEVER": "cstrike-10000",
@@ -297,6 +350,10 @@ class CliContractTests(unittest.TestCase):
                 "GSVIBE_LLM_TEMPERATURE": "1.0",
                 "GSVIBE_LLM_FAKE_AS": "codex",
                 "GSVIBE_LLM_EFFORT": "low",
+                "GSVIBE_PROCESS_REPORTER": "redis",
+                "GSVIBE_REDIS_URL": "redis://env.invalid:6379/1",
+                "GSVIBE_REDIS_PREFIX": "env:prefix",
+                "GSVIBE_RUN_ID": "env-run",
             },
         )
         self.assertEqual("cstrike-10121", args.gamever)
@@ -311,7 +368,10 @@ class CliContractTests(unittest.TestCase):
         self.assertEqual("high", args.llm_effort)
         self.assertEqual(4, args.maxretry)
         self.assertEqual("quiet", args.ida_args)
-        self.assertTrue(args.console_events)
+        self.assertEqual("console", args.process_reporter)
+        self.assertEqual("redis://cli.invalid:6379/2", args.redis_url)
+        self.assertEqual("cli:prefix", args.redis_prefix)
+        self.assertEqual("cli-run", args.run_id)
 
     def test_removed_and_deferred_options_are_rejected(self):
         for option in (
@@ -319,11 +379,10 @@ class CliContractTests(unittest.TestCase):
             "-plan-only",
             "-vcall_finder",
             "-rename",
-            "-process_reporter",
-            "-run_id",
         ):
             with self.subTest(option=option):
                 self.assert_parse_error(["-gamever", "cstrike-10120", option, "value"])
+        self.assert_parse_error(["-gamever", "cstrike-10120", "-console-events"])
         self.assert_parse_error(["-gamever", "cstrike-10120", "-platform", "all-platform"])
 
     def test_invalid_lists_retry_llm_and_agent_fail_fast(self):
@@ -336,6 +395,8 @@ class CliContractTests(unittest.TestCase):
             ["-gamever", "cstrike-10120", "-llm_temperature", "3"],
             ["-gamever", "cstrike-10120", "-agent", ""],
             ["-gamever", "cstrike-10120", "-llm_fake_as", "codex"],
+            ["-gamever", "cstrike-10120", "-redis_prefix", ":"],
+            ["-gamever", "cstrike-10120", "-run_id", "unsafe/run"],
         )
         for argv in invalid_argv:
             with self.subTest(argv=argv):
@@ -460,6 +521,39 @@ class DagTests(unittest.TestCase):
         self.assertEqual(("engine/shared.yaml",), plan.nodes[1].required_inputs)
         self.assertEqual("engine/shared.yaml", plan.edges[0].artifact)
 
+    def test_projects_validated_dag_to_stable_process_plan(self):
+        modules = [
+            {
+                "stage_index": 3,
+                "name": "engine",
+                "description": "Engine stage",
+                "path_windows": "Game/hw.dll",
+                "path_linux": None,
+                "skills": [skill("produce", output=["shared.yaml"])],
+                "symbols": [],
+            },
+            {
+                "stage_index": 7,
+                "name": "client",
+                "path_windows": "Game/client.dll",
+                "path_linux": None,
+                "skills": [skill("consume", output=["client.yaml"], required_input=["../engine/shared.yaml"])],
+                "symbols": [],
+            },
+        ]
+        plan = build_execution_plan(modules, platforms=["windows"], bin_dir="bin", tag="game-1")
+
+        process_plan = build_process_execution_plan(plan, modules, platforms=["windows"], bin_dir="bin")
+
+        self.assertEqual([3, 7], [stage.stage_index for stage in process_plan.stages])
+        self.assertEqual(
+            ["stage-0003-engine-windows/produce", "stage-0007-client-windows/consume"],
+            [node.id for node in process_plan.nodes],
+        )
+        dependency = next(edge for edge in process_plan.edges if edge.artifact == "engine/shared.yaml")
+        self.assertEqual("cross_stage_artifact", dependency.edge_type.value)
+        self.assertEqual(plan.nodes[0].id, process_plan.nodes[0].data["planner_node_id"])
+
     def test_rejects_cycle(self):
         modules = module(
             [
@@ -522,7 +616,6 @@ class DagTests(unittest.TestCase):
                 game_root=root,
                 old_game_root=None,
                 agent="codex",
-                reporter=InMemoryReporter(),
                 preprocessor_runner=preprocessor,
                 agent_skill_runner=lambda *_args, **_kwargs: calls.append("agent"),
             )
@@ -549,7 +642,7 @@ class DagTests(unittest.TestCase):
                 tag="game-2",
             ).nodes[0]
             calls = []
-            reporter = InMemoryReporter()
+            reporting = RecordingAnalysisReporting()
 
             def agent(_name, **kwargs):
                 calls.append(("agent", kwargs["model"], kwargs["debug"]))
@@ -575,16 +668,17 @@ class DagTests(unittest.TestCase):
                 agent_model="gpt-5",
                 debug=True,
                 skip_preprocessors=True,
-                reporter=reporter,
+                reporting=reporting,
+                task_id="stage-0000-engine-windows/find",
                 preprocessor_runner=lambda **_kwargs: calls.append("preprocessor"),
                 agent_skill_runner=agent,
             )
             self.assertEqual(PipelineResult("succeeded", "agent"), result)
             self.assertEqual([("agent", "gpt-5", True)], calls)
             self.assertEqual("ok: true\n", (root / "engine" / "result.yaml").read_text(encoding="utf-8"))
-            agent_events = [event for event in reporter.events if event.event.startswith("agent_")]
-            self.assertEqual(["agent_attempt_started", "agent_succeeded"], [event.event for event in agent_events])
-            self.assertEqual(1, agent_events[0].detail["attempt"])
+            agent_events = [event for event in reporting.events if event["event_type"] == "skill.progress"]
+            self.assertEqual(["attempt_started", "succeeded"], [event["payload"]["event"] for event in agent_events])
+            self.assertEqual(1, agent_events[0]["payload"]["attempt"])
 
     def test_pipeline_forwards_flat_llm_and_symbol_alias_arguments(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -611,7 +705,6 @@ class DagTests(unittest.TestCase):
                 game_root=root,
                 old_game_root=None,
                 agent="codex",
-                reporter=InMemoryReporter(),
                 llm_config={
                     "model": "test-model",
                     "api_key": "secret",
@@ -655,7 +748,6 @@ class DagTests(unittest.TestCase):
                     game_root=root,
                     old_game_root=None,
                     agent="codex",
-                    reporter=InMemoryReporter(),
                 )
             self.assertEqual("missing_input", missing.exception.reason)
 
@@ -667,7 +759,6 @@ class DagTests(unittest.TestCase):
                     game_root=root,
                     old_game_root=None,
                     agent="codex",
-                    reporter=InMemoryReporter(),
                 )
             self.assertEqual("invalid_input", invalid.exception.reason)
 
@@ -695,7 +786,6 @@ class DagTests(unittest.TestCase):
                     game_root=root,
                     old_game_root=None,
                     agent="codex",
-                    reporter=InMemoryReporter(),
                     preprocessor_runner=preprocessor,
                 )
             self.assertEqual("preprocess_contract_violation", raised.exception.reason)
@@ -724,7 +814,6 @@ class DagTests(unittest.TestCase):
                 game_root=root,
                 old_game_root=None,
                 agent="codex",
-                reporter=InMemoryReporter(),
                 preprocessor_runner=preprocessor,
                 agent_skill_runner=agent,
             )
@@ -762,7 +851,6 @@ class DagTests(unittest.TestCase):
                 game_root=root,
                 old_game_root=None,
                 agent="codex",
-                reporter=InMemoryReporter(),
                 preprocessor_runner=preprocessor,
                 agent_skill_runner=agent,
             )
@@ -790,7 +878,6 @@ class DagTests(unittest.TestCase):
                         game_root=root,
                         old_game_root=None,
                         agent="codex",
-                        reporter=InMemoryReporter(),
                         preprocessor_runner=lambda status=status, **_kwargs: status,
                         agent_skill_runner=agent,
                     )
@@ -819,7 +906,6 @@ class DagTests(unittest.TestCase):
                 game_root=root,
                 old_game_root=None,
                 agent="codex",
-                reporter=InMemoryReporter(),
                 skip_preprocessors=True,
                 agent_skill_runner=agent,
             )
@@ -844,7 +930,6 @@ class DagTests(unittest.TestCase):
                 game_root=root,
                 old_game_root=None,
                 agent="codex",
-                reporter=InMemoryReporter(),
                 preprocessor_runner=lambda **_kwargs: PREPROCESS_STATUS_NO_SCRIPT,
                 agent_skill_runner=lambda *_args, **_kwargs: True,
             )
@@ -874,7 +959,6 @@ class DagTests(unittest.TestCase):
                     game_root=root,
                     old_game_root=None,
                     agent="codex",
-                    reporter=InMemoryReporter(),
                     skip_preprocessors=True,
                     agent_skill_runner=agent,
                 )
@@ -910,7 +994,6 @@ class DagTests(unittest.TestCase):
                 game_root=root,
                 old_game_root=None,
                 agent="codex",
-                reporter=InMemoryReporter(),
                 preprocessor_runner=lambda **_kwargs: PREPROCESS_STATUS_NO_SCRIPT,
                 ensure_mcp_ready=ensure_ready,
                 agent_skill_runner=agent,
@@ -955,7 +1038,6 @@ class DagTests(unittest.TestCase):
                     bindir=root / "bin",
                     platforms=["windows"],
                     skip_error=True,
-                    reporter=InMemoryReporter(),
                     summary=summary,
                 )
             self.assertEqual(2, pipeline.call_count)
@@ -998,7 +1080,6 @@ class DagTests(unittest.TestCase):
                     config_path=config,
                     bindir=root / "bin",
                     platforms=["windows"],
-                    reporter=InMemoryReporter(),
                     summary=summary,
                 )
             self.assertEqual(1, pipeline.call_count)
@@ -1016,6 +1097,7 @@ class DagTests(unittest.TestCase):
 """,
                 encoding="utf-8",
             )
+            reporter = RecordingProcessReporter()
             with self.assertRaisesRegex(AnalysisRunError, "Module.*missing"):
                 analyze(
                     gamever="game-1",
@@ -1023,7 +1105,87 @@ class DagTests(unittest.TestCase):
                     bindir=root / "bin",
                     platforms=["windows"],
                     modules_filter=["missing"],
+                    reporter=reporter,
+                    run_id="invalid-plan-run",
                 )
+            self.assertEqual([], reporter.plan["nodes"])
+            self.assertEqual(["graph_invalid"], reporter.plan["warnings"])
+            self.assertEqual(("invalid-plan-run", RunStatus.FAILED), reporter.finalized[:2])
+            self.assertTrue(reporter.flushed)
+            self.assertTrue(reporter.closed)
+
+    def test_analyzer_reports_stable_lifecycle_for_existing_outputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text(
+                """modules:
+  - name: engine
+    path_windows: Game/hw.dll
+    skills:
+      - name: find
+        expected_output: result.yaml
+""",
+                encoding="utf-8",
+            )
+            write_pe32(root / "bin" / "game-1" / "engine" / "hw.dll")
+            output = root / "bin" / "game-1" / "engine" / "result.yaml"
+            output.write_text("ok: true\n", encoding="utf-8")
+            reporter = RecordingProcessReporter()
+            summary = AnalysisSummary()
+
+            analyze(
+                gamever="game-1",
+                config_path=config,
+                bindir=root / "bin",
+                platforms=["windows"],
+                reporter=reporter,
+                run_id="scheduled-run",
+                summary=summary,
+            )
+
+            task_id = "stage-0000-engine-windows/find"
+            task_events = [event for event in reporter.events if event.task_id == task_id]
+            self.assertEqual(["skipped"], [event.status.value for event in task_events])
+            self.assertEqual("existing_outputs", task_events[0].reason.value)
+            self.assertEqual(task_id, reporter.plan["nodes"][0]["id"])
+            self.assertEqual(("scheduled-run", RunStatus.SUCCEEDED), reporter.finalized[:2])
+            self.assertEqual(1, reporter.finalized[2]["skipped"])
+            self.assertTrue(reporter.flushed)
+            self.assertTrue(reporter.closed)
+
+    def test_binary_failure_aborts_tasks_and_finalizes_failed_run(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text(
+                """modules:
+  - name: engine
+    path_windows: Game/hw.dll
+    skills:
+      - name: find
+        expected_output: result.yaml
+""",
+                encoding="utf-8",
+            )
+            reporter = RecordingProcessReporter()
+            summary = AnalysisSummary()
+
+            analyze(
+                gamever="game-1",
+                config_path=config,
+                bindir=root / "bin",
+                platforms=["windows"],
+                skip_error=True,
+                reporter=reporter,
+                summary=summary,
+            )
+
+            task = next(event for event in reporter.events if event.task_id == "stage-0000-engine-windows/find")
+            self.assertEqual("aborted", task.status.value)
+            self.assertEqual("missing_binary", task.reason.value)
+            self.assertEqual(RunStatus.FAILED, reporter.finalized[1])
+            self.assertEqual(1, summary.failed)
 
 
 class McpLifecycleTests(unittest.TestCase):
@@ -1060,7 +1222,6 @@ class McpLifecycleTests(unittest.TestCase):
                     game_root=root,
                     old_game_root=None,
                     agent="codex",
-                    reporter=InMemoryReporter(),
                     mcp_runtime=runtime,
                     preprocessor_runner=preprocessor,
                 ),
@@ -1094,7 +1255,6 @@ class McpLifecycleTests(unittest.TestCase):
                     config_path=config,
                     bindir=root / "bin",
                     platforms=["windows"],
-                    reporter=InMemoryReporter(),
                     summary=summary,
                 )
             self.assertEqual((0, 0, 1), (summary.successful, summary.failed, summary.skipped))
@@ -1143,7 +1303,6 @@ class McpLifecycleTests(unittest.TestCase):
                     bindir=root / "bin",
                     platforms=["windows"],
                     ida_args="quiet",
-                    reporter=InMemoryReporter(),
                     summary=summary,
                 )
             lifecycle_type.assert_called_once_with(binary, "windows", DEFAULT_HOST, DEFAULT_PORT, "quiet", False)
@@ -1201,7 +1360,6 @@ class McpLifecycleTests(unittest.TestCase):
                     config_path=config,
                     bindir=root / "bin",
                     platforms=["windows"],
-                    reporter=InMemoryReporter(),
                     summary=summary,
                 )
             self.assertEqual((1, 0, 0), (summary.successful, summary.failed, summary.skipped))

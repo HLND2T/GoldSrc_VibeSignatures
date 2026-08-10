@@ -11,6 +11,19 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 
 import yaml
 
+from process_reporter import (
+    EdgeType,
+    ExecutionEdge,
+    ExecutionJob,
+    ExecutionNode,
+    ExecutionPlan as ProcessExecutionPlan,
+    ExecutionStage,
+    PlanNodeType,
+    build_job_id,
+    build_stage_id,
+    build_task_id,
+)
+
 PLATFORMS = ("windows", "linux")
 SYMBOL_CATEGORIES = frozenset({"func", "gv", "vfunc", "vtable", "patch", "struct", "structmember"})
 SAFE_NAME_RE = re.compile(r"^[A-Za-z0-9_.@$:+~-]+$", re.ASCII)
@@ -459,6 +472,135 @@ def build_execution_plan(
             edges.append(PlanEdge(module_skills[prerequisite], node.id, "prerequisite"))
     ordered = _topological_order(nodes, edges)
     return ExecutionPlan(tag, tuple(ordered), tuple(edges))
+
+
+def build_process_execution_plan(
+    plan: ExecutionPlan,
+    modules: list[dict],
+    *,
+    platforms: Iterable[str],
+    bin_dir: str | Path,
+) -> ProcessExecutionPlan:
+    """Project the validated GoldSrc DAG into the stable process-reporting schema."""
+
+    selected_platforms = tuple(platforms)
+    module_by_name = {module["name"]: module for module in modules}
+    active_pairs = {(node.module, node.platform) for node in plan.nodes}
+    active_modules = {module_name for module_name, _platform in active_pairs}
+    stages: list[ExecutionStage] = []
+    jobs: list[ExecutionJob] = []
+    process_nodes: list[ExecutionNode] = []
+    process_edges: list[ExecutionEdge] = []
+    stage_by_module: dict[str, ExecutionStage] = {}
+    job_by_pair: dict[tuple[str, str], ExecutionJob] = {}
+    task_id_by_planner_node: dict[str, str] = {}
+
+    for fallback_index, module in enumerate(modules):
+        module_name = module["name"]
+        if module_name not in active_modules:
+            continue
+        stage_index = module.get("stage_index", fallback_index)
+        stage = ExecutionStage(
+            id=build_stage_id(stage_index, module_name),
+            stage_index=stage_index,
+            module_name=module_name,
+            description=module.get("description"),
+        )
+        stages.append(stage)
+        stage_by_module[module_name] = stage
+        for platform in selected_platforms:
+            if (module_name, platform) not in active_pairs:
+                continue
+            configured_path = module.get(f"path_{platform}")
+            binary_path = (
+                str(Path(bin_dir) / plan.tag / module_name / Path(configured_path).name) if configured_path else None
+            )
+            job = ExecutionJob(
+                id=build_job_id(stage.id, platform),
+                stage_id=stage.id,
+                stage_index=stage.stage_index,
+                module_name=module_name,
+                platform=platform,
+                binary_path=binary_path,
+            )
+            jobs.append(job)
+            job_by_pair[(module_name, platform)] = job
+
+    incoming: dict[str, list[str]] = {node.id: [] for node in plan.nodes}
+    for edge in plan.edges:
+        incoming.setdefault(edge.target, []).append(edge.source)
+    layers: dict[str, int] = {}
+    for node in plan.nodes:
+        layers[node.id] = max((layers[source] + 1 for source in incoming.get(node.id, [])), default=0)
+
+    job_orders: dict[str, int] = {}
+    skill_by_module = {
+        module["name"]: {skill["name"]: skill for skill in module.get("skills", [])} for module in modules
+    }
+    for node in plan.nodes:
+        stage = stage_by_module[node.module]
+        job = job_by_pair[(node.module, node.platform)]
+        task_id = build_task_id(job.id, node.skill)
+        task_id_by_planner_node[node.id] = task_id
+        order = job_orders.get(job.id, 0)
+        job_orders[job.id] = order + 1
+        skill = skill_by_module.get(node.module, {}).get(node.skill, {})
+        process_nodes.append(
+            ExecutionNode(
+                id=task_id,
+                job_id=job.id,
+                stage_id=stage.id,
+                name=node.skill,
+                node_type=PlanNodeType.SKILL,
+                order=order,
+                layer=layers[node.id],
+                description=skill.get("description"),
+                data={
+                    "planner_node_id": node.id,
+                    "required_inputs": list(node.required_inputs),
+                    "optional_inputs": list(node.optional_inputs),
+                    "required_outputs": list(node.required_outputs),
+                    "optional_outputs": list(node.optional_outputs),
+                    "prerequisites": list(node.prerequisites),
+                    "skip_if_exists": list(node.skip_if_exists),
+                    "max_retries": node.max_retries,
+                    "aliases": list(node.aliases),
+                },
+            )
+        )
+
+    planner_nodes = {node.id: node for node in plan.nodes}
+    for edge in plan.edges:
+        source = planner_nodes[edge.source]
+        target = planner_nodes[edge.target]
+        edge_type = EdgeType(edge.kind)
+        if edge_type == EdgeType.ARTIFACT and source.module != target.module:
+            edge_type = EdgeType.CROSS_STAGE_ARTIFACT
+        process_edges.append(
+            ExecutionEdge(
+                source=task_id_by_planner_node[edge.source],
+                target=task_id_by_planner_node[edge.target],
+                edge_type=edge_type,
+                artifact=edge.artifact,
+            )
+        )
+
+    process_edges.extend(
+        ExecutionEdge(source=source.id, target=target.id, edge_type=EdgeType.STAGE_ORDER)
+        for source, target in zip(stages, stages[1:])
+    )
+    process_edges.extend(
+        ExecutionEdge(source=source.id, target=target.id, edge_type=EdgeType.STAGE_ORDER)
+        for source, target in zip(jobs, jobs[1:])
+    )
+    for job in jobs:
+        job_nodes = [node for node in process_nodes if node.job_id == job.id]
+        process_edges.extend(
+            ExecutionEdge(source=source.id, target=target.id, edge_type=EdgeType.STAGE_ORDER)
+            for source, target in zip(job_nodes, job_nodes[1:])
+        )
+
+    return ProcessExecutionPlan(stages=stages, jobs=jobs, nodes=process_nodes, edges=process_edges)
 
 
 def plan_sha256(plan: ExecutionPlan) -> str:

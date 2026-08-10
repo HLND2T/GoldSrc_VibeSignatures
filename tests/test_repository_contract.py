@@ -45,8 +45,8 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertTrue((ROOT / "ida_preprocessor_scripts" / "find-R_RenderView.py").is_file())
         self.assertTrue((ROOT / ".claude" / "skills" / "create-preprocessor-scripts" / "SKILL.md").is_file())
 
-    def test_no_disallowed_runtime_subsystems_or_architecture_paths(self):
-        disallowed = ("win64", "process_reporter_redis", "cpp_tests", "hl2sdk")
+    def test_no_disallowed_source2_subsystems_or_architecture_paths(self):
+        disallowed = ("win64", "cpp_tests", "hl2sdk")
         checked = [path for path in ROOT.glob("*.py") if path.name not in {"format_repo_files.py"}]
         checked.extend((ROOT / "gamesymbol_snapshot_lib").glob("*.py"))
         for path in checked:
@@ -63,10 +63,50 @@ class RepositoryContractTests(unittest.TestCase):
             "uv run python tests/run_test_suite.py unit -b --durations 30",
             "uv run python tests/run_test_suite.py repository-contract -b --durations 30",
             "uv run python tests/run_test_suite.py all -b --durations 30",
+            "uv run python tests/run_test_suite.py redis-integration -b --durations 30",
         )
         for command in commands:
             self.assertIn(command, readme)
             self.assertIn(command, workflow)
+
+        frontend_commands = (
+            "npm ci",
+            "npm test",
+            "npm run lint",
+            "npm run build",
+            "npm run verify:gamesymbols",
+            "npm run test:e2e",
+        )
+        pages_readme = (ROOT / "pages" / "README.md").read_text(encoding="utf-8")
+        pages_workflow = (ROOT / ".github" / "workflows" / "ci.yaml").read_text(encoding="utf-8")
+        for command in frontend_commands:
+            self.assertIn(command, pages_readme)
+            self.assertIn(command, pages_workflow)
+
+    def test_published_sven_snapshot_matches_goldsrc_contract(self):
+        path = ROOT / "gamesymbols" / "svencoop-10257.yaml"
+        self.assertTrue(path.is_file())
+        document = yaml.safe_load(path.read_text(encoding="utf-8"))
+        self.assertEqual(5, document["schema_version"])
+        self.assertEqual("svencoop-10257", document["game_version"])
+        self.assertEqual(2, document["file_count"])
+        self.assertEqual(
+            {"engine/R_RenderView.linux.yaml", "engine/R_RenderView.windows.yaml"},
+            set(document["files"]),
+        )
+        self.assertEqual(MODULES, set(document["binaries"]))
+
+    def test_pages_workflow_keeps_content_addressed_history_append_only(self):
+        workflow = (ROOT / ".github" / "workflows" / "deploy-pages.yml").read_text(encoding="utf-8")
+        for marker in (
+            "pages-snapshots",
+            "--archive",
+            "refs/heads/pages-snapshots",
+            "actions/deploy-pages@v5",
+            "[a-z0-9]+(-[a-z0-9]+)*-[0-9]+",
+        ):
+            self.assertIn(marker, workflow)
+        self.assertNotIn("push --force", workflow)
 
     def test_sven_local_dlls_are_read_only_pe32_smoke_inputs(self):
         root = ROOT / "bin" / "svencoop"

@@ -5,11 +5,14 @@ description = "Reproducible x86 GoldSrc signature and gamedata analysis framewor
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "fastapi>=0.139.0",
     "httpx>=0.27",
     "mcp>=1.0",
     "openai>=1.0",
     "python-dotenv>=1.0",
     "pyyaml>=6.0",
+    "redis",
+    "uvicorn>=0.41.0",
 ]
 
 [dependency-groups]

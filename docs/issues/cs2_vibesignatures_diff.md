@@ -9,8 +9,9 @@
 
 当前 GoldSrc 实现已经具备严格的 x86 二进制校验、跨模块分析 DAG、单一 Preprocessor → Agent
 回退、category-aware history relocation、snapshot/candidate 和发布边界，并已加入首个双平台
-production finder `find-R_RenderView`。尚未对齐的主体已收敛到 Reporter/scheduler、self-hosted IDA CI
-以及更大规模的 production symbol coverage。
+production finder `find-R_RenderView`。Reporter/execution graph、Redis scheduler/recovery、只读 API/SSE、
+React dashboard、Symbol Explorer、GitHub Pages 与 append-only snapshot archive 已按冻结基线移植并适配。
+尚未对齐的主体收敛到 Windows self-hosted IDA CI 与更大规模的 production symbol coverage。
 
 最关键的缺口不是单一启动脚本，而是一组相互依赖的运行时契约：
 
@@ -18,7 +19,7 @@ production finder `find-R_RenderView`。尚未对齐的主体已收敛到 Report
 2. Preprocessor 的 MCP-bound status/input/helper contract 与真实 Windows/Linux IDA smoke 均已完成；
 3. history reuse 已按 category 在新 IDB 中重建地址和派生字段，不再复制旧地址；
 4. config `name + category`、category-specific artifact identity、安全 sibling input 和跨模块 DAG 已对齐；
-5. Redis reporter/scheduler、进度 API、dashboard 和 self-hosted IDA CI 尚不存在。
+5. Redis reporter/scheduler、进度 API/SSE 和 dashboard 已完成；self-hosted IDA CI 尚未建立。
 
 ## 当前已有基础
 
@@ -46,14 +47,14 @@ production finder `find-R_RenderView`。尚未对齐的主体已收敛到 Report
 | --- | --- | --- |
 | 已完成 | 首个 production config/preprocessor/skill | `svencoop-10257/engine/R_RenderView` 已形成真实 DAG 节点 |
 | 已完成 | config/artifact/helper schema 对齐 | `category`、专用 identity、跨模块 input 和 Finder API 已对齐 |
-| P1 | execution plan 和 reporter contract 不兼容 | 无法接入 CS2 风格运行状态、任务图和可观测性消费者 |
+| 已完成 | execution plan 和 reporter contract | stable stage/job/task graph、typed event 与完整 reporter lifecycle 已接入 Analyzer |
 | 已完成 | 真实 IDA Preprocessor/validator smoke | `hw.dll` / `hw.so` 双平台分析均由 Preprocessor 成功产出并通过 runtime validator |
-| P2 | Redis scheduler/reporter、API、SSE、dashboard 缺失 | 无持久队列、恢复、heartbeat 和远程只读监控 |
+| 已完成 | Redis scheduler/reporter、API、SSE、dashboard | 已有持久队列、恢复、heartbeat、只读监控与 Symbol Explorer |
 | P2 | 缺少 Windows self-hosted IDA workflow | CI 无法证明真实 IDA 分析链可工作 |
 
 `idalib-mcp` lifecycle、database binding、identity validation、IDB lock、健康检查、一次恢复预算、owned shutdown、
-Preprocessor contract 和 runtime input/output validation 已补齐；本地真实 IDA smoke 于 2026-08-10 完成。
-尚未完成的是把同一 smoke 固化为 Windows self-hosted CI。
+Preprocessor contract、runtime input/output validation 和完整 process observability stack 已补齐；本地真实 IDA
+smoke 于 2026-08-10 完成。尚未完成的是把同一 smoke 固化为 Windows self-hosted CI。
 
 ## 1. Production 分析内容（首个 finder 已建立）
 
@@ -105,7 +106,8 @@ Repository contract 已改为验证该 production finder，而不是锁定空配
 - `-plan-only` 和 preview 分支已删除，内部 DAG builder 只服务真实执行；
 - generic `-vcall_finder` 排除；
 - `-ida_args` 已随 owned IDA MCP lifecycle 恢复；`-rename` 仍延期；
-- CS2 process/Redis Reporter 本次延期，现有 `-console-events` 保留；
+- `-process_reporter=none|console|redis`、`-redis_url`、`-redis_prefix`、`-run_id` 与对应 `GSVIBE_*`
+  环境变量已对齐；旧 `-console-events`、旧 event API 和旧格式全部删除；
 - old-version 自动选择限制在同 game family，`major_update: true` 可禁用；旧 YAML 直接复制先行禁用；
 - 有效输入按 CS2 语义对齐，非法输入使用更严格的 fail-fast 校验。
 
@@ -122,7 +124,7 @@ Repository contract 已改为验证该 production finder，而不是锁定空配
 | IDA 参数 | `-ida_args` | 已对齐 |
 | Retry | `-maxretry` 和 per-skill override | 已对齐；per-skill 显式值优先 |
 | 控制行为 | `-skip_error`、`-skip_pp`、`-rename`、`-debug` | 已对齐 `skip_error` / `skip_pp` / `debug`；`rename` 延期 |
-| Reporter | `-process_reporter`、Redis 参数、`-run_id` | 只有 `-console-events` |
+| Reporter | `-process_reporter`、Redis 参数、`-run_id` | 已对齐，使用 `GSVIBE_*` 与 `gsvibe:analysis:v1` |
 | Old version | 自动寻找；`major_update` 可禁用 | 已对齐为同 game family 自动选择；原样复制旧 YAML 已禁用 |
 | Plan preview | 无独立参数 | 已删除 `-plan-only` |
 
@@ -139,7 +141,8 @@ Repository contract 已改为验证该 production finder，而不是锁定空配
 - 默认输出配置回显和 success/fail/skip summary；
 - `-skip_error` 只允许继续执行，最终只要存在失败仍返回非零状态；
 - `-skip_pp` 会跳过单一 Preprocessor，直接进入 Agent；
-- CS2 scheduler 的 `-configyaml` 与逗号 platform 可以复用，但 Reporter 环境变量仍不能直接传给 GoldSrc。
+- scheduler 通过受控 argv 和 `GSVIBE_PROCESS_REPORTER/GSVIBE_REDIS_URL/GSVIBE_REDIS_PREFIX/GSVIBE_RUN_ID`
+  调用 Analyzer；不接受 CS2 namespace alias。
 
 ### 已落实规则
 
@@ -181,8 +184,9 @@ Producer/input key 已规范化为 game-root 相对 artifact path。跨 module p
 artifact edge，并参与重复 producer、缺失 input 与 cycle 检测。Snapshot formal paths 也使用规范化 owner
 path，因此 `../engine/X.yaml` 在 snapshot 中仍表示为 `engine/X.yaml`。
 
-GoldSrc 仍未移植 CS2 Reporter 使用的 stage/job/task stable ID、layer 与 auxiliary nodes；这属于 Reporter
-contract 差异，不再是 artifact DAG 缺口。
+`build_process_execution_plan()` 现在把同一个 GoldSrc artifact DAG 投影为 Reporter schema-v1 graph，补齐
+stage/job/task stable ID、layer、edge 与 auxiliary nodes。直接执行和 scheduler 执行复用同一来源；
+跨模块 artifact 在 process graph 中以 `cross_stage_artifact` edge 表示。
 
 本次 shared contract 变更同步更新了 planner、runtime artifact map、snapshot/candidate tests 和文档，
 analysis output contract 升级为 version 2。
@@ -409,12 +413,9 @@ opened binary identity 校验。后续若加入 cache key，应至少考虑：
 ### Fail-fast 与异常边界
 
 GoldSrc 已支持默认 fail-fast、`-skip_error` opt-in continuation、success/fail/skip 计数和结构化 skill reason。
-相对 CS2 完整 Reporter 生命周期仍缺少：
-
-- task abort reason；
-- pending task finalization；
-- reporter finalize/flush/close；
-- unexpected exception 对 run 状态的兜底写入。
+Analyzer 会为成功、失败、skip 和 abort 写入 typed task terminal event；退出前终结所有 pending task，并在正常与
+异常路径执行 reporter finalize/flush/close。unexpected exception 会把 run 兜底写为 failed；backend 由
+`BestEffortProcessReporter` 隔离，不改变 Analyzer 结果。
 
 ## 8. Agent runner 能力差异
 
@@ -440,48 +441,38 @@ GoldSrc 已支持默认 fail-fast、`-skip_error` opt-in continuation、success/
 - GoldSrc：`agent_runner.py`、`ida_analyze_bin.py:1206`、`tests/test_agent_runner.py`
 - CS2：`D:\CS2_VibeSignatures\agent_runner.py:15-29,110-205,219-365,434-629`
 
-## 9. Reporter 与 execution plan contract 不兼容
+## 9. Reporter 与 execution plan contract（已对齐）
 
-GoldSrc event：
-
-```text
-event, timestamp, tag, module, platform, skill, detail
-```
-
-仅有：
-
-- `InMemoryReporter`；
-- JSONL stdout `ConsoleReporter`；
-- `NullReporter`。
-
-CS2 event：
+GoldSrc 已删除旧 `ProgressEvent` 与 emit-only reporter，当前 event contract 为：
 
 ```text
 run_id, event_type, task_id, status, phase, reason,
 message, error, payload, occurred_at
 ```
 
-同时定义：
+当前 domain model 定义：
 
-- Run status state machine；
-- Task status state machine；
-- process phase 和 stable reason enum；
-- immutable versioned execution graph；
-- stage/job/task stable IDs；
-- `initialize_run`、`heartbeat`、`finalize_run`、`flush`、`close`；
+- Run/Task status state machine；
+- process phase 与 stable reason enum；
+- immutable schema-v1 execution graph；
+- stage/job/task stable ID、layer、edge 与 auxiliary node；
+- `initialize_run`、`emit`、`heartbeat`、`finalize_run`、`flush`、`close`；
+- `NullProcessReporter`、新 JSONL `ConsoleProcessReporter`、`RedisProcessReporter`；
 - best-effort wrapper，确保可观测性故障不改变 Analyzer 结果。
+
+`analysis_planner.py` 的原始 artifact DAG 仍是唯一事实来源；新增 projection 只生成 process graph，不复制或
+重写 planner 规则。Analyzer 在所有正常和异常终止路径 finalize run/task，并拒绝旧 `-console-events`。
 
 出处：
 
-- GoldSrc：`process_reporter.py:11-46`
-- CS2：`D:\CS2_VibeSignatures\process_reporter.py:11-182,193-247`
+- GoldSrc domain：`process_reporter.py`；
+- GoldSrc projection：`analysis_planner.py::build_process_execution_plan`；
+- Analyzer adapter：`ida_analyze_bin.py::AnalysisReporting`；
+- 冻结 CS2 基线：`c6383eb299ebf564f112a5fb34b58fb78d0690dd`。
 
-GoldSrc `ConsoleReporter` 可以作为本地调试 adapter 保留，但如果要接入 CS2 风格 scheduler/API，底层 domain
-model 和 plan schema 需要先完成兼容。
+## 10. Scheduler、恢复和监控（已对齐）
 
-## 10. Scheduler、恢复和监控缺失
-
-CS2 Redis scheduler 使用结构化 `RunRequest`，而不是可执行 shell 字符串。核心 contract 为：
+GoldSrc Redis scheduler 使用结构化 `RunRequest`，而不是可执行 shell 字符串。核心 contract 为：
 
 ```text
 run_id
@@ -493,50 +484,57 @@ agent
 created_at
 ```
 
-它提供：
+已实现：
 
 - Redis Stream Consumer Group；
-- FIFO 单并发 IDA worker；
+- 可续期 Redis 全局 lease 保证跨 scheduler 进程的 FIFO 单并发 IDA worker；
 - `xautoclaim` 回收 pending entry；
 - heartbeat 存活检查和防重复启动；
 - terminal run 防重复执行；
 - 受控 argv 构造；
 - Analyzer reporter/run ID 环境注入；
 - scheduler restart 后的 stale/aborted 处理；
-- Analyzer 未写 final status 时根据 exit code 补齐结果。
+- Analyzer 未写 final status 时根据 exit code 补齐结果；
+- scheduler fallback 原子 abort 未完成 task、重算 summary，Reporter finalize 不得覆盖不同的已有终态。
+
+`RunRequest` 保持最小字段，不接收 `agent_model`、IDA 或 LLM 参数。Scheduler 根据 config/tag 构造受控 argv，
+并仅通过 `GSVIBE_*` 注入 reporter、Redis 与 run ID。GoldSrc 和 CS2 仓库继续独立维护，文件/符号命名尽量一致；
+wire namespace 则适配为 `gsvibe:analysis:v1`。
+
+### API、dashboard 与 Pages
+
+GoldSrc 当前提供：
+
+- `process_api.py` 的 run list/detail、graph、snapshot、task、event page 和 SSE；
+- snapshot + `Last-Event-ID` 恢复协议、具体 live cursor 锚定与连接期间 expired-cursor reset；
+- `/healthz`、Redis-backed `/readyz`；
+- exact-origin CORS 和 opt-in private-network preflight；
+- 完整 `pages/` React dashboard，包括 run/graph/list/task views 与 Symbol Explorer；
+- `<family-build>` snapshot tag，按 game family 分组且组内 build 数字降序；
+- GitHub Pages build/deploy 与 append-only `pages-snapshots` history；
+- current/archive/deployed 三阶段的 exact-byte size/SHA-256 校验。
+
+API 是只读服务，默认绑定 loopback 且无内置认证。GitHub Pages 只托管静态 dashboard；公共页面连接的是浏览器
+所在计算机的 Process API，不会把 API/SSE 部署到 CDN。repository contract 已移除旧 Redis 禁令，并新增真实
+schema-5 `gamesymbols/svencoop-10257.yaml` 及 Pages archive 门禁。
 
 出处：
 
-- `D:\CS2_VibeSignatures\process_scheduler_redis.py:22-100,110-220,223-307`
-- `D:\CS2_VibeSignatures\process_scheduler_cli.py:25-103`
-
-GoldSrc 当前没有 Redis 依赖、scheduler、reporter backend、heartbeat 或持久状态。并且
-`tests/test_repository_contract.py:40-47` 明确禁止 `process_reporter_redis` 出现在 runtime 代码中。
-
-### API 和 dashboard
-
-CS2 还提供：
-
-- `process_api.py`；
-- run list、snapshot、task、event 和 SSE API；
-- snapshot + `Last-Event-ID` 恢复协议；
-- health/readiness；
-- CORS 和 private-network 安全配置；
-- `pages/` React dashboard。
-
-GoldSrc `docs/architecture_CN.md:40-43` 和 `README.md:71-74` 明确将 service、scheduler 和 UI 排除在范围外。
-若要最大程度贴近 CS2，需要先修改这一架构决策，而不是只添加实现文件。
+- `process_reporter_redis.py`、`process_scheduler_redis.py`、`process_scheduler_cli.py`；
+- `process_status_reader_redis.py`、`process_status_reader_redis_views.py`；
+- `process_api.py`、`process_api_schemas.py`；
+- `pages/` 与 `.github/workflows/deploy-pages.yml`。
 
 ## 11. 测试与 CI 缺口
 
-GoldSrc 当前真实 IDA integration test 只在 `RUN_IDA_INTEGRATION=1` 时验证 `idaapi` 和 `idalib` 是否可 import：
+GoldSrc 的最小 IDA environment test 只在 `RUN_IDA_INTEGRATION=1` 时验证 `idaapi` 和 `idalib` 是否可 import：
 
 ```python
 self.assertIsNotNone(importlib.util.find_spec("idaapi"))
 self.assertIsNotNone(importlib.util.find_spec("idalib"))
 ```
 
-它没有验证：
+该测试文件本身没有验证：
 
 - `idalib-mcp` 能否启动；
 - MCP tools/list contract；
@@ -545,13 +543,18 @@ self.assertIsNotNone(importlib.util.find_spec("idalib"))
 - preprocessor 能否通过真实 MCP 生成 YAML；
 - Agent 是否能连接所需 MCP server；
 - MCP recovery 和 owned shutdown；
-- Redis reporter/scheduler；
-- Analyzer CLI end-to-end exit behavior。
+- 商业 IDA 参与的 Analyzer CLI end-to-end exit behavior。
 
 出处：`tests/test_ida_integration.py:8-12`。
 
-GoldSrc CI 只在 hosted Ubuntu/Windows runner 上执行 formatting、unit、repository-contract 和 all suite，
-不安装商业 IDA，也不运行真实 Analyzer。
+GoldSrc hosted CI 现在分三类执行：
+
+- Ubuntu/Windows：formatting、unit、repository-contract 和 all suite；
+- Ubuntu + Redis 7 service：显式运行 `redis-integration`，覆盖 Lua transition、heartbeat、XAUTOCLAIM、真实
+  `ida_analyze_bin.py` 无 IDA 空计划子进程和 Redis read model；
+- Ubuntu + Node 24：Pages unit、lint、build、game-symbol exact-byte verify 和 Chromium Playwright E2E。
+
+Hosted runner 已覆盖真实 Analyzer CLI/process boundary，但仍不安装商业 IDA，也不运行 Analyzer/IDA smoke。
 
 CS2 self-hosted workflow 额外执行：
 
@@ -568,36 +571,25 @@ CS2 self-hosted workflow 额外执行：
 
 出处：
 
-- GoldSrc：`.github/workflows/ci.yaml:1-25`
+- GoldSrc：`.github/workflows/ci.yaml`
 - CS2：`D:\CS2_VibeSignatures\.github\workflows\build-on-self-runner.yml:108-286`
 
 对 GoldSrc 的第一阶段 CI 对齐不需要移植 CS2 的 C++/HL2SDK 流程，但至少需要一个受控的 Windows
 self-hosted IDA smoke/analyze workflow，并明确区分“IDA 环境可 import”和“真实分析成功”。
 
-## 当前仓库策略阻塞
+## 仓库策略调整状态
 
-当前仍被仓库主动定义为 contract 的差异：
-
-1. runtime 代码禁止包含 `process_reporter_redis`；
-2. README/architecture 仍排除 scheduler、service、UI 和 C++ layout；
-3. artifact output 必须留在当前 module；只有 input 可使用安全 sibling path；
-4. GoldSrc 始终保持 PE32/ELF32、x86 和 4-byte vfunc slot。
-
-相关出处：
-
-- `tests/test_repository_contract.py:29-47`
-- `tests/test_analysis_planner.py:81-94`
-- `README.md:71-74`
-- `docs/architecture_CN.md:40-43`
-
-因此，最大程度对齐 CS2 不是普通局部实现，而是一次明确的 contract 和范围调整。实现前需要同步更新：
+阻止 `process_reporter_redis` 的旧 repository contract 已删除；README/architecture 也已纳入 scheduler、service、
+dashboard 和 Pages。同步完成的范围包括：
 
 - repository-contract tests；
-- architecture 和 README；
-- config schema/version；
-- analysis-output contract version；
-- snapshot/candidate contract；
-- CLI 和 automation documentation。
+- architecture 和中英文 README；
+- versioned process graph/event、CLI 和 automation documentation；
+- 真实 schema-5 `gamesymbols/svencoop-10257.yaml`；
+- Redis 与前端/Playwright CI 门禁。
+
+继续保持的 GoldSrc hard boundary 是：artifact output 留在当前 module，只有 input 可使用安全 sibling path；
+PE32/ELF32、x86、4-byte vfunc slot、GoldSrc tag/depot 和 candidate guard 不受 Source2 假设影响。
 
 ## 不应机械移植的 CS2 专属能力
 
@@ -628,10 +620,10 @@ GoldSrc 应保留：
 - `category` 为唯一分类字段，严格拒绝 `type/kind`（已完成）；
 - module/skill validation 已修复，`plan-only` 已删除；
 - 支持 game-root 内安全 sibling-module input（已完成）；
-- 定义 versioned execution plan 和 event schema（Reporter 本次延期）；
-- 更新 repository-contract tests 和架构文档。
+- 定义 versioned execution plan 和 event schema（已完成）；
+- 更新 repository-contract tests 和架构文档（已完成）。
 
-验收标准：同一组 module/platform/skill filter 在直接执行和未来 scheduler 中生成相同 execution graph；不再提供
+验收状态：同一组 module/platform/skill filter 在直接执行和 scheduler 中生成相同 execution graph；不再提供
 独立 preview 入口。
 
 ### Phase 2：接入 IDA runtime
@@ -656,23 +648,25 @@ GoldSrc 应保留：
 
 ### Phase 4：补齐 Agent 和失败模型
 
-- port CS2 Agent session/model/output/error handling；
+- port CS2 Agent session/model/output/error handling（已完成）；
 - 添加 success/fail/skip summary（已完成）；
 - 添加 fail-fast 与 `skip_error`（已完成）；
-- 确保所有 terminal task 和 run 都被 finalize；
-- 为 Agent、preprocessor、MCP 和 missing artifact 定义稳定 reason（单进程 event 已完成，Reporter contract 待扩展）。
+- 确保所有 terminal task 和 run 都被 finalize（已完成）；
+- 为 Agent、preprocessor、MCP 和 missing artifact 定义稳定 reason（已完成）。
 
 验收标准：每种失败路径都有明确非零退出、结构化 reason 和足够诊断信息，retry 不会恢复无关 session。
 
 ### Phase 5：调度、监控和 CI
 
-- Redis reporter 和 best-effort adapter；
-- 单并发 Redis scheduler、heartbeat 和 pending recovery；
-- 可选只读 API/SSE/dashboard；
-- Windows self-hosted IDA analyze workflow；
-- candidate guard 和现有发布流程集成。
+- Redis reporter 和 best-effort adapter（已完成）；
+- 单并发 Redis scheduler、heartbeat 和 pending recovery（已完成）；
+- 只读 API/SSE/dashboard、Symbol Explorer（已完成）；
+- GitHub Pages、append-only snapshot archive 与 Playwright CI（已完成）；
+- candidate guard 和真实 `svencoop-10257` snapshot 发布（已完成）；
+- Windows self-hosted IDA analyze workflow（待完成）。
 
-验收标准：scheduler 重启后不会重复启动仍有 heartbeat 的 Analyzer；stale pending run 可以被确定性回收或终止。
+验收状态：真实 Redis 测试证明 scheduler 不重复启动仍有 heartbeat 的 Analyzer，stale pending run 可通过
+`XAUTOCLAIM` 确定性回收；剩余 CI 差异仅是商业 IDA self-hosted 自动化。
 
 ## 完成定义
 
@@ -686,5 +680,6 @@ GoldSrc 应保留：
 - CLI/config/plan/event contract 可供 scheduler 和 CI 稳定调用；
 - 失败状态、退出码、retry 和 skip 行为有测试覆盖；
 - Redis scheduler/reporter 或明确等价实现支持持久恢复；
-- Windows self-hosted workflow 至少验证一次真实 GoldSrc IDA 分析；
+- 本地真实 IDA smoke 已验证一次 GoldSrc 分析；Windows self-hosted workflow 仍是后续部署工作；
+- API/SSE、dashboard、Symbol Explorer、Pages append-only archive 与 exact-byte 验证均受 CI 覆盖；
 - x86、module-local output、安全 sibling input、candidate 和 GoldSrc-specific 安全边界未被 Source2 假设破坏。

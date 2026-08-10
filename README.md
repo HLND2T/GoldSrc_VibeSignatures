@@ -76,11 +76,17 @@ local template. The supported environment variables are:
 - `GSVIBE_AGENT` and `GSVIBE_AGENT_MODEL`;
 - `GSVIBE_LLM_MODEL`, `GSVIBE_LLM_APIKEY`, `GSVIBE_LLM_BASEURL`, `GSVIBE_LLM_TEMPERATURE`,
   `GSVIBE_LLM_FAKE_AS`, and `GSVIBE_LLM_EFFORT`.
+- `GSVIBE_PROCESS_REPORTER` (`none`, `console`, or `redis`), `GSVIBE_REDIS_URL`, `GSVIBE_REDIS_PREFIX`, and
+  `GSVIBE_RUN_ID`.
+- `GSVIBE_API_HOST`, `GSVIBE_API_PORT`, `GSVIBE_API_CORS_ORIGINS`, `GSVIBE_API_ALLOW_PRIVATE_NETWORK`,
+  `GSVIBE_SSE_BLOCK_MS`, and `GSVIBE_SSE_BATCH_SIZE` for the read-only Process API.
 
 The analyzer accepts `-configyaml`, comma-separated `-platform` and `-modules`, `-skill`, `-agent`, `-agent_model`, the
-matching `-llm_*` arguments, `-maxretry`, `-oldgamever`, `-ida_args`, `-debug`, `-skip_error`, `-skip_pp`, and the local
-`-console-events` adapter. Per-skill `max_retries` overrides `-maxretry`. `-skip_pp` bypasses the single Preprocessor and
-runs the Agent directly; `-skip_error` continues after runtime failures but the final exit status remains nonzero.
+matching `-llm_*` arguments, `-maxretry`, `-oldgamever`, `-ida_args`, `-debug`, `-skip_error`, `-skip_pp`,
+`-process_reporter`, `-redis_url`, `-redis_prefix`, and `-run_id`. Per-skill `max_retries` overrides `-maxretry`.
+`-skip_pp` bypasses the single Preprocessor and runs the Agent directly; `-skip_error` continues after runtime failures
+but the final exit status remains nonzero. `-process_reporter=console` emits typed `ProcessEvent` JSONL; `redis` is
+best-effort and writes the `gsvibe:analysis:v1` Redis protocol.
 
 Claude and OpenCode load the project skill-runner policies directly. Before using Codex, copy
 `.codex/skill_runner.config.toml` to `$CODEX_HOME/skill_runner.config.toml`; the runner selects that profile with
@@ -89,8 +95,28 @@ attempt failures through the configured progress reporter.
 
 The old `-config`, analyzer `all-platform`, and `-plan-only` spellings are removed without aliases. Generic
 `-vcall_finder` is excluded for GoldSrc. Pending work starts one owned `idalib-mcp` lifecycle per binary on
-`127.0.0.1:13337`; `-ida_args` appends IDA startup arguments. `-rename`, CS2-style process/Redis Reporter arguments,
-and their environment variables remain deferred. The existing local `-console-events` reporter remains available.
+`127.0.0.1:13337`; `-ida_args` appends IDA startup arguments. `-rename` and Source2-only finder semantics remain
+excluded. There is no legacy `ProgressEvent`, emit-only reporter, `-console-events`, or legacy output format.
+
+## Process service and dashboard
+
+The analyzer can report a versioned stage/job/task execution graph to Redis. `process_scheduler_cli.py submit` appends a
+validated request and `process_scheduler_cli.py run` executes one FIFO analyzer at a time, reclaims stale pending entries,
+holds a renewable global Redis lease, tracks heartbeats, and finalizes terminal runs after worker exit. Scheduler recovery
+atomically aborts unfinished tasks and recomputes the run summary. The request contract is intentionally minimal:
+`run_id`, `gamever`, `platforms`, `modules`, `skill_filter`, `agent`, and `created_at`; the scheduler controls its own argv
+and environment.
+
+`process_api.py` is a read-only FastAPI service. It exposes `/healthz`, `/readyz`, run list/detail, execution graph,
+snapshot, task, event-page, and SSE stream routes below `/api/v1`. SSE supports `Last-Event-ID` and emits a reset event
+when the retained Redis cursor is too old, including when trimming overtakes a live connection; the default live cursor is
+anchored to a concrete Stream ID before blocking. The default bind is loopback and there is no built-in authentication; expose it
+only behind a trusted private-network boundary and set explicit CORS origins.
+
+The React dashboard in `pages/` consumes this API and also provides a static Symbol Explorer. GitHub Pages publishes only
+the static `pages/dist` artifact; it does not host the API/SSE process. The `pages-snapshots` branch is append-only and
+stores every content-addressed `<family-build>.<sha256>.json` snapshot. `npm run verify:gamesymbols` and the deployment job
+verify exact response bytes and digests.
 
 ## Verification
 
@@ -99,6 +125,19 @@ uv run python format_repo_files.py --check
 uv run python tests/run_test_suite.py unit -b --durations 30
 uv run python tests/run_test_suite.py repository-contract -b --durations 30
 uv run python tests/run_test_suite.py all -b --durations 30
+uv run python tests/run_test_suite.py redis-integration -b --durations 30
+```
+
+Pages checks run independently:
+
+```powershell
+cd pages
+npm ci
+npm test
+npm run lint
+npm run build
+npm run verify:gamesymbols
+npm run test:e2e
 ```
 
 Commercial IDA integration is skipped unless `RUN_IDA_INTEGRATION=1` and an activated `idalib` environment are
@@ -106,9 +145,9 @@ available. A skipped integration test is not evidence that real IDA analysis pas
 
 ## Scope
 
-This repository currently does not include a web service, cache-backed scheduler, Redis process Reporter, UI, C++
-layout extraction, automatic version bumping, hosted release promotion, broad production symbol coverage, or a
-target-specific gamedata generator. Reporter migration is deferred rather than implemented by the analyzer CLI
-alignment.
+This repository includes the Redis-backed process reporter, single-concurrency scheduler, read-only Process API/SSE, and
+the React dashboard. Commercial IDA execution still requires the configured local/self-hosted environment; broad symbol
+coverage, automatic version bumping, remote API hosting, C++ layout extraction, and target-specific gamedata generators
+remain outside this repository's default hosted CI scope.
 
 Licensed under the [MIT License](LICENSE.md).

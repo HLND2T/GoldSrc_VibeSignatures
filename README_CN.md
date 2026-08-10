@@ -47,11 +47,17 @@ uv run python ida_analyze_bin.py -gamever svencoop-10257 -modules engine -skill 
 - `GSVIBE_AGENT`、`GSVIBE_AGENT_MODEL`；
 - `GSVIBE_LLM_MODEL`、`GSVIBE_LLM_APIKEY`、`GSVIBE_LLM_BASEURL`、`GSVIBE_LLM_TEMPERATURE`、
   `GSVIBE_LLM_FAKE_AS`、`GSVIBE_LLM_EFFORT`。
+- `GSVIBE_PROCESS_REPORTER`（`none`、`console` 或 `redis`）、`GSVIBE_REDIS_URL`、
+  `GSVIBE_REDIS_PREFIX`、`GSVIBE_RUN_ID`。
+- `GSVIBE_API_HOST`、`GSVIBE_API_PORT`、`GSVIBE_API_CORS_ORIGINS`、
+  `GSVIBE_API_ALLOW_PRIVATE_NETWORK`、`GSVIBE_SSE_BLOCK_MS`、`GSVIBE_SSE_BATCH_SIZE`。
 
 CLI 支持 `-configyaml`、逗号分隔的 `-platform` / `-modules`、`-skill`、`-agent`、`-agent_model`、全部
-`-llm_*` 参数、`-maxretry`、`-oldgamever`、`-ida_args`、`-debug`、`-skip_error`、`-skip_pp` 和本地
-`-console-events`。skill 显式 `max_retries` 优先于全局 `-maxretry`；`-skip_pp` 会跳过单一 Preprocessor 并直接
-运行 Agent；`-skip_error` 只控制继续执行，只要存在失败最终仍返回非零。
+`-llm_*` 参数、`-maxretry`、`-oldgamever`、`-ida_args`、`-debug`、`-skip_error`、`-skip_pp`、
+`-process_reporter`、`-redis_url`、`-redis_prefix` 和 `-run_id`。skill 显式 `max_retries` 优先于全局
+`-maxretry`；`-skip_pp` 会跳过单一 Preprocessor 并直接运行 Agent；`-skip_error` 只控制继续执行，只要存在失败
+最终仍返回非零。`-process_reporter=console` 输出新的 typed `ProcessEvent` JSONL，`redis` backend 以
+best-effort 方式写入 `gsvibe:analysis:v1` 协议。
 
 Claude 与 OpenCode 会直接加载仓库内的 skill-runner policy。使用 Codex 前需把
 `.codex/skill_runner.config.toml` 复制到 `$CODEX_HOME/skill_runner.config.toml`；runner 会通过
@@ -60,8 +66,24 @@ progress reporter 上报结构化 attempt failure。
 
 旧 `-config`、Analyzer 的 `all-platform` 和 `-plan-only` 已无 alias 删除。GoldSrc 排除 generic
 `-vcall_finder`。存在待执行工作时，每个 binary 会在 `127.0.0.1:13337` 启动一次 owned `idalib-mcp`
-生命周期，`-ida_args` 用于追加 IDA 启动参数。`-rename` 与 CS2 风格 process/Redis Reporter 的参数及环境变量
-仍延期，现有本地 `-console-events` 保留。
+生命周期，`-ida_args` 用于追加 IDA 启动参数。`-rename` 和 Source2 专用 finder 语义保持排除。旧
+`ProgressEvent`、emit-only reporter、`-console-events` 与旧输出格式均不保留。
+
+## 进程服务与 Dashboard
+
+Analyzer 会把 versioned stage/job/task execution graph 上报到 Redis。`process_scheduler_cli.py submit` 只接受
+`run_id`、`gamever`、`platforms`、`modules`、`skill_filter`、`agent`、`created_at` 这组最小 RunRequest；
+`process_scheduler_cli.py run` 使用受控 argv/env 和可续期的 Redis 全局 lease，以 FIFO 单并发执行 Analyzer，并处理
+heartbeat、pending `XAUTOCLAIM`、stale run 与未写终态的子进程退出；恢复终态会原子 abort 未完成 task 并重算 summary。
+
+`process_api.py` 是只读 FastAPI 服务，在 `/api/v1` 下提供 run list/detail、snapshot、graph、task、event page
+与 SSE，另有 `/healthz`、`/readyz`。SSE 支持 `Last-Event-ID`，游标早于 Redis 保留窗口时要求客户端重新加载
+snapshot；默认 live 游标会先固定为具体 Stream ID，连接存续期间 trim 越过游标也会返回 reset。API 默认只绑定
+loopback 且不内置认证；跨主机暴露时必须置于可信边界之后并配置精确 CORS origin。
+
+`pages/` 中的 React dashboard 同时提供运行监控和静态 Symbol Explorer。GitHub Pages 只部署静态
+`pages/dist`，不会托管 API/SSE；浏览器仍连接运行它的计算机上的 Process API。`pages-snapshots` 分支只允许
+追加 `<family-build>.<sha256>.json`，构建、归档和部署后都会复核精确 bytes、size 与 SHA-256。
 
 ## 本地门禁
 
@@ -70,6 +92,19 @@ uv run python format_repo_files.py --check
 uv run python tests/run_test_suite.py unit -b --durations 30
 uv run python tests/run_test_suite.py repository-contract -b --durations 30
 uv run python tests/run_test_suite.py all -b --durations 30
+uv run python tests/run_test_suite.py redis-integration -b --durations 30
+```
+
+前端门禁：
+
+```powershell
+cd pages
+npm ci
+npm test
+npm run lint
+npm run build
+npm run verify:gamesymbols
+npm run test:e2e
 ```
 
 只有在 `RUN_IDA_INTEGRATION=1` 且 `idalib` 环境已激活时才运行真实 IDA 集成测试；跳过不代表真实 IDA 分析通过。
