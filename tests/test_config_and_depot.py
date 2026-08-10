@@ -42,6 +42,7 @@ class DownloadConfigTests(unittest.TestCase):
             args = download_depot.parse_args(["-tag", "cstrike-10120"])
         self.assertEqual("env-user", args.username)
         self.assertEqual("env-secret", args.password)
+        self.assertTrue(args.remember_password)
 
     def test_auth_arguments_override_environment_variables(self):
         with patch.dict(
@@ -64,6 +65,7 @@ class DownloadConfigTests(unittest.TestCase):
             )
         self.assertEqual("cli-user", args.username)
         self.assertEqual("cli-secret", args.password)
+        self.assertTrue(args.remember_password)
 
     def test_production_downloads_have_exact_apps_and_manifests(self):
         entries = download_depot.load_downloads(Path(__file__).parents[1] / "download.yaml")

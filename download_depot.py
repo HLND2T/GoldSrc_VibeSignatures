@@ -34,7 +34,9 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser.add_argument("-username", default=os.environ.get("DEPOTDOWNLOADER_STEAM_USERNAME"))
     parser.add_argument("-password", default=os.environ.get("DEPOTDOWNLOADER_STEAM_PASSWORD"))
     parser.add_argument("-remember-password", action="store_true")
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    args.remember_password = args.remember_password or bool(args.username and args.password)
+    return args
 
 
 def load_downloads(config_path: str | Path) -> list[dict]:
