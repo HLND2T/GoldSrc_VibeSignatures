@@ -10,12 +10,12 @@ modules:
     skills: []
     symbols: []
   - name: gameui
-    path_windows: Half-Life/valve/cl_dlls/gameui.dll
+    path_windows: Half-Life/valve/cl_dlls/GameUI.dll
     path_linux: Half-Life/valve/cl_dlls/gameui.so
     skills: []
     symbols: []
   - name: server
-    path_windows: Half-Life/valve/dlls/mp.dll
-    path_linux: Half-Life/valve/dlls/mp.so
+    path_windows: Half-Life/valve/dlls/hl.dll
+    path_linux: Half-Life/valve/dlls/hl.so
     skills: []
     symbols: []

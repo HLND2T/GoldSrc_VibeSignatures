@@ -10,8 +10,13 @@ from analysis_planner import parse_config_document
 from binary_format import inspect_binary
 
 ROOT = Path(__file__).parents[1]
-TAGS = {"cstrike-10120", "svencoop-10257"}
+TAGS = {"hl-10120", "cstrike-10120", "svencoop-10257"}
 MODULES = {"engine", "client", "gameui", "server"}
+MODULES_BY_TAG = {
+    "hl-10120": MODULES,
+    "cstrike-10120": {"client", "server"},
+    "svencoop-10257": MODULES,
+}
 
 
 class RepositoryContractTests(unittest.TestCase):
@@ -30,7 +35,7 @@ class RepositoryContractTests(unittest.TestCase):
         for tag in TAGS:
             document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
             modules = parse_config_document(document)
-            self.assertEqual(MODULES, {module["name"] for module in modules})
+            self.assertEqual(MODULES_BY_TAG[tag], {module["name"] for module in modules})
             for module in modules:
                 self.assertTrue(module["path_windows"])
                 self.assertTrue(module["path_linux"])

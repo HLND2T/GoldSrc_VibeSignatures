@@ -70,8 +70,10 @@ class DownloadConfigTests(unittest.TestCase):
     def test_production_downloads_have_exact_apps_and_manifests(self):
         entries = download_depot.load_downloads(Path(__file__).parents[1] / "download.yaml")
         by_tag = {entry["tag"]: entry for entry in entries}
+        self.assertEqual(70, by_tag["hl-10120"]["appid"])
+        self.assertEqual({"2", "8", "71"}, set(by_tag["hl-10120"]["manifests"]))
         self.assertEqual(10, by_tag["cstrike-10120"]["appid"])
-        self.assertEqual({"2", "8"}, set(by_tag["cstrike-10120"]["manifests"]))
+        self.assertEqual({"11"}, set(by_tag["cstrike-10120"]["manifests"]))
         self.assertEqual(225840, by_tag["svencoop-10257"]["appid"])
         self.assertEqual("Sven-Coop", by_tag["svencoop-10257"]["basepath"])
         self.assertNotIn("config", by_tag["svencoop-10257"])
@@ -93,12 +95,27 @@ class DownloadConfigTests(unittest.TestCase):
             with self.assertRaisesRegex(download_depot.ConfigError, "major_update"):
                 download_depot.load_downloads(path)
 
-    def test_filelist_collects_both_platforms(self):
+    def test_filelist_collects_both_platforms_relative_to_depot_root(self):
         root = Path(__file__).parents[1]
-        paths = download_depot.load_module_filelist(root / "configs" / "cstrike-10120.yaml")
-        self.assertIn("Half-Life/hw.dll", paths)
-        self.assertIn("Half-Life/hw.so", paths)
+        paths = download_depot.load_module_filelist(root / "configs" / "cstrike-10120.yaml", "Half-Life")
+        self.assertIn("cstrike/cl_dlls/client.dll", paths)
+        self.assertIn("cstrike/cl_dlls/client.so", paths)
+        self.assertIn("cstrike/dlls/cs.so", paths)
+        self.assertNotIn("Half-Life/cstrike/cl_dlls/client.dll", paths)
         self.assertEqual(len(paths), len(set(paths)))
+
+    def test_filelist_rejects_paths_outside_basepath(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "config.yaml"
+            path.write_text(
+                """modules:
+  - name: engine
+    path_windows: Other/hw.dll
+""",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(download_depot.ConfigError, "basepath"):
+                download_depot.load_module_filelist(path, "Game")
 
     def test_depotdownloader_command_uses_entry_appid_and_manifest(self):
         command = download_depot.build_depotdownloader_command(
@@ -115,7 +132,40 @@ class DownloadConfigTests(unittest.TestCase):
         self.assertEqual("10", command[command.index("-app") + 1])
         self.assertEqual("2", command[command.index("-depot") + 1])
         self.assertEqual("123", command[command.index("-manifest") + 1])
+        self.assertIn("-all-platforms", command)
+        self.assertNotIn("-os", command)
         self.assertIn("-remember-password", command)
+
+    def test_download_uses_basepath_install_directory(self):
+        entry = {
+            "appid": 10,
+            "basepath": "Half-Life",
+            "manifests": {"11": "123"},
+        }
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            patch.object(download_depot, "run_command") as run,
+            patch.object(download_depot, "verify_downloaded_files", create=True) as verify,
+        ):
+            download_depot.download_manifests(
+                entry=entry,
+                os_name="windows",
+                depot_dir=Path(temporary) / "depots",
+                filelist=["cstrike/cl_dlls/client.dll"],
+            )
+        command = run.call_args.args[0]
+        expected = Path(temporary) / "depots" / "Half-Life"
+        self.assertEqual(str(expected), command[command.index("-dir") + 1])
+        verify.assert_called_once_with(expected, ["cstrike/cl_dlls/client.dll"])
+
+    def test_verify_downloaded_files_rejects_missing_outputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            install_dir = Path(temporary) / "Game"
+            present = install_dir / "hw.dll"
+            present.parent.mkdir(parents=True)
+            present.write_bytes(b"binary")
+            with self.assertRaisesRegex(download_depot.ConfigError, "missing"):
+                download_depot.verify_downloaded_files(install_dir, ["hw.dll", "hw.so"])
 
 
 class CopyDepotTests(unittest.TestCase):

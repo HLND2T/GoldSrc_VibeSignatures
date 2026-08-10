@@ -30,7 +30,7 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser.add_argument("-config", default=DEFAULT_CONFIG_FILE)
     parser.add_argument("-configyaml", default=None)
     parser.add_argument("-depotdir", default=DEFAULT_DEPOT_DIR)
-    parser.add_argument("-os", default=DEFAULT_OS)
+    parser.add_argument("-os", choices=("windows", "linux", "macos", DEFAULT_OS), default=DEFAULT_OS)
     parser.add_argument("-username", default=os.environ.get("DEPOTDOWNLOADER_STEAM_USERNAME"))
     parser.add_argument("-password", default=os.environ.get("DEPOTDOWNLOADER_STEAM_PASSWORD"))
     parser.add_argument("-remember-password", action="store_true")
@@ -96,7 +96,7 @@ def _safe_relative(value: str, field: str) -> str:
     return path.as_posix()
 
 
-def load_module_filelist(configyaml_path: str | Path) -> list[str]:
+def load_module_filelist(configyaml_path: str | Path, basepath: str) -> list[str]:
     path = Path(configyaml_path)
     try:
         document = yaml.safe_load(path.read_bytes()) or {}
@@ -105,6 +105,7 @@ def load_module_filelist(configyaml_path: str | Path) -> list[str]:
     modules = document.get("modules") if isinstance(document, dict) else None
     if not isinstance(modules, list):
         raise ConfigError("Analysis config must contain a modules list")
+    base = PurePosixPath(_safe_relative(basepath, "basepath"))
     paths: set[str] = set()
     for index, module in enumerate(modules):
         if not isinstance(module, dict):
@@ -112,7 +113,15 @@ def load_module_filelist(configyaml_path: str | Path) -> list[str]:
         for platform in ("windows", "linux"):
             value = module.get(f"path_{platform}")
             if value is not None:
-                paths.add(_safe_relative(value, f"modules[{index}].path_{platform}"))
+                field = f"modules[{index}].path_{platform}"
+                module_path = PurePosixPath(_safe_relative(value, field))
+                try:
+                    relative = module_path.relative_to(base)
+                except ValueError as exc:
+                    raise ConfigError(f"{field} must be within basepath {base.as_posix()!r}") from exc
+                if not relative.parts:
+                    raise ConfigError(f"{field} must name a file below basepath {base.as_posix()!r}")
+                paths.add(relative.as_posix())
     if not paths:
         raise ConfigError("Analysis config declares no module binaries")
     return sorted(paths)
@@ -139,13 +148,15 @@ def build_depotdownloader_command(
         str(depot),
         "-manifest",
         str(manifest),
-        "-os",
-        str(os_name),
         "-dir",
         str(depot_dir),
         "-filelist",
         str(filelist_path),
     ]
+    if os_name == DEFAULT_OS:
+        command.append("-all-platforms")
+    else:
+        command.extend(["-os", str(os_name)])
     if branch:
         command.extend(["-branch", branch])
     append_auth_args(command, username, password, remember_password)
@@ -162,6 +173,8 @@ def download_manifests(
     password: str | None = None,
     remember_password: bool = False,
 ) -> None:
+    basepath = _safe_relative(entry["basepath"], "basepath")
+    install_dir = Path(depot_dir).joinpath(*PurePosixPath(basepath).parts)
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".txt", delete=False) as handle:
         handle.write("\n".join(filelist) + "\n")
         filelist_path = Path(handle.name)
@@ -171,7 +184,7 @@ def download_manifests(
                 appid=entry["appid"],
                 depot=str(depot),
                 manifest=str(manifest),
-                depot_dir=depot_dir,
+                depot_dir=install_dir,
                 os_name=os_name,
                 filelist_path=filelist_path,
                 branch=entry.get("branch"),
@@ -180,8 +193,21 @@ def download_manifests(
                 remember_password=remember_password,
             )
             run_command(command)
+        verify_downloaded_files(install_dir, filelist)
     finally:
         filelist_path.unlink(missing_ok=True)
+
+
+def verify_downloaded_files(install_dir: str | Path, filelist: list[str]) -> None:
+    root = Path(install_dir)
+    missing = []
+    for index, value in enumerate(filelist):
+        relative = _safe_relative(value, f"filelist[{index}]")
+        target = root.joinpath(*PurePosixPath(relative).parts)
+        if not target.is_file():
+            missing.append(relative)
+    if missing:
+        raise ConfigError(f"Downloaded files are missing from {root}: {', '.join(missing)}")
 
 
 def main(argv=None) -> int:
@@ -190,7 +216,7 @@ def main(argv=None) -> int:
     try:
         configyaml = resolve_analysis_config(args.tag, args.configyaml)
         entry = find_download_entry(load_downloads(args.config), args.tag)
-        filelist = load_module_filelist(configyaml)
+        filelist = load_module_filelist(configyaml, entry["basepath"])
         download_manifests(
             entry=entry,
             os_name=args.os,

@@ -6,6 +6,6 @@ modules:
     symbols: []
   - name: server
     path_windows: Half-Life/cstrike/dlls/mp.dll
-    path_linux: Half-Life/cstrike/dlls/mp.so
+    path_linux: Half-Life/cstrike/dlls/cs.so
     skills: []
     symbols: []
