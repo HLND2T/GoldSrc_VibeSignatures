@@ -454,7 +454,7 @@ class CliContractTests(unittest.TestCase):
                     ]
                 )
             self.assertEqual(0, result)
-            self.assertIn(f"Config file: {config}", output.getvalue())
+            self.assertIn(f"Config file: {config.resolve()}", output.getvalue())
             self.assertIn("Successful: 0", output.getvalue())
             self.assertIn("Failed: 0", output.getvalue())
             self.assertIn("Skipped: 0", output.getvalue())
