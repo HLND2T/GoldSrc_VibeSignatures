@@ -1,11 +1,11 @@
 modules:
   - name: client
-    path_windows: Half-Life/cstrike/cl_dlls/client.dll
-    path_linux: Half-Life/cstrike/cl_dlls/client.so
+    path_windows: Counter-Strike-10120/cstrike/cl_dlls/client.dll
+    path_linux: Counter-Strike-10120/cstrike/cl_dlls/client.so
     skills: []
     symbols: []
   - name: server
-    path_windows: Half-Life/cstrike/dlls/mp.dll
-    path_linux: Half-Life/cstrike/dlls/cs.so
+    path_windows: Counter-Strike-10120/cstrike/dlls/mp.dll
+    path_linux: Counter-Strike-10120/cstrike/dlls/cs.so
     skills: []
     symbols: []

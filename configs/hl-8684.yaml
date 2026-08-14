@@ -1,0 +1,26 @@
+modules:
+  - name: engine
+    path_windows: Half-Life-8684/hw.dll
+    path_linux: Half-Life-8684/hw.so
+    skills:
+      - name: find-R_RenderView
+        expected_output:
+          - R_RenderView.{platform}.yaml
+    symbols:
+      - name: R_RenderView
+        category: func
+  - name: client
+    path_windows: Half-Life-8684/valve/cl_dlls/client.dll
+    path_linux: Half-Life-8684/valve/cl_dlls/client.so
+    skills: []
+    symbols: []
+  - name: gameui
+    path_windows: Half-Life-8684/valve/cl_dlls/GameUI.dll
+    path_linux: Half-Life-8684/valve/cl_dlls/gameui.so
+    skills: []
+    symbols: []
+  - name: server
+    path_windows: Half-Life-8684/valve/dlls/hl.dll
+    path_linux: Half-Life-8684/valve/dlls/hl.so
+    skills: []
+    symbols: []

@@ -75,7 +75,7 @@ class DownloadConfigTests(unittest.TestCase):
         self.assertEqual(10, by_tag["cstrike-10120"]["appid"])
         self.assertEqual({"11"}, set(by_tag["cstrike-10120"]["manifests"]))
         self.assertEqual(225840, by_tag["svencoop-10257"]["appid"])
-        self.assertEqual("Sven-Coop", by_tag["svencoop-10257"]["basepath"])
+        self.assertEqual("Sven-Coop-10257", by_tag["svencoop-10257"]["basepath"])
         self.assertNotIn("config", by_tag["svencoop-10257"])
 
     def test_major_update_must_be_boolean_when_present(self):
@@ -97,11 +97,11 @@ class DownloadConfigTests(unittest.TestCase):
 
     def test_filelist_collects_both_platforms_relative_to_depot_root(self):
         root = Path(__file__).parents[1]
-        paths = download_depot.load_module_filelist(root / "configs" / "cstrike-10120.yaml", "Half-Life")
+        paths = download_depot.load_module_filelist(root / "configs" / "cstrike-10120.yaml", "Counter-Strike-10120")
         self.assertIn("cstrike/cl_dlls/client.dll", paths)
         self.assertIn("cstrike/cl_dlls/client.so", paths)
         self.assertIn("cstrike/dlls/cs.so", paths)
-        self.assertNotIn("Half-Life/cstrike/cl_dlls/client.dll", paths)
+        self.assertNotIn("Counter-Strike-10120/cstrike/cl_dlls/client.dll", paths)
         self.assertEqual(len(paths), len(set(paths)))
 
     def test_filelist_rejects_paths_outside_basepath(self):

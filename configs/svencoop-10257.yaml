@@ -1,7 +1,7 @@
 modules:
   - name: engine
-    path_windows: Sven-Coop/hw.dll
-    path_linux: Sven-Coop/hw.so
+    path_windows: Sven-Coop-10257/hw.dll
+    path_linux: Sven-Coop-10257/hw.so
     skills:
       - name: find-R_RenderView
         expected_output:
@@ -10,17 +10,17 @@ modules:
       - name: R_RenderView
         category: func
   - name: client
-    path_windows: Sven-Coop/svencoop/cl_dlls/client.dll
-    path_linux: Sven-Coop/svencoop/cl_dlls/client.so
+    path_windows: Sven-Coop-10257/svencoop/cl_dlls/client.dll
+    path_linux: Sven-Coop-10257/svencoop/cl_dlls/client.so
     skills: []
     symbols: []
   - name: gameui
-    path_windows: Sven-Coop/svencoop/cl_dlls/GameUI.dll
-    path_linux: Sven-Coop/svencoop/cl_dlls/gameui.so
+    path_windows: Sven-Coop-10257/svencoop/cl_dlls/GameUI.dll
+    path_linux: Sven-Coop-10257/svencoop/cl_dlls/gameui.so
     skills: []
     symbols: []
   - name: server
-    path_windows: Sven-Coop/svencoop/dlls/server.dll
-    path_linux: Sven-Coop/svencoop/dlls/server.so
+    path_windows: Sven-Coop-10257/svencoop/dlls/server.dll
+    path_linux: Sven-Coop-10257/svencoop/dlls/server.so
     skills: []
     symbols: []

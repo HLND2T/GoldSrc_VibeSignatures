@@ -10,10 +10,12 @@ from analysis_planner import parse_config_document
 from binary_format import inspect_binary
 
 ROOT = Path(__file__).parents[1]
-TAGS = {"hl-10120", "cstrike-10120", "svencoop-10257"}
+TAGS = {"hl-8684", "hl-10120", "cstrike-8684", "cstrike-10120", "svencoop-10257"}
 MODULES = {"engine", "client", "gameui", "server"}
 MODULES_BY_TAG = {
+    "hl-8684": MODULES,
     "hl-10120": MODULES,
+    "cstrike-8684": {"client", "server"},
     "cstrike-10120": {"client", "server"},
     "svencoop-10257": MODULES,
 }
