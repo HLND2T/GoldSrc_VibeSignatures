@@ -167,6 +167,50 @@ class DownloadConfigTests(unittest.TestCase):
             with self.assertRaisesRegex(download_depot.ConfigError, "missing"):
                 download_depot.verify_downloaded_files(install_dir, ["hw.dll", "hw.so"])
 
+    def test_tag_and_all_are_mutually_exclusive_and_required(self):
+        with self.assertRaises(SystemExit):
+            download_depot.parse_args([])
+        with self.assertRaises(SystemExit):
+            download_depot.parse_args(["-tag", "cstrike-10120", "-all"])
+        args = download_depot.parse_args(["-all"])
+        self.assertTrue(args.all)
+        self.assertIsNone(args.tag)
+        args = download_depot.parse_args(["-tag", "cstrike-10120"])
+        self.assertFalse(args.all)
+        self.assertEqual("cstrike-10120", args.tag)
+
+    def test_download_all_tags_loops_over_config_and_reports_failures(self):
+        config = Path(__file__).parents[1] / "download.yaml"
+        entries = download_depot.load_downloads(config)
+        with (
+            patch.object(download_depot, "download_entry") as entry,
+            patch.object(download_depot, "load_downloads", return_value=entries),
+            patch.object(download_depot, "parse_args") as parse,
+        ):
+            parse.return_value = download_depot.parse_args(["-all"])
+            result = download_depot.download_all_tags(parse.return_value)
+        self.assertEqual(0, result)
+        self.assertEqual(len(entries), entry.call_count)
+
+    def test_download_all_tags_continues_past_failures(self):
+        entries = [
+            {"tag": "game-1", "appid": 1, "basepath": "Game", "manifests": {"1": "1"}},
+            {"tag": "game-2", "appid": 1, "basepath": "Game", "manifests": {"1": "1"}},
+            {"tag": "game-3", "appid": 1, "basepath": "Game", "manifests": {"1": "1"}},
+        ]
+        with (
+            patch.object(download_depot, "download_entry") as entry,
+            patch.object(download_depot, "load_downloads", return_value=entries),
+            patch.object(download_depot, "parse_args") as parse,
+        ):
+            parse.return_value = download_depot.parse_args(["-all"])
+            entry.side_effect = [None, download_depot.ConfigError("boom"), None]
+            result = download_depot.download_all_tags(parse.return_value)
+        self.assertEqual(1, result)
+        self.assertEqual(3, entry.call_count)
+        self.assertEqual("game-1", entry.call_args_list[0].args[1]["tag"])
+        self.assertEqual("game-3", entry.call_args_list[2].args[1]["tag"])
+
 
 class CopyDepotTests(unittest.TestCase):
     def test_copy_and_checkonly_exit_codes(self):

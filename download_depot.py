@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download exact Steam depot manifests declared for a safe release tag."""
+"""Download exact Steam depot manifests declared for one or all safe release tags."""
 
 from __future__ import annotations
 
@@ -25,8 +25,10 @@ class ConfigError(ValueError):
 
 
 def parse_args(argv=None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Download declared depot manifests for a release tag")
-    parser.add_argument("-tag", required=True)
+    parser = argparse.ArgumentParser(description="Download declared depot manifests for one or all release tags")
+    target_group = parser.add_mutually_exclusive_group(required=True)
+    target_group.add_argument("-tag", help="download a single release tag")
+    target_group.add_argument("-all", action="store_true", help="download every tag declared in the download config")
     parser.add_argument("-config", default=DEFAULT_CONFIG_FILE)
     parser.add_argument("-configyaml", default=None)
     parser.add_argument("-depotdir", default=DEFAULT_DEPOT_DIR)
@@ -210,22 +212,49 @@ def verify_downloaded_files(install_dir: str | Path, filelist: list[str]) -> Non
         raise ConfigError(f"Downloaded files are missing from {root}: {', '.join(missing)}")
 
 
+def download_entry(args: argparse.Namespace, entry: dict, depot_dir: str | Path) -> None:
+    configyaml = resolve_analysis_config(entry["tag"], args.configyaml)
+    filelist = load_module_filelist(configyaml, entry["basepath"])
+    download_manifests(
+        entry=entry,
+        os_name=args.os,
+        depot_dir=depot_dir,
+        filelist=filelist,
+        username=args.username,
+        password=args.password,
+        remember_password=args.remember_password,
+    )
+    print(f"Downloaded {len(entry['manifests'])} manifests for {entry['tag']} into {depot_dir}.")
+
+
+def download_tag(args: argparse.Namespace) -> None:
+    entry = find_download_entry(load_downloads(args.config), args.tag)
+    download_entry(args, entry, args.depotdir)
+
+
+def download_all_tags(args: argparse.Namespace) -> int:
+    downloads = load_downloads(args.config)
+    failures = 0
+    for entry in downloads:
+        try:
+            download_entry(args, entry, args.depotdir)
+        except (AnalysisConfigError, ConfigError, yaml.YAMLError, subprocess.CalledProcessError) as exc:
+            print(f"Error downloading {entry['tag']}: {exc}")
+            failures += 1
+    if failures:
+        print(f"Failed to download {failures} of {len(downloads)} tags.")
+        return 1
+    print(f"Downloaded all {len(downloads)} tags into {args.depotdir}.")
+    return 0
+
+
 def main(argv=None) -> int:
     load_dotenv(Path(__file__).with_name(".env"))
     args = parse_args(argv)
     try:
-        configyaml = resolve_analysis_config(args.tag, args.configyaml)
-        entry = find_download_entry(load_downloads(args.config), args.tag)
-        filelist = load_module_filelist(configyaml, entry["basepath"])
-        download_manifests(
-            entry=entry,
-            os_name=args.os,
-            depot_dir=args.depotdir,
-            filelist=filelist,
-            username=args.username,
-            password=args.password,
-            remember_password=args.remember_password,
-        )
+        if args.all:
+            return download_all_tags(args)
+        download_tag(args)
     except FileNotFoundError:
         print("Error: DepotDownloader executable not found in PATH")
         return 1
@@ -235,7 +264,6 @@ def main(argv=None) -> int:
     except (AnalysisConfigError, ConfigError, OSError, yaml.YAMLError) as exc:
         print(f"Error: {exc}")
         return 1
-    print(f"Downloaded {len(entry['manifests'])} manifests for {args.tag} into {args.depotdir}.")
     return 0
 
 

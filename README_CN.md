@@ -14,6 +14,7 @@ Half-Life 与 Sven Co-op 均已注册 `R_RenderView` production finder：通过
 ```console
 uv sync --locked
 uv run python download_depot.py -tag cstrike-10120 -depotdir depots
+uv run python download_depot.py -all -depotdir depots
 uv run python copy_depot_bin.py -gamever cstrike-10120 -platform all-platform
 uv run python ida_analyze_bin.py -gamever cstrike-10120 -configyaml configs/cstrike-10120.yaml -platform windows,linux
 uv run python ida_analyze_bin.py -gamever hl-10120 -modules engine -skill find-R_RenderView -platform windows,linux -debug
