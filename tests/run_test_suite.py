@@ -20,6 +20,7 @@ GROUP_FILES = {
         "test_process_reporter_factory.py",
         "test_snapshot_candidate.py",
         "test_gamedata.py",
+        "test_decrypt_blob.py",
     ),
     "redis-integration": (
         "test_process_reporter_redis.py",
