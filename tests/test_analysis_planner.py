@@ -22,6 +22,7 @@ from ida_analyze_bin import (
     ANALYSIS_STAGES,
     DEFAULT_HOST,
     DEFAULT_PORT,
+    SURVEY_CURRENT_IDB_PATH_PY_EVAL,
     AnalysisRunError,
     AnalysisSummary,
     IdaMcpLifecycle,
@@ -30,7 +31,9 @@ from ida_analyze_bin import (
     McpRuntime,
     PipelineFailure,
     PipelineResult,
+    _invalidate_ida_database,
     _is_major_update_gamever,
+    _merge_survey_path,
     _parse_mcp_tool_json,
     analyze,
     ensure_mcp_available,
@@ -857,6 +860,57 @@ class DagTests(unittest.TestCase):
             self.assertEqual(PipelineResult("succeeded", "agent"), result)
             self.assertEqual("source: preprocessor\n", observed["before_agent"])
 
+    def test_runner_exception_is_diagnosed_and_falls_back_to_agent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "game-1"
+            binary = root / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"binary")
+            node = build_execution_plan(
+                module([skill("find", output=["result.yaml"])]),
+                platforms=["windows"],
+                bin_dir=Path(temporary),
+                tag="game-1",
+            ).nodes[0]
+            reporting = RecordingAnalysisReporting()
+            agent = MagicMock(return_value=True)
+
+            def preprocessor(**_kwargs):
+                raise RuntimeError("runner dispatch failed")
+
+            def write_agent_output(*args, **kwargs):
+                Path(kwargs["expected_yaml_paths"][0]).write_text("source: agent\n", encoding="utf-8")
+                return agent(*args, **kwargs)
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                result = run_analysis_pipeline(
+                    node,
+                    binary_path=binary,
+                    game_root=root,
+                    old_game_root=None,
+                    agent="codex",
+                    reporting=reporting,
+                    task_id="stage-0000-engine-windows/find",
+                    preprocessor_runner=preprocessor,
+                    agent_skill_runner=write_agent_output,
+                )
+
+            self.assertEqual(PipelineResult("succeeded", "agent"), result)
+            agent.assert_called_once()
+            diagnostic_events = [
+                event
+                for event in reporting.events
+                if event["event_type"] == "skill.progress"
+                and event["payload"].get("event") == "preprocessor_diagnostic"
+            ]
+            self.assertEqual(1, len(diagnostic_events))
+            self.assertEqual("runner_failed", diagnostic_events[0]["payload"]["reason"])
+            self.assertEqual("RuntimeError", diagnostic_events[0]["payload"]["exception_type"])
+            self.assertEqual("runner dispatch failed", diagnostic_events[0]["payload"]["message"])
+            self.assertIn("runner dispatch failed", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
+
     def test_optional_only_normal_mode_skips_after_failed_or_missing_preprocessor(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "game-1"
@@ -1368,13 +1422,145 @@ class McpLifecycleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             binary = Path(temporary) / "hw.dll"
             binary.write_bytes(b"binary")
-            Path(f"{binary}.id0").write_bytes(b"lock")
+            stale_idb = Path(f"{binary}.i64")
+            stale_idb.write_bytes(b"stale")
+            lock_file = Path(f"{binary}.id0")
+            lock_file.write_bytes(b"lock")
             with (
                 patch("ida_analyze_bin.start_idalib_mcp") as start,
                 self.assertRaisesRegex(McpLifecycleError, "IDB lock file detected"),
             ):
                 IdaMcpLifecycle(binary, "windows", DEFAULT_HOST, DEFAULT_PORT, "").__enter__()
             start.assert_not_called()
+            self.assertTrue(stale_idb.is_file())
+            self.assertTrue(lock_file.is_file())
+
+    def test_invalidation_refuses_to_remove_an_active_id0_database(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary) / "hw.dll"
+            binary.write_bytes(b"binary")
+            stale_idb = Path(f"{binary}.i64")
+            stale_idb.write_bytes(b"stale")
+            lock_file = Path(f"{binary}.id0")
+            lock_file.write_bytes(b"lock")
+
+            with self.assertRaisesRegex(McpLifecycleError, "IDB lock file detected"):
+                _invalidate_ida_database(binary)
+
+            self.assertTrue(stale_idb.is_file())
+            self.assertTrue(lock_file.is_file())
+
+    def test_survey_path_merge_preserves_original_idb_input_sha256(self):
+        self.assertIn("ida_nalt.retrieve_input_file_sha256()", SURVEY_CURRENT_IDB_PATH_PY_EVAL)
+        merged = _merge_survey_path(
+            {"metadata": {"sha256": "unavailable"}},
+            {"metadata": {"path": "hw.dll.i64", "input_sha256": " ABCDEF "}},
+        )
+        self.assertEqual("hw.dll.i64", merged["metadata"]["path"])
+        self.assertEqual("ABCDEF", merged["metadata"]["input_sha256"])
+
+    def test_lifecycle_rebuilds_a_stale_idb_once(self):
+        first_process = MagicMock()
+        first_process.poll.return_value = None
+        rebuilt_process = MagicMock()
+        rebuilt_process.poll.return_value = None
+        binding = McpDatabaseBinding(False, None, "hw.dll", "worker", True, True)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary) / "hw.dll"
+            binary.write_bytes(b"binary")
+            stale_files = [
+                Path(f"{binary}.i64"),
+                Path(f"{binary}.id1"),
+                Path(f"{binary}.i64.nam"),
+            ]
+            for path in stale_files:
+                path.write_bytes(b"stale")
+            runtime = McpRuntime(DEFAULT_HOST, DEFAULT_PORT, str(binary), binding)
+
+            with (
+                patch("ida_analyze_bin.start_idalib_mcp", side_effect=[first_process, rebuilt_process]) as start,
+                patch(
+                    "ida_analyze_bin.verify_owned_mcp_with_single_recovery",
+                    side_effect=[(first_process, None), (rebuilt_process, runtime)],
+                ) as verify,
+                patch("ida_analyze_bin.stop_idalib_mcp_process") as stop,
+                patch("ida_analyze_bin.wait_for_port_release", return_value=True) as wait_for_release,
+                patch("ida_analyze_bin.quit_ida_gracefully") as quit_gracefully,
+                IdaMcpLifecycle(binary, "windows", DEFAULT_HOST, DEFAULT_PORT, "") as lifecycle,
+            ):
+                self.assertIs(runtime, lifecycle.runtime)
+                self.assertEqual(0, lifecycle.recovery_budget.remaining_restarts)
+
+            self.assertEqual(2, start.call_count)
+            self.assertEqual(2, verify.call_count)
+            stop.assert_called_once_with(first_process, debug=False)
+            self.assertEqual(
+                [(DEFAULT_HOST, DEFAULT_PORT), (DEFAULT_HOST, DEFAULT_PORT)],
+                [call.args for call in wait_for_release.call_args_list],
+            )
+            quit_gracefully.assert_called_once_with(
+                rebuilt_process,
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                expected_binary=binary,
+                debug=False,
+            )
+            self.assertTrue(all(not path.exists() for path in stale_files))
+
+    def test_lifecycle_preserves_stale_idb_when_port_does_not_release(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary) / "hw.dll"
+            binary.write_bytes(b"binary")
+            stale_idb = Path(f"{binary}.i64")
+            stale_idb.write_bytes(b"stale")
+
+            with (
+                patch("ida_analyze_bin.start_idalib_mcp", return_value=process) as start,
+                patch("ida_analyze_bin.verify_owned_mcp_with_single_recovery", return_value=(process, None)),
+                patch("ida_analyze_bin.stop_idalib_mcp_process") as stop,
+                patch("ida_analyze_bin.wait_for_port_release", return_value=False),
+                self.assertRaisesRegex(McpLifecycleError, "remained in use before IDB rebuild"),
+            ):
+                IdaMcpLifecycle(binary, "windows", DEFAULT_HOST, DEFAULT_PORT, "").__enter__()
+
+            start.assert_called_once()
+            stop.assert_called_once_with(process, debug=False)
+            self.assertTrue(stale_idb.is_file())
+
+    def test_lifecycle_ensure_ready_rebuilds_a_stale_idb_once(self):
+        first_process = MagicMock()
+        first_process.poll.return_value = None
+        rebuilt_process = MagicMock()
+        rebuilt_process.poll.return_value = None
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary) / "hw.dll"
+            binary.write_bytes(b"binary")
+            stale_idb = Path(f"{binary}.i64")
+            stale_idb.write_bytes(b"stale")
+            binding = McpDatabaseBinding(False, None, str(binary), "worker", True, True)
+            runtime = McpRuntime(DEFAULT_HOST, DEFAULT_PORT, str(binary), binding)
+            lifecycle = IdaMcpLifecycle(binary, "windows", DEFAULT_HOST, DEFAULT_PORT, "")
+            lifecycle.process = first_process
+
+            with (
+                patch("ida_analyze_bin.ensure_mcp_available", return_value=(first_process, True)),
+                patch(
+                    "ida_analyze_bin.verify_owned_mcp_with_single_recovery",
+                    side_effect=[(first_process, None), (rebuilt_process, runtime)],
+                ) as verify,
+                patch("ida_analyze_bin.stop_idalib_mcp_process") as stop,
+                patch("ida_analyze_bin.wait_for_port_release", return_value=True),
+                patch("ida_analyze_bin.start_idalib_mcp", return_value=rebuilt_process) as start,
+            ):
+                self.assertIs(runtime, lifecycle.ensure_ready())
+
+            self.assertEqual(2, verify.call_count)
+            stop.assert_called_once_with(first_process, debug=False)
+            start.assert_called_once_with(binary, DEFAULT_HOST, DEFAULT_PORT, "", False)
+            self.assertFalse(stale_idb.exists())
 
     def test_start_builds_argument_vector_and_requires_readiness(self):
         process = MagicMock()
@@ -1420,6 +1606,94 @@ class McpLifecycleTests(unittest.TestCase):
             )
             self.assertFalse(ok)
             self.assertTrue(any("PE database" in reason for reason in reasons), reasons)
+
+    def test_idb_identity_requires_original_input_sha256(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary) / "hw.dll"
+            binary.write_bytes(b"binary")
+            for suffix in (".i64", ".idb"):
+                with self.subTest(suffix=suffix):
+                    ok, reasons = validate_opened_binary_identity(
+                        binary,
+                        "windows",
+                        {"metadata": {"path": f"{binary}{suffix}"}},
+                    )
+                    self.assertFalse(ok)
+                    self.assertEqual(["IDB input sha256 is unavailable"], reasons)
+
+    def test_idb_identity_normalizes_placeholder_input_hashes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary) / "hw.dll"
+            binary.write_bytes(b"binary")
+            for placeholder in ("unavailable", "UNKNOWN", "none", " null "):
+                with self.subTest(placeholder=placeholder):
+                    ok, reasons = validate_opened_binary_identity(
+                        binary,
+                        "windows",
+                        {
+                            "metadata": {
+                                "path": f"{binary}.i64",
+                                "sha256": "unavailable",
+                                "input_sha256": placeholder,
+                            }
+                        },
+                    )
+                    self.assertFalse(ok)
+                    self.assertEqual(["IDB input sha256 is unavailable"], reasons)
+                    self.assertNotIn("sha256 mismatch", " ".join(reasons))
+
+    def test_missing_idb_input_hash_preserves_other_identity_failures(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary) / "hw.dll"
+            binary.write_bytes(b"binary")
+            ok, reasons = validate_opened_binary_identity(
+                binary,
+                "windows",
+                {
+                    "metadata": {
+                        "path": str(Path(temporary) / "wrong.dll.i64"),
+                        "arch": "64",
+                        "format": "ELF",
+                    }
+                },
+            )
+            self.assertFalse(ok)
+            self.assertTrue(any("unexpected 64-bit" in reason for reason in reasons), reasons)
+            self.assertTrue(any("ELF database" in reason for reason in reasons), reasons)
+            self.assertIn("IDB input sha256 is unavailable", reasons)
+            self.assertTrue(any("path mismatch" in reason for reason in reasons), reasons)
+
+    def test_idb_identity_uses_original_input_sha256_instead_of_survey_hash(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary) / "hw.dll"
+            binary.write_bytes(b"binary")
+            expected_sha256 = hashlib.sha256(b"binary").hexdigest()
+            ok, reasons = validate_opened_binary_identity(
+                binary,
+                "windows",
+                {
+                    "metadata": {
+                        "path": f"{binary}.i64",
+                        "sha256": "0" * 64,
+                        "input_sha256": expected_sha256,
+                    }
+                },
+            )
+            self.assertTrue(ok, reasons)
+
+            ok, reasons = validate_opened_binary_identity(
+                binary,
+                "windows",
+                {
+                    "metadata": {
+                        "path": f"{binary}.idb",
+                        "sha256": expected_sha256,
+                        "input_sha256": "0" * 64,
+                    }
+                },
+            )
+            self.assertFalse(ok)
+            self.assertTrue(any("IDB input" in reason and "sha256 mismatch" in reason for reason in reasons), reasons)
 
     def test_mcp_tool_json_accepts_sdk_snake_case_structured_content(self):
         payload = {"metadata": {"module": "hw.dll", "arch": "32"}}

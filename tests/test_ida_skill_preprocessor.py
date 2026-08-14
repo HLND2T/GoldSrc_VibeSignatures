@@ -9,8 +9,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
-import ida_skill_preprocessor
 import yaml
+
+import ida_skill_preprocessor
 from ida_analyze_util import (
     _build_func_xref_py_eval,
     parse_mcp_result,
@@ -25,8 +26,8 @@ from ida_skill_preprocessor import (
     PREPROCESS_STATUS_FAILED,
     PREPROCESS_STATUS_NO_SCRIPT,
     PREPROCESS_STATUS_SUCCESS,
-    _parse_image_base,
     _normalize_preprocess_status,
+    _parse_image_base,
     preprocess_single_skill_via_mcp,
 )
 
@@ -526,6 +527,79 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
                 )
             self.assertTrue(result)
             self.assertEqual("Target", yaml.safe_load(output.read_text(encoding="utf-8"))["func_name"])
+
+    async def test_struct_member_llm_fallback_preserves_old_yaml_canonical_name(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            symbol_name = "CBaseEntity_m_modelState_m_simulationState"
+            old_output = root / "old.yaml"
+            output = root / f"{symbol_name}.windows.yaml"
+            old_output.write_text(
+                "struct_name: CBaseEntity\nmember_name: m_modelState.m_simulationState\noffset: '0x8'\n",
+                encoding="utf-8",
+            )
+            llm_result = {
+                "found_struct_offset": [
+                    {
+                        "struct_name": "CBaseEntity",
+                        "member_name": "m_modelState_m_simulationState",
+                        "insn_va": "0x401020",
+                        "offset": "0x10",
+                    }
+                ]
+            }
+            instruction = {
+                "size": 3,
+                "func_start": "0x401000",
+                "func_end": "0x401100",
+                "line": "mov eax, [ecx+10h]",
+                "displacements": ["0x10"],
+            }
+
+            with (
+                patch("ida_analyze_util.preprocess_struct_offset_sig_via_mcp", new=AsyncMock(return_value=None)),
+                patch(
+                    "ida_analyze_util._prepare_llm_context",
+                    return_value={"targets": [({}, 0x401000)]},
+                ),
+                patch(
+                    "ida_analyze_util._export_llm_function",
+                    new=AsyncMock(return_value={"func_start": "0x401000", "func_end": "0x401100"}),
+                ),
+                patch("ida_analyze_util._call_llm_for_target", new=AsyncMock(return_value=llm_result)),
+                patch("ida_analyze_util._inspect_llm_instruction", new=AsyncMock(return_value=instruction)),
+                patch(
+                    "ida_analyze_util._inspect_function_via_mcp",
+                    new=AsyncMock(return_value={"func_va": "0x401000", "func_sig": "55 8B EC"}),
+                ),
+            ):
+                result = await preprocess_common_skill(
+                    session=SimpleNamespace(call_tool=AsyncMock()),
+                    expected_outputs=[str(output)],
+                    old_yaml_map={str(output): str(old_output)},
+                    new_binary_dir=root,
+                    platform="windows",
+                    image_base=0x400000,
+                    struct_member_names=[symbol_name],
+                    llm_decompile_specs=[
+                        {
+                            "symbol_name": symbol_name,
+                            "prompt_path": "prompt.md",
+                            "reference_yaml_paths": ["reference.yaml"],
+                            "expected_result_sections": ["found_struct_offset"],
+                            "dependency_policy": {"dependency.yaml": "required"},
+                        }
+                    ],
+                    llm_config={"model": "test-model"},
+                    generate_yaml_desired_fields=[
+                        (symbol_name, ["struct_name", "member_name", "offset", "offset_sig", "offset_sig_disp"])
+                    ],
+                )
+
+            self.assertTrue(result)
+            payload = yaml.safe_load(output.read_text(encoding="utf-8"))
+            self.assertEqual("CBaseEntity", payload["struct_name"])
+            self.assertEqual("m_modelState.m_simulationState", payload["member_name"])
 
     async def test_common_preprocessor_rejects_non_x86_pointer_size(self):
         async def call_tool(_name, _arguments):

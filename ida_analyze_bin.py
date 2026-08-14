@@ -37,6 +37,7 @@ from binary_format import BinaryFormatError, validate_binary
 from ida_analyze_util import SymbolArtifactError, normalize_symbol_artifact
 from ida_llm_utils import validated_temperature
 from ida_mcp_session import (
+    IDA_DATABASE_SUFFIXES,
     McpConnectionError,
     McpContractError,
     McpDatabaseBinding,
@@ -49,24 +50,28 @@ from ida_mcp_session import (
 )
 from ida_skill_preprocessor import (
     PREPROCESS_STATUS_ABSENT_OK,
+    PREPROCESS_STATUS_FAILED,
     PREPROCESS_STATUS_NO_SCRIPT,
     PREPROCESS_STATUS_SUCCESS,
+    _emit_diagnostic,
     _normalize_preprocess_status,
     preprocess_single_skill_via_mcp,
 )
 from process_reporter import (
     BestEffortProcessReporter,
-    ExecutionPlan as ProcessExecutionPlan,
+    NullProcessReporter,
     ProcessEvent,
     ProcessEventType,
     ProcessPhase,
     ProcessReason,
     ProcessReporter,
     ProcessReporterConfigurationError,
-    NullProcessReporter,
     RunStatus,
     TaskStatus,
     is_valid_task_transition,
+)
+from process_reporter import (
+    ExecutionPlan as ProcessExecutionPlan,
 )
 from process_reporter_factory import DEFAULT_REDIS_PREFIX, DEFAULT_REDIS_URL, create_process_reporter
 from trusted_yaml import load_yaml_file
@@ -92,6 +97,8 @@ QEXIT_CONNECTION_RESET_MARKER = "[WinError 10054]"
 LLM_EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "xhigh"})
 RUN_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,160}$", re.ASCII)
 REMOVED_CLI_OPTIONS = frozenset({"-config", "-plan-only", "-vcall_finder", "-rename", "-console-events"})
+UNAVAILABLE_HASH_VALUES = frozenset({"", "unavailable", "unknown", "none", "null"})
+IDA_DATABASE_SIDE_SUFFIXES = (".id1", ".id2", ".nam", ".til")
 
 
 class AnalysisRunError(RuntimeError):
@@ -365,6 +372,7 @@ def _md5(path: Path) -> str:
 SURVEY_CURRENT_IDB_PATH_PY_EVAL = (
     "import json\n"
     "path = ''\n"
+    "input_sha256 = ''\n"
     "try:\n"
     "    import idaapi\n"
     "    path = idaapi.get_path(idaapi.PATH_TYPE_IDB) or ''\n"
@@ -376,7 +384,19 @@ SURVEY_CURRENT_IDB_PATH_PY_EVAL = (
     "        path = idc.get_idb_path() or ''\n"
     "    except Exception:\n"
     "        pass\n"
-    "result = json.dumps({'metadata': {'path': path}})\n"
+    "try:\n"
+    "    import ida_nalt\n"
+    "    raw_sha256 = ida_nalt.retrieve_input_file_sha256()\n"
+    "    if isinstance(raw_sha256, (bytes, bytearray)):\n"
+    "        input_sha256 = bytes(raw_sha256).hex()\n"
+    "    elif isinstance(raw_sha256, str):\n"
+    "        input_sha256 = raw_sha256.strip()\n"
+    "except Exception:\n"
+    "    pass\n"
+    "metadata = {'path': path}\n"
+    "if input_sha256:\n"
+    "    metadata['input_sha256'] = input_sha256\n"
+    "result = json.dumps({'metadata': metadata})\n"
 )
 
 
@@ -424,6 +444,9 @@ def _merge_survey_path(payload, path_payload):
     metadata = merged.get("metadata")
     merged_metadata = dict(metadata) if isinstance(metadata, dict) else {}
     merged_metadata["path"] = current_path
+    input_sha256 = path_metadata.get("input_sha256")
+    if isinstance(input_sha256, str) and input_sha256.strip():
+        merged_metadata["input_sha256"] = input_sha256.strip()
     merged["metadata"] = merged_metadata
     return merged
 
@@ -460,7 +483,14 @@ async def _survey_opened_binary_via_mcp(host, port, expected_binary, *, auto_sta
 
 def _metadata_hash(metadata, key):
     value = metadata.get(key)
-    return value.strip().casefold() if isinstance(value, str) and value.strip() else ""
+    if not isinstance(value, str):
+        return ""
+    normalized = value.strip().casefold()
+    return "" if normalized in UNAVAILABLE_HASH_VALUES else normalized
+
+
+def _is_ida_database_path(path):
+    return isinstance(path, str) and path.strip().casefold().endswith(IDA_DATABASE_SUFFIXES)
 
 
 def validate_opened_binary_identity(binary_path, platform, survey_payload):
@@ -483,12 +513,19 @@ def validate_opened_binary_identity(binary_path, platform, survey_payload):
         reasons.append(f"ELF database opened for windows target: {format_label.strip()}")
 
     expected = Path(binary_path)
+    opened_path = metadata.get("path")
     opened_sha256 = _metadata_hash(metadata, "sha256")
+    input_sha256 = _metadata_hash(metadata, "input_sha256")
+    opened_is_ida_database = _is_ida_database_path(opened_path)
+    if opened_is_ida_database and not input_sha256:
+        reasons.append("IDB input sha256 is unavailable")
+    effective_sha256 = input_sha256 if opened_is_ida_database else (opened_sha256 or input_sha256)
     opened_md5 = _metadata_hash(metadata, "md5")
-    if opened_sha256:
+    if effective_sha256:
         expected_sha256 = _sha256(expected)
-        if opened_sha256 != expected_sha256:
-            reasons.append(f"sha256 mismatch: expected {expected_sha256}, opened {opened_sha256}")
+        if effective_sha256 != expected_sha256:
+            source = "IDB input" if opened_is_ida_database else "opened"
+            reasons.append(f"sha256 mismatch: expected {expected_sha256}, {source} {effective_sha256}")
         return not reasons, reasons
     if opened_md5:
         expected_md5 = _md5(expected)
@@ -496,7 +533,6 @@ def validate_opened_binary_identity(binary_path, platform, survey_payload):
             reasons.append(f"md5 mismatch: expected {expected_md5}, opened {opened_md5}")
         return not reasons, reasons
 
-    opened_path = metadata.get("path")
     expected_path = normalize_binary_identity_path(os.path.abspath(os.path.normpath(os.fspath(expected))))
     normalized_opened_path = normalize_binary_identity_path(opened_path) if isinstance(opened_path, str) else ""
     if not normalized_opened_path:
@@ -600,6 +636,53 @@ def stop_idalib_mcp_process(process, debug=False):
             process.wait(timeout=5.0)
         except (OSError, subprocess.TimeoutExpired):
             pass
+
+
+def _ida_database_primary_paths(binary_path):
+    base = os.fspath(binary_path)
+    return [f"{base}{suffix}" for suffix in IDA_DATABASE_SUFFIXES]
+
+
+def _ida_database_paths(binary_path):
+    base = os.fspath(binary_path)
+    primary_paths = _ida_database_primary_paths(binary_path)
+    side_bases = [base, *primary_paths]
+    side_paths = [f"{side_base}{suffix}" for side_base in side_bases for suffix in IDA_DATABASE_SIDE_SUFFIXES]
+    return [*primary_paths, *side_paths]
+
+
+def _ida_database_lock_paths(binary_path):
+    base = os.fspath(binary_path)
+    return [f"{base}.id0", *(f"{path}.id0" for path in _ida_database_primary_paths(binary_path))]
+
+
+def _existing_ida_database_lock(binary_path):
+    return next((path for path in _ida_database_lock_paths(binary_path) if os.path.isfile(path)), None)
+
+
+def _raise_for_active_ida_database(binary_path):
+    lock_file = _existing_ida_database_lock(binary_path)
+    if lock_file is not None:
+        raise McpLifecycleError(f"IDB lock file detected ({lock_file}); another IDA instance has this database open")
+
+
+def _invalidate_ida_database(binary_path, debug=False):
+    _raise_for_active_ida_database(binary_path)
+    removed = []
+    for database_path in dict.fromkeys(_ida_database_paths(binary_path)):
+        try:
+            if os.path.isfile(database_path):
+                os.remove(database_path)
+                removed.append(database_path)
+        except OSError as exc:
+            raise McpLifecycleError(f"Unable to remove stale IDA database file {database_path}: {exc}") from exc
+    if debug and removed:
+        print(f"  Removed stale IDA database files: {', '.join(removed)}")
+    return removed
+
+
+def _has_ida_database(binary_path):
+    return any(os.path.isfile(path) for path in _ida_database_primary_paths(binary_path))
 
 
 def start_idalib_mcp(
@@ -754,12 +837,38 @@ class IdaMcpLifecycle:
         self.recovery_budget = McpRecoveryBudget()
         self._force_local_stop = True
 
+    def _rebuild_stale_database(self) -> None:
+        if not self.recovery_budget.consume_restart():
+            return
+        process = self.process
+        if process is not None:
+            stop_idalib_mcp_process(process, debug=self.debug)
+            self.process = None
+        if not wait_for_port_release(self.host, self.port):
+            raise McpLifecycleError(f"MCP port {self.host}:{self.port} remained in use before IDB rebuild")
+        _invalidate_ida_database(self.binary_path, debug=self.debug)
+        self.process = start_idalib_mcp(
+            self.binary_path,
+            self.host,
+            self.port,
+            self.ida_args,
+            self.debug,
+        )
+        if self.process is None:
+            return
+        self.process, self.runtime = verify_owned_mcp_with_single_recovery(
+            self.process,
+            self.binary_path,
+            self.platform,
+            self.host,
+            self.port,
+            self.ida_args,
+            self.debug,
+            recovery_budget=self.recovery_budget,
+        )
+
     def __enter__(self):
-        lock_file = Path(f"{self.binary_path}.id0")
-        if lock_file.exists():
-            raise McpLifecycleError(
-                f"IDB lock file detected ({lock_file}); another IDA instance has this database open"
-            )
+        _raise_for_active_ida_database(self.binary_path)
         try:
             self.process = start_idalib_mcp(
                 self.binary_path,
@@ -780,6 +889,8 @@ class IdaMcpLifecycle:
                 self.debug,
                 recovery_budget=self.recovery_budget,
             )
+            if self.runtime is None and _has_ida_database(self.binary_path):
+                self._rebuild_stale_database()
             if self.runtime is None:
                 raise McpLifecycleError(f"Opened IDA database identity verification failed for {self.binary_path}")
             self._force_local_stop = False
@@ -814,6 +925,8 @@ class IdaMcpLifecycle:
                 self.debug,
                 recovery_budget=self.recovery_budget,
             )
+            if self.runtime is None and _has_ida_database(self.binary_path):
+                self._rebuild_stale_database()
             if self.runtime is None:
                 raise McpLifecycleError(f"Opened IDA database identity verification failed for {self.binary_path}")
             return self.runtime
@@ -1238,8 +1351,8 @@ def run_analysis_pipeline(
                 )
 
         effective_llm_config = dict(llm_config or {})
-        preprocess_status = _normalize_preprocess_status(
-            preprocessor_runner(
+        try:
+            raw_preprocess_status = preprocessor_runner(
                 host=runtime.host if runtime is not None else DEFAULT_HOST,
                 port=runtime.port if runtime is not None else DEFAULT_PORT,
                 skill_name=node.skill,
@@ -1262,7 +1375,18 @@ def run_analysis_pipeline(
                 debug=debug,
                 diagnostic_callback=report_preprocessor_diagnostic,
             )
-        )
+        except Exception as exc:  # noqa: BLE001 - runner failures use the normal Agent fallback path.
+            _emit_diagnostic(
+                "runner_failed",
+                node.skill,
+                exc,
+                diagnostic_callback=report_preprocessor_diagnostic,
+                debug=debug,
+                exception=exc,
+                secrets=(effective_llm_config.get("api_key"),),
+            )
+            raw_preprocess_status = PREPROCESS_STATUS_FAILED
+        preprocess_status = _normalize_preprocess_status(raw_preprocess_status)
         if reporting is not None and task_id is not None:
             reporting.emit_progress(
                 task_id,

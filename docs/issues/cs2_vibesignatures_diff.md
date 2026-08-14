@@ -53,8 +53,10 @@ React dashboard、Symbol Explorer、GitHub Pages 与 append-only snapshot archiv
 | P2 | 缺少 Windows self-hosted IDA workflow | CI 无法证明真实 IDA 分析链可工作 |
 
 `idalib-mcp` lifecycle、database binding、identity validation、IDB lock、健康检查、一次恢复预算、owned shutdown、
-Preprocessor contract、runtime input/output validation 和完整 process observability stack 已补齐；本地真实 IDA
-smoke 于 2026-08-10 完成。尚未完成的是把同一 smoke 固化为 Windows self-hosted CI。
+Preprocessor contract、runtime input/output validation 和完整 process observability stack 已补齐。复用 `.i64/.idb`
+时会读取 IDA 记录的原始输入 SHA-256，缺失或不匹配时 fail closed；owned lifecycle 会在确认端口释放且不存在
+`.id0` 活跃锁后安全移除 stale IDB/side files，并只重建一次。本地真实 IDA smoke 于 2026-08-10 完成，尚未完成
+的是把同一 smoke 固化为 Windows self-hosted CI。
 
 ## 1. Production 分析内容（首个 finder 已建立）
 
@@ -294,6 +296,8 @@ pipeline 采用结构化 `PipelineResult` / `PipelineFailure(reason, payload)`�
 - `absent_ok` 无条件记为 skipped/`preprocess_absent`，即使脚本同时留下 YAML；
 - `failed` 留下的 YAML 不删除，但该失败不能凭文件存在在同一次运行中转成成功，required-output skill 必须进入
   Agent fallback；
+- runner dispatch 直接抛出的异常会生成结构化 `runner_failed` 诊断、归一化为 `failed`，再进入同一 Agent
+  fallback；非 debug 模式仍保留错误摘要，traceback 仅在 debug 模式输出；
 - `no_script` 进入 Agent fallback；
 - optional-only skill 在正常模式下遇到 `failed` / `no_script` 记为 skipped/`optional_output_absent`；使用
   `-skip_pp` 时仍运行 Agent，最终没有 optional output 时使用同一 skipped reason；
@@ -313,7 +317,8 @@ lifecycle owner 执行一次受预算约束的恢复。dispatcher 不增加独�
 自动化 contract tests 已覆盖 loader cache、ABI、status normalization、LLM opt-in、session binding、image-base
 解析、输入输出验证、optional-only、zero-output、Agent fallback、MCP recovery，以及 CS2-compatible
 `preprocess_common_skill` API。共享 runtime 已覆盖 func/vfunc/GV/patch/structmember/vtable、4-byte inherited
-slots、A/B xref filters、C/D/E LLM fallback、H ordinal vtable 和合并后的 I/L unique indirect vcall。
+slots、A/B xref filters、C/D/E LLM fallback、H ordinal vtable 和合并后的 I/L unique indirect vcall。structmember
+LLM fallback 接受模型把嵌套 member 的 `.` 展平为 `_`，但成功匹配后仍使用 old YAML 的 canonical dotted name。
 
 2026-08-10 已在真实 IDA/`idalib-mcp` 环境执行：
 
@@ -413,6 +418,7 @@ opened binary identity 校验。后续若加入 cache key，应至少考虑：
 ### Fail-fast 与异常边界
 
 GoldSrc 已支持默认 fail-fast、`-skip_error` opt-in continuation、success/fail/skip 计数和结构化 skill reason。
+Preprocessor runner 的未捕获异常会先转换为结构化诊断和稳定 `failed` status，不再直接落入 `UNKNOWN_ERROR`。
 Analyzer 会为成功、失败、skip 和 abort 写入 typed task terminal event；退出前终结所有 pending task，并在正常与
 异常路径执行 reporter finalize/flush/close。unexpected exception 会把 run 兜底写为 failed；backend 由
 `BestEffortProcessReporter` 隔离，不改变 Analyzer 结果。

@@ -1584,6 +1584,29 @@ async def _call_llm_for_target(spec, context, exported_targets, platform, llm_co
     return dict(result)
 
 
+def _build_struct_member_symbol_name(struct_name, member_name):
+    struct_name = str(struct_name or "").strip()
+    member_name = str(member_name or "").strip()
+    if not struct_name or not member_name:
+        return None
+    return f"{struct_name}_{member_name}".replace(".", "_")
+
+
+def _resolve_struct_member_entry_names(
+    expected_struct_name,
+    expected_member_name,
+    entry_struct_name,
+    entry_member_name,
+):
+    if entry_struct_name != expected_struct_name:
+        return None
+    expected_symbol_name = _build_struct_member_symbol_name(expected_struct_name, expected_member_name)
+    entry_symbol_name = _build_struct_member_symbol_name(entry_struct_name, entry_member_name)
+    if expected_symbol_name is None or entry_symbol_name != expected_symbol_name:
+        return None
+    return expected_struct_name, expected_member_name
+
+
 def _entry_identity_matches(entry, symbol_name, category):
     field = {
         "func": "func_name",
@@ -1593,13 +1616,7 @@ def _entry_identity_matches(entry, symbol_name, category):
     }[category]
     if field is not None:
         return entry.get(field) == symbol_name
-    struct_name = entry.get("struct_name")
-    member_name = entry.get("member_name")
-    return (
-        isinstance(struct_name, str)
-        and isinstance(member_name, str)
-        and (f"{struct_name}_{member_name}".replace(".", "_") == symbol_name)
-    )
+    return _build_struct_member_symbol_name(entry.get("struct_name"), entry.get("member_name")) == symbol_name
 
 
 def _llm_entry_instruction_is_valid(entry, detail, target_ranges, rules):
@@ -1628,6 +1645,8 @@ async def _preprocess_llm_target(
     image_base,
     desired_fields,
     vtable_name=None,
+    expected_struct_name=None,
+    expected_member_name=None,
     debug=False,
 ):
     del debug
@@ -1742,6 +1761,20 @@ async def _preprocess_llm_target(
                     "gv_inst_disp": next((value for value in detail.get("operand_offsets") or () if value), 0),
                 }
             else:
+                resolved_names = None
+                if expected_struct_name and expected_member_name:
+                    resolved_names = _resolve_struct_member_entry_names(
+                        expected_struct_name,
+                        expected_member_name,
+                        str(entry.get("struct_name") or "").strip(),
+                        str(entry.get("member_name") or "").strip(),
+                    )
+                    if resolved_names is None:
+                        continue
+                resolved_struct_name, resolved_member_name = resolved_names or (
+                    entry["struct_name"],
+                    entry["member_name"],
+                )
                 try:
                     offset = _parse_int(entry.get("offset"), "offset")
                 except SymbolArtifactError:
@@ -1757,8 +1790,8 @@ async def _preprocess_llm_target(
                     continue
                 insn_va = _parse_int(entry["insn_va"], "insn_va")
                 payload = {
-                    "struct_name": entry["struct_name"],
-                    "member_name": entry["member_name"],
+                    "struct_name": resolved_struct_name,
+                    "member_name": resolved_member_name,
                     "offset": hex(offset),
                     "offset_sig": function["func_sig"],
                     "offset_sig_disp": insn_va - _parse_int(function["func_va"], "func_va"),
@@ -2025,16 +2058,20 @@ async def preprocess_common_skill(
         field_spec = desired.get(member_name)
         if field_spec is None:
             return False
+        old_path = _old_path_for_output(old_yaml_map, output)
         candidate = await preprocess_struct_offset_sig_via_mcp(
             session,
             output,
-            _old_path_for_output(old_yaml_map, output),
+            old_path,
             image_base,
             new_binary_dir,
             platform,
             debug,
         )
         if candidate is None:
+            old_data = _load_yaml_mapping(old_path) or {}
+            expected_struct_name = old_data.get("struct_name")
+            expected_member_name = old_data.get("member_name")
             candidate = await _preprocess_llm_target(
                 session=session,
                 symbol_name=member_name,
@@ -2045,6 +2082,8 @@ async def preprocess_common_skill(
                 platform=platform,
                 image_base=image_base,
                 desired_fields=field_spec["fields"],
+                expected_struct_name=(expected_struct_name.strip() if isinstance(expected_struct_name, str) else None),
+                expected_member_name=(expected_member_name.strip() if isinstance(expected_member_name, str) else None),
                 debug=debug,
             )
         if not emit(member_name, "structmember", candidate, output):
