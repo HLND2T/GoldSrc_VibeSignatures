@@ -12,6 +12,7 @@ from decrypt_blob import (
     BLOB_INFO_SIZE,
     BlobFormatError,
     build_pe,
+    classify_section,
     parse_blob,
     verify_pe,
 )
@@ -33,7 +34,10 @@ SECTIONS = [
     (0x8000, 0x5000, 0x3000),  # data
     (0xE000, 0x1000, 0x20),  # aux: RVA-pointer table
     (0xF000, 0x1000, 0x80),  # aux: reloc-style entries
+    (0x10000, 0x1000, 0x100),  # .rsrc: minimal version-info resource root
 ]
+
+RESOURCE_INDEX = len(SECTIONS) - 1
 
 IMPORT_RVA = SECTIONS[1][0] + 0x10  # 0x4010
 ENTRY_RVA = 0x2000
@@ -84,6 +88,16 @@ def _build_import_region() -> bytes:
     return bytes(region)
 
 
+def _build_resource_root() -> bytes:
+    """Minimal IMAGE_RESOURCE_DIRECTORY root with one VERSION(16) subdir entry."""
+    root = bytearray(24)
+    # Characteristics=0, TimeDateStamp=0, MajorVersion=1, MinorVersion=0,
+    # NumberOfNamedEntries=0, NumberOfIdEntries=1.
+    struct.pack_into("<IIHHHH", root, 0, 0, 0, 1, 0, 0, 1)
+    struct.pack_into("<II", root, 16, 16, 0x80000008)  # id=VERSION, subdirectory @8
+    return bytes(root)
+
+
 def make_blob(prefix: bytes = b"") -> bytes:
     """Build a synthetic, encrypted Metahook blob for test fixtures."""
     prefix_len = len(prefix)
@@ -99,6 +113,8 @@ def make_blob(prefix: bytes = b"") -> bytes:
             data = bytearray(d_size)
             region = _build_import_region()
             data[IMPORT_RVA - SECTIONS[1][0] : IMPORT_RVA - SECTIONS[1][0] + len(region)] = region
+        elif idx == RESOURCE_INDEX:
+            data = _build_resource_root() + bytes(d_size - 24)
         else:
             data = bytearray(bytes([(i * 7 + 13) & 0xFF for i in range(d_size)]))
         sections.append((IMAGE_BASE + rva, v_size, d_size, data_addr, 0))
@@ -143,8 +159,23 @@ class BlobDecryptionTests(unittest.TestCase):
         # section[0] = .text, exec+read
         self.assertEqual(b".text", struct.unpack_from("<8s", pe, 0x178)[0].rstrip(b"\0"))
         self.assertEqual(0x60000020, struct.unpack_from("<I", pe, 0x178 + 36)[0])
-        # import directory
-        self._assert_import_dir(pe, IMPORT_RVA, 2 * 20)
+        # import directory (2 DLLs + the all-zero terminator descriptor)
+        self._assert_import_dir(pe, IMPORT_RVA, 3 * 20)
+        # resource directory: .rsrc classified and exposed via DataDirectory[2]
+        self.assertEqual(".rsrc", classify_section(RESOURCE_INDEX, parsed.sections[RESOURCE_INDEX], parsed.buffer)[0])
+        opt = 0x98
+        res_rva, res_size = struct.unpack_from("<II", pe, opt + 112)
+        self.assertEqual(SECTIONS[RESOURCE_INDEX][0], res_rva)
+        self.assertEqual(0x1000, res_size)  # aligned raw size of the .rsrc section
+        # .rsrc raw bytes materialized verbatim: find its section header, then check the root.
+        rsrc_ptr = rsrc_raw = None
+        for i in range(len(parsed.sections)):
+            sh = opt + 0xE0 + i * 40
+            if pe[sh : sh + 8].rstrip(b"\0") == b".rsrc":
+                rsrc_raw = struct.unpack_from("<I", pe, sh + 16)[0]
+                rsrc_ptr = struct.unpack_from("<I", pe, sh + 20)[0]
+        self.assertEqual(0x1000, rsrc_raw)
+        self.assertEqual(_build_resource_root(), pe[rsrc_ptr : rsrc_ptr + 24])
         # binary_format.inspect_binary structural check
         with tempfile.TemporaryDirectory() as temporary:
             out = Path(temporary) / "hw.dll"

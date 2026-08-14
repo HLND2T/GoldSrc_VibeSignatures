@@ -221,6 +221,36 @@ def _looks_like_reloc(data: bytes) -> bool:
     return reloc_like / len(words) > 0.5
 
 
+def _looks_like_resource(data: bytes) -> bool:
+    """True when `data` starts with a plausible IMAGE_RESOURCE_DIRECTORY root.
+
+    The root of a Win32 resource tree has zero Characteristics and a small set
+    of entries (resource-type IDs such as 3=ICON, 6=STRING, 14=GROUP_ICON,
+    16=VERSION) whose Name/Id and OffsetToData pointers stay inside the section.
+    """
+    if len(data) < 16:
+        return False
+    characteristics, _timestamp = struct.unpack_from("<II", data, 0)
+    if characteristics != 0:
+        return False
+    named, by_id = struct.unpack_from("<HH", data, 12)
+    if not 0 <= named <= 16 or not 1 <= by_id <= 16:
+        return False
+    count = named + by_id
+    if len(data) < 16 + count * 8:
+        return False
+    for i in range(count):
+        name_or_id, offset_to_data = struct.unpack_from("<II", data, 16 + i * 8)
+        if name_or_id & 0x80000000:  # named entry: offset of the name string
+            if (name_or_id & 0x7FFFFFFF) >= len(data):
+                return False
+        elif not 1 <= name_or_id <= 0x10000:
+            return False
+        if (offset_to_data & 0x7FFFFFFF) >= len(data):  # subdir flag lives in bit 31
+            return False
+    return True
+
+
 def classify_section(index: int, section: BlobSection, buffer: bytes) -> tuple[str, int]:
     """Return (name, characteristics) mirroring LoadBlob's heuristic."""
     if index == 0:
@@ -230,6 +260,8 @@ def classify_section(index: int, section: BlobSection, buffer: bytes) -> tuple[s
         if _rdata_markers_match(data):
             return ".rdata", CHAR_INIT_READ
         return ".data", CHAR_INIT_READ_WRITE
+    if _looks_like_resource(data):
+        return ".rsrc", CHAR_INIT_READ
     if _looks_like_reloc(data):
         return ".reloc", CHAR_INIT_READ
     return ".rdata", CHAR_INIT_READ
@@ -293,7 +325,7 @@ def pe_checksum(data: bytes) -> int:
         total += data[size - 1]
     total = (total & 0xFFFF) + (total >> 16)
     total = (total & 0xFFFF) + (total >> 16)
-    return (total + size) & 0xFFFF
+    return (total + size) & 0xFFFFFFFF
 
 
 def build_pe(parsed: ParsedBlob) -> bytes:
@@ -303,8 +335,11 @@ def build_pe(parsed: ParsedBlob) -> bytes:
     names_flags = [classify_section(i, sec, parsed.buffer) for i, sec in enumerate(parsed.sections)]
     count = len(parsed.sections)
 
-    raw_sizes = [max(sec.virtual_size, sec.data_size) for sec in parsed.sections]
-    raw_sizes = [(s + FILE_ALIGNMENT - 1) & ~(FILE_ALIGNMENT - 1) for s in raw_sizes]
+    # Raw sizes derive from the stored bytes only. VirtualSize may be far larger
+    # (e.g. hl-3647's .data: 0x10b6fd4 virtual vs 0x39000 stored); the PE loader
+    # zero-fills VirtualSize beyond aligned SizeOfRawData, so padding the file to
+    # VirtualSize would balloon the output with dead zeros for no benefit.
+    raw_sizes = [(sec.data_size + FILE_ALIGNMENT - 1) & ~(FILE_ALIGNMENT - 1) for sec in parsed.sections]
     size_of_image = _size_of_image(parsed)
     imports = _walk_imports(parsed)
 
@@ -372,8 +407,21 @@ def build_pe(parsed: ParsedBlob) -> bytes:
     struct.pack_into("<I", pe, opt + 92, 16)  # NumberOfRvaAndSizes
     struct.pack_into("<II", pe, opt + 96, 0, 0)  # DataDirectory[0] Export: not synthesized
     struct.pack_into(
-        "<II", pe, opt + 104, header.import_table - image_base, len(imports) * 20
-    )  # DataDirectory[1] Import
+        "<II", pe, opt + 104, header.import_table - image_base, (len(imports) + 1) * 20
+    )  # DataDirectory[1] Import (includes the all-zero terminator descriptor)
+
+    # DataDirectory[2] Resource: expose a recovered .rsrc section so resource and
+    # version-information APIs can find it. Size mirrors the materialized bytes.
+    resource = next(
+        (
+            (sec.virtual_address - image_base, raw_size)
+            for sec, (_name, _flags), raw_size in zip(parsed.sections, names_flags, raw_sizes)
+            if sec.virtual_address - image_base != 0
+            and _name == ".rsrc"
+        ),
+        (0, 0),
+    )
+    struct.pack_into("<II", pe, opt + 112, *resource)  # DataDirectory[2] Resource
 
     section_header_start = opt + OPT_HEADER_SIZE
     file_off = size_of_headers
@@ -430,6 +478,9 @@ def verify_pe(pe: bytes, parsed: ParsedBlob) -> None:
     import_rva, _import_size = struct.unpack_from("<II", pe, opt + 104)
     if import_rva and not 0 < import_rva < size_of_image:
         raise BlobFormatError("output import directory outside image")
+    resource_rva, resource_size = struct.unpack_from("<II", pe, opt + 112)
+    if resource_rva and (not 0 < resource_rva < size_of_image or resource_size == 0):
+        raise BlobFormatError("output resource directory outside image")
     sh = opt + OPT_HEADER_SIZE
     for i in range(count):
         if struct.unpack_from("<I", pe, sh + i * 40 + 12)[0] % 0x1000 != 0:
