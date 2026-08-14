@@ -1,4 +1,12 @@
 downloads:
+  - tag: "hl-8684"
+    name: Half-Life buildnum 8684 (Pre-25th Anniversary Build)
+    basepath: Half-Life
+    appid: 70
+    manifests:
+      "2": "2139852524811213490" # DepotDownloader -app 70 -depot 2 -manifest 2139852524811213490 -all-platforms -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
+      "8": "8088891443299905514" # DepotDownloader -app 70 -depot 8 -manifest 8088891443299905514 -all-platforms -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
+      "71": "9183617604528345869" # DepotDownloader -app 70 -depot 71 -manifest 9183617604528345869 -all-platforms -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
   - tag: "hl-10120"
     name: Half-Life buildnum 10120
     basepath: Half-Life
@@ -7,6 +15,12 @@ downloads:
       "2": "724247850320422500" # DepotDownloader -app 70 -depot 2 -manifest 724247850320422500 -all-platforms -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
       "8": "1360709870205537514" # DepotDownloader -app 70 -depot 8 -manifest 1360709870205537514 -all-platforms -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
       "71": "3982364535202188842" # DepotDownloader -app 70 -depot 71 -manifest 3982364535202188842 -all-platforms -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
+  - tag: "cstrike-10120"
+    name: Counter-Strike buildnum 8684 (Pre-25th Anniversary Build)
+    basepath: Half-Life
+    appid: 10
+    manifests:
+      "11": "4720911300072406946" # DepotDownloader -app 10 -depot 11 -manifest 4720911300072406946 -all-platforms -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
   - tag: "cstrike-10120"
     name: Counter-Strike buildnum 10120
     basepath: Half-Life
