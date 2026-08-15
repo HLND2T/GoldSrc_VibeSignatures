@@ -1,0 +1,162 @@
+name: Deploy Pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pages/**'
+      - 'gamesymbols/**'
+      - 'configs/**'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: deploy-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: pages
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: pages/package-lock.json
+      - name: Install Pages dependencies
+        run: npm ci
+      - name: Test Pages application
+        run: npm test
+      - name: Lint Pages application
+        run: npm run lint
+      - name: Build Pages artifact
+        run: npm run build
+      - name: Verify current game-symbol bytes
+        run: npm run verify:gamesymbols
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run Pages E2E
+        run: npm run test:e2e
+      - name: Upload current Pages build
+        uses: actions/upload-artifact@v5
+        with:
+          name: pages-current-build
+          path: pages/dist
+          retention-days: 1
+  archive:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+      pages: write
+      id-token: write
+    defaults:
+      run:
+        working-directory: pages
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - name: Download current Pages build
+        uses: actions/download-artifact@v5
+        with:
+          name: pages-current-build
+          path: pages/dist
+      - name: Prepare append-only snapshot archive
+        id: snapshot-archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive_root="$RUNNER_TEMP/pages-snapshots"
+          git worktree add --detach --no-checkout "$archive_root" HEAD
+          if git ls-remote --exit-code --heads origin refs/heads/pages-snapshots >/dev/null 2>&1; then
+            git fetch --no-tags origin refs/heads/pages-snapshots:refs/remotes/origin/pages-snapshots
+            git -C "$archive_root" checkout -B pages-snapshots refs/remotes/origin/pages-snapshots
+            invalid_history="$(git -C "$archive_root" log --format= --name-status --no-renames | awk 'NF && ($1 != "A" || $2 !~ /^gamesymbols\/[a-z0-9]+(-[a-z0-9]+)*-[0-9]+\.[0-9a-f]{64}\.json$/) { print }')"
+            if [[ -n "$invalid_history" ]]; then
+              echo "pages-snapshots history is not append-only:" >&2
+              echo "$invalid_history" >&2
+              exit 1
+            fi
+          else
+            git -C "$archive_root" switch --orphan pages-snapshots
+          fi
+          echo "root=$archive_root" >> "$GITHUB_OUTPUT"
+      - name: Merge immutable game-symbol snapshot archive
+        run: >-
+          node verifyGameSymbolAssets.mjs
+          --directory dist/gamesymbols
+          --archive "${{ steps.snapshot-archive.outputs.root }}/gamesymbols"
+      - name: Persist immutable game-symbol snapshot archive
+        shell: bash
+        env:
+          ARCHIVE_ROOT: ${{ steps.snapshot-archive.outputs.root }}
+        run: |
+          set -euo pipefail
+          git -C "$ARCHIVE_ROOT" add -- gamesymbols
+          if git -C "$ARCHIVE_ROOT" diff --cached --quiet; then
+            echo "Immutable snapshot archive already contains every current digest."
+            exit 0
+          fi
+          git -C "$ARCHIVE_ROOT" config user.name "github-actions[bot]"
+          git -C "$ARCHIVE_ROOT" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$ARCHIVE_ROOT" commit -m "chore(pages): archive immutable game-symbol snapshots"
+          git -C "$ARCHIVE_ROOT" push origin HEAD:refs/heads/pages-snapshots
+      - name: Write final game-symbol verification manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          verification_root="$RUNNER_TEMP/pages-verification"
+          mkdir -p "$verification_root"
+          node verifyGameSymbolAssets.mjs \
+            --directory dist/gamesymbols \
+            --write-manifest "$verification_root/manifest.json"
+          cp verifyGameSymbolAssets.mjs "$verification_root/verifyGameSymbolAssets.mjs"
+      - name: Upload game-symbol verification manifest
+        uses: actions/upload-artifact@v5
+        with:
+          name: pages-gamesymbol-verification
+          path: ${{ runner.temp }}/pages-verification
+          retention-days: 1
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages/dist
+  deploy:
+    needs: archive
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - name: Download game-symbol verification manifest
+        uses: actions/download-artifact@v5
+        with:
+          name: pages-gamesymbol-verification
+          path: ${{ runner.temp }}/pages-verification
+      - id: deployment
+        uses: actions/deploy-pages@v5
+      - name: Verify deployed CDN game-symbol bytes
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: >-
+          node "$RUNNER_TEMP/pages-verification/verifyGameSymbolAssets.mjs"
+          --base-url "${PAGE_URL%/}/gamesymbols/"
+          --manifest "$RUNNER_TEMP/pages-verification/manifest.json"

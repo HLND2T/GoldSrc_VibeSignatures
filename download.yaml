@@ -1,17 +1,36 @@
 downloads:
-  - tag: "cstrike-10120"
-    name: Counter-Strike buildnum 10120
-    basepath: Half-Life
-    config: cstrike.yaml
+  - tag: "hl-8684"
+    name: Half-Life buildnum 8684 (Pre-25th Anniversary Build)
+    basepath: Half-Life-8684
+    appid: 70
+    manifests:
+      "2": "2139852524811213490" # DepotDownloader -app 70 -depot 2 -manifest 2139852524811213490 -all-platforms -dir depots/Half-Life-8684 [-username XXX] [-password XXX] [-remember-password]
+      "8": "8088891443299905514" # DepotDownloader -app 70 -depot 8 -manifest 8088891443299905514 -all-platforms -dir depots/Half-Life-8684 [-username XXX] [-password XXX] [-remember-password]
+      "71": "9183617604528345869" # DepotDownloader -app 70 -depot 71 -manifest 9183617604528345869 -all-platforms -dir depots/Half-Life-8684 [-username XXX] [-password XXX] [-remember-password]
+  - tag: "hl-10210"
+    name: Half-Life buildnum 10210
+    basepath: Half-Life-10210
+    appid: 70
+    manifests:
+      "2": "724247850320422500" # DepotDownloader -app 70 -depot 2 -manifest 724247850320422500 -all-platforms -dir depots/Half-Life-10210 [-username XXX] [-password XXX] [-remember-password]
+      "8": "1360709870205537514" # DepotDownloader -app 70 -depot 8 -manifest 1360709870205537514 -all-platforms -dir depots/Half-Life-10210 [-username XXX] [-password XXX] [-remember-password]
+      "71": "3982364535202188842" # DepotDownloader -app 70 -depot 71 -manifest 3982364535202188842 -all-platforms -dir depots/Half-Life-10210 [-username XXX] [-password XXX] [-remember-password]
+  - tag: "cstrike-8684"
+    name: Counter-Strike buildnum 8684 (Pre-25th Anniversary Build)
+    basepath: Counter-Strike-8684
     appid: 10
     manifests:
-      "2": "724247850320422500" # DepotDownloader -app 10 -depot 2 -manifest 724247850320422500 -os all-platform -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
-      "8": "1360709870205537514" # DepotDownloader -app 10 -depot 8 -manifest 1360709870205537514 -os all-platform -dir depots/Half-Life [-username XXX] [-password XXX] [-remember-password]
+      "11": "4720911300072406946" # DepotDownloader -app 10 -depot 11 -manifest 4720911300072406946 -all-platforms -dir depots/Counter-Strike-8684 [-username XXX] [-password XXX] [-remember-password]
+  - tag: "cstrike-10210"
+    name: Counter-Strike buildnum 10210
+    basepath: Counter-Strike-10210
+    appid: 10
+    manifests:
+      "11": "3018093494972814332" # DepotDownloader -app 10 -depot 11 -manifest 3018093494972814332 -all-platforms -dir depots/Counter-Strike-10210 [-username XXX] [-password XXX] [-remember-password]
   - tag: "svencoop-10257"
     name: Sven Co-op buildnum 10257
-    basepath: Sven-Co op
-    config: svencoop.yaml
+    basepath: Sven-Coop-10257
     appid: 225840
     manifests:
-      "225842": "7714419150192498919" # DepotDownloader -app 225840 -depot 225842 -manifest 7714419150192498919 -os all-platform -dir depots/Sven-Co op
-      "225843": "6320191083261921291" # DepotDownloader -app 225840 -depot 225843 -manifest 6320191083261921291 -os all-platform -dir depots/Sven-Co op
+      "225842": "7714419150192498919" # DepotDownloader -app 225840 -depot 225842 -manifest 7714419150192498919 -all-platforms -dir depots/Sven-Coop-10257 [-username XXX] [-password XXX] [-remember-password]
+      "225843": "6320191083261921291" # DepotDownloader -app 225840 -depot 225843 -manifest 6320191083261921291 -all-platforms -dir depots/Sven-Coop-10257 [-username XXX] [-password XXX] [-remember-password]

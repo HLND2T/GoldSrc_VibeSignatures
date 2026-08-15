@@ -1,0 +1,7 @@
+# Copy this file to $CODEX_HOME/skill_runner.config.toml; the runner selects it with --profile skill_runner.
+project_doc_fallback_filenames = [".claude/SKILL_RUNNER.md"]
+model_reasoning_effort = "high"
+model_reasoning_summary = "none"
+model_verbosity = "low"
+approval_policy = "never"
+sandbox_mode = "workspace-write"

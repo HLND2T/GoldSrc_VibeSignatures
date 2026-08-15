@@ -1,0 +1,35 @@
+[project]
+name = "goldsrc-vibesignatures"
+version = "0.1.0"
+description = "Reproducible x86 GoldSrc signature and gamedata analysis framework."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.139.0",
+    "httpx>=0.27",
+    "mcp>=1.0",
+    "openai>=1.0",
+    "python-dotenv>=1.0",
+    "pyyaml>=6.0",
+    "redis",
+    "uvicorn>=0.41.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.11",
+    "yamlfix>=1.17",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.yamlfix]
+explicit_start = false
+line_length = 120
+preserve_quotes = true
+sequence_style = "keep_style"

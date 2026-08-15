@@ -1,0 +1,2 @@
+class ReleaseWorkflowError(ValueError):
+    pass

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create GoldSrc Preprocessor Scripts"
+  short_description: "Create reusable GoldSrc x86 finder scripts"
+  default_prompt: "Use $create-preprocessor-scripts to add a GoldSrc x86 preprocessor finder and config entries."

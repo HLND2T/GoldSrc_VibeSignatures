@@ -1,0 +1,1 @@
+"""GoldSrc VibeSignatures test suite."""
