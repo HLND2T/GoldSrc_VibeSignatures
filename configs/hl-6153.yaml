@@ -1,5 +1,7 @@
 modules:
   - name: engine
+    module_windows: hw.dll
+    module_linux: hw.so
     path_windows: Half-Life-6153/hw.dll
     path_linux: Half-Life-6153/hw.so
     skills:

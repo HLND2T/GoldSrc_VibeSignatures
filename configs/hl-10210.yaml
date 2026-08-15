@@ -1,5 +1,7 @@
 modules:
   - name: engine
+    module_windows: hw.dll
+    module_linux: hw.so
     path_windows: Half-Life-10210/hw.dll
     path_linux: Half-Life-10210/hw.so
     skills:
@@ -10,16 +12,22 @@ modules:
       - name: R_RenderView
         category: func
   - name: client
+    module_windows: client.dll
+    module_linux: client.so
     path_windows: Half-Life-10210/valve/cl_dlls/client.dll
     path_linux: Half-Life-10210/valve/cl_dlls/client.so
     skills: []
     symbols: []
   - name: gameui
+    module_windows: GameUI.dll
+    module_linux: gameui.so
     path_windows: Half-Life-10210/valve/cl_dlls/GameUI.dll
     path_linux: Half-Life-10210/valve/cl_dlls/gameui.so
     skills: []
     symbols: []
   - name: server
+    module_windows: hl.dll
+    module_linux: hl.so
     path_windows: Half-Life-10210/valve/dlls/hl.dll
     path_linux: Half-Life-10210/valve/dlls/hl.so
     skills: []
