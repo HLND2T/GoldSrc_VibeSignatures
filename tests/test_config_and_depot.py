@@ -15,7 +15,7 @@ from tests.test_support import write_config, write_pe32
 
 class TagAndConfigTests(unittest.TestCase):
     def test_accepts_safe_release_tag(self):
-        self.assertEqual("cstrike-10120", validated_tag("cstrike-10120"))
+        self.assertEqual("cstrike-10210", validated_tag("cstrike-10210"))
         self.assertEqual("game-mod-123", validated_tag("game-mod-123"))
 
     def test_rejects_unsafe_or_unversioned_tags(self):
@@ -39,7 +39,7 @@ class DownloadConfigTests(unittest.TestCase):
             },
             clear=False,
         ):
-            args = download_depot.parse_args(["-tag", "cstrike-10120"])
+            args = download_depot.parse_args(["-tag", "cstrike-10210"])
         self.assertEqual("env-user", args.username)
         self.assertEqual("env-secret", args.password)
         self.assertTrue(args.remember_password)
@@ -56,7 +56,7 @@ class DownloadConfigTests(unittest.TestCase):
             args = download_depot.parse_args(
                 [
                     "-tag",
-                    "cstrike-10120",
+                    "cstrike-10210",
                     "-username",
                     "cli-user",
                     "-password",
@@ -70,10 +70,10 @@ class DownloadConfigTests(unittest.TestCase):
     def test_production_downloads_have_exact_apps_and_manifests(self):
         entries = download_depot.load_downloads(Path(__file__).parents[1] / "download.yaml")
         by_tag = {entry["tag"]: entry for entry in entries}
-        self.assertEqual(70, by_tag["hl-10120"]["appid"])
-        self.assertEqual({"2", "8", "71"}, set(by_tag["hl-10120"]["manifests"]))
-        self.assertEqual(10, by_tag["cstrike-10120"]["appid"])
-        self.assertEqual({"11"}, set(by_tag["cstrike-10120"]["manifests"]))
+        self.assertEqual(70, by_tag["hl-10210"]["appid"])
+        self.assertEqual({"2", "8", "71"}, set(by_tag["hl-10210"]["manifests"]))
+        self.assertEqual(10, by_tag["cstrike-10210"]["appid"])
+        self.assertEqual({"11"}, set(by_tag["cstrike-10210"]["manifests"]))
         self.assertEqual(225840, by_tag["svencoop-10257"]["appid"])
         self.assertEqual("Sven-Coop-10257", by_tag["svencoop-10257"]["basepath"])
         self.assertNotIn("config", by_tag["svencoop-10257"])
@@ -97,11 +97,11 @@ class DownloadConfigTests(unittest.TestCase):
 
     def test_filelist_collects_both_platforms_relative_to_depot_root(self):
         root = Path(__file__).parents[1]
-        paths = download_depot.load_module_filelist(root / "configs" / "cstrike-10120.yaml", "Counter-Strike-10120")
+        paths = download_depot.load_module_filelist(root / "configs" / "cstrike-10210.yaml", "Counter-Strike-10210")
         self.assertIn("cstrike/cl_dlls/client.dll", paths)
         self.assertIn("cstrike/cl_dlls/client.so", paths)
         self.assertIn("cstrike/dlls/cs.so", paths)
-        self.assertNotIn("Counter-Strike-10120/cstrike/cl_dlls/client.dll", paths)
+        self.assertNotIn("Counter-Strike-10210/cstrike/cl_dlls/client.dll", paths)
         self.assertEqual(len(paths), len(set(paths)))
 
     def test_filelist_rejects_paths_outside_basepath(self):
@@ -171,13 +171,13 @@ class DownloadConfigTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             download_depot.parse_args([])
         with self.assertRaises(SystemExit):
-            download_depot.parse_args(["-tag", "cstrike-10120", "-all"])
+            download_depot.parse_args(["-tag", "cstrike-10210", "-all"])
         args = download_depot.parse_args(["-all"])
         self.assertTrue(args.all)
         self.assertIsNone(args.tag)
-        args = download_depot.parse_args(["-tag", "cstrike-10120"])
+        args = download_depot.parse_args(["-tag", "cstrike-10210"])
         self.assertFalse(args.all)
-        self.assertEqual("cstrike-10120", args.tag)
+        self.assertEqual("cstrike-10210", args.tag)
 
     def test_download_all_tags_loops_over_config_and_reports_failures(self):
         config = Path(__file__).parents[1] / "download.yaml"

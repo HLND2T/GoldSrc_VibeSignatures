@@ -80,10 +80,10 @@ describe('gameSymbolsPlugin normalization', () => {
   it('groups game families and sorts numeric builds newest first', () => {
     const older = normalizeGameSymbolSnapshot(snapshot({}, 'svencoop-9999'), 'svencoop-9999', 'svencoop-9999.yaml')
     const latest = normalizeGameSymbolSnapshot(snapshot({}, 'svencoop-10257'), 'svencoop-10257', 'svencoop-10257.yaml')
-    const otherFamily = normalizeGameSymbolSnapshot(snapshot({}, 'cstrike-10120'), 'cstrike-10120', 'cstrike-10120.yaml')
+    const otherFamily = normalizeGameSymbolSnapshot(snapshot({}, 'cstrike-10210'), 'cstrike-10210', 'cstrike-10210.yaml')
     const index = createGameSymbolIndex([older, latest, otherFamily].map(encodeGameSymbolAsset))
     expect(index.schemaVersion).toBe(4)
-    expect(index.versions.map((entry) => entry.gameVersion)).toEqual(['cstrike-10120', 'svencoop-10257', 'svencoop-9999'])
+    expect(index.versions.map((entry) => entry.gameVersion)).toEqual(['cstrike-10210', 'svencoop-10257', 'svencoop-9999'])
     expect(index.versions[0]).toEqual(expect.objectContaining({
       lastPublishTime: '2026-01-02T03:04:05Z',
       fileCount: 0,

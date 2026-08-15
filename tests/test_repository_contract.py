@@ -10,13 +10,13 @@ from analysis_planner import parse_config_document
 from binary_format import inspect_binary
 
 ROOT = Path(__file__).parents[1]
-TAGS = {"hl-8684", "hl-10120", "cstrike-8684", "cstrike-10120", "svencoop-10257"}
+TAGS = {"hl-8684", "hl-10210", "cstrike-8684", "cstrike-10210", "svencoop-10257"}
 MODULES = {"engine", "client", "gameui", "server"}
 MODULES_BY_TAG = {
     "hl-8684": MODULES,
-    "hl-10120": MODULES,
+    "hl-10210": MODULES,
     "cstrike-8684": {"client", "server"},
-    "cstrike-10120": {"client", "server"},
+    "cstrike-10210": {"client", "server"},
     "svencoop-10257": MODULES,
 }
 
@@ -43,7 +43,7 @@ class RepositoryContractTests(unittest.TestCase):
                 self.assertTrue(module["path_linux"])
 
     def test_goldsrc_engines_register_r_renderview_production_finder(self):
-        for tag in ("hl-10120", "svencoop-10257"):
+        for tag in ("hl-10210", "svencoop-10257"):
             with self.subTest(tag=tag):
                 document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
                 engine = next(module for module in document["modules"] if module["name"] == "engine")

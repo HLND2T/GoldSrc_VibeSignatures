@@ -4,7 +4,7 @@ GoldSrc VibeSignatures 是面向 32 位 GoldSrc 游戏的可复现符号分析�
 Linux ELF32/I386，按依赖 DAG 执行分析，将平面 YAML 工件封装为 schema 5 快照，再通过不可变 candidate
 事务交给受控的 gamedata generator。
 
-正式配置覆盖 `hl-10120`、`cstrike-10120` 与 `svencoop-10257`；Half-Life 和 Sven Co-op 包含
+正式配置覆盖 `hl-10210`、`cstrike-10210` 与 `svencoop-10257`；Half-Life 和 Sven Co-op 包含
 `engine`、`client`、`gameui`、`server` 四模块，Counter-Strike 包含 `client`、`server`。
 Half-Life 与 Sven Co-op 均已注册 `R_RenderView` production finder：通过
 `"R_RenderView: NULL worldmodel"` 在 `hw.dll` / `hw.so` 定位普通函数 `engine/R_RenderView`。
@@ -13,11 +13,11 @@ Half-Life 与 Sven Co-op 均已注册 `R_RenderView` production finder：通过
 
 ```console
 uv sync --locked
-uv run python download_depot.py -tag cstrike-10120 -depotdir depots
+uv run python download_depot.py -tag cstrike-10210 -depotdir depots
 uv run python download_depot.py -all -depotdir depots
-uv run python copy_depot_bin.py -gamever cstrike-10120 -platform all-platform
-uv run python ida_analyze_bin.py -gamever cstrike-10120 -configyaml configs/cstrike-10120.yaml -platform windows,linux
-uv run python ida_analyze_bin.py -gamever hl-10120 -modules engine -skill find-R_RenderView -platform windows,linux -debug
+uv run python copy_depot_bin.py -gamever cstrike-10210 -platform all-platform
+uv run python ida_analyze_bin.py -gamever cstrike-10210 -configyaml configs/cstrike-10210.yaml -platform windows,linux
+uv run python ida_analyze_bin.py -gamever hl-10210 -modules engine -skill find-R_RenderView -platform windows,linux -debug
 uv run python ida_analyze_bin.py -gamever svencoop-10257 -modules engine -skill find-R_RenderView -platform windows,linux -debug
 ```
 

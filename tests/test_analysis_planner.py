@@ -288,8 +288,8 @@ class CliContractTests(unittest.TestCase):
         self.assertEqual(2, raised.exception.code)
 
     def test_cs2_style_defaults_use_gsvibe_namespace(self):
-        args = self.parse_args(env={"GSVIBE_GAMEVER": "cstrike-10120"})
-        self.assertEqual("cstrike-10120", args.gamever)
+        args = self.parse_args(env={"GSVIBE_GAMEVER": "cstrike-10210"})
+        self.assertEqual("cstrike-10210", args.gamever)
         self.assertEqual(["windows", "linux"], args.platforms)
         self.assertIsNone(args.module_filter)
         self.assertEqual("claude", args.agent)
@@ -384,22 +384,22 @@ class CliContractTests(unittest.TestCase):
             "-rename",
         ):
             with self.subTest(option=option):
-                self.assert_parse_error(["-gamever", "cstrike-10120", option, "value"])
-        self.assert_parse_error(["-gamever", "cstrike-10120", "-console-events"])
-        self.assert_parse_error(["-gamever", "cstrike-10120", "-platform", "all-platform"])
+                self.assert_parse_error(["-gamever", "cstrike-10210", option, "value"])
+        self.assert_parse_error(["-gamever", "cstrike-10210", "-console-events"])
+        self.assert_parse_error(["-gamever", "cstrike-10210", "-platform", "all-platform"])
 
     def test_invalid_lists_retry_llm_and_agent_fail_fast(self):
         invalid_argv = (
-            ["-gamever", "cstrike-10120", "-platform", ""],
-            ["-gamever", "cstrike-10120", "-platform", "windows,windows"],
-            ["-gamever", "cstrike-10120", "-modules", "engine,,client"],
-            ["-gamever", "cstrike-10120", "-modules", "engine,engine"],
-            ["-gamever", "cstrike-10120", "-maxretry", "0"],
-            ["-gamever", "cstrike-10120", "-llm_temperature", "3"],
-            ["-gamever", "cstrike-10120", "-agent", ""],
-            ["-gamever", "cstrike-10120", "-llm_fake_as", "codex"],
-            ["-gamever", "cstrike-10120", "-redis_prefix", ":"],
-            ["-gamever", "cstrike-10120", "-run_id", "unsafe/run"],
+            ["-gamever", "cstrike-10210", "-platform", ""],
+            ["-gamever", "cstrike-10210", "-platform", "windows,windows"],
+            ["-gamever", "cstrike-10210", "-modules", "engine,,client"],
+            ["-gamever", "cstrike-10210", "-modules", "engine,engine"],
+            ["-gamever", "cstrike-10210", "-maxretry", "0"],
+            ["-gamever", "cstrike-10210", "-llm_temperature", "3"],
+            ["-gamever", "cstrike-10210", "-agent", ""],
+            ["-gamever", "cstrike-10210", "-llm_fake_as", "codex"],
+            ["-gamever", "cstrike-10210", "-redis_prefix", ":"],
+            ["-gamever", "cstrike-10210", "-run_id", "unsafe/run"],
         )
         for argv in invalid_argv:
             with self.subTest(argv=argv):
@@ -410,15 +410,15 @@ class CliContractTests(unittest.TestCase):
             root = Path(temporary)
             for tag in ("cstrike-10118", "cstrike-10119", "svencoop-99999", "cstrike-10121"):
                 (root / tag).mkdir()
-            self.assertEqual("cstrike-10119", resolve_oldgamever("cstrike-10120", root))
+            self.assertEqual("cstrike-10119", resolve_oldgamever("cstrike-10210", root))
             args = self.parse_args(
-                ["-gamever", "cstrike-10120", "-bindir", str(root)],
+                ["-gamever", "cstrike-10210", "-bindir", str(root)],
             )
             self.assertEqual("cstrike-10119", args.oldgamever)
             self.assert_parse_error(
                 [
                     "-gamever",
-                    "cstrike-10120",
+                    "cstrike-10210",
                     "-bindir",
                     str(root),
                     "-oldgamever",
@@ -430,10 +430,10 @@ class CliContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "download.yaml"
             path.write_text(
-                "downloads:\n  - tag: cstrike-10120\n    major_update: true\n",
+                "downloads:\n  - tag: cstrike-10210\n    major_update: true\n",
                 encoding="utf-8",
             )
-            self.assertTrue(_is_major_update_gamever("cstrike-10120", path))
+            self.assertTrue(_is_major_update_gamever("cstrike-10210", path))
             self.assertFalse(_is_major_update_gamever("cstrike-10119", path))
 
     def test_main_prints_configuration_and_summary(self):

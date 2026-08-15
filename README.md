@@ -4,7 +4,7 @@ GoldSrc VibeSignatures is a reproducible Python 3.10+ framework for producing an
 snapshots. It validates PE32/I386 and ELF32/I386 inputs, executes a dependency-checked analysis graph, records an
 immutable candidate, and exposes a strict local contract to downstream gamedata generators.
 
-Production configuration covers Half-Life build 10120, Counter-Strike build 10120, and Sven Co-op build 10257.
+Production configuration covers Half-Life build 10210, Counter-Strike build 10210, and Sven Co-op build 10257.
 Half-Life and Sven Co-op include `engine`, `client`, `gameui`, and `server` modules on Windows and Linux;
 Counter-Strike includes `client` and `server`. Half-Life and Sven Co-op register the production finder
 `engine/R_RenderView`, anchored by `"R_RenderView: NULL worldmodel"` in `hw.dll` and `hw.so`.
@@ -21,31 +21,31 @@ Downloaded depots, binaries, IDA databases, candidates, and generated outputs ar
 ## Workflow
 
 ```console
-uv run python download_depot.py -tag cstrike-10120 -depotdir depots
+uv run python download_depot.py -tag cstrike-10210 -depotdir depots
 uv run python download_depot.py -all -depotdir depots
-uv run python copy_depot_bin.py -gamever cstrike-10120 -platform all-platform
-uv run python copy_depot_bin.py -gamever cstrike-10120 -platform windows -checkonly
-uv run python ida_analyze_bin.py -gamever cstrike-10120 -configyaml configs/cstrike-10120.yaml -platform windows,linux
-uv run python ida_analyze_bin.py -gamever hl-10120 -modules engine -skill find-R_RenderView -platform windows,linux -debug
+uv run python copy_depot_bin.py -gamever cstrike-10210 -platform all-platform
+uv run python copy_depot_bin.py -gamever cstrike-10210 -platform windows -checkonly
+uv run python ida_analyze_bin.py -gamever cstrike-10210 -configyaml configs/cstrike-10210.yaml -platform windows,linux
+uv run python ida_analyze_bin.py -gamever hl-10210 -modules engine -skill find-R_RenderView -platform windows,linux -debug
 uv run python ida_analyze_bin.py -gamever svencoop-10257 -modules engine -skill find-R_RenderView -platform windows,linux -debug
 
-uv run python gamesymbol_candidate.py build -gamever cstrike-10120 -bindir bin -output .candidates/candidate.yaml -session .candidates/session.json
+uv run python gamesymbol_candidate.py build -gamever cstrike-10210 -bindir bin -output .candidates/candidate.yaml -session .candidates/session.json
 uv run python gamesymbol_candidate.py guard -candidate .candidates/candidate.yaml -session .candidates/session.json
 
-uv run python gamedata_candidate.py build -gamever cstrike-10120 -snapshot .candidates/candidate.yaml -configyaml configs/cstrike-10120.yaml -candidate-root .gamedata-candidates/build -session .gamedata-candidates/session.json
+uv run python gamedata_candidate.py build -gamever cstrike-10210 -snapshot .candidates/candidate.yaml -configyaml configs/cstrike-10210.yaml -candidate-root .gamedata-candidates/build -session .gamedata-candidates/session.json
 uv run python gamedata_candidate.py guard -session .gamedata-candidates/session.json
-uv run python gamedata_candidate.py publish -session .gamedata-candidates/session.json -outputdir gamedata/cstrike-10120
+uv run python gamedata_candidate.py publish -session .gamedata-candidates/session.json -outputdir gamedata/cstrike-10210
 
 uv run python gamesymbol_candidate.py mark -candidate .candidates/candidate.yaml -session .candidates/session.json -step gamedata -gamedata-session .gamedata-candidates/session.json
-uv run python gamesymbol_candidate.py publish -candidate .candidates/candidate.yaml -session .candidates/session.json -destination gamesymbols/cstrike-10120.yaml
+uv run python gamesymbol_candidate.py publish -candidate .candidates/candidate.yaml -session .candidates/session.json -destination gamesymbols/cstrike-10210.yaml
 ```
 
 Snapshots can be restored and verified independently:
 
 ```console
-uv run python gamesymbol_snapshot.py restore -gamever cstrike-10120
-uv run python gamesymbol_snapshot.py verify -gamever cstrike-10120
-uv run python gamesymbol_snapshot.py check-contract -gamever cstrike-10120
+uv run python gamesymbol_snapshot.py restore -gamever cstrike-10210
+uv run python gamesymbol_snapshot.py verify -gamever cstrike-10210
+uv run python gamesymbol_snapshot.py check-contract -gamever cstrike-10210
 ```
 
 ## Analysis contract

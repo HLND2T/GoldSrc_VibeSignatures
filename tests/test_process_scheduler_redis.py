@@ -70,14 +70,14 @@ class BlockingProcess:
 
 class TestRunRequest(unittest.TestCase):
     def test_validates_queue_fields(self) -> None:
-        request = RunRequest.create("cstrike-10120", platforms="windows", modules="engine,server", agent="codex")
+        request = RunRequest.create("cstrike-10210", platforms="windows", modules="engine,server", agent="codex")
 
         self.assertEqual("windows", request.platforms)
         self.assertEqual("engine,server", request.modules)
         with self.assertRaisesRegex(ValueError, "platforms"):
-            RunRequest.create("cstrike-10120", platforms="macos")
+            RunRequest.create("cstrike-10210", platforms="macos")
         with self.assertRaisesRegex(ValueError, "agent"):
-            RunRequest.create("cstrike-10120", agent="powershell.exe")
+            RunRequest.create("cstrike-10210", agent="powershell.exe")
         with self.assertRaisesRegex(ValueError, "tag"):
             RunRequest.create("14141")
 
@@ -88,13 +88,13 @@ class TestSchedulerConfigResolution(unittest.TestCase):
             root = Path(temp_dir)
             configs = root / "configs"
             configs.mkdir()
-            first = configs / "cstrike-10120.yaml"
+            first = configs / "cstrike-10210.yaml"
             second = configs / "cstrike-10121.yaml"
             first.write_bytes(b"modules: []\n")
             second.write_bytes(b"modules: []\n")
             with patch("analysis_config.REPO_ROOT", root):
                 scheduler = RedisProcessScheduler(object(), analyzer_script=root / "analyzer.py")
-                first_command = scheduler.build_command(RunRequest.create("cstrike-10120"))
+                first_command = scheduler.build_command(RunRequest.create("cstrike-10210"))
                 second_command = scheduler.build_command(RunRequest.create("cstrike-10121"))
             self.assertIn(f"-configyaml={first.resolve()}", first_command)
             self.assertIn(f"-configyaml={second.resolve()}", second_command)
@@ -102,7 +102,7 @@ class TestSchedulerConfigResolution(unittest.TestCase):
             override = root / "scratch.yaml"
             override.write_bytes(b"modules: []\n")
             scheduler = RedisProcessScheduler(object(), analyzer_script=root / "analyzer.py", config_path=str(override))
-            command = scheduler.build_command(RunRequest.create("cstrike-10120"))
+            command = scheduler.build_command(RunRequest.create("cstrike-10210"))
             self.assertIn(f"-configyaml={override.resolve()}", command)
 
 

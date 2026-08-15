@@ -129,7 +129,7 @@ class TestRedisProcessStatusReader(unittest.IsolatedAsyncioTestCase):
 
     async def test_lists_runs_in_reverse_order_with_filters_and_safe_fields(self) -> None:
         self._seed_run("run-1", 1, "succeeded", "svencoop-10257")
-        self._seed_run("run-2", 2, "failed", "cstrike-10120")
+        self._seed_run("run-2", 2, "failed", "cstrike-10210")
         self._seed_run("run-3", 3, "succeeded", "svencoop-10257")
 
         page = await self.reader.list_runs(

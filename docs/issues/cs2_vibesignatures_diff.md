@@ -86,7 +86,7 @@ artifact 使用 `func_name` 身份字段。
 
 Repository contract 已改为验证该 production finder，而不是锁定空配置：
 
-- `configs/cstrike-10120.yaml:1-21`
+- `configs/cstrike-10210.yaml:1-21`
 - `configs/svencoop-10257.yaml:1-21`
 - `tests/test_repository_contract.py` 的 `test_sven_engine_registers_r_renderview_production_finder`
 - `agent_runner.py:67-84`
