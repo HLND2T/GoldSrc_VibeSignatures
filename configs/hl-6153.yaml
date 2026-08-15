@@ -1,7 +1,6 @@
 modules:
   - name: engine
     module_windows: hw.dll
-    module_linux: hw.so
     skills:
       - name: find-R_RenderView
         expected_output:
