@@ -43,13 +43,15 @@ class RepositoryContractTests(unittest.TestCase):
             "generate-reference-yaml",
             "generate_reference_yaml.py",
             "REFERENCE_GAMEVER",
-            "GSVIBE_REFERENCE_GAMEVER",
+            "default `-gamever`",
             "must not be regenerated once per",
             "New predecessor: mandatory multi-phase workflow",
             "-skill <PREDECESSOR_SKILL>",
             "Reference generation and annotation must cover both `disasm_code` and `procedure`.",
         ):
             self.assertIn(marker, text)
+        self.assertNotIn("GSVIBE_REFERENCE_GAMEVER", text)
+        self.assertNotIn(".env", text)
 
     def test_reference_yamls_match_generation_contract(self):
         reference_root = ROOT / "ida_preprocessor_scripts" / "references"

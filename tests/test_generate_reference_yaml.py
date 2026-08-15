@@ -96,12 +96,28 @@ class ReferenceYamlPureHelperTests(unittest.TestCase):
                     }
                 )
 
-    def test_parse_args_has_no_gamever_environment_fallback(self) -> None:
-        with patch.dict("os.environ", {"GSVIBE_GAMEVER": "hl-10210"}, clear=False):
+    def test_parse_args_defaults_gamever_from_reference_environment(self) -> None:
+        with patch.dict(
+            "os.environ",
+            {
+                "GSVIBE_GAMEVER": "cstrike-10210",
+                "GSVIBE_REFERENCE_GAMEVER": "hl-10210",
+            },
+            clear=True,
+        ):
             args = generate_reference_yaml.parse_args(["-func_name", "R_RenderView"])
-        self.assertIsNone(args.gamever)
+        self.assertEqual("hl-10210", args.gamever)
         self.assertIsNone(args.platform)
         self.assertFalse(args.auto_start_mcp)
+
+    def test_parse_args_explicit_gamever_overrides_reference_environment(self) -> None:
+        with patch.dict(
+            "os.environ",
+            {"GSVIBE_REFERENCE_GAMEVER": "hl-10210"},
+            clear=True,
+        ):
+            args = generate_reference_yaml.parse_args(["-gamever", "cstrike-10210", "-func_name", "R_RenderView"])
+        self.assertEqual("cstrike-10210", args.gamever)
 
     def test_parse_args_requires_binary_and_auto_start_as_a_pair(self) -> None:
         with self.assertRaises(SystemExit):
@@ -766,8 +782,36 @@ class ReferenceYamlMcpTests(unittest.IsolatedAsyncioTestCase):
 
 
 class ReferenceYamlMainTests(unittest.TestCase):
+    def test_main_loads_repository_env_before_parsing_args(self) -> None:
+        def load_reference_gamever(_path: Path) -> None:
+            generate_reference_yaml.os.environ["GSVIBE_REFERENCE_GAMEVER"] = "hl-10210"
+
+        with (
+            patch.dict("os.environ", {}, clear=True),
+            patch.object(
+                generate_reference_yaml,
+                "load_dotenv",
+                side_effect=load_reference_gamever,
+            ) as load_dotenv_mock,
+            patch.object(
+                generate_reference_yaml,
+                "run_reference_generation",
+                AsyncMock(return_value=Path("/tmp/reference.yaml")),
+            ) as run_mock,
+            patch("builtins.print"),
+        ):
+            self.assertEqual(0, generate_reference_yaml.main(["-func_name", "R_RenderView"]))
+
+        load_dotenv_mock.assert_called_once_with(Path(generate_reference_yaml.__file__).with_name(".env"))
+        run_mock.assert_awaited_once()
+        run_args = run_mock.await_args
+        self.assertIsNotNone(run_args)
+        assert run_args is not None
+        self.assertEqual("hl-10210", run_args.args[0].gamever)
+
     def test_main_reports_success_and_controlled_failure(self) -> None:
         with (
+            patch.object(generate_reference_yaml, "load_dotenv"),
             patch.object(
                 generate_reference_yaml,
                 "run_reference_generation",
@@ -779,6 +823,7 @@ class ReferenceYamlMainTests(unittest.TestCase):
         print_mock.assert_any_call(f"Generated reference YAML: {Path('/tmp/reference.yaml')}")
 
         with (
+            patch.object(generate_reference_yaml, "load_dotenv"),
             patch.object(
                 generate_reference_yaml,
                 "run_reference_generation",

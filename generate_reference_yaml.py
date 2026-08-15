@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from dotenv import load_dotenv
 
 from analysis_config import AnalysisConfigError, resolve_analysis_config, validated_tag
 from binary_format import BinaryFormatError, inspect_binary, validate_binary
@@ -105,8 +106,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate reference YAML for GoldSrc IDA preprocess scripts")
     parser.add_argument(
         "-gamever",
-        default=None,
-        help="GoldSrc game-version tag; when omitted, infer it from the current IDA binary path",
+        default=os.environ.get("GSVIBE_REFERENCE_GAMEVER"),
+        help=(
+            "GoldSrc game-version tag; defaults to GSVIBE_REFERENCE_GAMEVER, then infers from the "
+            "current IDA binary path when unset"
+        ),
     )
     parser.add_argument(
         "-configyaml",
@@ -932,6 +936,7 @@ async def run_reference_generation(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    load_dotenv(Path(__file__).with_name(".env"))
     args = parse_args(argv)
     try:
         output_path = asyncio.run(run_reference_generation(args))

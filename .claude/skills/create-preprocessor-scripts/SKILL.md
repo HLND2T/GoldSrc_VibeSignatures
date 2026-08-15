@@ -303,16 +303,16 @@ and never hand-build the initial reference YAML.
 #### Select one reference gamever
 
 Reference paths are shared across game versions and therefore must not be regenerated once per
-gamever. Always read the reference gamever from the `GSVIBE_REFERENCE_GAMEVER` environment variable
-in `.env`. `GSVIBE_REFERENCE_GAMEVER` is mandatory: stop if it is unset or empty, and never fall back
-to auto-selection or to a user-named gamever. Validate that `configs/<GSVIBE_REFERENCE_GAMEVER>.yaml`
-exists and declares the predecessor module. Use the resolved value as `REFERENCE_GAMEVER` throughout
-this workflow and record it in the delivery summary.
+gamever. Let `generate_reference_yaml.py` resolve its default `-gamever`; do not inspect environment
+files from this skill. Stop if the generator cannot resolve a non-empty reference gamever, and never
+fall back to auto-selection or to a user-named gamever. Validate that the resolved
+`configs/<REFERENCE_GAMEVER>.yaml` exists and declares the predecessor module. Use the resolved value
+as `REFERENCE_GAMEVER` throughout this workflow and record it in the delivery summary.
 
 Generate references only for platforms declared by the selected module config. A Windows-only tag
 such as `cof-5936` requires only Windows. When both Windows and Linux are declared, the same
 `REFERENCE_GAMEVER` must provide both and both references are required. Stop if the configured
-`GSVIBE_REFERENCE_GAMEVER` does not satisfy the module/platform/binary checks for this predecessor;
+default `-gamever` does not satisfy the module/platform/binary checks for this predecessor;
 do not silently substitute another game family.
 
 #### Generate supported platforms sequentially
@@ -323,10 +323,10 @@ owned MCP host/port:
 
 ```powershell
 # Windows -- run only when module_windows is declared
-uv run python generate_reference_yaml.py -gamever <REFERENCE_GAMEVER> -module <REFERENCE_MODULE> -func_name <PREDECESSOR> -auto_start_mcp -binary "bin/<REFERENCE_GAMEVER>/<REFERENCE_MODULE>/<WINDOWS_BINARY>" -platform windows -debug
+uv run python generate_reference_yaml.py -module <REFERENCE_MODULE> -func_name <PREDECESSOR> -auto_start_mcp -binary "bin/<REFERENCE_GAMEVER>/<REFERENCE_MODULE>/<WINDOWS_BINARY>" -platform windows -debug
 
 # Linux -- run only when module_linux is declared; wait for Windows first when both are supported
-uv run python generate_reference_yaml.py -gamever <REFERENCE_GAMEVER> -module <REFERENCE_MODULE> -func_name <PREDECESSOR> -auto_start_mcp -binary "bin/<REFERENCE_GAMEVER>/<REFERENCE_MODULE>/<LINUX_BINARY>" -platform linux -debug
+uv run python generate_reference_yaml.py -module <REFERENCE_MODULE> -func_name <PREDECESSOR> -auto_start_mcp -binary "bin/<REFERENCE_GAMEVER>/<REFERENCE_MODULE>/<LINUX_BINARY>" -platform linux -debug
 ```
 
 The generator accepts only PE32/I386 and ELF32/I386, binds the exact database, resolves `func_va`
