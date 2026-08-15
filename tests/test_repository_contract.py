@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 
+from analysis_config import iter_analysis_config_tags
 from analysis_planner import PLATFORMS, parse_config_document
 from binary_format import inspect_binary
 
@@ -14,7 +15,8 @@ MODULES = {"engine", "client", "gameui", "server"}
 
 
 def _config_tags() -> set[str]:
-    return {path.stem for path in (ROOT / "configs").glob("*.yaml")}
+    # configs/config.yaml is the -allgamever batch index, not a per-game config.
+    return {path.stem for path in (ROOT / "configs").glob("*.yaml") if path.name != "config.yaml"}
 
 
 class RepositoryContractTests(unittest.TestCase):
@@ -30,6 +32,14 @@ class RepositoryContractTests(unittest.TestCase):
                 self.assertTrue(configured_paths)
                 for path in configured_paths:
                     self.assertTrue(path.startswith(entry["basepath"] + "/"))
+
+    def test_config_index_matches_config_files(self):
+        indexed = set(iter_analysis_config_tags(ROOT))
+        actual = _config_tags()
+        # configs/config.yaml is the single authority for -allgamever: its
+        # declared gamevers must be exactly the per-game configs present, so a
+        # new config is not silently dropped from (or missing from) the batch.
+        self.assertEqual(actual, indexed)
 
     def test_production_configs_have_modules_and_at_least_one_platform_binary(self):
         for tag in sorted(_config_tags()):

@@ -65,6 +65,61 @@ class TagAndConfigTests(unittest.TestCase):
             (root / "configs").mkdir()
             self.assertEqual([], iter_analysis_config_tags(repo_root=root))
 
+    def test_iter_tags_follows_config_index_order(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            configs = root / "configs"
+            configs.mkdir()
+            (configs / "config.yaml").write_text(
+                "gamevers:\n  - cof-5936\n  - hl-10210\n",
+                encoding="utf-8",
+            )
+            for tag in ("cof-5936", "hl-10210"):
+                (configs / f"{tag}.yaml").write_text("modules: []\n", encoding="utf-8")
+            # Order follows the index declaration order, not lexical order.
+            self.assertEqual(["cof-5936", "hl-10210"], iter_analysis_config_tags(repo_root=root))
+
+    def test_iter_tags_ignores_index_when_config_index_absent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            configs = root / "configs"
+            configs.mkdir()
+            # No config.yaml index: legacy fallback must still work.
+            (root / "download.yaml").write_text(
+                "downloads:\n  - tag: hl-10210\n",
+                encoding="utf-8",
+            )
+            (configs / "hl-10210.yaml").write_text("modules: []\n", encoding="utf-8")
+            self.assertEqual(["hl-10210"], iter_analysis_config_tags(repo_root=root))
+
+    def test_iter_tags_rejects_missing_declared_config(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            configs = root / "configs"
+            configs.mkdir()
+            (configs / "config.yaml").write_text(
+                "gamevers:\n  - hl-10210\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(AnalysisConfigError, "config.yaml"):
+                iter_analysis_config_tags(repo_root=root)
+
+    def test_iter_tags_rejects_invalid_index_documents(self):
+        for content in (
+            "gamevers: not-a-list\n",
+            "other: []\n",
+            "gamevers:\n  - bad_tag\n",
+            "gamevers:\n  - hl-10210\n  - hl-10210\n",
+        ):
+            with self.subTest(content=content), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                configs = root / "configs"
+                configs.mkdir()
+                (configs / "config.yaml").write_text(content, encoding="utf-8")
+                (configs / "hl-10210.yaml").write_text("modules: []\n", encoding="utf-8")
+                with self.assertRaises(AnalysisConfigError):
+                    iter_analysis_config_tags(repo_root=root)
+
 
 class DownloadConfigTests(unittest.TestCase):
     def test_auth_arguments_default_to_environment_variables(self):

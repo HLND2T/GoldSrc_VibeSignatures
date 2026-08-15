@@ -69,6 +69,13 @@ equal the config symbol name, matching the CS2 loader contract. Supported catego
 `vtable`, `patch`, `struct`, and `structmember`. Shared primary/ordinal vtable helpers are explicit and fail closed;
 Source2-only dispatch protocols are excluded. x86 virtual-function slots are four bytes.
 
+`ida_analyze_bin.py -allgamever` batches every game-version tag declared in `configs/config.yaml`. That index is the
+single authority for batch membership and order; a tag only runs when explicitly listed, and a declared tag whose
+`configs/<tag>.yaml` is missing is a fatal configuration error rather than a silent skip. This is separate from
+`download.yaml`, which only controls depot downloading (`download_depot.py -all`). Without `configs/config.yaml` the
+legacy order is used for compatibility: the `download.yaml` manifest declaration order, then remaining `configs/*.yaml`
+tags in lexical order.
+
 See [docs/architecture.md](docs/architecture.md) and [docs/generator-contract.md](docs/generator-contract.md).
 
 ## Analyzer CLI and environment

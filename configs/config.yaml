@@ -1,0 +1,21 @@
+# configs/config.yaml — authoritative batch index for `ida_analyze_bin.py -allgamever`.
+#
+# The `gamevers` list is the single source of truth for which analysis configs
+# run and in what order: a tag only runs when explicitly declared here, and the
+# declaration order is the analysis order. Add a new game version to both this
+# file and its `configs/<tag>.yaml` so `-allgamever` picks it up.
+#
+# This is separate from download.yaml: that manifest only controls downloading
+# (`download_depot.py -all`), not which analysis configs are batch-runnable.
+gamevers:
+  - hl-3248
+  - hl-3266
+  - hl-3329
+  - hl-4554
+  - hl-6153
+  - hl-8684
+  - hl-10210
+  - cstrike-8684
+  - cstrike-10210
+  - svencoop-10257
+  - cof-5936
