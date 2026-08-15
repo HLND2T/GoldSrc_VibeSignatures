@@ -16,7 +16,7 @@
 ## 正确做法
 
 - 唯一生成入口：`.claude/skills/generate-reference-yaml/SKILL.md` + `generate_reference_yaml.py`；不手写初始 YAML、不直接调用 IDA API。该 backend skill 的 `policy.allow_implicit_invocation` 为 false，由上层流程显式调用。
-- `REFERENCE_GAMEVER` 强制来自 `.env` 的 `CSVIBE_REFERENCE_GAMEVER`（当前 `hl-10210`）；缺失或为空即停止，不做自动选择，也不回退到用户命名版本。校验 `configs/<tag>.yaml` 存在且声明 predecessor module；两平台均声明时必须由同一 `REFERENCE_GAMEVER` 提供。
+- `REFERENCE_GAMEVER` 强制来自 `.env` 的 `GSVIBE_REFERENCE_GAMEVER`（当前 `hl-10210`）；缺失或为空即停止，不做自动选择，也不回退到用户命名版本。校验 `configs/<tag>.yaml` 存在且声明 predecessor module；两平台均声明时必须由同一 `REFERENCE_GAMEVER` 提供。
 - 新 predecessor：注册 deterministic predecessor/downstream scripts → predecessor-only analyzer 运行 `<SUPPORTED_PLATFORMS>` → 各支持平台串行 generate → 同步注释 `disasm_code` 与 `procedure` → downstream/full validation。
 - regeneration 后以 Git removed lines 恢复仍有效的注释，不凭记忆重建。
 
