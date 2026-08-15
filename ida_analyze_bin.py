@@ -317,6 +317,74 @@ def get_binary_path(bin_dir, gamever, module_name, binary_name):
     return str(Path(bin_dir) / gamever / module_name / binary_name)
 
 
+def _decrypted_blob_output_path(binary_path):
+    """Return the sibling <stem>.decrypt.<ext> path for a Metahook blob source."""
+    path = Path(binary_path)
+    return path.with_name(f"{path.stem}.decrypt{path.suffix}")
+
+
+def _decrypt_blob_to_pe(binary_path, *, debug=False):
+    """Decrypt a Metahook blob into a PE32 DLL, reusing a valid existing output.
+
+    Raises OSError or ValueError (BlobFormatError/BinaryFormatError are both
+    ValueError subclasses) on failure so callers can fall back to the normal
+    binary-validation failure path.
+    """
+    import decrypt_blob
+
+    binary_path = Path(binary_path)
+    output = _decrypted_blob_output_path(binary_path)
+    if output.is_file():
+        try:
+            validate_binary(output, "windows")
+        except BinaryFormatError:
+            if debug:
+                print(f"  Rebuilding stale decrypted blob output: {output}")
+        else:
+            if debug:
+                print(f"  Reusing existing decrypted blob binary: {output}")
+            return output
+
+    parsed = decrypt_blob.parse_blob(binary_path.read_bytes())
+    pe = decrypt_blob.build_pe(parsed)
+    decrypt_blob.verify_pe(pe, parsed)
+    output.write_bytes(pe)
+    validate_binary(output, "windows")
+    return output
+
+
+def _handle_binary_validation_failure(
+    module_name,
+    platform,
+    binary,
+    binary_nodes,
+    exc,
+    skip_error,
+    reporting,
+    job_id,
+    run_summary,
+):
+    run_summary.failed += len(binary_nodes)
+    reason = ProcessReason.MISSING_BINARY if not binary.is_file() else ProcessReason.BINARY_VERIFICATION_FAILED
+    reporting.emit_task_status(
+        job_id,
+        TaskStatus.FAILED,
+        ProcessPhase.FINISHED,
+        reason=reason,
+        error=str(exc),
+    )
+    reporting.finish_job_tasks(
+        job_id,
+        TaskStatus.ABORTED,
+        reason,
+        f"Binary validation failed for {module_name}:{platform}",
+    )
+    message = f"Binary validation failed for {module_name}:{platform}: {exc}"
+    if not skip_error:
+        raise AnalysisRunError(message) from exc
+    print(f"Error: {message}; continuing (-skip_error)")
+
+
 def build_execution_plan(
     modules,
     *,
@@ -1725,28 +1793,55 @@ def analyze(
             try:
                 validate_binary(binary, platform)
                 validated_binaries[(module_name, platform)] = binary
-            except (BinaryFormatError, OSError) as exc:
-                run_summary.failed += len(binary_nodes)
-                reason = (
-                    ProcessReason.MISSING_BINARY if not binary.is_file() else ProcessReason.BINARY_VERIFICATION_FAILED
-                )
-                reporting.emit_task_status(
+            except BinaryFormatError as exc:
+                # Protected GoldSrc client modules ship as a non-PE Metahook
+                # "blob". Decrypt into a sibling *.decrypt.dll and analyze that
+                # instead, so the rest of the pipeline sees a normal PE32 DLL.
+                if platform != "windows":
+                    _handle_binary_validation_failure(
+                        module_name,
+                        platform,
+                        binary,
+                        binary_nodes,
+                        exc,
+                        skip_error,
+                        reporting,
+                        job_id,
+                        run_summary,
+                    )
+                    continue
+                try:
+                    binary = _decrypt_blob_to_pe(binary, debug=debug)
+                except (OSError, ValueError) as decrypt_error:
+                    if debug:
+                        print(f"  Blob decryption failed for {binary}: {decrypt_error}")
+                    _handle_binary_validation_failure(
+                        module_name,
+                        platform,
+                        binary,
+                        binary_nodes,
+                        exc,
+                        skip_error,
+                        reporting,
+                        job_id,
+                        run_summary,
+                    )
+                    continue
+                print(f"Decrypted blob {module_name}:{platform} -> {binary}")
+                validate_binary(binary, platform)
+                validated_binaries[(module_name, platform)] = binary
+            except OSError as exc:
+                _handle_binary_validation_failure(
+                    module_name,
+                    platform,
+                    binary,
+                    binary_nodes,
+                    exc,
+                    skip_error,
+                    reporting,
                     job_id,
-                    TaskStatus.FAILED,
-                    ProcessPhase.FINISHED,
-                    reason=reason,
-                    error=str(exc),
+                    run_summary,
                 )
-                reporting.finish_job_tasks(
-                    job_id,
-                    TaskStatus.ABORTED,
-                    reason,
-                    f"Binary validation failed for {module_name}:{platform}",
-                )
-                message = f"Binary validation failed for {module_name}:{platform}: {exc}"
-                if not skip_error:
-                    raise AnalysisRunError(message) from exc
-                print(f"Error: {message}; continuing (-skip_error)")
 
         for binary_key, binary_nodes in nodes_by_binary.items():
             if binary_key not in validated_binaries:

@@ -53,6 +53,7 @@ from ida_skill_preprocessor import (
     PREPROCESS_STATUS_SUCCESS,
 )
 from process_reporter import RunStatus
+from tests.test_decrypt_blob import make_blob
 from tests.test_support import write_pe32
 
 
@@ -1528,6 +1529,57 @@ class McpLifecycleTests(unittest.TestCase):
                 pipeline.call_args_list[0].kwargs["artifact_types"],
             )
             self.assertEqual((2, 0, 0), (summary.successful, summary.failed, summary.skipped))
+
+    def test_analyze_decrypts_blob_binary_before_analysis(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text(
+                """modules:
+  - name: engine
+    path_windows: Game/hw.dll
+    module_windows: hw.dll
+    skills:
+      - name: find
+        expected_output: [result.yaml]
+""",
+                encoding="utf-8",
+            )
+            binary = root / "bin" / "game-1" / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(make_blob())
+            lifecycle = MagicMock()
+            lifecycle.__enter__.return_value = lifecycle
+            lifecycle.runtime = McpRuntime(
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                str(binary),
+                McpDatabaseBinding(False, None, str(binary), "worker", True, True),
+            )
+            lifecycle.ensure_ready.return_value = lifecycle.runtime
+
+            def record_binary(_node, **kwargs):
+                Path(kwargs["binary_path"]).parent.joinpath("result.yaml").write_text("ok: true\n", encoding="utf-8")
+                return PipelineResult("succeeded", "agent")
+
+            summary = AnalysisSummary()
+            with (
+                patch("ida_analyze_bin.IdaMcpLifecycle", return_value=lifecycle) as lifecycle_type,
+                patch("ida_analyze_bin.run_analysis_pipeline", side_effect=record_binary) as pipeline,
+            ):
+                analyze(
+                    gamever="game-1",
+                    config_path=config,
+                    bindir=root / "bin",
+                    platforms=["windows"],
+                    summary=summary,
+                )
+
+            lifecycle_binary = lifecycle_type.call_args.args[0]
+            self.assertEqual("hw.decrypt.dll", Path(lifecycle_binary).name)
+            self.assertTrue(Path(lifecycle_binary).is_file())
+            self.assertEqual("hw.decrypt.dll", Path(pipeline.call_args.kwargs["binary_path"]).name)
+            self.assertEqual((1, 0, 0), (summary.successful, summary.failed, summary.skipped))
 
     def test_analyze_allows_binary_mutation_during_skill_execution(self):
         with tempfile.TemporaryDirectory() as temporary:
