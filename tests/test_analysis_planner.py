@@ -410,11 +410,11 @@ class CliContractTests(unittest.TestCase):
             root = Path(temporary)
             for tag in ("cstrike-10118", "cstrike-10119", "svencoop-99999", "cstrike-10121"):
                 (root / tag).mkdir()
-            self.assertEqual("cstrike-10119", resolve_oldgamever("cstrike-10210", root))
+            self.assertEqual("cstrike-10121", resolve_oldgamever("cstrike-10210", root))
             args = self.parse_args(
                 ["-gamever", "cstrike-10210", "-bindir", str(root)],
             )
-            self.assertEqual("cstrike-10119", args.oldgamever)
+            self.assertEqual("cstrike-10121", args.oldgamever)
             self.assert_parse_error(
                 [
                     "-gamever",
