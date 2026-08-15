@@ -2,8 +2,6 @@ modules:
   - name: engine
     module_windows: hw.dll
     module_linux: hw.so
-    path_windows: Half-Life-4554/hw.dll
-    path_linux: Half-Life-4554/hw.so
     skills:
       - name: find-R_RenderView
         expected_output:
