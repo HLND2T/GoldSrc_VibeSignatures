@@ -17,8 +17,9 @@ of another task.
   (`bin/hl-3266/`, `bin/hl-3329/`, `bin/hl-3647/`, ...).
 - Process **only** Non-PE Metahook blob game binaries: files that are not valid
   PE/ELF and carry the blob `0x12345678` algorithm marker.
-- Skip valid PE/ELF binaries, `.i64` IDA databases, `.yaml` artifacts, and any
-  other non-blob file.
+- Skip valid PE/ELF binaries, `.i64` IDA databases, `.yaml` artifacts, any
+  other non-blob file, and already-decrypted outputs (`*.decrypt.*`, e.g.
+  `hw.decrypt.dll`).
 
 ## Output naming
 
@@ -43,6 +44,8 @@ import decrypt_blob
 for p in sorted(Path('bin').rglob('*')):
     if not p.is_file():
         continue
+    if '.decrypt.' in p.name:
+        continue  # already-decrypted output, not a blob
     try:
         decrypt_blob.parse_blob(p.read_bytes())
     except Exception:
