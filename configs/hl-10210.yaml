@@ -8,8 +8,13 @@ modules:
       - name: find-R_RenderView
         expected_output:
           - R_RenderView.{platform}.yaml
+      - name: find-SV_SendServerinfo
+        expected_output:
+          - SV_SendServerinfo.{platform}.yaml
     symbols:
       - name: R_RenderView
+        category: func
+      - name: SV_SendServerinfo
         category: func
   - name: client
     module_windows: client.dll
