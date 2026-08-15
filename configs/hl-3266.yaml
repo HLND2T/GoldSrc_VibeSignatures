@@ -1,0 +1,11 @@
+modules:
+  - name: engine
+    path_windows: Half-Life-3266/hw.dll
+    path_linux: Half-Life-3266/hw.so
+    skills:
+      - name: find-R_RenderView
+        expected_output:
+          - R_RenderView.{platform}.yaml
+    symbols:
+      - name: R_RenderView
+        category: func
