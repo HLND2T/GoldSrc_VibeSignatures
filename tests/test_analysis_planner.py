@@ -360,7 +360,7 @@ class CliContractTests(unittest.TestCase):
         self.assertEqual(2, raised.exception.code)
 
     def test_cs2_style_defaults_use_gsvibe_namespace(self):
-        args = self.parse_args(env={"GSVIBE_GAMEVER": "cstrike-10210"})
+        args = self.parse_args(["-gamever", "cstrike-10210"])
         self.assertEqual("cstrike-10210", args.gamever)
         self.assertEqual(["windows", "linux"], args.platforms)
         self.assertIsNone(args.module_filter)
@@ -416,7 +416,6 @@ class CliContractTests(unittest.TestCase):
                 "cli-run",
             ],
             env={
-                "GSVIBE_GAMEVER": "cstrike-10000",
                 "GSVIBE_AGENT": "claude",
                 "GSVIBE_AGENT_MODEL": "env-agent-model",
                 "GSVIBE_LLM_MODEL": "env-model",
@@ -476,6 +475,11 @@ class CliContractTests(unittest.TestCase):
         for argv in invalid_argv:
             with self.subTest(argv=argv):
                 self.assert_parse_error(argv)
+
+    def test_gamever_is_required_without_env_fallback(self):
+        # GSVIBE_GAMEVER is no longer honored: -gamever or -allgamever must be explicit.
+        self.assert_parse_error([])
+        self.assert_parse_error([], env={"GSVIBE_GAMEVER": "cstrike-10210"})
 
     def test_oldgamever_auto_resolution_is_family_aware(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -1952,7 +1952,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-gamever",
         default=None,
-        help="Game version tag (required, or set GSVIBE_GAMEVER)",
+        help="Game version tag (required unless -allgamever is given)",
     )
     parser.add_argument(
         "-allgamever",
@@ -2083,9 +2083,9 @@ def parse_args(argv=None):
             parser.error("-run_id (or GSVIBE_RUN_ID) cannot be used with -allgamever")
         args.oldgamever = None
     else:
-        gamever = _optional_text(args.gamever) or _optional_text(os.environ.get("GSVIBE_GAMEVER"))
+        gamever = _optional_text(args.gamever)
         if gamever is None:
-            parser.error("-gamever is required, or -allgamever, or set GSVIBE_GAMEVER")
+            parser.error("-gamever is required, or use -allgamever")
         try:
             args.gamever = validated_tag(gamever)
         except AnalysisConfigError as exc:
@@ -2141,7 +2141,7 @@ def parse_args(argv=None):
     if not args.allgamever:
         gamever = args.gamever
         if gamever is None:  # defensive: the non-all path always resolves a tag.
-            parser.error("-gamever is required, or -allgamever, or set GSVIBE_GAMEVER")
+            parser.error("-gamever is required, or use -allgamever")
         if args.oldgamever is None:
             args.oldgamever = None if _is_major_update_gamever(gamever) else resolve_oldgamever(gamever, args.bindir)
         else:

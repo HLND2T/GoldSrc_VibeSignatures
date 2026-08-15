@@ -47,7 +47,6 @@ uv run python ida_analyze_bin.py -gamever svencoop-10257 -modules engine -skill 
 `ida_analyze_bin.py` 采用 CS2 风格 CLI，并使用 GoldSrc 专属的 `GSVIBE_*` 环境变量。优先级为显式 CLI、环境
 变量、程序默认值；`.env.example` 是可复制的本地模板。支持：
 
-- `GSVIBE_GAMEVER`；
 - `GSVIBE_AGENT`、`GSVIBE_AGENT_MODEL`；
 - `GSVIBE_LLM_MODEL`、`GSVIBE_LLM_APIKEY`、`GSVIBE_LLM_BASEURL`、`GSVIBE_LLM_TEMPERATURE`、
   `GSVIBE_LLM_FAKE_AS`、`GSVIBE_LLM_EFFORT`。
@@ -58,7 +57,8 @@ uv run python ida_analyze_bin.py -gamever svencoop-10257 -modules engine -skill 
 
 CLI 支持 `-configyaml`、逗号分隔的 `-platform` / `-modules`、`-skill`、`-agent`、`-agent_model`、全部
 `-llm_*` 参数、`-maxretry`、`-oldgamever`、`-ida_args`、`-debug`、`-skip_error`、`-skip_pp`、
-`-process_reporter`、`-redis_url`、`-redis_prefix` 和 `-run_id`。skill 显式 `max_retries` 优先于全局
+`-process_reporter`、`-redis_url`、`-redis_prefix` 和 `-run_id`。必须显式指定 `-gamever` 或 `-allgamever`；
+analyzer 不再回退到 `GSVIBE_GAMEVER`。skill 显式 `max_retries` 优先于全局
 `-maxretry`；`-skip_pp` 会跳过单一 Preprocessor 并直接运行 Agent；`-skip_error` 只控制继续执行，只要存在失败
 最终仍返回非零。`-process_reporter=console` 输出新的 typed `ProcessEvent` JSONL，`redis` backend 以
 best-effort 方式写入 `gsvibe:analysis:v1` 协议。

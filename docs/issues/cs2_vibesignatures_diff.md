@@ -119,7 +119,7 @@ Repository contract 已改为验证该 production finder，而不是锁定空配
 | --- | --- | --- |
 | Config 参数 | `-configyaml` | 已对齐，无 `-config` alias |
 | Platform | `-platform=windows,linux` | 已对齐；拒绝 Analyzer `all-platform` |
-| Game version fallback | `CS2VIBE_GAMEVER` | `GSVIBE_GAMEVER` |
+| Game version fallback | `CS2VIBE_GAMEVER` | 无；`-gamever` / `-allgamever` 必须显式指定 |
 | Agent 默认值 | `claude` | 已对齐；支持 `GSVIBE_AGENT` |
 | Agent model | `-agent_model` / `CS2VIBE_AGENT_MODEL` | `-agent_model` / `GSVIBE_AGENT_MODEL` |
 | LLM 参数 | `-llm_*` / `CS2VIBE_LLM_*` | `-llm_*` / `GSVIBE_LLM_*`；不再读取 `OPENAI_*` |

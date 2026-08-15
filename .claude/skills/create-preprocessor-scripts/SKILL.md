@@ -1,6 +1,6 @@
 ---
 name: create-preprocessor-scripts
-description: Create a new GoldSrc find-XXXX IDAPython preprocessor, register it in the selected game-version config, and validate Windows/Linux PE32/ELF32 artifacts. Use when a requested native function, vfunc, global, patch, vtable, or struct member has no existing finder skill.
+description: Create a new GoldSrc find-XXXX IDAPython preprocessor, register it in the game-version config(s) (all configs/ gamevers by default, or a single requested gamever), and validate Windows/Linux PE32/ELF32 artifacts. Use when a requested native function, vfunc, global, patch, vtable, or struct member has no existing finder skill.
 ---
 
 # Create GoldSrc Preprocessor Scripts
@@ -9,8 +9,10 @@ Create `ida_preprocessor_scripts/find-XXXX.py` and the matching `configs/<GAMEVE
 entries. Preserve the CS2_VibeSignatures finder/helper API and config schema, but target GoldSrc
 x86 only and omit Source2-only discovery protocols.
 
-Resolve `GAMEVER` from the explicit request or `GSVIBE_GAMEVER`. Stop if
-`configs/<GAMEVER>.yaml` does not exist. Never edit another version as a fallback.
+Resolve `GAMEVER` only from the explicit request. When the user does not name a game version, target
+every gamever declared in `configs/`: register the skill and symbol in each `configs/<GAMEVER>.yaml`
+and validate with `ida_analyze_bin.py -allgamever`. `GSVIBE_GAMEVER` is not supported. Stop if a
+targeted `configs/<GAMEVER>.yaml` does not exist. Never edit another version as a fallback.
 
 ## Hard contracts
 
@@ -244,8 +246,9 @@ Allowed result sections are `found_vcall`, `found_call`, `found_funcptr`, `found
 
 ### 1. Inspect repository context
 
-Read the exact game config, nearby finder scripts, helper implementation, tests, and any relevant
-reference YAML. Confirm the requested module and both binary paths from config.
+Read the selected game config(s) — or every `configs/<GAMEVER>.yaml` when running all gamevers — plus
+nearby finder scripts, helper implementation, tests, and any relevant reference YAML. Confirm the
+requested module and both binary paths from each config.
 
 ### 2. Choose the smallest sufficient pattern
 
@@ -269,6 +272,9 @@ Add `llm_config=None` immediately before `debug=False` only when the script uses
 
 ### 4. Update config
 
+When no gamever is requested, repeat this registration in every `configs/<GAMEVER>.yaml` so
+`-allgamever` covers all game versions. When the user names a version, edit only that config.
+
 ```yaml
 skills:
   - name: find-Target
@@ -291,13 +297,18 @@ vcalls, and struct accesses in both disassembly and procedure fields.
 
 ### 6. Validate
 
-Run the targeted finder first:
+Run the finder against every gamever by default (`-allgamever`), or against the explicitly requested
+version with `-gamever <GAMEVER>`:
 
 ```powershell
+uv run python ida_analyze_bin.py -allgamever -modules <MODULE> -skill find-Target -platform windows,linux -debug
 uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill find-Target -platform windows,linux -oldgamever none -debug
 ```
 
-Then run:
+`-allgamever` disables old-version comparison (it is mutually exclusive with `-oldgamever`), so the
+batch command omits it.
+
+`-gamever` or `-allgamever` is mandatory; there is no `GSVIBE_GAMEVER` fallback. Then run:
 
 ```powershell
 uv run python format_repo_files.py --check
@@ -342,7 +353,8 @@ Do not push or open a PR unless separately requested.
 - [ ] Artifacts use only category-specific identities and contain no `name/type/kind`.
 - [ ] Cross-module inputs stay within the game-version root and produce DAG edges.
 - [ ] Pattern-specific invariants pass.
-- [ ] Windows and Linux production finder runs succeed with zero failed skills.
+- [ ] When no gamever was requested, the skill is registered in every `configs/<GAMEVER>.yaml`.
+- [ ] Windows and Linux production finder runs succeed with zero failed skills (`-allgamever` by default, or `-gamever <GAMEVER>` when requested).
 - [ ] Unit, repository-contract, and format checks pass.
 - [ ] Current branch is `dev`.
 - [ ] Only task-related files are staged.

@@ -84,7 +84,6 @@ See [docs/architecture.md](docs/architecture.md) and [docs/generator-contract.md
 Explicit CLI values override environment values, which override program defaults. Copy `.env.example` to `.env` for a
 local template. The supported environment variables are:
 
-- `GSVIBE_GAMEVER`;
 - `GSVIBE_AGENT` and `GSVIBE_AGENT_MODEL`;
 - `GSVIBE_LLM_MODEL`, `GSVIBE_LLM_APIKEY`, `GSVIBE_LLM_BASEURL`, `GSVIBE_LLM_TEMPERATURE`,
   `GSVIBE_LLM_FAKE_AS`, and `GSVIBE_LLM_EFFORT`.
@@ -95,7 +94,8 @@ local template. The supported environment variables are:
 
 The analyzer accepts `-configyaml`, comma-separated `-platform` and `-modules`, `-skill`, `-agent`, `-agent_model`, the
 matching `-llm_*` arguments, `-maxretry`, `-oldgamever`, `-ida_args`, `-debug`, `-skip_error`, `-skip_pp`,
-`-process_reporter`, `-redis_url`, `-redis_prefix`, and `-run_id`. Per-skill `max_retries` overrides `-maxretry`.
+`-process_reporter`, `-redis_url`, `-redis_prefix`, and `-run_id`. `-gamever` or `-allgamever` is required — the
+analyzer no longer falls back to `GSVIBE_GAMEVER`. Per-skill `max_retries` overrides `-maxretry`.
 `-skip_pp` bypasses the single Preprocessor and runs the Agent directly; `-skip_error` continues after runtime failures
 but the final exit status remains nonzero. `-process_reporter=console` emits typed `ProcessEvent` JSONL; `redis` is
 best-effort and writes the `gsvibe:analysis:v1` Redis protocol.
