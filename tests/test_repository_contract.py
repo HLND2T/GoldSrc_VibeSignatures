@@ -43,6 +43,8 @@ class RepositoryContractTests(unittest.TestCase):
             "generate-reference-yaml",
             "generate_reference_yaml.py",
             "REFERENCE_GAMEVER",
+            "CSVIBE_REFERENCE_GAMEVER",
+            "must not be regenerated once per",
             "New predecessor: mandatory multi-phase workflow",
             "-skill <PREDECESSOR_SKILL>",
             "Reference generation and annotation must cover both `disasm_code` and `procedure`.",

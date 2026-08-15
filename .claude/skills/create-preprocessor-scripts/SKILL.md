@@ -303,19 +303,17 @@ and never hand-build the initial reference YAML.
 #### Select one reference gamever
 
 Reference paths are shared across game versions and therefore must not be regenerated once per
-gamever. When the user names a gamever, use it as `REFERENCE_GAMEVER`. During the default
-all-gamever workflow, read tags in `configs/config.yaml.gamevers` order. For each tag, read
-`configs/<tag>.yaml` and check that it declares the predecessor module, the required platform(s), the
-exact configured binary file(s), and whether the predecessor artifact(s) already exist. Choose the
-first tag in that order whose required predecessor artifacts exist. If the predecessor is new and no
-tag has those artifacts yet, choose the first tag that otherwise satisfies the module/platform/binary
-checks and materialize its artifacts with the mandatory multi-phase workflow below. Record the
-selected tag in the delivery summary.
+gamever. Always read the reference gamever from the `CSVIBE_REFERENCE_GAMEVER` environment variable
+in `.env`. `CSVIBE_REFERENCE_GAMEVER` is mandatory: stop if it is unset or empty, and never fall back
+to auto-selection or to a user-named gamever. Validate that `configs/<CSVIBE_REFERENCE_GAMEVER>.yaml`
+exists and declares the predecessor module. Use the resolved value as `REFERENCE_GAMEVER` throughout
+this workflow and record it in the delivery summary.
 
 Generate references only for platforms declared by the selected module config. A Windows-only tag
 such as `cof-5936` requires only Windows. When both Windows and Linux are declared, the same
-`REFERENCE_GAMEVER` must provide both and both references are required. Stop if no single compatible
-reference build exists; do not combine unrelated game families silently.
+`REFERENCE_GAMEVER` must provide both and both references are required. Stop if the configured
+`CSVIBE_REFERENCE_GAMEVER` does not satisfy the module/platform/binary checks for this predecessor;
+do not silently substitute another game family.
 
 #### Generate supported platforms sequentially
 
