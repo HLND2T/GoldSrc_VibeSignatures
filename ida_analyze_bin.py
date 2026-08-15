@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import copy
 import hashlib
 import json
 import os
@@ -20,7 +21,12 @@ import yaml
 from dotenv import load_dotenv
 
 import agent_runner
-from analysis_config import AnalysisConfigError, resolve_analysis_config, validated_tag
+from analysis_config import (
+    AnalysisConfigError,
+    iter_analysis_config_tags,
+    resolve_analysis_config,
+    validated_tag,
+)
 from analysis_planner import (
     AnalysisPlanError,
     ExecutionPlan,
@@ -1851,8 +1857,13 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("-bindir", default=DEFAULT_BIN_DIR, help="Directory containing copied binaries")
     parser.add_argument(
         "-gamever",
-        default=os.environ.get("GSVIBE_GAMEVER"),
+        default=None,
         help="Game version tag (required, or set GSVIBE_GAMEVER)",
+    )
+    parser.add_argument(
+        "-allgamever",
+        action="store_true",
+        help="Analyze every declared game-version tag in sequence",
     )
     parser.add_argument(
         "-platform",
@@ -1966,13 +1977,25 @@ def parse_args(argv=None):
         if option in REMOVED_CLI_OPTIONS:
             parser.error(f"unrecognized arguments: {token}")
     args = parser.parse_args(raw_argv)
-    args.gamever = _optional_text(args.gamever)
-    if args.gamever is None:
-        parser.error("-gamever is required, or set GSVIBE_GAMEVER")
-    try:
-        validated_tag(args.gamever)
-    except AnalysisConfigError as exc:
-        parser.error(str(exc))
+    if args.allgamever:
+        args.gamever = _optional_text(args.gamever)
+        if args.gamever is not None:
+            parser.error("-gamever and -allgamever are mutually exclusive")
+        if args.configyaml is not None:
+            parser.error("-configyaml cannot be used with -allgamever")
+        if args.oldgamever is not None:
+            parser.error("-oldgamever cannot be used with -allgamever")
+        if _optional_text(args.run_id) is not None:
+            parser.error("-run_id (or GSVIBE_RUN_ID) cannot be used with -allgamever")
+        args.oldgamever = None
+    else:
+        gamever = _optional_text(args.gamever) or _optional_text(os.environ.get("GSVIBE_GAMEVER"))
+        if gamever is None:
+            parser.error("-gamever is required, or -allgamever, or set GSVIBE_GAMEVER")
+        try:
+            args.gamever = validated_tag(gamever)
+        except AnalysisConfigError as exc:
+            parser.error(str(exc))
 
     args.platforms = _parse_csv(parser, args.platform, "-platform", allowed=PLATFORMS)
     args.modules = str(args.modules).strip()
@@ -2021,24 +2044,28 @@ def parse_args(argv=None):
     if not args.redis_prefix:
         parser.error("-redis_prefix cannot be empty")
 
-    if args.oldgamever is None:
-        args.oldgamever = (
-            None if _is_major_update_gamever(args.gamever) else resolve_oldgamever(args.gamever, args.bindir)
-        )
-    else:
-        args.oldgamever = str(args.oldgamever).strip()
-        if not args.oldgamever:
-            parser.error("-oldgamever cannot be empty")
-        if args.oldgamever.casefold() == "none":
-            args.oldgamever = None
+    if not args.allgamever:
+        gamever = args.gamever
+        if gamever is None:  # defensive: the non-all path always resolves a tag.
+            parser.error("-gamever is required, or -allgamever, or set GSVIBE_GAMEVER")
+        if args.oldgamever is None:
+            args.oldgamever = (
+                None if _is_major_update_gamever(gamever) else resolve_oldgamever(gamever, args.bindir)
+            )
         else:
-            try:
-                old_family, _old_build = _split_gamever(args.oldgamever)
-            except (AnalysisConfigError, ValueError) as exc:
-                parser.error(str(exc))
-            current_family, _current_build = _split_gamever(args.gamever)
-            if old_family != current_family:
-                parser.error("-oldgamever must use the same game family as -gamever")
+            args.oldgamever = str(args.oldgamever).strip()
+            if not args.oldgamever:
+                parser.error("-oldgamever cannot be empty")
+            if args.oldgamever.casefold() == "none":
+                args.oldgamever = None
+            else:
+                try:
+                    old_family, _old_build = _split_gamever(args.oldgamever)
+                except (AnalysisConfigError, ValueError) as exc:
+                    parser.error(str(exc))
+                current_family, _current_build = _split_gamever(gamever)
+                if old_family != current_family:
+                    parser.error("-oldgamever must use the same game family as -gamever")
     return args
 
 
@@ -2084,15 +2111,16 @@ def _print_summary(summary: AnalysisSummary) -> None:
     print(f"  Skipped: {summary.skipped}")
 
 
-def main(argv=None) -> int:
-    args = parse_args(argv)
-    summary = AnalysisSummary()
+def _run_single_tag(gamever: str, args, summary: AnalysisSummary | None = None) -> int:
+    summary = summary if summary is not None else AnalysisSummary()
+    args = copy.copy(args)
+    args.gamever = gamever
     try:
-        args.configyaml = str(resolve_analysis_config(args.gamever, args.configyaml))
+        args.configyaml = str(resolve_analysis_config(gamever, args.configyaml))
         _print_main_configuration(args)
         reporter = create_process_reporter(args)
         analyze(
-            gamever=args.gamever,
+            gamever=gamever,
             oldgamever=args.oldgamever,
             config_path=args.configyaml,
             bindir=args.bindir,
@@ -2126,6 +2154,34 @@ def main(argv=None) -> int:
         return 1
     _print_summary(summary)
     return 1 if summary.failed else 0
+
+
+def run_all(args) -> int:
+    tags = iter_analysis_config_tags()
+    if not tags:
+        print("Error: no analysis config files found to process with -allgamever")
+        return 1
+    aggregate = AnalysisSummary()
+    failed = False
+    for tag in tags:
+        print(f"\n=== gamever: {tag} ===")
+        tag_summary = AnalysisSummary()
+        rc = _run_single_tag(tag, args, summary=tag_summary)
+        aggregate.successful += tag_summary.successful
+        aggregate.failed += tag_summary.failed
+        aggregate.skipped += tag_summary.skipped
+        failed = failed or (rc != 0)
+        if rc != 0 and not args.skip_error:
+            break
+    _print_summary(aggregate)
+    return 1 if failed else 0
+
+
+def main(argv=None) -> int:
+    args = parse_args(argv)
+    if args.allgamever:
+        return run_all(args)
+    return _run_single_tag(args.gamever, args)
 
 
 if __name__ == "__main__":

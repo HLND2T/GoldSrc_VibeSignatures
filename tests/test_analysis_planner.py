@@ -484,6 +484,102 @@ class CliContractTests(unittest.TestCase):
             self.assertTrue(_is_major_update_gamever("cstrike-10210", path))
             self.assertFalse(_is_major_update_gamever("cstrike-10119", path))
 
+    def test_allgamever_rejects_conflicting_single_tag_options(self):
+        conflicting = (
+            ["-allgamever", "-gamever", "cstrike-10210"],
+            ["-allgamever", "-configyaml", "config.yaml"],
+            ["-allgamever", "-oldgamever", "cstrike-10119"],
+            ["-allgamever", "-oldgamever", "none"],
+            ["-allgamever", "-run_id", "cli-run"],
+        )
+        for argv in conflicting:
+            with self.subTest(argv=argv):
+                self.assert_parse_error(argv)
+
+    def test_allgamever_accepts_no_gamever_and_disables_oldgamever(self):
+        args = self.parse_args(["-allgamever", "-bindir", "bin"])
+        self.assertTrue(args.allgamever)
+        self.assertIsNone(args.gamever)
+        self.assertIsNone(args.oldgamever)
+
+    def test_allgamever_rejects_env_run_id(self):
+        with (
+            patch.dict(os.environ, {"GSVIBE_RUN_ID": "env-run"}, clear=True),
+            redirect_stderr(io.StringIO()),
+            self.assertRaises(SystemExit) as raised,
+        ):
+            parse_args(["-allgamever", "-bindir", "bin"])
+        self.assertEqual(2, raised.exception.code)
+
+    def test_run_all_batches_each_tag_and_aggregates(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "configs").mkdir()
+            (root / "download.yaml").write_text(
+                "downloads:\n  - tag: hl-10210\n  - tag: hl-8684\n",
+                encoding="utf-8",
+            )
+            for tag in ("hl-8684", "hl-10210"):
+                (root / "configs" / f"{tag}.yaml").write_text("modules: []\n", encoding="utf-8")
+
+            def record_success(gamever, args, summary=None):
+                del gamever, args
+                summary.successful = 1
+                return 0
+
+            with (
+                patch.dict(os.environ, {}, clear=True),
+                patch("ida_analyze_bin.iter_analysis_config_tags", return_value=["hl-10210", "hl-8684"]),
+                patch("ida_analyze_bin._run_single_tag", side_effect=record_success),
+                redirect_stdout(io.StringIO()),
+            ):
+                result = main(["-allgamever", "-bindir", str(root / "bin")])
+            self.assertEqual(0, result)
+
+    def test_run_all_stops_on_first_failure_without_skip_error(self):
+        calls = []
+
+        def fail_then_succeed(gamever, args, summary=None):
+            del args
+            calls.append(gamever)
+            if gamever == "hl-10210":
+                summary.failed = 1
+                return 1
+            summary.successful = 1
+            return 0
+
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("ida_analyze_bin.iter_analysis_config_tags", return_value=["hl-10210", "hl-8684"]),
+            patch("ida_analyze_bin._run_single_tag", side_effect=fail_then_succeed),
+            redirect_stdout(io.StringIO()),
+        ):
+            result = main(["-allgamever", "-bindir", "bin"])
+        self.assertEqual(1, result)
+        self.assertEqual(["hl-10210"], calls)
+
+    def test_run_all_continues_with_skip_error(self):
+        calls = []
+
+        def fail_then_succeed(gamever, args, summary=None):
+            del args
+            calls.append(gamever)
+            if gamever == "hl-10210":
+                summary.failed = 1
+                return 1
+            summary.successful = 1
+            return 0
+
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("ida_analyze_bin.iter_analysis_config_tags", return_value=["hl-10210", "hl-8684"]),
+            patch("ida_analyze_bin._run_single_tag", side_effect=fail_then_succeed),
+            redirect_stdout(io.StringIO()),
+        ):
+            result = main(["-allgamever", "-bindir", "bin", "-skip_error"])
+        self.assertEqual(1, result)
+        self.assertEqual(["hl-10210", "hl-8684"], calls)
+
     def test_main_prints_configuration_and_summary(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
