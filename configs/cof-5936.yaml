@@ -1,0 +1,26 @@
+modules:
+  - name: engine
+    module_windows: hw.dll
+    path_windows: Cry-of-Fear-5936/hw.dll
+    skills:
+      - name: find-R_RenderView
+        expected_output:
+          - R_RenderView.{platform}.yaml
+    symbols:
+      - name: R_RenderView
+        category: func
+  - name: client
+    module_windows: client.dll
+    path_windows: Cry-of-Fear-5936/cryoffear/cl_dlls/client.dll
+    skills: []
+    symbols: []
+  - name: gameui
+    module_windows: GameUI.dll
+    path_windows: Cry-of-Fear-5936/cryoffear/cl_dlls/GameUI.dll
+    skills: []
+    symbols: []
+  - name: server
+    module_windows: hl.dll
+    path_windows: Cry-of-Fear-5936/cryoffear/cl_dlls/hl.dll
+    skills: []
+    symbols: []

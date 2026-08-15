@@ -34,3 +34,9 @@ downloads:
     manifests:
       "225842": "7714419150192498919" # DepotDownloader -app 225840 -depot 225842 -manifest 7714419150192498919 -all-platforms -dir depots/Sven-Coop-10257 [-username XXX] [-password XXX] [-remember-password]
       "225843": "6320191083261921291" # DepotDownloader -app 225840 -depot 225843 -manifest 6320191083261921291 -all-platforms -dir depots/Sven-Coop-10257 [-username XXX] [-password XXX] [-remember-password]
+  - tag: "cof-5936"
+    name: Cry of Fear buildnum 5936
+    basepath: Cry-of-Fear-5936
+    appid: 223710
+    manifests:
+      "223711": "3465817078078599269" # DepotDownloader -app 223710 -depot 223711 -manifest 3465817078078599269 -all-platforms -dir depots/Cry-of-Fear-5936 [-username XXX] [-password XXX] [-remember-password]
