@@ -217,7 +217,8 @@ class RealSampleTests(unittest.TestCase):
         self.assertEqual(5, len(parsed.sections))
         entry_rva = parsed.header.entry_point - parsed.header.image_base
         covered = any(
-            sec.virtual_address - parsed.header.image_base <= entry_rva
+            sec.virtual_address - parsed.header.image_base
+            <= entry_rva
             < sec.virtual_address - parsed.header.image_base + sec.virtual_size
             for sec in parsed.sections
         )

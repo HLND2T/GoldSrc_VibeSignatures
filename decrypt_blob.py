@@ -152,9 +152,7 @@ def _validate_blob(header: BlobHeader, sections: list[BlobSection], buf: bytes) 
         if sec.virtual_address % 0x1000 != 0:
             raise BlobFormatError(f"section VA 0x{sec.virtual_address:08x} not aligned")
         if sec.data_address < 0 or sec.data_address + sec.data_size > len(buf):
-            raise BlobFormatError(
-                f"section data out of range (off 0x{sec.data_address:x} size 0x{sec.data_size:x})"
-            )
+            raise BlobFormatError(f"section data out of range (off 0x{sec.data_address:x} size 0x{sec.data_size:x})")
         image_end = max(image_end, sec.virtual_address + sec.virtual_size)
     for name, value in (
         ("entry point", header.entry_point),
@@ -346,7 +344,9 @@ def build_pe(parsed: ParsedBlob) -> bytes:
     headers_end = PE_OFFSET + 4 + 20 + OPT_HEADER_SIZE + count * 40
     size_of_headers = (headers_end + FILE_ALIGNMENT - 1) & ~(FILE_ALIGNMENT - 1)
     size_of_code = sum(raw_sizes[i] for i, (_name, flags) in enumerate(names_flags) if flags & CNT_CODE)
-    size_of_init_data = sum(raw_sizes[i] for i, (_name, flags) in enumerate(names_flags) if flags & CNT_INITIALIZED_DATA)
+    size_of_init_data = sum(
+        raw_sizes[i] for i, (_name, flags) in enumerate(names_flags) if flags & CNT_INITIALIZED_DATA
+    )
 
     pe = bytearray(size_of_headers)
     pe[0:2] = b"MZ"
@@ -416,8 +416,7 @@ def build_pe(parsed: ParsedBlob) -> bytes:
         (
             (sec.virtual_address - image_base, raw_size)
             for sec, (_name, _flags), raw_size in zip(parsed.sections, names_flags, raw_sizes)
-            if sec.virtual_address - image_base != 0
-            and _name == ".rsrc"
+            if sec.virtual_address - image_base != 0 and _name == ".rsrc"
         ),
         (0, 0),
     )
@@ -490,7 +489,8 @@ def verify_pe(pe: bytes, parsed: ParsedBlob) -> None:
         if ptr + raw > len(pe):
             raise BlobFormatError("output section data exceeds file size")
     covered = any(
-        sec.virtual_address - parsed.header.image_base <= entry_rva
+        sec.virtual_address - parsed.header.image_base
+        <= entry_rva
         < sec.virtual_address - parsed.header.image_base + sec.virtual_size
         for sec in parsed.sections
     )
@@ -511,7 +511,9 @@ def summarize(parsed: ParsedBlob, pe: bytes, output: Path) -> None:
     print(f"  describe: {_cstr(info.describe)!r}")
     print(f"  company:  {_cstr(info.company)!r}")
     print(f"  algorithm 0x{BLOB_ALGORITHM:08x} OK")
-    print(f"  image base 0x{header.image_base:08x}  sections {len(parsed.sections)}  DllMain(entry) 0x{header.entry_point:08x}")
+    print(
+        f"  image base 0x{header.image_base:08x}  sections {len(parsed.sections)}  DllMain(entry) 0x{header.entry_point:08x}"
+    )
     print(f"  export init fn 0x{header.export_point:08x}   (no PE export directory synthesized)")
     print(f"  imports: {len(imports)} DLLs ({', '.join(imports)})")
     print("  #  name     rva       vsize     dsize     flags")
