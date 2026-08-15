@@ -39,9 +39,7 @@ class TagAndConfigTests(unittest.TestCase):
             configs = root / "configs"
             configs.mkdir()
             (root / "download.yaml").write_text(
-                "downloads:\n"
-                "  - tag: hl-10210\n"
-                "  - tag: hl-8684\n",
+                "downloads:\n  - tag: hl-10210\n  - tag: hl-8684\n",
                 encoding="utf-8",
             )
             for tag in ("hl-8684", "hl-10210", "cof-5936"):

@@ -2049,9 +2049,7 @@ def parse_args(argv=None):
         if gamever is None:  # defensive: the non-all path always resolves a tag.
             parser.error("-gamever is required, or -allgamever, or set GSVIBE_GAMEVER")
         if args.oldgamever is None:
-            args.oldgamever = (
-                None if _is_major_update_gamever(gamever) else resolve_oldgamever(gamever, args.bindir)
-            )
+            args.oldgamever = None if _is_major_update_gamever(gamever) else resolve_oldgamever(gamever, args.bindir)
         else:
             args.oldgamever = str(args.oldgamever).strip()
             if not args.oldgamever:
