@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import tempfile
 from datetime import datetime, timezone
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 import yaml
 
@@ -85,7 +85,7 @@ def collect_actual_files(contract, *, strict: bool = True) -> dict[str, dict]:
 
 
 def _binary_path(contract, target) -> Path:
-    return contract.game_root / target.module_name / PurePosixPath(target.source_path).name
+    return contract.game_root / target.module_name / target.binary_name
 
 
 def _ensure_plain_binary(path: Path, game_root: Path) -> None:

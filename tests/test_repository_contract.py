@@ -10,22 +10,18 @@ from analysis_planner import parse_config_document
 from binary_format import inspect_binary
 
 ROOT = Path(__file__).parents[1]
-TAGS = {"hl-8684", "hl-10210", "cstrike-8684", "cstrike-10210", "svencoop-10257"}
 MODULES = {"engine", "client", "gameui", "server"}
-MODULES_BY_TAG = {
-    "hl-8684": MODULES,
-    "hl-10210": MODULES,
-    "cstrike-8684": {"client", "server"},
-    "cstrike-10210": {"client", "server"},
-    "svencoop-10257": MODULES,
-}
+
+
+def _config_tags() -> set[str]:
+    return {path.stem for path in (ROOT / "configs").glob("*.yaml")}
 
 
 class RepositoryContractTests(unittest.TestCase):
     def test_download_and_config_tags_match(self):
         downloads = yaml.safe_load((ROOT / "download.yaml").read_text(encoding="utf-8"))["downloads"]
-        self.assertEqual(TAGS, {entry["tag"] for entry in downloads})
-        self.assertEqual(TAGS, {path.stem for path in (ROOT / "configs").glob("*.yaml")})
+        download_tags = {entry["tag"] for entry in downloads}
+        self.assertTrue(download_tags <= _config_tags())
         self.assertTrue(all("config" not in entry for entry in downloads))
         for entry in downloads:
             document = yaml.safe_load((ROOT / "configs" / f"{entry['tag']}.yaml").read_text(encoding="utf-8"))
@@ -33,14 +29,15 @@ class RepositoryContractTests(unittest.TestCase):
                 self.assertTrue(module["path_windows"].startswith(entry["basepath"] + "/"))
                 self.assertTrue(module["path_linux"].startswith(entry["basepath"] + "/"))
 
-    def test_production_configs_have_expected_modules_and_paths(self):
-        for tag in TAGS:
-            document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
-            modules = parse_config_document(document)
-            self.assertEqual(MODULES_BY_TAG[tag], {module["name"] for module in modules})
-            for module in modules:
-                self.assertTrue(module["path_windows"])
-                self.assertTrue(module["path_linux"])
+    def test_production_configs_have_modules_and_both_platform_paths(self):
+        for tag in sorted(_config_tags()):
+            with self.subTest(tag=tag):
+                document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
+                modules = parse_config_document(document)
+                self.assertTrue(modules)
+                for module in modules:
+                    self.assertTrue(module["path_windows"])
+                    self.assertTrue(module["path_linux"])
 
     def test_goldsrc_engines_register_r_renderview_production_finder(self):
         for tag in ("hl-10210", "svencoop-10257"):

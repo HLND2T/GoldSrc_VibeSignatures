@@ -83,6 +83,7 @@ def module(skills):
             "stage_index": 0,
             "name": "engine",
             "path_windows": "Game/hw.dll",
+            "module_windows": "hw.dll",
             "path_linux": None,
             "skills": skills,
             "symbols": [],
@@ -144,6 +145,7 @@ class ConfigValidationTests(unittest.TestCase):
                     {
                         "name": "engine",
                         "path_windows": "Game/hw.dll",
+                        "module_windows": "hw.dll",
                         "skills": [
                             {
                                 "name": "find",
@@ -177,6 +179,7 @@ class ConfigValidationTests(unittest.TestCase):
                             {
                                 "name": "engine",
                                 "path_windows": "Game/hw.dll",
+                                "module_windows": "hw.dll",
                                 "skills": [{"name": "find", "expected_output": [path]}],
                             }
                         ]
@@ -187,10 +190,11 @@ class ConfigValidationTests(unittest.TestCase):
         modules = parse_config_document(
             {
                 "modules": [
-                    {"name": "engine", "path_windows": "Game/hw.dll"},
+                    {"name": "engine", "path_windows": "Game/hw.dll", "module_windows": "hw.dll"},
                     {
                         "name": "client",
                         "path_windows": "Game/client.dll",
+                        "module_windows": "client.dll",
                         "skills": [
                             {
                                 "name": "consume",
@@ -212,6 +216,7 @@ class ConfigValidationTests(unittest.TestCase):
                         {
                             "name": "engine",
                             "path_windows": "Game/hw.dll",
+                            "module_windows": "hw.dll",
                             "skills": [{"name": "escape", "expected_input": ["../../outside.yaml"]}],
                         }
                     ]
@@ -227,6 +232,7 @@ class ConfigValidationTests(unittest.TestCase):
                             {
                                 "name": "engine",
                                 "path_windows": "Game/hw.dll",
+                                "module_windows": "hw.dll",
                                 "symbols": [{"name": "R_RenderView", legacy_key: "func"}],
                             }
                         ]
@@ -241,6 +247,7 @@ class ConfigValidationTests(unittest.TestCase):
                         {
                             "name": "engine",
                             "path_windows": "Game/hw.dll",
+                            "module_windows": "hw.dll",
                             "skills": [{"name": "Find"}, {"name": "find"}],
                         }
                     ]
@@ -254,6 +261,7 @@ class ConfigValidationTests(unittest.TestCase):
                     {
                         "name": "engine",
                         "path_windows": "Game/hw.dll",
+                        "module_windows": "hw.dll",
                         "skills": [
                             {"name": "inherited"},
                             {"name": "explicit", "max_retries": 2},
@@ -506,6 +514,7 @@ class DagTests(unittest.TestCase):
                 "stage_index": 0,
                 "name": "client",
                 "path_windows": "Game/client.dll",
+                "module_windows": "client.dll",
                 "path_linux": None,
                 "skills": [skill("consume", output=["client.yaml"], required_input=["../engine/shared.yaml"])],
                 "symbols": [],
@@ -514,6 +523,7 @@ class DagTests(unittest.TestCase):
                 "stage_index": 1,
                 "name": "engine",
                 "path_windows": "Game/hw.dll",
+                "module_windows": "hw.dll",
                 "path_linux": None,
                 "skills": [skill("produce", output=["shared.yaml"])],
                 "symbols": [],
@@ -531,6 +541,7 @@ class DagTests(unittest.TestCase):
                 "name": "engine",
                 "description": "Engine stage",
                 "path_windows": "Game/hw.dll",
+                "module_windows": "hw.dll",
                 "path_linux": None,
                 "skills": [skill("produce", output=["shared.yaml"])],
                 "symbols": [],
@@ -539,6 +550,7 @@ class DagTests(unittest.TestCase):
                 "stage_index": 7,
                 "name": "client",
                 "path_windows": "Game/client.dll",
+                "module_windows": "client.dll",
                 "path_linux": None,
                 "skills": [skill("consume", output=["client.yaml"], required_input=["../engine/shared.yaml"])],
                 "symbols": [],
@@ -1063,6 +1075,7 @@ class DagTests(unittest.TestCase):
                 """modules:
   - name: engine
     path_windows: Game/hw.dll
+    module_windows: hw.dll
     skills:
       - name: first
       - name: second
@@ -1105,6 +1118,7 @@ class DagTests(unittest.TestCase):
                 """modules:
   - name: engine
     path_windows: Game/hw.dll
+    module_windows: hw.dll
     skills:
       - name: first
       - name: second
@@ -1147,6 +1161,7 @@ class DagTests(unittest.TestCase):
                 """modules:
   - name: engine
     path_windows: Game/hw.dll
+    module_windows: hw.dll
     skills: []
 """,
                 encoding="utf-8",
@@ -1176,6 +1191,7 @@ class DagTests(unittest.TestCase):
                 """modules:
   - name: engine
     path_windows: Game/hw.dll
+    module_windows: hw.dll
     skills:
       - name: find
         expected_output: result.yaml
@@ -1216,6 +1232,7 @@ class DagTests(unittest.TestCase):
                 """modules:
   - name: engine
     path_windows: Game/hw.dll
+    module_windows: hw.dll
     skills:
       - name: find
         expected_output: result.yaml
@@ -1293,6 +1310,7 @@ class McpLifecycleTests(unittest.TestCase):
                 """modules:
   - name: engine
     path_windows: Game/hw.dll
+    module_windows: hw.dll
     skills:
       - name: first
         expected_output: [result.yaml]
@@ -1321,6 +1339,7 @@ class McpLifecycleTests(unittest.TestCase):
                 """modules:
   - name: engine
     path_windows: Game/hw.dll
+    module_windows: hw.dll
     symbols:
       - name: TestSymbol
         category: func
@@ -1382,6 +1401,7 @@ class McpLifecycleTests(unittest.TestCase):
                 """modules:
   - name: engine
     path_windows: Game/hw.dll
+    module_windows: hw.dll
     skills:
       - name: mutate
 """,

@@ -68,11 +68,12 @@ def parse_config(config_path: str | Path) -> list[dict]:
             item[f"path_{platform}"] = (
                 None if value is None else _safe_source_path(value, f"modules[{index}].path_{platform}")
             )
-        binary_names = [
-            PurePosixPath(item[f"path_{platform}"]).name
-            for platform in PLATFORMS
-            if item[f"path_{platform}"] is not None
-        ]
+            binary_name = module.get(f"module_{platform}")
+            if item[f"path_{platform}"] is not None:
+                item[f"module_{platform}"] = _safe_component(binary_name, f"modules[{index}].module_{platform}")
+            else:
+                item[f"module_{platform}"] = None
+        binary_names = [item[f"module_{platform}"] for platform in PLATFORMS if item[f"module_{platform}"] is not None]
         if len({name.casefold() for name in binary_names}) != len(binary_names):
             raise ValueError(f"modules[{index}] platform binaries collide in one target directory")
         normalized.append(item)
@@ -91,7 +92,7 @@ def iter_module_entries(module, bin_dir, gamever, platform_filter, depot_dir):
         if not source_rel:
             continue
         source = Path(depot_dir).joinpath(*PurePosixPath(source_rel).parts)
-        target = Path(bin_dir) / tag / module["name"] / PurePosixPath(source_rel).name
+        target = Path(bin_dir) / tag / module["name"] / module[f"module_{platform}"]
         entries.append(
             {
                 "name": module["name"],

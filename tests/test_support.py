@@ -44,10 +44,12 @@ def write_config(path: Path, *, skill=None, symbols=None, both_platforms=True) -
     module = {
         "name": "engine",
         "path_windows": "Game/hw.dll",
+        "module_windows": "hw.dll",
         "skills": [] if skill is None else [skill],
         "symbols": [] if symbols is None else symbols,
     }
     if both_platforms:
         module["path_linux"] = "Game/hw.so"
+        module["module_linux"] = "hw.so"
     path.write_text(yaml.safe_dump({"modules": [module]}, sort_keys=False), encoding="utf-8")
     return path
