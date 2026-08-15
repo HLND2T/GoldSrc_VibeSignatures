@@ -201,15 +201,38 @@ class ConfigValidationTests(unittest.TestCase):
             [node.id for node in plan.nodes],
         )
 
-    def test_rejects_unpaired_or_empty_platform_declarations(self):
-        cases = (
-            {"path_windows": "Game/hw.dll"},
-            {"module_linux": "hw.so"},
-            {},
+    def test_rejects_module_without_any_platform_declaration(self):
+        with self.assertRaises(AnalysisPlanError):
+            parse_config_document({"modules": [{"name": "engine"}]})
+
+    def test_accepts_path_only_and_module_only_platform_declarations(self):
+        modules = parse_config_document(
+            {
+                "modules": [
+                    {
+                        "name": "path-engine",
+                        "path_windows": "Game/hw.dll",
+                        "skills": [{"name": "find"}],
+                    },
+                    {
+                        "name": "module-engine",
+                        "module_linux": "hw.so",
+                        "skills": [{"name": "find"}],
+                    },
+                ]
+            }
         )
-        for fields in cases:
-            with self.subTest(fields=fields), self.assertRaises(AnalysisPlanError):
-                parse_config_document({"modules": [{"name": "engine", **fields}]})
+        self.assertEqual("Game/hw.dll", modules[0]["path_windows"])
+        self.assertEqual("hw.dll", modules[0]["module_windows"])
+        self.assertIsNone(modules[0]["module_linux"])
+        self.assertIsNone(modules[1]["path_linux"])
+        self.assertEqual("hw.so", modules[1]["module_linux"])
+
+        plan = build_execution_plan(modules, platforms=["windows", "linux"], bin_dir="bin", tag="game-1")
+        self.assertEqual(
+            ["path-engine:windows:find", "module-engine:linux:find"],
+            [node.id for node in plan.nodes],
+        )
 
     def test_rejects_cross_directory_outputs_and_absolute_artifacts(self):
         for path in ("../other/a.yaml", "other/a.yaml", "C:/a.yaml", "/a.yaml"):

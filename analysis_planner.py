@@ -72,6 +72,15 @@ class ExecutionPlan:
         }
 
 
+def module_declares_platform(module: dict, platform: str) -> bool:
+    """Return True when a module declares any binary for the given platform.
+
+    `path_<platform>` and `module_<platform>` are independent declarations; either
+    one enables analysis for that platform.
+    """
+    return bool(module.get(f"path_{platform}") or module.get(f"module_{platform}"))
+
+
 def _list_of_strings(value: object, field: str) -> list[str]:
     if value is None:
         return []
@@ -275,18 +284,18 @@ def parse_config_document(document: object) -> list[dict]:
         for platform in PLATFORMS:
             value = raw.get(f"path_{platform}")
             binary_name = raw.get(f"module_{platform}")
-            if (value is None) != (binary_name is None):
-                raise AnalysisPlanError(
-                    f"{context}.path_{platform} and {context}.module_{platform} must be declared together"
-                )
             module[f"path_{platform}"] = (
                 None if value is None else validate_source_path(value, f"{context}.path_{platform}")
             )
-            if module[f"path_{platform}"] is not None:
+            if binary_name is not None:
                 module[f"module_{platform}"] = _safe_component(binary_name, f"{context}.module_{platform}")
+            elif module[f"path_{platform}"] is not None:
+                # path_<platform> alone is enough to declare the platform; the
+                # binary filename is derived from the last path component.
+                module[f"module_{platform}"] = module[f"path_{platform}"].rsplit("/", 1)[-1]
             else:
                 module[f"module_{platform}"] = None
-        if not any(module[f"path_{platform}"] for platform in PLATFORMS):
+        if not any(module[f"path_{platform}"] or module[f"module_{platform}"] for platform in PLATFORMS):
             raise AnalysisPlanError(f"{context} must declare at least one platform-specific binary")
         raw_skills = raw.get("skills") or []
         raw_symbols = raw.get("symbols") or []
@@ -420,7 +429,7 @@ def build_execution_plan(
     order = 0
     for module in modules:
         for platform in selected:
-            if not module.get(f"path_{platform}"):
+            if not module_declares_platform(module, platform):
                 continue
             for skill in module["skills"]:
                 if skill.get("platform") not in {None, platform}:
@@ -522,9 +531,10 @@ def build_process_execution_plan(
         for platform in selected_platforms:
             if (module_name, platform) not in active_pairs:
                 continue
-            configured_path = module.get(f"path_{platform}")
             binary_path = (
-                str(Path(bin_dir) / plan.tag / module_name / module[f"module_{platform}"]) if configured_path else None
+                str(Path(bin_dir) / plan.tag / module_name / module[f"module_{platform}"])
+                if module.get(f"module_{platform}")
+                else None
             )
             job = ExecutionJob(
                 id=build_job_id(stage.id, platform),
@@ -627,7 +637,7 @@ def expected_symbol_artifacts(modules: list[dict]) -> tuple[set[str], set[str]]:
     declared_modules = tuple(module["name"] for module in modules)
     for module in modules:
         for platform in PLATFORMS:
-            if not module.get(f"path_{platform}"):
+            if not module_declares_platform(module, platform):
                 continue
             for skill in module["skills"]:
                 if skill.get("platform") not in {None, platform}:

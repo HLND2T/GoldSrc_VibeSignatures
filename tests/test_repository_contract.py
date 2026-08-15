@@ -31,14 +31,16 @@ class RepositoryContractTests(unittest.TestCase):
                 for path in configured_paths:
                     self.assertTrue(path.startswith(entry["basepath"] + "/"))
 
-    def test_production_configs_have_modules_and_at_least_one_platform_path(self):
+    def test_production_configs_have_modules_and_at_least_one_platform_binary(self):
         for tag in sorted(_config_tags()):
             with self.subTest(tag=tag):
                 document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
                 modules = parse_config_document(document)
                 self.assertTrue(modules)
                 for module in modules:
-                    self.assertTrue(any(module[f"path_{platform}"] for platform in PLATFORMS))
+                    self.assertTrue(
+                        any(module[f"path_{platform}"] or module[f"module_{platform}"] for platform in PLATFORMS)
+                    )
 
     def test_goldsrc_engines_register_r_renderview_production_finder(self):
         for tag in ("hl-10210", "svencoop-10257"):

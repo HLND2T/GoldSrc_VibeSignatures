@@ -69,8 +69,10 @@ def parse_config(config_path: str | Path) -> list[dict]:
                 None if value is None else _safe_source_path(value, f"modules[{index}].path_{platform}")
             )
             binary_name = module.get(f"module_{platform}")
-            if item[f"path_{platform}"] is not None:
+            if binary_name is not None:
                 item[f"module_{platform}"] = _safe_component(binary_name, f"modules[{index}].module_{platform}")
+            elif item[f"path_{platform}"] is not None:
+                item[f"module_{platform}"] = item[f"path_{platform}"].rsplit("/", 1)[-1]
             else:
                 item[f"module_{platform}"] = None
         binary_names = [item[f"module_{platform}"] for platform in PLATFORMS if item[f"module_{platform}"] is not None]

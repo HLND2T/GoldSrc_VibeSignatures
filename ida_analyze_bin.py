@@ -1120,7 +1120,7 @@ def _artifact_type_map(modules: list[dict], game_root: Path) -> dict[str, str]:
     result: dict[str, str] = {}
     for module in modules:
         for platform in PLATFORMS:
-            if not module.get(f"path_{platform}"):
+            if not (module.get(f"path_{platform}") or module.get(f"module_{platform}")):
                 continue
             for symbol in module.get("symbols", ()):
                 if symbol.get("platform") not in {None, platform}:
@@ -1785,7 +1785,6 @@ def analyze(
         reporting.emit_run_status(RunStatus.RUNNING)
         process_reporter.heartbeat(initialized_run_id)
         for (module_name, platform), binary_nodes in nodes_by_binary.items():
-            configured = module_map[module_name].get(f"path_{platform}")
             binary_name = module_map[module_name].get(f"module_{platform}")
             binary = Path(get_binary_path(bindir, tag, module_name, binary_name))
             job_id = reporting.job_id_for(binary_nodes[0].id)
