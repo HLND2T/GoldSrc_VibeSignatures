@@ -294,7 +294,7 @@ vcalls, and struct accesses in both disassembly and procedure fields.
 Run the targeted finder first:
 
 ```powershell
-uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill find-Target -platform windows,linux -debug
+uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill find-Target -platform windows,linux -oldgamever none -debug
 ```
 
 Then run:
