@@ -20,6 +20,56 @@ def _config_tags() -> set[str]:
 
 
 class RepositoryContractTests(unittest.TestCase):
+    def test_generate_reference_yaml_skill_contract(self):
+        skill_path = ROOT / ".claude" / "skills" / "generate-reference-yaml" / "SKILL.md"
+        self.assertTrue(skill_path.is_file())
+        text = skill_path.read_text(encoding="utf-8")
+        for marker in (
+            "name: generate-reference-yaml",
+            "generate_reference_yaml.py",
+            "-platform windows",
+            "-platform linux",
+            "sequentially",
+            "ida_preprocessor_scripts/references/<module>/<func_name>.<platform>.yaml",
+        ):
+            self.assertIn(marker, text)
+        metadata = yaml.safe_load((skill_path.parent / "agents" / "openai.yaml").read_text(encoding="utf-8"))
+        self.assertIs(metadata["policy"]["allow_implicit_invocation"], False)
+
+    def test_create_preprocessor_skill_wires_llm_reference_generation(self):
+        path = ROOT / ".claude" / "skills" / "create-preprocessor-scripts" / "SKILL.md"
+        text = path.read_text(encoding="utf-8")
+        for marker in (
+            "generate-reference-yaml",
+            "generate_reference_yaml.py",
+            "REFERENCE_GAMEVER",
+            "New predecessor: mandatory multi-phase workflow",
+            "-skill <PREDECESSOR_SKILL>",
+            "Reference generation and annotation must cover both `disasm_code` and `procedure`.",
+        ):
+            self.assertIn(marker, text)
+
+    def test_reference_yamls_match_generation_contract(self):
+        reference_root = ROOT / "ida_preprocessor_scripts" / "references"
+        for path in reference_root.glob("**/*.yaml") if reference_root.is_dir() else ():
+            with self.subTest(path=path.relative_to(ROOT).as_posix()):
+                document = yaml.safe_load(path.read_text(encoding="utf-8"))
+                self.assertIsInstance(document, dict)
+                self.assertEqual(
+                    {"func_name", "func_va", "disasm_code", "procedure"},
+                    set(document),
+                )
+                self.assertIsInstance(document["func_name"], str)
+                self.assertTrue(document["func_name"].strip())
+                self.assertNotIsInstance(document["func_va"], bool)
+                func_va = int(document["func_va"], 0) if isinstance(document["func_va"], str) else document["func_va"]
+                self.assertIsInstance(func_va, int)
+                self.assertGreaterEqual(func_va, 0)
+                self.assertLessEqual(func_va, 0xFFFFFFFF)
+                self.assertIsInstance(document["disasm_code"], str)
+                self.assertTrue(document["disasm_code"].strip())
+                self.assertIsInstance(document["procedure"], str)
+
     def test_download_and_config_tags_match(self):
         downloads = yaml.safe_load((ROOT / "download.yaml").read_text(encoding="utf-8"))["downloads"]
         download_tags = {entry["tag"] for entry in downloads}

@@ -7,6 +7,7 @@ import json
 import math
 import os
 import re
+import textwrap
 from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 
@@ -314,6 +315,319 @@ def parse_mcp_result(result):
         except json.JSONDecodeError:
             return value
     return value
+
+
+def _is_remote_absolute_path(path):
+    """Accept absolute paths using either the local or remote host path syntax."""
+    import ntpath
+    import posixpath
+
+    value = os.fspath(path)
+    return os.path.isabs(value) or posixpath.isabs(value) or ntpath.isabs(value)
+
+
+def build_remote_text_export_py_eval(
+    *,
+    output_path,
+    producer_code,
+    content_var="payload_text",
+    format_name="text",
+):
+    """Build a py_eval script that writes large text atomically and returns a small ack."""
+    output_path_str = os.fspath(output_path)
+    if not _is_remote_absolute_path(output_path_str):
+        raise ValueError(f"output_path must be absolute, got {output_path_str!r}")
+    if not str(producer_code).strip():
+        raise ValueError("producer_code cannot be empty")
+    if not str(content_var).strip():
+        raise ValueError("content_var cannot be empty")
+
+    producer_block = textwrap.indent(str(producer_code).rstrip(), "    ")
+    return (
+        "import json, ntpath, os, posixpath, traceback\n"
+        f"output_path = {output_path_str!r}\n"
+        f"format_name = {str(format_name)!r}\n"
+        "tmp_path = output_path + '.tmp'\n"
+        "def _is_remote_absolute_path(output_path, _os=os, _posixpath=posixpath, _ntpath=ntpath):\n"
+        "    return (\n"
+        "        _os.path.isabs(output_path)\n"
+        "        or _posixpath.isabs(output_path)\n"
+        "        or _ntpath.isabs(output_path)\n"
+        "    )\n"
+        "def _truncate_text(value, limit=800):\n"
+        "    text = '' if value is None else str(value)\n"
+        "    return text if len(text) <= limit else text[:limit] + ' [truncated]'\n"
+        "try:\n"
+        "    if not _is_remote_absolute_path(output_path):\n"
+        "        raise ValueError(f'output_path must be absolute: {output_path}')\n"
+        f"{producer_block}\n"
+        f"    payload_text = str({content_var})\n"
+        "    parent_dir = os.path.dirname(output_path)\n"
+        "    if parent_dir:\n"
+        "        os.makedirs(parent_dir, exist_ok=True)\n"
+        "    with open(tmp_path, 'w', encoding='utf-8') as handle:\n"
+        "        handle.write(payload_text)\n"
+        "    os.replace(tmp_path, output_path)\n"
+        "    result = json.dumps({\n"
+        "        'ok': True,\n"
+        "        'output_path': output_path,\n"
+        "        'bytes_written': len(payload_text.encode('utf-8')),\n"
+        "        'format': format_name,\n"
+        "    })\n"
+        "except Exception as exc:\n"
+        "    try:\n"
+        "        if os.path.exists(tmp_path):\n"
+        "            os.unlink(tmp_path)\n"
+        "    except Exception:\n"
+        "        pass\n"
+        "    result = json.dumps({\n"
+        "        'ok': False,\n"
+        "        'output_path': output_path,\n"
+        "        'error': _truncate_text(exc),\n"
+        "        'traceback': _truncate_text(traceback.format_exc()),\n"
+        "    })\n"
+    )
+
+
+def build_function_detail_export_py_eval(func_va_int: int) -> str:
+    """Build a robust function-detail export script for reference YAML generation."""
+    return (
+        textwrap.dedent(
+            rf"""
+        import ida_bytes, ida_funcs, ida_lines, ida_segment, idautils, idc, json
+        try:
+            import ida_hexrays
+        except Exception:
+            ida_hexrays = None
+
+        func_ea = {func_va_int}
+
+        def _append_chunk_range(chunk_ranges, start_ea, end_ea):
+            try:
+                start_ea = int(start_ea)
+                end_ea = int(end_ea)
+            except Exception:
+                return
+            if start_ea < end_ea:
+                chunk_ranges.append((start_ea, end_ea))
+
+        def _collect_chunk_ranges(func):
+            chunk_ranges = []
+            try:
+                initial_chunk_ranges = []
+                for start_ea, end_ea in idautils.Chunks(func.start_ea):
+                    _append_chunk_range(initial_chunk_ranges, start_ea, end_ea)
+                chunk_ranges = initial_chunk_ranges
+            except Exception:
+                pass
+            if not chunk_ranges:
+                tail_chunk_ranges = []
+                try:
+                    try:
+                        tail_iterator = ida_funcs.func_tail_iterator_t(func)
+                    except Exception:
+                        tail_iterator = ida_funcs.func_tail_iterator_t()
+                        if not tail_iterator.set_ea(func.start_ea):
+                            tail_iterator = None
+                    if tail_iterator is not None and tail_iterator.first():
+                        while True:
+                            chunk = tail_iterator.chunk()
+                            _append_chunk_range(
+                                tail_chunk_ranges,
+                                getattr(chunk, 'start_ea', None),
+                                getattr(chunk, 'end_ea', None),
+                            )
+                            if not tail_iterator.next():
+                                break
+                except Exception:
+                    tail_chunk_ranges = []
+                if tail_chunk_ranges:
+                    _append_chunk_range(
+                        tail_chunk_ranges,
+                        func.start_ea,
+                        func.end_ea,
+                    )
+                    chunk_ranges = tail_chunk_ranges
+            if not chunk_ranges:
+                chunk_ranges = [(int(func.start_ea), int(func.end_ea))]
+            return sorted(set(chunk_ranges))
+
+        def _find_chunk_end(ea, chunk_ranges):
+            for start_ea, end_ea in chunk_ranges:
+                if start_ea <= ea < end_ea:
+                    return end_ea
+            return None
+
+        def _is_in_chunk_ranges(ea, chunk_ranges):
+            return _find_chunk_end(ea, chunk_ranges) is not None
+
+        def _format_address(ea):
+            seg = ida_segment.getseg(ea)
+            seg_name = ida_segment.get_segm_name(seg) if seg else ''
+            return f"{{seg_name}}:{{ea:08X}}" if seg_name else f"{{ea:08X}}"
+
+        def _iter_comment_lines(ea):
+            seen = set()
+            for repeatable in (0, 1):
+                try:
+                    comment = idc.get_cmt(ea, repeatable)
+                except Exception:
+                    comment = None
+                if not comment:
+                    continue
+                text = ida_lines.tag_remove(comment).strip()
+                if text and text not in seen:
+                    seen.add(text)
+                    yield text
+
+            get_extra_cmt = getattr(idc, 'get_extra_cmt', None)
+            if get_extra_cmt is None:
+                return
+            for constant_name in ('E_PREV', 'E_NEXT'):
+                base_index = getattr(ida_lines, constant_name, None)
+                if not isinstance(base_index, int):
+                    continue
+                for offset in range(100):
+                    try:
+                        comment = get_extra_cmt(ea, base_index + offset)
+                    except Exception:
+                        break
+                    if not comment:
+                        break
+                    text = ida_lines.tag_remove(comment).strip()
+                    if text and text not in seen:
+                        seen.add(text)
+                        yield text
+
+        def _iter_chunk_code_heads(chunk_ranges):
+            for start_ea, end_ea in chunk_ranges:
+                ea = int(start_ea)
+                while ea != idc.BADADDR and ea < end_ea:
+                    try:
+                        flags = ida_bytes.get_flags(ea)
+                    except Exception:
+                        break
+                    if ida_bytes.is_code(flags):
+                        yield ea
+                    try:
+                        next_ea = idc.next_head(ea, end_ea)
+                    except Exception:
+                        break
+                    if next_ea == idc.BADADDR or next_ea <= ea:
+                        break
+                    ea = next_ea
+
+        def _render_disasm_lines(eas):
+            lines = []
+            for ea in eas:
+                ea = int(ea)
+                address_text = _format_address(ea)
+                for comment in _iter_comment_lines(ea):
+                    lines.append(f"{{address_text}}                 ; {{comment}}")
+                disasm_line = ida_lines.tag_remove(
+                    idc.generate_disasm_line(ea, 0) or ''
+                ).strip()
+                if disasm_line:
+                    lines.append(f"{{address_text}}                 {{disasm_line}}")
+            return '\n'.join(lines).strip()
+
+        def get_disasm(start_ea):
+            func = ida_funcs.get_func(start_ea)
+            if func is None:
+                return ''
+            chunk_ranges = _collect_chunk_ranges(func)
+            fallback_eas = sorted(
+                set(int(ea) for ea in _iter_chunk_code_heads(chunk_ranges))
+            )
+            if not fallback_eas:
+                return ''
+            try:
+                pending_eas = [int(func.start_ea)]
+                visited_eas = set()
+                collected_eas = set()
+                max_steps = len(fallback_eas) * 4 + 256
+                steps = 0
+                while pending_eas and steps < max_steps:
+                    ea = int(pending_eas.pop())
+                    while True:
+                        if not _is_in_chunk_ranges(ea, chunk_ranges):
+                            break
+                        flags = ida_bytes.get_flags(ea)
+                        if not ida_bytes.is_code(flags) or ea in visited_eas:
+                            break
+                        visited_eas.add(ea)
+                        collected_eas.add(ea)
+                        steps += 1
+                        mnem = (idc.print_insn_mnem(ea) or '').lower()
+                        refs = [
+                            int(ref)
+                            for ref in idautils.CodeRefsFrom(ea, False)
+                            if _is_in_chunk_ranges(int(ref), chunk_ranges)
+                        ]
+                        chunk_end = _find_chunk_end(ea, chunk_ranges)
+                        next_ea = (
+                            idc.next_head(ea, chunk_end)
+                            if chunk_end is not None
+                            else idc.BADADDR
+                        )
+                        if mnem in (
+                            'ret', 'retn', 'retf', 'iret', 'iretd', 'iretq',
+                            'int3', 'hlt', 'ud2',
+                        ):
+                            break
+                        if mnem == 'jmp':
+                            for ref in reversed(refs):
+                                if ref not in visited_eas:
+                                    pending_eas.append(ref)
+                            break
+                        if mnem.startswith('j'):
+                            for ref in reversed(refs):
+                                if ref not in visited_eas:
+                                    pending_eas.append(ref)
+                            if next_ea == idc.BADADDR or next_ea <= ea:
+                                break
+                            ea = int(next_ea)
+                            continue
+                        if next_ea == idc.BADADDR or next_ea <= ea:
+                            break
+                        ea = int(next_ea)
+                collected_eas.update(fallback_eas)
+                return _render_disasm_lines(sorted(collected_eas))
+            except Exception:
+                return _render_disasm_lines(fallback_eas)
+
+        def get_pseudocode(start_ea):
+            if ida_hexrays is None:
+                return ''
+            try:
+                if not ida_hexrays.init_hexrays_plugin():
+                    return ''
+                cfunc = ida_hexrays.decompile(start_ea)
+            except Exception:
+                return ''
+            if not cfunc:
+                return ''
+            return '\n'.join(
+                ida_lines.tag_remove(line.line) for line in cfunc.get_pseudocode()
+            )
+
+        globals().update(locals())
+        func = ida_funcs.get_func(func_ea)
+        if func is None:
+            raise ValueError(f"Function not found: {{hex(func_ea)}}")
+        func_start = int(func.start_ea)
+        result = json.dumps(
+            {{
+                "func_name": ida_funcs.get_func_name(func_start) or f"sub_{{func_start:X}}",
+                "func_va": hex(func_start),
+                "disasm_code": get_disasm(func_start),
+                "procedure": get_pseudocode(func_start),
+            }}
+        )
+        """
+        ).strip()
+        + "\n"
+    )
 
 
 _FUNC_XREF_PY_EVAL_TEMPLATE = r"""
