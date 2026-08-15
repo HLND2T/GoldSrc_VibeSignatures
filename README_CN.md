@@ -4,9 +4,10 @@ GoldSrc VibeSignatures 是面向 32 位 GoldSrc 游戏的可复现符号分析�
 Linux ELF32/I386，按依赖 DAG 执行分析，将平面 YAML 工件封装为 schema 5 快照，再通过不可变 candidate
 事务交给受控的 gamedata generator。
 
-正式配置覆盖 `hl-10210`、`cstrike-10210` 与 `svencoop-10257`；Half-Life 和 Sven Co-op 包含
-`engine`、`client`、`gameui`、`server` 四模块，Counter-Strike 包含 `client`、`server`。
-Half-Life 与 Sven Co-op 均已注册 `R_RenderView` production finder：通过
+正式配置覆盖 `hl-10210`、`cstrike-10210`、`svencoop-10257` 与 `cof-5936`。每个模块可只支持 Windows、只支持
+Linux 或同时支持两者；每个已支持平台都必须成对声明 `module_<platform>` 与 `path_<platform>`。Half-Life 和
+Sven Co-op 在 Windows 与 Linux 上均包含 `engine`、`client`、`gameui`、`server` 四模块，Counter-Strike 包含
+`client`、`server`，Cry of Fear 仅支持 Windows。Half-Life 与 Sven Co-op 均已注册 `R_RenderView` production finder：通过
 `"R_RenderView: NULL worldmodel"` 在 `hw.dll` / `hw.so` 定位普通函数 `engine/R_RenderView`。
 
 ## 快速开始

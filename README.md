@@ -4,10 +4,12 @@ GoldSrc VibeSignatures is a reproducible Python 3.10+ framework for producing an
 snapshots. It validates PE32/I386 and ELF32/I386 inputs, executes a dependency-checked analysis graph, records an
 immutable candidate, and exposes a strict local contract to downstream gamedata generators.
 
-Production configuration covers Half-Life build 10210, Counter-Strike build 10210, and Sven Co-op build 10257.
-Half-Life and Sven Co-op include `engine`, `client`, `gameui`, and `server` modules on Windows and Linux;
-Counter-Strike includes `client` and `server`. Half-Life and Sven Co-op register the production finder
-`engine/R_RenderView`, anchored by `"R_RenderView: NULL worldmodel"` in `hw.dll` and `hw.so`.
+Production configuration covers Half-Life build 10210, Counter-Strike build 10210, Sven Co-op build 10257, and Cry of
+Fear build 5936. A module may target Windows, Linux, or both; each supported platform must declare a matching
+`module_<platform>` and `path_<platform>` pair. Half-Life and Sven Co-op include `engine`, `client`, `gameui`, and
+`server` modules on Windows and Linux; Counter-Strike includes `client` and `server`; Cry of Fear is Windows-only.
+Half-Life and Sven Co-op register the production finder `engine/R_RenderView`, anchored by
+`"R_RenderView: NULL worldmodel"` in `hw.dll` and `hw.so`.
 
 ## Setup
 

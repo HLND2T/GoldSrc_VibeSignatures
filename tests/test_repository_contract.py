@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from analysis_planner import parse_config_document
+from analysis_planner import PLATFORMS, parse_config_document
 from binary_format import inspect_binary
 
 ROOT = Path(__file__).parents[1]
@@ -25,19 +25,20 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertTrue(all("config" not in entry for entry in downloads))
         for entry in downloads:
             document = yaml.safe_load((ROOT / "configs" / f"{entry['tag']}.yaml").read_text(encoding="utf-8"))
-            for module in document["modules"]:
-                self.assertTrue(module["path_windows"].startswith(entry["basepath"] + "/"))
-                self.assertTrue(module["path_linux"].startswith(entry["basepath"] + "/"))
+            for module in parse_config_document(document):
+                configured_paths = [module[f"path_{platform}"] for platform in PLATFORMS if module[f"path_{platform}"]]
+                self.assertTrue(configured_paths)
+                for path in configured_paths:
+                    self.assertTrue(path.startswith(entry["basepath"] + "/"))
 
-    def test_production_configs_have_modules_and_both_platform_paths(self):
+    def test_production_configs_have_modules_and_at_least_one_platform_path(self):
         for tag in sorted(_config_tags()):
             with self.subTest(tag=tag):
                 document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
                 modules = parse_config_document(document)
                 self.assertTrue(modules)
                 for module in modules:
-                    self.assertTrue(module["path_windows"])
-                    self.assertTrue(module["path_linux"])
+                    self.assertTrue(any(module[f"path_{platform}"] for platform in PLATFORMS))
 
     def test_goldsrc_engines_register_r_renderview_production_finder(self):
         for tag in ("hl-10210", "svencoop-10257"):

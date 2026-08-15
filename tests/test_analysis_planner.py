@@ -170,6 +170,46 @@ class ConfigValidationTests(unittest.TestCase):
         self.assertIn("engine/A_b.windows.yaml", required)
         self.assertIn("engine/optional.windows.yaml", optional)
 
+    def test_accepts_windows_only_and_linux_only_modules(self):
+        modules = parse_config_document(
+            {
+                "modules": [
+                    {
+                        "name": "windows-engine",
+                        "path_windows": "Game/hw.dll",
+                        "module_windows": "hw.dll",
+                        "skills": [{"name": "find"}],
+                    },
+                    {
+                        "name": "linux-engine",
+                        "path_linux": "Game/hw.so",
+                        "module_linux": "hw.so",
+                        "skills": [{"name": "find"}],
+                    },
+                ]
+            }
+        )
+        self.assertEqual("Game/hw.dll", modules[0]["path_windows"])
+        self.assertIsNone(modules[0]["path_linux"])
+        self.assertIsNone(modules[1]["path_windows"])
+        self.assertEqual("Game/hw.so", modules[1]["path_linux"])
+
+        plan = build_execution_plan(modules, platforms=["windows", "linux"], bin_dir="bin", tag="game-1")
+        self.assertEqual(
+            ["windows-engine:windows:find", "linux-engine:linux:find"],
+            [node.id for node in plan.nodes],
+        )
+
+    def test_rejects_unpaired_or_empty_platform_declarations(self):
+        cases = (
+            {"path_windows": "Game/hw.dll"},
+            {"module_linux": "hw.so"},
+            {},
+        )
+        for fields in cases:
+            with self.subTest(fields=fields), self.assertRaises(AnalysisPlanError):
+                parse_config_document({"modules": [{"name": "engine", **fields}]})
+
     def test_rejects_cross_directory_outputs_and_absolute_artifacts(self):
         for path in ("../other/a.yaml", "other/a.yaml", "C:/a.yaml", "/a.yaml"):
             with self.subTest(path=path), self.assertRaises(AnalysisPlanError):

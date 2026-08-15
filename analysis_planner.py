@@ -274,14 +274,20 @@ def parse_config_document(document: object) -> list[dict]:
         module = {"stage_index": module_index, "name": name, "description": raw.get("description")}
         for platform in PLATFORMS:
             value = raw.get(f"path_{platform}")
+            binary_name = raw.get(f"module_{platform}")
+            if (value is None) != (binary_name is None):
+                raise AnalysisPlanError(
+                    f"{context}.path_{platform} and {context}.module_{platform} must be declared together"
+                )
             module[f"path_{platform}"] = (
                 None if value is None else validate_source_path(value, f"{context}.path_{platform}")
             )
-            binary_name = raw.get(f"module_{platform}")
             if module[f"path_{platform}"] is not None:
                 module[f"module_{platform}"] = _safe_component(binary_name, f"{context}.module_{platform}")
             else:
                 module[f"module_{platform}"] = None
+        if not any(module[f"path_{platform}"] for platform in PLATFORMS):
+            raise AnalysisPlanError(f"{context} must declare at least one platform-specific binary")
         raw_skills = raw.get("skills") or []
         raw_symbols = raw.get("symbols") or []
         if not isinstance(raw_skills, list) or not isinstance(raw_symbols, list):
