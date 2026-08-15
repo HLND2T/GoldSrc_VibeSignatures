@@ -9,7 +9,12 @@ import yaml
 
 import copy_depot_bin
 import download_depot
-from analysis_config import AnalysisConfigError, default_analysis_config_path, validated_tag
+from analysis_config import (
+    AnalysisConfigError,
+    default_analysis_config_path,
+    iter_analysis_config_tags,
+    validated_tag,
+)
 from tests.test_support import write_config, write_pe32
 
 
@@ -27,6 +32,38 @@ class TagAndConfigTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             expected = Path(temporary).resolve() / "configs" / "svencoop-10257.yaml"
             self.assertEqual(expected, default_analysis_config_path("svencoop-10257", repo_root=Path(temporary)))
+
+    def test_iter_tags_follows_manifest_order_then_lexical_orphans(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            configs = root / "configs"
+            configs.mkdir()
+            (root / "download.yaml").write_text(
+                "downloads:\n  - tag: hl-10210\n  - tag: hl-8684\n",
+                encoding="utf-8",
+            )
+            for tag in ("hl-8684", "hl-10210", "cof-5936"):
+                (configs / f"{tag}.yaml").write_text("modules: []\n", encoding="utf-8")
+            self.assertEqual(
+                ["hl-10210", "hl-8684", "cof-5936"],
+                iter_analysis_config_tags(repo_root=root),
+            )
+
+    def test_iter_tags_rejects_invalid_filenames(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            configs = root / "configs"
+            configs.mkdir()
+            (configs / "hl-10210.yaml").write_text("modules: []\n", encoding="utf-8")
+            (configs / "not-a-tag.yaml").write_text("modules: []\n", encoding="utf-8")
+            with self.assertRaises(AnalysisConfigError):
+                iter_analysis_config_tags(repo_root=root)
+
+    def test_iter_tags_empty_without_configs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "configs").mkdir()
+            self.assertEqual([], iter_analysis_config_tags(repo_root=root))
 
 
 class DownloadConfigTests(unittest.TestCase):
