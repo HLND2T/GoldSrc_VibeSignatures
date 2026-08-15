@@ -277,6 +277,11 @@ def parse_config_document(document: object) -> list[dict]:
             module[f"path_{platform}"] = (
                 None if value is None else validate_source_path(value, f"{context}.path_{platform}")
             )
+            binary_name = raw.get(f"module_{platform}")
+            if module[f"path_{platform}"] is not None:
+                module[f"module_{platform}"] = _safe_component(binary_name, f"{context}.module_{platform}")
+            else:
+                module[f"module_{platform}"] = None
         raw_skills = raw.get("skills") or []
         raw_symbols = raw.get("symbols") or []
         if not isinstance(raw_skills, list) or not isinstance(raw_symbols, list):
@@ -513,7 +518,7 @@ def build_process_execution_plan(
                 continue
             configured_path = module.get(f"path_{platform}")
             binary_path = (
-                str(Path(bin_dir) / plan.tag / module_name / Path(configured_path).name) if configured_path else None
+                str(Path(bin_dir) / plan.tag / module_name / module[f"module_{platform}"]) if configured_path else None
             )
             job = ExecutionJob(
                 id=build_job_id(stage.id, platform),

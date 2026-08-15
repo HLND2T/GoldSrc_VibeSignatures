@@ -248,8 +248,8 @@ class CopyDepotTests(unittest.TestCase):
                 yaml.safe_dump(
                     {
                         "modules": [
-                            {"name": "Engine", "path_windows": "Game/a.dll"},
-                            {"name": "engine", "path_windows": "Game/b.dll"},
+                            {"name": "Engine", "path_windows": "Game/a.dll", "module_windows": "a.dll"},
+                            {"name": "engine", "path_windows": "Game/b.dll", "module_windows": "b.dll"},
                         ]
                     }
                 ),

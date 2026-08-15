@@ -7,6 +7,7 @@ class BinaryTarget:
     module_name: str
     platform: str
     source_path: str
+    binary_name: str
 
 
 @dataclass(frozen=True)

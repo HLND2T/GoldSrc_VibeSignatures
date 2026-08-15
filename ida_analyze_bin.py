@@ -307,8 +307,8 @@ def should_skip_skill_for_existing_outputs(required_outputs, optional_outputs):
     return all_expected_outputs_exist(required_outputs or optional_outputs)
 
 
-def get_binary_path(bin_dir, gamever, module_name, configured_path):
-    return str(Path(bin_dir) / gamever / module_name / Path(configured_path).name)
+def get_binary_path(bin_dir, gamever, module_name, binary_name):
+    return str(Path(bin_dir) / gamever / module_name / binary_name)
 
 
 def build_execution_plan(
@@ -1712,7 +1712,8 @@ def analyze(
         process_reporter.heartbeat(initialized_run_id)
         for (module_name, platform), binary_nodes in nodes_by_binary.items():
             configured = module_map[module_name].get(f"path_{platform}")
-            binary = Path(get_binary_path(bindir, tag, module_name, configured))
+            binary_name = module_map[module_name].get(f"module_{platform}")
+            binary = Path(get_binary_path(bindir, tag, module_name, binary_name))
             job_id = reporting.job_id_for(binary_nodes[0].id)
             reporting.emit_task_status(job_id, TaskStatus.RUNNING, ProcessPhase.VALIDATING_BINARY)
             try:

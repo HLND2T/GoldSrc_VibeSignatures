@@ -57,7 +57,9 @@ def load_contract(
         for platform in ("windows", "linux"):
             source_path = module.get(f"path_{platform}")
             if source_path:
-                targets[(module["name"], platform)] = BinaryTarget(module["name"], platform, source_path)
+                targets[(module["name"], platform)] = BinaryTarget(
+                    module["name"], platform, source_path, module[f"module_{platform}"]
+                )
     return SnapshotContract(
         str(game_version),
         Path(bindir) / str(game_version),
