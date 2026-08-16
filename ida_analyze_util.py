@@ -713,7 +713,9 @@ def _signature(start):
     tokens = []
     ea = int(func.start_ea)
     fixed = 0
-    while ea < int(func.end_ea) and len(tokens) < 64 and fixed < 24:
+    max_fixed = 256 if spec.get('allow_across_function_boundary') else 24
+    max_tokens = 256 if spec.get('allow_across_function_boundary') else 64
+    while ea < int(func.end_ea) and len(tokens) < max_tokens and fixed < max_fixed:
         insn = ida_ua.insn_t()
         size = ida_ua.decode_insn(insn, ea)
         if not size:
@@ -850,6 +852,14 @@ def _build_func_xref_py_eval(spec, image_base):
     return _FUNC_XREF_PY_EVAL_TEMPLATE.replace("SPEC_PLACEHOLDER", repr(serialized_spec)).replace(
         "IMAGE_BASE_PLACEHOLDER", str(int(image_base))
     )
+
+
+def _func_xref_spec_with_across(spec, allow_across_function_boundary):
+    if not allow_across_function_boundary:
+        return spec
+    spec = dict(spec)
+    spec["allow_across_function_boundary"] = True
+    return spec
 
 
 def _normalize_func_xref_specs(specs):
@@ -1017,7 +1027,15 @@ async def preprocess_func_xrefs_via_mcp(
     )
     if not positive:
         return None
-    raw = await session.call_tool("py_eval", {"code": _build_func_xref_py_eval(spec, image_base)})
+    raw = await session.call_tool(
+        "py_eval",
+        {
+            "code": _build_func_xref_py_eval(
+                _func_xref_spec_with_across(spec, allow_func_sig_across_function_boundary),
+                image_base,
+            )
+        },
+    )
     payload = parse_mcp_result(raw)
     if not isinstance(payload, Mapping) or payload.get("pointer_size") != 4:
         return None
@@ -1175,7 +1193,9 @@ def _signature(start, end):
     tokens = []
     current = start
     fixed = 0
-    while current < end and len(tokens) < 64 and fixed < 24:
+    max_fixed = 256 if ALLOW_ACROSS_FUNCTION_BOUNDARY_PLACEHOLDER else 24
+    max_tokens = 256 if ALLOW_ACROSS_FUNCTION_BOUNDARY_PLACEHOLDER else 64
+    while current < end and len(tokens) < max_tokens and fixed < max_fixed:
         insn = ida_ua.insn_t()
         size = ida_ua.decode_insn(insn, current)
         if not size:
@@ -1215,9 +1235,11 @@ else:
 """
 
 
-async def _inspect_function_via_mcp(session, ea, image_base, func_name):
-    code = _INSPECT_FUNCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(int(ea))).replace(
-        "IMAGE_BASE_PLACEHOLDER", str(int(image_base))
+async def _inspect_function_via_mcp(session, ea, image_base, func_name, allow_across_function_boundary=False):
+    code = (
+        _INSPECT_FUNCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(int(ea)))
+        .replace("IMAGE_BASE_PLACEHOLDER", str(int(image_base)))
+        .replace("ALLOW_ACROSS_FUNCTION_BOUNDARY_PLACEHOLDER", "True" if allow_across_function_boundary else "False")
     )
     try:
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
@@ -1268,7 +1290,12 @@ async def preprocess_func_sig_via_mcp(
         ea = await _find_unique_bytes(session, signature)
         if ea is None:
             return None
-    result = await _inspect_function_via_mcp(session, ea, image_base, resolved_name)
+    allow_across = allow_func_sig_across_function_boundary or bool(
+        (old_data or {}).get("func_sig_allow_across_function_boundary")
+    )
+    result = await _inspect_function_via_mcp(
+        session, ea, image_base, resolved_name, allow_across_function_boundary=allow_across
+    )
     if result is None:
         return None
     if old_data and old_data.get("func_sig"):

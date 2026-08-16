@@ -14,12 +14,17 @@ modules:
           - build_number.{platform}.yaml
         expected_input:
           - SV_SendServerinfo.{platform}.yaml
+      - name: find-Sys_Error
+        expected_output:
+          - Sys_Error.{platform}.yaml
     symbols:
       - name: R_RenderView
         category: func
       - name: SV_SendServerinfo
         category: func
       - name: build_number
+        category: func
+      - name: Sys_Error
         category: func
   - name: client
     module_windows: client.dll

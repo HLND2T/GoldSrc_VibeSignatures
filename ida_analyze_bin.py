@@ -811,6 +811,44 @@ async def quit_ida_via_mcp(host, port, *, expected_binary, auto_started):
         return False
 
 
+async def save_ida_database_via_mcp(host, port, *, expected_binary, auto_started):
+    try:
+        async with open_ida_mcp_session(
+            host,
+            port,
+            expected_binary=expected_binary,
+            auto_started=auto_started,
+        ) as session:
+            if not session.binding.should_auto_quit:
+                return False
+            await session.call_tool("idb_save", {})
+            return True
+    except Exception as exc:  # noqa: BLE001 - normalize MCP save failures for the lifecycle owner.
+        raise McpLifecycleError(f"Unable to save IDB for {expected_binary}: {exc}") from exc
+
+
+def save_ida_database(host, port, *, expected_binary, debug=False):
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        saved = asyncio.run(
+            save_ida_database_via_mcp(
+                host,
+                port,
+                expected_binary=expected_binary,
+                auto_started=True,
+            )
+        )
+    else:
+        raise RuntimeError(
+            "save_ida_database() cannot run inside an active event loop; use await save_ida_database_via_mcp() instead"
+        )
+    if not saved:
+        raise McpLifecycleError(f"Refusing to save unowned or unverified IDB for {expected_binary}")
+    if debug:
+        print(f"  Saved IDB for {expected_binary}")
+
+
 async def quit_ida_gracefully_async(process, host, port, *, expected_binary, debug=False):
     if process is None or process.poll() is not None:
         return
@@ -1031,7 +1069,16 @@ class IdaMcpLifecycle:
             self.process = None
 
     def __exit__(self, exc_type, exc, traceback):
-        self._cleanup()
+        try:
+            if exc_type is None and self.process is not None and not self._force_local_stop:
+                save_ida_database(
+                    self.host,
+                    self.port,
+                    expected_binary=self.binary_path,
+                    debug=self.debug,
+                )
+        finally:
+            self._cleanup()
         return False
 
 
