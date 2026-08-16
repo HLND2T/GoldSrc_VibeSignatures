@@ -140,6 +140,7 @@ class RepositoryContractTests(unittest.TestCase):
                 "hl-3248",
                 "hl-3266",
                 "hl-3329",
+                "hl-3647",
                 "hl-4554",
                 "hl-6153",
                 "hl-8684",
