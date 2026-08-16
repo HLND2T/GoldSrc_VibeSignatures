@@ -110,7 +110,7 @@ test('switches between graph and list views and opens task details', async ({ pa
   await expect(page.getByText('思维导图')).toBeVisible()
   await expect(page.getByText('find-target', { exact: true }).first()).toBeVisible()
   await page.getByRole('tab', { name: '真实 DAG' }).click()
-  await expect(page.locator('.graph-canvas')).toBeVisible()
+  await expect(page.getByRole('tabpanel', { name: '真实 DAG' }).locator('.graph-canvas')).toBeVisible()
   await page.getByRole('tab', { name: '任务列表' }).click()
   await page.getByRole('button', { name: 'find-target' }).click()
   await expect(page.getByText('任务详情')).toBeVisible()

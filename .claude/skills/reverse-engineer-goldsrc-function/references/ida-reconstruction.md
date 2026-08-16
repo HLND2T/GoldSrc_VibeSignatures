@@ -1,23 +1,23 @@
 # IDA and Hex-Rays Reconstruction Reference
 
-Load this reference while analyzing DWARF, designing Windows partial structures, mutating the IDB, or repairing Hex-Rays locals.
+Load this reference while analyzing binary or DWARF evidence, designing target-specific partial structures, mutating a PE/ELF IDB, or repairing Hex-Rays locals.
 
 ## Build the Evidence Map
 
-Start with three synchronized views:
+Start with three synchronized views when all are available:
 
 - Official source: complete target body, nearby declarations, macros, and inlineable helpers.
-- Linux peer: DWARF plus disassembly for the matching function.
-- Windows target: instructions, call sites, data references, stack frame, and current pseudocode.
+- Cross-platform peer: machine code plus any symbols or DWARF for the matching function.
+- Current target: instructions, ABI, call sites, data references, stack frame, and current pseudocode.
 
 A useful working map has these columns:
 
-| Source construct | Linux evidence | Windows evidence | Planned IDB action | Confidence |
+| Source construct | Peer evidence | Target evidence | Planned IDB action | Confidence |
 | --- | --- | --- | --- | --- |
-| Function parameter | DWARF formal parameter | calling convention/register/stack use | set prototype | high/medium/low |
+| Function parameter | DWARF formal parameter or peer ABI use | calling convention/register/stack use | set prototype | high/medium/low |
 | Helper call | named symbol or inline DIE | call target or inline range | rename/prototype/comment | high/medium/low |
 | Global access | symbol/type | absolute data reference | rename and apply type | high/medium/low |
-| Structure field | member DIE and offset | memory operand offset | partial Windows field | high/medium/low |
+| Structure field | member DIE or peer operand offset | target memory operand offset | partial target field | high/medium/low |
 | Constant | source enum/macro | immediate operand | enum/comment | high/medium/low |
 
 Require at least two independent signals for callee renames when no symbol directly identifies the target.
@@ -42,7 +42,19 @@ Inspect these DIEs and attributes:
 
 Resolve referenced DIE offsets far enough to recover the needed type chain. Do not dump the entire binary when a named subtree and a few referenced types answer the question.
 
-DWARF locations may describe optimized or split live ranges. Treat them as identity hints; use Windows def-use behavior for the final local mapping.
+DWARF locations may describe optimized or split live ranges. Treat them as identity hints; use current-target def-use behavior for the final local mapping.
+
+### When DWARF Is Unavailable
+
+An empty named `llvm-dwarfdump` result, missing `.debug_*` sections, or a stripped ELF file does not block reconstruction. Record the absence and build the same evidence map from:
+
+- Current-target machine code, ABI, strings and xrefs, call graph, call-site arguments, globals, and data references.
+- ELF symbols that survived stripping, relocations, imports, exports, and section metadata.
+- Matching peer machine code, using control-flow shape, constants, strings, call order, and global-access patterns rather than address equality.
+- Official source declarations and nearby helpers, checked operation-by-operation against emitted target behavior.
+- Caller behavior and downstream callee contracts that constrain parameter, return, and field types.
+
+Require corroboration before semantic renames. For anonymous callees, prefer two independent signals such as a distinctive string plus call-site arguments, or matching source order plus a peer control-flow/constant signature. Do not treat lack of DWARF as permission to copy source names or peer layouts speculatively.
 
 ## Inspect Before Mutation
 
@@ -54,33 +66,52 @@ Typical IDA MCP sequence:
 4. `callees`, `xref_query`, or `xrefs_to` — identify dependencies and global references.
 5. `stack_frame` — record current stack members.
 6. `type_inspect` and `type_query` — avoid conflicting with useful existing types.
-7. `idb_save` — write the pre-mutation backup.
 
 Capture the original target name, address, prototype, callee addresses, and important data addresses before renaming anything.
 
 ## Restore Types with Minimum Commitment
 
-Declare only types required to explain the target. A partial Windows structure can use padding:
+Declare only types required to explain the target. A partial target structure can use padding:
 
 ```c
 typedef struct client_partial_s
 {
-    unsigned char _pad_0000[WINDOWS_FIELD_OFFSET];
+    unsigned char _pad_0000[TARGET_FIELD_OFFSET];
     edict_t *edict;
 } client_partial_t;
 ```
 
-Choose `WINDOWS_FIELD_OFFSET` from the Windows instruction operand, not the Linux DWARF offset. In one real GoldSrc build, `client->edict` was at `0x61F4` in Linux DWARF but at `0x630C` in the Windows code. Applying the Linux structure directly would have produced convincing but false pseudocode.
+Choose `TARGET_FIELD_OFFSET` from the current target's instruction operand, not a peer offset. In one real GoldSrc build, `client->edict` was at `0x61F4` in Linux but at `0x630C` in Windows. Applying either platform's structure directly to the other would have produced convincing but false pseudocode.
 
 For multiple fields:
 
-- Sort fields by verified Windows offset.
+- Sort fields by verified current-target offset.
 - Insert explicit padding between them.
 - Check alignment and pointer width against the target ABI.
 - Use neutral field types until loads, stores, and downstream calls establish signedness or pointee type.
 - Inspect the finished type and compare every used offset to disassembly.
 
 Apply a structure type to a global base only when data references consistently use that base. Otherwise name individual globals or retain an opaque byte array.
+
+## Repair MEMORY and Displaced Globals
+
+Treat these renderings as the same class of unresolved global-boundary problem:
+
+- `MEMORY[0xADDRESS]`.
+- A neighboring symbol plus a constant offset.
+- `dword_BASE[index]` or an equivalent oversized-array element that target evidence identifies as a standalone global.
+
+For each target expression:
+
+1. Correlate every use with the current instruction and resolve the current-target address. For PIC ELF, calculate the effective address from the current GOT/base register and displacement rather than transferring a peer address.
+2. Record address, width, section, instruction sites, proposed name/type, peer/source evidence, and confidence.
+3. Inspect `get_item_head`, item size, current name, and type before editing.
+4. Use `make_data` to create a real item boundary at the exact address, supplying both the type declaration and the `name` field. Apply `rename` and `set_type` afterward when needed.
+5. If the address is inside a broad array or opaque item, split and recreate the affected item as prefix, named field, necessary gap, and suffix items whose total range equals the original. Preserve unrelated symbols and types.
+6. Use a neutral address-based name plus a callable pointer type for an unidentified indirect function target.
+7. Call `force_recompile` and inspect the actual cfunc text. Do not accept a successful `set_name`, name lookup, or tool result when the decompiler still emits the unresolved expression.
+
+Repair all verified standalone globals used by the target. Search the final cfunc for `MEMORY[` and re-check any neighboring-array expressions. Leave uncertain data neutral and documented instead of forcing a semantic name.
 
 ## Mutate the IDB in Dependency Order
 
@@ -156,7 +187,7 @@ Use target code as the final truth. Determine whether the mismatch is:
 - A real type difference in the shipped binary.
 - A current IDB type error.
 
-Corroborate with Linux machine code when possible. For example, a public declaration may describe a value as an integer boolean while both shipped Windows and Linux code load and compare it as a floating-point value. Keep the floating-point behavior in the IDB and annotate the source mismatch; do not coerce the type solely to make pseudocode resemble the public file.
+Corroborate with cross-platform machine code when possible. For example, a public declaration may describe a value as an integer boolean while both shipped Windows and Linux code load and compare it as a floating-point value. Keep the target's floating-point behavior in the IDB and annotate the source mismatch; do not coerce the type solely to make pseudocode resemble the public file.
 
 ## Validation Gate
 
@@ -169,8 +200,8 @@ Before the final save:
 5. Use `stack_frame` to verify stack member names and sizes.
 6. Decompile and compare every branch, loop, call, write, and return with disassembly and the evidence map.
 7. Confirm comments identify inline helpers and unresolved source mismatches.
-8. Save the target IDB without overwriting the pre-mutation backup.
-9. Call `server_health` and confirm the active IDB is still the intended Windows target.
-10. Verify both IDB files exist and inspect their modification times.
+8. Save the active target IDB in place. Do not create a backup copy unless the user explicitly requested one.
+9. Call `server_health` and confirm the active IDB is still the intended PE or ELF target.
+10. Verify the final IDB exists and inspect its modification time.
 
 Record failed or unavailable checks explicitly. A source-like decompilation alone is not completion evidence.
