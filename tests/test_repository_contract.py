@@ -30,7 +30,7 @@ class RepositoryContractTests(unittest.TestCase):
             "-platform windows",
             "-platform linux",
             "sequentially",
-            "ida_preprocessor_scripts/references/<module>/<func_name>.<platform>.yaml",
+            "ida_preprocessor_scripts/references/<gamever>/<module>/<func_name>.<platform>.yaml",
         ):
             self.assertIn(marker, text)
         metadata = yaml.safe_load((skill_path.parent / "agents" / "openai.yaml").read_text(encoding="utf-8"))
@@ -85,7 +85,7 @@ class RepositoryContractTests(unittest.TestCase):
         for marker in (
             '"symbol_name": "build_number"',
             '"prompt_path": "prompt/call_llm_decompile.md"',
-            '"references/engine/SV_SendServerinfo.{platform}.yaml"',
+            '"references/{gamever}/engine/SV_SendServerinfo.{platform}.yaml"',
             '"expected_result_sections": ["found_call"]',
             "llm_config=None",
         ):
@@ -135,7 +135,12 @@ class RepositoryContractTests(unittest.TestCase):
 
         for platform in ("windows", "linux"):
             reference = (
-                ROOT / "ida_preprocessor_scripts" / "references" / "engine" / f"SV_SendServerinfo.{platform}.yaml"
+                ROOT
+                / "ida_preprocessor_scripts"
+                / "references"
+                / "hl-10210"
+                / "engine"
+                / f"SV_SendServerinfo.{platform}.yaml"
             )
             document = yaml.safe_load(reference.read_text(encoding="utf-8"))
             self.assertIn("call    build_number", document["disasm_code"])

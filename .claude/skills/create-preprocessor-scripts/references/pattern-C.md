@@ -8,7 +8,7 @@ LLM_DECOMPILE = [
     {
         "symbol_name": "{FUNC_NAME}",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": ["references/{module}/{PREDECESSOR}.{platform}.yaml"],
+        "reference_yaml_paths": ["references/{gamever}/{module}/{PREDECESSOR}.{platform}.yaml"],
         "expected_result_sections": ["found_vcall"],
         "dependency_policy": {"{PREDECESSOR}.{platform}.yaml": "required"},
     },

@@ -1697,13 +1697,22 @@ def _normalize_llm_decompile_specs(specs):
     return normalized
 
 
-def _resolve_llm_template(value, new_binary_dir, platform):
+DEFAULT_REFERENCE_GAMEVER = "hl-10210"
+
+
+def _reference_gamever():
+    return os.environ.get("GSVIBE_REFERENCE_GAMEVER", DEFAULT_REFERENCE_GAMEVER)
+
+
+def _resolve_llm_template(value, new_binary_dir, platform, *, gamever=None):
     module_name = Path(new_binary_dir).resolve().name
+    resolved_gamever = gamever if gamever is not None else Path(new_binary_dir).resolve().parent.name
     return (
         str(value)
         .replace("{platform}", platform)
         .replace("{module_name}", module_name)
         .replace("{module}", module_name)
+        .replace("{gamever}", resolved_gamever)
     )
 
 
@@ -1712,6 +1721,15 @@ def _resolve_preprocessor_resource(value, new_binary_dir, platform):
     if not path.is_absolute():
         path = Path(__file__).resolve().parent / "ida_preprocessor_scripts" / path
     return path.resolve()
+
+
+def _resolve_reference_resource(value, new_binary_dir, platform):
+    text = str(value)
+    current_path = _resolve_preprocessor_resource(text, new_binary_dir, platform)
+    if current_path.is_file() or "{gamever}" not in text:
+        return current_path
+    fallback_text = text.replace("{gamever}", _reference_gamever())
+    return _resolve_preprocessor_resource(fallback_text, new_binary_dir, platform)
 
 
 def _index_llm_inputs(values):
@@ -1739,7 +1757,7 @@ def _prepare_llm_dependency_contract(spec, llm_config, new_binary_dir, platform)
     references = []
     inferred_dependencies = {}
     for reference_value in spec["reference_yaml_paths"]:
-        reference_path = _resolve_preprocessor_resource(reference_value, new_binary_dir, platform)
+        reference_path = _resolve_reference_resource(reference_value, new_binary_dir, platform)
         reference_payload = _load_yaml_mapping(reference_path)
         if (
             not reference_payload

@@ -219,7 +219,7 @@ LLM_DECOMPILE = [
         "symbol_name": "Target",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": [
-            "references/{module}/Predecessor.{platform}.yaml",
+            "references/{gamever}/{module}/Predecessor.{platform}.yaml",
         ],
         "expected_result_sections": ["found_call"],
         "dependency_policy": {
@@ -295,7 +295,13 @@ Do not add `type`, `kind`, or category-specific artifact identity fields to conf
 
 Patterns C, D, and E require each predecessor reference at:
 
-`ida_preprocessor_scripts/references/<REFERENCE_MODULE>/<PREDECESSOR>.<platform>.yaml`
+`ida_preprocessor_scripts/references/<REFERENCE_GAMEVER>/<REFERENCE_MODULE>/<PREDECESSOR>.<platform>.yaml`
+
+In a `reference_yaml_paths` entry use the `{gamever}` placeholder. At runtime it resolves to the gamever
+currently being analyzed; when that reference file is absent, it falls back to the canonical reference
+gamever (the generator's default, `hl-10210`). Only generate a per-gamever reference when an
+engine's predecessor body genuinely differs (e.g. SvEngine `svencoop-10257`); the shared
+`hl-*`/`cstrike-*`/`cof-*` family keeps using the `hl-10210` reference via the fallback.
 
 Use the `generate-reference-yaml` skill as the only generation backend. Never call IDA APIs directly
 and never hand-build the initial reference YAML.

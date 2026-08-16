@@ -142,10 +142,12 @@ class ReferenceYamlPureHelperTests(unittest.TestCase):
             with self.subTest(path=path), self.assertRaises(generate_reference_yaml.ReferenceGenerationError):
                 generate_reference_yaml.infer_target_from_binary_path(path)
 
-    def test_reference_output_path_is_confined_to_module_directory(self) -> None:
+    def test_reference_output_path_is_confined_to_gamever_module_directory(self) -> None:
         self.assertEqual(
-            Path("/repo/ida_preprocessor_scripts/references/engine/R_RenderView.windows.yaml"),
-            generate_reference_yaml.build_reference_output_path("/repo", "engine", "R_RenderView", "windows"),
+            Path("/repo/ida_preprocessor_scripts/references/hl-10210/engine/R_RenderView.windows.yaml"),
+            generate_reference_yaml.build_reference_output_path(
+                "/repo", "hl-10210", "engine", "R_RenderView", "windows"
+            ),
         )
         for module, func_name, output_filename in (
             ("../engine", "R_RenderView", None),
@@ -165,8 +167,14 @@ class ReferenceYamlPureHelperTests(unittest.TestCase):
                 self.assertRaises(generate_reference_yaml.ReferenceGenerationError),
             ):
                 generate_reference_yaml.build_reference_output_path(
-                    "/repo", module, func_name, "windows", output_filename
+                    "/repo", "hl-10210", module, func_name, "windows", output_filename
                 )
+
+    def test_reference_output_path_rejects_invalid_gamever(self) -> None:
+        with self.assertRaises(generate_reference_yaml.ReferenceGenerationError):
+            generate_reference_yaml.build_reference_output_path(
+                "/repo", "../escape", "engine", "R_RenderView", "windows"
+            )
 
     def test_load_existing_func_va_and_symbol_aliases(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -632,7 +640,7 @@ class ReferenceYamlMcpTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_run_reference_generation_orchestrates_attach_mode(self) -> None:
         session = object()
-        expected_path = Path("/repo/ida_preprocessor_scripts/references/engine/R_RenderView.windows.yaml")
+        expected_path = Path("/repo/ida_preprocessor_scripts/references/hl-10210/engine/R_RenderView.windows.yaml")
 
         @asynccontextmanager
         async def _fake_attach(**kwargs):

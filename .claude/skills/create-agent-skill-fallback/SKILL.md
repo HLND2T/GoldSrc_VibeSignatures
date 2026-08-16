@@ -57,7 +57,7 @@ For target finder `find-XXXX` in module `<module>` (`engine`, `client`, `server`
    - `TARGET_FUNCTION_NAMES`, `TARGET_STRUCT_MEMBER_NAMES`, `TARGET_GLOBALVAR_NAMES`, `TARGET_VTABLE_CLASS_NAMES`
      and any `*_WINDOWS` / `*_LINUX` variants → the output symbols and their **platform gating**.
    - `LLM_DECOMPILE` (and `_WINDOWS`/`_LINUX`) → the **predecessor** reference each target is mined from
-     (`references/<module>/<predecessor>.{platform}.yaml`).
+     (`references/<gamever>/<module>/<predecessor>.{platform}.yaml`).
    - `FUNC_VTABLE_RELATIONS` → which targets are vtable-related (`vtable_name`).
    - `GENERATE_YAML_DESIRED_FIELDS` → the **exact fields and kind** for each target (this tells you whether a
      target is a struct member, an indirect-vcall vfunc, a real vfunc, a regular func, or a global var — see the
@@ -66,7 +66,7 @@ For target finder `find-XXXX` in module `<module>` (`engine`, `client`, `server`
 2. **`configs/<GAMEVER>.yaml` skill entry** — `expected_output` / `expected_output_windows` /
    `expected_output_linux` (authoritative output list per platform), `expected_input` (the predecessor YAML),
    `expected_input_windows`/`expected_input_linux`, `prerequisite`.
-3. **Reference YAMLs** `ida_preprocessor_scripts/references/<module>/<predecessor>.{platform}.yaml` — the
+3. **Reference YAMLs** `ida_preprocessor_scripts/references/<gamever>/<module>/<predecessor>.{platform}.yaml` — the
    `disasm_code` + `procedure` carry the annotations (`; 0xNN = Class::member` / `; 0xNN = Class::vfunc` /
    `// NNNN = 0xNN = …`) at each access/call site. **These annotations are the semantic fingerprints** you
    translate into the fallback's anchors. Also collect any real-world helper or alternate inline/de-inline
@@ -250,10 +250,10 @@ failure — which almost always means a target's access pattern **moved** across
 Read the platform-relevant real-world YAMLs before searching in IDA. Treat their addresses and offsets as
 reference-build values only; verify every result against the current binary.
 
-- `ida_preprocessor_scripts/references/<module>/<predecessor>.windows.yaml`
-- `ida_preprocessor_scripts/references/<module>/<predecessor>.linux.yaml`
-- `ida_preprocessor_scripts/references/<module>/<relevant-helper-or-variant>.windows.yaml`
-- `ida_preprocessor_scripts/references/<module>/<relevant-helper-or-variant>.linux.yaml`
+- `ida_preprocessor_scripts/references/<gamever>/<module>/<predecessor>.windows.yaml`
+- `ida_preprocessor_scripts/references/<gamever>/<module>/<predecessor>.linux.yaml`
+- `ida_preprocessor_scripts/references/<gamever>/<module>/<relevant-helper-or-variant>.windows.yaml`
+- `ida_preprocessor_scripts/references/<gamever>/<module>/<relevant-helper-or-variant>.linux.yaml`
 
 Spell out each existing path literally and drop non-applicable placeholders or platforms.
 

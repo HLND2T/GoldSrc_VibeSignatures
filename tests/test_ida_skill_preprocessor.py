@@ -11,6 +11,7 @@ from unittest.mock import ANY, AsyncMock, patch
 
 import yaml
 
+import ida_analyze_util
 import ida_skill_preprocessor
 from ida_analyze_util import (
     _build_func_xref_py_eval,
@@ -21,6 +22,7 @@ from ida_analyze_util import (
     _prepare_llm_context,
     _preprocess_llm_target,
     _resolve_llm_template,
+    _resolve_reference_resource,
     parse_mcp_result,
     preprocess_common_skill,
     preprocess_func_xrefs_via_mcp,
@@ -1534,6 +1536,95 @@ found_struct_offset: []
             "linux",
         )
         self.assertEqual("references/engine/engine/Target.linux.yaml", rendered)
+
+    def test_llm_template_supports_gamever(self):
+        rendered = _resolve_llm_template(
+            "references/{gamever}/{module}/Target.{platform}.yaml",
+            Path("D:/game/hl-10210/engine"),
+            "linux",
+        )
+        self.assertEqual("references/hl-10210/engine/Target.linux.yaml", rendered)
+
+    def test_resolve_reference_resource_prefers_current_gamever(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            new_binary_dir = root / "svencoop-10257" / "engine"
+            current = (
+                root
+                / "ida_preprocessor_scripts"
+                / "references"
+                / "svencoop-10257"
+                / "engine"
+                / "SV_SendServerinfo.windows.yaml"
+            )
+            current.parent.mkdir(parents=True)
+            current.write_text("func_name: SV_SendServerinfo\n", encoding="utf-8")
+
+            def _fake_resolve(value, new_binary_dir, platform):
+                gamever = Path(new_binary_dir).resolve().parent.name
+                resolved = str(value).replace("{platform}", platform).replace("{gamever}", gamever)
+                return (root / "ida_preprocessor_scripts" / resolved).resolve()
+
+            with patch.object(ida_analyze_util, "_resolve_preprocessor_resource", side_effect=_fake_resolve):
+                resolved = _resolve_reference_resource(
+                    "references/{gamever}/engine/SV_SendServerinfo.{platform}.yaml",
+                    new_binary_dir,
+                    "windows",
+                )
+        self.assertEqual(current.resolve(), resolved)
+
+    def test_resolve_reference_resource_falls_back_to_canonical_gamever(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            new_binary_dir = root / "svencoop-10257" / "engine"
+            canonical = (
+                root
+                / "ida_preprocessor_scripts"
+                / "references"
+                / "hl-10210"
+                / "engine"
+                / "SV_SendServerinfo.windows.yaml"
+            )
+            canonical.parent.mkdir(parents=True)
+            canonical.write_text("func_name: SV_SendServerinfo\n", encoding="utf-8")
+
+            def _fake_resolve(value, new_binary_dir, platform):
+                gamever = Path(new_binary_dir).resolve().parent.name
+                resolved = str(value).replace("{platform}", platform).replace("{gamever}", gamever)
+                return (root / "ida_preprocessor_scripts" / resolved).resolve()
+
+            with (
+                patch.object(ida_analyze_util, "_resolve_preprocessor_resource", side_effect=_fake_resolve),
+                patch.dict("os.environ", {"GSVIBE_REFERENCE_GAMEVER": "hl-10210"}, clear=True),
+            ):
+                resolved = _resolve_reference_resource(
+                    "references/{gamever}/engine/SV_SendServerinfo.{platform}.yaml",
+                    new_binary_dir,
+                    "windows",
+                )
+        self.assertEqual(canonical.resolve(), resolved)
+
+    def test_resolve_reference_resource_without_gamever_placeholder_has_no_fallback(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            new_binary_dir = root / "svencoop-10257" / "engine"
+            calls = []
+
+            def _fake_resolve(value, new_binary_dir, platform):
+                calls.append(value)
+                return (root / "ida_preprocessor_scripts" / str(value).replace("{platform}", platform)).resolve()
+
+            with (
+                patch.object(ida_analyze_util, "_resolve_preprocessor_resource", side_effect=_fake_resolve),
+                patch.dict("os.environ", {"GSVIBE_REFERENCE_GAMEVER": "hl-10210"}, clear=True),
+            ):
+                resolved = _resolve_reference_resource(
+                    "references/engine/SV_SendServerinfo.{platform}.yaml",
+                    new_binary_dir,
+                    "windows",
+                )
+        self.assertEqual(1, len(calls))
+        self.assertNotIn("hl-10210", resolved.parts)
 
     async def test_common_preprocessor_rejects_non_x86_pointer_size(self):
         async def call_tool(_name, _arguments):

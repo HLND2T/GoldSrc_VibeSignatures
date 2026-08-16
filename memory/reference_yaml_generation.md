@@ -13,7 +13,7 @@ permalink: goldsrc-vibesignatures/reference-yaml-generation
 
 ## 根因 / 约束
 
-- reference 路径跨 gamever 共享；不得按所有版本反复覆盖。
+- reference 路径带 gamever 段：`ida_preprocessor_scripts/references/<gamever>/<module>/<func>.<platform>.yaml`；`{gamever}` 运行时先取当前分析 gamever，缺失时回退到 `GSVIBE_REFERENCE_GAMEVER`（默认 `hl-10210`）。仅当引擎函数体确有差异（如 SvEngine `svencoop-10257`）才按 gamever 单独生成；`hl-*`/`cstrike-*`/`cof-*` 共用 `hl-10210` reference。
 - 输出固定且仅含 `func_name`、`func_va`、`disasm_code`、`procedure`；地址限 x86，disassembly 非空。
 - 仅支持 PE32/I386 与 ELF32/I386；attach/auto-start 都必须验证 bound IDB identity。
 - auto-start 必须使用仓库 `IdaMcpLifecycle`，且 `-binary` 必须等于 config 声明的 binary。
