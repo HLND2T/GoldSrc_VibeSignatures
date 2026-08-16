@@ -66,7 +66,6 @@ Typical IDA MCP sequence:
 4. `callees`, `xref_query`, or `xrefs_to` — identify dependencies and global references.
 5. `stack_frame` — record current stack members.
 6. `type_inspect` and `type_query` — avoid conflicting with useful existing types.
-7. `idb_save` — write the pre-mutation backup.
 
 Capture the original target name, address, prototype, callee addresses, and important data addresses before renaming anything.
 
@@ -93,6 +92,26 @@ For multiple fields:
 - Inspect the finished type and compare every used offset to disassembly.
 
 Apply a structure type to a global base only when data references consistently use that base. Otherwise name individual globals or retain an opaque byte array.
+
+## Repair MEMORY and Displaced Globals
+
+Treat these renderings as the same class of unresolved global-boundary problem:
+
+- `MEMORY[0xADDRESS]`.
+- A neighboring symbol plus a constant offset.
+- `dword_BASE[index]` or an equivalent oversized-array element that target evidence identifies as a standalone global.
+
+For each target expression:
+
+1. Correlate every use with the current instruction and resolve the current-target address. For PIC ELF, calculate the effective address from the current GOT/base register and displacement rather than transferring a peer address.
+2. Record address, width, section, instruction sites, proposed name/type, peer/source evidence, and confidence.
+3. Inspect `get_item_head`, item size, current name, and type before editing.
+4. Use `make_data` to create a real item boundary at the exact address, supplying both the type declaration and the `name` field. Apply `rename` and `set_type` afterward when needed.
+5. If the address is inside a broad array or opaque item, split and recreate the affected item as prefix, named field, necessary gap, and suffix items whose total range equals the original. Preserve unrelated symbols and types.
+6. Use a neutral address-based name plus a callable pointer type for an unidentified indirect function target.
+7. Call `force_recompile` and inspect the actual cfunc text. Do not accept a successful `set_name`, name lookup, or tool result when the decompiler still emits the unresolved expression.
+
+Repair all verified standalone globals used by the target. Search the final cfunc for `MEMORY[` and re-check any neighboring-array expressions. Leave uncertain data neutral and documented instead of forcing a semantic name.
 
 ## Mutate the IDB in Dependency Order
 
@@ -181,8 +200,8 @@ Before the final save:
 5. Use `stack_frame` to verify stack member names and sizes.
 6. Decompile and compare every branch, loop, call, write, and return with disassembly and the evidence map.
 7. Confirm comments identify inline helpers and unresolved source mismatches.
-8. Save the target IDB without overwriting the pre-mutation backup.
+8. Save the active target IDB in place. Do not create a backup copy unless the user explicitly requested one.
 9. Call `server_health` and confirm the active IDB is still the intended PE or ELF target.
-10. Verify both IDB files exist and inspect their modification times.
+10. Verify the final IDB exists and inspect its modification time.
 
 Record failed or unavailable checks explicitly. A source-like decompilation alone is not completion evidence.

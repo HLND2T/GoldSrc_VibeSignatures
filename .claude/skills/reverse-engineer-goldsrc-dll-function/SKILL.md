@@ -1,6 +1,6 @@
 ---
 name: reverse-engineer-goldsrc-dll-function
-description: Restore or reconstruct a GoldSrc function in a PE DLL or ELF .so IDA database so Hex-Rays resembles maintainable source, using the target machine code, official GoldSrc or HLDS source, and an optional cross-platform or DWARF peer. Use when recovering hw.dll, sw.dll, hw.so, engine, or game-module functions, including stripped ELF binaries without DWARF; renaming callees, globals, stack variables, and Hex-Rays locals; rebuilding prototypes, partial structs, and protocol enums; reconciling Windows and Linux layouts; documenting compiler inlining or source/binary mismatches; or validating and saving a reconstructed IDB.
+description: Restore or reconstruct a GoldSrc function in a PE DLL or ELF .so IDA database so Hex-Rays resembles maintainable source, using the target machine code, official GoldSrc or HLDS source, and an optional cross-platform or DWARF peer. Use when recovering hw.dll, sw.dll, hw.so, engine, or game-module functions, including stripped ELF binaries without DWARF; repairing unresolved globals rendered as MEMORY[...] or neighboring-array offsets; renaming callees, globals, stack variables, and Hex-Rays locals; rebuilding prototypes, partial structs, and protocol enums; reconciling Windows and Linux layouts; documenting compiler inlining or source/binary mismatches; or validating and saving a reconstructed IDB.
 ---
 
 # Reverse-Engineer a GoldSrc Binary Function
@@ -14,7 +14,6 @@ Collect or discover:
 - The target PE DLL or ELF `.so` binary or IDB and the target function name or address.
 - The matching GoldSrc/HLDS source tree, including nearby helpers and type declarations.
 - A matching cross-platform peer when available, plus `llvm-dwarfdump` or an equivalent DWARF reader when that peer or the target actually contains DWARF.
-- A writable backup location for the IDB.
 - `D:\HLND2T_official` as full source code reference.
 
 If the source build, target binary, or cross-platform peer does not match exactly, continue only with an explicit version-mismatch warning. Never silently merge evidence from different versions. If DWARF is absent or contains no entry for the function, record that fact and continue with the non-DWARF evidence path; do not skip the `.so` target.
@@ -62,21 +61,14 @@ Before editing, identify:
 - The target function prototype.
 - Anonymous target-owned callees that correspond to named source functions.
 - Globals that can be named and typed.
+- Every unresolved global expression in the target, including `MEMORY[0x...]`, a neighboring symbol plus offset, and oversized-array indexing that hides a standalone global.
 - The smallest reliable set of structures, fields, typedefs, and enums.
 - Stack variables, Hex-Rays locals, parameter copies, and inlined regions.
 - Any source/binary or cross-platform disagreement requiring a comment rather than a forced type.
 
 Prefer a minimal partial structure with explicit padding over a guessed full SDK structure. Always derive offsets from the current target: use Windows offsets in a Windows IDB and Linux offsets in a Linux IDB, even when peer symbols or DWARF expose a different layout.
 
-### 4. Save a Pre-Mutation Backup
-
-Save a separate IDB before the first rename or type change. Use a stable name such as:
-
-`<binary>.before_<function>_restore.i64`
-
-Confirm that the backup exists. Do not overwrite it during later saves.
-
-### 5. Restore Dependencies Before the Target
+### 4. Restore Dependencies Before the Target
 
 Apply changes from foundational to derived:
 
@@ -89,6 +81,19 @@ Apply changes from foundational to derived:
 7. Apply operand enums and comments to constants and inline regions.
 
 Correct callee prototypes often fix argument recovery more effectively than local-variable renaming alone. Avoid cosmetic renames until the data model and calling conventions are stable.
+
+### 5. Repair Unresolved Global Expressions
+
+Treat `MEMORY[0x...]`, a neighboring global plus offset, and `dword_BASE[index]` forms as unresolved global boundaries until target evidence proves otherwise. Repair every such expression used by the target function:
+
+1. Resolve the exact current-target address, access width, section, instruction sites, and semantic role. For PIC ELF code, derive the target from the current GOT/base register and displacement; never copy a peer's absolute address.
+2. Map the target address to a name and type using current-target behavior first, then matching peer symbols/decompilation and official source. Reuse peer names only for equivalent data roles and layouts.
+3. Inspect the existing item head, size, name, and type. Materialize a real standalone data item at the exact address with `make_data`, then apply the verified name and type. `rename` or `set_type` alone is insufficient when Hex-Rays still lacks a data boundary.
+4. If the address lies inside an oversized array or opaque item, split that item only as much as required into prefix, named field, gap, and suffix items. Preserve the original covered range and unrelated names/types; do not leave neighboring references degraded.
+5. Give unresolved function pointers a neutral address-based name and verified callable type rather than inventing an API identity.
+6. Force a fresh decompilation and inspect the actual rendered target. A successful name lookup or mutation result is not proof that Hex-Rays stopped emitting `MEMORY[...]`.
+
+Repeat until the target contains no unexplained `MEMORY[...]` or displaced-array expression for a verified standalone global. If a boundary cannot be repaired safely, retain the neutral expression, document the ambiguity, and report the reconstruction as partial.
 
 ### 6. Reconcile Layouts and Compiler Artifacts
 
@@ -113,9 +118,10 @@ Re-run analysis and require all applicable checks:
 - Protocol constants render as enums where useful.
 - Inline regions remain behaviorally faithful and are clearly annotated.
 - Final decompilation preserves every meaningful branch, loop, side effect, and call in the target code.
+- Final decompilation contains no unexplained `MEMORY[...]` or neighboring-array expression for any verified standalone global used by the target.
 - Any source/binary disagreement is visible and justified.
 
-Use `analyze_function`, `type_inspect`, `stack_frame`, `callees`, `disasm`, and `decompile` as appropriate. Save the target IDB, then call `server_health` once more and verify both the final IDB and the pre-mutation backup on disk.
+Use `analyze_function`, `type_inspect`, `stack_frame`, `callees`, `disasm`, and `decompile` as appropriate. Save the active target IDB in place, then call `server_health` once more and verify the final IDB on disk.
 
 ## Safety Rules
 
@@ -123,6 +129,7 @@ Use `analyze_function`, `type_inspect`, `stack_frame`, `callees`, `disasm`, and 
 - Never copy a full structure definition from one platform into another platform's IDB without independently validating its layout.
 - Never rename an anonymous callee from source order alone; corroborate it with arguments, strings, globals, control flow, or Linux symbols.
 - Never claim source-level recovery for an expression whose type or semantics remain ambiguous. Use a neutral type/name and record the uncertainty.
+- Do not create, copy, export, or save a pre-mutation backup IDB unless the user explicitly requests one. Use in-place `idb_save` for the active target after validation.
 - Preserve unrelated user changes in the IDB and repository.
 
 ## Completion Report
@@ -135,6 +142,6 @@ Report:
 - Restored prototype, callees, globals, structures, locals, enums, and inline annotations.
 - Important platform-layout or source/binary conflicts and their resolution.
 - Validation operations actually run and their results.
-- Final IDB path and pre-mutation backup path.
+- Final IDB path.
 
 Do not say the reconstruction is complete if the final IDB was not saved or the critical validation evidence could not be obtained.
