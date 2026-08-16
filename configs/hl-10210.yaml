@@ -22,6 +22,25 @@ modules:
       - name: find-ClientDLL_Init
         expected_output:
           - ClientDLL_Init.{platform}.yaml
+      - name: find-DispatchDirectUserMsg
+        expected_output:
+          - DispatchDirectUserMsg.{platform}.yaml
+      - name: find-Cvar_DirectSet
+        expected_output:
+          - Cvar_DirectSet.{platform}.yaml
+      - name: find-LoadBlobFile_Caller
+        expected_output:
+          - LoadBlobFile_Caller.{platform}.yaml
+      - name: find-LoadBlobFile
+        expected_input:
+          - LoadBlobFile_Caller.{platform}.yaml
+        expected_output:
+          - LoadBlobFile.{platform}.yaml
+      - name: find-FreeBlob
+        expected_input:
+          - ClientDLL_Init.{platform}.yaml
+        expected_output:
+          - FreeBlob.{platform}.yaml
     symbols:
       - name: R_RenderView
         category: func
@@ -32,6 +51,16 @@ modules:
       - name: Sys_Error
         category: func
       - name: ClientDLL_Init
+        category: func
+      - name: DispatchDirectUserMsg
+        category: func
+      - name: Cvar_DirectSet
+        category: func
+      - name: LoadBlobFile_Caller
+        category: func
+      - name: LoadBlobFile
+        category: func
+      - name: FreeBlob
         category: func
   - name: client
     module_windows: client.dll

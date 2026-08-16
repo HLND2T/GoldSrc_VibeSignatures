@@ -231,6 +231,36 @@ class RepositoryContractTests(unittest.TestCase):
                 self.assertEqual("func", symbol["category"])
         self.assertTrue((ROOT / "ida_preprocessor_scripts" / "find-ClientDLL_Init.py").is_file())
 
+    def test_hl_10210_engine_registers_private_function_finders(self):
+        document = yaml.safe_load((ROOT / "configs" / "hl-10210.yaml").read_text(encoding="utf-8"))
+        engine = next(module for module in document["modules"] if module["name"] == "engine")
+        targets = ("DispatchDirectUserMsg", "Cvar_DirectSet", "LoadBlobFile", "FreeBlob")
+        for target in targets:
+            with self.subTest(target=target):
+                finder = next(skill for skill in engine["skills"] if skill["name"] == f"find-{target}")
+                self.assertEqual([f"{target}.{{platform}}.yaml"], finder["expected_output"])
+                symbol = next(symbol for symbol in engine["symbols"] if symbol["name"] == target)
+                self.assertEqual("func", symbol["category"])
+                self.assertTrue((ROOT / "ida_preprocessor_scripts" / f"find-{target}.py").is_file())
+                source = (ROOT / "ida_preprocessor_scripts" / f"find-{target}.py").read_text(encoding="utf-8")
+                self.assertIn("old_yaml_map=None", source)
+                if target in {"DispatchDirectUserMsg", "Cvar_DirectSet"}:
+                    self.assertIn('"xref_signatures": []', source)
+                else:
+                    self.assertNotIn("xref_signatures", source)
+
+        load_blob_caller = next(skill for skill in engine["skills"] if skill["name"] == "find-LoadBlobFile_Caller")
+        self.assertEqual(["LoadBlobFile_Caller.{platform}.yaml"], load_blob_caller["expected_output"])
+        self.assertTrue((ROOT / "ida_preprocessor_scripts" / "find-LoadBlobFile_Caller.py").is_file())
+        self.assertEqual(
+            ["LoadBlobFile_Caller.{platform}.yaml"],
+            next(skill for skill in engine["skills"] if skill["name"] == "find-LoadBlobFile")["expected_input"],
+        )
+        self.assertEqual(
+            ["ClientDLL_Init.{platform}.yaml"],
+            next(skill for skill in engine["skills"] if skill["name"] == "find-FreeBlob")["expected_input"],
+        )
+
     def test_no_disallowed_source2_subsystems_or_architecture_paths(self):
         disallowed = ("win64", "cpp_tests", "hl2sdk")
         checked = [path for path in ROOT.glob("*.py") if path.name not in {"format_repo_files.py"}]

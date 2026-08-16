@@ -54,6 +54,21 @@ Always pass `-platform` explicitly in skill workflows. Generate only the platfor
 selected module in `configs/<GAMEVER>.yaml`. When both are declared, run Windows and Linux
 sequentially, never in parallel: both commands use the same MCP host and port.
 
+## Restore the Reference Function First
+
+Before running `generate_reference_yaml.py`, use the `reverse-engineer-goldsrc-function` workflow to
+restore the selected function in the owned IDB as close to the matching source as current-binary
+evidence supports. This is a required generation precondition, not optional polish. Recover the
+source function name and prototype, mapped callees, confirmed parameters and locals, and the globals
+or minimal types necessary for readable pseudocode. Preserve source/binary differences as explicit
+comments rather than inventing a source-shaped result.
+
+The canonical artifact name remains the `func_name` passed to this CLI and can differ from the IDB
+source name. For example, `LoadBlobFile_Caller.windows.yaml` may identify a caller artifact while
+the reference disassembly and procedure describe `NLoadBlobFile`. Do not rename the IDB function to
+the synthetic artifact name merely to generate a reference. YAML call/global annotations supplement
+the source-like IDB reconstruction; they do not replace it.
+
 ### 3. Custom output name
 
 Use `-output_filename` only when the reference filename intentionally differs from

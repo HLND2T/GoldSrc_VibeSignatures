@@ -84,6 +84,20 @@ Apply changes from foundational to derived:
 
 Correct callee prototypes often fix argument recovery more effectively than local-variable renaming alone. Avoid cosmetic renames until the data model and calling conventions are stable.
 
+### Reference Function Standard
+
+When the reconstructed function will be exported as an `LLM_DECOMPILE` reference, restore its IDB
+representation as close to the matching source form as current-binary evidence permits **before**
+generating the reference YAML. At minimum, recover the source function name, prototype, mapped
+callees, confirmed parameters and locals, and the globals or minimal structures needed for its
+decompilation to communicate the source-level role. Retain a source/binary mismatch comment instead
+of forcing unsupported names or types.
+
+The finder artifact identity may deliberately differ from the source function name: for example, a
+`LoadBlobFile_Caller` artifact can identify `NLoadBlobFile` in the IDB. Keep the artifact identity
+for dependency resolution, but export the source-like IDB name and pseudocode to the LLM reference.
+Reference annotations complement this reconstruction; they must not substitute for it.
+
 ### 5. Repair Unresolved Global Expressions
 
 Treat `MEMORY[0x...]`, a neighboring global plus offset, and `dword_BASE[index]` forms as unresolved global boundaries until target evidence proves otherwise. Repair every such expression used by the target function:
