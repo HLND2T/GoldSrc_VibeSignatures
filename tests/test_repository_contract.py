@@ -55,7 +55,9 @@ class RepositoryContractTests(unittest.TestCase):
 
     def test_reference_yamls_match_generation_contract(self):
         reference_root = ROOT / "ida_preprocessor_scripts" / "references"
-        for path in reference_root.glob("**/*.yaml") if reference_root.is_dir() else ():
+        references = list(reference_root.glob("**/*.yaml")) if reference_root.is_dir() else []
+        self.assertTrue(references)
+        for path in references:
             with self.subTest(path=path.relative_to(ROOT).as_posix()):
                 document = yaml.safe_load(path.read_text(encoding="utf-8"))
                 self.assertIsInstance(document, dict)
@@ -73,6 +75,71 @@ class RepositoryContractTests(unittest.TestCase):
                 self.assertIsInstance(document["disasm_code"], str)
                 self.assertTrue(document["disasm_code"].strip())
                 self.assertIsInstance(document["procedure"], str)
+
+    def test_build_number_llm_decompile_production_contract(self):
+        script = ROOT / "ida_preprocessor_scripts" / "find-build_number.py"
+        prompt = ROOT / "ida_preprocessor_scripts" / "prompt" / "call_llm_decompile.md"
+        self.assertTrue(script.is_file())
+        self.assertTrue(prompt.is_file())
+        script_text = script.read_text(encoding="utf-8")
+        for marker in (
+            '"symbol_name": "build_number"',
+            '"prompt_path": "prompt/call_llm_decompile.md"',
+            '"references/engine/SV_SendServerinfo.{platform}.yaml"',
+            '"expected_result_sections": ["found_call"]',
+            "llm_config=None",
+        ):
+            self.assertIn(marker, script_text)
+
+        prompt_text = prompt.read_text(encoding="utf-8")
+        for marker in (
+            "{reference_blocks}",
+            "{target_blocks}",
+            "{symbol_name_list}",
+            "found_vcall",
+            "found_call",
+            "found_funcptr",
+            "found_gv",
+            "found_struct_offset",
+            "GoldSrc vtable slots are 4 bytes",
+        ):
+            self.assertIn(marker, prompt_text)
+
+        engine_tags = set()
+        for tag in sorted(_config_tags()):
+            document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
+            engine = next((module for module in document["modules"] if module["name"] == "engine"), None)
+            if engine is None:
+                continue
+            engine_tags.add(tag)
+            finder = next(skill for skill in engine["skills"] if skill["name"] == "find-build_number")
+            self.assertEqual(["build_number.{platform}.yaml"], finder["expected_output"])
+            self.assertEqual(["SV_SendServerinfo.{platform}.yaml"], finder["expected_input"])
+            self.assertNotIn("optional_input", finder)
+            symbol = next(symbol for symbol in engine["symbols"] if symbol["name"] == "build_number")
+            self.assertEqual("func", symbol["category"])
+        self.assertEqual(
+            {
+                "cof-5936",
+                "hl-10210",
+                "hl-3248",
+                "hl-3266",
+                "hl-3329",
+                "hl-4554",
+                "hl-6153",
+                "hl-8684",
+                "svencoop-10257",
+            },
+            engine_tags,
+        )
+
+        for platform in ("windows", "linux"):
+            reference = (
+                ROOT / "ida_preprocessor_scripts" / "references" / "engine" / f"SV_SendServerinfo.{platform}.yaml"
+            )
+            document = yaml.safe_load(reference.read_text(encoding="utf-8"))
+            self.assertIn("call    build_number", document["disasm_code"])
+            self.assertIn("build_number()", document["procedure"])
 
     def test_download_and_config_tags_match(self):
         downloads = yaml.safe_load((ROOT / "download.yaml").read_text(encoding="utf-8"))["downloads"]

@@ -76,7 +76,8 @@ single authority for batch membership and order; a tag only runs when explicitly
 legacy order is used for compatibility: the `download.yaml` manifest declaration order, then remaining `configs/*.yaml`
 tags in lexical order.
 
-See [docs/architecture.md](docs/architecture.md) and [docs/generator-contract.md](docs/generator-contract.md).
+See [docs/architecture.md](docs/architecture.md), [docs/generator-contract.md](docs/generator-contract.md), and
+[docs/llm-decompile.md](docs/llm-decompile.md).
 
 ## Analyzer CLI and environment
 

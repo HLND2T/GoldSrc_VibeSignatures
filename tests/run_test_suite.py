@@ -15,6 +15,7 @@ GROUP_FILES = {
         "test_ida_mcp_session.py",
         "test_generate_reference_yaml.py",
         "test_format_repo_files.py",
+        "test_ida_llm_decompile.py",
         "test_ida_skill_preprocessor.py",
         "test_analysis_planner.py",
         "test_process_api.py",

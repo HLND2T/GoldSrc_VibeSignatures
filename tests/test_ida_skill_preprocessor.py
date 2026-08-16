@@ -7,13 +7,20 @@ import unittest
 from contextlib import asynccontextmanager, redirect_stderr
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import ANY, AsyncMock, patch
 
 import yaml
 
 import ida_skill_preprocessor
 from ida_analyze_util import (
     _build_func_xref_py_eval,
+    _call_llm_for_targets,
+    _inspect_function_via_mcp,
+    _llm_entry_instruction_is_valid,
+    _normalize_llm_decompile_specs,
+    _prepare_llm_context,
+    _preprocess_llm_target,
+    _resolve_llm_template,
     parse_mcp_result,
     preprocess_common_skill,
     preprocess_func_xrefs_via_mcp,
@@ -455,12 +462,14 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
             output = root / "Target.windows.yaml"
             prompt.write_text("Compare reference and target.", encoding="utf-8")
             reference.write_text(
-                "func_name: Predecessor\ndisasm_code: call Target\nprocedure: Target();\n",
+                "func_name: Predecessor\nfunc_va: '0x401000'\ndisasm_code: call Target\nprocedure: Target();\n",
                 encoding="utf-8",
             )
             current.write_text("func_name: Predecessor\nfunc_va: '0x401000'\n", encoding="utf-8")
 
             async def call_tool(name, arguments):
+                if name == "find_bytes":
+                    return {"matches": ["0x402000"], "n": 1}
                 self.assertEqual("py_eval", name)
                 code = arguments["code"]
                 if "ida_hexrays" in code:
@@ -497,8 +506,17 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
                     },
                 }
 
-            llm_result = {"found_call": [{"func_name": "Target", "insn_va": "0x401020"}]}
-            with patch("ida_llm_decompile.request_json", return_value=llm_result):
+            llm_result = """\
+found_vcall: []
+found_call:
+  - func_name: Target
+    insn_va: '0x401020'
+    insn_disasm: call sub_402000
+found_funcptr: []
+found_gv: []
+found_struct_offset: []
+"""
+            with patch("ida_llm_decompile.request_text", return_value=llm_result):
                 result = await preprocess_common_skill(
                     session=SimpleNamespace(call_tool=call_tool),
                     expected_outputs=[str(output)],
@@ -535,7 +553,7 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
             old_output = root / "old.yaml"
             output = root / f"{symbol_name}.windows.yaml"
             old_output.write_text(
-                "struct_name: CBaseEntity\nmember_name: m_modelState.m_simulationState\noffset: '0x8'\n",
+                "struct_name: CBaseEntity\nmember_name: m_modelState.m_simulationState\noffset: '0x0'\n",
                 encoding="utf-8",
             )
             llm_result = {
@@ -544,7 +562,7 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
                         "struct_name": "CBaseEntity",
                         "member_name": "m_modelState_m_simulationState",
                         "insn_va": "0x401020",
-                        "offset": "0x10",
+                        "offset": "0x0",
                     }
                 ]
             }
@@ -552,21 +570,25 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
                 "size": 3,
                 "func_start": "0x401000",
                 "func_end": "0x401100",
-                "line": "mov eax, [ecx+10h]",
-                "displacements": ["0x10"],
+                "line": "mov eax, [ecx]",
+                "displacements": ["0x0"],
             }
 
             with (
                 patch("ida_analyze_util.preprocess_struct_offset_sig_via_mcp", new=AsyncMock(return_value=None)),
                 patch(
                     "ida_analyze_util._prepare_llm_context",
-                    return_value={"targets": [({}, 0x401000)]},
+                    return_value={
+                        "model": "test-model",
+                        "prompt_path": "prompt.md",
+                        "reference_yaml_paths": ["reference.yaml"],
+                        "temperature": None,
+                    },
                 ),
                 patch(
-                    "ida_analyze_util._export_llm_function",
-                    new=AsyncMock(return_value={"func_start": "0x401000", "func_end": "0x401100"}),
+                    "ida_analyze_util._call_llm_for_targets",
+                    new=AsyncMock(return_value=(llm_result, [(0x401000, 0x401100)])),
                 ),
-                patch("ida_analyze_util._call_llm_for_target", new=AsyncMock(return_value=llm_result)),
                 patch("ida_analyze_util._inspect_llm_instruction", new=AsyncMock(return_value=instruction)),
                 patch(
                     "ida_analyze_util._inspect_function_via_mcp",
@@ -600,6 +622,918 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
             payload = yaml.safe_load(output.read_text(encoding="utf-8"))
             self.assertEqual("CBaseEntity", payload["struct_name"])
             self.assertEqual("m_modelState.m_simulationState", payload["member_name"])
+
+    async def test_llm_batch_groups_two_unresolved_regular_functions(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            outputs = [root / "TargetA.windows.yaml", root / "TargetB.windows.yaml"]
+            specs = [
+                {
+                    "symbol_name": name,
+                    "prompt_path": "prompt.md",
+                    "reference_yaml_paths": ["reference.windows.yaml"],
+                    "expected_result_sections": ["found_call"],
+                    "dependency_policy": {"Predecessor.windows.yaml": "required"},
+                }
+                for name in ("TargetA", "TargetB")
+            ]
+            llm_result = {
+                "found_vcall": [],
+                "found_call": [
+                    {
+                        "func_name": "TargetA",
+                        "insn_va": "0x401020",
+                        "insn_disasm": "call sub_402000",
+                    },
+                    {
+                        "func_name": "TargetB",
+                        "insn_va": "0x401030",
+                        "insn_disasm": "call sub_403000",
+                    },
+                ],
+                "found_funcptr": [],
+                "found_gv": [],
+                "found_struct_offset": [],
+            }
+            details = {
+                0x401020: {
+                    "func_start": "0x401000",
+                    "line": "call sub_402000",
+                    "code_refs": ["0x402000"],
+                },
+                0x401030: {
+                    "func_start": "0x401000",
+                    "line": "call sub_403000",
+                    "code_refs": ["0x403000"],
+                },
+            }
+
+            async def inspect_instruction(_session, ea):
+                return details[int(ea, 0) if isinstance(ea, str) else ea]
+
+            async def inspect_function(_session, ea, image_base, name):
+                return {
+                    "func_name": name,
+                    "func_va": hex(ea),
+                    "func_rva": hex(ea - image_base),
+                    "func_size": "0x20",
+                    "func_sig": "55 8B EC 83 EC ??",
+                }
+
+            context = {
+                "model": "test-model",
+                "prompt_path": "prompt.md",
+                "reference_yaml_paths": ["reference.windows.yaml"],
+                "temperature": None,
+            }
+            with (
+                patch("ida_analyze_util.preprocess_func_sig_via_mcp", new=AsyncMock(return_value=None)),
+                patch("ida_analyze_util._prepare_llm_context", return_value=context),
+                patch(
+                    "ida_analyze_util._call_llm_for_targets",
+                    new=AsyncMock(return_value=(llm_result, [(0x401000, 0x401100)])),
+                ) as call_llm,
+                patch("ida_analyze_util._inspect_llm_instruction", new=inspect_instruction),
+                patch("ida_analyze_util._inspect_function_via_mcp", new=inspect_function),
+            ):
+                result = await preprocess_common_skill(
+                    session=SimpleNamespace(call_tool=AsyncMock()),
+                    expected_outputs=[str(path) for path in outputs],
+                    new_binary_dir=root,
+                    platform="windows",
+                    image_base=0x400000,
+                    func_names=["TargetA", "TargetB"],
+                    llm_decompile_specs=specs,
+                    llm_config={"model": "test-model"},
+                    generate_yaml_desired_fields=[
+                        (name, ["func_name", "func_sig", "func_va", "func_rva", "func_size"])
+                        for name in ("TargetA", "TargetB")
+                    ],
+                )
+
+            self.assertTrue(result)
+            call_llm.assert_awaited_once()
+            self.assertEqual(["TargetA", "TargetB"], call_llm.await_args.kwargs["symbol_names"])
+            self.assertEqual(
+                ["TargetA", "TargetB"],
+                [yaml.safe_load(path.read_text(encoding="utf-8"))["func_name"] for path in outputs],
+            )
+
+    async def test_llm_batch_excludes_function_resolved_by_fast_path(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            outputs = [root / "FastTarget.windows.yaml", root / "LlmTarget.windows.yaml"]
+            specs = [
+                {
+                    "symbol_name": name,
+                    "prompt_path": "prompt.md",
+                    "reference_yaml_paths": ["reference.windows.yaml"],
+                    "expected_result_sections": ["found_call"],
+                    "dependency_policy": {"Predecessor.windows.yaml": "required"},
+                }
+                for name in ("FastTarget", "LlmTarget")
+            ]
+            fast_candidate = {
+                "func_name": "FastTarget",
+                "func_va": "0x402000",
+                "func_rva": "0x2000",
+                "func_size": "0x20",
+                "func_sig": "55 8B EC 83 EC ??",
+            }
+
+            async def fast_path(*_args, func_name=None, **_kwargs):
+                return fast_candidate if func_name == "FastTarget" else None
+
+            llm_result = {
+                "found_vcall": [],
+                "found_call": [
+                    {
+                        "func_name": "LlmTarget",
+                        "insn_va": "0x401020",
+                        "insn_disasm": "call sub_403000",
+                    }
+                ],
+                "found_funcptr": [],
+                "found_gv": [],
+                "found_struct_offset": [],
+            }
+            context = {
+                "model": "test-model",
+                "prompt_path": "prompt.md",
+                "reference_yaml_paths": ["reference.windows.yaml"],
+                "temperature": None,
+            }
+            with (
+                patch("ida_analyze_util.preprocess_func_sig_via_mcp", new=fast_path),
+                patch("ida_analyze_util._prepare_llm_context", return_value=context),
+                patch(
+                    "ida_analyze_util._call_llm_for_targets",
+                    new=AsyncMock(return_value=(llm_result, [(0x401000, 0x401100)])),
+                ) as call_llm,
+                patch(
+                    "ida_analyze_util._inspect_llm_instruction",
+                    new=AsyncMock(
+                        return_value={
+                            "func_start": "0x401000",
+                            "line": "call sub_403000",
+                            "code_refs": ["0x403000"],
+                        }
+                    ),
+                ),
+                patch(
+                    "ida_analyze_util._inspect_function_via_mcp",
+                    new=AsyncMock(
+                        return_value={
+                            "func_name": "LlmTarget",
+                            "func_va": "0x403000",
+                            "func_rva": "0x3000",
+                            "func_size": "0x20",
+                            "func_sig": "55 8B EC 83 EC ??",
+                        }
+                    ),
+                ),
+            ):
+                result = await preprocess_common_skill(
+                    session=SimpleNamespace(call_tool=AsyncMock()),
+                    expected_outputs=[str(path) for path in outputs],
+                    new_binary_dir=root,
+                    platform="windows",
+                    image_base=0x400000,
+                    func_names=["FastTarget", "LlmTarget"],
+                    llm_decompile_specs=specs,
+                    llm_config={"model": "test-model"},
+                    generate_yaml_desired_fields=[
+                        (name, ["func_name", "func_sig", "func_va", "func_rva", "func_size"])
+                        for name in ("FastTarget", "LlmTarget")
+                    ],
+                )
+
+            self.assertTrue(result)
+            call_llm.assert_awaited_once()
+            self.assertEqual(["LlmTarget"], call_llm.await_args.kwargs["symbol_names"])
+
+    async def test_llm_batch_includes_unresolved_global_variable(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            func_output = root / "Target.windows.yaml"
+            gv_output = root / "g_Target.windows.yaml"
+            specs = [
+                {
+                    "symbol_name": "Target",
+                    "prompt_path": "prompt.md",
+                    "reference_yaml_paths": ["reference.windows.yaml"],
+                    "expected_result_sections": ["found_call"],
+                    "dependency_policy": {"Predecessor.windows.yaml": "required"},
+                },
+                {
+                    "symbol_name": "g_Target",
+                    "prompt_path": "prompt.md",
+                    "reference_yaml_paths": ["reference.windows.yaml"],
+                    "expected_result_sections": ["found_gv"],
+                    "dependency_policy": {"Predecessor.windows.yaml": "required"},
+                },
+            ]
+            llm_result = {
+                "found_vcall": [],
+                "found_call": [
+                    {
+                        "func_name": "Target",
+                        "insn_va": "0x401020",
+                        "insn_disasm": "call sub_402000",
+                    }
+                ],
+                "found_funcptr": [],
+                "found_gv": [
+                    {
+                        "gv_name": "g_Target",
+                        "insn_va": "0x401040",
+                        "insn_disasm": "mov eax, ds:dword_404000",
+                    }
+                ],
+                "found_struct_offset": [],
+            }
+            details = {
+                0x401020: {
+                    "func_start": "0x401000",
+                    "line": "call sub_402000",
+                    "code_refs": ["0x402000"],
+                },
+                0x401040: {
+                    "func_start": "0x401000",
+                    "line": "mov eax, ds:dword_404000",
+                    "size": 5,
+                    "data_refs": ["0x404000"],
+                    "operand_targets": [],
+                    "operand_offsets": [1],
+                },
+            }
+
+            async def inspect_instruction(_session, ea):
+                return details[int(ea, 0) if isinstance(ea, str) else ea]
+
+            async def inspect_function(_session, ea, image_base, name):
+                if name == "__llm_anchor":
+                    return {"func_va": "0x401000", "func_sig": "55 8B EC 83 EC ??"}
+                return {
+                    "func_name": name,
+                    "func_va": hex(ea),
+                    "func_rva": hex(ea - image_base),
+                    "func_size": "0x20",
+                    "func_sig": "55 8B EC 83 EC ??",
+                }
+
+            context = {
+                "model": "test-model",
+                "prompt_path": "prompt.md",
+                "reference_yaml_paths": ["reference.windows.yaml"],
+                "temperature": None,
+            }
+            with (
+                patch("ida_analyze_util.preprocess_func_sig_via_mcp", new=AsyncMock(return_value=None)),
+                patch("ida_analyze_util.preprocess_gv_sig_via_mcp", new=AsyncMock(return_value=None)),
+                patch("ida_analyze_util._prepare_llm_context", return_value=context),
+                patch(
+                    "ida_analyze_util._call_llm_for_targets",
+                    new=AsyncMock(return_value=(llm_result, [(0x401000, 0x401100)])),
+                ) as call_llm,
+                patch("ida_analyze_util._inspect_llm_instruction", new=inspect_instruction),
+                patch("ida_analyze_util._inspect_function_via_mcp", new=inspect_function),
+            ):
+                result = await preprocess_common_skill(
+                    session=SimpleNamespace(call_tool=AsyncMock()),
+                    expected_outputs=[str(func_output), str(gv_output)],
+                    new_binary_dir=root,
+                    platform="windows",
+                    image_base=0x400000,
+                    func_names=["Target"],
+                    gv_names=["g_Target"],
+                    llm_decompile_specs=specs,
+                    llm_config={"model": "test-model"},
+                    generate_yaml_desired_fields=[
+                        ("Target", ["func_name", "func_sig", "func_va", "func_rva", "func_size"]),
+                        (
+                            "g_Target",
+                            [
+                                "gv_name",
+                                "gv_va",
+                                "gv_rva",
+                                "gv_sig",
+                                "gv_sig_va",
+                                "gv_inst_offset",
+                                "gv_inst_length",
+                                "gv_inst_disp",
+                            ],
+                        ),
+                    ],
+                )
+
+            self.assertTrue(result)
+            call_llm.assert_awaited_once()
+            self.assertEqual(["Target", "g_Target"], call_llm.await_args.kwargs["symbol_names"])
+            self.assertEqual("g_Target", yaml.safe_load(gv_output.read_text(encoding="utf-8"))["gv_name"])
+
+    async def test_llm_found_funcptr_generates_regular_function(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            output = root / "Callback.windows.yaml"
+            llm_result = {
+                "found_vcall": [],
+                "found_call": [],
+                "found_funcptr": [
+                    {
+                        "funcptr_name": "Callback",
+                        "insn_va": "0x401030",
+                        "insn_disasm": "lea eax, sub_403000",
+                    }
+                ],
+                "found_gv": [],
+                "found_struct_offset": [],
+            }
+            context = {
+                "model": "test-model",
+                "prompt_path": "prompt.md",
+                "reference_yaml_paths": ["reference.windows.yaml"],
+                "temperature": None,
+            }
+            with (
+                patch("ida_analyze_util.preprocess_func_sig_via_mcp", new=AsyncMock(return_value=None)),
+                patch("ida_analyze_util._prepare_llm_context", return_value=context),
+                patch(
+                    "ida_analyze_util._call_llm_for_targets",
+                    new=AsyncMock(return_value=(llm_result, [(0x401000, 0x401100)])),
+                ),
+                patch(
+                    "ida_analyze_util._inspect_llm_instruction",
+                    new=AsyncMock(
+                        return_value={
+                            "func_start": "0x401000",
+                            "line": "lea eax, sub_403000",
+                            "operand_targets": ["0x403000"],
+                        }
+                    ),
+                ),
+                patch(
+                    "ida_analyze_util._inspect_function_via_mcp",
+                    new=AsyncMock(
+                        return_value={
+                            "func_name": "Callback",
+                            "func_va": "0x403000",
+                            "func_rva": "0x3000",
+                            "func_size": "0x20",
+                            "func_sig": "55 8B EC 83 EC ??",
+                        }
+                    ),
+                ),
+            ):
+                result = await preprocess_common_skill(
+                    session=SimpleNamespace(call_tool=AsyncMock()),
+                    expected_outputs=[str(output)],
+                    new_binary_dir=root,
+                    platform="windows",
+                    image_base=0x400000,
+                    func_names=["Callback"],
+                    llm_decompile_specs=[
+                        {
+                            "symbol_name": "Callback",
+                            "prompt_path": "prompt.md",
+                            "reference_yaml_paths": ["reference.windows.yaml"],
+                            "expected_result_sections": ["found_funcptr"],
+                            "dependency_policy": {"Predecessor.windows.yaml": "required"},
+                        }
+                    ],
+                    llm_config={"model": "test-model"},
+                    generate_yaml_desired_fields=[
+                        ("Callback", ["func_name", "func_sig", "func_va", "func_rva", "func_size"])
+                    ],
+                )
+
+            self.assertTrue(result)
+            self.assertEqual("Callback", yaml.safe_load(output.read_text(encoding="utf-8"))["func_name"])
+
+    async def test_llm_found_vcall_uses_four_byte_slot(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            output = root / "VirtualTarget.windows.yaml"
+            (root / "TargetClass_vtable.windows.yaml").write_text(
+                "vtable_entries:\n  5: '0x402000'\n",
+                encoding="utf-8",
+            )
+            llm_result = {
+                "found_vcall": [
+                    {
+                        "func_name": "VirtualTarget",
+                        "insn_va": "0x401010",
+                        "insn_disasm": "call dword ptr [eax+14h]",
+                        "vfunc_offset": "0x14",
+                    }
+                ],
+                "found_call": [],
+                "found_funcptr": [],
+                "found_gv": [],
+                "found_struct_offset": [],
+            }
+            context = {
+                "model": "test-model",
+                "prompt_path": "prompt.md",
+                "reference_yaml_paths": ["reference.windows.yaml"],
+                "temperature": None,
+            }
+            with (
+                patch("ida_analyze_util.preprocess_func_sig_via_mcp", new=AsyncMock(return_value=None)),
+                patch("ida_analyze_util._prepare_llm_context", return_value=context),
+                patch(
+                    "ida_analyze_util._call_llm_for_targets",
+                    new=AsyncMock(return_value=(llm_result, [(0x401000, 0x401100)])),
+                ),
+                patch(
+                    "ida_analyze_util._inspect_llm_instruction",
+                    new=AsyncMock(
+                        return_value={
+                            "func_start": "0x401000",
+                            "line": "call dword ptr [eax+14h]",
+                            "displacements": ["0x14"],
+                        }
+                    ),
+                ),
+                patch(
+                    "ida_analyze_util._inspect_function_via_mcp",
+                    new=AsyncMock(
+                        return_value={
+                            "func_name": "VirtualTarget",
+                            "func_va": "0x402000",
+                            "func_rva": "0x2000",
+                            "func_size": "0x20",
+                            "func_sig": "55 8B EC 83 EC ??",
+                        }
+                    ),
+                ),
+            ):
+                result = await preprocess_common_skill(
+                    session=SimpleNamespace(call_tool=AsyncMock()),
+                    expected_outputs=[str(output)],
+                    new_binary_dir=root,
+                    platform="windows",
+                    image_base=0x400000,
+                    func_names=["VirtualTarget"],
+                    func_vtable_relations=[("VirtualTarget", "TargetClass")],
+                    llm_decompile_specs=[
+                        {
+                            "symbol_name": "VirtualTarget",
+                            "prompt_path": "prompt.md",
+                            "reference_yaml_paths": ["reference.windows.yaml"],
+                            "expected_result_sections": ["found_vcall"],
+                            "dependency_policy": {"Predecessor.windows.yaml": "required"},
+                        }
+                    ],
+                    llm_config={"model": "test-model"},
+                    generate_yaml_desired_fields=[
+                        (
+                            "VirtualTarget",
+                            ["func_name", "vfunc_sig", "vfunc_offset", "vfunc_index", "vtable_name"],
+                        )
+                    ],
+                )
+
+            self.assertTrue(result)
+            payload = yaml.safe_load(output.read_text(encoding="utf-8"))
+            self.assertEqual("0x14", payload["vfunc_offset"])
+            self.assertEqual(5, payload["vfunc_index"])
+
+    async def test_llm_found_vcall_accepts_zero_slot(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "TargetClass_vtable.windows.yaml").write_text(
+                "vtable_entries:\n  0: '0x402000'\n",
+                encoding="utf-8",
+            )
+            llm_result = {
+                "found_vcall": [
+                    {
+                        "func_name": "VirtualTarget",
+                        "insn_va": "0x401010",
+                        "insn_disasm": "call dword ptr [eax]",
+                        "vfunc_offset": "0x0",
+                    }
+                ],
+                "found_call": [],
+                "found_funcptr": [],
+                "found_gv": [],
+                "found_struct_offset": [],
+            }
+            with (
+                patch(
+                    "ida_analyze_util._inspect_llm_instruction",
+                    new=AsyncMock(
+                        return_value={
+                            "func_start": "0x401000",
+                            "line": "call dword ptr [eax]",
+                            "displacements": ["0x0"],
+                        }
+                    ),
+                ),
+                patch(
+                    "ida_analyze_util._inspect_function_via_mcp",
+                    new=AsyncMock(
+                        return_value={
+                            "func_name": "VirtualTarget",
+                            "func_va": "0x402000",
+                            "func_rva": "0x2000",
+                            "func_size": "0x20",
+                            "func_sig": "55 8B EC 83 EC ??",
+                        }
+                    ),
+                ),
+            ):
+                candidate = await _preprocess_llm_target(
+                    session=SimpleNamespace(call_tool=AsyncMock()),
+                    symbol_name="VirtualTarget",
+                    category="vfunc",
+                    spec={"expected_result_sections": ["found_vcall"]},
+                    llm_config={"model": "test-model"},
+                    new_binary_dir=root,
+                    platform="windows",
+                    image_base=0x400000,
+                    desired_fields=["func_name", "vfunc_sig", "vfunc_offset", "vfunc_index", "vtable_name"],
+                    vtable_name="TargetClass",
+                    llm_result=llm_result,
+                    target_ranges=[(0x401000, 0x401100)],
+                )
+
+            self.assertEqual("0x0", candidate["vfunc_offset"])
+            self.assertEqual(0, candidate["vfunc_index"])
+
+    async def test_incomplete_vfunc_fast_path_still_enters_llm_batch(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            output = root / "VirtualTarget.windows.yaml"
+            (root / "TargetClass_vtable.windows.yaml").write_text(
+                "vtable_entries:\n  0: '0x403000'\n",
+                encoding="utf-8",
+            )
+            fast_candidate = {
+                "func_name": "VirtualTarget",
+                "func_va": "0x402000",
+                "func_rva": "0x2000",
+                "func_size": "0x20",
+                "func_sig": "55 8B EC 83 EC ??",
+            }
+            llm_result = {
+                "found_vcall": [
+                    {
+                        "func_name": "VirtualTarget",
+                        "insn_va": "0x401010",
+                        "insn_disasm": "call dword ptr [eax]",
+                        "vfunc_offset": "0x0",
+                    }
+                ],
+                "found_call": [],
+                "found_funcptr": [],
+                "found_gv": [],
+                "found_struct_offset": [],
+            }
+            context = {
+                "model": "test-model",
+                "prompt_path": "prompt.md",
+                "reference_yaml_paths": ["reference.windows.yaml"],
+                "temperature": None,
+            }
+            with (
+                patch("ida_analyze_util.preprocess_func_sig_via_mcp", new=AsyncMock(return_value=fast_candidate)),
+                patch("ida_analyze_util.preprocess_vtable_via_mcp", new=AsyncMock(return_value=None)),
+                patch("ida_analyze_util._prepare_llm_context", return_value=context),
+                patch(
+                    "ida_analyze_util._call_llm_for_targets",
+                    new=AsyncMock(return_value=(llm_result, [(0x401000, 0x401100)])),
+                ) as call_llm,
+                patch(
+                    "ida_analyze_util._inspect_llm_instruction",
+                    new=AsyncMock(
+                        return_value={
+                            "func_start": "0x401000",
+                            "line": "call dword ptr [eax]",
+                            "displacements": ["0x0"],
+                        }
+                    ),
+                ),
+                patch(
+                    "ida_analyze_util._inspect_function_via_mcp",
+                    new=AsyncMock(
+                        return_value={
+                            "func_name": "VirtualTarget",
+                            "func_va": "0x403000",
+                            "func_rva": "0x3000",
+                            "func_size": "0x20",
+                            "func_sig": "55 8B EC 83 EC ??",
+                        }
+                    ),
+                ),
+            ):
+                result = await preprocess_common_skill(
+                    session=SimpleNamespace(call_tool=AsyncMock()),
+                    expected_outputs=[str(output)],
+                    new_binary_dir=root,
+                    platform="windows",
+                    image_base=0x400000,
+                    func_names=["VirtualTarget"],
+                    func_vtable_relations=[("VirtualTarget", "TargetClass")],
+                    llm_decompile_specs=[
+                        {
+                            "symbol_name": "VirtualTarget",
+                            "prompt_path": "prompt.md",
+                            "reference_yaml_paths": ["reference.windows.yaml"],
+                            "expected_result_sections": ["found_vcall"],
+                            "dependency_policy": {"Predecessor.windows.yaml": "required"},
+                        }
+                    ],
+                    llm_config={"model": "test-model"},
+                    generate_yaml_desired_fields=[
+                        (
+                            "VirtualTarget",
+                            ["func_name", "vfunc_sig", "vfunc_offset", "vfunc_index", "vtable_name"],
+                        )
+                    ],
+                )
+
+            self.assertTrue(result)
+            call_llm.assert_awaited_once()
+            self.assertEqual(["VirtualTarget"], call_llm.await_args.kwargs["symbol_names"])
+
+    async def test_generated_function_signature_must_be_unique(self):
+        function_payload = {
+            "pointer_size": 4,
+            "function": {
+                "func_va": "0x402000",
+                "func_rva": "0x2000",
+                "func_size": "0x20",
+                "func_sig": "55 8B EC 83 EC ??",
+            },
+        }
+
+        async def ambiguous_call_tool(name, _arguments):
+            if name == "py_eval":
+                return function_payload
+            return {"matches": ["0x402000", "0x403000"], "n": 2}
+
+        async def unique_call_tool(name, _arguments):
+            if name == "py_eval":
+                return function_payload
+            return {"matches": ["0x402000"], "n": 1}
+
+        self.assertIsNone(
+            await _inspect_function_via_mcp(
+                SimpleNamespace(call_tool=ambiguous_call_tool),
+                0x402000,
+                0x400000,
+                "Target",
+            )
+        )
+        self.assertEqual(
+            "Target",
+            (
+                await _inspect_function_via_mcp(
+                    SimpleNamespace(call_tool=unique_call_tool),
+                    0x402000,
+                    0x400000,
+                    "Target",
+                )
+            )["func_name"],
+        )
+
+    async def test_llm_direct_call_resolves_requested_jmp_thunk(self):
+        llm_result = {
+            "found_vcall": [],
+            "found_call": [
+                {
+                    "func_name": "Target",
+                    "insn_va": "0x401010",
+                    "insn_disasm": "call j_Target",
+                }
+            ],
+            "found_funcptr": [],
+            "found_gv": [],
+            "found_struct_offset": [],
+        }
+        inspected_function = {
+            "func_name": "Target",
+            "func_va": "0x403000",
+            "func_rva": "0x3000",
+            "func_size": "0x20",
+            "func_sig": "55 8B EC 83 EC ??",
+        }
+        with (
+            patch(
+                "ida_analyze_util._inspect_llm_instruction",
+                new=AsyncMock(
+                    return_value={
+                        "func_start": "0x401000",
+                        "line": "call j_Target",
+                        "code_refs": ["0x402000"],
+                    }
+                ),
+            ),
+            patch(
+                "ida_analyze_util._resolve_jmp_thunk_target_via_mcp",
+                new=AsyncMock(return_value=0x403000),
+            ) as resolve_thunk,
+            patch(
+                "ida_analyze_util._inspect_function_via_mcp",
+                new=AsyncMock(return_value=inspected_function),
+            ) as inspect_function,
+        ):
+            candidate = await _preprocess_llm_target(
+                session=SimpleNamespace(call_tool=AsyncMock()),
+                symbol_name="Target",
+                category="func",
+                spec={"expected_result_sections": ["found_call"]},
+                llm_config={"model": "test-model"},
+                new_binary_dir=Path("D:/game/engine"),
+                platform="windows",
+                image_base=0x400000,
+                desired_fields=[
+                    "func_name",
+                    "func_sig",
+                    "func_va",
+                    "func_rva",
+                    "func_size",
+                    "func_sig_resolve_jmp_thunk",
+                ],
+                llm_result=llm_result,
+                target_ranges=[(0x401000, 0x401100)],
+            )
+
+        self.assertEqual(inspected_function, candidate)
+        resolve_thunk.assert_awaited_once()
+        inspect_function.assert_awaited_once_with(ANY, 0x403000, 0x400000, "Target")
+
+    async def test_call_llm_for_targets_preserves_tail_chunk_ranges(self):
+        exported = {
+            "func_name": "Predecessor",
+            "func_start": "0x401000",
+            "func_end": "0x401050",
+            "chunk_ranges": [["0x401000", "0x401050"], ["0x402000", "0x402020"]],
+            "disasm_code": "0x402010: call sub_403000",
+            "procedure": "sub_403000();",
+        }
+        context = {
+            "targets": [({}, 0x401000)],
+            "reference_items": [
+                {
+                    "func_name": "Predecessor",
+                    "func_va": "0x401000",
+                    "disasm_code": "call Target",
+                    "procedure": "Target();",
+                }
+            ],
+            "model": "test-model",
+            "prompt_template": "{reference_blocks}\n{target_blocks}\n{symbol_name_list}",
+        }
+        with (
+            patch("ida_analyze_util._export_llm_function", new=AsyncMock(return_value=exported)),
+            patch(
+                "ida_analyze_util.call_llm_decompile",
+                new=AsyncMock(
+                    return_value={
+                        "found_vcall": [],
+                        "found_call": [],
+                        "found_funcptr": [],
+                        "found_gv": [],
+                        "found_struct_offset": [],
+                    }
+                ),
+            ),
+        ):
+            _result, target_ranges = await _call_llm_for_targets(
+                session=SimpleNamespace(call_tool=AsyncMock()),
+                symbol_names=["Target"],
+                specs={"Target": {"expected_result_sections": ["found_call"]}},
+                context=context,
+                platform="windows",
+                new_binary_dir=Path("D:/game/engine"),
+            )
+
+        self.assertEqual([(0x401000, 0x401050), (0x402000, 0x402020)], target_ranges)
+        self.assertTrue(
+            _llm_entry_instruction_is_valid(
+                {"insn_va": "0x402010"},
+                {"func_start": "0x401000", "line": "call sub_403000 ; tail chunk"},
+                target_ranges,
+                [
+                    {"regex": r"jmp .+"},
+                    {"regex": r"call sub_403000"},
+                ],
+            )
+        )
+
+    def test_prepare_llm_context_skips_missing_optional_predecessor(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            prompt = root / "prompt.md"
+            required_reference = root / "Required.yaml"
+            optional_reference = root / "Optional.yaml"
+            required_current = root / "Required.windows.yaml"
+            missing_optional = root / "Optional.windows.yaml"
+            prompt.write_text("{reference_blocks}\n{target_blocks}\n{symbol_name_list}", encoding="utf-8")
+            required_reference.write_text(
+                "func_name: Required\nfunc_va: '0x401000'\ndisasm_code: call Target\nprocedure: Target();\n",
+                encoding="utf-8",
+            )
+            optional_reference.write_text(
+                "func_name: Optional\nfunc_va: '0x402000'\ndisasm_code: call Target\nprocedure: Target();\n",
+                encoding="utf-8",
+            )
+            required_current.write_text("func_name: Required\nfunc_va: '0x411000'\n", encoding="utf-8")
+            context = _prepare_llm_context(
+                {
+                    "symbol_name": "Target",
+                    "prompt_path": str(prompt),
+                    "reference_yaml_paths": [str(required_reference), str(optional_reference)],
+                    "expected_result_sections": ["found_call"],
+                    "dependency_policy": {
+                        "Required.{platform}.yaml": "required",
+                        "Optional.{platform}.yaml": "optional",
+                    },
+                },
+                {
+                    "model": "test-model",
+                    "_expected_inputs": [str(required_current)],
+                    "_optional_inputs": [str(missing_optional)],
+                },
+                root,
+                "windows",
+            )
+
+            self.assertEqual(1, len(context["targets"]))
+            self.assertEqual(0x411000, context["targets"][0][1])
+            self.assertEqual([str(required_reference.resolve())], context["reference_yaml_paths"])
+
+    async def test_dependency_contract_is_validated_before_fast_path(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            output = root / "Target.windows.yaml"
+            fast_path = AsyncMock(
+                return_value={
+                    "func_name": "Target",
+                    "func_va": "0x402000",
+                    "func_rva": "0x2000",
+                    "func_size": "0x20",
+                    "func_sig": "55 8B EC",
+                }
+            )
+            with (
+                patch("ida_analyze_util._prepare_llm_context", return_value=None) as prepare_context,
+                patch("ida_analyze_util.preprocess_func_sig_via_mcp", new=fast_path),
+            ):
+                result = await preprocess_common_skill(
+                    session=SimpleNamespace(call_tool=AsyncMock()),
+                    expected_outputs=[str(output)],
+                    new_binary_dir=root,
+                    platform="windows",
+                    image_base=0x400000,
+                    func_names=["Target"],
+                    llm_decompile_specs=[
+                        {
+                            "symbol_name": "Target",
+                            "prompt_path": "prompt.md",
+                            "reference_yaml_paths": ["reference.windows.yaml"],
+                            "expected_result_sections": ["found_call"],
+                            "dependency_policy": {"Predecessor.windows.yaml": "required"},
+                        }
+                    ],
+                    llm_config={"model": "test-model"},
+                    generate_yaml_desired_fields=[
+                        ("Target", ["func_name", "func_sig", "func_va", "func_rva", "func_size"])
+                    ],
+                )
+
+            self.assertFalse(result)
+            prepare_context.assert_called_once()
+            fast_path.assert_not_awaited()
+
+    def test_llm_spec_rejects_casefold_duplicate_dependency_policy(self):
+        self.assertIsNone(
+            _normalize_llm_decompile_specs(
+                [
+                    {
+                        "symbol_name": "Target",
+                        "prompt_path": "prompt.md",
+                        "reference_yaml_paths": ["reference.windows.yaml"],
+                        "expected_result_sections": ["found_call"],
+                        "dependency_policy": {
+                            "Predecessor.windows.yaml": "required",
+                            "predecessor.windows.yaml": "required",
+                        },
+                    }
+                ]
+            )
+        )
+
+    def test_llm_templates_support_module_and_module_name(self):
+        rendered = _resolve_llm_template(
+            "references/{module}/{module_name}/Target.{platform}.yaml",
+            Path("D:/game/engine"),
+            "linux",
+        )
+        self.assertEqual("references/engine/engine/Target.linux.yaml", rendered)
 
     async def test_common_preprocessor_rejects_non_x86_pointer_size(self):
         async def call_tool(_name, _arguments):

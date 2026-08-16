@@ -9,10 +9,17 @@ modules:
       - name: find-SV_SendServerinfo
         expected_output:
           - SV_SendServerinfo.{platform}.yaml
+      - name: find-build_number
+        expected_output:
+          - build_number.{platform}.yaml
+        expected_input:
+          - SV_SendServerinfo.{platform}.yaml
     symbols:
       - name: R_RenderView
         category: func
       - name: SV_SendServerinfo
+        category: func
+      - name: build_number
         category: func
   - name: client
     module_windows: client.dll
