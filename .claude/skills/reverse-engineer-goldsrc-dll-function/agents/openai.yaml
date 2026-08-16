@@ -1,4 +1,0 @@
-interface:
-  display_name: "Reverse-Engineer GoldSrc DLL Function"
-  short_description: "Reconstruct GoldSrc functions and repair Hex-Rays globals"
-  default_prompt: "Use $reverse-engineer-goldsrc-dll-function to restore a GoldSrc PE or ELF function in IDA, repair unresolved MEMORY globals, validate the result, and save the active IDB in place without creating a backup."

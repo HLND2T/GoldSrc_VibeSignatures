@@ -1,5 +1,5 @@
 ---
-name: reverse-engineer-goldsrc-dll-function
+name: reverse-engineer-goldsrc-function
 description: Restore or reconstruct a GoldSrc function in a PE DLL or ELF .so IDA database so Hex-Rays resembles maintainable source, using the target machine code, official GoldSrc or HLDS source, and an optional cross-platform or DWARF peer. Use when recovering hw.dll, sw.dll, hw.so, engine, or game-module functions, including stripped ELF binaries without DWARF; repairing unresolved globals rendered as MEMORY[...] or neighboring-array offsets; renaming callees, globals, stack variables, and Hex-Rays locals; rebuilding prototypes, partial structs, and protocol enums; reconciling Windows and Linux layouts; documenting compiler inlining or source/binary mismatches; or validating and saving a reconstructed IDB.
 ---
 
