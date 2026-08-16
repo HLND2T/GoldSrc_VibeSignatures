@@ -13,3 +13,7 @@ depots/
 # Generated production outputs are promoted deliberately.
 gamesymbols/*.yaml
 gamedata/*/
+
+# Basic Memory knowledge base (memory.db, config, logs stay local)
+memory/*.db*
+memory/config.json

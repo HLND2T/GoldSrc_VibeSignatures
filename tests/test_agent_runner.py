@@ -165,7 +165,7 @@ class AgentRunnerExecutionTests(unittest.TestCase):
     def test_preflight_caches_success_and_failure_per_agent(self, mock_run_process) -> None:
         mock_run_process.side_effect = [
             subprocess.CompletedProcess(["claude", "mcp", "list"], 0, "ida-pro-mcp connected\n", ""),
-            subprocess.CompletedProcess(["codex", "mcp", "list"], 0, "serena connected\n", ""),
+            subprocess.CompletedProcess(["codex", "mcp", "list"], 0, "basic-memory connected\n", ""),
         ]
 
         self.assertTrue(agent_runner.has_required_mcp_server("claude"))

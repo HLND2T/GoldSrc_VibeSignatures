@@ -1,3 +1,9 @@
+---
+title: llm_decompile_runtime
+type: note
+permalink: goldsrc-vibesignatures/llm-decompile-runtime
+---
+
 # LLM_DECOMPILE Runtime
 
 ## Contract
@@ -18,7 +24,7 @@
 
 ## Reference/consumer invariants
 
-- Reference YAML generation and annotation workflow: `mem:reference_yaml_generation`.
+- Reference YAML generation and annotation workflow: [[reference_yaml_generation]].
 - Reference comments and Hex-Rays procedure are preserved; target comments are stripped before prompting to avoid leaking stale annotations.
 - Consumers re-check the live IDA instruction, unique code/data target, displacement/size, target-function membership, and pointer size before emitting canonical symbol YAML.
 

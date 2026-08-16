@@ -1,3 +1,9 @@
+---
+title: reference_yaml_generation
+type: note
+permalink: goldsrc-vibesignatures/reference-yaml-generation
+---
+
 # LLM_DECOMPILE Reference YAML Generation
 
 ## 触发信号
