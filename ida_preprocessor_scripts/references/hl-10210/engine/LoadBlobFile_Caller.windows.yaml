@@ -1,0 +1,280 @@
+func_name: "LoadBlobFile_Caller"
+func_va: "0x101d84e0"
+disasm_code: |-
+  .text:101D84E0                 ; Source: engine/LoadBlob.cpp:NLoadBlobFile.
+  The public source and this build differ in surrounding client-loader integration.
+  .text:101D84E0                 push    ebp; Source: engine/LoadBlob.cpp:NLoadBlobFile.
+  .text:101D84E1                 mov     ebp, esp
+  .text:101D84E3                 mov     eax, 100Ch
+  .text:101D84E8                 call    __alloca_probe
+  .text:101D84ED                 mov     eax, ___security_cookie
+  .text:101D84F2                 xor     eax, ebp
+  .text:101D84F4                 mov     [ebp+var_4], eax
+  .text:101D84F7                 mov     eax, [ebp+pblobfootprint]
+  .text:101D84FA                 push    ebx
+  .text:101D84FB                 mov     ebx, [ebp+pv]
+  .text:101D84FE                 push    esi
+  .text:101D84FF                 mov     esi, [ebp+pstFileName]
+  .text:101D8502                 push    edi
+  .text:101D8503                 xor     edi, edi
+  .text:101D8505                 mov     [ebp+var_1008], eax
+  .text:101D850B                 mov     [ebp+var_100C], ebx
+  .text:101D8511                 cmp     dword ptr [ebp+fLoadAsDll], edi
+  .text:101D8514                 jz      loc_101D85D8
+  .text:101D851A                 lea     ecx, [ebp+var_804]
+  .text:101D8520                 sub     ecx, esi
+  .text:101D8522                 mov     al, [esi]
+  .text:101D8524                 lea     esi, [esi+1]
+  .text:101D8527                 mov     [ecx+esi-1], al
+  .text:101D852B                 test    al, al
+  .text:101D852D                 jnz     short loc_101D8522
+  .text:101D852F                 mov     ecx, ds:104B8848h
+  .text:101D8535                 lea     edx, [ebp+LibFileName]
+  .text:101D853B                 push    800h
+  .text:101D8540                 push    edx
+  .text:101D8541                 lea     edx, [ebp+var_804]
+  .text:101D8547                 mov     eax, [ecx]
+  .text:101D8549                 push    edx
+  .text:101D854A                 call    dword ptr [eax+80h]
+  .text:101D8550                 lea     eax, [ebp+LibFileName]
+  .text:101D8556                 ; lpLibFileName
+  .text:101D8556                 push    eax; lpLibFileName
+  .text:101D8557                 call    ds:LoadLibraryA
+  .text:101D855D                 mov     esi, eax
+  .text:101D855F                 mov     eax, [ebp+var_1008]
+  .text:101D8565                 mov     [eax], esi
+  .text:101D8567                 test    esi, esi
+  .text:101D8569                 jnz     short loc_101D8593
+  .text:101D856B                 ; Line
+  .text:101D856B                 push    5Ah ; 'Z'; Line
+  .text:101D856D                 push    offset aCBuildslaveGol_8; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:101D8572                 push    offset aNullHmodulet; "NULL != hmoduleT"
+  .text:101D8577                 call    ds:_wassert
+  .text:101D857D                 add     esp, 0Ch
+  .text:101D8580                 mov     eax, edi
+  .text:101D8582                 pop     edi
+  .text:101D8583                 pop     esi
+  .text:101D8584                 pop     ebx
+  .text:101D8585                 mov     ecx, [ebp+var_4]
+  .text:101D8588                 ; StackCookie
+  .text:101D8588                 xor     ecx, ebp; StackCookie
+  .text:101D858A                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101D858F                 mov     esp, ebp
+  .text:101D8591                 pop     ebp
+  .text:101D8592                 retn
+  .text:101D8593                 push    offset asc_102BF4C8; "F"
+  .text:101D8598                 ; hModule
+  .text:101D8598                 push    esi; hModule
+  .text:101D8599                 mov     edi, esi
+  .text:101D859B                 call    ds:GetProcAddress
+  .text:101D85A1                 test    eax, eax
+  .text:101D85A3                 jz      short loc_101D85BE
+  .text:101D85A5                 push    ebx
+  .text:101D85A6                 call    eax
+  .text:101D85A8                 add     esp, 4
+  .text:101D85AB                 mov     eax, edi
+  .text:101D85AD                 pop     edi
+  .text:101D85AE                 pop     esi
+  .text:101D85AF                 pop     ebx
+  .text:101D85B0                 mov     ecx, [ebp+var_4]
+  .text:101D85B3                 ; StackCookie
+  .text:101D85B3                 xor     ecx, ebp; StackCookie
+  .text:101D85B5                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101D85BA                 mov     esp, ebp
+  .text:101D85BC                 pop     ebp
+  .text:101D85BD                 retn
+  .text:101D85BE                 ; hLibModule
+  .text:101D85BE                 push    esi; hLibModule
+  .text:101D85BF                 call    ds:FreeLibrary
+  .text:101D85C5                 pop     edi
+  .text:101D85C6                 pop     esi
+  .text:101D85C7                 xor     eax, eax
+  .text:101D85C9                 pop     ebx
+  .text:101D85CA                 mov     ecx, [ebp+var_4]
+  .text:101D85CD                 ; StackCookie
+  .text:101D85CD                 xor     ecx, ebp; StackCookie
+  .text:101D85CF                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101D85D4                 mov     esp, ebp
+  .text:101D85D6                 pop     ebp
+  .text:101D85D7                 retn
+  .text:101D85D8                 mov     ecx, ds:104B8848h
+  .text:101D85DE                 push    0
+  .text:101D85E0                 push    offset Mode; "rb"
+  .text:101D85E5                 push    esi
+  .text:101D85E6                 mov     eax, [ecx]
+  .text:101D85E8                 call    dword ptr [eax+0D0h]
+  .text:101D85EE                 mov     ebx, eax
+  .text:101D85F0                 test    ebx, ebx
+  .text:101D85F2                 jnz     short loc_101D863E
+  .text:101D85F4                 mov     ecx, offset aCstrike; "cstrike"
+  .text:101D85F9                 mov     eax, 1124C060h
+  .text:101D85FE                 xchg    ax, ax
+  .text:101D8600                 mov     dl, [eax]
+  .text:101D8602                 cmp     dl, [ecx]
+  .text:101D8604                 jnz     short loc_101D8620
+  .text:101D8606                 test    dl, dl
+  .text:101D8608                 jz      short loc_101D861C
+  .text:101D860A                 mov     dl, [eax+1]
+  .text:101D860D                 cmp     dl, [ecx+1]
+  .text:101D8610                 jnz     short loc_101D8620
+  .text:101D8612                 add     eax, 2
+  .text:101D8615                 add     ecx, 2
+  .text:101D8618                 test    dl, dl
+  .text:101D861A                 jnz     short loc_101D8600
+  .text:101D861C                 xor     eax, eax
+  .text:101D861E                 jmp     short loc_101D8625
+  .text:101D8620                 sbb     eax, eax
+  .text:101D8622                 or      eax, 1
+  .text:101D8625                 test    eax, eax
+  .text:101D8627                 jz      short loc_101D863E
+  .text:101D8629                 mov     ecx, ds:104B8848h
+  .text:101D862F                 push    0
+  .text:101D8631                 push    offset Mode; "rb"
+  .text:101D8636                 push    esi
+  .text:101D8637                 mov     eax, [ecx]
+  .text:101D8639                 call    dword ptr [eax+28h]
+  .text:101D863C                 mov     ebx, eax
+  .text:101D863E                 mov     ecx, ds:104B8848h
+  .text:101D8644                 push    2
+  .text:101D8646                 push    0
+  .text:101D8648                 push    ebx
+  .text:101D8649                 mov     eax, [ecx]
+  .text:101D864B                 call    dword ptr [eax+30h]
+  .text:101D864E                 mov     ecx, ds:104B8848h
+  .text:101D8654                 push    ebx
+  .text:101D8655                 mov     eax, [ecx]
+  .text:101D8657                 call    dword ptr [eax+34h]
+  .text:101D865A                 mov     ecx, ds:104B8848h
+  .text:101D8660                 mov     edi, eax
+  .text:101D8662                 push    0
+  .text:101D8664                 push    0
+  .text:101D8666                 push    ebx
+  .text:101D8667                 mov     eax, [ecx]
+  .text:101D8669                 call    dword ptr [eax+30h]
+  .text:101D866C                 ; Size
+  .text:101D866C                 push    edi; Size
+  .text:101D866D                 call    ds:__imp_malloc
+  .text:101D8673                 mov     ecx, ds:104B8848h
+  .text:101D8679                 add     esp, 4
+  .text:101D867C                 mov     esi, eax
+  .text:101D867E                 mov     eax, [ecx]
+  .text:101D8680                 push    ebx
+  .text:101D8681                 push    edi
+  .text:101D8682                 push    esi
+  .text:101D8683                 call    dword ptr [eax+54h]
+  .text:101D8686                 mov     eax, [ebp+var_1008]
+  .text:101D868C                 ; nBufSize
+  .text:101D868C                 push    edi; nBufSize
+  .text:101D868D                 ; pv
+  .text:101D868D                 push    [ebp+var_100C]; pv
+  .text:101D8693                 ; pblobfootprint
+  .text:101D8693                 push    eax; pblobfootprint
+  .text:101D8694                 ; pBuf
+  .text:101D8694                 push    esi; pBuf
+  .text:101D8695                 call    NLoadBlob; target: LoadBlobFile
+  .text:101D869A                 ; Block
+  .text:101D869A                 push    esi; Block
+  .text:101D869B                 mov     edi, eax
+  .text:101D869D                 call    ds:__imp_free
+  .text:101D86A3                 mov     ecx, ds:104B8848h
+  .text:101D86A9                 add     esp, 14h
+  .text:101D86AC                 mov     edx, [ecx]
+  .text:101D86AE                 push    ebx
+  .text:101D86AF                 call    dword ptr [edx+2Ch]
+  .text:101D86B2                 mov     ecx, [ebp+var_4]
+  .text:101D86B5                 mov     eax, edi
+  .text:101D86B7                 pop     edi
+  .text:101D86B8                 pop     esi
+  .text:101D86B9                 ; StackCookie
+  .text:101D86B9                 xor     ecx, ebp; StackCookie
+  .text:101D86BB                 pop     ebx
+  .text:101D86BC                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101D86C1                 mov     esp, ebp
+  .text:101D86C3                 pop     ebp
+  .text:101D86C4                 retn
+procedure: |-
+  void *__cdecl NLoadBlobFile(const char *pstFileName, BlobFootprint_t *pblobfootprint, void *pv, char fLoadAsDll)
+  {
+    const char *source_cursor; // esi
+    char copy_char; // al
+    HMODULE hmoduleT; // esi
+    FARPROC pfF; // eax
+    int fp; // ebx
+    int compare_result; // eax
+    int nSize; // edi
+    void *pBuf; // esi
+    void *nRet; // edi
+    CHAR rgchLocalPath[2048]; // [esp+14h] [ebp-1004h] BYREF
+    _BYTE rgchNew[2048]; // [esp+814h] [ebp-804h] BYREF
+    source_cursor = pstFileName;
+    if ( fLoadAsDll )
+    {
+      do
+      {
+        copy_char = *source_cursor++;
+        source_cursor[rgchNew - pstFileName - 1] = copy_char;
+      }
+      while ( copy_char );
+      (*(void (__thiscall **)(void *, _BYTE *, CHAR *, int))(*(_DWORD *)MEMORY[0x104B8848] + 128))(
+        MEMORY[0x104B8848],
+        rgchNew,
+        rgchLocalPath,
+        2048);
+      hmoduleT = LoadLibraryA(rgchLocalPath);
+      pblobfootprint->m_hDll = hmoduleT;
+      if ( !hmoduleT )
+        wassert(L"NULL != hmoduleT", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\engine\\LoadBlob.cpp", 0x5Au);
+      pfF = GetProcAddress(hmoduleT, L"F");
+      if ( pfF )
+      {
+        ((void (__cdecl *)(void *))pfF)(pv);
+        return hmoduleT;
+      }
+      else
+      {
+        FreeLibrary(hmoduleT);
+        return nullptr;
+      }
+    }
+    else
+    {
+      fp = (*(int (__thiscall **)(void *, const char *, const char *, _DWORD))(*(_DWORD *)MEMORY[0x104B8848] + 208))(
+             MEMORY[0x104B8848],
+             pstFileName,
+             "rb",
+             0);
+      if ( !fp )
+      {
+        compare_result = strcmp(MEMORY[0x1124C060], "cstrike");
+        if ( compare_result )
+          compare_result = compare_result < 0 ? -1 : 1;
+        if ( compare_result )
+          fp = (*(int (__thiscall **)(void *, const char *, const char *, _DWORD))(*(_DWORD *)MEMORY[0x104B8848] + 40))(
+                 MEMORY[0x104B8848],
+                 pstFileName,
+                 "rb",
+                 0);
+      }
+      (*(void (__thiscall **)(void *, int, _DWORD, int))(*(_DWORD *)MEMORY[0x104B8848] + 48))(
+        MEMORY[0x104B8848],
+        fp,
+        0,
+        2);
+      nSize = (*(int (__thiscall **)(void *, int))(*(_DWORD *)MEMORY[0x104B8848] + 52))(MEMORY[0x104B8848], fp);
+      (*(void (__thiscall **)(void *, int, _DWORD, _DWORD))(*(_DWORD *)MEMORY[0x104B8848] + 48))(
+        MEMORY[0x104B8848],
+        fp,
+        0,
+        0);
+      pBuf = malloc(nSize);
+      (*(void (__thiscall **)(void *, void *, int, int))(*(_DWORD *)MEMORY[0x104B8848] + 84))(
+        MEMORY[0x104B8848],
+        pBuf,
+        nSize,
+        fp);
+      nRet = NLoadBlob(pBuf, pblobfootprint, pv, nSize); // target: LoadBlobFile
+      free(pBuf);
+      (*(void (__thiscall **)(void *, int))(*(_DWORD *)MEMORY[0x104B8848] + 44))(MEMORY[0x104B8848], fp);
+      return nRet;
+    }
+  }

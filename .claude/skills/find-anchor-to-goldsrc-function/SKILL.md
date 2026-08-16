@@ -24,6 +24,11 @@ Fail closed when the IDB input path or recorded hash does not match the requeste
 
 Use this order. Do not advance to a weaker method after a stronger method produced one validated candidate.
 
+Byte signatures are output validation only. Never put a byte pattern in `xref_signatures` or
+`exclude_signatures` to locate or disambiguate a target. A finder governed by this skill must pass
+`old_yaml_map=None` to `preprocess_common_skill` so a prior artifact's `func_sig` cannot bypass the
+required string/LLM discovery chain.
+
 ### 1. Direct `xref_strings`
 
 Find a static literal referenced **inside the requested function**. Favor an invariant diagnostic, assertion, protocol label, or format string that is unlikely to be localized or reused.
@@ -48,7 +53,8 @@ Use a plain substring only when an exact literal is impossible and record why it
 
 ### 2. `LLM_DECOMPILE` from a Predecessor
 
-Use this only if no direct `xref_strings` anchor can identify one target function.
+Use this only if no direct `xref_strings` anchor can identify one target function. Locate the
+predecessor itself through direct `xref_strings`; do not use a signature to locate it.
 
 1. Deterministically locate a predecessor with its own stable string or existing artifact.
 2. Export the predecessor's current-binary disassembly and pseudocode.
@@ -103,7 +109,11 @@ Treat these values only as regression evidence for their exact SHA-256 inputs, n
 ## Repository Integration
 
 - Implement deterministic discovery in `ida_preprocessor_scripts/find-<symbol>.py` through `preprocess_common_skill` and `func_xrefs`.
-- Let the normal pipeline try prior validated signatures, then `xref_strings`; the shared helper rejects non-unique candidates and verifies the emitted signature.
+- Direct target strings are the first locator. When a target has no usable in-function string, add a
+  string-located predecessor finder, generate its reference YAML, and use `LLM_DECOMPILE` to recover
+  the direct call target.
+- Pass `old_yaml_map=None` for these string/LLM finders. The shared helper must validate the emitted
+  `func_sig` for uniqueness after discovery, but must not use a prior `func_sig` to locate the function.
 - Add `LLM_DECOMPILE` only for the explicit predecessor fallback described above.
 - Use the repository's owned lifecycle described in [[idalib-mcp]] on `127.0.0.1:13337`. The installed `ida-pro-mcp` command is an IDA plugin configurator, not this repository's HTTP supervisor.
 - Add Windows and Linux expected outputs and tests whenever the finder is registered in a production config.
