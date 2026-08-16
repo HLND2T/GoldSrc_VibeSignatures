@@ -6,6 +6,13 @@ import argparse
 import subprocess
 from pathlib import Path
 
+EXCLUDED_FORMAT_PREFIXES = (".claude/", ".codex/")
+
+
+def _is_excluded_format_path(path: str) -> bool:
+    normalized_path = path.replace("\\", "/").casefold()
+    return normalized_path.startswith(EXCLUDED_FORMAT_PREFIXES)
+
 
 def repository_format_files() -> tuple[list[str], list[str]]:
     result = subprocess.run(
@@ -16,7 +23,7 @@ def repository_format_files() -> tuple[list[str], list[str]]:
     )
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or "git ls-files failed")
-    paths = [path for path in result.stdout.splitlines() if Path(path).is_file()]
+    paths = [path for path in result.stdout.splitlines() if Path(path).is_file() and not _is_excluded_format_path(path)]
     python_files = sorted(path for path in paths if path.endswith(".py"))
     yaml_files = sorted(
         path

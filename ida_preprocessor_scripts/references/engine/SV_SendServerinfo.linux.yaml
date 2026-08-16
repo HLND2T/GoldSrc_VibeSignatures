@@ -1,0 +1,477 @@
+func_name: "SV_SendServerinfo"
+func_va: "0xde920"
+disasm_code: |-
+  .text:000DE920                 push    ebp
+  .text:000DE921                 push    edi
+  .text:000DE922                 push    esi
+  .text:000DE923                 push    ebx
+  .text:000DE924                 sub     esp, 89Ch
+  .text:000DE92A                 mov     eax, [esp+8ACh+msg]
+  .text:000DE931                 fld     developer.value
+  .text:000DE937                 fldz
+  .text:000DE939                 fxch    st(1)
+  .text:000DE93B                 mov     [esp+8ACh+buf], eax
+  .text:000DE93F                 mov     eax, [esp+8ACh+client]
+  .text:000DE946                 mov     [esp+8ACh+var_870], eax
+  .text:000DE94A                 mov     eax, large gs:14h
+  .text:000DE950                 mov     [esp+8ACh+var_20], eax
+  .text:000DE957                 xor     eax, eax
+  .text:000DE959                 fucomip st, st(1)
+  .text:000DE95B                 fstp    st
+  .text:000DE95D                 jp      short loc_DE971
+  .text:000DE95F                 jnz     short loc_DE971
+  .text:000DE961                 cmp     ds:svs.maxclients, 1
+  .text:000DE968                 lea     ebx, [esp+8ACh+message]
+  .text:000DE96F                 jle     short loc_DE9E7
+  .text:000DE971                 mov     edi, [esp+8ACh+buf]
+  .text:000DE975                 mov     ecx, 8
+  .text:000DE97A                 mov     esi, 2
+  .text:000DE97F                 ; c
+  .text:000DE97F                 mov     [esp+8ACh+mapcyclelist], ecx; c
+  .text:000DE983                 mov     ebp, offset aCBuildDServerI; "%c\nBUILD %d SERVER (%i CRC)\nServer # "...
+  .text:000DE988                 ; sb
+  .text:000DE988                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DE98B                 call    MSG_WriteByte
+  .text:000DE990                 mov     ebx, ds:svs.spawncount
+  .text:000DE996                 call    build_number
+  .text:000DE99B                 mov     [esp+8ACh+var_898], esi
+  .text:000DE99F                 mov     [esp+8ACh+callback], ebp
+  .text:000DE9A3                 mov     [esp+8ACh+var_88C], ebx
+  .text:000DE9A7                 xor     ebx, ebx
+  .text:000DE9A9                 mov     [esp+8ACh+var_890], ebx
+  .text:000DE9AD                 lea     ebx, [esp+8ACh+message]
+  .text:000DE9B4                 mov     [esp+8ACh+sb], ebx
+  .text:000DE9B7                 mov     [esp+8ACh+var_894], eax
+  .text:000DE9BB                 mov     eax, 800h
+  .text:000DE9C0                 mov     [esp+8ACh+pFields], eax
+  .text:000DE9C4                 mov     eax, 1
+  .text:000DE9C9                 mov     [esp+8ACh+seq], eax
+  .text:000DE9CD                 mov     eax, 800h
+  .text:000DE9D2                 mov     [esp+8ACh+mapcyclelist], eax
+  .text:000DE9D6                 call    __snprintf_chk
+  .text:000DE9DB                 ; s
+  .text:000DE9DB                 mov     [esp+8ACh+mapcyclelist], ebx; s
+  .text:000DE9DF                 ; sb
+  .text:000DE9DF                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DE9E2                 call    MSG_WriteString
+  .text:000DE9E7                 mov     edi, [esp+8ACh+buf]
+  .text:000DE9EB                 mov     eax, 0Bh
+  .text:000DE9F0                 ; c
+  .text:000DE9F0                 mov     [esp+8ACh+mapcyclelist], eax; c
+  .text:000DE9F4                 lea     esi, [esp+8ACh+mungebuffer]
+  .text:000DE9F8                 ; sb
+  .text:000DE9F8                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DE9FB                 call    MSG_WriteByte
+  .text:000DEA00                 mov     eax, 30h ; '0'
+  .text:000DEA05                 ; c
+  .text:000DEA05                 mov     [esp+8ACh+mapcyclelist], eax; c
+  .text:000DEA09                 ; sb
+  .text:000DEA09                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DEA0C                 call    MSG_WriteLong
+  .text:000DEA11                 mov     eax, ds:svs.spawncount
+  .text:000DEA16                 ; sb
+  .text:000DEA16                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DEA19                 ; c
+  .text:000DEA19                 mov     [esp+8ACh+mapcyclelist], eax; c
+  .text:000DEA1D                 call    MSG_WriteLong
+  .text:000DEA22                 mov     eax, [esp+8ACh+var_870]
+  .text:000DEA26                 mov     eax, [eax+61F4h]
+  .text:000DEA2C                 ; e
+  .text:000DEA2C                 mov     [esp+8ACh+sb], eax; e
+  .text:000DEA2F                 call    NUM_FOR_EDICT
+  .text:000DEA34                 mov     edx, ds:sv.worldmapCRC
+  .text:000DEA3A                 ; data
+  .text:000DEA3A                 mov     [esp+8ACh+sb], esi; data
+  .text:000DEA3D                 mov     [esp+8ACh+mungebuffer], edx
+  .text:000DEA41                 dec     eax
+  .text:000DEA42                 mov     dl, al
+  .text:000DEA44                 not     dl
+  .text:000DEA46                 movzx   edx, dl
+  .text:000DEA49                 mov     [esp+8ACh+playernum], playernum_0
+  .text:000DEA4D                 mov     playernum_0, 4
+  .text:000DEA52                 ; len
+  .text:000DEA52                 mov     [esp+8ACh+mapcyclelist], eax; len
+  .text:000DEA56                 ; seq
+  .text:000DEA56                 mov     [esp+8ACh+seq], edx; seq
+  .text:000DEA5A                 call    COM_Munge3
+  .text:000DEA5F                 mov     edx, [esp+8ACh+mungebuffer]
+  .text:000DEA63                 ; sb
+  .text:000DEA63                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DEA66                 ; c
+  .text:000DEA66                 mov     [esp+8ACh+mapcyclelist], edx; c
+  .text:000DEA6A                 call    MSG_WriteLong
+  .text:000DEA6F                 mov     eax, offset sv.clientdllmd5
+  .text:000DEA74                 mov     edx, 10h
+  .text:000DEA79                 ; buf
+  .text:000DEA79                 mov     [esp+8ACh+seq], eax; buf
+  .text:000DEA7D                 ; iSize
+  .text:000DEA7D                 mov     [esp+8ACh+mapcyclelist], edx; iSize
+  .text:000DEA81                 ; sb
+  .text:000DEA81                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DEA84                 call    MSG_WriteBuf
+  .text:000DEA89                 mov     edx, ds:svs.maxclients
+  .text:000DEA8F                 ; sb
+  .text:000DEA8F                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DEA92                 ; c
+  .text:000DEA92                 mov     [esp+8ACh+mapcyclelist], edx; c
+  .text:000DEA96                 call    MSG_WriteByte
+  .text:000DEA9B                 mov     eax, [esp+8ACh+playernum]
+  .text:000DEA9F                 ; sb
+  .text:000DEA9F                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DEAA2                 ; c
+  .text:000DEAA2                 mov     [esp+8ACh+mapcyclelist], eax; c
+  .text:000DEAA6                 call    MSG_WriteByte
+  .text:000DEAAB                 fld     coop.value
+  .text:000DEAB1                 fldz
+  .text:000DEAB3                 fxch    st(1)
+  .text:000DEAB5                 fucomip st, st(1)
+  .text:000DEAB7                 jp      short loc_DEAD3
+  .text:000DEAB9                 jnz     short loc_DEAE0
+  .text:000DEABB                 fld     deathmatch.value
+  .text:000DEAC1                 fucomip st, st(1)
+  .text:000DEAC3                 fstp    st
+  .text:000DEAC5                 jp      loc_DED8D
+  .text:000DEACB                 jnz     loc_DED8D
+  .text:000DEAD1                 jmp     short loc_DEAE2
+  .text:000DEAD3                 fstp    st
+  .text:000DEAD5                 jmp     short loc_DEAE2
+  .text:000DEAE0                 fstp    st
+  .text:000DEAE2                 xor     eax, eax
+  .text:000DEAE4                 ; c
+  .text:000DEAE4                 mov     [esp+8ACh+mapcyclelist], eax; c
+  .text:000DEAE8                 mov     eax, [esp+8ACh+buf]
+  .text:000DEAEC                 ; sb
+  .text:000DEAEC                 mov     [esp+8ACh+sb], eax; sb
+  .text:000DEAEF                 call    MSG_WriteByte
+  .text:000DEAF4                 ; out
+  .text:000DEAF4                 mov     [esp+8ACh+mapcyclelist], ebx; out
+  .text:000DEAF8                 mov     ebp, offset sv.modelname
+  .text:000DEAFD                 ; in
+  .text:000DEAFD                 mov     [esp+8ACh+sb], offset com_gamedir; in
+  .text:000DEB04                 call    COM_FileBase
+  .text:000DEB09                 mov     edi, [esp+8ACh+buf]
+  .text:000DEB0D                 ; s
+  .text:000DEB0D                 mov     [esp+8ACh+mapcyclelist], ebx; s
+  .text:000DEB11                 ; sb
+  .text:000DEB11                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DEB14                 call    MSG_WriteString
+  .text:000DEB19                 mov     [esp+8ACh+sb], offset aHostname; "hostname"
+  .text:000DEB20                 call    Cvar_VariableString
+  .text:000DEB25                 ; sb
+  .text:000DEB25                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DEB28                 ; s
+  .text:000DEB28                 mov     [esp+8ACh+mapcyclelist], eax; s
+  .text:000DEB2C                 call    MSG_WriteString
+  .text:000DEB31                 ; s
+  .text:000DEB31                 mov     [esp+8ACh+mapcyclelist], ebp; s
+  .text:000DEB35                 ; sb
+  .text:000DEB35                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DEB38                 call    MSG_WriteString
+  .text:000DEB3D                 mov     eax, mapcyclefile.string
+  .text:000DEB42                 ; pLength
+  .text:000DEB42                 mov     [esp+8ACh+mapcyclelist], esi; pLength
+  .text:000DEB46                 ; filename
+  .text:000DEB46                 mov     [esp+8ACh+sb], eax; filename
+  .text:000DEB49                 call    COM_LoadFileForMe
+  .text:000DEB4E                 test    mapcyclelist_0, mapcyclelist_0
+  .text:000DEB50                 jz      short loc_DEB5E
+  .text:000DEB52                 mov     edx, [esp+8ACh+mungebuffer]
+  .text:000DEB56                 test    edx, edx
+  .text:000DEB58                 jnz     loc_DED50
+  .text:000DEB5E                 mov     mapcyclelist_0, [esp+8ACh+buf]
+  .text:000DEB62                 mov     ebx, offset aMapcycleFailur; "mapcycle failure"
+  .text:000DEB67                 ; s
+  .text:000DEB67                 mov     [esp+8ACh+mapcyclelist], ebx; s
+  .text:000DEB6B                 ; sb
+  .text:000DEB6B                 mov     [esp+8ACh+sb], eax; sb
+  .text:000DEB6E                 call    MSG_WriteString
+  .text:000DEB73                 mov     edi, [esp+8ACh+buf]
+  .text:000DEB77                 xor     eax, eax
+  .text:000DEB79                 ; c
+  .text:000DEB79                 mov     [esp+8ACh+mapcyclelist], eax; c
+  .text:000DEB7D                 ; sb
+  .text:000DEB7D                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DEB80                 call    MSG_WriteByte
+  .text:000DEB85                 mov     eax, 36h ; '6'
+  .text:000DEB8A                 ; c
+  .text:000DEB8A                 mov     [esp+8ACh+mapcyclelist], eax; c
+  .text:000DEB8E                 ; sb
+  .text:000DEB8E                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DEB91                 call    MSG_WriteByte
+  .text:000DEB96                 mov     eax, offset com_clientfallback
+  .text:000DEB9B                 ; s
+  .text:000DEB9B                 mov     [esp+8ACh+mapcyclelist], eax; s
+  .text:000DEB9F                 ; sb
+  .text:000DEB9F                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DEBA2                 call    MSG_WriteString
+  .text:000DEBA7                 xor     eax, eax
+  .text:000DEBA9                 mov     edx, 1
+  .text:000DEBAE                 ; sb
+  .text:000DEBAE                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DEBB1                 lea     edi, [esp+8ACh+dest]
+  .text:000DEBB5                 fld     sv_cheats.value
+  .text:000DEBBB                 fldz
+  .text:000DEBBD                 fucomip st, st(1)
+  .text:000DEBBF                 fstp    st
+  .text:000DEBC1                 setp    al
+  .text:000DEBC4                 cmovnz  eax, edx
+  .text:000DEBC7                 ; c
+  .text:000DEBC7                 mov     [esp+8ACh+mapcyclelist], eax; c
+  .text:000DEBCB                 call    MSG_WriteByte
+  .text:000DEBD0                 xor     ecx, ecx
+  .text:000DEBD2                 mov     edx, 44h ; 'D'
+  .text:000DEBD7                 ; count
+  .text:000DEBD7                 mov     [esp+8ACh+seq], edx; count
+  .text:000DEBDB                 ; fill
+  .text:000DEBDB                 mov     [esp+8ACh+mapcyclelist], ecx; fill
+  .text:000DEBDF                 ; dest
+  .text:000DEBDF                 mov     [esp+8ACh+sb], edi; dest
+  .text:000DEBE2                 call    Q_memset
+  .text:000DEBE7                 mov     ebp, ds:g_sv_delta
+  .text:000DEBED                 test    ebp, ebp
+  .text:000DEBEF                 jz      loc_DECAD
+  .text:000DEBF5                 lea     esi, [esi+0]
+  .text:000DEBF9                 lea     edi, [edi+0]
+  .text:000DEC00                 mov     esi, [esp+8ACh+buf]
+  .text:000DEC04                 mov     ebx, 0Eh
+  .text:000DEC09                 ; c
+  .text:000DEC09                 mov     [esp+8ACh+mapcyclelist], ebx; c
+  .text:000DEC0D                 ; sb
+  .text:000DEC0D                 mov     [esp+8ACh+sb], esi; sb
+  .text:000DEC10                 call    MSG_WriteByte
+  .text:000DEC15                 mov     eax, [ebp+4]
+  .text:000DEC18                 ; sb
+  .text:000DEC18                 mov     [esp+8ACh+sb], esi; sb
+  .text:000DEC1B                 ; s
+  .text:000DEC1B                 mov     [esp+8ACh+mapcyclelist], eax; s
+  .text:000DEC1F                 call    MSG_WriteString
+  .text:000DEC24                 mov     eax, [ebp+0Ch]
+  .text:000DEC27                 mov     eax, [eax+4]
+  .text:000DEC2A                 ; buf
+  .text:000DEC2A                 mov     [esp+8ACh+sb], esi; buf
+  .text:000DEC2D                 mov     esi, 10h
+  .text:000DEC32                 mov     ebx, eax
+  .text:000DEC34                 call    MSG_StartBitWriting
+  .text:000DEC39                 ; numbits
+  .text:000DEC39                 mov     [esp+8ACh+mapcyclelist], esi; numbits
+  .text:000DEC3D                 xor     esi, esi
+  .text:000DEC3F                 ; data
+  .text:000DEC3F                 mov     [esp+8ACh+sb], ebx; data
+  .text:000DEC42                 mov     [esp+8ACh+playernum], ebx
+  .text:000DEC46                 xor     ebx, ebx
+  .text:000DEC48                 call    MSG_WriteBits
+  .text:000DEC4D                 mov     eax, [esp+8ACh+playernum]
+  .text:000DEC51                 test    eax, eax
+  .text:000DEC53                 jle     short loc_DEC96
+  .text:000DEC55                 lea     esi, [esi+0]
+  .text:000DEC59                 lea     edi, [edi+0]
+  .text:000DEC60                 xor     eax, eax
+  .text:000DEC62                 mov     edx, offset g_MetaDelta
+  .text:000DEC67                 mov     ecx, 1
+  .text:000DEC6C                 inc     ebx
+  .text:000DEC6D                 ; callback
+  .text:000DEC6D                 mov     [esp+8ACh+callback], eax; callback
+  .text:000DEC71                 ; pFields
+  .text:000DEC71                 mov     [esp+8ACh+pFields], edx; pFields
+  .text:000DEC75                 ; force
+  .text:000DEC75                 mov     [esp+8ACh+seq], ecx; force
+  .text:000DEC79                 mov     eax, [ebp+0Ch]
+  .text:000DEC7C                 mov     ecx, [eax+2Ch]
+  .text:000DEC7F                 ; from
+  .text:000DEC7F                 mov     [esp+8ACh+sb], edi; from
+  .text:000DEC82                 add     ecx, esi
+  .text:000DEC84                 add     esi, 44h ; 'D'
+  .text:000DEC87                 ; to
+  .text:000DEC87                 mov     [esp+8ACh+mapcyclelist], ecx; to
+  .text:000DEC8B                 call    DELTA_WriteDelta
+  .text:000DEC90                 cmp     [esp+8ACh+playernum], ebx
+  .text:000DEC94                 jnz     short loc_DEC60
+  .text:000DEC96                 mov     eax, [esp+8ACh+buf]
+  .text:000DEC9A                 ; buf
+  .text:000DEC9A                 mov     [esp+8ACh+sb], eax; buf
+  .text:000DEC9D                 call    MSG_EndBitWriting
+  .text:000DECA2                 mov     ebp, [ebp+0]
+  .text:000DECA5                 test    ebp, ebp
+  .text:000DECA7                 jnz     loc_DEC00
+  .text:000DECAD                 call    SV_SetMoveVars
+  .text:000DECB2                 mov     edi, [esp+8ACh+buf]
+  .text:000DECB6                 ; message
+  .text:000DECB6                 mov     [esp+8ACh+sb], edi; message
+  .text:000DECB9                 call    SV_WriteMovevarsToClient
+  .text:000DECBE                 mov     eax, 20h ; ' '
+  .text:000DECC3                 ; c
+  .text:000DECC3                 mov     [esp+8ACh+mapcyclelist], eax; c
+  .text:000DECC7                 ; sb
+  .text:000DECC7                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DECCA                 call    MSG_WriteByte
+  .text:000DECCF                 mov     eax, ds:gGlobalVariables.cdAudioTrack
+  .text:000DECD4                 ; sb
+  .text:000DECD4                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DECD7                 ; c
+  .text:000DECD7                 mov     [esp+8ACh+mapcyclelist], eax; c
+  .text:000DECDB                 call    MSG_WriteByte
+  .text:000DECE0                 mov     eax, ds:gGlobalVariables.cdAudioTrack
+  .text:000DECE5                 ; sb
+  .text:000DECE5                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DECE8                 ; c
+  .text:000DECE8                 mov     [esp+8ACh+mapcyclelist], eax; c
+  .text:000DECEC                 call    MSG_WriteByte
+  .text:000DECF1                 mov     eax, 5
+  .text:000DECF6                 ; c
+  .text:000DECF6                 mov     [esp+8ACh+mapcyclelist], eax; c
+  .text:000DECFA                 ; sb
+  .text:000DECFA                 mov     [esp+8ACh+sb], edi; sb
+  .text:000DECFD                 call    MSG_WriteByte
+  .text:000DED02                 mov     ebx, [esp+8ACh+var_870]
+  .text:000DED06                 mov     eax, [ebx+61F4h]
+  .text:000DED0C                 ; e
+  .text:000DED0C                 mov     [esp+8ACh+sb], eax; e
+  .text:000DED0F                 call    NUM_FOR_EDICT
+  .text:000DED14                 mov     [esp+8ACh+sb], edi
+  .text:000DED17                 mov     [esp+8ACh+mapcyclelist], eax
+  .text:000DED1B                 call    MSG_WriteShort
+  .text:000DED20                 mov     eax, [esp+8ACh+var_20]
+  .text:000DED27                 xor     eax, large gs:14h
+  .text:000DED2E                 mov     dword ptr [ebx+4], 0
+  .text:000DED35                 mov     dword ptr [ebx+0Ch], 1
+  .text:000DED3C                 mov     dword ptr [ebx+8], 0
+  .text:000DED43                 jnz     short loc_DEDA7
+  .text:000DED45                 add     esp, 89Ch
+  .text:000DED4B                 pop     ebx
+  .text:000DED4C                 pop     esi
+  .text:000DED4D                 pop     edi
+  .text:000DED4E                 pop     ebp
+  .text:000DED4F                 retn
+  .text:000DED50                 cmp     edx, 2000h
+  .text:000DED56                 jle     short loc_DED68
+  .text:000DED58                 mov     esi, 2000h
+  .text:000DED5D                 mov     [esp+8ACh+mungebuffer], esi
+  .text:000DED61                 mov     byte ptr [mapcyclelist_0+1FFFh], 0
+  .text:000DED68                 ; s
+  .text:000DED68                 mov     [esp+8ACh+mapcyclelist], mapcyclelist_0; s
+  .text:000DED6C                 mov     [esp+8ACh+playernum], mapcyclelist_0
+  .text:000DED70                 mov     mapcyclelist_0, [esp+8ACh+buf]
+  .text:000DED74                 ; sb
+  .text:000DED74                 mov     [esp+8ACh+sb], eax; sb
+  .text:000DED77                 call    MSG_WriteString
+  .text:000DED7C                 mov     eax, [esp+8ACh+playernum]
+  .text:000DED80                 ; buffer
+  .text:000DED80                 mov     [esp+8ACh+sb], eax; buffer
+  .text:000DED83                 call    COM_FreeFile
+  .text:000DED88                 jmp     loc_DEB73
+  .text:000DED8D                 mov     eax, 1
+  .text:000DED92                 ; c
+  .text:000DED92                 mov     [esp+8ACh+mapcyclelist], eax; c
+  .text:000DED96                 mov     eax, [esp+8ACh+buf]
+  .text:000DED9A                 ; sb
+  .text:000DED9A                 mov     [esp+8ACh+sb], eax; sb
+  .text:000DED9D                 call    MSG_WriteByte
+  .text:000DEDA2                 jmp     loc_DEAF4
+  .text:000DEDA7                 call    __stack_chk_fail
+procedure: |-
+  void __cdecl SV_SendServerinfo(sizebuf_t *msg, client_t *client)
+  {
+    int spawncount; // ebx
+    int v3; // eax
+    int v4; // eax
+    char *v5; // eax
+    byte *v6; // eax
+    delta_info_t *i; // ebp
+    sizebuf_t *fieldCount; // ebx
+    int v9; // esi
+    int v10; // ebx
+    unsigned __int8 *v11; // ecx
+    int v12; // eax
+    sizebuf_t *sb; // [esp+0h] [ebp-8ACh]
+    int playernuma; // [esp+34h] [ebp-878h]
+    int playernum; // [esp+34h] [ebp-878h]
+    byte *playernumb; // [esp+34h] [ebp-878h]
+    int mungebuffer; // [esp+44h] [ebp-868h] BYREF
+    unsigned __int8 dest[68]; // [esp+48h] [ebp-864h] BYREF
+    char message[2048]; // [esp+8Ch] [ebp-820h] BYREF
+    unsigned int v20; // [esp+88Ch] [ebp-20h]
+    v20 = __readgsdword(0x14u);
+    if ( developer.value != 0.0 || svs.maxclients > 1 )
+    {
+      MSG_WriteByte(msg, 8);
+      spawncount = svs.spawncount;
+      v3 = build_number();
+      _snprintf_chk(message, 2048, 1, 2048, "%c\nBUILD %d SERVER (%i CRC)\nServer # %i\n", 2, v3, 0, spawncount);
+      MSG_WriteString(msg, message);
+    }
+    MSG_WriteByte(msg, 11);
+    MSG_WriteLong(msg, 48);
+    MSG_WriteLong(msg, svs.spawncount);
+    v4 = NUM_FOR_EDICT((const edict_t_0 *)client->edict);
+    mungebuffer = sv.worldmapCRC;
+    playernuma = v4 - 1;
+    COM_Munge3((unsigned __int8 *)&mungebuffer, 4, (unsigned __int8)~(v4 - 1));
+    MSG_WriteLong(msg, mungebuffer);
+    MSG_WriteBuf(msg, 16, sv.clientdllmd5);
+    MSG_WriteByte(msg, svs.maxclients);
+    MSG_WriteByte(msg, playernuma);
+    if ( coop.value == 0.0 && deathmatch.value != 0.0 )
+      MSG_WriteByte(msg, 1);
+    else
+      MSG_WriteByte(msg, 0);
+    COM_FileBase(com_gamedir, message);
+    MSG_WriteString(msg, message);
+    v5 = Cvar_VariableString("hostname");
+    MSG_WriteString(msg, v5);
+    MSG_WriteString(msg, sv.modelname);
+    v6 = COM_LoadFileForMe(mapcyclefile.string, &mungebuffer);
+    if ( v6 && mungebuffer )
+    {
+      if ( mungebuffer > 0x2000 )
+      {
+        mungebuffer = 0x2000;
+        v6[0x1FFF] = 0;
+      }
+      playernumb = v6;
+      MSG_WriteString(msg, (const char *)v6);
+      COM_FreeFile(playernumb);
+    }
+    else
+    {
+      MSG_WriteString(msg, "mapcycle failure");
+    }
+    MSG_WriteByte(msg, 0);
+    MSG_WriteByte(msg, 54);
+    MSG_WriteString(msg, com_clientfallback);
+    MSG_WriteByte(msg, 0.0 != sv_cheats.value);
+    Q_memset(dest, 0, 68);
+    for ( i = g_sv_delta; i; i = i->next )
+    {
+      MSG_WriteByte(msg, 14);
+      MSG_WriteString(msg, i->name);
+      fieldCount = (sizebuf_t *)i->delta->fieldCount;
+      MSG_StartBitWriting(msg);
+      v9 = 0;
+      sb = fieldCount;
+      playernum = (int)fieldCount;
+      v10 = 0;
+      MSG_WriteBits((uint32)sb, 16);
+      if ( playernum > 0 )
+      {
+        do
+        {
+          ++v10;
+          v11 = (unsigned __int8 *)&i->delta->pdd[v9++];
+          DELTA_WriteDelta(dest, v11, true, &g_MetaDelta, nullptr);
+        }
+        while ( playernum != v10 );
+      }
+      MSG_EndBitWriting(msg);
+    }
+    SV_SetMoveVars();
+    SV_WriteMovevarsToClient(msg);
+    MSG_WriteByte(msg, 32);
+    MSG_WriteByte(msg, gGlobalVariables.cdAudioTrack);
+    MSG_WriteByte(msg, gGlobalVariables.cdAudioTrack);
+    MSG_WriteByte(msg, 5);
+    v12 = NUM_FOR_EDICT((const edict_t_0 *)client->edict);
+    MSG_WriteShort(msg, v12);
+    client->spawned = 0;
+    client->connected = 1;
+    client->fully_connected = 0;
+  }

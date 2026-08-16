@@ -1,0 +1,419 @@
+func_name: "SV_SendServerinfo"
+func_va: "0x1020ddb0"
+disasm_code: |-
+  .text:1020DDB0                 push    ebp
+  .text:1020DDB1                 mov     ebp, esp
+  .text:1020DDB3                 sub     esp, 858h
+  .text:1020DDB9                 mov     eax, ___security_cookie
+  .text:1020DDBE                 xor     eax, ebp
+  .text:1020DDC0                 mov     [ebp+var_4], eax
+  .text:1020DDC3                 movss   xmm0, developer.value
+  .text:1020DDCB                 xorps   xmm1, xmm1
+  .text:1020DDCE                 ucomiss xmm0, xmm1
+  .text:1020DDD1                 push    ebx
+  .text:1020DDD2                 push    esi
+  .text:1020DDD3                 mov     esi, [ebp+client]
+  .text:1020DDD6                 push    edi
+  .text:1020DDD7                 mov     edi, [ebp+msg]
+  .text:1020DDDA                 mov     [ebp+buf], edi
+  .text:1020DDE0                 mov     [ebp+var_858], esi
+  .text:1020DDE6                 lahf
+  .text:1020DDE7                 test    ah, 44h
+  .text:1020DDEA                 jp      short loc_1020DDF5
+  .text:1020DDEC                 cmp     svs.maxclients, 1
+  .text:1020DDF3                 jle     short loc_1020DE36
+  .text:1020DDF5                 ; c
+  .text:1020DDF5                 push    svc_print; c
+  .text:1020DDF7                 ; sb
+  .text:1020DDF7                 push    edi; sb
+  .text:1020DDF8                 call    MSG_WriteByte
+  .text:1020DDFD                 add     esp, 8
+  .text:1020DE00                 push    svs.spawncount
+  .text:1020DE06                 push    0
+  .text:1020DE08                 call    build_number
+  .text:1020DE0D                 push    eax
+  .text:1020DE0E                 ; ArgList
+  .text:1020DE0E                 push    2; ArgList
+  .text:1020DE10                 push    offset aCBuildDServerI; "%c\nBUILD %d SERVER (%i CRC)\nServer # "...
+  .text:1020DE15                 lea     eax, [ebp+message]
+  .text:1020DE1B                 ; count
+  .text:1020DE1B                 push    800h; count
+  .text:1020DE20                 ; dest
+  .text:1020DE20                 push    eax; dest
+  .text:1020DE21                 call    Q_snprintf
+  .text:1020DE26                 lea     eax, [ebp+message]
+  .text:1020DE2C                 ; s
+  .text:1020DE2C                 push    eax; s
+  .text:1020DE2D                 ; sb
+  .text:1020DE2D                 push    edi; sb
+  .text:1020DE2E                 call    MSG_WriteString
+  .text:1020DE33                 add     esp, 24h
+  .text:1020DE36                 ; c
+  .text:1020DE36                 push    svc_serverinfo; c
+  .text:1020DE38                 ; sb
+  .text:1020DE38                 push    edi; sb
+  .text:1020DE39                 call    MSG_WriteByte
+  .text:1020DE3E                 ; c
+  .text:1020DE3E                 push    PROTOCOL_VERSION; c
+  .text:1020DE40                 ; sb
+  .text:1020DE40                 push    edi; sb
+  .text:1020DE41                 call    MSG_WriteLong
+  .text:1020DE46                 ; c
+  .text:1020DE46                 push    svs.spawncount; c
+  .text:1020DE4C                 ; sb
+  .text:1020DE4C                 push    edi; sb
+  .text:1020DE4D                 call    MSG_WriteLong
+  .text:1020DE52                 ; e
+  .text:1020DE52                 push    dword ptr [esi+630Ch]; e
+  .text:1020DE58                 call    NUM_FOR_EDICT
+  .text:1020DE5D                 mov     ecx, sv.worldmapCRC
+  .text:1020DE63                 mov     [ebp+mungebuffer], ecx
+  .text:1020DE69                 or      ecx, 0FFFFFFFFh
+  .text:1020DE6C                 lea     esi, [eax-1]
+  .text:1020DE6F                 sub     ecx, esi
+  .text:1020DE71                 lea     eax, [ebp+mungebuffer]
+  .text:1020DE77                 movzx   ecx, cl
+  .text:1020DE7A                 ; seq
+  .text:1020DE7A                 push    ecx; seq
+  .text:1020DE7B                 ; len
+  .text:1020DE7B                 push    4; len
+  .text:1020DE7D                 ; data
+  .text:1020DE7D                 push    eax; data
+  .text:1020DE7E                 call    COM_Munge3
+  .text:1020DE83                 ; c
+  .text:1020DE83                 push    [ebp+mungebuffer]; c
+  .text:1020DE89                 ; sb
+  .text:1020DE89                 push    edi; sb
+  .text:1020DE8A                 ; To prevent cheating with hacked maps
+  .text:1020DE8A                 call    MSG_WriteLong; To prevent cheating with hacked maps
+  .text:1020DE8F                 ; buf
+  .text:1020DE8F                 push    offset sv.clientdllmd5; buf
+  .text:1020DE94                 ; size
+  .text:1020DE94                 push    10h; size
+  .text:1020DE96                 ; sb
+  .text:1020DE96                 push    edi; sb
+  .text:1020DE97                 ; To prevent cheating with hacked client DLLs
+  .text:1020DE97                 call    MSG_WriteBuf; To prevent cheating with hacked client DLLs
+  .text:1020DE9C                 ; c
+  .text:1020DE9C                 push    svs.maxclients; c
+  .text:1020DEA2                 ; sb
+  .text:1020DEA2                 push    edi; sb
+  .text:1020DEA3                 call    MSG_WriteByte
+  .text:1020DEA8                 add     esp, 44h
+  .text:1020DEAB                 ; c
+  .text:1020DEAB                 push    esi; c
+  .text:1020DEAC                 ; sb
+  .text:1020DEAC                 push    edi; sb
+  .text:1020DEAD                 call    MSG_WriteByte
+  .text:1020DEB2                 movss   xmm0, coop.value
+  .text:1020DEBA                 add     esp, 8
+  .text:1020DEBD                 xorps   xmm1, xmm1
+  .text:1020DEC0                 ucomiss xmm0, xmm1
+  .text:1020DEC3                 lahf
+  .text:1020DEC4                 test    ah, 44h
+  .text:1020DEC7                 jp      short loc_1020DEE1
+  .text:1020DEC9                 movss   xmm0, deathmatch.value
+  .text:1020DED1                 ucomiss xmm0, xmm1
+  .text:1020DED4                 lahf
+  .text:1020DED5                 test    ah, 44h
+  .text:1020DED8                 jnp     short loc_1020DEE1
+  .text:1020DEDA                 mov     eax, 1
+  .text:1020DEDF                 jmp     short loc_1020DEE3
+  .text:1020DEE1                 xor     eax, eax
+  .text:1020DEE3                 ; c
+  .text:1020DEE3                 push    eax; c
+  .text:1020DEE4                 ; sb
+  .text:1020DEE4                 push    edi; sb
+  .text:1020DEE5                 call    MSG_WriteByte
+  .text:1020DEEA                 lea     eax, [ebp+message]
+  .text:1020DEF0                 ; out
+  .text:1020DEF0                 push    eax; out
+  .text:1020DEF1                 ; in
+  .text:1020DEF1                 push    offset com_gamedir; in
+  .text:1020DEF6                 call    COM_FileBase
+  .text:1020DEFB                 lea     eax, [ebp+message]
+  .text:1020DF01                 ; s
+  .text:1020DF01                 push    eax; s
+  .text:1020DF02                 ; sb
+  .text:1020DF02                 push    edi; sb
+  .text:1020DF03                 call    MSG_WriteString
+  .text:1020DF08                 push    offset var_name; "hostname"
+  .text:1020DF0D                 call    Cvar_VariableString
+  .text:1020DF12                 ; s
+  .text:1020DF12                 push    eax; s
+  .text:1020DF13                 ; sb
+  .text:1020DF13                 push    edi; sb
+  .text:1020DF14                 call    MSG_WriteString
+  .text:1020DF19                 ; s
+  .text:1020DF19                 push    offset sv.modelname; s
+  .text:1020DF1E                 ; sb
+  .text:1020DF1E                 push    edi; sb
+  .text:1020DF1F                 call    MSG_WriteString
+  .text:1020DF24                 lea     eax, [ebp+len]
+  .text:1020DF2A                 ; pLength
+  .text:1020DF2A                 push    eax; pLength
+  .text:1020DF2B                 ; filename
+  .text:1020DF2B                 push    mapcyclefile.string; filename
+  .text:1020DF31                 call    COM_LoadFileForMe
+  .text:1020DF36                 mov     esi, eax
+  .text:1020DF38                 add     esp, 34h
+  .text:1020DF3B                 test    esi, esi
+  .text:1020DF3D                 jz      short loc_1020DF73
+  .text:1020DF3F                 mov     eax, [ebp+len]
+  .text:1020DF45                 test    eax, eax
+  .text:1020DF47                 jz      short loc_1020DF73
+  .text:1020DF49                 cmp     eax, 2000h
+  .text:1020DF4E                 jle     short loc_1020DF61
+  .text:1020DF50                 mov     [ebp+len], 2000h
+  .text:1020DF5A                 mov     byte ptr [esi+1FFFh], 0
+  .text:1020DF61                 ; s
+  .text:1020DF61                 push    esi; s
+  .text:1020DF62                 ; sb
+  .text:1020DF62                 push    edi; sb
+  .text:1020DF63                 call    MSG_WriteString
+  .text:1020DF68                 ; buffer
+  .text:1020DF68                 push    esi; buffer
+  .text:1020DF69                 call    COM_FreeFile
+  .text:1020DF6E                 add     esp, 0Ch
+  .text:1020DF71                 jmp     short loc_1020DF81
+  .text:1020DF73                 push    offset aMapcycleFailur; "mapcycle failure"
+  .text:1020DF78                 ; sb
+  .text:1020DF78                 push    edi; sb
+  .text:1020DF79                 call    MSG_WriteString
+  .text:1020DF7E                 add     esp, 8
+  .text:1020DF81                 ; c
+  .text:1020DF81                 push    0; c
+  .text:1020DF83                 ; sb
+  .text:1020DF83                 push    edi; sb
+  .text:1020DF84                 call    MSG_WriteByte
+  .text:1020DF89                 ; c
+  .text:1020DF89                 push    svc_sendextrainfo; c
+  .text:1020DF8B                 ; sb
+  .text:1020DF8B                 push    edi; sb
+  .text:1020DF8C                 call    MSG_WriteByte
+  .text:1020DF91                 ; s
+  .text:1020DF91                 push    offset com_clientfallback; s
+  .text:1020DF96                 ; sb
+  .text:1020DF96                 push    edi; sb
+  .text:1020DF97                 call    MSG_WriteString
+  .text:1020DF9C                 movss   xmm0, allow_cheats
+  .text:1020DFA4                 xorps   xmm1, xmm1
+  .text:1020DFA7                 ucomiss xmm0, xmm1
+  .text:1020DFAA                 mov     edx, 1
+  .text:1020DFAF                 lahf
+  .text:1020DFB0                 xor     ecx, ecx
+  .text:1020DFB2                 test    ah, 44h
+  .text:1020DFB5                 cmovp   ecx, edx
+  .text:1020DFB8                 ; c
+  .text:1020DFB8                 push    ecx; c
+  .text:1020DFB9                 ; sb
+  .text:1020DFB9                 push    edi; sb
+  .text:1020DFBA                 call    MSG_WriteByte
+  .text:1020DFBF                 ; Begin inlined SV_WriteDeltaDescriptionsToClient
+  .text:1020DFBF                 push    44h ; 'D'; Begin inlined SV_WriteDeltaDescriptionsToClient
+  .text:1020DFC1                 lea     eax, [ebp+nulldesc]
+  .text:1020DFC7                 ; fill
+  .text:1020DFC7                 push    0; fill
+  .text:1020DFC9                 ; dest
+  .text:1020DFC9                 push    eax; dest
+  .text:1020DFCA                 call    Q_memset
+  .text:1020DFCF                 mov     ebx, g_sv_delta
+  .text:1020DFD5                 add     esp, 2Ch
+  .text:1020DFD8                 test    ebx, ebx
+  .text:1020DFDA                 jz      short loc_1020E051
+  .text:1020DFDC                 nop     dword ptr [eax+00h]
+  .text:1020DFE0                 ; c
+  .text:1020DFE0                 push    svc_deltadescription; c
+  .text:1020DFE2                 ; sb
+  .text:1020DFE2                 push    edi; sb
+  .text:1020DFE3                 call    MSG_WriteByte
+  .text:1020DFE8                 ; s
+  .text:1020DFE8                 push    dword ptr [ebx+4]; s
+  .text:1020DFEB                 ; sb
+  .text:1020DFEB                 push    edi; sb
+  .text:1020DFEC                 call    MSG_WriteString
+  .text:1020DFF1                 mov     eax, [ebx+0Ch]
+  .text:1020DFF4                 ; buf
+  .text:1020DFF4                 push    [ebp+buf]; buf
+  .text:1020DFFA                 mov     edi, [eax+4]
+  .text:1020DFFD                 call    MSG_StartBitWriting
+  .text:1020E002                 ; numbits
+  .text:1020E002                 push    10h; numbits
+  .text:1020E004                 ; data
+  .text:1020E004                 push    edi; data
+  .text:1020E005                 call    MSG_WriteBits
+  .text:1020E00A                 add     esp, 1Ch
+  .text:1020E00D                 test    edi, edi
+  .text:1020E00F                 jle     short loc_1020E03C
+  .text:1020E011                 xor     esi, esi
+  .text:1020E013                 mov     eax, [ebx+0Ch]
+  .text:1020E016                 ; callback
+  .text:1020E016                 push    0; callback
+  .text:1020E018                 ; pFields
+  .text:1020E018                 push    offset g_MetaDelta; pFields
+  .text:1020E01D                 ; force
+  .text:1020E01D                 push    1; force
+  .text:1020E01F                 mov     eax, [eax+2Ch]
+  .text:1020E022                 add     eax, esi
+  .text:1020E024                 ; to
+  .text:1020E024                 push    eax; to
+  .text:1020E025                 lea     eax, [ebp+nulldesc]
+  .text:1020E02B                 ; from
+  .text:1020E02B                 push    eax; from
+  .text:1020E02C                 call    DELTA_WriteDelta
+  .text:1020E031                 add     esp, 14h
+  .text:1020E034                 add     esi, 44h ; 'D'
+  .text:1020E037                 sub     edi, 1
+  .text:1020E03A                 jnz     short loc_1020E013
+  .text:1020E03C                 mov     edi, [ebp+buf]
+  .text:1020E042                 ; buf
+  .text:1020E042                 push    edi; buf
+  .text:1020E043                 call    MSG_EndBitWriting
+  .text:1020E048                 mov     ebx, [ebx]
+  .text:1020E04A                 add     esp, 4
+  .text:1020E04D                 test    ebx, ebx
+  .text:1020E04F                 jnz     short loc_1020DFE0
+  .text:1020E051                 ; End inlined SV_WriteDeltaDescriptionsToClient
+  .text:1020E051                 call    SV_SetMoveVars; End inlined SV_WriteDeltaDescriptionsToClient
+  .text:1020E056                 ; message
+  .text:1020E056                 push    edi; message
+  .text:1020E057                 call    SV_WriteMovevarsToClient
+  .text:1020E05C                 ; c
+  .text:1020E05C                 push    svc_cdtrack; c
+  .text:1020E05E                 ; sb
+  .text:1020E05E                 push    edi; sb
+  .text:1020E05F                 call    MSG_WriteByte
+  .text:1020E064                 ; c
+  .text:1020E064                 push    gGlobalVariables.cdAudioTrack; c
+  .text:1020E06A                 ; sb
+  .text:1020E06A                 push    edi; sb
+  .text:1020E06B                 call    MSG_WriteByte
+  .text:1020E070                 ; c
+  .text:1020E070                 push    gGlobalVariables.cdAudioTrack; c
+  .text:1020E076                 ; sb
+  .text:1020E076                 push    edi; sb
+  .text:1020E077                 call    MSG_WriteByte
+  .text:1020E07C                 ; c
+  .text:1020E07C                 push    svc_setview; c
+  .text:1020E07E                 ; sb
+  .text:1020E07E                 push    edi; sb
+  .text:1020E07F                 call    MSG_WriteByte
+  .text:1020E084                 mov     ebx, [ebp+var_858]
+  .text:1020E08A                 ; e
+  .text:1020E08A                 push    dword ptr [ebx+630Ch]; e
+  .text:1020E090                 call    NUM_FOR_EDICT
+  .text:1020E095                 ; c
+  .text:1020E095                 push    eax; c
+  .text:1020E096                 ; sb
+  .text:1020E096                 push    edi; sb
+  .text:1020E097                 call    MSG_WriteShort
+  .text:1020E09C                 mov     ecx, [ebp+var_4]
+  .text:1020E09F                 add     esp, 30h
+  .text:1020E0A2                 mov     dword ptr [ebx+4], 0
+  .text:1020E0A9                 ; StackCookie
+  .text:1020E0A9                 xor     ecx, ebp; StackCookie
+  .text:1020E0AB                 mov     dword ptr [ebx+0Ch], 1
+  .text:1020E0B2                 mov     dword ptr [ebx+8], 0
+  .text:1020E0B9                 pop     edi
+  .text:1020E0BA                 pop     esi
+  .text:1020E0BB                 pop     ebx
+  .text:1020E0BC                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1020E0C1                 mov     esp, ebp
+  .text:1020E0C3                 pop     ebp
+  .text:1020E0C4                 retn
+procedure: |-
+  // Restored from official engine/sv_main.c and hw.so DWARF; SV_WriteDeltaDescriptionsToClient is compiler-inlined in this build.
+  void __cdecl SV_SendServerinfo(sizebuf_t *msg, client_t *client)
+  {
+    int buildnum; // eax
+    int edictnum; // eax
+    int playernum; // esi
+    BOOL is_deathmatch; // eax
+    char *hostname; // eax
+    char *mapcyclelist; // esi
+    delta_info_t *p; // ebx
+    signed int c; // edi
+    int i; // esi
+    int viewEntity; // eax
+    int spawncount; // [esp-10h] [ebp-868h]
+    int len; // [esp+8h] [ebp-850h] BYREF
+    int mungebuffer; // [esp+Ch] [ebp-84Ch] BYREF
+    struct delta_description_t nulldesc; // [esp+10h] [ebp-848h] BYREF
+    char message[2048]; // [esp+54h] [ebp-804h] BYREF
+    if ( developer.value != 0.0 || svs.maxclients > 1 )
+    {
+      MSG_WriteByte(msg, svc_print);
+      spawncount = svs.spawncount;
+      buildnum = build_number();
+      Q_snprintf(message, 0x800u, "%c\nBUILD %d SERVER (%i CRC)\nServer # %i\n", 2, buildnum, 0, spawncount);
+      MSG_WriteString(msg, message);
+    }
+    MSG_WriteByte(msg, svc_serverinfo);
+    MSG_WriteLong(msg, PROTOCOL_VERSION);
+    MSG_WriteLong(msg, svs.spawncount);
+    edictnum = NUM_FOR_EDICT(client->edict);
+    mungebuffer = sv.worldmapCRC;
+    playernum = edictnum - 1;
+    COM_Munge3((unsigned __int8 *)&mungebuffer, 4, (unsigned __int8)(-1 - (edictnum - 1)));
+    MSG_WriteLong(msg, mungebuffer);              // To prevent cheating with hacked maps
+    MSG_WriteBuf(msg, 16, sv.clientdllmd5);       // To prevent cheating with hacked client DLLs
+    MSG_WriteByte(msg, svs.maxclients);
+    MSG_WriteByte(msg, playernum);
+    is_deathmatch = coop.value == 0.0 && deathmatch.value != 0.0;
+    MSG_WriteByte(msg, is_deathmatch);
+    COM_FileBase(com_gamedir, message);
+    MSG_WriteString(msg, message);
+    hostname = Cvar_VariableString("hostname");
+    MSG_WriteString(msg, hostname);
+    MSG_WriteString(msg, sv.modelname);
+    mapcyclelist = (char *)COM_LoadFileForMe(mapcyclefile.string, &len);
+    if ( mapcyclelist && len )
+    {
+      if ( len > 0x2000 )
+      {
+        len = 0x2000;
+        mapcyclelist[0x1FFF] = 0;
+      }
+      MSG_WriteString(msg, mapcyclelist);
+      COM_FreeFile(mapcyclelist);
+    }
+    else
+    {
+      MSG_WriteString(msg, "mapcycle failure");
+    }
+    MSG_WriteByte(msg, 0);
+    MSG_WriteByte(msg, svc_sendextrainfo);
+    MSG_WriteString(msg, com_clientfallback);
+    MSG_WriteByte(msg, allow_cheats != 0.0);
+    Q_memset(&nulldesc, 0, 68);                   // Begin inlined SV_WriteDeltaDescriptionsToClient
+    for ( p = g_sv_delta; p; p = p->next )
+    {
+      MSG_WriteByte(msg, svc_deltadescription);
+      MSG_WriteString(msg, p->name);
+      c = p->delta->fieldCount;
+      MSG_StartBitWriting(msg);
+      MSG_WriteBits(c, 16);
+      if ( c > 0 )
+      {
+        i = 0;
+        do
+        {
+          DELTA_WriteDelta((unsigned __int8 *)&nulldesc, (unsigned __int8 *)&p->delta->pdd[i++], 1, &g_MetaDelta, nullptr);
+          --c;
+        }
+        while ( c );
+      }
+      MSG_EndBitWriting(msg);
+    }
+    SV_SetMoveVars();                             // End inlined SV_WriteDeltaDescriptionsToClient
+    SV_WriteMovevarsToClient(msg);
+    MSG_WriteByte(msg, svc_cdtrack);
+    MSG_WriteByte(msg, gGlobalVariables.cdAudioTrack);
+    MSG_WriteByte(msg, gGlobalVariables.cdAudioTrack);
+    MSG_WriteByte(msg, svc_setview);
+    viewEntity = NUM_FOR_EDICT(client->edict);
+    MSG_WriteShort(msg, viewEntity);
+    client->spawned = 0;
+    client->connected = 1;
+    client->fully_connected = 0;
+  }

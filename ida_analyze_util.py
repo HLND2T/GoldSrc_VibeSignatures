@@ -7,10 +7,18 @@ import json
 import math
 import os
 import re
+import textwrap
 from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 
 import yaml
+
+from ida_llm_decompile import (
+    _build_llm_decompile_request_cache_key,
+    _empty_llm_decompile_result,
+    call_llm_decompile,
+    render_llm_decompile_blocks,
+)
 
 SYMBOL_CATEGORIES = frozenset({"func", "gv", "vfunc", "vtable", "patch", "structmember"})
 SIGNATURE_RE = re.compile(r"^(?:[0-9A-F]{2}|\?\?)(?: (?:[0-9A-F]{2}|\?\?))*$")
@@ -314,6 +322,319 @@ def parse_mcp_result(result):
         except json.JSONDecodeError:
             return value
     return value
+
+
+def _is_remote_absolute_path(path):
+    """Accept absolute paths using either the local or remote host path syntax."""
+    import ntpath
+    import posixpath
+
+    value = os.fspath(path)
+    return os.path.isabs(value) or posixpath.isabs(value) or ntpath.isabs(value)
+
+
+def build_remote_text_export_py_eval(
+    *,
+    output_path,
+    producer_code,
+    content_var="payload_text",
+    format_name="text",
+):
+    """Build a py_eval script that writes large text atomically and returns a small ack."""
+    output_path_str = os.fspath(output_path)
+    if not _is_remote_absolute_path(output_path_str):
+        raise ValueError(f"output_path must be absolute, got {output_path_str!r}")
+    if not str(producer_code).strip():
+        raise ValueError("producer_code cannot be empty")
+    if not str(content_var).strip():
+        raise ValueError("content_var cannot be empty")
+
+    producer_block = textwrap.indent(str(producer_code).rstrip(), "    ")
+    return (
+        "import json, ntpath, os, posixpath, traceback\n"
+        f"output_path = {output_path_str!r}\n"
+        f"format_name = {str(format_name)!r}\n"
+        "tmp_path = output_path + '.tmp'\n"
+        "def _is_remote_absolute_path(output_path, _os=os, _posixpath=posixpath, _ntpath=ntpath):\n"
+        "    return (\n"
+        "        _os.path.isabs(output_path)\n"
+        "        or _posixpath.isabs(output_path)\n"
+        "        or _ntpath.isabs(output_path)\n"
+        "    )\n"
+        "def _truncate_text(value, limit=800):\n"
+        "    text = '' if value is None else str(value)\n"
+        "    return text if len(text) <= limit else text[:limit] + ' [truncated]'\n"
+        "try:\n"
+        "    if not _is_remote_absolute_path(output_path):\n"
+        "        raise ValueError(f'output_path must be absolute: {output_path}')\n"
+        f"{producer_block}\n"
+        f"    payload_text = str({content_var})\n"
+        "    parent_dir = os.path.dirname(output_path)\n"
+        "    if parent_dir:\n"
+        "        os.makedirs(parent_dir, exist_ok=True)\n"
+        "    with open(tmp_path, 'w', encoding='utf-8') as handle:\n"
+        "        handle.write(payload_text)\n"
+        "    os.replace(tmp_path, output_path)\n"
+        "    result = json.dumps({\n"
+        "        'ok': True,\n"
+        "        'output_path': output_path,\n"
+        "        'bytes_written': len(payload_text.encode('utf-8')),\n"
+        "        'format': format_name,\n"
+        "    })\n"
+        "except Exception as exc:\n"
+        "    try:\n"
+        "        if os.path.exists(tmp_path):\n"
+        "            os.unlink(tmp_path)\n"
+        "    except Exception:\n"
+        "        pass\n"
+        "    result = json.dumps({\n"
+        "        'ok': False,\n"
+        "        'output_path': output_path,\n"
+        "        'error': _truncate_text(exc),\n"
+        "        'traceback': _truncate_text(traceback.format_exc()),\n"
+        "    })\n"
+    )
+
+
+def build_function_detail_export_py_eval(func_va_int: int) -> str:
+    """Build a robust function-detail export script for reference YAML generation."""
+    return (
+        textwrap.dedent(
+            rf"""
+        import ida_bytes, ida_funcs, ida_lines, ida_segment, idautils, idc, json
+        try:
+            import ida_hexrays
+        except Exception:
+            ida_hexrays = None
+
+        func_ea = {func_va_int}
+
+        def _append_chunk_range(chunk_ranges, start_ea, end_ea):
+            try:
+                start_ea = int(start_ea)
+                end_ea = int(end_ea)
+            except Exception:
+                return
+            if start_ea < end_ea:
+                chunk_ranges.append((start_ea, end_ea))
+
+        def _collect_chunk_ranges(func):
+            chunk_ranges = []
+            try:
+                initial_chunk_ranges = []
+                for start_ea, end_ea in idautils.Chunks(func.start_ea):
+                    _append_chunk_range(initial_chunk_ranges, start_ea, end_ea)
+                chunk_ranges = initial_chunk_ranges
+            except Exception:
+                pass
+            if not chunk_ranges:
+                tail_chunk_ranges = []
+                try:
+                    try:
+                        tail_iterator = ida_funcs.func_tail_iterator_t(func)
+                    except Exception:
+                        tail_iterator = ida_funcs.func_tail_iterator_t()
+                        if not tail_iterator.set_ea(func.start_ea):
+                            tail_iterator = None
+                    if tail_iterator is not None and tail_iterator.first():
+                        while True:
+                            chunk = tail_iterator.chunk()
+                            _append_chunk_range(
+                                tail_chunk_ranges,
+                                getattr(chunk, 'start_ea', None),
+                                getattr(chunk, 'end_ea', None),
+                            )
+                            if not tail_iterator.next():
+                                break
+                except Exception:
+                    tail_chunk_ranges = []
+                if tail_chunk_ranges:
+                    _append_chunk_range(
+                        tail_chunk_ranges,
+                        func.start_ea,
+                        func.end_ea,
+                    )
+                    chunk_ranges = tail_chunk_ranges
+            if not chunk_ranges:
+                chunk_ranges = [(int(func.start_ea), int(func.end_ea))]
+            return sorted(set(chunk_ranges))
+
+        def _find_chunk_end(ea, chunk_ranges):
+            for start_ea, end_ea in chunk_ranges:
+                if start_ea <= ea < end_ea:
+                    return end_ea
+            return None
+
+        def _is_in_chunk_ranges(ea, chunk_ranges):
+            return _find_chunk_end(ea, chunk_ranges) is not None
+
+        def _format_address(ea):
+            seg = ida_segment.getseg(ea)
+            seg_name = ida_segment.get_segm_name(seg) if seg else ''
+            return f"{{seg_name}}:{{ea:08X}}" if seg_name else f"{{ea:08X}}"
+
+        def _iter_comment_lines(ea):
+            seen = set()
+            for repeatable in (0, 1):
+                try:
+                    comment = idc.get_cmt(ea, repeatable)
+                except Exception:
+                    comment = None
+                if not comment:
+                    continue
+                text = ida_lines.tag_remove(comment).strip()
+                if text and text not in seen:
+                    seen.add(text)
+                    yield text
+
+            get_extra_cmt = getattr(idc, 'get_extra_cmt', None)
+            if get_extra_cmt is None:
+                return
+            for constant_name in ('E_PREV', 'E_NEXT'):
+                base_index = getattr(ida_lines, constant_name, None)
+                if not isinstance(base_index, int):
+                    continue
+                for offset in range(100):
+                    try:
+                        comment = get_extra_cmt(ea, base_index + offset)
+                    except Exception:
+                        break
+                    if not comment:
+                        break
+                    text = ida_lines.tag_remove(comment).strip()
+                    if text and text not in seen:
+                        seen.add(text)
+                        yield text
+
+        def _iter_chunk_code_heads(chunk_ranges):
+            for start_ea, end_ea in chunk_ranges:
+                ea = int(start_ea)
+                while ea != idc.BADADDR and ea < end_ea:
+                    try:
+                        flags = ida_bytes.get_flags(ea)
+                    except Exception:
+                        break
+                    if ida_bytes.is_code(flags):
+                        yield ea
+                    try:
+                        next_ea = idc.next_head(ea, end_ea)
+                    except Exception:
+                        break
+                    if next_ea == idc.BADADDR or next_ea <= ea:
+                        break
+                    ea = next_ea
+
+        def _render_disasm_lines(eas):
+            lines = []
+            for ea in eas:
+                ea = int(ea)
+                address_text = _format_address(ea)
+                for comment in _iter_comment_lines(ea):
+                    lines.append(f"{{address_text}}                 ; {{comment}}")
+                disasm_line = ida_lines.tag_remove(
+                    idc.generate_disasm_line(ea, 0) or ''
+                ).strip()
+                if disasm_line:
+                    lines.append(f"{{address_text}}                 {{disasm_line}}")
+            return '\n'.join(lines).strip()
+
+        def get_disasm(start_ea):
+            func = ida_funcs.get_func(start_ea)
+            if func is None:
+                return ''
+            chunk_ranges = _collect_chunk_ranges(func)
+            fallback_eas = sorted(
+                set(int(ea) for ea in _iter_chunk_code_heads(chunk_ranges))
+            )
+            if not fallback_eas:
+                return ''
+            try:
+                pending_eas = [int(func.start_ea)]
+                visited_eas = set()
+                collected_eas = set()
+                max_steps = len(fallback_eas) * 4 + 256
+                steps = 0
+                while pending_eas and steps < max_steps:
+                    ea = int(pending_eas.pop())
+                    while True:
+                        if not _is_in_chunk_ranges(ea, chunk_ranges):
+                            break
+                        flags = ida_bytes.get_flags(ea)
+                        if not ida_bytes.is_code(flags) or ea in visited_eas:
+                            break
+                        visited_eas.add(ea)
+                        collected_eas.add(ea)
+                        steps += 1
+                        mnem = (idc.print_insn_mnem(ea) or '').lower()
+                        refs = [
+                            int(ref)
+                            for ref in idautils.CodeRefsFrom(ea, False)
+                            if _is_in_chunk_ranges(int(ref), chunk_ranges)
+                        ]
+                        chunk_end = _find_chunk_end(ea, chunk_ranges)
+                        next_ea = (
+                            idc.next_head(ea, chunk_end)
+                            if chunk_end is not None
+                            else idc.BADADDR
+                        )
+                        if mnem in (
+                            'ret', 'retn', 'retf', 'iret', 'iretd', 'iretq',
+                            'int3', 'hlt', 'ud2',
+                        ):
+                            break
+                        if mnem == 'jmp':
+                            for ref in reversed(refs):
+                                if ref not in visited_eas:
+                                    pending_eas.append(ref)
+                            break
+                        if mnem.startswith('j'):
+                            for ref in reversed(refs):
+                                if ref not in visited_eas:
+                                    pending_eas.append(ref)
+                            if next_ea == idc.BADADDR or next_ea <= ea:
+                                break
+                            ea = int(next_ea)
+                            continue
+                        if next_ea == idc.BADADDR or next_ea <= ea:
+                            break
+                        ea = int(next_ea)
+                collected_eas.update(fallback_eas)
+                return _render_disasm_lines(sorted(collected_eas))
+            except Exception:
+                return _render_disasm_lines(fallback_eas)
+
+        def get_pseudocode(start_ea):
+            if ida_hexrays is None:
+                return ''
+            try:
+                if not ida_hexrays.init_hexrays_plugin():
+                    return ''
+                cfunc = ida_hexrays.decompile(start_ea)
+            except Exception:
+                return ''
+            if not cfunc:
+                return ''
+            return '\n'.join(
+                ida_lines.tag_remove(line.line) for line in cfunc.get_pseudocode()
+            )
+
+        globals().update(locals())
+        func = ida_funcs.get_func(func_ea)
+        if func is None:
+            raise ValueError(f"Function not found: {{hex(func_ea)}}")
+        func_start = int(func.start_ea)
+        result = json.dumps(
+            {{
+                "func_name": ida_funcs.get_func_name(func_start) or f"sub_{{func_start:X}}",
+                "func_va": hex(func_start),
+                "disasm_code": get_disasm(func_start),
+                "procedure": get_pseudocode(func_start),
+            }}
+        )
+        """
+        ).strip()
+        + "\n"
+    )
 
 
 _FUNC_XREF_PY_EVAL_TEMPLATE = r"""
@@ -907,6 +1228,15 @@ async def _inspect_function_via_mcp(session, ea, image_base, func_name):
     if not isinstance(data, Mapping):
         return None
     result = {"func_name": func_name, **dict(data), "_pointer_size": 4}
+    signature = result.get("func_sig")
+    if not isinstance(signature, str) or not signature.strip():
+        return None
+    try:
+        func_va = _parse_int(result.get("func_va"), "func_va")
+    except SymbolArtifactError:
+        return None
+    if await _find_unique_bytes(session, signature) != func_va:
+        return None
     return result
 
 
@@ -1330,6 +1660,9 @@ def _normalize_llm_decompile_specs(specs):
             for name, value in policy.items()
         ):
             return None
+        policy_keys = [name.casefold() for name in policy]
+        if len(set(policy_keys)) != len(policy_keys):
+            return None
         spec = {
             "symbol_name": symbol_name,
             "prompt_path": prompt_path,
@@ -1366,7 +1699,12 @@ def _normalize_llm_decompile_specs(specs):
 
 def _resolve_llm_template(value, new_binary_dir, platform):
     module_name = Path(new_binary_dir).resolve().name
-    return str(value).replace("{platform}", platform).replace("{module}", module_name)
+    return (
+        str(value)
+        .replace("{platform}", platform)
+        .replace("{module_name}", module_name)
+        .replace("{module}", module_name)
+    )
 
 
 def _resolve_preprocessor_resource(value, new_binary_dir, platform):
@@ -1387,7 +1725,7 @@ def _index_llm_inputs(values):
     return indexed
 
 
-def _prepare_llm_context(spec, llm_config, new_binary_dir, platform):
+def _prepare_llm_dependency_contract(spec, llm_config, new_binary_dir, platform):
     if spec is None or not isinstance(llm_config, Mapping):
         return None
     expected_inputs = _index_llm_inputs(llm_config.get("_expected_inputs"))
@@ -1403,33 +1741,80 @@ def _prepare_llm_context(spec, llm_config, new_binary_dir, platform):
     for reference_value in spec["reference_yaml_paths"]:
         reference_path = _resolve_preprocessor_resource(reference_value, new_binary_dir, platform)
         reference_payload = _load_yaml_mapping(reference_path)
-        if not reference_payload:
+        if (
+            not reference_payload
+            or set(reference_payload) != {"func_name", "func_va", "disasm_code", "procedure"}
+            or not isinstance(reference_payload.get("func_va"), (str, int))
+            or not isinstance(reference_payload.get("disasm_code"), str)
+            or not reference_payload["disasm_code"].strip()
+            or not isinstance(reference_payload.get("procedure"), str)
+        ):
             return None
         func_name = reference_payload.get("func_name")
         if not isinstance(func_name, str) or not func_name:
             return None
         artifact_name = f"{func_name}.{platform}.yaml"
-        inferred_dependencies[artifact_name.casefold()] = artifact_name
+        dependency_key = artifact_name.casefold()
+        if dependency_key in inferred_dependencies:
+            return None
+        inferred_dependencies[dependency_key] = artifact_name
         references.append((reference_path, reference_payload, func_name))
     resolved_policy = {}
     for template, policy in spec["dependency_policy"].items():
         artifact_name = Path(_resolve_llm_template(template, new_binary_dir, platform)).name
-        resolved_policy[artifact_name.casefold()] = policy
+        artifact_key = artifact_name.casefold()
+        if artifact_key in resolved_policy:
+            return None
+        resolved_policy[artifact_key] = policy
     if set(resolved_policy) != set(inferred_dependencies):
         return None
-    targets = []
-    for _reference_path, reference_payload, func_name in references:
-        artifact_name = f"{func_name}.{platform}.yaml"
-        key = artifact_name.casefold()
+    for _reference_path, _reference_payload, func_name in references:
+        key = f"{func_name}.{platform}.yaml".casefold()
         policy = resolved_policy[key]
         source = expected_inputs if policy == "required" else optional_inputs
         other = optional_inputs if policy == "required" else expected_inputs
         if key in other or len(source.get(key, ())) != 1:
             return None
+    return {
+        "expected_inputs": expected_inputs,
+        "optional_inputs": optional_inputs,
+        "references": references,
+        "resolved_policy": resolved_policy,
+    }
+
+
+def _prepare_llm_context(spec, llm_config, new_binary_dir, platform, *, dependencies_only=False):
+    contract = _prepare_llm_dependency_contract(spec, llm_config, new_binary_dir, platform)
+    if contract is None or dependencies_only:
+        return contract
+    expected_inputs = contract["expected_inputs"]
+    optional_inputs = contract["optional_inputs"]
+    references = contract["references"]
+    resolved_policy = contract["resolved_policy"]
+    active_references = []
+    reference_paths = []
+    targets = []
+    for reference_path, reference_payload, func_name in references:
+        artifact_name = f"{func_name}.{platform}.yaml"
+        key = artifact_name.casefold()
+        policy = resolved_policy[key]
+        source = expected_inputs if policy == "required" else optional_inputs
         current_payload = _load_yaml_mapping(source[key][0])
         if not current_payload or current_payload.get("func_va") is None:
+            if policy == "optional":
+                continue
             return None
-        targets.append((reference_payload, _parse_int(current_payload["func_va"], "func_va")))
+        try:
+            target_ea = _parse_int(current_payload["func_va"], "func_va")
+        except SymbolArtifactError:
+            if policy == "optional":
+                continue
+            return None
+        active_references.append((reference_path, reference_payload, func_name))
+        reference_paths.append(str(reference_path))
+        targets.append((reference_payload, target_ea))
+    if not targets:
+        return None
     prompt_path = _resolve_preprocessor_resource(spec["prompt_path"], new_binary_dir, platform)
     try:
         prompt_template = prompt_path.read_text(encoding="utf-8")
@@ -1437,37 +1822,30 @@ def _prepare_llm_context(spec, llm_config, new_binary_dir, platform):
         return None
     if not prompt_template.strip():
         return None
-    return {"targets": targets, "prompt_template": prompt_template}
-
-
-_EXPORT_LLM_FUNCTION_PY_EVAL = r"""
-import ida_funcs, ida_hexrays, idaapi, idautils, idc, json
-ea = EA_PLACEHOLDER
-pointer_size = 8 if idaapi.inf_is_64bit() else 4
-func = ida_funcs.get_func(ea)
-payload = None
-if pointer_size == 4 and func is not None:
-    lines = []
-    for item_ea in idautils.FuncItems(int(func.start_ea)):
-        line = idc.generate_disasm_line(item_ea, 0) or ''
-        lines.append('%s: %s' % (hex(int(item_ea)), line))
-    procedure = ''
-    try:
-        procedure = str(ida_hexrays.decompile(int(func.start_ea)))
-    except Exception:
-        pass
-    payload = {
-        'func_start': hex(int(func.start_ea)),
-        'func_end': hex(int(func.end_ea)),
-        'disasm_code': '\n'.join(lines),
-        'procedure': procedure,
+    model = str(llm_config.get("model") or "").strip()
+    if not model:
+        return None
+    return {
+        "targets": targets,
+        "prompt_template": prompt_template,
+        "prompt_path": str(prompt_path),
+        "reference_yaml_paths": reference_paths,
+        "reference_items": [reference_payload for _path, reference_payload, _func_name in active_references],
+        "model": model,
+        "temperature": llm_config.get("temperature"),
+        "effort": llm_config.get("effort"),
+        "api_key": llm_config.get("api_key"),
+        "base_url": llm_config.get("base_url"),
+        "fake_as": llm_config.get("fake_as"),
+        "max_retries": llm_config.get("max_retries"),
+        "retry_initial_delay": llm_config.get("retry_initial_delay"),
+        "retry_backoff_factor": llm_config.get("retry_backoff_factor"),
+        "retry_max_delay": llm_config.get("retry_max_delay"),
     }
-result = json.dumps({'pointer_size': pointer_size, 'function': payload})
-"""
 
 
 _INSPECT_LLM_INSTRUCTION_PY_EVAL = r"""
-import ida_funcs, ida_segment, ida_ua, idaapi, idautils, idc, json
+import ida_funcs, ida_lines, ida_segment, ida_ua, idaapi, idautils, idc, json
 ea = EA_PLACEHOLDER
 pointer_size = 8 if idaapi.inf_is_64bit() else 4
 insn = ida_ua.insn_t()
@@ -1487,12 +1865,14 @@ if size:
             operand_targets.append(int(op.value))
         elif op.type == ida_ua.o_displ:
             displacements.append(int(op.addr) & 0xFFFFFFFF)
+        elif op.type == ida_ua.o_phrase:
+            displacements.append(0)
 result = json.dumps({
     'pointer_size': pointer_size,
     'size': int(size or 0),
     'func_start': None if func is None else hex(int(func.start_ea)),
     'func_end': None if func is None else hex(int(func.end_ea)),
-    'line': idc.generate_disasm_line(ea, 0) or '',
+    'line': ida_lines.tag_remove(idc.generate_disasm_line(ea, 0) or '').split(';', 1)[0].strip(),
     'mnemonic': idc.print_insn_mnem(ea) or '',
     'code_refs': [hex(int(value)) for value in idautils.CodeRefsFrom(ea, 0)],
     'data_refs': [hex(int(value)) for value in idautils.DataRefsFrom(ea)],
@@ -1504,15 +1884,44 @@ result = json.dumps({
 
 
 async def _export_llm_function(session, ea):
-    code = _EXPORT_LLM_FUNCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(int(ea)))
+    code = (
+        build_function_detail_export_py_eval(int(ea)).rstrip()
+        + "\n"
+        + textwrap.dedent(
+            """
+            payload = json.loads(result)
+            import idaapi
+            func = ida_funcs.get_func(func_ea)
+            payload.update({
+                'pointer_size': 8 if idaapi.inf_is_64bit() else 4,
+                'func_start': payload.get('func_va'),
+                'func_end': None if func is None else hex(int(func.end_ea)),
+                'chunk_ranges': [] if func is None else [
+                    [hex(int(start_ea)), hex(int(end_ea))]
+                    for start_ea, end_ea in _collect_chunk_ranges(func)
+                ],
+            })
+            result = json.dumps(payload)
+            """
+        ).strip()
+    )
     try:
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
     except Exception:
         return None
-    if not isinstance(payload, Mapping) or payload.get("pointer_size") != 4:
+    if isinstance(payload, Mapping) and isinstance(payload.get("function"), Mapping):
+        function = dict(payload["function"])
+        function["pointer_size"] = payload.get("pointer_size")
+        payload = function
+    if (
+        not isinstance(payload, Mapping)
+        or payload.get("pointer_size") != 4
+        or not isinstance(payload.get("disasm_code"), str)
+        or not payload["disasm_code"].strip()
+        or not isinstance(payload.get("procedure"), str)
+    ):
         return None
-    function = payload.get("function")
-    return dict(function) if isinstance(function, Mapping) else None
+    return dict(payload)
 
 
 async def _inspect_llm_instruction(session, ea):
@@ -1530,58 +1939,124 @@ async def _inspect_llm_instruction(session, ea):
     return dict(payload)
 
 
-def _render_llm_prompt(spec, context, exported_targets, platform):
-    expected = {section: [] for section in spec["expected_result_sections"]}
-    blocks = []
-    for index, ((reference_payload, _ea), target) in enumerate(zip(context["targets"], exported_targets), 1):
-        blocks.append(
-            "\n".join(
-                [
-                    f"REFERENCE {index} DISASSEMBLY:\n{reference_payload.get('disasm_code', '')}",
-                    f"REFERENCE {index} PROCEDURE:\n{reference_payload.get('procedure', '')}",
-                    f"TARGET {index} DISASSEMBLY:\n{target.get('disasm_code', '')}",
-                    f"TARGET {index} PROCEDURE:\n{target.get('procedure', '')}",
-                ]
-            )
-        )
-    rules = "\n".join(f"- {rule['text']} (regex: {rule['regex']})" for rule in spec.get("instruction_rules", ()))
-    return (
-        f"{context['prompt_template']}\n\n"
-        f"Platform: {platform}; architecture: GoldSrc x86 32-bit.\n"
-        f"Return one JSON object with exactly these result sections: {json.dumps(expected)}.\n"
-        "Every result entry must contain its canonical target identity and insn_va. "
-        "found_vcall also needs vfunc_offset; found_struct_offset needs struct_name, member_name, offset, and optional size.\n"
-        f"Instruction constraints:\n{rules or '- none'}\n\n" + "\n\n".join(blocks)
-    )
+_RESOLVE_JMP_THUNK_PY_EVAL = r"""
+import ida_funcs, ida_ua, idc, json
+current_ea = EA_PLACEHOLDER
+resolved_ea = current_ea
+visited = set()
+for _ in range(8):
+    if current_ea in visited:
+        break
+    visited.add(current_ea)
+    func = ida_funcs.get_func(current_ea)
+    if func is None or int(func.start_ea) != current_ea:
+        break
+    insn = ida_ua.insn_t()
+    if ida_ua.decode_insn(insn, current_ea) <= 0:
+        break
+    if (idc.print_insn_mnem(current_ea) or '').strip().lower() != 'jmp':
+        break
+    if insn.ops[0].type != ida_ua.o_near:
+        break
+    target_ea = int(insn.ops[0].addr)
+    target_func = ida_funcs.get_func(target_ea)
+    if target_func is None or int(target_func.start_ea) != target_ea:
+        break
+    resolved_ea = target_ea
+    current_ea = target_ea
+result = json.dumps({'func_va': hex(resolved_ea)})
+"""
 
 
-def _llm_config_object(llm_config):
-    from ida_llm_decompile import LlmConfig
-
-    return LlmConfig(
-        model=str(llm_config.get("model") or "gpt-4o"),
-        api_key=llm_config.get("api_key"),
-        base_url=llm_config.get("base_url"),
-        temperature=llm_config.get("temperature"),
-        effort=str(llm_config.get("effort") or "medium"),
-        fake_as=llm_config.get("fake_as"),
-        max_retries=int(llm_config.get("max_retries") or 3),
-    )
-
-
-async def _call_llm_for_target(spec, context, exported_targets, platform, llm_config):
-    from ida_llm_decompile import request_json
-
-    prompt = _render_llm_prompt(spec, context, exported_targets, platform)
+async def _resolve_jmp_thunk_target_via_mcp(session, func_va, debug=False):
     try:
-        result = await asyncio.to_thread(request_json, prompt, config=_llm_config_object(llm_config))
+        func_va_int = _parse_int(func_va, "func_va")
+        code = _RESOLVE_JMP_THUNK_PY_EVAL.replace("EA_PLACEHOLDER", str(func_va_int))
+        payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
+        resolved_va = _parse_int(payload.get("func_va"), "func_va") if isinstance(payload, Mapping) else None
     except Exception:
         return None
-    if not isinstance(result, Mapping) or set(result) != set(spec["expected_result_sections"]):
+    if resolved_va is None:
         return None
-    if any(not isinstance(result[section], list) for section in result):
-        return None
-    return dict(result)
+    if debug and resolved_va != func_va_int:
+        print(f"    Preprocess: resolved jmp thunk {hex(func_va_int)} -> {hex(resolved_va)}")
+    return resolved_va
+
+
+def _build_llm_instruction_validations(symbol_names, specs):
+    return {
+        symbol_name: {
+            "instruction_rules": specs[symbol_name].get("instruction_rules") or [],
+            "expected_size": specs[symbol_name].get("expected_size"),
+        }
+        for symbol_name in symbol_names
+    }
+
+
+async def _call_llm_for_targets(
+    *,
+    session,
+    symbol_names,
+    specs,
+    context,
+    platform,
+    new_binary_dir,
+    debug=False,
+):
+    exported_targets = []
+    target_ranges = []
+    for _reference, target_ea in context["targets"]:
+        exported = await _export_llm_function(session, target_ea)
+        if not exported:
+            return _empty_llm_decompile_result(), []
+        exported_ranges = []
+        for raw_range in exported.get("chunk_ranges") or ():
+            if not isinstance(raw_range, (tuple, list)) or len(raw_range) != 2:
+                return _empty_llm_decompile_result(), []
+            try:
+                exported_ranges.append((_parse_int(raw_range[0], "chunk_start"), _parse_int(raw_range[1], "chunk_end")))
+            except SymbolArtifactError:
+                return _empty_llm_decompile_result(), []
+        if not exported_ranges:
+            try:
+                exported_ranges.append(
+                    (_parse_int(exported["func_start"], "func_start"), _parse_int(exported["func_end"], "func_end"))
+                )
+            except (KeyError, SymbolArtifactError):
+                return _empty_llm_decompile_result(), []
+        if any(start >= end for start, end in exported_ranges):
+            return _empty_llm_decompile_result(), []
+        target_ranges.extend(exported_ranges)
+        exported_targets.append(exported)
+    reference_blocks, target_blocks = render_llm_decompile_blocks(context["reference_items"], exported_targets)
+    expected_sections = {
+        symbol_name: list(specs[symbol_name]["expected_result_sections"]) for symbol_name in symbol_names
+    }
+    result = await call_llm_decompile(
+        model=context["model"],
+        symbol_name_list=symbol_names,
+        expected_result_sections=expected_sections,
+        instruction_validations=_build_llm_instruction_validations(symbol_names, specs),
+        disasm_code=exported_targets[0].get("disasm_code", ""),
+        target_disasm_codes=[target.get("disasm_code", "") for target in exported_targets],
+        procedure=exported_targets[0].get("procedure", ""),
+        reference_blocks=reference_blocks,
+        target_blocks=target_blocks,
+        prompt_template=context["prompt_template"],
+        platform=platform,
+        new_binary_dir=new_binary_dir,
+        temperature=context.get("temperature"),
+        effort=context.get("effort"),
+        api_key=context.get("api_key"),
+        base_url=context.get("base_url"),
+        fake_as=context.get("fake_as"),
+        max_retries=context.get("max_retries"),
+        retry_initial_delay=context.get("retry_initial_delay"),
+        retry_backoff_factor=context.get("retry_backoff_factor"),
+        retry_max_delay=context.get("retry_max_delay"),
+        debug=debug,
+    )
+    return result, target_ranges
 
 
 def _build_struct_member_symbol_name(struct_name, member_name):
@@ -1607,13 +2082,15 @@ def _resolve_struct_member_entry_names(
     return expected_struct_name, expected_member_name
 
 
-def _entry_identity_matches(entry, symbol_name, category):
+def _entry_identity_matches(entry, symbol_name, category, section):
     field = {
         "func": "func_name",
         "vfunc": "func_name",
         "gv": "gv_name",
         "structmember": None,
     }[category]
+    if section == "found_funcptr":
+        field = "funcptr_name"
     if field is not None:
         return entry.get(field) == symbol_name
     return _build_struct_member_symbol_name(entry.get("struct_name"), entry.get("member_name")) == symbol_name
@@ -1629,8 +2106,8 @@ def _llm_entry_instruction_is_valid(entry, detail, target_ranges, rules):
         start == func_start for start, _ in target_ranges
     ):
         return False
-    line = str(detail.get("line") or "")
-    return all(re.search(rule["regex"], line) is not None for rule in rules or ())
+    line = re.split(r"\s;", str(detail.get("line") or ""), maxsplit=1)[0].strip()
+    return not rules or any(re.fullmatch(rule["regex"], line) is not None for rule in rules)
 
 
 async def _preprocess_llm_target(
@@ -1647,27 +2124,25 @@ async def _preprocess_llm_target(
     vtable_name=None,
     expected_struct_name=None,
     expected_member_name=None,
+    llm_result=None,
+    target_ranges=None,
     debug=False,
 ):
-    del debug
-    context = _prepare_llm_context(spec, llm_config, new_binary_dir, platform)
-    if context is None:
-        return None
-    exported_targets = []
-    target_ranges = []
-    for _reference, target_ea in context["targets"]:
-        exported = await _export_llm_function(session, target_ea)
-        if not exported:
-            return None
-        try:
-            target_ranges.append(
-                (_parse_int(exported["func_start"], "func_start"), _parse_int(exported["func_end"], "func_end"))
-            )
-        except (KeyError, SymbolArtifactError):
-            return None
-        exported_targets.append(exported)
-    result = await _call_llm_for_target(spec, context, exported_targets, platform, llm_config)
+    result = llm_result
     if result is None:
+        context = _prepare_llm_context(spec, llm_config, new_binary_dir, platform)
+        if context is None:
+            return None
+        result, target_ranges = await _call_llm_for_targets(
+            session=session,
+            symbol_names=[symbol_name],
+            specs={symbol_name: spec},
+            context=context,
+            platform=platform,
+            new_binary_dir=new_binary_dir,
+            debug=debug,
+        )
+    if not isinstance(result, Mapping) or not target_ranges:
         return None
     rules = spec.get("instruction_rules") or ()
 
@@ -1681,7 +2156,7 @@ async def _preprocess_llm_target(
         if section not in result:
             continue
         for entry in result[section]:
-            if not isinstance(entry, Mapping) or not _entry_identity_matches(entry, symbol_name, category):
+            if not isinstance(entry, Mapping) or not _entry_identity_matches(entry, symbol_name, category, section):
                 continue
             detail = await _inspect_llm_instruction(session, entry.get("insn_va"))
             if detail is None or not _llm_entry_instruction_is_valid(entry, detail, target_ranges, rules):
@@ -1690,9 +2165,12 @@ async def _preprocess_llm_target(
                 targets = detail.get("code_refs") if section == "found_call" else detail.get("operand_targets")
                 if not isinstance(targets, list) or len(set(targets)) != 1:
                     continue
-                function = await _inspect_function_via_mcp(
-                    session, _parse_int(targets[0], "function target"), image_base, symbol_name
-                )
+                target_va = _parse_int(targets[0], "function target")
+                if section == "found_call" and "func_sig_resolve_jmp_thunk" in desired_fields:
+                    target_va = await _resolve_jmp_thunk_target_via_mcp(session, target_va, debug=debug)
+                    if target_va is None:
+                        continue
+                function = await _inspect_function_via_mcp(session, target_va, image_base, symbol_name)
                 if function:
                     return function
             elif category == "vfunc":
@@ -1781,8 +2259,13 @@ async def _preprocess_llm_target(
                     continue
                 if hex(offset) not in set(detail.get("displacements") or ()):
                     continue
-                if spec.get("expected_size") is not None and entry.get("size") != spec["expected_size"]:
-                    continue
+                if spec.get("expected_size") is not None:
+                    try:
+                        entry_size = _parse_int(entry.get("size"), "size")
+                    except SymbolArtifactError:
+                        continue
+                    if entry_size != spec["expected_size"]:
+                        continue
                 function = await _inspect_function_via_mcp(
                     session, _parse_int(detail["func_start"], "func_start"), image_base, "__llm_anchor"
                 )
@@ -1800,6 +2283,33 @@ async def _preprocess_llm_target(
                     payload["size"] = entry["size"]
                 return payload
     return None
+
+
+def _llm_spec_matches_target(spec, category):
+    if not isinstance(spec, Mapping):
+        return False
+    allowed_sections = {
+        "func": {"found_call", "found_funcptr"},
+        "vfunc": {"found_vcall", "found_funcptr"},
+        "gv": {"found_gv"},
+        "structmember": {"found_struct_offset"},
+    }[category]
+    sections = set(spec.get("expected_result_sections") or ())
+    if not sections or not sections <= allowed_sections:
+        return False
+    return category == "structmember" or spec.get("expected_size") is None
+
+
+def _candidate_satisfies_field_spec(candidate, field_spec):
+    if not isinstance(candidate, Mapping) or not isinstance(field_spec, Mapping):
+        return False
+    if candidate.get("_pointer_size", 4) != 4:
+        return False
+    available_fields = {field for field, value in candidate.items() if value is not None}
+    available_fields.update((field_spec.get("generation_options") or {}).keys())
+    optional_fields = set(field_spec.get("optional_fields") or ())
+    required_fields = {field for field in field_spec.get("fields") or () if field not in optional_fields}
+    return required_fields <= available_fields
 
 
 async def preprocess_common_skill(
@@ -1887,20 +2397,37 @@ async def preprocess_common_skill(
     for xref_name in xref_by_name:
         if xref_name not in function_targets:
             function_targets.append(xref_name)
-    for func_name in function_targets:
-        spec = xref_by_name.get(func_name)
-        output = _output_for_symbol(expected_outputs, func_name)
-        if output is None:
+
+    target_categories = {name: ("vfunc" if name in vtable_by_name else "func") for name in function_targets}
+    target_categories.update({name: "gv" for name in gv_names or ()})
+    target_categories.update({name: "structmember" for name in struct_member_names or ()})
+    if set(llm_specs) - set(target_categories) or any(
+        not _llm_spec_matches_target(spec, target_categories[name]) for name, spec in llm_specs.items()
+    ):
+        return False
+
+    for symbol_name, spec in llm_specs.items():
+        contract = _prepare_llm_context(
+            spec,
+            llm_config,
+            new_binary_dir,
+            platform,
+            dependencies_only=True,
+        )
+        if contract is None:
             return False
-        old_path = _old_path_for_output(old_yaml_map, output)
+
+    function_fast_results = {}
+    for func_name in function_targets:
+        output = _output_for_symbol(expected_outputs, func_name)
         field_spec = desired.get(func_name)
-        if field_spec is None:
+        if output is None or field_spec is None:
             return False
         generation_options = field_spec["generation_options"]
         candidate = await preprocess_func_sig_via_mcp(
             session,
             output,
-            old_path,
+            _old_path_for_output(old_yaml_map, output),
             image_base,
             new_binary_dir,
             platform,
@@ -1911,18 +2438,19 @@ async def preprocess_common_skill(
                 "func_sig_allow_across_function_boundary", False
             ),
         )
-        if candidate is None and spec is not None:
+        xref_spec = xref_by_name.get(func_name)
+        if candidate is None and xref_spec is not None:
             candidate = await preprocess_func_xrefs_via_mcp(
                 session=session,
                 func_name=func_name,
-                xref_strings=spec.get("xref_strings"),
-                xref_gvs=spec.get("xref_gvs"),
-                xref_signatures=spec.get("xref_signatures"),
-                xref_funcs=spec.get("xref_funcs"),
-                exclude_funcs=spec.get("exclude_funcs"),
-                exclude_strings=spec.get("exclude_strings"),
-                exclude_gvs=spec.get("exclude_gvs"),
-                exclude_signatures=spec.get("exclude_signatures"),
+                xref_strings=xref_spec.get("xref_strings"),
+                xref_gvs=xref_spec.get("xref_gvs"),
+                xref_signatures=xref_spec.get("xref_signatures"),
+                xref_funcs=xref_spec.get("xref_funcs"),
+                exclude_funcs=xref_spec.get("exclude_funcs"),
+                exclude_strings=xref_spec.get("exclude_strings"),
+                exclude_gvs=xref_spec.get("exclude_gvs"),
+                exclude_signatures=xref_spec.get("exclude_signatures"),
                 new_binary_dir=new_binary_dir,
                 platform=platform,
                 image_base=image_base,
@@ -1931,12 +2459,159 @@ async def preprocess_common_skill(
                     "func_sig_allow_across_function_boundary", False
                 ),
                 debug=debug,
-                xref_floats=spec.get("xref_floats"),
-                exclude_floats=spec.get("exclude_floats"),
-                inline_alias=spec.get("inline_alias"),
-                exclude_callees=spec.get("exclude_callees"),
+                xref_floats=xref_spec.get("xref_floats"),
+                exclude_floats=xref_spec.get("exclude_floats"),
+                inline_alias=xref_spec.get("inline_alias"),
+                exclude_callees=xref_spec.get("exclude_callees"),
             )
+        if candidate is not None and generation_options.get("func_sig_resolve_jmp_thunk"):
+            try:
+                candidate_va = _parse_int(candidate.get("func_va"), "func_va")
+            except SymbolArtifactError:
+                candidate = None
+                candidate_va = None
+            resolved_va = (
+                await _resolve_jmp_thunk_target_via_mcp(
+                    session,
+                    candidate_va,
+                    debug=debug,
+                )
+                if candidate_va is not None
+                else None
+            )
+            if resolved_va is None:
+                candidate = None
+            elif resolved_va != candidate_va:
+                candidate = await _inspect_function_via_mcp(session, resolved_va, image_base, func_name)
+                if candidate is not None and generation_options.get("func_sig_allow_across_function_boundary"):
+                    candidate["func_sig_allow_across_function_boundary"] = True
+        if candidate is not None and func_name in vtable_by_name:
+            candidate = dict(candidate)
+            vtable_name = vtable_by_name[func_name]
+            if "vfunc_offset" not in candidate or "vfunc_index" not in candidate:
+                unenriched_candidate = candidate
+                try:
+                    candidate = _enrich_vfunc_from_vtable(
+                        unenriched_candidate,
+                        vtable_name,
+                        new_binary_dir,
+                        platform,
+                    )
+                except (KeyError, TypeError, ValueError, SymbolArtifactError):
+                    candidate = None
+                if candidate is None and not _is_vtable_artifact_stem(vtable_name):
+                    live_vtable = await preprocess_vtable_via_mcp(
+                        session,
+                        vtable_name,
+                        image_base,
+                        platform,
+                        debug=debug,
+                        symbol_aliases=(mangled_class_names or {}).get(vtable_name)
+                        if isinstance(mangled_class_names, Mapping)
+                        else None,
+                    )
+                    try:
+                        candidate = _enrich_vfunc_from_vtable_data(
+                            unenriched_candidate,
+                            vtable_name,
+                            live_vtable,
+                        )
+                    except (KeyError, TypeError, ValueError, SymbolArtifactError):
+                        candidate = None
+            elif "vtable_name" in field_spec["fields"]:
+                candidate["vtable_name"] = vtable_name
+            if candidate is not None and "vfunc_sig" in field_spec["fields"] and candidate.get("func_sig"):
+                candidate.setdefault("vfunc_sig", candidate["func_sig"])
+        if not _candidate_satisfies_field_spec(candidate, field_spec):
+            candidate = None
+        function_fast_results[func_name] = candidate
+
+    gv_fast_results = {}
+    for gv_name in gv_names or ():
+        output = _output_for_symbol(expected_outputs, gv_name)
+        if output is None or desired.get(gv_name) is None:
+            return False
+        candidate = await preprocess_gv_sig_via_mcp(
+            session,
+            output,
+            _old_path_for_output(old_yaml_map, output),
+            image_base,
+            new_binary_dir,
+            platform,
+            debug,
+        )
+        gv_fast_results[gv_name] = candidate if _candidate_satisfies_field_spec(candidate, desired[gv_name]) else None
+
+    struct_fast_results = {}
+    struct_old_metadata = {}
+    for member_name in struct_member_names or ():
+        output = _output_for_symbol(expected_outputs, member_name)
+        if output is None or desired.get(member_name) is None:
+            return False
+        old_path = _old_path_for_output(old_yaml_map, output)
+        old_data = _load_yaml_mapping(old_path) or {}
+        struct_old_metadata[member_name] = (
+            old_data.get("struct_name"),
+            old_data.get("member_name"),
+        )
+        candidate = await preprocess_struct_offset_sig_via_mcp(
+            session,
+            output,
+            old_path,
+            image_base,
+            new_binary_dir,
+            platform,
+            debug,
+        )
+        struct_fast_results[member_name] = (
+            candidate if _candidate_satisfies_field_spec(candidate, desired[member_name]) else None
+        )
+
+    unresolved_symbols = [
+        name
+        for name, candidate in {
+            **function_fast_results,
+            **gv_fast_results,
+            **struct_fast_results,
+        }.items()
+        if candidate is None and name in llm_specs
+    ]
+    request_groups = {}
+    for symbol_name in unresolved_symbols:
+        context = _prepare_llm_context(llm_specs[symbol_name], llm_config, new_binary_dir, platform)
+        if context is None:
+            continue
+        cache_key = _build_llm_decompile_request_cache_key(context)
+        if cache_key is None:
+            continue
+        group = request_groups.setdefault(cache_key, {"context": context, "symbol_names": []})
+        group["symbol_names"].append(symbol_name)
+
+    llm_batch_results = {}
+    for group in request_groups.values():
+        symbol_names = group["symbol_names"]
+        result, target_ranges = await _call_llm_for_targets(
+            session=session,
+            symbol_names=symbol_names,
+            specs=llm_specs,
+            context=group["context"],
+            platform=platform,
+            new_binary_dir=new_binary_dir,
+            debug=debug,
+        )
+        for symbol_name in symbol_names:
+            llm_batch_results[symbol_name] = (result, target_ranges)
+
+    for func_name in function_targets:
+        output = _output_for_symbol(expected_outputs, func_name)
+        if output is None:
+            return False
+        field_spec = desired.get(func_name)
+        if field_spec is None:
+            return False
+        candidate = function_fast_results[func_name]
         if candidate is None:
+            llm_result, target_ranges = llm_batch_results.get(func_name, (_empty_llm_decompile_result(), []))
             candidate = await _preprocess_llm_target(
                 session=session,
                 symbol_name=func_name,
@@ -1948,6 +2623,8 @@ async def preprocess_common_skill(
                 image_base=image_base,
                 vtable_name=vtable_by_name.get(func_name),
                 desired_fields=field_spec["fields"],
+                llm_result=llm_result,
+                target_ranges=target_ranges,
                 debug=debug,
             )
         if candidate is None:
@@ -2014,16 +2691,9 @@ async def preprocess_common_skill(
         field_spec = desired.get(gv_name)
         if field_spec is None:
             return False
-        candidate = await preprocess_gv_sig_via_mcp(
-            session,
-            output,
-            _old_path_for_output(old_yaml_map, output),
-            image_base,
-            new_binary_dir,
-            platform,
-            debug,
-        )
+        candidate = gv_fast_results[gv_name]
         if candidate is None:
+            llm_result, target_ranges = llm_batch_results.get(gv_name, (_empty_llm_decompile_result(), []))
             candidate = await _preprocess_llm_target(
                 session=session,
                 symbol_name=gv_name,
@@ -2034,6 +2704,8 @@ async def preprocess_common_skill(
                 platform=platform,
                 image_base=image_base,
                 desired_fields=field_spec["fields"],
+                llm_result=llm_result,
+                target_ranges=target_ranges,
                 debug=debug,
             )
         if not emit(gv_name, "gv", candidate, output):
@@ -2058,20 +2730,10 @@ async def preprocess_common_skill(
         field_spec = desired.get(member_name)
         if field_spec is None:
             return False
-        old_path = _old_path_for_output(old_yaml_map, output)
-        candidate = await preprocess_struct_offset_sig_via_mcp(
-            session,
-            output,
-            old_path,
-            image_base,
-            new_binary_dir,
-            platform,
-            debug,
-        )
+        candidate = struct_fast_results[member_name]
         if candidate is None:
-            old_data = _load_yaml_mapping(old_path) or {}
-            expected_struct_name = old_data.get("struct_name")
-            expected_member_name = old_data.get("member_name")
+            expected_struct_name, expected_member_name = struct_old_metadata[member_name]
+            llm_result, target_ranges = llm_batch_results.get(member_name, (_empty_llm_decompile_result(), []))
             candidate = await _preprocess_llm_target(
                 session=session,
                 symbol_name=member_name,
@@ -2084,6 +2746,8 @@ async def preprocess_common_skill(
                 desired_fields=field_spec["fields"],
                 expected_struct_name=(expected_struct_name.strip() if isinstance(expected_struct_name, str) else None),
                 expected_member_name=(expected_member_name.strip() if isinstance(expected_member_name, str) else None),
+                llm_result=llm_result,
+                target_ranges=target_ranges,
                 debug=debug,
             )
         if not emit(member_name, "structmember", candidate, output):

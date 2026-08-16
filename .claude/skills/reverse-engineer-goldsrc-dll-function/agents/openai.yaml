@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reverse-Engineer GoldSrc DLL Function"
+  short_description: "Reconstruct GoldSrc DLL functions with source and DWARF"
+  default_prompt: "Use $reverse-engineer-goldsrc-dll-function to restore a GoldSrc DLL function in IDA from official source and a symbolized Linux binary."
