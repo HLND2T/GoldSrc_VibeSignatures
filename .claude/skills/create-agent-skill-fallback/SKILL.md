@@ -56,8 +56,9 @@ For target finder `find-XXXX` in module `<module>` (`engine`, `client`, `server`
 1. **Preprocessor** `ida_preprocessor_scripts/find-XXXX.py` — the source of truth for *what* to find:
    - `TARGET_FUNCTION_NAMES`, `TARGET_STRUCT_MEMBER_NAMES`, `TARGET_GLOBALVAR_NAMES`, `TARGET_VTABLE_CLASS_NAMES`
      and any `*_WINDOWS` / `*_LINUX` variants → the output symbols and their **platform gating**.
-   - `LLM_DECOMPILE` (and `_WINDOWS`/`_LINUX`) → the **predecessor** reference each target is mined from
-     (`references/<module>/<predecessor>.{platform}.yaml`).
+   - `LLM_DECOMPILE` (and `_WINDOWS`/`_LINUX`) → the **predecessor** reference each target is mined from.
+     Render `{gamever}` with the current gamever first; if that file is absent, render it with the
+     canonical reference gamever from `GSVIBE_REFERENCE_GAMEVER` (default `hl-10210`).
    - `FUNC_VTABLE_RELATIONS` → which targets are vtable-related (`vtable_name`).
    - `GENERATE_YAML_DESIRED_FIELDS` → the **exact fields and kind** for each target (this tells you whether a
      target is a struct member, an indirect-vcall vfunc, a real vfunc, a regular func, or a global var — see the
@@ -66,11 +67,13 @@ For target finder `find-XXXX` in module `<module>` (`engine`, `client`, `server`
 2. **`configs/<GAMEVER>.yaml` skill entry** — `expected_output` / `expected_output_windows` /
    `expected_output_linux` (authoritative output list per platform), `expected_input` (the predecessor YAML),
    `expected_input_windows`/`expected_input_linux`, `prerequisite`.
-3. **Reference YAMLs** `ida_preprocessor_scripts/references/<module>/<predecessor>.{platform}.yaml` — the
-   `disasm_code` + `procedure` carry the annotations (`; 0xNN = Class::member` / `; 0xNN = Class::vfunc` /
-   `// NNNN = 0xNN = …`) at each access/call site. **These annotations are the semantic fingerprints** you
-   translate into the fallback's anchors. Also collect any real-world helper or alternate inline/de-inline
-   reference YAML that materially helps locate the targets.
+3. **Reference YAMLs**
+   `ida_preprocessor_scripts/references/<REFERENCE_GAMEVER>/<module>/<predecessor>.{platform}.yaml` — resolve
+   `REFERENCE_GAMEVER` with the current-then-canonical rule above. The `disasm_code` + `procedure` carry the
+   annotations (`; 0xNN = Class::member` / `; 0xNN = Class::vfunc` / `// NNNN = 0xNN = …`) at each access/call
+   site. **These annotations are the semantic fingerprints** you translate into the fallback's anchors. Also
+   collect any real-world helper or alternate inline/de-inline reference YAML that materially helps locate the
+   targets.
 4. **Ground-truth output YAMLs** `bin/<gamever>/<module>/<target>.{platform}.yaml` — the **authoritative**
    offsets, vfunc indices, and signature styles the finder currently produces. Mine these for the reference
    values in the inventory table. `<gamever>` comes from the explicit request; **there is no `GSVIBE_GAMEVER`
@@ -250,12 +253,14 @@ failure — which almost always means a target's access pattern **moved** across
 Read the platform-relevant real-world YAMLs before searching in IDA. Treat their addresses and offsets as
 reference-build values only; verify every result against the current binary.
 
-- `ida_preprocessor_scripts/references/<module>/<predecessor>.windows.yaml`
-- `ida_preprocessor_scripts/references/<module>/<predecessor>.linux.yaml`
-- `ida_preprocessor_scripts/references/<module>/<relevant-helper-or-variant>.windows.yaml`
-- `ida_preprocessor_scripts/references/<module>/<relevant-helper-or-variant>.linux.yaml`
+- `ida_preprocessor_scripts/references/<REFERENCE_GAMEVER>/<module>/<predecessor>.windows.yaml`
+- `ida_preprocessor_scripts/references/<REFERENCE_GAMEVER>/<module>/<predecessor>.linux.yaml`
+- `ida_preprocessor_scripts/references/<REFERENCE_GAMEVER>/<module>/<relevant-helper-or-variant>.windows.yaml`
+- `ida_preprocessor_scripts/references/<REFERENCE_GAMEVER>/<module>/<relevant-helper-or-variant>.linux.yaml`
 
-Spell out each existing path literally and drop non-applicable placeholders or platforms.
+Resolve `REFERENCE_GAMEVER` independently for each reference: prefer the current gamever when that exact file
+exists, otherwise use the canonical reference gamever. Spell out each resolved, existing path literally and
+drop non-applicable placeholders or platforms.
 
 ## Background — <PREDECESSOR> and what it wires up
 
@@ -330,7 +335,8 @@ vtable vfuncs**, include `func_va`/`func_sig` and the vtable fields.
 
 ## Failure handling
 
-- Predecessor YAML missing → **STOP** and report.
+- Predecessor YAML missing → check the current gamever path, then the canonical reference gamever path.
+  Only stop after both candidates are absent, and report both attempted paths.
 - A required target unresolved even after following callees → resolve the rest, then **STOP** and report exactly
   which output(s) failed so the user can extend the references.
 - Never emit a platform-gated symbol on the wrong platform.

@@ -244,11 +244,16 @@ def load_yaml_mapping(path: str | Path) -> dict[str, Any]:
 
 def build_reference_output_path(
     repo_root: str | Path,
+    gamever: str,
     module: str,
     func_name: str,
     platform: str,
     output_filename: str | None = None,
 ) -> Path:
+    try:
+        gamever = validated_tag(gamever)
+    except AnalysisConfigError as exc:
+        raise ReferenceGenerationError(str(exc)) from exc
     module_name = _safe_path_component(module, "module")
     target_name = _safe_path_component(func_name, "func_name")
     if platform not in {"windows", "linux"}:
@@ -262,7 +267,7 @@ def build_reference_output_path(
         raise ReferenceGenerationError("-output_filename must end with .yaml")
 
     reference_root = Path(repo_root) / "ida_preprocessor_scripts" / "references"
-    output_path = reference_root / module_name / filename
+    output_path = reference_root / gamever / module_name / filename
     resolved_root = reference_root.resolve()
     resolved_output = output_path.resolve()
     if not resolved_output.is_relative_to(resolved_root):
@@ -921,6 +926,7 @@ async def run_reference_generation(
         )
         output_path = build_reference_output_path(
             resolved_repo_root,
+            resolved_target["gamever"],
             resolved_target["module"],
             func_name,
             resolved_target["platform"],

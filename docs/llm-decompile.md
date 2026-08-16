@@ -35,12 +35,24 @@ target/anchor signatures, follow requested direct-call jump thunks, and enforce 
 Reference files live at:
 
 ```text
-ida_preprocessor_scripts/references/<module>/<func_name>.<platform>.yaml
+ida_preprocessor_scripts/references/<gamever>/<module>/<func_name>.<platform>.yaml
 ```
 
 Generate them only with `generate_reference_yaml.py` or the `generate-reference-yaml` skill. The mapping contains exactly
 `func_name`, `func_va`, `disasm_code`, and `procedure`. `disasm_code` must be non-empty; `procedure` must be a string.
 Annotate the desired call, vcall, global, or struct access in both fields.
+
+A `reference_yaml_paths` entry may use `{gamever}`. At runtime it resolves to the gamever currently being
+analyzed; when that reference file is absent, it falls back to the canonical reference gamever
+(`GSVIBE_REFERENCE_GAMEVER`, default `hl-10210`). This lets the shared `hl-*`/`cstrike-*`/`cof-*` family
+keep one `hl-10210` reference while an engine with a slightly different body (e.g. `svencoop-10257`)
+supplies its own `references/svencoop-10257/...` file.
+
+Both the current and canonical paths must resolve below `ida_preprocessor_scripts/references`. The
+canonical gamever must be a valid repository tag; invalid or path-like environment values fail closed
+instead of selecting a resource outside the reference namespace. Generation commands must pass the
+chosen `-gamever` explicitly: use the canonical gamever for a shared body and the analyzed gamever only
+for a confirmed per-gamever body override.
 
 Example Pattern D specification:
 
@@ -50,7 +62,7 @@ LLM_DECOMPILE = [
         "symbol_name": "build_number",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": [
-            "references/engine/SV_SendServerinfo.{platform}.yaml",
+            "references/{gamever}/engine/SV_SendServerinfo.{platform}.yaml",
         ],
         "expected_result_sections": ["found_call"],
         "dependency_policy": {

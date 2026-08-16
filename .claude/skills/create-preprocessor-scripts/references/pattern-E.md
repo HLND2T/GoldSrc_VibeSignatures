@@ -9,7 +9,7 @@ LLM_DECOMPILE = [
     {
         "symbol_name": "{STRUCT}_{MEMBER}",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": ["references/{module}/{PREDECESSOR}.{platform}.yaml"],
+        "reference_yaml_paths": ["references/{gamever}/{module}/{PREDECESSOR}.{platform}.yaml"],
         "expected_result_sections": ["found_struct_offset"],
         "dependency_policy": {"{PREDECESSOR}.{platform}.yaml": "required"},
         # "expected_size": 4,

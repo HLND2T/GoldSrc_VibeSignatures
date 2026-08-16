@@ -13,6 +13,7 @@ from pathlib import Path
 
 import yaml
 
+from analysis_config import validated_tag
 from ida_llm_decompile import (
     _build_llm_decompile_request_cache_key,
     _empty_llm_decompile_result,
@@ -1697,13 +1698,23 @@ def _normalize_llm_decompile_specs(specs):
     return normalized
 
 
-def _resolve_llm_template(value, new_binary_dir, platform):
+DEFAULT_REFERENCE_GAMEVER = "hl-10210"
+REFERENCE_RESOURCE_ROOT = Path(__file__).resolve().parent / "ida_preprocessor_scripts" / "references"
+
+
+def _reference_gamever():
+    return validated_tag(os.environ.get("GSVIBE_REFERENCE_GAMEVER", DEFAULT_REFERENCE_GAMEVER))
+
+
+def _resolve_llm_template(value, new_binary_dir, platform, *, gamever=None):
     module_name = Path(new_binary_dir).resolve().name
+    resolved_gamever = gamever if gamever is not None else Path(new_binary_dir).resolve().parent.name
     return (
         str(value)
         .replace("{platform}", platform)
         .replace("{module_name}", module_name)
         .replace("{module}", module_name)
+        .replace("{gamever}", resolved_gamever)
     )
 
 
@@ -1712,6 +1723,26 @@ def _resolve_preprocessor_resource(value, new_binary_dir, platform):
     if not path.is_absolute():
         path = Path(__file__).resolve().parent / "ida_preprocessor_scripts" / path
     return path.resolve()
+
+
+def _confine_reference_resource(path):
+    resolved_root = Path(REFERENCE_RESOURCE_ROOT).resolve()
+    resolved_path = Path(path).resolve()
+    if not resolved_path.is_relative_to(resolved_root):
+        raise ValueError(f"Reference resource path is outside reference root: {resolved_path}")
+    return resolved_path
+
+
+def _resolve_reference_resource(value, new_binary_dir, platform):
+    text = str(value)
+    current_path = _resolve_preprocessor_resource(text, new_binary_dir, platform)
+    if "{gamever}" not in text:
+        return current_path
+    current_path = _confine_reference_resource(current_path)
+    if current_path.is_file():
+        return current_path
+    fallback_text = text.replace("{gamever}", _reference_gamever())
+    return _confine_reference_resource(_resolve_preprocessor_resource(fallback_text, new_binary_dir, platform))
 
 
 def _index_llm_inputs(values):
@@ -1739,7 +1770,7 @@ def _prepare_llm_dependency_contract(spec, llm_config, new_binary_dir, platform)
     references = []
     inferred_dependencies = {}
     for reference_value in spec["reference_yaml_paths"]:
-        reference_path = _resolve_preprocessor_resource(reference_value, new_binary_dir, platform)
+        reference_path = _resolve_reference_resource(reference_value, new_binary_dir, platform)
         reference_payload = _load_yaml_mapping(reference_path)
         if (
             not reference_payload

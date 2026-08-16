@@ -11,7 +11,7 @@ LLM_DECOMPILE = [
         "symbol_name": "build_number",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": [
-            "references/engine/SV_SendServerinfo.{platform}.yaml",
+            "references/{gamever}/engine/SV_SendServerinfo.{platform}.yaml",
         ],
         "expected_result_sections": ["found_call"],
         "dependency_policy": {

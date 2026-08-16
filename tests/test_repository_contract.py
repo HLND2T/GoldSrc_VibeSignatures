@@ -30,7 +30,7 @@ class RepositoryContractTests(unittest.TestCase):
             "-platform windows",
             "-platform linux",
             "sequentially",
-            "ida_preprocessor_scripts/references/<module>/<func_name>.<platform>.yaml",
+            "ida_preprocessor_scripts/references/<gamever>/<module>/<func_name>.<platform>.yaml",
         ):
             self.assertIn(marker, text)
         metadata = yaml.safe_load((skill_path.parent / "agents" / "openai.yaml").read_text(encoding="utf-8"))
@@ -43,8 +43,11 @@ class RepositoryContractTests(unittest.TestCase):
             "generate-reference-yaml",
             "generate_reference_yaml.py",
             "REFERENCE_GAMEVER",
-            "default `-gamever`",
-            "must not be regenerated once per",
+            "canonical reference gamever",
+            "per-gamever override",
+            "-gamever <REFERENCE_GAMEVER>",
+            "references/<REFERENCE_GAMEVER>/<REFERENCE_MODULE>/<PREDECESSOR>.windows.yaml",
+            "references/<REFERENCE_GAMEVER>/<REFERENCE_MODULE>/<PREDECESSOR>.linux.yaml",
             "New predecessor: mandatory multi-phase workflow",
             "-skill <PREDECESSOR_SKILL>",
             "Reference generation and annotation must cover both `disasm_code` and `procedure`.",
@@ -52,6 +55,18 @@ class RepositoryContractTests(unittest.TestCase):
             self.assertIn(marker, text)
         self.assertNotIn("GSVIBE_REFERENCE_GAMEVER", text)
         self.assertNotIn(".env", text)
+
+    def test_create_agent_fallback_skill_resolves_reference_gamever(self):
+        path = ROOT / ".claude" / "skills" / "create-agent-skill-fallback" / "SKILL.md"
+        text = path.read_text(encoding="utf-8")
+        for marker in (
+            "current gamever",
+            "canonical reference gamever",
+            "GSVIBE_REFERENCE_GAMEVER",
+            "default `hl-10210`",
+            "Only stop after both",
+        ):
+            self.assertIn(marker, text)
 
     def test_reference_yamls_match_generation_contract(self):
         reference_root = ROOT / "ida_preprocessor_scripts" / "references"
@@ -85,7 +100,7 @@ class RepositoryContractTests(unittest.TestCase):
         for marker in (
             '"symbol_name": "build_number"',
             '"prompt_path": "prompt/call_llm_decompile.md"',
-            '"references/engine/SV_SendServerinfo.{platform}.yaml"',
+            '"references/{gamever}/engine/SV_SendServerinfo.{platform}.yaml"',
             '"expected_result_sections": ["found_call"]',
             "llm_config=None",
         ):
@@ -125,6 +140,7 @@ class RepositoryContractTests(unittest.TestCase):
                 "hl-3248",
                 "hl-3266",
                 "hl-3329",
+                "hl-3647",
                 "hl-4554",
                 "hl-6153",
                 "hl-8684",
@@ -133,13 +149,20 @@ class RepositoryContractTests(unittest.TestCase):
             engine_tags,
         )
 
-        for platform in ("windows", "linux"):
-            reference = (
-                ROOT / "ida_preprocessor_scripts" / "references" / "engine" / f"SV_SendServerinfo.{platform}.yaml"
-            )
-            document = yaml.safe_load(reference.read_text(encoding="utf-8"))
-            self.assertIn("call    build_number", document["disasm_code"])
-            self.assertIn("build_number()", document["procedure"])
+        for gamever in ("hl-10210", "svencoop-10257"):
+            for platform in ("windows", "linux"):
+                with self.subTest(gamever=gamever, platform=platform):
+                    reference = (
+                        ROOT
+                        / "ida_preprocessor_scripts"
+                        / "references"
+                        / gamever
+                        / "engine"
+                        / f"SV_SendServerinfo.{platform}.yaml"
+                    )
+                    document = yaml.safe_load(reference.read_text(encoding="utf-8"))
+                    self.assertIn("call    build_number", document["disasm_code"])
+                    self.assertIn("build_number()", document["procedure"])
 
     def test_download_and_config_tags_match(self):
         downloads = yaml.safe_load((ROOT / "download.yaml").read_text(encoding="utf-8"))["downloads"]

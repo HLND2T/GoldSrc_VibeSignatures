@@ -64,8 +64,8 @@ uv run python generate_reference_yaml.py -gamever <GAMEVER> -module <MODULE> -pl
 ```
 
 The value must be a `.yaml` filename, not a path. The file remains below
-`ida_preprocessor_scripts/references/<module>/`, and its `func_name` remains the canonical value
-passed to `-func_name`.
+`ida_preprocessor_scripts/references/<gamever>/<module>/`, and its `func_name` remains the canonical
+value passed to `-func_name`.
 
 ## Address resolution
 
@@ -80,7 +80,7 @@ Alias lookup must resolve to exactly one function start. Missing and ambiguous m
 
 Default path:
 
-`ida_preprocessor_scripts/references/<module>/<func_name>.<platform>.yaml`
+`ida_preprocessor_scripts/references/<gamever>/<module>/<func_name>.<platform>.yaml`
 
 The generated mapping contains exactly:
 
@@ -103,7 +103,7 @@ In a target `ida_preprocessor_scripts/find-*.py`, use the path relative to
 
 ```python
 "reference_yaml_paths": [
-    "references/<module>/<func_name>.<platform>.yaml",
+    "references/{gamever}/<module>/<func_name>.<platform>.yaml",
 ]
 ```
 

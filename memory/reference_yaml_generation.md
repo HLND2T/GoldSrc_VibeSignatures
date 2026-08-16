@@ -13,7 +13,7 @@ permalink: goldsrc-vibesignatures/reference-yaml-generation
 
 ## 根因 / 约束
 
-- reference 路径跨 gamever 共享；不得按所有版本反复覆盖。
+- reference 路径带 gamever 段：`ida_preprocessor_scripts/references/<gamever>/<module>/<func>.<platform>.yaml`；`{gamever}` 运行时先取当前分析 gamever，缺失时回退到 `GSVIBE_REFERENCE_GAMEVER`（默认 `hl-10210`）。canonical tag 必须通过 `validated_tag()`，current/fallback 的最终路径都必须位于 `ida_preprocessor_scripts/references` 根目录内。仅当引擎函数体确有差异（如 SvEngine `svencoop-10257`）才按 gamever 单独生成；`hl-*`/`cstrike-*`/`cof-*` 共用 `hl-10210` reference。
 - 输出固定且仅含 `func_name`、`func_va`、`disasm_code`、`procedure`；地址限 x86，disassembly 非空。
 - 仅支持 PE32/I386 与 ELF32/I386；attach/auto-start 都必须验证 bound IDB identity。
 - auto-start 必须使用仓库 `IdaMcpLifecycle`，且 `-binary` 必须等于 config 声明的 binary。
@@ -22,9 +22,9 @@ permalink: goldsrc-vibesignatures/reference-yaml-generation
 ## 正确做法
 
 - 唯一生成入口：`.claude/skills/generate-reference-yaml/SKILL.md` + `generate_reference_yaml.py`；不手写初始 YAML、不直接调用 IDA API。该 backend skill 的 `policy.allow_implicit_invocation` 为 false，由上层流程显式调用。
-- `generate_reference_yaml.py` 在解析参数前加载仓库环境文件，`-gamever` 默认读取 `GSVIBE_REFERENCE_GAMEVER`（当前 `hl-10210`），显式 CLI 值优先；未设置时保留从当前 IDA binary path 推断 target 的原有行为。`create-preprocessor-scripts` skill 不读取环境文件，也不引用该变量名；它使用 generator 解析出的 `REFERENCE_GAMEVER`，校验 `configs/<tag>.yaml` 存在且声明 predecessor module，两平台均声明时必须由同一 tag 提供。
+- `generate_reference_yaml.py` 在解析参数前加载仓库环境文件，`-gamever` 默认读取 `GSVIBE_REFERENCE_GAMEVER`（当前 `hl-10210`），显式 CLI 值优先；未设置时保留从当前 IDA binary path 推断 target 的原有行为。`create-preprocessor-scripts` skill 为共享 body 选择 canonical reference gamever，为确认存在差异的 body 选择目标 gamever，并在每条 generator 命令中显式传递 `-gamever <REFERENCE_GAMEVER>`；两平台均声明时必须由同一 tag 提供。
 - 新 predecessor：注册 deterministic predecessor/downstream scripts → predecessor-only analyzer 运行 `<SUPPORTED_PLATFORMS>` → 各支持平台串行 generate → 同步注释 `disasm_code` 与 `procedure` → downstream/full validation。
-- regeneration 后以 Git removed lines 恢复仍有效的注释，不凭记忆重建。
+- regeneration 后在带 `<REFERENCE_GAMEVER>` 的实际路径上查看 Git removed lines，恢复仍有效的注释，不凭记忆重建。
 
 ## 验证方式
 
