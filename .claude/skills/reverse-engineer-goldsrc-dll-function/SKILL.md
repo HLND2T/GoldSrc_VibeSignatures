@@ -15,6 +15,7 @@ Collect or discover:
 - The matching GoldSrc/HLDS source tree, including nearby helpers and type declarations.
 - A matching symbolized Linux binary when available, normally `hw.so`, plus `llvm-dwarfdump` or an equivalent DWARF reader.
 - A writable backup location for the IDB.
+- `D:\HLND2T_official` as full source code reference.
 
 If the source build, Linux binary, or Windows build does not match exactly, continue only with an explicit version-mismatch warning. Never silently merge evidence from different versions.
 
