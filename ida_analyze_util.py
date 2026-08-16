@@ -13,6 +13,7 @@ from pathlib import Path
 
 import yaml
 
+from analysis_config import validated_tag
 from ida_llm_decompile import (
     _build_llm_decompile_request_cache_key,
     _empty_llm_decompile_result,
@@ -1698,10 +1699,11 @@ def _normalize_llm_decompile_specs(specs):
 
 
 DEFAULT_REFERENCE_GAMEVER = "hl-10210"
+REFERENCE_RESOURCE_ROOT = Path(__file__).resolve().parent / "ida_preprocessor_scripts" / "references"
 
 
 def _reference_gamever():
-    return os.environ.get("GSVIBE_REFERENCE_GAMEVER", DEFAULT_REFERENCE_GAMEVER)
+    return validated_tag(os.environ.get("GSVIBE_REFERENCE_GAMEVER", DEFAULT_REFERENCE_GAMEVER))
 
 
 def _resolve_llm_template(value, new_binary_dir, platform, *, gamever=None):
@@ -1723,13 +1725,24 @@ def _resolve_preprocessor_resource(value, new_binary_dir, platform):
     return path.resolve()
 
 
+def _confine_reference_resource(path):
+    resolved_root = Path(REFERENCE_RESOURCE_ROOT).resolve()
+    resolved_path = Path(path).resolve()
+    if not resolved_path.is_relative_to(resolved_root):
+        raise ValueError(f"Reference resource path is outside reference root: {resolved_path}")
+    return resolved_path
+
+
 def _resolve_reference_resource(value, new_binary_dir, platform):
     text = str(value)
     current_path = _resolve_preprocessor_resource(text, new_binary_dir, platform)
-    if current_path.is_file() or "{gamever}" not in text:
+    if "{gamever}" not in text:
+        return current_path
+    current_path = _confine_reference_resource(current_path)
+    if current_path.is_file():
         return current_path
     fallback_text = text.replace("{gamever}", _reference_gamever())
-    return _resolve_preprocessor_resource(fallback_text, new_binary_dir, platform)
+    return _confine_reference_resource(_resolve_preprocessor_resource(fallback_text, new_binary_dir, platform))
 
 
 def _index_llm_inputs(values):

@@ -1,0 +1,496 @@
+func_name: "SV_SendServerinfo"
+func_va: "0xb83d0"
+disasm_code: |-
+  .text:000B83D0                 ; Sven Coop 10257 ELF SV_SendServerinfo. Reconstructed from target x86 machine code without usable DWARF; cross-checked against the same-build hw.dll and D:\HLND2T_official\engine\sv_main.c:1222. Linux ABI and observed offsets remain authoritative.
+  .text:000B83D0                 push    ebp; Sven Coop 10257 ELF SV_SendServerinfo. Reconstructed from target x86 machine code without usable DWARF; cross-checked against the same-build hw.dll and D:\HLND2T_official\engine\sv_main.c:1222. Linux ABI and observed offsets remain authoritative.
+  .text:000B83D1                 push    edi
+  .text:000B83D2                 push    esi
+  .text:000B83D3                 push    ebx
+  .text:000B83D4                 call    __x86_get_pc_thunk_bx
+  .text:000B83D9                 add     ebx, (offset dbl_2EE000 - $)
+  .text:000B83DF                 sub     esp, 88Ch
+  .text:000B83E5                 lea     eax, (off_2EF0A8 - 2EE000h)[ebx]; "developer"
+  .text:000B83EB                 fld     dword ptr [eax+0Ch]
+  .text:000B83EE                 fldz
+  .text:000B83F0                 fst     [esp+89Ch+buffer]
+  .text:000B83F4                 fxch    st(1)
+  .text:000B83F6                 fucomip st, st(1)
+  .text:000B83F8                 fstp    st
+  .text:000B83FA                 jp      short loc_B8412
+  .text:000B83FC                 jnz     short loc_B8412
+  .text:000B83FE                 cmp     ds:(svs_maxclients - 2EE000h)[ebx], 1
+  .text:000B8405                 lea     esi, [esp+89Ch+message]
+  .text:000B840C                 jle     loc_B8495
+  .text:000B8412                 mov     eax, svc_print
+  .text:000B8417                 ; c
+  .text:000B8417                 mov     [esp+89Ch+maxlen], eax; c
+  .text:000B841B                 mov     eax, [esp+89Ch+msg]
+  .text:000B8422                 ; sb
+  .text:000B8422                 mov     [esp+89Ch+s], eax; sb
+  .text:000B8425                 call    MSG_WriteByte
+  .text:000B842A                 mov     esi, ds:(svs_spawncount - 2EE000h)[ebx]
+  .text:000B8430                 call    build_number
+  .text:000B8435                 mov     edi, eax
+  .text:000B8437                 lea     eax, (unk_D3EE00 - 2EE000h)[ebx]
+  .text:000B843D                 ; Indirect Sven server-banner provider; exact exported API identity is not proven by the stripped ELF.
+  .text:000B843D                 call    dword ptr [eax+70h]; Indirect Sven server-banner provider; exact exported API identity is not proven by the stripped ELF.
+  .text:000B8440                 lea     edx, (asc_272EA1+1 - 2EE000h)[ebx]; ""
+  .text:000B8446                 mov     [esp+89Ch+var_880], esi
+  .text:000B844A                 lea     esi, [esp+89Ch+message]
+  .text:000B8451                 mov     [esp+89Ch+var_884], edx
+  .text:000B8455                 lea     edx, (a5018 - 2EE000h)[ebx]; "5.0.1.8"
+  .text:000B845B                 mov     [esp+89Ch+var_888], edi
+  .text:000B845F                 mov     [esp+89Ch+callback], edx
+  .text:000B8463                 ; s
+  .text:000B8463                 mov     [esp+89Ch+s], esi; s
+  .text:000B8466                 mov     [esp+89Ch+fields], eax
+  .text:000B846A                 lea     eax, (aSServerEngineS - 2EE000h)[ebx]; "\n%s\nServer Engine: %s (build %d%s)\nS"...
+  .text:000B8470                 ; format
+  .text:000B8470                 mov     [esp+89Ch+format], eax; format
+  .text:000B8474                 mov     eax, 800h
+  .text:000B8479                 ; maxlen
+  .text:000B8479                 mov     [esp+89Ch+maxlen], eax; maxlen
+  .text:000B847D                 call    _snprintf
+  .text:000B8482                 mov     eax, [esp+89Ch+msg]
+  .text:000B8489                 ; s
+  .text:000B8489                 mov     [esp+89Ch+maxlen], esi; s
+  .text:000B848D                 ; sb
+  .text:000B848D                 mov     [esp+89Ch+s], eax; sb
+  .text:000B8490                 call    MSG_WriteString
+  .text:000B8495                 mov     eax, [esp+89Ch+msg]
+  .text:000B849C                 mov     ebp, svc_serverinfo
+  .text:000B84A1                 ; c
+  .text:000B84A1                 mov     [esp+89Ch+maxlen], ebp; c
+  .text:000B84A5                 ; sb
+  .text:000B84A5                 mov     [esp+89Ch+s], eax; sb
+  .text:000B84A8                 call    MSG_WriteByte
+  .text:000B84AD                 mov     eax, PROTOCOL_VERSION
+  .text:000B84B2                 ; c
+  .text:000B84B2                 mov     [esp+89Ch+maxlen], eax; c
+  .text:000B84B6                 mov     eax, [esp+89Ch+msg]
+  .text:000B84BD                 ; sb
+  .text:000B84BD                 mov     [esp+89Ch+s], eax; sb
+  .text:000B84C0                 call    MSG_WriteLong
+  .text:000B84C5                 mov     eax, ds:(svs_spawncount - 2EE000h)[ebx]
+  .text:000B84CB                 ; c
+  .text:000B84CB                 mov     [esp+89Ch+maxlen], eax; c
+  .text:000B84CF                 mov     eax, [esp+89Ch+msg]
+  .text:000B84D6                 ; sb
+  .text:000B84D6                 mov     [esp+89Ch+s], eax; sb
+  .text:000B84D9                 call    MSG_WriteLong
+  .text:000B84DE                 mov     eax, [esp+89Ch+client]
+  .text:000B84E5                 mov     eax, [eax+client_t.edict]
+  .text:000B84EB                 ; edict
+  .text:000B84EB                 mov     [esp+89Ch+s], eax; edict
+  .text:000B84EE                 call    NUM_FOR_EDICT
+  .text:000B84F3                 mov     edi, eax
+  .text:000B84F5                 mov     eax, ds:(sv_worldmapCRC - 2EE000h)[ebx]
+  .text:000B84FB                 dec     edi
+  .text:000B84FC                 ; c
+  .text:000B84FC                 mov     [esp+89Ch+maxlen], eax; c
+  .text:000B8500                 mov     eax, [esp+89Ch+msg]
+  .text:000B8507                 ; sb
+  .text:000B8507                 mov     [esp+89Ch+s], eax; sb
+  .text:000B850A                 ; Sven build writes sv_worldmapCRC directly; unlike the reference source, no COM_Munge3 call is emitted.
+  .text:000B850A                 call    MSG_WriteLong; Sven build writes sv_worldmapCRC directly; unlike the reference source, no COM_Munge3 call is emitted.
+  .text:000B850F                 lea     eax, (sv_clientdllmd5 - 2EE000h)[ebx]
+  .text:000B8515                 ; buf
+  .text:000B8515                 mov     [esp+89Ch+format], eax; buf
+  .text:000B8519                 mov     eax, 10h
+  .text:000B851E                 ; size
+  .text:000B851E                 mov     [esp+89Ch+maxlen], eax; size
+  .text:000B8522                 mov     eax, [esp+89Ch+msg]
+  .text:000B8529                 ; sb
+  .text:000B8529                 mov     [esp+89Ch+s], eax; sb
+  .text:000B852C                 call    MSG_WriteBuf
+  .text:000B8531                 mov     eax, ds:(svs_maxclients - 2EE000h)[ebx]
+  .text:000B8537                 ; c
+  .text:000B8537                 mov     [esp+89Ch+maxlen], eax; c
+  .text:000B853B                 mov     eax, [esp+89Ch+msg]
+  .text:000B8542                 ; sb
+  .text:000B8542                 mov     [esp+89Ch+s], eax; sb
+  .text:000B8545                 call    MSG_WriteByte
+  .text:000B854A                 mov     eax, [esp+89Ch+msg]
+  .text:000B8551                 ; c
+  .text:000B8551                 mov     [esp+89Ch+maxlen], edi; c
+  .text:000B8555                 ; sb
+  .text:000B8555                 mov     [esp+89Ch+s], eax; sb
+  .text:000B8558                 call    MSG_WriteByte
+  .text:000B855D                 lea     eax, (off_2EF06C - 2EE000h)[ebx]; "coop"
+  .text:000B8563                 fld     dword ptr [eax+0Ch]
+  .text:000B8566                 fldz
+  .text:000B8568                 fst     [esp+89Ch+buffer]
+  .text:000B856C                 fxch    st(1)
+  .text:000B856E                 fucomip st, st(1)
+  .text:000B8570                 jp      short loc_B858F
+  .text:000B8572                 jnz     short loc_B8598
+  .text:000B8574                 lea     eax, (off_2EF080 - 2EE000h)[ebx]; "deathmatch"
+  .text:000B857A                 fld     dword ptr [eax+0Ch]
+  .text:000B857D                 fucomip st, st(1)
+  .text:000B857F                 fstp    st
+  .text:000B8581                 jp      loc_B88B0
+  .text:000B8587                 jnz     loc_B88B0
+  .text:000B858D                 jmp     short loc_B859A
+  .text:000B858F                 fstp    st
+  .text:000B8591                 jmp     short loc_B859A
+  .text:000B8598                 fstp    st
+  .text:000B859A                 mov     eax, [esp+89Ch+msg]
+  .text:000B85A1                 xor     ecx, ecx
+  .text:000B85A3                 ; c
+  .text:000B85A3                 mov     [esp+89Ch+maxlen], ecx; c
+  .text:000B85A7                 ; sb
+  .text:000B85A7                 mov     [esp+89Ch+s], eax; sb
+  .text:000B85AA                 call    MSG_WriteByte
+  .text:000B85AF                 lea     eax, (com_gamedir - 2EE000h)[ebx]
+  .text:000B85B5                 ; out
+  .text:000B85B5                 mov     [esp+89Ch+maxlen], esi; out
+  .text:000B85B9                 ; in
+  .text:000B85B9                 mov     [esp+89Ch+s], eax; in
+  .text:000B85BC                 call    COM_FileBase
+  .text:000B85C1                 mov     eax, [esp+89Ch+msg]
+  .text:000B85C8                 ; s
+  .text:000B85C8                 mov     [esp+89Ch+maxlen], esi; s
+  .text:000B85CC                 ; sb
+  .text:000B85CC                 mov     [esp+89Ch+s], eax; sb
+  .text:000B85CF                 call    MSG_WriteString
+  .text:000B85D4                 lea     eax, (aHostname - 2EE000h)[ebx]; "hostname"
+  .text:000B85DA                 ; name
+  .text:000B85DA                 mov     [esp+89Ch+s], eax; name
+  .text:000B85DD                 call    Cvar_VariableString
+  .text:000B85E2                 ; s
+  .text:000B85E2                 mov     [esp+89Ch+maxlen], eax; s
+  .text:000B85E6                 mov     eax, [esp+89Ch+msg]
+  .text:000B85ED                 ; sb
+  .text:000B85ED                 mov     [esp+89Ch+s], eax; sb
+  .text:000B85F0                 call    MSG_WriteString
+  .text:000B85F5                 lea     eax, (sv_modelname - 2EE000h)[ebx]
+  .text:000B85FB                 ; s
+  .text:000B85FB                 mov     [esp+89Ch+maxlen], eax; s
+  .text:000B85FF                 mov     eax, [esp+89Ch+msg]
+  .text:000B8606                 ; sb
+  .text:000B8606                 mov     [esp+89Ch+s], eax; sb
+  .text:000B8609                 call    MSG_WriteString
+  .text:000B860E                 lea     eax, [esp+89Ch+len]
+  .text:000B8612                 ; length
+  .text:000B8612                 mov     [esp+89Ch+maxlen], eax; length
+  .text:000B8616                 mov     eax, (mapcyclefile_string - 2EE000h)[ebx]
+  .text:000B861C                 ; filename
+  .text:000B861C                 mov     [esp+89Ch+s], eax; filename
+  .text:000B861F                 call    COM_LoadFileForMe
+  .text:000B8624                 test    eax, eax
+  .text:000B8626                 jz      short loc_B8634
+  .text:000B8628                 mov     edx, [esp+89Ch+len]
+  .text:000B862C                 test    edx, edx
+  .text:000B862E                 jnz     loc_B8879
+  .text:000B8634                 lea     eax, (aMapcycleFailur - 2EE000h)[ebx]; "mapcycle failure"
+  .text:000B863A                 ; s
+  .text:000B863A                 mov     [esp+89Ch+maxlen], eax; s
+  .text:000B863E                 mov     eax, [esp+89Ch+msg]
+  .text:000B8645                 ; sb
+  .text:000B8645                 mov     [esp+89Ch+s], eax; sb
+  .text:000B8648                 call    MSG_WriteString
+  .text:000B864D                 xor     eax, eax
+  .text:000B864F                 ; c
+  .text:000B864F                 mov     [esp+89Ch+maxlen], eax; c
+  .text:000B8653                 mov     eax, [esp+89Ch+msg]
+  .text:000B865A                 ; sb
+  .text:000B865A                 mov     [esp+89Ch+s], eax; sb
+  .text:000B865D                 call    MSG_WriteByte
+  .text:000B8662                 mov     eax, svc_sendextrainfo
+  .text:000B8667                 ; c
+  .text:000B8667                 mov     [esp+89Ch+maxlen], eax; c
+  .text:000B866B                 mov     eax, [esp+89Ch+msg]
+  .text:000B8672                 ; sb
+  .text:000B8672                 mov     [esp+89Ch+s], eax; sb
+  .text:000B8675                 call    MSG_WriteByte
+  .text:000B867A                 lea     eax, (com_clientfallback - 2EE000h)[ebx]
+  .text:000B8680                 ; s
+  .text:000B8680                 mov     [esp+89Ch+maxlen], eax; s
+  .text:000B8684                 mov     eax, [esp+89Ch+msg]
+  .text:000B868B                 ; sb
+  .text:000B868B                 mov     [esp+89Ch+s], eax; sb
+  .text:000B868E                 call    MSG_WriteString
+  .text:000B8693                 mov     eax, ds:(sv_cheats - 2EE000h)[ebx]
+  .text:000B8699                 ; c
+  .text:000B8699                 mov     [esp+89Ch+maxlen], eax; c
+  .text:000B869D                 mov     eax, [esp+89Ch+msg]
+  .text:000B86A4                 ; sb
+  .text:000B86A4                 mov     [esp+89Ch+s], eax; sb
+  .text:000B86A7                 call    MSG_WriteByte
+  .text:000B86AC                 ; inlined SV_WriteDeltaDescriptionsToClient: begin (D:\HLND2T_official\engine\sv_main.c:1109)
+  .text:000B86AC                 mov     eax, 44h ; 'D'; inlined SV_WriteDeltaDescriptionsToClient: begin (D:\HLND2T_official\engine\sv_main.c:1109)
+  .text:000B86B1                 xor     edx, edx
+  .text:000B86B3                 ; count
+  .text:000B86B3                 mov     [esp+89Ch+format], eax; count
+  .text:000B86B7                 lea     eax, [esp+89Ch+nulldesc]
+  .text:000B86BB                 ; dest
+  .text:000B86BB                 mov     [esp+89Ch+s], eax; dest
+  .text:000B86BE                 ; fill
+  .text:000B86BE                 mov     [esp+89Ch+maxlen], edx; fill
+  .text:000B86C2                 mov     [esp+89Ch+from], eax
+  .text:000B86C6                 call    Q_memset
+  .text:000B86CB                 mov     edi, ds:(g_sv_delta - 2EE000h)[ebx]
+  .text:000B86D1                 lea     eax, (g_MetaDelta.dynamic - 2EE000h)[ebx]
+  .text:000B86D7                 test    edi, edi
+  .text:000B86D9                 mov     [esp+89Ch+var_870], eax
+  .text:000B86DD                 jz      loc_B87B4
+  .text:000B86E3                 lea     esi, [esi+0]
+  .text:000B86E9                 lea     edi, [edi+0]
+  .text:000B86F0                 mov     eax, [esp+89Ch+msg]
+  .text:000B86F7                 mov     ecx, svc_deltadescription
+  .text:000B86FC                 mov     ebp, 10h
+  .text:000B8701                 ; c
+  .text:000B8701                 mov     [esp+89Ch+maxlen], ecx; c
+  .text:000B8705                 ; sb
+  .text:000B8705                 mov     [esp+89Ch+s], eax; sb
+  .text:000B8708                 call    MSG_WriteByte
+  .text:000B870D                 mov     eax, [edi+4]
+  .text:000B8710                 ; s
+  .text:000B8710                 mov     [esp+89Ch+maxlen], eax; s
+  .text:000B8714                 mov     eax, [esp+89Ch+msg]
+  .text:000B871B                 ; sb
+  .text:000B871B                 mov     [esp+89Ch+s], eax; sb
+  .text:000B871E                 call    MSG_WriteString
+  .text:000B8723                 mov     eax, [edi+0Ch]
+  .text:000B8726                 mov     eax, [eax+4]
+  .text:000B8729                 mov     esi, eax
+  .text:000B872B                 mov     eax, [esp+89Ch+msg]
+  .text:000B8732                 ; buf
+  .text:000B8732                 mov     [esp+89Ch+s], eax; buf
+  .text:000B8735                 call    MSG_StartBitWriting
+  .text:000B873A                 ; numbits
+  .text:000B873A                 mov     [esp+89Ch+maxlen], ebp; numbits
+  .text:000B873E                 xor     ebp, ebp
+  .text:000B8740                 ; data
+  .text:000B8740                 mov     [esp+89Ch+s], esi; data
+  .text:000B8743                 mov     [esp+89Ch+buffer], esi
+  .text:000B8747                 xor     esi, esi
+  .text:000B8749                 call    MSG_WriteBits
+  .text:000B874E                 mov     eax, [esp+89Ch+buffer]
+  .text:000B8752                 test    eax, eax
+  .text:000B8754                 jle     short loc_B879B
+  .text:000B8756                 mov     eax, ebp
+  .text:000B8758                 mov     ebp, edi
+  .text:000B875A                 mov     edi, eax
+  .text:000B875C                 lea     esi, [esi+0]
+  .text:000B8760                 xor     eax, eax
+  .text:000B8762                 mov     edx, 1
+  .text:000B8767                 ; callback
+  .text:000B8767                 mov     [esp+89Ch+callback], eax; callback
+  .text:000B876B                 mov     eax, [esp+89Ch+var_870]
+  .text:000B876F                 inc     esi
+  .text:000B8770                 ; force
+  .text:000B8770                 mov     [esp+89Ch+format], edx; force
+  .text:000B8774                 ; fields
+  .text:000B8774                 mov     [esp+89Ch+fields], eax; fields
+  .text:000B8778                 mov     eax, [ebp+0Ch]
+  .text:000B877B                 mov     ecx, [eax+2Ch]
+  .text:000B877E                 mov     eax, [esp+89Ch+from]
+  .text:000B8782                 add     ecx, edi
+  .text:000B8784                 add     edi, 44h ; 'D'
+  .text:000B8787                 ; to
+  .text:000B8787                 mov     [esp+89Ch+maxlen], ecx; to
+  .text:000B878B                 ; from
+  .text:000B878B                 mov     [esp+89Ch+s], eax; from
+  .text:000B878E                 call    DELTA_WriteDelta
+  .text:000B8793                 cmp     [esp+89Ch+buffer], esi
+  .text:000B8797                 jnz     short loc_B8760
+  .text:000B8799                 mov     edi, ebp
+  .text:000B879B                 mov     eax, [esp+89Ch+msg]
+  .text:000B87A2                 ; buf
+  .text:000B87A2                 mov     [esp+89Ch+s], eax; buf
+  .text:000B87A5                 call    MSG_EndBitWriting
+  .text:000B87AA                 mov     edi, [edi]
+  .text:000B87AC                 test    edi, edi
+  .text:000B87AE                 jnz     loc_B86F0
+  .text:000B87B4                 ; inlined SV_WriteDeltaDescriptionsToClient: end; SV_SetMoveVars resumes SV_SendServerinfo
+  .text:000B87B4                 call    SV_SetMoveVars; inlined SV_WriteDeltaDescriptionsToClient: end; SV_SetMoveVars resumes SV_SendServerinfo
+  .text:000B87B9                 mov     eax, [esp+89Ch+msg]
+  .text:000B87C0                 ; msg
+  .text:000B87C0                 mov     [esp+89Ch+s], eax; msg
+  .text:000B87C3                 call    SV_WriteMovevarsToClient
+  .text:000B87C8                 mov     eax, svc_cdtrack
+  .text:000B87CD                 ; c
+  .text:000B87CD                 mov     [esp+89Ch+maxlen], eax; c
+  .text:000B87D1                 mov     eax, [esp+89Ch+msg]
+  .text:000B87D8                 ; sb
+  .text:000B87D8                 mov     [esp+89Ch+s], eax; sb
+  .text:000B87DB                 call    MSG_WriteByte
+  .text:000B87E0                 mov     eax, ds:(gGlobalVariables_cdAudioTrack - 2EE000h)[ebx]
+  .text:000B87E6                 ; c
+  .text:000B87E6                 mov     [esp+89Ch+maxlen], eax; c
+  .text:000B87EA                 mov     eax, [esp+89Ch+msg]
+  .text:000B87F1                 ; sb
+  .text:000B87F1                 mov     [esp+89Ch+s], eax; sb
+  .text:000B87F4                 call    MSG_WriteByte
+  .text:000B87F9                 mov     eax, ds:(gGlobalVariables_cdAudioTrack - 2EE000h)[ebx]
+  .text:000B87FF                 ; c
+  .text:000B87FF                 mov     [esp+89Ch+maxlen], eax; c
+  .text:000B8803                 mov     eax, [esp+89Ch+msg]
+  .text:000B880A                 ; sb
+  .text:000B880A                 mov     [esp+89Ch+s], eax; sb
+  .text:000B880D                 call    MSG_WriteByte
+  .text:000B8812                 mov     eax, svc_setview
+  .text:000B8817                 ; c
+  .text:000B8817                 mov     [esp+89Ch+maxlen], eax; c
+  .text:000B881B                 mov     eax, [esp+89Ch+msg]
+  .text:000B8822                 ; sb
+  .text:000B8822                 mov     [esp+89Ch+s], eax; sb
+  .text:000B8825                 call    MSG_WriteByte
+  .text:000B882A                 mov     eax, [esp+89Ch+client]
+  .text:000B8831                 mov     eax, [eax+client_t.edict]
+  .text:000B8837                 ; edict
+  .text:000B8837                 mov     [esp+89Ch+s], eax; edict
+  .text:000B883A                 call    NUM_FOR_EDICT
+  .text:000B883F                 ; c
+  .text:000B883F                 mov     [esp+89Ch+maxlen], eax; c
+  .text:000B8843                 mov     eax, [esp+89Ch+msg]
+  .text:000B884A                 ; sb
+  .text:000B884A                 mov     [esp+89Ch+s], eax; sb
+  .text:000B884D                 call    MSG_WriteShort
+  .text:000B8852                 mov     eax, [esp+89Ch+client]
+  .text:000B8859                 mov     dword ptr [eax+4], 0
+  .text:000B8860                 mov     dword ptr [eax+0Ch], 1
+  .text:000B8867                 mov     dword ptr [eax+8], 0
+  .text:000B886E                 add     esp, 88Ch
+  .text:000B8874                 pop     ebx
+  .text:000B8875                 pop     esi
+  .text:000B8876                 pop     edi
+  .text:000B8877                 pop     ebp
+  .text:000B8878                 retn
+  .text:000B8879                 ; Sven build truncates mapcycle payloads to 8190 bytes before MSG_WriteString.
+  .text:000B8879                 cmp     edx, 1FFEh; Sven build truncates mapcycle payloads to 8190 bytes before MSG_WriteString.
+  .text:000B887F                 jle     short loc_B8888
+  .text:000B8881                 mov     byte ptr [eax+1FFEh], 0
+  .text:000B8888                 ; s
+  .text:000B8888                 mov     [esp+89Ch+maxlen], eax; s
+  .text:000B888C                 mov     [esp+89Ch+buffer], eax
+  .text:000B8890                 mov     eax, [esp+89Ch+msg]
+  .text:000B8897                 ; sb
+  .text:000B8897                 mov     [esp+89Ch+s], eax; sb
+  .text:000B889A                 call    MSG_WriteString
+  .text:000B889F                 mov     eax, [esp+89Ch+buffer]
+  .text:000B88A3                 ; buffer
+  .text:000B88A3                 mov     [esp+89Ch+s], eax; buffer
+  .text:000B88A6                 call    COM_FreeFile
+  .text:000B88AB                 jmp     loc_B864D
+  .text:000B88B0                 mov     eax, [esp+89Ch+msg]
+  .text:000B88B7                 mov     edi, 1
+  .text:000B88BC                 ; c
+  .text:000B88BC                 mov     [esp+89Ch+maxlen], edi; c
+  .text:000B88C0                 ; sb
+  .text:000B88C0                 mov     [esp+89Ch+s], eax; sb
+  .text:000B88C3                 call    MSG_WriteByte
+  .text:000B88C8                 jmp     loc_B85AF
+procedure: |-
+  // Sven Coop 10257 ELF SV_SendServerinfo. Reconstructed from target x86 machine code without usable DWARF; cross-checked against the same-build hw.dll and D:\HLND2T_official\engine\sv_main.c:1222. Linux ABI and observed offsets remain authoritative.
+  void SV_SendServerinfo(sizebuf_t *msg, client_t *client)
+  {
+    signed __int32 spawncount; // esi
+    int build; // edi
+    const char *serverBanner; // eax
+    int playernum; // edi
+    char *mapcyclelist; // eax
+    delta_info_t *p; // edi
+    signed __int32 fieldCount; // esi
+    int fieldsWritten; // esi
+    delta_info_t *currentDelta; // ebp
+    int fieldIndex; // edi
+    delta_description_t *to; // ecx
+    unsigned __int32 bitsValue; // [esp+0h] [ebp-89Ch]
+    const char *hostname; // [esp+4h] [ebp-898h]
+    signed __int32 viewEntityIndex; // [esp+4h] [ebp-898h]
+    signed __int32 buffer; // [esp+24h] [ebp-878h]
+    void *mapcyclelistToFree; // [esp+24h] [ebp-878h]
+    signed __int32 len; // [esp+38h] [ebp-864h] BYREF
+    struct delta_description_t nulldesc; // [esp+3Ch] [ebp-860h] BYREF
+    char message[2048]; // [esp+80h] [ebp-81Ch] BYREF
+    if ( developer_value != 0.0 || svs_maxclients > 1 )
+    {
+      MSG_WriteByte(msg, svc_print);
+      spawncount = svs_spawncount;
+      build = build_number();
+      serverBanner = dword_D3EE70();              // Indirect Sven server-banner provider; exact exported API identity is not proven by the stripped ELF.
+      snprintf(
+        message,
+        0x800u,
+        "\n%s\nServer Engine: %s (build %d%s)\nServer Number: %i\n\n",
+        serverBanner,
+        "5.0.1.8",
+        build,
+        "",
+        spawncount);
+      MSG_WriteString(msg, message);
+    }
+    MSG_WriteByte(msg, svc_serverinfo);
+    MSG_WriteLong(msg, PROTOCOL_VERSION);
+    MSG_WriteLong(msg, svs_spawncount);
+    playernum = NUM_FOR_EDICT(client->edict) - 1;
+    MSG_WriteLong(msg, sv_worldmapCRC);           // Sven build writes sv_worldmapCRC directly; unlike the reference source, no COM_Munge3 call is emitted.
+    MSG_WriteBuf(msg, 16, sv_clientdllmd5);
+    MSG_WriteByte(msg, svs_maxclients);
+    MSG_WriteByte(msg, playernum);
+    if ( coop_value == 0.0 && deathmatch_value != 0.0 )
+      MSG_WriteByte(msg, 1);
+    else
+      MSG_WriteByte(msg, 0);
+    COM_FileBase(com_gamedir, message);
+    MSG_WriteString(msg, message);
+    hostname = Cvar_VariableString("hostname");
+    MSG_WriteString(msg, hostname);
+    MSG_WriteString(msg, sv_modelname);
+    mapcyclelist = (char *)COM_LoadFileForMe(mapcyclefile_string, &len);
+    if ( mapcyclelist && len )
+    {                                             // Sven build truncates mapcycle payloads to 8190 bytes before MSG_WriteString.
+      if ( len > 8190 )
+        mapcyclelist[8190] = 0;
+      mapcyclelistToFree = mapcyclelist;
+      MSG_WriteString(msg, mapcyclelist);
+      COM_FreeFile(mapcyclelistToFree);
+    }
+    else
+    {
+      MSG_WriteString(msg, "mapcycle failure");
+    }
+    MSG_WriteByte(msg, 0);
+    MSG_WriteByte(msg, svc_sendextrainfo);
+    MSG_WriteString(msg, com_clientfallback);
+    MSG_WriteByte(msg, sv_cheats);
+    Q_memset(&nulldesc, 0, 0x44u);                // inlined SV_WriteDeltaDescriptionsToClient: begin (D:\HLND2T_official\engine\sv_main.c:1109)
+    for ( p = g_sv_delta; p; p = p->next )        // inlined SV_WriteDeltaDescriptionsToClient: end
+    {
+      MSG_WriteByte(msg, svc_deltadescription);
+      MSG_WriteString(msg, p->name);
+      fieldCount = p->delta->fieldCount;
+      MSG_StartBitWriting(msg);
+      bitsValue = fieldCount;
+      buffer = fieldCount;
+      fieldsWritten = 0;
+      MSG_WriteBits(bitsValue, 16);
+      if ( buffer > 0 )
+      {
+        currentDelta = p;
+        fieldIndex = 0;
+        do
+        {
+          ++fieldsWritten;
+          to = &currentDelta->delta->pdd[fieldIndex++];
+          DELTA_WriteDelta((byte *)&nulldesc, (byte *)to, 1, &g_MetaDelta, nullptr);
+        }
+        while ( buffer != fieldsWritten );
+        p = currentDelta;
+      }
+      MSG_EndBitWriting(msg);
+    }
+    SV_SetMoveVars();                             // inlined SV_WriteDeltaDescriptionsToClient: end; SV_SetMoveVars resumes SV_SendServerinfo
+    SV_WriteMovevarsToClient(msg);
+    MSG_WriteByte(msg, svc_cdtrack);
+    MSG_WriteByte(msg, gGlobalVariables_cdAudioTrack);
+    MSG_WriteByte(msg, gGlobalVariables_cdAudioTrack);
+    MSG_WriteByte(msg, svc_setview);
+    viewEntityIndex = NUM_FOR_EDICT(client->edict);
+    MSG_WriteShort(msg, viewEntityIndex);
+    client->spawned = 0;
+    client->connected = 1;
+    client->fully_connected = 0;
+  }

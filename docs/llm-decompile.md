@@ -48,6 +48,12 @@ analyzed; when that reference file is absent, it falls back to the canonical ref
 keep one `hl-10210` reference while an engine with a slightly different body (e.g. `svencoop-10257`)
 supplies its own `references/svencoop-10257/...` file.
 
+Both the current and canonical paths must resolve below `ida_preprocessor_scripts/references`. The
+canonical gamever must be a valid repository tag; invalid or path-like environment values fail closed
+instead of selecting a resource outside the reference namespace. Generation commands must pass the
+chosen `-gamever` explicitly: use the canonical gamever for a shared body and the analyzed gamever only
+for a confirmed per-gamever body override.
+
 Example Pattern D specification:
 
 ```python

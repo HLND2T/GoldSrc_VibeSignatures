@@ -308,18 +308,22 @@ and never hand-build the initial reference YAML.
 
 #### Select one reference gamever
 
-Reference paths are shared across game versions and therefore must not be regenerated once per
-gamever. Let `generate_reference_yaml.py` resolve its default `-gamever`; do not inspect environment
-files from this skill. Stop if the generator cannot resolve a non-empty reference gamever, and never
-fall back to auto-selection or to a user-named gamever. Validate that the resolved
-`configs/<REFERENCE_GAMEVER>.yaml` exists and declares the predecessor module. Use the resolved value
-as `REFERENCE_GAMEVER` throughout this workflow and record it in the delivery summary.
+Choose exactly one `REFERENCE_GAMEVER` for each predecessor body:
+
+- For a body shared across game families, use the configured canonical reference gamever (default
+  `hl-10210`). Do not regenerate the same body once per analyzed gamever.
+- When the requested gamever's predecessor body genuinely differs, set `REFERENCE_GAMEVER` to that
+  explicitly requested gamever as a per-gamever override. Do not create an override merely because
+  the analyzed gamever has a different tag.
+
+Validate that `configs/<REFERENCE_GAMEVER>.yaml` exists and declares the predecessor module. Use the
+selected value explicitly throughout this workflow, including every generator command, and record it
+in the delivery summary. Never silently substitute a different game family when validation fails.
 
 Generate references only for platforms declared by the selected module config. A Windows-only tag
 such as `cof-5936` requires only Windows. When both Windows and Linux are declared, the same
-`REFERENCE_GAMEVER` must provide both and both references are required. Stop if the configured
-default `-gamever` does not satisfy the module/platform/binary checks for this predecessor;
-do not silently substitute another game family.
+`REFERENCE_GAMEVER` must provide both and both references are required. Stop if
+`REFERENCE_GAMEVER` does not satisfy the module/platform/binary checks for this predecessor.
 
 #### Generate supported platforms sequentially
 
@@ -329,10 +333,10 @@ owned MCP host/port:
 
 ```powershell
 # Windows -- run only when module_windows is declared
-uv run python generate_reference_yaml.py -module <REFERENCE_MODULE> -func_name <PREDECESSOR> -auto_start_mcp -binary "bin/<REFERENCE_GAMEVER>/<REFERENCE_MODULE>/<WINDOWS_BINARY>" -platform windows -debug
+uv run python generate_reference_yaml.py -gamever <REFERENCE_GAMEVER> -module <REFERENCE_MODULE> -func_name <PREDECESSOR> -auto_start_mcp -binary "bin/<REFERENCE_GAMEVER>/<REFERENCE_MODULE>/<WINDOWS_BINARY>" -platform windows -debug
 
 # Linux -- run only when module_linux is declared; wait for Windows first when both are supported
-uv run python generate_reference_yaml.py -module <REFERENCE_MODULE> -func_name <PREDECESSOR> -auto_start_mcp -binary "bin/<REFERENCE_GAMEVER>/<REFERENCE_MODULE>/<LINUX_BINARY>" -platform linux -debug
+uv run python generate_reference_yaml.py -gamever <REFERENCE_GAMEVER> -module <REFERENCE_MODULE> -func_name <PREDECESSOR> -auto_start_mcp -binary "bin/<REFERENCE_GAMEVER>/<REFERENCE_MODULE>/<LINUX_BINARY>" -platform linux -debug
 ```
 
 The generator accepts only PE32/I386 and ELF32/I386, binds the exact database, resolves `func_va`
@@ -382,8 +386,8 @@ next link's reference can be generated.
 Generation replaces an existing reference YAML. Immediately inspect:
 
 ```powershell
-git diff -- ida_preprocessor_scripts/references/<REFERENCE_MODULE>/<PREDECESSOR>.windows.yaml
-git diff -- ida_preprocessor_scripts/references/<REFERENCE_MODULE>/<PREDECESSOR>.linux.yaml
+git diff -- ida_preprocessor_scripts/references/<REFERENCE_GAMEVER>/<REFERENCE_MODULE>/<PREDECESSOR>.windows.yaml
+git diff -- ida_preprocessor_scripts/references/<REFERENCE_GAMEVER>/<REFERENCE_MODULE>/<PREDECESSOR>.linux.yaml
 ```
 
 Restore any still-valid annotation comments verbatim from removed `-` lines into the regenerated

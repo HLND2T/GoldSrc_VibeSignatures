@@ -13,6 +13,7 @@ import yaml
 
 import ida_analyze_util
 import ida_skill_preprocessor
+from analysis_config import AnalysisConfigError
 from ida_analyze_util import (
     _build_func_xref_py_eval,
     _call_llm_for_targets,
@@ -1565,7 +1566,14 @@ found_struct_offset: []
                 resolved = str(value).replace("{platform}", platform).replace("{gamever}", gamever)
                 return (root / "ida_preprocessor_scripts" / resolved).resolve()
 
-            with patch.object(ida_analyze_util, "_resolve_preprocessor_resource", side_effect=_fake_resolve):
+            with (
+                patch.object(ida_analyze_util, "_resolve_preprocessor_resource", side_effect=_fake_resolve),
+                patch.object(
+                    ida_analyze_util,
+                    "REFERENCE_RESOURCE_ROOT",
+                    root / "ida_preprocessor_scripts" / "references",
+                ),
+            ):
                 resolved = _resolve_reference_resource(
                     "references/{gamever}/engine/SV_SendServerinfo.{platform}.yaml",
                     new_binary_dir,
@@ -1595,6 +1603,11 @@ found_struct_offset: []
 
             with (
                 patch.object(ida_analyze_util, "_resolve_preprocessor_resource", side_effect=_fake_resolve),
+                patch.object(
+                    ida_analyze_util,
+                    "REFERENCE_RESOURCE_ROOT",
+                    root / "ida_preprocessor_scripts" / "references",
+                ),
                 patch.dict("os.environ", {"GSVIBE_REFERENCE_GAMEVER": "hl-10210"}, clear=True),
             ):
                 resolved = _resolve_reference_resource(
@@ -1616,6 +1629,11 @@ found_struct_offset: []
 
             with (
                 patch.object(ida_analyze_util, "_resolve_preprocessor_resource", side_effect=_fake_resolve),
+                patch.object(
+                    ida_analyze_util,
+                    "REFERENCE_RESOURCE_ROOT",
+                    root / "ida_preprocessor_scripts" / "references",
+                ),
                 patch.dict("os.environ", {"GSVIBE_REFERENCE_GAMEVER": "hl-10210"}, clear=True),
             ):
                 resolved = _resolve_reference_resource(
@@ -1625,6 +1643,62 @@ found_struct_offset: []
                 )
         self.assertEqual(1, len(calls))
         self.assertNotIn("hl-10210", resolved.parts)
+
+    def test_resolve_reference_resource_rejects_invalid_canonical_gamever(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+
+            def _fake_resolve(value, new_binary_dir, platform):
+                gamever = Path(new_binary_dir).resolve().parent.name
+                resolved = str(value).replace("{platform}", platform).replace("{gamever}", gamever)
+                return (root / "ida_preprocessor_scripts" / resolved).resolve()
+
+            for gamever in ("", "../../..", "HL-10210"):
+                with (
+                    self.subTest(gamever=gamever),
+                    patch.object(ida_analyze_util, "_resolve_preprocessor_resource", side_effect=_fake_resolve),
+                    patch.object(
+                        ida_analyze_util,
+                        "REFERENCE_RESOURCE_ROOT",
+                        root / "ida_preprocessor_scripts" / "references",
+                    ),
+                    patch.dict("os.environ", {"GSVIBE_REFERENCE_GAMEVER": gamever}, clear=True),
+                    self.assertRaises(AnalysisConfigError),
+                ):
+                    _resolve_reference_resource(
+                        "references/{gamever}/engine/SV_SendServerinfo.windows.yaml",
+                        root / "missing-12345" / "engine",
+                        "windows",
+                    )
+
+    def test_resolve_reference_resource_rejects_path_outside_reference_root(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            reference_root = root / "ida_preprocessor_scripts" / "references"
+            outside = root / "outside" / "{gamever}" / "SV_SendServerinfo.windows.yaml"
+            with (
+                patch.object(ida_analyze_util, "REFERENCE_RESOURCE_ROOT", reference_root),
+                self.assertRaisesRegex(ValueError, "outside reference root"),
+            ):
+                _resolve_reference_resource(outside, root / "hl-10210" / "engine", "windows")
+
+    def test_resolve_reference_resource_uses_repository_svencoop_override(self):
+        root = Path(__file__).parents[1]
+        expected = (
+            root
+            / "ida_preprocessor_scripts"
+            / "references"
+            / "svencoop-10257"
+            / "engine"
+            / "SV_SendServerinfo.windows.yaml"
+        ).resolve()
+        with patch.dict("os.environ", {"GSVIBE_REFERENCE_GAMEVER": "hl-10210"}, clear=True):
+            resolved = _resolve_reference_resource(
+                "references/{gamever}/engine/SV_SendServerinfo.{platform}.yaml",
+                root / "bin" / "svencoop-10257" / "engine",
+                "windows",
+            )
+        self.assertEqual(expected, resolved)
 
     async def test_common_preprocessor_rejects_non_x86_pointer_size(self):
         async def call_tool(_name, _arguments):
