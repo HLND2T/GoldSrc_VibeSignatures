@@ -191,7 +191,7 @@ Corroborate with cross-platform machine code when possible. For example, a publi
 
 ## Validation Gate
 
-Before the final save:
+Before normal owned-lifecycle exit, follow Basic Memory [[idalib-mcp]] and:
 
 1. Call `force_recompile` and `analyze_function`.
 2. Inspect the real target prototype, not only the rendered declaration line.
@@ -200,8 +200,8 @@ Before the final save:
 5. Use `stack_frame` to verify stack member names and sizes.
 6. Decompile and compare every branch, loop, call, write, and return with disassembly and the evidence map.
 7. Confirm comments identify inline helpers and unresolved source mismatches.
-8. Save the active target IDB in place. Do not create a backup copy unless the user explicitly requested one.
-9. Call `server_health` and confirm the active IDB is still the intended PE or ELF target.
-10. Verify the final IDB exists and inspect its modification time.
+8. Call `server_health` and confirm the active IDB is still the intended PE or ELF target.
+9. Let the owned lifecycle perform its final in-place `idb_save`, targeted `qexit`, supervisor stop, and port release. Do not create a backup copy unless the user explicitly requested one.
+10. Verify the final IDB exists and inspect its modification time after the lifecycle exits.
 
 Record failed or unavailable checks explicitly. A source-like decompilation alone is not completion evidence.

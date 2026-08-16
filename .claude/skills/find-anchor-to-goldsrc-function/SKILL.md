@@ -10,7 +10,11 @@ Locate the function from evidence inside its own body. Prefer a deterministic `x
 ## Establish Evidence
 
 1. Identify the exact game tag, platform, module, binary path, and requested symbol.
-2. Open one owned `idalib-mcp` session for that binary. Use `survey_binary` and `server_health` to record architecture, image base, input path, IDB path, and SHA-256.
+2. Read Basic Memory [[idalib-mcp]], then open one owned `IdaMcpLifecycle` for that exact binary. Keep every MCP operation inside it:
+   - Do not start `idalib-mcp` directly or bind an arbitrary active database. The lifecycle starts the supervisor, binds and verifies the exact IDB, and owns only its worker.
+   - Use `survey_binary` and `server_health` to record architecture, image base, input path, IDB path, and SHA-256 while the lifecycle is active.
+   - Finish anchor validation and call `server_health` before normal lifecycle exit. That exit automatically calls `idb_save`, requests targeted `qexit`, stops the supervisor, and waits for port release. Afterwards, verify the final IDB exists and record its modification time.
+   - Use manual `idb_save` only for an intentional intermediate checkpoint. Attach to an externally managed session only when the user explicitly requires it; never save or close that external worker.
 3. Treat the current target binary as authoritative. Use `D:\HLND2T_official` to identify intent, exact literals, and caller/callee roles; do not assume its revision is byte-identical to the target.
 4. Read `D:\MetaHookSv\memory\metahook-privatevars.md` and relevant project artifacts only when they cover the target or provide a proven anchor.
 
@@ -101,9 +105,9 @@ Treat these values only as regression evidence for their exact SHA-256 inputs, n
 - Implement deterministic discovery in `ida_preprocessor_scripts/find-<symbol>.py` through `preprocess_common_skill` and `func_xrefs`.
 - Let the normal pipeline try prior validated signatures, then `xref_strings`; the shared helper rejects non-unique candidates and verifies the emitted signature.
 - Add `LLM_DECOMPILE` only for the explicit predecessor fallback described above.
-- Use the repository's `idalib-mcp` lifecycle on `127.0.0.1:13337`. The installed `ida-pro-mcp` command is an IDA plugin configurator, not this repository's HTTP supervisor.
+- Use the repository's owned lifecycle described in [[idalib-mcp]] on `127.0.0.1:13337`. The installed `ida-pro-mcp` command is an IDA plugin configurator, not this repository's HTTP supervisor.
 - Add Windows and Linux expected outputs and tests whenever the finder is registered in a production config.
 
 ## Report Completion
 
-Report the target binary hash, platform, module, selected anchor, number of matching strings and candidate functions, final VA/RVA, source files consulted, fallback status, and validation commands actually run. State any IDB identity or source-version mismatch explicitly.
+Report the target binary hash, platform, module, selected anchor, number of matching strings and candidate functions, final VA/RVA, source files consulted, fallback status, and validation commands actually run. Include lifecycle ownership, final IDB path and modification time, `idb_save` result, graceful worker close, and port-release evidence. State any IDB identity or source-version mismatch explicitly.

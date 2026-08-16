@@ -42,6 +42,7 @@ from ida_analyze_bin import (
     quit_ida_via_mcp,
     resolve_oldgamever,
     run_analysis_pipeline,
+    save_ida_database_via_mcp,
     start_idalib_mcp,
     validate_opened_binary_identity,
 )
@@ -1721,6 +1722,7 @@ class McpLifecycleTests(unittest.TestCase):
                 ) as verify,
                 patch("ida_analyze_bin.stop_idalib_mcp_process") as stop,
                 patch("ida_analyze_bin.wait_for_port_release", return_value=True) as wait_for_release,
+                patch("ida_analyze_bin.save_ida_database") as save_database,
                 patch("ida_analyze_bin.quit_ida_gracefully") as quit_gracefully,
                 IdaMcpLifecycle(binary, "windows", DEFAULT_HOST, DEFAULT_PORT, "") as lifecycle,
             ):
@@ -1730,6 +1732,12 @@ class McpLifecycleTests(unittest.TestCase):
             self.assertEqual(2, start.call_count)
             self.assertEqual(2, verify.call_count)
             stop.assert_called_once_with(first_process, debug=False)
+            save_database.assert_called_once_with(
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                expected_binary=binary,
+                debug=False,
+            )
             self.assertEqual(
                 [(DEFAULT_HOST, DEFAULT_PORT), (DEFAULT_HOST, DEFAULT_PORT)],
                 [call.args for call in wait_for_release.call_args_list],
@@ -1971,7 +1979,7 @@ class McpLifecycleTests(unittest.TestCase):
         self.assertFalse(second_ok)
         start.assert_called_once_with("hw.dll", DEFAULT_HOST, DEFAULT_PORT, "", False)
 
-    def test_verified_lifecycle_uses_targeted_graceful_shutdown(self):
+    def test_verified_lifecycle_saves_then_uses_targeted_graceful_shutdown(self):
         process = MagicMock()
         process.poll.return_value = None
         binding = McpDatabaseBinding(False, None, "hw.dll", "worker", True, True)
@@ -1979,10 +1987,39 @@ class McpLifecycleTests(unittest.TestCase):
         with (
             patch("ida_analyze_bin.start_idalib_mcp", return_value=process),
             patch("ida_analyze_bin.verify_owned_mcp_with_single_recovery", return_value=(process, runtime)),
+            patch("ida_analyze_bin.save_ida_database") as save_database,
             patch("ida_analyze_bin.quit_ida_gracefully") as quit_gracefully,
             IdaMcpLifecycle("hw.dll", "windows", DEFAULT_HOST, DEFAULT_PORT, ""),
         ):
             pass
+        save_database.assert_called_once_with(
+            DEFAULT_HOST,
+            DEFAULT_PORT,
+            expected_binary=Path("hw.dll"),
+            debug=False,
+        )
+        quit_gracefully.assert_called_once_with(
+            process,
+            DEFAULT_HOST,
+            DEFAULT_PORT,
+            expected_binary=Path("hw.dll"),
+            debug=False,
+        )
+
+    def test_verified_lifecycle_closes_when_final_save_fails(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        binding = McpDatabaseBinding(False, None, "hw.dll", "worker", True, True)
+        runtime = McpRuntime(DEFAULT_HOST, DEFAULT_PORT, "hw.dll", binding)
+        with (
+            patch("ida_analyze_bin.start_idalib_mcp", return_value=process),
+            patch("ida_analyze_bin.verify_owned_mcp_with_single_recovery", return_value=(process, runtime)),
+            patch("ida_analyze_bin.save_ida_database", side_effect=McpLifecycleError("save failed")),
+            patch("ida_analyze_bin.quit_ida_gracefully") as quit_gracefully,
+            self.assertRaisesRegex(McpLifecycleError, "save failed"),
+        ):
+            with IdaMcpLifecycle("hw.dll", "windows", DEFAULT_HOST, DEFAULT_PORT, ""):
+                pass
         quit_gracefully.assert_called_once_with(
             process,
             DEFAULT_HOST,
@@ -2008,6 +2045,39 @@ class McpLifecycleTests(unittest.TestCase):
 
 
 class McpShutdownTests(unittest.IsolatedAsyncioTestCase):
+    async def test_idb_save_is_sent_only_to_owned_auto_started_worker(self):
+        call_tool = AsyncMock()
+        owned = McpDatabaseBinding(True, "server-db", "hw.dll", "worker", True, True)
+        with patch(
+            "ida_analyze_bin.open_ida_mcp_session",
+            return_value=bound_session_context(owned, call_tool),
+        ):
+            self.assertTrue(
+                await save_ida_database_via_mcp(
+                    DEFAULT_HOST,
+                    DEFAULT_PORT,
+                    expected_binary="hw.dll",
+                    auto_started=True,
+                )
+            )
+        call_tool.assert_awaited_once_with("idb_save", {})
+
+        call_tool = AsyncMock()
+        unowned = McpDatabaseBinding(True, "server-db", "hw.dll", "worker", False, True)
+        with patch(
+            "ida_analyze_bin.open_ida_mcp_session",
+            return_value=bound_session_context(unowned, call_tool),
+        ):
+            self.assertFalse(
+                await save_ida_database_via_mcp(
+                    DEFAULT_HOST,
+                    DEFAULT_PORT,
+                    expected_binary="hw.dll",
+                    auto_started=True,
+                )
+            )
+        call_tool.assert_not_awaited()
+
     async def test_qexit_is_sent_only_to_owned_auto_started_worker(self):
         call_tool = AsyncMock()
         owned = McpDatabaseBinding(True, "server-db", "hw.dll", "worker", True, True)
