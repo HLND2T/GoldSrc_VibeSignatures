@@ -8,7 +8,7 @@ modules:
       - name: find-R_RenderView
         expected_output:
           - R_RenderView.{platform}.yaml
-      - name: find-SV_SendServerinfo
+      - name: find-SV_SendServerinfo-svencoop
         expected_output:
           - SV_SendServerinfo.{platform}.yaml
       - name: find-build_number
