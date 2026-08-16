@@ -16,6 +16,9 @@ modules:
       - name: find-Sys_Error
         expected_output:
           - Sys_Error.{platform}.yaml
+      - name: find-ClientDLL_Init
+        expected_output:
+          - ClientDLL_Init.{platform}.yaml
     symbols:
       - name: R_RenderView
         category: func
@@ -24,4 +27,6 @@ modules:
       - name: build_number
         category: func
       - name: Sys_Error
+        category: func
+      - name: ClientDLL_Init
         category: func
