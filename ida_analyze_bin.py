@@ -2250,6 +2250,14 @@ def _print_summary(summary: AnalysisSummary) -> None:
     print(f"  Skipped: {summary.skipped}")
 
 
+def _allgamever_module_filter_matches(tag: str, modules_filter) -> bool:
+    if modules_filter is None:
+        return True
+    _, modules = load_config(resolve_analysis_config(tag))
+    requested = set(modules_filter)
+    return bool(requested.intersection(module["name"] for module in modules))
+
+
 def _run_single_tag(gamever: str, args, summary: AnalysisSummary | None = None) -> int:
     summary = summary if summary is not None else AnalysisSummary()
     args = copy.copy(args)
@@ -2304,6 +2312,14 @@ def run_all(args) -> int:
     failed = False
     for tag in tags:
         print(f"\n=== gamever: {tag} ===")
+        if args.module_filter is not None:
+            try:
+                matches_module_filter = _allgamever_module_filter_matches(tag, args.module_filter)
+            except (AnalysisConfigError, AnalysisPlanError, OSError, yaml.YAMLError):
+                matches_module_filter = True
+            if not matches_module_filter:
+                print(f"Skipping gamever: no requested modules found ({', '.join(args.module_filter)})")
+                continue
         tag_summary = AnalysisSummary()
         rc = _run_single_tag(tag, args, summary=tag_summary)
         aggregate.successful += tag_summary.successful

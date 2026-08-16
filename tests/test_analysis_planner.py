@@ -31,6 +31,7 @@ from ida_analyze_bin import (
     McpRuntime,
     PipelineFailure,
     PipelineResult,
+    _allgamever_module_filter_matches,
     _invalidate_ida_database,
     _is_major_update_gamever,
     _merge_survey_path,
@@ -564,6 +565,37 @@ class CliContractTests(unittest.TestCase):
             ):
                 result = main(["-allgamever", "-bindir", str(root / "bin")])
             self.assertEqual(0, result)
+
+    def test_allgamever_module_filter_matches_configured_modules(self):
+        modules = [{"name": "engine"}, {"name": "client"}]
+        with (
+            patch("ida_analyze_bin.resolve_analysis_config", return_value=Path("configs/hl-10210.yaml")),
+            patch("ida_analyze_bin.load_config", return_value=({}, modules)),
+        ):
+            self.assertTrue(_allgamever_module_filter_matches("hl-10210", ["engine"]))
+            self.assertFalse(_allgamever_module_filter_matches("hl-10210", ["server"]))
+
+    def test_run_all_skips_tags_without_requested_modules(self):
+        calls = []
+        output = io.StringIO()
+
+        def record_success(gamever, args, summary=None):
+            del args
+            calls.append(gamever)
+            summary.successful = 1
+            return 0
+
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("ida_analyze_bin.iter_analysis_config_tags", return_value=["hl-10210", "cstrike-8684"]),
+            patch("ida_analyze_bin._allgamever_module_filter_matches", side_effect=[True, False]),
+            patch("ida_analyze_bin._run_single_tag", side_effect=record_success),
+            redirect_stdout(output),
+        ):
+            result = main(["-allgamever", "-modules", "engine", "-bindir", "bin"])
+        self.assertEqual(0, result)
+        self.assertEqual(["hl-10210"], calls)
+        self.assertIn("Skipping gamever: no requested modules found (engine)", output.getvalue())
 
     def test_run_all_stops_on_first_failure_without_skip_error(self):
         calls = []

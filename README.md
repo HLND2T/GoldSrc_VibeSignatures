@@ -75,6 +75,8 @@ single authority for batch membership and order; a tag only runs when explicitly
 `download.yaml`, which only controls depot downloading (`download_depot.py -all`). Without `configs/config.yaml` the
 legacy order is used for compatibility: the `download.yaml` manifest declaration order, then remaining `configs/*.yaml`
 tags in lexical order.
+When `-modules` is used with `-allgamever`, tags that declare none of the requested modules are skipped; a single
+`-gamever` run still reports a missing requested module as an error.
 
 See [docs/architecture.md](docs/architecture.md), [docs/generator-contract.md](docs/generator-contract.md), and
 [docs/llm-decompile.md](docs/llm-decompile.md).

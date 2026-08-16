@@ -63,6 +63,9 @@ analyzer 不再回退到 `GSVIBE_GAMEVER`。skill 显式 `max_retries` 优先于
 最终仍返回非零。`-process_reporter=console` 输出新的 typed `ProcessEvent` JSONL，`redis` backend 以
 best-effort 方式写入 `gsvibe:analysis:v1` 协议。
 
+当 `-allgamever` 与 `-modules` 一起使用时，未声明任何请求模块的版本会被跳过；单独使用 `-gamever` 时，请求的模块
+不存在仍会报错。
+
 Claude 与 OpenCode 会直接加载仓库内的 skill-runner policy。使用 Codex 前需把
 `.codex/skill_runner.config.toml` 复制到 `$CODEX_HOME/skill_runner.config.toml`；runner 会通过
 `--profile skill_runner` 选择该配置。Agent retry 会保持对应 CLI session、实时 drain 两条输出 pipe，并通过
