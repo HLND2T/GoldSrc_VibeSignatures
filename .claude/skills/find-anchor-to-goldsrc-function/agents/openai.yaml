@@ -1,0 +1,4 @@
+interface:
+  display_name: "GoldSrc Anchor Locator"
+  short_description: "Locate GoldSrc functions from stable anchor evidence"
+  default_prompt: "Use -anchor-to-goldsrc-function to locate a GoldSrc function from stable strings and source evidence."
