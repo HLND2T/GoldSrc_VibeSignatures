@@ -34,7 +34,7 @@ flowchart TD
     D --> E["Run MCP analysis or mutations"]
     E --> F["Normal lifecycle exit"]
     F --> G["idb_save for verified owned worker"]
-    G --> H["Targeted IDA qexit"]
+    G --> H["idb_close to quit gracefully"]
     H --> I["Stop supervisor and release port"]
 ```
 
@@ -47,6 +47,7 @@ flowchart TD
 ## Notes
 
 - Auto-save and automatic close apply only when `auto_started && owned && backend == "worker"`; an attached external database must never be saved or closed by this lifecycle.
+- Call `idb_close` to release a worker eagerly.
 - `idb_save` runs only on normal `IdaMcpLifecycle.__exit__`. If it fails, cleanup still performs graceful shutdown, then the lifecycle reports failure.
 - Keep Windows and Linux work sequential because they share one host and port. Do not start a second lifecycle when the port is occupied.
 - Perform all IDB mutations inside the owned lifecycle. After validation, call `server_health`, then let normal lifecycle exit save and close the IDB. Verify the final IDB path and modification time after that exit; use manual `idb_save` only for an intermediate checkpoint.
