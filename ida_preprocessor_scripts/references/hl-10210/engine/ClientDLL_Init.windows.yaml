@@ -10,54 +10,58 @@ disasm_code: |-
   .text:10196FCE                 xor     eax, ebp
   .text:10196FD0                 mov     [ebp+var_4], eax
   .text:10196FD3                 push    offset aClDllsClientDl; "cl_dlls\\client.dll"
-  .text:10196FD8                 lea     eax, [ebp+Buffer]
+  .text:10196FD8                 lea     eax, [ebp+szDllName]
   .text:10196FDE                 ; count
   .text:10196FDE                 push    200h; count
   .text:10196FE3                 ; dest
   .text:10196FE3                 push    eax; dest
   .text:10196FE4                 call    Q_snprintf
   .text:10196FE9                 add     esp, 0Ch
-  .text:10196FEC                 cmp     dword ptr ds:1032AF20h, 0
+  .text:10196FEC                 ; inlined ClientDLL_Shutdown: begin (source engine/cdll_int.c)
+  .text:10196FEC                 cmp     fClientLoaded, 0; inlined ClientDLL_Shutdown: begin (source engine/cdll_int.c)
   .text:10196FF3                 jz      loc_10197083
-  .text:10196FF9                 call    sub_101DAF70
-  .text:10196FFE                 call    sub_1019D140
-  .text:10197003                 mov     eax, dword ptr unk_1145EFA8
+  .text:10196FF9                 call    Net_APIShutDown
+  .text:10196FFE                 call    SPR_Shutdown
+  .text:10197003                 mov     eax, cl_funcs.pShutdown
   .text:10197008                 test    eax, eax
   .text:1019700A                 jz      short loc_1019700E
-  .text:1019700C                 call    eax ; unk_1145EFA8
-  .text:1019700E                 cmp     dword ptr unk_1140E9FC, 0
+  .text:1019700C                 call    eax
+  .text:1019700E                 cmp     cls_fSecureClient, 0
   .text:10197015                 jz      short loc_10197026
   .text:10197017                 ; pblobfootprint
-  .text:10197017                 push    1145ED1Ch; pblobfootprint
+  .text:10197017                 push    offset g_blobfootprintClient; pblobfootprint
   .text:1019701C                 call    FreeBlob ; target: FreeBlob
   .text:10197021                 add     esp, 4
   .text:10197024                 jmp     short loc_1019703C
   .text:10197026                 ; hLibModule
-  .text:10197026                 push    dword ptr ds:1032AF24h; hLibModule
+  .text:10197026                 push    hClientDLL; hLibModule
   .text:1019702C                 call    ds:FreeLibrary
-  .text:10197032                 mov     dword ptr ds:1032AF24h, 0
+  .text:10197032                 mov     hClientDLL, 0
   .text:1019703C                 ; count
   .text:1019703C                 push    0ACh; count
   .text:10197041                 ; fill
   .text:10197041                 push    0; fill
   .text:10197043                 ; dest
-  .text:10197043                 push    1145EF40h; dest
+  .text:10197043                 push    offset cl_funcs; dest
   .text:10197048                 call    Q_memset
   .text:1019704D                 add     esp, 0Ch
-  .text:10197050                 call    sub_101BE050
-  .text:10197055                 call    sub_101B65F0
-  .text:1019705A                 call    sub_101A8DC0
-  .text:1019705F                 mov     eax, ds:1032AF24h
-  .text:10197064                 mov     dword ptr ds:1032AF20h, 0
+  .text:10197050                 call    Cvar_RemoveHudCvars
+  .text:10197055                 call    Cmd_RemoveHudCmds
+  .text:1019705A                 call    CL_ShutDownUsrMessages
+  .text:1019705F                 mov     eax, hClientDLL
+  .text:10197064                 mov     fClientLoaded, 0
   .text:1019706E                 test    eax, eax
   .text:10197070                 jz      short loc_10197079
   .text:10197072                 ; hLibModule
   .text:10197072                 push    eax; hLibModule
   .text:10197073                 call    ds:FreeLibrary
-  .text:10197079                 mov     dword ptr ds:1032AF24h, 0
-  .text:10197083                 push    offset aTs; "ts"
-  .text:10197088                 push    1124C060h
-  .text:1019708D                 call    sub_101BB070
+  .text:10197079                 mov     hClientDLL, 0
+  .text:10197083                 ; inlined ClientDLL_Shutdown: end
+  windows-only vs public source: if (!Q_strcasecmp(com_gamedir, "ts")) AddVectoredExceptionHandler(1, Handler)
+  .text:10197083                 push    offset aTs; inlined ClientDLL_Shutdown: end
+  .text:10197088                 ; s1
+  .text:10197088                 push    offset com_gamedir; s1
+  .text:1019708D                 call    Q_strcasecmp
   .text:10197092                 add     esp, 8
   .text:10197095                 test    eax, eax
   .text:10197097                 jnz     short loc_101970A6
@@ -66,62 +70,71 @@ disasm_code: |-
   .text:1019709E                 ; First
   .text:1019709E                 push    1; First
   .text:101970A0                 call    ds:AddVectoredExceptionHandler
-  .text:101970A6                 lea     eax, [ebp+Buffer]
-  .text:101970AC                 push    eax
-  .text:101970AD                 call    sub_101B7A10
+  .text:101970A6                 lea     eax, [ebp+szDllName]
+  .text:101970AC                 ; pname
+  .text:101970AC                 push    eax; pname
+  .text:101970AD                 call    COM_FixSlashes
   .text:101970B2                 add     esp, 4
-  .text:101970B5                 xor     ecx, ecx
+  .text:101970B5                 ; inlined strcpy(g_szfullClientName, szDllName): begin
+  .text:101970B5                 xor     ecx, ecx; inlined strcpy(g_szfullClientName, szDllName): begin
   .text:101970B7                 nop     word ptr [eax+eax+00000000h]
-  .text:101970C0                 mov     al, [ebp+ecx+Buffer]
+  .text:101970C0                 mov     al, [ebp+ecx+szDllName]
   .text:101970C7                 lea     ecx, [ecx+1]
-  .text:101970CA                 mov     byte ptr unk_1145ED1F[ecx], al
+  .text:101970CA                 mov     byte ptr (g_blobfootprintClient.m_hDll+3)[ecx], al
   .text:101970D0                 test    al, al
   .text:101970D2                 jnz     short loc_101970C0
-  .text:101970D4                 push    1145ED20h
-  .text:101970D9                 call    sub_101B7740
-  .text:101970DE                 push    1145ED20h
-  .text:101970E3                 call    sub_101B7A10
+  .text:101970D4                 ; inlined strcpy(g_szfullClientName, szDllName): end
+  .text:101970D4                 push    offset g_szfullClientName; inlined strcpy(g_szfullClientName, szDllName): end
+  .text:101970D9                 call    COM_ExpandFilename
+  .text:101970DE                 ; pname
+  .text:101970DE                 push    offset g_szfullClientName; pname
+  .text:101970E3                 call    COM_FixSlashes
   .text:101970E8                 ; fLoadAsDll
   .text:101970E8                 push    1; fLoadAsDll
   .text:101970EA                 ; pv
-  .text:101970EA                 push    1145EF40h; pv
+  .text:101970EA                 push    offset cl_funcs; pv
   .text:101970EF                 ; pblobfootprint
-  .text:101970EF                 push    1145ED1Ch; pblobfootprint
+  .text:101970EF                 push    offset g_blobfootprintClient; pblobfootprint
   .text:101970F4                 ; pstFileName
-  .text:101970F4                 push    1145ED20h; pstFileName
-  .text:101970F9                 mov     dword ptr unk_1140E9FC, 0
-  .text:10197103                 mov     dword ptr ds:1145EF40h, offset unk_104B9818
-  .text:1019710D                 mov     dword ptr unk_1145EF48, offset off_10319D28
+  .text:101970F4                 push    offset g_szfullClientName; pstFileName
+  .text:101970F9                 ; inlined LoadSecureClient: begin (source engine/cdll_int.c)
+  .text:101970F9                 mov     cls_fSecureClient, 0; inlined LoadSecureClient: begin (source engine/cdll_int.c)
+  .text:10197103                 mov     cl_funcs.pInitFunc, offset g_modfuncs
+  .text:1019710D                 mov     cl_funcs.pHudVidInitFunc, offset g_cldstAddrs
   .text:10197117                 call    NLoadBlobFile
   .text:1019711C                 add     esp, 18h
   .text:1019711F                 test    eax, eax
   .text:10197121                 jz      short loc_10197134
-  .text:10197123                 mov     ds:1032AF24h, eax
-  .text:10197128                 mov     dword ptr ds:1032AF20h, 1
+  .text:10197123                 mov     hClientDLL, eax
+  .text:10197128                 mov     fClientLoaded, 1
   .text:10197132                 jmp     short loc_1019714A
-  .text:10197134                 cmp     dword ptr ds:1032AF20h, 0
+  .text:10197134                 cmp     fClientLoaded, 0
   .text:1019713B                 jnz     short loc_1019714A
-  .text:1019713D                 ; lpLibFileName
-  .text:1019713D                 push    1145ED20h; lpLibFileName
-  .text:10197142                 call    sub_10197580
+  .text:1019713D                 ; pszFullPathClientDLLName
+  .text:1019713D                 push    offset g_szfullClientName; pszFullPathClientDLLName
+  .text:10197142                 call    LoadInsecureClient
   .text:10197147                 add     esp, 4
-  .text:1019714A                 push    offset sub_102322C0
-  .text:1019714F                 push    offset aScreenshake; "ScreenShake"
-  .text:10197154                 call    sub_101A92C0
-  .text:10197159                 push    offset sub_10232160
+  .text:1019714A                 ; inlined LoadSecureClient: end
+  .text:1019714A                 push    offset V_ScreenShake; inlined LoadSecureClient: end
+  .text:1019714F                 push    offset pszName; "ScreenShake"
+  .text:10197154                 call    HookServerMsg
+  .text:10197159                 ; pfn
+  .text:10197159                 push    offset V_ScreenFade; pfn
   .text:1019715E                 push    offset aScreenfade; "ScreenFade"
-  .text:10197163                 call    sub_101A92C0
+  .text:10197163                 call    HookServerMsg
   .text:10197168                 push    7
-  .text:1019716A                 push    offset off_10319B08; target: g_ppEngfuncs
-  .text:1019716F                 call    dword ptr ds:1145EF40h; target: g_ppExportFuncs
-  .text:10197175                 mov     eax, dword ptr unk_1145EF5C
+  .text:1019716A                 push    offset cl_enginefuncs; target: g_ppEngfuncs
+  .text:1019716F                 call    cl_funcs.pInitFunc; target: g_ppExportFuncs
+  .text:10197175                 ; inlined ClientDLL_ClientMoveInit(&g_clmove): begin
+  .text:10197175                 mov     eax, cl_funcs.pClientMoveInit; inlined ClientDLL_ClientMoveInit(&g_clmove): begin
   .text:1019717A                 add     esp, 18h
   .text:1019717D                 test    eax, eax
   .text:1019717F                 jz      short loc_1019718B
-  .text:10197181                 push    offset unk_1140EA20
-  .text:10197186                 call    eax ; unk_1145EF5C
+  .text:10197181                 push    offset g_clmove
+  .text:10197186                 call    eax
   .text:10197188                 add     esp, 4
-  .text:1019718B                 call    sub_101A3060
+  .text:1019718B                 ; inlined ClientDLL_ClientMoveInit: end
+  .text:1019718B                 call    CL_GetPlayerHulls; inlined ClientDLL_ClientMoveInit: end
   .text:10197190                 mov     ecx, [ebp+var_4]
   .text:10197193                 ; StackCookie
   .text:10197193                 xor     ecx, ebp; StackCookie
@@ -130,66 +143,68 @@ disasm_code: |-
   .text:1019719C                 pop     ebp
   .text:1019719D                 retn
 procedure: |-
+  // source/binary mismatch: public ClientDLL_Shutdown is a separate function; this build inlines its body. Public LoadSecureClient is stubbed to return false; this build still calls NLoadBlobFile. Public source sets cls.fSecureClient=true first; this binary writes 0 and never sets it true. Extra FreeLibrary after fClientLoaded=0 is not in the public shutdown. Windows-only: Q_strcasecmp(com_gamedir, "ts") then AddVectoredExceptionHandler.
   void __cdecl ClientDLL_Init()
   {
-    int v0; // ecx
-    char v1; // al
-    void *hmoduleT; // eax
+    int i; // ecx
+    char ch; // al
+    void *ret; // eax
     char szDllName[512]; // [esp+0h] [ebp-204h] BYREF
+  
     Q_snprintf(szDllName, 0x200u, "cl_dlls\\client.dll");
-    if ( MEMORY[0x1032AF20] )
+    if ( fClientLoaded )
     {
-      sub_101DAF70();
-      sub_1019D140();
-      if ( unk_1145EFA8 )
-        unk_1145EFA8();
-      if ( unk_1140E9FC )
+      Net_APIShutDown();
+      SPR_Shutdown();
+      if ( cl_funcs.pShutdown )
+        cl_funcs.pShutdown();
+      if ( cls_fSecureClient )
       {
-        FreeBlob(&MEMORY[0x1145ED1C]); // target: FreeBlob
+        FreeBlob(&g_blobfootprintClient); // target: FreeBlob
       }
       else
       {
-        FreeLibrary((HMODULE)MEMORY[0x1032AF24]);
-        MEMORY[0x1032AF24] = nullptr;
+        FreeLibrary((HMODULE)hClientDLL);
+        hClientDLL = nullptr;
       }
-      Q_memset(&MEMORY[0x1145EF40], 0, 172);
-      sub_101BE050();
-      sub_101B65F0();
-      sub_101A8DC0();
-      MEMORY[0x1032AF20] = 0;
-      if ( MEMORY[0x1032AF24] )
-        FreeLibrary((HMODULE)MEMORY[0x1032AF24]);
-      MEMORY[0x1032AF24] = nullptr;
+      Q_memset(&cl_funcs, 0, 172);
+      Cvar_RemoveHudCvars();
+      Cmd_RemoveHudCmds();
+      CL_ShutDownUsrMessages();
+      fClientLoaded = 0;
+      if ( hClientDLL )
+        FreeLibrary((HMODULE)hClientDLL);
+      hClientDLL = nullptr;
     }
-    if ( !sub_101BB070(MEMORY[0x1124C060], "ts") )
+    if ( !Q_strcasecmp(com_gamedir, "ts") )
       AddVectoredExceptionHandler(1u, Handler);
-    sub_101B7A10(szDllName);
-    v0 = 0;
+    COM_FixSlashes(szDllName);
+    i = 0;
     do
     {
-      v1 = szDllName[v0++];
-      unk_1145ED1F[v0] = v1;
+      ch = szDllName[i++];
+      *((_BYTE *)&g_blobfootprintClient.m_hDll + i + 3) = ch;
     }
-    while ( v1 );
-    sub_101B7740(MEMORY[0x1145ED20]);
-    sub_101B7A10(MEMORY[0x1145ED20]);
-    unk_1140E9FC = 0;
-    MEMORY[0x1145EF40] = (int (__cdecl *)(_DWORD, _DWORD))&unk_104B9818;
-    unk_1145EF48 = off_10319D28;
-    hmoduleT = NLoadBlobFile(MEMORY[0x1145ED20], &MEMORY[0x1145ED1C], &MEMORY[0x1145EF40], 1);
-    if ( hmoduleT )
+    while ( ch );
+    COM_ExpandFilename(g_szfullClientName);
+    COM_FixSlashes(g_szfullClientName);
+    cls_fSecureClient = 0;
+    cl_funcs.pInitFunc = (INITIALIZE_FUNC)g_modfuncs;
+    cl_funcs.pHudVidInitFunc = g_cldstAddrs;
+    ret = NLoadBlobFile(g_szfullClientName, &g_blobfootprintClient, &cl_funcs, 1);
+    if ( ret )
     {
-      MEMORY[0x1032AF24] = hmoduleT;
-      MEMORY[0x1032AF20] = 1;
+      hClientDLL = ret;
+      fClientLoaded = 1;
     }
-    else if ( !MEMORY[0x1032AF20] )
+    else if ( !fClientLoaded )
     {
-      sub_10197580(MEMORY[0x1145ED20]);
+      LoadInsecureClient(g_szfullClientName);
     }
-    sub_101A92C0("ScreenShake", sub_102322C0);
-    sub_101A92C0("ScreenFade", sub_10232160);
-    g_ppExportFuncs(g_ppEngfuncs, 7);
-    if ( unk_1145EF5C )
-      unk_1145EF5C(&unk_1140EA20);
-    sub_101A3060();
+    HookServerMsg("ScreenShake", V_ScreenShake);
+    HookServerMsg("ScreenFade", V_ScreenFade);
+    cl_funcs.pInitFunc(cl_enginefuncs, 7); // target: g_ppExportFuncs / g_ppEngfuncs
+    if ( cl_funcs.pClientMoveInit )
+      cl_funcs.pClientMoveInit(g_clmove);
+    CL_GetPlayerHulls();
   }
