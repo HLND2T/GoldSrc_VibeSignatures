@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Locate the client factory reference via CBaseUI__Initialize decompile."""
+"""Locate the g_pClientFactory global that shares one LLM decompile reference."""
 
 from ida_analyze_util import preprocess_common_skill
 

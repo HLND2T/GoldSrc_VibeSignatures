@@ -39,7 +39,7 @@ modules:
           - ClientDLL_HudInit.{platform}.yaml
         expected_output:
           - g_phClientModule.{platform}.yaml
-      - name: find-g_pClientFactory
+      - name: find-CBaseUI__Initialize-decompiles
         expected_input:
           - CBaseUI__Initialize.{platform}.yaml
         expected_output:
