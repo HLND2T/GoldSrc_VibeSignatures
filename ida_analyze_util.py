@@ -940,12 +940,12 @@ def _is_readonly_float_segment(ea):
     name = ida_segment.get_segm_name(segment) or ''
     return name == '.rdata' or name.startswith('.rodata')
 
-def _float_matches(value, expected_values, kind):
+def _float_matches(value, expected, kind):
     epsilon = 1e-6 if kind == 'float' else 1e-12
-    return any(abs(value - expected) < epsilon for expected in expected_values)
+    return abs(value - expected) < epsilon
 
 def _function_matches_float_filters(start, required_values, excluded_values):
-    required_hit = not required_values
+    required_hits = [False] * len(required_values)
     excluded_hit = False
     for ea in idautils.FuncItems(start):
         kind = _scalar_float_kind(ea)
@@ -967,11 +967,13 @@ def _function_matches_float_filters(start, required_values, excluded_values):
                 continue
             if not math.isfinite(value):
                 continue
-            if _float_matches(value, required_values, kind):
-                required_hit = True
-            if _float_matches(value, excluded_values, kind):
-                excluded_hit = True
-    return required_hit and not excluded_hit
+            for index, expected in enumerate(required_values):
+                if _float_matches(value, expected, kind):
+                    required_hits[index] = True
+            for expected in excluded_values:
+                if _float_matches(value, expected, kind):
+                    excluded_hit = True
+    return all(required_hits) and not excluded_hit
 
 globals().update(locals())
 positive_sets = []

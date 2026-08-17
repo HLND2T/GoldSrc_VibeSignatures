@@ -112,7 +112,9 @@ class PreprocessStatusTests(unittest.TestCase):
         self.assertIn("Strings(default_setup=False)", code)
         self.assertIn("strings.setup(strtypes=[ida_nalt.STRTYPE_C]", code)
         self.assertIn("name == '.rdata' or name.startswith('.rodata')", code)
-        self.assertIn("return any(abs(value - expected) < epsilon", code)
+        self.assertIn("required_hits = [False] * len(required_values)", code)
+        self.assertIn("required_hits[index] = True", code)
+        self.assertIn("return all(required_hits) and not excluded_hit", code)
         self.assertIn("if not callers and dep_start is not None and dep_start in vtable_candidates", code)
         self.assertIn("excluded.update(_named_candidates(value))", code)
         self.assertIn("if spec.get('vtable_entries'):", code)
@@ -121,6 +123,50 @@ class PreprocessStatusTests(unittest.TestCase):
         self.assertNotIn("if len(tokens) >= max_tokens:\n                break", code)
         self.assertIn("ida_ua.o_displ", ida_analyze_util._INSPECT_FUNCTION_PY_EVAL)
         self.assertIn("def _try_decode_padding_nop", ida_analyze_util._INSPECT_FUNCTION_PY_EVAL)
+
+    def test_func_xref_float_filters_require_every_xref_and_exclude_any_hit(self):
+        code = _build_func_xref_py_eval({"func_name": "Target"}, 0x400000)
+        tree = ast.parse(code)
+        function_nodes = [
+            node
+            for node in tree.body
+            if isinstance(node, ast.FunctionDef) and node.name in {"_float_matches", "_function_matches_float_filters"}
+        ]
+        scalar_values = {
+            0x5000: 64.0,
+            0x5004: 0.5,
+            0x5008: 128.0,
+        }
+        function_items = {
+            0x1000: [0x4000],
+            0x2000: [0x4000, 0x4004],
+            0x3000: [0x4000, 0x4004, 0x4008],
+        }
+        namespace = {
+            "MEMORY_OPERAND_TYPES": {1},
+            "ida_bytes": SimpleNamespace(
+                get_bytes=lambda target_ea, width: __import__("struct").pack("<f", scalar_values[target_ea])
+            ),
+            "idautils": SimpleNamespace(FuncItems=lambda start: function_items[start]),
+            "idc": SimpleNamespace(
+                get_operand_type=lambda _ea, operand_index: 1 if operand_index == 0 else 0,
+                get_operand_value=lambda ea, _operand_index: ea + 0x1000,
+            ),
+            "math": __import__("math"),
+            "struct": __import__("struct"),
+            "_has_xmm_operand": lambda _ea: True,
+            "_is_readonly_float_segment": lambda _ea: True,
+            "_scalar_float_kind": lambda _ea: "float",
+        }
+        exec(  # noqa: S102 - executes only selected generated helper definitions.
+            compile(ast.Module(body=function_nodes, type_ignores=[]), "<func-xref-floats>", "exec"),
+            namespace,
+        )
+        matches = namespace["_function_matches_float_filters"]
+
+        self.assertFalse(matches(0x1000, [64.0, 0.5], []))
+        self.assertTrue(matches(0x2000, [64.0, 0.5], []))
+        self.assertFalse(matches(0x3000, [64.0, 0.5], [128.0]))
 
     def test_gsvibe_string_min_length_config_matches_cs2_rules(self):
         cases = ((None, None), ("", None), ("0", 4), ("invalid", 4), ("7", 7))
