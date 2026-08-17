@@ -29,6 +29,33 @@ class RepositoryFormatFileDiscoveryTests(unittest.TestCase):
         self.assertEqual(["src/app.py"], python_files)
         self.assertEqual(["config.yaml"], yaml_files)
 
+    def test_excludes_ida_preprocessor_references_yaml(self) -> None:
+        git_output = (
+            "ida_preprocessor_scripts/references/hl-10210/engine/CBaseUI__Initialize.linux.yaml\n"
+            "ida_preprocessor_scripts/references/hl-10210/engine/CBaseUI__Initialize.windows.yaml\n"
+            "ida_preprocessor_scripts/references/hl-10210/engine/ClientDLL_HudInit.yaml\n"
+            "ida_preprocessor_scripts/other/references/keep.yaml\n"
+            "ida_preprocessor_scripts/references/hl-10210/engine/not_a_yaml.txt\n"
+            "src/engine/config.yaml\n"
+            "src/engine/tool.py\n"
+        )
+        completed = SimpleNamespace(returncode=0, stdout=git_output, stderr="")
+
+        with (
+            patch.object(format_repo_files.subprocess, "run", return_value=completed),
+            patch.object(format_repo_files.Path, "is_file", return_value=True),
+        ):
+            python_files, yaml_files = format_repo_files.repository_format_files()
+
+        self.assertEqual(["src/engine/tool.py"], python_files)
+        self.assertEqual(
+            [
+                "ida_preprocessor_scripts/other/references/keep.yaml",
+                "src/engine/config.yaml",
+            ],
+            yaml_files,
+        )
+
     def test_excluded_prefixes_are_separator_and_case_insensitive(self) -> None:
         for path in (
             ".claude/SKILL.md",
