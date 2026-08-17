@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import math
 import os
@@ -105,6 +104,25 @@ FUNC_XREF_ALLOWED_KEYS = frozenset(
     }
 )
 FUNC_XREF_LIST_KEYS = tuple(FUNC_XREF_ALLOWED_KEYS - {"func_name", "inline_alias"})
+DEFAULT_IDA_STRING_MIN_LENGTH = 4
+IDA_STRING_MIN_LENGTH_ENV_VAR = "GSVIBE_STRING_MIN_LENGTH"
+IDA_STRING_SETUP_STATE_NODE = "$GSVIBE_STRING_SETUP_STATE"
+IDA_STRING_SETUP_STATE_VERSION = 1
+
+
+def _coerce_ida_string_min_length(value):
+    try:
+        min_length = int(str(value).strip())
+    except (TypeError, ValueError):
+        return DEFAULT_IDA_STRING_MIN_LENGTH
+    return min_length if min_length >= 1 else DEFAULT_IDA_STRING_MIN_LENGTH
+
+
+def _resolve_ida_string_min_length_config():
+    raw_min_length = os.getenv(IDA_STRING_MIN_LENGTH_ENV_VAR)
+    if raw_min_length is None or not str(raw_min_length).strip():
+        return None
+    return _coerce_ida_string_min_length(raw_min_length)
 
 
 class SymbolArtifactError(ValueError):
@@ -639,22 +657,80 @@ def build_function_detail_export_py_eval(func_va_int: int) -> str:
 
 
 _FUNC_XREF_PY_EVAL_TEMPLATE = r"""
-import ida_auto, ida_bytes, ida_funcs, ida_name, ida_segment, ida_ua, idaapi, idautils, json, math, struct
+import ida_auto, ida_bytes, ida_funcs, ida_name, ida_nalt, ida_netnode, ida_segment, ida_ua, ida_xref, idaapi, idautils, idc, json, math, struct
 
 spec = json.loads(SPEC_PLACEHOLDER)
 image_base = IMAGE_BASE_PLACEHOLDER
 ida_auto.auto_wait()
 pointer_size = 8 if idaapi.inf_is_64bit() else 4
+UNDEFINED_FUNC_RECOVERY_BACKTRACK_LIMIT = 0x200
+UNDEFINED_FUNC_RECOVERY_MAX_SOURCE_DEPTH = 4
+PAD_BYTES = {0xCC, 0x90}
 
-def _function_start(ea):
-    func = ida_funcs.get_func(int(ea))
-    if func is None:
-        try:
-            ida_funcs.add_func(int(ea))
-        except Exception:
-            pass
-        func = ida_funcs.get_func(int(ea))
-    return int(func.start_ea) if func is not None else None
+def _probe_function_start(code_addr):
+    func = ida_funcs.get_func(int(code_addr))
+    if func is not None:
+        return {'status': 'resolved', 'func_start': int(func.start_ea)}
+    candidates = set()
+    unresolved_sources = set()
+    lower_bound = max(0, int(code_addr) - UNDEFINED_FUNC_RECOVERY_BACKTRACK_LIMIT)
+    for probe_ea in range(int(code_addr), lower_bound - 1, -1):
+        other_func = ida_funcs.get_func(probe_ea)
+        if other_func is not None:
+            if candidates:
+                break
+            return {'status': 'blocked_existing_function'}
+        if not ida_bytes.is_code(ida_bytes.get_full_flags(probe_ea)):
+            continue
+        for xref in idautils.XrefsTo(probe_ea, 0):
+            mnem = (idc.print_insn_mnem(xref.frm) or '').lower()
+            if mnem not in ('call', 'jmp', 'lea'):
+                continue
+            if probe_ea not in [idc.get_operand_value(xref.frm, index) for index in range(3)]:
+                continue
+            ref_func = ida_funcs.get_func(xref.frm)
+            if ref_func is None:
+                unresolved_sources.add(int(xref.frm))
+                continue
+            candidates.add(probe_ea)
+    result = {'status': 'no_entry'}
+    if len(candidates) == 1:
+        result = {'status': 'needs_define', 'entry': next(iter(candidates))}
+    elif len(candidates) > 1:
+        result = {'status': 'multiple_entries'}
+    if unresolved_sources:
+        result['unresolved_sources'] = sorted(unresolved_sources)
+    return result
+
+def _function_start(ea, recovery_seen=None, recovery_depth=0):
+    code_addr = int(ea)
+    recovery_seen = set() if recovery_seen is None else recovery_seen
+    if code_addr in recovery_seen:
+        return None
+    recovery_seen.add(code_addr)
+    probe = _probe_function_start(code_addr)
+    while probe:
+        status = probe.get('status')
+        if status == 'resolved':
+            return int(probe['func_start'])
+        if status == 'needs_define':
+            try:
+                ida_funcs.add_func(int(probe['entry']))
+            except Exception:
+                return None
+            func = ida_funcs.get_func(code_addr)
+            return int(func.start_ea) if func is not None else None
+        if recovery_depth >= UNDEFINED_FUNC_RECOVERY_MAX_SOURCE_DEPTH:
+            return None
+        recovered_source = False
+        for source in probe.get('unresolved_sources') or []:
+            if _function_start(source, recovery_seen, recovery_depth + 1) is not None:
+                recovered_source = True
+                break
+        if not recovered_source:
+            return None
+        probe = _probe_function_start(code_addr)
+    return None
 
 def _functions_referencing(ea):
     found = set()
@@ -664,19 +740,68 @@ def _functions_referencing(ea):
             found.add(start)
     return found
 
+def _single_call_or_jump_candidates(ea):
+    call_jump_types = {
+        getattr(ida_xref, name)
+        for name in ('fl_CF', 'fl_CN', 'fl_JF', 'fl_JN')
+        if hasattr(ida_xref, name)
+    }
+    code_addrs = set()
+    for xref in idautils.XrefsTo(int(ea), 0):
+        mnem = (idc.print_insn_mnem(xref.frm) or '').lower()
+        if xref.type not in call_jump_types and mnem not in {'call', 'jmp'}:
+            continue
+        code_addrs.add(int(xref.frm))
+    counts = {}
+    for code_addr in sorted(code_addrs):
+        start = _function_start(code_addr)
+        if start is not None:
+            counts[start] = counts.get(start, 0) + 1
+    return {start for start, count in counts.items() if count == 1}
+
 def _address_candidates(values):
     found = set()
     for value in values or []:
+        if value is None:
+            continue
         start = _function_start(int(value))
         if start is not None:
             found.add(start)
     return found
 
+def _string_items():
+    strings = idautils.Strings(default_setup=False)
+    min_length = spec.get('string_min_length')
+    if min_length is None:
+        return strings
+    expected_state = {
+        'version': STRING_SETUP_STATE_VERSION_PLACEHOLDER,
+        'minlen': int(min_length),
+        'strtypes': 'STRTYPE_C',
+    }
+    try:
+        node = ida_netnode.netnode(STRING_SETUP_STATE_NODE_PLACEHOLDER, 0, True)
+        raw_state = node.valobj()
+        if isinstance(raw_state, bytes):
+            raw_state = raw_state.decode('utf-8', errors='ignore')
+        current_state = json.loads(str(raw_state)) if raw_state not in (None, '') else None
+    except Exception:
+        node = None
+        current_state = None
+    if current_state != expected_state:
+        strings.setup(strtypes=[ida_nalt.STRTYPE_C], minlen=int(min_length))
+        if node is not None:
+            try:
+                node.set(json.dumps(expected_state, sort_keys=True))
+            except Exception:
+                pass
+    return strings
+
 def _string_candidates(query):
     exact = str(query).startswith('FULLMATCH:')
     needle = str(query)[10:] if exact else str(query)
     found = set()
-    for item in idautils.Strings():
+    for item in _string_items():
         text = str(item)
         if (text == needle) if exact else (needle in text):
             found.update(_functions_referencing(int(item.ea)))
@@ -694,17 +819,45 @@ def _named_candidates(value):
     ea = _named_ea(value)
     return set() if ea is None else _functions_referencing(ea)
 
-def _function_calls_named(start, names):
-    func = ida_funcs.get_func(start)
-    if func is None:
-        return False
-    targets = {_named_ea(name) for name in names}
-    targets.discard(None)
-    for ea in idautils.FuncItems(start):
-        for xref in idautils.CodeRefsFrom(ea, 0):
-            if int(xref) in targets:
-                return True
-    return False
+def _is_same_exec_segment(ea, segment_start):
+    segment = ida_segment.getseg(int(ea))
+    return bool(
+        segment
+        and int(segment.start_ea) == int(segment_start)
+        and int(getattr(segment, 'perm', 0)) & int(getattr(idaapi, 'SEGPERM_EXEC', 4))
+    )
+
+def _try_decode_padding_nop(cursor, limit_end):
+    insn = ida_ua.insn_t()
+    size = ida_ua.decode_insn(insn, int(cursor))
+    if not size or int(cursor) + int(size) > int(limit_end):
+        return None
+    if (idc.print_insn_mnem(int(cursor)) or '').lower() != 'nop':
+        return None
+    raw = ida_bytes.get_bytes(int(cursor), int(size))
+    if not raw or len(raw) != int(size):
+        return None
+    return list(raw)
+
+def _consume_padding(cursor, limit_end, segment_start):
+    padding = []
+    while cursor < limit_end:
+        if not _is_same_exec_segment(cursor, segment_start):
+            return cursor, padding, False
+        flags = ida_bytes.get_full_flags(cursor)
+        if ida_bytes.is_code(flags) and ida_bytes.is_head(flags):
+            return cursor, padding, True
+        nop_bytes = _try_decode_padding_nop(cursor, limit_end)
+        if nop_bytes:
+            padding.append(nop_bytes)
+            cursor += len(nop_bytes)
+            continue
+        byte = ida_bytes.get_byte(cursor)
+        if byte == idaapi.BADADDR or byte not in PAD_BYTES:
+            return cursor, padding, False
+        padding.append([int(byte)])
+        cursor += 1
+    return cursor, padding, False
 
 def _signature(start):
     func = ida_funcs.get_func(start)
@@ -712,10 +865,28 @@ def _signature(start):
         return ''
     tokens = []
     ea = int(func.start_ea)
+    func_end = int(func.end_ea)
     fixed = 0
-    max_fixed = 256 if spec.get('allow_across_function_boundary') else 24
-    max_tokens = 256 if spec.get('allow_across_function_boundary') else 64
-    while ea < int(func.end_ea) and len(tokens) < max_tokens and fixed < max_fixed:
+    allow_across = bool(spec.get('allow_across_function_boundary'))
+    max_fixed = 256 if allow_across else 24
+    max_tokens = 256 if allow_across else 64
+    segment = ida_segment.getseg(ea)
+    segment_start = int(segment.start_ea) if segment is not None else idaapi.BADADDR
+    limit_end = ea + max_tokens if allow_across else func_end
+    while ea < limit_end and len(tokens) < max_tokens and fixed < max_fixed:
+        flags = ida_bytes.get_full_flags(ea)
+        if allow_across and (ea >= func_end or not ida_bytes.is_code(flags) or not ida_bytes.is_head(flags)):
+            ea, padding, can_continue = _consume_padding(ea, limit_end, segment_start)
+            for padding_bytes in padding:
+                tokens.extend('%02X' % byte for byte in padding_bytes)
+                fixed += len(padding_bytes)
+            if len(tokens) >= max_tokens or fixed >= max_fixed or not can_continue:
+                break
+            flags = ida_bytes.get_full_flags(ea)
+        if not _is_same_exec_segment(ea, segment_start):
+            break
+        if not ida_bytes.is_code(flags) or not ida_bytes.is_head(flags):
+            break
         insn = ida_ua.insn_t()
         size = ida_ua.decode_insn(insn, ea)
         if not size:
@@ -728,7 +899,7 @@ def _signature(start):
             for op in insn.ops:
                 if op.type == ida_ua.o_void:
                     break
-                if op.type in (ida_ua.o_near, ida_ua.o_far, ida_ua.o_mem):
+                if op.type in (ida_ua.o_near, ida_ua.o_far, ida_ua.o_mem, ida_ua.o_displ):
                     wildcard_from = min(wildcard_from, int(op.offb or size))
                 elif op.type == ida_ua.o_imm and ida_segment.getseg(int(op.value)) is not None:
                     wildcard_from = min(wildcard_from, int(op.offb or size))
@@ -741,22 +912,89 @@ def _signature(start):
         ea += size
     return ' '.join(tokens)
 
+SINGLE_FLOAT_MNEMS = {
+    'addss', 'subss', 'mulss', 'divss', 'minss', 'maxss', 'sqrtss', 'movss', 'comiss', 'ucomiss',
+    'vaddss', 'vsubss', 'vmulss', 'vdivss', 'vminss', 'vmaxss', 'vsqrtss', 'vmovss', 'vcomiss', 'vucomiss',
+}
+DOUBLE_FLOAT_MNEMS = {
+    'addsd', 'subsd', 'mulsd', 'divsd', 'minsd', 'maxsd', 'sqrtsd', 'movsd', 'comisd', 'ucomisd',
+    'vaddsd', 'vsubsd', 'vmulsd', 'vdivsd', 'vminsd', 'vmaxsd', 'vsqrtsd', 'vmovsd', 'vcomisd', 'vucomisd',
+}
+MEMORY_OPERAND_TYPES = {idc.o_mem, idc.o_displ, idc.o_phrase}
+
+def _scalar_float_kind(ea):
+    mnem = (idc.print_insn_mnem(ea) or '').lower()
+    if mnem in SINGLE_FLOAT_MNEMS and mnem.endswith('ss'):
+        return 'float'
+    if mnem in DOUBLE_FLOAT_MNEMS and mnem.endswith('sd'):
+        return 'double'
+    return None
+
+def _has_xmm_operand(ea):
+    return any('xmm' in (idc.print_operand(ea, index) or '').lower() for index in range(8))
+
+def _is_readonly_float_segment(ea):
+    segment = ida_segment.getseg(int(ea))
+    if segment is None:
+        return False
+    name = ida_segment.get_segm_name(segment) or ''
+    return name == '.rdata' or name.startswith('.rodata')
+
+def _float_matches(value, expected_values, kind):
+    epsilon = 1e-6 if kind == 'float' else 1e-12
+    return any(abs(value - expected) < epsilon for expected in expected_values)
+
+def _function_matches_float_filters(start, required_values, excluded_values):
+    required_hit = not required_values
+    excluded_hit = False
+    for ea in idautils.FuncItems(start):
+        kind = _scalar_float_kind(ea)
+        if kind is None or not _has_xmm_operand(ea):
+            continue
+        for operand_index in range(8):
+            if idc.get_operand_type(ea, operand_index) not in MEMORY_OPERAND_TYPES:
+                continue
+            target_ea = idc.get_operand_value(ea, operand_index)
+            if not _is_readonly_float_segment(target_ea):
+                continue
+            width, fmt = (4, '<f') if kind == 'float' else (8, '<d')
+            raw = ida_bytes.get_bytes(int(target_ea), width)
+            if not raw or len(raw) != width:
+                continue
+            try:
+                value = struct.unpack(fmt, raw)[0]
+            except Exception:
+                continue
+            if not math.isfinite(value):
+                continue
+            if _float_matches(value, required_values, kind):
+                required_hit = True
+            if _float_matches(value, excluded_values, kind):
+                excluded_hit = True
+    return required_hit and not excluded_hit
+
 globals().update(locals())
 positive_sets = []
+vtable_candidates = _address_candidates(spec.get('vtable_entries'))
 for value in spec.get('xref_strings') or []:
     positive_sets.append(_string_candidates(value))
 for value in spec.get('xref_gvs') or []:
     positive_sets.append(_named_candidates(value))
 for value in spec.get('xref_funcs') or []:
-    positive_sets.append(_named_candidates(value))
+    dep_ea = _named_ea(value)
+    callers = set() if dep_ea is None else _functions_referencing(dep_ea)
+    dep_start = None if dep_ea is None else _function_start(dep_ea)
+    if not callers and dep_start is not None and dep_start in vtable_candidates:
+        callers = {dep_start}
+    positive_sets.append(callers)
 for values in spec.get('xref_signature_ea_sets') or []:
     positive_sets.append(_address_candidates(values))
 if spec.get('inline_alias') is not None:
     alias_ea = int(spec['inline_alias'])
-    alias_callers = _functions_referencing(alias_ea)
+    alias_callers = _single_call_or_jump_candidates(alias_ea)
     positive_sets.append(alias_callers or _address_candidates([alias_ea]))
 if spec.get('vtable_entries'):
-    positive_sets.append(_address_candidates(spec.get('vtable_entries')))
+    positive_sets.append(vtable_candidates)
 
 if positive_sets:
     candidates = set(positive_sets[0])
@@ -772,57 +1010,19 @@ for value in spec.get('exclude_gvs') or []:
     excluded.update(_named_candidates(value))
 for value in spec.get('exclude_funcs') or []:
     excluded.update(_address_candidates([_named_ea(value)]))
+for value in spec.get('exclude_callees') or []:
+    excluded.update(_named_candidates(value))
 excluded.update(_address_candidates(spec.get('exclude_signature_eas')))
 candidates.difference_update(excluded)
-exclude_callees = spec.get('exclude_callees') or []
-if exclude_callees:
-    candidates = {ea for ea in candidates if not _function_calls_named(ea, exclude_callees)}
 
-def _float_values(start):
-    values = set()
-    func = ida_funcs.get_func(start)
-    if func is None:
-        return values
-    for ea in idautils.FuncItems(start):
-        insn = ida_ua.insn_t()
-        size = ida_ua.decode_insn(insn, ea)
-        if not size:
-            continue
-        for op in insn.ops:
-            if op.type == ida_ua.o_void:
-                break
-            if op.type == ida_ua.o_imm:
-                raw = int(op.value) & 0xFFFFFFFFFFFFFFFF
-                for fmt, width in (('<f', 4), ('<d', 8)):
-                    try:
-                        value = struct.unpack(fmt, raw.to_bytes(8, 'little')[:width])[0]
-                    except Exception:
-                        continue
-                    if math.isfinite(value):
-                        values.add(value)
-        for ref in idautils.DataRefsFrom(ea):
-            for fmt, width in (('<f', 4), ('<d', 8)):
-                raw = ida_bytes.get_bytes(int(ref), width)
-                if not raw or len(raw) != width:
-                    continue
-                try:
-                    value = struct.unpack(fmt, raw)[0]
-                except Exception:
-                    continue
-                if math.isfinite(value):
-                    values.add(value)
-    return values
-
-globals().update(locals())
 required_floats = [float(value) for value in spec.get('xref_floats') or []]
 excluded_floats = [float(value) for value in spec.get('exclude_floats') or []]
 if required_floats or excluded_floats:
-    filtered = set()
-    for start in candidates:
-        values = _float_values(start)
-        if all(value in values for value in required_floats) and not any(value in values for value in excluded_floats):
-            filtered.add(start)
-    candidates = filtered
+    candidates = {
+        start
+        for start in candidates
+        if _function_matches_float_filters(start, required_floats, excluded_floats)
+    }
 
 items = []
 for start in sorted(candidates):
@@ -849,8 +1049,11 @@ result = json.dumps({'pointer_size': pointer_size, 'candidates': items})
 
 def _build_func_xref_py_eval(spec, image_base):
     serialized_spec = json.dumps(spec, separators=(",", ":"))
-    return _FUNC_XREF_PY_EVAL_TEMPLATE.replace("SPEC_PLACEHOLDER", repr(serialized_spec)).replace(
-        "IMAGE_BASE_PLACEHOLDER", str(int(image_base))
+    return (
+        _FUNC_XREF_PY_EVAL_TEMPLATE.replace("SPEC_PLACEHOLDER", repr(serialized_spec))
+        .replace("IMAGE_BASE_PLACEHOLDER", str(int(image_base)))
+        .replace("STRING_SETUP_STATE_NODE_PLACEHOLDER", repr(IDA_STRING_SETUP_STATE_NODE))
+        .replace("STRING_SETUP_STATE_VERSION_PLACEHOLDER", str(IDA_STRING_SETUP_STATE_VERSION))
     )
 
 
@@ -904,8 +1107,9 @@ def _normalize_func_xref_specs(specs):
 
 async def _find_byte_matches(session, signature, *, limit=1000):
     try:
-        raw = await session.call_tool("find_bytes", {"patterns": [normalize_signature(signature)], "limit": limit})
-    except Exception:
+        normalized_signature = normalize_signature(signature)
+        raw = await session.call_tool("find_bytes", {"patterns": [normalized_signature], "limit": limit})
+    except Exception:  # noqa: BLE001 - MCP failures and signature normalization must fail closed.
         return None
     payload = parse_mcp_result(raw)
     if isinstance(payload, Mapping) and "matches" in payload:
@@ -925,14 +1129,23 @@ async def _find_byte_matches(session, signature, *, limit=1000):
         return None
 
 
-def _dependency_address(new_binary_dir, stem, platform, field):
-    text = str(stem)
-    try:
-        if text.lower().startswith("0x"):
+def _is_explicit_address_literal(value):
+    return isinstance(value, str) and len(value.strip()) > 2 and value.strip().lower().startswith("0x")
+
+
+def _dependency_address(new_binary_dir, stem, platform, field, *, allow_explicit=False):
+    text = str(stem).strip()
+    if _is_explicit_address_literal(text):
+        if not allow_explicit:
+            return None
+        try:
             return int(text, 0)
-    except ValueError:
+        except ValueError:
+            return None
+    try:
+        path = _resolve_artifact_stem_path(new_binary_dir, text, platform)
+    except (TypeError, ValueError, OSError):
         return None
-    path = _resolve_artifact_stem_path(new_binary_dir, text, platform)
     payload = _load_yaml_mapping(path)
     if not payload or payload.get(field) is None:
         return None
@@ -965,6 +1178,21 @@ async def preprocess_func_xrefs_via_mcp(
     exclude_callees=None,
 ):
     del debug
+    try:
+        required_float_values = [float(value) for value in xref_floats or ()]
+        excluded_float_values = [float(value) for value in exclude_floats or ()]
+    except (TypeError, ValueError):
+        return None
+    if any(not math.isfinite(value) for value in required_float_values + excluded_float_values):
+        return None
+    symbolic_func_dependencies = list(xref_funcs or ()) + list(exclude_funcs or ()) + list(exclude_callees or ())
+    if inline_alias:
+        symbolic_func_dependencies.append(inline_alias)
+    symbolic_gv_dependencies = [
+        value for value in list(xref_gvs or ()) + list(exclude_gvs or ()) if not _is_explicit_address_literal(value)
+    ]
+    if (symbolic_func_dependencies or symbolic_gv_dependencies or vtable_class) and not new_binary_dir:
+        return None
     spec = {
         "func_name": func_name,
         "xref_strings": list(xref_strings or ()),
@@ -973,25 +1201,38 @@ async def preprocess_func_xrefs_via_mcp(
         "exclude_funcs": [],
         "exclude_strings": list(exclude_strings or ()),
         "exclude_gvs": [],
-        "xref_floats": list(xref_floats or ()),
-        "exclude_floats": list(exclude_floats or ()),
+        "xref_floats": required_float_values,
+        "exclude_floats": excluded_float_values,
         "exclude_callees": [],
+        "string_min_length": _resolve_ida_string_min_length_config(),
     }
-    for source, field, destination in (
-        (xref_gvs, "gv_va", "xref_gvs"),
-        (xref_funcs, "func_va", "xref_funcs"),
-        (exclude_funcs, "func_va", "exclude_funcs"),
-        (exclude_gvs, "gv_va", "exclude_gvs"),
-        (exclude_callees, "func_va", "exclude_callees"),
+    for source, field, destination, allow_explicit in (
+        (xref_gvs, "gv_va", "xref_gvs", True),
+        (xref_funcs, "func_va", "xref_funcs", False),
+        (exclude_funcs, "func_va", "exclude_funcs", False),
+        (exclude_gvs, "gv_va", "exclude_gvs", True),
+        (exclude_callees, "func_va", "exclude_callees", False),
     ):
         for value in source or ():
-            address = _dependency_address(new_binary_dir, value, platform, field)
+            address = _dependency_address(
+                new_binary_dir,
+                value,
+                platform,
+                field,
+                allow_explicit=allow_explicit,
+            )
             if address is None:
                 return None
             spec[destination].append(address)
     spec["inline_alias"] = None
     if inline_alias:
-        spec["inline_alias"] = _dependency_address(new_binary_dir, inline_alias, platform, "func_va")
+        spec["inline_alias"] = _dependency_address(
+            new_binary_dir,
+            inline_alias,
+            platform,
+            "func_va",
+            allow_explicit=False,
+        )
         if spec["inline_alias"] is None:
             return None
     spec["xref_signature_ea_sets"] = []
@@ -1008,7 +1249,11 @@ async def preprocess_func_xrefs_via_mcp(
         spec["exclude_signature_eas"].extend(matches)
     spec["vtable_entries"] = []
     if vtable_class:
-        vtable = _load_yaml_mapping(_vtable_yaml_path(new_binary_dir, vtable_class, platform))
+        try:
+            vtable_path = _vtable_yaml_path(new_binary_dir, vtable_class, platform)
+        except (TypeError, ValueError, OSError):
+            return None
+        vtable = _load_yaml_mapping(vtable_path)
         if not vtable:
             return None
         for value in (vtable.get("vtable_entries") or {}).values():
@@ -1027,15 +1272,18 @@ async def preprocess_func_xrefs_via_mcp(
     )
     if not positive:
         return None
-    raw = await session.call_tool(
-        "py_eval",
-        {
-            "code": _build_func_xref_py_eval(
-                _func_xref_spec_with_across(spec, allow_func_sig_across_function_boundary),
-                image_base,
-            )
-        },
-    )
+    try:
+        raw = await session.call_tool(
+            "py_eval",
+            {
+                "code": _build_func_xref_py_eval(
+                    _func_xref_spec_with_across(spec, allow_func_sig_across_function_boundary),
+                    image_base,
+                )
+            },
+        )
+    except Exception:  # noqa: BLE001 - MCP tool failures must fail closed.
+        return None
     payload = parse_mcp_result(raw)
     if not isinstance(payload, Mapping) or payload.get("pointer_size") != 4:
         return None
@@ -1044,13 +1292,43 @@ async def preprocess_func_xrefs_via_mcp(
         return None
     result = dict(candidates[0])
     result["_pointer_size"] = 4
-    if result.get("func_sig"):
-        unique_ea = await _find_unique_bytes(session, result["func_sig"])
-        if unique_ea != _parse_int(result.get("func_va"), "func_va"):
-            return None
+    try:
+        func_va = _parse_int(result.get("func_va"), "func_va")
+    except SymbolArtifactError:
+        return None
+    signature = result.get("func_sig")
+    if isinstance(signature, str) and signature.strip():
+        unique_ea = await _find_unique_bytes(session, signature)
+        if unique_ea != func_va:
+            result.pop("func_sig", None)
+    else:
+        result.pop("func_sig", None)
     if allow_func_sig_across_function_boundary:
         result["func_sig_allow_across_function_boundary"] = True
     return result
+
+
+def _can_probe_future_func_fast_path(*, func_name, func_xrefs_map, new_binary_dir, platform):
+    xref_spec = (func_xrefs_map or {}).get(func_name)
+    if not isinstance(xref_spec, Mapping):
+        return True
+    inline_alias = xref_spec.get("inline_alias")
+    dependency_symbol_names = (
+        list(xref_spec.get("xref_funcs") or ())
+        + list(xref_spec.get("exclude_funcs") or ())
+        + list(xref_spec.get("exclude_callees") or ())
+        + ([inline_alias] if inline_alias else [])
+        + [value for value in xref_spec.get("xref_gvs") or () if not _is_explicit_address_literal(value)]
+        + [value for value in xref_spec.get("exclude_gvs") or () if not _is_explicit_address_literal(value)]
+    )
+    if not dependency_symbol_names:
+        return True
+    if new_binary_dir is None:
+        return False
+    return all(
+        (path := _resolve_artifact_stem_path(new_binary_dir, symbol_name, platform)) is not None and path.is_file()
+        for symbol_name in dependency_symbol_names
+    )
 
 
 def _desired_fields_map(specs):
@@ -1155,7 +1433,7 @@ def _old_path_for_output(old_yaml_map, output):
 async def _find_unique_bytes(session, signature):
     try:
         raw = await session.call_tool("find_bytes", {"patterns": [signature], "limit": 2})
-    except Exception:
+    except Exception:  # noqa: BLE001 - MCP tool failures must fail closed.
         return None
     payload = parse_mcp_result(raw)
     if isinstance(payload, Mapping) and "matches" in payload:
@@ -1168,7 +1446,11 @@ async def _find_unique_bytes(session, signature):
         return None
     matches = entries[0].get("matches")
     count = entries[0].get("n", len(matches) if isinstance(matches, list) else 0)
-    if not isinstance(matches, list) or int(count) != 1 or len(matches) != 1:
+    try:
+        count = int(count)
+    except (TypeError, ValueError):
+        return None
+    if not isinstance(matches, list) or count != 1 or len(matches) != 1:
         return None
     try:
         return int(matches[0], 0) if isinstance(matches[0], str) else int(matches[0])
@@ -1177,10 +1459,12 @@ async def _find_unique_bytes(session, signature):
 
 
 _INSPECT_FUNCTION_PY_EVAL = r"""
-import ida_bytes, ida_funcs, ida_name, ida_segment, ida_ua, idaapi, json
+import ida_bytes, ida_funcs, ida_name, ida_segment, ida_ua, idaapi, idc, json
 ea = EA_PLACEHOLDER
 image_base = IMAGE_BASE_PLACEHOLDER
 pointer_size = 8 if idaapi.inf_is_64bit() else 4
+allow_across_function_boundary = ALLOW_ACROSS_FUNCTION_BOUNDARY_PLACEHOLDER
+PAD_BYTES = {0xCC, 0x90}
 func = ida_funcs.get_func(ea)
 if func is None:
     try:
@@ -1189,13 +1473,71 @@ if func is None:
         pass
     func = ida_funcs.get_func(ea)
 
+def _is_same_exec_segment(cursor, segment_start):
+    segment = ida_segment.getseg(int(cursor))
+    return bool(
+        segment
+        and int(segment.start_ea) == int(segment_start)
+        and int(getattr(segment, 'perm', 0)) & int(getattr(idaapi, 'SEGPERM_EXEC', 4))
+    )
+
+def _try_decode_padding_nop(cursor, limit_end):
+    insn = ida_ua.insn_t()
+    size = ida_ua.decode_insn(insn, int(cursor))
+    if not size or int(cursor) + int(size) > int(limit_end):
+        return None
+    if (idc.print_insn_mnem(int(cursor)) or '').lower() != 'nop':
+        return None
+    raw = ida_bytes.get_bytes(int(cursor), int(size))
+    if not raw or len(raw) != int(size):
+        return None
+    return list(raw)
+
+def _consume_padding(cursor, limit_end, segment_start):
+    padding = []
+    while cursor < limit_end:
+        if not _is_same_exec_segment(cursor, segment_start):
+            return cursor, padding, False
+        flags = ida_bytes.get_full_flags(cursor)
+        if ida_bytes.is_code(flags) and ida_bytes.is_head(flags):
+            return cursor, padding, True
+        nop_bytes = _try_decode_padding_nop(cursor, limit_end)
+        if nop_bytes:
+            padding.append(nop_bytes)
+            cursor += len(nop_bytes)
+            continue
+        byte = ida_bytes.get_byte(cursor)
+        if byte == idaapi.BADADDR or byte not in PAD_BYTES:
+            return cursor, padding, False
+        padding.append([int(byte)])
+        cursor += 1
+    return cursor, padding, False
+
 def _signature(start, end):
     tokens = []
     current = start
     fixed = 0
-    max_fixed = 256 if ALLOW_ACROSS_FUNCTION_BOUNDARY_PLACEHOLDER else 24
-    max_tokens = 256 if ALLOW_ACROSS_FUNCTION_BOUNDARY_PLACEHOLDER else 64
-    while current < end and len(tokens) < max_tokens and fixed < max_fixed:
+    max_fixed = 256 if allow_across_function_boundary else 24
+    max_tokens = 256 if allow_across_function_boundary else 64
+    segment = ida_segment.getseg(start)
+    segment_start = int(segment.start_ea) if segment is not None else idaapi.BADADDR
+    limit_end = start + max_tokens if allow_across_function_boundary else end
+    while current < limit_end and len(tokens) < max_tokens and fixed < max_fixed:
+        flags = ida_bytes.get_full_flags(current)
+        if allow_across_function_boundary and (
+            current >= end or not ida_bytes.is_code(flags) or not ida_bytes.is_head(flags)
+        ):
+            current, padding, can_continue = _consume_padding(current, limit_end, segment_start)
+            for padding_bytes in padding:
+                tokens.extend('%02X' % byte for byte in padding_bytes)
+                fixed += len(padding_bytes)
+            if len(tokens) >= max_tokens or fixed >= max_fixed or not can_continue:
+                break
+            flags = ida_bytes.get_full_flags(current)
+        if not _is_same_exec_segment(current, segment_start):
+            break
+        if not ida_bytes.is_code(flags) or not ida_bytes.is_head(flags):
+            break
         insn = ida_ua.insn_t()
         size = ida_ua.decode_insn(insn, current)
         if not size:
@@ -1208,7 +1550,7 @@ def _signature(start, end):
             for op in insn.ops:
                 if op.type == ida_ua.o_void:
                     break
-                if op.type in (ida_ua.o_near, ida_ua.o_far, ida_ua.o_mem):
+                if op.type in (ida_ua.o_near, ida_ua.o_far, ida_ua.o_mem, ida_ua.o_displ):
                     wildcard_from = min(wildcard_from, int(op.offb or size))
                 elif op.type == ida_ua.o_imm and ida_segment.getseg(int(op.value)) is not None:
                     wildcard_from = min(wildcard_from, int(op.offb or size))
@@ -1243,7 +1585,7 @@ async def _inspect_function_via_mcp(session, ea, image_base, func_name, allow_ac
     )
     try:
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
-    except Exception:
+    except Exception:  # noqa: BLE001 - MCP tool failures must fail closed.
         return None
     if not isinstance(payload, Mapping) or payload.get("pointer_size") != 4:
         return None
@@ -1381,7 +1723,7 @@ async def preprocess_gv_sig_via_mcp(session, new_path, old_path, image_base, new
     )
     try:
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
-    except Exception:
+    except Exception:  # noqa: BLE001 - MCP tool failures must fail closed.
         return None
     if not isinstance(payload, Mapping) or payload.get("pointer_size") != 4 or payload.get("address") is None:
         return None
@@ -1434,7 +1776,7 @@ async def preprocess_struct_offset_sig_via_mcp(
     code = _RESOLVE_STRUCT_OFFSET_PY_EVAL.replace("EA_PLACEHOLDER", str(sig_addr + sig_disp))
     try:
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
-    except Exception:
+    except Exception:  # noqa: BLE001 - MCP tool failures must fail closed.
         return None
     offsets = payload.get("offsets") if isinstance(payload, Mapping) and payload.get("pointer_size") == 4 else None
     if not isinstance(offsets, list) or len(set(offsets)) != 1:
@@ -1503,7 +1845,7 @@ async def preprocess_vtable_via_mcp(session, class_name, image_base, platform, d
     )
     try:
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
-    except Exception:
+    except Exception:  # noqa: BLE001 - MCP tool failures must fail closed.
         return None
     if not isinstance(payload, Mapping) or payload.get("pointer_size") != 4 or not payload.get("vtable_va"):
         return None
@@ -1965,7 +2307,7 @@ async def _export_llm_function(session, ea):
     )
     try:
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
-    except Exception:
+    except Exception:  # noqa: BLE001 - MCP tool failures must fail closed.
         return None
     if isinstance(payload, Mapping) and isinstance(payload.get("function"), Mapping):
         function = dict(payload["function"])
@@ -1990,7 +2332,7 @@ async def _inspect_llm_instruction(session, ea):
     code = _INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(value))
     try:
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
-    except Exception:
+    except Exception:  # noqa: BLE001 - MCP tool failures must fail closed.
         return None
     if not isinstance(payload, Mapping) or payload.get("pointer_size") != 4 or not payload.get("size"):
         return None
@@ -2032,7 +2374,7 @@ async def _resolve_jmp_thunk_target_via_mcp(session, func_va, debug=False):
         code = _RESOLVE_JMP_THUNK_PY_EVAL.replace("EA_PLACEHOLDER", str(func_va_int))
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
         resolved_va = _parse_int(payload.get("func_va"), "func_va") if isinstance(payload, Mapping) else None
-    except Exception:
+    except Exception:  # noqa: BLE001 - MCP tool failures and payload parsing must fail closed.
         return None
     if resolved_va is None:
         return None
@@ -2455,6 +2797,11 @@ async def preprocess_common_skill(
     for xref_name in xref_by_name:
         if xref_name not in function_targets:
             function_targets.append(xref_name)
+    if any(
+        _output_for_symbol(expected_outputs, func_name) is None or desired.get(func_name) is None
+        for func_name in function_targets
+    ):
+        return False
 
     target_categories = {name: ("vfunc" if name in vtable_by_name else "func") for name in function_targets}
     target_categories.update({name: "gv" for name in gv_names or ()})
@@ -2475,12 +2822,29 @@ async def preprocess_common_skill(
         if contract is None:
             return False
 
-    function_fast_results = {}
-    for func_name in function_targets:
+    for class_name in vtable_class_names or ():
+        output = _output_for_symbol(expected_outputs, class_name) or _output_for_symbol(
+            expected_outputs, f"{class_name}_vtable"
+        )
+        aliases = (mangled_class_names or {}).get(class_name) if isinstance(mangled_class_names, Mapping) else None
+        candidate = await preprocess_vtable_via_mcp(
+            session,
+            class_name,
+            image_base,
+            platform,
+            debug=debug,
+            symbol_aliases=aliases,
+        )
+        if candidate is not None and isinstance(canonical_vtable_symbols, Mapping):
+            candidate["vtable_symbol"] = canonical_vtable_symbols.get(class_name, candidate["vtable_symbol"])
+        if not emit(class_name, "vtable", candidate, output):
+            return False
+
+    async def try_function_fast_path(func_name):
         output = _output_for_symbol(expected_outputs, func_name)
         field_spec = desired.get(func_name)
         if output is None or field_spec is None:
-            return False
+            return None
         generation_options = field_spec["generation_options"]
         candidate = await preprocess_func_sig_via_mcp(
             session,
@@ -2582,7 +2946,19 @@ async def preprocess_common_skill(
                 candidate.setdefault("vfunc_sig", candidate["func_sig"])
         if not _candidate_satisfies_field_spec(candidate, field_spec):
             candidate = None
-        function_fast_results[func_name] = candidate
+        return candidate
+
+    function_fast_results = {}
+    function_fast_attempted = {}
+    for func_name in function_targets:
+        can_probe = _can_probe_future_func_fast_path(
+            func_name=func_name,
+            func_xrefs_map=xref_by_name,
+            new_binary_dir=new_binary_dir,
+            platform=platform,
+        )
+        function_fast_attempted[func_name] = can_probe
+        function_fast_results[func_name] = await try_function_fast_path(func_name) if can_probe else None
 
     gv_fast_results = {}
     for gv_name in gv_names or ():
@@ -2627,13 +3003,14 @@ async def preprocess_common_skill(
 
     unresolved_symbols = [
         name
-        for name, candidate in {
-            **function_fast_results,
-            **gv_fast_results,
-            **struct_fast_results,
-        }.items()
-        if candidate is None and name in llm_specs
+        for name, candidate in function_fast_results.items()
+        if function_fast_attempted.get(name) and candidate is None and name in llm_specs
     ]
+    unresolved_symbols.extend(
+        name
+        for name, candidate in {**gv_fast_results, **struct_fast_results}.items()
+        if candidate is None and name in llm_specs
+    )
     request_groups = {}
     for symbol_name in unresolved_symbols:
         context = _prepare_llm_context(llm_specs[symbol_name], llm_config, new_binary_dir, platform)
@@ -2667,8 +3044,23 @@ async def preprocess_common_skill(
         field_spec = desired.get(func_name)
         if field_spec is None:
             return False
+        if not function_fast_attempted.get(func_name):
+            function_fast_results[func_name] = await try_function_fast_path(func_name)
+            function_fast_attempted[func_name] = True
         candidate = function_fast_results[func_name]
         if candidate is None:
+            if func_name in llm_specs and func_name not in llm_batch_results:
+                context = _prepare_llm_context(llm_specs[func_name], llm_config, new_binary_dir, platform)
+                if context is not None:
+                    llm_batch_results[func_name] = await _call_llm_for_targets(
+                        session=session,
+                        symbol_names=[func_name],
+                        specs=llm_specs,
+                        context=context,
+                        platform=platform,
+                        new_binary_dir=new_binary_dir,
+                        debug=debug,
+                    )
             llm_result, target_ranges = llm_batch_results.get(func_name, (_empty_llm_decompile_result(), []))
             candidate = await _preprocess_llm_target(
                 session=session,
@@ -2809,24 +3201,6 @@ async def preprocess_common_skill(
                 debug=debug,
             )
         if not emit(member_name, "structmember", candidate, output):
-            return False
-
-    for class_name in vtable_class_names or ():
-        output = _output_for_symbol(expected_outputs, class_name) or _output_for_symbol(
-            expected_outputs, f"{class_name}_vtable"
-        )
-        aliases = (mangled_class_names or {}).get(class_name) if isinstance(mangled_class_names, Mapping) else None
-        candidate = await preprocess_vtable_via_mcp(
-            session,
-            class_name,
-            image_base,
-            platform,
-            debug=debug,
-            symbol_aliases=aliases,
-        )
-        if candidate is not None and isinstance(canonical_vtable_symbols, Mapping):
-            candidate["vtable_symbol"] = canonical_vtable_symbols.get(class_name, candidate["vtable_symbol"])
-        if not emit(class_name, "vtable", candidate, output):
             return False
 
     return processed == set(desired)
