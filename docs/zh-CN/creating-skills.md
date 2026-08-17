@@ -57,8 +57,8 @@ async def preprocess_common_skill(
 
 ### 通过 expected input 的函数链
 
-`find-LoadBlobFile` 把 `find-LoadBlobFile_Caller` 声明为 `expected_input`；前置 finder 先定位 caller，再定位
-目标函数。`find-FreeBlob` 使用相同的链式模式。
+`find-NLoadBlobFile` 把 `find-NLoadBlob` 声明为 `expected_input`；前置 finder 先定位 `NLoadBlob`，再定位
+依赖它的函数。`find-FreeBlob` 使用相同的链式模式。
 
 ### 私有 engine 函数
 

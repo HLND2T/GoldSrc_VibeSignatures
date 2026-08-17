@@ -49,7 +49,8 @@ The shared GoldSrc x86 helper preserves the CS2 Finder API for function/vfunc, g
 
 ### Function chain via expected input
 
-`find-LoadBlobFile` declares `find-LoadBlobFile_Caller` as its `expected_input`; the predecessor finder first locates the caller, then the target function. `find-FreeBlob` follows the same chaining pattern.
+`find-NLoadBlobFile` declares `find-NLoadBlob` as its `expected_input`; the predecessor finder first locates
+`NLoadBlob`, then the dependent function. `find-FreeBlob` follows the same chaining pattern.
 
 ### Private engine functions
 

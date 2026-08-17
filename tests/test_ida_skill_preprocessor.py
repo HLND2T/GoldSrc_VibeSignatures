@@ -456,6 +456,55 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual("Target", result["func_name"])
             self.assertEqual(["find_bytes", "find_bytes", "py_eval", "find_bytes"], [name for name, _ in calls])
 
+    async def test_func_xref_intersects_each_signature_candidate_set(self):
+        signatures = {
+            "AA BB": ["0x401010", "0x402010"],
+            "CC DD": ["0x401020"],
+            "55 8B EC 83 EC ??": ["0x401000"],
+        }
+
+        async def call_tool(name, arguments):
+            if name == "find_bytes":
+                pattern = arguments["patterns"][0]
+                matches = signatures[pattern]
+                return {"matches": matches, "n": len(matches)}
+            self.assertEqual("py_eval", name)
+            code = arguments["code"]
+            spec_line = next(line for line in code.splitlines() if line.startswith("spec = "))
+            namespace = {"json": json}
+            exec(spec_line, namespace)  # noqa: S102 - validates generated IDAPython source.
+            self.assertEqual(
+                [[0x401010, 0x402010], [0x401020]],
+                namespace["spec"]["xref_signature_ea_sets"],
+            )
+            self.assertIn("for values in spec.get('xref_signature_ea_sets') or []", code)
+            candidate = {
+                "func_name": "Target",
+                "func_va": "0x401000",
+                "func_rva": "0x1000",
+                "func_size": "0x40",
+                "func_sig": "55 8B EC 83 EC ??",
+            }
+            return {"pointer_size": 4, "candidates": [candidate]}
+
+        result = await preprocess_func_xrefs_via_mcp(
+            session=SimpleNamespace(call_tool=call_tool),
+            func_name="Target",
+            xref_strings=[],
+            xref_gvs=[],
+            xref_signatures=["AA BB", "CC DD"],
+            xref_funcs=[],
+            exclude_funcs=[],
+            exclude_strings=[],
+            exclude_gvs=[],
+            exclude_signatures=[],
+            new_binary_dir=None,
+            platform="windows",
+            image_base=0x400000,
+        )
+
+        self.assertEqual("Target", result["func_name"])
+
     async def test_pattern_d_llm_fallback_uses_dependency_contract_and_verified_call(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

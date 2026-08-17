@@ -749,8 +749,8 @@ for value in spec.get('xref_gvs') or []:
     positive_sets.append(_named_candidates(value))
 for value in spec.get('xref_funcs') or []:
     positive_sets.append(_named_candidates(value))
-if spec.get('xref_signature_eas'):
-    positive_sets.append(_address_candidates(spec.get('xref_signature_eas')))
+for values in spec.get('xref_signature_ea_sets') or []:
+    positive_sets.append(_address_candidates(values))
 if spec.get('inline_alias') is not None:
     alias_ea = int(spec['inline_alias'])
     alias_callers = _functions_referencing(alias_ea)
@@ -994,12 +994,12 @@ async def preprocess_func_xrefs_via_mcp(
         spec["inline_alias"] = _dependency_address(new_binary_dir, inline_alias, platform, "func_va")
         if spec["inline_alias"] is None:
             return None
-    spec["xref_signature_eas"] = []
+    spec["xref_signature_ea_sets"] = []
     for signature in xref_signatures or ():
         matches = await _find_byte_matches(session, signature)
         if matches is None or not matches:
             return None
-        spec["xref_signature_eas"].extend(matches)
+        spec["xref_signature_ea_sets"].append(matches)
     spec["exclude_signature_eas"] = []
     for signature in exclude_signatures or ():
         matches = await _find_byte_matches(session, signature)
@@ -1021,7 +1021,7 @@ async def preprocess_func_xrefs_via_mcp(
     positive = (
         spec["xref_strings"]
         or spec["xref_gvs"]
-        or spec["xref_signature_eas"]
+        or spec["xref_signature_ea_sets"]
         or spec["xref_funcs"]
         or spec["inline_alias"]
     )

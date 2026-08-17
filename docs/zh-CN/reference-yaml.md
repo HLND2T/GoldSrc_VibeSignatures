@@ -73,7 +73,6 @@ uv run python generate_reference_yaml.py -gamever hl-10210 -module engine -platf
 仓库现有 reference 包括：
 
 - `references/hl-10210/engine/ClientDLL_Init.{platform}.yaml`
-- `references/hl-10210/engine/LoadBlobFile_Caller.{platform}.yaml`
 - `references/hl-10210/engine/SV_SendServerinfo.{platform}.yaml`
 - `references/svencoop-10257/engine/SV_SendServerinfo.{platform}.yaml`
 

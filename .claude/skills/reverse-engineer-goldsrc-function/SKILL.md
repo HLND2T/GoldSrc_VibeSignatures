@@ -93,10 +93,8 @@ callees, confirmed parameters and locals, and the globals or minimal structures 
 decompilation to communicate the source-level role. Retain a source/binary mismatch comment instead
 of forcing unsupported names or types.
 
-The finder artifact identity may deliberately differ from the source function name: for example, a
-`LoadBlobFile_Caller` artifact can identify `NLoadBlobFile` in the IDB. Keep the artifact identity
-for dependency resolution, but export the source-like IDB name and pseudocode to the LLM reference.
-Reference annotations complement this reconstruction; they must not substitute for it.
+Keep finder artifact identity and source-like IDB names aligned unless a dependency contract requires
+otherwise. Reference annotations complement this reconstruction; they must not substitute for it.
 
 ### 5. Repair Unresolved Global Expressions
 

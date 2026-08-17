@@ -233,7 +233,12 @@ class RepositoryContractTests(unittest.TestCase):
 
     def test_shared_client_dll_decompiles_are_grouped(self):
         finder_name = "find-ClientDLL_HudInit-decompiles"
-        expected_outputs = ["g_ppEngfuncs.{platform}.yaml", "g_ppExportFuncs.{platform}.yaml"]
+        expected_inputs = ["ClientDLL_Init.{platform}.yaml", "ClientDLL_HudInit.{platform}.yaml"]
+        expected_outputs = [
+            "g_ppEngfuncs.{platform}.yaml",
+            "g_ppExportFuncs.{platform}.yaml",
+            "g_phClientModule.{platform}.yaml",
+        ]
         engine_tags = {
             "cof-5936",
             "hl-10210",
@@ -252,10 +257,11 @@ class RepositoryContractTests(unittest.TestCase):
                 document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
                 engine = next(module for module in document["modules"] if module["name"] == "engine")
                 finder = next(skill for skill in engine["skills"] if skill["name"] == finder_name)
-                self.assertEqual(["ClientDLL_Init.{platform}.yaml"], finder["expected_input"])
+                self.assertEqual(expected_inputs, finder["expected_input"])
                 self.assertEqual(expected_outputs, finder["expected_output"])
                 self.assertFalse(
-                    {"find-g_ppEngfuncs", "find-g_ppExportFuncs"} & {skill["name"] for skill in engine["skills"]}
+                    {"find-g_ppEngfuncs", "find-g_ppExportFuncs", "find-g_phClientModule"}
+                    & {skill["name"] for skill in engine["skills"]}
                 )
 
         script_root = ROOT / "ida_preprocessor_scripts"
@@ -263,9 +269,11 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertTrue(script.is_file())
         self.assertFalse((script_root / "find-g_ppEngfuncs.py").exists())
         self.assertFalse((script_root / "find-g_ppExportFuncs.py").exists())
+        self.assertFalse((script_root / "find-g_phClientModule.py").exists())
         script_text = script.read_text(encoding="utf-8")
-        self.assertIn('TARGET_GV_NAMES = ["g_ppEngfuncs", "g_ppExportFuncs"]', script_text)
+        self.assertIn('TARGET_GV_NAMES = ["g_ppEngfuncs", "g_ppExportFuncs", "g_phClientModule"]', script_text)
         self.assertIn("ClientDLL_Init.{platform}.yaml", script_text)
+        self.assertIn("ClientDLL_HudInit.{platform}.yaml", script_text)
 
         skill_text = (ROOT / ".claude" / "skills" / "create-preprocessor-scripts" / "SKILL.md").read_text(
             encoding="utf-8"

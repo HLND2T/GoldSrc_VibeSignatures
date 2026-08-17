@@ -34,14 +34,10 @@ modules:
         platform: windows
         expected_input:
           - ClientDLL_Init.{platform}.yaml
+          - ClientDLL_HudInit.{platform}.yaml
         expected_output:
           - g_ppEngfuncs.{platform}.yaml
           - g_ppExportFuncs.{platform}.yaml
-      - name: find-g_phClientModule
-        platform: windows
-        expected_input:
-          - ClientDLL_HudInit.{platform}.yaml
-        expected_output:
           - g_phClientModule.{platform}.yaml
       - name: find-CBaseUI__Initialize-decompiles
         platform: windows
@@ -49,7 +45,23 @@ modules:
           - CBaseUI__Initialize.{platform}.yaml
         expected_output:
           - g_pClientFactory.{platform}.yaml
+      - name: find-NLoadBlob
+        platform: windows
+        expected_output:
+          - NLoadBlob.{platform}.yaml
+      - name: find-NLoadBlobFile
+        platform: windows
+        expected_input:
+          - NLoadBlob.{platform}.yaml
+        expected_output:
+          - NLoadBlobFile.{platform}.yaml
     symbols:
+      - name: NLoadBlob
+        category: func
+        platform: windows
+      - name: NLoadBlobFile
+        category: func
+        platform: windows
       - name: R_RenderView
         category: func
       - name: SV_SendServerinfo

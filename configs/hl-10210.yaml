@@ -31,13 +31,10 @@ modules:
       - name: find-ClientDLL_HudInit-decompiles
         expected_input:
           - ClientDLL_Init.{platform}.yaml
+          - ClientDLL_HudInit.{platform}.yaml
         expected_output:
           - g_ppEngfuncs.{platform}.yaml
           - g_ppExportFuncs.{platform}.yaml
-      - name: find-g_phClientModule
-        expected_input:
-          - ClientDLL_HudInit.{platform}.yaml
-        expected_output:
           - g_phClientModule.{platform}.yaml
       - name: find-CBaseUI__Initialize-decompiles
         expected_input:
@@ -50,14 +47,16 @@ modules:
       - name: find-Cvar_DirectSet
         expected_output:
           - Cvar_DirectSet.{platform}.yaml
-      - name: find-LoadBlobFile_Caller
+      - name: find-NLoadBlob
+        platform: windows
         expected_output:
-          - LoadBlobFile_Caller.{platform}.yaml
-      - name: find-LoadBlobFile
+          - NLoadBlob.{platform}.yaml
+      - name: find-NLoadBlobFile
+        platform: windows
         expected_input:
-          - LoadBlobFile_Caller.{platform}.yaml
+          - NLoadBlob.{platform}.yaml
         expected_output:
-          - LoadBlobFile.{platform}.yaml
+          - NLoadBlobFile.{platform}.yaml
       - name: find-FreeBlob
         expected_input:
           - ClientDLL_Init.{platform}.yaml
@@ -90,10 +89,12 @@ modules:
         category: func
       - name: Cvar_DirectSet
         category: func
-      - name: LoadBlobFile_Caller
+      - name: NLoadBlob
         category: func
-      - name: LoadBlobFile
+        platform: windows
+      - name: NLoadBlobFile
         category: func
+        platform: windows
       - name: FreeBlob
         category: func
   - name: client
