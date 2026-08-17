@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Preprocess script for find-VGuiWrap2_Startup."""
+"""Preprocess script for find-CBaseUI__Initialize."""
 
 from ida_analyze_util import preprocess_common_skill
 
 
-TARGET_FUNCTION_NAMES = ["VGuiWrap2_Startup"]
+TARGET_FUNCTION_NAMES = ["CBaseUI__Initialize"]
 FUNC_XREFS = [
     {
-        "func_name": "VGuiWrap2_Startup",
+        "func_name": "CBaseUI__Initialize",
         "xref_strings": ["FULLMATCH:VClientVGUI001"],
         "xref_gvs": [],
         "xref_signatures": [],
@@ -19,7 +19,7 @@ FUNC_XREFS = [
     },
 ]
 GENERATE_YAML_DESIRED_FIELDS = [
-    ("VGuiWrap2_Startup", ["func_name", "func_sig", "func_va", "func_rva", "func_size"]),
+    ("CBaseUI__Initialize", ["func_name", "func_sig", "func_va", "func_rva", "func_size"]),
 ]
 
 

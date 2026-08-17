@@ -26,10 +26,10 @@ modules:
         platform: windows
         expected_output:
           - ClientDLL_HudInit.{platform}.yaml
-      - name: find-VGuiWrap2_Startup
+      - name: find-CBaseUI__Initialize
         platform: windows
         expected_output:
-          - VGuiWrap2_Startup.{platform}.yaml
+          - CBaseUI__Initialize.{platform}.yaml
       - name: find-ClientDLL_HudInit-decompiles
         platform: windows
         expected_input:
@@ -46,7 +46,7 @@ modules:
       - name: find-g_pClientFactory
         platform: windows
         expected_input:
-          - VGuiWrap2_Startup.{platform}.yaml
+          - CBaseUI__Initialize.{platform}.yaml
         expected_output:
           - g_pClientFactory.{platform}.yaml
     symbols:
@@ -63,7 +63,7 @@ modules:
       - name: ClientDLL_HudInit
         category: func
         platform: windows
-      - name: VGuiWrap2_Startup
+      - name: CBaseUI__Initialize
         category: func
         platform: windows
       - name: g_ppEngfuncs

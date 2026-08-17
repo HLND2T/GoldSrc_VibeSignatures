@@ -1,0 +1,199 @@
+func_name: "CBaseUI__Initialize"
+func_va: "0x1022c130"
+disasm_code: |-
+  .text:1022C130                 push    ebp
+  .text:1022C131                 mov     ebp, esp
+  .text:1022C133                 sub     esp, 208h
+  .text:1022C139                 mov     eax, ___security_cookie
+  .text:1022C13E                 xor     eax, ebp
+  .text:1022C140                 mov     [ebp+var_4], eax
+  .text:1022C143                 cmp     staticGameUIFuncs, 0
+  .text:1022C14A                 push    ebx
+  .text:1022C14B                 push    edi
+  .text:1022C14C                 mov     edi, [ebp+factories]
+  .text:1022C14F                 mov     ebx, ecx
+  .text:1022C151                 jnz     loc_1022C2AC
+  .text:1022C157                 push    esi
+  .text:1022C158                 mov     esi, [edi]
+  .text:1022C15A                 mov     edi, [edi+4]
+  .text:1022C15D                 push    0
+  .text:1022C15F                 push    offset aVfilesystem009; "VFileSystem009"
+  .text:1022C164                 call    edi
+  .text:1022C166                 push    offset aVgui2Dll; "vgui2.dll"
+  .text:1022C16B                 call    Sys_LoadModule
+  .text:1022C170                 ; pModule
+  .text:1022C170                 push    eax; pModule
+  .text:1022C171                 mov     [ebx+20h], eax
+  .text:1022C174                 call    Sys_GetFactory
+  .text:1022C179                 push    offset aChromehtmlDll; "chromehtml.dll"
+  .text:1022C17E                 mov     [ebp+var_208], eax
+  .text:1022C184                 call    Sys_LoadModule
+  .text:1022C189                 ; pModule
+  .text:1022C189                 push    eax; pModule
+  .text:1022C18A                 mov     [ebx+28h], eax
+  .text:1022C18D                 call    Sys_GetFactory
+  .text:1022C192                 mov     ecx, [ebp+var_208]
+  .text:1022C198                 mov     [ebx+10h], eax
+  .text:1022C19B                 lea     eax, [ebp+Buffer]
+  .text:1022C1A1                 ; source builds 'valve\cl_dlls\gameui.dll'; shipped 10210 binary uses 'cl_dlls\GameUI.dll'
+  .text:1022C1A1                 push    offset aClDllsGameuiDl; source builds 'valve\cl_dlls\gameui.dll'; shipped 10210 binary uses 'cl_dlls\GameUI.dll'
+  .text:1022C1A6                 ; count
+  .text:1022C1A6                 push    200h; count
+  .text:1022C1AB                 mov     [ebx+4], esi
+  .text:1022C1AE                 mov     [ebx+8], ecx
+  .text:1022C1B1                 mov     [ebx+0Ch], edi
+  .text:1022C1B4                 ; dest
+  .text:1022C1B4                 push    eax; dest
+  .text:1022C1B5                 mov     dword ptr [ebx+1Ch], 4
+  .text:1022C1BC                 call    Q_snprintf
+  .text:1022C1C1                 lea     eax, [ebp+Buffer]
+  .text:1022C1C7                 ; filename
+  .text:1022C1C7                 push    eax; filename
+  .text:1022C1C8                 call    COM_ExpandFilename
+  .text:1022C1CD                 lea     eax, [ebp+Buffer]
+  .text:1022C1D3                 ; pname
+  .text:1022C1D3                 push    eax; pname
+  .text:1022C1D4                 call    COM_FixSlashes
+  .text:1022C1D9                 lea     eax, [ebp+Buffer]
+  .text:1022C1DF                 ; pFileName
+  .text:1022C1DF                 push    eax; pFileName
+  .text:1022C1E0                 call    FS_GetLocalCopy
+  .text:1022C1E5                 lea     eax, [ebp+Buffer]
+  .text:1022C1EB                 ; pModuleName
+  .text:1022C1EB                 push    eax; pModuleName
+  .text:1022C1EC                 call    Sys_LoadModule
+  .text:1022C1F1                 ; pModule
+  .text:1022C1F1                 push    eax; pModule
+  .text:1022C1F2                 mov     [ebx+24h], eax
+  .text:1022C1F5                 call    Sys_GetFactory
+  .text:1022C1FA                 mov     ecx, [ebx+1Ch]
+  .text:1022C1FD                 mov     esi, eax
+  .text:1022C1FF                 add     esp, 38h
+  .text:1022C202                 mov     [ebx+ecx*4+4], esi
+  .text:1022C206                 test    esi, esi
+  .text:1022C208                 jz      short loc_1022C23A
+  .text:1022C20A                 push    0
+  .text:1022C20C                 push    offset aGameui007; "GameUI007"
+  .text:1022C211                 call    esi
+  .text:1022C213                 push    0
+  .text:1022C215                 push    offset aGameconsole003; "GameConsole003"
+  .text:1022C21A                 mov     staticGameUIFuncs, eax
+  .text:1022C21F                 call    esi
+  .text:1022C221                 push    0
+  .text:1022C223                 ; staticCareerUI is commented out in the HLND2T source but active in the shipped binary
+  .text:1022C223                 push    offset aCareerui001; staticCareerUI is commented out in the HLND2T source but active in the shipped binary
+  .text:1022C228                 mov     staticGameConsole, eax
+  .text:1022C22D                 call    esi
+  .text:1022C22F                 add     esp, 18h
+  .text:1022C232                 mov     staticCareerUI, eax
+  .text:1022C237                 inc     dword ptr [ebx+1Ch]
+  .text:1022C23A                 push    0
+  .text:1022C23C                 push    offset aVguiInputinter; "VGUI_InputInternal001"
+  .text:1022C241                 call    [ebp+var_208]
+  .text:1022C247                 add     esp, 8
+  .text:1022C24A                 mov     g_InputInternal, eax
+  .text:1022C24F                 pop     esi
+  .text:1022C250                 test    eax, eax
+  .text:1022C252                 jnz     short loc_1022C255
+  .text:1022C254                 ; Trap to Debugger
+  .text:1022C254                 int     3; Trap to Debugger
+  .text:1022C255                 cmp     cl_funcs.pClientFactory, 0; target: g_pClientFactory
+  .text:1022C25C                 jz      short loc_1022C28D
+  .text:1022C25E                 ; pModule
+  .text:1022C25E                 push    hClientDLL; pModule
+  .text:1022C264                 call    Sys_GetFactory
+  .text:1022C269                 add     esp, 4
+  .text:1022C26C                 test    eax, eax
+  .text:1022C26E                 jz      short loc_1022C298
+  .text:1022C270                 mov     ecx, [ebx+1Ch]
+  .text:1022C273                 push    0
+  .text:1022C275                 push    offset aVclientvgui001; "VClientVGUI001"
+  .text:1022C27A                 mov     [ebx+ecx*4+4], eax
+  .text:1022C27E                 inc     dword ptr [ebx+1Ch]
+  .text:1022C281                 call    eax
+  .text:1022C283                 add     esp, 8
+  .text:1022C286                 mov     staticClient, eax
+  .text:1022C28B                 jmp     short loc_1022C298
+  .text:1022C28D                 mov     eax, [ebx+1Ch]
+  .text:1022C290                 mov     dword ptr [ebx+eax*4+4], 0
+  .text:1022C298                 ; numFactories
+  .text:1022C298                 push    dword ptr [ebx+1Ch]; numFactories
+  .text:1022C29B                 lea     eax, [ebx+4]
+  .text:1022C29E                 ; factoryList
+  .text:1022C29E                 push    eax; factoryList
+  .text:1022C29F                 push    offset moduleName; "BaseUI"
+  .text:1022C2A4                 call    VGuiControls_Init
+  .text:1022C2A9                 add     esp, 0Ch
+  .text:1022C2AC                 mov     ecx, [ebp+var_4]
+  .text:1022C2AF                 pop     edi
+  .text:1022C2B0                 ; StackCookie
+  .text:1022C2B0                 xor     ecx, ebp; StackCookie
+  .text:1022C2B2                 pop     ebx
+  .text:1022C2B3                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1022C2B8                 mov     esp, ebp
+  .text:1022C2BA                 pop     ebp
+  .text:1022C2BB                 retn    8
+procedure: |-
+  void __thiscall CBaseUI__Initialize(CBaseUI *this, CreateInterfaceFn *factories, int count)
+  {
+    void *(__cdecl *engineFactory)(const char *, int *); // esi
+    CreateInterfaceFn fileSystemFactory; // edi
+    CSysModule *Module; // eax
+    CSysModule *v7; // eax
+    CSysModule *v8; // eax
+    void *(__cdecl *gameUIFactory)(const char *, int *); // eax
+    void *(__cdecl *v10)(const char *, int *); // esi
+    void *(__cdecl *clientDLLFactory)(const char *, int *); // eax
+    void *(__cdecl *vguiFactory)(const char *, int *); // [esp+8h] [ebp-208h]
+    char Buffer[512]; // [esp+Ch] [ebp-204h] BYREF
+  
+    if ( !staticGameUIFuncs )
+    {
+      engineFactory = *factories;
+      fileSystemFactory = factories[1];
+      fileSystemFactory("VFileSystem009", nullptr);
+      Module = Sys_LoadModule("vgui2.dll");
+      this->m_hVGuiModule = Module;
+      vguiFactory = Sys_GetFactory(Module);
+      v7 = Sys_LoadModule("chromehtml.dll");
+      this->m_hChromeModule = v7;
+      this->m_FactoryList[3] = Sys_GetFactory(v7);
+      this->m_FactoryList[0] = engineFactory;
+      this->m_FactoryList[1] = vguiFactory;
+      this->m_FactoryList[2] = fileSystemFactory;
+      this->m_iNumFactories = 4;
+      Q_snprintf(Buffer, 0x200u, "cl_dlls\\GameUI.dll");// source builds 'valve\cl_dlls\gameui.dll'; shipped 10210 binary uses 'cl_dlls\GameUI.dll'
+      COM_ExpandFilename(Buffer);
+      COM_FixSlashes(Buffer);
+      FS_GetLocalCopy(Buffer);
+      v8 = Sys_LoadModule(Buffer);
+      this->m_hStaticGameUIModule = v8;
+      gameUIFactory = Sys_GetFactory(v8);
+      v10 = gameUIFactory;
+      this->m_FactoryList[this->m_iNumFactories] = gameUIFactory;
+      if ( gameUIFactory )
+      {
+        staticGameUIFuncs = (IGameUI *)gameUIFactory("GameUI007", nullptr);
+        staticGameConsole = (IGameConsole *)v10("GameConsole003", nullptr);
+        staticCareerUI = (ICareerUI *)v10("CareerUI001", nullptr);// staticCareerUI is commented out in the HLND2T source but active in the shipped binary
+        ++this->m_iNumFactories;
+      }
+      g_InputInternal = (IInputInternal *)vguiFactory("VGUI_InputInternal001", nullptr);
+      if ( !g_InputInternal )
+        __debugbreak();
+      if ( cl_funcs.pClientFactory )
+      {
+        clientDLLFactory = Sys_GetFactory((CSysModule *)hClientDLL);
+        if ( clientDLLFactory )
+        {
+          this->m_FactoryList[this->m_iNumFactories++] = clientDLLFactory;
+          staticClient = (IClientVGUI *)clientDLLFactory("VClientVGUI001", nullptr);
+        }
+      }
+      else
+      {
+        this->m_FactoryList[this->m_iNumFactories] = nullptr;
+      }
+      VGuiControls_Init("BaseUI", this->m_FactoryList, this->m_iNumFactories);
+    }
+  }

@@ -25,9 +25,9 @@ modules:
       - name: find-ClientDLL_HudInit
         expected_output:
           - ClientDLL_HudInit.{platform}.yaml
-      - name: find-VGuiWrap2_Startup
+      - name: find-CBaseUI__Initialize
         expected_output:
-          - VGuiWrap2_Startup.{platform}.yaml
+          - CBaseUI__Initialize.{platform}.yaml
       - name: find-ClientDLL_HudInit-decompiles
         expected_input:
           - ClientDLL_Init.{platform}.yaml
@@ -41,7 +41,7 @@ modules:
           - g_phClientModule.{platform}.yaml
       - name: find-g_pClientFactory
         expected_input:
-          - VGuiWrap2_Startup.{platform}.yaml
+          - CBaseUI__Initialize.{platform}.yaml
         expected_output:
           - g_pClientFactory.{platform}.yaml
     symbols:
@@ -57,7 +57,7 @@ modules:
         category: func
       - name: ClientDLL_HudInit
         category: func
-      - name: VGuiWrap2_Startup
+      - name: CBaseUI__Initialize
         category: func
       - name: g_ppEngfuncs
         category: gv
