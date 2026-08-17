@@ -45,23 +45,7 @@ modules:
           - CBaseUI__Initialize.{platform}.yaml
         expected_output:
           - g_pClientFactory.{platform}.yaml
-      - name: find-NLoadBlob
-        platform: windows
-        expected_output:
-          - NLoadBlob.{platform}.yaml
-      - name: find-NLoadBlobFile
-        platform: windows
-        expected_input:
-          - NLoadBlob.{platform}.yaml
-        expected_output:
-          - NLoadBlobFile.{platform}.yaml
     symbols:
-      - name: NLoadBlob
-        category: func
-        platform: windows
-      - name: NLoadBlobFile
-        category: func
-        platform: windows
       - name: R_RenderView
         category: func
       - name: SV_SendServerinfo
