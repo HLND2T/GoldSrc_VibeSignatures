@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Locate the client factory reference via VGuiWrap2_Startup decompile."""
+"""Locate the client factory reference via CBaseUI__Initialize decompile."""
 
 from ida_analyze_util import preprocess_common_skill
 
@@ -10,11 +10,11 @@ LLM_DECOMPILE = [
         "symbol_name": "g_pClientFactory",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": [
-            "references/{gamever}/engine/VGuiWrap2_Startup.{platform}.yaml",
+            "references/{gamever}/engine/CBaseUI__Initialize.{platform}.yaml",
         ],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {
-            "VGuiWrap2_Startup.{platform}.yaml": "required",
+            "CBaseUI__Initialize.{platform}.yaml": "required",
         },
     },
 ]

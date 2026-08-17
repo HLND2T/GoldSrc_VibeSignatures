@@ -1,4 +1,4 @@
-func_name: "VGuiWrap2_Startup"
+func_name: "CBaseUI__Initialize"
 func_va: "0x1c1cf0"
 disasm_code: |-
   .text:001C1CF0                 push    ebp
