@@ -8,25 +8,19 @@ Production configuration covers Half-Life build 10210, Counter-Strike build 1021
 
 ## Quick start
 
-Install the [requirements](docs/en/requirements.md), then prepare and analyze one game version:
+Install the [requirements](docs/en/requirements.md), then prepare game binaries with:
+
+`Use SKILL: init-gamebin`
+
+to populate `bin/<GAMEVER>/` with game binaries. (`DEPOTDOWNLOADER_STEAM_USERNAME` and `DEPOTDOWNLOADER_STEAM_PASSWORD` should be populated in `.env`)
+
+then
 
 ```bash
-uv sync --locked
-uv run python download_depot.py -tag cstrike-10210 -depotdir depots
-uv run python copy_depot_bin.py -gamever cstrike-10210 -platform all-platform
-uv run python ida_analyze_bin.py -gamever cstrike-10210 -configyaml configs/cstrike-10210.yaml -platform windows,linux
+uv run ida_analyze_bin.py -allgamever -debug
 ```
 
-These commands populate `bin/<GAMEVER>/` and run the configured deterministic, LLM-assisted, and Agent-assisted analysis. Continue with the immutable candidate, gamedata, and publication flow before publishing tracked outputs.
-
-## Workflow
-
-1. [Download the game depots and copy target binaries](docs/en/analysis.md#download-the-game-depots).
-2. [Analyze symbols declared by `configs/<GAMEVER>.yaml`](docs/en/analysis.md#analyze-configured-symbols).
-3. [Build one immutable symbol and gamedata candidate](docs/en/snapshot-and-gamedata.md#immutable-candidate-transaction).
-4. [Publish the guarded candidate and gamedata](docs/en/snapshot-and-gamedata.md#immutable-candidate-transaction).
-
-Canonical tracked outputs are `gamesymbols/<GAMEVER>.yaml` and `gamedata/<GAMEVER>/`. Per-symbol analysis YAML remains private mutable state under `bin/<GAMEVER>/`.
+to run the analysis workflow to generate YAML artifacts for GoldSrc symbols.
 
 ## Documentation
 
@@ -41,8 +35,6 @@ Canonical tracked outputs are `gamesymbols/<GAMEVER>.yaml` and `gamedata/<GAMEVE
 - [Architecture](docs/en/architecture.md)
 - [Gamedata generator contract](docs/en/generator-contract.md)
 
-## Scope
-
-This repository includes the Redis-backed process reporter, single-concurrency scheduler, read-only Process API/SSE, and the React dashboard with a static Symbol Explorer. Commercial IDA execution still requires the configured local/self-hosted environment; broad symbol coverage, automatic version bumping, remote API hosting, C++ layout extraction, and target-specific gamedata generators remain outside this repository's default hosted CI scope.
+## License
 
 Licensed under the [MIT License](LICENSE.md).
