@@ -3,42 +3,45 @@ func_va: "0x159020"
 disasm_code: |-
   .text:00159020                 push    ebx
   .text:00159021                 sub     esp, 18h
-  .text:00159024                 mov     eax, dword ptr ds:unk_F77F84
+  .text:00159024                 mov     eax, ds:cl_funcs.pHudInitFunc
   .text:00159029                 test    eax, eax
   .text:0015902B                 jz      loc_159110
-  .text:00159031                 call    eax ; unk_F77F84
-  .text:00159033                 mov     ebx, ds:805988h; target: g_phClientModule
-  .text:00159039                 call    R_ResetStudio
-  .text:0015903E                 cmp     byte ptr ds:80598Ch, 0
+  .text:00159031                 call    eax
+  .text:00159033                 mov     ebx, ds:hClientDLL; target: g_phClientModule
+  .text:00159039                 ; inlined ClientDLL_CheckStudioInterface: begin (DWARF source cdll_int.c:1765; call site line 1138)
+  .text:00159039                 call    R_ResetStudio; inlined ClientDLL_CheckStudioInterface: begin (DWARF source cdll_int.c:1765; call site line 1138)
+  .text:0015903E                 cmp     ds:fClientLoaded, 0
   .text:00159045                 jnz     short loc_1590B8
   .text:00159047                 mov     [esp+1Ch+fmt], offset aClRighthand; "cl_righthand"
   .text:0015904E                 call    Cvar_FindVar
   .text:00159053                 mov     [esp+1Ch+fmt], offset aJoysupported; "joysupported"
-  .text:0015905A                 mov     ds:2D8764h, eax
+  .text:0015905A                 mov     ds:cl_righthand, eax
   .text:0015905F                 call    Cvar_FindVar
   .text:00159064                 mov     [esp+1Ch+fmt], offset aJoyforwardsens; "joyforwardsensitivity"
-  .text:0015906B                 mov     ds:0F78254h, eax
+  .text:0015906B                 mov     ds:joy_supported, eax
   .text:00159070                 call    Cvar_FindVar
   .text:00159075                 mov     [esp+1Ch+fmt], offset aJoysidesensiti; "joysidesensitivity"
-  .text:0015907C                 mov     ds:0F78244h, eax
+  .text:0015907C                 mov     ds:joy_forwardsensitivity, eax
   .text:00159081                 call    Cvar_FindVar
   .text:00159086                 mov     [esp+1Ch+fmt], offset aJoypitchsensit; "joypitchsensitivity"
-  .text:0015908D                 mov     ds:0F78248h, eax
+  .text:0015908D                 mov     ds:joy_sidesensitivity, eax
   .text:00159092                 call    Cvar_FindVar
   .text:00159097                 mov     [esp+1Ch+fmt], offset aJoyyawsensitiv; "joyyawsensitivity"
-  .text:0015909E                 mov     ds:0F78250h, eax
+  .text:0015909E                 mov     ds:joy_pitchsensitivity, eax
   .text:001590A3                 call    Cvar_FindVar
-  .text:001590A8                 mov     ds:0F7824Ch, eax
+  .text:001590A8                 mov     ds:joy_yawsensitivity, eax
   .text:001590AD                 add     esp, 18h
   .text:001590B0                 pop     ebx
   .text:001590B1                 retn
-  .text:001590B8                 mov     eax, offset aHudGetstudiomo; "HUD_GetStudioModelInterface"
+  .text:001590B8                 ; inlined ClientDLL_CheckStudioInterface: resumed out-of-line block
+  .text:001590B8                 mov     eax, offset aHudGetstudiomo; inlined ClientDLL_CheckStudioInterface: resumed out-of-line block
   .text:001590BD                 ; name
   .text:001590BD                 mov     [esp+1Ch+name], eax; name
   .text:001590C1                 ; handle
   .text:001590C1                 mov     [esp+1Ch+fmt], ebx; handle
-  .text:001590C4                 call    near ptr 13CFD64h
-  .text:001590C9                 mov     eax, dword ptr ds:unk_F7801C
+  .text:001590C4                 ; Target binary calls dlsym but then uses cl_funcs.pStudioInterface; preserve emitted behavior.
+  .text:001590C4                 call    near ptr dlsym; Target binary calls dlsym but then uses cl_funcs.pStudioInterface; preserve emitted behavior.
+  .text:001590C9                 mov     eax, ds:cl_funcs.pStudioInterface
   .text:001590CE                 test    eax, eax
   .text:001590D0                 jz      loc_159047
   .text:001590D6                 mov     edx, offset engine_studio_api
@@ -46,42 +49,45 @@ disasm_code: |-
   .text:001590E0                 mov     [esp+1Ch+var_14], edx
   .text:001590E4                 mov     [esp+1Ch+name], ecx
   .text:001590E8                 mov     [esp+1Ch+fmt], 1
-  .text:001590EF                 call    eax ; unk_F7801C
+  .text:001590EF                 call    eax
   .text:001590F1                 test    eax, eax
   .text:001590F3                 jnz     loc_159047
   .text:001590F9                 mov     [esp+1Ch+fmt], offset aCouldnTGetClie; "Couldn't get client .dll studio model r"...
   .text:00159100                 call    Con_DPrintf
   .text:00159105                 call    R_ResetStudio
-  .text:0015910A                 jmp     loc_159047
+  .text:0015910A                 ; inlined ClientDLL_CheckStudioInterface: end
+  .text:0015910A                 jmp     loc_159047; inlined ClientDLL_CheckStudioInterface: end
   .text:00159110                 mov     eax, 466h
   .text:00159115                 mov     [esp+1Ch+name], eax
   .text:00159119                 mov     [esp+1Ch+fmt], offset aEngineCdllIntC_0; "../engine/cdll_int.c, line %d: could no"...
   .text:00159120                 call    Sys_Error
 procedure: |-
+  // Target hl-10210 binary/DWARF differs from D:\HLND2T_official: preserves fClientLoaded guard, compiler-inlined ClientDLL_CheckStudioInterface, and five joystick cvar caches.
   void ClientDLL_HudInit()
   {
-    void *v0; // ebx
-    if ( !unk_F77F84 )
+    HINSTANCE hClientDLL; // ebx
+
+    if ( !cl_funcs.pHudInitFunc )
       Sys_Error("../engine/cdll_int.c, line %d: could not link client DLL for HUD initialization", 1126);
-    unk_F77F84();
-    v0 = (void *)g_phClientModule;
+    cl_funcs.pHudInitFunc();
+    hClientDLL = ::hClientDLL; // target: g_phClientModule
     R_ResetStudio();
-    if ( MEMORY[0x80598C] )
+    if ( fClientLoaded )
     {
-      MEMORY[0x13CFD64](v0, "HUD_GetStudioModelInterface");
-      if ( unk_F7801C )
+      dlsym(hClientDLL, "HUD_GetStudioModelInterface");
+      if ( cl_funcs.pStudioInterface )
       {
-        if ( !unk_F7801C(1, &pStudioAPI, &engine_studio_api) )
+        if ( !cl_funcs.pStudioInterface(1, &pStudioAPI, &engine_studio_api) )
         {
           Con_DPrintf("Couldn't get client .dll studio model rendering interface.  Version mismatch?\n");
           R_ResetStudio();
         }
       }
     }
-    MEMORY[0x2D8764] = Cvar_FindVar("cl_righthand");
-    MEMORY[0xF78254] = Cvar_FindVar("joysupported");
-    MEMORY[0xF78244] = Cvar_FindVar("joyforwardsensitivity");
-    MEMORY[0xF78248] = Cvar_FindVar("joysidesensitivity");
-    MEMORY[0xF78250] = Cvar_FindVar("joypitchsensitivity");
-    MEMORY[0xF7824C] = Cvar_FindVar("joyyawsensitivity");
+    cl_righthand = Cvar_FindVar("cl_righthand");
+    joy_supported = Cvar_FindVar("joysupported");
+    joy_forwardsensitivity = Cvar_FindVar("joyforwardsensitivity");
+    joy_sidesensitivity = Cvar_FindVar("joysidesensitivity");
+    joy_pitchsensitivity = Cvar_FindVar("joypitchsensitivity");
+    joy_yawsensitivity = Cvar_FindVar("joyyawsensitivity");
   }
