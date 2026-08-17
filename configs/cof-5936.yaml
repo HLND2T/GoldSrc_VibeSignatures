@@ -26,15 +26,11 @@ modules:
       - name: find-VGuiWrap2_Startup
         expected_output:
           - VGuiWrap2_Startup.{platform}.yaml
-      - name: find-g_ppEngfuncs
+      - name: find-ClientDLL_HudInit-decompiles
         expected_input:
           - ClientDLL_Init.{platform}.yaml
         expected_output:
           - g_ppEngfuncs.{platform}.yaml
-      - name: find-g_ppExportFuncs
-        expected_input:
-          - ClientDLL_Init.{platform}.yaml
-        expected_output:
           - g_ppExportFuncs.{platform}.yaml
       - name: find-g_phClientModule
         expected_input:

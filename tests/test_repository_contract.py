@@ -231,6 +231,48 @@ class RepositoryContractTests(unittest.TestCase):
                 self.assertEqual("func", symbol["category"])
         self.assertTrue((ROOT / "ida_preprocessor_scripts" / "find-ClientDLL_Init.py").is_file())
 
+    def test_shared_client_dll_decompiles_are_grouped(self):
+        finder_name = "find-ClientDLL_HudInit-decompiles"
+        expected_outputs = ["g_ppEngfuncs.{platform}.yaml", "g_ppExportFuncs.{platform}.yaml"]
+        engine_tags = {
+            "cof-5936",
+            "hl-10210",
+            "hl-3248",
+            "hl-3266",
+            "hl-3329",
+            "hl-3647",
+            "hl-4554",
+            "hl-6153",
+            "hl-8684",
+            "svencoop-10257",
+        }
+
+        for tag in engine_tags:
+            with self.subTest(tag=tag):
+                document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
+                engine = next(module for module in document["modules"] if module["name"] == "engine")
+                finder = next(skill for skill in engine["skills"] if skill["name"] == finder_name)
+                self.assertEqual(["ClientDLL_Init.{platform}.yaml"], finder["expected_input"])
+                self.assertEqual(expected_outputs, finder["expected_output"])
+                self.assertFalse(
+                    {"find-g_ppEngfuncs", "find-g_ppExportFuncs"} & {skill["name"] for skill in engine["skills"]}
+                )
+
+        script_root = ROOT / "ida_preprocessor_scripts"
+        script = script_root / f"{finder_name}.py"
+        self.assertTrue(script.is_file())
+        self.assertFalse((script_root / "find-g_ppEngfuncs.py").exists())
+        self.assertFalse((script_root / "find-g_ppExportFuncs.py").exists())
+        script_text = script.read_text(encoding="utf-8")
+        self.assertIn('TARGET_GV_NAMES = ["g_ppEngfuncs", "g_ppExportFuncs"]', script_text)
+        self.assertIn("ClientDLL_Init.{platform}.yaml", script_text)
+
+        skill_text = (ROOT / ".claude" / "skills" / "create-preprocessor-scripts" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("find-<REFERENCE_GROUP>-decompiles", skill_text)
+        self.assertIn("Do not create separate `find-{Symbol}` scripts", skill_text)
+
     def test_ci_runs_required_checks(self):
         workflow = (ROOT / ".github" / "workflows" / "ci.yaml").read_text(encoding="utf-8")
         backend_commands = (

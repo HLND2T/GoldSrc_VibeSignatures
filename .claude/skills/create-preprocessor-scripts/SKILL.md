@@ -277,6 +277,13 @@ requested module and both binary paths from each config.
 Prefer deterministic xrefs/slots over LLM. Split chained LLM predecessors into separate scripts,
 because a downstream target requires the predecessor artifact to exist before its own run.
 
+Group independent LLM targets that use the same normalized `reference_yaml_paths`, dependency policy,
+and platform gating into one multi-target `find-<REFERENCE_GROUP>-decompiles` script. Register one config
+skill with the shared inputs and every target output; include every target in the script's target lists,
+`LLM_DECOMPILE`, and `GENERATE_YAML_DESIRED_FIELDS`. Do not create separate `find-{Symbol}` scripts for
+targets mined from the same reference context. Keep separate scripts only when platform gating or dependency
+policies differ, or when one target must produce a predecessor artifact before another target can run.
+
 ### 3. Create the script
 
 Path: `ida_preprocessor_scripts/find-{SKILL_NAME}.py`.
@@ -470,6 +477,8 @@ Do not push or open a PR unless separately requested.
 - [ ] Config uses only `name` + `category` for classification/identity.
 - [ ] Artifacts use only category-specific identities and contain no `name/type/kind`.
 - [ ] Cross-module inputs stay within the game-version root and produce DAG edges.
+- [ ] LLM targets sharing reference paths, dependency policy, and platform gating are grouped in one
+      `find-<REFERENCE_GROUP>-decompiles` skill instead of separate `find-{Symbol}` skills.
 - [ ] Pattern-specific invariants pass.
 - [ ] Patterns C/D/E references were generated through `generate_reference_yaml.py`, use one recorded
       reference gamever, and contain matching annotations in `disasm_code` and `procedure`.

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Locate the engine-function table reference in ClientDLL_Init via LLM decompile."""
+"""Locate ClientDLL_Init globals that share one LLM decompile reference."""
 
 from ida_analyze_util import preprocess_common_skill
 
 
-TARGET_GV_NAMES = ["g_ppEngfuncs"]
+TARGET_GV_NAMES = ["g_ppEngfuncs", "g_ppExportFuncs"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": "g_ppEngfuncs",
+        "symbol_name": symbol_name,
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": [
             "references/{gamever}/engine/ClientDLL_Init.{platform}.yaml",
@@ -16,7 +16,8 @@ LLM_DECOMPILE = [
         "dependency_policy": {
             "ClientDLL_Init.{platform}.yaml": "required",
         },
-    },
+    }
+    for symbol_name in TARGET_GV_NAMES
 ]
 GV_FIELDS = [
     "gv_name",
@@ -28,7 +29,7 @@ GV_FIELDS = [
     "gv_inst_length",
     "gv_inst_disp",
 ]
-GENERATE_YAML_DESIRED_FIELDS = [("g_ppEngfuncs", GV_FIELDS)]
+GENERATE_YAML_DESIRED_FIELDS = [(symbol_name, GV_FIELDS) for symbol_name in TARGET_GV_NAMES]
 
 
 async def preprocess_skill(
