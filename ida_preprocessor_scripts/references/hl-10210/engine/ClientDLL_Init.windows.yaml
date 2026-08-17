@@ -112,8 +112,8 @@ disasm_code: |-
   .text:1019715E                 push    offset aScreenfade; "ScreenFade"
   .text:10197163                 call    sub_101A92C0
   .text:10197168                 push    7
-  .text:1019716A                 push    offset off_10319B08
-  .text:1019716F                 call    dword ptr ds:1145EF40h
+  .text:1019716A                 push    offset off_10319B08; target: g_ppEngfuncs
+  .text:1019716F                 call    dword ptr ds:1145EF40h; target: g_ppExportFuncs
   .text:10197175                 mov     eax, dword ptr unk_1145EF5C
   .text:1019717A                 add     esp, 18h
   .text:1019717D                 test    eax, eax
@@ -188,7 +188,7 @@ procedure: |-
     }
     sub_101A92C0("ScreenShake", sub_102322C0);
     sub_101A92C0("ScreenFade", sub_10232160);
-    MEMORY[0x1145EF40](off_10319B08, 7);
+    g_ppExportFuncs(g_ppEngfuncs, 7);
     if ( unk_1145EF5C )
       unk_1145EF5C(&unk_1140EA20);
     sub_101A3060();

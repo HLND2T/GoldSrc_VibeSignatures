@@ -1,0 +1,195 @@
+func_name: "VGuiWrap2_Startup"
+func_va: "0x1c1cf0"
+disasm_code: |-
+  .text:001C1CF0                 push    ebp
+  .text:001C1CF1                 push    edi
+  .text:001C1CF2                 push    esi
+  .text:001C1CF3                 push    ebx
+  .text:001C1CF4                 mov     ebx, this
+  .text:001C1CF6                 sub     esp, 22Ch
+  .text:001C1CFC                 mov     this, large gs:14h
+  .text:001C1D02                 mov     [esp+23Ch+var_20], this
+  .text:001C1D09                 xor     this, this
+  .text:001C1D0B                 xor     eax, eax
+  .text:001C1D0D                 mov     ebp, [factories]
+  .text:001C1D0F                 mov     edi, [factories+4]
+  .text:001C1D12                 mov     [esp+23Ch+factoryList], eax
+  .text:001C1D16                 mov     [esp+23Ch+pModuleName], offset aVfilesystem009; "VFileSystem009"
+  .text:001C1D1D                 call    fileSystemFactory
+  .text:001C1D1F                 mov     [esp+23Ch+pModuleName], offset aVgui2So; "vgui2.so"
+  .text:001C1D26                 call    _Z14Sys_LoadModulePKc; Sys_LoadModule(char const*)
+  .text:001C1D2B                 mov     [this+20h], eax
+  .text:001C1D2E                 ; pModule
+  .text:001C1D2E                 mov     [esp+23Ch+pModuleName], eax; pModule
+  .text:001C1D31                 call    _Z14Sys_GetFactoryP10CSysModule; Sys_GetFactory(CSysModule *)
+  .text:001C1D36                 mov     [esp+23Ch+pModuleName], offset aChromehtmlSo; "chromehtml.so"
+  .text:001C1D3D                 mov     esi, eax
+  .text:001C1D3F                 call    _Z14Sys_LoadModulePKc; Sys_LoadModule(char const*)
+  .text:001C1D44                 mov     [this+28h], eax
+  .text:001C1D47                 ; pModule
+  .text:001C1D47                 mov     [esp+23Ch+pModuleName], eax; pModule
+  .text:001C1D4A                 call    _Z14Sys_GetFactoryP10CSysModule; Sys_GetFactory(CSysModule *)
+  .text:001C1D4F                 mov     [this+4], engineFactory
+  .text:001C1D52                 mov     [this+8], vguiFactory
+  .text:001C1D55                 mov     [this+0Ch], fileSystemFactory
+  .text:001C1D58                 mov     dword ptr [this+1Ch], 4
+  .text:001C1D5F                 mov     [this+10h], chromeFactory
+  .text:001C1D62                 xor     chromeFactory, chromeFactory
+  .text:001C1D64                 mov     edx, ds:dword_2617B4[eax]
+  .text:001C1D6A                 mov     dword ptr [esp+eax+23Ch+szDllName], edx
+  .text:001C1D6E                 add     eax, 4
+  .text:001C1D71                 cmp     eax, 18h
+  .text:001C1D74                 jb      short loc_1C1D64
+  .text:001C1D76                 lea     eax, [esp+23Ch+szDllName]
+  .text:001C1D7A                 ; pname
+  .text:001C1D7A                 mov     [esp+23Ch+pModuleName], eax; pname
+  .text:001C1D7D                 call    COM_FixSlashes
+  .text:001C1D82                 lea     eax, [esp+23Ch+szDllName]
+  .text:001C1D86                 ; pFileName
+  .text:001C1D86                 mov     [esp+23Ch+pModuleName], eax; pFileName
+  .text:001C1D89                 call    FS_GetLocalCopy
+  .text:001C1D8E                 lea     eax, [esp+23Ch+szDllName]
+  .text:001C1D92                 ; pModuleName
+  .text:001C1D92                 mov     [esp+23Ch+pModuleName], eax; pModuleName
+  .text:001C1D95                 call    _Z14Sys_LoadModulePKc; Sys_LoadModule(char const*)
+  .text:001C1D9A                 mov     [this+24h], eax
+  .text:001C1D9D                 ; pModule
+  .text:001C1D9D                 mov     [esp+23Ch+pModuleName], eax; pModule
+  .text:001C1DA0                 call    _Z14Sys_GetFactoryP10CSysModule; Sys_GetFactory(CSysModule *)
+  .text:001C1DA5                 mov     fileSystemFactory, eax
+  .text:001C1DA7                 mov     gameUIFactory, [this+1Ch]
+  .text:001C1DAA                 test    gameUIFactory, gameUIFactory
+  .text:001C1DAC                 mov     [this+eax*4+4], gameUIFactory
+  .text:001C1DB0                 jz      short loc_1C1DF1
+  .text:001C1DB2                 xor     eax, eax
+  .text:001C1DB4                 mov     [esp+23Ch+factoryList], eax
+  .text:001C1DB8                 mov     [esp+23Ch+pModuleName], offset aGameui007; "GameUI007"
+  .text:001C1DBF                 call    gameUIFactory
+  .text:001C1DC1                 mov     [esp+23Ch+pModuleName], offset aGameconsole003; "GameConsole003"
+  .text:001C1DC8                 mov     ds:945350h, eax
+  .text:001C1DCD                 xor     eax, eax
+  .text:001C1DCF                 mov     [esp+23Ch+factoryList], eax
+  .text:001C1DD3                 call    gameUIFactory
+  .text:001C1DD5                 mov     [esp+23Ch+pModuleName], offset aCareerui001; "CareerUI001"
+  .text:001C1DDC                 mov     ds:94534Ch, eax
+  .text:001C1DE1                 xor     eax, eax
+  .text:001C1DE3                 mov     [esp+23Ch+factoryList], eax
+  .text:001C1DE7                 call    gameUIFactory
+  .text:001C1DE9                 inc     dword ptr [this+1Ch]
+  .text:001C1DEC                 mov     ds:945348h, eax
+  .text:001C1DF1                 xor     gameUIFactory, gameUIFactory
+  .text:001C1DF3                 mov     [esp+23Ch+factoryList], edi
+  .text:001C1DF7                 mov     [esp+23Ch+pModuleName], offset aVguiInputinter; "VGUI_InputInternal001"
+  .text:001C1DFE                 call    vguiFactory
+  .text:001C1E00                 mov     engineFactory, dword ptr ds:unk_F78028; target: g_pClientFactory
+  .text:001C1E06                 test    ebp, ebp
+  .text:001C1E08                 mov     ds:945640h, eax
+  .text:001C1E0D                 jz      short loc_1C1E78
+  .text:001C1E0F                 mov     eax, ds:805988h
+  .text:001C1E14                 ; pModule
+  .text:001C1E14                 mov     [esp+23Ch+pModuleName], eax; pModule
+  .text:001C1E17                 call    _Z14Sys_GetFactoryP10CSysModule; Sys_GetFactory(CSysModule *)
+  .text:001C1E1C                 test    clientDLLFactory, clientDLLFactory
+  .text:001C1E1E                 jz      short loc_1C1E3F
+  .text:001C1E20                 mov     edx, [this+1Ch]
+  .text:001C1E23                 xor     ecx, ecx
+  .text:001C1E25                 mov     [this+edx*4+4], clientDLLFactory
+  .text:001C1E29                 inc     edx
+  .text:001C1E2A                 mov     [this+1Ch], edx
+  .text:001C1E2D                 mov     [esp+23Ch+factoryList], ecx
+  .text:001C1E31                 mov     [esp+23Ch+pModuleName], offset aVclientvgui001; "VClientVGUI001"
+  .text:001C1E38                 call    clientDLLFactory
+  .text:001C1E3A                 mov     ds:945344h, eax
+  .text:001C1E3F                 mov     eax, [this+1Ch]
+  .text:001C1E42                 add     this, 4
+  .text:001C1E45                 ; numFactories
+  .text:001C1E45                 mov     [esp+23Ch+numFactories], eax; numFactories
+  .text:001C1E49                 ; factoryList
+  .text:001C1E49                 mov     [esp+23Ch+factoryList], ebx; factoryList
+  .text:001C1E4D                 mov     [esp+23Ch+pModuleName], offset moduleName; "BaseUI"
+  .text:001C1E54                 call    _ZN5vgui217VGuiControls_InitEPKcPPFPvS1_PiEi; vgui2::VGuiControls_Init(char const*,void * (**)(char const*,int *),int)
+  .text:001C1E59                 mov     eax, [esp+23Ch+var_20]
+  .text:001C1E60                 xor     eax, large gs:14h
+  .text:001C1E67                 jnz     short loc_1C1E83
+  .text:001C1E69                 add     esp, 22Ch
+  .text:001C1E6F                 pop     ebx
+  .text:001C1E70                 pop     vguiFactory
+  .text:001C1E71                 pop     edi
+  .text:001C1E72                 pop     ebp
+  .text:001C1E73                 retn
+  .text:001C1E78                 mov     eax, [this+1Ch]
+  .text:001C1E7B                 xor     edx, edx
+  .text:001C1E7D                 mov     [this+eax*4+4], edx
+  .text:001C1E81                 jmp     short loc_1C1E42
+  .text:001C1E83                 call    near ptr 13CFEDCh
+procedure: |-
+  void __usercall VGuiWrap2_Startup_0(int a1@<eax>, int *a2@<edx>, CBaseUI *const this)
+  {
+    int v4; // ebp
+    void (__cdecl *v5)(const char *, _DWORD); // edi
+    CSysModule *Module; // eax
+    CreateInterfaceFn Factory; // esi
+    CSysModule *v8; // eax
+    CreateInterfaceFn v9; // eax
+    unsigned int i; // eax
+    CSysModule *v11; // eax
+    CreateInterfaceFn v12; // edi
+    ICareerUI *v13; // eax
+    CreateInterfaceFn v14; // eax
+    int v15; // edx
+    int numFactories; // eax
+    char szDllName[512]; // [esp+1Ch] [ebp-220h] BYREF
+    unsigned int v18; // [esp+21Ch] [ebp-20h]
+    v18 = __readgsdword(0x14u);
+    v4 = *a2;
+    v5 = (void (__cdecl *)(const char *, _DWORD))a2[1];
+    v5("VFileSystem009", 0);
+    Module = Sys_LoadModule("vgui2.so");
+    *(_DWORD *)(a1 + 32) = Module;
+    Factory = Sys_GetFactory(Module);
+    v8 = Sys_LoadModule("chromehtml.so");
+    *(_DWORD *)(a1 + 40) = v8;
+    v9 = Sys_GetFactory(v8);
+    *(_DWORD *)(a1 + 4) = v4;
+    *(_DWORD *)(a1 + 8) = Factory;
+    *(_DWORD *)(a1 + 12) = v5;
+    *(_DWORD *)(a1 + 28) = 4;
+    *(_DWORD *)(a1 + 16) = v9;
+    for ( i = 0; i < 6; ++i )
+      *(_DWORD *)&szDllName[i * 4] = dword_2617B4[i];
+    COM_FixSlashes(szDllName);
+    FS_GetLocalCopy(szDllName);
+    v11 = Sys_LoadModule(szDllName);
+    *(_DWORD *)(a1 + 36) = v11;
+    v12 = Sys_GetFactory(v11);
+    *(_DWORD *)(a1 + 4 * *(_DWORD *)(a1 + 28) + 4) = v12;
+    if ( v12 )
+    {
+      MEMORY[0x945350] = (IGameUI *)v12("GameUI007", nullptr);
+      MEMORY[0x94534C] = (IGameConsole *)v12("GameConsole003", nullptr);
+      v13 = (ICareerUI *)v12("CareerUI001", nullptr);
+      ++*(_DWORD *)(a1 + 28);
+      MEMORY[0x945348] = v13;
+    }
+    MEMORY[0x945640] = (vgui2::IInputInternal *)Factory("VGUI_InputInternal001", nullptr);
+    if ( g_pClientFactory )
+    {
+      v14 = Sys_GetFactory(MEMORY[0x805988]);
+      if ( v14 )
+      {
+        v15 = *(_DWORD *)(a1 + 28);
+        *(_DWORD *)(a1 + 4 * v15 + 4) = v14;
+        *(_DWORD *)(a1 + 28) = v15 + 1;
+        MEMORY[0x945344] = (IClientVGUI *)v14("VClientVGUI001", nullptr);
+      }
+      numFactories = *(_DWORD *)(a1 + 28);
+    }
+    else
+    {
+      numFactories = *(_DWORD *)(a1 + 28);
+      *(_DWORD *)(a1 + 4 * numFactories + 4) = 0;
+    }
+    vgui2::VGuiControls_Init("BaseUI", (CreateInterfaceFn *)(a1 + 4), numFactories);
+    if ( __readgsdword(0x14u) != v18 )
+      MEMORY[0x13CFEDC]();
+  }

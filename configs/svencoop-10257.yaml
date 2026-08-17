@@ -22,6 +22,38 @@ modules:
       - name: find-ClientDLL_Init
         expected_output:
           - ClientDLL_Init.{platform}.yaml
+      - name: find-ClientDLL_HudInit
+        platform: windows
+        expected_output:
+          - ClientDLL_HudInit.{platform}.yaml
+      - name: find-VGuiWrap2_Startup
+        platform: windows
+        expected_output:
+          - VGuiWrap2_Startup.{platform}.yaml
+      - name: find-g_ppEngfuncs
+        platform: windows
+        expected_input:
+          - ClientDLL_Init.{platform}.yaml
+        expected_output:
+          - g_ppEngfuncs.{platform}.yaml
+      - name: find-g_ppExportFuncs
+        platform: windows
+        expected_input:
+          - ClientDLL_Init.{platform}.yaml
+        expected_output:
+          - g_ppExportFuncs.{platform}.yaml
+      - name: find-g_phClientModule
+        platform: windows
+        expected_input:
+          - ClientDLL_HudInit.{platform}.yaml
+        expected_output:
+          - g_phClientModule.{platform}.yaml
+      - name: find-g_pClientFactory
+        platform: windows
+        expected_input:
+          - VGuiWrap2_Startup.{platform}.yaml
+        expected_output:
+          - g_pClientFactory.{platform}.yaml
     symbols:
       - name: R_RenderView
         category: func
@@ -33,6 +65,24 @@ modules:
         category: func
       - name: ClientDLL_Init
         category: func
+      - name: ClientDLL_HudInit
+        category: func
+        platform: windows
+      - name: VGuiWrap2_Startup
+        category: func
+        platform: windows
+      - name: g_ppEngfuncs
+        category: gv
+        platform: windows
+      - name: g_ppExportFuncs
+        category: gv
+        platform: windows
+      - name: g_phClientModule
+        category: gv
+        platform: windows
+      - name: g_pClientFactory
+        category: gv
+        platform: windows
   - name: client
     module_windows: client.dll
     module_linux: client.so

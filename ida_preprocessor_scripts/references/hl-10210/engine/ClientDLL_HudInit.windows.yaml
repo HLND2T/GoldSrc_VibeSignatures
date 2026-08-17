@@ -1,0 +1,90 @@
+func_name: "ClientDLL_HudInit"
+func_va: "0x10196e50"
+disasm_code: |-
+  .text:10196E50                 mov     eax, dword ptr unk_1145EF44
+  .text:10196E55                 test    eax, eax
+  .text:10196E57                 jnz     short loc_10196E70
+  .text:10196E59                 push    466h
+  .text:10196E5E                 push    offset aCBuildslaveGol_13; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10196E63                 call    Sys_Error
+  .text:10196E68                 mov     eax, dword ptr unk_1145EF44
+  .text:10196E6D                 add     esp, 8
+  .text:10196E70                 ; ArgList
+  .text:10196E70                 push    esi; ArgList
+  .text:10196E71                 call    eax ; unk_1145EF44
+  .text:10196E73                 mov     esi, ds:1032AF24h; target: g_phClientModule
+  .text:10196E79                 call    sub_101F6240
+  .text:10196E7E                 cmp     dword ptr ds:1032AF20h, 0
+  .text:10196E85                 jz      short loc_10196EC3
+  .text:10196E87                 push    offset aHudGetstudiomo; "HUD_GetStudioModelInterface"
+  .text:10196E8C                 ; hModule
+  .text:10196E8C                 push    esi; hModule
+  .text:10196E8D                 call    ds:GetProcAddress
+  .text:10196E93                 mov     eax, dword ptr unk_1145EFDC
+  .text:10196E98                 test    eax, eax
+  .text:10196E9A                 jz      short loc_10196EC3
+  .text:10196E9C                 push    offset off_1031C1E0
+  .text:10196EA1                 push    offset off_1031C0F0
+  .text:10196EA6                 push    1
+  .text:10196EA8                 call    eax ; unk_1145EFDC
+  .text:10196EAA                 add     esp, 0Ch
+  .text:10196EAD                 test    eax, eax
+  .text:10196EAF                 jnz     short loc_10196EC3
+  .text:10196EB1                 push    offset aCouldnTGetClie; "Couldn't get client .dll studio model r"...
+  .text:10196EB6                 call    sub_101BB8C0
+  .text:10196EBB                 add     esp, 4
+  .text:10196EBE                 call    sub_101F6240
+  .text:10196EC3                 push    offset aClRighthand; "cl_righthand"
+  .text:10196EC8                 call    sub_101BDEB0
+  .text:10196ECD                 push    offset aJoysupported; "joysupported"
+  .text:10196ED2                 mov     dword ptr unk_104D1BF0, eax
+  .text:10196ED7                 call    sub_101BDEB0
+  .text:10196EDC                 push    offset aJoyforwardsens; "joyforwardsensitivity"
+  .text:10196EE1                 mov     dword ptr unk_1145EF30, eax
+  .text:10196EE6                 call    sub_101BDEB0
+  .text:10196EEB                 push    offset aJoysidesensiti; "joysidesensitivity"
+  .text:10196EF0                 mov     dword ptr unk_1145EF2C, eax
+  .text:10196EF5                 call    sub_101BDEB0
+  .text:10196EFA                 push    offset aJoypitchsensit; "joypitchsensitivity"
+  .text:10196EFF                 mov     dword ptr unk_1145EF28, eax
+  .text:10196F04                 call    sub_101BDEB0
+  .text:10196F09                 push    offset aJoyyawsensitiv; "joyyawsensitivity"
+  .text:10196F0E                 mov     dword ptr unk_1145EF24, eax
+  .text:10196F13                 call    sub_101BDEB0
+  .text:10196F18                 add     esp, 18h
+  .text:10196F1B                 mov     dword ptr unk_1145EF20, eax
+  .text:10196F20                 pop     esi
+  .text:10196F21                 retn
+procedure: |-
+  int __usercall sub_10196E50@<eax>(char a1@<sil>)
+  {
+    HMODULE v1; // esi
+    int result; // eax
+    if ( !unk_1145EF44 )
+      Sys_Error(
+        "c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\engine\\cdll_int.c, line %d: could not link client DLL for HUD initialization",
+        1126);
+    unk_1145EF44();
+    v1 = (HMODULE)g_phClientModule;
+    sub_101F6240();
+    if ( MEMORY[0x1032AF20] )
+    {
+      GetProcAddress(v1, "HUD_GetStudioModelInterface");
+      if ( unk_1145EFDC )
+      {
+        if ( !unk_1145EFDC(1, &off_1031C0F0, &off_1031C1E0) )
+        {
+          sub_101BB8C0("Couldn't get client .dll studio model rendering interface.  Version mismatch?\n", a1);
+          sub_101F6240();
+        }
+      }
+    }
+    unk_104D1BF0 = sub_101BDEB0("cl_righthand");
+    unk_1145EF30 = sub_101BDEB0("joysupported");
+    unk_1145EF2C = sub_101BDEB0("joyforwardsensitivity");
+    unk_1145EF28 = sub_101BDEB0("joysidesensitivity");
+    unk_1145EF24 = sub_101BDEB0("joypitchsensitivity");
+    result = sub_101BDEB0("joyyawsensitivity");
+    unk_1145EF20 = result;
+    return result;
+  }

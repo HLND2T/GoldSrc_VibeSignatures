@@ -1,0 +1,193 @@
+func_name: "VGuiWrap2_Startup"
+func_va: "0x1022c130"
+disasm_code: |-
+  .text:1022C130                 push    ebp
+  .text:1022C131                 mov     ebp, esp
+  .text:1022C133                 sub     esp, 208h
+  .text:1022C139                 mov     eax, ___security_cookie
+  .text:1022C13E                 xor     eax, ebp
+  .text:1022C140                 mov     [ebp+var_4], eax
+  .text:1022C143                 cmp     dword ptr unk_1063E294, 0
+  .text:1022C14A                 push    ebx
+  .text:1022C14B                 push    edi
+  .text:1022C14C                 mov     edi, [ebp+arg_0]
+  .text:1022C14F                 mov     ebx, ecx
+  .text:1022C151                 jnz     loc_1022C2AC
+  .text:1022C157                 push    esi
+  .text:1022C158                 mov     esi, [edi]
+  .text:1022C15A                 mov     edi, [edi+4]
+  .text:1022C15D                 push    0
+  .text:1022C15F                 push    offset aVfilesystem009; "VFileSystem009"
+  .text:1022C164                 call    edi
+  .text:1022C166                 push    offset aVgui2Dll; "vgui2.dll"
+  .text:1022C16B                 call    sub_10192330
+  .text:1022C170                 ; hModule
+  .text:1022C170                 push    eax; hModule
+  .text:1022C171                 mov     [ebx+20h], eax
+  .text:1022C174                 call    sub_10192300
+  .text:1022C179                 push    offset aChromehtmlDll; "chromehtml.dll"
+  .text:1022C17E                 mov     [ebp+var_208], eax
+  .text:1022C184                 call    sub_10192330
+  .text:1022C189                 ; ArgList
+  .text:1022C189                 push    eax; ArgList
+  .text:1022C18A                 mov     [ebx+28h], eax
+  .text:1022C18D                 call    sub_10192300
+  .text:1022C192                 mov     ecx, [ebp+var_208]
+  .text:1022C198                 mov     [ebx+10h], eax
+  .text:1022C19B                 lea     eax, [ebp+Buffer]
+  .text:1022C1A1                 push    offset aClDllsGameuiDl; "cl_dlls\\GameUI.dll"
+  .text:1022C1A6                 ; count
+  .text:1022C1A6                 push    200h; count
+  .text:1022C1AB                 mov     [ebx+4], esi
+  .text:1022C1AE                 mov     [ebx+8], ecx
+  .text:1022C1B1                 mov     [ebx+0Ch], edi
+  .text:1022C1B4                 ; dest
+  .text:1022C1B4                 push    eax; dest
+  .text:1022C1B5                 mov     dword ptr [ebx+1Ch], 4
+  .text:1022C1BC                 call    Q_snprintf
+  .text:1022C1C1                 lea     eax, [ebp+Buffer]
+  .text:1022C1C7                 push    eax
+  .text:1022C1C8                 call    sub_101B7740
+  .text:1022C1CD                 lea     eax, [ebp+Buffer]
+  .text:1022C1D3                 push    eax
+  .text:1022C1D4                 call    sub_101B7A10
+  .text:1022C1D9                 lea     eax, [ebp+Buffer]
+  .text:1022C1DF                 push    eax
+  .text:1022C1E0                 call    sub_101C7EA0
+  .text:1022C1E5                 lea     eax, [ebp+Buffer]
+  .text:1022C1EB                 ; lpLibFileName
+  .text:1022C1EB                 push    eax; lpLibFileName
+  .text:1022C1EC                 call    sub_10192330
+  .text:1022C1F1                 ; hModule
+  .text:1022C1F1                 push    eax; hModule
+  .text:1022C1F2                 mov     [ebx+24h], eax
+  .text:1022C1F5                 call    sub_10192300
+  .text:1022C1FA                 mov     ecx, [ebx+1Ch]
+  .text:1022C1FD                 mov     esi, eax
+  .text:1022C1FF                 add     esp, 38h
+  .text:1022C202                 mov     [ebx+ecx*4+4], esi
+  .text:1022C206                 test    esi, esi
+  .text:1022C208                 jz      short loc_1022C23A
+  .text:1022C20A                 push    0
+  .text:1022C20C                 push    offset aGameui007; "GameUI007"
+  .text:1022C211                 call    esi
+  .text:1022C213                 push    0
+  .text:1022C215                 push    offset aGameconsole003; "GameConsole003"
+  .text:1022C21A                 mov     dword ptr unk_1063E294, eax
+  .text:1022C21F                 call    esi
+  .text:1022C221                 push    0
+  .text:1022C223                 push    offset aCareerui001; "CareerUI001"
+  .text:1022C228                 mov     dword ptr unk_1063E298, eax
+  .text:1022C22D                 call    esi
+  .text:1022C22F                 add     esp, 18h
+  .text:1022C232                 mov     dword ptr unk_1063E29C, eax
+  .text:1022C237                 inc     dword ptr [ebx+1Ch]
+  .text:1022C23A                 push    0
+  .text:1022C23C                 push    offset aVguiInputinter; "VGUI_InputInternal001"
+  .text:1022C241                 call    [ebp+var_208]
+  .text:1022C247                 add     esp, 8
+  .text:1022C24A                 mov     dword ptr unk_1063E2C4, eax
+  .text:1022C24F                 pop     esi
+  .text:1022C250                 test    eax, eax
+  .text:1022C252                 jnz     short loc_1022C255
+  .text:1022C254                 ; Trap to Debugger
+  .text:1022C254                 int     3; Trap to Debugger
+  .text:1022C255                 cmp     dword ptr unk_1145EFE8, 0; target: g_pClientFactory
+  .text:1022C25C                 jz      short loc_1022C28D
+  .text:1022C25E                 ; hModule
+  .text:1022C25E                 push    dword ptr ds:1032AF24h; hModule
+  .text:1022C264                 call    sub_10192300
+  .text:1022C269                 add     esp, 4
+  .text:1022C26C                 test    eax, eax
+  .text:1022C26E                 jz      short loc_1022C298
+  .text:1022C270                 mov     ecx, [ebx+1Ch]
+  .text:1022C273                 push    0
+  .text:1022C275                 push    offset aVclientvgui001; "VClientVGUI001"
+  .text:1022C27A                 mov     [ebx+ecx*4+4], eax
+  .text:1022C27E                 inc     dword ptr [ebx+1Ch]
+  .text:1022C281                 call    eax
+  .text:1022C283                 add     esp, 8
+  .text:1022C286                 mov     dword ptr unk_1063E2A0, eax
+  .text:1022C28B                 jmp     short loc_1022C298
+  .text:1022C28D                 mov     eax, [ebx+1Ch]
+  .text:1022C290                 mov     dword ptr [ebx+eax*4+4], 0
+  .text:1022C298                 ; int
+  .text:1022C298                 push    dword ptr [ebx+1Ch]; int
+  .text:1022C29B                 lea     eax, [ebx+4]
+  .text:1022C29E                 ; int
+  .text:1022C29E                 push    eax; int
+  .text:1022C29F                 push    offset aBaseui; "BaseUI"
+  .text:1022C2A4                 call    sub_10270150
+  .text:1022C2A9                 add     esp, 0Ch
+  .text:1022C2AC                 mov     ecx, [ebp+var_4]
+  .text:1022C2AF                 pop     edi
+  .text:1022C2B0                 ; StackCookie
+  .text:1022C2B0                 xor     ecx, ebp; StackCookie
+  .text:1022C2B2                 pop     ebx
+  .text:1022C2B3                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1022C2B8                 mov     esp, ebp
+  .text:1022C2BA                 pop     ebp
+  .text:1022C2BB                 retn    8
+procedure: |-
+  void __thiscall sub_1022C130(int *this, int *a2, int a3)
+  {
+    int v4; // esi
+    void (__cdecl *v5)(const char *, _DWORD); // edi
+    HMODULE v6; // eax
+    HMODULE v7; // eax
+    HMODULE v8; // eax
+    int (__cdecl *v9)(const char *, _DWORD); // eax
+    int (__cdecl *v10)(const char *, _DWORD); // esi
+    int (__cdecl *v11)(const char *, _DWORD); // eax
+    int (__cdecl *v12)(const char *, _DWORD); // [esp+8h] [ebp-208h]
+    char Buffer[512]; // [esp+Ch] [ebp-204h] BYREF
+    if ( !unk_1063E294 )
+    {
+      v4 = *a2;
+      v5 = (void (__cdecl *)(const char *, _DWORD))a2[1];
+      v5("VFileSystem009", 0);
+      v6 = (HMODULE)sub_10192330("vgui2.dll");
+      *(this + 8) = (int)v6;
+      v12 = (int (__cdecl *)(const char *, _DWORD))sub_10192300(v6);
+      v7 = (HMODULE)sub_10192330("chromehtml.dll");
+      *(this + 10) = (int)v7;
+      *(this + 4) = sub_10192300(v7);
+      *(this + 1) = v4;
+      *(this + 2) = (int)v12;
+      *(this + 3) = (int)v5;
+      *(this + 7) = 4;
+      Q_snprintf(Buffer, 0x200u, "cl_dlls\\GameUI.dll");
+      sub_101B7740(Buffer);
+      sub_101B7A10(Buffer);
+      sub_101C7EA0(Buffer);
+      v8 = (HMODULE)sub_10192330(Buffer);
+      *(this + 9) = (int)v8;
+      v9 = (int (__cdecl *)(const char *, _DWORD))sub_10192300(v8);
+      v10 = v9;
+      *(this + *(this + 7) + 1) = (int)v9;
+      if ( v9 )
+      {
+        unk_1063E294 = v9("GameUI007", 0);
+        unk_1063E298 = v10("GameConsole003", 0);
+        unk_1063E29C = v10("CareerUI001", 0);
+        ++*(this + 7);
+      }
+      unk_1063E2C4 = v12("VGUI_InputInternal001", 0);
+      if ( !unk_1063E2C4 )
+        __debugbreak();
+      if ( g_pClientFactory )
+      {
+        v11 = (int (__cdecl *)(const char *, _DWORD))sub_10192300((HMODULE)MEMORY[0x1032AF24]);
+        if ( v11 )
+        {
+          *(this + ++*(this + 7)) = (int)v11;
+          unk_1063E2A0 = v11("VClientVGUI001", 0);
+        }
+      }
+      else
+      {
+        *(this + *(this + 7) + 1) = 0;
+      }
+      sub_10270150("BaseUI", (int)(this + 1), *(this + 7));
+    }
+  }

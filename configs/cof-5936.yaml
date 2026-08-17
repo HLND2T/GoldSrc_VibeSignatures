@@ -20,6 +20,32 @@ modules:
       - name: find-ClientDLL_Init
         expected_output:
           - ClientDLL_Init.{platform}.yaml
+      - name: find-ClientDLL_HudInit
+        expected_output:
+          - ClientDLL_HudInit.{platform}.yaml
+      - name: find-VGuiWrap2_Startup
+        expected_output:
+          - VGuiWrap2_Startup.{platform}.yaml
+      - name: find-g_ppEngfuncs
+        expected_input:
+          - ClientDLL_Init.{platform}.yaml
+        expected_output:
+          - g_ppEngfuncs.{platform}.yaml
+      - name: find-g_ppExportFuncs
+        expected_input:
+          - ClientDLL_Init.{platform}.yaml
+        expected_output:
+          - g_ppExportFuncs.{platform}.yaml
+      - name: find-g_phClientModule
+        expected_input:
+          - ClientDLL_HudInit.{platform}.yaml
+        expected_output:
+          - g_phClientModule.{platform}.yaml
+      - name: find-g_pClientFactory
+        expected_input:
+          - VGuiWrap2_Startup.{platform}.yaml
+        expected_output:
+          - g_pClientFactory.{platform}.yaml
     symbols:
       - name: R_RenderView
         category: func
@@ -31,6 +57,18 @@ modules:
         category: func
       - name: ClientDLL_Init
         category: func
+      - name: ClientDLL_HudInit
+        category: func
+      - name: VGuiWrap2_Startup
+        category: func
+      - name: g_ppEngfuncs
+        category: gv
+      - name: g_ppExportFuncs
+        category: gv
+      - name: g_phClientModule
+        category: gv
+      - name: g_pClientFactory
+        category: gv
   - name: client
     module_windows: client.dll
     path_windows: Cry-of-Fear-5936/cryoffear/cl_dlls/client.dll
