@@ -142,9 +142,29 @@ new, explicitly GoldSrc protocol.
 
 Unnumbered general targets are supported directly:
 
-- Global variables via `gv_names` and `preprocess_gv_sig_via_mcp`.
 - Patches via `patch_names` and `preprocess_patch_via_mcp`.
 - Primary vtables via `vtable_class_names` and `preprocess_vtable_via_mcp`.
+
+### Global-variable finder policy
+
+Use `LLM_DECOMPILE` as the default and normally the only discovery path for a global variable.
+First locate a deterministic owning or predecessor function, generate and annotate its reference
+YAML, then use `gv_names` together with an `LLM_DECOMPILE` spec whose
+`expected_result_sections` is `["found_gv"]`. The LLM result must identify an instruction in that
+current-binary function; normal x86 validation then decodes the selected address operand and emits
+the global-variable artifact.
+
+Do not discover a global through a byte signature, an old YAML artifact, `xref_signatures`, or a
+standalone `preprocess_gv_sig_via_mcp` / `gv_names` path. A generated `gv_sig` remains required as
+the output's unique runtime-resolution validator, but it must be generated *after* the LLM-selected
+instruction is validated; it is never a discovery anchor.
+
+An exception is allowed only when a current-IDB, direct locator is demonstrably more robust across
+the requested game versions and platforms than the LLM predecessor path. It must identify the
+global's own access unambiguously, have source/behavior evidence for its ownership, and be
+validated on every requested platform and game family. Fixed addresses, source-order guesses,
+nearby-function matches, or a byte signature do not qualify. Record the direct locator and its
+cross-version evidence in the finder or its reference documentation.
 
 Read the chosen reference before implementation:
 

@@ -68,8 +68,8 @@ disasm_code: |-
   .text:001586E6                 call    HookServerMsg
   .text:001586EB                 mov     ecx, 7
   .text:001586F0                 mov     [esp+22Ch+pblobfootprint], ecx
-  .text:001586F4                 mov     [esp+22Ch+pname], offset cl_enginefuncs
-  .text:001586FB                 call    dword ptr ds:0F77F80h
+  .text:001586F4                 mov     [esp+22Ch+pname], offset cl_enginefuncs; target: g_ppEngfuncs
+  .text:001586FB                 call    dword ptr ds:0F77F80h; target: g_ppExportFuncs
   .text:00158701                 mov     eax, dword ptr ds:unk_F77F9C
   .text:00158706                 test    eax, eax
   .text:00158708                 jz      short loc_158713
@@ -182,7 +182,7 @@ procedure: |-
     }
     HookServerMsg("ScreenShake", V_ScreenShake);
     HookServerMsg("ScreenFade", V_ScreenFade);
-    MEMORY[0xF77F80](&cl_enginefuncs, 7);
+    g_ppExportFuncs(g_ppEngfuncs, 7);
     if ( unk_F77F9C )
       unk_F77F9C(&MEMORY[0xBDEEA0]);
     CL_GetPlayerHulls();
