@@ -63,8 +63,8 @@ async def preprocess_common_skill(
 ### 私有 engine 函数
 
 `find-Sys_Error`、`find-ClientDLL_Init`、`find-DispatchDirectUserMsg`、`find-Cvar_DirectSet` 通过稳定的函数内
-字符串锚点与官方源码交叉引用定位私有 engine 函数。在 `hl-*` 或 `svencoop-*` Windows/Linux 二进制中定位匿名函数
-参见 `find-anchor-to-goldsrc-function` skill。
+字符串锚点与官方源码交叉引用定位私有 engine 函数。在 `hl-*` 或 `svencoop-*` Windows/Linux 二进制中定位匿名函数、
+全局变量以及全局变量式指令操作数，参见 `find-anchor-to-goldsrc-symbol` skill。
 
 ## Signature 生成 skill
 

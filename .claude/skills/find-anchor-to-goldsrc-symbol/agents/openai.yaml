@@ -1,0 +1,4 @@
+interface:
+  display_name: "GoldSrc Symbol Anchor Locator"
+  short_description: "Locate GoldSrc functions and globals from stable anchor evidence"
+  default_prompt: "Use /find-anchor-to-goldsrc-symbol to locate a GoldSrc function, global variable, or instruction-operand locator from stable strings and source evidence."
