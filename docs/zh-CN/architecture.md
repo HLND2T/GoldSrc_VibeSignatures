@@ -1,3 +1,5 @@
+[返回 README](../../README_CN.md) | [English](../en/architecture.md)
+
 # 架构
 
 ## 数据流
@@ -49,12 +51,12 @@ Agent runner 会校验各 CLI 的 model 参数、保持 Claude/OpenCode retry se
 func/vfunc、GV、patch、structmember、primary/ordinal vtable、继承 slot、xref filter 和受验证的 LLM fallback。
 
 二进制在分析前必须是 32 位 I386，并以 path、platform metadata 和 hashes 核对 opened database identity。按
-CS2 runtime contract，分析期间不再额外增加每个 skill 后的 binary-mutation guard。对每个仍有待执行工作的
-module/platform binary，Analyzer 拥有一次完整 `idalib-mcp` 生命周期：检查 IDB lock 与端口、启动 supervisor、等待
-MCP contract ready、绑定唯一活动数据库、核对 survey identity、允许一次健康恢复，并定向关闭 owned worker、停止
-supervisor、等待端口释放。Preprocessor 每次调用都绑定该 binary/database，并获得严格解析的 image base；
-Preprocessor 与 Agent 产物经过同一层 YAML、symbol schema 与当前 IDB 地址校验。`-ida_args` 已支持，`-rename`
-仍延期。
+CS2 runtime contract，分析期间不再额外增加每个 skill 后的 binary-mutation guard。待执行工作会在
+`127.0.0.1:13337` 上为每个 binary 启动一次 owned `idalib-mcp` 生命周期；对每个 module/platform binary，
+Analyzer 检查 IDB lock 与端口、启动 supervisor、等待 MCP contract ready、绑定唯一活动数据库、核对 survey
+identity、允许一次健康恢复，并定向关闭 owned worker、停止 supervisor、等待端口释放。Preprocessor 每次调用都
+绑定该 binary/database，并获得严格解析的 image base；Preprocessor 与 Agent 产物经过同一层 YAML、symbol schema
+与当前 IDB 地址校验。`-ida_args` 已支持，`-rename` 仍延期。
 
 `-skip_pp` 跳过单一 Preprocessor，直接运行 Agent Skill。`-skip_error` 允许运行期的后续
 module/platform/skill 继续，但 config 与 DAG contract 错误仍立即失败；任何已记录运行失败最终都会返回非零。

@@ -1,0 +1,67 @@
+[返回 README](../../README_CN.md) | [English](../en/snapshot-and-gamedata.md)
+
+# Snapshot、gamedata 与发布
+
+单个 symbol 的 YAML 保持被 `bin/<GAMEVER>/<module>/` 忽略。Git-tracked 的 canonical 分析 lockfile 是
+`gamesymbols/<GAMEVER>.yaml`，其文件集合由 `configs/<GAMEVER>.yaml` 声明的必需与可选 YAML 输出推导。
+
+## 不可变 candidate 事务
+
+顶层分析事务成功后，立即构建一个 candidate。两个下游消费者都读取同一个不可变 candidate；只有 gamedata guard
+通过后，发布才会复制其原始字节：
+
+```bash
+CANDIDATE_DIR="$(mktemp -d)"
+CANDIDATE_SNAPSHOT="$CANDIDATE_DIR/candidate.yaml"
+CANDIDATE_SESSION="$CANDIDATE_DIR/session.json"
+GAMEDATA_ROOT="$CANDIDATE_DIR/gamedata-candidate"
+GAMEDATA_SESSION="$CANDIDATE_DIR/gamedata.session.json"
+
+uv run python gamesymbol_candidate.py build -gamever cstrike-10210 -bindir bin -output "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION"
+uv run python gamedata_candidate.py build -gamever cstrike-10210 -build-id local-1 -snapshot "$CANDIDATE_SNAPSHOT" -configyaml configs/cstrike-10210.yaml -candidate-root "$GAMEDATA_ROOT" -session "$GAMEDATA_SESSION"
+uv run python gamedata_candidate.py guard -session "$GAMEDATA_SESSION"
+uv run python gamesymbol_candidate.py mark -candidate "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION" -step gamedata -gamedata-session "$GAMEDATA_SESSION"
+uv run python gamesymbol_candidate.py publish -candidate "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION" -destination gamesymbols/cstrike-10210.yaml
+uv run python gamedata_candidate.py publish -session "$GAMEDATA_SESSION" -outputdir gamedata/cstrike-10210
+```
+
+注意：
+
+- `gamesymbol_candidate.py mark -step gamedata` 需要 `-gamedata-session`，其 gamever 与 candidate SHA-256 必须
+  与该 symbol candidate 匹配。
+- `gamedata_candidate.py publish -outputdir` 必须以精确 tag 结尾。发布是原子替换。
+- candidate manifest 固定候选 hash 与文件系统 identity。generator 根目录不存在或为空会产生带 hash 的空
+  inventory，只要 `guard` 成功仍可满足 gamedata 步骤。
+
+## 直接生成 gamedata
+
+不使用完整 candidate 事务时，可直接把 canonical symbol snapshot 转换成版本化 gamedata：
+
+```bash
+uv run python update_gamedata.py -gamever cstrike-10210 -snapshot gamesymbols/cstrike-10210.yaml -modulesdir gamedata-generators -outputdir gamedata/cstrike-10210
+```
+
+## 恢复与验证 snapshot
+
+恢复干净的分析基线，或在不动 tracked snapshot 的前提下验证当前工作区：
+
+```bash
+uv run python gamesymbol_snapshot.py restore -gamever cstrike-10210
+uv run python gamesymbol_snapshot.py restore -gamever cstrike-10210 -replace
+uv run python gamesymbol_snapshot.py verify -gamever cstrike-10210
+uv run python gamesymbol_snapshot.py check-contract -gamever cstrike-10210
+```
+
+默认 restore 会创建缺失的 YAML，并拒绝覆盖语义不同的文件。`-replace` 只删除 `bin/<GAMEVER>/` 下的 YAML，
+保留二进制与 IDA 数据库，再重建 snapshot 内容。
+
+writer 输出 schema 5（config digest v2）与 canonical 文件载荷；reader 兼容 schema 1–5。restore / verify 拒绝
+链接、路径逃逸、未声明 YAML、缺失必需 YAML、非 canonical bytes 与 contract drift。
+
+`check-contract` 是只读信任探针：退出 `0` 表示可信，退出 `3` 上报机器可读的不可信原因，调用、配置或操作错误
+仍是硬失败。
+
+## 范围：无 C++ layout 验证
+
+与 CS2 项目不同，GoldSrc VibeSignatures 不会针对源 header 运行 C++ layout 验证——没有 `run_cpp_tests.py`
+或 HL2SDK checkout。发布前唯一的 downstream guard 是 gamedata 步骤。

@@ -1,3 +1,5 @@
+[Back to README](../../README.md) | [中文](../zh-CN/generator-contract.md)
+
 # Gamedata generator contract
 
 Each enabled generator lives at `gamedata-generators/<directory>/gamedata.py` and declares:

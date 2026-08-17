@@ -1,4 +1,6 @@
-# Gamedata generator contract
+[返回 README](../../README_CN.md) | [English](../en/generator-contract.md)
+
+# Gamedata generator 合约
 
 每个启用的 generator 位于 `gamedata-generators/<directory>/gamedata.py`，并声明：
 

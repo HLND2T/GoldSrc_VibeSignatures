@@ -1,3 +1,5 @@
+[Back to README](../../README.md) | [中文](../zh-CN/architecture.md)
+
 # Architecture
 
 ## Data flow
@@ -52,7 +54,7 @@ global, patch, struct-member, primary/ordinal vtable, inherited slot, xref filte
 
 The binary is validated as 32-bit I386 before work, and the opened database identity is checked against its path,
 platform metadata, and hashes. In line with the CS2 runtime contract, analysis does not add a repeated binary-mutation
-guard after each skill. For each module/platform binary with pending work, the analyzer owns one `idalib-mcp` lifecycle: it checks
+guard after each skill. Pending work starts one owned `idalib-mcp` lifecycle per binary on `127.0.0.1:13337`; for each module/platform binary, the analyzer checks
 the IDB lock and port, starts the supervisor, waits for the MCP contract, binds the exact active database, validates
 survey identity, allows one health recovery, and performs targeted owned-worker shutdown plus port release. Every
 Preprocessor call binds that binary/database and receives a strictly parsed image base. Preprocessor and Agent outputs
