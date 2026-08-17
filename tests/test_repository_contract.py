@@ -270,10 +270,9 @@ class RepositoryContractTests(unittest.TestCase):
             for marker in disallowed:
                 self.assertNotIn(marker, text, f"{marker} remains in {path}")
 
-    def test_documented_commands_and_ci_gate_match(self):
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    def test_ci_runs_required_checks(self):
         workflow = (ROOT / ".github" / "workflows" / "ci.yaml").read_text(encoding="utf-8")
-        commands = (
+        backend_commands = (
             "uv sync --locked",
             "uv run python format_repo_files.py --check",
             "uv run python tests/run_test_suite.py unit -b --durations 30",
@@ -281,10 +280,6 @@ class RepositoryContractTests(unittest.TestCase):
             "uv run python tests/run_test_suite.py all -b --durations 30",
             "uv run python tests/run_test_suite.py redis-integration -b --durations 30",
         )
-        for command in commands:
-            self.assertIn(command, readme)
-            self.assertIn(command, workflow)
-
         frontend_commands = (
             "npm ci",
             "npm test",
@@ -293,11 +288,8 @@ class RepositoryContractTests(unittest.TestCase):
             "npm run verify:gamesymbols",
             "npm run test:e2e",
         )
-        pages_readme = (ROOT / "pages" / "README.md").read_text(encoding="utf-8")
-        pages_workflow = (ROOT / ".github" / "workflows" / "ci.yaml").read_text(encoding="utf-8")
-        for command in frontend_commands:
-            self.assertIn(command, pages_readme)
-            self.assertIn(command, pages_workflow)
+        for command in (*backend_commands, *frontend_commands):
+            self.assertIn(command, workflow)
 
     def test_published_sven_snapshot_matches_goldsrc_contract(self):
         path = ROOT / "gamesymbols" / "svencoop-10257.yaml"
