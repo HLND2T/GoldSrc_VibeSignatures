@@ -16,6 +16,6 @@ This file provides guidance and important rules working with code in this reposi
 
 - Check `README.md` and `docs/`.
 
-## IDA MCP Tools Reference
+## Explore SKILLs
 
-GoldSrc analysis runs one owned `idalib-mcp` lifecycle per binary on `127.0.0.1:13337`; the MCP session surface is bound via the analyzer's Preprocessor. See `README.md` for the analyzer/IDA integration contract.
+- project-level SKILLs should be explored from `.claude/skills` even when we are using Codex.
