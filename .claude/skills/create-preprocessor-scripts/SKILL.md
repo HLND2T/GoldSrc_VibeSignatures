@@ -318,6 +318,24 @@ symbols:
 
 Do not add `type`, `kind`, or category-specific artifact identity fields to config symbols.
 
+### Delivery boundaries
+
+A routine production finder addition is implementation/config work, not a new repository-wide
+test or documentation contract.
+
+- Do not create or update repository-contract tests that assert a concrete finder name, script
+  filename/layout, anchor string, target list, grouping choice, game-version registration list, or
+  exact config input/output inventory. The production configs are the source of truth, and existing
+  generic contract tests validate that registered skills are executable, their DAG is valid, and
+  their outputs map to declared symbols.
+- Do not inspect script source text from tests merely to freeze implementation details. Add or
+  update tests only when shared helper/runtime behavior changes or a reusable regression needs
+  coverage; use synthetic fixtures and assert observable behavior or generic invariants.
+- Do not update files under `docs/` for a routine finder, symbol, reference, or config registration.
+  Current production coverage belongs in `configs/<GAMEVER>.yaml`; implementation knowledge belongs
+  in the finder, annotated references, or project memory. Edit `docs/` only when the user explicitly
+  requests documentation or the shared public workflow/contract itself changes.
+
 ### 5. Generate references when needed
 
 Patterns C, D, and E require each predecessor reference at:
@@ -458,8 +476,9 @@ if (git show-ref --verify --quiet refs/heads/dev) {
 }
 ```
 
-Review `git status --short`. Stage only task-related code/config/skill/reference/test/docs files;
-never use `git add -A` and never stage `bin/` output YAML.
+Review `git status --short`. Stage only task-related code/config/skill/reference files, plus tests or
+docs only when allowed by the delivery boundaries above. Never use `git add -A` and never stage
+`bin/` output YAML.
 
 Commit format:
 
@@ -487,6 +506,10 @@ Do not push or open a PR unless separately requested.
 - [ ] When no gamever was requested, the skill is registered in every `configs/<GAMEVER>.yaml`.
 - [ ] Every config-declared production platform succeeds with zero failed skills (`-allgamever` by
       default, or `-gamever <GAMEVER>` when requested).
+- [ ] No concrete finder repository-contract/source-text test was added; any test change covers
+      shared behavior through generic invariants or synthetic fixtures.
+- [ ] No `docs/` file was changed for routine production coverage unless explicitly requested or a
+      shared public workflow/contract changed.
 - [ ] Unit, repository-contract, and format checks pass.
 - [ ] Current branch is `dev`.
 - [ ] Only task-related files are staged.
