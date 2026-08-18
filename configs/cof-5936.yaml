@@ -47,6 +47,9 @@ modules:
           - DispatchDirectUserMsg.{platform}.yaml
         expected_output:
           - gClientUserMsgs.{platform}.yaml
+      - name: find-cl_parsefuncs
+        expected_output:
+          - cl_parsefuncs.{platform}.yaml
       - name: find-NLoadBlob
         platform: windows
         expected_output:
@@ -89,6 +92,8 @@ modules:
       - name: DispatchDirectUserMsg
         category: func
       - name: gClientUserMsgs
+        category: gv
+      - name: cl_parsefuncs
         category: gv
   - name: client
     module_windows: client.dll
