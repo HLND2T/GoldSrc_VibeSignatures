@@ -666,6 +666,7 @@ pointer_size = 8 if idaapi.inf_is_64bit() else 4
 UNDEFINED_FUNC_RECOVERY_BACKTRACK_LIMIT = 0x200
 UNDEFINED_FUNC_RECOVERY_MAX_SOURCE_DEPTH = 4
 PAD_BYTES = {0xCC, 0x90}
+SIGNATURE_XREF_PROBE_MAX_CANDIDATES = 256
 
 def _probe_function_start(code_addr):
     func = ida_funcs.get_func(int(code_addr))
@@ -944,6 +945,32 @@ def _float_matches(value, expected, kind):
     epsilon = 1e-6 if kind == 'float' else 1e-12
     return abs(value - expected) < epsilon
 
+def _function_contains_signature(start, signature):
+    func = ida_funcs.get_func(start)
+    if func is None:
+        return False
+    match_ea = ida_bytes.find_bytes(
+        signature,
+        int(func.start_ea),
+        range_end=int(func.end_ea),
+        flags=ida_bytes.BIN_SEARCH_FORWARD | ida_bytes.BIN_SEARCH_NOSHOW,
+        radix=16,
+    )
+    return match_ea != idaapi.BADADDR and match_ea < int(func.end_ea)
+
+def _intersected_candidates(sets):
+    if not sets:
+        return set()
+    result = set(sets[0])
+    for values in sets[1:]:
+        result.intersection_update(values)
+    return result
+
+def _signature_candidates(narrowed, signature, match_eas):
+    if narrowed and len(narrowed) <= SIGNATURE_XREF_PROBE_MAX_CANDIDATES:
+        return {start for start in narrowed if _function_contains_signature(start, signature)}
+    return _address_candidates(match_eas)
+
 def _function_matches_float_filters(start, required_values, excluded_values):
     required_hits = [False] * len(required_values)
     excluded_hit = False
@@ -982,6 +1009,17 @@ for value in spec.get('xref_strings') or []:
     positive_sets.append(_string_candidates(value))
 for value in spec.get('xref_gvs') or []:
     positive_sets.append(_named_candidates(value))
+signature_texts = spec.get('xref_signatures') or []
+signature_ea_sets = spec.get('xref_signature_ea_sets') or []
+for index, signature in enumerate(signature_texts):
+    match_eas = signature_ea_sets[index] if index < len(signature_ea_sets) else []
+    positive_sets.append(
+        _signature_candidates(_intersected_candidates(positive_sets), signature, match_eas)
+    )
+if spec.get('inline_alias') is not None:
+    alias_ea = int(spec['inline_alias'])
+    alias_callers = _single_call_or_jump_candidates(alias_ea)
+    positive_sets.append(alias_callers or _address_candidates([alias_ea]))
 for value in spec.get('xref_funcs') or []:
     dep_ea = _named_ea(value)
     callers = set() if dep_ea is None else _functions_referencing(dep_ea)
@@ -989,12 +1027,6 @@ for value in spec.get('xref_funcs') or []:
     if not callers and dep_start is not None and dep_start in vtable_candidates:
         callers = {dep_start}
     positive_sets.append(callers)
-for values in spec.get('xref_signature_ea_sets') or []:
-    positive_sets.append(_address_candidates(values))
-if spec.get('inline_alias') is not None:
-    alias_ea = int(spec['inline_alias'])
-    alias_callers = _single_call_or_jump_candidates(alias_ea)
-    positive_sets.append(alias_callers or _address_candidates([alias_ea]))
 if spec.get('vtable_entries'):
     positive_sets.append(vtable_candidates)
 
@@ -1237,11 +1269,17 @@ async def preprocess_func_xrefs_via_mcp(
         )
         if spec["inline_alias"] is None:
             return None
+    spec["xref_signatures"] = []
     spec["xref_signature_ea_sets"] = []
     for signature in xref_signatures or ():
-        matches = await _find_byte_matches(session, signature)
-        if matches is None or not matches:
+        try:
+            normalized_signature = normalize_signature(signature)
+        except SymbolArtifactError:
             return None
+        matches = await _find_byte_matches(session, normalized_signature)
+        if matches is None:
+            return None
+        spec["xref_signatures"].append(normalized_signature)
         spec["xref_signature_ea_sets"].append(matches)
     spec["exclude_signature_eas"] = []
     for signature in exclude_signatures or ():
@@ -1268,7 +1306,7 @@ async def preprocess_func_xrefs_via_mcp(
     positive = (
         spec["xref_strings"]
         or spec["xref_gvs"]
-        or spec["xref_signature_ea_sets"]
+        or spec["xref_signatures"]
         or spec["xref_funcs"]
         or spec["inline_alias"]
     )

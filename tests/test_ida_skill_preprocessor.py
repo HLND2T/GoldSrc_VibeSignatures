@@ -116,6 +116,10 @@ class PreprocessStatusTests(unittest.TestCase):
         self.assertIn("required_hits[index] = True", code)
         self.assertIn("return all(required_hits) and not excluded_hit", code)
         self.assertIn("if not callers and dep_start is not None and dep_start in vtable_candidates", code)
+        self.assertIn("SIGNATURE_XREF_PROBE_MAX_CANDIDATES = 256", code)
+        self.assertIn("def _function_contains_signature(start, signature):", code)
+        self.assertIn("range_end=int(func.end_ea)", code)
+        self.assertIn("def _signature_candidates(narrowed, signature, match_eas):", code)
         self.assertIn("excluded.update(_named_candidates(value))", code)
         self.assertIn("if spec.get('vtable_entries'):", code)
         self.assertIn("def _try_decode_padding_nop", code)
@@ -167,6 +171,50 @@ class PreprocessStatusTests(unittest.TestCase):
         self.assertFalse(matches(0x1000, [64.0, 0.5], []))
         self.assertTrue(matches(0x2000, [64.0, 0.5], []))
         self.assertFalse(matches(0x3000, [64.0, 0.5], [128.0]))
+
+    def test_func_xref_signature_probes_narrowed_candidates_else_uses_global_matches(self):
+        code = _build_func_xref_py_eval({"func_name": "Target"}, 0x400000)
+        tree = ast.parse(code)
+        wanted = {
+            "_address_candidates",
+            "_function_contains_signature",
+            "_intersected_candidates",
+            "_signature_candidates",
+        }
+        function_nodes = [
+            node
+            for node in tree.body
+            if isinstance(node, ast.FunctionDef) and node.name in wanted
+        ]
+        contained = {0x1000: True, 0x2000: False}
+        namespace = {
+            "SIGNATURE_XREF_PROBE_MAX_CANDIDATES": 256,
+            "ida_bytes": SimpleNamespace(
+                BIN_SEARCH_FORWARD=1,
+                BIN_SEARCH_NOSHOW=2,
+                find_bytes=lambda _signature, start, range_end=None, flags=0, radix=16: (
+                    start if contained.get(start) else -1
+                ),
+            ),
+            "ida_funcs": SimpleNamespace(
+                get_func=lambda start: (
+                    SimpleNamespace(start_ea=start, end_ea=start + 0x40) if start in contained else None
+                )
+            ),
+            "idaapi": SimpleNamespace(BADADDR=-1),
+            "_function_start": lambda ea: {0x401010: 0x401000, 0x402010: 0x402000}.get(int(ea), int(ea)),
+        }
+        exec(  # noqa: S102 - executes only selected generated helper definitions.
+            compile(ast.Module(body=function_nodes, type_ignores=[]), "<func-xref-signatures>", "exec"),
+            namespace,
+        )
+        select = namespace["_signature_candidates"]
+        intersect = namespace["_intersected_candidates"]
+
+        self.assertEqual({0x1000}, select({0x1000, 0x2000}, "AA BB", [0x401010]))
+        self.assertEqual({0x401000}, select(set(), "AA BB", [0x401010]))
+        self.assertEqual({0x401000}, select(set(range(300)), "AA BB", [0x401010]))
+        self.assertEqual({0x1000}, intersect([{0x1000, 0x2000}, {0x1000, 0x3000}]))
 
     def test_gsvibe_string_min_length_config_matches_cs2_rules(self):
         cases = ((None, None), ("", None), ("0", 4), ("invalid", 4), ("7", 7))
@@ -555,11 +603,13 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
             spec_line = next(line for line in code.splitlines() if line.startswith("spec = "))
             namespace = {"json": json}
             exec(spec_line, namespace)  # noqa: S102 - validates generated IDAPython source.
+            self.assertEqual(["AA BB", "CC DD"], namespace["spec"]["xref_signatures"])
             self.assertEqual(
                 [[0x401010, 0x402010], [0x401020]],
                 namespace["spec"]["xref_signature_ea_sets"],
             )
-            self.assertIn("for values in spec.get('xref_signature_ea_sets') or []", code)
+            self.assertIn("def _signature_candidates(narrowed, signature, match_eas):", code)
+            self.assertIn("for index, signature in enumerate(signature_texts):", code)
             candidate = {
                 "func_name": "Target",
                 "func_va": "0x401000",
@@ -586,6 +636,49 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertEqual("Target", result["func_name"])
+
+    async def test_func_xref_keeps_empty_global_signature_matches_for_narrowed_probe(self):
+        captured_spec = {}
+
+        async def call_tool(name, arguments):
+            if name == "find_bytes":
+                return {"matches": [], "n": 0}
+            self.assertEqual("py_eval", name)
+            spec_line = next(line for line in arguments["code"].splitlines() if line.startswith("spec = "))
+            namespace = {"json": json}
+            exec(spec_line, namespace)  # noqa: S102 - validates generated IDAPython source.
+            captured_spec.update(namespace["spec"])
+            return {
+                "pointer_size": 4,
+                "candidates": [
+                    {
+                        "func_name": "Target",
+                        "func_va": "0x401000",
+                        "func_rva": "0x1000",
+                        "func_size": "0x40",
+                    }
+                ],
+            }
+
+        result = await preprocess_func_xrefs_via_mcp(
+            session=SimpleNamespace(call_tool=call_tool),
+            func_name="Target",
+            xref_strings=["anchor"],
+            xref_gvs=[],
+            xref_signatures=["AA BB"],
+            xref_funcs=[],
+            exclude_funcs=[],
+            exclude_strings=[],
+            exclude_gvs=[],
+            exclude_signatures=[],
+            new_binary_dir=None,
+            platform="windows",
+            image_base=0x400000,
+        )
+
+        self.assertEqual("Target", result["func_name"])
+        self.assertEqual(["AA BB"], captured_spec["xref_signatures"])
+        self.assertEqual([[]], captured_spec["xref_signature_ea_sets"])
 
     async def test_func_xref_forwards_gsvibe_string_min_length(self):
         captured_spec = {}
