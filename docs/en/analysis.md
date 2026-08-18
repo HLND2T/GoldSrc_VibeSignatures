@@ -72,4 +72,4 @@ Raw old-YAML copying is disabled because copying address-bearing artifacts can p
 
 ## Production finders
 
-Half-Life and Sven Co-op register the production finder `engine/R_RenderView`, anchored by `"R_RenderView: NULL worldmodel"` in `hw.dll` and `hw.so`. Additional finders registered across the engine modules include `find-SV_SendServerinfo`, `find-build_number`, `find-Sys_Error`, `find-ClientDLL_Init`, `find-DispatchDirectUserMsg`, `find-Cvar_DirectSet`, and the `find-LoadBlobFile*` / `find-FreeBlob` family. See [Creating symbol-analysis skills](creating-skills.md).
+Half-Life and Sven Co-op register the production finder `engine/R_RenderView`, anchored by `"R_RenderView: NULL worldmodel"` in `hw.dll` and `hw.so`. Additional finders registered across the engine modules include `find-SV_SendServerinfo`, `find-build_number`, `find-Sys_Error`, `find-ClientDLL_Init`, `find-DispatchDirectUserMsg`, `find-Cvar_DirectSet`, and `find-FreeBlob`. The Windows-only `find-NLoadBlob*` chain is not registered for Sven Co-op. See [Creating symbol-analysis skills](creating-skills.md).

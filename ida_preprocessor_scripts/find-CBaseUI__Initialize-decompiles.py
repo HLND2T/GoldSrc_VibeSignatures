@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""Locate the client module-handle reference via ClientDLL_HudInit decompile."""
+"""Locate the g_pClientFactory global that shares one LLM decompile reference."""
 
 from ida_analyze_util import preprocess_common_skill
 
 
-TARGET_GV_NAMES = ["g_phClientModule"]
+TARGET_GV_NAMES = ["g_pClientFactory"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": "g_phClientModule",
+        "symbol_name": "g_pClientFactory",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": [
-            "references/{gamever}/engine/ClientDLL_HudInit.{platform}.yaml",
+            "references/{gamever}/engine/CBaseUI__Initialize.{platform}.yaml",
         ],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {
-            "ClientDLL_HudInit.{platform}.yaml": "required",
+            "CBaseUI__Initialize.{platform}.yaml": "required",
         },
     },
 ]
@@ -28,7 +28,7 @@ GV_FIELDS = [
     "gv_inst_length",
     "gv_inst_disp",
 ]
-GENERATE_YAML_DESIRED_FIELDS = [("g_phClientModule", GV_FIELDS)]
+GENERATE_YAML_DESIRED_FIELDS = [("g_pClientFactory", GV_FIELDS)]
 
 
 async def preprocess_skill(

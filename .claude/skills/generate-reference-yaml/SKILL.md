@@ -64,10 +64,9 @@ or minimal types necessary for readable pseudocode. Preserve source/binary diffe
 comments rather than inventing a source-shaped result.
 
 The canonical artifact name remains the `func_name` passed to this CLI and can differ from the IDB
-source name. For example, `LoadBlobFile_Caller.windows.yaml` may identify a caller artifact while
-the reference disassembly and procedure describe `NLoadBlobFile`. Do not rename the IDB function to
-the synthetic artifact name merely to generate a reference. YAML call/global annotations supplement
-the source-like IDB reconstruction; they do not replace it.
+source name. Do not rename the IDB function to a synthetic artifact name merely to generate a
+reference. YAML call/global annotations supplement the source-like IDB reconstruction; they do not
+replace it.
 
 ### 3. Custom output name
 

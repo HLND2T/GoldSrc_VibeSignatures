@@ -1,0 +1,7 @@
+interface:
+  display_name: "Rename GoldSrc Preprocessor Scripts"
+  short_description: "Rename GoldSrc x86 finder symbols safely"
+default_prompt: "Use $rename-preprocessor-scripts to rename a GoldSrc preprocessor symbol across scripts, configs, references, and outputs."
+
+policy:
+  allow_implicit_invocation: false

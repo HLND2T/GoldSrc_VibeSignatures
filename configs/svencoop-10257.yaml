@@ -34,16 +34,12 @@ modules:
         platform: windows
         expected_input:
           - ClientDLL_Init.{platform}.yaml
+          - ClientDLL_HudInit.{platform}.yaml
         expected_output:
           - g_ppEngfuncs.{platform}.yaml
           - g_ppExportFuncs.{platform}.yaml
-      - name: find-g_phClientModule
-        platform: windows
-        expected_input:
-          - ClientDLL_HudInit.{platform}.yaml
-        expected_output:
           - g_phClientModule.{platform}.yaml
-      - name: find-g_pClientFactory
+      - name: find-CBaseUI__Initialize-decompiles
         platform: windows
         expected_input:
           - CBaseUI__Initialize.{platform}.yaml

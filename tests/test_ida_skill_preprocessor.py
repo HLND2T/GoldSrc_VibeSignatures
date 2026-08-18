@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import ast
 import io
 import json
+import os
 import tempfile
 import unittest
 from contextlib import asynccontextmanager, redirect_stderr
@@ -93,6 +95,130 @@ class PreprocessStatusTests(unittest.TestCase):
         namespace = {"json": json}
         exec(spec_line, namespace)  # noqa: S102 - validates generated IDAPython source.
         self.assertEqual(spec, namespace["spec"])
+
+    def test_func_xref_py_eval_preserves_cs2_semantic_contracts(self):
+        code = _build_func_xref_py_eval(
+            {
+                "func_name": "Target",
+                "vtable_entries": [0x401000],
+                "allow_across_function_boundary": True,
+            },
+            0x400000,
+        )
+
+        ast.parse(code)
+        self.assertIn("UNDEFINED_FUNC_RECOVERY_BACKTRACK_LIMIT", code)
+        self.assertIn("return {start for start, count in counts.items() if count == 1}", code)
+        self.assertIn("Strings(default_setup=False)", code)
+        self.assertIn("strings.setup(strtypes=[ida_nalt.STRTYPE_C]", code)
+        self.assertIn("name == '.rdata' or name.startswith('.rodata')", code)
+        self.assertIn("required_hits = [False] * len(required_values)", code)
+        self.assertIn("required_hits[index] = True", code)
+        self.assertIn("return all(required_hits) and not excluded_hit", code)
+        self.assertIn("if not callers and dep_start is not None and dep_start in vtable_candidates", code)
+        self.assertIn("SIGNATURE_XREF_PROBE_MAX_CANDIDATES = 256", code)
+        self.assertIn("def _function_contains_signature(start, signature):", code)
+        self.assertIn("range_end=int(func.end_ea)", code)
+        self.assertIn("def _signature_candidates(narrowed, signature, match_eas):", code)
+        self.assertIn("excluded.update(_named_candidates(value))", code)
+        self.assertIn("if spec.get('vtable_entries'):", code)
+        self.assertIn("def _try_decode_padding_nop", code)
+        self.assertIn("not ida_bytes.is_head(flags)", code)
+        self.assertNotIn("if len(tokens) >= max_tokens:\n                break", code)
+        self.assertIn("ida_ua.o_displ", ida_analyze_util._INSPECT_FUNCTION_PY_EVAL)
+        self.assertIn("def _try_decode_padding_nop", ida_analyze_util._INSPECT_FUNCTION_PY_EVAL)
+
+    def test_func_xref_float_filters_require_every_xref_and_exclude_any_hit(self):
+        code = _build_func_xref_py_eval({"func_name": "Target"}, 0x400000)
+        tree = ast.parse(code)
+        function_nodes = [
+            node
+            for node in tree.body
+            if isinstance(node, ast.FunctionDef) and node.name in {"_float_matches", "_function_matches_float_filters"}
+        ]
+        scalar_values = {
+            0x5000: 64.0,
+            0x5004: 0.5,
+            0x5008: 128.0,
+        }
+        function_items = {
+            0x1000: [0x4000],
+            0x2000: [0x4000, 0x4004],
+            0x3000: [0x4000, 0x4004, 0x4008],
+        }
+        namespace = {
+            "MEMORY_OPERAND_TYPES": {1},
+            "ida_bytes": SimpleNamespace(
+                get_bytes=lambda target_ea, width: __import__("struct").pack("<f", scalar_values[target_ea])
+            ),
+            "idautils": SimpleNamespace(FuncItems=lambda start: function_items[start]),
+            "idc": SimpleNamespace(
+                get_operand_type=lambda _ea, operand_index: 1 if operand_index == 0 else 0,
+                get_operand_value=lambda ea, _operand_index: ea + 0x1000,
+            ),
+            "math": __import__("math"),
+            "struct": __import__("struct"),
+            "_has_xmm_operand": lambda _ea: True,
+            "_is_readonly_float_segment": lambda _ea: True,
+            "_scalar_float_kind": lambda _ea: "float",
+        }
+        exec(  # noqa: S102 - executes only selected generated helper definitions.
+            compile(ast.Module(body=function_nodes, type_ignores=[]), "<func-xref-floats>", "exec"),
+            namespace,
+        )
+        matches = namespace["_function_matches_float_filters"]
+
+        self.assertFalse(matches(0x1000, [64.0, 0.5], []))
+        self.assertTrue(matches(0x2000, [64.0, 0.5], []))
+        self.assertFalse(matches(0x3000, [64.0, 0.5], [128.0]))
+
+    def test_func_xref_signature_probes_narrowed_candidates_else_uses_global_matches(self):
+        code = _build_func_xref_py_eval({"func_name": "Target"}, 0x400000)
+        tree = ast.parse(code)
+        wanted = {
+            "_address_candidates",
+            "_function_contains_signature",
+            "_intersected_candidates",
+            "_signature_candidates",
+        }
+        function_nodes = [node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name in wanted]
+        contained = {0x1000: True, 0x2000: False}
+        namespace = {
+            "SIGNATURE_XREF_PROBE_MAX_CANDIDATES": 256,
+            "ida_bytes": SimpleNamespace(
+                BIN_SEARCH_FORWARD=1,
+                BIN_SEARCH_NOSHOW=2,
+                find_bytes=lambda _signature, start, range_end=None, flags=0, radix=16: (
+                    start if contained.get(start) else -1
+                ),
+            ),
+            "ida_funcs": SimpleNamespace(
+                get_func=lambda start: (
+                    SimpleNamespace(start_ea=start, end_ea=start + 0x40) if start in contained else None
+                )
+            ),
+            "idaapi": SimpleNamespace(BADADDR=-1),
+            "_function_start": lambda ea: {0x401010: 0x401000, 0x402010: 0x402000}.get(int(ea), int(ea)),
+        }
+        exec(  # noqa: S102 - executes only selected generated helper definitions.
+            compile(ast.Module(body=function_nodes, type_ignores=[]), "<func-xref-signatures>", "exec"),
+            namespace,
+        )
+        select = namespace["_signature_candidates"]
+        intersect = namespace["_intersected_candidates"]
+
+        self.assertEqual({0x1000}, select({0x1000, 0x2000}, "AA BB", [0x401010]))
+        self.assertEqual({0x401000}, select(set(), "AA BB", [0x401010]))
+        self.assertEqual({0x401000}, select(set(range(300)), "AA BB", [0x401010]))
+        self.assertEqual({0x1000}, intersect([{0x1000, 0x2000}, {0x1000, 0x3000}]))
+
+    def test_gsvibe_string_min_length_config_matches_cs2_rules(self):
+        cases = ((None, None), ("", None), ("0", 4), ("invalid", 4), ("7", 7))
+        for raw_value, expected in cases:
+            with self.subTest(raw_value=raw_value), patch.dict(os.environ, {}, clear=True):
+                if raw_value is not None:
+                    os.environ["GSVIBE_STRING_MIN_LENGTH"] = raw_value
+                self.assertEqual(expected, ida_analyze_util._resolve_ida_string_min_length_config())
 
 
 class PreprocessorLoaderTests(unittest.IsolatedAsyncioTestCase):
@@ -456,6 +582,241 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual("Target", result["func_name"])
             self.assertEqual(["find_bytes", "find_bytes", "py_eval", "find_bytes"], [name for name, _ in calls])
 
+    async def test_func_xref_intersects_each_signature_candidate_set(self):
+        signatures = {
+            "AA BB": ["0x401010", "0x402010"],
+            "CC DD": ["0x401020"],
+            "55 8B EC 83 EC ??": ["0x401000"],
+        }
+
+        async def call_tool(name, arguments):
+            if name == "find_bytes":
+                pattern = arguments["patterns"][0]
+                matches = signatures[pattern]
+                return {"matches": matches, "n": len(matches)}
+            self.assertEqual("py_eval", name)
+            code = arguments["code"]
+            spec_line = next(line for line in code.splitlines() if line.startswith("spec = "))
+            namespace = {"json": json}
+            exec(spec_line, namespace)  # noqa: S102 - validates generated IDAPython source.
+            self.assertEqual(["AA BB", "CC DD"], namespace["spec"]["xref_signatures"])
+            self.assertEqual(
+                [[0x401010, 0x402010], [0x401020]],
+                namespace["spec"]["xref_signature_ea_sets"],
+            )
+            self.assertIn("def _signature_candidates(narrowed, signature, match_eas):", code)
+            self.assertIn("for index, signature in enumerate(signature_texts):", code)
+            candidate = {
+                "func_name": "Target",
+                "func_va": "0x401000",
+                "func_rva": "0x1000",
+                "func_size": "0x40",
+                "func_sig": "55 8B EC 83 EC ??",
+            }
+            return {"pointer_size": 4, "candidates": [candidate]}
+
+        result = await preprocess_func_xrefs_via_mcp(
+            session=SimpleNamespace(call_tool=call_tool),
+            func_name="Target",
+            xref_strings=[],
+            xref_gvs=[],
+            xref_signatures=["AA BB", "CC DD"],
+            xref_funcs=[],
+            exclude_funcs=[],
+            exclude_strings=[],
+            exclude_gvs=[],
+            exclude_signatures=[],
+            new_binary_dir=None,
+            platform="windows",
+            image_base=0x400000,
+        )
+
+        self.assertEqual("Target", result["func_name"])
+
+    async def test_func_xref_keeps_empty_global_signature_matches_for_narrowed_probe(self):
+        captured_spec = {}
+
+        async def call_tool(name, arguments):
+            if name == "find_bytes":
+                return {"matches": [], "n": 0}
+            self.assertEqual("py_eval", name)
+            spec_line = next(line for line in arguments["code"].splitlines() if line.startswith("spec = "))
+            namespace = {"json": json}
+            exec(spec_line, namespace)  # noqa: S102 - validates generated IDAPython source.
+            captured_spec.update(namespace["spec"])
+            return {
+                "pointer_size": 4,
+                "candidates": [
+                    {
+                        "func_name": "Target",
+                        "func_va": "0x401000",
+                        "func_rva": "0x1000",
+                        "func_size": "0x40",
+                    }
+                ],
+            }
+
+        result = await preprocess_func_xrefs_via_mcp(
+            session=SimpleNamespace(call_tool=call_tool),
+            func_name="Target",
+            xref_strings=["anchor"],
+            xref_gvs=[],
+            xref_signatures=["AA BB"],
+            xref_funcs=[],
+            exclude_funcs=[],
+            exclude_strings=[],
+            exclude_gvs=[],
+            exclude_signatures=[],
+            new_binary_dir=None,
+            platform="windows",
+            image_base=0x400000,
+        )
+
+        self.assertEqual("Target", result["func_name"])
+        self.assertEqual(["AA BB"], captured_spec["xref_signatures"])
+        self.assertEqual([[]], captured_spec["xref_signature_ea_sets"])
+
+    async def test_func_xref_forwards_gsvibe_string_min_length(self):
+        captured_spec = {}
+
+        async def call_tool(name, arguments):
+            self.assertEqual("py_eval", name)
+            spec_line = next(line for line in arguments["code"].splitlines() if line.startswith("spec = "))
+            namespace = {"json": json}
+            exec(spec_line, namespace)  # noqa: S102 - validates generated IDAPython source.
+            captured_spec.update(namespace["spec"])
+            return {
+                "pointer_size": 4,
+                "candidates": [
+                    {
+                        "func_name": "Target",
+                        "func_va": "0x401000",
+                        "func_rva": "0x1000",
+                        "func_size": "0x40",
+                    }
+                ],
+            }
+
+        with patch.dict(os.environ, {"GSVIBE_STRING_MIN_LENGTH": " 7 "}):
+            result = await preprocess_func_xrefs_via_mcp(
+                session=SimpleNamespace(call_tool=call_tool),
+                func_name="Target",
+                xref_strings=["anchor"],
+                xref_gvs=[],
+                xref_signatures=[],
+                xref_funcs=[],
+                exclude_funcs=[],
+                exclude_strings=[],
+                exclude_gvs=[],
+                exclude_signatures=[],
+                new_binary_dir=None,
+                platform="windows",
+                image_base=0x400000,
+            )
+
+        self.assertEqual(7, captured_spec["string_min_length"])
+        self.assertEqual("Target", result["func_name"])
+
+    async def test_func_xref_rejects_explicit_function_addresses_but_allows_gv_literals(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            base_kwargs = {
+                "session": None,
+                "func_name": "Target",
+                "xref_strings": ["anchor"],
+                "xref_gvs": [],
+                "xref_signatures": [],
+                "xref_funcs": [],
+                "exclude_funcs": [],
+                "exclude_strings": [],
+                "exclude_gvs": [],
+                "exclude_signatures": [],
+                "new_binary_dir": temporary,
+                "platform": "windows",
+                "image_base": 0x400000,
+            }
+            cases = (
+                {"xref_strings": [], "xref_funcs": ["0x401000"]},
+                {"exclude_funcs": ["0x401000"]},
+                {"exclude_callees": ["0x401000"]},
+                {"xref_strings": [], "inline_alias": "0x401000"},
+            )
+            for overrides in cases:
+                with self.subTest(overrides=overrides):
+                    session = SimpleNamespace(call_tool=AsyncMock())
+                    result = await preprocess_func_xrefs_via_mcp(**{**base_kwargs, **overrides, "session": session})
+                    self.assertIsNone(result)
+                    session.call_tool.assert_not_awaited()
+
+            async def call_tool(name, arguments):
+                self.assertEqual("py_eval", name)
+                self.assertIn("3735928559", arguments["code"])
+                return {
+                    "pointer_size": 4,
+                    "candidates": [
+                        {
+                            "func_name": "Target",
+                            "func_va": "0x401000",
+                            "func_rva": "0x1000",
+                            "func_size": "0x40",
+                        }
+                    ],
+                }
+
+            result = await preprocess_func_xrefs_via_mcp(
+                **{
+                    **base_kwargs,
+                    "session": SimpleNamespace(call_tool=call_tool),
+                    "xref_strings": [],
+                    "xref_gvs": ["0xDEADBEEF"],
+                }
+            )
+
+        self.assertEqual("Target", result["func_name"])
+
+    async def test_func_xref_nonunique_signature_keeps_basic_function_metadata(self):
+        async def call_tool(name, _arguments):
+            if name == "py_eval":
+                return {
+                    "pointer_size": 4,
+                    "candidates": [
+                        {
+                            "func_name": "Target",
+                            "func_va": "0x401000",
+                            "func_rva": "0x1000",
+                            "func_size": "0x40",
+                            "func_sig": "55 8B EC 83 EC ??",
+                        }
+                    ],
+                }
+            return {"matches": ["0x401000", "0x402000"], "n": 2}
+
+        result = await preprocess_func_xrefs_via_mcp(
+            session=SimpleNamespace(call_tool=call_tool),
+            func_name="Target",
+            xref_strings=["anchor"],
+            xref_gvs=[],
+            xref_signatures=[],
+            xref_funcs=[],
+            exclude_funcs=[],
+            exclude_strings=[],
+            exclude_gvs=[],
+            exclude_signatures=[],
+            new_binary_dir=None,
+            platform="windows",
+            image_base=0x400000,
+        )
+
+        self.assertEqual(
+            {
+                "func_name": "Target",
+                "func_va": "0x401000",
+                "func_rva": "0x1000",
+                "func_size": "0x40",
+                "_pointer_size": 4,
+            },
+            result,
+        )
+
     async def test_pattern_d_llm_fallback_uses_dependency_contract_and_verified_call(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -814,6 +1175,142 @@ found_struct_offset: []
             self.assertTrue(result)
             call_llm.assert_awaited_once()
             self.assertEqual(["LlmTarget"], call_llm.await_args.kwargs["symbol_names"])
+
+    async def test_function_fast_path_waits_for_predecessor_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            dependency_output = root / "Dependency.windows.yaml"
+            target_output = root / "Target.windows.yaml"
+            fast_path_calls = []
+
+            async def fast_path(*_args, func_name=None, **_kwargs):
+                fast_path_calls.append(func_name)
+                if func_name == "Dependency":
+                    return {
+                        "func_name": "Dependency",
+                        "func_va": "0x401000",
+                        "func_rva": "0x1000",
+                        "func_size": "0x20",
+                        "func_sig": "55 8B EC 90",
+                    }
+                self.assertTrue(dependency_output.is_file())
+                return None
+
+            async def xref_path(**kwargs):
+                self.assertEqual("Target", kwargs["func_name"])
+                self.assertTrue(dependency_output.is_file())
+                return {
+                    "func_name": "Target",
+                    "func_va": "0x402000",
+                    "func_rva": "0x2000",
+                    "func_size": "0x20",
+                    "func_sig": "55 8B EC 91",
+                }
+
+            with (
+                patch("ida_analyze_util.preprocess_func_sig_via_mcp", new=fast_path),
+                patch(
+                    "ida_analyze_util.preprocess_func_xrefs_via_mcp",
+                    new=AsyncMock(side_effect=xref_path),
+                ) as xref_fast_path,
+            ):
+                result = await preprocess_common_skill(
+                    session=SimpleNamespace(call_tool=AsyncMock()),
+                    expected_outputs=[str(dependency_output), str(target_output)],
+                    new_binary_dir=root,
+                    platform="windows",
+                    image_base=0x400000,
+                    func_names=["Dependency", "Target"],
+                    func_xrefs=[{"func_name": "Target", "xref_funcs": ["Dependency"]}],
+                    generate_yaml_desired_fields=[
+                        (name, ["func_name", "func_sig", "func_va", "func_rva", "func_size"])
+                        for name in ("Dependency", "Target")
+                    ],
+                )
+
+            self.assertTrue(result)
+            self.assertEqual(["Dependency", "Target"], fast_path_calls)
+            xref_fast_path.assert_awaited_once()
+            self.assertEqual("Dependency", yaml.safe_load(dependency_output.read_text(encoding="utf-8"))["func_name"])
+            self.assertEqual("Target", yaml.safe_load(target_output.read_text(encoding="utf-8"))["func_name"])
+
+    async def test_vtable_output_is_emitted_before_related_function_fast_path(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            vtable_output = root / "TargetClass_vtable.windows.yaml"
+            function_output = root / "VirtualTarget.windows.yaml"
+            call_order = []
+            vtable_candidate = {
+                "vtable_class": "TargetClass",
+                "vtable_symbol": "??_7TargetClass@@6B@",
+                "vtable_va": "0x410000",
+                "vtable_rva": "0x10000",
+                "vtable_size": "0x4",
+                "vtable_numvfunc": 1,
+                "vtable_entries": {0: "0x402000"},
+            }
+
+            async def vtable_path(*_args, **_kwargs):
+                call_order.append("vtable")
+                return vtable_candidate
+
+            async def function_path(*_args, **_kwargs):
+                call_order.append("function")
+                self.assertTrue(vtable_output.is_file())
+                return {
+                    "func_name": "VirtualTarget",
+                    "func_va": "0x402000",
+                    "func_rva": "0x2000",
+                    "func_size": "0x20",
+                    "vtable_name": "TargetClass",
+                    "vfunc_offset": "0x0",
+                    "vfunc_index": 0,
+                }
+
+            with (
+                patch("ida_analyze_util.preprocess_vtable_via_mcp", new=vtable_path),
+                patch("ida_analyze_util.preprocess_func_sig_via_mcp", new=function_path),
+            ):
+                result = await preprocess_common_skill(
+                    session=SimpleNamespace(call_tool=AsyncMock()),
+                    expected_outputs=[str(vtable_output), str(function_output)],
+                    new_binary_dir=root,
+                    platform="windows",
+                    image_base=0x400000,
+                    func_names=["VirtualTarget"],
+                    vtable_class_names=["TargetClass"],
+                    func_vtable_relations=[("VirtualTarget", "TargetClass")],
+                    generate_yaml_desired_fields=[
+                        (
+                            "TargetClass",
+                            [
+                                "vtable_class",
+                                "vtable_symbol",
+                                "vtable_va",
+                                "vtable_rva",
+                                "vtable_size",
+                                "vtable_numvfunc",
+                                "vtable_entries",
+                            ],
+                        ),
+                        (
+                            "VirtualTarget",
+                            [
+                                "func_name",
+                                "func_va",
+                                "func_rva",
+                                "func_size",
+                                "vtable_name",
+                                "vfunc_offset",
+                                "vfunc_index",
+                            ],
+                        ),
+                    ],
+                )
+
+            self.assertTrue(result)
+            self.assertEqual(["vtable", "function"], call_order)
+            self.assertEqual("TargetClass", yaml.safe_load(vtable_output.read_text(encoding="utf-8"))["vtable_class"])
 
     async def test_llm_batch_includes_unresolved_global_variable(self):
         with tempfile.TemporaryDirectory() as temporary:

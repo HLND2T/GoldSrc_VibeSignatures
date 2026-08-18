@@ -1,23 +1,40 @@
 #!/usr/bin/env python3
-"""Locate ClientDLL_Init globals that share one LLM decompile reference."""
+"""Locate client-engine globals that share one LLM decompile reference."""
 
 from ida_analyze_util import preprocess_common_skill
 
 
-TARGET_GV_NAMES = ["g_ppEngfuncs", "g_ppExportFuncs"]
+TARGET_GV_NAMES = ["g_ppEngfuncs", "g_ppExportFuncs", "g_phClientModule"]
+LLM_REFERENCE_GROUPS = [
+    {
+        "symbol_names": ["g_ppEngfuncs", "g_ppExportFuncs"],
+        "reference_yaml_paths": [
+            "references/{gamever}/engine/ClientDLL_Init.{platform}.yaml",
+        ],
+        "dependency_policy": {
+            "ClientDLL_Init.{platform}.yaml": "required",
+        },
+    },
+    {
+        "symbol_names": ["g_phClientModule"],
+        "reference_yaml_paths": [
+            "references/{gamever}/engine/ClientDLL_HudInit.{platform}.yaml",
+        ],
+        "dependency_policy": {
+            "ClientDLL_HudInit.{platform}.yaml": "required",
+        },
+    },
+]
 LLM_DECOMPILE = [
     {
         "symbol_name": symbol_name,
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [
-            "references/{gamever}/engine/ClientDLL_Init.{platform}.yaml",
-        ],
+        "reference_yaml_paths": group["reference_yaml_paths"],
         "expected_result_sections": ["found_gv"],
-        "dependency_policy": {
-            "ClientDLL_Init.{platform}.yaml": "required",
-        },
+        "dependency_policy": group["dependency_policy"],
     }
-    for symbol_name in TARGET_GV_NAMES
+    for group in LLM_REFERENCE_GROUPS
+    for symbol_name in group["symbol_names"]
 ]
 GV_FIELDS = [
     "gv_name",

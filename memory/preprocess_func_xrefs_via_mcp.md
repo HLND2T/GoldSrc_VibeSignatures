@@ -10,9 +10,10 @@ permalink: goldsrc-vibesignatures/preprocess-func-xrefs-via-mcp
 
 Deterministic function-locator path used by Pattern A finders (`find-<func>.py`) inside `preprocess_common_skill`. It builds a JSON spec, runs it through `_FUNC_XREF_PY_EVAL_TEMPLATE` against the bound IDA DB, and requires exactly one surviving candidate.
 
-- Positive sources (`xref_strings`, `xref_gvs`, `xref_signatures`, `xref_funcs`, `inline_alias`) are **intersected**; exclusions (`exclude_strings/gvs/funcs/signatures/callees`) subtract afterwards; `xref_floats` are post-intersection filters.
+- Positive sources (`xref_strings`, `xref_gvs`, `xref_signatures`, `xref_funcs`, `inline_alias`) are **intersected**; exclusions (`exclude_strings/gvs/funcs/signatures/callees`) subtract afterwards; `xref_floats` are post-intersection AND/OR filters (every `xref_floats` value must hit; any `exclude_floats` hit drops the candidate).
+- `xref_signatures` follow the CS2 probe rule: after strings/gvs, if the current intersection is non-empty and ≤ 256 functions, keep only those whose **function body** contains the signature (`ida_bytes.find_bytes` in `[start, end)`). Otherwise fall back to a global `find_bytes` match-EA set. Collection order is strings → gvs → signatures → inline_alias → xref_funcs → vtable.
 - `xref_strings` uses substring match unless prefixed `FULLMATCH:` (exact equality). A literal used inside the target function locates it directly; a literal used by a caller locates the caller (use that only as an `LLM_DECOMPILE` predecessor).
-- Exactly one function must remain (`len(candidates) == 1`), and the generated `func_sig` must resolve **uniquely** to that function's start via `_find_unique_bytes` (line ~1030). Non-unique signature → returns `None`.
+- Exactly one function must remain (`len(candidates) == 1`). A generated `func_sig` is kept only when `_find_unique_bytes` resolves uniquely to that function start; otherwise `func_sig` is dropped and basic `func_va` / `func_rva` / `func_size` metadata is still returned (CS2-aligned).
 
 ## The shared-prologue problem
 
