@@ -52,6 +52,14 @@ modules:
       - name: find-cl_parsefuncs
         expected_output:
           - cl_parsefuncs.{platform}.yaml
+      - name: find-VideoMode_Create
+        expected_output:
+          - VideoMode_Create.{platform}.yaml
+      - name: find-VideoMode_Create-decompiles
+        expected_input:
+          - VideoMode_Create.{platform}.yaml
+        expected_output:
+          - videomode.{platform}.yaml
       - name: find-Cvar_DirectSet
         expected_output:
           - Cvar_DirectSet.{platform}.yaml
@@ -107,6 +115,10 @@ modules:
       - name: gClientUserMsgs
         category: gv
       - name: cl_parsefuncs
+        category: gv
+      - name: VideoMode_Create
+        category: func
+      - name: videomode
         category: gv
       - name: Cvar_DirectSet
         category: func

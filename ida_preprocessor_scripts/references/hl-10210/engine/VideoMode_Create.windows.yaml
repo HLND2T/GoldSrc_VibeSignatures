@@ -1,0 +1,174 @@
+func_name: "VideoMode_Create"
+func_va: "0x10222ce0"
+disasm_code: |-
+  .text:10222CE0                 push    ebp
+  .text:10222CE1                 mov     ebp, esp
+  .text:10222CE3                 mov     ecx, registry
+  .text:10222CE9                 sub     esp, 18h
+  .text:10222CEC                 mov     eax, [ecx]
+  .text:10222CEE                 push    ebx
+  .text:10222CEF                 push    esi
+  .text:10222CF0                 push    0
+  .text:10222CF2                 push    offset aScreenwindowed; "ScreenWindowed"
+  .text:10222CF7                 call    dword ptr [eax+8]
+  .text:10222CFA                 test    eax, eax
+  .text:10222CFC                 push    offset aSw; "-sw"
+  .text:10222D01                 setnz   bl
+  .text:10222D04                 call    COM_CheckParm
+  .text:10222D09                 add     esp, 4
+  .text:10222D0C                 test    eax, eax
+  .text:10222D0E                 jnz     short loc_10222D69
+  .text:10222D10                 push    offset aStartwindowed; "-startwindowed"
+  .text:10222D15                 call    COM_CheckParm
+  .text:10222D1A                 add     esp, 4
+  .text:10222D1D                 test    eax, eax
+  .text:10222D1F                 jnz     short loc_10222D69
+  .text:10222D21                 push    offset aWindowed; "-windowed"
+  .text:10222D26                 call    COM_CheckParm
+  .text:10222D2B                 add     esp, 4
+  .text:10222D2E                 test    eax, eax
+  .text:10222D30                 jnz     short loc_10222D69
+  .text:10222D32                 push    offset aWindow; "-window"
+  .text:10222D37                 call    COM_CheckParm
+  .text:10222D3C                 add     esp, 4
+  .text:10222D3F                 test    eax, eax
+  .text:10222D41                 jnz     short loc_10222D69
+  .text:10222D43                 push    offset aFull; "-full"
+  .text:10222D48                 call    COM_CheckParm
+  .text:10222D4D                 add     esp, 4
+  .text:10222D50                 test    eax, eax
+  .text:10222D52                 jnz     short loc_10222D65
+  .text:10222D54                 push    offset aFullscreen; "-fullscreen"
+  .text:10222D59                 call    COM_CheckParm
+  .text:10222D5E                 add     esp, 4
+  .text:10222D61                 test    eax, eax
+  .text:10222D63                 jz      short loc_10222D6B
+  .text:10222D65                 xor     bl, bl
+  .text:10222D67                 jmp     short loc_10222D6B
+  .text:10222D69                 mov     bl, 1
+  .text:10222D6B                 mov     ecx, registry
+  .text:10222D71                 movzx   eax, bl
+  .text:10222D74                 push    eax
+  .text:10222D75                 push    offset aScreenwindowed; "ScreenWindowed"
+  .text:10222D7A                 mov     edx, [ecx]
+  .text:10222D7C                 call    dword ptr [edx+0Ch]
+  .text:10222D7F                 mov     ecx, registry
+  .text:10222D85                 mov     dword ptr unk_109A6900, 0
+  .text:10222D8F                 push    0
+  .text:10222D91                 push    offset aEngined3d; "EngineD3D"
+  .text:10222D96                 mov     eax, [ecx]
+  .text:10222D98                 call    dword ptr [eax+8]
+  .text:10222D9B                 push    offset aD3d; "-d3d"
+  .text:10222DA0                 call    COM_CheckParm
+  .text:10222DA5                 add     esp, 4
+  .text:10222DA8                 test    eax, eax
+  .text:10222DAA                 jnz     short loc_10222DB9
+  .text:10222DAC                 push    offset aGl_0; "-gl"
+  .text:10222DB1                 call    COM_CheckParm
+  .text:10222DB6                 add     esp, 4
+  .text:10222DB9                 ; Size
+  .text:10222DB9                 push    1BCh; Size
+  .text:10222DBE                 ; inlined CVideoMode_OpenGL::CVideoMode_OpenGL(bool): begin (corroborated by Linux DWARF)
+  .text:10222DBE                 call    ??2@YAPAXI@Z; inlined CVideoMode_OpenGL::CVideoMode_OpenGL(bool): begin (corroborated by Linux DWARF)
+  .text:10222DC3                 mov     esi, eax
+  .text:10222DC5                 add     esp, 4
+  .text:10222DC8                 mov     [ebp+var_4], esi
+  .text:10222DCB                 test    esi, esi
+  .text:10222DCD                 jz      loc_10222E65
+  .text:10222DD3                 ; inlined CVideoMode_Common::CVideoMode_Common(): begin (corroborated by Linux DWARF)
+  .text:10222DD3                 mov     dword ptr [esi], offset ??_7CVideoMode_Common@@6B@; inlined CVideoMode_Common::CVideoMode_Common(): begin (corroborated by Linux DWARF)
+  .text:10222DD9                 lea     eax, [ebp+mode]
+  .text:10222DDC                 mov     dword ptr [esi+19Ch], 0
+  .text:10222DE6                 mov     dword ptr [esi+1A0h], 0
+  .text:10222DF0                 mov     dword ptr [esi+1A4h], 0
+  .text:10222DFA                 mov     dword ptr [esi+1A8h], 0
+  .text:10222E04                 ; mode
+  .text:10222E04                 push    eax; mode
+  .text:10222E05                 ; displayIndex
+  .text:10222E05                 push    0; displayIndex
+  .text:10222E07                 mov     dword ptr [esi+190h], 0
+  .text:10222E11                 mov     dword ptr [esi+194h], 0
+  .text:10222E1B                 mov     byte ptr [esi+1B8h], 0
+  .text:10222E22                 mov     byte ptr [esi+198h], 0
+  .text:10222E29                 call    SDL_GetDesktopDisplayMode
+  .text:10222E2E                 mov     eax, [ebp+mode.w]
+  .text:10222E31                 add     esp, 8
+  .text:10222E34                 mov     [esi+184h], eax
+  .text:10222E3A                 mov     eax, [ebp+mode.h]
+  .text:10222E3D                 mov     [esi+188h], eax
+  .text:10222E43                 mov     dword ptr [esi+18Ch], 20h ; ' '
+  .text:10222E4D                 ; inlined CVideoMode_Common::CVideoMode_Common(): end
+  .text:10222E4D                 mov     dword ptr [esi], offset ??_7CVideoMode_OpenGL@@6B@; inlined CVideoMode_Common::CVideoMode_Common(): end
+  .text:10222E53                 mov     [esi+1B8h], bl
+  .text:10222E59                 ; inlined CVideoMode_OpenGL::CVideoMode_OpenGL(bool): end
+  .text:10222E59                 mov     videomode, esi; inlined CVideoMode_OpenGL::CVideoMode_OpenGL(bool): end; target: videomode
+  .text:10222E5F                 test    esi, esi
+  .text:10222E61                 jnz     short loc_10222E87
+  .text:10222E63                 jmp     short loc_10222E6F
+  .text:10222E65                 mov     videomode, 0
+  .text:10222E6F                 ; Line
+  .text:10222E6F                 push    93Ah; Line
+  .text:10222E74                 push    offset aCBuildslaveGol_15; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10222E79                 push    offset aVideomode; "videomode"
+  .text:10222E7E                 call    ds:_wassert
+  .text:10222E84                 add     esp, 0Ch
+  .text:10222E87                 pop     esi
+  .text:10222E88                 pop     ebx
+  .text:10222E89                 mov     esp, ebp
+  .text:10222E8B                 pop     ebp
+  .text:10222E8C                 retn
+procedure: |-
+  // Source mismatch: this shipped build retains EngineD3D/-d3d/-gl handling absent from the local official-source revision; machine code is authoritative.
+  void __cdecl VideoMode_Create()
+  {
+    bool windowed; // bl
+    CVideoMode_OpenGL *allocatedVideoMode; // eax
+    CVideoMode_OpenGL *newVideoMode; // esi
+    SDL_DisplayMode mode; // [esp+8h] [ebp-18h] BYREF
+    CVideoMode_OpenGL *constructionGuard; // [esp+1Ch] [ebp-4h]
+
+    windowed = (*((int (__thiscall **)(IRegistry *, const char *, _DWORD))registry->_vptr_IRegistry + 2))(
+                 registry,
+                 "ScreenWindowed",
+                 0) != 0;
+    if ( COM_CheckParm("-sw") || COM_CheckParm("-startwindowed") || COM_CheckParm("-windowed") || COM_CheckParm("-window") )
+    {
+      windowed = 1;
+    }
+    else if ( COM_CheckParm("-full") || COM_CheckParm("-fullscreen") )
+    {
+      windowed = 0;
+    }
+    (*((void (__thiscall **)(IRegistry *, const char *, bool))registry->_vptr_IRegistry + 3))(
+      registry,
+      "ScreenWindowed",
+      windowed);
+    unk_109A6900 = 0;
+    (*((void (__thiscall **)(IRegistry *, const char *, _DWORD))registry->_vptr_IRegistry + 2))(registry, "EngineD3D", 0);
+    if ( !COM_CheckParm("-d3d") )
+      COM_CheckParm("-gl");
+    allocatedVideoMode = (CVideoMode_OpenGL *)operator new(0x1BCu);
+    newVideoMode = allocatedVideoMode;
+    constructionGuard = allocatedVideoMode;
+    if ( !allocatedVideoMode )
+    {
+      videomode = nullptr;
+      wassert(L"videomode", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\engine\\sys_getmodes.cpp", 0x93Au);
+    }
+    allocatedVideoMode->vftable = &CVideoMode_Common::`vftable';
+    *(_DWORD *)allocatedVideoMode->m_ImageID = 0;
+    *(_DWORD *)&allocatedVideoMode->m_ImageID[4] = 0;
+    *(_DWORD *)&allocatedVideoMode->m_ImageID[8] = 0;
+    *(_DWORD *)&allocatedVideoMode->m_ImageID[12] = 0;
+    allocatedVideoMode->m_nNumModes = 0;
+    allocatedVideoMode->m_nGameMode = 0;
+    allocatedVideoMode->m_bWindowed = 0;
+    allocatedVideoMode->m_bInitialized = 0;
+    SDL_GetDesktopDisplayMode(0, &mode);
+    newVideoMode->m_safeMode.width = mode.w;
+    newVideoMode->m_safeMode.height = mode.h;
+    newVideoMode->m_safeMode.bpp = 32;
+    newVideoMode->vftable = &CVideoMode_OpenGL::`vftable';
+    newVideoMode->m_bWindowed = windowed;
+    videomode = (IVideoMode *)newVideoMode; // target: videomode
+  }
