@@ -25,18 +25,21 @@ Need the HL25 cvar hook list head (`cvarhook_t *cvar_hooks`, MetaHook name `cvar
 - The reachable hook loop compares node `+4` with the changed `cvar_t *`, advances through node `+8`, and invokes the callback at node `+0`.
 - Linux also loads inlined `cvar_vars` *before* the DirectSet call; do not take the first absolute load in the function.
 - Consumer needs the **global value** (list-head pointer), not a code-operand field.
+- Agent-produced YAML must normalize `gv_va`, `gv_rva`, `gv_sig_va`, `gv_inst_offset`, `gv_inst_length`, and `gv_inst_disp` as quoted hexadecimal strings before runtime validation.
 
 ## Correct approach
 1. `find-Cvar_Set`: unique error string + sole C-string-address filter.
 2. `find-Cvar_DirectSet`: existing exact `***PROTECTED***` string finder.
 3. `find-cvar_callbacks`: unique direct call, immediate writable absolute load, then reachable `+4/+8/+0` hook-loop validation.
 4. Runtime: `gv = *(uint32_t *)(match + gv_inst_offset + gv_inst_disp)`.
+5. Agent fallback: `.claude/skills/find-cvar_callbacks/SKILL.md` confirms the same global from both `Cvar_Set` dispatch and `Cvar_HookVariable` registration semantics when the strict assembly shape moves.
 
 ## Verification
 - `hl-10210` / `hl-8684` `find-Cvar_Set`, Windows + Linux: `2/0/0` each.
 - `hl-8684` `find-Cvar_DirectSet`, Windows + Linux: `2/0/0`.
 - `hl-10210` / `hl-8684` `find-cvar_callbacks`, Windows + Linux: `2/0/0` each.
 - Regenerated `Cvar_Set` and `cvar_callbacks` YAML files are byte-identical to the prior verified artifacts.
+- Agent-only fallback (`-skip_pp`) on `hl-10210`, Windows + Linux: `2/0/0`; both platforms independently confirmed dispatch and registration semantics.
 
 | Binary | Cvar_Set | cvar_callbacks | insn |
 | --- | --- | --- | --- |
