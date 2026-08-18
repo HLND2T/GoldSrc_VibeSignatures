@@ -112,4 +112,4 @@ CDN bytes. GitHub Pages hosts only static assets; it does not host the Process A
 Plan preview remains removed; the internal builder serves real execution only. Generic Source2 vcall finding, Source2
 RTTI/dispatch semantics, remote API hosting, C++ layout analysis, automatic version bumping, broad production signature
 coverage, and target-specific generators remain excluded. Commercial IDA verification still requires a configured local
-or self-hosted runner. The first production finder is `svencoop-10257/engine/R_RenderView`.
+or self-hosted runner. Current production finder coverage is declared in the game-version configs rather than maintained as a separate documentation inventory.

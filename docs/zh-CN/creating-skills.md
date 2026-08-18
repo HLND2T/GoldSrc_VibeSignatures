@@ -11,7 +11,7 @@
 让 Agent 创建新的 `find-XXXX.py` preprocessor，并在 game-version config 中注册：
 
 ```text
-/create-preprocessor-scripts Create "find-R_RenderView" in engine by xref_strings "R_RenderView: NULL worldmodel".
+/create-preprocessor-scripts Create "find-XXXX" in <MODULE> by xref_strings "<STABLE_ANCHOR>".
 ```
 
 该 skill 会：
@@ -47,25 +47,24 @@ async def preprocess_common_skill(
 
 ### 带字符串锚点的普通函数
 
-`find-R_RenderView` 通过 `hw.dll` / `hw.so` 中的 `"R_RenderView: NULL worldmodel"` 定位
-`engine/R_RenderView`。`find-SV_SendServerinfo` 用同一模式定位 `SV_SendServerinfo`。
+当稳定字符串能够唯一标识所属函数时，使用 `xref_strings`。若同一字符串存在多个代码引用，则增加 include 或
+exclude 锚点进行消歧。
 
 ### 带 LLM-decompile predecessor 的函数
 
-`find-build_number` 使用 `LLM_DECOMPILE`，以必需的 `SV_SendServerinfo.{platform}.yaml` reference 把
-`build_number` 定位为 predecessor 内部被调用的函数。
+当目标可通过 predecessor 函数内部的调用、全局变量访问、函数指针、虚调用或结构成员识别时，使用
+`LLM_DECOMPILE` 并声明必需的 predecessor reference。
 
 ### 通过 expected input 的函数链
 
-`find-NLoadBlobFile` 把 `find-NLoadBlob` 声明为 `expected_input`；前置 finder 先定位 `NLoadBlob`，再定位
-依赖它的函数。`find-FreeBlob` 使用相同的链式模式。
+把 predecessor 工件声明为 `expected_input`；其 finder 会先运行，依赖 finder 再通过分析 DAG 消费经过验证的
+YAML。
 
-### 私有 engine 函数
+### 私有函数与全局变量
 
-`find-Sys_Error`、`find-ClientDLL_Init`、`find-DispatchDirectUserMsg`、`find-Cvar_DirectSet` 通过稳定的函数内
-字符串锚点与官方源码交叉引用定位私有 engine 函数。`find-DispatchDirectUserMsg-decompiles` 从该前置函数恢复
-`gClientUserMsgs`。在 `hl-*` 或 `svencoop-*` Windows/Linux 二进制中定位匿名函数、
-全局变量以及全局变量式指令操作数，参见 `find-anchor-to-goldsrc-symbol` skill。
+定位私有函数时，将稳定的函数内锚点与官方源码交叉引用结合使用。基于 decompile 的 finder 可以消费该函数工件，
+继续恢复相关全局变量。在 Windows/Linux 二进制中定位匿名函数、全局变量以及全局变量式指令操作数，参见
+`find-anchor-to-goldsrc-symbol` skill。
 
 ## Signature 生成 skill
 
@@ -81,9 +80,9 @@ symbol schema 与当前 IDB 地址校验。
 已注册的 skill 条目形如：
 
 ```yaml
-- name: find-Sys_Error
+- name: find-XXXX
   expected_output:
-    - Sys_Error.{platform}.yaml
+    - XXXX.{platform}.yaml
 ```
 
 Symbol 只使用 `name + category`；拒绝 `type` 与 `kind`。Artifact payload 使用 category 专属 identity

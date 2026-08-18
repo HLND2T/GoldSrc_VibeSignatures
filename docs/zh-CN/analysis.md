@@ -36,7 +36,7 @@ Analyzer 会为 `configs/<GAMEVER>.yaml` 中声明的符号查找并生成 signa
 
 ```bash
 uv run python ida_analyze_bin.py -gamever cstrike-10210 -configyaml configs/cstrike-10210.yaml -platform windows,linux
-uv run python ida_analyze_bin.py -gamever hl-10210 -modules engine -skill find-R_RenderView -platform windows,linux -debug
+uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EXACT_SKILL_NAME> -platform windows,linux -debug
 ```
 
 必须显式指定 `-gamever` 或 `-allgamever`；analyzer 不再回退到 `GSVIBE_GAMEVER`。支持的参数：
@@ -91,11 +91,8 @@ helper 必须显式使用并 fail closed；Source2 专用 dispatch 协议保持�
 build，并可通过 `major_update: true` 禁用。Analyzer 将 new-output 到 old-YAML 的映射交给 Preprocessor，
 由具体脚本通过 MCP 重新定位 signature 并重建地址。
 
-## Production finders
+## Production 注册
 
-Half-Life 与 Sven Co-op 注册了 production finder `engine/R_RenderView`，通过 `hw.dll` / `hw.so` 中的
-`"R_RenderView: NULL worldmodel"` 锚点定位。各 engine 模块还注册了 `find-SV_SendServerinfo`、
-`find-build_number`、`find-Sys_Error`、`find-ClientDLL_Init`、`find-DispatchDirectUserMsg`、
-`find-DispatchDirectUserMsg-decompiles`、`find-Cvar_DirectSet` 与 `find-FreeBlob`。Windows-only 的
-`find-NLoadBlob*` 链不在 Sven Co-op 注册。参见
+Production finder 的覆盖范围与依赖链声明在 `configs/<GAMEVER>.yaml` 中。Config 是当前清单的唯一事实来源，
+Analyzer 根据其中的 input/output 构建执行 DAG。可复用的 finder 模式参见
 [创建符号分析 skill](creating-skills.md)。

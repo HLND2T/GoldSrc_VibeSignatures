@@ -9,7 +9,7 @@ Symbol-analysis skills are IDAPython preprocessors that locate a GoldSrc x86 sym
 Ask the agent to create a new `find-XXXX.py` preprocessor and register it in the game-version config(s):
 
 ```text
-/create-preprocessor-scripts Create "find-R_RenderView" in engine by xref_strings "R_RenderView: NULL worldmodel".
+/create-preprocessor-scripts Create "find-XXXX" in <MODULE> by xref_strings "<STABLE_ANCHOR>".
 ```
 
 The skill:
@@ -41,20 +41,19 @@ The shared GoldSrc x86 helper preserves the CS2 Finder API for function/vfunc, g
 
 ### Regular function with a string anchor
 
-`find-R_RenderView` locates `engine/R_RenderView` through the string `"R_RenderView: NULL worldmodel"` in `hw.dll` and `hw.so`. `find-SV_SendServerinfo` follows the same pattern for `SV_SendServerinfo`.
+Use `xref_strings` when a stable string uniquely identifies the containing function. Add include or exclude anchors when one string has multiple code references.
 
 ### Function with an LLM-decompile predecessor
 
-`find-build_number` uses `LLM_DECOMPILE` with a required `SV_SendServerinfo.{platform}.yaml` reference to locate `build_number` as a function called inside the predecessor.
+Use `LLM_DECOMPILE` with a required predecessor reference when the target is identifiable from a call, global access, function pointer, virtual dispatch, or structure member inside that function.
 
 ### Function chain via expected input
 
-`find-NLoadBlobFile` declares `find-NLoadBlob` as its `expected_input`; the predecessor finder first locates
-`NLoadBlob`, then the dependent function. `find-FreeBlob` follows the same chaining pattern.
+Declare the predecessor artifact as `expected_input`; its finder runs first, and the dependent finder consumes the validated YAML through the analysis DAG.
 
-### Private engine functions
+### Private functions and globals
 
-`find-Sys_Error`, `find-ClientDLL_Init`, `find-DispatchDirectUserMsg`, and `find-Cvar_DirectSet` locate private engine functions from stable in-function string anchors and official source cross-references. `find-DispatchDirectUserMsg-decompiles` recovers `gClientUserMsgs` from that predecessor. See the `find-anchor-to-goldsrc-symbol` skill for locating anonymous functions, global variables, and global-style instruction operands across `hl-*` or `svencoop-*` Windows/Linux binaries.
+Combine stable in-function anchors with official-source cross-references when locating private functions. A decompile-based finder may consume that function artifact to recover related globals. See the `find-anchor-to-goldsrc-symbol` skill for locating anonymous functions, global variables, and global-style instruction operands across Windows/Linux binaries.
 
 ## Signature generation skills
 
@@ -65,9 +64,9 @@ After a symbol is located and renamed in IDA, persist the result with the `write
 A registered skill entry looks like:
 
 ```yaml
-- name: find-Sys_Error
+- name: find-XXXX
   expected_output:
-    - Sys_Error.{platform}.yaml
+    - XXXX.{platform}.yaml
 ```
 
 Symbols use `name + category` only; `type` and `kind` are rejected. Artifact payloads use category-specific identities (`func_name`, `gv_name`, `patch_name`, `vtable_class`, `struct_name`/`member_name`) and are not required to equal the config symbol name.

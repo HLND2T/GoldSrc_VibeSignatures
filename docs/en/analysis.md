@@ -31,7 +31,7 @@ Command synopsis:
 
 ```bash
 uv run python ida_analyze_bin.py -gamever cstrike-10210 -configyaml configs/cstrike-10210.yaml -platform windows,linux
-uv run python ida_analyze_bin.py -gamever hl-10210 -modules engine -skill find-R_RenderView -platform windows,linux -debug
+uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EXACT_SKILL_NAME> -platform windows,linux -debug
 ```
 
 `-gamever` or `-allgamever` is required — the analyzer no longer falls back to `GSVIBE_GAMEVER`. Supported arguments:
@@ -70,6 +70,6 @@ Supported categories are `func`, `gv`, `vfunc`, `vtable`, `patch`, `struct`, and
 
 Raw old-YAML copying is disabled because copying address-bearing artifacts can preserve stale addresses. Automatic old-version discovery is restricted to an older build in the same game family and is disabled by `major_update: true`. The analyzer passes a new-output-to-old-YAML map to the Preprocessor so a skill-specific script can relocate signatures through MCP and rebuild addresses.
 
-## Production finders
+## Production registration
 
-Half-Life and Sven Co-op register the production finder `engine/R_RenderView`, anchored by `"R_RenderView: NULL worldmodel"` in `hw.dll` and `hw.so`. Additional finders registered across the engine modules include `find-SV_SendServerinfo`, `find-build_number`, `find-Sys_Error`, `find-ClientDLL_Init`, `find-DispatchDirectUserMsg`, `find-DispatchDirectUserMsg-decompiles`, `find-Cvar_DirectSet`, and `find-FreeBlob`. The Windows-only `find-NLoadBlob*` chain is not registered for Sven Co-op. See [Creating symbol-analysis skills](creating-skills.md).
+Production finder coverage and dependency chains are declared in `configs/<GAMEVER>.yaml`. Those configs are the source of truth for the current inventory; the analyzer derives the execution DAG from their inputs and outputs. See [Creating symbol-analysis skills](creating-skills.md) for the reusable finder patterns.
