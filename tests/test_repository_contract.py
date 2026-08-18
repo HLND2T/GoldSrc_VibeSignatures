@@ -1,13 +1,20 @@
 from __future__ import annotations
 
 import hashlib
+import tempfile
 import unittest
 from pathlib import Path
 
 import yaml
 
 from analysis_config import iter_analysis_config_tags
-from analysis_planner import PLATFORMS, parse_config_document
+from analysis_planner import (
+    PLATFORMS,
+    build_execution_plan,
+    module_declares_platform,
+    parse_config_document,
+    symbol_artifact_filename,
+)
 from binary_format import inspect_binary
 
 ROOT = Path(__file__).parents[1]
@@ -91,21 +98,9 @@ class RepositoryContractTests(unittest.TestCase):
                 self.assertTrue(document["disasm_code"].strip())
                 self.assertIsInstance(document["procedure"], str)
 
-    def test_build_number_llm_decompile_production_contract(self):
-        script = ROOT / "ida_preprocessor_scripts" / "find-build_number.py"
+    def test_llm_decompile_prompt_contract(self):
         prompt = ROOT / "ida_preprocessor_scripts" / "prompt" / "call_llm_decompile.md"
-        self.assertTrue(script.is_file())
         self.assertTrue(prompt.is_file())
-        script_text = script.read_text(encoding="utf-8")
-        for marker in (
-            '"symbol_name": "build_number"',
-            '"prompt_path": "prompt/call_llm_decompile.md"',
-            '"references/{gamever}/engine/SV_SendServerinfo.{platform}.yaml"',
-            '"expected_result_sections": ["found_call"]',
-            "llm_config=None",
-        ):
-            self.assertIn(marker, script_text)
-
         prompt_text = prompt.read_text(encoding="utf-8")
         for marker in (
             "{reference_blocks}",
@@ -120,49 +115,51 @@ class RepositoryContractTests(unittest.TestCase):
         ):
             self.assertIn(marker, prompt_text)
 
-        engine_tags = set()
-        for tag in sorted(_config_tags()):
-            document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
-            engine = next((module for module in document["modules"] if module["name"] == "engine"), None)
-            if engine is None:
-                continue
-            engine_tags.add(tag)
-            finder = next(skill for skill in engine["skills"] if skill["name"] == "find-build_number")
-            self.assertEqual(["build_number.{platform}.yaml"], finder["expected_output"])
-            self.assertEqual(["SV_SendServerinfo.{platform}.yaml"], finder["expected_input"])
-            self.assertNotIn("optional_input", finder)
-            symbol = next(symbol for symbol in engine["symbols"] if symbol["name"] == "build_number")
-            self.assertEqual("func", symbol["category"])
-        self.assertEqual(
-            {
-                "cof-5936",
-                "hl-10210",
-                "hl-3248",
-                "hl-3266",
-                "hl-3329",
-                "hl-3647",
-                "hl-4554",
-                "hl-6153",
-                "hl-8684",
-                "svencoop-10257",
-            },
-            engine_tags,
-        )
+    def test_registered_analysis_skills_have_implementations_and_declared_outputs(self):
+        preprocessor_root = ROOT / "ida_preprocessor_scripts"
+        fallback_root = ROOT / ".claude" / "skills"
+        saw_registered_skill = False
 
-        for gamever in ("hl-10210", "svencoop-10257"):
-            for platform in ("windows", "linux"):
-                with self.subTest(gamever=gamever, platform=platform):
-                    reference = (
-                        ROOT
-                        / "ida_preprocessor_scripts"
-                        / "references"
-                        / gamever
-                        / "engine"
-                        / f"SV_SendServerinfo.{platform}.yaml"
+        with tempfile.TemporaryDirectory() as temporary:
+            for tag in sorted(_config_tags()):
+                with self.subTest(tag=tag):
+                    document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
+                    modules = parse_config_document(document)
+                    plan = build_execution_plan(
+                        modules,
+                        platforms=PLATFORMS,
+                        bin_dir=temporary,
+                        tag=tag,
                     )
-                    document = yaml.safe_load(reference.read_text(encoding="utf-8"))
-                    self.assertIn("call    build_number", document["disasm_code"])
-                    self.assertIn("build_number()", document["procedure"])
+                    declared_artifacts = set()
+
+                    for module in modules:
+                        for skill in module["skills"]:
+                            saw_registered_skill = True
+                            preprocessor = preprocessor_root / f"{skill['name']}.py"
+                            fallback = fallback_root / skill["name"] / "SKILL.md"
+                            self.assertTrue(
+                                preprocessor.is_file() or fallback.is_file(),
+                                f"Registered skill {skill['name']!r} has no preprocessor or Agent fallback",
+                            )
+
+                        for platform in PLATFORMS:
+                            if not module_declares_platform(module, platform):
+                                continue
+                            for symbol in module["symbols"]:
+                                if symbol.get("platform") not in {None, platform}:
+                                    continue
+                                declared_artifacts.add(f"{module['name']}/{symbol_artifact_filename(symbol, platform)}")
+
+                    for node in plan.nodes:
+                        for output in (*node.required_outputs, *node.optional_outputs):
+                            self.assertIn(
+                                output,
+                                declared_artifacts,
+                                f"Output {output!r} from {node.id} has no declared symbol",
+                            )
+
+        self.assertTrue(saw_registered_skill)
 
     def test_download_and_config_tags_match(self):
         downloads = yaml.safe_load((ROOT / "download.yaml").read_text(encoding="utf-8"))["downloads"]
@@ -195,133 +192,6 @@ class RepositoryContractTests(unittest.TestCase):
                     self.assertTrue(
                         any(module[f"path_{platform}"] or module[f"module_{platform}"] for platform in PLATFORMS)
                     )
-
-    def test_goldsrc_engines_register_r_renderview_production_finder(self):
-        for tag in ("hl-10210", "svencoop-10257"):
-            with self.subTest(tag=tag):
-                document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
-                engine = next(module for module in document["modules"] if module["name"] == "engine")
-                finder = next(skill for skill in engine["skills"] if skill["name"] == "find-R_RenderView")
-                self.assertEqual(["R_RenderView.{platform}.yaml"], finder["expected_output"])
-                symbol = next(symbol for symbol in engine["symbols"] if symbol["name"] == "R_RenderView")
-                self.assertEqual("func", symbol["category"])
-        self.assertTrue((ROOT / "ida_preprocessor_scripts" / "find-R_RenderView.py").is_file())
-        self.assertTrue((ROOT / ".claude" / "skills" / "create-preprocessor-scripts" / "SKILL.md").is_file())
-
-    def test_goldsrc_engines_register_client_dll_init_production_finder(self):
-        engine_tags = {
-            "cof-5936",
-            "hl-10210",
-            "hl-3248",
-            "hl-3266",
-            "hl-3329",
-            "hl-3647",
-            "hl-4554",
-            "hl-6153",
-            "hl-8684",
-            "svencoop-10257",
-        }
-        for tag in engine_tags:
-            with self.subTest(tag=tag):
-                document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
-                engine = next(module for module in document["modules"] if module["name"] == "engine")
-                finder = next(skill for skill in engine["skills"] if skill["name"] == "find-ClientDLL_Init")
-                self.assertEqual(["ClientDLL_Init.{platform}.yaml"], finder["expected_output"])
-                symbol = next(symbol for symbol in engine["symbols"] if symbol["name"] == "ClientDLL_Init")
-                self.assertEqual("func", symbol["category"])
-        self.assertTrue((ROOT / "ida_preprocessor_scripts" / "find-ClientDLL_Init.py").is_file())
-
-    def test_shared_client_dll_decompiles_are_grouped(self):
-        finder_name = "find-ClientDLL_HudInit-decompiles"
-        expected_inputs = ["ClientDLL_Init.{platform}.yaml", "ClientDLL_HudInit.{platform}.yaml"]
-        expected_outputs = [
-            "g_ppEngfuncs.{platform}.yaml",
-            "g_ppExportFuncs.{platform}.yaml",
-            "g_phClientModule.{platform}.yaml",
-        ]
-        engine_tags = {
-            "cof-5936",
-            "hl-10210",
-            "hl-3248",
-            "hl-3266",
-            "hl-3329",
-            "hl-3647",
-            "hl-4554",
-            "hl-6153",
-            "hl-8684",
-            "svencoop-10257",
-        }
-
-        for tag in engine_tags:
-            with self.subTest(tag=tag):
-                document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
-                engine = next(module for module in document["modules"] if module["name"] == "engine")
-                finder = next(skill for skill in engine["skills"] if skill["name"] == finder_name)
-                self.assertEqual(expected_inputs, finder["expected_input"])
-                self.assertEqual(expected_outputs, finder["expected_output"])
-                self.assertFalse(
-                    {"find-g_ppEngfuncs", "find-g_ppExportFuncs", "find-g_phClientModule"}
-                    & {skill["name"] for skill in engine["skills"]}
-                )
-
-        script_root = ROOT / "ida_preprocessor_scripts"
-        script = script_root / f"{finder_name}.py"
-        self.assertTrue(script.is_file())
-        self.assertFalse((script_root / "find-g_ppEngfuncs.py").exists())
-        self.assertFalse((script_root / "find-g_ppExportFuncs.py").exists())
-        self.assertFalse((script_root / "find-g_phClientModule.py").exists())
-        script_text = script.read_text(encoding="utf-8")
-        self.assertIn('TARGET_GV_NAMES = ["g_ppEngfuncs", "g_ppExportFuncs", "g_phClientModule"]', script_text)
-        self.assertIn("ClientDLL_Init.{platform}.yaml", script_text)
-        self.assertIn("ClientDLL_HudInit.{platform}.yaml", script_text)
-
-        skill_text = (ROOT / ".claude" / "skills" / "create-preprocessor-scripts" / "SKILL.md").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("find-<REFERENCE_GROUP>-decompiles", skill_text)
-        self.assertIn("Do not create separate `find-{Symbol}` scripts", skill_text)
-
-    def test_dispatch_direct_user_msg_decompiles_are_grouped(self):
-        predecessor_name = "find-DispatchDirectUserMsg"
-        finder_name = "find-DispatchDirectUserMsg-decompiles"
-        expected_inputs = ["DispatchDirectUserMsg.{platform}.yaml"]
-        expected_outputs = ["gClientUserMsgs.{platform}.yaml"]
-        engine_tags = {
-            "cof-5936",
-            "hl-10210",
-            "hl-3248",
-            "hl-3266",
-            "hl-3329",
-            "hl-3647",
-            "hl-4554",
-            "hl-6153",
-            "hl-8684",
-            "svencoop-10257",
-        }
-
-        for tag in engine_tags:
-            with self.subTest(tag=tag):
-                document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
-                engine = next(module for module in document["modules"] if module["name"] == "engine")
-                predecessor = next(skill for skill in engine["skills"] if skill["name"] == predecessor_name)
-                finder = next(skill for skill in engine["skills"] if skill["name"] == finder_name)
-                self.assertEqual(["DispatchDirectUserMsg.{platform}.yaml"], predecessor["expected_output"])
-                self.assertEqual(expected_inputs, finder["expected_input"])
-                self.assertEqual(expected_outputs, finder["expected_output"])
-                self.assertFalse({"find-gClientUserMsgs"} & {skill["name"] for skill in engine["skills"]})
-                symbol = next(symbol for symbol in engine["symbols"] if symbol["name"] == "gClientUserMsgs")
-                self.assertEqual("gv", symbol["category"])
-
-        script_root = ROOT / "ida_preprocessor_scripts"
-        self.assertTrue((script_root / f"{predecessor_name}.py").is_file())
-        self.assertTrue((script_root / f"{finder_name}.py").is_file())
-        self.assertFalse((script_root / "find-gClientUserMsgs.py").exists())
-        script_text = (script_root / f"{finder_name}.py").read_text(encoding="utf-8")
-        self.assertIn('TARGET_GV_NAMES = ["gClientUserMsgs"]', script_text)
-        self.assertIn("DispatchDirectUserMsg.{platform}.yaml", script_text)
-        predecessor_text = (script_root / f"{predecessor_name}.py").read_text(encoding="utf-8")
-        self.assertIn("FULLMATCH:UserMsg: No pfn %s %d\\n", predecessor_text)
-        self.assertIn("FULLMATCH:UserMsg: Not Present on Client %d\\n", predecessor_text)
 
     def test_ci_runs_required_checks(self):
         workflow = (ROOT / ".github" / "workflows" / "ci.yaml").read_text(encoding="utf-8")

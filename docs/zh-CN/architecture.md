@@ -102,5 +102,5 @@ tracked schema-5 YAML 转成精确 UTF-8 content-addressed JSON 与 index schema
 
 Plan preview 继续删除，内部 builder 只服务真实执行。generic Source2 vcall finder、Source2 RTTI/dispatcher、
 远程 API hosting、C++ layout、自动版本 bump、广泛 production signature 覆盖和目标专属 generator 保持排除。
-商业 IDA 验证仍需要已配置的本地或 self-hosted runner。首个 production finder 是
-`svencoop-10257/engine/R_RenderView`。
+商业 IDA 验证仍需要已配置的本地或 self-hosted runner。当前 production finder 覆盖范围以 game-version config
+中的声明为准，不在文档中维护独立清单。
