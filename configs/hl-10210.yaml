@@ -49,6 +49,9 @@ modules:
           - DispatchDirectUserMsg.{platform}.yaml
         expected_output:
           - gClientUserMsgs.{platform}.yaml
+      - name: find-cl_parsefuncs
+        expected_output:
+          - cl_parsefuncs.{platform}.yaml
       - name: find-Cvar_DirectSet
         expected_output:
           - Cvar_DirectSet.{platform}.yaml
@@ -93,6 +96,8 @@ modules:
       - name: DispatchDirectUserMsg
         category: func
       - name: gClientUserMsgs
+        category: gv
+      - name: cl_parsefuncs
         category: gv
       - name: Cvar_DirectSet
         category: func
