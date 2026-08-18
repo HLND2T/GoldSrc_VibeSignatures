@@ -2,8 +2,8 @@
 """Locate Cvar_Set, the public name/value cvar setter.
 
 HL25 added cvarhook_t dispatch after Cvar_DirectSet. Official leak
-engine/cvar.c has no hooks; Linux DWARF names the list cvar_hooks and
-the registrar Cvar_HookVariable. GCC inlines the Cvar_Set body into
+engine/cvar.c has no hooks; the artifact follows Linux DWARF and names
+the list cvar_hooks. GCC inlines the Cvar_Set body into
 Cvar_SetValue and Cvar_CommandWithPrivilegeCheck, so
 FULLMATCH "Cvar_Set: variable %s not found\\n" has three to four
 function xrefs on Linux and one on Windows.

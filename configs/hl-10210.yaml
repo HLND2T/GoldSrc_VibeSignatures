@@ -58,12 +58,12 @@ modules:
       - name: find-Cvar_Set
         expected_output:
           - Cvar_Set.{platform}.yaml
-      - name: find-cvar_callbacks
+      - name: find-cvar_hooks
         expected_input:
           - Cvar_Set.{platform}.yaml
           - Cvar_DirectSet.{platform}.yaml
         expected_output:
-          - cvar_callbacks.{platform}.yaml
+          - cvar_hooks.{platform}.yaml
       - name: find-NLoadBlob
         platform: windows
         expected_output:
@@ -112,7 +112,7 @@ modules:
         category: func
       - name: Cvar_Set
         category: func
-      - name: cvar_callbacks
+      - name: cvar_hooks
         category: gv
       - name: NLoadBlob
         category: func

@@ -1,37 +1,37 @@
 ---
-name: find-cvar_callbacks
+name: find-cvar_hooks
 description: |
-  Final-guarantee Agent fallback for the find-cvar_callbacks preprocessor. Recovers the GoldSrc HL25
+  Final-guarantee Agent fallback for the find-cvar_hooks preprocessor. Recovers the GoldSrc HL25
   cvarhook_t list-head global from Cvar_Set dispatch semantics and Cvar_HookVariable registration semantics
   when the deterministic finder cannot match the exact call/fall-through assembly shape. Use only for the
-  engine cvar_callbacks output on PE32/I386 or ELF32/I386.
-  Trigger: cvar_callbacks, cvar_hooks, find-cvar_callbacks
+  engine cvar_hooks output on PE32/I386 or ELF32/I386.
+  Trigger: cvar_hooks, find-cvar_hooks
 disable-model-invocation: true
 ---
 
-# Find cvar_callbacks (final-guarantee fallback)
+# Find cvar_hooks (final-guarantee fallback)
 
-Recover `cvar_callbacks`, the process-global head of the HL25 `cvarhook_t` linked list, from the loaded
+Recover `cvar_hooks`, the process-global head of the HL25 `cvarhook_t` linked list, from the loaded
 GoldSrc `hw.dll` or `hw.so` with IDA Pro MCP tools. This fallback runs only after
-`ida_preprocessor_scripts/find-cvar_callbacks.py` fails. Do not repeat its strict requirement that the global
+`ida_preprocessor_scripts/find-cvar_hooks.py` fails. Do not repeat its strict requirement that the global
 load immediately follow the `Cvar_DirectSet` call; recover the variable from the surrounding semantics.
 
 The output is cross-platform and consists of exactly one non-empty mapping beside the loaded binary:
-`cvar_callbacks.windows.yaml` for PE32/I386 or `cvar_callbacks.linux.yaml` for ELF32/I386.
+`cvar_hooks.windows.yaml` for PE32/I386 or `cvar_hooks.linux.yaml` for ELF32/I386.
 
 ## Realworld Function References
 
-Read the current platform's artifacts first. These tracked `bin/` files are read-only reference-build evidence;
-their addresses and offsets must never be copied into a different binary without verification.
+Read the current platform's artifacts first. These generated `bin/` files are read-only reference-build
+evidence; their addresses and offsets must never be copied into a different binary without verification.
 
 - `bin/hl-10210/engine/Cvar_Set.windows.yaml`
 - `bin/hl-10210/engine/Cvar_Set.linux.yaml`
 - `bin/hl-10210/engine/Cvar_DirectSet.windows.yaml`
 - `bin/hl-10210/engine/Cvar_DirectSet.linux.yaml`
-- `bin/hl-10210/engine/cvar_callbacks.windows.yaml`
-- `bin/hl-10210/engine/cvar_callbacks.linux.yaml`
-- `bin/hl-8684/engine/cvar_callbacks.windows.yaml`
-- `bin/hl-8684/engine/cvar_callbacks.linux.yaml`
+- `bin/hl-10210/engine/cvar_hooks.windows.yaml`
+- `bin/hl-10210/engine/cvar_hooks.linux.yaml`
+- `bin/hl-8684/engine/cvar_hooks.windows.yaml`
+- `bin/hl-8684/engine/cvar_hooks.linux.yaml`
 
 Reference observations, for orientation only:
 
@@ -43,8 +43,8 @@ Reference observations, for orientation only:
 | `hl-8684` | Linux | `0xffad0` | `0x2ee2a0` | `0xffb2d` |
 
 On `hl-10210` Linux, symbols additionally identify `Cvar_HookVariable` at `0x97e30` and the same global as
-`cvar_hooks` at `0x2d4a40`. Treat those names as corroboration, not as a portable lookup strategy. The artifact
-name remains `cvar_callbacks` on both platforms.
+`cvar_hooks` at `0x2d4a40`. Treat those names as corroboration, not as a portable lookup strategy. The output
+artifact and IDA name are `cvar_hooks` on both platforms.
 
 ## Semantic model
 
@@ -64,11 +64,11 @@ calls `+0`.
 
 ## Step 0 — skip an existing output
 
-Determine the current binary directory and platform. If the corresponding `cvar_callbacks.<platform>.yaml`
+Determine the current binary directory and platform. If the corresponding `cvar_hooks.<platform>.yaml`
 already exists and parses as a non-empty YAML mapping, stop successfully without overwriting it:
 
 ```text
-mcp__ida-pro-mcp__py_eval code="import idaapi, os, yaml; d=os.path.dirname(idaapi.get_input_file_path()); p='windows' if idaapi.get_input_file_path().lower().endswith('.dll') else 'linux'; f=os.path.join(d, f'cvar_callbacks.{p}.yaml'); print({'path': f, 'exists': os.path.isfile(f), 'data': yaml.safe_load(open(f, encoding='utf-8')) if os.path.isfile(f) else None})"
+mcp__ida-pro-mcp__py_eval code="import idaapi, os, yaml; d=os.path.dirname(idaapi.get_input_file_path()); p='windows' if idaapi.get_input_file_path().lower().endswith('.dll') else 'linux'; f=os.path.join(d, f'cvar_hooks.{p}.yaml'); print({'path': f, 'exists': os.path.isfile(f), 'data': yaml.safe_load(open(f, encoding='utf-8')) if os.path.isfile(f) else None})"
 ```
 
 Reject 64-bit inputs and binaries other than PE32/I386 or ELF32/I386.
@@ -130,7 +130,7 @@ side in the final report.
 
 ## Step 4 — generate and write the artifact
 
-Rename the verified global to `cvar_callbacks` in IDA when doing so does not overwrite a stronger existing name.
+Rename the verified global to `cvar_hooks` in IDA when doing so does not overwrite a stronger existing name.
 Choose a direct x86 absolute-address load or store referencing the verified global, preferring the dispatch head
 load. Then:
 
@@ -138,7 +138,7 @@ load. Then:
    `target_inst=<chosen direct-reference instruction EA>`. Increase `max_sig_bytes` only if the first signature
    is not unique. The signature must start at the global-referencing instruction, and the four-byte absolute
    address displacement must be wildcarded.
-2. Use `/write-globalvar-as-yaml` with `gv_name=cvar_callbacks`, `gv_addr`, `gv_sig`, `gv_sig_va`,
+2. Use `/write-globalvar-as-yaml` with `gv_name=cvar_hooks`, `gv_addr`, `gv_sig`, `gv_sig_va`,
    `gv_inst_length`, and `gv_inst_disp` returned by the generator.
 
 For this fallback's generated signature, `gv_inst_offset` is `0`; the signature begins at the selected
@@ -157,8 +157,8 @@ The YAML payload may contain only `gv_name` and the global-variable data fields 
 
 ## Completion and failure handling
 
-Before reporting success, reopen `cvar_callbacks.<platform>.yaml`, verify it is a non-empty mapping with
-`gv_name: cvar_callbacks`, and confirm that the six numeric fields named above are quoted lowercase hexadecimal
+Before reporting success, reopen `cvar_hooks.<platform>.yaml`, verify it is a non-empty mapping with
+`gv_name: cvar_hooks`, and confirm that the six numeric fields named above are quoted lowercase hexadecimal
 strings. Confirm that its signature uniquely matches the selected instruction in the current binary. Re-read
 the encoded four-byte displacement at `gv_sig_va + gv_inst_disp` and confirm it equals the verified global
 address.

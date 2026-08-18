@@ -1,22 +1,21 @@
 ---
-title: cvar_callbacks locator
+title: cvar_hooks locator
 type: note
-permalink: goldsrc-vibesignatures/notes/cvar-callbacks-locator
+permalink: goldsrc-vibesignatures/notes/cvar-hooks-locator
 tags:
-- cvar_callbacks
 - cvar_hooks
 - Cvar_Set
 - gv-finder
 ---
 
-# cvar_callbacks locator
+# cvar_hooks locator
 
 ## Trigger
-Need the HL25 cvar hook list head (`cvarhook_t *cvar_hooks`, MetaHook name `cvar_callbacks`) in `hw.dll` / `hw.so`.
+Need the HL25 cvar hook list head (`cvarhook_t *cvar_hooks`) in `hw.dll` / `hw.so`.
 
 ## Facts
 - Official leak `engine/cvar.c` has no hook list. HL25 adds `cvarhook_t { hook, cvar, next }` and `Cvar_HookVariable`.
-- Linux DWARF/symtab name is `cvar_hooks` (4-byte `.bss` next to `cvar_vars`). Artifact / MetaHook name is `cvar_callbacks`.
+- Linux DWARF/symtab and the generated artifact name are `cvar_hooks` (4-byte `.bss` next to `cvar_vars`). The older artifact name was `cvar_callbacks`.
 - Exists only on `hl-8684` and `hl-10210`. Absent from older `hl-*`, SvEngine, and CoF.
 - `FULLMATCH:Cvar_Set: variable %s not found\n` is unique on Windows (1 owner) and shared on Linux (3–4 owners: `Cvar_Set`, inlined `Cvar_SetValue`, `Cvar_CommandWithPrivilegeCheck`).
 - `Cvar_Set` is the unique owner whose only readable string data ref is that diagnostic; compare referenced addresses and raw string bytes rather than dropping non-ASCII text.
@@ -30,18 +29,18 @@ Need the HL25 cvar hook list head (`cvarhook_t *cvar_hooks`, MetaHook name `cvar
 ## Correct approach
 1. `find-Cvar_Set`: unique error string + sole C-string-address filter.
 2. `find-Cvar_DirectSet`: existing exact `***PROTECTED***` string finder.
-3. `find-cvar_callbacks`: unique direct call, immediate writable absolute load, then reachable `+4/+8/+0` hook-loop validation.
+3. `find-cvar_hooks`: unique direct call, immediate writable absolute load, then reachable `+4/+8/+0` hook-loop validation; preserve the DWARF name `cvar_hooks` in IDA and YAML.
 4. Runtime: `gv = *(uint32_t *)(match + gv_inst_offset + gv_inst_disp)`.
-5. Agent fallback: `.claude/skills/find-cvar_callbacks/SKILL.md` confirms the same global from both `Cvar_Set` dispatch and `Cvar_HookVariable` registration semantics when the strict assembly shape moves.
+5. Agent fallback: `.claude/skills/find-cvar_hooks/SKILL.md` confirms the same global from both `Cvar_Set` dispatch and `Cvar_HookVariable` registration semantics when the strict assembly shape moves.
 
 ## Verification
 - `hl-10210` / `hl-8684` `find-Cvar_Set`, Windows + Linux: `2/0/0` each.
 - `hl-8684` `find-Cvar_DirectSet`, Windows + Linux: `2/0/0`.
-- `hl-10210` / `hl-8684` `find-cvar_callbacks`, Windows + Linux: `2/0/0` each.
-- Regenerated `Cvar_Set` and `cvar_callbacks` YAML files are byte-identical to the prior verified artifacts.
+- `hl-10210` / `hl-8684` `find-cvar_hooks`, Windows + Linux: `2/0/0` each.
+- Before the rename, regenerated `Cvar_Set` and legacy `cvar_callbacks` YAML files were byte-identical to the prior verified artifacts.
 - Agent-only fallback (`-skip_pp`) on `hl-10210`, Windows + Linux: `2/0/0`; both platforms independently confirmed dispatch and registration semantics.
 
-| Binary | Cvar_Set | cvar_callbacks | insn |
+| Binary | Cvar_Set | cvar_hooks | insn |
 | --- | --- | --- | --- |
 | hl-10210 hw.dll | `0x101be0b0` | `0x104b74c8` | `0x101be0e1` |
 | hl-10210 hw.so | `0x96fc0` | `0x2d4a40` | `0x9701d` |

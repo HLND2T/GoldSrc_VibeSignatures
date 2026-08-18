@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Locate cvar_callbacks, the HL25 cvarhook_t list-head pointer.
+"""Locate cvar_hooks, the HL25 cvarhook_t list-head pointer.
 
-Official Linux DWARF names the object cvar_hooks. MetaHook and this
-artifact use cvar_callbacks. Cvar_Set walks the list after
-Cvar_DirectSet; Cvar_HookVariable inserts.
+Official Linux DWARF names the object cvar_hooks. Cvar_Set walks the
+list after Cvar_DirectSet; Cvar_HookVariable inserts.
 
 The finder consumes verified Cvar_Set and Cvar_DirectSet artifacts. It
 requires one direct call from the former to the latter, then decodes the
@@ -23,7 +22,7 @@ from ida_analyze_util import (
     write_gv_yaml,
 )
 
-TARGET_GV_NAME = "cvar_callbacks"
+TARGET_GV_NAME = "cvar_hooks"
 OWNER_FUNC_NAME = "Cvar_Set"
 DIRECT_FUNC_NAME = "Cvar_DirectSet"
 
@@ -236,23 +235,29 @@ try:
                     'hook_shape': hook_shape,
                 })
             else:
-                try:
-                    ida_name.set_name(int(hit['gv_ea']), 'cvar_callbacks', ida_name.SN_FORCE)
-                except Exception:
-                    pass
-                result = json.dumps({
-                    'pointer_size': 4,
-                    'cvar_set': hex(int(owner.start_ea)),
-                    'cvar_directset': hex(int(direct.start_ea)),
-                    'call_ea': hex(call_ea),
-                    'gv_ea': hex(hit['gv_ea']),
-                    'gv_seg': seg_name(hit['gv_ea']),
-                    'insn_ea': hex(hit['insn_ea']),
-                    'insn_len': hit['insn_len'],
-                    'insn_disp': hit['insn_disp'],
-                    'insn_disasm': hit['disasm'],
-                    'hook_shape': hook_shape,
-                })
+                rename_ok = ida_name.set_name(int(hit['gv_ea']), 'cvar_hooks', ida_name.SN_FORCE)
+                renamed_to = ida_name.get_name(int(hit['gv_ea'])) or ''
+                if not rename_ok and renamed_to != 'cvar_hooks':
+                    result = json.dumps({
+                        'error': 'failed to rename hook-list global to cvar_hooks',
+                        'gv_ea': hex(hit['gv_ea']),
+                        'current_name': renamed_to,
+                    })
+                else:
+                    result = json.dumps({
+                        'pointer_size': 4,
+                        'cvar_set': hex(int(owner.start_ea)),
+                        'cvar_directset': hex(int(direct.start_ea)),
+                        'call_ea': hex(call_ea),
+                        'gv_ea': hex(hit['gv_ea']),
+                        'gv_name': renamed_to,
+                        'gv_seg': seg_name(hit['gv_ea']),
+                        'insn_ea': hex(hit['insn_ea']),
+                        'insn_len': hit['insn_len'],
+                        'insn_disp': hit['insn_disp'],
+                        'insn_disasm': idc.generate_disasm_line(int(hit['insn_ea']), 0) or '',
+                        'hook_shape': hook_shape,
+                    })
 except Exception as exc:
     result = json.dumps({'error': str(exc), 'trace': traceback.format_exc()})
 """
@@ -274,7 +279,7 @@ def _function_ea_from_artifact(new_binary_dir, platform, func_name, image_base):
     return func_ea if func_ea >= int(image_base) else None
 
 
-async def _locate_cvar_callbacks(session, cvar_set_ea, cvar_directset_ea):
+async def _locate_cvar_hooks(session, cvar_set_ea, cvar_directset_ea):
     code = LOCATE_PY.replace("CVAR_SET_EA_PLACEHOLDER", str(int(cvar_set_ea))).replace(
         "CVAR_DIRECTSET_EA_PLACEHOLDER", str(int(cvar_directset_ea))
     )
@@ -307,12 +312,12 @@ async def preprocess_skill(
     direct_ea = _function_ea_from_artifact(new_binary_dir, platform, DIRECT_FUNC_NAME, image_base)
     if owner_ea is None or direct_ea is None:
         if debug:
-            print("  find-cvar_callbacks: missing Cvar_Set or Cvar_DirectSet artifact")
+            print("  find-cvar_hooks: missing Cvar_Set or Cvar_DirectSet artifact")
         return False
     owner_function = await _inspect_function_via_mcp(session, owner_ea, image_base, OWNER_FUNC_NAME)
     if not owner_function or not owner_function.get("func_sig"):
         if debug:
-            print("  find-cvar_callbacks: failed to verify Cvar_Set artifact")
+            print("  find-cvar_hooks: failed to verify Cvar_Set artifact")
         return False
     try:
         inspected_owner_ea = int(owner_function["func_va"], 0)
@@ -320,10 +325,15 @@ async def preprocess_skill(
         return False
     if inspected_owner_ea != owner_ea:
         return False
-    located = await _locate_cvar_callbacks(session, owner_ea, direct_ea)
-    if located is None or located.get("error") or located.get("pointer_size") != 4:
+    located = await _locate_cvar_hooks(session, owner_ea, direct_ea)
+    if (
+        located is None
+        or located.get("error")
+        or located.get("pointer_size") != 4
+        or located.get("gv_name") != TARGET_GV_NAME
+    ):
         if debug:
-            print(f"  find-cvar_callbacks: locator failed {located}")
+            print(f"  find-cvar_hooks: locator failed {located}")
         return False
     required = ("gv_ea", "insn_ea", "insn_len", "insn_disp")
     if any(field not in located for field in required):
@@ -340,7 +350,7 @@ async def preprocess_skill(
     func_va = inspected_owner_ea
     if debug:
         print(
-            f"  find-cvar_callbacks: gv={located['gv_ea']} seg={located.get('gv_seg')} "
+            f"  find-cvar_hooks: gv={located['gv_ea']} seg={located.get('gv_seg')} "
             f"insn={located['insn_ea']} {located.get('insn_disasm', '')}"
         )
     write_gv_yaml(
