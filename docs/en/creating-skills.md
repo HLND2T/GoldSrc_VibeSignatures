@@ -54,7 +54,7 @@ The shared GoldSrc x86 helper preserves the CS2 Finder API for function/vfunc, g
 
 ### Private engine functions
 
-`find-Sys_Error`, `find-ClientDLL_Init`, `find-DispatchDirectUserMsg`, and `find-Cvar_DirectSet` locate private engine functions from stable in-function string anchors and official source cross-references. See the `find-anchor-to-goldsrc-symbol` skill for locating anonymous functions, global variables, and global-style instruction operands across `hl-*` or `svencoop-*` Windows/Linux binaries.
+`find-Sys_Error`, `find-ClientDLL_Init`, `find-DispatchDirectUserMsg`, and `find-Cvar_DirectSet` locate private engine functions from stable in-function string anchors and official source cross-references. `find-DispatchDirectUserMsg-decompiles` recovers `gClientUserMsgs` from that predecessor. See the `find-anchor-to-goldsrc-symbol` skill for locating anonymous functions, global variables, and global-style instruction operands across `hl-*` or `svencoop-*` Windows/Linux binaries.
 
 ## Signature generation skills
 

@@ -281,6 +281,48 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("find-<REFERENCE_GROUP>-decompiles", skill_text)
         self.assertIn("Do not create separate `find-{Symbol}` scripts", skill_text)
 
+    def test_dispatch_direct_user_msg_decompiles_are_grouped(self):
+        predecessor_name = "find-DispatchDirectUserMsg"
+        finder_name = "find-DispatchDirectUserMsg-decompiles"
+        expected_inputs = ["DispatchDirectUserMsg.{platform}.yaml"]
+        expected_outputs = ["gClientUserMsgs.{platform}.yaml"]
+        engine_tags = {
+            "cof-5936",
+            "hl-10210",
+            "hl-3248",
+            "hl-3266",
+            "hl-3329",
+            "hl-3647",
+            "hl-4554",
+            "hl-6153",
+            "hl-8684",
+            "svencoop-10257",
+        }
+
+        for tag in engine_tags:
+            with self.subTest(tag=tag):
+                document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
+                engine = next(module for module in document["modules"] if module["name"] == "engine")
+                predecessor = next(skill for skill in engine["skills"] if skill["name"] == predecessor_name)
+                finder = next(skill for skill in engine["skills"] if skill["name"] == finder_name)
+                self.assertEqual(["DispatchDirectUserMsg.{platform}.yaml"], predecessor["expected_output"])
+                self.assertEqual(expected_inputs, finder["expected_input"])
+                self.assertEqual(expected_outputs, finder["expected_output"])
+                self.assertFalse({"find-gClientUserMsgs"} & {skill["name"] for skill in engine["skills"]})
+                symbol = next(symbol for symbol in engine["symbols"] if symbol["name"] == "gClientUserMsgs")
+                self.assertEqual("gv", symbol["category"])
+
+        script_root = ROOT / "ida_preprocessor_scripts"
+        self.assertTrue((script_root / f"{predecessor_name}.py").is_file())
+        self.assertTrue((script_root / f"{finder_name}.py").is_file())
+        self.assertFalse((script_root / "find-gClientUserMsgs.py").exists())
+        script_text = (script_root / f"{finder_name}.py").read_text(encoding="utf-8")
+        self.assertIn('TARGET_GV_NAMES = ["gClientUserMsgs"]', script_text)
+        self.assertIn("DispatchDirectUserMsg.{platform}.yaml", script_text)
+        predecessor_text = (script_root / f"{predecessor_name}.py").read_text(encoding="utf-8")
+        self.assertIn("FULLMATCH:UserMsg: No pfn %s %d\\n", predecessor_text)
+        self.assertIn("FULLMATCH:UserMsg: Not Present on Client %d\\n", predecessor_text)
+
     def test_ci_runs_required_checks(self):
         workflow = (ROOT / ".github" / "workflows" / "ci.yaml").read_text(encoding="utf-8")
         backend_commands = (

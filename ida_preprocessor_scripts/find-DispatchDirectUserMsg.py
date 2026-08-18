@@ -9,12 +9,12 @@ TARGET_FUNCTION_NAMES = ["DispatchDirectUserMsg"]
 FUNC_XREFS = [
     {
         "func_name": "DispatchDirectUserMsg",
-        "xref_strings": ["UserMsg: No pfn %s %d"],
+        "xref_strings": ["FULLMATCH:UserMsg: No pfn %s %d\n"],
         "xref_gvs": [],
         "xref_signatures": [],
         "xref_funcs": [],
         "exclude_funcs": [],
-        "exclude_strings": ["Malformed WeaponList request, ignoring"],
+        "exclude_strings": ["FULLMATCH:UserMsg: Not Present on Client %d\n"],
         "exclude_gvs": [],
         "exclude_signatures": [],
     }

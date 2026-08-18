@@ -96,5 +96,6 @@ build，并可通过 `major_update: true` 禁用。Analyzer 将 new-output 到 o
 Half-Life 与 Sven Co-op 注册了 production finder `engine/R_RenderView`，通过 `hw.dll` / `hw.so` 中的
 `"R_RenderView: NULL worldmodel"` 锚点定位。各 engine 模块还注册了 `find-SV_SendServerinfo`、
 `find-build_number`、`find-Sys_Error`、`find-ClientDLL_Init`、`find-DispatchDirectUserMsg`、
-`find-Cvar_DirectSet` 与 `find-FreeBlob`。Windows-only 的 `find-NLoadBlob*` 链不在 Sven Co-op 注册。参见
+`find-DispatchDirectUserMsg-decompiles`、`find-Cvar_DirectSet` 与 `find-FreeBlob`。Windows-only 的
+`find-NLoadBlob*` 链不在 Sven Co-op 注册。参见
 [创建符号分析 skill](creating-skills.md)。

@@ -44,6 +44,11 @@ modules:
       - name: find-DispatchDirectUserMsg
         expected_output:
           - DispatchDirectUserMsg.{platform}.yaml
+      - name: find-DispatchDirectUserMsg-decompiles
+        expected_input:
+          - DispatchDirectUserMsg.{platform}.yaml
+        expected_output:
+          - gClientUserMsgs.{platform}.yaml
       - name: find-Cvar_DirectSet
         expected_output:
           - Cvar_DirectSet.{platform}.yaml
@@ -87,6 +92,8 @@ modules:
         category: gv
       - name: DispatchDirectUserMsg
         category: func
+      - name: gClientUserMsgs
+        category: gv
       - name: Cvar_DirectSet
         category: func
       - name: NLoadBlob
