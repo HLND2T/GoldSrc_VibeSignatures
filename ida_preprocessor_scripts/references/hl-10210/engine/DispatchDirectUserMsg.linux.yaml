@@ -1,0 +1,87 @@
+func_name: "DispatchDirectUserMsg"
+func_va: "0x144450"
+disasm_code: |-
+  .text:00144450                 ; Source: engine/cl_parse.c:DispatchDirectUserMsg.
+  Linux DWARF places gClientUserMsgs at 0x4D67E0 in .bss; Hex-Rays still renders MEMORY[0x4D67E0].
+  Binary invokes pfn inside the name-match loop; public source calls it after the walk.
+  .text:00144450                 push    ebp; Source: engine/cl_parse.c:DispatchDirectUserMsg.
+  .text:00144451                 push    edi
+  .text:00144452                 push    esi
+  .text:00144453                 xor     esi, esi
+  .text:00144455                 push    ebx
+  .text:00144456                 sub     esp, 1Ch
+  .text:00144459                 ; target: gClientUserMsgs
+  .text:00144459                 mov     edi, ds:4D67E0h; target: gClientUserMsgs
+  .text:0014445F                 mov     ebx, [esp+2Ch+pszName]
+  .text:00144463                 test    pList, pList
+  .text:00144465                 jz      short loc_1444B2
+  .text:00144467                 mov     fFound, fFound
+  .text:00144469                 lea     pList, [pList+0]
+  .text:00144470                 lea     ebp, [pList+8]
+  .text:00144473                 ; s2
+  .text:00144473                 mov     [esp+2Ch+s2], ebp; s2
+  .text:00144477                 ; s1
+  .text:00144477                 mov     [esp+2Ch+s1], ebx; s1
+  .text:0014447A                 call    Q_stricmp
+  .text:0014447F                 test    eax, eax
+  .text:00144481                 jnz     short loc_1444AB
+  .text:00144483                 mov     eax, [pList+4]
+  .text:00144486                 mov     esi, [pList+1Ch]
+  .text:00144489                 cmp     iMsgSize, 0FFFFFFFFh
+  .text:0014448C                 cmovz   iMsgSize, [esp+2Ch+iSize]
+  .text:00144491                 test    esi, esi
+  .text:00144493                 jz      short loc_1444C0
+  .text:00144495                 mov     edx, [esp+2Ch+pBuf]
+  .text:00144499                 mov     [esp+2Ch+s2], iMsgSize
+  .text:0014449D                 mov     [esp+2Ch+s1], ebp
+  .text:001444A0                 mov     [esp+2Ch+var_24], edx
+  .text:001444A4                 call    esi
+  .text:001444A6                 mov     esi, 1
+  .text:001444AB                 mov     pList, [pList+18h]
+  .text:001444AE                 test    pList, pList
+  .text:001444B0                 jnz     short loc_144470
+  .text:001444B2                 add     esp, 1Ch
+  .text:001444B5                 mov     eax, esi
+  .text:001444B7                 pop     ebx
+  .text:001444B8                 pop     esi
+  .text:001444B9                 pop     pList
+  .text:001444BA                 pop     ebp
+  .text:001444BB                 retn
+  .text:001444C0                 mov     iMsgSize, [pList]
+  .text:001444C2                 mov     esi, 1
+  .text:001444C7                 mov     [esp+2Ch+s2], ebp
+  .text:001444CB                 mov     [esp+2Ch+s1], offset aUsermsgNoPfnSD; "UserMsg: No pfn %s %d\n"
+  .text:001444D2                 mov     [esp+2Ch+var_24], eax
+  .text:001444D6                 call    Con_DPrintf
+  .text:001444DB                 jmp     short loc_1444AB
+procedure: |-
+  int __cdecl DispatchDirectUserMsg(const char *pszName, int iSize, void *pBuf)
+  {
+    int fFound; // esi
+    UserMsg *pList; // edi
+    int iMsgSize; // eax
+    void (__cdecl *pfnRet)(char *, int, void *); // esi
+  
+    fFound = 0;
+    for ( pList = MEMORY[0x4D67E0]; pList; pList = pList->next ) // target: gClientUserMsgs
+    {
+      if ( !Q_stricmp(pszName, pList->szName) )
+      {
+        iMsgSize = pList->iSize;
+        pfnRet = (void (__cdecl *)(char *, int, void *))pList->pfn;
+        if ( iMsgSize == -1 )
+          iMsgSize = iSize;
+        if ( pfnRet )
+        {
+          pfnRet(pList->szName, iMsgSize, pBuf);
+          fFound = 1;
+        }
+        else
+        {
+          fFound = 1;
+          Con_DPrintf("UserMsg: No pfn %s %d\n", pList->szName, pList->iMsg);
+        }
+      }
+    }
+    return fFound;
+  }

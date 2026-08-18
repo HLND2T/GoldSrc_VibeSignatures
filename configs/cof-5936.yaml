@@ -39,6 +39,14 @@ modules:
           - CBaseUI__Initialize.{platform}.yaml
         expected_output:
           - g_pClientFactory.{platform}.yaml
+      - name: find-DispatchDirectUserMsg
+        expected_output:
+          - DispatchDirectUserMsg.{platform}.yaml
+      - name: find-DispatchDirectUserMsg-decompiles
+        expected_input:
+          - DispatchDirectUserMsg.{platform}.yaml
+        expected_output:
+          - gClientUserMsgs.{platform}.yaml
       - name: find-NLoadBlob
         platform: windows
         expected_output:
@@ -77,6 +85,10 @@ modules:
       - name: g_phClientModule
         category: gv
       - name: g_pClientFactory
+        category: gv
+      - name: DispatchDirectUserMsg
+        category: func
+      - name: gClientUserMsgs
         category: gv
   - name: client
     module_windows: client.dll

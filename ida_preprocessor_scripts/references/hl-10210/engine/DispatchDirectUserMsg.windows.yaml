@@ -1,0 +1,77 @@
+func_name: "DispatchDirectUserMsg"
+func_va: "0x101a9260"
+disasm_code: |-
+  .text:101A9260                 ; Source: engine/cl_parse.c:DispatchDirectUserMsg.
+  Binary invokes pfn inside the name-match loop; public source calls it after the walk.
+  Windows compares names with Q_strcasecmp; official source / Linux use Q_stricmp.
+  .text:101A9260                 push    ebp; Source: engine/cl_parse.c:DispatchDirectUserMsg.
+  .text:101A9261                 mov     ebp, esp
+  .text:101A9263                 push    ebx
+  .text:101A9264                 push    esi
+  .text:101A9265                 mov     esi, gClientUserMsgs; target: gClientUserMsgs
+  .text:101A926B                 xor     ebx, ebx
+  .text:101A926D                 test    esi, esi
+  .text:101A926F                 jz      short loc_101A92BA
+  .text:101A9271                 push    edi
+  .text:101A9272                 lea     edi, [esi+8]
+  .text:101A9275                 ; s2
+  .text:101A9275                 push    edi; s2
+  .text:101A9276                 ; s1
+  .text:101A9276                 push    [ebp+s1]; s1
+  .text:101A9279                 call    Q_strcasecmp
+  .text:101A927E                 add     esp, 8
+  .text:101A9281                 test    eax, eax
+  .text:101A9283                 jnz     short loc_101A92B2
+  .text:101A9285                 mov     ecx, [esi+1Ch]
+  .text:101A9288                 lea     ebx, [eax+1]
+  .text:101A928B                 mov     eax, [esi+4]
+  .text:101A928E                 cmp     eax, 0FFFFFFFFh
+  .text:101A9291                 cmovz   eax, [ebp+iSize]
+  .text:101A9295                 test    ecx, ecx
+  .text:101A9297                 jnz     short loc_101A92A8
+  .text:101A9299                 push    dword ptr [esi]
+  .text:101A929B                 ; ArgList
+  .text:101A929B                 push    edi; ArgList
+  .text:101A929C                 push    offset aUsermsgNoPfnSD; "UserMsg: No pfn %s %d\n"
+  .text:101A92A1                 call    Con_DPrintf
+  .text:101A92A6                 jmp     short loc_101A92AF
+  .text:101A92A8                 push    [ebp+pBuf]
+  .text:101A92AB                 push    eax
+  .text:101A92AC                 push    edi
+  .text:101A92AD                 call    ecx
+  .text:101A92AF                 add     esp, 0Ch
+  .text:101A92B2                 mov     esi, [esi+18h]
+  .text:101A92B5                 test    esi, esi
+  .text:101A92B7                 jnz     short loc_101A9272
+  .text:101A92B9                 pop     edi
+  .text:101A92BA                 pop     esi
+  .text:101A92BB                 mov     eax, ebx
+  .text:101A92BD                 pop     ebx
+  .text:101A92BE                 pop     ebp
+  .text:101A92BF                 retn
+procedure: |-
+  int __cdecl DispatchDirectUserMsg(const char *pszName, int iSize, void *pBuf)
+  {
+    UserMsg *pList; // esi
+    int fFound; // ebx
+    void (__cdecl *pfnRet)(char *, int, void *); // ecx
+    int iMsgSize; // eax
+  
+    pList = gClientUserMsgs; // target: gClientUserMsgs
+    for ( fFound = 0; pList; pList = pList->next )
+    {
+      if ( !Q_strcasecmp(pszName, pList->szName) )
+      {
+        pfnRet = (void (__cdecl *)(char *, int, void *))pList->pfn;
+        fFound = 1;
+        iMsgSize = pList->iSize;
+        if ( iMsgSize == -1 )
+          iMsgSize = iSize;
+        if ( pfnRet )
+          pfnRet(pList->szName, iMsgSize, pBuf);
+        else
+          Con_DPrintf("UserMsg: No pfn %s %d\n", pList->szName, pList->iMsg);
+      }
+    }
+    return fFound;
+  }
