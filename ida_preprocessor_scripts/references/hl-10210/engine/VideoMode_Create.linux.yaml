@@ -1,0 +1,184 @@
+func_name: "VideoMode_Create"
+func_va: "0x1b4860"
+disasm_code: |-
+  .text:001B4860                 push    esi
+  .text:001B4861                 mov     esi, offset aScreenwindowed; "ScreenWindowed"
+  .text:001B4866                 push    ebx
+  .text:001B4867                 xor     ebx, ebx
+  .text:001B4869                 sub     esp, 34h
+  .text:001B486C                 mov     eax, registry
+  .text:001B4871                 mov     edx, [eax]
+  .text:001B4873                 mov     [esp+3Ch+var_34], ebx
+  .text:001B4877                 mov     [esp+3Ch+var_38], esi
+  .text:001B487B                 mov     [esp+3Ch+parm], eax
+  .text:001B487E                 call    dword ptr [edx+8]
+  .text:001B4881                 ; parm
+  .text:001B4881                 mov     [esp+3Ch+parm], offset aSw; parm
+  .text:001B4888                 mov     ebx, eax
+  .text:001B488A                 call    COM_CheckParm
+  .text:001B488F                 test    eax, eax
+  .text:001B4891                 jz      loc_1B4988
+  .text:001B4897                 mov     esi, 1
+  .text:001B489C                 mov     bl, 1
+  .text:001B489E                 mov     eax, registry
+  .text:001B48A3                 mov     ecx, offset aScreenwindowed; "ScreenWindowed"
+  .text:001B48A8                 mov     edx, [eax]
+  .text:001B48AA                 mov     [esp+3Ch+var_34], esi
+  .text:001B48AE                 xor     esi, esi
+  .text:001B48B0                 mov     [esp+3Ch+var_38], ecx
+  .text:001B48B4                 mov     [esp+3Ch+parm], eax
+  .text:001B48B7                 call    dword ptr [edx+0Ch]
+  .text:001B48BA                 mov     eax, registry
+  .text:001B48BF                 mov     ecx, offset aEngined3d; "EngineD3D"
+  .text:001B48C4                 mov     edx, [eax]
+  .text:001B48C6                 mov     [esp+3Ch+var_38], ecx
+  .text:001B48CA                 mov     [esp+3Ch+var_34], esi
+  .text:001B48CE                 mov     [esp+3Ch+parm], eax
+  .text:001B48D1                 call    dword ptr [edx+8]
+  .text:001B48D4                 mov     [esp+3Ch+parm], offset aD3d; "-d3d"
+  .text:001B48DB                 call    COM_CheckParm
+  .text:001B48E0                 test    eax, eax
+  .text:001B48E2                 jz      loc_1B49E0
+  .text:001B48E8                 ; size
+  .text:001B48E8                 mov     [esp+3Ch+parm], 1BCh; size
+  .text:001B48EF                 call    near ptr _Znwj; operator new(uint)
+  .text:001B48F4                 ; inlined CVideoMode_OpenGL::CVideoMode_OpenGL(bool): begin (DWARF sys_getmodes.cpp:2345)
+  .text:001B48F4                 xor     edx, edx; inlined CVideoMode_OpenGL::CVideoMode_OpenGL(bool): begin (DWARF sys_getmodes.cpp:2345)
+  .text:001B48F6                 xor     ecx, ecx
+  .text:001B48F8                 ; inlined CVideoMode_Common::CVideoMode_Common(): begin (DWARF)
+  .text:001B48F8                 mov     dword ptr [eax], offset CVideoMode_Common_vftable; inlined CVideoMode_Common::CVideoMode_Common(): begin (DWARF)
+  .text:001B48FE                 mov     esi, eax
+  .text:001B4900                 ; inlined CUtlVector<CVideoMode_Common::bimage_t>::CUtlVector(): begin (DWARF)
+  .text:001B4900                 mov     [eax+19Ch], edx; inlined CUtlVector<CVideoMode_Common::bimage_t>::CUtlVector(): begin (DWARF)
+  .text:001B4906                 mov     [eax+1A0h], ecx
+  .text:001B490C                 xor     eax, eax
+  .text:001B490E                 mov     [esi+1A4h], eax
+  .text:001B4914                 xor     eax, eax
+  .text:001B4916                 ; inlined CUtlVector<CVideoMode_Common::bimage_t>::CUtlVector(): end
+  .text:001B4916                 mov     [esi+1A8h], eax; inlined CUtlVector<CVideoMode_Common::bimage_t>::CUtlVector(): end
+  .text:001B491C                 xor     eax, eax
+  .text:001B491E                 mov     [esi+190h], eax
+  .text:001B4924                 xor     eax, eax
+  .text:001B4926                 mov     [esi+194h], eax
+  .text:001B492C                 lea     eax, [esp+3Ch+mode]
+  .text:001B4930                 mov     byte ptr [esi+1B8h], 0
+  .text:001B4937                 mov     byte ptr [esi+198h], 0
+  .text:001B493E                 mov     [esp+3Ch+var_38], eax
+  .text:001B4942                 mov     [esp+3Ch+parm], 0
+  .text:001B4949                 call    near ptr SDL_GetDesktopDisplayMode
+  .text:001B494E                 mov     eax, [esp+3Ch+mode.w]
+  .text:001B4952                 mov     dword ptr [esi], offset CVideoMode_OpenGL_vftable
+  .text:001B4958                 mov     [esi+1B8h], bl
+  .text:001B495E                 mov     ds:videomode, esi; target: videomode
+  .text:001B4964                 mov     [esi+184h], eax
+  .text:001B496A                 mov     eax, [esp+3Ch+mode.h]
+  .text:001B496E                 mov     [esi+188h], eax
+  .text:001B4974                 mov     eax, 20h ; ' '
+  .text:001B4979                 ; inlined CVideoMode_Common::CVideoMode_Common() and CVideoMode_OpenGL::CVideoMode_OpenGL(bool): end
+  .text:001B4979                 mov     [esi+18Ch], eax; inlined CVideoMode_Common::CVideoMode_Common() and CVideoMode_OpenGL::CVideoMode_OpenGL(bool): end
+  .text:001B497F                 add     esp, 34h
+  .text:001B4982                 pop     windowed
+  .text:001B4983                 pop     esi
+  .text:001B4984                 retn
+  .text:001B4988                 mov     [esp+3Ch+parm], offset aStartwindowed; "-startwindowed"
+  .text:001B498F                 call    COM_CheckParm
+  .text:001B4994                 test    eax, eax
+  .text:001B4996                 jnz     loc_1B4897
+  .text:001B499C                 mov     [esp+3Ch+parm], offset aWindowed; "-windowed"
+  .text:001B49A3                 call    COM_CheckParm
+  .text:001B49A8                 test    eax, eax
+  .text:001B49AA                 jnz     loc_1B4897
+  .text:001B49B0                 mov     [esp+3Ch+parm], offset aWindow; "-window"
+  .text:001B49B7                 call    COM_CheckParm
+  .text:001B49BC                 test    eax, eax
+  .text:001B49BE                 mov     esi, eax
+  .text:001B49C0                 jnz     loc_1B4897
+  .text:001B49C6                 mov     [esp+3Ch+parm], offset aFull; "-full"
+  .text:001B49CD                 call    COM_CheckParm
+  .text:001B49D2                 test    eax, eax
+  .text:001B49D4                 jz      short loc_1B49F8
+  .text:001B49D6                 xor     ebx, ebx
+  .text:001B49D8                 jmp     loc_1B489E
+  .text:001B49E0                 mov     [esp+3Ch+parm], offset aGl; "-gl"
+  .text:001B49E7                 call    COM_CheckParm
+  .text:001B49EC                 jmp     loc_1B48E8
+  .text:001B49F8                 mov     [esp+3Ch+parm], offset aFullscreen; "-fullscreen"
+  .text:001B49FF                 call    COM_CheckParm
+  .text:001B4A04                 test    eax, eax
+  .text:001B4A06                 jnz     short loc_1B49D6
+  .text:001B4A08                 test    ebx, ebx
+  .text:001B4A0A                 setnz   bl
+  .text:001B4A0D                 movzx   esi, bl
+  .text:001B4A10                 jmp     loc_1B489E
+  .text:001B4A15                 mov     windowed, eax
+  .text:001B4A17                 ; inlined constructor exception-cleanup path (DWARF)
+  .text:001B4A17                 lea     eax, [esi+19Ch]; inlined constructor exception-cleanup path (DWARF)
+  .text:001B4A1D                 ; this
+  .text:001B4A1D                 mov     [esp+0], eax; this
+  .text:001B4A20                 call    _ZN10CUtlVectorIN17CVideoMode_Common8bimage_tEED2Ev; CUtlVector<CVideoMode_Common::bimage_t>::~CUtlVector()
+  .text:001B4A25                 ; ptr
+  .text:001B4A25                 mov     [esp+0], esi; ptr
+  .text:001B4A28                 call    near ptr _ZdlPv; operator delete(void *)
+  .text:001B4A2D                 ; exceptionObject
+  .text:001B4A2D                 mov     [esp+0], ebx; exceptionObject
+  .text:001B4A30                 call    near ptr _Unwind_Resume
+procedure: |-
+  // Source mismatch: this shipped build retains EngineD3D/-d3d/-gl handling absent from the local official-source revision; current DWARF and machine code are authoritative.
+  void __cdecl VideoMode_Create()
+  {
+    int registryWindowed; // ebx
+    int windowedValue; // esi
+    bool windowed; // bl
+    CVideoMode_OpenGL *allocatedVideoMode; // eax
+    CVideoMode_OpenGL *newVideoMode; // esi
+    int desktopWidth; // eax
+    SDL_DisplayMode mode; // [esp+1Ch] [ebp-20h] BYREF
+
+    registryWindowed = (*((int (__cdecl **)(IRegistry *, const char *, _DWORD))registry->_vptr_IRegistry + 2))(
+                         registry,
+                         "ScreenWindowed",
+                         0);
+    if ( COM_CheckParm("-sw")
+      || COM_CheckParm("-startwindowed")
+      || COM_CheckParm("-windowed")
+      || (windowedValue = COM_CheckParm("-window")) != 0 )
+    {
+      windowedValue = 1;
+      windowed = 1;
+    }
+    else if ( COM_CheckParm("-full") || COM_CheckParm("-fullscreen") )
+    {
+      windowed = 0;
+    }
+    else
+    {
+      windowed = registryWindowed != 0;
+      windowedValue = windowed;
+    }
+    (*((void (__cdecl **)(IRegistry *, const char *, int))registry->_vptr_IRegistry + 3))(
+      registry,
+      "ScreenWindowed",
+      windowedValue);
+    (*((void (__cdecl **)(IRegistry *, const char *, _DWORD))registry->_vptr_IRegistry + 2))(registry, "EngineD3D", 0);
+    if ( !COM_CheckParm("-d3d") )
+      COM_CheckParm("-gl");
+    allocatedVideoMode = (CVideoMode_OpenGL *)operator new(0x1BCu);
+    allocatedVideoMode->_vptr_IVideoMode = (int (**)(...))&CVideoMode_Common_vftable;
+    newVideoMode = allocatedVideoMode;
+    allocatedVideoMode->m_ImageID.m_Memory.m_pMemory = nullptr;
+    allocatedVideoMode->m_ImageID.m_Memory.m_NumAllocated = 0;
+    allocatedVideoMode->m_ImageID.m_Memory.m_GrowSize = 0;
+    allocatedVideoMode->m_ImageID.m_Size = 0;
+    allocatedVideoMode->m_nNumModes = 0;
+    allocatedVideoMode->m_nGameMode = 0;
+    allocatedVideoMode->m_bWindowed = 0;
+    allocatedVideoMode->m_bInitialized = 0;
+    SDL_GetDesktopDisplayMode(0, &mode);
+    desktopWidth = mode.w;
+    newVideoMode->_vptr_IVideoMode = (int (**)(...))&CVideoMode_OpenGL_vftable;
+    newVideoMode->m_bWindowed = windowed;
+    videomode = newVideoMode;            // target: videomode
+    newVideoMode->m_safeMode.width = desktopWidth;
+    newVideoMode->m_safeMode.height = mode.h;
+    newVideoMode->m_safeMode.bpp = 32;
+  }
