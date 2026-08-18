@@ -181,11 +181,7 @@ class PreprocessStatusTests(unittest.TestCase):
             "_intersected_candidates",
             "_signature_candidates",
         }
-        function_nodes = [
-            node
-            for node in tree.body
-            if isinstance(node, ast.FunctionDef) and node.name in wanted
-        ]
+        function_nodes = [node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name in wanted]
         contained = {0x1000: True, 0x2000: False}
         namespace = {
             "SIGNATURE_XREF_PROBE_MAX_CANDIDATES": 256,
