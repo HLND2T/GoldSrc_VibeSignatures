@@ -17,6 +17,7 @@ GROUP_FILES = {
         "test_format_repo_files.py",
         "test_ida_llm_decompile.py",
         "test_ida_skill_preprocessor.py",
+        "test_cvar_callbacks_preprocessor.py",
         "test_analysis_planner.py",
         "test_process_api.py",
         "test_process_reporter.py",

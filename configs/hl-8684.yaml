@@ -52,12 +52,16 @@ modules:
       - name: find-cl_parsefuncs
         expected_output:
           - cl_parsefuncs.{platform}.yaml
+      - name: find-Cvar_DirectSet
+        expected_output:
+          - Cvar_DirectSet.{platform}.yaml
       - name: find-Cvar_Set
         expected_output:
           - Cvar_Set.{platform}.yaml
       - name: find-cvar_callbacks
         expected_input:
           - Cvar_Set.{platform}.yaml
+          - Cvar_DirectSet.{platform}.yaml
         expected_output:
           - cvar_callbacks.{platform}.yaml
       - name: find-NLoadBlob
@@ -105,6 +109,8 @@ modules:
         category: gv
       - name: cl_parsefuncs
         category: gv
+      - name: Cvar_DirectSet
+        category: func
       - name: Cvar_Set
         category: func
       - name: cvar_callbacks

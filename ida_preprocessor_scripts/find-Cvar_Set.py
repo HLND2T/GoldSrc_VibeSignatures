@@ -5,8 +5,8 @@ HL25 added cvarhook_t dispatch after Cvar_DirectSet. Official leak
 engine/cvar.c has no hooks; Linux DWARF names the list cvar_hooks and
 the registrar Cvar_HookVariable. GCC inlines the Cvar_Set body into
 Cvar_SetValue and Cvar_CommandWithPrivilegeCheck, so
-FULLMATCH "Cvar_Set: variable %s not found\\n" has three function
-xrefs on Linux and one on Windows.
+FULLMATCH "Cvar_Set: variable %s not found\\n" has three to four
+function xrefs on Linux and one on Windows.
 
 Cvar_Set is the unique owner whose only C-string data ref is that
 diagnostic. The inlined copies also xref "%f"/"%d" or the command /
@@ -23,7 +23,6 @@ from ida_analyze_util import (
 TARGET_FUNCTION_NAME = "Cvar_Set"
 
 LOCATE_PY = r"""
-import ida_bytes
 import ida_funcs
 import ida_name
 import ida_nalt
@@ -55,18 +54,16 @@ def functions_for_string(sea):
             starts.append(int(func.start_ea))
     return sorted(set(starts))
 
-def c_strings(func_start):
-    found = []
+def c_string_eas(func_start):
+    found = set()
     for head in idautils.FuncItems(int(func_start)):
         for xref in idautils.DataRefsFrom(int(head)):
-            raw = idc.get_strlit_contents(int(xref))
-            if not raw:
-                continue
             try:
-                found.append(raw.decode('ascii'))
+                if idc.get_strlit_contents(int(xref)) is not None:
+                    found.add(int(xref))
             except Exception:
                 continue
-    return found
+    return sorted(found)
 
 globals().update(locals())
 
@@ -81,13 +78,13 @@ try:
     survivors = []
     rejected = []
     for start in owners:
-        texts = c_strings(start)
+        string_eas = c_string_eas(start)
         rec = {
             'ea': hex(start),
             'name': idc.get_func_name(start) or '',
-            'strings': texts,
+            'strings': [hex(ea) for ea in string_eas],
         }
-        if set(texts) == {CVAR_SET_MSG}:
+        if len(strings) == 1 and string_eas == strings:
             survivors.append(rec)
         else:
             rejected.append(rec)
@@ -128,7 +125,11 @@ async def _locate_cvar_set(session):
         return None
     if payload.get("error") or payload.get("pointer_size") != 4:
         return payload if isinstance(payload, dict) else None
-    if int(payload.get("string_count") or 0) != 1:
+    try:
+        string_count = int(payload.get("string_count") or 0)
+    except (TypeError, ValueError):
+        return None
+    if string_count != 1:
         return payload
     if "func_ea" not in payload:
         return None

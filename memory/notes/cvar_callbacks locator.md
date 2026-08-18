@@ -19,17 +19,24 @@ Need the HL25 cvar hook list head (`cvarhook_t *cvar_hooks`, MetaHook name `cvar
 - Linux DWARF/symtab name is `cvar_hooks` (4-byte `.bss` next to `cvar_vars`). Artifact / MetaHook name is `cvar_callbacks`.
 - Exists only on `hl-8684` and `hl-10210`. Absent from older `hl-*`, SvEngine, and CoF.
 - `FULLMATCH:Cvar_Set: variable %s not found\n` is unique on Windows (1 owner) and shared on Linux (3–4 owners: `Cvar_Set`, inlined `Cvar_SetValue`, `Cvar_CommandWithPrivilegeCheck`).
-- `Cvar_Set` is the unique owner whose only C-string data ref is that diagnostic.
-- After `Cvar_DirectSet` (`FULLMATCH:***PROTECTED***`), `Cvar_Set` loads the list head (`mov eax, [abs]`, 5 bytes, disp 1). Linux also loads `cvar_vars` *before* that call; do not take the first absolute load.
+- `Cvar_Set` is the unique owner whose only readable string data ref is that diagnostic; compare referenced addresses and raw string bytes rather than dropping non-ASCII text.
+- `find-Cvar_DirectSet` already anchors `FULLMATCH:***PROTECTED***`; reuse its artifact instead of resolving that string again.
+- `Cvar_Set` has one direct call to `Cvar_DirectSet`. Its immediate fall-through instruction loads the list head (`mov reg32, [abs32]`, 5 bytes, disp 1) from writable non-executable data.
+- The reachable hook loop compares node `+4` with the changed `cvar_t *`, advances through node `+8`, and invokes the callback at node `+0`.
+- Linux also loads inlined `cvar_vars` *before* the DirectSet call; do not take the first absolute load in the function.
 - Consumer needs the **global value** (list-head pointer), not a code-operand field.
 
 ## Correct approach
-1. `find-Cvar_Set`: unique error string + sole C-string filter.
-2. `find-cvar_callbacks`: first non-executable 32-bit absolute load after the `Cvar_DirectSet` call.
-3. Runtime: `gv = *(uint32_t *)(match + gv_inst_offset + gv_inst_disp)`.
+1. `find-Cvar_Set`: unique error string + sole C-string-address filter.
+2. `find-Cvar_DirectSet`: existing exact `***PROTECTED***` string finder.
+3. `find-cvar_callbacks`: unique direct call, immediate writable absolute load, then reachable `+4/+8/+0` hook-loop validation.
+4. Runtime: `gv = *(uint32_t *)(match + gv_inst_offset + gv_inst_disp)`.
 
 ## Verification
-`-gamever hl-10210` / `hl-8684` `-modules engine -skill find-Cvar_Set` then `-skill find-cvar_callbacks` `-platform windows,linux`: 2/0/0 each.
+- `hl-10210` / `hl-8684` `find-Cvar_Set`, Windows + Linux: `2/0/0` each.
+- `hl-8684` `find-Cvar_DirectSet`, Windows + Linux: `2/0/0`.
+- `hl-10210` / `hl-8684` `find-cvar_callbacks`, Windows + Linux: `2/0/0` each.
+- Regenerated `Cvar_Set` and `cvar_callbacks` YAML files are byte-identical to the prior verified artifacts.
 
 | Binary | Cvar_Set | cvar_callbacks | insn |
 | --- | --- | --- | --- |

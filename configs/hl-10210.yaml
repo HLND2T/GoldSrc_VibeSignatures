@@ -61,6 +61,7 @@ modules:
       - name: find-cvar_callbacks
         expected_input:
           - Cvar_Set.{platform}.yaml
+          - Cvar_DirectSet.{platform}.yaml
         expected_output:
           - cvar_callbacks.{platform}.yaml
       - name: find-NLoadBlob
