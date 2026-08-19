@@ -11,7 +11,7 @@ import yaml
 
 from analysis_config import AnalysisConfigError, resolve_analysis_config, validated_tag
 from binary_format import BinaryFormatError, validate_binary
-from depot_util import resolve_module_depot_path, safe_relative_path
+from depot_util import module_depot_path, safe_relative_path
 from download_depot import ConfigError as DownloadConfigError
 from download_depot import find_download_entry, load_downloads
 
@@ -41,10 +41,6 @@ def _safe_component(value: object, field: str) -> str:
     return value
 
 
-def _safe_source_path(value: object, field: str) -> str:
-    return safe_relative_path(value, field)
-
-
 def parse_config(config_path: str | Path) -> list[dict]:
     try:
         document = yaml.safe_load(Path(config_path).read_bytes()) or {}
@@ -64,16 +60,13 @@ def parse_config(config_path: str | Path) -> list[dict]:
             raise ValueError(f"Case-insensitive module collision: {prior!r} and {name!r}")
         item = {"name": name}
         for platform in PLATFORMS:
-            for prefix in ("depot", "path"):
-                value = module.get(f"{prefix}_{platform}")
-                item[f"{prefix}_{platform}"] = (
-                    None if value is None else _safe_source_path(value, f"modules[{index}].{prefix}_{platform}")
-                )
+            value = module.get(f"depot_{platform}")
+            item[f"depot_{platform}"] = (
+                None if value is None else safe_relative_path(value, f"modules[{index}].depot_{platform}")
+            )
             binary_name = module.get(f"module_{platform}")
             if binary_name is not None:
                 item[f"module_{platform}"] = _safe_component(binary_name, f"modules[{index}].module_{platform}")
-            elif item[f"path_{platform}"] is not None:
-                item[f"module_{platform}"] = item[f"path_{platform}"].rsplit("/", 1)[-1]
             else:
                 item[f"module_{platform}"] = None
         binary_names = [item[f"module_{platform}"] for platform in PLATFORMS if item[f"module_{platform}"] is not None]
@@ -109,7 +102,7 @@ def iter_module_entries(module, bin_dir, gamever, platform_filter, depot_dir, ba
     entries = []
     for target in iter_module_targets(module, bin_dir, gamever, platform_filter):
         platform = target["platform"]
-        source_rel = resolve_module_depot_path(module, platform, basepath, f"module {module['name']!r}")
+        source_rel = module_depot_path(module, platform, f"module {module['name']!r}")
         if source_rel is None:
             raise ValueError(f"module {module['name']!r} declares {platform} but has no depot_{platform}")
         source = Path(depot_dir).joinpath(*PurePosixPath(basepath).parts, *PurePosixPath(source_rel).parts)

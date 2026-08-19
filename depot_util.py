@@ -28,23 +28,7 @@ def safe_relative_path(value: object, field: str) -> str:
     return path.as_posix()
 
 
-def resolve_module_depot_path(module: dict, platform: str, basepath: str, context: str) -> str | None:
-    base = PurePosixPath(safe_relative_path(basepath, "basepath"))
+def module_depot_path(module: dict, platform: str, context: str) -> str | None:
     depot_field = f"{context}.depot_{platform}"
-    legacy_field = f"{context}.path_{platform}"
     depot_value = module.get(f"depot_{platform}")
-    legacy_value = module.get(f"path_{platform}")
-    depot_path = None if depot_value is None else safe_relative_path(depot_value, depot_field)
-    legacy_path = None
-    if legacy_value is not None:
-        source = PurePosixPath(safe_relative_path(legacy_value, legacy_field))
-        try:
-            relative = source.relative_to(base)
-        except ValueError as exc:
-            raise ValueError(f"{legacy_field} must be within basepath {base.as_posix()!r}") from exc
-        if not relative.parts:
-            raise ValueError(f"{legacy_field} must name a file below basepath {base.as_posix()!r}")
-        legacy_path = relative.as_posix()
-    if depot_path is not None and legacy_path is not None and depot_path != legacy_path:
-        raise ValueError(f"{depot_field} and {legacy_field} must identify the same depot file")
-    return depot_path or legacy_path
+    return None if depot_value is None else safe_relative_path(depot_value, depot_field)

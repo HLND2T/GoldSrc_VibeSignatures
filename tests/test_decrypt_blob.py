@@ -222,7 +222,7 @@ class BlobDecryptionTests(unittest.TestCase):
                     ("engine", "windows"): BinaryTarget(
                         module_name="engine",
                         platform="windows",
-                        source_path="Half-Life-1/hw.dll",
+                        source_path=None,
                         binary_name="hw.dll",
                     )
                 },
@@ -231,7 +231,7 @@ class BlobDecryptionTests(unittest.TestCase):
             metadata = collect_binary_metadata(contract)["engine"]["windows"]
 
             hashes = hash_file(binary)
-            self.assertEqual("Half-Life-1/hw.dll", metadata["path"])
+            self.assertNotIn("path", metadata)
             for name in ("sha256", "md5", "crc32", "crc64", "size"):
                 self.assertEqual(hashes[name], metadata[name])
 

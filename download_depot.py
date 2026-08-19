@@ -13,7 +13,7 @@ import yaml
 from dotenv import load_dotenv
 
 from analysis_config import AnalysisConfigError, resolve_analysis_config, validated_tag
-from depot_util import append_auth_args, resolve_module_depot_path, run_command, safe_relative_path
+from depot_util import append_auth_args, module_depot_path, run_command, safe_relative_path
 
 DEFAULT_CONFIG_FILE = "download.yaml"
 DEFAULT_DEPOT_DIR = "depots"
@@ -105,13 +105,14 @@ def load_module_filelist(configyaml_path: str | Path, basepath: str) -> list[str
     modules = document.get("modules") if isinstance(document, dict) else None
     if not isinstance(modules, list):
         raise ConfigError("Analysis config must contain a modules list")
+    _safe_relative(basepath, "basepath")
     paths: set[str] = set()
     for index, module in enumerate(modules):
         if not isinstance(module, dict):
             raise ConfigError(f"modules[{index}] must be a mapping")
         for platform in ("windows", "linux"):
             try:
-                relative = resolve_module_depot_path(module, platform, basepath, f"modules[{index}]")
+                relative = module_depot_path(module, platform, f"modules[{index}]")
             except ValueError as exc:
                 raise ConfigError(str(exc)) from exc
             if relative is not None:

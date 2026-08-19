@@ -15,7 +15,7 @@ from analysis_config import (
     iter_analysis_config_tags,
     validated_tag,
 )
-from tests.test_support import write_config, write_pe32
+from tests.test_support import write_pe32
 
 
 class TagAndConfigTests(unittest.TestCase):
@@ -196,37 +196,26 @@ class DownloadConfigTests(unittest.TestCase):
         self.assertNotIn("Counter-Strike-10210/cstrike/cl_dlls/client.dll", paths)
         self.assertEqual(len(paths), len(set(paths)))
 
-    def test_filelist_rejects_paths_outside_basepath(self):
+    def test_filelist_rejects_unsafe_depot_paths(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "config.yaml"
             path.write_text(
                 """modules:
   - name: engine
-    path_windows: Other/hw.dll
+    depot_windows: ../Other/hw.dll
 """,
                 encoding="utf-8",
             )
-            with self.assertRaisesRegex(download_depot.ConfigError, "basepath"):
+            with self.assertRaisesRegex(download_depot.ConfigError, "unsafe"):
                 download_depot.load_module_filelist(path, "Game")
 
-    def test_filelist_accepts_relative_depot_paths_and_rejects_conflicting_aliases(self):
+    def test_filelist_accepts_relative_depot_paths(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "config.yaml"
             path.write_text(
                 """modules:
   - name: engine
     depot_windows: valve/hw.dll
-    path_windows: Game/other.dll
-""",
-                encoding="utf-8",
-            )
-            with self.assertRaisesRegex(download_depot.ConfigError, "same depot file"):
-                download_depot.load_module_filelist(path, "Game")
-            path.write_text(
-                """modules:
-  - name: engine
-    depot_windows: valve/hw.dll
-    path_windows: Game/valve/hw.dll
 """,
                 encoding="utf-8",
             )
@@ -331,7 +320,15 @@ class CopyDepotTests(unittest.TestCase):
     def test_copy_and_checkonly_exit_codes(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            config = write_config(root / "config.yaml", both_platforms=False)
+            config = root / "config.yaml"
+            config.write_text(
+                """modules:
+  - name: engine
+    depot_windows: hw.dll
+    module_windows: hw.dll
+""",
+                encoding="utf-8",
+            )
             download_config = root / "download.yaml"
             download_config.write_text(
                 """downloads:
@@ -405,8 +402,8 @@ class CopyDepotTests(unittest.TestCase):
                 yaml.safe_dump(
                     {
                         "modules": [
-                            {"name": "Engine", "path_windows": "Game/a.dll", "module_windows": "a.dll"},
-                            {"name": "engine", "path_windows": "Game/b.dll", "module_windows": "b.dll"},
+                            {"name": "Engine", "depot_windows": "a.dll", "module_windows": "a.dll"},
+                            {"name": "engine", "depot_windows": "b.dll", "module_windows": "b.dll"},
                         ]
                     }
                 ),
