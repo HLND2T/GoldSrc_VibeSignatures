@@ -1,0 +1,244 @@
+name: Game-symbol PR validation
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, closed]
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.repository }}-gamesymbol-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  finalize:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Finish without persisted YAML promotion
+        run: echo "No game-symbol staging or promotion is configured"
+  plan:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    outputs:
+      has_actions: ${{ steps.route.outputs.has_actions }}
+      has_analysis: ${{ steps.route.outputs.has_analysis }}
+      has_hosted: ${{ steps.route.outputs.has_hosted }}
+      same_repository: ${{ steps.route.outputs.same_repository }}
+    steps:
+      - name: Checkout PR merge commit with full history
+        uses: actions/checkout@v5
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          fetch-depth: 0
+          submodules: false
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Export trusted base planner
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          bundle="$RUNNER_TEMP/gamesymbol-validation"
+          mkdir -p "$bundle/base-planner"
+          git archive "$BASE_SHA" -- ':(glob)*.py' gamesymbol_snapshot_lib pyproject.toml uv.lock \
+            | tar -x -C "$bundle/base-planner"
+      - name: Sync trusted base planner environment
+        shell: bash
+        run: uv sync --locked --project "$RUNNER_TEMP/gamesymbol-validation/base-planner"
+      - name: Fetch bin submodule trees without checkout
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          MERGE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          bin_url=$(git config -f .gitmodules --get submodule.bin.url)
+          base_bin=$(git ls-tree "$BASE_SHA" bin | awk '{print $3}')
+          merge_bin=$(git ls-tree "$MERGE_SHA" bin | awk '{print $3}')
+          git clone --filter=blob:none --no-checkout "$bin_url" "$RUNNER_TEMP/bin-objects"
+          git -C "$RUNNER_TEMP/bin-objects" fetch --filter=blob:none origin "$base_bin" "$merge_bin"
+      - name: Generate canonical bound plan with base code
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          MERGE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          uv run --project "$RUNNER_TEMP/gamesymbol-validation/base-planner" \
+            python "$RUNNER_TEMP/gamesymbol-validation/base-planner/gamesymbol_pr_validation.py" plan \
+            -repo-root "$GITHUB_WORKSPACE" \
+            -base-ref "$BASE_SHA" \
+            -head-ref "$HEAD_SHA" \
+            -merge-ref "$MERGE_SHA" \
+            -bin-repo "$RUNNER_TEMP/bin-objects" \
+            -output "$RUNNER_TEMP/gamesymbol-validation/plan.json"
+      - name: Route validation jobs
+        id: route
+        shell: bash
+        env:
+          SAME_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        run: |
+          set -euo pipefail
+          plan="$RUNNER_TEMP/gamesymbol-validation/plan.json"
+          has_actions=$(jq 'any(.tags[]; (.analysis_nodes | length) > 0 or .snapshot_rebuild or .gamedata_rebuild or .deleted)' "$plan")
+          has_analysis=$(jq 'any(.tags[]; (.analysis_nodes | length) > 0)' "$plan")
+          has_hosted=$(jq 'any(.tags[]; (.analysis_nodes | length) == 0 and (.snapshot_rebuild or .gamedata_rebuild or .deleted))' "$plan")
+          echo "has_actions=$has_actions" >> "$GITHUB_OUTPUT"
+          echo "has_analysis=$has_analysis" >> "$GITHUB_OUTPUT"
+          echo "has_hosted=$has_hosted" >> "$GITHUB_OUTPUT"
+          echo "same_repository=$SAME_REPOSITORY" >> "$GITHUB_OUTPUT"
+          if [[ "$has_actions" != "true" ]]; then
+            echo "no affected game-symbol actions"
+          fi
+      - name: Upload trusted plan bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: gamesymbol-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/gamesymbol-validation
+          if-no-files-found: error
+          include-hidden-files: false
+  validate-hosted:
+    needs: plan
+    if: needs.plan.outputs.has_hosted == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR merge commit and exact binaries
+        uses: actions/checkout@v5
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.GSVIBE_BIN_TOKEN || github.token }}
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - uses: actions/download-artifact@v4
+        with:
+          name: gamesymbol-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/gamesymbol-validation
+      - name: Sync trusted base planner environment
+        shell: bash
+        run: uv sync --locked --project "$RUNNER_TEMP/gamesymbol-validation/base-planner"
+      - name: Validate snapshot and gamedata-only actions
+        shell: bash
+        run: |
+          set -euo pipefail
+          plan="$RUNNER_TEMP/gamesymbol-validation/plan.json"
+          base_project="$RUNNER_TEMP/gamesymbol-validation/base-planner"
+          while IFS= read -r tag; do
+            if [[ -e "configs/$tag.yaml" || -e "gamesymbols/$tag.yaml" ]]; then
+              echo "Deleted tag $tag still has a tracked config or snapshot" >&2
+              exit 1
+            fi
+            uv run --project "$base_project" python - "$tag" <<'PY'
+          import sys
+          import yaml
+          tag = sys.argv[1]
+          with open("configs/config.yaml", "rb") as stream:
+              gamevers = (yaml.safe_load(stream) or {}).get("gamevers", [])
+          if tag in gamevers:
+              raise SystemExit(f"Deleted tag {tag} remains in configs/config.yaml")
+          PY
+          done < <(jq -r '.tags[] | select(.deleted) | .tag' "$plan")
+          while IFS= read -r tag; do
+            uv run --project "$base_project" python "$base_project/gamesymbol_pr_validation.py" materialize \
+              -repo-root "$GITHUB_WORKSPACE" -plan "$plan" -tag "$tag" -merge-ref HEAD -bindir bin
+            stage=$(mktemp -d)
+            trap 'rm -rf "$stage"' EXIT
+            uv run python gamesymbol_candidate.py build -gamever "$tag" -bindir bin -configyaml "configs/$tag.yaml" \
+              -output "$stage/$tag.yaml" -session "$stage/symbol-session.json"
+            uv run python gamesymbol_candidate.py guard -candidate "$stage/$tag.yaml" -session "$stage/symbol-session.json"
+            uv run python gamedata_candidate.py build -gamever "$tag" -build-id "pr-${{ github.run_id }}" \
+              -snapshot "$stage/$tag.yaml" -configyaml "configs/$tag.yaml" -modulesdir gamedata-generators \
+              -candidate-root "$stage/gamedata" -session "$stage/gamedata-session.json"
+            uv run python gamedata_candidate.py guard -session "$stage/gamedata-session.json"
+            uv run python gamesymbol_candidate.py compare -candidate "$stage/$tag.yaml" \
+              -expected "gamesymbols/$tag.yaml" -gamever "$tag" -configyaml "configs/$tag.yaml" \
+              -session "$stage/symbol-session.json"
+            rm -rf "$stage"
+            trap - EXIT
+          done < <(jq -r '.tags[] | select((.analysis_nodes | length) == 0 and (.snapshot_rebuild or .gamedata_rebuild) and (.deleted | not)) | .tag' "$plan")
+  analyze-self-hosted:
+    needs: plan
+    if: needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository == 'true'
+    runs-on: [self-hosted, Windows, X64]
+    environment: win64
+    timeout-minutes: 720
+    env:
+      GSVIBE_AGENT: ${{ secrets.GSVIBE_AGENT }}
+      GSVIBE_AGENT_MODEL: ${{ secrets.GSVIBE_AGENT_MODEL }}
+      GSVIBE_LLM_APIKEY: ${{ secrets.GSVIBE_LLM_APIKEY }}
+      GSVIBE_LLM_BASEURL: ${{ secrets.GSVIBE_LLM_BASEURL }}
+      GSVIBE_LLM_EFFORT: ${{ secrets.GSVIBE_LLM_EFFORT }}
+      GSVIBE_LLM_MODEL: ${{ secrets.GSVIBE_LLM_MODEL }}
+      GSVIBE_LLM_TEMPERATURE: ${{ secrets.GSVIBE_LLM_TEMPERATURE }}
+    steps:
+      - name: Checkout PR merge commit and exact binaries
+        uses: actions/checkout@v5
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.GSVIBE_BIN_TOKEN || github.token }}
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - uses: actions/download-artifact@v4
+        with:
+          name: gamesymbol-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/gamesymbol-validation
+      - name: Sync trusted base planner environment
+        shell: powershell
+        run: |
+          $basePlannerRoot = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\base-planner'
+          uv sync --locked --project $basePlannerRoot
+          if ($LASTEXITCODE -ne 0) { throw 'trusted base planner environment sync failed' }
+      - name: Analyze selected nodes and compare actual snapshots
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $planPath = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\plan.json'
+          $basePlannerRoot = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\base-planner'
+          $baseCli = Join-Path $basePlannerRoot 'gamesymbol_pr_validation.py'
+          $plan = Get-Content -Raw -LiteralPath $planPath | ConvertFrom-Json
+          foreach ($action in $plan.tags) {
+            if ($action.analysis_nodes.Count -eq 0) { continue }
+            $tag = $action.tag
+            uv run --project $basePlannerRoot python $baseCli materialize -repo-root $env:GITHUB_WORKSPACE -plan $planPath -tag $tag -merge-ref HEAD -bindir bin
+            if ($LASTEXITCODE -ne 0) { throw "materialization failed for $tag" }
+            $analyzerArgs = @('ida_analyze_bin.py', '-gamever', $tag, '-oldgamever', 'none')
+            foreach ($node in $action.analysis_nodes) { $analyzerArgs += @('-node', $node) }
+            uv run python @analyzerArgs
+            if ($LASTEXITCODE -ne 0) { throw "selected-node analysis failed for $tag" }
+            $stage = Join-Path $env:RUNNER_TEMP ("gamesymbol-$tag-" + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $stage | Out-Null
+            try {
+              $candidate = Join-Path $stage "$tag.yaml"
+              $symbolSession = Join-Path $stage 'symbol-session.json'
+              $gamedataSession = Join-Path $stage 'gamedata-session.json'
+              uv run python gamesymbol_candidate.py build -gamever $tag -bindir bin -configyaml "configs/$tag.yaml" -output $candidate -session $symbolSession
+              if ($LASTEXITCODE -ne 0) { throw "candidate build failed for $tag" }
+              uv run python gamesymbol_candidate.py guard -candidate $candidate -session $symbolSession
+              if ($LASTEXITCODE -ne 0) { throw "candidate guard failed for $tag" }
+              uv run python gamedata_candidate.py build -gamever $tag -build-id "pr-${{ github.run_id }}" -snapshot $candidate `
+                -configyaml "configs/$tag.yaml" -modulesdir gamedata-generators -candidate-root (Join-Path $stage 'gamedata') `
+                -session $gamedataSession
+              if ($LASTEXITCODE -ne 0) { throw "gamedata build failed for $tag" }
+              uv run python gamedata_candidate.py guard -session $gamedataSession
+              if ($LASTEXITCODE -ne 0) { throw "gamedata guard failed for $tag" }
+              uv run python gamesymbol_candidate.py compare -candidate $candidate -expected "gamesymbols/$tag.yaml" `
+                -gamever $tag -configyaml "configs/$tag.yaml" -session $symbolSession
+              if ($LASTEXITCODE -ne 0) { throw "snapshot comparison failed for $tag" }
+            } finally {
+              if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
+            }
+          }
+  fork-analysis-blocked:
+    needs: plan
+    if: needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Fork PR analysis nodes require a trusted same-repository runner" && exit 1

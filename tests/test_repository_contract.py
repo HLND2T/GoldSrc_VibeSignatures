@@ -170,6 +170,9 @@ class RepositoryContractTests(unittest.TestCase):
                                 declared_artifacts,
                                 f"Output {output!r} from {node.id} has no declared symbol",
                             )
+                    contract = load_contract(ROOT / "configs" / f"{tag}.yaml", tag, ROOT / "bin")
+                    self.assertEqual(contract.formal_paths, set(contract.owners_by_path))
+                    self.assertTrue(all(len(owners) == 1 for owners in contract.owners_by_path.values()))
 
         self.assertTrue(saw_registered_skill)
 
@@ -225,6 +228,42 @@ class RepositoryContractTests(unittest.TestCase):
         )
         for command in (*backend_commands, *frontend_commands):
             self.assertIn(command, workflow)
+
+    def test_gamesymbol_pr_workflow_enforces_trusted_split_routing(self):
+        workflow = (ROOT / ".github" / "workflows" / "gamesymbol-pr-validation.yml").read_text(encoding="utf-8")
+        for marker in (
+            "opened, synchronize, reopened, ready_for_review, closed",
+            "cancel-in-progress: true",
+            "refs/pull/${{ github.event.pull_request.number }}/merge",
+            "fetch-depth: 0",
+            "Export trusted base planner",
+            "submodules: false",
+            "Fetch bin submodule trees without checkout",
+            "Sync trusted base planner environment",
+            'uv sync --locked --project "$RUNNER_TEMP/gamesymbol-validation/base-planner"',
+            "validate-hosted:",
+            "analyze-self-hosted:",
+            "same_repository",
+            "-oldgamever', 'none'",
+            "'-node'",
+            "gamesymbol_candidate.py compare",
+            ".snapshot_rebuild or .gamedata_rebuild or .deleted",
+            "Deleted tag $tag still has a tracked config or snapshot",
+            "no affected game-symbol actions",
+        ):
+            self.assertIn(marker, workflow)
+        for forbidden in (
+            "PERSISTED_WORKSPACE",
+            ".i64",
+            ".id0",
+            "LLM_FAKE_AS",
+            "gamesymbol_candidate.py publish",
+            "git commit",
+            "git push",
+            "download.yaml[-1]",
+            "robocopy",
+        ):
+            self.assertNotIn(forbidden, workflow)
 
     def test_published_baseline_snapshots_match_goldsrc_contract(self):
         published = {path.stem for path in (ROOT / "gamesymbols").glob("*.yaml")}

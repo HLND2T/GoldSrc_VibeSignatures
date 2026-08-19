@@ -36,6 +36,8 @@ from ida_analyze_bin import (
     _is_major_update_gamever,
     _merge_survey_path,
     _parse_mcp_tool_json,
+    _select_requested_nodes,
+    _validate_selected_inputs,
     analyze,
     ensure_mcp_available,
     main,
@@ -54,7 +56,7 @@ from ida_skill_preprocessor import (
     PREPROCESS_STATUS_NO_SCRIPT,
     PREPROCESS_STATUS_SUCCESS,
 )
-from process_reporter import RunStatus
+from process_reporter import RunStatus, TaskStatus
 from tests.test_decrypt_blob import make_blob
 from tests.test_support import write_pe32
 
@@ -380,6 +382,32 @@ class CliContractTests(unittest.TestCase):
         self.assertEqual("redis://127.0.0.1:6379/0", args.redis_url)
         self.assertEqual("gsvibe:analysis:v1", args.redis_prefix)
         self.assertIsNone(args.run_id)
+
+    def test_selected_nodes_are_repeatable_and_reject_legacy_filters(self):
+        args = self.parse_args(
+            [
+                "-gamever",
+                "hl-10210",
+                "-oldgamever",
+                "none",
+                "-node",
+                "engine:windows:produce",
+                "-node",
+                "client:linux:consume",
+            ]
+        )
+        self.assertEqual(["engine:windows:produce", "client:linux:consume"], args.node)
+        self.assertEqual(["windows", "linux"], args.platforms)
+        self.assertIsNone(args.module_filter)
+        for conflict in ("-skill", "-modules", "-platform", "-allgamever"):
+            value = "find" if conflict == "-skill" else "engine" if conflict == "-modules" else "windows"
+            argv = ["-gamever", "hl-10210", "-node", "engine:windows:produce", conflict]
+            if conflict != "-allgamever":
+                argv.append(value)
+            self.assert_parse_error(argv)
+        self.assert_parse_error(
+            ["-gamever", "hl-10210", "-node", "engine:windows:produce", "-node", "engine:windows:produce"]
+        )
 
     def test_cli_values_override_gsvibe_environment(self):
         args = self.parse_args(
@@ -765,6 +793,54 @@ class DagTests(unittest.TestCase):
         dependency = next(edge for edge in process_plan.edges if edge.artifact == "engine/shared.yaml")
         self.assertEqual("cross_stage_artifact", dependency.edge_type.value)
         self.assertEqual(plan.nodes[0].id, process_plan.nodes[0].data["planner_node_id"])
+
+    def test_selected_node_projection_keeps_full_dag_layer_but_only_selected_tasks(self):
+        modules = module(
+            [
+                skill("produce", output=["a.yaml"]),
+                skill("consume", output=["b.yaml"], required_input=["a.yaml"]),
+            ]
+        )
+        plan = build_execution_plan(modules, platforms=["windows"], bin_dir="bin", tag="game-1")
+        selected = _select_requested_nodes(plan, ["engine:windows:consume"])
+        self.assertEqual(("engine:windows:consume",), tuple(node.id for node in selected))
+        projected = build_process_execution_plan(
+            plan,
+            modules,
+            platforms=["windows"],
+            bin_dir="bin",
+            selected_node_ids=["engine:windows:consume"],
+        )
+        self.assertEqual(1, len(projected.nodes))
+        self.assertEqual(1, projected.nodes[0].layer)
+        self.assertFalse(
+            any(edge.source.startswith("task:") and edge.target.startswith("task:") for edge in projected.edges)
+        )
+
+    def test_selected_nodes_follow_topology_and_require_unselected_inputs_to_be_materialized(self):
+        modules = module(
+            [
+                skill("consume", output=["b.yaml"], required_input=["a.yaml"]),
+                skill("produce", output=["a.yaml"]),
+            ]
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            plan = build_execution_plan(modules, platforms=["windows"], bin_dir=temporary, tag="game-1")
+            selected = _select_requested_nodes(
+                plan,
+                ["engine:windows:consume", "engine:windows:produce"],
+            )
+            self.assertEqual(["produce", "consume"], [node.skill for node in selected])
+            _validate_selected_inputs(plan, selected, Path(temporary) / "game-1")
+            consumer = _select_requested_nodes(plan, ["engine:windows:consume"])
+            with self.assertRaisesRegex(AnalysisRunError, "materialized inputs"):
+                _validate_selected_inputs(plan, consumer, Path(temporary) / "game-1")
+            artifact = Path(temporary) / "game-1" / "engine" / "a.yaml"
+            artifact.parent.mkdir(parents=True)
+            artifact.write_text("value: present\n", encoding="utf-8")
+            _validate_selected_inputs(plan, consumer, Path(temporary) / "game-1")
+            with self.assertRaisesRegex(AnalysisRunError, "not found"):
+                _select_requested_nodes(plan, ["engine:windows:missing"])
 
     def test_rejects_cycle(self):
         modules = module(
@@ -1589,6 +1665,189 @@ class McpLifecycleTests(unittest.TestCase):
                 pipeline.call_args_list[0].kwargs["artifact_types"],
             )
             self.assertEqual((2, 0, 0), (summary.successful, summary.failed, summary.skipped))
+
+    def test_selected_node_forces_existing_output_and_ignores_unselected_binary(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text(
+                """modules:
+  - name: engine
+    path_windows: Game/hw.dll
+    module_windows: hw.dll
+    skills:
+      - name: selected
+        expected_output: result.yaml
+  - name: client
+    path_windows: Game/client.dll
+    module_windows: client.dll
+    skills:
+      - name: unselected
+        expected_output: client.yaml
+""",
+                encoding="utf-8",
+            )
+            binary = root / "bin" / "game-1" / "engine" / "hw.dll"
+            write_pe32(binary)
+            output = binary.parent / "result.yaml"
+            output.write_text("value: existing\n", encoding="utf-8")
+            lifecycle = MagicMock()
+            lifecycle.__enter__.return_value = lifecycle
+            lifecycle.runtime = McpRuntime(
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                str(binary),
+                McpDatabaseBinding(False, None, str(binary), "worker", True, True),
+            )
+            lifecycle.ensure_ready.return_value = lifecycle.runtime
+            reporter = RecordingProcessReporter()
+            summary = AnalysisSummary()
+
+            with (
+                patch("ida_analyze_bin.IdaMcpLifecycle", return_value=lifecycle) as lifecycle_type,
+                patch(
+                    "ida_analyze_bin.run_analysis_pipeline", return_value=PipelineResult("succeeded", "agent")
+                ) as pipeline,
+            ):
+                analyze(
+                    gamever="game-1",
+                    config_path=config,
+                    bindir=root / "bin",
+                    platforms=["windows"],
+                    selected_node_ids=["engine:windows:selected"],
+                    reporter=reporter,
+                    summary=summary,
+                )
+
+            lifecycle_type.assert_called_once()
+            self.assertTrue(pipeline.call_args.kwargs["force_execution"])
+            self.assertEqual(["selected"], [node["name"] for node in reporter.plan["nodes"]])
+            self.assertEqual((1, 0, 0), (summary.successful, summary.failed, summary.skipped))
+
+    def test_selected_node_jobs_track_failures_per_binary(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text(
+                """modules:
+  - name: engine
+    path_windows: Game/hw.dll
+    module_windows: hw.dll
+    skills:
+      - name: fails
+        expected_output: engine.yaml
+  - name: client
+    path_windows: Game/client.dll
+    module_windows: client.dll
+    skills:
+      - name: succeeds
+        expected_output: client.yaml
+""",
+                encoding="utf-8",
+            )
+            engine_binary = root / "bin" / "game-1" / "engine" / "hw.dll"
+            client_binary = root / "bin" / "game-1" / "client" / "client.dll"
+            write_pe32(engine_binary)
+            write_pe32(client_binary)
+            lifecycles = []
+            for binary in (engine_binary, client_binary):
+                lifecycle = MagicMock()
+                lifecycle.__enter__.return_value = lifecycle
+                lifecycle.runtime = McpRuntime(
+                    DEFAULT_HOST,
+                    DEFAULT_PORT,
+                    str(binary),
+                    McpDatabaseBinding(False, None, str(binary), "worker", True, True),
+                )
+                lifecycle.ensure_ready.return_value = lifecycle.runtime
+                lifecycles.append(lifecycle)
+            reporter = RecordingProcessReporter()
+            summary = AnalysisSummary()
+
+            with (
+                patch("ida_analyze_bin.IdaMcpLifecycle", side_effect=lifecycles),
+                patch(
+                    "ida_analyze_bin.run_analysis_pipeline",
+                    side_effect=[PipelineFailure("test_failure", "expected"), PipelineResult("succeeded", "agent")],
+                ),
+            ):
+                analyze(
+                    gamever="game-1",
+                    config_path=config,
+                    bindir=root / "bin",
+                    platforms=["windows"],
+                    selected_node_ids=["engine:windows:fails", "client:windows:succeeds"],
+                    skip_error=True,
+                    reporter=reporter,
+                    summary=summary,
+                )
+
+            job_ids = {job["module_name"]: job["id"] for job in reporter.plan["jobs"]}
+            terminal_statuses = {
+                event.task_id: event.status
+                for event in reporter.events
+                if event.task_id in job_ids.values() and event.status in {TaskStatus.SUCCEEDED, TaskStatus.FAILED}
+            }
+            self.assertEqual(TaskStatus.FAILED, terminal_statuses[job_ids["engine"]])
+            self.assertEqual(TaskStatus.SUCCEEDED, terminal_statuses[job_ids["client"]])
+            self.assertEqual((1, 1, 0), (summary.successful, summary.failed, summary.skipped))
+
+    def test_selected_node_lifecycle_failure_only_aborts_remaining_nodes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text(
+                """modules:
+  - name: engine
+    path_windows: Game/hw.dll
+    module_windows: hw.dll
+    skills:
+      - name: first
+        expected_output: first.yaml
+      - name: second
+        expected_output: second.yaml
+""",
+                encoding="utf-8",
+            )
+            binary = root / "bin" / "game-1" / "engine" / "hw.dll"
+            write_pe32(binary)
+            lifecycle = MagicMock()
+            lifecycle.__enter__.return_value = lifecycle
+            lifecycle.runtime = McpRuntime(
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                str(binary),
+                McpDatabaseBinding(False, None, str(binary), "worker", True, True),
+            )
+            lifecycle.ensure_ready.side_effect = McpLifecycleError("worker stopped")
+            reporter = RecordingProcessReporter()
+            summary = AnalysisSummary()
+
+            with (
+                patch("ida_analyze_bin.IdaMcpLifecycle", return_value=lifecycle),
+                patch("ida_analyze_bin.run_analysis_pipeline", return_value=PipelineResult("succeeded", "agent")),
+            ):
+                analyze(
+                    gamever="game-1",
+                    config_path=config,
+                    bindir=root / "bin",
+                    platforms=["windows"],
+                    selected_node_ids=["engine:windows:first", "engine:windows:second"],
+                    skip_error=True,
+                    reporter=reporter,
+                    summary=summary,
+                )
+
+            task_ids = {node["name"]: node["id"] for node in reporter.plan["nodes"]}
+            terminal_statuses = {
+                event.task_id: event.status
+                for event in reporter.events
+                if event.task_id in task_ids.values()
+                and event.status in {TaskStatus.SUCCEEDED, TaskStatus.FAILED, TaskStatus.ABORTED}
+            }
+            self.assertEqual(TaskStatus.SUCCEEDED, terminal_statuses[task_ids["first"]])
+            self.assertEqual(TaskStatus.ABORTED, terminal_statuses[task_ids["second"]])
+            self.assertEqual((1, 1, 0), (summary.successful, summary.failed, summary.skipped))
 
     def test_analyze_decrypts_blob_binary_before_analysis(self):
         with tempfile.TemporaryDirectory() as temporary:
