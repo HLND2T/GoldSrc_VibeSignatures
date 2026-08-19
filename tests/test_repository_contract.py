@@ -16,9 +16,21 @@ from analysis_planner import (
     symbol_artifact_filename,
 )
 from binary_format import inspect_binary
+from gamesymbol_snapshot_lib.config import load_contract
 
 ROOT = Path(__file__).parents[1]
-MODULES = {"engine", "client", "gameui", "server"}
+BASELINE_TAGS = {
+    "cof-5936",
+    "hl-10210",
+    "hl-3248",
+    "hl-3266",
+    "hl-3329",
+    "hl-3647",
+    "hl-4554",
+    "hl-6153",
+    "hl-8684",
+    "svencoop-10257",
+}
 
 
 def _config_tags() -> set[str]:
@@ -214,18 +226,32 @@ class RepositoryContractTests(unittest.TestCase):
         for command in (*backend_commands, *frontend_commands):
             self.assertIn(command, workflow)
 
-    def test_published_sven_snapshot_matches_goldsrc_contract(self):
-        path = ROOT / "gamesymbols" / "svencoop-10257.yaml"
-        self.assertTrue(path.is_file())
-        document = yaml.safe_load(path.read_text(encoding="utf-8"))
-        self.assertEqual(5, document["schema_version"])
-        self.assertEqual("svencoop-10257", document["game_version"])
-        self.assertEqual(2, document["file_count"])
-        self.assertEqual(
-            {"engine/R_RenderView.linux.yaml", "engine/R_RenderView.windows.yaml"},
-            set(document["files"]),
-        )
-        self.assertEqual(MODULES, set(document["binaries"]))
+    def test_published_baseline_snapshots_match_goldsrc_contract(self):
+        published = {path.stem for path in (ROOT / "gamesymbols").glob("*.yaml")}
+        self.assertEqual(BASELINE_TAGS, published)
+        self.assertFalse({"cstrike-8684", "cstrike-10210"} & published)
+
+        for tag in sorted(BASELINE_TAGS):
+            with self.subTest(tag=tag):
+                path = ROOT / "gamesymbols" / f"{tag}.yaml"
+                document = yaml.safe_load(path.read_text(encoding="utf-8"))
+                contract = load_contract(ROOT / "configs" / f"{tag}.yaml", tag, ROOT / "bin")
+                self.assertEqual(5, document["schema_version"])
+                self.assertEqual(tag, document["game_version"])
+                self.assertEqual(document["file_count"], len(document["files"]))
+                self.assertTrue(contract.required_paths <= set(document["files"]) <= contract.formal_paths)
+                actual_binaries = {
+                    (module, platform): metadata
+                    for module, platforms in document["binaries"].items()
+                    for platform, metadata in platforms.items()
+                }
+                self.assertEqual(set(contract.binary_targets), set(actual_binaries))
+                self.assertTrue(actual_binaries)
+                for key, target in contract.binary_targets.items():
+                    metadata = actual_binaries[key]
+                    self.assertEqual(target.source_path, metadata["path"])
+                    self.assertNotIn(".decrypt.", metadata["path"])
+                    self.assertGreater(metadata["size"], 0)
 
     def test_pages_workflow_keeps_content_addressed_history_append_only(self):
         workflow = (ROOT / ".github" / "workflows" / "deploy-pages.yml").read_text(encoding="utf-8")

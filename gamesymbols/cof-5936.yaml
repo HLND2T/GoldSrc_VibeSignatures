@@ -1,0 +1,156 @@
+analysis_output_contract_version: 2
+binaries:
+  client:
+    windows:
+      crc32: '0d04a71a'
+      crc64: '7cea6cbba92aa80d'
+      md5: 'fed5406e73905bd19737c97097c92704'
+      path: Cry-of-Fear-5936/cryoffear/cl_dlls/client.dll
+      sha256: 'd2a04641b301804f6f449aa68265042b13adc360925b80033d417ec9f38c9c00'
+      size: 1754112
+  engine:
+    windows:
+      crc32: 'aa2a0dcc'
+      crc64: '015f8476be9396f4'
+      md5: 'b2d22dec0f83d196c901315f6fc8bae8'
+      path: Cry-of-Fear-5936/hw.dll
+      sha256: '9dd34e536c4bb7cda3bc1bc4f0f5f6163687566a16f35c0ea0be59f93da62875'
+      size: 2121828
+  gameui:
+    windows:
+      crc32: '47c411ef'
+      crc64: 'b2ce83997386e755'
+      md5: '7065b7a1b26faefa48779b1a47353b85'
+      path: Cry-of-Fear-5936/cryoffear/cl_dlls/GameUI.dll
+      sha256: '8255926f84eaa08e9096f2f78dea7f2827c3733e7af8f4408efa0b423acca838'
+      size: 1056863
+  server:
+    windows:
+      crc32: '91faa3ed'
+      crc64: 'e5e3cb8a96389a57'
+      md5: 'a5509e785963b8abd0d6023e3b87d570'
+      path: Cry-of-Fear-5936/cryoffear/cl_dlls/hl.dll
+      sha256: '0036b91c01e92ed205513f52563053a55a66a32d257efb5f476b8f1f3dde0e63'
+      size: 2413568
+config_digest_version: 2
+config_sha256: sha256:c0095dcf8475c34173d6de90475c287bbcaee107fca15127d1dd17c4d794efbf
+file_count: 16
+files:
+  engine/CBaseUI__Initialize.windows.yaml:
+    func_name: CBaseUI__Initialize
+    func_rva: '0x10e6'
+    func_sig: 55 8B EC 81 EC 1C 02 00 00 53 56 57 89 8D ?? ?? ?? ?? 83 3D ?? ?? ?? ?? ?? 74 ?? E9 ?? ?? ?? ?? 8B 45 ?? 8B 08 89 8D ?? ?? ?? ??
+    func_size: '0x24e'
+    func_va: '0x1d010e6'
+  engine/ClientDLL_HudInit.windows.yaml:
+    func_name: ClientDLL_HudInit
+    func_rva: '0x231b4'
+    func_sig: 55 8B EC 83 3D ?? ?? ?? ?? ?? 75 ?? 68 45 04 00 00 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 08 FF 15 ?? ?? ?? ?? A1 ?? ?? ?? ?? 50 E8 ?? ?? ?? ?? 83 C4 04
+    func_size: '0x46'
+    func_va: '0x1d231b4'
+  engine/ClientDLL_Init.windows.yaml:
+    func_name: ClientDLL_Init
+    func_rva: '0x22306'
+    func_sig: 55 8B EC 81 EC 00 04 00 00 68 ?? ?? ?? ?? 68 00 02 00 00 8D 85 00 FC FF FF 50 E8 ?? ?? ?? ?? 83 C4 0C
+    func_size: '0x12b'
+    func_va: '0x1d22306'
+  engine/DispatchDirectUserMsg.windows.yaml:
+    func_name: DispatchDirectUserMsg
+    func_rva: '0x34a34'
+    func_sig: 55 8B EC 83 EC 10 C7 45 ?? ?? ?? ?? ?? C7 45 ?? ?? ?? ?? ?? A1 ?? ?? ?? ?? 89 45 ?? 83 7D ?? ?? 0F 84 ?? ?? ?? ?? 8B 4D ?? 83 C1 08 51 8B 55 ??
+    func_size: '0xae'
+    func_va: '0x1d34a34'
+  engine/NLoadBlob.windows.yaml:
+    func_name: NLoadBlob
+    func_rva: '0x8ae98'
+    func_sig: 55 8B EC 83 EC 1C C7 45 F0 00 00 00 00 8B 45 08 83 C0 44 89 45 F4 8B 4D 08
+    func_size: '0x137'
+    func_va: '0x1d8ae98'
+  engine/NLoadBlobFile.windows.yaml:
+    func_name: NLoadBlobFile
+    func_rva: '0x8acab'
+    func_sig: 55 8B EC B8 18 10 00 00 E8 ?? ?? ?? ?? C7 45 FC 00 00 00 00 83 7D 14 00 0F 84 ?? ?? ?? ?? 8B 45 08
+    func_size: '0x1ed'
+    func_va: '0x1d8acab'
+  engine/R_RenderView.windows.yaml:
+    func_name: R_RenderView
+    func_rva: '0x6ad4c'
+    func_sig: 55 8B EC 83 EC 14 D9 05 ?? ?? ?? ?? D8 1D ?? ?? ?? ?? DF E0 F6 C4 40 75 ?? E9 ?? ?? ?? ?? 83 3D ?? ?? ?? ?? ?? 74 ?? 83 3D ?? ?? ?? ?? ?? 75 ?? 68 ?? ?? ?? ??
+    func_size: '0x12e'
+    func_va: '0x1d6ad4c'
+  engine/SV_SendServerinfo.windows.yaml:
+    func_name: SV_SendServerinfo
+    func_rva: '0xd7308'
+    func_sig: 55 8B EC 81 EC 14 08 00 00 C7 45 FC 00 00 00 00 D9 05 ?? ?? ?? ?? D8 1D ?? ?? ?? ?? DF E0 F6 C4 40
+    func_size: '0x307'
+    func_va: '0x1dd7308'
+  engine/Sys_Error.windows.yaml:
+    func_name: Sys_Error
+    func_rva: '0xf2656'
+    func_sig: 55 8B EC 81 EC 04 04 00 00 8D 45 0C 89 85 FC FB FF FF 8B 8D FC FB FF FF 51 8B 55 08 52 68 00 04 00 00 8D 85 00 FC FF FF 50 E8 ?? ?? ?? ?? 83 C4 10 C7 85 FC FB FF FF 00 00 00 00 83 3D ?? ?? ?? ?? ?? 74 ?? 8D 8D 00 FC FF FF 51 68 ?? ?? ?? ?? 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 0C 6A 02 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? C7 05 ?? ?? ?? ?? ?? ?? ?? ?? 83 3D ?? ?? ?? ?? ?? 74 ?? 83 3D ?? ?? ?? ?? ?? 74 ?? 8D 95 00 FC FF FF 52 FF 15 ?? ?? ?? ?? 83 C4 04 8D 85 00 FC FF FF 50 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 08 83 3D ?? ?? ?? ?? ?? 74 ?? 6A 10 68 ?? ?? ?? ?? 8D 8D 00 FC FF FF 51 6A 00 FF 15 ?? ?? ?? ?? 6A FF E8 ?? ?? ?? ?? 8D 95 00 FC FF FF 52 E8 ?? ?? ?? ?? 83 C4 04 FF 15 ?? ?? ?? ?? 50 FF 15 ?? ?? ?? ?? 6A 10 68 ?? ?? ?? ?? 8D 85 00 FC FF FF 50 6A 00 FF 15 ?? ?? ?? ??
+    func_sig_allow_across_function_boundary: true
+    func_size: '0x10d'
+    func_va: '0x1df2656'
+  engine/build_number.windows.yaml:
+    func_name: build_number
+    func_rva: '0x1f970'
+    func_sig: 55 8B EC 83 EC 10 C7 45 F4 00 00 00 00 C7 45 FC 00 00 00 00 C7 45 F8 00 00 00 00
+    func_size: '0x115'
+    func_va: '0x1d1f970'
+  engine/cl_parsefuncs.windows.yaml:
+    gv_inst_disp: '0x2'
+    gv_inst_length: '0x6'
+    gv_inst_offset: '0x21d'
+    gv_name: cl_parsefuncs
+    gv_rva: '0x1ae668'
+    gv_sig: 55 8B EC 83 EC 1C C7 45 ?? ?? ?? ?? ?? A1 ?? ?? ?? ?? 89 45 ?? 81 3D ?? ?? ?? ?? ?? ?? ?? ?? 75 ?? 8B 0D ?? ?? ?? ?? 51 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 08 EB ?? 81 3D ?? ?? ?? ?? ?? ?? ?? ??
+    gv_sig_va: '0x1d3812a'
+    gv_va: '0x1eae668'
+  engine/gClientUserMsgs.windows.yaml:
+    gv_inst_disp: '0x1'
+    gv_inst_length: '0x5'
+    gv_inst_offset: '0x14'
+    gv_name: gClientUserMsgs
+    gv_rva: '0x1f47bc'
+    gv_sig: 55 8B EC 83 EC 10 C7 45 ?? ?? ?? ?? ?? C7 45 ?? ?? ?? ?? ?? A1 ?? ?? ?? ?? 89 45 ?? 83 7D ?? ?? 0F 84 ?? ?? ?? ?? 8B 4D ?? 83 C1 08 51 8B 55 ??
+    gv_sig_va: '0x1d34a34'
+    gv_va: '0x1ef47bc'
+  engine/g_pClientFactory.windows.yaml:
+    gv_inst_disp: '0x2'
+    gv_inst_length: '0x7'
+    gv_inst_offset: '0x1b4'
+    gv_name: g_pClientFactory
+    gv_rva: '0x12b9c88'
+    gv_sig: 55 8B EC 81 EC 1C 02 00 00 53 56 57 89 8D E4 FD FF FF 83 3D ?? ?? ?? ?? ?? 74 ?? E9 ?? ?? ?? ?? 8B 45 08
+    gv_sig_va: '0x1d010e6'
+    gv_va: '0x2fb9c88'
+  engine/g_phClientModule.windows.yaml:
+    gv_inst_disp: '0x1'
+    gv_inst_length: '0x5'
+    gv_inst_offset: '0x24'
+    gv_name: g_phClientModule
+    gv_rva: '0x1f02ac'
+    gv_sig: 55 8B EC 83 3D ?? ?? ?? ?? ?? 75 ?? 68 45 04 00 00 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 08 FF 15 ?? ?? ?? ?? A1 ?? ?? ?? ?? 50 E8 ?? ?? ?? ?? 83 C4 04
+    gv_sig_va: '0x1d231b4'
+    gv_va: '0x1ef02ac'
+  engine/g_ppEngfuncs.windows.yaml:
+    gv_inst_disp: '0x1'
+    gv_inst_length: '0x5'
+    gv_inst_offset: '0xe5'
+    gv_name: g_ppEngfuncs
+    gv_rva: '0x1a9a90'
+    gv_sig: 55 8B EC 81 EC 00 04 00 00 68 ?? ?? ?? ?? 68 00 02 00 00 8D 85 00 FC FF FF 50 E8 ?? ?? ?? ?? 83 C4 0C
+    gv_sig_va: '0x1d22306'
+    gv_va: '0x1ea9a90'
+  engine/g_ppExportFuncs.windows.yaml:
+    gv_inst_disp: '0x2'
+    gv_inst_length: '0x6'
+    gv_inst_offset: '0xea'
+    gv_name: g_ppExportFuncs
+    gv_rva: '0x12b9be0'
+    gv_sig: 55 8B EC 81 EC 00 04 00 00 68 ?? ?? ?? ?? 68 00 02 00 00 8D 85 00 FC FF FF 50 E8 ?? ?? ?? ?? 83 C4 0C
+    gv_sig_va: '0x1d22306'
+    gv_va: '0x2fb9be0'
+game_version: cof-5936
+last_publish_time: '2026-08-19T10:49:47Z'
+schema_version: 5

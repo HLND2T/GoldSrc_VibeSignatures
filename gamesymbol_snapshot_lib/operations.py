@@ -13,6 +13,7 @@ from analysis_config import resolve_analysis_config
 from analysis_output_contract import ANALYSIS_OUTPUT_CONTRACT_MISMATCH_REASON
 from binary_format import validate_binary
 from binary_hashing import hash_file
+from decrypt_blob import BlobFormatError, build_pe, parse_blob, verify_pe
 from gamesymbol_snapshot_lib.codec import (
     SCHEMA_4_VERSION,
     SCHEMA_VERSION,
@@ -100,6 +101,22 @@ def _ensure_plain_binary(path: Path, game_root: Path) -> None:
         current = current.parent
 
 
+def _validate_binary_identity(path: Path, platform: str) -> None:
+    try:
+        validate_binary(path, platform)
+        return
+    except ValueError as binary_error:
+        if platform != "windows":
+            raise binary_error
+
+    try:
+        parsed = parse_blob(path.read_bytes())
+        rebuilt = build_pe(parsed)
+        verify_pe(rebuilt, parsed)
+    except (OSError, BlobFormatError) as blob_error:
+        raise ValueError(f"{binary_error}; not a valid Metahook PE32 blob: {blob_error}") from blob_error
+
+
 def collect_binary_metadata(contract, schema_version: int = SCHEMA_VERSION) -> dict:
     if schema_version not in {SCHEMA_4_VERSION, SCHEMA_VERSION}:
         raise SnapshotSchemaError(f"Binary metadata is unsupported for schema {schema_version}")
@@ -109,7 +126,7 @@ def collect_binary_metadata(contract, schema_version: int = SCHEMA_VERSION) -> d
         binary = _binary_path(contract, target)
         _ensure_plain_binary(binary, contract.game_root)
         try:
-            validate_binary(binary, target.platform)
+            _validate_binary_identity(binary, target.platform)
         except ValueError as exc:
             raise SnapshotMismatchError(f"Invalid binary for {target.module_name}/{target.platform}: {exc}") from exc
         hashes = hash_file(binary)
