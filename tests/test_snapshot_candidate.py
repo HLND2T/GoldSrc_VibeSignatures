@@ -44,7 +44,7 @@ def fixture(root: Path):
 
 
 class CodecTests(unittest.TestCase):
-    def test_reader_accepts_schema_one_through_five(self):
+    def test_reader_accepts_schema_one_through_six(self):
         files = {"engine/a.windows.yaml": {"addr": "0x10"}}
         binaries4 = {"engine": {"windows": {"path": "Game/hw.dll", "sha256": "a" * 64, "md5": "b" * 32}}}
         binaries5 = {
@@ -59,16 +59,49 @@ class CodecTests(unittest.TestCase):
                 }
             }
         }
-        for schema in range(1, 6):
+        binaries6 = {
+            "engine": {
+                "windows": {
+                    "sha256": "a" * 64,
+                    "md5": "b" * 32,
+                    "crc32": "c" * 8,
+                    "crc64": "d" * 16,
+                    "size": 1,
+                }
+            }
+        }
+        for schema in range(1, 7):
             kwargs = {"schema_version": schema, "config_digest_version": 1 if schema == 1 else 2}
             if schema >= 4:
                 kwargs.update(
-                    last_publish_time="2026-01-02T03:04:05Z", binaries=binaries4 if schema == 4 else binaries5
+                    last_publish_time="2026-01-02T03:04:05Z",
+                    binaries=binaries4 if schema == 4 else binaries5 if schema == 5 else binaries6,
                 )
             document = build_snapshot_document("game-1", f"sha256:{'e' * 64}", files, **kwargs)
             data = canonical_snapshot_bytes(document)
             self.assertEqual(schema, parse_snapshot_bytes(data)["schema_version"])
             self.assertIn(b"'0x10'", data)
+
+    def test_schema_five_requires_path_and_schema_six_rejects_it(self):
+        common = {
+            "sha256": "a" * 64,
+            "md5": "b" * 32,
+            "crc32": "c" * 8,
+            "crc64": "d" * 16,
+            "size": 1,
+        }
+        for schema, metadata in ((5, common), (6, {"path": "Game/hw.dll", **common})):
+            with self.subTest(schema=schema):
+                document = build_snapshot_document(
+                    "game-1",
+                    f"sha256:{'e' * 64}",
+                    {},
+                    schema_version=schema,
+                    last_publish_time="2026-01-02T03:04:05Z",
+                    binaries={"engine": {"windows": metadata}},
+                )
+                with self.assertRaises(SnapshotSchemaError):
+                    parse_snapshot_bytes(canonical_yaml_bytes(document))
 
     def test_rejects_nonflat_or_case_colliding_paths(self):
         for files in (

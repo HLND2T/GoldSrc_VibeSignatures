@@ -10,15 +10,23 @@ from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.errors import SnapshotConfigError
 
 
-def write_config(path: Path, *, skills: list[dict], symbols: list[dict], description: str | None = None) -> Path:
+def write_config(
+    path: Path,
+    *,
+    skills: list[dict],
+    symbols: list[dict],
+    description: str | None = None,
+    source_path: str | None = "Game/hw.dll",
+) -> Path:
     module = {
         "name": "engine",
         "description": description,
-        "path_windows": "Game/hw.dll",
         "module_windows": "hw.dll",
         "skills": skills,
         "symbols": symbols,
     }
+    if source_path is not None:
+        module["path_windows"] = source_path
     path.write_text(yaml.safe_dump({"modules": [module]}, sort_keys=False), encoding="utf-8")
     return path
 
@@ -89,6 +97,31 @@ class SnapshotContractConfigTests(unittest.TestCase):
             self.assertNotEqual(
                 first_contract.nodes["engine:windows:two"].fingerprint,
                 changed_contract.nodes["engine:windows:two"].fingerprint,
+            )
+
+    def test_module_only_target_has_same_fingerprint_as_legacy_source_path(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            legacy = write_config(
+                root / "legacy.yaml",
+                skills=[skill("find", "Symbol.{platform}.yaml")],
+                symbols=[{"name": "Symbol", "category": "func"}],
+            )
+            module_only = write_config(
+                root / "module-only.yaml",
+                skills=[skill("find", "Symbol.{platform}.yaml")],
+                symbols=[{"name": "Symbol", "category": "func"}],
+                source_path=None,
+            )
+
+            legacy_contract = load_contract(legacy, "game-1", root / "bin")
+            module_contract = load_contract(module_only, "game-1", root / "bin")
+
+            self.assertEqual(set(legacy_contract.binary_targets), set(module_contract.binary_targets))
+            self.assertIsNone(module_contract.binary_targets[("engine", "windows")].source_path)
+            self.assertEqual(
+                legacy_contract.nodes["engine:windows:find"].fingerprint,
+                module_contract.nodes["engine:windows:find"].fingerprint,
             )
 
     def test_zero_and_multiple_artifact_owners_are_rejected(self):

@@ -8,7 +8,7 @@ from analysis_planner import ExecutionPlan
 class BinaryTarget:
     module_name: str
     platform: str
-    source_path: str
+    source_path: str | None
     binary_name: str
 
 

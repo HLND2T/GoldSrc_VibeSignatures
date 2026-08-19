@@ -73,7 +73,7 @@ def _skill_node(node, module: dict, target: BinaryTarget) -> SkillNode:
     symbols = _node_symbol_contract(module, node.platform, required_outputs | optional_outputs)
     payload = {
         "logical_key": [node.module, node.skill, node.platform],
-        "binary_target": {"source_path": target.source_path, "binary_name": target.binary_name},
+        "binary_target": {"binary_name": target.binary_name},
         "required_inputs": sorted(required_inputs),
         "optional_inputs": sorted(optional_inputs),
         "required_outputs": sorted(required_outputs),
@@ -124,10 +124,9 @@ def load_contract(
     for module in modules:
         for platform in ("windows", "linux"):
             source_path = module.get(f"path_{platform}")
-            if source_path:
-                targets[(module["name"], platform)] = BinaryTarget(
-                    module["name"], platform, source_path, module[f"module_{platform}"]
-                )
+            binary_name = module.get(f"module_{platform}")
+            if binary_name:
+                targets[(module["name"], platform)] = BinaryTarget(module["name"], platform, source_path, binary_name)
     modules_by_name = {module["name"]: module for module in modules}
     try:
         nodes = {}

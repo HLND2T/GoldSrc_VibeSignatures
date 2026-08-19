@@ -16,6 +16,8 @@ from binary_hashing import hash_file
 from decrypt_blob import BlobFormatError, build_pe, parse_blob, verify_pe
 from gamesymbol_snapshot_lib.codec import (
     SCHEMA_4_VERSION,
+    SCHEMA_5_VERSION,
+    SCHEMA_6_VERSION,
     SCHEMA_VERSION,
     build_snapshot_document,
     canonical_snapshot_bytes,
@@ -118,7 +120,7 @@ def _validate_binary_identity(path: Path, platform: str) -> None:
 
 
 def collect_binary_metadata(contract, schema_version: int = SCHEMA_VERSION) -> dict:
-    if schema_version not in {SCHEMA_4_VERSION, SCHEMA_VERSION}:
+    if schema_version not in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION}:
         raise SnapshotSchemaError(f"Binary metadata is unsupported for schema {schema_version}")
     binaries = {}
     for key in sorted(contract.binary_targets):
@@ -130,8 +132,10 @@ def collect_binary_metadata(contract, schema_version: int = SCHEMA_VERSION) -> d
         except ValueError as exc:
             raise SnapshotMismatchError(f"Invalid binary for {target.module_name}/{target.platform}: {exc}") from exc
         hashes = hash_file(binary)
-        metadata = {"path": target.source_path, "sha256": hashes["sha256"], "md5": hashes["md5"]}
-        if schema_version == SCHEMA_VERSION:
+        metadata = {"sha256": hashes["sha256"], "md5": hashes["md5"]}
+        if schema_version in {SCHEMA_4_VERSION, SCHEMA_5_VERSION}:
+            metadata["path"] = target.source_path or target.binary_name
+        if schema_version in {SCHEMA_5_VERSION, SCHEMA_6_VERSION}:
             metadata.update({"crc32": hashes["crc32"], "crc64": hashes["crc64"], "size": hashes["size"]})
         binaries.setdefault(target.module_name, {})[target.platform] = metadata
     return binaries
@@ -149,7 +153,7 @@ def build_actual_document(
     last_publish_time: str | None = None,
     binaries: dict | None = None,
 ) -> dict:
-    if schema_version in {SCHEMA_4_VERSION, SCHEMA_VERSION}:
+    if schema_version in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION}:
         last_publish_time = last_publish_time or _publish_time()
         binaries = collect_binary_metadata(contract, schema_version) if binaries is None else binaries
     return build_snapshot_document(
@@ -178,15 +182,9 @@ def validate_snapshot_contract(document: dict, contract) -> None:
         raise SnapshotMismatchError(
             "Snapshot files do not match the analysis contract", reason="snapshot_contract_mismatch"
         )
-    if document["schema_version"] in {SCHEMA_4_VERSION, SCHEMA_VERSION}:
-        expected = {
-            (target.module_name, target.platform): target.source_path for target in contract.binary_targets.values()
-        }
-        actual = {
-            (module, platform): metadata["path"]
-            for module, platforms in document["binaries"].items()
-            for platform, metadata in platforms.items()
-        }
+    if document["schema_version"] in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION}:
+        expected = set(contract.binary_targets)
+        actual = {(module, platform) for module, platforms in document["binaries"].items() for platform in platforms}
         if actual != expected:
             raise SnapshotMismatchError("Snapshot binaries do not match config", reason="snapshot_contract_mismatch")
 
