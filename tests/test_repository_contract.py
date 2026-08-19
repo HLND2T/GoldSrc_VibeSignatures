@@ -3,10 +3,11 @@ from __future__ import annotations
 import hashlib
 import tempfile
 import unittest
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import yaml
 
+import download_depot
 from analysis_config import iter_analysis_config_tags
 from analysis_planner import (
     PLATFORMS,
@@ -183,11 +184,22 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertTrue(all("config" not in entry for entry in downloads))
         for entry in downloads:
             document = yaml.safe_load((ROOT / "configs" / f"{entry['tag']}.yaml").read_text(encoding="utf-8"))
-            for module in parse_config_document(document):
-                configured_paths = [module[f"path_{platform}"] for platform in PLATFORMS if module[f"path_{platform}"]]
-                self.assertTrue(configured_paths)
-                for path in configured_paths:
-                    self.assertTrue(path.startswith(entry["basepath"] + "/"))
+            expected_paths = set()
+            for module in document["modules"]:
+                for platform in PLATFORMS:
+                    if not module.get(f"module_{platform}"):
+                        continue
+                    depot_path = module.get(f"depot_{platform}")
+                    self.assertIsInstance(depot_path, str)
+                    parsed = PurePosixPath(depot_path)
+                    self.assertFalse(parsed.is_absolute())
+                    self.assertTrue(parsed.parts)
+                    self.assertFalse(any(part in {"", ".", ".."} for part in parsed.parts))
+                    expected_paths.add(parsed.as_posix())
+            self.assertEqual(
+                expected_paths,
+                set(download_depot.load_module_filelist(ROOT / "configs" / f"{entry['tag']}.yaml", entry["basepath"])),
+            )
 
     def test_config_index_matches_config_files(self):
         indexed = set(iter_analysis_config_tags(ROOT))
@@ -203,6 +215,7 @@ class RepositoryContractTests(unittest.TestCase):
                 document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
                 modules = parse_config_document(document)
                 self.assertTrue(modules)
+                self.assertFalse(any(key.startswith("path_") for module in document["modules"] for key in module))
                 for module in modules:
                     self.assertTrue(
                         any(module[f"path_{platform}"] or module[f"module_{platform}"] for platform in PLATFORMS)
@@ -275,7 +288,7 @@ class RepositoryContractTests(unittest.TestCase):
                 path = ROOT / "gamesymbols" / f"{tag}.yaml"
                 document = yaml.safe_load(path.read_text(encoding="utf-8"))
                 contract = load_contract(ROOT / "configs" / f"{tag}.yaml", tag, ROOT / "bin")
-                self.assertEqual(5, document["schema_version"])
+                self.assertEqual(6, document["schema_version"])
                 self.assertEqual(tag, document["game_version"])
                 self.assertEqual(document["file_count"], len(document["files"]))
                 self.assertTrue(contract.required_paths <= set(document["files"]) <= contract.formal_paths)
@@ -288,8 +301,9 @@ class RepositoryContractTests(unittest.TestCase):
                 self.assertTrue(actual_binaries)
                 for key, target in contract.binary_targets.items():
                     metadata = actual_binaries[key]
-                    self.assertEqual(target.source_path, metadata["path"])
-                    self.assertNotIn(".decrypt.", metadata["path"])
+                    binary = contract.game_root / target.module_name / target.binary_name
+                    self.assertEqual(hashlib.sha256(binary.read_bytes()).hexdigest(), metadata["sha256"])
+                    self.assertNotIn("path", metadata)
                     self.assertGreater(metadata["size"], 0)
 
     def test_pages_workflow_keeps_content_addressed_history_append_only(self):

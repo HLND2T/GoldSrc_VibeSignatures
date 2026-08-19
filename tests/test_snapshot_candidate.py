@@ -121,10 +121,11 @@ class SnapshotOperationTests(unittest.TestCase):
             snapshot = root / "snapshot.yaml"
             packed = pack_snapshot(tag, root / "bin", config, snapshot, last_publish_time="2026-01-02T03:04:05Z")
             document = parse_snapshot_bytes(packed)
-            self.assertEqual(5, document["schema_version"])
+            self.assertEqual(6, document["schema_version"])
             self.assertEqual(2, document["config_digest_version"])
             self.assertEqual(2, document["file_count"])
             self.assertEqual({"windows", "linux"}, set(document["binaries"]["engine"]))
+            self.assertTrue(all("path" not in metadata for metadata in document["binaries"]["engine"].values()))
             self.assertEqual(packed, verify_snapshot(tag, root / "bin", config, snapshot))
             (game_root / "symbol.windows.yaml").unlink()
             restore_snapshot(tag, root / "bin", config, snapshot)

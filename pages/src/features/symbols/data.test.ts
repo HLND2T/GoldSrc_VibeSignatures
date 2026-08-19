@@ -7,7 +7,7 @@ const dataset: GameSymbolDataset = {
   schemaVersion: 3,
   source: {
     gameVersion: 'svencoop-10257',
-    snapshotSchemaVersion: 5,
+    snapshotSchemaVersion: 6,
     configDigestVersion: 2,
     analysisOutputContractVersion: 1,
     configSha256: 'sha256:test',
@@ -17,7 +17,6 @@ const dataset: GameSymbolDataset = {
   binaries: {
     server: {
       windows: {
-        path: 'game/bin/win64/server.dll',
         sha256: '1'.repeat(64),
         md5: '2'.repeat(32),
         crc32: '3'.repeat(8),
@@ -40,7 +39,7 @@ function encodedDataset(): { bytes: Uint8Array; version: GameSymbolIndexVersion 
       url: `svencoop-10257.${sha256}.json`,
       sha256,
       size: bytes.byteLength,
-      snapshotSchemaVersion: 5,
+      snapshotSchemaVersion: 6,
       fileCount: 0,
       lastPublishTime: '2026-07-27T04:42:43Z',
     },
@@ -112,7 +111,7 @@ describe('game-symbol asset loading', () => {
       url: `svencoop-10257.${sha256}.json`,
       sha256,
       size: bytes.byteLength,
-      snapshotSchemaVersion: 5,
+      snapshotSchemaVersion: 6,
       fileCount: 0,
       lastPublishTime: '2026-07-27T04:42:43Z',
     }

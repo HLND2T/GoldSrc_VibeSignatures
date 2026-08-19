@@ -11,9 +11,13 @@ import yaml
 
 from analysis_config import AnalysisConfigError, resolve_analysis_config, validated_tag
 from binary_format import BinaryFormatError, validate_binary
+from depot_util import resolve_module_depot_path, safe_relative_path
+from download_depot import ConfigError as DownloadConfigError
+from download_depot import find_download_entry, load_downloads
 
 DEFAULT_DEPOT_DIR = "depots"
 DEFAULT_BIN_DIR = "bin"
+DEFAULT_DOWNLOAD_CONFIG = "download.yaml"
 CHECKONLY_MISSING_EXIT = 1
 CHECKONLY_ERROR_EXIT = 2
 PLATFORMS = ("windows", "linux")
@@ -24,6 +28,7 @@ def parse_args(argv=None):
     parser.add_argument("-gamever", required=True)
     parser.add_argument("-bindir", default=DEFAULT_BIN_DIR)
     parser.add_argument("-depotdir", default=DEFAULT_DEPOT_DIR)
+    parser.add_argument("-downloadconfig", default=DEFAULT_DOWNLOAD_CONFIG)
     parser.add_argument("-platform", choices=["windows", "linux", "all-platform"], default="all-platform")
     parser.add_argument("-config", default=None)
     parser.add_argument("-checkonly", action="store_true")
@@ -37,12 +42,7 @@ def _safe_component(value: object, field: str) -> str:
 
 
 def _safe_source_path(value: object, field: str) -> str:
-    if not isinstance(value, str) or not value or "\\" in value:
-        raise ValueError(f"{field} must be a relative POSIX path")
-    path = PurePosixPath(value)
-    if path.is_absolute() or any(part in {"", ".", ".."} for part in path.parts):
-        raise ValueError(f"{field} is unsafe: {value!r}")
-    return path.as_posix()
+    return safe_relative_path(value, field)
 
 
 def parse_config(config_path: str | Path) -> list[dict]:
@@ -64,10 +64,11 @@ def parse_config(config_path: str | Path) -> list[dict]:
             raise ValueError(f"Case-insensitive module collision: {prior!r} and {name!r}")
         item = {"name": name}
         for platform in PLATFORMS:
-            value = module.get(f"path_{platform}")
-            item[f"path_{platform}"] = (
-                None if value is None else _safe_source_path(value, f"modules[{index}].path_{platform}")
-            )
+            for prefix in ("depot", "path"):
+                value = module.get(f"{prefix}_{platform}")
+                item[f"{prefix}_{platform}"] = (
+                    None if value is None else _safe_source_path(value, f"modules[{index}].{prefix}_{platform}")
+                )
             binary_name = module.get(f"module_{platform}")
             if binary_name is not None:
                 item[f"module_{platform}"] = _safe_component(binary_name, f"modules[{index}].module_{platform}")
@@ -86,29 +87,39 @@ def selected_platforms(platform_filter: str | None) -> tuple[str, ...]:
     return PLATFORMS if platform_filter in {None, "all-platform"} else (platform_filter,)
 
 
-def iter_module_entries(module, bin_dir, gamever, platform_filter, depot_dir):
+def iter_module_targets(module, bin_dir, gamever, platform_filter):
     tag = validated_tag(gamever)
     entries = []
     for platform in selected_platforms(platform_filter):
-        source_rel = module.get(f"path_{platform}")
-        if not source_rel:
+        binary_name = module.get(f"module_{platform}")
+        if not binary_name:
             continue
-        source = Path(depot_dir).joinpath(*PurePosixPath(source_rel).parts)
-        target = Path(bin_dir) / tag / module["name"] / module[f"module_{platform}"]
+        target = Path(bin_dir) / tag / module["name"] / binary_name
         entries.append(
             {
                 "name": module["name"],
                 "platform": platform,
-                "source_path": str(source),
                 "target_path": str(target),
             }
         )
     return entries
 
 
-def check_module_targets(module, bin_dir, gamever, platform_filter, depot_dir):
+def iter_module_entries(module, bin_dir, gamever, platform_filter, depot_dir, basepath):
+    entries = []
+    for target in iter_module_targets(module, bin_dir, gamever, platform_filter):
+        platform = target["platform"]
+        source_rel = resolve_module_depot_path(module, platform, basepath, f"module {module['name']!r}")
+        if source_rel is None:
+            raise ValueError(f"module {module['name']!r} declares {platform} but has no depot_{platform}")
+        source = Path(depot_dir).joinpath(*PurePosixPath(basepath).parts, *PurePosixPath(source_rel).parts)
+        entries.append({**target, "source_path": str(source)})
+    return entries
+
+
+def check_module_targets(module, bin_dir, gamever, platform_filter):
     ready = missing = 0
-    for entry in iter_module_entries(module, bin_dir, gamever, platform_filter, depot_dir):
+    for entry in iter_module_targets(module, bin_dir, gamever, platform_filter):
         target = Path(entry["target_path"])
         if not target.is_file():
             missing += 1
@@ -122,9 +133,9 @@ def check_module_targets(module, bin_dir, gamever, platform_filter, depot_dir):
     return ready, missing
 
 
-def process_module(module, bin_dir, gamever, platform_filter, depot_dir):
+def process_module(module, bin_dir, gamever, platform_filter, depot_dir, basepath):
     success = failed = 0
-    for entry in iter_module_entries(module, bin_dir, gamever, platform_filter, depot_dir):
+    for entry in iter_module_entries(module, bin_dir, gamever, platform_filter, depot_dir, basepath):
         source = Path(entry["source_path"])
         target = Path(entry["target_path"])
         try:
@@ -154,9 +165,7 @@ def main(argv=None):
     if args.checkonly:
         ready = missing = 0
         for module in modules:
-            module_ready, module_missing = check_module_targets(
-                module, args.bindir, args.gamever, args.platform, args.depotdir
-            )
+            module_ready, module_missing = check_module_targets(module, args.bindir, args.gamever, args.platform)
             ready += module_ready
             missing += module_missing
         print(f"Check-only summary: {ready} ready, {missing} missing")
@@ -164,9 +173,19 @@ def main(argv=None):
     if not Path(args.depotdir).is_dir():
         print(f"Error: Depot directory not found: {args.depotdir}")
         return 1
+    try:
+        entry = find_download_entry(load_downloads(args.downloadconfig), args.gamever)
+        basepath = safe_relative_path(entry["basepath"], "basepath")
+        for module in modules:
+            iter_module_entries(module, args.bindir, args.gamever, args.platform, args.depotdir, basepath)
+    except (DownloadConfigError, ValueError) as exc:
+        print(f"Error: {exc}")
+        return 1
     success = failed = 0
     for module in modules:
-        module_success, module_failed = process_module(module, args.bindir, args.gamever, args.platform, args.depotdir)
+        module_success, module_failed = process_module(
+            module, args.bindir, args.gamever, args.platform, args.depotdir, basepath
+        )
         success += module_success
         failed += module_failed
     print(f"Completed: {success} successful, {failed} failed")

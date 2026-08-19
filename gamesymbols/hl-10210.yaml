@@ -5,14 +5,12 @@ binaries:
       crc32: '70ffc262'
       crc64: 'bbd58b94bd48eba9'
       md5: 'd9554819bead2db84e426285c1e34391'
-      path: Half-Life-10210/valve/cl_dlls/client.so
       sha256: 'b123113076aa41ef849ca0a839230f9288d8e1f56c5579817422a4e1c97376ee'
       size: 4378257
     windows:
       crc32: 'b5720651'
       crc64: 'a0218611841168aa'
       md5: 'd9bc979f62475e5a8ab532e44c4d604c'
-      path: Half-Life-10210/valve/cl_dlls/client.dll
       sha256: 'e9827e3fe884b72da897c48b9921feb93660f9b0be62bd772e0104ab8c7135f8'
       size: 643424
   engine:
@@ -20,14 +18,12 @@ binaries:
       crc32: '303f1fc8'
       crc64: '727eaa19926a236c'
       md5: 'cb9d363dc978bbc92e9a49edd3616d11'
-      path: Half-Life-10210/hw.so
       sha256: 'fca6628b5a4d76a945e11b9796f327004edc65420d9f9cc23f883143508edd78'
       size: 11556210
     windows:
       crc32: 'ebb1f68c'
       crc64: '6ef7192cd8254e2d'
       md5: 'ba0ae7ebdef6891b1e822830145f3415'
-      path: Half-Life-10210/hw.dll
       sha256: '9ba9a2db5e07598fd59afa35507a98c86162e4e15b3835177b78c11842cd2295'
       size: 3598176
   gameui:
@@ -35,14 +31,12 @@ binaries:
       crc32: '5aa047a5'
       crc64: 'bbdff40f7f92f342'
       md5: 'c99749d6b9cd15faf3c160f580d82f67'
-      path: Half-Life-10210/valve/cl_dlls/gameui.so
       sha256: '6473a660d1f10c0de35c80fd328110266bb5eeb5d1d7eb07697a4867eda2ce0a'
       size: 9029893
     windows:
       crc32: '210e4839'
       crc64: '10b459a488880db0'
       md5: 'b7c592bda873d411978bdc6e4a0a3060'
-      path: Half-Life-10210/valve/cl_dlls/GameUI.dll
       sha256: 'b9b8c0c36bd19681627001c06ce2a15496da06b72315d561a12a3964e0265811'
       size: 850784
   server:
@@ -50,18 +44,16 @@ binaries:
       crc32: '2018761b'
       crc64: '4dc080d4f8d3e07e'
       md5: 'ac5175454188aa714f017bba2b14553f'
-      path: Half-Life-10210/valve/dlls/hl.so
       sha256: '4fd7df215b46b12d68d532691c59f75446388cdd0aad44380a4b807e45165191'
       size: 7610742
     windows:
       crc32: 'e0d04ec8'
       crc64: '43c71c2b20897814'
       md5: '33cfc70bfd34657e8f1f460151ad57b2'
-      path: Half-Life-10210/valve/dlls/hl.dll
       sha256: 'd932d274061ee05bef89ea712f9b32b8f5f742ad0124d5f516c8cca1e421ca24'
       size: 976224
 config_digest_version: 2
-config_sha256: sha256:94ef4fb6272234d5e04609f4dfa4e4bc80848c512ec07f833c262306066c1044
+config_sha256: sha256:c135254ddc3822cbb2f5fc22f5ac886ebfa998e32d7aeb8d803c1e89e5bc3e78
 file_count: 42
 files:
   engine/CBaseUI__Initialize.linux.yaml:
@@ -367,5 +359,5 @@ files:
     gv_sig_va: '0x10222ce0'
     gv_va: '0x105394c0'
 game_version: hl-10210
-last_publish_time: '2026-08-19T10:47:26Z'
-schema_version: 5
+last_publish_time: '2026-08-19T12:53:33Z'
+schema_version: 6

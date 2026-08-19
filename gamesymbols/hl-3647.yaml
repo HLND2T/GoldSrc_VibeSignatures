@@ -5,11 +5,10 @@ binaries:
       crc32: 'd4edc26e'
       crc64: 'a4f5787a83b57d53'
       md5: 'fb4c56099f9331f41629a03ccedda916'
-      path: Half-Life-3647/hw.dll
       sha256: 'f80c01c3c8f0800c89102343d58c4295bb62872f654cbd04a524788aa10f901f'
       size: 1841770
 config_digest_version: 2
-config_sha256: sha256:235d284bde8c73b1a1d929dc98eb72e203bacfb53035b9ecab6c32a88f226ff9
+config_sha256: sha256:fce91161aed28bb82c4483fcb49026eb17ef177fbe80cb4717267c8064b12146
 file_count: 16
 files:
   engine/CBaseUI__Initialize.windows.yaml:
@@ -128,5 +127,5 @@ files:
     gv_sig_va: '0x1d0db10'
     gv_va: '0x2f3ca60'
 game_version: hl-3647
-last_publish_time: '2026-08-19T10:45:48Z'
-schema_version: 5
+last_publish_time: '2026-08-19T12:52:59Z'
+schema_version: 6

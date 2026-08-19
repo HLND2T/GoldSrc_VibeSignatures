@@ -5,14 +5,12 @@ binaries:
       crc32: 'bc31f16c'
       crc64: '74337f40d9853c50'
       md5: 'ab2680eef389aea7f14c2a96de228680'
-      path: Sven-Coop-10257/svencoop/cl_dlls/client.so
       sha256: '50580344e1c59b3c77e8e4e52ed9f185fcec7da2da936873ec122f12c735a022'
       size: 6612508
     windows:
       crc32: 'ed791f5b'
       crc64: '6ad36cd4373ebb45'
       md5: 'c72d69d461024424f9eae66bdf334656'
-      path: Sven-Coop-10257/svencoop/cl_dlls/client.dll
       sha256: 'f40e74b7a703d193188d628066660ff0ac4be2b09613ae4b7f8d2c671991e7d6'
       size: 1945600
   engine:
@@ -20,14 +18,12 @@ binaries:
       crc32: '8ad14968'
       crc64: 'f486c097bcc00fd7'
       md5: '52e45e6c96e1537a50cbe5c17c2ec670'
-      path: Sven-Coop-10257/hw.so
       sha256: '8cead76a51204a4ba1036c85cc2099b7c3542950d924846a9aa2ccf619df7dfd'
       size: 3269720
     windows:
       crc32: 'f3a7f2f1'
       crc64: 'f469129b520b2e16'
       md5: '297800b5feee41a8cb1499b0b2deca91'
-      path: Sven-Coop-10257/hw.dll
       sha256: 'e3c7f374b70845fb6f45c05906e4b5fe3dc9f394ab37bb653501d3b6a3282596'
       size: 2123776
   gameui:
@@ -35,14 +31,12 @@ binaries:
       crc32: '052c43fb'
       crc64: 'c8021fc85d92203a'
       md5: '7332a7e857f2f187425bf6dedc306ba5'
-      path: Sven-Coop-10257/svencoop/cl_dlls/gameui.so
       sha256: '7bd0deabeb1ff8537c144043d0ba591587fb3e3090d14c6b18ffe14b511e3c39'
       size: 1247340
     windows:
       crc32: 'f1e19ce7'
       crc64: '6f447d2fe7e72fcd'
       md5: 'f852e06177fbe0e299e803f11274b8d3'
-      path: Sven-Coop-10257/svencoop/cl_dlls/GameUI.dll
       sha256: '99382b87319d21139c0675d8a45669d64ef930f9e43dbd582461575383545f75'
       size: 738816
   server:
@@ -50,18 +44,16 @@ binaries:
       crc32: 'eb816a9e'
       crc64: 'd45a52e4977c4341'
       md5: '0ffb12b25ba94daf8772de5c8f4197e3'
-      path: Sven-Coop-10257/svencoop/dlls/server.so
       sha256: '7a980bbd4b03f7380092e45d0a7515085ffb5142e62589d87e2596e90d89d2ca'
       size: 11745592
     windows:
       crc32: 'a41098c7'
       crc64: '5d7b59ae83608095'
       md5: 'd758ecc3cf663debc00db06101e7869d'
-      path: Sven-Coop-10257/svencoop/dlls/server.dll
       sha256: 'f8be8b7ba8af2a5006127c3c36ced3717d94aec1120ef8b5678e28b23f0b07c0'
       size: 5533184
 config_digest_version: 2
-config_sha256: sha256:628bb9ff2a52ad709def04bcc277c24fd06d8e15e05504e3856c3db30e9f9f89
+config_sha256: sha256:1b8cf28f3ca56a010cbcccbcd8d06743c21fe9c0dd2a557250855f5c76a39688
 file_count: 22
 files:
   engine/CBaseUI__Initialize.windows.yaml:
@@ -224,5 +216,5 @@ files:
     gv_sig_va: '0x1d19e56'
     gv_va: '0x204e7b0'
 game_version: svencoop-10257
-last_publish_time: '2026-08-19T10:48:41Z'
-schema_version: 5
+last_publish_time: '2026-08-19T12:53:57Z'
+schema_version: 6

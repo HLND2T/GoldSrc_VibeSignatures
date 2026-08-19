@@ -55,8 +55,9 @@ uv run python gamesymbol_snapshot.py check-contract -gamever cstrike-10210
 默认 restore 会创建缺失的 YAML，并拒绝覆盖语义不同的文件。`-replace` 只删除 `bin/<GAMEVER>/` 下的 YAML，
 保留二进制与 IDA 数据库，再重建 snapshot 内容。
 
-writer 输出 schema 5（config digest v2）与 canonical 文件载荷；reader 兼容 schema 1–5。restore / verify 拒绝
-链接、路径逃逸、未声明 YAML、缺失必需 YAML、非 canonical bytes 与 contract drift。
+writer 输出 schema 6（config digest v2）、canonical 文件载荷与不依赖路径的二进制 hash metadata；reader 兼容
+schema 1–6，schema 5 仍严格读取其必需的旧 binary `path`。restore / verify 拒绝链接、路径逃逸、未声明
+YAML、缺失必需 YAML、非 canonical bytes 与 contract drift。
 
 `check-contract` 是只读信任探针：退出 `0` 表示可信，退出 `3` 上报机器可读的不可信原因，调用、配置或操作错误
 仍是硬失败。

@@ -209,6 +209,29 @@ class DownloadConfigTests(unittest.TestCase):
             with self.assertRaisesRegex(download_depot.ConfigError, "basepath"):
                 download_depot.load_module_filelist(path, "Game")
 
+    def test_filelist_accepts_relative_depot_paths_and_rejects_conflicting_aliases(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "config.yaml"
+            path.write_text(
+                """modules:
+  - name: engine
+    depot_windows: valve/hw.dll
+    path_windows: Game/other.dll
+""",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(download_depot.ConfigError, "same depot file"):
+                download_depot.load_module_filelist(path, "Game")
+            path.write_text(
+                """modules:
+  - name: engine
+    depot_windows: valve/hw.dll
+    path_windows: Game/valve/hw.dll
+""",
+                encoding="utf-8",
+            )
+            self.assertEqual(["valve/hw.dll"], download_depot.load_module_filelist(path, "Game"))
+
     def test_depotdownloader_command_uses_entry_appid_and_manifest(self):
         command = download_depot.build_depotdownloader_command(
             appid=10,
@@ -309,6 +332,17 @@ class CopyDepotTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             config = write_config(root / "config.yaml", both_platforms=False)
+            download_config = root / "download.yaml"
+            download_config.write_text(
+                """downloads:
+  - tag: game-1
+    appid: 1
+    basepath: Game
+    manifests:
+      '1': '1'
+""",
+                encoding="utf-8",
+            )
             source = write_pe32(root / "depots" / "Game" / "hw.dll")
             self.assertTrue(source.is_file())
             args = [
@@ -318,6 +352,8 @@ class CopyDepotTests(unittest.TestCase):
                 str(config),
                 "-depotdir",
                 str(root / "depots"),
+                "-downloadconfig",
+                str(download_config),
                 "-bindir",
                 str(root / "bin"),
                 "-platform",
@@ -326,6 +362,35 @@ class CopyDepotTests(unittest.TestCase):
             self.assertEqual(1, copy_depot_bin.main([*args, "-checkonly"]))
             self.assertEqual(0, copy_depot_bin.main(args))
             self.assertEqual(0, copy_depot_bin.main([*args, "-checkonly"]))
+
+    def test_checkonly_uses_module_targets_without_depot_locators(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text(
+                """modules:
+  - name: engine
+    module_windows: hw.dll
+""",
+                encoding="utf-8",
+            )
+            write_pe32(root / "bin" / "game-1" / "engine" / "hw.dll")
+            self.assertEqual(
+                0,
+                copy_depot_bin.main(
+                    [
+                        "-gamever",
+                        "game-1",
+                        "-config",
+                        str(config),
+                        "-bindir",
+                        str(root / "bin"),
+                        "-platform",
+                        "windows",
+                        "-checkonly",
+                    ]
+                ),
+            )
 
     def test_checkonly_configuration_error_is_two(self):
         self.assertEqual(

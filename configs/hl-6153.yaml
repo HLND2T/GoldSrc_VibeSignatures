@@ -1,6 +1,5 @@
 modules:
   - name: engine
-    path_windows: Half-Life-6153/hw.dll
     module_windows: hw.dll
     skills:
       - name: find-R_RenderView

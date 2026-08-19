@@ -20,7 +20,7 @@ SCHEMA_3_VERSION = 3
 SCHEMA_4_VERSION = 4
 SCHEMA_5_VERSION = 5
 SCHEMA_6_VERSION = 6
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 SCHEMA_KEYS = {
     1: ("schema_version", "game_version", "config_sha256", "file_count", "files"),
     2: ("schema_version", "config_digest_version", "game_version", "config_sha256", "file_count", "files"),

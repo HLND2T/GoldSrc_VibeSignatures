@@ -9,6 +9,7 @@
 - Baseline snapshots 已在 `dev` 提交为 `1fb1ac6 feat(gamesymbols): publish baseline snapshots`；
 - Incremental PR validation infrastructure 已按本文 GoldSrc 分叉实现，包含 runtime contract、impact planner、selective materialize、selected-node analyzer 与三分流 workflow；
 - 首次引入 workflow 时，目标 base 分支尚无 trusted planner，按 5.2 的 bootstrap 约束使用既有 CI 与手工完整门禁验证；合入后，后续 PR 才由 base commit planner 执行可信 planning。
+- 后续 binary identity 迁移已用 schema 6 取代 snapshot `binaries.*.*.path`：分析身份只由 `module_<platform>` 与 hash 锁定，depot 获取位置改为相对 `download.yaml.basepath` 的 `depot_<platform>`。下文 schema 5 / `path_*` 描述保留为 baseline 建立时的历史契约，不再描述当前 writer。
 
 CS2 workflow 对齐基线：`D:/CS2_VibeSignatures` `main@0a4d75fb495c71543fa011a4cab1fb5518b5ee97`
 

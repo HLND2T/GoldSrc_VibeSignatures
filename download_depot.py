@@ -13,7 +13,7 @@ import yaml
 from dotenv import load_dotenv
 
 from analysis_config import AnalysisConfigError, resolve_analysis_config, validated_tag
-from depot_util import append_auth_args, run_command
+from depot_util import append_auth_args, resolve_module_depot_path, run_command, safe_relative_path
 
 DEFAULT_CONFIG_FILE = "download.yaml"
 DEFAULT_DEPOT_DIR = "depots"
@@ -90,12 +90,10 @@ def find_download_entry(downloads: list[dict], tag: str) -> dict:
 
 
 def _safe_relative(value: str, field: str) -> str:
-    if not isinstance(value, str) or not value or "\\" in value:
-        raise ConfigError(f"{field} must be a non-empty relative POSIX path")
-    path = PurePosixPath(value)
-    if path.is_absolute() or any(part in {"", ".", ".."} for part in path.parts):
-        raise ConfigError(f"{field} is unsafe: {value!r}")
-    return path.as_posix()
+    try:
+        return safe_relative_path(value, field)
+    except ValueError as exc:
+        raise ConfigError(str(exc)) from exc
 
 
 def load_module_filelist(configyaml_path: str | Path, basepath: str) -> list[str]:
@@ -107,23 +105,17 @@ def load_module_filelist(configyaml_path: str | Path, basepath: str) -> list[str
     modules = document.get("modules") if isinstance(document, dict) else None
     if not isinstance(modules, list):
         raise ConfigError("Analysis config must contain a modules list")
-    base = PurePosixPath(_safe_relative(basepath, "basepath"))
     paths: set[str] = set()
     for index, module in enumerate(modules):
         if not isinstance(module, dict):
             raise ConfigError(f"modules[{index}] must be a mapping")
         for platform in ("windows", "linux"):
-            value = module.get(f"path_{platform}")
-            if value is not None:
-                field = f"modules[{index}].path_{platform}"
-                module_path = PurePosixPath(_safe_relative(value, field))
-                try:
-                    relative = module_path.relative_to(base)
-                except ValueError as exc:
-                    raise ConfigError(f"{field} must be within basepath {base.as_posix()!r}") from exc
-                if not relative.parts:
-                    raise ConfigError(f"{field} must name a file below basepath {base.as_posix()!r}")
-                paths.add(relative.as_posix())
+            try:
+                relative = resolve_module_depot_path(module, platform, basepath, f"modules[{index}]")
+            except ValueError as exc:
+                raise ConfigError(str(exc)) from exc
+            if relative is not None:
+                paths.add(relative)
     if not paths:
         raise ConfigError("Analysis config declares no module binaries")
     return sorted(paths)

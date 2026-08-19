@@ -85,8 +85,8 @@ atomically aborts every unfinished task and recomputes the summary before append
 
 ## Snapshot boundary
 
-The writer emits schema 5 with config digest v2, analysis-output contract version 2, UTC publication time, canonical
-file payloads, and SHA-256/MD5/CRC32/CRC64/size metadata for every configured binary. The reader accepts schemas 1–5.
+The writer emits schema 6 with config digest v2, analysis-output contract version 2, UTC publication time, canonical
+file payloads, and path-independent SHA-256/MD5/CRC32/CRC64/size metadata for every configured binary. The reader accepts schemas 1–6; schema 5 retains its required legacy binary `path`.
 Restore and verification reject links, path escapes, undeclared YAML, missing required YAML, non-canonical bytes, and
 contract drift.
 

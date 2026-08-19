@@ -2,14 +2,14 @@ modules:
   - name: client
     module_windows: client.dll
     module_linux: client.so
-    path_windows: Counter-Strike-8684/cstrike/cl_dlls/client.dll
-    path_linux: Counter-Strike-8684/cstrike/cl_dlls/client.so
+    depot_windows: cstrike/cl_dlls/client.dll
+    depot_linux: cstrike/cl_dlls/client.so
     skills: []
     symbols: []
   - name: server
     module_windows: mp.dll
     module_linux: cs.so
-    path_windows: Counter-Strike-8684/cstrike/dlls/mp.dll
-    path_linux: Counter-Strike-8684/cstrike/dlls/cs.so
+    depot_windows: cstrike/dlls/mp.dll
+    depot_linux: cstrike/dlls/cs.so
     skills: []
     symbols: []
