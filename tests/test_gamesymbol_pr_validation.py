@@ -18,8 +18,10 @@ from gamesymbol_snapshot_lib.analysis_sources import (
 )
 from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.errors import SnapshotConfigError
+from gamesymbol_snapshot_lib.impact_registry import ImpactRegistryError, parse_impact_registry
 from gamesymbol_snapshot_lib.materialize import materialize_baseline
 from gamesymbol_snapshot_lib.operations import load_snapshot_context, pack_snapshot
+from gamesymbol_snapshot_lib.pr_cli import GitRepository, PrCliError, materialize_from_plan
 from gamesymbol_snapshot_lib.pr_validation import (
     BoundImpactPlan,
     ChangedPath,
@@ -27,10 +29,9 @@ from gamesymbol_snapshot_lib.pr_validation import (
     TagImpact,
     plan_tag_impact,
     snapshot_delta_paths,
+    snapshot_documents_changed,
 )
-from gamesymbol_snapshot_lib.pr_cli import GitRepository, PrCliError, materialize_from_plan
 from tests.test_support import write_pe32
-from gamesymbol_snapshot_lib.impact_registry import ImpactRegistryError, parse_impact_registry
 
 
 class ImpactRegistryTests(unittest.TestCase):
@@ -276,6 +277,19 @@ class ImpactPlanningTests(unittest.TestCase):
             self.assertEqual((), snapshot_only.analysis_nodes)
             self.assertTrue(snapshot_only.snapshot_rebuild)
             self.assertFalse(snapshot_only.gamedata_rebuild)
+            hashing_only = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(ChangedPath("M", "binary_hashing.py", "binary_hashing.py"),),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+            )
+            self.assertEqual((), hashing_only.analysis_nodes)
+            self.assertTrue(hashing_only.snapshot_rebuild)
+            self.assertFalse(hashing_only.gamedata_rebuild)
             gamedata_only = plan_tag_impact(
                 tag="game-1",
                 base_contract=contract,
@@ -361,14 +375,36 @@ class ImpactPlanningTests(unittest.TestCase):
             )
             self.assertTrue(deleted.deleted)
 
-    def test_publish_time_only_snapshot_change_has_no_artifact_delta(self):
+    def test_snapshot_metadata_changes_rebuild_but_publish_time_only_changes_do_not(self):
         files = {"engine/A.windows.yaml": {"value": 1}}
-        self.assertFalse(
-            snapshot_delta_paths(
-                {"last_publish_time": "2026-01-01T00:00:00Z", "files": files},
-                {"last_publish_time": "2026-01-02T00:00:00Z", "files": files},
+        publish_base = {"last_publish_time": "2026-01-01T00:00:00Z", "files": files}
+        publish_merge = {"last_publish_time": "2026-01-02T00:00:00Z", "files": files}
+        self.assertFalse(snapshot_delta_paths(publish_base, publish_merge))
+        self.assertFalse(snapshot_documents_changed(publish_base, publish_merge))
+
+        metadata_base = {**publish_base, "binaries": {"engine": {"windows": {"sha256": "a" * 64}}}}
+        metadata_merge = {**publish_merge, "binaries": {"engine": {"windows": {"sha256": "b" * 64}}}}
+        self.assertFalse(snapshot_delta_paths(metadata_base, metadata_merge))
+        self.assertTrue(snapshot_documents_changed(metadata_base, metadata_merge))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            contract = self._contract(root)
+            impact = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(ChangedPath("M", "gamesymbols/game-1.yaml", "gamesymbols/game-1.yaml"),),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+                snapshot_changed=True,
             )
-        )
+        self.assertEqual((), impact.analysis_nodes)
+        self.assertTrue(impact.snapshot_rebuild)
+        self.assertFalse(impact.gamedata_rebuild)
+        self.assertIn("snapshot metadata changed", impact.reasons)
 
     def test_bound_plan_digest_binds_shas_actions_and_digests(self):
         action = TagImpact("game-1", "incremental", (), (), True, True, False, ("snapshot",))

@@ -14,6 +14,16 @@ rules:
       - ida_llm_decompile.py
       - agent_runner.py
       - decrypt_blob.py
+      - pyproject.toml
+      - uv.lock
+      - .mcp.json
+      - .claude/agents/sig-finder.md
+      - .claude/SKILL_RUNNER.md
+      - .claude/skill_runner.settings.json
+      - .codex/config.toml
+      - .codex/skill_runner.config.toml
+      - .opencode/agents/sig-finder.md
+      - .opencode/skill_runner.config.json
       - ida_preprocessor_scripts/prompt/call_llm_decompile.md
       - gamesymbol_snapshot_lib/analysis_sources.py
       - gamesymbol_snapshot_lib/impact_registry.py

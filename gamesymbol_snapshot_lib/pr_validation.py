@@ -14,6 +14,7 @@ from gamesymbol_snapshot_lib.model import SnapshotContract
 PLAN_SCHEMA_VERSION = 1
 SNAPSHOT_DOMAIN_PATHS = frozenset(
     {
+        "binary_hashing.py",
         "gamesymbol_candidate.py",
         "gamesymbol_snapshot.py",
         "gamesymbol_store.py",
@@ -107,6 +108,17 @@ def snapshot_delta_paths(base: dict | None, merge: dict | None) -> frozenset[str
     )
 
 
+def snapshot_documents_changed(base: dict | None, merge: dict | None) -> bool:
+    """Compare snapshot semantics while ignoring the volatile publish timestamp."""
+
+    def stable_document(document: dict | None):
+        if document is None:
+            return None
+        return {key: value for key, value in document.items() if key != "last_publish_time"}
+
+    return stable_document(base) != stable_document(merge)
+
+
 def _registry_nodes(
     rules: tuple[ImpactRule, ...], paths: set[str], contract: SnapshotContract
 ) -> tuple[set[str], list[str]]:
@@ -180,6 +192,7 @@ def plan_tag_impact(
     base_rules: tuple[ImpactRule, ...],
     merge_rules: tuple[ImpactRule, ...],
     snapshot_delta: frozenset[str] = frozenset(),
+    snapshot_changed: bool = False,
     binary_changed_pairs: frozenset[tuple[str, str]] = frozenset(),
     base_snapshot_trusted: bool = True,
     expected_snapshot_exists: bool = True,
@@ -233,6 +246,8 @@ def plan_tag_impact(
         owner_ids.intersection_update(merge_contract.nodes)
         seeds.update(owner_ids)
         reasons.append(f"snapshot delta: {path}")
+    if snapshot_changed and not snapshot_delta:
+        reasons.append("snapshot metadata changed")
 
     for module, platform in binary_changed_pairs:
         pair_nodes = {
@@ -244,7 +259,9 @@ def plan_tag_impact(
         if pair_nodes:
             reasons.append(f"binary changed: {module}/{platform}")
 
-    snapshot_rebuild = bool(seeds or snapshot_delta or config_changed or _snapshot_domain_changed(all_paths))
+    snapshot_rebuild = bool(
+        seeds or snapshot_delta or snapshot_changed or config_changed or _snapshot_domain_changed(all_paths)
+    )
     gamedata_rebuild = bool(seeds or _gamedata_domain_changed(all_paths))
     if not expected_snapshot_exists and merge_contract.formal_paths:
         seeds.update(merge_contract.nodes)

@@ -10,6 +10,7 @@
 - Incremental PR validation infrastructure 已按本文 GoldSrc 分叉实现，包含 runtime contract、impact planner、selective materialize、selected-node analyzer 与三分流 workflow；
 - 首次引入 workflow 时，目标 base 分支尚无 trusted planner，按 5.2 的 bootstrap 约束使用既有 CI 与手工完整门禁验证；合入后，后续 PR 才由 base commit planner 执行可信 planning。
 - 后续 binary identity 迁移已用 schema 6 取代 snapshot `binaries.*.*.path`：分析身份只由 `module_<platform>` 与 hash 锁定，depot 获取位置改为相对 `download.yaml.basepath` 的 `depot_<platform>`。下文 schema 5 / `path_*` 描述保留为 baseline 建立时的历史契约，不再描述当前 writer。
+- PR review 修复补齐了 metadata-only snapshot rebuild、Agent runner 配置与依赖锁文件 impact，并在 self-hosted 分析前后清理 `bin` submodule 的 ignored YAML/IDA 状态；Windows runner steps 固定使用 `pwsh`。
 
 CS2 workflow 对齐基线：`D:/CS2_VibeSignatures` `main@0a4d75fb495c71543fa011a4cab1fb5518b5ee97`
 
@@ -454,7 +455,7 @@ rules:
 - gamedata generator/contract：gamedata domain；
 - `docs/**`、`pages/**` 与普通 tests。
 
-新增的 trusted planner、source index、registry parser、PR validation CLI 与 selective materializer 模块自身，也必须加入 `scope: all` 规则。具体路径在实现时随模块落位一起固定，不能依赖文件名前缀猜测。
+新增的 trusted planner、source index、registry parser、PR validation CLI 与 selective materializer 模块自身，也必须加入 `scope: all` 规则。Agent runner 直接读取的共享 prompt/settings、MCP 配置，以及 `pyproject.toml` / `uv.lock` 依赖环境同样属于分析输入。具体路径在实现时随模块落位一起固定，不能依赖文件名前缀猜测。
 
 若未来证明某文件会改变 symbol generation semantics，再新增明确 registry rule。
 
@@ -658,7 +659,7 @@ planning 不执行 PR preprocessors、skills 或 IDA code。planning **不 check
 - 一个 job 按 `configs/config.yaml` 顺序逐 tag 执行，跳过第 9.1 节的零 symbol no-op tags；
 - 某 tag 失败后立即停止后续 tags；
 - self-hosted job timeout 必须显式设置，并按“`scope: all` 打到全部非空 tags”估算最坏墙钟时间；默认 6 小时不够时提高 timeout，而不是改成 GitHub matrix 并行多个 IDA jobs；
-- cleanup 只终止当前 job 启动的 workers，并删除 candidate、session 与其他当前 run 临时产物；repository workspace 的清理由 runner 与后续 default checkout 负责；
+- cleanup 只终止当前 job 启动的 workers，并删除 candidate、session 与其他当前 run 临时产物；default checkout 不会递归清除 submodule ignored files，因此 workflow 必须在分析前后对已验证为 `$GITHUB_WORKSPACE/bin` 的 submodule 执行 clean；
 - 工作区二进制来自 checkout 的 `bin` submodule，不要先从 `PERSISTED_WORKSPACE` 覆盖 `bin/`。
 
 ### 13.6 YAML staging、merge promotion 与 closed finalizer
@@ -667,7 +668,7 @@ CS2 的 staging/promotion 服务于“persisted bin 同时保存二进制和 YAM
 
 第一版 Infrastructure 可以不做 promotion：validation 成功即可，closed finalizer 只清理 staging（若未创建则为 no-op）。若实现 promotion，必须遵守：
 
-- `.i64`、`.id0` 与其他 IDA database/cache 只存在于当前 validation workspace，不复制到 `PERSISTED_WORKSPACE`；不得抄 CS2 把 `*.i64` 拷进工作区的步骤；
+- `.i64`、`.id0` 与其他 IDA database/cache 只存在于当前 validation run，不复制到 `PERSISTED_WORKSPACE`，也不得残留到 self-hosted runner 的下一次 checkout；不得抄 CS2 把 `*.i64` 拷进工作区的步骤；
 - 只有整个 PR validation 成功，且所有受影响 tags 都完成 actual/expected comparison 与对应 candidate gates 后，才允许 staging；
 - staging 只包含本次实际执行 analysis nodes 的 tags 下完整 `bin/<tag>/**/*.yaml` 状态，不包含 binaries、IDA databases、candidate/session 或其他临时文件；
 - staging root 固定为 `PERSISTED_WORKSPACE/pr-yaml-staging/<PR>/<run_id>-<run_attempt>/`，保留 `bin/<tag>/...` 相对布局，并记录 PR number、base/head/merge SHA、run ID/attempt、tag inventory 与 plan digest；

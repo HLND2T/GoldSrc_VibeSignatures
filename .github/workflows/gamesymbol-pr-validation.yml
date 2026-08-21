@@ -199,13 +199,27 @@ jobs:
           name: gamesymbol-plan-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/gamesymbol-validation
       - name: Sync trusted base planner environment
-        shell: powershell
+        shell: pwsh
         run: |
           $basePlannerRoot = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\base-planner'
           uv sync --locked --project $basePlannerRoot
           if ($LASTEXITCODE -ne 0) { throw 'trusted base planner environment sync failed' }
+      - name: Clean persisted submodule analysis state
+        shell: pwsh
+        run: |
+          $workspaceRoot = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
+          $binRoot = (Resolve-Path -LiteralPath (Join-Path $workspaceRoot 'bin')).Path
+          if (-not $binRoot.StartsWith($workspaceRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "bin submodule escaped the checked-out workspace: $binRoot"
+          }
+          $gitTopLevel = (git -C $binRoot rev-parse --show-toplevel).Trim()
+          if ($LASTEXITCODE -ne 0 -or [IO.Path]::GetFullPath($gitTopLevel) -ne [IO.Path]::GetFullPath($binRoot)) {
+            throw "Refusing to clean an unexpected bin repository: $gitTopLevel"
+          }
+          git -C $binRoot clean -ffdx
+          if ($LASTEXITCODE -ne 0) { throw 'failed to clean persisted bin analysis state' }
       - name: Analyze selected nodes and compare actual snapshots
-        shell: powershell
+        shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $planPath = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\plan.json'
@@ -244,6 +258,21 @@ jobs:
               if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
             }
           }
+      - name: Remove generated submodule analysis state
+        if: always()
+        shell: pwsh
+        run: |
+          $workspaceRoot = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
+          $binRoot = (Resolve-Path -LiteralPath (Join-Path $workspaceRoot 'bin')).Path
+          if (-not $binRoot.StartsWith($workspaceRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "bin submodule escaped the checked-out workspace: $binRoot"
+          }
+          $gitTopLevel = (git -C $binRoot rev-parse --show-toplevel).Trim()
+          if ($LASTEXITCODE -ne 0 -or [IO.Path]::GetFullPath($gitTopLevel) -ne [IO.Path]::GetFullPath($binRoot)) {
+            throw "Refusing to clean an unexpected bin repository: $gitTopLevel"
+          }
+          git -C $binRoot clean -ffdx
+          if ($LASTEXITCODE -ne 0) { throw 'failed to remove generated bin analysis state' }
   fork-analysis-blocked:
     needs: plan
     if: needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository != 'true'

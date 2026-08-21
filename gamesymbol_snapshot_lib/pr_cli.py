@@ -29,6 +29,7 @@ from gamesymbol_snapshot_lib.pr_validation import (
     TagImpact,
     plan_tag_impact,
     snapshot_delta_paths,
+    snapshot_documents_changed,
 )
 
 
@@ -260,6 +261,7 @@ def build_plan(
                 base_rules=base_rules,
                 merge_rules=merge_rules,
                 snapshot_delta=snapshot_delta_paths(base_document, merge_document),
+                snapshot_changed=snapshot_documents_changed(base_document, merge_document),
                 binary_changed_pairs=_binary_changes(
                     tag=tag,
                     base_contract=base_contracts[tag],
