@@ -36,11 +36,19 @@ jobs:
         shell: bash
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           bundle="$RUNNER_TEMP/gamesymbol-validation"
           mkdir -p "$bundle/base-planner"
-          git archive "$BASE_SHA" -- ':(glob)*.py' gamesymbol_snapshot_lib pyproject.toml uv.lock \
+          export_src="$BASE_SHA"
+          # First PR introducing the planner framework: the base branch has no
+          # planner yet, so bootstrap from the head branch. Later PRs keep
+          # running the trusted base code to prevent validation tampering.
+          if ! git cat-file -e "$BASE_SHA:gamesymbol_pr_validation.py" 2>/dev/null; then
+            export_src="$HEAD_SHA"
+          fi
+          git archive "$export_src" -- ':(glob)*.py' gamesymbol_snapshot_lib pyproject.toml uv.lock \
             | tar -x -C "$bundle/base-planner"
       - name: Sync trusted base planner environment
         shell: bash
