@@ -102,10 +102,12 @@ jobs:
       - name: Upload trusted plan bundle
         uses: actions/upload-artifact@v4
         with:
-          name: gamesymbol-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          # Failed-job reruns reuse the successful plan job from an earlier attempt.
+          name: gamesymbol-plan-${{ github.run_id }}
           path: ${{ runner.temp }}/gamesymbol-validation
           if-no-files-found: error
           include-hidden-files: false
+          overwrite: true
   validate-hosted:
     needs: plan
     if: needs.plan.outputs.has_hosted == 'true'
@@ -124,7 +126,7 @@ jobs:
       - run: uv sync --locked
       - uses: actions/download-artifact@v4
         with:
-          name: gamesymbol-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          name: gamesymbol-plan-${{ github.run_id }}
           path: ${{ runner.temp }}/gamesymbol-validation
       - name: Sync trusted base planner environment
         shell: bash
@@ -196,7 +198,7 @@ jobs:
       - run: uv sync --locked
       - uses: actions/download-artifact@v4
         with:
-          name: gamesymbol-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          name: gamesymbol-plan-${{ github.run_id }}
           path: ${{ runner.temp }}/gamesymbol-validation
       - name: Sync trusted base planner environment
         shell: pwsh
