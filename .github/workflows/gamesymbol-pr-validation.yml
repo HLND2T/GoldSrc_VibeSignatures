@@ -175,7 +175,7 @@ jobs:
     environment: win64
     timeout-minutes: 720
     env:
-      GSVIBE_AGENT: ${{ secrets.GSVIBE_AGENT }}
+      GSVIBE_AGENT: ${{ secrets.GSVIBE_AGENT || 'claude' }}
       GSVIBE_AGENT_MODEL: ${{ secrets.GSVIBE_AGENT_MODEL }}
       GSVIBE_LLM_APIKEY: ${{ secrets.GSVIBE_LLM_APIKEY }}
       GSVIBE_LLM_BASEURL: ${{ secrets.GSVIBE_LLM_BASEURL }}

@@ -2183,12 +2183,12 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "-agent",
-        default=os.environ.get("GSVIBE_AGENT", DEFAULT_AGENT),
+        default=os.environ.get("GSVIBE_AGENT") or DEFAULT_AGENT,
         help="Agent executable (default: claude, or set GSVIBE_AGENT)",
     )
     parser.add_argument(
         "-agent_model",
-        default=os.environ.get("GSVIBE_AGENT_MODEL", DEFAULT_AGENT_MODEL),
+        default=os.environ.get("GSVIBE_AGENT_MODEL") or DEFAULT_AGENT_MODEL,
         help="Optional model for the selected Agent (or set GSVIBE_AGENT_MODEL)",
     )
     parser.add_argument(

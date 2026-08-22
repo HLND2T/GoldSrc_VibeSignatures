@@ -383,6 +383,14 @@ class CliContractTests(unittest.TestCase):
         self.assertEqual("gsvibe:analysis:v1", args.redis_prefix)
         self.assertIsNone(args.run_id)
 
+    def test_blank_agent_environment_values_use_defaults(self):
+        args = self.parse_args(
+            ["-gamever", "cstrike-10210"],
+            env={"GSVIBE_AGENT": "", "GSVIBE_AGENT_MODEL": ""},
+        )
+        self.assertEqual("claude", args.agent)
+        self.assertEqual("", args.agent_model)
+
     def test_selected_nodes_are_repeatable_and_reject_legacy_filters(self):
         args = self.parse_args(
             [
