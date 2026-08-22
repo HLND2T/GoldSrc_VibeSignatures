@@ -177,10 +177,6 @@ jobs:
     environment: win64
     timeout-minutes: 720
     env:
-      # Make checkout's initial reset repair CRLF files left by older runner jobs.
-      GIT_CONFIG_COUNT: '1'
-      GIT_CONFIG_KEY_0: core.autocrlf
-      GIT_CONFIG_VALUE_0: 'false'
       GSVIBE_AGENT: ${{ secrets.GSVIBE_AGENT || 'claude' }}
       GSVIBE_AGENT_MODEL: ${{ secrets.GSVIBE_AGENT_MODEL }}
       GSVIBE_LLM_APIKEY: ${{ secrets.GSVIBE_LLM_APIKEY }}
@@ -200,6 +196,18 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --locked
+      - name: Normalize canonical snapshot checkout bytes
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+          for path in Path("gamesymbols").glob("*.yaml"):
+              raw = path.read_bytes()
+              normalized = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+              if normalized != raw:
+                  path.write_bytes(normalized)
+          '@ | uv run python -
+          if ($LASTEXITCODE -ne 0) { throw 'snapshot checkout normalization failed' }
       - uses: actions/download-artifact@v4
         with:
           name: gamesymbol-plan-${{ github.run_id }}
