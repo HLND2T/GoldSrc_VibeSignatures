@@ -17,7 +17,7 @@ type JsonObject = Record<string, unknown>
 export type GameSymbolPlatform = 'windows' | 'linux'
 
 export interface GameSymbolBinary {
-  path: string
+  path?: string
   sha256: string
   md5: string
   crc32: string
@@ -174,7 +174,7 @@ function requiredPublishTime(value: unknown, source: string): string {
   return publishTime
 }
 
-function normalizeBinaries(value: unknown, source: string): GameSymbolBinaries {
+function normalizeBinaries(value: unknown, snapshotSchemaVersion: number, source: string): GameSymbolBinaries {
   if (!isObject(value)) throw new Error(`${source}: binaries must be a mapping`)
   const binaries: GameSymbolBinaries = {}
   for (const [module, platformsValue] of Object.entries(value).sort(([left], [right]) => left.localeCompare(right))) {
@@ -186,7 +186,12 @@ function normalizeBinaries(value: unknown, source: string): GameSymbolBinaries {
     for (const [platform, metadataValue] of Object.entries(platformsValue)) {
       if (platform !== 'windows' && platform !== 'linux') throw new Error(`${source}: unsupported binary platform ${platform}`)
       if (!isObject(metadataValue)) throw new Error(`${source}: binaries.${module}.${platform} must be a mapping`)
-      const path = requiredString(metadataValue.path, `binaries.${module}.${platform}.path`, source)
+      let path: string | undefined
+      if (snapshotSchemaVersion === 5) {
+        path = requiredString(metadataValue.path, `binaries.${module}.${platform}.path`, source)
+      } else if (metadataValue.path !== undefined) {
+        throw new Error(`${source}: binaries.${module}.${platform}.path is not allowed in schema 6`)
+      }
       const sha256 = requiredString(metadataValue.sha256, `binaries.${module}.${platform}.sha256`, source)
       const md5 = requiredString(metadataValue.md5, `binaries.${module}.${platform}.md5`, source)
       const crc32 = requiredString(metadataValue.crc32, `binaries.${module}.${platform}.crc32`, source)
@@ -196,7 +201,7 @@ function normalizeBinaries(value: unknown, source: string): GameSymbolBinaries {
       if (!/^[0-9a-f]{32}$/.test(md5)) throw new Error(`${source}: binaries.${module}.${platform}.md5 is invalid`)
       if (!/^[0-9a-f]{8}$/.test(crc32)) throw new Error(`${source}: binaries.${module}.${platform}.crc32 is invalid`)
       if (!/^[0-9a-f]{16}$/.test(crc64)) throw new Error(`${source}: binaries.${module}.${platform}.crc64 is invalid`)
-      platforms[platform] = { path, sha256, md5, crc32, crc64, size }
+      platforms[platform] = { ...(path === undefined ? {} : { path }), sha256, md5, crc32, crc64, size }
     }
     binaries[module] = platforms
   }
@@ -229,7 +234,9 @@ export function normalizeGameSymbolSnapshot(raw: unknown, expectedGameVersion: s
   const gameVersion = requiredString(raw.game_version, 'game_version', source)
   if (gameVersion !== expectedGameVersion) throw new Error(`${source}: game_version ${gameVersion} does not match filename ${expectedGameVersion}`)
   const snapshotSchemaVersion = requiredInteger(raw.schema_version, 'schema_version', source)
-  if (snapshotSchemaVersion !== 5) throw new Error(`${source}: schema_version must be 5`)
+  if (snapshotSchemaVersion !== 5 && snapshotSchemaVersion !== 6) {
+    throw new Error(`${source}: schema_version must be 5 or 6`)
+  }
 
   const files = raw.files
   if (!isObject(files)) throw new Error(`${source}: files must be a mapping`)
@@ -237,7 +244,7 @@ export function normalizeGameSymbolSnapshot(raw: unknown, expectedGameVersion: s
   const fileEntries = Object.entries(files)
   if (fileEntries.length !== fileCount) throw new Error(`${source}: file_count ${fileCount} does not match ${fileEntries.length} files`)
   const lastPublishTime = requiredPublishTime(raw.last_publish_time, source)
-  const binaries = normalizeBinaries(raw.binaries, source)
+  const binaries = normalizeBinaries(raw.binaries, snapshotSchemaVersion, source)
 
   const moduleCounts = new Map<string, { count: number; windowsCount: number; linuxCount: number }>()
   const records = fileEntries.map(([id, payloadValue]) => {

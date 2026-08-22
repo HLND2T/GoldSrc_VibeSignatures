@@ -9,7 +9,7 @@ import unittest
 from contextlib import asynccontextmanager, redirect_stderr
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import ANY, AsyncMock, patch
+from unittest.mock import ANY, AsyncMock, call, patch
 
 import yaml
 
@@ -124,6 +124,8 @@ class PreprocessStatusTests(unittest.TestCase):
         self.assertIn("if spec.get('vtable_entries'):", code)
         self.assertIn("def _try_decode_padding_nop", code)
         self.assertIn("not ida_bytes.is_head(flags)", code)
+        self.assertIn("xref_string_sources_as_function_starts", code)
+        self.assertIn("ida_funcs.add_func(source_ea)", code)
         self.assertNotIn("if len(tokens) >= max_tokens:\n                break", code)
         self.assertIn("ida_ua.o_displ", ida_analyze_util._INSPECT_FUNCTION_PY_EVAL)
         self.assertIn("def _try_decode_padding_nop", ida_analyze_util._INSPECT_FUNCTION_PY_EVAL)
@@ -290,6 +292,46 @@ class PreprocessorLoaderTests(unittest.IsolatedAsyncioTestCase):
         self.assertIs(PREPROCESS_STATUS_SUCCESS, second)
         self.assertEqual("x", import_count)
         self.assertIs(PREPROCESS_STATUS_FAILED, invalid_result)
+
+    async def test_clientdll_init_retries_with_across_boundary_signature_budget(self):
+        preprocess = ida_skill_preprocessor._get_preprocess_entry("find-ClientDLL_Init")
+        preprocess_common = AsyncMock(side_effect=[False, True])
+        with patch.dict(preprocess.__globals__, {"preprocess_common_skill": preprocess_common}):
+            result = await preprocess(
+                session=SimpleNamespace(call_tool=AsyncMock()),
+                skill_name="find-ClientDLL_Init",
+                expected_outputs=["ClientDLL_Init.windows.yaml"],
+                old_yaml_map=None,
+                new_binary_dir=Path("D:/bin/hl-4554/engine"),
+                platform="windows",
+                image_base=0x1D00000,
+            )
+
+        self.assertTrue(result)
+        self.assertEqual(2, preprocess_common.await_count)
+        self.assertTrue(
+            preprocess_common.await_args_list[0].kwargs["func_xrefs"][0]["xref_string_sources_as_function_starts"]
+        )
+        self.assertEqual(
+            [("ClientDLL_Init", ["func_name", "func_sig", "func_va", "func_rva", "func_size"])],
+            preprocess_common.await_args_list[0].kwargs["generate_yaml_desired_fields"],
+        )
+        self.assertEqual(
+            [
+                (
+                    "ClientDLL_Init",
+                    [
+                        "func_name",
+                        "func_sig",
+                        "func_va",
+                        "func_rva",
+                        "func_size",
+                        "func_sig_allow_across_function_boundary:true",
+                    ],
+                )
+            ],
+            preprocess_common.await_args_list[1].kwargs["generate_yaml_desired_fields"],
+        )
 
 
 class PreprocessorDispatchTests(unittest.IsolatedAsyncioTestCase):
@@ -1431,6 +1473,101 @@ found_struct_offset: []
             call_llm.assert_awaited_once()
             self.assertEqual(["Target", "g_Target"], call_llm.await_args.kwargs["symbol_names"])
             self.assertEqual("g_Target", yaml.safe_load(gv_output.read_text(encoding="utf-8"))["gv_name"])
+
+    async def test_llm_global_can_retry_with_across_boundary_signature_budget(self):
+        llm_result = {
+            "found_vcall": [],
+            "found_call": [],
+            "found_funcptr": [],
+            "found_gv": [
+                {
+                    "gv_name": "g_Target",
+                    "insn_va": "0x401040",
+                    "insn_disasm": "mov eax, ds:dword_404000",
+                }
+            ],
+            "found_struct_offset": [],
+        }
+        extended_function = {
+            "func_va": "0x401000",
+            "func_sig": "55 8B EC 83 EC ?? 53 56 57 8B F9",
+        }
+        inspect_function = AsyncMock(side_effect=[None, extended_function])
+        with (
+            patch(
+                "ida_analyze_util._inspect_llm_instruction",
+                new=AsyncMock(
+                    return_value={
+                        "func_start": "0x401000",
+                        "line": "mov eax, ds:dword_404000",
+                        "size": 5,
+                        "data_refs": ["0x404000"],
+                        "operand_targets": [],
+                        "operand_offsets": [1],
+                    }
+                ),
+            ),
+            patch("ida_analyze_util._inspect_function_via_mcp", new=inspect_function),
+        ):
+            candidate = await _preprocess_llm_target(
+                session=SimpleNamespace(call_tool=AsyncMock()),
+                symbol_name="g_Target",
+                category="gv",
+                spec={"expected_result_sections": ["found_gv"]},
+                llm_config={"model": "test-model"},
+                new_binary_dir=Path("D:/game/engine"),
+                platform="windows",
+                image_base=0x400000,
+                desired_fields=[
+                    "gv_name",
+                    "gv_va",
+                    "gv_rva",
+                    "gv_sig",
+                    "gv_sig_va",
+                    "gv_inst_offset",
+                    "gv_inst_length",
+                    "gv_inst_disp",
+                    "gv_sig_allow_across_function_boundary",
+                ],
+                llm_result=llm_result,
+                target_ranges=[(0x401000, 0x401100)],
+            )
+
+        self.assertEqual(extended_function["func_sig"], candidate["gv_sig"])
+        self.assertTrue(candidate["gv_sig_allow_across_function_boundary"])
+        self.assertEqual(
+            [
+                call(ANY, 0x401000, 0x400000, "__llm_anchor"),
+                call(
+                    ANY,
+                    0x401000,
+                    0x400000,
+                    "__llm_anchor",
+                    allow_across_function_boundary=True,
+                ),
+            ],
+            inspect_function.await_args_list,
+        )
+
+    def test_optional_global_across_boundary_marker_is_a_desired_output_field(self):
+        desired = ida_analyze_util._desired_fields_map(
+            [
+                (
+                    "g_Target",
+                    [
+                        "gv_name",
+                        "gv_sig",
+                        "gv_sig_allow_across_function_boundary?",
+                    ],
+                )
+            ]
+        )
+
+        self.assertIsNotNone(desired)
+        field_spec = desired["g_Target"]
+        self.assertIn("gv_sig_allow_across_function_boundary", field_spec["fields"])
+        self.assertIn("gv_sig_allow_across_function_boundary", field_spec["optional_fields"])
+        self.assertNotIn("gv_sig_allow_across_function_boundary", field_spec["generation_options"])
 
     async def test_llm_found_funcptr_generates_regular_function(self):
         with tempfile.TemporaryDirectory() as temporary:

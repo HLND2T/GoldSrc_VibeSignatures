@@ -40,7 +40,9 @@ export async function getGameSymbolIndex(signal?: AbortSignal): Promise<GameSymb
 
 function validateBinaryMetadata(value: unknown, context: string): void {
   if (!isObject(value)) throw new Error(`Invalid binary metadata at ${context}`)
-  if (typeof value.path !== 'string' || value.path.length === 0) throw new Error(`Invalid binary path at ${context}`)
+  if (value.path !== undefined && (typeof value.path !== 'string' || value.path.length === 0)) {
+    throw new Error(`Invalid binary path at ${context}`)
+  }
   if (typeof value.sha256 !== 'string' || !SHA256_PATTERN.test(value.sha256)) throw new Error(`Invalid binary sha256 at ${context}`)
   if (typeof value.md5 !== 'string' || !MD5_PATTERN.test(value.md5)) throw new Error(`Invalid binary md5 at ${context}`)
   if (typeof value.crc32 !== 'string' || !CRC32_PATTERN.test(value.crc32)) throw new Error(`Invalid binary crc32 at ${context}`)

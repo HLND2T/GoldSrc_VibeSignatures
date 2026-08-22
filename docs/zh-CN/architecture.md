@@ -78,8 +78,9 @@ code 补齐，并原子 abort 所有未完成 task、重算 summary 后再追加
 
 ## Snapshot 边界
 
-writer 输出 schema 5，包含 config digest v2、analysis output contract version 2、UTC 发布时间、canonical YAML 工件，以及
-每个配置二进制的 SHA-256、MD5、CRC32、CRC64 和 size。reader 兼容 schema 1–5。restore / verify 会拒绝链接、
+writer 输出 schema 6，包含 config digest v2、analysis output contract version 2、UTC 发布时间、canonical YAML 工件，以及
+每个配置二进制与路径无关的 SHA-256、MD5、CRC32、CRC64 和 size。reader 兼容 schema 1–6；schema 5 仍严格要求
+旧 binary `path`。restore / verify 会拒绝链接、
 路径逃逸、未声明或缺失的 YAML、非 canonical bytes 与 contract drift。
 
 candidate manifest 固定候选 hash 与文件系统 identity。发布使用原子替换，并且必须先验证匹配的 gamedata session。

@@ -23,6 +23,19 @@ FUNC_XREFS = [
 GENERATE_YAML_DESIRED_FIELDS = [
     ("Cvar_DirectSet", ["func_name", "func_sig", "func_va", "func_rva", "func_size"]),
 ]
+EXTENDED_SIGNATURE_DESIRED_FIELDS = [
+    (
+        "Cvar_DirectSet",
+        [
+            "func_name",
+            "func_sig",
+            "func_va",
+            "func_rva",
+            "func_size",
+            "func_sig_allow_across_function_boundary:true",
+        ],
+    ),
+]
 
 
 async def preprocess_skill(
@@ -36,15 +49,23 @@ async def preprocess_skill(
     debug=False,
 ):
     _ = skill_name
-    return await preprocess_common_skill(
-        session=session,
-        expected_outputs=expected_outputs,
-        old_yaml_map=None,
-        new_binary_dir=new_binary_dir,
-        platform=platform,
-        image_base=image_base,
-        func_names=TARGET_FUNCTION_NAMES,
-        func_xrefs=FUNC_XREFS,
+    common_arguments = {
+        "session": session,
+        "expected_outputs": expected_outputs,
+        "old_yaml_map": None,
+        "new_binary_dir": new_binary_dir,
+        "platform": platform,
+        "image_base": image_base,
+        "func_names": TARGET_FUNCTION_NAMES,
+        "func_xrefs": FUNC_XREFS,
+        "debug": debug,
+    }
+    if await preprocess_common_skill(
+        **common_arguments,
         generate_yaml_desired_fields=GENERATE_YAML_DESIRED_FIELDS,
-        debug=debug,
+    ):
+        return True
+    return await preprocess_common_skill(
+        **common_arguments,
+        generate_yaml_desired_fields=EXTENDED_SIGNATURE_DESIRED_FIELDS,
     )

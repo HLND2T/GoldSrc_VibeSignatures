@@ -67,7 +67,9 @@ export function validateGameSymbolIndex(value, source = 'gamesymbols/index.json'
 
 function validateBinaryMetadata(value, source) {
   if (!isObject(value)) throw new Error(`${source}: binary metadata must be an object`)
-  if (typeof value.path !== 'string' || value.path.length === 0) throw new Error(`${source}.path is invalid`)
+  if (value.path !== undefined && (typeof value.path !== 'string' || value.path.length === 0)) {
+    throw new Error(`${source}.path is invalid`)
+  }
   if (typeof value.sha256 !== 'string' || !SHA256_PATTERN.test(value.sha256)) throw new Error(`${source}.sha256 is invalid`)
   if (typeof value.md5 !== 'string' || !MD5_PATTERN.test(value.md5)) throw new Error(`${source}.md5 is invalid`)
   if (typeof value.crc32 !== 'string' || !CRC32_PATTERN.test(value.crc32)) throw new Error(`${source}.crc32 is invalid`)

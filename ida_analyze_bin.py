@@ -1388,6 +1388,7 @@ def run_analysis_pipeline(
     artifact_types: dict[str, str] | None = None,
     preprocessor_runner=_run_preprocessor,
     agent_skill_runner=agent_runner.run_skill,
+    force_execution: bool = False,
 ) -> PipelineResult:
     binary_path = Path(binary_path).resolve()
     game_root = Path(game_root).resolve()
@@ -1396,7 +1397,7 @@ def run_analysis_pipeline(
     required = [path.resolve() for path in required]
     optional = [path.resolve() for path in optional]
     existing_reason = _node_existing_output_reason(node, game_root)
-    if existing_reason is not None:
+    if not force_execution and existing_reason is not None:
         return PipelineResult("skipped", "existing", existing_reason.value)
 
     if reporting is not None and task_id is not None:
@@ -1671,10 +1672,11 @@ def _execute_analysis_node(
     ensure_mcp_ready=None,
     symbol_aliases=None,
     artifact_types=None,
+    force_execution: bool = False,
 ):
     task_id = reporting.task_id_for(node.id)
     existing_reason = _node_existing_output_reason(node, root)
-    if existing_reason is not None:
+    if not force_execution and existing_reason is not None:
         run_summary.skipped += 1
         reporting.emit_task_status(
             task_id,
@@ -1703,6 +1705,7 @@ def _execute_analysis_node(
             artifact_types=artifact_types,
             reporting=reporting,
             task_id=task_id,
+            force_execution=force_execution,
         )
         if result.status == "succeeded":
             run_summary.successful += 1
@@ -1764,6 +1767,129 @@ def _record_lifecycle_failures(nodes, *, error, reporting, run_summary):
         )
 
 
+def _select_requested_nodes(plan, requested_node_ids):
+    if requested_node_ids is None:
+        return tuple(plan.nodes)
+    requested = tuple(requested_node_ids)
+    if not requested or len(set(requested)) != len(requested):
+        raise AnalysisRunError("-node must contain unique non-empty node IDs")
+    available = {node.id for node in plan.nodes}
+    missing = sorted(set(requested) - available)
+    if missing:
+        raise AnalysisRunError(f"Analysis node(s) not found: {', '.join(missing)}")
+    requested_set = set(requested)
+    return tuple(node for node in plan.nodes if node.id in requested_set)
+
+
+def _validate_selected_inputs(plan, selected_nodes, game_root: Path) -> None:
+    selected_ids = {node.id for node in selected_nodes}
+    producers = {
+        output.casefold(): node.id for node in plan.nodes for output in (*node.required_outputs, *node.optional_outputs)
+    }
+    missing = []
+    for node in selected_nodes:
+        for artifact in node.required_inputs:
+            producer = producers.get(artifact.casefold())
+            path = game_root / Path(*PurePosixPath(artifact).parts)
+            if producer not in selected_ids and not path.is_file():
+                missing.append(f"{node.id}: {artifact}")
+    if missing:
+        raise AnalysisRunError("Selected nodes require materialized inputs:\n" + "\n".join(missing))
+
+
+def _execute_selected_nodes(
+    selected_nodes,
+    *,
+    validated_binaries,
+    root,
+    old_root,
+    agent,
+    agent_model,
+    llm_config,
+    skip_preprocessors,
+    debug,
+    reporting,
+    run_summary,
+    skip_error,
+    symbol_aliases,
+    artifact_types,
+    host,
+    port,
+    ida_args,
+):
+    failed_binaries = set()
+    index = 0
+    while index < len(selected_nodes):
+        binary_key = (selected_nodes[index].module, selected_nodes[index].platform)
+        end = index + 1
+        while end < len(selected_nodes) and (selected_nodes[end].module, selected_nodes[end].platform) == binary_key:
+            end += 1
+        segment = selected_nodes[index:end]
+        index = end
+        if binary_key not in validated_binaries:
+            continue
+        binary = validated_binaries[binary_key]
+        job_id = reporting.job_id_for(segment[0].id)
+        reporting.emit_task_status(job_id, TaskStatus.RUNNING, ProcessPhase.WAITING_FOR_MCP)
+        failures_before_segment = run_summary.failed
+        remaining = segment
+        lifecycle_failed = False
+        try:
+            with IdaMcpLifecycle(binary, binary_key[1], host, port, ida_args, debug) as lifecycle:
+                for node_index, node in enumerate(segment):
+                    if node_index:
+                        try:
+                            lifecycle.ensure_ready()
+                        except McpLifecycleError as exc:
+                            remaining = segment[node_index:]
+                            _record_lifecycle_failures(
+                                remaining,
+                                error=exc,
+                                reporting=reporting,
+                                run_summary=run_summary,
+                            )
+                            lifecycle_failed = True
+                            message = (
+                                f"MCP lifecycle failed for {node.module}:{node.platform}; "
+                                f"aborting {len(remaining)} remaining skill(s): {exc}"
+                            )
+                            if not skip_error:
+                                raise AnalysisRunError(message) from exc
+                            print(f"Error: {message}; continuing (-skip_error)")
+                            break
+                    _execute_analysis_node(
+                        node,
+                        binary=binary,
+                        root=root,
+                        old_root=old_root,
+                        agent=agent,
+                        agent_model=agent_model,
+                        llm_config=llm_config,
+                        skip_preprocessors=skip_preprocessors,
+                        debug=debug,
+                        reporting=reporting,
+                        run_summary=run_summary,
+                        skip_error=skip_error,
+                        mcp_runtime=lifecycle.runtime,
+                        ensure_mcp_ready=lifecycle.ensure_ready,
+                        symbol_aliases=symbol_aliases,
+                        artifact_types=artifact_types,
+                        force_execution=True,
+                    )
+                    remaining = segment[node_index + 1 :]
+        except McpLifecycleError as exc:
+            if remaining:
+                _record_lifecycle_failures(remaining, error=exc, reporting=reporting, run_summary=run_summary)
+            lifecycle_failed = True
+            message = f"MCP lifecycle failed for {binary_key[0]}:{binary_key[1]}: {exc}"
+            if not skip_error:
+                raise AnalysisRunError(message) from exc
+            print(f"Error: {message}; continuing (-skip_error)")
+        if lifecycle_failed or run_summary.failed > failures_before_segment:
+            failed_binaries.add(binary_key)
+    return frozenset(failed_binaries)
+
+
 def analyze(
     *,
     gamever: str,
@@ -1786,6 +1912,7 @@ def analyze(
     reporter: ProcessReporter | None = None,
     run_id: str | None = None,
     summary: AnalysisSummary | None = None,
+    selected_node_ids: tuple[str, ...] | list[str] | None = None,
 ) -> ExecutionPlan:
     process_reporter = BestEffortProcessReporter(reporter or NullProcessReporter())
     run_summary = summary if summary is not None else AnalysisSummary()
@@ -1797,7 +1924,11 @@ def analyze(
                 raise AnalysisRunError(f"Old game version must use the same game family as {tag}: {oldgamever}")
         document, all_modules = load_config(config_path)
         symbol_aliases = _symbol_alias_map_from_document(document)
-        modules = _select_execution_modules(all_modules, modules_filter, skill_filter)
+        modules = (
+            list(all_modules)
+            if selected_node_ids is not None
+            else _select_execution_modules(all_modules, modules_filter, skill_filter)
+        )
         plan = _build_execution_plan(
             modules,
             platforms=platforms,
@@ -1806,14 +1937,21 @@ def analyze(
             default_max_retries=max_retries,
             declared_modules=[module["name"] for module in all_modules],
         )
-        process_plan = build_process_execution_plan(plan, modules, platforms=platforms, bin_dir=bindir)
+        selected_nodes = _select_requested_nodes(plan, selected_node_ids)
+        process_plan = build_process_execution_plan(
+            plan,
+            modules,
+            platforms=platforms,
+            bin_dir=bindir,
+            selected_node_ids=None if selected_node_ids is None else [node.id for node in selected_nodes],
+        )
         root = Path(bindir) / tag
         old_root = Path(bindir) / oldgamever if oldgamever else None
         artifact_types = _artifact_type_map(all_modules, root)
         validated_binaries: dict[tuple[str, str], Path] = {}
         module_map = {module["name"]: module for module in modules}
         nodes_by_binary: dict[tuple[str, str], list] = {}
-        for node in plan.nodes:
+        for node in selected_nodes:
             nodes_by_binary.setdefault((node.module, node.platform), []).append(node)
         initialized_run_id = process_reporter.initialize_run(process_plan.to_dict(), run_id=run_id)
         reporting = AnalysisReporting(process_reporter, initialized_run_id, process_plan)
@@ -1831,6 +1969,8 @@ def analyze(
     try:
         reporting.emit_run_status(RunStatus.RUNNING)
         process_reporter.heartbeat(initialized_run_id)
+        if selected_node_ids is not None:
+            _validate_selected_inputs(plan, selected_nodes, root)
         for (module_name, platform), binary_nodes in nodes_by_binary.items():
             binary_name = module_map[module_name].get(f"module_{platform}")
             binary = Path(get_binary_path(bindir, tag, module_name, binary_name))
@@ -1889,7 +2029,37 @@ def analyze(
                     run_summary,
                 )
 
-        for binary_key, binary_nodes in nodes_by_binary.items():
+        selected_failed_binaries = frozenset()
+        if selected_node_ids is not None:
+            selected_failed_binaries = _execute_selected_nodes(
+                selected_nodes,
+                validated_binaries=validated_binaries,
+                root=root,
+                old_root=old_root,
+                agent=agent,
+                agent_model=agent_model,
+                llm_config=llm_config,
+                skip_preprocessors=skip_preprocessors,
+                debug=debug,
+                reporting=reporting,
+                run_summary=run_summary,
+                skip_error=skip_error,
+                symbol_aliases=symbol_aliases,
+                artifact_types=artifact_types,
+                host=host,
+                port=port,
+                ida_args=ida_args,
+            )
+            for binary_key, binary_nodes in nodes_by_binary.items():
+                if binary_key not in validated_binaries:
+                    continue
+                reporting.emit_task_status(
+                    reporting.job_id_for(binary_nodes[0].id),
+                    TaskStatus.FAILED if binary_key in selected_failed_binaries else TaskStatus.SUCCEEDED,
+                    ProcessPhase.FINISHED,
+                )
+
+        for binary_key, binary_nodes in () if selected_node_ids is not None else nodes_by_binary.items():
             if binary_key not in validated_binaries:
                 continue
             binary = validated_binaries[binary_key]
@@ -1974,7 +2144,7 @@ def analyze(
             )
 
         reporting.abort_pending(ProcessReason.UPSTREAM_ABORTED, "Task was not executed before run end")
-        final_status = RunStatus.FAILED if run_summary.failed else RunStatus.SUCCEEDED
+        final_status = RunStatus.FAILED if run_summary.failed or selected_failed_binaries else RunStatus.SUCCEEDED
         reporting.emit_run_status(final_status)
         process_reporter.finalize_run(initialized_run_id, final_status, reporting.summary())
         return plan
@@ -2013,21 +2183,22 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "-agent",
-        default=os.environ.get("GSVIBE_AGENT", DEFAULT_AGENT),
+        default=os.environ.get("GSVIBE_AGENT") or DEFAULT_AGENT,
         help="Agent executable (default: claude, or set GSVIBE_AGENT)",
     )
     parser.add_argument(
         "-agent_model",
-        default=os.environ.get("GSVIBE_AGENT_MODEL", DEFAULT_AGENT_MODEL),
+        default=os.environ.get("GSVIBE_AGENT_MODEL") or DEFAULT_AGENT_MODEL,
         help="Optional model for the selected Agent (or set GSVIBE_AGENT_MODEL)",
     )
     parser.add_argument(
         "-modules", default=DEFAULT_MODULES, help="Modules to analyze, comma-separated; '*' selects all"
     )
     parser.add_argument("-skill", default=None, help="Exact skill name to run")
+    parser.add_argument("-node", action="append", default=None, help="Exact module:platform:skill node ID to run")
     parser.add_argument(
         "-llm_model",
-        default=os.environ.get("GSVIBE_LLM_MODEL", DEFAULT_LLM_MODEL),
+        default=os.environ.get("GSVIBE_LLM_MODEL") or DEFAULT_LLM_MODEL,
         help="OpenAI-compatible model for LLM preprocessing (or set GSVIBE_LLM_MODEL)",
     )
     parser.add_argument(
@@ -2118,6 +2289,14 @@ def parse_args(argv=None):
         if option in REMOVED_CLI_OPTIONS:
             parser.error(f"unrecognized arguments: {token}")
     args = parser.parse_args(raw_argv)
+    explicit_options = {token.split("=", 1)[0] for token in raw_argv if token.startswith("-")}
+    if args.node is not None:
+        conflicts = sorted(explicit_options & {"-skill", "-modules", "-platform", "-allgamever"})
+        if conflicts:
+            parser.error(f"-node cannot be combined with {', '.join(conflicts)}")
+        if len(set(args.node)) != len(args.node) or any(not str(node).strip() for node in args.node):
+            parser.error("-node values must be unique non-empty node IDs")
+        args.node = [str(node).strip() for node in args.node]
     if args.allgamever:
         args.gamever = _optional_text(args.gamever)
         if args.gamever is not None:
@@ -2138,8 +2317,10 @@ def parse_args(argv=None):
         except AnalysisConfigError as exc:
             parser.error(str(exc))
 
-    args.platforms = _parse_csv(parser, args.platform, "-platform", allowed=PLATFORMS)
-    args.modules = str(args.modules).strip()
+    args.platforms = (
+        list(PLATFORMS) if args.node is not None else _parse_csv(parser, args.platform, "-platform", allowed=PLATFORMS)
+    )
+    args.modules = "*" if args.node is not None else str(args.modules).strip()
     if args.modules == "*":
         args.module_filter = None
     else:
@@ -2229,6 +2410,8 @@ def _print_main_configuration(args) -> None:
     print(f"Modules filter: {args.modules}")
     if args.skill:
         print(f"Skill filter: {args.skill}")
+    if args.node:
+        print(f"Selected nodes: {', '.join(args.node)}")
     print(f"Agent: {args.agent}")
     print(f"Process reporter: {args.process_reporter}")
     if args.run_id:
@@ -2285,6 +2468,7 @@ def _run_single_tag(gamever: str, args, summary: AnalysisSummary | None = None) 
             reporter=reporter,
             run_id=args.run_id,
             summary=summary,
+            selected_node_ids=args.node,
         )
     except (
         AnalysisConfigError,

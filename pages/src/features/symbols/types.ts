@@ -1,7 +1,7 @@
 export type GameSymbolPlatform = 'windows' | 'linux'
 
 export interface GameSymbolBinary {
-  path: string
+  path?: string
   sha256: string
   md5: string
   crc32: string

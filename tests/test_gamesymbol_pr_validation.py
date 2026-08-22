@@ -1,0 +1,639 @@
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+
+import yaml
+
+from gamesymbol_snapshot_lib.analysis_sources import (
+    AnalysisSourceError,
+    SourceIndex,
+    build_source_index,
+    validate_reference_consumers,
+)
+from gamesymbol_snapshot_lib.config import load_contract
+from gamesymbol_snapshot_lib.errors import SnapshotConfigError
+from gamesymbol_snapshot_lib.impact_registry import ImpactRegistryError, parse_impact_registry
+from gamesymbol_snapshot_lib.materialize import materialize_baseline
+from gamesymbol_snapshot_lib.operations import load_snapshot_context, pack_snapshot
+from gamesymbol_snapshot_lib.pr_cli import GitRepository, PrCliError, materialize_from_plan
+from gamesymbol_snapshot_lib.pr_validation import (
+    BoundImpactPlan,
+    ChangedPath,
+    ImpactPlanningError,
+    TagImpact,
+    plan_tag_impact,
+    snapshot_delta_paths,
+    snapshot_documents_changed,
+)
+from tests.test_support import write_pe32
+
+
+class ImpactRegistryTests(unittest.TestCase):
+    def test_parses_limited_scopes_and_matches_paths(self):
+        rules = parse_impact_registry(
+            {
+                "schema_version": 1,
+                "rules": [
+                    {"paths": ["ida_preprocessor_scripts/**/*.py"], "scope": "all", "reason": "shared"},
+                    {
+                        "paths": ["windows-only.py"],
+                        "scope": "platform",
+                        "platforms": ["windows"],
+                        "tags": ["hl-10210"],
+                        "reason": "windows",
+                    },
+                    {
+                        "paths": ["category.py"],
+                        "scope": "category",
+                        "categories": ["func"],
+                        "reason": "func",
+                    },
+                    {"paths": ["skill.py"], "scope": "skill", "skills": ["find"], "reason": "find"},
+                ],
+            }
+        )
+        self.assertTrue(rules[0].matches_path("ida_preprocessor_scripts/nested/find.py"))
+        self.assertEqual(frozenset({"hl-10210"}), rules[1].tags)
+        self.assertEqual(frozenset({"func"}), rules[2].categories)
+        self.assertEqual(frozenset({"find"}), rules[3].skills)
+
+    def test_rejects_unsafe_paths_invalid_scopes_and_unknown_selectors(self):
+        invalid_rules = (
+            {"paths": ["/absolute.py"], "scope": "all", "reason": "bad"},
+            {"paths": ["../escape.py"], "scope": "all", "reason": "bad"},
+            {"paths": ["bad\\path.py"], "scope": "all", "reason": "bad"},
+            {"paths": ["bad[0].py"], "scope": "all", "reason": "bad"},
+            {"paths": ["x.py"], "scope": "unknown", "reason": "bad"},
+            {"paths": ["x.py"], "scope": "platform", "platforms": ["mac"], "reason": "bad"},
+            {"paths": ["x.py"], "scope": "category", "categories": ["class"], "reason": "bad"},
+            {"paths": ["x.py"], "scope": "all", "skills": ["find"], "reason": "bad"},
+        )
+        for rule in invalid_rules:
+            with self.subTest(rule=rule), self.assertRaises(ImpactRegistryError):
+                parse_impact_registry({"schema_version": 1, "rules": [rule]})
+
+
+class AnalysisSourceIndexTests(unittest.TestCase):
+    def _contract(self, root: Path, tag: str):
+        config = root / f"{tag}.yaml"
+        config.write_text(
+            yaml.safe_dump(
+                {
+                    "modules": [
+                        {
+                            "name": "engine",
+                            "path_windows": "Game/hw.dll",
+                            "module_windows": "hw.dll",
+                            "skills": [{"name": "find-demo", "expected_output": ["Demo.{platform}.yaml"]}],
+                            "symbols": [{"name": "Demo", "category": "func"}],
+                        }
+                    ]
+                },
+                sort_keys=False,
+            ),
+            encoding="utf-8",
+        )
+        return load_contract(config, tag, root / "bin")
+
+    def test_indexes_root_import_prompt_current_reference_and_canonical_fallback(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            script = (
+                "from ida_analyze_util import preprocess_common_skill\n"
+                "LLM_DECOMPILE = [{'prompt_path': 'prompt/call_llm_decompile.md', "
+                "'reference_yaml_paths': ['references/{gamever}/{module_name}/Demo.{platform}.yaml']}]\n"
+            )
+            common_tree = {
+                "ida_preprocessor_scripts/find-demo.py": script,
+                "ida_analyze_util.py": "def preprocess_common_skill(): pass\n",
+                "ida_preprocessor_scripts/prompt/call_llm_decompile.md": "prompt",
+                "ida_preprocessor_scripts/references/hl-10210/engine/Demo.windows.yaml": "func_name: Demo\n",
+            }
+            current_tree = dict(common_tree)
+            current_tree["ida_preprocessor_scripts/references/game-1/engine/Demo.windows.yaml"] = "func_name: Demo\n"
+
+            current = build_source_index(self._contract(root, "game-1"), current_tree)
+            fallback = build_source_index(self._contract(root, "game-2"), common_tree)
+
+            node = "engine:windows:find-demo"
+            self.assertEqual(frozenset({node}), current.owners("ida_analyze_util.py"))
+            self.assertEqual(frozenset({node}), current.owners("ida_preprocessor_scripts/prompt/call_llm_decompile.md"))
+            self.assertEqual(
+                frozenset({node}),
+                current.owners("ida_preprocessor_scripts/references/game-1/engine/Demo.windows.yaml"),
+            )
+            self.assertFalse(current.owners("ida_preprocessor_scripts/references/hl-10210/engine/Demo.windows.yaml"))
+            self.assertEqual(
+                frozenset({node}),
+                fallback.owners("ida_preprocessor_scripts/references/hl-10210/engine/Demo.windows.yaml"),
+            )
+
+    def test_rejects_orphan_head_reference(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            tree = {
+                "ida_preprocessor_scripts/find-demo.py": "from ida_analyze_util import x\n",
+                "ida_analyze_util.py": "x = 1\n",
+                "ida_preprocessor_scripts/references/hl-10210/engine/Orphan.windows.yaml": "func_name: x\n",
+            }
+            with self.assertRaisesRegex(AnalysisSourceError, "no analysis consumer"):
+                validate_reference_consumers(tree, [build_source_index(self._contract(root, "game-1"), tree)])
+
+
+class ImpactPlanningTests(unittest.TestCase):
+    def _contract(self, root: Path, *, max_retries: int = 2):
+        config = root / f"config-{max_retries}.yaml"
+        config.write_text(
+            yaml.safe_dump(
+                {
+                    "modules": [
+                        {
+                            "name": "engine",
+                            "path_windows": "Game/hw.dll",
+                            "module_windows": "hw.dll",
+                            "skills": [
+                                {
+                                    "name": "produce",
+                                    "expected_output": ["A.{platform}.yaml"],
+                                    "max_retries": max_retries,
+                                },
+                                {
+                                    "name": "consume",
+                                    "expected_input": ["A.{platform}.yaml"],
+                                    "expected_output": ["B.{platform}.yaml"],
+                                },
+                            ],
+                            "symbols": [
+                                {"name": "A", "category": "func"},
+                                {"name": "B", "category": "gv"},
+                            ],
+                        }
+                    ]
+                },
+                sort_keys=False,
+            ),
+            encoding="utf-8",
+        )
+        return load_contract(config, "game-1", root / "bin")
+
+    def test_source_seed_expands_downstream_and_invalidates_owned_outputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            contract = self._contract(root)
+            source = SourceIndex(
+                {"ida_preprocessor_scripts/produce.py": frozenset({"engine:windows:produce"})},
+                frozenset({"ida_preprocessor_scripts/produce.py"}),
+            )
+            impact = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(
+                    ChangedPath("M", "ida_preprocessor_scripts/produce.py", "ida_preprocessor_scripts/produce.py"),
+                ),
+                base_sources=source,
+                merge_sources=source,
+                base_rules=(),
+                merge_rules=(),
+            )
+            self.assertEqual(("engine:windows:produce", "engine:windows:consume"), impact.analysis_nodes)
+            self.assertEqual(("engine/A.windows.yaml", "engine/B.windows.yaml"), impact.invalidated_paths)
+            self.assertTrue(impact.snapshot_rebuild)
+            self.assertTrue(impact.gamedata_rebuild)
+
+    def test_operational_config_change_is_snapshot_only_and_unmapped_analysis_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            base = self._contract(root, max_retries=1)
+            merge = self._contract(root, max_retries=20)
+            impact = plan_tag_impact(
+                tag="game-1",
+                base_contract=base,
+                merge_contract=merge,
+                changed_paths=(ChangedPath("M", "configs/game-1.yaml", "configs/game-1.yaml"),),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+            )
+            self.assertEqual((), impact.analysis_nodes)
+            self.assertTrue(impact.snapshot_rebuild)
+            with self.assertRaisesRegex(ImpactPlanningError, "no mapped consumer"):
+                plan_tag_impact(
+                    tag="game-1",
+                    base_contract=base,
+                    merge_contract=merge,
+                    changed_paths=(ChangedPath("A", None, "ida_preprocessor_scripts/unmapped.py"),),
+                    base_sources=None,
+                    merge_sources=None,
+                    base_rules=(),
+                    merge_rules=(),
+                )
+
+    def test_snapshot_delta_and_untrusted_base_select_full_rebuild(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            contract = self._contract(root)
+            delta = snapshot_delta_paths(
+                {"files": {"engine/A.windows.yaml": {"value": 1}}},
+                {"files": {"engine/A.windows.yaml": {"value": 2}}},
+            )
+            impact = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+                snapshot_delta=delta,
+                base_snapshot_trusted=False,
+            )
+            self.assertEqual("full-rebuild", impact.mode)
+            self.assertEqual(set(contract.nodes), set(impact.analysis_nodes))
+            self.assertIsNotNone(impact.fallback_reason)
+
+    def test_snapshot_and_gamedata_domains_route_without_ida_and_zero_symbol_tags_stay_noop(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            contract = self._contract(root)
+            snapshot_only = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(ChangedPath("M", "gamesymbol_candidate.py", "gamesymbol_candidate.py"),),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+            )
+            self.assertEqual((), snapshot_only.analysis_nodes)
+            self.assertTrue(snapshot_only.snapshot_rebuild)
+            self.assertFalse(snapshot_only.gamedata_rebuild)
+            hashing_only = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(ChangedPath("M", "binary_hashing.py", "binary_hashing.py"),),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+            )
+            self.assertEqual((), hashing_only.analysis_nodes)
+            self.assertTrue(hashing_only.snapshot_rebuild)
+            self.assertFalse(hashing_only.gamedata_rebuild)
+            gamedata_only = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(ChangedPath("M", "gamedata_contract.py", "gamedata_contract.py"),),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+            )
+            self.assertFalse(gamedata_only.snapshot_rebuild)
+            self.assertTrue(gamedata_only.gamedata_rebuild)
+
+            empty_config = root / "empty.yaml"
+            empty_config.write_text(
+                yaml.safe_dump(
+                    {
+                        "modules": [
+                            {
+                                "name": "engine",
+                                "path_windows": "Game/hw.dll",
+                                "module_windows": "hw.dll",
+                                "skills": [],
+                                "symbols": [],
+                            }
+                        ]
+                    },
+                    sort_keys=False,
+                ),
+                encoding="utf-8",
+            )
+            empty = load_contract(empty_config, "game-2", root / "bin")
+            rules = parse_impact_registry(
+                {"schema_version": 1, "rules": [{"paths": ["shared.py"], "scope": "all", "reason": "shared"}]}
+            )
+            noop = plan_tag_impact(
+                tag="game-2",
+                base_contract=empty,
+                merge_contract=empty,
+                changed_paths=(ChangedPath("M", "shared.py", "shared.py"),),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=rules,
+                merge_rules=rules,
+                expected_snapshot_exists=False,
+            )
+            self.assertFalse(noop.has_actions)
+
+    def test_skill_registry_binary_and_deleted_tag_seeds(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            contract = self._contract(root)
+            rules = parse_impact_registry(
+                {
+                    "schema_version": 1,
+                    "rules": [{"paths": ["shared.py"], "scope": "skill", "skills": ["produce"], "reason": "shared"}],
+                }
+            )
+            impact = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(
+                    ChangedPath("M", ".claude/skills/produce/SKILL.md", ".claude/skills/produce/SKILL.md"),
+                    ChangedPath("M", "shared.py", "shared.py"),
+                ),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=rules,
+                merge_rules=(),
+                binary_changed_pairs=frozenset({("engine", "windows")}),
+            )
+            self.assertEqual(set(contract.nodes), set(impact.analysis_nodes))
+            deleted = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=None,
+                changed_paths=(),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+            )
+            self.assertTrue(deleted.deleted)
+
+    def test_snapshot_metadata_changes_rebuild_but_publish_time_only_changes_do_not(self):
+        files = {"engine/A.windows.yaml": {"value": 1}}
+        publish_base = {"last_publish_time": "2026-01-01T00:00:00Z", "files": files}
+        publish_merge = {"last_publish_time": "2026-01-02T00:00:00Z", "files": files}
+        self.assertFalse(snapshot_delta_paths(publish_base, publish_merge))
+        self.assertFalse(snapshot_documents_changed(publish_base, publish_merge))
+
+        metadata_base = {**publish_base, "binaries": {"engine": {"windows": {"sha256": "a" * 64}}}}
+        metadata_merge = {**publish_merge, "binaries": {"engine": {"windows": {"sha256": "b" * 64}}}}
+        self.assertFalse(snapshot_delta_paths(metadata_base, metadata_merge))
+        self.assertTrue(snapshot_documents_changed(metadata_base, metadata_merge))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            contract = self._contract(root)
+            impact = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(ChangedPath("M", "gamesymbols/game-1.yaml", "gamesymbols/game-1.yaml"),),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+                snapshot_changed=True,
+            )
+        self.assertEqual((), impact.analysis_nodes)
+        self.assertTrue(impact.snapshot_rebuild)
+        self.assertFalse(impact.gamedata_rebuild)
+        self.assertIn("snapshot metadata changed", impact.reasons)
+
+    def test_bound_plan_digest_binds_shas_actions_and_digests(self):
+        action = TagImpact("game-1", "incremental", (), (), True, True, False, ("snapshot",))
+        plan = BoundImpactPlan("a" * 40, "b" * 40, "c" * 40, "d" * 40, "e" * 40, (action,), {"x": "y"})
+        document = json.loads(plan.canonical_bytes())
+        digest = document.pop("plan_sha256")
+        encoded = json.dumps(document, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        self.assertEqual(hashlib.sha256(encoded).hexdigest(), digest)
+
+
+class BoundPlanValidationTests(unittest.TestCase):
+    def _repository(self, root: Path) -> tuple[str, str, dict[str, str | None]]:
+        subprocess.run(["git", "init", "-q", str(root)], check=True)
+        subprocess.run(["git", "-C", str(root), "config", "user.email", "test@example.com"], check=True)
+        subprocess.run(["git", "-C", str(root), "config", "user.name", "Test"], check=True)
+        files = {
+            "configs/config.yaml": b"gamevers:\n  - game-1\n",
+            "configs/game-1.yaml": b"modules: []\n",
+            "gamesymbol-impact.yaml": b"version: 1\nrules: []\n",
+            "gamesymbols/game-1.yaml": b"schema_version: 5\ngame_version: game-1\n",
+        }
+        for relative, raw in files.items():
+            path = root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(raw)
+        subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+        subprocess.run(["git", "-C", str(root), "commit", "-q", "-m", "base"], check=True)
+        base_sha = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+        subprocess.run(["git", "-C", str(root), "commit", "-q", "--allow-empty", "-m", "merge"], check=True)
+        merge_sha = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+        digests = {
+            "merge_config_index": hashlib.sha256(files["configs/config.yaml"]).hexdigest(),
+            "merge_registry": hashlib.sha256(files["gamesymbol-impact.yaml"]).hexdigest(),
+            "merge_config:game-1": hashlib.sha256(files["configs/game-1.yaml"]).hexdigest(),
+            "merge_snapshot:game-1": hashlib.sha256(files["gamesymbols/game-1.yaml"]).hexdigest(),
+        }
+        return base_sha, merge_sha, digests
+
+    def _write_plan(
+        self,
+        path: Path,
+        *,
+        merge_sha: str,
+        digests: dict[str, str | None],
+        merge_bin_commit: str | None = None,
+    ) -> None:
+        action = TagImpact("game-1", "full-rebuild", (), (), True, False, False, ("snapshot",))
+        plan = BoundImpactPlan(
+            merge_sha,
+            merge_sha,
+            merge_sha,
+            None,
+            merge_bin_commit,
+            (action,),
+            digests,
+        )
+        path.write_bytes(plan.canonical_bytes())
+
+    def test_materialize_rejects_tampered_plan_and_bound_merge_inputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            base_sha, merge_sha, digests = self._repository(root)
+            plan_path = root / "plan.json"
+            self._write_plan(plan_path, merge_sha=merge_sha, digests=digests)
+            tampered = json.loads(plan_path.read_text(encoding="utf-8"))
+            tampered["plan_sha256"] = "0" * 64
+            plan_path.write_text(json.dumps(tampered), encoding="utf-8")
+            with self.assertRaisesRegex(PrCliError, "plan digest mismatch"):
+                materialize_from_plan(
+                    repo_root=root,
+                    plan_path=plan_path,
+                    tag="game-1",
+                    merge_ref=merge_sha,
+                    bindir=root / "bin",
+                )
+
+            self._write_plan(plan_path, merge_sha=merge_sha, digests=digests)
+            with self.assertRaisesRegex(PrCliError, "merge SHA"):
+                materialize_from_plan(
+                    repo_root=root,
+                    plan_path=plan_path,
+                    tag="game-1",
+                    merge_ref=base_sha,
+                    bindir=root / "bin",
+                )
+
+            self._write_plan(plan_path, merge_sha=merge_sha, digests=digests, merge_bin_commit="f" * 40)
+            with self.assertRaisesRegex(PrCliError, "bin gitlink"):
+                materialize_from_plan(
+                    repo_root=root,
+                    plan_path=plan_path,
+                    tag="game-1",
+                    merge_ref=merge_sha,
+                    bindir=root / "bin",
+                )
+
+            for key in (
+                "merge_config_index",
+                "merge_registry",
+                "merge_config:game-1",
+                "merge_snapshot:game-1",
+            ):
+                with self.subTest(key=key):
+                    mismatched = dict(digests)
+                    mismatched[key] = "0" * 64
+                    self._write_plan(plan_path, merge_sha=merge_sha, digests=mismatched)
+                    with self.assertRaisesRegex(PrCliError, re.escape(key)):
+                        materialize_from_plan(
+                            repo_root=root,
+                            plan_path=plan_path,
+                            tag="game-1",
+                            merge_ref=merge_sha,
+                            bindir=root / "bin",
+                        )
+
+
+class MaterializationTests(unittest.TestCase):
+    def test_selective_materialization_excludes_invalidated_and_clears_stale_yaml(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text(
+                yaml.safe_dump(
+                    {
+                        "modules": [
+                            {
+                                "name": "engine",
+                                "path_windows": "Game/hw.dll",
+                                "module_windows": "hw.dll",
+                                "skills": [
+                                    {"name": "one", "expected_output": ["One.{platform}.yaml"]},
+                                    {"name": "two", "expected_output": ["Two.{platform}.yaml"]},
+                                ],
+                                "symbols": [
+                                    {"name": "One", "category": "func"},
+                                    {"name": "Two", "category": "func"},
+                                ],
+                            }
+                        ]
+                    },
+                    sort_keys=False,
+                ),
+                encoding="utf-8",
+            )
+            game_root = root / "base-bin" / "game-1" / "engine"
+            write_pe32(game_root / "hw.dll")
+            (game_root / "One.windows.yaml").write_text("func_name: One\nfunc_va: '0x10'\n", encoding="utf-8")
+            (game_root / "Two.windows.yaml").write_text("func_name: Two\nfunc_va: '0x20'\n", encoding="utf-8")
+            snapshot = root / "base.yaml"
+            pack_snapshot("game-1", root / "base-bin", config, snapshot)
+            base = load_snapshot_context(snapshot, config, "game-1", root / "base-bin")
+            merge_contract = load_contract(config, "game-1", root / "merge-bin")
+            stale = root / "merge-bin" / "game-1" / "engine" / "Stale.yaml"
+            stale.parent.mkdir(parents=True)
+            stale.write_text("stale: true\n", encoding="utf-8")
+
+            restored = materialize_baseline(
+                base=base,
+                merge_contract=merge_contract,
+                bindir=root / "merge-bin",
+                invalidated_paths=("engine/Two.windows.yaml",),
+                mode="incremental",
+            )
+
+            self.assertEqual(("engine/One.windows.yaml",), restored)
+            self.assertTrue((stale.parent / "One.windows.yaml").is_file())
+            self.assertFalse((stale.parent / "Two.windows.yaml").exists())
+            self.assertFalse(stale.exists())
+
+    def test_full_rebuild_clears_yaml_without_restoring_base(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = AnalysisSourceIndexTests()._contract(root, "game-1")
+            yaml_path = config.game_root / "engine" / "Demo.windows.yaml"
+            yaml_path.parent.mkdir(parents=True)
+            yaml_path.write_text("value: old\n", encoding="utf-8")
+            self.assertEqual(
+                (),
+                materialize_baseline(
+                    base=None,
+                    merge_contract=config,
+                    bindir=root / "bin",
+                    invalidated_paths=(),
+                    mode="full-rebuild",
+                ),
+            )
+            self.assertFalse(yaml_path.exists())
+
+    def test_materialization_rejects_unsafe_invalidated_paths(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            contract = AnalysisSourceIndexTests()._contract(root, "game-1")
+            with self.assertRaises(SnapshotConfigError):
+                materialize_baseline(
+                    base=None,
+                    merge_contract=contract,
+                    bindir=root / "bin",
+                    invalidated_paths=("../escape.yaml",),
+                    mode="full-rebuild",
+                )
+
+
+class GitDiffTests(unittest.TestCase):
+    def test_parses_add_modify_delete_and_rename_with_nul_delimiters(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            subprocess.run(["git", "-C", str(root), "config", "user.email", "test@example.com"], check=True)
+            subprocess.run(["git", "-C", str(root), "config", "user.name", "Test"], check=True)
+            (root / "rename me.py").write_text("same\n", encoding="utf-8")
+            (root / "modify.py").write_text("before\n", encoding="utf-8")
+            (root / "delete.py").write_text("delete\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+            subprocess.run(["git", "-C", str(root), "commit", "-q", "-m", "base"], check=True)
+            base = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+            subprocess.run(["git", "-C", str(root), "mv", "rename me.py", "renamed file.py"], check=True)
+            (root / "modify.py").write_text("after\n", encoding="utf-8")
+            (root / "delete.py").unlink()
+            (root / "added.py").write_text("add\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", "-A"], check=True)
+            subprocess.run(["git", "-C", str(root), "commit", "-q", "-m", "merge"], check=True)
+            merge = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+
+            changes = GitRepository(root).changed_paths(base, merge)
+
+            self.assertEqual({"A", "M", "D", "R"}, {change.status for change in changes})
+            renamed = next(change for change in changes if change.status == "R")
+            self.assertEqual(("rename me.py", "renamed file.py"), (renamed.old_path, renamed.new_path))
+
+
+if __name__ == "__main__":
+    unittest.main()

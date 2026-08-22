@@ -17,6 +17,8 @@ uv run python copy_depot_bin.py -gamever cstrike-10210 -platform windows -checko
 - `download_depot.py -tag <tag>` 下载单个 release tag；`-all` 下载 download config 中声明的全部 tag。`-os`
   可选 `windows`、`linux`、`macos` 或 `all`（默认）。`download.yaml` 只控制下载，与控制批量分析的
   `configs/config.yaml` 相互独立。
+- `configs/<tag>.yaml` 中的每个 `depot_<platform>` 都是相对于该 tag 在 `download.yaml` 中 `basepath`
+  的安全路径；`module_<platform>` 独立声明 `bin/<gamever>/<module>/` 下的二进制文件名。
 - `copy_depot_bin.py -platform` 接受 `windows`、`linux` 或 `all-platform`。`-checkonly` 只检查所有期望的目标
   二进制是否已存在于 `bin/<gamever>/...`：就绪返回 `0`，缺失返回 `1`，配置或参数错误返回 `2`。
 

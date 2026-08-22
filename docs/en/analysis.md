@@ -15,6 +15,7 @@ uv run python copy_depot_bin.py -gamever cstrike-10210 -platform windows -checko
 ```
 
 - `download_depot.py -tag <tag>` downloads a single release tag; `-all` downloads every tag declared in the download config. `-os` selects `windows`, `linux`, `macos`, or `all` (default). `download.yaml` only controls downloading; it is separate from `configs/config.yaml`, which controls batch analysis.
+- Each `depot_<platform>` in `configs/<tag>.yaml` is a safe path relative to that tag's `download.yaml` `basepath`. `module_<platform>` independently names the binary under `bin/<gamever>/<module>/`.
 - `copy_depot_bin.py -platform` accepts `windows`, `linux`, or `all-platform`. `-checkonly` only checks that all expected target binaries already exist under `bin/<gamever>/...`: it returns `0` when ready, `1` when any target is missing, and `2` for configuration or argument errors.
 
 Use `/init-gamebin` to bootstrap the `depots/` and `bin/` trees for every tag in `download.yaml`.

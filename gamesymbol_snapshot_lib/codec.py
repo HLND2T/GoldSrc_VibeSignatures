@@ -1,4 +1,4 @@
-"""Canonical YAML codec with snapshot schema 1-5 reader compatibility."""
+"""Canonical YAML codec with snapshot schema 1-6 reader compatibility."""
 
 from __future__ import annotations
 
@@ -18,7 +18,9 @@ LEGACY_SCHEMA_VERSION = 1
 SCHEMA_2_VERSION = 2
 SCHEMA_3_VERSION = 3
 SCHEMA_4_VERSION = 4
-SCHEMA_VERSION = 5
+SCHEMA_5_VERSION = 5
+SCHEMA_6_VERSION = 6
+SCHEMA_VERSION = 6
 SCHEMA_KEYS = {
     1: ("schema_version", "game_version", "config_sha256", "file_count", "files"),
     2: ("schema_version", "config_digest_version", "game_version", "config_sha256", "file_count", "files"),
@@ -43,6 +45,17 @@ SCHEMA_KEYS = {
         "files",
     ),
     5: (
+        "schema_version",
+        "last_publish_time",
+        "binaries",
+        "analysis_output_contract_version",
+        "config_digest_version",
+        "game_version",
+        "config_sha256",
+        "file_count",
+        "files",
+    ),
+    6: (
         "schema_version",
         "last_publish_time",
         "binaries",
@@ -112,7 +125,7 @@ def snapshot_config_digest_version(document: Mapping) -> int:
     schema = document.get("schema_version")
     if schema == 1:
         return 1
-    if schema in {2, 3, 4, 5} and document.get("config_digest_version") == 2:
+    if schema in {2, 3, 4, 5, 6} and document.get("config_digest_version") == 2:
         return 2
     if schema not in SCHEMA_KEYS:
         raise SnapshotSchemaError(
@@ -129,7 +142,7 @@ def snapshot_analysis_output_contract_version(document: Mapping) -> int:
     if schema in {1, 2}:
         return 1
     value = document.get("analysis_output_contract_version")
-    if schema in {3, 4, 5} and isinstance(value, int) and not isinstance(value, bool) and value >= 1:
+    if schema in {3, 4, 5, 6} and isinstance(value, int) and not isinstance(value, bool) and value >= 1:
         return value
     if schema not in SCHEMA_KEYS:
         raise SnapshotSchemaError(
@@ -178,7 +191,7 @@ def build_snapshot_document(
         return {"schema_version": 1, **common}
     config_digest_version = 2 if config_digest_version is None else config_digest_version
     if config_digest_version != 2:
-        raise SnapshotSchemaError("Schemas 2-5 require config digest version 2")
+        raise SnapshotSchemaError("Schemas 2-6 require config digest version 2")
     if schema_version == 2:
         return {"schema_version": 2, "config_digest_version": 2, **common}
     output_version = (
@@ -235,7 +248,12 @@ def _validate_binaries(document: dict) -> None:
     if not isinstance(binaries, dict):
         raise SnapshotSchemaError("Snapshot binaries must be a mapping")
     module_spellings: dict[str, str] = {}
-    expected_keys = {"path", "sha256", "md5"} if schema == 4 else {"path", "sha256", "md5", "crc32", "crc64", "size"}
+    if schema == SCHEMA_4_VERSION:
+        expected_keys = {"path", "sha256", "md5"}
+    elif schema == SCHEMA_5_VERSION:
+        expected_keys = {"path", "sha256", "md5", "crc32", "crc64", "size"}
+    else:
+        expected_keys = {"sha256", "md5", "crc32", "crc64", "size"}
     for module, platforms in binaries.items():
         if not isinstance(module, str) or not module or module in {".", ".."} or "/" in module or "\\" in module:
             raise SnapshotSchemaError(f"Invalid binary module: {module!r}")
@@ -248,12 +266,13 @@ def _validate_binaries(document: dict) -> None:
             context = f"binaries.{module}.{platform}"
             if not isinstance(metadata, dict) or set(metadata) != expected_keys:
                 raise SnapshotSchemaError(f"{context} has unexpected metadata fields")
-            metadata["path"] = _validate_relative_binary_path(metadata["path"], f"{context}.path")
+            if schema in {SCHEMA_4_VERSION, SCHEMA_5_VERSION}:
+                metadata["path"] = _validate_relative_binary_path(metadata["path"], f"{context}.path")
             if not isinstance(metadata["sha256"], str) or not SHA256_PATTERN.fullmatch(metadata["sha256"]):
                 raise SnapshotSchemaError(f"{context}.sha256 is invalid")
             if not isinstance(metadata["md5"], str) or not MD5_PATTERN.fullmatch(metadata["md5"]):
                 raise SnapshotSchemaError(f"{context}.md5 is invalid")
-            if schema == 5:
+            if schema in {SCHEMA_5_VERSION, SCHEMA_6_VERSION}:
                 if not isinstance(metadata["crc32"], str) or not CRC32_PATTERN.fullmatch(metadata["crc32"]):
                     raise SnapshotSchemaError(f"{context}.crc32 is invalid")
                 if not isinstance(metadata["crc64"], str) or not CRC64_PATTERN.fullmatch(metadata["crc64"]):
@@ -298,7 +317,7 @@ def parse_snapshot_bytes(data: bytes, expected_game_version: str | None = None) 
             raise SnapshotSchemaError(f"Snapshot payload must be a mapping: {path}")
         normalized[path] = payload
     document["files"] = normalized
-    if schema in {4, 5}:
+    if schema in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION}:
         publish_time = document.get("last_publish_time")
         if not isinstance(publish_time, str) or not PUBLISH_TIME_PATTERN.fullmatch(publish_time):
             raise SnapshotSchemaError("Snapshot publish time must use UTC second precision")

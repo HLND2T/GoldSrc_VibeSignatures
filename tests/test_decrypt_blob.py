@@ -3,9 +3,11 @@ from __future__ import annotations
 import struct
 import tempfile
 import unittest
+from types import SimpleNamespace
 from pathlib import Path
 
 from binary_format import inspect_binary
+from binary_hashing import hash_file
 from decrypt_blob import (
     BLOB_ALGORITHM,
     BLOB_HEADER_SIZE,
@@ -16,6 +18,8 @@ from decrypt_blob import (
     parse_blob,
     verify_pe,
 )
+from gamesymbol_snapshot_lib.model import BinaryTarget
+from gamesymbol_snapshot_lib.operations import collect_binary_metadata
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -205,6 +209,31 @@ class BlobDecryptionTests(unittest.TestCase):
         struct.pack_into("<I", blob, 64, 0xDEADBEEF)
         with self.assertRaises(BlobFormatError):
             parse_blob(bytes(blob))
+
+    def test_snapshot_metadata_hashes_the_source_blob_after_validating_rebuilt_pe(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            game_root = Path(temporary) / "bin" / "hl-1"
+            binary = game_root / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(make_blob())
+            contract = SimpleNamespace(
+                game_root=game_root,
+                binary_targets={
+                    ("engine", "windows"): BinaryTarget(
+                        module_name="engine",
+                        platform="windows",
+                        source_path=None,
+                        binary_name="hw.dll",
+                    )
+                },
+            )
+
+            metadata = collect_binary_metadata(contract)["engine"]["windows"]
+
+            hashes = hash_file(binary)
+            self.assertNotIn("path", metadata)
+            for name in ("sha256", "md5", "crc32", "crc64", "size"):
+                self.assertEqual(hashes[name], metadata[name])
 
 
 class RealSampleTests(unittest.TestCase):

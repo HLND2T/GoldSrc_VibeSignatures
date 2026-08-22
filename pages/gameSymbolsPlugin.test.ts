@@ -77,6 +77,34 @@ describe('gameSymbolsPlugin normalization', () => {
     expect(() => normalizeGameSymbolSnapshot({ ...value, binaries: { server: { windows: { path: 'server.dll', sha256: '1'.repeat(64), md5: '2'.repeat(32), crc32: '3'.repeat(8), crc64: '4'.repeat(16), size: -1 } } } }, 'svencoop-10257', 'snapshot.yaml')).toThrow(/size/)
   })
 
+  it('accepts pathless schema 6 binaries while preserving strict schema 5 compatibility', () => {
+    const value = snapshot({})
+    const metadata = {
+      sha256: '1'.repeat(64),
+      md5: '2'.repeat(32),
+      crc32: '3'.repeat(8),
+      crc64: '4'.repeat(16),
+      size: 123,
+    }
+    const schemaSix = normalizeGameSymbolSnapshot({
+      ...value,
+      schema_version: 6,
+      binaries: { server: { windows: metadata } },
+    }, 'svencoop-10257', 'snapshot.yaml')
+
+    expect(schemaSix.source.snapshotSchemaVersion).toBe(6)
+    expect(schemaSix.binaries.server.windows).toEqual(metadata)
+    expect(() => normalizeGameSymbolSnapshot({
+      ...value,
+      binaries: { server: { windows: metadata } },
+    }, 'svencoop-10257', 'snapshot.yaml')).toThrow(/path/)
+    expect(() => normalizeGameSymbolSnapshot({
+      ...value,
+      schema_version: 6,
+      binaries: { server: { windows: { path: 'server.dll', ...metadata } } },
+    }, 'svencoop-10257', 'snapshot.yaml')).toThrow(/not allowed/)
+  })
+
   it('groups game families and sorts numeric builds newest first', () => {
     const older = normalizeGameSymbolSnapshot(snapshot({}, 'svencoop-9999'), 'svencoop-9999', 'svencoop-9999.yaml')
     const latest = normalizeGameSymbolSnapshot(snapshot({}, 'svencoop-10257'), 'svencoop-10257', 'svencoop-10257.yaml')

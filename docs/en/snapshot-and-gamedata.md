@@ -50,7 +50,7 @@ uv run python gamesymbol_snapshot.py check-contract -gamever cstrike-10210
 
 Default restore creates missing YAML and refuses to overwrite semantically different files. `-replace` removes only YAML under `bin/<GAMEVER>/`, preserves binaries and IDA databases, then rebuilds the snapshot contents.
 
-The writer emits schema 5 with config digest v2 and canonical file payloads; the reader accepts schemas 1–5. Restore and verification reject links, path escapes, undeclared YAML, missing required YAML, non-canonical bytes, and contract drift.
+The writer emits schema 6 with config digest v2, canonical file payloads, and path-independent binary hash metadata; the reader accepts schemas 1–6. Schema 5 remains readable with its required legacy binary `path`. Restore and verification reject links, path escapes, undeclared YAML, missing required YAML, non-canonical bytes, and contract drift.
 
 `check-contract` is a read-only trust probe: exit `0` means trusted, exit `3` reports a machine-readable untrusted reason, and invocation, configuration, or operational errors remain hard failures.
 

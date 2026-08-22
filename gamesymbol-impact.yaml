@@ -1,0 +1,35 @@
+schema_version: 1
+rules:
+  - paths:
+      - analysis_config.py
+      - analysis_planner.py
+      - analysis_output_contract.py
+      - binary_format.py
+      - trusted_yaml.py
+      - ida_analyze_bin.py
+      - ida_analyze_util.py
+      - ida_skill_preprocessor.py
+      - ida_mcp_session.py
+      - ida_llm_utils.py
+      - ida_llm_decompile.py
+      - agent_runner.py
+      - decrypt_blob.py
+      - pyproject.toml
+      - uv.lock
+      - .mcp.json
+      - .claude/agents/sig-finder.md
+      - .claude/SKILL_RUNNER.md
+      - .claude/skill_runner.settings.json
+      - .codex/config.toml
+      - .codex/skill_runner.config.toml
+      - .opencode/agents/sig-finder.md
+      - .opencode/skill_runner.config.json
+      - ida_preprocessor_scripts/prompt/call_llm_decompile.md
+      - gamesymbol_snapshot_lib/analysis_sources.py
+      - gamesymbol_snapshot_lib/impact_registry.py
+      - gamesymbol_snapshot_lib/materialize.py
+      - gamesymbol_snapshot_lib/pr_cli.py
+      - gamesymbol_snapshot_lib/pr_validation.py
+      - gamesymbol_pr_validation.py
+    scope: all
+    reason: Shared analysis execution, planning, binary validation, materialization, or model fallback semantics

@@ -424,8 +424,10 @@ def build_execution_plan(
     root = Path(bin_dir) / tag
     declared_modules = tuple(declared_modules or (module["name"] for module in modules))
     nodes: list[PlanNode] = []
-    producers: dict[tuple[str, str, str], str] = {}
-    output_spellings: dict[tuple[str, str, str], str] = {}
+    producers: dict[tuple[str, str], str] = {}
+    output_spellings: dict[tuple[str, str], str] = {}
+    global_producers: dict[str, str] = {}
+    global_output_spellings: dict[str, str] = {}
     order = 0
     for module in modules:
         for platform in selected:
@@ -468,8 +470,17 @@ def build_execution_plan(
                             f"Case-insensitive artifact collision: {prior_spelling!r} and {output!r}"
                         )
                     if key in producers:
-                        raise AnalysisPlanError(f"Duplicate artifact producer for {module['name']}/{output}")
+                        raise AnalysisPlanError(f"Duplicate artifact producer for {output}")
                     producers[key] = node.id
+                    global_key = output.casefold()
+                    global_spelling = global_output_spellings.setdefault(global_key, output)
+                    if global_spelling != output:
+                        raise AnalysisPlanError(
+                            f"Case-insensitive artifact collision: {global_spelling!r} and {output!r}"
+                        )
+                    if global_key in global_producers:
+                        raise AnalysisPlanError(f"Multiple artifact producers for {output}")
+                    global_producers[global_key] = node.id
     edges: list[PlanEdge] = []
     for node in nodes:
         for artifact, required in (
@@ -494,18 +505,50 @@ def build_execution_plan(
     return ExecutionPlan(tag, tuple(ordered), tuple(edges))
 
 
+def build_artifact_ownership_index(
+    plan: ExecutionPlan,
+    formal_paths: Iterable[str],
+) -> dict[str, frozenset[str]]:
+    formal_spellings: dict[str, str] = {}
+    for path in formal_paths:
+        prior = formal_spellings.setdefault(path.casefold(), path)
+        if prior != path:
+            raise AnalysisPlanError(f"Case-insensitive artifact collision: {prior!r} and {path!r}")
+
+    owners: dict[str, set[str]] = {path: set() for path in formal_spellings.values()}
+    for node in plan.nodes:
+        for output in (*node.required_outputs, *node.optional_outputs):
+            formal = formal_spellings.get(output.casefold())
+            if formal is None:
+                raise AnalysisPlanError(f"Analysis output is not part of the formal snapshot contract: {output}")
+            owners[formal].add(node.id)
+
+    for path, node_ids in owners.items():
+        if not node_ids:
+            raise AnalysisPlanError(f"Formal artifact has no producer: {path}")
+        if len(node_ids) != 1:
+            raise AnalysisPlanError(f"Formal artifact has multiple producers: {path}")
+    return {path: frozenset(node_ids) for path, node_ids in owners.items()}
+
+
 def build_process_execution_plan(
     plan: ExecutionPlan,
     modules: list[dict],
     *,
     platforms: Iterable[str],
     bin_dir: str | Path,
+    selected_node_ids: Iterable[str] | None = None,
 ) -> ProcessExecutionPlan:
     """Project the validated GoldSrc DAG into the stable process-reporting schema."""
 
     selected_platforms = tuple(platforms)
+    selected_ids = None if selected_node_ids is None else frozenset(selected_node_ids)
+    active_plan_nodes = tuple(node for node in plan.nodes if selected_ids is None or node.id in selected_ids)
+    if selected_ids is not None and selected_ids - {node.id for node in plan.nodes}:
+        missing = sorted(selected_ids - {node.id for node in plan.nodes})
+        raise AnalysisPlanError(f"Unknown selected analysis node(s): {', '.join(missing)}")
     module_by_name = {module["name"]: module for module in modules}
-    active_pairs = {(node.module, node.platform) for node in plan.nodes}
+    active_pairs = {(node.module, node.platform) for node in active_plan_nodes}
     active_modules = {module_name for module_name, _platform in active_pairs}
     stages: list[ExecutionStage] = []
     jobs: list[ExecutionJob] = []
@@ -558,7 +601,7 @@ def build_process_execution_plan(
     skill_by_module = {
         module["name"]: {skill["name"]: skill for skill in module.get("skills", [])} for module in modules
     }
-    for node in plan.nodes:
+    for node in active_plan_nodes:
         stage = stage_by_module[node.module]
         job = job_by_pair[(node.module, node.platform)]
         task_id = build_task_id(job.id, node.skill)
@@ -592,6 +635,8 @@ def build_process_execution_plan(
 
     planner_nodes = {node.id: node for node in plan.nodes}
     for edge in plan.edges:
+        if edge.source not in task_id_by_planner_node or edge.target not in task_id_by_planner_node:
+            continue
         source = planner_nodes[edge.source]
         target = planner_nodes[edge.target]
         edge_type = EdgeType(edge.kind)

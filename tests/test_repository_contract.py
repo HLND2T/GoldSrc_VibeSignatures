@@ -3,10 +3,11 @@ from __future__ import annotations
 import hashlib
 import tempfile
 import unittest
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import yaml
 
+import download_depot
 from analysis_config import iter_analysis_config_tags
 from analysis_planner import (
     PLATFORMS,
@@ -16,9 +17,9 @@ from analysis_planner import (
     symbol_artifact_filename,
 )
 from binary_format import inspect_binary
+from gamesymbol_snapshot_lib.config import load_contract
 
 ROOT = Path(__file__).parents[1]
-MODULES = {"engine", "client", "gameui", "server"}
 
 
 def _config_tags() -> set[str]:
@@ -158,6 +159,9 @@ class RepositoryContractTests(unittest.TestCase):
                                 declared_artifacts,
                                 f"Output {output!r} from {node.id} has no declared symbol",
                             )
+                    contract = load_contract(ROOT / "configs" / f"{tag}.yaml", tag, ROOT / "bin")
+                    self.assertEqual(contract.formal_paths, set(contract.owners_by_path))
+                    self.assertTrue(all(len(owners) == 1 for owners in contract.owners_by_path.values()))
 
         self.assertTrue(saw_registered_skill)
 
@@ -168,11 +172,22 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertTrue(all("config" not in entry for entry in downloads))
         for entry in downloads:
             document = yaml.safe_load((ROOT / "configs" / f"{entry['tag']}.yaml").read_text(encoding="utf-8"))
-            for module in parse_config_document(document):
-                configured_paths = [module[f"path_{platform}"] for platform in PLATFORMS if module[f"path_{platform}"]]
-                self.assertTrue(configured_paths)
-                for path in configured_paths:
-                    self.assertTrue(path.startswith(entry["basepath"] + "/"))
+            expected_paths = set()
+            for module in document["modules"]:
+                for platform in PLATFORMS:
+                    if not module.get(f"module_{platform}"):
+                        continue
+                    depot_path = module.get(f"depot_{platform}")
+                    self.assertIsInstance(depot_path, str)
+                    parsed = PurePosixPath(depot_path)
+                    self.assertFalse(parsed.is_absolute())
+                    self.assertTrue(parsed.parts)
+                    self.assertFalse(any(part in {"", ".", ".."} for part in parsed.parts))
+                    expected_paths.add(parsed.as_posix())
+            self.assertEqual(
+                expected_paths,
+                set(download_depot.load_module_filelist(ROOT / "configs" / f"{entry['tag']}.yaml", entry["basepath"])),
+            )
 
     def test_config_index_matches_config_files(self):
         indexed = set(iter_analysis_config_tags(ROOT))
@@ -188,6 +203,7 @@ class RepositoryContractTests(unittest.TestCase):
                 document = yaml.safe_load((ROOT / "configs" / f"{tag}.yaml").read_text(encoding="utf-8"))
                 modules = parse_config_document(document)
                 self.assertTrue(modules)
+                self.assertFalse(any(key.startswith("path_") for module in document["modules"] for key in module))
                 for module in modules:
                     self.assertTrue(
                         any(module[f"path_{platform}"] or module[f"module_{platform}"] for platform in PLATFORMS)
@@ -214,18 +230,68 @@ class RepositoryContractTests(unittest.TestCase):
         for command in (*backend_commands, *frontend_commands):
             self.assertIn(command, workflow)
 
-    def test_published_sven_snapshot_matches_goldsrc_contract(self):
-        path = ROOT / "gamesymbols" / "svencoop-10257.yaml"
-        self.assertTrue(path.is_file())
-        document = yaml.safe_load(path.read_text(encoding="utf-8"))
-        self.assertEqual(5, document["schema_version"])
-        self.assertEqual("svencoop-10257", document["game_version"])
-        self.assertEqual(2, document["file_count"])
-        self.assertEqual(
-            {"engine/R_RenderView.linux.yaml", "engine/R_RenderView.windows.yaml"},
-            set(document["files"]),
-        )
-        self.assertEqual(MODULES, set(document["binaries"]))
+    def test_gamesymbol_pr_workflow_enforces_trusted_split_routing(self):
+        workflow = (ROOT / ".github" / "workflows" / "gamesymbol-pr-validation.yml").read_text(encoding="utf-8")
+        for marker in (
+            "opened, synchronize, reopened, ready_for_review, closed",
+            "cancel-in-progress: true",
+            "refs/pull/${{ github.event.pull_request.number }}/merge",
+            "fetch-depth: 0",
+            "Export trusted base planner",
+            "submodules: false",
+            "Fetch bin submodule trees without checkout",
+            "Sync trusted base planner environment",
+            'uv sync --locked --project "$RUNNER_TEMP/gamesymbol-validation/base-planner"',
+            "validate-hosted:",
+            "analyze-self-hosted:",
+            "same_repository",
+            "-oldgamever', 'none'",
+            "'-node'",
+            "gamesymbol_candidate.py compare",
+            ".snapshot_rebuild or .gamedata_rebuild or .deleted",
+            "Deleted tag $tag still has a tracked config or snapshot",
+            "no affected game-symbol actions",
+        ):
+            self.assertIn(marker, workflow)
+        for forbidden in (
+            "PERSISTED_WORKSPACE",
+            ".i64",
+            ".id0",
+            "LLM_FAKE_AS",
+            "gamesymbol_candidate.py publish",
+            "git commit",
+            "git push",
+            "download.yaml[-1]",
+            "robocopy",
+        ):
+            self.assertNotIn(forbidden, workflow)
+
+    def test_published_gamesymbol_snapshots_match_goldsrc_contract(self):
+        # The exact published set is deliberately not pinned: the bin submodule
+        # pins binary bytes, and new game versions must not require editing this
+        # test. Structural contract checks below still guard every published file.
+        published = {path.stem for path in (ROOT / "gamesymbols").glob("*.yaml")}
+        self.assertTrue(published)
+
+        for tag in sorted(published):
+            with self.subTest(tag=tag):
+                path = ROOT / "gamesymbols" / f"{tag}.yaml"
+                document = yaml.safe_load(path.read_text(encoding="utf-8"))
+                contract = load_contract(ROOT / "configs" / f"{tag}.yaml", tag, ROOT / "bin")
+                self.assertEqual(6, document["schema_version"])
+                self.assertEqual(tag, document["game_version"])
+                self.assertEqual(document["file_count"], len(document["files"]))
+                self.assertTrue(contract.required_paths <= set(document["files"]) <= contract.formal_paths)
+                actual_binaries = {
+                    (module, platform): metadata
+                    for module, platforms in document["binaries"].items()
+                    for platform, metadata in platforms.items()
+                }
+                self.assertEqual(set(contract.binary_targets), set(actual_binaries))
+                self.assertTrue(actual_binaries)
+                for metadata in actual_binaries.values():
+                    self.assertNotIn("path", metadata)
+                    self.assertGreater(metadata["size"], 0)
 
     def test_pages_workflow_keeps_content_addressed_history_append_only(self):
         workflow = (ROOT / ".github" / "workflows" / "deploy-pages.yml").read_text(encoding="utf-8")
@@ -240,7 +306,10 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertNotIn("push --force", workflow)
 
     def test_sven_local_dlls_are_read_only_pe32_smoke_inputs(self):
-        root = ROOT / "bin" / "svencoop"
+        # The bin submodule already pins the exact binary bytes; this test only
+        # guards the smoke-input contract (PE32 i386) and that inspection is
+        # non-mutating, without hardcoding volatile hashes.
+        root = ROOT / "bin" / "svencoop-10257"
         expected = {
             "client/client.dll",
             "engine/hw.dll",
@@ -252,15 +321,6 @@ class RepositoryContractTests(unittest.TestCase):
             self.skipTest("Local Sven Co-op smoke binaries are not present")
         self.assertEqual(expected, existing)
         before = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in expected}
-        self.assertEqual(
-            {
-                "client/client.dll": "f40e74b7a703d193188d628066660ff0ac4be2b09613ae4b7f8d2c671991e7d6",
-                "engine/hw.dll": "e3c7f374b70845fb6f45c05906e4b5fe3dc9f394ab37bb653501d3b6a3282596",
-                "gameui/GameUI.dll": "99382b87319d21139c0675d8a45669d64ef930f9e43dbd582461575383545f75",
-                "server/server.dll": "f8be8b7ba8af2a5006127c3c36ced3717d94aec1120ef8b5678e28b23f0b07c0",
-            },
-            before,
-        )
         for name in expected:
             info = inspect_binary(root / name)
             self.assertEqual(("PE", 32, "I386"), (info.container, info.bits, info.machine))

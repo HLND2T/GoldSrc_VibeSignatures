@@ -26,7 +26,6 @@ async function writeCurrentAssets(directory, gameVersion, marker) {
     binaries: {
       server: {
         windows: {
-          path: 'game/bin/win64/server.dll',
           sha256: '1'.repeat(64),
           md5: '2'.repeat(32),
           crc32: '3'.repeat(8),
@@ -48,7 +47,7 @@ async function writeCurrentAssets(directory, gameVersion, marker) {
       url,
       sha256: digest,
       size: bytes.byteLength,
-      snapshotSchemaVersion: 5,
+      snapshotSchemaVersion: 6,
       fileCount: 1,
       lastPublishTime: '2026-07-28T00:00:00Z',
     }],

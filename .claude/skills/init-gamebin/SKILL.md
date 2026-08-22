@@ -39,8 +39,9 @@ uv run python download_depot.py -all
 ```
 
 This downloads every tag in `download.yaml` into `depots/<basepath>/` using the
-declared `appid`/`depot`/`manifest` ids and the module `path_{platform}`
-filelists from the matching `configs/<tag>.yaml`. The default `-os all-platform`
+declared `appid`/`depot`/`manifest` ids and the module `depot_{platform}`
+filelists from the matching `configs/<tag>.yaml`. Each depot path is relative
+to that tag's `download.yaml` `basepath`. The default `-os all-platform`
 passes `-all-platforms` to DepotDownloader, fetching both Windows and Linux
 binaries.
 
@@ -57,7 +58,8 @@ For every `tag` listed under `downloads` in `download.yaml`, invoke
 uv run python copy_depot_bin.py -gamever <TAG>
 ```
 
-`copy_depot_bin.py` reads `configs/<TAG>.yaml`, validates each source binary
+`copy_depot_bin.py` resolves `depot_<platform>` below the tag's declared
+`basepath`, validates each source binary
 (PE32 I386 for `windows`, ELF32 80386 for `linux`), and copies it to
 `bin/<TAG>/<module>/<module_<platform>>` — for example
 `bin/hl-8684/engine/hw.dll` or `bin/svencoop-10257/server/server.so`. Existing
