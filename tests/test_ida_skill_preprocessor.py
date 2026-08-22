@@ -1507,6 +1507,26 @@ found_struct_offset: []
             inspect_function.await_args_list,
         )
 
+    def test_optional_global_across_boundary_marker_is_a_desired_output_field(self):
+        desired = ida_analyze_util._desired_fields_map(
+            [
+                (
+                    "g_Target",
+                    [
+                        "gv_name",
+                        "gv_sig",
+                        "gv_sig_allow_across_function_boundary?",
+                    ],
+                )
+            ]
+        )
+
+        self.assertIsNotNone(desired)
+        field_spec = desired["g_Target"]
+        self.assertIn("gv_sig_allow_across_function_boundary", field_spec["fields"])
+        self.assertIn("gv_sig_allow_across_function_boundary", field_spec["optional_fields"])
+        self.assertNotIn("gv_sig_allow_across_function_boundary", field_spec["generation_options"])
+
     async def test_llm_found_funcptr_generates_regular_function(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -1388,9 +1388,11 @@ def _desired_fields_map(specs):
         generation_options = {}
         for raw_field in fields:
             field = raw_field
+            is_optional = False
             if field.endswith("?") and len(field) > 1:
                 field = field[:-1]
                 optional_fields.add(field)
+                is_optional = True
             if ":" in field:
                 directive, raw_value = field.split(":", 1)
                 raw_value = raw_value.strip().lower()
@@ -1426,6 +1428,14 @@ def _desired_fields_map(specs):
                 "vfunc_sig_max_match",
                 "offset_sig_max_match",
             }:
+                if is_optional and field in {
+                    "func_sig_allow_across_function_boundary",
+                    "gv_sig_allow_across_function_boundary",
+                    "vfunc_sig_allow_across_function_boundary",
+                    "offset_sig_allow_across_function_boundary",
+                }:
+                    desired_fields.append(field)
+                    continue
                 return None
             desired_fields.append(field)
         result[name] = {
