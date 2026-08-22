@@ -94,6 +94,7 @@ FUNC_XREF_ALLOWED_KEYS = frozenset(
         "xref_signatures",
         "xref_funcs",
         "inline_alias",
+        "xref_string_sources_as_function_starts",
         "xref_floats",
         "exclude_funcs",
         "exclude_strings",
@@ -103,7 +104,9 @@ FUNC_XREF_ALLOWED_KEYS = frozenset(
         "exclude_callees",
     }
 )
-FUNC_XREF_LIST_KEYS = tuple(FUNC_XREF_ALLOWED_KEYS - {"func_name", "inline_alias"})
+FUNC_XREF_LIST_KEYS = tuple(
+    FUNC_XREF_ALLOWED_KEYS - {"func_name", "inline_alias", "xref_string_sources_as_function_starts"}
+)
 DEFAULT_IDA_STRING_MIN_LENGTH = 4
 IDA_STRING_MIN_LENGTH_ENV_VAR = "GSVIBE_STRING_MIN_LENGTH"
 IDA_STRING_SETUP_STATE_NODE = "$GSVIBE_STRING_SETUP_STATE"
@@ -733,10 +736,21 @@ def _function_start(ea, recovery_seen=None, recovery_depth=0):
         probe = _probe_function_start(code_addr)
     return None
 
-def _functions_referencing(ea):
+def _functions_referencing(ea, allow_source_start=False):
     found = set()
     for xref in idautils.XrefsTo(int(ea), 0):
-        start = _function_start(xref.frm)
+        source_ea = int(xref.frm)
+        start = _function_start(source_ea)
+        if start is None and allow_source_start:
+            flags = ida_bytes.get_full_flags(source_ea)
+            if ida_bytes.is_code(flags) and ida_bytes.is_head(flags):
+                try:
+                    ida_funcs.add_func(source_ea)
+                except Exception:
+                    pass
+                func = ida_funcs.get_func(source_ea)
+                if func is not None and int(func.start_ea) == source_ea:
+                    start = source_ea
         if start is not None:
             found.add(start)
     return found
@@ -798,14 +812,14 @@ def _string_items():
                 pass
     return strings
 
-def _string_candidates(query):
+def _string_candidates(query, allow_source_start=False):
     exact = str(query).startswith('FULLMATCH:')
     needle = str(query)[10:] if exact else str(query)
     found = set()
     for item in _string_items():
         text = str(item)
         if (text == needle) if exact else (needle in text):
-            found.update(_functions_referencing(int(item.ea)))
+            found.update(_functions_referencing(int(item.ea), allow_source_start))
     return found
 
 def _named_ea(value):
@@ -1006,7 +1020,9 @@ globals().update(locals())
 positive_sets = []
 vtable_candidates = _address_candidates(spec.get('vtable_entries'))
 for value in spec.get('xref_strings') or []:
-    positive_sets.append(_string_candidates(value))
+    positive_sets.append(
+        _string_candidates(value, bool(spec.get('xref_string_sources_as_function_starts')))
+    )
 for value in spec.get('xref_gvs') or []:
     positive_sets.append(_named_candidates(value))
 signature_texts = spec.get('xref_signatures') or []
@@ -1130,6 +1146,10 @@ def _normalize_func_xref_specs(specs):
         if inline_alias is not None and (not isinstance(inline_alias, str) or not inline_alias):
             return None
         spec["inline_alias"] = inline_alias
+        source_starts = raw_spec.get("xref_string_sources_as_function_starts", False)
+        if not isinstance(source_starts, bool):
+            return None
+        spec["xref_string_sources_as_function_starts"] = source_starts
         if (
             not any(spec[key] for key in ("xref_strings", "xref_gvs", "xref_signatures", "xref_funcs"))
             and not inline_alias
@@ -1210,6 +1230,7 @@ async def preprocess_func_xrefs_via_mcp(
     exclude_floats=None,
     inline_alias=None,
     exclude_callees=None,
+    xref_string_sources_as_function_starts=False,
 ):
     del debug
     try:
@@ -1238,6 +1259,7 @@ async def preprocess_func_xrefs_via_mcp(
         "xref_floats": required_float_values,
         "exclude_floats": excluded_float_values,
         "exclude_callees": [],
+        "xref_string_sources_as_function_starts": bool(xref_string_sources_as_function_starts),
         "string_min_length": _resolve_ida_string_min_length_config(),
     }
     for source, field, destination, allow_explicit in (
@@ -2948,6 +2970,7 @@ async def preprocess_common_skill(
                 exclude_floats=xref_spec.get("exclude_floats"),
                 inline_alias=xref_spec.get("inline_alias"),
                 exclude_callees=xref_spec.get("exclude_callees"),
+                xref_string_sources_as_function_starts=xref_spec.get("xref_string_sources_as_function_starts", False),
             )
         if candidate is not None and generation_options.get("func_sig_resolve_jmp_thunk"):
             try:

@@ -124,6 +124,8 @@ class PreprocessStatusTests(unittest.TestCase):
         self.assertIn("if spec.get('vtable_entries'):", code)
         self.assertIn("def _try_decode_padding_nop", code)
         self.assertIn("not ida_bytes.is_head(flags)", code)
+        self.assertIn("xref_string_sources_as_function_starts", code)
+        self.assertIn("ida_funcs.add_func(source_ea)", code)
         self.assertNotIn("if len(tokens) >= max_tokens:\n                break", code)
         self.assertIn("ida_ua.o_displ", ida_analyze_util._INSPECT_FUNCTION_PY_EVAL)
         self.assertIn("def _try_decode_padding_nop", ida_analyze_util._INSPECT_FUNCTION_PY_EVAL)
@@ -290,6 +292,46 @@ class PreprocessorLoaderTests(unittest.IsolatedAsyncioTestCase):
         self.assertIs(PREPROCESS_STATUS_SUCCESS, second)
         self.assertEqual("x", import_count)
         self.assertIs(PREPROCESS_STATUS_FAILED, invalid_result)
+
+    async def test_clientdll_init_retries_with_across_boundary_signature_budget(self):
+        preprocess = ida_skill_preprocessor._get_preprocess_entry("find-ClientDLL_Init")
+        preprocess_common = AsyncMock(side_effect=[False, True])
+        with patch.dict(preprocess.__globals__, {"preprocess_common_skill": preprocess_common}):
+            result = await preprocess(
+                session=SimpleNamespace(call_tool=AsyncMock()),
+                skill_name="find-ClientDLL_Init",
+                expected_outputs=["ClientDLL_Init.windows.yaml"],
+                old_yaml_map=None,
+                new_binary_dir=Path("D:/bin/hl-4554/engine"),
+                platform="windows",
+                image_base=0x1D00000,
+            )
+
+        self.assertTrue(result)
+        self.assertEqual(2, preprocess_common.await_count)
+        self.assertTrue(
+            preprocess_common.await_args_list[0].kwargs["func_xrefs"][0]["xref_string_sources_as_function_starts"]
+        )
+        self.assertEqual(
+            [("ClientDLL_Init", ["func_name", "func_sig", "func_va", "func_rva", "func_size"])],
+            preprocess_common.await_args_list[0].kwargs["generate_yaml_desired_fields"],
+        )
+        self.assertEqual(
+            [
+                (
+                    "ClientDLL_Init",
+                    [
+                        "func_name",
+                        "func_sig",
+                        "func_va",
+                        "func_rva",
+                        "func_size",
+                        "func_sig_allow_across_function_boundary:true",
+                    ],
+                )
+            ],
+            preprocess_common.await_args_list[1].kwargs["generate_yaml_desired_fields"],
+        )
 
 
 class PreprocessorDispatchTests(unittest.IsolatedAsyncioTestCase):
