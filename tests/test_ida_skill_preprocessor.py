@@ -9,7 +9,7 @@ import unittest
 from contextlib import asynccontextmanager, redirect_stderr
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import ANY, AsyncMock, patch
+from unittest.mock import ANY, AsyncMock, call, patch
 
 import yaml
 
@@ -1431,6 +1431,81 @@ found_struct_offset: []
             call_llm.assert_awaited_once()
             self.assertEqual(["Target", "g_Target"], call_llm.await_args.kwargs["symbol_names"])
             self.assertEqual("g_Target", yaml.safe_load(gv_output.read_text(encoding="utf-8"))["gv_name"])
+
+    async def test_llm_global_can_retry_with_across_boundary_signature_budget(self):
+        llm_result = {
+            "found_vcall": [],
+            "found_call": [],
+            "found_funcptr": [],
+            "found_gv": [
+                {
+                    "gv_name": "g_Target",
+                    "insn_va": "0x401040",
+                    "insn_disasm": "mov eax, ds:dword_404000",
+                }
+            ],
+            "found_struct_offset": [],
+        }
+        extended_function = {
+            "func_va": "0x401000",
+            "func_sig": "55 8B EC 83 EC ?? 53 56 57 8B F9",
+        }
+        inspect_function = AsyncMock(side_effect=[None, extended_function])
+        with (
+            patch(
+                "ida_analyze_util._inspect_llm_instruction",
+                new=AsyncMock(
+                    return_value={
+                        "func_start": "0x401000",
+                        "line": "mov eax, ds:dword_404000",
+                        "size": 5,
+                        "data_refs": ["0x404000"],
+                        "operand_targets": [],
+                        "operand_offsets": [1],
+                    }
+                ),
+            ),
+            patch("ida_analyze_util._inspect_function_via_mcp", new=inspect_function),
+        ):
+            candidate = await _preprocess_llm_target(
+                session=SimpleNamespace(call_tool=AsyncMock()),
+                symbol_name="g_Target",
+                category="gv",
+                spec={"expected_result_sections": ["found_gv"]},
+                llm_config={"model": "test-model"},
+                new_binary_dir=Path("D:/game/engine"),
+                platform="windows",
+                image_base=0x400000,
+                desired_fields=[
+                    "gv_name",
+                    "gv_va",
+                    "gv_rva",
+                    "gv_sig",
+                    "gv_sig_va",
+                    "gv_inst_offset",
+                    "gv_inst_length",
+                    "gv_inst_disp",
+                    "gv_sig_allow_across_function_boundary",
+                ],
+                llm_result=llm_result,
+                target_ranges=[(0x401000, 0x401100)],
+            )
+
+        self.assertEqual(extended_function["func_sig"], candidate["gv_sig"])
+        self.assertTrue(candidate["gv_sig_allow_across_function_boundary"])
+        self.assertEqual(
+            [
+                call(ANY, 0x401000, 0x400000, "__llm_anchor"),
+                call(
+                    ANY,
+                    0x401000,
+                    0x400000,
+                    "__llm_anchor",
+                    allow_across_function_boundary=True,
+                ),
+            ],
+            inspect_function.await_args_list,
+        )
 
     async def test_llm_found_funcptr_generates_regular_function(self):
         with tempfile.TemporaryDirectory() as temporary:

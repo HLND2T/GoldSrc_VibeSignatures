@@ -2664,11 +2664,21 @@ async def _preprocess_llm_target(
                 function = await _inspect_function_via_mcp(
                     session, _parse_int(detail["func_start"], "func_start"), image_base, "__llm_anchor"
                 )
+                used_across_boundary_budget = False
+                if function is None and "gv_sig_allow_across_function_boundary" in desired_fields:
+                    function = await _inspect_function_via_mcp(
+                        session,
+                        _parse_int(detail["func_start"], "func_start"),
+                        image_base,
+                        "__llm_anchor",
+                        allow_across_function_boundary=True,
+                    )
+                    used_across_boundary_budget = function is not None
                 if not function or not function.get("func_sig"):
                     continue
                 gv_va = _parse_int(targets[0], "gv target")
                 insn_va = _parse_int(entry["insn_va"], "insn_va")
-                return {
+                candidate = {
                     "gv_name": symbol_name,
                     "gv_va": hex(gv_va),
                     "gv_rva": hex(gv_va - int(image_base)),
@@ -2678,6 +2688,9 @@ async def _preprocess_llm_target(
                     "gv_inst_length": detail["size"],
                     "gv_inst_disp": next((value for value in detail.get("operand_offsets") or () if value), 0),
                 }
+                if used_across_boundary_budget:
+                    candidate["gv_sig_allow_across_function_boundary"] = True
+                return candidate
             else:
                 resolved_names = None
                 if expected_struct_name and expected_member_name:

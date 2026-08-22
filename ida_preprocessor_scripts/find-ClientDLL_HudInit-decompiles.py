@@ -45,6 +45,7 @@ GV_FIELDS = [
     "gv_inst_offset",
     "gv_inst_length",
     "gv_inst_disp",
+    "gv_sig_allow_across_function_boundary?",
 ]
 GENERATE_YAML_DESIRED_FIELDS = [(symbol_name, GV_FIELDS) for symbol_name in TARGET_GV_NAMES]
 
