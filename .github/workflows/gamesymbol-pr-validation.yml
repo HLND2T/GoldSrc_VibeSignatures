@@ -180,7 +180,7 @@ jobs:
       GSVIBE_LLM_APIKEY: ${{ secrets.GSVIBE_LLM_APIKEY }}
       GSVIBE_LLM_BASEURL: ${{ secrets.GSVIBE_LLM_BASEURL }}
       GSVIBE_LLM_EFFORT: ${{ secrets.GSVIBE_LLM_EFFORT }}
-      GSVIBE_LLM_MODEL: ${{ secrets.GSVIBE_LLM_MODEL }}
+      GSVIBE_LLM_MODEL: ${{ secrets.GSVIBE_LLM_MODEL || 'gpt-4o' }}
       GSVIBE_LLM_TEMPERATURE: ${{ secrets.GSVIBE_LLM_TEMPERATURE }}
     steps:
       - name: Checkout PR merge commit and exact binaries

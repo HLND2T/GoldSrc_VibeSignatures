@@ -2198,7 +2198,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("-node", action="append", default=None, help="Exact module:platform:skill node ID to run")
     parser.add_argument(
         "-llm_model",
-        default=os.environ.get("GSVIBE_LLM_MODEL", DEFAULT_LLM_MODEL),
+        default=os.environ.get("GSVIBE_LLM_MODEL") or DEFAULT_LLM_MODEL,
         help="OpenAI-compatible model for LLM preprocessing (or set GSVIBE_LLM_MODEL)",
     )
     parser.add_argument(

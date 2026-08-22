@@ -386,10 +386,17 @@ class CliContractTests(unittest.TestCase):
     def test_blank_agent_environment_values_use_defaults(self):
         args = self.parse_args(
             ["-gamever", "cstrike-10210"],
-            env={"GSVIBE_AGENT": "", "GSVIBE_AGENT_MODEL": ""},
+            env={
+                "GSVIBE_AGENT": "",
+                "GSVIBE_AGENT_MODEL": "",
+                "GSVIBE_LLM_MODEL": "",
+                "GSVIBE_LLM_EFFORT": "",
+            },
         )
         self.assertEqual("claude", args.agent)
         self.assertEqual("", args.agent_model)
+        self.assertEqual("gpt-4o", args.llm_model)
+        self.assertEqual("medium", args.llm_effort)
 
     def test_selected_nodes_are_repeatable_and_reject_legacy_filters(self):
         args = self.parse_args(
