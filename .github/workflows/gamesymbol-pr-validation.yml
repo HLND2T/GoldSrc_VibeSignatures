@@ -177,6 +177,10 @@ jobs:
     environment: win64
     timeout-minutes: 720
     env:
+      # Make checkout's initial reset repair CRLF files left by older runner jobs.
+      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_KEY_0: core.autocrlf
+      GIT_CONFIG_VALUE_0: 'false'
       GSVIBE_AGENT: ${{ secrets.GSVIBE_AGENT || 'claude' }}
       GSVIBE_AGENT_MODEL: ${{ secrets.GSVIBE_AGENT_MODEL }}
       GSVIBE_LLM_APIKEY: ${{ secrets.GSVIBE_LLM_APIKEY }}
