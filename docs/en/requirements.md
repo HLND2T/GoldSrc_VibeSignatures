@@ -27,3 +27,14 @@ Copy `.env.example` to `.env` for a local template. The analyzer uses the GoldSr
 - `GSVIBE_API_HOST`, `GSVIBE_API_PORT`, `GSVIBE_API_CORS_ORIGINS`, `GSVIBE_API_ALLOW_PRIVATE_NETWORK`, `GSVIBE_SSE_BLOCK_MS`, and `GSVIBE_SSE_BATCH_SIZE` configure the read-only Process API.
 - `GSVIBE_REFERENCE_GAMEVER` (default `hl-10210`) selects the canonical reference game version for `LLM_DECOMPILE`.
 - `DEPOTDOWNLOADER_STEAM_USERNAME` and `DEPOTDOWNLOADER_STEAM_PASSWORD` are read by `download_depot.py` when depot authentication is required.
+
+## IDB cache host requirements
+
+The warm-cache runtime probe requires `IDADIR` to identify the exact pinned loader modules and allowlisted plugins. The
+cache CLI receives an explicit persisted root; CI later exposes it as `GSVIBE_PERSISTED_WORKSPACE` only inside the
+protected dedicated Windows runner job. That root must be outside the checkout and `bin/`, must not traverse a reparse
+point, and must reside on storage that supports atomic same-filesystem rename.
+
+The runner account needs exclusive write access to its cache root. Cache warming is single-concurrency and uses a local
+file lock for the fixed MCP port. A shared cache is valid only when all consumers use the same controlled storage and
+ACL authority; Actions artifacts and `READY.json` are not cache transports or truth sources.

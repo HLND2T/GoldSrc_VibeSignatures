@@ -58,6 +58,17 @@ uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EX
   `gsvibe:analysis:v1` Redis 协议。`-redis_url` 与 `-redis_prefix` 配置 Redis backend；`-run_id` 设置运行身份。
 - `-debug` 启用调试输出。
 
+### Local IDB cache core
+
+`idb_cache.py` 提供 `probe`、`warm`、`publish`、`restore`、`verify` 与 `prune`。Identity creation 明确属于
+orchestrator，因为它必须选择 exact module/platform binary 并绑定 pinned runtime contract。
+`idb_warm_worker.py probe-runtime` 会 hash `IDADIR` 下为所选 PE32/ELF32 使用的 loader 与 allowlisted plugin。
+
+Warm consumer 必须先持久化 exact probe selection，再 restore 该 generation，并以
+`database_policy=restored_strict`、`save_on_success=false` 运行 Analyzer。Miss、corrupt generation 或 runtime
+mismatch 会使 warm run 失败；restore 开始后绝不 silent fallback。Cold execution 保持现有 clean loader/analysis
+路径，并且不读取 persisted cache root。Workflow mode binding 在后续工作包单独交付。
+
 ### 使用 `-allgamever` 批量分析
 
 `ida_analyze_bin.py -allgamever` 会批处理 `configs/config.yaml` 中声明的每个 game-version tag。该索引是批量

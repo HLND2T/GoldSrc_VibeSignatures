@@ -22,6 +22,7 @@ from ida_analyze_bin import (
     ANALYSIS_STAGES,
     DEFAULT_HOST,
     DEFAULT_PORT,
+    DATABASE_POLICY_RESTORED_STRICT,
     SURVEY_CURRENT_IDB_PATH_PY_EVAL,
     AnalysisRunError,
     AnalysisSummary,
@@ -2056,6 +2057,78 @@ class McpLifecycleTests(unittest.TestCase):
                 debug=False,
             )
             self.assertTrue(all(not path.exists() for path in stale_files))
+
+    def test_strict_restored_lifecycle_requires_database_and_never_rebuilds_identity_mismatch(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary) / "hw.dll"
+            binary.write_bytes(b"binary")
+            with (
+                patch("ida_analyze_bin.start_idalib_mcp") as start,
+                self.assertRaisesRegex(McpLifecycleError, "Strict restored IDA database is missing"),
+            ):
+                IdaMcpLifecycle(
+                    binary,
+                    "windows",
+                    DEFAULT_HOST,
+                    DEFAULT_PORT,
+                    "",
+                    database_policy=DATABASE_POLICY_RESTORED_STRICT,
+                    save_on_success=False,
+                ).__enter__()
+            start.assert_not_called()
+
+            stale = Path(f"{binary}.i64")
+            stale.write_bytes(b"restored")
+            with (
+                patch("ida_analyze_bin.start_idalib_mcp", return_value=process) as start,
+                patch("ida_analyze_bin.verify_owned_mcp_with_single_recovery", return_value=(process, None)),
+                patch("ida_analyze_bin.stop_idalib_mcp_process"),
+                patch("ida_analyze_bin.wait_for_port_release", return_value=True),
+                patch("ida_analyze_bin._invalidate_ida_database") as invalidate,
+                self.assertRaisesRegex(McpLifecycleError, "Strict restored IDA database identity verification failed"),
+            ):
+                IdaMcpLifecycle(
+                    binary,
+                    "windows",
+                    DEFAULT_HOST,
+                    DEFAULT_PORT,
+                    "",
+                    database_policy=DATABASE_POLICY_RESTORED_STRICT,
+                    save_on_success=False,
+                ).__enter__()
+            start.assert_called_once()
+            invalidate.assert_not_called()
+            self.assertTrue(stale.is_file())
+
+    def test_strict_restored_lifecycle_does_not_save_selected_node_changes(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        binding = McpDatabaseBinding(False, None, "hw.dll", "worker", True, True)
+        runtime = McpRuntime(DEFAULT_HOST, DEFAULT_PORT, "hw.dll", binding)
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary) / "hw.dll"
+            binary.write_bytes(b"binary")
+            Path(f"{binary}.i64").write_bytes(b"restored")
+            with (
+                patch("ida_analyze_bin.start_idalib_mcp", return_value=process),
+                patch("ida_analyze_bin.verify_owned_mcp_with_single_recovery", return_value=(process, runtime)),
+                patch("ida_analyze_bin.save_ida_database") as save,
+                patch("ida_analyze_bin.quit_ida_gracefully"),
+                patch("ida_analyze_bin.wait_for_port_release", return_value=True),
+                IdaMcpLifecycle(
+                    binary,
+                    "windows",
+                    DEFAULT_HOST,
+                    DEFAULT_PORT,
+                    "",
+                    database_policy=DATABASE_POLICY_RESTORED_STRICT,
+                    save_on_success=False,
+                ),
+            ):
+                pass
+            save.assert_not_called()
 
     def test_lifecycle_preserves_stale_idb_when_port_does_not_release(self):
         process = MagicMock()

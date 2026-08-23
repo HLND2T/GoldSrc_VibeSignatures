@@ -70,6 +70,22 @@ deferred.
 module/platform/skill work to continue after runtime failures, while configuration and DAG contract failures remain
 fatal and any recorded runtime failure still produces a nonzero final exit status.
 
+## Warm IDB cache boundary
+
+`idb_cache.py` provides a local immutable-generation cache for neutral IDA databases. Its schema-1 key binds the exact
+binary path/bytes, observed IDA kernel/processor/bitness/file type, pinned loader and allowlisted plugin digests,
+normalized IDA arguments, and the warm-worker source contract. A generation contains an exact cached binary plus the
+complete allowed `.i64`/`.idb` primary and side-file inventory; active lock files are always rejected.
+
+Publication verifies an incoming tree before atomic rename and updates `READY.json` only afterward. READY is a probe
+hint, not a consumer authority: restore always binds an exact generation, key, and manifest SHA-256. Restore rejects
+reparse points, path escapes, case collisions, stale workspace binaries, tampered manifests/payloads, and active locks.
+The `restored_strict` lifecycle policy never invalidates or cold-rebuilds a mismatched restored database and can disable
+success saves so selected-node modifications never flow back into the immutable generation.
+
+The cache core is not yet a workflow route in this phase. A later integration binds explicit warm/cold mode in the
+trusted plan and keeps probe/warm/restore/analyze in one protected self-hosted job.
+
 ## Process reporting and scheduling
 
 The validated analysis DAG remains the only planning source. `build_process_execution_plan()` projects it into an

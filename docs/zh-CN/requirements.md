@@ -33,6 +33,17 @@ CLI 参数、环境变量、程序默认值。关键变量：
 - `DEPOTDOWNLOADER_STEAM_USERNAME` 与 `DEPOTDOWNLOADER_STEAM_PASSWORD` 在需要 depot 认证时由
   `download_depot.py` 读取。
 
+## IDB cache host 要求
+
+Warm-cache runtime probe 需要 `IDADIR`，以绑定 exact pinned loader module 与 allowlisted plugin。Cache CLI 接收
+显式 persisted root；CI 后续只会在受保护的专用 Windows runner job 内将其注入为
+`GSVIBE_PERSISTED_WORKSPACE`。该 root 必须位于 checkout 与 `bin/` 之外，不得经过 reparse point，并且所在存储
+必须支持同文件系统 atomic rename。
+
+Runner account 需要对 cache root 拥有独占写权限。Cache warming 固定单并发，并用本地 file lock 保护固定 MCP
+port。只有所有 consumer 共享同一受控 storage 与 ACL authority 时才能共享 cache；Actions artifact 与
+`READY.json` 都不是 cache transport 或 truth source。
+
 ## 初始化游戏 binaries
 
 使用 `/init-gamebin` 斜杠命令，先用 `download_depot.py -all` 下载 `download.yaml` 中声明的全部 depot，再用

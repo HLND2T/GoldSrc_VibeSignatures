@@ -66,6 +66,22 @@ identity、允许一次健康恢复，并定向关闭 owned worker、停止 supe
 `-skip_pp` 跳过单一 Preprocessor，直接运行 Agent Skill。`-skip_error` 允许运行期的后续
 module/platform/skill 继续，但 config 与 DAG contract 错误仍立即失败；任何已记录运行失败最终都会返回非零。
 
+## Warm IDB cache 边界
+
+`idb_cache.py` 为中性 IDA database 提供 local immutable-generation cache。Schema-1 key 绑定 exact binary
+path/bytes、observed IDA kernel/processor/bitness/file type、pinned loader 与 allowlisted plugin digest、normalized
+IDA arguments，以及 warm-worker source contract。Generation 保存 exact cached binary 与完整允许的 `.i64`/`.idb`
+primary/side-file inventory；active lock file 一律拒绝。
+
+Publication 会先验证 incoming tree，再 atomic rename，最后更新 `READY.json`。READY 只是 probe hint，不是 consumer
+authority；restore 始终绑定 exact generation、key 与 manifest SHA-256。Restore 拒绝 reparse point、path escape、
+case collision、stale workspace binary、被篡改的 manifest/payload 与 active lock。`restored_strict` lifecycle policy
+不会 invalidate 或 cold-rebuild 错配的 restored database，并可禁用 success save，确保 selected-node 修改不回流
+immutable generation。
+
+本阶段 cache core 尚未成为 workflow route。后续集成会把 explicit warm/cold mode 绑定进 trusted plan，并让
+probe/warm/restore/analyze 留在同一个受保护 self-hosted job。
+
 ## Reporter 与调度
 
 经过验证的分析 DAG 仍是唯一 planning source。`build_process_execution_plan()` 将它投影为 immutable schema-v1
