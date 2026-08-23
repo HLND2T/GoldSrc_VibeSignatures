@@ -1,12 +1,43 @@
 # GoldSrc 后续架构能力迁移方案
 
-状态：待实施；Release Phase 2 production activation 在外部门禁完成前保持 blocked
+状态：PR 1-7 仓库实现与本地验证已完成；Release Phase 2 production activation 在外部门禁完成前保持 blocked；可选 PR 8 未实施
 
 日期：2026-08-23（Asia/Singapore）
 
 GoldSrc 对齐基线：`https://github.com/HLND2T/GoldSrc_VibeSignatures` `main@e094c5af1044be26441ada79b8665b97bb685357`，tree `797de06a3289b25700f7db190678e5ff80f81604`，`bin` gitlink `65c8337f0ec37c73a7b20e43009204bd8f308e14`
 
 CS2 参考基线：`https://github.com/HLND2T/CS2_VibeSignatures.git` `main@67b3238b13abc331c1df8da12cbf358aecf951bd`，tree `a7ffaba0b36e6a667af32a8fbffc4a170d97f935`
+
+## 实施结果（2026-08-24）
+
+本轮已按第 8 节拆分完成 PR 1-7 的仓库实现，并分别提交到 `dev`：
+
+- PR 1：`9d14f90` `feat(ci): add stable pr validation gate`
+- PR 2：`4e73e80` `feat(gamesymbols): add immutable alias metadata`
+- PR 3：`88d92b9` `feat(gamedata): track canonical output manifests`
+- PR 4：`8a5e279` `feat(release): add shadow content provenance`
+- PR 5：`712ec73` `feat(ida): add immutable warm database cache`
+- PR 6：`707e3e3` `feat(ci): integrate warm idb cache modes`
+- PR 7：`38e13c4` `feat(release): add generated-output promotion`
+
+仓库级验证结果：
+
+- `uv run python format_repo_files.py --check` 通过；
+- `unit` 运行 375 项并通过；
+- `repository-contract` 运行 15 项并通过；
+- `all` 运行 394 项并通过，其中 4 项因本地无 Redis 或真实 IDA 环境按设计跳过；
+- Pages Vitest 16 个文件、49 项测试通过，ESLint、production build 和 10 个 Gamesymbol 资产验证通过；
+- Playwright Chromium E2E 5 项通过。
+
+以下真实环境验收尚未执行，因此步骤 6 只完成仓库实现与模拟测试，步骤 7 production activation 仍为 blocked：
+
+- branch protection/ruleset、merge-commit-only、up-to-date required check、protected tags、`release` Environment 与 GitHub App 权限/identity 的 captured evidence；
+- GitHub App 创建 generated-output PR 后真实触发唯一 `pr-validate` 的事件链；
+- draft、未合并、已合并、篡改、orphan/index repair、retry、resume-promotion 与 republish 的 protected test repository 演练；
+- GitHub Release 上传后重新下载全部 assets 并核对 size/SHA-256 的真实证据；
+- self-hosted runner 上 explicit cold、cache miss publication 与后续 cache hit 的运行证据。
+
+在上述证据补齐前，Phase 2 remote-write authority 和 production republish 保持默认禁用，不得据此切换生产发布权限。PR 8 属于可选的 release-only authority cutover，仍需独立设计与批准。
 
 ## 1. 计划定位
 
