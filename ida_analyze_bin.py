@@ -113,6 +113,9 @@ UNAVAILABLE_HASH_VALUES = frozenset({"", "unavailable", "unknown", "none", "null
 DATABASE_POLICY_REBUILD = "rebuild"
 DATABASE_POLICY_RESTORED_STRICT = "restored_strict"
 DATABASE_POLICIES = frozenset({DATABASE_POLICY_REBUILD, DATABASE_POLICY_RESTORED_STRICT})
+CACHE_MODE_COLD = "cold"
+CACHE_MODE_WARM = "warm"
+CACHE_MODES = (CACHE_MODE_COLD, CACHE_MODE_WARM)
 
 
 class AnalysisRunError(RuntimeError):
@@ -359,6 +362,17 @@ def _decrypt_blob_to_pe(binary_path, *, debug=False):
     output.write_bytes(pe)
     validate_binary(output, "windows")
     return output
+
+
+def prepare_analysis_binary(binary_path, platform, *, debug=False) -> Path:
+    binary = Path(binary_path)
+    try:
+        validate_binary(binary, platform)
+        return binary
+    except BinaryFormatError:
+        if platform != "windows":
+            raise
+    return _decrypt_blob_to_pe(binary, debug=debug)
 
 
 def _handle_binary_validation_failure(
@@ -2053,46 +2067,12 @@ def analyze(
             job_id = reporting.job_id_for(binary_nodes[0].id)
             reporting.emit_task_status(job_id, TaskStatus.RUNNING, ProcessPhase.VALIDATING_BINARY)
             try:
-                validate_binary(binary, platform)
+                prepared_binary = prepare_analysis_binary(binary, platform, debug=debug)
+                if prepared_binary != binary:
+                    binary = prepared_binary
+                    print(f"Decrypted blob {module_name}:{platform} -> {binary}")
                 validated_binaries[(module_name, platform)] = binary
-            except BinaryFormatError as exc:
-                # Protected GoldSrc client modules ship as a non-PE Metahook
-                # "blob". Decrypt into a sibling *.decrypt.dll and analyze that
-                # instead, so the rest of the pipeline sees a normal PE32 DLL.
-                if platform != "windows":
-                    _handle_binary_validation_failure(
-                        module_name,
-                        platform,
-                        binary,
-                        binary_nodes,
-                        exc,
-                        skip_error,
-                        reporting,
-                        job_id,
-                        run_summary,
-                    )
-                    continue
-                try:
-                    binary = _decrypt_blob_to_pe(binary, debug=debug)
-                except (OSError, ValueError) as decrypt_error:
-                    if debug:
-                        print(f"  Blob decryption failed for {binary}: {decrypt_error}")
-                    _handle_binary_validation_failure(
-                        module_name,
-                        platform,
-                        binary,
-                        binary_nodes,
-                        exc,
-                        skip_error,
-                        reporting,
-                        job_id,
-                        run_summary,
-                    )
-                    continue
-                print(f"Decrypted blob {module_name}:{platform} -> {binary}")
-                validate_binary(binary, platform)
-                validated_binaries[(module_name, platform)] = binary
-            except OSError as exc:
+            except (BinaryFormatError, OSError, ValueError) as exc:
                 _handle_binary_validation_failure(
                     module_name,
                     platform,
@@ -2315,6 +2295,12 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("-debug", action="store_true", help="Enable debug diagnostics and Agent output")
     parser.add_argument("-ida_args", default="", help="Additional arguments for idalib-mcp")
+    parser.add_argument(
+        "-cache_mode",
+        choices=CACHE_MODES,
+        required=True,
+        help="Explicit database mode: cold rebuild or exact restored warm generation",
+    )
     parser.add_argument("-skip_error", action="store_true", help="Continue after runtime failures")
     parser.add_argument("-skip_pp", action="store_true", help="Skip the single preprocessor and run Agent directly")
     parser.add_argument("-maxretry", type=int, default=3, help="Default total attempts per skill (1-20)")
@@ -2501,6 +2487,7 @@ def _print_main_configuration(args) -> None:
         print(f"Selected nodes: {', '.join(args.node)}")
     print(f"Agent: {args.agent}")
     print(f"Process reporter: {args.process_reporter}")
+    print(f"IDB cache mode: {args.cache_mode}")
     if args.run_id:
         print(f"Run ID: {args.run_id}")
     if args.ida_args:
@@ -2556,6 +2543,10 @@ def _run_single_tag(gamever: str, args, summary: AnalysisSummary | None = None) 
             run_id=args.run_id,
             summary=summary,
             selected_node_ids=args.node,
+            database_policy=(
+                DATABASE_POLICY_RESTORED_STRICT if args.cache_mode == CACHE_MODE_WARM else DATABASE_POLICY_REBUILD
+            ),
+            save_on_success=args.cache_mode == CACHE_MODE_COLD,
         )
     except (
         AnalysisConfigError,

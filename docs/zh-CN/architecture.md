@@ -27,6 +27,11 @@ snapshot + immutable metadata companion -> Vite asset plugin
 exact main Git tree + bin gitlink + tracked snapshot/metadata/gamedata
   -> self-excluding release content manifest
   -> read-only shadow verification evidence
+
+trusted PR plan + cache_mode
+  -> cold: validated clean -> normal loader/auto-analysis
+  -> warm: probe/publish exact generation -> canonical selection -> strict restore
+  -> selected-node analysis -> validated clean
 ```
 
 `analysis_planner.py` 是模块、符号、工件路径与 DAG 校验的唯一来源。snapshot contract 复用同一实现，避免分析和
@@ -79,8 +84,11 @@ case collision、stale workspace binary、被篡改的 manifest/payload 与 acti
 不会 invalidate 或 cold-rebuild 错配的 restored database，并可禁用 success save，确保 selected-node 修改不回流
 immutable generation。
 
-本阶段 cache core 尚未成为 workflow route。后续集成会把 explicit warm/cold mode 绑定进 trusted plan，并让
-probe/warm/restore/analyze 留在同一个受保护 self-hosted job。
+Trusted PR plan 绑定 explicit `cache_mode=warm|cold`。受保护的 `gsvibe-ida` Windows job 在同一 job 内依次执行
+validated submodule clean、exact probe/bounded warm publication、canonical selection verification、strict restore、
+selected-node analysis 与 final clean；restore 和 analysis 之间不会再次 clean。Cold mode 跳过全部 persisted-root
+step，使用 normal rebuild/save lifecycle。Repository-level Actions concurrency group 与 runner-local file lock 共同
+保护固定 MCP port。
 
 ## Reporter 与调度
 

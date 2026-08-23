@@ -38,6 +38,7 @@ jobs:
       has_analysis: ${{ steps.route.outputs.has_analysis }}
       has_hosted: ${{ steps.route.outputs.has_hosted }}
       same_repository: ${{ steps.route.outputs.same_repository }}
+      cache_mode: ${{ steps.route.outputs.cache_mode }}
     steps:
       - name: Checkout PR merge commit with full history
         uses: actions/checkout@v5
@@ -62,7 +63,7 @@ jobs:
           # planner yet, so bootstrap from the head branch. Later PRs keep
           # running the trusted base code to prevent validation tampering.
           if ! git cat-file -e "$BASE_SHA:gamesymbol_pr_validation.py" 2>/dev/null \
-            || ! git show "$BASE_SHA:gamesymbol_snapshot_lib/pr_validation.py" | grep -q 'def evaluate_pr_validation'; then
+            || ! git show "$BASE_SHA:gamesymbol_snapshot_lib/pr_validation.py" | grep -q 'PLAN_SCHEMA_VERSION = 2'; then
             export_src="$HEAD_SHA"
           fi
           git archive "$export_src" -- ':(glob)*.py' gamesymbol_snapshot_lib pyproject.toml uv.lock \
@@ -88,6 +89,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           MERGE_SHA: ${{ github.sha }}
+          CACHE_MODE: ${{ vars.GSVIBE_IDB_CACHE_MODE || 'cold' }}
         run: |
           set -euo pipefail
           uv run --project "$RUNNER_TEMP/gamesymbol-validation/base-planner" \
@@ -97,6 +99,7 @@ jobs:
             -head-ref "$HEAD_SHA" \
             -merge-ref "$MERGE_SHA" \
             -bin-repo "$RUNNER_TEMP/bin-objects" \
+            -cache-mode "$CACHE_MODE" \
             -output "$RUNNER_TEMP/gamesymbol-validation/plan.json"
       - name: Route validation jobs
         id: route
@@ -113,6 +116,7 @@ jobs:
           echo "has_analysis=$has_analysis" >> "$GITHUB_OUTPUT"
           echo "has_hosted=$has_hosted" >> "$GITHUB_OUTPUT"
           echo "same_repository=$SAME_REPOSITORY" >> "$GITHUB_OUTPUT"
+          echo "cache_mode=$(jq -r '.cache_mode' "$plan")" >> "$GITHUB_OUTPUT"
           if [[ "$has_actions" != "true" ]]; then
             echo "no affected game-symbol actions"
           fi
@@ -193,9 +197,12 @@ jobs:
     needs: [classify, plan]
     if: needs.classify.outputs.route == 'source' && needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository
       == 'true'
-    runs-on: [self-hosted, Windows, X64]
+    runs-on: [self-hosted, Windows, X64, gsvibe-ida]
     environment: win64
     timeout-minutes: 720
+    concurrency:
+      group: ${{ github.repository }}-gamesymbol-self-hosted-ida
+      cancel-in-progress: false
     env:
       GSVIBE_AGENT: ${{ secrets.GSVIBE_AGENT || 'claude' }}
       GSVIBE_AGENT_MODEL: ${{ secrets.GSVIBE_AGENT_MODEL }}
@@ -252,6 +259,68 @@ jobs:
           }
           git -C $binRoot clean -ffdx
           if ($LASTEXITCODE -ne 0) { throw 'failed to clean persisted bin analysis state' }
+      - name: Prepare exact warm IDB cache selection
+        if: needs.plan.outputs.cache_mode == 'warm'
+        shell: pwsh
+        env:
+          GSVIBE_PERSISTED_WORKSPACE: ${{ secrets.GSVIBE_PERSISTED_WORKSPACE }}
+          GSVIBE_IDA_KERNEL_VERSION: ${{ vars.GSVIBE_IDA_KERNEL_VERSION }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:GSVIBE_PERSISTED_WORKSPACE)) {
+            throw 'GSVIBE_PERSISTED_WORKSPACE is required for warm cache mode'
+          }
+          if ([string]::IsNullOrWhiteSpace($env:IDADIR) -or [string]::IsNullOrWhiteSpace($env:GSVIBE_IDA_KERNEL_VERSION)) {
+            throw 'IDADIR and GSVIBE_IDA_KERNEL_VERSION are required for warm cache mode'
+          }
+          $bundle = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'
+          $planPath = Join-Path $bundle 'plan.json'
+          $selectionPath = Join-Path $bundle 'cache-selection.json'
+          $selectionShaPath = Join-Path $bundle 'cache-selection.sha256'
+          uv run python idb_cache_workflow.py prepare `
+            -repo-root $env:GITHUB_WORKSPACE -plan $planPath -merge-ref HEAD -bindir bin `
+            -persisted-root $env:GSVIBE_PERSISTED_WORKSPACE -ida-root $env:IDADIR `
+            -kernel-version $env:GSVIBE_IDA_KERNEL_VERSION -run-id "${{ github.run_id }}" `
+            -attempt "${{ github.run_attempt }}" -output $selectionPath -output-sha256 $selectionShaPath
+          if ($LASTEXITCODE -ne 0) { throw 'warm cache preparation failed' }
+      - name: Verify exact warm IDB cache selection
+        if: needs.plan.outputs.cache_mode == 'warm'
+        shell: pwsh
+        env:
+          GSVIBE_PERSISTED_WORKSPACE: ${{ secrets.GSVIBE_PERSISTED_WORKSPACE }}
+          GSVIBE_IDA_KERNEL_VERSION: ${{ vars.GSVIBE_IDA_KERNEL_VERSION }}
+        run: |
+          $bundle = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'
+          uv run python idb_cache_workflow.py verify `
+            -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $bundle 'plan.json') -merge-ref HEAD -bindir bin `
+            -persisted-root $env:GSVIBE_PERSISTED_WORKSPACE -ida-root $env:IDADIR `
+            -kernel-version $env:GSVIBE_IDA_KERNEL_VERSION -selection (Join-Path $bundle 'cache-selection.json') `
+            -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
+          if ($LASTEXITCODE -ne 0) { throw 'warm cache selection verification failed' }
+      - name: Upload warm IDB cache selection evidence
+        if: needs.plan.outputs.cache_mode == 'warm'
+        uses: actions/upload-artifact@v4
+        with:
+          name: idb-cache-selection-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/gamesymbol-validation/cache-selection.json
+            ${{ runner.temp }}/gamesymbol-validation/cache-selection.sha256
+          if-no-files-found: error
+          retention-days: 30
+      - name: Restore exact warm IDB cache generations
+        if: needs.plan.outputs.cache_mode == 'warm'
+        shell: pwsh
+        env:
+          GSVIBE_PERSISTED_WORKSPACE: ${{ secrets.GSVIBE_PERSISTED_WORKSPACE }}
+          GSVIBE_IDA_KERNEL_VERSION: ${{ vars.GSVIBE_IDA_KERNEL_VERSION }}
+        run: |
+          $bundle = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'
+          uv run python idb_cache_workflow.py restore `
+            -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $bundle 'plan.json') -merge-ref HEAD -bindir bin `
+            -persisted-root $env:GSVIBE_PERSISTED_WORKSPACE -ida-root $env:IDADIR `
+            -kernel-version $env:GSVIBE_IDA_KERNEL_VERSION -selection (Join-Path $bundle 'cache-selection.json') `
+            -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
+          if ($LASTEXITCODE -ne 0) { throw 'warm cache restore failed' }
       - name: Analyze selected nodes and compare actual snapshots
         shell: pwsh
         run: |
@@ -265,7 +334,7 @@ jobs:
             $tag = $action.tag
             uv run --project $basePlannerRoot python $baseCli materialize -repo-root $env:GITHUB_WORKSPACE -plan $planPath -tag $tag -merge-ref HEAD -bindir bin
             if ($LASTEXITCODE -ne 0) { throw "materialization failed for $tag" }
-            $analyzerArgs = @('ida_analyze_bin.py', '-gamever', $tag, '-oldgamever', 'none')
+            $analyzerArgs = @('ida_analyze_bin.py', '-gamever', $tag, '-oldgamever', 'none', '-cache_mode', $plan.cache_mode)
             foreach ($node in $action.analysis_nodes) { $analyzerArgs += @('-node', $node) }
             uv run python @analyzerArgs
             if ($LASTEXITCODE -ne 0) { throw "selected-node analysis failed for $tag" }

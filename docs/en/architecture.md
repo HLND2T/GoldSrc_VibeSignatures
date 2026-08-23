@@ -27,6 +27,11 @@ snapshot + immutable metadata companion -> Vite asset plugin
 exact main Git tree + bin gitlink + tracked snapshot/metadata/gamedata
   -> self-excluding release content manifest
   -> read-only shadow verification evidence
+
+trusted PR plan + cache_mode
+  -> cold: validated clean -> normal loader/auto-analysis
+  -> warm: probe/publish exact generation -> canonical selection -> strict restore
+  -> selected-node analysis -> validated clean
 ```
 
 `analysis_planner.py` is the single source for module, symbol, artifact-path, and DAG validation. Snapshot contracts
@@ -83,8 +88,11 @@ reparse points, path escapes, case collisions, stale workspace binaries, tampere
 The `restored_strict` lifecycle policy never invalidates or cold-rebuilds a mismatched restored database and can disable
 success saves so selected-node modifications never flow back into the immutable generation.
 
-The cache core is not yet a workflow route in this phase. A later integration binds explicit warm/cold mode in the
-trusted plan and keeps probe/warm/restore/analyze in one protected self-hosted job.
+The trusted PR plan binds explicit `cache_mode=warm|cold`. The protected `gsvibe-ida` Windows job performs validated
+submodule clean, exact probe/bounded warm publication, canonical selection verification, strict restore, selected-node
+analysis, and final clean without another clean between restore and analysis. Cold mode skips every persisted-root step
+and uses the normal rebuild/save lifecycle. A repository-level Actions concurrency group and runner-local file lock
+protect the fixed MCP port.
 
 ## Process reporting and scheduling
 

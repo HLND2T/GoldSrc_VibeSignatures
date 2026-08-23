@@ -352,8 +352,11 @@ class ConfigValidationTests(unittest.TestCase):
 
 class CliContractTests(unittest.TestCase):
     def parse_args(self, argv=(), env=None):
+        argv = list(argv)
+        if not any(str(token).split("=", 1)[0] == "-cache_mode" for token in argv):
+            argv.extend(("-cache_mode", "cold"))
         with patch.dict(os.environ, env or {}, clear=True):
-            return parse_args(list(argv))
+            return parse_args(argv)
 
     def assert_parse_error(self, argv, env=None):
         with (
@@ -379,6 +382,7 @@ class CliContractTests(unittest.TestCase):
         self.assertEqual("medium", args.llm_effort)
         self.assertEqual(3, args.maxretry)
         self.assertEqual("", args.ida_args)
+        self.assertEqual("cold", args.cache_mode)
         self.assertEqual("none", args.process_reporter)
         self.assertEqual("redis://127.0.0.1:6379/0", args.redis_url)
         self.assertEqual("gsvibe:analysis:v1", args.redis_prefix)
@@ -527,6 +531,12 @@ class CliContractTests(unittest.TestCase):
         self.assert_parse_error([])
         self.assert_parse_error([], env={"GSVIBE_GAMEVER": "cstrike-10210"})
 
+    def test_cache_mode_is_explicit_and_limited_to_warm_or_cold(self):
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            parse_args(["-gamever", "cstrike-10210"])
+        self.assertEqual("warm", self.parse_args(["-gamever", "cstrike-10210", "-cache_mode", "warm"]).cache_mode)
+        self.assert_parse_error(["-gamever", "cstrike-10210", "-cache_mode", "fallback"])
+
     def test_oldgamever_auto_resolution_is_family_aware(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -607,7 +617,7 @@ class CliContractTests(unittest.TestCase):
                 patch("ida_analyze_bin._run_single_tag", side_effect=record_success),
                 redirect_stdout(io.StringIO()),
             ):
-                result = main(["-allgamever", "-bindir", str(root / "bin")])
+                result = main(["-allgamever", "-bindir", str(root / "bin"), "-cache_mode", "cold"])
             self.assertEqual(0, result)
 
     def test_allgamever_module_filter_matches_configured_modules(self):
@@ -636,7 +646,7 @@ class CliContractTests(unittest.TestCase):
             patch("ida_analyze_bin._run_single_tag", side_effect=record_success),
             redirect_stdout(output),
         ):
-            result = main(["-allgamever", "-modules", "engine", "-bindir", "bin"])
+            result = main(["-allgamever", "-modules", "engine", "-bindir", "bin", "-cache_mode", "cold"])
         self.assertEqual(0, result)
         self.assertEqual(["hl-10210"], calls)
         self.assertIn("Skipping gamever: no requested modules found (engine)", output.getvalue())
@@ -659,7 +669,7 @@ class CliContractTests(unittest.TestCase):
             patch("ida_analyze_bin._run_single_tag", side_effect=fail_then_succeed),
             redirect_stdout(io.StringIO()),
         ):
-            result = main(["-allgamever", "-bindir", "bin"])
+            result = main(["-allgamever", "-bindir", "bin", "-cache_mode", "cold"])
         self.assertEqual(1, result)
         self.assertEqual(["hl-10210"], calls)
 
@@ -681,7 +691,7 @@ class CliContractTests(unittest.TestCase):
             patch("ida_analyze_bin._run_single_tag", side_effect=fail_then_succeed),
             redirect_stdout(io.StringIO()),
         ):
-            result = main(["-allgamever", "-bindir", "bin", "-skip_error"])
+            result = main(["-allgamever", "-bindir", "bin", "-skip_error", "-cache_mode", "cold"])
         self.assertEqual(1, result)
         self.assertEqual(["hl-10210", "hl-8684"], calls)
 
@@ -700,6 +710,8 @@ class CliContractTests(unittest.TestCase):
                         str(config),
                         "-bindir",
                         str(root / "bin"),
+                        "-cache_mode",
+                        "cold",
                     ]
                 )
             self.assertEqual(0, result)
@@ -731,9 +743,44 @@ class CliContractTests(unittest.TestCase):
                         "-bindir",
                         str(root / "bin"),
                         "-skip_error",
+                        "-cache_mode",
+                        "cold",
                     ]
                 )
             self.assertEqual(1, result)
+
+    def test_cli_cache_mode_selects_cold_or_strict_lifecycle(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text("modules: []\n", encoding="utf-8")
+            observed = []
+
+            def record_mode(**kwargs):
+                observed.append((kwargs["database_policy"], kwargs["save_on_success"]))
+
+            for mode in ("cold", "warm"):
+                with (
+                    patch.dict(os.environ, {}, clear=True),
+                    patch("ida_analyze_bin.analyze", side_effect=record_mode),
+                    redirect_stdout(io.StringIO()),
+                ):
+                    self.assertEqual(
+                        0,
+                        main(
+                            [
+                                "-gamever",
+                                "game-1",
+                                "-configyaml",
+                                str(config),
+                                "-bindir",
+                                str(root / "bin"),
+                                "-cache_mode",
+                                mode,
+                            ]
+                        ),
+                    )
+            self.assertEqual([("rebuild", True), ("restored_strict", False)], observed)
 
 
 class DagTests(unittest.TestCase):

@@ -38,3 +38,9 @@ point, and must reside on storage that supports atomic same-filesystem rename.
 The runner account needs exclusive write access to its cache root. Cache warming is single-concurrency and uses a local
 file lock for the fixed MCP port. A shared cache is valid only when all consumers use the same controlled storage and
 ACL authority; Actions artifacts and `READY.json` are not cache transports or truth sources.
+
+Configure the dedicated runner with the `gsvibe-ida` label and attach it to the protected `win64` Environment. Set the
+repository variable `GSVIBE_IDB_CACHE_MODE` to `cold` until real runner evidence is captured, then to `warm`; set
+`GSVIBE_IDA_KERNEL_VERSION` to the pinned installation's expected kernel version. Store the absolute persisted path as
+the Environment secret `GSVIBE_PERSISTED_WORKSPACE`. The observed runtime must match the expected kernel, loader, and
+plugin identity before publication, so these settings cannot manufacture a successful cache generation.

@@ -24,6 +24,7 @@ from gamesymbol_snapshot_lib.operations import load_snapshot_context, pack_snaps
 from gamesymbol_snapshot_lib.pr_cli import GitRepository, PrCliError, materialize_from_plan
 from gamesymbol_snapshot_lib.pr_validation import (
     BoundImpactPlan,
+    CACHE_MODE_WARM,
     ChangedPath,
     ImpactPlanningError,
     TagImpact,
@@ -450,11 +451,23 @@ class ImpactPlanningTests(unittest.TestCase):
 
     def test_bound_plan_digest_binds_shas_actions_and_digests(self):
         action = TagImpact("game-1", "incremental", (), (), True, True, False, ("snapshot",))
-        plan = BoundImpactPlan("a" * 40, "b" * 40, "c" * 40, "d" * 40, "e" * 40, (action,), {"x": "y"})
+        plan = BoundImpactPlan(
+            "a" * 40,
+            "b" * 40,
+            "c" * 40,
+            "d" * 40,
+            "e" * 40,
+            (action,),
+            {"x": "y"},
+            CACHE_MODE_WARM,
+        )
         document = json.loads(plan.canonical_bytes())
+        self.assertEqual(CACHE_MODE_WARM, document["cache_mode"])
         digest = document.pop("plan_sha256")
         encoded = json.dumps(document, sort_keys=True, separators=(",", ":")).encode("utf-8")
         self.assertEqual(hashlib.sha256(encoded).hexdigest(), digest)
+        with self.assertRaises(ImpactPlanningError):
+            BoundImpactPlan("a" * 40, "b" * 40, "c" * 40, None, None, (), {}, "fallback")
 
 
 class PrValidationGateTests(unittest.TestCase):
@@ -604,6 +617,23 @@ class BoundPlanValidationTests(unittest.TestCase):
             tampered["plan_sha256"] = "0" * 64
             plan_path.write_text(json.dumps(tampered), encoding="utf-8")
             with self.assertRaisesRegex(PrCliError, "plan digest mismatch"):
+                materialize_from_plan(
+                    repo_root=root,
+                    plan_path=plan_path,
+                    tag="game-1",
+                    merge_ref=merge_sha,
+                    bindir=root / "bin",
+                )
+
+            self._write_plan(plan_path, merge_sha=merge_sha, digests=digests)
+            invalid_mode = json.loads(plan_path.read_text(encoding="utf-8"))
+            invalid_mode["cache_mode"] = "fallback"
+            unsigned = {key: value for key, value in invalid_mode.items() if key != "plan_sha256"}
+            invalid_mode["plan_sha256"] = hashlib.sha256(
+                json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()
+            plan_path.write_text(json.dumps(invalid_mode), encoding="utf-8")
+            with self.assertRaisesRegex(PrCliError, "Invalid bound impact plan"):
                 materialize_from_plan(
                     repo_root=root,
                     plan_path=plan_path,

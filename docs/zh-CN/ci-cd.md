@@ -30,6 +30,16 @@ hosted 与 self-hosted source validation 都会从不可变 symbol candidate 重
 exact `HEAD` Git blob 比较。bound plan 绑定 base/merge gamedata subtree digest；被忽略的工作树文件和宽泛 stage
 glob 都不是 validation 输入。
 
+Planner 还会从 repository variable `GSVIBE_IDB_CACHE_MODE` 绑定 `cache_mode`，默认值为 `cold`。Analysis 在
+`win64` Environment 下的专用 `[self-hosted, Windows, X64, gsvibe-ida]` runner 运行，并受 repository-wide IDA
+concurrency group 约束。Warm mode 在同一个 job 内完成 clean、probe/miss warmup、exact selection、restore、
+analysis 与 final clean。`cache-selection.json` 绑定 plan SHA、merge/bin identity、selected binary、cache key、
+generation 和 manifest hash；其 SHA-256 会被复核，Actions artifact 只作为 evidence。Cold mode 不执行任何收到
+`GSVIBE_PERSISTED_WORKSPACE` 的 step。
+
+Production warm activation 必须满足 [IDB cache 运维手册](idb-cache-operations.md) 中的 host/repository 设置。
+Unit 与 workflow-contract test 不能替代专用 runner 上记录的 cold、首次 miss/publication 与后续 hit run。
+
 ## Release provenance shadow
 
 [`release-shadow.yml`](../../.github/workflows/release-shadow.yml) 只在 exact `main` commit 上以 `contents: read`
@@ -55,6 +65,6 @@ GitHub Pages 只托管静态资产，绝不托管 Process API/SSE 服务。
 
 ## Analyzer 与 CI 参数参考
 
-从 CI 驱动 analyzer 时，传入与本地运行相同的参数——参见
+从 CI 驱动 analyzer 时，传入与本地运行相同的参数，并显式指定 `-cache_mode cold|warm`——参见
 [二进制获取与符号分析](analysis.md#分析配置的符号)。对每个配置 tag 的批量分析使用 `-allgamever`；单 tag 运行
 使用 `-gamever`。CI job 若只需知道二进制是否已就位，使用 `copy_depot_bin.py ... -checkonly`。

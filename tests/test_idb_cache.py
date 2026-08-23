@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import subprocess
 import tempfile
@@ -23,6 +24,7 @@ from idb_cache import (
     build_binary_identity,
     build_cache_identity,
     cache_key,
+    load_cache_identity,
     probe_generation,
     prune_tag,
     publish_generation,
@@ -30,7 +32,19 @@ from idb_cache import (
     verify_selection,
     warm_and_publish,
 )
+from idb_cache_workflow import (
+    CACHE_SELECTION_SCHEMA_VERSION,
+    IdbCacheWorkflowError,
+    SelectedBinaryGroup,
+    prepare_cache_selection,
+    restore_cache_selection,
+    selected_binary_groups,
+    validate_cache_selection,
+    validate_persisted_workspace,
+    verify_cache_selection_file,
+)
 from idb_warm_worker import probe_runtime_contract
+from gamesymbol_snapshot_lib.pr_validation import BoundImpactPlan, TagImpact
 from release_workflow_lib.hashing import canonical_json_bytes, write_canonical_json
 from tests.test_support import write_elf32, write_pe32
 
@@ -350,6 +364,233 @@ class IdbCacheGenerationTests(unittest.TestCase):
                 )
             self.assertFalse(Path(f"{binary}.i64").exists())
             self.assertFalse((persisted / "idb-cache").exists())
+
+
+class IdbCacheWorkflowTests(unittest.TestCase):
+    def _bound_repository(self, root: Path) -> tuple[Path, Path]:
+        repo = root / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.com"], check=True)
+        subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True)
+        files = {
+            "configs/config.yaml": b"gamevers:\n  - game-1\n",
+            "configs/game-1.yaml": (
+                b"modules:\n"
+                b"  - name: engine\n"
+                b"    module_windows: hw.dll\n"
+                b"    skills:\n"
+                b"      - name: find\n"
+                b"        expected_output: Demo.{platform}.yaml\n"
+                b"    symbols:\n"
+                b"      - name: Demo\n"
+                b"        category: func\n"
+                b"  - name: client\n"
+                b"    module_windows: client.dll\n"
+                b"    skills:\n"
+                b"      - name: other\n"
+                b"        expected_output: Other.{platform}.yaml\n"
+                b"    symbols:\n"
+                b"      - name: Other\n"
+                b"        category: func\n"
+            ),
+            "gamesymbol-impact.yaml": b"version: 1\nrules: []\n",
+            "gamesymbols/game-1.yaml": b"snapshot\n",
+        }
+        for relative, raw in files.items():
+            path = repo / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(raw)
+        subprocess.run(
+            ["git", "-C", str(repo), "add", "configs", "gamesymbol-impact.yaml", "gamesymbols"],
+            check=True,
+        )
+        subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "bound"], check=True)
+        merge_sha = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+        write_pe32(repo / "bin" / "game-1" / "engine" / "hw.dll")
+        write_pe32(repo / "bin" / "game-1" / "client" / "client.dll")
+        digests = {
+            "merge_config_index": hashlib.sha256(files["configs/config.yaml"]).hexdigest(),
+            "merge_registry": hashlib.sha256(files["gamesymbol-impact.yaml"]).hexdigest(),
+            "merge_config:game-1": hashlib.sha256(files["configs/game-1.yaml"]).hexdigest(),
+            "merge_snapshot:game-1": hashlib.sha256(files["gamesymbols/game-1.yaml"]).hexdigest(),
+            "merge_metadata:game-1": None,
+            "merge_gamedata:game-1": None,
+        }
+        action = TagImpact(
+            "game-1",
+            "full-rebuild",
+            ("engine:windows:find",),
+            ("engine/Demo.windows.yaml",),
+            True,
+            True,
+            False,
+            ("test",),
+        )
+        plan = BoundImpactPlan(merge_sha, merge_sha, merge_sha, None, None, (action,), digests, "warm")
+        plan_path = root / "plan.json"
+        plan_path.write_bytes(plan.canonical_bytes())
+        return repo, plan_path
+
+    def test_bound_warm_plan_selects_only_analysis_binary_pairs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, plan = self._bound_repository(root)
+            groups = selected_binary_groups(repo_root=repo, plan_path=plan)
+            self.assertEqual(1, len(groups))
+            self.assertEqual(("game-1", "windows"), (groups[0].tag, groups[0].platform))
+            self.assertEqual(["engine"], [record["module"] for record in groups[0].binaries])
+
+    def test_persisted_workspace_must_be_plain_and_disjoint_from_checkout(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkout = root / "checkout"
+            persisted = root / "persisted"
+            checkout.mkdir()
+            persisted.mkdir()
+            self.assertEqual(persisted.resolve(), validate_persisted_workspace(persisted, checkout))
+            with self.assertRaises(IdbCacheWorkflowError):
+                validate_persisted_workspace(checkout, checkout)
+            nested = checkout / "persisted"
+            nested.mkdir()
+            with self.assertRaises(IdbCacheWorkflowError):
+                validate_persisted_workspace(nested, checkout)
+
+    def test_combined_selection_binds_plan_runtime_binaries_and_exact_generation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workspace, persisted, _binary, identity = cache_fixture(root)
+            selection = publish_generation(
+                persisted_root=persisted,
+                identity=identity,
+                workspace_root=workspace,
+                run_id="run-1",
+                attempt=1,
+            )
+            plan = {
+                "plan_sha256": "a" * 64,
+                "merge_sha": "b" * 40,
+                "merge_bin_commit": "c" * 40,
+            }
+            group = SelectedBinaryGroup("game-1", "windows", workspace, tuple(identity["binaries"]))
+            document = {
+                "schema_version": CACHE_SELECTION_SCHEMA_VERSION,
+                "cache_mode": "warm",
+                "plan_sha256": plan["plan_sha256"],
+                "merge_sha": plan["merge_sha"],
+                "merge_bin_commit": plan["merge_bin_commit"],
+                "entries": [
+                    {
+                        "tag": "game-1",
+                        "platform": "windows",
+                        "cache_key": selection["cache_key"],
+                        "generation": selection["generation"],
+                        "manifest_sha256": selection["manifest_sha256"],
+                        "binaries": identity["binaries"],
+                    }
+                ],
+            }
+            self.assertEqual(
+                document,
+                validate_cache_selection(
+                    document=document,
+                    plan=plan,
+                    groups=(group,),
+                    identities={("game-1", "windows"): identity},
+                    persisted_root=persisted,
+                    raw=canonical_json_bytes(document),
+                ),
+            )
+            with self.assertRaisesRegex(IdbCacheWorkflowError, "plan field"):
+                validate_cache_selection(
+                    document={**document, "plan_sha256": "d" * 64},
+                    plan=plan,
+                    groups=(group,),
+                    identities={("game-1", "windows"): identity},
+                    persisted_root=persisted,
+                )
+
+    def test_prepare_miss_then_hit_writes_and_restores_exact_selection(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, plan = self._bound_repository(root)
+            persisted = root / "persisted"
+            persisted.mkdir()
+            ida_root = root / "ida"
+            (ida_root / "loaders").mkdir(parents=True)
+            (ida_root / "loaders" / "pe.dll").write_bytes(b"pinned-pe-loader")
+            selection_path = root / "selection.json"
+            selection_sha = root / "selection.sha256"
+            warm_calls = []
+
+            def fake_warm(**kwargs):
+                warm_calls.append(kwargs["identity_path"])
+                identity = load_cache_identity(kwargs["identity_path"])
+                workspace = Path(kwargs["workspace_root"])
+                for binary in identity["binaries"]:
+                    Path(f"{workspace.joinpath(*Path(binary['path']).parts)}.i64").write_bytes(b"neutral-idb")
+                return publish_generation(
+                    persisted_root=kwargs["persisted_root"],
+                    identity=identity,
+                    workspace_root=workspace,
+                    run_id=kwargs["run_id"],
+                    attempt=kwargs["attempt"],
+                )
+
+            common = {
+                "repo_root": repo,
+                "plan_path": plan,
+                "merge_ref": "HEAD",
+                "bindir": "bin",
+                "persisted_root": persisted,
+                "ida_root": ida_root,
+                "kernel_version": "9.3",
+                "normalized_ida_args": [],
+                "run_id": "run-1",
+                "attempt": 1,
+                "timeout_seconds": 1,
+            }
+            with patch("idb_cache_workflow.warm_and_publish", side_effect=fake_warm):
+                first = prepare_cache_selection(
+                    **common,
+                    output_path=selection_path,
+                    output_sha256_path=selection_sha,
+                )
+                second = prepare_cache_selection(
+                    **common,
+                    output_path=root / "selection-2.json",
+                    output_sha256_path=root / "selection-2.sha256",
+                )
+            self.assertEqual(1, len(warm_calls))
+            self.assertEqual(first["entries"], second["entries"])
+            verified, _groups = verify_cache_selection_file(
+                repo_root=repo,
+                plan_path=plan,
+                merge_ref="HEAD",
+                bindir="bin",
+                persisted_root=persisted,
+                ida_root=ida_root,
+                kernel_version="9.3",
+                normalized_ida_args=[],
+                selection_path=selection_path,
+                selection_sha256_path=selection_sha,
+            )
+            self.assertEqual(first, verified)
+            binary = repo / "bin" / "game-1" / "engine" / "hw.dll"
+            Path(f"{binary}.i64").write_bytes(b"selected-node-modification")
+            restore_cache_selection(
+                repo_root=repo,
+                plan_path=plan,
+                merge_ref="HEAD",
+                bindir="bin",
+                persisted_root=persisted,
+                ida_root=ida_root,
+                kernel_version="9.3",
+                normalized_ida_args=[],
+                selection_path=selection_path,
+                selection_sha256_path=selection_sha,
+            )
+            self.assertEqual(b"neutral-idb", Path(f"{binary}.i64").read_bytes())
 
 
 if __name__ == "__main__":

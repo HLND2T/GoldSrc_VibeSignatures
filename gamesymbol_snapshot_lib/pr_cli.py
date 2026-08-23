@@ -25,6 +25,7 @@ from gamesymbol_snapshot_lib.paths import metadata_filename, metadata_tag_from_f
 from gamesymbol_snapshot_lib.operations import load_snapshot_context, validate_snapshot_contract
 from gamesymbol_snapshot_lib.pr_validation import (
     BoundImpactPlan,
+    CACHE_MODES,
     ChangedPath,
     ImpactPlanningError,
     TagImpact,
@@ -216,6 +217,7 @@ def build_plan(
     head_ref: str,
     merge_ref: str,
     bin_repo_root: str | Path | None = None,
+    cache_mode: str = "cold",
 ) -> BoundImpactPlan:
     repo = GitRepository(repo_root)
     base_sha, head_sha, merge_sha = (repo.resolve(ref) for ref in (base_ref, head_ref, merge_ref))
@@ -315,12 +317,16 @@ def build_plan(
             )
             if impact.has_actions:
                 impacts.append(impact)
-    return BoundImpactPlan(base_sha, head_sha, merge_sha, base_bin, merge_bin, tuple(impacts), digests)
+    return BoundImpactPlan(base_sha, head_sha, merge_sha, base_bin, merge_bin, tuple(impacts), digests, cache_mode)
 
 
-def _load_bound_plan(path: str | Path) -> dict:
+def load_bound_plan(path: str | Path) -> dict:
     document = json.loads(Path(path).read_text(encoding="utf-8"))
-    if not isinstance(document, dict) or document.get("schema_version") != 1:
+    if (
+        not isinstance(document, dict)
+        or document.get("schema_version") != 2
+        or document.get("cache_mode") not in CACHE_MODES
+    ):
         raise PrCliError("Invalid bound impact plan")
     digest = document.pop("plan_sha256", None)
     encoded = json.dumps(document, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -328,6 +334,40 @@ def _load_bound_plan(path: str | Path) -> dict:
         raise PrCliError("Impact plan digest mismatch")
     document["plan_sha256"] = digest
     return document
+
+
+def verify_bound_plan_checkout(
+    *, repo_root: str | Path, plan_path: str | Path, merge_ref: str
+) -> tuple[GitRepository, dict]:
+    repo = GitRepository(repo_root)
+    document = load_bound_plan(plan_path)
+    if repo.resolve(merge_ref) != document["merge_sha"]:
+        raise PrCliError("Checked-out merge SHA does not match the bound plan")
+    if repo.gitlink(document["merge_sha"], "bin") != document.get("merge_bin_commit"):
+        raise PrCliError("Merge bin gitlink does not match the bound plan")
+    _verify_bound_digest(document, "merge_config_index", repo.read(document["merge_sha"], "configs/config.yaml"))
+    _verify_bound_digest(document, "merge_registry", repo.read(document["merge_sha"], "gamesymbol-impact.yaml"))
+    return repo, document
+
+
+def verify_bound_tag_inputs(document: dict, repo: GitRepository, tag: str) -> dict:
+    tag = validated_tag(tag)
+    _verify_bound_digest(document, f"merge_config:{tag}", repo.read(document["merge_sha"], f"configs/{tag}.yaml"))
+    _verify_bound_digest(
+        document,
+        f"merge_snapshot:{tag}",
+        repo.read(document["merge_sha"], f"gamesymbols/{tag}.yaml"),
+    )
+    _verify_bound_digest(
+        document,
+        f"merge_metadata:{tag}",
+        repo.read(document["merge_sha"], f"gamesymbols/{metadata_filename(tag)}"),
+    )
+    _verify_bound_gamedata(document, f"merge_gamedata:{tag}", repo, document["merge_sha"], tag)
+    action = next((item for item in document["tags"] if item["tag"] == tag), None)
+    if action is None or action.get("deleted"):
+        raise PrCliError(f"Plan has no materializable action for {tag}")
+    return action
 
 
 def _verify_bound_digest(document: dict, key: str, raw: bytes | None) -> None:
@@ -349,29 +389,8 @@ def materialize_from_plan(
     bindir: str | Path,
 ) -> tuple[str, ...]:
     tag = validated_tag(tag)
-    repo = GitRepository(repo_root)
-    document = _load_bound_plan(plan_path)
-    if repo.resolve(merge_ref) != document["merge_sha"]:
-        raise PrCliError("Checked-out merge SHA does not match the bound plan")
-    if repo.gitlink(document["merge_sha"], "bin") != document.get("merge_bin_commit"):
-        raise PrCliError("Merge bin gitlink does not match the bound plan")
-    _verify_bound_digest(document, "merge_config_index", repo.read(document["merge_sha"], "configs/config.yaml"))
-    _verify_bound_digest(document, "merge_registry", repo.read(document["merge_sha"], "gamesymbol-impact.yaml"))
-    _verify_bound_digest(document, f"merge_config:{tag}", repo.read(document["merge_sha"], f"configs/{tag}.yaml"))
-    _verify_bound_digest(
-        document,
-        f"merge_snapshot:{tag}",
-        repo.read(document["merge_sha"], f"gamesymbols/{tag}.yaml"),
-    )
-    _verify_bound_digest(
-        document,
-        f"merge_metadata:{tag}",
-        repo.read(document["merge_sha"], f"gamesymbols/{metadata_filename(tag)}"),
-    )
-    _verify_bound_gamedata(document, f"merge_gamedata:{tag}", repo, document["merge_sha"], tag)
-    action = next((item for item in document["tags"] if item["tag"] == tag), None)
-    if action is None or action.get("deleted"):
-        raise PrCliError(f"Plan has no materializable action for {tag}")
+    repo, document = verify_bound_plan_checkout(repo_root=repo_root, plan_path=plan_path, merge_ref=merge_ref)
+    action = verify_bound_tag_inputs(document, repo, tag)
     config_path = Path(repo_root) / "configs" / f"{tag}.yaml"
     merge_contract = load_contract(config_path, tag, bindir)
     unknown_nodes = set(action["analysis_nodes"]) - set(merge_contract.nodes)
@@ -426,6 +445,7 @@ def _parser() -> argparse.ArgumentParser:
     plan.add_argument("-head-ref", required=True)
     plan.add_argument("-merge-ref", required=True)
     plan.add_argument("-bin-repo", default=None)
+    plan.add_argument("-cache-mode", choices=tuple(sorted(CACHE_MODES)), required=True)
     plan.add_argument("-output", required=True)
     materialize = commands.add_parser("materialize")
     materialize.add_argument("-repo-root", default=".")
@@ -446,6 +466,7 @@ def main(argv: list[str] | None = None) -> int:
                 head_ref=args.head_ref,
                 merge_ref=args.merge_ref,
                 bin_repo_root=args.bin_repo,
+                cache_mode=args.cache_mode,
             )
             Path(args.output).write_bytes(plan.canonical_bytes())
         else:

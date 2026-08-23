@@ -44,6 +44,7 @@ WARM_WORKER_CONTRACT_FILES = (
     "ida_database_paths.py",
     "ida_mcp_session.py",
     "idb_cache.py",
+    "idb_cache_workflow.py",
     "idb_warm_worker.py",
     "release_workflow_lib/errors.py",
     "release_workflow_lib/hashing.py",

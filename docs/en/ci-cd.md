@@ -26,6 +26,17 @@ Branch protection depends only on the final `pr-validate` job. That job runs wit
 
 Hosted and self-hosted source validation rebuild the canonical gamedata manifest from the immutable symbol candidate and compare it with exact `HEAD` Git blobs. The bound plan includes base/merge gamedata subtree digests; ignored worktree files and broad staging globs are never validation inputs.
 
+The planner also binds `cache_mode` from the `GSVIBE_IDB_CACHE_MODE` repository variable (`cold` by default). Analysis
+runs on the dedicated `[self-hosted, Windows, X64, gsvibe-ida]` runner under the `win64` Environment and one
+repository-wide IDA concurrency group. Warm mode keeps clean, probe/miss warmup, exact selection, restore, analysis, and
+final clean in that one job. `cache-selection.json` binds the plan SHA, merge/bin identities, selected binaries, cache
+keys, generations, and manifest hashes; its SHA-256 is rechecked and uploaded only as evidence. Cold mode never executes
+a step that receives `GSVIBE_PERSISTED_WORKSPACE`.
+
+Production warm activation requires the host and repository settings in the
+[IDB cache operations runbook](idb-cache-operations.md). Unit and workflow-contract tests do not substitute for recorded
+cold, first miss/publication, and subsequent hit runs on that runner.
+
 ## Release provenance shadow
 
 [`release-shadow.yml`](../../.github/workflows/release-shadow.yml) runs only at the exact `main` commit with
@@ -49,4 +60,4 @@ GitHub Pages hosts only static assets; it never hosts the Process API/SSE servic
 
 ## Analyzer and CI argument reference
 
-When driving the analyzer from CI, pass the same arguments as a local run — see [Binary acquisition and symbol analysis](analysis.md#analyze-configured-symbols). Batch analysis over every configured tag uses `-allgamever`; a single-tag run uses `-gamever`. CI jobs that only need to know whether binaries are already in place use `copy_depot_bin.py ... -checkonly`.
+When driving the analyzer from CI, pass the same arguments as a local run — see [Binary acquisition and symbol analysis](analysis.md#analyze-configured-symbols). Every invocation must explicitly pass `-cache_mode cold|warm`. Batch analysis over every configured tag uses `-allgamever`; a single-tag run uses `-gamever`. CI jobs that only need to know whether binaries are already in place use `copy_depot_bin.py ... -checkonly`.

@@ -33,6 +33,10 @@ Warm IDB cache is a rebuildable performance layer for neutral databases created 
 
 `IdaMcpLifecycle(database_policy="restored_strict", save_on_success=False)` requires an existing restored database. Identity mismatch fails without invalidation or cold rebuild. Successful selected-node changes are not saved back, so the immutable generation remains neutral.
 
+## Workflow integration
+
+The schema-2 trusted PR plan binds `cache_mode=warm|cold`. `idb_cache_workflow.py` verifies the exact merge commit and bin gitlink, derives only the selected analysis binary pairs, probes or warms under per-tag and MCP-port locks, and writes canonical `cache-selection.json` plus its SHA-256. Warm verify/restore never re-read READY. Cold mode skips all persisted-root steps. The dedicated `gsvibe-ida` runner keeps clean, restore, strict analysis, and final clean in one protected job.
+
 ## Failure and recovery
 
 A warm timeout, worker failure, observed-runtime mismatch, active lock, or partial database removes the current incomplete workspace database and publishes nothing. A corrupt generation is never repaired in place. Probe may rebuild a damaged READY pointer only from a fully verified immutable generation.

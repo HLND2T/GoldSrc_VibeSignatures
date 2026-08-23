@@ -264,10 +264,41 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertEqual("${{ needs.validate-hosted.result }}", aggregate["env"]["HOSTED_RESULT"])
         self.assertEqual("${{ needs.analyze-self-hosted.result }}", aggregate["env"]["ANALYSIS_RESULT"])
         self.assertEqual("${{ needs.fork-analysis-blocked.result }}", aggregate["env"]["FORK_RESULT"])
+        self.assertEqual("${{ steps.route.outputs.cache_mode }}", jobs["plan"]["outputs"]["cache_mode"])
+        self.assertIn("-cache-mode", workflow_text)
+        self.assertIn("PLAN_SCHEMA_VERSION = 2", workflow_text)
+        self_hosted = jobs["analyze-self-hosted"]
+        self.assertEqual(["self-hosted", "Windows", "X64", "gsvibe-ida"], self_hosted["runs-on"])
+        self.assertEqual("${{ github.repository }}-gamesymbol-self-hosted-ida", self_hosted["concurrency"]["group"])
+        self.assertEqual("false", self_hosted["concurrency"]["cancel-in-progress"])
+        step_names = [step.get("name") for step in self_hosted["steps"]]
+        ordered = [
+            "Clean persisted submodule analysis state",
+            "Prepare exact warm IDB cache selection",
+            "Verify exact warm IDB cache selection",
+            "Restore exact warm IDB cache generations",
+            "Analyze selected nodes and compare actual snapshots",
+            "Remove generated submodule analysis state",
+        ]
+        self.assertEqual(
+            sorted(step_names.index(name) for name in ordered), [step_names.index(name) for name in ordered]
+        )
+        warm_steps = [step for step in self_hosted["steps"] if "warm IDB cache" in step.get("name", "")]
+        self.assertTrue(warm_steps)
+        self.assertTrue(all("cache_mode == 'warm'" in step["if"] for step in warm_steps))
+        analyzer = next(
+            step
+            for step in self_hosted["steps"]
+            if step.get("name") == "Analyze selected nodes and compare actual snapshots"
+        )
+        self.assertIn("'-cache_mode', $plan.cache_mode", analyzer["run"])
+        restore_index = step_names.index("Restore exact warm IDB cache generations")
+        analyze_index = step_names.index("Analyze selected nodes and compare actual snapshots")
+        self.assertNotIn(
+            "git clean",
+            "\n".join(step.get("run", "") for step in self_hosted["steps"][restore_index + 1 : analyze_index]),
+        )
         for forbidden in (
-            "PERSISTED_WORKSPACE",
-            ".i64",
-            ".id0",
             "LLM_FAKE_AS",
             "gamesymbol_candidate.py publish",
             "git commit",

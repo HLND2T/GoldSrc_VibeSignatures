@@ -17,7 +17,7 @@ to populate `bin/<GAMEVER>/` with game binaries. (`DEPOTDOWNLOADER_STEAM_USERNAM
 then
 
 ```bash
-uv run ida_analyze_bin.py -allgamever -debug
+uv run ida_analyze_bin.py -allgamever -cache_mode cold -debug
 ```
 
 to run the analysis workflow to generate YAML artifacts for GoldSrc symbols.
