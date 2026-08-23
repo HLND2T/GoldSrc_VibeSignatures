@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import tempfile
 import unittest
 from pathlib import Path, PurePosixPath
@@ -17,15 +18,15 @@ from analysis_planner import (
     symbol_artifact_filename,
 )
 from binary_format import inspect_binary
-from gamesymbol_snapshot_lib.config import load_contract
-from gamesymbol_snapshot_lib.metadata import verify_metadata
-from gamesymbol_snapshot_lib.paths import iter_snapshot_paths
 from gamedata_contract import (
     analysis_config_sha256,
     discover_generator_modules,
     generator_contract_sha256,
     validate_gamedata_tree,
 )
+from gamesymbol_snapshot_lib.config import load_contract
+from gamesymbol_snapshot_lib.metadata import verify_metadata
+from gamesymbol_snapshot_lib.paths import iter_snapshot_paths
 from release_workflow_lib.hashing import sha256_file
 
 ROOT = Path(__file__).parents[1]
@@ -243,14 +244,24 @@ class RepositoryContractTests(unittest.TestCase):
         workflow_text = (ROOT / ".github" / "workflows" / "gamesymbol-pr-validation.yml").read_text(encoding="utf-8")
         workflow = yaml.load(workflow_text, Loader=yaml.BaseLoader)
         jobs = workflow["jobs"]
+        self.assertIn("edited", workflow["on"]["pull_request"]["types"])
         self.assertEqual("pr-validate", jobs["pr-validate"]["name"])
         self.assertEqual(
-            {"classify", "plan", "validate-hosted", "analyze-self-hosted", "fork-analysis-blocked"},
+            {
+                "classify",
+                "plan",
+                "validate-hosted",
+                "analyze-self-hosted",
+                "fork-analysis-blocked",
+                "validate-output",
+            },
             set(jobs["pr-validate"]["needs"]),
         )
         self.assertIn("always()", jobs["pr-validate"]["if"])
         self.assertIn("github.event.action != 'closed'", jobs["pr-validate"]["if"])
-        self.assertNotIn("route == 'output'", jobs["pr-validate"]["if"])
+        self.assertEqual("classify", jobs["validate-output"]["needs"])
+        self.assertIn("route == 'output'", jobs["validate-output"]["if"])
+        self.assertEqual("./.github/workflows/release-output-validation.yml", jobs["validate-output"]["uses"])
         self.assertEqual("classify", jobs["plan"]["needs"])
         self.assertIn("route == 'source'", jobs["plan"]["if"])
         for job_id in ("validate-hosted", "analyze-self-hosted", "fork-analysis-blocked"):
@@ -264,6 +275,16 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertEqual("${{ needs.validate-hosted.result }}", aggregate["env"]["HOSTED_RESULT"])
         self.assertEqual("${{ needs.analyze-self-hosted.result }}", aggregate["env"]["ANALYSIS_RESULT"])
         self.assertEqual("${{ needs.fork-analysis-blocked.result }}", aggregate["env"]["FORK_RESULT"])
+        output_aggregate = next(
+            step
+            for step in jobs["pr-validate"]["steps"]
+            if step.get("name") == "Aggregate trusted output validation result"
+        )
+        self.assertIn("route == 'output'", output_aggregate["if"])
+        route_guard = next(
+            step for step in jobs["pr-validate"]["steps"] if step.get("name") == "Require exactly one trusted PR route"
+        )
+        self.assertEqual("${{ needs.classify.result }}", route_guard["env"]["CLASSIFY_RESULT"])
         self.assertEqual("${{ steps.route.outputs.cache_mode }}", jobs["plan"]["outputs"]["cache_mode"])
         self.assertIn("-cache-mode", workflow_text)
         self.assertIn("PLAN_SCHEMA_VERSION = 2", workflow_text)
@@ -307,6 +328,63 @@ class RepositoryContractTests(unittest.TestCase):
             "robocopy",
         ):
             self.assertNotIn(forbidden, workflow_text)
+
+    def test_release_phase_two_workflows_keep_read_write_authority_split(self):
+        workflows = {
+            name: yaml.load((ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
+            for name in (
+                "release-build.yml",
+                "release-output-validation.yml",
+                "release-promotion.yml",
+                "release-operations.yml",
+            )
+        }
+        build = workflows["release-build.yml"]
+        self.assertEqual("read", build["permissions"]["contents"])
+        build_job = build["jobs"]["build-output"]
+        self.assertEqual(["self-hosted", "Windows", "X64", "gsvibe-release"], build_job["runs-on"])
+        self.assertEqual("release", build_job["environment"])
+        self.assertIn("GSVIBE_RELEASE_PHASE2_ENABLED", json.dumps(build))
+        self.assertIn("actions/create-github-app-token@v2", json.dumps(build_job))
+
+        output = workflows["release-output-validation.yml"]
+        output_job = output["jobs"]["verify-output"]
+        self.assertEqual("read", output["permissions"]["contents"])
+        self.assertNotIn("environment", output_job)
+        self.assertNotIn("create-github-app-token", json.dumps(output_job))
+        checkout = next(step for step in output_job["steps"] if step.get("name") == "Checkout trusted base verifier")
+        self.assertEqual("${{ inputs.base_sha }}", checkout["with"]["ref"])
+        self.assertIn("base_branch", output["on"]["workflow_call"]["inputs"])
+
+        promotion = workflows["release-promotion.yml"]
+        verifier = promotion["jobs"]["verify-promotion"]
+        writer = promotion["jobs"]["promotion-write"]
+        self.assertNotIn("environment", verifier)
+        self.assertEqual("release", writer["environment"])
+        self.assertEqual("verify-promotion", writer["needs"])
+        self.assertIn("needs.verify-promotion.outputs.approval_sha256", json.dumps(writer))
+        self.assertIn("release_workflow.py promote", json.dumps(writer))
+
+        operations = workflows["release-operations.yml"]
+        choices = operations["on"]["workflow_dispatch"]["inputs"]["operation"]["options"]
+        self.assertEqual(
+            {"retry", "resume-promotion", "republish", "abandon", "repair-index", "cleanup", "reconcile"},
+            set(choices),
+        )
+        self.assertEqual("release", operations["jobs"]["operate"]["environment"])
+        self.assertIn("GSVIBE_RELEASE_REPUBLISH_ENABLED", json.dumps(operations))
+        concurrency_groups = {
+            build_job["concurrency"]["group"],
+            writer["concurrency"]["group"],
+            operations["jobs"]["operate"]["concurrency"]["group"],
+        }
+        self.assertEqual({"${{ github.repository }}-release-phase2"}, concurrency_groups)
+        for workflow in workflows.values():
+            for job in workflow["jobs"].values():
+                for step in job.get("steps", []):
+                    run = step.get("run", "")
+                    self.assertNotIn("${{ inputs.", run)
+                    self.assertNotIn("${{ github.event.pull_request.", run)
 
     def test_published_gamesymbol_snapshots_match_goldsrc_contract(self):
         # The exact published set is deliberately not pinned: the bin submodule

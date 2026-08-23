@@ -1,0 +1,187 @@
+name: Release generated-output promotion
+on:
+  pull_request_target:
+    types: [closed]
+permissions:
+  contents: read
+jobs:
+  verify-promotion:
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'gamesymbols/build/') &&
+      vars.GSVIBE_RELEASE_PHASE2_ENABLED == 'true'
+    runs-on: [self-hosted, Windows, X64, gsvibe-release]
+    timeout-minutes: 30
+    env:
+      EVENT_REPOSITORY_ID: ${{ github.repository_id }}
+      EVENT_REPOSITORY: ${{ github.repository }}
+      HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+      HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+      BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      AUTHOR_LOGIN: ${{ github.event.pull_request.user.login }}
+      EXPECTED_AUTHOR_LOGIN: ${{ vars.GSVIBE_RELEASE_BOT_LOGIN }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    outputs:
+      approval_sha256: ${{ steps.approval.outputs.sha256 }}
+    steps:
+      - name: Checkout trusted pre-merge verifier
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+          submodules: false
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Reject untrusted merge event before head fetch
+        shell: pwsh
+        run: >-
+          uv run python release_workflow.py output-event-check
+          -repository-id $env:EVENT_REPOSITORY_ID
+          -repository $env:EVENT_REPOSITORY
+          -expected-repository-id $env:EVENT_REPOSITORY_ID
+          -expected-repository $env:EVENT_REPOSITORY
+          -head-repository $env:HEAD_REPOSITORY
+          -head-branch $env:HEAD_BRANCH
+          -base-branch $env:BASE_BRANCH
+          -expected-base-branch $env:DEFAULT_BRANCH
+          -author-login $env:AUTHOR_LOGIN
+          -expected-author-login $env:EXPECTED_AUTHOR_LOGIN
+      - name: Fetch exact output head and merge objects without checkout
+        shell: pwsh
+        run: |
+          git fetch --no-tags origin $env:HEAD_SHA $env:MERGE_SHA $env:DEFAULT_BRANCH
+          if ($LASTEXITCODE -ne 0) { throw 'failed to fetch exact output promotion objects' }
+      - name: Verify two-parent merge and emit canonical approval
+        id: approval
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:GSVIBE_PERSISTED_WORKSPACE)) {
+            throw 'release runner persisted workspace is not configured'
+          }
+          $sourceSha = (git rev-parse "$env:MERGE_SHA^1").Trim()
+          if ($LASTEXITCODE -ne 0 -or $sourceSha -ne (git rev-parse HEAD).Trim()) {
+            throw 'trusted verifier checkout is not the exact pre-merge source parent'
+          }
+          $approvalPath = Join-Path $env:RUNNER_TEMP 'release-promotion-approval.json'
+          uv run python release_workflow.py promotion-verify `
+            -repo-root $env:GITHUB_WORKSPACE -merge-ref $env:MERGE_SHA -default-ref "origin/$env:DEFAULT_BRANCH" `
+            -head-ref $env:HEAD_SHA -pr-number $env:PR_NUMBER `
+            -repository-id $env:EVENT_REPOSITORY_ID -repository $env:EVENT_REPOSITORY `
+            -expected-repository-id $env:EVENT_REPOSITORY_ID -expected-repository $env:EVENT_REPOSITORY `
+            -head-repository $env:HEAD_REPOSITORY -head-branch $env:HEAD_BRANCH `
+            -base-branch $env:BASE_BRANCH -expected-base-branch $env:DEFAULT_BRANCH `
+            -author-login $env:AUTHOR_LOGIN -expected-author-login $env:EXPECTED_AUTHOR_LOGIN `
+            -workflow-repository $env:EVENT_REPOSITORY `
+            -build-workflow-path .github/workflows/release-build.yml `
+            -build-workflow-ref $sourceSha `
+            -persisted-root $env:GSVIBE_PERSISTED_WORKSPACE -output $approvalPath
+          if ($LASTEXITCODE -ne 0) { throw 'read-only promotion verification failed' }
+          $approval = Get-Content -Raw -LiteralPath $approvalPath | ConvertFrom-Json
+          "sha256=$($approval.approval_sha256)" >> $env:GITHUB_OUTPUT
+      - name: Upload read-only promotion approval
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-promotion-approval-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha
+            }}
+          path: ${{ runner.temp }}/release-promotion-approval.json
+          if-no-files-found: error
+          retention-days: 30
+  promotion-write:
+    needs: verify-promotion
+    if: needs.verify-promotion.result == 'success' && vars.GSVIBE_RELEASE_PHASE2_ENABLED == 'true'
+    runs-on: [self-hosted, Windows, X64, gsvibe-release]
+    environment: release
+    timeout-minutes: 120
+    env:
+      EVENT_REPOSITORY_ID: ${{ github.repository_id }}
+      EVENT_REPOSITORY: ${{ github.repository }}
+      HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+      HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+      BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      AUTHOR_LOGIN: ${{ github.event.pull_request.user.login }}
+      EXPECTED_AUTHOR_LOGIN: ${{ vars.GSVIBE_RELEASE_BOT_LOGIN }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      RUN_ID: ${{ github.run_id }}
+      RUN_ATTEMPT: ${{ github.run_attempt }}
+      PHASE2_ENABLED: ${{ vars.GSVIBE_RELEASE_PHASE2_ENABLED }}
+    concurrency:
+      group: ${{ github.repository }}-release-phase2
+      cancel-in-progress: false
+    steps:
+      - name: Checkout trusted pre-merge writer
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+          submodules: false
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Fetch exact output head and merge objects without checkout
+        shell: pwsh
+        run: |
+          git fetch --no-tags origin $env:HEAD_SHA $env:MERGE_SHA $env:DEFAULT_BRANCH
+          if ($LASTEXITCODE -ne 0) { throw 'failed to fetch exact output promotion objects' }
+      - name: Recheck promotion activation before credentials
+        shell: pwsh
+        run: |
+          if ($env:PHASE2_ENABLED -ne 'true') {
+            throw 'Phase 2 production authority is disabled'
+          }
+      - name: Create protected GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GSVIBE_RELEASE_APP_ID }}
+          private-key: ${{ secrets.GSVIBE_RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+      - name: Recompute approval and promote immutable release
+        shell: pwsh
+        env:
+          GITHUB_APP_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          if ($env:PHASE2_ENABLED -ne 'true') {
+            throw 'Phase 2 production authority is disabled'
+          }
+          $sourceSha = (git rev-parse "$env:MERGE_SHA^1").Trim()
+          if ($LASTEXITCODE -ne 0 -or $sourceSha -ne (git rev-parse HEAD).Trim()) {
+            throw 'trusted writer checkout is not the exact pre-merge source parent'
+          }
+          $output = Join-Path $env:RUNNER_TEMP 'release-promotion'
+          uv run python release_workflow.py promote `
+            -repo-root $env:GITHUB_WORKSPACE -merge-ref $env:MERGE_SHA -default-ref "origin/$env:DEFAULT_BRANCH" `
+            -head-ref $env:HEAD_SHA -pr-number $env:PR_NUMBER `
+            -repository-id $env:EVENT_REPOSITORY_ID -repository $env:EVENT_REPOSITORY `
+            -expected-repository-id $env:EVENT_REPOSITORY_ID -expected-repository $env:EVENT_REPOSITORY `
+            -head-repository $env:HEAD_REPOSITORY -head-branch $env:HEAD_BRANCH `
+            -base-branch $env:BASE_BRANCH -expected-base-branch $env:DEFAULT_BRANCH `
+            -author-login $env:AUTHOR_LOGIN -expected-author-login $env:EXPECTED_AUTHOR_LOGIN `
+            -workflow-repository $env:EVENT_REPOSITORY `
+            -build-workflow-path .github/workflows/release-build.yml `
+            -build-workflow-ref $sourceSha `
+            -persisted-root $env:GSVIBE_PERSISTED_WORKSPACE `
+            -expected-approval-sha256 "${{ needs.verify-promotion.outputs.approval_sha256 }}" `
+            -workflow-path .github/workflows/release-promotion.yml `
+            -workflow-ref-sha $sourceSha `
+            -run-id $env:RUN_ID -run-attempt $env:RUN_ATTEMPT -output-dir $output
+          if ($LASTEXITCODE -ne 0) { throw 'release promotion failed' }
+      - name: Upload promotion operation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-promotion-${{ github.event.pull_request.number }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-promotion/
+          if-no-files-found: error
+          retention-days: 90

@@ -22,7 +22,9 @@ GitHub Actions 工作流在每次 push 与 pull request 上运行受门禁保护
 
 ## Game-symbol Pull Request 验证
 
-`gamesymbol-pr-validation.yml` 通过共享路由合约分类每个非 closed pull request。source-only 上线阶段中，Python 合约已经识别 generated-output branch 语法，但在 output verifier 原子部署前仍把它留在 source 路由。
+`gamesymbol-pr-validation.yml` 通过共享路由合约分类每个非 closed pull request。普通 branch 进入 source
+plan/hosted/self-hosted 路径；所有 `gamesymbols/build/` branch（包括 malformed output-like 名称）都进入 output
+路径并明确失败，不能回落到 trusted analysis runner。
 
 Branch protection 只依赖终态 `pr-validate` job。该 job 使用 `always()`，显式读取每个路由 job 的结果，只在 trusted plan 未选择对应执行时接受 skipped，并在不向 fork 授予受保护 self-hosted runner 权限的前提下明确拒绝 fork analysis。内部 planner、hosted 与 self-hosted job 名称都不是 required checks。
 
@@ -40,16 +42,27 @@ generation 和 manifest hash；其 SHA-256 会被复核，Actions artifact 只�
 Production warm activation 必须满足 [IDB cache 运维手册](idb-cache-operations.md) 中的 host/repository 设置。
 Unit 与 workflow-contract test 不能替代专用 runner 上记录的 cold、首次 miss/publication 与后续 hit run。
 
-## Release provenance shadow
+## Release provenance 与 Phase 2 workflow
 
 [`release-shadow.yml`](../../.github/workflows/release-shadow.yml) 只在 exact `main` commit 上以 `contents: read`
 运行。它为 `hl-10210`、`hl-8684` 与 `svencoop-10257` 构建 canonical release content manifest，再从 exact Git
 blob 重建并逐份校验，最后上传保留 30 天的 evidence artifact。该 workflow 不 checkout `bin`，不信任 worktree
 glob，也不写 Git ref、repository content、PR、tag 或 Release。
 
-Shadow success 只证明本地 content identity 与 `new` mode decision，不会激活 generated-output PR、promotion、
-republish 或 production release authority；这些能力仍需 protected test repository 演练，以及外部 branch/ruleset、
-merge policy、protected tag、Environment 与 GitHub App evidence。
+Shadow success 只证明本地 content identity 与 `new` mode decision。已实现的 Phase 2 workflow 默认保持 disabled：
+
+- `release-build.yml` 只接受 exact `main` dispatch，并运行在受保护的 `gsvibe-release` runner 与 `release`
+  Environment。GitHub App token push immutable direct-parent output branch、创建 draft PR、把 remote identity 绑定到
+  private staging，最后才标记 ready。
+- `release-output-validation.yml` 是只读 reusable verifier；先拒绝 repository/author/branch identity，再只 fetch exact
+  head object，绝不 checkout 或执行 output-head code。
+- `release-promotion.yml` 把无 write credential 的 merge verifier 与 Environment-protected writer 分开；writer 获取
+  App tag/Release authority 前会重新计算 canonical approval digest。
+- `release-operations.yml` 以 explicit identity/confirmation 区分 retry、resume-promotion、republish、abandon、
+  repair-index、cleanup 与 reconcile。详见 [Release 运维手册](release-operations.md)。
+
+Protected test repository 演练，以及外部 branch/ruleset、merge-commit-only、up-to-date、protected tag、Environment
+与 GitHub App evidence 完成前，`GSVIBE_RELEASE_PHASE2_ENABLED` 必须保持 unset/false。
 
 ## Pages 部署
 

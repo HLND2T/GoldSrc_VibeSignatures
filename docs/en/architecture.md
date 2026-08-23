@@ -135,9 +135,18 @@ metadata companion, gamedata manifest/generator contract, and the trusted workfl
 inventory records path, Git mode, size, and blob SHA-256 for the current tag's snapshot, metadata, and gamedata, while
 deliberately excluding `release-manifests/<tag>.json` to avoid self-reference.
 
-The current release workflow is shadow-only. It verifies three tags and emits local Actions evidence with a `new` mode
-decision, but has no authority to push refs or contents, create pull requests or tags, or publish GitHub Releases.
-Generated-output PR and promotion authority remain disabled until their separate protected-repository gates are proven.
+Shadow verification still proves three `new` content identities without remote writes. Phase 2 code now adds a separate
+generated-output path: an exact `main` source commit produces a one-parent output commit that adds only
+`release-manifests/<tag>.json`; the source commit remains the authority for snapshot, metadata, and gamedata bytes. A
+shared classifier gives source and output PRs one mutually exclusive `pr-validate` result, while output verification uses
+trusted base code and never checks out or executes the output head.
+
+Promotion accepts only the recorded App-authored output PR, its direct-parent head, and an exact two-parent merge commit.
+It creates an annotated immutable tag, deterministic payload assets, provenance and a self-excluding checksum, then
+downloads every uploaded asset before writing `PROMOTED`, a durable completion record, and `PROMOTION_COMPLETE`.
+Private markers are hash-chained and recovery keeps retry, resume, republish, abandon, index repair, reconciliation, and
+cleanup as distinct operations. Production authority remains disabled by `GSVIBE_RELEASE_PHASE2_ENABLED` until the
+external branch/ruleset, merge-policy, protected-tag, Environment, App, and protected-repository exercises are captured.
 
 ## API, dashboard, and immutable Pages assets
 

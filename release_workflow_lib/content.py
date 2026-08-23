@@ -29,6 +29,11 @@ CONFIG_CONTRACT_PATHS = (
     "trusted_yaml.py",
 )
 RELEASE_TOOL_CONTRACT_PATHS = (
+    ".github/workflows/gamesymbol-pr-validation.yml",
+    ".github/workflows/release-build.yml",
+    ".github/workflows/release-operations.yml",
+    ".github/workflows/release-output-validation.yml",
+    ".github/workflows/release-promotion.yml",
     "analysis_config.py",
     "analysis_output_contract.py",
     "analysis_planner.py",
@@ -39,14 +44,21 @@ RELEASE_TOOL_CONTRACT_PATHS = (
     "gamesymbol_snapshot_lib/metadata.py",
     "gamesymbol_snapshot_lib/paths.py",
     "gamesymbol_store.py",
+    "pull_request_route.py",
     "release_workflow.py",
     "release_workflow_lib/__init__.py",
+    "release_workflow_lib/assets.py",
     "release_workflow_lib/content.py",
     "release_workflow_lib/errors.py",
     "release_workflow_lib/git_objects.py",
+    "release_workflow_lib/github_api.py",
     "release_workflow_lib/hashing.py",
     "release_workflow_lib/manifest.py",
+    "release_workflow_lib/output.py",
+    "release_workflow_lib/promotion.py",
+    "release_workflow_lib/recovery.py",
     "release_workflow_lib/shadow.py",
+    "release_workflow_lib/staging.py",
     "trusted_yaml.py",
 )
 

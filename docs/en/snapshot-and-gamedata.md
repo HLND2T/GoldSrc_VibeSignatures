@@ -56,6 +56,11 @@ bindings, the snapshot binary inventory, and the `bin` gitlink. A missing compan
 gamedata payload, executable-mode payload, non-canonical bytes, or default-branch drift fails closed. Shadow output is
 evidence only and does not change canonical publication authority.
 
+In Phase 2, source PRs continue to own all three payload classes. A generated-output commit has the exact source SHA as
+its only parent and may only add `release-manifests/<tag>.json`; any snapshot, metadata, or gamedata delta fails output
+validation. The merged manifest binds content identity, while PR/head/merge/tag/Release attempt identities live in
+private staging, provenance, and durable completion records rather than creating a self-referential tracked manifest.
+
 ## Generate gamedata directly
 
 To convert a canonical symbol snapshot into versioned gamedata without the full candidate transaction:

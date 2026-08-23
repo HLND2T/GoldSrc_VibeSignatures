@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import os
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -26,8 +28,7 @@ class GitObjectRepository:
     def _run(self, *args: str) -> bytes:
         result = subprocess.run(
             ["git", "-C", str(self.path), *args],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             check=False,
         )
         if result.returncode != 0:
@@ -40,6 +41,69 @@ class GitObjectRepository:
         if len(oid) != GIT_SHA1_LENGTH or any(character not in "0123456789abcdef" for character in oid):
             raise GitIdentityError(f"Resolved commit has unsupported object identity: {oid!r}")
         return oid
+
+    def commit_parents(self, ref: str) -> tuple[str, ...]:
+        fields = self._run("rev-list", "--parents", "-n", "1", self.resolve_commit(ref)).decode("ascii").split()
+        return tuple(fields[1:])
+
+    def is_ancestor(self, ancestor_ref: str, descendant_ref: str) -> bool:
+        ancestor = self.resolve_commit(ancestor_ref)
+        descendant = self.resolve_commit(descendant_ref)
+        result = subprocess.run(
+            ["git", "-C", str(self.path), "merge-base", "--is-ancestor", ancestor, descendant],
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode not in {0, 1}:
+            message = result.stderr.decode("utf-8", errors="replace").strip()
+            raise GitIdentityError(f"git merge-base --is-ancestor failed: {message}")
+        return result.returncode == 0
+
+    def changed_paths(self, base_ref: str, head_ref: str) -> tuple[str, ...]:
+        raw = self._run("diff", "--name-only", "-z", self.resolve_commit(base_ref), self.resolve_commit(head_ref))
+        try:
+            paths = tuple(normalized_relative_path(item.decode("utf-8")) for item in raw.split(b"\0") if item)
+        except UnicodeDecodeError as exc:
+            raise GitIdentityError("Git diff contains a non-UTF-8 path") from exc
+        if len(paths) != len({path.casefold() for path in paths}):
+            raise GitIdentityError("Git diff contains duplicate or case-colliding paths")
+        return paths
+
+    def create_commit_with_blob(self, *, parent_ref: str, path: str, raw: bytes, message: str) -> str:
+        parent = self.resolve_commit(parent_ref)
+        normalized = normalized_relative_path(path)
+        if not isinstance(message, str) or not message.strip():
+            raise GitIdentityError("Commit message must be non-empty")
+        environment = os.environ | {
+            "GIT_AUTHOR_NAME": os.environ.get("GIT_AUTHOR_NAME", "GoldSrc release bot"),
+            "GIT_AUTHOR_EMAIL": os.environ.get("GIT_AUTHOR_EMAIL", "release-bot@users.noreply.github.com"),
+            "GIT_COMMITTER_NAME": os.environ.get("GIT_COMMITTER_NAME", "GoldSrc release bot"),
+            "GIT_COMMITTER_EMAIL": os.environ.get("GIT_COMMITTER_EMAIL", "release-bot@users.noreply.github.com"),
+        }
+
+        def run(*args: str, input_bytes: bytes | None = None) -> bytes:
+            result = subprocess.run(
+                ["git", "-C", str(self.path), *args],
+                input=input_bytes,
+                capture_output=True,
+                env=environment,
+                check=False,
+            )
+            if result.returncode != 0:
+                message_text = result.stderr.decode("utf-8", errors="replace").strip()
+                raise GitIdentityError(f"git {' '.join(args)} failed: {message_text}")
+            return result.stdout
+
+        with tempfile.TemporaryDirectory(prefix="release-index-") as temporary:
+            environment["GIT_INDEX_FILE"] = str(Path(temporary) / "index")
+            oid = run("hash-object", "-w", "--stdin", input_bytes=raw).decode("ascii").strip()
+            run("read-tree", parent)
+            run("update-index", "--add", "--cacheinfo", "100644", oid, normalized)
+            tree = run("write-tree").decode("ascii").strip()
+            commit = run("commit-tree", tree, "-p", parent, "-m", message.strip()).decode("ascii").strip()
+        if self.commit_parents(commit) != (parent,) or self.changed_paths(parent, commit) != (normalized,):
+            raise GitIdentityError("Constructed output commit does not have the required direct-parent/one-path shape")
+        return self.resolve_commit(commit)
 
     def _parse_entries(self, raw: bytes) -> tuple[GitTreeEntry, ...]:
         entries = []

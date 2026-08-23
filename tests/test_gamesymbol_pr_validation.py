@@ -23,18 +23,17 @@ from gamesymbol_snapshot_lib.materialize import materialize_baseline
 from gamesymbol_snapshot_lib.operations import load_snapshot_context, pack_snapshot
 from gamesymbol_snapshot_lib.pr_cli import GitRepository, PrCliError, materialize_from_plan
 from gamesymbol_snapshot_lib.pr_validation import (
-    BoundImpactPlan,
     CACHE_MODE_WARM,
+    BoundImpactPlan,
     ChangedPath,
     ImpactPlanningError,
     TagImpact,
-    classify_pr_route,
     evaluate_pr_validation,
-    parse_output_branch,
     plan_tag_impact,
     snapshot_delta_paths,
     snapshot_documents_changed,
 )
+from pull_request_route import PullRequestRouteError, classify_pr_route, parse_output_branch
 from tests.test_support import write_pe32
 
 
@@ -483,8 +482,9 @@ class PrValidationGateTests(unittest.TestCase):
             "gamesymbols/build/hl-10210/run_1",
             "gamesymbols/build/hl-10210/run-1/extra",
         ):
-            with self.subTest(invalid=invalid), self.assertRaises(ImpactPlanningError):
+            with self.subTest(invalid=invalid), self.assertRaises(PullRequestRouteError):
                 parse_output_branch(invalid)
+            self.assertEqual("output", classify_pr_route(head_ref=invalid, output_routing_enabled=True))
 
     def test_gate_truth_table(self):
         cases = (

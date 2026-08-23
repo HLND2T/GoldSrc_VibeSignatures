@@ -65,6 +65,11 @@ snapshot binary inventory 与 `bin` gitlink。缺失 companion 或 gamedata mani
 payload、non-canonical bytes 或 default-branch drift 都会 fail closed。Shadow output 仅作为 evidence，不改变 canonical
 publication authority。
 
+Phase 2 中 source PR 继续拥有三类 payload authority。Generated-output commit 以 exact source SHA 为唯一父提交，
+并且只能新增 `release-manifests/<tag>.json`；snapshot、metadata 或 gamedata 任何 delta 都使 output validation
+失败。Merged manifest 绑定 content identity；PR/head/merge/tag/Release 的 attempt identity 则保存在 private
+staging、provenance 与 durable completion record 中，不让 tracked manifest 形成自引用。
+
 ## 直接生成 gamedata
 
 不使用完整 candidate 事务时，可直接把 canonical symbol snapshot 转换成版本化 gamedata：

@@ -30,6 +30,7 @@ to run the analysis workflow to generate YAML artifacts for GoldSrc symbols.
 - [Process reporting, scheduling, and dashboard](docs/en/process-monitoring.md)
 - [Reference YAML for `LLM_DECOMPILE`](docs/en/reference-yaml.md)
 - [Snapshots, gamedata, and publication](docs/en/snapshot-and-gamedata.md)
+- [Protected release operations](docs/en/release-operations.md)
 - [Creating symbol-analysis skills](docs/en/creating-skills.md)
 - [CI/CD reference](docs/en/ci-cd.md)
 - [Architecture](docs/en/architecture.md)

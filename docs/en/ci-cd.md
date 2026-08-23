@@ -20,7 +20,9 @@ The `pages` job installs Node 24, runs `npm ci`, `npm test`, `npm run lint`, `np
 
 ## Game-symbol pull request validation
 
-`gamesymbol-pr-validation.yml` classifies every non-closed pull request through a shared route contract. During the source-only rollout, generated-output branch syntax is recognized by the Python contract but remains on the source route until the output verifier is deployed atomically.
+`gamesymbol-pr-validation.yml` classifies every non-closed pull request through a shared route contract. Normal branches
+take the source plan/hosted/self-hosted path; every `gamesymbols/build/` branch, including malformed output-like names,
+takes the output path so it can fail explicitly instead of reaching a trusted analysis runner.
 
 Branch protection depends only on the final `pr-validate` job. That job runs with `always()`, reads every routed job result explicitly, accepts skipped jobs only when the trusted plan did not select them, and fails fork analysis without granting the fork access to the protected self-hosted runner. Internal planner, hosted, and self-hosted job names are not required checks.
 
@@ -37,16 +39,28 @@ Production warm activation requires the host and repository settings in the
 [IDB cache operations runbook](idb-cache-operations.md). Unit and workflow-contract tests do not substitute for recorded
 cold, first miss/publication, and subsequent hit runs on that runner.
 
-## Release provenance shadow
+## Release provenance and Phase 2 workflows
 
 [`release-shadow.yml`](../../.github/workflows/release-shadow.yml) runs only at the exact `main` commit with
 `contents: read`. It builds canonical release content manifests for `hl-10210`, `hl-8684`, and `svencoop-10257`, then
 rebuilds and verifies each manifest from exact Git blobs before uploading a 30-day evidence artifact. The workflow does
 not check out `bin`, trust worktree globs, or write refs, repository contents, pull requests, tags, or Releases.
 
-Shadow success proves local content identity and the `new` mode decision only. It does not activate generated-output
-PRs, promotion, republish, or production release authority; those still require protected test-repository exercises and
-external branch/ruleset, merge-policy, protected-tag, Environment, and GitHub App evidence.
+Shadow success proves local content identity and the `new` mode decision only. The implemented Phase 2 workflows remain
+disabled by default:
+
+- `release-build.yml` runs only for an exact `main` dispatch, the protected `gsvibe-release` runner and `release`
+  Environment. A GitHub App token pushes an immutable direct-parent output branch, creates a draft PR, binds its remote
+  identity into private staging, then marks it ready.
+- `release-output-validation.yml` is a read-only reusable verifier. It rejects repository/author/branch identity before
+  fetching the exact head object and never checks out or executes output-head code.
+- `release-promotion.yml` splits a credential-free merge verifier from an Environment-protected writer. The writer
+  recomputes the canonical approval digest before obtaining App-backed tag/Release authority.
+- `release-operations.yml` keeps retry, resume-promotion, republish, abandon, repair-index, cleanup, and reconcile behind
+  explicit identities and confirmations. See the [release operations runbook](release-operations.md).
+
+`GSVIBE_RELEASE_PHASE2_ENABLED` must remain unset/false until protected test-repository exercises and external
+branch/ruleset, merge-commit-only, up-to-date, protected-tag, Environment, and GitHub App evidence are complete.
 
 ## Pages deployment
 

@@ -1,7 +1,7 @@
 name: Game-symbol PR validation
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review, closed]
+    types: [opened, synchronize, reopened, ready_for_review, edited, closed]
 permissions:
   contents: read
 concurrency:
@@ -20,15 +20,31 @@ jobs:
     outputs:
       route: ${{ steps.classify.outputs.route }}
     steps:
+      - name: Checkout trusted base classifier
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 1
+          submodules: false
+          persist-credentials: false
       - name: Classify pull request route
         id: classify
         shell: bash
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
-          # PR 1 intentionally keeps output routing disabled. The strict shared
-          # parser lands in Python now and is activated atomically with the
-          # generated-output verifier in PR 7.
-          echo "route=source" >> "$GITHUB_OUTPUT"
+          if [[ ! -f pull_request_route.py ]]; then
+            echo "route=source" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          route=$(python - <<'PY'
+          import os
+          from pull_request_route import classify_pr_route
+          print(classify_pr_route(head_ref=os.environ["HEAD_REF"], output_routing_enabled=True))
+          PY
+          )
+          echo "route=$route" >> "$GITHUB_OUTPUT"
   plan:
     needs: classify
     if: github.event.action != 'closed' && needs.classify.outputs.route == 'source'
@@ -385,21 +401,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Fork PR analysis nodes require a trusted same-repository runner" && exit 1
+  validate-output:
+    needs: classify
+    if: needs.classify.outputs.route == 'output'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/release-output-validation.yml
+    with:
+      repository_id: ${{ github.repository_id }}
+      repository: ${{ github.repository }}
+      base_sha: ${{ github.event.pull_request.base.sha }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      head_repository: ${{ github.event.pull_request.head.repo.full_name }}
+      head_branch: ${{ github.event.pull_request.head.ref }}
+      base_branch: ${{ github.event.pull_request.base.ref }}
+      author_login: ${{ github.event.pull_request.user.login }}
+      pr_number: ${{ github.event.pull_request.number }}
   pr-validate:
     name: pr-validate
-    needs: [classify, plan, validate-hosted, analyze-self-hosted, fork-analysis-blocked]
+    needs: [classify, plan, validate-hosted, analyze-self-hosted, fork-analysis-blocked, validate-output]
     if: always() && github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
+      - name: Require exactly one trusted PR route
+        env:
+          CLASSIFY_RESULT: ${{ needs.classify.result }}
+          ROUTE: ${{ needs.classify.outputs.route }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$CLASSIFY_RESULT" == "success" ]]
+          [[ "$ROUTE" == "source" || "$ROUTE" == "output" ]]
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
       - name: Download trusted plan bundle
+        if: needs.classify.outputs.route == 'source'
         uses: actions/download-artifact@v4
         with:
           name: gamesymbol-plan-${{ github.run_id }}
           path: ${{ runner.temp }}/gamesymbol-validation
       - name: Aggregate trusted source validation results
+        if: needs.classify.outputs.route == 'source'
         env:
           PLAN_RESULT: ${{ needs.plan.result }}
           HOSTED_RESULT: ${{ needs.validate-hosted.result }}
@@ -431,3 +474,19 @@ jobs:
               print(f"::error::{error}")
           raise SystemExit(0 if decision.passed else 1)
           PY
+      - name: Aggregate trusted output validation result
+        if: needs.classify.outputs.route == 'output'
+        env:
+          OUTPUT_RESULT: ${{ needs.validate-output.result }}
+          PLAN_RESULT: ${{ needs.plan.result }}
+          HOSTED_RESULT: ${{ needs.validate-hosted.result }}
+          ANALYSIS_RESULT: ${{ needs.analyze-self-hosted.result }}
+          FORK_RESULT: ${{ needs.fork-analysis-blocked.result }}
+        shell: bash
+        run: |-
+          set -euo pipefail
+          [[ "$OUTPUT_RESULT" == "success" ]]
+          [[ "$PLAN_RESULT" == "skipped" ]]
+          [[ "$HOSTED_RESULT" == "skipped" ]]
+          [[ "$ANALYSIS_RESULT" == "skipped" ]]
+          [[ "$FORK_RESULT" == "skipped" ]]

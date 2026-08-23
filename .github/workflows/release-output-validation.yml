@@ -1,0 +1,119 @@
+name: Release output validation
+on:
+  workflow_call:
+    inputs:
+      repository_id:
+        required: true
+        type: number
+      repository:
+        required: true
+        type: string
+      base_sha:
+        required: true
+        type: string
+      head_sha:
+        required: true
+        type: string
+      head_repository:
+        required: true
+        type: string
+      head_branch:
+        required: true
+        type: string
+      base_branch:
+        required: true
+        type: string
+      author_login:
+        required: true
+        type: string
+      pr_number:
+        required: true
+        type: number
+permissions:
+  contents: read
+jobs:
+  verify-output:
+    runs-on: [self-hosted, Windows, X64, gsvibe-release]
+    timeout-minutes: 30
+    steps:
+      - name: Checkout trusted base verifier
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.base_sha }}
+          fetch-depth: 0
+          submodules: false
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Reject untrusted output event identity before Git fetch
+        shell: pwsh
+        env:
+          ACTUAL_REPOSITORY_ID: ${{ inputs.repository_id }}
+          ACTUAL_REPOSITORY: ${{ inputs.repository }}
+          EXPECTED_REPOSITORY_ID: ${{ github.repository_id }}
+          EXPECTED_REPOSITORY: ${{ github.repository }}
+          HEAD_REPOSITORY: ${{ inputs.head_repository }}
+          HEAD_BRANCH: ${{ inputs.head_branch }}
+          BASE_BRANCH: ${{ inputs.base_branch }}
+          EXPECTED_BASE_BRANCH: ${{ github.event.repository.default_branch }}
+          AUTHOR_LOGIN: ${{ inputs.author_login }}
+          EXPECTED_AUTHOR_LOGIN: ${{ vars.GSVIBE_RELEASE_BOT_LOGIN }}
+        run: >-
+          uv run python release_workflow.py output-event-check
+          -repository-id $env:ACTUAL_REPOSITORY_ID
+          -repository $env:ACTUAL_REPOSITORY
+          -expected-repository-id $env:EXPECTED_REPOSITORY_ID
+          -expected-repository $env:EXPECTED_REPOSITORY
+          -head-repository $env:HEAD_REPOSITORY
+          -head-branch $env:HEAD_BRANCH
+          -base-branch $env:BASE_BRANCH
+          -expected-base-branch $env:EXPECTED_BASE_BRANCH
+          -author-login $env:AUTHOR_LOGIN
+          -expected-author-login $env:EXPECTED_AUTHOR_LOGIN
+      - name: Fetch exact output head object without checkout
+        shell: pwsh
+        env:
+          HEAD_SHA: ${{ inputs.head_sha }}
+        run: |
+          git fetch --no-tags origin $env:HEAD_SHA
+          if ($LASTEXITCODE -ne 0) { throw 'failed to fetch exact output head' }
+      - name: Verify direct-parent output and private stage binding
+        shell: pwsh
+        env:
+          BASE_SHA: ${{ inputs.base_sha }}
+          HEAD_SHA: ${{ inputs.head_sha }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          ACTUAL_REPOSITORY_ID: ${{ inputs.repository_id }}
+          ACTUAL_REPOSITORY: ${{ inputs.repository }}
+          EXPECTED_REPOSITORY_ID: ${{ github.repository_id }}
+          EXPECTED_REPOSITORY: ${{ github.repository }}
+          HEAD_REPOSITORY: ${{ inputs.head_repository }}
+          HEAD_BRANCH: ${{ inputs.head_branch }}
+          BASE_BRANCH: ${{ inputs.base_branch }}
+          EXPECTED_BASE_BRANCH: ${{ github.event.repository.default_branch }}
+          AUTHOR_LOGIN: ${{ inputs.author_login }}
+          EXPECTED_AUTHOR_LOGIN: ${{ vars.GSVIBE_RELEASE_BOT_LOGIN }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:GSVIBE_PERSISTED_WORKSPACE)) {
+            throw 'release runner persisted workspace is not configured'
+          }
+          $approval = Join-Path $env:RUNNER_TEMP 'release-output-approval.json'
+          uv run python release_workflow.py output-verify `
+            -repo-root $env:GITHUB_WORKSPACE -base-ref $env:BASE_SHA -head-ref $env:HEAD_SHA `
+            -pr-number $env:PR_NUMBER -repository-id $env:ACTUAL_REPOSITORY_ID `
+            -repository $env:ACTUAL_REPOSITORY -expected-repository-id $env:EXPECTED_REPOSITORY_ID `
+            -expected-repository $env:EXPECTED_REPOSITORY -head-repository $env:HEAD_REPOSITORY `
+            -head-branch $env:HEAD_BRANCH -base-branch $env:BASE_BRANCH `
+            -expected-base-branch $env:EXPECTED_BASE_BRANCH -author-login $env:AUTHOR_LOGIN `
+            -expected-author-login $env:EXPECTED_AUTHOR_LOGIN -workflow-repository $env:EXPECTED_REPOSITORY `
+            -build-workflow-path .github/workflows/release-build.yml -build-workflow-ref $env:BASE_SHA `
+            -persisted-root $env:GSVIBE_PERSISTED_WORKSPACE -output $approval
+          if ($LASTEXITCODE -ne 0) { throw 'generated-output verification failed' }
+      - name: Upload read-only output approval evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-output-approval-${{ inputs.pr_number }}-${{ inputs.head_sha }}
+          path: ${{ runner.temp }}/release-output-approval.json
+          if-no-files-found: error
+          retention-days: 30

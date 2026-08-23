@@ -4,24 +4,23 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from dataclasses import asdict, dataclass
 from pathlib import PurePosixPath
 
 from gamesymbol_snapshot_lib.analysis_sources import SourceIndex, is_analysis_source_path
 from gamesymbol_snapshot_lib.impact_registry import ImpactRule
 from gamesymbol_snapshot_lib.model import SnapshotContract
+from pull_request_route import (
+    PR_ROUTE_OUTPUT,
+    PR_ROUTE_SOURCE,
+    classify_pr_route,
+    parse_output_branch,
+)
 
 PLAN_SCHEMA_VERSION = 2
 CACHE_MODE_COLD = "cold"
 CACHE_MODE_WARM = "warm"
 CACHE_MODES = frozenset({CACHE_MODE_COLD, CACHE_MODE_WARM})
-PR_ROUTE_SOURCE = "source"
-PR_ROUTE_OUTPUT = "output"
-_OUTPUT_BRANCH_RE = re.compile(
-    r"gamesymbols/build/(?P<tag>[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+)/"
-    r"(?P<build_id>[a-z0-9]+(?:-[a-z0-9]+)*)\Z"
-)
 SNAPSHOT_DOMAIN_PATHS = frozenset(
     {
         "binary_hashing.py",
@@ -41,22 +40,6 @@ class ImpactPlanningError(ValueError):
 class PrValidationDecision:
     passed: bool
     errors: tuple[str, ...]
-
-
-def parse_output_branch(branch: str) -> tuple[str, str] | None:
-    match = _OUTPUT_BRANCH_RE.fullmatch(branch)
-    if match is not None:
-        return match.group("tag"), match.group("build_id")
-    if branch.startswith("gamesymbols/build/"):
-        raise ImpactPlanningError(f"Invalid generated-output branch: {branch!r}")
-    return None
-
-
-def classify_pr_route(*, head_ref: str, output_routing_enabled: bool) -> str:
-    output_identity = parse_output_branch(head_ref)
-    if output_identity is not None and output_routing_enabled:
-        return PR_ROUTE_OUTPUT
-    return PR_ROUTE_SOURCE
 
 
 def evaluate_pr_validation(

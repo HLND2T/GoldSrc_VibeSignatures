@@ -128,9 +128,18 @@ companion、gamedata manifest/generator contract，以及可信 workflow/tool re
 tag 的 snapshot、metadata、gamedata 的 path、Git mode、size 与 blob SHA-256，并明确排除
 `release-manifests/<tag>.json`，避免 manifest 自引用。
 
-当前 release workflow 仅运行 shadow verification：它校验三个 tag 并生成带 `new` mode decision 的本地 Actions
-evidence，但无权 push ref/content、创建 PR/tag 或发布 GitHub Release。Generated-output PR 与 promotion authority
-在独立的 protected-repository 门禁取得真实证据前保持 disabled。
+Shadow verification 继续在不 remote write 的前提下证明三个 `new` content identity。Phase 2 代码新增独立的
+generated-output 路径：exact `main` source commit 生成单父 output commit，并且只增加
+`release-manifests/<tag>.json`；snapshot、metadata 与 gamedata bytes 的 authority 仍属于 source commit。Shared
+classifier 让 source/output PR 互斥地产生唯一 `pr-validate`；output verifier 只执行 trusted base code，绝不 checkout
+或执行 output head。
+
+Promotion 只接受已记录的 App-authored output PR、direct-parent head 与 exact two-parent merge commit。它依次创建
+annotated immutable tag、deterministic payload assets、provenance 与排除自身的 checksum；所有上传资产下载复核后，
+才写 `PROMOTED`、durable completion record 与 `PROMOTION_COMPLETE`。Private marker 使用 hash chain；retry、resume、
+republish、abandon、index repair、reconcile 与 cleanup 保持独立恢复语义。Production authority 继续由
+`GSVIBE_RELEASE_PHASE2_ENABLED` 锁住，直到 branch/ruleset、merge policy、protected tag、Environment、App 与
+protected-repository 演练证据全部取得。
 
 ## API、Dashboard 与不可变 Pages 资产
 
