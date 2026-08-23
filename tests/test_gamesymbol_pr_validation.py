@@ -27,6 +27,9 @@ from gamesymbol_snapshot_lib.pr_validation import (
     ChangedPath,
     ImpactPlanningError,
     TagImpact,
+    classify_pr_route,
+    evaluate_pr_validation,
+    parse_output_branch,
     plan_tag_impact,
     snapshot_delta_paths,
     snapshot_documents_changed,
@@ -413,6 +416,93 @@ class ImpactPlanningTests(unittest.TestCase):
         digest = document.pop("plan_sha256")
         encoded = json.dumps(document, sort_keys=True, separators=(",", ":")).encode("utf-8")
         self.assertEqual(hashlib.sha256(encoded).hexdigest(), digest)
+
+
+class PrValidationGateTests(unittest.TestCase):
+    def test_generated_output_branch_parser_and_source_only_routing(self):
+        branch = "gamesymbols/build/hl-10210/run-123"
+        self.assertEqual(("hl-10210", "run-123"), parse_output_branch(branch))
+        self.assertEqual("source", classify_pr_route(head_ref=branch, output_routing_enabled=False))
+        self.assertEqual("output", classify_pr_route(head_ref=branch, output_routing_enabled=True))
+        self.assertEqual("source", classify_pr_route(head_ref="feature/cache", output_routing_enabled=True))
+        for invalid in (
+            "gamesymbols/build/hl-10210",
+            "gamesymbols/build/HL-10210/run-1",
+            "gamesymbols/build/hl-10210/run_1",
+            "gamesymbols/build/hl-10210/run-1/extra",
+        ):
+            with self.subTest(invalid=invalid), self.assertRaises(ImpactPlanningError):
+                parse_output_branch(invalid)
+
+    def test_gate_truth_table(self):
+        cases = (
+            ({}, True),
+            ({"has_actions": True, "has_hosted": True, "validate_hosted_result": "success"}, True),
+            (
+                {"has_actions": True, "has_analysis": True, "analyze_self_hosted_result": "success"},
+                True,
+            ),
+            (
+                {
+                    "has_actions": True,
+                    "has_analysis": True,
+                    "has_hosted": True,
+                    "validate_hosted_result": "success",
+                    "analyze_self_hosted_result": "success",
+                },
+                True,
+            ),
+            (
+                {
+                    "has_actions": True,
+                    "has_analysis": True,
+                    "same_repository": False,
+                    "fork_analysis_blocked_result": "failure",
+                },
+                False,
+            ),
+            ({"plan_result": "failure"}, False),
+            ({"has_actions": True, "has_hosted": True}, False),
+            ({"validate_hosted_result": "success"}, False),
+        )
+        defaults = {
+            "plan_result": "success",
+            "validate_hosted_result": "skipped",
+            "analyze_self_hosted_result": "skipped",
+            "fork_analysis_blocked_result": "skipped",
+            "has_actions": False,
+            "has_analysis": False,
+            "has_hosted": False,
+            "same_repository": True,
+        }
+        for overrides, expected in cases:
+            with self.subTest(overrides=overrides):
+                decision = evaluate_pr_validation(**(defaults | overrides))
+                self.assertEqual(expected, decision.passed, decision.errors)
+
+    def test_gate_rejects_unexpected_success_and_unknown_results(self):
+        unexpected = evaluate_pr_validation(
+            plan_result="success",
+            validate_hosted_result="success",
+            analyze_self_hosted_result="skipped",
+            fork_analysis_blocked_result="skipped",
+            has_actions=False,
+            has_analysis=False,
+            has_hosted=False,
+            same_repository=True,
+        )
+        self.assertFalse(unexpected.passed)
+        unknown = evaluate_pr_validation(
+            plan_result="success",
+            validate_hosted_result="queued",
+            analyze_self_hosted_result="skipped",
+            fork_analysis_blocked_result="skipped",
+            has_actions=True,
+            has_analysis=False,
+            has_hosted=True,
+            same_repository=True,
+        )
+        self.assertFalse(unknown.passed)
 
 
 class BoundPlanValidationTests(unittest.TestCase):

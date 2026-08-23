@@ -18,6 +18,12 @@ A separate `redis-integration` job runs on `ubuntu-latest` with a `redis:7-alpin
 
 The `pages` job installs Node 24, runs `npm ci`, `npm test`, `npm run lint`, `npm run build`, `npm run verify:gamesymbols`, installs Chromium, and runs `npm run test:e2e` from the `pages/` directory.
 
+## Game-symbol pull request validation
+
+`gamesymbol-pr-validation.yml` classifies every non-closed pull request through a shared route contract. During the source-only rollout, generated-output branch syntax is recognized by the Python contract but remains on the source route until the output verifier is deployed atomically.
+
+Branch protection depends only on the final `pr-validate` job. That job runs with `always()`, reads every routed job result explicitly, accepts skipped jobs only when the trusted plan did not select them, and fails fork analysis without granting the fork access to the protected self-hosted runner. Internal planner, hosted, and self-hosted job names are not required checks.
+
 ## Pages deployment
 
 [`.github/workflows/deploy-pages.yml`](../../.github/workflows/deploy-pages.yml) triggers on pushes to `main` that touch `pages/**`, `gamesymbols/**`, `configs/**`, or the workflow itself:

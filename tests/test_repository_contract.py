@@ -231,28 +231,30 @@ class RepositoryContractTests(unittest.TestCase):
             self.assertIn(command, workflow)
 
     def test_gamesymbol_pr_workflow_enforces_trusted_split_routing(self):
-        workflow = (ROOT / ".github" / "workflows" / "gamesymbol-pr-validation.yml").read_text(encoding="utf-8")
-        for marker in (
-            "opened, synchronize, reopened, ready_for_review, closed",
-            "cancel-in-progress: true",
-            "refs/pull/${{ github.event.pull_request.number }}/merge",
-            "fetch-depth: 0",
-            "Export trusted base planner",
-            "submodules: false",
-            "Fetch bin submodule trees without checkout",
-            "Sync trusted base planner environment",
-            'uv sync --locked --project "$RUNNER_TEMP/gamesymbol-validation/base-planner"',
-            "validate-hosted:",
-            "analyze-self-hosted:",
-            "same_repository",
-            "-oldgamever', 'none'",
-            "'-node'",
-            "gamesymbol_candidate.py compare",
-            ".snapshot_rebuild or .gamedata_rebuild or .deleted",
-            "Deleted tag $tag still has a tracked config or snapshot",
-            "no affected game-symbol actions",
-        ):
-            self.assertIn(marker, workflow)
+        workflow_text = (ROOT / ".github" / "workflows" / "gamesymbol-pr-validation.yml").read_text(encoding="utf-8")
+        workflow = yaml.load(workflow_text, Loader=yaml.BaseLoader)
+        jobs = workflow["jobs"]
+        self.assertEqual("pr-validate", jobs["pr-validate"]["name"])
+        self.assertEqual(
+            {"classify", "plan", "validate-hosted", "analyze-self-hosted", "fork-analysis-blocked"},
+            set(jobs["pr-validate"]["needs"]),
+        )
+        self.assertIn("always()", jobs["pr-validate"]["if"])
+        self.assertIn("github.event.action != 'closed'", jobs["pr-validate"]["if"])
+        self.assertNotIn("route == 'output'", jobs["pr-validate"]["if"])
+        self.assertEqual("classify", jobs["plan"]["needs"])
+        self.assertIn("route == 'source'", jobs["plan"]["if"])
+        for job_id in ("validate-hosted", "analyze-self-hosted", "fork-analysis-blocked"):
+            self.assertIn("route == 'source'", jobs[job_id]["if"])
+        aggregate = next(
+            step
+            for step in jobs["pr-validate"]["steps"]
+            if step.get("name") == "Aggregate trusted source validation results"
+        )
+        self.assertEqual("${{ needs.plan.result }}", aggregate["env"]["PLAN_RESULT"])
+        self.assertEqual("${{ needs.validate-hosted.result }}", aggregate["env"]["HOSTED_RESULT"])
+        self.assertEqual("${{ needs.analyze-self-hosted.result }}", aggregate["env"]["ANALYSIS_RESULT"])
+        self.assertEqual("${{ needs.fork-analysis-blocked.result }}", aggregate["env"]["FORK_RESULT"])
         for forbidden in (
             "PERSISTED_WORKSPACE",
             ".i64",
@@ -264,7 +266,7 @@ class RepositoryContractTests(unittest.TestCase):
             "download.yaml[-1]",
             "robocopy",
         ):
-            self.assertNotIn(forbidden, workflow)
+            self.assertNotIn(forbidden, workflow_text)
 
     def test_published_gamesymbol_snapshots_match_goldsrc_contract(self):
         # The exact published set is deliberately not pinned: the bin submodule

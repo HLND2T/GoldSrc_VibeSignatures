@@ -20,6 +20,12 @@ GitHub Actions 工作流在每次 push 与 pull request 上运行受门禁保护
 `pages` job 安装 Node 24，在 `pages/` 目录运行 `npm ci`、`npm test`、`npm run lint`、`npm run build`、
 `npm run verify:gamesymbols`，安装 Chromium，并运行 `npm run test:e2e`。
 
+## Game-symbol Pull Request 验证
+
+`gamesymbol-pr-validation.yml` 通过共享路由合约分类每个非 closed pull request。source-only 上线阶段中，Python 合约已经识别 generated-output branch 语法，但在 output verifier 原子部署前仍把它留在 source 路由。
+
+Branch protection 只依赖终态 `pr-validate` job。该 job 使用 `always()`，显式读取每个路由 job 的结果，只在 trusted plan 未选择对应执行时接受 skipped，并在不向 fork 授予受保护 self-hosted runner 权限的前提下明确拒绝 fork analysis。内部 planner、hosted 与 self-hosted job 名称都不是 required checks。
+
 ## Pages 部署
 
 [`.github/workflows/deploy-pages.yml`](../../.github/workflows/deploy-pages.yml) 在 `main` 分支 push 触碰到

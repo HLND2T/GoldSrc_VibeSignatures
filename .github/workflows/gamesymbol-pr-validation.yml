@@ -14,8 +14,24 @@ jobs:
     steps:
       - name: Finish without persisted YAML promotion
         run: echo "No game-symbol staging or promotion is configured"
-  plan:
+  classify:
     if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    outputs:
+      route: ${{ steps.classify.outputs.route }}
+    steps:
+      - name: Classify pull request route
+        id: classify
+        shell: bash
+        run: |
+          set -euo pipefail
+          # PR 1 intentionally keeps output routing disabled. The strict shared
+          # parser lands in Python now and is activated atomically with the
+          # generated-output verifier in PR 7.
+          echo "route=source" >> "$GITHUB_OUTPUT"
+  plan:
+    needs: classify
+    if: github.event.action != 'closed' && needs.classify.outputs.route == 'source'
     runs-on: ubuntu-latest
     outputs:
       has_actions: ${{ steps.route.outputs.has_actions }}
@@ -45,7 +61,8 @@ jobs:
           # First PR introducing the planner framework: the base branch has no
           # planner yet, so bootstrap from the head branch. Later PRs keep
           # running the trusted base code to prevent validation tampering.
-          if ! git cat-file -e "$BASE_SHA:gamesymbol_pr_validation.py" 2>/dev/null; then
+          if ! git cat-file -e "$BASE_SHA:gamesymbol_pr_validation.py" 2>/dev/null \
+            || ! git show "$BASE_SHA:gamesymbol_snapshot_lib/pr_validation.py" | grep -q 'def evaluate_pr_validation'; then
             export_src="$HEAD_SHA"
           fi
           git archive "$export_src" -- ':(glob)*.py' gamesymbol_snapshot_lib pyproject.toml uv.lock \
@@ -109,8 +126,8 @@ jobs:
           include-hidden-files: false
           overwrite: true
   validate-hosted:
-    needs: plan
-    if: needs.plan.outputs.has_hosted == 'true'
+    needs: [classify, plan]
+    if: needs.classify.outputs.route == 'source' && needs.plan.outputs.has_hosted == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR merge commit and exact binaries
@@ -171,8 +188,9 @@ jobs:
             trap - EXIT
           done < <(jq -r '.tags[] | select((.analysis_nodes | length) == 0 and (.snapshot_rebuild or .gamedata_rebuild) and (.deleted | not)) | .tag' "$plan")
   analyze-self-hosted:
-    needs: plan
-    if: needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository == 'true'
+    needs: [classify, plan]
+    if: needs.classify.outputs.route == 'source' && needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository
+      == 'true'
     runs-on: [self-hosted, Windows, X64]
     environment: win64
     timeout-minutes: 720
@@ -288,8 +306,55 @@ jobs:
           git -C $binRoot clean -ffdx
           if ($LASTEXITCODE -ne 0) { throw 'failed to remove generated bin analysis state' }
   fork-analysis-blocked:
-    needs: plan
-    if: needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository != 'true'
+    needs: [classify, plan]
+    if: needs.classify.outputs.route == 'source' && needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository
+      != 'true'
     runs-on: ubuntu-latest
     steps:
       - run: echo "Fork PR analysis nodes require a trusted same-repository runner" && exit 1
+  pr-validate:
+    name: pr-validate
+    needs: [classify, plan, validate-hosted, analyze-self-hosted, fork-analysis-blocked]
+    if: always() && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Download trusted plan bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: gamesymbol-plan-${{ github.run_id }}
+          path: ${{ runner.temp }}/gamesymbol-validation
+      - name: Aggregate trusted source validation results
+        env:
+          PLAN_RESULT: ${{ needs.plan.result }}
+          HOSTED_RESULT: ${{ needs.validate-hosted.result }}
+          ANALYSIS_RESULT: ${{ needs.analyze-self-hosted.result }}
+          FORK_RESULT: ${{ needs.fork-analysis-blocked.result }}
+          HAS_ACTIONS: ${{ needs.plan.outputs.has_actions }}
+          HAS_ANALYSIS: ${{ needs.plan.outputs.has_analysis }}
+          HAS_HOSTED: ${{ needs.plan.outputs.has_hosted }}
+          SAME_REPOSITORY: ${{ needs.plan.outputs.same_repository }}
+        shell: bash
+        run: |-
+          set -euo pipefail
+          uv run --project "$RUNNER_TEMP/gamesymbol-validation/base-planner" python - <<'PY'
+          import os
+          from gamesymbol_snapshot_lib.pr_validation import evaluate_pr_validation
+          def flag(name: str) -> bool:
+              return os.environ[name].lower() == "true"
+          decision = evaluate_pr_validation(
+              plan_result=os.environ["PLAN_RESULT"],
+              validate_hosted_result=os.environ["HOSTED_RESULT"],
+              analyze_self_hosted_result=os.environ["ANALYSIS_RESULT"],
+              fork_analysis_blocked_result=os.environ["FORK_RESULT"],
+              has_actions=flag("HAS_ACTIONS"),
+              has_analysis=flag("HAS_ANALYSIS"),
+              has_hosted=flag("HAS_HOSTED"),
+              same_repository=flag("SAME_REPOSITORY"),
+          )
+          for error in decision.errors:
+              print(f"::error::{error}")
+          raise SystemExit(0 if decision.passed else 1)
+          PY
