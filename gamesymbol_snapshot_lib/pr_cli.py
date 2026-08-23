@@ -21,6 +21,7 @@ from gamesymbol_snapshot_lib.codec import canonical_snapshot_bytes, parse_snapsh
 from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.impact_registry import parse_impact_registry
 from gamesymbol_snapshot_lib.materialize import materialize_baseline
+from gamesymbol_snapshot_lib.paths import metadata_filename, metadata_tag_from_filename
 from gamesymbol_snapshot_lib.operations import load_snapshot_context, validate_snapshot_contract
 from gamesymbol_snapshot_lib.pr_validation import (
     BoundImpactPlan,
@@ -212,6 +213,14 @@ def build_plan(
     base_tree, merge_tree = _tree(repo, base_sha), _tree(repo, merge_sha)
     base_tags, merge_tags = _tags(repo, base_sha), _tags(repo, merge_sha)
     ordered_tags = tuple(dict.fromkeys((*merge_tags, *(tag for tag in base_tags if tag not in merge_tags))))
+    known_tags = set(ordered_tags)
+    for change in changes:
+        for path in change.paths:
+            if not path.startswith("gamesymbols/"):
+                continue
+            metadata_tag = metadata_tag_from_filename(path.removeprefix("gamesymbols/"))
+            if metadata_tag is not None and metadata_tag not in known_tags:
+                raise ImpactPlanningError(f"Metadata companion has no configured tag: {path}")
 
     impacts: list[TagImpact] = []
     digests: dict[str, str | None] = {
@@ -242,6 +251,8 @@ def build_plan(
             merge_document, merge_snapshot_raw, _merge_trusted = _snapshot(repo, merge_sha, tag, merge_contracts[tag])
             digests[f"base_snapshot:{tag}"] = _sha256(base_snapshot_raw)
             digests[f"merge_snapshot:{tag}"] = _sha256(merge_snapshot_raw)
+            digests[f"base_metadata:{tag}"] = _sha256(repo.read(base_sha, f"gamesymbols/{metadata_filename(tag)}"))
+            digests[f"merge_metadata:{tag}"] = _sha256(repo.read(merge_sha, f"gamesymbols/{metadata_filename(tag)}"))
             snapshots[tag] = (base_document, merge_document, base_contract_trusted)
 
         validate_reference_consumers(merge_tree, list(merge_sources.values()))
@@ -262,6 +273,7 @@ def build_plan(
                 merge_rules=merge_rules,
                 snapshot_delta=snapshot_delta_paths(base_document, merge_document),
                 snapshot_changed=snapshot_documents_changed(base_document, merge_document),
+                metadata_changed=any(f"gamesymbols/{metadata_filename(tag)}" in change.paths for change in changes),
                 binary_changed_pairs=_binary_changes(
                     tag=tag,
                     base_contract=base_contracts[tag],
@@ -319,6 +331,11 @@ def materialize_from_plan(
         f"merge_snapshot:{tag}",
         repo.read(document["merge_sha"], f"gamesymbols/{tag}.yaml"),
     )
+    _verify_bound_digest(
+        document,
+        f"merge_metadata:{tag}",
+        repo.read(document["merge_sha"], f"gamesymbols/{metadata_filename(tag)}"),
+    )
     action = next((item for item in document["tags"] if item["tag"] == tag), None)
     if action is None or action.get("deleted"):
         raise PrCliError(f"Plan has no materializable action for {tag}")
@@ -337,6 +354,11 @@ def materialize_from_plan(
             base_snapshot_raw = repo.read(document["base_sha"], f"gamesymbols/{tag}.yaml")
             _verify_bound_digest(document, f"base_config:{tag}", base_config_raw)
             _verify_bound_digest(document, f"base_snapshot:{tag}", base_snapshot_raw)
+            _verify_bound_digest(
+                document,
+                f"base_metadata:{tag}",
+                repo.read(document["base_sha"], f"gamesymbols/{metadata_filename(tag)}"),
+            )
             if base_config_raw is None or base_snapshot_raw is None:
                 raise PrCliError("Incremental plan is missing its bound base contract")
             temporary_root = Path(temporary)

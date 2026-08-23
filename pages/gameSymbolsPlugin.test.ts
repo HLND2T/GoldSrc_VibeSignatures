@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import { attachAliasesToDataset, buildConfigAliasIndex, createGameSymbolIndex, encodeGameSymbolAsset, normalizeGameSymbolSnapshot } from './gameSymbolsPlugin'
+import { attachAliasesToDataset, buildMetadataAliasIndex, createGameSymbolIndex, encodeGameSymbolAsset, normalizeGameSymbolSnapshot } from './gameSymbolsPlugin'
 
 function snapshot(files: Record<string, Record<string, unknown>>, gameVersion = 'svencoop-10257') {
   return {
@@ -28,7 +28,7 @@ function snapshot(files: Record<string, Record<string, unknown>>, gameVersion = 
     },
     config_digest_version: 2,
     analysis_output_contract_version: 1,
-    config_sha256: 'sha256:test',
+    config_sha256: `sha256:${'a'.repeat(64)}`,
     file_count: Object.keys(files).length,
     files,
     game_version: gameVersion,
@@ -143,38 +143,31 @@ describe('gameSymbolsPlugin normalization', () => {
   })
 })
 
-describe('config alias attachment', () => {
-  it('builds an alias index keyed by module/symbol-name and merges repeated modules', () => {
-    const config = {
-      modules: [
-        { name: 'networksystem', symbols: [
-          { name: 'CNetworkMessages_RegisterNetworkCategory', category: 'vfunc', alias: ['CNetworkMessages::RegisterNetworkCategory'] },
-          { name: 'CNetworkMessages_NoAlias', category: 'vfunc' },
-        ] },
-        { name: 'networksystem', symbols: [
-          { name: 'CNetworkMessages_RegisterNetworkCategory', category: 'vfunc', alias: ['CNetworkMessages::RegisterNetworkCategoryAlt'] },
-        ] },
-        { name: 'emptymodule' },
-        { name: 'no-symbols-array', symbols: 'oops' },
-      ],
-    }
-    const index = buildConfigAliasIndex(config, 'config.yaml')
-    expect(index.aliases.get('networksystem/CNetworkMessages_RegisterNetworkCategory')).toEqual([
-      'CNetworkMessages::RegisterNetworkCategory',
-      'CNetworkMessages::RegisterNetworkCategoryAlt',
-    ])
-    expect(index.aliases.has('networksystem/CNetworkMessages_NoAlias')).toBe(false)
-  })
-
-  it('attaches aliases to matching records by module and artifact across both platforms', () => {
+describe('immutable metadata alias attachment', () => {
+  it('attaches aliases only to exact module/platform/artifact owners', () => {
     const dataset = normalizeGameSymbolSnapshot(snapshot({
       'networksystem/CNetworkMessages_RegisterNetworkCategory.windows.yaml': { func_name: 'CNetworkMessages_RegisterNetworkCategory', vfunc_index: 0 },
       'networksystem/CNetworkMessages_RegisterNetworkCategory.linux.yaml': { func_name: 'CNetworkMessages_RegisterNetworkCategory', vfunc_index: 0 },
       'networksystem/CNetworkMessages_Unaliased.windows.yaml': { func_name: 'CNetworkMessages_Unaliased', vfunc_index: 1 },
     }, 'svencoop-10257'), 'svencoop-10257', 'snapshot.yaml')
-    const index = buildConfigAliasIndex({
-      modules: [{ name: 'networksystem', symbols: [{ name: 'CNetworkMessages_RegisterNetworkCategory', category: 'vfunc', alias: ['CNetworkMessages::RegisterNetworkCategory'] }] }],
-    }, 'config.yaml')
+    const index = buildMetadataAliasIndex({
+      schema_version: 1,
+      game_version: 'svencoop-10257',
+      snapshot_sha256: 'b'.repeat(64),
+      config_digest_version: 2,
+      config_sha256: 'a'.repeat(64),
+      modules: [{
+        name: 'networksystem',
+        symbols: [{
+          name: 'CNetworkMessages_RegisterNetworkCategory',
+          artifacts: [
+            { platform: 'windows', artifact: 'CNetworkMessages_RegisterNetworkCategory' },
+            { platform: 'linux', artifact: 'CNetworkMessages_RegisterNetworkCategory' },
+          ],
+          alias: ['CNetworkMessages::RegisterNetworkCategory'],
+        }],
+      }],
+    }, 'svencoop-10257', 'b'.repeat(64), dataset, 'metadata.yaml')
     const aliased = attachAliasesToDataset(dataset, index)
     expect(aliased.records).toEqual(expect.arrayContaining([
       expect.objectContaining({ platform: 'windows', aliases: ['CNetworkMessages::RegisterNetworkCategory'] }),
@@ -183,9 +176,46 @@ describe('config alias attachment', () => {
     expect(aliased.records.find((record) => record.artifact === 'CNetworkMessages_Unaliased')).not.toHaveProperty('aliases')
   })
 
-  it('returns the same dataset instance when the alias index is empty', () => {
+  it('returns the same dataset instance when metadata has no aliases', () => {
     const dataset = normalizeGameSymbolSnapshot(snapshot({ 'networksystem/F.windows.yaml': { func_name: 'F' } }, 'svencoop-10257'), 'svencoop-10257', 'snapshot.yaml')
-    const index = buildConfigAliasIndex({ modules: [] }, 'config.yaml')
+    const index = buildMetadataAliasIndex({
+      schema_version: 1,
+      game_version: 'svencoop-10257',
+      snapshot_sha256: 'b'.repeat(64),
+      config_digest_version: 2,
+      config_sha256: 'a'.repeat(64),
+      modules: [],
+    }, 'svencoop-10257', 'b'.repeat(64), dataset, 'metadata.yaml')
     expect(attachAliasesToDataset(dataset, index)).toBe(dataset)
+  })
+
+  it('rejects hash mismatches, duplicate aliases, and unknown owners', () => {
+    const dataset = normalizeGameSymbolSnapshot(snapshot({
+      'networksystem/F.windows.yaml': { func_name: 'F' },
+    }, 'svencoop-10257'), 'svencoop-10257', 'snapshot.yaml')
+    const base = {
+      schema_version: 1,
+      game_version: 'svencoop-10257',
+      snapshot_sha256: 'b'.repeat(64),
+      config_digest_version: 2,
+      config_sha256: 'a'.repeat(64),
+      modules: [{
+        name: 'networksystem',
+        symbols: [{
+          name: 'F',
+          artifacts: [{ platform: 'windows', artifact: 'F' }],
+          alias: ['Alias'],
+        }],
+      }],
+    }
+    expect(() => buildMetadataAliasIndex({ ...base, snapshot_sha256: 'c'.repeat(64) }, 'svencoop-10257', 'b'.repeat(64), dataset, 'metadata.yaml')).toThrow(/snapshot_sha256/)
+    expect(() => buildMetadataAliasIndex({
+      ...base,
+      modules: [{ ...base.modules[0], symbols: [{ ...base.modules[0].symbols[0], alias: ['Alias', 'Alias'] }] }],
+    }, 'svencoop-10257', 'b'.repeat(64), dataset, 'metadata.yaml')).toThrow(/duplicate alias/)
+    expect(() => buildMetadataAliasIndex({
+      ...base,
+      modules: [{ ...base.modules[0], symbols: [{ ...base.modules[0].symbols[0], artifacts: [{ platform: 'linux', artifact: 'F' }] }] }],
+    }, 'svencoop-10257', 'b'.repeat(64), dataset, 'metadata.yaml')).toThrow(/absent from snapshot/)
   })
 })

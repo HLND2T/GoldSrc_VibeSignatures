@@ -2,8 +2,9 @@
 
 # Snapshot、gamedata 与发布
 
-单个 symbol 的 YAML 保持被 `bin/<GAMEVER>/<module>/` 忽略。Git-tracked 的 canonical 分析 lockfile 是
-`gamesymbols/<GAMEVER>.yaml`，其文件集合由 `configs/<GAMEVER>.yaml` 声明的必需与可选 YAML 输出推导。
+单个 symbol 的 YAML 保持被 `bin/<GAMEVER>/<module>/` 忽略。每个已发布版本都有一对 Git-tracked canonical
+文件：`gamesymbols/<GAMEVER>.yaml` 保存分析 lockfile，`gamesymbols/<GAMEVER>.metadata.yaml` 冻结展示 alias
+及其解析后的 module/platform/artifact owner。
 
 ## 不可变 candidate 事务
 
@@ -12,7 +13,8 @@
 
 ```bash
 CANDIDATE_DIR="$(mktemp -d)"
-CANDIDATE_SNAPSHOT="$CANDIDATE_DIR/candidate.yaml"
+CANDIDATE_SNAPSHOT="$CANDIDATE_DIR/cstrike-10210.yaml"
+CANDIDATE_METADATA="$CANDIDATE_DIR/cstrike-10210.metadata.yaml"
 CANDIDATE_SESSION="$CANDIDATE_DIR/session.json"
 GAMEDATA_ROOT="$CANDIDATE_DIR/gamedata-candidate"
 GAMEDATA_SESSION="$CANDIDATE_DIR/gamedata.session.json"
@@ -30,8 +32,20 @@ uv run python gamedata_candidate.py publish -session "$GAMEDATA_SESSION" -output
 - `gamesymbol_candidate.py mark -step gamedata` 需要 `-gamedata-session`，其 gamever 与 candidate SHA-256 必须
   与该 symbol candidate 匹配。
 - `gamedata_candidate.py publish -outputdir` 必须以精确 tag 结尾。发布是原子替换。
-- candidate manifest 固定候选 hash 与文件系统 identity。generator 根目录不存在或为空会产生带 hash 的空
-  inventory，只要 `guard` 成功仍可满足 gamedata 步骤。
+- candidate build 同时生成 `$CANDIDATE_METADATA`。session 绑定两份文件的精确路径、hash、文件系统 identity，
+  以及 metadata 对 snapshot SHA-256 的绑定。
+- 本地 pair 发布使用恢复 journal 与固定替换顺序；任何中间错配都会被 verifier 拒绝。对外原子边界是 Git
+  commit/tree。
+- generator 根目录不存在或为空会产生带 hash 的空 inventory，只要 `guard` 成功仍可满足 gamedata 步骤。
+
+可以独立生成或验证 tracked companion：
+
+```bash
+uv run python gamesymbol_metadata.py generate -snapshot gamesymbols/hl-10210.yaml -configyaml configs/hl-10210.yaml -gamever hl-10210 -metadata gamesymbols/hl-10210.metadata.yaml
+uv run python gamesymbol_metadata.py verify -snapshot gamesymbols/hl-10210.yaml -configyaml configs/hl-10210.yaml -gamever hl-10210 -metadata gamesymbols/hl-10210.metadata.yaml
+```
+
+Pages 不再读取 live config alias。companion 缺失、非 canonical、hash 不匹配或 owner 不匹配都会使构建失败。
 
 ## 直接生成 gamedata
 

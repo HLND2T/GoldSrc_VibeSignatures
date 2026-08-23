@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import hashlib
+import json
 import tempfile
 import unittest
 from contextlib import contextmanager
@@ -8,7 +10,12 @@ from pathlib import Path
 
 from gamedata_candidate import build_candidate as build_gamedata_candidate
 from gamesymbol_candidate import main as gamesymbol_candidate_main
-from gamesymbol_snapshot_lib.candidate import build_candidate_snapshot, guard_candidate, publish_candidate
+from gamesymbol_snapshot_lib.candidate import (
+    build_candidate_snapshot,
+    compare_snapshots,
+    guard_candidate,
+    publish_candidate,
+)
 from gamesymbol_snapshot_lib.codec import (
     build_snapshot_document,
     canonical_snapshot_bytes,
@@ -16,6 +23,7 @@ from gamesymbol_snapshot_lib.codec import (
     parse_snapshot_bytes,
 )
 from gamesymbol_snapshot_lib.errors import SnapshotMismatchError, SnapshotSchemaError
+from gamesymbol_snapshot_lib.metadata import write_metadata
 from gamesymbol_snapshot_lib.operations import pack_snapshot, restore_snapshot, verify_snapshot
 from gamesymbol_store import CandidateChangedError, InvalidSymbolPathError, SnapshotSymbolStore
 from tests.test_support import write_config, write_elf32, write_pe32
@@ -166,12 +174,49 @@ class SnapshotOperationTests(unittest.TestCase):
 
 
 class CandidateTests(unittest.TestCase):
+    def test_snapshot_and_metadata_pair_compare_preserves_tracked_publish_time(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            tag, config, _game_root = fixture(root)
+            with working_directory(root):
+                expected = root / "gamesymbols" / f"{tag}.yaml"
+                expected.parent.mkdir()
+                pack_snapshot(
+                    tag,
+                    root / "bin",
+                    config,
+                    expected,
+                    last_publish_time="2026-01-02T03:04:05Z",
+                )
+                write_metadata(
+                    snapshot_path=expected,
+                    config_path=config,
+                    game_version=tag,
+                    output_path=expected.with_name(f"{tag}.metadata.yaml"),
+                )
+                candidate = root / ".candidates" / f"{tag}.yaml"
+                session = root / ".candidates" / "session.json"
+                build_candidate_snapshot(
+                    game_version=tag,
+                    bin_root=root / "bin",
+                    config_path=config,
+                    output_path=candidate,
+                    session_path=session,
+                )
+                compare_snapshots(
+                    actual_path=candidate,
+                    expected_path=expected,
+                    config_path=config,
+                    expected_game_version=tag,
+                    session_path=session,
+                )
+
     def test_tamper_guard_and_guarded_atomic_publish(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             tag, config, _game_root = fixture(root)
             with working_directory(root):
-                candidate = root / ".candidates" / "candidate.yaml"
+                candidate = root / ".candidates" / f"{tag}.yaml"
                 session = root / ".candidates" / "session.json"
                 build_candidate_snapshot(
                     game_version=tag,
@@ -214,13 +259,17 @@ class CandidateTests(unittest.TestCase):
                 published = publish_candidate(candidate_path=candidate, session_path=session, destination=destination)
                 self.assertEqual(candidate.read_bytes(), destination.read_bytes())
                 self.assertEqual(str(destination), published.path)
+                metadata = candidate.with_name(f"{tag}.metadata.yaml")
+                metadata_destination = destination.with_name(f"{tag}.metadata.yaml")
+                self.assertEqual(metadata.read_bytes(), metadata_destination.read_bytes())
+                self.assertEqual(str(metadata_destination), published.metadata_path)
 
     def test_tampered_candidate_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             tag, config, _game_root = fixture(root)
             with working_directory(root):
-                candidate = root / ".candidates" / "candidate.yaml"
+                candidate = root / ".candidates" / f"{tag}.yaml"
                 session = root / ".candidates" / "session.json"
                 build_candidate_snapshot(
                     game_version=tag,
@@ -232,6 +281,114 @@ class CandidateTests(unittest.TestCase):
                 candidate.write_bytes(candidate.read_bytes() + b"\n")
                 with self.assertRaises(CandidateChangedError):
                     guard_candidate(candidate_path=candidate, session_path=session)
+
+    def test_tampered_metadata_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            tag, config, _game_root = fixture(root)
+            with working_directory(root):
+                candidate = root / ".candidates" / f"{tag}.yaml"
+                session = root / ".candidates" / "session.json"
+                build_candidate_snapshot(
+                    game_version=tag,
+                    bin_root=root / "bin",
+                    config_path=config,
+                    output_path=candidate,
+                    session_path=session,
+                )
+                metadata = candidate.with_name(f"{tag}.metadata.yaml")
+                metadata.write_bytes(metadata.read_bytes() + b"\n")
+                with self.assertRaises(CandidateChangedError):
+                    guard_candidate(candidate_path=candidate, session_path=session)
+
+    def test_interrupted_pair_publication_rolls_back_before_retry(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            tag, config, _game_root = fixture(root)
+            with working_directory(root):
+                candidate = root / ".candidates" / f"{tag}.yaml"
+                session = root / ".candidates" / "session.json"
+                build_candidate_snapshot(
+                    game_version=tag,
+                    bin_root=root / "bin",
+                    config_path=config,
+                    output_path=candidate,
+                    session_path=session,
+                )
+                generators = root / "generators"
+                generators.mkdir()
+                gamedata_session = root / ".gamedata-candidates" / "session.json"
+                build_gamedata_candidate(
+                    gamever=tag,
+                    build_id="test",
+                    snapshot=candidate,
+                    analysis_config=config,
+                    modules_dir=generators,
+                    candidate_root=root / ".gamedata-candidates" / "build",
+                    session_path=gamedata_session,
+                )
+                self.assertEqual(
+                    0,
+                    gamesymbol_candidate_main(
+                        [
+                            "mark",
+                            "-candidate",
+                            str(candidate),
+                            "-session",
+                            str(session),
+                            "-step",
+                            "gamedata",
+                            "-gamedata-session",
+                            str(gamedata_session),
+                        ]
+                    ),
+                )
+                target = root / "gamesymbols" / f"{tag}.yaml"
+                target.parent.mkdir()
+                target_metadata = target.with_name(f"{tag}.metadata.yaml")
+                old_snapshot = b"old snapshot\n"
+                old_metadata = b"old metadata\n"
+                target.write_bytes(candidate.read_bytes())
+                target_metadata.write_bytes(old_metadata)
+                snapshot_backup = target.parent / ".snapshot.old"
+                metadata_backup = target.parent / ".metadata.old"
+                metadata_new = target.parent / ".metadata.new"
+                snapshot_backup.write_bytes(old_snapshot)
+                metadata_backup.write_bytes(old_metadata)
+                metadata_new.write_bytes(candidate.with_name(f"{tag}.metadata.yaml").read_bytes())
+                digest = lambda raw: f"sha256:{hashlib.sha256(raw).hexdigest()}"
+                journal = target.parent / f".{tag}.publish-journal.json"
+                journal.write_text(
+                    json.dumps(
+                        {
+                            "schema_version": 1,
+                            "state": "snapshot_replaced",
+                            "entries": [
+                                {
+                                    "target": str(target),
+                                    "old_exists": True,
+                                    "old_sha256": digest(old_snapshot),
+                                    "old_backup": str(snapshot_backup),
+                                    "new_sha256": digest(candidate.read_bytes()),
+                                    "new_temporary": str(target.parent / ".snapshot.missing"),
+                                },
+                                {
+                                    "target": str(target_metadata),
+                                    "old_exists": True,
+                                    "old_sha256": digest(old_metadata),
+                                    "old_backup": str(metadata_backup),
+                                    "new_sha256": digest(metadata_new.read_bytes()),
+                                    "new_temporary": str(metadata_new),
+                                },
+                            ],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                publish_candidate(candidate_path=candidate, session_path=session, destination=target)
+                self.assertEqual(candidate.read_bytes(), target.read_bytes())
+                self.assertEqual(candidate.with_name(f"{tag}.metadata.yaml").read_bytes(), target_metadata.read_bytes())
+                self.assertFalse(journal.exists())
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 # Snapshots, gamedata, and publication
 
-Per-symbol YAML remains ignored under `bin/<GAMEVER>/<module>/`. The Git-tracked canonical analysis lockfile is `gamesymbols/<GAMEVER>.yaml`, whose file set is derived from the required and optional YAML outputs declared by `configs/<GAMEVER>.yaml`.
+Per-symbol YAML remains ignored under `bin/<GAMEVER>/<module>/`. Each published version has a Git-tracked canonical pair: `gamesymbols/<GAMEVER>.yaml` contains the analysis lockfile, while `gamesymbols/<GAMEVER>.metadata.yaml` freezes the display aliases and their resolved module/platform/artifact owners.
 
 ## Immutable candidate transaction
 
@@ -10,7 +10,8 @@ After a successful top-level analysis transaction, build one candidate immediate
 
 ```bash
 CANDIDATE_DIR="$(mktemp -d)"
-CANDIDATE_SNAPSHOT="$CANDIDATE_DIR/candidate.yaml"
+CANDIDATE_SNAPSHOT="$CANDIDATE_DIR/cstrike-10210.yaml"
+CANDIDATE_METADATA="$CANDIDATE_DIR/cstrike-10210.metadata.yaml"
 CANDIDATE_SESSION="$CANDIDATE_DIR/session.json"
 GAMEDATA_ROOT="$CANDIDATE_DIR/gamedata-candidate"
 GAMEDATA_SESSION="$CANDIDATE_DIR/gamedata.session.json"
@@ -27,7 +28,18 @@ Notes:
 
 - `gamesymbol_candidate.py mark -step gamedata` requires a `-gamedata-session` whose gamever and candidate SHA-256 match the symbol candidate.
 - `gamedata_candidate.py publish -outputdir` must end with the exact tag. Publication is an atomic replace.
-- The candidate manifest records the canonical candidate hash and filesystem identity. An absent or empty generator root produces an empty, hashed inventory that still satisfies the gamedata step after `guard` succeeds.
+- Candidate build also generates `$CANDIDATE_METADATA`. The session binds both exact paths, hashes, filesystem identities, and the metadata-to-snapshot SHA-256.
+- Local pair publication uses a recovery journal and fixed replacement order. A verifier rejects any intermediate mismatch; the Git commit/tree is the externally visible atomic boundary.
+- An absent or empty generator root produces an empty, hashed inventory that still satisfies the gamedata step after `guard` succeeds.
+
+Generate or independently verify a tracked companion with:
+
+```bash
+uv run python gamesymbol_metadata.py generate -snapshot gamesymbols/hl-10210.yaml -configyaml configs/hl-10210.yaml -gamever hl-10210 -metadata gamesymbols/hl-10210.metadata.yaml
+uv run python gamesymbol_metadata.py verify -snapshot gamesymbols/hl-10210.yaml -configyaml configs/hl-10210.yaml -gamever hl-10210 -metadata gamesymbols/hl-10210.metadata.yaml
+```
+
+Pages never reads live config aliases. A missing, non-canonical, hash-mismatched, or owner-mismatched companion fails the build.
 
 ## Generate gamedata directly
 

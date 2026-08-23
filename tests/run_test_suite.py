@@ -25,6 +25,7 @@ GROUP_FILES = {
         "test_snapshot_candidate.py",
         "test_gamesymbol_snapshot_config.py",
         "test_gamesymbol_pr_validation.py",
+        "test_gamesymbol_metadata.py",
         "test_gamedata.py",
         "test_decrypt_blob.py",
     ),

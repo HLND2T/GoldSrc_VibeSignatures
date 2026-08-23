@@ -29,7 +29,7 @@ Branch protection 只依赖终态 `pr-validate` job。该 job 使用 `always()`�
 ## Pages 部署
 
 [`.github/workflows/deploy-pages.yml`](../../.github/workflows/deploy-pages.yml) 在 `main` 分支 push 触碰到
-`pages/**`、`gamesymbols/**`、`configs/**` 或工作流本身时触发：
+`pages/**`、`gamesymbols/**` 或工作流本身时触发；一般 config 修改不会重新部署历史 alias：
 
 1. **build**：测试、lint、构建 `pages/dist`，校验当前 game-symbol 字节，并上传 artifact。
 2. **archive**：校验 `pages-snapshots` 分支历史是 append-only（只允许新增

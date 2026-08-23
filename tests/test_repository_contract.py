@@ -18,6 +18,8 @@ from analysis_planner import (
 )
 from binary_format import inspect_binary
 from gamesymbol_snapshot_lib.config import load_contract
+from gamesymbol_snapshot_lib.metadata import verify_metadata
+from gamesymbol_snapshot_lib.paths import iter_snapshot_paths
 
 ROOT = Path(__file__).parents[1]
 
@@ -272,7 +274,7 @@ class RepositoryContractTests(unittest.TestCase):
         # The exact published set is deliberately not pinned: the bin submodule
         # pins binary bytes, and new game versions must not require editing this
         # test. Structural contract checks below still guard every published file.
-        published = {path.stem for path in (ROOT / "gamesymbols").glob("*.yaml")}
+        published = {path.stem for path in iter_snapshot_paths(ROOT / "gamesymbols")}
         self.assertTrue(published)
 
         for tag in sorted(published):
@@ -294,6 +296,16 @@ class RepositoryContractTests(unittest.TestCase):
                 for metadata in actual_binaries.values():
                     self.assertNotIn("path", metadata)
                     self.assertGreater(metadata["size"], 0)
+                companion = ROOT / "gamesymbols" / f"{tag}.metadata.yaml"
+                self.assertTrue(companion.is_file())
+                verify_metadata(
+                    metadata_path=companion,
+                    snapshot_path=path,
+                    config_path=ROOT / "configs" / f"{tag}.yaml",
+                    game_version=tag,
+                )
+        self.assertFalse((ROOT / "gamesymbols" / "cstrike-10210.metadata.yaml").exists())
+        self.assertFalse((ROOT / "gamesymbols" / "cstrike-8684.metadata.yaml").exists())
 
     def test_pages_workflow_keeps_content_addressed_history_append_only(self):
         workflow = (ROOT / ".github" / "workflows" / "deploy-pages.yml").read_text(encoding="utf-8")

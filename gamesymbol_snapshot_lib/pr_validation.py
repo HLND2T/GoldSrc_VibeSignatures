@@ -23,6 +23,7 @@ SNAPSHOT_DOMAIN_PATHS = frozenset(
     {
         "binary_hashing.py",
         "gamesymbol_candidate.py",
+        "gamesymbol_metadata.py",
         "gamesymbol_snapshot.py",
         "gamesymbol_store.py",
     }
@@ -264,6 +265,7 @@ def plan_tag_impact(
     merge_rules: tuple[ImpactRule, ...],
     snapshot_delta: frozenset[str] = frozenset(),
     snapshot_changed: bool = False,
+    metadata_changed: bool = False,
     binary_changed_pairs: frozenset[tuple[str, str]] = frozenset(),
     base_snapshot_trusted: bool = True,
     expected_snapshot_exists: bool = True,
@@ -331,8 +333,15 @@ def plan_tag_impact(
             reasons.append(f"binary changed: {module}/{platform}")
 
     snapshot_rebuild = bool(
-        seeds or snapshot_delta or snapshot_changed or config_changed or _snapshot_domain_changed(all_paths)
+        seeds
+        or snapshot_delta
+        or snapshot_changed
+        or metadata_changed
+        or config_changed
+        or _snapshot_domain_changed(all_paths)
     )
+    if metadata_changed:
+        reasons.append("snapshot metadata companion changed")
     gamedata_rebuild = bool(seeds or _gamedata_domain_changed(all_paths))
     if not expected_snapshot_exists and merge_contract.formal_paths:
         seeds.update(merge_contract.nodes)

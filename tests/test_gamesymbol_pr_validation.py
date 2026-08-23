@@ -280,6 +280,26 @@ class ImpactPlanningTests(unittest.TestCase):
             self.assertEqual((), snapshot_only.analysis_nodes)
             self.assertTrue(snapshot_only.snapshot_rebuild)
             self.assertFalse(snapshot_only.gamedata_rebuild)
+            metadata_only = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(
+                    ChangedPath(
+                        "M",
+                        "gamesymbols/game-1.metadata.yaml",
+                        "gamesymbols/game-1.metadata.yaml",
+                    ),
+                ),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+                metadata_changed=True,
+            )
+            self.assertEqual((), metadata_only.analysis_nodes)
+            self.assertTrue(metadata_only.snapshot_rebuild)
+            self.assertFalse(metadata_only.gamedata_rebuild)
             hashing_only = plan_tag_impact(
                 tag="game-1",
                 base_contract=contract,
@@ -530,6 +550,7 @@ class BoundPlanValidationTests(unittest.TestCase):
             "merge_registry": hashlib.sha256(files["gamesymbol-impact.yaml"]).hexdigest(),
             "merge_config:game-1": hashlib.sha256(files["configs/game-1.yaml"]).hexdigest(),
             "merge_snapshot:game-1": hashlib.sha256(files["gamesymbols/game-1.yaml"]).hexdigest(),
+            "merge_metadata:game-1": None,
         }
         return base_sha, merge_sha, digests
 

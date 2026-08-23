@@ -155,8 +155,8 @@ jobs:
           plan="$RUNNER_TEMP/gamesymbol-validation/plan.json"
           base_project="$RUNNER_TEMP/gamesymbol-validation/base-planner"
           while IFS= read -r tag; do
-            if [[ -e "configs/$tag.yaml" || -e "gamesymbols/$tag.yaml" ]]; then
-              echo "Deleted tag $tag still has a tracked config or snapshot" >&2
+            if [[ -e "configs/$tag.yaml" || -e "gamesymbols/$tag.yaml" || -e "gamesymbols/$tag.metadata.yaml" ]]; then
+              echo "Deleted tag $tag still has a tracked config, snapshot, or metadata companion" >&2
               exit 1
             fi
             uv run --project "$base_project" python - "$tag" <<'PY'
@@ -218,8 +218,8 @@ jobs:
         shell: pwsh
         run: |
           @'
-          from pathlib import Path
-          for path in Path("gamesymbols").glob("*.yaml"):
+          from gamesymbol_snapshot_lib.paths import iter_snapshot_paths
+          for path in iter_snapshot_paths("gamesymbols"):
               raw = path.read_bytes()
               normalized = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
               if normalized != raw:

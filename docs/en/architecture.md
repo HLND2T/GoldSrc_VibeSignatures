@@ -12,14 +12,14 @@ download.yaml + configs/<tag>.yaml
   -> versioned stage/job/task execution plan
   -> bin/<tag>/<module>/<symbol>.<platform>.yaml
   -> immutable candidate
-  -> gamesymbols/<tag>.yaml
+  -> gamesymbols/<tag>.yaml + gamesymbols/<tag>.metadata.yaml
   -> SymbolStore -> strict gamedata generator
 
 RunRequest -> Redis Stream -> single-concurrency scheduler -> analyzer
   -> ProcessEvent + heartbeat -> Redis state/streams
   -> read-only API/SSE -> React process dashboard
 
-gamesymbols/<family-build>.yaml -> Vite asset plugin
+snapshot + immutable metadata companion -> Vite asset plugin
   -> content-addressed JSON + index v4
   -> append-only pages-snapshots archive -> GitHub Pages Symbol Explorer
 ```
@@ -90,8 +90,9 @@ file payloads, and path-independent SHA-256/MD5/CRC32/CRC64/size metadata for ev
 Restore and verification reject links, path escapes, undeclared YAML, missing required YAML, non-canonical bytes, and
 contract drift.
 
-The candidate manifest records the canonical candidate hash and filesystem identity. Publication is an atomic replace
-and requires the guarded `gamedata` step. Candidate sessions do not contain a C++ test step.
+The candidate session binds the canonical snapshot and alias-metadata companion hashes, filesystem identities, and pair
+identity. Local pair publication is journaled and recoverable; the Git tree is the externally visible atomic boundary.
+Publication still requires the guarded `gamedata` step. Candidate sessions do not contain a C++ test step.
 
 ## API, dashboard, and immutable Pages assets
 
@@ -103,7 +104,8 @@ private-network preflights only by explicit opt-in.
 
 The React dashboard displays run lists, graph/list views, task details, status filters, live SSE updates, and a static
 Symbol Explorer. Symbol snapshots use `<family-build>` tags, are grouped by family, and sort builds numerically descending.
-The Vite plugin turns tracked schema-5 YAML into exact UTF-8 content-addressed JSON plus index schema v4. The deployment
+The Vite plugin turns tracked schema-5/6 YAML plus its required schema-1 metadata companion into exact UTF-8
+content-addressed JSON plus index schema v4. It never reads live config aliases. The deployment
 workflow preserves every digest on an append-only `pages-snapshots` branch and verifies current, archived, and deployed
 CDN bytes. GitHub Pages hosts only static assets; it does not host the Process API.
 

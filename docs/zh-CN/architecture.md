@@ -12,14 +12,14 @@ download.yaml + configs/<tag>.yaml
   -> versioned stage/job/task execution plan
   -> bin/<tag>/<module>/<symbol>.<platform>.yaml
   -> 不可变 candidate
-  -> gamesymbols/<tag>.yaml
+  -> gamesymbols/<tag>.yaml + gamesymbols/<tag>.metadata.yaml
   -> SymbolStore -> 严格 gamedata generator
 
 RunRequest -> Redis Stream -> 单并发 scheduler -> Analyzer
   -> ProcessEvent + heartbeat -> Redis state/streams
   -> 只读 API/SSE -> React process dashboard
 
-gamesymbols/<family-build>.yaml -> Vite asset plugin
+snapshot + immutable metadata companion -> Vite asset plugin
   -> content-addressed JSON + index v4
   -> append-only pages-snapshots archive -> GitHub Pages Symbol Explorer
 ```
@@ -83,7 +83,8 @@ writer 输出 schema 6，包含 config digest v2、analysis output contract vers
 旧 binary `path`。restore / verify 会拒绝链接、
 路径逃逸、未声明或缺失的 YAML、非 canonical bytes 与 contract drift。
 
-candidate manifest 固定候选 hash 与文件系统 identity。发布使用原子替换，并且必须先验证匹配的 gamedata session。
+candidate session 绑定 canonical snapshot 与 alias metadata companion 的 hash、文件系统 identity 和 pair identity。
+本地 pair 发布使用可恢复 journal；对外可见的原子边界是 Git tree。发布仍必须先验证匹配的 gamedata session，
 candidate session 不包含 C++ 测试步骤。
 
 ## API、Dashboard 与不可变 Pages 资产
@@ -95,7 +96,8 @@ reset contract 会要求客户端重新读取 atomic snapshot。
 
 React dashboard 提供 run list、graph/list、task detail、status filter 和 SSE live update，同时包含静态 Symbol
 Explorer。Symbol snapshot 使用 `<family-build>` tag，按 family 分组并在组内按数字 build 降序。Vite plugin 将
-tracked schema-5 YAML 转成精确 UTF-8 content-addressed JSON 与 index schema v4；部署 workflow 把所有 digest
+tracked schema-5/6 YAML 与必需的 schema-1 metadata companion 转成精确 UTF-8 content-addressed JSON 与 index
+schema v4，并且绝不读取 live config alias；部署 workflow 把所有 digest
 保存到 append-only `pages-snapshots` 分支，并校验 current/archive/CDN bytes。GitHub Pages 只托管静态资产，
 不托管 Process API。
 

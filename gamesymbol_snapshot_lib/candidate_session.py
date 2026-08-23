@@ -10,7 +10,7 @@ from pathlib import Path
 
 from gamesymbol_snapshot_lib.paths import is_reparse_point
 
-SESSION_SCHEMA_VERSION = 1
+SESSION_SCHEMA_VERSION = 2
 VALIDATION_STEPS = ("gamedata",)
 
 
@@ -52,12 +52,13 @@ def atomic_json_write(path: Path, payload: dict) -> None:
             temporary.unlink()
 
 
-def initial_manifest(info, output: Path) -> dict:
+def initial_manifest(info, output: Path, metadata_output: Path) -> dict:
     return {
         "schema_version": SESSION_SCHEMA_VERSION,
         **asdict(info),
         "candidate_path": str(output),
         "file_identity": file_identity(output),
+        "metadata_file_identity": file_identity(metadata_output),
         "state": "candidate_ready",
         "completed_steps": {"analysis": True, "pack": True, "expected_compare": None, "gamedata": False},
     }
@@ -79,8 +80,12 @@ def load_manifest(session_path):
         "config_digest_version",
         "config_sha256",
         "file_count",
+        "metadata_path",
+        "metadata_sha256",
+        "metadata_snapshot_sha256",
         "candidate_path",
         "file_identity",
+        "metadata_file_identity",
         "state",
         "completed_steps",
     }
