@@ -14,6 +14,7 @@ download.yaml + configs/<tag>.yaml
   -> immutable candidate
   -> gamesymbols/<tag>.yaml + gamesymbols/<tag>.metadata.yaml
   -> SymbolStore -> strict gamedata generator
+  -> gamedata/<tag>/gamedata-manifest.json + declared payloads
 
 RunRequest -> Redis Stream -> single-concurrency scheduler -> analyzer
   -> ProcessEvent + heartbeat -> Redis state/streams
@@ -93,6 +94,10 @@ contract drift.
 The candidate session binds the canonical snapshot and alias-metadata companion hashes, filesystem identities, and pair
 identity. Local pair publication is journaled and recoverable; the Git tree is the externally visible atomic boundary.
 Publication still requires the guarded `gamedata` step. Candidate sessions do not contain a C++ test step.
+
+Canonical gamedata remains ignored by default and is staged only from the guarded candidate inventory. Each tag has a
+self-excluding canonical manifest that binds snapshot/config/generator identities and the exact declared payload files;
+an empty generator set therefore still has one trackable, reviewable output.
 
 ## API, dashboard, and immutable Pages assets
 

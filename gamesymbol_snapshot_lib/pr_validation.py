@@ -250,7 +250,10 @@ def _snapshot_domain_changed(paths: set[str]) -> bool:
 
 
 def _gamedata_domain_changed(paths: set[str]) -> bool:
-    return any(path.startswith("gamedata_") or path.startswith("gamedata-generators/") for path in paths)
+    return any(
+        path.startswith("gamedata_") or path == "update_gamedata.py" or path.startswith("gamedata-generators/")
+        for path in paths
+    )
 
 
 def plan_tag_impact(
@@ -266,6 +269,7 @@ def plan_tag_impact(
     snapshot_delta: frozenset[str] = frozenset(),
     snapshot_changed: bool = False,
     metadata_changed: bool = False,
+    gamedata_changed: bool = False,
     binary_changed_pairs: frozenset[tuple[str, str]] = frozenset(),
     base_snapshot_trusted: bool = True,
     expected_snapshot_exists: bool = True,
@@ -342,7 +346,16 @@ def plan_tag_impact(
     )
     if metadata_changed:
         reasons.append("snapshot metadata companion changed")
-    gamedata_rebuild = bool(seeds or _gamedata_domain_changed(all_paths))
+    gamedata_rebuild = bool(
+        seeds
+        or config_changed
+        or snapshot_delta
+        or snapshot_changed
+        or gamedata_changed
+        or _gamedata_domain_changed(all_paths)
+    )
+    if gamedata_changed:
+        reasons.append("tracked gamedata changed")
     if not expected_snapshot_exists and merge_contract.formal_paths:
         seeds.update(merge_contract.nodes)
         snapshot_rebuild = True

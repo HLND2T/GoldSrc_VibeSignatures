@@ -155,8 +155,8 @@ jobs:
           plan="$RUNNER_TEMP/gamesymbol-validation/plan.json"
           base_project="$RUNNER_TEMP/gamesymbol-validation/base-planner"
           while IFS= read -r tag; do
-            if [[ -e "configs/$tag.yaml" || -e "gamesymbols/$tag.yaml" || -e "gamesymbols/$tag.metadata.yaml" ]]; then
-              echo "Deleted tag $tag still has a tracked config, snapshot, or metadata companion" >&2
+            if [[ -e "configs/$tag.yaml" || -e "gamesymbols/$tag.yaml" || -e "gamesymbols/$tag.metadata.yaml" || -d "gamedata/$tag" ]]; then
+              echo "Deleted tag $tag still has tracked config, snapshot, metadata, or gamedata" >&2
               exit 1
             fi
             uv run --project "$base_project" python - "$tag" <<'PY'
@@ -181,6 +181,8 @@ jobs:
               -snapshot "$stage/$tag.yaml" -configyaml "configs/$tag.yaml" -modulesdir gamedata-generators \
               -candidate-root "$stage/gamedata" -session "$stage/gamedata-session.json"
             uv run python gamedata_candidate.py guard -session "$stage/gamedata-session.json"
+            uv run python gamedata_candidate.py verify-tracked -session "$stage/gamedata-session.json" \
+              -repo-root "$GITHUB_WORKSPACE" -ref HEAD
             uv run python gamesymbol_candidate.py compare -candidate "$stage/$tag.yaml" \
               -expected "gamesymbols/$tag.yaml" -gamever "$tag" -configyaml "configs/$tag.yaml" \
               -session "$stage/symbol-session.json"
@@ -283,6 +285,8 @@ jobs:
               if ($LASTEXITCODE -ne 0) { throw "gamedata build failed for $tag" }
               uv run python gamedata_candidate.py guard -session $gamedataSession
               if ($LASTEXITCODE -ne 0) { throw "gamedata guard failed for $tag" }
+              uv run python gamedata_candidate.py verify-tracked -session $gamedataSession -repo-root $env:GITHUB_WORKSPACE -ref HEAD
+              if ($LASTEXITCODE -ne 0) { throw "tracked gamedata comparison failed for $tag" }
               uv run python gamesymbol_candidate.py compare -candidate $candidate -expected "gamesymbols/$tag.yaml" `
                 -gamever $tag -configyaml "configs/$tag.yaml" -session $symbolSession
               if ($LASTEXITCODE -ne 0) { throw "snapshot comparison failed for $tag" }

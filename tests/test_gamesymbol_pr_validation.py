@@ -325,6 +325,25 @@ class ImpactPlanningTests(unittest.TestCase):
             )
             self.assertFalse(gamedata_only.snapshot_rebuild)
             self.assertTrue(gamedata_only.gamedata_rebuild)
+            tracked_gamedata = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(
+                    ChangedPath(
+                        "M",
+                        "gamedata/game-1/gamedata-manifest.json",
+                        "gamedata/game-1/gamedata-manifest.json",
+                    ),
+                ),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+                gamedata_changed=True,
+            )
+            self.assertFalse(tracked_gamedata.snapshot_rebuild)
+            self.assertTrue(tracked_gamedata.gamedata_rebuild)
 
             empty_config = root / "empty.yaml"
             empty_config.write_text(
@@ -426,7 +445,7 @@ class ImpactPlanningTests(unittest.TestCase):
             )
         self.assertEqual((), impact.analysis_nodes)
         self.assertTrue(impact.snapshot_rebuild)
-        self.assertFalse(impact.gamedata_rebuild)
+        self.assertTrue(impact.gamedata_rebuild)
         self.assertIn("snapshot metadata changed", impact.reasons)
 
     def test_bound_plan_digest_binds_shas_actions_and_digests(self):
@@ -551,6 +570,7 @@ class BoundPlanValidationTests(unittest.TestCase):
             "merge_config:game-1": hashlib.sha256(files["configs/game-1.yaml"]).hexdigest(),
             "merge_snapshot:game-1": hashlib.sha256(files["gamesymbols/game-1.yaml"]).hexdigest(),
             "merge_metadata:game-1": None,
+            "merge_gamedata:game-1": None,
         }
         return base_sha, merge_sha, digests
 
@@ -617,6 +637,8 @@ class BoundPlanValidationTests(unittest.TestCase):
                 "merge_registry",
                 "merge_config:game-1",
                 "merge_snapshot:game-1",
+                "merge_metadata:game-1",
+                "merge_gamedata:game-1",
             ):
                 with self.subTest(key=key):
                     mismatched = dict(digests)

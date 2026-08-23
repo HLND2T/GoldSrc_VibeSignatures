@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import inspect
+import json
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -17,11 +18,24 @@ from release_workflow_lib.hashing import (
     inventory_sha256,
     reject_reparse_points,
     sha256_bytes,
+    sha256_file,
+    write_canonical_json,
 )
 
 MODULE_DIRECTORY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$", re.ASCII)
 ALLOWED_OUTPUT_SUFFIXES = {".json", ".jsonc", ".txt", ".cfg", ".ini", ".yaml", ".yml"}
 SUPPORTED_GENERATOR_API_VERSIONS = {1, 2}
+GAMEDATA_MANIFEST_FILENAME = "gamedata-manifest.json"
+GAMEDATA_MANIFEST_KEYS = {
+    "schema_version",
+    "game_version",
+    "candidate_sha256",
+    "analysis_config_sha256",
+    "generator_contract_sha256",
+    "payload_inventory_sha256",
+    "files",
+}
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 class GamedataContractError(ValueError):
@@ -163,14 +177,100 @@ def validate_output_tree(output_root: str | Path, gamever: str, modules: list[Ge
     if not root.is_dir():
         raise GamedataContractError(f"Versioned output is missing: {root}")
     expected = sorted(f"{module.directory}/{path}" for module in modules for path in module.output_paths)
-    actual = file_inventory(root)
+    actual = [item for item in file_inventory(root) if item["path"] != GAMEDATA_MANIFEST_FILENAME]
     actual_paths = [item["path"] for item in actual]
     if actual_paths != expected:
         missing = sorted(set(expected) - set(actual_paths))
         extra = sorted(set(actual_paths) - set(expected))
         raise GamedataContractError(f"Output tree violates OUTPUT_PATHS: missing={missing}, undeclared={extra}")
-    return prefixed_output_inventory(root, gamever)
+    prefix = f"gamedata/{gamever}/"
+    return [{**item, "path": prefix + item["path"]} for item in actual]
 
 
 def gamedata_manifest_sha256(inventory: list[dict]) -> str:
     return inventory_sha256(inventory)
+
+
+def build_gamedata_manifest(
+    *,
+    gamever: str,
+    candidate_sha256: str,
+    analysis_config_sha256: str,
+    generator_contract_digest: str,
+    payload_files: list[dict],
+) -> dict:
+    tag = str(gamever)
+    for label, digest in (
+        ("candidate_sha256", candidate_sha256),
+        ("analysis_config_sha256", analysis_config_sha256),
+        ("generator_contract_sha256", generator_contract_digest),
+    ):
+        if not isinstance(digest, str) or not SHA256_RE.fullmatch(digest):
+            raise GamedataContractError(f"{label} is invalid")
+    return {
+        "schema_version": 1,
+        "game_version": tag,
+        "candidate_sha256": candidate_sha256,
+        "analysis_config_sha256": analysis_config_sha256,
+        "generator_contract_sha256": generator_contract_digest,
+        "payload_inventory_sha256": inventory_sha256(payload_files),
+        "files": payload_files,
+    }
+
+
+def write_gamedata_manifest(output_root: str | Path, document: dict) -> str:
+    path = Path(output_root) / GAMEDATA_MANIFEST_FILENAME
+    write_canonical_json(path, document)
+    return sha256_file(path)
+
+
+def parse_gamedata_manifest(path: str | Path) -> tuple[dict, str]:
+    path = Path(path)
+    try:
+        raw = path.read_bytes()
+        document = json.loads(raw)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise GamedataContractError(f"Unable to read gamedata manifest {path}: {exc}") from exc
+    if not isinstance(document, dict) or set(document) != GAMEDATA_MANIFEST_KEYS or document.get("schema_version") != 1:
+        raise GamedataContractError("Gamedata manifest has unexpected fields or schema")
+    if canonical_json_bytes(document) != raw:
+        raise GamedataContractError("Gamedata manifest is not canonical JSON")
+    if not isinstance(document["game_version"], str) or not document["game_version"]:
+        raise GamedataContractError("Gamedata manifest game_version is invalid")
+    for field in (
+        "candidate_sha256",
+        "analysis_config_sha256",
+        "generator_contract_sha256",
+        "payload_inventory_sha256",
+    ):
+        if not isinstance(document[field], str) or not SHA256_RE.fullmatch(document[field]):
+            raise GamedataContractError(f"Gamedata manifest {field} is invalid")
+    if (
+        not isinstance(document["files"], list)
+        or inventory_sha256(document["files"]) != document["payload_inventory_sha256"]
+    ):
+        raise GamedataContractError("Gamedata manifest payload inventory is invalid")
+    return document, sha256_bytes(raw)
+
+
+def validate_gamedata_tree(
+    output_root: str | Path,
+    gamever: str,
+    modules: list[GeneratorModule],
+    *,
+    candidate_sha256: str,
+    analysis_config_sha256: str,
+    generator_contract_digest: str,
+) -> tuple[list[dict], str]:
+    payload_files = validate_output_tree(output_root, gamever, modules)
+    manifest, manifest_sha256 = parse_gamedata_manifest(Path(output_root) / GAMEDATA_MANIFEST_FILENAME)
+    expected = build_gamedata_manifest(
+        gamever=gamever,
+        candidate_sha256=candidate_sha256,
+        analysis_config_sha256=analysis_config_sha256,
+        generator_contract_digest=generator_contract_digest,
+        payload_files=payload_files,
+    )
+    if manifest != expected:
+        raise GamedataContractError("Gamedata manifest bindings do not match generated payload")
+    return prefixed_output_inventory(output_root, gamever), manifest_sha256

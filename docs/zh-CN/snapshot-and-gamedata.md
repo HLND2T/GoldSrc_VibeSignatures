@@ -25,6 +25,7 @@ uv run python gamedata_candidate.py guard -session "$GAMEDATA_SESSION"
 uv run python gamesymbol_candidate.py mark -candidate "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION" -step gamedata -gamedata-session "$GAMEDATA_SESSION"
 uv run python gamesymbol_candidate.py publish -candidate "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION" -destination gamesymbols/cstrike-10210.yaml
 uv run python gamedata_candidate.py publish -session "$GAMEDATA_SESSION" -outputdir gamedata/cstrike-10210
+uv run python gamedata_candidate.py stage -session "$GAMEDATA_SESSION" -repo-root .
 ```
 
 注意：
@@ -36,6 +37,10 @@ uv run python gamedata_candidate.py publish -session "$GAMEDATA_SESSION" -output
   以及 metadata 对 snapshot SHA-256 的绑定。
 - 本地 pair 发布使用恢复 journal 与固定替换顺序；任何中间错配都会被 verifier 拒绝。对外原子边界是 Git
   commit/tree。
+- 即使没有 generator 产生 payload，每个 gamedata 目录也包含 canonical `gamedata-manifest.json`。它绑定
+  snapshot、config、generator contract 与排除 manifest 自身的 payload inventory。
+- `stage` 先 guard candidate，再构造并验证临时 Git tree，最后只对 candidate manifest 中的精确路径执行
+  `git add -f -- <exact-path>`。仓库继续忽略 `gamedata/*/`，禁止宽泛 glob staging。
 - generator 根目录不存在或为空会产生带 hash 的空 inventory，只要 `guard` 成功仍可满足 gamedata 步骤。
 
 可以独立生成或验证 tracked companion：

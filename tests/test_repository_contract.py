@@ -20,6 +20,8 @@ from binary_format import inspect_binary
 from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.metadata import verify_metadata
 from gamesymbol_snapshot_lib.paths import iter_snapshot_paths
+from gamedata_contract import discover_generator_modules, generator_contract_sha256, validate_gamedata_tree
+from release_workflow_lib.hashing import sha256_file
 
 ROOT = Path(__file__).parents[1]
 
@@ -304,8 +306,22 @@ class RepositoryContractTests(unittest.TestCase):
                     config_path=ROOT / "configs" / f"{tag}.yaml",
                     game_version=tag,
                 )
+                config_path = ROOT / "configs" / f"{tag}.yaml"
+                generators = discover_generator_modules(ROOT / "gamedata-generators")
+                files, manifest_sha256 = validate_gamedata_tree(
+                    ROOT / "gamedata" / tag,
+                    tag,
+                    generators,
+                    candidate_sha256=sha256_file(path),
+                    analysis_config_sha256=sha256_file(config_path),
+                    generator_contract_digest=generator_contract_sha256(generators),
+                )
+                self.assertTrue(files)
+                self.assertRegex(manifest_sha256, r"^[0-9a-f]{64}$")
         self.assertFalse((ROOT / "gamesymbols" / "cstrike-10210.metadata.yaml").exists())
         self.assertFalse((ROOT / "gamesymbols" / "cstrike-8684.metadata.yaml").exists())
+        self.assertFalse((ROOT / "gamedata" / "cstrike-10210").exists())
+        self.assertFalse((ROOT / "gamedata" / "cstrike-8684").exists())
 
     def test_pages_workflow_keeps_content_addressed_history_append_only(self):
         workflow = (ROOT / ".github" / "workflows" / "deploy-pages.yml").read_text(encoding="utf-8")

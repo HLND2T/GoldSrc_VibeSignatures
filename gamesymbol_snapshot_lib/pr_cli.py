@@ -114,6 +114,21 @@ def _sha256(value: bytes | None) -> str | None:
     return None if value is None else hashlib.sha256(value).hexdigest()
 
 
+def _gamedata_tree_digest(repo: GitRepository, ref: str, tag: str) -> str | None:
+    prefix = f"gamedata/{validated_tag(tag)}/"
+    entries = []
+    for path in repo.list_files(ref):
+        if not path.startswith(prefix):
+            continue
+        raw = repo.read(ref, path)
+        if raw is not None:
+            entries.append({"path": path, "size": len(raw), "sha256": _sha256(raw)})
+    if not entries:
+        return None
+    encoded = json.dumps(entries, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def _tags(repo: GitRepository, ref: str) -> tuple[str, ...]:
     raw = repo.read(ref, "configs/config.yaml")
     if raw is None:
@@ -216,11 +231,18 @@ def build_plan(
     known_tags = set(ordered_tags)
     for change in changes:
         for path in change.paths:
-            if not path.startswith("gamesymbols/"):
-                continue
-            metadata_tag = metadata_tag_from_filename(path.removeprefix("gamesymbols/"))
-            if metadata_tag is not None and metadata_tag not in known_tags:
-                raise ImpactPlanningError(f"Metadata companion has no configured tag: {path}")
+            if path.startswith("gamesymbols/"):
+                metadata_tag = metadata_tag_from_filename(path.removeprefix("gamesymbols/"))
+                if metadata_tag is not None and metadata_tag not in known_tags:
+                    raise ImpactPlanningError(f"Metadata companion has no configured tag: {path}")
+            parts = path.split("/")
+            if parts[0] == "gamedata" and len(parts) >= 3:
+                try:
+                    gamedata_tag = validated_tag(parts[1])
+                except ValueError as exc:
+                    raise ImpactPlanningError(f"Invalid tracked gamedata path: {path}") from exc
+                if gamedata_tag not in known_tags:
+                    raise ImpactPlanningError(f"Tracked gamedata has no configured tag: {path}")
 
     impacts: list[TagImpact] = []
     digests: dict[str, str | None] = {
@@ -253,6 +275,8 @@ def build_plan(
             digests[f"merge_snapshot:{tag}"] = _sha256(merge_snapshot_raw)
             digests[f"base_metadata:{tag}"] = _sha256(repo.read(base_sha, f"gamesymbols/{metadata_filename(tag)}"))
             digests[f"merge_metadata:{tag}"] = _sha256(repo.read(merge_sha, f"gamesymbols/{metadata_filename(tag)}"))
+            digests[f"base_gamedata:{tag}"] = _gamedata_tree_digest(repo, base_sha, tag)
+            digests[f"merge_gamedata:{tag}"] = _gamedata_tree_digest(repo, merge_sha, tag)
             snapshots[tag] = (base_document, merge_document, base_contract_trusted)
 
         validate_reference_consumers(merge_tree, list(merge_sources.values()))
@@ -274,6 +298,9 @@ def build_plan(
                 snapshot_delta=snapshot_delta_paths(base_document, merge_document),
                 snapshot_changed=snapshot_documents_changed(base_document, merge_document),
                 metadata_changed=any(f"gamesymbols/{metadata_filename(tag)}" in change.paths for change in changes),
+                gamedata_changed=any(
+                    any(path.startswith(f"gamedata/{tag}/") for path in change.paths) for change in changes
+                ),
                 binary_changed_pairs=_binary_changes(
                     tag=tag,
                     base_contract=base_contracts[tag],
@@ -308,6 +335,11 @@ def _verify_bound_digest(document: dict, key: str, raw: bytes | None) -> None:
         raise PrCliError(f"Bound plan digest mismatch for {key}")
 
 
+def _verify_bound_gamedata(document: dict, key: str, repo: GitRepository, ref: str, tag: str) -> None:
+    if document.get("digests", {}).get(key) != _gamedata_tree_digest(repo, ref, tag):
+        raise PrCliError(f"Bound plan digest mismatch for {key}")
+
+
 def materialize_from_plan(
     *,
     repo_root: str | Path,
@@ -336,6 +368,7 @@ def materialize_from_plan(
         f"merge_metadata:{tag}",
         repo.read(document["merge_sha"], f"gamesymbols/{metadata_filename(tag)}"),
     )
+    _verify_bound_gamedata(document, f"merge_gamedata:{tag}", repo, document["merge_sha"], tag)
     action = next((item for item in document["tags"] if item["tag"] == tag), None)
     if action is None or action.get("deleted"):
         raise PrCliError(f"Plan has no materializable action for {tag}")
@@ -359,6 +392,7 @@ def materialize_from_plan(
                 f"base_metadata:{tag}",
                 repo.read(document["base_sha"], f"gamesymbols/{metadata_filename(tag)}"),
             )
+            _verify_bound_gamedata(document, f"base_gamedata:{tag}", repo, document["base_sha"], tag)
             if base_config_raw is None or base_snapshot_raw is None:
                 raise PrCliError("Incremental plan is missing its bound base contract")
             temporary_root = Path(temporary)

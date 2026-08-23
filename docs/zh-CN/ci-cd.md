@@ -26,6 +26,10 @@ GitHub Actions 工作流在每次 push 与 pull request 上运行受门禁保护
 
 Branch protection 只依赖终态 `pr-validate` job。该 job 使用 `always()`，显式读取每个路由 job 的结果，只在 trusted plan 未选择对应执行时接受 skipped，并在不向 fork 授予受保护 self-hosted runner 权限的前提下明确拒绝 fork analysis。内部 planner、hosted 与 self-hosted job 名称都不是 required checks。
 
+hosted 与 self-hosted source validation 都会从不可变 symbol candidate 重建 canonical gamedata manifest，并与
+exact `HEAD` Git blob 比较。bound plan 绑定 base/merge gamedata subtree digest；被忽略的工作树文件和宽泛 stage
+glob 都不是 validation 输入。
+
 ## Pages 部署
 
 [`.github/workflows/deploy-pages.yml`](../../.github/workflows/deploy-pages.yml) 在 `main` 分支 push 触碰到

@@ -14,6 +14,7 @@ download.yaml + configs/<tag>.yaml
   -> 不可变 candidate
   -> gamesymbols/<tag>.yaml + gamesymbols/<tag>.metadata.yaml
   -> SymbolStore -> 严格 gamedata generator
+  -> gamedata/<tag>/gamedata-manifest.json + declared payloads
 
 RunRequest -> Redis Stream -> 单并发 scheduler -> Analyzer
   -> ProcessEvent + heartbeat -> Redis state/streams
@@ -86,6 +87,10 @@ writer 输出 schema 6，包含 config digest v2、analysis output contract vers
 candidate session 绑定 canonical snapshot 与 alias metadata companion 的 hash、文件系统 identity 和 pair identity。
 本地 pair 发布使用可恢复 journal；对外可见的原子边界是 Git tree。发布仍必须先验证匹配的 gamedata session，
 candidate session 不包含 C++ 测试步骤。
+
+Canonical gamedata 默认继续被忽略，只能从 guarded candidate inventory 精确 stage。每个 tag 都有一个排除自身的
+canonical manifest，绑定 snapshot/config/generator identity 与声明的 payload 文件；因此空 generator 集合也有一份
+可跟踪、可 review 的输出。
 
 ## API、Dashboard 与不可变 Pages 资产
 

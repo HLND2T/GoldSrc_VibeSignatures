@@ -1,12 +1,20 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import tempfile
 import unittest
 from contextlib import contextmanager
 from pathlib import Path
 
-from gamedata_candidate import GamedataCandidateError, build_candidate, guard_candidate, publish_candidate
+from gamedata_candidate import (
+    GamedataCandidateError,
+    build_candidate,
+    guard_candidate,
+    publish_candidate,
+    stage_candidate,
+    verify_tracked_candidate,
+)
 from gamedata_contract import (
     GamedataContractError,
     generator_contract_sha256,
@@ -47,7 +55,8 @@ class GeneratorContractTests(unittest.TestCase):
                 modules_dir=root / "missing-generators",
                 output_root=root / "output",
             )
-            self.assertEqual([], result["files"])
+            self.assertEqual([], result["payload_files"])
+            self.assertEqual([f"gamedata/{tag}/gamedata-manifest.json"], [item["path"] for item in result["files"]])
             self.assertEqual(generator_contract_sha256([]), result["generator_contract_sha256"])
 
     def test_synthetic_generator_can_only_emit_declared_files(self):
@@ -71,7 +80,7 @@ class GeneratorContractTests(unittest.TestCase):
                 modules_dir=root / "generators",
                 output_root=root / "output",
             )
-            self.assertEqual([f"gamedata/{tag}/demo/value.txt"], [item["path"] for item in result["files"]])
+            self.assertEqual([f"gamedata/{tag}/demo/value.txt"], [item["path"] for item in result["payload_files"]])
 
     def test_rejects_undeclared_generator_output(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -118,9 +127,68 @@ class GamedataCandidateTests(unittest.TestCase):
             target = root / "gamedata" / tag
             publish_candidate(session_path=session, output_dir=target)
             self.assertTrue(target.is_dir())
+            self.assertTrue((target / "gamedata-manifest.json").is_file())
             snapshot.write_bytes(snapshot.read_bytes() + b"\n")
-            with self.assertRaises(GamedataCandidateError):
+            with self.assertRaises((GamedataCandidateError, GamedataContractError)):
                 guard_candidate(session)
+
+    def test_manifest_tamper_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            tag, config, snapshot = empty_snapshot(root)
+            modules = root / "generators"
+            modules.mkdir()
+            candidate_root = root / ".gamedata-candidates" / "build"
+            session = root / ".gamedata-candidates" / "session.json"
+            build_candidate(
+                gamever=tag,
+                build_id="test",
+                snapshot=snapshot,
+                analysis_config=config,
+                modules_dir=modules,
+                candidate_root=candidate_root,
+                session_path=session,
+            )
+            manifest = candidate_root / "gamedata" / tag / "gamedata-manifest.json"
+            manifest.write_bytes(manifest.read_bytes() + b"\n")
+            with self.assertRaises((GamedataCandidateError, GamedataContractError)):
+                guard_candidate(session)
+
+    def test_stage_uses_exact_candidate_paths_and_verifies_git_tree(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            subprocess.run(["git", "-C", str(root), "config", "user.email", "test@example.com"], check=True)
+            subprocess.run(["git", "-C", str(root), "config", "user.name", "Test"], check=True)
+            tag, config, snapshot = empty_snapshot(root)
+            (root / ".gitignore").write_text("gamedata/*/\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", ".gitignore", "config.yaml", "snapshot.yaml"], check=True)
+            subprocess.run(["git", "-C", str(root), "commit", "-q", "-m", "base"], check=True)
+            modules = root / "generators"
+            modules.mkdir()
+            candidate_root = root / ".gamedata-candidates" / "build"
+            session = root / ".gamedata-candidates" / "session.json"
+            build_candidate(
+                gamever=tag,
+                build_id="test",
+                snapshot=snapshot,
+                analysis_config=config,
+                modules_dir=modules,
+                candidate_root=candidate_root,
+                session_path=session,
+            )
+            target = root / "gamedata" / tag
+            publish_candidate(session_path=session, output_dir=target)
+            (root / "gamedata" / "unrelated.txt").write_text("extra", encoding="utf-8")
+            stage_candidate(session_path=session, repo_root=root)
+            staged = subprocess.check_output(
+                ["git", "-C", str(root), "diff", "--cached", "--name-only"], text=True
+            ).splitlines()
+            self.assertEqual([f"gamedata/{tag}/gamedata-manifest.json"], staged)
+            tree = subprocess.check_output(["git", "-C", str(root), "write-tree"], text=True).strip()
+            verify_tracked_candidate(session_path=session, repo_root=root, ref=tree)
+            subprocess.run(["git", "-C", str(root), "commit", "-q", "-m", "gamedata"], check=True)
+            verify_tracked_candidate(session_path=session, repo_root=root, ref="HEAD")
 
     def test_generator_contract_changes_are_detected(self):
         with tempfile.TemporaryDirectory() as temporary:

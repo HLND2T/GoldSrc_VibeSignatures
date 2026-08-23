@@ -24,6 +24,8 @@ The `pages` job installs Node 24, runs `npm ci`, `npm test`, `npm run lint`, `np
 
 Branch protection depends only on the final `pr-validate` job. That job runs with `always()`, reads every routed job result explicitly, accepts skipped jobs only when the trusted plan did not select them, and fails fork analysis without granting the fork access to the protected self-hosted runner. Internal planner, hosted, and self-hosted job names are not required checks.
 
+Hosted and self-hosted source validation rebuild the canonical gamedata manifest from the immutable symbol candidate and compare it with exact `HEAD` Git blobs. The bound plan includes base/merge gamedata subtree digests; ignored worktree files and broad staging globs are never validation inputs.
+
 ## Pages deployment
 
 [`.github/workflows/deploy-pages.yml`](../../.github/workflows/deploy-pages.yml) triggers on pushes to `main` that touch `pages/**`, `gamesymbols/**`, or the workflow itself. General config edits do not redeploy historical aliases:

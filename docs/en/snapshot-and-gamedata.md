@@ -22,6 +22,7 @@ uv run python gamedata_candidate.py guard -session "$GAMEDATA_SESSION"
 uv run python gamesymbol_candidate.py mark -candidate "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION" -step gamedata -gamedata-session "$GAMEDATA_SESSION"
 uv run python gamesymbol_candidate.py publish -candidate "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION" -destination gamesymbols/cstrike-10210.yaml
 uv run python gamedata_candidate.py publish -session "$GAMEDATA_SESSION" -outputdir gamedata/cstrike-10210
+uv run python gamedata_candidate.py stage -session "$GAMEDATA_SESSION" -repo-root .
 ```
 
 Notes:
@@ -30,6 +31,8 @@ Notes:
 - `gamedata_candidate.py publish -outputdir` must end with the exact tag. Publication is an atomic replace.
 - Candidate build also generates `$CANDIDATE_METADATA`. The session binds both exact paths, hashes, filesystem identities, and the metadata-to-snapshot SHA-256.
 - Local pair publication uses a recovery journal and fixed replacement order. A verifier rejects any intermediate mismatch; the Git commit/tree is the externally visible atomic boundary.
+- Every gamedata directory contains canonical `gamedata-manifest.json`, even when no generator emits payload files. It binds the snapshot, config, generator contract, and a self-excluding payload inventory.
+- `stage` guards the candidate, builds and verifies a temporary Git tree, then uses `git add -f -- <exact-path>` only for the candidate manifest paths. The repository keeps `gamedata/*/` ignored; broad glob staging is forbidden.
 - An absent or empty generator root produces an empty, hashed inventory that still satisfies the gamedata step after `guard` succeeds.
 
 Generate or independently verify a tracked companion with:
