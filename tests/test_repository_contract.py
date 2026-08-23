@@ -20,7 +20,12 @@ from binary_format import inspect_binary
 from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.metadata import verify_metadata
 from gamesymbol_snapshot_lib.paths import iter_snapshot_paths
-from gamedata_contract import discover_generator_modules, generator_contract_sha256, validate_gamedata_tree
+from gamedata_contract import (
+    analysis_config_sha256,
+    discover_generator_modules,
+    generator_contract_sha256,
+    validate_gamedata_tree,
+)
 from release_workflow_lib.hashing import sha256_file
 
 ROOT = Path(__file__).parents[1]
@@ -313,7 +318,7 @@ class RepositoryContractTests(unittest.TestCase):
                     tag,
                     generators,
                     candidate_sha256=sha256_file(path),
-                    analysis_config_sha256=sha256_file(config_path),
+                    analysis_config_sha256=analysis_config_sha256(config_path),
                     generator_contract_digest=generator_contract_sha256(generators),
                 )
                 self.assertTrue(files)

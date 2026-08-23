@@ -32,6 +32,7 @@ Notes:
 - Candidate build also generates `$CANDIDATE_METADATA`. The session binds both exact paths, hashes, filesystem identities, and the metadata-to-snapshot SHA-256.
 - Local pair publication uses a recovery journal and fixed replacement order. A verifier rejects any intermediate mismatch; the Git commit/tree is the externally visible atomic boundary.
 - Every gamedata directory contains canonical `gamedata-manifest.json`, even when no generator emits payload files. It binds the snapshot, config, generator contract, and a self-excluding payload inventory.
+- The gamedata config identity normalizes CRLF to LF and rejects bare CR. Repository attributes pin tracked configs to LF, so Windows candidate generation and exact Git-blob verification share one digest.
 - `stage` guards the candidate, builds and verifies a temporary Git tree, then uses `git add -f -- <exact-path>` only for the candidate manifest paths. The repository keeps `gamedata/*/` ignored; broad glob staging is forbidden.
 - An absent or empty generator root produces an empty, hashed inventory that still satisfies the gamedata step after `guard` succeeds.
 
@@ -43,6 +44,17 @@ uv run python gamesymbol_metadata.py verify -snapshot gamesymbols/hl-10210.yaml 
 ```
 
 Pages never reads live config aliases. A missing, non-canonical, hash-mismatched, or owner-mismatched companion fails the build.
+
+## Release content inventory
+
+The schema-1 release content manifest is a second, Git-tree-level contract. For one tag it inventories the exact
+`gamesymbols/<tag>.yaml`, `gamesymbols/<tag>.metadata.yaml`, and `gamedata/<tag>/**` blobs with their Git mode, size, and
+raw SHA-256. `release-manifests/<tag>.json` is excluded from that digest, so the manifest never hashes itself.
+
+The verifier cross-checks the companion's snapshot/config bindings, the gamedata manifest's snapshot/config/generator
+bindings, the snapshot binary inventory, and the `bin` gitlink. A missing companion or gamedata manifest, unexpected
+gamedata payload, executable-mode payload, non-canonical bytes, or default-branch drift fails closed. Shadow output is
+evidence only and does not change canonical publication authority.
 
 ## Generate gamedata directly
 

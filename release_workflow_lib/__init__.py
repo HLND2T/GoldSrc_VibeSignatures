@@ -1,1 +1,1 @@
-"""Local-only hashing helpers shared by candidate transactions."""
+"""Release content identity, staging, and promotion contracts."""

@@ -10,6 +10,7 @@ from analysis_config import AnalysisConfigError, resolve_analysis_config
 from gamedata_contract import (
     GamedataContractError,
     GeneratorContext,
+    analysis_config_sha256,
     build_gamedata_manifest,
     discover_generator_modules,
     generator_contract_sha256,
@@ -43,7 +44,7 @@ def generate_gamedata(*, gamever, snapshot_path, config_path, modules_dir, outpu
     manifest = build_gamedata_manifest(
         gamever=gamever,
         candidate_sha256=sha256_file(snapshot_path),
-        analysis_config_sha256=sha256_file(config_path),
+        analysis_config_sha256=analysis_config_sha256(config_path),
         generator_contract_digest=generator_digest,
         payload_files=payload_files,
     )

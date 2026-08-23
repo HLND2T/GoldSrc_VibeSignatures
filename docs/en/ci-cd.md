@@ -26,6 +26,17 @@ Branch protection depends only on the final `pr-validate` job. That job runs wit
 
 Hosted and self-hosted source validation rebuild the canonical gamedata manifest from the immutable symbol candidate and compare it with exact `HEAD` Git blobs. The bound plan includes base/merge gamedata subtree digests; ignored worktree files and broad staging globs are never validation inputs.
 
+## Release provenance shadow
+
+[`release-shadow.yml`](../../.github/workflows/release-shadow.yml) runs only at the exact `main` commit with
+`contents: read`. It builds canonical release content manifests for `hl-10210`, `hl-8684`, and `svencoop-10257`, then
+rebuilds and verifies each manifest from exact Git blobs before uploading a 30-day evidence artifact. The workflow does
+not check out `bin`, trust worktree globs, or write refs, repository contents, pull requests, tags, or Releases.
+
+Shadow success proves local content identity and the `new` mode decision only. It does not activate generated-output
+PRs, promotion, republish, or production release authority; those still require protected test-repository exercises and
+external branch/ruleset, merge-policy, protected-tag, Environment, and GitHub App evidence.
+
 ## Pages deployment
 
 [`.github/workflows/deploy-pages.yml`](../../.github/workflows/deploy-pages.yml) triggers on pushes to `main` that touch `pages/**`, `gamesymbols/**`, or the workflow itself. General config edits do not redeploy historical aliases:

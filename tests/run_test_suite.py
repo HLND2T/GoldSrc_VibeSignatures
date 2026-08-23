@@ -27,6 +27,7 @@ GROUP_FILES = {
         "test_gamesymbol_pr_validation.py",
         "test_gamesymbol_metadata.py",
         "test_gamedata.py",
+        "test_release_workflow.py",
         "test_decrypt_blob.py",
     ),
     "redis-integration": (

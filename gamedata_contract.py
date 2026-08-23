@@ -42,6 +42,17 @@ class GamedataContractError(ValueError):
     pass
 
 
+def analysis_config_sha256(path: str | Path) -> str:
+    try:
+        raw = Path(path).read_bytes()
+    except OSError as exc:
+        raise GamedataContractError(f"Unable to read analysis config {path}: {exc}") from exc
+    normalized = raw.replace(b"\r\n", b"\n")
+    if b"\r" in normalized:
+        raise GamedataContractError(f"Analysis config contains unsupported bare CR bytes: {path}")
+    return sha256_bytes(normalized)
+
+
 def _freeze(value):
     if isinstance(value, Mapping):
         return MappingProxyType({key: _freeze(item) for key, item in value.items()})
@@ -224,13 +235,11 @@ def write_gamedata_manifest(output_root: str | Path, document: dict) -> str:
     return sha256_file(path)
 
 
-def parse_gamedata_manifest(path: str | Path) -> tuple[dict, str]:
-    path = Path(path)
+def parse_gamedata_manifest_bytes(raw: bytes, source: str = "<bytes>") -> tuple[dict, str]:
     try:
-        raw = path.read_bytes()
         document = json.loads(raw)
-    except (OSError, json.JSONDecodeError) as exc:
-        raise GamedataContractError(f"Unable to read gamedata manifest {path}: {exc}") from exc
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise GamedataContractError(f"Unable to read gamedata manifest {source}: {exc}") from exc
     if not isinstance(document, dict) or set(document) != GAMEDATA_MANIFEST_KEYS or document.get("schema_version") != 1:
         raise GamedataContractError("Gamedata manifest has unexpected fields or schema")
     if canonical_json_bytes(document) != raw:
@@ -251,6 +260,15 @@ def parse_gamedata_manifest(path: str | Path) -> tuple[dict, str]:
     ):
         raise GamedataContractError("Gamedata manifest payload inventory is invalid")
     return document, sha256_bytes(raw)
+
+
+def parse_gamedata_manifest(path: str | Path) -> tuple[dict, str]:
+    path = Path(path)
+    try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise GamedataContractError(f"Unable to read gamedata manifest {path}: {exc}") from exc
+    return parse_gamedata_manifest_bytes(raw, str(path))
 
 
 def validate_gamedata_tree(

@@ -15,6 +15,7 @@ from pathlib import Path
 from analysis_config import validated_tag
 from gamedata_contract import (
     GamedataContractError,
+    analysis_config_sha256,
     discover_generator_modules,
     generator_contract_sha256,
     validate_gamedata_tree,
@@ -94,7 +95,7 @@ def build_candidate(
         "modules_dir": str(modules_dir),
         "gamedata_path": f"gamedata/{tag}",
         "candidate_sha256": sha256_file(snapshot),
-        "analysis_config_sha256": sha256_file(analysis_config),
+        "analysis_config_sha256": analysis_config_sha256(analysis_config),
         "generator_contract_sha256": result["generator_contract_sha256"],
         "gamedata_manifest_sha256": result["gamedata_manifest_sha256"],
         "files": result["files"],
@@ -112,7 +113,7 @@ def guard_candidate(session_path):
     config = _file(session["analysis_config_path"], "Analysis config")
     if sha256_file(snapshot) != session["candidate_sha256"]:
         raise GamedataCandidateError("Symbol candidate changed after gamedata generation")
-    if sha256_file(config) != session["analysis_config_sha256"]:
+    if analysis_config_sha256(config) != session["analysis_config_sha256"]:
         raise GamedataCandidateError("Analysis config changed after gamedata generation")
     modules = discover_generator_modules(session["modules_dir"])
     if generator_contract_sha256(modules) != session["generator_contract_sha256"]:

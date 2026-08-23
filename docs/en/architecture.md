@@ -23,6 +23,10 @@ RunRequest -> Redis Stream -> single-concurrency scheduler -> analyzer
 snapshot + immutable metadata companion -> Vite asset plugin
   -> content-addressed JSON + index v4
   -> append-only pages-snapshots archive -> GitHub Pages Symbol Explorer
+
+exact main Git tree + bin gitlink + tracked snapshot/metadata/gamedata
+  -> self-excluding release content manifest
+  -> read-only shadow verification evidence
 ```
 
 `analysis_planner.py` is the single source for module, symbol, artifact-path, and DAG validation. Snapshot contracts
@@ -98,6 +102,18 @@ Publication still requires the guarded `gamedata` step. Candidate sessions do no
 Canonical gamedata remains ignored by default and is staged only from the guarded candidate inventory. Each tag has a
 self-excluding canonical manifest that binds snapshot/config/generator identities and the exact declared payload files;
 an empty generator set therefore still has one trackable, reviewable output.
+
+## Release provenance boundary
+
+Release content identity is built only from exact blobs in the default-branch Git tree. Schema-1 canonical JSON binds
+the source commit, `bin` gitlink, raw config and canonical contract digests, snapshot and binary inventory, immutable
+metadata companion, gamedata manifest/generator contract, and the trusted workflow/tool revision. Its tracked-content
+inventory records path, Git mode, size, and blob SHA-256 for the current tag's snapshot, metadata, and gamedata, while
+deliberately excluding `release-manifests/<tag>.json` to avoid self-reference.
+
+The current release workflow is shadow-only. It verifies three tags and emits local Actions evidence with a `new` mode
+decision, but has no authority to push refs or contents, create pull requests or tags, or publish GitHub Releases.
+Generated-output PR and promotion authority remain disabled until their separate protected-repository gates are proven.
 
 ## API, dashboard, and immutable Pages assets
 

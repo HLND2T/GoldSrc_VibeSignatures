@@ -39,6 +39,8 @@ uv run python gamedata_candidate.py stage -session "$GAMEDATA_SESSION" -repo-roo
   commit/tree。
 - 即使没有 generator 产生 payload，每个 gamedata 目录也包含 canonical `gamedata-manifest.json`。它绑定
   snapshot、config、generator contract 与排除 manifest 自身的 payload inventory。
+- gamedata config identity 会把 CRLF 规范化为 LF 并拒绝 bare CR；仓库 attributes 同时把 tracked config 固定为
+  LF，因此 Windows candidate generation 与 exact Git-blob verification 使用同一 digest。
 - `stage` 先 guard candidate，再构造并验证临时 Git tree，最后只对 candidate manifest 中的精确路径执行
   `git add -f -- <exact-path>`。仓库继续忽略 `gamedata/*/`，禁止宽泛 glob staging。
 - generator 根目录不存在或为空会产生带 hash 的空 inventory，只要 `guard` 成功仍可满足 gamedata 步骤。
@@ -51,6 +53,17 @@ uv run python gamesymbol_metadata.py verify -snapshot gamesymbols/hl-10210.yaml 
 ```
 
 Pages 不再读取 live config alias。companion 缺失、非 canonical、hash 不匹配或 owner 不匹配都会使构建失败。
+
+## Release content inventory
+
+Schema-1 release content manifest 是第二层 Git-tree contract。对单个 tag，它以 Git mode、size 与 raw SHA-256
+清点 exact `gamesymbols/<tag>.yaml`、`gamesymbols/<tag>.metadata.yaml` 与 `gamedata/<tag>/**` blob。
+`release-manifests/<tag>.json` 不进入该 digest，因此 manifest 不会 hash 自身。
+
+Verifier 会交叉核对 companion 的 snapshot/config binding、gamedata manifest 的 snapshot/config/generator binding、
+snapshot binary inventory 与 `bin` gitlink。缺失 companion 或 gamedata manifest、额外 gamedata payload、可执行 mode
+payload、non-canonical bytes 或 default-branch drift 都会 fail closed。Shadow output 仅作为 evidence，不改变 canonical
+publication authority。
 
 ## 直接生成 gamedata
 

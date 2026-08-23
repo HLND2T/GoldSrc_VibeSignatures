@@ -30,6 +30,17 @@ hosted 与 self-hosted source validation 都会从不可变 symbol candidate 重
 exact `HEAD` Git blob 比较。bound plan 绑定 base/merge gamedata subtree digest；被忽略的工作树文件和宽泛 stage
 glob 都不是 validation 输入。
 
+## Release provenance shadow
+
+[`release-shadow.yml`](../../.github/workflows/release-shadow.yml) 只在 exact `main` commit 上以 `contents: read`
+运行。它为 `hl-10210`、`hl-8684` 与 `svencoop-10257` 构建 canonical release content manifest，再从 exact Git
+blob 重建并逐份校验，最后上传保留 30 天的 evidence artifact。该 workflow 不 checkout `bin`，不信任 worktree
+glob，也不写 Git ref、repository content、PR、tag 或 Release。
+
+Shadow success 只证明本地 content identity 与 `new` mode decision，不会激活 generated-output PR、promotion、
+republish 或 production release authority；这些能力仍需 protected test repository 演练，以及外部 branch/ruleset、
+merge policy、protected tag、Environment 与 GitHub App evidence。
+
 ## Pages 部署
 
 [`.github/workflows/deploy-pages.yml`](../../.github/workflows/deploy-pages.yml) 在 `main` 分支 push 触碰到

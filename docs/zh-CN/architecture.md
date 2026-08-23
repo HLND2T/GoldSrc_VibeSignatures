@@ -23,6 +23,10 @@ RunRequest -> Redis Stream -> 单并发 scheduler -> Analyzer
 snapshot + immutable metadata companion -> Vite asset plugin
   -> content-addressed JSON + index v4
   -> append-only pages-snapshots archive -> GitHub Pages Symbol Explorer
+
+exact main Git tree + bin gitlink + tracked snapshot/metadata/gamedata
+  -> self-excluding release content manifest
+  -> read-only shadow verification evidence
 ```
 
 `analysis_planner.py` 是模块、符号、工件路径与 DAG 校验的唯一来源。snapshot contract 复用同一实现，避免分析和
@@ -91,6 +95,18 @@ candidate session 不包含 C++ 测试步骤。
 Canonical gamedata 默认继续被忽略，只能从 guarded candidate inventory 精确 stage。每个 tag 都有一个排除自身的
 canonical manifest，绑定 snapshot/config/generator identity 与声明的 payload 文件；因此空 generator 集合也有一份
 可跟踪、可 review 的输出。
+
+## Release provenance 边界
+
+Release content identity 只从 default branch 的 exact Git-tree blob 构建。Schema-1 canonical JSON 绑定 source
+commit、`bin` gitlink、raw config 与 canonical contract digest、snapshot 与 binary inventory、immutable metadata
+companion、gamedata manifest/generator contract，以及可信 workflow/tool revision。Tracked-content inventory 记录当前
+tag 的 snapshot、metadata、gamedata 的 path、Git mode、size 与 blob SHA-256，并明确排除
+`release-manifests/<tag>.json`，避免 manifest 自引用。
+
+当前 release workflow 仅运行 shadow verification：它校验三个 tag 并生成带 `new` mode decision 的本地 Actions
+evidence，但无权 push ref/content、创建 PR/tag 或发布 GitHub Release。Generated-output PR 与 promotion authority
+在独立的 protected-repository 门禁取得真实证据前保持 disabled。
 
 ## API、Dashboard 与不可变 Pages 资产
 

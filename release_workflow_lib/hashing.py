@@ -3,14 +3,19 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import stat
 from pathlib import Path, PurePosixPath
 
 from release_workflow_lib.errors import ReleaseWorkflowError
 
+SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+
 
 def canonical_json_bytes(value: object) -> bytes:
-    return (json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True) + "\n").encode("utf-8")
+    return (
+        json.dumps(value, allow_nan=False, ensure_ascii=False, separators=(",", ":"), sort_keys=True) + "\n"
+    ).encode("utf-8")
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -25,11 +30,19 @@ def sha256_file(path: str | Path) -> str:
     return digest.hexdigest()
 
 
+def normalized_sha256(value: object, context: str, *, allow_prefix: bool = False) -> str:
+    if allow_prefix and isinstance(value, str) and value.startswith("sha256:"):
+        value = value.removeprefix("sha256:")
+    if not isinstance(value, str) or not SHA256_PATTERN.fullmatch(value):
+        raise ReleaseWorkflowError(f"{context} must be a lowercase raw SHA-256 digest")
+    return value
+
+
 def normalized_relative_path(value: str) -> str:
-    if not isinstance(value, str) or not value or "\\" in value:
+    if not isinstance(value, str) or not value or "\\" in value or "\0" in value:
         raise ReleaseWorkflowError(f"Path must be a non-empty relative POSIX path: {value!r}")
     path = PurePosixPath(value)
-    if path.is_absolute() or any(part in {"", ".", ".."} for part in path.parts):
+    if path.is_absolute() or path.as_posix() != value or any(part in {"", ".", ".."} for part in path.parts):
         raise ReleaseWorkflowError(f"Unsafe relative path: {value!r}")
     return path.as_posix()
 

@@ -17,6 +17,7 @@ from gamedata_candidate import (
 )
 from gamedata_contract import (
     GamedataContractError,
+    analysis_config_sha256,
     generator_contract_sha256,
 )
 from gamesymbol_snapshot_lib.operations import pack_snapshot
@@ -44,6 +45,18 @@ def empty_snapshot(root: Path):
 
 
 class GeneratorContractTests(unittest.TestCase):
+    def test_analysis_config_identity_is_stable_across_lf_and_crlf(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            lf = root / "lf.yaml"
+            crlf = root / "crlf.yaml"
+            lf.write_bytes(b"modules: []\n")
+            crlf.write_bytes(b"modules: []\r\n")
+            self.assertEqual(analysis_config_sha256(lf), analysis_config_sha256(crlf))
+            crlf.write_bytes(b"modules: []\r")
+            with self.assertRaises(GamedataContractError):
+                analysis_config_sha256(crlf)
+
     def test_zero_generators_have_stable_empty_contract_and_inventory(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
