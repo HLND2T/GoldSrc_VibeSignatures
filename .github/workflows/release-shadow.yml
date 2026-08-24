@@ -37,11 +37,11 @@ jobs:
           -tag hl-10210
           -tag hl-8684
           -tag svencoop-10257
-          -output-dir .release-shadow
+          -output-dir release-shadow
       - name: Upload read-only shadow evidence
         uses: actions/upload-artifact@v4
         with:
           name: release-shadow-${{ github.sha }}
-          path: .release-shadow/
+          path: release-shadow/
           if-no-files-found: error
           retention-days: 30
