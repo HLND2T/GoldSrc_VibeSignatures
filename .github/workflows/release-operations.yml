@@ -44,7 +44,7 @@ jobs:
     if: >-
       inputs.operation == 'reconcile' ||
       (inputs.activate_production == true && vars.GSVIBE_RELEASE_PHASE2_ENABLED == 'true')
-    runs-on: [self-hosted, Windows, X64, gsvibe-release]
+    runs-on: [self-hosted, windows, x64]
     environment: release
     timeout-minutes: 120
     env:

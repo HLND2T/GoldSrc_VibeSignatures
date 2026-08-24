@@ -49,9 +49,9 @@ not check out `bin`, trust worktree globs, or write refs, repository contents, p
 Shadow success proves local content identity and the `new` mode decision only. The implemented Phase 2 workflows remain
 disabled by default:
 
-- `release-build.yml` runs only for an exact `main` dispatch, the protected `gsvibe-release` runner and `release`
-  Environment. A GitHub App token pushes an immutable direct-parent output branch, creates a draft PR, binds its remote
-  identity into private staging, then marks it ready.
+- `release-build.yml` runs only for an exact `main` dispatch, on the shared `[self-hosted, windows, x64]` runner and the
+  `release` Environment. A GitHub App token pushes an immutable direct-parent output branch, creates a draft PR, binds its
+  remote identity into private staging, then marks it ready.
 - `release-output-validation.yml` is a read-only reusable verifier. It rejects repository/author/branch identity before
   fetching the exact head object and never checks out or executes output-head code.
 - `release-promotion.yml` splits a credential-free merge verifier from an Environment-protected writer. The writer

@@ -2,8 +2,8 @@
 
 Phase 2 production authority is off unless both the dispatch requests activation and the repository variable
 `GSVIBE_RELEASE_PHASE2_ENABLED` is `true`. Do not enable it until branch/ruleset, merge-commit-only and up-to-date policy,
-protected tags, the `release` Environment, GitHub App identity/permissions, and the dedicated `gsvibe-release` runner have
-captured protected-repository evidence.
+protected tags, the `release` Environment, and GitHub App identity/permissions have captured protected-repository
+evidence. Phase 2 runs on the same `[self-hosted, windows, x64]` runner as source analysis.
 
 `republish` additionally requires `GSVIBE_RELEASE_REPUBLISH_ENABLED=true`; keep that independent gate off until the
 missing/corrupt asset exercise has completed in the protected test repository.

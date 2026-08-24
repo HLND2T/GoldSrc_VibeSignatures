@@ -345,7 +345,7 @@ class RepositoryContractTests(unittest.TestCase):
         build = workflows["release-build.yml"]
         self.assertEqual("read", build["permissions"]["contents"])
         build_job = build["jobs"]["build-output"]
-        self.assertEqual(["self-hosted", "Windows", "X64", "gsvibe-release"], build_job["runs-on"])
+        self.assertEqual(["self-hosted", "windows", "x64"], build_job["runs-on"])
         self.assertEqual("release", build_job["environment"])
         self.assertIn("GSVIBE_RELEASE_PHASE2_ENABLED", json.dumps(build))
         self.assertIn("actions/create-github-app-token@v2", json.dumps(build_job))
@@ -384,6 +384,7 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertEqual({"${{ github.repository }}-release-phase2"}, concurrency_groups)
         for workflow in workflows.values():
             for job in workflow["jobs"].values():
+                self.assertNotIn("gsvibe-release", job.get("runs-on", []))
                 for step in job.get("steps", []):
                     run = step.get("run", "")
                     self.assertNotIn("${{ inputs.", run)

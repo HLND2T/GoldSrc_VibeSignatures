@@ -47,10 +47,11 @@ plugin identity before publication, so these settings cannot manufacture a succe
 
 ## Release runner and GitHub governance requirements
 
-Phase 2 requires a dedicated `[self-hosted, Windows, X64, gsvibe-release]` runner whose machine environment exposes the
-same checkout-external `GSVIBE_PERSISTED_WORKSPACE` to output validation, build, promotion, and recovery jobs. Its
-`release-staging` subtree must be protected by runner-account ACLs and storage with atomic same-filesystem rename and
-hard-link semantics. It must not be shared with untrusted jobs.
+Phase 2 runs on the same `[self-hosted, windows, x64]` runner as source analysis; there is no separate release runner. Its
+machine environment must expose the same checkout-external `GSVIBE_PERSISTED_WORKSPACE` to output validation, build,
+promotion, and recovery jobs. The `release-staging` subtree must be protected by runner-account ACLs and storage with
+atomic same-filesystem rename and hard-link semantics. The PR routing contract must keep untrusted/fork analysis off this
+runner.
 
 Create a protected `release` Environment with `GSVIBE_RELEASE_APP_ID` and `GSVIBE_RELEASE_APP_PRIVATE_KEY`. The installed
 App must have only the repository permissions needed for output branches/PRs, workflow dispatch, annotated tags,

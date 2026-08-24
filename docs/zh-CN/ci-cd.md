@@ -51,7 +51,7 @@ glob，也不写 Git ref、repository content、PR、tag 或 Release。
 
 Shadow success 只证明本地 content identity 与 `new` mode decision。已实现的 Phase 2 workflow 默认保持 disabled：
 
-- `release-build.yml` 只接受 exact `main` dispatch，并运行在受保护的 `gsvibe-release` runner 与 `release`
+- `release-build.yml` 只接受 exact `main` dispatch，并运行在共享的 `[self-hosted, windows, x64]` runner 与 `release`
   Environment。GitHub App token push immutable direct-parent output branch、创建 draft PR、把 remote identity 绑定到
   private staging，最后才标记 ready。
 - `release-output-validation.yml` 是只读 reusable verifier；先拒绝 repository/author/branch identity，再只 fetch exact

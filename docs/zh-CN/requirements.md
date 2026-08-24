@@ -51,10 +51,10 @@ identity 一致后才能 publication，因此这些配置值不能伪造成功�
 
 ## Release runner 与 GitHub governance 要求
 
-Phase 2 需要专用 `[self-hosted, Windows, X64, gsvibe-release]` runner。其 machine environment 必须让 output
-validation、build、promotion 与 recovery job 看到同一个 checkout 外 `GSVIBE_PERSISTED_WORKSPACE`；其中
-`release-staging` 子树必须由 runner-account ACL 保护，存储需要支持同文件系统 atomic rename 与 hard link，并且不能
-提供给 untrusted job。
+Phase 2 与 source analysis 共用同一个 `[self-hosted, windows, x64]` runner，没有独立 release runner。其 machine
+environment 必须让 output validation、build、promotion 与 recovery job 看到同一个 checkout 外
+`GSVIBE_PERSISTED_WORKSPACE`；其中 `release-staging` 子树必须由 runner-account ACL 保护，存储需要支持同文件系统
+atomic rename 与 hard link。PR routing contract 必须把 untrusted/fork analysis 挡在该 runner 之外。
 
 创建受保护的 `release` Environment，并配置 `GSVIBE_RELEASE_APP_ID` 与
 `GSVIBE_RELEASE_APP_PRIVATE_KEY`。Installation App 只获得 output branch/PR、workflow dispatch、annotated tag、

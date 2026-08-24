@@ -2,8 +2,8 @@
 
 只有 dispatch 显式请求 activation 且 repository variable `GSVIBE_RELEASE_PHASE2_ENABLED=true` 时，Phase 2 才可能
 取得 production authority。Branch/ruleset、merge-commit-only 与 up-to-date policy、protected tag、`release`
-Environment、GitHub App identity/permissions、专用 `gsvibe-release` runner 的 protected-repository evidence 未完成前，
-不得启用。
+Environment、GitHub App identity/permissions 的 protected-repository evidence 未完成前，不得启用。Phase 2 与 source
+analysis 共用同一个 `[self-hosted, windows, x64]` runner。
 
 `republish` 还要求独立的 `GSVIBE_RELEASE_REPUBLISH_ENABLED=true`；protected test repository 中缺失/损坏资产演练
 完成前保持关闭。
