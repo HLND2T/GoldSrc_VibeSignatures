@@ -35,7 +35,7 @@ Warm IDB cache is a rebuildable performance layer for neutral databases created 
 
 ## Workflow integration
 
-The schema-2 trusted PR plan binds `cache_mode=warm|cold`. `idb_cache_workflow.py` verifies the exact merge commit and bin gitlink, derives only the selected analysis binary pairs, probes or warms under per-tag and MCP-port locks, and writes canonical `cache-selection.json` plus its SHA-256. Warm verify/restore never re-read READY. Cold mode skips all persisted-root steps. The dedicated `gsvibe-ida` runner keeps clean, restore, strict analysis, and final clean in one protected job.
+The schema-2 trusted PR plan binds `cache_mode=warm|cold`. `idb_cache_workflow.py` verifies the exact merge commit and bin gitlink, derives only the selected analysis binary pairs, probes or warms under per-tag and MCP-port locks, and writes canonical `cache-selection.json` plus its SHA-256. Warm verify/restore never re-read READY. Cold mode skips all persisted-root steps.
 
 ## Failure and recovery
 

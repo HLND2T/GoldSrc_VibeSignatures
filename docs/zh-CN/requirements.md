@@ -44,8 +44,7 @@ Runner account 需要对 cache root 拥有独占写权限。Cache warming 固定
 port。只有所有 consumer 共享同一受控 storage 与 ACL authority 时才能共享 cache；Actions artifact 与
 `READY.json` 都不是 cache transport 或 truth source。
 
-为专用 runner 配置 `gsvibe-ida` label，并将其关联到受保护的 `win64` Environment。真实 runner evidence 完成前，
-repository variable `GSVIBE_IDB_CACHE_MODE` 保持 `cold`，完成后才切换为 `warm`；
+真实 runner evidence 完成前，repository variable `GSVIBE_IDB_CACHE_MODE` 保持 `cold`，完成后才切换为 `warm`；
 `GSVIBE_IDA_KERNEL_VERSION` 记录 pinned installation 的 expected kernel version。Absolute persisted path 作为
 Environment secret `GSVIBE_PERSISTED_WORKSPACE` 保存。Observed runtime 必须与 expected kernel、loader、plugin
 identity 一致后才能 publication，因此这些配置值不能伪造成功的 cache generation。

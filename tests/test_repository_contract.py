@@ -289,7 +289,7 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("-cache-mode", workflow_text)
         self.assertIn("PLAN_SCHEMA_VERSION = 2", workflow_text)
         self_hosted = jobs["analyze-self-hosted"]
-        self.assertEqual(["self-hosted", "Windows", "X64", "gsvibe-ida"], self_hosted["runs-on"])
+        self.assertEqual(["self-hosted", "windows", "x64"], self_hosted["runs-on"])
         self.assertEqual("${{ github.repository }}-gamesymbol-self-hosted-ida", self_hosted["concurrency"]["group"])
         self.assertEqual("false", self_hosted["concurrency"]["cancel-in-progress"])
         step_names = [step.get("name") for step in self_hosted["steps"]]

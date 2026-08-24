@@ -213,7 +213,7 @@ jobs:
     needs: [classify, plan]
     if: needs.classify.outputs.route == 'source' && needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository
       == 'true'
-    runs-on: [self-hosted, Windows, X64, gsvibe-ida]
+    runs-on: [self-hosted, windows, x64]
     environment: win64
     timeout-minutes: 720
     concurrency:

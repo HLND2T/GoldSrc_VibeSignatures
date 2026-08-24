@@ -88,7 +88,7 @@ reparse points, path escapes, case collisions, stale workspace binaries, tampere
 The `restored_strict` lifecycle policy never invalidates or cold-rebuilds a mismatched restored database and can disable
 success saves so selected-node modifications never flow back into the immutable generation.
 
-The trusted PR plan binds explicit `cache_mode=warm|cold`. The protected `gsvibe-ida` Windows job performs validated
+The trusted PR plan binds explicit `cache_mode=warm|cold`. The Windows job performs validated
 submodule clean, exact probe/bounded warm publication, canonical selection verification, strict restore, selected-node
 analysis, and final clean without another clean between restore and analysis. Cold mode skips every persisted-root step
 and uses the normal rebuild/save lifecycle. A repository-level Actions concurrency group and runner-local file lock

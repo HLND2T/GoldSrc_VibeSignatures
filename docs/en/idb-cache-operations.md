@@ -4,7 +4,7 @@
 
 ## Activation checklist
 
-Keep `GSVIBE_IDB_CACHE_MODE=cold` until the dedicated `gsvibe-ida` Windows runner, protected `win64` Environment,
+Keep `GSVIBE_IDB_CACHE_MODE=cold` until the dedicated Windows runner, protected `win64` Environment,
 outside-checkout persisted root, ACL owner, atomic rename storage, `IDADIR`, and expected kernel version are verified.
 The persisted root must not contain the checkout or be contained by it, and neither its path nor root may traverse a
 link or reparse point.

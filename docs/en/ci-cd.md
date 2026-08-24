@@ -29,7 +29,7 @@ Branch protection depends only on the final `pr-validate` job. That job runs wit
 Hosted and self-hosted source validation rebuild the canonical gamedata manifest from the immutable symbol candidate and compare it with exact `HEAD` Git blobs. The bound plan includes base/merge gamedata subtree digests; ignored worktree files and broad staging globs are never validation inputs.
 
 The planner also binds `cache_mode` from the `GSVIBE_IDB_CACHE_MODE` repository variable (`cold` by default). Analysis
-runs on the dedicated `[self-hosted, Windows, X64, gsvibe-ida]` runner under the `win64` Environment and one
+runs on the dedicated `[self-hosted, windows, x64]` runner under the `win64` Environment and one
 repository-wide IDA concurrency group. Warm mode keeps clean, probe/miss warmup, exact selection, restore, analysis, and
 final clean in that one job. `cache-selection.json` binds the plan SHA, merge/bin identities, selected binaries, cache
 keys, generations, and manifest hashes; its SHA-256 is rechecked and uploaded only as evidence. Cold mode never executes
