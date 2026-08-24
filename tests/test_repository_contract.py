@@ -240,7 +240,7 @@ class RepositoryContractTests(unittest.TestCase):
         for command in (*backend_commands, *frontend_commands):
             self.assertIn(command, workflow)
 
-    def test_gamesymbol_pr_workflow_enforces_trusted_split_routing(self):
+    def test_gamesymbol_pr_workflow_runs_merge_planner_with_selected_node_routing(self):
         workflow_text = (ROOT / ".github" / "workflows" / "gamesymbol-pr-validation.yml").read_text(encoding="utf-8")
         workflow = yaml.load(workflow_text, Loader=yaml.BaseLoader)
         jobs = workflow["jobs"]
@@ -267,9 +267,7 @@ class RepositoryContractTests(unittest.TestCase):
         for job_id in ("validate-hosted", "analyze-self-hosted", "fork-analysis-blocked"):
             self.assertIn("route == 'source'", jobs[job_id]["if"])
         aggregate = next(
-            step
-            for step in jobs["pr-validate"]["steps"]
-            if step.get("name") == "Aggregate trusted source validation results"
+            step for step in jobs["pr-validate"]["steps"] if step.get("name") == "Aggregate source validation results"
         )
         self.assertEqual("${{ needs.plan.result }}", aggregate["env"]["PLAN_RESULT"])
         self.assertEqual("${{ needs.validate-hosted.result }}", aggregate["env"]["HOSTED_RESULT"])
@@ -287,7 +285,12 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertEqual("${{ needs.classify.result }}", route_guard["env"]["CLASSIFY_RESULT"])
         self.assertEqual("${{ steps.route.outputs.cache_mode }}", jobs["plan"]["outputs"]["cache_mode"])
         self.assertIn("-cache-mode", workflow_text)
-        self.assertIn("PLAN_SCHEMA_VERSION = 2", workflow_text)
+        plan_steps = jobs["plan"]["steps"]
+        planner = next(step for step in plan_steps if step.get("name") == "Generate canonical bound plan from PR merge")
+        self.assertIn("uv run python gamesymbol_pr_validation.py plan", planner["run"])
+        self.assertNotIn("base-planner", workflow_text)
+        self.assertFalse(any(step.get("name") == "Export trusted base planner" for step in plan_steps))
+        self.assertNotIn("uv run", aggregate["run"])
         self_hosted = jobs["analyze-self-hosted"]
         self.assertEqual(["self-hosted", "windows", "x64"], self_hosted["runs-on"])
         self.assertEqual("${{ github.repository }}-gamesymbol-self-hosted-ida", self_hosted["concurrency"]["group"])

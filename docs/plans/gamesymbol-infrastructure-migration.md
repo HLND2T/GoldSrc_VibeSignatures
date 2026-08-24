@@ -8,7 +8,7 @@
 
 - Baseline snapshots 已在 `dev` 提交为 `1fb1ac6 feat(gamesymbols): publish baseline snapshots`；
 - Incremental PR validation infrastructure 已按本文 GoldSrc 分叉实现，包含 runtime contract、impact planner、selective materialize、selected-node analyzer 与三分流 workflow；
-- 首次引入 workflow 时，目标 base 分支尚无 trusted planner，按 5.2 的 bootstrap 约束使用既有 CI 与手工完整门禁验证；合入后，后续 PR 才由 base commit planner 执行可信 planning。
+- 首次引入 workflow 时曾从 base commit 导出 planner；后续在明确采用“同仓库 PR 非对抗”信任模型后，source PR 改为在默认 merge checkout 中原地执行 planner，同时保留 bound plan、selective materialize 与 selected-node analysis。
 - 后续 binary identity 迁移已用 schema 6 取代 snapshot `binaries.*.*.path`：分析身份只由 `module_<platform>` 与 hash 锁定，depot 获取位置改为相对 `download.yaml.basepath` 的 `depot_<platform>`。下文 schema 5 / `path_*` 描述保留为 baseline 建立时的历史契约，不再描述当前 writer。
 - PR review 修复补齐了 metadata-only snapshot rebuild、Agent runner 配置与依赖锁文件 impact，并在 self-hosted 分析前后清理 `bin` submodule 的 ignored YAML/IDA 状态；Windows runner steps 固定使用 `pwsh`。
 
@@ -58,7 +58,7 @@ CS2 基线**实际落地**的是更小的 runner 门禁，不是本方案的 hos
 | YAML 来源 | persisted bin 中的 YAML + restore | PR 工作区 YAML 只来自 snapshot materialize，不以 persisted YAML 为分析输入 |
 | IDB | 从 persisted bin 额外拷贝 `*.i64` 以跳过 IDA 初分析 | 禁止拷贝或回写 `.i64`/`.id0`；不得抄 CS2 那段 i64 robocopy |
 | Registry | 硬编码 `BROAD_ANALYSIS_FILES`（如 `.claude/agents/sig-finder.md`） | 根目录 `gamesymbol-impact.yaml`；这是 GoldSrc 新增，不是 CS2 文件迁移 |
-| Trusted planner | 无独立 base-commit planner 可执行文件 | 稳态 planning 使用 **base** commit 的 planner；merge planner 不能自我放行 |
+| Planner execution | merge checkout 中执行 invalidation code | merge checkout 中执行 GoldSrc semantic planner，并用 canonical bound plan 驱动 selected-node analysis |
 | 未映射 preprocessor | **broad rebuild** 全部 HEAD nodes | 分析源映射失败必须 fail-closed 或 broad rebuild，不得静默跳过 |
 | Reference 路径 | `references/<module>/Foo.{platform}.yaml`，matcher 只替换 `{platform}` / `{module_name}` | `references/{gamever}/<module>/Foo.{platform}.yaml`，加上 canonical `hl-10210` 回退 |
 | Finder import | 多数同样 `from ida_analyze_util import ...`；CS2 import graph 只跟踪 `ida_preprocessor_scripts.*` | 必须按 GoldSrc 实际 import 建模；禁止原样复制 CS2 `analysis_sources.py` |
@@ -234,7 +234,7 @@ YAML staging / merge-only promotion / closed finalizer **不是** GoldSrc PR 正
 2. `-node` + selective materialize + analyzer 契约测试；
 3. workflow 分流；promotion 可再延后。
 
-首次引入 workflow 的提交因 base 分支尚无 trusted planner，作为一次性 infrastructure bootstrap，使用现有 CI 与手工完整 contract/tests 验证。合入后，后续 PR 才由 base planner 决定 impact。
+首次引入 workflow 时曾使用一次性 bootstrap 解决 base 分支缺少 planner 的问题。当前 source PR 直接执行 merge checkout 中的 planner；不再维护 base-planner 导出或 bootstrap 分支，planner 仍必须生成绑定 base/head/merge identity 与内容 digest 的 canonical plan。
 
 ## 6. Runtime contract 与 ownership
 
@@ -455,7 +455,7 @@ rules:
 - gamedata generator/contract：gamedata domain；
 - `docs/**`、`pages/**` 与普通 tests。
 
-新增的 trusted planner、source index、registry parser、PR validation CLI 与 selective materializer 模块自身，也必须加入 `scope: all` 规则。Agent runner 直接读取的共享 prompt/settings、MCP 配置，以及 `pyproject.toml` / `uv.lock` 依赖环境同样属于分析输入。具体路径在实现时随模块落位一起固定，不能依赖文件名前缀猜测。
+Planner、source index、registry parser、PR validation CLI 与 selective materializer 模块自身，也必须加入 `scope: all` 规则。Agent runner 直接读取的共享 prompt/settings、MCP 配置，以及 `pyproject.toml` / `uv.lock` 依赖环境同样属于分析输入。具体路径在实现时随模块落位一起固定，不能依赖文件名前缀猜测。
 
 若未来证明某文件会改变 symbol generation semantics，再新增明确 registry rule。
 
@@ -503,11 +503,11 @@ planning job 输出 canonical JSON，至少包含：
 
 consumer job checkout merge tree 后必须重新核对 SHA/digests，并验证 plan 中 node/path 存在于 merge contract。任一 binding 不一致即失败，不使用 stale plan。
 
-### 9.3 Trusted planner
+### 9.3 Merge-workspace planner
 
-稳态 PR planning 使用 base commit 中的 trusted planner executable，读取 base 与 merge tree 的数据。merge tree 中刚修改的 planner 不能决定自己是否需要 self-hosted execution。
+Source PR planning 在默认 `$GITHUB_WORKSPACE` 的 PR merge checkout 中执行当前 planner，同时读取 base 与 merge tree 数据。该边界采用同仓库 PR 非对抗模型：不额外导出 base-planner，也不要求 planner executable 与待验证代码隔离。
 
-planner 及其 registry/parser 模块通过 base registry 映射为 `scope: all`；修改这些文件会选择全部现有 nodes。若新 schema 无法被 base planner 理解，planning 明确失败或进入受控 infrastructure migration，而不是运行 merge planner 自我放行。
+Plan 仍必须 canonical 地绑定 base/head/merge SHA、bin gitlinks 与 config/registry/snapshot digests；consumer 在 materialize 前重新核对这些 identities。Planner、registry/parser 及其依赖继续通过 impact registry 映射为分析输入，相关变更仍由 merge planner 选择受影响 nodes，selected-node 执行语义保持不变。
 
 ## 10. Selective baseline materialization
 
@@ -613,7 +613,7 @@ GoldSrc 仓库 allowlist 写本仓库的 GitHub full name，不要抄 CS2 的 `H
 
 ### 13.2 Hosted planning job
 
-GitHub-hosted runner 使用 base trusted planner，只执行：
+GitHub-hosted runner 在 PR merge checkout 中执行 planner，只执行：
 
 - Git diff 与 rename/copy status parsing；
 - base/merge config schema 与 semantic diff；
@@ -745,7 +745,7 @@ Infrastructure PR 采用 Level 2/TDD，至少覆盖：
 
 ### 16.2 Infrastructure PR
 
-- base trusted planner 能对 merge tree 生成 canonical bound plan；
+- PR merge planner 能对 base/merge tree 生成 canonical bound plan；
 - preprocessor/reference/skill/config/binary/snapshot changes 能精确映射到 nodes 与下游 artifacts；
 - 改 `references/hl-10210/...` 会使回退到该 canonical 文件的其他 tags 失效；CS2 风格的 `{platform}`-only matcher 测试必须失败；
 - 分析源映射失败不会 silent skip；

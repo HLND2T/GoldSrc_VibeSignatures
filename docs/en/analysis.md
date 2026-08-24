@@ -60,7 +60,7 @@ Warm consumers must first persist the exact probe selection, restore that genera
 `-cache_mode warm`, which selects `database_policy=restored_strict` and `save_on_success=false`. A miss, corrupt
 generation, or runtime mismatch fails the warm run; it never silently falls back after restore begins. `-cache_mode cold`
 uses the existing clean loader/analysis path and does not read the persisted cache root. The protected self-hosted job
-binds the same mode into the trusted plan and exact cache-selection evidence.
+binds the same mode into the canonical bound plan and exact cache-selection evidence.
 
 ### Batch analysis with `-allgamever`
 

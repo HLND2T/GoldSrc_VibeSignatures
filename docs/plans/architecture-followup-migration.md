@@ -19,6 +19,7 @@ CS2 参考基线：`https://github.com/HLND2T/CS2_VibeSignatures.git` `main@67b3
 - PR 5：`712ec73` `feat(ida): add immutable warm database cache`
 - PR 6：`707e3e3` `feat(ci): integrate warm idb cache modes`
 - PR 7：`38e13c4` `feat(release): add generated-output promotion`
+- 后续 CI 简化：source PR planner 改为在默认 merge checkout 中原地执行；bound plan 与 selected-node 路由保持不变，终态 `pr-validate` 使用纯 shell 聚合 source job 结果。
 
 仓库级验证结果：
 
@@ -59,7 +60,7 @@ GoldSrc 当前已经具备：
 - schema 6 canonical snapshot 与多版本 reader；
 - config digest、binary hash 和 analysis output contract；
 - immutable symbol candidate、gamedata candidate、session、guard 与 atomic publish；
-- trusted-base semantic impact planner、bound plan digest 与 selected-node analysis；
+- merge-workspace semantic impact planner、bound plan digest 与 selected-node analysis；
 - hosted snapshot/gamedata gate、Windows self-hosted IDA gate；
 - content-addressed Pages assets 与 append-only `pages-snapshots` archive。
 
@@ -96,11 +97,11 @@ GoldSrc 当前已经具备：
 
 ```text
 source PR merge ref
-  -> trusted-base semantic plan
+  -> merge-workspace semantic plan
   -> hosted and/or self-hosted validation
   -> stable pr-validate
 
-selected binary identity + trusted plan
+selected binary identity + bound plan
   -> bind cache_mode
      -> warm: probe/publish exact immutable generation -> strict restore
      -> cold: validated clean -> normal loader/auto-analysis
@@ -319,8 +320,8 @@ PR 1先落地shared classifier contract和source aggregator，但在output workf
 
 ### 5.3 Trust boundary
 
-- 继续使用 base commit planner；不得引入 CS2 的 path glob router；
-- aggregator 不重新计算 impact，只验证 trusted plan 已选择的执行结果；
+- source PR 在默认 merge checkout 中原地执行 semantic planner；不得引入 CS2 的 path glob router；
+- aggregator 不重新计算 impact，只验证 bound plan 已选择的执行结果；
 - fork PR 不因 aggregator 存在而获得 self-hosted 权限；
 - branch protection切换前必须真实演练fork hosted-only和fork hosted+analysis。若`bin` submodule不能由fork事件的`github.token`读取，明确把该路由标为unsupported并fail-closed；不得向fork注入PAT/App token或self-hosted secrets；
 - workflow permission 保持 `contents: read`；
@@ -424,7 +425,7 @@ verify
 初版把 probe/warm/restore/analyze 合并在同一个受保护的 self-hosted job 中，避免 GitHub 把 producer 与 consumer 调度到不同 runner 而看不到本机 persisted root。可以复用 workflow steps/CLI，但不能把依赖本机 generation 的 producer 与 consumer 拆成两个普通 `[self-hosted, Windows, X64]` jobs。流程：
 
 1. checkout exact source/merge SHA 与 exact `bin` gitlink；
-2. 下载并复核 trusted plan artifact与已绑定的`cache_mode`；
+2. 下载并复核 bound plan artifact与已绑定的`cache_mode`；
 3. warm mode只为`analysis_nodes`涉及的`(tag,module,platform)` pairs执行runtime/cache probe；cache miss时bounded warmup并发布/选择exact generations；
 4. warm mode在同一job写canonical `cache-selection.json`与SHA-256并复核；可上传为证据，但Actions artifact不是cache transport/truth；
 5. warm mode从selection指定的exact local/shared generation restore，以strict warm-IDB mode执行selected-node analysis；
@@ -446,7 +447,7 @@ validated bin-submodule clean
 
 ### 6.5 并发、retention 与恢复
 
-- trusted plan 当前把多 tag 顺序放在一个 self-hosted job；初版沿用该结构，以 per-tag persisted lock 保护 generation，同时以仓库级 self-hosted IDA concurrency group和runner本地file lock双重保护固定MCP port。只有 planner 输出并绑定 canonical tag/pair matrix 后才允许改成按 tag GitHub matrix concurrency；
+- bound plan 当前把多 tag 顺序放在一个 self-hosted job；初版沿用该结构，以 per-tag persisted lock 保护 generation，同时以仓库级 self-hosted IDA concurrency group和runner本地file lock双重保护固定MCP port。只有 planner 输出并绑定 canonical tag/pair matrix 后才允许改成按 tag GitHub matrix concurrency；
 - generation immutable，因此 consumer 之间允许并发读取；
 - `.incoming-*` 超过 24 小时可清理；
 - 每个 tag 保留 READY generation 与最新 3 个 generation，其余至少等待 7 天再删，给在途 consumer 留窗口；

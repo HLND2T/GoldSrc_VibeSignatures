@@ -228,7 +228,7 @@ def validate_cache_selection(
         seen.add(pair)
         identity = identities[pair]
         if entry["binaries"] != identity["binaries"]:
-            raise IdbCacheWorkflowError("Cache selection binary identities do not match the trusted plan")
+            raise IdbCacheWorkflowError("Cache selection binary identities do not match the bound plan")
         generation_selection = {
             "schema_version": CACHE_SCHEMA_VERSION,
             "tag": entry["tag"],

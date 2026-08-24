@@ -65,28 +65,8 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-      - name: Export trusted base planner
-        shell: bash
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          bundle="$RUNNER_TEMP/gamesymbol-validation"
-          mkdir -p "$bundle/base-planner"
-          export_src="$BASE_SHA"
-          # First PR introducing the planner framework: the base branch has no
-          # planner yet, so bootstrap from the head branch. Later PRs keep
-          # running the trusted base code to prevent validation tampering.
-          if ! git cat-file -e "$BASE_SHA:gamesymbol_pr_validation.py" 2>/dev/null \
-            || ! git show "$BASE_SHA:gamesymbol_snapshot_lib/pr_validation.py" | grep -q 'PLAN_SCHEMA_VERSION = 2'; then
-            export_src="$HEAD_SHA"
-          fi
-          git archive "$export_src" -- ':(glob)*.py' gamesymbol_snapshot_lib pyproject.toml uv.lock \
-            | tar -x -C "$bundle/base-planner"
-      - name: Sync trusted base planner environment
-        shell: bash
-        run: uv sync --locked --project "$RUNNER_TEMP/gamesymbol-validation/base-planner"
+      - name: Sync PR merge planner environment
+        run: uv sync --locked
       - name: Fetch bin submodule trees without checkout
         shell: bash
         env:
@@ -99,7 +79,7 @@ jobs:
           merge_bin=$(git ls-tree "$MERGE_SHA" bin | awk '{print $3}')
           git clone --filter=blob:none --no-checkout "$bin_url" "$RUNNER_TEMP/bin-objects"
           git -C "$RUNNER_TEMP/bin-objects" fetch --filter=blob:none origin "$base_bin" "$merge_bin"
-      - name: Generate canonical bound plan with base code
+      - name: Generate canonical bound plan from PR merge
         shell: bash
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -108,8 +88,8 @@ jobs:
           CACHE_MODE: ${{ vars.GSVIBE_IDB_CACHE_MODE || 'cold' }}
         run: |
           set -euo pipefail
-          uv run --project "$RUNNER_TEMP/gamesymbol-validation/base-planner" \
-            python "$RUNNER_TEMP/gamesymbol-validation/base-planner/gamesymbol_pr_validation.py" plan \
+          mkdir -p "$RUNNER_TEMP/gamesymbol-validation"
+          uv run python gamesymbol_pr_validation.py plan \
             -repo-root "$GITHUB_WORKSPACE" \
             -base-ref "$BASE_SHA" \
             -head-ref "$HEAD_SHA" \
@@ -136,14 +116,13 @@ jobs:
           if [[ "$has_actions" != "true" ]]; then
             echo "no affected game-symbol actions"
           fi
-      - name: Upload trusted plan bundle
+      - name: Upload bound plan
         uses: actions/upload-artifact@v4
         with:
           # Failed-job reruns reuse the successful plan job from an earlier attempt.
           name: gamesymbol-plan-${{ github.run_id }}
-          path: ${{ runner.temp }}/gamesymbol-validation
+          path: ${{ runner.temp }}/gamesymbol-validation/plan.json
           if-no-files-found: error
-          include-hidden-files: false
           overwrite: true
   validate-hosted:
     needs: [classify, plan]
@@ -165,21 +144,17 @@ jobs:
         with:
           name: gamesymbol-plan-${{ github.run_id }}
           path: ${{ runner.temp }}/gamesymbol-validation
-      - name: Sync trusted base planner environment
-        shell: bash
-        run: uv sync --locked --project "$RUNNER_TEMP/gamesymbol-validation/base-planner"
       - name: Validate snapshot and gamedata-only actions
         shell: bash
         run: |
           set -euo pipefail
           plan="$RUNNER_TEMP/gamesymbol-validation/plan.json"
-          base_project="$RUNNER_TEMP/gamesymbol-validation/base-planner"
           while IFS= read -r tag; do
             if [[ -e "configs/$tag.yaml" || -e "gamesymbols/$tag.yaml" || -e "gamesymbols/$tag.metadata.yaml" || -d "gamedata/$tag" ]]; then
               echo "Deleted tag $tag still has tracked config, snapshot, metadata, or gamedata" >&2
               exit 1
             fi
-            uv run --project "$base_project" python - "$tag" <<'PY'
+            uv run python - "$tag" <<'PY'
           import sys
           import yaml
           tag = sys.argv[1]
@@ -190,7 +165,7 @@ jobs:
           PY
           done < <(jq -r '.tags[] | select(.deleted) | .tag' "$plan")
           while IFS= read -r tag; do
-            uv run --project "$base_project" python "$base_project/gamesymbol_pr_validation.py" materialize \
+            uv run python gamesymbol_pr_validation.py materialize \
               -repo-root "$GITHUB_WORKSPACE" -plan "$plan" -tag "$tag" -merge-ref HEAD -bindir bin
             stage=$(mktemp -d)
             trap 'rm -rf "$stage"' EXIT
@@ -255,12 +230,6 @@ jobs:
         with:
           name: gamesymbol-plan-${{ github.run_id }}
           path: ${{ runner.temp }}/gamesymbol-validation
-      - name: Sync trusted base planner environment
-        shell: pwsh
-        run: |
-          $basePlannerRoot = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\base-planner'
-          uv sync --locked --project $basePlannerRoot
-          if ($LASTEXITCODE -ne 0) { throw 'trusted base planner environment sync failed' }
       - name: Clean persisted submodule analysis state
         shell: pwsh
         run: |
@@ -342,13 +311,12 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $planPath = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\plan.json'
-          $basePlannerRoot = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\base-planner'
-          $baseCli = Join-Path $basePlannerRoot 'gamesymbol_pr_validation.py'
+          $plannerCli = Join-Path $env:GITHUB_WORKSPACE 'gamesymbol_pr_validation.py'
           $plan = Get-Content -Raw -LiteralPath $planPath | ConvertFrom-Json
           foreach ($action in $plan.tags) {
             if ($action.analysis_nodes.Count -eq 0) { continue }
             $tag = $action.tag
-            uv run --project $basePlannerRoot python $baseCli materialize -repo-root $env:GITHUB_WORKSPACE -plan $planPath -tag $tag -merge-ref HEAD -bindir bin
+            uv run python $plannerCli materialize -repo-root $env:GITHUB_WORKSPACE -plan $planPath -tag $tag -merge-ref HEAD -bindir bin
             if ($LASTEXITCODE -ne 0) { throw "materialization failed for $tag" }
             $analyzerArgs = @('ida_analyze_bin.py', '-gamever', $tag, '-oldgamever', 'none', '-cache_mode', $plan.cache_mode)
             foreach ($node in $action.analysis_nodes) { $analyzerArgs += @('-node', $node) }
@@ -432,16 +400,7 @@ jobs:
           set -euo pipefail
           [[ "$CLASSIFY_RESULT" == "success" ]]
           [[ "$ROUTE" == "source" || "$ROUTE" == "output" ]]
-      - uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-      - name: Download trusted plan bundle
-        if: needs.classify.outputs.route == 'source'
-        uses: actions/download-artifact@v4
-        with:
-          name: gamesymbol-plan-${{ github.run_id }}
-          path: ${{ runner.temp }}/gamesymbol-validation
-      - name: Aggregate trusted source validation results
+      - name: Aggregate source validation results
         if: needs.classify.outputs.route == 'source'
         env:
           PLAN_RESULT: ${{ needs.plan.result }}
@@ -455,25 +414,47 @@ jobs:
         shell: bash
         run: |-
           set -euo pipefail
-          uv run --project "$RUNNER_TEMP/gamesymbol-validation/base-planner" python - <<'PY'
-          import os
-          from gamesymbol_snapshot_lib.pr_validation import evaluate_pr_validation
-          def flag(name: str) -> bool:
-              return os.environ[name].lower() == "true"
-          decision = evaluate_pr_validation(
-              plan_result=os.environ["PLAN_RESULT"],
-              validate_hosted_result=os.environ["HOSTED_RESULT"],
-              analyze_self_hosted_result=os.environ["ANALYSIS_RESULT"],
-              fork_analysis_blocked_result=os.environ["FORK_RESULT"],
-              has_actions=flag("HAS_ACTIONS"),
-              has_analysis=flag("HAS_ANALYSIS"),
-              has_hosted=flag("HAS_HOSTED"),
-              same_repository=flag("SAME_REPOSITORY"),
-          )
-          for error in decision.errors:
-              print(f"::error::{error}")
-          raise SystemExit(0 if decision.passed else 1)
-          PY
+          failed=false
+          require_result() {
+            local job="$1"
+            local actual="$2"
+            local expected="$3"
+            if [[ "$actual" != "$expected" ]]; then
+              echo "::error::$job must be $expected, got $actual"
+              failed=true
+            fi
+          }
+          for flag in "$HAS_ACTIONS" "$HAS_ANALYSIS" "$HAS_HOSTED" "$SAME_REPOSITORY"; do
+            if [[ "$flag" != "true" && "$flag" != "false" ]]; then
+              echo "::error::planner emitted an invalid boolean output: $flag"
+              failed=true
+            fi
+          done
+          require_result "plan" "$PLAN_RESULT" "success"
+          if [[ "$HAS_ANALYSIS" == "true" || "$HAS_HOSTED" == "true" ]]; then
+            if [[ "$HAS_ACTIONS" != "true" ]]; then
+              echo "::error::planner action outputs are inconsistent"
+              failed=true
+            fi
+          fi
+          if [[ "$HAS_HOSTED" == "true" ]]; then
+            require_result "validate-hosted" "$HOSTED_RESULT" "success"
+          else
+            require_result "validate-hosted" "$HOSTED_RESULT" "skipped"
+          fi
+          if [[ "$HAS_ANALYSIS" == "true" && "$SAME_REPOSITORY" == "true" ]]; then
+            require_result "analyze-self-hosted" "$ANALYSIS_RESULT" "success"
+          else
+            require_result "analyze-self-hosted" "$ANALYSIS_RESULT" "skipped"
+          fi
+          if [[ "$HAS_ANALYSIS" == "true" && "$SAME_REPOSITORY" != "true" ]]; then
+            require_result "fork-analysis-blocked" "$FORK_RESULT" "failure"
+            echo "::error::analysis nodes from a fork cannot use the self-hosted runner"
+            failed=true
+          else
+            require_result "fork-analysis-blocked" "$FORK_RESULT" "skipped"
+          fi
+          [[ "$failed" == "false" ]]
       - name: Aggregate trusted output validation result
         if: needs.classify.outputs.route == 'output'
         env:

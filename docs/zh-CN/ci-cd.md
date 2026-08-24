@@ -26,7 +26,7 @@ GitHub Actions 工作流在每次 push 与 pull request 上运行受门禁保护
 plan/hosted/self-hosted 路径；所有 `gamesymbols/build/` branch（包括 malformed output-like 名称）都进入 output
 路径并明确失败，不能回落到 trusted analysis runner。
 
-Branch protection 只依赖终态 `pr-validate` job。该 job 使用 `always()`，显式读取每个路由 job 的结果，只在 trusted plan 未选择对应执行时接受 skipped，并在不向 fork 授予受保护 self-hosted runner 权限的前提下明确拒绝 fork analysis。内部 planner、hosted 与 self-hosted job 名称都不是 required checks。
+Branch protection 只依赖终态 `pr-validate` job。Source planning 在默认 checkout 中原地执行 PR merge 版本的 semantic planner，并且只上传 canonical bound `plan.json`；selected-node 执行保持不变。终态 job 使用 `always()` 和 shell 逻辑聚合各路由结果，只在 bound plan 未选择对应执行时接受 skipped，并在不向 fork 授予受保护 self-hosted runner 权限的前提下明确拒绝 fork analysis。内部 planner、hosted 与 self-hosted job 名称都不是 required checks。
 
 hosted 与 self-hosted source validation 都会从不可变 symbol candidate 重建 canonical gamedata manifest，并与
 exact `HEAD` Git blob 比较。bound plan 绑定 base/merge gamedata subtree digest；被忽略的工作树文件和宽泛 stage

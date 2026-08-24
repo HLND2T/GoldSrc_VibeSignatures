@@ -68,7 +68,7 @@ orchestrator，因为它必须选择 exact module/platform binary 并绑定 pinn
 Warm consumer 必须先持久化 exact probe selection、restore 该 generation，再以 `-cache_mode warm` 运行 Analyzer；
 该模式选择 `database_policy=restored_strict` 与 `save_on_success=false`。Miss、corrupt generation 或 runtime
 mismatch 会使 warm run 失败；restore 开始后绝不 silent fallback。`-cache_mode cold` 保持现有 clean
-loader/analysis 路径，并且不读取 persisted cache root。受保护 self-hosted job 将同一 mode 绑定进 trusted plan 与
+loader/analysis 路径，并且不读取 persisted cache root。受保护 self-hosted job 将同一 mode 绑定进 canonical bound plan 与
 exact cache-selection evidence。
 
 ### 使用 `-allgamever` 批量分析
