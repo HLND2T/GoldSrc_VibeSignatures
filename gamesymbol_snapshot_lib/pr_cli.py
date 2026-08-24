@@ -21,9 +21,11 @@ from gamesymbol_snapshot_lib.codec import canonical_snapshot_bytes, parse_snapsh
 from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.impact_registry import parse_impact_registry
 from gamesymbol_snapshot_lib.materialize import materialize_baseline
+from gamesymbol_snapshot_lib.paths import metadata_filename, metadata_tag_from_filename
 from gamesymbol_snapshot_lib.operations import load_snapshot_context, validate_snapshot_contract
 from gamesymbol_snapshot_lib.pr_validation import (
     BoundImpactPlan,
+    CACHE_MODES,
     ChangedPath,
     ImpactPlanningError,
     TagImpact,
@@ -113,6 +115,21 @@ def _sha256(value: bytes | None) -> str | None:
     return None if value is None else hashlib.sha256(value).hexdigest()
 
 
+def _gamedata_tree_digest(repo: GitRepository, ref: str, tag: str) -> str | None:
+    prefix = f"gamedata/{validated_tag(tag)}/"
+    entries = []
+    for path in repo.list_files(ref):
+        if not path.startswith(prefix):
+            continue
+        raw = repo.read(ref, path)
+        if raw is not None:
+            entries.append({"path": path, "size": len(raw), "sha256": _sha256(raw)})
+    if not entries:
+        return None
+    encoded = json.dumps(entries, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def _tags(repo: GitRepository, ref: str) -> tuple[str, ...]:
     raw = repo.read(ref, "configs/config.yaml")
     if raw is None:
@@ -200,6 +217,7 @@ def build_plan(
     head_ref: str,
     merge_ref: str,
     bin_repo_root: str | Path | None = None,
+    cache_mode: str = "cold",
 ) -> BoundImpactPlan:
     repo = GitRepository(repo_root)
     base_sha, head_sha, merge_sha = (repo.resolve(ref) for ref in (base_ref, head_ref, merge_ref))
@@ -212,6 +230,21 @@ def build_plan(
     base_tree, merge_tree = _tree(repo, base_sha), _tree(repo, merge_sha)
     base_tags, merge_tags = _tags(repo, base_sha), _tags(repo, merge_sha)
     ordered_tags = tuple(dict.fromkeys((*merge_tags, *(tag for tag in base_tags if tag not in merge_tags))))
+    known_tags = set(ordered_tags)
+    for change in changes:
+        for path in change.paths:
+            if path.startswith("gamesymbols/"):
+                metadata_tag = metadata_tag_from_filename(path.removeprefix("gamesymbols/"))
+                if metadata_tag is not None and metadata_tag not in known_tags:
+                    raise ImpactPlanningError(f"Metadata companion has no configured tag: {path}")
+            parts = path.split("/")
+            if parts[0] == "gamedata" and len(parts) >= 3:
+                try:
+                    gamedata_tag = validated_tag(parts[1])
+                except ValueError as exc:
+                    raise ImpactPlanningError(f"Invalid tracked gamedata path: {path}") from exc
+                if gamedata_tag not in known_tags:
+                    raise ImpactPlanningError(f"Tracked gamedata has no configured tag: {path}")
 
     impacts: list[TagImpact] = []
     digests: dict[str, str | None] = {
@@ -242,6 +275,10 @@ def build_plan(
             merge_document, merge_snapshot_raw, _merge_trusted = _snapshot(repo, merge_sha, tag, merge_contracts[tag])
             digests[f"base_snapshot:{tag}"] = _sha256(base_snapshot_raw)
             digests[f"merge_snapshot:{tag}"] = _sha256(merge_snapshot_raw)
+            digests[f"base_metadata:{tag}"] = _sha256(repo.read(base_sha, f"gamesymbols/{metadata_filename(tag)}"))
+            digests[f"merge_metadata:{tag}"] = _sha256(repo.read(merge_sha, f"gamesymbols/{metadata_filename(tag)}"))
+            digests[f"base_gamedata:{tag}"] = _gamedata_tree_digest(repo, base_sha, tag)
+            digests[f"merge_gamedata:{tag}"] = _gamedata_tree_digest(repo, merge_sha, tag)
             snapshots[tag] = (base_document, merge_document, base_contract_trusted)
 
         validate_reference_consumers(merge_tree, list(merge_sources.values()))
@@ -262,6 +299,10 @@ def build_plan(
                 merge_rules=merge_rules,
                 snapshot_delta=snapshot_delta_paths(base_document, merge_document),
                 snapshot_changed=snapshot_documents_changed(base_document, merge_document),
+                metadata_changed=any(f"gamesymbols/{metadata_filename(tag)}" in change.paths for change in changes),
+                gamedata_changed=any(
+                    any(path.startswith(f"gamedata/{tag}/") for path in change.paths) for change in changes
+                ),
                 binary_changed_pairs=_binary_changes(
                     tag=tag,
                     base_contract=base_contracts[tag],
@@ -276,12 +317,16 @@ def build_plan(
             )
             if impact.has_actions:
                 impacts.append(impact)
-    return BoundImpactPlan(base_sha, head_sha, merge_sha, base_bin, merge_bin, tuple(impacts), digests)
+    return BoundImpactPlan(base_sha, head_sha, merge_sha, base_bin, merge_bin, tuple(impacts), digests, cache_mode)
 
 
-def _load_bound_plan(path: str | Path) -> dict:
+def load_bound_plan(path: str | Path) -> dict:
     document = json.loads(Path(path).read_text(encoding="utf-8"))
-    if not isinstance(document, dict) or document.get("schema_version") != 1:
+    if (
+        not isinstance(document, dict)
+        or document.get("schema_version") != 2
+        or document.get("cache_mode") not in CACHE_MODES
+    ):
         raise PrCliError("Invalid bound impact plan")
     digest = document.pop("plan_sha256", None)
     encoded = json.dumps(document, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -291,8 +336,47 @@ def _load_bound_plan(path: str | Path) -> dict:
     return document
 
 
+def verify_bound_plan_checkout(
+    *, repo_root: str | Path, plan_path: str | Path, merge_ref: str
+) -> tuple[GitRepository, dict]:
+    repo = GitRepository(repo_root)
+    document = load_bound_plan(plan_path)
+    if repo.resolve(merge_ref) != document["merge_sha"]:
+        raise PrCliError("Checked-out merge SHA does not match the bound plan")
+    if repo.gitlink(document["merge_sha"], "bin") != document.get("merge_bin_commit"):
+        raise PrCliError("Merge bin gitlink does not match the bound plan")
+    _verify_bound_digest(document, "merge_config_index", repo.read(document["merge_sha"], "configs/config.yaml"))
+    _verify_bound_digest(document, "merge_registry", repo.read(document["merge_sha"], "gamesymbol-impact.yaml"))
+    return repo, document
+
+
+def verify_bound_tag_inputs(document: dict, repo: GitRepository, tag: str) -> dict:
+    tag = validated_tag(tag)
+    _verify_bound_digest(document, f"merge_config:{tag}", repo.read(document["merge_sha"], f"configs/{tag}.yaml"))
+    _verify_bound_digest(
+        document,
+        f"merge_snapshot:{tag}",
+        repo.read(document["merge_sha"], f"gamesymbols/{tag}.yaml"),
+    )
+    _verify_bound_digest(
+        document,
+        f"merge_metadata:{tag}",
+        repo.read(document["merge_sha"], f"gamesymbols/{metadata_filename(tag)}"),
+    )
+    _verify_bound_gamedata(document, f"merge_gamedata:{tag}", repo, document["merge_sha"], tag)
+    action = next((item for item in document["tags"] if item["tag"] == tag), None)
+    if action is None or action.get("deleted"):
+        raise PrCliError(f"Plan has no materializable action for {tag}")
+    return action
+
+
 def _verify_bound_digest(document: dict, key: str, raw: bytes | None) -> None:
     if document.get("digests", {}).get(key) != _sha256(raw):
+        raise PrCliError(f"Bound plan digest mismatch for {key}")
+
+
+def _verify_bound_gamedata(document: dict, key: str, repo: GitRepository, ref: str, tag: str) -> None:
+    if document.get("digests", {}).get(key) != _gamedata_tree_digest(repo, ref, tag):
         raise PrCliError(f"Bound plan digest mismatch for {key}")
 
 
@@ -305,23 +389,8 @@ def materialize_from_plan(
     bindir: str | Path,
 ) -> tuple[str, ...]:
     tag = validated_tag(tag)
-    repo = GitRepository(repo_root)
-    document = _load_bound_plan(plan_path)
-    if repo.resolve(merge_ref) != document["merge_sha"]:
-        raise PrCliError("Checked-out merge SHA does not match the bound plan")
-    if repo.gitlink(document["merge_sha"], "bin") != document.get("merge_bin_commit"):
-        raise PrCliError("Merge bin gitlink does not match the bound plan")
-    _verify_bound_digest(document, "merge_config_index", repo.read(document["merge_sha"], "configs/config.yaml"))
-    _verify_bound_digest(document, "merge_registry", repo.read(document["merge_sha"], "gamesymbol-impact.yaml"))
-    _verify_bound_digest(document, f"merge_config:{tag}", repo.read(document["merge_sha"], f"configs/{tag}.yaml"))
-    _verify_bound_digest(
-        document,
-        f"merge_snapshot:{tag}",
-        repo.read(document["merge_sha"], f"gamesymbols/{tag}.yaml"),
-    )
-    action = next((item for item in document["tags"] if item["tag"] == tag), None)
-    if action is None or action.get("deleted"):
-        raise PrCliError(f"Plan has no materializable action for {tag}")
+    repo, document = verify_bound_plan_checkout(repo_root=repo_root, plan_path=plan_path, merge_ref=merge_ref)
+    action = verify_bound_tag_inputs(document, repo, tag)
     config_path = Path(repo_root) / "configs" / f"{tag}.yaml"
     merge_contract = load_contract(config_path, tag, bindir)
     unknown_nodes = set(action["analysis_nodes"]) - set(merge_contract.nodes)
@@ -337,6 +406,12 @@ def materialize_from_plan(
             base_snapshot_raw = repo.read(document["base_sha"], f"gamesymbols/{tag}.yaml")
             _verify_bound_digest(document, f"base_config:{tag}", base_config_raw)
             _verify_bound_digest(document, f"base_snapshot:{tag}", base_snapshot_raw)
+            _verify_bound_digest(
+                document,
+                f"base_metadata:{tag}",
+                repo.read(document["base_sha"], f"gamesymbols/{metadata_filename(tag)}"),
+            )
+            _verify_bound_gamedata(document, f"base_gamedata:{tag}", repo, document["base_sha"], tag)
             if base_config_raw is None or base_snapshot_raw is None:
                 raise PrCliError("Incremental plan is missing its bound base contract")
             temporary_root = Path(temporary)
@@ -370,6 +445,7 @@ def _parser() -> argparse.ArgumentParser:
     plan.add_argument("-head-ref", required=True)
     plan.add_argument("-merge-ref", required=True)
     plan.add_argument("-bin-repo", default=None)
+    plan.add_argument("-cache-mode", choices=tuple(sorted(CACHE_MODES)), required=True)
     plan.add_argument("-output", required=True)
     materialize = commands.add_parser("materialize")
     materialize.add_argument("-repo-root", default=".")
@@ -390,6 +466,7 @@ def main(argv: list[str] | None = None) -> int:
                 head_ref=args.head_ref,
                 merge_ref=args.merge_ref,
                 bin_repo_root=args.bin_repo,
+                cache_mode=args.cache_mode,
             )
             Path(args.output).write_bytes(plan.canonical_bytes())
         else:

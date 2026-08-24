@@ -33,6 +33,37 @@ CLI 参数、环境变量、程序默认值。关键变量：
 - `DEPOTDOWNLOADER_STEAM_USERNAME` 与 `DEPOTDOWNLOADER_STEAM_PASSWORD` 在需要 depot 认证时由
   `download_depot.py` 读取。
 
+## IDB cache host 要求
+
+Warm-cache runtime probe 需要 `IDADIR`，以绑定 exact pinned loader module 与 allowlisted plugin。Cache CLI 接收
+显式 persisted root；CI 后续只会在受保护的专用 Windows runner job 内将其注入为
+`GSVIBE_PERSISTED_WORKSPACE`。该 root 必须位于 checkout 与 `bin/` 之外，不得经过 reparse point，并且所在存储
+必须支持同文件系统 atomic rename。
+
+Runner account 需要对 cache root 拥有独占写权限。Cache warming 固定单并发，并用本地 file lock 保护固定 MCP
+port。只有所有 consumer 共享同一受控 storage 与 ACL authority 时才能共享 cache；Actions artifact 与
+`READY.json` 都不是 cache transport 或 truth source。
+
+真实 runner evidence 完成前，repository variable `GSVIBE_IDB_CACHE_MODE` 保持 `cold`，完成后才切换为 `warm`；
+`GSVIBE_IDA_KERNEL_VERSION` 记录 pinned installation 的 expected kernel version。Absolute persisted path 作为
+Environment secret `GSVIBE_PERSISTED_WORKSPACE` 保存。Observed runtime 必须与 expected kernel、loader、plugin
+identity 一致后才能 publication，因此这些配置值不能伪造成功的 cache generation。
+
+## Release runner 与 GitHub governance 要求
+
+Phase 2 需要专用 `[self-hosted, Windows, X64, gsvibe-release]` runner。其 machine environment 必须让 output
+validation、build、promotion 与 recovery job 看到同一个 checkout 外 `GSVIBE_PERSISTED_WORKSPACE`；其中
+`release-staging` 子树必须由 runner-account ACL 保护，存储需要支持同文件系统 atomic rename 与 hard link，并且不能
+提供给 untrusted job。
+
+创建受保护的 `release` Environment，并配置 `GSVIBE_RELEASE_APP_ID` 与
+`GSVIBE_RELEASE_APP_PRIVATE_KEY`。Installation App 只获得 output branch/PR、workflow dispatch、annotated tag、
+Release 与 assets 所需的最小 repository permissions。还需配置 `GSVIBE_RELEASE_BOT_LOGIN`，只 require Actions-owned
+唯一 `pr-validate`，要求 up-to-date merge commit，禁止 `main` direct/admin-bypass push，保护 release tag，并限制
+output branch prefix 只能由 App 写入。所有设置和演练取得 captured-at evidence 前，
+`GSVIBE_RELEASE_PHASE2_ENABLED` 保持 false；protected republish 演练完成前，独立的
+`GSVIBE_RELEASE_REPUBLISH_ENABLED` 也保持 false。Repository test 不能激活或证明这些外部控制。
+
 ## 初始化游戏 binaries
 
 使用 `/init-gamebin` 斜杠命令，先用 `download_depot.py -all` 下载 `download.yaml` 中声明的全部 depot，再用

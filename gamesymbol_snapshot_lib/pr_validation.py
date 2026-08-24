@@ -10,12 +10,22 @@ from pathlib import PurePosixPath
 from gamesymbol_snapshot_lib.analysis_sources import SourceIndex, is_analysis_source_path
 from gamesymbol_snapshot_lib.impact_registry import ImpactRule
 from gamesymbol_snapshot_lib.model import SnapshotContract
+from pull_request_route import (
+    PR_ROUTE_OUTPUT,
+    PR_ROUTE_SOURCE,
+    classify_pr_route,
+    parse_output_branch,
+)
 
-PLAN_SCHEMA_VERSION = 1
+PLAN_SCHEMA_VERSION = 2
+CACHE_MODE_COLD = "cold"
+CACHE_MODE_WARM = "warm"
+CACHE_MODES = frozenset({CACHE_MODE_COLD, CACHE_MODE_WARM})
 SNAPSHOT_DOMAIN_PATHS = frozenset(
     {
         "binary_hashing.py",
         "gamesymbol_candidate.py",
+        "gamesymbol_metadata.py",
         "gamesymbol_snapshot.py",
         "gamesymbol_store.py",
     }
@@ -24,6 +34,54 @@ SNAPSHOT_DOMAIN_PATHS = frozenset(
 
 class ImpactPlanningError(ValueError):
     pass
+
+
+@dataclass(frozen=True)
+class PrValidationDecision:
+    passed: bool
+    errors: tuple[str, ...]
+
+
+def evaluate_pr_validation(
+    *,
+    plan_result: str,
+    validate_hosted_result: str,
+    analyze_self_hosted_result: str,
+    fork_analysis_blocked_result: str,
+    has_actions: bool,
+    has_analysis: bool,
+    has_hosted: bool,
+    same_repository: bool,
+) -> PrValidationDecision:
+    results = {
+        "plan": plan_result,
+        "validate-hosted": validate_hosted_result,
+        "analyze-self-hosted": analyze_self_hosted_result,
+        "fork-analysis-blocked": fork_analysis_blocked_result,
+    }
+    allowed_results = {"success", "failure", "cancelled", "skipped"}
+    errors = [
+        f"{job} reported unsupported result {result!r}"
+        for job, result in results.items()
+        if result not in allowed_results
+    ]
+    if plan_result != "success":
+        errors.append(f"plan must succeed, got {plan_result}")
+        return PrValidationDecision(False, tuple(errors))
+    if (has_analysis or has_hosted) and not has_actions:
+        errors.append("planner action outputs are inconsistent")
+
+    expected = {
+        "validate-hosted": "success" if has_hosted else "skipped",
+        "analyze-self-hosted": "success" if has_analysis and same_repository else "skipped",
+        "fork-analysis-blocked": "failure" if has_analysis and not same_repository else "skipped",
+    }
+    for job, expected_result in expected.items():
+        if results[job] != expected_result:
+            errors.append(f"{job} must be {expected_result}, got {results[job]}")
+    if has_analysis and not same_repository:
+        errors.append("analysis nodes from a fork cannot use the trusted self-hosted runner")
+    return PrValidationDecision(not errors, tuple(errors))
 
 
 @dataclass(frozen=True)
@@ -80,6 +138,11 @@ class BoundImpactPlan:
     merge_bin_commit: str | None
     tags: tuple[TagImpact, ...]
     digests: dict[str, str | None]
+    cache_mode: str = CACHE_MODE_COLD
+
+    def __post_init__(self) -> None:
+        if self.cache_mode not in CACHE_MODES:
+            raise ImpactPlanningError(f"Invalid cache mode: {self.cache_mode!r}")
 
     def document(self) -> dict:
         payload = {
@@ -89,6 +152,7 @@ class BoundImpactPlan:
             "merge_sha": self.merge_sha,
             "base_bin_commit": self.base_bin_commit,
             "merge_bin_commit": self.merge_bin_commit,
+            "cache_mode": self.cache_mode,
             "tags": [asdict(tag) for tag in self.tags],
             "digests": dict(sorted(self.digests.items())),
         }
@@ -178,7 +242,10 @@ def _snapshot_domain_changed(paths: set[str]) -> bool:
 
 
 def _gamedata_domain_changed(paths: set[str]) -> bool:
-    return any(path.startswith("gamedata_") or path.startswith("gamedata-generators/") for path in paths)
+    return any(
+        path.startswith("gamedata_") or path == "update_gamedata.py" or path.startswith("gamedata-generators/")
+        for path in paths
+    )
 
 
 def plan_tag_impact(
@@ -193,6 +260,8 @@ def plan_tag_impact(
     merge_rules: tuple[ImpactRule, ...],
     snapshot_delta: frozenset[str] = frozenset(),
     snapshot_changed: bool = False,
+    metadata_changed: bool = False,
+    gamedata_changed: bool = False,
     binary_changed_pairs: frozenset[tuple[str, str]] = frozenset(),
     base_snapshot_trusted: bool = True,
     expected_snapshot_exists: bool = True,
@@ -260,9 +329,25 @@ def plan_tag_impact(
             reasons.append(f"binary changed: {module}/{platform}")
 
     snapshot_rebuild = bool(
-        seeds or snapshot_delta or snapshot_changed or config_changed or _snapshot_domain_changed(all_paths)
+        seeds
+        or snapshot_delta
+        or snapshot_changed
+        or metadata_changed
+        or config_changed
+        or _snapshot_domain_changed(all_paths)
     )
-    gamedata_rebuild = bool(seeds or _gamedata_domain_changed(all_paths))
+    if metadata_changed:
+        reasons.append("snapshot metadata companion changed")
+    gamedata_rebuild = bool(
+        seeds
+        or config_changed
+        or snapshot_delta
+        or snapshot_changed
+        or gamedata_changed
+        or _gamedata_domain_changed(all_paths)
+    )
+    if gamedata_changed:
+        reasons.append("tracked gamedata changed")
     if not expected_snapshot_exists and merge_contract.formal_paths:
         seeds.update(merge_contract.nodes)
         snapshot_rebuild = True

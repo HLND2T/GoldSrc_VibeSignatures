@@ -10,12 +10,15 @@ from analysis_config import AnalysisConfigError, resolve_analysis_config
 from gamedata_contract import (
     GamedataContractError,
     GeneratorContext,
+    analysis_config_sha256,
+    build_gamedata_manifest,
     discover_generator_modules,
-    gamedata_manifest_sha256,
     generator_contract_sha256,
+    write_gamedata_manifest,
     validate_output_tree,
 )
 from gamesymbol_store import SymbolStoreError, open_snapshot_store
+from release_workflow_lib.hashing import sha256_file
 
 
 def generate_gamedata(*, gamever, snapshot_path, config_path, modules_dir, output_root):
@@ -36,10 +39,29 @@ def generate_gamedata(*, gamever, snapshot_path, config_path, modules_dir, outpu
                 contract.module.update(store, module_root)
         except Exception as exc:
             raise GamedataContractError(f"Generator {contract.directory} failed: {exc}") from exc
-    files = validate_output_tree(output_root, gamever, modules)
+    payload_files = validate_output_tree(output_root, gamever, modules)
+    generator_digest = generator_contract_sha256(modules)
+    manifest = build_gamedata_manifest(
+        gamever=gamever,
+        candidate_sha256=sha256_file(snapshot_path),
+        analysis_config_sha256=analysis_config_sha256(config_path),
+        generator_contract_digest=generator_digest,
+        payload_files=payload_files,
+    )
+    manifest_sha256 = write_gamedata_manifest(output_root, manifest)
+    files = [
+        *payload_files,
+        {
+            "path": f"gamedata/{gamever}/gamedata-manifest.json",
+            "size": (output_root / "gamedata-manifest.json").stat().st_size,
+            "sha256": manifest_sha256,
+        },
+    ]
+    files.sort(key=lambda item: item["path"])
     return {
-        "generator_contract_sha256": generator_contract_sha256(modules),
-        "gamedata_manifest_sha256": gamedata_manifest_sha256(files),
+        "generator_contract_sha256": generator_digest,
+        "gamedata_manifest_sha256": manifest_sha256,
+        "payload_files": payload_files,
         "files": files,
     }
 

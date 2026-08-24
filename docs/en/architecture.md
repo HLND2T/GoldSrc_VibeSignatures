@@ -12,16 +12,26 @@ download.yaml + configs/<tag>.yaml
   -> versioned stage/job/task execution plan
   -> bin/<tag>/<module>/<symbol>.<platform>.yaml
   -> immutable candidate
-  -> gamesymbols/<tag>.yaml
+  -> gamesymbols/<tag>.yaml + gamesymbols/<tag>.metadata.yaml
   -> SymbolStore -> strict gamedata generator
+  -> gamedata/<tag>/gamedata-manifest.json + declared payloads
 
 RunRequest -> Redis Stream -> single-concurrency scheduler -> analyzer
   -> ProcessEvent + heartbeat -> Redis state/streams
   -> read-only API/SSE -> React process dashboard
 
-gamesymbols/<family-build>.yaml -> Vite asset plugin
+snapshot + immutable metadata companion -> Vite asset plugin
   -> content-addressed JSON + index v4
   -> append-only pages-snapshots archive -> GitHub Pages Symbol Explorer
+
+exact main Git tree + bin gitlink + tracked snapshot/metadata/gamedata
+  -> self-excluding release content manifest
+  -> read-only shadow verification evidence
+
+trusted PR plan + cache_mode
+  -> cold: validated clean -> normal loader/auto-analysis
+  -> warm: probe/publish exact generation -> canonical selection -> strict restore
+  -> selected-node analysis -> validated clean
 ```
 
 `analysis_planner.py` is the single source for module, symbol, artifact-path, and DAG validation. Snapshot contracts
@@ -65,6 +75,25 @@ deferred.
 module/platform/skill work to continue after runtime failures, while configuration and DAG contract failures remain
 fatal and any recorded runtime failure still produces a nonzero final exit status.
 
+## Warm IDB cache boundary
+
+`idb_cache.py` provides a local immutable-generation cache for neutral IDA databases. Its schema-1 key binds the exact
+binary path/bytes, observed IDA kernel/processor/bitness/file type, pinned loader and allowlisted plugin digests,
+normalized IDA arguments, and the warm-worker source contract. A generation contains an exact cached binary plus the
+complete allowed `.i64`/`.idb` primary and side-file inventory; active lock files are always rejected.
+
+Publication verifies an incoming tree before atomic rename and updates `READY.json` only afterward. READY is a probe
+hint, not a consumer authority: restore always binds an exact generation, key, and manifest SHA-256. Restore rejects
+reparse points, path escapes, case collisions, stale workspace binaries, tampered manifests/payloads, and active locks.
+The `restored_strict` lifecycle policy never invalidates or cold-rebuilds a mismatched restored database and can disable
+success saves so selected-node modifications never flow back into the immutable generation.
+
+The trusted PR plan binds explicit `cache_mode=warm|cold`. The Windows job performs validated
+submodule clean, exact probe/bounded warm publication, canonical selection verification, strict restore, selected-node
+analysis, and final clean without another clean between restore and analysis. Cold mode skips every persisted-root step
+and uses the normal rebuild/save lifecycle. A repository-level Actions concurrency group and runner-local file lock
+protect the fixed MCP port.
+
 ## Process reporting and scheduling
 
 The validated analysis DAG remains the only planning source. `build_process_execution_plan()` projects it into an
@@ -90,8 +119,34 @@ file payloads, and path-independent SHA-256/MD5/CRC32/CRC64/size metadata for ev
 Restore and verification reject links, path escapes, undeclared YAML, missing required YAML, non-canonical bytes, and
 contract drift.
 
-The candidate manifest records the canonical candidate hash and filesystem identity. Publication is an atomic replace
-and requires the guarded `gamedata` step. Candidate sessions do not contain a C++ test step.
+The candidate session binds the canonical snapshot and alias-metadata companion hashes, filesystem identities, and pair
+identity. Local pair publication is journaled and recoverable; the Git tree is the externally visible atomic boundary.
+Publication still requires the guarded `gamedata` step. Candidate sessions do not contain a C++ test step.
+
+Canonical gamedata remains ignored by default and is staged only from the guarded candidate inventory. Each tag has a
+self-excluding canonical manifest that binds snapshot/config/generator identities and the exact declared payload files;
+an empty generator set therefore still has one trackable, reviewable output.
+
+## Release provenance boundary
+
+Release content identity is built only from exact blobs in the default-branch Git tree. Schema-1 canonical JSON binds
+the source commit, `bin` gitlink, raw config and canonical contract digests, snapshot and binary inventory, immutable
+metadata companion, gamedata manifest/generator contract, and the trusted workflow/tool revision. Its tracked-content
+inventory records path, Git mode, size, and blob SHA-256 for the current tag's snapshot, metadata, and gamedata, while
+deliberately excluding `release-manifests/<tag>.json` to avoid self-reference.
+
+Shadow verification still proves three `new` content identities without remote writes. Phase 2 code now adds a separate
+generated-output path: an exact `main` source commit produces a one-parent output commit that adds only
+`release-manifests/<tag>.json`; the source commit remains the authority for snapshot, metadata, and gamedata bytes. A
+shared classifier gives source and output PRs one mutually exclusive `pr-validate` result, while output verification uses
+trusted base code and never checks out or executes the output head.
+
+Promotion accepts only the recorded App-authored output PR, its direct-parent head, and an exact two-parent merge commit.
+It creates an annotated immutable tag, deterministic payload assets, provenance and a self-excluding checksum, then
+downloads every uploaded asset before writing `PROMOTED`, a durable completion record, and `PROMOTION_COMPLETE`.
+Private markers are hash-chained and recovery keeps retry, resume, republish, abandon, index repair, reconciliation, and
+cleanup as distinct operations. Production authority remains disabled by `GSVIBE_RELEASE_PHASE2_ENABLED` until the
+external branch/ruleset, merge-policy, protected-tag, Environment, App, and protected-repository exercises are captured.
 
 ## API, dashboard, and immutable Pages assets
 
@@ -103,7 +158,8 @@ private-network preflights only by explicit opt-in.
 
 The React dashboard displays run lists, graph/list views, task details, status filters, live SSE updates, and a static
 Symbol Explorer. Symbol snapshots use `<family-build>` tags, are grouped by family, and sort builds numerically descending.
-The Vite plugin turns tracked schema-5 YAML into exact UTF-8 content-addressed JSON plus index schema v4. The deployment
+The Vite plugin turns tracked schema-5/6 YAML plus its required schema-1 metadata companion into exact UTF-8
+content-addressed JSON plus index schema v4. It never reads live config aliases. The deployment
 workflow preserves every digest on an append-only `pages-snapshots` branch and verifies current, archived, and deployed
 CDN bytes. GitHub Pages hosts only static assets; it does not host the Process API.
 

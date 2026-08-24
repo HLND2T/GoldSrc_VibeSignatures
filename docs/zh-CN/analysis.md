@@ -37,8 +37,8 @@ Analyzer 会为 `configs/<GAMEVER>.yaml` 中声明的符号查找并生成 signa
 命令概要：
 
 ```bash
-uv run python ida_analyze_bin.py -gamever cstrike-10210 -configyaml configs/cstrike-10210.yaml -platform windows,linux
-uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EXACT_SKILL_NAME> -platform windows,linux -debug
+uv run python ida_analyze_bin.py -gamever cstrike-10210 -configyaml configs/cstrike-10210.yaml -platform windows,linux -cache_mode cold
+uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EXACT_SKILL_NAME> -platform windows,linux -cache_mode cold -debug
 ```
 
 必须显式指定 `-gamever` 或 `-allgamever`；analyzer 不再回退到 `GSVIBE_GAMEVER`。支持的参数：
@@ -53,10 +53,23 @@ uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EX
 - `-oldgamever` 选择同一 game family 中最近的旧 build，并把 old-YAML map 交给 Preprocessor。
   `download.yaml` 中的 `major_update: true` 会禁用自动旧版本选择。旧 YAML 直接复制保持禁用。
 - `-ida_args` 用于追加 IDA 启动参数。`-rename` 与 Source2 专用 finder 语义保持排除。
+- `-cache_mode` 为必填参数。`cold` 使用 normal clean loader/auto-analysis lifecycle；`warm` 要求先恢复 exact IDB generation，并使用 strict no-rebuild/no-save 语义。
 - `-skip_pp` 跳过单一 Preprocessor，直接运行 Agent。`-skip_error` 允许运行失败后继续，但最终退出状态仍非零。
 - `-process_reporter=console` 输出 typed `ProcessEvent` JSONL；`redis` 以 best-effort 方式写入
   `gsvibe:analysis:v1` Redis 协议。`-redis_url` 与 `-redis_prefix` 配置 Redis backend；`-run_id` 设置运行身份。
 - `-debug` 启用调试输出。
+
+### Local IDB cache core
+
+`idb_cache.py` 提供 `probe`、`warm`、`publish`、`restore`、`verify` 与 `prune`。Identity creation 明确属于
+orchestrator，因为它必须选择 exact module/platform binary 并绑定 pinned runtime contract。
+`idb_warm_worker.py probe-runtime` 会 hash `IDADIR` 下为所选 PE32/ELF32 使用的 loader 与 allowlisted plugin。
+
+Warm consumer 必须先持久化 exact probe selection、restore 该 generation，再以 `-cache_mode warm` 运行 Analyzer；
+该模式选择 `database_policy=restored_strict` 与 `save_on_success=false`。Miss、corrupt generation 或 runtime
+mismatch 会使 warm run 失败；restore 开始后绝不 silent fallback。`-cache_mode cold` 保持现有 clean
+loader/analysis 路径，并且不读取 persisted cache root。受保护 self-hosted job 将同一 mode 绑定进 canonical bound plan 与
+exact cache-selection evidence。
 
 ### 使用 `-allgamever` 批量分析
 

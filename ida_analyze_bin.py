@@ -41,9 +41,15 @@ from analysis_planner import (
 )
 from binary_format import BinaryFormatError, validate_binary
 from ida_analyze_util import SymbolArtifactError, normalize_symbol_artifact
+from ida_database_paths import (
+    IDA_DATABASE_SUFFIXES,
+    database_lock_paths,
+    database_paths,
+    existing_database_lock,
+    primary_database_paths,
+)
 from ida_llm_utils import validated_temperature
 from ida_mcp_session import (
-    IDA_DATABASE_SUFFIXES,
     McpConnectionError,
     McpContractError,
     McpDatabaseBinding,
@@ -104,7 +110,12 @@ LLM_EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "xhigh"})
 RUN_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,160}$", re.ASCII)
 REMOVED_CLI_OPTIONS = frozenset({"-config", "-plan-only", "-vcall_finder", "-rename", "-console-events"})
 UNAVAILABLE_HASH_VALUES = frozenset({"", "unavailable", "unknown", "none", "null"})
-IDA_DATABASE_SIDE_SUFFIXES = (".id1", ".id2", ".nam", ".til")
+DATABASE_POLICY_REBUILD = "rebuild"
+DATABASE_POLICY_RESTORED_STRICT = "restored_strict"
+DATABASE_POLICIES = frozenset({DATABASE_POLICY_REBUILD, DATABASE_POLICY_RESTORED_STRICT})
+CACHE_MODE_COLD = "cold"
+CACHE_MODE_WARM = "warm"
+CACHE_MODES = (CACHE_MODE_COLD, CACHE_MODE_WARM)
 
 
 class AnalysisRunError(RuntimeError):
@@ -351,6 +362,17 @@ def _decrypt_blob_to_pe(binary_path, *, debug=False):
     output.write_bytes(pe)
     validate_binary(output, "windows")
     return output
+
+
+def prepare_analysis_binary(binary_path, platform, *, debug=False) -> Path:
+    binary = Path(binary_path)
+    try:
+        validate_binary(binary, platform)
+        return binary
+    except BinaryFormatError:
+        if platform != "windows":
+            raise
+    return _decrypt_blob_to_pe(binary, debug=debug)
 
 
 def _handle_binary_validation_failure(
@@ -713,25 +735,20 @@ def stop_idalib_mcp_process(process, debug=False):
 
 
 def _ida_database_primary_paths(binary_path):
-    base = os.fspath(binary_path)
-    return [f"{base}{suffix}" for suffix in IDA_DATABASE_SUFFIXES]
+    return [os.fspath(path) for path in primary_database_paths(binary_path)]
 
 
 def _ida_database_paths(binary_path):
-    base = os.fspath(binary_path)
-    primary_paths = _ida_database_primary_paths(binary_path)
-    side_bases = [base, *primary_paths]
-    side_paths = [f"{side_base}{suffix}" for side_base in side_bases for suffix in IDA_DATABASE_SIDE_SUFFIXES]
-    return [*primary_paths, *side_paths]
+    return [os.fspath(path) for path in database_paths(binary_path)]
 
 
 def _ida_database_lock_paths(binary_path):
-    base = os.fspath(binary_path)
-    return [f"{base}.id0", *(f"{path}.id0" for path in _ida_database_primary_paths(binary_path))]
+    return [os.fspath(path) for path in database_lock_paths(binary_path)]
 
 
 def _existing_ida_database_lock(binary_path):
-    return next((path for path in _ida_database_lock_paths(binary_path) if os.path.isfile(path)), None)
+    lock = existing_database_lock(binary_path)
+    return None if lock is None else os.fspath(lock)
 
 
 def _raise_for_active_ida_database(binary_path):
@@ -937,13 +954,30 @@ def verify_owned_mcp_with_single_recovery(
 class IdaMcpLifecycle:
     """Own one idalib-mcp supervisor and its selected worker for a binary."""
 
-    def __init__(self, binary_path, platform, host, port, ida_args, debug=False) -> None:
+    def __init__(
+        self,
+        binary_path,
+        platform,
+        host,
+        port,
+        ida_args,
+        debug=False,
+        *,
+        database_policy=DATABASE_POLICY_REBUILD,
+        save_on_success=True,
+    ) -> None:
+        if database_policy not in DATABASE_POLICIES:
+            raise ValueError(f"Unsupported IDA database policy: {database_policy!r}")
+        if not isinstance(save_on_success, bool):
+            raise TypeError("save_on_success must be boolean")
         self.binary_path = Path(binary_path)
         self.platform = platform
         self.host = host
         self.port = port
         self.ida_args = ida_args
         self.debug = debug
+        self.database_policy = database_policy
+        self.save_on_success = save_on_success
         self.process = None
         self.runtime = None
         self.recovery_budget = McpRecoveryBudget()
@@ -981,6 +1015,8 @@ class IdaMcpLifecycle:
 
     def __enter__(self):
         _raise_for_active_ida_database(self.binary_path)
+        if self.database_policy == DATABASE_POLICY_RESTORED_STRICT and not _has_ida_database(self.binary_path):
+            raise McpLifecycleError(f"Strict restored IDA database is missing for {self.binary_path}")
         try:
             self.process = start_idalib_mcp(
                 self.binary_path,
@@ -1001,9 +1037,17 @@ class IdaMcpLifecycle:
                 self.debug,
                 recovery_budget=self.recovery_budget,
             )
-            if self.runtime is None and _has_ida_database(self.binary_path):
+            if (
+                self.runtime is None
+                and self.database_policy == DATABASE_POLICY_REBUILD
+                and _has_ida_database(self.binary_path)
+            ):
                 self._rebuild_stale_database()
             if self.runtime is None:
+                if self.database_policy == DATABASE_POLICY_RESTORED_STRICT:
+                    raise McpLifecycleError(
+                        f"Strict restored IDA database identity verification failed for {self.binary_path}"
+                    )
                 raise McpLifecycleError(f"Opened IDA database identity verification failed for {self.binary_path}")
             self._force_local_stop = False
             return self
@@ -1037,9 +1081,17 @@ class IdaMcpLifecycle:
                 self.debug,
                 recovery_budget=self.recovery_budget,
             )
-            if self.runtime is None and _has_ida_database(self.binary_path):
+            if (
+                self.runtime is None
+                and self.database_policy == DATABASE_POLICY_REBUILD
+                and _has_ida_database(self.binary_path)
+            ):
                 self._rebuild_stale_database()
             if self.runtime is None:
+                if self.database_policy == DATABASE_POLICY_RESTORED_STRICT:
+                    raise McpLifecycleError(
+                        f"Strict restored IDA database identity verification failed for {self.binary_path}"
+                    )
                 raise McpLifecycleError(f"Opened IDA database identity verification failed for {self.binary_path}")
             return self.runtime
         except McpLifecycleError:
@@ -1070,7 +1122,7 @@ class IdaMcpLifecycle:
 
     def __exit__(self, exc_type, exc, traceback):
         try:
-            if exc_type is None and self.process is not None and not self._force_local_stop:
+            if exc_type is None and self.process is not None and not self._force_local_stop and self.save_on_success:
                 save_ida_database(
                     self.host,
                     self.port,
@@ -1797,6 +1849,31 @@ def _validate_selected_inputs(plan, selected_nodes, game_root: Path) -> None:
         raise AnalysisRunError("Selected nodes require materialized inputs:\n" + "\n".join(missing))
 
 
+def _create_ida_mcp_lifecycle(
+    binary,
+    platform,
+    host,
+    port,
+    ida_args,
+    debug,
+    *,
+    database_policy,
+    save_on_success,
+):
+    if database_policy == DATABASE_POLICY_REBUILD and save_on_success:
+        return IdaMcpLifecycle(binary, platform, host, port, ida_args, debug)
+    return IdaMcpLifecycle(
+        binary,
+        platform,
+        host,
+        port,
+        ida_args,
+        debug,
+        database_policy=database_policy,
+        save_on_success=save_on_success,
+    )
+
+
 def _execute_selected_nodes(
     selected_nodes,
     *,
@@ -1816,6 +1893,8 @@ def _execute_selected_nodes(
     host,
     port,
     ida_args,
+    database_policy,
+    save_on_success,
 ):
     failed_binaries = set()
     index = 0
@@ -1835,7 +1914,16 @@ def _execute_selected_nodes(
         remaining = segment
         lifecycle_failed = False
         try:
-            with IdaMcpLifecycle(binary, binary_key[1], host, port, ida_args, debug) as lifecycle:
+            with _create_ida_mcp_lifecycle(
+                binary,
+                binary_key[1],
+                host,
+                port,
+                ida_args,
+                debug,
+                database_policy=database_policy,
+                save_on_success=save_on_success,
+            ) as lifecycle:
                 for node_index, node in enumerate(segment):
                     if node_index:
                         try:
@@ -1913,6 +2001,8 @@ def analyze(
     run_id: str | None = None,
     summary: AnalysisSummary | None = None,
     selected_node_ids: tuple[str, ...] | list[str] | None = None,
+    database_policy: str = DATABASE_POLICY_REBUILD,
+    save_on_success: bool = True,
 ) -> ExecutionPlan:
     process_reporter = BestEffortProcessReporter(reporter or NullProcessReporter())
     run_summary = summary if summary is not None else AnalysisSummary()
@@ -1977,46 +2067,12 @@ def analyze(
             job_id = reporting.job_id_for(binary_nodes[0].id)
             reporting.emit_task_status(job_id, TaskStatus.RUNNING, ProcessPhase.VALIDATING_BINARY)
             try:
-                validate_binary(binary, platform)
+                prepared_binary = prepare_analysis_binary(binary, platform, debug=debug)
+                if prepared_binary != binary:
+                    binary = prepared_binary
+                    print(f"Decrypted blob {module_name}:{platform} -> {binary}")
                 validated_binaries[(module_name, platform)] = binary
-            except BinaryFormatError as exc:
-                # Protected GoldSrc client modules ship as a non-PE Metahook
-                # "blob". Decrypt into a sibling *.decrypt.dll and analyze that
-                # instead, so the rest of the pipeline sees a normal PE32 DLL.
-                if platform != "windows":
-                    _handle_binary_validation_failure(
-                        module_name,
-                        platform,
-                        binary,
-                        binary_nodes,
-                        exc,
-                        skip_error,
-                        reporting,
-                        job_id,
-                        run_summary,
-                    )
-                    continue
-                try:
-                    binary = _decrypt_blob_to_pe(binary, debug=debug)
-                except (OSError, ValueError) as decrypt_error:
-                    if debug:
-                        print(f"  Blob decryption failed for {binary}: {decrypt_error}")
-                    _handle_binary_validation_failure(
-                        module_name,
-                        platform,
-                        binary,
-                        binary_nodes,
-                        exc,
-                        skip_error,
-                        reporting,
-                        job_id,
-                        run_summary,
-                    )
-                    continue
-                print(f"Decrypted blob {module_name}:{platform} -> {binary}")
-                validate_binary(binary, platform)
-                validated_binaries[(module_name, platform)] = binary
-            except OSError as exc:
+            except (BinaryFormatError, OSError, ValueError) as exc:
                 _handle_binary_validation_failure(
                     module_name,
                     platform,
@@ -2049,6 +2105,8 @@ def analyze(
                 host=host,
                 port=port,
                 ida_args=ida_args,
+                database_policy=database_policy,
+                save_on_success=save_on_success,
             )
             for binary_key, binary_nodes in nodes_by_binary.items():
                 if binary_key not in validated_binaries:
@@ -2087,7 +2145,16 @@ def analyze(
             if pending_nodes:
                 reporting.emit_task_status(job_id, TaskStatus.RUNNING, ProcessPhase.WAITING_FOR_MCP)
                 try:
-                    with IdaMcpLifecycle(binary, binary_key[1], host, port, ida_args, debug) as lifecycle:
+                    with _create_ida_mcp_lifecycle(
+                        binary,
+                        binary_key[1],
+                        host,
+                        port,
+                        ida_args,
+                        debug,
+                        database_policy=database_policy,
+                        save_on_success=save_on_success,
+                    ) as lifecycle:
                         for index, node in enumerate(pending_nodes):
                             if index:
                                 try:
@@ -2228,6 +2295,12 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("-debug", action="store_true", help="Enable debug diagnostics and Agent output")
     parser.add_argument("-ida_args", default="", help="Additional arguments for idalib-mcp")
+    parser.add_argument(
+        "-cache_mode",
+        choices=CACHE_MODES,
+        required=True,
+        help="Explicit database mode: cold rebuild or exact restored warm generation",
+    )
     parser.add_argument("-skip_error", action="store_true", help="Continue after runtime failures")
     parser.add_argument("-skip_pp", action="store_true", help="Skip the single preprocessor and run Agent directly")
     parser.add_argument("-maxretry", type=int, default=3, help="Default total attempts per skill (1-20)")
@@ -2414,6 +2487,7 @@ def _print_main_configuration(args) -> None:
         print(f"Selected nodes: {', '.join(args.node)}")
     print(f"Agent: {args.agent}")
     print(f"Process reporter: {args.process_reporter}")
+    print(f"IDB cache mode: {args.cache_mode}")
     if args.run_id:
         print(f"Run ID: {args.run_id}")
     if args.ida_args:
@@ -2469,6 +2543,10 @@ def _run_single_tag(gamever: str, args, summary: AnalysisSummary | None = None) 
             run_id=args.run_id,
             summary=summary,
             selected_node_ids=args.node,
+            database_policy=(
+                DATABASE_POLICY_RESTORED_STRICT if args.cache_mode == CACHE_MODE_WARM else DATABASE_POLICY_REBUILD
+            ),
+            save_on_success=args.cache_mode == CACHE_MODE_COLD,
         )
     except (
         AnalysisConfigError,

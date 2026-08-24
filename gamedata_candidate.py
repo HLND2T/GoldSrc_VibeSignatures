@@ -4,18 +4,21 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import shutil
+import subprocess
+import tempfile
 import uuid
 from pathlib import Path
 
 from analysis_config import validated_tag
 from gamedata_contract import (
     GamedataContractError,
+    analysis_config_sha256,
     discover_generator_modules,
-    gamedata_manifest_sha256,
     generator_contract_sha256,
-    validate_output_tree,
+    validate_gamedata_tree,
 )
 from gamesymbol_store import SymbolStoreError
 from release_workflow_lib.errors import ReleaseWorkflowError
@@ -92,7 +95,7 @@ def build_candidate(
         "modules_dir": str(modules_dir),
         "gamedata_path": f"gamedata/{tag}",
         "candidate_sha256": sha256_file(snapshot),
-        "analysis_config_sha256": sha256_file(analysis_config),
+        "analysis_config_sha256": analysis_config_sha256(analysis_config),
         "generator_contract_sha256": result["generator_contract_sha256"],
         "gamedata_manifest_sha256": result["gamedata_manifest_sha256"],
         "files": result["files"],
@@ -110,14 +113,21 @@ def guard_candidate(session_path):
     config = _file(session["analysis_config_path"], "Analysis config")
     if sha256_file(snapshot) != session["candidate_sha256"]:
         raise GamedataCandidateError("Symbol candidate changed after gamedata generation")
-    if sha256_file(config) != session["analysis_config_sha256"]:
+    if analysis_config_sha256(config) != session["analysis_config_sha256"]:
         raise GamedataCandidateError("Analysis config changed after gamedata generation")
     modules = discover_generator_modules(session["modules_dir"])
     if generator_contract_sha256(modules) != session["generator_contract_sha256"]:
         raise GamedataCandidateError("Generator contract changed after gamedata generation")
     root = Path(session["candidate_root"]) / session["gamedata_path"]
-    files = validate_output_tree(root, tag, modules)
-    if files != session["files"] or gamedata_manifest_sha256(files) != session["gamedata_manifest_sha256"]:
+    files, manifest_sha256 = validate_gamedata_tree(
+        root,
+        tag,
+        modules,
+        candidate_sha256=session["candidate_sha256"],
+        analysis_config_sha256=session["analysis_config_sha256"],
+        generator_contract_digest=session["generator_contract_sha256"],
+    )
+    if files != session["files"] or manifest_sha256 != session["gamedata_manifest_sha256"]:
         raise GamedataCandidateError("Gamedata candidate bytes changed after generation")
     return session
 
@@ -134,8 +144,15 @@ def publish_candidate(*, session_path, output_dir):
     backup = target.parent / f".{tag}.backup-{uuid.uuid4().hex}"
     shutil.copytree(source, incoming, copy_function=shutil.copy2)
     modules = discover_generator_modules(session["modules_dir"])
-    incoming_files = validate_output_tree(incoming, tag, modules)
-    if incoming_files != session["files"]:
+    incoming_files, incoming_manifest = validate_gamedata_tree(
+        incoming,
+        tag,
+        modules,
+        candidate_sha256=session["candidate_sha256"],
+        analysis_config_sha256=session["analysis_config_sha256"],
+        generator_contract_digest=session["generator_contract_sha256"],
+    )
+    if incoming_files != session["files"] or incoming_manifest != session["gamedata_manifest_sha256"]:
         shutil.rmtree(incoming)
         raise GamedataCandidateError("Copied gamedata candidate failed verification")
     moved_old = False
@@ -154,8 +171,104 @@ def publish_candidate(*, session_path, output_dir):
         raise GamedataCandidateError(f"Atomic gamedata publication failed: {exc}") from exc
     if backup.exists():
         shutil.rmtree(backup)
-    if validate_output_tree(target, tag, modules) != session["files"]:
+    published_files, published_manifest = validate_gamedata_tree(
+        target,
+        tag,
+        modules,
+        candidate_sha256=session["candidate_sha256"],
+        analysis_config_sha256=session["analysis_config_sha256"],
+        generator_contract_digest=session["generator_contract_sha256"],
+    )
+    if published_files != session["files"] or published_manifest != session["gamedata_manifest_sha256"]:
         raise GamedataCandidateError("Published gamedata failed final verification")
+    return session
+
+
+def _git(repo_root: Path, *args: str, env: dict[str, str] | None = None) -> bytes:
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), *args],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise GamedataCandidateError(
+            f"git {' '.join(args)} failed: {result.stderr.decode('utf-8', errors='replace').strip()}"
+        )
+    return result.stdout
+
+
+def _tree_inventory(repo_root: Path, ref: str, tag: str) -> list[dict]:
+    prefix = f"gamedata/{validated_tag(tag)}/"
+    raw = _git(repo_root, "ls-tree", "-r", "-z", ref, "--", prefix.removesuffix("/"))
+    inventory = []
+    for record in raw.split(b"\0"):
+        if not record:
+            continue
+        metadata, separator, raw_path = record.partition(b"\t")
+        parts = metadata.decode("ascii").split()
+        path = raw_path.decode("utf-8")
+        if (
+            not separator
+            or len(parts) != 3
+            or parts[0] != "100644"
+            or parts[1] != "blob"
+            or not path.startswith(prefix)
+        ):
+            raise GamedataCandidateError(f"Tracked gamedata has an invalid Git tree entry: {path}")
+        blob = _git(repo_root, "cat-file", "blob", parts[2])
+        inventory.append({"path": path, "size": len(blob), "sha256": hashlib.sha256(blob).hexdigest()})
+    return sorted(inventory, key=lambda item: item["path"])
+
+
+def verify_tracked_candidate(*, session_path, repo_root, ref="HEAD"):
+    session = guard_candidate(session_path)
+    repo = Path(repo_root).resolve()
+    tracked = _tree_inventory(repo, ref, session["gamever"])
+    if tracked != session["files"]:
+        raise GamedataCandidateError(f"Tracked gamedata differs from candidate for {session['gamever']}")
+    return session
+
+
+def stage_candidate(*, session_path, repo_root):
+    session = guard_candidate(session_path)
+    repo = Path(repo_root).resolve()
+    tag = session["gamever"]
+    modules = discover_generator_modules(session["modules_dir"])
+    target = repo / "gamedata" / tag
+    files, manifest_sha256 = validate_gamedata_tree(
+        target,
+        tag,
+        modules,
+        candidate_sha256=session["candidate_sha256"],
+        analysis_config_sha256=session["analysis_config_sha256"],
+        generator_contract_digest=session["generator_contract_sha256"],
+    )
+    if files != session["files"] or manifest_sha256 != session["gamedata_manifest_sha256"]:
+        raise GamedataCandidateError("Published gamedata does not match its candidate session")
+    expected_paths = [item["path"] for item in session["files"]]
+    stale_paths = sorted(set(item["path"] for item in _tree_inventory(repo, "HEAD", tag)) - set(expected_paths))
+
+    def update_index(env=None):
+        for path in stale_paths:
+            _git(repo, "rm", "--cached", "--ignore-unmatch", "--", path, env=env)
+        for path in expected_paths:
+            _git(repo, "add", "-f", "--", path, env=env)
+
+    with tempfile.TemporaryDirectory(prefix="gamedata-index-") as temporary:
+        index_path = Path(temporary) / "index"
+        index_env = dict(os.environ)
+        index_env["GIT_INDEX_FILE"] = str(index_path)
+        _git(repo, "read-tree", "HEAD", env=index_env)
+        update_index(index_env)
+        temporary_tree = _git(repo, "write-tree", env=index_env).decode("ascii").strip()
+        if _tree_inventory(repo, temporary_tree, tag) != session["files"]:
+            raise GamedataCandidateError("Temporary Git tree does not match gamedata candidate")
+    update_index()
+    staged_tree = _git(repo, "write-tree").decode("ascii").strip()
+    if _tree_inventory(repo, staged_tree, tag) != session["files"]:
+        raise GamedataCandidateError("Staged Git tree does not match gamedata candidate")
     return session
 
 
@@ -175,6 +288,13 @@ def _parser():
     publish = commands.add_parser("publish")
     publish.add_argument("-session", required=True)
     publish.add_argument("-outputdir", required=True)
+    stage = commands.add_parser("stage")
+    stage.add_argument("-session", required=True)
+    stage.add_argument("-repo-root", default=".")
+    tracked = commands.add_parser("verify-tracked")
+    tracked.add_argument("-session", required=True)
+    tracked.add_argument("-repo-root", default=".")
+    tracked.add_argument("-ref", default="HEAD")
     return parser
 
 
@@ -193,8 +313,12 @@ def main(argv=None):
             )
         elif args.command == "guard":
             guard_candidate(args.session)
-        else:
+        elif args.command == "publish":
             publish_candidate(session_path=args.session, output_dir=args.outputdir)
+        elif args.command == "stage":
+            stage_candidate(session_path=args.session, repo_root=args.repo_root)
+        else:
+            verify_tracked_candidate(session_path=args.session, repo_root=args.repo_root, ref=args.ref)
     except (
         GamedataCandidateError,
         GamedataContractError,

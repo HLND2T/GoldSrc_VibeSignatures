@@ -13,6 +13,7 @@ GROUP_FILES = {
         "test_config_and_depot.py",
         "test_binary_and_symbols.py",
         "test_ida_mcp_session.py",
+        "test_idb_cache.py",
         "test_generate_reference_yaml.py",
         "test_format_repo_files.py",
         "test_ida_llm_decompile.py",
@@ -25,7 +26,9 @@ GROUP_FILES = {
         "test_snapshot_candidate.py",
         "test_gamesymbol_snapshot_config.py",
         "test_gamesymbol_pr_validation.py",
+        "test_gamesymbol_metadata.py",
         "test_gamedata.py",
+        "test_release_workflow.py",
         "test_decrypt_blob.py",
     ),
     "redis-integration": (

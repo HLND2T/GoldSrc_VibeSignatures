@@ -11,7 +11,7 @@ x86 only and omit Source2-only discovery protocols.
 
 Resolve `GAMEVER` only from the explicit request. When the user does not name a game version, target
 every gamever declared in `configs/`: register the skill and symbol in each `configs/<GAMEVER>.yaml`
-and validate with `ida_analyze_bin.py -allgamever`. `GSVIBE_GAMEVER` is not supported. Stop if a
+and validate with `ida_analyze_bin.py -allgamever -cache_mode cold`. `GSVIBE_GAMEVER` is not supported. Stop if a
 targeted `configs/<GAMEVER>.yaml` does not exist. Never edit another version as a fallback.
 
 ## Hard contracts
@@ -414,7 +414,7 @@ When the predecessor is new, `generate_reference_yaml.py` cannot initially read 
    YAML for each supported platform:
 
    ```powershell
-   uv run python ida_analyze_bin.py -gamever <REFERENCE_GAMEVER> -modules <REFERENCE_MODULE> -skill <PREDECESSOR_SKILL> -platform <SUPPORTED_PLATFORMS> -oldgamever none -debug
+   uv run python ida_analyze_bin.py -gamever <REFERENCE_GAMEVER> -modules <REFERENCE_MODULE> -skill <PREDECESSOR_SKILL> -platform <SUPPORTED_PLATFORMS> -oldgamever none -cache_mode cold -debug
    ```
 
 3. Run `generate_reference_yaml.py` sequentially for every supported platform using the applicable
@@ -444,8 +444,8 @@ Run the finder against every gamever by default (`-allgamever`), or against the 
 version with `-gamever <GAMEVER>`:
 
 ```powershell
-uv run python ida_analyze_bin.py -allgamever -modules <MODULE> -skill find-Target -platform windows,linux -debug
-uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill find-Target -platform windows,linux -oldgamever none -debug
+uv run python ida_analyze_bin.py -allgamever -modules <MODULE> -skill find-Target -platform windows,linux -cache_mode cold -debug
+uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill find-Target -platform windows,linux -oldgamever none -cache_mode cold -debug
 ```
 
 `-allgamever` disables old-version comparison (it is mutually exclusive with `-oldgamever`), so the

@@ -324,7 +324,7 @@ LLM fallback 接受模型把嵌套 member 的 `.` 展平为 `_`，但成功匹�
 
 ```powershell
 uv run python ida_analyze_bin.py -gamever svencoop-10257 -modules engine `
-  -skill find-R_RenderView -platform windows,linux -debug
+  -skill find-R_RenderView -platform windows,linux -cache_mode cold -debug
 ```
 
 结果为 `Successful: 2 / Failed: 0 / Skipped: 0`。`hw.dll` 产出 `func_va: 0x1d537b0`、

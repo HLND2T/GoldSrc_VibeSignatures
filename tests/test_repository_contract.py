@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import tempfile
 import unittest
 from pathlib import Path, PurePosixPath
@@ -17,7 +18,16 @@ from analysis_planner import (
     symbol_artifact_filename,
 )
 from binary_format import inspect_binary
+from gamedata_contract import (
+    analysis_config_sha256,
+    discover_generator_modules,
+    generator_contract_sha256,
+    validate_gamedata_tree,
+)
 from gamesymbol_snapshot_lib.config import load_contract
+from gamesymbol_snapshot_lib.metadata import verify_metadata
+from gamesymbol_snapshot_lib.paths import iter_snapshot_paths
+from release_workflow_lib.hashing import sha256_file
 
 ROOT = Path(__file__).parents[1]
 
@@ -230,33 +240,89 @@ class RepositoryContractTests(unittest.TestCase):
         for command in (*backend_commands, *frontend_commands):
             self.assertIn(command, workflow)
 
-    def test_gamesymbol_pr_workflow_enforces_trusted_split_routing(self):
-        workflow = (ROOT / ".github" / "workflows" / "gamesymbol-pr-validation.yml").read_text(encoding="utf-8")
-        for marker in (
-            "opened, synchronize, reopened, ready_for_review, closed",
-            "cancel-in-progress: true",
-            "refs/pull/${{ github.event.pull_request.number }}/merge",
-            "fetch-depth: 0",
-            "Export trusted base planner",
-            "submodules: false",
-            "Fetch bin submodule trees without checkout",
-            "Sync trusted base planner environment",
-            'uv sync --locked --project "$RUNNER_TEMP/gamesymbol-validation/base-planner"',
-            "validate-hosted:",
-            "analyze-self-hosted:",
-            "same_repository",
-            "-oldgamever', 'none'",
-            "'-node'",
-            "gamesymbol_candidate.py compare",
-            ".snapshot_rebuild or .gamedata_rebuild or .deleted",
-            "Deleted tag $tag still has a tracked config or snapshot",
-            "no affected game-symbol actions",
-        ):
-            self.assertIn(marker, workflow)
+    def test_gamesymbol_pr_workflow_runs_merge_planner_with_selected_node_routing(self):
+        workflow_text = (ROOT / ".github" / "workflows" / "gamesymbol-pr-validation.yml").read_text(encoding="utf-8")
+        workflow = yaml.load(workflow_text, Loader=yaml.BaseLoader)
+        jobs = workflow["jobs"]
+        self.assertIn("edited", workflow["on"]["pull_request"]["types"])
+        self.assertEqual("pr-validate", jobs["pr-validate"]["name"])
+        self.assertEqual(
+            {
+                "classify",
+                "plan",
+                "validate-hosted",
+                "analyze-self-hosted",
+                "fork-analysis-blocked",
+                "validate-output",
+            },
+            set(jobs["pr-validate"]["needs"]),
+        )
+        self.assertIn("always()", jobs["pr-validate"]["if"])
+        self.assertIn("github.event.action != 'closed'", jobs["pr-validate"]["if"])
+        self.assertEqual("classify", jobs["validate-output"]["needs"])
+        self.assertIn("route == 'output'", jobs["validate-output"]["if"])
+        self.assertEqual("./.github/workflows/release-output-validation.yml", jobs["validate-output"]["uses"])
+        self.assertEqual("classify", jobs["plan"]["needs"])
+        self.assertIn("route == 'source'", jobs["plan"]["if"])
+        for job_id in ("validate-hosted", "analyze-self-hosted", "fork-analysis-blocked"):
+            self.assertIn("route == 'source'", jobs[job_id]["if"])
+        aggregate = next(
+            step for step in jobs["pr-validate"]["steps"] if step.get("name") == "Aggregate source validation results"
+        )
+        self.assertEqual("${{ needs.plan.result }}", aggregate["env"]["PLAN_RESULT"])
+        self.assertEqual("${{ needs.validate-hosted.result }}", aggregate["env"]["HOSTED_RESULT"])
+        self.assertEqual("${{ needs.analyze-self-hosted.result }}", aggregate["env"]["ANALYSIS_RESULT"])
+        self.assertEqual("${{ needs.fork-analysis-blocked.result }}", aggregate["env"]["FORK_RESULT"])
+        output_aggregate = next(
+            step
+            for step in jobs["pr-validate"]["steps"]
+            if step.get("name") == "Aggregate trusted output validation result"
+        )
+        self.assertIn("route == 'output'", output_aggregate["if"])
+        route_guard = next(
+            step for step in jobs["pr-validate"]["steps"] if step.get("name") == "Require exactly one trusted PR route"
+        )
+        self.assertEqual("${{ needs.classify.result }}", route_guard["env"]["CLASSIFY_RESULT"])
+        self.assertEqual("${{ steps.route.outputs.cache_mode }}", jobs["plan"]["outputs"]["cache_mode"])
+        self.assertIn("-cache-mode", workflow_text)
+        plan_steps = jobs["plan"]["steps"]
+        planner = next(step for step in plan_steps if step.get("name") == "Generate canonical bound plan from PR merge")
+        self.assertIn("uv run python gamesymbol_pr_validation.py plan", planner["run"])
+        self.assertNotIn("base-planner", workflow_text)
+        self.assertFalse(any(step.get("name") == "Export trusted base planner" for step in plan_steps))
+        self.assertNotIn("uv run", aggregate["run"])
+        self_hosted = jobs["analyze-self-hosted"]
+        self.assertEqual(["self-hosted", "windows", "x64"], self_hosted["runs-on"])
+        self.assertEqual("${{ github.repository }}-gamesymbol-self-hosted-ida", self_hosted["concurrency"]["group"])
+        self.assertEqual("false", self_hosted["concurrency"]["cancel-in-progress"])
+        step_names = [step.get("name") for step in self_hosted["steps"]]
+        ordered = [
+            "Clean persisted submodule analysis state",
+            "Prepare exact warm IDB cache selection",
+            "Verify exact warm IDB cache selection",
+            "Restore exact warm IDB cache generations",
+            "Analyze selected nodes and compare actual snapshots",
+            "Remove generated submodule analysis state",
+        ]
+        self.assertEqual(
+            sorted(step_names.index(name) for name in ordered), [step_names.index(name) for name in ordered]
+        )
+        warm_steps = [step for step in self_hosted["steps"] if "warm IDB cache" in step.get("name", "")]
+        self.assertTrue(warm_steps)
+        self.assertTrue(all("cache_mode == 'warm'" in step["if"] for step in warm_steps))
+        analyzer = next(
+            step
+            for step in self_hosted["steps"]
+            if step.get("name") == "Analyze selected nodes and compare actual snapshots"
+        )
+        self.assertIn("'-cache_mode', $plan.cache_mode", analyzer["run"])
+        restore_index = step_names.index("Restore exact warm IDB cache generations")
+        analyze_index = step_names.index("Analyze selected nodes and compare actual snapshots")
+        self.assertNotIn(
+            "git clean",
+            "\n".join(step.get("run", "") for step in self_hosted["steps"][restore_index + 1 : analyze_index]),
+        )
         for forbidden in (
-            "PERSISTED_WORKSPACE",
-            ".i64",
-            ".id0",
             "LLM_FAKE_AS",
             "gamesymbol_candidate.py publish",
             "git commit",
@@ -264,13 +330,70 @@ class RepositoryContractTests(unittest.TestCase):
             "download.yaml[-1]",
             "robocopy",
         ):
-            self.assertNotIn(forbidden, workflow)
+            self.assertNotIn(forbidden, workflow_text)
+
+    def test_release_phase_two_workflows_keep_read_write_authority_split(self):
+        workflows = {
+            name: yaml.load((ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
+            for name in (
+                "release-build.yml",
+                "release-output-validation.yml",
+                "release-promotion.yml",
+                "release-operations.yml",
+            )
+        }
+        build = workflows["release-build.yml"]
+        self.assertEqual("read", build["permissions"]["contents"])
+        build_job = build["jobs"]["build-output"]
+        self.assertEqual(["self-hosted", "Windows", "X64", "gsvibe-release"], build_job["runs-on"])
+        self.assertEqual("release", build_job["environment"])
+        self.assertIn("GSVIBE_RELEASE_PHASE2_ENABLED", json.dumps(build))
+        self.assertIn("actions/create-github-app-token@v2", json.dumps(build_job))
+
+        output = workflows["release-output-validation.yml"]
+        output_job = output["jobs"]["verify-output"]
+        self.assertEqual("read", output["permissions"]["contents"])
+        self.assertNotIn("environment", output_job)
+        self.assertNotIn("create-github-app-token", json.dumps(output_job))
+        checkout = next(step for step in output_job["steps"] if step.get("name") == "Checkout trusted base verifier")
+        self.assertEqual("${{ inputs.base_sha }}", checkout["with"]["ref"])
+        self.assertIn("base_branch", output["on"]["workflow_call"]["inputs"])
+
+        promotion = workflows["release-promotion.yml"]
+        verifier = promotion["jobs"]["verify-promotion"]
+        writer = promotion["jobs"]["promotion-write"]
+        self.assertNotIn("environment", verifier)
+        self.assertEqual("release", writer["environment"])
+        self.assertEqual("verify-promotion", writer["needs"])
+        self.assertIn("needs.verify-promotion.outputs.approval_sha256", json.dumps(writer))
+        self.assertIn("release_workflow.py promote", json.dumps(writer))
+
+        operations = workflows["release-operations.yml"]
+        choices = operations["on"]["workflow_dispatch"]["inputs"]["operation"]["options"]
+        self.assertEqual(
+            {"retry", "resume-promotion", "republish", "abandon", "repair-index", "cleanup", "reconcile"},
+            set(choices),
+        )
+        self.assertEqual("release", operations["jobs"]["operate"]["environment"])
+        self.assertIn("GSVIBE_RELEASE_REPUBLISH_ENABLED", json.dumps(operations))
+        concurrency_groups = {
+            build_job["concurrency"]["group"],
+            writer["concurrency"]["group"],
+            operations["jobs"]["operate"]["concurrency"]["group"],
+        }
+        self.assertEqual({"${{ github.repository }}-release-phase2"}, concurrency_groups)
+        for workflow in workflows.values():
+            for job in workflow["jobs"].values():
+                for step in job.get("steps", []):
+                    run = step.get("run", "")
+                    self.assertNotIn("${{ inputs.", run)
+                    self.assertNotIn("${{ github.event.pull_request.", run)
 
     def test_published_gamesymbol_snapshots_match_goldsrc_contract(self):
         # The exact published set is deliberately not pinned: the bin submodule
         # pins binary bytes, and new game versions must not require editing this
         # test. Structural contract checks below still guard every published file.
-        published = {path.stem for path in (ROOT / "gamesymbols").glob("*.yaml")}
+        published = {path.stem for path in iter_snapshot_paths(ROOT / "gamesymbols")}
         self.assertTrue(published)
 
         for tag in sorted(published):
@@ -292,6 +415,30 @@ class RepositoryContractTests(unittest.TestCase):
                 for metadata in actual_binaries.values():
                     self.assertNotIn("path", metadata)
                     self.assertGreater(metadata["size"], 0)
+                companion = ROOT / "gamesymbols" / f"{tag}.metadata.yaml"
+                self.assertTrue(companion.is_file())
+                verify_metadata(
+                    metadata_path=companion,
+                    snapshot_path=path,
+                    config_path=ROOT / "configs" / f"{tag}.yaml",
+                    game_version=tag,
+                )
+                config_path = ROOT / "configs" / f"{tag}.yaml"
+                generators = discover_generator_modules(ROOT / "gamedata-generators")
+                files, manifest_sha256 = validate_gamedata_tree(
+                    ROOT / "gamedata" / tag,
+                    tag,
+                    generators,
+                    candidate_sha256=sha256_file(path),
+                    analysis_config_sha256=analysis_config_sha256(config_path),
+                    generator_contract_digest=generator_contract_sha256(generators),
+                )
+                self.assertTrue(files)
+                self.assertRegex(manifest_sha256, r"^[0-9a-f]{64}$")
+        self.assertFalse((ROOT / "gamesymbols" / "cstrike-10210.metadata.yaml").exists())
+        self.assertFalse((ROOT / "gamesymbols" / "cstrike-8684.metadata.yaml").exists())
+        self.assertFalse((ROOT / "gamedata" / "cstrike-10210").exists())
+        self.assertFalse((ROOT / "gamedata" / "cstrike-8684").exists())
 
     def test_pages_workflow_keeps_content_addressed_history_append_only(self):
         workflow = (ROOT / ".github" / "workflows" / "deploy-pages.yml").read_text(encoding="utf-8")

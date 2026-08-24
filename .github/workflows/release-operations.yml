@@ -1,0 +1,280 @@
+name: Release protected operations
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Protected release operation
+        required: true
+        type: choice
+        options: [retry, resume-promotion, republish, abandon, repair-index, cleanup, reconcile]
+      tag:
+        description: Exact release tag
+        required: true
+        type: string
+      build_id:
+        description: Exact existing build ID
+        required: true
+        type: string
+      secondary_build_id:
+        description: New build ID for retry
+        required: false
+        type: string
+      pr_number:
+        description: Exact output PR number when required
+        required: false
+        type: number
+      confirmation:
+        description: Exact operation confirmation phrase
+        required: false
+        type: string
+      reason:
+        description: Audit reason
+        required: false
+        type: string
+      activate_production:
+        description: Require the repository Phase 2 activation gate for writes
+        required: true
+        default: false
+        type: boolean
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  operate:
+    if: >-
+      inputs.operation == 'reconcile' ||
+      (inputs.activate_production == true && vars.GSVIBE_RELEASE_PHASE2_ENABLED == 'true')
+    runs-on: [self-hosted, Windows, X64, gsvibe-release]
+    environment: release
+    timeout-minutes: 120
+    env:
+      OPERATION: ${{ inputs.operation }}
+      TAG: ${{ inputs.tag }}
+      BUILD_ID: ${{ inputs.build_id }}
+      SECONDARY_BUILD_ID: ${{ inputs.secondary_build_id }}
+      PR_NUMBER: ${{ inputs.pr_number }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      REASON: ${{ inputs.reason }}
+      REPOSITORY_ID: ${{ github.repository_id }}
+      REPOSITORY: ${{ github.repository }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      EXPECTED_AUTHOR_LOGIN: ${{ vars.GSVIBE_RELEASE_BOT_LOGIN }}
+      PHASE2_ENABLED: ${{ vars.GSVIBE_RELEASE_PHASE2_ENABLED }}
+      REPUBLISH_ENABLED: ${{ vars.GSVIBE_RELEASE_REPUBLISH_ENABLED }}
+      RUN_ID: ${{ github.run_id }}
+      RUN_ATTEMPT: ${{ github.run_attempt }}
+    concurrency:
+      group: ${{ github.repository }}-release-phase2
+      cancel-in-progress: false
+    steps:
+      - name: Checkout trusted default-branch operator
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+          submodules: false
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Resolve exact private stage identity
+        if: >-
+          inputs.operation == 'retry' || inputs.operation == 'resume-promotion' ||
+          inputs.operation == 'abandon' || inputs.operation == 'repair-index'
+        id: stage
+        shell: pwsh
+        run: |
+          $path = Join-Path $env:RUNNER_TEMP 'release-stage-info.json'
+          $arguments = @(
+            'release_workflow.py', 'stage-info',
+            '-persisted-root', $env:GSVIBE_PERSISTED_WORKSPACE,
+            '-tag', $env:TAG, '-build-id', $env:BUILD_ID, '-output', $path
+          )
+          if ($env:OPERATION -eq 'resume-promotion') {
+            $arguments += @('-required-state', 'PROMOTION_STARTED')
+          }
+          uv run python @arguments
+          if ($LASTEXITCODE -ne 0) { throw 'unable to resolve exact private stage identity' }
+          $info = Get-Content -Raw -LiteralPath $path | ConvertFrom-Json
+          "pr_number=$($info.bindings.pr_number)" >> $env:GITHUB_OUTPUT
+          "workflow_ref=$($info.bindings.promotion_workflow_ref_sha)" >> $env:GITHUB_OUTPUT
+      - name: Recheck operation activation before credentials
+        shell: pwsh
+        run: |
+          if ($env:OPERATION -ne 'reconcile' -and $env:PHASE2_ENABLED -ne 'true') {
+            throw 'Phase 2 production authority is disabled'
+          }
+          if ($env:OPERATION -eq 'republish' -and $env:REPUBLISH_ENABLED -ne 'true') {
+            throw 'production republish is disabled'
+          }
+      - name: Create retry GitHub App token
+        if: inputs.operation == 'retry'
+        id: retry-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GSVIBE_RELEASE_APP_ID }}
+          private-key: ${{ secrets.GSVIBE_RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-actions: write
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Create abandon GitHub App token
+        if: inputs.operation == 'abandon'
+        id: abandon-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GSVIBE_RELEASE_APP_ID }}
+          private-key: ${{ secrets.GSVIBE_RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Create Release GitHub App token
+        if: inputs.operation == 'resume-promotion' || inputs.operation == 'republish'
+        id: release-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GSVIBE_RELEASE_APP_ID }}
+          private-key: ${{ secrets.GSVIBE_RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+      - name: Checkout original promotion verifier for resume
+        if: inputs.operation == 'resume-promotion'
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.stage.outputs.workflow_ref }}
+          fetch-depth: 0
+          submodules: false
+          persist-credentials: false
+      - name: Sync original promotion environment
+        if: inputs.operation == 'resume-promotion'
+        run: uv sync --locked
+      - name: Execute bounded release operation
+        shell: pwsh
+        env:
+          GITHUB_APP_TOKEN: ${{ steps.retry-token.outputs.token || steps.abandon-token.outputs.token || steps.release-token.outputs.token }}
+          GITHUB_API_TOKEN: ${{ steps.release-token.outputs.token || github.token }}
+          GH_TOKEN: ${{ steps.retry-token.outputs.token || steps.abandon-token.outputs.token || steps.release-token.outputs.token || github.token }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:GSVIBE_PERSISTED_WORKSPACE)) {
+            throw 'release runner persisted workspace is not configured'
+          }
+          $operation = $env:OPERATION
+          $common = @('-persisted-root', $env:GSVIBE_PERSISTED_WORKSPACE, '-tag', $env:TAG, '-build-id', $env:BUILD_ID)
+          if ($operation -eq 'retry') {
+            $info = Get-Content -Raw -LiteralPath (Join-Path $env:RUNNER_TEMP 'release-stage-info.json') | ConvertFrom-Json
+            uv run python release_workflow.py retry-check @common -new-build-id $env:SECONDARY_BUILD_ID -reason $env:REASON
+            if ($LASTEXITCODE -ne 0) { throw 'retry is not authorized at the current marker boundary' }
+            git fetch --no-tags origin $env:DEFAULT_BRANCH
+            if ($LASTEXITCODE -ne 0 -or (git rev-parse "origin/$env:DEFAULT_BRANCH").Trim() -ne $info.bindings.source_sha) {
+              throw 'retry source SHA no longer equals the exact default branch; use a replacement build decision'
+            }
+            $pullRequest = gh api "repos/$env:GITHUB_REPOSITORY/pulls/$env:PR_NUMBER" | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0 -or $pullRequest.number -ne $info.bindings.pr_number -or
+                $pullRequest.head.ref -ne $info.bindings.output_branch -or
+                $pullRequest.head.sha -ne $info.bindings.pr_head_sha -or
+                $pullRequest.base.sha -ne $info.bindings.pr_base_sha) {
+              throw 'retry PR identity does not match the private stage'
+            }
+            if ($pullRequest.state -eq 'open') {
+              gh pr close $pullRequest.number --repo $env:GITHUB_REPOSITORY --comment "Superseded by release retry $env:SECONDARY_BUILD_ID"
+              if ($LASTEXITCODE -ne 0) { throw 'unable to close superseded output PR' }
+            }
+            $encodedBranch = [uri]::EscapeDataString($info.bindings.output_branch)
+            $remoteRef = gh api "repos/$env:GITHUB_REPOSITORY/git/ref/heads/$encodedBranch" 2>$null | ConvertFrom-Json
+            if ($LASTEXITCODE -eq 0) {
+              if ($remoteRef.object.sha -ne $info.bindings.output_head_sha) { throw 'superseded branch head drifted' }
+              gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/heads/$encodedBranch" --silent
+              if ($LASTEXITCODE -ne 0) { throw 'unable to delete superseded output branch' }
+            }
+            uv run python release_workflow.py retry @common -new-build-id $env:SECONDARY_BUILD_ID -reason $env:REASON
+            if ($LASTEXITCODE -ne 0) { throw 'retry authorization failed' }
+            gh workflow run release-build.yml --repo $env:GITHUB_REPOSITORY --ref main `
+              -f tag=$env:TAG -f build_id=$env:SECONDARY_BUILD_ID -f activate_production=true
+          } elseif ($operation -eq 'abandon') {
+            $info = Get-Content -Raw -LiteralPath (Join-Path $env:RUNNER_TEMP 'release-stage-info.json') | ConvertFrom-Json
+            if ($info.bindings.pr_number) {
+              $pullRequest = gh api "repos/$env:GITHUB_REPOSITORY/pulls/$($info.bindings.pr_number)" | ConvertFrom-Json
+              if ($LASTEXITCODE -ne 0 -or $pullRequest.head.sha -ne $info.bindings.pr_head_sha -or
+                  $pullRequest.head.ref -ne $info.bindings.output_branch) {
+                throw 'abandon PR identity does not match the private stage'
+              }
+              if ($pullRequest.state -eq 'open') {
+                gh pr close $pullRequest.number --repo $env:GITHUB_REPOSITORY --comment "Abandoned: $env:REASON"
+                if ($LASTEXITCODE -ne 0) { throw 'unable to close abandoned output PR' }
+              }
+            }
+            $encodedBranch = [uri]::EscapeDataString($info.bindings.output_branch)
+            $remoteRef = gh api "repos/$env:GITHUB_REPOSITORY/git/ref/heads/$encodedBranch" 2>$null | ConvertFrom-Json
+            if ($LASTEXITCODE -eq 0) {
+              if ($remoteRef.object.sha -ne $info.bindings.output_head_sha) { throw 'abandoned branch head drifted' }
+              gh api --method DELETE "repos/$env:GITHUB_REPOSITORY/git/refs/heads/$encodedBranch" --silent
+              if ($LASTEXITCODE -ne 0) { throw 'unable to delete abandoned output branch' }
+            }
+            uv run python release_workflow.py abandon @common -confirmation $env:CONFIRMATION -reason $env:REASON
+          } elseif ($operation -eq 'cleanup') {
+            uv run python release_workflow.py cleanup @common -confirmation $env:CONFIRMATION
+          } elseif ($operation -eq 'reconcile') {
+            uv run python release_workflow.py reconcile @common -repository $env:REPOSITORY
+          } elseif ($operation -eq 'repair-index') {
+            $pullRequest = gh api "repos/$env:GITHUB_REPOSITORY/pulls/$env:PR_NUMBER" | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0) { throw 'unable to read output PR for index repair' }
+            if ($pullRequest.base.ref -ne $env:DEFAULT_BRANCH -or
+                $pullRequest.head.repo.full_name -ne $env:REPOSITORY -or
+                $pullRequest.user.login -ne $env:EXPECTED_AUTHOR_LOGIN) {
+              throw 'output PR is not eligible for private index repair'
+            }
+            uv run python release_workflow.py repair-index @common `
+              -pr-number $pullRequest.number -repository-id $env:REPOSITORY_ID `
+              -repository $env:REPOSITORY -base-ref $pullRequest.base.ref -output-branch $pullRequest.head.ref `
+              -pr-head-sha $pullRequest.head.sha -pr-base-sha $pullRequest.base.sha `
+              -confirmation $env:CONFIRMATION
+          } elseif ($operation -eq 'republish') {
+            $output = Join-Path $env:RUNNER_TEMP 'release-republish'
+            uv run python release_workflow.py republish -repo-root $env:GITHUB_WORKSPACE `
+              -repository $env:REPOSITORY @common -output-dir $output
+          } else {
+            $info = Get-Content -Raw -LiteralPath (Join-Path $env:RUNNER_TEMP 'release-stage-info.json') | ConvertFrom-Json
+            $pullRequest = gh api "repos/$env:GITHUB_REPOSITORY/pulls/$($info.bindings.pr_number)" | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0 -or -not $pullRequest.merged -or
+                $pullRequest.head.sha -ne $info.bindings.pr_head_sha -or
+                $pullRequest.base.sha -ne $info.bindings.pr_base_sha -or
+                $pullRequest.merge_commit_sha -ne $info.bindings.merge_sha) {
+              throw 'resume PR/merge identity does not match PROMOTION_STARTED'
+            }
+            git fetch --no-tags origin $pullRequest.head.sha $pullRequest.merge_commit_sha $env:DEFAULT_BRANCH
+            if ($LASTEXITCODE -ne 0) { throw 'unable to fetch resume promotion objects' }
+            $approvalPath = Join-Path $env:RUNNER_TEMP 'release-resume-approval.json'
+            $eventArguments = @(
+              '-repo-root', $env:GITHUB_WORKSPACE, '-merge-ref', $pullRequest.merge_commit_sha,
+              '-head-ref', $pullRequest.head.sha, '-pr-number', $pullRequest.number,
+              '-repository-id', $env:REPOSITORY_ID, '-repository', $env:REPOSITORY,
+              '-expected-repository-id', $env:REPOSITORY_ID, '-expected-repository', $env:REPOSITORY,
+              '-head-repository', $pullRequest.head.repo.full_name, '-head-branch', $pullRequest.head.ref,
+              '-base-branch', $pullRequest.base.ref, '-expected-base-branch', $env:DEFAULT_BRANCH,
+              '-author-login', $pullRequest.user.login, '-expected-author-login', $env:EXPECTED_AUTHOR_LOGIN,
+              '-workflow-repository', $env:REPOSITORY, '-build-workflow-path', '.github/workflows/release-build.yml',
+              '-build-workflow-ref', $pullRequest.base.sha, '-persisted-root', $env:GSVIBE_PERSISTED_WORKSPACE
+            )
+            uv run python release_workflow.py promotion-verify @eventArguments -default-ref "origin/$env:DEFAULT_BRANCH" -output $approvalPath
+            if ($LASTEXITCODE -ne 0) { throw 'resume promotion verification failed' }
+            $approval = Get-Content -Raw -LiteralPath $approvalPath | ConvertFrom-Json
+            $output = Join-Path $env:RUNNER_TEMP 'release-resume-promotion'
+            uv run python release_workflow.py promote @eventArguments `
+              -expected-approval-sha256 $approval.approval_sha256 `
+              -workflow-path $info.bindings.promotion_workflow_path `
+              -workflow-ref-sha $info.bindings.promotion_workflow_ref_sha `
+              -default-ref "origin/$env:DEFAULT_BRANCH" -run-id $env:RUN_ID -run-attempt $env:RUN_ATTEMPT -output-dir $output
+          }
+          if ($LASTEXITCODE -ne 0) { throw "release operation failed: $operation" }
+      - name: Upload operation output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-operation-${{ inputs.operation }}-${{ inputs.tag }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-*/
+          if-no-files-found: ignore
+          retention-days: 90

@@ -27,3 +27,35 @@ Copy `.env.example` to `.env` for a local template. The analyzer uses the GoldSr
 - `GSVIBE_API_HOST`, `GSVIBE_API_PORT`, `GSVIBE_API_CORS_ORIGINS`, `GSVIBE_API_ALLOW_PRIVATE_NETWORK`, `GSVIBE_SSE_BLOCK_MS`, and `GSVIBE_SSE_BATCH_SIZE` configure the read-only Process API.
 - `GSVIBE_REFERENCE_GAMEVER` (default `hl-10210`) selects the canonical reference game version for `LLM_DECOMPILE`.
 - `DEPOTDOWNLOADER_STEAM_USERNAME` and `DEPOTDOWNLOADER_STEAM_PASSWORD` are read by `download_depot.py` when depot authentication is required.
+
+## IDB cache host requirements
+
+The warm-cache runtime probe requires `IDADIR` to identify the exact pinned loader modules and allowlisted plugins. The
+cache CLI receives an explicit persisted root; CI later exposes it as `GSVIBE_PERSISTED_WORKSPACE` only inside the
+protected dedicated Windows runner job. That root must be outside the checkout and `bin/`, must not traverse a reparse
+point, and must reside on storage that supports atomic same-filesystem rename.
+
+The runner account needs exclusive write access to its cache root. Cache warming is single-concurrency and uses a local
+file lock for the fixed MCP port. A shared cache is valid only when all consumers use the same controlled storage and
+ACL authority; Actions artifacts and `READY.json` are not cache transports or truth sources.
+
+Set the
+repository variable `GSVIBE_IDB_CACHE_MODE` to `cold` until real runner evidence is captured, then to `warm`; set
+`GSVIBE_IDA_KERNEL_VERSION` to the pinned installation's expected kernel version. Store the absolute persisted path as
+the Environment secret `GSVIBE_PERSISTED_WORKSPACE`. The observed runtime must match the expected kernel, loader, and
+plugin identity before publication, so these settings cannot manufacture a successful cache generation.
+
+## Release runner and GitHub governance requirements
+
+Phase 2 requires a dedicated `[self-hosted, Windows, X64, gsvibe-release]` runner whose machine environment exposes the
+same checkout-external `GSVIBE_PERSISTED_WORKSPACE` to output validation, build, promotion, and recovery jobs. Its
+`release-staging` subtree must be protected by runner-account ACLs and storage with atomic same-filesystem rename and
+hard-link semantics. It must not be shared with untrusted jobs.
+
+Create a protected `release` Environment with `GSVIBE_RELEASE_APP_ID` and `GSVIBE_RELEASE_APP_PRIVATE_KEY`. The installed
+App must have only the repository permissions needed for output branches/PRs, workflow dispatch, annotated tags,
+Releases, and assets. Configure `GSVIBE_RELEASE_BOT_LOGIN`, require the unique Actions-owned `pr-validate`, require an
+up-to-date merge commit, prohibit direct/admin-bypass pushes to `main`, protect release tags, and restrict the output
+branch prefix to the App. Keep `GSVIBE_RELEASE_PHASE2_ENABLED` false until all settings and exercises have captured-at
+evidence. Keep the independent `GSVIBE_RELEASE_REPUBLISH_ENABLED` false until the protected republish exercise succeeds;
+repository tests cannot activate or prove these external controls.

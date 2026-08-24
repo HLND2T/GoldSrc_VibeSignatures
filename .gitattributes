@@ -1,2 +1,4 @@
 # Published snapshots are byte-for-byte canonical YAML on every platform.
 /gamesymbols/*.yaml text eol=lf
+/configs/*.yaml text eol=lf
+/gamedata/*/gamedata-manifest.json text eol=lf

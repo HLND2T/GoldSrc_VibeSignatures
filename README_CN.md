@@ -17,7 +17,7 @@ GoldSrc VibeSignatures 是一个面向 32 位 GoldSrc 游戏的、可复现的�
 然后运行
 
 ```bash
-uv run ida_analyze_bin.py -allgamever -debug
+uv run ida_analyze_bin.py -allgamever -cache_mode cold -debug
 ```
 
 该命令会执行分析流程并生成包含了GoldSrc游戏的符号信息的YAML产物。

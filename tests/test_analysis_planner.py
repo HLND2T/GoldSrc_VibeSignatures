@@ -22,6 +22,7 @@ from ida_analyze_bin import (
     ANALYSIS_STAGES,
     DEFAULT_HOST,
     DEFAULT_PORT,
+    DATABASE_POLICY_RESTORED_STRICT,
     SURVEY_CURRENT_IDB_PATH_PY_EVAL,
     AnalysisRunError,
     AnalysisSummary,
@@ -351,8 +352,11 @@ class ConfigValidationTests(unittest.TestCase):
 
 class CliContractTests(unittest.TestCase):
     def parse_args(self, argv=(), env=None):
+        argv = list(argv)
+        if not any(str(token).split("=", 1)[0] == "-cache_mode" for token in argv):
+            argv.extend(("-cache_mode", "cold"))
         with patch.dict(os.environ, env or {}, clear=True):
-            return parse_args(list(argv))
+            return parse_args(argv)
 
     def assert_parse_error(self, argv, env=None):
         with (
@@ -378,6 +382,7 @@ class CliContractTests(unittest.TestCase):
         self.assertEqual("medium", args.llm_effort)
         self.assertEqual(3, args.maxretry)
         self.assertEqual("", args.ida_args)
+        self.assertEqual("cold", args.cache_mode)
         self.assertEqual("none", args.process_reporter)
         self.assertEqual("redis://127.0.0.1:6379/0", args.redis_url)
         self.assertEqual("gsvibe:analysis:v1", args.redis_prefix)
@@ -526,6 +531,12 @@ class CliContractTests(unittest.TestCase):
         self.assert_parse_error([])
         self.assert_parse_error([], env={"GSVIBE_GAMEVER": "cstrike-10210"})
 
+    def test_cache_mode_is_explicit_and_limited_to_warm_or_cold(self):
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            parse_args(["-gamever", "cstrike-10210"])
+        self.assertEqual("warm", self.parse_args(["-gamever", "cstrike-10210", "-cache_mode", "warm"]).cache_mode)
+        self.assert_parse_error(["-gamever", "cstrike-10210", "-cache_mode", "fallback"])
+
     def test_oldgamever_auto_resolution_is_family_aware(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -606,7 +617,7 @@ class CliContractTests(unittest.TestCase):
                 patch("ida_analyze_bin._run_single_tag", side_effect=record_success),
                 redirect_stdout(io.StringIO()),
             ):
-                result = main(["-allgamever", "-bindir", str(root / "bin")])
+                result = main(["-allgamever", "-bindir", str(root / "bin"), "-cache_mode", "cold"])
             self.assertEqual(0, result)
 
     def test_allgamever_module_filter_matches_configured_modules(self):
@@ -635,7 +646,7 @@ class CliContractTests(unittest.TestCase):
             patch("ida_analyze_bin._run_single_tag", side_effect=record_success),
             redirect_stdout(output),
         ):
-            result = main(["-allgamever", "-modules", "engine", "-bindir", "bin"])
+            result = main(["-allgamever", "-modules", "engine", "-bindir", "bin", "-cache_mode", "cold"])
         self.assertEqual(0, result)
         self.assertEqual(["hl-10210"], calls)
         self.assertIn("Skipping gamever: no requested modules found (engine)", output.getvalue())
@@ -658,7 +669,7 @@ class CliContractTests(unittest.TestCase):
             patch("ida_analyze_bin._run_single_tag", side_effect=fail_then_succeed),
             redirect_stdout(io.StringIO()),
         ):
-            result = main(["-allgamever", "-bindir", "bin"])
+            result = main(["-allgamever", "-bindir", "bin", "-cache_mode", "cold"])
         self.assertEqual(1, result)
         self.assertEqual(["hl-10210"], calls)
 
@@ -680,7 +691,7 @@ class CliContractTests(unittest.TestCase):
             patch("ida_analyze_bin._run_single_tag", side_effect=fail_then_succeed),
             redirect_stdout(io.StringIO()),
         ):
-            result = main(["-allgamever", "-bindir", "bin", "-skip_error"])
+            result = main(["-allgamever", "-bindir", "bin", "-skip_error", "-cache_mode", "cold"])
         self.assertEqual(1, result)
         self.assertEqual(["hl-10210", "hl-8684"], calls)
 
@@ -699,6 +710,8 @@ class CliContractTests(unittest.TestCase):
                         str(config),
                         "-bindir",
                         str(root / "bin"),
+                        "-cache_mode",
+                        "cold",
                     ]
                 )
             self.assertEqual(0, result)
@@ -730,9 +743,44 @@ class CliContractTests(unittest.TestCase):
                         "-bindir",
                         str(root / "bin"),
                         "-skip_error",
+                        "-cache_mode",
+                        "cold",
                     ]
                 )
             self.assertEqual(1, result)
+
+    def test_cli_cache_mode_selects_cold_or_strict_lifecycle(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text("modules: []\n", encoding="utf-8")
+            observed = []
+
+            def record_mode(**kwargs):
+                observed.append((kwargs["database_policy"], kwargs["save_on_success"]))
+
+            for mode in ("cold", "warm"):
+                with (
+                    patch.dict(os.environ, {}, clear=True),
+                    patch("ida_analyze_bin.analyze", side_effect=record_mode),
+                    redirect_stdout(io.StringIO()),
+                ):
+                    self.assertEqual(
+                        0,
+                        main(
+                            [
+                                "-gamever",
+                                "game-1",
+                                "-configyaml",
+                                str(config),
+                                "-bindir",
+                                str(root / "bin"),
+                                "-cache_mode",
+                                mode,
+                            ]
+                        ),
+                    )
+            self.assertEqual([("rebuild", True), ("restored_strict", False)], observed)
 
 
 class DagTests(unittest.TestCase):
@@ -2056,6 +2104,78 @@ class McpLifecycleTests(unittest.TestCase):
                 debug=False,
             )
             self.assertTrue(all(not path.exists() for path in stale_files))
+
+    def test_strict_restored_lifecycle_requires_database_and_never_rebuilds_identity_mismatch(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary) / "hw.dll"
+            binary.write_bytes(b"binary")
+            with (
+                patch("ida_analyze_bin.start_idalib_mcp") as start,
+                self.assertRaisesRegex(McpLifecycleError, "Strict restored IDA database is missing"),
+            ):
+                IdaMcpLifecycle(
+                    binary,
+                    "windows",
+                    DEFAULT_HOST,
+                    DEFAULT_PORT,
+                    "",
+                    database_policy=DATABASE_POLICY_RESTORED_STRICT,
+                    save_on_success=False,
+                ).__enter__()
+            start.assert_not_called()
+
+            stale = Path(f"{binary}.i64")
+            stale.write_bytes(b"restored")
+            with (
+                patch("ida_analyze_bin.start_idalib_mcp", return_value=process) as start,
+                patch("ida_analyze_bin.verify_owned_mcp_with_single_recovery", return_value=(process, None)),
+                patch("ida_analyze_bin.stop_idalib_mcp_process"),
+                patch("ida_analyze_bin.wait_for_port_release", return_value=True),
+                patch("ida_analyze_bin._invalidate_ida_database") as invalidate,
+                self.assertRaisesRegex(McpLifecycleError, "Strict restored IDA database identity verification failed"),
+            ):
+                IdaMcpLifecycle(
+                    binary,
+                    "windows",
+                    DEFAULT_HOST,
+                    DEFAULT_PORT,
+                    "",
+                    database_policy=DATABASE_POLICY_RESTORED_STRICT,
+                    save_on_success=False,
+                ).__enter__()
+            start.assert_called_once()
+            invalidate.assert_not_called()
+            self.assertTrue(stale.is_file())
+
+    def test_strict_restored_lifecycle_does_not_save_selected_node_changes(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        binding = McpDatabaseBinding(False, None, "hw.dll", "worker", True, True)
+        runtime = McpRuntime(DEFAULT_HOST, DEFAULT_PORT, "hw.dll", binding)
+        with tempfile.TemporaryDirectory() as temporary:
+            binary = Path(temporary) / "hw.dll"
+            binary.write_bytes(b"binary")
+            Path(f"{binary}.i64").write_bytes(b"restored")
+            with (
+                patch("ida_analyze_bin.start_idalib_mcp", return_value=process),
+                patch("ida_analyze_bin.verify_owned_mcp_with_single_recovery", return_value=(process, runtime)),
+                patch("ida_analyze_bin.save_ida_database") as save,
+                patch("ida_analyze_bin.quit_ida_gracefully"),
+                patch("ida_analyze_bin.wait_for_port_release", return_value=True),
+                IdaMcpLifecycle(
+                    binary,
+                    "windows",
+                    DEFAULT_HOST,
+                    DEFAULT_PORT,
+                    "",
+                    database_policy=DATABASE_POLICY_RESTORED_STRICT,
+                    save_on_success=False,
+                ),
+            ):
+                pass
+            save.assert_not_called()
 
     def test_lifecycle_preserves_stale_idb_when_port_does_not_release(self):
         process = MagicMock()

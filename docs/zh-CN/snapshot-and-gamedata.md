@@ -2,8 +2,9 @@
 
 # Snapshot、gamedata 与发布
 
-单个 symbol 的 YAML 保持被 `bin/<GAMEVER>/<module>/` 忽略。Git-tracked 的 canonical 分析 lockfile 是
-`gamesymbols/<GAMEVER>.yaml`，其文件集合由 `configs/<GAMEVER>.yaml` 声明的必需与可选 YAML 输出推导。
+单个 symbol 的 YAML 保持被 `bin/<GAMEVER>/<module>/` 忽略。每个已发布版本都有一对 Git-tracked canonical
+文件：`gamesymbols/<GAMEVER>.yaml` 保存分析 lockfile，`gamesymbols/<GAMEVER>.metadata.yaml` 冻结展示 alias
+及其解析后的 module/platform/artifact owner。
 
 ## 不可变 candidate 事务
 
@@ -12,7 +13,8 @@
 
 ```bash
 CANDIDATE_DIR="$(mktemp -d)"
-CANDIDATE_SNAPSHOT="$CANDIDATE_DIR/candidate.yaml"
+CANDIDATE_SNAPSHOT="$CANDIDATE_DIR/cstrike-10210.yaml"
+CANDIDATE_METADATA="$CANDIDATE_DIR/cstrike-10210.metadata.yaml"
 CANDIDATE_SESSION="$CANDIDATE_DIR/session.json"
 GAMEDATA_ROOT="$CANDIDATE_DIR/gamedata-candidate"
 GAMEDATA_SESSION="$CANDIDATE_DIR/gamedata.session.json"
@@ -23,6 +25,7 @@ uv run python gamedata_candidate.py guard -session "$GAMEDATA_SESSION"
 uv run python gamesymbol_candidate.py mark -candidate "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION" -step gamedata -gamedata-session "$GAMEDATA_SESSION"
 uv run python gamesymbol_candidate.py publish -candidate "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION" -destination gamesymbols/cstrike-10210.yaml
 uv run python gamedata_candidate.py publish -session "$GAMEDATA_SESSION" -outputdir gamedata/cstrike-10210
+uv run python gamedata_candidate.py stage -session "$GAMEDATA_SESSION" -repo-root .
 ```
 
 注意：
@@ -30,8 +33,42 @@ uv run python gamedata_candidate.py publish -session "$GAMEDATA_SESSION" -output
 - `gamesymbol_candidate.py mark -step gamedata` 需要 `-gamedata-session`，其 gamever 与 candidate SHA-256 必须
   与该 symbol candidate 匹配。
 - `gamedata_candidate.py publish -outputdir` 必须以精确 tag 结尾。发布是原子替换。
-- candidate manifest 固定候选 hash 与文件系统 identity。generator 根目录不存在或为空会产生带 hash 的空
-  inventory，只要 `guard` 成功仍可满足 gamedata 步骤。
+- candidate build 同时生成 `$CANDIDATE_METADATA`。session 绑定两份文件的精确路径、hash、文件系统 identity，
+  以及 metadata 对 snapshot SHA-256 的绑定。
+- 本地 pair 发布使用恢复 journal 与固定替换顺序；任何中间错配都会被 verifier 拒绝。对外原子边界是 Git
+  commit/tree。
+- 即使没有 generator 产生 payload，每个 gamedata 目录也包含 canonical `gamedata-manifest.json`。它绑定
+  snapshot、config、generator contract 与排除 manifest 自身的 payload inventory。
+- gamedata config identity 会把 CRLF 规范化为 LF 并拒绝 bare CR；仓库 attributes 同时把 tracked config 固定为
+  LF，因此 Windows candidate generation 与 exact Git-blob verification 使用同一 digest。
+- `stage` 先 guard candidate，再构造并验证临时 Git tree，最后只对 candidate manifest 中的精确路径执行
+  `git add -f -- <exact-path>`。仓库继续忽略 `gamedata/*/`，禁止宽泛 glob staging。
+- generator 根目录不存在或为空会产生带 hash 的空 inventory，只要 `guard` 成功仍可满足 gamedata 步骤。
+
+可以独立生成或验证 tracked companion：
+
+```bash
+uv run python gamesymbol_metadata.py generate -snapshot gamesymbols/hl-10210.yaml -configyaml configs/hl-10210.yaml -gamever hl-10210 -metadata gamesymbols/hl-10210.metadata.yaml
+uv run python gamesymbol_metadata.py verify -snapshot gamesymbols/hl-10210.yaml -configyaml configs/hl-10210.yaml -gamever hl-10210 -metadata gamesymbols/hl-10210.metadata.yaml
+```
+
+Pages 不再读取 live config alias。companion 缺失、非 canonical、hash 不匹配或 owner 不匹配都会使构建失败。
+
+## Release content inventory
+
+Schema-1 release content manifest 是第二层 Git-tree contract。对单个 tag，它以 Git mode、size 与 raw SHA-256
+清点 exact `gamesymbols/<tag>.yaml`、`gamesymbols/<tag>.metadata.yaml` 与 `gamedata/<tag>/**` blob。
+`release-manifests/<tag>.json` 不进入该 digest，因此 manifest 不会 hash 自身。
+
+Verifier 会交叉核对 companion 的 snapshot/config binding、gamedata manifest 的 snapshot/config/generator binding、
+snapshot binary inventory 与 `bin` gitlink。缺失 companion 或 gamedata manifest、额外 gamedata payload、可执行 mode
+payload、non-canonical bytes 或 default-branch drift 都会 fail closed。Shadow output 仅作为 evidence，不改变 canonical
+publication authority。
+
+Phase 2 中 source PR 继续拥有三类 payload authority。Generated-output commit 以 exact source SHA 为唯一父提交，
+并且只能新增 `release-manifests/<tag>.json`；snapshot、metadata 或 gamedata 任何 delta 都使 output validation
+失败。Merged manifest 绑定 content identity；PR/head/merge/tag/Release 的 attempt identity 则保存在 private
+staging、provenance 与 durable completion record 中，不让 tracked manifest 形成自引用。
 
 ## 直接生成 gamedata
 

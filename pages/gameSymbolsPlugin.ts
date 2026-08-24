@@ -85,54 +85,99 @@ export interface EncodedGameSymbolAsset {
 interface CachedDataset {
   mtimeMs: number
   size: number
-  configMtimeMs: number
-  configSize: number
+  metadataMtimeMs: number
+  metadataSize: number
   dataset: GameSymbolDataset
 }
 
-function optionalStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return []
-  return value.filter((item): item is string => typeof item === 'string' && item.length > 0)
-}
-
-export interface ConfigAliasIndex {
+export interface MetadataAliasIndex {
   aliases: Map<string, string[]>
 }
 
-export function buildConfigAliasIndex(raw: unknown, source: string): ConfigAliasIndex {
-  if (!isObject(raw)) throw new Error(`${source}: config root must be a mapping`)
+function exactKeys(value: JsonObject, expected: string[], source: string): void {
+  const actual = Object.keys(value).sort()
+  const canonical = [...expected].sort()
+  if (actual.length !== canonical.length || actual.some((key, index) => key !== canonical[index])) {
+    throw new Error(`${source}: unexpected fields`)
+  }
+}
+
+function requiredAliasArray(value: unknown, field: string, source: string): string[] {
+  if (!Array.isArray(value) || value.length === 0) throw new Error(`${source}: ${field} must be a non-empty string array`)
+  const aliases: string[] = []
+  for (const item of value) {
+    if (typeof item !== 'string' || item.length === 0 || item.trim() !== item) throw new Error(`${source}: ${field} contains an invalid alias`)
+    if (aliases.includes(item)) throw new Error(`${source}: ${field} contains duplicate alias ${item}`)
+    aliases.push(item)
+  }
+  return aliases
+}
+
+export function buildMetadataAliasIndex(
+  raw: unknown,
+  expectedGameVersion: string,
+  snapshotSha256: string,
+  dataset: GameSymbolDataset,
+  source: string,
+): MetadataAliasIndex {
+  if (!isObject(raw)) throw new Error(`${source}: metadata root must be a mapping`)
+  exactKeys(raw, ['schema_version', 'game_version', 'snapshot_sha256', 'config_digest_version', 'config_sha256', 'modules'], source)
+  if (raw.schema_version !== 1) throw new Error(`${source}: schema_version must be 1`)
+  if (raw.game_version !== expectedGameVersion) throw new Error(`${source}: game_version does not match snapshot`)
+  if (raw.snapshot_sha256 !== snapshotSha256) throw new Error(`${source}: snapshot_sha256 does not match snapshot bytes`)
+  if (raw.config_digest_version !== dataset.source.configDigestVersion) throw new Error(`${source}: config_digest_version does not match snapshot`)
+  const configSha256 = requiredString(raw.config_sha256, 'config_sha256', source)
+  if (!/^[0-9a-f]{64}$/.test(configSha256) || dataset.source.configSha256 !== `sha256:${configSha256}`) {
+    throw new Error(`${source}: config_sha256 does not match snapshot`)
+  }
   const modules = raw.modules
   if (!Array.isArray(modules)) throw new Error(`${source}: modules must be an array`)
   const aliases = new Map<string, string[]>()
-  for (const moduleEntry of modules) {
-    if (!isObject(moduleEntry)) continue
-    const moduleName = moduleEntry.name
-    if (typeof moduleName !== 'string' || moduleName.length === 0) continue
+  const recordKeys = new Set(dataset.records.map(record => `${record.module}/${record.platform}/${record.artifact}`))
+  const seenModules = new Set<string>()
+  for (const [moduleIndex, moduleEntry] of modules.entries()) {
+    if (!isObject(moduleEntry)) throw new Error(`${source}: modules[${moduleIndex}] must be a mapping`)
+    exactKeys(moduleEntry, ['name', 'symbols'], `${source}: modules[${moduleIndex}]`)
+    const moduleName = requiredString(moduleEntry.name, `modules[${moduleIndex}].name`, source)
+    if (seenModules.has(moduleName.toLowerCase())) throw new Error(`${source}: duplicate module ${moduleName}`)
+    seenModules.add(moduleName.toLowerCase())
     const symbols = moduleEntry.symbols
-    if (!Array.isArray(symbols)) continue
-    for (const symbolEntry of symbols) {
-      if (!isObject(symbolEntry)) continue
-      const name = symbolEntry.name
-      if (typeof name !== 'string' || name.length === 0) continue
-      const aliasValues = optionalStringArray(symbolEntry.alias)
-      if (aliasValues.length === 0) continue
-      const key = `${moduleName}/${name}`
-      const existing = aliases.get(key)
-      if (existing) {
-        for (const alias of aliasValues) if (!existing.includes(alias)) existing.push(alias)
-      } else {
-        aliases.set(key, [...aliasValues])
+    if (!Array.isArray(symbols) || symbols.length === 0) throw new Error(`${source}: modules[${moduleIndex}].symbols must be non-empty`)
+    const seenSymbols = new Set<string>()
+    for (const [symbolIndex, symbolEntry] of symbols.entries()) {
+      if (!isObject(symbolEntry)) throw new Error(`${source}: symbol entry must be a mapping`)
+      exactKeys(symbolEntry, ['name', 'artifacts', 'alias'], `${source}: symbol entry`)
+      const name = requiredString(symbolEntry.name, `modules[${moduleIndex}].symbols[${symbolIndex}].name`, source)
+      if (seenSymbols.has(name.toLowerCase())) throw new Error(`${source}: duplicate symbol ${moduleName}.${name}`)
+      seenSymbols.add(name.toLowerCase())
+      const aliasValues = requiredAliasArray(symbolEntry.alias, `modules[${moduleIndex}].symbols[${symbolIndex}].alias`, source)
+      const artifacts = symbolEntry.artifacts
+      if (!Array.isArray(artifacts) || artifacts.length === 0) throw new Error(`${source}: alias symbol has no artifacts`)
+      let priorPlatform = -1
+      for (const artifactEntry of artifacts) {
+        if (!isObject(artifactEntry)) throw new Error(`${source}: artifact entry must be a mapping`)
+        exactKeys(artifactEntry, ['platform', 'artifact'], `${source}: artifact entry`)
+        const platform = artifactEntry.platform
+        if (platform !== 'windows' && platform !== 'linux') throw new Error(`${source}: invalid alias platform`)
+        const platformIndex = platform === 'windows' ? 0 : 1
+        if (platformIndex <= priorPlatform) throw new Error(`${source}: artifacts are not in canonical platform order`)
+        priorPlatform = platformIndex
+        const artifact = requiredString(artifactEntry.artifact, 'artifact', source)
+        const key = `${moduleName}/${platform}/${artifact}`
+        if (!recordKeys.has(key)) throw new Error(`${source}: alias owner ${key} is absent from snapshot`)
+        if (aliases.has(key)) throw new Error(`${source}: duplicate alias owner ${key}`)
+        aliases.set(key, aliasValues)
       }
     }
   }
   return { aliases }
 }
 
-export function attachAliasesToDataset(dataset: GameSymbolDataset, aliasIndex: ConfigAliasIndex): GameSymbolDataset {
+export function attachAliasesToDataset(dataset: GameSymbolDataset, aliasIndex: MetadataAliasIndex): GameSymbolDataset {
   if (aliasIndex.aliases.size === 0) return dataset
   let changed = false
   const records = dataset.records.map((record) => {
-    const key = `${record.module}/${record.artifact}`
+    const key = `${record.module}/${record.platform}/${record.artifact}`
     const aliases = aliasIndex.aliases.get(key)
     if (!aliases || aliases.length === 0) return record
     changed = true
@@ -323,7 +368,7 @@ export function createGameSymbolIndex(assets: EncodedGameSymbolAsset[]): GameSym
   }
 }
 
-export function gameSymbolsPlugin(symbolsDirectory: string, configsDirectory?: string): Plugin {
+export function gameSymbolsPlugin(symbolsDirectory: string): Plugin {
   const cache = new Map<string, CachedDataset>()
 
   async function snapshotFiles(): Promise<string[]> {
@@ -338,41 +383,27 @@ export function gameSymbolsPlugin(symbolsDirectory: string, configsDirectory?: s
     const fileName = basename(filePath)
     const match = SNAPSHOT_FILE_PATTERN.exec(fileName)
     if (!match) throw new Error(`Invalid gamesymbol snapshot filename: ${fileName}`)
-    const configPath = configsDirectory ? join(configsDirectory, `${match[1]}.yaml`) : undefined
-
-    let configStat = { mtimeMs: 0, size: 0 }
-    if (configPath) {
-      try {
-        const cs = await stat(configPath)
-        configStat = { mtimeMs: cs.mtimeMs, size: cs.size }
-      } catch {
-        configStat = { mtimeMs: 0, size: 0 }
-      }
-    }
+    const metadataPath = join(symbolsDirectory, `${match[1]}.metadata.yaml`)
+    const metadataStat = await stat(metadataPath)
 
     const cached = cache.get(filePath)
     if (
       cached?.mtimeMs === fileStat.mtimeMs && cached.size === fileStat.size
-      && cached.configMtimeMs === configStat.mtimeMs && cached.configSize === configStat.size
+      && cached.metadataMtimeMs === metadataStat.mtimeMs && cached.metadataSize === metadataStat.size
     ) return cached.dataset
 
-    const raw = parse(await readFile(filePath, 'utf8')) as unknown
+    const snapshotBytes = await readFile(filePath)
+    const raw = parse(snapshotBytes.toString('utf8')) as unknown
     let dataset = normalizeGameSymbolSnapshot(raw, match[1], filePath)
-
-    if (configPath && (configStat.mtimeMs !== 0 || configStat.size !== 0)) {
-      try {
-        const configRaw = parse(await readFile(configPath, 'utf8')) as unknown
-        dataset = attachAliasesToDataset(dataset, buildConfigAliasIndex(configRaw, configPath))
-      } catch {
-        // config missing/invalid is non-fatal: keep unaliased dataset
-      }
-    }
+    const snapshotSha256 = createHash('sha256').update(snapshotBytes).digest('hex')
+    const metadataRaw = parse(await readFile(metadataPath, 'utf8')) as unknown
+    dataset = attachAliasesToDataset(dataset, buildMetadataAliasIndex(metadataRaw, match[1], snapshotSha256, dataset, metadataPath))
 
     cache.set(filePath, {
       mtimeMs: fileStat.mtimeMs,
       size: fileStat.size,
-      configMtimeMs: configStat.mtimeMs,
-      configSize: configStat.size,
+      metadataMtimeMs: metadataStat.mtimeMs,
+      metadataSize: metadataStat.size,
       dataset,
     })
     return dataset
@@ -402,7 +433,6 @@ export function gameSymbolsPlugin(symbolsDirectory: string, configsDirectory?: s
     name: 'gamesymbol-assets',
     configureServer(server) {
       server.watcher.add(symbolsDirectory)
-      if (configsDirectory) server.watcher.add(configsDirectory)
       server.middlewares.use(async (request, response, next) => {
         const pathname = new URL(request.url ?? '/', 'http://localhost').pathname
         if (pathname.endsWith('/gamesymbols/index.json')) {
@@ -435,12 +465,10 @@ export function gameSymbolsPlugin(symbolsDirectory: string, configsDirectory?: s
     async buildStart() {
       const files = await snapshotFiles()
       files.forEach((filePath) => this.addWatchFile(filePath))
-      if (configsDirectory) {
-        files.forEach((filePath) => {
-          const match = SNAPSHOT_FILE_PATTERN.exec(basename(filePath))
-          if (match) this.addWatchFile(join(configsDirectory, `${match[1]}.yaml`))
-        })
-      }
+      files.forEach((filePath) => {
+        const match = SNAPSHOT_FILE_PATTERN.exec(basename(filePath))
+        if (match) this.addWatchFile(join(symbolsDirectory, `${match[1]}.metadata.yaml`))
+      })
     },
     async generateBundle() {
       const files = await snapshotFiles()

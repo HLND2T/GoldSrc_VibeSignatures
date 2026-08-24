@@ -10,11 +10,12 @@ from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import dataclass
 from typing import Any
 
+from ida_database_paths import IDA_DATABASE_SUFFIXES
+
 WORKER_TOOL_NAMES = frozenset(
     {"py_eval", "survey_binary", "find_bytes", "rename", "define_func", "set_comments", "get_int"}
 )
 MANAGEMENT_TOOL_NAMES = frozenset({"idb_open", "idb_list"})
-IDA_DATABASE_SUFFIXES = (".i64", ".idb")
 
 
 class McpContractError(RuntimeError):

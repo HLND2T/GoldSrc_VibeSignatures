@@ -1,0 +1,171 @@
+name: Release generated-output build
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Exact GoldSrc game-version tag
+        required: true
+        type: string
+      build_id:
+        description: Optional immutable build ID
+        required: false
+        type: string
+      activate_production:
+        description: Require the repository Phase 2 activation gate
+        required: true
+        default: false
+        type: boolean
+permissions:
+  contents: read
+jobs:
+  activation-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
+    steps:
+      - id: gate
+        env:
+          REQUESTED: ${{ inputs.activate_production }}
+          REPOSITORY_ENABLED: ${{ vars.GSVIBE_RELEASE_PHASE2_ENABLED }}
+        run: |
+          enabled=false
+          if [[ "$REQUESTED" == "true" && "$REPOSITORY_ENABLED" == "true" ]]; then enabled=true; fi
+          echo "enabled=$enabled" >> "$GITHUB_OUTPUT"
+          if [[ "$enabled" != "true" ]]; then
+            echo "Phase 2 production release authority remains disabled"
+          fi
+  build-output:
+    needs: activation-gate
+    if: needs.activation-gate.outputs.enabled == 'true' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Windows, X64, gsvibe-release]
+    environment: release
+    timeout-minutes: 60
+    concurrency:
+      group: ${{ github.repository }}-release-phase2
+      cancel-in-progress: false
+    steps:
+      - name: Recheck build activation before credentials
+        shell: pwsh
+        env:
+          REQUESTED: ${{ inputs.activate_production }}
+          REPOSITORY_ENABLED: ${{ vars.GSVIBE_RELEASE_PHASE2_ENABLED }}
+        run: |
+          if ($env:REQUESTED -ne 'true' -or $env:REPOSITORY_ENABLED -ne 'true') {
+            throw 'Phase 2 production release authority is disabled'
+          }
+      - name: Create protected GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GSVIBE_RELEASE_APP_ID }}
+          private-key: ${{ secrets.GSVIBE_RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Checkout exact main source
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ steps.app-token.outputs.token }}
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Resolve immutable build identity
+        id: identity
+        shell: pwsh
+        env:
+          REQUESTED_BUILD_ID: ${{ inputs.build_id }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          $buildId = $env:REQUESTED_BUILD_ID
+          if ([string]::IsNullOrWhiteSpace($buildId)) {
+            $buildId = "run-$env:RUN_ID-$env:RUN_ATTEMPT"
+          }
+          "build_id=$buildId" >> $env:GITHUB_OUTPUT
+      - name: Build direct-parent generated output
+        id: output
+        shell: pwsh
+        env:
+          BUILD_ID: ${{ steps.identity.outputs.build_id }}
+          TAG: ${{ inputs.tag }}
+          SOURCE_SHA: ${{ github.sha }}
+          REPOSITORY_ID: ${{ github.repository_id }}
+          REPOSITORY: ${{ github.repository }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:GSVIBE_PERSISTED_WORKSPACE)) {
+            throw 'release runner persisted workspace is not configured'
+          }
+          if ((git rev-parse HEAD).Trim() -ne $env:SOURCE_SHA) {
+            throw 'workflow dispatch source is not the exact checked-out main commit'
+          }
+          $resultPath = Join-Path $env:RUNNER_TEMP 'release-output-build.json'
+          uv run python release_workflow.py output-build `
+            -repo-root $env:GITHUB_WORKSPACE -default-ref HEAD -tag $env:TAG `
+            -build-id $env:BUILD_ID -repository-id $env:REPOSITORY_ID `
+            -repository $env:REPOSITORY -base-branch $env:DEFAULT_BRANCH -workflow-repository $env:REPOSITORY `
+            -workflow-path .github/workflows/release-build.yml -workflow-ref HEAD `
+            -persisted-root $env:GSVIBE_PERSISTED_WORKSPACE -run-id $env:RUN_ID `
+            -run-attempt $env:RUN_ATTEMPT -lease-owner "build-$env:RUN_ID-$env:RUN_ATTEMPT" `
+            -output $resultPath
+          if ($LASTEXITCODE -ne 0) { throw 'generated-output build failed' }
+          $result = Get-Content -Raw -LiteralPath $resultPath | ConvertFrom-Json
+          "branch=$($result.output_branch)" >> $env:GITHUB_OUTPUT
+          "head_sha=$($result.output_head_sha)" >> $env:GITHUB_OUTPUT
+          "source_sha=$($result.source_sha)" >> $env:GITHUB_OUTPUT
+      - name: Push immutable output branch
+        shell: pwsh
+        env:
+          OUTPUT_BRANCH: ${{ steps.output.outputs.branch }}
+          OUTPUT_HEAD_SHA: ${{ steps.output.outputs.head_sha }}
+        run: |
+          git push origin "$env:OUTPUT_HEAD_SHA`:refs/heads/$env:OUTPUT_BRANCH"
+          if ($LASTEXITCODE -ne 0) { throw 'immutable output branch push failed' }
+      - name: Create and bind draft output PR
+        id: pull-request
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          OUTPUT_BRANCH: ${{ steps.output.outputs.branch }}
+          OUTPUT_HEAD_SHA: ${{ steps.output.outputs.head_sha }}
+          SOURCE_SHA: ${{ steps.output.outputs.source_sha }}
+          BUILD_ID: ${{ steps.identity.outputs.build_id }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          $request = @{
+            title = "chore(release): stage $env:TAG content manifest"
+            head = $env:OUTPUT_BRANCH
+            base = 'main'
+            body = "Generated-output build ``$env:BUILD_ID``. Only the immutable release manifest is permitted."
+            draft = $true
+          } | ConvertTo-Json -Compress
+          $pullRequest = $request | gh api --method POST "repos/$env:GITHUB_REPOSITORY/pulls" --input - | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'draft output PR creation failed' }
+          if ($pullRequest.head.repo.full_name -ne $env:GITHUB_REPOSITORY -or
+              $pullRequest.head.ref -ne $env:OUTPUT_BRANCH -or
+              $pullRequest.head.sha -ne $env:OUTPUT_HEAD_SHA -or
+              $pullRequest.base.sha -ne $env:SOURCE_SHA -or
+              -not $pullRequest.draft) {
+            throw 'created output PR identity does not match the immutable build'
+          }
+          uv run python release_workflow.py bind-pr `
+            -persisted-root $env:GSVIBE_PERSISTED_WORKSPACE -tag $env:TAG -build-id $env:BUILD_ID `
+            -pr-number $pullRequest.number -pr-head-sha $pullRequest.head.sha -pr-base-sha $pullRequest.base.sha
+          if ($LASTEXITCODE -ne 0) { throw 'output PR private binding failed' }
+          gh pr ready $pullRequest.number --repo $env:GITHUB_REPOSITORY
+          if ($LASTEXITCODE -ne 0) { throw 'output PR could not be marked ready' }
+          "pr_number=$($pullRequest.number)" >> $env:GITHUB_OUTPUT
+      - name: Upload build attempt evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-output-build-${{ inputs.tag }}-${{ steps.identity.outputs.build_id }}
+          path: ${{ runner.temp }}/release-output-build.json
+          if-no-files-found: error
+          retention-days: 30

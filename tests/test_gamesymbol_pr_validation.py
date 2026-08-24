@@ -23,14 +23,17 @@ from gamesymbol_snapshot_lib.materialize import materialize_baseline
 from gamesymbol_snapshot_lib.operations import load_snapshot_context, pack_snapshot
 from gamesymbol_snapshot_lib.pr_cli import GitRepository, PrCliError, materialize_from_plan
 from gamesymbol_snapshot_lib.pr_validation import (
+    CACHE_MODE_WARM,
     BoundImpactPlan,
     ChangedPath,
     ImpactPlanningError,
     TagImpact,
+    evaluate_pr_validation,
     plan_tag_impact,
     snapshot_delta_paths,
     snapshot_documents_changed,
 )
+from pull_request_route import PullRequestRouteError, classify_pr_route, parse_output_branch
 from tests.test_support import write_pe32
 
 
@@ -277,6 +280,26 @@ class ImpactPlanningTests(unittest.TestCase):
             self.assertEqual((), snapshot_only.analysis_nodes)
             self.assertTrue(snapshot_only.snapshot_rebuild)
             self.assertFalse(snapshot_only.gamedata_rebuild)
+            metadata_only = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(
+                    ChangedPath(
+                        "M",
+                        "gamesymbols/game-1.metadata.yaml",
+                        "gamesymbols/game-1.metadata.yaml",
+                    ),
+                ),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+                metadata_changed=True,
+            )
+            self.assertEqual((), metadata_only.analysis_nodes)
+            self.assertTrue(metadata_only.snapshot_rebuild)
+            self.assertFalse(metadata_only.gamedata_rebuild)
             hashing_only = plan_tag_impact(
                 tag="game-1",
                 base_contract=contract,
@@ -302,6 +325,25 @@ class ImpactPlanningTests(unittest.TestCase):
             )
             self.assertFalse(gamedata_only.snapshot_rebuild)
             self.assertTrue(gamedata_only.gamedata_rebuild)
+            tracked_gamedata = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(
+                    ChangedPath(
+                        "M",
+                        "gamedata/game-1/gamedata-manifest.json",
+                        "gamedata/game-1/gamedata-manifest.json",
+                    ),
+                ),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+                gamedata_changed=True,
+            )
+            self.assertFalse(tracked_gamedata.snapshot_rebuild)
+            self.assertTrue(tracked_gamedata.gamedata_rebuild)
 
             empty_config = root / "empty.yaml"
             empty_config.write_text(
@@ -403,16 +445,116 @@ class ImpactPlanningTests(unittest.TestCase):
             )
         self.assertEqual((), impact.analysis_nodes)
         self.assertTrue(impact.snapshot_rebuild)
-        self.assertFalse(impact.gamedata_rebuild)
+        self.assertTrue(impact.gamedata_rebuild)
         self.assertIn("snapshot metadata changed", impact.reasons)
 
     def test_bound_plan_digest_binds_shas_actions_and_digests(self):
         action = TagImpact("game-1", "incremental", (), (), True, True, False, ("snapshot",))
-        plan = BoundImpactPlan("a" * 40, "b" * 40, "c" * 40, "d" * 40, "e" * 40, (action,), {"x": "y"})
+        plan = BoundImpactPlan(
+            "a" * 40,
+            "b" * 40,
+            "c" * 40,
+            "d" * 40,
+            "e" * 40,
+            (action,),
+            {"x": "y"},
+            CACHE_MODE_WARM,
+        )
         document = json.loads(plan.canonical_bytes())
+        self.assertEqual(CACHE_MODE_WARM, document["cache_mode"])
         digest = document.pop("plan_sha256")
         encoded = json.dumps(document, sort_keys=True, separators=(",", ":")).encode("utf-8")
         self.assertEqual(hashlib.sha256(encoded).hexdigest(), digest)
+        with self.assertRaises(ImpactPlanningError):
+            BoundImpactPlan("a" * 40, "b" * 40, "c" * 40, None, None, (), {}, "fallback")
+
+
+class PrValidationGateTests(unittest.TestCase):
+    def test_generated_output_branch_parser_and_source_only_routing(self):
+        branch = "gamesymbols/build/hl-10210/run-123"
+        self.assertEqual(("hl-10210", "run-123"), parse_output_branch(branch))
+        self.assertEqual("source", classify_pr_route(head_ref=branch, output_routing_enabled=False))
+        self.assertEqual("output", classify_pr_route(head_ref=branch, output_routing_enabled=True))
+        self.assertEqual("source", classify_pr_route(head_ref="feature/cache", output_routing_enabled=True))
+        for invalid in (
+            "gamesymbols/build/hl-10210",
+            "gamesymbols/build/HL-10210/run-1",
+            "gamesymbols/build/hl-10210/run_1",
+            "gamesymbols/build/hl-10210/run-1/extra",
+        ):
+            with self.subTest(invalid=invalid), self.assertRaises(PullRequestRouteError):
+                parse_output_branch(invalid)
+            self.assertEqual("output", classify_pr_route(head_ref=invalid, output_routing_enabled=True))
+
+    def test_gate_truth_table(self):
+        cases = (
+            ({}, True),
+            ({"has_actions": True, "has_hosted": True, "validate_hosted_result": "success"}, True),
+            (
+                {"has_actions": True, "has_analysis": True, "analyze_self_hosted_result": "success"},
+                True,
+            ),
+            (
+                {
+                    "has_actions": True,
+                    "has_analysis": True,
+                    "has_hosted": True,
+                    "validate_hosted_result": "success",
+                    "analyze_self_hosted_result": "success",
+                },
+                True,
+            ),
+            (
+                {
+                    "has_actions": True,
+                    "has_analysis": True,
+                    "same_repository": False,
+                    "fork_analysis_blocked_result": "failure",
+                },
+                False,
+            ),
+            ({"plan_result": "failure"}, False),
+            ({"has_actions": True, "has_hosted": True}, False),
+            ({"validate_hosted_result": "success"}, False),
+        )
+        defaults = {
+            "plan_result": "success",
+            "validate_hosted_result": "skipped",
+            "analyze_self_hosted_result": "skipped",
+            "fork_analysis_blocked_result": "skipped",
+            "has_actions": False,
+            "has_analysis": False,
+            "has_hosted": False,
+            "same_repository": True,
+        }
+        for overrides, expected in cases:
+            with self.subTest(overrides=overrides):
+                decision = evaluate_pr_validation(**(defaults | overrides))
+                self.assertEqual(expected, decision.passed, decision.errors)
+
+    def test_gate_rejects_unexpected_success_and_unknown_results(self):
+        unexpected = evaluate_pr_validation(
+            plan_result="success",
+            validate_hosted_result="success",
+            analyze_self_hosted_result="skipped",
+            fork_analysis_blocked_result="skipped",
+            has_actions=False,
+            has_analysis=False,
+            has_hosted=False,
+            same_repository=True,
+        )
+        self.assertFalse(unexpected.passed)
+        unknown = evaluate_pr_validation(
+            plan_result="success",
+            validate_hosted_result="queued",
+            analyze_self_hosted_result="skipped",
+            fork_analysis_blocked_result="skipped",
+            has_actions=True,
+            has_analysis=False,
+            has_hosted=True,
+            same_repository=True,
+        )
+        self.assertFalse(unknown.passed)
 
 
 class BoundPlanValidationTests(unittest.TestCase):
@@ -440,6 +582,8 @@ class BoundPlanValidationTests(unittest.TestCase):
             "merge_registry": hashlib.sha256(files["gamesymbol-impact.yaml"]).hexdigest(),
             "merge_config:game-1": hashlib.sha256(files["configs/game-1.yaml"]).hexdigest(),
             "merge_snapshot:game-1": hashlib.sha256(files["gamesymbols/game-1.yaml"]).hexdigest(),
+            "merge_metadata:game-1": None,
+            "merge_gamedata:game-1": None,
         }
         return base_sha, merge_sha, digests
 
@@ -482,6 +626,23 @@ class BoundPlanValidationTests(unittest.TestCase):
                 )
 
             self._write_plan(plan_path, merge_sha=merge_sha, digests=digests)
+            invalid_mode = json.loads(plan_path.read_text(encoding="utf-8"))
+            invalid_mode["cache_mode"] = "fallback"
+            unsigned = {key: value for key, value in invalid_mode.items() if key != "plan_sha256"}
+            invalid_mode["plan_sha256"] = hashlib.sha256(
+                json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()
+            plan_path.write_text(json.dumps(invalid_mode), encoding="utf-8")
+            with self.assertRaisesRegex(PrCliError, "Invalid bound impact plan"):
+                materialize_from_plan(
+                    repo_root=root,
+                    plan_path=plan_path,
+                    tag="game-1",
+                    merge_ref=merge_sha,
+                    bindir=root / "bin",
+                )
+
+            self._write_plan(plan_path, merge_sha=merge_sha, digests=digests)
             with self.assertRaisesRegex(PrCliError, "merge SHA"):
                 materialize_from_plan(
                     repo_root=root,
@@ -506,6 +667,8 @@ class BoundPlanValidationTests(unittest.TestCase):
                 "merge_registry",
                 "merge_config:game-1",
                 "merge_snapshot:game-1",
+                "merge_metadata:game-1",
+                "merge_gamedata:game-1",
             ):
                 with self.subTest(key=key):
                     mismatched = dict(digests)

@@ -2,7 +2,7 @@
 
 # Snapshots, gamedata, and publication
 
-Per-symbol YAML remains ignored under `bin/<GAMEVER>/<module>/`. The Git-tracked canonical analysis lockfile is `gamesymbols/<GAMEVER>.yaml`, whose file set is derived from the required and optional YAML outputs declared by `configs/<GAMEVER>.yaml`.
+Per-symbol YAML remains ignored under `bin/<GAMEVER>/<module>/`. Each published version has a Git-tracked canonical pair: `gamesymbols/<GAMEVER>.yaml` contains the analysis lockfile, while `gamesymbols/<GAMEVER>.metadata.yaml` freezes the display aliases and their resolved module/platform/artifact owners.
 
 ## Immutable candidate transaction
 
@@ -10,7 +10,8 @@ After a successful top-level analysis transaction, build one candidate immediate
 
 ```bash
 CANDIDATE_DIR="$(mktemp -d)"
-CANDIDATE_SNAPSHOT="$CANDIDATE_DIR/candidate.yaml"
+CANDIDATE_SNAPSHOT="$CANDIDATE_DIR/cstrike-10210.yaml"
+CANDIDATE_METADATA="$CANDIDATE_DIR/cstrike-10210.metadata.yaml"
 CANDIDATE_SESSION="$CANDIDATE_DIR/session.json"
 GAMEDATA_ROOT="$CANDIDATE_DIR/gamedata-candidate"
 GAMEDATA_SESSION="$CANDIDATE_DIR/gamedata.session.json"
@@ -21,13 +22,44 @@ uv run python gamedata_candidate.py guard -session "$GAMEDATA_SESSION"
 uv run python gamesymbol_candidate.py mark -candidate "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION" -step gamedata -gamedata-session "$GAMEDATA_SESSION"
 uv run python gamesymbol_candidate.py publish -candidate "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION" -destination gamesymbols/cstrike-10210.yaml
 uv run python gamedata_candidate.py publish -session "$GAMEDATA_SESSION" -outputdir gamedata/cstrike-10210
+uv run python gamedata_candidate.py stage -session "$GAMEDATA_SESSION" -repo-root .
 ```
 
 Notes:
 
 - `gamesymbol_candidate.py mark -step gamedata` requires a `-gamedata-session` whose gamever and candidate SHA-256 match the symbol candidate.
 - `gamedata_candidate.py publish -outputdir` must end with the exact tag. Publication is an atomic replace.
-- The candidate manifest records the canonical candidate hash and filesystem identity. An absent or empty generator root produces an empty, hashed inventory that still satisfies the gamedata step after `guard` succeeds.
+- Candidate build also generates `$CANDIDATE_METADATA`. The session binds both exact paths, hashes, filesystem identities, and the metadata-to-snapshot SHA-256.
+- Local pair publication uses a recovery journal and fixed replacement order. A verifier rejects any intermediate mismatch; the Git commit/tree is the externally visible atomic boundary.
+- Every gamedata directory contains canonical `gamedata-manifest.json`, even when no generator emits payload files. It binds the snapshot, config, generator contract, and a self-excluding payload inventory.
+- The gamedata config identity normalizes CRLF to LF and rejects bare CR. Repository attributes pin tracked configs to LF, so Windows candidate generation and exact Git-blob verification share one digest.
+- `stage` guards the candidate, builds and verifies a temporary Git tree, then uses `git add -f -- <exact-path>` only for the candidate manifest paths. The repository keeps `gamedata/*/` ignored; broad glob staging is forbidden.
+- An absent or empty generator root produces an empty, hashed inventory that still satisfies the gamedata step after `guard` succeeds.
+
+Generate or independently verify a tracked companion with:
+
+```bash
+uv run python gamesymbol_metadata.py generate -snapshot gamesymbols/hl-10210.yaml -configyaml configs/hl-10210.yaml -gamever hl-10210 -metadata gamesymbols/hl-10210.metadata.yaml
+uv run python gamesymbol_metadata.py verify -snapshot gamesymbols/hl-10210.yaml -configyaml configs/hl-10210.yaml -gamever hl-10210 -metadata gamesymbols/hl-10210.metadata.yaml
+```
+
+Pages never reads live config aliases. A missing, non-canonical, hash-mismatched, or owner-mismatched companion fails the build.
+
+## Release content inventory
+
+The schema-1 release content manifest is a second, Git-tree-level contract. For one tag it inventories the exact
+`gamesymbols/<tag>.yaml`, `gamesymbols/<tag>.metadata.yaml`, and `gamedata/<tag>/**` blobs with their Git mode, size, and
+raw SHA-256. `release-manifests/<tag>.json` is excluded from that digest, so the manifest never hashes itself.
+
+The verifier cross-checks the companion's snapshot/config bindings, the gamedata manifest's snapshot/config/generator
+bindings, the snapshot binary inventory, and the `bin` gitlink. A missing companion or gamedata manifest, unexpected
+gamedata payload, executable-mode payload, non-canonical bytes, or default-branch drift fails closed. Shadow output is
+evidence only and does not change canonical publication authority.
+
+In Phase 2, source PRs continue to own all three payload classes. A generated-output commit has the exact source SHA as
+its only parent and may only add `release-manifests/<tag>.json`; any snapshot, metadata, or gamedata delta fails output
+validation. The merged manifest binds content identity, while PR/head/merge/tag/Release attempt identities live in
+private staging, provenance, and durable completion records rather than creating a self-referential tracked manifest.
 
 ## Generate gamedata directly
 

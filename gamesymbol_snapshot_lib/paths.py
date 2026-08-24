@@ -1,9 +1,47 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
+from analysis_config import validated_tag
 from gamesymbol_snapshot_lib.errors import SnapshotConfigError, SnapshotSchemaError
+
+SNAPSHOT_FILENAME_RE = re.compile(r"^(?P<tag>[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+)\.yaml$")
+METADATA_FILENAME_RE = re.compile(r"^(?P<tag>[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+)\.metadata\.yaml$")
+
+
+def snapshot_tag_from_filename(filename: str) -> str | None:
+    match = SNAPSHOT_FILENAME_RE.fullmatch(filename)
+    return None if match is None else validated_tag(match.group("tag"))
+
+
+def metadata_tag_from_filename(filename: str) -> str | None:
+    match = METADATA_FILENAME_RE.fullmatch(filename)
+    return None if match is None else validated_tag(match.group("tag"))
+
+
+def metadata_filename(tag: str) -> str:
+    return f"{validated_tag(tag)}.metadata.yaml"
+
+
+def metadata_path_for_snapshot(snapshot_path: str | Path) -> Path:
+    path = Path(snapshot_path)
+    tag = snapshot_tag_from_filename(path.name)
+    if tag is None:
+        raise SnapshotSchemaError(f"Invalid snapshot filename: {path.name!r}")
+    return path.with_name(metadata_filename(tag))
+
+
+def iter_snapshot_paths(directory: str | Path) -> tuple[Path, ...]:
+    root = Path(directory)
+    if not root.is_dir():
+        return ()
+    return tuple(
+        path
+        for path in sorted(root.iterdir(), key=lambda item: item.name)
+        if path.is_file() and snapshot_tag_from_filename(path.name)
+    )
 
 
 def validate_snapshot_key(key: object) -> str:
