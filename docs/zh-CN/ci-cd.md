@@ -42,27 +42,23 @@ generation 和 manifest hash；其 SHA-256 会被复核，Actions artifact 只�
 Production warm activation 必须满足 [IDB cache 运维手册](idb-cache-operations.md) 中的 host/repository 设置。
 Unit 与 workflow-contract test 不能替代专用 runner 上记录的 cold、首次 miss/publication 与后续 hit run。
 
-## Release provenance 与 Phase 2 workflow
+## Release 构建与发布
 
-[`release-shadow.yml`](../../.github/workflows/release-shadow.yml) 只在 exact `main` commit 上以 `contents: read`
-运行。它为 `hl-10210`、`hl-8684` 与 `svencoop-10257` 构建 canonical release content manifest，再从 exact Git
-blob 重建并逐份校验，最后上传保留 30 天的 evidence artifact。该 workflow 不 checkout `bin`，不信任 worktree
-glob，也不写 Git ref、repository content、PR、tag 或 Release。
+[`release-build.yml`](../../.github/workflows/release-build.yml) 是手动 `workflow_dispatch`（`version` 如
+`v20260825a` + 可选 `source_sha` + `mode` `new|republish`）。它在 self-hosted `[self-hosted, windows, x64]` runner
+上：checkout exact source 与 `bin` submodule → 恢复 accepted bin → 逐 game version warm IDB cache →
+`ida_analyze_bin.py -allgamever` 分析全部 game version → 逐 game version build/guard/publish candidate 与 gamedata →
+`stage-build` → 创建单个 `github-actions[bot]` generated-output PR（分支 `gamesymbols/build/<version>`）。
 
-Shadow success 只证明本地 content identity 与 `new` mode decision。已实现的 Phase 2 workflow 默认保持 disabled：
+- `validate-generated-output-pr.yml` 校验 output PR（bot author + 同仓 + `gamesymbols/build/` 分支；路径 = 全部
+  game version 的 gamesymbols/metadata/gamedata + `release-manifests/<version>.json`）。
+- `promote-release-after-output-merge.yml` 在合并后校验两父合并、把 accepted bin 事务化交换进 persisted workspace、
+  打单个 `version` tag 并发布一个 GitHub Release（资产含全部 game version）。
+- `abandon-staged-release.yml` 与 `cleanup-completed-release-staging.yml` 处理生命周期（放弃 staged build、清理
+  已完成的 completion record）。
 
-- `release-build.yml` 只接受 exact `main` dispatch，并运行在共享的 `[self-hosted, windows, x64]` runner 与 `release`
-  Environment。GitHub App token push immutable direct-parent output branch、创建 draft PR、把 remote identity 绑定到
-  private staging，最后才标记 ready。
-- `release-output-validation.yml` 是只读 reusable verifier；先拒绝 repository/author/branch identity，再只 fetch exact
-  head object，绝不 checkout 或执行 output-head code。
-- `release-promotion.yml` 把无 write credential 的 merge verifier 与 Environment-protected writer 分开；writer 获取
-  App tag/Release authority 前会重新计算 canonical approval digest。
-- `release-operations.yml` 以 explicit identity/confirmation 区分 retry、resume-promotion、republish、abandon、
-  repair-index、cleanup 与 reconcile。详见 [Release 运维手册](release-operations.md)。
-
-Protected test repository 演练，以及外部 branch/ruleset、merge-commit-only、up-to-date、protected tag、Environment
-与 GitHub App evidence 完成前，`GSVIBE_RELEASE_PHASE2_ENABLED` 必须保持 unset/false。
+`mode=republish` 要求 `version` tag 已存在，且只重新分析自上次接受 source 以来受影响的输出。发布不再依赖
+`GSVIBE_RELEASE_PHASE2_ENABLED` 或 GitHub App token；gate 由 allowlist 仓库 + `win64` Environment + concurrency 提供。
 
 ## Pages 部署
 

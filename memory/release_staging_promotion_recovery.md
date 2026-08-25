@@ -8,45 +8,45 @@ permalink: goldsrc-vibesignatures/release-staging-promotion-recovery
 
 ## Overview
 
-Phase 2 separates stable release content identity from build-attempt and promotion identity. Source PRs retain authority
-for snapshot, metadata, and gamedata; the release App only creates a one-file manifest commit, its output PR, immutable
-tag, verified Release assets, and completion records.
+The release build (`release-build.yml`, manual `version=vYYYYMMDD[a-z]` dispatch) owns `gamesymbols/**` and
+`gamedata/**` for every game version. It analyzes all game versions on the self-hosted runner, publishes candidates
+into the working tree, stages them under `PERSISTED_WORKSPACE/release-staging/<version>/<build_id>/`, and opens one
+generated-output PR (`gamesymbols/build/<version>`). Merging that PR promotes a single versioned tag and GitHub Release.
 
 ## Responsibilities
 
-- Route every output-like PR to the read-only output verifier and keep one final `pr-validate`.
-- Hash-chain private stage markers and bind repository/source/branch/PR/head/base/merge/tag/Release identities.
+- Gate output PRs through `validate-generated-output-pr.yml` (bot author, same repo, `gamesymbols/build/` branch).
+- Hash-chain private stage markers and bind version/source/branch/PR/head/merge identities.
 - Require a direct-parent output head and a two-parent merge commit.
-- Build deterministic assets, exclude checksum self-reference, and verify downloaded hashes.
-- Keep retry, resume-promotion, republish, abandon, repair-index, cleanup, and reconcile semantically distinct.
+- Promote accepted binaries transactionally into `PERSISTED_WORKSPACE/bin/<gamever>` under a per-version lock.
+- Keep abandon, cleanup-unmerged, and cleanup-completed semantically distinct.
 
 ## Involved Files
 
-- `pull_request_route.py`
 - `release_workflow.py`
-- `release_workflow_lib/output.py`
+- `release_workflow_lib/manifests.py`
 - `release_workflow_lib/staging.py`
 - `release_workflow_lib/promotion.py`
-- `release_workflow_lib/recovery.py`
+- `release_workflow_lib/validation.py`
+- `release_workflow_lib/cli.py`
+- `release_workflow_lib/sync_accepted_bin.py`
+- `idb_cache_release.py`
 - `.github/workflows/release-build.yml`
-- `.github/workflows/release-output-validation.yml`
-- `.github/workflows/release-promotion.yml`
-- `.github/workflows/release-operations.yml`
+- `.github/workflows/validate-generated-output-pr.yml`
+- `.github/workflows/promote-release-after-output-merge.yml`
+- `.github/workflows/abandon-staged-release.yml`
+- `.github/workflows/cleanup-completed-release-staging.yml`
 
 ## Architecture
 
-`source SHA -> direct-parent manifest head -> output PR/READY -> two-parent merge -> PROMOTION_STARTED -> annotated tag +
-draft Release -> deterministic assets/download verification -> PROMOTED -> durable completion -> PROMOTION_COMPLETE ->
-recoverable cleanup trash`.
-
-The original promotion workflow repository/path/ref is bound at `PROMOTION_STARTED` so a resume rebuilds identical
-provenance even when the operator workflow itself has advanced.
+`source SHA -> analyze all game versions -> publish candidates -> stage-build (per-version stage dir) -> output PR ->
+READY -> two-parent merge -> PROMOTION_STARTED -> promote-bin -> tag + Release -> durable completion ->
+PROMOTION_COMPLETE -> recoverable cleanup trash`.
 
 ## Recovery Notes
 
-- Trigger signal: a marker exists without its successor, a PR index is missing, or remote tag/Release state differs.
+- Trigger signal: a stage marker exists without its successor, a PR index is missing, or remote tag/Release state differs.
 - Root constraint: never switch build ID after `PROMOTION_STARTED`; never treat Actions artifacts as truth.
 - Correct action: use the matching explicit operation and exact identities; preserve diagnostics append-only.
-- Verification: load the full marker hash chain, recompute approval/content/assets, then compare remote tag, Release ID, and
-  downloaded hashes with durable completion.
-- Scope: Phase 2 generated-output releases only; production activation remains externally gated.
+- Verification: recompute tracked output/bin inventories and compare remote tag/Release with durable completion.
+- Scope: multi-gamever versioned releases only; `mode=republish` re-analyzes only the invalidated outputs.

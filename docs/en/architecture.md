@@ -24,9 +24,9 @@ snapshot + immutable metadata companion -> Vite asset plugin
   -> content-addressed JSON + index v4
   -> append-only pages-snapshots archive -> GitHub Pages Symbol Explorer
 
-exact main Git tree + bin gitlink + tracked snapshot/metadata/gamedata
-  -> self-excluding release content manifest
-  -> read-only shadow verification evidence
+exact source + bin gitlink -> analyze all game versions -> publish candidates/gamedata
+  -> release-manifests/<version>.json generated-output PR
+  -> validate-output-pr -> merge -> version tag + GitHub Release
 
 trusted PR plan + cache_mode
   -> cold: validated clean -> normal loader/auto-analysis
@@ -129,24 +129,18 @@ an empty generator set therefore still has one trackable, reviewable output.
 
 ## Release provenance boundary
 
-Release content identity is built only from exact blobs in the default-branch Git tree. Schema-1 canonical JSON binds
-the source commit, `bin` gitlink, raw config and canonical contract digests, snapshot and binary inventory, immutable
-metadata companion, gamedata manifest/generator contract, and the trusted workflow/tool revision. Its tracked-content
-inventory records path, Git mode, size, and blob SHA-256 for the current tag's snapshot, metadata, and gamedata, while
-deliberately excluding `release-manifests/<tag>.json` to avoid self-reference.
+The release build generates and publishes `gamesymbols/<tag>.yaml`, `gamesymbols/<tag>.metadata.yaml`, and
+`gamedata/<tag>/**` for every game version on the self-hosted runner, committing them together with
+`release-manifests/<version>.json` onto the `gamesymbols/build/<version>` generated-output branch. Schema-1 canonical JSON
+binds `version`, `mode`, `build_id`, `source_sha`, per-game-version snapshot/gamedata provenance, and the aggregate
+inventory hashes.
 
-Shadow verification still proves three `new` content identities without remote writes. Phase 2 code now adds a separate
-generated-output path: an exact `main` source commit produces a one-parent output commit that adds only
-`release-manifests/<tag>.json`; the source commit remains the authority for snapshot, metadata, and gamedata bytes. A
-shared classifier gives source and output PRs one mutually exclusive `pr-validate` result, while output verification uses
-trusted base code and never checks out or executes the output head.
-
-Promotion accepts only the recorded App-authored output PR, its direct-parent head, and an exact two-parent merge commit.
-It creates an annotated immutable tag, deterministic payload assets, provenance and a self-excluding checksum, then
-downloads every uploaded asset before writing `PROMOTED`, a durable completion record, and `PROMOTION_COMPLETE`.
-Private markers are hash-chained and recovery keeps retry, resume, republish, abandon, index repair, reconciliation, and
-cleanup as distinct operations. Production authority remains disabled by `GSVIBE_RELEASE_PHASE2_ENABLED` until the
-external branch/ruleset, merge-policy, protected-tag, Environment, App, and protected-repository exercises are captured.
+`validate-generated-output-pr.yml` rebuilds the tracked output inventory from exact Git blobs and checks each game
+version; `promote-release-after-output-merge.yml` accepts only the recorded bot-authored output PR, its direct-parent
+head, and an exact two-parent merge, then transactionally swaps accepted bin into the persisted workspace, tags the
+single `version`, and publishes one GitHub Release. Private markers are hash-chained; abandon and cleanup remain distinct
+operations. `mode=republish` re-analyzes only the outputs affected since the last accepted source. Production authority
+comes from the allowlisted repository + `win64` Environment + per-version concurrency.
 
 ## API, dashboard, and immutable Pages assets
 

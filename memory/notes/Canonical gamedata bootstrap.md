@@ -13,7 +13,7 @@ tags:
 
 ## Overview
 
-Source PRs own reviewed/tracked `gamedata/<tag>/**` bytes. The directory remains ignored by default; only a guarded candidate session may stage exact allowlisted paths.
+The release build owns reviewed/tracked `gamedata/<tag>/**` bytes; source PRs no longer commit them. The directory remains ignored by default; only a guarded candidate session may stage exact allowlisted paths.
 
 ## Empty output contract
 
@@ -25,7 +25,7 @@ Every snapshot tag has `gamedata/<tag>/gamedata-manifest.json`, even when no gen
 
 ## PR validation
 
-The trusted impact plan binds base/merge gamedata subtree digests. Hosted and self-hosted jobs rebuild a candidate manifest and use `verify-tracked` against exact Git blobs. Changes under `gamedata/<tag>/` select only that tag and do not select IDA nodes; config, snapshot/binary identity, or generator contract changes rebuild gamedata.
+The trusted impact plan binds base/merge gamedata subtree digests. Hosted and self-hosted jobs rebuild a guarded candidate manifest for self-consistency (build -> guard -> gamedata build -> guard -> mark gamedata) without comparing against tracked output. Changes under `gamedata/<tag>/` select only that tag and do not select IDA nodes; config, snapshot/binary identity, or generator contract changes rebuild gamedata. Publication happens only in the release build.
 
 ## Validation
 

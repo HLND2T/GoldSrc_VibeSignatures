@@ -45,21 +45,18 @@ uv run python gamesymbol_metadata.py verify -snapshot gamesymbols/hl-10210.yaml 
 
 Pages never reads live config aliases. A missing, non-canonical, hash-mismatched, or owner-mismatched companion fails the build.
 
-## Release content inventory
+## Release output inventory
 
-The schema-1 release content manifest is a second, Git-tree-level contract. For one tag it inventories the exact
-`gamesymbols/<tag>.yaml`, `gamesymbols/<tag>.metadata.yaml`, and `gamedata/<tag>/**` blobs with their Git mode, size, and
-raw SHA-256. `release-manifests/<tag>.json` is excluded from that digest, so the manifest never hashes itself.
+The release build generates `gamesymbols/<tag>.yaml`, `gamesymbols/<tag>.metadata.yaml`, and `gamedata/<tag>/**` for every
+game version on the self-hosted runner, commits them together with `release-manifests/<version>.json` onto the
+`gamesymbols/build/<version>` generated-output branch, and — once merged — tags the single `version` and publishes one
+GitHub Release with assets for every game version.
 
-The verifier cross-checks the companion's snapshot/config bindings, the gamedata manifest's snapshot/config/generator
-bindings, the snapshot binary inventory, and the `bin` gitlink. A missing companion or gamedata manifest, unexpected
-gamedata payload, executable-mode payload, non-canonical bytes, or default-branch drift fails closed. Shadow output is
-evidence only and does not change canonical publication authority.
-
-In Phase 2, source PRs continue to own all three payload classes. A generated-output commit has the exact source SHA as
-its only parent and may only add `release-manifests/<tag>.json`; any snapshot, metadata, or gamedata delta fails output
-validation. The merged manifest binds content identity, while PR/head/merge/tag/Release attempt identities live in
-private staging, provenance, and durable completion records rather than creating a self-referential tracked manifest.
+`release-manifests/<version>.json` is a schema-1 canonical manifest binding `version`, `mode`, `build_id`, `source_sha`,
+per-game-version snapshot/gamedata provenance, and the aggregate bin/tracked-output inventory hashes.
+`validate-generated-output-pr.yml` rebuilds the tracked output inventory from exact Git blobs and checks each game
+version's snapshot hash and gamedata inventory; `promote-release-after-output-merge.yml` verifies the two-parent merge and
+transactionally swaps accepted bin into the persisted workspace. Source PRs no longer own gamesymbols/gamedata authority.
 
 ## Generate gamedata directly
 

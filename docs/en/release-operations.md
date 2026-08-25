@@ -1,40 +1,25 @@
 # Release operations
 
-Phase 2 production authority is off unless both the dispatch requests activation and the repository variable
-`GSVIBE_RELEASE_PHASE2_ENABLED` is `true`. Do not enable it until branch/ruleset, merge-commit-only and up-to-date policy,
-protected tags, the `release` Environment, and GitHub App identity/permissions have captured protected-repository
-evidence. Phase 2 runs on the same `[self-hosted, windows, x64]` runner as source analysis.
-
-`republish` additionally requires `GSVIBE_RELEASE_REPUBLISH_ENABLED=true`; keep that independent gate off until the
-missing/corrupt asset exercise has completed in the protected test repository.
+The release build is a manual `workflow_dispatch` (`release-build.yml`, `version` plus optional `source_sha` and `mode`).
+Production authority comes from the allowlisted repository + `win64` Environment + per-version concurrency, not
+`GSVIBE_RELEASE_PHASE2_ENABLED` or a GitHub App token.
 
 ## State and truth sources
 
-The private chain is `BUILDING -> HEAD_BOUND -> PR_CREATED -> READY -> PROMOTION_STARTED -> PROMOTED ->
-PROMOTION_COMPLETE`. Every marker is immutable canonical JSON, hashes its predecessor, and retains non-null bindings.
-Only the durable completion record plus the annotated tag identity, Release ID, and downloaded asset inventory means the
-release is complete. Actions artifacts, a draft Release, `READY`, or `PROMOTED` alone are not completion.
+The private stage directory is `PERSISTED_WORKSPACE/release-staging/<version>/<build_id>/`, holding canonical
+`manifest.json`, `READY`, `PROMOTION_STARTED`, `PROMOTED.json`, and `PROMOTION_COMPLETE` markers. `pr-index/<pr>.json`
+binds the output PR; `completed/<version>/<build_id>.json` is the durable completion record. Only the completion record
+plus the tag identity, Release ID, and downloaded asset inventory means the release is complete.
 
 ## Protected operations
 
-Run `release-operations.yml` with the exact tag/build and the requested confirmation:
+- `abandon`: `abandon-staged-release.yml` (a `workflow_dispatch`), pre-promotion only, with confirmation
+  `ABANDON <version>/<build_id>` and a reason. Any recorded PR is remotely verified before it is closed.
+- `cleanup`: `cleanup-completed-release-staging.yml` (a `workflow_dispatch` or daily cron) sweeps only stages with
+  `PROMOTION_COMPLETE` and a matching durable completion, atomically renaming them to
+  `cleanup-trash/<version>/<build_id>`.
+- `republish`: `release-build.yml` with `mode=republish`, requiring the `version` tag to exist; it re-analyzes only the
+  outputs affected since the last accepted source.
 
-- `retry`: allowed only before `PROMOTION_STARTED`; close the recorded PR, remove its immutable output branch, record
-  `SUPERSEDED`, and dispatch a new build ID with the same content identity.
-- `resume-promotion`: use the same build, PR head, merge commit, tag target, and original promotion workflow identity.
-  The workflow checks out that exact verifier revision and resumes idempotent tag/asset/completion boundaries.
-- `republish`: available only from durable completion. It rebuilds original bytes from the recorded merge, replaces only
-  missing/corrupt named assets, downloads them again, and never changes the tag or tracked manifest.
-- `abandon`: pre-promotion only, with `abandon:<tag>:<build-id>` and a reason. Any recorded PR is remotely verified before
-  it is closed.
-- `repair-index`: rebuilds only private `pr-index`/`READY` after exact repository, branch, PR, head, base, tag, build, and
-  content identity match. Confirmation is `repair-index:<pr-number>:<tag>:<build-id>`.
-- `cleanup`: requires `cleanup:<tag>:<build-id>`, `PROMOTION_COMPLETE`, and matching durable completion. It atomically
-  renames the stage to `cleanup-trash/<tag>/<build-id>` and moves the PR index with it; deletion is a separate operator
-  retention action.
-- `reconcile`: read-only comparison of local markers/completion with the Git tag and Release. It reports differences and
-  never repairs them automatically.
-
-Preserve failed stages, operation logs, workflow URL/run/attempt, source/bin/workflow SHAs, approval digest, PR/head/merge
-identity, tag object/target, Release ID, and downloaded hashes. Republish stays disabled in production until its protected
-test-repository exercise succeeds.
+Preserve failed stages, workflow URL/run/attempt, source/bin SHAs, PR/head/merge identity, tag target, Release ID, and
+downloaded hashes.

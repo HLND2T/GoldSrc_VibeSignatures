@@ -24,9 +24,9 @@ snapshot + immutable metadata companion -> Vite asset plugin
   -> content-addressed JSON + index v4
   -> append-only pages-snapshots archive -> GitHub Pages Symbol Explorer
 
-exact main Git tree + bin gitlink + tracked snapshot/metadata/gamedata
-  -> self-excluding release content manifest
-  -> read-only shadow verification evidence
+exact source + bin gitlink -> analyze all game versions -> publish candidates/gamedata
+  -> release-manifests/<version>.json generated-output PR
+  -> validate-output-pr -> merge -> version tag + GitHub Release
 
 trusted PR plan + cache_mode
   -> cold: validated clean -> normal loader/auto-analysis
@@ -122,24 +122,16 @@ canonical manifest，绑定 snapshot/config/generator identity 与声明的 payl
 
 ## Release provenance 边界
 
-Release content identity 只从 default branch 的 exact Git-tree blob 构建。Schema-1 canonical JSON 绑定 source
-commit、`bin` gitlink、raw config 与 canonical contract digest、snapshot 与 binary inventory、immutable metadata
-companion、gamedata manifest/generator contract，以及可信 workflow/tool revision。Tracked-content inventory 记录当前
-tag 的 snapshot、metadata、gamedata 的 path、Git mode、size 与 blob SHA-256，并明确排除
-`release-manifests/<tag>.json`，避免 manifest 自引用。
+Release build 在 self-hosted runner 上为全部 game version 生成并发布 `gamesymbols/<tag>.yaml`、
+`gamesymbols/<tag>.metadata.yaml` 与 `gamedata/<tag>/**`，把结果连同 `release-manifests/<version>.json` 提交到
+`gamesymbols/build/<version>` 分支的 generated-output PR。Schema-1 canonical manifest 绑定 `version`、`mode`、
+`build_id`、`source_sha`、每条 game version 的 snapshot/gamedata provenance 与 aggregate inventory hash。
 
-Shadow verification 继续在不 remote write 的前提下证明三个 `new` content identity。Phase 2 代码新增独立的
-generated-output 路径：exact `main` source commit 生成单父 output commit，并且只增加
-`release-manifests/<tag>.json`；snapshot、metadata 与 gamedata bytes 的 authority 仍属于 source commit。Shared
-classifier 让 source/output PR 互斥地产生唯一 `pr-validate`；output verifier 只执行 trusted base code，绝不 checkout
-或执行 output head。
-
-Promotion 只接受已记录的 App-authored output PR、direct-parent head 与 exact two-parent merge commit。它依次创建
-annotated immutable tag、deterministic payload assets、provenance 与排除自身的 checksum；所有上传资产下载复核后，
-才写 `PROMOTED`、durable completion record 与 `PROMOTION_COMPLETE`。Private marker 使用 hash chain；retry、resume、
-republish、abandon、index repair、reconcile 与 cleanup 保持独立恢复语义。Production authority 继续由
-`GSVIBE_RELEASE_PHASE2_ENABLED` 锁住，直到 branch/ruleset、merge policy、protected tag、Environment、App 与
-protected-repository 演练证据全部取得。
+`validate-generated-output-pr.yml` 用 exact Git blob 重建 tracked output inventory 并核对每条 game version；
+`promote-release-after-output-merge.yml` 只接受 bot-authored output PR、direct-parent head 与 exact two-parent merge，
+校验后把 accepted bin 事务化交换进 persisted workspace、打单个 `version` tag 并发布一个 GitHub Release。Private
+marker 使用 hash chain；abandon 与 cleanup 保持独立恢复语义。`mode=republish` 只重新分析自上次接受 source 以来
+受影响的输出。Production authority 由 allowlist 仓库 + `win64` Environment + per-version concurrency 提供。
 
 ## API、Dashboard 与不可变 Pages 资产
 
