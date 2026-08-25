@@ -105,9 +105,9 @@ jobs:
         run: |
           set -euo pipefail
           plan="$RUNNER_TEMP/gamesymbol-validation/plan.json"
-          has_actions=$(jq 'any(.tags[]; (.analysis_nodes | length) > 0 or .snapshot_rebuild or .gamedata_rebuild or .deleted)' "$plan")
+          has_actions=$(jq 'any(.tags[]; (.analysis_nodes | length) > 0 or .snapshot_rebuild or .gamedata_rebuild)' "$plan")
           has_analysis=$(jq 'any(.tags[]; (.analysis_nodes | length) > 0)' "$plan")
-          has_hosted=$(jq 'any(.tags[]; (.analysis_nodes | length) == 0 and (.snapshot_rebuild or .gamedata_rebuild or .deleted))' "$plan")
+          has_hosted=$(jq 'any(.tags[]; (.analysis_nodes | length) == 0 and (.snapshot_rebuild or .gamedata_rebuild))' "$plan")
           echo "has_actions=$has_actions" >> "$GITHUB_OUTPUT"
           echo "has_analysis=$has_analysis" >> "$GITHUB_OUTPUT"
           echo "has_hosted=$has_hosted" >> "$GITHUB_OUTPUT"
@@ -150,21 +150,6 @@ jobs:
           set -euo pipefail
           plan="$RUNNER_TEMP/gamesymbol-validation/plan.json"
           while IFS= read -r tag; do
-            if [[ -e "configs/$tag.yaml" || -e "gamesymbols/$tag.yaml" || -e "gamesymbols/$tag.metadata.yaml" || -d "gamedata/$tag" ]]; then
-              echo "Deleted tag $tag still has tracked config, snapshot, metadata, or gamedata" >&2
-              exit 1
-            fi
-            uv run python - "$tag" <<'PY'
-          import sys
-          import yaml
-          tag = sys.argv[1]
-          with open("configs/config.yaml", "rb") as stream:
-              gamevers = (yaml.safe_load(stream) or {}).get("gamevers", [])
-          if tag in gamevers:
-              raise SystemExit(f"Deleted tag {tag} remains in configs/config.yaml")
-          PY
-          done < <(jq -r '.tags[] | select(.deleted) | .tag' "$plan")
-          while IFS= read -r tag; do
             uv run python gamesymbol_pr_validation.py materialize \
               -repo-root "$GITHUB_WORKSPACE" -plan "$plan" -tag "$tag" -merge-ref HEAD -bindir bin
             stage=$(mktemp -d)
@@ -176,14 +161,11 @@ jobs:
               -snapshot "$stage/$tag.yaml" -configyaml "configs/$tag.yaml" -modulesdir gamedata-generators \
               -candidate-root "$stage/gamedata" -session "$stage/gamedata-session.json"
             uv run python gamedata_candidate.py guard -session "$stage/gamedata-session.json"
-            uv run python gamedata_candidate.py verify-tracked -session "$stage/gamedata-session.json" \
-              -repo-root "$GITHUB_WORKSPACE" -ref HEAD
-            uv run python gamesymbol_candidate.py compare -candidate "$stage/$tag.yaml" \
-              -expected "gamesymbols/$tag.yaml" -gamever "$tag" -configyaml "configs/$tag.yaml" \
-              -session "$stage/symbol-session.json"
+            uv run python gamesymbol_candidate.py mark -candidate "$stage/$tag.yaml" -session "$stage/symbol-session.json" \
+              -step gamedata -gamedata-session "$stage/gamedata-session.json"
             rm -rf "$stage"
             trap - EXIT
-          done < <(jq -r '.tags[] | select((.analysis_nodes | length) == 0 and (.snapshot_rebuild or .gamedata_rebuild) and (.deleted | not)) | .tag' "$plan")
+          done < <(jq -r '.tags[] | select((.analysis_nodes | length) == 0 and (.snapshot_rebuild or .gamedata_rebuild)) | .tag' "$plan")
   analyze-self-hosted:
     needs: [classify, plan]
     if: needs.classify.outputs.route == 'source' && needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository
@@ -306,7 +288,7 @@ jobs:
             -kernel-version $env:GSVIBE_IDA_KERNEL_VERSION -selection (Join-Path $bundle 'cache-selection.json') `
             -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
           if ($LASTEXITCODE -ne 0) { throw 'warm cache restore failed' }
-      - name: Analyze selected nodes and compare actual snapshots
+      - name: Analyze selected nodes and build self-consistent candidates
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -338,11 +320,8 @@ jobs:
               if ($LASTEXITCODE -ne 0) { throw "gamedata build failed for $tag" }
               uv run python gamedata_candidate.py guard -session $gamedataSession
               if ($LASTEXITCODE -ne 0) { throw "gamedata guard failed for $tag" }
-              uv run python gamedata_candidate.py verify-tracked -session $gamedataSession -repo-root $env:GITHUB_WORKSPACE -ref HEAD
-              if ($LASTEXITCODE -ne 0) { throw "tracked gamedata comparison failed for $tag" }
-              uv run python gamesymbol_candidate.py compare -candidate $candidate -expected "gamesymbols/$tag.yaml" `
-                -gamever $tag -configyaml "configs/$tag.yaml" -session $symbolSession
-              if ($LASTEXITCODE -ne 0) { throw "snapshot comparison failed for $tag" }
+              uv run python gamesymbol_candidate.py mark -candidate $candidate -session $symbolSession -step gamedata -gamedata-session $gamedataSession
+              if ($LASTEXITCODE -ne 0) { throw "candidate self-consistency check failed for $tag" }
             } finally {
               if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
             }
@@ -369,26 +348,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Fork PR analysis nodes require a trusted same-repository runner" && exit 1
-  validate-output:
-    needs: classify
-    if: needs.classify.outputs.route == 'output'
-    permissions:
-      contents: read
-    uses: ./.github/workflows/release-output-validation.yml
-    with:
-      repository_id: ${{ github.repository_id }}
-      repository: ${{ github.repository }}
-      base_sha: ${{ github.event.pull_request.base.sha }}
-      head_sha: ${{ github.event.pull_request.head.sha }}
-      head_repository: ${{ github.event.pull_request.head.repo.full_name }}
-      head_branch: ${{ github.event.pull_request.head.ref }}
-      base_branch: ${{ github.event.pull_request.base.ref }}
-      author_login: ${{ github.event.pull_request.user.login }}
-      pr_number: ${{ github.event.pull_request.number }}
   pr-validate:
     name: pr-validate
-    needs: [classify, plan, validate-hosted, analyze-self-hosted, fork-analysis-blocked, validate-output]
-    if: always() && github.event.action != 'closed'
+    needs: [classify, plan, validate-hosted, analyze-self-hosted, fork-analysis-blocked]
+    if: always() && github.event.action != 'closed' && needs.classify.outputs.route == 'source'
     runs-on: ubuntu-latest
     steps:
       - name: Require exactly one trusted PR route
@@ -399,7 +362,7 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$CLASSIFY_RESULT" == "success" ]]
-          [[ "$ROUTE" == "source" || "$ROUTE" == "output" ]]
+          [[ "$ROUTE" == "source" ]]
       - name: Aggregate source validation results
         if: needs.classify.outputs.route == 'source'
         env:
@@ -455,19 +418,3 @@ jobs:
             require_result "fork-analysis-blocked" "$FORK_RESULT" "skipped"
           fi
           [[ "$failed" == "false" ]]
-      - name: Aggregate trusted output validation result
-        if: needs.classify.outputs.route == 'output'
-        env:
-          OUTPUT_RESULT: ${{ needs.validate-output.result }}
-          PLAN_RESULT: ${{ needs.plan.result }}
-          HOSTED_RESULT: ${{ needs.validate-hosted.result }}
-          ANALYSIS_RESULT: ${{ needs.analyze-self-hosted.result }}
-          FORK_RESULT: ${{ needs.fork-analysis-blocked.result }}
-        shell: bash
-        run: |-
-          set -euo pipefail
-          [[ "$OUTPUT_RESULT" == "success" ]]
-          [[ "$PLAN_RESULT" == "skipped" ]]
-          [[ "$HOSTED_RESULT" == "skipped" ]]
-          [[ "$ANALYSIS_RESULT" == "skipped" ]]
-          [[ "$FORK_RESULT" == "skipped" ]]

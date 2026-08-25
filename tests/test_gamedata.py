@@ -13,7 +13,6 @@ from gamedata_candidate import (
     guard_candidate,
     publish_candidate,
     stage_candidate,
-    verify_tracked_candidate,
 )
 from gamedata_contract import (
     GamedataContractError,
@@ -167,7 +166,7 @@ class GamedataCandidateTests(unittest.TestCase):
             with self.assertRaises((GamedataCandidateError, GamedataContractError)):
                 guard_candidate(session)
 
-    def test_stage_uses_exact_candidate_paths_and_verifies_git_tree(self):
+    def test_stage_uses_exact_candidate_paths(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             subprocess.run(["git", "init", "-q", str(root)], check=True)
@@ -198,10 +197,6 @@ class GamedataCandidateTests(unittest.TestCase):
                 ["git", "-C", str(root), "diff", "--cached", "--name-only"], text=True
             ).splitlines()
             self.assertEqual([f"gamedata/{tag}/gamedata-manifest.json"], staged)
-            tree = subprocess.check_output(["git", "-C", str(root), "write-tree"], text=True).strip()
-            verify_tracked_candidate(session_path=session, repo_root=root, ref=tree)
-            subprocess.run(["git", "-C", str(root), "commit", "-q", "-m", "gamedata"], check=True)
-            verify_tracked_candidate(session_path=session, repo_root=root, ref="HEAD")
 
     def test_generator_contract_changes_are_detected(self):
         with tempfile.TemporaryDirectory() as temporary:

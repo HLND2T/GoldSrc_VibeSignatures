@@ -7,7 +7,6 @@ import argparse
 
 from gamesymbol_snapshot_lib.candidate import (
     build_candidate_snapshot,
-    compare_snapshots,
     complete_candidate_step,
     guard_candidate,
     publish_candidate,
@@ -26,12 +25,6 @@ def _parser():
     build.add_argument("-configyaml", default=None)
     build.add_argument("-output", required=True)
     build.add_argument("-session", required=True)
-    compare = commands.add_parser("compare")
-    compare.add_argument("-candidate", required=True)
-    compare.add_argument("-expected", required=True)
-    compare.add_argument("-gamever", required=True)
-    compare.add_argument("-configyaml", default=None)
-    compare.add_argument("-session", default=None)
     for name in ("guard", "mark", "publish"):
         command = commands.add_parser(name)
         command.add_argument("-candidate", required=True)
@@ -53,14 +46,6 @@ def main(argv=None):
                 bin_root=args.bindir,
                 config_path=args.configyaml,
                 output_path=args.output,
-                session_path=args.session,
-            )
-        elif args.command == "compare":
-            compare_snapshots(
-                actual_path=args.candidate,
-                expected_path=args.expected,
-                config_path=args.configyaml,
-                expected_game_version=args.gamever,
                 session_path=args.session,
             )
         elif args.command == "guard":
