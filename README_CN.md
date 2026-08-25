@@ -2,9 +2,9 @@
 
 [English README](README.md) | [GUI](https://hlnd2t.github.io/GoldSrc_VibeSignatures/)
 
-GoldSrc VibeSignatures 是一个面向 32 位 GoldSrc 游戏的、可复现的符号分析框架。它严格验证 Windows PE32/I386 与 Linux ELF32/I386 输入，按依赖 DAG 执行分析，记录不可变 candidate，并通过受控的 gamedata generator 生成按版本保存的 downstream gamedata。
+GoldSrc VibeSignatures 是一个面向 32 位 GoldSrc 游戏的、可复现的符号分析框架。
 
-正式配置覆盖 Half-Life build 10210、Counter-Strike build 10210、Sven Co-op build 10257 与 Cry of Fear build 5936。每个模块可只支持 Windows、只支持 Linux 或同时支持两者；每个已支持平台都必须成对声明 `module_<platform>` 与 `path_<platform>`。
+正式配置覆盖 Half-Life build 10210、Counter-Strike build 10210、Sven Co-op build 10257 与 Cry of Fear build 5936。
 
 ## 快速开始
 

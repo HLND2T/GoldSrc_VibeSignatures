@@ -2,9 +2,9 @@
 
 [中文文档](README_CN.md) | [GUI](https://hlnd2t.github.io/GoldSrc_VibeSignatures/)
 
-GoldSrc VibeSignatures is a reproducible Python 3.10+ framework for producing and publishing x86 game-symbol snapshots and versioned downstream gamedata. It validates Windows PE32/I386 and Linux ELF32/I386 inputs, executes a dependency-checked analysis DAG, records an immutable candidate, and exposes a strict local contract to downstream gamedata generators.
+GoldSrc VibeSignatures is a reproducible game binary analysis framework for GoldSrc games.
 
-Production configuration covers Half-Life build 10210, Counter-Strike build 10210, Sven Co-op build 10257, and Cry of Fear build 5936. A module may target Windows, Linux, or both; each supported platform must declare a matching `module_<platform>` and `path_<platform>` pair.
+Configuration covers Half-Life build 10210, Counter-Strike build 10210, Sven Co-op build 10257, and Cry of Fear build 5936.
 
 ## Quick start
 
