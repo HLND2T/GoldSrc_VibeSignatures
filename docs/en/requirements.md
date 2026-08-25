@@ -47,16 +47,13 @@ plugin identity before publication, so these settings cannot manufacture a succe
 
 ## Release runner and GitHub governance requirements
 
-Phase 2 runs on the same `[self-hosted, windows, x64]` runner as source analysis; there is no separate release runner. Its
-machine environment must expose the same checkout-external `GSVIBE_PERSISTED_WORKSPACE` to output validation, build,
-promotion, and recovery jobs. The `release-staging` subtree must be protected by runner-account ACLs and storage with
-atomic same-filesystem rename and hard-link semantics. The PR routing contract must keep untrusted/fork analysis off this
-runner.
+The release build runs on the same `[self-hosted, windows, x64]` runner as source analysis; there is no separate release
+runner. Its machine environment must expose the same checkout-external `GSVIBE_PERSISTED_WORKSPACE` to build, promotion,
+and recovery jobs. The `release-staging` subtree must be protected by runner-account ACLs and storage with atomic
+same-filesystem rename semantics. The PR routing contract must keep untrusted/fork analysis off this runner.
 
-Create a protected `release` Environment with `GSVIBE_RELEASE_APP_ID` and `GSVIBE_RELEASE_APP_PRIVATE_KEY`. The installed
-App must have only the repository permissions needed for output branches/PRs, workflow dispatch, annotated tags,
-Releases, and assets. Configure `GSVIBE_RELEASE_BOT_LOGIN`, require the unique Actions-owned `pr-validate`, require an
-up-to-date merge commit, prohibit direct/admin-bypass pushes to `main`, protect release tags, and restrict the output
-branch prefix to the App. Keep `GSVIBE_RELEASE_PHASE2_ENABLED` false until all settings and exercises have captured-at
-evidence. Keep the independent `GSVIBE_RELEASE_REPUBLISH_ENABLED` false until the protected republish exercise succeeds;
+Releases run only in the allowlisted repositories (`HLND2T/GoldSrc_VibeSignatures` and the fork), gated by the `win64`
+Environment and per-version concurrency rather than a GitHub App token or `GSVIBE_RELEASE_PHASE2_ENABLED`. The output PR
+is authored by `github-actions[bot]`; branch protection requires the unique Actions-owned `pr-validate`, an up-to-date
+merge commit, no direct/admin-bypass pushes to `main`, and protected release tags.
 repository tests cannot activate or prove these external controls.

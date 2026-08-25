@@ -25,8 +25,7 @@ from gamesymbol_snapshot_lib.codec import (
     parse_snapshot_bytes,
     snapshot_config_digest_version,
 )
-from gamesymbol_snapshot_lib.diff import format_snapshot_mismatch
-from gamesymbol_snapshot_lib.errors import SnapshotMismatchError, SnapshotSchemaError
+from gamesymbol_snapshot_lib.errors import SnapshotSchemaError
 from gamesymbol_snapshot_lib.metadata import (
     MetadataContractError,
     companion_path,
@@ -55,13 +54,6 @@ class CandidateInfo:
     metadata_path: str
     metadata_sha256: str
     metadata_snapshot_sha256: str
-
-
-@dataclass(frozen=True)
-class SnapshotDiff:
-    actual_sha256: str
-    expected_sha256: str
-    equal: bool
 
 
 @dataclass(frozen=True)
@@ -201,47 +193,6 @@ def guard_candidate(*, candidate_path, session_path) -> CandidateInfo:
     if manifest["metadata_file_identity"] != file_identity(metadata):
         raise CandidateChangedError("Candidate metadata file identity changed after build")
     return info
-
-
-def compare_snapshots(*, actual_path, expected_path, config_path, expected_game_version, session_path=None):
-    if session_path:
-        guard_candidate(candidate_path=actual_path, session_path=session_path)
-    actual = SnapshotSymbolStore.open(
-        actual_path, expected_game_version=str(expected_game_version), config_path=config_path
-    )
-    expected = SnapshotSymbolStore.open(
-        expected_path, expected_game_version=str(expected_game_version), config_path=config_path
-    )
-    actual_document = parse_snapshot_bytes(Path(actual_path).read_bytes())
-    expected_document = parse_snapshot_bytes(Path(expected_path).read_bytes())
-    comparable_actual, comparable_expected = dict(actual_document), dict(expected_document)
-    comparable_actual.pop("last_publish_time", None)
-    comparable_expected.pop("last_publish_time", None)
-    if comparable_actual != comparable_expected:
-        raise SnapshotMismatchError(format_snapshot_mismatch(comparable_expected, comparable_actual))
-    actual_metadata = (
-        absolute_path(load_manifest(session_path)[1]["metadata_path"]) if session_path else companion_path(actual_path)
-    )
-    expected_metadata = companion_path(expected_path)
-    actual_metadata_raw = actual_metadata.read_bytes()
-    expected_metadata_raw = expected_metadata.read_bytes()
-    parse_metadata_bytes(
-        actual_metadata_raw,
-        expected_game_version=str(expected_game_version),
-        snapshot_bytes=Path(actual_path).read_bytes(),
-    )
-    parse_metadata_bytes(
-        expected_metadata_raw,
-        expected_game_version=str(expected_game_version),
-        snapshot_bytes=Path(expected_path).read_bytes(),
-    )
-    if actual_metadata_raw != expected_metadata_raw:
-        raise SnapshotMismatchError(f"Metadata companion mismatch for {expected_game_version}")
-    if session_path:
-        session, manifest = load_manifest(session_path)
-        manifest["completed_steps"]["expected_compare"] = True
-        update_session(session, manifest, state="expected_matched")
-    return SnapshotDiff(actual.candidate_sha256, expected.candidate_sha256, True)
 
 
 def complete_candidate_step(*, candidate_path, session_path, step: str):

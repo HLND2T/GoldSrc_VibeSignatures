@@ -39,28 +39,25 @@ Production warm activation requires the host and repository settings in the
 [IDB cache operations runbook](idb-cache-operations.md). Unit and workflow-contract tests do not substitute for recorded
 cold, first miss/publication, and subsequent hit runs on that runner.
 
-## Release provenance and Phase 2 workflows
+## Release build and promotion
 
-[`release-shadow.yml`](../../.github/workflows/release-shadow.yml) runs only at the exact `main` commit with
-`contents: read`. It builds canonical release content manifests for `hl-10210`, `hl-8684`, and `svencoop-10257`, then
-rebuilds and verifies each manifest from exact Git blobs before uploading a 30-day evidence artifact. The workflow does
-not check out `bin`, trust worktree globs, or write refs, repository contents, pull requests, tags, or Releases.
+[`release-build.yml`](../../.github/workflows/release-build.yml) is a manual `workflow_dispatch` (`version` such as
+`v20260825a` plus an optional `source_sha` and a `mode` of `new|republish`). On the self-hosted
+`[self-hosted, windows, x64]` runner it: checks out the exact source and `bin` submodule, restores accepted bin, warms the
+IDB cache for every game version, runs `ida_analyze_bin.py -allgamever`, builds/guards/publishes candidates and gamedata
+per game version, runs `stage-build`, and opens a single `github-actions[bot]` generated-output PR
+(branch `gamesymbols/build/<version>`).
 
-Shadow success proves local content identity and the `new` mode decision only. The implemented Phase 2 workflows remain
-disabled by default:
+- `validate-generated-output-pr.yml` verifies the output PR (bot author + same repo + `gamesymbols/build/` branch; paths =
+  every game version's gamesymbols/metadata/gamedata plus `release-manifests/<version>.json`).
+- `promote-release-after-output-merge.yml` verifies the two-parent merge, transactionally swaps accepted bin into the
+  persisted workspace, tags the single `version`, and publishes one GitHub Release with assets for every game version.
+- `abandon-staged-release.yml` and `cleanup-completed-release-staging.yml` cover the lifecycle (abandon a staged build,
+  sweep completed completion records).
 
-- `release-build.yml` runs only for an exact `main` dispatch, on the shared `[self-hosted, windows, x64]` runner and the
-  `release` Environment. A GitHub App token pushes an immutable direct-parent output branch, creates a draft PR, binds its
-  remote identity into private staging, then marks it ready.
-- `release-output-validation.yml` is a read-only reusable verifier. It rejects repository/author/branch identity before
-  fetching the exact head object and never checks out or executes output-head code.
-- `release-promotion.yml` splits a credential-free merge verifier from an Environment-protected writer. The writer
-  recomputes the canonical approval digest before obtaining App-backed tag/Release authority.
-- `release-operations.yml` keeps retry, resume-promotion, republish, abandon, repair-index, cleanup, and reconcile behind
-  explicit identities and confirmations. See the [release operations runbook](release-operations.md).
-
-`GSVIBE_RELEASE_PHASE2_ENABLED` must remain unset/false until protected test-repository exercises and external
-branch/ruleset, merge-commit-only, up-to-date, protected-tag, Environment, and GitHub App evidence are complete.
+`mode=republish` requires the `version` tag to exist and re-analyzes only the outputs affected since the last accepted
+source. Publication no longer depends on `GSVIBE_RELEASE_PHASE2_ENABLED` or a GitHub App token; the gate is the
+allowlisted repository + `win64` Environment + concurrency.
 
 ## Pages deployment
 

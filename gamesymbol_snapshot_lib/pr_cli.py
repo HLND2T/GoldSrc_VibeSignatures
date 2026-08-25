@@ -30,8 +30,6 @@ from gamesymbol_snapshot_lib.pr_validation import (
     ImpactPlanningError,
     TagImpact,
     plan_tag_impact,
-    snapshot_delta_paths,
-    snapshot_documents_changed,
 )
 
 
@@ -246,6 +244,17 @@ def build_plan(
                 if gamedata_tag not in known_tags:
                     raise ImpactPlanningError(f"Tracked gamedata has no configured tag: {path}")
 
+    # A tag removed from configs/config.yaml must delete its committed
+    # gamesymbols/gamedata payloads in the same PR; release owns those outputs.
+    for tag in base_tags:
+        if tag in merge_tags:
+            continue
+        for path in (f"gamesymbols/{tag}.yaml", f"gamesymbols/{metadata_filename(tag)}"):
+            if repo.read(merge_sha, path) is not None:
+                raise ImpactPlanningError(f"Removed tag {tag} still has committed snapshot: {path}")
+        if _gamedata_tree_digest(repo, merge_sha, tag) is not None:
+            raise ImpactPlanningError(f"Removed tag {tag} still has committed gamedata")
+
     impacts: list[TagImpact] = []
     digests: dict[str, str | None] = {
         "base_config_index": _sha256(repo.read(base_sha, "configs/config.yaml")),
@@ -297,8 +306,6 @@ def build_plan(
                 merge_sources=merge_sources.get(tag),
                 base_rules=base_rules,
                 merge_rules=merge_rules,
-                snapshot_delta=snapshot_delta_paths(base_document, merge_document),
-                snapshot_changed=snapshot_documents_changed(base_document, merge_document),
                 metadata_changed=any(f"gamesymbols/{metadata_filename(tag)}" in change.paths for change in changes),
                 gamedata_changed=any(
                     any(path.startswith(f"gamedata/{tag}/") for path in change.paths) for change in changes
@@ -312,7 +319,6 @@ def build_plan(
                     merge_commit=merge_bin,
                 ),
                 base_snapshot_trusted=trusted,
-                expected_snapshot_exists=merge_document is not None,
                 fail_unmapped_analysis=False,
             )
             if impact.has_actions:

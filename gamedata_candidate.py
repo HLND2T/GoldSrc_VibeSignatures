@@ -132,6 +132,43 @@ def guard_candidate(session_path):
     return session
 
 
+def verify_published_gamedata(*, session_path, repo_root, gamever, candidate, analysis_config):
+    """Verify that the published ``gamedata/<gamever>`` tree matches the guarded candidate.
+
+    Used by the release build to bind the working-tree gamedata to its immutable
+    candidate session before staging. Reads the checked-out working tree and
+    re-derives the generator contract from the build-time modules directory
+    recorded in the session.
+    """
+    session = guard_candidate(session_path)
+    tag = validated_tag(gamever)
+    candidate = _file(candidate, "Symbol candidate")
+    analysis_config = _file(analysis_config, "Analysis config")
+    if session["gamever"] != tag or sha256_file(candidate) != session["candidate_sha256"]:
+        raise GamedataCandidateError("Gamedata session does not match the release candidate")
+    if analysis_config_sha256(analysis_config) != session["analysis_config_sha256"]:
+        raise GamedataCandidateError("Gamedata session does not match the analysis config")
+    root = Path(repo_root) / "gamedata" / tag
+    if not root.is_dir():
+        raise GamedataCandidateError(f"Published gamedata is missing: {root}")
+    modules = discover_generator_modules(session["modules_dir"])
+    files, manifest_sha256 = validate_gamedata_tree(
+        root,
+        tag,
+        modules,
+        candidate_sha256=session["candidate_sha256"],
+        analysis_config_sha256=session["analysis_config_sha256"],
+        generator_contract_digest=session["generator_contract_sha256"],
+    )
+    if files != session["files"] or manifest_sha256 != session["gamedata_manifest_sha256"]:
+        raise GamedataCandidateError("Published gamedata differs from the guarded candidate")
+    return {
+        "gamedata_path": session["gamedata_path"],
+        "gamedata_manifest_sha256": session["gamedata_manifest_sha256"],
+        "generator_contract_sha256": session["generator_contract_sha256"],
+    }
+
+
 def publish_candidate(*, session_path, output_dir):
     session = guard_candidate(session_path)
     tag = session["gamever"]
@@ -222,15 +259,6 @@ def _tree_inventory(repo_root: Path, ref: str, tag: str) -> list[dict]:
     return sorted(inventory, key=lambda item: item["path"])
 
 
-def verify_tracked_candidate(*, session_path, repo_root, ref="HEAD"):
-    session = guard_candidate(session_path)
-    repo = Path(repo_root).resolve()
-    tracked = _tree_inventory(repo, ref, session["gamever"])
-    if tracked != session["files"]:
-        raise GamedataCandidateError(f"Tracked gamedata differs from candidate for {session['gamever']}")
-    return session
-
-
 def stage_candidate(*, session_path, repo_root):
     session = guard_candidate(session_path)
     repo = Path(repo_root).resolve()
@@ -291,10 +319,6 @@ def _parser():
     stage = commands.add_parser("stage")
     stage.add_argument("-session", required=True)
     stage.add_argument("-repo-root", default=".")
-    tracked = commands.add_parser("verify-tracked")
-    tracked.add_argument("-session", required=True)
-    tracked.add_argument("-repo-root", default=".")
-    tracked.add_argument("-ref", default="HEAD")
     return parser
 
 
@@ -317,8 +341,6 @@ def main(argv=None):
             publish_candidate(session_path=args.session, output_dir=args.outputdir)
         elif args.command == "stage":
             stage_candidate(session_path=args.session, repo_root=args.repo_root)
-        else:
-            verify_tracked_candidate(session_path=args.session, repo_root=args.repo_root, ref=args.ref)
     except (
         GamedataCandidateError,
         GamedataContractError,

@@ -60,7 +60,7 @@ def initial_manifest(info, output: Path, metadata_output: Path) -> dict:
         "file_identity": file_identity(output),
         "metadata_file_identity": file_identity(metadata_output),
         "state": "candidate_ready",
-        "completed_steps": {"analysis": True, "pack": True, "expected_compare": None, "gamedata": False},
+        "completed_steps": {"analysis": True, "pack": True, "gamedata": False},
     }
 
 
@@ -95,7 +95,7 @@ def load_manifest(session_path):
         or manifest.get("schema_version") != SESSION_SCHEMA_VERSION
     ):
         raise CandidateContractError(f"Unsupported or malformed candidate session: {session}")
-    if set(manifest["completed_steps"]) != {"analysis", "pack", "expected_compare", "gamedata"}:
+    if set(manifest["completed_steps"]) != {"analysis", "pack", "gamedata"}:
         raise CandidateContractError("Candidate session has malformed completed steps")
     return session, manifest
 

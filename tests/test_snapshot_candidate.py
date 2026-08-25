@@ -12,7 +12,6 @@ from gamedata_candidate import build_candidate as build_gamedata_candidate
 from gamesymbol_candidate import main as gamesymbol_candidate_main
 from gamesymbol_snapshot_lib.candidate import (
     build_candidate_snapshot,
-    compare_snapshots,
     guard_candidate,
     publish_candidate,
 )
@@ -174,43 +173,6 @@ class SnapshotOperationTests(unittest.TestCase):
 
 
 class CandidateTests(unittest.TestCase):
-    def test_snapshot_and_metadata_pair_compare_preserves_tracked_publish_time(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            tag, config, _game_root = fixture(root)
-            with working_directory(root):
-                expected = root / "gamesymbols" / f"{tag}.yaml"
-                expected.parent.mkdir()
-                pack_snapshot(
-                    tag,
-                    root / "bin",
-                    config,
-                    expected,
-                    last_publish_time="2026-01-02T03:04:05Z",
-                )
-                write_metadata(
-                    snapshot_path=expected,
-                    config_path=config,
-                    game_version=tag,
-                    output_path=expected.with_name(f"{tag}.metadata.yaml"),
-                )
-                candidate = root / ".candidates" / f"{tag}.yaml"
-                session = root / ".candidates" / "session.json"
-                build_candidate_snapshot(
-                    game_version=tag,
-                    bin_root=root / "bin",
-                    config_path=config,
-                    output_path=candidate,
-                    session_path=session,
-                )
-                compare_snapshots(
-                    actual_path=candidate,
-                    expected_path=expected,
-                    config_path=config,
-                    expected_game_version=tag,
-                    session_path=session,
-                )
-
     def test_tamper_guard_and_guarded_atomic_publish(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

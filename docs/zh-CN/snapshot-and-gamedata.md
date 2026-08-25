@@ -54,21 +54,18 @@ uv run python gamesymbol_metadata.py verify -snapshot gamesymbols/hl-10210.yaml 
 
 Pages 不再读取 live config alias。companion 缺失、非 canonical、hash 不匹配或 owner 不匹配都会使构建失败。
 
-## Release content inventory
+## Release 输出清单
 
-Schema-1 release content manifest 是第二层 Git-tree contract。对单个 tag，它以 Git mode、size 与 raw SHA-256
-清点 exact `gamesymbols/<tag>.yaml`、`gamesymbols/<tag>.metadata.yaml` 与 `gamedata/<tag>/**` blob。
-`release-manifests/<tag>.json` 不进入该 digest，因此 manifest 不会 hash 自身。
+Release build 在 self-hosted runner 上为全部 game version 生成 `gamesymbols/<tag>.yaml`、
+`gamesymbols/<tag>.metadata.yaml` 与 `gamedata/<tag>/**`，把它们连同 `release-manifests/<version>.json` 一起提交到
+`gamesymbols/build/<version>` 分支的 generated-output PR；合并后打单个 `version` tag 并发布一个 GitHub Release（资产
+含全部 game version）。
 
-Verifier 会交叉核对 companion 的 snapshot/config binding、gamedata manifest 的 snapshot/config/generator binding、
-snapshot binary inventory 与 `bin` gitlink。缺失 companion 或 gamedata manifest、额外 gamedata payload、可执行 mode
-payload、non-canonical bytes 或 default-branch drift 都会 fail closed。Shadow output 仅作为 evidence，不改变 canonical
-publication authority。
-
-Phase 2 中 source PR 继续拥有三类 payload authority。Generated-output commit 以 exact source SHA 为唯一父提交，
-并且只能新增 `release-manifests/<tag>.json`；snapshot、metadata 或 gamedata 任何 delta 都使 output validation
-失败。Merged manifest 绑定 content identity；PR/head/merge/tag/Release 的 attempt identity 则保存在 private
-staging、provenance 与 durable completion record 中，不让 tracked manifest 形成自引用。
+`release-manifests/<version>.json` 是 schema-1 canonical manifest：绑定 `version`、`mode`、`build_id`、`source_sha`、
+每条 game version 的 snapshot/gamedata provenance，以及 aggregate bin/tracked-output inventory hash。
+`validate-generated-output-pr.yml` 用 exact Git blob 重建 tracked output inventory 并核对每条 game version 的 snapshot
+hash 与 gamedata inventory；`promote-release-after-output-merge.yml` 校验两父合并并把 accepted bin 事务化交换进
+persisted workspace。source PR 不再拥有 gamesymbols/gamedata authority。
 
 ## 直接生成 gamedata
 
