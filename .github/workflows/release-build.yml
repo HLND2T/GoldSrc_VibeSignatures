@@ -15,7 +15,7 @@ on:
         description: Release lifecycle mode
         required: true
         type: choice
-        options: [new]
+        options: [new, republish]
 permissions:
   contents: read
 concurrency:
@@ -96,6 +96,17 @@ jobs:
               if ($LASTEXITCODE -ge 8) { throw "robocopy restore failed for $gamever" }
               $global:LASTEXITCODE = 0
             }
+          }
+      - name: Invalidate republish outputs
+        if: needs.preflight.outputs.mode == 'republish'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $gamevers = uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {}).get('gamevers', [])))"
+          foreach ($gamever in ($gamevers -split "`n")) {
+            uv run python release_workflow.py invalidate-republish --repo-root $env:GITHUB_WORKSPACE --gamever $gamever `
+              --version "${{ needs.preflight.outputs.version }}" --source-sha "${{ needs.preflight.outputs.source_sha }}" --bindir bin
+            if ($LASTEXITCODE -ne 0) { throw "invalidate-republish failed for $gamever" }
           }
       - name: Warm IDB cache for all game versions
         shell: pwsh

@@ -58,6 +58,7 @@ def _add_build_parsers(commands) -> None:
     invalidate = commands.add_parser("invalidate-republish")
     invalidate.add_argument("--repo-root", default=".")
     invalidate.add_argument("--gamever", required=True)
+    invalidate.add_argument("--version", required=True)
     invalidate.add_argument("--source-sha", required=True)
     invalidate.add_argument("--bindir", default="bin")
 
@@ -216,6 +217,7 @@ def _run_build(args) -> object:
         return invalidate_republish(
             repo_root=args.repo_root,
             gamever=args.gamever,
+            version=args.version,
             source_sha=args.source_sha,
             bindir=args.bindir,
         )

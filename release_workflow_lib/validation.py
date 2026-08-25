@@ -1,19 +1,25 @@
-"""Release build input validation and old-version baseline selection."""
+"""Release build input validation, old-version baseline selection, and republish invalidation."""
 
 from __future__ import annotations
 
 import subprocess
+import tempfile
 from pathlib import Path
 
 import yaml
 
-from analysis_config import validated_tag
+from gamesymbol_snapshot_lib.analysis_sources import build_source_index
+from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.errors import SnapshotError
 from gamesymbol_snapshot_lib.operations import restore_snapshot
+from gamesymbol_snapshot_lib.paths import ensure_real_tree, path_from_key
+from gamesymbol_snapshot_lib.pr_cli import GitRepository
+from gamesymbol_snapshot_lib.pr_validation import build_invalidation_plan
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.manifests import (
     ALLOWED_REPOSITORIES,
     GAMEVER_RE,
+    load_tracked_manifest,
     require_gamever,
     require_mode,
     require_sha,
@@ -54,6 +60,8 @@ def validate_build_input(*, repository: str, version: str, source_sha: str, mode
     )
     if mode == "new" and tag_exists:
         raise ReleaseWorkflowError(f"mode=new requires tag {version} to be absent")
+    if mode == "republish" and not tag_exists:
+        raise ReleaseWorkflowError(f"mode=republish requires tag {version} to exist")
 
 
 def _gamever_key(gamever: str) -> tuple[str, int]:
@@ -98,5 +106,69 @@ def prepare_oldgamever_baseline(*, repo_root: str | Path, gamever: str, bindir: 
     }
 
 
-def invalidate_republish(*, repo_root: Path, gamever: str, source_sha: str, bindir: Path) -> int:
-    raise ReleaseWorkflowError("republish mode is not supported yet")
+def _source_tree(repo: GitRepository, ref: str) -> dict[str, bytes]:
+    paths = [
+        path
+        for path in repo.list_files(ref)
+        if path == "ida_analyze_util.py" or path.startswith("ida_preprocessor_scripts/")
+    ]
+    return {path: value for path in paths if (value := repo.read(ref, path)) is not None}
+
+
+def invalidate_republish(*, repo_root: Path, gamever: str, version: str, source_sha: str, bindir: Path) -> int:
+    """Invalidate affected analysis outputs so a republish re-analyzes only what changed."""
+    repo_root = Path(repo_root).resolve()
+    gamever = require_gamever(gamever)
+    version = require_version(version)
+    source_sha = require_sha(source_sha, "SOURCE_SHA")
+    bindir = Path(bindir)
+    if not bindir.is_absolute():
+        bindir = repo_root / bindir
+
+    manifest = load_tracked_manifest(repo_root / "release-manifests" / f"{version}.json")
+    entry = next((item for item in manifest["gamevers"] if item["gamever"] == gamever), None)
+    if entry is None:
+        raise ReleaseWorkflowError(f"release manifest has no entry for {gamever}")
+    base_sha = require_sha(manifest["source_sha"], "previous SOURCE_SHA")
+    if base_sha == source_sha:
+        raise ReleaseWorkflowError("republish SOURCE_SHA must be newer than the accepted generator source")
+
+    repo = GitRepository(repo_root)
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), "merge-base", "--is-ancestor", base_sha, source_sha], check=False
+    )
+    if result.returncode != 0:
+        raise ReleaseWorkflowError("previous accepted SOURCE_SHA is not an ancestor of the rebuild SOURCE_SHA")
+
+    changes = repo.changed_paths(base_sha, source_sha)
+    head_contract = load_contract(repo_root / "configs" / f"{gamever}.yaml", gamever, bindir)
+    base_config_raw = repo.read(base_sha, f"configs/{gamever}.yaml")
+    if base_config_raw is None:
+        raise ReleaseWorkflowError(f"base analysis config is missing for {gamever} at {base_sha}")
+    with tempfile.TemporaryDirectory(prefix="release-base-") as temporary:
+        base_config = Path(temporary) / f"{gamever}.yaml"
+        base_config.write_bytes(base_config_raw)
+        base_contract = load_contract(base_config, gamever, bindir)
+        plan = build_invalidation_plan(
+            base_contract,
+            head_contract,
+            None,
+            None,
+            changes,
+            repo_root,
+            base_sources=build_source_index(base_contract, _source_tree(repo, base_sha)),
+            head_sources=build_source_index(head_contract, _source_tree(repo, source_sha)),
+        )
+
+    game_root = bindir / gamever
+    ensure_real_tree(bindir, game_root)
+    deleted = 0
+    for key in sorted(plan.paths):
+        target = path_from_key(game_root, key)
+        if target.is_file():
+            target.unlink()
+            deleted += 1
+    for reason in plan.reasons:
+        print(reason)
+    print(f"Invalidated {len(plan.paths)} affected output(s); deleted {deleted} YAML file(s)")
+    return deleted

@@ -80,9 +80,9 @@ def require_sha256(value: object, label: str) -> str:
 
 
 def require_mode(value: object) -> str:
-    if value != "new":
-        raise ReleaseWorkflowError(f"invalid release mode: {value!r} (only 'new' is supported)")
-    return "new"
+    if value not in {"new", "republish"}:
+        raise ReleaseWorkflowError(f"invalid release mode: {value!r}")
+    return value
 
 
 def require_build_id(value: object) -> str:

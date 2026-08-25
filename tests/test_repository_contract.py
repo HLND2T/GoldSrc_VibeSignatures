@@ -337,7 +337,7 @@ class RepositoryContractTests(unittest.TestCase):
         build = workflows["release-build.yml"]
         self.assertIn("version", build["on"]["workflow_dispatch"]["inputs"])
         self.assertIn("source_sha", build["on"]["workflow_dispatch"]["inputs"])
-        self.assertEqual(["new"], build["on"]["workflow_dispatch"]["inputs"]["mode"]["options"])
+        self.assertEqual(["new", "republish"], build["on"]["workflow_dispatch"]["inputs"]["mode"]["options"])
         self.assertEqual("read", build["permissions"]["contents"])
         build_job = build["jobs"]["build"]
         self.assertEqual(["self-hosted", "windows", "x64"], build_job["runs-on"])

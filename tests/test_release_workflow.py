@@ -82,8 +82,9 @@ class ManifestSchemaTests(unittest.TestCase):
                 tracked_output_manifest_sha256="2" * 64,
                 gamevers=[entry, entry],
             )
+        self.assertEqual("republish", require_mode("republish"))
         with self.assertRaises(ReleaseWorkflowError):
-            require_mode("republish")
+            require_mode("bogus")
 
 
 class OutputPathValidationTests(unittest.TestCase):

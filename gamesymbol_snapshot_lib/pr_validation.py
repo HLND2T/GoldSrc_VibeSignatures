@@ -322,3 +322,59 @@ def plan_tag_impact(
         reasons=tuple(dict.fromkeys(reasons)),
         fallback_reason=fallback_reason,
     )
+
+
+@dataclass(frozen=True)
+class InvalidationPlan:
+    paths: frozenset[str]
+    nodes: frozenset[str]
+    reasons: tuple[str, ...]
+
+
+def _normalize_changes(changed_files) -> tuple[ChangedPath, ...]:
+    result = []
+    for item in changed_files:
+        if isinstance(item, ChangedPath):
+            result.append(item)
+        elif isinstance(item, str):
+            result.append(ChangedPath("M", item, item))
+        else:
+            raise ImpactPlanningError(f"Unsupported changed path: {item!r}")
+    return tuple(result)
+
+
+def build_invalidation_plan(
+    base_contract,
+    head_contract,
+    base_snapshot,
+    head_snapshot,
+    changed_files,
+    repo_root,
+    *,
+    base_sources: SourceIndex | None = None,
+    head_sources: SourceIndex | None = None,
+) -> InvalidationPlan:
+    """Compute which artifact paths must be re-analyzed for a republish.
+
+    Reuses the PR impact planner so republish invalidation matches PR-triggered
+    re-analysis. ``base_snapshot``/``head_snapshot`` are accepted for parity with
+    the single-gamever contract but are no longer consulted (snapshot-delta
+    seeding was removed from the planner).
+    """
+    changes = _normalize_changes(changed_files)
+    impact = plan_tag_impact(
+        tag=head_contract.game_version,
+        base_contract=base_contract,
+        merge_contract=head_contract,
+        changed_paths=changes,
+        base_sources=base_sources,
+        merge_sources=head_sources,
+        base_rules=(),
+        merge_rules=(),
+        base_snapshot_trusted=True,
+    )
+    return InvalidationPlan(
+        frozenset(impact.invalidated_paths),
+        frozenset(impact.analysis_nodes),
+        impact.reasons,
+    )

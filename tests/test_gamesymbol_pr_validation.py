@@ -28,6 +28,7 @@ from gamesymbol_snapshot_lib.pr_validation import (
     ChangedPath,
     ImpactPlanningError,
     TagImpact,
+    build_invalidation_plan,
     evaluate_pr_validation,
     plan_tag_impact,
 )
@@ -403,6 +404,28 @@ class ImpactPlanningTests(unittest.TestCase):
                 binary_changed_pairs=frozenset({("engine", "windows")}),
             )
             self.assertEqual(set(contract.nodes), set(impact.analysis_nodes))
+
+    def test_invalidation_plan_reuses_impact_planner(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            contract = self._contract(root)
+            source = SourceIndex(
+                {"ida_preprocessor_scripts/produce.py": frozenset({"engine:windows:produce"})},
+                frozenset({"ida_preprocessor_scripts/produce.py"}),
+            )
+            plan = build_invalidation_plan(
+                contract,
+                contract,
+                None,
+                None,
+                [ChangedPath("M", "ida_preprocessor_scripts/produce.py", "ida_preprocessor_scripts/produce.py")],
+                root,
+                base_sources=source,
+                head_sources=source,
+            )
+            self.assertIn("engine/A.windows.yaml", plan.paths)
+            self.assertIn("engine/B.windows.yaml", plan.paths)
+            self.assertTrue(plan.reasons)
 
     def test_bound_plan_digest_binds_shas_actions_and_digests(self):
         action = TagImpact("game-1", "incremental", (), (), True, True, ("snapshot",))
