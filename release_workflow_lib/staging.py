@@ -1,632 +1,420 @@
+"""Private release staging for a multi-gamever versioned build."""
+
 from __future__ import annotations
 
-import json
-import os
-import re
-import stat
-from contextlib import contextmanager
-from pathlib import Path
+import shutil
+from pathlib import Path, PurePosixPath
 
-from analysis_config import validated_tag
-from pull_request_route import parse_output_branch
+from gamedata_candidate import GamedataCandidateError, verify_published_gamedata
+from gamesymbol_snapshot_lib.operations import load_snapshot_context
 from release_workflow_lib.errors import ReleaseWorkflowError
+from release_workflow_lib.filesystem import remove_tree
 from release_workflow_lib.hashing import (
-    canonical_json_bytes,
-    normalized_relative_path,
-    normalized_sha256,
-    sha256_bytes,
+    contained_path,
+    file_inventory,
+    inventory_sha256,
+    load_json_object,
+    reject_reparse_components,
+    reject_reparse_points,
+    sha256_file,
+    tracked_output_inventory,
+    verify_inventory,
+    write_canonical_json,
 )
-from release_workflow_lib.manifest import GIT_SHA_PATTERN, parse_content_manifest_bytes
+from release_workflow_lib.manifests import (
+    ALLOWED_REPOSITORIES,
+    SCHEMA_VERSION,
+    build_gamever_entry,
+    build_tracked_manifest,
+    load_tracked_manifest,
+    parse_output_branch,
+    require_build_id,
+    require_sha,
+    require_version,
+    verify_tracked_outputs,
+)
 
-STAGE_SCHEMA_VERSION = 1
-STATE_SEQUENCE = (
-    "BUILDING",
-    "HEAD_BOUND",
-    "PR_CREATED",
-    "READY",
-    "PROMOTION_STARTED",
-    "PROMOTED",
-    "PROMOTION_COMPLETE",
-)
-DIAGNOSTIC_STATES = frozenset({"FAILED", "CANCELLED", "PR_CLOSED", "SUPERSEDED", "ABANDONED"})
-MARKER_KEYS = {
+ABANDON_REASON_MAX_LENGTH = 500
+PROMOTION_STATE_MARKERS = ("PROMOTION_STARTED", "PROMOTED.json", "PROMOTION_COMPLETE")
+IDA_DATABASE_SUFFIXES = (".i64", ".idb", ".id0", ".id1", ".id2", ".nam", ".til")
+RECOVERABLE_ANALYSIS_SUFFIXES = (*IDA_DATABASE_SUFFIXES, ".bsproj", ".binsync.json")
+PRIVATE_FIELDS = {
     "schema_version",
-    "state",
-    "tag",
+    "version",
+    "mode",
     "build_id",
-    "content_manifest_sha256",
-    "previous_state_sha256",
-    "run_id",
-    "run_attempt",
-    "lease_owner",
-    "bindings",
-}
-BINDING_KEYS = {
-    "repository_id",
-    "repository",
     "source_sha",
-    "base_ref",
-    "output_branch",
-    "output_head_sha",
-    "pr_number",
-    "pr_head_sha",
-    "pr_base_sha",
-    "merge_sha",
-    "promotion_run_id",
-    "promotion_run_attempt",
-    "promotion_workflow_repository",
-    "promotion_workflow_path",
-    "promotion_workflow_ref_sha",
-    "tag_object_sha",
-    "tag_target_sha",
-    "release_id",
-    "release_assets_sha256",
-}
-PR_INDEX_KEYS = {
-    "schema_version",
-    "repository_id",
+    "workflow_run_url",
+    "bin_manifest_sha256",
+    "tracked_output_manifest_sha256",
+    "gamevers",
     "repository",
-    "base_ref",
-    "tag",
-    "build_id",
     "output_branch",
-    "pr_number",
     "pr_head_sha",
-    "pr_base_sha",
-    "content_manifest_sha256",
+    "bin_files",
+    "tracked_files",
 }
-BUILD_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
-REPOSITORY_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
-RUN_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,160}$")
 
 
-class ReleaseStageError(ReleaseWorkflowError):
-    pass
+def is_recoverable_analysis_path(path: Path) -> bool:
+    return any(part.lower().endswith(RECOVERABLE_ANALYSIS_SUFFIXES) for part in Path(path).parts)
 
 
-def reject_release_path_links(path: str | Path, context: str) -> None:
-    current = Path(path)
-    for candidate in (current, *current.parents):
-        if not candidate.exists() and not candidate.is_symlink():
-            continue
-        info = candidate.lstat()
-        attributes = getattr(info, "st_file_attributes", 0)
-        if candidate.is_symlink() or attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400):
-            raise ReleaseStageError(f"{context} must not traverse a link/reparse point: {candidate}")
+def ignore_recoverable_analysis_state(_directory: str, names: list[str]) -> set[str]:
+    return {name for name in names if is_recoverable_analysis_path(Path(name))}
 
 
-def validated_build_id(value: object) -> str:
-    if not isinstance(value, str) or not BUILD_ID_RE.fullmatch(value):
-        raise ReleaseStageError("build_id must be lowercase alphanumeric hyphen components")
-    return value
+def _bin_inventory(stage_bin_root: Path, gamevers: list[str]) -> list[dict]:
+    entries = []
+    for gamever in gamevers:
+        gamever_bin = contained_path(stage_bin_root, gamever)
+        if not gamever_bin.is_dir():
+            raise ReleaseWorkflowError(f"staged bin is missing for {gamever}: {gamever_bin}")
+        for item in file_inventory(gamever_bin):
+            entries.append({"gamever": gamever, **item})
+    return sorted(entries, key=lambda item: (item["gamever"], item["path"]))
 
 
-def output_branch(tag: str, build_id: str) -> str:
-    branch = f"gamesymbols/build/{validated_tag(tag)}/{validated_build_id(build_id)}"
-    if parse_output_branch(branch) != (tag, build_id):
-        raise ReleaseStageError("Output branch identity is not canonical")
-    return branch
+def verify_snapshot_binaries(document: dict, stage_bin: Path) -> int:
+    binaries = document.get("binaries")
+    if not binaries:
+        return 0
+    checked = 0
+    for module, platforms in binaries.items():
+        for platform, metadata in platforms.items():
+            path = metadata.get("path")
+            if not path:
+                continue
+            binary = contained_path(stage_bin, module, PurePosixPath(path).name)
+            reject_reparse_components(stage_bin, binary)
+            if not binary.is_file():
+                raise ReleaseWorkflowError(f"snapshot binary is missing from staged bin: {module}/{platform}")
+            if sha256_file(binary) != metadata["sha256"]:
+                raise ReleaseWorkflowError(f"snapshot binary hash mismatch for {module}/{platform}")
+            checked += 1
+    return checked
 
 
-def _plain_directory(path: str | Path, context: str) -> Path:
-    root = Path(path)
-    reject_release_path_links(root, context)
-    if not root.is_dir():
-        raise ReleaseStageError(f"{context} must be a pre-provisioned directory")
-    info = root.lstat()
-    attributes = getattr(info, "st_file_attributes", 0)
-    if root.is_symlink() or attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400):
-        raise ReleaseStageError(f"{context} must not be a link/reparse point")
-    return root.resolve()
+def staging_directory(staging_root: Path, version: str, build_id: str) -> Path:
+    version = require_version(version)
+    staging_root = Path(staging_root)
+    staging_root.mkdir(parents=True, exist_ok=True)
+    target = contained_path(staging_root, version, build_id)
+    reject_reparse_components(staging_root, target)
+    return target
 
 
-def release_staging_root(persisted_root: str | Path) -> Path:
-    root = _plain_directory(persisted_root, "Persisted workspace")
-    staging = root / "release-staging"
-    staging.mkdir(exist_ok=True)
-    return _plain_directory(staging, "Release staging root")
+def _ready_builds(staging_root: Path, version: str) -> list[Path]:
+    version_root = contained_path(Path(staging_root), version)
+    if not version_root.is_dir():
+        return []
+    return sorted(path.parent for path in version_root.glob("*/READY") if path.is_file())
 
 
-def build_stage_root(persisted_root: str | Path, tag: str, build_id: str) -> Path:
-    path = release_staging_root(persisted_root) / validated_tag(tag) / validated_build_id(build_id)
-    reject_release_path_links(path, "Release build stage")
-    return path
+def assert_no_other_ready_build(staging_root: Path, version: str, build_id: str) -> None:
+    active = [path for path in _ready_builds(staging_root, version) if path.name != build_id]
+    if active:
+        raise ReleaseWorkflowError(f"another ready staged build blocks {version}: {active[0]}")
 
 
-@contextmanager
-def release_tag_lock(persisted_root: str | Path, tag: str):
-    staging = release_staging_root(persisted_root)
-    lock_path = staging / "locks" / f"{validated_tag(tag)}.lock"
-    reject_release_path_links(lock_path, "Release tag lock")
-    lock_path.parent.mkdir(exist_ok=True)
-    reject_release_path_links(lock_path.parent, "Release tag lock directory")
-    handle = lock_path.open("a+b")
-    if handle.seek(0, os.SEEK_END) == 0:
-        handle.write(b"\0")
-        handle.flush()
-    handle.seek(0)
-    try:
-        if os.name == "nt":
-            import msvcrt
-
-            msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
-        else:
-            import fcntl
-
-            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
-        yield
-    finally:
-        handle.seek(0)
-        if os.name == "nt":
-            import msvcrt
-
-            msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
-        else:
-            import fcntl
-
-            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
-        handle.close()
+def _validate_stage_request(*, staging_root: Path, repository: str, output_branch: str, version: str, build_id: str):
+    if repository not in ALLOWED_REPOSITORIES:
+        raise ReleaseWorkflowError(f"repository is not allowlisted: {repository}")
+    version = require_version(version)
+    if parse_output_branch(output_branch) != version:
+        raise ReleaseWorkflowError("output branch does not match VERSION")
+    assert_no_other_ready_build(staging_root, version, build_id)
+    stage_dir = staging_directory(staging_root, version, build_id)
+    if stage_dir.exists():
+        raise ReleaseWorkflowError(f"staging directory already exists: {stage_dir}")
+    return version, stage_dir
 
 
-def _git_sha_or_none(value: object, context: str) -> str | None:
-    if value is None:
-        return None
-    if not isinstance(value, str) or not GIT_SHA_PATTERN.fullmatch(value):
-        raise ReleaseStageError(f"{context} must be a lowercase Git SHA-1 or null")
-    return value
-
-
-def _positive_int_or_none(value: object, context: str) -> int | None:
-    if value is None:
-        return None
-    if not isinstance(value, int) or isinstance(value, bool) or value < 1:
-        raise ReleaseStageError(f"{context} must be a positive integer or null")
-    return value
-
-
-def validate_bindings(value: object) -> dict:
-    if not isinstance(value, dict) or set(value) != BINDING_KEYS:
-        raise ReleaseStageError("Stage bindings have unexpected or missing fields")
-    repository_id = _positive_int_or_none(value["repository_id"], "repository_id")
-    if repository_id is None:
-        raise ReleaseStageError("repository_id is required")
-    repository = value["repository"]
-    if not isinstance(repository, str) or not REPOSITORY_RE.fullmatch(repository):
-        raise ReleaseStageError("repository must be an owner/repository slug")
-    source_sha = _git_sha_or_none(value["source_sha"], "source_sha")
-    if source_sha is None:
-        raise ReleaseStageError("source_sha is required")
-    base_ref = value["base_ref"]
-    if not isinstance(base_ref, str) or not base_ref or "/" in base_ref or "\\" in base_ref:
-        raise ReleaseStageError("base_ref must be a simple branch name")
-    branch = value["output_branch"]
-    if not isinstance(branch, str):
-        raise ReleaseStageError("output_branch is required")
-    parse_output_branch(branch)
-    for field in ("output_head_sha", "pr_head_sha", "pr_base_sha", "merge_sha"):
-        _git_sha_or_none(value[field], field)
-    for field in ("tag_object_sha", "tag_target_sha"):
-        _git_sha_or_none(value[field], field)
-    _positive_int_or_none(value["pr_number"], "pr_number")
-    _positive_int_or_none(value["promotion_run_attempt"], "promotion_run_attempt")
-    _positive_int_or_none(value["release_id"], "release_id")
-    promotion_run_id = value["promotion_run_id"]
-    if promotion_run_id is not None and (
-        not isinstance(promotion_run_id, str) or not RUN_ID_RE.fullmatch(promotion_run_id)
-    ):
-        raise ReleaseStageError("promotion_run_id is invalid")
-    promotion_workflow_repository = value["promotion_workflow_repository"]
-    if promotion_workflow_repository is not None and (
-        not isinstance(promotion_workflow_repository, str) or not REPOSITORY_RE.fullmatch(promotion_workflow_repository)
-    ):
-        raise ReleaseStageError("promotion_workflow_repository is invalid")
-    promotion_workflow_path = value["promotion_workflow_path"]
-    if promotion_workflow_path is not None:
-        normalized_relative_path(promotion_workflow_path)
-    _git_sha_or_none(value["promotion_workflow_ref_sha"], "promotion_workflow_ref_sha")
-    release_assets_sha256 = value["release_assets_sha256"]
-    if release_assets_sha256 is not None:
-        normalized_sha256(release_assets_sha256, "release_assets_sha256")
-    return dict(value)
-
-
-def validate_pr_index(document: object, raw: bytes | None = None) -> dict:
-    if not isinstance(document, dict) or set(document) != PR_INDEX_KEYS:
-        raise ReleaseStageError("PR index has unexpected or missing fields")
-    if document["schema_version"] != STAGE_SCHEMA_VERSION:
-        raise ReleaseStageError("Unsupported PR index schema")
-    tag = validated_tag(document["tag"])
-    build_id = validated_build_id(document["build_id"])
-    repository_id = _positive_int_or_none(document["repository_id"], "repository_id")
-    if repository_id is None:
-        raise ReleaseStageError("repository_id is required")
-    repository = document["repository"]
-    if not isinstance(repository, str) or not REPOSITORY_RE.fullmatch(repository):
-        raise ReleaseStageError("repository must be an owner/repository slug")
-    base_ref = document["base_ref"]
-    if not isinstance(base_ref, str) or not base_ref or "/" in base_ref or "\\" in base_ref:
-        raise ReleaseStageError("PR index base_ref must be a simple branch name")
-    branch = document["output_branch"]
-    if not isinstance(branch, str) or parse_output_branch(branch) != (tag, build_id):
-        raise ReleaseStageError("PR index branch/tag/build identity mismatch")
-    if _positive_int_or_none(document["pr_number"], "pr_number") is None:
-        raise ReleaseStageError("pr_number is required")
-    if _git_sha_or_none(document["pr_head_sha"], "pr_head_sha") is None:
-        raise ReleaseStageError("pr_head_sha is required")
-    if _git_sha_or_none(document["pr_base_sha"], "pr_base_sha") is None:
-        raise ReleaseStageError("pr_base_sha is required")
-    normalized_sha256(document["content_manifest_sha256"], "content_manifest_sha256")
-    if raw is not None and canonical_json_bytes(document) != raw:
-        raise ReleaseStageError("PR index is not canonical JSON")
-    return dict(document)
-
-
-def validate_marker(document: object, raw: bytes | None = None) -> dict:
-    if not isinstance(document, dict) or set(document) != MARKER_KEYS:
-        raise ReleaseStageError("Release stage marker has unexpected or missing fields")
-    if document["schema_version"] != STAGE_SCHEMA_VERSION or document["state"] not in STATE_SEQUENCE:
-        raise ReleaseStageError("Unsupported release stage marker schema/state")
-    validated_tag(document["tag"])
-    validated_build_id(document["build_id"])
-    normalized_sha256(document["content_manifest_sha256"], "content_manifest_sha256")
-    previous = document["previous_state_sha256"]
-    if previous is not None:
-        normalized_sha256(previous, "previous_state_sha256")
-    if not isinstance(document["run_id"], str) or not RUN_ID_RE.fullmatch(document["run_id"]):
-        raise ReleaseStageError("run_id is invalid")
-    if _positive_int_or_none(document["run_attempt"], "run_attempt") is None:
-        raise ReleaseStageError("run_attempt is required")
-    if not isinstance(document["lease_owner"], str) or not RUN_ID_RE.fullmatch(document["lease_owner"]):
-        raise ReleaseStageError("lease_owner is invalid")
-    bindings = validate_bindings(document["bindings"])
-    parsed = parse_output_branch(bindings["output_branch"])
-    if parsed != (document["tag"], document["build_id"]):
-        raise ReleaseStageError("Stage marker branch/tag/build identity mismatch")
-    state_index = STATE_SEQUENCE.index(document["state"])
-    required_by_state = {
-        1: ("output_head_sha",),
-        2: ("pr_number", "pr_head_sha", "pr_base_sha"),
-        4: (
-            "merge_sha",
-            "promotion_run_id",
-            "promotion_run_attempt",
-            "promotion_workflow_repository",
-            "promotion_workflow_path",
-            "promotion_workflow_ref_sha",
-        ),
-        5: ("tag_object_sha", "tag_target_sha", "release_id", "release_assets_sha256"),
-    }
-    for minimum_index, fields in required_by_state.items():
-        if state_index >= minimum_index and any(bindings[field] is None for field in fields):
-            raise ReleaseStageError(f"Stage marker {document['state']} is missing required bindings")
-        if state_index < minimum_index and any(bindings[field] is not None for field in fields):
-            raise ReleaseStageError(f"Stage marker {document['state']} contains premature bindings")
-    if raw is not None and canonical_json_bytes(document) != raw:
-        raise ReleaseStageError("Release stage marker is not canonical JSON")
-    return {**document, "bindings": bindings}
-
-
-def _marker_path(stage_root: Path, state: str) -> Path:
-    return stage_root / f"{state}.json"
-
-
-def load_marker(stage_root: str | Path, state: str) -> tuple[dict, bytes]:
-    path = _marker_path(Path(stage_root), state)
-    try:
-        raw = path.read_bytes()
-        document = json.loads(raw)
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ReleaseStageError(f"Unable to read release stage marker {path}: {exc}") from exc
-    marker = validate_marker(document, raw)
-    if marker["state"] != state:
-        raise ReleaseStageError(f"Release marker filename/state mismatch: {path}")
-    state_index = STATE_SEQUENCE.index(state)
-    if state_index == 0:
-        if marker["previous_state_sha256"] is not None:
-            raise ReleaseStageError("BUILDING marker must not have a previous state")
-    else:
-        previous, previous_raw = load_marker(stage_root, STATE_SEQUENCE[state_index - 1])
-        if marker["previous_state_sha256"] != sha256_bytes(previous_raw):
-            raise ReleaseStageError(f"Release marker hash chain is broken at {state}")
-        for field in ("tag", "build_id", "content_manifest_sha256", "run_id", "run_attempt", "lease_owner"):
-            if marker[field] != previous[field]:
-                raise ReleaseStageError(f"Release marker identity drift at {state}: {field}")
-        for field, value in previous["bindings"].items():
-            if value is not None and marker["bindings"][field] != value:
-                raise ReleaseStageError(f"Release marker binding drift at {state}: {field}")
-    return marker, raw
-
-
-def _create_exact_file(path: Path, raw: bytes) -> None:
-    reject_release_path_links(path, "Immutable stage file")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    reject_release_path_links(path.parent, "Immutable stage directory")
-    if path.exists():
-        if not path.is_file() or path.read_bytes() != raw:
-            raise ReleaseStageError(f"Immutable stage file already exists with different bytes: {path}")
-        return
-    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    temporary.write_bytes(raw)
-    try:
-        os.link(temporary, path)
-    except FileExistsError:
-        if path.read_bytes() != raw:
-            raise ReleaseStageError(f"Concurrent immutable stage write differs: {path}")
-    finally:
-        if temporary.exists():
-            temporary.unlink()
-
-
-def _marker_document(
+def _write_stage_manifests(
     *,
-    state: str,
-    tag: str,
-    build_id: str,
-    content_manifest_sha256: str,
-    previous_state_sha256: str | None,
-    run_id: str,
-    run_attempt: int,
-    lease_owner: str,
-    bindings: dict,
-) -> dict:
-    return validate_marker(
-        {
-            "schema_version": STAGE_SCHEMA_VERSION,
-            "state": state,
-            "tag": tag,
-            "build_id": build_id,
-            "content_manifest_sha256": content_manifest_sha256,
-            "previous_state_sha256": previous_state_sha256,
-            "run_id": run_id,
-            "run_attempt": run_attempt,
-            "lease_owner": lease_owner,
-            "bindings": bindings,
-        }
-    )
-
-
-def create_building_stage(
-    *,
-    persisted_root: str | Path,
-    manifest_raw: bytes,
-    build_id: str,
-    repository_id: int,
+    repo_root: Path,
+    stage_dir: Path,
+    stage_bin_root: Path,
+    candidates: dict[str, Path],
     repository: str,
-    base_ref: str,
-    run_id: str,
-    run_attempt: int,
-    lease_owner: str,
-) -> tuple[Path, dict]:
-    manifest = parse_content_manifest_bytes(manifest_raw)
-    tag = manifest["game_version"]
-    stage_root = build_stage_root(persisted_root, tag, build_id)
-    with release_tag_lock(persisted_root, tag):
-        staging = release_staging_root(persisted_root)
-        tag_root = staging / tag
-        if tag_root.is_dir():
-            for candidate in tag_root.iterdir():
-                terminal = any((candidate / "diagnostics").glob("*-SUPERSEDED.json")) or any(
-                    (candidate / "diagnostics").glob("*-ABANDONED.json")
-                )
-                if (
-                    candidate != stage_root
-                    and candidate.is_dir()
-                    and _marker_path(candidate, "BUILDING").is_file()
-                    and not terminal
-                ):
-                    raise ReleaseStageError(f"Another active release build already exists for {tag}: {candidate.name}")
-        stage_root.mkdir(parents=True, exist_ok=True)
-        reject_release_path_links(stage_root, "Release build stage")
-        _create_exact_file(stage_root / "content-manifest.json", manifest_raw)
-        bindings = {
-            "repository_id": repository_id,
-            "repository": repository,
-            "source_sha": manifest["source_sha"],
-            "base_ref": base_ref,
-            "output_branch": output_branch(tag, build_id),
-            "output_head_sha": None,
-            "pr_number": None,
-            "pr_head_sha": None,
-            "pr_base_sha": None,
-            "merge_sha": None,
-            "promotion_run_id": None,
-            "promotion_run_attempt": None,
-            "promotion_workflow_repository": None,
-            "promotion_workflow_path": None,
-            "promotion_workflow_ref_sha": None,
-            "tag_object_sha": None,
-            "tag_target_sha": None,
-            "release_id": None,
-            "release_assets_sha256": None,
-        }
-        marker = _marker_document(
-            state="BUILDING",
-            tag=tag,
-            build_id=build_id,
-            content_manifest_sha256=sha256_bytes(manifest_raw),
-            previous_state_sha256=None,
-            run_id=run_id,
-            run_attempt=run_attempt,
-            lease_owner=lease_owner,
-            bindings=bindings,
+    output_branch: str,
+    version: str,
+    mode: str,
+    build_id: str,
+    source_sha: str,
+    workflow_run_url: str,
+    gamedata_sessions: dict[str, Path],
+) -> dict:
+    gamevers = sorted(candidates)
+    bin_files = _bin_inventory(stage_bin_root, gamevers)
+    tracked_files = tracked_output_inventory(repo_root, gamevers)
+    entries = []
+    for gamever in gamevers:
+        candidate = candidates[gamever]
+        analysis_config = (repo_root / "configs" / f"{gamever}.yaml").resolve()
+        if not analysis_config.is_file():
+            raise ReleaseWorkflowError(f"analysis config must be {analysis_config}")
+        try:
+            candidate_context = load_snapshot_context(candidate, analysis_config, gamever, repo_root / "bin")
+        except Exception as exc:
+            raise ReleaseWorkflowError(f"candidate snapshot provenance is invalid for {gamever}: {exc}") from exc
+        verify_snapshot_binaries(candidate_context.document, stage_bin_root / gamever)
+        try:
+            gamedata = verify_published_gamedata(
+                session_path=gamedata_sessions[gamever],
+                repo_root=repo_root,
+                gamever=gamever,
+                candidate=candidate,
+                analysis_config=analysis_config,
+            )
+        except GamedataCandidateError as exc:
+            raise ReleaseWorkflowError(f"versioned gamedata provenance is invalid for {gamever}: {exc}") from exc
+        entries.append(
+            build_gamever_entry(
+                gamever=gamever,
+                candidate_sha256=sha256_file(candidate),
+                analysis_config_path=f"configs/{gamever}.yaml",
+                analysis_config_sha256=sha256_file(analysis_config),
+                gamedata_path=gamedata["gamedata_path"],
+                gamedata_manifest_sha256=gamedata["gamedata_manifest_sha256"],
+                gamedata_inventory_sha256=inventory_sha256(
+                    [item for item in tracked_files if item["path"].startswith(f"gamedata/{gamever}/")]
+                ),
+                generator_contract_sha256=gamedata["generator_contract_sha256"],
+            )
         )
-        _create_exact_file(_marker_path(stage_root, "BUILDING"), canonical_json_bytes(marker))
-        return stage_root, marker
-
-
-def advance_stage(stage_root: str | Path, state: str, *, binding_updates: dict | None = None) -> dict:
-    if state not in STATE_SEQUENCE[1:]:
-        raise ReleaseStageError(f"Invalid stage transition target: {state}")
-    target_index = STATE_SEQUENCE.index(state)
-    previous_state = STATE_SEQUENCE[target_index - 1]
-    root = Path(stage_root)
-    previous, previous_raw = load_marker(root, previous_state)
-    bindings = dict(previous["bindings"])
-    for field, value in (binding_updates or {}).items():
-        if field not in BINDING_KEYS:
-            raise ReleaseStageError(f"Unknown stage binding update: {field}")
-        bindings[field] = value
-    marker = _marker_document(
-        state=state,
-        tag=previous["tag"],
-        build_id=previous["build_id"],
-        content_manifest_sha256=previous["content_manifest_sha256"],
-        previous_state_sha256=sha256_bytes(previous_raw),
-        run_id=previous["run_id"],
-        run_attempt=previous["run_attempt"],
-        lease_owner=previous["lease_owner"],
-        bindings=bindings,
+    tracked = build_tracked_manifest(
+        version=version,
+        mode=mode,
+        build_id=build_id,
+        source_sha=source_sha,
+        workflow_run_url=workflow_run_url,
+        bin_manifest_sha256=inventory_sha256(bin_files),
+        tracked_output_manifest_sha256=inventory_sha256(tracked_files),
+        gamevers=entries,
     )
-    _create_exact_file(_marker_path(root, state), canonical_json_bytes(marker))
-    return marker
-
-
-def bind_pull_request(
-    *,
-    persisted_root: str | Path,
-    tag: str,
-    build_id: str,
-    pr_number: int,
-    pr_head_sha: str,
-    pr_base_sha: str,
-) -> dict:
-    stage_root = build_stage_root(persisted_root, tag, build_id)
-    head, _raw = load_marker(stage_root, "HEAD_BOUND")
-    if head["bindings"]["output_head_sha"] != pr_head_sha:
-        raise ReleaseStageError("Pull request head does not match HEAD_BOUND")
-    created = advance_stage(
-        stage_root,
-        "PR_CREATED",
-        binding_updates={"pr_number": pr_number, "pr_head_sha": pr_head_sha, "pr_base_sha": pr_base_sha},
-    )
-    index = {
-        "schema_version": STAGE_SCHEMA_VERSION,
-        "repository_id": created["bindings"]["repository_id"],
-        "repository": created["bindings"]["repository"],
-        "base_ref": created["bindings"]["base_ref"],
-        "tag": tag,
-        "build_id": build_id,
-        "output_branch": created["bindings"]["output_branch"],
-        "pr_number": pr_number,
-        "pr_head_sha": pr_head_sha,
-        "pr_base_sha": pr_base_sha,
-        "content_manifest_sha256": created["content_manifest_sha256"],
-    }
-    index_path = release_staging_root(persisted_root) / "pr-index" / f"{pr_number}.json"
-    _create_exact_file(index_path, canonical_json_bytes(index))
-    return advance_stage(stage_root, "READY")
-
-
-def load_pr_index(persisted_root: str | Path, pr_number: int) -> dict:
-    if not isinstance(pr_number, int) or isinstance(pr_number, bool) or pr_number < 1:
-        raise ReleaseStageError("pr_number must be positive")
-    path = release_staging_root(persisted_root) / "pr-index" / f"{pr_number}.json"
-    try:
-        raw = path.read_bytes()
-        document = json.loads(raw)
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ReleaseStageError(f"Unable to read PR index {path}: {exc}") from exc
-    return validate_pr_index(document, raw)
-
-
-def repair_pr_index(
-    *,
-    persisted_root: str | Path,
-    tag: str,
-    build_id: str,
-    pr_number: int,
-    repository_id: int,
-    repository: str,
-    base_ref: str,
-    output_branch_name: str,
-    pr_head_sha: str,
-    pr_base_sha: str,
-    confirmation: str,
-) -> Path:
-    if confirmation != f"repair-index:{pr_number}:{tag}:{build_id}":
-        raise ReleaseStageError("Repair-index confirmation does not match exact PR/tag/build identity")
-    stage_root = build_stage_root(persisted_root, tag, build_id)
-    if (stage_root / "READY.json").is_file():
-        marker_state = "READY"
-    elif (stage_root / "PR_CREATED.json").is_file():
-        marker_state = "PR_CREATED"
-    else:
-        marker_state = "HEAD_BOUND"
-    marker, _raw = load_marker(stage_root, marker_state)
-    bindings = marker["bindings"]
-    if bindings["pr_number"] is not None and bindings["pr_number"] != pr_number:
-        raise ReleaseStageError("READY marker PR number mismatch")
-    expected = {
-        "repository_id": repository_id,
+    write_canonical_json(repo_root / "release-manifests" / f"{version}.json", tracked)
+    pending = {
+        **tracked,
         "repository": repository,
-        "base_ref": base_ref,
-        "output_branch": output_branch_name,
-        "pr_head_sha": pr_head_sha,
-        "pr_base_sha": pr_base_sha,
+        "output_branch": output_branch,
+        "pr_head_sha": None,
+        "bin_files": bin_files,
+        "tracked_files": tracked_files,
     }
-    for field, value in expected.items():
-        if marker_state == "HEAD_BOUND" and field in {"pr_head_sha", "pr_base_sha"}:
-            continue
-        if bindings[field] != value:
-            raise ReleaseStageError(f"PR index repair identity mismatch for {field}")
-    if bindings["output_head_sha"] != pr_head_sha:
-        raise ReleaseStageError("PR index repair head does not match HEAD_BOUND")
-    if marker_state == "HEAD_BOUND":
-        marker = advance_stage(
-            stage_root,
-            "PR_CREATED",
-            binding_updates={"pr_number": pr_number, "pr_head_sha": pr_head_sha, "pr_base_sha": pr_base_sha},
+    write_canonical_json(stage_dir / "manifest.json", pending)
+    return pending
+
+
+def stage_build(
+    *,
+    repo_root: Path,
+    staging_root: Path,
+    bin_sources: dict[str, Path],
+    candidates: dict[str, Path],
+    repository: str,
+    output_branch: str,
+    version: str,
+    mode: str,
+    build_id: str,
+    source_sha: str,
+    workflow_run_url: str,
+    gamedata_sessions: dict[str, Path],
+) -> dict:
+    repo_root = Path(repo_root)
+    staging_root = Path(staging_root)
+    version, stage_dir = _validate_stage_request(
+        staging_root=staging_root,
+        repository=repository,
+        output_branch=output_branch,
+        version=version,
+        build_id=build_id,
+    )
+    stage_bin_root = stage_dir / "bin"
+    try:
+        for gamever, bin_source in sorted(bin_sources.items()):
+            reject_reparse_points(bin_source)
+            target = stage_bin_root / gamever
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(bin_source, target, copy_function=shutil.copy2, ignore=ignore_recoverable_analysis_state)
+        return _write_stage_manifests(
+            repo_root=repo_root,
+            stage_dir=stage_dir,
+            stage_bin_root=stage_bin_root,
+            candidates=candidates,
+            repository=repository,
+            output_branch=output_branch,
+            version=version,
+            mode=mode,
+            build_id=build_id,
+            source_sha=source_sha,
+            workflow_run_url=workflow_run_url,
+            gamedata_sessions=gamedata_sessions,
         )
-        bindings = marker["bindings"]
-        marker_state = "PR_CREATED"
+    except Exception:
+        if stage_dir.exists():
+            remove_tree(stage_dir)
+        raise
+
+
+def finalize_stage(*, repo_root: Path, staging_root: Path, version: str, build_id: str, pr_head_sha: str) -> dict:
+    pr_head_sha = require_sha(pr_head_sha, "PR head SHA")
+    stage_dir = staging_directory(staging_root, version, build_id)
+    reject_reparse_components(staging_root, stage_dir / "manifest.json")
+    reject_reparse_components(staging_root, stage_dir / "READY")
+    if (stage_dir / "READY").exists():
+        pending = load_json_object(stage_dir / "manifest.json")
+        if pending.get("pr_head_sha") != pr_head_sha:
+            raise ReleaseWorkflowError("ready staging manifest has a different PR head SHA")
+        return pending
+    pending = load_json_object(stage_dir / "manifest.json")
+    tracked_path = Path(repo_root) / "release-manifests" / f"{version}.json"
+    tracked = load_tracked_manifest(tracked_path)
+    if {key: pending.get(key) for key in tracked} != tracked:
+        raise ReleaseWorkflowError("private and tracked release manifests disagree")
+    verify_tracked_outputs(repo_root, tracked)
+    gamevers = [entry["gamever"] for entry in tracked["gamevers"]]
+    bin_files = _bin_inventory(stage_dir / "bin", gamevers)
+    if bin_files != pending.get("bin_files"):
+        raise ReleaseWorkflowError("staged bin inventory differs from pending manifest")
+    if inventory_sha256(bin_files) != tracked["bin_manifest_sha256"]:
+        raise ReleaseWorkflowError("staged bin manifest hash mismatch")
+    pending["pr_head_sha"] = pr_head_sha
+    write_canonical_json(stage_dir / "manifest.json", pending)
+    ready_hash = sha256_file(stage_dir / "manifest.json")
+    (stage_dir / "READY").write_text(f"{ready_hash}\n", encoding="ascii")
+    return pending
+
+
+def write_pr_index(*, staging_root: Path, pr_number: int, version: str, build_id: str, pr_head_sha: str) -> Path:
+    if pr_number <= 0:
+        raise ReleaseWorkflowError("PR number must be positive")
+    pr_head_sha = require_sha(pr_head_sha, "PR head SHA")
+    stage_dir = staging_directory(staging_root, version, build_id)
+    if not (stage_dir / "READY").is_file():
+        raise ReleaseWorkflowError("cannot index staging state before READY")
+    pending = load_json_object(stage_dir / "manifest.json")
+    if pending.get("pr_head_sha") != pr_head_sha:
+        raise ReleaseWorkflowError("PR head SHA does not match private manifest")
     index = {
-        "schema_version": STAGE_SCHEMA_VERSION,
-        "repository_id": bindings["repository_id"],
-        "repository": bindings["repository"],
-        "base_ref": bindings["base_ref"],
-        "tag": tag,
-        "build_id": build_id,
-        "output_branch": bindings["output_branch"],
+        "schema_version": SCHEMA_VERSION,
         "pr_number": pr_number,
-        "pr_head_sha": bindings["pr_head_sha"],
-        "pr_base_sha": bindings["pr_base_sha"],
-        "content_manifest_sha256": marker["content_manifest_sha256"],
+        "version": version,
+        "build_id": build_id,
+        "pr_head_sha": pr_head_sha,
+        "output_branch": pending["output_branch"],
     }
-    validate_pr_index(index)
-    path = release_staging_root(persisted_root) / "pr-index" / f"{pr_number}.json"
-    _create_exact_file(path, canonical_json_bytes(index))
-    if marker_state == "PR_CREATED":
-        advance_stage(stage_root, "READY")
-    return path
+    index_path = contained_path(Path(staging_root), "pr-index", f"{pr_number}.json")
+    reject_reparse_components(staging_root, index_path)
+    if index_path.exists() and load_json_object(index_path) != index:
+        raise ReleaseWorkflowError(f"PR index already exists with different identity: {index_path}")
+    write_canonical_json(index_path, index)
+    return index_path
 
 
-def write_completion_record(stage_root: str | Path, document: dict) -> Path:
-    root = Path(stage_root)
-    promoted, _raw = load_marker(root, "PROMOTED")
-    completion = {
-        "schema_version": STAGE_SCHEMA_VERSION,
-        "tag": promoted["tag"],
-        "build_id": promoted["build_id"],
-        "content_manifest_sha256": promoted["content_manifest_sha256"],
-        "bindings": promoted["bindings"],
-        "promotion": document,
+def load_indexed_pending(staging_root: Path, pr_number: int, event_head_sha: str) -> tuple[dict, dict, Path]:
+    event_head_sha = require_sha(event_head_sha, "event head SHA")
+    index_path = contained_path(Path(staging_root), "pr-index", f"{pr_number}.json")
+    reject_reparse_components(staging_root, index_path)
+    index = load_json_object(index_path)
+    expected_index_fields = {"schema_version", "pr_number", "version", "build_id", "pr_head_sha", "output_branch"}
+    if set(index) != expected_index_fields:
+        raise ReleaseWorkflowError("pending PR index has unexpected or missing fields")
+    if index.get("pr_number") != pr_number or index.get("pr_head_sha") != event_head_sha:
+        raise ReleaseWorkflowError("PR event identity does not match pending index")
+    stage_dir = staging_directory(staging_root, index["version"], index["build_id"])
+    reject_reparse_components(staging_root, stage_dir / "manifest.json")
+    reject_reparse_components(staging_root, stage_dir / "READY")
+    pending = load_json_object(stage_dir / "manifest.json")
+    if set(pending) != PRIVATE_FIELDS:
+        raise ReleaseWorkflowError("private pending manifest has unexpected or missing fields")
+    if pending.get("schema_version") != index.get("schema_version"):
+        raise ReleaseWorkflowError("private manifest schema does not match pending PR index")
+    if pending.get("pr_head_sha") != event_head_sha or pending.get("output_branch") != index.get("output_branch"):
+        raise ReleaseWorkflowError("private manifest identity does not match PR index")
+    ready = stage_dir / "READY"
+    if not ready.is_file() or ready.read_text(encoding="ascii").strip() != sha256_file(stage_dir / "manifest.json"):
+        raise ReleaseWorkflowError("pending staging READY marker is invalid")
+    return index, pending, stage_dir
+
+
+def cleanup_unmerged(staging_root: Path, pr_number: int, event_head_sha: str) -> None:
+    _index, _pending, stage_dir = load_indexed_pending(staging_root, pr_number, event_head_sha)
+    _remove_indexed_pending(staging_root, pr_number, stage_dir)
+
+
+def _remove_indexed_pending(staging_root: Path, pr_number: int, stage_dir: Path) -> None:
+    index_path = contained_path(Path(staging_root), "pr-index", f"{pr_number}.json")
+    reject_reparse_points(stage_dir)
+    remove_tree(stage_dir)
+    index_path.unlink()
+
+
+def abandon_pending(
+    *,
+    staging_root: Path,
+    persisted_root: Path,
+    repository: str,
+    output_branch: str,
+    version: str,
+    build_id: str,
+    pr_number: int,
+    event_head_sha: str,
+    confirmation: str,
+    reason: str,
+) -> dict:
+    if repository not in ALLOWED_REPOSITORIES:
+        raise ReleaseWorkflowError(f"repository is not allowlisted: {repository}")
+    version = require_version(version)
+    build_id = require_build_id(build_id)
+    if parse_output_branch(output_branch) != version:
+        raise ReleaseWorkflowError("output branch does not match requested version")
+    expected_confirmation = f"ABANDON {version}/{build_id}"
+    if confirmation != expected_confirmation:
+        raise ReleaseWorkflowError(f"confirmation must exactly equal {expected_confirmation!r}")
+    reason = str(reason).strip()
+    if not reason or len(reason) > ABANDON_REASON_MAX_LENGTH or any(char in reason for char in "\r\n"):
+        raise ReleaseWorkflowError("abandon reason must be one non-empty line of at most 500 characters")
+
+    index, pending, stage_dir = load_indexed_pending(staging_root, pr_number, event_head_sha)
+    if (index.get("version"), index.get("build_id")) != (version, build_id):
+        raise ReleaseWorkflowError("requested build identity does not match pending PR index")
+    if pending.get("output_branch") != output_branch or index.get("output_branch") != output_branch:
+        raise ReleaseWorkflowError("requested output branch does not match indexed pending state")
+    if pending.get("repository") != repository:
+        raise ReleaseWorkflowError("requested repository does not match private pending manifest")
+
+    for marker in PROMOTION_STATE_MARKERS:
+        marker_path = stage_dir / marker
+        reject_reparse_components(staging_root, marker_path)
+        if marker_path.exists():
+            raise ReleaseWorkflowError(
+                f"promotion state exists; recovery must resume instead of abandon: {marker_path}"
+            )
+
+    persisted_root = Path(persisted_root)
+    accepted_root = contained_path(persisted_root, "bin")
+    for suffix in ("incoming", "backup"):
+        for gamever in [entry["gamever"] for entry in pending["gamevers"]]:
+            recovery_path = contained_path(accepted_root, f".{gamever}.{build_id}.{suffix}")
+            reject_reparse_components(persisted_root, recovery_path)
+            if recovery_path.exists():
+                raise ReleaseWorkflowError(f"promotion recovery path exists; refusing abandon: {recovery_path}")
+
+    _remove_indexed_pending(staging_root, pr_number, stage_dir)
+    return {
+        "version": version,
+        "build_id": build_id,
+        "pr_number": pr_number,
+        "pr_head_sha": require_sha(event_head_sha, "event head SHA"),
+        "reason": reason,
     }
-    staging = root.parents[1]
-    path = staging / "completed" / promoted["tag"] / f"{promoted['build_id']}.json"
-    _create_exact_file(path, canonical_json_bytes(completion))
-    return path
 
 
-def write_diagnostic(stage_root: str | Path, state: str, reason: str) -> Path:
-    if state not in DIAGNOSTIC_STATES or not isinstance(reason, str) or not reason.strip():
-        raise ReleaseStageError("Invalid diagnostic state/reason")
-    root = Path(stage_root)
-    diagnostics = root / "diagnostics"
-    reject_release_path_links(diagnostics, "Release diagnostic directory")
-    diagnostics.mkdir(exist_ok=True)
-    reject_release_path_links(diagnostics, "Release diagnostic directory")
-    sequence = len(tuple(diagnostics.glob("*.json"))) + 1
-    document = {"schema_version": 1, "state": state, "reason": reason.strip()}
-    path = diagnostics / f"{sequence:04d}-{state}.json"
-    _create_exact_file(path, canonical_json_bytes(document))
-    return path
+def cleanup_incomplete(staging_root: Path, version: str, build_id: str) -> bool:
+    stage_dir = staging_directory(staging_root, version, build_id)
+    if not stage_dir.exists() or (stage_dir / "READY").is_file():
+        return False
+    reject_reparse_points(stage_dir)
+    remove_tree(stage_dir)
+    return True
