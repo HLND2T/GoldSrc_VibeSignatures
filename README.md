@@ -8,13 +8,7 @@ Production configuration covers Half-Life build 10210, Counter-Strike build 1021
 
 ## Quick start
 
-Install the [requirements](docs/en/requirements.md), then prepare game binaries with:
-
-`Use SKILL: init-gamebin`
-
-to populate `bin/<GAMEVER>/` with game binaries. (`DEPOTDOWNLOADER_STEAM_USERNAME` and `DEPOTDOWNLOADER_STEAM_PASSWORD` should be populated in `.env`)
-
-then
+Install the [requirements](docs/en/requirements.md), then:
 
 ```bash
 uv run ida_analyze_bin.py -allgamever -cache_mode cold -debug

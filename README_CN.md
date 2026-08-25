@@ -8,13 +8,7 @@ GoldSrc VibeSignatures 是一个面向 32 位 GoldSrc 游戏的、可复现的�
 
 ## 快速开始
 
-先安装[依赖](docs/zh-CN/requirements.md)，准备游戏二进制：
-
-`Use SKILL: init-gamebin`
-
-该命令会下载必要的游戏二进制至 `bin/<GAMEVER>/` (需要在 `.env` 里准备好 `DEPOTDOWNLOADER_STEAM_USERNAME` 与 `DEPOTDOWNLOADER_STEAM_PASSWORD` )
-
-然后运行
+先安装[依赖](docs/zh-CN/requirements.md)，然后运行:
 
 ```bash
 uv run ida_analyze_bin.py -allgamever -cache_mode cold -debug
