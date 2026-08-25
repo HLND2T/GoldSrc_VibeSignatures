@@ -1,171 +1,198 @@
-name: Release generated-output build
+name: Release Build
+run-name: Release build ${{ inputs.version }}
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: Exact GoldSrc game-version tag
+      version:
+        description: Release version (e.g. v20260825a)
         required: true
         type: string
-      build_id:
-        description: Optional immutable build ID
+      source_sha:
+        description: Full immutable commit SHA reachable from the default branch (defaults to default branch HEAD)
         required: false
         type: string
-      activate_production:
-        description: Require the repository Phase 2 activation gate
+      mode:
+        description: Release lifecycle mode
         required: true
-        default: false
-        type: boolean
+        type: choice
+        options: [new]
 permissions:
   contents: read
+concurrency:
+  group: release-build-${{ github.repository }}-${{ inputs.version }}
+  cancel-in-progress: false
 jobs:
-  activation-gate:
+  preflight:
+    if: github.repository == 'HLND2T/GoldSrc_VibeSignatures' || github.repository == 'hzqst/GoldSrc_VibeSignatures'
     runs-on: ubuntu-latest
     outputs:
-      enabled: ${{ steps.gate.outputs.enabled }}
+      version: ${{ steps.resolve.outputs.version }}
+      source_sha: ${{ steps.resolve.outputs.source_sha }}
+      mode: ${{ steps.resolve.outputs.mode }}
     steps:
-      - id: gate
-        env:
-          REQUESTED: ${{ inputs.activate_production }}
-          REPOSITORY_ENABLED: ${{ vars.GSVIBE_RELEASE_PHASE2_ENABLED }}
-        run: |
-          enabled=false
-          if [[ "$REQUESTED" == "true" && "$REPOSITORY_ENABLED" == "true" ]]; then enabled=true; fi
-          echo "enabled=$enabled" >> "$GITHUB_OUTPUT"
-          if [[ "$enabled" != "true" ]]; then
-            echo "Phase 2 production release authority remains disabled"
-          fi
-  build-output:
-    needs: activation-gate
-    if: needs.activation-gate.outputs.enabled == 'true' && github.ref == 'refs/heads/main'
-    runs-on: [self-hosted, windows, x64]
-    environment: release
-    timeout-minutes: 60
-    concurrency:
-      group: ${{ github.repository }}-release-phase2
-      cancel-in-progress: false
-    steps:
-      - name: Recheck build activation before credentials
-        shell: pwsh
-        env:
-          REQUESTED: ${{ inputs.activate_production }}
-          REPOSITORY_ENABLED: ${{ vars.GSVIBE_RELEASE_PHASE2_ENABLED }}
-        run: |
-          if ($env:REQUESTED -ne 'true' -or $env:REPOSITORY_ENABLED -ne 'true') {
-            throw 'Phase 2 production release authority is disabled'
-          }
-      - name: Create protected GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v2
+      - uses: actions/checkout@v5
         with:
-          app-id: ${{ secrets.GSVIBE_RELEASE_APP_ID }}
-          private-key: ${{ secrets.GSVIBE_RELEASE_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
-          permission-contents: write
-          permission-pull-requests: write
-      - name: Checkout exact main source
-        uses: actions/checkout@v5
-        with:
-          ref: main
           fetch-depth: 0
-          submodules: recursive
-          token: ${{ steps.app-token.outputs.token }}
+          submodules: false
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
       - run: uv sync --locked
-      - name: Resolve immutable build identity
-        id: identity
-        shell: pwsh
+      - name: Resolve release build identity
+        id: resolve
+        shell: bash
         env:
-          REQUESTED_BUILD_ID: ${{ inputs.build_id }}
-          RUN_ID: ${{ github.run_id }}
-          RUN_ATTEMPT: ${{ github.run_attempt }}
+          VERSION: ${{ inputs.version }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          MODE: ${{ inputs.mode }}
         run: |
-          $buildId = $env:REQUESTED_BUILD_ID
-          if ([string]::IsNullOrWhiteSpace($buildId)) {
-            $buildId = "run-$env:RUN_ID-$env:RUN_ATTEMPT"
-          }
-          "build_id=$buildId" >> $env:GITHUB_OUTPUT
-      - name: Build direct-parent generated output
-        id: output
-        shell: pwsh
-        env:
-          BUILD_ID: ${{ steps.identity.outputs.build_id }}
-          TAG: ${{ inputs.tag }}
-          SOURCE_SHA: ${{ github.sha }}
-          REPOSITORY_ID: ${{ github.repository_id }}
-          REPOSITORY: ${{ github.repository }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-          RUN_ID: ${{ github.run_id }}
-          RUN_ATTEMPT: ${{ github.run_attempt }}
-        run: |
-          if ([string]::IsNullOrWhiteSpace($env:GSVIBE_PERSISTED_WORKSPACE)) {
-            throw 'release runner persisted workspace is not configured'
-          }
-          if ((git rev-parse HEAD).Trim() -ne $env:SOURCE_SHA) {
-            throw 'workflow dispatch source is not the exact checked-out main commit'
-          }
-          $resultPath = Join-Path $env:RUNNER_TEMP 'release-output-build.json'
-          uv run python release_workflow.py output-build `
-            -repo-root $env:GITHUB_WORKSPACE -default-ref HEAD -tag $env:TAG `
-            -build-id $env:BUILD_ID -repository-id $env:REPOSITORY_ID `
-            -repository $env:REPOSITORY -base-branch $env:DEFAULT_BRANCH -workflow-repository $env:REPOSITORY `
-            -workflow-path .github/workflows/release-build.yml -workflow-ref HEAD `
-            -persisted-root $env:GSVIBE_PERSISTED_WORKSPACE -run-id $env:RUN_ID `
-            -run-attempt $env:RUN_ATTEMPT -lease-owner "build-$env:RUN_ID-$env:RUN_ATTEMPT" `
-            -output $resultPath
-          if ($LASTEXITCODE -ne 0) { throw 'generated-output build failed' }
-          $result = Get-Content -Raw -LiteralPath $resultPath | ConvertFrom-Json
-          "branch=$($result.output_branch)" >> $env:GITHUB_OUTPUT
-          "head_sha=$($result.output_head_sha)" >> $env:GITHUB_OUTPUT
-          "source_sha=$($result.source_sha)" >> $env:GITHUB_OUTPUT
-      - name: Push immutable output branch
-        shell: pwsh
-        env:
-          OUTPUT_BRANCH: ${{ steps.output.outputs.branch }}
-          OUTPUT_HEAD_SHA: ${{ steps.output.outputs.head_sha }}
-        run: |
-          git push origin "$env:OUTPUT_HEAD_SHA`:refs/heads/$env:OUTPUT_BRANCH"
-          if ($LASTEXITCODE -ne 0) { throw 'immutable output branch push failed' }
-      - name: Create and bind draft output PR
-        id: pull-request
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          OUTPUT_BRANCH: ${{ steps.output.outputs.branch }}
-          OUTPUT_HEAD_SHA: ${{ steps.output.outputs.head_sha }}
-          SOURCE_SHA: ${{ steps.output.outputs.source_sha }}
-          BUILD_ID: ${{ steps.identity.outputs.build_id }}
-          TAG: ${{ inputs.tag }}
-        run: |
-          $request = @{
-            title = "chore(release): stage $env:TAG content manifest"
-            head = $env:OUTPUT_BRANCH
-            base = 'main'
-            body = "Generated-output build ``$env:BUILD_ID``. Only the immutable release manifest is permitted."
-            draft = $true
-          } | ConvertTo-Json -Compress
-          $pullRequest = $request | gh api --method POST "repos/$env:GITHUB_REPOSITORY/pulls" --input - | ConvertFrom-Json
-          if ($LASTEXITCODE -ne 0) { throw 'draft output PR creation failed' }
-          if ($pullRequest.head.repo.full_name -ne $env:GITHUB_REPOSITORY -or
-              $pullRequest.head.ref -ne $env:OUTPUT_BRANCH -or
-              $pullRequest.head.sha -ne $env:OUTPUT_HEAD_SHA -or
-              $pullRequest.base.sha -ne $env:SOURCE_SHA -or
-              -not $pullRequest.draft) {
-            throw 'created output PR identity does not match the immutable build'
-          }
-          uv run python release_workflow.py bind-pr `
-            -persisted-root $env:GSVIBE_PERSISTED_WORKSPACE -tag $env:TAG -build-id $env:BUILD_ID `
-            -pr-number $pullRequest.number -pr-head-sha $pullRequest.head.sha -pr-base-sha $pullRequest.base.sha
-          if ($LASTEXITCODE -ne 0) { throw 'output PR private binding failed' }
-          gh pr ready $pullRequest.number --repo $env:GITHUB_REPOSITORY
-          if ($LASTEXITCODE -ne 0) { throw 'output PR could not be marked ready' }
-          "pr_number=$($pullRequest.number)" >> $env:GITHUB_OUTPUT
-      - name: Upload build attempt evidence
-        uses: actions/upload-artifact@v4
+          set -euo pipefail
+          git fetch origin "${{ github.event.repository.default_branch }}"
+          source_sha="${SOURCE_SHA:-$(git rev-parse "origin/${{ github.event.repository.default_branch }}")}"
+          uv run python release_workflow.py validate-build \
+            --repository "${{ github.repository }}" \
+            --version "$VERSION" \
+            --source-sha "$source_sha" \
+            --mode "$MODE" \
+            --default-ref "origin/${{ github.event.repository.default_branch }}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+  build:
+    needs: preflight
+    environment: win64
+    runs-on: [self-hosted, windows, x64]
+    timeout-minutes: 1440
+    env:
+      PERSISTED_WORKSPACE: ${{ secrets.GSVIBE_PERSISTED_WORKSPACE }}
+      IDA_KERNEL_VERSION: ${{ vars.GSVIBE_IDA_KERNEL_VERSION }}
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v5
         with:
-          name: release-output-build-${{ inputs.tag }}-${{ steps.identity.outputs.build_id }}
-          path: ${{ runner.temp }}/release-output-build.json
-          if-no-files-found: error
-          retention-days: 30
+          ref: ${{ needs.preflight.outputs.source_sha }}
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.GSVIBE_BIN_TOKEN || github.token }}
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Prepare persisted workspace and restore accepted bin
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:PERSISTED_WORKSPACE)) {
+            throw 'GSVIBE_PERSISTED_WORKSPACE is required'
+          }
+          $binRoot = (Resolve-Path -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'bin')).Path
+          $gamevers = uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {}).get('gamevers', [])))"
+          foreach ($gamever in ($gamevers -split "`n")) {
+            $persisted = Join-Path $env:PERSISTED_WORKSPACE "bin\$gamever"
+            if (Test-Path -LiteralPath $persisted) {
+              $target = Join-Path $binRoot $gamever
+              New-Item -ItemType Directory -Path $target -Force | Out-Null
+              robocopy $persisted $target /E /NFL /NDL /NJH /NJS /R:2 /W:5 /XF *.i64 *.idb *.id0 *.id1 *.id2 *.nam *.til
+              if ($LASTEXITCODE -ge 8) { throw "robocopy restore failed for $gamever" }
+              $global:LASTEXITCODE = 0
+            }
+          }
+      - name: Warm IDB cache for all game versions
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $gamevers = uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {}).get('gamevers', [])))"
+          foreach ($gamever in ($gamevers -split "`n")) {
+            uv run python idb_cache_release.py warm -repo-root $env:GITHUB_WORKSPACE -gamever $gamever -bindir bin `
+              -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR -kernel-version $env:IDA_KERNEL_VERSION `
+              -run-id "${{ github.run_id }}" -attempt "${{ github.run_attempt }}"
+            if ($LASTEXITCODE -ne 0) { throw "warm IDB cache failed for $gamever" }
+          }
+      - name: Analyze all game versions
+        shell: pwsh
+        run: |
+          uv run python ida_analyze_bin.py -allgamever -cache_mode warm
+          if ($LASTEXITCODE -ne 0) { throw 'all-gamever analysis failed' }
+      - name: Build, guard, and publish candidates for every game version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $gamevers = uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {}).get('gamevers', [])))"
+          $candidateRoot = Join-Path $env:RUNNER_TEMP "release-candidates\${{ github.run_id }}-${{ github.run_attempt }}"
+          New-Item -ItemType Directory -Path $candidateRoot -Force | Out-Null
+          $gameversJson = @{}
+          foreach ($gamever in ($gamevers -split "`n")) {
+            $candidate = Join-Path $candidateRoot "$gamever.yaml"
+            $session = Join-Path $candidateRoot "$gamever.session.json"
+            $gamedataSession = Join-Path $candidateRoot "$gamever.gamedata.session.json"
+            uv run python gamesymbol_candidate.py build -gamever $gamever -bindir bin -configyaml "configs/$gamever.yaml" -output $candidate -session $session
+            if ($LASTEXITCODE -ne 0) { throw "candidate build failed for $gamever" }
+            uv run python gamesymbol_candidate.py guard -candidate $candidate -session $session
+            if ($LASTEXITCODE -ne 0) { throw "candidate guard failed for $gamever" }
+            uv run python gamedata_candidate.py build -gamever $gamever -build-id "${{ github.run_id }}-${{ github.run_attempt }}" `
+              -snapshot $candidate -configyaml "configs/$gamever.yaml" -modulesdir gamedata-generators `
+              -candidate-root (Join-Path $candidateRoot "gamedata-$gamever") -session $gamedataSession
+            if ($LASTEXITCODE -ne 0) { throw "gamedata build failed for $gamever" }
+            uv run python gamedata_candidate.py guard -session $gamedataSession
+            if ($LASTEXITCODE -ne 0) { throw "gamedata guard failed for $gamever" }
+            uv run python gamesymbol_candidate.py mark -candidate $candidate -session $session -step gamedata -gamedata-session $gamedataSession
+            if ($LASTEXITCODE -ne 0) { throw "candidate mark failed for $gamever" }
+            uv run python gamesymbol_candidate.py publish -candidate $candidate -session $session -destination "gamesymbols/$gamever.yaml"
+            if ($LASTEXITCODE -ne 0) { throw "candidate publish failed for $gamever" }
+            uv run python gamedata_candidate.py publish -session $gamedataSession -outputdir "gamedata/$gamever"
+            if ($LASTEXITCODE -ne 0) { throw "gamedata publish failed for $gamever" }
+            $gameversJson[$gamever] = @{
+              bin_source = (Join-Path $env:GITHUB_WORKSPACE "bin\$gamever")
+              candidate = $candidate
+              gamedata_session = $gamedataSession
+            }
+          }
+          $gameversJson | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $candidateRoot "gamevers.json") -Encoding utf8
+          "GAMEVERS_JSON=$(Join-Path $candidateRoot 'gamevers.json')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "BUILD_ID=${{ github.run_id }}-${{ github.run_attempt }}" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "OUTPUT_BRANCH=gamesymbols/build/${{ needs.preflight.outputs.version }}" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Stage validated output
+        shell: pwsh
+        run: |
+          uv run python release_workflow.py stage-build \
+            --repo-root "$env:GITHUB_WORKSPACE" \
+            --staging-root "$env:PERSISTED_WORKSPACE\release-staging" \
+            --gamevers-json "$env:GAMEVERS_JSON" \
+            --repository "${{ github.repository }}" \
+            --output-branch "$env:OUTPUT_BRANCH" \
+            --version "${{ needs.preflight.outputs.version }}" \
+            --mode "${{ needs.preflight.outputs.mode }}" \
+            --build-id "$env:BUILD_ID" \
+            --source-sha "${{ needs.preflight.outputs.source_sha }}" \
+            --workflow-run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          if ($LASTEXITCODE -ne 0) { throw 'stage-build failed' }
+      - name: Create generated-output pull request
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$env:OUTPUT_BRANCH"
+          git add "gamesymbols" "gamedata" "release-manifests"
+          git commit -m "chore(gamesymbols): publish ${{ needs.preflight.outputs.version }} build $env:BUILD_ID" `
+            -m "Co-Authored-By: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+          $headSha = git rev-parse HEAD
+          uv run python release_workflow.py finalize-stage `
+            --repo-root "$env:GITHUB_WORKSPACE" --staging-root "$env:PERSISTED_WORKSPACE\release-staging" `
+            --version "${{ needs.preflight.outputs.version }}" --build-id "$env:BUILD_ID" --pr-head-sha $headSha
+          git push origin "HEAD:refs/heads/$env:OUTPUT_BRANCH"
+          $prNumber = gh pr create --base "${{ github.event.repository.default_branch }}" --head "$env:OUTPUT_BRANCH" `
+            --title "chore(gamesymbols): publish ${{ needs.preflight.outputs.version }} build $env:BUILD_ID" `
+            --body "Validated release output from immutable source ${{ needs.preflight.outputs.source_sha }}. Merge is the promotion gate."
+          uv run python release_workflow.py write-pr-index `
+            --staging-root "$env:PERSISTED_WORKSPACE\release-staging" --pr-number $prNumber `
+            --version "${{ needs.preflight.outputs.version }}" --build-id "$env:BUILD_ID" --pr-head-sha $headSha
+      - name: Clean incomplete staging on failure
+        if: failure()
+        shell: pwsh
+        run: |-
+          uv run python release_workflow.py cleanup-incomplete `
+            --staging-root "$env:PERSISTED_WORKSPACE\release-staging" `
+            --version "${{ needs.preflight.outputs.version }}" --build-id "${{ github.run_id }}-${{ github.run_attempt }}"

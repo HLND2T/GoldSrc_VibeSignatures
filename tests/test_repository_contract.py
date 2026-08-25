@@ -253,15 +253,12 @@ class RepositoryContractTests(unittest.TestCase):
                 "validate-hosted",
                 "analyze-self-hosted",
                 "fork-analysis-blocked",
-                "validate-output",
             },
             set(jobs["pr-validate"]["needs"]),
         )
         self.assertIn("always()", jobs["pr-validate"]["if"])
         self.assertIn("github.event.action != 'closed'", jobs["pr-validate"]["if"])
-        self.assertEqual("classify", jobs["validate-output"]["needs"])
-        self.assertIn("route == 'output'", jobs["validate-output"]["if"])
-        self.assertEqual("./.github/workflows/release-output-validation.yml", jobs["validate-output"]["uses"])
+        self.assertIn("needs.classify.outputs.route == 'source'", jobs["pr-validate"]["if"])
         self.assertEqual("classify", jobs["plan"]["needs"])
         self.assertIn("route == 'source'", jobs["plan"]["if"])
         for job_id in ("validate-hosted", "analyze-self-hosted", "fork-analysis-blocked"):
@@ -273,12 +270,6 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertEqual("${{ needs.validate-hosted.result }}", aggregate["env"]["HOSTED_RESULT"])
         self.assertEqual("${{ needs.analyze-self-hosted.result }}", aggregate["env"]["ANALYSIS_RESULT"])
         self.assertEqual("${{ needs.fork-analysis-blocked.result }}", aggregate["env"]["FORK_RESULT"])
-        output_aggregate = next(
-            step
-            for step in jobs["pr-validate"]["steps"]
-            if step.get("name") == "Aggregate trusted output validation result"
-        )
-        self.assertIn("route == 'output'", output_aggregate["if"])
         route_guard = next(
             step for step in jobs["pr-validate"]["steps"] if step.get("name") == "Require exactly one trusted PR route"
         )
@@ -301,7 +292,7 @@ class RepositoryContractTests(unittest.TestCase):
             "Prepare exact warm IDB cache selection",
             "Verify exact warm IDB cache selection",
             "Restore exact warm IDB cache generations",
-            "Analyze selected nodes and compare actual snapshots",
+            "Analyze selected nodes and build self-consistent candidates",
             "Remove generated submodule analysis state",
         ]
         self.assertEqual(
@@ -313,11 +304,11 @@ class RepositoryContractTests(unittest.TestCase):
         analyzer = next(
             step
             for step in self_hosted["steps"]
-            if step.get("name") == "Analyze selected nodes and compare actual snapshots"
+            if step.get("name") == "Analyze selected nodes and build self-consistent candidates"
         )
         self.assertIn("'-cache_mode', $plan.cache_mode", analyzer["run"])
         restore_index = step_names.index("Restore exact warm IDB cache generations")
-        analyze_index = step_names.index("Analyze selected nodes and compare actual snapshots")
+        analyze_index = step_names.index("Analyze selected nodes and build self-consistent candidates")
         self.assertNotIn(
             "git clean",
             "\n".join(step.get("run", "") for step in self_hosted["steps"][restore_index + 1 : analyze_index]),
@@ -332,63 +323,48 @@ class RepositoryContractTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, workflow_text)
 
-    def test_release_phase_two_workflows_keep_read_write_authority_split(self):
+    def test_release_workflows_build_stage_verify_and_promote(self):
         workflows = {
             name: yaml.load((ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
             for name in (
                 "release-build.yml",
-                "release-output-validation.yml",
-                "release-promotion.yml",
-                "release-operations.yml",
+                "validate-generated-output-pr.yml",
+                "promote-release-after-output-merge.yml",
+                "abandon-staged-release.yml",
+                "cleanup-completed-release-staging.yml",
             )
         }
         build = workflows["release-build.yml"]
+        self.assertIn("version", build["on"]["workflow_dispatch"]["inputs"])
+        self.assertIn("source_sha", build["on"]["workflow_dispatch"]["inputs"])
+        self.assertEqual(["new"], build["on"]["workflow_dispatch"]["inputs"]["mode"]["options"])
         self.assertEqual("read", build["permissions"]["contents"])
-        build_job = build["jobs"]["build-output"]
+        build_job = build["jobs"]["build"]
         self.assertEqual(["self-hosted", "windows", "x64"], build_job["runs-on"])
-        self.assertEqual("release", build_job["environment"])
-        self.assertIn("GSVIBE_RELEASE_PHASE2_ENABLED", json.dumps(build))
-        self.assertIn("actions/create-github-app-token@v2", json.dumps(build_job))
+        self.assertEqual("win64", build_job["environment"])
+        build_text = json.dumps(build)
+        self.assertIn("release_workflow.py validate-build", build_text)
+        self.assertIn("ida_analyze_bin.py -allgamever", build_text)
+        self.assertIn("release_workflow.py stage-build", build_text)
+        self.assertNotIn("GSVIBE_RELEASE_PHASE2_ENABLED", build_text)
+        self.assertNotIn("create-github-app-token", build_text)
 
-        output = workflows["release-output-validation.yml"]
-        output_job = output["jobs"]["verify-output"]
-        self.assertEqual("read", output["permissions"]["contents"])
-        self.assertNotIn("environment", output_job)
-        self.assertNotIn("create-github-app-token", json.dumps(output_job))
-        checkout = next(step for step in output_job["steps"] if step.get("name") == "Checkout trusted base verifier")
-        self.assertEqual("${{ inputs.base_sha }}", checkout["with"]["ref"])
-        self.assertIn("base_branch", output["on"]["workflow_call"]["inputs"])
+        validate = workflows["validate-generated-output-pr.yml"]
+        self.assertEqual("pr-validate", validate["jobs"]["validate"]["name"])
+        validate_text = json.dumps(validate)
+        self.assertIn("github-actions[bot]", validate_text)
+        self.assertIn("gamesymbols/build/", validate_text)
+        self.assertIn("verify-output-pr", validate_text)
 
-        promotion = workflows["release-promotion.yml"]
-        verifier = promotion["jobs"]["verify-promotion"]
-        writer = promotion["jobs"]["promotion-write"]
-        self.assertNotIn("environment", verifier)
-        self.assertEqual("release", writer["environment"])
-        self.assertEqual("verify-promotion", writer["needs"])
-        self.assertIn("needs.verify-promotion.outputs.approval_sha256", json.dumps(writer))
-        self.assertIn("release_workflow.py promote", json.dumps(writer))
+        promote = workflows["promote-release-after-output-merge.yml"]
+        promote_text = json.dumps(promote)
+        self.assertIn("verify-promotion", promote_text)
+        self.assertIn("promote-bin", promote_text)
+        self.assertIn("finalize-promotion", promote_text)
+        self.assertIn("win64", promote_text)
 
-        operations = workflows["release-operations.yml"]
-        choices = operations["on"]["workflow_dispatch"]["inputs"]["operation"]["options"]
-        self.assertEqual(
-            {"retry", "resume-promotion", "republish", "abandon", "repair-index", "cleanup", "reconcile"},
-            set(choices),
-        )
-        self.assertEqual("release", operations["jobs"]["operate"]["environment"])
-        self.assertIn("GSVIBE_RELEASE_REPUBLISH_ENABLED", json.dumps(operations))
-        concurrency_groups = {
-            build_job["concurrency"]["group"],
-            writer["concurrency"]["group"],
-            operations["jobs"]["operate"]["concurrency"]["group"],
-        }
-        self.assertEqual({"${{ github.repository }}-release-phase2"}, concurrency_groups)
-        for workflow in workflows.values():
-            for job in workflow["jobs"].values():
-                self.assertNotIn("gsvibe-release", job.get("runs-on", []))
-                for step in job.get("steps", []):
-                    run = step.get("run", "")
-                    self.assertNotIn("${{ inputs.", run)
-                    self.assertNotIn("${{ github.event.pull_request.", run)
+        for name in ("abandon-staged-release.yml", "cleanup-completed-release-staging.yml"):
+            self.assertIn("win64", json.dumps(workflows[name]))
 
     def test_published_gamesymbol_snapshots_match_goldsrc_contract(self):
         # The exact published set is deliberately not pinned: the bin submodule
