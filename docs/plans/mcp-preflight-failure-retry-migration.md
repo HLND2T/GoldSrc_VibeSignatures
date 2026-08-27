@@ -8,9 +8,9 @@
 
 GoldSrc 规划基线：`main@98e7247502f1e5c8e30481295d67712b6db5282d`
 
-CS2 参考合并提交：`3076f534794977a646b702ae6587eeb44765615c`
+CS2 参考合并提交：`3076f534794977a646b702ae6587eeb44765615c` (D:/CS2_VibeSignatures)
 
-CS2 直接参考提交：`d0d7dfa103071ecda0ba0409cd0d2dd3ac702e95` `fix(agent): retry failed MCP preflights`
+CS2 直接参考提交：`d0d7dfa103071ecda0ba0409cd0d2dd3ac702e95` `fix(agent): retry failed MCP preflights` (D:/CS2_VibeSignatures)
 
 ## 1. 目标
 

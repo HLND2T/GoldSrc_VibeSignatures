@@ -8,11 +8,11 @@
 
 GoldSrc 规划基线：`main@98e7247502f1e5c8e30481295d67712b6db5282d`
 
-CS2 参考合并提交：`3076f534794977a646b702ae6587eeb44765615c`
+CS2 参考合并提交：`3076f534794977a646b702ae6587eeb44765615c` (D:/CS2_VibeSignatures)
 
-CS2 endpoint override 参考提交：`8656bbcf34ca4b67dbb5ea7ee406574a4bdb9149` `fix(agent): inject dynamic MCP endpoint overrides`
+CS2 endpoint override 参考提交：`8656bbcf34ca4b67dbb5ea7ee406574a4bdb9149` `fix(agent): inject dynamic MCP endpoint overrides` (D:/CS2_VibeSignatures)
 
-CS2 动态端口参考提交：`dde2464938c77384709bf675423d4fc6c139a16a` `feat(ida): allocate a dynamic MCP port per binary`
+CS2 动态端口参考提交：`dde2464938c77384709bf675423d4fc6c139a16a` `feat(ida): allocate a dynamic MCP port per binary` (D:/CS2_VibeSignatures)
 
 依赖：建议先完成 `docs/plans/mcp-preflight-failure-retry-migration.md`
 
