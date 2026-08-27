@@ -404,7 +404,8 @@ def _perform_mcp_preflight(agent: str, *, debug: bool, server_name: str) -> McpP
                     **_diagnostic_payload(completed.stdout, completed.stderr),
                 },
             )
-    _MCP_PREFLIGHT_CACHE[cache_key] = result
+    if result.ok:
+        _MCP_PREFLIGHT_CACHE[cache_key] = result
     return result
 
 
