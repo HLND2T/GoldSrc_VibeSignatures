@@ -161,7 +161,7 @@ jobs:
         run: |
           set -euo pipefail
           git submodule sync --recursive
-          git submodule update --init --recursive --depth 1 --jobs 8
+          git submodule update --init --recursive --force --depth 1 --jobs 8
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
@@ -249,7 +249,7 @@ jobs:
         run: |
           git submodule sync --recursive
           if ($LASTEXITCODE -ne 0) { throw "git submodule sync failed." }
-          git submodule update --init --recursive --depth 1 --jobs 8
+          git submodule update --init --recursive --force --depth 1 --jobs 8
           if ($LASTEXITCODE -ne 0) { throw "git submodule update failed." }
       - uses: astral-sh/setup-uv@v6
         with:
@@ -283,6 +283,10 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or [IO.Path]::GetFullPath($gitTopLevel) -ne [IO.Path]::GetFullPath($binRoot)) {
             throw "Refusing to clean an unexpected bin repository: $gitTopLevel"
           }
+          # reset --hard reverts tracked-file modifications restored from a dirty
+          # cache before analysis; git clean handles the untracked side.
+          git -C $binRoot reset --hard
+          if ($LASTEXITCODE -ne 0) { throw 'failed to reset tracked bin files' }
           git -C $binRoot clean -ffdx
           if ($LASTEXITCODE -ne 0) { throw 'failed to clean persisted bin analysis state' }
       - name: Prepare exact warm IDB cache selection
@@ -398,6 +402,8 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or [IO.Path]::GetFullPath($gitTopLevel) -ne [IO.Path]::GetFullPath($binRoot)) {
             throw "Refusing to clean an unexpected bin repository: $gitTopLevel"
           }
+          git -C $binRoot reset --hard
+          if ($LASTEXITCODE -ne 0) { throw 'failed to reset tracked bin files' }
           git -C $binRoot clean -ffdx
           if ($LASTEXITCODE -ne 0) { throw 'failed to remove generated bin analysis state' }
   fork-analysis-blocked:

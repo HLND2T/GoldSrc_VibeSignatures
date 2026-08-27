@@ -105,7 +105,7 @@ jobs:
         run: |
           git submodule sync --recursive
           if ($LASTEXITCODE -ne 0) { throw "git submodule sync failed." }
-          git submodule update --init --recursive --depth 1 --jobs 8
+          git submodule update --init --recursive --force --depth 1 --jobs 8
           if ($LASTEXITCODE -ne 0) { throw "git submodule update failed." }
       - uses: astral-sh/setup-uv@v6
         with:
@@ -246,6 +246,11 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or [IO.Path]::GetFullPath($gitTopLevel) -ne [IO.Path]::GetFullPath($binRoot)) {
             throw "Refusing to clean an unexpected bin repository: $gitTopLevel"
           }
+          # reset --hard reverts tracked-file modifications (e.g. robocopy-accepted
+          # binaries) before the cache post-save, so a later self-hosted PR analysis
+          # never restores a dirty submodule; git clean handles the untracked side.
+          git -C $binRoot reset --hard
+          if ($LASTEXITCODE -ne 0) { throw 'failed to reset tracked bin files' }
           git -C $binRoot clean -ffdx
           if ($LASTEXITCODE -ne 0) { throw 'failed to remove generated bin analysis state' }
       - name: Clean incomplete staging on failure
