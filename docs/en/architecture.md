@@ -54,7 +54,7 @@ For each DAG node, `ida_analyze_bin.py` currently attempts two executable layers
 
 The Agent runner validates per-CLI model arguments, keeps Claude/OpenCode retry sessions stable, injects the Codex
 developer prompt, drains stdout/stderr concurrently, and emits attempt-level structured diagnostics through the local
-reporter. MCP list preflight results are cached per Agent executable and server.
+reporter. MCP list preflight results are cached per Agent executable, server, and normalized MCP endpoint (success only).
 
 Raw old-YAML copying is disabled because copying address-bearing artifacts can preserve stale addresses. Automatic
 old-version discovery is restricted to an older build in the same game family and is disabled by `major_update: true`.
@@ -64,9 +64,12 @@ global, patch, struct-member, primary/ordinal vtable, inherited slot, xref filte
 
 The binary is validated as 32-bit I386 before work, and the opened database identity is checked against its path,
 platform metadata, and hashes. In line with the CS2 runtime contract, analysis does not add a repeated binary-mutation
-guard after each skill. Pending work starts one owned `idalib-mcp` lifecycle per binary on `127.0.0.1:13337`; for each module/platform binary, the analyzer checks
+guard after each skill. Pending work allocates a free local port and starts one owned `idalib-mcp` lifecycle per binary on
+`127.0.0.1:<dynamic-port>` (the fixed `13337` is no longer reserved); for each module/platform binary, the analyzer checks
 the IDB lock and port, starts the supervisor, waits for the MCP contract, binds the exact active database, validates
-survey identity, allows one health recovery, and performs targeted owned-worker shutdown plus port release. Every
+survey identity, allows one health recovery, and performs targeted owned-worker shutdown plus port release. The verified
+runtime endpoint is injected into Agent fallback runs as an invocation-scoped MCP override, so each Agent connects the
+exact owned lifecycle for its binary. Every
 Preprocessor call binds that binary/database and receives a strictly parsed image base. Preprocessor and Agent outputs
 pass the same YAML, symbol-schema, and current-IDB address validator. `-ida_args` is supported while `-rename` remains
 deferred.
