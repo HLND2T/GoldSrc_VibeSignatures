@@ -65,7 +65,6 @@ jobs:
     timeout-minutes: 1440
     env:
       PERSISTED_WORKSPACE: ${{ secrets.PERSISTED_WORKSPACE }}
-      IDA_KERNEL_VERSION: ${{ vars.GSVIBE_IDA_KERNEL_VERSION }}
       SUBMODULE_CACHE_VERSION: v1
     steps:
       - name: Checkout exact source
@@ -111,6 +110,22 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --locked
+      - name: Resolve IDA interpreter identity
+        shell: pwsh
+        run: |
+          $pythonExe = (Get-Command python -ErrorAction SilentlyContinue).Source
+          $idalibMcpExe = (Get-Command idalib-mcp -ErrorAction SilentlyContinue).Source
+          if ([string]::IsNullOrWhiteSpace($pythonExe) -or [string]::IsNullOrWhiteSpace($idalibMcpExe)) {
+            throw 'python with idalib and idalib-mcp must both be available on PATH'
+          }
+          $probe = Join-Path $env:GITHUB_WORKSPACE 'ida_runtime_probe.py'
+          $idaVersionOutput = & $pythonExe $probe --idalib-mcp $idalibMcpExe
+          $probeExitCode = $LASTEXITCODE
+          $idaVersion = (@($idaVersionOutput) -join "`n").Trim()
+          if ($probeExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($idaVersion)) {
+            throw 'Failed to resolve the IDA kernel version from the idalib-mcp installation'
+          }
+          "IDA_KERNEL_VERSION=$idaVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Prepare persisted workspace and restore accepted bin
         shell: pwsh
         run: |

@@ -4,10 +4,10 @@
 
 ## 激活检查表
 
-在专用 Windows runner、受保护 `win64` Environment、checkout 外 persisted root、ACL owner、支持
-atomic rename 的 storage、`IDADIR` 与 expected kernel version 全部核验前，保持
-`GSVIBE_IDB_CACHE_MODE=cold`。Persisted root 不得包含 checkout，也不得位于 checkout 内；路径与 root 均不得经过
-link 或 reparse point。
+在专用 Windows runner、受保护 `win64` Environment、checkout 外 persisted root、ACL owner、支持 atomic
+rename 的 storage 与 `IDADIR` 全部核验前，保持 `GSVIBE_IDB_CACHE_MODE=cold`。确认带 `idapro` 的 `python` 与
+`idalib-mcp` 解析到同一 installation；CI 会动态读取其 kernel version。Persisted root 不得包含 checkout，也不得
+位于 checkout 内；路径与 root 均不得经过 link 或 reparse point。
 
 分别保存一次 explicit cold run、一次发布 generation 的 warm miss，以及同一 plan 和 binary/runtime identity 的
 后续 warm hit。证据记录 run URL/attempt、source/bin SHA、plan/selection SHA-256、cache key、generation、manifest

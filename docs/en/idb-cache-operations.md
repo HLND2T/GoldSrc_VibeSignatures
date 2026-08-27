@@ -5,9 +5,9 @@
 ## Activation checklist
 
 Keep `GSVIBE_IDB_CACHE_MODE=cold` until the dedicated Windows runner, protected `win64` Environment,
-outside-checkout persisted root, ACL owner, atomic rename storage, `IDADIR`, and expected kernel version are verified.
-The persisted root must not contain the checkout or be contained by it, and neither its path nor root may traverse a
-link or reparse point.
+outside-checkout persisted root, ACL owner, atomic rename storage, and `IDADIR` are verified. Confirm that `python` with
+`idapro` and `idalib-mcp` resolve to the same installation; CI dynamically reads its kernel version. The persisted root
+must not contain the checkout or be contained by it, and neither its path nor root may traverse a link or reparse point.
 
 Capture one explicit cold run, one warm miss that publishes a generation, and a later warm hit for the same plan and
 binary/runtime identity. Record run URL/attempt, source and bin SHAs, plan and selection SHA-256, cache key, generation,

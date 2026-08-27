@@ -25,7 +25,7 @@ Warm IDB cache is a rebuildable performance layer for neutral databases created 
 
 ## Architecture
 
-`ida_database_paths.py` is the shared primary/side/lock path contract. `idb_cache.py` owns schema-1 identity, key, manifest, READY, publish, probe, verify, restore, and prune behavior. `idb_warm_worker.py` is a bounded subprocess that holds the runner-local MCP port lock, observes runtime identity through the opened IDA session, and saves a neutral database without dispatching project finder/Agent logic.
+`ida_database_paths.py` is the shared primary/side/lock path contract. `idb_cache.py` owns schema-1 identity, key, manifest, READY, publish, probe, verify, restore, and prune behavior. `ida_runtime_probe.py` dynamically reads `idaapi.get_kernel_version()` through the runner Python installation and rejects an `idalib-mcp` executable outside that Python directory or its `Scripts` directory. `idb_warm_worker.py` is a bounded subprocess that holds the runner-local MCP port lock, observes runtime identity through the opened IDA session, and saves a neutral database without dispatching project finder/Agent logic.
 
 `READY.json` is only a discovery hint. Once selected, a consumer carries exact `generation + cache_key + manifest_sha256`; later READY changes cannot redirect that run.
 
