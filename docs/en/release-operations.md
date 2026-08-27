@@ -23,3 +23,16 @@ plus the tag identity, Release ID, and downloaded asset inventory means the rele
 
 Preserve failed stages, workflow URL/run/attempt, source/bin SHAs, PR/head/merge identity, tag target, Release ID, and
 downloaded hashes.
+
+## Generated-output PR base advancement
+
+An output PR stays valid after `main` advances when:
+
+- the output head is a single-parent commit whose parent is exactly the manifest `source_sha`;
+- the current PR base is a descendant of that `source_sha`;
+- `source_sha..head` only changes allowlisted generated outputs, including `release-manifests/<version>.json`;
+- tracked manifest identity and hashes still match.
+
+The verifier does not rebase the immutable output head onto the new base. GitHub mergeability still blocks conflicting
+histories. Merge-time `verify_promotion()` uses the same ancestor rule for the merge first parent. Replacement
+build/PR is required only when that ancestor or direct-parent identity is broken.

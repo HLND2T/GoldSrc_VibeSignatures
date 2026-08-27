@@ -58,8 +58,9 @@ environment 必须让 build、promotion 与 recovery job 看到同一个 checkou
 
 Release 只在 allowlist 仓库（`HLND2T/GoldSrc_VibeSignatures` 与 fork）里运行，由 `win64` Environment + per-version
 concurrency 门禁，不再依赖 GitHub App token 或 `GSVIBE_RELEASE_PHASE2_ENABLED`。输出 PR 由 `github-actions[bot]`
-创建；branch protection 只 require Actions-owned 唯一 `pr-validate`，要求 up-to-date merge commit，禁止 `main`
-direct/admin-bypass push，并保护 release tag。
+创建；branch protection 只 require Actions-owned 唯一 `pr-validate`，要求 merge-commit-only（merge first parent 是
+output `source_sha` 的后代），禁止 `main` direct/admin-bypass push，并保护 release tag。不要要求 output 分支相对
+`main` up-to-date，那会把 default branch merge 进 immutable output head。
 
 ## 初始化游戏 binaries
 

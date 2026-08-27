@@ -136,11 +136,14 @@ binds `version`, `mode`, `build_id`, `source_sha`, per-game-version snapshot/gam
 inventory hashes.
 
 `validate-generated-output-pr.yml` rebuilds the tracked output inventory from exact Git blobs and checks each game
-version; `promote-release-after-output-merge.yml` accepts only the recorded bot-authored output PR, its direct-parent
-head, and an exact two-parent merge, then transactionally swaps accepted bin into the persisted workspace, tags the
-single `version`, and publishes one GitHub Release. Private markers are hash-chained; abandon and cleanup remain distinct
-operations. `mode=republish` re-analyzes only the outputs affected since the last accepted source. Production authority
-comes from the allowlisted repository + `win64` Environment + per-version concurrency.
+version. The output head must be a single-parent commit whose parent equals manifest `source_sha`; the current PR base
+must descend from that `source_sha`, so default-branch advancement is not itself stale. Changed paths are taken from
+`source_sha..head`. `promote-release-after-output-merge.yml` accepts only the recorded bot-authored output PR, its
+direct-parent head, and an exact two-parent merge whose first parent descends from `source_sha`, then transactionally
+swaps accepted bin into the persisted workspace, tags the single `version`, and publishes one GitHub Release. Private
+markers are hash-chained; abandon and cleanup remain distinct operations. `mode=republish` re-analyzes only the outputs
+affected since the last accepted source. Production authority comes from the allowlisted repository + `win64`
+Environment + per-version concurrency.
 
 ## API, dashboard, and immutable Pages assets
 

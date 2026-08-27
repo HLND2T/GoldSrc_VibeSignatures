@@ -64,8 +64,9 @@ Release build 在 self-hosted runner 上为全部 game version 生成 `gamesymbo
 `release-manifests/<version>.json` 是 schema-1 canonical manifest：绑定 `version`、`mode`、`build_id`、`source_sha`、
 每条 game version 的 snapshot/gamedata provenance，以及 aggregate bin/tracked-output inventory hash。
 `validate-generated-output-pr.yml` 用 exact Git blob 重建 tracked output inventory 并核对每条 game version 的 snapshot
-hash 与 gamedata inventory；`promote-release-after-output-merge.yml` 校验两父合并并把 accepted bin 事务化交换进
-persisted workspace。source PR 不再拥有 gamesymbols/gamedata authority。
+hash 与 gamedata inventory。output identity 仍绑定 exact `source_sha`（output head 的唯一父提交）；当前 PR base 必须
+是该提交的后代。`promote-release-after-output-merge.yml` 校验 first parent 从 `source_sha` 演进而来的两父合并，并把
+accepted bin 事务化交换进 persisted workspace。source PR 不再拥有 gamesymbols/gamedata authority。
 
 ## 直接生成 gamedata
 

@@ -48,18 +48,19 @@ COMPLETION_FIELDS = {
 }
 
 
-def _git_output(arguments: list[str]) -> str:
-    result = subprocess.run(["git", *arguments], capture_output=True, text=True, check=False)
+def _git_output(arguments: list[str], *, cwd: str | Path | None = None) -> str:
+    result = subprocess.run(["git", *arguments], capture_output=True, text=True, check=False, cwd=cwd)
     if result.returncode != 0:
         raise ReleaseWorkflowError(result.stderr.strip() or f"git {' '.join(arguments)} failed")
     return result.stdout.strip()
 
 
-def _is_ancestor(ancestor: str, descendant: str) -> bool:
+def _is_ancestor(ancestor: str, descendant: str, *, cwd: str | Path | None = None) -> bool:
     result = subprocess.run(
         ["git", "merge-base", "--is-ancestor", ancestor, descendant],
         capture_output=True,
         check=False,
+        cwd=cwd,
     )
     return result.returncode == 0
 
@@ -77,17 +78,29 @@ def verify_output_pr(
     if repository not in ALLOWED_REPOSITORIES:
         raise ReleaseWorkflowError(f"repository is not allowlisted: {repository}")
     base_sha = require_sha(base_sha, "PR base SHA")
-    require_sha(head_sha, "PR head SHA")
+    head_sha = require_sha(head_sha, "PR head SHA")
     if repository != head_repository:
         raise ReleaseWorkflowError("generated-output PR must originate from the base repository")
     if author != "github-actions[bot]":
         raise ReleaseWorkflowError("generated-output PR author is not github-actions[bot]")
     version = parse_output_branch(branch)
-    paths = [line for line in _git_output(["diff", "--name-only", base_sha, head_sha, "--"]).splitlines() if line]
     manifest = load_tracked_manifest(Path(repo_root) / "release-manifests" / f"{version}.json")
+    if manifest["version"] != version:
+        raise ReleaseWorkflowError("output PR manifest identity does not match the branch")
+    parents = _git_output(["rev-list", "--parents", "-n", "1", head_sha], cwd=repo_root).split()
+    if len(parents) != 2 or parents[1] != manifest["source_sha"]:
+        raise ReleaseWorkflowError("generated-output commit is not directly based on SOURCE_SHA")
+    if not _is_ancestor(manifest["source_sha"], base_sha, cwd=repo_root):
+        raise ReleaseWorkflowError("PR base must descend from SOURCE_SHA")
+    paths = [
+        line
+        for line in _git_output(
+            ["diff", "--name-only", manifest["source_sha"], head_sha, "--"],
+            cwd=repo_root,
+        ).splitlines()
+        if line
+    ]
     validate_output_paths(paths, [entry["gamever"] for entry in manifest["gamevers"]], version)
-    if manifest["source_sha"] != base_sha or manifest["version"] != version:
-        raise ReleaseWorkflowError("output PR is stale or its manifest identity does not match the branch")
     verify_tracked_outputs(repo_root, manifest)
     return manifest
 

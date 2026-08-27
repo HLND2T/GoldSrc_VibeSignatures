@@ -50,8 +50,11 @@ Unit 与 workflow-contract test 不能替代专用 runner 上记录的 cold、�
 `ida_analyze_bin.py -allgamever` 分析全部 game version → 逐 game version build/guard/publish candidate 与 gamedata →
 `stage-build` → 创建单个 `github-actions[bot]` generated-output PR（分支 `gamesymbols/build/<version>`）。
 
-- `validate-generated-output-pr.yml` 校验 output PR（bot author + 同仓 + `gamesymbols/build/` 分支；路径 = 全部
-  game version 的 gamesymbols/metadata/gamedata + `release-manifests/<version>.json`）。
+- `validate-generated-output-pr.yml` 校验 output PR（bot author + 同仓 + `gamesymbols/build/` 分支）。output head 必须是
+  单父提交，且该父提交等于 tracked manifest 的 `source_sha`。当前 PR base 必须是该 `source_sha` 的后代，因此 PR
+  创建后 default branch 前进本身不是 stale。changed-path allowlist 按 `source_sha..head` 计算（全部 game version 的
+  gamesymbols/metadata/gamedata + `release-manifests/<version>.json`），不把可能已前进的 PR base 上的变化算进 output
+  PR。tracked output hash 仍必须匹配。trusted validation tooling 继续来自 PR base；output workspace 检出 exact head。
 - `promote-release-after-output-merge.yml` 在合并后校验两父合并、把 accepted bin 事务化交换进 persisted workspace、
   打单个 `version` tag 并发布一个 GitHub Release（资产含全部 game version）。
 - `abandon-staged-release.yml` 与 `cleanup-completed-release-staging.yml` 处理生命周期（放弃 staged build、清理

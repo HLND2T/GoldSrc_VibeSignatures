@@ -17,7 +17,8 @@ generated-output PR (`gamesymbols/build/<version>`). Merging that PR promotes a 
 
 - Gate output PRs through `validate-generated-output-pr.yml` (bot author, same repo, `gamesymbols/build/` branch).
 - Hash-chain private stage markers and bind version/source/branch/PR/head/merge identities.
-- Require a direct-parent output head and a two-parent merge commit.
+- Require a direct-parent output head whose parent equals manifest `source_sha`, a current PR/merge base that
+  descends from that `source_sha`, and a two-parent merge commit. Default-branch advancement is not itself stale.
 - Promote accepted binaries transactionally into `PERSISTED_WORKSPACE/bin/<gamever>` under a per-version lock.
 - Keep abandon, cleanup-unmerged, and cleanup-completed semantically distinct.
 

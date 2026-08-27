@@ -48,8 +48,12 @@ IDB cache for every game version, runs `ida_analyze_bin.py -allgamever`, builds/
 per game version, runs `stage-build`, and opens a single `github-actions[bot]` generated-output PR
 (branch `gamesymbols/build/<version>`).
 
-- `validate-generated-output-pr.yml` verifies the output PR (bot author + same repo + `gamesymbols/build/` branch; paths =
-  every game version's gamesymbols/metadata/gamedata plus `release-manifests/<version>.json`).
+- `validate-generated-output-pr.yml` verifies the output PR (bot author + same repo + `gamesymbols/build/` branch). The
+  output head must be a single-parent commit whose parent equals the tracked manifest `source_sha`. The current PR base
+  must be a descendant of that `source_sha`, so default-branch advancement after PR creation is not itself stale.
+  Changed-path allowlist is computed from `source_sha..head` (every game version's gamesymbols/metadata/gamedata plus
+  `release-manifests/<version>.json`), not from the possibly advanced PR base. Tracked output hashes still have to match.
+  Trusted validation tooling continues to come from the PR base; the output workspace is the exact head.
 - `promote-release-after-output-merge.yml` verifies the two-parent merge, transactionally swaps accepted bin into the
   persisted workspace, tags the single `version`, and publishes one GitHub Release with assets for every game version.
 - `abandon-staged-release.yml` and `cleanup-completed-release-staging.yml` cover the lifecycle (abandon a staged build,
