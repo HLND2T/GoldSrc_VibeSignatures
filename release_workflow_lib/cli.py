@@ -54,6 +54,7 @@ def _add_build_parsers(commands) -> None:
     validate.add_argument("--source-sha", required=True)
     validate.add_argument("--mode", required=True)
     validate.add_argument("--default-ref", required=True)
+    validate.add_argument("--allow-existing-tag", action="store_true")
 
     invalidate = commands.add_parser("invalidate-republish")
     invalidate.add_argument("--repo-root", default=".")
@@ -212,6 +213,7 @@ def _run_build(args) -> object:
             source_sha=args.source_sha,
             mode=args.mode,
             default_ref=args.default_ref,
+            allow_existing_tag=args.allow_existing_tag,
         )
     if args.command == "invalidate-republish":
         return invalidate_republish(

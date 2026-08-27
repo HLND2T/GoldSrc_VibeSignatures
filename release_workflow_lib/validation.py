@@ -35,7 +35,9 @@ def git_output(arguments: list[str], *, text: bool = True):
     return result.stdout.strip() if text else result.stdout
 
 
-def validate_build_input(*, repository: str, version: str, source_sha: str, mode: str, default_ref: str) -> None:
+def validate_build_input(
+    *, repository: str, version: str, source_sha: str, mode: str, default_ref: str, allow_existing_tag: bool = False
+) -> None:
     if repository not in ALLOWED_REPOSITORIES:
         raise ReleaseWorkflowError(f"repository is not allowlisted: {repository}")
     version = require_version(version)
@@ -59,7 +61,17 @@ def validate_build_input(*, repository: str, version: str, source_sha: str, mode
         subprocess.run(["git", "show-ref", "--verify", "--quiet", f"refs/tags/{version}"], check=False).returncode == 0
     )
     if mode == "new" and tag_exists:
-        raise ReleaseWorkflowError(f"mode=new requires tag {version} to be absent")
+        if not allow_existing_tag:
+            raise ReleaseWorkflowError(f"mode=new requires tag {version} to be absent")
+        tag_objects = {
+            git_output(["rev-parse", f"refs/tags/{version}"]),
+            git_output(["rev-parse", f"refs/tags/{version}^{{commit}}"]),
+        }
+        if source_sha not in tag_objects:
+            raise ReleaseWorkflowError(
+                f"mode=new (tag-triggered) requires tag {version} to point at SOURCE_SHA {source_sha}; "
+                f"it resolves to {sorted(tag_objects)}"
+            )
     if mode == "republish" and not tag_exists:
         raise ReleaseWorkflowError(f"mode=republish requires tag {version} to exist")
 
@@ -85,9 +97,12 @@ def prepare_oldgamever_baseline(*, repo_root: str | Path, gamever: str, bindir: 
     if snapshot_root.is_dir():
         for snapshot in snapshot_root.glob("*.yaml"):
             candidate = snapshot.stem
-            if GAMEVER_RE.fullmatch(candidate) and _gamever_key(candidate)[0] == current[0]:
-                if _gamever_key(candidate) < current:
-                    candidates.append((candidate, snapshot))
+            if (
+                GAMEVER_RE.fullmatch(candidate)
+                and _gamever_key(candidate)[0] == current[0]
+                and _gamever_key(candidate) < current
+            ):
+                candidates.append((candidate, snapshot))
     if not candidates:
         raise ReleaseWorkflowError(f"no trusted old-version snapshot is available for {gamever}")
 

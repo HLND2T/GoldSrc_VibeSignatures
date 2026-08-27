@@ -43,7 +43,8 @@ cold, first miss/publication, and subsequent hit runs on that runner.
 ## Release build and promotion
 
 [`release-build.yml`](../../.github/workflows/release-build.yml) is a manual `workflow_dispatch` (`version` such as
-`v20260825a` plus an optional `source_sha` and a `mode` of `new|republish`). On the self-hosted
+`v20260825a` plus an optional `source_sha` and a `mode` of `new|republish`). It can also be triggered by pushing a
+`v[0-9]*` version tag (tag name is `version`, `source_sha` is the tagged commit, `mode` is fixed to `new`). On the self-hosted
 `[self-hosted, windows, x64]` runner it: checks out the exact source and `bin` submodule, restores accepted bin, warms the
 IDB cache for every game version, runs `ida_analyze_bin.py -allgamever`, builds/guards/publishes candidates and gamedata
 per game version, runs `stage-build`, and opens a single `github-actions[bot]` generated-output PR

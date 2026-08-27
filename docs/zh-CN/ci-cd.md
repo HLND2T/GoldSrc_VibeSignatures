@@ -46,7 +46,8 @@ Unit 与 workflow-contract test 不能替代专用 runner 上记录的 cold、�
 ## Release 构建与发布
 
 [`release-build.yml`](../../.github/workflows/release-build.yml) 是手动 `workflow_dispatch`（`version` 如
-`v20260825a` + 可选 `source_sha` + `mode` `new|republish`）。它在 self-hosted `[self-hosted, windows, x64]` runner
+`v20260825a` + 可选 `source_sha` + `mode` `new|republish`），也可通过 push 一个 `v[0-9]*` 版本 tag 触发
+（tag 名即 `version`，`source_sha` 取 tag 指向的 commit，`mode` 固定为 `new`）。它在 self-hosted `[self-hosted, windows, x64]` runner
 上：checkout exact source 与 `bin` submodule → 恢复 accepted bin → 逐 game version warm IDB cache →
 `ida_analyze_bin.py -allgamever` 分析全部 game version → 逐 game version build/guard/publish candidate 与 gamedata →
 `stage-build` → 创建单个 `github-actions[bot]` generated-output PR（分支 `gamesymbols/build/<version>`）。

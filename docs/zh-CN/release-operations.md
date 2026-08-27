@@ -1,6 +1,7 @@
 # Release 运维
 
-Release build 是手动 `workflow_dispatch`（`release-build.yml`，`version` + 可选 `source_sha` + `mode`）。生产
+Release build 是手动 `workflow_dispatch`（`release-build.yml`，`version` + 可选 `source_sha` + `mode`），也可通过
+push 一个 `v[0-9]*` 版本 tag 触发（tag 名即 `version`，`source_sha` 取 tag 指向的 commit，`mode` 固定为 `new`）。生产
 authority 由 allowlist 仓库 + `win64` Environment + per-version concurrency 提供，不再依赖
 `GSVIBE_RELEASE_PHASE2_ENABLED` 或 GitHub App token。
 

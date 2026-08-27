@@ -1,6 +1,8 @@
 # Release operations
 
 The release build is a manual `workflow_dispatch` (`release-build.yml`, `version` plus optional `source_sha` and `mode`).
+It can also be triggered by pushing a `v[0-9]*` version tag (tag name is `version`, `source_sha` is the tagged commit,
+`mode` is fixed to `new`).
 Production authority comes from the allowlisted repository + `win64` Environment + per-version concurrency, not
 `GSVIBE_RELEASE_PHASE2_ENABLED` or a GitHub App token.
 
