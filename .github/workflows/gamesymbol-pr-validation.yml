@@ -289,19 +289,35 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'failed to reset tracked bin files' }
           git -C $binRoot clean -ffdx
           if ($LASTEXITCODE -ne 0) { throw 'failed to clean persisted bin analysis state' }
+      - name: Resolve IDA interpreter identity
+        if: needs.plan.outputs.cache_mode == 'warm'
+        shell: pwsh
+        run: |
+          $pythonExe = (Get-Command python -ErrorAction SilentlyContinue).Source
+          $idalibMcpExe = (Get-Command idalib-mcp -ErrorAction SilentlyContinue).Source
+          if ([string]::IsNullOrWhiteSpace($pythonExe) -or [string]::IsNullOrWhiteSpace($idalibMcpExe)) {
+            throw 'python with idalib and idalib-mcp must both be available on PATH'
+          }
+          $probe = Join-Path $env:GITHUB_WORKSPACE 'ida_runtime_probe.py'
+          $idaVersionOutput = & $pythonExe $probe --idalib-mcp $idalibMcpExe
+          $probeExitCode = $LASTEXITCODE
+          $idaVersion = (@($idaVersionOutput) -join "`n").Trim()
+          if ($probeExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($idaVersion)) {
+            throw 'Failed to resolve the IDA kernel version from the idalib-mcp installation'
+          }
+          "IDA_KERNEL_VERSION=$idaVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Prepare exact warm IDB cache selection
         if: needs.plan.outputs.cache_mode == 'warm'
         shell: pwsh
         env:
           PERSISTED_WORKSPACE: ${{ secrets.PERSISTED_WORKSPACE }}
-          GSVIBE_IDA_KERNEL_VERSION: ${{ vars.GSVIBE_IDA_KERNEL_VERSION }}
         run: |
           $ErrorActionPreference = 'Stop'
           if ([string]::IsNullOrWhiteSpace($env:PERSISTED_WORKSPACE)) {
             throw 'PERSISTED_WORKSPACE is required for warm cache mode'
           }
-          if ([string]::IsNullOrWhiteSpace($env:IDADIR) -or [string]::IsNullOrWhiteSpace($env:GSVIBE_IDA_KERNEL_VERSION)) {
-            throw 'IDADIR and GSVIBE_IDA_KERNEL_VERSION are required for warm cache mode'
+          if ([string]::IsNullOrWhiteSpace($env:IDADIR) -or [string]::IsNullOrWhiteSpace($env:IDA_KERNEL_VERSION)) {
+            throw 'IDADIR and the dynamically resolved IDA_KERNEL_VERSION are required for warm cache mode'
           }
           $bundle = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'
           $planPath = Join-Path $bundle 'plan.json'
@@ -310,7 +326,7 @@ jobs:
           uv run python idb_cache_workflow.py prepare `
             -repo-root $env:GITHUB_WORKSPACE -plan $planPath -merge-ref HEAD -bindir bin `
             -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR `
-            -kernel-version $env:GSVIBE_IDA_KERNEL_VERSION -run-id "${{ github.run_id }}" `
+            -kernel-version $env:IDA_KERNEL_VERSION -run-id "${{ github.run_id }}" `
             -attempt "${{ github.run_attempt }}" -output $selectionPath -output-sha256 $selectionShaPath
           if ($LASTEXITCODE -ne 0) { throw 'warm cache preparation failed' }
       - name: Verify exact warm IDB cache selection
@@ -318,13 +334,12 @@ jobs:
         shell: pwsh
         env:
           PERSISTED_WORKSPACE: ${{ secrets.PERSISTED_WORKSPACE }}
-          GSVIBE_IDA_KERNEL_VERSION: ${{ vars.GSVIBE_IDA_KERNEL_VERSION }}
         run: |
           $bundle = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'
           uv run python idb_cache_workflow.py verify `
             -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $bundle 'plan.json') -merge-ref HEAD -bindir bin `
             -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR `
-            -kernel-version $env:GSVIBE_IDA_KERNEL_VERSION -selection (Join-Path $bundle 'cache-selection.json') `
+            -kernel-version $env:IDA_KERNEL_VERSION -selection (Join-Path $bundle 'cache-selection.json') `
             -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
           if ($LASTEXITCODE -ne 0) { throw 'warm cache selection verification failed' }
       - name: Upload warm IDB cache selection evidence
@@ -342,13 +357,12 @@ jobs:
         shell: pwsh
         env:
           PERSISTED_WORKSPACE: ${{ secrets.PERSISTED_WORKSPACE }}
-          GSVIBE_IDA_KERNEL_VERSION: ${{ vars.GSVIBE_IDA_KERNEL_VERSION }}
         run: |
           $bundle = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'
           uv run python idb_cache_workflow.py restore `
             -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $bundle 'plan.json') -merge-ref HEAD -bindir bin `
             -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR `
-            -kernel-version $env:GSVIBE_IDA_KERNEL_VERSION -selection (Join-Path $bundle 'cache-selection.json') `
+            -kernel-version $env:IDA_KERNEL_VERSION -selection (Join-Path $bundle 'cache-selection.json') `
             -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
           if ($LASTEXITCODE -ne 0) { throw 'warm cache restore failed' }
       - name: Analyze selected nodes and build self-consistent candidates

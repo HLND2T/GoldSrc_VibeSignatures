@@ -13,6 +13,7 @@ GROUP_FILES = {
         "test_config_and_depot.py",
         "test_binary_and_symbols.py",
         "test_ida_mcp_session.py",
+        "test_ida_runtime_probe.py",
         "test_idb_cache.py",
         "test_generate_reference_yaml.py",
         "test_format_repo_files.py",
