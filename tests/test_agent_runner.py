@@ -162,17 +162,119 @@ class AgentRunnerExecutionTests(unittest.TestCase):
         agent_runner._MCP_PREFLIGHT_CACHE.clear()
 
     @patch("agent_runner._run_process_with_stream_capture")
-    def test_preflight_caches_success_and_failure_per_agent(self, mock_run_process) -> None:
+    def test_preflight_caches_success_once_per_agent(self, mock_run_process) -> None:
         mock_run_process.side_effect = [
             subprocess.CompletedProcess(["claude", "mcp", "list"], 0, "ida-pro-mcp connected\n", ""),
-            subprocess.CompletedProcess(["codex", "mcp", "list"], 0, "basic-memory connected\n", ""),
+            subprocess.CompletedProcess(["codex", "mcp", "list"], 0, "ida-pro-mcp connected\n", ""),
         ]
 
         self.assertTrue(agent_runner.has_required_mcp_server("claude"))
         self.assertTrue(agent_runner.has_required_mcp_server("claude"))
-        self.assertFalse(agent_runner.has_required_mcp_server("codex"))
-        self.assertFalse(agent_runner.has_required_mcp_server("codex"))
+        self.assertTrue(agent_runner.has_required_mcp_server("codex"))
+        self.assertTrue(agent_runner.has_required_mcp_server("codex"))
         self.assertEqual(2, mock_run_process.call_count)
+
+    @patch("agent_runner._run_process_with_stream_capture")
+    def test_preflight_retries_after_failure_then_caches_success(self, mock_run_process) -> None:
+        mock_run_process.side_effect = [
+            subprocess.CompletedProcess(["claude", "mcp", "list"], 0, "basic-memory connected\n", ""),
+            subprocess.CompletedProcess(["claude", "mcp", "list"], 0, "ida-pro-mcp connected\n", ""),
+        ]
+
+        self.assertFalse(agent_runner.has_required_mcp_server("claude"))
+        self.assertTrue(agent_runner.has_required_mcp_server("claude"))
+        self.assertTrue(agent_runner.has_required_mcp_server("claude"))
+        self.assertEqual(2, mock_run_process.call_count)
+
+    @patch("agent_runner._run_process_with_stream_capture")
+    def test_timeout_failure_is_not_cached(self, mock_run_process) -> None:
+        timeout = subprocess.TimeoutExpired(["claude"], 30, output="partial out", stderr="partial err")
+        mock_run_process.side_effect = [
+            timeout,
+            subprocess.CompletedProcess(["claude", "mcp", "list"], 0, "ida-pro-mcp connected\n", ""),
+        ]
+
+        first = agent_runner._perform_mcp_preflight("claude", debug=False, server_name="ida-pro-mcp")
+        self.assertFalse(first.ok)
+        self.assertEqual("mcp_preflight_timeout", first.reason)
+        self.assertEqual(30, first.detail["timeout_seconds"])
+
+        second = agent_runner._perform_mcp_preflight("claude", debug=False, server_name="ida-pro-mcp")
+        self.assertTrue(second.ok)
+        self.assertEqual(2, mock_run_process.call_count)
+
+    @patch("agent_runner._run_process_with_stream_capture", side_effect=FileNotFoundError)
+    def test_agent_not_found_failure_is_not_cached(self, mock_run_process) -> None:
+        first = agent_runner._perform_mcp_preflight("codex", debug=False, server_name="ida-pro-mcp")
+        self.assertFalse(first.ok)
+        self.assertEqual("agent_not_found", first.reason)
+        self.assertEqual("codex", first.detail["agent"])
+
+        second = agent_runner._perform_mcp_preflight("codex", debug=False, server_name="ida-pro-mcp")
+        self.assertFalse(second.ok)
+        self.assertEqual(2, mock_run_process.call_count)
+
+    @patch("agent_runner._run_process_with_stream_capture")
+    def test_server_missing_failure_is_not_cached(self, mock_run_process) -> None:
+        mock_run_process.side_effect = [
+            subprocess.CompletedProcess(["claude", "mcp", "list"], 0, "basic-memory connected\n", ""),
+            subprocess.CompletedProcess(["claude", "mcp", "list"], 0, "basic-memory connected\n", ""),
+        ]
+
+        first = agent_runner._perform_mcp_preflight("claude", debug=False, server_name="ida-pro-mcp")
+        self.assertFalse(first.ok)
+        self.assertEqual("mcp_unavailable", first.reason)
+        self.assertEqual("ida-pro-mcp", first.detail["server"])
+        self.assertEqual(0, first.detail["returncode"])
+
+        second = agent_runner._perform_mcp_preflight("claude", debug=False, server_name="ida-pro-mcp")
+        self.assertFalse(second.ok)
+        self.assertEqual(2, mock_run_process.call_count)
+
+    @patch("agent_runner._run_process_with_stream_capture")
+    def test_success_cache_is_partitioned_by_server_name(self, mock_run_process) -> None:
+        mock_run_process.side_effect = [
+            subprocess.CompletedProcess(["claude", "mcp", "list"], 0, "ida-pro-mcp connected\n", ""),
+            subprocess.CompletedProcess(["claude", "mcp", "list"], 0, "basic-memory connected\n", ""),
+        ]
+
+        self.assertTrue(agent_runner._perform_mcp_preflight("claude", debug=False, server_name="ida-pro-mcp").ok)
+        self.assertTrue(agent_runner._perform_mcp_preflight("claude", debug=False, server_name="basic-memory").ok)
+        self.assertTrue(agent_runner._perform_mcp_preflight("claude", debug=False, server_name="ida-pro-mcp").ok)
+        self.assertTrue(agent_runner._perform_mcp_preflight("claude", debug=False, server_name="basic-memory").ok)
+        self.assertEqual(2, mock_run_process.call_count)
+
+    @patch("agent_runner._run_process_with_stream_capture")
+    def test_run_skill_repreeflights_after_prior_failure(self, mock_run_process) -> None:
+        mock_run_process.side_effect = [
+            subprocess.CompletedProcess(["codex", "mcp", "list"], 0, "basic-memory connected\n", ""),
+            subprocess.CompletedProcess(["codex", "mcp", "list"], 0, "ida-pro-mcp connected\n", ""),
+            subprocess.CompletedProcess(["codex"], 0, "done\n", ""),
+        ]
+        progress: list[dict] = []
+
+        with (
+            patch.object(Path, "is_file", return_value=True),
+            patch.object(Path, "read_text", return_value="sig finder prompt"),
+        ):
+            self.assertFalse(
+                agent_runner.run_skill(
+                    "find-symbol",
+                    agent="codex",
+                    progress_callback=lambda **event: progress.append(event),
+                )
+            )
+            self.assertTrue(
+                agent_runner.run_skill(
+                    "find-symbol",
+                    agent="codex",
+                    progress_callback=lambda **event: progress.append(event),
+                )
+            )
+
+        self.assertEqual("mcp_unavailable", progress[0]["reason"])
+        self.assertEqual(["failed", "attempt_started", "succeeded"], [event["event"] for event in progress])
+        self.assertEqual(3, mock_run_process.call_count)
 
     def test_pre_dispatch_failures_have_structured_reasons(self) -> None:
         cases = (
