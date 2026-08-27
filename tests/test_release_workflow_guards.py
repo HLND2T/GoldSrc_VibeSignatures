@@ -223,6 +223,25 @@ class VerifyOutputPrGitTests(unittest.TestCase):
             with self.assertRaisesRegex(ReleaseWorkflowError, r"generated-output PR contains disallowed paths"):
                 _verify(root, base_sha=source_sha, head_sha=head_sha)
 
+    def test_rejects_disallowed_source_path_renamed_into_allowed_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            _init_repo(root)
+            _write_source_outputs(root)
+            _write_bytes(root, "README.md", b"renamed-content\n")
+            source_sha = _commit(root, "source")
+
+            (root / "README.md").rename(root / "gamedata" / GAMEVER / "renamed.txt")
+            _run_git(root, "add", "-A")
+            _write_manifest(root, _tracked_manifest(root, source_sha))
+            head_sha = _commit(root, "output-with-hidden-rename-source")
+
+            with self.assertRaisesRegex(
+                ReleaseWorkflowError,
+                r"generated-output PR contains disallowed paths: README\.md",
+            ):
+                _verify(root, base_sha=source_sha, head_sha=head_sha)
+
     def test_rejects_branch_version_mismatch(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

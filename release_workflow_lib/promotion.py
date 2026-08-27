@@ -95,7 +95,7 @@ def verify_output_pr(
     paths = [
         line
         for line in _git_output(
-            ["diff", "--name-only", manifest["source_sha"], head_sha, "--"],
+            ["diff", "--no-renames", "--name-only", manifest["source_sha"], head_sha, "--"],
             cwd=repo_root,
         ).splitlines()
         if line
@@ -146,7 +146,9 @@ def verify_promotion(
     if not _is_ancestor(pending["source_sha"], base_parent_sha):
         raise ReleaseWorkflowError("merge first parent must descend from SOURCE_SHA")
     paths = [
-        line for line in _git_output(["diff", "--name-only", base_parent_sha, merge_sha, "--"]).splitlines() if line
+        line
+        for line in _git_output(["diff", "--no-renames", "--name-only", base_parent_sha, merge_sha, "--"]).splitlines()
+        if line
     ]
     gamevers = [entry["gamever"] for entry in pending["gamevers"]]
     validate_output_paths(paths, gamevers, version)

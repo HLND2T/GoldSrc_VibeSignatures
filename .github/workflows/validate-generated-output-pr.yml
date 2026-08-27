@@ -18,16 +18,17 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-      - run: uv sync --locked
       - name: Checkout trusted validation tooling from PR base
         uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: .release-tools
           fetch-depth: 1
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Sync trusted validation dependencies from PR base
+        run: uv sync --locked --project .release-tools
       - name: Verify paths, provenance, and tracked hashes
         env:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
@@ -37,7 +38,7 @@ jobs:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |-
           git fetch origin "$PR_BASE_SHA" "$PR_HEAD_SHA"
-          uv run .release-tools/release_workflow.py verify-output-pr \
+          uv run --locked --project .release-tools .release-tools/release_workflow.py verify-output-pr \
             --repo-root "$GITHUB_WORKSPACE" \
             --repository "${{ github.repository }}" \
             --head-repository "$PR_HEAD_REPOSITORY" \
