@@ -170,7 +170,7 @@ jobs:
       - name: Analyze all game versions
         shell: pwsh
         run: |
-          uv run python ida_analyze_bin.py -allgamever -cache_mode warm
+          uv run python ida_analyze_bin.py -allgamever -cache_mode warm -debug -process_reporter console
           if ($LASTEXITCODE -ne 0) { throw 'all-gamever analysis failed' }
       - name: Build, guard, and publish candidates for every game version
         shell: pwsh
