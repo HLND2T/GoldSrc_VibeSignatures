@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import os
 import re
 import subprocess
 import sys
 import threading
+import tempfile
+import urllib.parse
 import uuid
 from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -28,6 +32,7 @@ CLAUDE_SKILL_RUNNER_SETTINGS = ".claude/skill_runner.settings.json"
 SKILL_RUNNER_SYSTEM_PROMPT = ".claude/SKILL_RUNNER.md"
 OPENCODE_SKILL_RUNNER_CONFIG = ".opencode/skill_runner.config.json"
 DEFAULT_AGENT_MODEL = ""
+LOOPBACK_HOST_LITERALS = frozenset({"localhost", "127.0.0.1", "::1"})
 
 
 @dataclass(frozen=True)
@@ -44,12 +49,66 @@ class McpPreflightResult:
     detail: dict[str, object] = field(default_factory=dict)
 
 
-_MCP_PREFLIGHT_CACHE: dict[tuple[str, str], McpPreflightResult] = {}
+_MCP_PREFLIGHT_CACHE: dict[tuple[str, str, str | None], McpPreflightResult] = {}
 
 
 def detect_agent_kind(agent: str) -> str | None:
     lowered = str(agent).lower()
     return next((kind for kind in ("claude", "codex", "opencode") if kind in lowered), None)
+
+
+def _is_loopback_host(host: str) -> bool:
+    if host in LOOPBACK_HOST_LITERALS:
+        return True
+    try:
+        return bool(ipaddress.ip_address(host).is_loopback)
+    except ValueError:
+        return False
+
+
+def _normalize_mcp_url(mcp_url: str | None) -> str | None:
+    """Validate and canonicalize an owned idalib-mcp HTTP endpoint URL."""
+    if mcp_url is None:
+        return None
+    if not isinstance(mcp_url, str):
+        raise ValueError("mcp_url must be a string")
+    normalized = mcp_url.strip()
+    if not normalized:
+        raise ValueError("mcp_url must not be empty")
+    try:
+        parsed = urllib.parse.urlsplit(normalized)
+    except ValueError as error:
+        raise ValueError(f"invalid mcp_url: {error}") from error
+    if parsed.scheme != "http":
+        raise ValueError("mcp_url must use the http scheme")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("mcp_url must not contain credentials")
+    if parsed.query or parsed.fragment:
+        raise ValueError("mcp_url must not contain a query or fragment")
+    if parsed.path != "/mcp":
+        raise ValueError("mcp_url must use the /mcp path")
+    host = parsed.hostname
+    if not host:
+        raise ValueError("mcp_url must include a host")
+    if not _is_loopback_host(host):
+        raise ValueError("mcp_url host must be a local loopback address")
+    try:
+        port = parsed.port
+    except ValueError as error:
+        raise ValueError(f"invalid mcp_url port: {error}") from error
+    if port is None or not 1 <= port <= 65535:
+        raise ValueError("mcp_url port must be between 1 and 65535")
+    formatted_host = f"[{host}]" if ":" in host else host
+    return f"http://{formatted_host}:{port}/mcp"
+
+
+def mcp_endpoint_url(host: str, port: int) -> str:
+    """Build the canonical analyzer-owned idalib-mcp endpoint URL from a verified runtime."""
+    normalized_host = str(host).strip()
+    if normalized_host.startswith("[") and normalized_host.endswith("]"):
+        normalized_host = normalized_host[1:-1]
+    formatted_host = f"[{normalized_host}]" if ":" in normalized_host else normalized_host
+    return _normalize_mcp_url(f"http://{formatted_host}:{port}/mcp")
 
 
 def _extract_opencode_session_id(output: str) -> str | None:
@@ -84,7 +143,23 @@ def _mcp_list_contains_server(output: str, server_name: str = "ida-pro-mcp") -> 
     return bool(re.search(rf"(?m)^\s*{prefix}{re.escape(server_name)}(?:\s|:|$)", normalized_output))
 
 
-def _agent_process_env(agent_kind: str) -> dict[str, str] | None:
+def _agent_mcp_override_args(agent_kind: str, mcp_url: str | None) -> list[str]:
+    if not mcp_url:
+        return []
+    if agent_kind == "claude":
+        config = {"mcpServers": {"ida-pro-mcp": {"type": "http", "url": mcp_url}}}
+        return ["--mcp-config", json.dumps(config, separators=(",", ":")), "--strict-mcp-config"]
+    if agent_kind == "codex":
+        return [
+            "-c",
+            f"mcp_servers.ida-pro-mcp.url={json.dumps(mcp_url)}",
+            "-c",
+            "mcp_servers.ida-pro-mcp.required=true",
+        ]
+    return []
+
+
+def _agent_process_env(agent_kind: str, mcp_url: str | None = None) -> dict[str, str] | None:
     if agent_kind != "opencode":
         return None
     env = os.environ.copy()
@@ -94,7 +169,34 @@ def _agent_process_env(agent_kind: str) -> dict[str, str] | None:
             "OPENCODE_CONFIG": OPENCODE_SKILL_RUNNER_CONFIG,
         }
     )
+    if mcp_url:
+        env["OPENCODE_CONFIG_CONTENT"] = json.dumps(
+            {
+                "mcp": {
+                    "ida-pro-mcp": {
+                        "type": "remote",
+                        "url": mcp_url,
+                        "enabled": True,
+                    }
+                }
+            },
+            separators=(",", ":"),
+        )
     return env
+
+
+@contextmanager
+def _claude_mcp_preflight_workspace(mcp_url: str | None):
+    if mcp_url is None:
+        yield None
+        return
+    with tempfile.TemporaryDirectory(prefix="gsvibe-claude-preflight-") as temporary_directory:
+        config = {"mcpServers": {"ida-pro-mcp": {"type": "http", "url": mcp_url}}}
+        (Path(temporary_directory) / ".mcp.json").write_text(
+            json.dumps(config, separators=(",", ":")),
+            encoding="utf-8",
+        )
+        yield temporary_directory
 
 
 def _truncate_diagnostic(text: str | bytes | None) -> str | None:
@@ -157,6 +259,7 @@ def _run_process_with_stream_capture(
     debug: bool = False,
     timeout: int = SKILL_TIMEOUT,
     env: dict[str, str] | None = None,
+    cwd: str | Path | None = None,
 ) -> subprocess.CompletedProcess[str]:
     process = subprocess.Popen(
         command,
@@ -165,6 +268,7 @@ def _run_process_with_stream_capture(
         stderr=subprocess.PIPE,
         text=True,
         env=env,
+        cwd=cwd,
     )
     if agent_input is not None and process.stdin is not None:
         process.stdin.write(agent_input)
@@ -270,8 +374,10 @@ def _build_claude_command(
     session_id: str,
     is_retry: bool,
     agent_model: str = DEFAULT_AGENT_MODEL,
+    mcp_url: str | None = None,
 ) -> AgentCommand:
     args = [agent, "-p", f"/{skill_name}", "--agent", "sig-finder"]
+    args.extend(_agent_mcp_override_args("claude", mcp_url))
     args.extend(_agent_model_args("claude", agent_model))
     args.extend(["--settings", CLAUDE_SKILL_RUNNER_SETTINGS])
     args.extend(["--append-system-prompt-file", SKILL_RUNNER_SYSTEM_PROMPT])
@@ -286,8 +392,10 @@ def _build_codex_command(
     developer_instructions: str,
     is_retry: bool,
     agent_model: str = DEFAULT_AGENT_MODEL,
+    mcp_url: str | None = None,
 ) -> AgentCommand:
     args = [agent, "--profile", "skill_runner", "-c", developer_instructions]
+    args.extend(_agent_mcp_override_args("codex", mcp_url))
     args.extend(_agent_model_args("codex", agent_model))
     args.append("exec")
     if is_retry:
@@ -326,14 +434,15 @@ def _build_agent_command(
     developer_instructions: str | None,
     is_retry: bool,
     agent_model: str = DEFAULT_AGENT_MODEL,
+    mcp_url: str | None = None,
 ) -> AgentCommand:
     if agent_kind == "claude":
-        return _build_claude_command(agent, skill_name, session_id, is_retry, agent_model)
+        return _build_claude_command(agent, skill_name, session_id, is_retry, agent_model, mcp_url)
     if agent_kind == "opencode":
         return _build_opencode_command(agent, skill_name, is_retry, opencode_session_id, agent_model)
     if developer_instructions is None:
         raise ValueError("Codex developer instructions are required")
-    return _build_codex_command(agent, skill_name, developer_instructions, is_retry, agent_model)
+    return _build_codex_command(agent, skill_name, developer_instructions, is_retry, agent_model, mcp_url)
 
 
 def build_agent_command(
@@ -365,19 +474,28 @@ def build_agent_command(
     return command.args
 
 
-def _perform_mcp_preflight(agent: str, *, debug: bool, server_name: str) -> McpPreflightResult:
-    cache_key = (agent, server_name)
+def _perform_mcp_preflight(
+    agent: str, *, debug: bool, server_name: str, mcp_url: str | None = None
+) -> McpPreflightResult:
+    try:
+        mcp_url = _normalize_mcp_url(mcp_url)
+    except ValueError as error:
+        return McpPreflightResult(False, "invalid_mcp_url", {"error": str(error)})
+    cache_key = (agent, server_name, mcp_url)
     cached = _MCP_PREFLIGHT_CACHE.get(cache_key)
     if cached is not None:
         return cached
-    command = [agent, "mcp", "list"]
+    agent_kind = detect_agent_kind(agent) or ""
+    command = [agent, *_agent_mcp_override_args(agent_kind, mcp_url), "mcp", "list"]
     try:
-        completed = _run_process_with_stream_capture(
-            command,
-            debug=debug,
-            timeout=MCP_LIST_TIMEOUT,
-            env=_agent_process_env(detect_agent_kind(agent) or ""),
-        )
+        with _claude_mcp_preflight_workspace(mcp_url if agent_kind == "claude" else None) as preflight_cwd:
+            completed = _run_process_with_stream_capture(
+                command,
+                debug=debug,
+                timeout=MCP_LIST_TIMEOUT,
+                env=_agent_process_env(agent_kind, mcp_url),
+                cwd=preflight_cwd,
+            )
     except subprocess.TimeoutExpired as error:
         result = McpPreflightResult(
             False,
@@ -409,8 +527,14 @@ def _perform_mcp_preflight(agent: str, *, debug: bool, server_name: str) -> McpP
     return result
 
 
-def has_required_mcp_server(agent: str, server_name: str = "ida-pro-mcp", *, debug: bool = False) -> bool:
-    return _perform_mcp_preflight(agent, debug=debug, server_name=server_name).ok
+def has_required_mcp_server(
+    agent: str,
+    server_name: str = "ida-pro-mcp",
+    *,
+    debug: bool = False,
+    mcp_url: str | None = None,
+) -> bool:
+    return _perform_mcp_preflight(agent, debug=debug, server_name=server_name, mcp_url=mcp_url).ok
 
 
 def _missing_expected_outputs(expected_yaml_paths) -> list[str]:
@@ -459,9 +583,10 @@ def _run_skill_attempts(
     timeout: int,
     debug: bool,
     progress_callback: Callable[..., None] | None,
+    mcp_url: str | None = None,
 ) -> bool:
     opencode_session_id = None
-    process_env = _agent_process_env(agent_kind)
+    process_env = _agent_process_env(agent_kind, mcp_url)
     last_failure: dict[str, object] | None = None
     for attempt_index in range(max_retries):
         attempt = attempt_index + 1
@@ -475,6 +600,7 @@ def _run_skill_attempts(
             developer_instructions=developer_instructions,
             is_retry=attempt_index > 0,
             agent_model=agent_model,
+            mcp_url=mcp_url,
         )
         try:
             completed = _run_process_with_stream_capture(
@@ -554,6 +680,7 @@ def run_skill(
     mcp_preflight: bool = True,
     debug: bool = False,
     agent_model: str | None = None,
+    mcp_url: str | None = None,
 ) -> bool:
     """Execute a skill with bounded retries and structured progress events."""
     agent_kind = detect_agent_kind(agent)
@@ -579,13 +706,18 @@ def run_skill(
     except ValueError as error:
         _notify_progress(progress_callback, "failed", reason="invalid_agent_model", error=str(error))
         return False
+    try:
+        mcp_url = _normalize_mcp_url(mcp_url)
+    except ValueError as error:
+        _notify_progress(progress_callback, "failed", reason="invalid_mcp_url", error=str(error))
+        return False
 
     skill_path = Path(".claude") / "skills" / skill_name / "SKILL.md"
     if not skill_path.is_file():
         _notify_progress(progress_callback, "failed", reason="skill_file_missing", path=str(skill_path))
         return False
     if mcp_preflight:
-        preflight = _perform_mcp_preflight(agent, debug=debug, server_name="ida-pro-mcp")
+        preflight = _perform_mcp_preflight(agent, debug=debug, server_name="ida-pro-mcp", mcp_url=mcp_url)
         if not preflight.ok:
             _notify_progress(progress_callback, "failed", reason=preflight.reason, **preflight.detail)
             return False
@@ -606,4 +738,5 @@ def run_skill(
         timeout=timeout,
         debug=debug,
         progress_callback=progress_callback,
+        mcp_url=mcp_url,
     )

@@ -34,7 +34,8 @@ glob 都不是 validation 输入。
 
 Planner 还会从 repository variable `GSVIBE_IDB_CACHE_MODE` 绑定 `cache_mode`，默认值为 `cold`。Analysis 在
 `win64` Environment 下的专用 `[self-hosted, windows, x64]` runner 运行，并受 repository-wide IDA
-concurrency group 约束。Warm mode 在同一个 job 内完成 clean、probe/miss warmup、exact selection、restore、
+concurrency group 约束（动态 per-binary MCP endpoint 为 invocation-scoped，不会放宽该 group）。Warm mode 在同一个
+job 内完成 clean、probe/miss warmup、exact selection、restore、
 analysis 与 final clean。`cache-selection.json` 绑定 plan SHA、merge/bin identity、selected binary、cache key、
 generation 和 manifest hash；其 SHA-256 会被复核，Actions artifact 只作为 evidence。Cold mode 不执行任何收到
 `GSVIBE_PERSISTED_WORKSPACE` 的 step。

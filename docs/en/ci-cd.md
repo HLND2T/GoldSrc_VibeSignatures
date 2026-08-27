@@ -30,7 +30,8 @@ Hosted and self-hosted source validation rebuild the canonical gamedata manifest
 
 The planner also binds `cache_mode` from the `GSVIBE_IDB_CACHE_MODE` repository variable (`cold` by default). Analysis
 runs on the dedicated `[self-hosted, windows, x64]` runner under the `win64` Environment and one
-repository-wide IDA concurrency group. Warm mode keeps clean, probe/miss warmup, exact selection, restore, analysis, and
+repository-wide IDA concurrency group (dynamic per-binary MCP endpoints are invocation-scoped and do not relax this
+group). Warm mode keeps clean, probe/miss warmup, exact selection, restore, analysis, and
 final clean in that one job. `cache-selection.json` binds the plan SHA, merge/bin identities, selected binaries, cache
 keys, generations, and manifest hashes; its SHA-256 is rechecked and uploaded only as evidence. Cold mode never executes
 a step that receives `GSVIBE_PERSISTED_WORKSPACE`.

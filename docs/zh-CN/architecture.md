@@ -52,8 +52,8 @@ config symbol identity 强制比较。
 2. 在需要 fallback 时通过 Agent runner 有界重试具体 skill。
 
 Agent runner 会校验各 CLI 的 model 参数、保持 Claude/OpenCode retry session 稳定、注入 Codex developer prompt、
-并发 drain stdout/stderr，并通过本地 reporter 发出 attempt 级结构化诊断。MCP list preflight 结果按 Agent 可执行文件
-和 server 分别缓存。
+并发 drain stdout/stderr，并通过本地 reporter 发出 attempt 级结构化诊断。MCP list preflight 结果按 Agent 可执行文件、
+server 和 normalized MCP endpoint 分别缓存（仅成功）。
 
 旧 YAML 直接复制已禁用，因为携带地址的旧工件可能保留陈旧地址。旧版本自动选择仅限同一 game family 中更早的
 最高 build，并可通过 `major_update: true` 禁用；Analyzer 将 new-output 到 old-YAML 的映射交给 Preprocessor，
@@ -61,12 +61,14 @@ Agent runner 会校验各 CLI 的 model 参数、保持 Claude/OpenCode retry se
 func/vfunc、GV、patch、structmember、primary/ordinal vtable、继承 slot、xref filter 和受验证的 LLM fallback。
 
 二进制在分析前必须是 32 位 I386，并以 path、platform metadata 和 hashes 核对 opened database identity。按
-CS2 runtime contract，分析期间不再额外增加每个 skill 后的 binary-mutation guard。待执行工作会在
-`127.0.0.1:13337` 上为每个 binary 启动一次 owned `idalib-mcp` 生命周期；对每个 module/platform binary，
-Analyzer 检查 IDB lock 与端口、启动 supervisor、等待 MCP contract ready、绑定唯一活动数据库、核对 survey
-identity、允许一次健康恢复，并定向关闭 owned worker、停止 supervisor、等待端口释放。Preprocessor 每次调用都
-绑定该 binary/database，并获得严格解析的 image base；Preprocessor 与 Agent 产物经过同一层 YAML、symbol schema
-与当前 IDB 地址校验。`-ida_args` 已支持，`-rename` 仍延期。
+CS2 runtime contract，分析期间不再额外增加每个 skill 后的 binary-mutation guard。待执行工作会分配一个空闲
+本地端口，并在 `127.0.0.1:<dynamic-port>` 上为每个 binary 启动一次 owned `idalib-mcp` 生命周期（不再保留固定
+`13337`）；对每个 module/platform binary，Analyzer 检查 IDB lock 与端口、启动 supervisor、等待 MCP contract
+ready、绑定唯一活动数据库、核对 survey identity、允许一次健康恢复，并定向关闭 owned worker、停止 supervisor、
+等待端口释放。verified runtime endpoint 会以 invocation-scoped MCP override 注入 Agent fallback，使每个 Agent
+连接到其 binary 对应的 exact owned lifecycle。Preprocessor 每次调用都绑定该 binary/database，并获得严格解析的
+image base；Preprocessor 与 Agent 产物经过同一层 YAML、symbol schema 与当前 IDB 地址校验。`-ida_args` 已支持，
+`-rename` 仍延期。
 
 `-skip_pp` 跳过单一 Preprocessor，直接运行 Agent Skill。`-skip_error` 允许运行期的后续
 module/platform/skill 继续，但 config 与 DAG contract 错误仍立即失败；任何已记录运行失败最终都会返回非零。

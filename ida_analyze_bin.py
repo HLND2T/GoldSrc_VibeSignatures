@@ -7,6 +7,7 @@ import argparse
 import asyncio
 import copy
 import hashlib
+import ipaddress
 import json
 import os
 import re
@@ -684,6 +685,22 @@ async def check_mcp_worker_health(host, port, expected_binary):
             return True
     except Exception:  # noqa: BLE001 - health probes must collapse transport failures to False.
         return False
+
+
+def _allocate_local_port(host: str = DEFAULT_HOST) -> int:
+    """Reserve a free local port by binding an ephemeral socket, then release it."""
+    bind_host = str(host).strip()
+    if bind_host.startswith("[") and bind_host.endswith("]"):
+        bind_host = bind_host[1:-1]
+    try:
+        address = ipaddress.ip_address(bind_host)
+    except ValueError:
+        address_family = socket.AF_INET
+    else:
+        address_family = socket.AF_INET6 if address.version == 6 else socket.AF_INET
+    with socket.socket(address_family, socket.SOCK_STREAM) as sock:
+        sock.bind((bind_host, 0))
+        return int(sock.getsockname()[1])
 
 
 def is_port_in_use(host, port):
@@ -1621,6 +1638,7 @@ def run_analysis_pipeline(
         if reporting is not None and task_id is not None:
             reporting.emit_progress(task_id, ProcessPhase.AGENT_FALLBACK, event=event, **payload)
 
+    mcp_url = agent_runner.mcp_endpoint_url(runtime.host, runtime.port) if runtime is not None else None
     succeeded = agent_skill_runner(
         node.skill,
         agent=agent,
@@ -1629,6 +1647,7 @@ def run_analysis_pipeline(
         model=agent_model,
         debug=debug,
         progress_callback=report_agent_progress,
+        mcp_url=mcp_url,
     )
     if not succeeded:
         raise PipelineFailure(
@@ -1860,6 +1879,10 @@ def _create_ida_mcp_lifecycle(
     database_policy,
     save_on_success,
 ):
+    if port is None:
+        port = _allocate_local_port(host)
+        if debug:
+            print(f"  Allocated dynamic MCP port {host}:{port}")
     if database_policy == DATABASE_POLICY_REBUILD and save_on_success:
         return IdaMcpLifecycle(binary, platform, host, port, ida_args, debug)
     return IdaMcpLifecycle(
@@ -1995,7 +2018,7 @@ def analyze(
     skip_preprocessors: bool = False,
     debug: bool = False,
     host: str = DEFAULT_HOST,
-    port: int = DEFAULT_PORT,
+    port: int | None = None,
     ida_args: str = "",
     reporter: ProcessReporter | None = None,
     run_id: str | None = None,

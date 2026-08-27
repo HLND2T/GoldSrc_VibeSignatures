@@ -10,6 +10,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import agent_runner
+import ida_analyze_bin
 from agent_runner import build_agent_command
 from analysis_planner import (
     AnalysisPlanError,
@@ -33,6 +35,7 @@ from ida_analyze_bin import (
     PipelineFailure,
     PipelineResult,
     _allgamever_module_filter_matches,
+    _allocate_local_port,
     _invalidate_ida_database,
     _is_major_update_gamever,
     _merge_survey_path,
@@ -1403,6 +1406,84 @@ class DagTests(unittest.TestCase):
             self.assertEqual(PipelineResult("succeeded", "agent"), result)
             ensure_ready.assert_called_once_with()
 
+    def test_agent_fallback_receives_runtime_mcp_url(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "game-1"
+            binary = root / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"binary")
+            node = build_execution_plan(
+                module([skill("find", output=["result.yaml"])]),
+                platforms=["windows"],
+                bin_dir=Path(temporary),
+                tag="game-1",
+            ).nodes[0]
+            runtime = McpRuntime(
+                DEFAULT_HOST,
+                54321,
+                str(binary),
+                McpDatabaseBinding(True, "server-db", str(binary), "worker", True, True),
+            )
+            seen = {}
+
+            def agent(_name, **kwargs):
+                seen["mcp_url"] = kwargs["mcp_url"]
+                Path(kwargs["expected_yaml_paths"][0]).write_text("ok: true\n", encoding="utf-8")
+                return True
+
+            result = run_analysis_pipeline(
+                node,
+                binary_path=binary,
+                game_root=root,
+                old_game_root=None,
+                agent="codex",
+                mcp_runtime=runtime,
+                skip_preprocessors=True,
+                agent_skill_runner=agent,
+            )
+            self.assertEqual(PipelineResult("succeeded", "agent"), result)
+            self.assertEqual("http://127.0.0.1:54321/mcp", seen["mcp_url"])
+
+    def test_agent_fallback_uses_recovered_endpoint(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "game-1"
+            binary = root / "engine" / "hw.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"binary")
+            node = build_execution_plan(
+                module([skill("find", output=["result.yaml"])]),
+                platforms=["windows"],
+                bin_dir=Path(temporary),
+                tag="game-1",
+            ).nodes[0]
+            recovered_runtime = McpRuntime(
+                DEFAULT_HOST,
+                54322,
+                str(binary),
+                McpDatabaseBinding(True, "recovered-db", str(binary), "worker", True, True),
+            )
+            ensure_ready = MagicMock(return_value=recovered_runtime)
+            seen = {}
+
+            def agent(_name, **kwargs):
+                seen["mcp_url"] = kwargs["mcp_url"]
+                Path(kwargs["expected_yaml_paths"][0]).write_text("ok: true\n", encoding="utf-8")
+                return True
+
+            result = run_analysis_pipeline(
+                node,
+                binary_path=binary,
+                game_root=root,
+                old_game_root=None,
+                agent="codex",
+                preprocessor_runner=lambda **_kwargs: PREPROCESS_STATUS_NO_SCRIPT,
+                ensure_mcp_ready=ensure_ready,
+                agent_skill_runner=agent,
+            )
+            self.assertEqual(PipelineResult("succeeded", "agent"), result)
+            ensure_ready.assert_called_once_with()
+            self.assertEqual("http://127.0.0.1:54322/mcp", seen["mcp_url"])
+
     def test_skip_error_continues_but_records_failure(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -1595,6 +1676,44 @@ class DagTests(unittest.TestCase):
             self.assertEqual(1, summary.failed)
 
 
+class TestAllocateLocalPort(unittest.TestCase):
+    def test_binds_ephemeral_socket_and_returns_port(self) -> None:
+        sock = MagicMock()
+        sock.getsockname.return_value = ("127.0.0.1", 39000)
+        sock.__enter__.return_value = sock
+        with patch.object(ida_analyze_bin.socket, "socket", return_value=sock) as socket_cls:
+            port = _allocate_local_port("127.0.0.1")
+
+        self.assertEqual(39000, port)
+        socket_cls.assert_called_once_with(
+            ida_analyze_bin.socket.AF_INET,
+            ida_analyze_bin.socket.SOCK_STREAM,
+        )
+        sock.bind.assert_called_once_with(("127.0.0.1", 0))
+
+    def test_allocated_port_is_actually_free(self) -> None:
+        port = _allocate_local_port("127.0.0.1")
+
+        self.assertIsInstance(port, int)
+        self.assertGreaterEqual(port, 1)
+        self.assertLessEqual(port, 65535)
+        self.assertFalse(ida_analyze_bin.is_port_in_use("127.0.0.1", port))
+
+    def test_binds_ipv6_ephemeral_socket_for_ipv6_loopback(self) -> None:
+        sock = MagicMock()
+        sock.getsockname.return_value = ("::1", 39001, 0, 0)
+        sock.__enter__.return_value = sock
+        with patch.object(ida_analyze_bin.socket, "socket", return_value=sock) as socket_cls:
+            port = _allocate_local_port("::1")
+
+        self.assertEqual(39001, port)
+        socket_cls.assert_called_once_with(
+            ida_analyze_bin.socket.AF_INET6,
+            ida_analyze_bin.socket.SOCK_STREAM,
+        )
+        sock.bind.assert_called_once_with(("::1", 0))
+
+
 class McpLifecycleTests(unittest.TestCase):
     def test_runtime_binding_is_forwarded_to_preprocessor(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1700,6 +1819,7 @@ class McpLifecycleTests(unittest.TestCase):
             lifecycle.ensure_ready.return_value = runtime
             summary = AnalysisSummary()
             with (
+                patch("ida_analyze_bin._allocate_local_port", return_value=39000) as allocate_port,
                 patch("ida_analyze_bin.IdaMcpLifecycle", return_value=lifecycle) as lifecycle_type,
                 patch(
                     "ida_analyze_bin.run_analysis_pipeline",
@@ -1714,7 +1834,8 @@ class McpLifecycleTests(unittest.TestCase):
                     ida_args="quiet",
                     summary=summary,
                 )
-            lifecycle_type.assert_called_once_with(binary, "windows", DEFAULT_HOST, DEFAULT_PORT, "quiet", False)
+            allocate_port.assert_called_once_with(DEFAULT_HOST)
+            lifecycle_type.assert_called_once_with(binary, "windows", DEFAULT_HOST, 39000, "quiet", False)
             lifecycle.ensure_ready.assert_called_once_with()
             self.assertIs(runtime, pipeline.call_args_list[0].kwargs["mcp_runtime"])
             self.assertIs(runtime, pipeline.call_args_list[1].kwargs["mcp_runtime"])
@@ -1728,6 +1849,47 @@ class McpLifecycleTests(unittest.TestCase):
                 pipeline.call_args_list[0].kwargs["artifact_types"],
             )
             self.assertEqual((2, 0, 0), (summary.successful, summary.failed, summary.skipped))
+
+    def test_analyze_preserves_explicit_port_without_allocation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = root / "config.yaml"
+            config.write_text(
+                """modules:
+  - name: engine
+    path_windows: Game/hw.dll
+    module_windows: hw.dll
+    skills:
+      - name: first
+""",
+                encoding="utf-8",
+            )
+            binary = root / "bin" / "game-1" / "engine" / "hw.dll"
+            write_pe32(binary)
+            lifecycle = MagicMock()
+            lifecycle.__enter__.return_value = lifecycle
+            lifecycle.runtime = McpRuntime(
+                DEFAULT_HOST,
+                13337,
+                str(binary),
+                McpDatabaseBinding(False, None, str(binary), "worker", True, True),
+            )
+            lifecycle.ensure_ready.return_value = lifecycle.runtime
+            summary = AnalysisSummary()
+            with (
+                patch("ida_analyze_bin._allocate_local_port", side_effect=AssertionError("must not allocate")),
+                patch("ida_analyze_bin.IdaMcpLifecycle", return_value=lifecycle) as lifecycle_type,
+                patch("ida_analyze_bin.run_analysis_pipeline", return_value=PipelineResult("succeeded", "agent")),
+            ):
+                analyze(
+                    gamever="game-1",
+                    config_path=config,
+                    bindir=root / "bin",
+                    platforms=["windows"],
+                    port=13337,
+                    summary=summary,
+                )
+            lifecycle_type.assert_called_once_with(binary, "windows", DEFAULT_HOST, 13337, "", False)
 
     def test_selected_node_forces_existing_output_and_ignores_unselected_binary(self):
         with tempfile.TemporaryDirectory() as temporary:

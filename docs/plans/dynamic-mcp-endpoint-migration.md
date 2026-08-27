@@ -1,6 +1,6 @@
 # 动态 MCP endpoint 迁移计划
 
-状态：待实施
+状态：已实施
 
 日期：2026-08-27（Asia/Singapore）
 

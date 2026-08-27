@@ -123,6 +123,54 @@ class AgentRunnerCommandTests(unittest.TestCase):
         self.assertEqual(["exec", "-"], command.args[-2:])
         self.assertEqual("Run SKILL: .claude/skills/find-symbol/SKILL.md", command.input_text)
 
+    def test_claude_dynamic_mcp_override_is_reused_for_retry(self) -> None:
+        mcp_url = "http://127.0.0.1:54321/mcp"
+        first = agent_runner._build_claude_command("claude", "find-symbol", "session-1", False, mcp_url=mcp_url)
+        retry = agent_runner._build_claude_command("claude", "find-symbol", "session-1", True, mcp_url=mcp_url)
+        expected_config = {"mcpServers": {"ida-pro-mcp": {"type": "http", "url": mcp_url}}}
+
+        for command in (first, retry):
+            config_index = command.args.index("--mcp-config")
+            self.assertEqual(expected_config, json.loads(command.args[config_index + 1]))
+            self.assertIn("--strict-mcp-config", command.args)
+
+    def test_codex_dynamic_mcp_override_is_reused_for_retry(self) -> None:
+        mcp_url = "http://127.0.0.1:54321/mcp"
+        expected_override = [
+            "-c",
+            f'mcp_servers.ida-pro-mcp.url="{mcp_url}"',
+            "-c",
+            "mcp_servers.ida-pro-mcp.required=true",
+        ]
+        first = agent_runner._build_codex_command(
+            "codex", "find-symbol", 'developer_instructions="sig finder"', False, mcp_url=mcp_url
+        )
+        retry = agent_runner._build_codex_command(
+            "codex", "find-symbol", 'developer_instructions="sig finder"', True, mcp_url=mcp_url
+        )
+
+        for command in (first, retry):
+            override_index = command.args.index(expected_override[1]) - 1
+            self.assertEqual(expected_override, command.args[override_index : override_index + 4])
+
+    def test_mcp_endpoint_url_builds_canonical_loopback_url(self) -> None:
+        self.assertEqual("http://127.0.0.1:54321/mcp", agent_runner.mcp_endpoint_url("127.0.0.1", 54321))
+        self.assertEqual("http://[::1]:54321/mcp", agent_runner.mcp_endpoint_url("::1", 54321))
+
+    def test_mcp_endpoint_url_rejects_invalid_urls(self) -> None:
+        for url in (
+            "https://127.0.0.1:54321/mcp",
+            "http://example.com:54321/mcp",
+            "http://user:pass@127.0.0.1:54321/mcp",
+            "http://127.0.0.1:54321/mcp?x=1",
+            "http://127.0.0.1:54321/mcp#frag",
+            "http://127.0.0.1:54321/other",
+            "http://127.0.0.1:99999/mcp",
+        ):
+            with self.subTest(url=url):
+                with self.assertRaises(ValueError):
+                    agent_runner._normalize_mcp_url(url)
+
 
 class AgentRunnerProcessTests(unittest.TestCase):
     @patch("agent_runner.subprocess.Popen")
@@ -203,6 +251,55 @@ class AgentRunnerExecutionTests(unittest.TestCase):
         self.assertTrue(second.ok)
         self.assertEqual(2, mock_run_process.call_count)
 
+    @patch("agent_runner._run_process_with_stream_capture")
+    def test_claude_preflight_uses_dynamic_endpoint_workspace(self, mock_run_process) -> None:
+        mcp_url = "http://127.0.0.1:54321/mcp"
+
+        def run_process(command, **kwargs):
+            config = json.loads((Path(kwargs["cwd"]) / ".mcp.json").read_text(encoding="utf-8"))
+            self.assertEqual(mcp_url, config["mcpServers"]["ida-pro-mcp"]["url"])
+            return subprocess.CompletedProcess(command, 0, "ida-pro-mcp connected\n", "")
+
+        mock_run_process.side_effect = run_process
+        result = agent_runner._perform_mcp_preflight(
+            "claude",
+            debug=False,
+            server_name="ida-pro-mcp",
+            mcp_url=mcp_url,
+        )
+
+        self.assertTrue(result.ok)
+        command = mock_run_process.call_args.args[0]
+        self.assertIn("--mcp-config", command)
+        self.assertIn("--strict-mcp-config", command)
+
+    @patch("agent_runner._run_process_with_stream_capture")
+    def test_direct_preflight_normalizes_mcp_url_before_cache(self, mock_run_process) -> None:
+        mock_run_process.return_value = subprocess.CompletedProcess(["codex"], 0, "ida-pro-mcp connected\n", "")
+        canonical = "http://127.0.0.1:54321/mcp"
+        noncanonical = " HTTP://127.0.0.1:54321/mcp "
+
+        self.assertTrue(agent_runner.has_required_mcp_server("codex", mcp_url=noncanonical))
+        self.assertTrue(agent_runner.has_required_mcp_server("codex", mcp_url=canonical))
+        self.assertEqual(1, mock_run_process.call_count)
+        self.assertEqual(
+            'mcp_servers.ida-pro-mcp.url="http://127.0.0.1:54321/mcp"',
+            mock_run_process.call_args.args[0][2],
+        )
+
+    @patch("agent_runner._run_process_with_stream_capture")
+    def test_direct_preflight_rejects_invalid_mcp_url(self, mock_run_process) -> None:
+        result = agent_runner._perform_mcp_preflight(
+            "codex",
+            debug=False,
+            server_name="ida-pro-mcp",
+            mcp_url="https://example.com/mcp",
+        )
+
+        self.assertFalse(result.ok)
+        self.assertEqual("invalid_mcp_url", result.reason)
+        mock_run_process.assert_not_called()
+
     @patch("agent_runner._run_process_with_stream_capture", side_effect=FileNotFoundError)
     def test_agent_not_found_failure_is_not_cached(self, mock_run_process) -> None:
         first = agent_runner._perform_mcp_preflight("codex", debug=False, server_name="ida-pro-mcp")
@@ -275,6 +372,99 @@ class AgentRunnerExecutionTests(unittest.TestCase):
         self.assertEqual("mcp_unavailable", progress[0]["reason"])
         self.assertEqual(["failed", "attempt_started", "succeeded"], [event["event"] for event in progress])
         self.assertEqual(3, mock_run_process.call_count)
+
+    @patch("agent_runner._run_process_with_stream_capture")
+    def test_preflight_cache_is_partitioned_by_dynamic_endpoint(self, mock_run_process) -> None:
+        first_url = "http://127.0.0.1:54321/mcp"
+        second_url = "http://127.0.0.1:54322/mcp"
+        mock_run_process.side_effect = [
+            subprocess.CompletedProcess(["codex"], 0, "ida-pro-mcp enabled\n", ""),
+            subprocess.CompletedProcess(["codex"], 0, "ida-pro-mcp enabled\n", ""),
+        ]
+
+        self.assertTrue(
+            agent_runner._perform_mcp_preflight("codex", debug=False, server_name="ida-pro-mcp", mcp_url=first_url).ok
+        )
+        self.assertTrue(
+            agent_runner._perform_mcp_preflight("codex", debug=False, server_name="ida-pro-mcp", mcp_url=first_url).ok
+        )
+        self.assertTrue(
+            agent_runner._perform_mcp_preflight("codex", debug=False, server_name="ida-pro-mcp", mcp_url=second_url).ok
+        )
+
+        self.assertEqual(2, mock_run_process.call_count)
+        for process_call, mcp_url in zip(mock_run_process.call_args_list, (first_url, second_url), strict=True):
+            self.assertEqual(
+                [
+                    "codex",
+                    "-c",
+                    f'mcp_servers.ida-pro-mcp.url="{mcp_url}"',
+                    "-c",
+                    "mcp_servers.ida-pro-mcp.required=true",
+                    "mcp",
+                    "list",
+                ],
+                process_call.args[0],
+            )
+
+    def test_run_skill_rejects_invalid_mcp_url_with_structured_reason(self) -> None:
+        progress: list[dict] = []
+        result = agent_runner.run_skill(
+            "find-symbol",
+            agent="codex",
+            mcp_url="https://example.com/mcp",
+            progress_callback=lambda **event: progress.append(event),
+        )
+        self.assertFalse(result)
+        self.assertEqual("invalid_mcp_url", progress[-1]["reason"])
+
+    @patch("agent_runner._run_process_with_stream_capture")
+    def test_run_skill_injects_opencode_mcp_override_for_preflight_and_retries(self, mock_run_process) -> None:
+        mcp_url = "http://127.0.0.1:54321/mcp"
+        mock_run_process.side_effect = [
+            subprocess.CompletedProcess(["opencode", "mcp", "list"], 0, "ida-pro-mcp connected\n", ""),
+            subprocess.CompletedProcess(["opencode", "run"], 1, "", "first failure"),
+            subprocess.CompletedProcess(["opencode", "run"], 0, "", ""),
+        ]
+
+        with patch.object(Path, "is_file", return_value=True):
+            self.assertTrue(
+                agent_runner.run_skill(
+                    "find-symbol",
+                    agent="opencode",
+                    max_retries=2,
+                    mcp_url=mcp_url,
+                )
+            )
+
+        expected_content = {"mcp": {"ida-pro-mcp": {"type": "remote", "url": mcp_url, "enabled": True}}}
+        for process_call in mock_run_process.call_args_list:
+            self.assertEqual(expected_content, json.loads(process_call.kwargs["env"]["OPENCODE_CONFIG_CONTENT"]))
+
+    @patch("agent_runner._run_process_with_stream_capture")
+    def test_mcp_preflight_false_still_injects_endpoint_override(self, mock_run_process) -> None:
+        mcp_url = "http://127.0.0.1:54321/mcp"
+        mock_run_process.side_effect = [
+            subprocess.CompletedProcess(["codex"], 0, "done\n", ""),
+        ]
+
+        with (
+            patch.object(Path, "is_file", return_value=True),
+            patch.object(Path, "read_text", return_value="sig finder prompt"),
+        ):
+            self.assertTrue(
+                agent_runner.run_skill(
+                    "find-symbol",
+                    agent="codex",
+                    max_retries=1,
+                    mcp_preflight=False,
+                    mcp_url=mcp_url,
+                )
+            )
+
+        command = mock_run_process.call_args.args[0]
+        self.assertIn(f'mcp_servers.ida-pro-mcp.url="{mcp_url}"', command)
+        self.assertIn("mcp_servers.ida-pro-mcp.required=true", command)
 
     def test_pre_dispatch_failures_have_structured_reasons(self) -> None:
         cases = (
