@@ -64,7 +64,7 @@ jobs:
     runs-on: [self-hosted, windows, x64]
     timeout-minutes: 1440
     env:
-      PERSISTED_WORKSPACE: ${{ secrets.GSVIBE_PERSISTED_WORKSPACE }}
+      PERSISTED_WORKSPACE: ${{ secrets.PERSISTED_WORKSPACE }}
       IDA_KERNEL_VERSION: ${{ vars.GSVIBE_IDA_KERNEL_VERSION }}
       SUBMODULE_CACHE_VERSION: v1
     steps:
@@ -116,7 +116,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           if ([string]::IsNullOrWhiteSpace($env:PERSISTED_WORKSPACE)) {
-            throw 'GSVIBE_PERSISTED_WORKSPACE is required'
+            throw 'PERSISTED_WORKSPACE is required'
           }
           $binRoot = (Resolve-Path -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'bin')).Path
           $gamevers = uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {}).get('gamevers', [])))"

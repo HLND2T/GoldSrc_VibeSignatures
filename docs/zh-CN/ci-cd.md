@@ -38,7 +38,7 @@ concurrency group 约束（动态 per-binary MCP endpoint 为 invocation-scoped�
 job 内完成 clean、probe/miss warmup、exact selection、restore、
 analysis 与 final clean。`cache-selection.json` 绑定 plan SHA、merge/bin identity、selected binary、cache key、
 generation 和 manifest hash；其 SHA-256 会被复核，Actions artifact 只作为 evidence。Cold mode 不执行任何收到
-`GSVIBE_PERSISTED_WORKSPACE` 的 step。
+`PERSISTED_WORKSPACE` 的 step。
 
 Production warm activation 必须满足 [IDB cache 运维手册](idb-cache-operations.md) 中的 host/repository 设置。
 Unit 与 workflow-contract test 不能替代专用 runner 上记录的 cold、首次 miss/publication 与后续 hit run。

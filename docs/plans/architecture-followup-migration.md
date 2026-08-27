@@ -385,7 +385,7 @@ cache key 是上述 canonical JSON 的 SHA-256。为避免“只有 warm 后才�
 路径：
 
 ```text
-<GSVIBE_PERSISTED_WORKSPACE>/idb-cache/<tag>/
+<PERSISTED_WORKSPACE>/idb-cache/<tag>/
   generations/<cache-key>-<run-id>-<attempt>/
     manifest.json
     payload/binaries/<module>/<relative-binary-path>
@@ -429,7 +429,7 @@ verify
 3. warm mode只为`analysis_nodes`涉及的`(tag,module,platform)` pairs执行runtime/cache probe；cache miss时bounded warmup并发布/选择exact generations；
 4. warm mode在同一job写canonical `cache-selection.json`与SHA-256并复核；可上传为证据，但Actions artifact不是cache transport/truth；
 5. warm mode从selection指定的exact local/shared generation restore，以strict warm-IDB mode执行selected-node analysis；
-6. cold mode不读取`GSVIBE_PERSISTED_WORKSPACE`，执行validated clean后直接走normal loader/auto-analysis与selected-node analysis；
+6. cold mode不读取`PERSISTED_WORKSPACE`，执行validated clean后直接走normal loader/auto-analysis与selected-node analysis；
 7. finally清除当前workspace restored/modified databases，但不删除immutable cache generation。
 
 当前 workflow 的 clean 顺序必须调整为：
@@ -443,7 +443,7 @@ validated bin-submodule clean
 
 禁止在 restore 后、analysis 前再次执行 `git clean -ffdx`。
 
-该组合 job 运行在唯一专用 runner label（在通用 labels 之外增加仓库配置的专用 label）和受保护的 `win64` Environment。只有在所有 runner 共享同一具备原子 rename 语义的受控存储时，未来才允许拆分 producer/consumer。`GSVIBE_PERSISTED_WORKSPACE` 只在这些 jobs 中注入，且 canonical-resolve 后必须位于 `GITHUB_WORKSPACE/bin` 与整个 checkout 之外并拒绝 reparse-point escape；hosted planner 不读取该 secret。
+该组合 job 运行在唯一专用 runner label（在通用 labels 之外增加仓库配置的专用 label）和受保护的 `win64` Environment。只有在所有 runner 共享同一具备原子 rename 语义的受控存储时，未来才允许拆分 producer/consumer。`PERSISTED_WORKSPACE` 只在这些 jobs 中注入，且 canonical-resolve 后必须位于 `GITHUB_WORKSPACE/bin` 与整个 checkout 之外并拒绝 reparse-point escape；hosted planner 不读取该 secret。
 
 ### 6.5 并发、retention 与恢复
 
@@ -606,7 +606,7 @@ Event/trust contract 固定为：
 GoldSrc private stage 不复制 accepted binary tree。建议内容：
 
 ```text
-<GSVIBE_PERSISTED_WORKSPACE>/release-staging/<tag>/<build-id>/
+<PERSISTED_WORKSPACE>/release-staging/<tag>/<build-id>/
   content-manifest.json
   BUILDING.json
   HEAD_BOUND.json
@@ -617,9 +617,9 @@ GoldSrc private stage 不复制 accepted binary tree。建议内容：
   PROMOTION_COMPLETE.json
   FAILED.json | CANCELLED.json | PR_CLOSED.json
 
-<GSVIBE_PERSISTED_WORKSPACE>/release-staging/pr-index/<pr-number>.json
-<GSVIBE_PERSISTED_WORKSPACE>/release-staging/completed/<tag>/<build-id>.json
-<GSVIBE_PERSISTED_WORKSPACE>/release-staging/locks/<tag>.lock
+<PERSISTED_WORKSPACE>/release-staging/pr-index/<pr-number>.json
+<PERSISTED_WORKSPACE>/release-staging/completed/<tag>/<build-id>.json
+<PERSISTED_WORKSPACE>/release-staging/locks/<tag>.lock
 ```
 
 所有 state JSON 使用版本化 schema，绑定 tag、build ID、content-manifest SHA-256、前一 state hash、run identity 与 lease/owner，并只允许 `BUILDING -> HEAD_BOUND -> PR_CREATED -> READY -> PROMOTION_STARTED -> PROMOTED -> PROMOTION_COMPLETE`。`FAILED/CANCELLED/PR_CLOSED`作为append-only诊断记录，必须指向最后一个成功边界，不删除或伪造其状态；retry创建新build，resume-promotion从同一build最后成功边界继续。必要的output bytes已在generated-output commit；binary可由`source_sha + bin_gitlink_sha`精确重建。stage只保存private identity、状态标记和不能安全放进tracked manifest的PR binding，不保存IDB、MCP/BinSync状态或另一份accepted-bin。

@@ -37,7 +37,7 @@ CLI 参数、环境变量、程序默认值。关键变量：
 
 Warm-cache runtime probe 需要 `IDADIR`，以绑定 exact pinned loader module 与 allowlisted plugin。Cache CLI 接收
 显式 persisted root；CI 后续只会在受保护的专用 Windows runner job 内将其注入为
-`GSVIBE_PERSISTED_WORKSPACE`。该 root 必须位于 checkout 与 `bin/` 之外，不得经过 reparse point，并且所在存储
+`PERSISTED_WORKSPACE`。该 root 必须位于 checkout 与 `bin/` 之外，不得经过 reparse point，并且所在存储
 必须支持同文件系统 atomic rename。
 
 Runner account 需要对 cache root 拥有独占写权限。Cache warming 固定单并发，并用本地 file lock 保护固定 MCP
@@ -46,13 +46,13 @@ port。只有所有 consumer 共享同一受控 storage 与 ACL authority 时才
 
 真实 runner evidence 完成前，repository variable `GSVIBE_IDB_CACHE_MODE` 保持 `cold`，完成后才切换为 `warm`；
 `GSVIBE_IDA_KERNEL_VERSION` 记录 pinned installation 的 expected kernel version。Absolute persisted path 作为
-Environment secret `GSVIBE_PERSISTED_WORKSPACE` 保存。Observed runtime 必须与 expected kernel、loader、plugin
+Environment secret `PERSISTED_WORKSPACE` 保存。Observed runtime 必须与 expected kernel、loader、plugin
 identity 一致后才能 publication，因此这些配置值不能伪造成功的 cache generation。
 
 ## Release runner 与 GitHub governance 要求
 
 Release build 与 source analysis 共用同一个 `[self-hosted, windows, x64]` runner，没有独立 release runner。其 machine
-environment 必须让 build、promotion 与 recovery job 看到同一个 checkout 外 `GSVIBE_PERSISTED_WORKSPACE`；其中
+environment 必须让 build、promotion 与 recovery job 看到同一个 checkout 外 `PERSISTED_WORKSPACE`；其中
 `release-staging` 子树必须由 runner-account ACL 保护，存储需要支持同文件系统 atomic rename。PR routing contract 必须
 把 untrusted/fork analysis 挡在该 runner 之外。
 

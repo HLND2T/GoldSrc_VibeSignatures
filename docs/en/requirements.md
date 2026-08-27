@@ -31,7 +31,7 @@ Copy `.env.example` to `.env` for a local template. The analyzer uses the GoldSr
 ## IDB cache host requirements
 
 The warm-cache runtime probe requires `IDADIR` to identify the exact pinned loader modules and allowlisted plugins. The
-cache CLI receives an explicit persisted root; CI later exposes it as `GSVIBE_PERSISTED_WORKSPACE` only inside the
+cache CLI receives an explicit persisted root; CI later exposes it as `PERSISTED_WORKSPACE` only inside the
 protected dedicated Windows runner job. That root must be outside the checkout and `bin/`, must not traverse a reparse
 point, and must reside on storage that supports atomic same-filesystem rename.
 
@@ -42,13 +42,13 @@ ACL authority; Actions artifacts and `READY.json` are not cache transports or tr
 Set the
 repository variable `GSVIBE_IDB_CACHE_MODE` to `cold` until real runner evidence is captured, then to `warm`; set
 `GSVIBE_IDA_KERNEL_VERSION` to the pinned installation's expected kernel version. Store the absolute persisted path as
-the Environment secret `GSVIBE_PERSISTED_WORKSPACE`. The observed runtime must match the expected kernel, loader, and
+the Environment secret `PERSISTED_WORKSPACE`. The observed runtime must match the expected kernel, loader, and
 plugin identity before publication, so these settings cannot manufacture a successful cache generation.
 
 ## Release runner and GitHub governance requirements
 
 The release build runs on the same `[self-hosted, windows, x64]` runner as source analysis; there is no separate release
-runner. Its machine environment must expose the same checkout-external `GSVIBE_PERSISTED_WORKSPACE` to build, promotion,
+runner. Its machine environment must expose the same checkout-external `PERSISTED_WORKSPACE` to build, promotion,
 and recovery jobs. The `release-staging` subtree must be protected by runner-account ACLs and storage with atomic
 same-filesystem rename semantics. The PR routing contract must keep untrusted/fork analysis off this runner.
 

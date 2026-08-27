@@ -34,7 +34,7 @@ repository-wide IDA concurrency group (dynamic per-binary MCP endpoints are invo
 group). Warm mode keeps clean, probe/miss warmup, exact selection, restore, analysis, and
 final clean in that one job. `cache-selection.json` binds the plan SHA, merge/bin identities, selected binaries, cache
 keys, generations, and manifest hashes; its SHA-256 is rechecked and uploaded only as evidence. Cold mode never executes
-a step that receives `GSVIBE_PERSISTED_WORKSPACE`.
+a step that receives `PERSISTED_WORKSPACE`.
 
 Production warm activation requires the host and repository settings in the
 [IDB cache operations runbook](idb-cache-operations.md). Unit and workflow-contract tests do not substitute for recorded

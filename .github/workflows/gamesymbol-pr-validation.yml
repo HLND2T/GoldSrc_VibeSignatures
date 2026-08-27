@@ -289,12 +289,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'failed to reset tracked bin files' }
           git -C $binRoot clean -ffdx
           if ($LASTEXITCODE -ne 0) { throw 'failed to clean persisted bin analysis state' }
-      - name: Prepare exact warm IDB cache selection
+      - naPERSISTED_WORKSPACE cache selectiPERSISTED_WORKSPACE
         if: needs.plan.outputs.cache_mode == 'warm'
         shell: pwsh
         env:
-          GSVIBE_PERSISTED_WORKSPACE: ${{ secrets.GSVIBE_PERSISTED_WORKSPACE }}
-          GSVIBE_IDA_KERNEL_VERSION: ${{ vars.GSVIBE_IDA_KERNEL_VERSION }}
+          GSVIBE_PERSISTED_WORKSPACE: ${{ secretPERSISTED_WORKSPACECE }}
+          GSVIBE_IDPERSISTED_WORKSPACE.GSVIBE_IDA_KERNEL_VERSION }}
         run: |
           $ErrorActionPreference = 'Stop'
           if ([string]::IsNullOrWhiteSpace($env:GSVIBE_PERSISTED_WORKSPACE)) {
@@ -305,7 +305,7 @@ jobs:
           }
           $bundle = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'
           $planPath = Join-Path $bundle 'plan.json'
-          $selectionPath = Join-Path $bundle 'cache-selection.json'
+          $selectionPath = Join-PPERSISTED_WORKSPACEon.json'
           $selectionShaPath = Join-Path $bundle 'cache-selection.sha256'
           uv run python idb_cache_workflow.py prepare `
             -repo-root $env:GITHUB_WORKSPACE -plan $planPath -merge-ref HEAD -bindir bin `
@@ -313,13 +313,13 @@ jobs:
             -kernel-version $env:GSVIBE_IDA_KERNEL_VERSION -run-id "${{ github.run_id }}" `
             -attempt "${{ github.run_attempt }}" -output $selectionPath -output-sha256 $selectionShaPath
           if ($LASTEXITCODE -ne 0) { throw 'warm cache preparation failed' }
-      - name: Verify exact warm IDB cache selection
+      - naPERSISTED_WORKSPACEcache selectioPERSISTED_WORKSPACE
         if: needs.plan.outputs.cache_mode == 'warm'
         shell: pwsh
         env:
           GSVIBE_PERSISTED_WORKSPACE: ${{ secrets.GSVIBE_PERSISTED_WORKSPACE }}
           GSVIBE_IDA_KERNEL_VERSION: ${{ vars.GSVIBE_IDA_KERNEL_VERSION }}
-        run: |
+        run: |PERSISTED_WORKSPACE
           $bundle = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'
           uv run python idb_cache_workflow.py verify `
             -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $bundle 'plan.json') -merge-ref HEAD -bindir bin `
@@ -337,13 +337,13 @@ jobs:
             ${{ runner.temp }}/gamesymbol-validation/cache-selection.sha256
           if-no-files-found: error
           retention-days: 30
-      - name: Restore exact warm IDB cache generations
+      - naPERSISTED_WORKSPACE cache generatPERSISTED_WORKSPACE
         if: needs.plan.outputs.cache_mode == 'warm'
         shell: pwsh
         env:
           GSVIBE_PERSISTED_WORKSPACE: ${{ secrets.GSVIBE_PERSISTED_WORKSPACE }}
           GSVIBE_IDA_KERNEL_VERSION: ${{ vars.GSVIBE_IDA_KERNEL_VERSION }}
-        run: |
+        run: |PERSISTED_WORKSPACE
           $bundle = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'
           uv run python idb_cache_workflow.py restore `
             -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $bundle 'plan.json') -merge-ref HEAD -bindir bin `
