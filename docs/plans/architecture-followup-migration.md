@@ -574,8 +574,8 @@ Event/trust contract 固定为：
 - production output branch/PR 统一使用受保护 Environment 中的 GitHub App installation token创建；不使用个人 PAT。默认 `GITHUB_TOKEN` 创建的 PR/push 通常不会再次触发 `pull_request` workflow，不能作为 required-check 事件链；
 - output PR validation 使用普通 `pull_request`、`contents: read`，从 event base/source SHA 读取 trusted verifier，绝不执行 output head 修改的代码；
 - promotion 初版使用 `pull_request_target` 的 `closed && merged` 事件，只执行default-branch trusted code，通过GitHub API/Git blobs读取identities，绝不checkout或执行head workspace。workflow拆成无write credential的read-only verifier job与受保护Environment中的promotion-write job；后者不能只信任artifact布尔值，必须用verifier输出的canonical approval digest重新绑定并复核exact PR/head/merge/content identities后才取得GitHub App write token；
-- production 初版要求 output PR 使用 merge-commit-only：head 的唯一父提交是 `source_sha`，merge commit 两个父分别是验证过的 pre-merge base 与 exact output head。若将来允许 squash/rebase/merge queue，必须先升级 schema/verifier 和演练证据；
-- branch protection 必须要求 output PR 与 base up-to-date。base 发生 drift 时不得把 base merge进 immutable output head；release bot关闭/标记旧 build 为 superseded，并从最新 main 创建新的 direct-parent output commit。若 drift 与 release 无关且 content identity未变，可自动重绑到新 source SHA；若 config、bin gitlink、generator/tool contract或当前 tag payload变化，则旧 build失效并要求重新完成对应source validation。promotion 再做一次 exact-base检查只是 defense in depth。
+- production 初版要求 output PR 使用 merge-commit-only：head 的唯一父提交是 `source_sha`，merge commit 两个父分别是验证过的 pre-merge base 与 exact output head。pre-merge base 必须是 `source_sha` 的后代，但不要求等于 `source_sha`。若将来允许 squash/rebase/merge queue，必须先升级 schema/verifier 和演练证据；
+- 不得把 default branch merge 进 immutable output head，也不要求 GitHub “up-to-date with the base branch”。只要当前 PR base 是 manifest `source_sha` 的后代，且 GitHub mergeability 无冲突，就允许 default-branch advancement。lightweight verifier 与 merge-time `verify_promotion()` 都用 ancestor + exact source parent 绑定 output identity；changed-path allowlist 只审计 `source_sha..head`。Git 冲突仍由 GitHub mergeability/branch policy 阻止合并。只有当 base 与 `source_sha` 无祖先关系、output head 不再直接基于 `source_sha`，或 allowlist/hash/trust 失败时，才需要 replacement build/PR。
 
 ### 7.4 Release build 与 private staging
 
@@ -651,9 +651,9 @@ promotion workflow只接受可信 merged output PR，至少验证：
 
 - event repository、PR head repository、GitHub App/bot ID、base branch与严格 branch parser全部命中 allowlist；
 - PR number/head SHA与 `PR_CREATED.json`、READY、private PR index一致；
-- output head 的唯一父提交等于 pending `source_sha`，changed paths 只有当前 tag release manifest；
+- output head 的唯一父提交等于 pending `source_sha`，changed paths 从 `source_sha..head` 计算并必须通过 allowlist；
 - merge commit/API identity符合已经配置并演练的 merge-commit-only contract，其两个父提交分别等于 pre-merge base与 exact output head；
-- `source_sha` 必须等于 pre-merge base；若 main 在 output PR 期间漂移，必须按 7.3 生成replacement build/PR，不能让旧 head直接合并；
+- pre-merge base 必须是 `source_sha` 的后代，不要求等于 `source_sha`；default-branch advancement 本身不是 stale，不能仅因 main 前进就按 7.3 强制 replacement build/PR；
 - tracked content manifest、private manifest、source payload inventory、merge tree、snapshot、companion、gamedata与 bin gitlink全部一致，且 manifest未参与自己的 inventory；
 - 仓库不存在目标 tag/Release；Phase 2 output promotion只处理 `new`，republish走已完成 release上的独立操作。
 
@@ -848,7 +848,7 @@ npm run test:e2e
 - warm cache未部署或不可用时有预先绑定、可验证的cold mode；strict warm consumer不inline fallback；
 - release content manifest端到端绑定source SHA、bin gitlink、config、candidate、metadata、gamedata、generator与workflow identity，content inventory明确排除manifest自身；
 - Phase 2 source PR拥有snapshot/metadata/gamedata authority，generated-output PR只增加release manifest；只有Phase 3可转移canonical output authority；
-- generated-output PR merge是唯一promotion gate；默认分支无关drift可通过replacement build/PR重绑且不要求重新分析，相关drift一定使旧build失效；
+- generated-output PR merge是唯一promotion gate；output head 绑定 exact `source_sha`（单父且该父提交等于 source）；当前 PR/merge base 必须是该 source 的后代；output-only diff 不把 default-branch drift 算入 output PR；Git 冲突仍阻止合并，祖先关系或 identity 破坏时才需要 replacement build/PR；
 - Git tag、Release assets和completion record的identity/hash一致；
 - promotion中断后以同一identity安全resume，pre-promotion retry与republish语义互不混淆；cleanup中断可恢复；
 - production activation由branch/ruleset、merge policy、protected tag、Environment和App identity共同门禁；仓库历史提交形状不能替代配置；

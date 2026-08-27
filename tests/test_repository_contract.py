@@ -355,6 +355,16 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("github-actions[bot]", validate_text)
         self.assertIn("gamesymbols/build/", validate_text)
         self.assertIn("verify-output-pr", validate_text)
+        self.assertIn(".release-tools", validate_text)
+        self.assertIn("--base-sha", validate_text)
+        self.assertIn("--head-sha", validate_text)
+        checkout_steps = [
+            step
+            for step in validate["jobs"]["validate"]["steps"]
+            if str(step.get("uses", "")).startswith("actions/checkout@")
+        ]
+        self.assertEqual("0", str(checkout_steps[0]["with"]["fetch-depth"]))
+        self.assertEqual("1", str(checkout_steps[1]["with"]["fetch-depth"]))
 
         promote = workflows["promote-release-after-output-merge.yml"]
         promote_text = json.dumps(promote)

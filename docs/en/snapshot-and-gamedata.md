@@ -55,8 +55,10 @@ GitHub Release with assets for every game version.
 `release-manifests/<version>.json` is a schema-1 canonical manifest binding `version`, `mode`, `build_id`, `source_sha`,
 per-game-version snapshot/gamedata provenance, and the aggregate bin/tracked-output inventory hashes.
 `validate-generated-output-pr.yml` rebuilds the tracked output inventory from exact Git blobs and checks each game
-version's snapshot hash and gamedata inventory; `promote-release-after-output-merge.yml` verifies the two-parent merge and
-transactionally swaps accepted bin into the persisted workspace. Source PRs no longer own gamesymbols/gamedata authority.
+version's snapshot hash and gamedata inventory. Output identity stays bound to exact `source_sha` (the output head's only
+parent); the current PR base must be a descendant of that commit. `promote-release-after-output-merge.yml` verifies the
+two-parent merge whose first parent descends from `source_sha` and transactionally swaps accepted bin into the persisted
+workspace. Source PRs no longer own gamesymbols/gamedata authority.
 
 ## Generate gamedata directly
 

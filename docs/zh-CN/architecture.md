@@ -127,8 +127,10 @@ Release build 在 self-hosted runner 上为全部 game version 生成并发布 `
 `gamesymbols/build/<version>` 分支的 generated-output PR。Schema-1 canonical manifest 绑定 `version`、`mode`、
 `build_id`、`source_sha`、每条 game version 的 snapshot/gamedata provenance 与 aggregate inventory hash。
 
-`validate-generated-output-pr.yml` 用 exact Git blob 重建 tracked output inventory 并核对每条 game version；
-`promote-release-after-output-merge.yml` 只接受 bot-authored output PR、direct-parent head 与 exact two-parent merge，
+`validate-generated-output-pr.yml` 用 exact Git blob 重建 tracked output inventory 并核对每条 game version。output
+head 必须是单父提交且该父提交等于 manifest `source_sha`；当前 PR base 必须是该 `source_sha` 的后代，因此 default
+branch 前进本身不是 stale。changed paths 取自 `source_sha..head`。`promote-release-after-output-merge.yml` 只接受
+bot-authored output PR、direct-parent head，以及 first parent 从 `source_sha` 演进而来的 exact two-parent merge，
 校验后把 accepted bin 事务化交换进 persisted workspace、打单个 `version` tag 并发布一个 GitHub Release。Private
 marker 使用 hash chain；abandon 与 cleanup 保持独立恢复语义。`mode=republish` 只重新分析自上次接受 source 以来
 受影响的输出。Production authority 由 allowlist 仓库 + `win64` Environment + per-version concurrency 提供。

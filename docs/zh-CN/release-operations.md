@@ -23,3 +23,16 @@ ID + 下载资产 inventory 同时成立才表示 release 完成。
 
 保留失败 stage、workflow URL/run/attempt、source/bin SHA、PR/head/merge identity、tag target、Release ID 与
 downloaded hash。
+
+## Generated-output PR 的 base advancement
+
+`main` 前进后，output PR 在以下条件全部成立时仍然有效：
+
+- output head 是单父提交，且该父提交恰好是 manifest `source_sha`；
+- 当前 PR base 是该 `source_sha` 的后代；
+- `source_sha..head` 只改 allowlist 内 generated outputs（含 `release-manifests/<version>.json`）；
+- tracked manifest identity 与 hash 仍然匹配。
+
+verifier 不会把 immutable output head rebase 到新 base。Git 冲突仍由 GitHub mergeability 阻止合并。merge-time
+`verify_promotion()` 对 merge first parent 使用同一套 ancestor 规则。只有祖先关系或 direct-parent identity 被破坏时，
+才需要 replacement build/PR。

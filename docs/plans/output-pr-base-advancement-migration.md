@@ -1,6 +1,6 @@
 # Generated-output PR 默认分支前移兼容迁移计划
 
-状态：待实施
+状态：已实施（本地测试与文档已落地；protected test repository 演练仍待 operator 环境）
 
 日期：2026-08-27（Asia/Singapore）
 
