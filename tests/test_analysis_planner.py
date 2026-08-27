@@ -1699,6 +1699,20 @@ class TestAllocateLocalPort(unittest.TestCase):
         self.assertLessEqual(port, 65535)
         self.assertFalse(ida_analyze_bin.is_port_in_use("127.0.0.1", port))
 
+    def test_binds_ipv6_ephemeral_socket_for_ipv6_loopback(self) -> None:
+        sock = MagicMock()
+        sock.getsockname.return_value = ("::1", 39001, 0, 0)
+        sock.__enter__.return_value = sock
+        with patch.object(ida_analyze_bin.socket, "socket", return_value=sock) as socket_cls:
+            port = _allocate_local_port("::1")
+
+        self.assertEqual(39001, port)
+        socket_cls.assert_called_once_with(
+            ida_analyze_bin.socket.AF_INET6,
+            ida_analyze_bin.socket.SOCK_STREAM,
+        )
+        sock.bind.assert_called_once_with(("::1", 0))
+
 
 class McpLifecycleTests(unittest.TestCase):
     def test_runtime_binding_is_forwarded_to_preprocessor(self):

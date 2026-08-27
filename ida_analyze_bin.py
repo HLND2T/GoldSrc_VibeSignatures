@@ -7,6 +7,7 @@ import argparse
 import asyncio
 import copy
 import hashlib
+import ipaddress
 import json
 import os
 import re
@@ -688,8 +689,17 @@ async def check_mcp_worker_health(host, port, expected_binary):
 
 def _allocate_local_port(host: str = DEFAULT_HOST) -> int:
     """Reserve a free local port by binding an ephemeral socket, then release it."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind((host, 0))
+    bind_host = str(host).strip()
+    if bind_host.startswith("[") and bind_host.endswith("]"):
+        bind_host = bind_host[1:-1]
+    try:
+        address = ipaddress.ip_address(bind_host)
+    except ValueError:
+        address_family = socket.AF_INET
+    else:
+        address_family = socket.AF_INET6 if address.version == 6 else socket.AF_INET
+    with socket.socket(address_family, socket.SOCK_STREAM) as sock:
+        sock.bind((bind_host, 0))
         return int(sock.getsockname()[1])
 
 

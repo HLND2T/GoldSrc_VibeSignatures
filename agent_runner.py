@@ -9,9 +9,11 @@ import re
 import subprocess
 import sys
 import threading
+import tempfile
 import urllib.parse
 import uuid
 from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -96,12 +98,17 @@ def _normalize_mcp_url(mcp_url: str | None) -> str | None:
         raise ValueError(f"invalid mcp_url port: {error}") from error
     if port is None or not 1 <= port <= 65535:
         raise ValueError("mcp_url port must be between 1 and 65535")
-    return f"http://{host}:{port}/mcp"
+    formatted_host = f"[{host}]" if ":" in host else host
+    return f"http://{formatted_host}:{port}/mcp"
 
 
 def mcp_endpoint_url(host: str, port: int) -> str:
     """Build the canonical analyzer-owned idalib-mcp endpoint URL from a verified runtime."""
-    return _normalize_mcp_url(f"http://{host}:{port}/mcp")
+    normalized_host = str(host).strip()
+    if normalized_host.startswith("[") and normalized_host.endswith("]"):
+        normalized_host = normalized_host[1:-1]
+    formatted_host = f"[{normalized_host}]" if ":" in normalized_host else normalized_host
+    return _normalize_mcp_url(f"http://{formatted_host}:{port}/mcp")
 
 
 def _extract_opencode_session_id(output: str) -> str | None:
@@ -178,6 +185,20 @@ def _agent_process_env(agent_kind: str, mcp_url: str | None = None) -> dict[str,
     return env
 
 
+@contextmanager
+def _claude_mcp_preflight_workspace(mcp_url: str | None):
+    if mcp_url is None:
+        yield None
+        return
+    with tempfile.TemporaryDirectory(prefix="gsvibe-claude-preflight-") as temporary_directory:
+        config = {"mcpServers": {"ida-pro-mcp": {"type": "http", "url": mcp_url}}}
+        (Path(temporary_directory) / ".mcp.json").write_text(
+            json.dumps(config, separators=(",", ":")),
+            encoding="utf-8",
+        )
+        yield temporary_directory
+
+
 def _truncate_diagnostic(text: str | bytes | None) -> str | None:
     if text is None:
         return None
@@ -238,6 +259,7 @@ def _run_process_with_stream_capture(
     debug: bool = False,
     timeout: int = SKILL_TIMEOUT,
     env: dict[str, str] | None = None,
+    cwd: str | Path | None = None,
 ) -> subprocess.CompletedProcess[str]:
     process = subprocess.Popen(
         command,
@@ -246,6 +268,7 @@ def _run_process_with_stream_capture(
         stderr=subprocess.PIPE,
         text=True,
         env=env,
+        cwd=cwd,
     )
     if agent_input is not None and process.stdin is not None:
         process.stdin.write(agent_input)
@@ -454,6 +477,10 @@ def build_agent_command(
 def _perform_mcp_preflight(
     agent: str, *, debug: bool, server_name: str, mcp_url: str | None = None
 ) -> McpPreflightResult:
+    try:
+        mcp_url = _normalize_mcp_url(mcp_url)
+    except ValueError as error:
+        return McpPreflightResult(False, "invalid_mcp_url", {"error": str(error)})
     cache_key = (agent, server_name, mcp_url)
     cached = _MCP_PREFLIGHT_CACHE.get(cache_key)
     if cached is not None:
@@ -461,12 +488,14 @@ def _perform_mcp_preflight(
     agent_kind = detect_agent_kind(agent) or ""
     command = [agent, *_agent_mcp_override_args(agent_kind, mcp_url), "mcp", "list"]
     try:
-        completed = _run_process_with_stream_capture(
-            command,
-            debug=debug,
-            timeout=MCP_LIST_TIMEOUT,
-            env=_agent_process_env(agent_kind, mcp_url),
-        )
+        with _claude_mcp_preflight_workspace(mcp_url if agent_kind == "claude" else None) as preflight_cwd:
+            completed = _run_process_with_stream_capture(
+                command,
+                debug=debug,
+                timeout=MCP_LIST_TIMEOUT,
+                env=_agent_process_env(agent_kind, mcp_url),
+                cwd=preflight_cwd,
+            )
     except subprocess.TimeoutExpired as error:
         result = McpPreflightResult(
             False,

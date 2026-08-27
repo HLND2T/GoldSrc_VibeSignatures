@@ -155,6 +155,7 @@ class AgentRunnerCommandTests(unittest.TestCase):
 
     def test_mcp_endpoint_url_builds_canonical_loopback_url(self) -> None:
         self.assertEqual("http://127.0.0.1:54321/mcp", agent_runner.mcp_endpoint_url("127.0.0.1", 54321))
+        self.assertEqual("http://[::1]:54321/mcp", agent_runner.mcp_endpoint_url("::1", 54321))
 
     def test_mcp_endpoint_url_rejects_invalid_urls(self) -> None:
         for url in (
@@ -249,6 +250,55 @@ class AgentRunnerExecutionTests(unittest.TestCase):
         second = agent_runner._perform_mcp_preflight("claude", debug=False, server_name="ida-pro-mcp")
         self.assertTrue(second.ok)
         self.assertEqual(2, mock_run_process.call_count)
+
+    @patch("agent_runner._run_process_with_stream_capture")
+    def test_claude_preflight_uses_dynamic_endpoint_workspace(self, mock_run_process) -> None:
+        mcp_url = "http://127.0.0.1:54321/mcp"
+
+        def run_process(command, **kwargs):
+            config = json.loads((Path(kwargs["cwd"]) / ".mcp.json").read_text(encoding="utf-8"))
+            self.assertEqual(mcp_url, config["mcpServers"]["ida-pro-mcp"]["url"])
+            return subprocess.CompletedProcess(command, 0, "ida-pro-mcp connected\n", "")
+
+        mock_run_process.side_effect = run_process
+        result = agent_runner._perform_mcp_preflight(
+            "claude",
+            debug=False,
+            server_name="ida-pro-mcp",
+            mcp_url=mcp_url,
+        )
+
+        self.assertTrue(result.ok)
+        command = mock_run_process.call_args.args[0]
+        self.assertIn("--mcp-config", command)
+        self.assertIn("--strict-mcp-config", command)
+
+    @patch("agent_runner._run_process_with_stream_capture")
+    def test_direct_preflight_normalizes_mcp_url_before_cache(self, mock_run_process) -> None:
+        mock_run_process.return_value = subprocess.CompletedProcess(["codex"], 0, "ida-pro-mcp connected\n", "")
+        canonical = "http://127.0.0.1:54321/mcp"
+        noncanonical = " HTTP://127.0.0.1:54321/mcp "
+
+        self.assertTrue(agent_runner.has_required_mcp_server("codex", mcp_url=noncanonical))
+        self.assertTrue(agent_runner.has_required_mcp_server("codex", mcp_url=canonical))
+        self.assertEqual(1, mock_run_process.call_count)
+        self.assertEqual(
+            'mcp_servers.ida-pro-mcp.url="http://127.0.0.1:54321/mcp"',
+            mock_run_process.call_args.args[0][2],
+        )
+
+    @patch("agent_runner._run_process_with_stream_capture")
+    def test_direct_preflight_rejects_invalid_mcp_url(self, mock_run_process) -> None:
+        result = agent_runner._perform_mcp_preflight(
+            "codex",
+            debug=False,
+            server_name="ida-pro-mcp",
+            mcp_url="https://example.com/mcp",
+        )
+
+        self.assertFalse(result.ok)
+        self.assertEqual("invalid_mcp_url", result.reason)
+        mock_run_process.assert_not_called()
 
     @patch("agent_runner._run_process_with_stream_capture", side_effect=FileNotFoundError)
     def test_agent_not_found_failure_is_not_cached(self, mock_run_process) -> None:
