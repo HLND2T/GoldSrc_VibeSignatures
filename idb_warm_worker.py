@@ -6,16 +6,14 @@ import asyncio
 import ctypes
 import os
 import subprocess
-import sys
-import time
-from contextlib import contextmanager
 from pathlib import Path
 
 from binary_format import inspect_binary
 from ida_analyze_bin import DEFAULT_HOST, DEFAULT_PORT, IdaMcpLifecycle, _parse_py_eval_json
 from ida_database_paths import database_paths, existing_database_lock, validate_database_file_set, validate_plain_file
 from ida_mcp_session import open_ida_mcp_session
-from idb_cache import IdbCacheError, load_cache_identity
+from idb_cache import load_cache_identity
+from idb_cache_locks import IdbCacheError, exclusive_file_lock
 from release_workflow_lib.hashing import sha256_file, write_canonical_json
 
 _WINDOWS_JOB_HANDLE = None
@@ -94,49 +92,6 @@ def _apply_memory_limit(limit_mb: int) -> None:
         raise IdbCacheError(f"Unable to assign warm worker Job Object: {ctypes.get_last_error()}")
     global _WINDOWS_JOB_HANDLE
     _WINDOWS_JOB_HANDLE = job
-
-
-@contextmanager
-def exclusive_file_lock(path: str | Path, timeout_seconds: float = 120.0):
-    lock_path = Path(path)
-    lock_path.parent.mkdir(parents=True, exist_ok=True)
-    handle = lock_path.open("a+b")
-    deadline = time.monotonic() + timeout_seconds
-    acquired = False
-    try:
-        while not acquired:
-            try:
-                if os.name == "nt":
-                    import msvcrt
-
-                    handle.seek(0)
-                    if handle.tell() == handle.seek(0, os.SEEK_END):
-                        handle.write(b"\0")
-                        handle.flush()
-                    handle.seek(0)
-                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
-                else:
-                    import fcntl
-
-                    fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-                acquired = True
-            except OSError:
-                if time.monotonic() >= deadline:
-                    raise IdbCacheError(f"Timed out acquiring IDA MCP port lock: {lock_path}")
-                time.sleep(0.1)
-        yield
-    finally:
-        if acquired:
-            if os.name == "nt":
-                import msvcrt
-
-                handle.seek(0)
-                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                import fcntl
-
-                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
-        handle.close()
 
 
 def _loader_path(ida_root: Path, loader_name: str) -> Path:
@@ -237,7 +192,7 @@ def run_worker(
         raise IdbCacheError(f"Warm workspace is missing: {root}")
     _apply_memory_limit(memory_limit_mb)
     observed_runtime = None
-    with exclusive_file_lock(port_lock):
+    with exclusive_file_lock(port_lock, description="IDA MCP warm worker port lock"):
         for record in identity["binaries"]:
             binary = root.joinpath(*Path(record["path"]).parts)
             validate_plain_file(binary, context="Warm worker binary")

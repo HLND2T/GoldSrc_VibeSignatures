@@ -22,6 +22,7 @@ from release_workflow_lib.hashing import (
     verify_inventory,
     write_canonical_json,
 )
+from release_workflow_lib.locks import accepted_bin_lock_path, version_lock
 from release_workflow_lib.manifests import (
     ALLOWED_REPOSITORIES,
     SCHEMA_VERSION,
@@ -182,43 +183,6 @@ def reconstruct_workspace(repo_root: Path, stage_dir: Path, version: str) -> Pat
     return source
 
 
-@contextmanager
-def _version_lock(lock_path: Path):
-    lock_path.parent.mkdir(parents=True, exist_ok=True)
-    handle = lock_path.open("a+b")
-    try:
-        handle.seek(0, os.SEEK_END)
-        if handle.tell() == 0:
-            handle.write(b"0")
-            handle.flush()
-        if os.name == "nt":
-            import msvcrt
-
-            handle.seek(0)
-            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
-        else:
-            import fcntl
-
-            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        yield
-    except OSError as exc:
-        raise ReleaseWorkflowError(f"unable to acquire per-version promotion lock: {lock_path}") from exc
-    finally:
-        try:
-            if os.name == "nt":
-                import msvcrt
-
-                handle.seek(0)
-                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                import fcntl
-
-                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
-        except OSError:
-            pass
-        handle.close()
-
-
 def promote_bin(*, persisted_root: Path, stage_dir: Path, version: str, build_id: str) -> dict:
     version = require_version(version)
     build_id = require_build_id(build_id)
@@ -240,19 +204,22 @@ def promote_bin(*, persisted_root: Path, stage_dir: Path, version: str, build_id
     accepted_root.mkdir(parents=True, exist_ok=True)
     lock_path = contained_path(persisted_root, "release-staging", "locks", f"{version}.lock")
     promoted = {}
-    with _version_lock(lock_path):
+    with version_lock(lock_path):
         started_path = stage_dir / "PROMOTION_STARTED"
         reject_reparse_components(stage_dir, started_path)
         write_canonical_json(started_path, {"schema_version": SCHEMA_VERSION, "version": version, "build_id": build_id})
-        for gamever in gamevers:
+        # Canonical gamever order, and one accepted-bin lock at a time, so a concurrent
+        # multi-gamever materialization can never deadlock against this swap.
+        for gamever in sorted(gamevers):
             source = contained_path(stage_dir, "bin", gamever)
             target = contained_path(accepted_root, gamever)
             incoming = contained_path(accepted_root, f".{gamever}.{build_id}.incoming")
             backup = contained_path(accepted_root, f".{gamever}.{build_id}.backup")
             gamever_files = [item for item in bin_files if item["gamever"] == gamever]
-            if target.is_dir() and inventory_sha256(gamever_files) == inventory_sha256(file_inventory(target)):
-                continue
-            promoted[gamever] = _swap_verified_bin(source, target, incoming, backup, gamever_files)
+            with version_lock(accepted_bin_lock_path(persisted_root, gamever)):
+                if target.is_dir() and inventory_sha256(gamever_files) == inventory_sha256(file_inventory(target)):
+                    continue
+                promoted[gamever] = _swap_verified_bin(source, target, incoming, backup, gamever_files)
     return {"version": version, "build_id": build_id, "promoted": promoted}
 
 
@@ -353,7 +320,7 @@ def cleanup_completed(*, staging_root: Path, persisted_root: Path, version: str,
     trash_dir = contained_path(staging_root, "cleanup-trash", version, build_id)
     lock_path = contained_path(staging_root, "locks", f"{version}.lock")
     resumed = False
-    with _version_lock(lock_path):
+    with version_lock(lock_path):
         if stage_dir.exists() and trash_dir.exists():
             raise ReleaseWorkflowError("both completed stage and cleanup trash exist")
         if stage_dir.exists():

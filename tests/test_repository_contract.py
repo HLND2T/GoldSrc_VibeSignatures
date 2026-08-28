@@ -250,6 +250,7 @@ class RepositoryContractTests(unittest.TestCase):
             {
                 "classify",
                 "plan",
+                "warmup-idb",
                 "validate-hosted",
                 "analyze-self-hosted",
                 "fork-analysis-blocked",
@@ -267,6 +268,7 @@ class RepositoryContractTests(unittest.TestCase):
             step for step in jobs["pr-validate"]["steps"] if step.get("name") == "Aggregate source validation results"
         )
         self.assertEqual("${{ needs.plan.result }}", aggregate["env"]["PLAN_RESULT"])
+        self.assertEqual("${{ needs.warmup-idb.result }}", aggregate["env"]["WARMUP_RESULT"])
         self.assertEqual("${{ needs.validate-hosted.result }}", aggregate["env"]["HOSTED_RESULT"])
         self.assertEqual("${{ needs.analyze-self-hosted.result }}", aggregate["env"]["ANALYSIS_RESULT"])
         self.assertEqual("${{ needs.fork-analysis-blocked.result }}", aggregate["env"]["FORK_RESULT"])
@@ -289,7 +291,7 @@ class RepositoryContractTests(unittest.TestCase):
         step_names = [step.get("name") for step in self_hosted["steps"]]
         ordered = [
             "Clean persisted submodule analysis state",
-            "Prepare exact warm IDB cache selection",
+            "Download exact warm IDB cache selection",
             "Verify exact warm IDB cache selection",
             "Restore exact warm IDB cache generations",
             "Analyze selected nodes and build self-consistent candidates",
@@ -301,6 +303,12 @@ class RepositoryContractTests(unittest.TestCase):
         warm_steps = [step for step in self_hosted["steps"] if "warm IDB cache" in step.get("name", "")]
         self.assertTrue(warm_steps)
         self.assertTrue(all("cache_mode == 'warm'" in step["if"] for step in warm_steps))
+        # The consumer must not warm or publish; that authority belongs to the reusable producer.
+        self.assertNotIn("idb_cache_workflow.py prepare", workflow_text)
+        producer = jobs["warmup-idb"]
+        self.assertEqual("./.github/workflows/warmup-idb.yml", producer["uses"])
+        self.assertEqual("bound-plan", producer["with"]["scope"])
+        self.assertIn("warmup-idb", self_hosted["needs"])
         analyzer = next(
             step
             for step in self_hosted["steps"]
@@ -346,6 +354,27 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("release_workflow.py validate-build", build_text)
         self.assertIn("ida_analyze_bin.py -allgamever", build_text)
         self.assertIn("release_workflow.py stage-build", build_text)
+        self.assertIn("release_workflow.py materialize-accepted-bin", build_text)
+        self.assertNotIn("robocopy", build_text)
+        self.assertEqual(["preflight", "warmup-idb"], build_job["needs"])
+        producer = build["jobs"]["warmup-idb"]
+        self.assertEqual("./.github/workflows/warmup-idb.yml", producer["uses"])
+        self.assertEqual("release-all", producer["with"]["scope"])
+        self.assertNotIn("idb_cache_release.py prepare", json.dumps(build_job))
+        warmup = yaml.load(
+            (ROOT / ".github" / "workflows" / "warmup-idb.yml").read_text(encoding="utf-8"), Loader=yaml.BaseLoader
+        )
+        warmup_job = warmup["jobs"]["warmup"]
+        # One producer per repository: the group must not be scoped by version, PR, tag or run.
+        self.assertEqual("idb-warmup-${{ github.repository }}", warmup_job["concurrency"]["group"])
+        self.assertEqual("false", warmup_job["concurrency"]["cancel-in-progress"])
+        self.assertEqual("win64", warmup_job["environment"])
+        self.assertEqual(["self-hosted", "windows", "x64"], warmup_job["runs-on"])
+        self.assertEqual(
+            {"selection_artifact_name", "selection_sha256", "selection_schema_version", "source_sha"},
+            set(warmup["on"]["workflow_call"]["outputs"]),
+        )
+        self.assertNotIn("workflow_dispatch", warmup["on"])
         self.assertNotIn("GSVIBE_RELEASE_PHASE2_ENABLED", build_text)
         self.assertNotIn("create-github-app-token", build_text)
 

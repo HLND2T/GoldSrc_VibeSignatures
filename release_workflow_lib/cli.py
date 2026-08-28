@@ -7,6 +7,9 @@ import json
 import sys
 from pathlib import Path
 
+import yaml
+
+from release_workflow_lib.accepted_bin import materialize_accepted_bin
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.github import write_github_output
 from release_workflow_lib.hashing import load_json_object
@@ -47,6 +50,23 @@ def _load_gamevers_json(path: str) -> dict[str, dict]:
     return result
 
 
+def _materialization_gamevers(args) -> list[str]:
+    """Resolve the gamevers to materialize, always in canonical order.
+
+    Multiple accepted-bin locks are taken one after another in a stable order so two
+    concurrent multi-gamever callers can never deadlock by nesting them in opposite order.
+    """
+    if args.all_gamevers == bool(args.gamever):
+        raise ReleaseWorkflowError("materialize-accepted-bin requires either --all-gamevers or --gamever")
+    if args.gamever:
+        return sorted(set(args.gamever))
+    document = yaml.safe_load(Path(args.repo_root, "configs", "config.yaml").read_text(encoding="utf-8")) or {}
+    gamevers = document.get("gamevers")
+    if not isinstance(gamevers, list) or not gamevers:
+        raise ReleaseWorkflowError("configs/config.yaml must declare a non-empty gamevers list")
+    return sorted({str(gamever) for gamever in gamevers})
+
+
 def _add_build_parsers(commands) -> None:
     validate = commands.add_parser("validate-build")
     validate.add_argument("--repository", required=True)
@@ -72,6 +92,13 @@ def _add_build_parsers(commands) -> None:
     pending.add_argument("--staging-root", required=True)
     pending.add_argument("--version", required=True)
     pending.add_argument("--build-id", required=True)
+
+    materialize = commands.add_parser("materialize-accepted-bin")
+    materialize.add_argument("--repo-root", default=".")
+    materialize.add_argument("--persisted-root", required=True)
+    materialize.add_argument("--bindir", default="bin")
+    materialize.add_argument("--gamever", action="append", default=[])
+    materialize.add_argument("--all-gamevers", action="store_true")
 
 
 def _add_staging_parsers(commands) -> None:
@@ -227,6 +254,17 @@ def _run_build(args) -> object:
         return result
     if args.command == "check-pending":
         return assert_no_other_ready_build(args.staging_root, args.version, args.build_id)
+    if args.command == "materialize-accepted-bin":
+        gamevers = _materialization_gamevers(args)
+        return [
+            materialize_accepted_bin(
+                repo_root=args.repo_root,
+                persisted_root=args.persisted_root,
+                gamever=gamever,
+                bindir=args.bindir,
+            )
+            for gamever in gamevers
+        ]
     return _UNHANDLED
 
 

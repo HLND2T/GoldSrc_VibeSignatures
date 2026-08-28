@@ -42,9 +42,12 @@ plugin。Cache CLI 接收显式 persisted root；CI 后续只会在受保护的�
 `PERSISTED_WORKSPACE`。该 root 必须位于 checkout 与 `bin/` 之外，不得经过 reparse point，并且所在存储必须
 支持同文件系统 atomic rename。
 
-Runner account 需要对 cache root 拥有独占写权限。Cache warming 固定单并发，并用本地 file lock 保护固定 MCP
-port。只有所有 consumer 共享同一受控 storage 与 ACL authority 时才能共享 cache；Actions artifact 与
-`READY.json` 都不是 cache transport 或 truth source。
+Runner account 需要对 cache root 拥有独占写权限。Cache warming 在调度层通过 repository-wide `idb-warmup-*`
+concurrency group 保证单并发，每个 tag 的 publish/restore/prune 再由
+`<PERSISTED_WORKSPACE>/idb-cache/.locks/<tag>.lock` 串行；固定 MCP port 另有独立本地 file lock。Byte-range lock
+必须在两个独立 runner 进程间具备互斥语义，而不是仅在同进程线程间生效。只有所有 consumer 共享同一受控 storage
+与 ACL authority 时才能共享 cache；Actions artifact 是 evidence/selection transport，`READY.json` 是 probe hint，
+都不是 cache transport 或 truth source。
 
 真实 runner evidence 完成前，repository variable `GSVIBE_IDB_CACHE_MODE` 保持 `cold`，完成后才切换为 `warm`；
 不再需要人工维护 IDA version variable。Absolute persisted path 作为 Environment secret

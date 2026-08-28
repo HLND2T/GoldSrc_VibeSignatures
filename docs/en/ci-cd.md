@@ -31,10 +31,20 @@ Hosted and self-hosted source validation rebuild the canonical gamedata manifest
 The planner also binds `cache_mode` from the `GSVIBE_IDB_CACHE_MODE` repository variable (`cold` by default). Analysis
 runs on the dedicated `[self-hosted, windows, x64]` runner under the `win64` Environment and one
 repository-wide IDA concurrency group (dynamic per-binary MCP endpoints are invocation-scoped and do not relax this
-group). Warm mode keeps clean, probe/miss warmup, exact selection, restore, analysis, and
-final clean in that one job. `cache-selection.json` binds the plan SHA, merge/bin identities, selected binaries, cache
-keys, generations, and manifest hashes; its SHA-256 is rechecked and uploaded only as evidence. Cold mode never executes
-a step that receives `PERSISTED_WORKSPACE`.
+group).
+
+Warm mode splits the producer out of the consumer. `plan` calls the reusable
+[`warmup-idb.yml`](../../.github/workflows/warmup-idb.yml) producer with `scope: bound-plan`; that job checks out the
+merge commit in its own workspace, verifies the bound plan, probes/warms/publishes immutable generations, and uploads a
+canonical `cache-selection.json` plus independent SHA-256 evidence. `analyze-self-hosted` then runs in a fresh
+workspace: it downloads that exact selection, re-checks its SHA-256 against the producer job output, verifies it against
+its own checkout and pinned runtime, restores the exact generations, and runs strict no-save analysis. The consumer
+never warms, publishes, or reads `READY.json`. A failed or cancelled producer blocks the consumer instead of falling
+back to an inline warm. Cold mode skips the producer entirely and never executes a step that receives
+`PERSISTED_WORKSPACE`.
+
+`cache-selection.json` binds the plan SHA, merge/bin identities, selected binaries, cache keys, generations, and
+manifest hashes; the Actions artifact is evidence and selection transport, never IDB payload transport.
 
 Production warm activation requires the host and repository settings in the
 [IDB cache operations runbook](idb-cache-operations.md). Unit and workflow-contract tests do not substitute for recorded
@@ -43,11 +53,16 @@ cold, first miss/publication, and subsequent hit runs on that runner.
 ## Release build and promotion
 
 [`release-build.yml`](../../.github/workflows/release-build.yml) is a manual `workflow_dispatch` (`version` such as
-`v20260825a` plus an optional `source_sha` and a `mode` of `new|republish`). On the self-hosted
-`[self-hosted, windows, x64]` runner it: checks out the exact source and `bin` submodule, restores accepted bin, warms the
-IDB cache for every game version, runs `ida_analyze_bin.py -allgamever`, builds/guards/publishes candidates and gamedata
-per game version, runs `stage-build`, and opens a single `github-actions[bot]` generated-output PR
-(branch `gamesymbols/build/<version>`).
+`v20260825a` plus an optional `source_sha` and a `mode` of `new|republish`). Its DAG is
+`preflight -> warmup-idb -> build`: `preflight` resolves and binds `version`, `source_sha`, `mode` and `cache_mode`;
+`warmup-idb` calls the reusable producer with `scope: release-all` when the mode is warm; `build` is a pure consumer.
+
+On the self-hosted `[self-hosted, windows, x64]` runner `build`: checks out the exact source and `bin` submodule,
+cleans the submodule, materializes accepted bin through `release_workflow.py materialize-accepted-bin`, downloads and
+verifies the exact cache selection, restores those exact generations, runs
+`ida_analyze_bin.py -allgamever -cache_mode <mode> -debug -process_reporter console`, builds/guards/publishes candidates
+and gamedata per game version, runs `stage-build`, and opens a single `github-actions[bot]` generated-output PR
+(branch `gamesymbols/build/<version>`). Warm builds require a successful producer; cold builds require a skipped one.
 
 - `validate-generated-output-pr.yml` verifies the output PR (bot author + same repo + `gamesymbols/build/` branch). The
   output head must be a single-parent commit whose parent equals the tracked manifest `source_sha`. The current PR base

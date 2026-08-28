@@ -37,9 +37,12 @@ modules and allowlisted plugins. The cache CLI receives an explicit persisted ro
 `PERSISTED_WORKSPACE` only inside the protected dedicated Windows runner job. That root must be outside the checkout
 and `bin/`, must not traverse a reparse point, and must reside on storage that supports atomic same-filesystem rename.
 
-The runner account needs exclusive write access to its cache root. Cache warming is single-concurrency and uses a local
-file lock for the fixed MCP port. A shared cache is valid only when all consumers use the same controlled storage and
-ACL authority; Actions artifacts and `READY.json` are not cache transports or truth sources.
+The runner account needs exclusive write access to its cache root. Cache warming is single-concurrency at the scheduler
+layer through a repository-wide `idb-warmup-*` concurrency group, and each tag's publish/restore/prune is further
+serialized by `<PERSISTED_WORKSPACE>/idb-cache/.locks/<tag>.lock`; a separate local file lock still protects the fixed
+MCP port. The byte-range locks must be mutually exclusive across two independent runner processes, not just threads in
+one process. A shared cache is valid only when all consumers use the same controlled storage and ACL authority; Actions
+artifacts are evidence/selection transport and `READY.json` is a probe hint, never a cache transport or truth source.
 
 Set the repository variable `GSVIBE_IDB_CACHE_MODE` to `cold` until real runner evidence is captured, then to `warm`.
 No manually maintained IDA-version variable is required. Store the absolute persisted path as the Environment secret

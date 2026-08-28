@@ -4,7 +4,9 @@ import json
 import hashlib
 import os
 import subprocess
+import sys
 import tempfile
+import textwrap
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,6 +34,24 @@ from idb_cache import (
     verify_selection,
     warm_and_publish,
 )
+import idb_cache
+import idb_cache_selection
+from idb_cache_locks import IdbCacheError as IdbCacheLockError
+from idb_cache_locks import lock_root, tag_lock
+from idb_cache_release import (
+    RELEASE_SELECTION_KEYS,
+    RELEASE_SELECTION_SCHEMA_VERSION,
+    IdbCacheReleaseError,
+    prepare_release_selection,
+    restore_release_selection,
+    verify_release_selection_file,
+)
+from idb_cache_selection import (
+    IdbCacheSelectionError,
+    generation_selection,
+    restore_selection_entries,
+    validate_persisted_workspace,
+)
 from idb_cache_workflow import (
     CACHE_SELECTION_SCHEMA_VERSION,
     IdbCacheWorkflowError,
@@ -40,13 +60,43 @@ from idb_cache_workflow import (
     restore_cache_selection,
     selected_binary_groups,
     validate_cache_selection,
-    validate_persisted_workspace,
     verify_cache_selection_file,
 )
 from idb_warm_worker import probe_runtime_contract
 from gamesymbol_snapshot_lib.pr_validation import BoundImpactPlan, TagImpact
 from release_workflow_lib.hashing import canonical_json_bytes, write_canonical_json
 from tests.test_support import write_elf32, write_pe32
+
+
+LOCK_PROBE_TIMED_OUT = 3
+
+
+def lock_is_held_by_another_process(lock_path: Path) -> bool:
+    """Try to take ``lock_path`` from a separate process; report whether it is already held."""
+    script = textwrap.dedent(
+        """
+        import sys
+        from pathlib import Path
+        from idb_cache_locks import IdbCacheError, exclusive_file_lock
+
+        try:
+            with exclusive_file_lock(Path(sys.argv[1]), 0.0, wait_interval_seconds=0.0):
+                pass
+        except IdbCacheError:
+            raise SystemExit(3)
+        raise SystemExit(0)
+        """
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script, str(lock_path)],
+        cwd=str(Path(__file__).resolve().parents[1]),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode not in {0, LOCK_PROBE_TIMED_OUT}:
+        raise AssertionError(f"lock probe failed: {result.returncode}: {result.stderr}")
+    return result.returncode == LOCK_PROBE_TIMED_OUT
 
 
 def cache_fixture(root: Path):
@@ -449,11 +499,11 @@ class IdbCacheWorkflowTests(unittest.TestCase):
             checkout.mkdir()
             persisted.mkdir()
             self.assertEqual(persisted.resolve(), validate_persisted_workspace(persisted, checkout))
-            with self.assertRaises(IdbCacheWorkflowError):
+            with self.assertRaises(IdbCacheSelectionError):
                 validate_persisted_workspace(checkout, checkout)
             nested = checkout / "persisted"
             nested.mkdir()
-            with self.assertRaises(IdbCacheWorkflowError):
+            with self.assertRaises(IdbCacheSelectionError):
                 validate_persisted_workspace(nested, checkout)
 
     def test_combined_selection_binds_plan_runtime_binaries_and_exact_generation(self):
@@ -550,7 +600,7 @@ class IdbCacheWorkflowTests(unittest.TestCase):
                 "attempt": 1,
                 "timeout_seconds": 1,
             }
-            with patch("idb_cache_workflow.warm_and_publish", side_effect=fake_warm):
+            with patch("idb_cache_selection.warm_and_publish", side_effect=fake_warm):
                 first = prepare_cache_selection(
                     **common,
                     output_path=selection_path,
@@ -591,6 +641,340 @@ class IdbCacheWorkflowTests(unittest.TestCase):
                 selection_sha256_path=selection_sha,
             )
             self.assertEqual(b"neutral-idb", Path(f"{binary}.i64").read_bytes())
+
+
+class IdbCacheReadyWriteTests(unittest.TestCase):
+    def test_ready_is_only_replaced_when_its_canonical_bytes_change(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workspace, persisted, binary, identity = cache_fixture(root)
+            first = publish_generation(
+                persisted_root=persisted,
+                identity=identity,
+                workspace_root=workspace,
+                run_id="run-1",
+                attempt=1,
+                published_at="2026-01-01T00:00:00Z",
+            )
+            ready = persisted / "idb-cache" / "game-1" / "READY.json"
+            self.assertEqual(canonical_json_bytes(first), ready.read_bytes())
+            written = []
+            original = idb_cache.write_canonical_json
+
+            def spy(path, value):
+                written.append(Path(path))
+                return original(path, value)
+
+            with patch.object(idb_cache, "write_canonical_json", side_effect=spy):
+                probe_generation(persisted_root=persisted, identity=identity)
+                publish_generation(
+                    persisted_root=persisted,
+                    identity=identity,
+                    workspace_root=workspace,
+                    run_id="run-1",
+                    attempt=1,
+                    published_at="2026-01-01T00:00:00Z",
+                )
+            self.assertNotIn(ready, written)
+            Path(f"{binary}.i64").write_bytes(b"second generation database")
+            second = publish_generation(
+                persisted_root=persisted,
+                identity=identity,
+                workspace_root=workspace,
+                run_id="run-2",
+                attempt=1,
+                published_at="2026-01-02T00:00:00Z",
+            )
+            self.assertEqual(canonical_json_bytes(second), ready.read_bytes())
+
+
+class IdbCacheLockTests(unittest.TestCase):
+    def test_tag_lock_is_exclusive_across_processes_and_reports_its_description(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            persisted = Path(temporary)
+            lock_path = lock_root(persisted) / "game-1.lock"
+            self.assertFalse(lock_is_held_by_another_process(lock_path))
+            with tag_lock(persisted, "game-1", timeout_seconds=5.0):
+                self.assertTrue(lock_is_held_by_another_process(lock_path))
+                with self.assertRaisesRegex(IdbCacheLockError, "IDB cache tag lock for game-1"):
+                    with tag_lock(persisted, "game-1", timeout_seconds=0.0):
+                        pass
+            # The lock file deliberately survives; only the open handle carried the lock.
+            self.assertTrue(lock_path.is_file())
+            self.assertFalse(lock_is_held_by_another_process(lock_path))
+
+    def test_tag_lock_waits_longer_than_the_warm_worker_timeout(self):
+        from idb_cache_locks import DEFAULT_WARM_TIMEOUT_SECONDS, tag_lock_timeout_seconds
+
+        self.assertGreater(tag_lock_timeout_seconds(DEFAULT_WARM_TIMEOUT_SECONDS), DEFAULT_WARM_TIMEOUT_SECONDS)
+        self.assertGreater(tag_lock_timeout_seconds(60.0), 60.0)
+
+    def test_restore_holds_the_tag_lock_so_prune_cannot_run_concurrently(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workspace, persisted, binary, identity = cache_fixture(root)
+            selection = publish_generation(
+                persisted_root=persisted,
+                identity=identity,
+                workspace_root=workspace,
+                run_id="run-1",
+                attempt=1,
+            )
+            entry = {
+                "tag": selection["tag"],
+                "platform": "windows",
+                "cache_key": selection["cache_key"],
+                "generation": selection["generation"],
+                "manifest_sha256": selection["manifest_sha256"],
+                "binaries": identity["binaries"],
+            }
+            group = SelectedBinaryGroup("game-1", "windows", workspace, tuple(identity["binaries"]))
+            lock_path = lock_root(persisted) / "game-1.lock"
+            observed = []
+            original = idb_cache_selection.restore_generation
+
+            def spy(**kwargs):
+                observed.append(lock_is_held_by_another_process(lock_path))
+                return original(**kwargs)
+
+            Path(f"{binary}.i64").write_bytes(b"finder modification")
+            with patch.object(idb_cache_selection, "restore_generation", side_effect=spy):
+                restore_selection_entries(entries=[entry], groups=(group,), persisted_root=persisted)
+            self.assertEqual([True], observed)
+            self.assertEqual(b"primary-idb", Path(f"{binary}.i64").read_bytes())
+            self.assertFalse(lock_is_held_by_another_process(lock_path))
+
+
+class IdbCacheReleaseTests(unittest.TestCase):
+    CONFIG = (
+        b"modules:\n"
+        b"  - name: engine\n"
+        b"    module_windows: hw.dll\n"
+        b"    skills:\n"
+        b"      - name: find\n"
+        b"        expected_output: Demo.{platform}.yaml\n"
+        b"    symbols:\n"
+        b"      - name: Demo\n"
+        b"        category: func\n"
+        b"  - name: client\n"
+        b"    module_windows: client.dll\n"
+        b"    skills:\n"
+        b"      - name: other\n"
+        b"        expected_output: Other.{platform}.yaml\n"
+        b"    symbols:\n"
+        b"      - name: Other\n"
+        b"        category: func\n"
+    )
+    BIN_COMMIT = "b" * 40
+
+    def _release_repository(self, root: Path) -> tuple[Path, Path]:
+        repo = root / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.com"], check=True)
+        subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True)
+        for relative, raw in {
+            "configs/config.yaml": b"gamevers:\n  - game-1\n",
+            "configs/game-1.yaml": self.CONFIG,
+        }.items():
+            path = repo / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(raw)
+        subprocess.run(["git", "-C", str(repo), "add", "configs"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "update-index", "--add", "--cacheinfo", f"160000,{self.BIN_COMMIT},bin"],
+            check=True,
+        )
+        subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "release source"], check=True)
+        write_pe32(repo / "bin" / "game-1" / "engine" / "hw.dll")
+        write_pe32(repo / "bin" / "game-1" / "client" / "client.dll")
+        ida_root = root / "ida"
+        (ida_root / "loaders").mkdir(parents=True)
+        (ida_root / "loaders" / "pe.dll").write_bytes(b"pinned-pe-loader")
+        return repo, ida_root
+
+    @staticmethod
+    def _fake_warm(**kwargs):
+        identity = load_cache_identity(kwargs["identity_path"])
+        workspace = Path(kwargs["workspace_root"])
+        for record in identity["binaries"]:
+            Path(f"{workspace.joinpath(*Path(record['path']).parts)}.i64").write_bytes(b"neutral-idb")
+        return publish_generation(
+            persisted_root=kwargs["persisted_root"],
+            identity=identity,
+            workspace_root=workspace,
+            run_id=kwargs["run_id"],
+            attempt=kwargs["attempt"],
+        )
+
+    def _common(self, repo: Path, persisted: Path, ida_root: Path) -> dict:
+        return {
+            "repo_root": repo,
+            "bindir": "bin",
+            "persisted_root": persisted,
+            "ida_root": ida_root,
+            "kernel_version": "9.3",
+            "normalized_ida_args": [],
+            "source_sha": None,
+        }
+
+    def _prepare(self, repo: Path, persisted: Path, ida_root: Path, root: Path, name: str = "selection") -> dict:
+        with patch("idb_cache_selection.warm_and_publish", side_effect=self._fake_warm):
+            return prepare_release_selection(
+                **self._common(repo, persisted, ida_root),
+                run_id="run-1",
+                attempt=1,
+                timeout_seconds=1,
+                output_path=root / f"{name}.json",
+                output_sha256_path=root / f"{name}.sha256",
+            )
+
+    def test_release_selection_binds_source_bin_and_every_configured_group(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, ida_root = self._release_repository(root)
+            persisted = root / "persisted"
+            persisted.mkdir()
+            document = self._prepare(repo, persisted, ida_root, root)
+            self.assertEqual(RELEASE_SELECTION_KEYS, set(document))
+            self.assertEqual(RELEASE_SELECTION_SCHEMA_VERSION, document["schema_version"])
+            self.assertEqual("warm", document["cache_mode"])
+            self.assertEqual(self.BIN_COMMIT, document["bin_commit"])
+            head = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+            self.assertEqual(head, document["source_sha"])
+            self.assertEqual([("game-1", "windows")], [(e["tag"], e["platform"]) for e in document["entries"]])
+            self.assertEqual(["client", "engine"], [record["module"] for record in document["entries"][0]["binaries"]])
+            raw = (root / "selection.json").read_bytes()
+            self.assertEqual(canonical_json_bytes(document), raw)
+            self.assertEqual(
+                f"{hashlib.sha256(raw).hexdigest()}\n", (root / "selection.sha256").read_text(encoding="ascii")
+            )
+            verified, _context = verify_release_selection_file(
+                **self._common(repo, persisted, ida_root),
+                selection_path=root / "selection.json",
+                selection_sha256_path=root / "selection.sha256",
+            )
+            self.assertEqual(document, verified)
+
+    def test_cache_hit_and_miss_produce_the_same_selection_entries(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, ida_root = self._release_repository(root)
+            persisted = root / "persisted"
+            persisted.mkdir()
+            warm_calls = []
+
+            def counting_warm(**kwargs):
+                warm_calls.append(kwargs["run_id"])
+                return self._fake_warm(**kwargs)
+
+            with patch("idb_cache_selection.warm_and_publish", side_effect=counting_warm):
+                first = prepare_release_selection(
+                    **self._common(repo, persisted, ida_root),
+                    run_id="run-1",
+                    attempt=1,
+                    timeout_seconds=1,
+                    output_path=root / "first.json",
+                    output_sha256_path=root / "first.sha256",
+                )
+                second = prepare_release_selection(
+                    **self._common(repo, persisted, ida_root),
+                    run_id="run-2",
+                    attempt=1,
+                    timeout_seconds=1,
+                    output_path=root / "second.json",
+                    output_sha256_path=root / "second.sha256",
+                )
+            self.assertEqual(["run-1"], warm_calls)
+            self.assertEqual(first, second)
+
+    def test_consumer_restores_the_bound_generation_after_ready_advances(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, ida_root = self._release_repository(root)
+            persisted = root / "persisted"
+            persisted.mkdir()
+            document = self._prepare(repo, persisted, ida_root, root)
+            entry = document["entries"][0]
+            identity = verify_selection(persisted_root=persisted, selection=generation_selection(entry))["identity"]
+            workspace = repo / "bin" / "game-1"
+            for record in identity["binaries"]:
+                Path(f"{workspace.joinpath(*Path(record['path']).parts)}.i64").write_bytes(b"newer-idb")
+            advanced = publish_generation(
+                persisted_root=persisted,
+                identity=identity,
+                workspace_root=workspace,
+                run_id="run-9",
+                attempt=1,
+            )
+            self.assertNotEqual(entry["generation"], advanced["generation"])
+            self.assertEqual(
+                advanced,
+                json.loads((persisted / "idb-cache" / "game-1" / "READY.json").read_bytes()),
+            )
+            restore_release_selection(
+                **self._common(repo, persisted, ida_root),
+                selection_path=root / "selection.json",
+                selection_sha256_path=root / "selection.sha256",
+            )
+            for record in identity["binaries"]:
+                restored = Path(f"{workspace.joinpath(*Path(record['path']).parts)}.i64")
+                self.assertEqual(b"neutral-idb", restored.read_bytes())
+
+    def test_selection_is_rejected_on_source_bin_coverage_and_evidence_drift(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, ida_root = self._release_repository(root)
+            persisted = root / "persisted"
+            persisted.mkdir()
+            document = self._prepare(repo, persisted, ida_root, root)
+            selection_path = root / "selection.json"
+            sha_path = root / "selection.sha256"
+            mutations = {
+                "source": {**document, "source_sha": "c" * 40},
+                "bin": {**document, "bin_commit": "d" * 40},
+                "missing": {**document, "entries": []},
+                "duplicate": {**document, "entries": [document["entries"][0], document["entries"][0]]},
+                "binaries": {
+                    **document,
+                    "entries": [{**document["entries"][0], "binaries": document["entries"][0]["binaries"][:1]}],
+                },
+            }
+            for name, mutated in mutations.items():
+                with self.subTest(mutation=name):
+                    write_canonical_json(selection_path, mutated)
+                    digest = hashlib.sha256(selection_path.read_bytes()).hexdigest()
+                    sha_path.write_text(f"{digest}\n", encoding="ascii", newline="\n")
+                    with self.assertRaises((IdbCacheReleaseError, IdbCacheSelectionError)):
+                        verify_release_selection_file(
+                            **self._common(repo, persisted, ida_root),
+                            selection_path=selection_path,
+                            selection_sha256_path=sha_path,
+                        )
+            write_canonical_json(selection_path, document)
+            sha_path.write_text(f"{'0' * 64}\n", encoding="ascii", newline="\n")
+            with self.assertRaisesRegex(IdbCacheSelectionError, "SHA-256 evidence mismatch"):
+                verify_release_selection_file(
+                    **self._common(repo, persisted, ida_root),
+                    selection_path=selection_path,
+                    selection_sha256_path=sha_path,
+                )
+
+    def test_bound_source_sha_must_match_the_producer_checkout(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, ida_root = self._release_repository(root)
+            persisted = root / "persisted"
+            persisted.mkdir()
+            with self.assertRaisesRegex(IdbCacheReleaseError, "drifted"):
+                prepare_release_selection(
+                    **{**self._common(repo, persisted, ida_root), "source_sha": "e" * 40},
+                    run_id="run-1",
+                    attempt=1,
+                    timeout_seconds=1,
+                    output_path=root / "selection.json",
+                    output_sha256_path=root / "selection.sha256",
+                )
 
 
 if __name__ == "__main__":

@@ -55,6 +55,7 @@ jobs:
       has_hosted: ${{ steps.route.outputs.has_hosted }}
       same_repository: ${{ steps.route.outputs.same_repository }}
       cache_mode: ${{ steps.route.outputs.cache_mode }}
+      plan_sha256: ${{ steps.route.outputs.plan_sha256 }}
     steps:
       - name: Checkout PR merge commit with full history
         uses: actions/checkout@v5
@@ -113,6 +114,7 @@ jobs:
           echo "has_hosted=$has_hosted" >> "$GITHUB_OUTPUT"
           echo "same_repository=$SAME_REPOSITORY" >> "$GITHUB_OUTPUT"
           echo "cache_mode=$(jq -r '.cache_mode' "$plan")" >> "$GITHUB_OUTPUT"
+          echo "plan_sha256=$(jq -r '.plan_sha256' "$plan")" >> "$GITHUB_OUTPUT"
           if [[ "$has_actions" != "true" ]]; then
             echo "no affected game-symbol actions"
           fi
@@ -192,10 +194,28 @@ jobs:
             rm -rf "$stage"
             trap - EXIT
           done < <(jq -r '.tags[] | select((.analysis_nodes | length) == 0 and (.snapshot_rebuild or .gamedata_rebuild)) | .tag' "$plan")
-  analyze-self-hosted:
+  warmup-idb:
     needs: [classify, plan]
     if: needs.classify.outputs.route == 'source' && needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository
-      == 'true'
+      == 'true' && needs.plan.outputs.cache_mode == 'warm'
+    uses: ./.github/workflows/warmup-idb.yml
+    secrets: inherit
+    with:
+      source_sha: ${{ github.sha }}
+      scope: bound-plan
+      cache_mode: ${{ needs.plan.outputs.cache_mode }}
+      plan_artifact_name: gamesymbol-plan-${{ github.run_id }}
+      plan_sha256: ${{ needs.plan.outputs.plan_sha256 }}
+      selection_artifact_name: idb-cache-selection-${{ github.run_id }}-${{ github.run_attempt }}
+  analyze-self-hosted:
+    needs: [classify, plan, warmup-idb]
+    # Warm analysis requires a successful producer; cold analysis requires it to have been
+    # skipped. The consumer never warms or publishes, so a failed producer must block it.
+    if: |
+      always() && needs.classify.outputs.route == 'source' && needs.plan.result == 'success'
+      && needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository == 'true'
+      && ((needs.plan.outputs.cache_mode == 'warm' && needs.warmup-idb.result == 'success')
+      || (needs.plan.outputs.cache_mode == 'cold' && needs.warmup-idb.result == 'skipped'))
     runs-on: [self-hosted, windows, x64]
     environment: win64
     timeout-minutes: 720
@@ -306,11 +326,18 @@ jobs:
             throw 'Failed to resolve the IDA kernel version from the idalib-mcp installation'
           }
           "IDA_KERNEL_VERSION=$idaVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-      - name: Prepare exact warm IDB cache selection
+      - name: Download exact warm IDB cache selection
+        if: needs.plan.outputs.cache_mode == 'warm'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.warmup-idb.outputs.selection_artifact_name }}
+          path: ${{ runner.temp }}/gamesymbol-validation
+      - name: Verify exact warm IDB cache selection
         if: needs.plan.outputs.cache_mode == 'warm'
         shell: pwsh
         env:
           PERSISTED_WORKSPACE: ${{ secrets.PERSISTED_WORKSPACE }}
+          PRODUCER_SELECTION_SHA256: ${{ needs.warmup-idb.outputs.selection_sha256 }}
         run: |
           $ErrorActionPreference = 'Stop'
           if ([string]::IsNullOrWhiteSpace($env:PERSISTED_WORKSPACE)) {
@@ -320,38 +347,16 @@ jobs:
             throw 'IDADIR and the dynamically resolved IDA_KERNEL_VERSION are required for warm cache mode'
           }
           $bundle = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'
-          $planPath = Join-Path $bundle 'plan.json'
-          $selectionPath = Join-Path $bundle 'cache-selection.json'
-          $selectionShaPath = Join-Path $bundle 'cache-selection.sha256'
-          uv run python idb_cache_workflow.py prepare `
-            -repo-root $env:GITHUB_WORKSPACE -plan $planPath -merge-ref HEAD -bindir bin `
-            -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR `
-            -kernel-version $env:IDA_KERNEL_VERSION -run-id "${{ github.run_id }}" `
-            -attempt "${{ github.run_attempt }}" -output $selectionPath -output-sha256 $selectionShaPath
-          if ($LASTEXITCODE -ne 0) { throw 'warm cache preparation failed' }
-      - name: Verify exact warm IDB cache selection
-        if: needs.plan.outputs.cache_mode == 'warm'
-        shell: pwsh
-        env:
-          PERSISTED_WORKSPACE: ${{ secrets.PERSISTED_WORKSPACE }}
-        run: |
-          $bundle = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'
+          $evidence = (Get-Content -Raw -LiteralPath (Join-Path $bundle 'cache-selection.sha256')).Trim()
+          if ($evidence -ne $env:PRODUCER_SELECTION_SHA256) {
+            throw 'downloaded cache selection evidence does not match the producer job output'
+          }
           uv run python idb_cache_workflow.py verify `
             -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $bundle 'plan.json') -merge-ref HEAD -bindir bin `
             -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR `
             -kernel-version $env:IDA_KERNEL_VERSION -selection (Join-Path $bundle 'cache-selection.json') `
             -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
           if ($LASTEXITCODE -ne 0) { throw 'warm cache selection verification failed' }
-      - name: Upload warm IDB cache selection evidence
-        if: needs.plan.outputs.cache_mode == 'warm'
-        uses: actions/upload-artifact@v4
-        with:
-          name: idb-cache-selection-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ${{ runner.temp }}/gamesymbol-validation/cache-selection.json
-            ${{ runner.temp }}/gamesymbol-validation/cache-selection.sha256
-          if-no-files-found: error
-          retention-days: 30
       - name: Restore exact warm IDB cache generations
         if: needs.plan.outputs.cache_mode == 'warm'
         shell: pwsh
@@ -429,7 +434,7 @@ jobs:
       - run: echo "Fork PR analysis nodes require a trusted same-repository runner" && exit 1
   pr-validate:
     name: pr-validate
-    needs: [classify, plan, validate-hosted, analyze-self-hosted, fork-analysis-blocked]
+    needs: [classify, plan, warmup-idb, validate-hosted, analyze-self-hosted, fork-analysis-blocked]
     if: always() && github.event.action != 'closed' && needs.classify.outputs.route == 'source'
     runs-on: ubuntu-latest
     steps:
@@ -446,6 +451,7 @@ jobs:
         if: needs.classify.outputs.route == 'source'
         env:
           PLAN_RESULT: ${{ needs.plan.result }}
+          WARMUP_RESULT: ${{ needs.warmup-idb.result }}
           HOSTED_RESULT: ${{ needs.validate-hosted.result }}
           ANALYSIS_RESULT: ${{ needs.analyze-self-hosted.result }}
           FORK_RESULT: ${{ needs.fork-analysis-blocked.result }}
@@ -453,6 +459,7 @@ jobs:
           HAS_ANALYSIS: ${{ needs.plan.outputs.has_analysis }}
           HAS_HOSTED: ${{ needs.plan.outputs.has_hosted }}
           SAME_REPOSITORY: ${{ needs.plan.outputs.same_repository }}
+          CACHE_MODE: ${{ needs.plan.outputs.cache_mode }}
         shell: bash
         run: |-
           set -euo pipefail
@@ -486,8 +493,14 @@ jobs:
           fi
           if [[ "$HAS_ANALYSIS" == "true" && "$SAME_REPOSITORY" == "true" ]]; then
             require_result "analyze-self-hosted" "$ANALYSIS_RESULT" "success"
+            if [[ "$CACHE_MODE" == "warm" ]]; then
+              require_result "warmup-idb" "$WARMUP_RESULT" "success"
+            else
+              require_result "warmup-idb" "$WARMUP_RESULT" "skipped"
+            fi
           else
             require_result "analyze-self-hosted" "$ANALYSIS_RESULT" "skipped"
+            require_result "warmup-idb" "$WARMUP_RESULT" "skipped"
           fi
           if [[ "$HAS_ANALYSIS" == "true" && "$SAME_REPOSITORY" != "true" ]]; then
             require_result "fork-analysis-blocked" "$FORK_RESULT" "failure"

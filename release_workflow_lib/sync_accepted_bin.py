@@ -7,49 +7,21 @@ import shutil
 import uuid
 from pathlib import Path
 
+from release_workflow_lib.accepted_bin import (
+    contains_recoverable_analysis_state,
+    durable_inventory,
+    durable_skeleton,
+)
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.filesystem import remove_tree
 from release_workflow_lib.hashing import (
     contained_path,
-    inventory_sha256,
-    normalized_relative_path,
     reject_reparse_components,
     reject_reparse_points,
-    sha256_file,
 )
+from release_workflow_lib.locks import accepted_bin_lock_path, version_lock
 from release_workflow_lib.manifests import require_gamever
-from release_workflow_lib.promotion import _version_lock
-from release_workflow_lib.staging import ignore_recoverable_analysis_state, is_recoverable_analysis_path
-
-_LOCK_RELATIVE = ("release-staging", "locks")
-
-
-def _filtered_files(root: Path) -> list[Path]:
-    reject_reparse_points(root)
-    return [
-        path
-        for path in sorted(item for item in root.rglob("*") if item.is_file())
-        if not is_recoverable_analysis_path(path.relative_to(root))
-    ]
-
-
-def _filtered_inventory(root: Path) -> tuple[list[dict], str]:
-    filtered = []
-    for path in _filtered_files(root):
-        relative = normalized_relative_path(path.relative_to(root).as_posix())
-        filtered.append({"path": relative, "size": path.stat().st_size, "sha256": sha256_file(path)})
-    return filtered, inventory_sha256(filtered)
-
-
-def _filtered_skeleton(root: Path) -> list[tuple[str, int]]:
-    return [
-        (normalized_relative_path(path.relative_to(root).as_posix()), path.stat().st_size)
-        for path in _filtered_files(root)
-    ]
-
-
-def _contains_recoverable_analysis_state(root: Path) -> bool:
-    return any(is_recoverable_analysis_path(path.relative_to(root)) for path in root.rglob("*"))
+from release_workflow_lib.staging import ignore_recoverable_analysis_state
 
 
 def _swap_verified_bin(
@@ -65,7 +37,7 @@ def _swap_verified_bin(
         shutil.copytree(source, incoming, copy_function=shutil.copy2, ignore=ignore_recoverable_analysis_state)
     except OSError as exc:
         raise ReleaseWorkflowError(f"unable to copy source tree {source}: {exc}") from exc
-    if _filtered_inventory(incoming) != (expected_files, expected_hash):
+    if durable_inventory(incoming) != (expected_files, expected_hash):
         remove_tree(incoming)
         raise ReleaseWorkflowError("incoming accepted-bin directory failed verification")
     moved_old = False
@@ -97,17 +69,16 @@ def sync_accepted_bin(*, repo_root: Path, persisted_root: Path, gamever: str) ->
     target = contained_path(accepted_root, gamever)
     incoming = contained_path(accepted_root, f".{gamever}.{uuid.uuid4().hex}.incoming")
     backup = contained_path(accepted_root, f".{gamever}.{uuid.uuid4().hex}.backup")
-    lock_path = contained_path(persisted_root, *_LOCK_RELATIVE, f"{gamever}.lock")
 
-    source_skeleton = _filtered_skeleton(source_root)
-    with _version_lock(lock_path):
+    source_skeleton = durable_skeleton(source_root)
+    with version_lock(accepted_bin_lock_path(persisted_root, gamever)):
         if (
             target.is_dir()
-            and _filtered_skeleton(target) == source_skeleton
-            and not _contains_recoverable_analysis_state(target)
+            and durable_skeleton(target) == source_skeleton
+            and not contains_recoverable_analysis_state(target)
         ):
             return {"synced": False, "gamever": gamever, "hash": None}
-        expected_files, expected_hash = _filtered_inventory(source_root)
+        expected_files, expected_hash = durable_inventory(source_root)
         moved_old = _swap_verified_bin(
             source=source_root,
             target=target,

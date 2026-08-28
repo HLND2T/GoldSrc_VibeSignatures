@@ -23,6 +23,7 @@ from ida_database_paths import (
     validate_database_file_set,
     validate_plain_file,
 )
+from idb_cache_locks import DEFAULT_TAG_LOCK_TIMEOUT_SECONDS, IdbCacheError, tag_lock, tag_lock_timeout_seconds
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.hashing import (
     canonical_json_bytes,
@@ -44,6 +45,8 @@ WARM_WORKER_CONTRACT_FILES = (
     "ida_database_paths.py",
     "ida_mcp_session.py",
     "idb_cache.py",
+    "idb_cache_locks.py",
+    "idb_cache_selection.py",
     "idb_cache_workflow.py",
     "idb_warm_worker.py",
     "release_workflow_lib/errors.py",
@@ -81,10 +84,6 @@ GENERATION_MANIFEST_KEYS = {
 READY_KEYS = {"schema_version", "tag", "cache_key", "generation", "manifest_sha256"}
 SAFE_COMPONENT_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,159}$", re.ASCII)
 UTC_TIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
-
-
-class IdbCacheError(ValueError):
-    pass
 
 
 def _component(value: object, context: str) -> str:
@@ -302,6 +301,22 @@ def _tag_root(persisted_root: str | Path, tag: str, *, create: bool = False) -> 
     if create:
         tag_root.mkdir(parents=True, exist_ok=True)
     return _plain_root(tag_root) if tag_root.exists() else tag_root
+
+
+def _write_ready(tag_root: Path, selection: dict) -> None:
+    """Publish the probe hint, skipping the replace when READY already holds these bytes.
+
+    READY is only an optimization pointer; rewriting identical bytes buys nothing and adds a
+    replace that a concurrent reader can turn into a Windows sharing violation.
+    """
+    ready_path = tag_root / "READY.json"
+    expected = canonical_json_bytes(selection)
+    try:
+        if ready_path.read_bytes() == expected:
+            return
+    except OSError:
+        pass
+    write_canonical_json(ready_path, selection)
 
 
 def _generation_name(key: str, run_id: str, attempt: int) -> str:
@@ -526,7 +541,7 @@ def publish_generation(
             "generation": generation,
             "manifest_sha256": manifest_sha256,
         }
-        write_canonical_json(tag_root / "READY.json", selection)
+        _write_ready(tag_root, selection)
         return selection
     finally:
         if incoming.exists():
@@ -609,7 +624,7 @@ def probe_generation(*, persisted_root: str | Path, identity: dict) -> dict | No
     if not candidates:
         return None
     selection = candidates[-1]
-    write_canonical_json(ready_path, selection)
+    _write_ready(tag_root, selection)
     return selection
 
 
@@ -825,56 +840,76 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _locked_command(args) -> int:
+    """Run one mutating CLI command; the caller already holds this tag's lock."""
+    if args.command == "probe":
+        selection = probe_generation(
+            persisted_root=args.persisted_root,
+            identity=load_cache_identity(args.identity),
+        )
+        if selection is None:
+            return 3
+        write_canonical_json(args.output, selection)
+    elif args.command == "warm":
+        selection = warm_and_publish(
+            persisted_root=args.persisted_root,
+            identity_path=args.identity,
+            workspace_root=args.workspace_root,
+            run_id=args.run_id,
+            attempt=args.attempt,
+            port_lock=args.port_lock,
+            timeout_seconds=args.timeout_seconds,
+        )
+        print(json.dumps(selection, sort_keys=True))
+    elif args.command == "publish":
+        selection = publish_generation(
+            persisted_root=args.persisted_root,
+            identity=load_cache_identity(args.identity),
+            workspace_root=args.workspace_root,
+            run_id=args.run_id,
+            attempt=args.attempt,
+        )
+        print(json.dumps(selection, sort_keys=True))
+    elif args.command == "restore":
+        restore_generation(
+            persisted_root=args.persisted_root,
+            selection=_parse_selection(Path(args.selection).read_bytes()),
+            workspace_root=args.workspace_root,
+        )
+    else:
+        for removed in prune_tag(persisted_root=args.persisted_root, tag=args.tag):
+            print(removed)
+    return 0
+
+
+def _command_tag(args) -> str:
+    if args.command in {"probe", "warm", "publish"}:
+        return load_cache_identity(args.identity)["tag"]
+    if args.command == "restore":
+        return _parse_selection(Path(args.selection).read_bytes())["tag"]
+    return args.tag
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
-        if args.command == "probe":
-            selection = probe_generation(
-                persisted_root=args.persisted_root,
-                identity=load_cache_identity(args.identity),
-            )
-            if selection is None:
-                return 3
-            write_canonical_json(args.output, selection)
-        elif args.command == "warm":
-            selection = warm_and_publish(
-                persisted_root=args.persisted_root,
-                identity_path=args.identity,
-                workspace_root=args.workspace_root,
-                run_id=args.run_id,
-                attempt=args.attempt,
-                port_lock=args.port_lock,
-                timeout_seconds=args.timeout_seconds,
-            )
-            print(json.dumps(selection, sort_keys=True))
-        elif args.command == "publish":
-            selection = publish_generation(
-                persisted_root=args.persisted_root,
-                identity=load_cache_identity(args.identity),
-                workspace_root=args.workspace_root,
-                run_id=args.run_id,
-                attempt=args.attempt,
-            )
-            print(json.dumps(selection, sort_keys=True))
-        elif args.command == "restore":
-            selection = _parse_selection(Path(args.selection).read_bytes())
-            restore_generation(
-                persisted_root=args.persisted_root,
-                selection=selection,
-                workspace_root=args.workspace_root,
-            )
-        elif args.command == "verify":
+        if args.command == "verify":
+            # Verification only reads immutable generation bytes, so it needs no write authority.
             verify_selection(
                 persisted_root=args.persisted_root,
                 selection=_parse_selection(Path(args.selection).read_bytes()),
             )
-        else:
-            for removed in prune_tag(persisted_root=args.persisted_root, tag=args.tag):
-                print(removed)
+            return 0
+        timeout_seconds = (
+            tag_lock_timeout_seconds(args.timeout_seconds)
+            if args.command == "warm"
+            else DEFAULT_TAG_LOCK_TIMEOUT_SECONDS
+        )
+        with tag_lock(args.persisted_root, _command_tag(args), timeout_seconds=timeout_seconds):
+            return _locked_command(args)
     except (IdbCacheError, OSError, ValueError) as exc:
         print(f"Error: {exc}")
         return 1
-    return 0
 
 
 if __name__ == "__main__":
