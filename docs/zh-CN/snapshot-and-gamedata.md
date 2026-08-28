@@ -61,6 +61,10 @@ Release build 在 self-hosted runner 上为全部 game version 生成 `gamesymbo
 `gamesymbols/build/<version>` 分支的 generated-output PR；合并后打单个 `version` tag 并发布一个 GitHub Release（资产
 含全部 game version）。
 
+这也包括配置 symbol 集合为空的 tag。其 snapshot 的 `files` 为空，但仍锁定已配置的二进制 identity；metadata
+companion 仍为必需，gamedata 目录则包含 canonical 空 inventory manifest。首次 release 发布前，这类 tag 仍可仅有
+config；metadata 或 gamedata 不得脱离 snapshot 单独存在。
+
 `release-manifests/<version>.json` 是 schema-1 canonical manifest：绑定 `version`、`mode`、`build_id`、`source_sha`、
 每条 game version 的 snapshot/gamedata provenance，以及 aggregate bin/tracked-output inventory hash。
 `validate-generated-output-pr.yml` 用 exact Git blob 重建 tracked output inventory 并核对每条 game version 的 snapshot

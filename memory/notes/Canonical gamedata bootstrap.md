@@ -29,4 +29,4 @@ The trusted impact plan binds base/merge gamedata subtree digests. Hosted and se
 
 ## Validation
 
-Run `tests.test_gamedata`, `tests.test_gamesymbol_pr_validation`, repository-contract, and the full suite. Config-only zero-symbol tags have no snapshot, metadata, or gamedata directory.
+Run `tests.test_gamedata`, `tests.test_gamesymbol_pr_validation`, repository-contract, and the full suite. A zero-symbol tag may remain config-only before release. When it is published, it has the same snapshot/metadata pair and a gamedata directory whose canonical manifest records an empty payload inventory.

@@ -451,10 +451,6 @@ class RepositoryContractTests(unittest.TestCase):
                 )
                 self.assertTrue(files)
                 self.assertRegex(manifest_sha256, r"^[0-9a-f]{64}$")
-        self.assertFalse((ROOT / "gamesymbols" / "cstrike-10210.metadata.yaml").exists())
-        self.assertFalse((ROOT / "gamesymbols" / "cstrike-8684.metadata.yaml").exists())
-        self.assertFalse((ROOT / "gamedata" / "cstrike-10210").exists())
-        self.assertFalse((ROOT / "gamedata" / "cstrike-8684").exists())
 
     def test_pages_workflow_keeps_content_addressed_history_append_only(self):
         workflow = (ROOT / ".github" / "workflows" / "deploy-pages.yml").read_text(encoding="utf-8")

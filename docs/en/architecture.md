@@ -145,7 +145,8 @@ The release build generates and publishes `gamesymbols/<tag>.yaml`, `gamesymbols
 `gamedata/<tag>/**` for every game version on the self-hosted runner, committing them together with
 `release-manifests/<version>.json` onto the `gamesymbols/build/<version>` generated-output branch. Schema-1 canonical JSON
 binds `version`, `mode`, `build_id`, `source_sha`, per-game-version snapshot/gamedata provenance, and the aggregate
-inventory hashes.
+inventory hashes. Empty-symbol tags follow the same publication contract: their snapshot locks binary identity with an
+empty file payload, and the companion plus canonical empty-inventory gamedata manifest are still required.
 
 `validate-generated-output-pr.yml` rebuilds the tracked output inventory from exact Git blobs and checks each game
 version. The output head must be a single-parent commit whose parent equals manifest `source_sha`; the current PR base

@@ -4,6 +4,10 @@
 
 日期：2026-08-23（Asia/Singapore）
 
+后续契约更新（2026-08-28）：release output 现允许发布 empty-symbol tag。此类 tag 在首次发布前仍可保持
+config-only；一旦发布 snapshot，就必须同时发布 canonical metadata companion 与仅含空 inventory manifest 的
+gamedata。下文关于 `cstrike-10210` / `cstrike-8684` 不生成发布产物的描述仅保留为原迁移阶段的历史设计。
+
 GoldSrc 对齐基线：`https://github.com/HLND2T/GoldSrc_VibeSignatures` `main@e094c5af1044be26441ada79b8665b97bb685357`，tree `797de06a3289b25700f7db190678e5ff80f81604`，`bin` gitlink `65c8337f0ec37c73a7b20e43009204bd8f308e14`
 
 CS2 参考基线：`https://github.com/HLND2T/CS2_VibeSignatures.git` `main@67b3238b13abc331c1df8da12cbf358aecf951bd`，tree `a7ffaba0b36e6a667af32a8fbffc4a170d97f935`
