@@ -692,7 +692,16 @@ def create_ida_mcp_lifecycle(
     debug: bool,
 ) -> Any:
     ida_analyze_bin = _load_ida_analyze_bin()
-    return ida_analyze_bin.IdaMcpLifecycle(binary_path, platform, host, port, ida_args, debug)
+    return ida_analyze_bin.IdaMcpLifecycle(
+        binary_path,
+        platform,
+        host,
+        port,
+        ida_args,
+        debug,
+        database_policy=ida_analyze_bin.DATABASE_POLICY_RESTORED_STRICT,
+        save_on_success=False,
+    )
 
 
 @asynccontextmanager

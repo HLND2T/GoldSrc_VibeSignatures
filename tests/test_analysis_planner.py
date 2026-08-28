@@ -24,6 +24,7 @@ from ida_analyze_bin import (
     ANALYSIS_STAGES,
     DEFAULT_HOST,
     DEFAULT_PORT,
+    DATABASE_POLICY_REBUILD,
     DATABASE_POLICY_RESTORED_STRICT,
     SURVEY_CURRENT_IDB_PATH_PY_EVAL,
     AnalysisRunError,
@@ -355,11 +356,8 @@ class ConfigValidationTests(unittest.TestCase):
 
 class CliContractTests(unittest.TestCase):
     def parse_args(self, argv=(), env=None):
-        argv = list(argv)
-        if not any(str(token).split("=", 1)[0] == "-cache_mode" for token in argv):
-            argv.extend(("-cache_mode", "cold"))
         with patch.dict(os.environ, env or {}, clear=True):
-            return parse_args(argv)
+            return parse_args(list(argv))
 
     def assert_parse_error(self, argv, env=None):
         with (
@@ -385,7 +383,6 @@ class CliContractTests(unittest.TestCase):
         self.assertEqual("medium", args.llm_effort)
         self.assertEqual(3, args.maxretry)
         self.assertEqual("", args.ida_args)
-        self.assertEqual("cold", args.cache_mode)
         self.assertEqual("none", args.process_reporter)
         self.assertEqual("redis://127.0.0.1:6379/0", args.redis_url)
         self.assertEqual("gsvibe:analysis:v1", args.redis_prefix)
@@ -506,6 +503,7 @@ class CliContractTests(unittest.TestCase):
             "-plan-only",
             "-vcall_finder",
             "-rename",
+            "-cache_mode",
         ):
             with self.subTest(option=option):
                 self.assert_parse_error(["-gamever", "cstrike-10210", option, "value"])
@@ -534,11 +532,11 @@ class CliContractTests(unittest.TestCase):
         self.assert_parse_error([])
         self.assert_parse_error([], env={"GSVIBE_GAMEVER": "cstrike-10210"})
 
-    def test_cache_mode_is_explicit_and_limited_to_warm_or_cold(self):
-        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
-            parse_args(["-gamever", "cstrike-10210"])
-        self.assertEqual("warm", self.parse_args(["-gamever", "cstrike-10210", "-cache_mode", "warm"]).cache_mode)
-        self.assert_parse_error(["-gamever", "cstrike-10210", "-cache_mode", "fallback"])
+    def test_cache_mode_is_fixed_warm_and_not_a_cli_switch(self):
+        args = self.parse_args(["-gamever", "cstrike-10210"])
+        self.assertFalse(hasattr(args, "cache_mode"))
+        for mode in ("warm", "cold", "fallback"):
+            self.assert_parse_error(["-gamever", "cstrike-10210", "-cache_mode", mode])
 
     def test_oldgamever_auto_resolution_is_family_aware(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -620,7 +618,7 @@ class CliContractTests(unittest.TestCase):
                 patch("ida_analyze_bin._run_single_tag", side_effect=record_success),
                 redirect_stdout(io.StringIO()),
             ):
-                result = main(["-allgamever", "-bindir", str(root / "bin"), "-cache_mode", "cold"])
+                result = main(["-allgamever", "-bindir", str(root / "bin")])
             self.assertEqual(0, result)
 
     def test_allgamever_module_filter_matches_configured_modules(self):
@@ -649,7 +647,7 @@ class CliContractTests(unittest.TestCase):
             patch("ida_analyze_bin._run_single_tag", side_effect=record_success),
             redirect_stdout(output),
         ):
-            result = main(["-allgamever", "-modules", "engine", "-bindir", "bin", "-cache_mode", "cold"])
+            result = main(["-allgamever", "-modules", "engine", "-bindir", "bin"])
         self.assertEqual(0, result)
         self.assertEqual(["hl-10210"], calls)
         self.assertIn("Skipping gamever: no requested modules found (engine)", output.getvalue())
@@ -672,7 +670,7 @@ class CliContractTests(unittest.TestCase):
             patch("ida_analyze_bin._run_single_tag", side_effect=fail_then_succeed),
             redirect_stdout(io.StringIO()),
         ):
-            result = main(["-allgamever", "-bindir", "bin", "-cache_mode", "cold"])
+            result = main(["-allgamever", "-bindir", "bin"])
         self.assertEqual(1, result)
         self.assertEqual(["hl-10210"], calls)
 
@@ -694,7 +692,7 @@ class CliContractTests(unittest.TestCase):
             patch("ida_analyze_bin._run_single_tag", side_effect=fail_then_succeed),
             redirect_stdout(io.StringIO()),
         ):
-            result = main(["-allgamever", "-bindir", "bin", "-skip_error", "-cache_mode", "cold"])
+            result = main(["-allgamever", "-bindir", "bin", "-skip_error"])
         self.assertEqual(1, result)
         self.assertEqual(["hl-10210", "hl-8684"], calls)
 
@@ -713,8 +711,6 @@ class CliContractTests(unittest.TestCase):
                         str(config),
                         "-bindir",
                         str(root / "bin"),
-                        "-cache_mode",
-                        "cold",
                     ]
                 )
             self.assertEqual(0, result)
@@ -722,6 +718,7 @@ class CliContractTests(unittest.TestCase):
             self.assertIn("Successful: 0", output.getvalue())
             self.assertIn("Failed: 0", output.getvalue())
             self.assertIn("Skipped: 0", output.getvalue())
+            self.assertIn("IDB cache mode: warm (strict restored, no save)", output.getvalue())
 
     def test_main_returns_nonzero_when_skip_error_records_failures(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -746,44 +743,40 @@ class CliContractTests(unittest.TestCase):
                         "-bindir",
                         str(root / "bin"),
                         "-skip_error",
-                        "-cache_mode",
-                        "cold",
                     ]
                 )
             self.assertEqual(1, result)
 
-    def test_cli_cache_mode_selects_cold_or_strict_lifecycle(self):
+    def test_cli_analysis_exposes_no_database_policy_override(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             config = root / "config.yaml"
             config.write_text("modules: []\n", encoding="utf-8")
-            observed = []
+            observed = {}
 
             def record_mode(**kwargs):
-                observed.append((kwargs["database_policy"], kwargs["save_on_success"]))
+                observed.update(kwargs)
 
-            for mode in ("cold", "warm"):
-                with (
-                    patch.dict(os.environ, {}, clear=True),
-                    patch("ida_analyze_bin.analyze", side_effect=record_mode),
-                    redirect_stdout(io.StringIO()),
-                ):
-                    self.assertEqual(
-                        0,
-                        main(
-                            [
-                                "-gamever",
-                                "game-1",
-                                "-configyaml",
-                                str(config),
-                                "-bindir",
-                                str(root / "bin"),
-                                "-cache_mode",
-                                mode,
-                            ]
-                        ),
-                    )
-            self.assertEqual([("rebuild", True), ("restored_strict", False)], observed)
+            with (
+                patch.dict(os.environ, {}, clear=True),
+                patch("ida_analyze_bin.analyze", side_effect=record_mode),
+                redirect_stdout(io.StringIO()),
+            ):
+                self.assertEqual(
+                    0,
+                    main(
+                        [
+                            "-gamever",
+                            "game-1",
+                            "-configyaml",
+                            str(config),
+                            "-bindir",
+                            str(root / "bin"),
+                        ]
+                    ),
+                )
+            self.assertNotIn("database_policy", observed)
+            self.assertNotIn("save_on_success", observed)
 
 
 class DagTests(unittest.TestCase):
@@ -1835,7 +1828,16 @@ class McpLifecycleTests(unittest.TestCase):
                     summary=summary,
                 )
             allocate_port.assert_called_once_with(DEFAULT_HOST)
-            lifecycle_type.assert_called_once_with(binary, "windows", DEFAULT_HOST, 39000, "quiet", False)
+            lifecycle_type.assert_called_once_with(
+                binary,
+                "windows",
+                DEFAULT_HOST,
+                39000,
+                "quiet",
+                False,
+                database_policy=DATABASE_POLICY_RESTORED_STRICT,
+                save_on_success=False,
+            )
             lifecycle.ensure_ready.assert_called_once_with()
             self.assertIs(runtime, pipeline.call_args_list[0].kwargs["mcp_runtime"])
             self.assertIs(runtime, pipeline.call_args_list[1].kwargs["mcp_runtime"])
@@ -1889,7 +1891,16 @@ class McpLifecycleTests(unittest.TestCase):
                     port=13337,
                     summary=summary,
                 )
-            lifecycle_type.assert_called_once_with(binary, "windows", DEFAULT_HOST, 13337, "", False)
+            lifecycle_type.assert_called_once_with(
+                binary,
+                "windows",
+                DEFAULT_HOST,
+                13337,
+                "",
+                False,
+                database_policy=DATABASE_POLICY_RESTORED_STRICT,
+                save_on_success=False,
+            )
 
     def test_selected_node_forces_existing_output_and_ignores_unselected_binary(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -2182,7 +2193,15 @@ class McpLifecycleTests(unittest.TestCase):
                 patch("ida_analyze_bin.start_idalib_mcp") as start,
                 self.assertRaisesRegex(McpLifecycleError, "IDB lock file detected"),
             ):
-                IdaMcpLifecycle(binary, "windows", DEFAULT_HOST, DEFAULT_PORT, "").__enter__()
+                IdaMcpLifecycle(
+                    binary,
+                    "windows",
+                    DEFAULT_HOST,
+                    DEFAULT_PORT,
+                    "",
+                    database_policy=DATABASE_POLICY_REBUILD,
+                    save_on_success=True,
+                ).__enter__()
             start.assert_not_called()
             self.assertTrue(stale_idb.is_file())
             self.assertTrue(lock_file.is_file())
@@ -2240,7 +2259,15 @@ class McpLifecycleTests(unittest.TestCase):
                 patch("ida_analyze_bin.wait_for_port_release", return_value=True) as wait_for_release,
                 patch("ida_analyze_bin.save_ida_database") as save_database,
                 patch("ida_analyze_bin.quit_ida_gracefully") as quit_gracefully,
-                IdaMcpLifecycle(binary, "windows", DEFAULT_HOST, DEFAULT_PORT, "") as lifecycle,
+                IdaMcpLifecycle(
+                    binary,
+                    "windows",
+                    DEFAULT_HOST,
+                    DEFAULT_PORT,
+                    "",
+                    database_policy=DATABASE_POLICY_REBUILD,
+                    save_on_success=True,
+                ) as lifecycle,
             ):
                 self.assertIs(runtime, lifecycle.runtime)
                 self.assertEqual(0, lifecycle.recovery_budget.remaining_restarts)
@@ -2355,7 +2382,15 @@ class McpLifecycleTests(unittest.TestCase):
                 patch("ida_analyze_bin.wait_for_port_release", return_value=False),
                 self.assertRaisesRegex(McpLifecycleError, "remained in use before IDB rebuild"),
             ):
-                IdaMcpLifecycle(binary, "windows", DEFAULT_HOST, DEFAULT_PORT, "").__enter__()
+                IdaMcpLifecycle(
+                    binary,
+                    "windows",
+                    DEFAULT_HOST,
+                    DEFAULT_PORT,
+                    "",
+                    database_policy=DATABASE_POLICY_REBUILD,
+                    save_on_success=True,
+                ).__enter__()
 
             start.assert_called_once()
             stop.assert_called_once_with(process, debug=False)
@@ -2373,7 +2408,15 @@ class McpLifecycleTests(unittest.TestCase):
             stale_idb.write_bytes(b"stale")
             binding = McpDatabaseBinding(False, None, str(binary), "worker", True, True)
             runtime = McpRuntime(DEFAULT_HOST, DEFAULT_PORT, str(binary), binding)
-            lifecycle = IdaMcpLifecycle(binary, "windows", DEFAULT_HOST, DEFAULT_PORT, "")
+            lifecycle = IdaMcpLifecycle(
+                binary,
+                "windows",
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                "",
+                database_policy=DATABASE_POLICY_REBUILD,
+                save_on_success=True,
+            )
             lifecycle.process = first_process
 
             with (
@@ -2577,7 +2620,15 @@ class McpLifecycleTests(unittest.TestCase):
             patch("ida_analyze_bin.verify_owned_mcp_with_single_recovery", return_value=(process, runtime)),
             patch("ida_analyze_bin.save_ida_database") as save_database,
             patch("ida_analyze_bin.quit_ida_gracefully") as quit_gracefully,
-            IdaMcpLifecycle("hw.dll", "windows", DEFAULT_HOST, DEFAULT_PORT, ""),
+            IdaMcpLifecycle(
+                "hw.dll",
+                "windows",
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                "",
+                database_policy=DATABASE_POLICY_REBUILD,
+                save_on_success=True,
+            ),
         ):
             pass
         save_database.assert_called_once_with(
@@ -2606,7 +2657,15 @@ class McpLifecycleTests(unittest.TestCase):
             patch("ida_analyze_bin.quit_ida_gracefully") as quit_gracefully,
             self.assertRaisesRegex(McpLifecycleError, "save failed"),
         ):
-            with IdaMcpLifecycle("hw.dll", "windows", DEFAULT_HOST, DEFAULT_PORT, ""):
+            with IdaMcpLifecycle(
+                "hw.dll",
+                "windows",
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                "",
+                database_policy=DATABASE_POLICY_REBUILD,
+                save_on_success=True,
+            ):
                 pass
         quit_gracefully.assert_called_once_with(
             process,
@@ -2627,7 +2686,15 @@ class McpLifecycleTests(unittest.TestCase):
             patch("ida_analyze_bin.quit_ida_gracefully") as quit_gracefully,
             self.assertRaisesRegex(McpLifecycleError, "identity verification failed"),
         ):
-            IdaMcpLifecycle("hw.dll", "windows", DEFAULT_HOST, DEFAULT_PORT, "").__enter__()
+            IdaMcpLifecycle(
+                "hw.dll",
+                "windows",
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                "",
+                database_policy=DATABASE_POLICY_REBUILD,
+                save_on_success=True,
+            ).__enter__()
         stop.assert_called_once_with(process, debug=False)
         quit_gracefully.assert_not_called()
 

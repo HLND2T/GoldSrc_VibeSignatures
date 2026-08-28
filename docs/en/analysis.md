@@ -31,8 +31,8 @@ The Analyzer finds and generates signatures for symbols declared in `configs/<GA
 Command synopsis:
 
 ```bash
-uv run python ida_analyze_bin.py -gamever cstrike-10210 -configyaml configs/cstrike-10210.yaml -platform windows,linux -cache_mode cold
-uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EXACT_SKILL_NAME> -platform windows,linux -cache_mode cold -debug
+uv run python ida_analyze_bin.py -gamever cstrike-10210 -configyaml configs/cstrike-10210.yaml -platform windows,linux
+uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EXACT_SKILL_NAME> -platform windows,linux -debug
 ```
 
 `-gamever` or `-allgamever` is required — the analyzer no longer falls back to `GSVIBE_GAMEVER`. Supported arguments:
@@ -45,7 +45,7 @@ uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EX
 - `-maxretry` bounds Agent retries; per-skill `max_retries` overrides it.
 - `-oldgamever` selects the latest older build from the same game family and passes an old-YAML map to the Preprocessor. A `major_update: true` download entry disables automatic old-version selection. Raw old-YAML copying remains disabled.
 - `-ida_args` appends IDA startup arguments. `-rename` and Source2-only finder semantics remain excluded.
-- `-cache_mode` is required. `cold` uses the normal clean loader/auto-analysis lifecycle; `warm` requires exact IDB generations to have been restored first and uses strict no-rebuild/no-save semantics.
+- IDB cache mode is not a CLI option. Every analysis invocation requires exact IDB generations to have been restored first and always uses strict no-rebuild/no-save semantics.
 - `-skip_pp` bypasses the single Preprocessor and runs the Agent directly. `-skip_error` continues after runtime failures but the final exit status remains nonzero.
 - `-process_reporter=console` emits typed `ProcessEvent` JSONL; `redis` is best-effort and writes the `gsvibe:analysis:v1` Redis protocol. `-redis_url` and `-redis_prefix` configure the Redis backend; `-run_id` sets the run identity.
 - `-debug` enables debug output.
@@ -58,11 +58,11 @@ orchestrator responsibility because it must select exact module/platform binarie
 
 Warm production is split across jobs: the reusable `warmup-idb` producer writes the canonical `cache-selection.json`
 and its SHA-256 evidence, and the consumer (`idb_cache_release.py restore` / `idb_cache_workflow.py restore`) verifies
-that selection, restores the exact generations, and then runs the Analyzer with `-cache_mode warm`, which selects
+that selection, restores the exact generations, and then runs the Analyzer with
 `database_policy=restored_strict` and `save_on_success=false`. A miss, corrupt generation, or runtime mismatch fails the
-warm run; it never silently falls back after restore begins. `-cache_mode cold` uses the existing clean loader/analysis
-path and does not read the persisted cache root. The consumer never re-probes `READY.json`; it restores exactly what its
-own producer published.
+run; no analysis consumer can fall back to rebuilding. The consumer never re-probes `READY.json`; it restores exactly
+what its own producer published. Local callers must likewise restore a verified exact generation before invoking the
+Analyzer.
 
 ### Batch analysis with `-allgamever`
 

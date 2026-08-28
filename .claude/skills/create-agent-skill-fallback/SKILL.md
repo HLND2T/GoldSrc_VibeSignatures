@@ -165,7 +165,7 @@ schema (category-specific identity, no `name/type/kind`, 4-byte vfunc slots).
 - Run the fallback itself in the real IDA/MCP environment, bypassing both old-version reuse and preprocessing:
 
   ```bash
-  uv run python ida_analyze_bin.py -gamever <gamever> -oldgamever none -modules <module> -skill find-XXXX -platform windows,linux -skip_pp -cache_mode cold -debug
+  uv run python ida_analyze_bin.py -gamever <gamever> -oldgamever none -modules <module> -skill find-XXXX -platform windows,linux -skip_pp -debug
   ```
 
   The selected game version must contain the module binary and every configured `expected_input`. Ensure at
@@ -394,7 +394,7 @@ Written beside the binary, one per symbol: `<symbol>.windows.yaml` / `<symbol>.l
 - [ ] `format_repo_files.py --check`, `unit`, and `repository-contract` suites pass.
 - [ ] Values cross-checked against `bin/` ground truth.
 - [ ] Real Agent-Skill-only test passed with `uv run python ida_analyze_bin.py -gamever <gamever> -oldgamever
-      none -modules <module> -skill find-XXXX -platform windows,linux -skip_pp -cache_mode cold -debug`; the log proves
+      none -modules <module> -skill find-XXXX -platform windows,linux -skip_pp -debug`; the log proves
       preprocessing was skipped (`Agent Skill only mode: enabled (-skip_pp)`), the Agent actually started and
       produced the previously-absent expected YAMLs, and the summary reports `Failed: 0`.
 - [ ] The current branch is `dev` (created from `main` when it did not already exist).

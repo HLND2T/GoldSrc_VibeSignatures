@@ -323,7 +323,6 @@ class RedisProcessScheduler:
             f"-platform={request.platforms}",
             f"-modules={request.modules}",
             f"-agent={request.agent}",
-            "-cache_mode=cold",
         ]
         if request.skill_filter:
             command.append(f"-skill={request.skill_filter}")

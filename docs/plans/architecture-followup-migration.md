@@ -8,6 +8,10 @@
 config-only；一旦发布 snapshot，就必须同时发布 canonical metadata companion 与仅含空 inventory manifest 的
 gamedata。下文关于 `cstrike-10210` / `cstrike-8684` 不生成发布产物的描述仅保留为原迁移阶段的历史设计。
 
+Warm-only 契约更新（2026-08-28）：官方与本地 Analyzer 均固定为 strict restored/no-save consumer；
+`GSVIBE_IDB_CACHE_MODE`、`-cache_mode`、planner `-cache-mode` 与 cold rollback 路径已移除。下文所有显式
+warm/cold 选择、cold fallback、cold rollback 与“cache 仅影响性能”的描述只保留为原迁移阶段历史，不再是当前契约。
+
 GoldSrc 对齐基线：`https://github.com/HLND2T/GoldSrc_VibeSignatures` `main@e094c5af1044be26441ada79b8665b97bb685357`，tree `797de06a3289b25700f7db190678e5ff80f81604`，`bin` gitlink `65c8337f0ec37c73a7b20e43009204bd8f308e14`
 
 CS2 参考基线：`https://github.com/HLND2T/CS2_VibeSignatures.git` `main@67b3238b13abc331c1df8da12cbf358aecf951bd`，tree `a7ffaba0b36e6a667af32a8fbffc4a170d97f935`

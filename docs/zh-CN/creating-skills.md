@@ -24,7 +24,7 @@
 4. 校验 Windows/Linux 的 PE32/ELF32 工件。
 
 当用户未指定游戏版本时，该 skill 以 `configs/` 中声明的每个 gamever 为目标，并用
-`ida_analyze_bin.py -allgamever -cache_mode cold` 验证。
+`ida_analyze_bin.py -allgamever` 验证。
 
 ## Finder/helper API
 

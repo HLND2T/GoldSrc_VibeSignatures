@@ -37,8 +37,8 @@ Analyzer 会为 `configs/<GAMEVER>.yaml` 中声明的符号查找并生成 signa
 命令概要：
 
 ```bash
-uv run python ida_analyze_bin.py -gamever cstrike-10210 -configyaml configs/cstrike-10210.yaml -platform windows,linux -cache_mode cold
-uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EXACT_SKILL_NAME> -platform windows,linux -cache_mode cold -debug
+uv run python ida_analyze_bin.py -gamever cstrike-10210 -configyaml configs/cstrike-10210.yaml -platform windows,linux
+uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EXACT_SKILL_NAME> -platform windows,linux -debug
 ```
 
 必须显式指定 `-gamever` 或 `-allgamever`；analyzer 不再回退到 `GSVIBE_GAMEVER`。支持的参数：
@@ -53,7 +53,7 @@ uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EX
 - `-oldgamever` 选择同一 game family 中最近的旧 build，并把 old-YAML map 交给 Preprocessor。
   `download.yaml` 中的 `major_update: true` 会禁用自动旧版本选择。旧 YAML 直接复制保持禁用。
 - `-ida_args` 用于追加 IDA 启动参数。`-rename` 与 Source2 专用 finder 语义保持排除。
-- `-cache_mode` 为必填参数。`cold` 使用 normal clean loader/auto-analysis lifecycle；`warm` 要求先恢复 exact IDB generation，并使用 strict no-rebuild/no-save 语义。
+- IDB cache mode 不再是 CLI 参数。每次 analysis 都要求先恢复 exact IDB generation，并固定使用 strict no-rebuild/no-save 语义。
 - `-skip_pp` 跳过单一 Preprocessor，直接运行 Agent。`-skip_error` 允许运行失败后继续，但最终退出状态仍非零。
 - `-process_reporter=console` 输出 typed `ProcessEvent` JSONL；`redis` 以 best-effort 方式写入
   `gsvibe:analysis:v1` Redis 协议。`-redis_url` 与 `-redis_prefix` 配置 Redis backend；`-run_id` 设置运行身份。
@@ -67,10 +67,10 @@ orchestrator，因为它必须选择 exact module/platform binary 并绑定 pinn
 
 Warm production 按 job 拆分：reusable `warmup-idb` producer 写入 canonical `cache-selection.json` 及其 SHA-256
 evidence；consumer（`idb_cache_release.py restore` / `idb_cache_workflow.py restore`）验证该 selection、restore
-exact generation，再以 `-cache_mode warm` 运行 Analyzer；该模式选择 `database_policy=restored_strict` 与
-`save_on_success=false`。Miss、corrupt generation 或 runtime mismatch 会使 warm run 失败；restore 开始后绝不
-silent fallback。`-cache_mode cold` 保持现有 clean loader/analysis 路径，并且不读取 persisted cache root。
-Consumer 绝不重新 probe `READY.json`，只 restore 其自身 producer 发布的 exact generation。
+exact generation，再以 `database_policy=restored_strict` 与 `save_on_success=false` 运行 Analyzer。Miss、corrupt
+generation 或 runtime mismatch 会使 run 失败；任何 analysis consumer 都不能回退为重建。Consumer 绝不重新
+probe `READY.json`，只 restore 其自身 producer 发布的 exact generation。本地调用也必须先恢复已验证的 exact
+generation，再启动 Analyzer。
 
 ### 使用 `-allgamever` 批量分析
 

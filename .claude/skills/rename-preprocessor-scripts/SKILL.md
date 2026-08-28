@@ -227,13 +227,13 @@ for accidental changes to addresses, signatures, bytes, or 4-byte vfunc offsets.
 For a named game version, run the affected module and platform(s) with old-version reuse disabled:
 
 ```powershell
-uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill find-NewName -platform windows,linux -oldgamever none -cache_mode cold -debug
+uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill find-NewName -platform windows,linux -oldgamever none -debug
 ```
 
 For an all-version rename, use:
 
 ```powershell
-uv run python ida_analyze_bin.py -allgamever -modules <MODULE> -skill find-NewName -platform windows,linux -cache_mode cold -debug
+uv run python ida_analyze_bin.py -allgamever -modules <MODULE> -skill find-NewName -platform windows,linux -debug
 ```
 
 Then run repository checks:

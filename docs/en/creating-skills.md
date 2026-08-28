@@ -19,7 +19,7 @@ The skill:
 3. Generates annotated reference YAML under `ida_preprocessor_scripts/references/` for `LLM_DECOMPILE` patterns (see [Reference YAML for `LLM_DECOMPILE`](reference-yaml.md)).
 4. Validates the Windows/Linux PE32/ELF32 artifacts.
 
-When the user does not name a game version, the skill targets every gamever declared in `configs/` and validates with `ida_analyze_bin.py -allgamever -cache_mode cold`.
+When the user does not name a game version, the skill targets every gamever declared in `configs/` and validates with `ida_analyze_bin.py -allgamever`.
 
 ## Finder/helper API
 

@@ -28,10 +28,9 @@ exact source + bin gitlink -> analyze all game versions -> publish candidates/ga
   -> release-manifests/<version>.json generated-output PR
   -> validate-output-pr -> merge -> version tag + GitHub Release
 
-trusted PR plan + cache_mode
-  -> cold: validated clean -> normal loader/auto-analysis
-  -> warm: probe/publish exact generation -> canonical selection -> strict restore
-  -> selected-node analysis -> validated clean
+trusted PR plan + cache_mode=warm evidence
+  -> probe/publish exact generation -> canonical selection -> strict restore
+  -> strict no-save selected-node analysis -> validated clean
 ```
 
 `analysis_planner.py` 是模块、符号、工件路径与 DAG 校验的唯一来源。snapshot contract 复用同一实现，避免分析和
@@ -93,12 +92,11 @@ document（`plan_sha256`/`merge_sha` vs `source_sha`/`bin_commit`），但 gener
 `idb_cache_locks.py` 负责跨进程 tag lock——publisher、pruner、restorer 与直接调用 `idb_cache.py` CLI 都会取得它，
 因此任何路径都无法绕过 high-level authority。
 
-Trusted PR plan 绑定 explicit `cache_mode=warm|cold`。Warm mode 把 producer 拆到 reusable `warmup-idb` job，
-`analyze-self-hosted` 变成纯 consumer：下载 canonical selection、对照自身 checkout 与 pinned runtime 验证、在 tag
-lock 下 restore exact generation、再执行 strict selected-node analysis。Release build 使用同一 producer（
-`scope: release-all`）和结构一致的 consumer。Cold mode 跳过全部 persisted-root step，使用 normal rebuild/save
-lifecycle。Repository-level Actions concurrency group 串行化唯一的官方 producer，runner-local file lock 保护固定
-MCP port。
+Trusted PR plan 携带固定证据字段 `cache_mode=warm`。所有 analysis 路由都把 producer 拆到 reusable
+`warmup-idb` job，`analyze-self-hosted` 变成纯 consumer：下载 canonical selection、对照自身 checkout 与 pinned
+runtime 验证、在 tag lock 下 restore exact generation、再执行 strict selected-node analysis。Release build 使用同一
+producer（`scope: release-all`）和结构一致的 consumer，不存在 analysis 侧 rebuild/save 路由。Repository-level
+Actions concurrency group 串行化唯一的官方 producer，runner-local file lock 保护固定 MCP port。
 
 ## Reporter 与调度
 

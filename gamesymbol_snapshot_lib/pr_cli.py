@@ -25,7 +25,7 @@ from gamesymbol_snapshot_lib.paths import metadata_filename, metadata_tag_from_f
 from gamesymbol_snapshot_lib.operations import load_snapshot_context, validate_snapshot_contract
 from gamesymbol_snapshot_lib.pr_validation import (
     BoundImpactPlan,
-    CACHE_MODES,
+    CACHE_MODE_WARM,
     ChangedPath,
     ImpactPlanningError,
     TagImpact,
@@ -215,7 +215,6 @@ def build_plan(
     head_ref: str,
     merge_ref: str,
     bin_repo_root: str | Path | None = None,
-    cache_mode: str = "cold",
 ) -> BoundImpactPlan:
     repo = GitRepository(repo_root)
     base_sha, head_sha, merge_sha = (repo.resolve(ref) for ref in (base_ref, head_ref, merge_ref))
@@ -323,7 +322,7 @@ def build_plan(
             )
             if impact.has_actions:
                 impacts.append(impact)
-    return BoundImpactPlan(base_sha, head_sha, merge_sha, base_bin, merge_bin, tuple(impacts), digests, cache_mode)
+    return BoundImpactPlan(base_sha, head_sha, merge_sha, base_bin, merge_bin, tuple(impacts), digests)
 
 
 def load_bound_plan(path: str | Path) -> dict:
@@ -331,7 +330,7 @@ def load_bound_plan(path: str | Path) -> dict:
     if (
         not isinstance(document, dict)
         or document.get("schema_version") != 2
-        or document.get("cache_mode") not in CACHE_MODES
+        or document.get("cache_mode") != CACHE_MODE_WARM
     ):
         raise PrCliError("Invalid bound impact plan")
     digest = document.pop("plan_sha256", None)
@@ -451,7 +450,6 @@ def _parser() -> argparse.ArgumentParser:
     plan.add_argument("-head-ref", required=True)
     plan.add_argument("-merge-ref", required=True)
     plan.add_argument("-bin-repo", default=None)
-    plan.add_argument("-cache-mode", choices=tuple(sorted(CACHE_MODES)), required=True)
     plan.add_argument("-output", required=True)
     materialize = commands.add_parser("materialize")
     materialize.add_argument("-repo-root", default=".")
@@ -472,7 +470,6 @@ def main(argv: list[str] | None = None) -> int:
                 head_ref=args.head_ref,
                 merge_ref=args.merge_ref,
                 bin_repo_root=args.bin_repo,
-                cache_mode=args.cache_mode,
             )
             Path(args.output).write_bytes(plan.canonical_bytes())
         else:

@@ -309,7 +309,7 @@ def _common_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Bound warm/cold IDB cache workflow orchestration")
+    parser = argparse.ArgumentParser(description="Bound warm IDB cache workflow orchestration")
     commands = parser.add_subparsers(dest="command", required=True)
     prepare = commands.add_parser("prepare")
     _common_arguments(prepare)
