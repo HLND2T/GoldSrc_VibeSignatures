@@ -3,13 +3,18 @@ on:
   pull_request:
     types: [closed]
 permissions:
-  contents: read
+  contents: write
+  pull-requests: read
 jobs:
   resolve:
-    if: >-
+    if: >
       github.event.pull_request.merged == true &&
-      github.event.pull_request.user.login == 'github-actions[bot]' &&
+      (github.event.pull_request.user.login == 'github-actions[bot]' ||
+       github.event.pull_request.author_association == 'OWNER' ||
+       github.event.pull_request.author_association == 'MEMBER' ||
+       github.event.pull_request.author_association == 'COLLABORATOR') &&
       github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == github.event.repository.default_branch &&
       startsWith(github.event.pull_request.head.ref, 'gamesymbols/build/')
     runs-on: ubuntu-latest
     outputs:
@@ -42,20 +47,28 @@ jobs:
       - name: Verify promotion
         id: verify
         env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
           EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT_REPOSITORY: ${{ github.repository }}
           MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
           STAGING_ROOT: ${{ secrets.PERSISTED_WORKSPACE }}
         run: |
           uv run python release_workflow.py verify-promotion \
             --repo-root "$GITHUB_WORKSPACE" \
             --staging-root "$STAGING_ROOT/release-staging" \
-            --repository "${{ github.repository }}" \
-            --head-repository "${{ github.event.pull_request.head.repo.full_name }}" \
-            --author "${{ github.event.pull_request.user.login }}" \
-            --branch "${{ github.event.pull_request.head.ref }}" \
-            --base-branch "${{ github.event.pull_request.base.ref }}" \
-            --default-branch "${{ github.event.repository.default_branch }}" \
+            --repository "$EVENT_REPOSITORY" \
+            --head-repository "$PR_HEAD_REPOSITORY" \
+            --author "$PR_AUTHOR" \
+            --author-association "$PR_AUTHOR_ASSOCIATION" \
+            --branch "$PR_HEAD_REF" \
+            --base-branch "$PR_BASE_REF" \
+            --default-branch "$DEFAULT_BRANCH" \
             --pr-number "$PR_NUMBER" \
             --event-head-sha "$EVENT_HEAD_SHA" \
             --merge-sha "$MERGE_SHA" \
@@ -107,9 +120,13 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ needs.resolve.outputs.version }}"
+          git fetch origin --tags --force
+          if ($LASTEXITCODE -ne 0) { throw "failed to fetch existing release tags for $version" }
           if (-not (git tag -l $version)) {
             git tag $version "${{ github.event.pull_request.merge_commit_sha }}"
+            if ($LASTEXITCODE -ne 0) { throw "failed to create release tag $version" }
             git push origin "refs/tags/$version"
+            if ($LASTEXITCODE -ne 0) { throw "failed to push release tag $version" }
           }
       - name: Write release metadata
         id: metadata
@@ -136,12 +153,17 @@ jobs:
           $version = "${{ needs.resolve.outputs.version }}"
           $metadataDir = Join-Path $env:RUNNER_TEMP "release-metadata"
           gh release create $version --title "GoldSrc game symbols $version" --notes-file (Join-Path $metadataDir "release-notes-$version.md") --draft
+          if ($LASTEXITCODE -ne 0) { throw "failed to create draft GitHub Release $version" }
           foreach ($asset in (Get-ChildItem -LiteralPath $env:ARCHIVE_DIR -File)) {
             gh release upload $version $asset.FullName --clobber
+            if ($LASTEXITCODE -ne 0) { throw "failed to upload GitHub Release asset $($asset.Name)" }
           }
           gh release upload $version (Join-Path $metadataDir "release-provenance-$version.json") --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'failed to upload release provenance' }
           gh release upload $version (Join-Path $metadataDir "SHA256SUMS-$version.txt") --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'failed to upload release checksums' }
           gh release edit $version --draft=false
+          if ($LASTEXITCODE -ne 0) { throw "failed to publish GitHub Release $version" }
       - name: Finalize promotion
         shell: pwsh
         run: |-

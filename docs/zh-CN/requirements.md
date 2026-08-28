@@ -62,8 +62,10 @@ environment 必须让 build、promotion 与 recovery job 看到同一个 checkou
 把 untrusted/fork analysis 挡在该 runner 之外。
 
 Release 只在 allowlist 仓库（`HLND2T/GoldSrc_VibeSignatures` 与 fork）里运行，由 `win64` Environment + per-version
-concurrency 门禁，不再依赖 GitHub App token 或 `GSVIBE_RELEASE_PHASE2_ENABLED`。输出 PR 由 `github-actions[bot]`
-创建；branch protection 只 require Actions-owned 唯一 `pr-validate`，要求 merge-commit-only（merge first parent 是
+concurrency 门禁，不再依赖 GitHub App token 或 `GSVIBE_RELEASE_PHASE2_ENABLED`。在该 Environment 中配置
+`HLND2T_GH_TOKEN`，授予目标仓库 Contents/Pull requests read/write 与 Metadata read；token owner 必须是 `OWNER`、
+`MEMBER` 或 repository `COLLABORATOR`，output PR 由该 PAT account 创建。Branch protection 只 require
+Actions-owned 唯一 `pr-validate`，要求 merge-commit-only（merge first parent 是
 output `source_sha` 的后代），禁止 `main` direct/admin-bypass push，并保护 release tag。不要要求 output 分支相对
 `main` up-to-date，那会把 default branch merge 进 immutable output head。
 

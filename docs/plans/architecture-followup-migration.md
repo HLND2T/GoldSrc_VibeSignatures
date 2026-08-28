@@ -32,8 +32,8 @@ CS2 参考基线：`https://github.com/HLND2T/CS2_VibeSignatures.git` `main@67b3
 
 以下真实环境验收尚未执行，因此步骤 6 只完成仓库实现与模拟测试，步骤 7 production activation 仍为 blocked：
 
-- branch protection/ruleset、merge-commit-only、up-to-date required check、protected tags、`release` Environment 与 GitHub App 权限/identity 的 captured evidence；
-- GitHub App 创建 generated-output PR 后真实触发唯一 `pr-validate` 的事件链；
+- branch protection/ruleset、merge-commit-only、up-to-date required check、protected tags、`win64` Environment 与 PAT 权限/identity 的 captured evidence；
+- PAT 创建 generated-output PR 后真实触发唯一 `pr-validate` 的事件链；
 - draft、未合并、已合并、篡改、orphan/index repair、retry、resume-promotion 与 republish 的 protected test repository 演练；
 - GitHub Release 上传后重新下载全部 assets 并核对 size/SHA-256 的真实证据；
 - self-hosted runner 上 explicit cold、cache miss publication 与后续 cache hit 的运行证据。
@@ -137,8 +137,8 @@ exact main source SHA + bin gitlink + source-PR-owned canonical outputs
 
 - `main` 禁止 direct push 与未审计的 admin bypass，并只 require 唯一的 GitHub Actions `pr-validate`；
 - Phase 2初版配置merge-commit-only并把two-parent identity算法写入verifier；若未来改用merge queue或squash/rebase，必须先升级schema/verifier并重新演练；
-- output branch prefix 只允许 release bot/App 创建，source/output workflow 使用同一个 classifier contract；
-- protected tag pattern、release Environment 审批、最小权限 GitHub App、Pages archive branch 保护均已配置；
+- output branch prefix 只允许受信任 PAT account 或 release bot 创建，source/output workflow 使用同一个 classifier contract；
+- protected tag pattern、`win64` Environment 审批、最小权限 PAT、Pages archive branch 保护均已配置；
 - self-hosted runner 的 persisted root ACL、runner affinity/共享存储模型、全局 MCP port 互斥已经确定；
 - 保存 GitHub 设置、workflow run、source SHA、bin gitlink 和演练结果的 captured-at 证据。
 
@@ -563,7 +563,7 @@ release_tool_contract_sha256
 | Identity | 稳定内容 | Truth source |
 | --- | --- | --- |
 | content identity | source SHA、bin gitlink、config contract、snapshot、metadata、gamedata、generator、workflow/tool contract | exact Git tree/blob + canonical content manifest |
-| attempt identity | build ID、run ID/attempt/URL、output branch、PR number/head、App identity | private stage + GitHub API |
+| attempt identity | build ID、run ID/attempt/URL、output branch、PR number/head、PAT actor/association | private stage + GitHub API |
 | promotion identity | merge SHA、immutable tag object/target、Release ID、downloaded asset hashes、completion state | GitHub API + durable completion record |
 
 Phase 2 authority 固定为：source PR 作者/reviewer 负责前三类 canonical payload bytes；release workflow 独占 release output branch/tag/GitHub Release 写权限，只负责生成 content manifest、创建 output PR、tag、Release 与 provenance/completion。现有 local candidate/session 只能作为生成期 guard，release verifier 只信任 exact Git blobs。
@@ -571,9 +571,9 @@ Phase 2 authority 固定为：source PR 作者/reviewer 负责前三类 canonica
 Event/trust contract 固定为：
 
 - build 仅从受保护的 default-branch workflow 以 exact `origin/main` SHA启动；
-- production output branch/PR 统一使用受保护 Environment 中的 GitHub App installation token创建；不使用个人 PAT。默认 `GITHUB_TOKEN` 创建的 PR/push 通常不会再次触发 `pull_request` workflow，不能作为 required-check 事件链；
+- production output branch/PR 统一使用受保护 `win64` Environment 中的静态 PAT secret `HLND2T_GH_TOKEN` 创建。release build 的默认 `GITHUB_TOKEN` 保持 `actions: read`、`contents: read`、`pull-requests: read`；PAT 只用于 exact checkout、Git authentication、output branch push 与 PR create。默认 `GITHUB_TOKEN` 创建的 PR/push 通常不会再次触发 `pull_request` workflow，不能作为 required-check 事件链；
 - output PR validation 使用普通 `pull_request`、`contents: read`，从 event base/source SHA 读取 trusted verifier，绝不执行 output head 修改的代码；
-- promotion 初版使用 `pull_request_target` 的 `closed && merged` 事件，只执行default-branch trusted code，通过GitHub API/Git blobs读取identities，绝不checkout或执行head workspace。workflow拆成无write credential的read-only verifier job与受保护Environment中的promotion-write job；后者不能只信任artifact布尔值，必须用verifier输出的canonical approval digest重新绑定并复核exact PR/head/merge/content identities后才取得GitHub App write token；
+- promotion 使用普通 `pull_request` 的 `closed && merged` 事件；只接受同仓 `gamesymbols/build/` 分支和 `github-actions[bot]` 或 `OWNER`/`MEMBER`/`COLLABORATOR` author association，并继续复核 exact PR/head/merge/content identities。promotion workflow 的 `${{ github.token }}` 单独取得 `contents: write`、`pull-requests: read`，用于 immutable tag 与 GitHub Release；PAT 不进入 promotion；
 - production 初版要求 output PR 使用 merge-commit-only：head 的唯一父提交是 `source_sha`，merge commit 两个父分别是验证过的 pre-merge base 与 exact output head。pre-merge base 必须是 `source_sha` 的后代，但不要求等于 `source_sha`。若将来允许 squash/rebase/merge queue，必须先升级 schema/verifier 和演练证据；
 - 不得把 default branch merge 进 immutable output head，也不要求 GitHub “up-to-date with the base branch”。只要当前 PR base 是 manifest `source_sha` 的后代，且 GitHub mergeability 无冲突，就允许 default-branch advancement。lightweight verifier 与 merge-time `verify_promotion()` 都用 ancestor + exact source parent 绑定 output identity；changed-path allowlist 只审计 `source_sha..head`。Git 冲突仍由 GitHub mergeability/branch policy 阻止合并。只有当 base 与 `source_sha` 无祖先关系、output head 不再直接基于 `source_sha`，或 allowlist/hash/trust 失败时，才需要 replacement build/PR。
 
@@ -598,7 +598,7 @@ Event/trust contract 固定为：
 5. 生成 canonical content manifest，输出 commit 直接以 `source_sha` 为唯一父提交且只增加 `release-manifests/<tag>.json`；
 6. 原子写 `BUILDING.json`，绑定 content/attempt identity 与预定 branch；
 7. 创建 output commit 后写 `HEAD_BOUND.json`，再 push immutable branch；
-8. 使用受保护 GitHub App installation token创建 draft PR；
+8. 使用受保护 `HLND2T_GH_TOKEN` PAT 创建 draft PR；
 9. 原子写 `PR_CREATED.json` 与 `pr-index/<pr-number>.json`，复核远程 repository/branch/head/base/PR；
 10. 最后写 `READY.json`；只有 READY 才表示 stage、branch、draft PR 与 index 全部存在且互相匹配；
 11. READY 复核成功后才把 PR 标为 ready for review。
@@ -641,7 +641,7 @@ Phase 2 每个 output commit 必须直接以 release `source_sha` 为唯一父�
 - output commit 后记录 exact head SHA；
 - output PR 使用独立 validation workflow，但终态 job 同样命名 `pr-validate`；
 - output validation 工具从 PR event base/source SHA 读取，不能使用 output branch 自己修改的 verifier；
-- GitHub App identity、head repository、branch parser、direct-parent、changed-path allowlist 和 shared classifier全部通过后才能把 draft PR转为 ready。
+- PAT actor association、head repository、branch parser、direct-parent、changed-path allowlist 和 shared classifier全部通过后才能把 draft PR转为 ready。
 
 自动 release 失败后不无限重试。保留失败 stage与诊断；尚未写 `PROMOTION_STARTED.json` 时允许显式 retry，promotion 已开始则只能 resume 同一 build。`republish` 不是 build retry。同 tag 已有 READY build/output PR 时，新 run fail-closed。
 
@@ -649,7 +649,7 @@ Phase 2 每个 output commit 必须直接以 release `source_sha` 为唯一父�
 
 promotion workflow只接受可信 merged output PR，至少验证：
 
-- event repository、PR head repository、GitHub App/bot ID、base branch与严格 branch parser全部命中 allowlist；
+- event repository、PR head repository、受信任 PAT actor association/Actions bot、base branch与严格 branch parser全部命中 allowlist；
 - PR number/head SHA与 `PR_CREATED.json`、READY、private PR index一致；
 - output head 的唯一父提交等于 pending `source_sha`，changed paths 从 `source_sha..head` 计算并必须通过 allowlist；
 - merge commit/API identity符合已经配置并演练的 merge-commit-only contract，其两个父提交分别等于 pre-merge base与 exact output head；
@@ -746,7 +746,7 @@ source PR validation
 - content/attempt/promotion identity分离、path allowlist、tag/build/branch parser；
 - source SHA、bin gitlink、config、candidate、metadata、gamedata、generator hashes任一篡改被拒绝；
 - `BUILDING -> HEAD_BOUND -> PR_CREATED -> READY`顺序、draft PR、orphan branch/PR与repair-index；
-- GitHub App创建PR后确实触发output validation；默认`GITHUB_TOKEN`事件抑制不能造成缺失check；
+- PAT 创建 PR 后确实触发 output validation；默认 `GITHUB_TOKEN` 事件抑制不能造成缺失 check；
 - PR index/head/two-parent merge identity、pre-merge up-to-date gate、default-branch unrelated drift与relevant drift；
 - duplicate pending build、new/retry/republish/resume-promotion规则；
 - promotion interruption在每个marker边界可重入；
@@ -771,7 +771,7 @@ source PR validation
 - 发布asset下载后hash与provenance一致；
 - durable completion存在后才允许cleanup；
 - 不创建accepted-bin副本；
-- production activation前，branch/ruleset、merge-commit-only、protected tags、Environment/App identity与required check均有captured evidence。
+- production activation前，branch/ruleset、merge-commit-only、protected tags、Environment/PAT identity与required check均有captured evidence。
 
 ## 8. 建议 PR 拆分
 
@@ -783,7 +783,7 @@ source PR validation
 | PR 4 | release content manifest + shadow verifier | 复用现有`release_workflow_lib/hashing.py`与`errors.py`骨架并扩展、CLI、self-excluding inventory tests、shadow workflow | Level 2，无remote write |
 | PR 5 | IDB cache core | `ida_database_paths.py`、`idb_cache.py`、restricted warm worker、strict lifecycle | Level 2，纯本地/临时目录，不先改 workflow |
 | PR 6 | warm/cold self-hosted integration | combined runner job、selection、workflow tests、operations docs | Level 2 + cold/miss/hit真实证据 |
-| PR 7 | generated-output PR + promotion | build/output-validation/promotion/recovery workflows、GitHub App、docs | Level 2 + protected test repository演练 |
+| PR 7 | generated-output PR + promotion | build/output-validation/promotion/recovery workflows、PAT、docs | Level 2 + protected test repository演练 |
 | PR 8 | 可选 release-only authority cutover | PR staging/finalizer、accepted-analysis state、review UX | 独立设计评审，不随PR 7自动实施 |
 
 PR 4必须等待PR 2与PR 3完成。PR 5/6是独立性能工作，可与PR 4并行；PR 7必须等待PR 1-4完成，但不硬依赖PR 5/6，因为它必须能绑定并验证显式 cold mode。没有可信warm generation时不得消费cache，也不得在strict warm consumer内inline fallback。
@@ -851,7 +851,7 @@ npm run test:e2e
 - generated-output PR merge是唯一promotion gate；output head 绑定 exact `source_sha`（单父且该父提交等于 source）；当前 PR/merge base 必须是该 source 的后代；output-only diff 不把 default-branch drift 算入 output PR；Git 冲突仍阻止合并，祖先关系或 identity 破坏时才需要 replacement build/PR；
 - Git tag、Release assets和completion record的identity/hash一致；
 - promotion中断后以同一identity安全resume，pre-promotion retry与republish语义互不混淆；cleanup中断可恢复；
-- production activation由branch/ruleset、merge policy、protected tag、Environment和App identity共同门禁；仓库历史提交形状不能替代配置；
+- production activation由branch/ruleset、merge policy、protected tag、Environment和PAT identity共同门禁；仓库历史提交形状不能替代配置；
 - Pages publication保持独立状态域，Release completion不虚假宣称Pages同步完成；
 - 未引入CS2 accepted-bin、BinSync、单GAMEVER、path-glob router或C++ gate假设；
 - 除非PR 8另行批准，author-provided snapshot/metadata/gamedata模式保持不变。

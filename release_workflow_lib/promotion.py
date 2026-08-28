@@ -36,6 +36,7 @@ from release_workflow_lib.manifests import (
 from release_workflow_lib.staging import _bin_inventory, load_indexed_pending
 
 COMPLETION_SCHEMA_VERSION = 1
+TRUSTED_AUTHOR_ASSOCIATIONS = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
 COMPLETION_FIELDS = {
     "schema_version",
     "version",
@@ -66,12 +67,19 @@ def _is_ancestor(ancestor: str, descendant: str, *, cwd: str | Path | None = Non
     return result.returncode == 0
 
 
+def _require_trusted_pr_author(author: str, author_association: str, operation: str) -> None:
+    association = str(author_association).upper()
+    if author != "github-actions[bot]" and association not in TRUSTED_AUTHOR_ASSOCIATIONS:
+        raise ReleaseWorkflowError(f"{operation} requires a trusted generated-output PR author")
+
+
 def verify_output_pr(
     *,
     repo_root: Path,
     repository: str,
     head_repository: str,
     author: str,
+    author_association: str,
     branch: str,
     base_sha: str,
     head_sha: str,
@@ -82,8 +90,7 @@ def verify_output_pr(
     head_sha = require_sha(head_sha, "PR head SHA")
     if repository != head_repository:
         raise ReleaseWorkflowError("generated-output PR must originate from the base repository")
-    if author != "github-actions[bot]":
-        raise ReleaseWorkflowError("generated-output PR author is not github-actions[bot]")
+    _require_trusted_pr_author(author, author_association, "generated-output PR verification")
     version = parse_output_branch(branch)
     manifest = load_tracked_manifest(Path(repo_root) / "release-manifests" / f"{version}.json")
     if manifest["version"] != version:
@@ -113,6 +120,7 @@ def verify_promotion(
     repository: str,
     head_repository: str,
     author: str,
+    author_association: str,
     branch: str,
     base_branch: str,
     default_branch: str,
@@ -125,8 +133,7 @@ def verify_promotion(
     merge_sha = require_sha(merge_sha, "OUTPUT_MERGE_SHA")
     if repository != head_repository:
         raise ReleaseWorkflowError("promotion requires a same-repository PR")
-    if author != "github-actions[bot]":
-        raise ReleaseWorkflowError("promotion requires github-actions[bot] as PR author")
+    _require_trusted_pr_author(author, author_association, "promotion")
     if base_branch != default_branch:
         raise ReleaseWorkflowError("generated-output PR base is not the default branch")
     version = parse_output_branch(branch)
