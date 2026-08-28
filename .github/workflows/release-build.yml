@@ -274,16 +274,16 @@ jobs:
       - name: Stage validated output
         shell: pwsh
         run: |
-          uv run python release_workflow.py stage-build \
-            --repo-root "$env:GITHUB_WORKSPACE" \
-            --staging-root "$env:PERSISTED_WORKSPACE\release-staging" \
-            --gamevers-json "$env:GAMEVERS_JSON" \
-            --repository "${{ github.repository }}" \
-            --output-branch "$env:OUTPUT_BRANCH" \
-            --version "${{ needs.preflight.outputs.version }}" \
-            --mode "${{ needs.preflight.outputs.mode }}" \
-            --build-id "$env:BUILD_ID" \
-            --source-sha "${{ needs.preflight.outputs.source_sha }}" \
+          uv run python release_workflow.py stage-build `
+            --repo-root "$env:GITHUB_WORKSPACE" `
+            --staging-root "$env:PERSISTED_WORKSPACE\release-staging" `
+            --gamevers-json "$env:GAMEVERS_JSON" `
+            --repository "${{ github.repository }}" `
+            --output-branch "$env:OUTPUT_BRANCH" `
+            --version "${{ needs.preflight.outputs.version }}" `
+            --mode "${{ needs.preflight.outputs.mode }}" `
+            --build-id "$env:BUILD_ID" `
+            --source-sha "${{ needs.preflight.outputs.source_sha }}" `
             --workflow-run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           if ($LASTEXITCODE -ne 0) { throw 'stage-build failed' }
       - name: Create generated-output pull request
