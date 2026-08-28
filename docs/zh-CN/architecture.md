@@ -81,16 +81,24 @@ IDA arguments，以及 warm-worker source contract。Generation 保存 exact cac
 primary/side-file inventory；active lock file 一律拒绝。
 
 Publication 会先验证 incoming tree，再 atomic rename，最后更新 `READY.json`。READY 只是 probe hint，不是 consumer
-authority；restore 始终绑定 exact generation、key 与 manifest SHA-256。Restore 拒绝 reparse point、path escape、
-case collision、stale workspace binary、被篡改的 manifest/payload 与 active lock。`restored_strict` lifecycle policy
-不会 invalidate 或 cold-rebuild 错配的 restored database，并可禁用 success save，确保 selected-node 修改不回流
-immutable generation。
+authority；restore 始终绑定 exact generation、key 与 manifest SHA-256。READY 写入是幂等的——canonical bytes 相同
+就不再替换；JSON writer 自身使用 UUID 临时文件并对 Windows sharing violation 做 bounded retry，避免并发 reader
+留下半写或 PID 冲突文件。Restore 拒绝 reparse point、path escape、case collision、stale workspace binary、被篡改
+的 manifest/payload 与 active lock。`restored_strict` lifecycle policy 不会 invalidate 或 cold-rebuild 错配的
+restored database，并可禁用 success save，确保 selected-node 修改不回流 immutable generation。
 
-Trusted PR plan 绑定 explicit `cache_mode=warm|cold`。Windows job 在同一 job 内依次执行
-validated submodule clean、exact probe/bounded warm publication、canonical selection verification、strict restore、
-selected-node analysis 与 final clean；restore 和 analysis 之间不会再次 clean。Cold mode 跳过全部 persisted-root
-step，使用 normal rebuild/save lifecycle。Repository-level Actions concurrency group 与 runner-local file lock 共同
-保护固定 MCP port。
+Selection primitive 是共享的。`idb_cache_selection.py` 负责 canonical entry shape、coverage/identity 校验、
+SHA-256 evidence 文件、带锁的 probe/warm/publish 路径与带锁的 exact restore；PR 与 release workflow 各自构建顶层
+document（`plan_sha256`/`merge_sha` vs `source_sha`/`bin_commit`），但 generation contract 不会漂移。
+`idb_cache_locks.py` 负责跨进程 tag lock——publisher、pruner、restorer 与直接调用 `idb_cache.py` CLI 都会取得它，
+因此任何路径都无法绕过 high-level authority。
+
+Trusted PR plan 绑定 explicit `cache_mode=warm|cold`。Warm mode 把 producer 拆到 reusable `warmup-idb` job，
+`analyze-self-hosted` 变成纯 consumer：下载 canonical selection、对照自身 checkout 与 pinned runtime 验证、在 tag
+lock 下 restore exact generation、再执行 strict selected-node analysis。Release build 使用同一 producer（
+`scope: release-all`）和结构一致的 consumer。Cold mode 跳过全部 persisted-root step，使用 normal rebuild/save
+lifecycle。Repository-level Actions concurrency group 串行化唯一的官方 producer，runner-local file lock 保护固定
+MCP port。
 
 ## Reporter 与调度
 

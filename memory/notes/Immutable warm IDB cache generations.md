@@ -25,9 +25,9 @@ Warm IDB cache is a rebuildable performance layer for neutral databases created 
 
 ## Architecture
 
-`ida_database_paths.py` is the shared primary/side/lock path contract. `idb_cache.py` owns schema-1 identity, key, manifest, READY, publish, probe, verify, restore, and prune behavior. `ida_runtime_probe.py` dynamically reads `idaapi.get_kernel_version()` through the runner Python installation and rejects an `idalib-mcp` executable outside that Python directory or its `Scripts` directory. `idb_warm_worker.py` is a bounded subprocess that holds the runner-local MCP port lock, observes runtime identity through the opened IDA session, and saves a neutral database without dispatching project finder/Agent logic.
+`ida_database_paths.py` is the shared primary/side/lock path contract. `idb_cache.py` owns schema-1 identity, key, manifest, READY, publish, probe, verify, restore, and prune behavior. `idb_cache_locks.py` owns the cross-process tag lock and the fixed MCP-port lock; `idb_cache_selection.py` owns the canonical entry shape, coverage/identity validation, SHA-256 evidence files, the locked probe/warm/publish path, and the locked exact restore. `ida_runtime_probe.py` dynamically reads `idaapi.get_kernel_version()` through the runner Python installation and rejects an `idalib-mcp` executable outside that Python directory or its `Scripts` directory. `idb_cache.py` derives and holds the runner-local MCP port lock before launching the bounded `idb_warm_worker.py` subprocess, which observes runtime identity through the opened IDA session and saves a neutral database without dispatching project finder/Agent logic.
 
-`READY.json` is only a discovery hint. Once selected, a consumer carries exact `generation + cache_key + manifest_sha256`; later READY changes cannot redirect that run.
+`write_canonical_json()` writes a UUID-named temporary file and retries Windows WinError 5/32 with bounded jitter before `os.replace`, treating an already-matching target as success. `READY.json` is only a discovery hint and its writes are idempotent. Once selected, a consumer carries exact `generation + cache_key + manifest_sha256`; later READY changes cannot redirect that run.
 
 ## Strict consumer
 
@@ -35,7 +35,7 @@ Warm IDB cache is a rebuildable performance layer for neutral databases created 
 
 ## Workflow integration
 
-The schema-2 trusted PR plan binds `cache_mode=warm|cold`. `idb_cache_workflow.py` verifies the exact merge commit and bin gitlink, derives only the selected analysis binary pairs, probes or warms under per-tag and MCP-port locks, and writes canonical `cache-selection.json` plus its SHA-256. Warm verify/restore never re-read READY. Cold mode skips all persisted-root steps.
+The schema-2 trusted PR plan binds `cache_mode=warm|cold`. Warm mode splits producer from consumer through the reusable `warmup-idb.yml` job: the producer checks out the exact source in its own workspace, probes or warms under per-tag and MCP-port locks, and uploads canonical `cache-selection.json` plus its SHA-256; the consumer downloads that exact selection, verifies it against its own checkout and pinned runtime, restores the exact generations under the tag lock, and runs strict no-save analysis. The release build uses the same producer (`scope: release-all`) and a structurally identical consumer. Every official producer shares one repository-wide concurrency group (`idb-warmup-${{ github.repository }}`, `cancel-in-progress: false`). Warm verify/restore never re-read READY. Cold mode skips all persisted-root steps. Accepted-bin materialization is a single helper holding the same per-gamever lock release promotion takes around its directory swap.
 
 ## Failure and recovery
 
@@ -43,4 +43,4 @@ A warm timeout, worker failure, observed-runtime mismatch, active lock, or parti
 
 ## Verification
 
-Tests cover key sensitivity, PE32/ELF32 loader identity, both primary suffixes and side files, active locks, atomic publication, idempotence, exact-selection restore after READY changes, manifest/binary/DB tampering, symlink/reparse rejection, retention, timeout/runtime mismatch cleanup, and strict lifecycle no-rebuild/no-save behavior.
+Tests cover key sensitivity, PE32/ELF32 loader identity, both primary suffixes and side files, active locks (including a real cross-process probe), atomic JSON replacement retry/cleanup, idempotence, exact-selection restore after READY changes, release selection source/bin binding, manifest/binary/DB tampering, symlink/reparse rejection, retention, timeout/runtime mismatch cleanup, and strict lifecycle no-rebuild/no-save behavior.

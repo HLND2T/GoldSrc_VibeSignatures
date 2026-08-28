@@ -56,11 +56,13 @@ uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EX
 orchestrator responsibility because it must select exact module/platform binaries and bind the pinned runtime contract.
 `idb_warm_worker.py probe-runtime` hashes the selected PE32/ELF32 loader and allowlisted plugins under `IDADIR`.
 
-Warm consumers must first persist the exact probe selection, restore that generation, and run the Analyzer with
-`-cache_mode warm`, which selects `database_policy=restored_strict` and `save_on_success=false`. A miss, corrupt
-generation, or runtime mismatch fails the warm run; it never silently falls back after restore begins. `-cache_mode cold`
-uses the existing clean loader/analysis path and does not read the persisted cache root. The protected self-hosted job
-binds the same mode into the canonical bound plan and exact cache-selection evidence.
+Warm production is split across jobs: the reusable `warmup-idb` producer writes the canonical `cache-selection.json`
+and its SHA-256 evidence, and the consumer (`idb_cache_release.py restore` / `idb_cache_workflow.py restore`) verifies
+that selection, restores the exact generations, and then runs the Analyzer with `-cache_mode warm`, which selects
+`database_policy=restored_strict` and `save_on_success=false`. A miss, corrupt generation, or runtime mismatch fails the
+warm run; it never silently falls back after restore begins. `-cache_mode cold` uses the existing clean loader/analysis
+path and does not read the persisted cache root. The consumer never re-probes `READY.json`; it restores exactly what its
+own producer published.
 
 ### Batch analysis with `-allgamever`
 

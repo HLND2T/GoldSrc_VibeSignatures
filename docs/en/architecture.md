@@ -86,16 +86,25 @@ normalized IDA arguments, and the warm-worker source contract. A generation cont
 complete allowed `.i64`/`.idb` primary and side-file inventory; active lock files are always rejected.
 
 Publication verifies an incoming tree before atomic rename and updates `READY.json` only afterward. READY is a probe
-hint, not a consumer authority: restore always binds an exact generation, key, and manifest SHA-256. Restore rejects
-reparse points, path escapes, case collisions, stale workspace binaries, tampered manifests/payloads, and active locks.
-The `restored_strict` lifecycle policy never invalidates or cold-rebuilds a mismatched restored database and can disable
-success saves so selected-node modifications never flow back into the immutable generation.
+hint, not a consumer authority: restore always binds an exact generation, key, and manifest SHA-256. READY writes are
+idempotent — identical canonical bytes are not re-replaced, and the JSON writer itself uses a UUID temporary file plus
+bounded Windows sharing-violation retry so a concurrent reader cannot leave a half-written or PID-clobbered file.
+Restore rejects reparse points, path escapes, case collisions, stale workspace binaries, tampered manifests/payloads,
+and active locks. The `restored_strict` lifecycle policy never invalidates or cold-rebuilds a mismatched restored
+database and can disable success saves so selected-node modifications never flow back into the immutable generation.
 
-The trusted PR plan binds explicit `cache_mode=warm|cold`. The Windows job performs validated
-submodule clean, exact probe/bounded warm publication, canonical selection verification, strict restore, selected-node
-analysis, and final clean without another clean between restore and analysis. Cold mode skips every persisted-root step
-and uses the normal rebuild/save lifecycle. A repository-level Actions concurrency group and runner-local file lock
-protect the fixed MCP port.
+Selection primitives are shared. `idb_cache_selection.py` owns the canonical entry shape, coverage/identity validation,
+SHA-256 evidence files, the locked probe/warm/publish path, and the locked exact restore; the PR and release workflows
+build their own top-level documents (`plan_sha256`/`merge_sha` vs `source_sha`/`bin_commit`) but cannot drift on the
+generation contract. `idb_cache_locks.py` owns the cross-process tag lock — publisher, pruner, restorer, and the direct
+`idb_cache.py` CLI all acquire it, so no code path can bypass the high-level authority.
+
+The trusted PR plan binds explicit `cache_mode=warm|cold`. Warm mode splits the producer into a reusable `warmup-idb`
+job and turns `analyze-self-hosted` into a pure consumer: it downloads the canonical selection, verifies it against its
+own checkout and pinned runtime, restores the exact generations under the tag lock, and runs strict selected-node
+analysis. The release build uses the same producer (`scope: release-all`) and a structurally identical consumer. Cold
+mode skips every persisted-root step and uses the normal rebuild/save lifecycle. A repository-level Actions concurrency
+group serializes the one official producer, and a runner-local file lock protects the fixed MCP port.
 
 ## Process reporting and scheduling
 

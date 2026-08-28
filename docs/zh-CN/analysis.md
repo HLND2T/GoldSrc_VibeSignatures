@@ -65,11 +65,12 @@ uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EX
 orchestrator，因为它必须选择 exact module/platform binary 并绑定 pinned runtime contract。
 `idb_warm_worker.py probe-runtime` 会 hash `IDADIR` 下为所选 PE32/ELF32 使用的 loader 与 allowlisted plugin。
 
-Warm consumer 必须先持久化 exact probe selection、restore 该 generation，再以 `-cache_mode warm` 运行 Analyzer；
-该模式选择 `database_policy=restored_strict` 与 `save_on_success=false`。Miss、corrupt generation 或 runtime
-mismatch 会使 warm run 失败；restore 开始后绝不 silent fallback。`-cache_mode cold` 保持现有 clean
-loader/analysis 路径，并且不读取 persisted cache root。受保护 self-hosted job 将同一 mode 绑定进 canonical bound plan 与
-exact cache-selection evidence。
+Warm production 按 job 拆分：reusable `warmup-idb` producer 写入 canonical `cache-selection.json` 及其 SHA-256
+evidence；consumer（`idb_cache_release.py restore` / `idb_cache_workflow.py restore`）验证该 selection、restore
+exact generation，再以 `-cache_mode warm` 运行 Analyzer；该模式选择 `database_policy=restored_strict` 与
+`save_on_success=false`。Miss、corrupt generation 或 runtime mismatch 会使 warm run 失败；restore 开始后绝不
+silent fallback。`-cache_mode cold` 保持现有 clean loader/analysis 路径，并且不读取 persisted cache root。
+Consumer 绝不重新 probe `READY.json`，只 restore 其自身 producer 发布的 exact generation。
 
 ### 使用 `-allgamever` 批量分析
 

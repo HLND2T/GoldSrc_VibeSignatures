@@ -1,0 +1,273 @@
+name: Warm IDB Cache
+run-name: Warm IDB cache ${{ inputs.scope }} ${{ inputs.source_sha }}
+on:
+  workflow_call:
+    inputs:
+      source_sha:
+        description: Exact 40-hex commit the producer must check out
+        required: true
+        type: string
+      scope:
+        description: Producer scope, either release-all or bound-plan
+        required: true
+        type: string
+      cache_mode:
+        description: Bound cache mode; only warm is accepted
+        required: true
+        type: string
+      selection_artifact_name:
+        description: Caller-constructed artifact name carrying the exact cache selection
+        required: true
+        type: string
+      plan_artifact_name:
+        description: Bound plan artifact name; required for the bound-plan scope
+        required: false
+        type: string
+      plan_sha256:
+        description: Bound plan SHA-256; required for the bound-plan scope
+        required: false
+        type: string
+    outputs:
+      selection_artifact_name:
+        description: Artifact carrying cache-selection.json and cache-selection.sha256
+        value: ${{ jobs.warmup.outputs.selection_artifact_name }}
+      selection_sha256:
+        description: SHA-256 of the canonical cache selection bytes
+        value: ${{ jobs.warmup.outputs.selection_sha256 }}
+      selection_schema_version:
+        description: Schema version of the published cache selection
+        value: ${{ jobs.warmup.outputs.selection_schema_version }}
+      source_sha:
+        description: Exact source commit the producer used
+        value: ${{ jobs.warmup.outputs.source_sha }}
+permissions:
+  contents: read
+jobs:
+  warmup:
+    if: github.repository == 'HLND2T/GoldSrc_VibeSignatures' || github.repository == 'hzqst/GoldSrc_VibeSignatures'
+    environment: win64
+    runs-on: [self-hosted, windows, x64]
+    timeout-minutes: 1440
+    # One producer per repository. Release and source-PR callers must resolve to this exact
+    # group string so the scheduler can never run two persisted IDB cache writers at once.
+    concurrency:
+      group: idb-warmup-${{ github.repository }}
+      cancel-in-progress: false
+    outputs:
+      selection_artifact_name: ${{ steps.publish.outputs.selection_artifact_name }}
+      selection_sha256: ${{ steps.publish.outputs.selection_sha256 }}
+      selection_schema_version: ${{ steps.publish.outputs.selection_schema_version }}
+      source_sha: ${{ steps.publish.outputs.source_sha }}
+    env:
+      PERSISTED_WORKSPACE: ${{ secrets.PERSISTED_WORKSPACE }}
+      SOURCE_SHA: ${{ inputs.source_sha }}
+      SCOPE: ${{ inputs.scope }}
+      CACHE_MODE: ${{ inputs.cache_mode }}
+      PLAN_ARTIFACT_NAME: ${{ inputs.plan_artifact_name }}
+      PLAN_SHA256: ${{ inputs.plan_sha256 }}
+      SUBMODULE_CACHE_VERSION: v1
+    steps:
+      - name: Validate producer inputs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:SOURCE_SHA -notmatch '^[0-9a-fA-F]{40}$') { throw 'source_sha must be a full 40-hex commit SHA' }
+          if ($env:CACHE_MODE -ne 'warm') { throw "warmup-idb only accepts cache_mode=warm, got '$env:CACHE_MODE'" }
+          if ($env:SCOPE -notin @('release-all', 'bound-plan')) { throw "unsupported producer scope '$env:SCOPE'" }
+          if ($env:SCOPE -eq 'bound-plan') {
+            if ([string]::IsNullOrWhiteSpace($env:PLAN_ARTIFACT_NAME)) { throw 'bound-plan scope requires plan_artifact_name' }
+            if ($env:PLAN_SHA256 -notmatch '^[0-9a-f]{64}$') { throw 'bound-plan scope requires a lowercase plan_sha256' }
+          }
+          if ([string]::IsNullOrWhiteSpace('${{ inputs.selection_artifact_name }}')) {
+            throw 'selection_artifact_name is required'
+          }
+          if ([string]::IsNullOrWhiteSpace($env:PERSISTED_WORKSPACE)) { throw 'PERSISTED_WORKSPACE is required' }
+      - name: Checkout exact producer source
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+          submodules: false
+          token: ${{ secrets.GSVIBE_BIN_TOKEN || github.token }}
+      - name: Verify immutable source checkout
+        shell: pwsh
+        run: |
+          $expected = $env:SOURCE_SHA.ToLowerInvariant()
+          $actual = (git rev-parse HEAD).Trim().ToLowerInvariant()
+          if ($LASTEXITCODE -ne 0 -or $actual -ne $expected) {
+            throw "Warmup source checkout drifted: expected=$expected actual=$actual"
+          }
+      - name: Compute submodule cache key
+        id: submodule-cache-key
+        shell: pwsh
+        run: |
+          $content = @()
+          $content += Get-Content -Raw .gitmodules
+          $content += ""
+          $content += git ls-tree HEAD -- bin
+          $sha = [System.Security.Cryptography.SHA256]::Create()
+          $bytes = [System.Text.Encoding]::UTF8.GetBytes(($content -join "`n"))
+          $hash = [System.BitConverter]::ToString($sha.ComputeHash($bytes)).Replace("-", "").ToLowerInvariant()
+          "hash=$hash" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+      - name: Restore submodule cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            .git/modules
+            bin
+          key: ${{ runner.os }}-submodules-${{ env.SUBMODULE_CACHE_VERSION }}-${{ steps.submodule-cache-key.outputs.hash }}
+          restore-keys: |
+            ${{ runner.os }}-submodules-${{ env.SUBMODULE_CACHE_VERSION }}-
+      - name: Sync and update the exact bin submodule
+        shell: pwsh
+        run: |
+          git submodule sync --recursive
+          if ($LASTEXITCODE -ne 0) { throw 'git submodule sync failed.' }
+          git submodule update --init --recursive --force --depth 1 --jobs 8
+          if ($LASTEXITCODE -ne 0) { throw 'git submodule update failed.' }
+      - name: Clean the bin submodule before materialization
+        shell: pwsh
+        run: |
+          $workspaceRoot = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
+          $binRoot = (Resolve-Path -LiteralPath (Join-Path $workspaceRoot 'bin')).Path
+          if (-not $binRoot.StartsWith($workspaceRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "bin submodule escaped the checked-out workspace: $binRoot"
+          }
+          $gitTopLevel = (git -C $binRoot rev-parse --show-toplevel).Trim()
+          if ($LASTEXITCODE -ne 0 -or [IO.Path]::GetFullPath($gitTopLevel) -ne [IO.Path]::GetFullPath($binRoot)) {
+            throw "Refusing to clean an unexpected bin repository: $gitTopLevel"
+          }
+          git -C $binRoot reset --hard
+          if ($LASTEXITCODE -ne 0) { throw 'failed to reset tracked bin files' }
+          git -C $binRoot clean -ffdx
+          if ($LASTEXITCODE -ne 0) { throw 'failed to clean persisted bin analysis state' }
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Materialize accepted bin for every release game version
+        if: inputs.scope == 'release-all'
+        shell: pwsh
+        run: |
+          uv run python release_workflow.py materialize-accepted-bin `
+            --repo-root "$env:GITHUB_WORKSPACE" --persisted-root "$env:PERSISTED_WORKSPACE" --bindir bin --all-gamevers
+          if ($LASTEXITCODE -ne 0) { throw 'accepted bin materialization failed' }
+      - name: Resolve IDA interpreter identity
+        shell: pwsh
+        run: |
+          $pythonExe = (Get-Command python -ErrorAction SilentlyContinue).Source
+          $idalibMcpExe = (Get-Command idalib-mcp -ErrorAction SilentlyContinue).Source
+          if ([string]::IsNullOrWhiteSpace($pythonExe) -or [string]::IsNullOrWhiteSpace($idalibMcpExe)) {
+            throw 'python with idalib and idalib-mcp must both be available on PATH'
+          }
+          $probe = Join-Path $env:GITHUB_WORKSPACE 'ida_runtime_probe.py'
+          $idaVersionOutput = & $pythonExe $probe --idalib-mcp $idalibMcpExe
+          $probeExitCode = $LASTEXITCODE
+          $idaVersion = (@($idaVersionOutput) -join "`n").Trim()
+          if ($probeExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($idaVersion)) {
+            throw 'Failed to resolve the IDA kernel version from the idalib-mcp installation'
+          }
+          if ([string]::IsNullOrWhiteSpace($env:IDADIR)) { throw 'IDADIR is required for warm cache production' }
+          "IDA_KERNEL_VERSION=$idaVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "CACHE_BUNDLE=$(Join-Path $env:RUNNER_TEMP 'idb-cache-selection')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Download the bound plan
+        if: inputs.scope == 'bound-plan'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.plan_artifact_name }}
+          path: ${{ runner.temp }}/idb-cache-selection
+      - name: Verify the bound plan SHA-256
+        if: inputs.scope == 'bound-plan'
+        shell: pwsh
+        run: |
+          $planPath = Join-Path $env:CACHE_BUNDLE 'plan.json'
+          $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $planPath).Hash.ToLowerInvariant()
+          $expected = (uv run python -c "import json,sys;print(json.load(open(sys.argv[1],encoding='utf-8'))['plan_sha256'])" $planPath).Trim()
+          if ($expected -ne $env:PLAN_SHA256) { throw 'bound plan does not carry the caller-declared plan_sha256' }
+          Write-Host "Bound plan file SHA-256: $actual; plan_sha256: $expected"
+      - name: Prepare the exact warm IDB cache selection
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Path $env:CACHE_BUNDLE -Force | Out-Null
+          $selection = Join-Path $env:CACHE_BUNDLE 'cache-selection.json'
+          $selectionSha = Join-Path $env:CACHE_BUNDLE 'cache-selection.sha256'
+          if ($env:SCOPE -eq 'release-all') {
+            uv run python idb_cache_release.py prepare `
+              -repo-root $env:GITHUB_WORKSPACE -bindir bin -persisted-root $env:PERSISTED_WORKSPACE `
+              -ida-root $env:IDADIR -kernel-version $env:IDA_KERNEL_VERSION -source-sha $env:SOURCE_SHA `
+              -run-id "${{ github.run_id }}" -attempt "${{ github.run_attempt }}" `
+              -output $selection -output-sha256 $selectionSha
+          } else {
+            uv run python idb_cache_workflow.py prepare `
+              -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $env:CACHE_BUNDLE 'plan.json') -merge-ref HEAD -bindir bin `
+              -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR `
+              -kernel-version $env:IDA_KERNEL_VERSION -run-id "${{ github.run_id }}" `
+              -attempt "${{ github.run_attempt }}" -output $selection -output-sha256 $selectionSha
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'warm IDB cache preparation failed' }
+      - name: Verify the published cache selection
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $selection = Join-Path $env:CACHE_BUNDLE 'cache-selection.json'
+          $selectionSha = Join-Path $env:CACHE_BUNDLE 'cache-selection.sha256'
+          if ($env:SCOPE -eq 'release-all') {
+            uv run python idb_cache_release.py verify `
+              -repo-root $env:GITHUB_WORKSPACE -bindir bin -persisted-root $env:PERSISTED_WORKSPACE `
+              -ida-root $env:IDADIR -kernel-version $env:IDA_KERNEL_VERSION -source-sha $env:SOURCE_SHA `
+              -selection $selection -selection-sha256 $selectionSha
+          } else {
+            uv run python idb_cache_workflow.py verify `
+              -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $env:CACHE_BUNDLE 'plan.json') -merge-ref HEAD -bindir bin `
+              -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR `
+              -kernel-version $env:IDA_KERNEL_VERSION -selection $selection -selection-sha256 $selectionSha
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'warm IDB cache selection verification failed' }
+      - name: Publish producer outputs
+        id: publish
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $selection = Join-Path $env:CACHE_BUNDLE 'cache-selection.json'
+          $digest = (Get-Content -Raw -LiteralPath (Join-Path $env:CACHE_BUNDLE 'cache-selection.sha256')).Trim()
+          if ($digest -notmatch '^[0-9a-f]{64}$') { throw 'cache selection SHA-256 evidence is malformed' }
+          $schema = (uv run python -c "import json,sys;print(json.load(open(sys.argv[1],encoding='utf-8'))['schema_version'])" $selection).Trim()
+          "selection_artifact_name=${{ inputs.selection_artifact_name }}" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "selection_sha256=$digest" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "selection_schema_version=$schema" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "source_sha=$($env:SOURCE_SHA.ToLowerInvariant())" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
+      - name: Upload the exact cache selection
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.selection_artifact_name }}
+          path: |
+            ${{ runner.temp }}/idb-cache-selection/cache-selection.json
+            ${{ runner.temp }}/idb-cache-selection/cache-selection.sha256
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: true
+      - name: Remove producer workspace analysis state
+        if: always()
+        shell: pwsh
+        run: |-
+          $ErrorActionPreference = 'Stop'
+          if ($env:CACHE_BUNDLE -and (Test-Path -LiteralPath $env:CACHE_BUNDLE)) {
+            Get-ChildItem -LiteralPath $env:CACHE_BUNDLE -Filter '.*-identity.json' -Force -ErrorAction SilentlyContinue |
+              Remove-Item -Force -ErrorAction SilentlyContinue
+          }
+          $workspaceRoot = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
+          $binPath = Join-Path $workspaceRoot 'bin'
+          if (-not (Test-Path -LiteralPath $binPath)) { return }
+          $binRoot = (Resolve-Path -LiteralPath $binPath).Path
+          if (-not $binRoot.StartsWith($workspaceRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "bin submodule escaped the checked-out workspace: $binRoot"
+          }
+          $gitTopLevel = (git -C $binRoot rev-parse --show-toplevel).Trim()
+          if ($LASTEXITCODE -ne 0 -or [IO.Path]::GetFullPath($gitTopLevel) -ne [IO.Path]::GetFullPath($binRoot)) {
+            throw "Refusing to clean an unexpected bin repository: $gitTopLevel"
+          }
+          git -C $binRoot reset --hard
+          if ($LASTEXITCODE -ne 0) { throw 'failed to reset tracked bin files' }
+          git -C $binRoot clean -ffdx
+          if ($LASTEXITCODE -ne 0) { throw 'failed to remove generated bin analysis state' }

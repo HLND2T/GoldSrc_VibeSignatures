@@ -34,11 +34,18 @@ glob 都不是 validation 输入。
 
 Planner 还会从 repository variable `GSVIBE_IDB_CACHE_MODE` 绑定 `cache_mode`，默认值为 `cold`。Analysis 在
 `win64` Environment 下的专用 `[self-hosted, windows, x64]` runner 运行，并受 repository-wide IDA
-concurrency group 约束（动态 per-binary MCP endpoint 为 invocation-scoped，不会放宽该 group）。Warm mode 在同一个
-job 内完成 clean、probe/miss warmup、exact selection、restore、
-analysis 与 final clean。`cache-selection.json` 绑定 plan SHA、merge/bin identity、selected binary、cache key、
-generation 和 manifest hash；其 SHA-256 会被复核，Actions artifact 只作为 evidence。Cold mode 不执行任何收到
-`PERSISTED_WORKSPACE` 的 step。
+concurrency group 约束（动态 per-binary MCP endpoint 为 invocation-scoped，不会放宽该 group）。
+
+Warm mode 已把 producer 从 consumer 中拆出。`plan` 以 `scope: bound-plan` 调用 reusable
+[`warmup-idb.yml`](../../.github/workflows/warmup-idb.yml) producer；该 job 在自己的 workspace 中 checkout merge
+commit、校验 bound plan、probe/warm/publish immutable generation，并上传 canonical `cache-selection.json` 与独立
+SHA-256 evidence。`analyze-self-hosted` 随后在全新 workspace 中运行：下载该 exact selection、把 SHA-256 与
+producer job output 复核、对照自身 checkout 与 pinned runtime 验证、restore exact generation，再执行 strict
+no-save analysis。Consumer 不 warm、不 publish、也不读取 `READY.json`。Producer 失败或取消会阻塞 consumer，而不是
+回落到 inline warm。Cold mode 直接跳过 producer，也不执行任何收到 `PERSISTED_WORKSPACE` 的 step。
+
+`cache-selection.json` 绑定 plan SHA、merge/bin identity、selected binary、cache key、generation 和 manifest hash；
+Actions artifact 是 evidence 与 selection transport，绝不是 IDB payload transport。
 
 Production warm activation 必须满足 [IDB cache 运维手册](idb-cache-operations.md) 中的 host/repository 设置。
 Unit 与 workflow-contract test 不能替代专用 runner 上记录的 cold、首次 miss/publication 与后续 hit run。
@@ -46,10 +53,17 @@ Unit 与 workflow-contract test 不能替代专用 runner 上记录的 cold、�
 ## Release 构建与发布
 
 [`release-build.yml`](../../.github/workflows/release-build.yml) 是手动 `workflow_dispatch`（`version` 如
-`v20260825a` + 可选 `source_sha` + `mode` `new|republish`）。它在 self-hosted `[self-hosted, windows, x64]` runner
-上：checkout exact source 与 `bin` submodule → 恢复 accepted bin → 逐 game version warm IDB cache →
-`ida_analyze_bin.py -allgamever` 分析全部 game version → 逐 game version build/guard/publish candidate 与 gamedata →
-`stage-build` → 创建单个 `github-actions[bot]` generated-output PR（分支 `gamesymbols/build/<version>`）。
+`v20260825a` + 可选 `source_sha` + `mode` `new|republish`）。其 DAG 为 `preflight -> warmup-idb -> build`：
+`preflight` 解析并绑定 `version`、`source_sha`、`mode` 与 `cache_mode`；warm 模式下 `warmup-idb` 以
+`scope: release-all` 调用 reusable producer；`build` 是纯 consumer。
+
+`build` 在 self-hosted `[self-hosted, windows, x64]` runner 上：checkout exact source 与 `bin` submodule → clean
+submodule → 通过 `release_workflow.py materialize-accepted-bin` materialize accepted bin → 下载并验证 exact cache
+selection → restore 这些 exact generation → 执行
+`ida_analyze_bin.py -allgamever -cache_mode <mode> -debug -process_reporter console` →
+逐 game version build/guard/publish candidate 与 gamedata → `stage-build` → 创建单个 `github-actions[bot]`
+generated-output PR（分支 `gamesymbols/build/<version>`）。Warm build 要求 producer 成功；cold build 要求 producer
+被 skip。
 
 - `validate-generated-output-pr.yml` 校验 output PR（bot author + 同仓 + `gamesymbols/build/` 分支）。output head 必须是
   单父提交，且该父提交等于 tracked manifest 的 `source_sha`。当前 PR base 必须是该 `source_sha` 的后代，因此 PR

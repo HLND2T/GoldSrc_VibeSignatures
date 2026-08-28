@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -15,25 +14,24 @@ from gamesymbol_snapshot_lib.pr_cli import (
 )
 from gamesymbol_snapshot_lib.pr_validation import CACHE_MODE_WARM
 from ida_analyze_bin import prepare_analysis_binary
-from ida_database_paths import is_reparse_point
 from idb_cache import (
-    CACHE_SCHEMA_VERSION,
     IdbCacheError,
     build_binary_identity,
     build_cache_identity,
-    probe_generation,
-    prune_tag,
-    restore_generation,
-    verify_selection,
-    warm_and_publish,
 )
-from idb_warm_worker import exclusive_file_lock, probe_runtime_contract
-from release_workflow_lib.hashing import (
-    canonical_json_bytes,
-    normalized_sha256,
-    sha256_bytes,
-    write_canonical_json,
+from idb_cache_selection import (
+    SELECTION_ENTRY_KEYS,
+    IdbCacheSelectionError,
+    entry_sort_key,
+    prepare_selection_entries,
+    read_selection_with_evidence,
+    restore_selection_entries,
+    validate_persisted_workspace,
+    validate_selection_entries,
+    write_selection_with_evidence,
 )
+from idb_warm_worker import probe_runtime_contract
+from release_workflow_lib.hashing import canonical_json_bytes
 
 CACHE_SELECTION_SCHEMA_VERSION = 1
 CACHE_SELECTION_KEYS = {
@@ -44,17 +42,10 @@ CACHE_SELECTION_KEYS = {
     "merge_bin_commit",
     "entries",
 }
-CACHE_SELECTION_ENTRY_KEYS = {
-    "tag",
-    "platform",
-    "cache_key",
-    "generation",
-    "manifest_sha256",
-    "binaries",
-}
+CACHE_SELECTION_ENTRY_KEYS = SELECTION_ENTRY_KEYS
 
 
-class IdbCacheWorkflowError(ValueError):
+class IdbCacheWorkflowError(IdbCacheSelectionError):
     pass
 
 
@@ -64,36 +55,6 @@ class SelectedBinaryGroup:
     platform: str
     workspace_root: Path
     binaries: tuple[dict, ...]
-
-
-def _is_within(path: Path, root: Path) -> bool:
-    try:
-        path.relative_to(root)
-        return True
-    except ValueError:
-        return False
-
-
-def _reject_reparse_ancestors(path: Path) -> None:
-    absolute = path.absolute()
-    for candidate in reversed((absolute, *absolute.parents)):
-        if candidate.exists() and is_reparse_point(candidate):
-            raise IdbCacheWorkflowError(f"Persisted workspace traverses a link/reparse point: {candidate}")
-
-
-def validate_persisted_workspace(persisted_root: str | Path, checkout_root: str | Path) -> Path:
-    persisted_path = Path(persisted_root)
-    checkout_path = Path(checkout_root)
-    if not persisted_path.is_dir():
-        raise IdbCacheWorkflowError("Persisted workspace must be a pre-provisioned directory")
-    if not checkout_path.is_dir():
-        raise IdbCacheWorkflowError("Checkout root is missing")
-    _reject_reparse_ancestors(persisted_path)
-    persisted = persisted_path.resolve()
-    checkout = checkout_path.resolve()
-    if _is_within(persisted, checkout) or _is_within(checkout, persisted):
-        raise IdbCacheWorkflowError("Persisted workspace and checkout must not overlap")
-    return persisted
 
 
 def _selected_binary_groups(*, document: dict, repo_root: Path, bindir: Path, repo) -> tuple[SelectedBinaryGroup, ...]:
@@ -189,7 +150,7 @@ def _selection_document(plan: dict, entries: list[dict]) -> dict:
         "plan_sha256": plan["plan_sha256"],
         "merge_sha": plan["merge_sha"],
         "merge_bin_commit": plan.get("merge_bin_commit"),
-        "entries": sorted(entries, key=lambda item: (item["tag"], item["platform"])),
+        "entries": sorted(entries, key=entry_sort_key),
     }
 
 
@@ -212,33 +173,14 @@ def validate_cache_selection(
     for field in ("plan_sha256", "merge_sha", "merge_bin_commit"):
         if document[field] != plan.get(field):
             raise IdbCacheWorkflowError(f"Cache selection does not bind plan field {field}")
-    entries = document["entries"]
-    if not isinstance(entries, list) or entries != sorted(entries, key=lambda item: (item["tag"], item["platform"])):
-        raise IdbCacheWorkflowError("Cache selection entries must use canonical order")
-    expected = {(group.tag, group.platform): group for group in groups}
-    if len(entries) != len(expected):
-        raise IdbCacheWorkflowError("Cache selection does not cover every selected binary group")
-    seen = set()
-    for entry in entries:
-        if not isinstance(entry, dict) or set(entry) != CACHE_SELECTION_ENTRY_KEYS:
-            raise IdbCacheWorkflowError("Cache selection entry has unexpected fields")
-        pair = (entry["tag"], entry["platform"])
-        if pair in seen or pair not in expected:
-            raise IdbCacheWorkflowError("Cache selection contains an unselected or duplicate tag/platform group")
-        seen.add(pair)
-        identity = identities[pair]
-        if entry["binaries"] != identity["binaries"]:
-            raise IdbCacheWorkflowError("Cache selection binary identities do not match the bound plan")
-        generation_selection = {
-            "schema_version": CACHE_SCHEMA_VERSION,
-            "tag": entry["tag"],
-            "cache_key": entry["cache_key"],
-            "generation": entry["generation"],
-            "manifest_sha256": entry["manifest_sha256"],
-        }
-        manifest = verify_selection(persisted_root=persisted_root, selection=generation_selection)
-        if manifest["identity"] != identity:
-            raise IdbCacheWorkflowError("Cache generation identity does not match the pinned runtime and binary plan")
+    expected = {(group.tag, group.platform) for group in groups}
+    if set(identities) != expected:
+        raise IdbCacheWorkflowError("Bound plan groups and pinned runtime identities disagree")
+    validate_selection_entries(
+        entries=document["entries"],
+        identities=identities,
+        persisted_root=persisted_root,
+    )
     if raw is not None and canonical_json_bytes(document) != raw:
         raise IdbCacheWorkflowError("Cache selection is not canonical JSON")
     return document
@@ -272,47 +214,14 @@ def prepare_cache_selection(
         kernel_version=kernel_version,
         normalized_ida_args=normalized_ida_args,
     )
-    lock_root = persisted / "idb-cache" / ".locks"
-    lock_root.mkdir(parents=True, exist_ok=True)
-    entries = []
-    for group in groups:
-        identity = identities[(group.tag, group.platform)]
-        started = time.monotonic()
-        with exclusive_file_lock(lock_root / f"{group.tag}.lock"):
-            selection = probe_generation(persisted_root=persisted, identity=identity)
-            hit = selection is not None
-            if selection is None:
-                identity_path = Path(output_path).with_name(f".{group.tag}-{group.platform}-identity.json")
-                try:
-                    write_canonical_json(identity_path, identity)
-                    selection = warm_and_publish(
-                        persisted_root=persisted,
-                        identity_path=identity_path,
-                        workspace_root=group.workspace_root,
-                        run_id=run_id,
-                        attempt=attempt,
-                        port_lock=lock_root / "ida-mcp-port.lock",
-                        timeout_seconds=timeout_seconds,
-                    )
-                finally:
-                    if identity_path.exists():
-                        identity_path.unlink()
-            verify_selection(persisted_root=persisted, selection=selection)
-            prune_tag(persisted_root=persisted, tag=group.tag)
-        entries.append(
-            {
-                "tag": group.tag,
-                "platform": group.platform,
-                "cache_key": selection["cache_key"],
-                "generation": selection["generation"],
-                "manifest_sha256": selection["manifest_sha256"],
-                "binaries": identity["binaries"],
-            }
-        )
-        print(
-            f"IDB cache {'hit' if hit else 'miss'}: {group.tag}/{group.platform}; "
-            f"binaries={len(group.binaries)}; wall_seconds={time.monotonic() - started:.3f}"
-        )
+    entries = prepare_selection_entries(
+        groups=groups,
+        identities=identities,
+        persisted_root=persisted,
+        run_id=run_id,
+        attempt=attempt,
+        timeout_seconds=timeout_seconds,
+    )
     document = _selection_document(plan, entries)
     validate_cache_selection(
         document=document,
@@ -321,8 +230,11 @@ def prepare_cache_selection(
         identities=identities,
         persisted_root=persisted,
     )
-    write_canonical_json(output_path, document)
-    raw = Path(output_path).read_bytes()
+    raw, digest = write_selection_with_evidence(
+        document=document,
+        output_path=output_path,
+        output_sha256_path=output_sha256_path,
+    )
     validate_cache_selection(
         document=json.loads(raw),
         plan=plan,
@@ -331,8 +243,6 @@ def prepare_cache_selection(
         persisted_root=persisted,
         raw=raw,
     )
-    digest = sha256_bytes(raw)
-    Path(output_sha256_path).write_text(f"{digest}\n", encoding="ascii", newline="\n")
     print(f"Cache selection SHA-256: {digest}")
     return document
 
@@ -360,15 +270,10 @@ def verify_cache_selection_file(
         kernel_version=kernel_version,
         normalized_ida_args=normalized_ida_args,
     )
-    raw = Path(selection_path).read_bytes()
-    expected_digest = Path(selection_sha256_path).read_text(encoding="ascii").strip()
-    normalized_sha256(expected_digest, "cache selection SHA-256")
-    if sha256_bytes(raw) != expected_digest:
-        raise IdbCacheWorkflowError("Cache selection SHA-256 evidence mismatch")
-    try:
-        document = json.loads(raw)
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise IdbCacheWorkflowError(f"Unable to parse cache selection: {exc}") from exc
+    document, raw, _digest = read_selection_with_evidence(
+        selection_path=selection_path,
+        selection_sha256_path=selection_sha256_path,
+    )
     return (
         validate_cache_selection(
             document=document,
@@ -384,22 +289,11 @@ def verify_cache_selection_file(
 
 def restore_cache_selection(**kwargs) -> dict:
     document, groups = verify_cache_selection_file(**kwargs)
-    group_map = {(group.tag, group.platform): group for group in groups}
-    for entry in document["entries"]:
-        started = time.monotonic()
-        selection = {
-            "schema_version": CACHE_SCHEMA_VERSION,
-            "tag": entry["tag"],
-            "cache_key": entry["cache_key"],
-            "generation": entry["generation"],
-            "manifest_sha256": entry["manifest_sha256"],
-        }
-        restore_generation(
-            persisted_root=kwargs["persisted_root"],
-            selection=selection,
-            workspace_root=group_map[(entry["tag"], entry["platform"])].workspace_root,
-        )
-        print(f"IDB cache restored: {entry['tag']}/{entry['platform']}; wall_seconds={time.monotonic() - started:.3f}")
+    restore_selection_entries(
+        entries=document["entries"],
+        groups=groups,
+        persisted_root=kwargs["persisted_root"],
+    )
     return document
 
 
@@ -470,7 +364,7 @@ def main(argv: list[str] | None = None) -> int:
             verify_cache_selection_file(**_verification_kwargs(args))
         else:
             restore_cache_selection(**_verification_kwargs(args))
-    except (IdbCacheError, IdbCacheWorkflowError, PrCliError, OSError, ValueError) as exc:
+    except (IdbCacheError, IdbCacheSelectionError, PrCliError, OSError, ValueError) as exc:
         print(f"Error: {exc}")
         return 1
     return 0

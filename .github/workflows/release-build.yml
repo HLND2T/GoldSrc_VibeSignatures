@@ -29,6 +29,7 @@ jobs:
       version: ${{ steps.resolve.outputs.version }}
       source_sha: ${{ steps.resolve.outputs.source_sha }}
       mode: ${{ steps.resolve.outputs.mode }}
+      cache_mode: ${{ steps.resolve.outputs.cache_mode }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -45,6 +46,7 @@ jobs:
           VERSION: ${{ inputs.version }}
           SOURCE_SHA: ${{ inputs.source_sha }}
           MODE: ${{ inputs.mode }}
+          CACHE_MODE: ${{ vars.GSVIBE_IDB_CACHE_MODE || 'cold' }}
         run: |
           set -euo pipefail
           git fetch origin "${{ github.event.repository.default_branch }}"
@@ -55,11 +57,32 @@ jobs:
             --source-sha "$source_sha" \
             --mode "$MODE" \
             --default-ref "origin/${{ github.event.repository.default_branch }}"
+          if [[ "$CACHE_MODE" != "warm" && "$CACHE_MODE" != "cold" ]]; then
+            echo "::error::unsupported IDB cache mode: $CACHE_MODE"
+            exit 1
+          fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
           echo "mode=$MODE" >> "$GITHUB_OUTPUT"
-  build:
+          echo "cache_mode=$CACHE_MODE" >> "$GITHUB_OUTPUT"
+  warmup-idb:
     needs: preflight
+    if: needs.preflight.outputs.cache_mode == 'warm'
+    uses: ./.github/workflows/warmup-idb.yml
+    secrets: inherit
+    with:
+      source_sha: ${{ needs.preflight.outputs.source_sha }}
+      scope: release-all
+      cache_mode: ${{ needs.preflight.outputs.cache_mode }}
+      selection_artifact_name: idb-cache-selection-${{ github.run_id }}-${{ github.run_attempt }}
+  build:
+    needs: [preflight, warmup-idb]
+    # Warm builds require a successful producer; cold builds require it to have been skipped.
+    # A failed or cancelled producer must never fall back to warming inside the consumer.
+    if: |
+      always() && needs.preflight.result == 'success'
+      && ((needs.preflight.outputs.cache_mode == 'warm' && needs.warmup-idb.result == 'success')
+      || (needs.preflight.outputs.cache_mode == 'cold' && needs.warmup-idb.result == 'skipped'))
     environment: win64
     runs-on: [self-hosted, windows, x64]
     timeout-minutes: 1440
@@ -126,25 +149,32 @@ jobs:
             throw 'Failed to resolve the IDA kernel version from the idalib-mcp installation'
           }
           "IDA_KERNEL_VERSION=$idaVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-      - name: Prepare persisted workspace and restore accepted bin
+      - name: Clean the bin submodule before materialization
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           if ([string]::IsNullOrWhiteSpace($env:PERSISTED_WORKSPACE)) {
             throw 'PERSISTED_WORKSPACE is required'
           }
-          $binRoot = (Resolve-Path -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'bin')).Path
-          $gamevers = uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {}).get('gamevers', [])))"
-          foreach ($gamever in ($gamevers -split "`n")) {
-            $persisted = Join-Path $env:PERSISTED_WORKSPACE "bin\$gamever"
-            if (Test-Path -LiteralPath $persisted) {
-              $target = Join-Path $binRoot $gamever
-              New-Item -ItemType Directory -Path $target -Force | Out-Null
-              robocopy $persisted $target /E /NFL /NDL /NJH /NJS /R:2 /W:5 /XF *.i64 *.idb *.id0 *.id1 *.id2 *.nam *.til
-              if ($LASTEXITCODE -ge 8) { throw "robocopy restore failed for $gamever" }
-              $global:LASTEXITCODE = 0
-            }
+          $workspaceRoot = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
+          $binRoot = (Resolve-Path -LiteralPath (Join-Path $workspaceRoot 'bin')).Path
+          if (-not $binRoot.StartsWith($workspaceRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "bin submodule escaped the checked-out workspace: $binRoot"
           }
+          $gitTopLevel = (git -C $binRoot rev-parse --show-toplevel).Trim()
+          if ($LASTEXITCODE -ne 0 -or $([IO.Path]::GetFullPath($gitTopLevel)) -ne [IO.Path]::GetFullPath($binRoot)) {
+            throw "Refusing to clean an unexpected bin repository: $gitTopLevel"
+          }
+          git -C $binRoot reset --hard
+          if ($LASTEXITCODE -ne 0) { throw 'failed to reset tracked bin files' }
+          git -C $binRoot clean -ffdx
+          if ($LASTEXITCODE -ne 0) { throw 'failed to clean persisted bin analysis state' }
+      - name: Materialize accepted bin for every game version
+        shell: pwsh
+        run: |
+          uv run python release_workflow.py materialize-accepted-bin `
+            --repo-root "$env:GITHUB_WORKSPACE" --persisted-root "$env:PERSISTED_WORKSPACE" --bindir bin --all-gamevers
+          if ($LASTEXITCODE -ne 0) { throw 'accepted bin materialization failed' }
       - name: Invalidate republish outputs
         if: needs.preflight.outputs.mode == 'republish'
         shell: pwsh
@@ -156,21 +186,47 @@ jobs:
               --version "${{ needs.preflight.outputs.version }}" --source-sha "${{ needs.preflight.outputs.source_sha }}" --bindir bin
             if ($LASTEXITCODE -ne 0) { throw "invalidate-republish failed for $gamever" }
           }
-      - name: Warm IDB cache for all game versions
+      - name: Download the exact warm IDB cache selection
+        if: needs.preflight.outputs.cache_mode == 'warm'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.warmup-idb.outputs.selection_artifact_name }}
+          path: ${{ runner.temp }}/idb-cache-selection
+      - name: Verify the exact warm IDB cache selection
+        if: needs.preflight.outputs.cache_mode == 'warm'
         shell: pwsh
+        env:
+          PRODUCER_SELECTION_SHA256: ${{ needs.warmup-idb.outputs.selection_sha256 }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $gamevers = uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {}).get('gamevers', [])))"
-          foreach ($gamever in ($gamevers -split "`n")) {
-            uv run python idb_cache_release.py warm -repo-root $env:GITHUB_WORKSPACE -gamever $gamever -bindir bin `
-              -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR -kernel-version $env:IDA_KERNEL_VERSION `
-              -run-id "${{ github.run_id }}" -attempt "${{ github.run_attempt }}"
-            if ($LASTEXITCODE -ne 0) { throw "warm IDB cache failed for $gamever" }
+          $bundle = Join-Path $env:RUNNER_TEMP 'idb-cache-selection'
+          $evidence = (Get-Content -Raw -LiteralPath (Join-Path $bundle 'cache-selection.sha256')).Trim()
+          if ($evidence -ne $env:PRODUCER_SELECTION_SHA256) {
+            throw 'downloaded cache selection evidence does not match the producer job output'
           }
+          uv run python idb_cache_release.py verify `
+            -repo-root $env:GITHUB_WORKSPACE -bindir bin -persisted-root $env:PERSISTED_WORKSPACE `
+            -ida-root $env:IDADIR -kernel-version $env:IDA_KERNEL_VERSION `
+            -source-sha "${{ needs.preflight.outputs.source_sha }}" `
+            -selection (Join-Path $bundle 'cache-selection.json') `
+            -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
+          if ($LASTEXITCODE -ne 0) { throw 'warm cache selection verification failed' }
+      - name: Restore the exact warm IDB cache generations
+        if: needs.preflight.outputs.cache_mode == 'warm'
+        shell: pwsh
+        run: |
+          $bundle = Join-Path $env:RUNNER_TEMP 'idb-cache-selection'
+          uv run python idb_cache_release.py restore `
+            -repo-root $env:GITHUB_WORKSPACE -bindir bin -persisted-root $env:PERSISTED_WORKSPACE `
+            -ida-root $env:IDADIR -kernel-version $env:IDA_KERNEL_VERSION `
+            -source-sha "${{ needs.preflight.outputs.source_sha }}" `
+            -selection (Join-Path $bundle 'cache-selection.json') `
+            -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
+          if ($LASTEXITCODE -ne 0) { throw 'warm cache restore failed' }
       - name: Analyze all game versions
         shell: pwsh
         run: |
-          uv run python ida_analyze_bin.py -allgamever -cache_mode warm -debug -process_reporter console
+          uv run python ida_analyze_bin.py -allgamever -cache_mode "${{ needs.preflight.outputs.cache_mode }}" -debug -process_reporter console
           if ($LASTEXITCODE -ne 0) { throw 'all-gamever analysis failed' }
       - name: Build, guard, and publish candidates for every game version
         shell: pwsh
@@ -261,7 +317,7 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or [IO.Path]::GetFullPath($gitTopLevel) -ne [IO.Path]::GetFullPath($binRoot)) {
             throw "Refusing to clean an unexpected bin repository: $gitTopLevel"
           }
-          # reset --hard reverts tracked-file modifications (e.g. robocopy-accepted
+          # reset --hard reverts tracked-file modifications (materialized accepted
           # binaries) before the cache post-save, so a later self-hosted PR analysis
           # never restores a dirty submodule; git clean handles the untracked side.
           git -C $binRoot reset --hard

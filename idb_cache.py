@@ -23,6 +23,14 @@ from ida_database_paths import (
     validate_database_file_set,
     validate_plain_file,
 )
+from idb_cache_locks import (
+    DEFAULT_TAG_LOCK_TIMEOUT_SECONDS,
+    IdbCacheError,
+    exclusive_file_lock,
+    tag_lock,
+    tag_lock_timeout_seconds,
+    warm_port_lock_path,
+)
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.hashing import (
     canonical_json_bytes,
@@ -44,6 +52,8 @@ WARM_WORKER_CONTRACT_FILES = (
     "ida_database_paths.py",
     "ida_mcp_session.py",
     "idb_cache.py",
+    "idb_cache_locks.py",
+    "idb_cache_selection.py",
     "idb_cache_workflow.py",
     "idb_warm_worker.py",
     "release_workflow_lib/errors.py",
@@ -81,10 +91,6 @@ GENERATION_MANIFEST_KEYS = {
 READY_KEYS = {"schema_version", "tag", "cache_key", "generation", "manifest_sha256"}
 SAFE_COMPONENT_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,159}$", re.ASCII)
 UTC_TIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
-
-
-class IdbCacheError(ValueError):
-    pass
 
 
 def _component(value: object, context: str) -> str:
@@ -302,6 +308,22 @@ def _tag_root(persisted_root: str | Path, tag: str, *, create: bool = False) -> 
     if create:
         tag_root.mkdir(parents=True, exist_ok=True)
     return _plain_root(tag_root) if tag_root.exists() else tag_root
+
+
+def _write_ready(tag_root: Path, selection: dict) -> None:
+    """Publish the probe hint, skipping the replace when READY already holds these bytes.
+
+    READY is only an optimization pointer; rewriting identical bytes buys nothing and adds a
+    replace that a concurrent reader can turn into a Windows sharing violation.
+    """
+    ready_path = tag_root / "READY.json"
+    expected = canonical_json_bytes(selection)
+    try:
+        if ready_path.read_bytes() == expected:
+            return
+    except OSError:
+        pass
+    write_canonical_json(ready_path, selection)
 
 
 def _generation_name(key: str, run_id: str, attempt: int) -> str:
@@ -526,7 +548,7 @@ def publish_generation(
             "generation": generation,
             "manifest_sha256": manifest_sha256,
         }
-        write_canonical_json(tag_root / "READY.json", selection)
+        _write_ready(tag_root, selection)
         return selection
     finally:
         if incoming.exists():
@@ -609,7 +631,7 @@ def probe_generation(*, persisted_root: str | Path, identity: dict) -> dict | No
     if not candidates:
         return None
     selection = candidates[-1]
-    write_canonical_json(ready_path, selection)
+    _write_ready(tag_root, selection)
     return selection
 
 
@@ -689,20 +711,23 @@ def _remove_database_files(workspace: Path, identity: dict) -> None:
 def warm_and_publish(
     *,
     persisted_root: str | Path,
-    identity_path: str | Path,
+    identity: dict,
     workspace_root: str | Path,
     run_id: str,
     attempt: int,
-    port_lock: str | Path,
     timeout_seconds: float,
 ) -> dict:
-    identity = load_cache_identity(identity_path)
+    identity = validate_cache_identity(identity)
     workspace = _plain_root(workspace_root)
     _remove_database_files(workspace, identity)
+    identity_fd, identity_name = tempfile.mkstemp(prefix="idb-warm-identity-", suffix=".json")
+    os.close(identity_fd)
+    identity_path = Path(identity_name)
     observed_fd, observed_name = tempfile.mkstemp(prefix="idb-warm-observed-", suffix=".json")
     os.close(observed_fd)
     observed_path = Path(observed_name)
     try:
+        write_canonical_json(identity_path, identity)
         command = [
             sys.executable,
             str(Path(__file__).with_name("idb_warm_worker.py")),
@@ -711,16 +736,19 @@ def warm_and_publish(
             str(Path(identity_path).resolve()),
             "-workspace-root",
             str(workspace),
-            "-port-lock",
-            str(Path(port_lock).resolve()),
             "-output",
             str(observed_path),
         ]
-        try:
-            result = subprocess.run(command, check=False, timeout=timeout_seconds)
-        except subprocess.TimeoutExpired as exc:
-            _remove_database_files(workspace, identity)
-            raise IdbCacheError(f"Restricted IDB warm worker timed out after {timeout_seconds:g}s") from exc
+        with exclusive_file_lock(
+            warm_port_lock_path(persisted_root),
+            timeout_seconds=tag_lock_timeout_seconds(timeout_seconds),
+            description="IDA MCP warm worker port lock",
+        ):
+            try:
+                result = subprocess.run(command, check=False, timeout=timeout_seconds)
+            except subprocess.TimeoutExpired as exc:
+                _remove_database_files(workspace, identity)
+                raise IdbCacheError(f"Restricted IDB warm worker timed out after {timeout_seconds:g}s") from exc
         if result.returncode != 0:
             _remove_database_files(workspace, identity)
             raise IdbCacheError(f"Restricted IDB warm worker failed with exit code {result.returncode}")
@@ -736,8 +764,11 @@ def warm_and_publish(
             attempt=attempt,
         )
     finally:
-        if observed_path.exists():
-            observed_path.unlink()
+        for temporary_path in (identity_path, observed_path):
+            try:
+                temporary_path.unlink(missing_ok=True)
+            except OSError:
+                pass
 
 
 def prune_tag(
@@ -804,7 +835,6 @@ def _parser() -> argparse.ArgumentParser:
     warm.add_argument("-workspace-root", required=True)
     warm.add_argument("-run-id", required=True)
     warm.add_argument("-attempt", required=True, type=int)
-    warm.add_argument("-port-lock", required=True)
     warm.add_argument("-timeout-seconds", type=float, default=3600.0)
     publish = commands.add_parser("publish")
     publish.add_argument("-persisted-root", required=True)
@@ -825,56 +855,77 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _command_document(args) -> dict | None:
+    if args.command in {"probe", "warm", "publish"}:
+        return load_cache_identity(args.identity)
+    if args.command in {"restore", "verify"}:
+        return _parse_selection(Path(args.selection).read_bytes())
+    return None
+
+
+def _locked_command(args, document: dict | None) -> int:
+    """Run one mutating CLI command; the caller already holds this tag's lock."""
+    if args.command == "probe":
+        selection = probe_generation(
+            persisted_root=args.persisted_root,
+            identity=document,
+        )
+        if selection is None:
+            return 3
+        write_canonical_json(args.output, selection)
+    elif args.command == "warm":
+        selection = warm_and_publish(
+            persisted_root=args.persisted_root,
+            identity=document,
+            workspace_root=args.workspace_root,
+            run_id=args.run_id,
+            attempt=args.attempt,
+            timeout_seconds=args.timeout_seconds,
+        )
+        print(json.dumps(selection, sort_keys=True))
+    elif args.command == "publish":
+        selection = publish_generation(
+            persisted_root=args.persisted_root,
+            identity=document,
+            workspace_root=args.workspace_root,
+            run_id=args.run_id,
+            attempt=args.attempt,
+        )
+        print(json.dumps(selection, sort_keys=True))
+    elif args.command == "restore":
+        restore_generation(
+            persisted_root=args.persisted_root,
+            selection=document,
+            workspace_root=args.workspace_root,
+        )
+    else:
+        for removed in prune_tag(persisted_root=args.persisted_root, tag=args.tag):
+            print(removed)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
-        if args.command == "probe":
-            selection = probe_generation(
-                persisted_root=args.persisted_root,
-                identity=load_cache_identity(args.identity),
-            )
-            if selection is None:
-                return 3
-            write_canonical_json(args.output, selection)
-        elif args.command == "warm":
-            selection = warm_and_publish(
-                persisted_root=args.persisted_root,
-                identity_path=args.identity,
-                workspace_root=args.workspace_root,
-                run_id=args.run_id,
-                attempt=args.attempt,
-                port_lock=args.port_lock,
-                timeout_seconds=args.timeout_seconds,
-            )
-            print(json.dumps(selection, sort_keys=True))
-        elif args.command == "publish":
-            selection = publish_generation(
-                persisted_root=args.persisted_root,
-                identity=load_cache_identity(args.identity),
-                workspace_root=args.workspace_root,
-                run_id=args.run_id,
-                attempt=args.attempt,
-            )
-            print(json.dumps(selection, sort_keys=True))
-        elif args.command == "restore":
-            selection = _parse_selection(Path(args.selection).read_bytes())
-            restore_generation(
-                persisted_root=args.persisted_root,
-                selection=selection,
-                workspace_root=args.workspace_root,
-            )
-        elif args.command == "verify":
+        document = _command_document(args)
+        if args.command == "verify":
+            # Verification only reads immutable generation bytes, so it needs no write authority.
             verify_selection(
                 persisted_root=args.persisted_root,
-                selection=_parse_selection(Path(args.selection).read_bytes()),
+                selection=document,
             )
-        else:
-            for removed in prune_tag(persisted_root=args.persisted_root, tag=args.tag):
-                print(removed)
+            return 0
+        timeout_seconds = (
+            tag_lock_timeout_seconds(args.timeout_seconds)
+            if args.command == "warm"
+            else DEFAULT_TAG_LOCK_TIMEOUT_SECONDS
+        )
+        tag = document["tag"] if document is not None else args.tag
+        with tag_lock(args.persisted_root, tag, timeout_seconds=timeout_seconds):
+            return _locked_command(args, document)
     except (IdbCacheError, OSError, ValueError) as exc:
         print(f"Error: {exc}")
         return 1
-    return 0
 
 
 if __name__ == "__main__":
