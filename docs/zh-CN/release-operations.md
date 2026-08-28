@@ -4,6 +4,21 @@ Release build 是手动 `workflow_dispatch`（`release-build.yml`，`version` + 
 authority 由 allowlist 仓库 + `win64` Environment + per-version concurrency 提供，不再依赖
 `GSVIBE_RELEASE_PHASE2_ENABLED` 或 GitHub App token。
 
+## 凭据与权限边界
+
+- `release-build.yml` 的默认 `${{ github.token }}` 保持只读（`actions: read`、`contents: read`、
+  `pull-requests: read`）。Exact source checkout、Git authentication、output branch push 与 PR create 使用 `win64`
+  Environment secret `HLND2T_GH_TOKEN`。
+- PAT 需要 repository `Contents: Read and write`、`Pull requests: Read and write`、`Metadata: Read`；token owner
+  必须是 `OWNER`、`MEMBER` 或 repository `COLLABORATOR`。Workflow `permissions` 不会授予或扩大 PAT scope。
+- Output PR validation 不接收 PAT，保持 `contents: read`。Merge-time promotion 使用 `${{ github.token }}`，以
+  `contents: write`、`pull-requests: read` 创建 immutable tag 与 GitHub Release。
+- `GSVIBE_BIN_TOKEN` 若仍用于 source PR 或 warmup workflow，只承担 private submodule read；它不是 release
+  publication credential。
+
+不得把 PAT value 输出、持久化、上传或复制到 log、artifact、manifest、stage、cache 或 Git config diagnostic。
+通过 `win64` Environment 轮换或吊销，并在仓库外记录 owner、expiry、SSO authorization 与 rotation owner。
+
 ## 状态与 truth source
 
 Private stage 目录为 `PERSISTED_WORKSPACE/release-staging/<version>/<build_id>/`，内含 canonical `manifest.json`、
@@ -36,3 +51,11 @@ downloaded hash。
 verifier 不会把 immutable output head rebase 到新 base。Git 冲突仍由 GitHub mergeability 阻止合并。merge-time
 `verify_promotion()` 对 merge first parent 使用同一套 ancestor 规则。只有祖先关系或 direct-parent identity 被破坏时，
 才需要 replacement build/PR。
+
+## 已知 promotion storage 门禁
+
+`PERSISTED_WORKSPACE` 当前只存在于 `win64` Environment secret；hosted Ubuntu `verify` job 未声明该 Environment，
+所以 `${{ secrets.PERSISTED_WORKSPACE }}` 会解析为空。即使另行提供 repository secret，该 job 仍把
+`$STAGING_ROOT/release-staging` 传给 `verify-promotion`，而 private stage 由 Windows self-hosted runner 生成，当前没有
+artifact 或 shared mount 跨接两套 filesystem。因此在 storage/topology 完成修复并真实演练前，production promotion
+验收保持 blocked；repository test 与本次 PAT 迁移不能证明该路径可用。

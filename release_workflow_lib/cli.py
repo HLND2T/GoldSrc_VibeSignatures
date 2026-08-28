@@ -135,6 +135,7 @@ def _add_verification_parsers(commands) -> None:
     verify_pr.add_argument("--repository", required=True)
     verify_pr.add_argument("--head-repository", required=True)
     verify_pr.add_argument("--author", required=True)
+    verify_pr.add_argument("--author-association", required=True)
     verify_pr.add_argument("--branch", required=True)
     verify_pr.add_argument("--base-sha", required=True)
     verify_pr.add_argument("--head-sha", required=True)
@@ -145,6 +146,7 @@ def _add_verification_parsers(commands) -> None:
     promote.add_argument("--repository", required=True)
     promote.add_argument("--head-repository", required=True)
     promote.add_argument("--author", required=True)
+    promote.add_argument("--author-association", required=True)
     promote.add_argument("--branch", required=True)
     promote.add_argument("--base-branch", required=True)
     promote.add_argument("--default-branch", required=True)
@@ -313,6 +315,7 @@ def _run_verification(args) -> object:
             repository=args.repository,
             head_repository=args.head_repository,
             author=args.author,
+            author_association=args.author_association,
             branch=args.branch,
             base_sha=args.base_sha,
             head_sha=args.head_sha,
@@ -324,6 +327,7 @@ def _run_verification(args) -> object:
             repository=args.repository,
             head_repository=args.head_repository,
             author=args.author,
+            author_association=args.author_association,
             branch=args.branch,
             base_branch=args.base_branch,
             default_branch=args.default_branch,

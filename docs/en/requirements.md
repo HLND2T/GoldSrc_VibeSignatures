@@ -57,8 +57,10 @@ and recovery jobs. The `release-staging` subtree must be protected by runner-acc
 same-filesystem rename semantics. The PR routing contract must keep untrusted/fork analysis off this runner.
 
 Releases run only in the allowlisted repositories (`HLND2T/GoldSrc_VibeSignatures` and the fork), gated by the `win64`
-Environment and per-version concurrency rather than a GitHub App token or `GSVIBE_RELEASE_PHASE2_ENABLED`. The output PR
-is authored by `github-actions[bot]`. Branch protection requires the unique Actions-owned `pr-validate`, merge-commit-only
+Environment and per-version concurrency rather than a GitHub App token or `GSVIBE_RELEASE_PHASE2_ENABLED`. Configure
+`HLND2T_GH_TOKEN` in that Environment with repository Contents and Pull requests read/write plus Metadata read. Its owner
+must be an `OWNER`, `MEMBER`, or repository `COLLABORATOR`; the output PR is authored by that PAT account. Branch
+protection requires the unique Actions-owned `pr-validate`, merge-commit-only
 merges whose first parent descends from the output `source_sha`, no direct/admin-bypass pushes to `main`, and protected
 release tags. Requiring the output branch to be up to date with `main` would force merging the default branch into the
 immutable output head and is not part of this contract. Repository tests cannot activate or prove these external

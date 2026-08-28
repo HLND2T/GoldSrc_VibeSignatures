@@ -61,11 +61,12 @@ Unit 与 workflow-contract test 不能替代专用 runner 上记录的 cold、�
 submodule → 通过 `release_workflow.py materialize-accepted-bin` materialize accepted bin → 下载并验证 exact cache
 selection → restore 这些 exact generation → 执行
 `ida_analyze_bin.py -allgamever -cache_mode <mode> -debug -process_reporter console` →
-逐 game version build/guard/publish candidate 与 gamedata → `stage-build` → 创建单个 `github-actions[bot]`
-generated-output PR（分支 `gamesymbols/build/<version>`）。Warm build 要求 producer 成功；cold build 要求 producer
+逐 game version build/guard/publish candidate 与 gamedata → `stage-build` → 使用受保护的 `HLND2T_GH_TOKEN` PAT
+创建单个 generated-output PR（分支 `gamesymbols/build/<version>`）。Warm build 要求 producer 成功；cold build 要求 producer
 被 skip。
 
-- `validate-generated-output-pr.yml` 校验 output PR（bot author + 同仓 + `gamesymbols/build/` 分支）。output head 必须是
+- `validate-generated-output-pr.yml` 校验 output PR（Actions bot 或 `OWNER`/`MEMBER`/`COLLABORATOR`、同仓、
+  `gamesymbols/build/` 分支）。output head 必须是
   单父提交，且该父提交等于 tracked manifest 的 `source_sha`。当前 PR base 必须是该 `source_sha` 的后代，因此 PR
   创建后 default branch 前进本身不是 stale。changed-path allowlist 按 `source_sha..head` 计算（全部 game version 的
   gamesymbols/metadata/gamedata + `release-manifests/<version>.json`），不把可能已前进的 PR base 上的变化算进 output
@@ -77,6 +78,8 @@ generated-output PR（分支 `gamesymbols/build/<version>`）。Warm build 要�
 
 `mode=republish` 要求 `version` tag 已存在，且只重新分析自上次接受 source 以来受影响的输出。发布不再依赖
 `GSVIBE_RELEASE_PHASE2_ENABLED` 或 GitHub App token；gate 由 allowlist 仓库 + `win64` Environment + concurrency 提供。
+Release build 的默认 token 保持只读；checkout/output publication 使用 `HLND2T_GH_TOKEN`，merge-time tag/Release 写入
+使用按 workflow permission 收窄的 `${{ github.token }}`。
 
 ## Pages 部署
 

@@ -21,6 +21,7 @@ OTHER_VERSION = "v20260825b"
 BRANCH = f"gamesymbols/build/{VERSION}"
 REPOSITORY = "HLND2T/GoldSrc_VibeSignatures"
 AUTHOR = "github-actions[bot]"
+AUTHOR_ASSOCIATION = "NONE"
 WORKFLOW_RUN_URL = "https://github.com/HLND2T/GoldSrc_VibeSignatures/actions/runs/1"
 
 
@@ -119,6 +120,7 @@ def _call(root: Path, *, base_sha: str, head_sha: str, **overrides):
         "repository": REPOSITORY,
         "head_repository": REPOSITORY,
         "author": AUTHOR,
+        "author_association": AUTHOR_ASSOCIATION,
         "branch": BRANCH,
         "base_sha": base_sha,
         "head_sha": head_sha,
@@ -141,7 +143,7 @@ class VerifyOutputPrTrustTests(unittest.TestCase):
             ReleaseWorkflowError, r"generated-output PR must originate from the base repository"
         ):
             _call(Path("."), base_sha=dummy, head_sha=dummy, head_repository="hzqst/GoldSrc_VibeSignatures")
-        with self.assertRaisesRegex(ReleaseWorkflowError, r"generated-output PR author is not github-actions\[bot\]"):
+        with self.assertRaisesRegex(ReleaseWorkflowError, r"requires a trusted generated-output PR author"):
             _call(Path("."), base_sha=dummy, head_sha=dummy, author="human")
         with self.assertRaisesRegex(ReleaseWorkflowError, r"PR base SHA must be a full 40-hex commit SHA"):
             _call(Path("."), base_sha="not-a-sha", head_sha=dummy)
@@ -150,6 +152,21 @@ class VerifyOutputPrTrustTests(unittest.TestCase):
 
 
 class VerifyOutputPrGitTests(unittest.TestCase):
+    def test_accepts_trusted_pat_author_associations(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source_sha, head_sha, manifest = _build_output_repo(root)
+            for association in ("OWNER", "MEMBER", "COLLABORATOR"):
+                with self.subTest(association=association):
+                    accepted = _verify(
+                        root,
+                        base_sha=source_sha,
+                        head_sha=head_sha,
+                        author="trusted-pat-owner",
+                        author_association=association,
+                    )
+                    self.assertEqual(manifest["source_sha"], accepted["source_sha"])
+
     def test_accepts_exact_base_and_descendant_base_advancement(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

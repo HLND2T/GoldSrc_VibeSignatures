@@ -4,6 +4,22 @@ The release build is a manual `workflow_dispatch` (`release-build.yml`, `version
 Production authority comes from the allowlisted repository + `win64` Environment + per-version concurrency, not
 `GSVIBE_RELEASE_PHASE2_ENABLED` or a GitHub App token.
 
+## Credential and permission boundary
+
+- `release-build.yml` keeps its default `${{ github.token }}` read-only (`actions: read`, `contents: read`, and
+  `pull-requests: read`). Exact source checkout, Git authentication, output-branch push, and PR creation use the
+  `win64` Environment secret `HLND2T_GH_TOKEN`.
+- The PAT needs repository `Contents: Read and write`, `Pull requests: Read and write`, and `Metadata: Read`; its owner
+  must be an `OWNER`, `MEMBER`, or repository `COLLABORATOR`. Workflow `permissions` do not grant or widen PAT scopes.
+- Output PR validation receives no PAT and stays at `contents: read`. Merge-time promotion uses `${{ github.token }}`
+  with `contents: write` and `pull-requests: read` for the immutable tag and GitHub Release.
+- `GSVIBE_BIN_TOKEN`, where still configured for source-PR or warmup workflows, is a private-submodule read credential.
+  It is not the release publication credential.
+
+Never print, persist, upload, or copy the PAT value into logs, artifacts, manifests, staging, caches, or Git config
+diagnostics. Rotate or revoke it through the `win64` Environment and record the owner, expiry, SSO authorization, and
+rotation owner outside the repository.
+
 ## State and truth sources
 
 The private stage directory is `PERSISTED_WORKSPACE/release-staging/<version>/<build_id>/`, holding canonical
@@ -36,3 +52,12 @@ An output PR stays valid after `main` advances when:
 The verifier does not rebase the immutable output head onto the new base. GitHub mergeability still blocks conflicting
 histories. Merge-time `verify_promotion()` uses the same ancestor rule for the merge first parent. Replacement
 build/PR is required only when that ancestor or direct-parent identity is broken.
+
+## Known promotion storage gate
+
+`PERSISTED_WORKSPACE` currently exists only as a `win64` Environment secret; the hosted Ubuntu `verify` job does not
+declare that Environment, so its `${{ secrets.PERSISTED_WORKSPACE }}` reference resolves empty. Even if supplied as a
+repository secret, the job passes `$STAGING_ROOT/release-staging` to `verify-promotion` while the private stage is
+produced on the Windows self-hosted runner, and no artifact or shared mount bridges those filesystems. Production
+promotion acceptance therefore remains blocked until storage/topology is resolved and exercised; repository tests and
+the PAT migration do not prove that path.

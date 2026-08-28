@@ -61,11 +61,13 @@ On the self-hosted `[self-hosted, windows, x64]` runner `build`: checks out the 
 cleans the submodule, materializes accepted bin through `release_workflow.py materialize-accepted-bin`, downloads and
 verifies the exact cache selection, restores those exact generations, runs
 `ida_analyze_bin.py -allgamever -cache_mode <mode> -debug -process_reporter console`, builds/guards/publishes candidates
-and gamedata per game version, runs `stage-build`, and opens a single `github-actions[bot]` generated-output PR
-(branch `gamesymbols/build/<version>`). Warm builds require a successful producer; cold builds require a skipped one.
+and gamedata per game version, runs `stage-build`, and uses the protected `HLND2T_GH_TOKEN` PAT to open one
+generated-output PR (branch `gamesymbols/build/<version>`). Warm builds require a successful producer; cold builds
+require a skipped one.
 
-- `validate-generated-output-pr.yml` verifies the output PR (bot author + same repo + `gamesymbols/build/` branch). The
-  output head must be a single-parent commit whose parent equals the tracked manifest `source_sha`. The current PR base
+- `validate-generated-output-pr.yml` verifies the output PR (Actions bot or an `OWNER`/`MEMBER`/`COLLABORATOR`, same
+  repository, and a `gamesymbols/build/` branch). The output head must be a single-parent commit whose parent equals the
+  tracked manifest `source_sha`. The current PR base
   must be a descendant of that `source_sha`, so default-branch advancement after PR creation is not itself stale.
   Changed-path allowlist is computed from `source_sha..head` (every game version's gamesymbols/metadata/gamedata plus
   `release-manifests/<version>.json`), not from the possibly advanced PR base. Tracked output hashes still have to match.
@@ -77,7 +79,9 @@ and gamedata per game version, runs `stage-build`, and opens a single `github-ac
 
 `mode=republish` requires the `version` tag to exist and re-analyzes only the outputs affected since the last accepted
 source. Publication no longer depends on `GSVIBE_RELEASE_PHASE2_ENABLED` or a GitHub App token; the gate is the
-allowlisted repository + `win64` Environment + concurrency.
+allowlisted repository + `win64` Environment + concurrency. The release build's default token remains read-only;
+checkout/output publication uses `HLND2T_GH_TOKEN`, whereas merge-time tag/Release writes use the permission-scoped
+`${{ github.token }}`.
 
 ## Pages deployment
 
