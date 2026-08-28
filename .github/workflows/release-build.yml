@@ -274,6 +274,8 @@ jobs:
       - name: Stage validated output
         shell: pwsh
         run: |
+          git add -- "gamesymbols" "gamedata"
+          if ($LASTEXITCODE -ne 0) { throw 'generated output staging failed' }
           uv run python release_workflow.py stage-build `
             --repo-root "$env:GITHUB_WORKSPACE" `
             --staging-root "$env:PERSISTED_WORKSPACE\release-staging" `
@@ -295,7 +297,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$env:OUTPUT_BRANCH"
-          git add "gamesymbols" "gamedata" "release-manifests"
+          git add -- "release-manifests"
           git commit -m "chore(gamesymbols): publish ${{ needs.preflight.outputs.version }} build $env:BUILD_ID" `
             -m "Co-Authored-By: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
           $headSha = git rev-parse HEAD
