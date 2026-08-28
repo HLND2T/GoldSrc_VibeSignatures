@@ -8,6 +8,7 @@ import sys
 import tempfile
 import textwrap
 import unittest
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -26,7 +27,6 @@ from idb_cache import (
     build_binary_identity,
     build_cache_identity,
     cache_key,
-    load_cache_identity,
     probe_generation,
     prune_tag,
     publish_generation,
@@ -37,7 +37,7 @@ from idb_cache import (
 import idb_cache
 import idb_cache_selection
 from idb_cache_locks import IdbCacheError as IdbCacheLockError
-from idb_cache_locks import lock_root, tag_lock
+from idb_cache_locks import lock_root, tag_lock, tag_lock_timeout_seconds, warm_port_lock_path
 from idb_cache_release import (
     RELEASE_SELECTION_KEYS,
     RELEASE_SELECTION_SCHEMA_VERSION,
@@ -367,30 +367,31 @@ class IdbCacheGenerationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             workspace, persisted, binary, identity = cache_fixture(root)
-            identity_path = root / "identity.json"
-            write_canonical_json(identity_path, identity)
             with (
+                patch("idb_cache.exclusive_file_lock") as port_lock,
                 patch("idb_cache.subprocess.run", side_effect=subprocess.TimeoutExpired(["worker"], 1)),
                 self.assertRaisesRegex(IdbCacheError, "timed out"),
             ):
                 warm_and_publish(
                     persisted_root=persisted,
-                    identity_path=identity_path,
+                    identity=identity,
                     workspace_root=workspace,
                     run_id="run-1",
                     attempt=1,
-                    port_lock=root / "port.lock",
                     timeout_seconds=1,
                 )
+            port_lock.assert_called_once_with(
+                warm_port_lock_path(persisted),
+                timeout_seconds=tag_lock_timeout_seconds(1),
+                description="IDA MCP warm worker port lock",
+            )
             self.assertFalse(Path(f"{binary}.i64").exists())
-            self.assertFalse((persisted / "idb-cache").exists())
+            self.assertFalse((persisted / "idb-cache" / "game-1").exists())
 
     def test_warm_observed_runtime_mismatch_cleans_database_and_does_not_publish(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             workspace, persisted, binary, identity = cache_fixture(root)
-            identity_path = root / "identity.json"
-            write_canonical_json(identity_path, identity)
 
             def fake_worker(command, **_kwargs):
                 output = Path(command[command.index("-output") + 1])
@@ -405,15 +406,14 @@ class IdbCacheGenerationTests(unittest.TestCase):
             ):
                 warm_and_publish(
                     persisted_root=persisted,
-                    identity_path=identity_path,
+                    identity=identity,
                     workspace_root=workspace,
                     run_id="run-1",
                     attempt=1,
-                    port_lock=root / "port.lock",
                     timeout_seconds=1,
                 )
             self.assertFalse(Path(f"{binary}.i64").exists())
-            self.assertFalse((persisted / "idb-cache").exists())
+            self.assertFalse((persisted / "idb-cache" / "game-1").exists())
 
 
 class IdbCacheWorkflowTests(unittest.TestCase):
@@ -574,8 +574,8 @@ class IdbCacheWorkflowTests(unittest.TestCase):
             warm_calls = []
 
             def fake_warm(**kwargs):
-                warm_calls.append(kwargs["identity_path"])
-                identity = load_cache_identity(kwargs["identity_path"])
+                warm_calls.append(kwargs["identity"])
+                identity = kwargs["identity"]
                 workspace = Path(kwargs["workspace_root"])
                 for binary in identity["binaries"]:
                     Path(f"{workspace.joinpath(*Path(binary['path']).parts)}.i64").write_bytes(b"neutral-idb")
@@ -703,6 +703,55 @@ class IdbCacheLockTests(unittest.TestCase):
             self.assertTrue(lock_path.is_file())
             self.assertFalse(lock_is_held_by_another_process(lock_path))
 
+    def test_restore_cli_uses_the_selection_that_determined_the_tag_lock(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            persisted = root / "persisted"
+            workspace = root / "workspace"
+            persisted.mkdir()
+            workspace.mkdir()
+            selection_path = root / "selection.json"
+
+            def selection(tag: str) -> dict:
+                return {
+                    "schema_version": 1,
+                    "tag": tag,
+                    "cache_key": "a" * 64,
+                    "generation": "generation-1",
+                    "manifest_sha256": "b" * 64,
+                }
+
+            write_canonical_json(selection_path, selection("game-1"))
+            restored = []
+
+            @contextmanager
+            def replace_selection_after_lock(_persisted_root, tag, **_kwargs):
+                self.assertEqual("game-1", tag)
+                write_canonical_json(selection_path, selection("game-2"))
+                yield
+
+            with (
+                patch.object(idb_cache, "tag_lock", side_effect=replace_selection_after_lock),
+                patch.object(
+                    idb_cache,
+                    "restore_generation",
+                    side_effect=lambda **kwargs: restored.append(kwargs["selection"]),
+                ),
+            ):
+                result = idb_cache.main(
+                    [
+                        "restore",
+                        "-persisted-root",
+                        str(persisted),
+                        "-selection",
+                        str(selection_path),
+                        "-workspace-root",
+                        str(workspace),
+                    ]
+                )
+            self.assertEqual(0, result)
+            self.assertEqual("game-1", restored[0]["tag"])
+
     def test_tag_lock_waits_longer_than_the_warm_worker_timeout(self):
         from idb_cache_locks import DEFAULT_WARM_TIMEOUT_SECONDS, tag_lock_timeout_seconds
 
@@ -795,7 +844,7 @@ class IdbCacheReleaseTests(unittest.TestCase):
 
     @staticmethod
     def _fake_warm(**kwargs):
-        identity = load_cache_identity(kwargs["identity_path"])
+        identity = kwargs["identity"]
         workspace = Path(kwargs["workspace_root"])
         for record in identity["binaries"]:
             Path(f"{workspace.joinpath(*Path(record['path']).parts)}.i64").write_bytes(b"neutral-idb")

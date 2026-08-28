@@ -221,7 +221,6 @@ def prepare_cache_selection(
         run_id=run_id,
         attempt=attempt,
         timeout_seconds=timeout_seconds,
-        identity_scratch_dir=Path(output_path).parent,
     )
     document = _selection_document(plan, entries)
     validate_cache_selection(

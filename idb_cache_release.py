@@ -275,7 +275,6 @@ def prepare_release_selection(
         run_id=run_id,
         attempt=attempt,
         timeout_seconds=timeout_seconds,
-        identity_scratch_dir=Path(output_path).parent,
     )
     document = _selection_document(context, entries)
     validate_release_selection(document=document, context=context)

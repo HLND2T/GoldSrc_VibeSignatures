@@ -140,7 +140,10 @@ def write_canonical_json(path: str | Path, value: object) -> None:
             pass
         raise
     else:
-        temporary.unlink(missing_ok=True)
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError:
+            pass
 
 
 def load_json_object(path: str | Path) -> dict:

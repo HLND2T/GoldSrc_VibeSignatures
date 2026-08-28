@@ -3,7 +3,9 @@ from __future__ import annotations
 import subprocess
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
+from unittest.mock import patch
 
 from gamedata_contract import generator_contract_sha256
 from release_workflow_lib.accepted_bin import durable_inventory, materialize_accepted_bin
@@ -314,6 +316,28 @@ class MaterializeAcceptedBinTests(unittest.TestCase):
             result = materialize_accepted_bin(repo_root=repo, persisted_root=persisted, gamever="hl-9999")
             self.assertEqual({"materialized": False, "gamever": "hl-9999", "files": 0, "hash": None}, result)
             self.assertEqual([], list((repo / "bin" / "hl-9999").iterdir()))
+
+    def test_source_existence_is_checked_after_acquiring_the_gamever_lock(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo, persisted = self._workspace(Path(temporary))
+            source = persisted / "bin" / "hl-3248"
+            backup = persisted / "bin" / ".hl-3248.promotion-backup"
+            source.rename(backup)
+
+            @contextmanager
+            def finish_promotion(_lock_path):
+                backup.rename(source)
+                yield
+
+            with patch("release_workflow_lib.accepted_bin.version_lock", side_effect=finish_promotion) as lock:
+                result = materialize_accepted_bin(
+                    repo_root=repo,
+                    persisted_root=persisted,
+                    gamever="hl-3248",
+                )
+            lock.assert_called_once_with(accepted_bin_lock_path(persisted.resolve(), "hl-3248"))
+            self.assertTrue(result["materialized"])
+            self.assertEqual(b"accepted binary", (repo / "bin" / "hl-3248" / "engine" / "hw.dll").read_bytes())
 
     def test_materialization_uses_the_same_per_gamever_authority_as_promotion(self):
         with tempfile.TemporaryDirectory() as temporary:

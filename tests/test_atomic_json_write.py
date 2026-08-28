@@ -53,6 +53,22 @@ class TestAtomicJsonWrite(unittest.TestCase):
             self.assertEqual(payload, target.read_bytes())
             self.assertEqual([], list(Path(temporary).glob(".READY.json.*.tmp")))
 
+    def test_matching_target_success_ignores_temporary_cleanup_failure(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary) / "READY.json"
+            payload = hashing.canonical_json_bytes({"state": "ready"})
+
+            def concurrent_replace(_source, destination):
+                Path(destination).write_bytes(payload)
+                raise _windows_error(32)
+
+            with (
+                patch.object(hashing.os, "replace", side_effect=concurrent_replace),
+                patch.object(Path, "unlink", side_effect=OSError("temporary cleanup failed")),
+            ):
+                hashing.write_canonical_json(target, {"state": "ready"})
+            self.assertEqual(payload, target.read_bytes())
+
     def test_reports_retry_exhaustion_and_removes_temporary_file(self):
         with tempfile.TemporaryDirectory() as temporary:
             target = Path(temporary) / "READY.json"

@@ -79,10 +79,10 @@ def materialize_accepted_bin(
         raise ReleaseWorkflowError(f"checkout bin directory does not exist: {bin_root}")
     source = contained_path(persisted_root, "bin", gamever)
     target = contained_path(bin_root, gamever)
-    if not source.is_dir():
-        print(f"accepted bin materialization skipped (no persisted tree): {gamever}")
-        return {"materialized": False, "gamever": gamever, "files": 0, "hash": None}
     with version_lock(accepted_bin_lock_path(persisted_root, gamever)):
+        if not source.is_dir():
+            print(f"accepted bin materialization skipped (no persisted tree): {gamever}")
+            return {"materialized": False, "gamever": gamever, "files": 0, "hash": None}
         expected, digest = durable_inventory(source)
         target.mkdir(parents=True, exist_ok=True)
         reject_reparse_components(repo_root, target)

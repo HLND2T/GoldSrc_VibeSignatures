@@ -13,7 +13,7 @@ from ida_analyze_bin import DEFAULT_HOST, DEFAULT_PORT, IdaMcpLifecycle, _parse_
 from ida_database_paths import database_paths, existing_database_lock, validate_database_file_set, validate_plain_file
 from ida_mcp_session import open_ida_mcp_session
 from idb_cache import load_cache_identity
-from idb_cache_locks import IdbCacheError, exclusive_file_lock
+from idb_cache_locks import IdbCacheError
 from release_workflow_lib.hashing import sha256_file, write_canonical_json
 
 _WINDOWS_JOB_HANDLE = None
@@ -182,7 +182,6 @@ def run_worker(
     *,
     identity_path: str | Path,
     workspace_root: str | Path,
-    port_lock: str | Path,
     output_path: str | Path,
     memory_limit_mb: int,
 ) -> dict:
@@ -192,38 +191,37 @@ def run_worker(
         raise IdbCacheError(f"Warm workspace is missing: {root}")
     _apply_memory_limit(memory_limit_mb)
     observed_runtime = None
-    with exclusive_file_lock(port_lock, description="IDA MCP warm worker port lock"):
-        for record in identity["binaries"]:
-            binary = root.joinpath(*Path(record["path"]).parts)
-            validate_plain_file(binary, context="Warm worker binary")
-            info = inspect_binary(binary)
-            if (
-                info.platform != record["platform"]
-                or binary.stat().st_size != record["size"]
-                or sha256_file(binary) != record["sha256"]
+    for record in identity["binaries"]:
+        binary = root.joinpath(*Path(record["path"]).parts)
+        validate_plain_file(binary, context="Warm worker binary")
+        info = inspect_binary(binary)
+        if (
+            info.platform != record["platform"]
+            or binary.stat().st_size != record["size"]
+            or sha256_file(binary) != record["sha256"]
+        ):
+            raise IdbCacheError(f"Warm worker binary identity mismatch: {record['path']}")
+        _cleanup_database(binary)
+        ida_args = subprocess.list2cmdline(identity["normalized_ida_args"])
+        try:
+            with IdaMcpLifecycle(
+                binary,
+                record["platform"],
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                ida_args,
+                database_policy="rebuild",
+                save_on_success=True,
             ):
-                raise IdbCacheError(f"Warm worker binary identity mismatch: {record['path']}")
+                current_runtime = _observed_runtime(binary, identity["ida_runtime"])
+                if observed_runtime is None:
+                    observed_runtime = current_runtime
+                elif observed_runtime != current_runtime:
+                    raise IdbCacheError("Warm binaries observed inconsistent IDA runtime identities")
+            validate_database_file_set(binary)
+        except Exception:
             _cleanup_database(binary)
-            ida_args = subprocess.list2cmdline(identity["normalized_ida_args"])
-            try:
-                with IdaMcpLifecycle(
-                    binary,
-                    record["platform"],
-                    DEFAULT_HOST,
-                    DEFAULT_PORT,
-                    ida_args,
-                    database_policy="rebuild",
-                    save_on_success=True,
-                ):
-                    current_runtime = _observed_runtime(binary, identity["ida_runtime"])
-                    if observed_runtime is None:
-                        observed_runtime = current_runtime
-                    elif observed_runtime != current_runtime:
-                        raise IdbCacheError("Warm binaries observed inconsistent IDA runtime identities")
-                validate_database_file_set(binary)
-            except Exception:
-                _cleanup_database(binary)
-                raise
+            raise
     if observed_runtime is None:
         raise IdbCacheError("Warm identity selected no binaries")
     write_canonical_json(output_path, observed_runtime)
@@ -242,7 +240,6 @@ def _parser() -> argparse.ArgumentParser:
     run = commands.add_parser("run")
     run.add_argument("-identity", required=True)
     run.add_argument("-workspace-root", required=True)
-    run.add_argument("-port-lock", required=True)
     run.add_argument("-output", required=True)
     run.add_argument("-memory-limit-mb", type=int, default=8192)
     return parser
@@ -263,7 +260,6 @@ def main(argv: list[str] | None = None) -> int:
             run_worker(
                 identity_path=args.identity,
                 workspace_root=args.workspace_root,
-                port_lock=args.port_lock,
                 output_path=args.output,
                 memory_limit_mb=args.memory_limit_mb,
             )

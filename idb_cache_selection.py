@@ -31,7 +31,6 @@ from idb_cache_locks import (
     DEFAULT_TAG_LOCK_TIMEOUT_SECONDS,
     tag_lock,
     tag_lock_timeout_seconds,
-    warm_port_lock_path,
 )
 from release_workflow_lib.hashing import (
     normalized_sha256,
@@ -141,12 +140,9 @@ def prepare_selection_entries(
     run_id: str,
     attempt: int,
     timeout_seconds: float,
-    identity_scratch_dir: str | Path,
 ) -> list[dict]:
     """Probe, warm and publish every group under its tag lock, returning canonical entries."""
     persisted = Path(persisted_root)
-    port_lock = warm_port_lock_path(persisted)
-    scratch = Path(identity_scratch_dir)
     entries = []
     for group in groups:
         identity = identities[(group.tag, group.platform)]
@@ -155,21 +151,14 @@ def prepare_selection_entries(
             selection = probe_generation(persisted_root=persisted, identity=identity)
             hit = selection is not None
             if selection is None:
-                identity_path = scratch / f".{group.tag}-{group.platform}-identity.json"
-                try:
-                    write_canonical_json(identity_path, identity)
-                    selection = warm_and_publish(
-                        persisted_root=persisted,
-                        identity_path=identity_path,
-                        workspace_root=group.workspace_root,
-                        run_id=run_id,
-                        attempt=attempt,
-                        port_lock=port_lock,
-                        timeout_seconds=timeout_seconds,
-                    )
-                finally:
-                    if identity_path.exists():
-                        identity_path.unlink()
+                selection = warm_and_publish(
+                    persisted_root=persisted,
+                    identity=identity,
+                    workspace_root=group.workspace_root,
+                    run_id=run_id,
+                    attempt=attempt,
+                    timeout_seconds=timeout_seconds,
+                )
             verify_selection(persisted_root=persisted, selection=selection)
             prune_tag(persisted_root=persisted, tag=group.tag)
         entries.append(
