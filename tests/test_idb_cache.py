@@ -477,7 +477,7 @@ class IdbCacheWorkflowTests(unittest.TestCase):
             False,
             ("test",),
         )
-        plan = BoundImpactPlan(merge_sha, merge_sha, merge_sha, None, None, (action,), digests, "warm")
+        plan = BoundImpactPlan(merge_sha, merge_sha, merge_sha, None, None, (action,), digests)
         plan_path = root / "plan.json"
         plan_path.write_bytes(plan.canonical_bytes())
         return repo, plan_path

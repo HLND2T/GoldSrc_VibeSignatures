@@ -11,10 +11,6 @@ on:
         description: Producer scope, either release-all or bound-plan
         required: true
         type: string
-      cache_mode:
-        description: Bound cache mode; only warm is accepted
-        required: true
-        type: string
       selection_artifact_name:
         description: Caller-constructed artifact name carrying the exact cache selection
         required: true
@@ -62,7 +58,6 @@ jobs:
       PERSISTED_WORKSPACE: ${{ secrets.PERSISTED_WORKSPACE }}
       SOURCE_SHA: ${{ inputs.source_sha }}
       SCOPE: ${{ inputs.scope }}
-      CACHE_MODE: ${{ inputs.cache_mode }}
       PLAN_ARTIFACT_NAME: ${{ inputs.plan_artifact_name }}
       PLAN_SHA256: ${{ inputs.plan_sha256 }}
       SUBMODULE_CACHE_VERSION: v1
@@ -72,7 +67,6 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           if ($env:SOURCE_SHA -notmatch '^[0-9a-fA-F]{40}$') { throw 'source_sha must be a full 40-hex commit SHA' }
-          if ($env:CACHE_MODE -ne 'warm') { throw "warmup-idb only accepts cache_mode=warm, got '$env:CACHE_MODE'" }
           if ($env:SCOPE -notin @('release-all', 'bound-plan')) { throw "unsupported producer scope '$env:SCOPE'" }
           if ($env:SCOPE -eq 'bound-plan') {
             if ([string]::IsNullOrWhiteSpace($env:PLAN_ARTIFACT_NAME)) { throw 'bound-plan scope requires plan_artifact_name' }

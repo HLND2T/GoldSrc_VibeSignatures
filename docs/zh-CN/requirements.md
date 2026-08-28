@@ -49,10 +49,10 @@ concurrency group 保证单并发，每个 tag 的 publish/restore/prune 再由
 与 ACL authority 时才能共享 cache；Actions artifact 是 evidence/selection transport，`READY.json` 是 probe hint，
 都不是 cache transport 或 truth source。
 
-真实 runner evidence 完成前，repository variable `GSVIBE_IDB_CACHE_MODE` 保持 `cold`，完成后才切换为 `warm`；
-不再需要人工维护 IDA version variable。Absolute persisted path 作为 Environment secret
-`PERSISTED_WORKSPACE` 保存。Opened runtime 必须与动态探测得到的 kernel、loader、plugin identity 一致后才能
-publication，因此 PATH 或 installation drift 会 fail closed，不会使用过期配置版本选择 cache。
+官方 analysis 无条件使用 warm cache，不再读取 `GSVIBE_IDB_CACHE_MODE`。真实 runner 与 storage evidence 完成前，
+不要启用或触发这些 workflow。不再需要人工维护 IDA version variable。Absolute persisted path 作为 Environment
+secret `PERSISTED_WORKSPACE` 保存。Opened runtime 必须与动态探测得到的 kernel、loader、plugin identity 一致后
+才能 publication，因此 PATH 或 installation drift 会 fail closed，不会使用过期配置版本选择 cache。
 
 ## Release runner 与 GitHub governance 要求
 

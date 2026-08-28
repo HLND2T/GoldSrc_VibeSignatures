@@ -12,9 +12,7 @@ from gamesymbol_snapshot_lib.impact_registry import ImpactRule
 from gamesymbol_snapshot_lib.model import SnapshotContract
 
 PLAN_SCHEMA_VERSION = 2
-CACHE_MODE_COLD = "cold"
 CACHE_MODE_WARM = "warm"
-CACHE_MODES = frozenset({CACHE_MODE_COLD, CACHE_MODE_WARM})
 SNAPSHOT_DOMAIN_PATHS = frozenset(
     {
         "binary_hashing.py",
@@ -131,11 +129,6 @@ class BoundImpactPlan:
     merge_bin_commit: str | None
     tags: tuple[TagImpact, ...]
     digests: dict[str, str | None]
-    cache_mode: str = CACHE_MODE_COLD
-
-    def __post_init__(self) -> None:
-        if self.cache_mode not in CACHE_MODES:
-            raise ImpactPlanningError(f"Invalid cache mode: {self.cache_mode!r}")
 
     def document(self) -> dict:
         payload = {
@@ -145,7 +138,7 @@ class BoundImpactPlan:
             "merge_sha": self.merge_sha,
             "base_bin_commit": self.base_bin_commit,
             "merge_bin_commit": self.merge_bin_commit,
-            "cache_mode": self.cache_mode,
+            "cache_mode": CACHE_MODE_WARM,
             "tags": [asdict(tag) for tag in self.tags],
             "digests": dict(sorted(self.digests.items())),
         }

@@ -1,6 +1,6 @@
 # IDB warmup 独立 Job 与原子缓存移植计划
 
-状态：待实施
+状态：仓库实现与本地验证已完成；production runner evidence 待外部环境验证
 
 日期：2026-08-28（Asia/Singapore）
 
@@ -13,6 +13,10 @@ CS2 参考树：`D:/CS2_VibeSignatures@12ea634c08613f7ef687ecdf7c9519c850ceb46a`
 CS2 直接修复提交：`243f4509e7e9b6122487caf715c45e3cd1ef67de` `fix(cache): harden atomic JSON replacement on Windows`
 
 关联计划：`docs/plans/architecture-followup-migration.md` 第 6 节
+
+Warm-only 契约更新（2026-08-28）：`cache_mode` 只作为 plan/selection 中固定为 `warm` 的证据字段保留；
+workflow、planner 与 Analyzer 不再暴露 mode switch，producer 失败会阻塞 consumer。下文关于 cold rollback、
+warm/cold route 与 `-cache_mode` 的内容是原设计记录，已被当前实现取代。
 
 ## 1. 计划定位
 

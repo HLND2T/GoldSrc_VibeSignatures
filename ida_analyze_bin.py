@@ -109,14 +109,11 @@ OPENED_BINARY_VERIFY_RETRY_INTERVAL = 2.0
 QEXIT_CONNECTION_RESET_MARKER = "[WinError 10054]"
 LLM_EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "xhigh"})
 RUN_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,160}$", re.ASCII)
-REMOVED_CLI_OPTIONS = frozenset({"-config", "-plan-only", "-vcall_finder", "-rename", "-console-events"})
+REMOVED_CLI_OPTIONS = frozenset({"-config", "-plan-only", "-vcall_finder", "-rename", "-console-events", "-cache_mode"})
 UNAVAILABLE_HASH_VALUES = frozenset({"", "unavailable", "unknown", "none", "null"})
 DATABASE_POLICY_REBUILD = "rebuild"
 DATABASE_POLICY_RESTORED_STRICT = "restored_strict"
 DATABASE_POLICIES = frozenset({DATABASE_POLICY_REBUILD, DATABASE_POLICY_RESTORED_STRICT})
-CACHE_MODE_COLD = "cold"
-CACHE_MODE_WARM = "warm"
-CACHE_MODES = (CACHE_MODE_COLD, CACHE_MODE_WARM)
 
 
 class AnalysisRunError(RuntimeError):
@@ -980,8 +977,8 @@ class IdaMcpLifecycle:
         ida_args,
         debug=False,
         *,
-        database_policy=DATABASE_POLICY_REBUILD,
-        save_on_success=True,
+        database_policy,
+        save_on_success,
     ) -> None:
         if database_policy not in DATABASE_POLICIES:
             raise ValueError(f"Unsupported IDA database policy: {database_policy!r}")
@@ -1875,16 +1872,11 @@ def _create_ida_mcp_lifecycle(
     port,
     ida_args,
     debug,
-    *,
-    database_policy,
-    save_on_success,
 ):
     if port is None:
         port = _allocate_local_port(host)
         if debug:
             print(f"  Allocated dynamic MCP port {host}:{port}")
-    if database_policy == DATABASE_POLICY_REBUILD and save_on_success:
-        return IdaMcpLifecycle(binary, platform, host, port, ida_args, debug)
     return IdaMcpLifecycle(
         binary,
         platform,
@@ -1892,8 +1884,8 @@ def _create_ida_mcp_lifecycle(
         port,
         ida_args,
         debug,
-        database_policy=database_policy,
-        save_on_success=save_on_success,
+        database_policy=DATABASE_POLICY_RESTORED_STRICT,
+        save_on_success=False,
     )
 
 
@@ -1916,8 +1908,6 @@ def _execute_selected_nodes(
     host,
     port,
     ida_args,
-    database_policy,
-    save_on_success,
 ):
     failed_binaries = set()
     index = 0
@@ -1944,8 +1934,6 @@ def _execute_selected_nodes(
                 port,
                 ida_args,
                 debug,
-                database_policy=database_policy,
-                save_on_success=save_on_success,
             ) as lifecycle:
                 for node_index, node in enumerate(segment):
                     if node_index:
@@ -2024,8 +2012,6 @@ def analyze(
     run_id: str | None = None,
     summary: AnalysisSummary | None = None,
     selected_node_ids: tuple[str, ...] | list[str] | None = None,
-    database_policy: str = DATABASE_POLICY_REBUILD,
-    save_on_success: bool = True,
 ) -> ExecutionPlan:
     process_reporter = BestEffortProcessReporter(reporter or NullProcessReporter())
     run_summary = summary if summary is not None else AnalysisSummary()
@@ -2128,8 +2114,6 @@ def analyze(
                 host=host,
                 port=port,
                 ida_args=ida_args,
-                database_policy=database_policy,
-                save_on_success=save_on_success,
             )
             for binary_key, binary_nodes in nodes_by_binary.items():
                 if binary_key not in validated_binaries:
@@ -2175,8 +2159,6 @@ def analyze(
                         port,
                         ida_args,
                         debug,
-                        database_policy=database_policy,
-                        save_on_success=save_on_success,
                     ) as lifecycle:
                         for index, node in enumerate(pending_nodes):
                             if index:
@@ -2318,12 +2300,6 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("-debug", action="store_true", help="Enable debug diagnostics and Agent output")
     parser.add_argument("-ida_args", default="", help="Additional arguments for idalib-mcp")
-    parser.add_argument(
-        "-cache_mode",
-        choices=CACHE_MODES,
-        required=True,
-        help="Explicit database mode: cold rebuild or exact restored warm generation",
-    )
     parser.add_argument("-skip_error", action="store_true", help="Continue after runtime failures")
     parser.add_argument("-skip_pp", action="store_true", help="Skip the single preprocessor and run Agent directly")
     parser.add_argument("-maxretry", type=int, default=3, help="Default total attempts per skill (1-20)")
@@ -2510,7 +2486,7 @@ def _print_main_configuration(args) -> None:
         print(f"Selected nodes: {', '.join(args.node)}")
     print(f"Agent: {args.agent}")
     print(f"Process reporter: {args.process_reporter}")
-    print(f"IDB cache mode: {args.cache_mode}")
+    print("IDB cache mode: warm (strict restored, no save)")
     if args.run_id:
         print(f"Run ID: {args.run_id}")
     if args.ida_args:
@@ -2566,10 +2542,6 @@ def _run_single_tag(gamever: str, args, summary: AnalysisSummary | None = None) 
             run_id=args.run_id,
             summary=summary,
             selected_node_ids=args.node,
-            database_policy=(
-                DATABASE_POLICY_RESTORED_STRICT if args.cache_mode == CACHE_MODE_WARM else DATABASE_POLICY_REBUILD
-            ),
-            save_on_success=args.cache_mode == CACHE_MODE_COLD,
         )
     except (
         AnalysisConfigError,

@@ -4,19 +4,20 @@
 
 ## Activation checklist
 
-Keep `GSVIBE_IDB_CACHE_MODE=cold` until the dedicated Windows runner, protected `win64` Environment,
-outside-checkout persisted root, ACL owner, atomic rename storage, and `IDADIR` are verified. Confirm that `python` with
-`idapro` and `idalib-mcp` resolve to the same installation; CI dynamically reads its kernel version. The persisted root
-must not contain the checkout or be contained by it, and neither its path nor root may traverse a link or reparse point.
+Do not enable or dispatch official analysis until the dedicated Windows runner, protected `win64` Environment,
+outside-checkout persisted root, ACL owner, atomic rename storage, and `IDADIR` are verified. Official analysis is always
+a strict warm consumer; there is no cold bypass. Confirm that `python` with `idapro` and `idalib-mcp` resolve to the same
+installation; CI dynamically reads its kernel version. The persisted root must not contain the checkout or be contained
+by it, and neither its path nor root may traverse a link or reparse point.
 
 Splitting the producer into its own job additionally requires cross-runner evidence: every eligible runner resolves
 `PERSISTED_WORKSPACE` to the same controlled storage, a generation published on runner A verifies on runner B, that
 storage supports same-directory atomic rename, all runner accounts share one ACL authority, and Windows byte-range locks
-are mutually exclusive across two independent processes on that storage. Until every item holds, keep
-`GSVIBE_IDB_CACHE_MODE=cold`; merging the workflow YAML is not activation.
+are mutually exclusive across two independent processes on that storage. Until every item holds, keep the analysis
+workflows disabled; merging the workflow YAML is not activation.
 
-Capture, in order: one explicit cold run; one split-job warm miss that publishes generations; a later warm hit whose
-consumer runs on a different runner; a run where READY advances between producer and consumer yet the exact restore
+Capture, in order: one split-job warm miss that publishes generations; a later warm hit whose consumer runs on a
+different runner; a run where READY advances between producer and consumer yet the exact restore
 still succeeds; two release versions dispatched together where the second producer queues; a source PR and a release
 requesting warmup together with still only one producer running; a cancelled/timed-out producer after which no
 half-written generation is ever selected; a corrupt generation or selection failing closed; and a failed build whose
@@ -54,8 +55,8 @@ operator trash, record its inventory and reason, then delete it only after the i
 
 ## Failures
 
-Do not repair a corrupt generation in place. Preserve the selection and logs, switch future plans explicitly to cold or
-start a new warm producer run, and quarantine the corrupt generation after confirming no in-flight selection references
+Do not repair a corrupt generation in place. Preserve the selection and logs, start a new warm producer run, and
+quarantine the corrupt generation after confirming no in-flight selection references
 it. A strict consumer failure never falls back inline. A damaged READY pointer may be rebuilt only by probing verified
 immutable generations.
 

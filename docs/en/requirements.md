@@ -44,10 +44,11 @@ MCP port. The byte-range locks must be mutually exclusive across two independent
 one process. A shared cache is valid only when all consumers use the same controlled storage and ACL authority; Actions
 artifacts are evidence/selection transport and `READY.json` is a probe hint, never a cache transport or truth source.
 
-Set the repository variable `GSVIBE_IDB_CACHE_MODE` to `cold` until real runner evidence is captured, then to `warm`.
-No manually maintained IDA-version variable is required. Store the absolute persisted path as the Environment secret
-`PERSISTED_WORKSPACE`. The opened runtime must match the dynamically detected kernel, loader, and plugin identity before
-publication, so PATH or installation drift fails closed instead of selecting a cache under a stale configured version.
+Official analysis is unconditionally warm; `GSVIBE_IDB_CACHE_MODE` is not read. Do not enable or dispatch those workflows
+until the runner and storage evidence above is complete. No manually maintained IDA-version variable is required. Store
+the absolute persisted path as the Environment secret `PERSISTED_WORKSPACE`. The opened runtime must match the
+dynamically detected kernel, loader, and plugin identity before publication, so PATH or installation drift fails closed
+instead of selecting a cache under a stale configured version.
 
 ## Release runner and GitHub governance requirements
 

@@ -11,10 +11,11 @@ Configuration covers Half-Life build 10210, Counter-Strike build 10210, Sven Co-
 Install the [requirements](docs/en/requirements.md), then:
 
 ```bash
-uv run ida_analyze_bin.py -allgamever -cache_mode cold -debug
+uv run ida_analyze_bin.py -allgamever -debug
 ```
 
-to run the analysis workflow to generate YAML artifacts for GoldSrc symbols.
+to run the analysis workflow to generate YAML artifacts for GoldSrc symbols. The Analyzer always requires exact warm
+IDB generations to have been restored first; it never rebuilds databases or saves consumer-side changes.
 
 ## Documentation
 

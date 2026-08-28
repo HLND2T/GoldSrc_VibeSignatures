@@ -28,10 +28,9 @@ exact source + bin gitlink -> analyze all game versions -> publish candidates/ga
   -> release-manifests/<version>.json generated-output PR
   -> validate-output-pr -> merge -> version tag + GitHub Release
 
-trusted PR plan + cache_mode
-  -> cold: validated clean -> normal loader/auto-analysis
-  -> warm: probe/publish exact generation -> canonical selection -> strict restore
-  -> selected-node analysis -> validated clean
+trusted PR plan + cache_mode=warm evidence
+  -> probe/publish exact generation -> canonical selection -> strict restore
+  -> strict no-save selected-node analysis -> validated clean
 ```
 
 `analysis_planner.py` is the single source for module, symbol, artifact-path, and DAG validation. Snapshot contracts
@@ -99,12 +98,12 @@ build their own top-level documents (`plan_sha256`/`merge_sha` vs `source_sha`/`
 generation contract. `idb_cache_locks.py` owns the cross-process tag lock — publisher, pruner, restorer, and the direct
 `idb_cache.py` CLI all acquire it, so no code path can bypass the high-level authority.
 
-The trusted PR plan binds explicit `cache_mode=warm|cold`. Warm mode splits the producer into a reusable `warmup-idb`
-job and turns `analyze-self-hosted` into a pure consumer: it downloads the canonical selection, verifies it against its
-own checkout and pinned runtime, restores the exact generations under the tag lock, and runs strict selected-node
-analysis. The release build uses the same producer (`scope: release-all`) and a structurally identical consumer. Cold
-mode skips every persisted-root step and uses the normal rebuild/save lifecycle. A repository-level Actions concurrency
-group serializes the one official producer, and a runner-local file lock protects the fixed MCP port.
+The trusted PR plan carries the invariant evidence field `cache_mode=warm`. Every analysis route splits the producer into
+the reusable `warmup-idb` job and turns `analyze-self-hosted` into a pure consumer: it downloads the canonical selection,
+verifies it against its own checkout and pinned runtime, restores the exact generations under the tag lock, and runs
+strict selected-node analysis. The release build uses the same producer (`scope: release-all`) and a structurally
+identical consumer. There is no analysis-side rebuild/save route. A repository-level Actions concurrency group
+serializes the one official producer, and a runner-local file lock protects the fixed MCP port.
 
 ## Process reporting and scheduling
 

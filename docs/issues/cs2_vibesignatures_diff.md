@@ -322,6 +322,9 @@ LLM fallback 接受模型把嵌套 member 的 `.` 展平为 `_`，但成功匹�
 
 2026-08-10 已在真实 IDA/`idalib-mcp` 环境执行：
 
+> 历史证据：以下命令发生在 warm-only 迁移前。当前 Analyzer 已移除 `-cache_mode`，调用前必须恢复 exact warm
+> IDB generation；不要复制该历史参数。
+
 ```powershell
 uv run python ida_analyze_bin.py -gamever svencoop-10257 -modules engine `
   -skill find-R_RenderView -platform windows,linux -cache_mode cold -debug

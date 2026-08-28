@@ -98,7 +98,7 @@ class TestSchedulerConfigResolution(unittest.TestCase):
                 second_command = scheduler.build_command(RunRequest.create("cstrike-10121"))
             self.assertIn(f"-configyaml={first.resolve()}", first_command)
             self.assertIn(f"-configyaml={second.resolve()}", second_command)
-            self.assertIn("-cache_mode=cold", first_command)
+            self.assertFalse(any(argument.startswith("-cache_mode") for argument in first_command))
 
             override = root / "scratch.yaml"
             override.write_bytes(b"modules: []\n")

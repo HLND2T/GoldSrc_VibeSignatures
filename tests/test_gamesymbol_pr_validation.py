@@ -437,15 +437,12 @@ class ImpactPlanningTests(unittest.TestCase):
             "e" * 40,
             (action,),
             {"x": "y"},
-            CACHE_MODE_WARM,
         )
         document = json.loads(plan.canonical_bytes())
         self.assertEqual(CACHE_MODE_WARM, document["cache_mode"])
         digest = document.pop("plan_sha256")
         encoded = json.dumps(document, sort_keys=True, separators=(",", ":")).encode("utf-8")
         self.assertEqual(hashlib.sha256(encoded).hexdigest(), digest)
-        with self.assertRaises(ImpactPlanningError):
-            BoundImpactPlan("a" * 40, "b" * 40, "c" * 40, None, None, (), {}, "fallback")
 
 
 class PrValidationGateTests(unittest.TestCase):
@@ -606,7 +603,7 @@ class BoundPlanValidationTests(unittest.TestCase):
 
             self._write_plan(plan_path, merge_sha=merge_sha, digests=digests)
             invalid_mode = json.loads(plan_path.read_text(encoding="utf-8"))
-            invalid_mode["cache_mode"] = "fallback"
+            invalid_mode["cache_mode"] = "cold"
             unsigned = {key: value for key, value in invalid_mode.items() if key != "plan_sha256"}
             invalid_mode["plan_sha256"] = hashlib.sha256(
                 json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")

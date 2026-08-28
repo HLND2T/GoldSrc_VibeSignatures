@@ -5,17 +5,18 @@
 ## 激活检查表
 
 在专用 Windows runner、受保护 `win64` Environment、checkout 外 persisted root、ACL owner、支持 atomic
-rename 的 storage 与 `IDADIR` 全部核验前，保持 `GSVIBE_IDB_CACHE_MODE=cold`。确认带 `idapro` 的 `python` 与
-`idalib-mcp` 解析到同一 installation；CI 会动态读取其 kernel version。Persisted root 不得包含 checkout，也不得
-位于 checkout 内；路径与 root 均不得经过 link 或 reparse point。
+rename 的 storage 与 `IDADIR` 全部核验前，不要启用或触发官方 analysis。官方 analysis 始终是 strict warm
+consumer，不存在 cold 绕行路径。确认带 `idapro` 的 `python` 与 `idalib-mcp` 解析到同一 installation；CI 会动态
+读取其 kernel version。Persisted root 不得包含 checkout，也不得位于 checkout 内；路径与 root 均不得经过 link 或
+reparse point。
 
 把 producer 拆成独立 job 还需要额外的跨 runner 证据：所有 eligible runner 的 `PERSISTED_WORKSPACE` 指向同一受控
 storage；runner A 发布的 generation 能在 runner B 通过验证；该 storage 支持同目录 atomic rename；所有 runner
 account 共用同一 ACL authority；Windows byte-range lock 在该 storage 上对两个独立进程具备互斥语义。任一条不满足就
-保持 `GSVIBE_IDB_CACHE_MODE=cold`——合入 workflow YAML 不等于激活。
+保持 analysis workflow 禁用——合入 workflow YAML 不等于激活。
 
-按顺序保存证据：一次 explicit cold run；一次发布 generation 的 split-job warm miss；一次 consumer 位于另一 runner
-的 warm hit；一次 READY 在 producer 与 consumer 之间被改写但 exact restore 仍成功的 run；两个 release version 同时
+按顺序保存证据：一次发布 generation 的 split-job warm miss；一次 consumer 位于另一 runner 的 warm hit；一次 READY
+在 producer 与 consumer 之间被改写但 exact restore 仍成功的 run；两个 release version 同时
 触发且第二个 producer 排队；source PR 与 release 同时请求 warmup 但仍只有一个 producer；producer 被取消或超时后
 没有任何半写 generation 被选择；corrupt generation/selection fail-closed；build 失败后 workspace cleanup 完成且
 persisted generation 完整。证据记录 run URL/attempt、runner identity、source/bin SHA、plan/selection SHA-256、
@@ -49,8 +50,8 @@ tag directory 移到可恢复 operator trash，记录 inventory 与 reason，并
 
 ## 故障处理
 
-不得原地修复 corrupt generation。保留 selection 与日志，让后续 plan 显式切到 cold 或启动新的 warm producer
-run，并在确认没有 in-flight selection 引用后隔离损坏 generation。Strict consumer 失败绝不 inline fallback。
+不得原地修复 corrupt generation。保留 selection 与日志，启动新的 warm producer run，并在确认没有 in-flight
+selection 引用后隔离损坏 generation。Strict consumer 失败绝不 inline fallback。
 损坏的 READY pointer 只能通过 probe 已验证 immutable generation 重建。
 
 Producer 失败、producer 被取消、selection artifact 无法下载，都会阻塞 consumer。这是 exact binding 换来的有意

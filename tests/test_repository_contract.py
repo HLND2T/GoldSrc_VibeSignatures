@@ -276,8 +276,9 @@ class RepositoryContractTests(unittest.TestCase):
             step for step in jobs["pr-validate"]["steps"] if step.get("name") == "Require exactly one trusted PR route"
         )
         self.assertEqual("${{ needs.classify.result }}", route_guard["env"]["CLASSIFY_RESULT"])
-        self.assertEqual("${{ steps.route.outputs.cache_mode }}", jobs["plan"]["outputs"]["cache_mode"])
-        self.assertIn("-cache-mode", workflow_text)
+        self.assertNotIn("cache_mode", jobs["plan"]["outputs"])
+        self.assertNotIn("GSVIBE_IDB_CACHE_MODE", workflow_text)
+        self.assertNotIn("-cache-mode", workflow_text)
         plan_steps = jobs["plan"]["steps"]
         planner = next(step for step in plan_steps if step.get("name") == "Generate canonical bound plan from PR merge")
         self.assertIn("uv run python gamesymbol_pr_validation.py plan", planner["run"])
@@ -302,19 +303,23 @@ class RepositoryContractTests(unittest.TestCase):
         )
         warm_steps = [step for step in self_hosted["steps"] if "warm IDB cache" in step.get("name", "")]
         self.assertTrue(warm_steps)
-        self.assertTrue(all("cache_mode == 'warm'" in step["if"] for step in warm_steps))
+        self.assertTrue(all("if" not in step for step in warm_steps))
         # The consumer must not warm or publish; that authority belongs to the reusable producer.
         self.assertNotIn("idb_cache_workflow.py prepare", workflow_text)
         producer = jobs["warmup-idb"]
         self.assertEqual("./.github/workflows/warmup-idb.yml", producer["uses"])
         self.assertEqual("bound-plan", producer["with"]["scope"])
+        self.assertNotIn("cache_mode", producer["with"])
         self.assertIn("warmup-idb", self_hosted["needs"])
+        self.assertIn("needs.warmup-idb.result == 'success'", self_hosted["if"])
+        self.assertNotIn("cold", self_hosted["if"])
+        self.assertNotIn("needs.warmup-idb.result == 'skipped'", self_hosted["if"])
         analyzer = next(
             step
             for step in self_hosted["steps"]
             if step.get("name") == "Analyze selected nodes and build self-consistent candidates"
         )
-        self.assertIn("'-cache_mode', $plan.cache_mode", analyzer["run"])
+        self.assertNotIn("cache_mode", analyzer["run"])
         restore_index = step_names.index("Restore exact warm IDB cache generations")
         analyze_index = step_names.index("Analyze selected nodes and build self-consistent candidates")
         self.assertNotIn(
@@ -357,9 +362,14 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("release_workflow.py materialize-accepted-bin", build_text)
         self.assertNotIn("robocopy", build_text)
         self.assertEqual(["preflight", "warmup-idb"], build_job["needs"])
+        self.assertIn("needs.warmup-idb.result == 'success'", build_job["if"])
+        self.assertNotIn("cold", build_job["if"])
+        self.assertNotIn("GSVIBE_IDB_CACHE_MODE", build_text)
+        self.assertNotIn("-cache_mode", build_text)
         producer = build["jobs"]["warmup-idb"]
         self.assertEqual("./.github/workflows/warmup-idb.yml", producer["uses"])
         self.assertEqual("release-all", producer["with"]["scope"])
+        self.assertNotIn("cache_mode", producer["with"])
         self.assertNotIn("idb_cache_release.py prepare", json.dumps(build_job))
         warmup = yaml.load(
             (ROOT / ".github" / "workflows" / "warmup-idb.yml").read_text(encoding="utf-8"), Loader=yaml.BaseLoader
@@ -374,6 +384,8 @@ class RepositoryContractTests(unittest.TestCase):
             {"selection_artifact_name", "selection_sha256", "selection_schema_version", "source_sha"},
             set(warmup["on"]["workflow_call"]["outputs"]),
         )
+        self.assertNotIn("cache_mode", warmup["on"]["workflow_call"]["inputs"])
+        self.assertNotIn("CACHE_MODE", warmup_job["env"])
         self.assertNotIn("workflow_dispatch", warmup["on"])
         self.assertNotIn("GSVIBE_RELEASE_PHASE2_ENABLED", build_text)
         self.assertNotIn("create-github-app-token", build_text)
