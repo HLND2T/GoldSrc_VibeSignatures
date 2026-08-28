@@ -223,12 +223,12 @@ jobs:
       group: ${{ github.repository }}-gamesymbol-self-hosted-ida
       cancel-in-progress: false
     env:
-      GSVIBE_AGENT: ${{ secrets.GSVIBE_AGENT || 'claude' }}
+      GSVIBE_AGENT: ${{ secrets.GSVIBE_AGENT }}
       GSVIBE_AGENT_MODEL: ${{ secrets.GSVIBE_AGENT_MODEL }}
       GSVIBE_LLM_APIKEY: ${{ secrets.GSVIBE_LLM_APIKEY }}
       GSVIBE_LLM_BASEURL: ${{ secrets.GSVIBE_LLM_BASEURL }}
       GSVIBE_LLM_EFFORT: ${{ secrets.GSVIBE_LLM_EFFORT }}
-      GSVIBE_LLM_MODEL: ${{ secrets.GSVIBE_LLM_MODEL || 'gpt-4o' }}
+      GSVIBE_LLM_MODEL: ${{ secrets.GSVIBE_LLM_MODEL }}
       GSVIBE_LLM_TEMPERATURE: ${{ secrets.GSVIBE_LLM_TEMPERATURE }}
       SUBMODULE_CACHE_VERSION: v1
     steps:
