@@ -52,6 +52,11 @@ game version on the self-hosted runner, commits them together with `release-mani
 `gamesymbols/build/<version>` generated-output branch, and — once merged — tags the single `version` and publishes one
 GitHub Release with assets for every game version.
 
+This includes tags whose configured symbol set is empty. Their snapshot has an empty `files` map while still locking the
+configured binary identities, their metadata companion remains mandatory, and their gamedata directory contains the
+canonical empty-inventory manifest. Before the first release publication, such a tag may still exist as config-only;
+metadata or gamedata must never exist without its snapshot.
+
 `release-manifests/<version>.json` is a schema-1 canonical manifest binding `version`, `mode`, `build_id`, `source_sha`,
 per-game-version snapshot/gamedata provenance, and the aggregate bin/tracked-output inventory hashes.
 `validate-generated-output-pr.yml` rebuilds the tracked output inventory from exact Git blobs and checks each game

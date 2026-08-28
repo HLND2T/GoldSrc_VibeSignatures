@@ -38,4 +38,4 @@ The companion binds exact canonical snapshot bytes with lowercase raw SHA-256, c
 
 ## Validation
 
-Run the Python metadata/candidate/planner tests, repository-contract suite, and Pages test/lint/build/asset verification. Current config-only zero-symbol tags `cstrike-10210` and `cstrike-8684` intentionally have no snapshot or companion.
+Run the Python metadata/candidate/planner tests, repository-contract suite, and Pages test/lint/build/asset verification. A zero-symbol tag may remain config-only before its first release, but release publication may create its snapshot and companion. Once the snapshot exists, the companion is mandatory and follows the same canonical binding contract as every other published tag.

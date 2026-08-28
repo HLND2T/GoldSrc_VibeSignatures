@@ -135,7 +135,9 @@ canonical manifest，绑定 snapshot/config/generator identity 与声明的 payl
 Release build 在 self-hosted runner 上为全部 game version 生成并发布 `gamesymbols/<tag>.yaml`、
 `gamesymbols/<tag>.metadata.yaml` 与 `gamedata/<tag>/**`，把结果连同 `release-manifests/<version>.json` 提交到
 `gamesymbols/build/<version>` 分支的 generated-output PR。Schema-1 canonical manifest 绑定 `version`、`mode`、
-`build_id`、`source_sha`、每条 game version 的 snapshot/gamedata provenance 与 aggregate inventory hash。
+`build_id`、`source_sha`、每条 game version 的 snapshot/gamedata provenance 与 aggregate inventory hash。empty-symbol
+tag 遵循同一发布契约：snapshot 使用空 file payload 锁定二进制 identity，同时仍须发布 companion 与 canonical 空
+inventory gamedata manifest。
 
 `validate-generated-output-pr.yml` 用 exact Git blob 重建 tracked output inventory 并核对每条 game version。output
 head 必须是单父提交且该父提交等于 manifest `source_sha`；当前 PR base 必须是该 `source_sha` 的后代，因此 default
