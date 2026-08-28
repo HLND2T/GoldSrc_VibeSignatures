@@ -1,0 +1,6 @@
+schema_version: 1
+game_version: cstrike-10210
+snapshot_sha256: e9549e5ba2539c7191d05ae4eca0d8c0279bd5eecad7a35ae34a102faa752bff
+config_digest_version: 2
+config_sha256: e65b47b1205e5c45db058a983dd141cd3e3eb12b3f8565e462db29c23fe67407
+modules: []
