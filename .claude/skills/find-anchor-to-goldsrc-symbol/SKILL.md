@@ -28,7 +28,7 @@ Decide what the requested name represents before choosing an anchor. Do not forc
 - **True global variable (`gv`)**: an object or pointer stored in mapped data (`.data` or `.bss`) and referenced by x86 code. Emit `gv_name`, `gv_va`, `gv_rva`, and a unique instruction-based `gv_sig`; the signature wildcards the absolute-address displacement and runtime resolution reads that displacement.
 - **Global-style instruction operand**: a logical slot represented by bytes inside an instruction, rather than a data object. First recover the containing function, then preserve the instruction address, operand offset, operand value, and extraction rule. Do not emit it as a normal `gv` unless the runtime consumer expects the operand's *value* as the global address.
 
-`g_ppEngfuncs` is the important boundary case. MetaHook names the address of the embedded `cl_enginefuncs` pointer operand as `g_ppEngfuncs`; that operand field lives in `ClientDLL_Init` code, while its decoded value is the actual engine-function table in data. Establish whether the consumer needs the table value (a normal `gv` target) or the operand-field address (a code-operand locator) before selecting the artifact category.
+`cl_enginefuncs` is the important boundary case. The embedded pointer operand in `ClientDLL_Init` decodes to the `cl_enginefuncs` engine-function table in data; the operand field itself lives in code. Name a normal `gv` target after the decoded data table, and establish whether the consumer instead needs the operand-field address before selecting the artifact category.
 
 For this pattern, anchor `ClientDLL_Init` through its `"ScreenShake"` registration, then validate the client `Initialize` call and its interface-version argument. Windows commonly encodes it as `push 7; push <engine-table-va>; call ...`, while Linux may use register/stack `mov` instructions such as `mov dword ptr [esp], <engine-table-va>`. The source role must agree, but the Windows byte form is never a Linux locator.
 
@@ -96,7 +96,7 @@ After anchoring the owning function, use current-IDB disassembly and source sema
 4. Persist a true global with `write-globalvar-as-yaml`. The runtime resolver is x86-32 absolute addressing: `gv_address = *(uint32_t *)(matched_instruction + gv_inst_disp)`. Never apply a RIP-relative formula.
 5. For a global-style instruction operand, report both the operand-field address and decoded value. The operand field is `matched_instruction + operand_offset`; decoding it yields the table/object address. Do not use the normal GV resolver when the consumer needs the operand-field address itself.
 
-For `g_ppEngfuncs`, retain the distinction in the delivery: the operand field is the MetaHook-compatible locator, and the decoded immediate is the `cl_enginefuncs` data-table address. On each platform, validate the interface version and indirect `Initialize` call in the same basic block before accepting either value.
+For `cl_enginefuncs`, retain the distinction in the delivery: report the operand field separately when a consumer needs a code-operand locator, while the decoded immediate is the `cl_enginefuncs` data-table address emitted by a normal `gv` artifact. On each platform, validate the interface version and indirect `Initialize` call in the same basic block before accepting either value.
 
 ## Validate the Candidate
 

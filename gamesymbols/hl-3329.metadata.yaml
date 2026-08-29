@@ -1,6 +1,6 @@
 schema_version: 1
 game_version: hl-3329
-snapshot_sha256: 0e3699a2b63714a6b72910fe021a0c698ba1e359f4c7132b3e7a681e2a200ce3
+snapshot_sha256: d0c9daee02edd9ca7b6892696b7c44549d16792c56f28aa59441e7dd346559cd
 config_digest_version: 2
-config_sha256: 6e0835ad6657bfd94fd48d8c6e9194c91e6794083389cc9ab203e154bfb4dc53
+config_sha256: 253d817c6d5bdf6ea2e3587687eb54f0fd5fb887f406cf7cbab7ac0319148bac
 modules: []

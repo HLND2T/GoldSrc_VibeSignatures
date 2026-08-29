@@ -1,6 +1,6 @@
 schema_version: 1
 game_version: cof-5936
-snapshot_sha256: e067ac1948ef0fb2f5344fb7f285936a9cf635a688ec68ed8c023675dcf0a3f7
+snapshot_sha256: 52e9a2bacc291300a2ef79e1dd85c0fc0721e0b9486dbe18728c30955be949b8
 config_digest_version: 2
-config_sha256: 5e6a4d0d95ee12ceaa05aa0899987bd00c5b98d819f5d48c32c0bfe2581b28af
+config_sha256: d9be26a87da569fd0869e9708633421795d324361ad4ff6fab80f6044b65be3a
 modules: []
