@@ -27,6 +27,30 @@ downloads:
     appid: 10
     manifests:
       "11": "3018093494972814332" # DepotDownloader -app 10 -depot 11 -manifest 3018093494972814332 -all-platforms -dir depots/Counter-Strike-10210 [-username XXX] [-password XXX] [-remember-password]
+  - tag: "czero-8684"
+    name: Counter-Strike Condition Zero buildnum 8684 (Pre-25th Anniversary Build)
+    basepath: Condition-Zero-8684
+    appid: 80
+    manifests:
+      "81": "3601230779843470737" # DepotDownloader -app 80 -depot 81 -manifest 3601230779843470737 -all-platforms -dir depots/Condition-Zero-8684 [-username XXX] [-password XXX] [-remember-password]
+  - tag: "czero-10210"
+    name: Counter-Strike Condition Zero buildnum 10210
+    basepath: Condition-Zero-10210
+    appid: 80
+    manifests:
+      "81": "7655178544656723224" # DepotDownloader -app 80 -depot 81 -manifest 7655178544656723224 -all-platforms -dir depots/Condition-Zero-10210 [-username XXX] [-password XXX] [-remember-password]
+  - tag: "czeror-8684"
+    name: Counter-Strike Condition Zero Deleted Scenes buildnum 8684 (Pre-25th Anniversary Build)
+    basepath: Condition-Zero-Deleted-Scenes-8684
+    appid: 100
+    manifests:
+      "101": "8179188924685435454" # DepotDownloader -app 100 -depot 101 -manifest 8179188924685435454 -all-platforms -dir depots/Condition-Zero-Deleted-Scenes-8684 [-username XXX] [-password XXX] [-remember-password]
+  - tag: "czeror-10210"
+    name: Counter-Strike Condition Zero Deleted Scenes buildnum 10210
+    basepath: Condition-Zero-Deleted-Scenes-10210
+    appid: 100
+    manifests:
+      "101": "8145292884440584734" # DepotDownloader -app 100 -depot 101 -manifest 8145292884440584734 -all-platforms -dir depots/Condition-Zero-Deleted-Scenes-10210 [-username XXX] [-password XXX] [-remember-password]
   - tag: "svencoop-10257"
     name: Sven Co-op buildnum 10257
     basepath: Sven-Coop-10257

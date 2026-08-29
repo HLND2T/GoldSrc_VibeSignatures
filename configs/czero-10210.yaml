@@ -1,0 +1,11 @@
+modules:
+  - name: client
+    module_windows: client.dll
+    depot_windows: czero/cl_dlls/client.dll
+    skills: []
+    symbols: []
+  - name: server
+    module_windows: mp.dll
+    depot_windows: czero/dlls/mp.dll
+    skills: []
+    symbols: []
