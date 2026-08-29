@@ -53,8 +53,8 @@ binaries:
       sha256: 'f8be8b7ba8af2a5006127c3c36ced3717d94aec1120ef8b5678e28b23f0b07c0'
       size: 5533184
 config_digest_version: 2
-config_sha256: sha256:1b8cf28f3ca56a010cbcccbcd8d06743c21fe9c0dd2a557250855f5c76a39688
-file_count: 22
+config_sha256: sha256:dc1f7200de2c45917281eecf45499603f3b557c63b012de0191d09208794a820
+file_count: 26
 files:
   engine/CBaseUI__Initialize.windows.yaml:
     func_name: CBaseUI__Initialize
@@ -131,6 +131,18 @@ files:
     func_sig_allow_across_function_boundary: true
     func_size: '0x186'
     func_va: '0x1dbb050'
+  engine/VideoMode_Create.linux.yaml:
+    func_name: VideoMode_Create
+    func_rva: '0x1828c0'
+    func_sig: 55 31 C9 57 56 53 E8 ?? ?? ?? ?? 81 C3 ?? ?? ?? ?? 83 EC ?? 8D B3 ?? ?? ?? ?? 8D BB ?? ?? ?? ?? 8B 06 8B 10 89 4C 24 ?? 89 7C 24 ??
+    func_size: '0x1f7'
+    func_va: '0x1828c0'
+  engine/VideoMode_Create.windows.yaml:
+    func_name: VideoMode_Create
+    func_rva: '0xbdb40'
+    func_sig: 55 8B EC 6A FF 68 ?? ?? ?? ?? 64 A1 ?? ?? ?? ?? 50 83 EC 08 53 56 A1 ?? ?? ?? ?? 33 C5 50 8D 45 ?? 64 A3 ?? ?? ?? ?? 8B 0D ?? ?? ?? ??
+    func_size: '0x1fc'
+    func_va: '0x1dbdb40'
   engine/build_number.linux.yaml:
     func_name: build_number
     func_rva: '0x564c0'
@@ -217,6 +229,24 @@ files:
     gv_sig_allow_across_function_boundary: true
     gv_sig_va: '0x1d19cf0'
     gv_va: '0x204e7b0'
+  engine/videomode.linux.yaml:
+    gv_inst_disp: '0x2'
+    gv_inst_length: '0x6'
+    gv_inst_offset: '0x128'
+    gv_name: videomode
+    gv_rva: '0x7ae14a0'
+    gv_sig: 55 31 C9 57 56 53 E8 ?? ?? ?? ?? 81 C3 ?? ?? ?? ?? 83 EC ?? 8D B3 ?? ?? ?? ?? 8D BB ?? ?? ?? ?? 8B 06 8B 10 89 4C 24 ?? 89 7C 24 ??
+    gv_sig_va: '0x1828c0'
+    gv_va: '0x7ae14a0'
+  engine/videomode.windows.yaml:
+    gv_inst_disp: '0x1'
+    gv_inst_length: '0x5'
+    gv_inst_offset: '0x1c4'
+    gv_name: videomode
+    gv_rva: '0x78d30e0'
+    gv_sig: 55 8B EC 6A FF 68 ?? ?? ?? ?? 64 A1 ?? ?? ?? ?? 50 83 EC 08 53 56 A1 ?? ?? ?? ?? 33 C5 50 8D 45 ?? 64 A3 ?? ?? ?? ?? 8B 0D ?? ?? ?? ??
+    gv_sig_va: '0x1dbdb40'
+    gv_va: '0x95d30e0'
 game_version: svencoop-10257
 last_publish_time: '2026-08-19T12:53:57Z'
 schema_version: 6

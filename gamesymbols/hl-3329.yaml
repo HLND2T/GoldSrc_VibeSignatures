@@ -8,8 +8,8 @@ binaries:
       sha256: 'ef59e9f2001baf08185d3482684a56a8faad1b31f2fe6e5ba97048fe23f696ff'
       size: 1845834
 config_digest_version: 2
-config_sha256: sha256:fce91161aed28bb82c4483fcb49026eb17ef177fbe80cb4717267c8064b12146
-file_count: 16
+config_sha256: sha256:6e0835ad6657bfd94fd48d8c6e9194c91e6794083389cc9ab203e154bfb4dc53
+file_count: 18
 files:
   engine/CBaseUI__Initialize.windows.yaml:
     func_name: CBaseUI__Initialize
@@ -66,6 +66,12 @@ files:
     func_sig_allow_across_function_boundary: true
     func_size: '0xe7'
     func_va: '0x1db8bc0'
+  engine/VideoMode_Create.windows.yaml:
+    func_name: VideoMode_Create
+    func_rva: '0xbca00'
+    func_sig: 83 EC 08 8B 0D ?? ?? ?? ?? 53 56 33 F6 8B 01 56 68 ?? ?? ?? ?? FF 50 ?? 85 C0 0F 95 C3 68 ?? ?? ?? ?? 88 5C 24 ??
+    func_size: '0x179'
+    func_va: '0x1dbca00'
   engine/build_number.windows.yaml:
     func_name: build_number
     func_rva: '0xb8d0'
@@ -126,6 +132,15 @@ files:
     gv_sig: 81 EC 00 04 00 00 8D 44 24 ?? 68 ?? ?? ?? ?? 68 00 02 00 00 50 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 C4 0C 85 C0 74 ??
     gv_sig_va: '0x1d0db10'
     gv_va: '0x2f3dbc0'
+  engine/videomode.windows.yaml:
+    gv_inst_disp: '0x1'
+    gv_inst_length: '0x5'
+    gv_inst_offset: '0x118'
+    gv_name: videomode
+    gv_rva: '0x75ec48'
+    gv_sig: 83 EC 08 8B 0D ?? ?? ?? ?? 53 56 33 F6 8B 01 56 68 ?? ?? ?? ?? FF 50 ?? 85 C0 0F 95 C3 68 ?? ?? ?? ?? 88 5C 24 ??
+    gv_sig_va: '0x1dbca00'
+    gv_va: '0x245ec48'
 game_version: hl-3329
 last_publish_time: '2026-08-19T12:52:54Z'
 schema_version: 6

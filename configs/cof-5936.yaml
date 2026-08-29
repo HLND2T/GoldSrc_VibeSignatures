@@ -50,6 +50,14 @@ modules:
       - name: find-cl_parsefuncs
         expected_output:
           - cl_parsefuncs.{platform}.yaml
+      - name: find-VideoMode_Create
+        expected_output:
+          - VideoMode_Create.{platform}.yaml
+      - name: find-VideoMode_Create-decompiles
+        expected_input:
+          - VideoMode_Create.{platform}.yaml
+        expected_output:
+          - videomode.{platform}.yaml
       - name: find-NLoadBlob
         platform: windows
         expected_output:
@@ -94,6 +102,10 @@ modules:
       - name: gClientUserMsgs
         category: gv
       - name: cl_parsefuncs
+        category: gv
+      - name: VideoMode_Create
+        category: func
+      - name: videomode
         category: gv
   - name: client
     module_windows: client.dll

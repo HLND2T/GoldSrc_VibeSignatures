@@ -1,6 +1,6 @@
 schema_version: 1
 game_version: hl-8684
-snapshot_sha256: a00ce30be01290af5edbfbdede1a7fb91874921f89d768f83b68313900312854
+snapshot_sha256: dcd1d7f3e6168c3b3be4dce2d3162870af650c6dcaeae696be066f8be2cd9dfd
 config_digest_version: 2
-config_sha256: 68931274355174d3db23233d883895fc42eea57fa85f2e0a1a1a72844dad8b06
+config_sha256: 4bc0be04d107ef32c632ea436c51e82069d8c0719f7d70788188ed8d3ef87005
 modules: []
