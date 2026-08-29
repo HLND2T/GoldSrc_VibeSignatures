@@ -94,7 +94,6 @@ FUNC_XREF_ALLOWED_KEYS = frozenset(
         "xref_signatures",
         "xref_funcs",
         "inline_alias",
-        "xref_string_sources_as_function_starts",
         "xref_floats",
         "exclude_funcs",
         "exclude_strings",
@@ -104,9 +103,7 @@ FUNC_XREF_ALLOWED_KEYS = frozenset(
         "exclude_callees",
     }
 )
-FUNC_XREF_LIST_KEYS = tuple(
-    FUNC_XREF_ALLOWED_KEYS - {"func_name", "inline_alias", "xref_string_sources_as_function_starts"}
-)
+FUNC_XREF_LIST_KEYS = tuple(FUNC_XREF_ALLOWED_KEYS - {"func_name", "inline_alias"})
 DEFAULT_IDA_STRING_MIN_LENGTH = 4
 IDA_STRING_MIN_LENGTH_ENV_VAR = "GSVIBE_STRING_MIN_LENGTH"
 IDA_STRING_SETUP_STATE_NODE = "$GSVIBE_STRING_SETUP_STATE"
@@ -659,6 +656,243 @@ def build_function_detail_export_py_eval(func_va_int: int) -> str:
     )
 
 
+_FUNCTION_OWNER_RECOVERY_PY_EVAL = r"""
+FUNCTION_RECOVERY_BACKTRACK_LIMIT = 0x200
+FUNCTION_RECOVERY_MAX_SPAN = 0x4000
+
+def _function_payload(func, recovered, reason):
+    return {
+        'function_start': int(func.start_ea),
+        'function_end': int(func.end_ea),
+        'recovered': bool(recovered),
+        'recovery_reason': str(reason),
+    }
+
+def _is_executable_address(ea):
+    segment = ida_segment.getseg(int(ea))
+    return bool(
+        segment
+        and int(getattr(segment, 'perm', 0)) & int(getattr(idaapi, 'SEGPERM_EXEC', 4))
+    )
+
+def _same_executable_segment(start, end):
+    if int(end) <= int(start):
+        return False
+    first = ida_segment.getseg(int(start))
+    last = ida_segment.getseg(int(end) - 1)
+    return bool(
+        first
+        and last
+        and int(first.start_ea) == int(last.start_ea)
+        and int(getattr(first, 'perm', 0)) & int(getattr(idaapi, 'SEGPERM_EXEC', 4))
+    )
+
+def _direct_call_sources(entry_ea):
+    found = set()
+    for xref in idautils.XrefsTo(int(entry_ea), 0):
+        source_ea = int(xref.frm)
+        if (idc.print_insn_mnem(source_ea) or '').lower() != 'call':
+            continue
+        insn = idautils.DecodeInstruction(source_ea)
+        if not insn or int(insn.ops[0].type) != int(idaapi.o_near):
+            continue
+        if int(idc.get_operand_value(source_ea, 0)) != int(entry_ea):
+            continue
+        caller = ida_funcs.get_func(source_ea)
+        if caller is not None:
+            found.add(source_ea)
+    return sorted(found)
+
+def _direct_call_entry_candidates(anchor_ea, lower_bound):
+    found = set()
+    for probe_ea in range(int(anchor_ea), int(lower_bound) - 1, -1):
+        if not _is_executable_address(probe_ea):
+            continue
+        insn = ida_ua.insn_t()
+        if not ida_ua.decode_insn(insn, int(probe_ea)):
+            continue
+        if _direct_call_sources(probe_ea):
+            found.add(probe_ea)
+    return found
+
+def _signature_matches(entry_ea, signature):
+    if not signature:
+        return True
+    tokens = str(signature).strip().split()
+    raw = ida_bytes.get_bytes(int(entry_ea), len(tokens))
+    if not raw or len(raw) != len(tokens):
+        return False
+    for index, token in enumerate(tokens):
+        if token == '??':
+            continue
+        try:
+            expected = int(token, 16)
+        except Exception:
+            return False
+        if int(raw[index]) != expected:
+            return False
+    return True
+
+def _raw_instruction_boundary_reaches(start_ea, target_ea, limit_ea):
+    cursor = int(start_ea)
+    target = int(target_ea)
+    limit = int(limit_ea)
+    while cursor < limit and cursor <= target:
+        if cursor == target:
+            return True
+        insn = ida_ua.insn_t()
+        size = ida_ua.decode_insn(insn, cursor)
+        if not size or cursor + int(size) > limit:
+            return False
+        cursor += int(size)
+    return False
+
+def _raw_instruction_span_ends_at(start_ea, end_ea):
+    cursor = int(start_ea)
+    end = int(end_ea)
+    while cursor < end:
+        insn = ida_ua.insn_t()
+        size = ida_ua.decode_insn(insn, cursor)
+        if not size or cursor + int(size) > end:
+            return False
+        cursor += int(size)
+    return cursor == end
+
+def _next_recovery_limit(entry_ea, anchor_ea):
+    function = ida_funcs.get_next_func(int(entry_ea))
+    while function is not None and int(function.start_ea) <= int(anchor_ea):
+        function = ida_funcs.get_next_func(int(function.start_ea))
+    if function is not None:
+        limit = int(function.start_ea)
+    else:
+        segment = ida_segment.getseg(int(entry_ea))
+        limit = int(segment.end_ea) if segment is not None else 0
+    if limit <= int(entry_ea) or limit - int(entry_ea) > FUNCTION_RECOVERY_MAX_SPAN:
+        return None
+    return limit
+
+def _contained_functions(entry_ea, limit_ea):
+    found = []
+    function = ida_funcs.get_next_func(int(entry_ea) - 1)
+    while function is not None and int(function.start_ea) < int(limit_ea):
+        if int(function.start_ea) >= int(entry_ea):
+            found.append(function)
+        function = ida_funcs.get_next_func(int(function.start_ea))
+    return found
+
+def _has_reference_from_outside(ea, start_ea, end_ea):
+    for xref in idautils.XrefsTo(int(ea), 0):
+        source = int(xref.frm)
+        if source < int(start_ea) or source >= int(end_ea):
+            return True
+    return False
+
+def _verified_entry_function(entry_ea, anchor_ea, expected_end, expected_signature):
+    function = ida_funcs.get_func(int(entry_ea))
+    if function is None or int(function.start_ea) != int(entry_ea):
+        return None
+    if not (int(function.start_ea) <= int(anchor_ea) < int(function.end_ea)):
+        return None
+    if expected_end is not None and int(function.end_ea) != int(expected_end):
+        return None
+    if not _signature_matches(entry_ea, expected_signature):
+        return None
+    return function
+
+def _recover_function_entry(entry_ea, anchor_ea, expected_end, expected_signature):
+    entry = int(entry_ea)
+    anchor = int(anchor_ea)
+    expected_end = None if expected_end is None else int(expected_end)
+    existing = _verified_entry_function(entry, anchor, expected_end, expected_signature)
+    if existing is not None:
+        return existing
+    containing = ida_funcs.get_func(entry)
+    if containing is not None and int(containing.start_ea) != entry:
+        return None
+    if not _is_executable_address(entry) or not _signature_matches(entry, expected_signature):
+        return None
+    try:
+        if expected_end is None:
+            ida_funcs.add_func(entry)
+        else:
+            ida_funcs.add_func(entry, expected_end)
+    except Exception:
+        pass
+    function = _verified_entry_function(entry, anchor, expected_end, expected_signature)
+    if function is not None:
+        return function
+    call_sources = _direct_call_sources(entry)
+    if not call_sources:
+        return None
+    cleanup_end = expected_end if expected_end is not None else _next_recovery_limit(entry, anchor)
+    if cleanup_end is None:
+        return None
+    if not any(source < entry or source >= cleanup_end for source in call_sources):
+        return None
+    if cleanup_end - entry > FUNCTION_RECOVERY_MAX_SPAN or not _same_executable_segment(entry, cleanup_end):
+        return None
+    if not _raw_instruction_boundary_reaches(entry, anchor, cleanup_end):
+        return None
+    if expected_end is not None and not _raw_instruction_span_ends_at(entry, expected_end):
+        return None
+    contained = [function for function in _contained_functions(entry, cleanup_end) if int(function.start_ea) != entry]
+    if len(contained) > 1:
+        return None
+    for suffix in contained:
+        suffix_start = int(suffix.start_ea)
+        suffix_end = int(suffix.end_ea)
+        if suffix_end > cleanup_end:
+            return None
+        if expected_end is None and not (suffix_start <= anchor < suffix_end):
+            return None
+        if _has_reference_from_outside(suffix_start, entry, cleanup_end):
+            return None
+    for suffix in contained:
+        if not ida_funcs.del_func(int(suffix.start_ea)):
+            return None
+    try:
+        ida_bytes.del_items(entry, ida_bytes.DELIT_EXPAND, cleanup_end - entry)
+        if not ida_ua.create_insn(entry):
+            return None
+        ida_auto.plan_range(entry, cleanup_end)
+        ida_auto.auto_wait()
+        if expected_end is None:
+            ida_funcs.add_func(entry)
+        else:
+            ida_funcs.add_func(entry, expected_end)
+        ida_auto.auto_wait()
+    except Exception:
+        return None
+    return _verified_entry_function(entry, anchor, expected_end, expected_signature)
+
+def _ensure_function_owner(anchor_ea, expected_entry=None, expected_end=None, expected_signature=None):
+    anchor = int(anchor_ea)
+    existing = ida_funcs.get_func(anchor)
+    if expected_entry is not None:
+        entry = int(expected_entry)
+        if existing is not None and int(existing.start_ea) == entry:
+            verified = _verified_entry_function(entry, anchor, expected_end, expected_signature)
+            return None if verified is None else _function_payload(verified, False, 'existing_entry')
+        recovered = _recover_function_entry(entry, anchor, expected_end, expected_signature)
+        return None if recovered is None else _function_payload(recovered, True, 'expected_entry')
+    if existing is not None and int(existing.start_ea) < anchor:
+        return _function_payload(existing, False, 'existing_owner')
+    lower_bound = max(0, anchor - FUNCTION_RECOVERY_BACKTRACK_LIMIT)
+    candidates = _direct_call_entry_candidates(anchor, lower_bound)
+    if existing is not None and int(existing.start_ea) == anchor and candidates in (set(), {anchor}):
+        return _function_payload(existing, False, 'existing_entry')
+    if len(candidates) != 1:
+        return None
+    entry = next(iter(candidates))
+    if existing is not None and int(existing.start_ea) == entry:
+        return _function_payload(existing, False, 'existing_entry')
+    recovered = _recover_function_entry(entry, anchor, expected_end, expected_signature)
+    return None if recovered is None else _function_payload(recovered, True, 'direct_call_entry')
+
+globals().update(locals())
+"""
+
+
 _FUNC_XREF_PY_EVAL_TEMPLATE = r"""
 import ida_auto, ida_bytes, ida_funcs, ida_name, ida_nalt, ida_netnode, ida_segment, ida_ua, ida_xref, idaapi, idautils, idc, json, math, struct
 
@@ -666,91 +900,20 @@ spec = json.loads(SPEC_PLACEHOLDER)
 image_base = IMAGE_BASE_PLACEHOLDER
 ida_auto.auto_wait()
 pointer_size = 8 if idaapi.inf_is_64bit() else 4
-UNDEFINED_FUNC_RECOVERY_BACKTRACK_LIMIT = 0x200
-UNDEFINED_FUNC_RECOVERY_MAX_SOURCE_DEPTH = 4
 PAD_BYTES = {0xCC, 0x90}
 SIGNATURE_XREF_PROBE_MAX_CANDIDATES = 256
 
-def _probe_function_start(code_addr):
-    func = ida_funcs.get_func(int(code_addr))
-    if func is not None:
-        return {'status': 'resolved', 'func_start': int(func.start_ea)}
-    candidates = set()
-    unresolved_sources = set()
-    lower_bound = max(0, int(code_addr) - UNDEFINED_FUNC_RECOVERY_BACKTRACK_LIMIT)
-    for probe_ea in range(int(code_addr), lower_bound - 1, -1):
-        other_func = ida_funcs.get_func(probe_ea)
-        if other_func is not None:
-            if candidates:
-                break
-            return {'status': 'blocked_existing_function'}
-        if not ida_bytes.is_code(ida_bytes.get_full_flags(probe_ea)):
-            continue
-        for xref in idautils.XrefsTo(probe_ea, 0):
-            mnem = (idc.print_insn_mnem(xref.frm) or '').lower()
-            if mnem not in ('call', 'jmp', 'lea'):
-                continue
-            if probe_ea not in [idc.get_operand_value(xref.frm, index) for index in range(3)]:
-                continue
-            ref_func = ida_funcs.get_func(xref.frm)
-            if ref_func is None:
-                unresolved_sources.add(int(xref.frm))
-                continue
-            candidates.add(probe_ea)
-    result = {'status': 'no_entry'}
-    if len(candidates) == 1:
-        result = {'status': 'needs_define', 'entry': next(iter(candidates))}
-    elif len(candidates) > 1:
-        result = {'status': 'multiple_entries'}
-    if unresolved_sources:
-        result['unresolved_sources'] = sorted(unresolved_sources)
-    return result
+FUNCTION_OWNER_RECOVERY_PLACEHOLDER
 
-def _function_start(ea, recovery_seen=None, recovery_depth=0):
-    code_addr = int(ea)
-    recovery_seen = set() if recovery_seen is None else recovery_seen
-    if code_addr in recovery_seen:
-        return None
-    recovery_seen.add(code_addr)
-    probe = _probe_function_start(code_addr)
-    while probe:
-        status = probe.get('status')
-        if status == 'resolved':
-            return int(probe['func_start'])
-        if status == 'needs_define':
-            try:
-                ida_funcs.add_func(int(probe['entry']))
-            except Exception:
-                return None
-            func = ida_funcs.get_func(code_addr)
-            return int(func.start_ea) if func is not None else None
-        if recovery_depth >= UNDEFINED_FUNC_RECOVERY_MAX_SOURCE_DEPTH:
-            return None
-        recovered_source = False
-        for source in probe.get('unresolved_sources') or []:
-            if _function_start(source, recovery_seen, recovery_depth + 1) is not None:
-                recovered_source = True
-                break
-        if not recovered_source:
-            return None
-        probe = _probe_function_start(code_addr)
-    return None
+def _function_start(ea):
+    owner = _ensure_function_owner(int(ea))
+    return None if owner is None else int(owner['function_start'])
 
-def _functions_referencing(ea, allow_source_start=False):
+def _functions_referencing(ea):
     found = set()
     for xref in idautils.XrefsTo(int(ea), 0):
         source_ea = int(xref.frm)
         start = _function_start(source_ea)
-        if start is None and allow_source_start:
-            flags = ida_bytes.get_full_flags(source_ea)
-            if ida_bytes.is_code(flags) and ida_bytes.is_head(flags):
-                try:
-                    ida_funcs.add_func(source_ea)
-                except Exception:
-                    pass
-                func = ida_funcs.get_func(source_ea)
-                if func is not None and int(func.start_ea) == source_ea:
-                    start = source_ea
         if start is not None:
             found.add(start)
     return found
@@ -812,14 +975,14 @@ def _string_items():
                 pass
     return strings
 
-def _string_candidates(query, allow_source_start=False):
+def _string_candidates(query):
     exact = str(query).startswith('FULLMATCH:')
     needle = str(query)[10:] if exact else str(query)
     found = set()
     for item in _string_items():
         text = str(item)
         if (text == needle) if exact else (needle in text):
-            found.update(_functions_referencing(int(item.ea), allow_source_start))
+            found.update(_functions_referencing(int(item.ea)))
     return found
 
 def _named_ea(value):
@@ -1020,9 +1183,7 @@ globals().update(locals())
 positive_sets = []
 vtable_candidates = _address_candidates(spec.get('vtable_entries'))
 for value in spec.get('xref_strings') or []:
-    positive_sets.append(
-        _string_candidates(value, bool(spec.get('xref_string_sources_as_function_starts')))
-    )
+    positive_sets.append(_string_candidates(value))
 for value in spec.get('xref_gvs') or []:
     positive_sets.append(_named_candidates(value))
 signature_texts = spec.get('xref_signatures') or []
@@ -1102,6 +1263,7 @@ def _build_func_xref_py_eval(spec, image_base):
     return (
         _FUNC_XREF_PY_EVAL_TEMPLATE.replace("SPEC_PLACEHOLDER", repr(serialized_spec))
         .replace("IMAGE_BASE_PLACEHOLDER", str(int(image_base)))
+        .replace("FUNCTION_OWNER_RECOVERY_PLACEHOLDER", _FUNCTION_OWNER_RECOVERY_PY_EVAL)
         .replace("STRING_SETUP_STATE_NODE_PLACEHOLDER", repr(IDA_STRING_SETUP_STATE_NODE))
         .replace("STRING_SETUP_STATE_VERSION_PLACEHOLDER", str(IDA_STRING_SETUP_STATE_VERSION))
     )
@@ -1146,10 +1308,6 @@ def _normalize_func_xref_specs(specs):
         if inline_alias is not None and (not isinstance(inline_alias, str) or not inline_alias):
             return None
         spec["inline_alias"] = inline_alias
-        source_starts = raw_spec.get("xref_string_sources_as_function_starts", False)
-        if not isinstance(source_starts, bool):
-            return None
-        spec["xref_string_sources_as_function_starts"] = source_starts
         if (
             not any(spec[key] for key in ("xref_strings", "xref_gvs", "xref_signatures", "xref_funcs"))
             and not inline_alias
@@ -1230,7 +1388,6 @@ async def preprocess_func_xrefs_via_mcp(
     exclude_floats=None,
     inline_alias=None,
     exclude_callees=None,
-    xref_string_sources_as_function_starts=False,
 ):
     del debug
     try:
@@ -1259,7 +1416,6 @@ async def preprocess_func_xrefs_via_mcp(
         "xref_floats": required_float_values,
         "exclude_floats": excluded_float_values,
         "exclude_callees": [],
-        "xref_string_sources_as_function_starts": bool(xref_string_sources_as_function_starts),
         "string_min_length": _resolve_ida_string_min_length_config(),
     }
     for source, field, destination, allow_explicit in (
@@ -1530,20 +1686,18 @@ async def _find_unique_bytes(session, signature):
         return None
 
 
-_INSPECT_FUNCTION_PY_EVAL = r"""
-import ida_bytes, ida_funcs, ida_name, ida_segment, ida_ua, idaapi, idc, json
+_INSPECT_FUNCTION_PY_EVAL_TEMPLATE = r"""
+import ida_auto, ida_bytes, ida_funcs, ida_name, ida_segment, ida_ua, idaapi, idautils, idc, json
 ea = EA_PLACEHOLDER
 image_base = IMAGE_BASE_PLACEHOLDER
 pointer_size = 8 if idaapi.inf_is_64bit() else 4
 allow_across_function_boundary = ALLOW_ACROSS_FUNCTION_BOUNDARY_PLACEHOLDER
 PAD_BYTES = {0xCC, 0x90}
-func = ida_funcs.get_func(ea)
-if func is None:
-    try:
-        ida_funcs.add_func(ea)
-    except Exception:
-        pass
-    func = ida_funcs.get_func(ea)
+
+FUNCTION_OWNER_RECOVERY_PLACEHOLDER
+
+owner = _ensure_function_owner(ea, expected_entry=ea)
+func = None if owner is None else ida_funcs.get_func(int(owner['function_start']))
 
 def _is_same_exec_segment(cursor, segment_start):
     segment = ida_segment.getseg(int(cursor))
@@ -1647,6 +1801,62 @@ else:
         'func_sig': _signature(ea, end),
     }})
 """
+
+
+_INSPECT_FUNCTION_PY_EVAL = _INSPECT_FUNCTION_PY_EVAL_TEMPLATE.replace(
+    "FUNCTION_OWNER_RECOVERY_PLACEHOLDER", _FUNCTION_OWNER_RECOVERY_PY_EVAL
+)
+
+
+_RUNTIME_ADDRESS_INSPECTION_PY_EVAL_TEMPLATE = r"""
+import ida_auto, ida_bytes, ida_funcs, ida_segment, ida_ua, idaapi, idautils, idc, json
+request = json.loads(REQUEST_PLACEHOLDER)
+ea = int(request['address'])
+seg = ida_segment.getseg(ea)
+
+FUNCTION_OWNER_RECOVERY_PLACEHOLDER
+
+owner = None
+if request.get('require_function'):
+    expected_size = request.get('expected_size')
+    expected_end = None if expected_size is None else ea + int(expected_size)
+    owner = _ensure_function_owner(
+        ea,
+        expected_entry=ea,
+        expected_end=expected_end,
+        expected_signature=request.get('expected_signature'),
+    )
+func = ida_funcs.get_func(ea)
+result = json.dumps({
+    'has_segment': seg is not None,
+    'segment_name': ida_segment.get_segm_name(seg) if seg is not None else '',
+    'image_base': hex(int(idaapi.get_imagebase())),
+    'has_function': func is not None,
+    'function_start': hex(int(func.start_ea)) if func is not None else '',
+    'is_function_start': bool(func is not None and int(func.start_ea) == ea),
+    'recovered': bool(owner and owner.get('recovered')),
+    'recovery_reason': '' if owner is None else str(owner.get('recovery_reason') or ''),
+})
+"""
+
+
+def build_runtime_address_inspection_py_eval(
+    address,
+    *,
+    require_function,
+    expected_size=None,
+    expected_signature=None,
+):
+    request = {
+        "address": int(address),
+        "require_function": bool(require_function),
+        "expected_size": None if expected_size is None else int(expected_size),
+        "expected_signature": expected_signature,
+    }
+    serialized_request = json.dumps(request, separators=(",", ":"))
+    return _RUNTIME_ADDRESS_INSPECTION_PY_EVAL_TEMPLATE.replace(
+        "REQUEST_PLACEHOLDER", repr(serialized_request)
+    ).replace("FUNCTION_OWNER_RECOVERY_PLACEHOLDER", _FUNCTION_OWNER_RECOVERY_PY_EVAL)
 
 
 async def _inspect_function_via_mcp(session, ea, image_base, func_name, allow_across_function_boundary=False):
@@ -2970,7 +3180,6 @@ async def preprocess_common_skill(
                 exclude_floats=xref_spec.get("exclude_floats"),
                 inline_alias=xref_spec.get("inline_alias"),
                 exclude_callees=xref_spec.get("exclude_callees"),
-                xref_string_sources_as_function_starts=xref_spec.get("xref_string_sources_as_function_starts", False),
             )
         if candidate is not None and generation_options.get("func_sig_resolve_jmp_thunk"):
             try:

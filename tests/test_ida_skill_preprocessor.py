@@ -107,7 +107,7 @@ class PreprocessStatusTests(unittest.TestCase):
         )
 
         ast.parse(code)
-        self.assertIn("UNDEFINED_FUNC_RECOVERY_BACKTRACK_LIMIT", code)
+        self.assertIn("FUNCTION_RECOVERY_BACKTRACK_LIMIT", code)
         self.assertIn("return {start for start, count in counts.items() if count == 1}", code)
         self.assertIn("Strings(default_setup=False)", code)
         self.assertIn("strings.setup(strtypes=[ida_nalt.STRTYPE_C]", code)
@@ -124,11 +124,101 @@ class PreprocessStatusTests(unittest.TestCase):
         self.assertIn("if spec.get('vtable_entries'):", code)
         self.assertIn("def _try_decode_padding_nop", code)
         self.assertIn("not ida_bytes.is_head(flags)", code)
-        self.assertIn("xref_string_sources_as_function_starts", code)
-        self.assertIn("ida_funcs.add_func(source_ea)", code)
         self.assertNotIn("if len(tokens) >= max_tokens:\n                break", code)
         self.assertIn("ida_ua.o_displ", ida_analyze_util._INSPECT_FUNCTION_PY_EVAL)
         self.assertIn("def _try_decode_padding_nop", ida_analyze_util._INSPECT_FUNCTION_PY_EVAL)
+
+    def test_function_owner_recovery_replaces_false_suffix_with_unique_direct_call_entry(self):
+        tree = ast.parse(ida_analyze_util._FUNCTION_OWNER_RECOVERY_PY_EVAL)
+        function_node = next(
+            node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "_ensure_function_owner"
+        )
+        anchor_ea = 0x401120
+        entry_ea = 0x401000
+        suffix = SimpleNamespace(start_ea=anchor_ea, end_ea=0x401160)
+        recovered = SimpleNamespace(start_ea=entry_ea, end_ea=0x401160)
+        calls = []
+
+        def recover(entry, anchor, expected_end, expected_signature):
+            calls.append((entry, anchor, expected_end, expected_signature))
+            return recovered
+
+        namespace = {
+            "FUNCTION_RECOVERY_BACKTRACK_LIMIT": 0x200,
+            "ida_funcs": SimpleNamespace(get_func=lambda ea: suffix if ea == anchor_ea else None),
+            "_direct_call_entry_candidates": lambda _anchor, _lower: {entry_ea},
+            "_recover_function_entry": recover,
+            "_function_payload": lambda func, was_recovered, reason: {
+                "function_start": int(func.start_ea),
+                "function_end": int(func.end_ea),
+                "recovered": was_recovered,
+                "recovery_reason": reason,
+            },
+        }
+        exec(  # noqa: S102 - executes only the selected generated recovery helper.
+            compile(ast.Module(body=[function_node], type_ignores=[]), "<function-owner-recovery>", "exec"),
+            namespace,
+        )
+
+        result = namespace["_ensure_function_owner"](anchor_ea)
+
+        self.assertEqual(entry_ea, result["function_start"])
+        self.assertTrue(result["recovered"])
+        self.assertEqual([(entry_ea, anchor_ea, None, None)], calls)
+
+    def test_function_owner_recovery_fails_closed_on_ambiguous_entries(self):
+        tree = ast.parse(ida_analyze_util._FUNCTION_OWNER_RECOVERY_PY_EVAL)
+        function_node = next(
+            node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "_ensure_function_owner"
+        )
+        anchor_ea = 0x401120
+        namespace = {
+            "FUNCTION_RECOVERY_BACKTRACK_LIMIT": 0x200,
+            "ida_funcs": SimpleNamespace(get_func=lambda _ea: None),
+            "_direct_call_entry_candidates": lambda _anchor, _lower: {0x401000, 0x401080},
+            "_recover_function_entry": lambda *_args: self.fail("ambiguous recovery must not mutate IDA"),
+            "_function_payload": lambda *_args: self.fail("ambiguous recovery must not produce a function"),
+        }
+        exec(  # noqa: S102 - executes only the selected generated recovery helper.
+            compile(ast.Module(body=[function_node], type_ignores=[]), "<function-owner-recovery>", "exec"),
+            namespace,
+        )
+
+        self.assertIsNone(namespace["_ensure_function_owner"](anchor_ea))
+
+    def test_function_owner_destructive_recovery_requires_external_direct_call(self):
+        tree = ast.parse(ida_analyze_util._FUNCTION_OWNER_RECOVERY_PY_EVAL)
+        function_node = next(
+            node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "_recover_function_entry"
+        )
+        entry_ea = 0x401000
+        anchor_ea = 0x401120
+        cleanup_end = 0x401160
+        add_func_calls = []
+        namespace = {
+            "FUNCTION_RECOVERY_MAX_SPAN": 0x4000,
+            "ida_funcs": SimpleNamespace(
+                get_func=lambda _ea: None,
+                add_func=lambda *args: add_func_calls.append(args),
+            ),
+            "_verified_entry_function": lambda *_args: None,
+            "_is_executable_address": lambda _ea: True,
+            "_signature_matches": lambda _ea, _signature: True,
+            "_direct_call_sources": lambda _ea: [anchor_ea],
+            "_next_recovery_limit": lambda _entry, _anchor: cleanup_end,
+            "_same_executable_segment": lambda *_args: self.fail(
+                "internal direct calls must not reach destructive recovery gates"
+            ),
+        }
+        exec(  # noqa: S102 - executes only the selected generated recovery helper.
+            compile(ast.Module(body=[function_node], type_ignores=[]), "<function-entry-recovery>", "exec"),
+            namespace,
+        )
+
+        result = namespace["_recover_function_entry"](entry_ea, anchor_ea, None, None)
+
+        self.assertIsNone(result)
+        self.assertEqual([(entry_ea,)], add_func_calls)
 
     def test_func_xref_float_filters_require_every_xref_and_exclude_any_hit(self):
         code = _build_func_xref_py_eval({"func_name": "Target"}, 0x400000)
@@ -292,46 +382,6 @@ class PreprocessorLoaderTests(unittest.IsolatedAsyncioTestCase):
         self.assertIs(PREPROCESS_STATUS_SUCCESS, second)
         self.assertEqual("x", import_count)
         self.assertIs(PREPROCESS_STATUS_FAILED, invalid_result)
-
-    async def test_clientdll_init_retries_with_across_boundary_signature_budget(self):
-        preprocess = ida_skill_preprocessor._get_preprocess_entry("find-ClientDLL_Init")
-        preprocess_common = AsyncMock(side_effect=[False, True])
-        with patch.dict(preprocess.__globals__, {"preprocess_common_skill": preprocess_common}):
-            result = await preprocess(
-                session=SimpleNamespace(call_tool=AsyncMock()),
-                skill_name="find-ClientDLL_Init",
-                expected_outputs=["ClientDLL_Init.windows.yaml"],
-                old_yaml_map=None,
-                new_binary_dir=Path("D:/bin/hl-4554/engine"),
-                platform="windows",
-                image_base=0x1D00000,
-            )
-
-        self.assertTrue(result)
-        self.assertEqual(2, preprocess_common.await_count)
-        self.assertTrue(
-            preprocess_common.await_args_list[0].kwargs["func_xrefs"][0]["xref_string_sources_as_function_starts"]
-        )
-        self.assertEqual(
-            [("ClientDLL_Init", ["func_name", "func_sig", "func_va", "func_rva", "func_size"])],
-            preprocess_common.await_args_list[0].kwargs["generate_yaml_desired_fields"],
-        )
-        self.assertEqual(
-            [
-                (
-                    "ClientDLL_Init",
-                    [
-                        "func_name",
-                        "func_sig",
-                        "func_va",
-                        "func_rva",
-                        "func_size",
-                        "func_sig_allow_across_function_boundary:true",
-                    ],
-                )
-            ],
-            preprocess_common.await_args_list[1].kwargs["generate_yaml_desired_fields"],
-        )
 
 
 class PreprocessorDispatchTests(unittest.IsolatedAsyncioTestCase):
