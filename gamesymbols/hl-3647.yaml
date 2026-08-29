@@ -8,7 +8,7 @@ binaries:
       sha256: 'f80c01c3c8f0800c89102343d58c4295bb62872f654cbd04a524788aa10f901f'
       size: 1841770
 config_digest_version: 2
-config_sha256: sha256:253d817c6d5bdf6ea2e3587687eb54f0fd5fb887f406cf7cbab7ac0319148bac
+config_sha256: sha256:f88f001d55ceced250dcfd7b387b10e48b6f794e6736a604152fd150cec128df
 file_count: 18
 files:
   engine/CBaseUI__Initialize.windows.yaml:
@@ -87,6 +87,15 @@ files:
     gv_sig: 81 EC 00 04 00 00 8D 44 24 ?? 68 ?? ?? ?? ?? 68 00 02 00 00 50 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 C4 0C 85 C0 74 ??
     gv_sig_va: '0x1d0db10'
     gv_va: '0x1e882a8'
+  engine/cl_funcs.windows.yaml:
+    gv_inst_disp: '0x2'
+    gv_inst_length: '0x6'
+    gv_inst_offset: '0xcf'
+    gv_name: cl_funcs
+    gv_rva: '0x123ca60'
+    gv_sig: 81 EC 00 04 00 00 8D 44 24 ?? 68 ?? ?? ?? ?? 68 00 02 00 00 50 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 C4 0C 85 C0 74 ??
+    gv_sig_va: '0x1d0db10'
+    gv_va: '0x2f3ca60'
   engine/cl_parsefuncs.windows.yaml:
     gv_inst_disp: '0x3'
     gv_inst_length: '0x7'
@@ -123,15 +132,6 @@ files:
     gv_sig: A1 ?? ?? ?? ?? 85 C0 75 ?? 68 20 04 00 00 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 08 FF 15 ?? ?? ?? ?? A1 ?? ?? ?? ?? 50 E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 08
     gv_sig_va: '0x1d0e6f0'
     gv_va: '0x1ec1750'
-  engine/g_ppExportFuncs.windows.yaml:
-    gv_inst_disp: '0x2'
-    gv_inst_length: '0x6'
-    gv_inst_offset: '0xcf'
-    gv_name: g_ppExportFuncs
-    gv_rva: '0x123ca60'
-    gv_sig: 81 EC 00 04 00 00 8D 44 24 ?? 68 ?? ?? ?? ?? 68 00 02 00 00 50 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 C4 0C 85 C0 74 ??
-    gv_sig_va: '0x1d0db10'
-    gv_va: '0x2f3ca60'
   engine/videomode.windows.yaml:
     gv_inst_disp: '0x1'
     gv_inst_length: '0x5'

@@ -76,7 +76,7 @@ disasm_code: |-
   .text:001586EB                 mov     ecx, 7
   .text:001586F0                 mov     [esp+22Ch+pblobfootprint], ecx
   .text:001586F4                 mov     [esp+22Ch+pname], offset cl_enginefuncs; target: cl_enginefuncs
-  .text:001586FB                 call    ds:cl_funcs.pInitFunc; target: g_ppExportFuncs
+  .text:001586FB                 call    ds:cl_funcs.pInitFunc; target: cl_funcs
   .text:00158701                 ; inlined ClientDLL_ClientMoveInit(&g_clmove): begin (DWARF engine/cdll_int.c:498)
   .text:00158701                 mov     eax, ds:cl_funcs.pClientMoveInit; inlined ClientDLL_ClientMoveInit(&g_clmove): begin (DWARF engine/cdll_int.c:498)
   .text:00158706                 test    eax, eax
@@ -199,7 +199,7 @@ procedure: |-
     }
     HookServerMsg("ScreenShake", V_ScreenShake);
     HookServerMsg("ScreenFade", V_ScreenFade);
-    cl_funcs.pInitFunc(&cl_enginefuncs, 7); // target: g_ppExportFuncs / cl_enginefuncs
+    cl_funcs.pInitFunc(&cl_enginefuncs, 7); // target: cl_funcs / cl_enginefuncs
     if ( cl_funcs.pClientMoveInit )
       cl_funcs.pClientMoveInit((playermove_s *)MEMORY[0xBDEEA0]); // g_clmove
     CL_GetPlayerHulls();

@@ -34,7 +34,7 @@ modules:
           - ClientDLL_HudInit.{platform}.yaml
         expected_output:
           - cl_enginefuncs.{platform}.yaml
-          - g_ppExportFuncs.{platform}.yaml
+          - cl_funcs.{platform}.yaml
           - g_phClientModule.{platform}.yaml
       - name: find-CBaseUI__Initialize-decompiles
         expected_input:
@@ -105,7 +105,7 @@ modules:
         category: func
       - name: cl_enginefuncs
         category: gv
-      - name: g_ppExportFuncs
+      - name: cl_funcs
         category: gv
       - name: g_phClientModule
         category: gv

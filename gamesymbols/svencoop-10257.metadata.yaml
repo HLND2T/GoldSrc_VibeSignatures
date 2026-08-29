@@ -1,6 +1,6 @@
 schema_version: 1
 game_version: svencoop-10257
-snapshot_sha256: 2708c38a3efae4eb08d0566fbda8a0012a259c7f93e42cfc42de4b9b8edc711f
+snapshot_sha256: e7be0c446c6eace020025ec62d62bd4909b29e091940f984fe551564903d5a3c
 config_digest_version: 2
-config_sha256: 14efa77d10890b96b31623cedf65d044c1c3d4b18ffddb6cb7aa1c853a4edb2c
+config_sha256: bef5329a724cbddb3a7601a849f4d9aa8cf27d90265aa191b04ca3eb7516b051
 modules: []
