@@ -29,7 +29,8 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
   verify:
     needs: resolve
-    runs-on: ubuntu-latest
+    environment: win64
+    runs-on: [self-hosted, windows, x64]
     outputs:
       version: ${{ steps.verify.outputs.version }}
       build_id: ${{ steps.verify.outputs.build_id }}
@@ -57,22 +58,29 @@ jobs:
           EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           EVENT_REPOSITORY: ${{ github.repository }}
           MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
-          STAGING_ROOT: ${{ secrets.PERSISTED_WORKSPACE }}
+          PERSISTED_WORKSPACE: ${{ secrets.PERSISTED_WORKSPACE }}
+        shell: pwsh
         run: |
-          uv run python release_workflow.py verify-promotion \
-            --repo-root "$GITHUB_WORKSPACE" \
-            --staging-root "$STAGING_ROOT/release-staging" \
-            --repository "$EVENT_REPOSITORY" \
-            --head-repository "$PR_HEAD_REPOSITORY" \
-            --author "$PR_AUTHOR" \
-            --author-association "$PR_AUTHOR_ASSOCIATION" \
-            --branch "$PR_HEAD_REF" \
-            --base-branch "$PR_BASE_REF" \
-            --default-branch "$DEFAULT_BRANCH" \
-            --pr-number "$PR_NUMBER" \
-            --event-head-sha "$EVENT_HEAD_SHA" \
-            --merge-sha "$MERGE_SHA" \
-            --github-output "$GITHUB_OUTPUT"
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:PERSISTED_WORKSPACE)) {
+            throw 'PERSISTED_WORKSPACE is required'
+          }
+          $stagingRoot = Join-Path $env:PERSISTED_WORKSPACE 'release-staging'
+          uv run python release_workflow.py verify-promotion `
+            --repo-root "$env:GITHUB_WORKSPACE" `
+            --staging-root "$stagingRoot" `
+            --repository "$env:EVENT_REPOSITORY" `
+            --head-repository "$env:PR_HEAD_REPOSITORY" `
+            --author "$env:PR_AUTHOR" `
+            --author-association "$env:PR_AUTHOR_ASSOCIATION" `
+            --branch "$env:PR_HEAD_REF" `
+            --base-branch "$env:PR_BASE_REF" `
+            --default-branch "$env:DEFAULT_BRANCH" `
+            --pr-number "$env:PR_NUMBER" `
+            --event-head-sha "$env:EVENT_HEAD_SHA" `
+            --merge-sha "$env:MERGE_SHA" `
+            --github-output "$env:GITHUB_OUTPUT"
+          if ($LASTEXITCODE -ne 0) { throw 'verify-promotion failed' }
   promote:
     needs: [resolve, verify]
     environment: win64

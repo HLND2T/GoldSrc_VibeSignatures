@@ -412,7 +412,13 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("verify-promotion", promote_text)
         self.assertIn("promote-bin", promote_text)
         self.assertIn("finalize-promotion", promote_text)
-        self.assertIn("win64", promote_text)
+        verify_job = promote["jobs"]["verify"]
+        self.assertEqual(["self-hosted", "windows", "x64"], verify_job["runs-on"])
+        self.assertEqual("win64", verify_job["environment"])
+        verify_step = next(step for step in verify_job["steps"] if step.get("name") == "Verify promotion")
+        self.assertEqual("pwsh", verify_step["shell"])
+        self.assertIn("Join-Path $env:PERSISTED_WORKSPACE 'release-staging'", verify_step["run"])
+        self.assertNotIn("$STAGING_ROOT/release-staging", verify_step["run"])
 
         for name in ("abandon-staged-release.yml", "cleanup-completed-release-staging.yml"):
             self.assertIn("win64", json.dumps(workflows[name]))

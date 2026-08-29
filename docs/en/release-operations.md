@@ -53,11 +53,10 @@ The verifier does not rebase the immutable output head onto the new base. GitHub
 histories. Merge-time `verify_promotion()` uses the same ancestor rule for the merge first parent. Replacement
 build/PR is required only when that ancestor or direct-parent identity is broken.
 
-## Known promotion storage gate
+## Promotion storage topology
 
-`PERSISTED_WORKSPACE` currently exists only as a `win64` Environment secret; the hosted Ubuntu `verify` job does not
-declare that Environment, so its `${{ secrets.PERSISTED_WORKSPACE }}` reference resolves empty. Even if supplied as a
-repository secret, the job passes `$STAGING_ROOT/release-staging` to `verify-promotion` while the private stage is
-produced on the Windows self-hosted runner, and no artifact or shared mount bridges those filesystems. Production
-promotion acceptance therefore remains blocked until storage/topology is resolved and exercised; repository tests and
-the PAT migration do not prove that path.
+Both the `verify` and `promote` jobs declare the `win64` Environment and run on `[self-hosted, windows, x64]` runners.
+They access the same private `release-staging` through that Environment's `PERSISTED_WORKSPACE` secret. `verify` builds
+the path with PowerShell `Join-Path` and fails closed when the secret is empty. Every eligible runner must still map the
+path to the same controlled storage; perform a real merge rehearsal before production promotion acceptance to prove
+cross-job visibility and Environment protection behavior.

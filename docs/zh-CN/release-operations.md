@@ -52,10 +52,9 @@ verifier 不会把 immutable output head rebase 到新 base。Git 冲突仍由 G
 `verify_promotion()` 对 merge first parent 使用同一套 ancestor 规则。只有祖先关系或 direct-parent identity 被破坏时，
 才需要 replacement build/PR。
 
-## 已知 promotion storage 门禁
+## Promotion storage 拓扑
 
-`PERSISTED_WORKSPACE` 当前只存在于 `win64` Environment secret；hosted Ubuntu `verify` job 未声明该 Environment，
-所以 `${{ secrets.PERSISTED_WORKSPACE }}` 会解析为空。即使另行提供 repository secret，该 job 仍把
-`$STAGING_ROOT/release-staging` 传给 `verify-promotion`，而 private stage 由 Windows self-hosted runner 生成，当前没有
-artifact 或 shared mount 跨接两套 filesystem。因此在 storage/topology 完成修复并真实演练前，production promotion
-验收保持 blocked；repository test 与本次 PAT 迁移不能证明该路径可用。
+`verify` 与 `promote` job 都声明 `win64` Environment，并运行在 `[self-hosted, windows, x64]` runner；两者通过该
+Environment 的 `PERSISTED_WORKSPACE` secret 访问同一个 private `release-staging`。`verify` 使用 PowerShell
+`Join-Path` 构造路径，并在 secret 为空时 fail closed。所有 eligible runner 仍必须把该路径映射到同一受控存储；在
+production promotion 验收前还应完成一次真实 merge 演练，以证明跨 job 可见性与 Environment protection 行为。
