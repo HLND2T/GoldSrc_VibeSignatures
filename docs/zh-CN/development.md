@@ -28,17 +28,21 @@ formatter 只处理 `git ls-files --cached -- '*.py' '*.yaml'` 返回的文件�
 uv run python tests/run_test_suite.py unit -b --durations 30
 ```
 
-其余主套件显式覆盖仓库状态与 Redis：
+其余 source 权限套件显式覆盖仓库结构与 Redis：
 
 ```bash
 uv run python tests/run_test_suite.py repository-contract -b --durations 30
 uv run python tests/run_test_suite.py redis-integration -b --durations 30
 ```
 
-完成前运行全部指定测试：
+完成前运行全部 source-compatible 指定测试：
 
 ```bash
 uv run python tests/run_test_suite.py all -b --durations 30
 ```
+
+`all` 明确排除 `generated-output-contract`。该 release 权限套件会比较当前 config 与生成后的
+`gamesymbols/`、metadata、`gamedata/`，因此只由 release build 在发布新 candidate 后、stage generated-output
+commit 前运行。
 
 只有在 `RUN_IDA_INTEGRATION=1` 且 `idalib` 环境已激活时才运行商业 IDA 集成测试；跳过不代表真实 IDA 分析通过。

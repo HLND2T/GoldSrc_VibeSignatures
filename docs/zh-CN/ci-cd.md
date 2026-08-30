@@ -11,8 +11,9 @@ GitHub Actions 工作流在每次 push 与 pull request 上运行受门禁保护
 1. `uv sync --locked` 安装锁定环境。
 2. `uv run python format_repo_files.py --check` 检查格式化。
 3. `uv run python tests/run_test_suite.py unit -b --durations 30` 运行快速隔离套件。
-4. `uv run python tests/run_test_suite.py repository-contract -b --durations 30` 检查仓库合约。
-5. `uv run python tests/run_test_suite.py all -b --durations 30` 运行全部指定测试。
+4. `uv run python tests/run_test_suite.py repository-contract -b --durations 30` 检查 source 权限仓库合约。
+5. `uv run python tests/run_test_suite.py all -b --durations 30` 运行全部 source-compatible 指定测试；其中明确排除
+   release 权限的 `generated-output-contract` 套件。
 
 独立的 `redis-integration` job 在 `ubuntu-latest` 上运行，带 `redis:7-alpine` 服务，设置 `GSVIBE_REDIS_URL` 与
 `GSVIBE_REDIS_PREFIX`，并运行 `tests/run_test_suite.py redis-integration -b --durations 30`。
@@ -61,7 +62,7 @@ producer；`build` 是纯 consumer。
 submodule → 通过 `release_workflow.py materialize-accepted-bin` materialize accepted bin → 下载并验证 exact cache
 selection → restore 这些 exact generation → 执行
 `ida_analyze_bin.py -allgamever -debug -process_reporter console` →
-逐 game version build/guard/publish candidate 与 gamedata → `stage-build` → 使用受保护的 `HLND2T_GH_TOKEN` PAT
+逐 game version build/guard/publish candidate 与 gamedata → 运行 `generated-output-contract` → `stage-build` → 使用受保护的 `HLND2T_GH_TOKEN` PAT
 创建单个 generated-output PR（分支 `gamesymbols/build/<version>`）。每个 build 都要求 producer 成功。
 
 - `validate-generated-output-pr.yml` 校验 output PR（Actions bot 或 `OWNER`/`MEMBER`/`COLLABORATOR`、同仓、

@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from gamedata_contract import generator_contract_sha256
+from generated_output_contract import GeneratedOutputContractError, GeneratedOutputProvenance
 from release_workflow_lib.accepted_bin import durable_inventory, materialize_accepted_bin
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.hashing import inventory_sha256, tracked_output_inventory, write_canonical_json
@@ -23,6 +24,12 @@ REPOSITORY = "HLND2T/GoldSrc_VibeSignatures"
 AUTHOR = "github-actions[bot]"
 AUTHOR_ASSOCIATION = "NONE"
 WORKFLOW_RUN_URL = "https://github.com/HLND2T/GoldSrc_VibeSignatures/actions/runs/1"
+VALIDATED_PROVENANCE = {
+    GAMEVER: GeneratedOutputProvenance(
+        analysis_config_sha256="b" * 64,
+        gamedata_manifest_sha256="c" * 64,
+    )
+}
 
 
 def _run_git(root: Path, *arguments: str, stdin_data: bytes | None = None) -> str:
@@ -126,7 +133,11 @@ def _call(root: Path, *, base_sha: str, head_sha: str, **overrides):
         "head_sha": head_sha,
     }
     arguments.update(overrides)
-    return verify_output_pr(**arguments)
+    with patch(
+        "release_workflow_lib.promotion.validate_generated_output_contract",
+        return_value=VALIDATED_PROVENANCE,
+    ):
+        return verify_output_pr(**arguments)
 
 
 def _verify(root: Path, *, base_sha: str, head_sha: str, **overrides):
@@ -152,6 +163,59 @@ class VerifyOutputPrTrustTests(unittest.TestCase):
 
 
 class VerifyOutputPrGitTests(unittest.TestCase):
+    def test_revalidates_generated_outputs_from_the_output_head_workspace(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source_sha, head_sha, manifest = _build_output_repo(root)
+            _run_git(root, "checkout", "-q", head_sha)
+            with patch(
+                "release_workflow_lib.promotion.validate_generated_output_contract",
+                return_value=VALIDATED_PROVENANCE,
+            ) as validate:
+                accepted = verify_output_pr(
+                    repo_root=root,
+                    repository=REPOSITORY,
+                    head_repository=REPOSITORY,
+                    author=AUTHOR,
+                    author_association=AUTHOR_ASSOCIATION,
+                    branch=BRANCH,
+                    base_sha=source_sha,
+                    head_sha=head_sha,
+                )
+            self.assertEqual(manifest, accepted)
+            validate.assert_called_once_with(root, expected_gamevers=[GAMEVER])
+
+    def test_rejects_checkout_that_is_not_the_exact_output_head(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source_sha, head_sha, _manifest = _build_output_repo(root)
+            _advance_base(root, source_sha, {"README.md": b"advanced\n"}, "advanced base")
+            with self.assertRaisesRegex(ReleaseWorkflowError, "checkout does not match PR head SHA"):
+                _call(root, base_sha=source_sha, head_sha=head_sha)
+
+    def test_rejects_generated_output_contract_failure(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source_sha, head_sha, _manifest = _build_output_repo(root)
+            _run_git(root, "checkout", "-q", head_sha)
+            with (
+                patch(
+                    "release_workflow_lib.promotion.validate_generated_output_contract",
+                    side_effect=GeneratedOutputContractError("snapshot drift"),
+                ),
+                self.assertRaisesRegex(ReleaseWorkflowError, "generated-output contract verification failed"),
+            ):
+                verify_output_pr(
+                    repo_root=root,
+                    repository=REPOSITORY,
+                    head_repository=REPOSITORY,
+                    author=AUTHOR,
+                    author_association=AUTHOR_ASSOCIATION,
+                    branch=BRANCH,
+                    base_sha=source_sha,
+                    head_sha=head_sha,
+                )
+
     def test_accepts_trusted_pat_author_associations(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -199,7 +263,7 @@ class VerifyOutputPrGitTests(unittest.TestCase):
     def test_rejects_base_that_is_not_source_descendant(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            source_sha, head_sha, _manifest = _build_output_repo(root)
+            _source_sha, head_sha, _manifest = _build_output_repo(root)
             empty_tree = _run_git(root, "mktree", stdin_data=b"")
             unrelated = _run_git(root, "commit-tree", empty_tree, "-m", "unrelated")
             with self.assertRaisesRegex(ReleaseWorkflowError, r"PR base must descend from SOURCE_SHA"):
@@ -298,6 +362,19 @@ class VerifyOutputPrGitTests(unittest.TestCase):
             _run_git(root, "add", f"gamesymbols/{GAMEVER}.yaml")
             with self.assertRaisesRegex(ReleaseWorkflowError, r"tracked output manifest hash mismatch"):
                 _call(root, base_sha=source_sha, head_sha=head_sha)
+
+    def test_rejects_tampered_manifest_provenance_digests(self):
+        for field in ("analysis_config_sha256", "gamedata_manifest_sha256"):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                source_sha, _head_sha, manifest = _build_output_repo(root)
+                manifest["gamevers"][0][field] = "0" * 64
+                _write_manifest(root, manifest)
+                _run_git(root, "add", f"release-manifests/{VERSION}.json")
+                _run_git(root, "commit", "--amend", "-q", "--no-edit")
+                tampered_head = _run_git(root, "rev-parse", "HEAD")
+                with self.assertRaisesRegex(ReleaseWorkflowError, field):
+                    _verify(root, base_sha=source_sha, head_sha=tampered_head)
 
 
 class MaterializeAcceptedBinTests(unittest.TestCase):

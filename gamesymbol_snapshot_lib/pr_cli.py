@@ -31,6 +31,7 @@ from gamesymbol_snapshot_lib.pr_validation import (
     TagImpact,
     plan_tag_impact,
 )
+from pull_request_route import validate_source_paths
 
 
 class PrCliError(ValueError):
@@ -222,6 +223,7 @@ def build_plan(
     merge_bin = repo.gitlink(merge_sha, "bin")
     bin_repo = GitRepository(bin_repo_root) if bin_repo_root is not None else None
     changes = repo.changed_paths(base_sha, merge_sha)
+    validate_source_paths(path for change in changes for path in change.paths)
     base_rules, base_registry_raw = _registry(repo, base_sha)
     merge_rules, merge_registry_raw = _registry(repo, merge_sha)
     base_tree, merge_tree = _tree(repo, base_sha), _tree(repo, merge_sha)

@@ -70,7 +70,11 @@ config；metadata 或 gamedata 不得脱离 snapshot 单独存在。
 `validate-generated-output-pr.yml` 用 exact Git blob 重建 tracked output inventory 并核对每条 game version 的 snapshot
 hash 与 gamedata inventory。output identity 仍绑定 exact `source_sha`（output head 的唯一父提交）；当前 PR base 必须
 是该提交的后代。`promote-release-after-output-merge.yml` 校验 first parent 从 `source_sha` 演进而来的两父合并，并把
-accepted bin 事务化交换进 persisted workspace。source PR 不再拥有 gamesymbols/gamedata authority。
+accepted bin 事务化交换进 persisted workspace。source PR 不再拥有 gamesymbols/gamedata authority。因此 source
+validation 的 `repository-contract` 不要求已发布输出立即匹配尚未发布的 config 变更；release build 在 candidate
+publish 后运行独立的 `generated-output-contract`，output PR verification 也会使用可信 base tooling 对 exact output
+head 重验同一契约。source-route planner 会拒绝对 `gamesymbols/`、`gamedata/` 与 `release-manifests/` 的修改；
+这些 namespace 只能由 generated-output route 更新。
 
 ## 直接生成 gamedata
 

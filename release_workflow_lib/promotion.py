@@ -7,6 +7,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from generated_output_contract import GeneratedOutputContractError, validate_generated_output_contract
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.filesystem import remove_tree
 from release_workflow_lib.hashing import (
@@ -90,6 +91,9 @@ def verify_output_pr(
         raise ReleaseWorkflowError("generated-output PR must originate from the base repository")
     _require_trusted_pr_author(author, author_association, "generated-output PR verification")
     version = parse_output_branch(branch)
+    checkout_sha = require_sha(_git_output(["rev-parse", "HEAD"], cwd=repo_root), "checkout HEAD")
+    if checkout_sha != head_sha:
+        raise ReleaseWorkflowError("generated-output validator checkout does not match PR head SHA")
     manifest = load_tracked_manifest(Path(repo_root) / "release-manifests" / f"{version}.json")
     if manifest["version"] != version:
         raise ReleaseWorkflowError("output PR manifest identity does not match the branch")
@@ -108,6 +112,19 @@ def verify_output_pr(
     ]
     validate_output_paths(paths, [entry["gamever"] for entry in manifest["gamevers"]], version)
     verify_tracked_outputs(repo_root, manifest)
+    try:
+        provenance = validate_generated_output_contract(
+            repo_root,
+            expected_gamevers=[entry["gamever"] for entry in manifest["gamevers"]],
+        )
+    except GeneratedOutputContractError as exc:
+        raise ReleaseWorkflowError(f"generated-output contract verification failed: {exc}") from exc
+    for entry in manifest["gamevers"]:
+        gamever = entry["gamever"]
+        actual = provenance[gamever]
+        for field in ("analysis_config_sha256", "gamedata_manifest_sha256"):
+            if entry[field] != getattr(actual, field):
+                raise ReleaseWorkflowError(f"generated-output manifest {field} mismatch for {gamever}")
     return manifest
 
 

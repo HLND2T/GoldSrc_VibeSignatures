@@ -21,7 +21,7 @@ from gamesymbol_snapshot_lib.errors import SnapshotConfigError
 from gamesymbol_snapshot_lib.impact_registry import ImpactRegistryError, parse_impact_registry
 from gamesymbol_snapshot_lib.materialize import materialize_baseline
 from gamesymbol_snapshot_lib.operations import load_snapshot_context, pack_snapshot
-from gamesymbol_snapshot_lib.pr_cli import GitRepository, PrCliError, materialize_from_plan
+from gamesymbol_snapshot_lib.pr_cli import GitRepository, PrCliError, build_plan, materialize_from_plan
 from gamesymbol_snapshot_lib.pr_validation import (
     CACHE_MODE_WARM,
     BoundImpactPlan,
@@ -461,6 +461,37 @@ class PrValidationGateTests(unittest.TestCase):
             with self.subTest(invalid=invalid), self.assertRaises(PullRequestRouteError):
                 parse_output_branch(invalid)
             self.assertEqual("output", classify_pr_route(head_ref=invalid, output_routing_enabled=True))
+
+    def test_source_planner_rejects_each_release_owned_namespace(self):
+        for relative in (
+            "gamesymbols/game-1.yaml",
+            "gamedata/game-1/gamedata-manifest.json",
+            "release-manifests/v20260825a.json",
+        ):
+            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                subprocess.run(["git", "init", "-q", str(root)], check=True)
+                subprocess.run(["git", "-C", str(root), "config", "user.email", "test@example.com"], check=True)
+                subprocess.run(["git", "-C", str(root), "config", "user.name", "Test"], check=True)
+                config_index = root / "configs" / "config.yaml"
+                config_index.parent.mkdir(parents=True)
+                config_index.write_text("gamevers: []\n", encoding="utf-8")
+                subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+                subprocess.run(["git", "-C", str(root), "commit", "-q", "-m", "base"], check=True)
+                base_sha = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+                output = root / relative
+                output.parent.mkdir(parents=True, exist_ok=True)
+                output.write_text("generated\n", encoding="utf-8")
+                subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+                subprocess.run(["git", "-C", str(root), "commit", "-q", "-m", "source-pr"], check=True)
+                head_sha = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+                with self.assertRaisesRegex(PullRequestRouteError, "release-owned generated-output paths"):
+                    build_plan(
+                        repo_root=root,
+                        base_ref=base_sha,
+                        head_ref=head_sha,
+                        merge_ref=head_sha,
+                    )
 
     def test_gate_truth_table(self):
         cases = (

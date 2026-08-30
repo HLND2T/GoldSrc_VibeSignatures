@@ -11,8 +11,9 @@ The GitHub Actions workflows run the guarded analysis and publication gates on e
 1. `uv sync --locked` installs the locked environment.
 2. `uv run python format_repo_files.py --check` checks formatting.
 3. `uv run python tests/run_test_suite.py unit -b --durations 30` runs the fast isolated suite.
-4. `uv run python tests/run_test_suite.py repository-contract -b --durations 30` checks the repository contract.
-5. `uv run python tests/run_test_suite.py all -b --durations 30` runs every assigned test.
+4. `uv run python tests/run_test_suite.py repository-contract -b --durations 30` checks source-owned repository contracts.
+5. `uv run python tests/run_test_suite.py all -b --durations 30` runs every source-compatible assigned test; it excludes
+   the release-owned `generated-output-contract` suite.
 
 A separate `redis-integration` job runs on `ubuntu-latest` with a `redis:7-alpine` service, sets `GSVIBE_REDIS_URL` and `GSVIBE_REDIS_PREFIX`, and runs `tests/run_test_suite.py redis-integration -b --durations 30`.
 
@@ -59,7 +60,8 @@ On the self-hosted `[self-hosted, windows, x64]` runner `build`: checks out the 
 cleans the submodule, materializes accepted bin through `release_workflow.py materialize-accepted-bin`, downloads and
 verifies the exact cache selection, restores those exact generations, runs
 `ida_analyze_bin.py -allgamever -debug -process_reporter console`, builds/guards/publishes candidates
-and gamedata per game version, runs `stage-build`, and uses the protected `HLND2T_GH_TOKEN` PAT to open one
+and gamedata per game version, runs `generated-output-contract`, then runs `stage-build`, and uses the protected
+`HLND2T_GH_TOKEN` PAT to open one
 generated-output PR (branch `gamesymbols/build/<version>`). Every build requires a successful producer.
 
 - `validate-generated-output-pr.yml` verifies the output PR (Actions bot or an `OWNER`/`MEMBER`/`COLLABORATOR`, same
