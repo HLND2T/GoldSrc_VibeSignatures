@@ -19,6 +19,9 @@ modules:
       - name: find-S_LoadSound
         expected_output:
           - S_LoadSound.{platform}.yaml
+      - name: find-Mod_LoadModel
+        expected_output:
+          - Mod_LoadModel.{platform}.yaml
       - name: find-ClientDLL_Init
         expected_output:
           - ClientDLL_Init.{platform}.yaml
@@ -86,6 +89,8 @@ modules:
       - name: Sys_Error
         category: func
       - name: S_LoadSound
+        category: func
+      - name: Mod_LoadModel
         category: func
       - name: ClientDLL_Init
         category: func
