@@ -1,0 +1,588 @@
+func_name: "Mod_LoadModel"
+func_va: "0x1d51be0"
+disasm_code: |-
+  .text:01D51BE0                 ; SvEngine Mod_LoadModel differs from public GoldSrc source: it substitutes missing assets and rejects alias models. Current binary behavior is authoritative; Windows uses tmpName[260], while Linux uses a compiler-coalesced 4 KiB workspace.
+  .text:01D51BE0                 sub     esp, 150h; SvEngine Mod_LoadModel differs from public GoldSrc source: it substitutes missing assets and rejects alias models. Current binary behavior is authoritative; Windows uses tmpName[260], while Linux uses a compiler-coalesced 4 KiB workspace.
+  .text:01D51BE6                 mov     eax, ___security_cookie
+  .text:01D51BEB                 xor     eax, esp
+  .text:01D51BED                 mov     [esp+150h+var_4], eax
+  .text:01D51BF4                 push    ebx
+  .text:01D51BF5                 push    esi
+  .text:01D51BF6                 mov     esi, [esp+158h+mod]
+  .text:01D51BFD                 push    edi
+  .text:01D51BFE                 mov     eax, [esi+40h]
+  .text:01D51C01                 test    eax, eax
+  .text:01D51C03                 jz      loc_1D51FCF
+  .text:01D51C09                 cmp     eax, 3
+  .text:01D51C0C                 jz      loc_1D51FCF
+  .text:01D51C12                 push    offset aSteam_1; "-steam"
+  .text:01D51C17                 call    COM_CheckParm
+  .text:01D51C1C                 add     esp, 4
+  .text:01D51C1F                 test    eax, eax
+  .text:01D51C21                 jz      short loc_1D51C62
+  .text:01D51C23                 cmp     byte ptr [esi], 2Fh ; '/'
+  .text:01D51C26                 jnz     short loc_1D51C62
+  .text:01D51C28                 mov     eax, esi
+  .text:01D51C2A                 lea     ebx, [ebx+0]
+  .text:01D51C30                 inc     eax
+  .text:01D51C31                 cmp     byte ptr [eax], 2Fh ; '/'
+  .text:01D51C34                 jz      short loc_1D51C30
+  .text:01D51C36                 ; Count
+  .text:01D51C36                 push    103h; Count
+  .text:01D51C3B                 ; Source
+  .text:01D51C3B                 push    eax; Source
+  .text:01D51C3C                 lea     eax, [esp+164h+tmpName]
+  .text:01D51C40                 ; Destination
+  .text:01D51C40                 push    eax; Destination
+  .text:01D51C41                 call    _strncpy
+  .text:01D51C46                 ; Count
+  .text:01D51C46                 push    3Fh ; '?'; Count
+  .text:01D51C48                 lea     eax, [esp+16Ch+tmpName]
+  .text:01D51C4C                 mov     [esp+16Ch+var_5], 0
+  .text:01D51C54                 ; Source
+  .text:01D51C54                 push    eax; Source
+  .text:01D51C55                 ; Destination
+  .text:01D51C55                 push    esi; Destination
+  .text:01D51C56                 call    _strncpy
+  .text:01D51C5B                 add     esp, 18h
+  .text:01D51C5E                 mov     byte ptr [esi+3Fh], 0
+  .text:01D51C62                 cmp     dword ptr [esi+40h], 0
+  .text:01D51C66                 jz      loc_1D51D11
+  .text:01D51C6C                 cmp     byte ptr [esi], 2Ah ; '*'
+  .text:01D51C6F                 jz      loc_1D51D11
+  .text:01D51C75                 ; path
+  .text:01D51C75                 push    esi; path
+  .text:01D51C76                 call    FS_FileExists
+  .text:01D51C7B                 add     esp, 4
+  .text:01D51C7E                 test    eax, eax
+  .text:01D51C80                 jnz     loc_1D51D11
+  .text:01D51C86                 ; c
+  .text:01D51C86                 push    2Eh ; '.'; c
+  .text:01D51C88                 ; s
+  .text:01D51C88                 push    esi; s
+  .text:01D51C89                 call    Q_strrchr
+  .text:01D51C8E                 mov     edi, eax
+  .text:01D51C90                 add     esp, 8
+  .text:01D51C93                 test    edi, edi
+  .text:01D51C95                 jz      short loc_1D51D11
+  .text:01D51C97                 ; count
+  .text:01D51C97                 push    40h ; '@'; count
+  .text:01D51C99                 lea     eax, [esp+160h+errorModelName]
+  .text:01D51C9D                 ; c
+  .text:01D51C9D                 push    0; c
+  .text:01D51C9F                 ; dest
+  .text:01D51C9F                 push    eax; dest
+  .text:01D51CA0                 call    Q_memset
+  .text:01D51CA5                 push    offset aMdl; ".mdl"
+  .text:01D51CAA                 ; s1
+  .text:01D51CAA                 push    edi; s1
+  .text:01D51CAB                 call    Q_stricmp
+  .text:01D51CB0                 add     esp, 14h
+  .text:01D51CB3                 test    eax, eax
+  .text:01D51CB5                 jnz     short loc_1D51CC0
+  .text:01D51CB7                 push    40h ; '@'
+  .text:01D51CB9                 push    offset aModelsErrorMdl; "models/error.mdl"
+  .text:01D51CBE                 jmp     short loc_1D51CD9
+  .text:01D51CC0                 push    offset aSpr; ".spr"
+  .text:01D51CC5                 ; s1
+  .text:01D51CC5                 push    edi; s1
+  .text:01D51CC6                 call    Q_stricmp
+  .text:01D51CCB                 add     esp, 8
+  .text:01D51CCE                 test    eax, eax
+  .text:01D51CD0                 jnz     short loc_1D51CE6
+  .text:01D51CD2                 ; count
+  .text:01D51CD2                 push    40h ; '@'; count
+  .text:01D51CD4                 push    offset aSpritesErrorSp; "sprites/error.spr"
+  .text:01D51CD9                 lea     eax, [esp+164h+errorModelName]
+  .text:01D51CDD                 ; dest
+  .text:01D51CDD                 push    eax; dest
+  .text:01D51CDE                 call    Q_strncpy
+  .text:01D51CE3                 add     esp, 0Ch
+  .text:01D51CE6                 cmp     [esp+15Ch+errorModelName], 0
+  .text:01D51CEB                 jz      short loc_1D51D11
+  .text:01D51CED                 lea     eax, [esp+15Ch+errorModelName]
+  .text:01D51CF1                 push    eax
+  .text:01D51CF2                 ; ArgList
+  .text:01D51CF2                 push    esi; ArgList
+  .text:01D51CF3                 push    offset aErrorSNotFound; "Error: '%s' not found, swapping it for "...
+  .text:01D51CF8                 call    Con_Printf
+  .text:01D51CFD                 ; count
+  .text:01D51CFD                 push    40h ; '@'; count
+  .text:01D51CFF                 lea     eax, [esp+16Ch+errorModelName]
+  .text:01D51D03                 ; src
+  .text:01D51D03                 push    eax; src
+  .text:01D51D04                 ; dest
+  .text:01D51D04                 push    esi; dest
+  .text:01D51D05                 call    Q_strncpy
+  .text:01D51D0A                 add     esp, 18h
+  .text:01D51D0D                 mov     byte ptr [esi+3Fh], 0
+  .text:01D51D11                 push    offset pOptions; "rb"
+  .text:01D51D16                 ; pFileName
+  .text:01D51D16                 push    esi; pFileName
+  .text:01D51D17                 call    FS_Open
+  .text:01D51D1C                 mov     edi, eax
+  .text:01D51D1E                 add     esp, 8
+  .text:01D51D21                 test    edi, edi
+  .text:01D51D23                 jnz     short loc_1D51D73
+  .text:01D51D25                 cmp     [esp+15Ch+crash], eax
+  .text:01D51D2C                 jnz     short loc_1D51D3D
+  .text:01D51D2E                 fld1
+  .text:01D51D30                 fcomp   developer_value
+  .text:01D51D36                 fnstsw  ax
+  .text:01D51D38                 test    ah, 5
+  .text:01D51D3B                 jp      short loc_1D51D4B
+  .text:01D51D3D                 ; ArgList
+  .text:01D51D3D                 push    esi; ArgList
+  .text:01D51D3E                 push    offset aModLoadmodelCo; "Mod_LoadModel: Could not load '%s': Fil"...
+  .text:01D51D43                 call    Sys_Error
+  .text:01D51D48                 add     esp, 8
+  .text:01D51D4B                 ; ArgList
+  .text:01D51D4B                 push    esi; ArgList
+  .text:01D51D4C                 push    offset aErrorCouldNotL; "Error: Could not load '%s': File not fo"...
+  .text:01D51D51                 call    Con_Printf
+  .text:01D51D56                 add     esp, 8
+  .text:01D51D59                 xor     eax, eax
+  .text:01D51D5B                 pop     edi
+  .text:01D51D5C                 pop     esi
+  .text:01D51D5D                 pop     ebx
+  .text:01D51D5E                 mov     ecx, [esp+150h+var_4]
+  .text:01D51D65                 ; StackCookie
+  .text:01D51D65                 xor     ecx, esp; StackCookie
+  .text:01D51D67                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:01D51D6C                 add     esp, 150h
+  .text:01D51D72                 retn
+  .text:01D51D73                 lea     eax, [esp+15Ch+length]
+  .text:01D51D77                 ; outBufferSize
+  .text:01D51D77                 push    eax; outBufferSize
+  .text:01D51D78                 ; file
+  .text:01D51D78                 push    edi; file
+  .text:01D51D79                 call    FS_GetReadBuffer
+  .text:01D51D7E                 mov     ebx, eax
+  .text:01D51D80                 add     esp, 8
+  .text:01D51D83                 test    ebx, ebx
+  .text:01D51D85                 jz      short loc_1D51DA8
+  .text:01D51D87                 ; int
+  .text:01D51D87                 push    dword ptr [ebx]; int
+  .text:01D51D89                 mov     eax, LittleLong
+  .text:01D51D8E                 call    eax ; LittleLong
+  .text:01D51D90                 add     esp, 4
+  .text:01D51D93                 cmp     eax, 54534449h
+  .text:01D51D98                 jnz     loc_1D51E25
+  .text:01D51D9E                 ; buffer
+  .text:01D51D9E                 push    ebx; buffer
+  .text:01D51D9F                 ; file
+  .text:01D51D9F                 push    edi; file
+  .text:01D51DA0                 call    FS_ReleaseReadBuffer
+  .text:01D51DA5                 add     esp, 8
+  .text:01D51DA8                 ; file
+  .text:01D51DA8                 push    edi; file
+  .text:01D51DA9                 call    FS_Size
+  .text:01D51DAE                 mov     [esp+160h+length], eax
+  .text:01D51DB2                 inc     eax
+  .text:01D51DB3                 ; size
+  .text:01D51DB3                 push    eax; size
+  .text:01D51DB4                 call    Hunk_TempAlloc
+  .text:01D51DB9                 ; file
+  .text:01D51DB9                 push    edi; file
+  .text:01D51DBA                 ; count
+  .text:01D51DBA                 push    1; count
+  .text:01D51DBC                 ; size
+  .text:01D51DBC                 push    [esp+16Ch+length]; size
+  .text:01D51DC0                 mov     ebx, eax
+  .text:01D51DC2                 ; output
+  .text:01D51DC2                 push    ebx; output
+  .text:01D51DC3                 call    FS_Read
+  .text:01D51DC8                 ; file
+  .text:01D51DC8                 push    edi; file
+  .text:01D51DC9                 call    FS_Close
+  .text:01D51DCE                 add     esp, 1Ch
+  .text:01D51DD1                 xor     edi, edi
+  .text:01D51DD3                 test    ebx, ebx
+  .text:01D51DD5                 jnz     short loc_1D51E25
+  .text:01D51DD7                 cmp     [esp+15Ch+crash], edi
+  .text:01D51DDE                 jnz     short loc_1D51DEF
+  .text:01D51DE0                 fld1
+  .text:01D51DE2                 fcomp   developer_value
+  .text:01D51DE8                 fnstsw  ax
+  .text:01D51DEA                 test    ah, 5
+  .text:01D51DED                 jp      short loc_1D51DFD
+  .text:01D51DEF                 ; ArgList
+  .text:01D51DEF                 push    esi; ArgList
+  .text:01D51DF0                 push    offset aModLoadmodelCo_0; "Mod_LoadModel: Could not load '%s': Rea"...
+  .text:01D51DF5                 call    Sys_Error
+  .text:01D51DFA                 add     esp, 8
+  .text:01D51DFD                 ; ArgList
+  .text:01D51DFD                 push    esi; ArgList
+  .text:01D51DFE                 push    offset aErrorCouldNotL_0; "Error: Could not load '%s': Read error "...
+  .text:01D51E03                 call    Con_Printf
+  .text:01D51E08                 add     esp, 8
+  .text:01D51E0B                 xor     eax, eax
+  .text:01D51E0D                 pop     edi
+  .text:01D51E0E                 pop     esi
+  .text:01D51E0F                 pop     ebx
+  .text:01D51E10                 mov     ecx, [esp+150h+var_4]
+  .text:01D51E17                 ; StackCookie
+  .text:01D51E17                 xor     ecx, esp; StackCookie
+  .text:01D51E19                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:01D51E1E                 add     esp, 150h
+  .text:01D51E24                 retn
+  .text:01D51E25                 cmp     [esp+15Ch+trackCRC], 0
+  .text:01D51E2D                 jz      loc_1D51EB9
+  .text:01D51E33                 mov     ecx, esi
+  .text:01D51E35                 mov     eax, 5397829Dh
+  .text:01D51E3A                 sub     ecx, offset mod_known
+  .text:01D51E40                 imul    ecx
+  .text:01D51E42                 push    ebp
+  .text:01D51E43                 sar     edx, 7
+  .text:01D51E46                 mov     eax, edx
+  .text:01D51E48                 shr     eax, 1Fh
+  .text:01D51E4B                 add     eax, edx
+  .text:01D51E4D                 lea     ebp, [eax+eax*2]
+  .text:01D51E50                 cmp     dword ptr mod_known_info.shouldCRC[ebp*4], 0
+  .text:01D51E58                 jz      short loc_1D51EB8
+  .text:01D51E5A                 lea     eax, [esp+160h+currentCRC]
+  .text:01D51E5E                 ; crc
+  .text:01D51E5E                 push    eax; crc
+  .text:01D51E5F                 call    CRC32_Init
+  .text:01D51E64                 ; length
+  .text:01D51E64                 push    [esp+164h+length]; length
+  .text:01D51E68                 lea     eax, [esp+168h+currentCRC]
+  .text:01D51E6C                 ; buffer
+  .text:01D51E6C                 push    ebx; buffer
+  .text:01D51E6D                 ; crc
+  .text:01D51E6D                 push    eax; crc
+  .text:01D51E6E                 call    CRC32_ProcessBuffer
+  .text:01D51E73                 ; crc
+  .text:01D51E73                 push    [esp+170h+currentCRC]; crc
+  .text:01D51E77                 call    CRC32_Final
+  .text:01D51E7C                 add     esp, 14h
+  .text:01D51E7F                 mov     [esp+160h+currentCRC], eax
+  .text:01D51E83                 cmp     mod_known_info.firstCRCDone[ebp*4], 0
+  .text:01D51E8B                 jnz     short loc_1D51EA1
+  .text:01D51E8D                 mov     mod_known_info.firstCRCDone[ebp*4], 1
+  .text:01D51E98                 mov     mod_known_info.initialCRC[ebp*4], eax
+  .text:01D51E9F                 jmp     short loc_1D51EB8
+  .text:01D51EA1                 cmp     eax, mod_known_info.initialCRC[ebp*4]
+  .text:01D51EA8                 jz      short loc_1D51EB8
+  .text:01D51EAA                 ; ArgList
+  .text:01D51EAA                 push    esi; ArgList
+  .text:01D51EAB                 push    offset aWarningFileSHa; "Warning: File '%s' has changed since st"...
+  .text:01D51EB0                 call    Con_Printf
+  .text:01D51EB5                 add     esp, 8
+  .text:01D51EB8                 pop     ebp
+  .text:01D51EB9                 fld1
+  .text:01D51EBB                 fcomp   developer_value
+  .text:01D51EC1                 fnstsw  ax
+  .text:01D51EC3                 test    ah, 5
+  .text:01D51EC6                 jp      short loc_1D51ED6
+  .text:01D51EC8                 ; ArgList
+  .text:01D51EC8                 push    esi; ArgList
+  .text:01D51EC9                 push    offset aLoadingS; "Loading '%s'\n"
+  .text:01D51ECE                 call    Con_DPrintf
+  .text:01D51ED3                 add     esp, 8
+  .text:01D51ED6                 ; output
+  .text:01D51ED6                 push    offset loadname; output
+  .text:01D51EDB                 ; input
+  .text:01D51EDB                 push    esi; input
+  .text:01D51EDC                 call    COM_FileBase
+  .text:01D51EE1                 mov     dword ptr loadmodel, esi
+  .text:01D51EE7                 mov     dword ptr [esi+40h], 0
+  .text:01D51EEE                 ; int
+  .text:01D51EEE                 push    dword ptr [ebx]; int
+  .text:01D51EF0                 mov     eax, LittleLong
+  .text:01D51EF5                 call    eax ; LittleLong
+  .text:01D51EF7                 add     esp, 0Ch
+  .text:01D51EFA                 cmp     eax, 4F504449h
+  .text:01D51EFF                 jz      loc_1D51FE9
+  .text:01D51F05                 cmp     eax, 50534449h
+  .text:01D51F0A                 jz      loc_1D51FB1
+  .text:01D51F10                 cmp     eax, 54534449h
+  .text:01D51F15                 jz      loc_1D51FA8
+  .text:01D51F1B                 ; c
+  .text:01D51F1B                 push    2Eh ; '.'; c
+  .text:01D51F1D                 ; s
+  .text:01D51F1D                 push    esi; s
+  .text:01D51F1E                 call    Q_strrchr
+  .text:01D51F23                 add     esp, 8
+  .text:01D51F26                 test    eax, eax
+  .text:01D51F28                 jz      short loc_1D51F45
+  .text:01D51F2A                 push    offset aBsp; ".bsp"
+  .text:01D51F2F                 ; s1
+  .text:01D51F2F                 push    eax; s1
+  .text:01D51F30                 call    Q_stricmp
+  .text:01D51F35                 add     esp, 8
+  .text:01D51F38                 test    eax, eax
+  .text:01D51F3A                 jnz     short loc_1D51F45
+  .text:01D51F3C                 ; buffer
+  .text:01D51F3C                 push    ebx; buffer
+  .text:01D51F3D                 ; mod
+  .text:01D51F3D                 push    esi; mod
+  .text:01D51F3E                 call    Mod_LoadBrushModel
+  .text:01D51F43                 jmp     short loc_1D51FB8
+  .text:01D51F45                 test    edi, edi
+  .text:01D51F47                 jz      short loc_1D51F59
+  .text:01D51F49                 ; buffer
+  .text:01D51F49                 push    ebx; buffer
+  .text:01D51F4A                 ; file
+  .text:01D51F4A                 push    edi; file
+  .text:01D51F4B                 call    FS_ReleaseReadBuffer
+  .text:01D51F50                 ; file
+  .text:01D51F50                 push    edi; file
+  .text:01D51F51                 call    FS_Close
+  .text:01D51F56                 add     esp, 0Ch
+  .text:01D51F59                 cmp     [esp+15Ch+crash], 0
+  .text:01D51F61                 jnz     short loc_1D51F72
+  .text:01D51F63                 fld1
+  .text:01D51F65                 fcomp   developer_value
+  .text:01D51F6B                 fnstsw  ax
+  .text:01D51F6D                 test    ah, 5
+  .text:01D51F70                 jp      short loc_1D51F80
+  .text:01D51F72                 ; ArgList
+  .text:01D51F72                 push    esi; ArgList
+  .text:01D51F73                 push    offset aModLoadmodelCo_1; "Mod_LoadModel: Could not load '%s'. Unk"...
+  .text:01D51F78                 call    Sys_Error
+  .text:01D51F7D                 add     esp, 8
+  .text:01D51F80                 ; ArgList
+  .text:01D51F80                 push    esi; ArgList
+  .text:01D51F81                 push    offset aErrorCouldNotL_1; "Error: Could not load '%s'. Unknown fil"...
+  .text:01D51F86                 call    Con_Printf
+  .text:01D51F8B                 add     esp, 8
+  .text:01D51F8E                 xor     eax, eax
+  .text:01D51F90                 pop     edi
+  .text:01D51F91                 pop     esi
+  .text:01D51F92                 pop     ebx
+  .text:01D51F93                 mov     ecx, [esp+150h+var_4]
+  .text:01D51F9A                 ; StackCookie
+  .text:01D51F9A                 xor     ecx, esp; StackCookie
+  .text:01D51F9C                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:01D51FA1                 add     esp, 150h
+  .text:01D51FA7                 retn
+  .text:01D51FA8                 ; buffer
+  .text:01D51FA8                 push    ebx; buffer
+  .text:01D51FA9                 ; mod
+  .text:01D51FA9                 push    esi; mod
+  .text:01D51FAA                 call    Mod_LoadStudioModel
+  .text:01D51FAF                 jmp     short loc_1D51FB8
+  .text:01D51FB1                 ; buffer
+  .text:01D51FB1                 push    ebx; buffer
+  .text:01D51FB2                 ; mod
+  .text:01D51FB2                 push    esi; mod
+  .text:01D51FB3                 call    Mod_LoadSpriteModel
+  .text:01D51FB8                 add     esp, 8
+  .text:01D51FBB                 test    edi, edi
+  .text:01D51FBD                 jz      short loc_1D51FCF
+  .text:01D51FBF                 ; buffer
+  .text:01D51FBF                 push    ebx; buffer
+  .text:01D51FC0                 ; file
+  .text:01D51FC0                 push    edi; file
+  .text:01D51FC1                 call    FS_ReleaseReadBuffer
+  .text:01D51FC6                 ; file
+  .text:01D51FC6                 push    edi; file
+  .text:01D51FC7                 call    FS_Close
+  .text:01D51FCC                 add     esp, 0Ch
+  .text:01D51FCF                 pop     edi
+  .text:01D51FD0                 mov     eax, esi
+  .text:01D51FD2                 pop     esi
+  .text:01D51FD3                 pop     ebx
+  .text:01D51FD4                 mov     ecx, [esp+150h+var_4]
+  .text:01D51FDB                 ; StackCookie
+  .text:01D51FDB                 xor     ecx, esp; StackCookie
+  .text:01D51FDD                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:01D51FE2                 add     esp, 150h
+  .text:01D51FE8                 retn
+  .text:01D51FE9                 test    edi, edi
+  .text:01D51FEB                 jz      short loc_1D51FFD
+  .text:01D51FED                 ; buffer
+  .text:01D51FED                 push    ebx; buffer
+  .text:01D51FEE                 ; file
+  .text:01D51FEE                 push    edi; file
+  .text:01D51FEF                 call    FS_ReleaseReadBuffer
+  .text:01D51FF4                 ; file
+  .text:01D51FF4                 push    edi; file
+  .text:01D51FF5                 call    FS_Close
+  .text:01D51FFA                 add     esp, 0Ch
+  .text:01D51FFD                 cmp     [esp+15Ch+crash], 0
+  .text:01D52005                 jnz     short loc_1D52016
+  .text:01D52007                 fld1
+  .text:01D52009                 fcomp   developer_value
+  .text:01D5200F                 fnstsw  ax
+  .text:01D52011                 test    ah, 5
+  .text:01D52014                 jp      short loc_1D52024
+  .text:01D52016                 ; ArgList
+  .text:01D52016                 push    esi; ArgList
+  .text:01D52017                 push    offset aModLoadmodelCo_2; "Mod_LoadModel: Could not load '%s'. Ali"...
+  .text:01D5201C                 call    Sys_Error
+  .text:01D52021                 add     esp, 8
+  .text:01D52024                 ; ArgList
+  .text:01D52024                 push    esi; ArgList
+  .text:01D52025                 push    offset aErrorCouldNotL_2; "Error: Could not load '%s'. Alias model"...
+  .text:01D5202A                 call    Con_Printf
+  .text:01D5202F                 mov     ecx, [esp+164h+var_4]
+  .text:01D52036                 add     esp, 8
+  .text:01D52039                 xor     eax, eax
+  .text:01D5203B                 pop     edi
+  .text:01D5203C                 pop     esi
+  .text:01D5203D                 pop     ebx
+  .text:01D5203E                 ; StackCookie
+  .text:01D5203E                 xor     ecx, esp; StackCookie
+  .text:01D52040                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:01D52045                 add     esp, 150h
+  .text:01D5204B                 retn
+procedure: |-
+  // SvEngine Mod_LoadModel differs from public GoldSrc source: it substitutes missing assets and rejects alias models. Current binary behavior is authoritative; Windows uses tmpName[260], while Linux uses a compiler-coalesced 4 KiB workspace.
+  model_t *__cdecl Mod_LoadModel(model_t *mod, qboolean crash, qboolean trackCRC)
+  {
+    qboolean needload; // eax
+    model_t *v4; // eax
+    char *v5; // edi
+    FileHandle_t hFile; // edi
+    unsigned __int8 *ReadBuffer; // eax
+    unsigned int *buf; // ebx
+    int v10; // eax
+    int v11; // ebp
+    CRC32_t v12; // eax
+    int v13; // eax
+    char *v14; // eax
+    signed __int32 length; // [esp+Ch] [ebp-150h] BYREF
+    CRC32_t currentCRC; // [esp+10h] [ebp-14Ch] BYREF
+    char errorModelName[64]; // [esp+14h] [ebp-148h] BYREF
+    char tmpName[260]; // [esp+54h] [ebp-108h] BYREF
+  
+    needload = mod->needload;
+    if ( !needload || needload == 3 )
+      return mod;
+    if ( COM_CheckParm("-steam") && mod->name[0] == 47 )
+    {
+      v4 = mod;
+      do
+        v4 = (model_t *)((char *)v4 + 1);
+      while ( v4->name[0] == 47 );
+      strncpy(tmpName, v4->name, 0x103u);
+      tmpName[259] = 0;
+      strncpy(mod->name, tmpName, 0x3Fu);
+      mod->name[63] = 0;
+    }
+    if ( mod->needload )
+    {
+      if ( mod->name[0] != 42 && !FS_FileExists(mod->name) )
+      {
+        v5 = Q_strrchr(mod->name, 46);
+        if ( v5 )
+        {
+          Q_memset(errorModelName, 0, 0x40u);
+          if ( Q_stricmp(v5, ".mdl") )
+          {
+            if ( !Q_stricmp(v5, ".spr") )
+              Q_strncpy(errorModelName, "sprites/error.spr", 0x40u);
+          }
+          else
+          {
+            Q_strncpy(errorModelName, "models/error.mdl", 0x40u);
+          }
+          if ( errorModelName[0] )
+          {
+            Con_Printf("Error: '%s' not found, swapping it for '%s'.\n", mod->name, errorModelName);
+            Q_strncpy(mod->name, errorModelName, 0x40u);
+            mod->name[63] = 0;
+          }
+        }
+      }
+    }
+    hFile = FS_Open(mod->name, "rb");
+    if ( !hFile )
+    {
+      if ( crash || developer_value > 1.0 )
+        Sys_Error("Mod_LoadModel: Could not load '%s': File not found", mod->name);
+      Con_Printf("Error: Could not load '%s': File not found\n", mod->name);
+      return nullptr;
+    }
+    ReadBuffer = FS_GetReadBuffer(hFile, &length);
+    buf = (unsigned int *)ReadBuffer;
+    if ( ReadBuffer )
+    {
+      if ( LittleLong(*(_DWORD *)ReadBuffer) != 1414743113 )
+        goto LABEL_31;
+      FS_ReleaseReadBuffer(hFile, (unsigned __int8 *)buf);
+    }
+    length = FS_Size(hFile);
+    buf = (unsigned int *)Hunk_TempAlloc(length + 1);
+    FS_Read(buf, length, 1, hFile);
+    FS_Close(hFile);
+    hFile = nullptr;
+    if ( !buf )
+    {
+      if ( crash || developer_value > 1.0 )
+        Sys_Error("Mod_LoadModel: Could not load '%s': Read error or out of memory", mod->name);
+      Con_Printf("Error: Could not load '%s': Read error or out of memory\n", mod->name);
+      return nullptr;
+    }
+  LABEL_31:
+    if ( trackCRC )
+    {
+      v10 = mod - &mod_known;
+      v11 = 3 * v10;
+      if ( *(&mod_known_info.shouldCRC + 3 * v10) )
+      {
+        CRC32_Init(&currentCRC);
+        CRC32_ProcessBuffer(&currentCRC, buf, length);
+        v12 = CRC32_Final(currentCRC);
+        currentCRC = v12;
+        if ( *(&mod_known_info.firstCRCDone + v11) )
+        {
+          if ( v12 != *(&mod_known_info.initialCRC + v11) )
+            Con_Printf("Warning: File '%s' has changed since starting the engine.\n", mod->name);
+        }
+        else
+        {
+          *(&mod_known_info.firstCRCDone + v11) = 1;
+          *(&mod_known_info.initialCRC + v11) = v12;
+        }
+      }
+    }
+    if ( developer_value > 1.0 )
+      Con_DPrintf("Loading '%s'\n", mod->name);
+    COM_FileBase(mod->name, loadname);
+    loadmodel = mod;
+    mod->needload = 0;
+    v13 = LittleLong(*buf);
+    switch ( v13 )
+    {
+      case 1330660425:
+        if ( hFile )
+        {
+          FS_ReleaseReadBuffer(hFile, (unsigned __int8 *)buf);
+          FS_Close(hFile);
+        }
+        if ( crash || developer_value > 1.0 )
+          Sys_Error("Mod_LoadModel: Could not load '%s'. Alias models are not supported!", mod->name);
+        Con_Printf("Error: Could not load '%s'. Alias models are not supported!\n", mod->name);
+        return nullptr;
+      case 1347634249:
+        Mod_LoadSpriteModel(mod, buf);
+  LABEL_53:
+        if ( hFile )
+        {
+          FS_ReleaseReadBuffer(hFile, (unsigned __int8 *)buf);
+          FS_Close(hFile);
+        }
+        return mod;
+      case 1414743113:
+        Mod_LoadStudioModel(mod, buf);
+        goto LABEL_53;
+    }
+    v14 = Q_strrchr(mod->name, 46);
+    if ( v14 && !Q_stricmp(v14, ".bsp") )
+    {
+      Mod_LoadBrushModel(mod, buf);
+      goto LABEL_53;
+    }
+    if ( hFile )
+    {
+      FS_ReleaseReadBuffer(hFile, (unsigned __int8 *)buf);
+      FS_Close(hFile);
+    }
+    if ( crash || developer_value > 1.0 )
+      Sys_Error("Mod_LoadModel: Could not load '%s'. Unknown file format!", mod->name);
+    Con_Printf("Error: Could not load '%s'. Unknown file format!\n", mod->name);
+    return nullptr;
+  }

@@ -1,0 +1,398 @@
+func_name: "Mod_LoadModel"
+func_va: "0x1565f0"
+disasm_code: |-
+  .text:001565F0                 push    ebp
+  .text:001565F1                 mov     ebp, trackCRC
+  .text:001565F3                 push    edi
+  .text:001565F4                 push    esi
+  .text:001565F5                 push    ebx
+  .text:001565F6                 mov     ebx, mod
+  .text:001565F8                 sub     esp, 103Ch
+  .text:001565FE                 mov     [esp+104Ch+parm], offset aSteam; "-steam"
+  .text:00156605                 mov     mod, large gs:14h
+  .text:0015660B                 mov     [esp+104Ch+stackCanary], mod
+  .text:00156612                 xor     mod, mod
+  .text:00156614                 mov     [esp+104Ch+crash], crash_0
+  .text:00156618                 call    COM_CheckParm
+  .text:0015661D                 test    eax, eax
+  .text:0015661F                 jz      short loc_15662A
+  .text:00156621                 cmp     byte ptr [mod], 2Fh ; '/'
+  .text:00156624                 jz      loc_156860
+  .text:0015662A                 mov     edi, offset aRb; "rb"
+  .text:0015662F                 ; pOptions
+  .text:0015662F                 mov     [esp+104Ch+pOptions], edi; pOptions
+  .text:00156633                 ; pFileName
+  .text:00156633                 mov     [esp+104Ch+parm], mod; pFileName
+  .text:00156636                 call    FS_Open
+  .text:0015663B                 test    eax, eax
+  .text:0015663D                 mov     esi, eax
+  .text:0015663F                 jz      loc_1567C0
+  .text:00156645                 lea     hFile, [esp+104Ch+length]
+  .text:00156649                 ; outBufSize
+  .text:00156649                 mov     [esp+104Ch+pOptions], eax; outBufSize
+  .text:0015664D                 ; file
+  .text:0015664D                 mov     [esp+104Ch+parm], hFile; file
+  .text:00156650                 call    FS_GetReadBuffer
+  .text:00156655                 test    eax, eax
+  .text:00156657                 mov     edi, eax
+  .text:00156659                 jz      loc_156774
+  .text:0015665F                 mov     buf, [buf]
+  .text:00156661                 ; int32
+  .text:00156661                 mov     [esp+104Ch+parm], eax; int32
+  .text:00156664                 call    ds:LittleLong
+  .text:0015666A                 cmp     eax, IDSTUDIOHEADER
+  .text:0015666F                 jz      loc_156768
+  .text:00156675                 test    trackCRC, trackCRC
+  .text:00156677                 jz      short loc_1566A3
+  .text:00156679                 mov     eax, mod
+  .text:0015667B                 sub     eax, offset mod_known
+  .text:00156680                 sar     eax, 3
+  .text:00156683                 imul    eax, 1A1F58D1h
+  .text:00156689                 lea     eax, [eax+eax*2]
+  .text:0015668C                 shl     eax, 2
+  .text:0015668F                 mov     ecx, dword ptr ds:mod_known_info.shouldCRC[eax]
+  .text:00156695                 ; DWARF source p = &mod_known_info[mod - mod_known]. GCC strength-reduced division by sizeof(model_t)==392 using >>3 and multiplier 0x397829CC; the decompiler's 964176332 expression is this exact array index.
+  .text:00156695                 lea     trackCRC, mod_known_info.shouldCRC[eax]; DWARF source p = &mod_known_info[mod - mod_known]. GCC strength-reduced division by sizeof(model_t)==392 using >>3 and multiplier 0x397829CC; the decompiler's 964176332 expression is this exact array index.
+  .text:0015669B                 test    ecx, ecx
+  .text:0015669D                 jnz     loc_1568C0
+  .text:001566A3                 fld     developer.value
+  .text:001566A9                 fld1
+  .text:001566AB                 fxch    st(1)
+  .text:001566AD                 fucomip st, st(1)
+  .text:001566AF                 fstp    st
+  .text:001566B1                 jbe     short loc_1566C3
+  .text:001566B3                 mov     [esp+104Ch+pOptions], mod
+  .text:001566B7                 ; fmt
+  .text:001566B7                 mov     [esp+104Ch+parm], (offset aFailedLoadingS+7); fmt
+  .text:001566BE                 call    Con_DPrintf
+  .text:001566C3                 mov     edx, offset loadname
+  .text:001566C8                 ; out
+  .text:001566C8                 mov     [esp+104Ch+pOptions], edx; out
+  .text:001566CC                 ; in
+  .text:001566CC                 mov     [esp+104Ch+parm], mod; in
+  .text:001566CF                 call    COM_FileBase
+  .text:001566D4                 mov     ds:loadmodel, mod
+  .text:001566DA                 mov     dword ptr [mod+40h], 0
+  .text:001566E1                 mov     eax, [buf]
+  .text:001566E3                 ; int32
+  .text:001566E3                 mov     [esp+104Ch+parm], eax; int32
+  .text:001566E6                 call    ds:LittleLong
+  .text:001566EC                 cmp     eax, 50534449h
+  .text:001566F1                 jz      loc_156848
+  .text:001566F7                 cmp     eax, IDSTUDIOHEADER
+  .text:001566FC                 jz      loc_156830
+  .text:00156702                 cmp     eax, 4F504449h
+  .text:00156707                 jz      loc_156810
+  .text:0015670D                 ; levelName
+  .text:0015670D                 mov     [esp+104Ch+parm], offset loadname; levelName
+  .text:00156714                 call    DT_LoadDetailMapFile
+  .text:00156719                 ; buffer
+  .text:00156719                 mov     [esp+104Ch+pOptions], buf; buffer
+  .text:0015671D                 ; mod
+  .text:0015671D                 mov     [esp+104Ch+parm], mod; mod
+  .text:00156720                 call    Mod_LoadBrushModel
+  .text:00156725                 test    hFile, hFile
+  .text:00156727                 jz      loc_156824
+  .text:0015672D                 ; buffer
+  .text:0015672D                 mov     [esp+104Ch+pOptions], buf; buffer
+  .text:00156731                 ; file
+  .text:00156731                 mov     [esp+104Ch+parm], hFile; file
+  .text:00156734                 call    FS_ReleaseReadBuffer
+  .text:00156739                 ; file
+  .text:00156739                 mov     [esp+104Ch+parm], hFile; file
+  .text:0015673C                 call    FS_Close
+  .text:00156741                 mov     eax, mod
+  .text:00156743                 mov     ecx, [esp+104Ch+stackCanary]
+  .text:0015674A                 xor     ecx, large gs:14h
+  .text:00156751                 jnz     loc_15699B
+  .text:00156757                 add     esp, 103Ch
+  .text:0015675D                 pop     mod
+  .text:0015675E                 pop     esi
+  .text:0015675F                 pop     edi
+  .text:00156760                 pop     ebp
+  .text:00156761                 retn
+  .text:00156768                 ; buffer
+  .text:00156768                 mov     [esp+104Ch+pOptions], buf; buffer
+  .text:0015676C                 ; file
+  .text:0015676C                 mov     [esp+104Ch+parm], hFile; file
+  .text:0015676F                 call    FS_ReleaseReadBuffer
+  .text:00156774                 ; file
+  .text:00156774                 mov     [esp+104Ch+parm], hFile; file
+  .text:00156777                 call    FS_Size
+  .text:0015677C                 mov     [esp+104Ch+length], eax
+  .text:00156780                 inc     eax
+  .text:00156781                 ; size
+  .text:00156781                 mov     [esp+104Ch+parm], eax; size
+  .text:00156784                 call    Hunk_TempAlloc
+  .text:00156789                 ; file
+  .text:00156789                 mov     [esp+104Ch+file], hFile; file
+  .text:0015678D                 mov     edi, eax
+  .text:0015678F                 mov     buf, 1
+  .text:00156794                 ; count
+  .text:00156794                 mov     [esp+104Ch+count], eax; count
+  .text:00156798                 mov     eax, [esp+104Ch+length]
+  .text:0015679C                 ; pOutput
+  .text:0015679C                 mov     [esp+104Ch+parm], buf; pOutput
+  .text:0015679F                 ; size
+  .text:0015679F                 mov     [esp+104Ch+pOptions], eax; size
+  .text:001567A3                 call    FS_Read
+  .text:001567A8                 ; file
+  .text:001567A8                 mov     [esp+104Ch+parm], hFile; file
+  .text:001567AB                 call    FS_Close
+  .text:001567B0                 test    buf, buf
+  .text:001567B2                 jz      short loc_1567C0
+  .text:001567B4                 xor     esi, esi
+  .text:001567B6                 jmp     loc_156675
+  .text:001567C0                 mov     esi, [esp+104Ch+crash]
+  .text:001567C4                 test    esi, esi
+  .text:001567C6                 jnz     short loc_1567E0
+  .text:001567C8                 ; Binary-authoritative revision difference: missing-model reporting uses developer.value > 2.0; current public source uses > 1.0.
+  .text:001567C8                 fld     developer.value; Binary-authoritative revision difference: missing-model reporting uses developer.value > 2.0; current public source uses > 1.0.
+  .text:001567CE                 fld     ds:flt_24A974
+  .text:001567D4                 fxch    st(1)
+  .text:001567D6                 fucomip st, st(1)
+  .text:001567D8                 fstp    st
+  .text:001567DA                 jbe     short loc_1567F0
+  .text:001567DC                 lea     esi, [esi+0]
+  .text:001567E0                 mov     [esp+104Ch+pOptions], mod
+  .text:001567E4                 mov     [esp+104Ch+parm], offset aModNumfornameS; "Mod_NumForName: %s not found"
+  .text:001567EB                 call    Sys_Error
+  .text:001567F0                 mov     [esp+104Ch+pOptions], mod
+  .text:001567F4                 mov     [esp+104Ch+parm], offset aErrorCouldNotL; "Error: could not load file %s\n"
+  .text:001567FB                 call    Con_Printf
+  .text:00156800                 xor     eax, eax
+  .text:00156802                 jmp     loc_156743
+  .text:00156810                 ; buffer
+  .text:00156810                 mov     [esp+104Ch+pOptions], buf; buffer
+  .text:00156814                 ; mod
+  .text:00156814                 mov     [esp+104Ch+parm], mod; mod
+  .text:00156817                 call    Mod_LoadAliasModel
+  .text:0015681C                 test    hFile, hFile
+  .text:0015681E                 jnz     loc_15672D
+  .text:00156824                 mov     eax, mod
+  .text:00156826                 jmp     loc_156743
+  .text:00156830                 ; buffer
+  .text:00156830                 mov     [esp+104Ch+pOptions], buf; buffer
+  .text:00156834                 ; mod
+  .text:00156834                 mov     [esp+104Ch+parm], mod; mod
+  .text:00156837                 call    Mod_LoadStudioModel
+  .text:0015683C                 jmp     loc_156725
+  .text:00156848                 ; buffer
+  .text:00156848                 mov     [esp+104Ch+pOptions], buf; buffer
+  .text:0015684C                 ; mod
+  .text:0015684C                 mov     [esp+104Ch+parm], mod; mod
+  .text:0015684F                 call    Mod_LoadSpriteModel
+  .text:00156854                 jmp     loc_156725
+  .text:00156860                 mov     eax, p
+  .text:00156862                 lea     esi, [esi+0]
+  .text:00156869                 lea     edi, [edi+0]
+  .text:00156870                 inc     p
+  .text:00156871                 cmp     byte ptr [p], 2Fh ; '/'
+  .text:00156874                 jz      short loc_156870
+  .text:00156876                 ; inlined strncpy wrapper #1: begin (DWARF GL_MODEL.C:397; interleaved ranges 0x156876-0x15687B and 0x156880-0x156894).
+  .text:00156876                 mov     edx, 0FFFh; inlined strncpy wrapper #1: begin (DWARF GL_MODEL.C:397; interleaved ranges 0x156876-0x15687B and 0x156880-0x156894).
+  .text:0015687B                 ; inlined strncpy wrapper #2: begin (DWARF GL_MODEL.C:400; interleaved ranges 0x15687B-0x156880, 0x156896-0x1568A1, 0x1568A8-0x1568AD).
+  .text:0015687B                 mov     edi, 3Fh ; '?'; inlined strncpy wrapper #2: begin (DWARF GL_MODEL.C:400; interleaved ranges 0x15687B-0x156880, 0x156896-0x1568A1, 0x1568A8-0x1568AD).
+  .text:00156880                 lea     esi, [esp+104Ch+tmpName]
+  .text:00156884                 ; n
+  .text:00156884                 mov     [esp+104Ch+count], edx; n
+  .text:00156888                 ; src
+  .text:00156888                 mov     [esp+104Ch+pOptions], p; src
+  .text:0015688C                 ; dest
+  .text:0015688C                 mov     [esp+104Ch+parm], esi; dest
+  .text:0015688F                 ; inlined strncpy wrapper #1 emits the actual strncpy call; DWARF inline range ends at 0x156894.
+  .text:0015688F                 call    strncpy; inlined strncpy wrapper #1 emits the actual strncpy call; DWARF inline range ends at 0x156894.
+  .text:00156894                 xor     ecx, ecx
+  .text:00156896                 ; n
+  .text:00156896                 mov     [esp+104Ch+count], edi; n
+  .text:0015689A                 ; src
+  .text:0015689A                 mov     [esp+104Ch+pOptions], esi; src
+  .text:0015689E                 ; dest
+  .text:0015689E                 mov     [esp+104Ch+parm], mod; dest
+  .text:001568A1                 mov     [esp+104Ch+tmpName+0FFFh], cl
+  .text:001568A8                 ; inlined strncpy wrapper #2 emits the actual strncpy call; DWARF inline range ends at 0x1568AD.
+  .text:001568A8                 call    strncpy; inlined strncpy wrapper #2 emits the actual strncpy call; DWARF inline range ends at 0x1568AD.
+  .text:001568AD                 mov     byte ptr [mod+3Fh], 0
+  .text:001568B1                 jmp     loc_15662A
+  .text:001568C0                 lea     eax, [esp+104Ch+currentCRC]
+  .text:001568C4                 ; pulCRC
+  .text:001568C4                 mov     [esp+104Ch+parm], eax; pulCRC
+  .text:001568C7                 mov     [esp+104Ch+crash], eax
+  .text:001568CB                 call    CRC32_Init
+  .text:001568D0                 mov     edx, [esp+104Ch+length]
+  .text:001568D4                 mov     eax, [esp+104Ch+crash]
+  .text:001568D8                 ; pBuffer
+  .text:001568D8                 mov     [esp+104Ch+pOptions], buf; pBuffer
+  .text:001568DC                 ; nBuffer
+  .text:001568DC                 mov     [esp+104Ch+count], edx; nBuffer
+  .text:001568E0                 ; pulCRC
+  .text:001568E0                 mov     [esp+104Ch+parm], eax; pulCRC
+  .text:001568E3                 call    CRC32_ProcessBuffer
+  .text:001568E8                 mov     eax, [esp+104Ch+currentCRC]
+  .text:001568EC                 ; pulCRC
+  .text:001568EC                 mov     [esp+104Ch+parm], eax; pulCRC
+  .text:001568EF                 call    CRC32_Final
+  .text:001568F4                 mov     edx, [ebp+4]
+  .text:001568F7                 test    edx, edx
+  .text:001568F9                 mov     [esp+104Ch+currentCRC], eax
+  .text:001568FD                 jz      short loc_156920
+  .text:001568FF                 cmp     eax, [ebp+8]
+  .text:00156902                 jz      loc_1566A3
+  .text:00156908                 mov     [esp+104Ch+pOptions], mod
+  .text:0015690C                 mov     [esp+104Ch+parm], offset aSHasBeenModifi; "%s has been modified since starting the"...
+  .text:00156913                 call    Sys_Error
+  .text:00156918                 xor     eax, eax
+  .text:0015691A                 jmp     loc_156743
+  .text:00156920                 mov     [ebp+8], eax
+  .text:00156923                 mov     dword ptr [ebp+4], 1
+  .text:0015692A                 ; This build calls SetCStrikeFlags only on the initial-CRC path; current public source places it after the firstCRCDone branch.
+  .text:0015692A                 call    SetCStrikeFlags; This build calls SetCStrikeFlags only on the initial-CRC path; current public source places it after the firstCRCDone branch.
+  .text:0015692F                 mov     [esp+104Ch+parm], offset aCzero; "czero"
+  .text:00156936                 call    IsGameSubscribed
+  .text:0015693B                 test    eax, eax
+  .text:0015693D                 jnz     loc_1566A3
+  .text:00156943                 mov     eax, ds:g_bIsCStrike
+  .text:00156948                 test    eax, eax
+  .text:0015694A                 jz      loc_1566A3
+  .text:00156950                 mov     eax, [esp+104Ch+currentCRC]
+  .text:00156954                 ; filename
+  .text:00156954                 mov     [esp+104Ch+pOptions], mod; filename
+  .text:00156958                 ; crc
+  .text:00156958                 mov     [esp+104Ch+parm], eax; crc
+  .text:0015695B                 call    IsCZPlayerModel
+  .text:00156960                 test    badModel, badModel
+  .text:00156962                 jz      loc_1566A3
+  .text:00156968                 mov     ebp, ds:cls.state
+  .text:0015696E                 test    ebp, ebp
+  .text:00156970                 jz      loc_1566A3
+  .text:00156976                 mov     ecx, offset aCannotContinue_2; "Cannot continue with altered model %s, "...
+  .text:0015697B                 ; fmt
+  .text:0015697B                 mov     [esp+104Ch+pOptions], ecx; fmt
+  .text:0015697F                 mov     [esp+104Ch+count], mod
+  .text:00156983                 ; bPrint
+  .text:00156983                 mov     [esp+104Ch+parm], 1; bPrint
+  .text:0015698A                 call    COM_ExplainDisconnection
+  .text:0015698F                 call    CL_Disconnect
+  .text:00156994                 xor     eax, eax
+  .text:00156996                 jmp     loc_156743
+  .text:0015699B                 nop
+  .text:0015699C                 lea     esi, [esi+0]
+  .text:001569A0                 call    __stack_chk_fail
+procedure: |-
+  // Alternative name is 'Mod_LoadModel.part.3'
+  model_t *__usercall Mod_LoadModel_part_3@<eax>(model_t *mod@<eax>, qboolean_0 crash@<edx>, qboolean_0 trackCRC@<ecx>)
+  {
+    FileHandle_t hFile; // esi
+    unsigned int *readBuffer; // eax
+    unsigned int *buf; // edi
+    mod_known_info_t *modInfo; // ebp
+    model_file_id_t ident; // eax
+    char *p; // eax
+    CRC32_t finalCRC; // eax
+    qboolean_0 firstCRCDone; // edx
+    int length; // [esp+24h] [ebp-1028h] BYREF
+    CRC32_t currentCRC; // [esp+28h] [ebp-1024h] BYREF
+    char tmpName[4096]; // [esp+2Ch] [ebp-1020h] BYREF
+    unsigned int stackCanary; // [esp+102Ch] [ebp-20h]
+  
+    stackCanary = __readgsdword(0x14u);
+    if ( COM_CheckParm("-steam") && mod->name[0] == 47 )
+    {
+      p = (char *)mod;
+      do
+        ++p;
+      while ( *p == 47 );
+      strncpy(tmpName, p, 0xFFFu);
+      tmpName[4095] = 0;
+      strncpy(mod->name, tmpName, 0x3Fu);
+      mod->name[63] = 0;
+    }
+    hFile = FS_Open(mod->name, "rb");
+    if ( !hFile )
+      goto LABEL_20;
+    readBuffer = (unsigned int *)FS_GetReadBuffer(hFile, &length);
+    buf = readBuffer;
+    if ( readBuffer )
+    {
+      if ( LittleLong(*readBuffer) != IDSTUDIOHEADER )
+        goto LABEL_6;
+      FS_ReleaseReadBuffer(hFile, buf);
+    }
+    length = FS_Size(hFile);
+    buf = (unsigned int *)Hunk_TempAlloc(length + 1);
+    FS_Read(buf, length, 1, hFile);
+    FS_Close(hFile);
+    if ( !buf )
+    {
+  LABEL_20:
+      if ( crash || developer.value > 2.0 )
+        Sys_Error("Mod_NumForName: %s not found", mod->name);
+      Con_Printf("Error: could not load file %s\n", mod->name);
+      return nullptr;
+    }
+    hFile = nullptr;
+  LABEL_6:
+    if ( trackCRC == false )
+      goto LABEL_8;
+    modInfo = (mod_known_info_t *)((char *)mod_known_info + 964176332 * (((char *)mod - (char *)mod_known) >> 3));
+    if ( modInfo->shouldCRC == false )
+      goto LABEL_8;
+    CRC32_Init(&currentCRC);
+    CRC32_ProcessBuffer(&currentCRC, buf, length);
+    finalCRC = CRC32_Final(currentCRC);
+    firstCRCDone = modInfo->firstCRCDone;
+    currentCRC = finalCRC;
+    if ( firstCRCDone )
+    {
+      if ( finalCRC != modInfo->initialCRC )
+        Sys_Error(
+          "%s has been modified since starting the engine.  Consider running system diagnostics to check for faulty hardware.\n",
+          mod->name);
+  LABEL_8:
+      if ( developer.value > 1.0 )
+        Con_DPrintf((char *)"loading %s\n", mod->name);
+      COM_FileBase(mod->name, loadname);
+      loadmodel = mod;
+      mod->needload = false;
+      ident = LittleLong(*buf);
+      switch ( ident )
+      {
+        case IDSPRITEHEADER:
+          Mod_LoadSpriteModel(mod, buf);
+          break;
+        case IDSTUDIOHEADER:
+          Mod_LoadStudioModel(mod, buf);
+          break;
+        case IDPOLYHEADER:
+          Mod_LoadAliasModel(mod, buf);
+          if ( hFile )
+            goto LABEL_15;
+          return mod;
+        default:
+          DT_LoadDetailMapFile(loadname);
+          Mod_LoadBrushModel(mod, buf);
+          break;
+      }
+      if ( hFile )
+      {
+  LABEL_15:
+        FS_ReleaseReadBuffer(hFile, buf);
+        FS_Close(hFile);
+        return mod;
+      }
+      return mod;
+    }
+    modInfo->initialCRC = finalCRC;
+    modInfo->firstCRCDone = true;
+    SetCStrikeFlags();
+    if ( IsGameSubscribed("czero")
+      || !g_bIsCStrike
+      || !IsCZPlayerModel(currentCRC, mod->name)
+      || cls.state == ca_dedicated )
+    {
+      goto LABEL_8;
+    }
+    COM_ExplainDisconnection(true, "Cannot continue with altered model %s, disconnecting.", mod->name);
+    CL_Disconnect();
+    return nullptr;
+  }
