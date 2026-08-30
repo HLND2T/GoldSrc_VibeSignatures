@@ -41,7 +41,11 @@ from analysis_planner import (
     build_execution_plan as _build_execution_plan,
 )
 from binary_format import BinaryFormatError, validate_binary
-from ida_analyze_util import SymbolArtifactError, normalize_symbol_artifact
+from ida_analyze_util import (
+    SymbolArtifactError,
+    build_runtime_address_inspection_py_eval,
+    normalize_symbol_artifact,
+)
 from ida_database_paths import (
     IDA_DATABASE_SUFFIXES,
     database_lock_paths,
@@ -1286,6 +1290,18 @@ def _load_runtime_artifact(path: Path, expected_type: str | None):
     if symbol_type == "func" and not any(field in payload for field in ("func_va", "func_addr")):
         issues.append(f"{path}: func artifact requires func_va or func_addr")
 
+    expected_function_size = None
+    expected_function_signature = None
+    if symbol_type in {"func", "vfunc"}:
+        if "func_size" in payload:
+            try:
+                expected_function_size = _parse_artifact_integer(payload["func_size"], "func_size")
+            except (TypeError, ValueError) as exc:
+                issues.append(f"{path}: {exc}")
+        signature = payload.get("func_sig")
+        if isinstance(signature, str) and signature.strip():
+            expected_function_signature = signature.strip()
+
     for field, raw_value in payload.items():
         if not (field.endswith("_va") or field in {"func_addr", "gv_addr", "patch_addr", "vtable_addr"}):
             continue
@@ -1301,6 +1317,7 @@ def _load_runtime_artifact(path: Path, expected_type: str | None):
                 rva = _parse_artifact_integer(payload[rva_field], rva_field)
             except (TypeError, ValueError) as exc:
                 issues.append(f"{path}: {exc}")
+        require_function = symbol_type in {"func", "vfunc"} and field in {"func_va", "func_addr", "vfunc_va"}
         inspections.append(
             {
                 "path": str(path),
@@ -1308,7 +1325,9 @@ def _load_runtime_artifact(path: Path, expected_type: str | None):
                 "address": address,
                 "rva_field": rva_field,
                 "rva": rva,
-                "require_function": symbol_type in {"func", "vfunc"} and field in {"func_va", "func_addr", "vfunc_va"},
+                "require_function": require_function,
+                "expected_size": expected_function_size if require_function else None,
+                "expected_signature": expected_function_signature if require_function else None,
             }
         )
     return payload, issues, inspections
@@ -1324,19 +1343,11 @@ async def _inspect_runtime_addresses(mcp_runtime: McpRuntime, inspections: list[
             explicit_database=mcp_runtime.binding.session_id,
         ) as session:
             for inspection in inspections:
-                code = (
-                    "import ida_funcs, ida_segment, idaapi, json\n"
-                    f"ea = {inspection['address']}\n"
-                    "seg = ida_segment.getseg(ea)\n"
-                    "func = ida_funcs.get_func(ea)\n"
-                    "result = json.dumps({\n"
-                    "  'has_segment': seg is not None,\n"
-                    "  'segment_name': ida_segment.get_segm_name(seg) if seg is not None else '',\n"
-                    "  'image_base': hex(int(idaapi.get_imagebase())),\n"
-                    "  'has_function': func is not None,\n"
-                    "  'function_start': hex(int(func.start_ea)) if func is not None else '',\n"
-                    "  'is_function_start': bool(func is not None and int(func.start_ea) == ea),\n"
-                    "})\n"
+                code = build_runtime_address_inspection_py_eval(
+                    inspection["address"],
+                    require_function=inspection["require_function"],
+                    expected_size=inspection.get("expected_size"),
+                    expected_signature=inspection.get("expected_signature"),
                 )
                 payload = _parse_py_eval_json(await session.call_tool("py_eval", {"code": code}))
                 if not isinstance(payload, dict):

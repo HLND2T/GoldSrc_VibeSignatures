@@ -53,7 +53,7 @@ binaries:
       sha256: 'd932d274061ee05bef89ea712f9b32b8f5f742ad0124d5f516c8cca1e421ca24'
       size: 976224
 config_digest_version: 2
-config_sha256: sha256:c135254ddc3822cbb2f5fc22f5ac886ebfa998e32d7aeb8d803c1e89e5bc3e78
+config_sha256: sha256:5f307b69ea8dd1c1b553a980fd58eef85f2f07cd92206aa6f9a33cb903fb454e
 file_count: 42
 files:
   engine/CBaseUI__Initialize.linux.yaml:
@@ -215,6 +215,42 @@ files:
     func_sig: A1 ?? ?? ?? ?? 53 33 DB 85 C0 0F 85 ?? ?? ?? ?? 57 33 FF 0F 1F 40 ?? 66 0F 1F 84 00 ?? ?? ?? ?? 6A 03 FF 34 BD ?? ?? ?? ??
     func_size: '0xb6'
     func_va: '0x10193a50'
+  engine/cl_enginefuncs.linux.yaml:
+    gv_inst_disp: '0x3'
+    gv_inst_length: '0x7'
+    gv_inst_offset: '0x114'
+    gv_name: cl_enginefuncs
+    gv_rva: '0x2beb00'
+    gv_sig: 53 BA 6E 74 2E 73 81 EC ?? ?? ?? ?? 65 A1 ?? ?? ?? ?? 89 84 24 ?? ?? ?? ?? 31 C0 B8 63 6C 5F 64 80 3D ?? ?? ?? ?? ?? 89 44 24 ??
+    gv_sig_va: '0x1585e0'
+    gv_va: '0x2beb00'
+  engine/cl_enginefuncs.windows.yaml:
+    gv_inst_disp: '0x1'
+    gv_inst_length: '0x5'
+    gv_inst_offset: '0x1aa'
+    gv_name: cl_enginefuncs
+    gv_rva: '0x319b08'
+    gv_sig: 55 8B EC 81 EC 04 02 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 68 ?? ?? ?? ?? 8D 85 ?? ?? ?? ?? 68 00 02 00 00 50 E8 ?? ?? ?? ??
+    gv_sig_va: '0x10196fc0'
+    gv_va: '0x10319b08'
+  engine/cl_funcs.linux.yaml:
+    gv_inst_disp: '0x2'
+    gv_inst_length: '0x6'
+    gv_inst_offset: '0x11b'
+    gv_name: cl_funcs
+    gv_rva: '0xf77f80'
+    gv_sig: 53 BA 6E 74 2E 73 81 EC ?? ?? ?? ?? 65 A1 ?? ?? ?? ?? 89 84 24 ?? ?? ?? ?? 31 C0 B8 63 6C 5F 64 80 3D ?? ?? ?? ?? ?? 89 44 24 ??
+    gv_sig_va: '0x1585e0'
+    gv_va: '0xf77f80'
+  engine/cl_funcs.windows.yaml:
+    gv_inst_disp: '0x2'
+    gv_inst_length: '0x6'
+    gv_inst_offset: '0x1af'
+    gv_name: cl_funcs
+    gv_rva: '0x145ef40'
+    gv_sig: 55 8B EC 81 EC 04 02 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 68 ?? ?? ?? ?? 8D 85 ?? ?? ?? ?? 68 00 02 00 00 50 E8 ?? ?? ?? ??
+    gv_sig_va: '0x10196fc0'
+    gv_va: '0x1145ef40'
   engine/cl_parsefuncs.linux.yaml:
     gv_inst_disp: '0x3'
     gv_inst_length: '0x7'
@@ -305,42 +341,6 @@ files:
     gv_sig: A1 ?? ?? ?? ?? 85 C0 75 ?? 68 66 04 00 00 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 C4 08 56 FF D0 8B 35 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 3D ?? ?? ?? ?? ?? 74 ??
     gv_sig_va: '0x10196e50'
     gv_va: '0x1032af24'
-  engine/g_ppEngfuncs.linux.yaml:
-    gv_inst_disp: '0x3'
-    gv_inst_length: '0x7'
-    gv_inst_offset: '0x114'
-    gv_name: g_ppEngfuncs
-    gv_rva: '0x2beb00'
-    gv_sig: 53 BA 6E 74 2E 73 81 EC ?? ?? ?? ?? 65 A1 ?? ?? ?? ?? 89 84 24 ?? ?? ?? ?? 31 C0 B8 63 6C 5F 64 80 3D ?? ?? ?? ?? ?? 89 44 24 ??
-    gv_sig_va: '0x1585e0'
-    gv_va: '0x2beb00'
-  engine/g_ppEngfuncs.windows.yaml:
-    gv_inst_disp: '0x1'
-    gv_inst_length: '0x5'
-    gv_inst_offset: '0x1aa'
-    gv_name: g_ppEngfuncs
-    gv_rva: '0x319b08'
-    gv_sig: 55 8B EC 81 EC 04 02 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 68 ?? ?? ?? ?? 8D 85 ?? ?? ?? ?? 68 00 02 00 00 50 E8 ?? ?? ?? ??
-    gv_sig_va: '0x10196fc0'
-    gv_va: '0x10319b08'
-  engine/g_ppExportFuncs.linux.yaml:
-    gv_inst_disp: '0x2'
-    gv_inst_length: '0x6'
-    gv_inst_offset: '0x11b'
-    gv_name: g_ppExportFuncs
-    gv_rva: '0xf77f80'
-    gv_sig: 53 BA 6E 74 2E 73 81 EC ?? ?? ?? ?? 65 A1 ?? ?? ?? ?? 89 84 24 ?? ?? ?? ?? 31 C0 B8 63 6C 5F 64 80 3D ?? ?? ?? ?? ?? 89 44 24 ??
-    gv_sig_va: '0x1585e0'
-    gv_va: '0xf77f80'
-  engine/g_ppExportFuncs.windows.yaml:
-    gv_inst_disp: '0x2'
-    gv_inst_length: '0x6'
-    gv_inst_offset: '0x1af'
-    gv_name: g_ppExportFuncs
-    gv_rva: '0x145ef40'
-    gv_sig: 55 8B EC 81 EC 04 02 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 68 ?? ?? ?? ?? 8D 85 ?? ?? ?? ?? 68 00 02 00 00 50 E8 ?? ?? ?? ??
-    gv_sig_va: '0x10196fc0'
-    gv_va: '0x1145ef40'
   engine/videomode.linux.yaml:
     gv_inst_disp: '0x2'
     gv_inst_length: '0x6'

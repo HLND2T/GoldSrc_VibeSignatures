@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Locate client-engine globals used while initializing the client DLL.
 
-``g_ppEngfuncs`` and ``g_ppExportFuncs`` are the two operands of the
+``cl_enginefuncs`` and ``cl_funcs`` are the two operands of the
 ``cl_funcs.pInitFunc(CLDLL_INTERFACE_VERSION, &cl_enginefuncs)`` call in
 ``ClientDLL_Init``. Locate that call directly so large Linux function bodies
 do not have to pass through the LLM export transport.
@@ -23,7 +23,7 @@ from ida_analyze_util import (
 )
 
 
-DIRECT_GV_NAMES = ["g_ppEngfuncs", "g_ppExportFuncs"]
+DIRECT_GV_NAMES = ["cl_enginefuncs", "cl_funcs"]
 LLM_GV_NAMES = ["g_phClientModule"]
 OWNER_FUNC_NAME = "ClientDLL_Init"
 CLIENT_DLL_INTERFACE_VERSION = 7
@@ -238,8 +238,8 @@ async def _write_direct_globals(
     try:
         located_owner_ea = int(located["owner_ea"], 0)
         hits = {
-            "g_ppEngfuncs": located["engine"],
-            "g_ppExportFuncs": located["exports"],
+            "cl_enginefuncs": located["engine"],
+            "cl_funcs": located["exports"],
         }
         parsed = {
             name: {

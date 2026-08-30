@@ -123,8 +123,8 @@ disasm_code: |-
   .text:1019715E                 push    offset aScreenfade; "ScreenFade"
   .text:10197163                 call    HookServerMsg
   .text:10197168                 push    7
-  .text:1019716A                 push    offset cl_enginefuncs; target: g_ppEngfuncs
-  .text:1019716F                 call    cl_funcs.pInitFunc; target: g_ppExportFuncs
+  .text:1019716A                 push    offset cl_enginefuncs; target: cl_enginefuncs
+  .text:1019716F                 call    cl_funcs.pInitFunc; target: cl_funcs
   .text:10197175                 ; inlined ClientDLL_ClientMoveInit(&g_clmove): begin
   .text:10197175                 mov     eax, cl_funcs.pClientMoveInit; inlined ClientDLL_ClientMoveInit(&g_clmove): begin
   .text:1019717A                 add     esp, 18h
@@ -203,7 +203,7 @@ procedure: |-
     }
     HookServerMsg("ScreenShake", V_ScreenShake);
     HookServerMsg("ScreenFade", V_ScreenFade);
-    cl_funcs.pInitFunc(cl_enginefuncs, 7); // target: g_ppExportFuncs / g_ppEngfuncs
+    cl_funcs.pInitFunc(cl_enginefuncs, 7); // target: cl_funcs / cl_enginefuncs
     if ( cl_funcs.pClientMoveInit )
       cl_funcs.pClientMoveInit(g_clmove);
     CL_GetPlayerHulls();

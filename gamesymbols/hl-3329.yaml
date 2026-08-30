@@ -8,7 +8,7 @@ binaries:
       sha256: 'ef59e9f2001baf08185d3482684a56a8faad1b31f2fe6e5ba97048fe23f696ff'
       size: 1845834
 config_digest_version: 2
-config_sha256: sha256:6e0835ad6657bfd94fd48d8c6e9194c91e6794083389cc9ab203e154bfb4dc53
+config_sha256: sha256:f88f001d55ceced250dcfd7b387b10e48b6f794e6736a604152fd150cec128df
 file_count: 18
 files:
   engine/CBaseUI__Initialize.windows.yaml:
@@ -78,6 +78,24 @@ files:
     func_sig: A1 ?? ?? ?? ?? 83 EC 08 56 33 F6 85 C0 0F 85 ?? ?? ?? ?? 53 33 DB 8B 04 9D ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? 6A 03 50 51 E8 ?? ?? ?? ??
     func_size: '0xb7'
     func_va: '0x1d0b8d0'
+  engine/cl_enginefuncs.windows.yaml:
+    gv_inst_disp: '0x1'
+    gv_inst_length: '0x5'
+    gv_inst_offset: '0xca'
+    gv_name: cl_enginefuncs
+    gv_rva: '0x189298'
+    gv_sig: 81 EC 00 04 00 00 8D 44 24 ?? 68 ?? ?? ?? ?? 68 00 02 00 00 50 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 C4 0C 85 C0 74 ??
+    gv_sig_va: '0x1d0db10'
+    gv_va: '0x1e89298'
+  engine/cl_funcs.windows.yaml:
+    gv_inst_disp: '0x2'
+    gv_inst_length: '0x6'
+    gv_inst_offset: '0xcf'
+    gv_name: cl_funcs
+    gv_rva: '0x123dbc0'
+    gv_sig: 81 EC 00 04 00 00 8D 44 24 ?? 68 ?? ?? ?? ?? 68 00 02 00 00 50 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 C4 0C 85 C0 74 ??
+    gv_sig_va: '0x1d0db10'
+    gv_va: '0x2f3dbc0'
   engine/cl_parsefuncs.windows.yaml:
     gv_inst_disp: '0x3'
     gv_inst_length: '0x7'
@@ -114,24 +132,6 @@ files:
     gv_sig: A1 ?? ?? ?? ?? 85 C0 75 ?? 68 16 04 00 00 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 08 FF 15 ?? ?? ?? ?? A1 ?? ?? ?? ?? 50 E8 ?? ?? ?? ?? 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 08
     gv_sig_va: '0x1d0e6f0'
     gv_va: '0x1ec28a8'
-  engine/g_ppEngfuncs.windows.yaml:
-    gv_inst_disp: '0x1'
-    gv_inst_length: '0x5'
-    gv_inst_offset: '0xca'
-    gv_name: g_ppEngfuncs
-    gv_rva: '0x189298'
-    gv_sig: 81 EC 00 04 00 00 8D 44 24 ?? 68 ?? ?? ?? ?? 68 00 02 00 00 50 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 C4 0C 85 C0 74 ??
-    gv_sig_va: '0x1d0db10'
-    gv_va: '0x1e89298'
-  engine/g_ppExportFuncs.windows.yaml:
-    gv_inst_disp: '0x2'
-    gv_inst_length: '0x6'
-    gv_inst_offset: '0xcf'
-    gv_name: g_ppExportFuncs
-    gv_rva: '0x123dbc0'
-    gv_sig: 81 EC 00 04 00 00 8D 44 24 ?? 68 ?? ?? ?? ?? 68 00 02 00 00 50 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 C4 0C 85 C0 74 ??
-    gv_sig_va: '0x1d0db10'
-    gv_va: '0x2f3dbc0'
   engine/videomode.windows.yaml:
     gv_inst_disp: '0x1'
     gv_inst_length: '0x5'

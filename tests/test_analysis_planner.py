@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 import os
 import tempfile
 import unittest
@@ -39,6 +40,7 @@ from ida_analyze_bin import (
     _allocate_local_port,
     _invalidate_ida_database,
     _is_major_update_gamever,
+    _load_runtime_artifact,
     _merge_survey_path,
     _parse_mcp_tool_json,
     _select_requested_nodes,
@@ -52,6 +54,7 @@ from ida_analyze_bin import (
     run_analysis_pipeline,
     save_ida_database_via_mcp,
     start_idalib_mcp,
+    validate_runtime_artifacts,
     validate_opened_binary_identity,
 )
 from ida_mcp_session import McpDatabaseBinding
@@ -1361,6 +1364,134 @@ class DagTests(unittest.TestCase):
                     agent_skill_runner=agent,
                 )
             self.assertEqual("agent_output_invalid", raised.exception.reason)
+
+    def test_function_artifact_validation_uses_shared_entry_recovery_contract(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            module_dir = Path(temporary) / "engine"
+            module_dir.mkdir()
+            artifact = module_dir / "result.yaml"
+            artifact.write_text(
+                "func_name: SyntheticTarget\n"
+                "func_va: '0x401000'\n"
+                "func_rva: '0x1000'\n"
+                "func_size: '0x80'\n"
+                "func_sig: 55 8B EC\n",
+                encoding="utf-8",
+            )
+            _payload, issues, inspections = _load_runtime_artifact(artifact, "func")
+            runtime = McpRuntime(
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                str(module_dir / "hw.dll"),
+                McpDatabaseBinding(True, "db", str(module_dir / "hw.dll"), "worker", True, True),
+            )
+            call_tool = AsyncMock(
+                return_value=SimpleNamespace(
+                    structuredContent={
+                        "result": json.dumps(
+                            {
+                                "has_segment": True,
+                                "segment_name": ".text",
+                                "image_base": "0x400000",
+                                "has_function": True,
+                                "function_start": "0x401000",
+                                "is_function_start": True,
+                                "recovered": True,
+                            }
+                        )
+                    },
+                    content=[],
+                )
+            )
+            with (
+                patch.object(
+                    ida_analyze_bin,
+                    "open_ida_mcp_session",
+                    side_effect=lambda *_args, **_kwargs: bound_session_context(runtime.binding, call_tool),
+                ),
+                patch.object(
+                    ida_analyze_bin,
+                    "build_runtime_address_inspection_py_eval",
+                    return_value="shared recovery code",
+                ) as build_code,
+            ):
+                runtime_issues = validate_runtime_artifacts(
+                    [artifact],
+                    module_dir=module_dir,
+                    artifact_types={str(artifact.resolve()).lower(): "func"},
+                    mcp_runtime=runtime,
+                )
+
+            self.assertEqual([], issues)
+            self.assertEqual([], runtime_issues)
+            self.assertEqual(0x80, inspections[0]["expected_size"])
+            self.assertEqual("55 8B EC", inspections[0]["expected_signature"])
+            build_code.assert_called_once_with(
+                0x401000,
+                require_function=True,
+                expected_size=0x80,
+                expected_signature="55 8B EC",
+            )
+            call_tool.assert_awaited_once_with("py_eval", {"code": "shared recovery code"})
+
+    def test_function_artifact_validation_still_rejects_an_inside_function_address(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            module_dir = Path(temporary) / "engine"
+            module_dir.mkdir()
+            artifact = module_dir / "result.yaml"
+            artifact.write_text(
+                "func_name: SyntheticTarget\n"
+                "func_va: '0x401020'\n"
+                "func_rva: '0x1020'\n"
+                "func_size: '0x60'\n"
+                "func_sig: 55 8B EC\n",
+                encoding="utf-8",
+            )
+            runtime = McpRuntime(
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                str(module_dir / "hw.dll"),
+                McpDatabaseBinding(True, "db", str(module_dir / "hw.dll"), "worker", True, True),
+            )
+            call_tool = AsyncMock(
+                return_value=SimpleNamespace(
+                    structuredContent={
+                        "result": json.dumps(
+                            {
+                                "has_segment": True,
+                                "segment_name": ".text",
+                                "image_base": "0x400000",
+                                "has_function": True,
+                                "function_start": "0x401000",
+                                "is_function_start": False,
+                                "recovered": False,
+                            }
+                        )
+                    },
+                    content=[],
+                )
+            )
+            with (
+                patch.object(
+                    ida_analyze_bin,
+                    "open_ida_mcp_session",
+                    side_effect=lambda *_args, **_kwargs: bound_session_context(runtime.binding, call_tool),
+                ),
+                patch.object(
+                    ida_analyze_bin,
+                    "build_runtime_address_inspection_py_eval",
+                    return_value="shared recovery code",
+                ),
+            ):
+                issues = validate_runtime_artifacts(
+                    [artifact],
+                    module_dir=module_dir,
+                    artifact_types={str(artifact.resolve()).lower(): "func"},
+                    mcp_runtime=runtime,
+                )
+
+            self.assertEqual(1, len(issues))
+            self.assertIn("resolves inside function 0x401000", issues[0])
 
     def test_mcp_readiness_is_recovered_before_agent(self):
         with tempfile.TemporaryDirectory() as temporary:
