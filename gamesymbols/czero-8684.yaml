@@ -1,0 +1,23 @@
+analysis_output_contract_version: 2
+binaries:
+  client:
+    windows:
+      crc32: 'e3fb203d'
+      crc64: '1fa85bbc7a71d3ae'
+      md5: '808388b73bb42bf719c59f08724fcc07'
+      sha256: 'b017e06a5551f3db8c7c817b72a65433362d8b3c8394edb02cac919528e3f73c'
+      size: 1096608
+  server:
+    windows:
+      crc32: 'bd938a62'
+      crc64: '944d1936253ff64b'
+      md5: 'f91df50b85d75226767bc1c2637f2af2'
+      sha256: '3636366938b3bd8fa7c182fcffde2b6b4f934fd2e83e0937e788fdeb5ba7fce8'
+      size: 1325976
+config_digest_version: 2
+config_sha256: sha256:d7b3595a42d7e859f356eb3121e88d35c86834dd29e5d8844ab2c2bd16dbeb6d
+file_count: 0
+files: {}
+game_version: czero-8684
+last_publish_time: '2026-08-30T02:16:33Z'
+schema_version: 6
