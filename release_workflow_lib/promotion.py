@@ -229,7 +229,11 @@ def promote_bin(*, persisted_root: Path, stage_dir: Path, version: str, build_id
             target = contained_path(accepted_root, gamever)
             incoming = contained_path(accepted_root, f".{gamever}.{build_id}.incoming")
             backup = contained_path(accepted_root, f".{gamever}.{build_id}.backup")
-            gamever_files = [item for item in bin_files if item["gamever"] == gamever]
+            gamever_files = [
+                {"path": item["path"], "size": item["size"], "sha256": item["sha256"]}
+                for item in bin_files
+                if item["gamever"] == gamever
+            ]
             with version_lock(accepted_bin_lock_path(persisted_root, gamever)):
                 if target.is_dir() and inventory_sha256(gamever_files) == inventory_sha256(file_inventory(target)):
                     continue

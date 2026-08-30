@@ -5,7 +5,13 @@ import unittest
 from pathlib import Path
 
 from release_workflow_lib.errors import ReleaseWorkflowError
-from release_workflow_lib.hashing import allowed_output_path, validate_output_paths
+from release_workflow_lib.hashing import (
+    allowed_output_path,
+    file_inventory,
+    inventory_sha256,
+    validate_output_paths,
+    write_canonical_json,
+)
 from release_workflow_lib.manifests import (
     build_gamever_entry,
     build_tracked_manifest,
@@ -16,7 +22,7 @@ from release_workflow_lib.manifests import (
     require_version,
     validate_tracked_manifest,
 )
-from release_workflow_lib.promotion import reconstruct_workspace
+from release_workflow_lib.promotion import promote_bin, reconstruct_workspace
 
 
 class BranchParsingTests(unittest.TestCase):
@@ -149,6 +155,72 @@ class ReconstructWorkspaceTests(unittest.TestCase):
 
             self.assertEqual((root / "stage" / "bin").resolve(), source)
             self.assertEqual(b"staged", (repo / "bin" / "cof-5936" / "engine" / "hw.dll").read_bytes())
+
+
+class PromoteBinTests(unittest.TestCase):
+    gamever = "hl-10210"
+    version = "v20260825a"
+    build_id = "123-1"
+
+    def _prepare_stage(self, root: Path, *, accepted_payload: bytes) -> tuple[Path, Path, Path]:
+        persisted_root = root / "persisted"
+        stage_dir = persisted_root / "release-staging" / self.version / self.build_id
+        staged_binary = stage_dir / "bin" / self.gamever / "engine" / "hw.dll"
+        staged_binary.parent.mkdir(parents=True)
+        staged_binary.write_bytes(b"staged")
+
+        accepted_binary = persisted_root / "bin" / self.gamever / "engine" / "hw.dll"
+        accepted_binary.parent.mkdir(parents=True)
+        accepted_binary.write_bytes(accepted_payload)
+
+        bin_files = [
+            {"gamever": self.gamever, **item}
+            for item in file_inventory(stage_dir / "bin" / self.gamever)
+        ]
+        write_canonical_json(
+            stage_dir / "manifest.json",
+            {
+                "version": self.version,
+                "build_id": self.build_id,
+                "gamevers": [{"gamever": self.gamever}],
+                "bin_manifest_sha256": inventory_sha256(bin_files),
+            },
+        )
+        return persisted_root, stage_dir, accepted_binary
+
+    def test_promotes_verified_gamever_inventory(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            persisted_root, stage_dir, accepted_binary = self._prepare_stage(
+                Path(temporary), accepted_payload=b"accepted"
+            )
+
+            result = promote_bin(
+                persisted_root=persisted_root,
+                stage_dir=stage_dir,
+                version=self.version,
+                build_id=self.build_id,
+            )
+
+            self.assertEqual({self.gamever: True}, result["promoted"])
+            self.assertEqual(b"staged", accepted_binary.read_bytes())
+            self.assertTrue((stage_dir / "PROMOTION_STARTED").is_file())
+
+    def test_skips_gamever_with_identical_accepted_inventory(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            persisted_root, stage_dir, accepted_binary = self._prepare_stage(
+                Path(temporary), accepted_payload=b"staged"
+            )
+
+            result = promote_bin(
+                persisted_root=persisted_root,
+                stage_dir=stage_dir,
+                version=self.version,
+                build_id=self.build_id,
+            )
+
+            self.assertEqual({}, result["promoted"])
+            self.assertEqual(b"staged", accepted_binary.read_bytes())
+            self.assertFalse((persisted_root / "bin" / f".{self.gamever}.{self.build_id}.backup").exists())
 
 
 if __name__ == "__main__":
