@@ -121,11 +121,20 @@ jobs:
           $version = "${{ needs.resolve.outputs.version }}"
           $gamevers = uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {}).get('gamevers', [])))"
           $archiveDir = Join-Path $env:RUNNER_TEMP "archives"
+          $excludeArgs = @(
+            '-xr!*.i64'
+            '-xr!*.idb'
+            '-xr!*.id0'
+            '-xr!*.id1'
+            '-xr!*.id2'
+            '-xr!*.nam'
+            '-xr!*.til'
+          )
           New-Item -ItemType Directory -Path $archiveDir -Force | Out-Null
           foreach ($gamever in ($gamevers -split "`n")) {
-            & 7z a (Join-Path $archiveDir "gamedata-$gamever.7z") "configs/$gamever.yaml" "bin/$gamever" "gamesymbols/$gamever.yaml" "gamesymbols/$gamever.metadata.yaml" "gamedata/$gamever" -xr!*.i64 -xr!*.idb -xr!*.id0 -xr!*.id1 -xr!*.id2 -xr!*.nam -xr!*.til
+            & 7z a (Join-Path $archiveDir "gamedata-$gamever.7z") "configs/$gamever.yaml" "bin/$gamever" "gamesymbols/$gamever.yaml" "gamesymbols/$gamever.metadata.yaml" "gamedata/$gamever" @excludeArgs
             if ($LASTEXITCODE -ne 0) { throw "archive failed for $gamever" }
-            & 7z a (Join-Path $archiveDir "gamebin-$gamever.7z") (Join-Path "bin" $gamever) -xr!*.i64 -xr!*.idb -xr!*.id0 -xr!*.id1 -xr!*.id2 -xr!*.nam -xr!*.til
+            & 7z a (Join-Path $archiveDir "gamebin-$gamever.7z") (Join-Path "bin" $gamever) @excludeArgs
             if ($LASTEXITCODE -ne 0) { throw "gamebin archive failed for $gamever" }
           }
           "ARCHIVE_DIR=$archiveDir" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
