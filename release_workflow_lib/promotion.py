@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
-from contextlib import contextmanager
 from pathlib import Path
 
 from release_workflow_lib.errors import ReleaseWorkflowError
@@ -19,7 +18,6 @@ from release_workflow_lib.hashing import (
     reject_reparse_points,
     sha256_file,
     validate_output_paths,
-    verify_inventory,
     write_canonical_json,
 )
 from release_workflow_lib.locks import accepted_bin_lock_path, version_lock
@@ -329,7 +327,7 @@ def cleanup_completed(*, staging_root: Path, persisted_root: Path, version: str,
         raise ReleaseWorkflowError("staging_root must be persisted_root/release-staging")
     completion_path = contained_path(staging_root, "completed", version, f"{build_id}.json")
     reject_reparse_components(staging_root, completion_path)
-    record = _validate_completion_record(load_json_object(completion_path), version, build_id)
+    _validate_completion_record(load_json_object(completion_path), version, build_id)
     if _matching_pr_indexes(staging_root, version, build_id):
         raise ReleaseWorkflowError("completed stage still has a matching PR index")
     stage_dir = contained_path(staging_root, version, build_id)
