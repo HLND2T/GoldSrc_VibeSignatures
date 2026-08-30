@@ -173,10 +173,7 @@ class PromoteBinTests(unittest.TestCase):
         accepted_binary.parent.mkdir(parents=True)
         accepted_binary.write_bytes(accepted_payload)
 
-        bin_files = [
-            {"gamever": self.gamever, **item}
-            for item in file_inventory(stage_dir / "bin" / self.gamever)
-        ]
+        bin_files = [{"gamever": self.gamever, **item} for item in file_inventory(stage_dir / "bin" / self.gamever)]
         write_canonical_json(
             stage_dir / "manifest.json",
             {

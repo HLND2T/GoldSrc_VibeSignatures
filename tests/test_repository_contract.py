@@ -18,16 +18,8 @@ from analysis_planner import (
     symbol_artifact_filename,
 )
 from binary_format import inspect_binary
-from gamedata_contract import (
-    analysis_config_sha256,
-    discover_generator_modules,
-    generator_contract_sha256,
-    validate_gamedata_tree,
-)
 from gamesymbol_snapshot_lib.config import load_contract
-from gamesymbol_snapshot_lib.metadata import verify_metadata
-from gamesymbol_snapshot_lib.paths import iter_snapshot_paths
-from release_workflow_lib.hashing import sha256_file
+from tests.run_test_suite import GROUP_FILES, SOURCE_ALL_GROUPS
 
 ROOT = Path(__file__).parents[1]
 
@@ -221,6 +213,8 @@ class RepositoryContractTests(unittest.TestCase):
 
     def test_ci_runs_required_checks(self):
         workflow = (ROOT / ".github" / "workflows" / "ci.yaml").read_text(encoding="utf-8")
+        self.assertIn("generated-output-contract", GROUP_FILES)
+        self.assertNotIn("generated-output-contract", SOURCE_ALL_GROUPS)
         backend_commands = (
             "uv sync --locked",
             "uv run python format_repo_files.py --check",
@@ -239,6 +233,7 @@ class RepositoryContractTests(unittest.TestCase):
         )
         for command in (*backend_commands, *frontend_commands):
             self.assertIn(command, workflow)
+        self.assertNotIn("generated-output-contract", workflow)
 
     def test_gamesymbol_pr_workflow_runs_merge_planner_with_selected_node_routing(self):
         workflow_text = (ROOT / ".github" / "workflows" / "gamesymbol-pr-validation.yml").read_text(encoding="utf-8")
@@ -358,6 +353,7 @@ class RepositoryContractTests(unittest.TestCase):
         build_text = json.dumps(build)
         self.assertIn("release_workflow.py validate-build", build_text)
         self.assertIn("ida_analyze_bin.py -allgamever", build_text)
+        self.assertIn("tests/run_test_suite.py generated-output-contract", build_text)
         self.assertIn("release_workflow.py stage-build", build_text)
         self.assertIn("release_workflow.py materialize-accepted-bin", build_text)
         self.assertNotIn("robocopy", build_text)
@@ -389,6 +385,13 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertNotIn("workflow_dispatch", warmup["on"])
         self.assertNotIn("GSVIBE_RELEASE_PHASE2_ENABLED", build_text)
         self.assertNotIn("create-github-app-token", build_text)
+        build_step_names = [step.get("name") for step in build_job["steps"]]
+        output_contract_index = build_step_names.index("Validate generated output contract")
+        self.assertLess(
+            build_step_names.index("Build, guard, and publish candidates for every game version"),
+            output_contract_index,
+        )
+        self.assertLess(output_contract_index, build_step_names.index("Stage validated output"))
 
         validate = workflows["validate-generated-output-pr.yml"]
         self.assertEqual("pr-validate", validate["jobs"]["validate"]["name"])
@@ -422,53 +425,6 @@ class RepositoryContractTests(unittest.TestCase):
 
         for name in ("abandon-staged-release.yml", "cleanup-completed-release-staging.yml"):
             self.assertIn("win64", json.dumps(workflows[name]))
-
-    def test_published_gamesymbol_snapshots_match_goldsrc_contract(self):
-        # The exact published set is deliberately not pinned: the bin submodule
-        # pins binary bytes, and new game versions must not require editing this
-        # test. Structural contract checks below still guard every published file.
-        published = {path.stem for path in iter_snapshot_paths(ROOT / "gamesymbols")}
-        self.assertTrue(published)
-
-        for tag in sorted(published):
-            with self.subTest(tag=tag):
-                path = ROOT / "gamesymbols" / f"{tag}.yaml"
-                document = yaml.safe_load(path.read_text(encoding="utf-8"))
-                contract = load_contract(ROOT / "configs" / f"{tag}.yaml", tag, ROOT / "bin")
-                self.assertEqual(6, document["schema_version"])
-                self.assertEqual(tag, document["game_version"])
-                self.assertEqual(document["file_count"], len(document["files"]))
-                self.assertTrue(contract.required_paths <= set(document["files"]) <= contract.formal_paths)
-                actual_binaries = {
-                    (module, platform): metadata
-                    for module, platforms in document["binaries"].items()
-                    for platform, metadata in platforms.items()
-                }
-                self.assertEqual(set(contract.binary_targets), set(actual_binaries))
-                self.assertTrue(actual_binaries)
-                for metadata in actual_binaries.values():
-                    self.assertNotIn("path", metadata)
-                    self.assertGreater(metadata["size"], 0)
-                companion = ROOT / "gamesymbols" / f"{tag}.metadata.yaml"
-                self.assertTrue(companion.is_file())
-                verify_metadata(
-                    metadata_path=companion,
-                    snapshot_path=path,
-                    config_path=ROOT / "configs" / f"{tag}.yaml",
-                    game_version=tag,
-                )
-                config_path = ROOT / "configs" / f"{tag}.yaml"
-                generators = discover_generator_modules(ROOT / "gamedata-generators")
-                files, manifest_sha256 = validate_gamedata_tree(
-                    ROOT / "gamedata" / tag,
-                    tag,
-                    generators,
-                    candidate_sha256=sha256_file(path),
-                    analysis_config_sha256=analysis_config_sha256(config_path),
-                    generator_contract_digest=generator_contract_sha256(generators),
-                )
-                self.assertTrue(files)
-                self.assertRegex(manifest_sha256, r"^[0-9a-f]{64}$")
 
     def test_pages_workflow_keeps_content_addressed_history_append_only(self):
         workflow = (ROOT / ".github" / "workflows" / "deploy-pages.yml").read_text(encoding="utf-8")

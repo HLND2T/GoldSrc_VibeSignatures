@@ -281,6 +281,11 @@ jobs:
           "GAMEVERS_JSON=$(Join-Path $candidateRoot 'gamevers.json')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "BUILD_ID=${{ github.run_id }}-${{ github.run_attempt }}" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "OUTPUT_BRANCH=gamesymbols/build/${{ needs.preflight.outputs.version }}" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Validate generated output contract
+        shell: pwsh
+        run: |
+          uv run python tests/run_test_suite.py generated-output-contract -b --durations 30
+          if ($LASTEXITCODE -ne 0) { throw 'generated-output contract validation failed' }
       - name: Stage validated output
         shell: pwsh
         run: |

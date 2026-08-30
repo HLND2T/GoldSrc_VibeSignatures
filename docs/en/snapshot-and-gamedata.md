@@ -63,7 +63,11 @@ per-game-version snapshot/gamedata provenance, and the aggregate bin/tracked-out
 version's snapshot hash and gamedata inventory. Output identity stays bound to exact `source_sha` (the output head's only
 parent); the current PR base must be a descendant of that commit. `promote-release-after-output-merge.yml` verifies the
 two-parent merge whose first parent descends from `source_sha` and transactionally swaps accepted bin into the persisted
-workspace. Source PRs no longer own gamesymbols/gamedata authority.
+workspace. Source PRs no longer own gamesymbols/gamedata authority. Source validation therefore runs
+`repository-contract` without requiring published outputs to match pending config changes. The release build runs the
+separate `generated-output-contract` suite after candidate publication, and output-PR verification rechecks the same
+contract from trusted base tooling against the exact output head. The source-route planner rejects changes under
+`gamesymbols/`, `gamedata/`, and `release-manifests/`; those namespaces may only change on the generated-output route.
 
 ## Generate gamedata directly
 

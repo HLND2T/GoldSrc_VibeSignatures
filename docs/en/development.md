@@ -28,17 +28,21 @@ Use the fast isolated suite during local edit-test loops:
 uv run python tests/run_test_suite.py unit -b --durations 30
 ```
 
-The remaining primary suites keep repository-state and Redis coverage explicit:
+The remaining source-owned suites keep repository structure and Redis coverage explicit:
 
 ```bash
 uv run python tests/run_test_suite.py repository-contract -b --durations 30
 uv run python tests/run_test_suite.py redis-integration -b --durations 30
 ```
 
-Run every assigned test before completion:
+Run every source-compatible assigned test before completion:
 
 ```bash
 uv run python tests/run_test_suite.py all -b --durations 30
 ```
+
+`all` deliberately excludes `generated-output-contract`. That release-owned suite compares the current configs with
+the generated `gamesymbols/`, metadata, and `gamedata/` trees, so the release build runs it only after publishing fresh
+candidates and before staging the generated-output commit.
 
 Commercial IDA integration is skipped unless `RUN_IDA_INTEGRATION=1` and an activated `idalib` environment are available. A skipped integration test is not evidence that real IDA analysis passed.

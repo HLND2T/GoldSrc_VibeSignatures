@@ -19,6 +19,9 @@ modules:
       - name: find-Sys_Error
         expected_output:
           - Sys_Error.{platform}.yaml
+      - name: find-S_LoadSound
+        expected_output:
+          - S_LoadSound.{platform}.yaml
       - name: find-ClientDLL_Init
         expected_output:
           - ClientDLL_Init.{platform}.yaml
@@ -72,6 +75,8 @@ modules:
       - name: build_number
         category: func
       - name: Sys_Error
+        category: func
+      - name: S_LoadSound
         category: func
       - name: ClientDLL_Init
         category: func

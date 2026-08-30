@@ -15,6 +15,9 @@ generated-output PR (`gamesymbols/build/<version>`). Merging that PR promotes a 
 
 ## Responsibilities
 
+- Keep source-owned `repository-contract` independent of release-owned `gamesymbols/**` and `gamedata/**`; source PRs may change configs and finders without regenerating published output.
+- Run the separate `generated-output-contract` after release candidate publication and before staging. The trusted output-PR verifier reuses the same validator against the exact output head, requiring config tags, snapshots, metadata, gamedata, config digests, artifact paths, and generator bindings to converge.
+
 - Gate output PRs through `validate-generated-output-pr.yml` (bot author, same repo, `gamesymbols/build/` branch).
 - Hash-chain private stage markers and bind version/source/branch/PR/head/merge identities.
 - Require a direct-parent output head whose parent equals manifest `source_sha`, a current PR/merge base that
