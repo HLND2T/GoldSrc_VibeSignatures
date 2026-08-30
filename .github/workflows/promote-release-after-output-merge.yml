@@ -34,7 +34,6 @@ jobs:
     outputs:
       version: ${{ steps.verify.outputs.version }}
       build_id: ${{ steps.verify.outputs.build_id }}
-      stage_dir: ${{ steps.verify.outputs.stage_dir }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -99,10 +98,21 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --locked
+      - name: Resolve private stage directory
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:PERSISTED_WORKSPACE)) {
+            throw 'PERSISTED_WORKSPACE is required'
+          }
+          $stagingRoot = Join-Path $env:PERSISTED_WORKSPACE 'release-staging'
+          $versionRoot = Join-Path $stagingRoot '${{ needs.verify.outputs.version }}'
+          $stageDir = Join-Path $versionRoot '${{ needs.verify.outputs.build_id }}'
+          "STAGE_DIR=$stageDir" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Reconstruct workspace binaries
         shell: pwsh
         run: |
-          uv run python release_workflow.py reconstruct --repo-root "$env:GITHUB_WORKSPACE" --stage-dir "${{ needs.verify.outputs.stage_dir }}" --version "${{ needs.resolve.outputs.version }}"
+          uv run python release_workflow.py reconstruct --repo-root "$env:GITHUB_WORKSPACE" --stage-dir "$env:STAGE_DIR" --version "${{ needs.resolve.outputs.version }}"
           if ($LASTEXITCODE -ne 0) { throw 'reconstruct failed' }
       - name: Create release archives
         shell: pwsh
@@ -122,7 +132,7 @@ jobs:
       - name: Promote accepted binaries
         shell: pwsh
         run: |
-          uv run python release_workflow.py promote-bin --persisted-root "$env:PERSISTED_WORKSPACE" --stage-dir "${{ needs.verify.outputs.stage_dir }}" --version "${{ needs.resolve.outputs.version }}" --build-id "${{ needs.verify.outputs.build_id }}"
+          uv run python release_workflow.py promote-bin --persisted-root "$env:PERSISTED_WORKSPACE" --stage-dir "$env:STAGE_DIR" --version "${{ needs.resolve.outputs.version }}" --build-id "${{ needs.verify.outputs.build_id }}"
           if ($LASTEXITCODE -ne 0) { throw 'promote-bin failed' }
       - name: Tag release
         shell: pwsh

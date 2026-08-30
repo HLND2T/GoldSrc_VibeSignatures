@@ -176,12 +176,21 @@ def verify_promotion(
 
 def reconstruct_workspace(repo_root: Path, stage_dir: Path, version: str) -> Path:
     repo_root = Path(repo_root).resolve()
-    stage_dir = Path(stage_dir)
+    if not str(stage_dir).strip():
+        raise ReleaseWorkflowError("STAGE_DIR is required")
+    stage_dir = Path(stage_dir).resolve()
     reject_reparse_components(stage_dir, stage_dir)
     source = contained_path(stage_dir, "bin")
+    repository_bin = contained_path(repo_root, "bin")
+    resolved_source = source.resolve(strict=False)
+    resolved_repository_bin = repository_bin.resolve(strict=False)
+    if resolved_source.is_relative_to(resolved_repository_bin) or resolved_repository_bin.is_relative_to(
+        resolved_source
+    ):
+        raise ReleaseWorkflowError("staged bin source must not overlap the repository bin directory")
     reject_reparse_points(source)
     for gamever_dir in sorted(path for path in source.iterdir() if path.is_dir()):
-        target = contained_path(repo_root, "bin", gamever_dir.name)
+        target = contained_path(repository_bin, gamever_dir.name)
         if target.exists():
             reject_reparse_points(target)
             remove_tree(target)

@@ -341,7 +341,6 @@ def _run_verification(args) -> object:
                 "version": result["version"],
                 "build_id": result["build_id"],
                 "mode": result["mode"],
-                "stage_dir": result["stage_dir"],
             },
         )
         return result

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import tempfile
 import unittest
+from pathlib import Path
 
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.hashing import allowed_output_path, validate_output_paths
@@ -14,6 +16,7 @@ from release_workflow_lib.manifests import (
     require_version,
     validate_tracked_manifest,
 )
+from release_workflow_lib.promotion import reconstruct_workspace
 
 
 class BranchParsingTests(unittest.TestCase):
@@ -106,6 +109,46 @@ class OutputPathValidationTests(unittest.TestCase):
         validate_output_paths(allowed, gamevers, version)
         with self.assertRaises(ReleaseWorkflowError):
             validate_output_paths(["gamesymbols/hl-10210.yaml"], gamevers, version)
+
+
+class ReconstructWorkspaceTests(unittest.TestCase):
+    def _repo_with_binary(self, root: Path) -> Path:
+        repo = root / "repo"
+        binary = repo / "bin" / "cof-5936" / "engine" / "hw.dll"
+        binary.parent.mkdir(parents=True)
+        binary.write_bytes(b"existing")
+        return repo
+
+    def test_rejects_empty_stage_directory_without_removing_workspace_binaries(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = self._repo_with_binary(Path(temporary))
+
+            with self.assertRaisesRegex(ReleaseWorkflowError, "STAGE_DIR is required"):
+                reconstruct_workspace(repo, "", "v20260825a")
+
+            self.assertEqual(b"existing", (repo / "bin" / "cof-5936" / "engine" / "hw.dll").read_bytes())
+
+    def test_rejects_stage_source_overlapping_repository_bin(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = self._repo_with_binary(Path(temporary))
+
+            with self.assertRaisesRegex(ReleaseWorkflowError, "must not overlap"):
+                reconstruct_workspace(repo, repo, "v20260825a")
+
+            self.assertEqual(b"existing", (repo / "bin" / "cof-5936" / "engine" / "hw.dll").read_bytes())
+
+    def test_reconstructs_workspace_from_private_stage(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo = self._repo_with_binary(root)
+            staged_binary = root / "stage" / "bin" / "cof-5936" / "engine" / "hw.dll"
+            staged_binary.parent.mkdir(parents=True)
+            staged_binary.write_bytes(b"staged")
+
+            source = reconstruct_workspace(repo, root / "stage", "v20260825a")
+
+            self.assertEqual((root / "stage" / "bin").resolve(), source)
+            self.assertEqual(b"staged", (repo / "bin" / "cof-5936" / "engine" / "hw.dll").read_bytes())
 
 
 if __name__ == "__main__":
