@@ -368,6 +368,18 @@ def _agent_permission_args(agent_kind: str) -> list[str]:
     return []
 
 
+def _artifact_context_prompt(artifact_context: dict) -> str:
+    return (
+        "Invocation artifact contract (JSON). Use these exact paths; do not derive YAML paths from the binary: "
+        f"{json.dumps(artifact_context, ensure_ascii=False, sort_keys=True)}"
+    )
+
+
+def _skill_prompt(skill_name: str, artifact_context: dict | None = None) -> str:
+    prompt = f"Run SKILL: .claude/skills/{skill_name}/SKILL.md"
+    return prompt if artifact_context is None else f"{prompt}\n\n{_artifact_context_prompt(artifact_context)}"
+
+
 def _build_claude_command(
     agent: str,
     skill_name: str,
@@ -375,8 +387,12 @@ def _build_claude_command(
     is_retry: bool,
     agent_model: str = DEFAULT_AGENT_MODEL,
     mcp_url: str | None = None,
+    artifact_context: dict | None = None,
 ) -> AgentCommand:
-    args = [agent, "-p", f"/{skill_name}", "--agent", "sig-finder"]
+    prompt = f"/{skill_name}"
+    if artifact_context is not None:
+        prompt = f"{prompt}\n\n{_artifact_context_prompt(artifact_context)}"
+    args = [agent, "-p", prompt, "--agent", "sig-finder"]
     args.extend(_agent_mcp_override_args("claude", mcp_url))
     args.extend(_agent_model_args("claude", agent_model))
     args.extend(["--settings", CLAUDE_SKILL_RUNNER_SETTINGS])
@@ -393,6 +409,7 @@ def _build_codex_command(
     is_retry: bool,
     agent_model: str = DEFAULT_AGENT_MODEL,
     mcp_url: str | None = None,
+    artifact_context: dict | None = None,
 ) -> AgentCommand:
     args = [agent, "--profile", "skill_runner", "-c", developer_instructions]
     args.extend(_agent_mcp_override_args("codex", mcp_url))
@@ -401,7 +418,7 @@ def _build_codex_command(
     if is_retry:
         args.extend(["resume", "--last"])
     args.append("-")
-    prompt = f"Run SKILL: .claude/skills/{skill_name}/SKILL.md"
+    prompt = _skill_prompt(skill_name, artifact_context)
     return AgentCommand(args, prompt, "the latest Codex session (--last)")
 
 
@@ -411,6 +428,7 @@ def _build_opencode_command(
     is_retry: bool,
     session_id: str | None,
     agent_model: str = DEFAULT_AGENT_MODEL,
+    artifact_context: dict | None = None,
 ) -> AgentCommand:
     args = [agent, "run", "--format", "json"]
     args.extend(_agent_model_args("opencode", agent_model))
@@ -419,7 +437,7 @@ def _build_opencode_command(
         args.extend(["--session", session_id])
     elif is_retry:
         args.append("--continue")
-    args.extend(["--agent", "sig-finder", f"Run SKILL: .claude/skills/{skill_name}/SKILL.md"])
+    args.extend(["--agent", "sig-finder", _skill_prompt(skill_name, artifact_context)])
     retry_target = f"OpenCode session {session_id}" if session_id else "the latest OpenCode session (--continue)"
     return AgentCommand(args, None, retry_target)
 
@@ -435,14 +453,17 @@ def _build_agent_command(
     is_retry: bool,
     agent_model: str = DEFAULT_AGENT_MODEL,
     mcp_url: str | None = None,
+    artifact_context: dict | None = None,
 ) -> AgentCommand:
     if agent_kind == "claude":
-        return _build_claude_command(agent, skill_name, session_id, is_retry, agent_model, mcp_url)
+        return _build_claude_command(agent, skill_name, session_id, is_retry, agent_model, mcp_url, artifact_context)
     if agent_kind == "opencode":
-        return _build_opencode_command(agent, skill_name, is_retry, opencode_session_id, agent_model)
+        return _build_opencode_command(agent, skill_name, is_retry, opencode_session_id, agent_model, artifact_context)
     if developer_instructions is None:
         raise ValueError("Codex developer instructions are required")
-    return _build_codex_command(agent, skill_name, developer_instructions, is_retry, agent_model, mcp_url)
+    return _build_codex_command(
+        agent, skill_name, developer_instructions, is_retry, agent_model, mcp_url, artifact_context
+    )
 
 
 def build_agent_command(
@@ -584,6 +605,7 @@ def _run_skill_attempts(
     debug: bool,
     progress_callback: Callable[..., None] | None,
     mcp_url: str | None = None,
+    artifact_context: dict | None = None,
 ) -> bool:
     opencode_session_id = None
     process_env = _agent_process_env(agent_kind, mcp_url)
@@ -601,6 +623,7 @@ def _run_skill_attempts(
             is_retry=attempt_index > 0,
             agent_model=agent_model,
             mcp_url=mcp_url,
+            artifact_context=artifact_context,
         )
         try:
             completed = _run_process_with_stream_capture(
@@ -681,6 +704,7 @@ def run_skill(
     debug: bool = False,
     agent_model: str | None = None,
     mcp_url: str | None = None,
+    artifact_context: dict | None = None,
 ) -> bool:
     """Execute a skill with bounded retries and structured progress events."""
     agent_kind = detect_agent_kind(agent)
@@ -711,6 +735,14 @@ def run_skill(
     except ValueError as error:
         _notify_progress(progress_callback, "failed", reason="invalid_mcp_url", error=str(error))
         return False
+    if artifact_context is not None:
+        try:
+            if not isinstance(artifact_context, dict):
+                raise TypeError("artifact context must be an object")
+            _artifact_context_prompt(artifact_context)
+        except (TypeError, ValueError) as error:
+            _notify_progress(progress_callback, "failed", reason="invalid_artifact_context", error=str(error))
+            return False
 
     skill_path = Path(".claude") / "skills" / skill_name / "SKILL.md"
     if not skill_path.is_file():
@@ -739,4 +771,5 @@ def run_skill(
         debug=debug,
         progress_callback=progress_callback,
         mcp_url=mcp_url,
+        artifact_context=artifact_context,
     )

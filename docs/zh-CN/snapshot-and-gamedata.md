@@ -2,110 +2,59 @@
 
 # Snapshot、gamedata 与发布
 
-单个 symbol 的 YAML 保持被 `bin/<GAMEVER>/<module>/` 忽略。每个已发布版本都有一对 Git-tracked canonical
-文件：`gamesymbols/<GAMEVER>.yaml` 保存分析 lockfile，`gamesymbols/<GAMEVER>.metadata.yaml` 冻结展示 alias
-及其解析后的 module/platform/artifact owner。
+单 symbol 分析 YAML 只在 `bin_artifacts/<GAMEVER>/<module>/` 由 Git 托管。`bin/` 仅保存二进制与可重建的 IDA
+状态，不是 artifact truth。`gamesymbols/`、`gamedata/` 与 release manifest 都是 release 派生输出，不再版本化入库。
 
 ## 不可变 candidate 事务
 
-顶层分析事务成功后，立即构建一个 candidate。两个下游消费者都读取同一个不可变 candidate；只有 gamedata guard
-通过后，发布才会复制其原始字节：
+Candidate 必须写入显式 staging。Snapshot 从 `bin/` 读取二进制 metadata，从 `bin_artifacts/` 读取 symbol YAML；
+gamedata 必须由同一 immutable candidate 生成并完成 mark：
 
 ```bash
 CANDIDATE_DIR="$(mktemp -d)"
-CANDIDATE_SNAPSHOT="$CANDIDATE_DIR/cstrike-10210.yaml"
-CANDIDATE_METADATA="$CANDIDATE_DIR/cstrike-10210.metadata.yaml"
-CANDIDATE_SESSION="$CANDIDATE_DIR/session.json"
-GAMEDATA_ROOT="$CANDIDATE_DIR/gamedata-candidate"
-GAMEDATA_SESSION="$CANDIDATE_DIR/gamedata.session.json"
-
-uv run python gamesymbol_candidate.py build -gamever cstrike-10210 -bindir bin -output "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION"
-uv run python gamedata_candidate.py build -gamever cstrike-10210 -build-id local-1 -snapshot "$CANDIDATE_SNAPSHOT" -configyaml configs/cstrike-10210.yaml -candidate-root "$GAMEDATA_ROOT" -session "$GAMEDATA_SESSION"
-uv run python gamedata_candidate.py guard -session "$GAMEDATA_SESSION"
-uv run python gamesymbol_candidate.py mark -candidate "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION" -step gamedata -gamedata-session "$GAMEDATA_SESSION"
-uv run python gamesymbol_candidate.py publish -candidate "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION" -destination gamesymbols/cstrike-10210.yaml
-uv run python gamedata_candidate.py publish -session "$GAMEDATA_SESSION" -outputdir gamedata/cstrike-10210
-uv run python gamedata_candidate.py stage -session "$GAMEDATA_SESSION" -repo-root .
+uv run python gamesymbol_candidate.py build -gamever cstrike-10210 -bindir bin \
+  -artifactdir bin_artifacts -output "$CANDIDATE_DIR/cstrike-10210.yaml" \
+  -session "$CANDIDATE_DIR/symbol-session.json"
+uv run python gamedata_candidate.py build -gamever cstrike-10210 -build-id local-1 \
+  -snapshot "$CANDIDATE_DIR/cstrike-10210.yaml" -configyaml configs/cstrike-10210.yaml \
+  -candidate-root "$CANDIDATE_DIR/gamedata" -session "$CANDIDATE_DIR/gamedata-session.json"
+uv run python gamesymbol_candidate.py mark -candidate "$CANDIDATE_DIR/cstrike-10210.yaml" \
+  -session "$CANDIDATE_DIR/symbol-session.json" -step gamedata \
+  -gamedata-session "$CANDIDATE_DIR/gamedata-session.json"
 ```
 
-注意：
+Candidate session 绑定 snapshot/metadata 字节、文件系统 identity、config 与 matching gamedata session。即使 generator
+inventory 为空，gamedata 也有排除自身的 canonical manifest。本地 `publish` 只把已验证字节复制到调用方显式 staging；
+正常开发与 PR validation 不写 repository-root `gamesymbols/` 或 `gamedata/`。
 
-- `gamesymbol_candidate.py mark -step gamedata` 需要 `-gamedata-session`，其 gamever 与 candidate SHA-256 必须
-  与该 symbol candidate 匹配。
-- `gamedata_candidate.py publish -outputdir` 必须以精确 tag 结尾。发布是原子替换。
-- candidate build 同时生成 `$CANDIDATE_METADATA`。session 绑定两份文件的精确路径、hash、文件系统 identity，
-  以及 metadata 对 snapshot SHA-256 的绑定。
-- 本地 pair 发布使用恢复 journal 与固定替换顺序；任何中间错配都会被 verifier 拒绝。对外原子边界是 Git
-  commit/tree。
-- 即使没有 generator 产生 payload，每个 gamedata 目录也包含 canonical `gamedata-manifest.json`。它绑定
-  snapshot、config、generator contract 与排除 manifest 自身的 payload inventory。
-- gamedata config identity 会把 CRLF 规范化为 LF 并拒绝 bare CR；仓库 attributes 同时把 tracked config 固定为
-  LF，因此 Windows candidate generation 与 exact Git-blob verification 使用同一 digest。
-- `stage` 先 guard candidate，再构造并验证临时 Git tree，最后只对 candidate manifest 中的精确路径执行
-  `git add -f -- <exact-path>`。仓库继续忽略 `gamedata/*/`，禁止宽泛 glob staging。
-- generator 根目录不存在或为空会产生带 hash 的空 inventory，只要 `guard` 成功仍可满足 gamedata 步骤。
+## Release bundle
 
-可以独立生成或验证 tracked companion：
+`release-build.yml` 在 checkout 外的 fresh root 强制重建全部 configured artifact，并与 Git `bin_artifacts` 做 exact
+byte comparison。随后派生 snapshot、metadata、gamedata 和 archive，并构造封闭 bundle：
+
+- `gamesymbols/<tag>.yaml` 与 `<tag>.metadata.yaml`；
+- `gamedata/<tag>/**`；
+- `archives/gamedata-<tag>.7z`，包含 config、`bin_artifacts`、snapshot、gamedata 与兼容二进制；
+- binary-only `archives/gamebin-<tag>.7z`；
+- `release-manifest-<version>.json` 与 `SHA256SUMS-<version>.txt`。
+
+GitHub-hosted verifier 会检查 exact source SHA/bin gitlink、repository artifact inventory、
+snapshot/metadata/gamedata contract、bundle allowlist、canonical manifest 与全部 checksum。只有这份 exact verified
+bundle 能进入受保护 publisher。GitHub Release assets 是公开发布层；Actions Artifact 只负责传输。
+
+## Restore 与验证
+
+Snapshot restore 只是显式 compatibility/migration 操作。必须提供从 published Release 下载的 snapshot；verify 只读、
+restore 只写显式 artifact root：
 
 ```bash
-uv run python gamesymbol_metadata.py generate -snapshot gamesymbols/hl-10210.yaml -configyaml configs/hl-10210.yaml -gamever hl-10210 -metadata gamesymbols/hl-10210.metadata.yaml
-uv run python gamesymbol_metadata.py verify -snapshot gamesymbols/hl-10210.yaml -configyaml configs/hl-10210.yaml -gamever hl-10210 -metadata gamesymbols/hl-10210.metadata.yaml
+uv run python gamesymbol_snapshot.py verify -gamever cstrike-10210 -snapshot <release-asset.yaml> \
+  -bindir bin -artifactdir bin_artifacts
+uv run python gamesymbol_snapshot.py check-contract -gamever cstrike-10210 -snapshot <release-asset.yaml> \
+  -bindir bin -artifactdir bin_artifacts
+uv run python gamesymbol_snapshot.py restore -gamever cstrike-10210 -snapshot <release-asset.yaml> \
+  -bindir bin -artifactdir <compatibility-artifact-root>
 ```
 
-Pages 不再读取 live config alias。companion 缺失、非 canonical、hash 不匹配或 owner 不匹配都会使构建失败。
-
-## Release 输出清单
-
-Release build 在 self-hosted runner 上为全部 game version 生成 `gamesymbols/<tag>.yaml`、
-`gamesymbols/<tag>.metadata.yaml` 与 `gamedata/<tag>/**`，把它们连同 `release-manifests/<version>.json` 一起提交到
-`gamesymbols/build/<version>` 分支的 generated-output PR；合并后打单个 `version` tag 并发布一个 GitHub Release（资产
-含全部 game version）。
-
-这也包括配置 symbol 集合为空的 tag。其 snapshot 的 `files` 为空，但仍锁定已配置的二进制 identity；metadata
-companion 仍为必需，gamedata 目录则包含 canonical 空 inventory manifest。首次 release 发布前，这类 tag 仍可仅有
-config；metadata 或 gamedata 不得脱离 snapshot 单独存在。
-
-`release-manifests/<version>.json` 是 schema-1 canonical manifest：绑定 `version`、`mode`、`build_id`、`source_sha`、
-每条 game version 的 snapshot/gamedata provenance，以及 aggregate bin/tracked-output inventory hash。
-`validate-generated-output-pr.yml` 用 exact Git blob 重建 tracked output inventory 并核对每条 game version 的 snapshot
-hash 与 gamedata inventory。output identity 仍绑定 exact `source_sha`（output head 的唯一父提交）；当前 PR base 必须
-是该提交的后代。`promote-release-after-output-merge.yml` 校验 first parent 从 `source_sha` 演进而来的两父合并，并把
-accepted bin 事务化交换进 persisted workspace。source PR 不再拥有 gamesymbols/gamedata authority。因此 source
-validation 的 `repository-contract` 不要求已发布输出立即匹配尚未发布的 config 变更；release build 在 candidate
-publish 后运行独立的 `generated-output-contract`，output PR verification 也会使用可信 base tooling 对 exact output
-head 重验同一契约。source-route planner 会拒绝对 `gamesymbols/`、`gamedata/` 与 `release-manifests/` 的修改；
-这些 namespace 只能由 generated-output route 更新。
-
-## 直接生成 gamedata
-
-不使用完整 candidate 事务时，可直接把 canonical symbol snapshot 转换成版本化 gamedata：
-
-```bash
-uv run python update_gamedata.py -gamever cstrike-10210 -snapshot gamesymbols/cstrike-10210.yaml -modulesdir gamedata-generators -outputdir gamedata/cstrike-10210
-```
-
-## 恢复与验证 snapshot
-
-恢复干净的分析基线，或在不动 tracked snapshot 的前提下验证当前工作区：
-
-```bash
-uv run python gamesymbol_snapshot.py restore -gamever cstrike-10210
-uv run python gamesymbol_snapshot.py restore -gamever cstrike-10210 -replace
-uv run python gamesymbol_snapshot.py verify -gamever cstrike-10210
-uv run python gamesymbol_snapshot.py check-contract -gamever cstrike-10210
-```
-
-默认 restore 会创建缺失的 YAML，并拒绝覆盖语义不同的文件。`-replace` 只删除 `bin/<GAMEVER>/` 下的 YAML，
-保留二进制与 IDA 数据库，再重建 snapshot 内容。
-
-writer 输出 schema 6（config digest v2）、canonical 文件载荷与不依赖路径的二进制 hash metadata；reader 兼容
-schema 1–6，schema 5 仍严格读取其必需的旧 binary `path`。restore / verify 拒绝链接、路径逃逸、未声明
-YAML、缺失必需 YAML、非 canonical bytes 与 contract drift。
-
-`check-contract` 是只读信任探针：退出 `0` 表示可信，退出 `3` 上报机器可读的不可信原因，调用、配置或操作错误
-仍是硬失败。
-
-## 范围：无 C++ layout 验证
-
-与 CS2 项目不同，GoldSrc VibeSignatures 不会针对源 header 运行 C++ layout 验证——没有 `run_cpp_tests.py`
-或 HL2SDK checkout。发布前唯一的 downstream guard 是 gamedata 步骤。
+Writer 输出 schema 6，reader 接受 schema 1–6。Restore/verify 拒绝 link、path escape、未声明或缺失 YAML、
+非 canonical bytes 与 contract drift。

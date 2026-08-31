@@ -74,10 +74,10 @@ For target finder `find-XXXX` in module `<module>` (`engine`, `client`, `server`
    site. **These annotations are the semantic fingerprints** you translate into the fallback's anchors. Also
    collect any real-world helper or alternate inline/de-inline reference YAML that materially helps locate the
    targets.
-4. **Ground-truth output YAMLs** `bin/<gamever>/<module>/<target>.{platform}.yaml` — the **authoritative**
+4. **Ground-truth output YAMLs** `bin_artifacts/<gamever>/<module>/<target>.{platform}.yaml` — the **authoritative**
    offsets, vfunc indices, and signature styles the finder currently produces. Mine these for the reference
    values in the inventory table. `<gamever>` comes from the explicit request; **there is no `GSVIBE_GAMEVER`
-   fallback**. `bin/` is a tracked git submodule (see below) — read whatever versions exist, never edit it.
+   fallback**. `bin_artifacts/` is the Git-tracked YAML truth; `bin/` is the binary-only git submodule.
 
 Cross-check every value across the reference annotation AND the ground-truth YAML; where they disagree, trust
 the ground-truth YAML and note the discrepancy (references occasionally mis-annotate — see the decoy caution).
@@ -129,7 +129,7 @@ For each target, read its access/call site in the reference `disasm_code` + `pro
 - the **semantic anchor**: the nearest stable landmark — a string literal, a magic constant, a named
   global/interface call, a distinctive helper — that identifies the site independent of address;
 - the **`this`-relative offset** (members) or **call displacement** (indirect vcalls) or **vtable index**;
-- the **reference value** from the ground-truth `bin/` YAML (both platforms where they differ).
+- the **reference value** from the ground-truth `bin_artifacts/` YAML (both platforms where they differ).
 
 ### Step 4 — Write the fallback SKILL.md
 
@@ -291,11 +291,11 @@ Platform gating: <list cross-platform vs windows-only / linux-only outputs>.
 
 ## Step 0. Skip targets already produced
 
-For each output, if `<name>.<platform>.yaml` already exists beside the binary and parses to a non-empty mapping,
-skip it — the preprocessor or an earlier fallback wrote it. List the directory with:
+For each output, select its exact path from the invocation artifact contract. If it already exists and parses to a
+non-empty mapping, skip it — the preprocessor or an earlier fallback wrote it. Never derive the YAML path from the binary:
 
 ```
-mcp__ida-pro-mcp__py_eval code="import idaapi, os; d=os.path.dirname(idaapi.get_input_file_path()); print('\n'.join(sorted(f for f in os.listdir(d) if f.endswith('.yaml'))))"
+mcp__ida-pro-mcp__py_eval code="import os; p=os.path.abspath(r'<EXACT_OUTPUT_ARTIFACT_PATH_FROM_INVOCATION_CONTRACT>'); print({'path': p, 'exists': os.path.isfile(p)})"
 ```
 
 For functions/vfuncs, resolving the predecessor (Step 1) also reports whether its YAML exists.
@@ -324,7 +324,7 @@ For each resolved target, produce its YAML via the appropriate **GoldSrc sub-ski
 Step 1): `/generate-signature-for-function`, `/generate-signature-for-globalvar`,
 `/generate-signature-for-structoffset`, or `/generate-signature-for-vfuncoffset` for the signature, then
 `/write-func-as-yaml`, `/write-globalvar-as-yaml`, `/write-structoffset-as-yaml`, or `/write-vfunc-as-yaml` to
-persist it beside the binary. For vtable-backed targets, resolve the vtable with `/get-vtable-from-yaml` or
+persist it at the exact bound output path. For vtable-backed targets, resolve the vtable with `/get-vtable-from-yaml` or
 `/get-vtable-address`, and find a function's slot with `/get-vtable-index`.
 
 For **struct members**, write `struct_name`, `member_name`, `offset`, and `offset_sig` (offset is the must-have;
@@ -343,7 +343,8 @@ vtable vfuncs**, include `func_va`/`func_sig` and the vtable fields.
 
 ## Output YAML filenames
 
-Written beside the binary, one per symbol: `<symbol>.windows.yaml` / `<symbol>.linux.yaml`.
+Written only to the invocation contract's exact artifact path, one per symbol: `<symbol>.windows.yaml` /
+`<symbol>.linux.yaml`.
 ````
 
 ---
@@ -364,7 +365,7 @@ Written beside the binary, one per symbol: `<symbol>.windows.yaml` / `<symbol>.l
    is `vtable_name` + `vfunc_offset = disp` + `vfunc_index = disp/4` + a `vfunc_sig` pinning the call instruction;
    there is **no `func_va`**. Resolve the interface from the receiver global's type. Slots are always 4 bytes.
 5. **Watch for decoys.** References sometimes annotate two nearby offsets with the same member name. Trust the
-   ground-truth `bin/` YAML. (GoldSrc precedent: two closely spaced `this+disp` accesses can share a field label;
+   ground-truth `bin_artifacts/` YAML. (GoldSrc precedent: two closely spaced `this+disp` accesses can share a field label;
    the true member is the one the reference value matches.)
 6. **The offset is the must-have; the signature is best-effort.** For struct members, `offset` is the required
    output; `offset_sig` is for relocation and may legitimately be omitted (write offset only) when a unique
@@ -375,7 +376,7 @@ Written beside the binary, one per symbol: `<symbol>.windows.yaml` / `<symbol>.l
 
 ## Checklist
 
-- [ ] Read the target preprocessor `.py`, its config entry, its reference YAMLs, and its `bin/` ground-truth
+- [ ] Read the target preprocessor `.py`, its config entry, its reference YAMLs, and its `bin_artifacts/` ground-truth
       output YAMLs.
 - [ ] Output inventory lists **every** symbol with kind + platform + predecessor + reference value.
 - [ ] Fallback SKILL.md filename equals the finder's skill name.
@@ -392,7 +393,7 @@ Written beside the binary, one per symbol: `<symbol>.windows.yaml` / `<symbol>.l
 - [ ] x86 invariants present and consistent (PE32/ELF32, `this`=ECX/stack-arg, 4-byte slots).
 - [ ] Failure handling + output-filename sections present.
 - [ ] `format_repo_files.py --check`, `unit`, and `repository-contract` suites pass.
-- [ ] Values cross-checked against `bin/` ground truth.
+- [ ] Values cross-checked against `bin_artifacts/` ground truth.
 - [ ] Real Agent-Skill-only test passed with `uv run python ida_analyze_bin.py -gamever <gamever> -oldgamever
       none -modules <module> -skill find-XXXX -platform windows,linux -skip_pp -debug`; the log proves
       preprocessing was skipped (`Agent Skill only mode: enabled (-skip_pp)`), the Agent actually started and

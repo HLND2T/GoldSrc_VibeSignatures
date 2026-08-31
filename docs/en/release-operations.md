@@ -1,62 +1,40 @@
 # Release operations
 
-The release build is a manual `workflow_dispatch` (`release-build.yml`, `version` plus optional `source_sha` and `mode`).
-Production authority comes from the allowlisted repository + `win64` Environment + per-version concurrency, not
-`GSVIBE_RELEASE_PHASE2_ENABLED` or a GitHub App token.
+`release-build.yml` accepts an immutable `version`, optional `source_sha`, and `publish_release` (default `true`). A
+production source must be reachable from the default branch. `publish_release=false` is only a non-publishing workflow
+verification mode and requires the source to equal the dispatch commit.
 
-## Credential and permission boundary
+## Trust and permission boundary
 
-- `release-build.yml` keeps its default `${{ github.token }}` read-only (`actions: read`, `contents: read`, and
-  `pull-requests: read`). Exact source checkout, Git authentication, output-branch push, and PR creation use the
-  `win64` Environment secret `HLND2T_GH_TOKEN`.
-- The PAT needs repository `Contents: Read and write`, `Pull requests: Read and write`, and `Metadata: Read`; its owner
-  must be an `OWNER`, `MEMBER`, or repository `COLLABORATOR`. Workflow `permissions` do not grant or widen PAT scopes.
-- Output PR validation receives no PAT and stays at `contents: read`. Merge-time promotion uses `${{ github.token }}`
-  with `contents: write` and `pull-requests: read` for the immutable tag and GitHub Release.
-- `GSVIBE_BIN_TOKEN`, where still configured for source-PR or warmup workflows, is a private-submodule read credential.
-  It is not the release publication credential.
+- `preflight`, `warmup-idb`, `build-release-bundle`, and `verify-release-bundle` have read-only contents permission.
+- The self-hosted build has no PAT, push, tag, or Release authority. `GSVIBE_BIN_TOKEN` is private-submodule read access.
+- The GitHub-hosted verifier checks the closed bundle against exact source Git objects.
+- `publish-release` runs in the protected `release` Environment and is the only job with `contents: write`.
+- Actions Artifact names bind version, source SHA, run ID, and attempt; their digest is checked before download.
 
-Never print, persist, upload, or copy the PAT value into logs, artifacts, manifests, staging, caches, or Git config
-diagnostics. Rotate or revoke it through the `win64` Environment and record the owner, expiry, SSO authorization, and
-rotation owner outside the repository.
+## Immutable version state
 
-## State and truth sources
+- No tag/Release: create a tag pointing directly to source SHA, then a draft Release.
+- Matching tag and draft: resume the original build identity; existing assets must match exact size/hash.
+- Published Release: exact assets are an idempotent success; missing or different assets fail.
+- Tag mismatch, Release without tag, different draft identity, or overwrite request fail closed.
+- Changed content requires a new version. `--clobber`, tag moves, and content-style republish are forbidden.
 
-The private stage directory is `PERSISTED_WORKSPACE/release-staging/<version>/<build_id>/`, holding canonical
-`manifest.json`, `READY`, `PROMOTION_STARTED`, `PROMOTED.json`, and `PROMOTION_COMPLETE` markers. `pr-index/<pr>.json`
-binds the output PR; `completed/<version>/<build_id>.json` is the durable completion record. Only the completion record
-plus the tag identity, Release ID, and downloaded asset inventory means the release is complete.
+The draft is the recoverable staging layer. The publisher uploads missing assets without overwrite, re-reads remote asset
+name/size/hash, and publishes only after the complete inventory matches. Preserve the run URL, source/bin SHAs, bundle
+manifest, checksums, and draft URL when diagnosing a failure.
 
-## Protected operations
+## Binary-only accepted cache maintenance
 
-- `abandon`: `abandon-staged-release.yml` (a `workflow_dispatch`), pre-promotion only, with confirmation
-  `ABANDON <version>/<build_id>` and a reason. Any recorded PR is remotely verified before it is closed.
-- `cleanup`: `cleanup-completed-release-staging.yml` (a `workflow_dispatch` or daily cron) sweeps only stages with
-  `PROMOTION_COMPLETE` and a matching durable completion, atomically renaming them to
-  `cleanup-trash/<version>/<build_id>`.
-- `republish`: `release-build.yml` with `mode=republish`, requiring the `version` tag to exist; it re-analyzes only the
-  outputs affected since the last accepted source.
+`PERSISTED_WORKSPACE/bin/<gamever>` is a rebuildable binary/side-file cache, not release truth. Materialization ignores
+analysis YAML and IDA/BinSync state. To retire legacy persisted YAML, run one game version at a time on the authorized
+runner:
 
-Preserve failed stages, workflow URL/run/attempt, source/bin SHAs, PR/head/merge identity, tag target, Release ID, and
-downloaded hashes.
+```bash
+uv run python release_workflow.py cleanup-legacy-accepted-yaml --repo-root <checkout> \
+  --persisted-root <root> --gamever <tag> --cutover-id bin-artifacts-v1
+```
 
-## Generated-output PR base advancement
-
-An output PR stays valid after `main` advances when:
-
-- the output head is a single-parent commit whose parent is exactly the manifest `source_sha`;
-- the current PR base is a descendant of that `source_sha`;
-- `source_sha..head` only changes allowlisted generated outputs, including `release-manifests/<version>.json`;
-- tracked manifest identity and hashes still match.
-
-The verifier does not rebase the immutable output head onto the new base. GitHub mergeability still blocks conflicting
-histories. Merge-time `verify_promotion()` uses the same ancestor rule for the merge first parent. Replacement
-build/PR is required only when that ancestor or direct-parent identity is broken.
-
-## Promotion storage topology
-
-Both the `verify` and `promote` jobs declare the `win64` Environment and run on `[self-hosted, windows, x64]` runners.
-They access the same private `release-staging` through that Environment's `PERSISTED_WORKSPACE` secret. `verify` builds
-the path with PowerShell `Join-Path` and fails closed when the secret is empty. Every eligible runner must still map the
-path to the same controlled storage; perform a real merge rehearsal before production promotion acceptance to prove
-cross-job visibility and Environment protection behavior.
+The command first verifies binary-only materialization, then under the per-gamever lock creates an exact inventoried
+backup in `accepted-bin/legacy-yaml-backups/<cutover-id>/<gamever>` before deleting the unchanged YAML inventory. Rerun
+the same command after an interrupted rename or partial deletion; it resumes only from the canonical matching backup.

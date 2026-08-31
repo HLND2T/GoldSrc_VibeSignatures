@@ -123,6 +123,27 @@ class AgentRunnerCommandTests(unittest.TestCase):
         self.assertEqual(["exec", "-"], command.args[-2:])
         self.assertEqual("Run SKILL: .claude/skills/find-symbol/SKILL.md", command.input_text)
 
+    def test_all_agent_prompts_bind_exact_artifact_context(self) -> None:
+        context = {
+            "required_outputs": [r"D:\\temp\\artifacts\\game-1\\engine\\result.windows.yaml"],
+            "optional_outputs": [],
+            "required_inputs": [r"D:\\temp\\artifacts\\game-1\\engine\\input.windows.yaml"],
+            "optional_inputs": [],
+        }
+        claude = agent_runner._build_claude_command(
+            "claude", "find-symbol", "session-1", False, artifact_context=context
+        )
+        codex = agent_runner._build_codex_command(
+            "codex", "find-symbol", 'developer_instructions="sig finder"', False, artifact_context=context
+        )
+        opencode = agent_runner._build_opencode_command(
+            "opencode", "find-symbol", False, None, artifact_context=context
+        )
+        for prompt in (claude.args[2], codex.input_text, opencode.args[-1]):
+            self.assertIn("Invocation artifact contract", prompt)
+            self.assertIn("result.windows.yaml", prompt)
+            self.assertIn("input.windows.yaml", prompt)
+
     def test_claude_dynamic_mcp_override_is_reused_for_retry(self) -> None:
         mcp_url = "http://127.0.0.1:54321/mcp"
         first = agent_runner._build_claude_command("claude", "find-symbol", "session-1", False, mcp_url=mcp_url)
@@ -417,6 +438,16 @@ class AgentRunnerExecutionTests(unittest.TestCase):
         )
         self.assertFalse(result)
         self.assertEqual("invalid_mcp_url", progress[-1]["reason"])
+
+    def test_run_skill_rejects_nonserializable_artifact_context(self) -> None:
+        progress: list[dict] = []
+        result = agent_runner.run_skill(
+            "find-symbol",
+            artifact_context={"required_outputs": {Path("output.yaml")}},
+            progress_callback=lambda **event: progress.append(event),
+        )
+        self.assertFalse(result)
+        self.assertEqual("invalid_artifact_context", progress[-1]["reason"])
 
     @patch("agent_runner._run_process_with_stream_capture")
     def test_run_skill_injects_opencode_mcp_override_for_preflight_and_retries(self, mock_run_process) -> None:

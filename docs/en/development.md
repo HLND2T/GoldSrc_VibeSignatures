@@ -41,8 +41,8 @@ Run every source-compatible assigned test before completion:
 uv run python tests/run_test_suite.py all -b --durations 30
 ```
 
-`all` deliberately excludes `generated-output-contract`. That release-owned suite compares the current configs with
-the generated `gamesymbols/`, metadata, and `gamedata/` trees, so the release build runs it only after publishing fresh
-candidates and before staging the generated-output commit.
+`all` is the declared disjoint union of unit, Redis integration, repository contract, and IDA integration groups. Release
+bundle and publisher contracts are ordinary unit tests; live GitHub publication and commercial IDA evidence remain
+separate operational gates.
 
 Commercial IDA integration is skipped unless `RUN_IDA_INTEGRATION=1` and an activated `idalib` environment are available. A skipped integration test is not evidence that real IDA analysis passed.

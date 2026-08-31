@@ -11,7 +11,7 @@ from gamesymbol_snapshot_lib.analysis_sources import SourceIndex, is_analysis_so
 from gamesymbol_snapshot_lib.impact_registry import ImpactRule
 from gamesymbol_snapshot_lib.model import SnapshotContract
 
-PLAN_SCHEMA_VERSION = 3
+PLAN_SCHEMA_VERSION = 4
 CACHE_MODE_WARM = "warm"
 SNAPSHOT_DOMAIN_PATHS = frozenset(
     {
@@ -107,13 +107,11 @@ class ChangedPath:
 @dataclass(frozen=True)
 class TagImpact:
     tag: str
-    mode: str
     analysis_nodes: tuple[str, ...]
     invalidated_paths: tuple[str, ...]
     snapshot_rebuild: bool
     gamedata_rebuild: bool
     reasons: tuple[str, ...]
-    fallback_reason: str | None = None
 
     @property
     def has_actions(self) -> bool:
@@ -229,7 +227,7 @@ def _snapshot_domain_changed(paths: set[str]) -> bool:
         path in SNAPSHOT_DOMAIN_PATHS
         or path.startswith("gamesymbol_snapshot_lib/")
         and path.rsplit("/", 1)[-1]
-        not in {"analysis_sources.py", "impact_registry.py", "materialize.py", "pr_cli.py", "pr_validation.py"}
+        not in {"analysis_sources.py", "impact_registry.py", "pr_cli.py", "pr_validation.py"}
         for path in paths
     )
 
@@ -251,16 +249,13 @@ def plan_tag_impact(
     merge_sources: SourceIndex | None,
     base_rules: tuple[ImpactRule, ...],
     merge_rules: tuple[ImpactRule, ...],
-    metadata_changed: bool = False,
-    gamedata_changed: bool = False,
     binary_changed_pairs: frozenset[tuple[str, str]] = frozenset(),
-    base_snapshot_trusted: bool = True,
     fail_unmapped_analysis: bool = True,
 ) -> TagImpact:
     if merge_contract is None:
-        return TagImpact(tag, "incremental", (), (), False, False, ())
+        return TagImpact(tag, (), (), False, False, ())
     if not merge_contract.formal_paths:
-        return TagImpact(tag, "incremental", (), (), False, False, ())
+        return TagImpact(tag, (), (), False, False, ())
 
     all_paths = {path for change in changed_paths for path in change.paths}
     seeds: set[str] = set()
@@ -316,92 +311,20 @@ def plan_tag_impact(
         if pair_nodes:
             reasons.append(f"binary changed: {module}/{platform}")
 
-    snapshot_rebuild = bool(seeds or metadata_changed or config_changed or _snapshot_domain_changed(all_paths))
-    if metadata_changed:
-        reasons.append("snapshot metadata companion changed")
-    gamedata_rebuild = bool(seeds or config_changed or gamedata_changed or _gamedata_domain_changed(all_paths))
-    if gamedata_changed:
-        reasons.append("tracked gamedata changed")
+    snapshot_rebuild = bool(seeds or config_changed or _snapshot_domain_changed(all_paths))
+    gamedata_rebuild = bool(seeds or config_changed or _gamedata_domain_changed(all_paths))
 
     if not seeds and not snapshot_rebuild and not gamedata_rebuild:
-        return TagImpact(tag, "incremental", (), (), False, False, ())
-
-    mode = "incremental"
-    fallback_reason = None
-    if not base_snapshot_trusted and merge_contract.nodes:
-        mode = "full-rebuild"
-        fallback_reason = "base snapshot missing or untrusted"
-        seeds = set(merge_contract.nodes)
-        snapshot_rebuild = True
-        gamedata_rebuild = True
-        reasons.append(fallback_reason)
+        return TagImpact(tag, (), (), False, False, ())
 
     selected = _downstream_closure(merge_contract, seeds)
     invalidated = sorted(path for node_id in selected for path in merge_contract.nodes[node_id].outputs)
     ordered_nodes = tuple(node.id for node in merge_contract.analysis_plan.nodes if node.id in selected)
     return TagImpact(
         tag=tag,
-        mode=mode,
         analysis_nodes=ordered_nodes,
         invalidated_paths=tuple(dict.fromkeys(invalidated)),
         snapshot_rebuild=snapshot_rebuild,
         gamedata_rebuild=gamedata_rebuild,
         reasons=tuple(dict.fromkeys(reasons)),
-        fallback_reason=fallback_reason,
-    )
-
-
-@dataclass(frozen=True)
-class InvalidationPlan:
-    paths: frozenset[str]
-    nodes: frozenset[str]
-    reasons: tuple[str, ...]
-
-
-def _normalize_changes(changed_files) -> tuple[ChangedPath, ...]:
-    result = []
-    for item in changed_files:
-        if isinstance(item, ChangedPath):
-            result.append(item)
-        elif isinstance(item, str):
-            result.append(ChangedPath("M", item, item))
-        else:
-            raise ImpactPlanningError(f"Unsupported changed path: {item!r}")
-    return tuple(result)
-
-
-def build_invalidation_plan(
-    base_contract,
-    head_contract,
-    base_snapshot,
-    head_snapshot,
-    changed_files,
-    repo_root,
-    *,
-    base_sources: SourceIndex | None = None,
-    head_sources: SourceIndex | None = None,
-) -> InvalidationPlan:
-    """Compute which artifact paths must be re-analyzed for a republish.
-
-    Reuses the PR impact planner so republish invalidation matches PR-triggered
-    re-analysis. ``base_snapshot``/``head_snapshot`` are accepted for parity with
-    the single-gamever contract but are no longer consulted (snapshot-delta
-    seeding was removed from the planner).
-    """
-    changes = _normalize_changes(changed_files)
-    impact = plan_tag_impact(
-        tag=head_contract.game_version,
-        base_contract=base_contract,
-        merge_contract=head_contract,
-        changed_paths=changes,
-        base_sources=base_sources,
-        merge_sources=head_sources,
-        base_rules=(),
-        merge_rules=(),
-        base_snapshot_trusted=True,
-    )
-    return InvalidationPlan(
-        frozenset(impact.invalidated_paths),
-        frozenset(impact.analysis_nodes),
-        impact.reasons,
     )

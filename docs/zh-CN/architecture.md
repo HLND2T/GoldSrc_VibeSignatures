@@ -10,9 +10,9 @@ download.yaml + configs/<tag>.yaml
   -> bin/<tag>/<module>/<binary>
   -> 经过校验的分析 DAG
   -> versioned stage/job/task execution plan
-  -> bin/<tag>/<module>/<symbol>.<platform>.yaml
-  -> 不可变 candidate
-  -> gamesymbols/<tag>.yaml + gamesymbols/<tag>.metadata.yaml
+  -> bin_artifacts/<tag>/<module>/<symbol>.<platform>.yaml（Git truth）
+  -> 仅 release 阶段生成的不可变 candidate
+  -> gamesymbols/<tag>.yaml + gamesymbols/<tag>.metadata.yaml（bundle）
   -> SymbolStore -> 严格 gamedata generator
   -> gamedata/<tag>/gamedata-manifest.json + declared payloads
 
@@ -24,9 +24,9 @@ snapshot + immutable metadata companion -> Vite asset plugin
   -> content-addressed JSON + index v4
   -> append-only pages-snapshots archive -> GitHub Pages Symbol Explorer
 
-exact source + bin gitlink -> analyze all game versions -> publish candidates/gamedata
-  -> release-manifests/<version>.json generated-output PR
-  -> validate-output-pr -> merge -> version tag + GitHub Release
+exact source + bin gitlink + bin_artifacts -> analyze all game versions
+  -> release bundle + canonical manifest + SHA256SUMS
+  -> hosted verify -> protected publish-release -> GitHub Release
 
 trusted PR plan + cache_mode=warm evidence
   -> probe/publish exact generation -> canonical selection -> strict restore
@@ -121,29 +121,20 @@ writer 输出 schema 6，包含 config digest v2、analysis output contract vers
 路径逃逸、未声明或缺失的 YAML、非 canonical bytes 与 contract drift。
 
 candidate session 绑定 canonical snapshot 与 alias metadata companion 的 hash、文件系统 identity 和 pair identity。
-本地 pair 发布使用可恢复 journal；对外可见的原子边界是 Git tree。发布仍必须先验证匹配的 gamedata session，
+本地 pair 发布使用可恢复 journal；对外候选边界是 verified release bundle。发布仍必须先验证匹配的 gamedata session，
 candidate session 不包含 C++ 测试步骤。
 
-Canonical gamedata 默认继续被忽略，只能从 guarded candidate inventory 精确 stage。每个 tag 都有一个排除自身的
-canonical manifest，绑定 snapshot/config/generator identity 与声明的 payload 文件；因此空 generator 集合也有一份
-可跟踪、可 review 的输出。
+Canonical gamedata 只从 guarded candidate inventory 派生并复制到 release staging，绝不进入 Git index。每个 tag
+都有一个排除自身的 canonical manifest，绑定 snapshot/config/generator identity 与声明的 payload 文件；因此空
+generator 集合也有一份可验证输出。
 
 ## Release provenance 边界
 
-Release build 在 self-hosted runner 上为全部 game version 生成并发布 `gamesymbols/<tag>.yaml`、
-`gamesymbols/<tag>.metadata.yaml` 与 `gamedata/<tag>/**`，把结果连同 `release-manifests/<version>.json` 提交到
-`gamesymbols/build/<version>` 分支的 generated-output PR。Schema-1 canonical manifest 绑定 `version`、`mode`、
-`build_id`、`source_sha`、每条 game version 的 snapshot/gamedata provenance 与 aggregate inventory hash。empty-symbol
-tag 遵循同一发布契约：snapshot 使用空 file payload 锁定二进制 identity，同时仍须发布 companion 与 canonical 空
-inventory gamedata manifest。
-
-`validate-generated-output-pr.yml` 用 exact Git blob 重建 tracked output inventory 并核对每条 game version。output
-head 必须是单父提交且该父提交等于 manifest `source_sha`；当前 PR base 必须是该 `source_sha` 的后代，因此 default
-branch 前进本身不是 stale。changed paths 取自 `source_sha..head`。`promote-release-after-output-merge.yml` 只接受
-bot-authored output PR、direct-parent head，以及 first parent 从 `source_sha` 演进而来的 exact two-parent merge，
-校验后把 accepted bin 事务化交换进 persisted workspace、打单个 `version` tag 并发布一个 GitHub Release。Private
-marker 使用 hash chain；abandon 与 cleanup 保持独立恢复语义。`mode=republish` 只重新分析自上次接受 source 以来
-受影响的输出。Production authority 由 allowlist 仓库 + `win64` Environment + per-version concurrency 提供。
+Release build 会在 checkout 外的 fresh root 强制重建所有 configured artifact，并与 Git `bin_artifacts` 做 exact byte
+comparison；随后生成 snapshot、metadata、gamedata、binary-only/game-data archive、canonical Release manifest 和
+`SHA256SUMS`。self-hosted job 只有 read 权限；GitHub-hosted job 对 exact source 与 Git blobs 完整复验封闭 bundle。
+受保护的 `publish-release` 是唯一 `contents: write` job：创建或恢复 matching draft，拒绝 tag/asset drift 与覆盖，复核
+远端 name/size/hash 后才发布。published version 不可覆盖；内容变化必须使用新版本。
 
 ## API、Dashboard 与不可变 Pages 资产
 
@@ -154,7 +145,7 @@ reset contract 会要求客户端重新读取 atomic snapshot。
 
 React dashboard 提供 run list、graph/list、task detail、status filter 和 SSE live update，同时包含静态 Symbol
 Explorer。Symbol snapshot 使用 `<family-build>` tag，按 family 分组并在组内按数字 build 降序。Vite plugin 将
-tracked schema-5/6 YAML 与必需的 schema-1 metadata companion 转成精确 UTF-8 content-addressed JSON 与 index
+published Release 中下载的 schema-6 YAML 与必需的 schema-1 metadata companion 转成精确 UTF-8 content-addressed JSON 与 index
 schema v4，并且绝不读取 live config alias；部署 workflow 把所有 digest
 保存到 append-only `pages-snapshots` 分支，并校验 current/archive/CDN bytes。GitHub Pages 只托管静态资产，
 不托管 Process API。

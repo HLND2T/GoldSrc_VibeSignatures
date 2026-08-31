@@ -14,8 +14,9 @@ Install the [requirements](docs/en/requirements.md), then:
 uv run ida_analyze_bin.py -allgamever -debug
 ```
 
-to run the analysis workflow to generate YAML artifacts for GoldSrc symbols. The Analyzer always requires exact warm
-IDB generations to have been restored first; it never rebuilds databases or saves consumer-side changes.
+to run the analysis workflow. Per-symbol YAML is read and written only under `bin_artifacts/<gamever>/<module>/`; `bin/`
+contains binaries and rebuildable IDA state only. The Analyzer always requires exact warm IDB generations to have been
+restored first; it never rebuilds databases or saves consumer-side changes.
 
 ## Documentation
 

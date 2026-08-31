@@ -32,6 +32,7 @@ from gamesymbol_snapshot_lib.pr_validation import (
     CACHE_MODE_WARM,
     ChangedPath,
     ImpactPlanningError,
+    PLAN_SCHEMA_VERSION,
     TagImpact,
     plan_tag_impact,
 )
@@ -307,8 +308,6 @@ def build_plan(
                 merge_sources=merge_sources.get(tag),
                 base_rules=base_rules,
                 merge_rules=merge_rules,
-                metadata_changed=False,
-                gamedata_changed=False,
                 binary_changed_pairs=_binary_changes(
                     tag=tag,
                     base_contract=base_contracts[tag],
@@ -317,7 +316,6 @@ def build_plan(
                     base_commit=base_bin,
                     merge_commit=merge_bin,
                 ),
-                base_snapshot_trusted=True,
                 fail_unmapped_analysis=False,
             )
             if impact.has_actions:
@@ -329,7 +327,7 @@ def load_bound_plan(path: str | Path) -> dict:
     document = json.loads(Path(path).read_text(encoding="utf-8"))
     if (
         not isinstance(document, dict)
-        or document.get("schema_version") != 3
+        or document.get("schema_version") != PLAN_SCHEMA_VERSION
         or document.get("cache_mode") != CACHE_MODE_WARM
     ):
         raise PrCliError("Invalid bound impact plan")

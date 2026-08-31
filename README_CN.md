@@ -14,8 +14,9 @@ GoldSrc VibeSignatures 是一个面向 32 位 GoldSrc 游戏的、可复现的�
 uv run ida_analyze_bin.py -allgamever -debug
 ```
 
-该命令会执行分析流程并生成包含了GoldSrc游戏的符号信息的YAML产物。Analyzer 始终要求预先恢复 exact warm IDB
-generation；它不会在 consumer 中重建数据库，也不会保存 consumer 侧修改。
+该命令会执行分析流程。单 symbol YAML 只在 `bin_artifacts/<gamever>/<module>/` 下读写；`bin/` 只保存二进制与
+可重建的 IDA 状态。Analyzer 始终要求预先恢复 exact warm IDB generation；它不会在 consumer 中重建数据库，
+也不会保存 consumer 侧修改。
 
 ## 文档
 

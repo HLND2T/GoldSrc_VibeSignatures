@@ -85,7 +85,7 @@ value passed to `-func_name`.
 
 The generator resolves the predecessor address in this order:
 
-1. `bin/<gamever>/<module>/<func_name>.<platform>.yaml` `func_va`.
+1. `bin_artifacts/<gamever>/<module>/<func_name>.<platform>.yaml` `func_va`.
 2. The config symbol's canonical `name` and `alias` values looked up in the bound IDB.
 
 Alias lookup must resolve to exactly one function start. Missing and ambiguous matches fail closed.

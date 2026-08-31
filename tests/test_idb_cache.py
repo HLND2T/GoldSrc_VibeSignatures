@@ -445,7 +445,6 @@ class IdbCacheWorkflowTests(unittest.TestCase):
                 b"        category: func\n"
             ),
             "gamesymbol-impact.yaml": b"version: 1\nrules: []\n",
-            "gamesymbols/game-1.yaml": b"snapshot\n",
             "bin_artifacts/game-1/engine/Demo.windows.yaml": b"func_name: Demo\nfunc_va: '0x10'\n",
             "bin_artifacts/game-1/client/Other.windows.yaml": b"func_name: Other\nfunc_va: '0x20'\n",
         }
@@ -461,7 +460,6 @@ class IdbCacheWorkflowTests(unittest.TestCase):
                 "add",
                 "configs",
                 "gamesymbol-impact.yaml",
-                "gamesymbols",
                 "bin_artifacts",
             ],
             check=True,
@@ -474,9 +472,6 @@ class IdbCacheWorkflowTests(unittest.TestCase):
             "merge_config_index": hashlib.sha256(files["configs/config.yaml"]).hexdigest(),
             "merge_registry": hashlib.sha256(files["gamesymbol-impact.yaml"]).hexdigest(),
             "merge_config:game-1": hashlib.sha256(files["configs/game-1.yaml"]).hexdigest(),
-            "merge_snapshot:game-1": hashlib.sha256(files["gamesymbols/game-1.yaml"]).hexdigest(),
-            "merge_metadata:game-1": None,
-            "merge_gamedata:game-1": None,
             "merge_artifacts:game-1": hashlib.sha256(
                 json.dumps(
                     [
@@ -495,7 +490,6 @@ class IdbCacheWorkflowTests(unittest.TestCase):
         }
         action = TagImpact(
             "game-1",
-            "full-rebuild",
             ("engine:windows:find",),
             ("engine/Demo.windows.yaml",),
             True,

@@ -9,7 +9,7 @@ import sys
 import time
 from pathlib import Path
 
-ALLOWED_REPOSITORIES = {"HLND2T/GoldSrc_VibeSignatures", "hzqst/GoldSrc_VibeSignatures"}
+ALLOWED_REPOSITORIES = {"HLND2T/GoldSrc_VibeSignatures"}
 VERSION_RE = re.compile(r"^v[0-9]{8}[a-z]?\Z")
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 WORKFLOW = "release-build.yml"

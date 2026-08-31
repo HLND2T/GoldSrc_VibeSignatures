@@ -56,18 +56,16 @@ secret `PERSISTED_WORKSPACE` 保存。Opened runtime 必须与动态探测得到
 
 ## Release runner 与 GitHub governance 要求
 
-Release build 与 source analysis 共用同一个 `[self-hosted, windows, x64]` runner，没有独立 release runner。其 machine
-environment 必须让 build、promotion 与 recovery job 看到同一个 checkout 外 `PERSISTED_WORKSPACE`；其中
-`release-staging` 子树必须由 runner-account ACL 保护，存储需要支持同文件系统 atomic rename。PR routing contract 必须
-把 untrusted/fork analysis 挡在该 runner 之外。
+Release build 与 source analysis 共用 `[self-hosted, windows, x64]` runner。受保护 `win64` Environment 只提供
+analysis/runtime secret 与 checkout 外 `PERSISTED_WORKSPACE`；`idb-cache` 和 binary-only accepted cache 子树必须由
+runner-account ACL 保护，并支持同文件系统 atomic rename。Build 只有 repository read 权限，没有 PAT、push、tag 或
+Release authority。PR routing 必须把 untrusted/fork analysis 挡在该 runner 之外。
 
-Release 只在 allowlist 仓库（`HLND2T/GoldSrc_VibeSignatures` 与 fork）里运行，由 `win64` Environment + per-version
-concurrency 门禁，不再依赖 GitHub App token 或 `GSVIBE_RELEASE_PHASE2_ENABLED`。在该 Environment 中配置
-`HLND2T_GH_TOKEN`，授予目标仓库 Contents/Pull requests read/write 与 Metadata read；token owner 必须是 `OWNER`、
-`MEMBER` 或 repository `COLLABORATOR`，output PR 由该 PAT account 创建。Branch protection 只 require
-Actions-owned 唯一 `pr-validate`，要求 merge-commit-only（merge first parent 是
-output `source_sha` 的后代），禁止 `main` direct/admin-bypass push，并保护 release tag。不要要求 output 分支相对
-`main` up-to-date，那会把 default branch merge 进 immutable output head。
+Production release dispatch 仅允许 `HLND2T/GoldSrc_VibeSignatures`，并使用 per-version concurrency。为 GitHub-hosted
+`publish-release` job 配置独立受保护 `release` Environment；它是唯一获准 `contents: write` 的 job。Branch protection
+要求 Actions-owned 唯一 `pr-validate`、禁止 `main` direct/admin-bypass push、保护 release tag，并为该 Environment
+配置所需 approval。Release authority 不再包含 GitHub App token、`HLND2T_GH_TOKEN`、generated-output branch 或
+merge-time promotion；repository test 无法激活或证明这些外部控制。
 
 ## 初始化游戏 binaries
 

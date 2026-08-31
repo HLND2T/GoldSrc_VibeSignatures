@@ -6,7 +6,12 @@ from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 
-from release_workflow_lib.accepted_bin import durable_inventory, materialize_accepted_bin
+from release_workflow_lib.accepted_bin import (
+    cleanup_legacy_accepted_yaml,
+    durable_inventory,
+    legacy_yaml_inventory,
+    materialize_accepted_bin,
+)
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.locks import accepted_bin_lock_path, version_lock
 
@@ -47,6 +52,23 @@ class MaterializeAcceptedBinTests(unittest.TestCase):
             self.assertEqual({"materialized": False, "gamever": "hl-9999", "files": 0, "hash": None}, result)
             self.assertEqual([], list((repo / "bin" / "hl-9999").iterdir()))
 
+    def test_yaml_named_parent_does_not_hide_a_durable_binary_file(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo, persisted = self._workspace(Path(temporary))
+            source = persisted / "bin" / "hl-3248" / "engine" / "metadata.yaml" / "payload.bin"
+            source.parent.mkdir()
+            source.write_bytes(b"durable payload")
+
+            result = materialize_accepted_bin(repo_root=repo, persisted_root=persisted, gamever="hl-3248")
+
+            self.assertEqual(2, result["files"])
+            target = repo / "bin" / "hl-3248" / "engine" / "metadata.yaml" / "payload.bin"
+            self.assertEqual(b"durable payload", target.read_bytes())
+            self.assertNotIn(
+                "engine/metadata.yaml/payload.bin",
+                {record["path"] for record in legacy_yaml_inventory(persisted / "bin" / "hl-3248")[0]},
+            )
+
     def test_source_existence_is_checked_after_acquiring_gamever_lock(self):
         with tempfile.TemporaryDirectory() as temporary:
             repo, persisted = self._workspace(Path(temporary))
@@ -79,6 +101,148 @@ class MaterializeAcceptedBinTests(unittest.TestCase):
             empty.mkdir()
             with self.assertRaisesRegex(ReleaseWorkflowError, "checkout bin directory"):
                 materialize_accepted_bin(repo_root=empty, persisted_root=persisted, gamever="hl-3248")
+
+    def test_legacy_yaml_cleanup_requires_verified_materialization_and_keeps_exact_backup(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo, persisted = self._workspace(Path(temporary))
+            source = persisted / "bin" / "hl-3248"
+            expected, expected_digest = legacy_yaml_inventory(source)
+            result = cleanup_legacy_accepted_yaml(
+                repo_root=repo,
+                persisted_root=persisted,
+                gamever="hl-3248",
+                cutover_id="bin-artifacts-v1",
+            )
+            self.assertTrue(result["cleaned"])
+            self.assertEqual(len(expected), result["files"])
+            self.assertEqual(expected_digest, result["hash"])
+            self.assertEqual([], legacy_yaml_inventory(source)[0])
+            backup = Path(result["backup"])
+            self.assertEqual(expected, legacy_yaml_inventory(backup)[0])
+            self.assertTrue((backup / "legacy-yaml-inventory.json").is_file())
+            self.assertEqual(b"accepted binary", (source / "engine" / "hw.dll").read_bytes())
+
+            repeated = cleanup_legacy_accepted_yaml(
+                repo_root=repo,
+                persisted_root=persisted,
+                gamever="hl-3248",
+                cutover_id="bin-artifacts-v1",
+            )
+            self.assertFalse(repeated["cleaned"])
+            self.assertEqual(0, repeated["files"])
+            self.assertEqual(str(backup), repeated["backup"])
+            self.assertEqual(expected_digest, repeated["hash"])
+
+    def test_legacy_yaml_cleanup_recovers_a_verified_incoming_backup(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo, persisted = self._workspace(Path(temporary))
+            with patch.object(Path, "replace", side_effect=OSError("interrupted rename")):
+                with self.assertRaisesRegex(ReleaseWorkflowError, "backup preparation failed"):
+                    cleanup_legacy_accepted_yaml(
+                        repo_root=repo,
+                        persisted_root=persisted,
+                        gamever="hl-3248",
+                        cutover_id="bin-artifacts-v1",
+                    )
+            source = persisted / "bin" / "hl-3248"
+            self.assertTrue(legacy_yaml_inventory(source)[0])
+            result = cleanup_legacy_accepted_yaml(
+                repo_root=repo,
+                persisted_root=persisted,
+                gamever="hl-3248",
+                cutover_id="bin-artifacts-v1",
+            )
+            self.assertTrue(result["cleaned"])
+            self.assertEqual([], legacy_yaml_inventory(source)[0])
+
+    def test_legacy_yaml_cleanup_resumes_after_partial_deletion(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo, persisted = self._workspace(Path(temporary))
+            source = persisted / "bin" / "hl-3248"
+            original_unlink = Path.unlink
+            yaml_unlinks = 0
+
+            def interrupt_second_yaml(path, *args, **kwargs):
+                nonlocal yaml_unlinks
+                if source in path.parents and path.suffix.lower() in {".yaml", ".yml"}:
+                    yaml_unlinks += 1
+                    if yaml_unlinks == 2:
+                        raise OSError("interrupted deletion")
+                return original_unlink(path, *args, **kwargs)
+
+            with patch.object(Path, "unlink", interrupt_second_yaml):
+                with self.assertRaisesRegex(ReleaseWorkflowError, "cleanup was interrupted"):
+                    cleanup_legacy_accepted_yaml(
+                        repo_root=repo,
+                        persisted_root=persisted,
+                        gamever="hl-3248",
+                        cutover_id="bin-artifacts-v1",
+                    )
+            self.assertEqual(1, len(legacy_yaml_inventory(source)[0]))
+            result = cleanup_legacy_accepted_yaml(
+                repo_root=repo,
+                persisted_root=persisted,
+                gamever="hl-3248",
+                cutover_id="bin-artifacts-v1",
+            )
+            self.assertTrue(result["cleaned"])
+            self.assertEqual(1, result["files"])
+            self.assertEqual([], legacy_yaml_inventory(source)[0])
+
+    def test_legacy_yaml_cleanup_rejects_source_drift_after_partial_deletion(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo, persisted = self._workspace(Path(temporary))
+            source = persisted / "bin" / "hl-3248"
+            original_unlink = Path.unlink
+            yaml_unlinks = 0
+
+            def interrupt_second_yaml(path, *args, **kwargs):
+                nonlocal yaml_unlinks
+                if source in path.parents and path.suffix.lower() in {".yaml", ".yml"}:
+                    yaml_unlinks += 1
+                    if yaml_unlinks == 2:
+                        raise OSError("interrupted deletion")
+                return original_unlink(path, *args, **kwargs)
+
+            with patch.object(Path, "unlink", interrupt_second_yaml):
+                with self.assertRaisesRegex(ReleaseWorkflowError, "cleanup was interrupted"):
+                    cleanup_legacy_accepted_yaml(
+                        repo_root=repo,
+                        persisted_root=persisted,
+                        gamever="hl-3248",
+                        cutover_id="bin-artifacts-v1",
+                    )
+            remaining = legacy_yaml_inventory(source)[0]
+            self.assertEqual(1, len(remaining))
+            (source / remaining[0]["path"]).write_bytes(b"func_name: changed\n")
+
+            with self.assertRaisesRegex(ReleaseWorkflowError, "new or differs"):
+                cleanup_legacy_accepted_yaml(
+                    repo_root=repo,
+                    persisted_root=persisted,
+                    gamever="hl-3248",
+                    cutover_id="bin-artifacts-v1",
+                )
+
+    def test_legacy_yaml_is_not_deleted_when_binary_materialization_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo, persisted = self._workspace(Path(temporary))
+            source = persisted / "bin" / "hl-3248"
+            before = legacy_yaml_inventory(source)[0]
+            with (
+                patch(
+                    "release_workflow_lib.accepted_bin.materialize_accepted_bin",
+                    side_effect=ReleaseWorkflowError("materialization failed"),
+                ),
+                self.assertRaisesRegex(ReleaseWorkflowError, "materialization failed"),
+            ):
+                cleanup_legacy_accepted_yaml(
+                    repo_root=repo,
+                    persisted_root=persisted,
+                    gamever="hl-3248",
+                    cutover_id="bin-artifacts-v1",
+                )
+            self.assertEqual(before, legacy_yaml_inventory(source)[0])
 
 
 if __name__ == "__main__":

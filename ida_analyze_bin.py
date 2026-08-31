@@ -1653,6 +1653,12 @@ def run_analysis_pipeline(
         node.skill,
         agent=agent,
         expected_yaml_paths=[str(path) for path in required],
+        artifact_context={
+            "required_outputs": [str(path) for path in required],
+            "optional_outputs": [str(path) for path in optional],
+            "required_inputs": [str(path) for path in required_inputs],
+            "optional_inputs": [str(path) for path in optional_inputs],
+        },
         max_retries=node.max_retries,
         model=agent_model,
         debug=debug,

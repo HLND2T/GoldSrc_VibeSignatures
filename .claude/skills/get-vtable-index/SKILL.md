@@ -19,7 +19,8 @@ Find a function's position (offset and index) within a vtable by iterating throu
 
 ### 1. Load vtable YAML and find function index:
 
-   **ALWAYS** first check if `{ClassName}_vtable.{platform}.yaml` exists beside the binary, then search for the function in `vtable_entries`:
+   **ALWAYS** select the exact `{ClassName}_vtable.{platform}.yaml` input path from the invocation prompt's artifact
+   contract, then search `vtable_entries`. Never derive the YAML path from the binary:
 
    ```python
    mcp__ida-pro-mcp__py_eval code="""
@@ -33,10 +34,11 @@ Find a function's position (offset and index) within a vtable by iterating throu
    # ======================================
 
    input_file = idaapi.get_input_file_path()
-   dir_path = os.path.dirname(input_file)
    platform = 'windows' if input_file.endswith('.dll') else 'linux'
 
-   yaml_path = os.path.join(dir_path, f"{class_name}_vtable.{platform}.yaml")
+   yaml_path = os.path.abspath(r"<EXACT_INPUT_ARTIFACT_PATH_FROM_INVOCATION_CONTRACT>")
+   if os.path.basename(yaml_path) != f"{class_name}_vtable.{platform}.yaml":
+       raise ValueError(f"Artifact path does not match {class_name}_vtable.{platform}.yaml: {yaml_path}")
 
    if not os.path.exists(yaml_path):
        print(f"ERROR: Required file {class_name}_vtable.{platform}.yaml not found.")

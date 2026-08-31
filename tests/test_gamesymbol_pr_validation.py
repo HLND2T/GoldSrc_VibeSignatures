@@ -17,10 +17,7 @@ from gamesymbol_snapshot_lib.analysis_sources import (
     validate_reference_consumers,
 )
 from gamesymbol_snapshot_lib.config import load_contract
-from gamesymbol_snapshot_lib.errors import SnapshotConfigError
 from gamesymbol_snapshot_lib.impact_registry import ImpactRegistryError, parse_impact_registry
-from gamesymbol_snapshot_lib.materialize import materialize_baseline
-from gamesymbol_snapshot_lib.operations import load_snapshot_context, pack_snapshot
 from gamesymbol_snapshot_lib.pr_cli import (
     GitRepository,
     PrCliError,
@@ -30,11 +27,11 @@ from gamesymbol_snapshot_lib.pr_cli import (
 )
 from gamesymbol_snapshot_lib.pr_validation import (
     CACHE_MODE_WARM,
+    PLAN_SCHEMA_VERSION,
     BoundImpactPlan,
     ChangedPath,
     ImpactPlanningError,
     TagImpact,
-    build_invalidation_plan,
     evaluate_pr_validation,
     plan_tag_impact,
 )
@@ -244,31 +241,6 @@ class ImpactPlanningTests(unittest.TestCase):
                     merge_rules=(),
                 )
 
-    def test_untrusted_base_selects_full_rebuild(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            contract = self._contract(root)
-            source = SourceIndex(
-                {"ida_preprocessor_scripts/produce.py": frozenset({"engine:windows:produce"})},
-                frozenset({"ida_preprocessor_scripts/produce.py"}),
-            )
-            impact = plan_tag_impact(
-                tag="game-1",
-                base_contract=contract,
-                merge_contract=contract,
-                changed_paths=(
-                    ChangedPath("M", "ida_preprocessor_scripts/produce.py", "ida_preprocessor_scripts/produce.py"),
-                ),
-                base_sources=source,
-                merge_sources=source,
-                base_rules=(),
-                merge_rules=(),
-                base_snapshot_trusted=False,
-            )
-            self.assertEqual("full-rebuild", impact.mode)
-            self.assertEqual(set(contract.nodes), set(impact.analysis_nodes))
-            self.assertIsNotNone(impact.fallback_reason)
-
     def test_snapshot_and_gamedata_domains_route_without_ida_and_zero_symbol_tags_stay_noop(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -286,26 +258,6 @@ class ImpactPlanningTests(unittest.TestCase):
             self.assertEqual((), snapshot_only.analysis_nodes)
             self.assertTrue(snapshot_only.snapshot_rebuild)
             self.assertFalse(snapshot_only.gamedata_rebuild)
-            metadata_only = plan_tag_impact(
-                tag="game-1",
-                base_contract=contract,
-                merge_contract=contract,
-                changed_paths=(
-                    ChangedPath(
-                        "M",
-                        "gamesymbols/game-1.metadata.yaml",
-                        "gamesymbols/game-1.metadata.yaml",
-                    ),
-                ),
-                base_sources=None,
-                merge_sources=None,
-                base_rules=(),
-                merge_rules=(),
-                metadata_changed=True,
-            )
-            self.assertEqual((), metadata_only.analysis_nodes)
-            self.assertTrue(metadata_only.snapshot_rebuild)
-            self.assertFalse(metadata_only.gamedata_rebuild)
             hashing_only = plan_tag_impact(
                 tag="game-1",
                 base_contract=contract,
@@ -331,26 +283,6 @@ class ImpactPlanningTests(unittest.TestCase):
             )
             self.assertFalse(gamedata_only.snapshot_rebuild)
             self.assertTrue(gamedata_only.gamedata_rebuild)
-            tracked_gamedata = plan_tag_impact(
-                tag="game-1",
-                base_contract=contract,
-                merge_contract=contract,
-                changed_paths=(
-                    ChangedPath(
-                        "M",
-                        "gamedata/game-1/gamedata-manifest.json",
-                        "gamedata/game-1/gamedata-manifest.json",
-                    ),
-                ),
-                base_sources=None,
-                merge_sources=None,
-                base_rules=(),
-                merge_rules=(),
-                gamedata_changed=True,
-            )
-            self.assertFalse(tracked_gamedata.snapshot_rebuild)
-            self.assertTrue(tracked_gamedata.gamedata_rebuild)
-
             empty_config = root / "empty.yaml"
             empty_config.write_text(
                 yaml.safe_dump(
@@ -411,28 +343,6 @@ class ImpactPlanningTests(unittest.TestCase):
             )
             self.assertEqual(set(contract.nodes), set(impact.analysis_nodes))
 
-    def test_invalidation_plan_reuses_impact_planner(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            contract = self._contract(root)
-            source = SourceIndex(
-                {"ida_preprocessor_scripts/produce.py": frozenset({"engine:windows:produce"})},
-                frozenset({"ida_preprocessor_scripts/produce.py"}),
-            )
-            plan = build_invalidation_plan(
-                contract,
-                contract,
-                None,
-                None,
-                [ChangedPath("M", "ida_preprocessor_scripts/produce.py", "ida_preprocessor_scripts/produce.py")],
-                root,
-                base_sources=source,
-                head_sources=source,
-            )
-            self.assertIn("engine/A.windows.yaml", plan.paths)
-            self.assertIn("engine/B.windows.yaml", plan.paths)
-            self.assertTrue(plan.reasons)
-
     def test_artifact_change_maps_to_owner_and_downstream_and_rejects_unknown_path(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -480,7 +390,7 @@ class ImpactPlanningTests(unittest.TestCase):
                 )
 
     def test_bound_plan_digest_binds_shas_actions_and_digests(self):
-        action = TagImpact("game-1", "incremental", (), (), True, True, ("snapshot",))
+        action = TagImpact("game-1", (), (), True, True, ("snapshot",))
         plan = BoundImpactPlan(
             "a" * 40,
             "b" * 40,
@@ -491,6 +401,9 @@ class ImpactPlanningTests(unittest.TestCase):
             {"x": "y"},
         )
         document = json.loads(plan.canonical_bytes())
+        self.assertEqual(PLAN_SCHEMA_VERSION, document["schema_version"])
+        self.assertNotIn("mode", document["tags"][0])
+        self.assertNotIn("fallback_reason", document["tags"][0])
         self.assertEqual(CACHE_MODE_WARM, document["cache_mode"])
         digest = document.pop("plan_sha256")
         encoded = json.dumps(document, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -578,7 +491,6 @@ class BoundPlanValidationTests(unittest.TestCase):
             "configs/config.yaml": b"gamevers:\n  - game-1\n",
             "configs/game-1.yaml": b"modules: []\n",
             "gamesymbol-impact.yaml": b"version: 1\nrules: []\n",
-            "gamesymbols/game-1.yaml": b"schema_version: 5\ngame_version: game-1\n",
         }
         for relative, raw in files.items():
             path = root / relative
@@ -593,9 +505,6 @@ class BoundPlanValidationTests(unittest.TestCase):
             "merge_config_index": hashlib.sha256(files["configs/config.yaml"]).hexdigest(),
             "merge_registry": hashlib.sha256(files["gamesymbol-impact.yaml"]).hexdigest(),
             "merge_config:game-1": hashlib.sha256(files["configs/game-1.yaml"]).hexdigest(),
-            "merge_snapshot:game-1": hashlib.sha256(files["gamesymbols/game-1.yaml"]).hexdigest(),
-            "merge_metadata:game-1": None,
-            "merge_gamedata:game-1": None,
         }
         return base_sha, merge_sha, digests
 
@@ -607,7 +516,7 @@ class BoundPlanValidationTests(unittest.TestCase):
         digests: dict[str, str | None],
         merge_bin_commit: str | None = None,
     ) -> None:
-        action = TagImpact("game-1", "full-rebuild", (), (), True, False, ("snapshot",))
+        action = TagImpact("game-1", (), (), True, False, ("snapshot",))
         plan = BoundImpactPlan(
             merge_sha,
             merge_sha,
@@ -783,96 +692,6 @@ class ArtifactRebuildComparisonTests(unittest.TestCase):
                     merge_ref=merge_sha,
                     bindir=repo / "bin",
                     artifactdir=rebuilt,
-                )
-
-
-class MaterializationTests(unittest.TestCase):
-    def test_selective_materialization_excludes_invalidated_and_clears_stale_yaml(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            config = root / "config.yaml"
-            config.write_text(
-                yaml.safe_dump(
-                    {
-                        "modules": [
-                            {
-                                "name": "engine",
-                                "path_windows": "Game/hw.dll",
-                                "module_windows": "hw.dll",
-                                "skills": [
-                                    {"name": "one", "expected_output": ["One.{platform}.yaml"]},
-                                    {"name": "two", "expected_output": ["Two.{platform}.yaml"]},
-                                ],
-                                "symbols": [
-                                    {"name": "One", "category": "func"},
-                                    {"name": "Two", "category": "func"},
-                                ],
-                            }
-                        ]
-                    },
-                    sort_keys=False,
-                ),
-                encoding="utf-8",
-            )
-            binary_module_dir = root / "base-bin" / "game-1" / "engine"
-            artifact_module_dir = root / "base-artifacts" / "game-1" / "engine"
-            write_pe32(binary_module_dir / "hw.dll")
-            artifact_module_dir.mkdir(parents=True)
-            (artifact_module_dir / "One.windows.yaml").write_text("func_name: One\nfunc_va: '0x10'\n", encoding="utf-8")
-            (artifact_module_dir / "Two.windows.yaml").write_text("func_name: Two\nfunc_va: '0x20'\n", encoding="utf-8")
-            snapshot = root / "base.yaml"
-            pack_snapshot("game-1", root / "base-bin", config, snapshot, artifactdir=root / "base-artifacts")
-            base = load_snapshot_context(
-                snapshot, config, "game-1", root / "base-bin", artifactdir=root / "base-artifacts"
-            )
-            merge_contract = load_contract(config, "game-1", root / "merge-bin", artifactdir=root / "merge-artifacts")
-            stale = root / "merge-artifacts" / "game-1" / "engine" / "Stale.yaml"
-            stale.parent.mkdir(parents=True)
-            stale.write_text("stale: true\n", encoding="utf-8")
-
-            restored = materialize_baseline(
-                base=base,
-                merge_contract=merge_contract,
-                artifactdir=root / "merge-artifacts",
-                invalidated_paths=("engine/Two.windows.yaml",),
-                mode="incremental",
-            )
-
-            self.assertEqual(("engine/One.windows.yaml",), restored)
-            self.assertTrue((stale.parent / "One.windows.yaml").is_file())
-            self.assertFalse((stale.parent / "Two.windows.yaml").exists())
-            self.assertFalse(stale.exists())
-
-    def test_full_rebuild_clears_yaml_without_restoring_base(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            config = AnalysisSourceIndexTests()._contract(root, "game-1")
-            yaml_path = config.artifact_game_root / "engine" / "Demo.windows.yaml"
-            yaml_path.parent.mkdir(parents=True)
-            yaml_path.write_text("value: old\n", encoding="utf-8")
-            self.assertEqual(
-                (),
-                materialize_baseline(
-                    base=None,
-                    merge_contract=config,
-                    artifactdir=root / "bin_artifacts",
-                    invalidated_paths=(),
-                    mode="full-rebuild",
-                ),
-            )
-            self.assertFalse(yaml_path.exists())
-
-    def test_materialization_rejects_unsafe_invalidated_paths(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            contract = AnalysisSourceIndexTests()._contract(root, "game-1")
-            with self.assertRaises(SnapshotConfigError):
-                materialize_baseline(
-                    base=None,
-                    merge_contract=contract,
-                    artifactdir=root / "bin_artifacts",
-                    invalidated_paths=("../escape.yaml",),
-                    mode="full-rebuild",
                 )
 
 

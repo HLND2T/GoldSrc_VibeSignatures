@@ -19,6 +19,12 @@
 - 2026-08-31：步骤 9 的 GitHub 远端 drain 审计未发现 open PR 或
   `gamesymbols/build/*` remote branch。私有 `PERSISTED_WORKSPACE` 因 runner 缺失不可访问；新流程禁止恢复旧
   staging state，legacy state 的 inventory/backup/cleanup 延后到 runner 恢复后的步骤 11 门禁执行。
+- 2026-08-31：完成步骤 10–11 的仓库改造。Git versioned outputs、generated-output PR/promotion 状态机和旧
+  snapshot baseline materializer 已删除；Agent fallback 通过 invocation artifact contract 使用精确的
+  `bin_artifacts` 路径。新增 `cleanup-legacy-accepted-yaml`，在 per-gamever lock 下先验证 binary-only
+  materialization，再创建 canonical exact-hash backup，支持 verified `.incoming` 与 partial deletion 幂等恢复。
+  私有 `PERSISTED_WORKSPACE` 的实际 inventory/cleanup 仍因 runner 缺失无法执行，runner 恢复后必须使用同一
+  cutover identity 执行该运维门禁。
 
 ## 1. 目标
 
