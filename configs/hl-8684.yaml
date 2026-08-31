@@ -25,6 +25,11 @@ modules:
       - name: find-Mod_LoadModel
         expected_output:
           - Mod_LoadModel.{platform}.yaml
+      - name: find-Mod_LoadModel-decompiles
+        expected_input:
+          - Mod_LoadModel.{platform}.yaml
+        expected_output:
+          - FS_Open.{platform}.yaml
       - name: find-ClientDLL_Init
         expected_output:
           - ClientDLL_Init.{platform}.yaml
@@ -106,6 +111,8 @@ modules:
       - name: S_LoadSound
         category: func
       - name: Mod_LoadModel
+        category: func
+      - name: FS_Open
         category: func
       - name: ClientDLL_Init
         category: func

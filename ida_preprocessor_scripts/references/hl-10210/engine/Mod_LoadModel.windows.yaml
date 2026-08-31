@@ -1,0 +1,436 @@
+func_name: "Mod_LoadModel"
+func_va: "0x10240290"
+disasm_code: |-
+  .text:10240290                 push    ebp
+  .text:10240291                 mov     ebp, esp
+  .text:10240293                 ; hl-10210 Windows revision: 0x114-byte frame contains tmpName[260]; public source currently declares tmpName[4096].
+  .text:10240293                 sub     esp, 114h; hl-10210 Windows revision: 0x114-byte frame contains tmpName[260]; public source currently declares tmpName[4096].
+  .text:10240299                 mov     eax, ___security_cookie
+  .text:1024029E                 xor     eax, ebp
+  .text:102402A0                 mov     [ebp+var_4], eax
+  .text:102402A3                 push    ebx
+  .text:102402A4                 push    esi
+  .text:102402A5                 push    edi
+  .text:102402A6                 mov     edi, [ebp+String1]
+  .text:102402A9                 mov     eax, [edi+44h]
+  .text:102402AC                 cmp     eax, 2
+  .text:102402AF                 jz      loc_102404A2
+  .text:102402B5                 cmp     eax, 3
+  .text:102402B8                 jz      loc_102404A2
+  .text:102402BE                 mov     eax, [edi+40h]
+  .text:102402C1                 test    eax, eax
+  .text:102402C3                 jz      loc_10240589
+  .text:102402C9                 cmp     eax, 3
+  .text:102402CC                 jz      loc_10240589
+  .text:102402D2                 push    offset aSteam_0; "-steam"
+  .text:102402D7                 call    COM_CheckParm
+  .text:102402DC                 add     esp, 4
+  .text:102402DF                 test    eax, eax
+  .text:102402E1                 jz      short loc_10240322
+  .text:102402E3                 cmp     byte ptr [edi], 2Fh ; '/'
+  .text:102402E6                 jnz     short loc_10240322
+  .text:102402E8                 mov     eax, edi
+  .text:102402EA                 nop     word ptr [eax+eax+00h]
+  .text:102402F0                 inc     eax
+  .text:102402F1                 cmp     byte ptr [eax], 2Fh ; '/'
+  .text:102402F4                 jz      short loc_102402F0
+  .text:102402F6                 mov     esi, ds:strncpy
+  .text:102402FC                 ; Count
+  .text:102402FC                 push    103h; Count
+  .text:10240301                 ; Source
+  .text:10240301                 push    eax; Source
+  .text:10240302                 lea     eax, [ebp+tmpName]
+  .text:10240308                 ; Destination
+  .text:10240308                 push    eax; Destination
+  .text:10240309                 call    esi ; strncpy
+  .text:1024030B                 ; Count
+  .text:1024030B                 push    3Fh ; '?'; Count
+  .text:1024030D                 lea     eax, [ebp+tmpName]
+  .text:10240313                 mov     [ebp+tmpName_259], 0
+  .text:10240317                 ; Source
+  .text:10240317                 push    eax; Source
+  .text:10240318                 ; Destination
+  .text:10240318                 push    edi; Destination
+  .text:10240319                 call    esi ; strncpy
+  .text:1024031B                 add     esp, 18h
+  .text:1024031E                 mov     byte ptr [edi+3Fh], 0
+  .text:10240322                 push    offset pOptions; "rb"
+  .text:10240327                 ; pFileName
+  .text:10240327                 push    edi; pFileName
+  .text:10240328                 call    FS_Open
+  .text:1024032D                 mov     ebx, eax
+  .text:1024032F                 add     esp, 8
+  .text:10240332                 test    ebx, ebx
+  .text:10240334                 jz      loc_1024059C
+  .text:1024033A                 lea     eax, [ebp+length]
+  .text:10240340                 ; outBufSize
+  .text:10240340                 push    eax; outBufSize
+  .text:10240341                 ; file
+  .text:10240341                 push    ebx; file
+  .text:10240342                 call    FS_GetReadBuffer
+  .text:10240347                 mov     esi, eax
+  .text:10240349                 add     esp, 8
+  .text:1024034C                 test    esi, esi
+  .text:1024034E                 jz      short loc_1024036C
+  .text:10240350                 ; value
+  .text:10240350                 push    dword ptr [esi]; value
+  .text:10240352                 call    LittleLong
+  .text:10240358                 add     esp, 4
+  .text:1024035B                 cmp     eax, IDSTUDIOHEADER
+  .text:10240360                 jnz     short loc_102403A3
+  .text:10240362                 ; buffer
+  .text:10240362                 push    esi; buffer
+  .text:10240363                 ; file
+  .text:10240363                 push    ebx; file
+  .text:10240364                 call    FS_ReleaseReadBuffer
+  .text:10240369                 add     esp, 8
+  .text:1024036C                 ; file
+  .text:1024036C                 push    ebx; file
+  .text:1024036D                 call    FS_Size
+  .text:10240372                 mov     [ebp+length], eax
+  .text:10240378                 inc     eax
+  .text:10240379                 ; size
+  .text:10240379                 push    eax; size
+  .text:1024037A                 call    Hunk_TempAlloc
+  .text:1024037F                 ; file
+  .text:1024037F                 push    ebx; file
+  .text:10240380                 ; count
+  .text:10240380                 push    1; count
+  .text:10240382                 ; size
+  .text:10240382                 push    [ebp+length]; size
+  .text:10240388                 mov     esi, eax
+  .text:1024038A                 ; pOutput
+  .text:1024038A                 push    esi; pOutput
+  .text:1024038B                 call    FS_Read
+  .text:10240390                 ; file
+  .text:10240390                 push    ebx; file
+  .text:10240391                 call    FS_Close
+  .text:10240396                 add     esp, 1Ch
+  .text:10240399                 xor     ebx, ebx
+  .text:1024039B                 test    esi, esi
+  .text:1024039D                 jz      loc_1024059C
+  .text:102403A3                 cmp     [ebp+trackCRC], 0
+  .text:102403A7                 jz      loc_102404EC
+  .text:102403AD                 mov     ecx, edi
+  .text:102403AF                 mov     eax, 5397829Dh
+  .text:102403B4                 sub     ecx, offset mod_known
+  .text:102403BA                 imul    ecx
+  .text:102403BC                 sar     edx, 7
+  .text:102403BF                 mov     eax, edx
+  .text:102403C1                 shr     eax, 1Fh
+  .text:102403C4                 add     eax, edx
+  .text:102403C6                 lea     eax, [eax+eax*2]
+  .text:102403C9                 cmp     dword ptr mod_known_info[eax*4], 0
+  .text:102403D1                 mov     [ebp+infoIndex], eax
+  .text:102403D7                 jz      loc_102404EC
+  .text:102403DD                 lea     eax, [ebp+currentCRC]
+  .text:102403E3                 ; pulCRC
+  .text:102403E3                 push    eax; pulCRC
+  .text:102403E4                 call    CRC32_Init
+  .text:102403E9                 ; nBuffer
+  .text:102403E9                 push    [ebp+length]; nBuffer
+  .text:102403EF                 lea     eax, [ebp+currentCRC]
+  .text:102403F5                 ; pBuffer
+  .text:102403F5                 push    esi; pBuffer
+  .text:102403F6                 ; pulCRC
+  .text:102403F6                 push    eax; pulCRC
+  .text:102403F7                 call    CRC32_ProcessBuffer
+  .text:102403FC                 ; pulCRC
+  .text:102403FC                 push    [ebp+currentCRC]; pulCRC
+  .text:10240402                 call    CRC32_Final; Microsoft VisualC 14/net runtime
+  .text:10240407                 mov     ecx, eax
+  .text:10240409                 add     esp, 14h
+  .text:1024040C                 mov     eax, [ebp+infoIndex]
+  .text:10240412                 mov     [ebp+currentCRC], ecx
+  .text:10240418                 cmp     dword ptr (mod_known_info+4)[eax*4], 0
+  .text:10240420                 jnz     loc_102404D3
+  .text:10240426                 mov     dword ptr (mod_known_info+4)[eax*4], 1
+  .text:10240431                 mov     dword ptr (mod_known_info+8)[eax*4], ecx
+  .text:10240438                 ; This build calls SetCStrikeFlags only on the initial-CRC path; current public source places it after the firstCRCDone branch.
+  .text:10240438                 call    SetCStrikeFlags; This build calls SetCStrikeFlags only on the initial-CRC path; current public source places it after the firstCRCDone branch.
+  .text:1024043D                 push    offset gameName; "czero"
+  .text:10240442                 call    IsGameSubscribed
+  .text:10240447                 add     esp, 4
+  .text:1024044A                 test    eax, eax
+  .text:1024044C                 jnz     loc_102404EC
+  .text:10240452                 cmp     g_bIsCStrike, eax
+  .text:10240458                 jz      loc_102404EC
+  .text:1024045E                 ; filename
+  .text:1024045E                 push    edi; filename
+  .text:1024045F                 ; crc
+  .text:1024045F                 push    [ebp+currentCRC]; crc
+  .text:10240465                 call    IsCZPlayerModel
+  .text:1024046A                 add     esp, 8
+  .text:1024046D                 test    eax, eax
+  .text:1024046F                 jz      short loc_102404EC
+  .text:10240471                 ; ca_dedicated == 0; this test is source-level cls.state != ca_dedicated.
+  .text:10240471                 cmp     cls.state, 0; ca_dedicated == 0; this test is source-level cls.state != ca_dedicated.
+  .text:10240478                 jz      short loc_102404EC
+  .text:1024047A                 ; ArgList
+  .text:1024047A                 push    edi; ArgList
+  .text:1024047B                 push    offset aCannotContinue_2; "Cannot continue with altered model %s, "...
+  .text:10240480                 ; bPrint
+  .text:10240480                 push    1; bPrint
+  .text:10240482                 call    COM_ExplainDisconnection
+  .text:10240487                 add     esp, 0Ch
+  .text:1024048A                 call    CL_Disconnect
+  .text:1024048F                 pop     edi
+  .text:10240490                 pop     esi
+  .text:10240491                 xor     eax, eax
+  .text:10240493                 pop     ebx
+  .text:10240494                 mov     ecx, [ebp+var_4]
+  .text:10240497                 ; StackCookie
+  .text:10240497                 xor     ecx, ebp; StackCookie
+  .text:10240499                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1024049E                 mov     esp, ebp
+  .text:102404A0                 pop     ebp
+  .text:102404A1                 retn
+  .text:102404A2                 lea     ecx, [edi+184h]
+  .text:102404A8                 ; c
+  .text:102404A8                 push    ecx; c
+  .text:102404A9                 call    Cache_Check
+  .text:102404AE                 add     esp, 4
+  .text:102404B1                 test    eax, eax
+  .text:102404B3                 jz      loc_102402D2
+  .text:102404B9                 mov     dword ptr [edi+40h], 0
+  .text:102404C0                 mov     eax, edi
+  .text:102404C2                 pop     edi
+  .text:102404C3                 pop     esi
+  .text:102404C4                 pop     ebx
+  .text:102404C5                 mov     ecx, [ebp+var_4]
+  .text:102404C8                 ; StackCookie
+  .text:102404C8                 xor     ecx, ebp; StackCookie
+  .text:102404CA                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:102404CF                 mov     esp, ebp
+  .text:102404D1                 pop     ebp
+  .text:102404D2                 retn
+  .text:102404D3                 cmp     ecx, dword ptr (mod_known_info+8)[eax*4]
+  .text:102404DA                 jz      short loc_102404EC
+  .text:102404DC                 push    edi
+  .text:102404DD                 push    offset aSHasBeenModifi; "%s has been modified since starting the"...
+  .text:102404E2                 call    Sys_Error
+  .text:102404E7                 jmp     loc_102405CC
+  .text:102404EC                 movss   xmm0, developer_value
+  .text:102404F4                 comiss  xmm0, ds:dword_103064A8
+  .text:102404FB                 jbe     short loc_1024050B
+  .text:102404FD                 ; ArgList
+  .text:102404FD                 push    edi; ArgList
+  .text:102404FE                 push    offset aLoadingS; "loading %s\n"
+  .text:10240503                 call    Con_DPrintf
+  .text:10240508                 add     esp, 8
+  .text:1024050B                 ; out
+  .text:1024050B                 push    offset loadname; out
+  .text:10240510                 ; in
+  .text:10240510                 push    edi; in
+  .text:10240511                 call    COM_FileBase
+  .text:10240516                 mov     loadmodel, edi
+  .text:1024051C                 mov     dword ptr [edi+40h], 0
+  .text:10240523                 ; value
+  .text:10240523                 push    dword ptr [esi]; value
+  .text:10240525                 call    LittleLong
+  .text:1024052B                 add     esp, 0Ch
+  .text:1024052E                 cmp     eax, 4F504449h
+  .text:10240533                 jz      short loc_1024056B
+  .text:10240535                 cmp     eax, 50534449h
+  .text:1024053A                 jz      short loc_10240562
+  .text:1024053C                 cmp     eax, 54534449h
+  .text:10240541                 jz      short loc_10240559
+  .text:10240543                 ; levelName
+  .text:10240543                 push    offset loadname; levelName
+  .text:10240548                 call    DT_LoadDetailMapFile
+  .text:1024054D                 ; buffer
+  .text:1024054D                 push    esi; buffer
+  .text:1024054E                 ; mod
+  .text:1024054E                 push    edi; mod
+  .text:1024054F                 call    Mod_LoadBrushModel
+  .text:10240554                 add     esp, 0Ch
+  .text:10240557                 jmp     short loc_10240575
+  .text:10240559                 ; buffer
+  .text:10240559                 push    esi; buffer
+  .text:1024055A                 ; mod
+  .text:1024055A                 push    edi; mod
+  .text:1024055B                 call    Mod_LoadStudioModel
+  .text:10240560                 jmp     short loc_10240572
+  .text:10240562                 ; buffer
+  .text:10240562                 push    esi; buffer
+  .text:10240563                 ; mod
+  .text:10240563                 push    edi; mod
+  .text:10240564                 call    Mod_LoadSpriteModel
+  .text:10240569                 jmp     short loc_10240572
+  .text:1024056B                 ; buffer
+  .text:1024056B                 push    esi; buffer
+  .text:1024056C                 ; mod
+  .text:1024056C                 push    edi; mod
+  .text:1024056D                 call    Mod_LoadAliasModel
+  .text:10240572                 add     esp, 8
+  .text:10240575                 test    ebx, ebx
+  .text:10240577                 jz      short loc_10240589
+  .text:10240579                 ; buffer
+  .text:10240579                 push    esi; buffer
+  .text:1024057A                 ; file
+  .text:1024057A                 push    ebx; file
+  .text:1024057B                 call    FS_ReleaseReadBuffer
+  .text:10240580                 ; file
+  .text:10240580                 push    ebx; file
+  .text:10240581                 call    FS_Close
+  .text:10240586                 add     esp, 0Ch
+  .text:10240589                 mov     eax, edi
+  .text:1024058B                 pop     edi
+  .text:1024058C                 pop     esi
+  .text:1024058D                 pop     ebx
+  .text:1024058E                 mov     ecx, [ebp+var_4]
+  .text:10240591                 ; StackCookie
+  .text:10240591                 xor     ecx, ebp; StackCookie
+  .text:10240593                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10240598                 mov     esp, ebp
+  .text:1024059A                 pop     ebp
+  .text:1024059B                 retn
+  .text:1024059C                 cmp     [ebp+crash], 0
+  .text:102405A0                 jnz     short loc_102405B3
+  .text:102405A2                 ; Binary-authoritative revision difference: missing-model reporting uses developer_value > 2.0; current public source uses > 1.0.
+  .text:102405A2                 movss   xmm0, developer_value; Binary-authoritative revision difference: missing-model reporting uses developer_value > 2.0; current public source uses > 1.0.
+  .text:102405AA                 comiss  xmm0, ds:dword_10306610
+  .text:102405B1                 jbe     short loc_102405C1
+  .text:102405B3                 push    edi
+  .text:102405B4                 push    offset aModNumfornameS; "Mod_NumForName: %s not found"
+  .text:102405B9                 call    Sys_Error
+  .text:102405BE                 add     esp, 8
+  .text:102405C1                 ; ArgList
+  .text:102405C1                 push    edi; ArgList
+  .text:102405C2                 push    offset aErrorCouldNotL; "Error: could not load file %s\n"
+  .text:102405C7                 call    Con_Printf
+  .text:102405CC                 mov     ecx, [ebp+var_4]
+  .text:102405CF                 add     esp, 8
+  .text:102405D2                 ; StackCookie
+  .text:102405D2                 xor     ecx, ebp; StackCookie
+  .text:102405D4                 xor     eax, eax
+  .text:102405D6                 pop     edi
+  .text:102405D7                 pop     esi
+  .text:102405D8                 pop     ebx
+  .text:102405D9                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:102405DE                 mov     esp, ebp
+  .text:102405E0                 pop     ebp
+  .text:102405E1                 retn
+procedure: |-
+  // Reconstructed against D:/HLND2T_official/engine/gl_model.c:215; hl-10210 machine code is authoritative.
+  // Revision differences: this Windows binary uses tmpName[260] (0x114-byte frame, strncpy count 0x103), while the current public source uses tmpName[4096]; the missing-model path tests developer_value > 2.0 rather than > 1.0; SetCStrikeFlags runs only while capturing the initial CRC in this build. ca_dedicated is zero, so Hex-Rays may render 'cls.state' for 'cls.state != ca_dedicated'.
+  model_t *__cdecl Mod_LoadModel(model_t *mod, qboolean crash, qboolean trackCRC)
+  {
+    modtype_t type; // eax
+    needload_t currentNeedload; // eax
+    char *p; // eax
+    FileHandle_t hFile; // ebx
+    unsigned int *readBuffer; // eax
+    unsigned int *buf; // esi
+    CRC32_t finalCRC; // ecx
+    model_file_id_t ident; // eax
+    int length; // [esp+10h] [ebp-110h] BYREF
+    CRC32_t currentCRC; // [esp+14h] [ebp-10Ch] BYREF
+    char tmpName[260]; // [esp+18h] [ebp-108h] BYREF
+  
+    type = mod->type;
+    if ( type == mod_alias || type == mod_studio )
+    {
+      if ( Cache_Check(&mod->cache) )
+      {
+        mod->needload = NL_PRESENT;
+        return mod;
+      }
+    }
+    else
+    {
+      currentNeedload = mod->needload;
+      if ( currentNeedload == NL_PRESENT || currentNeedload == NL_CLIENT )
+        return mod;
+    }
+    if ( COM_CheckParm("-steam") && mod->name[0] == 47 )
+    {
+      p = (char *)mod;
+      do
+        ++p;
+      while ( *p == 47 );
+      strncpy(tmpName, p, 0x103u);
+      tmpName[259] = 0;
+      strncpy(mod->name, tmpName, 0x3Fu);
+      mod->name[63] = 0;
+    }
+    hFile = FS_Open(mod->name, "rb");
+    if ( hFile )
+    {
+      readBuffer = (unsigned int *)FS_GetReadBuffer(hFile, &length);
+      buf = readBuffer;
+      if ( readBuffer )
+      {
+        if ( LittleLong(*readBuffer) != IDSTUDIOHEADER )
+          goto LABEL_15;
+        FS_ReleaseReadBuffer(hFile, buf);
+      }
+      length = FS_Size(hFile);
+      buf = (unsigned int *)Hunk_TempAlloc(length + 1);
+      FS_Read(buf, length, 1, hFile);
+      FS_Close(hFile);
+      hFile = nullptr;
+      if ( buf )
+      {
+  LABEL_15:
+        if ( trackCRC && mod_known_info[mod - mod_known].shouldCRC )
+        {
+          CRC32_Init(&currentCRC);
+          CRC32_ProcessBuffer(&currentCRC, buf, length);
+          finalCRC = CRC32_Final(currentCRC);
+          currentCRC = finalCRC;
+          if ( mod_known_info[mod - mod_known].firstCRCDone )
+          {
+            if ( finalCRC != mod_known_info[mod - mod_known].initialCRC )
+              Sys_Error(
+                "%s has been modified since starting the engine.  Consider running system diagnostics to check for faulty hardware.\n",
+                mod->name);
+          }
+          else
+          {
+            mod_known_info[mod - mod_known].firstCRCDone = 1;
+            mod_known_info[mod - mod_known].initialCRC = finalCRC;
+            SetCStrikeFlags();
+            if ( !IsGameSubscribed("czero") && g_bIsCStrike && IsCZPlayerModel(currentCRC, mod->name) && cls.state )
+            {
+              COM_ExplainDisconnection(1, "Cannot continue with altered model %s, disconnecting.", mod->name);
+              CL_Disconnect();
+              return nullptr;
+            }
+          }
+        }
+        if ( developer_value > 1.0 )
+          Con_DPrintf("loading %s\n", mod->name);
+        COM_FileBase(mod->name, loadname);
+        loadmodel = mod;
+        mod->needload = NL_PRESENT;
+        ident = LittleLong(*buf);
+        switch ( ident )
+        {
+          case IDPOLYHEADER:
+            Mod_LoadAliasModel(mod, buf);
+            break;
+          case IDSPRITEHEADER:
+            Mod_LoadSpriteModel(mod, buf);
+            break;
+          case IDSTUDIOHEADER:
+            Mod_LoadStudioModel(mod, buf);
+            break;
+          default:
+            DT_LoadDetailMapFile(loadname);
+            Mod_LoadBrushModel(mod, buf);
+            break;
+        }
+        if ( hFile )
+        {
+          FS_ReleaseReadBuffer(hFile, buf);
+          FS_Close(hFile);
+        }
+        return mod;
+      }
+    }
+    if ( crash || developer_value > 2.0 )
+      Sys_Error("Mod_NumForName: %s not found", mod->name);
+    Con_Printf("Error: could not load file %s\n", mod->name);
+    return nullptr;
+  }
