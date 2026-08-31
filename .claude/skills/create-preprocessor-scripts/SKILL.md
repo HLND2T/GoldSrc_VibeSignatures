@@ -460,8 +460,8 @@ uv run python tests/run_test_suite.py repository-contract -b --durations 30
 ```
 
 Inspect every emitted YAML for category-specific identity fields, x86 addresses, unique signatures,
-and 4-byte vfunc offset/index consistency. Generated `bin/` artifacts are validation outputs and
-must not be staged.
+and 4-byte vfunc offset/index consistency. The analyzer writes the reviewed deliverables to
+`bin_artifacts/`; stage those task-owned YAML changes. Never stage binary/IDA scratch from the `bin/` submodule.
 
 ### 7. Switch/create `dev` and commit
 
@@ -478,7 +478,7 @@ if (git show-ref --verify --quiet refs/heads/dev) {
 
 Review `git status --short`. Stage only task-related code/config/skill/reference files, plus tests or
 docs only when allowed by the delivery boundaries above. Never use `git add -A` and never stage
-`bin/` output YAML.
+binary/IDA scratch from `bin/`.
 
 Commit format:
 

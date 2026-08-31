@@ -211,9 +211,10 @@ git add -- .claude/skills/find-XXXX/SKILL.md <memory-pointer-path>
 git diff --cached --name-only
 ```
 
-`bin/` is a tracked **git submodule** (a separate repo). Never stage `bin/` paths — the ground-truth YAMLs there
-are validation inputs, not deliverables of this task. Stop if the staged-path list contains anything unrelated
-to this task. Commit only the staged task changes using the repository commit format:
+`bin/` is a tracked **git submodule** (a separate repo). Never stage `bin/` paths or treat YAML scratch there as
+analysis truth. Git-tracked `bin_artifacts/` is the only ground-truth YAML root; stage its task-owned changes when
+the fallback validation updates them. Stop if the staged-path list contains anything unrelated to this task.
+Commit only the staged task changes using the repository commit format:
 
 ```bash
 git commit -m "feat(skills): add find-XXXX fallback" -m "Co-Authored-By: Codex"

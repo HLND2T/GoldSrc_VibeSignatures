@@ -133,8 +133,8 @@ generator 集合也有一份可验证输出。
 Release build 会在 checkout 外的 fresh root 强制重建所有 configured artifact，并与 Git `bin_artifacts` 做 exact byte
 comparison；随后生成 snapshot、metadata、gamedata、binary-only/game-data archive、canonical Release manifest 和
 `SHA256SUMS`。self-hosted job 只有 read 权限；GitHub-hosted job 对 exact source 与 Git blobs 完整复验封闭 bundle。
-受保护的 `publish-release` 是唯一 `contents: write` job：创建或恢复 matching draft，拒绝 tag/asset drift 与覆盖，复核
-远端 name/size/hash 后才发布。published version 不可覆盖；内容变化必须使用新版本。
+受保护的 `publish-release` 是 `release-build.yml` 中唯一 `contents: write` job：创建或恢复 matching draft，拒绝
+tag/asset drift 与覆盖，复核远端 name/size/hash 后才发布。published version 不可覆盖；内容变化必须使用新版本。
 
 ## API、Dashboard 与不可变 Pages 资产
 
@@ -147,8 +147,8 @@ React dashboard 提供 run list、graph/list、task detail、status filter 和 S
 Explorer。Symbol snapshot 使用 `<family-build>` tag，按 family 分组并在组内按数字 build 降序。Vite plugin 将
 published Release 中下载的 schema-6 YAML 与必需的 schema-1 metadata companion 转成精确 UTF-8 content-addressed JSON 与 index
 schema v4，并且绝不读取 live config alias；部署 workflow 把所有 digest
-保存到 append-only `pages-snapshots` 分支，并校验 current/archive/CDN bytes。GitHub Pages 只托管静态资产，
-不托管 Process API。
+保存到 append-only `pages-snapshots` 分支，并校验 current/archive/CDN bytes。该分支只是从 published Release
+派生的非权威展示镜像，绝不是 source 或 release truth。GitHub Pages 只托管静态资产，不托管 Process API。
 
 ## 当前排除与延期
 

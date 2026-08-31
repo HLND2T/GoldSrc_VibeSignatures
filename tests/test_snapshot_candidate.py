@@ -21,7 +21,7 @@ from gamesymbol_snapshot_lib.codec import (
     canonical_yaml_bytes,
     parse_snapshot_bytes,
 )
-from gamesymbol_snapshot_lib.errors import SnapshotMismatchError, SnapshotSchemaError
+from gamesymbol_snapshot_lib.errors import SnapshotConfigError, SnapshotMismatchError, SnapshotSchemaError
 from gamesymbol_snapshot_lib.metadata import write_metadata
 from gamesymbol_snapshot_lib.operations import pack_snapshot, restore_snapshot, verify_snapshot
 from gamesymbol_store import CandidateChangedError, DirectorySymbolStore, InvalidSymbolPathError, SnapshotSymbolStore
@@ -123,6 +123,23 @@ class CodecTests(unittest.TestCase):
 
 
 class SnapshotOperationTests(unittest.TestCase):
+    def test_snapshot_operations_require_an_explicit_snapshot_path(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            tag, config, _binary_module_dir, _artifact_module_dir = fixture(root)
+            common = {
+                "game_version": tag,
+                "bindir": root / "bin",
+                "config_path": config,
+                "artifactdir": root / "bin_artifacts",
+            }
+            for operation in (pack_snapshot, restore_snapshot, verify_snapshot):
+                with (
+                    self.subTest(operation=operation.__name__),
+                    self.assertRaisesRegex(SnapshotConfigError, "explicit snapshot path"),
+                ):
+                    operation(**common, snapshot_path=None)
+
     def test_pack_verify_and_restore_are_byte_stable(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

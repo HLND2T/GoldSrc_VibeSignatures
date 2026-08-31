@@ -160,6 +160,10 @@ class ReleasePublishTests(unittest.TestCase):
                         repo_root=temporary,
                         bundle_root=temporary,
                         version="v20260831a",
+                        source_sha=manifest["source_sha"],
+                        build_id=manifest["build_id"],
+                        workflow_run_url=manifest["workflow_run_url"],
+                        cache_selection_sha256="b" * 64,
                     ),
                 )
             run.assert_not_called()
@@ -181,6 +185,10 @@ class ReleasePublishTests(unittest.TestCase):
                     repo_root=temporary,
                     bundle_root=temporary,
                     version="v20260831a",
+                    source_sha=manifest["source_sha"],
+                    build_id=manifest["build_id"],
+                    workflow_run_url=manifest["workflow_run_url"],
+                    cache_selection_sha256="b" * 64,
                 )
 
     def test_matching_draft_reuses_assets_then_publishes(self):
@@ -224,6 +232,10 @@ class ReleasePublishTests(unittest.TestCase):
                         repo_root=temporary,
                         bundle_root=temporary,
                         version="v20260831a",
+                        source_sha=manifest["source_sha"],
+                        build_id=manifest["build_id"],
+                        workflow_run_url=manifest["workflow_run_url"],
+                        cache_selection_sha256="b" * 64,
                     ),
                 )
             run.assert_called_once_with(

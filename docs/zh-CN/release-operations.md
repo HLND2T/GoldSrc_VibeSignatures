@@ -8,7 +8,8 @@ default branch 到达。`publish_release=false` 只用于不发布的 workflow v
 - `preflight`、`warmup-idb`、`build-release-bundle`、`verify-release-bundle` 都只有 contents read 权限。
 - self-hosted build 没有 PAT、push、tag 或 Release authority；`GSVIBE_BIN_TOKEN` 只读 private submodule。
 - GitHub-hosted verifier 对照 exact source Git objects 校验封闭 bundle。
-- `publish-release` 位于受保护的 `release` Environment，是唯一 `contents: write` job。
+- `publish-release` 位于受保护的 `release` Environment，是 `release-build.yml` 中唯一 `contents: write` job；
+  Pages archive writer 是独立的非权威展示镜像。
 - Actions Artifact 名称绑定 version/source SHA/run ID/attempt，下载前还会检查 digest。
 
 ## 不可变版本状态

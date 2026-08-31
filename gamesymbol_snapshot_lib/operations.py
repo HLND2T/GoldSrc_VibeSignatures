@@ -28,7 +28,12 @@ from gamesymbol_snapshot_lib.codec import (
 )
 from gamesymbol_snapshot_lib.config import LATEST_CONFIG_DIGEST_VERSION, load_contract
 from gamesymbol_snapshot_lib.diff import format_snapshot_mismatch
-from gamesymbol_snapshot_lib.errors import SnapshotMismatchError, SnapshotSchemaError, SnapshotUntrustedError
+from gamesymbol_snapshot_lib.errors import (
+    SnapshotConfigError,
+    SnapshotMismatchError,
+    SnapshotSchemaError,
+    SnapshotUntrustedError,
+)
 from gamesymbol_snapshot_lib.model import SnapshotContext
 from gamesymbol_snapshot_lib.paths import (
     canonical_key,
@@ -54,6 +59,12 @@ def _atomic_write(path: Path, data: bytes) -> None:
     finally:
         if temporary is not None and temporary.exists():
             temporary.unlink()
+
+
+def _required_snapshot_path(snapshot_path) -> Path:
+    if snapshot_path is None:
+        raise SnapshotConfigError("An explicit snapshot path is required")
+    return Path(snapshot_path)
 
 
 def _load_yaml_mapping(path: Path) -> dict:
@@ -239,7 +250,7 @@ def pack_snapshot(
     last_publish_time: str | None = None,
     strict: bool = True,
 ) -> bytes:
-    output = Path(snapshot_path or f"gamesymbols/{game_version}.yaml")
+    output = _required_snapshot_path(snapshot_path)
     config = resolve_analysis_config(game_version, config_path)
     contract = load_contract(
         config,
@@ -282,7 +293,7 @@ def restore_snapshot(
     artifactdir="bin_artifacts",
     replace=False,
 ) -> bytes:
-    snapshot = Path(snapshot_path or f"gamesymbols/{game_version}.yaml")
+    snapshot = _required_snapshot_path(snapshot_path)
     config = resolve_analysis_config(game_version, config_path)
     context = load_snapshot_context(snapshot, config, game_version, bindir, artifactdir=artifactdir)
     ensure_real_tree(Path(artifactdir), context.contract.artifact_game_root)
@@ -318,7 +329,7 @@ def verify_snapshot(
     *,
     artifactdir="bin_artifacts",
 ) -> bytes:
-    snapshot = Path(snapshot_path or f"gamesymbols/{game_version}.yaml")
+    snapshot = _required_snapshot_path(snapshot_path)
     config = resolve_analysis_config(game_version, config_path)
     context = load_snapshot_context(snapshot, config, game_version, bindir, artifactdir=artifactdir)
     actual = build_actual_document(
@@ -341,7 +352,7 @@ def check_snapshot_contract(
     *,
     artifactdir="bin_artifacts",
 ) -> SnapshotContext:
-    snapshot = Path(snapshot_path or f"gamesymbols/{game_version}.yaml")
+    snapshot = _required_snapshot_path(snapshot_path)
     config = resolve_analysis_config(game_version, config_path)
     try:
         context = load_snapshot_context(snapshot, config, game_version, bindir, artifactdir=artifactdir)

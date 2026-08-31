@@ -29,12 +29,12 @@ preflight -> warmup-idb -> build-release-bundle -> verify-release-bundle -> publ
 The self-hosted read-only build force-rebuilds all analysis artifacts in a fresh root, compares them with Git truth,
 derives the full release bundle, and uploads one transport Artifact. The GitHub-hosted verifier checks source ancestry,
 bin gitlink, artifact inventory, payload contracts, allowlist, canonical manifest, and checksums. The protected publisher
-is the only contents writer and implements immutable tag/draft/asset semantics. There is no generated-output PR or
+is the release workflow's only contents writer and implements immutable tag/draft/asset semantics. There is no generated-output PR or
 separate promotion workflow.
 
 ## Pages deployment
 
 `deploy-pages.yml` triggers from a published Release or a manual dispatch with an explicit published tag. It downloads the
-Release snapshot/metadata YAML, builds content-addressed JSON, preserves the append-only `pages-snapshots` archive, deploys
-Pages, and verifies CDN bytes. Local/CI builds use a generated minimal schema fixture; production always sets the explicit
-downloaded asset directory.
+Release snapshot/metadata YAML, builds content-addressed JSON, preserves the non-authoritative append-only
+`pages-snapshots` presentation mirror, deploys Pages, and verifies CDN bytes. Local/CI builds use a generated minimal schema
+fixture; production always sets the explicit downloaded asset directory.

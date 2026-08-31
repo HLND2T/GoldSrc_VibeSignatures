@@ -52,7 +52,7 @@ uv run python gamesymbol_snapshot.py verify -gamever cstrike-10210 -snapshot <re
   -bindir bin -artifactdir bin_artifacts
 uv run python gamesymbol_snapshot.py check-contract -gamever cstrike-10210 -snapshot <release-asset.yaml> \
   -bindir bin -artifactdir bin_artifacts
-uv run python gamesymbol_snapshot.py restore -gamever cstrike-10210 -snapshot <release-asset.yaml> \
+uv run python gamesymbol_snapshot.py restore-legacy -gamever cstrike-10210 -snapshot <release-asset.yaml> \
   -bindir bin -artifactdir <compatibility-artifact-root>
 ```
 

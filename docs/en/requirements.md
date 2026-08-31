@@ -59,8 +59,9 @@ read-only repository permission and no PAT, push, tag, or Release authority. PR 
 off this runner.
 
 Production release dispatch is restricted to `HLND2T/GoldSrc_VibeSignatures` and per-version concurrency. Configure a
-separate protected `release` Environment for the GitHub-hosted `publish-release` job; it is the only job granted
-`contents: write`. Branch protection requires the unique Actions-owned `pr-validate`, no direct/admin-bypass pushes to
+separate protected `release` Environment for the GitHub-hosted `publish-release` job; it is the only release-build job
+granted `contents: write`. The separate Pages archive job may write only its append-only, non-authoritative mirror branch.
+Branch protection requires the unique Actions-owned `pr-validate`, no direct/admin-bypass pushes to
 `main`, protected release tags, and the required approval policy for that Environment. No GitHub App token,
 `HLND2T_GH_TOKEN`, generated-output branch, or merge-time promotion is part of the release authority. Repository tests
 cannot activate or prove these external controls.

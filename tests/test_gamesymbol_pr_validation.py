@@ -371,6 +371,23 @@ class ImpactPlanningTests(unittest.TestCase):
                 ("engine/A.windows.yaml", "engine/B.windows.yaml"),
                 impact.invalidated_paths,
             )
+            deleted = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(
+                    ChangedPath(
+                        "D",
+                        "bin_artifacts/game-1/engine/A.windows.yaml",
+                        None,
+                    ),
+                ),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+            )
+            self.assertEqual(impact.analysis_nodes, deleted.analysis_nodes)
             with self.assertRaisesRegex(ImpactPlanningError, "outside the formal contract"):
                 plan_tag_impact(
                     tag="game-1",
@@ -381,6 +398,47 @@ class ImpactPlanningTests(unittest.TestCase):
                             "A",
                             None,
                             "bin_artifacts/game-1/engine/Unknown.windows.yaml",
+                        ),
+                    ),
+                    base_sources=None,
+                    merge_sources=None,
+                    base_rules=(),
+                    merge_rules=(),
+                )
+            empty_config = root / "empty.yaml"
+            empty_config.write_text(
+                yaml.safe_dump(
+                    {
+                        "modules": [
+                            {
+                                "name": "engine",
+                                "path_windows": "Game/hw.dll",
+                                "module_windows": "hw.dll",
+                                "skills": [],
+                                "symbols": [],
+                            }
+                        ]
+                    },
+                    sort_keys=False,
+                ),
+                encoding="utf-8",
+            )
+            empty = load_contract(
+                empty_config,
+                "game-1",
+                root / "bin",
+                artifactdir=root / "bin_artifacts",
+            )
+            with self.assertRaisesRegex(ImpactPlanningError, "empty merge contract"):
+                plan_tag_impact(
+                    tag="game-1",
+                    base_contract=contract,
+                    merge_contract=empty,
+                    changed_paths=(
+                        ChangedPath(
+                            "D",
+                            "bin_artifacts/game-1/engine/A.windows.yaml",
+                            None,
                         ),
                     ),
                     base_sources=None,

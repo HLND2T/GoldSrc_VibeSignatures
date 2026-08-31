@@ -103,7 +103,12 @@ def _gamevers(repo_root: Path) -> list[str]:
 
 
 def _tag_binary_groups(repo_root: Path, bindir: Path, tag: str) -> tuple[BinaryGroup, ...]:
-    contract = load_contract(repo_root / "configs" / f"{tag}.yaml", tag, bindir)
+    contract = load_contract(
+        repo_root / "configs" / f"{tag}.yaml",
+        tag,
+        bindir,
+        artifactdir=repo_root / "bin_artifacts",
+    )
     groups: dict[tuple[str, str], list[dict]] = {}
     for (module, platform), target in sorted(contract.binary_targets.items()):
         original = contract.binary_game_root / module / target.binary_name

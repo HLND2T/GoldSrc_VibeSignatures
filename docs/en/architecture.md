@@ -143,9 +143,9 @@ the exact declared payload files; an empty generator set therefore still has one
 The release build force-rebuilds every configured artifact into a fresh external root and compares exact bytes with Git
 `bin_artifacts`. It then generates snapshots, metadata, gamedata, binary-only/game-data archives, a canonical Release
 manifest, and `SHA256SUMS`. The self-hosted job is read-only; a GitHub-hosted job verifies the closed bundle against the
-exact source and Git blobs. The protected `publish-release` job is the only `contents: write` job. It creates or resumes a
-matching draft, refuses tag/asset drift and overwrite, verifies remote name/size/hash, then publishes. Published versions
-are immutable; changed content requires a new version.
+exact source and Git blobs. The protected `publish-release` job is the only `contents: write` job in `release-build.yml`.
+It creates or resumes a matching draft, refuses tag/asset drift and overwrite, verifies remote name/size/hash, then
+publishes. Published versions are immutable; changed content requires a new version.
 
 ## API, dashboard, and immutable Pages assets
 
@@ -160,7 +160,8 @@ Symbol Explorer. Symbol snapshots use `<family-build>` tags, are grouped by fami
 The Vite plugin turns schema-6 snapshot/metadata assets downloaded from a published Release into exact UTF-8
 content-addressed JSON plus index schema v4. It never reads live config aliases. The deployment
 workflow preserves every digest on an append-only `pages-snapshots` branch and verifies current, archived, and deployed
-CDN bytes. GitHub Pages hosts only static assets; it does not host the Process API.
+CDN bytes. That branch is a non-authoritative presentation mirror derived only from published Releases; it is never source
+or release truth. GitHub Pages hosts only static assets; it does not host the Process API.
 
 ## Current exclusions and deferrals
 

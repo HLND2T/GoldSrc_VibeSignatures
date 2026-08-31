@@ -109,9 +109,8 @@ def load_contract(
     bindir: str | Path,
     config_digest_version: int = LATEST_CONFIG_DIGEST_VERSION,
     *,
-    artifactdir: str | Path | None = None,
+    artifactdir: str | Path,
 ) -> SnapshotContract:
-    artifactdir = bindir if artifactdir is None else artifactdir
     try:
         document, modules = load_config(config_path)
         analysis_plan = build_execution_plan(

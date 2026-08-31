@@ -9,7 +9,8 @@ verification mode and requires the source to equal the dispatch commit.
 - `preflight`, `warmup-idb`, `build-release-bundle`, and `verify-release-bundle` have read-only contents permission.
 - The self-hosted build has no PAT, push, tag, or Release authority. `GSVIBE_BIN_TOKEN` is private-submodule read access.
 - The GitHub-hosted verifier checks the closed bundle against exact source Git objects.
-- `publish-release` runs in the protected `release` Environment and is the only job with `contents: write`.
+- `publish-release` runs in the protected `release` Environment and is the only `release-build.yml` job with
+  `contents: write`; the Pages archive writer is a separate non-authoritative presentation mirror.
 - Actions Artifact names bind version, source SHA, run ID, and attempt; their digest is checked before download.
 
 ## Immutable version state

@@ -209,14 +209,21 @@ def _artifact_owner_seeds(
     for change in changed_paths:
         candidates = []
         if change.old_path is not None and change.old_path.startswith(prefix):
-            candidates.append((change.old_path, base_contract))
+            candidates.append((change.old_path, base_contract, True))
         if change.new_path is not None and change.new_path.startswith(prefix):
-            candidates.append((change.new_path, merge_contract))
-        for path, contract in candidates:
+            candidates.append((change.new_path, merge_contract, False))
+        for path, contract, old_path in candidates:
             relative = path.removeprefix(prefix)
             if contract is None or relative not in contract.formal_paths:
                 raise ImpactPlanningError(f"Changed artifact is outside the formal contract for {tag}: {path}")
-            owners = set(contract.owners_by_path[relative]) & set(merge_contract.nodes)
+            if old_path and relative not in merge_contract.formal_paths:
+                raise ImpactPlanningError(
+                    f"Deleted or renamed artifact is no longer declared by the merge contract for {tag}: {path}"
+                )
+            owners = set(contract.owners_by_path[relative])
+            missing_owners = owners - set(merge_contract.nodes)
+            if missing_owners:
+                raise ImpactPlanningError(f"Artifact owner was removed from the merge contract for {tag}: {path}")
             seeds.update(owners)
             reasons.append(f"analysis artifact changed: {path}")
     return seeds, reasons
@@ -252,9 +259,15 @@ def plan_tag_impact(
     binary_changed_pairs: frozenset[tuple[str, str]] = frozenset(),
     fail_unmapped_analysis: bool = True,
 ) -> TagImpact:
+    artifact_prefix = f"bin_artifacts/{tag}/"
+    has_artifact_changes = any(path.startswith(artifact_prefix) for change in changed_paths for path in change.paths)
     if merge_contract is None:
+        if has_artifact_changes:
+            raise ImpactPlanningError(f"Changed artifacts have no merge contract for {tag}")
         return TagImpact(tag, (), (), False, False, ())
     if not merge_contract.formal_paths:
+        if has_artifact_changes:
+            raise ImpactPlanningError(f"Changed artifacts have an empty merge contract for {tag}")
         return TagImpact(tag, (), (), False, False, ())
 
     all_paths = {path for change in changed_paths for path in change.paths}

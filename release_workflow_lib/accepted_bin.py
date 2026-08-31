@@ -13,6 +13,7 @@ import re
 import shutil
 from pathlib import Path, PurePosixPath
 
+from idb_cache_selection import IdbCacheSelectionError, validate_persisted_workspace
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.hashing import (
     canonical_json_bytes,
@@ -56,7 +57,13 @@ def legacy_yaml_inventory(root: Path) -> tuple[list[dict], str]:
     return records, inventory_sha256(records)
 
 
-def _verified_legacy_yaml_backup(root: Path, *, gamever: str, cutover_id: str) -> tuple[list[dict], str]:
+def _verified_legacy_yaml_backup(
+    root: Path,
+    *,
+    gamever: str,
+    cutover_id: str,
+    durable_inventory_sha256: str,
+) -> tuple[list[dict], str]:
     if not root.is_dir():
         raise ReleaseWorkflowError(f"legacy YAML backup is not a directory: {root}")
     records, digest = legacy_yaml_inventory(root)
@@ -74,7 +81,11 @@ def _verified_legacy_yaml_backup(root: Path, *, gamever: str, cutover_id: str) -
         raise ReleaseWorkflowError(f"legacy YAML backup manifest has an unexpected schema: {manifest_path}")
     if document.get("cutover_id") != cutover_id or document.get("gamever") != gamever:
         raise ReleaseWorkflowError(f"legacy YAML backup identity differs: {manifest_path}")
-    normalized_sha256(document.get("durable_inventory_sha256"), "legacy backup durable inventory")
+    if (
+        normalized_sha256(document.get("durable_inventory_sha256"), "legacy backup durable inventory")
+        != durable_inventory_sha256
+    ):
+        raise ReleaseWorkflowError(f"legacy YAML backup durable inventory differs: {manifest_path}")
     if (
         normalized_sha256(document.get("legacy_yaml_inventory_sha256"), "legacy backup YAML inventory") != digest
         or document.get("files") != records
@@ -139,8 +150,10 @@ def materialize_accepted_bin(
     """
     gamever = require_gamever(gamever)
     repo_root = Path(repo_root).resolve()
-    persisted_root = Path(persisted_root).resolve()
-    reject_reparse_components(persisted_root, persisted_root)
+    try:
+        persisted_root = validate_persisted_workspace(persisted_root, repo_root)
+    except IdbCacheSelectionError as exc:
+        raise ReleaseWorkflowError(str(exc)) from exc
     bin_root = contained_path(repo_root, bindir)
     if not bin_root.is_dir():
         raise ReleaseWorkflowError(f"checkout bin directory does not exist: {bin_root}")
@@ -180,7 +193,10 @@ def cleanup_legacy_accepted_yaml(
     if not isinstance(cutover_id, str) or not CUTOVER_ID_RE.fullmatch(cutover_id):
         raise ReleaseWorkflowError(f"invalid cutover ID: {cutover_id!r}")
     repo_root = Path(repo_root).resolve()
-    persisted_root = Path(persisted_root).resolve()
+    try:
+        persisted_root = validate_persisted_workspace(persisted_root, repo_root)
+    except IdbCacheSelectionError as exc:
+        raise ReleaseWorkflowError(str(exc)) from exc
     materialized = materialize_accepted_bin(
         repo_root=repo_root,
         persisted_root=persisted_root,
@@ -203,15 +219,26 @@ def cleanup_legacy_accepted_yaml(
         if incoming.exists() and backup_root.exists():
             raise ReleaseWorkflowError(f"conflicting complete and incomplete legacy YAML backups: {backup_root}")
         try:
+            if incoming.exists() and not (incoming / "legacy-yaml-inventory.json").is_file():
+                if not incoming.is_dir():
+                    raise ReleaseWorkflowError(f"incomplete legacy YAML backup is not a directory: {incoming}")
+                reject_reparse_points(incoming)
+                shutil.rmtree(incoming)
             if incoming.exists():
                 backup_files, backup_digest = _verified_legacy_yaml_backup(
-                    incoming, gamever=gamever, cutover_id=cutover_id
+                    incoming,
+                    gamever=gamever,
+                    cutover_id=cutover_id,
+                    durable_inventory_sha256=durable_digest,
                 )
                 _require_legacy_source_subset(legacy, backup_files)
                 incoming.replace(backup_root)
             elif backup_root.exists():
                 backup_files, backup_digest = _verified_legacy_yaml_backup(
-                    backup_root, gamever=gamever, cutover_id=cutover_id
+                    backup_root,
+                    gamever=gamever,
+                    cutover_id=cutover_id,
+                    durable_inventory_sha256=durable_digest,
                 )
                 _require_legacy_source_subset(legacy, backup_files)
             elif not legacy:
@@ -236,7 +263,10 @@ def cleanup_legacy_accepted_yaml(
                     },
                 )
                 backup_files, backup_digest = _verified_legacy_yaml_backup(
-                    incoming, gamever=gamever, cutover_id=cutover_id
+                    incoming,
+                    gamever=gamever,
+                    cutover_id=cutover_id,
+                    durable_inventory_sha256=durable_digest,
                 )
                 if backup_files != legacy or backup_digest != legacy_digest:
                     raise ReleaseWorkflowError("legacy YAML backup verification failed")

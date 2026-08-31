@@ -62,8 +62,9 @@ runner-account ACL 保护，并支持同文件系统 atomic rename。Build 只�
 Release authority。PR routing 必须把 untrusted/fork analysis 挡在该 runner 之外。
 
 Production release dispatch 仅允许 `HLND2T/GoldSrc_VibeSignatures`，并使用 per-version concurrency。为 GitHub-hosted
-`publish-release` job 配置独立受保护 `release` Environment；它是唯一获准 `contents: write` 的 job。Branch protection
-要求 Actions-owned 唯一 `pr-validate`、禁止 `main` direct/admin-bypass push、保护 release tag，并为该 Environment
+`publish-release` job 配置独立受保护 `release` Environment；它是 release build 中唯一获准 `contents: write` 的 job。
+独立 Pages archive job 只能写 append-only、非权威的镜像分支。Branch protection 要求 Actions-owned 唯一
+`pr-validate`、禁止 `main` direct/admin-bypass push、保护 release tag，并为该 Environment
 配置所需 approval。Release authority 不再包含 GitHub App token、`HLND2T_GH_TOKEN`、generated-output branch 或
 merge-time promotion；repository test 无法激活或证明这些外部控制。
 

@@ -10,8 +10,9 @@ permalink: goldsrc-vibesignatures/release-staging-promotion-recovery
 
 `release-build.yml` builds one closed bundle from an immutable source SHA, the bound `bin` gitlink, and Git-tracked
 `bin_artifacts`. The self-hosted runner is read-only; a GitHub-hosted verifier rechecks the bundle; the protected
-`publish-release` job is the only `contents: write` authority. Git no longer versions `gamesymbols/`, `gamedata/`, or
-release manifests, and there is no generated-output PR or separate promotion workflow.
+`publish-release` job is the only `contents: write` authority inside `release-build.yml`. Git source branches no longer
+version `gamesymbols/`, `gamedata/`, or release manifests, and there is no generated-output PR or separate promotion
+workflow. The separate Pages workflow may write only its non-authoritative append-only presentation mirror.
 
 ## Responsibilities
 

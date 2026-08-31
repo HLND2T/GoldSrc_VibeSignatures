@@ -41,6 +41,7 @@ jobs:
           set -euo pipefail
           tag="${EVENT_RELEASE_TAG:-$REQUESTED_RELEASE_TAG}"
           test -n "$tag"
+          test "$(gh api "repos/${{ github.repository }}/releases/tags/$tag" --jq '.draft')" = "false"
           rm -rf release-gamesymbols
           mkdir release-gamesymbols
           gh release download "$tag" --repo "${{ github.repository }}" --pattern '*.yaml' --dir release-gamesymbols

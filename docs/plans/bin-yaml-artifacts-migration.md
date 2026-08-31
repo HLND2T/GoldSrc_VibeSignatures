@@ -25,6 +25,15 @@
   materialization，再创建 canonical exact-hash backup，支持 verified `.incoming` 与 partial deletion 幂等恢复。
   私有 `PERSISTED_WORKSPACE` 的实际 inventory/cleanup 仍因 runner 缺失无法执行，runner 恢复后必须使用同一
   cutover identity 执行该运维门禁。
+- 2026-08-31：完成步骤 12 的独立 code review 与本地全量验证。review 后进一步将 hosted verifier 收紧为固定
+  Release asset allowlist，并安全枚举、解包 `.7z` 后逐文件对照可信 Git/bundle bytes；manifest 额外绑定
+  source/run/bin gitlink、generator、IDA runtime 和 warm-cache selection evidence。accepted-bin 增加 persisted
+  root link/overlap 与 durable backup inventory 校验，PR planner 对删除/空 contract fail closed，snapshot CLI
+  只接受显式 legacy snapshot，Pages 只部署已发布 Release 且由 publish job 显式 dispatch。Python unit 为
+  455 tests，repository contract 为 14 tests，`all` 为 473 tests（4 个环境性 skip）；Pages 为 53 tests、5 个
+  E2E，Windows absolute input build、formatter、`actionlint` 和 `git diff --check` 均通过。由于仓库仍无
+  self-hosted runner，release dry run 的 build/hosted verify 和私有 persisted cleanup 尚无通过证据，因此计划
+  状态继续保持“实施中”，PR 不得宣称最终外部验收完成。
 
 ## 1. 目标
 
@@ -653,7 +662,7 @@ workflow 另做仓库支持的 YAML/action validation；关键 release dry run �
 - release bundle 可从 source SHA + bin gitlink + `bin_artifacts` 重建；
 - self-hosted build job 没有发布权限；
 - hosted verifier 对 bundle 完整复验；
-- `publish-release` 是唯一 contents-write job，受 protected environment 约束；
+- `publish-release` 是 `release-build.yml` 中唯一 contents-write job，受 protected environment 约束；
 - tag 指向 source SHA，Release manifest 和 SHA256SUMS 作为 assets 发布；
 - published Release 不允许覆盖；
 - 不存在 generated-output PR、output branch 或独立 promote workflow；

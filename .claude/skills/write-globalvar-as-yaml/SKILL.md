@@ -75,7 +75,7 @@ yaml_path = os.path.abspath(r"<EXACT_OUTPUT_ARTIFACT_PATH_FROM_INVOCATION_CONTRA
 if os.path.basename(yaml_path) != f"{gv_name}.{platform}.yaml":
     raise ValueError(f"Artifact path does not match {gv_name}.{platform}.yaml: {yaml_path}")
 os.makedirs(os.path.dirname(yaml_path), exist_ok=True)
-with open(yaml_path, 'w', encoding='utf-8') as f:
+with open(yaml_path, 'w', encoding='utf-8', newline='\n') as f:
     yaml.dump(data, f, default_flow_style=False, sort_keys=False)
 print(f"Written to: {yaml_path}")
 """

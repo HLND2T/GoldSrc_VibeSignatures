@@ -167,7 +167,12 @@ class RepositoryContractTests(unittest.TestCase):
                                 declared_artifacts,
                                 f"Output {output!r} from {node.id} has no declared symbol",
                             )
-                    contract = load_contract(ROOT / "configs" / f"{tag}.yaml", tag, ROOT / "bin")
+                    contract = load_contract(
+                        ROOT / "configs" / f"{tag}.yaml",
+                        tag,
+                        ROOT / "bin",
+                        artifactdir=ROOT / "bin_artifacts",
+                    )
                     self.assertEqual(contract.formal_paths, set(contract.owners_by_path))
                     self.assertTrue(all(len(owners) == 1 for owners in contract.owners_by_path.values()))
 

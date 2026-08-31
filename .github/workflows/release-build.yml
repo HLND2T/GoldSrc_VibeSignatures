@@ -229,8 +229,12 @@ jobs:
             Copy-Item -LiteralPath (Join-Path $gamesymbolsRoot "$gamever.yaml") -Destination (Join-Path $gamedataStage 'gamesymbols')
             Copy-Item -LiteralPath (Join-Path $gamesymbolsRoot "$gamever.metadata.yaml") -Destination (Join-Path $gamedataStage 'gamesymbols')
             Copy-Item -LiteralPath (Join-Path $gamedataRoot $gamever) -Destination (Join-Path $gamedataStage 'gamedata') -Recurse
-            Copy-Item -LiteralPath "bin/$gamever" -Destination (Join-Path $gamedataStage 'bin') -Recurse
-            Copy-Item -LiteralPath "bin/$gamever" -Destination (Join-Path $gamebinStage 'bin') -Recurse
+            uv run python release_bundle.py stage-binary --repo-root $env:GITHUB_WORKSPACE --gamever $gamever `
+              --destination (Join-Path $gamedataStage "bin/$gamever")
+            if ($LASTEXITCODE -ne 0) { throw "gamedata binary staging failed for $gamever" }
+            uv run python release_bundle.py stage-binary --repo-root $env:GITHUB_WORKSPACE --gamever $gamever `
+              --destination (Join-Path $gamebinStage "bin/$gamever")
+            if ($LASTEXITCODE -ne 0) { throw "gamebin binary staging failed for $gamever" }
             foreach ($archiveStage in @($gamedataStage, $gamebinStage)) {
               Get-ChildItem -LiteralPath $archiveStage -Recurse -Force | ForEach-Object { $_.LastWriteTimeUtc = $sourceTime }
             }
@@ -267,7 +271,11 @@ jobs:
             --source-sha "${{ needs.preflight.outputs.source_sha }}"
           if ($LASTEXITCODE -ne 0) { throw 'release bundle build failed' }
           uv run python release_bundle.py verify --repo-root $env:GITHUB_WORKSPACE --bundle-root $bundleRoot `
-            --version "${{ needs.preflight.outputs.version }}"
+            --version "${{ needs.preflight.outputs.version }}" `
+            --source-sha "${{ needs.preflight.outputs.source_sha }}" `
+            --build-id "${{ needs.preflight.outputs.build_id }}" `
+            --workflow-run-url "${{ needs.preflight.outputs.workflow_run_url }}" `
+            --cache-selection-sha256 "${{ needs.warmup-idb.outputs.selection_sha256 }}"
           if ($LASTEXITCODE -ne 0) { throw 'local release bundle verification failed' }
       - name: Upload release bundle transport artifact
         uses: actions/upload-artifact@v4
@@ -286,7 +294,7 @@ jobs:
           git -C $binRoot clean -ffdx
           if ($LASTEXITCODE -ne 0) { throw 'failed to clean bin submodule' }
   verify-release-bundle:
-    needs: [preflight, build-release-bundle]
+    needs: [preflight, warmup-idb, build-release-bundle]
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -321,7 +329,11 @@ jobs:
       - name: Verify release bundle on GitHub-hosted runner
         run: |
           uv run python release_bundle.py verify --repo-root "$GITHUB_WORKSPACE" \
-            --bundle-root "$RUNNER_TEMP/release-bundle" --version "${{ needs.preflight.outputs.version }}"
+            --bundle-root "$RUNNER_TEMP/release-bundle" --version "${{ needs.preflight.outputs.version }}" \
+            --source-sha "${{ needs.preflight.outputs.source_sha }}" \
+            --build-id "${{ needs.preflight.outputs.build_id }}" \
+            --workflow-run-url "${{ needs.preflight.outputs.workflow_run_url }}" \
+            --cache-selection-sha256 "${{ needs.warmup-idb.outputs.selection_sha256 }}"
       - name: Upload exact verified bundle
         id: upload-verified
         uses: actions/upload-artifact@v4
@@ -331,12 +343,12 @@ jobs:
           if-no-files-found: error
           retention-days: 7
   publish-release:
-    needs: [preflight, verify-release-bundle]
+    needs: [preflight, warmup-idb, verify-release-bundle]
     if: inputs.publish_release
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      actions: read
+      actions: write
       contents: write
     steps:
       - name: Checkout exact source and bin gitlink
@@ -373,4 +385,16 @@ jobs:
           set -euo pipefail
           uv run python release_publish.py publish --repository "${{ github.repository }}" \
             --repo-root "$GITHUB_WORKSPACE" --bundle-root "$RUNNER_TEMP/verified-release-bundle" \
-            --version "${{ needs.preflight.outputs.version }}"
+            --version "${{ needs.preflight.outputs.version }}" \
+            --source-sha "${{ needs.preflight.outputs.source_sha }}" \
+            --build-id "${{ needs.preflight.outputs.build_id }}" \
+            --workflow-run-url "${{ needs.preflight.outputs.workflow_run_url }}" \
+            --cache-selection-sha256 "${{ needs.warmup-idb.outputs.selection_sha256 }}"
+      - name: Dispatch Pages from the published immutable Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |-
+          set -euo pipefail
+          gh workflow run deploy-pages.yml --repo "${{ github.repository }}" \
+            --ref "${{ github.event.repository.default_branch }}" \
+            -f "release_tag=${{ needs.preflight.outputs.version }}"

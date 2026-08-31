@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import os
 from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
@@ -102,6 +103,22 @@ class MaterializeAcceptedBinTests(unittest.TestCase):
             with self.assertRaisesRegex(ReleaseWorkflowError, "checkout bin directory"):
                 materialize_accepted_bin(repo_root=empty, persisted_root=persisted, gamever="hl-3248")
 
+    def test_persisted_workspace_must_be_disjoint_and_must_not_traverse_links(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo, persisted = self._workspace(Path(temporary))
+            overlapping = repo / "persisted"
+            overlapping.mkdir()
+            with self.assertRaisesRegex(ReleaseWorkflowError, "must not overlap"):
+                materialize_accepted_bin(repo_root=repo, persisted_root=overlapping, gamever="hl-3248")
+
+            linked = Path(temporary) / "persisted-link"
+            try:
+                os.symlink(persisted, linked, target_is_directory=True)
+            except OSError:
+                self.skipTest("directory symlinks are unavailable")
+            with self.assertRaisesRegex(ReleaseWorkflowError, "link/reparse"):
+                materialize_accepted_bin(repo_root=repo, persisted_root=linked, gamever="hl-3248")
+
     def test_legacy_yaml_cleanup_requires_verified_materialization_and_keeps_exact_backup(self):
         with tempfile.TemporaryDirectory() as temporary:
             repo, persisted = self._workspace(Path(temporary))
@@ -154,6 +171,24 @@ class MaterializeAcceptedBinTests(unittest.TestCase):
             )
             self.assertTrue(result["cleaned"])
             self.assertEqual([], legacy_yaml_inventory(source)[0])
+
+    def test_legacy_yaml_cleanup_rebuilds_an_uncommitted_incoming_backup(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo, persisted = self._workspace(Path(temporary))
+            incoming = persisted / "accepted-bin" / "legacy-yaml-backups" / "bin-artifacts-v1" / ".hl-3248.incoming"
+            (incoming / "engine").mkdir(parents=True)
+            (incoming / "engine" / "partial.yaml").write_text("partial: true\n", encoding="utf-8")
+
+            result = cleanup_legacy_accepted_yaml(
+                repo_root=repo,
+                persisted_root=persisted,
+                gamever="hl-3248",
+                cutover_id="bin-artifacts-v1",
+            )
+
+            self.assertTrue(result["cleaned"])
+            self.assertFalse(incoming.exists())
+            self.assertTrue((Path(result["backup"]) / "legacy-yaml-inventory.json").is_file())
 
     def test_legacy_yaml_cleanup_resumes_after_partial_deletion(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -217,6 +252,29 @@ class MaterializeAcceptedBinTests(unittest.TestCase):
             (source / remaining[0]["path"]).write_bytes(b"func_name: changed\n")
 
             with self.assertRaisesRegex(ReleaseWorkflowError, "new or differs"):
+                cleanup_legacy_accepted_yaml(
+                    repo_root=repo,
+                    persisted_root=persisted,
+                    gamever="hl-3248",
+                    cutover_id="bin-artifacts-v1",
+                )
+
+    def test_legacy_yaml_cleanup_rejects_durable_inventory_drift_for_existing_backup(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo, persisted = self._workspace(Path(temporary))
+            result = cleanup_legacy_accepted_yaml(
+                repo_root=repo,
+                persisted_root=persisted,
+                gamever="hl-3248",
+                cutover_id="bin-artifacts-v1",
+            )
+            source = persisted / "bin" / "hl-3248"
+            backup = Path(result["backup"])
+            restored = backup / "engine" / "symbol.yaml"
+            (source / "engine" / "symbol.yaml").write_bytes(restored.read_bytes())
+            (source / "engine" / "hw.dll").write_bytes(b"changed accepted binary")
+
+            with self.assertRaisesRegex(ReleaseWorkflowError, "durable inventory differs"):
                 cleanup_legacy_accepted_yaml(
                     repo_root=repo,
                     persisted_root=persisted,

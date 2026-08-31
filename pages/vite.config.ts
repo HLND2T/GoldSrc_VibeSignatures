@@ -1,17 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 import { gameSymbolsPlugin } from './gameSymbolsPlugin'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    gameSymbolsPlugin(
-      process.env.GSVIBE_GAMESYMBOLS_DIR
-        ? fileURLToPath(new URL(process.env.GSVIBE_GAMESYMBOLS_DIR, import.meta.url))
-        : fileURLToPath(new URL('./.test-gamesymbols', import.meta.url)),
-    ),
+    gameSymbolsPlugin(resolve(process.env.GSVIBE_GAMESYMBOLS_DIR ?? '.test-gamesymbols')),
   ],
   base: '/GoldSrc_VibeSignatures/',
 })

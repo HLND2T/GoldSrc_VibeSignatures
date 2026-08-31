@@ -28,11 +28,11 @@ preflight -> warmup-idb -> build-release-bundle -> verify-release-bundle -> publ
 
 self-hosted read-only build 在 fresh root 强制重建全部分析 artifact、与 Git truth 比较、派生完整 release bundle，再上传
 唯一 transport Artifact。GitHub-hosted verifier 校验 source ancestry、bin gitlink、artifact inventory、payload contract、
-allowlist、canonical manifest 与 checksums。受保护 publisher 是唯一 contents writer，并实现 immutable
+allowlist、canonical manifest 与 checksums。受保护 publisher 是 release workflow 中唯一 contents writer，并实现 immutable
 tag/draft/asset 语义。不再存在 generated-output PR 或独立 promotion workflow。
 
 ## Pages deployment
 
 `deploy-pages.yml` 由 published Release 触发，或通过显式 published tag 手动触发。它下载 Release snapshot/metadata
-YAML，构建 content-addressed JSON，保留 append-only `pages-snapshots` archive，部署 Pages 并验证 CDN bytes。本地/CI
-build 使用动态生成的最小 schema fixture；production 始终设置显式下载 asset 目录。
+YAML，构建 content-addressed JSON，保留非权威、append-only 的 `pages-snapshots` 展示镜像，部署 Pages 并验证 CDN
+bytes。本地/CI build 使用动态生成的最小 schema fixture；production 始终设置显式下载 asset 目录。
