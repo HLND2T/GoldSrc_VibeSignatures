@@ -194,18 +194,16 @@ class MaterializeAcceptedBinTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             repo, persisted = self._workspace(Path(temporary))
             source = persisted / "bin" / "hl-3248"
-            original_unlink = Path.unlink
             yaml_unlinks = 0
 
-            def interrupt_second_yaml(path, *args, **kwargs):
+            def interrupt_second_yaml(path):
                 nonlocal yaml_unlinks
-                if source in path.parents and path.suffix.lower() in {".yaml", ".yml"}:
-                    yaml_unlinks += 1
-                    if yaml_unlinks == 2:
-                        raise OSError("interrupted deletion")
-                return original_unlink(path, *args, **kwargs)
+                yaml_unlinks += 1
+                if yaml_unlinks == 2:
+                    raise OSError("interrupted deletion")
+                path.unlink()
 
-            with patch.object(Path, "unlink", interrupt_second_yaml):
+            with patch("release_workflow_lib.accepted_bin._remove_legacy_yaml", side_effect=interrupt_second_yaml):
                 with self.assertRaisesRegex(ReleaseWorkflowError, "cleanup was interrupted"):
                     cleanup_legacy_accepted_yaml(
                         repo_root=repo,
@@ -228,18 +226,16 @@ class MaterializeAcceptedBinTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             repo, persisted = self._workspace(Path(temporary))
             source = persisted / "bin" / "hl-3248"
-            original_unlink = Path.unlink
             yaml_unlinks = 0
 
-            def interrupt_second_yaml(path, *args, **kwargs):
+            def interrupt_second_yaml(path):
                 nonlocal yaml_unlinks
-                if source in path.parents and path.suffix.lower() in {".yaml", ".yml"}:
-                    yaml_unlinks += 1
-                    if yaml_unlinks == 2:
-                        raise OSError("interrupted deletion")
-                return original_unlink(path, *args, **kwargs)
+                yaml_unlinks += 1
+                if yaml_unlinks == 2:
+                    raise OSError("interrupted deletion")
+                path.unlink()
 
-            with patch.object(Path, "unlink", interrupt_second_yaml):
+            with patch("release_workflow_lib.accepted_bin._remove_legacy_yaml", side_effect=interrupt_second_yaml):
                 with self.assertRaisesRegex(ReleaseWorkflowError, "cleanup was interrupted"):
                     cleanup_legacy_accepted_yaml(
                         repo_root=repo,

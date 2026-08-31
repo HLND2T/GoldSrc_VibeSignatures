@@ -105,6 +105,10 @@ def _require_legacy_source_subset(source: list[dict], backup: list[dict]) -> Non
             )
 
 
+def _remove_legacy_yaml(path: Path) -> None:
+    path.unlink()
+
+
 def durable_files(root: Path) -> list[Path]:
     reject_reparse_points(root)
     return [
@@ -287,7 +291,7 @@ def cleanup_legacy_accepted_yaml(
             raise ReleaseWorkflowError("legacy YAML changed while its backup was being prepared")
         try:
             for record in legacy:
-                contained_path(source, *PurePosixPath(record["path"]).parts).unlink()
+                _remove_legacy_yaml(contained_path(source, *PurePosixPath(record["path"]).parts))
         except OSError as exc:
             raise ReleaseWorkflowError(f"legacy YAML cleanup was interrupted; rerun the same cutover: {exc}") from exc
         remaining, _remaining_digest = legacy_yaml_inventory(source)
