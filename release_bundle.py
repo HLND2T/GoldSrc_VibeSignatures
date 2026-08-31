@@ -13,7 +13,11 @@ from pathlib import Path, PurePosixPath
 
 import yaml
 
-from bin_artifact_contract import BinArtifactContractError, validate_repository_artifact_contract
+from bin_artifact_contract import (
+    BinArtifactContractError,
+    compare_repository_artifact_root,
+    validate_repository_artifact_contract,
+)
 from gamedata_contract import (
     GamedataContractError,
     analysis_config_sha256,
@@ -222,6 +226,35 @@ def stage_tracked_binary_tree(*, repo_root: str | Path, gamever: str, destinatio
         shutil.copy2(source, target)
 
 
+def stage_validated_artifact_tree(
+    *,
+    repo_root: str | Path,
+    artifact_root: str | Path,
+    destination: str | Path,
+) -> None:
+    repo_root = Path(repo_root).resolve()
+    artifact_root = Path(artifact_root).resolve()
+    destination = Path(destination).resolve()
+    if destination.exists():
+        raise ReleaseBundleError(f"Artifact staging destination already exists: {destination}")
+    try:
+        repository = compare_repository_artifact_root(repo_root, artifact_root)
+    except BinArtifactContractError as exc:
+        raise ReleaseBundleError(str(exc)) from exc
+    destination.mkdir(parents=True)
+    for inventory in repository.gamevers:
+        gamever_destination = contained_path(destination, inventory.game_version)
+        gamever_destination.mkdir()
+        for entry in inventory.entries:
+            parts = PurePosixPath(entry.path).parts
+            source = contained_path(artifact_root, inventory.game_version, *parts)
+            target = contained_path(gamever_destination, *parts)
+            _copy_file(source, target)
+        expected = [{"path": entry.path, "size": entry.size, "sha256": entry.sha256} for entry in inventory.entries]
+        if file_inventory(gamever_destination) != expected:
+            raise ReleaseBundleError(f"Staged artifact inventory differs for {inventory.game_version}")
+
+
 def _add_archive_source(sources: dict[str, Path], relative: str, source: Path) -> None:
     relative = normalized_relative_path(relative)
     if not source.is_file():
@@ -311,15 +344,30 @@ def _seven_zip_records(archive: Path) -> list[dict[str, str]]:
     return records
 
 
-def _seven_zip_inventory(archive: Path, expected_paths: set[str]) -> tuple[set[str], set[str]]:
+def _seven_zip_inventory(
+    archive: Path,
+    expected_paths: set[str],
+    *,
+    required_directories: set[str] | None = None,
+) -> tuple[set[str], set[str]]:
     files: set[str] = set()
     directories: set[str] = set()
     seen_casefold: set[str] = set()
+    required_directories = {
+        normalized_relative_path(path) for path in (() if required_directories is None else required_directories)
+    }
+    if len({path.casefold() for path in required_directories}) != len(required_directories):
+        raise ReleaseBundleError("Required archive directories case-collide")
     expected_directories = {
         PurePosixPath(*PurePosixPath(path).parts[:index]).as_posix()
         for path in expected_paths
         for index in range(1, len(PurePosixPath(path).parts))
     }
+    expected_directories.update(
+        PurePosixPath(*PurePosixPath(path).parts[:index]).as_posix()
+        for path in required_directories
+        for index in range(1, len(PurePosixPath(path).parts) + 1)
+    )
     for record in _seven_zip_records(archive):
         raw_path = record.get("Path")
         if raw_path is None or any(ord(character) < 32 for character in raw_path):
@@ -358,15 +406,28 @@ def _seven_zip_inventory(archive: Path, expected_paths: set[str]) -> tuple[set[s
             f"Archive file inventory mismatch: missing={sorted(expected_paths - files)!r}; "
             f"extra={sorted(files - expected_paths)!r}"
         )
+    if not required_directories.issubset(directories):
+        raise ReleaseBundleError(
+            f"Archive required directory inventory mismatch: missing={sorted(required_directories - directories)!r}"
+        )
     return files, directories
 
 
-def _verify_archive(archive: Path, expected_sources: dict[str, Path]) -> None:
+def _verify_archive(
+    archive: Path,
+    expected_sources: dict[str, Path],
+    *,
+    required_directories: set[str] | None = None,
+) -> None:
     expected_records = [
         {"path": path, "size": source.stat().st_size, "sha256": sha256_file(source)}
         for path, source in expected_sources.items()
     ]
-    _seven_zip_inventory(archive, {record["path"] for record in expected_records})
+    _seven_zip_inventory(
+        archive,
+        {record["path"] for record in expected_records},
+        required_directories=required_directories,
+    )
     with tempfile.TemporaryDirectory(prefix="release-archive-verify-") as temporary:
         extracted = Path(temporary)
         result = subprocess.run(
@@ -816,6 +877,7 @@ def verify_release_bundle(
                 artifact_entries=artifact_by_tag[gamever].entries,
                 archive_kind="gamedata",
             ),
+            required_directories={f"bin_artifacts/{gamever}"},
         )
 
     expected_assets = [_asset_record(bundle_root, path) for path in _expected_payload_paths(gamevers)]
@@ -847,6 +909,10 @@ def main(argv: list[str] | None = None) -> int:
     stage_binary.add_argument("--repo-root", default=".")
     stage_binary.add_argument("--gamever", required=True)
     stage_binary.add_argument("--destination", required=True)
+    stage_artifacts = commands.add_parser("stage-artifacts")
+    stage_artifacts.add_argument("--repo-root", default=".")
+    stage_artifacts.add_argument("--artifact-root", required=True)
+    stage_artifacts.add_argument("--destination", required=True)
     verify = commands.add_parser("verify")
     verify.add_argument("--repo-root", default=".")
     verify.add_argument("--bundle-root", required=True)
@@ -875,6 +941,12 @@ def main(argv: list[str] | None = None) -> int:
             stage_tracked_binary_tree(
                 repo_root=args.repo_root,
                 gamever=args.gamever,
+                destination=args.destination,
+            )
+        elif args.command == "stage-artifacts":
+            stage_validated_artifact_tree(
+                repo_root=args.repo_root,
+                artifact_root=args.artifact_root,
                 destination=args.destination,
             )
         else:

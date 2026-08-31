@@ -169,6 +169,51 @@ class ReleaseBundleTests(unittest.TestCase):
         )
         return repo, generated, source_sha
 
+    def test_stages_validated_artifacts_with_canonical_empty_gamever_directories(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, _, _ = self.fixture(root)
+            (repo / "configs/config.yaml").write_text(
+                "gamevers:\n  - game-1\n  - empty-1\n",
+                encoding="utf-8",
+            )
+            write_config(
+                repo / "configs/empty-1.yaml",
+                symbols=[],
+                both_platforms=False,
+            )
+            subprocess.run(["git", "-C", str(repo), "add", "configs"], check=True)
+            subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "empty gamever"], check=True)
+
+            rebuilt = root / "rebuilt"
+            shutil.copytree(repo / "bin_artifacts/game-1", rebuilt / "game-1")
+            staged = root / "staged"
+            release_bundle.stage_validated_artifact_tree(
+                repo_root=repo,
+                artifact_root=rebuilt,
+                destination=staged,
+            )
+
+            expected = repo / "bin_artifacts/game-1/engine/Demo.windows.yaml"
+            actual = staged / "game-1/engine/Demo.windows.yaml"
+            self.assertEqual(expected.read_bytes(), actual.read_bytes())
+            self.assertTrue((staged / "empty-1").is_dir())
+            self.assertEqual([], list((staged / "empty-1").iterdir()))
+
+    def test_archive_verifier_accepts_required_empty_artifact_directory(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            stage = root / "stage"
+            (stage / "bin_artifacts/empty-1").mkdir(parents=True)
+            archive = root / "empty-artifacts.7z"
+            self._archive(stage, archive)
+
+            release_bundle._verify_archive(
+                archive,
+                {},
+                required_directories={"bin_artifacts/empty-1"},
+            )
+
     def test_build_verify_and_tamper_detection(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -194,6 +194,10 @@ jobs:
           $gamedataRoot = Join-Path $generatedRoot 'gamedata'
           $archivesRoot = Join-Path $generatedRoot 'archives'
           New-Item -ItemType Directory -Path $gamesymbolsRoot,$gamedataRoot,$archivesRoot -Force | Out-Null
+          $stagedArtifactRoot = Join-Path $generatedRoot 'bin_artifacts'
+          uv run python release_bundle.py stage-artifacts --repo-root $env:GITHUB_WORKSPACE `
+            --artifact-root $env:REBUILT_ARTIFACT_ROOT --destination $stagedArtifactRoot
+          if ($LASTEXITCODE -ne 0) { throw 'validated artifact staging failed' }
           $publishTime = (git show -s --format=%cI HEAD | uv run python -c "import sys; from datetime import datetime,timezone; print(datetime.fromisoformat(sys.stdin.read().strip()).astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))").Trim()
           $sourceTime = [DateTime]::Parse($publishTime).ToUniversalTime()
           $gamevers = @(uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {})['gamevers']))")
@@ -233,7 +237,7 @@ jobs:
             New-Item -ItemType Directory -Path (Join-Path $gamedataStage 'bin') -Force | Out-Null
             New-Item -ItemType Directory -Path (Join-Path $gamebinStage 'bin') -Force | Out-Null
             Copy-Item -LiteralPath "configs/$gamever.yaml" -Destination (Join-Path $gamedataStage "configs/$gamever.yaml")
-            Copy-Item -LiteralPath (Join-Path $env:REBUILT_ARTIFACT_ROOT $gamever) -Destination (Join-Path $gamedataStage 'bin_artifacts') -Recurse
+            Copy-Item -LiteralPath (Join-Path $stagedArtifactRoot $gamever) -Destination (Join-Path $gamedataStage 'bin_artifacts') -Recurse
             Copy-Item -LiteralPath (Join-Path $gamesymbolsRoot "$gamever.yaml") -Destination (Join-Path $gamedataStage 'gamesymbols')
             Copy-Item -LiteralPath (Join-Path $gamesymbolsRoot "$gamever.metadata.yaml") -Destination (Join-Path $gamedataStage 'gamesymbols')
             Copy-Item -LiteralPath (Join-Path $gamedataRoot $gamever) -Destination (Join-Path $gamedataStage 'gamedata') -Recurse
