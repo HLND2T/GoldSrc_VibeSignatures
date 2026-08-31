@@ -9,6 +9,7 @@ from pathlib import Path, PurePosixPath
 import yaml
 
 import download_depot
+from bin_artifact_contract import validate_repository_artifact_contract
 from analysis_config import iter_analysis_config_tags
 from analysis_planner import (
     PLATFORMS,
@@ -30,6 +31,11 @@ def _config_tags() -> set[str]:
 
 
 class RepositoryContractTests(unittest.TestCase):
+    def test_tracked_bin_artifacts_match_the_formal_repository_contract(self):
+        inventory = validate_repository_artifact_contract(ROOT)
+        self.assertEqual(273, len(inventory.paths))
+        self.assertEqual(_config_tags(), {item.game_version for item in inventory.gamevers})
+
     def test_generate_reference_yaml_skill_contract(self):
         skill_path = ROOT / ".claude" / "skills" / "generate-reference-yaml" / "SKILL.md"
         self.assertTrue(skill_path.is_file())
