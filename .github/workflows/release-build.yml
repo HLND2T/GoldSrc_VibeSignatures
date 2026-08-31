@@ -16,6 +16,11 @@ on:
         required: false
         default: true
         type: boolean
+      cleanup_legacy_yaml:
+        description: One-time cleanup of backed-up legacy accepted-bin YAML after the bundle is locally verified
+        required: false
+        default: false
+        type: boolean
 permissions:
   actions: read
   contents: read
@@ -296,6 +301,22 @@ jobs:
           path: ${{ runner.temp }}/release-bundle
           if-no-files-found: error
           retention-days: 7
+      - name: Back up and clean legacy accepted-bin YAML
+        if: inputs.cleanup_legacy_yaml
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:PERSISTED_WORKSPACE)) {
+            throw 'PERSISTED_WORKSPACE is required for legacy YAML cleanup'
+          }
+          $gamevers = @(uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {})['gamevers']))")
+          foreach ($gamever in $gamevers) {
+            if ([string]::IsNullOrWhiteSpace($gamever)) { throw 'configs/config.yaml contains an empty game version' }
+            uv run python release_workflow.py cleanup-legacy-accepted-yaml `
+              --repo-root $env:GITHUB_WORKSPACE --persisted-root $env:PERSISTED_WORKSPACE `
+              --gamever $gamever --cutover-id bin-artifacts-v1
+            if ($LASTEXITCODE -ne 0) { throw "legacy accepted-bin YAML cleanup failed for $gamever" }
+          }
       - name: Remove generated binary analysis state
         if: always()
         shell: pwsh
