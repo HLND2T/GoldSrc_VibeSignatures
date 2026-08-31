@@ -26,6 +26,7 @@ def _parser():
     build.add_argument("-configyaml", default=None)
     build.add_argument("-output", required=True)
     build.add_argument("-session", required=True)
+    build.add_argument("-last-publish-time", default=None)
     for name in ("guard", "mark", "publish"):
         command = commands.add_parser(name)
         command.add_argument("-candidate", required=True)
@@ -49,6 +50,7 @@ def main(argv=None):
                 config_path=args.configyaml,
                 output_path=args.output,
                 session_path=args.session,
+                last_publish_time=args.last_publish_time,
             )
         elif args.command == "guard":
             guard_candidate(candidate_path=args.candidate, session_path=args.session)

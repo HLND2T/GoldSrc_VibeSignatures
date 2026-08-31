@@ -433,6 +433,12 @@ class CliContractTests(unittest.TestCase):
         self.assert_parse_error(
             ["-gamever", "hl-10210", "-node", "engine:windows:produce", "-node", "engine:windows:produce"]
         )
+        self.assert_parse_error(["-gamever", "hl-10210", "-node", "engine:windows:produce", "-force_all"])
+
+    def test_force_all_is_explicit_and_rejects_skill_filter(self):
+        args = self.parse_args(["-gamever", "hl-10210", "-force_all"])
+        self.assertTrue(args.force_all)
+        self.assert_parse_error(["-gamever", "hl-10210", "-force_all", "-skill", "find"])
 
     def test_cli_values_override_gsvibe_environment(self):
         args = self.parse_args(
@@ -1761,7 +1767,7 @@ class DagTests(unittest.TestCase):
                 gamever="game-1",
                 config_path=config,
                 bindir=root / "bin",
-                    artifactdir=root / "bin_artifacts",
+                artifactdir=root / "bin_artifacts",
                 platforms=["windows"],
                 reporter=reporter,
                 run_id="scheduled-run",
@@ -1800,7 +1806,7 @@ class DagTests(unittest.TestCase):
                 gamever="game-1",
                 config_path=config,
                 bindir=root / "bin",
-                    artifactdir=root / "bin_artifacts",
+                artifactdir=root / "bin_artifacts",
                 platforms=["windows"],
                 skip_error=True,
                 reporter=reporter,

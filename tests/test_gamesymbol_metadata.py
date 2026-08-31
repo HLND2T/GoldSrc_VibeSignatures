@@ -36,12 +36,8 @@ def metadata_fixture(root: Path, *, alias=None, artifact=None):
     write_pe32(binary_module_dir / "hw.dll")
     write_elf32(binary_module_dir / "hw.so")
     artifact_module_dir.mkdir(parents=True)
-    (artifact_module_dir / "symbol.windows.yaml").write_text(
-        "func_name: symbol\nfunc_va: '0x10'\n", encoding="utf-8"
-    )
-    (artifact_module_dir / "symbol.linux.yaml").write_text(
-        "func_name: symbol\nfunc_va: '0x20'\n", encoding="utf-8"
-    )
+    (artifact_module_dir / "symbol.windows.yaml").write_text("func_name: symbol\nfunc_va: '0x10'\n", encoding="utf-8")
+    (artifact_module_dir / "symbol.linux.yaml").write_text("func_name: symbol\nfunc_va: '0x20'\n", encoding="utf-8")
     snapshot = root / f"{tag}.yaml"
     pack_snapshot(
         tag,

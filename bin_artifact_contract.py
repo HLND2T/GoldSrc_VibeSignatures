@@ -116,7 +116,9 @@ def _walk_artifact_tree(
             if path.suffix != ".yaml":
                 if allow_non_artifact_files:
                     continue
-                raise BinArtifactContractError(f"Unknown file in artifact tree: {path.relative_to(game_root).as_posix()}")
+                raise BinArtifactContractError(
+                    f"Unknown file in artifact tree: {path.relative_to(game_root).as_posix()}"
+                )
             discovered.append(path)
     return tuple(discovered)
 
@@ -220,9 +222,7 @@ def validate_repository_artifact_contract(
             f"expected={sorted(expected_directories)!r}; actual={sorted(actual_directories)!r}; "
             f"files={sorted(actual_files)!r}"
         )
-    digest_payload = [
-        {"game_version": inventory.game_version, "digest": inventory.digest} for inventory in inventories
-    ]
+    digest_payload = [{"game_version": inventory.game_version, "digest": inventory.digest} for inventory in inventories]
     encoded = json.dumps(digest_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     repository = RepositoryArtifactInventory(
         gamevers=inventories,
@@ -241,12 +241,53 @@ def validate_repository_artifact_contract(
     return repository
 
 
+def compare_repository_artifact_root(
+    repo_root: str | Path,
+    actual_root: str | Path,
+) -> RepositoryArtifactInventory:
+    repo_root = Path(repo_root).resolve()
+    actual_root = Path(actual_root).resolve()
+    if actual_root == repo_root or repo_root in actual_root.parents:
+        raise BinArtifactContractError("Actual artifact root must be outside the source checkout")
+    expected = validate_repository_artifact_contract(repo_root)
+    actual = tuple(
+        build_game_artifact_inventory(
+            inventory.game_version,
+            repo_root / "configs" / f"{inventory.game_version}.yaml",
+            actual_root,
+        )
+        for inventory in expected.gamevers
+    )
+    for expected_inventory, actual_inventory in zip(expected.gamevers, actual, strict=True):
+        if expected_inventory.entries != actual_inventory.entries:
+            raise BinArtifactContractError(
+                f"Rebuilt artifact inventory differs from Git truth for {expected_inventory.game_version}"
+            )
+    expected_directories = {inventory.game_version for inventory in actual if inventory.entries}
+    actual_directories = (
+        {path.name for path in actual_root.iterdir() if path.is_dir()} if actual_root.is_dir() else set()
+    )
+    actual_files = {path.name for path in actual_root.iterdir() if path.is_file()} if actual_root.is_dir() else set()
+    if actual_files or actual_directories != expected_directories:
+        raise BinArtifactContractError(
+            "Rebuilt artifact root inventory mismatch: "
+            f"expected={sorted(expected_directories)!r}; actual={sorted(actual_directories)!r}; "
+            f"files={sorted(actual_files)!r}"
+        )
+    return expected
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", default=".")
+    parser.add_argument("--actual-root")
     args = parser.parse_args(argv)
     try:
-        inventory = validate_repository_artifact_contract(args.repo_root)
+        inventory = (
+            compare_repository_artifact_root(args.repo_root, args.actual_root)
+            if args.actual_root
+            else validate_repository_artifact_contract(args.repo_root)
+        )
     except (BinArtifactContractError, OSError, ValueError) as exc:
         print(f"Error: {exc}")
         return 1

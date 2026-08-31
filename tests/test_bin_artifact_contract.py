@@ -4,7 +4,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from bin_artifact_contract import BinArtifactContractError, build_game_artifact_inventory
+from bin_artifact_contract import (
+    BinArtifactContractError,
+    build_game_artifact_inventory,
+    compare_repository_artifact_root,
+)
 from gamesymbol_snapshot_lib.config import load_contract
 from ida_analyze_util import canonical_symbol_yaml_bytes
 from tests.test_support import write_config
@@ -68,13 +72,41 @@ class BinArtifactContractTests(unittest.TestCase):
                 elif mutation == "extra":
                     (artifact_game_root / "extra.yaml").write_text("ok: true\n", encoding="utf-8")
                 elif mutation == "noncanonical":
-                    (artifact_game_root / "symbol.windows.yaml").write_bytes(b"func_va: '0x10'\r\nfunc_name: symbol\r\n")
+                    (artifact_game_root / "symbol.windows.yaml").write_bytes(
+                        b"func_va: '0x10'\r\nfunc_name: symbol\r\n"
+                    )
                 else:
                     nested = artifact_game_root / "nested"
                     nested.mkdir()
                     (nested / "extra.yaml").write_text("ok: true\n", encoding="utf-8")
                 with self.assertRaises(BinArtifactContractError):
                     build_game_artifact_inventory(game_version, config, root / "bin_artifacts")
+
+    def test_repository_root_comparison_requires_exact_external_rebuild(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo = root / "repo"
+            rebuilt = root / "rebuilt"
+            repo.mkdir()
+            game_version, config, artifact_game_root = self.fixture(repo)
+            configs = repo / "configs"
+            configs.mkdir()
+            config.replace(configs / f"{game_version}.yaml")
+            (configs / "config.yaml").write_text("gamevers:\n  - game-1\n", encoding="utf-8")
+            import subprocess
+
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            subprocess.run(["git", "-C", str(repo), "add", "configs", "bin_artifacts"], check=True)
+            target = rebuilt / game_version / "engine"
+            target.mkdir(parents=True)
+            for source in artifact_game_root.iterdir():
+                (target / source.name).write_bytes(source.read_bytes())
+            self.assertEqual(2, len(compare_repository_artifact_root(repo, rebuilt).paths))
+            (target / "symbol.windows.yaml").write_bytes(
+                canonical_symbol_yaml_bytes({"func_name": "symbol", "func_va": "0x99"})
+            )
+            with self.assertRaisesRegex(BinArtifactContractError, "differs"):
+                compare_repository_artifact_root(repo, rebuilt)
 
 
 if __name__ == "__main__":

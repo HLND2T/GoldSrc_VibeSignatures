@@ -57,6 +57,7 @@ class SnapshotContract:
     def formal_paths(self) -> frozenset[str]:
         return self.required_paths | self.optional_paths
 
+
 @dataclass(frozen=True)
 class SnapshotContext:
     document: dict

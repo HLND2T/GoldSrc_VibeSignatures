@@ -34,6 +34,7 @@ GROUP_FILES = {
         "test_gamedata.py",
         "test_release_workflow.py",
         "test_release_bundle.py",
+        "test_release_publish.py",
         "test_release_workflow_guards.py",
         "test_trigger_release_build.py",
         "test_decrypt_blob.py",

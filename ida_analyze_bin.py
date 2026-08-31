@@ -2026,6 +2026,7 @@ def analyze(
     run_id: str | None = None,
     summary: AnalysisSummary | None = None,
     selected_node_ids: tuple[str, ...] | list[str] | None = None,
+    force_all: bool = False,
 ) -> ExecutionPlan:
     process_reporter = BestEffortProcessReporter(reporter or NullProcessReporter())
     run_summary = summary if summary is not None else AnalysisSummary()
@@ -2039,7 +2040,7 @@ def analyze(
         symbol_aliases = _symbol_alias_map_from_document(document)
         modules = (
             list(all_modules)
-            if selected_node_ids is not None
+            if selected_node_ids is not None or force_all
             else _select_execution_modules(all_modules, modules_filter, skill_filter)
         )
         plan = _build_execution_plan(
@@ -2144,7 +2145,11 @@ def analyze(
             binary = validated_binaries[binary_key]
             job_id = reporting.job_id_for(binary_nodes[0].id)
             failures_before_job = run_summary.failed
-            existing_nodes = [node for node in binary_nodes if _node_existing_output_reason(node, root) is not None]
+            existing_nodes = (
+                []
+                if force_all
+                else [node for node in binary_nodes if _node_existing_output_reason(node, root) is not None]
+            )
             pending_nodes = [node for node in binary_nodes if node not in existing_nodes]
             for node in existing_nodes:
                 _execute_analysis_node(
@@ -2211,6 +2216,7 @@ def analyze(
                                 ensure_mcp_ready=lifecycle.ensure_ready,
                                 symbol_aliases=symbol_aliases,
                                 artifact_types=artifact_types,
+                                force_execution=force_all,
                             )
                 except McpLifecycleError as exc:
                     _record_lifecycle_failures(
@@ -2287,6 +2293,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("-skill", default=None, help="Exact skill name to run")
     parser.add_argument("-node", action="append", default=None, help="Exact module:platform:skill node ID to run")
+    parser.add_argument("-force_all", action="store_true", help="Force every selected config node to execute")
     parser.add_argument(
         "-llm_model",
         default=os.environ.get("GSVIBE_LLM_MODEL") or DEFAULT_LLM_MODEL,
@@ -2382,12 +2389,14 @@ def parse_args(argv=None):
     args = parser.parse_args(raw_argv)
     explicit_options = {token.split("=", 1)[0] for token in raw_argv if token.startswith("-")}
     if args.node is not None:
-        conflicts = sorted(explicit_options & {"-skill", "-modules", "-platform", "-allgamever"})
+        conflicts = sorted(explicit_options & {"-skill", "-modules", "-platform", "-allgamever", "-force_all"})
         if conflicts:
             parser.error(f"-node cannot be combined with {', '.join(conflicts)}")
         if len(set(args.node)) != len(args.node) or any(not str(node).strip() for node in args.node):
             parser.error("-node values must be unique non-empty node IDs")
         args.node = [str(node).strip() for node in args.node]
+    if args.force_all and args.skill is not None:
+        parser.error("-force_all cannot be combined with -skill")
     if args.allgamever:
         args.gamever = _optional_text(args.gamever)
         if args.gamever is not None:
@@ -2504,6 +2513,8 @@ def _print_main_configuration(args) -> None:
         print(f"Skill filter: {args.skill}")
     if args.node:
         print(f"Selected nodes: {', '.join(args.node)}")
+    if args.force_all:
+        print("Force all nodes: enabled")
     print(f"Agent: {args.agent}")
     print(f"Process reporter: {args.process_reporter}")
     print("IDB cache mode: warm (strict restored, no save)")
@@ -2563,6 +2574,7 @@ def _run_single_tag(gamever: str, args, summary: AnalysisSummary | None = None) 
             run_id=args.run_id,
             summary=summary,
             selected_node_ids=args.node,
+            force_all=args.force_all,
         )
     except (
         AnalysisConfigError,

@@ -157,7 +157,9 @@ def _artifact_inventory(
         raise ImpactPlanningError(
             f"Artifact inventory mismatch for {tag} at {ref}: missing={sorted(missing)!r}; extra={sorted(extra)!r}"
         )
-    selected = contract.required_paths | (contract.optional_paths & relative_paths) if require_complete else relative_paths
+    selected = (
+        contract.required_paths | (contract.optional_paths & relative_paths) if require_complete else relative_paths
+    )
     entries = []
     for relative in sorted(selected):
         raw = repo.read(ref, f"{prefix}{relative}")
@@ -576,8 +578,7 @@ def compare_rebuilt_artifacts(
         except BinArtifactContractError as exc:
             raise PrCliError(f"Rebuilt artifact contract failed for {tag}: {exc}") from exc
         actual = tuple(
-            {"path": entry.path, "size": entry.size, "sha256": entry.sha256}
-            for entry in actual_inventory.entries
+            {"path": entry.path, "size": entry.size, "sha256": entry.sha256} for entry in actual_inventory.entries
         )
         if actual != expected:
             raise PrCliError(f"Rebuilt artifact inventory differs from merge Git blobs for {tag}")

@@ -47,12 +47,8 @@ def fixture(root: Path):
     write_pe32(binary_module_dir / "hw.dll")
     write_elf32(binary_module_dir / "hw.so")
     artifact_module_dir.mkdir(parents=True)
-    (artifact_module_dir / "symbol.windows.yaml").write_text(
-        "func_name: symbol\nfunc_va: '0x10'\n", encoding="utf-8"
-    )
-    (artifact_module_dir / "symbol.linux.yaml").write_text(
-        "func_name: symbol\nfunc_va: '0x20'\n", encoding="utf-8"
-    )
+    (artifact_module_dir / "symbol.windows.yaml").write_text("func_name: symbol\nfunc_va: '0x10'\n", encoding="utf-8")
+    (artifact_module_dir / "symbol.linux.yaml").write_text("func_name: symbol\nfunc_va: '0x20'\n", encoding="utf-8")
     return tag, config, binary_module_dir, artifact_module_dir
 
 
@@ -165,15 +161,11 @@ class SnapshotOperationTests(unittest.TestCase):
             tag, config, _binary_module_dir, artifact_module_dir = fixture(root)
             (artifact_module_dir / "symbol.windows.yaml").unlink()
             with self.assertRaises(SnapshotMismatchError):
-                pack_snapshot(
-                    tag, root / "bin", config, root / "snapshot.yaml", artifactdir=root / "bin_artifacts"
-                )
+                pack_snapshot(tag, root / "bin", config, root / "snapshot.yaml", artifactdir=root / "bin_artifacts")
             (artifact_module_dir / "symbol.windows.yaml").write_text("ok: true\n", encoding="utf-8")
             (artifact_module_dir / "undeclared.yaml").write_text("bad: true\n", encoding="utf-8")
             with self.assertRaises(SnapshotMismatchError):
-                pack_snapshot(
-                    tag, root / "bin", config, root / "snapshot.yaml", artifactdir=root / "bin_artifacts"
-                )
+                pack_snapshot(tag, root / "bin", config, root / "snapshot.yaml", artifactdir=root / "bin_artifacts")
 
     def test_noncanonical_signature_artifact_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -183,9 +175,7 @@ class SnapshotOperationTests(unittest.TestCase):
                 "func_name: symbol\nfunc_sig: aa bb\n", encoding="utf-8"
             )
             with self.assertRaises(SnapshotMismatchError):
-                pack_snapshot(
-                    tag, root / "bin", config, root / "snapshot.yaml", artifactdir=root / "bin_artifacts"
-                )
+                pack_snapshot(tag, root / "bin", config, root / "snapshot.yaml", artifactdir=root / "bin_artifacts")
 
     def test_symbol_store_is_read_only_and_path_safe(self):
         with tempfile.TemporaryDirectory() as temporary:

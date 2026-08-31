@@ -164,9 +164,7 @@ def invalidate_republish(
         raise ReleaseWorkflowError("previous accepted SOURCE_SHA is not an ancestor of the rebuild SOURCE_SHA")
 
     changes = repo.changed_paths(base_sha, source_sha)
-    head_contract = load_contract(
-        repo_root / "configs" / f"{gamever}.yaml", gamever, bindir, artifactdir=artifactdir
-    )
+    head_contract = load_contract(repo_root / "configs" / f"{gamever}.yaml", gamever, bindir, artifactdir=artifactdir)
     base_config_raw = repo.read(base_sha, f"configs/{gamever}.yaml")
     if base_config_raw is None:
         raise ReleaseWorkflowError(f"base analysis config is missing for {gamever} at {base_sha}")

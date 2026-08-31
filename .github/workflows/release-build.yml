@@ -4,22 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Release version (e.g. v20260825a)
+        description: Immutable release version (e.g. v20260831a)
         required: true
         type: string
       source_sha:
-        description: Full immutable commit SHA reachable from the default branch (defaults to default branch HEAD)
+        description: Full source SHA reachable from the default branch (defaults to default branch HEAD)
         required: false
         type: string
-      mode:
-        description: Release lifecycle mode
-        required: true
-        type: choice
-        options: [new, republish]
 permissions:
   actions: read
   contents: read
-  pull-requests: read
 concurrency:
   group: release-build-${{ github.repository }}-${{ inputs.version }}
   cancel-in-progress: false
@@ -30,36 +24,47 @@ jobs:
     outputs:
       version: ${{ steps.resolve.outputs.version }}
       source_sha: ${{ steps.resolve.outputs.source_sha }}
-      mode: ${{ steps.resolve.outputs.mode }}
+      release_state: ${{ steps.resolve.outputs.release_state }}
+      build_id: ${{ steps.resolve.outputs.build_id }}
+      workflow_run_url: ${{ steps.resolve.outputs.workflow_run_url }}
+      build_artifact_name: ${{ steps.resolve.outputs.build_artifact_name }}
+      verified_artifact_name: ${{ steps.resolve.outputs.verified_artifact_name }}
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout release tooling
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: false
+          persist-credentials: false
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
       - run: uv sync --locked
-      - name: Resolve release build identity
+      - name: Resolve immutable release identity
         id: resolve
         shell: bash
         env:
+          GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
-          SOURCE_SHA: ${{ inputs.source_sha }}
-          MODE: ${{ inputs.mode }}
+          REQUESTED_SOURCE_SHA: ${{ inputs.source_sha }}
         run: |
           set -euo pipefail
-          git fetch origin "${{ github.event.repository.default_branch }}"
-          source_sha="${SOURCE_SHA:-$(git rev-parse "origin/${{ github.event.repository.default_branch }}")}"
-          uv run python release_workflow.py validate-build \
-            --repository "${{ github.repository }}" \
-            --version "$VERSION" \
-            --source-sha "$source_sha" \
-            --mode "$MODE" \
-            --default-ref "origin/${{ github.event.repository.default_branch }}"
+          git fetch --no-tags origin "${{ github.event.repository.default_branch }}"
+          default_ref="origin/${{ github.event.repository.default_branch }}"
+          source_sha="${REQUESTED_SOURCE_SHA:-$(git rev-parse "$default_ref")}"
+          uv run python -c "from release_workflow_lib.manifests import require_sha, require_version; require_version('$VERSION'); require_sha('$source_sha', 'SOURCE_SHA')"
+          git cat-file -e "$source_sha^{commit}"
+          git merge-base --is-ancestor "$source_sha" "$default_ref"
+          git ls-tree "$source_sha" -- bin | grep '^160000 commit '
+          uv run python release_publish.py preflight --repository "${{ github.repository }}" \
+            --version "$VERSION" --source-sha "$source_sha" \
+            --build-id "${{ github.run_id }}" \
+            --workflow-run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --github-output "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
-          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "build_artifact_name=release-bundle-$VERSION-$source_sha-${{ github.run_id }}-${{ github.run_attempt }}" >> "$GITHUB_OUTPUT"
+          echo "verified_artifact_name=verified-release-bundle-$VERSION-$source_sha-${{ github.run_id }}-${{ github.run_attempt }}" >> "$GITHUB_OUTPUT"
   warmup-idb:
     needs: preflight
     uses: ./.github/workflows/warmup-idb.yml
@@ -68,12 +73,12 @@ jobs:
       source_sha: ${{ needs.preflight.outputs.source_sha }}
       scope: release-all
       selection_artifact_name: idb-cache-selection-${{ github.run_id }}-${{ github.run_attempt }}
-  build:
+  build-release-bundle:
     needs: [preflight, warmup-idb]
-    # Every build requires a successful warm-cache producer. Consumers never rebuild or fall back.
-    if: |
-      always() && needs.preflight.result == 'success'
-      && needs.warmup-idb.result == 'success'
+    if: needs.preflight.result == 'success' && needs.warmup-idb.result == 'success'
+    permissions:
+      actions: read
+      contents: read
     environment: win64
     runs-on: [self-hosted, windows, x64]
     timeout-minutes: 1440
@@ -84,293 +89,276 @@ jobs:
       GSVIBE_LLM_EFFORT: ${{ secrets.GSVIBE_LLM_EFFORT }}
       GSVIBE_LLM_MODEL: ${{ secrets.GSVIBE_LLM_MODEL || 'gpt-4o' }}
       GSVIBE_LLM_TEMPERATURE: ${{ secrets.GSVIBE_LLM_TEMPERATURE }}
-      SUBMODULE_CACHE_VERSION: v1
     steps:
-      - name: Checkout exact source
+      - name: Checkout exact source and bin gitlink
         uses: actions/checkout@v5
         with:
           ref: ${{ needs.preflight.outputs.source_sha }}
-          fetch-depth: 0
-          submodules: false
-          token: ${{ secrets.HLND2T_GH_TOKEN }}
-      - name: Verify release PAT authentication
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.HLND2T_GH_TOKEN }}
-        run: |
-          gh auth setup-git
-          if ($LASTEXITCODE -ne 0) { throw "gh auth setup-git failed with exit code $LASTEXITCODE" }
-          $orgLogin = gh api /orgs/HLND2T --jq .login
-          if ($LASTEXITCODE -ne 0) {
-            throw "HLND2T_GH_TOKEN could not authenticate to the HLND2T organization. Verify that the token is valid, not expired, SSO-authorized, and can access the organization."
-          }
-          if ($orgLogin.Trim() -ne 'HLND2T') {
-            throw "HLND2T_GH_TOKEN authenticated to an unexpected organization: '$($orgLogin.Trim())'."
-          }
-          $repository = gh api "repos/${{ github.repository }}" --jq .full_name
-          if ($LASTEXITCODE -ne 0) {
-            throw "HLND2T_GH_TOKEN cannot read ${{ github.repository }}. Verify repository access and token scope."
-          }
-          if ($repository.Trim() -ne '${{ github.repository }}') {
-            throw "HLND2T_GH_TOKEN resolved an unexpected repository: '$($repository.Trim())'."
-          }
-          Write-Host "HLND2T_GH_TOKEN authenticated to $($orgLogin.Trim())/$($repository.Trim().Split('/')[-1])"
-      - name: Compute submodule cache key
-        id: submodule-cache-key
-        shell: pwsh
-        run: |
-          $content = @()
-          $content += Get-Content -Raw .gitmodules
-          $content += ""
-          # Hash the committed bin gitlink SHA (not the working-tree submodule
-          # state, which drifts between uninitialized and initialized) so the
-          # key is deterministic and shared by runs pinning the same bin commit.
-          $content += git ls-tree HEAD -- bin
-          $sha = [System.Security.Cryptography.SHA256]::Create()
-          $bytes = [System.Text.Encoding]::UTF8.GetBytes(($content -join "`n"))
-          $hash = [System.BitConverter]::ToString($sha.ComputeHash($bytes)).Replace("-", "").ToLowerInvariant()
-          "hash=$hash" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-      - name: Restore submodule cache
-        id: restore-submodule-cache
-        uses: actions/cache@v5
-        with:
-          path: |
-            .git/modules
-            bin
-          key: ${{ runner.os }}-submodules-${{ env.SUBMODULE_CACHE_VERSION }}-${{ steps.submodule-cache-key.outputs.hash }}
-          restore-keys: |
-            ${{ runner.os }}-submodules-${{ env.SUBMODULE_CACHE_VERSION }}-
-      - name: Sync and update submodules
-        shell: pwsh
-        run: |
-          git submodule sync --recursive
-          if ($LASTEXITCODE -ne 0) { throw "git submodule sync failed." }
-          git submodule update --init --recursive --force --depth 1 --jobs 8
-          if ($LASTEXITCODE -ne 0) { throw "git submodule update failed." }
+          fetch-depth: 1
+          submodules: recursive
+          token: ${{ secrets.GSVIBE_BIN_TOKEN || github.token }}
+          persist-credentials: false
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
       - run: uv sync --locked
-      - name: Resolve IDA interpreter identity
-        shell: pwsh
-        run: |
-          $pythonExe = (Get-Command python -ErrorAction SilentlyContinue).Source
-          $idalibMcpExe = (Get-Command idalib-mcp -ErrorAction SilentlyContinue).Source
-          if ([string]::IsNullOrWhiteSpace($pythonExe) -or [string]::IsNullOrWhiteSpace($idalibMcpExe)) {
-            throw 'python with idalib and idalib-mcp must both be available on PATH'
-          }
-          $probe = Join-Path $env:GITHUB_WORKSPACE 'ida_runtime_probe.py'
-          $idaVersionOutput = & $pythonExe $probe --idalib-mcp $idalibMcpExe
-          $probeExitCode = $LASTEXITCODE
-          $idaVersion = (@($idaVersionOutput) -join "`n").Trim()
-          if ($probeExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($idaVersion)) {
-            throw 'Failed to resolve the IDA kernel version from the idalib-mcp installation'
-          }
-          "IDA_KERNEL_VERSION=$idaVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-      - name: Clean the bin submodule before materialization
+      - name: Clean binary analysis scratch
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if ([string]::IsNullOrWhiteSpace($env:PERSISTED_WORKSPACE)) {
-            throw 'PERSISTED_WORKSPACE is required'
-          }
           $workspaceRoot = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
           $binRoot = (Resolve-Path -LiteralPath (Join-Path $workspaceRoot 'bin')).Path
           if (-not $binRoot.StartsWith($workspaceRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
-            throw "bin submodule escaped the checked-out workspace: $binRoot"
-          }
-          $gitTopLevel = (git -C $binRoot rev-parse --show-toplevel).Trim()
-          if ($LASTEXITCODE -ne 0 -or $([IO.Path]::GetFullPath($gitTopLevel)) -ne [IO.Path]::GetFullPath($binRoot)) {
-            throw "Refusing to clean an unexpected bin repository: $gitTopLevel"
+            throw "bin submodule escaped the checkout: $binRoot"
           }
           git -C $binRoot reset --hard
-          if ($LASTEXITCODE -ne 0) { throw 'failed to reset tracked bin files' }
+          if ($LASTEXITCODE -ne 0) { throw 'failed to reset bin submodule' }
           git -C $binRoot clean -ffdx
-          if ($LASTEXITCODE -ne 0) { throw 'failed to clean persisted bin analysis state' }
-      - name: Materialize accepted bin for every game version
-        shell: pwsh
-        run: |
-          uv run python release_workflow.py materialize-accepted-bin `
-            --repo-root "$env:GITHUB_WORKSPACE" --persisted-root "$env:PERSISTED_WORKSPACE" --bindir bin --all-gamevers
-          if ($LASTEXITCODE -ne 0) { throw 'accepted bin materialization failed' }
-      - name: Invalidate republish outputs
-        if: needs.preflight.outputs.mode == 'republish'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $gamevers = uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {}).get('gamevers', [])))"
-          foreach ($gamever in ($gamevers -split "`n")) {
-            uv run python release_workflow.py invalidate-republish --repo-root $env:GITHUB_WORKSPACE --gamever $gamever `
-              --version "${{ needs.preflight.outputs.version }}" --source-sha "${{ needs.preflight.outputs.source_sha }}" --bindir bin
-            if ($LASTEXITCODE -ne 0) { throw "invalidate-republish failed for $gamever" }
-          }
-      - name: Download the exact warm IDB cache selection
+          if ($LASTEXITCODE -ne 0) { throw 'failed to clean bin submodule' }
+      - name: Download exact warm IDB selection
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.warmup-idb.outputs.selection_artifact_name }}
           path: ${{ runner.temp }}/idb-cache-selection
-      - name: Verify the exact warm IDB cache selection
+      - name: Resolve runtime identity and restore warm IDBs
         shell: pwsh
         env:
           PRODUCER_SELECTION_SHA256: ${{ needs.warmup-idb.outputs.selection_sha256 }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $bundle = Join-Path $env:RUNNER_TEMP 'idb-cache-selection'
-          $evidence = (Get-Content -Raw -LiteralPath (Join-Path $bundle 'cache-selection.sha256')).Trim()
-          if ($evidence -ne $env:PRODUCER_SELECTION_SHA256) {
-            throw 'downloaded cache selection evidence does not match the producer job output'
+          if ([string]::IsNullOrWhiteSpace($env:PERSISTED_WORKSPACE) -or [string]::IsNullOrWhiteSpace($env:IDADIR)) {
+            throw 'PERSISTED_WORKSPACE and IDADIR are required'
           }
-          uv run python idb_cache_release.py verify `
-            -repo-root $env:GITHUB_WORKSPACE -bindir bin -persisted-root $env:PERSISTED_WORKSPACE `
-            -ida-root $env:IDADIR -kernel-version $env:IDA_KERNEL_VERSION `
+          $idalibMcp = (Get-Command idalib-mcp -ErrorAction Stop).Source
+          $kernelVersion = (& python ida_runtime_probe.py --idalib-mcp $idalibMcp | Out-String).Trim()
+          if ([string]::IsNullOrWhiteSpace($kernelVersion)) { throw 'failed to resolve IDA kernel version' }
+          $selectionRoot = Join-Path $env:RUNNER_TEMP 'idb-cache-selection'
+          $selectionSha = (Get-Content -Raw -LiteralPath (Join-Path $selectionRoot 'cache-selection.sha256')).Trim()
+          if ($selectionSha -ne $env:PRODUCER_SELECTION_SHA256) { throw 'cache selection digest mismatch' }
+          uv run python idb_cache_release.py verify -repo-root $env:GITHUB_WORKSPACE -bindir bin `
+            -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR -kernel-version $kernelVersion `
             -source-sha "${{ needs.preflight.outputs.source_sha }}" `
-            -selection (Join-Path $bundle 'cache-selection.json') `
-            -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
-          if ($LASTEXITCODE -ne 0) { throw 'warm cache selection verification failed' }
-      - name: Restore the exact warm IDB cache generations
-        shell: pwsh
-        run: |
-          $bundle = Join-Path $env:RUNNER_TEMP 'idb-cache-selection'
-          uv run python idb_cache_release.py restore `
-            -repo-root $env:GITHUB_WORKSPACE -bindir bin -persisted-root $env:PERSISTED_WORKSPACE `
-            -ida-root $env:IDADIR -kernel-version $env:IDA_KERNEL_VERSION `
+            -selection (Join-Path $selectionRoot 'cache-selection.json') `
+            -selection-sha256 (Join-Path $selectionRoot 'cache-selection.sha256')
+          if ($LASTEXITCODE -ne 0) { throw 'warm IDB selection verification failed' }
+          uv run python idb_cache_release.py restore -repo-root $env:GITHUB_WORKSPACE -bindir bin `
+            -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR -kernel-version $kernelVersion `
             -source-sha "${{ needs.preflight.outputs.source_sha }}" `
-            -selection (Join-Path $bundle 'cache-selection.json') `
-            -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
-          if ($LASTEXITCODE -ne 0) { throw 'warm cache restore failed' }
-      - name: Analyze all game versions
-        shell: pwsh
-        run: |
-          uv run python ida_analyze_bin.py -allgamever -debug -process_reporter console
-          if ($LASTEXITCODE -ne 0) { throw 'all-gamever analysis failed' }
-      - name: Build, guard, and publish candidates for every game version
+            -selection (Join-Path $selectionRoot 'cache-selection.json') `
+            -selection-sha256 (Join-Path $selectionRoot 'cache-selection.sha256')
+          if ($LASTEXITCODE -ne 0) { throw 'warm IDB restore failed' }
+          $runtimePath = Join-Path $env:RUNNER_TEMP 'ida-runtime.json'
+          uv run python -c "from release_workflow_lib.hashing import write_canonical_json; write_canonical_json(r'$runtimePath', {'kernel_version': r'$kernelVersion', 'idalib_mcp_sha256': __import__('hashlib').sha256(open(r'$idalibMcp','rb').read()).hexdigest()})"
+          "IDA_KERNEL_VERSION=$kernelVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "IDA_RUNTIME_PATH=$runtimePath" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Force full analysis in a fresh artifact root
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $gamevers = uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {}).get('gamevers', [])))"
-          $candidateRoot = Join-Path $env:RUNNER_TEMP "release-candidates\${{ github.run_id }}-${{ github.run_attempt }}"
-          New-Item -ItemType Directory -Path $candidateRoot -Force | Out-Null
-          $gameversJson = @{}
-          foreach ($gamever in ($gamevers -split "`n")) {
-            $candidate = Join-Path $candidateRoot "$gamever.yaml"
-            $session = Join-Path $candidateRoot "$gamever.session.json"
-            $gamedataSession = Join-Path $candidateRoot "$gamever.gamedata.session.json"
-            uv run python gamesymbol_candidate.py build -gamever $gamever -bindir bin -configyaml "configs/$gamever.yaml" -output $candidate -session $session
-            if ($LASTEXITCODE -ne 0) { throw "candidate build failed for $gamever" }
-            uv run python gamesymbol_candidate.py guard -candidate $candidate -session $session
-            if ($LASTEXITCODE -ne 0) { throw "candidate guard failed for $gamever" }
-            uv run python gamedata_candidate.py build -gamever $gamever -build-id "${{ github.run_id }}-${{ github.run_attempt }}" `
+          $artifactRoot = Join-Path $env:RUNNER_TEMP 'rebuilt-bin-artifacts'
+          if (Test-Path -LiteralPath $artifactRoot) { Remove-Item -LiteralPath $artifactRoot -Recurse -Force }
+          New-Item -ItemType Directory -Path $artifactRoot | Out-Null
+          uv run python ida_analyze_bin.py -allgamever -force_all -bindir bin -artifactdir $artifactRoot `
+            -debug -process_reporter console
+          if ($LASTEXITCODE -ne 0) { throw 'fresh all-gamever analysis failed' }
+          uv run python bin_artifact_contract.py --repo-root $env:GITHUB_WORKSPACE --actual-root $artifactRoot
+          if ($LASTEXITCODE -ne 0) { throw 'rebuilt artifacts differ from Git truth' }
+          git diff --exit-code -- bin_artifacts
+          if ($LASTEXITCODE -ne 0) { throw 'tracked bin_artifacts changed during release rebuild' }
+          "REBUILT_ARTIFACT_ROOT=$artifactRoot" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Build snapshots, gamedata, and deterministic archives
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $generatedRoot = Join-Path $env:RUNNER_TEMP 'release-generated'
+          if (Test-Path -LiteralPath $generatedRoot) { Remove-Item -LiteralPath $generatedRoot -Recurse -Force }
+          $gamesymbolsRoot = Join-Path $generatedRoot 'gamesymbols'
+          $gamedataRoot = Join-Path $generatedRoot 'gamedata'
+          $archivesRoot = Join-Path $generatedRoot 'archives'
+          New-Item -ItemType Directory -Path $gamesymbolsRoot,$gamedataRoot,$archivesRoot -Force | Out-Null
+          $publishTime = (git show -s --format=%cI HEAD | uv run python -c "import sys; from datetime import datetime,timezone; print(datetime.fromisoformat(sys.stdin.read().strip()).astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))").Trim()
+          $sourceTime = [DateTime]::Parse($publishTime).ToUniversalTime()
+          $gamevers = @(uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {})['gamevers']))")
+          foreach ($gamever in $gamevers) {
+            if ([string]::IsNullOrWhiteSpace($gamever)) { throw 'configs/config.yaml contains an empty game version' }
+            $stage = Join-Path $env:RUNNER_TEMP ("release-candidate-" + $gamever)
+            if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
+            New-Item -ItemType Directory -Path $stage -Force | Out-Null
+            $candidate = Join-Path $stage "$gamever.yaml"
+            $symbolSession = Join-Path $stage 'symbol-session.json'
+            $gamedataSession = Join-Path $stage 'gamedata-session.json'
+            uv run python gamesymbol_candidate.py build -gamever $gamever -bindir bin `
+              -artifactdir $env:REBUILT_ARTIFACT_ROOT -configyaml "configs/$gamever.yaml" `
+              -output $candidate -session $symbolSession -last-publish-time $publishTime
+            if ($LASTEXITCODE -ne 0) { throw "snapshot candidate failed for $gamever" }
+            uv run python gamedata_candidate.py build -gamever $gamever -build-id "${{ needs.preflight.outputs.build_id }}" `
               -snapshot $candidate -configyaml "configs/$gamever.yaml" -modulesdir gamedata-generators `
-              -candidate-root (Join-Path $candidateRoot "gamedata-$gamever") -session $gamedataSession
-            if ($LASTEXITCODE -ne 0) { throw "gamedata build failed for $gamever" }
-            uv run python gamedata_candidate.py guard -session $gamedataSession
-            if ($LASTEXITCODE -ne 0) { throw "gamedata guard failed for $gamever" }
-            uv run python gamesymbol_candidate.py mark -candidate $candidate -session $session -step gamedata -gamedata-session $gamedataSession
-            if ($LASTEXITCODE -ne 0) { throw "candidate mark failed for $gamever" }
-            uv run python gamesymbol_candidate.py publish -candidate $candidate -session $session -destination "gamesymbols/$gamever.yaml"
-            if ($LASTEXITCODE -ne 0) { throw "candidate publish failed for $gamever" }
-            uv run python gamedata_candidate.py publish -session $gamedataSession -outputdir "gamedata/$gamever"
+              -candidate-root (Join-Path $stage 'gamedata') -session $gamedataSession
+            if ($LASTEXITCODE -ne 0) { throw "gamedata candidate failed for $gamever" }
+            uv run python gamesymbol_candidate.py mark -candidate $candidate -session $symbolSession `
+              -step gamedata -gamedata-session $gamedataSession
+            if ($LASTEXITCODE -ne 0) { throw "candidate guard failed for $gamever" }
+            uv run python gamesymbol_candidate.py publish -candidate $candidate -session $symbolSession `
+              -destination (Join-Path $gamesymbolsRoot "$gamever.yaml")
+            if ($LASTEXITCODE -ne 0) { throw "snapshot publish failed for $gamever" }
+            uv run python gamedata_candidate.py publish -session $gamedataSession -outputdir (Join-Path $gamedataRoot $gamever)
             if ($LASTEXITCODE -ne 0) { throw "gamedata publish failed for $gamever" }
-            $gameversJson[$gamever] = @{
-              bin_source = (Join-Path $env:GITHUB_WORKSPACE "bin\$gamever")
-              candidate = $candidate
-              gamedata_session = $gamedataSession
+            $gamedataStage = Join-Path $env:RUNNER_TEMP ("gamedata-archive-" + $gamever)
+            $gamebinStage = Join-Path $env:RUNNER_TEMP ("gamebin-archive-" + $gamever)
+            foreach ($archiveStage in @($gamedataStage, $gamebinStage)) {
+              if (Test-Path -LiteralPath $archiveStage) { Remove-Item -LiteralPath $archiveStage -Recurse -Force }
             }
+            New-Item -ItemType Directory -Path (Join-Path $gamedataStage 'configs') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $gamedataStage 'bin_artifacts') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $gamedataStage 'gamesymbols') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $gamedataStage 'gamedata') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $gamedataStage 'bin') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $gamebinStage 'bin') -Force | Out-Null
+            Copy-Item -LiteralPath "configs/$gamever.yaml" -Destination (Join-Path $gamedataStage "configs/$gamever.yaml")
+            Copy-Item -LiteralPath (Join-Path $env:REBUILT_ARTIFACT_ROOT $gamever) -Destination (Join-Path $gamedataStage 'bin_artifacts') -Recurse
+            Copy-Item -LiteralPath (Join-Path $gamesymbolsRoot "$gamever.yaml") -Destination (Join-Path $gamedataStage 'gamesymbols')
+            Copy-Item -LiteralPath (Join-Path $gamesymbolsRoot "$gamever.metadata.yaml") -Destination (Join-Path $gamedataStage 'gamesymbols')
+            Copy-Item -LiteralPath (Join-Path $gamedataRoot $gamever) -Destination (Join-Path $gamedataStage 'gamedata') -Recurse
+            Copy-Item -LiteralPath "bin/$gamever" -Destination (Join-Path $gamedataStage 'bin') -Recurse
+            Copy-Item -LiteralPath "bin/$gamever" -Destination (Join-Path $gamebinStage 'bin') -Recurse
+            foreach ($archiveStage in @($gamedataStage, $gamebinStage)) {
+              Get-ChildItem -LiteralPath $archiveStage -Recurse -Force | ForEach-Object { $_.LastWriteTimeUtc = $sourceTime }
+            }
+            Push-Location $gamedataStage
+            try {
+              7z a -t7z -mx=9 -mmt=off -mtc=off -mta=off (Join-Path $archivesRoot "gamedata-$gamever.7z") '.\*' | Out-Host
+              $archiveExitCode = $LASTEXITCODE
+            }
+            finally { Pop-Location }
+            if ($archiveExitCode -ne 0) { throw "gamedata archive failed for $gamever" }
+            Push-Location $gamebinStage
+            try {
+              7z a -t7z -mx=9 -mmt=off -mtc=off -mta=off (Join-Path $archivesRoot "gamebin-$gamever.7z") '.\*' | Out-Host
+              $archiveExitCode = $LASTEXITCODE
+            }
+            finally { Pop-Location }
+            if ($archiveExitCode -ne 0) { throw "gamebin archive failed for $gamever" }
           }
-          $gameversJson | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $candidateRoot "gamevers.json") -Encoding utf8
-          "GAMEVERS_JSON=$(Join-Path $candidateRoot 'gamevers.json')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-          "BUILD_ID=${{ github.run_id }}-${{ github.run_attempt }}" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-          "OUTPUT_BRANCH=gamesymbols/build/${{ needs.preflight.outputs.version }}" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
-      - name: Validate generated output contract
+          "GENERATED_ROOT=$generatedRoot" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Build and locally verify release bundle
         shell: pwsh
-        run: |
-          uv run python tests/run_test_suite.py generated-output-contract -b --durations 30
-          if ($LASTEXITCODE -ne 0) { throw 'generated-output contract validation failed' }
-      - name: Stage validated output
-        shell: pwsh
-        run: |
-          git add -- "gamesymbols" "gamedata"
-          if ($LASTEXITCODE -ne 0) { throw 'generated output staging failed' }
-          uv run python release_workflow.py stage-build `
-            --repo-root "$env:GITHUB_WORKSPACE" `
-            --staging-root "$env:PERSISTED_WORKSPACE\release-staging" `
-            --gamevers-json "$env:GAMEVERS_JSON" `
-            --repository "${{ github.repository }}" `
-            --output-branch "$env:OUTPUT_BRANCH" `
-            --version "${{ needs.preflight.outputs.version }}" `
-            --mode "${{ needs.preflight.outputs.mode }}" `
-            --build-id "$env:BUILD_ID" `
-            --source-sha "${{ needs.preflight.outputs.source_sha }}" `
-            --workflow-run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          if ($LASTEXITCODE -ne 0) { throw 'stage-build failed' }
-      - name: Create generated-output pull request
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.HLND2T_GH_TOKEN }}
         run: |
           $ErrorActionPreference = 'Stop'
-          git config user.name "github-actions[bot]"
-          if ($LASTEXITCODE -ne 0) { throw 'failed to configure Git author name' }
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if ($LASTEXITCODE -ne 0) { throw 'failed to configure Git author email' }
-          git checkout -b "$env:OUTPUT_BRANCH"
-          if ($LASTEXITCODE -ne 0) { throw 'failed to create generated-output branch' }
-          git add -- "release-manifests"
-          if ($LASTEXITCODE -ne 0) { throw 'failed to stage generated release manifests' }
-          git commit -m "chore(gamesymbols): publish ${{ needs.preflight.outputs.version }} build $env:BUILD_ID" `
-            -m "Co-Authored-By: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
-          if ($LASTEXITCODE -ne 0) { throw 'failed to commit generated release output' }
-          $headSha = (git rev-parse HEAD).Trim()
-          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($headSha)) {
-            throw 'failed to resolve generated-output commit SHA'
-          }
-          uv run python release_workflow.py finalize-stage `
-            --repo-root "$env:GITHUB_WORKSPACE" --staging-root "$env:PERSISTED_WORKSPACE\release-staging" `
-            --version "${{ needs.preflight.outputs.version }}" --build-id "$env:BUILD_ID" --pr-head-sha $headSha
-          if ($LASTEXITCODE -ne 0) { throw 'failed to bind staged state to output commit' }
-          gh auth setup-git
-          if ($LASTEXITCODE -ne 0) { throw 'failed to configure Git authentication from HLND2T_GH_TOKEN' }
-          git push origin "HEAD:refs/heads/$env:OUTPUT_BRANCH"
-          if ($LASTEXITCODE -ne 0) { throw 'failed to push immutable output branch' }
-          $prUrl = gh pr create --base "${{ github.event.repository.default_branch }}" --head "$env:OUTPUT_BRANCH" `
-            --title "chore(gamesymbols): publish ${{ needs.preflight.outputs.version }} build $env:BUILD_ID" `
-            --body "Validated release output from immutable source ${{ needs.preflight.outputs.source_sha }}. Merge is the promotion gate."
-          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($prUrl)) {
-            throw 'failed to create generated-output pull request'
-          }
-          $prNumber = gh pr view $prUrl --json number --jq .number
-          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($prNumber)) {
-            throw 'failed to resolve generated-output pull request number'
-          }
-          uv run python release_workflow.py write-pr-index `
-            --staging-root "$env:PERSISTED_WORKSPACE\release-staging" --pr-number $prNumber `
-            --version "${{ needs.preflight.outputs.version }}" --build-id "$env:BUILD_ID" --pr-head-sha $headSha
-          if ($LASTEXITCODE -ne 0) { throw 'failed to persist generated-output pull request index' }
-          Write-Host "Generated-output PR: $prUrl"
-      - name: Remove generated submodule analysis state
+          $bundleRoot = Join-Path $env:RUNNER_TEMP 'release-bundle'
+          if (Test-Path -LiteralPath $bundleRoot) { Remove-Item -LiteralPath $bundleRoot -Recurse -Force }
+          uv run python release_bundle.py build --repo-root $env:GITHUB_WORKSPACE --bundle-root $bundleRoot `
+            --gamesymbols-root (Join-Path $env:GENERATED_ROOT 'gamesymbols') `
+            --gamedata-root (Join-Path $env:GENERATED_ROOT 'gamedata') `
+            --archives-root (Join-Path $env:GENERATED_ROOT 'archives') `
+            --ida-runtime $env:IDA_RUNTIME_PATH `
+            --cache-selection (Join-Path $env:RUNNER_TEMP 'idb-cache-selection\cache-selection.json') `
+            --version "${{ needs.preflight.outputs.version }}" --build-id "${{ needs.preflight.outputs.build_id }}" `
+            --workflow-run-url "${{ needs.preflight.outputs.workflow_run_url }}" `
+            --source-sha "${{ needs.preflight.outputs.source_sha }}"
+          if ($LASTEXITCODE -ne 0) { throw 'release bundle build failed' }
+          uv run python release_bundle.py verify --repo-root $env:GITHUB_WORKSPACE --bundle-root $bundleRoot `
+            --version "${{ needs.preflight.outputs.version }}"
+          if ($LASTEXITCODE -ne 0) { throw 'local release bundle verification failed' }
+      - name: Upload release bundle transport artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.preflight.outputs.build_artifact_name }}
+          path: ${{ runner.temp }}/release-bundle
+          if-no-files-found: error
+          retention-days: 7
+      - name: Remove generated binary analysis state
         if: always()
         shell: pwsh
         run: |
-          $workspaceRoot = [IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
-          $binRoot = (Resolve-Path -LiteralPath (Join-Path $workspaceRoot 'bin')).Path
-          if (-not $binRoot.StartsWith($workspaceRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
-            throw "bin submodule escaped the checked-out workspace: $binRoot"
-          }
-          $gitTopLevel = (git -C $binRoot rev-parse --show-toplevel).Trim()
-          if ($LASTEXITCODE -ne 0 -or [IO.Path]::GetFullPath($gitTopLevel) -ne [IO.Path]::GetFullPath($binRoot)) {
-            throw "Refusing to clean an unexpected bin repository: $gitTopLevel"
-          }
-          # reset --hard reverts tracked-file modifications (materialized accepted
-          # binaries) before the cache post-save, so a later self-hosted PR analysis
-          # never restores a dirty submodule; git clean handles the untracked side.
+          $binRoot = (Resolve-Path -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'bin')).Path
           git -C $binRoot reset --hard
-          if ($LASTEXITCODE -ne 0) { throw 'failed to reset tracked bin files' }
+          if ($LASTEXITCODE -ne 0) { throw 'failed to reset bin submodule' }
           git -C $binRoot clean -ffdx
-          if ($LASTEXITCODE -ne 0) { throw 'failed to remove generated bin analysis state' }
-      - name: Clean incomplete staging on failure
-        if: failure()
-        shell: pwsh
+          if ($LASTEXITCODE -ne 0) { throw 'failed to clean bin submodule' }
+  verify-release-bundle:
+    needs: [preflight, build-release-bundle]
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      artifact_digest: ${{ steps.upload-verified.outputs.artifact-digest }}
+    steps:
+      - name: Checkout exact source and bin gitlink
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.preflight.outputs.source_sha }}
+          fetch-depth: 1
+          submodules: recursive
+          token: ${{ secrets.GSVIBE_BIN_TOKEN || github.token }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Verify exact source remains on the default branch
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ needs.preflight.outputs.source_sha }}"
+          git fetch --no-tags origin "${{ github.event.repository.default_branch }}"
+          git merge-base --is-ancestor HEAD "origin/${{ github.event.repository.default_branch }}"
+      - name: Download exact build transport artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.preflight.outputs.build_artifact_name }}
+          path: ${{ runner.temp }}/release-bundle
+      - name: Verify release bundle on GitHub-hosted runner
+        run: |
+          uv run python release_bundle.py verify --repo-root "$GITHUB_WORKSPACE" \
+            --bundle-root "$RUNNER_TEMP/release-bundle" --version "${{ needs.preflight.outputs.version }}"
+      - name: Upload exact verified bundle
+        id: upload-verified
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.preflight.outputs.verified_artifact_name }}
+          path: ${{ runner.temp }}/release-bundle
+          if-no-files-found: error
+          retention-days: 7
+  publish-release:
+    needs: [preflight, verify-release-bundle]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Checkout exact source and bin gitlink
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.preflight.outputs.source_sha }}
+          fetch-depth: 1
+          submodules: recursive
+          token: ${{ secrets.GSVIBE_BIN_TOKEN || github.token }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Verify exact Actions Artifact identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERIFIED_ARTIFACT_NAME: ${{ needs.preflight.outputs.verified_artifact_name }}
+          VERIFIED_ARTIFACT_DIGEST: ${{ needs.verify-release-bundle.outputs.artifact_digest }}
+        run: |
+          set -euo pipefail
+          test -n "$VERIFIED_ARTIFACT_DIGEST"
+          gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --paginate --slurp \
+            | uv run python -c 'import json,os,sys; pages=json.load(sys.stdin); matches=[a for page in pages for a in page.get("artifacts",[]) if a.get("name")==os.environ["VERIFIED_ARTIFACT_NAME"]]; expected=os.environ["VERIFIED_ARTIFACT_DIGEST"].removeprefix("sha256:"); assert len(matches)==1 and str(matches[0].get("digest","")).removeprefix("sha256:")==expected, "verified Actions Artifact identity mismatch"'
+      - name: Download exact verified bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.preflight.outputs.verified_artifact_name }}
+          path: ${{ runner.temp }}/verified-release-bundle
+      - name: Publish immutable GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |-
-          uv run python release_workflow.py cleanup-incomplete `
-            --staging-root "$env:PERSISTED_WORKSPACE\release-staging" `
-            --version "${{ needs.preflight.outputs.version }}" --build-id "${{ github.run_id }}-${{ github.run_attempt }}"
+          set -euo pipefail
+          uv run python release_publish.py publish --repository "${{ github.repository }}" \
+            --repo-root "$GITHUB_WORKSPACE" --bundle-root "$RUNNER_TEMP/verified-release-bundle" \
+            --version "${{ needs.preflight.outputs.version }}"

@@ -769,9 +769,7 @@ class ArtifactRebuildComparisonTests(unittest.TestCase):
                                 "name": "engine",
                                 "path_windows": "Game/hw.dll",
                                 "module_windows": "hw.dll",
-                                "skills": [
-                                    {"name": "find", "expected_output": ["Demo.{platform}.yaml"]}
-                                ],
+                                "skills": [{"name": "find", "expected_output": ["Demo.{platform}.yaml"]}],
                                 "symbols": [{"name": "Demo", "category": "func"}],
                             }
                         ]
@@ -827,9 +825,7 @@ class ArtifactRebuildComparisonTests(unittest.TestCase):
                 ),
             )
             self.assertEqual(expected_checkout_bytes, artifact.read_bytes())
-            rebuilt_artifact.write_bytes(
-                canonical_symbol_yaml_bytes({"func_name": "Demo", "func_va": "0x12"})
-            )
+            rebuilt_artifact.write_bytes(canonical_symbol_yaml_bytes({"func_name": "Demo", "func_va": "0x12"}))
             with self.assertRaisesRegex(PrCliError, "inventory differs"):
                 compare_rebuilt_artifacts(
                     repo_root=repo,
@@ -873,22 +869,14 @@ class MaterializationTests(unittest.TestCase):
             artifact_module_dir = root / "base-artifacts" / "game-1" / "engine"
             write_pe32(binary_module_dir / "hw.dll")
             artifact_module_dir.mkdir(parents=True)
-            (artifact_module_dir / "One.windows.yaml").write_text(
-                "func_name: One\nfunc_va: '0x10'\n", encoding="utf-8"
-            )
-            (artifact_module_dir / "Two.windows.yaml").write_text(
-                "func_name: Two\nfunc_va: '0x20'\n", encoding="utf-8"
-            )
+            (artifact_module_dir / "One.windows.yaml").write_text("func_name: One\nfunc_va: '0x10'\n", encoding="utf-8")
+            (artifact_module_dir / "Two.windows.yaml").write_text("func_name: Two\nfunc_va: '0x20'\n", encoding="utf-8")
             snapshot = root / "base.yaml"
-            pack_snapshot(
-                "game-1", root / "base-bin", config, snapshot, artifactdir=root / "base-artifacts"
-            )
+            pack_snapshot("game-1", root / "base-bin", config, snapshot, artifactdir=root / "base-artifacts")
             base = load_snapshot_context(
                 snapshot, config, "game-1", root / "base-bin", artifactdir=root / "base-artifacts"
             )
-            merge_contract = load_contract(
-                config, "game-1", root / "merge-bin", artifactdir=root / "merge-artifacts"
-            )
+            merge_contract = load_contract(config, "game-1", root / "merge-bin", artifactdir=root / "merge-artifacts")
             stale = root / "merge-artifacts" / "game-1" / "engine" / "Stale.yaml"
             stale.parent.mkdir(parents=True)
             stale.write_text("stale: true\n", encoding="utf-8")
@@ -918,7 +906,7 @@ class MaterializationTests(unittest.TestCase):
                 materialize_baseline(
                     base=None,
                     merge_contract=config,
-                            artifactdir=root / "bin_artifacts",
+                    artifactdir=root / "bin_artifacts",
                     invalidated_paths=(),
                     mode="full-rebuild",
                 ),

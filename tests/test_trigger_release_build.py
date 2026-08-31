@@ -46,18 +46,59 @@ class TestTriggerReleaseBuild(unittest.TestCase):
                 trigger.require_github_access(Path("."), "HLND2T/GoldSrc_VibeSignatures")
         run.assert_called_once_with(["gh", "auth", "status", "--hostname", "github.com"], Path("."))
 
-    def test_release_state_selects_new_or_republish(self) -> None:
-        with patch.object(trigger, "run_command", return_value=completed([], returncode=2)):
+    def test_release_state_selects_new_or_draft_resume(self) -> None:
+        with patch.object(
+            trigger,
+            "run_command",
+            side_effect=[
+                completed([], returncode=2),
+                completed([], returncode=1, stderr="gh: Not Found (HTTP 404)"),
+            ],
+        ):
             self.assertEqual(
                 "new",
-                trigger.resolve_mode(Path("."), "v20260825a"),
+                trigger.release_state(Path("."), "HLND2T/GoldSrc_VibeSignatures", "v20260825a", "1" * 40),
             )
 
-        with patch.object(trigger, "run_command", return_value=completed([], stdout="sha\trefs/tags/v20260825a\n")):
+        with patch.object(
+            trigger,
+            "run_command",
+            side_effect=[
+                completed([], stdout=f"{'1' * 40}\trefs/tags/v20260825a\n"),
+                completed([], stdout=json.dumps({"draft": True})),
+            ],
+        ):
             self.assertEqual(
-                "republish",
-                trigger.resolve_mode(Path("."), "v20260825a"),
+                "resume",
+                trigger.release_state(Path("."), "HLND2T/GoldSrc_VibeSignatures", "v20260825a", "1" * 40),
             )
+
+    def test_release_state_refuses_mismatched_tag_and_published_release(self) -> None:
+        with (
+            patch.object(
+                trigger,
+                "run_command",
+                side_effect=[
+                    completed([], stdout=f"{'2' * 40}\trefs/tags/v20260825a\n"),
+                    completed([], returncode=1, stderr="gh: Not Found (HTTP 404)"),
+                ],
+            ),
+            self.assertRaisesRegex(trigger.TriggerError, "does not point"),
+        ):
+            trigger.release_state(Path("."), "HLND2T/GoldSrc_VibeSignatures", "v20260825a", "1" * 40)
+
+        with (
+            patch.object(
+                trigger,
+                "run_command",
+                side_effect=[
+                    completed([], stdout=f"{'1' * 40}\trefs/tags/v20260825a\n"),
+                    completed([], stdout=json.dumps({"draft": False})),
+                ],
+            ),
+            self.assertRaisesRegex(trigger.TriggerError, "already published"),
+        ):
+            trigger.release_state(Path("."), "HLND2T/GoldSrc_VibeSignatures", "v20260825a", "1" * 40)
 
     def test_open_output_pr_blocks_dispatch(self) -> None:
         pulls = json.dumps([{"headRefName": "gamesymbols/build/v20260825a", "url": "https://pr"}])
@@ -95,39 +136,26 @@ class TestTriggerReleaseBuild(unittest.TestCase):
             with self.assertRaisesRegex(trigger.TriggerError, "already active"):
                 trigger.require_no_duplicate(Path("."), "v20260825a")
 
-    def test_dispatch_uses_selected_workflow_mode(self) -> None:
+    def test_dispatch_uses_immutable_version_and_source(self) -> None:
         root = Path("repo")
-        for mode in ("new", "republish"):
-            with (
-                self.subTest(mode=mode),
-                patch.object(
-                    trigger,
-                    "run_command",
-                    return_value=completed([]),
-                ) as run,
-            ):
-                trigger.dispatch(root, "v20260825a", "1" * 40, mode)
+        with patch.object(trigger, "run_command", return_value=completed([])) as run:
+            trigger.dispatch(root, "v20260825a", "1" * 40)
 
-            run.assert_called_once_with(
-                [
-                    "gh",
-                    "workflow",
-                    "run",
-                    "release-build.yml",
-                    "--ref",
-                    "main",
-                    "-f",
-                    "version=v20260825a",
-                    "-f",
-                    f"source_sha={'1' * 40}",
-                    "-f",
-                    f"mode={mode}",
-                ],
-                root,
-            )
-
-        with self.assertRaisesRegex(trigger.TriggerError, "invalid release mode"):
-            trigger.dispatch(root, "v20260825a", "1" * 40, "unsafe")
+        run.assert_called_once_with(
+            [
+                "gh",
+                "workflow",
+                "run",
+                "release-build.yml",
+                "--ref",
+                "main",
+                "-f",
+                "version=v20260825a",
+                "-f",
+                f"source_sha={'1' * 40}",
+            ],
+            root,
+        )
 
     def test_dispatch_stops_if_origin_main_advanced(self) -> None:
         with patch.object(trigger, "run_command", return_value=completed([], stdout=f"{'2' * 40}\trefs/heads/main\n")):
@@ -156,7 +184,7 @@ class TestTriggerReleaseBuild(unittest.TestCase):
             patch.object(trigger, "require_repository", return_value="HLND2T/GoldSrc_VibeSignatures"),
             patch.object(trigger, "require_github_access") as access,
             patch.object(trigger, "resolve_source", return_value=("1" * 40, "subject")),
-            patch.object(trigger, "resolve_mode", return_value="new") as resolve_mode,
+            patch.object(trigger, "release_state", return_value="new") as release_state,
             patch.object(trigger, "require_no_duplicate", return_value={10}),
             patch.object(trigger, "require_main_unchanged") as unchanged,
             patch.object(trigger, "dispatch") as dispatch,
@@ -165,17 +193,17 @@ class TestTriggerReleaseBuild(unittest.TestCase):
             result = trigger.execute("v20260825a")
 
         self.assertEqual("v20260825a", result["version"])
-        self.assertEqual("new", result["mode"])
+        self.assertEqual("new", result["state"])
         self.assertEqual("https://run/11", result["run_url"])
         access.assert_called_once()
-        resolve_mode.assert_called_once_with(root, "v20260825a")
+        release_state.assert_called_once_with(root, "HLND2T/GoldSrc_VibeSignatures", "v20260825a", "1" * 40)
         unchanged.assert_called_once_with(root, "1" * 40)
-        dispatch.assert_called_once_with(root, "v20260825a", "1" * 40, "new")
+        dispatch.assert_called_once_with(root, "v20260825a", "1" * 40)
 
-    def test_main_reports_selected_mode(self) -> None:
+    def test_main_reports_selected_state(self) -> None:
         result = {
             "version": "v20260825a",
-            "mode": "new",
+            "state": "new",
             "source_sha": "1" * 40,
             "subject": "subject",
             "run_url": "https://run/11",
@@ -184,7 +212,7 @@ class TestTriggerReleaseBuild(unittest.TestCase):
             self.assertEqual(0, trigger.main(["v20260825a"]))
 
         execute.assert_called_once_with("v20260825a")
-        output.assert_any_call("Mode: new")
+        output.assert_any_call("Release state: new")
 
 
 if __name__ == "__main__":
