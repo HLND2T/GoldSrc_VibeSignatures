@@ -1,0 +1,5 @@
+func_name: CBaseUI__Initialize
+func_rva: '0x10d0'
+func_sig: 55 8B EC 81 EC 04 02 00 00 A1 ?? ?? ?? ?? 56 85 C0 8B F1 0F 85 ?? ?? ?? ?? 8B 45 ?? 53 57 6A 00 8B 08
+func_size: '0x180'
+func_va: '0x1d010d0'

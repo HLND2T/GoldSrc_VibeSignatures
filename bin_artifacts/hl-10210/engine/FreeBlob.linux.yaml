@@ -1,0 +1,5 @@
+func_name: FreeBlob
+func_rva: '0xa0520'
+func_sig: 8B 44 24 ?? 8B 00 85 C0 75 ?? C3
+func_size: '0x19'
+func_va: '0xa0520'

@@ -1,0 +1,8 @@
+gv_name: videomode
+gv_va: '0x2492060'
+gv_rva: '0x792060'
+gv_sig: 83 EC 08 8B 0D ?? ?? ?? ?? 53 56 33 F6 8B 01 56 68 ?? ?? ?? ?? FF 50 ?? 85 C0 0F 95 C3 68 ?? ?? ?? ?? 88 5C 24 ??
+gv_sig_va: '0x1dbd320'
+gv_inst_offset: '0x118'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

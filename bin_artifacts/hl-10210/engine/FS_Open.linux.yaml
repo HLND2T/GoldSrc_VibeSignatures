@@ -1,0 +1,5 @@
+func_name: FS_Open
+func_va: '0x9e520'
+func_rva: '0x9e520'
+func_size: '0x2a'
+func_sig: 83 EC ?? 31 C9 A1 ?? ?? ?? ?? 8B 10 89 4C 24 ?? 8B 4C 24 ?? 89 04 24 89 4C 24 ?? 8B 4C 24 ?? 89 4C 24 ??

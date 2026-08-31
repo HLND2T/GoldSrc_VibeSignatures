@@ -1,0 +1,5 @@
+func_name: Mod_LoadModel
+func_va: '0x10240290'
+func_rva: '0x240290'
+func_size: '0x352'
+func_sig: 55 8B EC 81 EC 14 01 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 57 8B 7D ?? 8B 47 ?? 83 F8 02

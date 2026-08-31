@@ -1,0 +1,8 @@
+gv_inst_disp: '0x1'
+gv_inst_length: '0x5'
+gv_inst_offset: '0x33'
+gv_name: cvar_hooks
+gv_rva: '0x2f5710'
+gv_sig: 55 8B EC 56 57 8B 7D ?? 57 E8 ?? ?? ?? ?? 8B F0 83 C4 04 85 F6 75 ?? 57 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 08 5F
+gv_sig_va: '0x1d2e850'
+gv_va: '0x1ff5710'

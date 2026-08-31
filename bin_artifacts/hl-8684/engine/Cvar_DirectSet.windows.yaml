@@ -1,0 +1,5 @@
+func_name: Cvar_DirectSet
+func_rva: '0x2e530'
+func_sig: 55 8B EC 81 EC 00 04 00 00 56 8B 75 ?? 57 8B 7D ?? 85 FF 0F 84 ?? ?? ?? ?? 85 F6 0F 84 ?? ?? ?? ?? 8B 47 ??
+func_size: '0x318'
+func_va: '0x1d2e530'

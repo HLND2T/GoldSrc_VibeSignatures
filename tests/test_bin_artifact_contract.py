@@ -5,8 +5,8 @@ import unittest
 from pathlib import Path
 
 from bin_artifact_contract import BinArtifactContractError, build_game_artifact_inventory
-from gamesymbol_snapshot_lib.codec import canonical_yaml_bytes
 from gamesymbol_snapshot_lib.config import load_contract
+from ida_analyze_util import canonical_symbol_yaml_bytes
 from tests.test_support import write_config
 
 
@@ -21,7 +21,7 @@ class BinArtifactContractTests(unittest.TestCase):
         artifact_game_root.mkdir(parents=True)
         for platform, address in (("windows", "0x10"), ("linux", "0x20")):
             (artifact_game_root / f"symbol.{platform}.yaml").write_bytes(
-                canonical_yaml_bytes({"func_name": "symbol", "func_va": address})
+                canonical_symbol_yaml_bytes({"func_name": "symbol", "func_va": address})
             )
         return game_version, config, artifact_game_root
 
@@ -52,7 +52,7 @@ class BinArtifactContractTests(unittest.TestCase):
                 first.owners_by_path["engine/symbol.windows.yaml"],
             )
             (artifact_game_root / "symbol.windows.yaml").write_bytes(
-                canonical_yaml_bytes({"func_name": "symbol", "func_va": "0x11"})
+                canonical_symbol_yaml_bytes({"func_name": "symbol", "func_va": "0x11"})
             )
             second = build_game_artifact_inventory(game_version, config, root / "bin_artifacts")
             self.assertNotEqual(first.digest, second.digest)
@@ -66,13 +66,13 @@ class BinArtifactContractTests(unittest.TestCase):
                 if mutation == "missing":
                     (artifact_game_root / "symbol.windows.yaml").unlink()
                 elif mutation == "extra":
-                    (artifact_game_root / "extra.yaml").write_bytes(canonical_yaml_bytes({"ok": True}))
+                    (artifact_game_root / "extra.yaml").write_text("ok: true\n", encoding="utf-8")
                 elif mutation == "noncanonical":
                     (artifact_game_root / "symbol.windows.yaml").write_bytes(b"func_va: '0x10'\r\nfunc_name: symbol\r\n")
                 else:
                     nested = artifact_game_root / "nested"
                     nested.mkdir()
-                    (nested / "extra.yaml").write_bytes(canonical_yaml_bytes({"ok": True}))
+                    (nested / "extra.yaml").write_text("ok: true\n", encoding="utf-8")
                 with self.assertRaises(BinArtifactContractError):
                     build_game_artifact_inventory(game_version, config, root / "bin_artifacts")
 

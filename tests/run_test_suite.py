@@ -23,6 +23,7 @@ GROUP_FILES = {
         "test_cvar_hooks_preprocessor.py",
         "test_analysis_planner.py",
         "test_bin_artifact_contract.py",
+        "test_migrate_bin_artifacts.py",
         "test_process_api.py",
         "test_process_reporter.py",
         "test_process_reporter_factory.py",
