@@ -38,7 +38,13 @@ from gamesymbol_snapshot_lib.pr_validation import (
     evaluate_pr_validation,
     plan_tag_impact,
 )
-from pull_request_route import PullRequestRouteError, classify_pr_route, parse_output_branch
+from pull_request_route import (
+    BIN_ARTIFACT_CUTOVER_HEAD_SHA,
+    PullRequestRouteError,
+    classify_pr_route,
+    parse_output_branch,
+    validate_source_paths,
+)
 from ida_analyze_util import canonical_symbol_yaml_bytes
 from tests.test_support import write_pe32
 
@@ -499,6 +505,12 @@ class ImpactPlanningTests(unittest.TestCase):
 
 
 class PrValidationGateTests(unittest.TestCase):
+    def test_release_owned_cutover_exception_is_bound_to_one_head(self):
+        paths = ("gamesymbols/game-1.yaml", "gamedata/game-1/gamedata-manifest.json")
+        validate_source_paths(paths, head_sha=BIN_ARTIFACT_CUTOVER_HEAD_SHA)
+        with self.assertRaisesRegex(PullRequestRouteError, "release-owned generated-output paths"):
+            validate_source_paths(paths, head_sha="0" * 40)
+
     def test_generated_output_branch_parser_and_source_only_routing(self):
         branch = "gamesymbols/build/hl-10210/run-123"
         self.assertEqual(("hl-10210", "run-123"), parse_output_branch(branch))

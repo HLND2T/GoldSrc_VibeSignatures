@@ -217,7 +217,7 @@ class BlobDecryptionTests(unittest.TestCase):
             binary.parent.mkdir(parents=True)
             binary.write_bytes(make_blob())
             contract = SimpleNamespace(
-                game_root=game_root,
+                binary_game_root=game_root,
                 binary_targets={
                     ("engine", "windows"): BinaryTarget(
                         module_name="engine",
