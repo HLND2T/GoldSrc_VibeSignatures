@@ -108,13 +108,16 @@ def load_contract(
     game_version: str,
     bindir: str | Path,
     config_digest_version: int = LATEST_CONFIG_DIGEST_VERSION,
+    *,
+    artifactdir: str | Path | None = None,
 ) -> SnapshotContract:
+    artifactdir = bindir if artifactdir is None else artifactdir
     try:
         document, modules = load_config(config_path)
         analysis_plan = build_execution_plan(
             modules,
             platforms=("windows", "linux"),
-            bin_dir=bindir,
+            bin_dir=artifactdir,
             tag=str(game_version),
         )
         required, optional = expected_symbol_artifacts(modules)
@@ -140,7 +143,8 @@ def load_contract(
         raise SnapshotConfigError(f"Invalid analysis contract: {exc}") from exc
     return SnapshotContract(
         game_version=str(game_version),
-        game_root=Path(bindir) / str(game_version),
+        binary_game_root=Path(bindir) / str(game_version),
+        artifact_game_root=Path(artifactdir) / str(game_version),
         config_digest_version=config_digest_version,
         config_sha256=config_digest(document, config_digest_version),
         analysis_output_contract_version=ANALYSIS_OUTPUT_CONTRACT_VERSION,
