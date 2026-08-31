@@ -1,12 +1,24 @@
 # 分析 YAML Git 托管与 Release 派生产物迁移计划
 
-状态：已评审（待实施）
+状态：实施中
 
 日期：2026-08-31
 
 优先级：P1
 
 基线：`main@daf54ea`
+
+## 实施记录
+
+- 2026-08-31：完成步骤 1–7，`bin_artifacts` 已成为 Git truth，并已接入隔离的 release bundle
+  build、GitHub-hosted verify 和 protected publish jobs。
+- 2026-08-31：步骤 8 的真实 non-publishing Actions run
+  `33377379614` 已通过 hosted preflight，但仓库没有注册的 self-hosted runner，因而停在
+  `warmup-idb` 排队；该 run 已请求取消，未产生 Actions Artifact、tag 或 Release。runner 恢复后必须重新执行并通过
+  build → upload → hosted verify，方可满足最终验收。
+- 2026-08-31：步骤 9 的 GitHub 远端 drain 审计未发现 open PR 或
+  `gamesymbols/build/*` remote branch。私有 `PERSISTED_WORKSPACE` 因 runner 缺失不可访问；新流程禁止恢复旧
+  staging state，legacy state 的 inventory/backup/cleanup 延后到 runner 恢复后的步骤 11 门禁执行。
 
 ## 1. 目标
 
