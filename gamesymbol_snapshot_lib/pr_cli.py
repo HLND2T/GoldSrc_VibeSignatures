@@ -12,6 +12,7 @@ from pathlib import Path
 import yaml
 
 from analysis_config import validated_tag
+from bin_artifact_contract import BinArtifactContractError, build_game_artifact_inventory
 from gamesymbol_snapshot_lib.analysis_sources import (
     build_source_index,
     is_analysis_source_path,
@@ -20,9 +21,15 @@ from gamesymbol_snapshot_lib.analysis_sources import (
 from gamesymbol_snapshot_lib.codec import canonical_snapshot_bytes, parse_snapshot_bytes
 from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.impact_registry import parse_impact_registry
-from gamesymbol_snapshot_lib.materialize import materialize_baseline
-from gamesymbol_snapshot_lib.paths import metadata_filename, metadata_tag_from_filename
-from gamesymbol_snapshot_lib.operations import load_snapshot_context, validate_snapshot_contract
+from gamesymbol_snapshot_lib.operations import _atomic_write, validate_snapshot_contract
+from gamesymbol_snapshot_lib.paths import (
+    ensure_real_tree,
+    is_reparse_point,
+    iter_yaml_paths,
+    metadata_filename,
+    metadata_tag_from_filename,
+    path_from_key,
+)
 from gamesymbol_snapshot_lib.pr_validation import (
     BoundImpactPlan,
     CACHE_MODE_WARM,
@@ -129,6 +136,40 @@ def _gamedata_tree_digest(repo: GitRepository, ref: str, tag: str) -> str | None
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _artifact_inventory(
+    repo: GitRepository,
+    ref: str,
+    tag: str,
+    contract,
+    *,
+    require_complete: bool,
+) -> tuple[tuple[dict, ...], str | None]:
+    prefix = f"bin_artifacts/{validated_tag(tag)}/"
+    paths = tuple(path for path in repo.list_files(ref) if path.startswith(prefix))
+    if contract is None:
+        if paths:
+            raise ImpactPlanningError(f"Artifact tree has no configured tag at {ref}: {prefix}")
+        return (), None
+    relative_paths = {path.removeprefix(prefix) for path in paths}
+    extra = relative_paths - contract.formal_paths
+    missing = contract.required_paths - relative_paths
+    if extra or require_complete and missing:
+        raise ImpactPlanningError(
+            f"Artifact inventory mismatch for {tag} at {ref}: missing={sorted(missing)!r}; extra={sorted(extra)!r}"
+        )
+    selected = contract.required_paths | (contract.optional_paths & relative_paths) if require_complete else relative_paths
+    entries = []
+    for relative in sorted(selected):
+        raw = repo.read(ref, f"{prefix}{relative}")
+        if raw is None:
+            raise ImpactPlanningError(f"Artifact disappeared while reading {tag} at {ref}: {relative}")
+        entries.append({"path": relative, "size": len(raw), "sha256": _sha256(raw)})
+    if not entries:
+        return (), None
+    encoded = json.dumps(entries, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return tuple(entries), hashlib.sha256(encoded).hexdigest()
+
+
 def _tags(repo: GitRepository, ref: str) -> tuple[str, ...]:
     raw = repo.read(ref, "configs/config.yaml")
     if raw is None:
@@ -149,7 +190,13 @@ def _contract(repo: GitRepository, ref: str, tag: str, temporary: Path):
     path = temporary / ref.replace("/", "_") / "configs" / f"{tag}.yaml"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(raw)
-    return load_contract(path, tag, temporary / ref.replace("/", "_") / "bin"), raw
+    checkout_root = temporary / ref.replace("/", "_")
+    return load_contract(
+        path,
+        tag,
+        checkout_root / "bin",
+        artifactdir=checkout_root / "bin_artifacts",
+    ), raw
 
 
 def _snapshot(repo: GitRepository, ref: str, tag: str, contract):
@@ -237,6 +284,15 @@ def build_plan(
                 if metadata_tag is not None and metadata_tag not in known_tags:
                     raise ImpactPlanningError(f"Metadata companion has no configured tag: {path}")
             parts = path.split("/")
+            if parts[0] == "bin_artifacts":
+                if len(parts) != 4:
+                    raise ImpactPlanningError(f"Invalid tracked artifact path: {path}")
+                try:
+                    artifact_tag = validated_tag(parts[1])
+                except ValueError as exc:
+                    raise ImpactPlanningError(f"Invalid tracked artifact path: {path}") from exc
+                if artifact_tag not in known_tags:
+                    raise ImpactPlanningError(f"Tracked artifact has no configured tag: {path}")
             if parts[0] == "gamedata" and len(parts) >= 3:
                 try:
                     gamedata_tag = validated_tag(parts[1])
@@ -270,6 +326,7 @@ def build_plan(
         base_sources = {}
         merge_sources = {}
         snapshots = {}
+        artifact_inventories = {}
         for tag in ordered_tags:
             base_contracts[tag], base_config_raw = _contract(repo, base_sha, tag, temporary)
             merge_contracts[tag], merge_config_raw = _contract(repo, merge_sha, tag, temporary)
@@ -289,6 +346,23 @@ def build_plan(
             digests[f"merge_metadata:{tag}"] = _sha256(repo.read(merge_sha, f"gamesymbols/{metadata_filename(tag)}"))
             digests[f"base_gamedata:{tag}"] = _gamedata_tree_digest(repo, base_sha, tag)
             digests[f"merge_gamedata:{tag}"] = _gamedata_tree_digest(repo, merge_sha, tag)
+            base_artifacts, base_artifact_digest = _artifact_inventory(
+                repo,
+                base_sha,
+                tag,
+                base_contracts[tag],
+                require_complete=False,
+            )
+            merge_artifacts, merge_artifact_digest = _artifact_inventory(
+                repo,
+                merge_sha,
+                tag,
+                merge_contracts[tag],
+                require_complete=True,
+            )
+            digests[f"base_artifacts:{tag}"] = base_artifact_digest
+            digests[f"merge_artifacts:{tag}"] = merge_artifact_digest
+            artifact_inventories[tag] = (base_artifacts, merge_artifacts)
             snapshots[tag] = (base_document, merge_document, base_contract_trusted)
 
         validate_reference_consumers(merge_tree, list(merge_sources.values()))
@@ -331,7 +405,7 @@ def load_bound_plan(path: str | Path) -> dict:
     document = json.loads(Path(path).read_text(encoding="utf-8"))
     if (
         not isinstance(document, dict)
-        or document.get("schema_version") != 2
+        or document.get("schema_version") != 3
         or document.get("cache_mode") != CACHE_MODE_WARM
     ):
         raise PrCliError("Invalid bound impact plan")
@@ -371,6 +445,27 @@ def verify_bound_tag_inputs(document: dict, repo: GitRepository, tag: str) -> di
         repo.read(document["merge_sha"], f"gamesymbols/{metadata_filename(tag)}"),
     )
     _verify_bound_gamedata(document, f"merge_gamedata:{tag}", repo, document["merge_sha"], tag)
+    config_raw = repo.read(document["merge_sha"], f"configs/{tag}.yaml")
+    if config_raw is None:
+        raise PrCliError(f"Merge config is missing for {tag}")
+    with tempfile.TemporaryDirectory(prefix="gamesymbol-bound-artifacts-") as temporary:
+        config_path = Path(temporary) / f"{tag}.yaml"
+        config_path.write_bytes(config_raw)
+        contract = load_contract(
+            config_path,
+            tag,
+            Path(temporary) / "bin",
+            artifactdir=Path(temporary) / "bin_artifacts",
+        )
+        _entries, digest = _artifact_inventory(
+            repo,
+            document["merge_sha"],
+            tag,
+            contract,
+            require_complete=True,
+        )
+    if document.get("digests", {}).get(f"merge_artifacts:{tag}") != digest:
+        raise PrCliError(f"Bound plan digest mismatch for merge_artifacts:{tag}")
     action = next((item for item in document["tags"] if item["tag"] == tag), None)
     if action is None or action.get("deleted"):
         raise PrCliError(f"Plan has no materializable action for {tag}")
@@ -399,49 +494,99 @@ def materialize_from_plan(
     tag = validated_tag(tag)
     repo, document = verify_bound_plan_checkout(repo_root=repo_root, plan_path=plan_path, merge_ref=merge_ref)
     action = verify_bound_tag_inputs(document, repo, tag)
-    config_path = Path(repo_root) / "configs" / f"{tag}.yaml"
-    merge_contract = load_contract(config_path, tag, bindir, artifactdir=artifactdir)
-    unknown_nodes = set(action["analysis_nodes"]) - set(merge_contract.nodes)
-    if unknown_nodes:
-        raise PrCliError(f"Plan references unknown merge nodes: {', '.join(sorted(unknown_nodes))}")
-    invalidated = tuple(action["invalidated_paths"])
-    if set(invalidated) - merge_contract.formal_paths:
-        raise PrCliError("Plan references paths outside the merge contract")
-    base = None
-    if action["mode"] == "incremental":
-        with tempfile.TemporaryDirectory(prefix="gamesymbol-pr-base-") as temporary:
-            base_config_raw = repo.read(document["base_sha"], f"configs/{tag}.yaml")
-            base_snapshot_raw = repo.read(document["base_sha"], f"gamesymbols/{tag}.yaml")
-            _verify_bound_digest(document, f"base_config:{tag}", base_config_raw)
-            _verify_bound_digest(document, f"base_snapshot:{tag}", base_snapshot_raw)
-            _verify_bound_digest(
-                document,
-                f"base_metadata:{tag}",
-                repo.read(document["base_sha"], f"gamesymbols/{metadata_filename(tag)}"),
-            )
-            _verify_bound_gamedata(document, f"base_gamedata:{tag}", repo, document["base_sha"], tag)
-            if base_config_raw is None or base_snapshot_raw is None:
-                raise PrCliError("Incremental plan is missing its bound base contract")
-            temporary_root = Path(temporary)
-            base_config = temporary_root / f"{tag}.yaml"
-            base_snapshot = temporary_root / f"{tag}.snapshot.yaml"
-            base_config.write_bytes(base_config_raw)
-            base_snapshot.write_bytes(base_snapshot_raw)
-            base = load_snapshot_context(base_snapshot, base_config, tag, bindir, artifactdir=artifactdir)
-            return materialize_baseline(
-                base=base,
-                merge_contract=merge_contract,
-                artifactdir=artifactdir,
-                invalidated_paths=invalidated,
-                mode=action["mode"],
-            )
-    return materialize_baseline(
-        base=None,
-        merge_contract=merge_contract,
-        artifactdir=artifactdir,
-        invalidated_paths=invalidated,
-        mode=action["mode"],
-    )
+    repo_root = Path(repo_root).resolve()
+    artifactdir = Path(artifactdir).resolve()
+    if artifactdir == repo_root or repo_root in artifactdir.parents:
+        raise PrCliError("Rebuild artifact root must be outside the source checkout")
+    config_raw = repo.read(document["merge_sha"], f"configs/{tag}.yaml")
+    if config_raw is None:
+        raise PrCliError(f"Merge config is missing for {tag}")
+    with tempfile.TemporaryDirectory(prefix="gamesymbol-pr-contract-") as temporary:
+        config_path = Path(temporary) / f"{tag}.yaml"
+        config_path.write_bytes(config_raw)
+        merge_contract = load_contract(config_path, tag, bindir, artifactdir=artifactdir)
+        unknown_nodes = set(action["analysis_nodes"]) - set(merge_contract.nodes)
+        if unknown_nodes:
+            raise PrCliError(f"Plan references unknown merge nodes: {', '.join(sorted(unknown_nodes))}")
+        invalidated = set(action["invalidated_paths"])
+        if invalidated - merge_contract.formal_paths:
+            raise PrCliError("Plan references paths outside the merge contract")
+        entries, _digest = _artifact_inventory(
+            repo,
+            document["merge_sha"],
+            tag,
+            merge_contract,
+            require_complete=True,
+        )
+        game_root = merge_contract.artifact_game_root
+        ensure_real_tree(artifactdir, game_root)
+        game_root.mkdir(parents=True, exist_ok=True)
+        if is_reparse_point(game_root):
+            raise PrCliError(f"Rebuild artifact root must not be a link/reparse point: {game_root}")
+        for path in list(iter_yaml_paths(game_root)):
+            path.unlink()
+        selected = []
+        for entry in entries:
+            relative = entry["path"]
+            if relative in invalidated:
+                continue
+            raw = repo.read(document["merge_sha"], f"bin_artifacts/{tag}/{relative}")
+            if raw is None:
+                raise PrCliError(f"Merge artifact disappeared during materialization: {relative}")
+            target = path_from_key(game_root, relative)
+            if target.parent.exists() and is_reparse_point(target.parent):
+                raise PrCliError(f"Refusing to materialize through a link/reparse point: {target.parent}")
+            _atomic_write(target, raw)
+            selected.append(relative)
+        return tuple(selected)
+
+
+def compare_rebuilt_artifacts(
+    *,
+    repo_root: str | Path,
+    plan_path: str | Path,
+    tag: str,
+    merge_ref: str,
+    bindir: str | Path,
+    artifactdir: str | Path,
+) -> tuple[str, ...]:
+    tag = validated_tag(tag)
+    repo, document = verify_bound_plan_checkout(repo_root=repo_root, plan_path=plan_path, merge_ref=merge_ref)
+    verify_bound_tag_inputs(document, repo, tag)
+    repo_root = Path(repo_root).resolve()
+    artifactdir = Path(artifactdir).resolve()
+    if artifactdir == repo_root or repo_root in artifactdir.parents:
+        raise PrCliError("Rebuild artifact root must be outside the source checkout")
+    config_raw = repo.read(document["merge_sha"], f"configs/{tag}.yaml")
+    if config_raw is None:
+        raise PrCliError(f"Merge config is missing for {tag}")
+    with tempfile.TemporaryDirectory(prefix="gamesymbol-pr-compare-") as temporary:
+        config_path = Path(temporary) / f"{tag}.yaml"
+        config_path.write_bytes(config_raw)
+        contract = load_contract(config_path, tag, bindir, artifactdir=artifactdir)
+        expected, _digest = _artifact_inventory(
+            repo,
+            document["merge_sha"],
+            tag,
+            contract,
+            require_complete=True,
+        )
+        try:
+            actual_inventory = build_game_artifact_inventory(tag, config_path, artifactdir)
+        except BinArtifactContractError as exc:
+            raise PrCliError(f"Rebuilt artifact contract failed for {tag}: {exc}") from exc
+        actual = tuple(
+            {"path": entry.path, "size": entry.size, "sha256": entry.sha256}
+            for entry in actual_inventory.entries
+        )
+        if actual != expected:
+            raise PrCliError(f"Rebuilt artifact inventory differs from merge Git blobs for {tag}")
+        for entry in expected:
+            expected_raw = repo.read(document["merge_sha"], f"bin_artifacts/{tag}/{entry['path']}")
+            actual_raw = path_from_key(contract.artifact_game_root, entry["path"]).read_bytes()
+            if expected_raw != actual_raw:
+                raise PrCliError(f"Rebuilt artifact bytes differ from merge Git blob: {tag}/{entry['path']}")
+        return tuple(entry["path"] for entry in expected)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -461,6 +606,13 @@ def _parser() -> argparse.ArgumentParser:
     materialize.add_argument("-merge-ref", default="HEAD")
     materialize.add_argument("-bindir", default="bin")
     materialize.add_argument("-artifactdir", default="bin_artifacts")
+    compare = commands.add_parser("compare")
+    compare.add_argument("-repo-root", default=".")
+    compare.add_argument("-plan", required=True)
+    compare.add_argument("-tag", required=True)
+    compare.add_argument("-merge-ref", default="HEAD")
+    compare.add_argument("-bindir", default="bin")
+    compare.add_argument("-artifactdir", required=True)
     return parser
 
 
@@ -476,8 +628,17 @@ def main(argv: list[str] | None = None) -> int:
                 bin_repo_root=args.bin_repo,
             )
             Path(args.output).write_bytes(plan.canonical_bytes())
-        else:
+        elif args.command == "materialize":
             materialize_from_plan(
+                repo_root=args.repo_root,
+                plan_path=args.plan,
+                tag=args.tag,
+                merge_ref=args.merge_ref,
+                bindir=args.bindir,
+                artifactdir=args.artifactdir,
+            )
+        else:
+            compare_rebuilt_artifacts(
                 repo_root=args.repo_root,
                 plan_path=args.plan,
                 tag=args.tag,

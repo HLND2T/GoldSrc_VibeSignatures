@@ -282,9 +282,10 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertNotIn("-cache-mode", workflow_text)
         plan_steps = jobs["plan"]["steps"]
         planner = next(step for step in plan_steps if step.get("name") == "Generate canonical bound plan from PR merge")
-        self.assertIn("uv run python gamesymbol_pr_validation.py plan", planner["run"])
-        self.assertNotIn("base-planner", workflow_text)
-        self.assertFalse(any(step.get("name") == "Export trusted base planner" for step in plan_steps))
+        self.assertIn(".trusted-planner/gamesymbol_pr_validation.py plan", planner["run"])
+        trusted_checkout = next(step for step in plan_steps if step.get("name") == "Checkout trusted base planner")
+        self.assertEqual("${{ github.event.pull_request.base.sha }}", trusted_checkout["with"]["ref"])
+        self.assertEqual("false", trusted_checkout["with"]["persist-credentials"])
         self.assertNotIn("uv run", aggregate["run"])
         self_hosted = jobs["analyze-self-hosted"]
         self.assertEqual(["self-hosted", "windows", "x64"], self_hosted["runs-on"])
@@ -321,6 +322,10 @@ class RepositoryContractTests(unittest.TestCase):
             if step.get("name") == "Analyze selected nodes and build self-consistent candidates"
         )
         self.assertNotIn("cache_mode", analyzer["run"])
+        self.assertIn("$env:RUNNER_TEMP 'rebuilt-bin-artifacts'", analyzer["run"])
+        self.assertIn("$plannerCli compare", analyzer["run"])
+        self.assertIn("-artifactdir $artifactRoot", analyzer["run"])
+        self.assertIn("git diff --exit-code -- bin_artifacts", analyzer["run"])
         restore_index = step_names.index("Restore exact warm IDB cache generations")
         analyze_index = step_names.index("Analyze selected nodes and build self-consistent candidates")
         self.assertNotIn(

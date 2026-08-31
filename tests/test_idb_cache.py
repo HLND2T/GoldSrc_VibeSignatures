@@ -446,13 +446,24 @@ class IdbCacheWorkflowTests(unittest.TestCase):
             ),
             "gamesymbol-impact.yaml": b"version: 1\nrules: []\n",
             "gamesymbols/game-1.yaml": b"snapshot\n",
+            "bin_artifacts/game-1/engine/Demo.windows.yaml": b"func_name: Demo\nfunc_va: '0x10'\n",
+            "bin_artifacts/game-1/client/Other.windows.yaml": b"func_name: Other\nfunc_va: '0x20'\n",
         }
         for relative, raw in files.items():
             path = repo / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(raw)
         subprocess.run(
-            ["git", "-C", str(repo), "add", "configs", "gamesymbol-impact.yaml", "gamesymbols"],
+            [
+                "git",
+                "-C",
+                str(repo),
+                "add",
+                "configs",
+                "gamesymbol-impact.yaml",
+                "gamesymbols",
+                "bin_artifacts",
+            ],
             check=True,
         )
         subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "bound"], check=True)
@@ -466,6 +477,21 @@ class IdbCacheWorkflowTests(unittest.TestCase):
             "merge_snapshot:game-1": hashlib.sha256(files["gamesymbols/game-1.yaml"]).hexdigest(),
             "merge_metadata:game-1": None,
             "merge_gamedata:game-1": None,
+            "merge_artifacts:game-1": hashlib.sha256(
+                json.dumps(
+                    [
+                        {
+                            "path": path.removeprefix("bin_artifacts/game-1/"),
+                            "size": len(files[path]),
+                            "sha256": hashlib.sha256(files[path]).hexdigest(),
+                        }
+                        for path in sorted(files)
+                        if path.startswith("bin_artifacts/game-1/")
+                    ],
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            ).hexdigest(),
         }
         action = TagImpact(
             "game-1",
@@ -474,7 +500,6 @@ class IdbCacheWorkflowTests(unittest.TestCase):
             ("engine/Demo.windows.yaml",),
             True,
             True,
-            False,
             ("test",),
         )
         plan = BoundImpactPlan(merge_sha, merge_sha, merge_sha, None, None, (action,), digests)
