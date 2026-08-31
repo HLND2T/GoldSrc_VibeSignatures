@@ -12,6 +12,8 @@ dist
 dist-ssr
 playwright-report
 test-results
+.test-gamesymbols
+release-gamesymbols
 *.local
 
 # Editor directories and files

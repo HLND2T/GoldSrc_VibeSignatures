@@ -38,7 +38,6 @@ from gamesymbol_snapshot_lib.pr_validation import (
     evaluate_pr_validation,
     plan_tag_impact,
 )
-from pull_request_route import PullRequestRouteError, classify_pr_route, parse_output_branch
 from ida_analyze_util import canonical_symbol_yaml_bytes
 from tests.test_support import write_pe32
 
@@ -499,53 +498,6 @@ class ImpactPlanningTests(unittest.TestCase):
 
 
 class PrValidationGateTests(unittest.TestCase):
-    def test_generated_output_branch_parser_and_source_only_routing(self):
-        branch = "gamesymbols/build/hl-10210/run-123"
-        self.assertEqual(("hl-10210", "run-123"), parse_output_branch(branch))
-        self.assertEqual("source", classify_pr_route(head_ref=branch, output_routing_enabled=False))
-        self.assertEqual("output", classify_pr_route(head_ref=branch, output_routing_enabled=True))
-        self.assertEqual("source", classify_pr_route(head_ref="feature/cache", output_routing_enabled=True))
-        for invalid in (
-            "gamesymbols/build/hl-10210",
-            "gamesymbols/build/HL-10210/run-1",
-            "gamesymbols/build/hl-10210/run_1",
-            "gamesymbols/build/hl-10210/run-1/extra",
-        ):
-            with self.subTest(invalid=invalid), self.assertRaises(PullRequestRouteError):
-                parse_output_branch(invalid)
-            self.assertEqual("output", classify_pr_route(head_ref=invalid, output_routing_enabled=True))
-
-    def test_source_planner_rejects_each_release_owned_namespace(self):
-        for relative in (
-            "gamesymbols/game-1.yaml",
-            "gamedata/game-1/gamedata-manifest.json",
-            "release-manifests/v20260825a.json",
-        ):
-            with self.subTest(relative=relative), tempfile.TemporaryDirectory() as temporary:
-                root = Path(temporary)
-                subprocess.run(["git", "init", "-q", str(root)], check=True)
-                subprocess.run(["git", "-C", str(root), "config", "user.email", "test@example.com"], check=True)
-                subprocess.run(["git", "-C", str(root), "config", "user.name", "Test"], check=True)
-                config_index = root / "configs" / "config.yaml"
-                config_index.parent.mkdir(parents=True)
-                config_index.write_text("gamevers: []\n", encoding="utf-8")
-                subprocess.run(["git", "-C", str(root), "add", "."], check=True)
-                subprocess.run(["git", "-C", str(root), "commit", "-q", "-m", "base"], check=True)
-                base_sha = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
-                output = root / relative
-                output.parent.mkdir(parents=True, exist_ok=True)
-                output.write_text("generated\n", encoding="utf-8")
-                subprocess.run(["git", "-C", str(root), "add", "."], check=True)
-                subprocess.run(["git", "-C", str(root), "commit", "-q", "-m", "source-pr"], check=True)
-                head_sha = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
-                with self.assertRaisesRegex(PullRequestRouteError, "release-owned generated-output paths"):
-                    build_plan(
-                        repo_root=root,
-                        base_ref=base_sha,
-                        head_ref=head_sha,
-                        merge_ref=head_sha,
-                    )
-
     def test_gate_truth_table(self):
         cases = (
             ({}, True),
@@ -730,9 +682,6 @@ class BoundPlanValidationTests(unittest.TestCase):
                 "merge_config_index",
                 "merge_registry",
                 "merge_config:game-1",
-                "merge_snapshot:game-1",
-                "merge_metadata:game-1",
-                "merge_gamedata:game-1",
             ):
                 with self.subTest(key=key):
                     mismatched = dict(digests)

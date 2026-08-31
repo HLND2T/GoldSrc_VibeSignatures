@@ -38,7 +38,6 @@ GROUP_FILES = {
         "test_release_workflow_guards.py",
         "test_trigger_release_build.py",
         "test_decrypt_blob.py",
-        "test_generated_output_contract_validator.py",
     ),
     "redis-integration": (
         "test_process_reporter_redis.py",
@@ -46,11 +45,10 @@ GROUP_FILES = {
         "test_process_status_reader_redis.py",
     ),
     "repository-contract": ("test_repository_contract.py",),
-    "generated-output-contract": ("test_generated_output_contract.py",),
     "ida-integration": ("test_ida_integration.py",),
 }
 
-SOURCE_ALL_GROUPS = tuple(name for name in GROUP_FILES if name != "generated-output-contract")
+SOURCE_ALL_GROUPS = tuple(GROUP_FILES)
 
 
 def validate_membership(root: Path) -> None:

@@ -5,6 +5,13 @@ import { gameSymbolsPlugin } from './gameSymbolsPlugin'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), gameSymbolsPlugin(fileURLToPath(new URL('../gamesymbols', import.meta.url)))],
+  plugins: [
+    react(),
+    gameSymbolsPlugin(
+      process.env.GSVIBE_GAMESYMBOLS_DIR
+        ? fileURLToPath(new URL(process.env.GSVIBE_GAMESYMBOLS_DIR, import.meta.url))
+        : fileURLToPath(new URL('./.test-gamesymbols', import.meta.url)),
+    ),
+  ],
   base: '/GoldSrc_VibeSignatures/',
 })

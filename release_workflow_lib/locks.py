@@ -1,10 +1,7 @@
-"""Non-blocking file locks for the persisted release workspace.
+"""Non-blocking file locks for persisted accepted-bin maintenance.
 
-Two lock keys live side by side under ``<persisted-root>/release-staging/locks``:
-
-* ``<version>.lock`` serializes one release lifecycle (staging, promotion, cleanup).
-* ``<gamever>.lock`` serializes the accepted ``bin/<gamever>`` directory itself, so a
-  promotion swap can never race a warmup/consumer job that is copying the same tree out.
+One lock per game version lives under ``<persisted-root>/accepted-bin/locks`` and serializes
+materialization, legacy cleanup, and other maintenance of ``bin/<gamever>``.
 
 Both are byte-range locks held by an open handle: process exit releases them and the lock
 file is deliberately left behind.
@@ -20,7 +17,7 @@ from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.hashing import contained_path
 from release_workflow_lib.manifests import require_gamever
 
-LOCK_RELATIVE = ("release-staging", "locks")
+LOCK_RELATIVE = ("accepted-bin", "locks")
 
 
 @contextmanager

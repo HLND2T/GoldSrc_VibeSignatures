@@ -6,7 +6,6 @@ import os
 import random
 import re
 import stat
-import subprocess
 import time
 import uuid
 from pathlib import Path, PurePosixPath
@@ -14,7 +13,6 @@ from pathlib import Path, PurePosixPath
 from release_workflow_lib.errors import ReleaseWorkflowError
 
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
-REGULAR_GIT_MODES = {"100644", "100755"}
 WINDOWS_ERROR_ACCESS_DENIED = 5
 WINDOWS_ERROR_SHARING_VIOLATION = 32
 WINDOWS_REPLACE_RETRY_ERRORS = {WINDOWS_ERROR_ACCESS_DENIED, WINDOWS_ERROR_SHARING_VIOLATION}
@@ -187,74 +185,3 @@ def verify_inventory(root: str | Path, expected: list[dict]) -> str:
     if actual != expected:
         raise ReleaseWorkflowError(f"File inventory mismatch under {root}")
     return inventory_sha256(actual)
-
-
-def _git_bytes(repo_root: str | Path, arguments: list[str]) -> bytes:
-    result = subprocess.run(
-        ["git", "-C", str(repo_root), *arguments],
-        capture_output=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        detail = result.stderr.decode(errors="replace").strip()
-        raise ReleaseWorkflowError(detail or f"git {' '.join(arguments)} failed")
-    return result.stdout
-
-
-def _git_index_inventory(repo_root: str | Path, pathspecs: list[str]) -> list[dict]:
-    raw_entries = _git_bytes(repo_root, ["ls-files", "--stage", "-z", "--", *pathspecs])
-    inventory = []
-    seen = set()
-    for record in raw_entries.split(b"\0"):
-        if not record:
-            continue
-        metadata, raw_path = record.split(b"\t", 1)
-        mode, object_id, stage = metadata.decode("ascii").split()
-        relative = normalized_relative_path(os.fsdecode(raw_path).replace("\\", "/"))
-        if stage != "0" or mode not in REGULAR_GIT_MODES or relative in seen:
-            raise ReleaseWorkflowError(f"Tracked output has an unsupported Git index entry: {relative}")
-        blob = _git_bytes(repo_root, ["cat-file", "blob", object_id])
-        inventory.append({"path": relative, "size": len(blob), "sha256": sha256_bytes(blob)})
-        seen.add(relative)
-    return sorted(inventory, key=lambda item: item["path"])
-
-
-def tracked_output_inventory(repo_root: str | Path, gamevers: list[str]) -> list[dict]:
-    repo_root = Path(repo_root)
-    pathspecs = []
-    for gamever in gamevers:
-        pathspecs.extend((f"gamesymbols/{gamever}.yaml", f"gamesymbols/{gamever}.metadata.yaml", f"gamedata/{gamever}"))
-    inventory = _git_index_inventory(repo_root, pathspecs)
-    paths = {item["path"] for item in inventory}
-    for gamever in gamevers:
-        if f"gamesymbols/{gamever}.yaml" not in paths:
-            raise ReleaseWorkflowError(
-                f"required tracked output is missing from the Git index: gamesymbols/{gamever}.yaml"
-            )
-        if f"gamesymbols/{gamever}.metadata.yaml" not in paths:
-            raise ReleaseWorkflowError(
-                f"required tracked output is missing from the Git index: gamesymbols/{gamever}.metadata.yaml"
-            )
-        if not any(path.startswith(f"gamedata/{gamever}/") for path in paths):
-            raise ReleaseWorkflowError(f"required tracked output is missing from the Git index: gamedata/{gamever}")
-    return inventory
-
-
-def allowed_output_path(path: str, gamevers: list[str], version: str) -> bool:
-    path = normalized_relative_path(path)
-    if path == f"release-manifests/{version}.json":
-        return True
-    for gamever in gamevers:
-        if path in {f"gamesymbols/{gamever}.yaml", f"gamesymbols/{gamever}.metadata.yaml"}:
-            return True
-        if path.startswith(f"gamedata/{gamever}/"):
-            return True
-    return False
-
-
-def validate_output_paths(paths: list[str], gamevers: list[str], version: str) -> None:
-    rejected = [path for path in paths if not allowed_output_path(path, gamevers, version)]
-    if rejected:
-        raise ReleaseWorkflowError("generated-output PR contains disallowed paths: " + ", ".join(sorted(rejected)))
-    if f"release-manifests/{version}.json" not in paths:
-        raise ReleaseWorkflowError(f"generated-output PR must change release-manifests/{version}.json")

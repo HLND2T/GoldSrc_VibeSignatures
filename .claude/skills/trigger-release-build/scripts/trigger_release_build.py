@@ -153,14 +153,6 @@ def list_runs(root: Path) -> list[dict]:
 
 
 def require_no_duplicate(root: Path, version: str) -> set[int]:
-    pulls = run_command(
-        ["gh", "pr", "list", "--state", "open", "--limit", RUN_LIST_LIMIT, "--json", "headRefName,url"], root
-    )
-    canonical_prefix = f"gamesymbols/build/{version}"
-    for pull in parse_json_list(pulls.stdout, "gh pr list"):
-        head_ref = str(pull.get("headRefName", ""))
-        if head_ref.startswith(canonical_prefix):
-            raise TriggerError(f"an output PR is already open for {version}: {pull.get('url')}")
     runs = list_runs(root)
     title = f"Release build {version}"
     for run in runs:

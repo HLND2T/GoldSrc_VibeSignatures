@@ -238,6 +238,13 @@ def validate_repository_artifact_contract(
         tracked_legacy = _tracked_paths(repo_root, "bin/**/*.yaml")
         if tracked_legacy:
             raise BinArtifactContractError(f"Legacy bin YAML must not be tracked: {sorted(tracked_legacy)!r}")
+        tracked_outputs = set().union(
+            *(_tracked_paths(repo_root, root) for root in ("gamesymbols", "gamedata", "release-manifests"))
+        )
+        if tracked_outputs:
+            raise BinArtifactContractError(
+                f"Versioned release outputs must not be tracked: {sorted(tracked_outputs)!r}"
+            )
     return repository
 
 

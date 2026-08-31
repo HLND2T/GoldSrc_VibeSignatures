@@ -1,12 +1,10 @@
 """Durable accepted-bin inventory helpers and the checkout materialization entry point.
 
-``PERSISTED_WORKSPACE/bin/<gamever>`` is the accepted binary tree. Release promotion swaps it,
-while the IDB cache producer and the release consumer both read it into their own checkout.
-Every one of those paths goes through the same per-gamever lock so a promotion can never swap
-the directory while a job is halfway through copying it out.
+``PERSISTED_WORKSPACE/bin/<gamever>`` is a binary-only cache read by the IDB cache producer.
+Every materialization goes through the same per-gamever lock so cleanup cannot race a reader.
 
-"Durable" means the binaries and their side files, excluding recoverable analysis state
-(IDA databases, BinSync projects) which is restored from the immutable IDB cache instead.
+"Durable" means binaries and side files, excluding analysis YAML and recoverable analysis
+state (IDA databases, BinSync projects).
 """
 
 from __future__ import annotations
@@ -25,7 +23,17 @@ from release_workflow_lib.hashing import (
 )
 from release_workflow_lib.locks import accepted_bin_lock_path, version_lock
 from release_workflow_lib.manifests import require_gamever
-from release_workflow_lib.staging import is_recoverable_analysis_path
+
+IDA_DATABASE_SUFFIXES = (".i64", ".idb", ".id0", ".id1", ".id2", ".nam", ".til")
+RECOVERABLE_ANALYSIS_SUFFIXES = (*IDA_DATABASE_SUFFIXES, ".bsproj", ".binsync.json")
+
+
+def is_recoverable_analysis_path(path: Path) -> bool:
+    return any(part.lower().endswith(RECOVERABLE_ANALYSIS_SUFFIXES) for part in Path(path).parts)
+
+
+def is_analysis_yaml_path(path: Path) -> bool:
+    return any(part.lower().endswith((".yaml", ".yml")) for part in Path(path).parts)
 
 
 def durable_files(root: Path) -> list[Path]:
@@ -34,6 +42,7 @@ def durable_files(root: Path) -> list[Path]:
         path
         for path in sorted(item for item in root.rglob("*") if item.is_file())
         if not is_recoverable_analysis_path(path.relative_to(root))
+        and not is_analysis_yaml_path(path.relative_to(root))
     ]
 
 
@@ -66,7 +75,7 @@ def materialize_accepted_bin(
     """Overlay the persisted accepted bin tree for one gamever onto the current checkout.
 
     This is the single materialization entry point for both the warmup producer and the
-    release consumer, so the two jobs cannot drift into different include/exclude rules.
+    cache consumer, so jobs cannot drift into different include/exclude rules.
     The overlay is additive: checked-out submodule files stay unless the accepted tree
     replaces them, matching the previous per-workflow copy behaviour.
     """
