@@ -176,6 +176,14 @@ jobs:
           git diff --exit-code -- bin_artifacts
           if ($LASTEXITCODE -ne 0) { throw 'tracked bin_artifacts changed during release rebuild' }
           "REBUILT_ARTIFACT_ROOT=$artifactRoot" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Upload unverified rebuilt artifact diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unverified-rebuilt-bin-artifacts-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/rebuilt-bin-artifacts
+          if-no-files-found: warn
+          retention-days: 1
       - name: Build snapshots, gamedata, and deterministic archives
         shell: pwsh
         run: |
