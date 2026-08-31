@@ -1,7 +1,8 @@
 # Release 运维
 
-`release-build.yml` 接受 immutable `version`、可选 `source_sha` 与默认开启的 `publish_release`。生产 source 必须可从
-default branch 到达。`publish_release=false` 只用于不发布的 workflow verification，并要求 source 等于 dispatch commit。
+`release-build.yml` 接受 immutable `version`、可选 `source_sha`、默认开启的 `publish_release`，以及默认关闭的
+`cleanup_legacy_yaml`。生产 source 必须可从 default branch 到达。`publish_release=false` 只用于不发布的 workflow
+verification，并要求 source 等于 dispatch commit。
 
 ## 信任与权限边界
 
@@ -26,7 +27,11 @@ Draft 是可恢复 staging 层。Publisher 只上传缺失 asset，绝不覆盖�
 ## Binary-only accepted cache 维护
 
 `PERSISTED_WORKSPACE/bin/<gamever>` 是可重建 binary/side-file cache，不是 release truth。Materialization 会忽略分析
-YAML 和 IDA/BinSync state。在授权 runner 上逐 game version 清理 legacy persisted YAML：
+YAML 和 IDA/BinSync state。一次性 cutover 应在 reviewed non-publishing run 中显式开启 `cleanup_legacy_yaml`。
+Build job 仅在 release bundle 通过本地校验并上传 transport artifact 后、GitHub-hosted verifier 运行前执行 cleanup。
+该输入默认关闭，并对所有 configured gamevers 使用固定 cutover identity `bin-artifacts-v1`。
+
+如需人工恢复或在授权 runner 上定向重跑，可逐 game version 执行：
 
 ```bash
 uv run python release_workflow.py cleanup-legacy-accepted-yaml --repo-root <checkout> \

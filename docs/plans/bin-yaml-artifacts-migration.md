@@ -1,6 +1,6 @@
 # 分析 YAML Git 托管与 Release 派生产物迁移计划
 
-状态：实施中
+状态：实施完成（待 PR #61 → #60 合并）
 
 日期：2026-08-31
 
@@ -12,28 +12,26 @@
 
 - 2026-08-31：完成步骤 1–7，`bin_artifacts` 已成为 Git truth，并已接入隔离的 release bundle
   build、GitHub-hosted verify 和 protected publish jobs。
-- 2026-08-31：步骤 8 的真实 non-publishing Actions run
-  `33377379614` 已通过 hosted preflight，但仓库没有注册的 self-hosted runner，因而停在
-  `warmup-idb` 排队；该 run 已请求取消，未产生 Actions Artifact、tag 或 Release。runner 恢复后必须重新执行并通过
-  build → upload → hosted verify，方可满足最终验收。
-- 2026-08-31：步骤 9 的 GitHub 远端 drain 审计未发现 open PR 或
-  `gamesymbols/build/*` remote branch。私有 `PERSISTED_WORKSPACE` 因 runner 缺失不可访问；新流程禁止恢复旧
-  staging state，legacy state 的 inventory/backup/cleanup 延后到 runner 恢复后的步骤 11 门禁执行。
-- 2026-08-31：完成步骤 10–11 的仓库改造。Git versioned outputs、generated-output PR/promotion 状态机和旧
-  snapshot baseline materializer 已删除；Agent fallback 通过 invocation artifact contract 使用精确的
-  `bin_artifacts` 路径。新增 `cleanup-legacy-accepted-yaml`，在 per-gamever lock 下先验证 binary-only
-  materialization，再创建 canonical exact-hash backup，支持 verified `.incoming` 与 partial deletion 幂等恢复。
-  私有 `PERSISTED_WORKSPACE` 的实际 inventory/cleanup 仍因 runner 缺失无法执行，runner 恢复后必须使用同一
-  cutover identity 执行该运维门禁。
-- 2026-08-31：完成步骤 12 的独立 code review 与本地全量验证。review 后进一步将 hosted verifier 收紧为固定
-  Release asset allowlist，并安全枚举、解包 `.7z` 后逐文件对照可信 Git/bundle bytes；manifest 额外绑定
-  source/run/bin gitlink、generator、IDA runtime 和 warm-cache selection evidence。accepted-bin 增加 persisted
-  root link/overlap 与 durable backup inventory 校验，PR planner 对删除/空 contract fail closed，snapshot CLI
-  只接受显式 legacy snapshot，Pages 只部署已发布 Release 且由 publish job 显式 dispatch。Python unit 为
-  455 tests，repository contract 为 14 tests，`all` 为 473 tests（4 个环境性 skip）；Pages 为 53 tests、5 个
-  E2E，Windows absolute input build、formatter、`actionlint` 和 `git diff --check` 均通过。由于仓库仍无
-  self-hosted runner，release dry run 的 build/hosted verify 和私有 persisted cleanup 尚无通过证据，因此计划
-  状态继续保持“实施中”，PR 不得宣称最终外部验收完成。
+- 2026-08-31：完成步骤 9–11。GitHub 远端 drain 审计未发现 open generated-output PR 或
+  `gamesymbols/build/*` remote branch；Git versioned outputs、generated-output PR/promotion 状态机和旧 snapshot
+  baseline materializer 已删除。新增受保护的 `cleanup-legacy-accepted-yaml`，在 per-gamever lock 下先验证
+  binary-only materialization，再创建 canonical exact-hash backup，支持 verified `.incoming` 与 partial deletion
+  幂等恢复。
+- 2026-09-01：完成步骤 8 的真实外部验收。non-publishing Actions run
+  [`33414151802`](https://github.com/HLND2T/GoldSrc_VibeSignatures/actions/runs/33414151802) 首次完整通过 fresh
+  rebuild、byte-exact contract、release bundle build/upload、local verify 和 GitHub-hosted verify。
+- 2026-09-01：最终运维 run
+  [`33419774873`](https://github.com/HLND2T/GoldSrc_VibeSignatures/actions/runs/33419774873) 在 source
+  `e2f75aed0b5de130c265a2c905f7ab4ed7f5d5c1` 上以 `publish_release=false`、
+  `cleanup_legacy_yaml=true` 完整通过。16/16 configured gamevers 均报告 persisted tree 不存在，因而没有 legacy
+  YAML 需要备份或删除；这是授权 `PERSISTED_WORKSPACE` 上实际执行后的 absence audit。`publish-release` 被跳过，
+  未创建 tag 或 GitHub Release。
+- 2026-09-01：最终 verified bundle Actions Artifact 为 ID `9769719575`，digest
+  `sha256:bc02b3293f085dd457a579018fc6efb13456da5a43bff0f86d170ed012f83868`。完成独立 code review 与
+  completion verification：Python 全量测试 475 passed、4 skipped，repository contract 14 passed；artifact contract
+  覆盖 16 个 gamevers、273 个文件，digest
+  `sha256:cbb593a076d24477d56d156aa45ca87210bfbe35e2378b467e895f4ce854ce4e`；formatter、`actionlint` 和
+  `git diff --check` 均通过。实施已完成，合并时必须按 bootstrap PR #61 → migration PR #60 的顺序执行。
 
 ## 1. 目标
 

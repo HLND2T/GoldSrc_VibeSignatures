@@ -1,8 +1,9 @@
 # Release operations
 
-`release-build.yml` accepts an immutable `version`, optional `source_sha`, and `publish_release` (default `true`). A
-production source must be reachable from the default branch. `publish_release=false` is only a non-publishing workflow
-verification mode and requires the source to equal the dispatch commit.
+`release-build.yml` accepts an immutable `version`, optional `source_sha`, `publish_release` (default `true`), and
+`cleanup_legacy_yaml` (default `false`). A production source must be reachable from the default branch.
+`publish_release=false` is only a non-publishing workflow verification mode and requires the source to equal the dispatch
+commit.
 
 ## Trust and permission boundary
 
@@ -28,8 +29,12 @@ manifest, checksums, and draft URL when diagnosing a failure.
 ## Binary-only accepted cache maintenance
 
 `PERSISTED_WORKSPACE/bin/<gamever>` is a rebuildable binary/side-file cache, not release truth. Materialization ignores
-analysis YAML and IDA/BinSync state. To retire legacy persisted YAML, run one game version at a time on the authorized
-runner:
+analysis YAML and IDA/BinSync state. For the one-time cutover, explicitly enable `cleanup_legacy_yaml` on a reviewed
+non-publishing run. The build job performs cleanup only after the release bundle passes local verification and its
+transport artifact is uploaded, and before the GitHub-hosted verifier runs. The input is disabled by default and uses the
+fixed cutover identity `bin-artifacts-v1` for every configured game version.
+
+For manual recovery or a targeted rerun on the authorized runner, run one game version at a time:
 
 ```bash
 uv run python release_workflow.py cleanup-legacy-accepted-yaml --repo-root <checkout> \
