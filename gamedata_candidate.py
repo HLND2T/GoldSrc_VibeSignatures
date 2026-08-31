@@ -4,11 +4,8 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import os
 import shutil
-import subprocess
-import tempfile
 import uuid
 from pathlib import Path
 
@@ -132,43 +129,6 @@ def guard_candidate(session_path):
     return session
 
 
-def verify_published_gamedata(*, session_path, repo_root, gamever, candidate, analysis_config):
-    """Verify that the published ``gamedata/<gamever>`` tree matches the guarded candidate.
-
-    Used by the release build to bind the working-tree gamedata to its immutable
-    candidate session before staging. Reads the checked-out working tree and
-    re-derives the generator contract from the build-time modules directory
-    recorded in the session.
-    """
-    session = guard_candidate(session_path)
-    tag = validated_tag(gamever)
-    candidate = _file(candidate, "Symbol candidate")
-    analysis_config = _file(analysis_config, "Analysis config")
-    if session["gamever"] != tag or sha256_file(candidate) != session["candidate_sha256"]:
-        raise GamedataCandidateError("Gamedata session does not match the release candidate")
-    if analysis_config_sha256(analysis_config) != session["analysis_config_sha256"]:
-        raise GamedataCandidateError("Gamedata session does not match the analysis config")
-    root = Path(repo_root) / "gamedata" / tag
-    if not root.is_dir():
-        raise GamedataCandidateError(f"Published gamedata is missing: {root}")
-    modules = discover_generator_modules(session["modules_dir"])
-    files, manifest_sha256 = validate_gamedata_tree(
-        root,
-        tag,
-        modules,
-        candidate_sha256=session["candidate_sha256"],
-        analysis_config_sha256=session["analysis_config_sha256"],
-        generator_contract_digest=session["generator_contract_sha256"],
-    )
-    if files != session["files"] or manifest_sha256 != session["gamedata_manifest_sha256"]:
-        raise GamedataCandidateError("Published gamedata differs from the guarded candidate")
-    return {
-        "gamedata_path": session["gamedata_path"],
-        "gamedata_manifest_sha256": session["gamedata_manifest_sha256"],
-        "generator_contract_sha256": session["generator_contract_sha256"],
-    }
-
-
 def publish_candidate(*, session_path, output_dir):
     session = guard_candidate(session_path)
     tag = session["gamever"]
@@ -221,85 +181,6 @@ def publish_candidate(*, session_path, output_dir):
     return session
 
 
-def _git(repo_root: Path, *args: str, env: dict[str, str] | None = None) -> bytes:
-    result = subprocess.run(
-        ["git", "-C", str(repo_root), *args],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        env=env,
-        check=False,
-    )
-    if result.returncode != 0:
-        raise GamedataCandidateError(
-            f"git {' '.join(args)} failed: {result.stderr.decode('utf-8', errors='replace').strip()}"
-        )
-    return result.stdout
-
-
-def _tree_inventory(repo_root: Path, ref: str, tag: str) -> list[dict]:
-    prefix = f"gamedata/{validated_tag(tag)}/"
-    raw = _git(repo_root, "ls-tree", "-r", "-z", ref, "--", prefix.removesuffix("/"))
-    inventory = []
-    for record in raw.split(b"\0"):
-        if not record:
-            continue
-        metadata, separator, raw_path = record.partition(b"\t")
-        parts = metadata.decode("ascii").split()
-        path = raw_path.decode("utf-8")
-        if (
-            not separator
-            or len(parts) != 3
-            or parts[0] != "100644"
-            or parts[1] != "blob"
-            or not path.startswith(prefix)
-        ):
-            raise GamedataCandidateError(f"Tracked gamedata has an invalid Git tree entry: {path}")
-        blob = _git(repo_root, "cat-file", "blob", parts[2])
-        inventory.append({"path": path, "size": len(blob), "sha256": hashlib.sha256(blob).hexdigest()})
-    return sorted(inventory, key=lambda item: item["path"])
-
-
-def stage_candidate(*, session_path, repo_root):
-    session = guard_candidate(session_path)
-    repo = Path(repo_root).resolve()
-    tag = session["gamever"]
-    modules = discover_generator_modules(session["modules_dir"])
-    target = repo / "gamedata" / tag
-    files, manifest_sha256 = validate_gamedata_tree(
-        target,
-        tag,
-        modules,
-        candidate_sha256=session["candidate_sha256"],
-        analysis_config_sha256=session["analysis_config_sha256"],
-        generator_contract_digest=session["generator_contract_sha256"],
-    )
-    if files != session["files"] or manifest_sha256 != session["gamedata_manifest_sha256"]:
-        raise GamedataCandidateError("Published gamedata does not match its candidate session")
-    expected_paths = [item["path"] for item in session["files"]]
-    stale_paths = sorted(set(item["path"] for item in _tree_inventory(repo, "HEAD", tag)) - set(expected_paths))
-
-    def update_index(env=None):
-        for path in stale_paths:
-            _git(repo, "rm", "--cached", "--ignore-unmatch", "--", path, env=env)
-        for path in expected_paths:
-            _git(repo, "add", "-f", "--", path, env=env)
-
-    with tempfile.TemporaryDirectory(prefix="gamedata-index-") as temporary:
-        index_path = Path(temporary) / "index"
-        index_env = dict(os.environ)
-        index_env["GIT_INDEX_FILE"] = str(index_path)
-        _git(repo, "read-tree", "HEAD", env=index_env)
-        update_index(index_env)
-        temporary_tree = _git(repo, "write-tree", env=index_env).decode("ascii").strip()
-        if _tree_inventory(repo, temporary_tree, tag) != session["files"]:
-            raise GamedataCandidateError("Temporary Git tree does not match gamedata candidate")
-    update_index()
-    staged_tree = _git(repo, "write-tree").decode("ascii").strip()
-    if _tree_inventory(repo, staged_tree, tag) != session["files"]:
-        raise GamedataCandidateError("Staged Git tree does not match gamedata candidate")
-    return session
-
-
 def _parser():
     parser = argparse.ArgumentParser(description="Build, guard, and publish gamedata candidates")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -316,9 +197,6 @@ def _parser():
     publish = commands.add_parser("publish")
     publish.add_argument("-session", required=True)
     publish.add_argument("-outputdir", required=True)
-    stage = commands.add_parser("stage")
-    stage.add_argument("-session", required=True)
-    stage.add_argument("-repo-root", default=".")
     return parser
 
 
@@ -339,8 +217,6 @@ def main(argv=None):
             guard_candidate(args.session)
         elif args.command == "publish":
             publish_candidate(session_path=args.session, output_dir=args.outputdir)
-        elif args.command == "stage":
-            stage_candidate(session_path=args.session, repo_root=args.repo_root)
     except (
         GamedataCandidateError,
         GamedataContractError,

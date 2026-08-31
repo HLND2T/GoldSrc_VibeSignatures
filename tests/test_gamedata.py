@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import subprocess
 import tempfile
 import unittest
 from contextlib import contextmanager
@@ -12,7 +11,6 @@ from gamedata_candidate import (
     build_candidate,
     guard_candidate,
     publish_candidate,
-    stage_candidate,
 )
 from gamedata_contract import (
     GamedataContractError,
@@ -172,38 +170,6 @@ class GamedataCandidateTests(unittest.TestCase):
             manifest.write_bytes(manifest.read_bytes() + b"\n")
             with self.assertRaises((GamedataCandidateError, GamedataContractError)):
                 guard_candidate(session)
-
-    def test_stage_uses_exact_candidate_paths(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            subprocess.run(["git", "init", "-q", str(root)], check=True)
-            subprocess.run(["git", "-C", str(root), "config", "user.email", "test@example.com"], check=True)
-            subprocess.run(["git", "-C", str(root), "config", "user.name", "Test"], check=True)
-            tag, config, snapshot = empty_snapshot(root)
-            (root / ".gitignore").write_text("gamedata/*/\n", encoding="utf-8")
-            subprocess.run(["git", "-C", str(root), "add", ".gitignore", "config.yaml", "snapshot.yaml"], check=True)
-            subprocess.run(["git", "-C", str(root), "commit", "-q", "-m", "base"], check=True)
-            modules = root / "generators"
-            modules.mkdir()
-            candidate_root = root / ".gamedata-candidates" / "build"
-            session = root / ".gamedata-candidates" / "session.json"
-            build_candidate(
-                gamever=tag,
-                build_id="test",
-                snapshot=snapshot,
-                analysis_config=config,
-                modules_dir=modules,
-                candidate_root=candidate_root,
-                session_path=session,
-            )
-            target = root / "gamedata" / tag
-            publish_candidate(session_path=session, output_dir=target)
-            (root / "gamedata" / "unrelated.txt").write_text("extra", encoding="utf-8")
-            stage_candidate(session_path=session, repo_root=root)
-            staged = subprocess.check_output(
-                ["git", "-C", str(root), "diff", "--cached", "--name-only"], text=True
-            ).splitlines()
-            self.assertEqual([f"gamedata/{tag}/gamedata-manifest.json"], staged)
 
     def test_generator_contract_changes_are_detected(self):
         with tempfile.TemporaryDirectory() as temporary:

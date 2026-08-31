@@ -239,7 +239,7 @@ class CandidateTests(unittest.TestCase):
                         ]
                     ),
                 )
-                destination = root / "gamesymbols" / f"{tag}.yaml"
+                destination = root / "release-generated" / "gamesymbols" / f"{tag}.yaml"
                 published = publish_candidate(candidate_path=candidate, session_path=session, destination=destination)
                 self.assertEqual(candidate.read_bytes(), destination.read_bytes())
                 self.assertEqual(str(destination), published.path)
@@ -330,8 +330,8 @@ class CandidateTests(unittest.TestCase):
                         ]
                     ),
                 )
-                target = root / "gamesymbols" / f"{tag}.yaml"
-                target.parent.mkdir()
+                target = root / "release-generated" / "gamesymbols" / f"{tag}.yaml"
+                target.parent.mkdir(parents=True)
                 target_metadata = target.with_name(f"{tag}.metadata.yaml")
                 old_snapshot = b"old snapshot\n"
                 old_metadata = b"old metadata\n"

@@ -120,9 +120,6 @@ def build_candidate_snapshot(
     if snapshot_tag_from_filename(output.name) != str(game_version):
         raise CandidateContractError(f"Candidate snapshot must be named {game_version}.yaml")
     metadata_output = absolute_path(metadata_output_path or companion_path(output))
-    tracked_root = absolute_path(Path.cwd() / "gamesymbols")
-    if output == tracked_root or tracked_root in output.parents:
-        raise CandidateContractError("Candidate output must not use the tracked gamesymbols namespace")
     if output.parent != session.parent or metadata_output.parent != output.parent:
         raise CandidateContractError("Candidate, metadata, and session must share one staging directory")
     if output.exists() or metadata_output.exists() or session.exists():
@@ -132,10 +129,6 @@ def build_candidate_snapshot(
     ensure_real_path(metadata_output)
     ensure_real_path(session)
     try:
-        tracked_snapshot = tracked_root / f"{game_version}.yaml"
-        if last_publish_time is None and tracked_snapshot.is_file():
-            tracked_document = parse_snapshot_bytes(tracked_snapshot.read_bytes(), str(game_version))
-            last_publish_time = tracked_document.get("last_publish_time")
         pack_snapshot(
             game_version,
             bin_root,
@@ -314,9 +307,10 @@ def publish_candidate(*, candidate_path, session_path, destination):
     if manifest["state"] != "validated" or not manifest["completed_steps"]["gamedata"]:
         raise CandidateContractError("Candidate requires guarded gamedata before publication")
     target = absolute_path(destination)
-    tracked_root = absolute_path(Path.cwd() / "gamesymbols")
-    if target.parent != tracked_root or target.name != f"{info.game_version}.yaml":
-        raise CandidateContractError(f"Published snapshot must be gamesymbols/{info.game_version}.yaml")
+    if target.parent.name != "gamesymbols" or target.name != f"{info.game_version}.yaml":
+        raise CandidateContractError(
+            f"Published snapshot must use an explicit gamesymbols/{info.game_version}.yaml staging path"
+        )
     target.parent.mkdir(parents=True, exist_ok=True)
     target_metadata = target.with_name(metadata_filename(info.game_version))
     ensure_real_path(target)
