@@ -109,6 +109,7 @@ def build_candidate_snapshot(
     *,
     game_version,
     bin_root,
+    artifact_root,
     config_path,
     output_path,
     session_path,
@@ -140,6 +141,7 @@ def build_candidate_snapshot(
             bin_root,
             config_path,
             output,
+            artifactdir=artifact_root,
             last_publish_time=last_publish_time,
             strict=True,
         )

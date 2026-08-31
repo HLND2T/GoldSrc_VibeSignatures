@@ -394,12 +394,13 @@ def materialize_from_plan(
     tag: str,
     merge_ref: str,
     bindir: str | Path,
+    artifactdir: str | Path,
 ) -> tuple[str, ...]:
     tag = validated_tag(tag)
     repo, document = verify_bound_plan_checkout(repo_root=repo_root, plan_path=plan_path, merge_ref=merge_ref)
     action = verify_bound_tag_inputs(document, repo, tag)
     config_path = Path(repo_root) / "configs" / f"{tag}.yaml"
-    merge_contract = load_contract(config_path, tag, bindir)
+    merge_contract = load_contract(config_path, tag, bindir, artifactdir=artifactdir)
     unknown_nodes = set(action["analysis_nodes"]) - set(merge_contract.nodes)
     if unknown_nodes:
         raise PrCliError(f"Plan references unknown merge nodes: {', '.join(sorted(unknown_nodes))}")
@@ -426,18 +427,18 @@ def materialize_from_plan(
             base_snapshot = temporary_root / f"{tag}.snapshot.yaml"
             base_config.write_bytes(base_config_raw)
             base_snapshot.write_bytes(base_snapshot_raw)
-            base = load_snapshot_context(base_snapshot, base_config, tag, bindir)
+            base = load_snapshot_context(base_snapshot, base_config, tag, bindir, artifactdir=artifactdir)
             return materialize_baseline(
                 base=base,
                 merge_contract=merge_contract,
-                bindir=bindir,
+                artifactdir=artifactdir,
                 invalidated_paths=invalidated,
                 mode=action["mode"],
             )
     return materialize_baseline(
         base=None,
         merge_contract=merge_contract,
-        bindir=bindir,
+        artifactdir=artifactdir,
         invalidated_paths=invalidated,
         mode=action["mode"],
     )
@@ -459,6 +460,7 @@ def _parser() -> argparse.ArgumentParser:
     materialize.add_argument("-tag", required=True)
     materialize.add_argument("-merge-ref", default="HEAD")
     materialize.add_argument("-bindir", default="bin")
+    materialize.add_argument("-artifactdir", default="bin_artifacts")
     return parser
 
 
@@ -481,6 +483,7 @@ def main(argv: list[str] | None = None) -> int:
                 tag=args.tag,
                 merge_ref=args.merge_ref,
                 bindir=args.bindir,
+                artifactdir=args.artifactdir,
             )
     except (ImpactPlanningError, PrCliError, OSError, ValueError, yaml.YAMLError) as exc:
         print(f"Error: {exc}")

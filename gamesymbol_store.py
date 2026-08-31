@@ -234,13 +234,13 @@ class SnapshotSymbolStore(_MemorySymbolStore):
 class DirectorySymbolStore(_MemorySymbolStore):
     def __init__(
         self,
-        bin_root,
+        artifact_root,
         game_version: str,
         *,
         config_sha256: str | None = None,
         config_digest_version: int = LATEST_CONFIG_DIGEST_VERSION,
     ):
-        game_root = Path(bin_root) / str(game_version)
+        game_root = Path(artifact_root) / str(game_version)
         files = {}
         for path in iter_yaml_paths(game_root):
             key = canonical_key(game_root, path)

@@ -37,6 +37,7 @@ def _valid_generated_output(root: Path) -> None:
         root / "bin",
         config,
         snapshot,
+        artifactdir=root / "bin_artifacts",
         last_publish_time="2026-01-02T03:04:05Z",
     )
     write_metadata(

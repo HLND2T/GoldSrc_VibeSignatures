@@ -101,7 +101,7 @@ class AnalysisSourceIndexTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        return load_contract(config, tag, root / "bin")
+        return load_contract(config, tag, root / "bin", artifactdir=root / "bin_artifacts")
 
     def test_indexes_root_import_prompt_current_reference_and_canonical_fallback(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -182,7 +182,7 @@ class ImpactPlanningTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        return load_contract(config, "game-1", root / "bin")
+        return load_contract(config, "game-1", root / "bin", artifactdir=root / "bin_artifacts")
 
     def test_source_seed_expands_downstream_and_invalidates_owned_outputs(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -363,7 +363,7 @@ class ImpactPlanningTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            empty = load_contract(empty_config, "game-2", root / "bin")
+            empty = load_contract(empty_config, "game-2", root / "bin", artifactdir=root / "bin_artifacts")
             rules = parse_impact_registry(
                 {"schema_version": 1, "rules": [{"paths": ["shared.py"], "scope": "all", "reason": "shared"}]}
             )
@@ -630,6 +630,7 @@ class BoundPlanValidationTests(unittest.TestCase):
                     tag="game-1",
                     merge_ref=merge_sha,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                 )
 
             self._write_plan(plan_path, merge_sha=merge_sha, digests=digests)
@@ -647,6 +648,7 @@ class BoundPlanValidationTests(unittest.TestCase):
                     tag="game-1",
                     merge_ref=merge_sha,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                 )
 
             self._write_plan(plan_path, merge_sha=merge_sha, digests=digests)
@@ -657,6 +659,7 @@ class BoundPlanValidationTests(unittest.TestCase):
                     tag="game-1",
                     merge_ref=base_sha,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                 )
 
             self._write_plan(plan_path, merge_sha=merge_sha, digests=digests, merge_bin_commit="f" * 40)
@@ -667,6 +670,7 @@ class BoundPlanValidationTests(unittest.TestCase):
                     tag="game-1",
                     merge_ref=merge_sha,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                 )
 
             for key in (
@@ -688,6 +692,7 @@ class BoundPlanValidationTests(unittest.TestCase):
                             tag="game-1",
                             merge_ref=merge_sha,
                             bindir=root / "bin",
+                            artifactdir=root / "bin_artifacts",
                         )
 
 
@@ -719,22 +724,34 @@ class MaterializationTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            game_root = root / "base-bin" / "game-1" / "engine"
-            write_pe32(game_root / "hw.dll")
-            (game_root / "One.windows.yaml").write_text("func_name: One\nfunc_va: '0x10'\n", encoding="utf-8")
-            (game_root / "Two.windows.yaml").write_text("func_name: Two\nfunc_va: '0x20'\n", encoding="utf-8")
+            binary_module_dir = root / "base-bin" / "game-1" / "engine"
+            artifact_module_dir = root / "base-artifacts" / "game-1" / "engine"
+            write_pe32(binary_module_dir / "hw.dll")
+            artifact_module_dir.mkdir(parents=True)
+            (artifact_module_dir / "One.windows.yaml").write_text(
+                "func_name: One\nfunc_va: '0x10'\n", encoding="utf-8"
+            )
+            (artifact_module_dir / "Two.windows.yaml").write_text(
+                "func_name: Two\nfunc_va: '0x20'\n", encoding="utf-8"
+            )
             snapshot = root / "base.yaml"
-            pack_snapshot("game-1", root / "base-bin", config, snapshot)
-            base = load_snapshot_context(snapshot, config, "game-1", root / "base-bin")
-            merge_contract = load_contract(config, "game-1", root / "merge-bin")
-            stale = root / "merge-bin" / "game-1" / "engine" / "Stale.yaml"
+            pack_snapshot(
+                "game-1", root / "base-bin", config, snapshot, artifactdir=root / "base-artifacts"
+            )
+            base = load_snapshot_context(
+                snapshot, config, "game-1", root / "base-bin", artifactdir=root / "base-artifacts"
+            )
+            merge_contract = load_contract(
+                config, "game-1", root / "merge-bin", artifactdir=root / "merge-artifacts"
+            )
+            stale = root / "merge-artifacts" / "game-1" / "engine" / "Stale.yaml"
             stale.parent.mkdir(parents=True)
             stale.write_text("stale: true\n", encoding="utf-8")
 
             restored = materialize_baseline(
                 base=base,
                 merge_contract=merge_contract,
-                bindir=root / "merge-bin",
+                artifactdir=root / "merge-artifacts",
                 invalidated_paths=("engine/Two.windows.yaml",),
                 mode="incremental",
             )
@@ -748,7 +765,7 @@ class MaterializationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             config = AnalysisSourceIndexTests()._contract(root, "game-1")
-            yaml_path = config.game_root / "engine" / "Demo.windows.yaml"
+            yaml_path = config.artifact_game_root / "engine" / "Demo.windows.yaml"
             yaml_path.parent.mkdir(parents=True)
             yaml_path.write_text("value: old\n", encoding="utf-8")
             self.assertEqual(
@@ -756,7 +773,7 @@ class MaterializationTests(unittest.TestCase):
                 materialize_baseline(
                     base=None,
                     merge_contract=config,
-                    bindir=root / "bin",
+                            artifactdir=root / "bin_artifacts",
                     invalidated_paths=(),
                     mode="full-rebuild",
                 ),
@@ -771,7 +788,7 @@ class MaterializationTests(unittest.TestCase):
                 materialize_baseline(
                     base=None,
                     merge_contract=contract,
-                    bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                     invalidated_paths=("../escape.yaml",),
                     mode="full-rebuild",
                 )

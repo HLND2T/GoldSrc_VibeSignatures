@@ -57,11 +57,6 @@ class SnapshotContract:
     def formal_paths(self) -> frozenset[str]:
         return self.required_paths | self.optional_paths
 
-    @property
-    def game_root(self) -> Path:
-        return self.artifact_game_root
-
-
 @dataclass(frozen=True)
 class SnapshotContext:
     document: dict

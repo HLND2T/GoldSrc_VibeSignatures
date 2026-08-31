@@ -71,13 +71,18 @@ def _gamever_key(gamever: str) -> tuple[str, int]:
     return family, int(buildnum)
 
 
-def prepare_oldgamever_baseline(*, repo_root: str | Path, gamever: str, bindir: str | Path) -> dict:
+def prepare_oldgamever_baseline(
+    *, repo_root: str | Path, gamever: str, bindir: str | Path, artifactdir: str | Path
+) -> dict:
     """Select the highest older same-family snapshot as an analysis baseline."""
     repo_root = Path(repo_root).resolve()
     gamever = require_gamever(gamever)
     bindir = Path(bindir)
     if not bindir.is_absolute():
         bindir = repo_root / bindir
+    artifactdir = Path(artifactdir)
+    if not artifactdir.is_absolute():
+        artifactdir = repo_root / artifactdir
 
     current = _gamever_key(gamever)
     snapshot_root = repo_root / "gamesymbols"
@@ -96,7 +101,14 @@ def prepare_oldgamever_baseline(*, repo_root: str | Path, gamever: str, bindir: 
     if not config.is_file():
         raise ReleaseWorkflowError(f"old-version analysis config is missing: {config}")
     try:
-        restore_snapshot(oldgamever, str(bindir), str(config), str(snapshot), replace=True)
+        restore_snapshot(
+            oldgamever,
+            str(bindir),
+            str(config),
+            str(snapshot),
+            artifactdir=str(artifactdir),
+            replace=True,
+        )
     except (SnapshotError, OSError, UnicodeError) as exc:
         raise ReleaseWorkflowError(f"unable to restore trusted snapshot for {oldgamever}: {exc}") from exc
     return {
@@ -115,7 +127,15 @@ def _source_tree(repo: GitRepository, ref: str) -> dict[str, bytes]:
     return {path: value for path in paths if (value := repo.read(ref, path)) is not None}
 
 
-def invalidate_republish(*, repo_root: Path, gamever: str, version: str, source_sha: str, bindir: Path) -> int:
+def invalidate_republish(
+    *,
+    repo_root: Path,
+    gamever: str,
+    version: str,
+    source_sha: str,
+    bindir: Path,
+    artifactdir: Path,
+) -> int:
     """Invalidate affected analysis outputs so a republish re-analyzes only what changed."""
     repo_root = Path(repo_root).resolve()
     gamever = require_gamever(gamever)
@@ -124,6 +144,9 @@ def invalidate_republish(*, repo_root: Path, gamever: str, version: str, source_
     bindir = Path(bindir)
     if not bindir.is_absolute():
         bindir = repo_root / bindir
+    artifactdir = Path(artifactdir)
+    if not artifactdir.is_absolute():
+        artifactdir = repo_root / artifactdir
 
     manifest = load_tracked_manifest(repo_root / "release-manifests" / f"{version}.json")
     entry = next((item for item in manifest["gamevers"] if item["gamever"] == gamever), None)
@@ -141,14 +164,16 @@ def invalidate_republish(*, repo_root: Path, gamever: str, version: str, source_
         raise ReleaseWorkflowError("previous accepted SOURCE_SHA is not an ancestor of the rebuild SOURCE_SHA")
 
     changes = repo.changed_paths(base_sha, source_sha)
-    head_contract = load_contract(repo_root / "configs" / f"{gamever}.yaml", gamever, bindir)
+    head_contract = load_contract(
+        repo_root / "configs" / f"{gamever}.yaml", gamever, bindir, artifactdir=artifactdir
+    )
     base_config_raw = repo.read(base_sha, f"configs/{gamever}.yaml")
     if base_config_raw is None:
         raise ReleaseWorkflowError(f"base analysis config is missing for {gamever} at {base_sha}")
     with tempfile.TemporaryDirectory(prefix="release-base-") as temporary:
         base_config = Path(temporary) / f"{gamever}.yaml"
         base_config.write_bytes(base_config_raw)
-        base_contract = load_contract(base_config, gamever, bindir)
+        base_contract = load_contract(base_config, gamever, bindir, artifactdir=artifactdir)
         plan = build_invalidation_plan(
             base_contract,
             head_contract,
@@ -160,8 +185,8 @@ def invalidate_republish(*, repo_root: Path, gamever: str, version: str, source_
             head_sources=build_source_index(head_contract, _source_tree(repo, source_sha)),
         )
 
-    game_root = bindir / gamever
-    ensure_real_tree(bindir, game_root)
+    game_root = artifactdir / gamever
+    ensure_real_tree(artifactdir, game_root)
     deleted = 0
     for key in sorted(plan.paths):
         target = path_from_key(game_root, key)

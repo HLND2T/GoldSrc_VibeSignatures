@@ -179,7 +179,7 @@ class ReferenceYamlPureHelperTests(unittest.TestCase):
     def test_load_existing_func_va_and_symbol_aliases(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
-            artifact = root / "bin" / "hl-10210" / "engine" / "R_RenderView.windows.yaml"
+            artifact = root / "bin_artifacts" / "hl-10210" / "engine" / "R_RenderView.windows.yaml"
             artifact.parent.mkdir(parents=True)
             artifact.write_text("func_va: '0x10244610'\n", encoding="utf-8")
             self.assertEqual(
@@ -351,7 +351,7 @@ class ReferenceYamlMcpTests(unittest.IsolatedAsyncioTestCase):
     async def test_resolve_func_va_prefers_existing_artifact(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
-            artifact = root / "bin" / "hl-10210" / "engine" / "R_RenderView.windows.yaml"
+            artifact = root / "bin_artifacts" / "hl-10210" / "engine" / "R_RenderView.windows.yaml"
             artifact.parent.mkdir(parents=True)
             artifact.write_text("func_va: '0x10244610'\n", encoding="utf-8")
             session = SimpleNamespace(call_tool=AsyncMock())

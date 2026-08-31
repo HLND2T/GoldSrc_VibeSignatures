@@ -16,6 +16,7 @@ def _parser():
         command = commands.add_parser(name)
         command.add_argument("-gamever", required=True)
         command.add_argument("-bindir", default="bin")
+        command.add_argument("-artifactdir", default="bin_artifacts")
         command.add_argument("-config", default=None)
         command.add_argument("-snapshot", default=None)
         if name == "restore":
@@ -29,6 +30,7 @@ def main(argv=None):
         kwargs = {
             "game_version": args.gamever,
             "bindir": args.bindir,
+            "artifactdir": args.artifactdir,
             "config_path": args.config,
             "snapshot_path": args.snapshot,
         }

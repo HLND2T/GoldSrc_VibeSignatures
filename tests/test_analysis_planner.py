@@ -374,6 +374,8 @@ class CliContractTests(unittest.TestCase):
     def test_cs2_style_defaults_use_gsvibe_namespace(self):
         args = self.parse_args(["-gamever", "cstrike-10210"])
         self.assertEqual("cstrike-10210", args.gamever)
+        self.assertEqual("bin", args.bindir)
+        self.assertEqual("bin_artifacts", args.artifactdir)
         self.assertEqual(["windows", "linux"], args.platforms)
         self.assertIsNone(args.module_filter)
         self.assertEqual("claude", args.agent)
@@ -439,6 +441,10 @@ class CliContractTests(unittest.TestCase):
                 "cstrike-10121",
                 "-platform",
                 "linux",
+                "-bindir",
+                "binary-root",
+                "-artifactdir",
+                "artifact-root",
                 "-agent",
                 "codex",
                 "-agent_model",
@@ -485,6 +491,8 @@ class CliContractTests(unittest.TestCase):
         )
         self.assertEqual("cstrike-10121", args.gamever)
         self.assertEqual(["linux"], args.platforms)
+        self.assertEqual("binary-root", args.bindir)
+        self.assertEqual("artifact-root", args.artifactdir)
         self.assertEqual("codex", args.agent)
         self.assertEqual("gpt-5", args.agent_model)
         self.assertEqual("cli-model", args.llm_model)
@@ -963,8 +971,8 @@ class DagTests(unittest.TestCase):
             result = run_analysis_pipeline(
                 node,
                 binary_path=binary,
-                game_root=root,
-                old_game_root=None,
+                artifact_root=root,
+                old_artifact_root=None,
                 agent="codex",
                 preprocessor_runner=preprocessor,
                 agent_skill_runner=lambda *_args, **_kwargs: calls.append("agent"),
@@ -1012,8 +1020,8 @@ class DagTests(unittest.TestCase):
             result = run_analysis_pipeline(
                 node,
                 binary_path=binary,
-                game_root=root,
-                old_game_root=old_root,
+                artifact_root=root,
+                old_artifact_root=old_root,
                 agent="codex",
                 agent_model="gpt-5",
                 debug=True,
@@ -1052,8 +1060,8 @@ class DagTests(unittest.TestCase):
             result = run_analysis_pipeline(
                 node,
                 binary_path=binary,
-                game_root=root,
-                old_game_root=None,
+                artifact_root=root,
+                old_artifact_root=None,
                 agent="codex",
                 llm_config={
                     "model": "test-model",
@@ -1095,8 +1103,8 @@ class DagTests(unittest.TestCase):
                 run_analysis_pipeline(
                     node,
                     binary_path=binary,
-                    game_root=root,
-                    old_game_root=None,
+                    artifact_root=root,
+                    old_artifact_root=None,
                     agent="codex",
                 )
             self.assertEqual("missing_input", missing.exception.reason)
@@ -1106,8 +1114,8 @@ class DagTests(unittest.TestCase):
                 run_analysis_pipeline(
                     node,
                     binary_path=binary,
-                    game_root=root,
-                    old_game_root=None,
+                    artifact_root=root,
+                    old_artifact_root=None,
                     agent="codex",
                 )
             self.assertEqual("invalid_input", invalid.exception.reason)
@@ -1133,8 +1141,8 @@ class DagTests(unittest.TestCase):
                 run_analysis_pipeline(
                     node,
                     binary_path=binary,
-                    game_root=root,
-                    old_game_root=None,
+                    artifact_root=root,
+                    old_artifact_root=None,
                     agent="codex",
                     preprocessor_runner=preprocessor,
                 )
@@ -1161,8 +1169,8 @@ class DagTests(unittest.TestCase):
             result = run_analysis_pipeline(
                 node,
                 binary_path=binary,
-                game_root=root,
-                old_game_root=None,
+                artifact_root=root,
+                old_artifact_root=None,
                 agent="codex",
                 preprocessor_runner=preprocessor,
                 agent_skill_runner=agent,
@@ -1198,8 +1206,8 @@ class DagTests(unittest.TestCase):
             result = run_analysis_pipeline(
                 node,
                 binary_path=binary,
-                game_root=root,
-                old_game_root=None,
+                artifact_root=root,
+                old_artifact_root=None,
                 agent="codex",
                 preprocessor_runner=preprocessor,
                 agent_skill_runner=agent,
@@ -1234,8 +1242,8 @@ class DagTests(unittest.TestCase):
                 result = run_analysis_pipeline(
                     node,
                     binary_path=binary,
-                    game_root=root,
-                    old_game_root=None,
+                    artifact_root=root,
+                    old_artifact_root=None,
                     agent="codex",
                     reporting=reporting,
                     task_id="stage-0000-engine-windows/find",
@@ -1276,8 +1284,8 @@ class DagTests(unittest.TestCase):
                     result = run_analysis_pipeline(
                         node,
                         binary_path=binary,
-                        game_root=root,
-                        old_game_root=None,
+                        artifact_root=root,
+                        old_artifact_root=None,
                         agent="codex",
                         preprocessor_runner=lambda status=status, **_kwargs: status,
                         agent_skill_runner=agent,
@@ -1304,8 +1312,8 @@ class DagTests(unittest.TestCase):
             result = run_analysis_pipeline(
                 node,
                 binary_path=binary,
-                game_root=root,
-                old_game_root=None,
+                artifact_root=root,
+                old_artifact_root=None,
                 agent="codex",
                 skip_preprocessors=True,
                 agent_skill_runner=agent,
@@ -1328,8 +1336,8 @@ class DagTests(unittest.TestCase):
             result = run_analysis_pipeline(
                 node,
                 binary_path=binary,
-                game_root=root,
-                old_game_root=None,
+                artifact_root=root,
+                old_artifact_root=None,
                 agent="codex",
                 preprocessor_runner=lambda **_kwargs: PREPROCESS_STATUS_NO_SCRIPT,
                 agent_skill_runner=lambda *_args, **_kwargs: True,
@@ -1357,8 +1365,8 @@ class DagTests(unittest.TestCase):
                 run_analysis_pipeline(
                     node,
                     binary_path=binary,
-                    game_root=root,
-                    old_game_root=None,
+                    artifact_root=root,
+                    old_artifact_root=None,
                     agent="codex",
                     skip_preprocessors=True,
                     agent_skill_runner=agent,
@@ -1520,8 +1528,8 @@ class DagTests(unittest.TestCase):
             result = run_analysis_pipeline(
                 node,
                 binary_path=binary,
-                game_root=root,
-                old_game_root=None,
+                artifact_root=root,
+                old_artifact_root=None,
                 agent="codex",
                 preprocessor_runner=lambda **_kwargs: PREPROCESS_STATUS_NO_SCRIPT,
                 ensure_mcp_ready=ensure_ready,
@@ -1558,8 +1566,8 @@ class DagTests(unittest.TestCase):
             result = run_analysis_pipeline(
                 node,
                 binary_path=binary,
-                game_root=root,
-                old_game_root=None,
+                artifact_root=root,
+                old_artifact_root=None,
                 agent="codex",
                 mcp_runtime=runtime,
                 skip_preprocessors=True,
@@ -1597,8 +1605,8 @@ class DagTests(unittest.TestCase):
             result = run_analysis_pipeline(
                 node,
                 binary_path=binary,
-                game_root=root,
-                old_game_root=None,
+                artifact_root=root,
+                old_artifact_root=None,
                 agent="codex",
                 preprocessor_runner=lambda **_kwargs: PREPROCESS_STATUS_NO_SCRIPT,
                 ensure_mcp_ready=ensure_ready,
@@ -1644,6 +1652,7 @@ class DagTests(unittest.TestCase):
                     gamever="game-1",
                     config_path=config,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                     platforms=["windows"],
                     skip_error=True,
                     summary=summary,
@@ -1688,6 +1697,7 @@ class DagTests(unittest.TestCase):
                     gamever="game-1",
                     config_path=config,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                     platforms=["windows"],
                     summary=summary,
                 )
@@ -1713,6 +1723,7 @@ class DagTests(unittest.TestCase):
                     gamever="game-1",
                     config_path=config,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                     platforms=["windows"],
                     modules_filter=["missing"],
                     reporter=reporter,
@@ -1740,7 +1751,8 @@ class DagTests(unittest.TestCase):
                 encoding="utf-8",
             )
             write_pe32(root / "bin" / "game-1" / "engine" / "hw.dll")
-            output = root / "bin" / "game-1" / "engine" / "result.yaml"
+            output = root / "bin_artifacts" / "game-1" / "engine" / "result.yaml"
+            output.parent.mkdir(parents=True)
             output.write_text("ok: true\n", encoding="utf-8")
             reporter = RecordingProcessReporter()
             summary = AnalysisSummary()
@@ -1749,6 +1761,7 @@ class DagTests(unittest.TestCase):
                 gamever="game-1",
                 config_path=config,
                 bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                 platforms=["windows"],
                 reporter=reporter,
                 run_id="scheduled-run",
@@ -1787,6 +1800,7 @@ class DagTests(unittest.TestCase):
                 gamever="game-1",
                 config_path=config,
                 bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                 platforms=["windows"],
                 skip_error=True,
                 reporter=reporter,
@@ -1869,8 +1883,8 @@ class McpLifecycleTests(unittest.TestCase):
                 run_analysis_pipeline(
                     node,
                     binary_path=binary,
-                    game_root=root,
-                    old_game_root=None,
+                    artifact_root=root,
+                    old_artifact_root=None,
                     agent="codex",
                     mcp_runtime=runtime,
                     preprocessor_runner=preprocessor,
@@ -1897,14 +1911,17 @@ class McpLifecycleTests(unittest.TestCase):
                 encoding="utf-8",
             )
             module_root = root / "bin" / "game-1" / "engine"
+            artifact_module_dir = root / "bin_artifacts" / "game-1" / "engine"
             write_pe32(module_root / "hw.dll")
-            (module_root / "result.yaml").write_text("not: [valid\n", encoding="utf-8")
+            artifact_module_dir.mkdir(parents=True)
+            (artifact_module_dir / "result.yaml").write_text("not: [valid\n", encoding="utf-8")
             summary = AnalysisSummary()
             with patch("ida_analyze_bin.IdaMcpLifecycle", side_effect=AssertionError("must not start")):
                 analyze(
                     gamever="game-1",
                     config_path=config,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                     platforms=["windows"],
                     summary=summary,
                 )
@@ -1954,6 +1971,7 @@ class McpLifecycleTests(unittest.TestCase):
                     gamever="game-1",
                     config_path=config,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                     platforms=["windows"],
                     ida_args="quiet",
                     summary=summary,
@@ -1972,13 +1990,20 @@ class McpLifecycleTests(unittest.TestCase):
             lifecycle.ensure_ready.assert_called_once_with()
             self.assertIs(runtime, pipeline.call_args_list[0].kwargs["mcp_runtime"])
             self.assertIs(runtime, pipeline.call_args_list[1].kwargs["mcp_runtime"])
+            self.assertEqual(
+                (root / "bin_artifacts" / "game-1").resolve(),
+                pipeline.call_args_list[0].kwargs["artifact_root"].resolve(),
+            )
+            self.assertIsNone(pipeline.call_args_list[0].kwargs["old_artifact_root"])
             self.assertIs(lifecycle.ensure_ready, pipeline.call_args_list[0].kwargs["ensure_mcp_ready"])
             self.assertEqual(
                 {"TestSymbol": ("TestAlias",)},
                 pipeline.call_args_list[0].kwargs["symbol_aliases"],
             )
             self.assertIn(
-                os.path.normcase(str((binary.parent / "TestSymbol.windows.yaml").resolve())),
+                os.path.normcase(
+                    str((root / "bin_artifacts" / "game-1" / "engine" / "TestSymbol.windows.yaml").resolve())
+                ),
                 pipeline.call_args_list[0].kwargs["artifact_types"],
             )
             self.assertEqual((2, 0, 0), (summary.successful, summary.failed, summary.skipped))
@@ -2018,6 +2043,7 @@ class McpLifecycleTests(unittest.TestCase):
                     gamever="game-1",
                     config_path=config,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                     platforms=["windows"],
                     port=13337,
                     summary=summary,
@@ -2080,6 +2106,7 @@ class McpLifecycleTests(unittest.TestCase):
                     gamever="game-1",
                     config_path=config,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                     platforms=["windows"],
                     selected_node_ids=["engine:windows:selected"],
                     reporter=reporter,
@@ -2142,6 +2169,7 @@ class McpLifecycleTests(unittest.TestCase):
                     gamever="game-1",
                     config_path=config,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                     platforms=["windows"],
                     selected_node_ids=["engine:windows:fails", "client:windows:succeeds"],
                     skip_error=True,
@@ -2198,6 +2226,7 @@ class McpLifecycleTests(unittest.TestCase):
                     gamever="game-1",
                     config_path=config,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                     platforms=["windows"],
                     selected_node_ids=["engine:windows:first", "engine:windows:second"],
                     skip_error=True,
@@ -2257,6 +2286,7 @@ class McpLifecycleTests(unittest.TestCase):
                     gamever="game-1",
                     config_path=config,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                     platforms=["windows"],
                     summary=summary,
                 )
@@ -2307,6 +2337,7 @@ class McpLifecycleTests(unittest.TestCase):
                     gamever="game-1",
                     config_path=config,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                     platforms=["windows"],
                     summary=summary,
                 )

@@ -39,7 +39,14 @@ def empty_snapshot(root: Path):
     config = write_config(root / "config.yaml", both_platforms=False)
     write_pe32(root / "bin" / tag / "engine" / "hw.dll")
     snapshot = root / "snapshot.yaml"
-    pack_snapshot(tag, root / "bin", config, snapshot, last_publish_time="2026-01-02T03:04:05Z")
+    pack_snapshot(
+        tag,
+        root / "bin",
+        config,
+        snapshot,
+        artifactdir=root / "bin_artifacts",
+        last_publish_time="2026-01-02T03:04:05Z",
+    )
     return tag, config, snapshot
 
 

@@ -290,7 +290,7 @@ def build_existing_yaml_path(
     func_name = _safe_path_component(func_name, "func_name")
     if platform not in {"windows", "linux"}:
         raise ReferenceGenerationError(f"unsupported platform: {platform}")
-    return Path(repo_root) / "bin" / gamever / module / f"{func_name}.{platform}.yaml"
+    return Path(repo_root) / "bin_artifacts" / gamever / module / f"{func_name}.{platform}.yaml"
 
 
 def load_existing_func_va(

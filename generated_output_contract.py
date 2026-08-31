@@ -125,6 +125,7 @@ def validate_generated_output_contract(
             context = check_snapshot_contract(
                 gamever,
                 bindir=root / "bin",
+                artifactdir=root / "bin_artifacts",
                 config_path=config,
                 snapshot_path=snapshot,
             )

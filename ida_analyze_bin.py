@@ -98,6 +98,7 @@ load_dotenv()
 PLATFORMS = ("windows", "linux")
 ANALYSIS_STAGES = ("preprocessor", "agent")
 DEFAULT_BIN_DIR = "bin"
+DEFAULT_ARTIFACT_DIR = "bin_artifacts"
 DEFAULT_PLATFORM = "windows,linux"
 DEFAULT_MODULES = "*"
 DEFAULT_AGENT = "claude"
@@ -1450,8 +1451,8 @@ def run_analysis_pipeline(
     node,
     *,
     binary_path: Path,
-    game_root: Path,
-    old_game_root: Path | None,
+    artifact_root: Path,
+    old_artifact_root: Path | None,
     agent: str,
     reporting: AnalysisReporting | None = None,
     task_id: str | None = None,
@@ -1468,20 +1469,20 @@ def run_analysis_pipeline(
     force_execution: bool = False,
 ) -> PipelineResult:
     binary_path = Path(binary_path).resolve()
-    game_root = Path(game_root).resolve()
-    module_dir = (game_root / node.module).resolve()
-    required, optional = _outputs(node, game_root)
+    artifact_root = Path(artifact_root).resolve()
+    module_dir = (artifact_root / node.module).resolve()
+    required, optional = _outputs(node, artifact_root)
     required = [path.resolve() for path in required]
     optional = [path.resolve() for path in optional]
-    existing_reason = _node_existing_output_reason(node, game_root)
+    existing_reason = _node_existing_output_reason(node, artifact_root)
     if not force_execution and existing_reason is not None:
         return PipelineResult("skipped", "existing", existing_reason.value)
 
     if reporting is not None and task_id is not None:
         reporting.emit_task_status(task_id, TaskStatus.RUNNING, ProcessPhase.VALIDATING_INPUTS)
 
-    required_inputs = [(game_root / Path(*PurePosixPath(name).parts)).resolve() for name in node.required_inputs]
-    optional_inputs = [(game_root / Path(*PurePosixPath(name).parts)).resolve() for name in node.optional_inputs]
+    required_inputs = [(artifact_root / Path(*PurePosixPath(name).parts)).resolve() for name in node.required_inputs]
+    optional_inputs = [(artifact_root / Path(*PurePosixPath(name).parts)).resolve() for name in node.optional_inputs]
     overlap = sorted(
         {_artifact_path_key(path) for path in required_inputs} & {_artifact_path_key(path) for path in optional_inputs}
     )
@@ -1528,10 +1529,11 @@ def run_analysis_pipeline(
 
     expected_outputs = [str(path) for path in (*required, *optional)]
     old_yaml_map = None
-    if old_game_root is not None:
-        old_root = Path(old_game_root).resolve()
+    if old_artifact_root is not None:
+        old_root = Path(old_artifact_root).resolve()
         old_yaml_map = {
-            path: str((old_root / Path(path).resolve().relative_to(game_root)).resolve()) for path in expected_outputs
+            path: str((old_root / Path(path).resolve().relative_to(artifact_root)).resolve())
+            for path in expected_outputs
         }
 
     preprocess_status = PREPROCESS_STATUS_NO_SCRIPT
@@ -1771,8 +1773,8 @@ def _execute_analysis_node(
         result = run_analysis_pipeline(
             node,
             binary_path=binary,
-            game_root=root,
-            old_game_root=old_root,
+            artifact_root=root,
+            old_artifact_root=old_root,
             agent=agent,
             agent_model=agent_model,
             llm_config=llm_config,
@@ -2005,6 +2007,7 @@ def analyze(
     gamever: str,
     config_path: str | Path,
     bindir: str | Path = DEFAULT_BIN_DIR,
+    artifactdir: str | Path = DEFAULT_ARTIFACT_DIR,
     platforms=PLATFORMS,
     oldgamever: str | None = None,
     modules_filter=None,
@@ -2042,7 +2045,7 @@ def analyze(
         plan = _build_execution_plan(
             modules,
             platforms=platforms,
-            bin_dir=bindir,
+            bin_dir=artifactdir,
             tag=tag,
             default_max_retries=max_retries,
             declared_modules=[module["name"] for module in all_modules],
@@ -2055,8 +2058,8 @@ def analyze(
             bin_dir=bindir,
             selected_node_ids=None if selected_node_ids is None else [node.id for node in selected_nodes],
         )
-        root = Path(bindir) / tag
-        old_root = Path(bindir) / oldgamever if oldgamever else None
+        root = Path(artifactdir) / tag
+        old_root = Path(artifactdir) / oldgamever if oldgamever else None
         artifact_types = _artifact_type_map(all_modules, root)
         validated_binaries: dict[tuple[str, str], Path] = {}
         module_map = {module["name"]: module for module in modules}
@@ -2249,6 +2252,11 @@ def _parser() -> argparse.ArgumentParser:
         help="Analysis config path; defaults to configs/<GAMEVER>.yaml",
     )
     parser.add_argument("-bindir", default=DEFAULT_BIN_DIR, help="Directory containing copied binaries")
+    parser.add_argument(
+        "-artifactdir",
+        default=DEFAULT_ARTIFACT_DIR,
+        help="Directory containing per-symbol analysis YAML artifacts",
+    )
     parser.add_argument(
         "-gamever",
         default=None,
@@ -2487,6 +2495,7 @@ def _llm_config_from_args(args) -> dict:
 def _print_main_configuration(args) -> None:
     print(f"Config file: {args.configyaml}")
     print(f"Binary directory: {args.bindir}")
+    print(f"Artifact directory: {args.artifactdir}")
     print(f"Game version: {args.gamever}")
     print(f"Old game version: {args.oldgamever or '(disabled)'}")
     print(f"Platforms: {', '.join(args.platforms)}")
@@ -2538,6 +2547,7 @@ def _run_single_tag(gamever: str, args, summary: AnalysisSummary | None = None) 
             oldgamever=args.oldgamever,
             config_path=args.configyaml,
             bindir=args.bindir,
+            artifactdir=args.artifactdir,
             platforms=args.platforms,
             modules_filter=args.module_filter,
             skill_filter=args.skill,

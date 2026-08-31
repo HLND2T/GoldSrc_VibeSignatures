@@ -31,13 +31,26 @@ def metadata_fixture(root: Path, *, alias=None, artifact=None):
     if artifact is not None:
         symbol["artifact"] = artifact
     config = write_config(root / "config.yaml", skill=skill, symbols=[symbol])
-    game_root = root / "bin" / tag / "engine"
-    write_pe32(game_root / "hw.dll")
-    write_elf32(game_root / "hw.so")
-    (game_root / "symbol.windows.yaml").write_text("func_name: symbol\nfunc_va: '0x10'\n", encoding="utf-8")
-    (game_root / "symbol.linux.yaml").write_text("func_name: symbol\nfunc_va: '0x20'\n", encoding="utf-8")
+    binary_module_dir = root / "bin" / tag / "engine"
+    artifact_module_dir = root / "bin_artifacts" / tag / "engine"
+    write_pe32(binary_module_dir / "hw.dll")
+    write_elf32(binary_module_dir / "hw.so")
+    artifact_module_dir.mkdir(parents=True)
+    (artifact_module_dir / "symbol.windows.yaml").write_text(
+        "func_name: symbol\nfunc_va: '0x10'\n", encoding="utf-8"
+    )
+    (artifact_module_dir / "symbol.linux.yaml").write_text(
+        "func_name: symbol\nfunc_va: '0x20'\n", encoding="utf-8"
+    )
     snapshot = root / f"{tag}.yaml"
-    pack_snapshot(tag, root / "bin", config, snapshot, last_publish_time="2026-01-02T03:04:05Z")
+    pack_snapshot(
+        tag,
+        root / "bin",
+        config,
+        snapshot,
+        artifactdir=root / "bin_artifacts",
+        last_publish_time="2026-01-02T03:04:05Z",
+    )
     return tag, config, snapshot
 
 
