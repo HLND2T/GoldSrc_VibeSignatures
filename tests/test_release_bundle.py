@@ -173,6 +173,19 @@ class ReleaseBundleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             repo, _, _ = self.fixture(root)
+            write_config(
+                repo / "configs/game-1.yaml",
+                skill={"name": "find", "expected_output": ["Demo.windows.yaml", "build_number.windows.yaml"]},
+                symbols=[
+                    {"name": "Demo", "category": "func", "platform": "windows"},
+                    {"name": "build_number", "category": "func", "platform": "windows"},
+                ],
+                both_platforms=False,
+            )
+            lowercase_artifact = repo / "bin_artifacts/game-1/engine/build_number.windows.yaml"
+            lowercase_artifact.write_bytes(
+                canonical_symbol_yaml_bytes({"func_name": "build_number", "func_va": "0x20"})
+            )
             (repo / "configs/config.yaml").write_text(
                 "gamevers:\n  - game-1\n  - empty-1\n",
                 encoding="utf-8",
@@ -182,7 +195,7 @@ class ReleaseBundleTests(unittest.TestCase):
                 symbols=[],
                 both_platforms=False,
             )
-            subprocess.run(["git", "-C", str(repo), "add", "configs"], check=True)
+            subprocess.run(["git", "-C", str(repo), "add", "configs", "bin_artifacts"], check=True)
             subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "empty gamever"], check=True)
 
             rebuilt = root / "rebuilt"

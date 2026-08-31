@@ -73,13 +73,18 @@ def reject_reparse_points(root: str | Path) -> None:
 def file_inventory(root: str | Path) -> list[dict]:
     root = Path(root)
     reject_reparse_points(root)
+    files = [
+        (normalized_relative_path(path.relative_to(root).as_posix()), path)
+        for path in root.rglob("*")
+        if path.is_file()
+    ]
     return [
         {
-            "path": normalized_relative_path(path.relative_to(root).as_posix()),
+            "path": relative,
             "size": path.stat().st_size,
             "sha256": sha256_file(path),
         }
-        for path in sorted(item for item in root.rglob("*") if item.is_file())
+        for relative, path in sorted(files, key=lambda item: item[0])
     ]
 
 
