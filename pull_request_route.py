@@ -9,7 +9,7 @@ OUTPUT_BRANCH_PREFIX = "gamesymbols/build/"
 RELEASE_OWNED_PATH_PREFIXES = ("gamesymbols/", "gamedata/", "release-manifests/")
 # One-time trust bridge for the reviewed cutover PR. The cutover removes this
 # legacy routing module, so the exception expires when that exact head merges.
-BIN_ARTIFACT_CUTOVER_HEAD_SHA = "da2c16f7d4f29cf517ded4e19c5b33f8d45db7db"
+BIN_ARTIFACT_CUTOVER_HEAD_SHA = "a1676fcb60a7d4803cad1ffe98a893c20d293d3e"
 _OUTPUT_BRANCH_RE = re.compile(
     r"gamesymbols/build/(?P<tag>[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+)/"
     r"(?P<build_id>[a-z0-9]+(?:-[a-z0-9]+)*)\Z"
