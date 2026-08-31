@@ -267,8 +267,18 @@ def compare_repository_artifact_root(
     )
     for expected_inventory, actual_inventory in zip(expected.gamevers, actual, strict=True):
         if expected_inventory.entries != actual_inventory.entries:
+            expected_by_path = {entry.path: entry for entry in expected_inventory.entries}
+            actual_by_path = {entry.path: entry for entry in actual_inventory.entries}
+            missing = sorted(expected_by_path.keys() - actual_by_path.keys())
+            extra = sorted(actual_by_path.keys() - expected_by_path.keys())
+            changed = sorted(
+                path
+                for path in expected_by_path.keys() & actual_by_path.keys()
+                if expected_by_path[path] != actual_by_path[path]
+            )
             raise BinArtifactContractError(
-                f"Rebuilt artifact inventory differs from Git truth for {expected_inventory.game_version}"
+                f"Rebuilt artifact inventory differs from Git truth for {expected_inventory.game_version}: "
+                f"missing={missing!r}; extra={extra!r}; changed={changed!r}"
             )
     expected_directories = {inventory.game_version for inventory in actual if inventory.entries}
     actual_directories = (
