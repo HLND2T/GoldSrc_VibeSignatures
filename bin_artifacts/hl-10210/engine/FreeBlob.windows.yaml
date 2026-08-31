@@ -1,5 +1,5 @@
 func_name: FreeBlob
-func_rva: '0x1d8390'
-func_sig: 55 8B EC 8B 45 ?? FF 30 FF 15 ?? ?? ?? ?? 5D C3
-func_size: '0x10'
 func_va: '0x101d8390'
+func_rva: '0x1d8390'
+func_size: '0x10'
+func_sig: 55 8B EC 8B 45 ?? FF 30 FF 15 ?? ?? ?? ?? 5D C3

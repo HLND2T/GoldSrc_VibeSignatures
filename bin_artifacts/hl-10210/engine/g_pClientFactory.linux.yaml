@@ -1,8 +1,8 @@
-gv_inst_disp: '0x2'
-gv_inst_length: '0x6'
-gv_inst_offset: '0x110'
 gv_name: g_pClientFactory
+gv_va: '0xf78028'
 gv_rva: '0xf78028'
 gv_sig: 55 57 56 53 89 C3 81 EC ?? ?? ?? ?? 65 A1 ?? ?? ?? ?? 89 84 24 ?? ?? ?? ?? 31 C0 31 C0 8B 2A 8B 7A ?? 89 44 24 ??
 gv_sig_va: '0x1c1cf0'
-gv_va: '0xf78028'
+gv_inst_offset: '0x110'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

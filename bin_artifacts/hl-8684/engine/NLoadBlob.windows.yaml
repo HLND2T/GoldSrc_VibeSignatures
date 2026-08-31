@@ -1,5 +1,5 @@
 func_name: NLoadBlob
-func_rva: '0x61dd0'
-func_sig: 55 8B EC 51 53 8B 5D ?? 56 8B 75 ?? 57 B8 44 00 00 00 8D 7B ?? 3B F0 C7 45 ?? ?? ?? ?? ?? 89 7D ??
-func_size: '0xd7'
 func_va: '0x1d61dd0'
+func_rva: '0x61dd0'
+func_size: '0xd7'
+func_sig: 55 8B EC 51 53 8B 5D ?? 56 8B 75 ?? 57 B8 44 00 00 00 8D 7B ?? 3B F0 C7 45 ?? ?? ?? ?? ?? 89 7D ??
