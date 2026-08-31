@@ -8,9 +8,14 @@ on:
         required: true
         type: string
       source_sha:
-        description: Full source SHA reachable from the default branch (defaults to default branch HEAD)
+        description: Full source SHA; publish requires default-branch ancestry, dry run requires the dispatch commit
         required: false
         type: string
+      publish_release:
+        description: Publish the verified bundle; disable only for a non-publishing verification run
+        required: false
+        default: true
+        type: boolean
 permissions:
   actions: read
   contents: read
@@ -47,6 +52,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
           REQUESTED_SOURCE_SHA: ${{ inputs.source_sha }}
+          PUBLISH_RELEASE: ${{ inputs.publish_release }}
         run: |
           set -euo pipefail
           git fetch --no-tags origin "${{ github.event.repository.default_branch }}"
@@ -54,7 +60,11 @@ jobs:
           source_sha="${REQUESTED_SOURCE_SHA:-$(git rev-parse "$default_ref")}"
           uv run python -c "from release_workflow_lib.manifests import require_sha, require_version; require_version('$VERSION'); require_sha('$source_sha', 'SOURCE_SHA')"
           git cat-file -e "$source_sha^{commit}"
-          git merge-base --is-ancestor "$source_sha" "$default_ref"
+          if [[ "$PUBLISH_RELEASE" == "true" ]]; then
+            git merge-base --is-ancestor "$source_sha" "$default_ref"
+          else
+            test "$source_sha" = "${{ github.sha }}"
+          fi
           git ls-tree "$source_sha" -- bin | grep '^160000 commit '
           uv run python release_publish.py preflight --repository "${{ github.repository }}" \
             --version "$VERSION" --source-sha "$source_sha" \
@@ -297,6 +307,7 @@ jobs:
           enable-cache: true
       - run: uv sync --locked
       - name: Verify exact source remains on the default branch
+        if: inputs.publish_release
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${{ needs.preflight.outputs.source_sha }}"
@@ -321,6 +332,7 @@ jobs:
           retention-days: 7
   publish-release:
     needs: [preflight, verify-release-bundle]
+    if: inputs.publish_release
     runs-on: ubuntu-latest
     environment: release
     permissions:
