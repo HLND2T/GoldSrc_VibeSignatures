@@ -6,6 +6,7 @@ import json
 import math
 import os
 import re
+import tempfile
 import textwrap
 from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
@@ -44,6 +45,7 @@ FUNC_YAML_ORDER = [
     "vfunc_offset",
     "vfunc_index",
     "vfunc_sig",
+    "vfunc_sig_disp",
     "vfunc_sig_max_match",
     "vfunc_sig_allow_across_function_boundary",
 ]
@@ -273,6 +275,17 @@ def normalize_symbol_artifact(payload: Mapping[str, object], *, category: str | 
     return normalized
 
 
+def _ordered_nested_mappings(value: object) -> object:
+    if isinstance(value, Mapping):
+        return {
+            key: _ordered_nested_mappings(value[key])
+            for key in sorted(value, key=lambda item: (type(item).__module__, type(item).__qualname__, repr(item)))
+        }
+    if isinstance(value, list):
+        return [_ordered_nested_mappings(item) for item in value]
+    return value
+
+
 def _ordered_payload(payload: Mapping[str, object], category: str) -> dict:
     ordered = {}
     for key in CATEGORY_FIELD_ORDER[category]:
@@ -281,10 +294,10 @@ def _ordered_payload(payload: Mapping[str, object], category: str) -> dict:
         if key == "vtable_entries" and isinstance(payload[key], Mapping):
             ordered[key] = dict(sorted((int(index), str(value)) for index, value in payload[key].items()))
         else:
-            ordered[key] = payload[key]
-    for key, value in payload.items():
+            ordered[key] = _ordered_nested_mappings(payload[key])
+    for key in sorted(payload):
         if key not in ordered:
-            ordered[key] = value
+            ordered[key] = _ordered_nested_mappings(payload[key])
     return ordered
 
 
@@ -299,10 +312,38 @@ def canonical_symbol_yaml_bytes(payload: Mapping[str, object], *, category: str 
     ).encode("utf-8")
 
 
+def _atomic_write_bytes(path: Path, data: bytes) -> None:
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix=f".{path.name}.", delete=False) as handle:
+            temporary = Path(handle.name)
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
+
+
+def canonicalize_symbol_yaml_file(
+    path: str | Path,
+    *,
+    category: str,
+) -> bool:
+    target = Path(path)
+    raw = target.read_bytes()
+    canonical = canonical_symbol_yaml_bytes(yaml.safe_load(raw), category=category)
+    if raw == canonical:
+        return False
+    _atomic_write_bytes(target, canonical)
+    return True
+
+
 def write_symbol_yaml(path: str | Path, payload: Mapping[str, object], *, category: str | None = None) -> None:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_bytes(canonical_symbol_yaml_bytes(payload, category=category))
+    _atomic_write_bytes(target, canonical_symbol_yaml_bytes(payload, category=category))
 
 
 def write_func_yaml(path, data):

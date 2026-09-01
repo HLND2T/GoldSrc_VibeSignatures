@@ -58,6 +58,7 @@ from ida_analyze_bin import (
     validate_opened_binary_identity,
 )
 from ida_mcp_session import McpDatabaseBinding
+from ida_analyze_util import canonical_symbol_yaml_bytes
 from ida_skill_preprocessor import (
     PREPROCESS_STATUS_ABSENT_OK,
     PREPROCESS_STATUS_FAILED,
@@ -1383,6 +1384,51 @@ class DagTests(unittest.TestCase):
                     agent_skill_runner=agent,
                 )
             self.assertEqual("agent_output_invalid", raised.exception.reason)
+
+    def test_trusted_pipeline_canonicalizes_preprocessor_and_agent_symbol_outputs(self):
+        signature = " ".join(["AA"] * 64)
+        payload = {"gv_name": "SyntheticGlobal", "gv_sig": signature}
+        noncanonical = f"gv_sig: {signature}\ngv_name: SyntheticGlobal\n"
+
+        for producer in ("preprocessor", "agent"):
+            with self.subTest(producer=producer), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary) / "game-1"
+                binary = root / "engine" / "hw.dll"
+                binary.parent.mkdir(parents=True)
+                binary.write_bytes(b"binary")
+                node = build_execution_plan(
+                    module([skill("find", output=["result.yaml"])]),
+                    platforms=["windows"],
+                    bin_dir=Path(temporary),
+                    tag="game-1",
+                ).nodes[0]
+                output = binary.parent / "result.yaml"
+
+                def write_output(path: str) -> None:
+                    Path(path).write_text(noncanonical, encoding="utf-8")
+
+                def preprocessor(**kwargs):
+                    write_output(kwargs["expected_outputs"][0])
+                    return PREPROCESS_STATUS_SUCCESS
+
+                def agent(_name, **kwargs):
+                    write_output(kwargs["expected_yaml_paths"][0])
+                    return True
+
+                result = run_analysis_pipeline(
+                    node,
+                    binary_path=binary,
+                    artifact_root=root,
+                    old_artifact_root=None,
+                    agent="codex",
+                    skip_preprocessors=producer == "agent",
+                    preprocessor_runner=preprocessor,
+                    agent_skill_runner=agent,
+                    artifact_types={os.path.normcase(os.fspath(output.resolve())): "gv"},
+                )
+
+                self.assertEqual(PipelineResult("succeeded", producer), result)
+                self.assertEqual(canonical_symbol_yaml_bytes(payload, category="gv"), output.read_bytes())
 
     def test_function_artifact_validation_uses_shared_entry_recovery_contract(self):
         with tempfile.TemporaryDirectory() as temporary:

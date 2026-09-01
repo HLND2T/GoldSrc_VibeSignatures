@@ -44,6 +44,7 @@ from binary_format import BinaryFormatError, validate_binary
 from ida_analyze_util import (
     SymbolArtifactError,
     build_runtime_address_inspection_py_eval,
+    canonicalize_symbol_yaml_file,
     normalize_symbol_artifact,
 )
 from ida_database_paths import (
@@ -1443,6 +1444,36 @@ def _validate_artifacts_with_recovery(
             raise PipelineFailure("mcp_unavailable", str(exc)) from exc
 
 
+def _finalize_produced_outputs(
+    paths,
+    *,
+    module_dir: Path,
+    artifact_types: dict[str, str],
+    mcp_runtime: McpRuntime | None,
+    ensure_mcp_ready=None,
+):
+    issues, runtime = _validate_artifacts_with_recovery(
+        paths,
+        module_dir=module_dir,
+        artifact_types=artifact_types,
+        mcp_runtime=mcp_runtime,
+        ensure_mcp_ready=ensure_mcp_ready,
+    )
+    if issues:
+        return issues, runtime
+
+    for raw_path in paths:
+        path = Path(raw_path).resolve()
+        category = artifact_types.get(_artifact_path_key(path))
+        if category is None:
+            continue
+        try:
+            canonicalize_symbol_yaml_file(path, category=category)
+        except (OSError, UnicodeError, TypeError, ValueError, yaml.YAMLError) as exc:
+            issues.append(f"{path}: unable to canonicalize symbol YAML ({exc})")
+    return issues, runtime
+
+
 def _run_preprocessor(**kwargs):
     return asyncio.run(preprocess_single_skill_via_mcp(**kwargs))
 
@@ -1611,7 +1642,7 @@ def run_analysis_pipeline(
             if output_paths:
                 if reporting is not None and task_id is not None:
                     reporting.emit_task_status(task_id, TaskStatus.RUNNING, ProcessPhase.VALIDATING_OUTPUTS)
-                output_issues, runtime = _validate_artifacts_with_recovery(
+                output_issues, runtime = _finalize_produced_outputs(
                     output_paths,
                     module_dir=module_dir,
                     artifact_types=artifact_types,
@@ -1685,7 +1716,7 @@ def run_analysis_pipeline(
     if output_paths:
         if reporting is not None and task_id is not None:
             reporting.emit_task_status(task_id, TaskStatus.RUNNING, ProcessPhase.VALIDATING_OUTPUTS)
-        output_issues, runtime = _validate_artifacts_with_recovery(
+        output_issues, runtime = _finalize_produced_outputs(
             output_paths,
             module_dir=module_dir,
             artifact_types=artifact_types,
