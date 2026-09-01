@@ -38,6 +38,7 @@ GROUP_FILES = {
         "test_release_workflow_guards.py",
         "test_trigger_release_build.py",
         "test_decrypt_blob.py",
+        "test_gamesymbols_json.py",
     ),
     "redis-integration": (
         "test_process_reporter_redis.py",
