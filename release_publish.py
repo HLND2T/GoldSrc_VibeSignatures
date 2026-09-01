@@ -47,17 +47,35 @@ def _gh_json(arguments: list[str], *, allow_not_found: bool = False) -> dict | N
     return value
 
 
+def _gh_paginated_objects(arguments: list[str]) -> tuple[dict, ...]:
+    command = [*arguments, "--paginate", "--slurp"]
+    result = _run(["gh", *command])
+    try:
+        pages = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise ReleasePublishError(f"gh {' '.join(command)} returned invalid JSON") from exc
+    if not isinstance(pages, list) or any(not isinstance(page, list) for page in pages):
+        raise ReleasePublishError(f"gh {' '.join(command)} did not return paginated arrays")
+    values = tuple(value for page in pages for value in page)
+    if any(not isinstance(value, dict) for value in values):
+        raise ReleasePublishError(f"gh {' '.join(command)} returned a non-object entry")
+    return values
+
+
 def remote_state(repository: str, version: str) -> tuple[dict | None, dict | None]:
     version = require_version(version)
     tag = _gh_json(
         ["api", f"repos/{repository}/git/ref/tags/{version}"],
         allow_not_found=True,
     )
-    release = _gh_json(
-        ["api", f"repos/{repository}/releases/tags/{version}"],
-        allow_not_found=True,
+    releases = _gh_paginated_objects(
+        ["api", f"repos/{repository}/releases?per_page=100"],
     )
-    return tag, release
+    matches = tuple(release for release in releases if release.get("tag_name") == version)
+    if len(matches) > 1:
+        release_ids = ", ".join(str(release.get("id", "unknown")) for release in matches)
+        raise ReleasePublishError(f"Multiple Releases exist for tag {version}: {release_ids}")
+    return tag, matches[0] if matches else None
 
 
 def preflight(repository: str, version: str, source_sha: str) -> str:

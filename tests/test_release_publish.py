@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 import tempfile
 import unittest
@@ -105,6 +106,61 @@ class ReleasePublishTests(unittest.TestCase):
             self.assertRaisesRegex(release_publish.ReleasePublishError, "403"),
         ):
             release_publish._gh_json(["api", "endpoint"], allow_not_found=True)
+
+    def test_remote_state_finds_draft_from_paginated_release_inventory(self):
+        tag = {"object": {"type": "commit", "sha": "a" * 40}}
+        draft = {
+            "id": 41,
+            "tag_name": "v20260831a",
+            "draft": True,
+            "body": "draft identity",
+            "assets": [],
+        }
+        other = {"id": 42, "tag_name": "v20260830a", "draft": False}
+        with patch.object(
+            release_publish,
+            "_run",
+            side_effect=[
+                completed([], stdout=json.dumps(tag)),
+                completed([], stdout=json.dumps([[other], [draft]])),
+            ],
+        ) as run:
+            self.assertEqual((tag, draft), release_publish.remote_state("owner/repo", "v20260831a"))
+        self.assertEqual(
+            [
+                ["gh", "api", "repos/owner/repo/git/ref/tags/v20260831a"],
+                [
+                    "gh",
+                    "api",
+                    "repos/owner/repo/releases?per_page=100",
+                    "--paginate",
+                    "--slurp",
+                ],
+            ],
+            [call.args[0] for call in run.call_args_list],
+        )
+
+    def test_remote_state_rejects_duplicate_releases_for_one_tag(self):
+        tag = {"object": {"type": "commit", "sha": "a" * 40}}
+        releases = [
+            {"id": 41, "tag_name": "v20260831a", "draft": True},
+            {"id": 43, "tag_name": "v20260831a", "draft": True},
+        ]
+        with (
+            patch.object(
+                release_publish,
+                "_run",
+                side_effect=[
+                    completed([], stdout=json.dumps(tag)),
+                    completed([], stdout=json.dumps([releases])),
+                ],
+            ),
+            self.assertRaisesRegex(
+                release_publish.ReleasePublishError,
+                r"Multiple Releases exist for tag v20260831a: 41, 43",
+            ),
+        ):
+            release_publish.remote_state("owner/repo", "v20260831a")
 
     def test_release_identity_refuses_different_source(self):
         notes = release_publish._release_identity_notes(

@@ -19,12 +19,17 @@ commit.
 - No tag/Release: create a tag pointing directly to source SHA, then a draft Release.
 - Matching tag and draft: resume the original build identity; existing assets must match exact size/hash.
 - Published Release: exact assets are an idempotent success; missing or different assets fail.
-- Tag mismatch, Release without tag, different draft identity, or overwrite request fail closed.
+- The publisher discovers drafts by exact tag in the paginated Release inventory instead of relying on a get-by-tag
+  endpoint that may return 404 for drafts.
+- Multiple Releases for one tag, tag mismatch, Release without tag, different draft identity, or overwrite request fail
+  closed.
 - Changed content requires a new version. `--clobber`, tag moves, and content-style republish are forbidden.
 
 The draft is the recoverable staging layer. The publisher uploads missing assets without overwrite, re-reads remote asset
 name/size/hash, and publishes only after the complete inventory matches. Preserve the run URL, source/bin SHAs, bundle
-manifest, checksums, and draft URL when diagnosing a failure.
+manifest, checksums, draft URL, and Release ID when diagnosing a failure. If one tag already has duplicate drafts, an
+explicit operator action must reduce them to one matching draft before rerunning; the publisher never selects or deletes
+one automatically.
 
 ## Binary-only accepted cache maintenance
 

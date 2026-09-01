@@ -56,11 +56,15 @@ verify a canonical backup under `accepted-bin/legacy-yaml-backups/<cutover-id>/<
 source inventory. A verified `.incoming` backup and a partial deletion are resumable with the same cutover identity.
 
 ## Recovery Notes
-
-- Trigger signal: a matching draft exists after a failed run, an upload is incomplete, or remote tag/asset identity
-  differs from the verified bundle.
-- Root constraint: never move a tag, overwrite an asset, reuse a version for changed bytes, or treat an Actions Artifact
-  as publication truth.
-- Correct action: rerun the same version/source/build identity to resume a matching draft; otherwise use a new version.
-- Verification: compare tag target, Release manifest identity, complete remote asset names/sizes/hashes, and checksums.
+- Trigger signal: a matching draft exists after a failed run, an upload is incomplete, remote tag/asset identity
+  differs from the verified bundle, or `releases/tags/<version>` returns 404 after a successful draft creation.
+- Root constraint: the get-by-tag endpoint is not a reliable Draft Release discovery mechanism for this workflow token.
+  Discover releases from the complete paginated `/releases` inventory and match the exact `tag_name`.
+- Ambiguity constraint: more than one Release with the same tag is unsafe. Report every matching Release ID and stop; never
+  silently choose, delete, or publish one.
+- Correct action: when exactly one matching draft exists, rerun the same version/source/build identity to resume it. When
+  duplicates exist, reduce them to one matching draft through an explicit operator action before retrying. Otherwise use a
+  new version.
+- Verification: compare tag target, embedded build identity, complete remote asset names/sizes/hashes, and checksums. Test
+  paginated Draft discovery plus duplicate-tag rejection without asserting mutable memory text.
 - Scope: one multi-game-version immutable Release per version.
