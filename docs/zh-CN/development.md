@@ -41,8 +41,7 @@ uv run python tests/run_test_suite.py redis-integration -b --durations 30
 uv run python tests/run_test_suite.py all -b --durations 30
 ```
 
-`all` 明确排除 `generated-output-contract`。该 release 权限套件会比较当前 config 与生成后的
-`gamesymbols/`、metadata、`gamedata/`，因此只由 release build 在发布新 candidate 后、stage generated-output
-commit 前运行。
+`all` 是 unit、Redis integration、repository contract 与 IDA integration group 的声明式不重复并集。Release bundle
+与 publisher contract 属于普通 unit test；真实 GitHub publication 与商业 IDA evidence 仍是独立运维门禁。
 
 只有在 `RUN_IDA_INTEGRATION=1` 且 `idalib` 环境已激活时才运行商业 IDA 集成测试；跳过不代表真实 IDA 分析通过。

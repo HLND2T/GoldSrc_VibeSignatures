@@ -100,24 +100,12 @@ class TestTriggerReleaseBuild(unittest.TestCase):
         ):
             trigger.release_state(Path("."), "HLND2T/GoldSrc_VibeSignatures", "v20260825a", "1" * 40)
 
-    def test_open_output_pr_blocks_dispatch(self) -> None:
-        pulls = json.dumps([{"headRefName": "gamesymbols/build/v20260825a", "url": "https://pr"}])
-        with patch.object(trigger, "run_command", return_value=completed([], stdout=pulls)):
-            with self.assertRaisesRegex(trigger.TriggerError, "already open"):
-                trigger.require_no_duplicate(Path("."), "v20260825a")
-
-    def test_unrelated_version_leaf_branch_does_not_block_dispatch(self) -> None:
-        pulls = json.dumps([{"headRefName": "gamesymbols/v20260825a", "url": "https://historical-pr"}])
-        with patch.object(
-            trigger,
-            "run_command",
-            side_effect=[completed([], stdout=pulls), completed([], stdout="[]")],
-        ):
+    def test_no_active_release_run_allows_dispatch(self) -> None:
+        with patch.object(trigger, "run_command", return_value=completed([], stdout="[]")):
             self.assertEqual(set(), trigger.require_no_duplicate(Path("."), "v20260825a"))
 
     def test_active_workflow_run_blocks_dispatch(self) -> None:
         responses = [
-            completed([], stdout="[]"),
             completed(
                 [],
                 stdout=json.dumps(
@@ -130,7 +118,7 @@ class TestTriggerReleaseBuild(unittest.TestCase):
                         }
                     ]
                 ),
-            ),
+            )
         ]
         with patch.object(trigger, "run_command", side_effect=responses):
             with self.assertRaisesRegex(trigger.TriggerError, "already active"):

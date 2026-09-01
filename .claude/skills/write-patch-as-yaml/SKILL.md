@@ -1,11 +1,11 @@
 ---
 name: write-patch-as-yaml
-description: Write patch analysis results, including patch_sig match VA/RVA, as a YAML file beside the binary using IDA Pro MCP. Use this skill after identifying a patch target and generating a unique signature to persist patch_name, patch_va, patch_rva, patch_sig, optional patch_sig_disp, and patch_bytes in a standardized format.
+description: Write patch analysis results, including patch_sig match VA/RVA, to the exact analyzer-bound YAML artifact path using IDA Pro MCP. Use this skill after identifying a patch target and generating a unique signature.
 ---
 
 # Write Patch as YAML (GoldSrc)
 
-Persist a single patch analysis result to a YAML file beside the binary using IDA Pro MCP. Resolve the unique
+Persist a single patch analysis result to the exact output path in the invocation prompt's artifact contract. Resolve the unique
 `patch_sig` match in the current IDB and record its VA and RVA in the output. Applies to GoldSrc **PE32/I386**
 (Windows) and **ELF32/I386** (Linux) binaries only.
 
@@ -90,9 +90,8 @@ if len(matches) != 1:
 patch_va = matches[0]
 patch_rva = patch_va - idaapi.get_imagebase()
 
-# Get binary path and determine platform
+# Get binary identity and determine platform
 input_file = idaapi.get_input_file_path()
-dir_path = os.path.dirname(input_file)
 
 if input_file.endswith('.dll'):
     platform = 'windows'
@@ -112,8 +111,11 @@ if patch_sig_disp is not None and patch_sig_disp > 0:
 
 data['patch_bytes'] = patch_bytes
 
-yaml_path = os.path.join(dir_path, f"{patch_name}.{platform}.yaml")
-with open(yaml_path, 'w', encoding='utf-8') as f:
+yaml_path = os.path.abspath(r"<EXACT_OUTPUT_ARTIFACT_PATH_FROM_INVOCATION_CONTRACT>")
+if os.path.basename(yaml_path) != f"{patch_name}.{platform}.yaml":
+    raise ValueError(f"Artifact path does not match {patch_name}.{platform}.yaml: {yaml_path}")
+os.makedirs(os.path.dirname(yaml_path), exist_ok=True)
+with open(yaml_path, 'w', encoding='utf-8', newline='\n') as f:
     yaml.dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
 print(f"Written to: {yaml_path}")
 print(f"patch_va={hex(patch_va)}, patch_rva={hex(patch_rva)}")
@@ -195,7 +197,7 @@ patch_sig_disp = None
 
 ## Notes
 
-- The YAML file is written to the same directory as the input binary
+- The YAML file is written only to the exact analyzer-bound artifact path, never beside the binary
 - `patch_sig` must match exactly once in the current IDB `.text` segment; otherwise the skill stops without writing YAML
 - `patch_va` and `patch_rva` always identify the `patch_sig` match start, not the displaced target instruction
 - When `patch_sig_disp` is `None` or `0`, the `patch_sig_disp` field is omitted from the output entirely (signature starts at the target instruction)

@@ -5,7 +5,10 @@ description: Load function information from a pre-generated YAML file. Use this 
 
 # Get Function from YAML (GoldSrc)
 
-Load function information from a pre-generated `{func_name}.{platform}.yaml` file beside the binary. Applies to GoldSrc **PE32/I386** (Windows) and **ELF32/I386** (Linux) binaries only.
+Load function information from the analyzer-bound `{func_name}.{platform}.yaml` artifact path. The invocation prompt's
+artifact contract contains exact absolute input/output paths; select the unique matching basename and never derive a YAML
+path from the input binary. A manual invocation must provide the exact `bin_artifacts` path explicitly. Applies to GoldSrc
+**PE32/I386** (Windows) and **ELF32/I386** (Linux) binaries only.
 
 ## Parameters
 
@@ -25,10 +28,11 @@ import os
 func_name = "<FUNC_NAME>"  # Replace with actual function name
 
 input_file = idaapi.get_input_file_path()
-dir_path = os.path.dirname(input_file)
 platform = 'windows' if input_file.endswith('.dll') else 'linux'
 
-yaml_path = os.path.join(dir_path, f"{func_name}.{platform}.yaml")
+yaml_path = os.path.abspath(r"<EXACT_INPUT_ARTIFACT_PATH_FROM_INVOCATION_CONTRACT>")
+if os.path.basename(yaml_path) != f"{func_name}.{platform}.yaml":
+    raise ValueError(f"Artifact path does not match {func_name}.{platform}.yaml: {yaml_path}")
 
 if os.path.exists(yaml_path):
     with open(yaml_path, 'r', encoding='utf-8') as f:

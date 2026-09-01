@@ -93,7 +93,8 @@ generation，再启动 Analyzer。
 
 ### 工件路径与身份
 
-工件路径固定为 `bin/<tag>/<module>/<symbol>.<platform>.yaml`。Config symbol 使用 `name` 加唯一分类符
+工件路径固定为 `bin_artifacts/<tag>/<module>/<symbol>.<platform>.yaml`。`bin/` 是独立的二进制与 IDA scratch 根，
+不再是分析 YAML 的 truth source。Config symbol 使用 `name` 加唯一分类符
 `category`；拒绝 `type` 与 `kind`。Artifact 拒绝通用 `name/type/kind`，按 category 使用 `func_name`、
 `gv_name`、`patch_name`、`vtable_class` 或 `struct_name/member_name`。Payload identity 不要求与 config symbol
 name 相等，这与 CS2 loader 合约一致。
@@ -105,7 +106,7 @@ helper 必须显式使用并 fail closed；Source2 专用 dispatch 协议保持�
 
 旧 YAML 直接复制已禁用，因为携带地址的工件可能保留陈旧地址。自动旧版本发现仅限同一 game family 中更早的
 build，并可通过 `major_update: true` 禁用。Analyzer 将 new-output 到 old-YAML 的映射交给 Preprocessor，
-由具体脚本通过 MCP 重新定位 signature 并重建地址。
+由具体脚本通过 MCP 重新定位 signature 并重建地址；新旧工件根均为显式 artifact root，不从 `bin/` 恢复 YAML。
 
 ## Production 注册
 

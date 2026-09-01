@@ -2,31 +2,32 @@
 title: Canonical gamedata bootstrap
 type: architecture
 permalink: goldsrc-vibesignatures/notes/canonical-gamedata-bootstrap
-tags:
-- gamedata
-- git
-- publication
-- candidate
 ---
 
 # Canonical gamedata bootstrap
 
 ## Overview
 
-The release build owns reviewed/tracked `gamedata/<tag>/**` bytes; source PRs no longer commit them. The directory remains ignored by default; only a guarded candidate session may stage exact allowlisted paths.
+Gamedata is derived from an immutable game-symbol candidate during release build. `gamedata/<tag>/**` is no longer
+Git-versioned or staged into the index; its public bytes live only inside the verified GitHub Release bundle.
 
 ## Empty output contract
 
-Every snapshot tag has `gamedata/<tag>/gamedata-manifest.json`, even when no generator emits payload files. The schema-1 canonical JSON binds game version, exact snapshot SHA-256, analysis config SHA-256, generator contract SHA-256, and a payload inventory hash that excludes the manifest itself. This makes the zero-generator state trackable without placeholder files.
+Every tag has a canonical self-excluding `gamedata-manifest.json`, even when no generator emits payloads. The manifest
+binds snapshot SHA-256, normalized analysis config identity, generator contract, and the exact declared payload inventory.
 
-## Staging boundary
+## Candidate and bundle boundary
 
-`gamedata_candidate.py stage` guards snapshot/config/generator/output identities, validates the published tree, creates a temporary Git index from HEAD, stages only session paths with argument-vector `git add -f -- <exact-path>`, verifies the temporary tree, then repeats the exact operations on the real index. Stale tracked paths are removed explicitly. Worktree globs and `git add -A` are not used.
+`gamedata_candidate.py build -> guard -> publish` operates only on explicit staging paths. `publish` atomically copies the
+verified candidate tree to caller-owned release staging and never performs Git operations. `release_bundle.py` copies the
+tree into the closed bundle; the GitHub-hosted verifier rebuilds and checks the same contract before protected publication.
 
 ## PR validation
 
-The trusted impact plan binds base/merge gamedata subtree digests. Hosted and self-hosted jobs rebuild a guarded candidate manifest for self-consistency (build -> guard -> gamedata build -> guard -> mark gamedata) without comparing against tracked output. Changes under `gamedata/<tag>/` select only that tag and do not select IDA nodes; config, snapshot/binary identity, or generator contract changes rebuild gamedata. Publication happens only in the release build.
+Hosted/self-hosted source validation rebuilds a temporary snapshot and gamedata candidate for self-consistency without
+reading or comparing a tracked gamedata baseline. Generator/config/artifact impacts are bound by the trusted plan.
 
 ## Validation
 
-Run `tests.test_gamedata`, `tests.test_gamesymbol_pr_validation`, repository-contract, and the full suite. A zero-symbol tag may remain config-only before release. When it is published, it has the same snapshot/metadata pair and a gamedata directory whose canonical manifest records an empty payload inventory.
+Run gamedata candidate/contract tests, snapshot candidate tests, release bundle verification, repository contract, and
+the complete suite. Test empty and declared payload inventories, generator drift, tamper, and extra bundle files.

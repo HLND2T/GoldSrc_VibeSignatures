@@ -167,7 +167,12 @@ class RepositoryContractTests(unittest.TestCase):
                                 declared_artifacts,
                                 f"Output {output!r} from {node.id} has no declared symbol",
                             )
-                    contract = load_contract(ROOT / "configs" / f"{tag}.yaml", tag, ROOT / "bin")
+                    contract = load_contract(
+                        ROOT / "configs" / f"{tag}.yaml",
+                        tag,
+                        ROOT / "bin",
+                        artifactdir=ROOT / "bin_artifacts",
+                    )
                     self.assertEqual(contract.formal_paths, set(contract.owners_by_path))
                     self.assertTrue(all(len(owners) == 1 for owners in contract.owners_by_path.values()))
 
@@ -219,8 +224,8 @@ class RepositoryContractTests(unittest.TestCase):
 
     def test_ci_runs_required_checks(self):
         workflow = (ROOT / ".github" / "workflows" / "ci.yaml").read_text(encoding="utf-8")
-        self.assertIn("generated-output-contract", GROUP_FILES)
-        self.assertNotIn("generated-output-contract", SOURCE_ALL_GROUPS)
+        self.assertNotIn("generated-output-contract", GROUP_FILES)
+        self.assertEqual(tuple(GROUP_FILES), SOURCE_ALL_GROUPS)
         backend_commands = (
             "uv sync --locked",
             "uv run python format_repo_files.py --check",
@@ -249,7 +254,6 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertEqual("pr-validate", jobs["pr-validate"]["name"])
         self.assertEqual(
             {
-                "classify",
                 "plan",
                 "warmup-idb",
                 "validate-hosted",
@@ -259,12 +263,8 @@ class RepositoryContractTests(unittest.TestCase):
             set(jobs["pr-validate"]["needs"]),
         )
         self.assertIn("always()", jobs["pr-validate"]["if"])
-        self.assertIn("github.event.action != 'closed'", jobs["pr-validate"]["if"])
-        self.assertIn("needs.classify.outputs.route == 'source'", jobs["pr-validate"]["if"])
-        self.assertEqual("classify", jobs["plan"]["needs"])
-        self.assertIn("route == 'source'", jobs["plan"]["if"])
-        for job_id in ("validate-hosted", "analyze-self-hosted", "fork-analysis-blocked"):
-            self.assertIn("route == 'source'", jobs[job_id]["if"])
+        self.assertEqual("always()", jobs["pr-validate"]["if"])
+        self.assertNotIn("classify", jobs)
         aggregate = next(
             step for step in jobs["pr-validate"]["steps"] if step.get("name") == "Aggregate source validation results"
         )
@@ -273,10 +273,6 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertEqual("${{ needs.validate-hosted.result }}", aggregate["env"]["HOSTED_RESULT"])
         self.assertEqual("${{ needs.analyze-self-hosted.result }}", aggregate["env"]["ANALYSIS_RESULT"])
         self.assertEqual("${{ needs.fork-analysis-blocked.result }}", aggregate["env"]["FORK_RESULT"])
-        route_guard = next(
-            step for step in jobs["pr-validate"]["steps"] if step.get("name") == "Require exactly one trusted PR route"
-        )
-        self.assertEqual("${{ needs.classify.result }}", route_guard["env"]["CLASSIFY_RESULT"])
         self.assertNotIn("cache_mode", jobs["plan"]["outputs"])
         self.assertNotIn("GSVIBE_IDB_CACHE_MODE", workflow_text)
         self.assertNotIn("-cache-mode", workflow_text)
@@ -352,6 +348,8 @@ class RepositoryContractTests(unittest.TestCase):
             "[a-z0-9]+(-[a-z0-9]+)*-[0-9]+",
         ):
             self.assertIn(marker, workflow)
+        self.assertIn("gh release download", workflow)
+        self.assertNotIn("'gamesymbols/**'", workflow)
         self.assertNotIn("push --force", workflow)
 
     def test_sven_local_dlls_are_read_only_pe32_smoke_inputs(self):

@@ -10,9 +10,9 @@ download.yaml + configs/<tag>.yaml
   -> bin/<tag>/<module>/<binary>
   -> validated analysis DAG
   -> versioned stage/job/task execution plan
-  -> bin/<tag>/<module>/<symbol>.<platform>.yaml
-  -> immutable candidate
-  -> gamesymbols/<tag>.yaml + gamesymbols/<tag>.metadata.yaml
+  -> bin_artifacts/<tag>/<module>/<symbol>.<platform>.yaml (Git truth)
+  -> release-only immutable candidate
+  -> gamesymbols/<tag>.yaml + gamesymbols/<tag>.metadata.yaml (bundle)
   -> SymbolStore -> strict gamedata generator
   -> gamedata/<tag>/gamedata-manifest.json + declared payloads
 
@@ -24,9 +24,9 @@ snapshot + immutable metadata companion -> Vite asset plugin
   -> content-addressed JSON + index v4
   -> append-only pages-snapshots archive -> GitHub Pages Symbol Explorer
 
-exact source + bin gitlink -> analyze all game versions -> publish candidates/gamedata
-  -> release-manifests/<version>.json generated-output PR
-  -> validate-output-pr -> merge -> version tag + GitHub Release
+exact source + bin gitlink + bin_artifacts -> analyze all game versions
+  -> release bundle + canonical manifest + SHA256SUMS
+  -> hosted verify -> protected publish-release -> GitHub Release
 
 trusted PR plan + cache_mode=warm evidence
   -> probe/publish exact generation -> canonical selection -> strict restore
@@ -131,31 +131,21 @@ Restore and verification reject links, path escapes, undeclared YAML, missing re
 contract drift.
 
 The candidate session binds the canonical snapshot and alias-metadata companion hashes, filesystem identities, and pair
-identity. Local pair publication is journaled and recoverable; the Git tree is the externally visible atomic boundary.
-Publication still requires the guarded `gamedata` step. Candidate sessions do not contain a C++ test step.
+identity. Pair publication into release staging is journaled and recoverable. The verified release bundle is the external
+candidate boundary; publication still requires the guarded `gamedata` step. Candidate sessions do not contain a C++ test step.
 
-Canonical gamedata remains ignored by default and is staged only from the guarded candidate inventory. Each tag has a
-self-excluding canonical manifest that binds snapshot/config/generator identities and the exact declared payload files;
-an empty generator set therefore still has one trackable, reviewable output.
+Canonical gamedata is release-derived only from the guarded candidate inventory and is copied into release staging,
+never the Git index. Each tag has a self-excluding canonical manifest that binds snapshot/config/generator identities and
+the exact declared payload files; an empty generator set therefore still has one verifiable output.
 
 ## Release provenance boundary
 
-The release build generates and publishes `gamesymbols/<tag>.yaml`, `gamesymbols/<tag>.metadata.yaml`, and
-`gamedata/<tag>/**` for every game version on the self-hosted runner, committing them together with
-`release-manifests/<version>.json` onto the `gamesymbols/build/<version>` generated-output branch. Schema-1 canonical JSON
-binds `version`, `mode`, `build_id`, `source_sha`, per-game-version snapshot/gamedata provenance, and the aggregate
-inventory hashes. Empty-symbol tags follow the same publication contract: their snapshot locks binary identity with an
-empty file payload, and the companion plus canonical empty-inventory gamedata manifest are still required.
-
-`validate-generated-output-pr.yml` rebuilds the tracked output inventory from exact Git blobs and checks each game
-version. The output head must be a single-parent commit whose parent equals manifest `source_sha`; the current PR base
-must descend from that `source_sha`, so default-branch advancement is not itself stale. Changed paths are taken from
-`source_sha..head`. `promote-release-after-output-merge.yml` accepts only the recorded bot-authored output PR, its
-direct-parent head, and an exact two-parent merge whose first parent descends from `source_sha`, then transactionally
-swaps accepted bin into the persisted workspace, tags the single `version`, and publishes one GitHub Release. Private
-markers are hash-chained; abandon and cleanup remain distinct operations. `mode=republish` re-analyzes only the outputs
-affected since the last accepted source. Production authority comes from the allowlisted repository + `win64`
-Environment + per-version concurrency.
+The release build force-rebuilds every configured artifact into a fresh external root and compares exact bytes with Git
+`bin_artifacts`. It then generates snapshots, metadata, gamedata, binary-only/game-data archives, a canonical Release
+manifest, and `SHA256SUMS`. The self-hosted job is read-only; a GitHub-hosted job verifies the closed bundle against the
+exact source and Git blobs. The protected `publish-release` job is the only `contents: write` job in `release-build.yml`.
+It creates or resumes a matching draft, refuses tag/asset drift and overwrite, verifies remote name/size/hash, then
+publishes. Published versions are immutable; changed content requires a new version.
 
 ## API, dashboard, and immutable Pages assets
 
@@ -167,10 +157,11 @@ private-network preflights only by explicit opt-in.
 
 The React dashboard displays run lists, graph/list views, task details, status filters, live SSE updates, and a static
 Symbol Explorer. Symbol snapshots use `<family-build>` tags, are grouped by family, and sort builds numerically descending.
-The Vite plugin turns tracked schema-5/6 YAML plus its required schema-1 metadata companion into exact UTF-8
+The Vite plugin turns schema-6 snapshot/metadata assets downloaded from a published Release into exact UTF-8
 content-addressed JSON plus index schema v4. It never reads live config aliases. The deployment
 workflow preserves every digest on an append-only `pages-snapshots` branch and verifies current, archived, and deployed
-CDN bytes. GitHub Pages hosts only static assets; it does not host the Process API.
+CDN bytes. That branch is a non-authoritative presentation mirror derived only from published Releases; it is never source
+or release truth. GitHub Pages hosts only static assets; it does not host the Process API.
 
 ## Current exclusions and deferrals
 

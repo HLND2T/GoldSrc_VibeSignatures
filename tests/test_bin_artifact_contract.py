@@ -105,7 +105,10 @@ class BinArtifactContractTests(unittest.TestCase):
             (target / "symbol.windows.yaml").write_bytes(
                 canonical_symbol_yaml_bytes({"func_name": "symbol", "func_va": "0x99"})
             )
-            with self.assertRaisesRegex(BinArtifactContractError, "differs"):
+            with self.assertRaisesRegex(
+                BinArtifactContractError,
+                r"missing=\[\]; extra=\[\]; changed=\['engine/symbol\.windows\.yaml'\]",
+            ):
                 compare_repository_artifact_root(repo, rebuilt)
 
 

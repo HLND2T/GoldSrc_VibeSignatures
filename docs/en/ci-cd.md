@@ -2,96 +2,39 @@
 
 # CI/CD reference
 
-The GitHub Actions workflows run the guarded analysis and publication gates on every push and pull request.
-
 ## Continuous integration
 
-[`.github/workflows/ci.yaml`](../../.github/workflows/ci.yaml) runs on both `ubuntu-latest` and `windows-latest`:
+`ci.yaml` runs formatting, unit, repository-contract, complete assigned suites, Redis integration, and Pages
+test/lint/build/asset/E2E checks. Repository contract requires the complete formal `bin_artifacts` Git inventory and
+forbids tracked `bin/**/*.yaml`, `gamesymbols/`, `gamedata/`, and `release-manifests/` outputs.
 
-1. `uv sync --locked` installs the locked environment.
-2. `uv run python format_repo_files.py --check` checks formatting.
-3. `uv run python tests/run_test_suite.py unit -b --durations 30` runs the fast isolated suite.
-4. `uv run python tests/run_test_suite.py repository-contract -b --durations 30` checks source-owned repository contracts.
-5. `uv run python tests/run_test_suite.py all -b --durations 30` runs every source-compatible assigned test; it excludes
-   the release-owned `generated-output-contract` suite.
+## Source PR validation
 
-A separate `redis-integration` job runs on `ubuntu-latest` with a `redis:7-alpine` service, sets `GSVIBE_REDIS_URL` and `GSVIBE_REDIS_PREFIX`, and runs `tests/run_test_suite.py redis-integration -b --durations 30`.
+`gamesymbol-pr-validation.yml` has one source route. Trusted base tooling plans impact from base/head/merge Git trees,
+including artifact A/M/D/R/C ownership and downstream closure. Rebuilds write only to an external temporary artifact root,
+force selected nodes to execute, then compare the complete inventory and bytes with merge Git blobs. Forks that need
+self-hosted analysis fail closed. `pr-validate` is the aggregate required check.
 
-The `pages` job installs Node 24, runs `npm ci`, `npm test`, `npm run lint`, `npm run build`, `npm run verify:gamesymbols`, installs Chromium, and runs `npm run test:e2e` from the `pages/` directory.
+The reusable `warmup-idb` producer publishes an exact selection. Consumers verify and restore that selection, never warm
+or save. The IDB key binds binary/runtime identity and intentionally does not bind `bin_artifacts` content.
 
-## Game-symbol pull request validation
+## Release workflow
 
-`gamesymbol-pr-validation.yml` classifies every non-closed pull request through a shared route contract. Normal branches
-take the source plan/hosted/self-hosted path; every `gamesymbols/build/` branch, including malformed output-like names,
-takes the output path so it can fail explicitly instead of reaching a trusted analysis runner.
+The release DAG is:
 
-Branch protection depends only on the final `pr-validate` job. Source planning runs the PR merge version of the semantic planner in the default checkout and uploads only its canonical bound `plan.json`; selected-node execution remains unchanged. The terminal job runs with `always()`, aggregates routed results with shell logic, accepts skipped jobs only when the bound plan did not select them, and fails fork analysis without granting the fork access to the protected self-hosted runner. Internal planner, hosted, and self-hosted job names are not required checks.
+```text
+preflight -> warmup-idb -> build-release-bundle -> verify-release-bundle -> publish-release
+```
 
-Hosted and self-hosted source validation rebuild the canonical gamedata manifest from the immutable symbol candidate and compare it with exact `HEAD` Git blobs. The bound plan includes base/merge gamedata subtree digests; ignored worktree files and broad staging globs are never validation inputs.
-
-The planner signs the invariant evidence field `cache_mode=warm`; no repository variable controls analysis lifecycle.
-Analysis runs on the dedicated `[self-hosted, windows, x64]` runner under the `win64` Environment and one repository-wide
-IDA concurrency group (dynamic per-binary MCP endpoints are invocation-scoped and do not relax this group).
-
-Every analysis route splits the producer out of the consumer. `plan` calls the reusable
-[`warmup-idb.yml`](../../.github/workflows/warmup-idb.yml) producer with `scope: bound-plan`; that job checks out the
-merge commit in its own workspace, verifies the bound plan, probes/warms/publishes immutable generations, and uploads a
-canonical `cache-selection.json` plus independent SHA-256 evidence. `analyze-self-hosted` then runs in a fresh
-workspace: it downloads that exact selection, re-checks its SHA-256 against the producer job output, verifies it against
-its own checkout and pinned runtime, restores the exact generations, and runs strict no-save analysis. The consumer
-never warms, publishes, or reads `READY.json`. A failed or cancelled producer blocks the consumer instead of falling
-back to an inline rebuild.
-
-`cache-selection.json` binds the plan SHA, merge/bin identities, selected binaries, cache keys, generations, and
-manifest hashes; the Actions artifact is evidence and selection transport, never IDB payload transport.
-
-Production warm activation requires the host and repository settings in the
-[IDB cache operations runbook](idb-cache-operations.md). Unit and workflow-contract tests do not substitute for recorded
-first miss/publication and subsequent hit runs on that runner.
-
-## Release build and promotion
-
-[`release-build.yml`](../../.github/workflows/release-build.yml) is a manual `workflow_dispatch` (`version` such as
-`v20260825a` plus an optional `source_sha` and a `mode` of `new|republish`). Its DAG is
-`preflight -> warmup-idb -> build`: `preflight` resolves and binds `version`, `source_sha`, and `mode`; `warmup-idb`
-always calls the reusable producer with `scope: release-all`; `build` is a pure consumer.
-
-On the self-hosted `[self-hosted, windows, x64]` runner `build`: checks out the exact source and `bin` submodule,
-cleans the submodule, materializes accepted bin through `release_workflow.py materialize-accepted-bin`, downloads and
-verifies the exact cache selection, restores those exact generations, runs
-`ida_analyze_bin.py -allgamever -debug -process_reporter console`, builds/guards/publishes candidates
-and gamedata per game version, runs `generated-output-contract`, then runs `stage-build`, and uses the protected
-`HLND2T_GH_TOKEN` PAT to open one
-generated-output PR (branch `gamesymbols/build/<version>`). Every build requires a successful producer.
-
-- `validate-generated-output-pr.yml` verifies the output PR (Actions bot or an `OWNER`/`MEMBER`/`COLLABORATOR`, same
-  repository, and a `gamesymbols/build/` branch). The output head must be a single-parent commit whose parent equals the
-  tracked manifest `source_sha`. The current PR base
-  must be a descendant of that `source_sha`, so default-branch advancement after PR creation is not itself stale.
-  Changed-path allowlist is computed from `source_sha..head` (every game version's gamesymbols/metadata/gamedata plus
-  `release-manifests/<version>.json`), not from the possibly advanced PR base. Tracked output hashes still have to match.
-  Trusted validation tooling continues to come from the PR base; the output workspace is the exact head.
-- `promote-release-after-output-merge.yml` verifies the two-parent merge, transactionally swaps accepted bin into the
-  persisted workspace, tags the single `version`, and publishes one GitHub Release with assets for every game version.
-- `abandon-staged-release.yml` and `cleanup-completed-release-staging.yml` cover the lifecycle (abandon a staged build,
-  sweep completed completion records).
-
-`mode=republish` requires the `version` tag to exist and re-analyzes only the outputs affected since the last accepted
-source. Publication no longer depends on `GSVIBE_RELEASE_PHASE2_ENABLED` or a GitHub App token; the gate is the
-allowlisted repository + `win64` Environment + concurrency. The release build's default token remains read-only;
-checkout/output publication uses `HLND2T_GH_TOKEN`, whereas merge-time tag/Release writes use the permission-scoped
-`${{ github.token }}`.
+The self-hosted read-only build force-rebuilds all analysis artifacts in a fresh root, compares them with Git truth,
+derives the full release bundle, and uploads one transport Artifact. The GitHub-hosted verifier checks source ancestry,
+bin gitlink, artifact inventory, payload contracts, allowlist, canonical manifest, and checksums. The protected publisher
+is the release workflow's only contents writer and implements immutable tag/draft/asset semantics. There is no generated-output PR or
+separate promotion workflow.
 
 ## Pages deployment
 
-[`.github/workflows/deploy-pages.yml`](../../.github/workflows/deploy-pages.yml) triggers on pushes to `main` that touch `pages/**`, `gamesymbols/**`, or the workflow itself. General config edits do not redeploy historical aliases:
-
-1. **build**: tests, lints, builds `pages/dist`, verifies current game-symbol bytes, and uploads the artifact.
-2. **archive**: verifies that the `pages-snapshots` branch history is append-only (only `gamesymbols/<family-build>.<sha256>.json` additions), merges the immutable game-symbol snapshot archive, and pushes it.
-3. **deploy**: deploys `pages/dist` via GitHub Pages and verifies the deployed CDN game-symbol bytes against the verification manifest.
-
-GitHub Pages hosts only static assets; it never hosts the Process API/SSE service.
-
-## Analyzer and CI argument reference
-
-When driving the analyzer from CI, pass the same arguments as a local run — see [Binary acquisition and symbol analysis](analysis.md#analyze-configured-symbols). Cache mode is not configurable: every invocation is a strict warm consumer. Batch analysis over every configured tag uses `-allgamever`; a single-tag run uses `-gamever`. CI jobs that only need to know whether binaries are already in place use `copy_depot_bin.py ... -checkonly`.
+`deploy-pages.yml` triggers from a published Release or a manual dispatch with an explicit published tag. It downloads the
+Release snapshot/metadata YAML, builds content-addressed JSON, preserves the non-authoritative append-only
+`pages-snapshots` presentation mirror, deploys Pages, and verifies CDN bytes. Local/CI builds use a generated minimal schema
+fixture; production always sets the explicit downloaded asset directory.

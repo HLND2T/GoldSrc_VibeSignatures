@@ -47,7 +47,7 @@ class SnapshotContractConfigTests(unittest.TestCase):
                 symbols=[{"name": "Symbol", "category": "func", "alias": ["_Symbol"]}],
             )
 
-            contract = load_contract(config, "game-1", root / "bin")
+            contract = load_contract(config, "game-1", root / "bin", artifactdir=root / "bin_artifacts")
 
             self.assertEqual(("engine:windows:find",), tuple(contract.nodes))
             node = contract.nodes["engine:windows:find"]
@@ -87,9 +87,9 @@ class SnapshotContractConfigTests(unittest.TestCase):
                 symbols=[{"name": "One", "category": "func"}, {"name": "Two", "category": "gv"}],
             )
 
-            first_contract = load_contract(first, "game-1", root / "bin")
-            reordered_contract = load_contract(reordered, "game-1", root / "bin")
-            changed_contract = load_contract(changed, "game-1", root / "bin")
+            first_contract = load_contract(first, "game-1", root / "bin", artifactdir=root / "bin_artifacts")
+            reordered_contract = load_contract(reordered, "game-1", root / "bin", artifactdir=root / "bin_artifacts")
+            changed_contract = load_contract(changed, "game-1", root / "bin", artifactdir=root / "bin_artifacts")
 
             first_fingerprints = {key: node.fingerprint for key, node in first_contract.nodes.items()}
             reordered_fingerprints = {key: node.fingerprint for key, node in reordered_contract.nodes.items()}
@@ -114,8 +114,8 @@ class SnapshotContractConfigTests(unittest.TestCase):
                 source_path=None,
             )
 
-            legacy_contract = load_contract(legacy, "game-1", root / "bin")
-            module_contract = load_contract(module_only, "game-1", root / "bin")
+            legacy_contract = load_contract(legacy, "game-1", root / "bin", artifactdir=root / "bin_artifacts")
+            module_contract = load_contract(module_only, "game-1", root / "bin", artifactdir=root / "bin_artifacts")
 
             self.assertEqual(set(legacy_contract.binary_targets), set(module_contract.binary_targets))
             self.assertIsNone(module_contract.binary_targets[("engine", "windows")].source_path)
@@ -133,7 +133,7 @@ class SnapshotContractConfigTests(unittest.TestCase):
                 symbols=[{"name": "Unowned", "category": "func"}],
             )
             with self.assertRaisesRegex(SnapshotConfigError, "no producer"):
-                load_contract(zero, "game-1", root / "bin")
+                load_contract(zero, "game-1", root / "bin", artifactdir=root / "bin_artifacts")
 
             multiple_document = {
                 "modules": [
@@ -151,7 +151,7 @@ class SnapshotContractConfigTests(unittest.TestCase):
             multiple = root / "multiple.yaml"
             multiple.write_text(yaml.safe_dump(multiple_document, sort_keys=False), encoding="utf-8")
             with self.assertRaisesRegex(SnapshotConfigError, "Multiple artifact producers"):
-                load_contract(multiple, "game-1", root / "bin")
+                load_contract(multiple, "game-1", root / "bin", artifactdir=root / "bin_artifacts")
 
 
 if __name__ == "__main__":

@@ -40,11 +40,13 @@ The consumer rechecks its SHA-256 against the producer job output, re-derives th
 checkout and pinned runtime, restores exact entries without consulting READY, and runs strict no-save analysis. Final
 workspace clean removes restored and modified databases without deleting generations.
 
-Accepted-bin materialization for both producer and consumer goes through
+Accepted-bin materialization for the release-all producer goes through
 `uv run python release_workflow.py materialize-accepted-bin --repo-root <checkout> --persisted-root <root> --all-gamevers`.
-It holds `<PERSISTED_WORKSPACE>/release-staging/locks/<gamever>.lock` — the same key release promotion takes around its
-directory swap — copies only durable files (IDA databases and BinSync state are excluded), and verifies the copied
-inventory before releasing the lock. Do not hand-copy the accepted tree.
+It holds `<PERSISTED_WORKSPACE>/accepted-bin/locks/<gamever>.lock`, copies only binary/side files (analysis YAML, IDA
+databases, and BinSync state are excluded), and verifies every copied byte before releasing the lock. Legacy YAML cleanup
+uses `cleanup-legacy-accepted-yaml --cutover-id <id>`: it first verifies this binary-only materialization, then creates an
+exact inventoried backup under `accepted-bin/legacy-yaml-backups/` before deleting the locked YAML inventory. Do not
+hand-copy or hand-delete the accepted tree.
 
 Run `uv run python idb_cache.py prune -persisted-root <root> -tag <tag>` only under the same runner authority. Every
 mutating `idb_cache.py` subcommand (`probe`, `warm`, `publish`, `restore`, `prune`) acquires the tag lock itself, so a

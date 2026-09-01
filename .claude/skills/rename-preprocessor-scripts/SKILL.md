@@ -2,7 +2,7 @@
 name: rename-preprocessor-scripts
 description: |
   Rename a GoldSrc x86 preprocessor symbol across finder scripts, configs/GAMEVER.yaml,
-  downstream dependencies, reference YAML, tests, and existing bin output. Use when a function,
+  downstream dependencies, reference YAML, tests, and existing bin_artifacts output. Use when a function,
   vfunc, vtable, global variable, struct member, or patch name changes, or when an inline finder
   must be renamed to the inlined stage of an inline/noinline fallback chain.
 ---
@@ -11,7 +11,7 @@ description: |
 
 Rename `OldName` to `NewName` consistently across the GoldSrc preprocessor pipeline. Update the
 finder source, every affected game-version config, dependent finder inputs, reference YAML, tests,
-and ignored `bin/` artifacts. Preserve binary-derived values such as addresses, signatures, and
+and Git-tracked `bin_artifacts/` outputs. Preserve binary-derived values such as addresses, signatures, and
 vfunc offsets.
 
 Resolve the target game versions from the explicit request. If the request names no game version,
@@ -55,7 +55,7 @@ Classify every hit before changing it:
 |---|---|---|
 | Finder script | `ida_preprocessor_scripts/find-OldName.py` | Rename file and update identity strings |
 | Game config | `configs/<GAMEVER>.yaml` | Update skill, artifact, symbol, alias, and dependency entries |
-| Output YAML | `bin/*/<module>/OldName.<platform>.yaml` | Rename file and update category identity fields |
+| Output YAML | `bin_artifacts/*/<module>/OldName.<platform>.yaml` | Rename file and update category identity fields |
 | Reference YAML | `ida_preprocessor_scripts/references/**/*.yaml` | Rename symbol-named files or update annotations/comments |
 | Tests | `tests/**/*.py` | Update fixtures, paths, assertions, and test names |
 
@@ -149,13 +149,13 @@ An underscore-form symbol and a C++ alias are different strings. Replace both ex
 example `IGameSystemFactory_Allocate` and `IGameSystemFactory::Allocate`; do not rely on one
 replacement to update the other.
 
-## Step 5: Rename and Update `bin/` Outputs
+## Step 5: Rename and Update `bin_artifacts/` Outputs
 
-`bin/` YAML is generated output and normally ignored by git, but it must remain consistent for
-local validation. Locate the module directory from Step 1, then rename each existing platform file:
+`bin_artifacts/` YAML is the Git-tracked analysis truth and must remain consistent with config ownership. Locate the
+module directory from Step 1, then rename each existing platform file:
 
 ```powershell
-Get-ChildItem -Path bin -Recurse -File -Filter 'OldName.*.yaml' | ForEach-Object {
+Get-ChildItem -Path bin_artifacts -Recurse -File -Filter 'OldName.*.yaml' | ForEach-Object {
     $newPath = Join-Path $_.DirectoryName ($_.Name.Replace('OldName', 'NewName'))
     Move-Item -LiteralPath $_.FullName -Destination $newPath
 }
@@ -245,8 +245,8 @@ uv run python tests/run_test_suite.py repository-contract -b --durations 30
 ```
 
 Inspect every emitted YAML for the correct category identity, x86 address, unique signature, and
-`vfunc_offset == vfunc_index * 4`. Generated `bin/` files are validation outputs and must not be
-staged.
+`vfunc_offset == vfunc_index * 4`. The reviewed `bin_artifacts/` changes are task deliverables and must be staged;
+never stage binary-submodule scratch under `bin/`.
 
 If the repository's non-MCP unittest command is needed for a fast pass, exclude only the IDA MCP
 adapter/smoke modules and require zero selected failures:
@@ -258,8 +258,8 @@ uv run python -c "from pathlib import Path; import sys, unittest; excluded={'tes
 ## Step 11: Review Delivery
 
 Review `git status --short`, `git diff`, and the final stale-name search. Keep unrelated existing
-changes untouched, and stage only task-related tracked files; never use `git add -A` and never stage
-`bin/` output. The repository delivery branch is `dev`; switch or create it only when the task
+changes untouched, and stage only task-related tracked files; never use `git add -A`. Stage the matching
+`bin_artifacts/` rename, but never stage binary-submodule scratch under `bin/`. The repository delivery branch is `dev`; switch or create it only when the task
 explicitly requests a commit. If committing is requested, use:
 
 ```text
@@ -276,7 +276,7 @@ Do not push or open a pull request unless separately requested.
 - [ ] Targeted `configs/<GAMEVER>.yaml` skill and symbol registrations updated
 - [ ] Alias, downstream inputs, prerequisites, optional outputs, and skip entries updated
 - [ ] GoldSrc artifact identity fields updated without changing binary-derived values
-- [ ] Existing `bin/` outputs renamed locally and kept out of the index
+- [ ] Matching `bin_artifacts/` outputs renamed, reviewed, and staged
 - [ ] Reference YAML filenames and annotations updated where applicable
 - [ ] Tests and vtable relation assertions updated where applicable
 - [ ] No stale old identity remains outside historical documentation
@@ -291,7 +291,7 @@ Do not push or open a pull request unless separately requested.
 
 For `ILoopType_EngineLoop` -> `CLoopTypeBase_EngineLoop`, rename the finder, update its
 `GENERATE_YAML_DESIRED_FIELDS` key and function target, update every targeted config's skill/output/
-symbol/alias entries, and rename matching `bin/*/engine` YAML files. Keep function signatures and
+symbol/alias entries, and rename matching `bin_artifacts/*/engine` YAML files. Keep function signatures and
 addresses unchanged.
 
 ### Class and downstream rename

@@ -2,98 +2,61 @@
 
 # Snapshots, gamedata, and publication
 
-Per-symbol YAML remains ignored under `bin/<GAMEVER>/<module>/`. Each published version has a Git-tracked canonical pair: `gamesymbols/<GAMEVER>.yaml` contains the analysis lockfile, while `gamesymbols/<GAMEVER>.metadata.yaml` freezes the display aliases and their resolved module/platform/artifact owners.
+Per-symbol analysis YAML is Git-tracked only under `bin_artifacts/<GAMEVER>/<module>/`. `bin/` contains binaries and
+rebuildable IDA state; it is never an artifact truth source. `gamesymbols/`, `gamedata/`, and release manifests are
+release-derived outputs and are not versioned in the repository.
 
 ## Immutable candidate transaction
 
-After a successful top-level analysis transaction, build one candidate immediately. Both downstream consumers read that same immutable candidate; publication copies its original bytes only after the gamedata guard succeeds:
+Build candidates into an explicit staging directory. The snapshot reads binary metadata from `bin/` and symbol YAML from
+`bin_artifacts/`; gamedata must be generated from the same immutable candidate and marked before publication:
 
 ```bash
 CANDIDATE_DIR="$(mktemp -d)"
-CANDIDATE_SNAPSHOT="$CANDIDATE_DIR/cstrike-10210.yaml"
-CANDIDATE_METADATA="$CANDIDATE_DIR/cstrike-10210.metadata.yaml"
-CANDIDATE_SESSION="$CANDIDATE_DIR/session.json"
-GAMEDATA_ROOT="$CANDIDATE_DIR/gamedata-candidate"
-GAMEDATA_SESSION="$CANDIDATE_DIR/gamedata.session.json"
-
-uv run python gamesymbol_candidate.py build -gamever cstrike-10210 -bindir bin -output "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION"
-uv run python gamedata_candidate.py build -gamever cstrike-10210 -build-id local-1 -snapshot "$CANDIDATE_SNAPSHOT" -configyaml configs/cstrike-10210.yaml -candidate-root "$GAMEDATA_ROOT" -session "$GAMEDATA_SESSION"
-uv run python gamedata_candidate.py guard -session "$GAMEDATA_SESSION"
-uv run python gamesymbol_candidate.py mark -candidate "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION" -step gamedata -gamedata-session "$GAMEDATA_SESSION"
-uv run python gamesymbol_candidate.py publish -candidate "$CANDIDATE_SNAPSHOT" -session "$CANDIDATE_SESSION" -destination gamesymbols/cstrike-10210.yaml
-uv run python gamedata_candidate.py publish -session "$GAMEDATA_SESSION" -outputdir gamedata/cstrike-10210
-uv run python gamedata_candidate.py stage -session "$GAMEDATA_SESSION" -repo-root .
+uv run python gamesymbol_candidate.py build -gamever cstrike-10210 -bindir bin \
+  -artifactdir bin_artifacts -output "$CANDIDATE_DIR/cstrike-10210.yaml" \
+  -session "$CANDIDATE_DIR/symbol-session.json"
+uv run python gamedata_candidate.py build -gamever cstrike-10210 -build-id local-1 \
+  -snapshot "$CANDIDATE_DIR/cstrike-10210.yaml" -configyaml configs/cstrike-10210.yaml \
+  -candidate-root "$CANDIDATE_DIR/gamedata" -session "$CANDIDATE_DIR/gamedata-session.json"
+uv run python gamesymbol_candidate.py mark -candidate "$CANDIDATE_DIR/cstrike-10210.yaml" \
+  -session "$CANDIDATE_DIR/symbol-session.json" -step gamedata \
+  -gamedata-session "$CANDIDATE_DIR/gamedata-session.json"
 ```
 
-Notes:
+Candidate sessions bind the snapshot and metadata bytes, filesystem identities, config, and matching gamedata session.
+Gamedata has a canonical self-excluding manifest even for an empty generator inventory. Local `publish` commands copy
+verified bytes only to an explicit caller-owned staging directory; normal development and PR validation do not write
+repository-root `gamesymbols/` or `gamedata/` trees.
 
-- `gamesymbol_candidate.py mark -step gamedata` requires a `-gamedata-session` whose gamever and candidate SHA-256 match the symbol candidate.
-- `gamedata_candidate.py publish -outputdir` must end with the exact tag. Publication is an atomic replace.
-- Candidate build also generates `$CANDIDATE_METADATA`. The session binds both exact paths, hashes, filesystem identities, and the metadata-to-snapshot SHA-256.
-- Local pair publication uses a recovery journal and fixed replacement order. A verifier rejects any intermediate mismatch; the Git commit/tree is the externally visible atomic boundary.
-- Every gamedata directory contains canonical `gamedata-manifest.json`, even when no generator emits payload files. It binds the snapshot, config, generator contract, and a self-excluding payload inventory.
-- The gamedata config identity normalizes CRLF to LF and rejects bare CR. Repository attributes pin tracked configs to LF, so Windows candidate generation and exact Git-blob verification share one digest.
-- `stage` guards the candidate, builds and verifies a temporary Git tree, then uses `git add -f -- <exact-path>` only for the candidate manifest paths. The repository keeps `gamedata/*/` ignored; broad glob staging is forbidden.
-- An absent or empty generator root produces an empty, hashed inventory that still satisfies the gamedata step after `guard` succeeds.
+## Release bundle
 
-Generate or independently verify a tracked companion with:
+`release-build.yml` force-rebuilds all configured artifacts in a fresh external root and compares exact bytes with Git
+`bin_artifacts`. It derives snapshots, metadata, gamedata, and archives, then builds a closed bundle containing:
+
+- `gamesymbols/<tag>.yaml` and `<tag>.metadata.yaml`;
+- `gamedata/<tag>/**`;
+- `archives/gamedata-<tag>.7z` including configs, `bin_artifacts`, snapshots, gamedata, and compatible binaries;
+- binary-only `archives/gamebin-<tag>.7z`;
+- `release-manifest-<version>.json` and `SHA256SUMS-<version>.txt`.
+
+A GitHub-hosted verifier checks the exact source SHA/bin gitlink, repository artifact inventory, snapshot/metadata/gamedata
+contracts, bundle allowlist, canonical manifest, and every checksum. Only that exact verified bundle reaches the protected
+publisher. GitHub Release assets are the public publication layer; Actions Artifacts are transport only.
+
+## Restore and verification
+
+Snapshot restore is an explicit compatibility/migration operation. Supply a snapshot downloaded from a published Release;
+verification reads, and restore writes, only the explicit artifact root:
 
 ```bash
-uv run python gamesymbol_metadata.py generate -snapshot gamesymbols/hl-10210.yaml -configyaml configs/hl-10210.yaml -gamever hl-10210 -metadata gamesymbols/hl-10210.metadata.yaml
-uv run python gamesymbol_metadata.py verify -snapshot gamesymbols/hl-10210.yaml -configyaml configs/hl-10210.yaml -gamever hl-10210 -metadata gamesymbols/hl-10210.metadata.yaml
+uv run python gamesymbol_snapshot.py verify -gamever cstrike-10210 -snapshot <release-asset.yaml> \
+  -bindir bin -artifactdir bin_artifacts
+uv run python gamesymbol_snapshot.py check-contract -gamever cstrike-10210 -snapshot <release-asset.yaml> \
+  -bindir bin -artifactdir bin_artifacts
+uv run python gamesymbol_snapshot.py restore-legacy -gamever cstrike-10210 -snapshot <release-asset.yaml> \
+  -bindir bin -artifactdir <compatibility-artifact-root>
 ```
 
-Pages never reads live config aliases. A missing, non-canonical, hash-mismatched, or owner-mismatched companion fails the build.
-
-## Release output inventory
-
-The release build generates `gamesymbols/<tag>.yaml`, `gamesymbols/<tag>.metadata.yaml`, and `gamedata/<tag>/**` for every
-game version on the self-hosted runner, commits them together with `release-manifests/<version>.json` onto the
-`gamesymbols/build/<version>` generated-output branch, and — once merged — tags the single `version` and publishes one
-GitHub Release with assets for every game version.
-
-This includes tags whose configured symbol set is empty. Their snapshot has an empty `files` map while still locking the
-configured binary identities, their metadata companion remains mandatory, and their gamedata directory contains the
-canonical empty-inventory manifest. Before the first release publication, such a tag may still exist as config-only;
-metadata or gamedata must never exist without its snapshot.
-
-`release-manifests/<version>.json` is a schema-1 canonical manifest binding `version`, `mode`, `build_id`, `source_sha`,
-per-game-version snapshot/gamedata provenance, and the aggregate bin/tracked-output inventory hashes.
-`validate-generated-output-pr.yml` rebuilds the tracked output inventory from exact Git blobs and checks each game
-version's snapshot hash and gamedata inventory. Output identity stays bound to exact `source_sha` (the output head's only
-parent); the current PR base must be a descendant of that commit. `promote-release-after-output-merge.yml` verifies the
-two-parent merge whose first parent descends from `source_sha` and transactionally swaps accepted bin into the persisted
-workspace. Source PRs no longer own gamesymbols/gamedata authority. Source validation therefore runs
-`repository-contract` without requiring published outputs to match pending config changes. The release build runs the
-separate `generated-output-contract` suite after candidate publication, and output-PR verification rechecks the same
-contract from trusted base tooling against the exact output head. The source-route planner rejects changes under
-`gamesymbols/`, `gamedata/`, and `release-manifests/`; those namespaces may only change on the generated-output route.
-
-## Generate gamedata directly
-
-To convert a canonical symbol snapshot into versioned gamedata without the full candidate transaction:
-
-```bash
-uv run python update_gamedata.py -gamever cstrike-10210 -snapshot gamesymbols/cstrike-10210.yaml -modulesdir gamedata-generators -outputdir gamedata/cstrike-10210
-```
-
-## Restore and verify snapshots
-
-Restore a clean analysis baseline or verify the current workspace without modifying the tracked snapshot:
-
-```bash
-uv run python gamesymbol_snapshot.py restore -gamever cstrike-10210
-uv run python gamesymbol_snapshot.py restore -gamever cstrike-10210 -replace
-uv run python gamesymbol_snapshot.py verify -gamever cstrike-10210
-uv run python gamesymbol_snapshot.py check-contract -gamever cstrike-10210
-```
-
-Default restore creates missing YAML and refuses to overwrite semantically different files. `-replace` removes only YAML under `bin/<GAMEVER>/`, preserves binaries and IDA databases, then rebuilds the snapshot contents.
-
-The writer emits schema 6 with config digest v2, canonical file payloads, and path-independent binary hash metadata; the reader accepts schemas 1–6. Schema 5 remains readable with its required legacy binary `path`. Restore and verification reject links, path escapes, undeclared YAML, missing required YAML, non-canonical bytes, and contract drift.
-
-`check-contract` is a read-only trust probe: exit `0` means trusted, exit `3` reports a machine-readable untrusted reason, and invocation, configuration, or operational errors remain hard failures.
-
-## Scope: no C++ layout validation
-
-Unlike the CS2 project, GoldSrc VibeSignatures does not run C++ layout validation against source headers — there is no `run_cpp_tests.py` or HL2SDK checkout. The gamedata step is the sole downstream guard before publication.
+The writer emits schema 6 and the reader accepts schemas 1–6. Restore and verification reject links, path escapes,
+undeclared or missing YAML, non-canonical bytes, and contract drift.

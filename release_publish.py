@@ -184,11 +184,22 @@ def publish_release(
     repo_root: str | Path,
     bundle_root: str | Path,
     version: str,
+    source_sha: str,
+    build_id: str,
+    workflow_run_url: str,
+    cache_selection_sha256: str,
 ) -> str:
     repo_root = Path(repo_root).resolve()
     bundle_root = Path(bundle_root).resolve()
-    manifest = verify_release_bundle(repo_root=repo_root, bundle_root=bundle_root, version=version)
-    source_sha = manifest["source_sha"]
+    manifest = verify_release_bundle(
+        repo_root=repo_root,
+        bundle_root=bundle_root,
+        version=version,
+        source_sha=source_sha,
+        build_id=build_id,
+        workflow_run_url=workflow_run_url,
+        cache_selection_sha256=cache_selection_sha256,
+    )
     state, _build_id, _workflow_run_url = inspect_preflight(
         repository,
         version,
@@ -295,6 +306,10 @@ def main(argv: list[str] | None = None) -> int:
     publish.add_argument("--repo-root", default=".")
     publish.add_argument("--bundle-root", required=True)
     publish.add_argument("--version", required=True)
+    publish.add_argument("--source-sha", required=True)
+    publish.add_argument("--build-id", required=True)
+    publish.add_argument("--workflow-run-url", required=True)
+    publish.add_argument("--cache-selection-sha256", required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == "preflight":
@@ -318,6 +333,10 @@ def main(argv: list[str] | None = None) -> int:
                     repo_root=args.repo_root,
                     bundle_root=args.bundle_root,
                     version=args.version,
+                    source_sha=args.source_sha,
+                    build_id=args.build_id,
+                    workflow_run_url=args.workflow_run_url,
+                    cache_selection_sha256=args.cache_selection_sha256,
                 )
             )
     except (ReleasePublishError, ReleaseBundleError, OSError, ValueError) as exc:

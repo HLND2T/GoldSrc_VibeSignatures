@@ -52,17 +52,16 @@ instead of selecting a cache under a stale configured version.
 
 ## Release runner and GitHub governance requirements
 
-The release build runs on the same `[self-hosted, windows, x64]` runner as source analysis; there is no separate release
-runner. Its machine environment must expose the same checkout-external `PERSISTED_WORKSPACE` to build, promotion,
-and recovery jobs. The `release-staging` subtree must be protected by runner-account ACLs and storage with atomic
-same-filesystem rename semantics. The PR routing contract must keep untrusted/fork analysis off this runner.
+The release build runs on the same `[self-hosted, windows, x64]` runner as source analysis. Its protected `win64`
+Environment supplies only analysis/runtime secrets and the checkout-external `PERSISTED_WORKSPACE`; the `idb-cache` and
+binary-only accepted-cache subtrees require runner-account ACLs and same-filesystem atomic rename support. The build has
+read-only repository permission and no PAT, push, tag, or Release authority. PR routing must keep untrusted/fork analysis
+off this runner.
 
-Releases run only in the allowlisted repositories (`HLND2T/GoldSrc_VibeSignatures` and the fork), gated by the `win64`
-Environment and per-version concurrency rather than a GitHub App token or `GSVIBE_RELEASE_PHASE2_ENABLED`. Configure
-`HLND2T_GH_TOKEN` in that Environment with repository Contents and Pull requests read/write plus Metadata read. Its owner
-must be an `OWNER`, `MEMBER`, or repository `COLLABORATOR`; the output PR is authored by that PAT account. Branch
-protection requires the unique Actions-owned `pr-validate`, merge-commit-only
-merges whose first parent descends from the output `source_sha`, no direct/admin-bypass pushes to `main`, and protected
-release tags. Requiring the output branch to be up to date with `main` would force merging the default branch into the
-immutable output head and is not part of this contract. Repository tests cannot activate or prove these external
-controls.
+Production release dispatch is restricted to `HLND2T/GoldSrc_VibeSignatures` and per-version concurrency. Configure a
+separate protected `release` Environment for the GitHub-hosted `publish-release` job; it is the only release-build job
+granted `contents: write`. The separate Pages archive job may write only its append-only, non-authoritative mirror branch.
+Branch protection requires the unique Actions-owned `pr-validate`, no direct/admin-bypass pushes to
+`main`, protected release tags, and the required approval policy for that Environment. No GitHub App token,
+`HLND2T_GH_TOKEN`, generated-output branch, or merge-time promotion is part of the release authority. Repository tests
+cannot activate or prove these external controls.

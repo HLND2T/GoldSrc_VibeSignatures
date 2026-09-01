@@ -5,13 +5,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
-from pathlib import Path
+import tempfile
+from pathlib import Path, PurePosixPath
 
 import yaml
 
-from bin_artifact_contract import BinArtifactContractError, validate_repository_artifact_contract
+from bin_artifact_contract import (
+    BinArtifactContractError,
+    compare_repository_artifact_root,
+    validate_repository_artifact_contract,
+)
 from gamedata_contract import (
     GamedataContractError,
     analysis_config_sha256,
@@ -20,19 +26,24 @@ from gamedata_contract import (
     validate_gamedata_tree,
 )
 from gamesymbol_snapshot_lib.errors import SnapshotError
+from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.metadata import MetadataContractError, verify_metadata
 from gamesymbol_snapshot_lib.operations import check_snapshot_contract
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.hashing import (
     canonical_json_bytes,
+    contained_path,
     file_inventory,
     inventory_sha256,
+    normalized_relative_path,
+    normalized_sha256,
     reject_reparse_points,
     sha256_bytes,
     sha256_file,
     write_canonical_json,
 )
-from release_workflow_lib.manifests import require_sha, require_version
+from release_workflow_lib.accepted_bin import is_analysis_yaml_path, is_recoverable_analysis_path
+from release_workflow_lib.manifests import require_gamever, require_sha, require_version
 
 BUNDLE_SCHEMA_VERSION = 1
 MANIFEST_KEYS = {
@@ -49,6 +60,43 @@ MANIFEST_KEYS = {
     "gamevers",
     "assets",
 }
+GAMEVER_RECORD_KEYS = {
+    "game_version",
+    "artifact_inventory_sha256",
+    "analysis_config_sha256",
+    "snapshot_sha256",
+    "metadata_sha256",
+    "gamedata_manifest_sha256",
+    "gamedata_inventory_sha256",
+}
+ASSET_RECORD_KEYS = {"path", "size", "sha256"}
+IDA_RUNTIME_EVIDENCE_KEYS = {"kernel_version", "idalib_mcp_sha256"}
+CACHE_SELECTION_KEYS = {"schema_version", "cache_mode", "source_sha", "bin_commit", "entries"}
+CACHE_SELECTION_ENTRY_KEYS = {"tag", "platform", "cache_key", "generation", "manifest_sha256", "binaries"}
+CACHE_BINARY_KEYS = {"module", "platform", "path", "size", "sha256"}
+GENERATION_RE = re.compile(r"^[A-Za-z0-9._-]{1,240}$", re.ASCII)
+SEVEN_ZIP_ITEM_KEYS = {
+    "Path",
+    "Size",
+    "Packed Size",
+    "Modified",
+    "Created",
+    "Accessed",
+    "Attributes",
+    "CRC",
+    "Encrypted",
+    "Method",
+    "Characteristics",
+    "Host OS",
+    "Version",
+    "Volume Index",
+    "Offset",
+    "Block",
+    "Folder",
+    "Symbolic Link",
+    "Hard Link",
+}
+SEVEN_ZIP_CRC_RE = re.compile(r"^[0-9A-F]{8}$")
 
 
 class ReleaseBundleError(ValueError):
@@ -90,6 +138,21 @@ def _configured_gamevers(repo_root: Path) -> tuple[str, ...]:
     return tuple(sorted(values))
 
 
+def _expected_cache_pairs(repo_root: Path, gamevers: tuple[str, ...]) -> tuple[tuple[str, str], ...]:
+    pairs = []
+    for gamever in gamevers:
+        contract = load_contract(
+            repo_root / "configs" / f"{gamever}.yaml",
+            gamever,
+            repo_root / "bin",
+            artifactdir=repo_root / "bin_artifacts",
+        )
+        pairs.extend(
+            (gamever, platform) for platform in sorted({target.platform for target in contract.binary_targets.values()})
+        )
+    return tuple(sorted(pairs))
+
+
 def _copy_file(source: Path, target: Path) -> None:
     if not source.is_file():
         raise ReleaseBundleError(f"Required bundle input is missing: {source}")
@@ -108,13 +171,288 @@ def _copy_tree(source: Path, target: Path) -> None:
     shutil.copytree(source, target)
 
 
+def _tracked_binary_sources(repo_root: Path, gamever: str) -> dict[str, Path]:
+    gamever = require_gamever(gamever)
+    bin_root = repo_root / "bin"
+    result = subprocess.run(
+        ["git", "-C", str(bin_root), "ls-files", "-z", "--", gamever],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        raise ReleaseBundleError(
+            result.stderr.decode(errors="replace").strip() or "Unable to enumerate tracked binary files"
+        )
+    records: dict[str, Path] = {}
+    for raw in result.stdout.split(b"\0"):
+        if not raw:
+            continue
+        try:
+            relative = normalized_relative_path(raw.decode("utf-8"))
+        except (UnicodeDecodeError, ReleaseWorkflowError) as exc:
+            raise ReleaseBundleError(f"Tracked binary path is unsafe: {raw!r}") from exc
+        parts = PurePosixPath(relative).parts
+        if not parts or parts[0] != gamever:
+            raise ReleaseBundleError(f"Tracked binary path escaped its game version: {relative}")
+        source = contained_path(bin_root, *parts)
+        if not source.is_file():
+            raise ReleaseBundleError(f"Tracked binary input is missing: {source}")
+        relative_path = Path(*parts)
+        if is_analysis_yaml_path(relative_path) or is_recoverable_analysis_path(relative_path):
+            raise ReleaseBundleError(f"Tracked binary tree contains analysis state: {relative}")
+        archive_path = normalized_relative_path(f"bin/{relative}")
+        prior = records.setdefault(archive_path.casefold(), source)
+        if prior != source:
+            raise ReleaseBundleError(f"Tracked binary paths case-collide: {archive_path}")
+    if not records:
+        raise ReleaseBundleError(f"No tracked binary files were found for {gamever}")
+    return {
+        normalized_relative_path(f"bin/{path.relative_to(bin_root).as_posix()}"): path
+        for path in sorted(records.values())
+    }
+
+
+def stage_tracked_binary_tree(*, repo_root: str | Path, gamever: str, destination: str | Path) -> None:
+    repo_root = Path(repo_root).resolve()
+    destination = Path(destination).resolve()
+    if destination.exists():
+        raise ReleaseBundleError(f"Tracked binary staging destination already exists: {destination}")
+    destination.mkdir(parents=True)
+    for archive_path, source in _tracked_binary_sources(repo_root, gamever).items():
+        relative = PurePosixPath(archive_path).relative_to(PurePosixPath("bin", gamever))
+        target = contained_path(destination, *relative.parts)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+
+
+def stage_validated_artifact_tree(
+    *,
+    repo_root: str | Path,
+    artifact_root: str | Path,
+    destination: str | Path,
+) -> None:
+    repo_root = Path(repo_root).resolve()
+    artifact_root = Path(artifact_root).resolve()
+    destination = Path(destination).resolve()
+    if destination.exists():
+        raise ReleaseBundleError(f"Artifact staging destination already exists: {destination}")
+    try:
+        repository = compare_repository_artifact_root(repo_root, artifact_root)
+    except BinArtifactContractError as exc:
+        raise ReleaseBundleError(str(exc)) from exc
+    destination.mkdir(parents=True)
+    for inventory in repository.gamevers:
+        gamever_destination = contained_path(destination, inventory.game_version)
+        gamever_destination.mkdir()
+        for entry in inventory.entries:
+            parts = PurePosixPath(entry.path).parts
+            source = contained_path(artifact_root, inventory.game_version, *parts)
+            target = contained_path(gamever_destination, *parts)
+            _copy_file(source, target)
+        expected = [{"path": entry.path, "size": entry.size, "sha256": entry.sha256} for entry in inventory.entries]
+        if file_inventory(gamever_destination) != expected:
+            raise ReleaseBundleError(f"Staged artifact inventory differs for {inventory.game_version}")
+
+
+def _add_archive_source(sources: dict[str, Path], relative: str, source: Path) -> None:
+    relative = normalized_relative_path(relative)
+    if not source.is_file():
+        raise ReleaseBundleError(f"Expected archive source is missing: {source}")
+    if relative.casefold() in {path.casefold() for path in sources}:
+        raise ReleaseBundleError(f"Expected archive paths case-collide: {relative}")
+    sources[relative] = source
+
+
+def _expected_archive_sources(
+    *,
+    repo_root: Path,
+    bundle_root: Path,
+    gamever: str,
+    artifact_entries,
+    archive_kind: str,
+) -> dict[str, Path]:
+    sources: dict[str, Path] = {}
+    for path, source in _tracked_binary_sources(repo_root, gamever).items():
+        _add_archive_source(sources, path, source)
+    if archive_kind == "gamebin":
+        return dict(sorted(sources.items()))
+    if archive_kind != "gamedata":
+        raise ReleaseBundleError(f"Unknown archive kind: {archive_kind}")
+    _add_archive_source(sources, f"configs/{gamever}.yaml", repo_root / "configs" / f"{gamever}.yaml")
+    for entry in artifact_entries:
+        _add_archive_source(
+            sources,
+            f"bin_artifacts/{gamever}/{entry.path}",
+            repo_root / "bin_artifacts" / gamever / Path(*PurePosixPath(entry.path).parts),
+        )
+    for suffix in (".yaml", ".metadata.yaml"):
+        _add_archive_source(
+            sources,
+            f"gamesymbols/{gamever}{suffix}",
+            bundle_root / "gamesymbols" / f"{gamever}{suffix}",
+        )
+    gamedata_root = bundle_root / "gamedata" / gamever
+    for record in file_inventory(gamedata_root):
+        _add_archive_source(
+            sources,
+            f"gamedata/{gamever}/{record['path']}",
+            gamedata_root / Path(*PurePosixPath(record["path"]).parts),
+        )
+    return dict(sorted(sources.items()))
+
+
 def _asset_record(bundle_root: Path, relative: str) -> dict:
-    path = bundle_root / relative
+    relative = normalized_relative_path(relative)
+    path = contained_path(bundle_root, *PurePosixPath(relative).parts)
+    if not path.is_file():
+        raise ReleaseBundleError(f"Release asset is missing: {relative}")
     return {"path": relative, "size": path.stat().st_size, "sha256": sha256_file(path)}
 
 
 def _checksum_bytes(records: list[dict]) -> bytes:
     return "".join(f"{record['sha256']}  {record['path']}\n" for record in records).encode("utf-8")
+
+
+def _seven_zip_records(archive: Path) -> list[dict[str, str]]:
+    result = subprocess.run(
+        ["7z", "l", "-slt", "-ba", "-sccUTF-8", str(archive)],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="strict",
+    )
+    if result.returncode != 0:
+        raise ReleaseBundleError(result.stderr.strip() or f"Unable to list archive: {archive}")
+    records: list[dict[str, str]] = []
+    current: dict[str, str] = {}
+    for raw_line in result.stdout.splitlines():
+        if not raw_line:
+            if current:
+                records.append(current)
+                current = {}
+            continue
+        key, separator, value = raw_line.partition(" = ")
+        if not separator or key not in SEVEN_ZIP_ITEM_KEYS or key in current:
+            raise ReleaseBundleError(f"Archive listing is ambiguous or unsafe: {archive}")
+        current[key] = value
+    if current:
+        records.append(current)
+    if not records:
+        raise ReleaseBundleError(f"Archive contains no entries: {archive}")
+    return records
+
+
+def _seven_zip_inventory(
+    archive: Path,
+    expected_paths: set[str],
+    *,
+    required_directories: set[str] | None = None,
+) -> tuple[set[str], set[str]]:
+    files: set[str] = set()
+    directories: set[str] = set()
+    seen_casefold: set[str] = set()
+    required_directories = {
+        normalized_relative_path(path) for path in (() if required_directories is None else required_directories)
+    }
+    if len({path.casefold() for path in required_directories}) != len(required_directories):
+        raise ReleaseBundleError("Required archive directories case-collide")
+    expected_directories = {
+        PurePosixPath(*PurePosixPath(path).parts[:index]).as_posix()
+        for path in expected_paths
+        for index in range(1, len(PurePosixPath(path).parts))
+    }
+    expected_directories.update(
+        PurePosixPath(*PurePosixPath(path).parts[:index]).as_posix()
+        for path in required_directories
+        for index in range(1, len(PurePosixPath(path).parts) + 1)
+    )
+    for record in _seven_zip_records(archive):
+        raw_path = record.get("Path")
+        if raw_path is None or any(ord(character) < 32 for character in raw_path):
+            raise ReleaseBundleError(f"Archive entry path is missing or unsafe: {archive}")
+        normalized_input = raw_path.replace("\\", "/")
+        if normalized_input == "." and record.get("Folder") == "+":
+            continue
+        try:
+            path = normalized_relative_path(normalized_input)
+        except ReleaseWorkflowError as exc:
+            raise ReleaseBundleError(f"Archive entry path is unsafe: {raw_path!r}") from exc
+        key = path.casefold()
+        if key in seen_casefold:
+            raise ReleaseBundleError(f"Archive entry paths duplicate or case-collide: {path}")
+        seen_casefold.add(key)
+        if record.get("Symbolic Link") or record.get("Hard Link"):
+            raise ReleaseBundleError(f"Archive links are not allowed: {path}")
+        is_directory = record.get("Folder") == "+" or record.get("Attributes", "").startswith("D")
+        if is_directory:
+            if path not in expected_directories:
+                raise ReleaseBundleError(f"Archive contains an unexpected directory: {path}")
+            directories.add(path)
+            continue
+        try:
+            size = int(record["Size"])
+        except (KeyError, ValueError) as exc:
+            raise ReleaseBundleError(f"Archive file has no valid size: {path}") from exc
+        if size < 0:
+            raise ReleaseBundleError(f"Archive file has a negative size: {path}")
+        crc = record.get("CRC")
+        if crc is not None and not SEVEN_ZIP_CRC_RE.fullmatch(crc):
+            raise ReleaseBundleError(f"Archive file has an invalid CRC: {path}")
+        files.add(path)
+    if files != expected_paths:
+        raise ReleaseBundleError(
+            f"Archive file inventory mismatch: missing={sorted(expected_paths - files)!r}; "
+            f"extra={sorted(files - expected_paths)!r}"
+        )
+    if not required_directories.issubset(directories):
+        raise ReleaseBundleError(
+            f"Archive required directory inventory mismatch: missing={sorted(required_directories - directories)!r}"
+        )
+    return files, directories
+
+
+def _verify_archive(
+    archive: Path,
+    expected_sources: dict[str, Path],
+    *,
+    required_directories: set[str] | None = None,
+) -> None:
+    expected_records = [
+        {"path": path, "size": source.stat().st_size, "sha256": sha256_file(source)}
+        for path, source in expected_sources.items()
+    ]
+    _seven_zip_inventory(
+        archive,
+        {record["path"] for record in expected_records},
+        required_directories=required_directories,
+    )
+    with tempfile.TemporaryDirectory(prefix="release-archive-verify-") as temporary:
+        extracted = Path(temporary)
+        result = subprocess.run(
+            ["7z", "x", "-y", f"-o{extracted}", str(archive)],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise ReleaseBundleError(result.stderr.strip() or f"Unable to extract archive: {archive}")
+        actual_records = file_inventory(extracted)
+        if actual_records != expected_records:
+            raise ReleaseBundleError(f"Archive content differs from trusted sources: {archive.name}")
+
+
+def _load_canonical_json(path: Path, label: str) -> dict:
+    try:
+        raw = path.read_bytes()
+        document = json.loads(raw)
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ReleaseBundleError(f"Unable to parse {label}: {exc}") from exc
+    if not isinstance(document, dict) or canonical_json_bytes(document) != raw:
+        raise ReleaseBundleError(f"{label} must be a canonical JSON object")
+    return document
 
 
 def _parse_manifest(path: Path) -> dict:
@@ -128,6 +466,155 @@ def _parse_manifest(path: Path) -> dict:
     if canonical_json_bytes(document) != raw:
         raise ReleaseBundleError("Release manifest is not canonical JSON")
     return document
+
+
+def _expected_payload_paths(gamevers: tuple[str, ...]) -> tuple[str, ...]:
+    return tuple(
+        sorted(
+            path
+            for gamever in gamevers
+            for path in (
+                f"archives/gamedata-{gamever}.7z",
+                f"archives/gamebin-{gamever}.7z",
+                f"gamesymbols/{gamever}.yaml",
+                f"gamesymbols/{gamever}.metadata.yaml",
+            )
+        )
+    )
+
+
+def _validate_manifest_identity(
+    manifest: dict,
+    *,
+    repo_root: Path,
+    version: str,
+    source_sha: str,
+    build_id: str,
+    workflow_run_url: str,
+    gamevers: tuple[str, ...],
+) -> None:
+    if manifest["release_version"] != version:
+        raise ReleaseBundleError("Release manifest version mismatch")
+    if manifest["source_sha"] != source_sha:
+        raise ReleaseBundleError("Release manifest source SHA differs from the bound workflow identity")
+    if manifest["build_id"] != build_id or manifest["workflow_run_url"] != workflow_run_url:
+        raise ReleaseBundleError("Release manifest workflow identity mismatch")
+    if manifest["source_subject"] != _git(repo_root, "show", "-s", "--format=%s", "HEAD"):
+        raise ReleaseBundleError("Release manifest source subject mismatch")
+    for key in (
+        "generator_contract_sha256",
+        "ida_runtime_sha256",
+        "warm_idb_selection_sha256",
+    ):
+        try:
+            normalized_sha256(manifest[key], f"release manifest {key}")
+        except ReleaseWorkflowError as exc:
+            raise ReleaseBundleError(str(exc)) from exc
+    records = manifest["gamevers"]
+    if (
+        not isinstance(records, list)
+        or [record.get("game_version") if isinstance(record, dict) else None for record in records] != list(gamevers)
+        or any(not isinstance(record, dict) or set(record) != GAMEVER_RECORD_KEYS for record in records)
+    ):
+        raise ReleaseBundleError("Release manifest gamever inventory must be unique, canonical, and complete")
+    assets = manifest["assets"]
+    if not isinstance(assets, list) or any(
+        not isinstance(record, dict)
+        or set(record) != ASSET_RECORD_KEYS
+        or not isinstance(record["size"], int)
+        or record["size"] < 0
+        for record in assets
+    ):
+        raise ReleaseBundleError("Release manifest asset inventory has an invalid schema")
+
+
+def _validate_evidence(
+    *,
+    bundle_root: Path,
+    manifest: dict,
+    source_sha: str,
+    bin_gitlink_sha: str,
+    cache_selection_sha256: str,
+    gamevers: tuple[str, ...],
+    expected_cache_pairs: tuple[tuple[str, str], ...],
+) -> None:
+    runtime_path = bundle_root / "evidence/ida-runtime.json"
+    selection_path = bundle_root / "evidence/cache-selection.json"
+    runtime = _load_canonical_json(runtime_path, "IDA runtime evidence")
+    if set(runtime) != IDA_RUNTIME_EVIDENCE_KEYS:
+        raise ReleaseBundleError("IDA runtime evidence has unexpected fields")
+    if (
+        not isinstance(runtime["kernel_version"], str)
+        or not runtime["kernel_version"].strip()
+        or runtime["kernel_version"] != runtime["kernel_version"].strip()
+    ):
+        raise ReleaseBundleError("IDA runtime kernel version must be a trimmed non-empty string")
+    try:
+        normalized_sha256(runtime["idalib_mcp_sha256"], "IDA runtime idalib-mcp digest")
+        expected_selection_digest = normalized_sha256(cache_selection_sha256, "bound warm IDB selection digest")
+    except ReleaseWorkflowError as exc:
+        raise ReleaseBundleError(str(exc)) from exc
+    selection = _load_canonical_json(selection_path, "warm IDB selection evidence")
+    if (
+        set(selection) != CACHE_SELECTION_KEYS
+        or selection.get("schema_version") != 1
+        or selection.get("cache_mode") != "warm"
+        or selection.get("source_sha") != source_sha
+        or selection.get("bin_commit") != bin_gitlink_sha
+        or not isinstance(selection.get("entries"), list)
+        or not selection["entries"]
+    ):
+        raise ReleaseBundleError("Warm IDB selection evidence has an unexpected schema or identity")
+    entries = selection["entries"]
+    pairs: list[tuple[str, str]] = []
+    for entry in entries:
+        if not isinstance(entry, dict) or set(entry) != CACHE_SELECTION_ENTRY_KEYS:
+            raise ReleaseBundleError("Warm IDB selection entry has unexpected fields")
+        try:
+            tag = require_gamever(entry["tag"])
+            normalized_sha256(entry["cache_key"], "warm IDB cache key")
+            normalized_sha256(entry["manifest_sha256"], "warm IDB generation manifest digest")
+        except ReleaseWorkflowError as exc:
+            raise ReleaseBundleError(str(exc)) from exc
+        platform = entry["platform"]
+        if tag not in gamevers or platform not in {"windows", "linux"}:
+            raise ReleaseBundleError("Warm IDB selection entry has an unknown tag or platform")
+        if not isinstance(entry["generation"], str) or not GENERATION_RE.fullmatch(entry["generation"]):
+            raise ReleaseBundleError("Warm IDB selection generation is invalid")
+        binaries = entry["binaries"]
+        if not isinstance(binaries, list) or not binaries:
+            raise ReleaseBundleError("Warm IDB selection entry must bind binaries")
+        binary_paths = []
+        for binary in binaries:
+            if not isinstance(binary, dict) or set(binary) != CACHE_BINARY_KEYS:
+                raise ReleaseBundleError("Warm IDB selection binary has unexpected fields")
+            try:
+                binary_path = normalized_relative_path(binary["path"])
+                normalized_sha256(binary["sha256"], "warm IDB binary digest")
+            except ReleaseWorkflowError as exc:
+                raise ReleaseBundleError(str(exc)) from exc
+            if (
+                binary["platform"] != platform
+                or not isinstance(binary["module"], str)
+                or not binary["module"]
+                or PurePosixPath(binary_path).parts[0] != binary["module"]
+                or not isinstance(binary["size"], int)
+                or binary["size"] <= 0
+            ):
+                raise ReleaseBundleError("Warm IDB selection binary identity is invalid")
+            binary_paths.append(binary_path)
+        if binary_paths != sorted(binary_paths) or len({path.casefold() for path in binary_paths}) != len(binary_paths):
+            raise ReleaseBundleError("Warm IDB selection binaries must use canonical unique order")
+        pairs.append((tag, platform))
+    if tuple(pairs) != expected_cache_pairs:
+        raise ReleaseBundleError("Warm IDB selection entries do not cover the configured tag/platform inventory")
+    if sha256_file(runtime_path) != manifest["ida_runtime_sha256"]:
+        raise ReleaseBundleError("IDA runtime evidence digest mismatch")
+    if (
+        sha256_file(selection_path) != manifest["warm_idb_selection_sha256"]
+        or sha256_file(selection_path) != expected_selection_digest
+    ):
+        raise ReleaseBundleError("Warm IDB selection evidence digest mismatch")
 
 
 def build_release_bundle(
@@ -225,7 +712,10 @@ def build_release_bundle(
             }
         )
 
-    assets = [_asset_record(bundle_root, relative) for relative in sorted(payload_paths)]
+    expected_payload_paths = _expected_payload_paths(_configured_gamevers(repo_root))
+    if tuple(sorted(payload_paths)) != expected_payload_paths:
+        raise ReleaseBundleError("Release builder payload inventory is incomplete")
+    assets = [_asset_record(bundle_root, relative) for relative in expected_payload_paths]
     manifest = {
         "schema_version": BUNDLE_SCHEMA_VERSION,
         "release_version": version,
@@ -248,17 +738,38 @@ def build_release_bundle(
     return manifest
 
 
-def verify_release_bundle(*, repo_root: str | Path, bundle_root: str | Path, version: str) -> dict:
+def verify_release_bundle(
+    *,
+    repo_root: str | Path,
+    bundle_root: str | Path,
+    version: str,
+    source_sha: str,
+    build_id: str,
+    workflow_run_url: str,
+    cache_selection_sha256: str,
+) -> dict:
     repo_root = Path(repo_root).resolve()
     bundle_root = Path(bundle_root).resolve()
     version = require_version(version)
+    source_sha = require_sha(source_sha, "bound SOURCE_SHA")
+    if not isinstance(build_id, str) or not build_id or not isinstance(workflow_run_url, str) or not workflow_run_url:
+        raise ReleaseBundleError("Bound build ID and workflow run URL must be non-empty strings")
     manifest_relative = f"release-manifest-{version}.json"
     manifest = _parse_manifest(bundle_root / manifest_relative)
-    if manifest["release_version"] != version:
-        raise ReleaseBundleError("Release manifest version mismatch")
-    if _git(repo_root, "rev-parse", "HEAD") != manifest["source_sha"]:
-        raise ReleaseBundleError("Verifier checkout does not match manifest source SHA")
-    if _gitlink(repo_root) != manifest["bin_gitlink_sha"]:
+    gamevers = _configured_gamevers(repo_root)
+    _validate_manifest_identity(
+        manifest,
+        repo_root=repo_root,
+        version=version,
+        source_sha=source_sha,
+        build_id=build_id,
+        workflow_run_url=workflow_run_url,
+        gamevers=gamevers,
+    )
+    if _git(repo_root, "rev-parse", "HEAD") != source_sha:
+        raise ReleaseBundleError("Verifier checkout does not match the bound source SHA")
+    bin_gitlink_sha = _gitlink(repo_root)
+    if bin_gitlink_sha != manifest["bin_gitlink_sha"]:
         raise ReleaseBundleError("Verifier bin gitlink does not match manifest")
 
     try:
@@ -270,12 +781,16 @@ def verify_release_bundle(*, repo_root: str | Path, bundle_root: str | Path, ver
         raise ReleaseBundleError(str(exc)) from exc
     if generator_digest != manifest["generator_contract_sha256"]:
         raise ReleaseBundleError("Generator contract digest mismatch")
-    if sha256_file(bundle_root / "evidence/ida-runtime.json") != manifest["ida_runtime_sha256"]:
-        raise ReleaseBundleError("IDA runtime evidence digest mismatch")
-    if sha256_file(bundle_root / "evidence/cache-selection.json") != manifest["warm_idb_selection_sha256"]:
-        raise ReleaseBundleError("Warm IDB selection evidence digest mismatch")
+    _validate_evidence(
+        bundle_root=bundle_root,
+        manifest=manifest,
+        source_sha=source_sha,
+        bin_gitlink_sha=bin_gitlink_sha,
+        cache_selection_sha256=cache_selection_sha256,
+        gamevers=gamevers,
+        expected_cache_pairs=_expected_cache_pairs(repo_root, gamevers),
+    )
 
-    gamevers = _configured_gamevers(repo_root)
     expected_paths = {
         manifest_relative,
         f"SHA256SUMS-{version}.txt",
@@ -303,8 +818,6 @@ def verify_release_bundle(*, repo_root: str | Path, bundle_root: str | Path, ver
 
     artifact_by_tag = {item.game_version: item for item in repository_artifacts.gamevers}
     manifest_by_tag = {item["game_version"]: item for item in manifest["gamevers"]}
-    if set(manifest_by_tag) != set(gamevers):
-        raise ReleaseBundleError("Release manifest gamever inventory mismatch")
     for gamever in gamevers:
         config = repo_root / "configs" / f"{gamever}.yaml"
         snapshot = bundle_root / "gamesymbols" / f"{gamever}.yaml"
@@ -345,10 +858,31 @@ def verify_release_bundle(*, repo_root: str | Path, bundle_root: str | Path, ver
         }
         if record != expected_record:
             raise ReleaseBundleError(f"Release manifest provenance mismatch for {gamever}")
+        _verify_archive(
+            bundle_root / "archives" / f"gamebin-{gamever}.7z",
+            _expected_archive_sources(
+                repo_root=repo_root,
+                bundle_root=bundle_root,
+                gamever=gamever,
+                artifact_entries=artifact_by_tag[gamever].entries,
+                archive_kind="gamebin",
+            ),
+        )
+        _verify_archive(
+            bundle_root / "archives" / f"gamedata-{gamever}.7z",
+            _expected_archive_sources(
+                repo_root=repo_root,
+                bundle_root=bundle_root,
+                gamever=gamever,
+                artifact_entries=artifact_by_tag[gamever].entries,
+                archive_kind="gamedata",
+            ),
+            required_directories={f"bin_artifacts/{gamever}"},
+        )
 
-    actual_assets = [_asset_record(bundle_root, item["path"]) for item in manifest["assets"]]
-    if actual_assets != manifest["assets"]:
-        raise ReleaseBundleError("Release payload asset digest mismatch")
+    expected_assets = [_asset_record(bundle_root, path) for path in _expected_payload_paths(gamevers)]
+    if manifest["assets"] != expected_assets:
+        raise ReleaseBundleError("Release payload asset inventory or digest mismatch")
     manifest_record = _asset_record(bundle_root, manifest_relative)
     expected_checksums = _checksum_bytes([*manifest["assets"], manifest_record])
     if (bundle_root / f"SHA256SUMS-{version}.txt").read_bytes() != expected_checksums:
@@ -371,10 +905,22 @@ def main(argv: list[str] | None = None) -> int:
     build.add_argument("--build-id", required=True)
     build.add_argument("--workflow-run-url", required=True)
     build.add_argument("--source-sha", required=True)
+    stage_binary = commands.add_parser("stage-binary")
+    stage_binary.add_argument("--repo-root", default=".")
+    stage_binary.add_argument("--gamever", required=True)
+    stage_binary.add_argument("--destination", required=True)
+    stage_artifacts = commands.add_parser("stage-artifacts")
+    stage_artifacts.add_argument("--repo-root", default=".")
+    stage_artifacts.add_argument("--artifact-root", required=True)
+    stage_artifacts.add_argument("--destination", required=True)
     verify = commands.add_parser("verify")
     verify.add_argument("--repo-root", default=".")
     verify.add_argument("--bundle-root", required=True)
     verify.add_argument("--version", required=True)
+    verify.add_argument("--source-sha", required=True)
+    verify.add_argument("--build-id", required=True)
+    verify.add_argument("--workflow-run-url", required=True)
+    verify.add_argument("--cache-selection-sha256", required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == "build":
@@ -391,8 +937,28 @@ def main(argv: list[str] | None = None) -> int:
                 workflow_run_url=args.workflow_run_url,
                 source_sha=args.source_sha,
             )
+        elif args.command == "stage-binary":
+            stage_tracked_binary_tree(
+                repo_root=args.repo_root,
+                gamever=args.gamever,
+                destination=args.destination,
+            )
+        elif args.command == "stage-artifacts":
+            stage_validated_artifact_tree(
+                repo_root=args.repo_root,
+                artifact_root=args.artifact_root,
+                destination=args.destination,
+            )
         else:
-            verify_release_bundle(repo_root=args.repo_root, bundle_root=args.bundle_root, version=args.version)
+            verify_release_bundle(
+                repo_root=args.repo_root,
+                bundle_root=args.bundle_root,
+                version=args.version,
+                source_sha=args.source_sha,
+                build_id=args.build_id,
+                workflow_run_url=args.workflow_run_url,
+                cache_selection_sha256=args.cache_selection_sha256,
+            )
     except (ReleaseBundleError, ReleaseWorkflowError, OSError, ValueError) as exc:
         print(f"Error: {exc}")
         return 1

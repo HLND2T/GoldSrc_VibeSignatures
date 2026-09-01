@@ -73,7 +73,12 @@ def _selected_binary_groups(*, document: dict, repo_root: Path, bindir: Path, re
         verified_action = verify_bound_tag_inputs(document, repo, tag)
         if tuple(verified_action.get("analysis_nodes", ())) != node_ids:
             raise IdbCacheWorkflowError(f"Bound analysis node list changed for {tag}")
-        contract = load_contract(checkout / "configs" / f"{tag}.yaml", tag, binary_root)
+        contract = load_contract(
+            checkout / "configs" / f"{tag}.yaml",
+            tag,
+            binary_root,
+            artifactdir=checkout / "bin_artifacts",
+        )
         unknown = set(node_ids) - set(contract.nodes)
         if unknown:
             raise IdbCacheWorkflowError(

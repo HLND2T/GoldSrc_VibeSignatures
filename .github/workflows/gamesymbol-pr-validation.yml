@@ -1,53 +1,14 @@
 name: Game-symbol PR validation
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review, edited, closed]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
 permissions:
   contents: read
 concurrency:
   group: ${{ github.repository }}-gamesymbol-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 jobs:
-  finalize:
-    if: github.event.action == 'closed'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Finish without persisted YAML promotion
-        run: echo "No game-symbol staging or promotion is configured"
-  classify:
-    if: github.event.action != 'closed'
-    runs-on: ubuntu-latest
-    outputs:
-      route: ${{ steps.classify.outputs.route }}
-    steps:
-      - name: Checkout trusted base classifier
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          fetch-depth: 1
-          submodules: false
-          persist-credentials: false
-      - name: Classify pull request route
-        id: classify
-        shell: bash
-        env:
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: |
-          set -euo pipefail
-          if [[ ! -f pull_request_route.py ]]; then
-            echo "route=source" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          route=$(python - <<'PY'
-          import os
-          from pull_request_route import classify_pr_route
-          print(classify_pr_route(head_ref=os.environ["HEAD_REF"], output_routing_enabled=True))
-          PY
-          )
-          echo "route=$route" >> "$GITHUB_OUTPUT"
   plan:
-    needs: classify
-    if: github.event.action != 'closed' && needs.classify.outputs.route == 'source'
     runs-on: ubuntu-latest
     outputs:
       has_actions: ${{ steps.route.outputs.has_actions }}
@@ -132,8 +93,8 @@ jobs:
           if-no-files-found: error
           overwrite: true
   validate-hosted:
-    needs: [classify, plan]
-    if: needs.classify.outputs.route == 'source' && needs.plan.outputs.has_hosted == 'true'
+    needs: plan
+    if: needs.plan.outputs.has_hosted == 'true'
     runs-on: ubuntu-latest
     env:
       SUBMODULE_CACHE_VERSION: v1
@@ -216,9 +177,8 @@ jobs:
             trap - EXIT
           done < <(jq -r '.tags[] | select((.analysis_nodes | length) == 0 and (.snapshot_rebuild or .gamedata_rebuild)) | .tag' "$plan")
   warmup-idb:
-    needs: [classify, plan]
-    if: needs.classify.outputs.route == 'source' && needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository
-      == 'true'
+    needs: plan
+    if: needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository == 'true'
     uses: ./.github/workflows/warmup-idb.yml
     secrets: inherit
     with:
@@ -228,10 +188,10 @@ jobs:
       plan_sha256: ${{ needs.plan.outputs.plan_sha256 }}
       selection_artifact_name: idb-cache-selection-${{ github.run_id }}-${{ github.run_attempt }}
   analyze-self-hosted:
-    needs: [classify, plan, warmup-idb]
+    needs: [plan, warmup-idb]
     # Analysis always requires a successful producer. The consumer never warms or rebuilds.
     if: |
-      always() && needs.classify.outputs.route == 'source' && needs.plan.result == 'success'
+      always() && needs.plan.result == 'success'
       && needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository == 'true'
       && needs.warmup-idb.result == 'success'
     runs-on: [self-hosted, windows, x64]
@@ -303,18 +263,6 @@ jobs:
           enable-cache: true
       - run: uv sync --locked
       - run: uv sync --project .trusted-validator --locked
-      - name: Normalize canonical snapshot checkout bytes
-        shell: pwsh
-        run: |
-          @'
-          from gamesymbol_snapshot_lib.paths import iter_snapshot_paths
-          for path in iter_snapshot_paths("gamesymbols"):
-              raw = path.read_bytes()
-              normalized = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
-              if normalized != raw:
-                  path.write_bytes(normalized)
-          '@ | uv run python -
-          if ($LASTEXITCODE -ne 0) { throw 'snapshot checkout normalization failed' }
       - uses: actions/download-artifact@v4
         with:
           name: gamesymbol-plan-${{ github.run_id }}
@@ -460,29 +408,18 @@ jobs:
           git -C $binRoot clean -ffdx
           if ($LASTEXITCODE -ne 0) { throw 'failed to remove generated bin analysis state' }
   fork-analysis-blocked:
-    needs: [classify, plan]
-    if: needs.classify.outputs.route == 'source' && needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository
-      != 'true'
+    needs: plan
+    if: needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository != 'true'
     runs-on: ubuntu-latest
     steps:
       - run: echo "Fork PR analysis nodes require a trusted same-repository runner" && exit 1
   pr-validate:
     name: pr-validate
-    needs: [classify, plan, warmup-idb, validate-hosted, analyze-self-hosted, fork-analysis-blocked]
-    if: always() && github.event.action != 'closed' && needs.classify.outputs.route == 'source'
+    needs: [plan, warmup-idb, validate-hosted, analyze-self-hosted, fork-analysis-blocked]
+    if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Require exactly one trusted PR route
-        env:
-          CLASSIFY_RESULT: ${{ needs.classify.result }}
-          ROUTE: ${{ needs.classify.outputs.route }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          [[ "$CLASSIFY_RESULT" == "success" ]]
-          [[ "$ROUTE" == "source" ]]
       - name: Aggregate source validation results
-        if: needs.classify.outputs.route == 'source'
         env:
           PLAN_RESULT: ${{ needs.plan.result }}
           WARMUP_RESULT: ${{ needs.warmup-idb.result }}

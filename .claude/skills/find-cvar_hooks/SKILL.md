@@ -16,22 +16,22 @@ GoldSrc `hw.dll` or `hw.so` with IDA Pro MCP tools. This fallback runs only afte
 `ida_preprocessor_scripts/find-cvar_hooks.py` fails. Do not repeat its strict requirement that the global
 load immediately follow the `Cvar_DirectSet` call; recover the variable from the surrounding semantics.
 
-The output is cross-platform and consists of exactly one non-empty mapping beside the loaded binary:
-`cvar_hooks.windows.yaml` for PE32/I386 or `cvar_hooks.linux.yaml` for ELF32/I386.
+The output is cross-platform and consists of exactly one non-empty mapping at the invocation contract's exact
+artifact path: `cvar_hooks.windows.yaml` for PE32/I386 or `cvar_hooks.linux.yaml` for ELF32/I386.
 
 ## Realworld Function References
 
-Read the current platform's artifacts first. These generated `bin/` files are read-only reference-build
+Read the current platform's artifacts first. These Git-tracked `bin_artifacts/` files are read-only reference-build
 evidence; their addresses and offsets must never be copied into a different binary without verification.
 
-- `bin/hl-10210/engine/Cvar_Set.windows.yaml`
-- `bin/hl-10210/engine/Cvar_Set.linux.yaml`
-- `bin/hl-10210/engine/Cvar_DirectSet.windows.yaml`
-- `bin/hl-10210/engine/Cvar_DirectSet.linux.yaml`
-- `bin/hl-10210/engine/cvar_hooks.windows.yaml`
-- `bin/hl-10210/engine/cvar_hooks.linux.yaml`
-- `bin/hl-8684/engine/cvar_hooks.windows.yaml`
-- `bin/hl-8684/engine/cvar_hooks.linux.yaml`
+- `bin_artifacts/hl-10210/engine/Cvar_Set.windows.yaml`
+- `bin_artifacts/hl-10210/engine/Cvar_Set.linux.yaml`
+- `bin_artifacts/hl-10210/engine/Cvar_DirectSet.windows.yaml`
+- `bin_artifacts/hl-10210/engine/Cvar_DirectSet.linux.yaml`
+- `bin_artifacts/hl-10210/engine/cvar_hooks.windows.yaml`
+- `bin_artifacts/hl-10210/engine/cvar_hooks.linux.yaml`
+- `bin_artifacts/hl-8684/engine/cvar_hooks.windows.yaml`
+- `bin_artifacts/hl-8684/engine/cvar_hooks.linux.yaml`
 
 Reference observations, for orientation only:
 
@@ -64,18 +64,18 @@ calls `+0`.
 
 ## Step 0 — skip an existing output
 
-Determine the current binary directory and platform. If the corresponding `cvar_hooks.<platform>.yaml`
-already exists and parses as a non-empty YAML mapping, stop successfully without overwriting it:
+Determine the current platform and select the exact `cvar_hooks.<platform>.yaml` output from the invocation artifact
+contract. If it already exists and parses as a non-empty YAML mapping, stop successfully without overwriting it:
 
 ```text
-mcp__ida-pro-mcp__py_eval code="import idaapi, os, yaml; d=os.path.dirname(idaapi.get_input_file_path()); p='windows' if idaapi.get_input_file_path().lower().endswith('.dll') else 'linux'; f=os.path.join(d, f'cvar_hooks.{p}.yaml'); print({'path': f, 'exists': os.path.isfile(f), 'data': yaml.safe_load(open(f, encoding='utf-8')) if os.path.isfile(f) else None})"
+mcp__ida-pro-mcp__py_eval code="import idaapi, os, yaml; p='windows' if idaapi.get_input_file_path().lower().endswith('.dll') else 'linux'; f=os.path.abspath(r'<EXACT_OUTPUT_ARTIFACT_PATH_FROM_INVOCATION_CONTRACT>'); assert os.path.basename(f) == f'cvar_hooks.{p}.yaml'; print({'path': f, 'exists': os.path.isfile(f), 'data': yaml.safe_load(open(f, encoding='utf-8')) if os.path.isfile(f) else None})"
 ```
 
 Reject 64-bit inputs and binaries other than PE32/I386 or ELF32/I386.
 
 ## Step 1 — load the two required function artifacts
 
-Always use `/get-func-from-yaml` twice against the current binary directory:
+Always use `/get-func-from-yaml` twice against the exact input paths in the invocation artifact contract:
 
 1. `func_name=Cvar_Set`
 2. `func_name=Cvar_DirectSet`

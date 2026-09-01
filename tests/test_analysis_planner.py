@@ -1010,6 +1010,11 @@ class DagTests(unittest.TestCase):
 
             def agent(_name, **kwargs):
                 calls.append(("agent", kwargs["model"], kwargs["debug"]))
+                self.assertEqual(
+                    [str((root / "engine" / "result.yaml").resolve())],
+                    kwargs["artifact_context"]["required_outputs"],
+                )
+                self.assertEqual([], kwargs["artifact_context"]["optional_outputs"])
                 kwargs["progress_callback"](
                     event="attempt_started",
                     attempt=1,

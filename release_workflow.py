@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI entry point for the GoldSrc release build/stage/promote lifecycle."""
+"""CLI entry point for binary-only accepted-cache materialization and maintenance."""
 
 from release_workflow_lib.cli import main
 

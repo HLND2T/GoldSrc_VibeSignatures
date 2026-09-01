@@ -36,10 +36,12 @@ Miss 会发布新的 immutable generation；hit 必须先验证 exact generation
 READY 即恢复 exact entry，并运行 strict no-save analysis。Final workspace clean 删除 restored/modified database，
 但不删除 generation。
 
-Producer 与 consumer 的 accepted-bin materialization 统一走
+release-all producer 的 accepted-bin materialization 统一走
 `uv run python release_workflow.py materialize-accepted-bin --repo-root <checkout> --persisted-root <root> --all-gamevers`。
-它持有 `<PERSISTED_WORKSPACE>/release-staging/locks/<gamever>.lock`——与 release promotion 目录切换所用的同一把锁；
-只复制 durable 文件（排除 IDA database 与 BinSync state），并在释放锁前校验复制 inventory。不要手工复制 accepted
+它持有 `<PERSISTED_WORKSPACE>/accepted-bin/locks/<gamever>.lock`，只复制 binary/side file（排除分析 YAML、IDA
+database 与 BinSync state），并在释放锁前逐字节校验。Legacy YAML 清理使用
+`cleanup-legacy-accepted-yaml --cutover-id <id>`：先验证 binary-only materialization，再在
+`accepted-bin/legacy-yaml-backups/` 创建 exact inventory 备份，最后才在锁内删除 YAML。不要手工复制或删除 accepted
 目录树。
 
 只能在同一 runner authority 下运行 `uv run python idb_cache.py prune -persisted-root <root> -tag <tag>`。

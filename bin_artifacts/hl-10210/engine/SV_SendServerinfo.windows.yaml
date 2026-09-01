@@ -1,5 +1,5 @@
 func_name: SV_SendServerinfo
-func_rva: '0x20ddb0'
-func_sig: 55 8B EC 81 EC 58 08 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? F3 0F 10 05 ?? ?? ?? ?? 0F 57 C9 0F 2E C1
-func_size: '0x315'
 func_va: '0x1020ddb0'
+func_rva: '0x20ddb0'
+func_size: '0x315'
+func_sig: 55 8B EC 81 EC 58 08 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? F3 0F 10 05 ?? ?? ?? ?? 0F 57 C9 0F 2E C1

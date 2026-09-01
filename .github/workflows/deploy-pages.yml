@@ -1,12 +1,13 @@
 name: Deploy Pages
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'pages/**'
-      - 'gamesymbols/**'
-      - '.github/workflows/deploy-pages.yml'
+  release:
+    types: [published]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Published immutable Release tag to deploy
+        required: false
+        type: string
 permissions: {}
 concurrency:
   group: deploy-pages
@@ -16,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      GSVIBE_GAMESYMBOLS_DIR: release-gamesymbols
     defaults:
       run:
         working-directory: pages
@@ -28,6 +31,20 @@ jobs:
           node-version: '24'
           cache: 'npm'
           cache-dependency-path: pages/package-lock.json
+      - name: Download immutable game-symbol Release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_RELEASE_TAG: ${{ github.event.release.tag_name }}
+          REQUESTED_RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          tag="${EVENT_RELEASE_TAG:-$REQUESTED_RELEASE_TAG}"
+          test -n "$tag"
+          test "$(gh api "repos/${{ github.repository }}/releases/tags/$tag" --jq '.draft')" = "false"
+          rm -rf release-gamesymbols
+          mkdir release-gamesymbols
+          gh release download "$tag" --repo "${{ github.repository }}" --pattern '*.yaml' --dir release-gamesymbols
       - name: Install Pages dependencies
         run: npm ci
       - name: Test Pages application

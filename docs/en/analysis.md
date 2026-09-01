@@ -78,7 +78,7 @@ Required and optional artifacts plus explicit prerequisites form one DAG. Output
 
 ### Artifact paths and identity
 
-The artifact path is `bin/<tag>/<module>/<symbol>.<platform>.yaml`. Config symbols use `name` plus the sole classifier `category`; `type` and `kind` are rejected. Artifacts reject generic `name/type/kind` and use `func_name`, `gv_name`, `patch_name`, `vtable_class`, or `struct_name/member_name` according to category. Payload identity is not required to equal the config symbol name, matching the CS2 loader contract.
+The artifact path is `bin_artifacts/<tag>/<module>/<symbol>.<platform>.yaml`. `bin/` is a separate binary and IDA-scratch root and is never an analysis-YAML truth source. Config symbols use `name` plus the sole classifier `category`; `type` and `kind` are rejected. Artifacts reject generic `name/type/kind` and use `func_name`, `gv_name`, `patch_name`, `vtable_class`, or `struct_name/member_name` according to category. Payload identity is not required to equal the config symbol name, matching the CS2 loader contract.
 
 Supported categories are `func`, `gv`, `vfunc`, `vtable`, `patch`, `struct`, and `structmember`. Shared primary/ordinal vtable helpers are explicit and fail closed; Source2-only dispatch protocols are excluded. x86 virtual-function slots are four bytes.
 

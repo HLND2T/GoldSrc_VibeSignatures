@@ -18,16 +18,13 @@ from gamesymbol_snapshot_lib.analysis_sources import (
     is_analysis_source_path,
     validate_reference_consumers,
 )
-from gamesymbol_snapshot_lib.codec import canonical_snapshot_bytes, parse_snapshot_bytes
 from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.impact_registry import parse_impact_registry
-from gamesymbol_snapshot_lib.operations import _atomic_write, validate_snapshot_contract
+from gamesymbol_snapshot_lib.operations import _atomic_write
 from gamesymbol_snapshot_lib.paths import (
     ensure_real_tree,
     is_reparse_point,
     iter_yaml_paths,
-    metadata_filename,
-    metadata_tag_from_filename,
     path_from_key,
 )
 from gamesymbol_snapshot_lib.pr_validation import (
@@ -35,10 +32,10 @@ from gamesymbol_snapshot_lib.pr_validation import (
     CACHE_MODE_WARM,
     ChangedPath,
     ImpactPlanningError,
+    PLAN_SCHEMA_VERSION,
     TagImpact,
     plan_tag_impact,
 )
-from pull_request_route import validate_source_paths
 
 
 class PrCliError(ValueError):
@@ -121,21 +118,6 @@ def _sha256(value: bytes | None) -> str | None:
     return None if value is None else hashlib.sha256(value).hexdigest()
 
 
-def _gamedata_tree_digest(repo: GitRepository, ref: str, tag: str) -> str | None:
-    prefix = f"gamedata/{validated_tag(tag)}/"
-    entries = []
-    for path in repo.list_files(ref):
-        if not path.startswith(prefix):
-            continue
-        raw = repo.read(ref, path)
-        if raw is not None:
-            entries.append({"path": path, "size": len(raw), "sha256": _sha256(raw)})
-    if not entries:
-        return None
-    encoded = json.dumps(entries, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
-
-
 def _artifact_inventory(
     repo: GitRepository,
     ref: str,
@@ -201,21 +183,6 @@ def _contract(repo: GitRepository, ref: str, tag: str, temporary: Path):
     ), raw
 
 
-def _snapshot(repo: GitRepository, ref: str, tag: str, contract):
-    raw = repo.read(ref, f"gamesymbols/{tag}.yaml")
-    if raw is None:
-        return None, None, False
-    try:
-        document = parse_snapshot_bytes(raw, tag)
-        if contract is None:
-            return document, raw, False
-        validate_snapshot_contract(document, contract)
-        trusted = canonical_snapshot_bytes(document) == raw
-        return document, raw, trusted
-    except Exception:
-        return None, raw, False
-
-
 def _tree(repo: GitRepository, ref: str) -> dict[str, bytes]:
     paths = [
         path
@@ -230,10 +197,6 @@ def _registry(repo: GitRepository, ref: str):
     if raw is None:
         return (), None
     return parse_impact_registry(yaml.safe_load(raw)), raw
-
-
-def _binary_metadata_trusted(document: dict | None, contract) -> bool:
-    return bool(document is not None and contract is not None and contract.binary_targets)
 
 
 def _binary_changes(
@@ -272,7 +235,6 @@ def build_plan(
     merge_bin = repo.gitlink(merge_sha, "bin")
     bin_repo = GitRepository(bin_repo_root) if bin_repo_root is not None else None
     changes = repo.changed_paths(base_sha, merge_sha)
-    validate_source_paths((path for change in changes for path in change.paths), head_sha=head_sha)
     base_rules, base_registry_raw = _registry(repo, base_sha)
     merge_rules, merge_registry_raw = _registry(repo, merge_sha)
     base_tree, merge_tree = _tree(repo, base_sha), _tree(repo, merge_sha)
@@ -281,10 +243,6 @@ def build_plan(
     known_tags = set(ordered_tags)
     for change in changes:
         for path in change.paths:
-            if path.startswith("gamesymbols/"):
-                metadata_tag = metadata_tag_from_filename(path.removeprefix("gamesymbols/"))
-                if metadata_tag is not None and metadata_tag not in known_tags:
-                    raise ImpactPlanningError(f"Metadata companion has no configured tag: {path}")
             parts = path.split("/")
             if parts[0] == "bin_artifacts":
                 if len(parts) != 4:
@@ -295,25 +253,6 @@ def build_plan(
                     raise ImpactPlanningError(f"Invalid tracked artifact path: {path}") from exc
                 if artifact_tag not in known_tags:
                     raise ImpactPlanningError(f"Tracked artifact has no configured tag: {path}")
-            if parts[0] == "gamedata" and len(parts) >= 3:
-                try:
-                    gamedata_tag = validated_tag(parts[1])
-                except ValueError as exc:
-                    raise ImpactPlanningError(f"Invalid tracked gamedata path: {path}") from exc
-                if gamedata_tag not in known_tags:
-                    raise ImpactPlanningError(f"Tracked gamedata has no configured tag: {path}")
-
-    # A tag removed from configs/config.yaml must delete its committed
-    # gamesymbols/gamedata payloads in the same PR; release owns those outputs.
-    for tag in base_tags:
-        if tag in merge_tags:
-            continue
-        for path in (f"gamesymbols/{tag}.yaml", f"gamesymbols/{metadata_filename(tag)}"):
-            if repo.read(merge_sha, path) is not None:
-                raise ImpactPlanningError(f"Removed tag {tag} still has committed snapshot: {path}")
-        if _gamedata_tree_digest(repo, merge_sha, tag) is not None:
-            raise ImpactPlanningError(f"Removed tag {tag} still has committed gamedata")
-
     impacts: list[TagImpact] = []
     digests: dict[str, str | None] = {
         "base_config_index": _sha256(repo.read(base_sha, "configs/config.yaml")),
@@ -327,7 +266,6 @@ def build_plan(
         merge_contracts = {}
         base_sources = {}
         merge_sources = {}
-        snapshots = {}
         artifact_inventories = {}
         for tag in ordered_tags:
             base_contracts[tag], base_config_raw = _contract(repo, base_sha, tag, temporary)
@@ -338,16 +276,6 @@ def build_plan(
                 base_sources[tag] = build_source_index(base_contracts[tag], base_tree)
             if merge_contracts[tag] is not None:
                 merge_sources[tag] = build_source_index(merge_contracts[tag], merge_tree)
-            base_document, base_snapshot_raw, base_contract_trusted = _snapshot(
-                repo, base_sha, tag, base_contracts[tag]
-            )
-            merge_document, merge_snapshot_raw, _merge_trusted = _snapshot(repo, merge_sha, tag, merge_contracts[tag])
-            digests[f"base_snapshot:{tag}"] = _sha256(base_snapshot_raw)
-            digests[f"merge_snapshot:{tag}"] = _sha256(merge_snapshot_raw)
-            digests[f"base_metadata:{tag}"] = _sha256(repo.read(base_sha, f"gamesymbols/{metadata_filename(tag)}"))
-            digests[f"merge_metadata:{tag}"] = _sha256(repo.read(merge_sha, f"gamesymbols/{metadata_filename(tag)}"))
-            digests[f"base_gamedata:{tag}"] = _gamedata_tree_digest(repo, base_sha, tag)
-            digests[f"merge_gamedata:{tag}"] = _gamedata_tree_digest(repo, merge_sha, tag)
             base_artifacts, base_artifact_digest = _artifact_inventory(
                 repo,
                 base_sha,
@@ -365,15 +293,12 @@ def build_plan(
             digests[f"base_artifacts:{tag}"] = base_artifact_digest
             digests[f"merge_artifacts:{tag}"] = merge_artifact_digest
             artifact_inventories[tag] = (base_artifacts, merge_artifacts)
-            snapshots[tag] = (base_document, merge_document, base_contract_trusted)
 
         validate_reference_consumers(merge_tree, list(merge_sources.values()))
         for path in sorted({path for change in changes for path in change.paths if is_analysis_source_path(path)}):
             if not any(index.owners(path) for index in (*base_sources.values(), *merge_sources.values())):
                 raise ImpactPlanningError(f"Changed analysis source has no mapped consumer: {path}")
         for tag in ordered_tags:
-            base_document, merge_document, base_contract_trusted = snapshots[tag]
-            trusted = base_contract_trusted and _binary_metadata_trusted(base_document, base_contracts[tag])
             impact = plan_tag_impact(
                 tag=tag,
                 base_contract=base_contracts[tag],
@@ -383,10 +308,6 @@ def build_plan(
                 merge_sources=merge_sources.get(tag),
                 base_rules=base_rules,
                 merge_rules=merge_rules,
-                metadata_changed=any(f"gamesymbols/{metadata_filename(tag)}" in change.paths for change in changes),
-                gamedata_changed=any(
-                    any(path.startswith(f"gamedata/{tag}/") for path in change.paths) for change in changes
-                ),
                 binary_changed_pairs=_binary_changes(
                     tag=tag,
                     base_contract=base_contracts[tag],
@@ -395,7 +316,6 @@ def build_plan(
                     base_commit=base_bin,
                     merge_commit=merge_bin,
                 ),
-                base_snapshot_trusted=trusted,
                 fail_unmapped_analysis=False,
             )
             if impact.has_actions:
@@ -407,7 +327,7 @@ def load_bound_plan(path: str | Path) -> dict:
     document = json.loads(Path(path).read_text(encoding="utf-8"))
     if (
         not isinstance(document, dict)
-        or document.get("schema_version") != 3
+        or document.get("schema_version") != PLAN_SCHEMA_VERSION
         or document.get("cache_mode") != CACHE_MODE_WARM
     ):
         raise PrCliError("Invalid bound impact plan")
@@ -436,17 +356,6 @@ def verify_bound_plan_checkout(
 def verify_bound_tag_inputs(document: dict, repo: GitRepository, tag: str) -> dict:
     tag = validated_tag(tag)
     _verify_bound_digest(document, f"merge_config:{tag}", repo.read(document["merge_sha"], f"configs/{tag}.yaml"))
-    _verify_bound_digest(
-        document,
-        f"merge_snapshot:{tag}",
-        repo.read(document["merge_sha"], f"gamesymbols/{tag}.yaml"),
-    )
-    _verify_bound_digest(
-        document,
-        f"merge_metadata:{tag}",
-        repo.read(document["merge_sha"], f"gamesymbols/{metadata_filename(tag)}"),
-    )
-    _verify_bound_gamedata(document, f"merge_gamedata:{tag}", repo, document["merge_sha"], tag)
     config_raw = repo.read(document["merge_sha"], f"configs/{tag}.yaml")
     if config_raw is None:
         raise PrCliError(f"Merge config is missing for {tag}")
@@ -476,11 +385,6 @@ def verify_bound_tag_inputs(document: dict, repo: GitRepository, tag: str) -> di
 
 def _verify_bound_digest(document: dict, key: str, raw: bytes | None) -> None:
     if document.get("digests", {}).get(key) != _sha256(raw):
-        raise PrCliError(f"Bound plan digest mismatch for {key}")
-
-
-def _verify_bound_gamedata(document: dict, key: str, repo: GitRepository, ref: str, tag: str) -> None:
-    if document.get("digests", {}).get(key) != _gamedata_tree_digest(repo, ref, tag):
         raise PrCliError(f"Bound plan digest mismatch for {key}")
 
 

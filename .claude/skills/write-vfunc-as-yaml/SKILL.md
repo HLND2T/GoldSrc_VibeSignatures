@@ -1,11 +1,13 @@
 ---
 name: write-vfunc-as-yaml
-description: Write virtual function analysis results as YAML file beside the binary using IDA Pro MCP. Use this skill after completing virtual function identification, signature generation, and vtable analysis to persist the results in a standardized YAML format. GoldSrc x86 only: vfunc slots are 4 bytes.
+description: Write virtual function analysis results to the exact analyzer-bound YAML artifact path using IDA Pro MCP. Use this skill after completing virtual function identification, signature generation, and vtable analysis. GoldSrc x86 only: vfunc slots are 4 bytes.
 ---
 
 # Write Virtual Function IDA Analysis Output as YAML (GoldSrc)
 
-Persist virtual function analysis results to a YAML file beside the binary using IDA Pro MCP. Applies to GoldSrc **PE32/I386** (Windows) and **ELF32/I386** (Linux) binaries only.
+Persist virtual function analysis results to the exact output path in the invocation prompt's artifact contract. Match
+the expected basename and never derive the YAML path from the binary. Applies to GoldSrc **PE32/I386** (Windows) and
+**ELF32/I386** (Linux) binaries only.
 
 ## Prerequisites
 
@@ -65,9 +67,8 @@ vfunc_offset = <vfunc_offset>       # e.g., 0x330 (must be 4-byte aligned)
 vfunc_index = <vfunc_index>         # e.g., 204 (must equal vfunc_offset / 4)
 # =========================================
 
-# Get binary path and determine platform
+# Get binary identity and determine platform
 input_file = idaapi.get_input_file_path()
-dir_path = os.path.dirname(input_file)
 
 if input_file.endswith('.dll'):
     platform = 'windows'
@@ -102,8 +103,11 @@ data['vtable_name'] = vtable_name
 data['vfunc_offset'] = hex(vfunc_offset)
 data['vfunc_index'] = vfunc_index
 
-yaml_path = os.path.join(dir_path, f"{func_name}.{platform}.yaml")
-with open(yaml_path, 'w', encoding='utf-8') as f:
+yaml_path = os.path.abspath(r"<EXACT_OUTPUT_ARTIFACT_PATH_FROM_INVOCATION_CONTRACT>")
+if os.path.basename(yaml_path) != f"{func_name}.{platform}.yaml":
+    raise ValueError(f"Artifact path does not match {func_name}.{platform}.yaml: {yaml_path}")
+os.makedirs(os.path.dirname(yaml_path), exist_ok=True)
+with open(yaml_path, 'w', encoding='utf-8', newline='\n') as f:
     yaml.dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
 print(f"Written to: {yaml_path}")
 """
@@ -164,7 +168,7 @@ The skill automatically detects the platform based on file extension:
 ## Notes
 
 - All values marked "changes with game updates" should be regenerated when analyzing new binary versions
-- The YAML file is written to the same directory as the input binary
+- The YAML file is written only to the exact analyzer-bound artifact path, never beside the binary
 - When `func_addr` is provided, func_size is automatically calculated from IDA's function analysis
 - When `func_addr` is provided, func_rva is automatically calculated as `func_va - image_base`
 - When `func_addr` / `func_sig` / `vfunc_sig` is `None`, those fields are omitted from the output entirely

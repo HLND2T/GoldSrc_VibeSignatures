@@ -214,7 +214,13 @@ class SnapshotSymbolStore(_MemorySymbolStore):
         try:
             config = resolve_analysis_config(expected_game_version, config_path)
             digest_version = snapshot_config_digest_version(document)
-            contract = load_contract(config, expected_game_version, "bin", digest_version)
+            contract = load_contract(
+                config,
+                expected_game_version,
+                "bin",
+                digest_version,
+                artifactdir="bin_artifacts",
+            )
             validate_snapshot_contract(document, contract)
         except (AnalysisConfigError, SnapshotConfigError, SnapshotMismatchError) as exc:
             raise SnapshotConfigMismatchError(str(exc)) from exc
