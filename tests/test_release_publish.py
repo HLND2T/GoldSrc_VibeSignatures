@@ -107,52 +107,108 @@ class ReleasePublishTests(unittest.TestCase):
         ):
             release_publish._gh_json(["api", "endpoint"], allow_not_found=True)
 
-    def test_remote_state_finds_draft_from_paginated_release_inventory(self):
+    def test_remote_state_finds_draft_from_graphql_inventory_and_normalizes_view(self):
         tag = {"object": {"type": "commit", "sha": "a" * 40}}
-        draft = {
+        inventory = {
+            "data": {
+                "repository": {
+                    "releases": {
+                        "nodes": [
+                            {
+                                "databaseId": 42,
+                                "tagName": "v20260830a",
+                                "isDraft": False,
+                                "createdAt": "2026-08-30T00:00:00Z",
+                            },
+                            {
+                                "databaseId": 41,
+                                "tagName": "v20260831a",
+                                "isDraft": True,
+                                "createdAt": "2026-08-31T00:00:00Z",
+                            },
+                        ],
+                        "pageInfo": {"hasNextPage": False, "endCursor": "cursor"},
+                    }
+                }
+            }
+        }
+        view = {
+            "databaseId": 41,
+            "tagName": "v20260831a",
+            "isDraft": True,
+            "body": "draft identity",
+            "targetCommitish": "a" * 40,
+            "url": "https://github.com/owner/repo/releases/tag/untagged-draft",
+            "assets": [
+                {
+                    "apiUrl": "https://api.github.com/repos/owner/repo/releases/assets/99",
+                    "name": "asset.7z",
+                    "size": 7,
+                    "digest": "sha256:" + "b" * 64,
+                }
+            ],
+        }
+        expected_release = {
             "id": 41,
             "tag_name": "v20260831a",
             "draft": True,
             "body": "draft identity",
-            "assets": [],
+            "target_commitish": "a" * 40,
+            "html_url": "https://github.com/owner/repo/releases/tag/untagged-draft",
+            "assets": [{"id": 99, "name": "asset.7z", "size": 7, "digest": "sha256:" + "b" * 64}],
         }
-        other = {"id": 42, "tag_name": "v20260830a", "draft": False}
         with patch.object(
             release_publish,
             "_run",
             side_effect=[
                 completed([], stdout=json.dumps(tag)),
-                completed([], stdout=json.dumps([[other], [draft]])),
+                completed([], stdout=json.dumps([inventory])),
+                completed([], stdout=json.dumps(view)),
             ],
         ) as run:
-            self.assertEqual((tag, draft), release_publish.remote_state("owner/repo", "v20260831a"))
+            self.assertEqual((tag, expected_release), release_publish.remote_state("owner/repo", "v20260831a"))
+        calls = [call.args[0] for call in run.call_args_list]
+        self.assertEqual(["gh", "api", "repos/owner/repo/git/ref/tags/v20260831a"], calls[0])
+        self.assertEqual(["gh", "api", "graphql", "--paginate", "--slurp"], calls[1][:5])
+        self.assertIn("owner=owner", calls[1])
+        self.assertIn("name=repo", calls[1])
+        self.assertTrue(any(argument.startswith("query=query(") for argument in calls[1]))
         self.assertEqual(
             [
-                ["gh", "api", "repos/owner/repo/git/ref/tags/v20260831a"],
-                [
-                    "gh",
-                    "api",
-                    "repos/owner/repo/releases?per_page=100",
-                    "--paginate",
-                    "--slurp",
-                ],
+                "gh",
+                "release",
+                "view",
+                "v20260831a",
+                "--repo",
+                "owner/repo",
+                "--json",
+                release_publish.RELEASE_VIEW_FIELDS,
             ],
-            [call.args[0] for call in run.call_args_list],
+            calls[2],
         )
 
     def test_remote_state_rejects_duplicate_releases_for_one_tag(self):
         tag = {"object": {"type": "commit", "sha": "a" * 40}}
-        releases = [
-            {"id": 41, "tag_name": "v20260831a", "draft": True},
-            {"id": 43, "tag_name": "v20260831a", "draft": True},
-        ]
+        inventory = {
+            "data": {
+                "repository": {
+                    "releases": {
+                        "nodes": [
+                            {"databaseId": 41, "tagName": "v20260831a", "isDraft": True},
+                            {"databaseId": 43, "tagName": "v20260831a", "isDraft": True},
+                        ],
+                        "pageInfo": {"hasNextPage": False, "endCursor": "cursor"},
+                    }
+                }
+            }
+        }
         with (
             patch.object(
                 release_publish,
                 "_run",
                 side_effect=[
                     completed([], stdout=json.dumps(tag)),
-                    completed([], stdout=json.dumps([releases])),
+                    completed([], stdout=json.dumps([inventory])),
                 ],
             ),
             self.assertRaisesRegex(

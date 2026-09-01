@@ -21,6 +21,15 @@ class ReleasePublishError(ValueError):
 
 IDENTITY_PREFIX = "<!-- gsvibe-release-identity:"
 IDENTITY_SUFFIX = " -->"
+RELEASE_INVENTORY_QUERY = (
+    "query($owner: String!, $name: String!, $endCursor: String) { "
+    "repository(owner: $owner, name: $name) { "
+    "releases(first: 100, after: $endCursor, orderBy: {field: CREATED_AT, direction: DESC}) { "
+    "nodes { databaseId tagName isDraft createdAt } "
+    "pageInfo { hasNextPage endCursor } "
+    "} } }"
+)
+RELEASE_VIEW_FIELDS = "assets,body,databaseId,isDraft,tagName,targetCommitish,url"
 
 
 def _run(arguments: list[str], *, allowed: tuple[int, ...] = (0,)) -> subprocess.CompletedProcess:
@@ -47,19 +56,77 @@ def _gh_json(arguments: list[str], *, allow_not_found: bool = False) -> dict | N
     return value
 
 
-def _gh_paginated_objects(arguments: list[str]) -> tuple[dict, ...]:
-    command = [*arguments, "--paginate", "--slurp"]
+def _release_inventory(repository: str) -> tuple[dict, ...]:
+    parts = repository.split("/")
+    if len(parts) != 2 or not all(parts):
+        raise ReleasePublishError("repository must use owner/name format")
+    owner, name = parts
+    command = [
+        "api",
+        "graphql",
+        "--paginate",
+        "--slurp",
+        "-F",
+        f"owner={owner}",
+        "-F",
+        f"name={name}",
+        "-f",
+        f"query={RELEASE_INVENTORY_QUERY}",
+    ]
     result = _run(["gh", *command])
     try:
         pages = json.loads(result.stdout)
     except json.JSONDecodeError as exc:
         raise ReleasePublishError(f"gh {' '.join(command)} returned invalid JSON") from exc
-    if not isinstance(pages, list) or any(not isinstance(page, list) for page in pages):
-        raise ReleasePublishError(f"gh {' '.join(command)} did not return paginated arrays")
-    values = tuple(value for page in pages for value in page)
-    if any(not isinstance(value, dict) for value in values):
-        raise ReleasePublishError(f"gh {' '.join(command)} returned a non-object entry")
-    return values
+    if not isinstance(pages, list) or any(not isinstance(page, dict) for page in pages):
+        raise ReleasePublishError("GitHub GraphQL release inventory did not return paginated objects")
+    values: list[dict] = []
+    for page in pages:
+        try:
+            nodes = page["data"]["repository"]["releases"]["nodes"]
+        except (KeyError, TypeError) as exc:
+            raise ReleasePublishError("GitHub GraphQL release inventory response is incomplete") from exc
+        if not isinstance(nodes, list) or any(not isinstance(value, dict) for value in nodes):
+            raise ReleasePublishError("GitHub GraphQL release inventory nodes are invalid")
+        values.extend(nodes)
+    return tuple(values)
+
+
+def _normalize_release_asset(asset: dict) -> dict:
+    name = asset.get("name")
+    size = asset.get("size")
+    api_url = asset.get("apiUrl")
+    asset_id = re.search(r"/releases/assets/([1-9][0-9]*)$", api_url) if isinstance(api_url, str) else None
+    if not isinstance(name, str) or not name or not isinstance(size, int) or size < 0 or asset_id is None:
+        raise ReleasePublishError("gh release view returned an invalid asset")
+    normalized = {"id": int(asset_id.group(1)), "name": name, "size": size}
+    digest = asset.get("digest")
+    if digest is not None:
+        if not isinstance(digest, str):
+            raise ReleasePublishError("gh release view returned an invalid asset digest")
+        normalized["digest"] = digest
+    return normalized
+
+
+def _normalize_release_view(release: dict, *, version: str, release_id: int) -> dict:
+    assets = release.get("assets")
+    if (
+        release.get("databaseId") != release_id
+        or release.get("tagName") != version
+        or not isinstance(release.get("isDraft"), bool)
+        or not isinstance(assets, list)
+        or any(not isinstance(asset, dict) for asset in assets)
+    ):
+        raise ReleasePublishError("gh release view returned an inconsistent Release")
+    return {
+        "id": release_id,
+        "tag_name": version,
+        "draft": release["isDraft"],
+        "body": release.get("body"),
+        "target_commitish": release.get("targetCommitish"),
+        "html_url": release.get("url"),
+        "assets": [_normalize_release_asset(asset) for asset in assets],
+    }
 
 
 def remote_state(repository: str, version: str) -> tuple[dict | None, dict | None]:
@@ -68,14 +135,20 @@ def remote_state(repository: str, version: str) -> tuple[dict | None, dict | Non
         ["api", f"repos/{repository}/git/ref/tags/{version}"],
         allow_not_found=True,
     )
-    releases = _gh_paginated_objects(
-        ["api", f"repos/{repository}/releases?per_page=100"],
-    )
-    matches = tuple(release for release in releases if release.get("tag_name") == version)
+    releases = _release_inventory(repository)
+    matches = tuple(release for release in releases if release.get("tagName") == version)
     if len(matches) > 1:
-        release_ids = ", ".join(str(release.get("id", "unknown")) for release in matches)
+        release_ids = ", ".join(str(release.get("databaseId", "unknown")) for release in matches)
         raise ReleasePublishError(f"Multiple Releases exist for tag {version}: {release_ids}")
-    return tag, matches[0] if matches else None
+    if not matches:
+        return tag, None
+    release_id = matches[0].get("databaseId")
+    if not isinstance(release_id, int):
+        raise ReleasePublishError("GitHub GraphQL release inventory has no database ID")
+    release = _gh_json(
+        ["release", "view", version, "--repo", repository, "--json", RELEASE_VIEW_FIELDS],
+    )
+    return tag, _normalize_release_view(release, version=version, release_id=release_id)
 
 
 def preflight(repository: str, version: str, source_sha: str) -> str:

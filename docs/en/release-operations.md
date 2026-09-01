@@ -19,8 +19,9 @@ commit.
 - No tag/Release: create a tag pointing directly to source SHA, then a draft Release.
 - Matching tag and draft: resume the original build identity; existing assets must match exact size/hash.
 - Published Release: exact assets are an idempotent success; missing or different assets fail.
-- The publisher discovers drafts by exact tag in the paginated Release inventory instead of relying on a get-by-tag
-  endpoint that may return 404 for drafts.
+- The publisher discovers drafts by exact tag in the paginated GraphQL Release inventory, then reads the unique match with
+  `gh release view`. It does not rely on REST endpoints that may return 404 or an empty draft inventory to the Actions
+  `GITHUB_TOKEN`.
 - Multiple Releases for one tag, tag mismatch, Release without tag, different draft identity, or overwrite request fail
   closed.
 - Changed content requires a new version. `--clobber`, tag moves, and content-style republish are forbidden.

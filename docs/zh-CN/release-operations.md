@@ -18,7 +18,8 @@ verification，并要求 source 等于 dispatch commit。
 - 无 tag/Release：创建直接指向 source SHA 的 tag，再创建 draft Release；
 - matching tag + draft：恢复原 build identity，已存在 asset 必须 size/hash 完全一致；
 - published Release：全部 exact assets 一致则幂等成功，缺失或不同则失败；
-- Publisher 从分页 Release inventory 按 exact tag 发现 Draft，不依赖可能对 Draft 返回 404 的 get-by-tag endpoint；
+- Publisher 从分页 GraphQL Release inventory 按 exact tag 发现 Draft，再通过 `gh release view` 读取唯一匹配项；不依赖
+  Actions `GITHUB_TOKEN` 下会对 Draft 返回 404 或空 inventory 的 REST endpoints；
 - 同一 tag 存在多个 Release、tag mismatch、Release without tag、不同 draft identity 或覆盖请求一律 fail closed；
 - 内容变化必须使用新版本，禁止 `--clobber`、移动 tag 与内容型 republish。
 
