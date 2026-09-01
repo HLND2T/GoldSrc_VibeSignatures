@@ -16,6 +16,7 @@ from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.errors import SnapshotError
 from gamesymbol_snapshot_lib.operations import collect_actual_files
 from gamesymbol_snapshot_lib.paths import canonical_key, ensure_real_tree, is_reparse_point
+from ida_analyze_util import canonical_symbol_yaml_bytes
 
 INVENTORY_SCHEMA_VERSION = 1
 INVENTORY_DOMAIN_SEPARATOR = b"bin-artifact-inventory:v1\n"
@@ -161,6 +162,8 @@ def build_game_artifact_inventory(
         raw = path.read_bytes()
         if require_canonical_bytes:
             _validate_canonical_text_bytes(raw, key)
+            if raw != canonical_symbol_yaml_bytes(documents[key]):
+                raise BinArtifactContractError(f"Artifact is not canonical symbol YAML: {key}")
         entries.append(ArtifactInventoryEntry(key, len(raw), hashlib.sha256(raw).hexdigest()))
 
     ordered = tuple(sorted(entries, key=lambda entry: entry.path))

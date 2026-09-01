@@ -66,7 +66,7 @@ if os.path.basename(yaml_path) != f"{func_name}.{platform}.yaml":
     raise ValueError(f"Artifact path does not match {func_name}.{platform}.yaml: {yaml_path}")
 os.makedirs(os.path.dirname(yaml_path), exist_ok=True)
 with open(yaml_path, 'w', encoding='utf-8', newline='\n') as f:
-    yaml.dump(data, f, default_flow_style=False, sort_keys=False)
+    yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True)
 print(f"Written to: {yaml_path}")
 """
 ```
@@ -100,6 +100,7 @@ The skill automatically detects the platform based on file extension:
 
 - All values marked "changes with game updates" should be regenerated when analyzing new binary versions
 - The YAML file is written only to the exact analyzer-bound artifact path, never beside the binary
+- Agent-side YAML serialization is provisional; the trusted analyzer pipeline applies the canonical field order and formatting before accepting producer success
 - func_size is automatically calculated from IDA's function analysis
 - func_rva is automatically calculated as `func_va - image_base`
 - GoldSrc artifact payloads must contain only category-specific identity (`func_name`) plus the data fields;

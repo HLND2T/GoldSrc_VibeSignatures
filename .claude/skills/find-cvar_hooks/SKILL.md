@@ -148,9 +148,9 @@ instruction. At runtime on x86-32, the global address is the little-endian dword
 The runtime artifact validator requires every address/size/offset/length/displacement field to be a normalized,
 quoted hexadecimal scalar. `/write-globalvar-as-yaml` may emit the three instruction metadata fields as YAML
 integers, so reopen the file after that skill completes and normalize these six fields before validation:
-`gv_va`, `gv_rva`, `gv_sig_va`, `gv_inst_offset`, `gv_inst_length`, and `gv_inst_disp`. Preserve field order and
-all other values; `gv_inst_offset` must become `'0x0'`, not numeric `0`. This is a schema-normalization step, not
-permission to hand-author or guess the artifact.
+`gv_va`, `gv_rva`, `gv_sig_va`, `gv_inst_offset`, `gv_inst_length`, and `gv_inst_disp`. Preserve all other values;
+the trusted analyzer pipeline, not this skill, finalizes field order and line wrapping. `gv_inst_offset` must become
+`'0x0'`, not numeric `0`. This is a schema-normalization step, not permission to hand-author or guess the artifact.
 
 The YAML payload may contain only `gv_name` and the global-variable data fields emitted by
 `/write-globalvar-as-yaml`; never add generic `name`, `type`, or `kind` keys.

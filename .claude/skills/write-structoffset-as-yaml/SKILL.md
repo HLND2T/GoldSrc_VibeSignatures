@@ -81,7 +81,7 @@ if os.path.basename(yaml_path) != f"{struct_name}_{member_name}.{platform}.yaml"
     raise ValueError(f"Artifact path does not match {struct_name}_{member_name}.{platform}.yaml: {yaml_path}")
 os.makedirs(os.path.dirname(yaml_path), exist_ok=True)
 with open(yaml_path, 'w', encoding='utf-8', newline='\n') as f:
-    yaml.dump(data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+    yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True)
 print(f"Written to: {yaml_path}")
 """
 ```
@@ -196,6 +196,7 @@ offset_sig = "8B 83 E0 04 00 00"
 
 - All offsets are written in hexadecimal format with lowercase `0x` prefix
 - The YAML file is written only to the exact analyzer-bound artifact path, never beside the binary
+- Agent-side YAML serialization is provisional; the trusted analyzer pipeline applies the canonical field order and formatting before accepting producer success
 - When `size` is `None` or `0`, the `size` field is omitted from the output entirely
 - When `offset_sig` is `None`, the `offset_sig` field is omitted from the output entirely
 - When `offset_sig_disp` is `None` or `0`, the `offset_sig_disp` field is omitted from the output entirely (signature starts at the target instruction)

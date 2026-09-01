@@ -82,6 +82,15 @@ class BinArtifactContractTests(unittest.TestCase):
                 with self.assertRaises(BinArtifactContractError):
                     build_game_artifact_inventory(game_version, config, root / "bin_artifacts")
 
+    def test_rejects_semantically_valid_yaml_with_noncanonical_field_order(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            game_version, config, artifact_game_root = self.fixture(root)
+            (artifact_game_root / "symbol.windows.yaml").write_bytes(b"func_va: '0x10'\nfunc_name: symbol\n")
+
+            with self.assertRaisesRegex(BinArtifactContractError, "canonical symbol YAML"):
+                build_game_artifact_inventory(game_version, config, root / "bin_artifacts")
+
     def test_repository_root_comparison_requires_exact_external_rebuild(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

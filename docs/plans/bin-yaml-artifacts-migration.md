@@ -221,7 +221,11 @@ formal paths 包含：
 - 禁止 absolute path、`..`、反斜杠、空段和非 canonical spelling；
 - `.gitattributes` 增加 `/bin_artifacts/**/*.yaml text eol=lf`；
 - expected 以 Git blob bytes 为准，不依赖 Windows checkout 换行；
-- YAML writer 保持 UTF-8、LF、稳定 key order 和 canonical signature；
+- Agent SKILL / preprocessor writer 只负责生成语义 payload，不作为字段顺序或折行的信任边界；
+- trusted analyzer pipeline 在 producer 输出通过语义与 runtime 校验后，按中央字段表原子重写 formal symbol YAML，
+  统一 UTF-8、LF、稳定 key order、120 列折行和 canonical signature；
+- repository contract 必须重新 canonical serialize 每个 tracked artifact 并比较 exact bytes，拒绝任何顺序、折行或
+  scalar spelling drift；
 - 在同一 pinned 环境的两个 fresh artifact roots 上重跑，inventory 与 bytes 必须完全相同。
 
 ## 7. 代码改造范围

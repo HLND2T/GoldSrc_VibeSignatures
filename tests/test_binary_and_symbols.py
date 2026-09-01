@@ -12,6 +12,7 @@ from binary_format import BinaryFormatError, inspect_binary, validate_binary
 from binary_hashing import hash_file
 from ida_analyze_util import (
     SymbolArtifactError,
+    canonical_symbol_yaml_bytes,
     normalize_signature,
     normalize_symbol_artifact,
     resolve_x86_global_reference,
@@ -104,6 +105,47 @@ class SignatureAndSymbolTests(unittest.TestCase):
                 {"func_name": "v", "vfunc_offset": "0x10", "vfunc_index": 5},
                 category="vfunc",
             )
+
+    def test_canonical_yaml_is_independent_of_input_field_order(self):
+        signature = " ".join(["AA"] * 64)
+        first = {
+            "extension_z": "last",
+            "extension_metadata": {"z": 2, "a": 1},
+            "func_sig": signature,
+            "func_name": "symbol",
+            "extension_a": "first",
+        }
+        second = {
+            "extension_a": "first",
+            "func_name": "symbol",
+            "extension_z": "last",
+            "func_sig": signature,
+            "extension_metadata": {"a": 1, "z": 2},
+        }
+
+        self.assertEqual(
+            canonical_symbol_yaml_bytes(first, category="func"),
+            canonical_symbol_yaml_bytes(second, category="func"),
+        )
+
+    def test_canonical_vfunc_yaml_uses_central_field_order(self):
+        payload = {
+            "vfunc_sig_disp": 3,
+            "vfunc_sig": "FF 90 ?? ?? ?? ??",
+            "vfunc_index": 4,
+            "vfunc_offset": "0x10",
+            "vtable_name": "SyntheticClass",
+            "func_name": "SyntheticMethod",
+        }
+
+        keys = [
+            line.split(":", 1)[0]
+            for line in canonical_symbol_yaml_bytes(payload, category="vfunc").decode().splitlines()
+        ]
+        self.assertEqual(
+            ["func_name", "vtable_name", "vfunc_offset", "vfunc_index", "vfunc_sig", "vfunc_sig_disp"],
+            keys,
+        )
 
 
 class X86GlobalResolverTests(unittest.TestCase):
