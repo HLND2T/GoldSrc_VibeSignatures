@@ -36,6 +36,9 @@ modules:
       - name: find-CBaseUI__Initialize
         expected_output:
           - CBaseUI__Initialize.{platform}.yaml
+      - name: find-CL_PrecacheResources
+        expected_output:
+          - CL_PrecacheResources.{platform}.yaml
       - name: find-ClientDLL_HudInit-decompiles
         expected_input:
           - ClientDLL_Init.{platform}.yaml
@@ -104,6 +107,8 @@ modules:
       - name: ClientDLL_HudInit
         category: func
       - name: CBaseUI__Initialize
+        category: func
+      - name: CL_PrecacheResources
         category: func
       - name: cl_enginefuncs
         category: gv

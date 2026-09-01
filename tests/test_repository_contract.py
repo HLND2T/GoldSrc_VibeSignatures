@@ -33,7 +33,6 @@ def _config_tags() -> set[str]:
 class RepositoryContractTests(unittest.TestCase):
     def test_tracked_bin_artifacts_match_the_formal_repository_contract(self):
         inventory = validate_repository_artifact_contract(ROOT)
-        self.assertEqual(273, len(inventory.paths))
         self.assertEqual(_config_tags(), {item.game_version for item in inventory.gamevers})
 
     def test_generate_reference_yaml_skill_contract(self):

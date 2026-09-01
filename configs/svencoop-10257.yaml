@@ -41,6 +41,9 @@ modules:
         platform: windows
         expected_output:
           - CBaseUI__Initialize.{platform}.yaml
+      - name: find-CL_PrecacheResources
+        expected_output:
+          - CL_PrecacheResources.{platform}.yaml
       - name: find-ClientDLL_HudInit-decompiles
         platform: windows
         expected_input:
@@ -98,6 +101,8 @@ modules:
       - name: CBaseUI__Initialize
         category: func
         platform: windows
+      - name: CL_PrecacheResources
+        category: func
       - name: cl_enginefuncs
         category: gv
         platform: windows
