@@ -62,11 +62,20 @@ jobs:
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
           fetch-depth: 0
           submodules: false
+          persist-credentials: false
+      - name: Checkout trusted base planner
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 1
+          submodules: false
+          persist-credentials: false
+          path: .trusted-planner
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-      - name: Sync PR merge planner environment
-        run: uv sync --locked
+      - name: Sync trusted base planner environment
+        run: uv sync --project .trusted-planner --locked
       - name: Fetch bin submodule trees without checkout
         shell: bash
         env:
@@ -74,7 +83,7 @@ jobs:
           MERGE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          bin_url=$(git config -f .gitmodules --get submodule.bin.url)
+          bin_url=$(git config -f .trusted-planner/.gitmodules --get submodule.bin.url)
           base_bin=$(git ls-tree "$BASE_SHA" bin | awk '{print $3}')
           merge_bin=$(git ls-tree "$MERGE_SHA" bin | awk '{print $3}')
           git clone --filter=blob:none --no-checkout "$bin_url" "$RUNNER_TEMP/bin-objects"
@@ -88,7 +97,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/gamesymbol-validation"
-          uv run python gamesymbol_pr_validation.py plan \
+          uv run --project .trusted-planner python .trusted-planner/gamesymbol_pr_validation.py plan \
             -repo-root "$GITHUB_WORKSPACE" \
             -base-ref "$BASE_SHA" \
             -head-ref "$HEAD_SHA" \
@@ -136,6 +145,15 @@ jobs:
           fetch-depth: 0
           submodules: false
           token: ${{ secrets.GSVIBE_BIN_TOKEN || github.token }}
+          persist-credentials: false
+      - name: Checkout trusted base validator
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 1
+          submodules: false
+          persist-credentials: false
+          path: .trusted-validator
       - name: Compute submodule cache key
         id: submodule-cache-key
         shell: bash
@@ -164,6 +182,7 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --locked
+      - run: uv sync --project .trusted-validator --locked
       - uses: actions/download-artifact@v4
         with:
           name: gamesymbol-plan-${{ github.run_id }}
@@ -173,12 +192,18 @@ jobs:
         run: |
           set -euo pipefail
           plan="$RUNNER_TEMP/gamesymbol-validation/plan.json"
+          artifact_root="$RUNNER_TEMP/rebuilt-bin-artifacts"
           while IFS= read -r tag; do
-            uv run python gamesymbol_pr_validation.py materialize \
-              -repo-root "$GITHUB_WORKSPACE" -plan "$plan" -tag "$tag" -merge-ref HEAD -bindir bin
+            uv run --project .trusted-validator python .trusted-validator/gamesymbol_pr_validation.py materialize \
+              -repo-root "$GITHUB_WORKSPACE" -plan "$plan" -tag "$tag" -merge-ref HEAD -bindir bin \
+              -artifactdir "$artifact_root"
             stage=$(mktemp -d)
             trap 'rm -rf "$stage"' EXIT
-            uv run python gamesymbol_candidate.py build -gamever "$tag" -bindir bin -configyaml "configs/$tag.yaml" \
+            uv run --project .trusted-validator python .trusted-validator/gamesymbol_pr_validation.py compare \
+              -repo-root "$GITHUB_WORKSPACE" -plan "$plan" -tag "$tag" -merge-ref HEAD -bindir bin \
+              -artifactdir "$artifact_root"
+            uv run --project .trusted-validator python .trusted-validator/gamesymbol_candidate.py build \
+              -gamever "$tag" -bindir bin -artifactdir "$artifact_root" -configyaml "configs/$tag.yaml" \
               -output "$stage/$tag.yaml" -session "$stage/symbol-session.json"
             uv run python gamesymbol_candidate.py guard -candidate "$stage/$tag.yaml" -session "$stage/symbol-session.json"
             uv run python gamedata_candidate.py build -gamever "$tag" -build-id "pr-${{ github.run_id }}" \
@@ -232,6 +257,15 @@ jobs:
           fetch-depth: 0
           submodules: false
           token: ${{ secrets.GSVIBE_BIN_TOKEN || github.token }}
+          persist-credentials: false
+      - name: Checkout trusted base validator
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 1
+          submodules: false
+          persist-credentials: false
+          path: .trusted-validator
       - name: Compute submodule cache key
         id: submodule-cache-key
         shell: pwsh
@@ -268,6 +302,7 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --locked
+      - run: uv sync --project .trusted-validator --locked
       - name: Normalize canonical snapshot checkout bytes
         shell: pwsh
         run: |
@@ -364,24 +399,32 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $planPath = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\plan.json'
-          $plannerCli = Join-Path $env:GITHUB_WORKSPACE 'gamesymbol_pr_validation.py'
+          $trustedRoot = Join-Path $env:GITHUB_WORKSPACE '.trusted-validator'
+          $plannerCli = Join-Path $trustedRoot 'gamesymbol_pr_validation.py'
+          $candidateCli = Join-Path $trustedRoot 'gamesymbol_candidate.py'
+          $artifactRoot = Join-Path $env:RUNNER_TEMP 'rebuilt-bin-artifacts'
           $plan = Get-Content -Raw -LiteralPath $planPath | ConvertFrom-Json
           foreach ($action in $plan.tags) {
             if ($action.analysis_nodes.Count -eq 0) { continue }
             $tag = $action.tag
-            uv run python $plannerCli materialize -repo-root $env:GITHUB_WORKSPACE -plan $planPath -tag $tag -merge-ref HEAD -bindir bin
+            uv run --project $trustedRoot python $plannerCli materialize -repo-root $env:GITHUB_WORKSPACE `
+              -plan $planPath -tag $tag -merge-ref HEAD -bindir bin -artifactdir $artifactRoot
             if ($LASTEXITCODE -ne 0) { throw "materialization failed for $tag" }
-            $analyzerArgs = @('ida_analyze_bin.py', '-gamever', $tag, '-oldgamever', 'none')
+            $analyzerArgs = @('ida_analyze_bin.py', '-gamever', $tag, '-oldgamever', 'none', '-bindir', 'bin', '-artifactdir', $artifactRoot)
             foreach ($node in $action.analysis_nodes) { $analyzerArgs += @('-node', $node) }
             uv run python @analyzerArgs
             if ($LASTEXITCODE -ne 0) { throw "selected-node analysis failed for $tag" }
+            uv run --project $trustedRoot python $plannerCli compare -repo-root $env:GITHUB_WORKSPACE `
+              -plan $planPath -tag $tag -merge-ref HEAD -bindir bin -artifactdir $artifactRoot
+            if ($LASTEXITCODE -ne 0) { throw "artifact byte comparison failed for $tag" }
             $stage = Join-Path $env:RUNNER_TEMP ("gamesymbol-$tag-" + [guid]::NewGuid().ToString('N'))
             New-Item -ItemType Directory -Path $stage | Out-Null
             try {
               $candidate = Join-Path $stage "$tag.yaml"
               $symbolSession = Join-Path $stage 'symbol-session.json'
               $gamedataSession = Join-Path $stage 'gamedata-session.json'
-              uv run python gamesymbol_candidate.py build -gamever $tag -bindir bin -configyaml "configs/$tag.yaml" -output $candidate -session $symbolSession
+              uv run --project $trustedRoot python $candidateCli build -gamever $tag -bindir bin `
+                -artifactdir $artifactRoot -configyaml "configs/$tag.yaml" -output $candidate -session $symbolSession
               if ($LASTEXITCODE -ne 0) { throw "candidate build failed for $tag" }
               uv run python gamesymbol_candidate.py guard -candidate $candidate -session $symbolSession
               if ($LASTEXITCODE -ne 0) { throw "candidate guard failed for $tag" }
@@ -397,6 +440,8 @@ jobs:
               if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
             }
           }
+          git diff --exit-code -- bin_artifacts
+          if ($LASTEXITCODE -ne 0) { throw 'tracked bin_artifacts changed during isolated rebuild' }
       - name: Remove generated submodule analysis state
         if: always()
         shell: pwsh

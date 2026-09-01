@@ -1,0 +1,5 @@
+func_name: FS_Open
+func_va: '0x1d3baa0'
+func_rva: '0x3baa0'
+func_size: '0x1a'
+func_sig: 55 8B EC 8B 55 ?? 8B 0D ?? ?? ?? ?? 6A 00 52 8B 55 ?? 8B 01 52 FF 50 ?? 5D C3

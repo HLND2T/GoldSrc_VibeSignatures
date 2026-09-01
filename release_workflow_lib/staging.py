@@ -155,7 +155,13 @@ def _write_stage_manifests(
         if not analysis_config.is_file():
             raise ReleaseWorkflowError(f"analysis config must be {analysis_config}")
         try:
-            candidate_context = load_snapshot_context(candidate, analysis_config, gamever, repo_root / "bin")
+            candidate_context = load_snapshot_context(
+                candidate,
+                analysis_config,
+                gamever,
+                repo_root / "bin",
+                artifactdir=repo_root / "bin_artifacts",
+            )
         except Exception as exc:
             raise ReleaseWorkflowError(f"candidate snapshot provenance is invalid for {gamever}: {exc}") from exc
         verify_snapshot_binaries(candidate_context.document, stage_bin_root / gamever)

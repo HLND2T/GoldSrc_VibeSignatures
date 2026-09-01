@@ -26,18 +26,19 @@ def materialize_baseline(
     *,
     base: SnapshotContext | None,
     merge_contract: SnapshotContract,
-    bindir: str | Path,
+    artifactdir: str | Path,
     invalidated_paths: tuple[str, ...],
     mode: str,
 ) -> tuple[str, ...]:
     if mode not in {"incremental", "full-rebuild"}:
         raise SnapshotConfigError(f"Unsupported materialization mode: {mode!r}")
     invalidated = {validate_snapshot_key(path) for path in invalidated_paths}
-    ensure_real_tree(Path(bindir), merge_contract.game_root)
-    merge_contract.game_root.mkdir(parents=True, exist_ok=True)
-    if is_reparse_point(merge_contract.game_root):
-        raise SnapshotConfigError(f"Snapshot target must not be a link/reparse point: {merge_contract.game_root}")
-    _clear_analysis_yaml(merge_contract.game_root)
+    root = merge_contract.artifact_game_root
+    ensure_real_tree(Path(artifactdir), root)
+    root.mkdir(parents=True, exist_ok=True)
+    if is_reparse_point(root):
+        raise SnapshotConfigError(f"Snapshot target must not be a link/reparse point: {root}")
+    _clear_analysis_yaml(root)
     if mode == "full-rebuild":
         return ()
     if base is None or base.contract.game_version != merge_contract.game_version:
@@ -45,7 +46,7 @@ def materialize_baseline(
 
     selected = sorted(set(base.document["files"]) & merge_contract.formal_paths - invalidated)
     for key in selected:
-        target = path_from_key(merge_contract.game_root, key)
+        target = path_from_key(root, key)
         target.parent.mkdir(parents=True, exist_ok=True)
         if is_reparse_point(target.parent) or target.exists() and is_reparse_point(target):
             raise SnapshotConfigError(f"Refusing to materialize through a link/reparse point: {target}")

@@ -76,19 +76,20 @@ def _load_yaml_mapping(path: Path) -> dict:
 
 
 def collect_actual_files(contract, *, strict: bool = True) -> dict[str, dict]:
-    missing = [key for key in sorted(contract.required_paths) if not path_from_key(contract.game_root, key).is_file()]
+    root = contract.artifact_game_root
+    missing = [key for key in sorted(contract.required_paths) if not path_from_key(root, key).is_file()]
     if missing:
         raise SnapshotMismatchError("Missing required symbol YAML:\n" + "\n".join(f"  {key}" for key in missing))
-    actual = {canonical_key(contract.game_root, path) for path in iter_yaml_paths(contract.game_root)}
+    actual = {canonical_key(root, path) for path in iter_yaml_paths(root)}
     undeclared = sorted(actual - contract.formal_paths)
     if strict and undeclared:
         raise SnapshotMismatchError("Undeclared symbol YAML:\n" + "\n".join(f"  {key}" for key in undeclared))
     selected = sorted(contract.required_paths | (contract.optional_paths & actual))
-    return {key: _load_yaml_mapping(path_from_key(contract.game_root, key)) for key in selected}
+    return {key: _load_yaml_mapping(path_from_key(root, key)) for key in selected}
 
 
 def _binary_path(contract, target) -> Path:
-    return contract.game_root / target.module_name / target.binary_name
+    return contract.binary_game_root / target.module_name / target.binary_name
 
 
 def _ensure_plain_binary(path: Path, game_root: Path) -> None:
@@ -126,7 +127,7 @@ def collect_binary_metadata(contract, schema_version: int = SCHEMA_VERSION) -> d
     for key in sorted(contract.binary_targets):
         target = contract.binary_targets[key]
         binary = _binary_path(contract, target)
-        _ensure_plain_binary(binary, contract.game_root)
+        _ensure_plain_binary(binary, contract.binary_game_root)
         try:
             _validate_binary_identity(binary, target.platform)
         except ValueError as exc:
@@ -201,13 +202,27 @@ def load_snapshot_for_contract(snapshot_path, contract, *, require_canonical: bo
     return document, raw
 
 
-def load_snapshot_context(snapshot_path, config_path, game_version, bindir, *, require_canonical=True):
+def load_snapshot_context(
+    snapshot_path,
+    config_path,
+    game_version,
+    bindir,
+    *,
+    artifactdir="bin_artifacts",
+    require_canonical=True,
+):
     try:
         raw = Path(snapshot_path).read_bytes()
     except OSError as exc:
         raise SnapshotMismatchError(f"Unable to read snapshot {snapshot_path}: {exc}") from exc
     document = parse_snapshot_bytes(raw, str(game_version))
-    contract = load_contract(config_path, game_version, bindir, snapshot_config_digest_version(document))
+    contract = load_contract(
+        config_path,
+        game_version,
+        bindir,
+        snapshot_config_digest_version(document),
+        artifactdir=artifactdir,
+    )
     validate_snapshot_contract(document, contract)
     if require_canonical and raw != canonical_snapshot_bytes(document):
         raise SnapshotMismatchError("Snapshot is not canonical", reason="noncanonical_snapshot")
@@ -220,13 +235,21 @@ def pack_snapshot(
     config_path=None,
     snapshot_path=None,
     *,
+    artifactdir="bin_artifacts",
     last_publish_time: str | None = None,
     strict: bool = True,
 ) -> bytes:
     output = Path(snapshot_path or f"gamesymbols/{game_version}.yaml")
     config = resolve_analysis_config(game_version, config_path)
-    contract = load_contract(config, game_version, bindir, LATEST_CONFIG_DIGEST_VERSION)
-    ensure_real_tree(Path(bindir), contract.game_root)
+    contract = load_contract(
+        config,
+        game_version,
+        bindir,
+        LATEST_CONFIG_DIGEST_VERSION,
+        artifactdir=artifactdir,
+    )
+    ensure_real_tree(Path(bindir), contract.binary_game_root)
+    ensure_real_tree(Path(artifactdir), contract.artifact_game_root)
     document = build_actual_document(contract, strict=strict, last_publish_time=last_publish_time)
     data = canonical_snapshot_bytes(document)
     reparsed = parse_snapshot_bytes(data, str(game_version))
@@ -239,7 +262,7 @@ def pack_snapshot(
 
 def _write_files(contract, document, *, overwrite: bool) -> None:
     for key, payload in document["files"].items():
-        target = path_from_key(contract.game_root, key)
+        target = path_from_key(contract.artifact_game_root, key)
         if target.exists() and not overwrite:
             continue
         _atomic_write(target, canonical_yaml_bytes(payload))
@@ -250,22 +273,30 @@ def _delete_yaml_tree(game_root: Path) -> None:
         path.unlink()
 
 
-def restore_snapshot(game_version, bindir="bin", config_path=None, snapshot_path=None, *, replace=False) -> bytes:
+def restore_snapshot(
+    game_version,
+    bindir="bin",
+    config_path=None,
+    snapshot_path=None,
+    *,
+    artifactdir="bin_artifacts",
+    replace=False,
+) -> bytes:
     snapshot = Path(snapshot_path or f"gamesymbols/{game_version}.yaml")
     config = resolve_analysis_config(game_version, config_path)
-    context = load_snapshot_context(snapshot, config, game_version, bindir)
-    ensure_real_tree(Path(bindir), context.contract.game_root)
+    context = load_snapshot_context(snapshot, config, game_version, bindir, artifactdir=artifactdir)
+    ensure_real_tree(Path(artifactdir), context.contract.artifact_game_root)
     if not replace:
         conflicts = [
             key
             for key, expected in context.document["files"].items()
-            if path_from_key(context.contract.game_root, key).exists()
-            and _load_yaml_mapping(path_from_key(context.contract.game_root, key)) != expected
+            if path_from_key(context.contract.artifact_game_root, key).exists()
+            and _load_yaml_mapping(path_from_key(context.contract.artifact_game_root, key)) != expected
         ]
         if conflicts:
             raise SnapshotMismatchError("Refusing to overwrite different symbol YAML: " + ", ".join(conflicts))
     else:
-        _delete_yaml_tree(context.contract.game_root)
+        _delete_yaml_tree(context.contract.artifact_game_root)
     _write_files(context.contract, context.document, overwrite=replace)
     restored = build_actual_document(
         context.contract,
@@ -279,10 +310,17 @@ def restore_snapshot(game_version, bindir="bin", config_path=None, snapshot_path
     return context.raw_bytes
 
 
-def verify_snapshot(game_version, bindir="bin", config_path=None, snapshot_path=None) -> bytes:
+def verify_snapshot(
+    game_version,
+    bindir="bin",
+    config_path=None,
+    snapshot_path=None,
+    *,
+    artifactdir="bin_artifacts",
+) -> bytes:
     snapshot = Path(snapshot_path or f"gamesymbols/{game_version}.yaml")
     config = resolve_analysis_config(game_version, config_path)
-    context = load_snapshot_context(snapshot, config, game_version, bindir)
+    context = load_snapshot_context(snapshot, config, game_version, bindir, artifactdir=artifactdir)
     actual = build_actual_document(
         context.contract,
         strict=True,
@@ -295,14 +333,25 @@ def verify_snapshot(game_version, bindir="bin", config_path=None, snapshot_path=
     return data
 
 
-def check_snapshot_contract(game_version, bindir="bin", config_path=None, snapshot_path=None) -> SnapshotContext:
+def check_snapshot_contract(
+    game_version,
+    bindir="bin",
+    config_path=None,
+    snapshot_path=None,
+    *,
+    artifactdir="bin_artifacts",
+) -> SnapshotContext:
     snapshot = Path(snapshot_path or f"gamesymbols/{game_version}.yaml")
     config = resolve_analysis_config(game_version, config_path)
     try:
-        context = load_snapshot_context(snapshot, config, game_version, bindir)
+        context = load_snapshot_context(snapshot, config, game_version, bindir, artifactdir=artifactdir)
         with tempfile.TemporaryDirectory(prefix="gamesymbol-contract-") as temp:
             temporary_contract = load_contract(
-                config, game_version, Path(temp) / "bin", context.contract.config_digest_version
+                config,
+                game_version,
+                Path(temp) / "bin",
+                context.contract.config_digest_version,
+                artifactdir=Path(temp) / "bin_artifacts",
             )
             _write_files(temporary_contract, context.document, overwrite=True)
             rebuilt = build_actual_document(

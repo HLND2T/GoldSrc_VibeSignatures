@@ -24,7 +24,7 @@ from gamesymbol_snapshot_lib.codec import (
 from gamesymbol_snapshot_lib.errors import SnapshotMismatchError, SnapshotSchemaError
 from gamesymbol_snapshot_lib.metadata import write_metadata
 from gamesymbol_snapshot_lib.operations import pack_snapshot, restore_snapshot, verify_snapshot
-from gamesymbol_store import CandidateChangedError, InvalidSymbolPathError, SnapshotSymbolStore
+from gamesymbol_store import CandidateChangedError, DirectorySymbolStore, InvalidSymbolPathError, SnapshotSymbolStore
 from tests.test_support import write_config, write_elf32, write_pe32
 
 
@@ -42,12 +42,14 @@ def fixture(root: Path):
     tag = "game-1"
     skill = {"name": "find", "expected_output": ["symbol.{platform}.yaml"]}
     config = write_config(root / "config.yaml", skill=skill)
-    game_root = root / "bin" / tag / "engine"
-    write_pe32(game_root / "hw.dll")
-    write_elf32(game_root / "hw.so")
-    (game_root / "symbol.windows.yaml").write_text("func_name: symbol\nfunc_va: '0x10'\n", encoding="utf-8")
-    (game_root / "symbol.linux.yaml").write_text("func_name: symbol\nfunc_va: '0x20'\n", encoding="utf-8")
-    return tag, config, game_root
+    binary_module_dir = root / "bin" / tag / "engine"
+    artifact_module_dir = root / "bin_artifacts" / tag / "engine"
+    write_pe32(binary_module_dir / "hw.dll")
+    write_elf32(binary_module_dir / "hw.so")
+    artifact_module_dir.mkdir(parents=True)
+    (artifact_module_dir / "symbol.windows.yaml").write_text("func_name: symbol\nfunc_va: '0x10'\n", encoding="utf-8")
+    (artifact_module_dir / "symbol.linux.yaml").write_text("func_name: symbol\nfunc_va: '0x20'\n", encoding="utf-8")
+    return tag, config, binary_module_dir, artifact_module_dir
 
 
 class CodecTests(unittest.TestCase):
@@ -124,65 +126,85 @@ class SnapshotOperationTests(unittest.TestCase):
     def test_pack_verify_and_restore_are_byte_stable(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            tag, config, game_root = fixture(root)
+            tag, config, binary_module_dir, artifact_module_dir = fixture(root)
             snapshot = root / "snapshot.yaml"
-            packed = pack_snapshot(tag, root / "bin", config, snapshot, last_publish_time="2026-01-02T03:04:05Z")
+            binary_before = (binary_module_dir / "hw.dll").read_bytes()
+            packed = pack_snapshot(
+                tag,
+                root / "bin",
+                config,
+                snapshot,
+                artifactdir=root / "bin_artifacts",
+                last_publish_time="2026-01-02T03:04:05Z",
+            )
             document = parse_snapshot_bytes(packed)
             self.assertEqual(6, document["schema_version"])
             self.assertEqual(2, document["config_digest_version"])
             self.assertEqual(2, document["file_count"])
             self.assertEqual({"windows", "linux"}, set(document["binaries"]["engine"]))
             self.assertTrue(all("path" not in metadata for metadata in document["binaries"]["engine"].values()))
-            self.assertEqual(packed, verify_snapshot(tag, root / "bin", config, snapshot))
-            (game_root / "symbol.windows.yaml").unlink()
-            restore_snapshot(tag, root / "bin", config, snapshot)
-            self.assertEqual(packed, verify_snapshot(tag, root / "bin", config, snapshot))
+            self.assertEqual(
+                packed,
+                verify_snapshot(tag, root / "bin", config, snapshot, artifactdir=root / "bin_artifacts"),
+            )
+            (artifact_module_dir / "symbol.windows.yaml").unlink()
+            restore_snapshot(tag, root / "bin", config, snapshot, artifactdir=root / "bin_artifacts")
+            self.assertEqual(binary_before, (binary_module_dir / "hw.dll").read_bytes())
+            self.assertEqual(
+                packed,
+                verify_snapshot(tag, root / "bin", config, snapshot, artifactdir=root / "bin_artifacts"),
+            )
 
     def test_missing_required_and_undeclared_artifacts_fail(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            tag, config, game_root = fixture(root)
-            (game_root / "symbol.windows.yaml").unlink()
+            tag, config, _binary_module_dir, artifact_module_dir = fixture(root)
+            (artifact_module_dir / "symbol.windows.yaml").unlink()
             with self.assertRaises(SnapshotMismatchError):
-                pack_snapshot(tag, root / "bin", config, root / "snapshot.yaml")
-            (game_root / "symbol.windows.yaml").write_text("ok: true\n", encoding="utf-8")
-            (game_root / "undeclared.yaml").write_text("bad: true\n", encoding="utf-8")
+                pack_snapshot(tag, root / "bin", config, root / "snapshot.yaml", artifactdir=root / "bin_artifacts")
+            (artifact_module_dir / "symbol.windows.yaml").write_text("ok: true\n", encoding="utf-8")
+            (artifact_module_dir / "undeclared.yaml").write_text("bad: true\n", encoding="utf-8")
             with self.assertRaises(SnapshotMismatchError):
-                pack_snapshot(tag, root / "bin", config, root / "snapshot.yaml")
+                pack_snapshot(tag, root / "bin", config, root / "snapshot.yaml", artifactdir=root / "bin_artifacts")
 
     def test_noncanonical_signature_artifact_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            tag, config, game_root = fixture(root)
-            (game_root / "symbol.windows.yaml").write_text("func_name: symbol\nfunc_sig: aa bb\n", encoding="utf-8")
+            tag, config, _binary_module_dir, artifact_module_dir = fixture(root)
+            (artifact_module_dir / "symbol.windows.yaml").write_text(
+                "func_name: symbol\nfunc_sig: aa bb\n", encoding="utf-8"
+            )
             with self.assertRaises(SnapshotMismatchError):
-                pack_snapshot(tag, root / "bin", config, root / "snapshot.yaml")
+                pack_snapshot(tag, root / "bin", config, root / "snapshot.yaml", artifactdir=root / "bin_artifacts")
 
     def test_symbol_store_is_read_only_and_path_safe(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            tag, config, _game_root = fixture(root)
+            tag, config, _binary_module_dir, _artifact_module_dir = fixture(root)
             snapshot = root / "snapshot.yaml"
-            pack_snapshot(tag, root / "bin", config, snapshot)
+            pack_snapshot(tag, root / "bin", config, snapshot, artifactdir=root / "bin_artifacts")
             store = SnapshotSymbolStore.open(snapshot, expected_game_version=tag, config_path=config)
             first = store.require("engine", "symbol.windows.yaml")
             first["func_name"] = "changed"
             self.assertEqual("symbol", store.require("engine", "symbol.windows.yaml")["func_name"])
             with self.assertRaises(InvalidSymbolPathError):
                 store.get("../engine", "symbol.windows.yaml")
+            directory_store = DirectorySymbolStore(root / "bin_artifacts", tag)
+            self.assertEqual("symbol", directory_store.require("engine", "symbol.windows.yaml")["func_name"])
 
 
 class CandidateTests(unittest.TestCase):
     def test_tamper_guard_and_guarded_atomic_publish(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            tag, config, _game_root = fixture(root)
+            tag, config, _binary_module_dir, _artifact_module_dir = fixture(root)
             with working_directory(root):
                 candidate = root / ".candidates" / f"{tag}.yaml"
                 session = root / ".candidates" / "session.json"
                 build_candidate_snapshot(
                     game_version=tag,
                     bin_root=root / "bin",
+                    artifact_root=root / "bin_artifacts",
                     config_path=config,
                     output_path=candidate,
                     session_path=session,
@@ -229,13 +251,14 @@ class CandidateTests(unittest.TestCase):
     def test_tampered_candidate_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            tag, config, _game_root = fixture(root)
+            tag, config, _binary_module_dir, _artifact_module_dir = fixture(root)
             with working_directory(root):
                 candidate = root / ".candidates" / f"{tag}.yaml"
                 session = root / ".candidates" / "session.json"
                 build_candidate_snapshot(
                     game_version=tag,
                     bin_root=root / "bin",
+                    artifact_root=root / "bin_artifacts",
                     config_path=config,
                     output_path=candidate,
                     session_path=session,
@@ -247,13 +270,14 @@ class CandidateTests(unittest.TestCase):
     def test_tampered_metadata_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            tag, config, _game_root = fixture(root)
+            tag, config, _binary_module_dir, _artifact_module_dir = fixture(root)
             with working_directory(root):
                 candidate = root / ".candidates" / f"{tag}.yaml"
                 session = root / ".candidates" / "session.json"
                 build_candidate_snapshot(
                     game_version=tag,
                     bin_root=root / "bin",
+                    artifact_root=root / "bin_artifacts",
                     config_path=config,
                     output_path=candidate,
                     session_path=session,
@@ -266,13 +290,14 @@ class CandidateTests(unittest.TestCase):
     def test_interrupted_pair_publication_rolls_back_before_retry(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            tag, config, _game_root = fixture(root)
+            tag, config, _binary_module_dir, _artifact_module_dir = fixture(root)
             with working_directory(root):
                 candidate = root / ".candidates" / f"{tag}.yaml"
                 session = root / ".candidates" / "session.json"
                 build_candidate_snapshot(
                     game_version=tag,
                     bin_root=root / "bin",
+                    artifact_root=root / "bin_artifacts",
                     config_path=config,
                     output_path=candidate,
                     session_path=session,

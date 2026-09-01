@@ -1,0 +1,8 @@
+gv_inst_disp: '0x2'
+gv_inst_length: '0x6'
+gv_inst_offset: '0xcf'
+gv_name: cl_funcs
+gv_rva: '0x123ca60'
+gv_sig: 81 EC 00 04 00 00 8D 44 24 ?? 68 ?? ?? ?? ?? 68 00 02 00 00 50 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 C4 0C 85 C0 74 ??
+gv_sig_va: '0x1d0db10'
+gv_va: '0x2f3ca60'

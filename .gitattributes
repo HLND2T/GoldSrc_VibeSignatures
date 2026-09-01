@@ -3,3 +3,4 @@
 /configs/*.yaml text eol=lf
 /gamedata/*/gamedata-manifest.json text eol=lf
 /release-manifests/*.json text eol=lf
+/bin_artifacts/**/*.yaml text eol=lf

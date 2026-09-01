@@ -1,0 +1,5 @@
+func_name: S_LoadSound
+func_va: '0x1dcb0b0'
+func_rva: '0xcb0b0'
+func_size: '0x497'
+func_sig: 55 8B EC 81 EC 54 05 00 00 56 57 C7 45 ?? ?? ?? ?? ?? 8B 45 ?? 0F BE 08 83 F9 2A 75 ?? 8B 55 ??

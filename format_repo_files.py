@@ -29,6 +29,7 @@ def repository_format_files() -> tuple[list[str], list[str]]:
         path
         for path in paths
         if path.endswith((".yaml", ".yml"))
+        and not path.replace("\\", "/").startswith("bin_artifacts/")
         and not path.replace("\\", "/").startswith("gamesymbols/")
         and not path.replace("\\", "/").startswith("ida_preprocessor_scripts/references/")
     )

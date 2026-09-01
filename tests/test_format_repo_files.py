@@ -16,6 +16,7 @@ class RepositoryFormatFileDiscoveryTests(unittest.TestCase):
             ".codex/config.yml\n"
             "src/app.py\n"
             "config.yaml\n"
+            "bin_artifacts/hl-10210/engine/generated.yaml\n"
             "gamesymbols/generated.yaml"
         )
         completed = SimpleNamespace(returncode=0, stdout=git_output, stderr="")

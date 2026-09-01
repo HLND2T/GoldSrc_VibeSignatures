@@ -81,11 +81,13 @@ def _add_build_parsers(commands) -> None:
     invalidate.add_argument("--version", required=True)
     invalidate.add_argument("--source-sha", required=True)
     invalidate.add_argument("--bindir", default="bin")
+    invalidate.add_argument("--artifactdir", default="bin_artifacts")
 
     oldgamever = commands.add_parser("prepare-oldgamever")
     oldgamever.add_argument("--repo-root", default=".")
     oldgamever.add_argument("--gamever", required=True)
     oldgamever.add_argument("--bindir", default="bin")
+    oldgamever.add_argument("--artifactdir", default="bin_artifacts")
     oldgamever.add_argument("--github-output")
 
     pending = commands.add_parser("check-pending")
@@ -249,9 +251,15 @@ def _run_build(args) -> object:
             version=args.version,
             source_sha=args.source_sha,
             bindir=args.bindir,
+            artifactdir=args.artifactdir,
         )
     if args.command == "prepare-oldgamever":
-        result = prepare_oldgamever_baseline(repo_root=args.repo_root, gamever=args.gamever, bindir=args.bindir)
+        result = prepare_oldgamever_baseline(
+            repo_root=args.repo_root,
+            gamever=args.gamever,
+            bindir=args.bindir,
+            artifactdir=args.artifactdir,
+        )
         write_github_output(args.github_output, {"oldgamever": result["oldgamever"]})
         return result
     if args.command == "check-pending":

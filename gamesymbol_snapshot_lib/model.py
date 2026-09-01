@@ -41,7 +41,8 @@ class SkillNode:
 @dataclass(frozen=True)
 class SnapshotContract:
     game_version: str
-    game_root: Path
+    binary_game_root: Path
+    artifact_game_root: Path
     config_digest_version: int
     config_sha256: str
     analysis_output_contract_version: int

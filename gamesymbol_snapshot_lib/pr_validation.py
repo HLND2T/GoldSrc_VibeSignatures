@@ -11,7 +11,7 @@ from gamesymbol_snapshot_lib.analysis_sources import SourceIndex, is_analysis_so
 from gamesymbol_snapshot_lib.impact_registry import ImpactRule
 from gamesymbol_snapshot_lib.model import SnapshotContract
 
-PLAN_SCHEMA_VERSION = 2
+PLAN_SCHEMA_VERSION = 3
 CACHE_MODE_WARM = "warm"
 SNAPSHOT_DOMAIN_PATHS = frozenset(
     {
@@ -198,6 +198,32 @@ def _downstream_closure(contract: SnapshotContract, seeds: set[str]) -> set[str]
     return selected
 
 
+def _artifact_owner_seeds(
+    *,
+    tag: str,
+    changed_paths: tuple[ChangedPath, ...],
+    base_contract: SnapshotContract | None,
+    merge_contract: SnapshotContract,
+) -> tuple[set[str], list[str]]:
+    prefix = f"bin_artifacts/{tag}/"
+    seeds: set[str] = set()
+    reasons: list[str] = []
+    for change in changed_paths:
+        candidates = []
+        if change.old_path is not None and change.old_path.startswith(prefix):
+            candidates.append((change.old_path, base_contract))
+        if change.new_path is not None and change.new_path.startswith(prefix):
+            candidates.append((change.new_path, merge_contract))
+        for path, contract in candidates:
+            relative = path.removeprefix(prefix)
+            if contract is None or relative not in contract.formal_paths:
+                raise ImpactPlanningError(f"Changed artifact is outside the formal contract for {tag}: {path}")
+            owners = set(contract.owners_by_path[relative]) & set(merge_contract.nodes)
+            seeds.update(owners)
+            reasons.append(f"analysis artifact changed: {path}")
+    return seeds, reasons
+
+
 def _snapshot_domain_changed(paths: set[str]) -> bool:
     return any(
         path in SNAPSHOT_DOMAIN_PATHS
@@ -239,6 +265,14 @@ def plan_tag_impact(
     all_paths = {path for change in changed_paths for path in change.paths}
     seeds: set[str] = set()
     reasons: list[str] = []
+    artifact_seeds, artifact_reasons = _artifact_owner_seeds(
+        tag=tag,
+        changed_paths=changed_paths,
+        base_contract=base_contract,
+        merge_contract=merge_contract,
+    )
+    seeds.update(artifact_seeds)
+    reasons.extend(artifact_reasons)
     for path in sorted(all_paths):
         owners = set()
         if base_sources:

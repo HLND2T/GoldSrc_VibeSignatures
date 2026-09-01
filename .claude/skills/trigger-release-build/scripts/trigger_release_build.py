@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dispatch a new release or same-version rebuild from immutable origin/main."""
+"""Dispatch a new release or resume its matching draft from immutable origin/main."""
 
 import argparse
 import json
@@ -16,7 +16,6 @@ WORKFLOW = "release-build.yml"
 RUN_LIST_LIMIT = "100"
 RUN_DISCOVERY_ATTEMPTS = 10
 RUN_DISCOVERY_DELAY_SECONDS = 2
-RELEASE_MODES = frozenset({"new", "republish"})
 
 
 class TriggerError(Exception):
@@ -84,17 +83,45 @@ def require_version(value: str) -> str:
     return value
 
 
-def remote_tag_exists(root: Path, version: str) -> bool:
+def remote_tag_target(root: Path, version: str) -> str | None:
     tag = run_command(
         ["git", "ls-remote", "--exit-code", "--tags", "origin", f"refs/tags/{version}"],
         root,
         allowed=(0, 2),
     )
-    return tag.returncode == 0 and bool(tag.stdout.strip())
+    if tag.returncode == 2 or not tag.stdout.strip():
+        return None
+    return tag.stdout.split()[0].lower()
 
 
-def resolve_mode(root: Path, version: str) -> str:
-    return "republish" if remote_tag_exists(root, version) else "new"
+def release_state(root: Path, repository: str, version: str, source_sha: str) -> str:
+    target = remote_tag_target(root, version)
+    result = run_command(
+        ["gh", "api", f"repos/{repository}/releases/tags/{version}"],
+        root,
+        allowed=(0, 1),
+    )
+    if result.returncode == 1:
+        detail = (result.stderr or result.stdout).strip()
+        if not re.search(r"\bHTTP 404\b", detail):
+            raise TriggerError(f"release lookup failed: {detail or 'exit code 1'}")
+        release = None
+    else:
+        try:
+            release = json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            raise TriggerError("release lookup returned invalid JSON") from exc
+    if target is None:
+        if release is None:
+            return "new"
+        raise TriggerError(f"release {version} exists without its immutable tag")
+    if target != source_sha:
+        raise TriggerError(f"existing tag {version} does not point to the selected origin/main SHA")
+    if not isinstance(release, dict):
+        return "resume"
+    if release.get("draft") is True:
+        return "resume"
+    raise TriggerError(f"release {version} is already published and immutable; use a new version")
 
 
 def parse_json_list(raw: str, label: str) -> list[dict]:
@@ -149,14 +176,7 @@ def require_main_unchanged(root: Path, source_sha: str) -> None:
         raise TriggerError("origin/main advanced while validating the rebuild request; run the skill again")
 
 
-def dispatch(
-    root: Path,
-    version: str,
-    source_sha: str,
-    mode: str,
-) -> None:
-    if mode not in RELEASE_MODES:
-        raise TriggerError(f"invalid release mode: {mode}")
+def dispatch(root: Path, version: str, source_sha: str) -> None:
     run_command(
         [
             "gh",
@@ -169,8 +189,6 @@ def dispatch(
             f"version={version}",
             "-f",
             f"source_sha={source_sha}",
-            "-f",
-            f"mode={mode}",
         ],
         root,
     )
@@ -197,14 +215,14 @@ def execute(requested: str) -> dict:
     require_github_access(root, repository)
     source_sha, subject = resolve_source(root)
     version = require_version(requested)
-    mode = resolve_mode(root, version)
+    state = release_state(root, repository, version, source_sha)
     known_ids = require_no_duplicate(root, version)
     require_main_unchanged(root, source_sha)
-    dispatch(root, version, source_sha, mode)
+    dispatch(root, version, source_sha)
     run_url = discover_run(root, known_ids, version=version, source_sha=source_sha)
     return {
         "version": version,
-        "mode": mode,
+        "state": state,
         "source_sha": source_sha,
         "subject": subject,
         "run_url": run_url,
@@ -221,7 +239,7 @@ def main(argv=None) -> int:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
     print(f"Selected VERSION: {result['version']}")
-    print(f"Mode: {result['mode']}")
+    print(f"Release state: {result['state']}")
     print(f"SOURCE_SHA: {result['source_sha']}")
     print(f"Commit: {result['subject']}")
     print(f"Actions run: {result['run_url']}")

@@ -1,0 +1,8 @@
+gv_inst_disp: '0x2'
+gv_inst_length: '0x6'
+gv_inst_offset: '0x2'
+gv_name: gClientUserMsgs
+gv_rva: '0x1c5bb4'
+gv_sig: 53 56 8B 35 ?? ?? ?? ?? 33 DB 85 F6 74 ?? 55 8B 6C 24 ?? 57 8B 44 24 ?? 8D 7E ?? 57 50 E8 ?? ?? ?? ?? 83 C4 08
+gv_sig_va: '0x1d1d570'
+gv_va: '0x1ec5bb4'

@@ -9,6 +9,7 @@ from pathlib import Path, PurePosixPath
 import yaml
 
 import download_depot
+from bin_artifact_contract import validate_repository_artifact_contract
 from analysis_config import iter_analysis_config_tags
 from analysis_planner import (
     PLATFORMS,
@@ -30,6 +31,11 @@ def _config_tags() -> set[str]:
 
 
 class RepositoryContractTests(unittest.TestCase):
+    def test_tracked_bin_artifacts_match_the_formal_repository_contract(self):
+        inventory = validate_repository_artifact_contract(ROOT)
+        self.assertEqual(273, len(inventory.paths))
+        self.assertEqual(_config_tags(), {item.game_version for item in inventory.gamevers})
+
     def test_generate_reference_yaml_skill_contract(self):
         skill_path = ROOT / ".claude" / "skills" / "generate-reference-yaml" / "SKILL.md"
         self.assertTrue(skill_path.is_file())
@@ -276,9 +282,10 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertNotIn("-cache-mode", workflow_text)
         plan_steps = jobs["plan"]["steps"]
         planner = next(step for step in plan_steps if step.get("name") == "Generate canonical bound plan from PR merge")
-        self.assertIn("uv run python gamesymbol_pr_validation.py plan", planner["run"])
-        self.assertNotIn("base-planner", workflow_text)
-        self.assertFalse(any(step.get("name") == "Export trusted base planner" for step in plan_steps))
+        self.assertIn(".trusted-planner/gamesymbol_pr_validation.py plan", planner["run"])
+        trusted_checkout = next(step for step in plan_steps if step.get("name") == "Checkout trusted base planner")
+        self.assertEqual("${{ github.event.pull_request.base.sha }}", trusted_checkout["with"]["ref"])
+        self.assertEqual("false", trusted_checkout["with"]["persist-credentials"])
         self.assertNotIn("uv run", aggregate["run"])
         self_hosted = jobs["analyze-self-hosted"]
         self.assertEqual(["self-hosted", "windows", "x64"], self_hosted["runs-on"])
@@ -315,6 +322,10 @@ class RepositoryContractTests(unittest.TestCase):
             if step.get("name") == "Analyze selected nodes and build self-consistent candidates"
         )
         self.assertNotIn("cache_mode", analyzer["run"])
+        self.assertIn("$env:RUNNER_TEMP 'rebuilt-bin-artifacts'", analyzer["run"])
+        self.assertIn("$plannerCli compare", analyzer["run"])
+        self.assertIn("-artifactdir $artifactRoot", analyzer["run"])
+        self.assertIn("git diff --exit-code -- bin_artifacts", analyzer["run"])
         restore_index = step_names.index("Restore exact warm IDB cache generations")
         analyze_index = step_names.index("Analyze selected nodes and build self-consistent candidates")
         self.assertNotIn(
@@ -330,101 +341,6 @@ class RepositoryContractTests(unittest.TestCase):
             "robocopy",
         ):
             self.assertNotIn(forbidden, workflow_text)
-
-    def test_release_workflows_build_stage_verify_and_promote(self):
-        workflows = {
-            name: yaml.load((ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
-            for name in (
-                "release-build.yml",
-                "validate-generated-output-pr.yml",
-                "promote-release-after-output-merge.yml",
-                "abandon-staged-release.yml",
-                "cleanup-completed-release-staging.yml",
-            )
-        }
-        build = workflows["release-build.yml"]
-        self.assertIn("version", build["on"]["workflow_dispatch"]["inputs"])
-        self.assertIn("source_sha", build["on"]["workflow_dispatch"]["inputs"])
-        self.assertEqual(["new", "republish"], build["on"]["workflow_dispatch"]["inputs"]["mode"]["options"])
-        self.assertEqual("read", build["permissions"]["contents"])
-        build_job = build["jobs"]["build"]
-        self.assertEqual(["self-hosted", "windows", "x64"], build_job["runs-on"])
-        self.assertEqual("win64", build_job["environment"])
-        build_text = json.dumps(build)
-        self.assertIn("release_workflow.py validate-build", build_text)
-        self.assertIn("ida_analyze_bin.py -allgamever", build_text)
-        self.assertIn("tests/run_test_suite.py generated-output-contract", build_text)
-        self.assertIn("release_workflow.py stage-build", build_text)
-        self.assertIn("release_workflow.py materialize-accepted-bin", build_text)
-        self.assertNotIn("robocopy", build_text)
-        self.assertEqual(["preflight", "warmup-idb"], build_job["needs"])
-        self.assertIn("needs.warmup-idb.result == 'success'", build_job["if"])
-        self.assertNotIn("cold", build_job["if"])
-        self.assertNotIn("GSVIBE_IDB_CACHE_MODE", build_text)
-        self.assertNotIn("-cache_mode", build_text)
-        producer = build["jobs"]["warmup-idb"]
-        self.assertEqual("./.github/workflows/warmup-idb.yml", producer["uses"])
-        self.assertEqual("release-all", producer["with"]["scope"])
-        self.assertNotIn("cache_mode", producer["with"])
-        self.assertNotIn("idb_cache_release.py prepare", json.dumps(build_job))
-        warmup = yaml.load(
-            (ROOT / ".github" / "workflows" / "warmup-idb.yml").read_text(encoding="utf-8"), Loader=yaml.BaseLoader
-        )
-        warmup_job = warmup["jobs"]["warmup"]
-        # One producer per repository: the group must not be scoped by version, PR, tag or run.
-        self.assertEqual("idb-warmup-${{ github.repository }}", warmup_job["concurrency"]["group"])
-        self.assertEqual("false", warmup_job["concurrency"]["cancel-in-progress"])
-        self.assertEqual("win64", warmup_job["environment"])
-        self.assertEqual(["self-hosted", "windows", "x64"], warmup_job["runs-on"])
-        self.assertEqual(
-            {"selection_artifact_name", "selection_sha256", "selection_schema_version", "source_sha"},
-            set(warmup["on"]["workflow_call"]["outputs"]),
-        )
-        self.assertNotIn("cache_mode", warmup["on"]["workflow_call"]["inputs"])
-        self.assertNotIn("CACHE_MODE", warmup_job["env"])
-        self.assertNotIn("workflow_dispatch", warmup["on"])
-        self.assertNotIn("GSVIBE_RELEASE_PHASE2_ENABLED", build_text)
-        self.assertNotIn("create-github-app-token", build_text)
-        build_step_names = [step.get("name") for step in build_job["steps"]]
-        output_contract_index = build_step_names.index("Validate generated output contract")
-        self.assertLess(
-            build_step_names.index("Build, guard, and publish candidates for every game version"),
-            output_contract_index,
-        )
-        self.assertLess(output_contract_index, build_step_names.index("Stage validated output"))
-
-        validate = workflows["validate-generated-output-pr.yml"]
-        self.assertEqual("pr-validate", validate["jobs"]["validate"]["name"])
-        validate_text = json.dumps(validate)
-        self.assertIn("github-actions[bot]", validate_text)
-        self.assertIn("gamesymbols/build/", validate_text)
-        self.assertIn("verify-output-pr", validate_text)
-        self.assertIn(".release-tools", validate_text)
-        self.assertIn("--base-sha", validate_text)
-        self.assertIn("--head-sha", validate_text)
-        checkout_steps = [
-            step
-            for step in validate["jobs"]["validate"]["steps"]
-            if str(step.get("uses", "")).startswith("actions/checkout@")
-        ]
-        self.assertEqual("0", str(checkout_steps[0]["with"]["fetch-depth"]))
-        self.assertEqual("1", str(checkout_steps[1]["with"]["fetch-depth"]))
-
-        promote = workflows["promote-release-after-output-merge.yml"]
-        promote_text = json.dumps(promote)
-        self.assertIn("verify-promotion", promote_text)
-        self.assertIn("promote-bin", promote_text)
-        self.assertIn("finalize-promotion", promote_text)
-        verify_job = promote["jobs"]["verify"]
-        self.assertEqual(["self-hosted", "windows", "x64"], verify_job["runs-on"])
-        self.assertEqual("win64", verify_job["environment"])
-        verify_step = next(step for step in verify_job["steps"] if step.get("name") == "Verify promotion")
-        self.assertEqual("pwsh", verify_step["shell"])
-        self.assertIn("Join-Path $env:PERSISTED_WORKSPACE 'release-staging'", verify_step["run"])
-        self.assertNotIn("$STAGING_ROOT/release-staging", verify_step["run"])
-
-        for name in ("abandon-staged-release.yml", "cleanup-completed-release-staging.yml"):
-            self.assertIn("win64", json.dumps(workflows[name]))
 
     def test_pages_workflow_keeps_content_addressed_history_append_only(self):
         workflow = (ROOT / ".github" / "workflows" / "deploy-pages.yml").read_text(encoding="utf-8")

@@ -21,7 +21,13 @@ from gamesymbol_snapshot_lib.errors import SnapshotConfigError
 from gamesymbol_snapshot_lib.impact_registry import ImpactRegistryError, parse_impact_registry
 from gamesymbol_snapshot_lib.materialize import materialize_baseline
 from gamesymbol_snapshot_lib.operations import load_snapshot_context, pack_snapshot
-from gamesymbol_snapshot_lib.pr_cli import GitRepository, PrCliError, build_plan, materialize_from_plan
+from gamesymbol_snapshot_lib.pr_cli import (
+    GitRepository,
+    PrCliError,
+    build_plan,
+    compare_rebuilt_artifacts,
+    materialize_from_plan,
+)
 from gamesymbol_snapshot_lib.pr_validation import (
     CACHE_MODE_WARM,
     BoundImpactPlan,
@@ -32,7 +38,14 @@ from gamesymbol_snapshot_lib.pr_validation import (
     evaluate_pr_validation,
     plan_tag_impact,
 )
-from pull_request_route import PullRequestRouteError, classify_pr_route, parse_output_branch
+from pull_request_route import (
+    BIN_ARTIFACT_CUTOVER_HEAD_SHA,
+    PullRequestRouteError,
+    classify_pr_route,
+    parse_output_branch,
+    validate_source_paths,
+)
+from ida_analyze_util import canonical_symbol_yaml_bytes
 from tests.test_support import write_pe32
 
 
@@ -101,7 +114,7 @@ class AnalysisSourceIndexTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        return load_contract(config, tag, root / "bin")
+        return load_contract(config, tag, root / "bin", artifactdir=root / "bin_artifacts")
 
     def test_indexes_root_import_prompt_current_reference_and_canonical_fallback(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -182,7 +195,7 @@ class ImpactPlanningTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        return load_contract(config, "game-1", root / "bin")
+        return load_contract(config, "game-1", root / "bin", artifactdir=root / "bin_artifacts")
 
     def test_source_seed_expands_downstream_and_invalidates_owned_outputs(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -363,7 +376,7 @@ class ImpactPlanningTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            empty = load_contract(empty_config, "game-2", root / "bin")
+            empty = load_contract(empty_config, "game-2", root / "bin", artifactdir=root / "bin_artifacts")
             rules = parse_impact_registry(
                 {"schema_version": 1, "rules": [{"paths": ["shared.py"], "scope": "all", "reason": "shared"}]}
             )
@@ -427,6 +440,52 @@ class ImpactPlanningTests(unittest.TestCase):
             self.assertIn("engine/B.windows.yaml", plan.paths)
             self.assertTrue(plan.reasons)
 
+    def test_artifact_change_maps_to_owner_and_downstream_and_rejects_unknown_path(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            contract = self._contract(root)
+            impact = plan_tag_impact(
+                tag="game-1",
+                base_contract=contract,
+                merge_contract=contract,
+                changed_paths=(
+                    ChangedPath(
+                        "M",
+                        "bin_artifacts/game-1/engine/A.windows.yaml",
+                        "bin_artifacts/game-1/engine/A.windows.yaml",
+                    ),
+                ),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+            )
+            self.assertEqual(
+                ("engine:windows:produce", "engine:windows:consume"),
+                impact.analysis_nodes,
+            )
+            self.assertEqual(
+                ("engine/A.windows.yaml", "engine/B.windows.yaml"),
+                impact.invalidated_paths,
+            )
+            with self.assertRaisesRegex(ImpactPlanningError, "outside the formal contract"):
+                plan_tag_impact(
+                    tag="game-1",
+                    base_contract=contract,
+                    merge_contract=contract,
+                    changed_paths=(
+                        ChangedPath(
+                            "A",
+                            None,
+                            "bin_artifacts/game-1/engine/Unknown.windows.yaml",
+                        ),
+                    ),
+                    base_sources=None,
+                    merge_sources=None,
+                    base_rules=(),
+                    merge_rules=(),
+                )
+
     def test_bound_plan_digest_binds_shas_actions_and_digests(self):
         action = TagImpact("game-1", "incremental", (), (), True, True, ("snapshot",))
         plan = BoundImpactPlan(
@@ -446,6 +505,12 @@ class ImpactPlanningTests(unittest.TestCase):
 
 
 class PrValidationGateTests(unittest.TestCase):
+    def test_release_owned_cutover_exception_is_bound_to_one_head(self):
+        paths = ("gamesymbols/game-1.yaml", "gamedata/game-1/gamedata-manifest.json")
+        validate_source_paths(paths, head_sha=BIN_ARTIFACT_CUTOVER_HEAD_SHA)
+        with self.assertRaisesRegex(PullRequestRouteError, "release-owned generated-output paths"):
+            validate_source_paths(paths, head_sha="0" * 40)
+
     def test_generated_output_branch_parser_and_source_only_routing(self):
         branch = "gamesymbols/build/hl-10210/run-123"
         self.assertEqual(("hl-10210", "run-123"), parse_output_branch(branch))
@@ -630,6 +695,7 @@ class BoundPlanValidationTests(unittest.TestCase):
                     tag="game-1",
                     merge_ref=merge_sha,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                 )
 
             self._write_plan(plan_path, merge_sha=merge_sha, digests=digests)
@@ -647,6 +713,7 @@ class BoundPlanValidationTests(unittest.TestCase):
                     tag="game-1",
                     merge_ref=merge_sha,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                 )
 
             self._write_plan(plan_path, merge_sha=merge_sha, digests=digests)
@@ -657,6 +724,7 @@ class BoundPlanValidationTests(unittest.TestCase):
                     tag="game-1",
                     merge_ref=base_sha,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                 )
 
             self._write_plan(plan_path, merge_sha=merge_sha, digests=digests, merge_bin_commit="f" * 40)
@@ -667,6 +735,7 @@ class BoundPlanValidationTests(unittest.TestCase):
                     tag="game-1",
                     merge_ref=merge_sha,
                     bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                 )
 
             for key in (
@@ -688,7 +757,96 @@ class BoundPlanValidationTests(unittest.TestCase):
                             tag="game-1",
                             merge_ref=merge_sha,
                             bindir=root / "bin",
+                            artifactdir=root / "bin_artifacts",
                         )
+
+
+class ArtifactRebuildComparisonTests(unittest.TestCase):
+    def test_artifact_only_plan_materializes_isolated_tree_and_compares_git_blob_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo = root / "repo"
+            rebuilt = root / "rebuilt"
+            repo.mkdir()
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.com"], check=True)
+            subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True)
+            (repo / "configs").mkdir()
+            (repo / "configs" / "config.yaml").write_text("gamevers:\n  - game-1\n", encoding="utf-8")
+            (repo / "configs" / "game-1.yaml").write_text(
+                yaml.safe_dump(
+                    {
+                        "modules": [
+                            {
+                                "name": "engine",
+                                "path_windows": "Game/hw.dll",
+                                "module_windows": "hw.dll",
+                                "skills": [{"name": "find", "expected_output": ["Demo.{platform}.yaml"]}],
+                                "symbols": [{"name": "Demo", "category": "func"}],
+                            }
+                        ]
+                    },
+                    sort_keys=False,
+                ),
+                encoding="utf-8",
+            )
+            artifact = repo / "bin_artifacts" / "game-1" / "engine" / "Demo.windows.yaml"
+            artifact.parent.mkdir(parents=True)
+            artifact.write_bytes(canonical_symbol_yaml_bytes({"func_name": "Demo", "func_va": "0x10"}))
+            subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+            subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "base"], check=True)
+            base_sha = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+            artifact.write_bytes(canonical_symbol_yaml_bytes({"func_name": "Demo", "func_va": "0x11"}))
+            subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+            subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "merge"], check=True)
+            merge_sha = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+            expected_checkout_bytes = artifact.read_bytes()
+
+            plan = build_plan(
+                repo_root=repo,
+                base_ref=base_sha,
+                head_ref=merge_sha,
+                merge_ref=merge_sha,
+            )
+            self.assertEqual(("engine:windows:find",), plan.tags[0].analysis_nodes)
+            plan_path = root / "plan.json"
+            plan_path.write_bytes(plan.canonical_bytes())
+            self.assertEqual(
+                (),
+                materialize_from_plan(
+                    repo_root=repo,
+                    plan_path=plan_path,
+                    tag="game-1",
+                    merge_ref=merge_sha,
+                    bindir=repo / "bin",
+                    artifactdir=rebuilt,
+                ),
+            )
+            rebuilt_artifact = rebuilt / "game-1" / "engine" / "Demo.windows.yaml"
+            rebuilt_artifact.parent.mkdir(parents=True, exist_ok=True)
+            rebuilt_artifact.write_bytes(expected_checkout_bytes)
+            self.assertEqual(
+                ("engine/Demo.windows.yaml",),
+                compare_rebuilt_artifacts(
+                    repo_root=repo,
+                    plan_path=plan_path,
+                    tag="game-1",
+                    merge_ref=merge_sha,
+                    bindir=repo / "bin",
+                    artifactdir=rebuilt,
+                ),
+            )
+            self.assertEqual(expected_checkout_bytes, artifact.read_bytes())
+            rebuilt_artifact.write_bytes(canonical_symbol_yaml_bytes({"func_name": "Demo", "func_va": "0x12"}))
+            with self.assertRaisesRegex(PrCliError, "inventory differs"):
+                compare_rebuilt_artifacts(
+                    repo_root=repo,
+                    plan_path=plan_path,
+                    tag="game-1",
+                    merge_ref=merge_sha,
+                    bindir=repo / "bin",
+                    artifactdir=rebuilt,
+                )
 
 
 class MaterializationTests(unittest.TestCase):
@@ -719,22 +877,26 @@ class MaterializationTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            game_root = root / "base-bin" / "game-1" / "engine"
-            write_pe32(game_root / "hw.dll")
-            (game_root / "One.windows.yaml").write_text("func_name: One\nfunc_va: '0x10'\n", encoding="utf-8")
-            (game_root / "Two.windows.yaml").write_text("func_name: Two\nfunc_va: '0x20'\n", encoding="utf-8")
+            binary_module_dir = root / "base-bin" / "game-1" / "engine"
+            artifact_module_dir = root / "base-artifacts" / "game-1" / "engine"
+            write_pe32(binary_module_dir / "hw.dll")
+            artifact_module_dir.mkdir(parents=True)
+            (artifact_module_dir / "One.windows.yaml").write_text("func_name: One\nfunc_va: '0x10'\n", encoding="utf-8")
+            (artifact_module_dir / "Two.windows.yaml").write_text("func_name: Two\nfunc_va: '0x20'\n", encoding="utf-8")
             snapshot = root / "base.yaml"
-            pack_snapshot("game-1", root / "base-bin", config, snapshot)
-            base = load_snapshot_context(snapshot, config, "game-1", root / "base-bin")
-            merge_contract = load_contract(config, "game-1", root / "merge-bin")
-            stale = root / "merge-bin" / "game-1" / "engine" / "Stale.yaml"
+            pack_snapshot("game-1", root / "base-bin", config, snapshot, artifactdir=root / "base-artifacts")
+            base = load_snapshot_context(
+                snapshot, config, "game-1", root / "base-bin", artifactdir=root / "base-artifacts"
+            )
+            merge_contract = load_contract(config, "game-1", root / "merge-bin", artifactdir=root / "merge-artifacts")
+            stale = root / "merge-artifacts" / "game-1" / "engine" / "Stale.yaml"
             stale.parent.mkdir(parents=True)
             stale.write_text("stale: true\n", encoding="utf-8")
 
             restored = materialize_baseline(
                 base=base,
                 merge_contract=merge_contract,
-                bindir=root / "merge-bin",
+                artifactdir=root / "merge-artifacts",
                 invalidated_paths=("engine/Two.windows.yaml",),
                 mode="incremental",
             )
@@ -748,7 +910,7 @@ class MaterializationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             config = AnalysisSourceIndexTests()._contract(root, "game-1")
-            yaml_path = config.game_root / "engine" / "Demo.windows.yaml"
+            yaml_path = config.artifact_game_root / "engine" / "Demo.windows.yaml"
             yaml_path.parent.mkdir(parents=True)
             yaml_path.write_text("value: old\n", encoding="utf-8")
             self.assertEqual(
@@ -756,7 +918,7 @@ class MaterializationTests(unittest.TestCase):
                 materialize_baseline(
                     base=None,
                     merge_contract=config,
-                    bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                     invalidated_paths=(),
                     mode="full-rebuild",
                 ),
@@ -771,7 +933,7 @@ class MaterializationTests(unittest.TestCase):
                 materialize_baseline(
                     base=None,
                     merge_contract=contract,
-                    bindir=root / "bin",
+                    artifactdir=root / "bin_artifacts",
                     invalidated_paths=("../escape.yaml",),
                     mode="full-rebuild",
                 )

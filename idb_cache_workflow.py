@@ -85,12 +85,12 @@ def _selected_binary_groups(*, document: dict, repo_root: Path, bindir: Path, re
         )
         for module, platform in pairs:
             target = contract.binary_targets[(module, platform)]
-            original = contract.game_root / module / target.binary_name
+            original = contract.binary_game_root / module / target.binary_name
             binary = prepare_analysis_binary(original, platform)
-            relative = binary.relative_to(contract.game_root).as_posix()
+            relative = binary.relative_to(contract.binary_game_root).as_posix()
             groups.setdefault((tag, platform), []).append(
                 build_binary_identity(
-                    workspace_root=contract.game_root,
+                    workspace_root=contract.binary_game_root,
                     module=module,
                     platform=platform,
                     relative_path=relative,

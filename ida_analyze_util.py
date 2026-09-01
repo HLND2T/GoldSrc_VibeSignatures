@@ -288,16 +288,21 @@ def _ordered_payload(payload: Mapping[str, object], category: str) -> dict:
     return ordered
 
 
+def canonical_symbol_yaml_bytes(payload: Mapping[str, object], *, category: str | None = None) -> bytes:
+    category = category or _infer_artifact_category(payload)
+    normalized = normalize_symbol_artifact(payload, category=category)
+    return yaml.safe_dump(
+        _ordered_payload(normalized, category),
+        allow_unicode=True,
+        sort_keys=False,
+        width=120,
+    ).encode("utf-8")
+
+
 def write_symbol_yaml(path: str | Path, payload: Mapping[str, object], *, category: str | None = None) -> None:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    category = category or _infer_artifact_category(payload)
-    normalized = normalize_symbol_artifact(payload, category=category)
-    target.write_text(
-        yaml.safe_dump(_ordered_payload(normalized, category), allow_unicode=True, sort_keys=False, width=120),
-        encoding="utf-8",
-        newline="\n",
-    )
+    target.write_bytes(canonical_symbol_yaml_bytes(payload, category=category))
 
 
 def write_func_yaml(path, data):

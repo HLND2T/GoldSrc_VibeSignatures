@@ -106,12 +106,12 @@ def _tag_binary_groups(repo_root: Path, bindir: Path, tag: str) -> tuple[BinaryG
     contract = load_contract(repo_root / "configs" / f"{tag}.yaml", tag, bindir)
     groups: dict[tuple[str, str], list[dict]] = {}
     for (module, platform), target in sorted(contract.binary_targets.items()):
-        original = contract.game_root / module / target.binary_name
+        original = contract.binary_game_root / module / target.binary_name
         binary = prepare_analysis_binary(original, platform)
-        relative = binary.relative_to(contract.game_root).as_posix()
+        relative = binary.relative_to(contract.binary_game_root).as_posix()
         groups.setdefault((tag, platform), []).append(
             build_binary_identity(
-                workspace_root=contract.game_root,
+                workspace_root=contract.binary_game_root,
                 module=module,
                 platform=platform,
                 relative_path=relative,
