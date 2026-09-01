@@ -18,11 +18,11 @@ workflow. The separate Pages workflow may write only its non-authoritative appen
 
 - Force-rebuild every configured analysis artifact into a fresh checkout-external root and compare exact inventory and
   bytes with Git `bin_artifacts`.
-- Derive snapshot/metadata pairs, gamedata, archives, a canonical Release manifest, and `SHA256SUMS` into one allowlisted
-  bundle.
+- Derive snapshot/metadata pairs and browser JSON datasets (`mark -step json`), pack the single
+  `gamesymbols-<version>.7z`, and write a canonical Release manifest and `SHA256SUMS` into one allowlisted bundle.
 - Upload the bundle as an Actions Artifact for build-to-verifier-to-publisher transport only.
-- Re-verify exact source ancestry, bin gitlink, repository artifact inventory, candidate/gamedata contracts, bundle
-  allowlist, manifest, and checksums on a GitHub-hosted runner.
+- Re-verify exact source ancestry, bin gitlink, repository artifact inventory, snapshot/metadata contracts, independently
+  re-derived JSON bytes, 7z contents, bundle allowlist, manifest, and checksums on a GitHub-hosted runner.
 - Create or resume only a matching draft, refuse tag/asset drift and overwrite, re-read remote asset size/hash, and publish
   only after the complete inventory matches.
 - Treat published versions as immutable. Changed content requires a new version.

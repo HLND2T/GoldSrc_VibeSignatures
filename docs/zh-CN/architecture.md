@@ -13,15 +13,14 @@ download.yaml + configs/<tag>.yaml
   -> bin_artifacts/<tag>/<module>/<symbol>.<platform>.yaml（Git truth）
   -> 仅 release 阶段生成的不可变 candidate
   -> gamesymbols/<tag>.yaml + gamesymbols/<tag>.metadata.yaml（bundle）
-  -> SymbolStore -> 严格 gamedata generator
-  -> gamedata/<tag>/gamedata-manifest.json + declared payloads
+  -> gamesymbols_json.py 确定性派生浏览器 JSON dataset + index（schema 3/4）
+  -> 打包唯一 all-in-one gamesymbols-<version>.7z
 
 RunRequest -> Redis Stream -> 单并发 scheduler -> Analyzer
   -> ProcessEvent + heartbeat -> Redis state/streams
   -> 只读 API/SSE -> React process dashboard
 
-snapshot + immutable metadata companion -> Vite asset plugin
-  -> content-addressed JSON + index v4
+Release 派生 JSON dataset + index -> Vite 中继插件
   -> append-only pages-snapshots archive -> GitHub Pages Symbol Explorer
 
 exact source + bin gitlink + bin_artifacts -> analyze all game versions
@@ -121,18 +120,20 @@ writer 输出 schema 6，包含 config digest v2、analysis output contract vers
 路径逃逸、未声明或缺失的 YAML、非 canonical bytes 与 contract drift。
 
 candidate session 绑定 canonical snapshot 与 alias metadata companion 的 hash、文件系统 identity 和 pair identity。
-本地 pair 发布使用可恢复 journal；对外候选边界是 verified release bundle。发布仍必须先验证匹配的 gamedata session，
+本地 pair 发布使用可恢复 journal；对外候选边界是 verified release bundle。release 发布前必须先完成 JSON 校验步骤
+（`mark -step json`）；gamedata 一致性 gate（`mark -step gamedata`）由 PR validation 与 `update_gamedata.py` 承担。
 candidate session 不包含 C++ 测试步骤。
 
-Canonical gamedata 只从 guarded candidate inventory 派生并复制到 release staging，绝不进入 Git index。每个 tag
-都有一个排除自身的 canonical manifest，绑定 snapshot/config/generator identity 与声明的 payload 文件；因此空
-generator 集合也有一份可验证输出。
+Canonical gamedata 只从 guarded candidate inventory 派生（`update_gamedata.py` / PR validation），绝不进入 Git
+index。每个 tag 都有一个排除自身的 canonical manifest，绑定 snapshot/config/generator identity 与声明的 payload
+文件；因此空 generator 集合也有一份可验证输出。gamedata 不再是 release 发布物。
 
 ## Release provenance 边界
 
 Release build 会在 checkout 外的 fresh root 强制重建所有 configured artifact，并与 Git `bin_artifacts` 做 exact byte
-comparison；随后生成 snapshot、metadata、gamedata、binary-only/game-data archive、canonical Release manifest 和
-`SHA256SUMS`。self-hosted job 只有 read 权限；GitHub-hosted job 对 exact source 与 Git blobs 完整复验封闭 bundle。
+comparison；随后生成 snapshot、metadata、浏览器 JSON dataset（`mark -step json`）、唯一 all-in-one
+`gamesymbols-<version>.7z`、canonical Release manifest 和 `SHA256SUMS`。self-hosted job 只有 read 权限；GitHub-hosted
+job 对 exact source 与 Git blobs 完整复验封闭 bundle，并独立再派生 JSON 与 bundle 逐字节对比。
 受保护的 `publish-release` 是 `release-build.yml` 中唯一 `contents: write` job：创建或恢复 matching draft，拒绝
 tag/asset drift 与覆盖，复核远端 name/size/hash 后才发布。published version 不可覆盖；内容变化必须使用新版本。
 
@@ -144,11 +145,12 @@ reset contract 会要求客户端重新读取 atomic snapshot。
 服务默认绑定 `127.0.0.1`、无内置认证；CORS 只允许显式 origin，浏览器 private-network preflight 也必须显式开启。
 
 React dashboard 提供 run list、graph/list、task detail、status filter 和 SSE live update，同时包含静态 Symbol
-Explorer。Symbol snapshot 使用 `<family-build>` tag，按 family 分组并在组内按数字 build 降序。Vite plugin 将
-published Release 中下载的 schema-6 YAML 与必需的 schema-1 metadata companion 转成精确 UTF-8 content-addressed JSON 与 index
-schema v4，并且绝不读取 live config alias；部署 workflow 把所有 digest
-保存到 append-only `pages-snapshots` 分支，并校验 current/archive/CDN bytes。该分支只是从 published Release
-派生的非权威展示镜像，绝不是 source 或 release truth。GitHub Pages 只托管静态资产，不托管 Process API。
+Explorer。Symbol snapshot 使用 `<family-build>` tag，按 family 分组并在组内按数字 build 降序。release 流水线用
+Python 从 schema-6 snapshot 与 schema-1 metadata companion 确定性派生精确 UTF-8 content-addressed JSON dataset 与
+index schema v4；Vite 插件纯中继这些字节，不再派生，也绝不读取 live config alias。部署 workflow 下载
+`gamesymbols-*.7z` 解压得到同一 JSON，把所有 digest 保存到 append-only `pages-snapshots` 分支，并校验
+current/archive/CDN bytes。该分支只是从 published Release 派生的非权威展示镜像，绝不是 source 或 release truth。
+GitHub Pages 只托管静态资产，不托管 Process API。
 
 ## 当前排除与延期
 

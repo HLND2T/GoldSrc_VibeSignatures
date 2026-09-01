@@ -27,14 +27,19 @@ preflight -> warmup-idb -> build-release-bundle -> verify-release-bundle -> publ
 ```
 
 The self-hosted read-only build force-rebuilds all analysis artifacts in a fresh root, compares them with Git truth,
-derives the full release bundle, and uploads one transport Artifact. The GitHub-hosted verifier checks source ancestry,
-bin gitlink, artifact inventory, payload contracts, allowlist, canonical manifest, and checksums. The protected publisher
-is the release workflow's only contents writer and implements immutable tag/draft/asset semantics. There is no generated-output PR or
-separate promotion workflow.
+derives snapshots/metadata and the browser JSON datasets, marks `json`, publishes them, then derives the single all-in-one
+`gamesymbols-<version>.7z` and assembles the full release bundle, uploading one transport Artifact. The GitHub-hosted
+verifier checks source ancestry, bin gitlink, artifact inventory, payload contracts, **independently re-derives the JSON
+and compares it byte-for-byte with the bundle**, 7z contents, allowlist, canonical manifest, and checksums. The protected
+publisher is the release workflow's only contents writer and implements immutable tag/draft/asset semantics. There is no
+generated-output PR or separate promotion workflow. The Release publishes only three assets:
+`gamesymbols-<version>.7z`, `release-manifest-<version>.json`, and `SHA256SUMS-<version>.txt`.
 
 ## Pages deployment
 
-`deploy-pages.yml` triggers from a published Release or a manual dispatch with an explicit published tag. It downloads the
-Release snapshot/metadata YAML, builds content-addressed JSON, preserves the non-authoritative append-only
-`pages-snapshots` presentation mirror, deploys Pages, and verifies CDN bytes. Local/CI builds use a generated minimal schema
-fixture; production always sets the explicit downloaded asset directory.
+`deploy-pages.yml` triggers from a published Release or a manual dispatch with an explicit published tag. It downloads and
+extracts `gamesymbols-*.7z`, obtaining the Release's already-derived content-addressed JSON (`index.json` +
+`<tag>.<sha256>.json`); the Vite plugin relays those bytes into the build output. It preserves the non-authoritative
+append-only `pages-snapshots` presentation mirror, deploys Pages, and verifies CDN bytes. Local/CI builds use a generated
+minimal JSON fixture; production always sets the explicit downloaded asset directory. Only new-format Releases are
+supported (dispatch for an old tag fails fast).

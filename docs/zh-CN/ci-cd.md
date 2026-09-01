@@ -26,13 +26,17 @@ Release DAG：
 preflight -> warmup-idb -> build-release-bundle -> verify-release-bundle -> publish-release
 ```
 
-self-hosted read-only build 在 fresh root 强制重建全部分析 artifact、与 Git truth 比较、派生完整 release bundle，再上传
-唯一 transport Artifact。GitHub-hosted verifier 校验 source ancestry、bin gitlink、artifact inventory、payload contract、
-allowlist、canonical manifest 与 checksums。受保护 publisher 是 release workflow 中唯一 contents writer，并实现 immutable
-tag/draft/asset 语义。不再存在 generated-output PR 或独立 promotion workflow。
+self-hosted read-only build 在 fresh root 强制重建全部分析 artifact、与 Git truth 比较、派生 snapshot/metadata 与浏览器
+JSON dataset、`mark -step json` 后发布，再派生唯一 all-in-one `gamesymbols-<version>.7z` 并组装完整 release bundle，
+上传唯一 transport Artifact。GitHub-hosted verifier 校验 source ancestry、bin gitlink、artifact inventory、payload
+contract、**独立再派生 JSON 并与 bundle 逐字节对比**、7z 内容、allowlist、canonical manifest 与 checksums。受保护
+publisher 是 release workflow 中唯一 contents writer，并实现 immutable tag/draft/asset 语义。不再存在 generated-output
+PR 或独立 promotion workflow。Release 只发布 3 个资产：`gamesymbols-<version>.7z`、`release-manifest-<version>.json`、
+`SHA256SUMS-<version>.txt`。
 
 ## Pages deployment
 
-`deploy-pages.yml` 由 published Release 触发，或通过显式 published tag 手动触发。它下载 Release snapshot/metadata
-YAML，构建 content-addressed JSON，保留非权威、append-only 的 `pages-snapshots` 展示镜像，部署 Pages 并验证 CDN
-bytes。本地/CI build 使用动态生成的最小 schema fixture；production 始终设置显式下载 asset 目录。
+`deploy-pages.yml` 由 published Release 触发，或通过显式 published tag 手动触发。它下载 `gamesymbols-*.7z` 并解压，
+得到 Release 已派生的 content-addressed JSON（`index.json` + `<tag>.<sha256>.json`），vite 插件纯中继到 build 产物，
+保留非权威、append-only 的 `pages-snapshots` 展示镜像，部署 Pages 并验证 CDN bytes。本地/CI build 使用动态生成的
+最小 JSON fixture；production 始终设置显式下载 asset 目录。仅支持新格式 Release（旧 tag 的 dispatch 会快速失败）。

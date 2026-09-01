@@ -32,22 +32,32 @@ repository-root `gamesymbols/` or `gamedata/` trees.
 ## Release bundle
 
 `release-build.yml` force-rebuilds all configured artifacts in a fresh external root and compares exact bytes with Git
-`bin_artifacts`. It derives snapshots, metadata, gamedata, and archives, then builds a closed bundle containing:
+`bin_artifacts`. Per game version it derives a snapshot and metadata, deterministically derives the browser JSON dataset
+(schema 3, `<tag>.<sha256>.json`) from them with `gamesymbols_json.py`, marks `json`, and publishes the snapshot/metadata;
+`release_bundle.py` then assembles the index (schema 4), packs a single all-in-one archive, and builds a closed bundle
+containing:
 
-- `gamesymbols/<tag>.yaml` and `<tag>.metadata.yaml`;
-- `gamedata/<tag>/**`;
-- `archives/gamedata-<tag>.7z` including configs, `bin_artifacts`, snapshots, gamedata, and compatible binaries;
-- binary-only `archives/gamebin-<tag>.7z`;
+- `gamesymbols/<tag>.yaml` and `<tag>.metadata.yaml` (canonical snapshot/metadata used for re-derivation);
+- `gamesymbols-json/<tag>.<sha256>.json` and `gamesymbols-json/index.json`;
+- `archives/gamesymbols-<version>.7z` — the sole published payload, containing `gamesymbols/index.json` and every dataset;
+- `evidence/ida-runtime.json`, `evidence/cache-selection.json`;
 - `release-manifest-<version>.json` and `SHA256SUMS-<version>.txt`.
 
-A GitHub-hosted verifier checks the exact source SHA/bin gitlink, repository artifact inventory, snapshot/metadata/gamedata
-contracts, bundle allowlist, canonical manifest, and every checksum. Only that exact verified bundle reaches the protected
-publisher. GitHub Release assets are the public publication layer; Actions Artifacts are transport only.
+The GitHub Release publishes only three assets: `gamesymbols-<version>.7z`, `release-manifest-<version>.json`, and
+`SHA256SUMS-<version>.txt`. A GitHub-hosted verifier checks the exact source SHA/bin gitlink, repository artifact
+inventory, snapshot/metadata contracts, **independently re-derives the JSON and compares it byte-for-byte with the
+bundle's `gamesymbols-json/`**, the 7z contents, bundle allowlist, canonical manifest, and every checksum. Only that
+exact verified bundle reaches the protected publisher. GitHub Release assets are the public publication layer; Actions
+Artifacts are transport only.
+
+gamedata generation is no longer part of the release pipeline; the snapshot candidate's gamedata consistency gate is
+enforced by `gamesymbol-pr-validation.yml` (`mark -step gamedata`) and `update_gamedata.py`.
 
 ## Restore and verification
 
-Snapshot restore is an explicit compatibility/migration operation. Supply a snapshot downloaded from a published Release;
-verification reads, and restore writes, only the explicit artifact root:
+Snapshot restore is an explicit compatibility/migration operation. The Release no longer publishes snapshot YAML; supply
+a snapshot from a local candidate build (`gamesymbol_candidate.py build`). Verification reads, and restore writes, only
+the explicit artifact root:
 
 ```bash
 uv run python gamesymbol_snapshot.py verify -gamever cstrike-10210 -snapshot <release-asset.yaml> \

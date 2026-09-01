@@ -8,8 +8,9 @@ permalink: goldsrc-vibesignatures/notes/canonical-gamedata-bootstrap
 
 ## Overview
 
-Gamedata is derived from an immutable game-symbol candidate during release build. `gamedata/<tag>/**` is no longer
-Git-versioned or staged into the index; its public bytes live only inside the verified GitHub Release bundle.
+Gamedata is derived from an immutable game-symbol candidate by `update_gamedata.py` and by PR validation as a
+self-consistency gate. `gamedata/<tag>/**` is not Git-versioned or staged into the index and is no longer part of the
+GitHub Release bundle; the release publishes only the derived game-symbol JSON archive.
 
 ## Empty output contract
 
@@ -19,8 +20,9 @@ binds snapshot SHA-256, normalized analysis config identity, generator contract,
 ## Candidate and bundle boundary
 
 `gamedata_candidate.py build -> guard -> publish` operates only on explicit staging paths. `publish` atomically copies the
-verified candidate tree to caller-owned release staging and never performs Git operations. `release_bundle.py` copies the
-tree into the closed bundle; the GitHub-hosted verifier rebuilds and checks the same contract before protected publication.
+verified candidate tree to caller-owned staging and never performs Git operations. The release pipeline instead derives
+browser JSON datasets from the snapshot/metadata and guards them with `mark -step json`; the GitHub-hosted verifier
+independently re-derives those JSON bytes before protected publication.
 
 ## PR validation
 

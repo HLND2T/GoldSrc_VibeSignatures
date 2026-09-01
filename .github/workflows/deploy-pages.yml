@@ -42,9 +42,14 @@ jobs:
           tag="${EVENT_RELEASE_TAG:-$REQUESTED_RELEASE_TAG}"
           test -n "$tag"
           test "$(gh api "repos/${{ github.repository }}/releases/tags/$tag" --jq '.draft')" = "false"
-          rm -rf release-gamesymbols
-          mkdir release-gamesymbols
-          gh release download "$tag" --repo "${{ github.repository }}" --pattern '*.yaml' --dir release-gamesymbols
+          download_dir="$RUNNER_TEMP/release-assets"
+          extract_dir="$RUNNER_TEMP/release-gamesymbols-extract"
+          rm -rf release-gamesymbols "$download_dir" "$extract_dir"
+          mkdir -p release-gamesymbols "$download_dir"
+          gh release download "$tag" --repo "${{ github.repository }}" --pattern 'gamesymbols-*.7z' --dir "$download_dir"
+          7z x -y -o"$extract_dir" "$download_dir"/gamesymbols-*.7z >/dev/null
+          test -d "$extract_dir/gamesymbols"
+          cp -a "$extract_dir/gamesymbols"/. release-gamesymbols/
       - name: Install Pages dependencies
         run: npm ci
       - name: Test Pages application

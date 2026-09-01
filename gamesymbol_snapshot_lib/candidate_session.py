@@ -10,8 +10,8 @@ from pathlib import Path
 
 from gamesymbol_snapshot_lib.paths import is_reparse_point
 
-SESSION_SCHEMA_VERSION = 2
-VALIDATION_STEPS = ("gamedata",)
+SESSION_SCHEMA_VERSION = 3
+VALIDATION_STEPS = ("gamedata", "json")
 
 
 class CandidateContractError(Exception):
@@ -60,7 +60,7 @@ def initial_manifest(info, output: Path, metadata_output: Path) -> dict:
         "file_identity": file_identity(output),
         "metadata_file_identity": file_identity(metadata_output),
         "state": "candidate_ready",
-        "completed_steps": {"analysis": True, "pack": True, "gamedata": False},
+        "completed_steps": {"analysis": True, "pack": True, "gamedata": False, "json": False},
     }
 
 
@@ -95,7 +95,7 @@ def load_manifest(session_path):
         or manifest.get("schema_version") != SESSION_SCHEMA_VERSION
     ):
         raise CandidateContractError(f"Unsupported or malformed candidate session: {session}")
-    if set(manifest["completed_steps"]) != {"analysis", "pack", "gamedata"}:
+    if set(manifest["completed_steps"]) != {"analysis", "pack", "gamedata", "json"}:
         raise CandidateContractError("Candidate session has malformed completed steps")
     return session, manifest
 

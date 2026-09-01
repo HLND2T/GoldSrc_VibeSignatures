@@ -1,40 +1,39 @@
 #!/usr/bin/env python3
-"""Build and verify immutable GitHub Release bundles from tracked analysis artifacts."""
+"""Build and verify immutable GitHub Release bundles from tracked analysis artifacts.
+
+The published payload of an immutable release is a single all-in-one
+``archives/gamesymbols-<version>.7z`` containing the browser-consumable
+game-symbol JSON (schema-4 index plus one content-addressed schema-3 dataset per
+game version). The bundle itself carries the canonical snapshot/metadata YAML so
+an independent verifier can re-derive those JSON bytes and compare them exactly.
+"""
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
 import yaml
 
-from bin_artifact_contract import (
-    BinArtifactContractError,
-    compare_repository_artifact_root,
-    validate_repository_artifact_contract,
-)
-from gamedata_contract import (
-    GamedataContractError,
-    analysis_config_sha256,
-    discover_generator_modules,
-    generator_contract_sha256,
-    validate_gamedata_tree,
-)
-from gamesymbol_snapshot_lib.errors import SnapshotError
+from bin_artifact_contract import BinArtifactContractError, validate_repository_artifact_contract
+from gamedata_contract import GamedataContractError, analysis_config_sha256
 from gamesymbol_snapshot_lib.config import load_contract
+from gamesymbol_snapshot_lib.errors import SnapshotError
 from gamesymbol_snapshot_lib.metadata import MetadataContractError, verify_metadata
 from gamesymbol_snapshot_lib.operations import check_snapshot_contract
+from gamesymbols_json import encode_dataset, encode_index
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.hashing import (
     canonical_json_bytes,
     contained_path,
     file_inventory,
-    inventory_sha256,
     normalized_relative_path,
     normalized_sha256,
     reject_reparse_points,
@@ -42,10 +41,9 @@ from release_workflow_lib.hashing import (
     sha256_file,
     write_canonical_json,
 )
-from release_workflow_lib.accepted_bin import is_analysis_yaml_path, is_recoverable_analysis_path
 from release_workflow_lib.manifests import require_gamever, require_sha, require_version
 
-BUNDLE_SCHEMA_VERSION = 1
+BUNDLE_SCHEMA_VERSION = 2
 MANIFEST_KEYS = {
     "schema_version",
     "release_version",
@@ -54,9 +52,9 @@ MANIFEST_KEYS = {
     "source_sha",
     "source_subject",
     "bin_gitlink_sha",
-    "generator_contract_sha256",
     "ida_runtime_sha256",
     "warm_idb_selection_sha256",
+    "gamesymbols_json",
     "gamevers",
     "assets",
 }
@@ -66,9 +64,9 @@ GAMEVER_RECORD_KEYS = {
     "analysis_config_sha256",
     "snapshot_sha256",
     "metadata_sha256",
-    "gamedata_manifest_sha256",
-    "gamedata_inventory_sha256",
 }
+JSON_BINDING_KEYS = {"index_sha256", "index_size", "datasets"}
+JSON_DATASET_KEYS = {"game_version", "sha256", "size"}
 ASSET_RECORD_KEYS = {"path", "size", "sha256"}
 IDA_RUNTIME_EVIDENCE_KEYS = {"kernel_version", "idalib_mcp_sha256"}
 CACHE_SELECTION_KEYS = {"schema_version", "cache_mode", "source_sha", "bin_commit", "entries"}
@@ -162,99 +160,6 @@ def _copy_file(source: Path, target: Path) -> None:
     target.write_bytes(source.read_bytes())
 
 
-def _copy_tree(source: Path, target: Path) -> None:
-    if not source.is_dir():
-        raise ReleaseBundleError(f"Required bundle input directory is missing: {source}")
-    reject_reparse_points(source)
-    if target.exists():
-        raise ReleaseBundleError(f"Bundle target already exists: {target}")
-    shutil.copytree(source, target)
-
-
-def _tracked_binary_sources(repo_root: Path, gamever: str) -> dict[str, Path]:
-    gamever = require_gamever(gamever)
-    bin_root = repo_root / "bin"
-    result = subprocess.run(
-        ["git", "-C", str(bin_root), "ls-files", "-z", "--", gamever],
-        check=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    if result.returncode != 0:
-        raise ReleaseBundleError(
-            result.stderr.decode(errors="replace").strip() or "Unable to enumerate tracked binary files"
-        )
-    records: dict[str, Path] = {}
-    for raw in result.stdout.split(b"\0"):
-        if not raw:
-            continue
-        try:
-            relative = normalized_relative_path(raw.decode("utf-8"))
-        except (UnicodeDecodeError, ReleaseWorkflowError) as exc:
-            raise ReleaseBundleError(f"Tracked binary path is unsafe: {raw!r}") from exc
-        parts = PurePosixPath(relative).parts
-        if not parts or parts[0] != gamever:
-            raise ReleaseBundleError(f"Tracked binary path escaped its game version: {relative}")
-        source = contained_path(bin_root, *parts)
-        if not source.is_file():
-            raise ReleaseBundleError(f"Tracked binary input is missing: {source}")
-        relative_path = Path(*parts)
-        if is_analysis_yaml_path(relative_path) or is_recoverable_analysis_path(relative_path):
-            raise ReleaseBundleError(f"Tracked binary tree contains analysis state: {relative}")
-        archive_path = normalized_relative_path(f"bin/{relative}")
-        prior = records.setdefault(archive_path.casefold(), source)
-        if prior != source:
-            raise ReleaseBundleError(f"Tracked binary paths case-collide: {archive_path}")
-    if not records:
-        raise ReleaseBundleError(f"No tracked binary files were found for {gamever}")
-    return {
-        normalized_relative_path(f"bin/{path.relative_to(bin_root).as_posix()}"): path
-        for path in sorted(records.values())
-    }
-
-
-def stage_tracked_binary_tree(*, repo_root: str | Path, gamever: str, destination: str | Path) -> None:
-    repo_root = Path(repo_root).resolve()
-    destination = Path(destination).resolve()
-    if destination.exists():
-        raise ReleaseBundleError(f"Tracked binary staging destination already exists: {destination}")
-    destination.mkdir(parents=True)
-    for archive_path, source in _tracked_binary_sources(repo_root, gamever).items():
-        relative = PurePosixPath(archive_path).relative_to(PurePosixPath("bin", gamever))
-        target = contained_path(destination, *relative.parts)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source, target)
-
-
-def stage_validated_artifact_tree(
-    *,
-    repo_root: str | Path,
-    artifact_root: str | Path,
-    destination: str | Path,
-) -> None:
-    repo_root = Path(repo_root).resolve()
-    artifact_root = Path(artifact_root).resolve()
-    destination = Path(destination).resolve()
-    if destination.exists():
-        raise ReleaseBundleError(f"Artifact staging destination already exists: {destination}")
-    try:
-        repository = compare_repository_artifact_root(repo_root, artifact_root)
-    except BinArtifactContractError as exc:
-        raise ReleaseBundleError(str(exc)) from exc
-    destination.mkdir(parents=True)
-    for inventory in repository.gamevers:
-        gamever_destination = contained_path(destination, inventory.game_version)
-        gamever_destination.mkdir()
-        for entry in inventory.entries:
-            parts = PurePosixPath(entry.path).parts
-            source = contained_path(artifact_root, inventory.game_version, *parts)
-            target = contained_path(gamever_destination, *parts)
-            _copy_file(source, target)
-        expected = [{"path": entry.path, "size": entry.size, "sha256": entry.sha256} for entry in inventory.entries]
-        if file_inventory(gamever_destination) != expected:
-            raise ReleaseBundleError(f"Staged artifact inventory differs for {inventory.game_version}")
-
-
 def _add_archive_source(sources: dict[str, Path], relative: str, source: Path) -> None:
     relative = normalized_relative_path(relative)
     if not source.is_file():
@@ -264,41 +169,14 @@ def _add_archive_source(sources: dict[str, Path], relative: str, source: Path) -
     sources[relative] = source
 
 
-def _expected_archive_sources(
-    *,
-    repo_root: Path,
-    bundle_root: Path,
-    gamever: str,
-    artifact_entries,
-    archive_kind: str,
-) -> dict[str, Path]:
+def _json_archive_sources(json_dir: Path) -> dict[str, Path]:
     sources: dict[str, Path] = {}
-    for path, source in _tracked_binary_sources(repo_root, gamever).items():
-        _add_archive_source(sources, path, source)
-    if archive_kind == "gamebin":
-        return dict(sorted(sources.items()))
-    if archive_kind != "gamedata":
-        raise ReleaseBundleError(f"Unknown archive kind: {archive_kind}")
-    _add_archive_source(sources, f"configs/{gamever}.yaml", repo_root / "configs" / f"{gamever}.yaml")
-    for entry in artifact_entries:
-        _add_archive_source(
-            sources,
-            f"bin_artifacts/{gamever}/{entry.path}",
-            repo_root / "bin_artifacts" / gamever / Path(*PurePosixPath(entry.path).parts),
-        )
-    for suffix in (".yaml", ".metadata.yaml"):
-        _add_archive_source(
-            sources,
-            f"gamesymbols/{gamever}{suffix}",
-            bundle_root / "gamesymbols" / f"{gamever}{suffix}",
-        )
-    gamedata_root = bundle_root / "gamedata" / gamever
-    for record in file_inventory(gamedata_root):
-        _add_archive_source(
-            sources,
-            f"gamedata/{gamever}/{record['path']}",
-            gamedata_root / Path(*PurePosixPath(record["path"]).parts),
-        )
+    for path in sorted(json_dir.iterdir(), key=lambda item: item.name):
+        if not path.is_file():
+            raise ReleaseBundleError(f"JSON dataset staging is not a plain file: {path}")
+        _add_archive_source(sources, f"gamesymbols/{path.name}", path)
+    if not sources:
+        raise ReleaseBundleError("No JSON datasets were staged for the gamesymbols archive")
     return dict(sorted(sources.items()))
 
 
@@ -461,26 +339,11 @@ def _parse_manifest(path: Path) -> dict:
         document = json.loads(raw)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ReleaseBundleError(f"Unable to parse release manifest {path}: {exc}") from exc
-    if not isinstance(document, dict) or set(document) != MANIFEST_KEYS or document.get("schema_version") != 1:
+    if not isinstance(document, dict) or set(document) != MANIFEST_KEYS or document.get("schema_version") != 2:
         raise ReleaseBundleError("Release manifest has unexpected fields or schema")
     if canonical_json_bytes(document) != raw:
         raise ReleaseBundleError("Release manifest is not canonical JSON")
     return document
-
-
-def _expected_payload_paths(gamevers: tuple[str, ...]) -> tuple[str, ...]:
-    return tuple(
-        sorted(
-            path
-            for gamever in gamevers
-            for path in (
-                f"archives/gamedata-{gamever}.7z",
-                f"archives/gamebin-{gamever}.7z",
-                f"gamesymbols/{gamever}.yaml",
-                f"gamesymbols/{gamever}.metadata.yaml",
-            )
-        )
-    )
 
 
 def _validate_manifest_identity(
@@ -501,11 +364,7 @@ def _validate_manifest_identity(
         raise ReleaseBundleError("Release manifest workflow identity mismatch")
     if manifest["source_subject"] != _git(repo_root, "show", "-s", "--format=%s", "HEAD"):
         raise ReleaseBundleError("Release manifest source subject mismatch")
-    for key in (
-        "generator_contract_sha256",
-        "ida_runtime_sha256",
-        "warm_idb_selection_sha256",
-    ):
+    for key in ("ida_runtime_sha256", "warm_idb_selection_sha256"):
         try:
             normalized_sha256(manifest[key], f"release manifest {key}")
         except ReleaseWorkflowError as exc:
@@ -517,6 +376,43 @@ def _validate_manifest_identity(
         or any(not isinstance(record, dict) or set(record) != GAMEVER_RECORD_KEYS for record in records)
     ):
         raise ReleaseBundleError("Release manifest gamever inventory must be unique, canonical, and complete")
+    for record in records:
+        try:
+            normalized_sha256(record["snapshot_sha256"], f"release manifest {record['game_version']} snapshot")
+            normalized_sha256(record["metadata_sha256"], f"release manifest {record['game_version']} metadata")
+            normalized_sha256(
+                record["artifact_inventory_sha256"], f"release manifest {record['game_version']} artifact inventory"
+            )
+            normalized_sha256(record["analysis_config_sha256"], f"release manifest {record['game_version']} config")
+        except ReleaseWorkflowError as exc:
+            raise ReleaseBundleError(str(exc)) from exc
+    binding = manifest["gamesymbols_json"]
+    if not isinstance(binding, dict) or set(binding) != JSON_BINDING_KEYS:
+        raise ReleaseBundleError("Release manifest JSON binding has an invalid schema")
+    try:
+        normalized_sha256(binding["index_sha256"], "release manifest JSON index")
+    except ReleaseWorkflowError as exc:
+        raise ReleaseBundleError(str(exc)) from exc
+    if not isinstance(binding["index_size"], int) or binding["index_size"] <= 0:
+        raise ReleaseBundleError("Release manifest JSON index size is invalid")
+    datasets = binding["datasets"]
+    if (
+        not isinstance(datasets, list)
+        or [record.get("game_version") if isinstance(record, dict) else None for record in datasets] != list(gamevers)
+        or any(
+            not isinstance(record, dict)
+            or set(record) != JSON_DATASET_KEYS
+            or not isinstance(record["size"], int)
+            or record["size"] <= 0
+            for record in datasets
+        )
+    ):
+        raise ReleaseBundleError("Release manifest JSON dataset inventory is invalid")
+    for record in datasets:
+        try:
+            normalized_sha256(record["sha256"], f"release manifest JSON dataset {record['game_version']}")
+        except ReleaseWorkflowError as exc:
+            raise ReleaseBundleError(str(exc)) from exc
     assets = manifest["assets"]
     if not isinstance(assets, list) or any(
         not isinstance(record, dict)
@@ -617,13 +513,65 @@ def _validate_evidence(
         raise ReleaseBundleError("Warm IDB selection evidence digest mismatch")
 
 
+def _source_time(repo_root: Path) -> float:
+    value = _git(repo_root, "show", "-s", "--format=%cI", "HEAD")
+    return datetime.fromisoformat(value).astimezone(timezone.utc).timestamp()
+
+
+def _pack_gamesymbols_archive(bundle_root: Path, version: str, json_dir: Path, source_time: float) -> None:
+    target = bundle_root / "archives" / f"gamesymbols-{version}.7z"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="release-gamesymbols-archive-") as temporary:
+        stage_root = Path(temporary)
+        stage = stage_root / "gamesymbols"
+        stage.mkdir()
+        for path in sorted(json_dir.iterdir(), key=lambda item: item.name):
+            if not path.is_file():
+                raise ReleaseBundleError(f"JSON dataset staging is not a plain file: {path}")
+            shutil.copy2(path, stage / path.name)
+        for path in stage.rglob("*"):
+            if path.is_file():
+                os.utime(path, (source_time, source_time))
+        result = subprocess.run(
+            ["7z", "a", "-t7z", "-mx=9", "-mmt=off", "-mtc=off", "-mta=off", str(target), "."],
+            cwd=stage_root,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise ReleaseBundleError(result.stderr.strip() or f"Unable to pack gamesymbols archive: {target}")
+
+
+def _derive_dataset(bundle_root: Path, gamever: str) -> tuple[dict, bytes, str]:
+    snapshot = bundle_root / "gamesymbols" / f"{gamever}.yaml"
+    metadata = bundle_root / "gamesymbols" / f"{gamever}.metadata.yaml"
+    dataset = encode_dataset(snapshot.read_bytes(), metadata.read_bytes(), gamever)
+    raw = canonical_json_bytes(dataset)
+    return dataset, raw, sha256_bytes(raw)
+
+
+def _stage_json_dataset(json_dir: Path, gamever: str, provided_root: Path, raw: bytes) -> str:
+    digest = sha256_bytes(raw)
+    name = f"{gamever}.{digest}.json"
+    provided = provided_root / name
+    if not provided.is_file():
+        raise ReleaseBundleError(f"Derived JSON dataset is absent from staging for {gamever}: {name}")
+    if provided.read_bytes() != raw:
+        raise ReleaseBundleError(f"Staged JSON dataset differs from derivation for {gamever}")
+    target = json_dir / name
+    if target.exists():
+        raise ReleaseBundleError(f"Bundle JSON dataset already exists: {target}")
+    target.write_bytes(raw)
+    return name
+
+
 def build_release_bundle(
     *,
     repo_root: str | Path,
     bundle_root: str | Path,
     gamesymbols_root: str | Path,
-    gamedata_root: str | Path,
-    archives_root: str | Path,
+    gamesymbols_json_root: str | Path,
     ida_runtime_path: str | Path,
     cache_selection_path: str | Path,
     version: str,
@@ -645,9 +593,7 @@ def build_release_bundle(
 
     try:
         repository_artifacts = validate_repository_artifact_contract(repo_root)
-        modules = discover_generator_modules(repo_root / "gamedata-generators")
-        generator_digest = generator_contract_sha256(modules)
-    except (BinArtifactContractError, GamedataContractError, ReleaseWorkflowError) as exc:
+    except (BinArtifactContractError, ReleaseWorkflowError) as exc:
         raise ReleaseBundleError(str(exc)) from exc
 
     ida_runtime = Path(ida_runtime_path)
@@ -657,23 +603,19 @@ def build_release_bundle(
 
     artifacts_by_tag = {item.game_version: item for item in repository_artifacts.gamevers}
     gamesymbols_root = Path(gamesymbols_root)
-    gamedata_root = Path(gamedata_root)
-    archives_root = Path(archives_root)
-    payload_paths: list[str] = []
+    gamesymbols_json_root = Path(gamesymbols_json_root)
+    gamevers = _configured_gamevers(repo_root)
+    json_dir = bundle_root / "gamesymbols-json"
+    json_dir.mkdir()
     gamever_records: list[dict] = []
-    for gamever in _configured_gamevers(repo_root):
+    datasets: list[dict] = []
+    for gamever in gamevers:
         snapshot_source = gamesymbols_root / f"{gamever}.yaml"
         metadata_source = gamesymbols_root / f"{gamever}.metadata.yaml"
         snapshot_target = bundle_root / "gamesymbols" / snapshot_source.name
         metadata_target = bundle_root / "gamesymbols" / metadata_source.name
         _copy_file(snapshot_source, snapshot_target)
         _copy_file(metadata_source, metadata_target)
-        _copy_tree(gamedata_root / gamever, bundle_root / "gamedata" / gamever)
-        for archive_name in (f"gamedata-{gamever}.7z", f"gamebin-{gamever}.7z"):
-            _copy_file(archives_root / archive_name, bundle_root / "archives" / archive_name)
-            payload_paths.append(f"archives/{archive_name}")
-        payload_paths.extend((f"gamesymbols/{snapshot_source.name}", f"gamesymbols/{metadata_source.name}"))
-
         config = repo_root / "configs" / f"{gamever}.yaml"
         try:
             check_snapshot_contract(
@@ -689,16 +631,11 @@ def build_release_bundle(
                 config_path=config,
                 game_version=gamever,
             )
-            gamedata_inventory, gamedata_manifest_digest = validate_gamedata_tree(
-                bundle_root / "gamedata" / gamever,
-                gamever,
-                modules,
-                candidate_sha256=sha256_file(snapshot_target),
-                analysis_config_sha256=analysis_config_sha256(config),
-                generator_contract_digest=generator_digest,
-            )
-        except (SnapshotError, MetadataContractError, GamedataContractError, OSError) as exc:
+        except (SnapshotError, MetadataContractError, OSError) as exc:
             raise ReleaseBundleError(f"Release payload contract failed for {gamever}: {exc}") from exc
+        dataset, raw, digest = _derive_dataset(bundle_root, gamever)
+        _stage_json_dataset(json_dir, gamever, gamesymbols_json_root, raw)
+        datasets.append(dataset)
         artifact_inventory = artifacts_by_tag[gamever]
         gamever_records.append(
             {
@@ -707,15 +644,18 @@ def build_release_bundle(
                 "analysis_config_sha256": analysis_config_sha256(config),
                 "snapshot_sha256": sha256_file(snapshot_target),
                 "metadata_sha256": sha256_file(metadata_target),
-                "gamedata_manifest_sha256": gamedata_manifest_digest,
-                "gamedata_inventory_sha256": inventory_sha256(gamedata_inventory),
             }
         )
 
-    expected_payload_paths = _expected_payload_paths(_configured_gamevers(repo_root))
-    if tuple(sorted(payload_paths)) != expected_payload_paths:
-        raise ReleaseBundleError("Release builder payload inventory is incomplete")
-    assets = [_asset_record(bundle_root, relative) for relative in expected_payload_paths]
+    index = encode_index(datasets)
+    index_path = json_dir / "index.json"
+    write_canonical_json(index_path, index)
+    if index_path.read_bytes() != canonical_json_bytes(index):
+        raise ReleaseBundleError("JSON index was not written canonically")
+    index_record = _asset_record(bundle_root, "gamesymbols-json/index.json")
+
+    _pack_gamesymbols_archive(bundle_root, version, json_dir, _source_time(repo_root))
+    payload = _asset_record(bundle_root, f"archives/gamesymbols-{version}.7z")
     manifest = {
         "schema_version": BUNDLE_SCHEMA_VERSION,
         "release_version": version,
@@ -724,16 +664,27 @@ def build_release_bundle(
         "source_sha": source_sha,
         "source_subject": _git(repo_root, "show", "-s", "--format=%s", "HEAD"),
         "bin_gitlink_sha": _gitlink(repo_root),
-        "generator_contract_sha256": generator_digest,
         "ida_runtime_sha256": sha256_file(bundle_root / "evidence/ida-runtime.json"),
         "warm_idb_selection_sha256": sha256_file(bundle_root / "evidence/cache-selection.json"),
+        "gamesymbols_json": {
+            "index_sha256": index_record["sha256"],
+            "index_size": index_record["size"],
+            "datasets": [
+                {
+                    "game_version": dataset["source"]["gameVersion"],
+                    "sha256": sha256_bytes(canonical_json_bytes(dataset)),
+                    "size": len(canonical_json_bytes(dataset)),
+                }
+                for dataset in datasets
+            ],
+        },
         "gamevers": gamever_records,
-        "assets": assets,
+        "assets": [payload],
     }
     manifest_relative = f"release-manifest-{version}.json"
     manifest_path = bundle_root / manifest_relative
     write_canonical_json(manifest_path, manifest)
-    checksummed = [*assets, _asset_record(bundle_root, manifest_relative)]
+    checksummed = [*manifest["assets"], _asset_record(bundle_root, manifest_relative)]
     (bundle_root / f"SHA256SUMS-{version}.txt").write_bytes(_checksum_bytes(checksummed))
     return manifest
 
@@ -774,13 +725,9 @@ def verify_release_bundle(
 
     try:
         repository_artifacts = validate_repository_artifact_contract(repo_root)
-        modules = discover_generator_modules(repo_root / "gamedata-generators")
-        generator_digest = generator_contract_sha256(modules)
         reject_reparse_points(bundle_root)
-    except (BinArtifactContractError, GamedataContractError, ReleaseWorkflowError) as exc:
+    except (BinArtifactContractError, ReleaseWorkflowError) as exc:
         raise ReleaseBundleError(str(exc)) from exc
-    if generator_digest != manifest["generator_contract_sha256"]:
-        raise ReleaseBundleError("Generator contract digest mismatch")
     _validate_evidence(
         bundle_root=bundle_root,
         manifest=manifest,
@@ -796,28 +743,13 @@ def verify_release_bundle(
         f"SHA256SUMS-{version}.txt",
         "evidence/ida-runtime.json",
         "evidence/cache-selection.json",
+        "gamesymbols-json/index.json",
+        f"archives/gamesymbols-{version}.7z",
     }
-    for gamever in gamevers:
-        expected_paths.update(
-            {
-                f"gamesymbols/{gamever}.yaml",
-                f"gamesymbols/{gamever}.metadata.yaml",
-                f"archives/gamedata-{gamever}.7z",
-                f"archives/gamebin-{gamever}.7z",
-            }
-        )
-        expected_paths.update(
-            f"gamedata/{gamever}/{item['path']}" for item in file_inventory(bundle_root / "gamedata" / gamever)
-        )
-    actual_paths = {item["path"] for item in file_inventory(bundle_root)}
-    if actual_paths != expected_paths:
-        raise ReleaseBundleError(
-            f"Release bundle allowlist mismatch: missing={sorted(expected_paths - actual_paths)!r}; "
-            f"extra={sorted(actual_paths - expected_paths)!r}"
-        )
-
     artifact_by_tag = {item.game_version: item for item in repository_artifacts.gamevers}
     manifest_by_tag = {item["game_version"]: item for item in manifest["gamevers"]}
+    json_dir = bundle_root / "gamesymbols-json"
+    datasets: list[dict] = []
     for gamever in gamevers:
         config = repo_root / "configs" / f"{gamever}.yaml"
         snapshot = bundle_root / "gamesymbols" / f"{gamever}.yaml"
@@ -837,50 +769,59 @@ def verify_release_bundle(
                 config_path=config,
                 game_version=gamever,
             )
-            gamedata_inventory, gamedata_manifest_digest = validate_gamedata_tree(
-                bundle_root / "gamedata" / gamever,
-                gamever,
-                modules,
-                candidate_sha256=sha256_file(snapshot),
-                analysis_config_sha256=analysis_config_sha256(config),
-                generator_contract_digest=generator_digest,
-            )
-        except (SnapshotError, MetadataContractError, GamedataContractError, OSError) as exc:
+        except (SnapshotError, MetadataContractError, OSError) as exc:
             raise ReleaseBundleError(f"Release bundle contract failed for {gamever}: {exc}") from exc
+        dataset, raw, digest = _derive_dataset(bundle_root, gamever)
+        dataset_name = f"{gamever}.{digest}.json"
+        dataset_path = json_dir / dataset_name
+        if not dataset_path.is_file():
+            raise ReleaseBundleError(f"Derived JSON dataset is absent from the bundle for {gamever}: {dataset_name}")
+        if dataset_path.read_bytes() != raw:
+            raise ReleaseBundleError(f"Bundle JSON dataset differs from derivation for {gamever}")
+        expected_paths.update({f"gamesymbols/{gamever}.yaml", f"gamesymbols/{gamever}.metadata.yaml"})
+        expected_paths.add(f"gamesymbols-json/{dataset_name}")
+        datasets.append(dataset)
         expected_record = {
             "game_version": gamever,
             "artifact_inventory_sha256": artifact_by_tag[gamever].digest.removeprefix("sha256:"),
             "analysis_config_sha256": analysis_config_sha256(config),
             "snapshot_sha256": sha256_file(snapshot),
             "metadata_sha256": sha256_file(metadata),
-            "gamedata_manifest_sha256": gamedata_manifest_digest,
-            "gamedata_inventory_sha256": inventory_sha256(gamedata_inventory),
         }
         if record != expected_record:
             raise ReleaseBundleError(f"Release manifest provenance mismatch for {gamever}")
-        _verify_archive(
-            bundle_root / "archives" / f"gamebin-{gamever}.7z",
-            _expected_archive_sources(
-                repo_root=repo_root,
-                bundle_root=bundle_root,
-                gamever=gamever,
-                artifact_entries=artifact_by_tag[gamever].entries,
-                archive_kind="gamebin",
-            ),
-        )
-        _verify_archive(
-            bundle_root / "archives" / f"gamedata-{gamever}.7z",
-            _expected_archive_sources(
-                repo_root=repo_root,
-                bundle_root=bundle_root,
-                gamever=gamever,
-                artifact_entries=artifact_by_tag[gamever].entries,
-                archive_kind="gamedata",
-            ),
-            required_directories={f"bin_artifacts/{gamever}"},
+
+    index_bytes = canonical_json_bytes(encode_index(datasets))
+    index_path = json_dir / "index.json"
+    if index_path.read_bytes() != index_bytes:
+        raise ReleaseBundleError("Bundle JSON index differs from independent derivation")
+    _verify_archive(
+        bundle_root / "archives" / f"gamesymbols-{version}.7z",
+        _json_archive_sources(json_dir),
+        required_directories={"gamesymbols"},
+    )
+    actual_paths = {item["path"] for item in file_inventory(bundle_root)}
+    if actual_paths != expected_paths:
+        raise ReleaseBundleError(
+            f"Release bundle allowlist mismatch: missing={sorted(expected_paths - actual_paths)!r}; "
+            f"extra={sorted(actual_paths - expected_paths)!r}"
         )
 
-    expected_assets = [_asset_record(bundle_root, path) for path in _expected_payload_paths(gamevers)]
+    expected_json_binding = {
+        "index_sha256": sha256_bytes(index_bytes),
+        "index_size": len(index_bytes),
+        "datasets": [
+            {
+                "game_version": dataset["source"]["gameVersion"],
+                "sha256": sha256_bytes(canonical_json_bytes(dataset)),
+                "size": len(canonical_json_bytes(dataset)),
+            }
+            for dataset in datasets
+        ],
+    }
+    if manifest["gamesymbols_json"] != expected_json_binding:
+        raise ReleaseBundleError("Release manifest JSON binding mismatch")
+    expected_assets = [_asset_record(bundle_root, f"archives/gamesymbols-{version}.7z")]
     if manifest["assets"] != expected_assets:
         raise ReleaseBundleError("Release payload asset inventory or digest mismatch")
     manifest_record = _asset_record(bundle_root, manifest_relative)
@@ -897,22 +838,13 @@ def main(argv: list[str] | None = None) -> int:
     build.add_argument("--repo-root", default=".")
     build.add_argument("--bundle-root", required=True)
     build.add_argument("--gamesymbols-root", required=True)
-    build.add_argument("--gamedata-root", required=True)
-    build.add_argument("--archives-root", required=True)
+    build.add_argument("--gamesymbols-json-root", required=True)
     build.add_argument("--ida-runtime", required=True)
     build.add_argument("--cache-selection", required=True)
     build.add_argument("--version", required=True)
     build.add_argument("--build-id", required=True)
     build.add_argument("--workflow-run-url", required=True)
     build.add_argument("--source-sha", required=True)
-    stage_binary = commands.add_parser("stage-binary")
-    stage_binary.add_argument("--repo-root", default=".")
-    stage_binary.add_argument("--gamever", required=True)
-    stage_binary.add_argument("--destination", required=True)
-    stage_artifacts = commands.add_parser("stage-artifacts")
-    stage_artifacts.add_argument("--repo-root", default=".")
-    stage_artifacts.add_argument("--artifact-root", required=True)
-    stage_artifacts.add_argument("--destination", required=True)
     verify = commands.add_parser("verify")
     verify.add_argument("--repo-root", default=".")
     verify.add_argument("--bundle-root", required=True)
@@ -928,26 +860,13 @@ def main(argv: list[str] | None = None) -> int:
                 repo_root=args.repo_root,
                 bundle_root=args.bundle_root,
                 gamesymbols_root=args.gamesymbols_root,
-                gamedata_root=args.gamedata_root,
-                archives_root=args.archives_root,
+                gamesymbols_json_root=args.gamesymbols_json_root,
                 ida_runtime_path=args.ida_runtime,
                 cache_selection_path=args.cache_selection,
                 version=args.version,
                 build_id=args.build_id,
                 workflow_run_url=args.workflow_run_url,
                 source_sha=args.source_sha,
-            )
-        elif args.command == "stage-binary":
-            stage_tracked_binary_tree(
-                repo_root=args.repo_root,
-                gamever=args.gamever,
-                destination=args.destination,
-            )
-        elif args.command == "stage-artifacts":
-            stage_validated_artifact_tree(
-                repo_root=args.repo_root,
-                artifact_root=args.artifact_root,
-                destination=args.destination,
             )
         else:
             verify_release_bundle(
@@ -959,7 +878,7 @@ def main(argv: list[str] | None = None) -> int:
                 workflow_run_url=args.workflow_run_url,
                 cache_selection_sha256=args.cache_selection_sha256,
             )
-    except (ReleaseBundleError, ReleaseWorkflowError, OSError, ValueError) as exc:
+    except (ReleaseBundleError, ReleaseWorkflowError, GamedataContractError, OSError, ValueError) as exc:
         print(f"Error: {exc}")
         return 1
     return 0

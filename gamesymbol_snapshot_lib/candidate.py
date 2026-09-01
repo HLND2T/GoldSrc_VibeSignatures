@@ -304,8 +304,10 @@ def _publish_pair(
 def publish_candidate(*, candidate_path, session_path, destination):
     info = guard_candidate(candidate_path=candidate_path, session_path=session_path)
     session, manifest = load_manifest(session_path)
-    if manifest["state"] != "validated" or not manifest["completed_steps"]["gamedata"]:
-        raise CandidateContractError("Candidate requires guarded gamedata before publication")
+    if manifest["state"] != "validated" or not (
+        manifest["completed_steps"].get("gamedata") or manifest["completed_steps"].get("json")
+    ):
+        raise CandidateContractError("Candidate requires a guarded validation step before publication")
     target = absolute_path(destination)
     if target.parent.name != "gamesymbols" or target.name != f"{info.game_version}.yaml":
         raise CandidateContractError(

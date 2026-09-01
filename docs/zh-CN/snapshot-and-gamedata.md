@@ -30,22 +30,29 @@ inventory 为空，gamedata 也有排除自身的 canonical manifest。本地 `p
 ## Release bundle
 
 `release-build.yml` 在 checkout 外的 fresh root 强制重建全部 configured artifact，并与 Git `bin_artifacts` 做 exact
-byte comparison。随后派生 snapshot、metadata、gamedata 和 archive，并构造封闭 bundle：
+byte comparison。随后每个 gamever 派生 snapshot、metadata，用 `gamesymbols_json.py` 从它们确定性派生浏览器 JSON
+dataset（schema 3，`<tag>.<sha256>.json`），`mark -step json` 后发布 snapshot/metadata，最后在 `release_bundle.py`
+中组装 index（schema 4）、打包唯一 all-in-one 7z，并构造封闭 bundle：
 
-- `gamesymbols/<tag>.yaml` 与 `<tag>.metadata.yaml`；
-- `gamedata/<tag>/**`；
-- `archives/gamedata-<tag>.7z`，包含 config、`bin_artifacts`、snapshot、gamedata 与兼容二进制；
-- binary-only `archives/gamebin-<tag>.7z`；
+- `gamesymbols/<tag>.yaml` 与 `<tag>.metadata.yaml`（canonical snapshot/metadata，用于再派生校验）；
+- `gamesymbols-json/<tag>.<sha256>.json` 与 `gamesymbols-json/index.json`；
+- `archives/gamesymbols-<version>.7z` —— **唯一发布载荷**，内含 `gamesymbols/index.json` 与全部 dataset；
+- `evidence/ida-runtime.json`、`evidence/cache-selection.json`；
 - `release-manifest-<version>.json` 与 `SHA256SUMS-<version>.txt`。
 
-GitHub-hosted verifier 会检查 exact source SHA/bin gitlink、repository artifact inventory、
-snapshot/metadata/gamedata contract、bundle allowlist、canonical manifest 与全部 checksum。只有这份 exact verified
-bundle 能进入受保护 publisher。GitHub Release assets 是公开发布层；Actions Artifact 只负责传输。
+GitHub Release 只发布 3 个资产：`gamesymbols-<version>.7z`、`release-manifest-<version>.json`、
+`SHA256SUMS-<version>.txt`。GitHub-hosted verifier 会检查 exact source SHA/bin gitlink、repository artifact
+inventory、snapshot/metadata contract、**独立再派生 JSON 并与 bundle 内 `gamesymbols-json/` 逐字节对比**、7z 内容、
+bundle allowlist、canonical manifest 与全部 checksum。只有这份 exact verified bundle 能进入受保护 publisher。
+GitHub Release assets 是公开发布层；Actions Artifact 只负责传输。
+
+gamedata 生成不再属于 release 流水线；snapshot candidate 的 gamedata 一致性 gate 由
+`gamesymbol-pr-validation.yml`（`mark -step gamedata`）与 `update_gamedata.py` 承担。
 
 ## Restore 与验证
 
-Snapshot restore 只是显式 compatibility/migration 操作。必须提供从 published Release 下载的 snapshot；verify 只读、
-restore 只写显式 artifact root：
+Snapshot restore 只是显式 compatibility/migration 操作。Release 不再发布 snapshot YAML，必须提供本地 candidate
+build 生成的 snapshot（`gamesymbol_candidate.py build` 输出）；verify 只读、restore 只写显式 artifact root：
 
 ```bash
 uv run python gamesymbol_snapshot.py verify -gamever cstrike-10210 -snapshot <release-asset.yaml> \

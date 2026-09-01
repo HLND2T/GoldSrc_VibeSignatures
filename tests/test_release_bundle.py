@@ -1,26 +1,18 @@
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
-import yaml
-
-from gamedata_contract import (
-    analysis_config_sha256,
-    build_gamedata_manifest,
-    generator_contract_sha256,
-    write_gamedata_manifest,
-)
 from gamesymbol_snapshot_lib.metadata import write_metadata
 from gamesymbol_snapshot_lib.operations import pack_snapshot
+from gamesymbols_json import encode_dataset
 from ida_analyze_util import canonical_symbol_yaml_bytes
 import release_bundle
 from release_bundle import ReleaseBundleError, build_release_bundle, verify_release_bundle
-from release_workflow_lib.hashing import canonical_json_bytes, sha256_file
+from release_workflow_lib.hashing import canonical_json_bytes, sha256_bytes, sha256_file
 from tests.test_support import write_config, write_pe32
 
 
@@ -110,30 +102,11 @@ class ReleaseBundleTests(unittest.TestCase):
             game_version="game-1",
             output_path=gamesymbols / "game-1.metadata.yaml",
         )
-        gamedata = generated / "gamedata" / "game-1"
-        gamedata.mkdir(parents=True)
-        generator_digest = generator_contract_sha256([])
-        manifest = build_gamedata_manifest(
-            gamever="game-1",
-            candidate_sha256=__import__("hashlib").sha256(snapshot.read_bytes()).hexdigest(),
-            analysis_config_sha256=analysis_config_sha256(config),
-            generator_contract_digest=generator_digest,
-            payload_files=[],
-        )
-        write_gamedata_manifest(gamedata, manifest)
-        archives = generated / "archives"
-        archives.mkdir()
-        gamedata_stage = generated / "gamedata-stage"
-        gamebin_stage = generated / "gamebin-stage"
-        shutil.copytree(repo / "bin" / "game-1", gamedata_stage / "bin" / "game-1")
-        shutil.copytree(repo / "bin" / "game-1", gamebin_stage / "bin" / "game-1")
-        (gamedata_stage / "configs").mkdir()
-        shutil.copy2(config, gamedata_stage / "configs" / "game-1.yaml")
-        shutil.copytree(repo / "bin_artifacts" / "game-1", gamedata_stage / "bin_artifacts" / "game-1")
-        shutil.copytree(gamesymbols, gamedata_stage / "gamesymbols")
-        shutil.copytree(gamedata, gamedata_stage / "gamedata" / "game-1")
-        self._archive(gamedata_stage, archives / "gamedata-game-1.7z")
-        self._archive(gamebin_stage, archives / "gamebin-game-1.7z")
+        gamesymbols_json = generated / "gamesymbols-json"
+        gamesymbols_json.mkdir()
+        dataset = encode_dataset(snapshot.read_bytes(), (gamesymbols / "game-1.metadata.yaml").read_bytes(), "game-1")
+        raw = canonical_json_bytes(dataset)
+        (gamesymbols_json / f"game-1.{sha256_bytes(raw)}.json").write_bytes(raw)
         evidence = generated / "evidence"
         evidence.mkdir()
         (evidence / "ida-runtime.json").write_bytes(
@@ -169,49 +142,19 @@ class ReleaseBundleTests(unittest.TestCase):
         )
         return repo, generated, source_sha
 
-    def test_stages_validated_artifacts_with_canonical_empty_gamever_directories(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            repo, _, _ = self.fixture(root)
-            write_config(
-                repo / "configs/game-1.yaml",
-                skill={"name": "find", "expected_output": ["Demo.windows.yaml", "build_number.windows.yaml"]},
-                symbols=[
-                    {"name": "Demo", "category": "func", "platform": "windows"},
-                    {"name": "build_number", "category": "func", "platform": "windows"},
-                ],
-                both_platforms=False,
-            )
-            lowercase_artifact = repo / "bin_artifacts/game-1/engine/build_number.windows.yaml"
-            lowercase_artifact.write_bytes(
-                canonical_symbol_yaml_bytes({"func_name": "build_number", "func_va": "0x20"})
-            )
-            (repo / "configs/config.yaml").write_text(
-                "gamevers:\n  - game-1\n  - empty-1\n",
-                encoding="utf-8",
-            )
-            write_config(
-                repo / "configs/empty-1.yaml",
-                symbols=[],
-                both_platforms=False,
-            )
-            subprocess.run(["git", "-C", str(repo), "add", "configs", "bin_artifacts"], check=True)
-            subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "empty gamever"], check=True)
-
-            rebuilt = root / "rebuilt"
-            shutil.copytree(repo / "bin_artifacts/game-1", rebuilt / "game-1")
-            staged = root / "staged"
-            release_bundle.stage_validated_artifact_tree(
-                repo_root=repo,
-                artifact_root=rebuilt,
-                destination=staged,
-            )
-
-            expected = repo / "bin_artifacts/game-1/engine/Demo.windows.yaml"
-            actual = staged / "game-1/engine/Demo.windows.yaml"
-            self.assertEqual(expected.read_bytes(), actual.read_bytes())
-            self.assertTrue((staged / "empty-1").is_dir())
-            self.assertEqual([], list((staged / "empty-1").iterdir()))
+    def _build(self, repo: Path, generated: Path, bundle: Path, source_sha: str) -> dict:
+        return build_release_bundle(
+            repo_root=repo,
+            bundle_root=bundle,
+            gamesymbols_root=generated / "gamesymbols",
+            gamesymbols_json_root=generated / "gamesymbols-json",
+            ida_runtime_path=generated / "evidence/ida-runtime.json",
+            cache_selection_path=generated / "evidence/cache-selection.json",
+            version="v20260831a",
+            build_id="run-1-1",
+            workflow_run_url="https://example.invalid/run/1",
+            source_sha=source_sha,
+        )
 
     def test_archive_verifier_accepts_required_empty_artifact_directory(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -232,26 +175,15 @@ class ReleaseBundleTests(unittest.TestCase):
             root = Path(temporary)
             repo, generated, source_sha = self.fixture(root)
             bundle = root / "bundle"
-            manifest = build_release_bundle(
-                repo_root=repo,
-                bundle_root=bundle,
-                gamesymbols_root=generated / "gamesymbols",
-                gamedata_root=generated / "gamedata",
-                archives_root=generated / "archives",
-                ida_runtime_path=generated / "evidence/ida-runtime.json",
-                cache_selection_path=generated / "evidence/cache-selection.json",
-                version="v20260831a",
-                build_id="run-1-1",
-                workflow_run_url="https://example.invalid/run/1",
-                source_sha=source_sha,
-            )
-            self.assertNotIn("manifest_sha256", manifest)
+            manifest = self._build(repo, generated, bundle, source_sha)
+            self.assertEqual(["archives/gamesymbols-v20260831a.7z"], [asset["path"] for asset in manifest["assets"]])
+            self.assertEqual(["game-1"], [entry["game_version"] for entry in manifest["gamesymbols_json"]["datasets"]])
             verify_arguments = self._verification_arguments(repo, generated, source_sha)
             self.assertEqual(manifest, verify_release_bundle(bundle_root=bundle, **verify_arguments))
             checksum = (bundle / "SHA256SUMS-v20260831a.txt").read_text(encoding="utf-8")
             self.assertIn("release-manifest-v20260831a.json", checksum)
             self.assertNotIn("SHA256SUMS-v20260831a.txt", checksum)
-            archive = bundle / "archives/gamedata-game-1.7z"
+            archive = bundle / "archives/gamesymbols-v20260831a.7z"
             archive.write_bytes(archive.read_bytes() + b"tamper")
             with self.assertRaisesRegex(ReleaseBundleError, "asset inventory or digest"):
                 verify_release_bundle(bundle_root=bundle, **verify_arguments)
@@ -261,19 +193,7 @@ class ReleaseBundleTests(unittest.TestCase):
             root = Path(temporary)
             repo, generated, source_sha = self.fixture(root)
             bundle = root / "bundle"
-            build_release_bundle(
-                repo_root=repo,
-                bundle_root=bundle,
-                gamesymbols_root=generated / "gamesymbols",
-                gamedata_root=generated / "gamedata",
-                archives_root=generated / "archives",
-                ida_runtime_path=generated / "evidence/ida-runtime.json",
-                cache_selection_path=generated / "evidence/cache-selection.json",
-                version="v20260831a",
-                build_id="run-1-1",
-                workflow_run_url="https://example.invalid/run/1",
-                source_sha=source_sha,
-            )
+            self._build(repo, generated, bundle, source_sha)
             (bundle / "extra.txt").write_text("extra\n", encoding="utf-8")
             with self.assertRaisesRegex(ReleaseBundleError, "allowlist"):
                 verify_release_bundle(
@@ -296,21 +216,9 @@ class ReleaseBundleTests(unittest.TestCase):
             root = Path(temporary)
             repo, generated, source_sha = self.fixture(root)
             bundle = root / "bundle"
-            build_release_bundle(
-                repo_root=repo,
-                bundle_root=bundle,
-                gamesymbols_root=generated / "gamesymbols",
-                gamedata_root=generated / "gamedata",
-                archives_root=generated / "archives",
-                ida_runtime_path=generated / "evidence/ida-runtime.json",
-                cache_selection_path=generated / "evidence/cache-selection.json",
-                version="v20260831a",
-                build_id="run-1-1",
-                workflow_run_url="https://example.invalid/run/1",
-                source_sha=source_sha,
-            )
+            self._build(repo, generated, bundle, source_sha)
             verify_arguments = self._verification_arguments(repo, generated, source_sha)
-            archive = bundle / "archives/gamedata-game-1.7z"
+            archive = bundle / "archives/gamesymbols-v20260831a.7z"
             malicious = root / "malicious"
             malicious.mkdir()
             (malicious / "unexpected.txt").write_text("attacker controlled\n", encoding="utf-8")
@@ -319,7 +227,7 @@ class ReleaseBundleTests(unittest.TestCase):
 
             def refresh_archive(document):
                 for record in document["assets"]:
-                    if record["path"] == "archives/gamedata-game-1.7z":
+                    if record["path"] == "archives/gamesymbols-v20260831a.7z":
                         record.update(release_bundle._asset_record(bundle, record["path"]))
 
             self._rewrite_manifest_and_checksums(bundle, refresh_archive)
@@ -329,19 +237,7 @@ class ReleaseBundleTests(unittest.TestCase):
             (root / "second").mkdir()
             repo, generated, source_sha = self.fixture(root / "second")
             second_bundle = root / "second-bundle"
-            build_release_bundle(
-                repo_root=repo,
-                bundle_root=second_bundle,
-                gamesymbols_root=generated / "gamesymbols",
-                gamedata_root=generated / "gamedata",
-                archives_root=generated / "archives",
-                ida_runtime_path=generated / "evidence/ida-runtime.json",
-                cache_selection_path=generated / "evidence/cache-selection.json",
-                version="v20260831a",
-                build_id="run-1-1",
-                workflow_run_url="https://example.invalid/run/1",
-                source_sha=source_sha,
-            )
+            self._build(repo, generated, second_bundle, source_sha)
             self._rewrite_manifest_and_checksums(second_bundle, lambda document: document.update(assets=[]))
             with self.assertRaisesRegex(ReleaseBundleError, "asset inventory"):
                 verify_release_bundle(

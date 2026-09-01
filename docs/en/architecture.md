@@ -13,15 +13,14 @@ download.yaml + configs/<tag>.yaml
   -> bin_artifacts/<tag>/<module>/<symbol>.<platform>.yaml (Git truth)
   -> release-only immutable candidate
   -> gamesymbols/<tag>.yaml + gamesymbols/<tag>.metadata.yaml (bundle)
-  -> SymbolStore -> strict gamedata generator
-  -> gamedata/<tag>/gamedata-manifest.json + declared payloads
+  -> gamesymbols_json.py deterministically derives browser JSON datasets + index (schema 3/4)
+  -> packs the single all-in-one gamesymbols-<version>.7z
 
 RunRequest -> Redis Stream -> single-concurrency scheduler -> analyzer
   -> ProcessEvent + heartbeat -> Redis state/streams
   -> read-only API/SSE -> React process dashboard
 
-snapshot + immutable metadata companion -> Vite asset plugin
-  -> content-addressed JSON + index v4
+release-derived JSON datasets + index -> Vite relay plugin
   -> append-only pages-snapshots archive -> GitHub Pages Symbol Explorer
 
 exact source + bin gitlink + bin_artifacts -> analyze all game versions
@@ -132,18 +131,23 @@ contract drift.
 
 The candidate session binds the canonical snapshot and alias-metadata companion hashes, filesystem identities, and pair
 identity. Pair publication into release staging is journaled and recoverable. The verified release bundle is the external
-candidate boundary; publication still requires the guarded `gamedata` step. Candidate sessions do not contain a C++ test step.
+candidate boundary; a release publication requires the guarded `json` step (`mark -step json`), while the gamedata
+consistency gate (`mark -step gamedata`) is enforced by PR validation and `update_gamedata.py`. Candidate sessions do not
+contain a C++ test step.
 
-Canonical gamedata is release-derived only from the guarded candidate inventory and is copied into release staging,
-never the Git index. Each tag has a self-excluding canonical manifest that binds snapshot/config/generator identities and
-the exact declared payload files; an empty generator set therefore still has one verifiable output.
+Canonical gamedata is derived only from the guarded candidate inventory (`update_gamedata.py` / PR validation), never the
+Git index. Each tag has a self-excluding canonical manifest that binds snapshot/config/generator identities and the exact
+declared payload files; an empty generator set therefore still has one verifiable output. gamedata is no longer a Release
+artifact.
 
 ## Release provenance boundary
 
 The release build force-rebuilds every configured artifact into a fresh external root and compares exact bytes with Git
-`bin_artifacts`. It then generates snapshots, metadata, gamedata, binary-only/game-data archives, a canonical Release
-manifest, and `SHA256SUMS`. The self-hosted job is read-only; a GitHub-hosted job verifies the closed bundle against the
-exact source and Git blobs. The protected `publish-release` job is the only `contents: write` job in `release-build.yml`.
+`bin_artifacts`. It then generates snapshots, metadata, browser JSON datasets (`mark -step json`), the single all-in-one
+`gamesymbols-<version>.7z`, a canonical Release manifest, and `SHA256SUMS`. The self-hosted job is read-only; a
+GitHub-hosted job verifies the closed bundle against the exact source and Git blobs, independently re-deriving the JSON
+and comparing it byte-for-byte with the bundle. The protected `publish-release` job is the only `contents: write` job in
+`release-build.yml`.
 It creates or resumes a matching draft, refuses tag/asset drift and overwrite, verifies remote name/size/hash, then
 publishes. Published versions are immutable; changed content requires a new version.
 
@@ -157,10 +161,11 @@ private-network preflights only by explicit opt-in.
 
 The React dashboard displays run lists, graph/list views, task details, status filters, live SSE updates, and a static
 Symbol Explorer. Symbol snapshots use `<family-build>` tags, are grouped by family, and sort builds numerically descending.
-The Vite plugin turns schema-6 snapshot/metadata assets downloaded from a published Release into exact UTF-8
-content-addressed JSON plus index schema v4. It never reads live config aliases. The deployment
-workflow preserves every digest on an append-only `pages-snapshots` branch and verifies current, archived, and deployed
-CDN bytes. That branch is a non-authoritative presentation mirror derived only from published Releases; it is never source
+The release pipeline deterministically derives the exact UTF-8 content-addressed JSON datasets plus index schema v4 in
+Python from the schema-6 snapshot and schema-1 metadata companion; the Vite plugin relays those bytes without re-deriving
+and never reads live config aliases. The deployment workflow downloads and extracts `gamesymbols-*.7z` to obtain the same
+JSON, preserves every digest on an append-only `pages-snapshots` branch, and verifies current, archived, and deployed CDN
+bytes. That branch is a non-authoritative presentation mirror derived only from published Releases; it is never source
 or release truth. GitHub Pages hosts only static assets; it does not host the Process API.
 
 ## Current exclusions and deferrals

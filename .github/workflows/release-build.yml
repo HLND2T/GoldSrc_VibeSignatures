@@ -189,22 +189,16 @@ jobs:
           path: ${{ runner.temp }}/rebuilt-bin-artifacts
           if-no-files-found: warn
           retention-days: 1
-      - name: Build snapshots, gamedata, and deterministic archives
+      - name: Build game-symbol snapshots and JSON datasets
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $generatedRoot = Join-Path $env:RUNNER_TEMP 'release-generated'
           if (Test-Path -LiteralPath $generatedRoot) { Remove-Item -LiteralPath $generatedRoot -Recurse -Force }
           $gamesymbolsRoot = Join-Path $generatedRoot 'gamesymbols'
-          $gamedataRoot = Join-Path $generatedRoot 'gamedata'
-          $archivesRoot = Join-Path $generatedRoot 'archives'
-          New-Item -ItemType Directory -Path $gamesymbolsRoot,$gamedataRoot,$archivesRoot -Force | Out-Null
-          $stagedArtifactRoot = Join-Path $generatedRoot 'bin_artifacts'
-          uv run python release_bundle.py stage-artifacts --repo-root $env:GITHUB_WORKSPACE `
-            --artifact-root $env:REBUILT_ARTIFACT_ROOT --destination $stagedArtifactRoot
-          if ($LASTEXITCODE -ne 0) { throw 'validated artifact staging failed' }
+          $gamesymbolsJsonRoot = Join-Path $generatedRoot 'gamesymbols-json'
+          New-Item -ItemType Directory -Path $gamesymbolsRoot,$gamesymbolsJsonRoot -Force | Out-Null
           $publishTime = (git show -s --format=%cI HEAD | uv run python -c "import sys; from datetime import datetime,timezone; print(datetime.fromisoformat(sys.stdin.read().strip()).astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'))").Trim()
-          $sourceTime = [DateTime]::Parse($publishTime).ToUniversalTime()
           $gamevers = @(uv run python -c "import yaml; print('\n'.join((yaml.safe_load(open('configs/config.yaml', encoding='utf-8')) or {})['gamevers']))")
           foreach ($gamever in $gamevers) {
             if ([string]::IsNullOrWhiteSpace($gamever)) { throw 'configs/config.yaml contains an empty game version' }
@@ -213,62 +207,21 @@ jobs:
             New-Item -ItemType Directory -Path $stage -Force | Out-Null
             $candidate = Join-Path $stage "$gamever.yaml"
             $symbolSession = Join-Path $stage 'symbol-session.json'
-            $gamedataSession = Join-Path $stage 'gamedata-session.json'
+            $jsonSession = Join-Path $stage 'json-session.json'
             uv run python gamesymbol_candidate.py build -gamever $gamever -bindir bin `
               -artifactdir $env:REBUILT_ARTIFACT_ROOT -configyaml "configs/$gamever.yaml" `
               -output $candidate -session $symbolSession -last-publish-time $publishTime
             if ($LASTEXITCODE -ne 0) { throw "snapshot candidate failed for $gamever" }
-            uv run python gamedata_candidate.py build -gamever $gamever -build-id "${{ needs.preflight.outputs.build_id }}" `
-              -snapshot $candidate -configyaml "configs/$gamever.yaml" -modulesdir gamedata-generators `
-              -candidate-root (Join-Path $stage 'gamedata') -session $gamedataSession
-            if ($LASTEXITCODE -ne 0) { throw "gamedata candidate failed for $gamever" }
+            uv run python gamesymbols_json.py build -snapshot $candidate `
+              -metadata (Join-Path $stage "$gamever.metadata.yaml") -gamever $gamever `
+              -output-dir $gamesymbolsJsonRoot -session $jsonSession
+            if ($LASTEXITCODE -ne 0) { throw "JSON dataset failed for $gamever" }
             uv run python gamesymbol_candidate.py mark -candidate $candidate -session $symbolSession `
-              -step gamedata -gamedata-session $gamedataSession
+              -step json -json-session $jsonSession
             if ($LASTEXITCODE -ne 0) { throw "candidate guard failed for $gamever" }
             uv run python gamesymbol_candidate.py publish -candidate $candidate -session $symbolSession `
               -destination (Join-Path $gamesymbolsRoot "$gamever.yaml")
             if ($LASTEXITCODE -ne 0) { throw "snapshot publish failed for $gamever" }
-            uv run python gamedata_candidate.py publish -session $gamedataSession -outputdir (Join-Path $gamedataRoot $gamever)
-            if ($LASTEXITCODE -ne 0) { throw "gamedata publish failed for $gamever" }
-            $gamedataStage = Join-Path $env:RUNNER_TEMP ("gamedata-archive-" + $gamever)
-            $gamebinStage = Join-Path $env:RUNNER_TEMP ("gamebin-archive-" + $gamever)
-            foreach ($archiveStage in @($gamedataStage, $gamebinStage)) {
-              if (Test-Path -LiteralPath $archiveStage) { Remove-Item -LiteralPath $archiveStage -Recurse -Force }
-            }
-            New-Item -ItemType Directory -Path (Join-Path $gamedataStage 'configs') -Force | Out-Null
-            New-Item -ItemType Directory -Path (Join-Path $gamedataStage 'bin_artifacts') -Force | Out-Null
-            New-Item -ItemType Directory -Path (Join-Path $gamedataStage 'gamesymbols') -Force | Out-Null
-            New-Item -ItemType Directory -Path (Join-Path $gamedataStage 'gamedata') -Force | Out-Null
-            New-Item -ItemType Directory -Path (Join-Path $gamedataStage 'bin') -Force | Out-Null
-            New-Item -ItemType Directory -Path (Join-Path $gamebinStage 'bin') -Force | Out-Null
-            Copy-Item -LiteralPath "configs/$gamever.yaml" -Destination (Join-Path $gamedataStage "configs/$gamever.yaml")
-            Copy-Item -LiteralPath (Join-Path $stagedArtifactRoot $gamever) -Destination (Join-Path $gamedataStage 'bin_artifacts') -Recurse
-            Copy-Item -LiteralPath (Join-Path $gamesymbolsRoot "$gamever.yaml") -Destination (Join-Path $gamedataStage 'gamesymbols')
-            Copy-Item -LiteralPath (Join-Path $gamesymbolsRoot "$gamever.metadata.yaml") -Destination (Join-Path $gamedataStage 'gamesymbols')
-            Copy-Item -LiteralPath (Join-Path $gamedataRoot $gamever) -Destination (Join-Path $gamedataStage 'gamedata') -Recurse
-            uv run python release_bundle.py stage-binary --repo-root $env:GITHUB_WORKSPACE --gamever $gamever `
-              --destination (Join-Path $gamedataStage "bin/$gamever")
-            if ($LASTEXITCODE -ne 0) { throw "gamedata binary staging failed for $gamever" }
-            uv run python release_bundle.py stage-binary --repo-root $env:GITHUB_WORKSPACE --gamever $gamever `
-              --destination (Join-Path $gamebinStage "bin/$gamever")
-            if ($LASTEXITCODE -ne 0) { throw "gamebin binary staging failed for $gamever" }
-            foreach ($archiveStage in @($gamedataStage, $gamebinStage)) {
-              Get-ChildItem -LiteralPath $archiveStage -Recurse -Force | ForEach-Object { $_.LastWriteTimeUtc = $sourceTime }
-            }
-            Push-Location $gamedataStage
-            try {
-              7z a -t7z -mx=9 -mmt=off -mtc=off -mta=off (Join-Path $archivesRoot "gamedata-$gamever.7z") '.\*' | Out-Host
-              $archiveExitCode = $LASTEXITCODE
-            }
-            finally { Pop-Location }
-            if ($archiveExitCode -ne 0) { throw "gamedata archive failed for $gamever" }
-            Push-Location $gamebinStage
-            try {
-              7z a -t7z -mx=9 -mmt=off -mtc=off -mta=off (Join-Path $archivesRoot "gamebin-$gamever.7z") '.\*' | Out-Host
-              $archiveExitCode = $LASTEXITCODE
-            }
-            finally { Pop-Location }
-            if ($archiveExitCode -ne 0) { throw "gamebin archive failed for $gamever" }
           }
           "GENERATED_ROOT=$generatedRoot" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Build and locally verify release bundle
@@ -279,8 +232,7 @@ jobs:
           if (Test-Path -LiteralPath $bundleRoot) { Remove-Item -LiteralPath $bundleRoot -Recurse -Force }
           uv run python release_bundle.py build --repo-root $env:GITHUB_WORKSPACE --bundle-root $bundleRoot `
             --gamesymbols-root (Join-Path $env:GENERATED_ROOT 'gamesymbols') `
-            --gamedata-root (Join-Path $env:GENERATED_ROOT 'gamedata') `
-            --archives-root (Join-Path $env:GENERATED_ROOT 'archives') `
+            --gamesymbols-json-root (Join-Path $env:GENERATED_ROOT 'gamesymbols-json') `
             --ida-runtime $env:IDA_RUNTIME_PATH `
             --cache-selection (Join-Path $env:RUNNER_TEMP 'idb-cache-selection\cache-selection.json') `
             --version "${{ needs.preflight.outputs.version }}" --build-id "${{ needs.preflight.outputs.build_id }}" `

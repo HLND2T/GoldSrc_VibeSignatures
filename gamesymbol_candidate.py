@@ -32,8 +32,9 @@ def _parser():
         command.add_argument("-candidate", required=True)
         command.add_argument("-session", required=True)
         if name == "mark":
-            command.add_argument("-step", choices=["gamedata"], required=True)
-            command.add_argument("-gamedata-session", required=True)
+            command.add_argument("-step", choices=["gamedata", "json"], required=True)
+            command.add_argument("-gamedata-session")
+            command.add_argument("-json-session")
         if name == "publish":
             command.add_argument("-destination", required=True)
     return parser
@@ -55,14 +56,27 @@ def main(argv=None):
         elif args.command == "guard":
             guard_candidate(candidate_path=args.candidate, session_path=args.session)
         elif args.command == "mark":
-            from gamedata_candidate import guard_candidate as guard_gamedata_candidate
-
             info = guard_candidate(candidate_path=args.candidate, session_path=args.session)
-            gamedata_session = guard_gamedata_candidate(args.gamedata_session)
-            if gamedata_session["gamever"] != info.game_version or gamedata_session[
-                "candidate_sha256"
-            ] != info.candidate_sha256.removeprefix("sha256:"):
-                raise CandidateContractError("Gamedata session does not guard this game-symbol candidate")
+            if args.step == "gamedata":
+                from gamedata_candidate import guard_candidate as guard_gamedata_candidate
+
+                if not args.gamedata_session:
+                    raise CandidateContractError("mark -step gamedata requires -gamedata-session")
+                gamedata_session = guard_gamedata_candidate(args.gamedata_session)
+                if gamedata_session["gamever"] != info.game_version or gamedata_session[
+                    "candidate_sha256"
+                ] != info.candidate_sha256.removeprefix("sha256:"):
+                    raise CandidateContractError("Gamedata session does not guard this game-symbol candidate")
+            else:
+                from gamesymbols_json import guard_dataset_session
+
+                if not args.json_session:
+                    raise CandidateContractError("mark -step json requires -json-session")
+                json_session = guard_dataset_session(args.json_session)
+                if json_session["gamever"] != info.game_version or json_session[
+                    "snapshot_sha256"
+                ] != info.candidate_sha256.removeprefix("sha256:"):
+                    raise CandidateContractError("JSON session does not guard this game-symbol candidate")
             complete_candidate_step(candidate_path=args.candidate, session_path=args.session, step=args.step)
         else:
             publish_candidate(candidate_path=args.candidate, session_path=args.session, destination=args.destination)
