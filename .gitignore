@@ -4,6 +4,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
+.zcode/skills
 
 # Downloaded depots, binaries, IDA databases, and local release candidates.
 depots/
