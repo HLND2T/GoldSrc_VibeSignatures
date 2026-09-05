@@ -70,6 +70,7 @@ from ida_database_paths import (
     primary_database_paths,
 )
 from ida_llm_utils import validated_temperature
+from mcp_startup import mcp_startup_lock
 from ida_mcp_session import (
     McpConnectionError,
     McpContractError,
@@ -811,6 +812,27 @@ def _has_ida_database(binary_path):
     return any(os.path.isfile(path) for path in _ida_database_primary_paths(binary_path))
 
 
+def _spawn_idalib_mcp(binary_path, host, port, ida_args="", debug=False, stdout=None, stderr=None):
+    """Spawn idalib-mcp on a fixed port without waiting for readiness."""
+    if is_port_in_use(host, port):
+        return None
+    command = ["idalib-mcp", "--unsafe", "--host", host, "--port", str(port)]
+    if ida_args:
+        command.extend(str(ida_args).split())
+    command.append(str(binary_path))
+    if debug:
+        print(f"  Starting idalib-mcp: {' '.join(command)}")
+    try:
+        output = stdout if stdout is not None else (None if debug else subprocess.DEVNULL)
+        errors = stderr if stderr is not None else (None if debug else subprocess.DEVNULL)
+        creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" and not debug else 0
+        return subprocess.Popen(command, stdout=output, stderr=errors, creationflags=creationflags)
+    except OSError as exc:
+        if debug:
+            print(f"  Unable to start idalib-mcp: {exc}")
+        return None
+
+
 def start_idalib_mcp(
     binary_path,
     host=DEFAULT_HOST,
@@ -820,28 +842,63 @@ def start_idalib_mcp(
     stdout=None,
     stderr=None,
 ):
-    if is_port_in_use(host, port):
-        return None
-    command = ["idalib-mcp", "--unsafe", "--host", host, "--port", str(port)]
-    if ida_args:
-        command.extend(str(ida_args).split())
-    command.append(str(binary_path))
-    if debug:
-        print(f"  Starting idalib-mcp: {' '.join(command)}")
     process = None
-    try:
-        output = stdout if stdout is not None else (None if debug else subprocess.DEVNULL)
-        errors = stderr if stderr is not None else (None if debug else subprocess.DEVNULL)
-        creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" and not debug else 0
-        process = subprocess.Popen(command, stdout=output, stderr=errors, creationflags=creationflags)
-        if wait_for_mcp_ready(process, host, port):
-            return process
-    except OSError as exc:
-        if debug:
-            print(f"  Unable to start idalib-mcp: {exc}")
+    with mcp_startup_lock():
+        process = _spawn_idalib_mcp(binary_path, host, port, ida_args, debug, stdout, stderr)
+    if process is not None and wait_for_mcp_ready(process, host, port):
+        return process
     stop_idalib_mcp_process(process, debug=debug)
     wait_for_port_release(host, port)
     return None
+
+
+MCP_DYNAMIC_STARTUP_ATTEMPTS = 3
+MCP_PORT_BIND_TIMEOUT_SECONDS = 60.0
+
+
+def _wait_dynamic_port_bound(process, host, port, timeout=MCP_PORT_BIND_TIMEOUT_SECONDS, retry_interval=0.5):
+    """Confirm the spawned child actually bound its port, or exited."""
+    deadline = time.monotonic() + max(0.0, timeout)
+    while True:
+        if process.poll() is not None:
+            return False
+        if is_port_in_use(host, port):
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(max(0.0, retry_interval))
+
+
+def start_dynamic_idalib_mcp(
+    binary_path,
+    host=DEFAULT_HOST,
+    ida_args="",
+    debug=False,
+    *,
+    attempts=MCP_DYNAMIC_STARTUP_ATTEMPTS,
+    lock_path=None,
+):
+    """Allocate, spawn, and bind-confirm one dynamic-port idalib-mcp under the startup lock.
+
+    The lock covers only the short allocate/spawn/bind window; full MCP readiness
+    is awaited by the caller after the lock is released. A stolen or never-bound
+    port triggers a bounded re-allocation with a fresh ephemeral port.
+    """
+    process = None
+    for attempt in range(1, max(1, attempts) + 1):
+        with mcp_startup_lock(lock_path):
+            port = _allocate_local_port(host)
+            process = _spawn_idalib_mcp(binary_path, host, port, ida_args, debug)
+            bound = process is not None and _wait_dynamic_port_bound(process, host, port)
+        if bound:
+            if debug:
+                print(f"  Allocated dynamic MCP port {host}:{port} (attempt {attempt})")
+            return process, port
+        stop_idalib_mcp_process(process, debug=debug)
+        wait_for_port_release(host, port)
+        if debug:
+            print(f"  Dynamic MCP port attempt {attempt} failed for {binary_path}; retrying")
+    return None, None
 
 
 async def quit_ida_via_mcp(host, port, *, expected_binary, auto_started):
@@ -1053,15 +1110,25 @@ class IdaMcpLifecycle:
         if self.database_policy == DATABASE_POLICY_RESTORED_STRICT and not _has_ida_database(self.binary_path):
             raise McpLifecycleError(f"Strict restored IDA database is missing for {self.binary_path}")
         try:
-            self.process = start_idalib_mcp(
-                self.binary_path,
-                self.host,
-                self.port,
-                self.ida_args,
-                self.debug,
-            )
-            if self.process is None:
-                raise McpLifecycleError(f"Unable to start idalib-mcp for {self.binary_path}")
+            if self.port is None:
+                self.process, self.port = start_dynamic_idalib_mcp(
+                    self.binary_path,
+                    self.host,
+                    self.ida_args,
+                    self.debug,
+                )
+                if self.process is None or not wait_for_mcp_ready(self.process, self.host, self.port):
+                    raise McpLifecycleError(f"Unable to start idalib-mcp for {self.binary_path}")
+            else:
+                self.process = start_idalib_mcp(
+                    self.binary_path,
+                    self.host,
+                    self.port,
+                    self.ida_args,
+                    self.debug,
+                )
+                if self.process is None:
+                    raise McpLifecycleError(f"Unable to start idalib-mcp for {self.binary_path}")
             self.process, self.runtime = verify_owned_mcp_with_single_recovery(
                 self.process,
                 self.binary_path,
@@ -1938,10 +2005,7 @@ def _create_ida_mcp_lifecycle(
     ida_args,
     debug,
 ):
-    if port is None:
-        port = _allocate_local_port(host)
-        if debug:
-            print(f"  Allocated dynamic MCP port {host}:{port}")
+    # port=None defers allocation into the lifecycle under the cross-process MCP startup lock.
     return IdaMcpLifecycle(
         binary,
         platform,

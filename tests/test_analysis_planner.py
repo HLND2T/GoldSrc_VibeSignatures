@@ -2017,7 +2017,7 @@ class McpLifecycleTests(unittest.TestCase):
             lifecycle.ensure_ready.return_value = runtime
             summary = AnalysisSummary()
             with (
-                patch("ida_analyze_bin._allocate_local_port", return_value=39000) as allocate_port,
+                patch("ida_analyze_bin._allocate_local_port", side_effect=AssertionError("must not allocate")),
                 patch("ida_analyze_bin.IdaMcpLifecycle", return_value=lifecycle) as lifecycle_type,
                 patch(
                     "ida_analyze_bin.run_analysis_pipeline",
@@ -2033,12 +2033,11 @@ class McpLifecycleTests(unittest.TestCase):
                     ida_args="quiet",
                     summary=summary,
                 )
-            allocate_port.assert_called_once_with(DEFAULT_HOST)
             lifecycle_type.assert_called_once_with(
                 binary,
                 "windows",
                 DEFAULT_HOST,
-                39000,
+                None,
                 "quiet",
                 False,
                 database_policy=DATABASE_POLICY_RESTORED_STRICT,
@@ -2984,6 +2983,100 @@ class McpShutdownTests(unittest.IsolatedAsyncioTestCase):
                 )
             )
         call_tool.assert_not_awaited()
+
+
+class McpStartupLockTests(unittest.TestCase):
+    def test_lock_is_exclusive_and_released(self):
+        import threading
+
+        from mcp_startup import mcp_startup_lock, mcp_startup_lock_path
+
+        with tempfile.TemporaryDirectory() as temporary:
+            lock_file = Path(temporary) / "startup.lock"
+            with mcp_startup_lock(lock_file, timeout_seconds=1.0):
+                acquired = []
+
+                def contend():
+                    try:
+                        with mcp_startup_lock(lock_file, timeout_seconds=0.2):
+                            acquired.append(True)
+                    except Exception:
+                        acquired.append(False)
+
+                thread = threading.Thread(target=contend)
+                thread.start()
+                thread.join()
+            self.assertEqual([False], acquired)
+            with mcp_startup_lock(lock_file, timeout_seconds=1.0):
+                pass
+
+    def test_lock_path_prefers_explicit_environment(self):
+        from mcp_startup import mcp_startup_lock_path
+
+        with tempfile.TemporaryDirectory() as temporary:
+            with patch.dict(os.environ, {"GSVIBE_MCP_STARTUP_LOCK_DIR": temporary}, clear=False):
+                path = mcp_startup_lock_path()
+            self.assertEqual(Path(temporary), path.parent)
+
+
+class DynamicPortStartupTests(unittest.TestCase):
+    def test_dynamic_start_reallocates_when_port_is_stolen(self):
+        process = SimpleNamespace(poll=lambda: None, terminate=lambda: None, kill=lambda: None)
+
+        def wait_noop(*args, **kwargs):
+            return None
+
+        with (
+            patch("ida_analyze_bin._allocate_local_port", side_effect=[11111, 22222]),
+            patch("ida_analyze_bin._spawn_idalib_mcp", return_value=process) as spawn,
+            patch("ida_analyze_bin._wait_dynamic_port_bound", side_effect=[False, True]),
+            patch("ida_analyze_bin.stop_idalib_mcp_process", wait_noop),
+            patch("ida_analyze_bin.wait_for_port_release", return_value=True),
+        ):
+            started, port = ida_analyze_bin.start_dynamic_idalib_mcp(
+                "hw.dll", "127.0.0.1", lock_path=Path(self.enterContext(tempfile.TemporaryDirectory())) / "l.lock"
+            )
+        self.assertIs(process, started)
+        self.assertEqual(22222, port)
+        self.assertEqual([11111, 22222], [call.args[2] for call in spawn.call_args_list])
+
+    def test_dynamic_start_fails_closed_after_bounded_attempts(self):
+        process = SimpleNamespace(poll=lambda: None, terminate=lambda: None, kill=lambda: None)
+        with (
+            patch("ida_analyze_bin._allocate_local_port", side_effect=[1, 2, 3, 4]),
+            patch("ida_analyze_bin._spawn_idalib_mcp", return_value=process),
+            patch("ida_analyze_bin._wait_dynamic_port_bound", return_value=False),
+            patch("ida_analyze_bin.stop_idalib_mcp_process"),
+            patch("ida_analyze_bin.wait_for_port_release", return_value=True),
+        ):
+            started, port = ida_analyze_bin.start_dynamic_idalib_mcp(
+                "hw.dll",
+                "127.0.0.1",
+                attempts=3,
+                lock_path=Path(self.enterContext(tempfile.TemporaryDirectory())) / "l.lock",
+            )
+        self.assertIsNone(started)
+        self.assertIsNone(port)
+
+    def test_fixed_port_spawn_and_readiness_split(self):
+        process = SimpleNamespace(poll=lambda: None, terminate=lambda: None, kill=lambda: None)
+        with (
+            patch("ida_analyze_bin._spawn_idalib_mcp", return_value=process) as spawn,
+            patch("ida_analyze_bin.wait_for_mcp_ready", return_value=True) as ready,
+            patch("ida_analyze_bin.is_port_in_use", return_value=False),
+            patch("ida_analyze_bin.stop_idalib_mcp_process"),
+            patch("ida_analyze_bin.wait_for_port_release", return_value=True),
+        ):
+            started = ida_analyze_bin.start_idalib_mcp("hw.dll", "127.0.0.1", 13337)
+        self.assertIs(process, started)
+        ready.assert_called_once()
+        spawn.assert_called_once()
+
+    def test_lifecycle_defers_dynamic_port_allocation(self):
+        lifecycle = ida_analyze_bin._create_ida_mcp_lifecycle("hw.dll", "windows", "127.0.0.1", None, "", False)
+        self.assertIsNone(lifecycle.port)
+        self.assertEqual(ida_analyze_bin.DATABASE_POLICY_RESTORED_STRICT, lifecycle.database_policy)
+        self.assertFalse(lifecycle.save_on_success)
 
 
 if __name__ == "__main__":
