@@ -3,19 +3,21 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import shutil
 import subprocess
-import sys
-import tempfile
+import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath
 
 from analysis_config import validated_tag
 from binary_format import validate_binary
 from ida_database_paths import (
+    database_cleanup_paths,
     database_file_role,
     database_paths,
     existing_database_lock,
@@ -24,18 +26,14 @@ from ida_database_paths import (
     validate_plain_file,
 )
 from idb_cache_locks import (
-    DEFAULT_TAG_LOCK_TIMEOUT_SECONDS,
     IdbCacheError,
-    exclusive_file_lock,
+    producer_lock,
     tag_lock,
-    tag_lock_timeout_seconds,
-    warm_port_lock_path,
 )
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.hashing import (
     canonical_json_bytes,
     inventory_sha256,
-    load_json_object,
     normalized_relative_path,
     normalized_sha256,
     reject_reparse_points,
@@ -43,21 +41,19 @@ from release_workflow_lib.hashing import (
     sha256_file,
     write_canonical_json,
 )
+from warmup_memory import (
+    DEFAULT_MEMORY_ADMISSION_TIMEOUT_SECONDS,
+    MemoryLaunchGate,
+    ProducerMemoryOwner,
+    producer_memory_owner_from_environment,
+)
 
 CACHE_SCHEMA_VERSION = 1
 WARMUP_CONTRACT_VERSION = 1
 WARM_WORKER_CONTRACT_FILES = (
     "binary_format.py",
-    "ida_analyze_bin.py",
     "ida_database_paths.py",
-    "ida_mcp_session.py",
-    "idb_cache.py",
-    "idb_cache_locks.py",
-    "idb_cache_selection.py",
-    "idb_cache_workflow.py",
     "idb_warm_worker.py",
-    "release_workflow_lib/errors.py",
-    "release_workflow_lib/hashing.py",
 )
 CACHE_IDENTITY_KEYS = {
     "schema_version",
@@ -68,7 +64,8 @@ CACHE_IDENTITY_KEYS = {
     "normalized_ida_args",
     "binaries",
 }
-RUNTIME_KEYS = {
+CURRENT_RUNTIME_KEYS = {"kernel_version"}
+LEGACY_RUNTIME_KEYS = {
     "kernel_version",
     "processor",
     "bitness",
@@ -77,6 +74,12 @@ RUNTIME_KEYS = {
     "loader_module_sha256",
     "plugins",
 }
+DEFAULT_MAX_CONCURRENCY = 2
+DEFAULT_WORKER_TIMEOUT_SECONDS = 30 * 60
+DEFAULT_WORKER_MEMORY_LIMIT_MIB = 8192
+MAX_CONCURRENCY_ENV = "IDB_WARMUP_MAX_CONCURRENCY"
+INVALIDATION_MAX_ATTEMPTS = 3
+INVALIDATION_RETRY_DELAY_SECONDS = 1.0
 GENERATION_MANIFEST_KEYS = {
     "schema_version",
     "tag",
@@ -136,8 +139,16 @@ def _contained_path(root: Path, relative: str, *, require_file: bool = False) ->
 
 
 def _runtime_identity(value: object) -> dict:
-    if not isinstance(value, dict) or set(value) != RUNTIME_KEYS:
+    if not isinstance(value, dict):
         raise IdbCacheError("IDA runtime identity has unexpected or missing fields")
+    keys = frozenset(value)
+    if keys not in {frozenset(CURRENT_RUNTIME_KEYS), frozenset(LEGACY_RUNTIME_KEYS)}:
+        raise IdbCacheError("IDA runtime identity has unexpected or missing fields")
+    if keys == CURRENT_RUNTIME_KEYS:
+        version = value["kernel_version"]
+        if not isinstance(version, str) or not version.strip() or version != version.strip():
+            raise IdbCacheError("ida_runtime.kernel_version must be a trimmed non-empty string")
+        return {"kernel_version": version}
     for field in ("kernel_version", "processor", "file_type", "loader_name"):
         if not isinstance(value[field], str) or not value[field].strip() or value[field] != value[field].strip():
             raise IdbCacheError(f"ida_runtime.{field} must be a trimmed non-empty string")
@@ -217,9 +228,13 @@ def validate_cache_identity(value: object) -> dict:
     ):
         raise IdbCacheError("normalized_ida_args must be a list of trimmed non-empty strings")
     binaries = _binary_identities(value["binaries"])
-    expected_platform = "windows" if runtime["file_type"] == "PE" else "linux"
-    if any(binary["platform"] != expected_platform for binary in binaries):
-        raise IdbCacheError("Every binary in one cache identity must use the runtime loader platform")
+    platforms = {binary["platform"] for binary in binaries}
+    if len(platforms) != 1:
+        raise IdbCacheError("Every binary in one cache identity must use one platform")
+    if set(runtime) == LEGACY_RUNTIME_KEYS:
+        expected_platform = "windows" if runtime["file_type"] == "PE" else "linux"
+        if platforms != {expected_platform}:
+            raise IdbCacheError("Every binary in one cache identity must use the runtime loader platform")
     return {
         "schema_version": CACHE_SCHEMA_VERSION,
         "tag": tag,
@@ -267,28 +282,36 @@ def build_binary_identity(*, workspace_root: str | Path, module: str, platform: 
     }
 
 
-def build_cache_identity(
-    *, tag: str, ida_runtime: dict, normalized_ida_args: list[str], binaries: list[dict], warm_worker_path: str | Path
-) -> dict:
+def build_cache_identity(*, tag: str, ida_runtime: dict, binaries: list[dict], warm_worker_path: str | Path) -> dict:
     document = {
         "schema_version": CACHE_SCHEMA_VERSION,
         "tag": validated_tag(tag),
         "ida_runtime": ida_runtime,
         "warmup_contract_version": WARMUP_CONTRACT_VERSION,
         "warm_worker_sha256": warm_worker_contract_sha256(warm_worker_path),
-        "normalized_ida_args": normalized_ida_args,
+        "normalized_ida_args": [],
         "binaries": sorted(
             binaries,
             key=lambda item: (item["module"].encode("utf-8"), item["platform"], item["path"]),
         ),
     }
-    return validate_cache_identity(document)
+    return validate_current_warm_identity(document)
+
+
+def validate_current_warm_identity(value: object) -> dict:
+    identity = validate_cache_identity(value)
+    if set(identity["ida_runtime"]) != CURRENT_RUNTIME_KEYS:
+        raise IdbCacheError("Warm/publish requires the current kernel-version-only IDA runtime identity")
+    if identity["normalized_ida_args"]:
+        raise IdbCacheError("Warm/publish requires normalized_ida_args to be empty")
+    return identity
 
 
 def warm_worker_contract_sha256(warm_worker_path: str | Path) -> str:
     worker = validate_plain_file(warm_worker_path, context="Warm worker")
-    if worker.name != "idb_warm_worker.py":
-        return sha256_file(worker)
+    canonical_worker = Path(__file__).with_name("idb_warm_worker.py").resolve(strict=True)
+    if worker.resolve(strict=True) != canonical_worker:
+        raise IdbCacheError("Warm worker must be the canonical repository idb_warm_worker.py")
     root = worker.parent
     files = []
     for relative in WARM_WORKER_CONTRACT_FILES:
@@ -478,7 +501,7 @@ def publish_generation(
     attempt: int,
     published_at: str | None = None,
 ) -> dict:
-    identity = validate_cache_identity(identity)
+    identity = validate_current_warm_identity(identity)
     key = cache_key(identity)
     generation = _generation_name(key, run_id, attempt)
     tag_root = _tag_root(persisted_root, identity["tag"], create=True)
@@ -697,78 +720,269 @@ def restore_generation(*, persisted_root: str | Path, selection: dict, workspace
         raise
 
 
-def _remove_database_files(workspace: Path, identity: dict) -> None:
-    for binary_identity in identity["binaries"]:
-        binary = _contained_path(workspace, binary_identity["path"], require_file=True)
-        if existing_database_lock(binary) is not None:
-            raise IdbCacheError(f"Active IDA database lock prevents cleanup: {binary}")
-        for path in database_paths(binary):
-            if path.exists():
-                validate_plain_file(path, context="IDA database cleanup target")
+def _validated_worker_binary(workspace: Path, binary_identity: dict) -> Path:
+    binary = _contained_path(workspace, binary_identity["path"], require_file=True)
+    validate_binary(binary, binary_identity["platform"])
+    if binary.stat().st_size != binary_identity["size"] or sha256_file(binary) != binary_identity["sha256"]:
+        raise IdbCacheError(f"Warm worker binary identity mismatch: {binary_identity['path']}")
+    return binary
+
+
+def _validate_cleanup_target(workspace: Path, path: Path) -> None:
+    try:
+        path.resolve(strict=False).relative_to(workspace)
+    except ValueError as exc:
+        raise IdbCacheError("IDA database cleanup target escapes the warm workspace") from exc
+    try:
+        path.lstat()
+    except FileNotFoundError:
+        return
+    validate_plain_file(path, context="IDA database cleanup target")
+
+
+def _prepare_database_files_for_warm(workspace: Path, binary: Path) -> None:
+    lock = existing_database_lock(binary)
+    if lock is not None:
+        raise IdbCacheError(f"Active IDA database lock prevents warm startup: {binary}")
+    for path in database_paths(binary):
+        _validate_cleanup_target(workspace, path)
+        path.unlink(missing_ok=True)
+
+
+def _invalidate_failed_worker_database(workspace: Path, binary: Path) -> tuple[list[str], list[str]]:
+    pending = list(database_cleanup_paths(binary))
+    removed = []
+    failures = []
+    for attempt in range(INVALIDATION_MAX_ATTEMPTS):
+        retry = []
+        for path in pending:
+            try:
+                _validate_cleanup_target(workspace, path)
                 path.unlink()
+                removed.append(str(path))
+            except FileNotFoundError:
+                continue
+            except OSError as exc:
+                if getattr(exc, "winerror", None) in {5, 32} and attempt + 1 < INVALIDATION_MAX_ATTEMPTS:
+                    retry.append(path)
+                else:
+                    failures.append(f"{path}: {type(exc).__name__} ({getattr(exc, 'winerror', exc.errno)})")
+            except (IdbCacheError, ValueError) as exc:
+                failures.append(f"{path}: {exc}")
+        if not retry:
+            break
+        pending = retry
+        time.sleep(INVALIDATION_RETRY_DELAY_SECONDS)
+    return removed, failures
 
 
-def warm_and_publish(
+def validate_ida_python_executable(value: str | Path) -> Path:
+    try:
+        executable = Path(value).resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise IdbCacheError("IDA Python executable does not resolve to an existing file") from exc
+    return validate_plain_file(executable, context="IDA Python executable")
+
+
+def probe_ida_kernel_version(ida_python_executable: str | Path) -> str:
+    executable = validate_ida_python_executable(ida_python_executable)
+    worker = Path(__file__).with_name("idb_warm_worker.py").resolve(strict=True)
+    try:
+        result = subprocess.run(
+            [str(executable), str(worker), "--print-ida-version"],
+            capture_output=True,
+            text=True,
+            errors="replace",
+            check=False,
+        )
+    except OSError as exc:
+        raise IdbCacheError(f"Unable to run the IDA kernel version probe: {exc}") from exc
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip()
+        raise IdbCacheError(f"IDA kernel version probe failed with exit code {result.returncode}: {detail}")
+    version = result.stdout.strip()
+    if not version:
+        raise IdbCacheError("IDA kernel version probe returned an empty value")
+    return version
+
+
+def _resolved_max_concurrency(value: int | None) -> int:
+    if value is None:
+        raw = os.environ.get(MAX_CONCURRENCY_ENV)
+        if raw is None or not raw.strip():
+            return DEFAULT_MAX_CONCURRENCY
+        try:
+            value = int(raw.strip())
+        except ValueError as exc:
+            raise IdbCacheError(f"{MAX_CONCURRENCY_ENV} must be a positive integer") from exc
+    if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+        raise IdbCacheError("max_concurrency must be a positive integer")
+    return value
+
+
+def _worker_failure(workspace: Path, binary: Path, reason: str) -> IdbCacheError:
+    _removed, failures = _invalidate_failed_worker_database(workspace, binary)
+    if failures:
+        reason = f"{reason}; cleanup incomplete: {'; '.join(failures)}"
+    return IdbCacheError(reason)
+
+
+def _run_one_worker(
     *,
-    persisted_root: str | Path,
+    workspace: Path,
+    binary: Path,
+    ida_python_executable: Path,
+    worker_path: Path,
+    worker_timeout_seconds: float,
+    memory_gate: MemoryLaunchGate | None,
+    memory_admission_timeout_seconds: float,
+) -> float:
+    gate_acquired = False
+    process = None
+    reaped = False
+    started = time.monotonic()
+    module = binary.relative_to(workspace).parts[0]
+    try:
+        if memory_gate is not None:
+            try:
+                memory_gate.wait_for_launch(
+                    binary.name,
+                    timeout_seconds=memory_admission_timeout_seconds,
+                )
+            except TimeoutError as exc:
+                raise IdbCacheError(f"Memory admission timed out for {binary.name}: {exc}") from exc
+            except OSError as exc:
+                raise IdbCacheError(f"Memory admission sampling failed for {binary.name}: {exc}") from exc
+            gate_acquired = True
+        _prepare_database_files_for_warm(workspace, binary)
+        command = [str(ida_python_executable), str(worker_path), "run", "-binary", str(binary)]
+        if memory_gate is None:
+            command.extend(["-memory-limit-mib", str(DEFAULT_WORKER_MEMORY_LIMIT_MIB)])
+        else:
+            command.append("--disable-memory-limit")
+        try:
+            print(f"IDB warm worker start: binary={binary}; module={module}")
+            process = subprocess.Popen(command)
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise IdbCacheError(f"IDB warm worker could not start for {binary.name}: {exc}") from exc
+        try:
+            return_code = process.wait(timeout=worker_timeout_seconds)
+            reaped = True
+        except subprocess.TimeoutExpired as exc:
+            process.kill()
+            process.wait()
+            reaped = True
+            raise _worker_failure(
+                workspace,
+                binary,
+                f"IDB warm worker timed out after {worker_timeout_seconds:g}s for {binary.name}",
+            ) from exc
+        if return_code != 0:
+            raise _worker_failure(
+                workspace,
+                binary,
+                f"IDB warm worker failed with exit code {return_code} for {binary.name}",
+            )
+        try:
+            validate_database_file_set(binary)
+        except (OSError, ValueError) as exc:
+            raise _worker_failure(
+                workspace,
+                binary,
+                f"IDB warm worker produced an invalid database for {binary.name}: {exc}",
+            ) from exc
+        elapsed = time.monotonic() - started
+        print(f"IDB warm worker exit: binary={binary}; exit_code=0; wall_seconds={elapsed:.3f}")
+        return elapsed
+    except Exception as error:
+        if process is not None and not reaped:
+            try:
+                process.kill()
+                process.wait()
+                reaped = True
+            except (OSError, subprocess.SubprocessError) as reap_error:
+                raise IdbCacheError(
+                    f"Unable to confirm IDB warm worker exit for {binary.name} after error: {error}"
+                ) from reap_error
+            raise _worker_failure(
+                workspace,
+                binary,
+                f"IDB warm worker execution failed for {binary.name}: {error}",
+            ) from error
+        raise
+    finally:
+        if gate_acquired and (process is None or reaped):
+            memory_gate.worker_finished()
+
+
+def warm_group(
+    *,
     identity: dict,
     workspace_root: str | Path,
-    run_id: str,
-    attempt: int,
-    timeout_seconds: float,
-) -> dict:
-    identity = validate_cache_identity(identity)
+    ida_python_executable: str | Path,
+    max_concurrency: int | None = None,
+    worker_timeout_seconds: float = DEFAULT_WORKER_TIMEOUT_SECONDS,
+    producer_memory: ProducerMemoryOwner | None = None,
+    memory_admission_timeout_seconds: float = DEFAULT_MEMORY_ADMISSION_TIMEOUT_SECONDS,
+) -> None:
+    identity = validate_current_warm_identity(identity)
+    if not math.isfinite(worker_timeout_seconds) or worker_timeout_seconds <= 0:
+        raise IdbCacheError("worker_timeout_seconds must be positive and finite")
+    if not math.isfinite(memory_admission_timeout_seconds) or memory_admission_timeout_seconds <= 0:
+        raise IdbCacheError("memory_admission_timeout_seconds must be positive and finite")
+    concurrency = _resolved_max_concurrency(max_concurrency)
     workspace = _plain_root(workspace_root)
-    _remove_database_files(workspace, identity)
-    identity_fd, identity_name = tempfile.mkstemp(prefix="idb-warm-identity-", suffix=".json")
-    os.close(identity_fd)
-    identity_path = Path(identity_name)
-    observed_fd, observed_name = tempfile.mkstemp(prefix="idb-warm-observed-", suffix=".json")
-    os.close(observed_fd)
-    observed_path = Path(observed_name)
-    try:
-        write_canonical_json(identity_path, identity)
-        command = [
-            sys.executable,
-            str(Path(__file__).with_name("idb_warm_worker.py")),
-            "run",
-            "-identity",
-            str(Path(identity_path).resolve()),
-            "-workspace-root",
-            str(workspace),
-            "-output",
-            str(observed_path),
-        ]
-        with exclusive_file_lock(
-            warm_port_lock_path(persisted_root),
-            timeout_seconds=tag_lock_timeout_seconds(timeout_seconds),
-            description="IDA MCP warm worker port lock",
-        ):
-            try:
-                result = subprocess.run(command, check=False, timeout=timeout_seconds)
-            except subprocess.TimeoutExpired as exc:
-                _remove_database_files(workspace, identity)
-                raise IdbCacheError(f"Restricted IDB warm worker timed out after {timeout_seconds:g}s") from exc
-        if result.returncode != 0:
-            _remove_database_files(workspace, identity)
-            raise IdbCacheError(f"Restricted IDB warm worker failed with exit code {result.returncode}")
-        observed = load_json_object(observed_path)
-        if observed != identity["ida_runtime"]:
-            _remove_database_files(workspace, identity)
-            raise IdbCacheError("Warm worker observed runtime identity does not match expected identity")
-        return publish_generation(
-            persisted_root=persisted_root,
-            identity=identity,
-            workspace_root=workspace,
-            run_id=run_id,
-            attempt=attempt,
+    executable = validate_ida_python_executable(ida_python_executable)
+    worker = Path(__file__).with_name("idb_warm_worker.py").resolve(strict=True)
+    binaries = [_validated_worker_binary(workspace, record) for record in identity["binaries"]]
+    observed_version = probe_ida_kernel_version(executable)
+    expected_version = identity["ida_runtime"]["kernel_version"]
+    if observed_version != expected_version:
+        raise IdbCacheError(
+            f"IDA kernel version mismatch: expected {expected_version!r}, observed {observed_version!r}"
         )
+
+    owner = producer_memory or producer_memory_owner_from_environment()
+    if owner.budget_bytes is None:
+        print("IDB warm aggregate memory controls disabled; using per-worker memory limits")
+    memory_gate = owner.begin_group()
+    failures = []
+    warmed = 0
+    try:
+        print(
+            f"IDB warm group start: tag={identity['tag']}; platform={identity['binaries'][0]['platform']}; "
+            f"binaries={len(binaries)}; max_concurrency={concurrency}; ida_python={executable}; "
+            f"kernel_version={observed_version}"
+        )
+        with ThreadPoolExecutor(max_workers=concurrency) as pool:
+            futures = {
+                pool.submit(
+                    _run_one_worker,
+                    workspace=workspace,
+                    binary=binary,
+                    ida_python_executable=executable,
+                    worker_path=worker,
+                    worker_timeout_seconds=worker_timeout_seconds,
+                    memory_gate=memory_gate,
+                    memory_admission_timeout_seconds=memory_admission_timeout_seconds,
+                ): binary
+                for binary in binaries
+            }
+            for future in as_completed(futures):
+                binary = futures[future]
+                try:
+                    elapsed = future.result()
+                except Exception as exc:
+                    failures.append(f"{binary.name}: {exc}")
+                    print(f"IDB warm worker failed: binary={binary}; error={exc}")
+                else:
+                    warmed += 1
+                    print(f"IDB warm worker completed: binary={binary}; wall_seconds={elapsed:.3f}")
     finally:
-        for temporary_path in (identity_path, observed_path):
-            try:
-                temporary_path.unlink(missing_ok=True)
-            except OSError:
-                pass
+        owner.end_group(memory_gate)
+    print(f"IDB warm group complete: warmed={warmed}; failed={len(failures)}; skipped=0")
+    if failures:
+        raise IdbCacheError(f"IDB warm group failed ({len(failures)} worker(s)): {' | '.join(failures)}")
 
 
 def prune_tag(
@@ -835,7 +1049,13 @@ def _parser() -> argparse.ArgumentParser:
     warm.add_argument("-workspace-root", required=True)
     warm.add_argument("-run-id", required=True)
     warm.add_argument("-attempt", required=True, type=int)
-    warm.add_argument("-timeout-seconds", type=float, default=3600.0)
+    warm.add_argument("--ida-python", required=True)
+    warm.add_argument("--max-concurrency", type=int)
+    warm.add_argument(
+        "--worker-timeout-seconds",
+        type=float,
+        default=DEFAULT_WORKER_TIMEOUT_SECONDS,
+    )
     publish = commands.add_parser("publish")
     publish.add_argument("-persisted-root", required=True)
     publish.add_argument("-identity", required=True)
@@ -873,16 +1093,6 @@ def _locked_command(args, document: dict | None) -> int:
         if selection is None:
             return 3
         write_canonical_json(args.output, selection)
-    elif args.command == "warm":
-        selection = warm_and_publish(
-            persisted_root=args.persisted_root,
-            identity=document,
-            workspace_root=args.workspace_root,
-            run_id=args.run_id,
-            attempt=args.attempt,
-            timeout_seconds=args.timeout_seconds,
-        )
-        print(json.dumps(selection, sort_keys=True))
     elif args.command == "publish":
         selection = publish_generation(
             persisted_root=args.persisted_root,
@@ -915,13 +1125,44 @@ def main(argv: list[str] | None = None) -> int:
                 selection=document,
             )
             return 0
-        timeout_seconds = (
-            tag_lock_timeout_seconds(args.timeout_seconds)
-            if args.command == "warm"
-            else DEFAULT_TAG_LOCK_TIMEOUT_SECONDS
-        )
         tag = document["tag"] if document is not None else args.tag
-        with tag_lock(args.persisted_root, tag, timeout_seconds=timeout_seconds):
+        if args.command == "warm":
+            producer_lock_started = time.monotonic()
+            with producer_lock(args.persisted_root, timeout_seconds=None):
+                print(f"IDB cache producer lock acquired: wait_seconds={time.monotonic() - producer_lock_started:.3f}")
+                with tag_lock(args.persisted_root, tag, timeout_seconds=None):
+                    selection = probe_generation(persisted_root=args.persisted_root, identity=document)
+                if selection is None:
+                    warm_group(
+                        identity=document,
+                        workspace_root=args.workspace_root,
+                        ida_python_executable=args.ida_python,
+                        max_concurrency=args.max_concurrency,
+                        worker_timeout_seconds=args.worker_timeout_seconds,
+                    )
+                    with tag_lock(args.persisted_root, tag, timeout_seconds=None):
+                        selection = probe_generation(persisted_root=args.persisted_root, identity=document)
+                        if selection is None:
+                            selection = publish_generation(
+                                persisted_root=args.persisted_root,
+                                identity=document,
+                                workspace_root=args.workspace_root,
+                                run_id=args.run_id,
+                                attempt=args.attempt,
+                            )
+                        verify_selection(persisted_root=args.persisted_root, selection=selection)
+                        prune_tag(persisted_root=args.persisted_root, tag=tag)
+                else:
+                    with tag_lock(args.persisted_root, tag, timeout_seconds=None):
+                        verify_selection(persisted_root=args.persisted_root, selection=selection)
+                        prune_tag(persisted_root=args.persisted_root, tag=tag)
+                print(json.dumps(selection, sort_keys=True))
+                return 0
+        if args.command in {"publish", "prune"}:
+            with producer_lock(args.persisted_root, timeout_seconds=None):
+                with tag_lock(args.persisted_root, tag, timeout_seconds=None):
+                    return _locked_command(args, document)
+        with tag_lock(args.persisted_root, tag, timeout_seconds=None):
             return _locked_command(args, document)
     except (IdbCacheError, OSError, ValueError) as exc:
         print(f"Error: {exc}")

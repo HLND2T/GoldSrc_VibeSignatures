@@ -35,24 +35,27 @@ CLI 参数、环境变量、程序默认值。关键变量：
 
 ## IDB cache host 要求
 
-Warm-cache runtime probe 要求专用 runner 提供带 `idapro` 的 `python`、`idalib-mcp` 与 `IDADIR`。Python
-executable 必须与 `idalib-mcp` 位于同一目录，或拥有包含后者的 `Scripts` 目录。CI 使用该 exact Python
-installation 调用 `idaapi.get_kernel_version()`，并通过 `IDADIR` 绑定 pinned loader module 与 allowlisted
-plugin。Cache CLI 接收显式 persisted root；CI 后续只会在受保护的专用 Windows runner job 内将其注入为
+Warm production 要求专用 runner 提供一个带 `idapro` 的 canonical Python executable。CI 用它调用 canonical
+`idb_warm_worker.py --print-ida-version`，并用同一 executable 启动每个裸 idalib worker。Consumer analysis 仍要求
+`idalib-mcp` 与 `IDADIR`，但 MCP executable 和 IDA installation path 不再参与新的 cache identity。Cache CLI 接收
+显式 persisted root；CI 后续只会在受保护的专用 Windows runner job 内将其注入为
 `PERSISTED_WORKSPACE`。该 root 必须位于 checkout 与 `bin/` 之外，不得经过 reparse point，并且所在存储必须
 支持同文件系统 atomic rename。
 
 Runner account 需要对 cache root 拥有独占写权限。Cache warming 在调度层通过 repository-wide `idb-warmup-*`
-concurrency group 保证单并发，每个 tag 的 publish/restore/prune 再由
-`<PERSISTED_WORKSPACE>/idb-cache/.locks/<tag>.lock` 串行；固定 MCP port 另有独立本地 file lock。Byte-range lock
-必须在两个独立 runner 进程间具备互斥语义，而不是仅在同进程线程间生效。只有所有 consumer 共享同一受控 storage
+concurrency group 保证单并发。所有 official/direct producer 还共用
+`<PERSISTED_WORKSPACE>/idb-cache/.locks/producer.lock`；短 tag lock 串行 persisted probe/publish/prune 与 exact
+restore，而每 binary 一个裸 idalib worker 的 warm 在 tag lock 外执行。Byte-range lock 必须在两个独立 runner
+进程间具备互斥语义，而不是仅在同进程线程间生效。只有所有 consumer 共享同一受控 storage
 与 ACL authority 时才能共享 cache；Actions artifact 是 evidence/selection transport，`READY.json` 是 probe hint，
 都不是 cache transport 或 truth source。
 
 官方 analysis 无条件使用 warm cache，不再读取 `GSVIBE_IDB_CACHE_MODE`。真实 runner 与 storage evidence 完成前，
 不要启用或触发这些 workflow。不再需要人工维护 IDA version variable。Absolute persisted path 作为 Environment
-secret `PERSISTED_WORKSPACE` 保存。Opened runtime 必须与动态探测得到的 kernel、loader、plugin identity 一致后
-才能 publication，因此 PATH 或 installation drift 会 fail closed，不会使用过期配置版本选择 cache。
+secret `PERSISTED_WORKSPACE` 保存。`IDB_WARMUP_MAX_CONCURRENCY` 限制 worker（默认 `2`），可选
+`IDB_WARMUP_MAX_MEMORY_MIB` 启用聚合 Windows Job admission。新 identity 的 `ida_runtime` 只绑定动态探测到的非空
+kernel version；binary identity 与 canonical worker contract 仍独立绑定。Producer 启动 worker 前会用同一 executable
+再次探测版本，不匹配即 fail closed。
 
 ## Release runner 与 GitHub governance 要求
 

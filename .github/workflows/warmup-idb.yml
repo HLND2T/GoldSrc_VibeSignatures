@@ -61,6 +61,8 @@ jobs:
       PLAN_ARTIFACT_NAME: ${{ inputs.plan_artifact_name }}
       PLAN_SHA256: ${{ inputs.plan_sha256 }}
       SUBMODULE_CACHE_VERSION: v1
+      IDB_WARMUP_MAX_CONCURRENCY: ${{ vars.IDB_WARMUP_MAX_CONCURRENCY || '2' }}
+      IDB_WARMUP_MAX_MEMORY_MIB: ${{ vars.IDB_WARMUP_MAX_MEMORY_MIB }}
     steps:
       - name: Validate producer inputs
         shell: pwsh
@@ -149,19 +151,18 @@ jobs:
       - name: Resolve IDA interpreter identity
         shell: pwsh
         run: |
-          $pythonExe = (Get-Command python -ErrorAction SilentlyContinue).Source
-          $idalibMcpExe = (Get-Command idalib-mcp -ErrorAction SilentlyContinue).Source
-          if ([string]::IsNullOrWhiteSpace($pythonExe) -or [string]::IsNullOrWhiteSpace($idalibMcpExe)) {
-            throw 'python with idalib and idalib-mcp must both be available on PATH'
-          }
-          $probe = Join-Path $env:GITHUB_WORKSPACE 'ida_runtime_probe.py'
-          $idaVersionOutput = & $pythonExe $probe --idalib-mcp $idalibMcpExe
+          $pythonCommand = (Get-Command python -ErrorAction SilentlyContinue).Source
+          if ([string]::IsNullOrWhiteSpace($pythonCommand)) { throw 'python with idalib must be available on PATH' }
+          $pythonExe = (Resolve-Path -LiteralPath $pythonCommand).Path
+          if (-not (Test-Path -LiteralPath $pythonExe -PathType Leaf)) { throw 'IDA Python must resolve to a file' }
+          $worker = Join-Path $env:GITHUB_WORKSPACE 'idb_warm_worker.py'
+          $idaVersionOutput = & $pythonExe $worker --print-ida-version
           $probeExitCode = $LASTEXITCODE
           $idaVersion = (@($idaVersionOutput) -join "`n").Trim()
           if ($probeExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($idaVersion)) {
-            throw 'Failed to resolve the IDA kernel version from the idalib-mcp installation'
+            throw 'Failed to resolve the IDA kernel version from the IDA Python executable'
           }
-          if ([string]::IsNullOrWhiteSpace($env:IDADIR)) { throw 'IDADIR is required for warm cache production' }
+          "IDA_PYTHON_EXE=$pythonExe" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "IDA_KERNEL_VERSION=$idaVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "CACHE_BUNDLE=$(Join-Path $env:RUNNER_TEMP 'idb-cache-selection')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Download the bound plan
@@ -189,14 +190,17 @@ jobs:
           if ($env:SCOPE -eq 'release-all') {
             uv run python idb_cache_release.py prepare `
               -repo-root $env:GITHUB_WORKSPACE -bindir bin -persisted-root $env:PERSISTED_WORKSPACE `
-              -ida-root $env:IDADIR -kernel-version $env:IDA_KERNEL_VERSION -source-sha $env:SOURCE_SHA `
+              -kernel-version $env:IDA_KERNEL_VERSION --ida-python $env:IDA_PYTHON_EXE `
+              --max-concurrency $env:IDB_WARMUP_MAX_CONCURRENCY --worker-timeout-seconds 1800 `
+              -source-sha $env:SOURCE_SHA `
               -run-id "${{ github.run_id }}" -attempt "${{ github.run_attempt }}" `
               -output $selection -output-sha256 $selectionSha
           } else {
             uv run python idb_cache_workflow.py prepare `
               -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $env:CACHE_BUNDLE 'plan.json') -merge-ref HEAD -bindir bin `
-              -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR `
-              -kernel-version $env:IDA_KERNEL_VERSION -run-id "${{ github.run_id }}" `
+              -persisted-root $env:PERSISTED_WORKSPACE -kernel-version $env:IDA_KERNEL_VERSION `
+              --ida-python $env:IDA_PYTHON_EXE --max-concurrency $env:IDB_WARMUP_MAX_CONCURRENCY `
+              --worker-timeout-seconds 1800 -run-id "${{ github.run_id }}" `
               -attempt "${{ github.run_attempt }}" -output $selection -output-sha256 $selectionSha
           }
           if ($LASTEXITCODE -ne 0) { throw 'warm IDB cache preparation failed' }
@@ -209,12 +213,12 @@ jobs:
           if ($env:SCOPE -eq 'release-all') {
             uv run python idb_cache_release.py verify `
               -repo-root $env:GITHUB_WORKSPACE -bindir bin -persisted-root $env:PERSISTED_WORKSPACE `
-              -ida-root $env:IDADIR -kernel-version $env:IDA_KERNEL_VERSION -source-sha $env:SOURCE_SHA `
+              -kernel-version $env:IDA_KERNEL_VERSION -source-sha $env:SOURCE_SHA `
               -selection $selection -selection-sha256 $selectionSha
           } else {
             uv run python idb_cache_workflow.py verify `
               -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $env:CACHE_BUNDLE 'plan.json') -merge-ref HEAD -bindir bin `
-              -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR `
+              -persisted-root $env:PERSISTED_WORKSPACE `
               -kernel-version $env:IDA_KERNEL_VERSION -selection $selection -selection-sha256 $selectionSha
           }
           if ($LASTEXITCODE -ne 0) { throw 'warm IDB cache selection verification failed' }

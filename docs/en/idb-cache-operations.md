@@ -5,10 +5,11 @@
 ## Activation checklist
 
 Do not enable or dispatch official analysis until the dedicated Windows runner, protected `win64` Environment,
-outside-checkout persisted root, ACL owner, atomic rename storage, and `IDADIR` are verified. Official analysis is always
-a strict warm consumer; there is no cold bypass. Confirm that `python` with `idapro` and `idalib-mcp` resolve to the same
-installation; CI dynamically reads its kernel version. The persisted root must not contain the checkout or be contained
-by it, and neither its path nor root may traverse a link or reparse point.
+outside-checkout persisted root, ACL owner, atomic rename storage, and consumer `IDADIR` are verified. Official analysis
+is always a strict warm consumer; there is no cold bypass. The producer resolves one canonical Python executable with
+`idapro`, uses `idb_warm_worker.py --print-ida-version` to identify it, and launches every bare-idalib worker with that
+same executable. Consumer analysis still requires `idalib-mcp`. The persisted root must not overlap the checkout, and
+neither its path nor root may traverse a link or reparse point.
 
 Splitting the producer into its own job additionally requires cross-runner evidence: every eligible runner resolves
 `PERSISTED_WORKSPACE` to the same controlled storage, a generation published on runner A verifies on runner B, that
@@ -19,20 +20,22 @@ workflows disabled; merging the workflow YAML is not activation.
 Capture, in order: one split-job warm miss that publishes generations; a later warm hit whose consumer runs on a
 different runner; a run where READY advances between producer and consumer yet the exact restore
 still succeeds; two release versions dispatched together where the second producer queues; a source PR and a release
-requesting warmup together with still only one producer running; a cancelled/timed-out producer after which no
-half-written generation is ever selected; a corrupt generation or selection failing closed; and a failed build whose
-workspace cleanup leaves the persisted generations intact. Record run URL/attempt, runner identity, source and bin SHAs,
-plan and selection SHA-256, cache key, generation, manifest hash, and wall times.
+requesting warmup together with still only one producer running; a two-worker cache miss that is faster than the serial
+baseline; a worker failure/timeout that is reaped before only its own database files and stale `.id0` are removed while
+siblings finish; memory-budget rejection and finite admission timeout; a corrupt generation or selection failing closed;
+and a failed build whose workspace cleanup leaves persisted generations intact. Record run URL/attempt, runner identity,
+source and bin SHAs, plan and selection SHA-256, cache key, generation, manifest hash, worker counts, and wall times.
 
 ## Normal operation
 
 Warm production runs in the reusable `warmup-idb` job. Every official producer — release and source PR alike — shares
 the single job-level concurrency group `idb-warmup-<owner>/<repo>` with `cancel-in-progress: false`, so the scheduler
-allows one persisted IDB cache writer per repository at a time. Within a producer, each tag's
-`probe -> warm/publish -> verify -> selection -> prune` runs under
-`<PERSISTED_WORKSPACE>/idb-cache/.locks/<tag>.lock`; consumers hold the same lock across `verify -> restore` so a
-concurrent prune cannot delete a generation that was already selected. A lock is held by an open handle, never by the
-lock file existing.
+allows one official producer per repository at a time. Official and direct producers also hold the shared
+`<PERSISTED_WORKSPACE>/idb-cache/.locks/producer.lock`. Each miss is probed under a short tag lock, warmed outside that
+lock by one bare-idalib process per binary, and then re-probed/published/verified/pruned after reacquiring the tag lock.
+`IDB_WARMUP_MAX_CONCURRENCY` defaults to `2`; optional `IDB_WARMUP_MAX_MEMORY_MIB` enables process-tree Job memory
+admission. Consumers hold only the tag lock across `verify -> restore`, so they can restore while another producer warms
+but cannot race its publish/prune. A lock is held by an open handle, never by the lock file existing.
 
 A miss publishes a new immutable generation; a hit verifies the exact generation before selection. Hit and miss produce
 byte-identical selection entries. `cache-selection.json` is evidence and selection transport, not IDB payload transport.
@@ -48,9 +51,10 @@ uses `cleanup-legacy-accepted-yaml --cutover-id <id>`: it first verifies this bi
 exact inventoried backup under `accepted-bin/legacy-yaml-backups/` before deleting the locked YAML inventory. Do not
 hand-copy or hand-delete the accepted tree.
 
-Run `uv run python idb_cache.py prune -persisted-root <root> -tag <tag>` only under the same runner authority. Every
-mutating `idb_cache.py` subcommand (`probe`, `warm`, `publish`, `restore`, `prune`) acquires the tag lock itself, so a
-direct CLI invocation cannot bypass the authority; only `verify` is lock-free because it is read-only. Prune keeps
+Run `uv run python idb_cache.py prune -persisted-root <root> -tag <tag>` only under the same runner authority. Direct
+`warm`, `publish`, and `prune` commands acquire the producer lock as well as the relevant short tag lock; `restore` and
+`probe` acquire the tag lock, while read-only `verify` is lock-free. Direct warm requires `--ida-python`, accepts
+`--max-concurrency`, and uses `--worker-timeout-seconds` only for worker execution. Prune keeps
 READY and the newest three valid generations, honors the minimum age, and only visits that tag. Retired tags require an
 offline maintenance window: stop new IDA jobs, acquire the tag authority, move the exact tag directory to recoverable
 operator trash, record its inventory and reason, then delete it only after the in-flight retention window expires.
@@ -66,3 +70,8 @@ A failed producer, a cancelled producer, or a selection artifact that cannot be 
 is deliberate fail-closed behaviour bought by exact binding: recovery is a new run, never a consumer-side re-probe.
 Report IDB cache restore success and full business analysis success separately — a healthy restore does not excuse a
 later analysis or Skill failure.
+
+Worker failure never publishes a partial group. Pending and running siblings are allowed to finish; a failed or timed-out
+worker is killed and reaped before its own complete database set (including stale lock files) is invalidated. Startup
+`.id0` files remain fail-closed because they may belong to an active process. Cleanup retries only Windows sharing
+violations and reports any residual paths without replacing the original worker error.

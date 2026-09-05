@@ -16,26 +16,50 @@ tags:
 Warm IDB cache is a rebuildable performance layer for neutral databases created after loader/auto-analysis and before any project finder, Preprocessor, or Agent mutation. It is never analysis or release truth.
 
 ## Responsibilities
-
-- Bind binary path/size/SHA-256, IDA kernel/processor/bitness/file type, loader module digest, allowlisted plugin digests, normalized IDA arguments, and warm-worker source contract.
+- Bind binary path/size/SHA-256, the non-empty IDA kernel version, an empty compatibility-only `normalized_ida_args`, and the canonical three-file warm-worker source contract.
+- Preserve exact schema-1 reads for legacy seven-field runtime identities and non-empty historical IDA arguments without projecting or rewriting them.
+- Warm one binary per bare-idalib process with bounded group concurrency and optional aggregate Windows Job memory admission.
 - Publish immutable generations through verified `.incoming-*` directories and atomic rename.
 - Record the complete allowed `.i64`/`.idb` primary and side-file inventory; never publish active lock files.
 - Restore only an exact generation selected by cache key and manifest SHA-256.
 - Retain READY plus the newest three generations, with minimum-age protection for other generations.
 
+## Involved Files & Symbols
+
+- `idb_warm_worker.py` — `ida_kernel_version()`, `warm_binary()`
+- `idb_cache.py` — `warm_group()`, `_run_one_worker()`, `publish_generation()`
+- `ida_database_paths.py` — `database_cleanup_paths()`
+- `idb_cache_locks.py` — `producer_lock()`, `tag_lock()`, `exclusive_file_lock()`
+- `idb_cache_selection.py` — `prepare_selection_entries()`, `restore_selection_entries()`
+- `warmup_memory.py` — `ProducerMemoryOwner`, `MemoryLaunchGate`, `WindowsJobMemoryController`
+- `idb_cache_release.py` / `idb_cache_workflow.py` — release-all and bound-plan producers/consumers
+- `.github/workflows/warmup-idb.yml` — canonical IDA Python binding and producer configuration
+
 ## Architecture
+`ida_database_paths.py` owns the primary/side/lock and complete failure-cleanup path contract. `idb_warm_worker.py` is the only worker executable: it imports `idapro` only inside `--print-ida-version` or `run -binary`, then uses bare idalib to open, wait for analysis, save, and close one database. `auto_wait()` false is a failure and never saves.
 
-`ida_database_paths.py` is the shared primary/side/lock path contract. `idb_cache.py` owns schema-1 identity, key, manifest, READY, publish, probe, verify, restore, and prune behavior. `idb_cache_locks.py` owns the cross-process tag lock and the fixed MCP-port lock; `idb_cache_selection.py` owns the canonical entry shape, coverage/identity validation, SHA-256 evidence files, the locked probe/warm/publish path, and the locked exact restore. `ida_runtime_probe.py` dynamically reads `idaapi.get_kernel_version()` through the runner Python installation and rejects an `idalib-mcp` executable outside that Python directory or its `Scripts` directory. `idb_cache.py` derives and holds the runner-local MCP port lock before launching the bounded `idb_warm_worker.py` subprocess, which observes runtime identity through the opened IDA session and saves a neutral database without dispatching project finder/Agent logic.
+`idb_cache.py` owns schema-1 identity, key, manifest, READY, concurrent `warm_group`, publish, probe, verify, restore, and prune. It binds every worker and the version probe to one validated IDA Python executable, uses `ThreadPoolExecutor` for per-binary processes, and requires every process to exit successfully with a valid database set before publication. Worker timeout is explicit `kill -> wait -> owned-file invalidation`; siblings are not cancelled.
 
-`write_canonical_json()` writes a UUID-named temporary file and retries Windows WinError 5/32 with bounded jitter before `os.replace`, treating an already-matching target as success. `READY.json` is only a discovery hint and its writes are idempotent. Once selected, a consumer carries exact `generation + cache_key + manifest_sha256`; later READY changes cannot redirect that run.
+`idb_cache_locks.py` owns a repository-wide producer-only SMB byte-range lock plus per-tag locks. High-level production is `short locked probe -> unlocked warm -> short locked re-probe/optional publish/verify/prune`; consumers retain `locked exact verify -> restore`. Only explicit lock contention is polled indefinitely. Storage, permission, handle, and unknown I/O errors fail closed.
 
+`warmup_memory.py` owns the optional process-level Windows Job controller. The first miss binds at most one controller per producer process, every miss group takes a fresh baseline and launch gate, and the bound Job handle remains strongly owned until process exit.
 ## Strict consumer
 
 `IdaMcpLifecycle(database_policy="restored_strict", save_on_success=False)` requires an existing restored database. Identity mismatch fails without invalidation or cold rebuild. Successful selected-node changes are not saved back, so the immutable generation remains neutral.
 
 ## Workflow integration
+The schema-2 trusted PR plan carries the invariant evidence field `cache_mode=warm`; it is not user-selectable. Every official analysis route uses the reusable `warmup-idb.yml` producer. The workflow canonicalizes one PATH-resolved IDA Python executable, obtains its kernel version through `idb_warm_worker.py --print-ida-version`, and passes that executable to release-all or bound-plan preparation. The producer no longer requires `idalib-mcp` or `IDADIR`; strict consumers still use [[idalib-mcp]] for analysis.
 
-The schema-2 trusted PR plan carries the invariant evidence field `cache_mode=warm`; it is not a user-selectable or repository-configurable mode. Every official analysis route splits producer from consumer through the reusable `warmup-idb.yml` job. The producer checks out the exact source in its own workspace, probes or warms under per-tag and MCP-port locks, and uploads canonical `cache-selection.json` plus its SHA-256. The consumer downloads that exact selection, verifies it against its own checkout and pinned runtime, restores the exact generations under the tag lock, and runs strict no-save analysis. The release build uses the same producer (`scope: release-all`) and a structurally identical consumer. Every official producer shares one repository-wide concurrency group (`idb-warmup-${{ github.repository }}`, `cancel-in-progress: false`). Verify/restore never re-read READY. A failed, cancelled, or skipped producer blocks analysis; there is no cold or consumer-side rebuild fallback. Release-all may materialize the binary-only accepted cache under `accepted-bin/locks/<gamever>.lock`; analysis YAML is excluded and artifact content intentionally does not participate in IDB cache identity.
+Official producers share the repository-wide Actions concurrency group (`idb-warmup-${{ github.repository }}`, `cancel-in-progress: false`). Official and direct producers also share persisted `idb-cache/.locks/producer.lock`, so a bypass invocation cannot overlap the official producer. Verify/restore never re-read READY. A failed, cancelled, or skipped producer blocks analysis; there is no cold or consumer-side rebuild fallback.
+
+## Concurrent bare-idalib warmup
+
+- **Trigger signal:** A cache-miss group contains several binaries and wall time scales as their serial sum, or a fixed MCP port lock prevents overlapping workers.
+- **Root cause / constraints:** idalib owns one open database per process. MCP-port serialization is unnecessary for neutral warming, but immutable group publication, exact selection, producer/tag lock authority, worker ownership, and stale `.id0` safety must remain fail-closed.
+- **Correct approach:** Run one canonical bare-idalib worker per binary, bound to the same probed IDA Python executable. Bound concurrency with `IDB_WARMUP_MAX_CONCURRENCY` (default 2). When `IDB_WARMUP_MAX_MEMORY_MIB` is configured, admit through a finite per-task deadline on a reused process-level Job controller; otherwise retain each worker's own memory limit.
+- **Failure authority:** Admission, preflight, and spawn failures do not grant failed-worker cleanup authority. After an actual worker starts, only its producer owner may invalidate `database_cleanup_paths()` and only after confirmed process exit. Startup `.id0` remains an active-lock signal. Windows WinError 5/32 deletion retries are bounded.
+- **Verification:** Unit tests cover `auto_wait=False`, explicit IDA executable binding, max concurrency, sibling isolation, timeout kill/wait-before-cleanup, stale lock cleanup, transient delete retry, producer/tag lock boundaries, legacy identity reads, and controller reuse. Production activation additionally requires real Windows Job, throughput, and cross-runner SMB3 evidence.
+- **Scope:** This changes only producer warming and shared cache identity construction. Consumer `IdaMcpLifecycle(database_policy="restored_strict", save_on_success=False)`, immutable generation payloads, exact restore, and group granularity remain unchanged.
 
 ## Cache group granularity and cross-scope reuse
 
@@ -66,9 +90,10 @@ Observed example on 2026-09-01:
 The current behavior is correct for the implemented immutable group identity but may duplicate work across scopes. Improving reuse requires an explicit design change: either publish one independent generation per binary, or make bound-plan warm the complete release group whenever it selects any module/platform member. The former improves composability but expands selection/locking/restore contracts; the latter preserves existing contracts but deliberately warms binaries outside the immediate PR plan. See [[Release bundle publication and recovery]] for the release consumer boundary.
 
 ## Failure and recovery
+A version mismatch, active startup lock, memory admission failure, worker timeout/failure, invalid database set, or partial cleanup publishes nothing for that group. Pending/running siblings finish; successful sibling databases remain available for retry. A started worker is killed and waited before only its own complete database set, including stale `.id0`, may be invalidated. Cleanup residue is appended to the original failure instead of replacing it.
 
-A warm timeout, worker failure, observed-runtime mismatch, active lock, or partial database removes the current incomplete workspace database and publishes nothing. A corrupt generation is never repaired in place. Probe may rebuild a damaged READY pointer only from a fully verified immutable generation.
-
+A corrupt generation is never repaired in place. Probe may rebuild a damaged READY pointer only from a fully verified immutable generation. Hard producer termination relies on the aggregate Job to reap descendants when enabled, but does not claim that workspace database cleanup completed.
 ## Verification
+Repository tests cover kernel-only/current and seven-field/legacy identity validation, cache-key separation, canonical worker contract binding, exact generation publication/restore/prune, per-binary concurrency limits, `auto_wait()` false/exception behavior, worker exit and file-set checks, failure isolation, timeout kill/wait ordering, stale `.id0` invalidation, Windows sharing-violation retry, producer/tag lock scopes, LockFileEx interoperability with the former `msvcrt` byte range, finite memory admission, and process-level controller reuse.
 
-Tests cover key sensitivity, PE32/ELF32 loader identity, both primary suffixes and side files, active locks (including a real cross-process probe), atomic JSON replacement retry/cleanup, idempotence, exact-selection restore after READY changes, release selection source/bin binding, manifest/binary/DB tampering, symlink/reparse rejection, retention, timeout/runtime mismatch cleanup, and strict lifecycle no-rebuild/no-save behavior.
+A local real-IDA 9.3 smoke validated one generated `client.dll.i64`; a two-binary run measured 49.234s serial versus 24.640s at concurrency 2 (2.00x), with every worker and database-set validation succeeding. Production real-runner acceptance remains separate: inject a worker failure and timeout, exercise aggregate Job memory across two miss groups in an isolated producer process, and prove on distinct SMB3 runners that consumer restore overlaps workspace warm while publish/prune remains mutually exclusive with exact restore.

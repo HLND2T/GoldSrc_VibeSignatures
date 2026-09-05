@@ -326,7 +326,7 @@ jobs:
           }
           uv run python idb_cache_workflow.py verify `
             -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $bundle 'plan.json') -merge-ref HEAD -bindir bin `
-            -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR `
+            -persisted-root $env:PERSISTED_WORKSPACE `
             -kernel-version $env:IDA_KERNEL_VERSION -selection (Join-Path $bundle 'cache-selection.json') `
             -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
           if ($LASTEXITCODE -ne 0) { throw 'warm cache selection verification failed' }
@@ -338,7 +338,7 @@ jobs:
           $bundle = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'
           uv run python idb_cache_workflow.py restore `
             -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $bundle 'plan.json') -merge-ref HEAD -bindir bin `
-            -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR `
+            -persisted-root $env:PERSISTED_WORKSPACE `
             -kernel-version $env:IDA_KERNEL_VERSION -selection (Join-Path $bundle 'cache-selection.json') `
             -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
           if ($LASTEXITCODE -ne 0) { throw 'warm cache restore failed' }

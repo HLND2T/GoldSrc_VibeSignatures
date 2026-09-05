@@ -73,10 +73,10 @@ module/platform/skill 继续，但 config 与 DAG contract 错误仍立即失败
 
 ## Warm IDB cache 边界
 
-`idb_cache.py` 为中性 IDA database 提供 local immutable-generation cache。Schema-1 key 绑定 exact binary
-path/bytes、observed IDA kernel/processor/bitness/file type、pinned loader 与 allowlisted plugin digest、normalized
-IDA arguments，以及 warm-worker source contract。Generation 保存 exact cached binary 与完整允许的 `.i64`/`.idb`
-primary/side-file inventory；active lock file 一律拒绝。
+`idb_cache.py` 为中性 IDA database 提供 local immutable-generation cache。新的 schema-1 key 绑定 exact binary
+path/bytes、IDA kernel version 与 canonical warm-worker source contract。`normalized_ida_args` 保留为空的兼容字段；
+reader 仍按原始字段校验包含旧完整 runtime 与非空参数的 schema-1 identity，不投影或改写。Generation 保存 exact
+cached binary 与完整允许的 `.i64`/`.idb` primary/side-file inventory；active lock file 一律拒绝。
 
 Publication 会先验证 incoming tree，再 atomic rename，最后更新 `READY.json`。READY 只是 probe hint，不是 consumer
 authority；restore 始终绑定 exact generation、key 与 manifest SHA-256。READY 写入是幂等的——canonical bytes 相同
@@ -86,16 +86,20 @@ authority；restore 始终绑定 exact generation、key 与 manifest SHA-256。R
 restored database，并可禁用 success save，确保 selected-node 修改不回流 immutable generation。
 
 Selection primitive 是共享的。`idb_cache_selection.py` 负责 canonical entry shape、coverage/identity 校验、
-SHA-256 evidence 文件、带锁的 probe/warm/publish 路径与带锁的 exact restore；PR 与 release workflow 各自构建顶层
-document（`plan_sha256`/`merge_sha` vs `source_sha`/`bin_commit`），但 generation contract 不会漂移。
-`idb_cache_locks.py` 负责跨进程 tag lock——publisher、pruner、restorer 与直接调用 `idb_cache.py` CLI 都会取得它，
-因此任何路径都无法绕过 high-level authority。
+SHA-256 evidence 文件、短锁 probe/finalize、锁外 workspace warm 与带锁 exact restore；PR 与 release workflow 各自
+构建顶层 document（`plan_sha256`/`merge_sha` vs `source_sha`/`bin_commit`），但 generation contract 不会漂移。
+`idb_cache_locks.py` 负责跨进程 producer/tag lock；只有明确 contention 才无限轮询，storage、permission、handle 与
+未知 I/O 故障立即失败。
 
 Trusted PR plan 携带固定证据字段 `cache_mode=warm`。所有 analysis 路由都把 producer 拆到 reusable
 `warmup-idb` job，`analyze-self-hosted` 变成纯 consumer：下载 canonical selection、对照自身 checkout 与 pinned
 runtime 验证、在 tag lock 下 restore exact generation、再执行 strict selected-node analysis。Release build 使用同一
 producer（`scope: release-all`）和结构一致的 consumer，不存在 analysis 侧 rebuild/save 路由。Repository-level
-Actions concurrency group 串行化唯一的官方 producer，runner-local file lock 保护固定 MCP port。
+Actions concurrency group 串行化唯一官方 producer，persisted producer-only SMB lock 还会排除 direct producer。
+Miss 使用 canonical Python executable 探测 IDA version，再通过 bounded `ThreadPoolExecutor` 按每 binary 一个裸
+idalib process 并发执行，不使用 MCP port。Worker timeout 遵守 kill/wait 后清理；失败只影响其 owned database set，
+sibling 继续完成，任一失败都会禁止 group publication。可选聚合 memory admission 在跨 group 的单一进程级 Windows
+Job controller 上，为每组重新采样 baseline 并创建 gate。
 
 ## Reporter 与调度
 
