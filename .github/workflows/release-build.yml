@@ -104,6 +104,8 @@ jobs:
       GSVIBE_LLM_EFFORT: ${{ secrets.GSVIBE_LLM_EFFORT }}
       GSVIBE_LLM_MODEL: ${{ secrets.GSVIBE_LLM_MODEL || 'gpt-4o' }}
       GSVIBE_LLM_TEMPERATURE: ${{ secrets.GSVIBE_LLM_TEMPERATURE }}
+      GSVIBE_ANALYSIS_MAX_CONCURRENCY: ${{ vars.GSVIBE_ANALYSIS_MAX_CONCURRENCY || '1' }}
+      GSVIBE_ANALYSIS_MAX_MEMORY_MIB: ${{ vars.GSVIBE_ANALYSIS_MAX_MEMORY_MIB }}
     steps:
       - name: Checkout exact source and bin gitlink
         uses: actions/checkout@v5
