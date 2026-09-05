@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import unittest
+import unittest.mock
 from pathlib import Path
 
 from analysis_batch import (
@@ -295,7 +297,6 @@ class SchedulerTests(unittest.TestCase):
         self.clock[0] += seconds
 
     def _launch(self, process, payload):
-        import json
         import tempfile
 
         handle = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8")
@@ -473,3 +474,192 @@ class SchedulerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class InternalWorkerEntryTests(unittest.TestCase):
+    def setUp(self):
+        import tempfile
+
+        self._temp = tempfile.TemporaryDirectory()
+        self.root = Path(self._temp.name)
+        self.addCleanup(self._temp.cleanup)
+
+    def _write_request(self, item: WorkItem, result_path: Path) -> Path:
+        import ida_analyze_bin as iab
+
+        options = {
+            "configyaml": "configs/tag-1.yaml",
+            "bindir": "bin",
+            "artifactdir": "bin_artifacts",
+            "platforms": ["windows"],
+            "agent": "claude",
+            "agent_model": "",
+            "llm_model": "gpt-4o",
+            "llm_baseurl": None,
+            "llm_temperature": None,
+            "llm_effort": "medium",
+            "llm_fake_as": None,
+            "maxretry": 3,
+            "skip_error": False,
+            "skip_pp": False,
+            "debug": False,
+            "ida_args": "",
+            "process_reporter": "none",
+            "redis_url": None,
+            "redis_prefix": "gsvibe",
+        }
+        request = {
+            "run_id": f"run-1-{item.work_item_id}",
+            "work_item_id": item.work_item_id,
+            "phase": item.phase,
+            "tag": item.binary.tag,
+            "module": item.binary.module,
+            "platform": item.binary.platform,
+            "binary_relative_path": item.binary.binary_relative_path,
+            "node_ids": list(item.node_ids),
+            "result_path": str(result_path),
+            "options": options,
+        }
+        request_path = self.root / f"{item.work_item_id}.request.json"
+        request_path.write_text(json.dumps(request), encoding="utf-8")
+        return request_path
+
+    def test_worker_success_writes_valid_result_contract(self):
+        import ida_analyze_bin as iab
+
+        item = make_item()
+        result_path = self.root / "result.json"
+        request_path = self._write_request(item, result_path)
+        calls = {}
+
+        from process_reporter import ProcessEvent, ProcessEventType, ProcessPhase, TaskStatus
+
+        def fake_analyze(**kwargs):
+            calls.update(kwargs)
+            summary = kwargs["summary"]
+            selected = list(kwargs["selected_node_ids"])
+            summary.successful += len(selected)
+            reporter = kwargs["reporter"]
+            plan = {
+                "nodes": [
+                    {"id": f"task-{index}", "data": {"planner_node_id": node_id}}
+                    for index, node_id in enumerate(selected)
+                ]
+            }
+            reporter.initialize_run(plan, run_id=kwargs["run_id"])
+            for index, _node_id in enumerate(selected):
+                reporter.emit(
+                    ProcessEvent(
+                        run_id=kwargs["run_id"],
+                        event_type=ProcessEventType.TASK_STATUS_CHANGED,
+                        task_id=f"task-{index}",
+                        status=TaskStatus.SUCCEEDED,
+                        phase=ProcessPhase.FINISHED,
+                    )
+                )
+
+        with (
+            unittest.mock.patch.object(iab, "analyze", side_effect=fake_analyze),
+            unittest.mock.patch.object(iab, "create_process_reporter", return_value=iab.NullProcessReporter()),
+        ):
+            exit_code = iab._batch_worker_main(str(request_path))
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(calls["gamever"], "tag-1")
+        self.assertIsNone(calls["oldgamever"])
+        self.assertEqual(tuple(calls["selected_node_ids"]), item.node_ids)
+        self.assertTrue(calls["force_all"])
+        result = validate_worker_result(
+            json.loads(result_path.read_text(encoding="utf-8")), item, run_id=f"run-1-{item.work_item_id}"
+        )
+        self.assertEqual(result.status, "succeeded")
+        self.assertEqual(result.summary["successful"], 2)
+
+    def test_worker_failure_marks_remaining_nodes_not_executed(self):
+        import ida_analyze_bin as iab
+
+        item = make_item()
+        result_path = self.root / "result.json"
+        request_path = self._write_request(item, result_path)
+
+        def fake_analyze(**kwargs):
+            raise iab.AnalysisRunError("boom")
+
+        with (
+            unittest.mock.patch.object(iab, "analyze", side_effect=fake_analyze),
+            unittest.mock.patch.object(iab, "create_process_reporter", return_value=iab.NullProcessReporter()),
+        ):
+            exit_code = iab._batch_worker_main(str(request_path))
+        self.assertEqual(exit_code, 1)
+        result = validate_worker_result(
+            json.loads(result_path.read_text(encoding="utf-8")), item, run_id=f"run-1-{item.work_item_id}"
+        )
+        self.assertEqual(result.status, "failed")
+        self.assertEqual(result.summary["failed"], 2)
+        self.assertEqual({entry.reason for entry in result.node_results}, {"not_executed"})
+
+    def test_worker_flag_requires_exactly_one_request_path(self):
+        import ida_analyze_bin as iab
+
+        self.assertEqual(iab.main([iab._BATCH_WORKER_FLAG]), 2)
+
+    def test_batch_worker_options_contains_no_secrets(self):
+        import argparse
+
+        import ida_analyze_bin as iab
+
+        args = argparse.Namespace(
+            gamever="tag-1",
+            configyaml=None,
+            bindir="bin",
+            artifactdir="bin_artifacts",
+            platforms=["windows"],
+            agent="claude",
+            agent_model="",
+            llm_model="gpt-4o",
+            llm_apikey="sk-secret",
+            llm_baseurl=None,
+            llm_temperature=None,
+            llm_effort="medium",
+            llm_fake_as=None,
+            maxretry=3,
+            skip_error=False,
+            skip_pp=False,
+            debug=False,
+            ida_args="",
+            process_reporter="none",
+            redis_url=None,
+            redis_prefix="gsvibe",
+        )
+        with unittest.mock.patch.object(iab, "resolve_analysis_config", return_value=Path("configs/tag-1.yaml")):
+            options = iab._batch_worker_options(args)
+        self.assertNotIn("llm_apikey", options)
+        self.assertNotIn("api_key", options)
+        self.assertNotIn("sk-secret", json.dumps(options))
+
+
+class MainRoutingTests(unittest.TestCase):
+    def test_full_force_all_routes_to_batch_coordinator(self):
+        import ida_analyze_bin as iab
+
+        called = {}
+        with (
+            unittest.mock.patch.object(
+                iab, "_run_full_batch", side_effect=lambda args: (called.__setitem__("args", args), 7)[1]
+            ),
+            unittest.mock.patch.object(iab, "run_all", return_value=0) as legacy,
+        ):
+            rc = iab.main(["-allgamever", "-force_all", "-agent", "claude", "-llm_apikey", "k"])
+        self.assertEqual(rc, 7)
+        legacy.assert_not_called()
+
+    def test_non_full_allgamever_keeps_legacy_path(self):
+        import ida_analyze_bin as iab
+
+        with (
+            unittest.mock.patch.object(iab, "_run_full_batch", return_value=0) as batch,
+            unittest.mock.patch.object(iab, "run_all", return_value=0) as legacy,
+        ):
+            rc = iab.main(["-allgamever", "-agent", "claude", "-llm_apikey", "k"])
+        self.assertEqual(rc, 0)
+        batch.assert_not_called()
+        legacy.assert_called_once()
