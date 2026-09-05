@@ -349,6 +349,51 @@ class WarmGroupSchedulingTests(unittest.TestCase):
 
 
 class WarmFailureCleanupTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == "win32", "Windows path aliases are required")
+    def test_worker_normalizes_windows_short_and_long_path_aliases_before_relative_to(self):
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        get_short_path_name = kernel32.GetShortPathNameW
+        get_short_path_name.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint32]
+        get_short_path_name.restype = ctypes.c_uint32
+
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace, binaries, _identity = warm_group_fixture(Path(temporary))
+            workspace = workspace.resolve(strict=True)
+            binary = binaries[0].resolve(strict=True)
+            required = get_short_path_name(str(binary), None, 0)
+            if required == 0:
+                self.skipTest(f"GetShortPathNameW failed with error {ctypes.get_last_error()}")
+            buffer = ctypes.create_unicode_buffer(required)
+            written = get_short_path_name(str(binary), buffer, required)
+            if written == 0:
+                self.skipTest(f"GetShortPathNameW failed with error {ctypes.get_last_error()}")
+            short_binary = Path(buffer.value)
+            if short_binary == binary:
+                self.skipTest("8.3 short path names are unavailable on this volume")
+            self.assertTrue(short_binary.samefile(binary))
+
+            gate = SimpleNamespace(
+                wait_for_launch=Mock(side_effect=TimeoutError("pressure")),
+                worker_finished=Mock(),
+            )
+            with (
+                patch("idb_cache._prepare_database_files_for_warm") as prepare,
+                patch("idb_cache.subprocess.Popen") as popen,
+                self.assertRaisesRegex(IdbCacheError, "admission timed out"),
+            ):
+                idb_cache._run_one_worker(
+                    workspace=workspace,
+                    binary=short_binary,
+                    ida_python_executable=Path(sys.executable).resolve(),
+                    worker_path=Path(idb_cache.__file__).with_name("idb_warm_worker.py"),
+                    worker_timeout_seconds=1,
+                    memory_gate=gate,
+                    memory_admission_timeout_seconds=1,
+                )
+            prepare.assert_not_called()
+            popen.assert_not_called()
+            gate.worker_finished.assert_not_called()
+
     def test_startup_lock_is_preserved_and_prevents_worker_launch(self):
         with tempfile.TemporaryDirectory() as temporary:
             workspace, binaries, _identity = warm_group_fixture(Path(temporary))

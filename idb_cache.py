@@ -841,6 +841,8 @@ def _run_one_worker(
     process = None
     reaped = False
     started = time.monotonic()
+    workspace = workspace.resolve(strict=True)
+    binary = binary.resolve(strict=True)
     module = binary.relative_to(workspace).parts[0]
     try:
         if memory_gate is not None:
