@@ -151,6 +151,18 @@ class AnalysisMemoryGate(MemoryLaunchGate):
                 )
         return admitted, reason
 
+    def try_admit(self, worker_name: str) -> str | None:
+        """Attempt one non-blocking admission; return the wait reason when not admitted."""
+        with self._condition:
+            snapshot = self._snapshot()
+            now = self._monotonic()
+            admitted, reason = self._admission_state(snapshot, now)
+            if not admitted:
+                return reason
+            self._active_workers += 1
+            self._last_launch_time = now
+            return None
+
     def wait_for_launch(self, worker_name: str, *, timeout_seconds: float) -> None:
         """Wait for admission and report the final wait reason on timeout."""
         import math
