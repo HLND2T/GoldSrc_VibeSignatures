@@ -76,6 +76,24 @@ deferred.
 module/platform/skill work to continue after runtime failures, while configuration and DAG contract failures remain
 fatal and any recorded runtime failure still produces a nonzero final exit status.
 
+## Full-analysis bounded concurrency
+
+`ida_analyze_bin.py -allgamever -force_all` runs as a two-phase coordinator. The complete per-tag node DAGs are
+classified once before any worker starts: every cross-binary dependency edge moves its target and the entire
+downstream closure into a serial tail queue, and the remaining nodes are grouped per binary into parallel work
+items. Each work item is one worker process (`analysis_batch.py`) that owns one dynamic-port `idalib-mcp`
+lifecycle and executes its exact ordered node subset with force execution; no tag-completion barrier exists
+between game versions. The serial tail queue starts only after every parallel worker result validates and its
+process/lifecycle has exited, and it runs at most one segment at a time, reopening the neutral restored IDB
+when the same binary reappears across phases.
+
+Admission is bounded by `GSVIBE_ANALYSIS_MAX_CONCURRENCY` (default `1`, fail-closed decimal `1..32`) and, when
+`GSVIBE_ANALYSIS_MAX_MEMORY_MIB` is set, by an aggregate Windows Job Object hard limit plus an 85% soft
+admission gate with host-headroom checks (`analysis_memory.py`, reusing the warmup Job primitives). Effective
+concurrency above `1` requires an explicit memory budget; malformed values fail closed before any worker
+launches. Dynamic MCP port allocation happens under a runner-local cross-process startup lock
+(`mcp_startup.py`) that covers only allocate/spawn/bind-confirm and retries with a fresh port when stolen.
+
 ## Warm IDB cache boundary
 
 `idb_cache.py` provides a local immutable-generation cache for neutral IDA databases. A new schema-1 key binds exact
