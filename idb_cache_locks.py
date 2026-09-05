@@ -94,7 +94,7 @@ def _release(handle, /) -> None:
 def _is_contention(error: OSError) -> bool:
     if os.name == "nt":
         return getattr(error, "winerror", None) == _ERROR_LOCK_VIOLATION
-    return error.errno in {errno.EACCES, errno.EAGAIN}
+    return error.errno in {errno.EAGAIN, errno.EWOULDBLOCK}
 
 
 def _error_code(error: OSError) -> str:
