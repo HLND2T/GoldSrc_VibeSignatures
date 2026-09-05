@@ -518,6 +518,9 @@ class WarmFailureCleanupTests(unittest.TestCase):
             self.assertEqual(b"existing", database.read_bytes())
 
     def test_invalidation_retries_only_windows_sharing_violations(self):
+        class WindowsSharingViolation(OSError):
+            winerror = 32
+
         with tempfile.TemporaryDirectory() as temporary:
             workspace, binaries, _identity = warm_group_fixture(Path(temporary))
             target = Path(f"{binaries[0]}.i64")
@@ -529,7 +532,7 @@ class WarmFailureCleanupTests(unittest.TestCase):
                 nonlocal calls
                 if path == target and calls < 2:
                     calls += 1
-                    raise ctypes.WinError(32)
+                    raise WindowsSharingViolation("sharing violation")
                 return original_unlink(path, *args, **kwargs)
 
             with (
