@@ -20,6 +20,7 @@ import argparse
 import json
 import re
 import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -28,7 +29,13 @@ import yaml
 from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.pr_validation import CACHE_MODE_WARM
 from ida_analyze_bin import prepare_analysis_binary
-from idb_cache import IdbCacheError, build_binary_identity, build_cache_identity
+from idb_cache import (
+    DEFAULT_WORKER_TIMEOUT_SECONDS,
+    IdbCacheError,
+    build_binary_identity,
+    build_cache_identity,
+)
+from idb_cache_locks import producer_lock
 from idb_cache_selection import (
     IdbCacheSelectionError,
     entry_sort_key,
@@ -39,8 +46,8 @@ from idb_cache_selection import (
     validate_selection_entries,
     write_selection_with_evidence,
 )
-from idb_warm_worker import probe_runtime_contract
 from release_workflow_lib.hashing import canonical_json_bytes
+from warmup_memory import ProducerMemoryOwner, producer_memory_owner_from_environment
 
 RELEASE_SELECTION_SCHEMA_VERSION = 1
 RELEASE_SELECTION_KEYS = {"schema_version", "cache_mode", "source_sha", "bin_commit", "entries"}
@@ -146,19 +153,14 @@ def release_binary_groups(repo_root: Path, bindir: Path) -> tuple[BinaryGroup, .
 def _release_identities(
     *,
     groups: tuple[BinaryGroup, ...],
-    ida_root: str | Path,
     kernel_version: str,
-    normalized_ida_args: list[str],
 ) -> dict[tuple[str, str], dict]:
     worker = Path(__file__).with_name("idb_warm_worker.py")
     identities = {}
     for group in groups:
-        first = group.workspace_root.joinpath(*Path(group.binaries[0]["path"]).parts)
-        runtime = probe_runtime_contract(ida_root=ida_root, kernel_version=kernel_version, binary_path=first)
         identities[(group.tag, group.platform)] = build_cache_identity(
             tag=group.tag,
-            ida_runtime=runtime,
-            normalized_ida_args=normalized_ida_args,
+            ida_runtime={"kernel_version": str(kernel_version).strip()},
             binaries=list(group.binaries),
             warm_worker_path=worker,
         )
@@ -181,9 +183,7 @@ def _release_context(
     repo_root: str | Path,
     bindir: str | Path,
     persisted_root: str | Path,
-    ida_root: str | Path,
     kernel_version: str,
-    normalized_ida_args: list[str],
     source_sha: str | None,
 ) -> ReleaseCacheContext:
     root = Path(repo_root).resolve()
@@ -206,9 +206,7 @@ def _release_context(
         groups=groups,
         identities=_release_identities(
             groups=groups,
-            ida_root=ida_root,
             kernel_version=kernel_version,
-            normalized_ida_args=normalized_ida_args,
         ),
     )
 
@@ -250,47 +248,54 @@ def prepare_release_selection(
     repo_root: str | Path,
     bindir: str | Path,
     persisted_root: str | Path,
-    ida_root: str | Path,
     kernel_version: str,
-    normalized_ida_args: list[str],
+    ida_python_executable: str | Path,
     source_sha: str | None,
     run_id: str,
     attempt: int,
-    timeout_seconds: float,
+    max_concurrency: int | None,
+    worker_timeout_seconds: float,
     output_path: str | Path,
     output_sha256_path: str | Path,
+    producer_memory: ProducerMemoryOwner | None = None,
 ) -> dict:
-    context = _release_context(
-        repo_root=repo_root,
-        bindir=bindir,
-        persisted_root=persisted_root,
-        ida_root=ida_root,
-        kernel_version=kernel_version,
-        normalized_ida_args=normalized_ida_args,
-        source_sha=source_sha,
-    )
-    print(
-        f"IDB cache producer scope: release-all; source_sha={context.source_sha}; "
-        f"bin_commit={context.bin_commit}; groups={len(context.groups)}"
-    )
-    entries = prepare_selection_entries(
-        groups=context.groups,
-        identities=context.identities,
-        persisted_root=context.persisted_root,
-        run_id=run_id,
-        attempt=attempt,
-        timeout_seconds=timeout_seconds,
-    )
-    document = _selection_document(context, entries)
-    validate_release_selection(document=document, context=context)
-    raw, digest = write_selection_with_evidence(
-        document=document,
-        output_path=output_path,
-        output_sha256_path=output_sha256_path,
-    )
-    validate_release_selection(document=json.loads(raw), context=context, raw=raw)
-    print(f"Release cache selection SHA-256: {digest}")
-    return document
+    root = Path(repo_root).resolve()
+    persisted = validate_persisted_workspace(persisted_root, root)
+    producer_lock_started = time.monotonic()
+    with producer_lock(persisted, timeout_seconds=None):
+        print(f"IDB cache producer lock acquired: wait_seconds={time.monotonic() - producer_lock_started:.3f}")
+        context = _release_context(
+            repo_root=root,
+            bindir=bindir,
+            persisted_root=persisted,
+            kernel_version=kernel_version,
+            source_sha=source_sha,
+        )
+        print(
+            f"IDB cache producer scope: release-all; source_sha={context.source_sha}; "
+            f"bin_commit={context.bin_commit}; groups={len(context.groups)}"
+        )
+        entries = prepare_selection_entries(
+            groups=context.groups,
+            identities=context.identities,
+            persisted_root=context.persisted_root,
+            run_id=run_id,
+            attempt=attempt,
+            ida_python_executable=ida_python_executable,
+            max_concurrency=max_concurrency,
+            worker_timeout_seconds=worker_timeout_seconds,
+            producer_memory=producer_memory or producer_memory_owner_from_environment(),
+        )
+        document = _selection_document(context, entries)
+        validate_release_selection(document=document, context=context)
+        raw, digest = write_selection_with_evidence(
+            document=document,
+            output_path=output_path,
+            output_sha256_path=output_sha256_path,
+        )
+        validate_release_selection(document=json.loads(raw), context=context, raw=raw)
+        print(f"Release cache selection SHA-256: {digest}")
+        return document
 
 
 def verify_release_selection_file(
@@ -298,9 +303,7 @@ def verify_release_selection_file(
     repo_root: str | Path,
     bindir: str | Path,
     persisted_root: str | Path,
-    ida_root: str | Path,
     kernel_version: str,
-    normalized_ida_args: list[str],
     source_sha: str | None,
     selection_path: str | Path,
     selection_sha256_path: str | Path,
@@ -309,9 +312,7 @@ def verify_release_selection_file(
         repo_root=repo_root,
         bindir=bindir,
         persisted_root=persisted_root,
-        ida_root=ida_root,
         kernel_version=kernel_version,
-        normalized_ida_args=normalized_ida_args,
         source_sha=source_sha,
     )
     document, raw, digest = read_selection_with_evidence(
@@ -340,9 +341,7 @@ def _common_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("-repo-root", default=".")
     parser.add_argument("-bindir", default="bin")
     parser.add_argument("-persisted-root", required=True)
-    parser.add_argument("-ida-root", required=True)
     parser.add_argument("-kernel-version", required=True)
-    parser.add_argument("-ida-arg", action="append", default=[])
     parser.add_argument("-source-sha")
 
 
@@ -351,9 +350,15 @@ def _parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
     prepare = commands.add_parser("prepare")
     _common_arguments(prepare)
+    prepare.add_argument("--ida-python", required=True)
+    prepare.add_argument("--max-concurrency", type=int)
+    prepare.add_argument(
+        "--worker-timeout-seconds",
+        type=float,
+        default=DEFAULT_WORKER_TIMEOUT_SECONDS,
+    )
     prepare.add_argument("-run-id", required=True)
     prepare.add_argument("-attempt", type=int, required=True)
-    prepare.add_argument("-timeout-seconds", type=float, default=3600.0)
     prepare.add_argument("-output", required=True)
     prepare.add_argument("-output-sha256", required=True)
     for name in ("verify", "restore"):
@@ -369,9 +374,7 @@ def _verification_kwargs(args) -> dict:
         "repo_root": args.repo_root,
         "bindir": args.bindir,
         "persisted_root": args.persisted_root,
-        "ida_root": args.ida_root,
         "kernel_version": args.kernel_version,
-        "normalized_ida_args": list(args.ida_arg),
         "source_sha": args.source_sha,
         "selection_path": args.selection,
         "selection_sha256_path": args.selection_sha256,
@@ -386,13 +389,13 @@ def main(argv: list[str] | None = None) -> int:
                 repo_root=args.repo_root,
                 bindir=args.bindir,
                 persisted_root=args.persisted_root,
-                ida_root=args.ida_root,
                 kernel_version=args.kernel_version,
-                normalized_ida_args=list(args.ida_arg),
+                ida_python_executable=args.ida_python,
                 source_sha=args.source_sha,
                 run_id=args.run_id,
                 attempt=args.attempt,
-                timeout_seconds=args.timeout_seconds,
+                max_concurrency=args.max_concurrency,
+                worker_timeout_seconds=args.worker_timeout_seconds,
                 output_path=args.output,
                 output_sha256_path=args.output_sha256,
             )

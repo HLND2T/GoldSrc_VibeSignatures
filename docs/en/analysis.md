@@ -54,7 +54,11 @@ uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EX
 
 `idb_cache.py` exposes `probe`, `warm`, `publish`, `restore`, `verify`, and `prune`. Identity creation is intentionally an
 orchestrator responsibility because it must select exact module/platform binaries and bind the pinned runtime contract.
-`idb_warm_worker.py probe-runtime` hashes the selected PE32/ELF32 loader and allowlisted plugins under `IDADIR`.
+New identities use `{"kernel_version": ...}` and an empty compatibility-only `normalized_ida_args`; legacy schema-1
+manifests with the former full runtime remain readable without being reused as new identities. The canonical
+`idb_warm_worker.py` supports `--print-ida-version` and `run -binary ...`, imports IDA only inside those execution paths,
+and warms one binary through bare idalib without an MCP port. A producer runs these workers concurrently within one
+tag/platform group and publishes only after every worker exits successfully with a valid database file set.
 
 Warm production is split across jobs: the reusable `warmup-idb` producer writes the canonical `cache-selection.json`
 and its SHA-256 evidence, and the consumer (`idb_cache_release.py restore` / `idb_cache_workflow.py restore`) verifies

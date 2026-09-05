@@ -32,8 +32,13 @@ def database_lock_paths(binary_path: str | os.PathLike[str]) -> tuple[Path, ...]
     return (Path(f"{binary}.id0"), *(Path(f"{path}.id0") for path in primary_database_paths(binary)))
 
 
+def database_cleanup_paths(binary_path: str | os.PathLike[str]) -> tuple[Path, ...]:
+    """Return every database artifact that a reaped worker is allowed to invalidate."""
+    return tuple(dict.fromkeys((*database_paths(binary_path), *database_lock_paths(binary_path))))
+
+
 def existing_database_lock(binary_path: str | os.PathLike[str]) -> Path | None:
-    return next((path for path in database_lock_paths(binary_path) if path.is_file()), None)
+    return next((path for path in database_lock_paths(binary_path) if path.exists() or path.is_symlink()), None)
 
 
 def existing_database_files(binary_path: str | os.PathLike[str], *, require_primary: bool = False) -> tuple[Path, ...]:

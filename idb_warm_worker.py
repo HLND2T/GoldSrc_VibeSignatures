@@ -1,38 +1,24 @@
 #!/usr/bin/env python3
+"""Warm one GoldSrc IDA database with bare idalib and no MCP server."""
+
 from __future__ import annotations
 
 import argparse
-import asyncio
 import ctypes
 import os
-import subprocess
+import sys
 from pathlib import Path
 
 from binary_format import inspect_binary
-from ida_analyze_bin import DEFAULT_HOST, DEFAULT_PORT, IdaMcpLifecycle, _parse_py_eval_json
-from ida_database_paths import database_paths, existing_database_lock, validate_database_file_set, validate_plain_file
-from ida_mcp_session import open_ida_mcp_session
-from idb_cache import load_cache_identity
-from idb_cache_locks import IdbCacheError
-from release_workflow_lib.hashing import sha256_file, write_canonical_json
+from ida_database_paths import IdaDatabasePathError, existing_database_lock, validate_plain_file
 
+DEFAULT_MEMORY_LIMIT_MIB = 8192
 _WINDOWS_JOB_HANDLE = None
-RUNTIME_IDENTITY_PY_EVAL = (
-    "import json\n"
-    "import idaapi\n"
-    "import ida_ida\n"
-    "result = json.dumps({\n"
-    "    'kernel_version': str(idaapi.get_kernel_version()),\n"
-    "    'processor': str(ida_ida.inf_get_procname()),\n"
-    "    'bitness': 64 if ida_ida.inf_is_64bit() else 32,\n"
-    "    'file_type_name': str(idaapi.get_file_type_name()),\n"
-    "})\n"
-)
 
 
 def _apply_memory_limit(limit_mb: int) -> None:
     if limit_mb < 256:
-        raise IdbCacheError("Warm worker memory limit must be at least 256 MiB")
+        raise IdaDatabasePathError("Warm worker memory limit must be at least 256 MiB")
     limit_bytes = limit_mb * 1024 * 1024
     if os.name != "nt":
         import resource
@@ -80,191 +66,112 @@ def _apply_memory_limit(limit_mb: int) -> None:
     kernel32.GetCurrentProcess.restype = ctypes.c_void_p
     kernel32.AssignProcessToJobObject.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
     kernel32.AssignProcessToJobObject.restype = ctypes.c_int
+    kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
+    kernel32.CloseHandle.restype = ctypes.c_int
     job = kernel32.CreateJobObjectW(None, None)
     if not job:
-        raise IdbCacheError(f"Unable to create warm worker Job Object: {ctypes.get_last_error()}")
-    information = ExtendedLimitInformation()
-    information.BasicLimitInformation.LimitFlags = 0x00002000 | 0x00000200
-    information.JobMemoryLimit = limit_bytes
-    if not kernel32.SetInformationJobObject(job, 9, ctypes.byref(information), ctypes.sizeof(information)):
-        raise IdbCacheError(f"Unable to set warm worker Job Object limit: {ctypes.get_last_error()}")
-    if not kernel32.AssignProcessToJobObject(job, kernel32.GetCurrentProcess()):
-        raise IdbCacheError(f"Unable to assign warm worker Job Object: {ctypes.get_last_error()}")
+        raise IdaDatabasePathError(f"Unable to create warm worker Job Object: {ctypes.get_last_error()}")
+    try:
+        information = ExtendedLimitInformation()
+        information.BasicLimitInformation.LimitFlags = 0x00002000 | 0x00000200
+        information.JobMemoryLimit = limit_bytes
+        if not kernel32.SetInformationJobObject(job, 9, ctypes.byref(information), ctypes.sizeof(information)):
+            raise IdaDatabasePathError(f"Unable to set warm worker Job Object limit: {ctypes.get_last_error()}")
+        if not kernel32.AssignProcessToJobObject(job, kernel32.GetCurrentProcess()):
+            raise IdaDatabasePathError(f"Unable to assign warm worker Job Object: {ctypes.get_last_error()}")
+    except Exception:
+        kernel32.CloseHandle(job)
+        raise
     global _WINDOWS_JOB_HANDLE
     _WINDOWS_JOB_HANDLE = job
 
 
-def _loader_path(ida_root: Path, loader_name: str) -> Path:
-    suffixes = (".dll", ".so", ".dylib")
-    matches = [ida_root / "loaders" / f"{loader_name}{suffix}" for suffix in suffixes]
-    existing = [path for path in matches if path.is_file()]
-    if len(existing) != 1:
-        raise IdbCacheError(f"Unable to resolve one pinned IDA loader for {loader_name}: {existing}")
-    return validate_plain_file(existing[0], context="IDA loader module")
+def _load_ida_modules():
+    """Initialize idalib first, then load the APIs used by database warming."""
+    import idapro
+    import ida_auto
+    import ida_loader
+
+    return idapro, ida_auto, ida_loader
 
 
-def probe_runtime_contract(
-    *, ida_root: str | Path, kernel_version: str, binary_path: str | Path, plugins: tuple[str, ...] = ()
-) -> dict:
-    root = Path(ida_root).resolve()
-    if not root.is_dir():
-        raise IdbCacheError(f"IDA root is missing: {root}")
-    binary = inspect_binary(binary_path)
-    loader_name = "pe" if binary.container == "PE" else "elf"
-    plugin_records = []
-    for plugin_name in sorted(plugins, key=lambda value: value.encode("utf-8")):
-        if not plugin_name or Path(plugin_name).name != plugin_name:
-            raise IdbCacheError(f"Invalid IDA plugin allowlist name: {plugin_name!r}")
-        plugin = validate_plain_file(root / "plugins" / plugin_name, context="IDA plugin")
-        plugin_records.append({"name": plugin_name, "sha256": sha256_file(plugin)})
-    return {
-        "kernel_version": str(kernel_version).strip(),
-        "processor": "metapc",
-        "bitness": binary.bits,
-        "file_type": binary.container,
-        "loader_name": loader_name,
-        "loader_module_sha256": sha256_file(_loader_path(root, loader_name)),
-        "plugins": plugin_records,
-    }
+def _load_ida_version_modules():
+    """Initialize idalib first, then load the kernel-version API."""
+    import idapro
+    import idaapi
+
+    return idapro, idaapi
 
 
-async def _query_opened_runtime(binary: Path) -> dict:
-    async with open_ida_mcp_session(
-        DEFAULT_HOST,
-        DEFAULT_PORT,
-        expected_binary=binary,
-        auto_started=True,
-    ) as session:
-        payload = _parse_py_eval_json(await session.call_tool("py_eval", {"code": RUNTIME_IDENTITY_PY_EVAL}))
-    if not isinstance(payload, dict) or set(payload) != {
-        "kernel_version",
-        "processor",
-        "bitness",
-        "file_type_name",
-    }:
-        raise IdbCacheError("Warm worker could not observe the opened IDA runtime identity")
-    return payload
+def ida_kernel_version() -> str:
+    _idapro, idaapi = _load_ida_version_modules()
+    version = str(idaapi.get_kernel_version()).strip()
+    if not version:
+        raise IdaDatabasePathError("IDA kernel version probe returned an empty value")
+    return version
 
 
-def _observed_runtime(binary: Path, expected: dict) -> dict:
-    opened = asyncio.run(_query_opened_runtime(binary))
-    label = str(opened["file_type_name"]).upper()
-    file_type = "ELF" if "ELF" in label else "PE" if "PE" in label or "PORTABLE EXECUTABLE" in label else ""
-    if not file_type:
-        raise IdbCacheError(f"Unsupported opened IDA file type: {opened['file_type_name']!r}")
-    ida_root_value = os.environ.get("IDADIR")
-    if not ida_root_value:
-        raise IdbCacheError("IDADIR is required to bind the observed loader/plugin identity")
-    plugin_names = tuple(plugin["name"] for plugin in expected["plugins"])
-    runtime = probe_runtime_contract(
-        ida_root=ida_root_value,
-        kernel_version=str(opened["kernel_version"]),
-        binary_path=binary,
-        plugins=plugin_names,
-    )
-    runtime["processor"] = str(opened["processor"])
-    runtime["bitness"] = opened["bitness"]
-    runtime["file_type"] = file_type
-    runtime["loader_name"] = "pe" if file_type == "PE" else "elf"
-    return runtime
-
-
-def _cleanup_database(binary: Path) -> None:
-    if existing_database_lock(binary) is not None:
-        raise IdbCacheError(f"Active IDA database lock prevents warm cleanup: {binary}")
-    for path in database_paths(binary):
-        if path.exists():
-            validate_plain_file(path, context="Warm worker database cleanup target")
-            path.unlink()
-
-
-def run_worker(
+def warm_binary(
+    binary_path: str | os.PathLike[str],
     *,
-    identity_path: str | Path,
-    workspace_root: str | Path,
-    output_path: str | Path,
-    memory_limit_mb: int,
-) -> dict:
-    identity = load_cache_identity(identity_path)
-    root = Path(workspace_root).resolve()
-    if not root.is_dir():
-        raise IdbCacheError(f"Warm workspace is missing: {root}")
-    _apply_memory_limit(memory_limit_mb)
-    observed_runtime = None
-    for record in identity["binaries"]:
-        binary = root.joinpath(*Path(record["path"]).parts)
-        validate_plain_file(binary, context="Warm worker binary")
-        info = inspect_binary(binary)
-        if (
-            info.platform != record["platform"]
-            or binary.stat().st_size != record["size"]
-            or sha256_file(binary) != record["sha256"]
-        ):
-            raise IdbCacheError(f"Warm worker binary identity mismatch: {record['path']}")
-        _cleanup_database(binary)
-        ida_args = subprocess.list2cmdline(identity["normalized_ida_args"])
+    memory_limit_mb: int | None = DEFAULT_MEMORY_LIMIT_MIB,
+) -> None:
+    """Open, auto-analyze, save, and close exactly one validated binary."""
+    binary = validate_plain_file(Path(binary_path).resolve(strict=True), context="Warm worker binary")
+    inspect_binary(binary)
+    lock = existing_database_lock(binary)
+    if lock is not None:
+        raise IdaDatabasePathError(f"Active IDA database lock prevents warm startup: {lock}")
+    if memory_limit_mb is not None:
+        _apply_memory_limit(memory_limit_mb)
+
+    idapro, ida_auto, ida_loader = _load_ida_modules()
+    if idapro.open_database(str(binary), run_auto_analysis=True) != 0:
+        raise IdaDatabasePathError(f"Unable to open warm database: {binary}")
+    try:
+        if not ida_auto.auto_wait():
+            raise IdaDatabasePathError(f"Warm auto-analysis did not complete: {binary}")
+        if not ida_loader.save_database(None, 0):
+            raise IdaDatabasePathError(f"Unable to save warm database: {binary}")
+    except Exception as warm_error:
         try:
-            with IdaMcpLifecycle(
-                binary,
-                record["platform"],
-                DEFAULT_HOST,
-                DEFAULT_PORT,
-                ida_args,
-                database_policy="rebuild",
-                save_on_success=True,
-            ):
-                current_runtime = _observed_runtime(binary, identity["ida_runtime"])
-                if observed_runtime is None:
-                    observed_runtime = current_runtime
-                elif observed_runtime != current_runtime:
-                    raise IdbCacheError("Warm binaries observed inconsistent IDA runtime identities")
-            validate_database_file_set(binary)
-        except Exception:
-            _cleanup_database(binary)
-            raise
-    if observed_runtime is None:
-        raise IdbCacheError("Warm identity selected no binaries")
-    write_canonical_json(output_path, observed_runtime)
-    return observed_runtime
+            idapro.close_database()
+        except Exception as close_error:
+            raise warm_error from close_error
+        raise
+    else:
+        idapro.close_database()
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Restricted neutral IDB warm worker")
-    commands = parser.add_subparsers(dest="command", required=True)
-    runtime = commands.add_parser("probe-runtime")
-    runtime.add_argument("-ida-root", required=True)
-    runtime.add_argument("-kernel-version", required=True)
-    runtime.add_argument("-binary", required=True)
-    runtime.add_argument("-plugin", action="append", default=[])
-    runtime.add_argument("-output", required=True)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--print-ida-version", action="store_true")
+    commands = parser.add_subparsers(dest="command")
     run = commands.add_parser("run")
-    run.add_argument("-identity", required=True)
-    run.add_argument("-workspace-root", required=True)
-    run.add_argument("-output", required=True)
-    run.add_argument("-memory-limit-mb", type=int, default=8192)
+    run.add_argument("-binary", required=True)
+    memory = run.add_mutually_exclusive_group()
+    memory.add_argument("-memory-limit-mib", type=int, default=DEFAULT_MEMORY_LIMIT_MIB)
+    memory.add_argument("--disable-memory-limit", action="store_true")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = _parser().parse_args(argv)
+    parser = _parser()
+    args = parser.parse_args(argv)
     try:
-        if args.command == "probe-runtime":
-            document = probe_runtime_contract(
-                ida_root=args.ida_root,
-                kernel_version=args.kernel_version,
-                binary_path=args.binary,
-                plugins=tuple(args.plugin),
+        if args.print_ida_version:
+            if args.command is not None:
+                parser.error("--print-ida-version cannot be combined with run")
+            print(ida_kernel_version())
+        elif args.command == "run":
+            warm_binary(
+                args.binary,
+                memory_limit_mb=None if args.disable_memory_limit else args.memory_limit_mib,
             )
-            write_canonical_json(args.output, document)
         else:
-            run_worker(
-                identity_path=args.identity,
-                workspace_root=args.workspace_root,
-                output_path=args.output,
-                memory_limit_mb=args.memory_limit_mb,
-            )
-    except (IdbCacheError, OSError, ValueError) as exc:
-        print(f"Error: {exc}")
+            parser.error("run is required unless --print-ida-version is used")
+    except Exception as exc:
+        print(f"Error: {exc}", file=sys.stderr)
         return 1
     return 0
 

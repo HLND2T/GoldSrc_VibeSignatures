@@ -15,8 +15,9 @@ A/M/D/R/C ownership 与 downstream closure。重建只写 checkout 外临时 art
 完整 inventory/bytes 与 merge Git blobs 比较。需要 self-hosted analysis 的 fork 会 fail closed；`pr-validate` 是聚合
 required check。
 
-Reusable `warmup-idb` producer 发布 exact selection；consumer 只 verify/restore，不 warm、不 save。IDB key 绑定
-binary/runtime identity，并且有意不绑定 `bin_artifacts` 内容。
+Reusable `warmup-idb` producer 发布 exact selection；它绑定一个 IDA Python executable，再按 group 内有限并发为
+每个 binary 启动独立裸 idalib worker。Consumer 只 verify/restore，不 warm、不 save。IDB key 绑定
+binary/kernel/worker identity，并且有意不绑定 `bin_artifacts` 内容。
 
 ## Release workflow
 

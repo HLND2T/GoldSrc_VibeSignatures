@@ -151,13 +151,13 @@ jobs:
           $selectionSha = (Get-Content -Raw -LiteralPath (Join-Path $selectionRoot 'cache-selection.sha256')).Trim()
           if ($selectionSha -ne $env:PRODUCER_SELECTION_SHA256) { throw 'cache selection digest mismatch' }
           uv run python idb_cache_release.py verify -repo-root $env:GITHUB_WORKSPACE -bindir bin `
-            -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR -kernel-version $kernelVersion `
+            -persisted-root $env:PERSISTED_WORKSPACE -kernel-version $kernelVersion `
             -source-sha "${{ needs.preflight.outputs.source_sha }}" `
             -selection (Join-Path $selectionRoot 'cache-selection.json') `
             -selection-sha256 (Join-Path $selectionRoot 'cache-selection.sha256')
           if ($LASTEXITCODE -ne 0) { throw 'warm IDB selection verification failed' }
           uv run python idb_cache_release.py restore -repo-root $env:GITHUB_WORKSPACE -bindir bin `
-            -persisted-root $env:PERSISTED_WORKSPACE -ida-root $env:IDADIR -kernel-version $kernelVersion `
+            -persisted-root $env:PERSISTED_WORKSPACE -kernel-version $kernelVersion `
             -source-sha "${{ needs.preflight.outputs.source_sha }}" `
             -selection (Join-Path $selectionRoot 'cache-selection.json') `
             -selection-sha256 (Join-Path $selectionRoot 'cache-selection.sha256')

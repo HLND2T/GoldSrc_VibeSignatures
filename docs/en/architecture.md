@@ -78,10 +78,11 @@ fatal and any recorded runtime failure still produces a nonzero final exit statu
 
 ## Warm IDB cache boundary
 
-`idb_cache.py` provides a local immutable-generation cache for neutral IDA databases. Its schema-1 key binds the exact
-binary path/bytes, observed IDA kernel/processor/bitness/file type, pinned loader and allowlisted plugin digests,
-normalized IDA arguments, and the warm-worker source contract. A generation contains an exact cached binary plus the
-complete allowed `.i64`/`.idb` primary and side-file inventory; active lock files are always rejected.
+`idb_cache.py` provides a local immutable-generation cache for neutral IDA databases. A new schema-1 key binds exact
+binary path/bytes, the IDA kernel version, and the canonical warm-worker source contract. `normalized_ida_args` remains
+an empty compatibility field; readers still validate old schema-1 identities containing the former full runtime and
+non-empty arguments without projecting or rewriting them. A generation contains an exact cached binary plus the complete
+allowed `.i64`/`.idb` primary and side-file inventory; active lock files are always rejected.
 
 Publication verifies an incoming tree before atomic rename and updates `READY.json` only afterward. READY is a probe
 hint, not a consumer authority: restore always binds an exact generation, key, and manifest SHA-256. READY writes are
@@ -92,17 +93,21 @@ and active locks. The `restored_strict` lifecycle policy never invalidates or co
 database and can disable success saves so selected-node modifications never flow back into the immutable generation.
 
 Selection primitives are shared. `idb_cache_selection.py` owns the canonical entry shape, coverage/identity validation,
-SHA-256 evidence files, the locked probe/warm/publish path, and the locked exact restore; the PR and release workflows
-build their own top-level documents (`plan_sha256`/`merge_sha` vs `source_sha`/`bin_commit`) but cannot drift on the
-generation contract. `idb_cache_locks.py` owns the cross-process tag lock — publisher, pruner, restorer, and the direct
-`idb_cache.py` CLI all acquire it, so no code path can bypass the high-level authority.
+SHA-256 evidence files, short locked probe/finalize phases, lock-free workspace warm, and locked exact restore; the PR and
+release workflows build their own top-level documents (`plan_sha256`/`merge_sha` vs `source_sha`/`bin_commit`) but cannot
+drift on the generation contract. `idb_cache_locks.py` owns the cross-process producer and tag locks. Only explicit lock
+contention is polled indefinitely; storage, permission, handle, and unknown I/O failures stop immediately.
 
 The trusted PR plan carries the invariant evidence field `cache_mode=warm`. Every analysis route splits the producer into
 the reusable `warmup-idb` job and turns `analyze-self-hosted` into a pure consumer: it downloads the canonical selection,
 verifies it against its own checkout and pinned runtime, restores the exact generations under the tag lock, and runs
 strict selected-node analysis. The release build uses the same producer (`scope: release-all`) and a structurally
-identical consumer. There is no analysis-side rebuild/save route. A repository-level Actions concurrency group
-serializes the one official producer, and a runner-local file lock protects the fixed MCP port.
+identical consumer. There is no analysis-side rebuild/save route. A repository-level Actions concurrency group serializes
+the one official producer, while a persisted producer-only SMB lock also excludes direct producers. On a miss, the
+canonical Python executable probes its IDA version and starts one bare-idalib process per binary under a bounded
+`ThreadPoolExecutor`; no MCP port is used. Worker timeout follows kill/wait-before-cleanup, failures affect only the owned
+database set, siblings finish, and any failure prevents group publication. Optional aggregate memory admission uses one
+process-level Windows Job controller across groups and a fresh gate/baseline for each group.
 
 ## Process reporting and scheduling
 

@@ -21,22 +21,20 @@ from pathlib import Path
 from ida_database_paths import is_reparse_point
 from idb_cache import (
     CACHE_SCHEMA_VERSION,
+    publish_generation,
     probe_generation,
     prune_tag,
     restore_generation,
     verify_selection,
-    warm_and_publish,
+    warm_group,
 )
-from idb_cache_locks import (
-    DEFAULT_TAG_LOCK_TIMEOUT_SECONDS,
-    tag_lock,
-    tag_lock_timeout_seconds,
-)
+from idb_cache_locks import tag_lock
 from release_workflow_lib.hashing import (
     normalized_sha256,
     sha256_bytes,
     write_canonical_json,
 )
+from warmup_memory import ProducerMemoryOwner
 
 SELECTION_ENTRY_KEYS = {"tag", "platform", "cache_key", "generation", "manifest_sha256", "binaries"}
 
@@ -139,28 +137,55 @@ def prepare_selection_entries(
     persisted_root: str | Path,
     run_id: str,
     attempt: int,
-    timeout_seconds: float,
+    ida_python_executable: str | Path,
+    max_concurrency: int | None,
+    worker_timeout_seconds: float,
+    producer_memory: ProducerMemoryOwner,
 ) -> list[dict]:
-    """Probe, warm and publish every group under its tag lock, returning canonical entries."""
+    """Probe under a short lock, warm outside it, then re-probe and publish under the lock."""
     persisted = Path(persisted_root)
     entries = []
     for group in groups:
         identity = identities[(group.tag, group.platform)]
         started = time.monotonic()
-        with tag_lock(persisted, group.tag, timeout_seconds=tag_lock_timeout_seconds(timeout_seconds)):
+        initial_lock_started = time.monotonic()
+        with tag_lock(persisted, group.tag, timeout_seconds=None):
+            print(
+                f"IDB cache initial tag lock acquired: tag={group.tag}; "
+                f"wait_seconds={time.monotonic() - initial_lock_started:.3f}"
+            )
             selection = probe_generation(persisted_root=persisted, identity=identity)
             hit = selection is not None
-            if selection is None:
-                selection = warm_and_publish(
-                    persisted_root=persisted,
-                    identity=identity,
-                    workspace_root=group.workspace_root,
-                    run_id=run_id,
-                    attempt=attempt,
-                    timeout_seconds=timeout_seconds,
+            if hit:
+                verify_selection(persisted_root=persisted, selection=selection)
+                prune_tag(persisted_root=persisted, tag=group.tag)
+        if selection is None:
+            warm_group(
+                identity=identity,
+                workspace_root=group.workspace_root,
+                ida_python_executable=ida_python_executable,
+                max_concurrency=max_concurrency,
+                worker_timeout_seconds=worker_timeout_seconds,
+                producer_memory=producer_memory,
+            )
+            publish_lock_started = time.monotonic()
+            with tag_lock(persisted, group.tag, timeout_seconds=None):
+                print(
+                    f"IDB cache publish tag lock acquired: tag={group.tag}; "
+                    f"wait_seconds={time.monotonic() - publish_lock_started:.3f}"
                 )
-            verify_selection(persisted_root=persisted, selection=selection)
-            prune_tag(persisted_root=persisted, tag=group.tag)
+                selection = probe_generation(persisted_root=persisted, identity=identity)
+                print(f"IDB cache publish re-probe: tag={group.tag}; result={'hit' if selection else 'miss'}")
+                if selection is None:
+                    selection = publish_generation(
+                        persisted_root=persisted,
+                        identity=identity,
+                        workspace_root=group.workspace_root,
+                        run_id=run_id,
+                        attempt=attempt,
+                    )
+                verify_selection(persisted_root=persisted, selection=selection)
+                prune_tag(persisted_root=persisted, tag=group.tag)
         entries.append(
             selection_entry(
                 tag=group.tag,
@@ -182,7 +207,6 @@ def restore_selection_entries(
     entries: list[dict],
     groups,
     persisted_root: str | Path,
-    timeout_seconds: float = DEFAULT_TAG_LOCK_TIMEOUT_SECONDS,
 ) -> None:
     """Restore each exact generation into its workspace while holding that tag's lock.
 
@@ -196,7 +220,7 @@ def restore_selection_entries(
             raise IdbCacheSelectionError(f"Cache selection entry has no workspace group: {pair[0]}/{pair[1]}")
         selection = generation_selection(entry)
         started = time.monotonic()
-        with tag_lock(persisted_root, entry["tag"], timeout_seconds=timeout_seconds):
+        with tag_lock(persisted_root, entry["tag"], timeout_seconds=None):
             verify_selection(persisted_root=persisted_root, selection=selection)
             restore_generation(
                 persisted_root=persisted_root,

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import hashlib
 import os
+import ctypes
 import subprocess
 import sys
 import tempfile
@@ -11,11 +12,11 @@ import unittest
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import patch
 
 from ida_database_paths import (
     IdaDatabasePathError,
+    database_cleanup_paths,
     database_file_role,
     database_lock_paths,
     database_paths,
@@ -32,12 +33,11 @@ from idb_cache import (
     publish_generation,
     restore_generation,
     verify_selection,
-    warm_and_publish,
 )
 import idb_cache
 import idb_cache_selection
 from idb_cache_locks import IdbCacheError as IdbCacheLockError
-from idb_cache_locks import lock_root, tag_lock, tag_lock_timeout_seconds, warm_port_lock_path
+from idb_cache_locks import exclusive_file_lock, lock_root, producer_lock_path, tag_lock
 from idb_cache_release import (
     RELEASE_SELECTION_KEYS,
     RELEASE_SELECTION_SCHEMA_VERSION,
@@ -62,10 +62,10 @@ from idb_cache_workflow import (
     validate_cache_selection,
     verify_cache_selection_file,
 )
-from idb_warm_worker import probe_runtime_contract
 from gamesymbol_snapshot_lib.pr_validation import BoundImpactPlan, TagImpact
 from release_workflow_lib.hashing import canonical_json_bytes, write_canonical_json
-from tests.test_support import write_elf32, write_pe32
+from tests.test_support import write_pe32
+from warmup_memory import ProducerMemoryOwner
 
 
 LOCK_PROBE_TIMED_OUT = 3
@@ -106,17 +106,7 @@ def cache_fixture(root: Path):
     binary = write_pe32(workspace / "engine" / "hw.dll", b"cache-input")
     Path(f"{binary}.i64").write_bytes(b"primary-idb")
     Path(f"{binary}.i64.nam").write_bytes(b"names")
-    worker = root / "worker.py"
-    worker.write_text("worker contract\n", encoding="utf-8")
-    runtime = {
-        "kernel_version": "9.3",
-        "processor": "metapc",
-        "bitness": 32,
-        "file_type": "PE",
-        "loader_name": "pe",
-        "loader_module_sha256": "1" * 64,
-        "plugins": [],
-    }
+    runtime = {"kernel_version": "9.3"}
     binary_identity = build_binary_identity(
         workspace_root=workspace,
         module="engine",
@@ -126,9 +116,8 @@ def cache_fixture(root: Path):
     identity = build_cache_identity(
         tag="game-1",
         ida_runtime=runtime,
-        normalized_ida_args=["-A"],
         binaries=[binary_identity],
-        warm_worker_path=worker,
+        warm_worker_path=Path(idb_cache.__file__).with_name("idb_warm_worker.py"),
     )
     return workspace, persisted, binary, identity
 
@@ -147,6 +136,10 @@ class IdaDatabasePathTests(unittest.TestCase):
         self.assertEqual(
             (Path("engine/hw.dll.id0"), Path("engine/hw.dll.i64.id0"), Path("engine/hw.dll.idb.id0")),
             database_lock_paths(binary),
+        )
+        self.assertEqual(
+            tuple(dict.fromkeys((*database_paths(binary), *database_lock_paths(binary)))),
+            database_cleanup_paths(binary),
         )
         self.assertEqual("primary", database_file_role(binary, Path("engine/hw.dll.idb")))
         self.assertEqual("side", database_file_role(binary, Path("engine/hw.dll.i64.nam")))
@@ -168,38 +161,16 @@ class IdaDatabasePathTests(unittest.TestCase):
 
 
 class IdbCacheIdentityTests(unittest.TestCase):
-    def test_runtime_probe_binds_binary_loader_and_allowlisted_plugins(self):
+    def test_new_identity_uses_kernel_only_runtime_empty_args_and_canonical_worker(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            ida_root = root / "ida"
-            loaders = ida_root / "loaders"
-            plugins = ida_root / "plugins"
-            loaders.mkdir(parents=True)
-            plugins.mkdir()
-            (loaders / "pe.dll").write_bytes(b"pe-loader")
-            (loaders / "elf.dll").write_bytes(b"elf-loader")
-            (plugins / "allowed.dll").write_bytes(b"plugin")
-            pe = write_pe32(root / "hw.dll")
-            elf = write_elf32(root / "hw.so")
-            pe_runtime = probe_runtime_contract(
-                ida_root=ida_root,
-                kernel_version="9.3",
-                binary_path=pe,
-                plugins=("allowed.dll",),
-            )
-            elf_runtime = probe_runtime_contract(
-                ida_root=ida_root,
-                kernel_version="9.3",
-                binary_path=elf,
-            )
-            self.assertEqual(
-                ("PE", "pe", 32), (pe_runtime["file_type"], pe_runtime["loader_name"], pe_runtime["bitness"])
-            )
-            self.assertEqual(
-                ("ELF", "elf", 32), (elf_runtime["file_type"], elf_runtime["loader_name"], elf_runtime["bitness"])
-            )
-            self.assertNotEqual(pe_runtime["loader_module_sha256"], elf_runtime["loader_module_sha256"])
-            self.assertEqual("allowed.dll", pe_runtime["plugins"][0]["name"])
+            _workspace, _persisted, _binary, identity = cache_fixture(root)
+            self.assertEqual({"kernel_version": "9.3"}, identity["ida_runtime"])
+            self.assertEqual([], identity["normalized_ida_args"])
+            alternate = root / "worker.py"
+            alternate.write_text("worker\n", encoding="utf-8")
+            with self.assertRaisesRegex(IdbCacheError, "canonical"):
+                idb_cache.warm_worker_contract_sha256(alternate)
 
     def test_key_is_sensitive_to_binary_runtime_args_worker_and_path(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -219,6 +190,25 @@ class IdbCacheIdentityTests(unittest.TestCase):
             self.assertTrue(all(cache_key(mutation) != original for mutation in mutations))
             self.assertTrue(workspace.is_dir())
 
+    def test_runtime_validator_accepts_only_current_or_complete_legacy_shapes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            _workspace, _persisted, _binary, identity = cache_fixture(Path(temporary))
+            with self.assertRaisesRegex(IdbCacheError, "unexpected or missing"):
+                cache_key(
+                    {
+                        **identity,
+                        "ida_runtime": {"kernel_version": "9.3", "processor": "metapc"},
+                    }
+                )
+            with self.assertRaisesRegex(IdbCacheError, "normalized_ida_args"):
+                publish_generation(
+                    persisted_root=Path(temporary) / "persisted",
+                    identity={**identity, "normalized_ida_args": ["-A"]},
+                    workspace_root=Path(temporary) / "workspace",
+                    run_id="run-1",
+                    attempt=1,
+                )
+
     def test_identity_rejects_path_escape_case_collision_and_mixed_loader_platform(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -231,12 +221,62 @@ class IdbCacheIdentityTests(unittest.TestCase):
             duplicate = {**identity["binaries"][0], "module": "engine2", "path": "engine2/hw.dll"}
             with self.assertRaises(IdbCacheError):
                 cache_key({**identity, "binaries": [collision, duplicate]})
-            linux = {**identity["binaries"][0], "platform": "linux"}
+            linux = {
+                **identity["binaries"][0],
+                "module": "client",
+                "platform": "linux",
+                "path": "client/client.so",
+            }
             with self.assertRaises(IdbCacheError):
-                cache_key({**identity, "binaries": [linux]})
+                cache_key({**identity, "binaries": [linux, identity["binaries"][0]]})
 
 
 class IdbCacheGenerationTests(unittest.TestCase):
+    def test_legacy_schema_one_runtime_and_args_remain_readable_but_cannot_be_published(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace, persisted, binary, current = cache_fixture(Path(temporary))
+            legacy = {
+                **current,
+                "ida_runtime": {
+                    "kernel_version": "9.3",
+                    "processor": "metapc",
+                    "bitness": 32,
+                    "file_type": "PE",
+                    "loader_name": "pe",
+                    "loader_module_sha256": "1" * 64,
+                    "plugins": [],
+                },
+                "normalized_ida_args": ["-A"],
+            }
+            legacy_key = cache_key(legacy)
+            with self.assertRaisesRegex(IdbCacheError, "kernel-version-only"):
+                publish_generation(
+                    persisted_root=persisted,
+                    identity=legacy,
+                    workspace_root=workspace,
+                    run_id="legacy",
+                    attempt=1,
+                )
+            with patch.object(
+                idb_cache,
+                "validate_current_warm_identity",
+                side_effect=idb_cache.validate_cache_identity,
+            ):
+                selection = publish_generation(
+                    persisted_root=persisted,
+                    identity=legacy,
+                    workspace_root=workspace,
+                    run_id="legacy",
+                    attempt=1,
+                )
+            manifest = verify_selection(persisted_root=persisted, selection=selection)
+            self.assertEqual(legacy_key, manifest["cache_key"])
+            self.assertEqual(legacy, manifest["identity"])
+            Path(f"{binary}.i64").unlink()
+            restore_generation(persisted_root=persisted, selection=selection, workspace_root=workspace)
+            self.assertTrue(Path(f"{binary}.i64").is_file())
+            self.assertEqual([], prune_tag(persisted_root=persisted, tag="game-1"))
+
     def test_publish_probe_verify_restore_and_exact_selection_are_immutable(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -362,58 +402,6 @@ class IdbCacheGenerationTests(unittest.TestCase):
             self.assertFalse((generations / selections[0]["generation"]).exists())
             self.assertFalse((generations / selections[1]["generation"]).exists())
             self.assertTrue(all((generations / item["generation"]).is_dir() for item in selections[2:]))
-
-    def test_warm_timeout_cleans_incomplete_database_and_does_not_publish(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            workspace, persisted, binary, identity = cache_fixture(root)
-            with (
-                patch("idb_cache.exclusive_file_lock") as port_lock,
-                patch("idb_cache.subprocess.run", side_effect=subprocess.TimeoutExpired(["worker"], 1)),
-                self.assertRaisesRegex(IdbCacheError, "timed out"),
-            ):
-                warm_and_publish(
-                    persisted_root=persisted,
-                    identity=identity,
-                    workspace_root=workspace,
-                    run_id="run-1",
-                    attempt=1,
-                    timeout_seconds=1,
-                )
-            port_lock.assert_called_once_with(
-                warm_port_lock_path(persisted),
-                timeout_seconds=tag_lock_timeout_seconds(1),
-                description="IDA MCP warm worker port lock",
-            )
-            self.assertFalse(Path(f"{binary}.i64").exists())
-            self.assertFalse((persisted / "idb-cache" / "game-1").exists())
-
-    def test_warm_observed_runtime_mismatch_cleans_database_and_does_not_publish(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            workspace, persisted, binary, identity = cache_fixture(root)
-
-            def fake_worker(command, **_kwargs):
-                output = Path(command[command.index("-output") + 1])
-                workspace_root = Path(command[command.index("-workspace-root") + 1])
-                Path(f"{workspace_root / 'engine' / 'hw.dll'}.i64").write_bytes(b"new warm database")
-                write_canonical_json(output, {**identity["ida_runtime"], "kernel_version": "9.4"})
-                return SimpleNamespace(returncode=0)
-
-            with (
-                patch("idb_cache.subprocess.run", side_effect=fake_worker),
-                self.assertRaisesRegex(IdbCacheError, "observed runtime identity"),
-            ):
-                warm_and_publish(
-                    persisted_root=persisted,
-                    identity=identity,
-                    workspace_root=workspace,
-                    run_id="run-1",
-                    attempt=1,
-                    timeout_seconds=1,
-                )
-            self.assertFalse(Path(f"{binary}.i64").exists())
-            self.assertFalse((persisted / "idb-cache" / "game-1").exists())
 
 
 class IdbCacheWorkflowTests(unittest.TestCase):
@@ -585,26 +573,18 @@ class IdbCacheWorkflowTests(unittest.TestCase):
             repo, plan = self._bound_repository(root)
             persisted = root / "persisted"
             persisted.mkdir()
-            ida_root = root / "ida"
-            (ida_root / "loaders").mkdir(parents=True)
-            (ida_root / "loaders" / "pe.dll").write_bytes(b"pinned-pe-loader")
             selection_path = root / "selection.json"
             selection_sha = root / "selection.sha256"
             warm_calls = []
 
             def fake_warm(**kwargs):
+                self.assertFalse(lock_is_held_by_another_process(lock_root(persisted) / "game-1.lock"))
+                self.assertTrue(lock_is_held_by_another_process(producer_lock_path(persisted)))
                 warm_calls.append(kwargs["identity"])
                 identity = kwargs["identity"]
                 workspace = Path(kwargs["workspace_root"])
                 for binary in identity["binaries"]:
                     Path(f"{workspace.joinpath(*Path(binary['path']).parts)}.i64").write_bytes(b"neutral-idb")
-                return publish_generation(
-                    persisted_root=kwargs["persisted_root"],
-                    identity=identity,
-                    workspace_root=workspace,
-                    run_id=kwargs["run_id"],
-                    attempt=kwargs["attempt"],
-                )
 
             common = {
                 "repo_root": repo,
@@ -612,14 +592,15 @@ class IdbCacheWorkflowTests(unittest.TestCase):
                 "merge_ref": "HEAD",
                 "bindir": "bin",
                 "persisted_root": persisted,
-                "ida_root": ida_root,
                 "kernel_version": "9.3",
-                "normalized_ida_args": [],
+                "ida_python_executable": sys.executable,
                 "run_id": "run-1",
                 "attempt": 1,
-                "timeout_seconds": 1,
+                "max_concurrency": 2,
+                "worker_timeout_seconds": 1,
+                "producer_memory": ProducerMemoryOwner(None),
             }
-            with patch("idb_cache_selection.warm_and_publish", side_effect=fake_warm):
+            with patch("idb_cache_selection.warm_group", side_effect=fake_warm):
                 first = prepare_cache_selection(
                     **common,
                     output_path=selection_path,
@@ -638,9 +619,7 @@ class IdbCacheWorkflowTests(unittest.TestCase):
                 merge_ref="HEAD",
                 bindir="bin",
                 persisted_root=persisted,
-                ida_root=ida_root,
                 kernel_version="9.3",
-                normalized_ida_args=[],
                 selection_path=selection_path,
                 selection_sha256_path=selection_sha,
             )
@@ -653,9 +632,7 @@ class IdbCacheWorkflowTests(unittest.TestCase):
                 merge_ref="HEAD",
                 bindir="bin",
                 persisted_root=persisted,
-                ida_root=ida_root,
                 kernel_version="9.3",
-                normalized_ida_args=[],
                 selection_path=selection_path,
                 selection_sha256_path=selection_sha,
             )
@@ -708,6 +685,54 @@ class IdbCacheReadyWriteTests(unittest.TestCase):
 
 
 class IdbCacheLockTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == "nt", "Windows byte-range lock compatibility")
+    def test_lockfileex_and_msvcrt_lock_the_same_byte_range(self):
+        import msvcrt
+
+        script = textwrap.dedent(
+            """
+            import msvcrt
+            import sys
+            from pathlib import Path
+
+            path = Path(sys.argv[1])
+            with path.open("a+b") as handle:
+                handle.seek(0, 2)
+                if handle.tell() == 0:
+                    handle.write(b"0")
+                    handle.flush()
+                handle.seek(0)
+                try:
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                except OSError:
+                    raise SystemExit(3)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+            """
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            lock_path = Path(temporary) / "interop.lock"
+            with exclusive_file_lock(lock_path, timeout_seconds=5):
+                probe = subprocess.run(
+                    [sys.executable, "-c", script, str(lock_path)],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(LOCK_PROBE_TIMED_OUT, probe.returncode, probe.stderr)
+
+            with lock_path.open("a+b") as handle:
+                handle.seek(0, os.SEEK_END)
+                if handle.tell() == 0:
+                    handle.write(b"0")
+                    handle.flush()
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                try:
+                    self.assertTrue(lock_is_held_by_another_process(lock_path))
+                finally:
+                    handle.seek(0)
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+
     def test_tag_lock_is_exclusive_across_processes_and_reports_its_description(self):
         with tempfile.TemporaryDirectory() as temporary:
             persisted = Path(temporary)
@@ -771,11 +796,29 @@ class IdbCacheLockTests(unittest.TestCase):
             self.assertEqual(0, result)
             self.assertEqual("game-1", restored[0]["tag"])
 
-    def test_tag_lock_waits_longer_than_the_warm_worker_timeout(self):
-        from idb_cache_locks import DEFAULT_WARM_TIMEOUT_SECONDS, tag_lock_timeout_seconds
+    def test_unbounded_lock_retries_only_explicit_contention(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            lock_path = Path(temporary) / "lock"
+            contention = ctypes.WinError(33) if os.name == "nt" else BlockingIOError(11, "busy")
+            with (
+                patch("idb_cache_locks._acquire", side_effect=[contention, None]) as acquire,
+                patch("idb_cache_locks._release"),
+                patch("idb_cache_locks.time.sleep") as sleep,
+                exclusive_file_lock(lock_path, timeout_seconds=None),
+            ):
+                pass
+            self.assertEqual(2, acquire.call_count)
+            sleep.assert_called_once()
 
-        self.assertGreater(tag_lock_timeout_seconds(DEFAULT_WARM_TIMEOUT_SECONDS), DEFAULT_WARM_TIMEOUT_SECONDS)
-        self.assertGreater(tag_lock_timeout_seconds(60.0), 60.0)
+            permission = ctypes.WinError(5) if os.name == "nt" else PermissionError(13, "denied")
+            with (
+                patch("idb_cache_locks._acquire", side_effect=permission),
+                patch("idb_cache_locks.time.sleep") as sleep,
+                self.assertRaisesRegex(IdbCacheLockError, "Unable to acquire"),
+            ):
+                with exclusive_file_lock(lock_path, timeout_seconds=None):
+                    pass
+            sleep.assert_not_called()
 
     def test_restore_holds_the_tag_lock_so_prune_cannot_run_concurrently(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -867,34 +910,28 @@ class IdbCacheReleaseTests(unittest.TestCase):
         workspace = Path(kwargs["workspace_root"])
         for record in identity["binaries"]:
             Path(f"{workspace.joinpath(*Path(record['path']).parts)}.i64").write_bytes(b"neutral-idb")
-        return publish_generation(
-            persisted_root=kwargs["persisted_root"],
-            identity=identity,
-            workspace_root=workspace,
-            run_id=kwargs["run_id"],
-            attempt=kwargs["attempt"],
-        )
 
     def _common(self, repo: Path, persisted: Path, ida_root: Path) -> dict:
         return {
             "repo_root": repo,
             "bindir": "bin",
             "persisted_root": persisted,
-            "ida_root": ida_root,
             "kernel_version": "9.3",
-            "normalized_ida_args": [],
             "source_sha": None,
         }
 
     def _prepare(self, repo: Path, persisted: Path, ida_root: Path, root: Path, name: str = "selection") -> dict:
-        with patch("idb_cache_selection.warm_and_publish", side_effect=self._fake_warm):
+        with patch("idb_cache_selection.warm_group", side_effect=self._fake_warm):
             return prepare_release_selection(
                 **self._common(repo, persisted, ida_root),
+                ida_python_executable=sys.executable,
                 run_id="run-1",
                 attempt=1,
-                timeout_seconds=1,
+                max_concurrency=2,
+                worker_timeout_seconds=1,
                 output_path=root / f"{name}.json",
                 output_sha256_path=root / f"{name}.sha256",
+                producer_memory=ProducerMemoryOwner(None),
             )
 
     def test_release_selection_binds_source_bin_and_every_configured_group(self):
@@ -933,27 +970,33 @@ class IdbCacheReleaseTests(unittest.TestCase):
             warm_calls = []
 
             def counting_warm(**kwargs):
-                warm_calls.append(kwargs["run_id"])
+                warm_calls.append(kwargs["identity"]["tag"])
                 return self._fake_warm(**kwargs)
 
-            with patch("idb_cache_selection.warm_and_publish", side_effect=counting_warm):
+            with patch("idb_cache_selection.warm_group", side_effect=counting_warm):
                 first = prepare_release_selection(
                     **self._common(repo, persisted, ida_root),
+                    ida_python_executable=sys.executable,
                     run_id="run-1",
                     attempt=1,
-                    timeout_seconds=1,
+                    max_concurrency=2,
+                    worker_timeout_seconds=1,
                     output_path=root / "first.json",
                     output_sha256_path=root / "first.sha256",
+                    producer_memory=ProducerMemoryOwner(None),
                 )
                 second = prepare_release_selection(
                     **self._common(repo, persisted, ida_root),
+                    ida_python_executable=sys.executable,
                     run_id="run-2",
                     attempt=1,
-                    timeout_seconds=1,
+                    max_concurrency=2,
+                    worker_timeout_seconds=1,
                     output_path=root / "second.json",
                     output_sha256_path=root / "second.sha256",
+                    producer_memory=ProducerMemoryOwner(None),
                 )
-            self.assertEqual(["run-1"], warm_calls)
+            self.assertEqual(["game-1"], warm_calls)
             self.assertEqual(first, second)
 
     def test_consumer_restores_the_bound_generation_after_ready_advances(self):
@@ -1037,11 +1080,14 @@ class IdbCacheReleaseTests(unittest.TestCase):
             with self.assertRaisesRegex(IdbCacheReleaseError, "drifted"):
                 prepare_release_selection(
                     **{**self._common(repo, persisted, ida_root), "source_sha": "e" * 40},
+                    ida_python_executable=sys.executable,
                     run_id="run-1",
                     attempt=1,
-                    timeout_seconds=1,
+                    max_concurrency=2,
+                    worker_timeout_seconds=1,
                     output_path=root / "selection.json",
                     output_sha256_path=root / "selection.sha256",
+                    producer_memory=ProducerMemoryOwner(None),
                 )
 
 

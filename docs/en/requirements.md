@@ -30,25 +30,28 @@ Copy `.env.example` to `.env` for a local template. The analyzer uses the GoldSr
 
 ## IDB cache host requirements
 
-The warm-cache runtime probe requires `python` with `idapro`, `idalib-mcp`, and `IDADIR` on the dedicated runner. The
-Python executable must be beside `idalib-mcp` or own the `Scripts` directory containing it. CI queries
-`idaapi.get_kernel_version()` through that exact Python installation and uses `IDADIR` to identify the pinned loader
-modules and allowlisted plugins. The cache CLI receives an explicit persisted root; CI later exposes it as
+Warm production requires one canonical Python executable with `idapro` on the dedicated runner. CI invokes the canonical
+`idb_warm_worker.py --print-ida-version` with that executable and uses it for every bare-idalib worker. Consumer analysis
+still requires `idalib-mcp` and `IDADIR`, but neither the MCP executable nor the IDA installation path participates in the
+new cache identity. The cache CLI receives an explicit persisted root; CI later exposes it as
 `PERSISTED_WORKSPACE` only inside the protected dedicated Windows runner job. That root must be outside the checkout
 and `bin/`, must not traverse a reparse point, and must reside on storage that supports atomic same-filesystem rename.
 
 The runner account needs exclusive write access to its cache root. Cache warming is single-concurrency at the scheduler
-layer through a repository-wide `idb-warmup-*` concurrency group, and each tag's publish/restore/prune is further
-serialized by `<PERSISTED_WORKSPACE>/idb-cache/.locks/<tag>.lock`; a separate local file lock still protects the fixed
-MCP port. The byte-range locks must be mutually exclusive across two independent runner processes, not just threads in
-one process. A shared cache is valid only when all consumers use the same controlled storage and ACL authority; Actions
+layer through a repository-wide `idb-warmup-*` concurrency group. All official and direct producers also share
+`<PERSISTED_WORKSPACE>/idb-cache/.locks/producer.lock`; short tag locks serialize persisted probe/publish/prune and exact
+restore while per-binary bare-idalib workers run outside the tag lock. The byte-range locks must be mutually exclusive
+across two independent runner processes, not just threads in one process. A shared cache is valid only when all consumers
+use the same controlled storage and ACL authority; Actions
 artifacts are evidence/selection transport and `READY.json` is a probe hint, never a cache transport or truth source.
 
 Official analysis is unconditionally warm; `GSVIBE_IDB_CACHE_MODE` is not read. Do not enable or dispatch those workflows
 until the runner and storage evidence above is complete. No manually maintained IDA-version variable is required. Store
-the absolute persisted path as the Environment secret `PERSISTED_WORKSPACE`. The opened runtime must match the
-dynamically detected kernel, loader, and plugin identity before publication, so PATH or installation drift fails closed
-instead of selecting a cache under a stale configured version.
+the absolute persisted path as the Environment secret `PERSISTED_WORKSPACE`. `IDB_WARMUP_MAX_CONCURRENCY` bounds workers
+(default `2`), while optional `IDB_WARMUP_MAX_MEMORY_MIB` enables aggregate Windows Job admission. New cache identities
+bind only the dynamically probed non-empty kernel version as `ida_runtime`; binary identity and the canonical worker
+contract remain independently bound. A producer re-probes the same executable before launching workers and fails closed
+on a mismatch.
 
 ## Release runner and GitHub governance requirements
 
