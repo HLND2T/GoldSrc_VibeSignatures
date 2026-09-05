@@ -14,6 +14,8 @@ import re
 import socket
 import subprocess
 import sys
+import tempfile
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -27,6 +29,19 @@ from analysis_config import (
     iter_analysis_config_tags,
     resolve_analysis_config,
     validated_tag,
+)
+from analysis_batch import (
+    RESULT_SCHEMA_VERSION,
+    BatchPlanError,
+    build_batch_schedule,
+    run_batch,
+)
+from analysis_memory import (
+    AnalysisMemoryConfigError,
+    COORDINATED_CHILD_ENV,
+    analysis_memory_authority_from_environment,
+    resolve_analysis_limits,
+    validate_limits_for_effective_concurrency,
 )
 from analysis_planner import (
     AnalysisPlanError,
@@ -55,6 +70,7 @@ from ida_database_paths import (
     primary_database_paths,
 )
 from ida_llm_utils import validated_temperature
+from mcp_startup import mcp_startup_lock
 from ida_mcp_session import (
     McpConnectionError,
     McpContractError,
@@ -796,6 +812,27 @@ def _has_ida_database(binary_path):
     return any(os.path.isfile(path) for path in _ida_database_primary_paths(binary_path))
 
 
+def _spawn_idalib_mcp(binary_path, host, port, ida_args="", debug=False, stdout=None, stderr=None):
+    """Spawn idalib-mcp on a fixed port without waiting for readiness."""
+    if is_port_in_use(host, port):
+        return None
+    command = ["idalib-mcp", "--unsafe", "--host", host, "--port", str(port)]
+    if ida_args:
+        command.extend(str(ida_args).split())
+    command.append(str(binary_path))
+    if debug:
+        print(f"  Starting idalib-mcp: {' '.join(command)}")
+    try:
+        output = stdout if stdout is not None else (None if debug else subprocess.DEVNULL)
+        errors = stderr if stderr is not None else (None if debug else subprocess.DEVNULL)
+        creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" and not debug else 0
+        return subprocess.Popen(command, stdout=output, stderr=errors, creationflags=creationflags)
+    except OSError as exc:
+        if debug:
+            print(f"  Unable to start idalib-mcp: {exc}")
+        return None
+
+
 def start_idalib_mcp(
     binary_path,
     host=DEFAULT_HOST,
@@ -805,28 +842,63 @@ def start_idalib_mcp(
     stdout=None,
     stderr=None,
 ):
-    if is_port_in_use(host, port):
-        return None
-    command = ["idalib-mcp", "--unsafe", "--host", host, "--port", str(port)]
-    if ida_args:
-        command.extend(str(ida_args).split())
-    command.append(str(binary_path))
-    if debug:
-        print(f"  Starting idalib-mcp: {' '.join(command)}")
     process = None
-    try:
-        output = stdout if stdout is not None else (None if debug else subprocess.DEVNULL)
-        errors = stderr if stderr is not None else (None if debug else subprocess.DEVNULL)
-        creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" and not debug else 0
-        process = subprocess.Popen(command, stdout=output, stderr=errors, creationflags=creationflags)
-        if wait_for_mcp_ready(process, host, port):
-            return process
-    except OSError as exc:
-        if debug:
-            print(f"  Unable to start idalib-mcp: {exc}")
+    with mcp_startup_lock():
+        process = _spawn_idalib_mcp(binary_path, host, port, ida_args, debug, stdout, stderr)
+    if process is not None and wait_for_mcp_ready(process, host, port):
+        return process
     stop_idalib_mcp_process(process, debug=debug)
     wait_for_port_release(host, port)
     return None
+
+
+MCP_DYNAMIC_STARTUP_ATTEMPTS = 3
+MCP_PORT_BIND_TIMEOUT_SECONDS = 60.0
+
+
+def _wait_dynamic_port_bound(process, host, port, timeout=MCP_PORT_BIND_TIMEOUT_SECONDS, retry_interval=0.5):
+    """Confirm the spawned child actually bound its port, or exited."""
+    deadline = time.monotonic() + max(0.0, timeout)
+    while True:
+        if process.poll() is not None:
+            return False
+        if is_port_in_use(host, port):
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(max(0.0, retry_interval))
+
+
+def start_dynamic_idalib_mcp(
+    binary_path,
+    host=DEFAULT_HOST,
+    ida_args="",
+    debug=False,
+    *,
+    attempts=MCP_DYNAMIC_STARTUP_ATTEMPTS,
+    lock_path=None,
+):
+    """Allocate, spawn, and bind-confirm one dynamic-port idalib-mcp under the startup lock.
+
+    The lock covers only the short allocate/spawn/bind window; full MCP readiness
+    is awaited by the caller after the lock is released. A stolen or never-bound
+    port triggers a bounded re-allocation with a fresh ephemeral port.
+    """
+    process = None
+    for attempt in range(1, max(1, attempts) + 1):
+        with mcp_startup_lock(lock_path):
+            port = _allocate_local_port(host)
+            process = _spawn_idalib_mcp(binary_path, host, port, ida_args, debug)
+            bound = process is not None and _wait_dynamic_port_bound(process, host, port)
+        if bound:
+            if debug:
+                print(f"  Allocated dynamic MCP port {host}:{port} (attempt {attempt})")
+            return process, port
+        stop_idalib_mcp_process(process, debug=debug)
+        wait_for_port_release(host, port)
+        if debug:
+            print(f"  Dynamic MCP port attempt {attempt} failed for {binary_path}; retrying")
+    return None, None
 
 
 async def quit_ida_via_mcp(host, port, *, expected_binary, auto_started):
@@ -1038,15 +1110,25 @@ class IdaMcpLifecycle:
         if self.database_policy == DATABASE_POLICY_RESTORED_STRICT and not _has_ida_database(self.binary_path):
             raise McpLifecycleError(f"Strict restored IDA database is missing for {self.binary_path}")
         try:
-            self.process = start_idalib_mcp(
-                self.binary_path,
-                self.host,
-                self.port,
-                self.ida_args,
-                self.debug,
-            )
-            if self.process is None:
-                raise McpLifecycleError(f"Unable to start idalib-mcp for {self.binary_path}")
+            if self.port is None:
+                self.process, self.port = start_dynamic_idalib_mcp(
+                    self.binary_path,
+                    self.host,
+                    self.ida_args,
+                    self.debug,
+                )
+                if self.process is None or not wait_for_mcp_ready(self.process, self.host, self.port):
+                    raise McpLifecycleError(f"Unable to start idalib-mcp for {self.binary_path}")
+            else:
+                self.process = start_idalib_mcp(
+                    self.binary_path,
+                    self.host,
+                    self.port,
+                    self.ida_args,
+                    self.debug,
+                )
+                if self.process is None:
+                    raise McpLifecycleError(f"Unable to start idalib-mcp for {self.binary_path}")
             self.process, self.runtime = verify_owned_mcp_with_single_recovery(
                 self.process,
                 self.binary_path,
@@ -1923,10 +2005,7 @@ def _create_ida_mcp_lifecycle(
     ida_args,
     debug,
 ):
-    if port is None:
-        port = _allocate_local_port(host)
-        if debug:
-            print(f"  Allocated dynamic MCP port {host}:{port}")
+    # port=None defers allocation into the lifecycle under the cross-process MCP startup lock.
     return IdaMcpLifecycle(
         binary,
         platform,
@@ -2589,6 +2668,7 @@ def _run_single_tag(gamever: str, args, summary: AnalysisSummary | None = None) 
     try:
         args.configyaml = str(resolve_analysis_config(gamever, args.configyaml))
         _print_main_configuration(args)
+        analysis_memory_authority_from_environment()
         reporter = create_process_reporter(args)
         analyze(
             gamever=gamever,
@@ -2615,6 +2695,7 @@ def _run_single_tag(gamever: str, args, summary: AnalysisSummary | None = None) 
         )
     except (
         AnalysisConfigError,
+        AnalysisMemoryConfigError,
         AnalysisPlanError,
         AnalysisRunError,
         BinaryFormatError,
@@ -2659,8 +2740,376 @@ def run_all(args) -> int:
     return 1 if failed else 0
 
 
+_BATCH_WORKER_FLAG = "--internal-batch-worker"
+_BATCH_TERMINAL_STATUSES = frozenset({"succeeded", "failed", "skipped", "aborted"})
+_BATCH_WORKER_ENV_OPTIONS = (
+    ("GSVIBE_AGENT", "agent"),
+    ("GSVIBE_AGENT_MODEL", "agent_model"),
+    ("GSVIBE_LLM_APIKEY", "llm_apikey"),
+    ("GSVIBE_LLM_BASEURL", "llm_baseurl"),
+    ("GSVIBE_LLM_EFFORT", "llm_effort"),
+    ("GSVIBE_LLM_FAKE_AS", "llm_fake_as"),
+    ("GSVIBE_LLM_MODEL", "llm_model"),
+    ("GSVIBE_LLM_TEMPERATURE", "llm_temperature"),
+    ("GSVIBE_PROCESS_REPORTER", "process_reporter"),
+    ("GSVIBE_REDIS_PREFIX", "redis_prefix"),
+    ("GSVIBE_REDIS_URL", "redis_url"),
+)
+
+
+class _RecordingProcessReporter:
+    """Forward reporter events while recording terminal task statuses per planner node."""
+
+    def __init__(self, inner) -> None:
+        self._inner = inner
+        self._planner_by_task: dict[str, str] = {}
+        self._terminal: dict[str, str] = {}
+
+    def terminal_status(self, planner_node_id: str) -> str | None:
+        return self._terminal.get(planner_node_id)
+
+    def initialize_run(self, plan, run_id=None):
+        for node in (plan or {}).get("nodes", []):
+            planner_node_id = (node.get("data") or {}).get("planner_node_id")
+            if planner_node_id and node.get("id"):
+                self._planner_by_task[node["id"]] = planner_node_id
+        return self._inner.initialize_run(plan, run_id=run_id)
+
+    def emit(self, event) -> None:
+        if event.event_type is ProcessEventType.TASK_STATUS_CHANGED and event.task_id in self._planner_by_task:
+            status = event.status
+            status_value = status.value if hasattr(status, "value") else str(status)
+            if status_value in _BATCH_TERMINAL_STATUSES:
+                self._terminal[self._planner_by_task[event.task_id]] = status_value
+        self._inner.emit(event)
+
+    def heartbeat(self, run_id: str) -> None:
+        self._inner.heartbeat(run_id)
+
+    def finalize_run(self, run_id: str, status, summary) -> None:
+        self._inner.finalize_run(run_id, status, summary)
+
+    def flush(self) -> None:
+        self._inner.flush()
+
+    def close(self) -> None:
+        self._inner.close()
+
+
+def _atomic_write_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f"{path.name}.tmp")
+    temporary.write_text(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+        encoding="utf-8",
+    )
+    os.replace(temporary, path)
+
+
+def _batch_worker_options(args) -> dict:
+    return {
+        "configyaml": str(resolve_analysis_config(args.gamever, args.configyaml)),
+        "bindir": args.bindir,
+        "artifactdir": args.artifactdir,
+        "platforms": list(args.platforms),
+        "agent": args.agent,
+        "agent_model": args.agent_model,
+        "llm_model": args.llm_model,
+        "llm_baseurl": args.llm_baseurl,
+        "llm_temperature": args.llm_temperature,
+        "llm_effort": args.llm_effort,
+        "llm_fake_as": args.llm_fake_as,
+        "maxretry": args.maxretry,
+        "skip_error": bool(args.skip_error),
+        "skip_pp": bool(args.skip_pp),
+        "debug": bool(args.debug),
+        "ida_args": args.ida_args,
+        "process_reporter": args.process_reporter,
+        "redis_url": args.redis_url,
+        "redis_prefix": args.redis_prefix,
+    }
+
+
+def _batch_worker_main(request_path: str) -> int:
+    """Execute one invocation-scoped work item exactly and emit the result contract."""
+    request = json.loads(Path(request_path).read_text(encoding="utf-8"))
+    options = request["options"]
+    node_ids = tuple(request["node_ids"])
+    tag = request["tag"]
+    run_id = request["run_id"]
+    reporter_args = argparse.Namespace(
+        process_reporter=options.get("process_reporter", "none"),
+        redis_url=options.get("redis_url"),
+        redis_prefix=options.get("redis_prefix"),
+        gamever=tag,
+        agent=options.get("agent"),
+        configyaml=options.get("configyaml"),
+    )
+    recorder = _RecordingProcessReporter(create_process_reporter(reporter_args))
+    summary = AnalysisSummary()
+    failure_reason = None
+    try:
+        analyze(
+            gamever=tag,
+            oldgamever=None,
+            config_path=options["configyaml"],
+            bindir=options["bindir"],
+            artifactdir=options["artifactdir"],
+            platforms=options.get("platforms") or list(PLATFORMS),
+            agent=options.get("agent") or DEFAULT_AGENT,
+            agent_model=options.get("agent_model") or DEFAULT_AGENT_MODEL,
+            llm_config={
+                "model": options.get("llm_model") or DEFAULT_LLM_MODEL,
+                "api_key": os.environ.get("GSVIBE_LLM_APIKEY"),
+                "base_url": options.get("llm_baseurl"),
+                "temperature": options.get("llm_temperature"),
+                "effort": options.get("llm_effort"),
+                "fake_as": options.get("llm_fake_as"),
+                "max_retries": options.get("maxretry", 3),
+            },
+            max_retries=options.get("maxretry", 3),
+            skip_error=bool(options.get("skip_error")),
+            skip_preprocessors=bool(options.get("skip_pp")),
+            debug=bool(options.get("debug")),
+            ida_args=options.get("ida_args", ""),
+            reporter=recorder,
+            run_id=run_id,
+            summary=summary,
+            selected_node_ids=list(node_ids),
+            force_all=True,
+        )
+        if summary.failed:
+            failure_reason = "node_failures"
+    except (
+        AnalysisConfigError,
+        AnalysisPlanError,
+        AnalysisRunError,
+        BinaryFormatError,
+        ProcessReporterConfigurationError,
+        OSError,
+        yaml.YAMLError,
+    ) as exc:
+        failure_reason = str(exc)
+        print(f"Error: batch worker failed for {request['work_item_id']}: {exc}")
+
+    node_results = []
+    for node_id in node_ids:
+        terminal = recorder.terminal_status(node_id)
+        if terminal == "succeeded":
+            node_results.append({"node_id": node_id, "status": "succeeded", "reason": None})
+        elif terminal == "skipped":
+            node_results.append({"node_id": node_id, "status": "skipped", "reason": None})
+        elif terminal == "aborted":
+            node_results.append({"node_id": node_id, "status": "aborted", "reason": "lifecycle_abort"})
+        elif terminal == "failed":
+            node_results.append({"node_id": node_id, "status": "failed", "reason": failure_reason or "node_failed"})
+        else:
+            node_results.append({"node_id": node_id, "status": "aborted", "reason": "not_executed"})
+    counts = {"successful": 0, "failed": 0, "skipped": 0}
+    for entry in node_results:
+        if entry["status"] == "succeeded":
+            counts["successful"] += 1
+        elif entry["status"] == "skipped":
+            counts["skipped"] += 1
+        else:
+            counts["failed"] += 1
+    status = "succeeded" if failure_reason is None and counts["failed"] == 0 else "failed"
+    exit_code = 0 if status == "succeeded" else 1
+    _atomic_write_json(
+        Path(request["result_path"]),
+        {
+            "schema_version": RESULT_SCHEMA_VERSION,
+            "run_id": run_id,
+            "work_item_id": request["work_item_id"],
+            "phase": request["phase"],
+            "tag": tag,
+            "module": request["module"],
+            "platform": request["platform"],
+            "binary_relative_path": request["binary_relative_path"],
+            "node_ids": list(node_ids),
+            "node_results": node_results,
+            "status": status,
+            "exit_code": exit_code,
+            "summary": counts,
+            "failure_reason": failure_reason,
+        },
+    )
+    return exit_code
+
+
+def _batch_binary_relative_paths(tag: str, modules, platforms) -> dict[tuple[str, str], str]:
+    paths: dict[tuple[str, str], str] = {}
+    for module in modules:
+        for platform in platforms:
+            binary_name = module.get(f"module_{platform}")
+            if binary_name:
+                paths[(module["name"], platform)] = f"{tag}/{module['name']}/{binary_name}"
+    return paths
+
+
+def _run_full_batch(args) -> int:
+    """Two-phase bounded-concurrency path for `-allgamever -force_all`."""
+    tags = iter_analysis_config_tags()
+    if not tags:
+        print("Error: no analysis config files found to process with -allgamever")
+        return 1
+    limits = resolve_analysis_limits()
+    tag_plans = []
+    for tag in tags:
+        if args.module_filter is not None:
+            try:
+                matches_module_filter = _allgamever_module_filter_matches(tag, args.module_filter)
+            except (AnalysisConfigError, AnalysisPlanError, OSError, yaml.YAMLError):
+                matches_module_filter = True
+            if not matches_module_filter:
+                print(f"Skipping gamever: no requested modules found ({', '.join(args.module_filter)})")
+                continue
+        config_path = str(resolve_analysis_config(tag))
+        _document, all_modules = load_config(config_path)
+        plan = _build_execution_plan(
+            all_modules,
+            platforms=args.platforms,
+            bin_dir=args.artifactdir,
+            tag=tag,
+            default_max_retries=args.maxretry,
+            declared_modules=[module["name"] for module in all_modules],
+        )
+        tag_plans.append((tag, plan, _batch_binary_relative_paths(tag, all_modules, args.platforms)))
+    try:
+        schedule = build_batch_schedule(tag_plans)
+    except BatchPlanError as exc:
+        print(f"Error: full analysis batch classification failed: {exc}")
+        return 1
+    effective_concurrency = min(limits.max_concurrency, len(schedule.parallel_items))
+    try:
+        validate_limits_for_effective_concurrency(limits, effective_concurrency)
+    except AnalysisMemoryConfigError as exc:
+        print(f"Error: {exc}")
+        return 1
+    print(
+        f"Full analysis batch: {len(schedule.parallel_items)} parallel binary work item(s), "
+        f"{len(schedule.serial_items)} serial segment(s); configured concurrency "
+        f"{limits.max_concurrency}, effective {max(effective_concurrency, 1)}"
+    )
+    memory_gate = None
+    if limits.memory_guard_enabled:
+        try:
+            authority = analysis_memory_authority_from_environment()
+        except AnalysisMemoryConfigError as exc:
+            print(f"Error: {exc}")
+            return 1
+        memory_gate = authority.gate if authority is not None else None
+    else:
+        print("Full analysis batch: aggregate memory guard disabled (GSVIBE_ANALYSIS_MAX_MEMORY_MIB unset)")
+
+    batch_run_id = f"analysis-batch-{time.strftime('%Y%m%dT%H%M%S')}"
+    request_root = Path(tempfile.mkdtemp(prefix="gsvibe-analysis-batch-"))
+    print_lock = threading.Lock()
+
+    def launch_worker(item):
+        request_path = request_root / f"{item.work_item_id}.request.json"
+        result_path = request_root / f"{item.work_item_id}.result.json"
+        request = {
+            "run_id": f"{batch_run_id}-{item.work_item_id}",
+            "work_item_id": item.work_item_id,
+            "phase": item.phase,
+            "tag": item.binary.tag,
+            "module": item.binary.module,
+            "platform": item.binary.platform,
+            "binary_relative_path": item.binary.binary_relative_path,
+            "node_ids": list(item.node_ids),
+            "result_path": str(result_path),
+            "options": _batch_worker_options(
+                argparse.Namespace(
+                    gamever=item.binary.tag,
+                    configyaml=str(resolve_analysis_config(item.binary.tag)),
+                    bindir=args.bindir,
+                    artifactdir=args.artifactdir,
+                    platforms=args.platforms,
+                    agent=args.agent,
+                    agent_model=args.agent_model,
+                    llm_model=args.llm_model,
+                    llm_baseurl=args.llm_baseurl,
+                    llm_temperature=args.llm_temperature,
+                    llm_effort=args.llm_effort,
+                    llm_fake_as=args.llm_fake_as,
+                    maxretry=args.maxretry,
+                    skip_error=args.skip_error,
+                    skip_pp=args.skip_pp,
+                    debug=args.debug,
+                    ida_args=args.ida_args,
+                    process_reporter=args.process_reporter,
+                    redis_url=args.redis_url,
+                    redis_prefix=args.redis_prefix,
+                )
+            ),
+        }
+        _atomic_write_json(request_path, request)
+        environment = os.environ.copy()
+        environment[COORDINATED_CHILD_ENV] = "1"
+        for env_name, attribute in _BATCH_WORKER_ENV_OPTIONS:
+            value = getattr(args, attribute, None)
+            if value is not None:
+                environment[env_name] = str(value)
+        command = [sys.executable, os.fspath(Path(__file__).resolve()), _BATCH_WORKER_FLAG, str(request_path)]
+        process = subprocess.Popen(
+            command,
+            env=environment,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+
+        def drain(prefix: str) -> None:
+            assert process.stdout is not None
+            for raw in iter(process.stdout.readline, b""):
+                line = raw.decode("utf-8", errors="replace").rstrip()
+                with print_lock:
+                    print(f"{prefix} {line}")
+            process.stdout.close()
+
+        threading.Thread(target=drain, args=(item.log_prefix,), daemon=True).start()
+        return process, result_path
+
+    try:
+        outcome = run_batch(
+            schedule,
+            run_id=batch_run_id,
+            launch_worker=launch_worker,
+            max_concurrency=limits.max_concurrency,
+            memory_gate=memory_gate,
+            skip_error=args.skip_error,
+        )
+    finally:
+        try:
+            for path in request_root.glob("*.request.json"):
+                path.unlink()
+            request_root.rmdir()
+        except OSError as cleanup_error:
+            print(f"Warning: batch request cleanup failed: {cleanup_error}")
+
+    for work_item_id, status in outcome.work_item_summaries:
+        print(f"Work item {work_item_id}: {status}")
+    if outcome.aborted_node_ids:
+        print(f"Aborted nodes ({len(outcome.aborted_node_ids)}): {', '.join(outcome.aborted_node_ids)}")
+    if outcome.failure_reason:
+        print(f"Batch failure reason: {outcome.failure_reason}")
+    print("\nSummary")
+    print(f"  Successful: {outcome.successful}")
+    print(f"  Failed: {outcome.failed}")
+    print(f"  Skipped: {outcome.skipped}")
+    return 0 if outcome.succeeded else 1
+
+
 def main(argv=None) -> int:
+    raw_argv = list(sys.argv[1:] if argv is None else argv)
+    if raw_argv and raw_argv[0] == _BATCH_WORKER_FLAG:
+        if len(raw_argv) != 2:
+            print(f"Error: {_BATCH_WORKER_FLAG} requires exactly one request file path")
+            return 2
+        return _batch_worker_main(raw_argv[1])
     args = parse_args(argv)
+    if args.allgamever and args.force_all:
+        return _run_full_batch(args)
     if args.allgamever:
         return run_all(args)
     return _run_single_tag(args.gamever, args)

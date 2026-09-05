@@ -71,6 +71,20 @@ image base；Preprocessor 与 Agent 产物经过同一层 YAML、symbol schema �
 `-skip_pp` 跳过单一 Preprocessor，直接运行 Agent Skill。`-skip_error` 允许运行期的后续
 module/platform/skill 继续，但 config 与 DAG contract 错误仍立即失败；任何已记录运行失败最终都会返回非零。
 
+## Full analysis 有界并发
+
+`ida_analyze_bin.py -allgamever -force_all` 以两阶段 coordinator 执行。启动任何 worker 前，先对每个 tag 的完整节点
+DAG 做一次分类：每条跨 binary 依赖边会把它指向的 target 及其全部下游闭包移入串行尾队列，其余节点按 binary 分组为并行
+work item。每个 work item 对应一个独立 worker 进程（`analysis_batch.py`），持有自己的 dynamic-port `idalib-mcp`
+lifecycle，按精确有序节点子集强制执行；不同 gamever 之间没有完成屏障。串行尾队列只有在全部并行 worker 结果校验成功且
+进程/lifecycle 退出后才会启动，同一时刻最多运行一个段；同一 binary 跨阶段重新打开的是 neutral restored IDB。
+
+准入由 `GSVIBE_ANALYSIS_MAX_CONCURRENCY`（默认 `1`，仅接受十进制 `1..32`，非法值 fail closed）与（当
+`GSVIBE_ANALYSIS_MAX_MEMORY_MIB` 已设置时）Windows Job Object aggregate hard limit 加 85% soft admission gate 与
+host headroom 检查共同约束（`analysis_memory.py`，复用 warmup 的 Job 原语）。effective concurrency 大于 `1` 必须显式
+配置内存预算。dynamic MCP 端口分配位于 runner 本地跨进程 startup lock（`mcp_startup.py`）内，该锁只覆盖
+allocate/spawn/bind-confirm 窗口，端口被抢占时使用新端口做有界重试。
+
 ## Warm IDB cache 边界
 
 `idb_cache.py` 为中性 IDA database 提供 local immutable-generation cache。新的 schema-1 key 绑定 exact binary

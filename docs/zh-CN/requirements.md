@@ -30,6 +30,8 @@ CLI 参数、环境变量、程序默认值。关键变量：
 - `GSVIBE_API_HOST`、`GSVIBE_API_PORT`、`GSVIBE_API_CORS_ORIGINS`、`GSVIBE_API_ALLOW_PRIVATE_NETWORK`、
   `GSVIBE_SSE_BLOCK_MS`、`GSVIBE_SSE_BATCH_SIZE` 配置只读 Process API。
 - `GSVIBE_REFERENCE_GAMEVER`（默认 `hl-10210`）选择 `LLM_DECOMPILE` 的 canonical reference 游戏版本。
+- `GSVIBE_ANALYSIS_MAX_CONCURRENCY` 限制 full analysis 同时准入的 worker 进程数（十进制 `1..32`，默认 `1`，fail closed）；大于 `1` 时必须同时设置 `GSVIBE_ANALYSIS_MAX_MEMORY_MIB`。
+- `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` 设置 analyzer 进程树的 aggregate committed-memory 硬预算（Windows Job Object），含 85% soft admission gate；同样适用于直接单 tag 与 selected-node 分析。
 - `DEPOTDOWNLOADER_STEAM_USERNAME` 与 `DEPOTDOWNLOADER_STEAM_PASSWORD` 在需要 depot 认证时由
   `download_depot.py` 读取。
 
