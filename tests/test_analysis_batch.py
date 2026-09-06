@@ -4,6 +4,7 @@ import json
 import unittest
 import unittest.mock
 from pathlib import Path
+from types import SimpleNamespace
 
 from analysis_batch import (
     PHASE_PARALLEL,
@@ -797,6 +798,34 @@ class SchedulerTests(unittest.TestCase):
         self.assertEqual(tree_kills, [process])
         self.assertTrue(any("exit could not be confirmed" in line for line in self.logs), self.logs)
 
+    def test_kill_failure_with_root_exit_is_still_a_cleanup_failure(self):
+        # The kill command fails while the root subsequently exits on its own:
+        # a root exit never proves the reparented descendants exited, so the
+        # slot must stay reserved and the worker must stay tracked.
+        item = make_item()
+        schedule = BatchSchedule(parallel_items=(item,), serial_items=())
+        process = FakeProcess(polls_until_exit=None)
+        kill_attempts = []
+
+        def kill_tree(target):
+            kill_attempts.append(target)
+            raise RuntimeError("taskkill unavailable")
+
+        gate = FakeGate(capacity=4)
+        outcome = self._run_with_cleanup_failure(
+            kill_tree=kill_tree,
+            launch=lambda _item: self._launch(process, make_result_payload(item)),
+            schedule=schedule,
+            gate=gate,
+            skip_error=True,
+        )
+        self.assertFalse(outcome.succeeded)
+        self.assertEqual(outcome.failure_reason, "worker_cleanup_failed")
+        self.assertEqual(outcome.uncleaned_work_item_ids, ("parallel-0000",))
+        self.assertEqual(gate.active, 1)
+        self.assertEqual(kill_attempts, [process])
+        self.assertTrue(any("owned tree exit cannot be confirmed" in line for line in self.logs), self.logs)
+
     def test_serial_cleanup_failure_keeps_slot_reserved_and_blocks_remaining_segments(self):
         p_item = make_item()
         s_items = [
@@ -1033,6 +1062,7 @@ class ProcessTreeKillHelperTests(unittest.TestCase):
 
         def record_run(*args, **kwargs):
             calls.append((args, kwargs))
+            return SimpleNamespace(returncode=0)
 
         with unittest.mock.patch.object(ab.subprocess, "run", side_effect=record_run):
             ab._kill_windows_process_tree(4242)
@@ -1043,6 +1073,27 @@ class ProcessTreeKillHelperTests(unittest.TestCase):
         # The tree-kill command itself must be bounded, not just the exit wait.
         self.assertGreater(kwargs.get("timeout", 0), 0)
         self.assertEqual(kwargs["timeout"], ab.TREE_KILL_COMMAND_TIMEOUT_SECONDS)
+
+    def test_windows_tree_kill_raises_on_nonzero_taskkill_exit(self):
+        import analysis_batch as ab
+
+        with unittest.mock.patch.object(ab.subprocess, "run", return_value=SimpleNamespace(returncode=1)):
+            with self.assertRaises(RuntimeError):
+                ab._kill_windows_process_tree(4242)
+
+    def test_posix_tree_kill_reports_root_kill_failure(self):
+        import analysis_batch as ab
+
+        def fake_kill(pid, _sig):
+            if pid == 10:
+                raise OSError("no such process")
+
+        with (
+            unittest.mock.patch.object(ab, "_posix_descendant_pids", return_value=[11]),
+            unittest.mock.patch.object(ab.os, "kill", side_effect=fake_kill),
+        ):
+            with self.assertRaises(OSError):
+                ab._kill_posix_process_tree(10)
 
     def test_posix_tree_kill_sweeps_descendants_before_root(self):
         import analysis_batch as ab

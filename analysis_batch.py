@@ -401,13 +401,18 @@ def terminate_process_tree(process: WorkerProcess) -> None:
 
 
 def _kill_windows_process_tree(pid: int) -> None:
-    subprocess.run(
+    result = subprocess.run(
         ["taskkill", "/F", "/T", "/PID", str(pid)],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
         timeout=TREE_KILL_COMMAND_TIMEOUT_SECONDS,
     )
+    if result.returncode != 0:
+        # A non-zero taskkill (kill denied, or the pid already gone and the
+        # tree no longer attributable) means the owned tree's exit cannot be
+        # established; callers must keep treating the worker as uncleaned.
+        raise RuntimeError(f"taskkill /F /T /PID {pid} failed with exit code {result.returncode}")
 
 
 def _kill_posix_process_tree(pid: int) -> None:
@@ -417,11 +422,18 @@ def _kill_posix_process_tree(pid: int) -> None:
     # Snapshot descendants before touching the root and kill deepest-first, so
     # the parent chain stays intact while children are still being attributed.
     targets = [*reversed(_posix_descendant_pids(pid)), pid]
+    root_kill_failed: OSError | None = None
     for target in targets:
         try:
             os.kill(target, kill_signal)
-        except OSError:
+        except OSError as exc:
+            if target == pid:
+                root_kill_failed = exc
             continue
+    if root_kill_failed is not None:
+        # The root could not be signalled, so the tree walk's attribution is
+        # unreliable and the tree's exit cannot be confirmed.
+        raise OSError(f"failed to signal root pid {pid}: {root_kill_failed}") from root_kill_failed
 
 
 def _posix_descendant_pids(root_pid: int) -> list[int]:
@@ -476,10 +488,24 @@ def _terminate_worker(
     # Terminating the root first would defeat the tree walk: on Windows
     # terminate() hard-kills only the root and the descendants get reparented,
     # after which they can no longer be attributed to this worker.
+    kill_confirmed = False
     try:
         tree_kill(worker.process)
+        kill_confirmed = True
     except Exception as kill_error:  # noqa: BLE001
         log(f"{worker.item.log_prefix} worker process tree kill failed: {kill_error}")
+    if not kill_confirmed:
+        # The kill step itself failed (exception, non-zero command exit, or
+        # command timeout). The root exiting afterwards proves nothing about
+        # the descendants - they are reparented and unattributable once the
+        # root dies - so this stays a cleanup failure even if wait() returns.
+        # Reap the root when possible, but never report a confirmed exit.
+        try:
+            worker.process.wait(timeout=grace_seconds)
+        except Exception:  # noqa: BLE001 - diagnostics only; the outcome is already None.
+            pass
+        log(f"{worker.item.log_prefix} owned tree exit cannot be confirmed; treating as cleanup failure")
+        return None
     try:
         return int(worker.process.wait(timeout=grace_seconds))
     except Exception:  # noqa: BLE001 - exit unconfirmed is a cleanup failure, not a code.
