@@ -206,9 +206,7 @@ def build_batch_schedule(
             for node_id in item.node_ids:
                 node_key = (item.binary.tag, node_id)
                 if node_key in seen_tag_nodes:
-                    raise BatchPlanError(
-                        f"Node {node_id} appears in multiple work items for tag {item.binary.tag}"
-                    )
+                    raise BatchPlanError(f"Node {node_id} appears in multiple work items for tag {item.binary.tag}")
                 seen_tag_nodes.add(node_key)
         parallel_items.extend(tag_parallel)
         serial_items.extend(tag_serial)

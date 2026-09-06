@@ -182,9 +182,7 @@ class HostMemoryProbeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             meminfo = Path(tmp) / "meminfo"
             meminfo.write_text(
-                "MemTotal:       16000000 kB\n"
-                "MemFree:         1000000 kB\n"
-                "MemAvailable:    8000000 kB\n",
+                "MemTotal:       16000000 kB\nMemFree:         1000000 kB\nMemAvailable:    8000000 kB\n",
                 encoding="ascii",
             )
             probe = am.PosixMeminfoProbe(str(meminfo))

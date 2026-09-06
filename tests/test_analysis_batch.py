@@ -232,7 +232,9 @@ def make_item(tag="tag-1", module="a", platform="windows", phase=PHASE_PARALLEL)
 class WorkerResultContractTests(unittest.TestCase):
     def test_valid_result_passes(self):
         item = make_item()
-        result = validate_worker_result(make_result_payload(item), item, run_id=work_item_run_id("run-1", item.work_item_id))
+        result = validate_worker_result(
+            make_result_payload(item), item, run_id=work_item_run_id("run-1", item.work_item_id)
+        )
         self.assertEqual(result.status, "succeeded")
         self.assertEqual(result.summary, {"successful": 2, "failed": 0, "skipped": 0})
 
@@ -508,9 +510,7 @@ class SchedulerTests(unittest.TestCase):
         item = make_item()
         schedule = BatchSchedule(parallel_items=(item,), serial_items=())
         launches = {
-            "parallel-0000": self._launch(
-                FakeProcess(), make_result_payload(item, run_id="run-1")
-            ),
+            "parallel-0000": self._launch(FakeProcess(), make_result_payload(item, run_id="run-1")),
         }
         outcome = self._run(schedule, launches)
         self.assertFalse(outcome.succeeded)
