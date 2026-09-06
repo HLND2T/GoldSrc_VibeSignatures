@@ -43,9 +43,14 @@ Bounded admission combines `GSVIBE_ANALYSIS_MAX_CONCURRENCY` with the aggregate 
   (cleanup/lifecycle failure) while every node exited successfully; `outcome.succeeded` therefore also requires
   `failure_reason is None`.
 - A scheduler that owns child processes needs an **exception-path teardown**: wrap scheduling in
-  `except BaseException`, sweep active workers with bounded terminate → `taskkill /F /T` (or POSIX /proc walk +
-  SIGKILL), confirm exit before releasing the memory-gate slot, then re-raise. Terminating only the outer Python
-  worker leaks the IDA/MCP descendants (ports, IDB handles) whenever no aggregate Job Object is configured.
+  `except BaseException`, sweep active workers with `taskkill /F /T` (or a POSIX /proc walk + SIGKILL, snapshot
+  descendants before touching the root and kill deepest-first), confirm exit before releasing the memory-gate
+  slot, then re-raise. The tree kill must run **while the root is alive and unconditionally**: Windows
+  `terminate()` hard-kills only the root, and descendants are reparented once the root exits so they can no
+  longer be attributed to the worker — a root exit never proves the tree exited. The child pid stays reserved
+  until `wait()` reaps it, so an unreaped pid cannot be reused by an unrelated process. Workers retire from the
+  active list only on completed paths: a `finally` removal runs before the cancellation sweep and leaks the
+  in-flight worker.
 - Validation should encode the real invariant, not a proxy: rejecting "binary in multiple work items" broke the
   legal cross-phase reopen (parallel item then serial segment on the same binary). Validate node uniqueness plus
   "no binary in two overlapping parallel items" instead.
