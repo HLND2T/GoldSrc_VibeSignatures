@@ -57,8 +57,8 @@ The release build job reads `GSVIBE_ANALYSIS_MAX_CONCURRENCY` and `GSVIBE_ANALYS
 protected `win64` Environment. Safe activation order:
 
 1. Merge with concurrency unset (`1`): production stays serial through the two-phase coordinator.
-2. Set `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` above the measured coordinator baseline plus one 4096 MiB worker
-   reservation, and record the real peak from a concurrency-`1` run.
+2. Ensure 85% of `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` can accommodate the measured coordinator baseline plus one worker
+   reservation (default 4096 MiB, adjustable via `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB`), and record the real peak from a concurrency-`1` run.
 3. Raise concurrency to `2` and verify two verified MCP endpoints, memory below budget, and byte-identical
    artifacts through `bin_artifact_contract.py`.
 4. Roll back by setting concurrency back to `1`; cache generations, selection, and release schema are

@@ -35,10 +35,12 @@ publisher 是 release workflow 中唯一 contents writer，并实现 immutable t
 PR 或独立 promotion workflow。Release 只发布 3 个资产：`gamesymbols-<version>.7z`、`release-manifest-<version>.json`、
 `SHA256SUMS-<version>.txt`。
 
-full `-allgamever -force_all` 分析步骤运行两阶段有界 coordinator。受保护的 `win64` Environment 向 job 映射两个非
+full `-allgamever -force_all` 分析步骤运行两阶段有界 coordinator。受保护的 `win64` Environment 向 job 映射非
 secret 变量：`GSVIBE_ANALYSIS_MAX_CONCURRENCY`（默认 `1`）与 `GSVIBE_ANALYSIS_MAX_MEMORY_MIB`（未设置时关闭
 aggregate 内存门禁，同时阻止大于 `1` 的并发）。激活顺序渐进：先在 concurrency `1` 下配置内存预算并记录真实峰值，
 再凭真实 runner 证据提升到 `2`；回滚只需把 concurrency 改回 `1`。runner 专属内存数值属于运维配置，不写入仓库。
+
+`GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` 同样映射到 job，可调整每 worker 的初始预留下限，默认 `4096` MiB；配置规则见 requirements。
 
 ## Pages deployment
 

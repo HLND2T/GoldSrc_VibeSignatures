@@ -11,6 +11,7 @@ from unittest.mock import Mock
 from analysis_memory import (
     ANALYSIS_CONCURRENCY_ENV,
     ANALYSIS_MEMORY_ENV,
+    ANALYSIS_RESERVATION_ENV,
     AnalysisMemoryAuthority,
     AnalysisMemoryConfigError,
     AnalysisMemoryGate,
@@ -19,6 +20,7 @@ from analysis_memory import (
     is_coordinated_child,
     parse_analysis_concurrency,
     parse_analysis_memory_budget_bytes,
+    parse_analysis_worker_reservation_bytes,
     resolve_analysis_limits,
     validate_limits_for_effective_concurrency,
 )
@@ -65,6 +67,22 @@ class ParseMemoryBudgetTests(unittest.TestCase):
             with self.subTest(value=value):
                 with self.assertRaises(AnalysisMemoryConfigError):
                     parse_analysis_memory_budget_bytes(value)
+
+
+class ParseWorkerReservationTests(unittest.TestCase):
+    def test_default_and_environment_override(self):
+        with unittest.mock.patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(4096 * MIB, parse_analysis_worker_reservation_bytes())
+        for raw in ("", "   "):
+            self.assertEqual(4096 * MIB, parse_analysis_worker_reservation_bytes(raw))
+        with unittest.mock.patch.dict(os.environ, {ANALYSIS_RESERVATION_ENV: " 512 "}):
+            self.assertEqual(512 * MIB, parse_analysis_worker_reservation_bytes())
+            self.assertEqual(MIB, parse_analysis_worker_reservation_bytes("1"))
+
+    def test_invalid_values_fail_closed(self):
+        for raw in ("0", "-1", "1.5", "+512", "0x200", "NaN", "５１２"):
+            with self.subTest(raw=raw), self.assertRaisesRegex(AnalysisMemoryConfigError, ANALYSIS_RESERVATION_ENV):
+                parse_analysis_worker_reservation_bytes(raw)
 
 
 class ResolveLimitsTests(unittest.TestCase):
@@ -228,21 +246,55 @@ class EnvironmentAuthorityWiringTests(unittest.TestCase):
         probe = SimpleNamespace(available_physical_bytes=lambda: 1 << 40)
         created = []
 
-        def fake_authority(budget_bytes, *, host_probe=None):
-            created.append((budget_bytes, host_probe))
+        def fake_authority(budget_bytes, *, host_probe=None, initial_worker_reservation_bytes):
+            created.append((budget_bytes, host_probe, initial_worker_reservation_bytes))
             return SimpleNamespace(budget_bytes=budget_bytes)
 
         with (
-            unittest.mock.patch.dict(os.environ, {ANALYSIS_MEMORY_ENV: "4096"}),
+            unittest.mock.patch.dict(os.environ, {ANALYSIS_MEMORY_ENV: "4096", ANALYSIS_RESERVATION_ENV: "512"}),
             unittest.mock.patch.object(am, "default_host_memory_probe", return_value=probe),
             unittest.mock.patch.object(am, "AnalysisMemoryAuthority", side_effect=fake_authority),
         ):
             os.environ.pop(am.COORDINATED_CHILD_ENV, None)
             authority = am.analysis_memory_authority_from_environment()
 
-        self.assertEqual(created, [(4096 * MIB, probe)])
+        self.assertEqual([(4096 * MIB, probe, 512 * MIB)], created)
         self.assertIsNotNone(created[0][1])
         self.assertEqual(authority.budget_bytes, 4096 * MIB)
+
+    def test_override_controls_admission_and_observed_usage_can_raise_it(self):
+        import analysis_memory as am
+
+        factory, controller = controller_factory()
+        probe = SimpleNamespace(available_physical_bytes=lambda: 600 * MIB)
+        real_authority = am.AnalysisMemoryAuthority
+        with (
+            unittest.mock.patch.dict(os.environ, {
+                ANALYSIS_MEMORY_ENV: "8192", ANALYSIS_RESERVATION_ENV: "512",
+                COORDINATED_CHILD_ENV: "0",
+            }),
+            unittest.mock.patch.object(am, "default_host_memory_probe", return_value=probe),
+            unittest.mock.patch.object(am, "AnalysisMemoryAuthority", side_effect=lambda *args, **kwargs:
+                real_authority(*args, **kwargs, controller_factory=factory, launch_interval_seconds=0)),
+        ):
+            authority = am.analysis_memory_authority_from_environment()
+        self.assertIsNone(authority.gate.try_admit("first"))
+        controller.snapshot.return_value = MemorySnapshot(job_bytes=700 * MIB)
+        self.assertIn("worker reservation 700.0 MiB", authority.gate.try_admit("second"))
+
+    def test_invalid_reservation_fails_before_creating_job(self):
+        import analysis_memory as am
+
+        with (
+            unittest.mock.patch.dict(os.environ, {
+                ANALYSIS_MEMORY_ENV: "8192", ANALYSIS_RESERVATION_ENV: "0",
+                COORDINATED_CHILD_ENV: "0",
+            }),
+            unittest.mock.patch.object(am, "AnalysisMemoryAuthority") as constructor,
+        ):
+            with self.assertRaises(AnalysisMemoryConfigError):
+                am.analysis_memory_authority_from_environment()
+        constructor.assert_not_called()
 
 
 if __name__ == "__main__":

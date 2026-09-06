@@ -37,8 +37,11 @@ publisher is the release workflow's only contents writer and implements immutabl
 generated-output PR or separate promotion workflow. The Release publishes only three assets:
 `gamesymbols-<version>.7z`, `release-manifest-<version>.json`, and `SHA256SUMS-<version>.txt`.
 
+`GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` is also mapped into the job to tune the initial per-worker
+reservation floor (default `4096` MiB); see requirements for configuration rules.
+
 The full `-allgamever -force_all` analysis step runs the two-phase bounded coordinator. The protected `win64`
-Environment maps two non-secret variables into the job: `GSVIBE_ANALYSIS_MAX_CONCURRENCY` (default `1`) and
+Environment maps non-secret variables into the job: `GSVIBE_ANALYSIS_MAX_CONCURRENCY` (default `1`) and
 `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` (unset disables the aggregate memory guard, which also blocks concurrency above
 `1`). Activation is progressive: enable the memory budget first at concurrency `1` to record a real peak, then
 raise concurrency to `2` only after real-runner evidence supports it; rolling back only requires setting

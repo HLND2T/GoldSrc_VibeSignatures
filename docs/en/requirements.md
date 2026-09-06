@@ -28,6 +28,7 @@ Copy `.env.example` to `.env` for a local template. The analyzer uses the GoldSr
 - `GSVIBE_REFERENCE_GAMEVER` (default `hl-10210`) selects the canonical reference game version for `LLM_DECOMPILE`.
 - `GSVIBE_ANALYSIS_MAX_CONCURRENCY` bounds concurrently admitted full-analysis worker processes (decimal `1..32`, default `1`, fail-closed). Values above `1` also require `GSVIBE_ANALYSIS_MAX_MEMORY_MIB`.
 - `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` sets the analyzer process tree's aggregate committed-memory hard budget (Windows Job Object) with an 85% soft admission gate; it also applies to direct single-tag and selected-node analysis.
+- `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` overrides the analyzer's initial per-worker reservation floor (positive decimal integer MiB; unset or blank defaults to `4096`). It is read only when the memory guard is enabled; invalid values fail startup. Observed usage can still raise the reservation, and IDB warmup defaults are unaffected. Set it in the GitHub `win64` Environment Variables, for example to `1024`, to tune new release builds.
 - `DEPOTDOWNLOADER_STEAM_USERNAME` and `DEPOTDOWNLOADER_STEAM_PASSWORD` are read by `download_depot.py` when depot authentication is required.
 
 ## IDB cache host requirements

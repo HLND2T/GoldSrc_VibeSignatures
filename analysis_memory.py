@@ -27,6 +27,7 @@ from warmup_memory import (
 
 ANALYSIS_CONCURRENCY_ENV = "GSVIBE_ANALYSIS_MAX_CONCURRENCY"
 ANALYSIS_MEMORY_ENV = "GSVIBE_ANALYSIS_MAX_MEMORY_MIB"
+ANALYSIS_RESERVATION_ENV = "GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB"
 COORDINATED_CHILD_ENV = "GSVIBE_ANALYSIS_COORDINATED_CHILD"
 MAX_ANALYSIS_CONCURRENCY = 32
 DEFAULT_ANALYSIS_CONCURRENCY = 1
@@ -66,6 +67,19 @@ def parse_analysis_memory_budget_bytes(raw: str | None = None) -> int | None:
     if memory_mib < 1:
         raise AnalysisMemoryConfigError(f"{ANALYSIS_MEMORY_ENV} must be a positive decimal integer MiB value")
     return memory_mib * MIB
+
+
+def parse_analysis_worker_reservation_bytes(raw: str | None = None) -> int:
+    """Parse the per-worker reservation floor; blank retains the shared default."""
+    value = os.environ.get(ANALYSIS_RESERVATION_ENV) if raw is None else raw
+    if value is None or not str(value).strip():
+        return DEFAULT_INITIAL_WORKER_RESERVATION_BYTES
+    text = str(value).strip()
+    if not text.isdecimal() or not text.isascii() or int(text, 10) < 1:
+        raise AnalysisMemoryConfigError(
+            f"{ANALYSIS_RESERVATION_ENV} must be a positive decimal integer MiB value"
+        )
+    return int(text, 10) * MIB
 
 
 @dataclass(frozen=True)
@@ -303,13 +317,18 @@ def analysis_memory_authority_from_environment() -> AnalysisMemoryAuthority | No
     budget_bytes = parse_analysis_memory_budget_bytes()
     if budget_bytes is None:
         return None
+    reservation_bytes = parse_analysis_worker_reservation_bytes()
     host_probe = default_host_memory_probe()
     if host_probe is None:
         print("Analysis memory guard: host headroom probe unavailable; host available-memory check disabled")
     global _PROCESS_AUTHORITY
     with _AUTHORITY_LOCK:
         if _PROCESS_AUTHORITY is None:
-            _PROCESS_AUTHORITY = AnalysisMemoryAuthority(budget_bytes, host_probe=host_probe)
+            _PROCESS_AUTHORITY = AnalysisMemoryAuthority(
+                budget_bytes,
+                host_probe=host_probe,
+                initial_worker_reservation_bytes=reservation_bytes,
+            )
         elif _PROCESS_AUTHORITY.budget_bytes != budget_bytes:
             raise AnalysisMemoryConfigError("analysis memory budget cannot change within one analyzer process")
         return _PROCESS_AUTHORITY

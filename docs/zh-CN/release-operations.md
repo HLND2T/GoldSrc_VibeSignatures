@@ -51,7 +51,7 @@ release build job 从受保护的 `win64` Environment 读取 `GSVIBE_ANALYSIS_MA
 `GSVIBE_ANALYSIS_MAX_MEMORY_MIB`。安全激活顺序：
 
 1. 未配置（即 `1`）时合入：production 经两阶段 coordinator 保持串行。
-2. 将 `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` 配置为高于实测 coordinator baseline 加一个 4096 MiB worker reservation，
+2. 确保 `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` 的 85% soft limit 能容纳实测 coordinator baseline 加一个 worker reservation（默认 4096 MiB，可通过 `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` 调整），
    并在 concurrency `1` 运行中记录真实峰值。
 3. 提升到 concurrency `2`，验证两个 verified MCP endpoint、内存低于预算，且产物经 `bin_artifact_contract.py`
    逐字节一致。
