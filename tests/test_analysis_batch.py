@@ -134,7 +134,7 @@ class ClassifyTagPlanTests(unittest.TestCase):
         with self.assertRaises(BatchPlanError):
             classify_tag_plan("tag-1", plan, binary_paths_for(plan))
 
-    def test_build_batch_schedule_preserves_tag_order_and_rejects_duplicate_binaries(self):
+    def test_build_batch_schedule_preserves_tag_order_and_rejects_duplicate_nodes(self):
         plan_a = make_plan([make_node("a", "windows", "s1", 0)])
         plan_b = make_plan([make_node("b", "windows", "s1", 0)])
         schedule = build_batch_schedule(
@@ -148,6 +148,24 @@ class ClassifyTagPlanTests(unittest.TestCase):
             build_batch_schedule(
                 [("tag-1", plan_a, binary_paths_for(plan_a)), ("tag-1", plan_a, binary_paths_for(plan_a))]
             )
+
+    def test_build_batch_schedule_accepts_cross_phase_binary_reopen(self):
+        plan = make_plan(
+            [
+                make_node("a", "windows", "a1", 0),
+                make_node("b", "windows", "b1", 1),
+                make_node("a", "windows", "a2", 2),
+            ],
+            edges=[
+                ("a:windows:a1", "b:windows:b1", "artifact"),
+                ("b:windows:b1", "a:windows:a2", "artifact"),
+            ],
+        )
+        schedule = build_batch_schedule([("tag-1", plan, binary_paths_for(plan))])
+        parallel_binaries = [(item.binary.module, item.binary.platform) for item in schedule.parallel_items]
+        serial_binaries = [(item.binary.module, item.binary.platform) for item in schedule.serial_items]
+        self.assertEqual(parallel_binaries, [("a", "windows")])
+        self.assertEqual(serial_binaries, [("b", "windows"), ("a", "windows")])
 
     def test_build_batch_schedule_numbers_work_item_ids_across_the_whole_batch(self):
         plans = []

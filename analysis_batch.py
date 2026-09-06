@@ -192,19 +192,31 @@ def build_batch_schedule(
     Work item ids are renumbered across the whole batch so request/result file
     names and reporter run ids stay unique when several tags run concurrently;
     the per-tag numbering produced by ``classify_tag_plan`` never escapes this
-    function.
+    function. A binary may be reopened by a serial segment after its parallel
+    item finished (the phases never overlap), so validation checks node
+    uniqueness and that no binary appears in two overlapping parallel items
+    instead of rejecting binary reuse outright.
     """
     parallel_items: list[WorkItem] = []
     serial_items: list[WorkItem] = []
-    seen_binaries: set[BinaryIdentity] = set()
+    seen_tag_nodes: set[tuple[str, str]] = set()
     for tag, plan, binary_relative_paths in tag_plans:
         tag_parallel, tag_serial = classify_tag_plan(tag, plan, binary_relative_paths)
         for item in tag_parallel + tag_serial:
-            if item.binary in seen_binaries:
-                raise BatchPlanError(f"Binary identity appears in multiple work items: {item.binary}")
-            seen_binaries.add(item.binary)
+            for node_id in item.node_ids:
+                node_key = (item.binary.tag, node_id)
+                if node_key in seen_tag_nodes:
+                    raise BatchPlanError(
+                        f"Node {node_id} appears in multiple work items for tag {item.binary.tag}"
+                    )
+                seen_tag_nodes.add(node_key)
         parallel_items.extend(tag_parallel)
         serial_items.extend(tag_serial)
+    parallel_binaries: set[BinaryIdentity] = set()
+    for item in parallel_items:
+        if item.binary in parallel_binaries:
+            raise BatchPlanError(f"Binary appears in overlapping parallel work items: {item.binary}")
+        parallel_binaries.add(item.binary)
     renumbered_parallel = tuple(
         replace(item, work_item_id=f"{PHASE_PARALLEL}-{index:04d}") for index, item in enumerate(parallel_items)
     )
