@@ -422,18 +422,18 @@ def _kill_posix_process_tree(pid: int) -> None:
     # Snapshot descendants before touching the root and kill deepest-first, so
     # the parent chain stays intact while children are still being attributed.
     targets = [*reversed(_posix_descendant_pids(pid)), pid]
-    root_kill_failed: OSError | None = None
+    failures: list[str] = []
     for target in targets:
         try:
             os.kill(target, kill_signal)
-        except OSError as exc:
-            if target == pid:
-                root_kill_failed = exc
+        except ProcessLookupError:
+            # The pid no longer exists: positive evidence this member exited.
             continue
-    if root_kill_failed is not None:
-        # The root could not be signalled, so the tree walk's attribution is
-        # unreliable and the tree's exit cannot be confirmed.
-        raise OSError(f"failed to signal root pid {pid}: {root_kill_failed}") from root_kill_failed
+        except OSError as exc:
+            failures.append(f"pid {target}: {exc}")
+    if failures:
+        # Any member we could not signal keeps the tree exit unconfirmed.
+        raise OSError(f"failed to signal owned tree member(s): {'; '.join(failures)}")
 
 
 def _posix_descendant_pids(root_pid: int) -> list[int]:

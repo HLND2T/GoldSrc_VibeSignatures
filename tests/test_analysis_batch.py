@@ -1095,6 +1095,39 @@ class ProcessTreeKillHelperTests(unittest.TestCase):
             with self.assertRaises(OSError):
                 ab._kill_posix_process_tree(10)
 
+    def test_posix_tree_kill_keeps_descendant_signal_failures(self):
+        import analysis_batch as ab
+
+        def fake_kill(pid, _sig):
+            if pid == 11:
+                raise PermissionError(13, "permission denied")
+
+        with (
+            unittest.mock.patch.object(ab, "_posix_descendant_pids", return_value=[11]),
+            unittest.mock.patch.object(ab.os, "kill", side_effect=fake_kill),
+        ):
+            # A descendant we cannot signal keeps the tree exit unconfirmed
+            # even though the root itself kills and exits cleanly.
+            with self.assertRaises(OSError):
+                ab._kill_posix_process_tree(10)
+
+    def test_posix_tree_kill_treats_missing_descendant_as_exited(self):
+        import analysis_batch as ab
+
+        killed = []
+
+        def fake_kill(pid, _sig):
+            killed.append(pid)
+            if pid == 11:
+                raise ProcessLookupError()
+
+        with (
+            unittest.mock.patch.object(ab, "_posix_descendant_pids", return_value=[11]),
+            unittest.mock.patch.object(ab.os, "kill", side_effect=fake_kill),
+        ):
+            ab._kill_posix_process_tree(10)
+        self.assertEqual(killed, [11, 10])
+
     def test_posix_tree_kill_sweeps_descendants_before_root(self):
         import analysis_batch as ab
 
