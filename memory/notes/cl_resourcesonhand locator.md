@@ -31,6 +31,7 @@ tags:
 2. 恢复规则（-allgamever 13/13 全绿）：owner 函数内配对引用——V 被 cmp 引用（或 lea 取址且 ≤6 条指令内 cmp 使用其寄存器），且 V+0x80 被 mov-load 引用，V 在可写数据段，候选唯一才通过。地址提取必须**双通道并集**：操作数层（o_imm value / o_mem addr）+ DataRefsFrom（覆盖 GOTOFF/PIC）。仅用 DataRefsFrom 会在结构化 IDB（hl-8684 hw.so）上因 xref 归一到结构基址（cl）而零候选失败。
 3. 产物地址总表（gv_va）：hl-3248/3266=0x2DB64E4、hl-3329=0x2D82E04、hl-3647=0x2D81CA4、hl-4554=0x2D2BDC4、hl-6153=0x2D5CDC4、hl-8684=0x2D602E4(w)/0xC44744(l)、hl-10210=0x11257F64(w)/0xC2FA84(l)、svencoop=0x21092D4(w)/0x15D7D64(l)、cof-5936=0x2DD5A84。全部为 `&cl.resourcesonhand`（cl+4）。
 4. 引用指令形态四类（finder 全部覆盖）：`cmp reg, imm`（hl 系/sven-win）、`cmp [ebp+x], imm`（cof）、GOTOFF `lea reg,[ebx+V-GOT]` + `cmp reg,reg`（sven-linux）、结构化 `(offset m1+4)`（hl-8684-linux，操作数层解码）。
+5. Agent 兜底（2026-09-06，dev）：`.claude/skills/find-cl_resourcesonhand/SKILL.md`——finder 纯反汇编配对扫描失败时，agent 按 list-walk 语义恢复哨兵（init `[V+0x80]` load + 条件比较 vs V + advance `+0x80`），容忍编码漂移、寄存器重分配、基本块拆分与 helper de-inline；svencoop-linux PIC 构建遵循仓库既有 GOTOFF disp 约定（sven-linux 全部 4 个 gv artifact 一致：内嵌 dword = V−GOT，GOT≈0x2EE000；非 PIC 构建内嵌 dword == V 绝对值，已逐字节验证）。e2e `-skip_pp -agent claude` hl-10210 双平台 `Successful: 2 / Failed: 0`，产物地址与 finder 完全一致；注意本机 `.env` 的 `GSVIBE_AGENT=claude.cmd` 无 .cmd shim 可解析，需显式 `-agent claude`，否则 `agent_not_found` 快速失败。
 
 ## Open items
 - MetaHook 侧 gamedata 迁移仍未做（见 metahooksv/privatevars/precache-manager-privatevars）；迁移时直接消费本仓库 `cl_resourcesonhand` 产物即可。
