@@ -17,6 +17,7 @@ from analysis_batch import (
     classify_tag_plan,
     run_batch,
     validate_worker_result,
+    work_item_run_id,
 )
 from analysis_planner import ExecutionPlan, PlanEdge, PlanNode
 
@@ -150,8 +151,10 @@ class ClassifyTagPlanTests(unittest.TestCase):
 
 
 def make_result_payload(
-    item: WorkItem, *, run_id="run-1", status="succeeded", exit_code=0, node_status="succeeded"
+    item: WorkItem, *, run_id=None, status="succeeded", exit_code=0, node_status="succeeded"
 ) -> dict:
+    if run_id is None:
+        run_id = work_item_run_id("run-1", item.work_item_id)
     node_results = [{"node_id": node_id, "status": node_status, "reason": None} for node_id in item.node_ids]
     successful = sum(1 for entry in node_results if entry["status"] == "succeeded")
     skipped = sum(1 for entry in node_results if entry["status"] == "skipped")
@@ -188,7 +191,7 @@ def make_item(tag="tag-1", module="a", platform="windows", phase=PHASE_PARALLEL)
 class WorkerResultContractTests(unittest.TestCase):
     def test_valid_result_passes(self):
         item = make_item()
-        result = validate_worker_result(make_result_payload(item), item, run_id="run-1")
+        result = validate_worker_result(make_result_payload(item), item, run_id=work_item_run_id("run-1", item.work_item_id))
         self.assertEqual(result.status, "succeeded")
         self.assertEqual(result.summary, {"successful": 2, "failed": 0, "skipped": 0})
 
@@ -197,14 +200,14 @@ class WorkerResultContractTests(unittest.TestCase):
         payload = make_result_payload(item)
         payload["extra"] = 1
         with self.assertRaises(WorkerResultError):
-            validate_worker_result(payload, item, run_id="run-1")
+            validate_worker_result(payload, item, run_id=work_item_run_id("run-1", item.work_item_id))
 
     def test_identity_mismatch_fails(self):
         item = make_item()
         payload = make_result_payload(item)
         payload["work_item_id"] = "parallel-9999"
         with self.assertRaises(WorkerResultError):
-            validate_worker_result(payload, item, run_id="run-1")
+            validate_worker_result(payload, item, run_id=work_item_run_id("run-1", item.work_item_id))
 
     def test_node_ids_order_mismatch_fails(self):
         item = make_item()
@@ -212,26 +215,26 @@ class WorkerResultContractTests(unittest.TestCase):
         payload["node_ids"] = list(reversed(payload["node_ids"]))
         payload["node_results"] = list(reversed(payload["node_results"]))
         with self.assertRaises(WorkerResultError):
-            validate_worker_result(payload, item, run_id="run-1")
+            validate_worker_result(payload, item, run_id=work_item_run_id("run-1", item.work_item_id))
 
     def test_summary_inconsistency_fails(self):
         item = make_item()
         payload = make_result_payload(item)
         payload["summary"]["successful"] = 5
         with self.assertRaises(WorkerResultError):
-            validate_worker_result(payload, item, run_id="run-1")
+            validate_worker_result(payload, item, run_id=work_item_run_id("run-1", item.work_item_id))
 
     def test_succeeded_with_failed_node_fails(self):
         item = make_item()
         payload = make_result_payload(item, node_status="failed", status="succeeded", exit_code=0)
         payload["failure_reason"] = None
         with self.assertRaises(WorkerResultError):
-            validate_worker_result(payload, item, run_id="run-1")
+            validate_worker_result(payload, item, run_id=work_item_run_id("run-1", item.work_item_id))
 
     def test_zero_exit_code_cannot_mask_failure(self):
         item = make_item()
         payload = make_result_payload(item, node_status="aborted", status="failed", exit_code=0)
-        result = validate_worker_result(payload, item, run_id="run-1")
+        result = validate_worker_result(payload, item, run_id=work_item_run_id("run-1", item.work_item_id))
         self.assertEqual(result.status, "failed")
 
     def test_negative_counts_fail(self):
@@ -239,7 +242,7 @@ class WorkerResultContractTests(unittest.TestCase):
         payload = make_result_payload(item)
         payload["summary"]["successful"] = -1
         with self.assertRaises(WorkerResultError):
-            validate_worker_result(payload, item, run_id="run-1")
+            validate_worker_result(payload, item, run_id=work_item_run_id("run-1", item.work_item_id))
 
 
 class FakeProcess:
@@ -448,6 +451,19 @@ class SchedulerTests(unittest.TestCase):
         self.assertFalse(outcome.succeeded)
         self.assertEqual(outcome.failed, 2)
 
+    def test_worker_result_run_id_must_be_scoped_to_work_item(self):
+        item = make_item()
+        schedule = BatchSchedule(parallel_items=(item,), serial_items=())
+        launches = {
+            "parallel-0000": self._launch(
+                FakeProcess(), make_result_payload(item, run_id="run-1")
+            ),
+        }
+        outcome = self._run(schedule, launches)
+        self.assertFalse(outcome.succeeded)
+        self.assertEqual(outcome.work_item_summaries, (("parallel-0000", "failed"),))
+        self.assertTrue(any("run_id mismatch" in line for line in self.logs), self.logs)
+
     def test_memory_gate_slots_bound_admission(self):
         items = [
             WorkItem(
@@ -509,7 +525,7 @@ class InternalWorkerEntryTests(unittest.TestCase):
             "redis_prefix": "gsvibe",
         }
         request = {
-            "run_id": f"run-1-{item.work_item_id}",
+            "run_id": work_item_run_id("run-1", item.work_item_id),
             "work_item_id": item.work_item_id,
             "phase": item.phase,
             "tag": item.binary.tag,

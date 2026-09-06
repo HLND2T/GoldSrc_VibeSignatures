@@ -35,6 +35,7 @@ from analysis_batch import (
     BatchPlanError,
     build_batch_schedule,
     run_batch,
+    work_item_run_id,
 )
 from analysis_memory import (
     AnalysisMemoryConfigError,
@@ -3010,7 +3011,7 @@ def _run_full_batch(args) -> int:
         request_path = request_root / f"{item.work_item_id}.request.json"
         result_path = request_root / f"{item.work_item_id}.result.json"
         request = {
-            "run_id": f"{batch_run_id}-{item.work_item_id}",
+            "run_id": work_item_run_id(batch_run_id, item.work_item_id),
             "work_item_id": item.work_item_id,
             "phase": item.phase,
             "tag": item.binary.tag,

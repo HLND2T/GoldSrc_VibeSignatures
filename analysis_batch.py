@@ -200,6 +200,16 @@ def build_batch_schedule(
     return BatchSchedule(parallel_items=tuple(parallel_items), serial_items=tuple(serial_items))
 
 
+def work_item_run_id(batch_run_id: str, work_item_id: str) -> str:
+    """Compose the per-work-item reporter identity from the batch identity.
+
+    The worker reports this value in its result contract and the coordinator
+    validates against the same composition, so the batch identity and the
+    reporter identity stay distinguishable.
+    """
+    return f"{batch_run_id}-{work_item_id}"
+
+
 @dataclass(frozen=True)
 class NodeResultEntry:
     node_id: str
@@ -399,7 +409,11 @@ def run_batch(
         if memory_gate is not None:
             memory_gate.worker_finished()
         try:
-            result = validate_worker_result(read_result_payload(worker.result_path), worker.item, run_id=run_id)
+            result = validate_worker_result(
+                read_result_payload(worker.result_path),
+                worker.item,
+                run_id=work_item_run_id(run_id, worker.item.work_item_id),
+            )
         except WorkerResultError as exc:
             outcome.failed += len(worker.item.node_ids)
             item_summaries.append((worker.item.work_item_id, WORKER_STATUS_FAILED))
@@ -601,10 +615,16 @@ class BatchRunRequest:
     options: dict = field(default_factory=dict)
 
     @classmethod
-    def from_work_item(cls, item: WorkItem, *, options: Mapping[str, object] | None = None) -> "BatchRunRequest":
+    def from_work_item(
+        cls,
+        item: WorkItem,
+        *,
+        batch_run_id: str,
+        options: Mapping[str, object] | None = None,
+    ) -> "BatchRunRequest":
         binary = item.binary
         return cls(
-            run_id="",
+            run_id=work_item_run_id(batch_run_id, item.work_item_id),
             work_item_id=item.work_item_id,
             phase=item.phase,
             tag=binary.tag,
