@@ -487,6 +487,22 @@ class SchedulerTests(unittest.TestCase):
         self.assertEqual(outcome.work_item_summaries, (("parallel-0000", "failed"),))
         self.assertTrue(any("run_id mismatch" in line for line in self.logs), self.logs)
 
+    def test_worker_level_failure_without_failed_nodes_fails_the_batch(self):
+        item = make_item()
+        schedule = BatchSchedule(parallel_items=(item,), serial_items=())
+        launches = {
+            "parallel-0000": self._launch(
+                FakeProcess(exit_code=1),
+                make_result_payload(item, status="failed", exit_code=1),
+            ),
+        }
+        outcome = self._run(schedule, launches)
+        self.assertFalse(outcome.succeeded)
+        self.assertEqual(outcome.failure_reason, "worker_failed")
+        self.assertEqual(outcome.successful, 2)
+        self.assertEqual(outcome.failed, 0)
+        self.assertEqual(outcome.work_item_summaries, (("parallel-0000", "failed"),))
+
     def test_memory_gate_slots_bound_admission(self):
         items = [
             WorkItem(

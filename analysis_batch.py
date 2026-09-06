@@ -607,7 +607,9 @@ def run_batch(
         outcome.failed += len(aborted)
     outcome.aborted_node_ids = tuple(aborted)
     outcome.work_item_summaries = tuple(item_summaries)
-    outcome.succeeded = outcome.failed == 0 and outcome.aborted_node_ids == ()
+    # Worker-level failures (worker/gate/cleanup status failed, launch failed, timeout)
+    # must fail the batch even when every reported node exited successfully.
+    outcome.succeeded = outcome.failed == 0 and outcome.aborted_node_ids == () and failure_reason is None
     outcome.failure_reason = failure_reason
     return outcome
 
