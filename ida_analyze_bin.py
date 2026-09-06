@@ -848,6 +848,11 @@ def _spawn_idalib_mcp(binary_path, host, port, ida_args="", debug=False, stdout=
         return None
 
 
+def _stop_unready_idalib_mcp(process, host, port, debug=False):
+    stop_idalib_mcp_process(process, debug=debug)
+    wait_for_port_release(host, port)
+
+
 def start_idalib_mcp(
     binary_path,
     host=DEFAULT_HOST,
@@ -860,10 +865,17 @@ def start_idalib_mcp(
     process = None
     with mcp_startup_lock():
         process = _spawn_idalib_mcp(binary_path, host, port, ida_args, debug, stdout, stderr)
-    if process is not None and wait_for_mcp_ready(process, host, port):
+    try:
+        ready = process is not None and wait_for_mcp_ready(process, host, port)
+    except Exception:
+        # A raised readiness probe must not orphan the already-spawned worker;
+        # the lifecycle owner cannot clean it up because its process handle is
+        # never assigned when this helper raises.
+        _stop_unready_idalib_mcp(process, host, port, debug=debug)
+        raise
+    if ready:
         return process
-    stop_idalib_mcp_process(process, debug=debug)
-    wait_for_port_release(host, port)
+    _stop_unready_idalib_mcp(process, host, port, debug=debug)
     return None
 
 
@@ -901,16 +913,25 @@ def start_dynamic_idalib_mcp(
     """
     process = None
     for attempt in range(1, max(1, attempts) + 1):
+        bound = False
+        probe_failure = None
         with mcp_startup_lock(lock_path):
             port = _allocate_local_port(host)
             process = _spawn_idalib_mcp(binary_path, host, port, ida_args, debug)
-            bound = process is not None and _wait_dynamic_port_bound(process, host, port)
+            try:
+                bound = process is not None and _wait_dynamic_port_bound(process, host, port)
+            except Exception as exc:
+                probe_failure = exc
+        if probe_failure is not None:
+            # Same orphan risk as the fixed-port start: clean the spawned
+            # process before letting the probe error escape this helper.
+            _stop_unready_idalib_mcp(process, host, port, debug=debug)
+            raise probe_failure
         if bound:
             if debug:
                 print(f"  Allocated dynamic MCP port {host}:{port} (attempt {attempt})")
             return process, port
-        stop_idalib_mcp_process(process, debug=debug)
-        wait_for_port_release(host, port)
+        _stop_unready_idalib_mcp(process, host, port, debug=debug)
         if debug:
             print(f"  Dynamic MCP port attempt {attempt} failed for {binary_path}; retrying")
     return None, None

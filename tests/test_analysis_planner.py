@@ -2683,6 +2683,22 @@ class McpLifecycleTests(unittest.TestCase):
         )
         ready.assert_called_once_with(process, DEFAULT_HOST, DEFAULT_PORT)
 
+    def test_start_cleans_up_spawned_process_when_readiness_probe_raises(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        with (
+            patch("ida_analyze_bin.is_port_in_use", return_value=False),
+            patch("ida_analyze_bin.subprocess.Popen", return_value=process),
+            patch("ida_analyze_bin.wait_for_mcp_ready", side_effect=RuntimeError("probe failed")) as ready,
+            patch("ida_analyze_bin.stop_idalib_mcp_process") as stop,
+            patch("ida_analyze_bin.wait_for_port_release", return_value=True) as wait_for_release,
+            self.assertRaises(RuntimeError),
+        ):
+            start_idalib_mcp("hw.dll", DEFAULT_HOST, DEFAULT_PORT)
+        ready.assert_called_once_with(process, DEFAULT_HOST, DEFAULT_PORT)
+        stop.assert_called_once_with(process, debug=False)
+        wait_for_release.assert_called_once_with(DEFAULT_HOST, DEFAULT_PORT)
+
     def test_opened_binary_identity_uses_hash_and_platform_metadata(self):
         with tempfile.TemporaryDirectory() as temporary:
             binary = Path(temporary) / "hw.dll"
@@ -3110,6 +3126,25 @@ class DynamicPortStartupTests(unittest.TestCase):
             )
         self.assertIsNone(started)
         self.assertIsNone(port)
+
+    def test_dynamic_start_cleans_up_spawned_process_when_bind_probe_raises(self):
+        process = SimpleNamespace(poll=lambda: None, terminate=lambda: None, kill=lambda: None)
+        with (
+            patch("ida_analyze_bin._allocate_local_port", return_value=11111),
+            patch("ida_analyze_bin._spawn_idalib_mcp", return_value=process) as spawn,
+            patch("ida_analyze_bin._wait_dynamic_port_bound", side_effect=OSError("probe failed")),
+            patch("ida_analyze_bin.stop_idalib_mcp_process") as stop,
+            patch("ida_analyze_bin.wait_for_port_release", return_value=True) as wait_for_release,
+            self.assertRaises(OSError),
+        ):
+            ida_analyze_bin.start_dynamic_idalib_mcp(
+                "hw.dll",
+                "127.0.0.1",
+                lock_path=Path(self.enterContext(tempfile.TemporaryDirectory())) / "l.lock",
+            )
+        spawn.assert_called_once()
+        stop.assert_called_once_with(process, debug=False)
+        wait_for_release.assert_called_once_with("127.0.0.1", 11111)
 
     def test_fixed_port_spawn_and_readiness_split(self):
         process = SimpleNamespace(poll=lambda: None, terminate=lambda: None, kill=lambda: None)
