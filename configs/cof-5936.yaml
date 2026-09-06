@@ -17,6 +17,9 @@ modules:
       - name: find-Sys_Error
         expected_output:
           - Sys_Error.{platform}.yaml
+      - name: find-Sys_InitMemory
+        expected_output:
+          - Sys_InitMemory.{platform}.yaml
       - name: find-S_LoadSound
         expected_output:
           - S_LoadSound.{platform}.yaml
@@ -101,6 +104,8 @@ modules:
       - name: build_number
         category: func
       - name: Sys_Error
+        category: func
+      - name: Sys_InitMemory
         category: func
       - name: S_LoadSound
         category: func
