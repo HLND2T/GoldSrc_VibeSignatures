@@ -56,7 +56,9 @@ Bounded admission combines `GSVIBE_ANALYSIS_MAX_CONCURRENCY` with the aggregate 
   kill command itself needs an explicit timeout, not just the exit wait. A **failed kill step** (exception,
   non-zero command exit, command timeout) stays a cleanup failure **even when the root exits afterwards**: the
   root's exit proves nothing about descendants that were already reparented, so check the command's return code
-  and never let a successful root wait() launder a failed tree kill.
+  and never let a successful root wait() launder a failed tree kill. Every member's signal failure counts — on
+  POSIX only `ProcessLookupError` is benign (a missing pid is positive evidence that member exited); a
+  PermissionError on a single descendant keeps the whole teardown unconfirmed.
 - Validation should encode the real invariant, not a proxy: rejecting "binary in multiple work items" broke the
   legal cross-phase reopen (parallel item then serial segment on the same binary). Validate node uniqueness plus
   "no binary in two overlapping parallel items" instead.
