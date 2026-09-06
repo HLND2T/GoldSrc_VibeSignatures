@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+import tempfile
 import unittest
 import unittest.mock
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -171,6 +173,78 @@ class AnalysisMemoryAuthorityTests(unittest.TestCase):
         limits = resolve_analysis_limits(concurrency_raw="1", memory_raw="4096")
         validate_limits_for_effective_concurrency(limits, 1)
         self.assertTrue(limits.memory_guard_enabled)
+
+
+class HostMemoryProbeTests(unittest.TestCase):
+    def test_posix_meminfo_probe_parses_mem_available(self):
+        import analysis_memory as am
+
+        with tempfile.TemporaryDirectory() as tmp:
+            meminfo = Path(tmp) / "meminfo"
+            meminfo.write_text(
+                "MemTotal:       16000000 kB\n"
+                "MemFree:         1000000 kB\n"
+                "MemAvailable:    8000000 kB\n",
+                encoding="ascii",
+            )
+            probe = am.PosixMeminfoProbe(str(meminfo))
+            self.assertEqual(probe.available_physical_bytes(), 8_000_000 * 1024)
+
+    def test_posix_meminfo_probe_rejects_missing_mem_available(self):
+        import analysis_memory as am
+
+        with tempfile.TemporaryDirectory() as tmp:
+            meminfo = Path(tmp) / "meminfo"
+            meminfo.write_text("MemTotal:       16000000 kB\n", encoding="ascii")
+            with self.assertRaises(ValueError):
+                am.PosixMeminfoProbe(str(meminfo))
+
+    def test_default_probe_on_windows_uses_global_memory_status(self):
+        import analysis_memory as am
+
+        if os.name != "nt":
+            self.skipTest("Windows-only host probe")
+        probe = am.default_host_memory_probe()
+        self.assertIsInstance(probe, am.WindowsGlobalMemoryStatusProbe)
+        self.assertGreater(probe.available_physical_bytes(), 0)
+
+    def test_default_probe_degrades_to_none_when_platform_probe_unavailable(self):
+        import analysis_memory as am
+
+        with (
+            unittest.mock.patch.object(am.os, "name", "posix"),
+            unittest.mock.patch.object(am, "PosixMeminfoProbe", side_effect=ValueError("no meminfo")),
+        ):
+            self.assertIsNone(am.default_host_memory_probe())
+
+
+class EnvironmentAuthorityWiringTests(unittest.TestCase):
+    def tearDown(self):
+        import analysis_memory as am
+
+        am._PROCESS_AUTHORITY = None
+
+    def test_environment_authority_wires_the_default_host_probe(self):
+        import analysis_memory as am
+
+        probe = SimpleNamespace(available_physical_bytes=lambda: 1 << 40)
+        created = []
+
+        def fake_authority(budget_bytes, *, host_probe=None):
+            created.append((budget_bytes, host_probe))
+            return SimpleNamespace(budget_bytes=budget_bytes)
+
+        with (
+            unittest.mock.patch.dict(os.environ, {ANALYSIS_MEMORY_ENV: "4096"}),
+            unittest.mock.patch.object(am, "default_host_memory_probe", return_value=probe),
+            unittest.mock.patch.object(am, "AnalysisMemoryAuthority", side_effect=fake_authority),
+        ):
+            os.environ.pop(am.COORDINATED_CHILD_ENV, None)
+            authority = am.analysis_memory_authority_from_environment()
+
+        self.assertEqual(created, [(4096 * MIB, probe)])
+        self.assertIsNotNone(created[0][1])
+        self.assertEqual(authority.budget_bytes, 4096 * MIB)
 
 
 if __name__ == "__main__":

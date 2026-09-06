@@ -13,6 +13,7 @@ import threading
 import time
 from ctypes import wintypes
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable, Protocol
 
 from warmup_memory import (
@@ -130,6 +131,44 @@ class WindowsGlobalMemoryStatusProbe:
         if not self._kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
             raise ctypes.WinError(ctypes.get_last_error())
         return int(status.ullAvailPhys)
+
+
+class PosixMeminfoProbe:
+    """Read host available physical memory from /proc/meminfo (MemAvailable)."""
+
+    def __init__(self, meminfo_path: str = "/proc/meminfo") -> None:
+        self._meminfo_path = meminfo_path
+        self.available_physical_bytes()  # fail fast when the file is unreadable
+
+    def available_physical_bytes(self) -> int:
+        try:
+            text = Path(self._meminfo_path).read_text(encoding="ascii")
+        except OSError as exc:
+            raise ValueError(f"unable to read {self._meminfo_path}") from exc
+        for line in text.splitlines():
+            if line.startswith("MemAvailable:"):
+                fields = line.split()
+                if len(fields) < 2:
+                    break
+                try:
+                    available_kib = int(fields[1])
+                except ValueError:
+                    break
+                return available_kib * 1024
+        raise ValueError(f"MemAvailable missing from {self._meminfo_path}")
+
+
+def default_host_memory_probe() -> HostMemoryProbe | None:
+    """Best-effort production probe; None keeps the gate's host check disabled."""
+    if os.name == "nt":
+        try:
+            return WindowsGlobalMemoryStatusProbe()
+        except OSError:
+            return None
+    try:
+        return PosixMeminfoProbe()
+    except (OSError, ValueError):
+        return None
 
 
 class AnalysisMemoryGate(MemoryLaunchGate):
@@ -264,10 +303,13 @@ def analysis_memory_authority_from_environment() -> AnalysisMemoryAuthority | No
     budget_bytes = parse_analysis_memory_budget_bytes()
     if budget_bytes is None:
         return None
+    host_probe = default_host_memory_probe()
+    if host_probe is None:
+        print("Analysis memory guard: host headroom probe unavailable; host available-memory check disabled")
     global _PROCESS_AUTHORITY
     with _AUTHORITY_LOCK:
         if _PROCESS_AUTHORITY is None:
-            _PROCESS_AUTHORITY = AnalysisMemoryAuthority(budget_bytes)
+            _PROCESS_AUTHORITY = AnalysisMemoryAuthority(budget_bytes, host_probe=host_probe)
         elif _PROCESS_AUTHORITY.budget_bytes != budget_bytes:
             raise AnalysisMemoryConfigError("analysis memory budget cannot change within one analyzer process")
         return _PROCESS_AUTHORITY
