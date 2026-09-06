@@ -76,9 +76,7 @@ def parse_analysis_worker_reservation_bytes(raw: str | None = None) -> int:
         return DEFAULT_INITIAL_WORKER_RESERVATION_BYTES
     text = str(value).strip()
     if not text.isdecimal() or not text.isascii() or int(text, 10) < 1:
-        raise AnalysisMemoryConfigError(
-            f"{ANALYSIS_RESERVATION_ENV} must be a positive decimal integer MiB value"
-        )
+        raise AnalysisMemoryConfigError(f"{ANALYSIS_RESERVATION_ENV} must be a positive decimal integer MiB value")
     return int(text, 10) * MIB
 
 

@@ -269,13 +269,22 @@ class EnvironmentAuthorityWiringTests(unittest.TestCase):
         probe = SimpleNamespace(available_physical_bytes=lambda: 600 * MIB)
         real_authority = am.AnalysisMemoryAuthority
         with (
-            unittest.mock.patch.dict(os.environ, {
-                ANALYSIS_MEMORY_ENV: "8192", ANALYSIS_RESERVATION_ENV: "512",
-                COORDINATED_CHILD_ENV: "0",
-            }),
+            unittest.mock.patch.dict(
+                os.environ,
+                {
+                    ANALYSIS_MEMORY_ENV: "8192",
+                    ANALYSIS_RESERVATION_ENV: "512",
+                    COORDINATED_CHILD_ENV: "0",
+                },
+            ),
             unittest.mock.patch.object(am, "default_host_memory_probe", return_value=probe),
-            unittest.mock.patch.object(am, "AnalysisMemoryAuthority", side_effect=lambda *args, **kwargs:
-                real_authority(*args, **kwargs, controller_factory=factory, launch_interval_seconds=0)),
+            unittest.mock.patch.object(
+                am,
+                "AnalysisMemoryAuthority",
+                side_effect=lambda *args, **kwargs: real_authority(
+                    *args, **kwargs, controller_factory=factory, launch_interval_seconds=0
+                ),
+            ),
         ):
             authority = am.analysis_memory_authority_from_environment()
         self.assertIsNone(authority.gate.try_admit("first"))
@@ -286,10 +295,14 @@ class EnvironmentAuthorityWiringTests(unittest.TestCase):
         import analysis_memory as am
 
         with (
-            unittest.mock.patch.dict(os.environ, {
-                ANALYSIS_MEMORY_ENV: "8192", ANALYSIS_RESERVATION_ENV: "0",
-                COORDINATED_CHILD_ENV: "0",
-            }),
+            unittest.mock.patch.dict(
+                os.environ,
+                {
+                    ANALYSIS_MEMORY_ENV: "8192",
+                    ANALYSIS_RESERVATION_ENV: "0",
+                    COORDINATED_CHILD_ENV: "0",
+                },
+            ),
             unittest.mock.patch.object(am, "AnalysisMemoryAuthority") as constructor,
         ):
             with self.assertRaises(AnalysisMemoryConfigError):
