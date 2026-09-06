@@ -35,6 +35,7 @@ from analysis_batch import (
     BatchPlanError,
     build_batch_schedule,
     run_batch,
+    terminate_process_tree,
     work_item_run_id,
 )
 from analysis_memory import (
@@ -758,6 +759,19 @@ def stop_idalib_mcp_process(process, debug=False):
     if debug:
         print("  Stopping the current idalib-mcp process...")
     try:
+        # The spawned idalib-mcp launcher detaches worker processes that can
+        # outlive it and keep holding the IDB lock; terminate() only reaches
+        # the launcher itself, so kill the whole descendant tree first.
+        terminate_process_tree(process)
+    except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
+        if debug:
+            print(f"  Process-tree stop unavailable: {exc}")
+    try:
+        process.wait(timeout=MCP_SHUTDOWN_TIMEOUT)
+        return
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    try:
         process.terminate()
         process.wait(timeout=MCP_SHUTDOWN_TIMEOUT)
         return
@@ -1210,7 +1224,20 @@ class IdaMcpLifecycle:
             return
         try:
             if self._force_local_stop:
-                stop_idalib_mcp_process(process, debug=self.debug)
+                # A failed __enter__/ensure_ready can still leave a live worker
+                # with its MCP port bound; attempt one guarded graceful quit so
+                # the IDB is closed and packed, and keep the local process-tree
+                # stop for when the graceful path cannot run at all.
+                try:
+                    quit_ida_gracefully(
+                        process,
+                        self.host,
+                        self.port,
+                        expected_binary=self.binary_path,
+                        debug=self.debug,
+                    )
+                except RuntimeError:
+                    stop_idalib_mcp_process(process, debug=self.debug)
             else:
                 quit_ida_gracefully(
                     process,

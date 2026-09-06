@@ -4,6 +4,7 @@ import hashlib
 import io
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from contextlib import asynccontextmanager, redirect_stderr, redirect_stdout
@@ -34,6 +35,7 @@ from ida_analyze_bin import (
     McpLifecycleError,
     McpRecoveryBudget,
     McpRuntime,
+    MCP_SHUTDOWN_TIMEOUT,
     PipelineFailure,
     PipelineResult,
     _allgamever_module_filter_matches,
@@ -54,6 +56,7 @@ from ida_analyze_bin import (
     run_analysis_pipeline,
     save_ida_database_via_mcp,
     start_idalib_mcp,
+    stop_idalib_mcp_process,
     validate_runtime_artifacts,
     validate_opened_binary_identity,
 )
@@ -2893,7 +2896,7 @@ class McpLifecycleTests(unittest.TestCase):
             debug=False,
         )
 
-    def test_unverified_lifecycle_only_stops_its_supervisor(self):
+    def test_unverified_lifecycle_attempts_guarded_graceful_quit(self):
         process = MagicMock()
         process.poll.return_value = None
         with (
@@ -2913,8 +2916,58 @@ class McpLifecycleTests(unittest.TestCase):
                 database_policy=DATABASE_POLICY_REBUILD,
                 save_on_success=True,
             ).__enter__()
+        quit_gracefully.assert_called_once_with(
+            process,
+            DEFAULT_HOST,
+            DEFAULT_PORT,
+            expected_binary=Path("hw.dll"),
+            debug=False,
+        )
+        stop.assert_not_called()
+
+    def test_forced_lifecycle_cleanup_falls_back_to_local_stop_without_event_loop(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        lifecycle = IdaMcpLifecycle(
+            "hw.dll",
+            "windows",
+            DEFAULT_HOST,
+            DEFAULT_PORT,
+            "",
+            database_policy=DATABASE_POLICY_REBUILD,
+            save_on_success=True,
+        )
+        lifecycle.process = process
+        with (
+            patch("ida_analyze_bin.quit_ida_gracefully", side_effect=RuntimeError("active event loop")),
+            patch("ida_analyze_bin.stop_idalib_mcp_process") as stop,
+            patch("ida_analyze_bin.wait_for_port_release", return_value=True) as wait_for_release,
+        ):
+            lifecycle._cleanup()
         stop.assert_called_once_with(process, debug=False)
-        quit_gracefully.assert_not_called()
+        wait_for_release.assert_called_once_with(DEFAULT_HOST, DEFAULT_PORT)
+        self.assertIsNone(lifecycle.process)
+
+
+class StopIdalibMcpProcessTests(unittest.TestCase):
+    def test_kills_process_tree_before_reaping_the_launcher(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        with patch("ida_analyze_bin.terminate_process_tree") as terminate_tree:
+            stop_idalib_mcp_process(process, debug=False)
+        terminate_tree.assert_called_once_with(process)
+        process.wait.assert_called_once_with(timeout=MCP_SHUTDOWN_TIMEOUT)
+        process.terminate.assert_not_called()
+
+    def test_falls_back_to_terminate_when_tree_kill_is_unavailable(self):
+        process = MagicMock()
+        process.poll.return_value = None
+        process.wait.side_effect = subprocess.TimeoutExpired(cmd="idalib-mcp", timeout=1.0)
+        with patch("ida_analyze_bin.terminate_process_tree", side_effect=RuntimeError("taskkill failed")):
+            stop_idalib_mcp_process(process, debug=False)
+        self.assertEqual(3, process.wait.call_count)
+        process.terminate.assert_called_once_with()
+        process.kill.assert_called_once_with()
 
 
 class McpShutdownTests(unittest.IsolatedAsyncioTestCase):
