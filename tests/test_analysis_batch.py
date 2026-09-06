@@ -269,26 +269,37 @@ class WorkerResultContractTests(unittest.TestCase):
 
 
 class FakeProcess:
-    def __init__(self, exit_code=0, polls_until_exit=1) -> None:
+    def __init__(self, exit_code=0, polls_until_exit=1, stubborn=False) -> None:
         self.exit_code = exit_code
         self.remaining_polls = polls_until_exit
         self.pid = 4242
         self.terminated = False
         self.killed = False
+        self.stubborn = stubborn
+        self.tree_killed = False
+
+    def _running(self):
+        return self.remaining_polls is None or self.remaining_polls > 0
 
     def poll(self):
-        if self.remaining_polls is None or self.remaining_polls > 0:
+        if self._running():
             if self.remaining_polls is not None:
                 self.remaining_polls -= 1
             return None
         return self.exit_code
 
     def wait(self, timeout=None):
+        if self.stubborn and self._running():
+            import subprocess
+
+            raise subprocess.TimeoutExpired(cmd="fake-worker", timeout=timeout)
+        self.remaining_polls = 0
         return self.exit_code
 
     def terminate(self):
         self.terminated = True
-        self.remaining_polls = 0
+        if not self.stubborn:
+            self.remaining_polls = 0
 
     def kill(self):
         self.killed = True
@@ -332,7 +343,7 @@ class SchedulerTests(unittest.TestCase):
         self.temp_paths.append(path)
         return process, path
 
-    def _run(self, schedule, launches, *, max_concurrency=2, gate=None, skip_error=False):
+    def _run(self, schedule, launches, *, max_concurrency=2, gate=None, skip_error=False, kill_tree=None):
         import json
 
         return run_batch(
@@ -342,6 +353,7 @@ class SchedulerTests(unittest.TestCase):
             max_concurrency=max_concurrency,
             memory_gate=gate,
             skip_error=skip_error,
+            kill_process_tree=kill_tree,
             poll_interval_seconds=0.1,
             monotonic=lambda: self.clock[0],
             sleep=self._sleep,
@@ -525,6 +537,112 @@ class SchedulerTests(unittest.TestCase):
         outcome = self._run(schedule, launches, max_concurrency=3, gate=gate)
         self.assertTrue(outcome.succeeded, self.logs)
         self.assertEqual(gate.active, 0)
+
+    def test_worker_timeout_hard_kills_stubborn_process_tree(self):
+        item = make_item()
+        schedule = BatchSchedule(parallel_items=(item,), serial_items=())
+        process = FakeProcess(polls_until_exit=None, stubborn=True)
+        tree_kills = []
+
+        def kill_tree(target):
+            tree_kills.append(target)
+            target.tree_killed = True
+            target.remaining_polls = 0
+
+        outcome = run_batch(
+            schedule,
+            run_id="run-1",
+            launch_worker=lambda _item: self._launch(process, make_result_payload(item)),
+            max_concurrency=1,
+            worker_timeout_seconds=0.5,
+            kill_process_tree=kill_tree,
+            poll_interval_seconds=0.1,
+            monotonic=lambda: self.clock[0],
+            sleep=self._sleep,
+            log=self.logs.append,
+        )
+        self.assertFalse(outcome.succeeded)
+        self.assertEqual(outcome.failure_reason, "worker_timeout")
+        self.assertTrue(process.terminated)
+        self.assertTrue(process.tree_killed)
+        self.assertEqual(tree_kills, [process])
+
+    def test_serial_timeout_hard_kills_stubborn_process_tree(self):
+        p_item = make_item()
+        s_item = make_item(phase=PHASE_SERIAL)
+        schedule = BatchSchedule(parallel_items=(p_item,), serial_items=(s_item,))
+        serial_process = FakeProcess(polls_until_exit=None, stubborn=True)
+        tree_kills = []
+
+        def kill_tree(target):
+            tree_kills.append(target)
+            target.tree_killed = True
+            target.remaining_polls = 0
+
+        outcome = run_batch(
+            schedule,
+            run_id="run-1",
+            launch_worker=lambda item: (
+                self._launch(FakeProcess(), make_result_payload(item))
+                if item.phase == PHASE_PARALLEL
+                else self._launch(serial_process, make_result_payload(item))
+            ),
+            max_concurrency=1,
+            worker_timeout_seconds=0.5,
+            kill_process_tree=kill_tree,
+            poll_interval_seconds=0.1,
+            monotonic=lambda: self.clock[0],
+            sleep=self._sleep,
+            log=self.logs.append,
+        )
+        self.assertFalse(outcome.succeeded)
+        self.assertEqual(outcome.failure_reason, "worker_timeout")
+        self.assertTrue(serial_process.terminated)
+        self.assertTrue(serial_process.tree_killed)
+        self.assertEqual(tree_kills, [serial_process])
+
+    def test_cancellation_tears_down_active_workers_and_reraises(self):
+        items = [
+            WorkItem(
+                work_item_id=f"parallel-{index:04d}",
+                phase=PHASE_PARALLEL,
+                binary=BinaryIdentity(
+                    tag="tag-1", module=f"m{index}", platform="windows", binary_relative_path=f"m{index}/x.bin"
+                ),
+                node_ids=(f"m{index}:windows:s1",),
+            )
+            for index in range(2)
+        ]
+        schedule = BatchSchedule(parallel_items=tuple(items), serial_items=())
+        process = FakeProcess(polls_until_exit=None, stubborn=True)
+        tree_kills = []
+
+        def kill_tree(target):
+            tree_kills.append(target)
+            target.tree_killed = True
+            target.remaining_polls = 0
+
+        def launch(item):
+            if item.work_item_id == "parallel-0000":
+                return self._launch(process, make_result_payload(item))
+            raise KeyboardInterrupt
+
+        with self.assertRaises(KeyboardInterrupt):
+            run_batch(
+                schedule,
+                run_id="run-1",
+                launch_worker=launch,
+                max_concurrency=2,
+                kill_process_tree=kill_tree,
+                poll_interval_seconds=0.1,
+                monotonic=lambda: self.clock[0],
+                sleep=self._sleep,
+                log=self.logs.append,
+            )
+        self.assertTrue(process.terminated)
+        self.assertTrue(process.tree_killed)
+        self.assertEqual(tree_kills, [process])
+        self.assertTrue(any("tearing down owned worker process trees" in line for line in self.logs), self.logs)
 
 
 if __name__ == "__main__":
@@ -718,3 +836,52 @@ class MainRoutingTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         batch.assert_not_called()
         legacy.assert_called_once()
+
+
+class ProcessTreeKillHelperTests(unittest.TestCase):
+    def test_windows_tree_kill_invokes_taskkill_with_tree_flag(self):
+        import analysis_batch as ab
+
+        calls = []
+
+        def record_run(*args, **kwargs):
+            calls.append((args, kwargs))
+
+        with unittest.mock.patch.object(ab.subprocess, "run", side_effect=record_run):
+            ab._kill_windows_process_tree(4242)
+        self.assertEqual(len(calls), 1)
+        args, kwargs = calls[0]
+        self.assertEqual(args[0], ["taskkill", "/F", "/T", "/PID", "4242"])
+        self.assertFalse(kwargs.get("check", True))
+
+    def test_posix_tree_kill_sweeps_descendants(self):
+        import analysis_batch as ab
+
+        killed = []
+        with (
+            unittest.mock.patch.object(ab, "_posix_descendant_pids", return_value=[11, 12]),
+            unittest.mock.patch.object(ab.os, "kill", side_effect=lambda pid, _sig: killed.append(pid)),
+        ):
+            ab._kill_posix_process_tree(10)
+        self.assertEqual(killed, [10, 11, 12])
+
+    def test_posix_descendant_walk_collects_transitive_children_only(self):
+        import analysis_batch as ab
+
+        stats = {
+            "/proc/10/stat": "python (10) S 1",
+            "/proc/11/stat": "ida (11) S 10",
+            "/proc/12/stat": "mcp (12) S 11",
+            "/proc/13/stat": "other (13) S 1",
+        }
+
+        def fake_read_text(self, *args, **kwargs):
+            normalized = str(self).replace("\\", "/")
+            return stats[normalized]
+
+        with (
+            unittest.mock.patch.object(ab.os, "listdir", return_value=["10", "11", "12", "13", "cpuinfo"]),
+            unittest.mock.patch.object(ab.Path, "read_text", fake_read_text),
+        ):
+            descendants = ab._posix_descendant_pids(10)
+        self.assertEqual(sorted(descendants), [11, 12])

@@ -8,6 +8,8 @@ and an aggregate memory admission gate.
 
 from __future__ import annotations
 
+import os
+import subprocess
 import time
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -365,15 +367,93 @@ class _ActiveWorker:
     result_path: Path | None = None
 
 
-def _terminate_worker(worker: _ActiveWorker, *, grace_seconds: float, log) -> int:
+def terminate_process_tree(process: WorkerProcess) -> None:
+    """Hard-kill one owned worker process together with its whole descendant tree.
+
+    Without an aggregate Job Object the IDA/MCP descendants would otherwise keep
+    holding ports and IDB files after the outer Python worker died. Callers stay
+    bounded: after this they still wait on the root process to confirm exit.
+    """
+    pid = getattr(process, "pid", None)
+    if pid is None:
+        process.kill()
+        return
+    if os.name == "nt":
+        _kill_windows_process_tree(int(pid))
+    else:
+        _kill_posix_process_tree(int(pid))
+
+
+def _kill_windows_process_tree(pid: int) -> None:
+    subprocess.run(
+        ["taskkill", "/F", "/T", "/PID", str(pid)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+
+
+def _kill_posix_process_tree(pid: int) -> None:
+    import signal
+
+    kill_signal = getattr(signal, "SIGKILL", signal.SIGTERM)
+    for target in [pid, *_posix_descendant_pids(pid)]:
+        try:
+            os.kill(target, kill_signal)
+        except OSError:
+            continue
+
+
+def _posix_descendant_pids(root_pid: int) -> list[int]:
+    try:
+        proc_entries = os.listdir("/proc")
+    except OSError:
+        return []
+    parent_of: dict[int, int] = {}
+    for entry in proc_entries:
+        if not entry.isdigit():
+            continue
+        try:
+            stat_text = Path(f"/proc/{entry}/stat").read_text(encoding="ascii")
+        except (OSError, UnicodeDecodeError):
+            continue
+        # comm may contain spaces; the fields after the closing paren are state, ppid, ...
+        stat_fields = stat_text[stat_text.rfind(")") + 1 :].split()
+        if len(stat_fields) < 2:
+            continue
+        try:
+            parent_of[int(entry)] = int(stat_fields[1])
+        except ValueError:
+            continue
+    descendants: list[int] = []
+    frontier = [root_pid]
+    while frontier:
+        current = frontier.pop()
+        for child, parent in parent_of.items():
+            if parent == current and child not in descendants:
+                descendants.append(child)
+                frontier.append(child)
+    return descendants
+
+
+def _terminate_worker(
+    worker: _ActiveWorker,
+    *,
+    grace_seconds: float,
+    log,
+    kill_tree: Callable[[WorkerProcess], None] | None = None,
+) -> int:
+    tree_kill = kill_tree if kill_tree is not None else terminate_process_tree
     try:
         worker.process.terminate()
         worker.process.wait(timeout=grace_seconds)
-    except Exception:  # noqa: BLE001 - escalate to kill after the grace period.
+    except Exception:  # noqa: BLE001 - escalate to a hard tree kill below.
+        pass
+    if worker.process.poll() is None:
         try:
-            worker.process.kill()
+            tree_kill(worker.process)
         except Exception as kill_error:  # noqa: BLE001
-            log(f"{worker.item.log_prefix} worker kill failed: {kill_error}")
+            log(f"{worker.item.log_prefix} worker process tree kill failed: {kill_error}")
     try:
         return int(worker.process.wait(timeout=grace_seconds))
     except Exception:  # noqa: BLE001 - the exit code is diagnostic only after a hard kill.
@@ -400,6 +480,7 @@ def run_batch(
     worker_timeout_seconds: float = DEFAULT_WORKER_TIMEOUT_SECONDS,
     admission_timeout_seconds: float = DEFAULT_ADMISSION_TIMEOUT_SECONDS,
     terminate_grace_seconds: float = 30.0,
+    kill_process_tree: Callable[[WorkerProcess], None] | None = None,
     poll_interval_seconds: float = 1.0,
     monotonic: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
@@ -462,146 +543,164 @@ def run_batch(
         failure_reason = reason
         log(f"{item.log_prefix} {detail}")
 
-    while pending or active:
-        while not stop_admission and pending and len(active) < effective_parallel:
-            item = pending[0]
-            if memory_gate is not None:
-                try:
-                    wait_reason = memory_gate.try_admit(item.work_item_id)
-                except Exception as exc:  # noqa: BLE001 - memory gate failures fail the batch.
-                    _stop_for_gate_failure(item, "memory_gate_error", f"memory gate failure: {exc}")
-                    break
-                if wait_reason is not None:
-                    now = monotonic()
-                    started = admission_wait_started.setdefault(item.work_item_id, now)
-                    if now - started >= admission_timeout_seconds:
-                        admission_wait_started.pop(item.work_item_id, None)
-                        _stop_for_gate_failure(
-                            item,
-                            "memory_admission_timeout",
-                            f"memory admission timed out after {admission_timeout_seconds:g}s; last reason: {wait_reason}",
-                        )
-                        break
-                    break  # retry admission after polling active workers
-                admission_wait_started.pop(item.work_item_id, None)
-            try:
-                process, result_path = launch_worker(item)
-            except Exception as exc:  # noqa: BLE001 - launch failures count as worker failures.
-                pending.pop(0)
-                outcome.failed += len(item.node_ids)
-                item_summaries.append((item.work_item_id, WORKER_STATUS_FAILED))
-                parallel_failed = True
-                failure_reason = failure_reason or "worker_launch_failed"
-                log(f"{item.log_prefix} worker launch failed: {exc}")
-                if not skip_error:
-                    stop_admission = True
+    try:
+        while pending or active:
+            while not stop_admission and pending and len(active) < effective_parallel:
+                item = pending[0]
                 if memory_gate is not None:
-                    memory_gate.worker_finished()
-                continue
-            pending.pop(0)
-            worker = _ActiveWorker(item=item, process=process, started_at=monotonic())
-            worker.result_path = result_path
-            active.append(worker)
-            log(f"{item.log_prefix} worker admitted (pid {getattr(process, 'pid', '?')})")
-        if not active:
-            if stop_admission or not pending:
-                break
-            sleep(poll_interval_seconds)
-            continue
-        sleep(poll_interval_seconds)
-        for worker in list(active):
-            exit_code = worker.process.poll()
-            if exit_code is None:
-                if monotonic() - worker.started_at > worker_timeout_seconds:
-                    log(f"{worker.item.log_prefix} worker timeout after {worker_timeout_seconds:g}s")
-                    exit_code = _terminate_worker(worker, grace_seconds=terminate_grace_seconds, log=log)
-                    outcome.failed += len(worker.item.node_ids)
-                    item_summaries.append((worker.item.work_item_id, WORKER_STATUS_FAILED))
-                    active.remove(worker)
-                    if memory_gate is not None:
-                        memory_gate.worker_finished()
-                    parallel_failed = True
-                    failure_reason = failure_reason or "worker_timeout"
-                    if not skip_error:
-                        stop_admission = True
-                continue
-            active.remove(worker)
-            result = finish_worker(worker, exit_code=exit_code)
-            if result is None or result.status != WORKER_STATUS_SUCCEEDED:
-                parallel_failed = True
-                failure_reason = failure_reason or "worker_failed"
-                if not skip_error:
-                    stop_admission = True
-
-    for item in pending:
-        aborted.extend(f"{item.binary.tag}:{node_id}" for node_id in item.node_ids)
-
-    # Success barrier: serial segments start only after every parallel worker exited.
-    if active:
-        log("Batch coordinator barrier violation: parallel workers still active")
-    serial_blocked = parallel_failed or bool(active)
-    if serial_blocked and schedule.serial_items:
-        for item in schedule.serial_items:
-            aborted.extend(f"{item.binary.tag}:{node_id}" for node_id in item.node_ids)
-        log(
-            "Batch coordinator: serial phase blocked by parallel failure "
-            f"({failure_reason or 'worker_failed'}); aborting {len(schedule.serial_items)} segment(s)"
-        )
-    elif schedule.serial_items:
-        for item in schedule.serial_items:
-            if memory_gate is not None:
-                admitted_at = monotonic()
-                while True:
                     try:
                         wait_reason = memory_gate.try_admit(item.work_item_id)
-                    except Exception as exc:  # noqa: BLE001
-                        failure_reason = failure_reason or "memory_gate_error"
-                        log(f"{item.log_prefix} serial memory gate failure: {exc}")
-                        wait_reason = "error"
-                    if wait_reason is None:
+                    except Exception as exc:  # noqa: BLE001 - memory gate failures fail the batch.
+                        _stop_for_gate_failure(item, "memory_gate_error", f"memory gate failure: {exc}")
                         break
-                    if monotonic() - admitted_at >= admission_timeout_seconds or wait_reason == "error":
+                    if wait_reason is not None:
+                        now = monotonic()
+                        started = admission_wait_started.setdefault(item.work_item_id, now)
+                        if now - started >= admission_timeout_seconds:
+                            admission_wait_started.pop(item.work_item_id, None)
+                            _stop_for_gate_failure(
+                                item,
+                                "memory_admission_timeout",
+                                f"memory admission timed out after {admission_timeout_seconds:g}s; last reason: {wait_reason}",
+                            )
+                            break
+                        break  # retry admission after polling active workers
+                    admission_wait_started.pop(item.work_item_id, None)
+                try:
+                    process, result_path = launch_worker(item)
+                except Exception as exc:  # noqa: BLE001 - launch failures count as worker failures.
+                    pending.pop(0)
+                    outcome.failed += len(item.node_ids)
+                    item_summaries.append((item.work_item_id, WORKER_STATUS_FAILED))
+                    parallel_failed = True
+                    failure_reason = failure_reason or "worker_launch_failed"
+                    log(f"{item.log_prefix} worker launch failed: {exc}")
+                    if not skip_error:
+                        stop_admission = True
+                    if memory_gate is not None:
+                        memory_gate.worker_finished()
+                    continue
+                pending.pop(0)
+                worker = _ActiveWorker(item=item, process=process, started_at=monotonic())
+                worker.result_path = result_path
+                active.append(worker)
+                log(f"{item.log_prefix} worker admitted (pid {getattr(process, 'pid', '?')})")
+            if not active:
+                if stop_admission or not pending:
+                    break
+                sleep(poll_interval_seconds)
+                continue
+            sleep(poll_interval_seconds)
+            for worker in list(active):
+                exit_code = worker.process.poll()
+                if exit_code is None:
+                    if monotonic() - worker.started_at > worker_timeout_seconds:
+                        log(f"{worker.item.log_prefix} worker timeout after {worker_timeout_seconds:g}s")
+                        exit_code = _terminate_worker(
+                            worker, grace_seconds=terminate_grace_seconds, log=log, kill_tree=kill_process_tree
+                        )
+                        outcome.failed += len(worker.item.node_ids)
+                        item_summaries.append((worker.item.work_item_id, WORKER_STATUS_FAILED))
+                        active.remove(worker)
+                        if memory_gate is not None:
+                            memory_gate.worker_finished()
+                        parallel_failed = True
+                        failure_reason = failure_reason or "worker_timeout"
+                        if not skip_error:
+                            stop_admission = True
+                    continue
+                active.remove(worker)
+                result = finish_worker(worker, exit_code=exit_code)
+                if result is None or result.status != WORKER_STATUS_SUCCEEDED:
+                    parallel_failed = True
+                    failure_reason = failure_reason or "worker_failed"
+                    if not skip_error:
+                        stop_admission = True
+
+        for item in pending:
+            aborted.extend(f"{item.binary.tag}:{node_id}" for node_id in item.node_ids)
+
+        # Success barrier: serial segments start only after every parallel worker exited.
+        if active:
+            log("Batch coordinator barrier violation: parallel workers still active")
+        serial_blocked = parallel_failed or bool(active)
+        if serial_blocked and schedule.serial_items:
+            for item in schedule.serial_items:
+                aborted.extend(f"{item.binary.tag}:{node_id}" for node_id in item.node_ids)
+            log(
+                "Batch coordinator: serial phase blocked by parallel failure "
+                f"({failure_reason or 'worker_failed'}); aborting {len(schedule.serial_items)} segment(s)"
+            )
+        elif schedule.serial_items:
+            for item in schedule.serial_items:
+                if memory_gate is not None:
+                    admitted_at = monotonic()
+                    while True:
+                        try:
+                            wait_reason = memory_gate.try_admit(item.work_item_id)
+                        except Exception as exc:  # noqa: BLE001
+                            failure_reason = failure_reason or "memory_gate_error"
+                            log(f"{item.log_prefix} serial memory gate failure: {exc}")
+                            wait_reason = "error"
+                        if wait_reason is None:
+                            break
+                        if monotonic() - admitted_at >= admission_timeout_seconds or wait_reason == "error":
+                            outcome.failed += len(item.node_ids)
+                            item_summaries.append((item.work_item_id, WORKER_STATUS_FAILED))
+                            failure_reason = failure_reason or "memory_admission_timeout"
+                            log(f"{item.log_prefix} serial memory admission failed; last reason: {wait_reason}")
+                            for remaining in schedule.serial_items[schedule.serial_items.index(item) + 1 :]:
+                                aborted.extend(f"{remaining.binary.tag}:{nid}" for nid in remaining.node_ids)
+                            item = None
+                            break
+                        sleep(poll_interval_seconds)
+                    if item is None:
+                        break
+                try:
+                    process, result_path = launch_worker(item)
+                except Exception as exc:  # noqa: BLE001
+                    outcome.failed += len(item.node_ids)
+                    item_summaries.append((item.work_item_id, WORKER_STATUS_FAILED))
+                    failure_reason = failure_reason or "worker_launch_failed"
+                    log(f"{item.log_prefix} serial worker launch failed: {exc}")
+                    if memory_gate is not None:
+                        memory_gate.worker_finished()
+                    break
+                worker = _ActiveWorker(item=item, process=process, started_at=monotonic())
+                worker.result_path = result_path
+                active.append(worker)
+                log(f"{item.log_prefix} serial worker admitted (pid {getattr(process, 'pid', '?')})")
+                try:
+                    try:
+                        exit_code = worker.process.wait(timeout=worker_timeout_seconds)
+                    except Exception:  # noqa: BLE001 - treat wait timeouts as bounded worker timeouts.
+                        exit_code = _terminate_worker(
+                            worker, grace_seconds=terminate_grace_seconds, log=log, kill_tree=kill_process_tree
+                        )
                         outcome.failed += len(item.node_ids)
                         item_summaries.append((item.work_item_id, WORKER_STATUS_FAILED))
-                        failure_reason = failure_reason or "memory_admission_timeout"
-                        log(f"{item.log_prefix} serial memory admission failed; last reason: {wait_reason}")
-                        for remaining in schedule.serial_items[schedule.serial_items.index(item) + 1 :]:
-                            aborted.extend(f"{remaining.binary.tag}:{nid}" for nid in remaining.node_ids)
-                        item = None
+                        failure_reason = failure_reason or "worker_timeout"
+                        if memory_gate is not None:
+                            memory_gate.worker_finished()
                         break
-                    sleep(poll_interval_seconds)
-                if item is None:
-                    break
-            try:
-                process, result_path = launch_worker(item)
-            except Exception as exc:  # noqa: BLE001
-                outcome.failed += len(item.node_ids)
-                item_summaries.append((item.work_item_id, WORKER_STATUS_FAILED))
-                failure_reason = failure_reason or "worker_launch_failed"
-                log(f"{item.log_prefix} serial worker launch failed: {exc}")
-                if memory_gate is not None:
-                    memory_gate.worker_finished()
-                break
-            worker = _ActiveWorker(item=item, process=process, started_at=monotonic())
-            worker.result_path = result_path
-            log(f"{item.log_prefix} serial worker admitted (pid {getattr(process, 'pid', '?')})")
-            try:
-                exit_code = worker.process.wait(timeout=worker_timeout_seconds)
-            except Exception:  # noqa: BLE001 - treat wait timeouts as bounded worker timeouts.
-                exit_code = _terminate_worker(worker, grace_seconds=terminate_grace_seconds, log=log)
-                outcome.failed += len(item.node_ids)
-                item_summaries.append((item.work_item_id, WORKER_STATUS_FAILED))
-                failure_reason = failure_reason or "worker_timeout"
-                if memory_gate is not None:
-                    memory_gate.worker_finished()
-                break
-            result = finish_worker(worker, exit_code=exit_code)
-            if result is None or result.status != WORKER_STATUS_SUCCEEDED:
-                failure_reason = failure_reason or "worker_failed"
-                index = schedule.serial_items.index(item)
-                for remaining in schedule.serial_items[index + 1 :]:
-                    aborted.extend(f"{remaining.binary.tag}:{nid}" for nid in remaining.node_ids)
-                break
+                    result = finish_worker(worker, exit_code=exit_code)
+                    if result is None or result.status != WORKER_STATUS_SUCCEEDED:
+                        failure_reason = failure_reason or "worker_failed"
+                        index = schedule.serial_items.index(item)
+                        for remaining in schedule.serial_items[index + 1 :]:
+                            aborted.extend(f"{remaining.binary.tag}:{nid}" for nid in remaining.node_ids)
+                        break
+                finally:
+                    active.remove(worker)
+    except BaseException:
+        # Cancellation (KeyboardInterrupt/SystemExit) must not leak owned worker
+        # process trees; tear them down bounded and confirm exit before re-raising.
+        log("Batch coordinator: scheduling aborted; tearing down owned worker process trees")
+        for worker in list(active):
+            _terminate_worker(worker, grace_seconds=terminate_grace_seconds, log=log, kill_tree=kill_process_tree)
+            if memory_gate is not None:
+                memory_gate.worker_finished()
+        raise
 
     if aborted:
         outcome.failed += len(aborted)
