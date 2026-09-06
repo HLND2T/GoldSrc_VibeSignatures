@@ -31,6 +31,27 @@ Bounded admission combines `GSVIBE_ANALYSIS_MAX_CONCURRENCY` with the aggregate 
   worker logs.
 - Secrets (LLM API key) travel only through the child environment; the request JSON and result JSON carry none.
 
+## Review-fix lessons (PR #67)
+
+- Cross-process identity contracts need **one composition rule shared by both sides**: the coordinator stamped
+  `<batch_run_id>-<work_item_id>` into worker requests but validated results against the bare batch run id, so
+  every conforming result was rejected. `work_item_run_id()` is now the single source for both paths.
+- Any identifier that reaches a **filesystem name or a reporter run id must be unique across the whole batch**,
+  not per tag: per-tag `parallel-0000` numbering made concurrent tags overwrite each other's request/result files.
+  `build_batch_schedule` renumbers both phases globally.
+- Batch success must include **worker-level failure**, not just node counts: a worker can report status=failed
+  (cleanup/lifecycle failure) while every node exited successfully; `outcome.succeeded` therefore also requires
+  `failure_reason is None`.
+- A scheduler that owns child processes needs an **exception-path teardown**: wrap scheduling in
+  `except BaseException`, sweep active workers with bounded terminate → `taskkill /F /T` (or POSIX /proc walk +
+  SIGKILL), confirm exit before releasing the memory-gate slot, then re-raise. Terminating only the outer Python
+  worker leaks the IDA/MCP descendants (ports, IDB handles) whenever no aggregate Job Object is configured.
+- Validation should encode the real invariant, not a proxy: rejecting "binary in multiple work items" broke the
+  legal cross-phase reopen (parallel item then serial segment on the same binary). Validate node uniqueness plus
+  "no binary in two overlapping parallel items" instead.
+- Production wiring must pass its **default probes explicitly** — an optional constructor parameter defaults to
+  `None` and silently disables the check (`default_host_memory_probe()` now feeds the authority).
+
 ## Verification
 
 `uv run python -m unittest tests.test_analysis_batch tests.test_analysis_memory tests.test_analysis_planner`
