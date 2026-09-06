@@ -50,7 +50,10 @@ Bounded admission combines `GSVIBE_ANALYSIS_MAX_CONCURRENCY` with the aggregate 
   longer be attributed to the worker — a root exit never proves the tree exited. The child pid stays reserved
   until `wait()` reaps it, so an unreaped pid cannot be reused by an unrelated process. Workers retire from the
   active list only on completed paths: a `finally` removal runs before the cancellation sweep and leaks the
-  in-flight worker.
+  in-flight worker. An **unconfirmed** exit (kill command failed or wait timed out) is its own
+  `worker_cleanup_failed` outcome: keep the worker tracked, keep its gate slot reserved, and stop all admission
+  even under -skip_error — releasing the slot invites over-admission behind a tree that still holds memory. The
+  kill command itself needs an explicit timeout, not just the exit wait.
 - Validation should encode the real invariant, not a proxy: rejecting "binary in multiple work items" broke the
   legal cross-phase reopen (parallel item then serial segment on the same binary). Validate node uniqueness plus
   "no binary in two overlapping parallel items" instead.
