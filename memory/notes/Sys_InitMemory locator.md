@@ -38,11 +38,12 @@ Need the engine heap-init root function (`Sys_InitMemory`, `engine/sys_dll2.cpp`
 - Sharable constraint: heap-limit immediate family in body — SvEngine 0x20000000 (512MB); GoldSrc 0x2000000/0x2800000/0x8000000 by buildnum (cof-5936 shows both 0x2800000 and 0x8000000 despite buildnum < 6153, so a future patch collector should not gate 0x8000000 on buildnum >= 6153).
 
 ## Correct approach
+1. Windows (all hl-*/cof-*, incl. blob gamevers via their decrypted `hw.decrypt.dll`): `xref_strings` with `FULLMATCH:Available memory less than 15MB!!! %i\n`.
+2. hl Linux (hl-10210 AND hl-8684): `FULLMATCH:-heapsize` — the 15MB wording exists only in HL25-era Linux builds (hl-8684 hw.so drops it and instead parses `-heapsize`/`-minmemory` plus `"Unable to allocate %.2f MB\n"`; all three are uniquely owned by `_Z14Sys_InitMemoryv` in both builds).
+3. SvEngine Windows: `FULLMATCH:Available memory less than the %.2f MB requirement (%.2f MB).\nCheck your hardware against the system requirements.\n`; SvEngine Linux: `FULLMATCH:/proc/meminfo` (verify single string / single owner in the current IDB).
+4. Validate owner via in-body heap-limit immediates family and a `Sys_Error` call at the string site (Windows).
 
-1. Windows + HL25-Linux: `xref_strings` with the exact literal (substring `"Available memory less than"` only as documented fallback for SvEngine Windows phrasing).
-2. SvEngine Linux: `xref_strings` with `FULLMATCH:/proc/meminfo` (verify single string / single owner in the current IDB).
-3. Validate owner via in-body heap-limit immediates family and a `Sys_Error` call at the string site (Windows).
-
+Implemented as `ida_preprocessor_scripts/find-Sys_InitMemory.py` (generic, platform-branched anchors) and `find-Sys_InitMemory-svencoop.py` (svencoop), both passing `old_yaml_map=None`; registered in all engine-declaring configs (hl-3248..hl-10210, cof-5936, svencoop-10257). 2026-09-06 delivery run: 13/13 platform nodes green (hl-8684 linux resolves `0x139c90` = symtab `_Z14Sys_InitMemoryv`; hl-3248's inlined form has no EBP frame, prologue `83 EC 24`).
 ## 验证方式
 
 Owned `IdaMcpLifecycle` per binary (`restored_strict`), `survey_binary` + `server_health`, py_eval string/xref/owner/immediate probe; require owner_count == 1 and cross-platform source-role agreement (2026-09-06 run: 5/5 binaries passed; IDBs closed clean, no `.id0` locks).
