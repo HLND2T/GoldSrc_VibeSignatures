@@ -9,7 +9,7 @@ and an aggregate memory admission gate.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Callable, Iterable, Mapping, Protocol
 
@@ -185,7 +185,13 @@ def classify_tag_plan(
 def build_batch_schedule(
     tag_plans: Iterable[tuple[str, object, Mapping[tuple[str, str], str]]],
 ) -> BatchSchedule:
-    """Combine per-tag classifications into one schedule in tag declaration order."""
+    """Combine per-tag classifications into one schedule in tag declaration order.
+
+    Work item ids are renumbered across the whole batch so request/result file
+    names and reporter run ids stay unique when several tags run concurrently;
+    the per-tag numbering produced by ``classify_tag_plan`` never escapes this
+    function.
+    """
     parallel_items: list[WorkItem] = []
     serial_items: list[WorkItem] = []
     seen_binaries: set[BinaryIdentity] = set()
@@ -197,7 +203,13 @@ def build_batch_schedule(
             seen_binaries.add(item.binary)
         parallel_items.extend(tag_parallel)
         serial_items.extend(tag_serial)
-    return BatchSchedule(parallel_items=tuple(parallel_items), serial_items=tuple(serial_items))
+    renumbered_parallel = tuple(
+        replace(item, work_item_id=f"{PHASE_PARALLEL}-{index:04d}") for index, item in enumerate(parallel_items)
+    )
+    renumbered_serial = tuple(
+        replace(item, work_item_id=f"{PHASE_SERIAL}-{index:04d}") for index, item in enumerate(serial_items)
+    )
+    return BatchSchedule(parallel_items=renumbered_parallel, serial_items=renumbered_serial)
 
 
 def work_item_run_id(batch_run_id: str, work_item_id: str) -> str:

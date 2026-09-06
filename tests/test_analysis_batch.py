@@ -149,6 +149,29 @@ class ClassifyTagPlanTests(unittest.TestCase):
                 [("tag-1", plan_a, binary_paths_for(plan_a)), ("tag-1", plan_a, binary_paths_for(plan_a))]
             )
 
+    def test_build_batch_schedule_numbers_work_item_ids_across_the_whole_batch(self):
+        plans = []
+        for tag in ("tag-1", "tag-2", "tag-3"):
+            plan = make_plan([make_node("a", "windows", "s1", 0), make_node("b", "windows", "s1", 1)])
+            plans.append((tag, plan, binary_paths_for(plan)))
+        schedule = build_batch_schedule(plans)
+        parallel_ids = [item.work_item_id for item in schedule.parallel_items]
+        self.assertEqual(
+            parallel_ids,
+            ["parallel-0000", "parallel-0001", "parallel-0002", "parallel-0003", "parallel-0004", "parallel-0005"],
+        )
+        self.assertEqual(len(set(parallel_ids)), len(parallel_ids))
+        cross_tag_plan = make_plan([make_node("a", "windows", "s1", 0)])
+        other_tag = make_plan([make_node("a", "windows", "s1", 0)])
+        mixed = build_batch_schedule(
+            [
+                ("tag-1", cross_tag_plan, binary_paths_for(cross_tag_plan)),
+                ("tag-2", other_tag, binary_paths_for(other_tag)),
+            ]
+        )
+        self.assertEqual([item.work_item_id for item in mixed.parallel_items], ["parallel-0000", "parallel-0001"])
+        self.assertEqual({item.binary.tag for item in mixed.parallel_items}, {"tag-1", "tag-2"})
+
 
 def make_result_payload(
     item: WorkItem, *, run_id=None, status="succeeded", exit_code=0, node_status="succeeded"
