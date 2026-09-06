@@ -27,10 +27,12 @@ tags:
 - **IDA 命名陷阱**：hw.so.i64 里 IDA 把 0xC2FA80 显示为 `nMax`（类型 `client_state_t_9`）——symtab/DWARF/官方源码/仓库配置中均无 `nMax`，是 IDA 侧产物；但其成员路径 `nMax.resourcesonhand`(+4) 与 DWARF 一致。
 
 ## Correct approach
-1. 不要重复字符串发现 owning function：config 声明 `expected_input: CL_PrecacheResources.{platform}.yaml`，以 `find-CBaseUI__Initialize-decompiles.py` 为模板（读产物 func_va → `_inspect_function_via_mcp` 当前 IDB 重校验 → 函数内确定性恢复 → `write_gv_yaml`，`gv_sig` 沿用 owner func_sig + `gv_inst_offset/length/disp`）。
-2. 恢复逻辑用上述配对引用规则（确定性、无 LLM）；0x80 是 `pNext` 偏移，勿按公开 HLSDK custom.h 的 96/104 布局理解。
-3. gamesymbol 清单登记 `cl_resourcesonhand / category: gv`。
+1. 生产 finder 已落地（2026-09-06，commit `feat(preprocessor): add find-cl_resourcesonhand`，dev 分支）：`ida_preprocessor_scripts/find-cl_resourcesonhand.py`，注册于全部 10 个 configs（hl-3248/3266/3329/3647/4554/6153/8684/10210、svencoop-10257、cof-5936），`expected_input: CL_PrecacheResources.{platform}.yaml` → `cl_resourcesonhand.{platform}.yaml`，gamesymbol `cl_resourcesonhand / category: gv`。
+2. 恢复规则（-allgamever 13/13 全绿）：owner 函数内配对引用——V 被 cmp 引用（或 lea 取址且 ≤6 条指令内 cmp 使用其寄存器），且 V+0x80 被 mov-load 引用，V 在可写数据段，候选唯一才通过。地址提取必须**双通道并集**：操作数层（o_imm value / o_mem addr）+ DataRefsFrom（覆盖 GOTOFF/PIC）。仅用 DataRefsFrom 会在结构化 IDB（hl-8684 hw.so）上因 xref 归一到结构基址（cl）而零候选失败。
+3. 产物地址总表（gv_va）：hl-3248/3266=0x2DB64E4、hl-3329=0x2D82E04、hl-3647=0x2D81CA4、hl-4554=0x2D2BDC4、hl-6153=0x2D5CDC4、hl-8684=0x2D602E4(w)/0xC44744(l)、hl-10210=0x11257F64(w)/0xC2FA84(l)、svencoop=0x21092D4(w)/0x15D7D64(l)、cof-5936=0x2DD5A84。全部为 `&cl.resourcesonhand`（cl+4）。
+4. 引用指令形态四类（finder 全部覆盖）：`cmp reg, imm`（hl 系/sven-win）、`cmp [ebp+x], imm`（cof）、GOTOFF `lea reg,[ebx+V-GOT]` + `cmp reg,reg`（sven-linux）、结构化 `(offset m1+4)`（hl-8684-linux，操作数层解码）。
 
 ## Open items
-- finder 未落地（截至 2026-09-06 仅分析结论）；MetaHook 侧 gamedata 迁移同样未做（见 metahooksv/privatevars/precache-manager-privatevars）。
-- 其余游戏版本的地址未逐一验证；复用链依赖 `CL_PrecacheResources` 产物先行生成，owner finder 失败时 fail closed。
+- MetaHook 侧 gamedata 迁移仍未做（见 metahooksv/privatevars/precache-manager-privatevars）；迁移时直接消费本仓库 `cl_resourcesonhand` 产物即可。
+- cstrike/czero/czeror 系列 engine 模块未在本仓库分析范围（无 hw 模块 config），不适用本 finder。
+
