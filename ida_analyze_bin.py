@@ -3092,6 +3092,11 @@ def _run_full_batch(args) -> int:
         print(f"Work item {work_item_id}: {status}")
     if outcome.aborted_node_ids:
         print(f"Aborted nodes ({len(outcome.aborted_node_ids)}): {', '.join(outcome.aborted_node_ids)}")
+    if outcome.uncleaned_work_item_ids:
+        print(
+            f"Warning: {len(outcome.uncleaned_work_item_ids)} worker(s) could not be confirmed dead; "
+            "their memory reservations stay held: " + ", ".join(outcome.uncleaned_work_item_ids)
+        )
     if outcome.failure_reason:
         print(f"Batch failure reason: {outcome.failure_reason}")
     print("\nSummary")

@@ -717,6 +717,120 @@ class SchedulerTests(unittest.TestCase):
         self.assertEqual(tree_kills, [serial_process])
         self.assertTrue(any("tearing down owned worker process trees" in line for line in self.logs), self.logs)
 
+    def _run_with_cleanup_failure(self, *, kill_tree, launch, schedule, gate, skip_error):
+        return run_batch(
+            schedule,
+            run_id="run-1",
+            launch_worker=launch,
+            max_concurrency=1,
+            memory_gate=gate,
+            skip_error=skip_error,
+            worker_timeout_seconds=0.5,
+            kill_process_tree=kill_tree,
+            poll_interval_seconds=0.1,
+            monotonic=lambda: self.clock[0],
+            sleep=self._sleep,
+            log=self.logs.append,
+        )
+
+    def test_kill_command_failure_keeps_worker_tracked_with_slot_reserved(self):
+        items = [
+            WorkItem(
+                work_item_id=f"parallel-{index:04d}",
+                phase=PHASE_PARALLEL,
+                binary=BinaryIdentity(
+                    tag="tag-1", module=f"m{index}", platform="windows", binary_relative_path=f"m{index}/x.bin"
+                ),
+                node_ids=(f"m{index}:windows:s1",),
+            )
+            for index in range(2)
+        ]
+        schedule = BatchSchedule(parallel_items=tuple(items), serial_items=())
+        process = FakeProcess(polls_until_exit=None, stubborn=True)
+        kill_attempts = []
+
+        def kill_tree(target):
+            kill_attempts.append(target)
+            raise RuntimeError("taskkill unavailable")
+
+        gate = FakeGate(capacity=4)
+        # skip_error must not re-arm admission behind an unconfirmed worker.
+        outcome = self._run_with_cleanup_failure(
+            kill_tree=kill_tree,
+            launch=lambda item: self._launch(process, make_result_payload(item)),
+            schedule=schedule,
+            gate=gate,
+            skip_error=True,
+        )
+        self.assertFalse(outcome.succeeded)
+        self.assertEqual(outcome.failure_reason, "worker_cleanup_failed")
+        self.assertEqual(outcome.uncleaned_work_item_ids, ("parallel-0000",))
+        self.assertEqual(gate.active, 1)
+        self.assertEqual(kill_attempts, [process])
+        self.assertEqual(outcome.work_item_summaries, (("parallel-0000", "failed"),))
+        self.assertIn("tag-1:m1:windows:s1", outcome.aborted_node_ids)
+        self.assertTrue(any("process tree kill failed" in line for line in self.logs), self.logs)
+
+    def test_exit_wait_timeout_after_kill_is_a_cleanup_failure(self):
+        item = make_item()
+        schedule = BatchSchedule(parallel_items=(item,), serial_items=())
+        process = FakeProcess(polls_until_exit=None, stubborn=True)
+        tree_kills = []
+
+        def kill_tree(target):
+            # The kill command "succeeds" but the worker never exits.
+            tree_kills.append(target)
+            target.tree_killed = True
+
+        gate = FakeGate(capacity=4)
+        outcome = self._run_with_cleanup_failure(
+            kill_tree=kill_tree,
+            launch=lambda _item: self._launch(process, make_result_payload(item)),
+            schedule=schedule,
+            gate=gate,
+            skip_error=False,
+        )
+        self.assertFalse(outcome.succeeded)
+        self.assertEqual(outcome.failure_reason, "worker_cleanup_failed")
+        self.assertEqual(outcome.uncleaned_work_item_ids, ("parallel-0000",))
+        self.assertEqual(gate.active, 1)
+        self.assertEqual(tree_kills, [process])
+        self.assertTrue(any("exit could not be confirmed" in line for line in self.logs), self.logs)
+
+    def test_serial_cleanup_failure_keeps_slot_reserved_and_blocks_remaining_segments(self):
+        p_item = make_item()
+        s_items = [
+            WorkItem(
+                work_item_id=f"serial-{index:04d}",
+                phase=PHASE_SERIAL,
+                binary=BinaryIdentity(
+                    tag="tag-1", module=f"m{index}", platform="windows", binary_relative_path=f"m{index}/x.bin"
+                ),
+                node_ids=(f"m{index}:windows:s1",),
+            )
+            for index in range(2)
+        ]
+        schedule = BatchSchedule(parallel_items=(p_item,), serial_items=tuple(s_items))
+        serial_process = FakeProcess(polls_until_exit=None, stubborn=True)
+
+        def kill_tree(target):
+            raise RuntimeError("taskkill unavailable")
+
+        def launch(item):
+            if item.phase == PHASE_PARALLEL:
+                return self._launch(FakeProcess(), make_result_payload(item))
+            return self._launch(serial_process, make_result_payload(item))
+
+        gate = FakeGate(capacity=4)
+        outcome = self._run_with_cleanup_failure(
+            kill_tree=kill_tree, launch=launch, schedule=schedule, gate=gate, skip_error=False
+        )
+        self.assertFalse(outcome.succeeded)
+        self.assertEqual(outcome.failure_reason, "worker_cleanup_failed")
+        self.assertEqual(outcome.uncleaned_work_item_ids, ("serial-0000",))
+        self.assertEqual(gate.active, 1)
+        self.assertIn("tag-1:m1:windows:s1", outcome.aborted_node_ids)
+
 
 if __name__ == "__main__":
     unittest.main()
@@ -926,6 +1040,9 @@ class ProcessTreeKillHelperTests(unittest.TestCase):
         args, kwargs = calls[0]
         self.assertEqual(args[0], ["taskkill", "/F", "/T", "/PID", "4242"])
         self.assertFalse(kwargs.get("check", True))
+        # The tree-kill command itself must be bounded, not just the exit wait.
+        self.assertGreater(kwargs.get("timeout", 0), 0)
+        self.assertEqual(kwargs["timeout"], ab.TREE_KILL_COMMAND_TIMEOUT_SECONDS)
 
     def test_posix_tree_kill_sweeps_descendants_before_root(self):
         import analysis_batch as ab

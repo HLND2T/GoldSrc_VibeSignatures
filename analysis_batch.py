@@ -40,6 +40,7 @@ NODE_TERMINAL_STATUSES = frozenset({"succeeded", "failed", "skipped", "aborted"}
 WORKER_STATUSES = frozenset({WORKER_STATUS_SUCCEEDED, WORKER_STATUS_FAILED})
 DEFAULT_WORKER_TIMEOUT_SECONDS = 4 * 3600.0
 DEFAULT_ADMISSION_TIMEOUT_SECONDS = 300.0
+TREE_KILL_COMMAND_TIMEOUT_SECONDS = 15.0
 SERIAL_REASON_MEMORY_LIMIT_EXCEEDED = "memory_limit_exceeded"
 
 
@@ -347,6 +348,7 @@ class BatchOutcome:
     skipped: int = 0
     aborted_node_ids: tuple[str, ...] = ()
     work_item_summaries: tuple[tuple[str, str], ...] = ()
+    uncleaned_work_item_ids: tuple[str, ...] = ()
 
 
 class WorkerProcess(Protocol):
@@ -404,6 +406,7 @@ def _kill_windows_process_tree(pid: int) -> None:
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
+        timeout=TREE_KILL_COMMAND_TIMEOUT_SECONDS,
     )
 
 
@@ -459,7 +462,15 @@ def _terminate_worker(
     grace_seconds: float,
     log,
     kill_tree: Callable[[WorkerProcess], None] | None = None,
-) -> int:
+) -> int | None:
+    """Tear down the worker's owned process tree; return the exit code once exit is confirmed.
+
+    Returns None when exit could not be confirmed (the kill command failed or
+    the confirmation wait timed out). Callers must treat None as an independent
+    cleanup failure: keep the worker tracked, keep its memory slot reserved,
+    and stop admitting new workers - the unconfirmed tree may still hold the
+    binary, ports, and memory.
+    """
     tree_kill = kill_tree if kill_tree is not None else terminate_process_tree
     # Kill the owned tree unconditionally and while the root is still alive.
     # Terminating the root first would defeat the tree walk: on Windows
@@ -471,8 +482,9 @@ def _terminate_worker(
         log(f"{worker.item.log_prefix} worker process tree kill failed: {kill_error}")
     try:
         return int(worker.process.wait(timeout=grace_seconds))
-    except Exception:  # noqa: BLE001 - the exit code is diagnostic only after a hard kill.
-        return -1
+    except Exception:  # noqa: BLE001 - exit unconfirmed is a cleanup failure, not a code.
+        log(f"{worker.item.log_prefix} worker exit could not be confirmed after tree kill")
+        return None
 
 
 def _read_result_payload(result_path: Path) -> object:
@@ -545,6 +557,9 @@ def run_batch(
     )
 
     active: list[_ActiveWorker] = []
+    # Workers whose process-tree exit could not be confirmed: they stay tracked
+    # here with their memory slot reserved so the budget cannot be overdrawn.
+    uncleaned: list[_ActiveWorker] = []
     pending = parallel_items
     stop_admission = False
     parallel_failed = False
@@ -616,10 +631,20 @@ def run_batch(
                         )
                         outcome.failed += len(worker.item.node_ids)
                         item_summaries.append((worker.item.work_item_id, WORKER_STATUS_FAILED))
+                        parallel_failed = True
+                        if exit_code is None:
+                            # Cleanup failure: the tree may still hold the binary,
+                            # ports, and memory, so keep the worker tracked with its
+                            # slot reserved and stop all admission, even with
+                            # -skip_error.
+                            failure_reason = failure_reason or "worker_cleanup_failed"
+                            uncleaned.append(worker)
+                            active.remove(worker)
+                            stop_admission = True
+                            continue
                         active.remove(worker)
                         if memory_gate is not None:
                             memory_gate.worker_finished()
-                        parallel_failed = True
                         failure_reason = failure_reason or "worker_timeout"
                         if not skip_error:
                             stop_admission = True
@@ -700,6 +725,16 @@ def run_batch(
                     )
                     outcome.failed += len(item.node_ids)
                     item_summaries.append((item.work_item_id, WORKER_STATUS_FAILED))
+                    index = schedule.serial_items.index(item)
+                    for remaining in schedule.serial_items[index + 1 :]:
+                        aborted.extend(f"{remaining.binary.tag}:{nid}" for nid in remaining.node_ids)
+                    if exit_code is None:
+                        # Cleanup failure: keep the worker tracked with its slot
+                        # reserved; nothing else may be admitted behind it.
+                        failure_reason = failure_reason or "worker_cleanup_failed"
+                        uncleaned.append(worker)
+                        active.remove(worker)
+                        break
                     failure_reason = failure_reason or "worker_timeout"
                     if memory_gate is not None:
                         memory_gate.worker_finished()
@@ -719,8 +754,12 @@ def run_batch(
         # process trees; tear them down bounded and confirm exit before re-raising.
         log("Batch coordinator: scheduling aborted; tearing down owned worker process trees")
         for worker in list(active):
-            _terminate_worker(worker, grace_seconds=terminate_grace_seconds, log=log, kill_tree=kill_process_tree)
-            if memory_gate is not None:
+            exit_code = _terminate_worker(
+                worker, grace_seconds=terminate_grace_seconds, log=log, kill_tree=kill_process_tree
+            )
+            # Only release the slot for workers whose exit was confirmed; an
+            # unconfirmed tree keeps its reservation.
+            if exit_code is not None and memory_gate is not None:
                 memory_gate.worker_finished()
         raise
 
@@ -728,6 +767,7 @@ def run_batch(
         outcome.failed += len(aborted)
     outcome.aborted_node_ids = tuple(aborted)
     outcome.work_item_summaries = tuple(item_summaries)
+    outcome.uncleaned_work_item_ids = tuple(worker.item.work_item_id for worker in uncleaned)
     # Worker-level failures (worker/gate/cleanup status failed, launch failed, timeout)
     # must fail the batch even when every reported node exited successfully.
     outcome.succeeded = outcome.failed == 0 and outcome.aborted_node_ids == () and failure_reason is None
