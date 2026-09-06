@@ -44,3 +44,17 @@ uv run python release_workflow.py cleanup-legacy-accepted-yaml --repo-root <chec
 命令先验证 binary-only materialization，再在 per-gamever lock 内把 exact inventory 备份到
 `accepted-bin/legacy-yaml-backups/<cutover-id>/<gamever>`；只有 YAML inventory 未变化时才删除。Rename 或 partial
 deletion 中断后，使用同一参数重跑；命令只会从 canonical matching backup 恢复。
+
+## Full analysis 并发 runbook
+
+release build job 从受保护的 `win64` Environment 读取 `GSVIBE_ANALYSIS_MAX_CONCURRENCY` 与
+`GSVIBE_ANALYSIS_MAX_MEMORY_MIB`。安全激活顺序：
+
+1. 未配置（即 `1`）时合入：production 经两阶段 coordinator 保持串行。
+2. 将 `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` 配置为高于实测 coordinator baseline 加一个 4096 MiB worker reservation，
+   并在 concurrency `1` 运行中记录真实峰值。
+3. 提升到 concurrency `2`，验证两个 verified MCP endpoint、内存低于预算，且产物经 `bin_artifact_contract.py`
+   逐字节一致。
+4. 回滚只需把 concurrency 改回 `1`；cache generation、selection 与 release schema 不受影响。hard memory limit 触发
+   以结构化 reason 失败，不会在同一次 run 内降并发重试。
+

@@ -50,3 +50,18 @@ uv run python release_workflow.py cleanup-legacy-accepted-yaml --repo-root <chec
 The command first verifies binary-only materialization, then under the per-gamever lock creates an exact inventoried
 backup in `accepted-bin/legacy-yaml-backups/<cutover-id>/<gamever>` before deleting the unchanged YAML inventory. Rerun
 the same command after an interrupted rename or partial deletion; it resumes only from the canonical matching backup.
+
+## Full-analysis concurrency runbook
+
+The release build job reads `GSVIBE_ANALYSIS_MAX_CONCURRENCY` and `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` from the
+protected `win64` Environment. Safe activation order:
+
+1. Merge with concurrency unset (`1`): production stays serial through the two-phase coordinator.
+2. Set `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` above the measured coordinator baseline plus one 4096 MiB worker
+   reservation, and record the real peak from a concurrency-`1` run.
+3. Raise concurrency to `2` and verify two verified MCP endpoints, memory below budget, and byte-identical
+   artifacts through `bin_artifact_contract.py`.
+4. Roll back by setting concurrency back to `1`; cache generations, selection, and release schema are
+   unaffected. A hard memory-limit violation fails the run with a structured reason and is not retried at
+   lower concurrency within the same run.
+
