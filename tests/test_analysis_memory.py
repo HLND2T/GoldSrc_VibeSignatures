@@ -72,9 +72,9 @@ class ParseMemoryBudgetTests(unittest.TestCase):
 class ParseWorkerReservationTests(unittest.TestCase):
     def test_default_and_environment_override(self):
         with unittest.mock.patch.dict(os.environ, {}, clear=True):
-            self.assertEqual(4096 * MIB, parse_analysis_worker_reservation_bytes())
+            self.assertEqual(2048 * MIB, parse_analysis_worker_reservation_bytes())
         for raw in ("", "   "):
-            self.assertEqual(4096 * MIB, parse_analysis_worker_reservation_bytes(raw))
+            self.assertEqual(2048 * MIB, parse_analysis_worker_reservation_bytes(raw))
         with unittest.mock.patch.dict(os.environ, {ANALYSIS_RESERVATION_ENV: " 512 "}):
             self.assertEqual(512 * MIB, parse_analysis_worker_reservation_bytes())
             self.assertEqual(MIB, parse_analysis_worker_reservation_bytes("1"))

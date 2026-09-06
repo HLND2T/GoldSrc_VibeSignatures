@@ -38,7 +38,7 @@ generated-output PR or separate promotion workflow. The Release publishes only t
 `gamesymbols-<version>.7z`, `release-manifest-<version>.json`, and `SHA256SUMS-<version>.txt`.
 
 `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` is also mapped into the job to tune the initial per-worker
-reservation floor (default `4096` MiB); see requirements for configuration rules.
+reservation floor (default `2048` MiB); see requirements for configuration rules.
 
 The full `-allgamever -force_all` analysis step runs the two-phase bounded coordinator. The protected `win64`
 Environment maps non-secret variables into the job: `GSVIBE_ANALYSIS_MAX_CONCURRENCY` (default `1`) and
