@@ -44,6 +44,11 @@ modules:
       - name: find-CL_PrecacheResources
         expected_output:
           - CL_PrecacheResources.{platform}.yaml
+      - name: find-cl_resourcesonhand
+        expected_input:
+          - CL_PrecacheResources.{platform}.yaml
+        expected_output:
+          - cl_resourcesonhand.{platform}.yaml
       - name: find-ClientDLL_HudInit-decompiles
         platform: windows
         expected_input:
@@ -103,6 +108,8 @@ modules:
         platform: windows
       - name: CL_PrecacheResources
         category: func
+      - name: cl_resourcesonhand
+        category: gv
       - name: cl_enginefuncs
         category: gv
         platform: windows
