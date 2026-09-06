@@ -380,9 +380,13 @@ class _ActiveWorker:
 def terminate_process_tree(process: WorkerProcess) -> None:
     """Hard-kill one owned worker process together with its whole descendant tree.
 
-    Without an aggregate Job Object the IDA/MCP descendants would otherwise keep
-    holding ports and IDB files after the outer Python worker died. Callers stay
-    bounded: after this they still wait on the root process to confirm exit.
+    Must run while the root process is still alive: descendants are attributed
+    to the worker through the root (the ``taskkill /T`` walk, the /proc PPid
+    chain), and once the root exits they are reparented and can no longer be
+    identified, so a root exit alone never proves the tree exited. The child
+    pid stays reserved until ``wait()`` reaps it, so this cannot hit an
+    unrelated process. Callers stay bounded: after this they still wait on the
+    root process to confirm exit.
     """
     pid = getattr(process, "pid", None)
     if pid is None:
@@ -407,7 +411,10 @@ def _kill_posix_process_tree(pid: int) -> None:
     import signal
 
     kill_signal = getattr(signal, "SIGKILL", signal.SIGTERM)
-    for target in [pid, *_posix_descendant_pids(pid)]:
+    # Snapshot descendants before touching the root and kill deepest-first, so
+    # the parent chain stays intact while children are still being attributed.
+    targets = [*reversed(_posix_descendant_pids(pid)), pid]
+    for target in targets:
         try:
             os.kill(target, kill_signal)
         except OSError:
@@ -454,16 +461,14 @@ def _terminate_worker(
     kill_tree: Callable[[WorkerProcess], None] | None = None,
 ) -> int:
     tree_kill = kill_tree if kill_tree is not None else terminate_process_tree
+    # Kill the owned tree unconditionally and while the root is still alive.
+    # Terminating the root first would defeat the tree walk: on Windows
+    # terminate() hard-kills only the root and the descendants get reparented,
+    # after which they can no longer be attributed to this worker.
     try:
-        worker.process.terminate()
-        worker.process.wait(timeout=grace_seconds)
-    except Exception:  # noqa: BLE001 - escalate to a hard tree kill below.
-        pass
-    if worker.process.poll() is None:
-        try:
-            tree_kill(worker.process)
-        except Exception as kill_error:  # noqa: BLE001
-            log(f"{worker.item.log_prefix} worker process tree kill failed: {kill_error}")
+        tree_kill(worker.process)
+    except Exception as kill_error:  # noqa: BLE001
+        log(f"{worker.item.log_prefix} worker process tree kill failed: {kill_error}")
     try:
         return int(worker.process.wait(timeout=grace_seconds))
     except Exception:  # noqa: BLE001 - the exit code is diagnostic only after a hard kill.
@@ -619,8 +624,11 @@ def run_batch(
                         if not skip_error:
                             stop_admission = True
                     continue
-                active.remove(worker)
                 result = finish_worker(worker, exit_code=exit_code)
+                # Retire only after the result is fully processed: an exception
+                # escaping finish_worker must leave the worker visible to the
+                # cancellation sweep in `active`.
+                active.remove(worker)
                 if result is None or result.status != WORKER_STATUS_SUCCEEDED:
                     parallel_failed = True
                     failure_reason = failure_reason or "worker_failed"
@@ -680,28 +688,32 @@ def run_batch(
                 worker.result_path = result_path
                 active.append(worker)
                 log(f"{item.log_prefix} serial worker admitted (pid {getattr(process, 'pid', '?')})")
+                # Retire from `active` only on completed paths: an exception
+                # escaping wait()/finish_worker (cancellation) must leave the
+                # worker visible to the outer cancellation sweep, which owns
+                # its process-tree teardown.
                 try:
-                    try:
-                        exit_code = worker.process.wait(timeout=worker_timeout_seconds)
-                    except Exception:  # noqa: BLE001 - treat wait timeouts as bounded worker timeouts.
-                        exit_code = _terminate_worker(
-                            worker, grace_seconds=terminate_grace_seconds, log=log, kill_tree=kill_process_tree
-                        )
-                        outcome.failed += len(item.node_ids)
-                        item_summaries.append((item.work_item_id, WORKER_STATUS_FAILED))
-                        failure_reason = failure_reason or "worker_timeout"
-                        if memory_gate is not None:
-                            memory_gate.worker_finished()
-                        break
-                    result = finish_worker(worker, exit_code=exit_code)
-                    if result is None or result.status != WORKER_STATUS_SUCCEEDED:
-                        failure_reason = failure_reason or "worker_failed"
-                        index = schedule.serial_items.index(item)
-                        for remaining in schedule.serial_items[index + 1 :]:
-                            aborted.extend(f"{remaining.binary.tag}:{nid}" for nid in remaining.node_ids)
-                        break
-                finally:
+                    exit_code = worker.process.wait(timeout=worker_timeout_seconds)
+                except Exception:  # noqa: BLE001 - treat wait timeouts as bounded worker timeouts.
+                    exit_code = _terminate_worker(
+                        worker, grace_seconds=terminate_grace_seconds, log=log, kill_tree=kill_process_tree
+                    )
+                    outcome.failed += len(item.node_ids)
+                    item_summaries.append((item.work_item_id, WORKER_STATUS_FAILED))
+                    failure_reason = failure_reason or "worker_timeout"
+                    if memory_gate is not None:
+                        memory_gate.worker_finished()
                     active.remove(worker)
+                    break
+                result = finish_worker(worker, exit_code=exit_code)
+                if result is None or result.status != WORKER_STATUS_SUCCEEDED:
+                    failure_reason = failure_reason or "worker_failed"
+                    index = schedule.serial_items.index(item)
+                    for remaining in schedule.serial_items[index + 1 :]:
+                        aborted.extend(f"{remaining.binary.tag}:{nid}" for nid in remaining.node_ids)
+                    active.remove(worker)
+                    break
+                active.remove(worker)
     except BaseException:
         # Cancellation (KeyboardInterrupt/SystemExit) must not leak owned worker
         # process trees; tear them down bounded and confirm exit before re-raising.

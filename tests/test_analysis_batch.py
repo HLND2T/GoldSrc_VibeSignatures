@@ -289,13 +289,14 @@ class WorkerResultContractTests(unittest.TestCase):
 
 
 class FakeProcess:
-    def __init__(self, exit_code=0, polls_until_exit=1, stubborn=False) -> None:
+    def __init__(self, exit_code=0, polls_until_exit=1, stubborn=False, interrupt_wait=False) -> None:
         self.exit_code = exit_code
         self.remaining_polls = polls_until_exit
         self.pid = 4242
         self.terminated = False
         self.killed = False
         self.stubborn = stubborn
+        self.interrupt_wait = interrupt_wait
         self.tree_killed = False
 
     def _running(self):
@@ -309,6 +310,8 @@ class FakeProcess:
         return self.exit_code
 
     def wait(self, timeout=None):
+        if self.interrupt_wait and self._running():
+            raise KeyboardInterrupt
         if self.stubborn and self._running():
             import subprocess
 
@@ -467,18 +470,35 @@ class SchedulerTests(unittest.TestCase):
         self.assertEqual(started, ["parallel-0000", "parallel-0001"])
         self.assertIn("tag-1:m0:windows:s9", outcome.aborted_node_ids)
 
-    def test_worker_timeout_terminates_worker(self):
+    def test_worker_timeout_hard_kills_tree_even_when_root_would_exit_first(self):
         item = make_item()
         schedule = BatchSchedule(parallel_items=(item,), serial_items=())
+        # A lenient root exits as soon as terminate() touches it; the tree kill
+        # must still run while the root is alive, because descendants cannot be
+        # attributed to the worker after the root exits.
         process = FakeProcess(polls_until_exit=None)
-        outcome = self._run(
+        tree_kills = []
+
+        def kill_tree(target):
+            tree_kills.append(target)
+            target.tree_killed = True
+            target.remaining_polls = 0
+
+        outcome = run_batch(
             schedule,
-            {"parallel-0000": self._launch(process, make_result_payload(item))},
+            run_id="run-1",
+            launch_worker=lambda _item: self._launch(process, make_result_payload(item)),
             max_concurrency=1,
+            worker_timeout_seconds=0.5,
+            kill_process_tree=kill_tree,
+            poll_interval_seconds=0.1,
+            monotonic=lambda: self.clock[0],
+            sleep=self._sleep,
+            log=self.logs.append,
         )
-        self._run  # keep reference
         self.assertFalse(outcome.succeeded)
-        self.assertTrue(process.terminated)
+        self.assertEqual(tree_kills, [process])
+        self.assertTrue(process.tree_killed)
 
     def test_malformed_result_fails_worker(self):
         item = make_item()
@@ -581,7 +601,7 @@ class SchedulerTests(unittest.TestCase):
         )
         self.assertFalse(outcome.succeeded)
         self.assertEqual(outcome.failure_reason, "worker_timeout")
-        self.assertTrue(process.terminated)
+        self.assertFalse(process.terminated)
         self.assertTrue(process.tree_killed)
         self.assertEqual(tree_kills, [process])
 
@@ -615,7 +635,7 @@ class SchedulerTests(unittest.TestCase):
         )
         self.assertFalse(outcome.succeeded)
         self.assertEqual(outcome.failure_reason, "worker_timeout")
-        self.assertTrue(serial_process.terminated)
+        self.assertFalse(serial_process.terminated)
         self.assertTrue(serial_process.tree_killed)
         self.assertEqual(tree_kills, [serial_process])
 
@@ -657,9 +677,44 @@ class SchedulerTests(unittest.TestCase):
                 sleep=self._sleep,
                 log=self.logs.append,
             )
-        self.assertTrue(process.terminated)
         self.assertTrue(process.tree_killed)
         self.assertEqual(tree_kills, [process])
+        self.assertTrue(any("tearing down owned worker process trees" in line for line in self.logs), self.logs)
+
+    def test_serial_cancellation_tears_down_in_flight_serial_worker(self):
+        p_item = make_item()
+        s_item = make_item(phase=PHASE_SERIAL)
+        schedule = BatchSchedule(parallel_items=(p_item,), serial_items=(s_item,))
+        # wait() raises KeyboardInterrupt while the serial worker is still
+        # running; the worker must stay in `active` so the cancellation sweep
+        # owns its process-tree teardown.
+        serial_process = FakeProcess(polls_until_exit=None, interrupt_wait=True)
+        tree_kills = []
+
+        def kill_tree(target):
+            tree_kills.append(target)
+            target.tree_killed = True
+            target.remaining_polls = 0
+
+        def launch(item):
+            if item.phase == PHASE_PARALLEL:
+                return self._launch(FakeProcess(), make_result_payload(item))
+            return self._launch(serial_process, make_result_payload(item))
+
+        with self.assertRaises(KeyboardInterrupt):
+            run_batch(
+                schedule,
+                run_id="run-1",
+                launch_worker=launch,
+                max_concurrency=1,
+                kill_process_tree=kill_tree,
+                poll_interval_seconds=0.1,
+                monotonic=lambda: self.clock[0],
+                sleep=self._sleep,
+                log=self.logs.append,
+            )
+        self.assertTrue(serial_process.tree_killed)
+        self.assertEqual(tree_kills, [serial_process])
         self.assertTrue(any("tearing down owned worker process trees" in line for line in self.logs), self.logs)
 
 
@@ -872,7 +927,7 @@ class ProcessTreeKillHelperTests(unittest.TestCase):
         self.assertEqual(args[0], ["taskkill", "/F", "/T", "/PID", "4242"])
         self.assertFalse(kwargs.get("check", True))
 
-    def test_posix_tree_kill_sweeps_descendants(self):
+    def test_posix_tree_kill_sweeps_descendants_before_root(self):
         import analysis_batch as ab
 
         killed = []
@@ -881,7 +936,9 @@ class ProcessTreeKillHelperTests(unittest.TestCase):
             unittest.mock.patch.object(ab.os, "kill", side_effect=lambda pid, _sig: killed.append(pid)),
         ):
             ab._kill_posix_process_tree(10)
-        self.assertEqual(killed, [10, 11, 12])
+        # Descendants are killed deepest-first and the root last, while the
+        # parent chain still attributes them to this worker.
+        self.assertEqual(killed, [12, 11, 10])
 
     def test_posix_descendant_walk_collects_transitive_children_only(self):
         import analysis_batch as ab
