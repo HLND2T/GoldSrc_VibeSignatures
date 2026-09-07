@@ -35,6 +35,7 @@ from analysis_batch import (
     BatchPlanError,
     build_batch_schedule,
     run_batch,
+    terminate_process_tree,
     work_item_run_id,
 )
 from analysis_memory import (
@@ -758,6 +759,19 @@ def stop_idalib_mcp_process(process, debug=False):
     if debug:
         print("  Stopping the current idalib-mcp process...")
     try:
+        # The spawned idalib-mcp launcher detaches worker processes that can
+        # outlive it and keep holding the IDB lock; terminate() only reaches
+        # the launcher itself, so kill the whole descendant tree first.
+        terminate_process_tree(process)
+    except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
+        if debug:
+            print(f"  Process-tree stop unavailable: {exc}")
+    try:
+        process.wait(timeout=MCP_SHUTDOWN_TIMEOUT)
+        return
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    try:
         process.terminate()
         process.wait(timeout=MCP_SHUTDOWN_TIMEOUT)
         return
@@ -834,6 +848,11 @@ def _spawn_idalib_mcp(binary_path, host, port, ida_args="", debug=False, stdout=
         return None
 
 
+def _stop_unready_idalib_mcp(process, host, port, debug=False):
+    stop_idalib_mcp_process(process, debug=debug)
+    wait_for_port_release(host, port)
+
+
 def start_idalib_mcp(
     binary_path,
     host=DEFAULT_HOST,
@@ -846,10 +865,17 @@ def start_idalib_mcp(
     process = None
     with mcp_startup_lock():
         process = _spawn_idalib_mcp(binary_path, host, port, ida_args, debug, stdout, stderr)
-    if process is not None and wait_for_mcp_ready(process, host, port):
+    try:
+        ready = process is not None and wait_for_mcp_ready(process, host, port)
+    except Exception:
+        # A raised readiness probe must not orphan the already-spawned worker;
+        # the lifecycle owner cannot clean it up because its process handle is
+        # never assigned when this helper raises.
+        _stop_unready_idalib_mcp(process, host, port, debug=debug)
+        raise
+    if ready:
         return process
-    stop_idalib_mcp_process(process, debug=debug)
-    wait_for_port_release(host, port)
+    _stop_unready_idalib_mcp(process, host, port, debug=debug)
     return None
 
 
@@ -887,16 +913,25 @@ def start_dynamic_idalib_mcp(
     """
     process = None
     for attempt in range(1, max(1, attempts) + 1):
+        bound = False
+        probe_failure = None
         with mcp_startup_lock(lock_path):
             port = _allocate_local_port(host)
             process = _spawn_idalib_mcp(binary_path, host, port, ida_args, debug)
-            bound = process is not None and _wait_dynamic_port_bound(process, host, port)
+            try:
+                bound = process is not None and _wait_dynamic_port_bound(process, host, port)
+            except Exception as exc:
+                probe_failure = exc
+        if probe_failure is not None:
+            # Same orphan risk as the fixed-port start: clean the spawned
+            # process before letting the probe error escape this helper.
+            _stop_unready_idalib_mcp(process, host, port, debug=debug)
+            raise probe_failure
         if bound:
             if debug:
                 print(f"  Allocated dynamic MCP port {host}:{port} (attempt {attempt})")
             return process, port
-        stop_idalib_mcp_process(process, debug=debug)
-        wait_for_port_release(host, port)
+        _stop_unready_idalib_mcp(process, host, port, debug=debug)
         if debug:
             print(f"  Dynamic MCP port attempt {attempt} failed for {binary_path}; retrying")
     return None, None
@@ -1210,7 +1245,20 @@ class IdaMcpLifecycle:
             return
         try:
             if self._force_local_stop:
-                stop_idalib_mcp_process(process, debug=self.debug)
+                # A failed __enter__/ensure_ready can still leave a live worker
+                # with its MCP port bound; attempt one guarded graceful quit so
+                # the IDB is closed and packed, and keep the local process-tree
+                # stop for when the graceful path cannot run at all.
+                try:
+                    quit_ida_gracefully(
+                        process,
+                        self.host,
+                        self.port,
+                        expected_binary=self.binary_path,
+                        debug=self.debug,
+                    )
+                except RuntimeError:
+                    stop_idalib_mcp_process(process, debug=self.debug)
             else:
                 quit_ida_gracefully(
                     process,
