@@ -63,6 +63,7 @@ from idb_cache_workflow import (
     verify_cache_selection_file,
 )
 from gamesymbol_snapshot_lib.pr_validation import BoundImpactPlan, TagImpact
+from gamesymbol_snapshot_lib.pr_cli import PrCliError
 from release_workflow_lib.hashing import canonical_json_bytes, write_canonical_json
 from tests.test_support import write_pe32
 from warmup_memory import ProducerMemoryOwner
@@ -613,17 +614,6 @@ class IdbCacheWorkflowTests(unittest.TestCase):
                 )
             self.assertEqual(1, len(warm_calls))
             self.assertEqual(first["entries"], second["entries"])
-            verified, _groups = verify_cache_selection_file(
-                repo_root=repo,
-                plan_path=plan,
-                merge_ref="HEAD",
-                bindir="bin",
-                persisted_root=persisted,
-                kernel_version="9.3",
-                selection_path=selection_path,
-                selection_sha256_path=selection_sha,
-            )
-            self.assertEqual(first, verified)
             binary = repo / "bin" / "game-1" / "engine" / "hw.dll"
             Path(f"{binary}.i64").write_bytes(b"selected-node-modification")
             restore_cache_selection(
@@ -637,6 +627,92 @@ class IdbCacheWorkflowTests(unittest.TestCase):
                 selection_sha256_path=selection_sha,
             )
             self.assertEqual(b"neutral-idb", Path(f"{binary}.i64").read_bytes())
+            verified, _groups = verify_cache_selection_file(
+                repo_root=repo,
+                plan_path=plan,
+                merge_ref="HEAD",
+                bindir="bin",
+                persisted_root=persisted,
+                kernel_version="9.3",
+                selection_path=selection_path,
+                selection_sha256_path=selection_sha,
+            )
+            self.assertEqual(first, verified)
+
+    def test_direct_restore_rejects_invalid_inputs_before_copying(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, plan = self._bound_repository(root)
+            persisted = root / "persisted"
+            persisted.mkdir()
+            selection_path = root / "selection.json"
+            selection_sha = root / "selection.sha256"
+            binary = repo / "bin" / "game-1" / "engine" / "hw.dll"
+            database = Path(f"{binary}.i64")
+
+            def fake_warm(**kwargs):
+                database.write_bytes(b"neutral-idb")
+
+            with patch("idb_cache_selection.warm_group", side_effect=fake_warm):
+                document = prepare_cache_selection(
+                    repo_root=repo,
+                    plan_path=plan,
+                    merge_ref="HEAD",
+                    bindir="bin",
+                    persisted_root=persisted,
+                    kernel_version="9.3",
+                    ida_python_executable=sys.executable,
+                    run_id="run-1",
+                    attempt=1,
+                    max_concurrency=1,
+                    worker_timeout_seconds=1,
+                    output_path=selection_path,
+                    output_sha256_path=selection_sha,
+                    producer_memory=ProducerMemoryOwner(None),
+                )
+            generation = document["entries"][0]["generation"]
+            payload = (
+                persisted
+                / "idb-cache"
+                / "game-1"
+                / "generations"
+                / generation
+                / "payload"
+                / "databases"
+                / "engine"
+                / "hw.dll.i64"
+            )
+            originals = {path: path.read_bytes() for path in (plan, selection_sha, binary, payload)}
+            database.write_bytes(b"existing-consumer-database")
+            cases = (
+                ("evidence", selection_sha, b"0" * 64 + b"\n", "9.3", "evidence"),
+                ("plan", plan, b'{"schema_version": 0}', "9.3", "Invalid bound"),
+                ("binary", binary, originals[binary] + b"drift", "9.3", "binary identities"),
+                ("runtime", None, None, "9.4", "pinned runtime"),
+                ("payload", payload, b"damaged-idb", "9.3", "payload"),
+            )
+            for name, changed_path, raw, kernel, message in cases:
+                with self.subTest(name=name):
+                    if changed_path is not None:
+                        changed_path.write_bytes(raw)
+                    try:
+                        with patch("idb_cache_workflow.restore_selection_entries") as restore:
+                            with self.assertRaisesRegex((IdbCacheError, IdbCacheSelectionError, PrCliError), message):
+                                restore_cache_selection(
+                                    repo_root=repo,
+                                    plan_path=plan,
+                                    merge_ref="HEAD",
+                                    bindir="bin",
+                                    persisted_root=persisted,
+                                    kernel_version=kernel,
+                                    selection_path=selection_path,
+                                    selection_sha256_path=selection_sha,
+                                )
+                            restore.assert_not_called()
+                        self.assertEqual(b"existing-consumer-database", database.read_bytes())
+                    finally:
+                        if changed_path is not None:
+                            changed_path.write_bytes(originals[changed_path])
 
 
 class IdbCacheReadyWriteTests(unittest.TestCase):
