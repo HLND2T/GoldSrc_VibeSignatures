@@ -5,8 +5,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import tempfile
+from collections.abc import Iterable
 from pathlib import Path
 
 import yaml
@@ -72,6 +74,56 @@ class GitRepository:
             return None
         return self._run("show", f"{ref}:{path}")
 
+    def read_many(self, ref: str, paths: Iterable[str]) -> dict[str, bytes | None]:
+        """Read exact blob bytes in one batch; only explicit missing responses return None."""
+        paths = tuple(dict.fromkeys(paths))
+        if not paths:
+            return {}
+        for path in paths:
+            if any(separator in path for separator in ("\r", "\n", "\0")):
+                raise PrCliError(f"Invalid git batch path: {path!r}")
+        commit = self.resolve(ref)
+        requests = tuple(f"{commit}:{path}".encode("utf-8") for path in paths)
+        result = subprocess.run(
+            ["git", "-C", str(self.path), "cat-file", "--batch"],
+            input=b"\n".join(requests) + b"\n",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if result.returncode != 0:
+            message = result.stderr.decode("utf-8", errors="replace").strip()
+            raise PrCliError(f"git cat-file --batch failed: {message}")
+        raw = result.stdout
+        position = 0
+        blobs = {}
+        for path, request in zip(paths, requests, strict=True):
+            end = raw.find(b"\n", position)
+            if end < 0:
+                raise PrCliError(f"Truncated git batch header for {path}")
+            header = raw[position:end]
+            position = end + 1
+            if header == request + b" missing":
+                blobs[path] = None
+                continue
+            match = re.fullmatch(rb"([0-9a-f]{40}|[0-9a-f]{64}) ([^ ]+) ([0-9]+)", header)
+            if match is None:
+                raise PrCliError(f"Invalid git batch header for {path}: {header!r}")
+            if match[2] != b"blob":
+                raise PrCliError(f"Git batch object is not a blob: {path}")
+            try:
+                size = int(match[3])
+            except ValueError as exc:
+                raise PrCliError(f"Invalid git batch blob size for {path}") from exc
+            end = position + size
+            if end >= len(raw) or raw[end : end + 1] != b"\n":
+                raise PrCliError(f"Truncated git batch blob or invalid delimiter for {path}")
+            blobs[path] = raw[position:end]
+            position = end + 1
+        if position != len(raw):
+            raise PrCliError("Unexpected trailing git batch response bytes")
+        return blobs
+
     def list_files(self, ref: str) -> tuple[str, ...]:
         raw = self._run("ls-tree", "-r", "--name-only", "-z", ref)
         return tuple(item.decode("utf-8") for item in raw.split(b"\0") if item)
@@ -127,6 +179,7 @@ def _artifact_inventory(
     require_complete: bool,
 ) -> tuple[tuple[dict, ...], str | None]:
     prefix = f"bin_artifacts/{validated_tag(tag)}/"
+    ref = repo.resolve(ref)
     paths = tuple(path for path in repo.list_files(ref) if path.startswith(prefix))
     if contract is None:
         if paths:
@@ -142,9 +195,11 @@ def _artifact_inventory(
     selected = (
         contract.required_paths | (contract.optional_paths & relative_paths) if require_complete else relative_paths
     )
+    ordered = sorted(selected)
+    blobs = repo.read_many(ref, (f"{prefix}{relative}" for relative in ordered))
     entries = []
-    for relative in sorted(selected):
-        raw = repo.read(ref, f"{prefix}{relative}")
+    for relative in ordered:
+        raw = blobs[f"{prefix}{relative}"]
         if raw is None:
             raise ImpactPlanningError(f"Artifact disappeared while reading {tag} at {ref}: {relative}")
         entries.append({"path": relative, "size": len(raw), "sha256": _sha256(raw)})
@@ -355,8 +410,8 @@ def verify_bound_plan_checkout(
 
 def verify_bound_tag_inputs(document: dict, repo: GitRepository, tag: str) -> dict:
     tag = validated_tag(tag)
-    _verify_bound_digest(document, f"merge_config:{tag}", repo.read(document["merge_sha"], f"configs/{tag}.yaml"))
     config_raw = repo.read(document["merge_sha"], f"configs/{tag}.yaml")
+    _verify_bound_digest(document, f"merge_config:{tag}", config_raw)
     if config_raw is None:
         raise PrCliError(f"Merge config is missing for {tag}")
     with tempfile.TemporaryDirectory(prefix="gamesymbol-bound-artifacts-") as temporary:

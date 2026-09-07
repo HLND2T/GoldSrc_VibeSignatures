@@ -261,7 +261,7 @@ jobs:
         with:
           name: ${{ needs.warmup-idb.outputs.selection_artifact_name }}
           path: ${{ runner.temp }}/gamesymbol-validation
-      - name: Verify exact warm IDB cache selection
+      - name: Verify and restore exact warm IDB cache generations
         shell: pwsh
         env:
           PERSISTED_WORKSPACE: ${{ secrets.PERSISTED_WORKSPACE }}
@@ -279,18 +279,6 @@ jobs:
           if ($evidence -ne $env:PRODUCER_SELECTION_SHA256) {
             throw 'downloaded cache selection evidence does not match the producer job output'
           }
-          uv run python idb_cache_workflow.py verify `
-            -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $bundle 'plan.json') -merge-ref HEAD -bindir bin `
-            -persisted-root $env:PERSISTED_WORKSPACE `
-            -kernel-version $env:IDA_KERNEL_VERSION -selection (Join-Path $bundle 'cache-selection.json') `
-            -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
-          if ($LASTEXITCODE -ne 0) { throw 'warm cache selection verification failed' }
-      - name: Restore exact warm IDB cache generations
-        shell: pwsh
-        env:
-          PERSISTED_WORKSPACE: ${{ secrets.PERSISTED_WORKSPACE }}
-        run: |
-          $bundle = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation'
           uv run python idb_cache_workflow.py restore `
             -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $bundle 'plan.json') -merge-ref HEAD -bindir bin `
             -persisted-root $env:PERSISTED_WORKSPACE `

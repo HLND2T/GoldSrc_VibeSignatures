@@ -7,6 +7,8 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import yaml
 
@@ -21,9 +23,11 @@ from gamesymbol_snapshot_lib.impact_registry import ImpactRegistryError, parse_i
 from gamesymbol_snapshot_lib.pr_cli import (
     GitRepository,
     PrCliError,
+    _artifact_inventory,
     build_plan,
     compare_rebuilt_artifacts,
     materialize_from_plan,
+    verify_bound_tag_inputs,
 )
 from gamesymbol_snapshot_lib.pr_validation import (
     CACHE_MODE_WARM,
@@ -751,6 +755,225 @@ class ArtifactRebuildComparisonTests(unittest.TestCase):
                     bindir=repo / "bin",
                     artifactdir=rebuilt,
                 )
+
+
+class GitBatchReadTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.repo = GitRepository(self.root)
+        self.repo._run("init", "-q")
+        self.repo._run("config", "user.email", "test@example.com")
+        self.repo._run("config", "user.name", "Test")
+        self.repo._run("config", "core.autocrlf", "false")
+        self.files = {
+            "plain.txt": b"plain\ntext\n",
+            "empty.txt": b"",
+            "nested/含 空格.bin": b"first\r\n\x00\xff\nlast",
+        }
+        for relative, raw in self.files.items():
+            path = self.root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(raw)
+        self.repo._run("add", ".")
+        self.repo._run("commit", "-q", "-m", "fixture")
+        self.commit = self.repo.resolve("HEAD")
+
+    def test_batch_preserves_blob_bytes_order_and_missing_paths(self):
+        paths = (*self.files, "absent file", "plain.txt")
+        (self.root / "plain.txt").write_bytes(b"uncommitted change")
+        with patch("gamesymbol_snapshot_lib.pr_cli.subprocess.run", wraps=subprocess.run) as run:
+            actual = self.repo.read_many(self.commit, paths)
+        self.assertEqual({**self.files, "absent file": None}, actual)
+        self.assertEqual([*self.files, "absent file"], list(actual))
+        commands = [call.args[0][3:] for call in run.call_args_list]
+        self.assertEqual(1, commands.count(["cat-file", "--batch"]))
+        self.assertFalse(any(command[0] == "show" or command[:2] == ["cat-file", "-e"] for command in commands))
+        batch = next(call for call in run.call_args_list if call.args[0][-1] == "--batch")
+        self.assertEqual(len(actual), len(batch.kwargs["input"].splitlines()))
+
+    def test_empty_batch_does_not_start_git(self):
+        with patch("gamesymbol_snapshot_lib.pr_cli.subprocess.run") as run:
+            self.assertEqual({}, self.repo.read_many("HEAD", ()))
+        run.assert_not_called()
+
+    def test_batch_resolves_symbolic_ref(self):
+        self.assertEqual(self.files, self.repo.read_many("HEAD", tuple(self.files)))
+
+    def test_batch_rejects_request_separators_before_starting_git(self):
+        for separator in ("\r", "\n", "\0"):
+            with self.subTest(separator=separator), patch("gamesymbol_snapshot_lib.pr_cli.subprocess.run") as run:
+                with self.assertRaises(PrCliError):
+                    self.repo.read_many(self.commit, (f"plain{separator}txt",))
+                run.assert_not_called()
+
+    def test_batch_rejects_non_blob_objects(self):
+        with self.assertRaisesRegex(PrCliError, "blob"):
+            self.repo.read_many(self.commit, ("nested",))
+
+    def test_batch_rejects_invalid_or_incomplete_responses(self):
+        oid = b"a" * 40
+        invalid = (
+            b"",
+            b"bad header\n",
+            b"not-an-object-id blob 0\n\n",
+            oid + b" tree 0\n\n",
+            oid + b" blob -1\n\n",
+            oid + b" blob nan\n\n",
+            oid + b" blob +1\nx\n",
+            oid + b" blob " + b"9" * 5000 + b"\n\n",
+            oid + b" blob 3\nxy",
+            oid + b" blob 1\nx",
+            oid + b" blob 1\nxx",
+            oid + b" blob 0\n\nextra",
+            b"wrong-request missing\n",
+        )
+        for raw in invalid:
+            with self.subTest(raw=raw), patch.object(self.repo, "resolve", return_value=self.commit):
+                result = subprocess.CompletedProcess([], 0, stdout=raw, stderr=b"")
+                with patch("gamesymbol_snapshot_lib.pr_cli.subprocess.run", return_value=result):
+                    with self.assertRaises(PrCliError):
+                        self.repo.read_many(self.commit, ("plain.txt",))
+        result = subprocess.CompletedProcess([], 0, stdout=oid + b" blob 0\n\n", stderr=b"")
+        with patch.object(self.repo, "resolve", return_value=self.commit):
+            with patch("gamesymbol_snapshot_lib.pr_cli.subprocess.run", return_value=result):
+                with self.assertRaises(PrCliError):
+                    self.repo.read_many(self.commit, ("plain.txt", "empty.txt"))
+
+    def test_batch_git_failure_is_not_missing(self):
+        result = subprocess.CompletedProcess([], 1, stdout=b"", stderr=b"object store unavailable")
+        with patch.object(self.repo, "resolve", return_value=self.commit):
+            with patch("gamesymbol_snapshot_lib.pr_cli.subprocess.run", return_value=result):
+                with self.assertRaisesRegex(PrCliError, "object store unavailable"):
+                    self.repo.read_many(self.commit, ("plain.txt",))
+
+
+class ArtifactInventoryBatchTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.repo = GitRepository(self.root)
+        self.repo._run("init", "-q")
+        self.repo._run("config", "user.email", "test@example.com")
+        self.repo._run("config", "user.name", "Test")
+        self.repo._run("config", "core.autocrlf", "false")
+        self.required = "engine/Required.windows.yaml"
+        self.optional = "engine/Optional.windows.yaml"
+        self.contract = SimpleNamespace(
+            required_paths={self.required},
+            optional_paths={self.optional},
+            formal_paths={self.required, self.optional},
+        )
+        self.files = {self.required: b"required\r\n", self.optional: b"optional\x00\n"}
+        for relative, raw in self.files.items():
+            path = self.root / "bin_artifacts" / "game-1" / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(raw)
+        self.repo._run("add", ".")
+        self.repo._run("commit", "-q", "-m", "fixture")
+        self.commit = self.repo.resolve("HEAD")
+
+    def inventory(self, *, require_complete=True, contract=None):
+        return _artifact_inventory(
+            self.repo,
+            "HEAD",
+            "game-1",
+            self.contract if contract is None else contract,
+            require_complete=require_complete,
+        )
+
+    def test_complete_inventory_preserves_canonical_digest_with_one_batch(self):
+        expected = tuple(
+            {"path": path, "size": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+            for path, raw in sorted(self.files.items())
+        )
+        digest = hashlib.sha256(json.dumps(expected, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        with patch("gamesymbol_snapshot_lib.pr_cli.subprocess.run", wraps=subprocess.run) as run:
+            self.assertEqual((expected, digest), self.inventory())
+        commands = [call.args[0][3:] for call in run.call_args_list]
+        self.assertEqual(1, commands.count(["cat-file", "--batch"]))
+        self.assertFalse(any(command[0] == "show" or command[:2] == ["cat-file", "-e"] for command in commands))
+
+    def test_inventory_pins_ref_before_tree_enumeration(self):
+        original = self.repo.list_files
+
+        def move_head_after_listing(ref):
+            paths = original(ref)
+            path = self.root / "bin_artifacts" / "game-1" / self.required
+            path.write_bytes(b"changed after tree enumeration")
+            self.repo._run("add", ".")
+            self.repo._run("commit", "-q", "-m", "move HEAD")
+            return paths
+
+        with patch.object(self.repo, "list_files", side_effect=move_head_after_listing):
+            entries, _digest = self.inventory()
+        entry = next(entry for entry in entries if entry["path"] == self.required)
+        self.assertEqual(hashlib.sha256(self.files[self.required]).hexdigest(), entry["sha256"])
+
+    def test_missing_required_is_rejected_only_in_complete_mode(self):
+        self.repo._run("rm", "--", f"bin_artifacts/game-1/{self.required}")
+        self.repo._run("commit", "-q", "-m", "remove required")
+        with self.assertRaisesRegex(ImpactPlanningError, "inventory mismatch"):
+            self.inventory()
+        entries, _digest = self.inventory(require_complete=False)
+        self.assertEqual([self.optional], [entry["path"] for entry in entries])
+
+    def test_absent_optional_and_empty_inventory_remain_valid(self):
+        self.repo._run("rm", "--", f"bin_artifacts/game-1/{self.optional}")
+        self.repo._run("commit", "-q", "-m", "remove optional")
+        entries, _digest = self.inventory()
+        self.assertEqual([self.required], [entry["path"] for entry in entries])
+        self.repo._run("rm", "--", f"bin_artifacts/game-1/{self.required}")
+        self.repo._run("commit", "-q", "-m", "remove required")
+        self.assertEqual(((), None), self.inventory(require_complete=False))
+        self.assertEqual(
+            ((), None),
+            _artifact_inventory(self.repo, "HEAD", "game-1", None, require_complete=True),
+        )
+        empty = SimpleNamespace(required_paths=set(), optional_paths=set(), formal_paths=set())
+        self.assertEqual(((), None), self.inventory(contract=empty))
+
+    def test_extra_artifacts_and_artifacts_without_contract_are_rejected(self):
+        with self.assertRaisesRegex(ImpactPlanningError, "no configured tag"):
+            _artifact_inventory(self.repo, "HEAD", "game-1", None, require_complete=True)
+        contract = SimpleNamespace(required_paths=set(), optional_paths=set(), formal_paths=set())
+        for complete in (False, True):
+            with self.subTest(complete=complete), self.assertRaisesRegex(ImpactPlanningError, "inventory mismatch"):
+                self.inventory(require_complete=complete, contract=contract)
+
+    def test_listed_artifact_missing_from_batch_fails_closed(self):
+        missing = {f"bin_artifacts/game-1/{path}": None for path in self.files}
+        with patch.object(self.repo, "read_many", return_value=missing):
+            with self.assertRaisesRegex(ImpactPlanningError, "disappeared"):
+                self.inventory()
+
+    def test_bound_verification_reuses_config_bytes_and_rejects_single_byte_drift(self):
+        _entries, digest = self.inventory()
+        config = b"modules: []\n"
+        action = {"tag": "game-1", "analysis_nodes": ["engine:windows:find"]}
+        document = {
+            "merge_sha": self.commit,
+            "digests": {
+                "merge_config:game-1": hashlib.sha256(config).hexdigest(),
+                "merge_artifacts:game-1": digest,
+            },
+            "tags": [action],
+        }
+        with patch.object(self.repo, "read", return_value=config) as read:
+            with patch("gamesymbol_snapshot_lib.pr_cli.load_contract", return_value=self.contract):
+                self.assertEqual(action, verify_bound_tag_inputs(document, self.repo, "game-1"))
+        read.assert_called_once_with(self.commit, "configs/game-1.yaml")
+        path = self.root / "bin_artifacts" / "game-1" / self.optional
+        path.write_bytes(b"Optional\x00\n")
+        self.repo._run("add", ".")
+        self.repo._run("commit", "-q", "-m", "single byte drift")
+        document["merge_sha"] = self.repo.resolve("HEAD")
+        with patch.object(self.repo, "read", return_value=config):
+            with patch("gamesymbol_snapshot_lib.pr_cli.load_contract", return_value=self.contract):
+                with self.assertRaisesRegex(PrCliError, "merge_artifacts:game-1"):
+                    verify_bound_tag_inputs(document, self.repo, "game-1")
 
 
 class GitDiffTests(unittest.TestCase):

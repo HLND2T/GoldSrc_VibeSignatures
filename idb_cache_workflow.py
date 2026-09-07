@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -248,6 +249,16 @@ def prepare_cache_selection(
         return document
 
 
+@contextmanager
+def _timed_stage(stage: str):
+    started = time.monotonic()
+    print(f"IDB cache stage started: {stage}", flush=True)
+    try:
+        yield
+    finally:
+        print(f"IDB cache stage ended: {stage}; wall_seconds={time.monotonic() - started:.3f}", flush=True)
+
+
 def verify_cache_selection_file(
     *,
     repo_root: str | Path,
@@ -259,35 +270,37 @@ def verify_cache_selection_file(
     selection_path: str | Path,
     selection_sha256_path: str | Path,
 ) -> tuple[dict, tuple[SelectedBinaryGroup, ...]]:
-    root = Path(repo_root).resolve()
-    persisted = validate_persisted_workspace(persisted_root, root)
-    repo, plan = verify_bound_plan_checkout(repo_root=root, plan_path=plan_path, merge_ref=merge_ref)
-    groups = _selected_binary_groups(document=plan, repo_root=root, bindir=root / bindir, repo=repo)
-    identities = _expected_identities(groups=groups, kernel_version=kernel_version)
-    document, raw, _digest = read_selection_with_evidence(
-        selection_path=selection_path,
-        selection_sha256_path=selection_sha256_path,
-    )
-    return (
-        validate_cache_selection(
+    with _timed_stage("checkout_and_plan_binding"):
+        root = Path(repo_root).resolve()
+        persisted = validate_persisted_workspace(persisted_root, root)
+        repo, plan = verify_bound_plan_checkout(repo_root=root, plan_path=plan_path, merge_ref=merge_ref)
+    with _timed_stage("bound_inputs_and_binary_identities"):
+        groups = _selected_binary_groups(document=plan, repo_root=root, bindir=root / bindir, repo=repo)
+        identities = _expected_identities(groups=groups, kernel_version=kernel_version)
+    with _timed_stage("selection_evidence_and_payload_validation"):
+        document, raw, _digest = read_selection_with_evidence(
+            selection_path=selection_path,
+            selection_sha256_path=selection_sha256_path,
+        )
+        verified = validate_cache_selection(
             document=document,
             plan=plan,
             groups=groups,
             identities=identities,
             persisted_root=persisted,
             raw=raw,
-        ),
-        groups,
-    )
+        )
+    return verified, groups
 
 
 def restore_cache_selection(**kwargs) -> dict:
     document, groups = verify_cache_selection_file(**kwargs)
-    restore_selection_entries(
-        entries=document["entries"],
-        groups=groups,
-        persisted_root=kwargs["persisted_root"],
-    )
+    with _timed_stage("locked_exact_restore"):
+        restore_selection_entries(
+            entries=document["entries"],
+            groups=groups,
+            persisted_root=kwargs["persisted_root"],
+        )
     return document
 
 

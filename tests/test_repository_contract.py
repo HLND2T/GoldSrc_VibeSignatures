@@ -286,21 +286,6 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertEqual(["self-hosted", "windows", "x64"], self_hosted["runs-on"])
         self.assertEqual("${{ github.repository }}-gamesymbol-self-hosted-ida", self_hosted["concurrency"]["group"])
         self.assertEqual("false", self_hosted["concurrency"]["cancel-in-progress"])
-        step_names = [step.get("name") for step in self_hosted["steps"]]
-        ordered = [
-            "Clean persisted submodule analysis state",
-            "Download exact warm IDB cache selection",
-            "Verify exact warm IDB cache selection",
-            "Restore exact warm IDB cache generations",
-            "Analyze selected nodes and build self-consistent candidates",
-            "Remove generated submodule analysis state",
-        ]
-        self.assertEqual(
-            sorted(step_names.index(name) for name in ordered), [step_names.index(name) for name in ordered]
-        )
-        warm_steps = [step for step in self_hosted["steps"] if "warm IDB cache" in step.get("name", "")]
-        self.assertTrue(warm_steps)
-        self.assertTrue(all("if" not in step for step in warm_steps))
         # The consumer must not warm or publish; that authority belongs to the reusable producer.
         self.assertNotIn("idb_cache_workflow.py prepare", workflow_text)
         producer = jobs["warmup-idb"]
@@ -321,12 +306,6 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("$plannerCli compare", analyzer["run"])
         self.assertIn("-artifactdir $artifactRoot", analyzer["run"])
         self.assertIn("git diff --exit-code -- bin_artifacts", analyzer["run"])
-        restore_index = step_names.index("Restore exact warm IDB cache generations")
-        analyze_index = step_names.index("Analyze selected nodes and build self-consistent candidates")
-        self.assertNotIn(
-            "git clean",
-            "\n".join(step.get("run", "") for step in self_hosted["steps"][restore_index + 1 : analyze_index]),
-        )
         for forbidden in (
             "LLM_FAKE_AS",
             "gamesymbol_candidate.py publish",

@@ -52,6 +52,14 @@ The schema-2 trusted PR plan carries the invariant evidence field `cache_mode=wa
 
 Official producers share the repository-wide Actions concurrency group (`idb-warmup-${{ github.repository }}`, `cancel-in-progress: false`). Official and direct producers also share persisted `idb-cache/.locks/producer.lock`, so a bypass invocation cannot overlap the official producer. Verify/restore never re-read READY. A failed, cancelled, or skipped producer blocks analysis; there is no cold or consumer-side rebuild fallback.
 
+## Bound-plan consumer validation cost
+
+- **Trigger signal:** Adjacent PR Verify/Restore steps take similar time while the logged restore loop is much shorter.
+- **Root cause / constraints:** `restore_cache_selection()` already performs full verification. Artifact binding validates the complete tag inventory, and per-file Git probes plus reads incur two process launches per blob. Buffered log timestamps do not measure the restore loop; use its monotonic durations.
+- **Correct approach:** The PR workflow checks downloaded selection evidence against the producer job output, then invokes `restore` once. Standalone `verify` remains available. `GitRepository.read_many()` uses one binary `cat-file --batch` exchange per nonempty tag inventory, with the tree and blobs pinned to the same commit. Config verification reuses one read. Required/optional path rules, original bytes, size/SHA-256 and canonical inventory digest remain unchanged.
+- **Verification:** Real-Git tests cover binary bytes, missing/non-blob objects, symbolic-ref movement and one batch per inventory; malformed protocol responses fail closed. Direct restore rejects evidence, plan, binary/runtime and payload mismatches before copying. Flushed stage timings distinguish checkout/plan binding, bound inputs/binary identities, selection/payload validation and locked exact restore. Production performance requires comparable repeated runner measurements, separate from local reader microbenchmarks.
+- **Scope:** No plan/cache schema, READY selection, per-tag locking or completeness-proof change. Restore retains full verification and locked exact generation checks; no skip-verification token or cold fallback is introduced.
+
 ## Concurrent bare-idalib warmup
 
 - **Trigger signal:** A cache-miss group contains several binaries and wall time scales as their serial sum, or a fixed MCP port lock prevents overlapping workers.
