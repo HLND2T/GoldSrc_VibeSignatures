@@ -71,20 +71,6 @@ image base；Preprocessor 与 Agent 产物经过同一层 YAML、symbol schema �
 `-skip_pp` 跳过单一 Preprocessor，直接运行 Agent Skill。`-skip_error` 允许运行期的后续
 module/platform/skill 继续，但 config 与 DAG contract 错误仍立即失败；任何已记录运行失败最终都会返回非零。
 
-## Full analysis 有界并发
-
-`ida_analyze_bin.py -allgamever -force_all` 以两阶段 coordinator 执行。启动任何 worker 前，先对每个 tag 的完整节点
-DAG 做一次分类：每条跨 binary 依赖边会把它指向的 target 及其全部下游闭包移入串行尾队列，其余节点按 binary 分组为并行
-work item。每个 work item 对应一个独立 worker 进程（`analysis_batch.py`），持有自己的 dynamic-port `idalib-mcp`
-lifecycle，按精确有序节点子集强制执行；不同 gamever 之间没有完成屏障。串行尾队列只有在全部并行 worker 结果校验成功且
-进程/lifecycle 退出后才会启动，同一时刻最多运行一个段；同一 binary 跨阶段重新打开的是 neutral restored IDB。
-
-准入由 `GSVIBE_ANALYSIS_MAX_CONCURRENCY`（默认 `1`，仅接受十进制 `1..32`，非法值 fail closed）与（当
-`GSVIBE_ANALYSIS_MAX_MEMORY_MIB` 已设置时）Windows Job Object aggregate hard limit 加 85% soft admission gate 与
-host headroom 检查共同约束（`analysis_memory.py`，复用 warmup 的 Job 原语）。effective concurrency 大于 `1` 必须显式
-配置内存预算。dynamic MCP 端口分配位于 runner 本地跨进程 startup lock（`mcp_startup.py`）内，该锁只覆盖
-allocate/spawn/bind-confirm 窗口，端口被抢占时使用新端口做有界重试。
-
 ## Warm IDB cache 边界
 
 `idb_cache.py` 为中性 IDA database 提供 local immutable-generation cache。新的 schema-1 key 绑定 exact binary
@@ -115,21 +101,6 @@ idalib process 并发执行，不使用 MCP port。Worker timeout 遵守 kill/wa
 sibling 继续完成，任一失败都会禁止 group publication。可选聚合 memory admission 在跨 group 的单一进程级 Windows
 Job controller 上，为每组重新采样 baseline 并创建 gate。
 
-## Reporter 与调度
-
-经过验证的分析 DAG 仍是唯一 planning source。`build_process_execution_plan()` 将它投影为 immutable schema-v1
-graph，提供稳定的 stage/job/task、layer、edge 与 auxiliary node ID；直接 Analyzer 和 scheduler 执行因此得到同一图。
-
-`ProcessEvent` 定义 run/task 状态机、phase、稳定 reason、payload、发生时间与 revision 顺序。Reporter 生命周期为
-`initialize_run`、`emit`、`heartbeat`、`finalize_run`、`flush`、`close`。Analyzer 始终使用
-`BestEffortProcessReporter` 包装 backend，因此监控故障不会改变分析结果。console backend 输出当前 JSONL 协议；
-Redis backend 在 `gsvibe:analysis:v1` 下原子更新 run/task view 并追加 event。不保留任何旧 event API 或格式。
-
-`RedisRunQueue` 使用 consumer-group Stream 保存经过验证的最小 `RunRequest`。Scheduler 通过可续期的 Redis 全局
-lease 保证一次只运行一个 Analyzer，不经 shell 拼接构造 argv，注入 reporter/run-ID 环境值，以 heartbeat 防止重复
-启动，通过 `XAUTOCLAIM` 回收 stale pending entry，拒绝重放 terminal run；若 Analyzer 未写终态，则按子进程 exit
-code 补齐，并原子 abort 所有未完成 task、重算 summary 后再追加 run terminal event。
-
 ## Snapshot 边界
 
 writer 输出 schema 6，包含 config digest v2、analysis output contract version 2、UTC 发布时间、canonical YAML 工件，以及
@@ -145,15 +116,6 @@ candidate session 不包含 C++ 测试步骤。
 Canonical gamedata 只从 guarded candidate inventory 派生（`update_gamedata.py` / PR validation），绝不进入 Git
 index。每个 tag 都有一个排除自身的 canonical manifest，绑定 snapshot/config/generator identity 与声明的 payload
 文件；因此空 generator 集合也有一份可验证输出。gamedata 不再是 release 发布物。
-
-## Release provenance 边界
-
-Release build 会在 checkout 外的 fresh root 强制重建所有 configured artifact，并与 Git `bin_artifacts` 做 exact byte
-comparison；随后生成 snapshot、metadata、浏览器 JSON dataset（`mark -step json`）、唯一 all-in-one
-`gamesymbols-<version>.7z`、canonical Release manifest 和 `SHA256SUMS`。self-hosted job 只有 read 权限；GitHub-hosted
-job 对 exact source 与 Git blobs 完整复验封闭 bundle，并独立再派生 JSON 与 bundle 逐字节对比。
-受保护的 `publish-release` 是 `release-build.yml` 中唯一 `contents: write` job：创建或恢复 matching draft，拒绝
-tag/asset drift 与覆盖，复核远端 name/size/hash 后才发布。published version 不可覆盖；内容变化必须使用新版本。
 
 ## API、Dashboard 与不可变 Pages 资产
 

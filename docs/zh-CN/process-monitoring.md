@@ -13,8 +13,7 @@ GSVIBE_REDIS_URL=redis://127.0.0.1:6379/0
 
 或向 Analyzer 传入 `-process_reporter=redis`、`-redis_url=...` 与可选的 `-redis_prefix=...`。
 
-Reporter 会发布不可变执行图、当前 Run/Job/Task snapshot、event Stream、原子 summary 计数器与带 TTL 的
-heartbeat。临时 Redis 故障不会改变分析结果；重连后回放最近一次本地 snapshot。
+临时 Redis 故障不会改变分析结果；重连后回放最近一次本地 snapshot。
 
 ## Scheduler
 
@@ -26,9 +25,7 @@ uv run python process_scheduler_cli.py run
 ```
 
 Redis Stream consumer group 保持 FIFO 顺序，Scheduler 重启后恢复 pending entry，且不会在 Analyzer heartbeat
-仍存活时重启已恢复的 Run。队列载荷是经过验证的字段而非可执行 shell 命令。请求合约刻意保持最小：`run_id`、
-`gamever`、`platforms`、`modules`、`skill_filter`、`agent`、`created_at`；scheduler 控制自己的 argv 与环境。
-Scheduler 恢复会原子 abort 所有未完成 task 并重算 summary。
+仍存活时重启已恢复的 Run。
 
 ## 只读进度 API
 

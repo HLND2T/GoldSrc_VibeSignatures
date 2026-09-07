@@ -61,12 +61,7 @@ uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EX
 
 ### Local IDB cache core
 
-`idb_cache.py` 提供 `probe`、`warm`、`publish`、`restore`、`verify` 与 `prune`。Identity creation 明确属于
-orchestrator，因为它必须选择 exact module/platform binary 并绑定 pinned runtime contract。
-新 identity 使用 `{"kernel_version": ...}` 与作为兼容保留字段的空 `normalized_ida_args`；旧 schema-1 完整 runtime
-manifest 仍可读取，但不会转换为新 identity 复用。Canonical `idb_warm_worker.py` 只支持
-`--print-ida-version` 与 `run -binary ...`，仅在执行路径内 import IDA，并以无 MCP port 的裸 idalib warm 一个 binary。
-Producer 在单一 tag/platform group 内并发运行这些 worker，只有全部成功退出且 database file set 有效才发布。
+`idb_cache.py` 提供 `probe`、`warm`、`publish`、`restore`、`verify` 与 `prune`。
 
 Warm production 按 job 拆分：reusable `warmup-idb` producer 写入 canonical `cache-selection.json` 及其 SHA-256
 evidence；consumer（`idb_cache_release.py restore` / `idb_cache_workflow.py restore`）验证该 selection、restore
@@ -104,12 +99,6 @@ name 相等，这与 CS2 loader 合约一致。
 
 支持的 category 为 `func`、`gv`、`vfunc`、`vtable`、`patch`、`struct`、`structmember`。primary/ordinal vtable
 helper 必须显式使用并 fail closed；Source2 专用 dispatch 协议保持排除。x86 虚拟函数 slot 固定为 4 字节。
-
-### 旧版本处理
-
-旧 YAML 直接复制已禁用，因为携带地址的工件可能保留陈旧地址。自动旧版本发现仅限同一 game family 中更早的
-build，并可通过 `major_update: true` 禁用。Analyzer 将 new-output 到 old-YAML 的映射交给 Preprocessor，
-由具体脚本通过 MCP 重新定位 signature 并重建地址；新旧工件根均为显式 artifact root，不从 `bin/` 恢复 YAML。
 
 ## Production 注册
 

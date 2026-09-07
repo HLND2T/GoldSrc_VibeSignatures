@@ -52,13 +52,7 @@ uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EX
 
 ### Local IDB cache core
 
-`idb_cache.py` exposes `probe`, `warm`, `publish`, `restore`, `verify`, and `prune`. Identity creation is intentionally an
-orchestrator responsibility because it must select exact module/platform binaries and bind the pinned runtime contract.
-New identities use `{"kernel_version": ...}` and an empty compatibility-only `normalized_ida_args`; legacy schema-1
-manifests with the former full runtime remain readable without being reused as new identities. The canonical
-`idb_warm_worker.py` supports `--print-ida-version` and `run -binary ...`, imports IDA only inside those execution paths,
-and warms one binary through bare idalib without an MCP port. A producer runs these workers concurrently within one
-tag/platform group and publishes only after every worker exits successfully with a valid database file set.
+`idb_cache.py` exposes `probe`, `warm`, `publish`, `restore`, `verify`, and `prune`.
 
 Warm production is split across jobs: the reusable `warmup-idb` producer writes the canonical `cache-selection.json`
 and its SHA-256 evidence, and the consumer (`idb_cache_release.py restore` / `idb_cache_workflow.py restore`) verifies
@@ -85,10 +79,6 @@ Required and optional artifacts plus explicit prerequisites form one DAG. Output
 The artifact path is `bin_artifacts/<tag>/<module>/<symbol>.<platform>.yaml`. `bin/` is a separate binary and IDA-scratch root and is never an analysis-YAML truth source. Config symbols use `name` plus the sole classifier `category`; `type` and `kind` are rejected. Artifacts reject generic `name/type/kind` and use `func_name`, `gv_name`, `patch_name`, `vtable_class`, or `struct_name/member_name` according to category. Payload identity is not required to equal the config symbol name, matching the CS2 loader contract.
 
 Supported categories are `func`, `gv`, `vfunc`, `vtable`, `patch`, `struct`, and `structmember`. Shared primary/ordinal vtable helpers are explicit and fail closed; Source2-only dispatch protocols are excluded. x86 virtual-function slots are four bytes.
-
-### Old-version handling
-
-Raw old-YAML copying is disabled because copying address-bearing artifacts can preserve stale addresses. Automatic old-version discovery is restricted to an older build in the same game family and is disabled by `major_update: true`. The analyzer passes a new-output-to-old-YAML map to the Preprocessor so a skill-specific script can relocate signatures through MCP and rebuild addresses.
 
 ## Production registration
 
