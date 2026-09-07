@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Preprocess script for find-FreeBlob."""
+"""Locate FreeBlob from ClientDLL_Init when Shutdown is inlined.
+
+HL25 inlines ClientDLL_Shutdown into ClientDLL_Init; the secure-client path
+calls FreeBlob there. Older GoldSrc (and hl-8684 Windows) keep a standalone
+Shutdown body and use find-FreeBlob-legacy instead.
+"""
 
 from ida_analyze_util import preprocess_common_skill
 

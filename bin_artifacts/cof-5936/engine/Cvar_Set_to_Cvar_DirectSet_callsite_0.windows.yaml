@@ -1,0 +1,5 @@
+patch_name: Cvar_Set_to_Cvar_DirectSet_callsite_0
+patch_va: '0x1d4d3ee'
+patch_rva: '0x4d3ee'
+patch_sig: E8 B3 FC FF FF 83 C4 ?? 8B E5 5D C3 55 8B EC 83 EC ?? 8D 45 ??
+patch_sig_disp: '0x0'

@@ -304,6 +304,34 @@ def _normalize_mapping(mapping):
     return {section: _normalize_entries(section, mapping.get(section, [])) for section in LLM_DECOMPILE_RESULT_SECTIONS}
 
 
+def _complete_unique_symbol_mapping(mapping, requested_symbol_names):
+    if not isinstance(mapping, dict):
+        return mapping
+    requested = _normalize_requested_symbols(requested_symbol_names)
+    if len(requested) != 1:
+        return mapping
+    keys = set(mapping)
+    permitted = set(LLM_DECOMPILE_RESULT_SECTIONS)
+    if not keys or not keys <= permitted:
+        return mapping
+    symbol = requested[0]
+    completed = {section: mapping.get(section, []) for section in LLM_DECOMPILE_RESULT_SECTIONS}
+    for section, symbol_key in _LLM_RESULT_SYMBOL_KEYS.items():
+        entries = completed[section]
+        if not isinstance(entries, list):
+            continue
+        filled_entries = []
+        for entry in entries:
+            if not isinstance(entry, dict) or str(entry.get(symbol_key, "") or "").strip():
+                filled_entries.append(entry)
+                continue
+            updated = dict(entry)
+            updated[symbol_key] = symbol
+            filled_entries.append(updated)
+        completed[section] = filled_entries
+    return completed
+
+
 def _validate_raw_mapping(mapping, *, require_all_sections):
     issues = []
     keys = set(mapping)
@@ -350,6 +378,7 @@ def _parse_llm_decompile_response_with_issues(response_text, requested_symbol_na
     root_keys = set(parsed)
     permitted = set(LLM_DECOMPILE_RESULT_SECTIONS)
     if root_keys & permitted:
+        parsed = _complete_unique_symbol_mapping(parsed, requested_symbol_names)
         issues = _validate_raw_mapping(parsed, require_all_sections=True)
         return _normalize_mapping(parsed), issues
 

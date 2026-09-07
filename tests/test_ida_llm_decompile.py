@@ -193,6 +193,29 @@ found_struct_offset: []
         self.assertEqual(_empty_llm_decompile_result(), result)
         sleep.assert_awaited_once_with(0.25)
 
+    async def test_completes_unique_symbol_and_missing_empty_sections(self):
+        result = await call_llm_decompile(
+            model="test-model",
+            symbol_name_list=["FreeBlob"],
+            expected_result_sections={"FreeBlob": ["found_call"]},
+            target_disasm_codes=[".text:001AED9F                 call    FreeBlob"],
+            prompt_template="Find {symbol_name_list}.",
+            max_retries=1,
+            call_llm_text_func=lambda **_kwargs: (
+                "found_call:\n  - insn_va: '0x001AED9F'\n    insn_disasm: call FreeBlob\n"
+            ),
+        )
+
+        self.assertEqual(
+            {
+                "insn_va": "0x001AED9F",
+                "insn_disasm": "call FreeBlob",
+                "func_name": "FreeBlob",
+            },
+            result["found_call"][0],
+        )
+        self.assertEqual([], result["found_vcall"])
+
     async def test_accepts_zero_offsets_and_alternative_instruction_rules(self):
         response = """\
 found_vcall:

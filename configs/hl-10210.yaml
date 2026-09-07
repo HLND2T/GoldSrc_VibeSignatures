@@ -86,6 +86,8 @@ modules:
         expected_output:
           - Cvar_DirectSet.{platform}.yaml
       - name: find-Cvar_Set
+        expected_input:
+          - Cvar_DirectSet.{platform}.yaml
         expected_output:
           - Cvar_Set.{platform}.yaml
       - name: find-cvar_hooks

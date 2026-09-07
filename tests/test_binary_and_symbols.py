@@ -128,6 +128,23 @@ class SignatureAndSymbolTests(unittest.TestCase):
             canonical_symbol_yaml_bytes(second, category="func"),
         )
 
+    def test_canonical_patch_yaml_keeps_disp_and_omits_missing_bytes(self):
+        payload = {
+            "patch_sig_disp": 0,
+            "patch_sig": "E8 AA BB CC DD 83 C4 08",
+            "patch_rva": "0x1be0d6",
+            "patch_va": "0x101be0d6",
+            "patch_name": "Cvar_Set_to_Cvar_DirectSet_callsite_0",
+        }
+        text = canonical_symbol_yaml_bytes(payload, category="patch").decode()
+        keys = [line.split(":", 1)[0] for line in text.splitlines()]
+        self.assertEqual(
+            ["patch_name", "patch_va", "patch_rva", "patch_sig", "patch_sig_disp"],
+            keys,
+        )
+        self.assertIn("patch_sig_disp: '0x0'", text)
+        self.assertNotIn("patch_bytes", text)
+
     def test_canonical_vfunc_yaml_uses_central_field_order(self):
         payload = {
             "vfunc_sig_disp": 3,

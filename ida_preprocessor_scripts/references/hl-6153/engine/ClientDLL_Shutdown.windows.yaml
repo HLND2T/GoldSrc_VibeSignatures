@@ -1,0 +1,79 @@
+func_name: "ClientDLL_Shutdown"
+func_va: "0x1d0bcd0"
+disasm_code: |-
+  .text:01D0BCD0                 ; Source: engine/cdll_int.c:ClientDLL_Shutdown.
+  Public leak comments out FreeBlob(&g_blobfootprintClient); this binary keeps the secure-client path.
+  Extra trailing FreeLibrary(hClientDLL) is not in the public source revision.
+  .text:01D0BCD0                 push    esi; Source: engine/cdll_int.c:ClientDLL_Shutdown.
+  .text:01D0BCD1                 push    edi
+  .text:01D0BCD2                 call    Net_APIShutDown
+  .text:01D0BCD7                 call    SPR_Shutdown
+  .text:01D0BCDC                 mov     eax, cl_funcs.pShutdown
+  .text:01D0BCE1                 xor     edi, edi
+  .text:01D0BCE3                 cmp     eax, edi
+  .text:01D0BCE5                 jz      short loc_1D0BCE9
+  .text:01D0BCE7                 call    eax ; cl_funcs.pShutdown
+  .text:01D0BCE9                 mov     eax, cls_fSecureClient
+  .text:01D0BCEE                 mov     esi, ds:__imp_FreeLibrary
+  .text:01D0BCF4                 cmp     eax, edi
+  .text:01D0BCF6                 jz      short loc_1D0BD07
+  .text:01D0BCF8                 push    offset g_blobfootprintClient; pblobfootprint
+  .text:01D0BCFD                 call    FreeBlob ; target: FreeBlob
+  .text:01D0BD02                 add     esp, 4
+  .text:01D0BD05                 jmp     short loc_1D0BD15
+  .text:01D0BD07                 mov     eax, hClientDLL
+  .text:01D0BD0C                 ; hLibModule
+  .text:01D0BD0C                 push    eax; hLibModule
+  .text:01D0BD0D                 call    esi ; __imp_FreeLibrary
+  .text:01D0BD0F                 mov     hClientDLL, edi
+  .text:01D0BD15                 push    0ACh; sizeof(cl_funcs)
+  .text:01D0BD1A                 push    edi
+  .text:01D0BD1B                 push    offset cl_funcs
+  .text:01D0BD20                 call    Q_memset
+  .text:01D0BD25                 add     esp, 0Ch
+  .text:01D0BD28                 call    Cvar_RemoveHudCvars
+  .text:01D0BD2D                 call    Cmd_RemoveHudCmds
+  .text:01D0BD32                 call    CL_ShutDownUsrMessages
+  .text:01D0BD37                 mov     eax, hClientDLL
+  .text:01D0BD3C                 mov     fClientLoaded, edi
+  .text:01D0BD42                 cmp     eax, edi
+  .text:01D0BD44                 jz      short loc_1D0BD49
+  .text:01D0BD46                 ; hLibModule
+  .text:01D0BD46                 push    eax; hLibModule
+  .text:01D0BD47                 call    esi ; __imp_FreeLibrary
+  .text:01D0BD49                 mov     hClientDLL, edi
+  .text:01D0BD4F                 pop     edi
+  .text:01D0BD50                 pop     esi
+  .text:01D0BD51                 retn
+procedure: |-
+  // Source: engine/cdll_int.c:ClientDLL_Shutdown.
+  // Public leak comments out FreeBlob(&g_blobfootprintClient); this binary keeps that call.
+  // Extra trailing FreeLibrary(hClientDLL) is not in the public source revision.
+  HMODULE ClientDLL_Shutdown()
+  {
+    HMODULE result; // eax
+
+    Net_APIShutDown();
+    SPR_Shutdown();
+    if ( cl_funcs.pShutdown )
+      cl_funcs.pShutdown();
+    if ( cls_fSecureClient )
+    {
+      FreeBlob(&g_blobfootprintClient); // target: FreeBlob
+    }
+    else
+    {
+      FreeLibrary(hClientDLL);
+      hClientDLL = nullptr;
+    }
+    Q_memset(&cl_funcs, 0, 172);
+    Cvar_RemoveHudCvars();
+    Cmd_RemoveHudCmds();
+    CL_ShutDownUsrMessages();
+    result = hClientDLL;
+    fClientLoaded = 0;
+    if ( hClientDLL )
+      result = (HMODULE)FreeLibrary(hClientDLL);
+    hClientDLL = nullptr;
+    return result;
+  }

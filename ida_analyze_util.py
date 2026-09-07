@@ -1978,7 +1978,7 @@ async def preprocess_func_sig_via_mcp(
 async def preprocess_patch_via_mcp(session, new_path, old_path, image_base, new_binary_dir, platform, debug=False):
     del new_binary_dir, platform, debug
     old_data = _load_yaml_mapping(old_path)
-    if not old_data or not old_data.get("patch_sig") or not old_data.get("patch_bytes"):
+    if not old_data or not old_data.get("patch_sig"):
         return None
     ea = await _find_unique_bytes(session, old_data["patch_sig"])
     if ea is None or ea < int(image_base):
@@ -1988,10 +1988,11 @@ async def preprocess_patch_via_mcp(session, new_path, old_path, image_base, new_
         "patch_va": hex(ea),
         "patch_rva": hex(ea - int(image_base)),
         "patch_sig": normalize_signature(old_data["patch_sig"]),
-        "patch_bytes": old_data["patch_bytes"],
     }
     if old_data.get("patch_sig_disp") is not None:
         result["patch_sig_disp"] = _parse_int(old_data["patch_sig_disp"], "patch_sig_disp")
+    if old_data.get("patch_bytes") is not None:
+        result["patch_bytes"] = old_data["patch_bytes"]
     return result
 
 
@@ -2611,9 +2612,9 @@ result = json.dumps({
 """
 
 
-async def _export_llm_function(session, ea):
-    code = (
-        build_function_detail_export_py_eval(int(ea)).rstrip()
+def _build_llm_function_export_py_eval(func_va_int: int, output_path: str | Path) -> str:
+    producer_code = (
+        build_function_detail_export_py_eval(int(func_va_int)).rstrip()
         + "\n"
         + textwrap.dedent(
             """
@@ -2629,14 +2630,45 @@ async def _export_llm_function(session, ea):
                     for start_ea, end_ea in _collect_chunk_ranges(func)
                 ],
             })
-            result = json.dumps(payload)
+            payload_text = json.dumps(payload)
             """
         ).strip()
     )
+    return build_remote_text_export_py_eval(
+        output_path=output_path,
+        producer_code=producer_code,
+        content_var="payload_text",
+        format_name="json",
+    )
+
+
+async def _export_llm_function(session, ea):
     try:
-        payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
+        func_va_int = int(ea)
+    except (TypeError, ValueError):
+        return None
+    output_path = None
+    try:
+        with tempfile.NamedTemporaryFile(prefix="gsvibe-llm-export-", suffix=".json", delete=False) as handle:
+            output_path = handle.name
+        code = _build_llm_function_export_py_eval(func_va_int, output_path)
+        ack = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
+        if (
+            not isinstance(ack, Mapping)
+            or not ack.get("ok")
+            or str(ack.get("output_path", "")).strip() != output_path
+            or str(ack.get("format", "")).strip() != "json"
+        ):
+            return None
+        payload = json.loads(Path(output_path).read_text(encoding="utf-8"))
     except Exception:  # noqa: BLE001 - MCP tool failures must fail closed.
         return None
+    finally:
+        if output_path:
+            try:
+                os.unlink(output_path)
+            except OSError:
+                pass
     if isinstance(payload, Mapping) and isinstance(payload.get("function"), Mapping):
         function = dict(payload["function"])
         function["pointer_size"] = payload.get("pointer_size")

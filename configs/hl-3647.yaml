@@ -89,6 +89,30 @@ modules:
           - NLoadBlob.{platform}.yaml
         expected_output:
           - NLoadBlobFile.{platform}.yaml
+      - name: find-Cvar_DirectSet
+        expected_output:
+          - Cvar_DirectSet.{platform}.yaml
+      - name: find-Cvar_Set
+        expected_input:
+          - Cvar_DirectSet.{platform}.yaml
+        expected_output:
+          - Cvar_Set.{platform}.yaml
+      - name: find-Cvar_Set_to_Cvar_DirectSet_callsites
+        expected_input:
+          - Cvar_Set.{platform}.yaml
+          - Cvar_DirectSet.{platform}.yaml
+        expected_output:
+          - Cvar_Set_to_Cvar_DirectSet_callsite_0.{platform}.yaml
+      - name: find-ClientDLL_Shutdown
+        expected_input:
+          - ClientDLL_Init.{platform}.yaml
+        expected_output:
+          - ClientDLL_Shutdown.{platform}.yaml
+      - name: find-FreeBlob-legacy
+        expected_input:
+          - ClientDLL_Shutdown.{platform}.yaml
+        expected_output:
+          - FreeBlob.{platform}.yaml
     symbols:
       - name: NLoadBlob
         category: func
@@ -140,3 +164,13 @@ modules:
         category: func
       - name: videomode
         category: gv
+      - name: Cvar_DirectSet
+        category: func
+      - name: Cvar_Set
+        category: func
+      - name: Cvar_Set_to_Cvar_DirectSet_callsite_0
+        category: patch
+      - name: ClientDLL_Shutdown
+        category: func
+      - name: FreeBlob
+        category: func
