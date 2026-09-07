@@ -229,7 +229,8 @@ def restore_selection_entries(
             )
         print(
             f"IDB cache restored: {entry['tag']}/{entry['platform']}; generation={entry['generation']}; "
-            f"wall_seconds={time.monotonic() - started:.3f}"
+            f"wall_seconds={time.monotonic() - started:.3f}",
+            flush=True,
         )
 
 
