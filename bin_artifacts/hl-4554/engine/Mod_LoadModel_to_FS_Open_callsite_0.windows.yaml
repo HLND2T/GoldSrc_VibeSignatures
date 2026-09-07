@@ -1,0 +1,5 @@
+patch_name: Mod_LoadModel_to_FS_Open_callsite_0
+patch_va: '0x1d4bb8c'
+patch_rva: '0x4bb8c'
+patch_sig: E8 BF B5 FF FF 8B D8
+patch_sig_disp: '0x0'
