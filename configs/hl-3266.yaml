@@ -103,9 +103,14 @@ modules:
           - Cvar_DirectSet.{platform}.yaml
         expected_output:
           - Cvar_Set_to_Cvar_DirectSet_callsite_0.{platform}.yaml
-      - name: find-FreeBlob
+      - name: find-ClientDLL_Shutdown
         expected_input:
           - ClientDLL_Init.{platform}.yaml
+        expected_output:
+          - ClientDLL_Shutdown.{platform}.yaml
+      - name: find-FreeBlob-legacy
+        expected_input:
+          - ClientDLL_Shutdown.{platform}.yaml
         expected_output:
           - FreeBlob.{platform}.yaml
     symbols:
@@ -165,5 +170,7 @@ modules:
         category: func
       - name: Cvar_Set_to_Cvar_DirectSet_callsite_0
         category: patch
+      - name: ClientDLL_Shutdown
+        category: func
       - name: FreeBlob
         category: func
