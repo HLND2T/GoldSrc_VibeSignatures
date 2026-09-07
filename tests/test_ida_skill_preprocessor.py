@@ -18,7 +18,9 @@ import ida_skill_preprocessor
 from analysis_config import AnalysisConfigError
 from ida_analyze_util import (
     _build_func_xref_py_eval,
+    _build_llm_function_export_py_eval,
     _call_llm_for_targets,
+    _export_llm_function,
     _inspect_function_via_mcp,
     _llm_entry_instruction_is_valid,
     _normalize_llm_decompile_specs,
@@ -928,15 +930,26 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
                     return {"matches": ["0x402000"], "n": 1}
                 self.assertEqual("py_eval", name)
                 code = arguments["code"]
-                if "ida_hexrays" in code:
-                    return {
+                if "format_name = 'json'" in code and "output_path = " in code:
+                    output_path = None
+                    for line in code.splitlines():
+                        if line.startswith("output_path = "):
+                            output_path = ast.literal_eval(line.split("=", 1)[1].strip())
+                            break
+                    self.assertIsInstance(output_path, str)
+                    payload = {
                         "pointer_size": 4,
-                        "function": {
-                            "func_start": "0x401000",
-                            "func_end": "0x401100",
-                            "disasm_code": "0x401020: call sub_402000",
-                            "procedure": "sub_402000();",
-                        },
+                        "func_start": "0x401000",
+                        "func_end": "0x401100",
+                        "disasm_code": "0x401020: call sub_402000",
+                        "procedure": "sub_402000();",
+                    }
+                    Path(output_path).write_text(json.dumps(payload), encoding="utf-8")
+                    return {
+                        "ok": True,
+                        "output_path": output_path,
+                        "bytes_written": Path(output_path).stat().st_size,
+                        "format": "json",
                     }
                 if "operand_targets" in code:
                     return {
@@ -2051,6 +2064,48 @@ found_struct_offset: []
         self.assertEqual(inspected_function, candidate)
         resolve_thunk.assert_awaited_once()
         inspect_function.assert_awaited_once_with(ANY, 0x403000, 0x400000, "Target")
+
+    def test_llm_function_export_builder_writes_json_via_remote_ack(self):
+        code = _build_llm_function_export_py_eval(0x1AEBF0, "D:/tmp/export.json")
+        compile(code, "<llm-function-export>", "exec")
+        self.assertIn("tmp_path = output_path + '.tmp'", code)
+        self.assertIn("os.replace(tmp_path, output_path)", code)
+        self.assertIn("payload_text = json.dumps(payload)", code)
+        self.assertLess(
+            code.index("payload_text = json.dumps(payload)"), code.index("os.replace(tmp_path, output_path)")
+        )
+
+    async def test_export_llm_function_reads_remote_json_payload(self):
+        exported = {
+            "pointer_size": 4,
+            "func_name": "ClientDLL_Init",
+            "func_va": "0x1aebf0",
+            "func_start": "0x1aebf0",
+            "func_end": "0x1af71d",
+            "disasm_code": "call FreeBlob",
+            "procedure": "FreeBlob(&g_blobfootprintClient);",
+            "chunk_ranges": [["0x1aebf0", "0x1af71d"]],
+        }
+
+        async def fake_call_tool(name, arguments=None, **_kwargs):
+            self.assertEqual("py_eval", name)
+            code = arguments["code"]
+            output_path = None
+            for line in code.splitlines():
+                if line.startswith("output_path = "):
+                    output_path = ast.literal_eval(line.split("=", 1)[1].strip())
+                    break
+            self.assertIsInstance(output_path, str)
+            Path(output_path).write_text(json.dumps(exported), encoding="utf-8")
+            return {
+                "ok": True,
+                "output_path": output_path,
+                "bytes_written": Path(output_path).stat().st_size,
+                "format": "json",
+            }
+
+        payload = await _export_llm_function(SimpleNamespace(call_tool=fake_call_tool), 0x1AEBF0)
+        self.assertEqual(exported, payload)
 
     async def test_call_llm_for_targets_preserves_tail_chunk_ranges(self):
         exported = {

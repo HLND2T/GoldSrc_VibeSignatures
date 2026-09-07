@@ -74,7 +74,7 @@ Required MetaHook changes (do not ship fake symbols here):
 - `find-Cvar_DirectSet`: existing `FULLMATCH:***PROTECTED***`.
 - `find-cvar_hooks`: unchanged; hl-8684 / hl-10210 only.
 - `find-Cvar_Set_to_Cvar_DirectSet_callsites`: direct `E8`/`E9` in Cvar_Set whose xref resolves to Cvar_DirectSet.
-- `find-FreeBlob`: LLM_DECOMPILE from `ClientDLL_Init` (HL25 inlined Shutdown). Registered on hl-10210 Windows+Linux and hl-8684 Linux.
+- `find-FreeBlob`: LLM_DECOMPILE from `ClientDLL_Init` (inlined Shutdown). Registered on hl-10210 Windows+Linux and hl-8684 Linux. hl-8684 Linux predecessor body differs (`0xb2d`, inlined LoadInsecureClient); reference is `references/hl-8684/engine/ClientDLL_Init.linux.yaml` rather than the hl-10210 fallback.
 - `find-ClientDLL_Shutdown`: unique `ClientDLL_Init` callee that is larger than the FreeBlob wrapper and calls FreeLibrary/dlclose. Old GoldSrc + hl-8684 Windows.
 - `find-FreeBlob-legacy`: LLM_DECOMPILE from standalone `ClientDLL_Shutdown`. Reference: `references/hl-6153/engine/ClientDLL_Shutdown.windows.yaml` (public leak comments out FreeBlob; this body keeps the call).
 - `find-NLoadBlob`: existing Windows-only xref signatures.

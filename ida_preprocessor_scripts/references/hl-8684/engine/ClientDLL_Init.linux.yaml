@@ -1,0 +1,924 @@
+func_name: "ClientDLL_Init"
+func_va: "0x1aebf0"
+disasm_code: |-
+  .text:001AEBF0                 ; Source: engine/cdll_int.c:ClientDLL_Init. Public leak comments out FreeBlob; this binary keeps the secure-client path. LoadSecureClient, ClientDLL_Shutdown, LoadInsecureClient, ClientDLL_ClientMoveInit are inlined.
+  .text:001AEBF0                 push    ebx; Source: engine/cdll_int.c:ClientDLL_Init. Public leak comments out FreeBlob; this binary keeps the secure-client path. LoadSecureClient, ClientDLL_Shutdown, LoadInsecureClient, ClientDLL_ClientMoveInit are inlined.
+  .text:001AEBF1                 mov     eax, offset aClDllsClientSo; "cl_dlls/client.so"
+  .text:001AEBF6                 sub     esp, 218h
+  .text:001AEBFC                 ; format
+  .text:001AEBFC                 mov     [esp+21Ch+format], eax; format
+  .text:001AEC00                 lea     ebx, [esp+21Ch+szDllName]
+  .text:001AEC04                 mov     eax, 200h
+  .text:001AEC09                 ; maxlen
+  .text:001AEC09                 mov     [esp+21Ch+maxlen], eax; maxlen
+  .text:001AEC0D                 ; s
+  .text:001AEC0D                 mov     [esp+21Ch+s], ebx; s
+  .text:001AEC10                 call    snprintf
+  .text:001AEC15                 cmp     ds:fClientLoaded, 0
+  .text:001AEC1C                 jnz     loc_1AED10; inlined ClientDLL_Shutdown: begin (DWARF engine/cdll_int.c:436)
+  .text:001AEC22                 ; pname
+  .text:001AEC22                 mov     [esp+21Ch+s], ebx; pname
+  .text:001AEC25                 call    COM_FixSlashes
+  .text:001AEC2A                 ; src
+  .text:001AEC2A                 mov     [esp+21Ch+maxlen], ebx; src
+  .text:001AEC2E                 ; dest
+  .text:001AEC2E                 mov     [esp+21Ch+s], offset g_szfullClientName; dest
+  .text:001AEC35                 call    strcpy
+  .text:001AEC3A                 ; filename
+  .text:001AEC3A                 mov     [esp+21Ch+s], offset g_szfullClientName; filename
+  .text:001AEC41                 call    COM_ExpandFilename
+  .text:001AEC46                 ; pname
+  .text:001AEC46                 mov     [esp+21Ch+s], offset g_szfullClientName; pname
+  .text:001AEC4D                 call    COM_FixSlashes
+  .text:001AEC52                 xor     eax, eax
+  .text:001AEC54                 mov     ds:cls.state+438Ch, eax
+  .text:001AEC59                 ; inlined LoadSecureClient: begin (DWARF engine/cdll_int.c:451)
+  .text:001AEC59                 mov     eax, offset g_modfuncs; inlined LoadSecureClient: begin (DWARF engine/cdll_int.c:451)
+  .text:001AEC5E                 mov     ds:cl_funcs.pInitFunc, eax
+  .text:001AEC63                 mov     eax, offset g_cldstAddrs
+  .text:001AEC68                 mov     ds:cl_funcs.pInitFunc+8, eax
+  .text:001AEC6D                 mov     eax, 1
+  .text:001AEC72                 ; fLoadAsDll
+  .text:001AEC72                 mov     dword ptr [esp+21Ch+fLoadAsDll], eax; fLoadAsDll
+  .text:001AEC76                 mov     eax, offset cl_funcs
+  .text:001AEC7B                 ; pv
+  .text:001AEC7B                 mov     [esp+21Ch+format], eax; pv
+  .text:001AEC7F                 mov     eax, offset g_blobfootprintClient
+  .text:001AEC84                 ; pblobfootprint
+  .text:001AEC84                 mov     [esp+21Ch+maxlen], eax; pblobfootprint
+  .text:001AEC88                 ; pstFileName
+  .text:001AEC88                 mov     [esp+21Ch+s], offset g_szfullClientName; pstFileName
+  .text:001AEC8F                 call    NLoadBlobFile
+  .text:001AEC94                 test    eax, eax
+  .text:001AEC96                 jz      loc_1AEDB0
+  .text:001AEC9C                 mov     ds:hClientDLL, eax
+  .text:001AECA1                 ; inlined LoadSecureClient: end
+  .text:001AECA1                 mov     ds:fClientLoaded, 1; inlined LoadSecureClient: end
+  .text:001AECA8                 mov     ecx, offset V_ScreenShake
+  .text:001AECAD                 mov     ebx, offset V_ScreenFade
+  .text:001AECB2                 ; pfn
+  .text:001AECB2                 mov     [esp+21Ch+maxlen], ecx; pfn
+  .text:001AECB6                 mov     [esp+21Ch+s], offset aScreenshake; "ScreenShake"
+  .text:001AECBD                 call    HookServerMsg
+  .text:001AECC2                 ; pfn
+  .text:001AECC2                 mov     [esp+21Ch+maxlen], ebx; pfn
+  .text:001AECC6                 mov     [esp+21Ch+s], offset aScreenfade; "ScreenFade"
+  .text:001AECCD                 call    HookServerMsg
+  .text:001AECD2                 mov     eax, 7
+  .text:001AECD7                 mov     [esp+21Ch+maxlen], eax
+  .text:001AECDB                 mov     [esp+21Ch+s], offset cl_enginefuncs
+  .text:001AECE2                 call    ds:cl_funcs.pInitFunc
+  .text:001AECE8                 ; inlined ClientDLL_ClientMoveInit: begin (DWARF engine/cdll_int.c:462)
+  .text:001AECE8                 mov     eax, ds:cl_funcs.pInitFunc+1Ch; inlined ClientDLL_ClientMoveInit: begin (DWARF engine/cdll_int.c:462)
+  .text:001AECED                 test    eax, eax
+  .text:001AECEF                 jz      short loc_1AECFA
+  .text:001AECF1                 mov     [esp+21Ch+s], offset g_clmove
+  .text:001AECF8                 ; inlined ClientDLL_ClientMoveInit: end
+  .text:001AECF8                 call    eax; inlined ClientDLL_ClientMoveInit: end
+  .text:001AECFA                 call    CL_GetPlayerHulls
+  .text:001AECFF                 add     esp, 218h
+  .text:001AED05                 pop     ebx
+  .text:001AED06                 retn
+  .text:001AED10                 ; inlined ClientDLL_Shutdown: begin (DWARF engine/cdll_int.c:436)
+  .text:001AED10                 call    Net_APIShutDown; inlined ClientDLL_Shutdown: begin (DWARF engine/cdll_int.c:436)
+  .text:001AED15                 call    SPR_Shutdown
+  .text:001AED1A                 mov     eax, ds:cl_funcs.pInitFunc+68h
+  .text:001AED1F                 test    eax, eax
+  .text:001AED21                 jz      short loc_1AED25
+  .text:001AED23                 call    eax
+  .text:001AED25                 mov     eax, ds:cls.state+438Ch
+  .text:001AED2A                 test    eax, eax
+  .text:001AED2C                 jnz     short loc_1AED98
+  .text:001AED2E                 mov     eax, ds:hClientDLL
+  .text:001AED33                 ; handle
+  .text:001AED33                 mov     [esp+21Ch+s], eax; handle
+  .text:001AED36                 call    dlclose
+  .text:001AED3B                 xor     eax, eax
+  .text:001AED3D                 mov     ds:hClientDLL, eax
+  .text:001AED42                 xor     eax, eax
+  .text:001AED44                 mov     ecx, 0ACh
+  .text:001AED49                 ; fill
+  .text:001AED49                 mov     [esp+21Ch+maxlen], eax; fill
+  .text:001AED4D                 ; count
+  .text:001AED4D                 mov     [esp+21Ch+format], ecx; count
+  .text:001AED51                 ; dest
+  .text:001AED51                 mov     [esp+21Ch+s], offset cl_funcs; dest
+  .text:001AED58                 call    Q_memset
+  .text:001AED5D                 call    Cvar_RemoveHudCvars
+  .text:001AED62                 call    Cmd_RemoveHudCmds
+  .text:001AED67                 call    CL_ShutDownUsrMessages
+  .text:001AED6C                 mov     eax, ds:hClientDLL
+  .text:001AED71                 mov     ds:fClientLoaded, 0
+  .text:001AED78                 test    eax, eax
+  .text:001AED7A                 jz      short loc_1AED84
+  .text:001AED7C                 ; handle
+  .text:001AED7C                 mov     [esp+21Ch+s], eax; handle
+  .text:001AED7F                 call    dlclose
+  .text:001AED84                 xor     edx, edx
+  .text:001AED86                 mov     ds:hClientDLL, edx
+  .text:001AED8C                 jmp     loc_1AEC22
+  .text:001AED98                 ; pblobfootprint; g_blobfootprintClient
+  .text:001AED98                 mov     [esp+21Ch+s], offset g_blobfootprintClient; pblobfootprint; g_blobfootprintClient
+  .text:001AED9F                 call    FreeBlob ; target: FreeBlob
+  .text:001AEDA4                 jmp     short loc_1AED42
+  .text:001AEDB0                 cmp     ds:fClientLoaded, 0
+  .text:001AEDB7                 jnz     loc_1AECA8
+  .text:001AEDBD                 ; dllName
+  .text:001AEDBD                 ; inlined LoadInsecureClient: begin (DWARF engine/cdll_int.c:453)
+  .text:001AEDBD                 mov     [esp+21Ch+s], offset g_szfullClientName; dllName
+  .text:001AEDC4                 call    FS_LoadLibrary
+  .text:001AEDC9                 test    eax, eax
+  .text:001AEDCB                 mov     ds:hClientDLL, eax
+  .text:001AEDD0                 jz      loc_1AF708
+  .text:001AEDD6                 mov     ecx, offset aInitialize; "Initialize"
+  .text:001AEDDB                 mov     ds:fClientLoaded, 1
+  .text:001AEDE2                 ; name
+  .text:001AEDE2                 mov     [esp+21Ch+maxlen], ecx; name
+  .text:001AEDE6                 ; handle
+  .text:001AEDE6                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEDE9                 call    dlsym
+  .text:001AEDEE                 test    eax, eax
+  .text:001AEDF0                 mov     ds:cl_funcs.pInitFunc, eax
+  .text:001AEDF5                 jz      loc_1AF6F0
+  .text:001AEDFB                 mov     eax, ds:hClientDLL
+  .text:001AEE00                 mov     edx, offset aHudVidinit; "HUD_VidInit"
+  .text:001AEE05                 ; name
+  .text:001AEE05                 mov     [esp+21Ch+maxlen], edx; name
+  .text:001AEE09                 ; handle
+  .text:001AEE09                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEE0C                 call    dlsym
+  .text:001AEE11                 test    eax, eax
+  .text:001AEE13                 mov     ds:cl_funcs.pInitFunc+8, eax
+  .text:001AEE18                 jz      loc_1AF6D8
+  .text:001AEE1E                 mov     eax, offset aHudInit; "HUD_Init"
+  .text:001AEE23                 ; name
+  .text:001AEE23                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AEE27                 mov     eax, ds:hClientDLL
+  .text:001AEE2C                 ; handle
+  .text:001AEE2C                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEE2F                 call    dlsym
+  .text:001AEE34                 test    eax, eax
+  .text:001AEE36                 mov     ds:cl_funcs.pInitFunc+4, eax
+  .text:001AEE3B                 jz      loc_1AF6C0
+  .text:001AEE41                 mov     eax, offset aHudRed; "HUD_Red"
+  .text:001AEE46                 ; name
+  .text:001AEE46                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AEE4A                 mov     eax, ds:hClientDLL
+  .text:001AEE4F                 ; handle
+  .text:001AEE4F                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEE52                 call    dlsym
+  .text:001AEE57                 test    eax, eax
+  .text:001AEE59                 mov     ds:cl_funcs.pInitFunc+0Ch, eax
+  .text:001AEE5E                 jz      loc_1AF6A8
+  .text:001AEE64                 mov     eax, offset aHudUpdateclien; "HUD_UpdateClientData"
+  .text:001AEE69                 ; name
+  .text:001AEE69                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AEE6D                 mov     eax, ds:hClientDLL
+  .text:001AEE72                 ; handle
+  .text:001AEE72                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEE75                 call    dlsym
+  .text:001AEE7A                 test    eax, eax
+  .text:001AEE7C                 mov     ds:cl_funcs.pInitFunc+10h, eax
+  .text:001AEE81                 jz      loc_1AF690
+  .text:001AEE87                 mov     eax, offset aHudReset; "HUD_Reset"
+  .text:001AEE8C                 ; name
+  .text:001AEE8C                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AEE90                 mov     eax, ds:hClientDLL
+  .text:001AEE95                 ; handle
+  .text:001AEE95                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEE98                 call    dlsym
+  .text:001AEE9D                 test    eax, eax
+  .text:001AEE9F                 mov     ds:cl_funcs.pInitFunc+14h, eax
+  .text:001AEEA4                 jz      loc_1AF678
+  .text:001AEEAA                 mov     eax, offset aHudPlayermove; "HUD_PlayerMove"
+  .text:001AEEAF                 ; name
+  .text:001AEEAF                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AEEB3                 mov     eax, ds:hClientDLL
+  .text:001AEEB8                 ; handle
+  .text:001AEEB8                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEEBB                 call    dlsym
+  .text:001AEEC0                 test    eax, eax
+  .text:001AEEC2                 mov     ds:cl_funcs.pInitFunc+18h, eax
+  .text:001AEEC7                 jz      loc_1AF660
+  .text:001AEECD                 mov     eax, offset aHudPlayermovei; "HUD_PlayerMoveInit"
+  .text:001AEED2                 ; name
+  .text:001AEED2                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AEED6                 mov     eax, ds:hClientDLL
+  .text:001AEEDB                 ; handle
+  .text:001AEEDB                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEEDE                 call    dlsym
+  .text:001AEEE3                 test    eax, eax
+  .text:001AEEE5                 mov     ds:cl_funcs.pInitFunc+1Ch, eax
+  .text:001AEEEA                 jz      loc_1AF648
+  .text:001AEEF0                 mov     eax, ds:hClientDLL
+  .text:001AEEF5                 mov     ebx, offset aHudPlayermovet; "HUD_PlayerMoveTexture"
+  .text:001AEEFA                 ; name
+  .text:001AEEFA                 mov     [esp+21Ch+maxlen], ebx; name
+  .text:001AEEFE                 ; handle
+  .text:001AEEFE                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEF01                 call    dlsym
+  .text:001AEF06                 test    eax, eax
+  .text:001AEF08                 mov     ds:cl_funcs.pInitFunc+20h, eax
+  .text:001AEF0D                 jz      loc_1AF630
+  .text:001AEF13                 mov     eax, ds:hClientDLL
+  .text:001AEF18                 mov     ecx, offset aInActivatemous_0; "IN_ActivateMouse"
+  .text:001AEF1D                 ; name
+  .text:001AEF1D                 mov     [esp+21Ch+maxlen], ecx; name
+  .text:001AEF21                 ; handle
+  .text:001AEF21                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEF24                 call    dlsym
+  .text:001AEF29                 test    eax, eax
+  .text:001AEF2B                 mov     ds:cl_funcs.pInitFunc+24h, eax
+  .text:001AEF30                 jz      loc_1AF618
+  .text:001AEF36                 mov     eax, ds:hClientDLL
+  .text:001AEF3B                 mov     edx, offset aInDeactivatemo_0; "IN_DeactivateMouse"
+  .text:001AEF40                 ; name
+  .text:001AEF40                 mov     [esp+21Ch+maxlen], edx; name
+  .text:001AEF44                 ; handle
+  .text:001AEF44                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEF47                 call    dlsym
+  .text:001AEF4C                 test    eax, eax
+  .text:001AEF4E                 mov     ds:cl_funcs.pInitFunc+28h, eax
+  .text:001AEF53                 jz      loc_1AF600
+  .text:001AEF59                 mov     eax, offset aInMouseevent_0; "IN_MouseEvent"
+  .text:001AEF5E                 ; name
+  .text:001AEF5E                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AEF62                 mov     eax, ds:hClientDLL
+  .text:001AEF67                 ; handle
+  .text:001AEF67                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEF6A                 call    dlsym
+  .text:001AEF6F                 test    eax, eax
+  .text:001AEF71                 mov     ds:cl_funcs.pInitFunc+2Ch, eax
+  .text:001AEF76                 jz      loc_1AF5E8
+  .text:001AEF7C                 mov     eax, offset aInClearstates_0; "IN_ClearStates"
+  .text:001AEF81                 ; name
+  .text:001AEF81                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AEF85                 mov     eax, ds:hClientDLL
+  .text:001AEF8A                 ; handle
+  .text:001AEF8A                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEF8D                 call    dlsym
+  .text:001AEF92                 test    eax, eax
+  .text:001AEF94                 mov     ds:cl_funcs.pInitFunc+30h, eax
+  .text:001AEF99                 jz      loc_1AF5D0
+  .text:001AEF9F                 mov     eax, offset aInAccumulate; "IN_Accumulate"
+  .text:001AEFA4                 ; name
+  .text:001AEFA4                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AEFA8                 mov     eax, ds:hClientDLL
+  .text:001AEFAD                 ; handle
+  .text:001AEFAD                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEFB0                 call    dlsym
+  .text:001AEFB5                 test    eax, eax
+  .text:001AEFB7                 mov     ds:cl_funcs.pInitFunc+34h, eax
+  .text:001AEFBC                 jz      loc_1AF5B8
+  .text:001AEFC2                 mov     eax, offset aClCreatemove; "CL_CreateMove"
+  .text:001AEFC7                 ; name
+  .text:001AEFC7                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AEFCB                 mov     eax, ds:hClientDLL
+  .text:001AEFD0                 ; handle
+  .text:001AEFD0                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEFD3                 call    dlsym
+  .text:001AEFD8                 test    eax, eax
+  .text:001AEFDA                 mov     ds:cl_funcs.pInitFunc+38h, eax
+  .text:001AEFDF                 jz      loc_1AF5A0
+  .text:001AEFE5                 mov     eax, offset aClIsthirdperso; "CL_IsThirdPerson"
+  .text:001AEFEA                 ; name
+  .text:001AEFEA                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AEFEE                 mov     eax, ds:hClientDLL
+  .text:001AEFF3                 ; handle
+  .text:001AEFF3                 mov     [esp+21Ch+s], eax; handle
+  .text:001AEFF6                 call    dlsym
+  .text:001AEFFB                 test    eax, eax
+  .text:001AEFFD                 mov     ds:cl_funcs.pInitFunc+3Ch, eax
+  .text:001AF002                 jz      loc_1AF588
+  .text:001AF008                 mov     eax, offset aClCameraoffset; "CL_CameraOffset"
+  .text:001AF00D                 ; name
+  .text:001AF00D                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF011                 mov     eax, ds:hClientDLL
+  .text:001AF016                 ; handle
+  .text:001AF016                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF019                 call    dlsym
+  .text:001AF01E                 test    eax, eax
+  .text:001AF020                 mov     ds:cl_funcs.pInitFunc+40h, eax
+  .text:001AF025                 jz      loc_1AF570
+  .text:001AF02B                 mov     eax, ds:hClientDLL
+  .text:001AF030                 mov     ebx, offset aCamThink; "CAM_Think"
+  .text:001AF035                 ; name
+  .text:001AF035                 mov     [esp+21Ch+maxlen], ebx; name
+  .text:001AF039                 ; handle
+  .text:001AF039                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF03C                 call    dlsym
+  .text:001AF041                 test    eax, eax
+  .text:001AF043                 mov     ds:cl_funcs.pInitFunc+48h, eax
+  .text:001AF048                 jz      loc_1AF558
+  .text:001AF04E                 mov     eax, ds:hClientDLL
+  .text:001AF053                 mov     ecx, offset aKbFind; "KB_Find"
+  .text:001AF058                 ; name
+  .text:001AF058                 mov     [esp+21Ch+maxlen], ecx; name
+  .text:001AF05C                 ; handle
+  .text:001AF05C                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF05F                 call    dlsym
+  .text:001AF064                 test    eax, eax
+  .text:001AF066                 mov     ds:cl_funcs.pInitFunc+44h, eax
+  .text:001AF06B                 jz      loc_1AF540
+  .text:001AF071                 mov     eax, ds:hClientDLL
+  .text:001AF076                 mov     edx, offset aVCalcrefdef; "V_CalcRefdef"
+  .text:001AF07B                 ; name
+  .text:001AF07B                 mov     [esp+21Ch+maxlen], edx; name
+  .text:001AF07F                 ; handle
+  .text:001AF07F                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF082                 call    dlsym
+  .text:001AF087                 test    eax, eax
+  .text:001AF089                 mov     ds:cl_funcs.pInitFunc+4Ch, eax
+  .text:001AF08E                 jz      loc_1AF528
+  .text:001AF094                 mov     eax, offset aHudAddentity; "HUD_AddEntity"
+  .text:001AF099                 ; name
+  .text:001AF099                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF09D                 mov     eax, ds:hClientDLL
+  .text:001AF0A2                 ; handle
+  .text:001AF0A2                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF0A5                 call    dlsym
+  .text:001AF0AA                 test    eax, eax
+  .text:001AF0AC                 mov     ds:cl_funcs.pInitFunc+50h, eax
+  .text:001AF0B1                 jz      loc_1AF510
+  .text:001AF0B7                 mov     eax, offset aHudCreateentit; "HUD_CreateEntities"
+  .text:001AF0BC                 ; name
+  .text:001AF0BC                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF0C0                 mov     eax, ds:hClientDLL
+  .text:001AF0C5                 ; handle
+  .text:001AF0C5                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF0C8                 call    dlsym
+  .text:001AF0CD                 test    eax, eax
+  .text:001AF0CF                 mov     ds:cl_funcs.pInitFunc+54h, eax
+  .text:001AF0D4                 jz      loc_1AF4F8
+  .text:001AF0DA                 mov     eax, offset aHudDrawnormalt; "HUD_DrawNormalTriangles"
+  .text:001AF0DF                 ; name
+  .text:001AF0DF                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF0E3                 mov     eax, ds:hClientDLL
+  .text:001AF0E8                 ; handle
+  .text:001AF0E8                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF0EB                 call    dlsym
+  .text:001AF0F0                 test    eax, eax
+  .text:001AF0F2                 mov     ds:cl_funcs.pInitFunc+58h, eax
+  .text:001AF0F7                 jz      loc_1AF4E0
+  .text:001AF0FD                 mov     eax, offset aHudDrawtranspa; "HUD_DrawTransparentTriangles"
+  .text:001AF102                 ; name
+  .text:001AF102                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF106                 mov     eax, ds:hClientDLL
+  .text:001AF10B                 ; handle
+  .text:001AF10B                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF10E                 call    dlsym
+  .text:001AF113                 test    eax, eax
+  .text:001AF115                 mov     ds:cl_funcs.pInitFunc+5Ch, eax
+  .text:001AF11A                 jz      loc_1AF4C8
+  .text:001AF120                 mov     eax, offset aHudStudioevent; "HUD_StudioEvent"
+  .text:001AF125                 ; name
+  .text:001AF125                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF129                 mov     eax, ds:hClientDLL
+  .text:001AF12E                 ; handle
+  .text:001AF12E                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF131                 call    dlsym
+  .text:001AF136                 test    eax, eax
+  .text:001AF138                 mov     ds:cl_funcs.pInitFunc+60h, eax
+  .text:001AF13D                 jz      loc_1AF4B0
+  .text:001AF143                 mov     eax, offset aHudShutdown; "HUD_Shutdown"
+  .text:001AF148                 ; name
+  .text:001AF148                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF14C                 mov     eax, ds:hClientDLL
+  .text:001AF151                 ; handle
+  .text:001AF151                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF154                 call    dlsym
+  .text:001AF159                 test    eax, eax
+  .text:001AF15B                 mov     ds:cl_funcs.pInitFunc+68h, eax
+  .text:001AF160                 jz      loc_1AF498
+  .text:001AF166                 mov     eax, ds:hClientDLL
+  .text:001AF16B                 mov     ebx, offset aHudTxferlocalo; "HUD_TxferLocalOverrides"
+  .text:001AF170                 ; name
+  .text:001AF170                 mov     [esp+21Ch+maxlen], ebx; name
+  .text:001AF174                 ; handle
+  .text:001AF174                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF177                 call    dlsym
+  .text:001AF17C                 test    eax, eax
+  .text:001AF17E                 mov     ds:cl_funcs.pInitFunc+6Ch, eax
+  .text:001AF183                 jz      loc_1AF480
+  .text:001AF189                 mov     eax, ds:hClientDLL
+  .text:001AF18E                 mov     ecx, offset aHudProcessplay; "HUD_ProcessPlayerState"
+  .text:001AF193                 ; name
+  .text:001AF193                 mov     [esp+21Ch+maxlen], ecx; name
+  .text:001AF197                 ; handle
+  .text:001AF197                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF19A                 call    dlsym
+  .text:001AF19F                 test    eax, eax
+  .text:001AF1A1                 mov     ds:cl_funcs.pInitFunc+70h, eax
+  .text:001AF1A6                 jz      loc_1AF468
+  .text:001AF1AC                 mov     eax, ds:hClientDLL
+  .text:001AF1B1                 mov     edx, offset aHudTxferpredic; "HUD_TxferPredictionData"
+  .text:001AF1B6                 ; name
+  .text:001AF1B6                 mov     [esp+21Ch+maxlen], edx; name
+  .text:001AF1BA                 ; handle
+  .text:001AF1BA                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF1BD                 call    dlsym
+  .text:001AF1C2                 test    eax, eax
+  .text:001AF1C4                 mov     ds:cl_funcs.pInitFunc+74h, eax
+  .text:001AF1C9                 jz      loc_1AF450
+  .text:001AF1CF                 mov     eax, offset aDemoReadbuffer; "Demo_ReadBuffer"
+  .text:001AF1D4                 ; name
+  .text:001AF1D4                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF1D8                 mov     eax, ds:hClientDLL
+  .text:001AF1DD                 ; handle
+  .text:001AF1DD                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF1E0                 call    dlsym
+  .text:001AF1E5                 test    eax, eax
+  .text:001AF1E7                 mov     ds:cl_funcs.pInitFunc+78h, eax
+  .text:001AF1EC                 jz      loc_1AF438
+  .text:001AF1F2                 mov     eax, offset aHudConnectionl; "HUD_ConnectionlessPacket"
+  .text:001AF1F7                 ; name
+  .text:001AF1F7                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF1FB                 mov     eax, ds:hClientDLL
+  .text:001AF200                 ; handle
+  .text:001AF200                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF203                 call    dlsym
+  .text:001AF208                 test    eax, eax
+  .text:001AF20A                 mov     ds:cl_funcs.pInitFunc+7Ch, eax
+  .text:001AF20F                 jz      loc_1AF420
+  .text:001AF215                 mov     eax, offset aHudGethullboun; "HUD_GetHullBounds"
+  .text:001AF21A                 ; name
+  .text:001AF21A                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF21E                 mov     eax, ds:hClientDLL
+  .text:001AF223                 ; handle
+  .text:001AF223                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF226                 call    dlsym
+  .text:001AF22B                 test    eax, eax
+  .text:001AF22D                 mov     ds:cl_funcs.pInitFunc+80h, eax
+  .text:001AF232                 jz      loc_1AF408
+  .text:001AF238                 mov     eax, offset aHudFrame; "HUD_Frame"
+  .text:001AF23D                 ; name
+  .text:001AF23D                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF241                 mov     eax, ds:hClientDLL
+  .text:001AF246                 ; handle
+  .text:001AF246                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF249                 call    dlsym
+  .text:001AF24E                 test    eax, eax
+  .text:001AF250                 mov     ds:cl_funcs.pInitFunc+84h, eax
+  .text:001AF255                 jz      loc_1AF3F0
+  .text:001AF25B                 mov     eax, offset aHudKeyEvent; "HUD_Key_Event"
+  .text:001AF260                 ; name
+  .text:001AF260                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF264                 mov     eax, ds:hClientDLL
+  .text:001AF269                 ; handle
+  .text:001AF269                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF26C                 call    dlsym
+  .text:001AF271                 test    eax, eax
+  .text:001AF273                 mov     ds:cl_funcs.pInitFunc+88h, eax
+  .text:001AF278                 jz      loc_1AF3D8
+  .text:001AF27E                 mov     eax, offset aHudPostruncmd; "HUD_PostRunCmd"
+  .text:001AF283                 ; name
+  .text:001AF283                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF287                 mov     eax, ds:hClientDLL
+  .text:001AF28C                 ; handle
+  .text:001AF28C                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF28F                 call    dlsym
+  .text:001AF294                 test    eax, eax
+  .text:001AF296                 mov     ds:cl_funcs.pInitFunc+64h, eax
+  .text:001AF29B                 jz      loc_1AF3C0
+  .text:001AF2A1                 mov     eax, ds:hClientDLL
+  .text:001AF2A6                 mov     ebx, offset aHudTempentupda; "HUD_TempEntUpdate"
+  .text:001AF2AB                 ; name
+  .text:001AF2AB                 mov     [esp+21Ch+maxlen], ebx; name
+  .text:001AF2AF                 ; handle
+  .text:001AF2AF                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF2B2                 call    dlsym
+  .text:001AF2B7                 test    eax, eax
+  .text:001AF2B9                 mov     ds:cl_funcs.pInitFunc+8Ch, eax
+  .text:001AF2BE                 jz      loc_1AF3A8
+  .text:001AF2C4                 mov     eax, ds:hClientDLL
+  .text:001AF2C9                 mov     ecx, offset aHudGetuserenti; "HUD_GetUserEntity"
+  .text:001AF2CE                 ; name
+  .text:001AF2CE                 mov     [esp+21Ch+maxlen], ecx; name
+  .text:001AF2D2                 ; handle
+  .text:001AF2D2                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF2D5                 call    dlsym
+  .text:001AF2DA                 test    eax, eax
+  .text:001AF2DC                 mov     ds:cl_funcs.pInitFunc+90h, eax
+  .text:001AF2E1                 jz      loc_1AF390
+  .text:001AF2E7                 mov     eax, offset aHudVoicestatus; "HUD_VoiceStatus"
+  .text:001AF2EC                 ; name
+  .text:001AF2EC                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF2F0                 mov     eax, ds:hClientDLL
+  .text:001AF2F5                 ; handle
+  .text:001AF2F5                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF2F8                 call    dlsym
+  .text:001AF2FD                 mov     ds:cl_funcs.pInitFunc+94h, eax
+  .text:001AF302                 mov     eax, offset aHudDirectormes; "HUD_DirectorMessage"
+  .text:001AF307                 ; name
+  .text:001AF307                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF30B                 mov     eax, ds:hClientDLL
+  .text:001AF310                 ; handle
+  .text:001AF310                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF313                 call    dlsym
+  .text:001AF318                 mov     ds:cl_funcs.pInitFunc+98h, eax
+  .text:001AF31D                 mov     eax, offset aHudGetstudiomo; "HUD_GetStudioModelInterface"
+  .text:001AF322                 ; name
+  .text:001AF322                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF326                 mov     eax, ds:hClientDLL
+  .text:001AF32B                 ; handle
+  .text:001AF32B                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF32E                 call    dlsym
+  .text:001AF333                 mov     ds:cl_funcs.pInitFunc+9Ch, eax
+  .text:001AF338                 mov     eax, offset aHudChatinputpo; "HUD_ChatInputPosition"
+  .text:001AF33D                 ; name
+  .text:001AF33D                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF341                 mov     eax, ds:hClientDLL
+  .text:001AF346                 ; handle
+  .text:001AF346                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF349                 call    dlsym
+  .text:001AF34E                 mov     ds:cl_funcs.pInitFunc+0A0h, eax
+  .text:001AF353                 mov     eax, offset aClientfactory; "ClientFactory"
+  .text:001AF358                 ; name
+  .text:001AF358                 mov     [esp+21Ch+maxlen], eax; name
+  .text:001AF35C                 mov     eax, ds:hClientDLL
+  .text:001AF361                 ; handle
+  .text:001AF361                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF364                 call    dlsym
+  .text:001AF369                 mov     edx, offset aHudGetplayerte; "HUD_GetPlayerTeam"
+  .text:001AF36E                 ; name
+  .text:001AF36E                 mov     [esp+21Ch+maxlen], edx; name
+  .text:001AF372                 mov     ds:cl_funcs.pInitFunc+0A8h, eax
+  .text:001AF377                 mov     eax, ds:hClientDLL
+  .text:001AF37C                 ; handle
+  .text:001AF37C                 mov     [esp+21Ch+s], eax; handle
+  .text:001AF37F                 call    dlsym
+  .text:001AF384                 mov     ds:cl_funcs.pInitFunc+0A4h, eax
+  .text:001AF389                 jmp     loc_1AECA8
+  .text:001AF390                 mov     [esp+21Ch+s], offset aCouldNotLinkCl; "could not link client.dll function HUD_"...
+  .text:001AF397                 call    Sys_Error
+  .text:001AF39C                 jmp     loc_1AF2E7
+  .text:001AF3A8                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_0; "could not link client.dll function HUD_"...
+  .text:001AF3AF                 call    Sys_Error
+  .text:001AF3B4                 jmp     loc_1AF2C4
+  .text:001AF3C0                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_1; "could not link client.dll function HUD_"...
+  .text:001AF3C7                 call    Sys_Error
+  .text:001AF3CC                 jmp     loc_1AF2A1
+  .text:001AF3D8                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_2; "could not link client.dll function HUD_"...
+  .text:001AF3DF                 call    Sys_Error
+  .text:001AF3E4                 jmp     loc_1AF27E
+  .text:001AF3F0                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_3; "could not link client.dll function HUD_"...
+  .text:001AF3F7                 call    Sys_Error
+  .text:001AF3FC                 jmp     loc_1AF25B
+  .text:001AF408                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_4; "could not link client.dll function HUD_"...
+  .text:001AF40F                 call    Sys_Error
+  .text:001AF414                 jmp     loc_1AF238
+  .text:001AF420                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_5; "could not link client.dll function HUD_"...
+  .text:001AF427                 call    Sys_Error
+  .text:001AF42C                 jmp     loc_1AF215
+  .text:001AF438                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_6; "could not link client.dll function Demo"...
+  .text:001AF43F                 call    Sys_Error
+  .text:001AF444                 jmp     loc_1AF1F2
+  .text:001AF450                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_7; "could not link client.dll function HUD_"...
+  .text:001AF457                 call    Sys_Error
+  .text:001AF45C                 jmp     loc_1AF1CF
+  .text:001AF468                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_8; "could not link client.dll function HUD_"...
+  .text:001AF46F                 call    Sys_Error
+  .text:001AF474                 jmp     loc_1AF1AC
+  .text:001AF480                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_9; "could not link client.dll function HUD_"...
+  .text:001AF487                 call    Sys_Error
+  .text:001AF48C                 jmp     loc_1AF189
+  .text:001AF498                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_10; "could not link client.dll function HUD_"...
+  .text:001AF49F                 call    Sys_Error
+  .text:001AF4A4                 jmp     loc_1AF166
+  .text:001AF4B0                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_11; "could not link client.dll function HUD_"...
+  .text:001AF4B7                 call    Sys_Error
+  .text:001AF4BC                 jmp     loc_1AF143
+  .text:001AF4C8                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_12; "could not link client.dll function HUD_"...
+  .text:001AF4CF                 call    Sys_Error
+  .text:001AF4D4                 jmp     loc_1AF120
+  .text:001AF4E0                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_13; "could not link client.dll function HUD_"...
+  .text:001AF4E7                 call    Sys_Error
+  .text:001AF4EC                 jmp     loc_1AF0FD
+  .text:001AF4F8                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_14; "could not link client.dll function HUD_"...
+  .text:001AF4FF                 call    Sys_Error
+  .text:001AF504                 jmp     loc_1AF0DA
+  .text:001AF510                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_15; "could not link client.dll function HUD_"...
+  .text:001AF517                 call    Sys_Error
+  .text:001AF51C                 jmp     loc_1AF0B7
+  .text:001AF528                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_16; "could not link client.dll function V_Ca"...
+  .text:001AF52F                 call    Sys_Error
+  .text:001AF534                 jmp     loc_1AF094
+  .text:001AF540                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_17; "could not link client.dll function KB_F"...
+  .text:001AF547                 call    Sys_Error
+  .text:001AF54C                 jmp     loc_1AF071
+  .text:001AF558                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_18; "could not link client.dll function CAM_"...
+  .text:001AF55F                 call    Sys_Error
+  .text:001AF564                 jmp     loc_1AF04E
+  .text:001AF570                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_19; "could not link client.dll function CL_C"...
+  .text:001AF577                 call    Sys_Error
+  .text:001AF57C                 jmp     loc_1AF02B
+  .text:001AF588                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_20; "could not link client.dll function CL_I"...
+  .text:001AF58F                 call    Sys_Error
+  .text:001AF594                 jmp     loc_1AF008
+  .text:001AF5A0                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_21; "could not link client.dll function CL_C"...
+  .text:001AF5A7                 call    Sys_Error
+  .text:001AF5AC                 jmp     loc_1AEFE5
+  .text:001AF5B8                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_22; "could not link client.dll function IN_A"...
+  .text:001AF5BF                 call    Sys_Error
+  .text:001AF5C4                 jmp     loc_1AEFC2
+  .text:001AF5D0                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_23; "could not link client.dll function IN_C"...
+  .text:001AF5D7                 call    Sys_Error
+  .text:001AF5DC                 jmp     loc_1AEF9F
+  .text:001AF5E8                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_24; "could not link client.dll function IN_M"...
+  .text:001AF5EF                 call    Sys_Error
+  .text:001AF5F4                 jmp     loc_1AEF7C
+  .text:001AF600                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_25; "could not link client.dll function IN_D"...
+  .text:001AF607                 call    Sys_Error
+  .text:001AF60C                 jmp     loc_1AEF59
+  .text:001AF618                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_26; "could not link client.dll function IN_A"...
+  .text:001AF61F                 call    Sys_Error
+  .text:001AF624                 jmp     loc_1AEF36
+  .text:001AF630                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_27; "could not link client.dll function HUD_"...
+  .text:001AF637                 call    Sys_Error
+  .text:001AF63C                 jmp     loc_1AEF13
+  .text:001AF648                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_28; "could not link client.dll function HUD_"...
+  .text:001AF64F                 call    Sys_Error
+  .text:001AF654                 jmp     loc_1AEEF0
+  .text:001AF660                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_29; "could not link client.dll function HUD_"...
+  .text:001AF667                 call    Sys_Error
+  .text:001AF66C                 jmp     loc_1AEECD
+  .text:001AF678                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_30; "could not link client.dll function HUD_"...
+  .text:001AF67F                 call    Sys_Error
+  .text:001AF684                 jmp     loc_1AEEAA
+  .text:001AF690                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_31; "could not link client.dll function HUD_"...
+  .text:001AF697                 call    Sys_Error
+  .text:001AF69C                 jmp     loc_1AEE87
+  .text:001AF6A8                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_32; "could not link client.dll function HUD_"...
+  .text:001AF6AF                 call    Sys_Error
+  .text:001AF6B4                 jmp     loc_1AEE64
+  .text:001AF6C0                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_33; "could not link client.dll function HUD_"...
+  .text:001AF6C7                 call    Sys_Error
+  .text:001AF6CC                 jmp     loc_1AEE41
+  .text:001AF6D8                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_34; "could not link client.dll function HUD_"...
+  .text:001AF6DF                 call    Sys_Error
+  .text:001AF6E4                 jmp     loc_1AEE1E
+  .text:001AF6F0                 mov     [esp+21Ch+s], offset aCouldNotLinkCl_35; "could not link client.dll function Init"...
+  .text:001AF6F7                 call    Sys_Error
+  .text:001AF6FC                 jmp     loc_1AEDFB
+  .text:001AF708                 mov     ebx, offset g_szfullClientName
+  .text:001AF70D                 mov     [esp+21Ch+maxlen], ebx
+  .text:001AF711                 mov     [esp+21Ch+s], offset aCouldNotLoadLi; "could not load library %s"
+  .text:001AF718                 call    Sys_Error
+procedure: |-
+  // Source: engine/cdll_int.c:ClientDLL_Init (DWARF decl_line 415; public HLND2T tree is a different revision).
+  // ClientDLL_Shutdown, LoadSecureClient, LoadInsecureClient, ClientDLL_ClientMoveInit are inlined.
+  // Public leak comments out FreeBlob(&g_blobfootprintClient); this binary keeps that call.
+  void ClientDLL_Init()
+  {
+    void *v0; // eax
+    HUD_CLIENTMOVEINIT_FUNC pClientMoveInit; // eax
+    void (*pShutdown)(void); // eax
+    void *Library; // eax
+    int (*v4)(void); // eax
+    void (*v5)(void); // eax
+    int (*v6)(float, int); // eax
+    int (*v7)(client_data_s *, float); // eax
+    void (*v8)(void); // eax
+    void (*v9)(playermove_s *, qboolean); // eax
+    void (*v10)(playermove_s *); // eax
+    char (*v11)(char *); // eax
+    void (*v12)(void); // eax
+    void (*v13)(void); // eax
+    void (*v14)(int); // eax
+    void (*v15)(void); // eax
+    void (*v16)(void); // eax
+    void (*v17)(float, usercmd_s *, int); // eax
+    int (*v18)(void); // eax
+    void (*v19)(float *); // eax
+    void (*v20)(void); // eax
+    kbutton_s *(*v21)(const char *); // eax
+    void (*v22)(ref_params_s *); // eax
+    int (*v23)(int, cl_entity_s *, const char *); // eax
+    void (*v24)(void); // eax
+    void (*v25)(void); // eax
+    void (*v26)(void); // eax
+    void (*v27)(const mstudioevent_s *, const cl_entity_s *); // eax
+    void (*v28)(void); // eax
+    void (*v29)(entity_state_s *, const clientdata_s *); // eax
+    void (*v30)(entity_state_s *, const entity_state_s *); // eax
+    void (*v31)(entity_state_s *, const entity_state_s *, clientdata_s *, const clientdata_s *, weapon_data_s *, const weapon_data_s *); // eax
+    void (*v32)(int, unsigned __int8 *); // eax
+    int (*v33)(const netadr_s *, const char *, char *, int *); // eax
+    int (*v34)(int, float *, float *); // eax
+    void (*v35)(double); // eax
+    int (*v36)(int, int, const char *); // eax
+    void (*v37)(local_state_s *, local_state_s *, usercmd_s *, int, double, unsigned int); // eax
+    void (*v38)(double, double, double, tempent_s **, tempent_s **, int (*)(cl_entity_s *), void (*)(tempent_s *, float)); // eax
+    cl_entity_s *(*v39)(int); // eax
+    char szDllName[524]; // [esp+10h] [ebp-20Ch] BYREF
+  
+    snprintf(szDllName, 0x200u, "cl_dlls/client.so");
+    if ( fClientLoaded[0] )
+    {
+      Net_APIShutDown();
+      SPR_Shutdown();
+      pShutdown = cl_funcs.pShutdown;
+      if ( pShutdown )
+        pShutdown();
+      if ( cls.fSecureClient )
+      {
+        FreeBlob(&g_blobfootprintClient); // target: FreeBlob
+      }
+      else
+      {
+        dlclose(hClientDLL);
+        hClientDLL = nullptr;
+      }
+      Q_memset(&cl_funcs, 0, 172);
+      Cvar_RemoveHudCvars();
+      Cmd_RemoveHudCmds();
+      CL_ShutDownUsrMessages();
+      fClientLoaded[0] = 0;
+      if ( hClientDLL )
+        dlclose(hClientDLL);
+      hClientDLL = nullptr;
+    }
+    COM_FixSlashes(szDllName);
+    strcpy(g_szfullClientName, szDllName);
+    COM_ExpandFilename(g_szfullClientName);
+    COM_FixSlashes(g_szfullClientName);
+    cls.fSecureClient = false;
+    cl_funcs.pInitFunc = (INITIALIZE_FUNC)&g_modfuncs;
+    cl_funcs.pHudVidInitFunc = (HUD_VIDINIT_FUNC)&g_cldstAddrs;
+    v0 = NLoadBlobFile(g_szfullClientName, &g_blobfootprintClient, &cl_funcs, 1);
+    if ( v0 )
+    {
+      hClientDLL = v0;
+      fClientLoaded[0] = 1;
+    }
+    else if ( !fClientLoaded[0] )
+    {
+      Library = FS_LoadLibrary(g_szfullClientName);
+      hClientDLL = Library;
+      if ( !Library )
+        Sys_Error("could not load library %s", g_szfullClientName);
+      fClientLoaded[0] = 1;
+      cl_funcs.pInitFunc = (INITIALIZE_FUNC)dlsym(Library, "Initialize");
+      if ( !cl_funcs.pInitFunc )
+        Sys_Error("could not link client.dll function Initialize\n");
+      v4 = (int (*)(void))dlsym(hClientDLL, "HUD_VidInit");
+      cl_funcs.pHudVidInitFunc = v4;
+      if ( !v4 )
+        Sys_Error("could not link client.dll function HUD_VidInit\n");
+      v5 = (void (*)(void))dlsym(hClientDLL, "HUD_Init");
+      cl_funcs.pHudInitFunc = v5;
+      if ( !v5 )
+        Sys_Error("could not link client.dll function HUD_Init\n");
+      v6 = (int (*)(float, int))dlsym(hClientDLL, aHudRed);
+      cl_funcs.pHudRedrawFunc = v6;
+      if ( !v6 )
+        Sys_Error("could not link client.dll function HUD_Redraw\n");
+      v7 = (int (*)(client_data_s *, float))dlsym(hClientDLL, "HUD_UpdateClientData");
+      cl_funcs.pHudUpdateClientDataFunc = v7;
+      if ( !v7 )
+        Sys_Error("could not link client.dll function HUD_UpdateClientData\n");
+      v8 = (void (*)(void))dlsym(hClientDLL, "HUD_Reset");
+      cl_funcs.pHudResetFunc = v8;
+      if ( !v8 )
+        Sys_Error("could not link client.dll function HUD_Reset\n");
+      v9 = (void (*)(playermove_s *, qboolean))dlsym(hClientDLL, "HUD_PlayerMove");
+      cl_funcs.pClientMove = v9;
+      if ( !v9 )
+        Sys_Error("could not link client.dll function HUD_PlayerMove\n");
+      v10 = (void (*)(playermove_s *))dlsym(hClientDLL, "HUD_PlayerMoveInit");
+      cl_funcs.pClientMoveInit = v10;
+      if ( !v10 )
+        Sys_Error("could not link client.dll function HUD_PlayerMoveInit\n");
+      v11 = (char (*)(char *))dlsym(hClientDLL, "HUD_PlayerMoveTexture");
+      cl_funcs.pClientTextureType = v11;
+      if ( !v11 )
+        Sys_Error("could not link client.dll function HUD_PlayerMoveTexture\n");
+      v12 = (void (*)(void))dlsym(hClientDLL, "IN_ActivateMouse");
+      cl_funcs.pIN_ActivateMouse = v12;
+      if ( !v12 )
+        Sys_Error("could not link client.dll function IN_ActivateMouse\n");
+      v13 = (void (*)(void))dlsym(hClientDLL, "IN_DeactivateMouse");
+      cl_funcs.pIN_DeactivateMouse = v13;
+      if ( !v13 )
+        Sys_Error("could not link client.dll function IN_DeactivateMouse\n");
+      v14 = (void (*)(int))dlsym(hClientDLL, "IN_MouseEvent");
+      cl_funcs.pIN_MouseEvent = v14;
+      if ( !v14 )
+        Sys_Error("could not link client.dll function IN_MouseEvent\n");
+      v15 = (void (*)(void))dlsym(hClientDLL, "IN_ClearStates");
+      cl_funcs.pIN_ClearStates = v15;
+      if ( !v15 )
+        Sys_Error("could not link client.dll function IN_ClearStates\n");
+      v16 = (void (*)(void))dlsym(hClientDLL, "IN_Accumulate");
+      cl_funcs.pIN_Accumulate = v16;
+      if ( !v16 )
+        Sys_Error("could not link client.dll function IN_Accumulate\n");
+      v17 = (void (*)(float, usercmd_s *, int))dlsym(hClientDLL, "CL_CreateMove");
+      cl_funcs.pCL_CreateMove = v17;
+      if ( !v17 )
+        Sys_Error("could not link client.dll function CL_CreateMove\n");
+      v18 = (int (*)(void))dlsym(hClientDLL, "CL_IsThirdPerson");
+      cl_funcs.pCL_IsThirdPerson = v18;
+      if ( !v18 )
+        Sys_Error("could not link client.dll function CL_IsThirdPerson\n");
+      v19 = (void (*)(float *))dlsym(hClientDLL, "CL_CameraOffset");
+      cl_funcs.pCL_GetCameraOffsets = v19;
+      if ( !v19 )
+        Sys_Error("could not link client.dll function CL_CameraOffset\n");
+      v20 = (void (*)(void))dlsym(hClientDLL, "CAM_Think");
+      cl_funcs.pCamThink = v20;
+      if ( !v20 )
+        Sys_Error("could not link client.dll function CAM_Think\n");
+      v21 = (kbutton_s *(*)(const char *))dlsym(hClientDLL, "KB_Find");
+      cl_funcs.pFindKey = v21;
+      if ( !v21 )
+        Sys_Error("could not link client.dll function KB_Find\n");
+      v22 = (void (*)(ref_params_s *))dlsym(hClientDLL, "V_CalcRefdef");
+      cl_funcs.pCalcRefdef = v22;
+      if ( !v22 )
+        Sys_Error("could not link client.dll function V_CalcRefdef\n");
+      v23 = (int (*)(int, cl_entity_s *, const char *))dlsym(hClientDLL, "HUD_AddEntity");
+      cl_funcs.pAddEntity = v23;
+      if ( !v23 )
+        Sys_Error("could not link client.dll function HUD_AddEntity\n");
+      v24 = (void (*)(void))dlsym(hClientDLL, "HUD_CreateEntities");
+      cl_funcs.pCreateEntities = v24;
+      if ( !v24 )
+        Sys_Error("could not link client.dll function HUD_CreateEntities\n");
+      v25 = (void (*)(void))dlsym(hClientDLL, "HUD_DrawNormalTriangles");
+      cl_funcs.pDrawNormalTriangles = v25;
+      if ( !v25 )
+        Sys_Error("could not link client.dll function HUD_DrawNormalTriangles\n");
+      v26 = (void (*)(void))dlsym(hClientDLL, "HUD_DrawTransparentTriangles");
+      cl_funcs.pDrawTransparentTriangles = v26;
+      if ( !v26 )
+        Sys_Error("could not link client.dll function HUD_DrawTransparentTriangles\n");
+      v27 = (void (*)(const mstudioevent_s *, const cl_entity_s *))dlsym(hClientDLL, "HUD_StudioEvent");
+      cl_funcs.pStudioEvent = v27;
+      if ( !v27 )
+        Sys_Error("could not link client.dll function HUD_StudioEvent\n");
+      v28 = (void (*)(void))dlsym(hClientDLL, "HUD_Shutdown");
+      cl_funcs.pShutdown = v28;
+      if ( !v28 )
+        Sys_Error("could not link client.dll function HUD_Shutdown\n");
+      v29 = (void (*)(entity_state_s *, const clientdata_s *))dlsym(hClientDLL, "HUD_TxferLocalOverrides");
+      cl_funcs.pTxferLocalOverrides = v29;
+      if ( !v29 )
+        Sys_Error("could not link client.dll function HUD_TxferLocalOverrides\n");
+      v30 = (void (*)(entity_state_s *, const entity_state_s *))dlsym(hClientDLL, "HUD_ProcessPlayerState");
+      cl_funcs.pProcessPlayerState = v30;
+      if ( !v30 )
+        Sys_Error("could not link client.dll function HUD_ProcessPlayerState\n");
+      v31 = (void (*)(entity_state_s *, const entity_state_s *, clientdata_s *, const clientdata_s *, weapon_data_s *, const weapon_data_s *))dlsym(hClientDLL, "HUD_TxferPredictionData");
+      cl_funcs.pTxferPredictionData = v31;
+      if ( !v31 )
+        Sys_Error("could not link client.dll function HUD_TxferPredictionData\n");
+      v32 = (void (*)(int, unsigned __int8 *))dlsym(hClientDLL, "Demo_ReadBuffer");
+      cl_funcs.pReadDemoBuffer = v32;
+      if ( !v32 )
+        Sys_Error("could not link client.dll function Demo_ReadBuffer\n");
+      v33 = (int (*)(const netadr_s *, const char *, char *, int *))dlsym(hClientDLL, "HUD_ConnectionlessPacket");
+      cl_funcs.pConnectionlessPacket = v33;
+      if ( !v33 )
+        Sys_Error("could not link client.dll function HUD_ConnectionlessPacket\n");
+      v34 = (int (*)(int, float *, float *))dlsym(hClientDLL, "HUD_GetHullBounds");
+      cl_funcs.pGetHullBounds = v34;
+      if ( !v34 )
+        Sys_Error("could not link client.dll function HUD_GetHullBounds\n");
+      v35 = (void (*)(double))dlsym(hClientDLL, "HUD_Frame");
+      cl_funcs.pHudFrame = v35;
+      if ( !v35 )
+        Sys_Error("could not link client.dll function HUD_Frame\n");
+      v36 = (int (*)(int, int, const char *))dlsym(hClientDLL, "HUD_Key_Event");
+      cl_funcs.pKeyEvent = v36;
+      if ( !v36 )
+        Sys_Error("could not link client.dll function HUD_Key_Event\n");
+      v37 = (void (*)(local_state_s *, local_state_s *, usercmd_s *, int, double, unsigned int))dlsym(
+                                                                                                  hClientDLL,
+                                                                                                  "HUD_PostRunCmd");
+      cl_funcs.pPostRunCmd = v37;
+      if ( !v37 )
+        Sys_Error("could not link client.dll function HUD_PostRunCmd\n");
+      v38 = (void (*)(double, double, double, tempent_s **, tempent_s **, int (*)(cl_entity_s *), void (*)(tempent_s *, float)))dlsym(hClientDLL, "HUD_TempEntUpdate");
+      cl_funcs.pTempEntUpdate = v38;
+      if ( !v38 )
+        Sys_Error("could not link client.dll function HUD_TempEntUpdate\n");
+      v39 = (cl_entity_s *(*)(int))dlsym(hClientDLL, "HUD_GetUserEntity");
+      cl_funcs.pGetUserEntity = v39;
+      if ( !v39 )
+        Sys_Error("could not link client.dll function HUD_GetUserEntity\n");
+      cl_funcs.pVoiceStatus = (HUD_VOICESTATUS_FUNC)dlsym(hClientDLL, "HUD_VoiceStatus");
+      cl_funcs.pDirectorMessage = (HUD_DIRECTORMESSAGE_FUNC)dlsym(hClientDLL, "HUD_DirectorMessage");
+      cl_funcs.pStudioInterface = (HUD_STUDIO_INTERFACE_FUNC)dlsym(hClientDLL, "HUD_GetStudioModelInterface");
+      cl_funcs.pChatInputPosition = (HUD_CHATINPUTPOSITION_FUNC)dlsym(hClientDLL, "HUD_ChatInputPosition");
+      cl_funcs.pClientFactory = (CLIENTFACTORY)dlsym(hClientDLL, "ClientFactory");
+      cl_funcs.pGetPlayerTeam = (HUD_GETPLAYERTEAM)dlsym(hClientDLL, "HUD_GetPlayerTeam");
+    }
+    HookServerMsg("ScreenShake", V_ScreenShake);
+    HookServerMsg("ScreenFade", V_ScreenFade);
+    cl_funcs.pInitFunc(&cl_enginefuncs, 7);
+    pClientMoveInit = cl_funcs.pClientMoveInit;
+    if ( pClientMoveInit )
+      pClientMoveInit(&g_clmove);
+    CL_GetPlayerHulls();
+  }
