@@ -30,6 +30,7 @@ from ida_analyze_util import (
     _resolve_reference_resource,
     parse_mcp_result,
     preprocess_common_skill,
+    preprocess_func_sig_via_mcp,
     preprocess_func_xrefs_via_mcp,
     preprocess_index_based_vfunc_via_mcp,
 )
@@ -2557,6 +2558,174 @@ found_struct_offset: []
         )
         self.assertEqual("0x2000", result["vtable_rva"])
         self.assertEqual({0: "0x401000", 1: "0x401100"}, result["vtable_entries"])
+
+
+class PreprocessFuncSigViaMcpTests(unittest.IsolatedAsyncioTestCase):
+    IMAGE_BASE = 0x400000
+    FUNC_VA = 0x402000
+    OTHER_VA = 0x403000
+    CURRENT_SIG = "55 8B EC 83 EC ??"
+    STALE_SIG = "90 90 90 90"
+    OLD_SIG_RAW = "55 8b ec 90"
+    OLD_SIG_NORMALIZED = "55 8B EC 90"
+
+    def _write_old_yaml(self, root, *, func_sig=None, allow_across=False):
+        payload = {"func_name": "Target"}
+        if func_sig is not None:
+            payload["func_sig"] = func_sig
+        if allow_across:
+            payload["func_sig_allow_across_function_boundary"] = True
+        path = Path(root) / "Target.windows.yaml"
+        path.write_text(yaml.safe_dump(payload), encoding="utf-8")
+        return path
+
+    def _inspect_payload(self, *, function=True):
+        if not function:
+            return {"pointer_size": 4, "function": None}
+        return {
+            "pointer_size": 4,
+            "function": {
+                "func_va": hex(self.FUNC_VA),
+                "func_rva": hex(self.FUNC_VA - self.IMAGE_BASE),
+                "func_size": "0x20",
+                "func_sig": self.CURRENT_SIG,
+            },
+        }
+
+    def _session(self, *, extra_matches=None, inspect_function=True, inspect_error=False):
+        matches_by_pattern = {self.CURRENT_SIG: [self.FUNC_VA]}
+        if extra_matches:
+            matches_by_pattern.update(extra_matches)
+        lookups = []
+        py_eval_codes = []
+
+        async def call_tool(name, arguments):
+            if name == "find_bytes":
+                pattern = arguments["patterns"][0]
+                lookups.append(pattern)
+                matches = matches_by_pattern.get(pattern, [])
+                return {
+                    "matches": [hex(match) if isinstance(match, int) else match for match in matches],
+                    "n": len(matches),
+                }
+            if name == "py_eval":
+                py_eval_codes.append(arguments["code"])
+                if inspect_error:
+                    raise RuntimeError("inspect failed")
+                return self._inspect_payload(function=inspect_function)
+            raise AssertionError(f"unexpected tool {name}")
+
+        return SimpleNamespace(call_tool=call_tool, lookups=lookups, py_eval_codes=py_eval_codes)
+
+    async def _preprocess(self, session, old_path, **kwargs):
+        return await preprocess_func_sig_via_mcp(
+            session,
+            "Target.windows.yaml",
+            old_path,
+            self.IMAGE_BASE,
+            "unused",
+            "windows",
+            func_name="Target",
+            **kwargs,
+        )
+
+    async def test_direct_va_keeps_current_sig_when_old_sig_matches_nothing(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            old_path = self._write_old_yaml(temporary, func_sig=self.STALE_SIG)
+            session = self._session(extra_matches={self.STALE_SIG: []})
+            result = await self._preprocess(session, old_path, direct_func_va=self.FUNC_VA)
+
+        self.assertEqual(self.CURRENT_SIG, result["func_sig"])
+        self.assertEqual(hex(self.FUNC_VA), result["func_va"])
+        self.assertNotIn(self.STALE_SIG, session.lookups)
+        self.assertEqual([self.CURRENT_SIG], session.lookups)
+
+    async def test_direct_va_never_returns_old_sig_matching_other_or_multiple_locations(self):
+        cases = (
+            {self.STALE_SIG: [self.OTHER_VA]},
+            {self.STALE_SIG: [self.FUNC_VA, self.OTHER_VA]},
+        )
+        for extra_matches in cases:
+            with self.subTest(extra_matches=extra_matches), tempfile.TemporaryDirectory() as temporary:
+                old_path = self._write_old_yaml(temporary, func_sig=self.STALE_SIG)
+                session = self._session(extra_matches=extra_matches)
+                result = await self._preprocess(session, old_path, direct_func_va=hex(self.FUNC_VA))
+
+                self.assertEqual(self.CURRENT_SIG, result["func_sig"])
+                self.assertNotEqual(self.STALE_SIG, result["func_sig"])
+                self.assertNotIn(self.STALE_SIG, session.lookups)
+
+    async def test_direct_va_without_old_sig_keeps_current_sig(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            old_path = self._write_old_yaml(temporary)
+            session = self._session()
+            result = await self._preprocess(session, old_path, direct_func_va=self.FUNC_VA)
+
+        self.assertEqual(self.CURRENT_SIG, result["func_sig"])
+        self.assertEqual([self.CURRENT_SIG], session.lookups)
+
+    async def test_direct_va_inspection_failure_returns_none_even_with_old_sig(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            old_path = self._write_old_yaml(temporary, func_sig=self.STALE_SIG)
+            missing_function = self._session(extra_matches={self.STALE_SIG: [self.FUNC_VA]}, inspect_function=False)
+            self.assertIsNone(await self._preprocess(missing_function, old_path, direct_func_va=self.FUNC_VA))
+            self.assertEqual([], missing_function.lookups)
+
+            inspect_error = self._session(extra_matches={self.STALE_SIG: [self.FUNC_VA]}, inspect_error=True)
+            self.assertIsNone(await self._preprocess(inspect_error, old_path, direct_func_va=self.FUNC_VA))
+            self.assertEqual([], inspect_error.lookups)
+
+    async def test_ordinary_path_reuses_validated_unique_old_sig(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            old_path = self._write_old_yaml(temporary, func_sig=self.OLD_SIG_RAW)
+            session = self._session(extra_matches={self.OLD_SIG_RAW: [self.FUNC_VA]})
+            result = await self._preprocess(session, old_path)
+
+        self.assertEqual(self.OLD_SIG_NORMALIZED, result["func_sig"])
+        self.assertEqual(hex(self.FUNC_VA), result["func_va"])
+        self.assertEqual([self.OLD_SIG_RAW, self.CURRENT_SIG], session.lookups)
+
+    async def test_ordinary_path_missing_or_nonunique_old_sig_returns_none(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            missing_sig_path = self._write_old_yaml(temporary)
+            session = self._session()
+            self.assertIsNone(await self._preprocess(session, missing_sig_path))
+            self.assertEqual([], session.lookups)
+            self.assertEqual([], session.py_eval_codes)
+
+            self.assertIsNone(await self._preprocess(session, None))
+            self.assertEqual([], session.lookups)
+
+            stale_path = self._write_old_yaml(temporary, func_sig=self.STALE_SIG)
+            for extra_matches in ({self.STALE_SIG: []}, {self.STALE_SIG: [self.FUNC_VA, self.OTHER_VA]}):
+                with self.subTest(extra_matches=extra_matches):
+                    session = self._session(extra_matches=extra_matches)
+                    self.assertIsNone(await self._preprocess(session, stale_path))
+                    self.assertEqual([self.STALE_SIG], session.lookups)
+                    self.assertEqual([], session.py_eval_codes)
+
+    async def test_across_function_boundary_flag_is_forwarded_and_recorded(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            old_path = self._write_old_yaml(temporary, func_sig=self.OLD_SIG_RAW)
+            session = self._session(extra_matches={self.OLD_SIG_RAW: [self.FUNC_VA]})
+            result = await self._preprocess(
+                session,
+                old_path,
+                allow_func_sig_across_function_boundary=True,
+            )
+            self.assertTrue(result["func_sig_allow_across_function_boundary"])
+            self.assertIn("allow_across_function_boundary = True", session.py_eval_codes[0])
+
+            old_flag_path = self._write_old_yaml(temporary, func_sig=self.OLD_SIG_RAW, allow_across=True)
+            session = self._session(extra_matches={self.OLD_SIG_RAW: [self.FUNC_VA]})
+            result = await self._preprocess(session, old_flag_path)
+            self.assertTrue(result["func_sig_allow_across_function_boundary"])
+            self.assertIn("allow_across_function_boundary = True", session.py_eval_codes[0])
+
+            session = self._session()
+            result = await self._preprocess(session, None, direct_func_va=self.FUNC_VA)
+            self.assertNotIn("func_sig_allow_across_function_boundary", result)
+            self.assertIn("allow_across_function_boundary = False", session.py_eval_codes[0])
 
 
 if __name__ == "__main__":
