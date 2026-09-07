@@ -1,0 +1,5 @@
+patch_name: Mod_LoadModel_to_FS_Open_callsite_0
+patch_va: '0x156636'
+patch_rva: '0x156636'
+patch_sig: E8 E5 7E F4 FF 85 C0
+patch_sig_disp: '0x0'

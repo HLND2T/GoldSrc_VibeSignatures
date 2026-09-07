@@ -23,6 +23,7 @@ GROUP_FILES = {
         "test_ida_skill_preprocessor.py",
         "test_cvar_hooks_preprocessor.py",
         "test_cvar_set_callsites_preprocessor.py",
+        "test_func_to_func_callsites_preprocessor.py",
         "test_analysis_planner.py",
         "test_analysis_batch.py",
         "test_analysis_memory.py",

@@ -31,6 +31,18 @@ modules:
           - Mod_LoadModel.{platform}.yaml
         expected_output:
           - FS_Open.{platform}.yaml
+      - name: find-S_LoadSound_to_FS_Open_callsites
+        expected_input:
+          - S_LoadSound.{platform}.yaml
+          - FS_Open.{platform}.yaml
+        expected_output:
+          - S_LoadSound_to_FS_Open_callsite_0.{platform}.yaml
+      - name: find-Mod_LoadModel_to_FS_Open_callsites
+        expected_input:
+          - Mod_LoadModel.{platform}.yaml
+          - FS_Open.{platform}.yaml
+        expected_output:
+          - Mod_LoadModel_to_FS_Open_callsite_0.{platform}.yaml
       - name: find-ClientDLL_Init
         expected_output:
           - ClientDLL_Init.{platform}.yaml
@@ -137,6 +149,10 @@ modules:
         category: func
       - name: FS_Open
         category: func
+      - name: S_LoadSound_to_FS_Open_callsite_0
+        category: patch
+      - name: Mod_LoadModel_to_FS_Open_callsite_0
+        category: patch
       - name: ClientDLL_Init
         category: func
       - name: ClientDLL_HudInit

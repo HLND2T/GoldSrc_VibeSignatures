@@ -1,0 +1,5 @@
+patch_name: S_LoadSound_to_FS_Open_callsite_0
+patch_va: '0x1a1829'
+patch_rva: '0x1a1829'
+patch_sig: E8 F2 CC EF FF 85 C0
+patch_sig_disp: '0x0'

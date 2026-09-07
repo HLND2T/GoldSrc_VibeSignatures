@@ -1,0 +1,5 @@
+patch_name: S_LoadSound_to_FS_Open_callsite_0
+patch_va: '0x1d991d4'
+patch_rva: '0x991d4'
+patch_sig: E8 F7 56 FB FF 8B D8
+patch_sig_disp: '0x0'
