@@ -76,24 +76,6 @@ deferred.
 module/platform/skill work to continue after runtime failures, while configuration and DAG contract failures remain
 fatal and any recorded runtime failure still produces a nonzero final exit status.
 
-## Full-analysis bounded concurrency
-
-`ida_analyze_bin.py -allgamever -force_all` runs as a two-phase coordinator. The complete per-tag node DAGs are
-classified once before any worker starts: every cross-binary dependency edge moves its target and the entire
-downstream closure into a serial tail queue, and the remaining nodes are grouped per binary into parallel work
-items. Each work item is one worker process (`analysis_batch.py`) that owns one dynamic-port `idalib-mcp`
-lifecycle and executes its exact ordered node subset with force execution; no tag-completion barrier exists
-between game versions. The serial tail queue starts only after every parallel worker result validates and its
-process/lifecycle has exited, and it runs at most one segment at a time, reopening the neutral restored IDB
-when the same binary reappears across phases.
-
-Admission is bounded by `GSVIBE_ANALYSIS_MAX_CONCURRENCY` (default `1`, fail-closed decimal `1..32`) and, when
-`GSVIBE_ANALYSIS_MAX_MEMORY_MIB` is set, by an aggregate Windows Job Object hard limit plus an 85% soft
-admission gate with host-headroom checks (`analysis_memory.py`, reusing the warmup Job primitives). Effective
-concurrency above `1` requires an explicit memory budget; malformed values fail closed before any worker
-launches. Dynamic MCP port allocation happens under a runner-local cross-process startup lock
-(`mcp_startup.py`) that covers only allocate/spawn/bind-confirm and retries with a fresh port when stolen.
-
 ## Warm IDB cache boundary
 
 `idb_cache.py` provides a local immutable-generation cache for neutral IDA databases. A new schema-1 key binds exact
@@ -127,24 +109,6 @@ canonical Python executable probes its IDA version and starts one bare-idalib pr
 database set, siblings finish, and any failure prevents group publication. Optional aggregate memory admission uses one
 process-level Windows Job controller across groups and a fresh gate/baseline for each group.
 
-## Process reporting and scheduling
-
-The validated analysis DAG remains the only planning source. `build_process_execution_plan()` projects it into an
-immutable schema-v1 graph with stable stage, job, task, layer, edge, and auxiliary-node identifiers. Direct analyzer
-execution and queued execution therefore report the same graph.
-
-`ProcessEvent` defines run/task state machines, phases, stable reasons, payloads, occurrence time, and revision ordering.
-The reporter lifecycle is `initialize_run`, `emit`, `heartbeat`, `finalize_run`, `flush`, and `close`. The analyzer wraps
-backends with `BestEffortProcessReporter`, so monitoring failures never change analysis results. The console backend emits
-the current JSONL protocol; the Redis backend atomically persists run/task views and appends events under
-`gsvibe:analysis:v1`. No legacy event API or format is retained.
-
-`RedisRunQueue` stores validated minimal `RunRequest` objects in a consumer-group Stream. The scheduler runs one analyzer
-at a time under a renewable global Redis lease, constructs argv without shell interpolation, injects reporter/run-ID
-environment values, honors live heartbeats, uses `XAUTOCLAIM` for stale pending entries, prevents terminal-run replay, and
-derives a final status from the child exit code when the analyzer did not persist one. Scheduler terminal fallback
-atomically aborts every unfinished task and recomputes the summary before appending the terminal run event.
-
 ## Snapshot boundary
 
 The writer emits schema 6 with config digest v2, analysis-output contract version 2, UTC publication time, canonical
@@ -162,17 +126,6 @@ Canonical gamedata is derived only from the guarded candidate inventory (`update
 Git index. Each tag has a self-excluding canonical manifest that binds snapshot/config/generator identities and the exact
 declared payload files; an empty generator set therefore still has one verifiable output. gamedata is no longer a Release
 artifact.
-
-## Release provenance boundary
-
-The release build force-rebuilds every configured artifact into a fresh external root and compares exact bytes with Git
-`bin_artifacts`. It then generates snapshots, metadata, browser JSON datasets (`mark -step json`), the single all-in-one
-`gamesymbols-<version>.7z`, a canonical Release manifest, and `SHA256SUMS`. The self-hosted job is read-only; a
-GitHub-hosted job verifies the closed bundle against the exact source and Git blobs, independently re-deriving the JSON
-and comparing it byte-for-byte with the bundle. The protected `publish-release` job is the only `contents: write` job in
-`release-build.yml`.
-It creates or resumes a matching draft, refuses tag/asset drift and overwrite, verifies remote name/size/hash, then
-publishes. Published versions are immutable; changed content requires a new version.
 
 ## API, dashboard, and immutable Pages assets
 

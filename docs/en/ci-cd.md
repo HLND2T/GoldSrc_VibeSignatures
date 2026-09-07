@@ -27,11 +27,6 @@ including artifact A/M/D/R/C ownership and downstream closure. Rebuilds write on
 force selected nodes to execute, then compare the complete inventory and bytes with merge Git blobs. Forks that need
 self-hosted analysis fail closed. `pr-validate` is the aggregate required check.
 
-The reusable `warmup-idb` producer publishes an exact selection. It binds one IDA Python executable, then warms each
-binary in a separate bare-idalib worker with bounded per-group concurrency. Consumers verify and restore that selection,
-never warm or save. The IDB key binds binary/kernel/worker identity and intentionally does not bind `bin_artifacts`
-content.
-
 ## Release workflow
 
 The release DAG is:

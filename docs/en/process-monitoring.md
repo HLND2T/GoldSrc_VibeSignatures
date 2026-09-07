@@ -13,7 +13,7 @@ GSVIBE_REDIS_URL=redis://127.0.0.1:6379/0
 
 Alternatively, pass `-process_reporter=redis`, `-redis_url=...`, and the optional `-redis_prefix=...` arguments to the Analyzer.
 
-The Reporter publishes the immutable execution graph, current Run/Job/Task snapshots, an event Stream, atomic summary counters, and a TTL heartbeat. Temporary Redis failures do not change the Analyzer result; the latest local snapshots are replayed after reconnection.
+Temporary Redis failures do not change the Analyzer result; the latest local snapshots are replayed after reconnection.
 
 ## Scheduler
 
@@ -24,7 +24,7 @@ uv run python process_scheduler_cli.py submit --gamever cstrike-10210 --agent cl
 uv run python process_scheduler_cli.py run
 ```
 
-The Redis Stream consumer group preserves FIFO order, recovers pending entries after Scheduler restarts, and does not relaunch a recovered Run while its Analyzer heartbeat is still alive. Queue payloads are validated fields rather than executable shell commands. The request contract is intentionally minimal: `run_id`, `gamever`, `platforms`, `modules`, `skill_filter`, `agent`, and `created_at`; the scheduler controls its own argv and environment. Scheduler recovery atomically aborts unfinished tasks and recomputes the run summary.
+The Redis Stream consumer group preserves FIFO order, recovers pending entries after Scheduler restarts, and does not relaunch a recovered Run while its Analyzer heartbeat is still alive.
 
 ## Read-only progress API
 
