@@ -1968,7 +1968,8 @@ async def preprocess_func_sig_via_mcp(
     )
     if result is None:
         return None
-    if old_data and old_data.get("func_sig"):
+    # direct_func_va skips the unique-match lookup, so keep the inspect-generated signature.
+    if direct_func_va is None and old_data and old_data.get("func_sig"):
         result["func_sig"] = normalize_signature(old_data["func_sig"])
     if allow_func_sig_across_function_boundary or (old_data or {}).get("func_sig_allow_across_function_boundary"):
         result["func_sig_allow_across_function_boundary"] = True
