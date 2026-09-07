@@ -8,6 +8,17 @@
 test/lint/build/asset/E2E 检查。Repository contract 要求完整 formal `bin_artifacts` Git inventory，并禁止 tracked
 `bin/**/*.yaml`、`gamesymbols/`、`gamedata/` 与 `release-manifests/` 输出。
 
+## Submodule 拉取
+
+Workflow 直接同步并拉取已提交的精确 submodule revision，不再通过 Actions 缓存 `bin` 或 `.git/modules`。
+Self-hosted runner 使用预先配置的 Git URL 重写，将 `https://github.com/` 读取转发到
+`http://HZVM:8080/`（git-cache-proxy）。配置必须对 runner service 账户及 checkout action 可见，workflow
+不负责安装或修改这些配置。代理仅在 runner 宿主机的私有网络可达，GitHub-hosted job 仍直接从 GitHub 拉取。
+
+代理的上游 PAT 只有读权限，必须拥有所服务的每个私有 submodule 仓库的 Contents: Read 权限。
+推送必须继续使用 `https://github.com/`，由 runner 的 `pushInsteadOf` 规则确保绕过代理，并由 job 提供独立的写入凭据。
+IDB、uv 与 npm 缓存独立于 submodule 拉取。
+
 ## Source PR validation
 
 `gamesymbol-pr-validation.yml` 只有 source route。可信 base tooling 从 base/head/merge Git tree 规划影响，覆盖 artifact

@@ -8,6 +8,18 @@
 test/lint/build/asset/E2E checks. Repository contract requires the complete formal `bin_artifacts` Git inventory and
 forbids tracked `bin/**/*.yaml`, `gamesymbols/`, `gamedata/`, and `release-manifests/` outputs.
 
+## Submodule downloads
+
+Workflows sync and fetch the exact committed submodule revisions without Actions caches for `bin` or `.git/modules`.
+Self-hosted runners use their preconfigured Git URL rewrites to read `https://github.com/` through
+`http://HZVM:8080/` (git-cache-proxy). These settings must be visible to the runner service account, including checkout
+actions; workflows do not install or change them. GitHub-hosted jobs fetch directly from GitHub because the proxy is
+only reachable on the runner host's private network.
+
+The proxy's upstream PAT is read-only and must have Contents: Read access to every private submodule it serves.
+Pushes must continue to use `https://github.com/`, with the runner's `pushInsteadOf` rule keeping them off the proxy
+and the job supplying its own write credentials. IDB, uv, and npm caches are independent of submodule downloads.
+
 ## Source PR validation
 
 `gamesymbol-pr-validation.yml` has one source route. Trusted base tooling plans impact from base/head/merge Git trees,
