@@ -1,0 +1,5 @@
+patch_name: Cvar_Set_to_Cvar_DirectSet_callsite_0
+patch_va: '0x1d313a7'
+patch_rva: '0x313a7'
+patch_sig: E9 24 FE FF FF 90
+patch_sig_disp: '0x0'

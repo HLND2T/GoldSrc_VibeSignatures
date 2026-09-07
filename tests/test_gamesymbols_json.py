@@ -12,7 +12,7 @@ from gamesymbol_snapshot_lib.candidate import build_candidate_snapshot, publish_
 from gamesymbol_snapshot_lib.candidate_session import CandidateContractError
 from gamesymbol_snapshot_lib.metadata import write_metadata
 from gamesymbol_snapshot_lib.operations import pack_snapshot
-from gamesymbols_json import build_dataset_cli, encode_dataset, encode_index
+from gamesymbols_json import _symbol_kind, _symbol_name, build_dataset_cli, encode_dataset, encode_index
 from release_workflow_lib.hashing import canonical_json_bytes, sha256_bytes
 from tests.test_support import write_config, write_elf32, write_pe32
 
@@ -42,6 +42,20 @@ def fixture(root: Path):
 
 
 class EncoderTests(unittest.TestCase):
+    def test_patch_payload_exports_as_patch_kind(self):
+        payload = {
+            "patch_name": "Cvar_Set_to_Cvar_DirectSet_callsite_0",
+            "patch_va": "0x101be0d6",
+            "patch_rva": "0x1be0d6",
+            "patch_sig": "E8 AA BB CC DD 83 C4 08",
+            "patch_sig_disp": "0x0",
+        }
+        self.assertEqual("patch", _symbol_kind(payload))
+        self.assertEqual(
+            "Cvar_Set_to_Cvar_DirectSet_callsite_0",
+            _symbol_name(payload, "ignored"),
+        )
+
     def test_encode_dataset_is_canonical_and_schema_three(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

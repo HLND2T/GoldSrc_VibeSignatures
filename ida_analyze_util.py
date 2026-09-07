@@ -1978,7 +1978,7 @@ async def preprocess_func_sig_via_mcp(
 async def preprocess_patch_via_mcp(session, new_path, old_path, image_base, new_binary_dir, platform, debug=False):
     del new_binary_dir, platform, debug
     old_data = _load_yaml_mapping(old_path)
-    if not old_data or not old_data.get("patch_sig") or not old_data.get("patch_bytes"):
+    if not old_data or not old_data.get("patch_sig"):
         return None
     ea = await _find_unique_bytes(session, old_data["patch_sig"])
     if ea is None or ea < int(image_base):
@@ -1988,10 +1988,11 @@ async def preprocess_patch_via_mcp(session, new_path, old_path, image_base, new_
         "patch_va": hex(ea),
         "patch_rva": hex(ea - int(image_base)),
         "patch_sig": normalize_signature(old_data["patch_sig"]),
-        "patch_bytes": old_data["patch_bytes"],
     }
     if old_data.get("patch_sig_disp") is not None:
         result["patch_sig_disp"] = _parse_int(old_data["patch_sig_disp"], "patch_sig_disp")
+    if old_data.get("patch_bytes") is not None:
+        result["patch_bytes"] = old_data["patch_bytes"]
     return result
 
 

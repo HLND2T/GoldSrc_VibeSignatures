@@ -1,0 +1,5 @@
+patch_name: Cvar_Set_to_Cvar_DirectSet_callsite_0
+patch_va: '0x1d424ac'
+patch_rva: '0x424ac'
+patch_sig: E8 0F 00 00 00 83 C4 ??
+patch_sig_disp: '0x0'
