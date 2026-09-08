@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import textwrap
+import threading
 import unittest
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -121,6 +122,210 @@ def cache_fixture(root: Path):
         warm_worker_path=Path(idb_cache.__file__).with_name("idb_warm_worker.py"),
     )
     return workspace, persisted, binary, identity
+
+
+class PrepareSelectionConcurrencyTests(unittest.TestCase):
+    def _prepare(self, persisted, groups, identities, concurrency=2):
+        return idb_cache_selection.prepare_selection_entries(
+            groups=groups,
+            identities=identities,
+            persisted_root=persisted,
+            run_id="run-2",
+            attempt=1,
+            ida_python_executable=sys.executable,
+            max_concurrency=concurrency,
+            worker_timeout_seconds=1,
+            producer_memory=ProducerMemoryOwner(None),
+        )
+
+    def _groups(self, root, pairs):
+        groups = [SelectedBinaryGroup(tag, platform, root / tag, ()) for tag, platform in pairs]
+        identities = {(g.tag, g.platform): {"tag": g.tag, "platform": g.platform, "binaries": []} for g in groups}
+        return groups, identities
+
+    @staticmethod
+    def _selection(identity):
+        return {"cache_key": "a" * 64, "generation": identity["tag"], "manifest_sha256": "b" * 64}
+
+    def test_probes_overlap_across_tags_with_bounded_concurrency_and_canonical_results(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            groups, identities = self._groups(root, [(f"game-{i}", "windows") for i in (4, 3, 2, 1)])
+            barrier = threading.Barrier(2, timeout=5)
+            guard = threading.Lock()
+            active = peak = 0
+
+            def probe(**kwargs):
+                nonlocal active, peak
+                with guard:
+                    active += 1
+                    peak = max(peak, active)
+                try:
+                    barrier.wait()
+                    return self._selection(kwargs["identity"])
+                finally:
+                    with guard:
+                        active -= 1
+
+            with (
+                patch.object(idb_cache_selection, "probe_generation", side_effect=probe),
+                patch.object(idb_cache_selection, "prune_tag"),
+                patch.object(idb_cache_selection, "verify_selection") as verify,
+                patch.object(idb_cache_selection, "warm_group") as warm,
+            ):
+                entries = self._prepare(root, groups, identities)
+            self.assertEqual(2, peak)
+            self.assertEqual([f"game-{i}" for i in (1, 2, 3, 4)], [e["tag"] for e in entries])
+            verify.assert_not_called()
+            warm.assert_not_called()
+
+    def test_same_tag_platforms_keep_input_order_and_exclusive_lock(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            groups, identities = self._groups(root, [("game-1", "windows"), ("game-1", "linux")])
+            observed = []
+
+            def probe(**kwargs):
+                identity = kwargs["identity"]
+                observed.append(identity["platform"])
+                self.assertTrue(lock_is_held_by_another_process(lock_root(root) / "game-1.lock"))
+                return self._selection(identity)
+
+            with (
+                patch.object(idb_cache_selection, "probe_generation", side_effect=probe),
+                patch.object(idb_cache_selection, "prune_tag"),
+                patch.object(idb_cache_selection, "verify_selection"),
+            ):
+                entries = self._prepare(root, groups, identities)
+            self.assertEqual(["windows", "linux"], observed)
+            self.assertEqual(["linux", "windows"], [e["platform"] for e in entries])
+
+    def test_serial_and_parallel_real_hits_produce_identical_canonical_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace, persisted, _binary, identity = cache_fixture(Path(temporary))
+            identities = {}
+            groups = []
+            for tag in ("game-2", "game-1"):
+                current = {**identity, "tag": tag}
+                identities[(tag, "windows")] = current
+                groups.append(SelectedBinaryGroup(tag, "windows", workspace, tuple(current["binaries"])))
+                publish_generation(
+                    persisted_root=persisted, identity=current, workspace_root=workspace, run_id="run-1", attempt=1
+                )
+            serial = self._prepare(persisted, groups, identities, concurrency=1)
+            parallel = self._prepare(persisted, groups, identities, concurrency=2)
+            self.assertEqual(canonical_json_bytes(serial), canonical_json_bytes(parallel))
+
+    def test_concurrency_environment_is_used_and_invalid_limits_fail_before_probe(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            groups, identities = self._groups(root, [("game-2", "windows"), ("game-1", "windows")])
+            with (
+                patch.dict(os.environ, {idb_cache.MAX_CONCURRENCY_ENV: "1"}),
+                patch.object(
+                    idb_cache_selection, "probe_generation", side_effect=lambda **kw: self._selection(kw["identity"])
+                ) as probe,
+                patch.object(idb_cache_selection, "prune_tag"),
+            ):
+                self._prepare(root, groups, identities, concurrency=None)
+                self.assertEqual(["game-2", "game-1"], [c.kwargs["identity"]["tag"] for c in probe.call_args_list])
+            for invalid in (0, -1, True):
+                with self.subTest(limit=invalid), patch.object(idb_cache_selection, "probe_generation") as probe:
+                    with self.assertRaisesRegex(IdbCacheError, "positive integer"):
+                        self._prepare(root, groups, identities, concurrency=invalid)
+                    probe.assert_not_called()
+
+    def test_misses_warm_serially_on_caller_after_probes_and_reprobe_before_publish(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            groups, identities = self._groups(root, [("game-2", "windows"), ("game-1", "windows")])
+            initial_probes = set()
+            caller = threading.get_ident()
+            warmed = []
+            owners = []
+
+            def probe(**kwargs):
+                identity = kwargs["identity"]
+                if threading.get_ident() != caller:
+                    initial_probes.add(identity["tag"])
+                    return None
+                # A generation appeared while warming: retain the locked re-probe.
+                return self._selection(identity)
+
+            def warm(**kwargs):
+                self.assertEqual(caller, threading.get_ident())
+                self.assertEqual({"game-1", "game-2"}, initial_probes)
+                self.assertEqual(2, kwargs["max_concurrency"])
+                self.assertFalse(lock_is_held_by_another_process(lock_root(root) / f"{kwargs['identity']['tag']}.lock"))
+                warmed.append(kwargs["identity"]["tag"])
+                owners.append(kwargs["producer_memory"])
+
+            with (
+                patch.object(idb_cache_selection, "probe_generation", side_effect=probe),
+                patch.object(idb_cache_selection, "warm_group", side_effect=warm),
+                patch.object(idb_cache_selection, "publish_generation") as publish,
+                patch.object(idb_cache_selection, "verify_selection") as verify,
+                patch.object(idb_cache_selection, "prune_tag"),
+            ):
+                self._prepare(root, groups, identities)
+            self.assertEqual(["game-2", "game-1"], warmed)
+            self.assertIs(owners[0], owners[1])
+            self.assertEqual(2, verify.call_count)
+            publish.assert_not_called()
+
+    def test_probe_failure_finishes_pool_and_does_not_start_misses(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            groups, identities = self._groups(root, [("game-1", "windows"), ("game-2", "windows")])
+            barrier = threading.Barrier(2, timeout=5)
+            finished = threading.Event()
+
+            def probe(**kwargs):
+                barrier.wait()
+                if kwargs["identity"]["tag"] == "game-1":
+                    raise OSError("probe failed")
+                finished.set()
+                return None
+
+            with (
+                patch.object(idb_cache_selection, "probe_generation", side_effect=probe),
+                patch.object(idb_cache_selection, "warm_group") as warm,
+            ):
+                with self.assertRaisesRegex(OSError, "probe failed"):
+                    self._prepare(root, groups, identities)
+            self.assertTrue(finished.is_set())
+            warm.assert_not_called()
+
+    def test_ready_and_fallback_hits_still_hash_payload_and_reject_corruption(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace, persisted, _binary, identity = cache_fixture(Path(temporary))
+            selection = publish_generation(
+                persisted_root=persisted, identity=identity, workspace_root=workspace, run_id="run-1", attempt=1
+            )
+            group = SelectedBinaryGroup("game-1", "windows", workspace, tuple(identity["binaries"]))
+            identities = {("game-1", "windows"): identity}
+            ready = persisted / "idb-cache" / "game-1" / "READY.json"
+            for fallback in (False, True):
+                with self.subTest(fallback=fallback):
+                    if fallback:
+                        ready.write_bytes(b"invalid ready")
+                    with (
+                        patch.object(idb_cache_selection, "verify_selection") as redundant_verify,
+                        patch.object(
+                            idb_cache, "_verify_generation_root", wraps=idb_cache._verify_generation_root
+                        ) as verify,
+                        patch.object(idb_cache_selection, "warm_group") as warm,
+                    ):
+                        entries = self._prepare(persisted, [group], identities)
+                    self.assertEqual(selection["generation"], entries[0]["generation"])
+                    self.assertGreaterEqual(verify.call_count, 1)
+                    redundant_verify.assert_not_called()
+                    warm.assert_not_called()
+            payload = persisted / "idb-cache" / "game-1" / "generations" / selection["generation"] / "payload"
+            next(payload.rglob("*.i64")).write_bytes(b"corrupt-idb")
+            with patch.object(idb_cache_selection, "warm_group", side_effect=IdbCacheError("rebuild required")):
+                with self.assertRaisesRegex(IdbCacheError, "rebuild required"):
+                    self._prepare(persisted, [group], identities)
 
 
 class IdaDatabasePathTests(unittest.TestCase):
