@@ -66,7 +66,7 @@ from idb_cache_workflow import (
 from gamesymbol_snapshot_lib.pr_validation import BoundImpactPlan, TagImpact
 from gamesymbol_snapshot_lib.pr_cli import PrCliError
 from release_workflow_lib.hashing import canonical_json_bytes, write_canonical_json
-from tests.test_support import write_pe32
+from tests.test_support import write_elf32, write_pe32
 from warmup_memory import ProducerMemoryOwner
 
 
@@ -125,6 +125,89 @@ def cache_fixture(root: Path):
 
 
 class PrepareSelectionConcurrencyTests(unittest.TestCase):
+    def test_prepared_generations_survive_later_prunes(self):
+        fixed_now = datetime(2026, 2, 1, tzinfo=timezone.utc)
+        for concurrency in (1, 2):
+            for hits in (("windows",), ("linux", "windows"), ()):
+                with self.subTest(concurrency=concurrency, hits=hits), tempfile.TemporaryDirectory() as temporary:
+                    workspace, persisted, _binary, windows = cache_fixture(Path(temporary))
+                    linux_binary = write_elf32(workspace / "engine" / "hw.so", b"cache-input")
+                    Path(f"{linux_binary}.i64").write_bytes(b"linux-idb")
+                    linux = build_cache_identity(
+                        tag="game-1",
+                        ida_runtime={"kernel_version": "9.3"},
+                        binaries=[
+                            build_binary_identity(
+                                workspace_root=workspace,
+                                module="engine",
+                                platform="linux",
+                                relative_path="engine/hw.so",
+                            )
+                        ],
+                        warm_worker_path=Path(idb_cache.__file__).with_name("idb_warm_worker.py"),
+                    )
+                    identities = {("game-1", "linux"): linux, ("game-1", "windows"): windows}
+                    groups = [
+                        SelectedBinaryGroup(tag, platform, workspace, tuple(identity["binaries"]))
+                        for (tag, platform), identity in identities.items()
+                    ]
+                    selected = {}
+                    for platform in hits:
+                        selected[platform] = publish_generation(
+                            persisted_root=persisted,
+                            identity=identities[("game-1", platform)],
+                            workspace_root=workspace,
+                            run_id=f"old-{platform}",
+                            attempt=1,
+                            published_at="2026-01-05T00:00:00Z"
+                            if len(hits) == 2 and platform == "windows"
+                            else "2026-01-01T00:00:00Z",
+                        )
+                    historical = []
+                    for index, version in enumerate(("8.2", "8.3", "8.4"), start=2):
+                        historical.append(
+                            publish_generation(
+                                persisted_root=persisted,
+                                identity={**windows, "ida_runtime": {"kernel_version": version}},
+                                workspace_root=workspace,
+                                run_id=f"history-{index}",
+                                attempt=1,
+                                published_at=f"2026-01-0{index}T00:00:00Z",
+                            )
+                        )
+                    # Fix retention time while retaining the real probe/publish/prune/verify paths.
+                    with (
+                        patch.object(idb_cache_selection, "warm_group") as warm,
+                        patch.object(
+                            idb_cache_selection,
+                            "publish_generation",
+                            side_effect=lambda **kw: publish_generation(published_at="2026-01-10T00:00:00Z", **kw),
+                        ),
+                        patch.object(
+                            idb_cache_selection,
+                            "prune_tag",
+                            # For all misses, age out new publications and remove latest-count
+                            # protection so only the Prepare set can retain the first miss.
+                            side_effect=lambda **kw: prune_tag(now=fixed_now, keep_latest=3 if hits else 0, **kw),
+                        ),
+                    ):
+                        entries = self._prepare(persisted, groups, identities, concurrency)
+                    idb_cache_selection.validate_selection_entries(
+                        entries=entries,
+                        identities=identities,
+                        persisted_root=persisted,
+                    )
+                    self.assertEqual(
+                        [platform for platform in ("linux", "windows") if platform not in hits],
+                        [call.kwargs["identity"]["binaries"][0]["platform"] for call in warm.call_args_list],
+                    )
+                    for entry in entries:
+                        if entry["platform"] in selected:
+                            self.assertEqual(selected[entry["platform"]], generation_selection(entry))
+                    generations = persisted / "idb-cache" / "game-1" / "generations"
+                    if len(hits) < 2:
+                        self.assertFalse((generations / historical[0]["generation"]).exists())
+
     def _prepare(self, persisted, groups, identities, concurrency=2):
         return idb_cache_selection.prepare_selection_entries(
             groups=groups,
@@ -243,6 +326,10 @@ class PrepareSelectionConcurrencyTests(unittest.TestCase):
             caller = threading.get_ident()
             warmed = []
             owners = []
+            pruned = []
+
+            def prune(**kwargs):
+                pruned.append((kwargs["tag"], set(kwargs["protected_generations"])))
 
             def probe(**kwargs):
                 identity = kwargs["identity"]
@@ -265,12 +352,13 @@ class PrepareSelectionConcurrencyTests(unittest.TestCase):
                 patch.object(idb_cache_selection, "warm_group", side_effect=warm),
                 patch.object(idb_cache_selection, "publish_generation") as publish,
                 patch.object(idb_cache_selection, "verify_selection") as verify,
-                patch.object(idb_cache_selection, "prune_tag"),
+                patch.object(idb_cache_selection, "prune_tag", side_effect=prune),
             ):
                 self._prepare(root, groups, identities)
             self.assertEqual(["game-2", "game-1"], warmed)
             self.assertIs(owners[0], owners[1])
             self.assertEqual(2, verify.call_count)
+            self.assertEqual([("game-2", {"game-2"}), ("game-1", {"game-1"})], pruned)
             publish.assert_not_called()
 
     def test_probe_failure_finishes_pool_and_does_not_start_misses(self):
@@ -438,6 +526,60 @@ class IdbCacheIdentityTests(unittest.TestCase):
 
 
 class IdbCacheGenerationTests(unittest.TestCase):
+    def test_prune_protection_is_local_and_does_not_skip_payload_verification(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace, persisted, _binary, identity = cache_fixture(Path(temporary))
+            selections = [
+                publish_generation(
+                    persisted_root=persisted,
+                    identity=identity,
+                    workspace_root=workspace,
+                    run_id=f"run-{index}",
+                    attempt=1,
+                    published_at=f"2026-01-0{index + 1}T00:00:00Z",
+                )
+                for index in range(5)
+            ]
+            protected = selections[0]["generation"]
+            generations = persisted / "idb-cache" / "game-1" / "generations"
+            kwargs = dict(persisted_root=persisted, tag="game-1", now=datetime(2026, 2, 1, tzinfo=timezone.utc))
+            removed = prune_tag(**kwargs, protected_generations={protected})
+            self.assertEqual([selections[1]["generation"]], removed)
+            verify_selection(persisted_root=persisted, selection=selections[0])
+            self.assertEqual([protected], prune_tag(**kwargs))
+            self.assertFalse((generations / protected).exists())
+
+            corrupt = selections[2]
+            payload = next((generations / corrupt["generation"]).rglob("*.i64"))
+            payload.write_bytes(b"corrupt")
+            # Prune leaves invalid generations alone; protection must not make them valid.
+            prune_tag(**kwargs, protected_generations={corrupt["generation"]})
+            with self.assertRaises(IdbCacheError):
+                verify_selection(persisted_root=persisted, selection=corrupt)
+
+    def test_prune_validates_all_protected_names_before_deleting(self):
+        for invalid in ("../escape", ".incoming-stale", "", 123, "a/b", "a\\b"):
+            with self.subTest(invalid=invalid), tempfile.TemporaryDirectory() as temporary:
+                workspace, persisted, _binary, identity = cache_fixture(Path(temporary))
+                selection = publish_generation(
+                    persisted_root=persisted,
+                    identity=identity,
+                    workspace_root=workspace,
+                    run_id="old",
+                    attempt=1,
+                )
+                incoming = persisted / "idb-cache" / "game-1" / "generations" / ".incoming-stale"
+                incoming.mkdir()
+                os.utime(incoming, (0, 0))
+                with self.assertRaises(IdbCacheError):
+                    prune_tag(
+                        persisted_root=persisted, tag="game-1", protected_generations=[selection["generation"], invalid]
+                    )
+                self.assertTrue(incoming.is_dir())
+        with tempfile.TemporaryDirectory() as temporary:
+            with self.assertRaises(IdbCacheError):
+                prune_tag(persisted_root=temporary, tag="game-1", protected_generations="generation")
+
     def test_legacy_schema_one_runtime_and_args_remain_readable_but_cannot_be_published(self):
         with tempfile.TemporaryDirectory() as temporary:
             workspace, persisted, binary, current = cache_fixture(Path(temporary))

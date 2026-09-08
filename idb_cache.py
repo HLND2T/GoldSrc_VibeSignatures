@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import time
 import uuid
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath
@@ -995,7 +996,12 @@ def prune_tag(
     keep_latest: int = 3,
     minimum_age: timedelta = timedelta(days=7),
     incoming_age: timedelta = timedelta(hours=24),
+    protected_generations: Iterable[str] = (),
 ) -> list[str]:
+    """Retain verified generations selected by this Prepare in addition to normal retention."""
+    if isinstance(protected_generations, (str, bytes)):
+        raise IdbCacheError("protected_generations must be a collection of generation names")
+    protected = {_component(name, "protected generation") for name in protected_generations}
     tag_root = _tag_root(persisted_root, tag)
     if not tag_root.is_dir():
         return []
@@ -1029,6 +1035,7 @@ def prune_tag(
             continue
     valid.sort(key=lambda item: (item[0], item[1].name), reverse=True)
     keep = {path.name for _published, path in valid[:keep_latest]}
+    keep.update(protected)
     if ready_generation is not None:
         keep.add(ready_generation)
     for published, path in valid:

@@ -178,6 +178,7 @@ def prepare_selection_entries(
 
     def probe_tag(tag_groups):
         results = {}
+        protected = set()
         for group in tag_groups:
             pair = (group.tag, group.platform)
             label = f"tag={group.tag}; platform={group.platform}"
@@ -191,22 +192,25 @@ def prepare_selection_entries(
                     selection = probe_generation(persisted_root=persisted, identity=identities[pair])
                 if selection is not None:
                     # READY and fallback hits have already fully verified under this same lock.
+                    protected.add(selection["generation"])
                     with timed_stage(f"prepare_prune; {label}"):
-                        prune_tag(persisted_root=persisted, tag=group.tag)
+                        prune_tag(persisted_root=persisted, tag=group.tag, protected_generations=protected)
             elapsed = time.monotonic() - started
             results[pair] = (selection, elapsed)
             if selection is not None:
                 log_selection(group, selection, True, elapsed)
-        return results
+        return results, protected
 
     probed = {}
+    protected_by_tag = {}
     if by_tag:
         with timed_stage("prepare_parallel_probe_verify_prune"):
             with ThreadPoolExecutor(max_workers=min(concurrency, len(by_tag))) as pool:
                 # Exiting the pool waits for every task, including on failure. No warm or
                 # selection publication starts until the complete probe phase succeeds.
-                for results in pool.map(probe_tag, by_tag.values()):
+                for tag, (results, protected) in zip(by_tag, pool.map(probe_tag, by_tag.values())):
                     probed.update(results)
+                    protected_by_tag[tag] = protected
 
     entries = []
     for group in groups:
@@ -245,8 +249,11 @@ def prepare_selection_entries(
                         )
                 with timed_stage(f"prepare_published_verify; {label}"):
                     verify_selection(persisted_root=persisted, selection=selection)
+                protected_by_tag[group.tag].add(selection["generation"])
                 with timed_stage(f"prepare_prune; {label}"):
-                    prune_tag(persisted_root=persisted, tag=group.tag)
+                    prune_tag(
+                        persisted_root=persisted, tag=group.tag, protected_generations=protected_by_tag[group.tag]
+                    )
             log_selection(group, selection, False, probe_elapsed + time.monotonic() - started)
         entries.append(
             selection_entry(

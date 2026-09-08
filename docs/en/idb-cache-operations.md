@@ -51,6 +51,11 @@ input order and share the existing tag lock. After every probe task has finished
 publish one group at a time, retaining per-binary worker concurrency and the single process memory owner. A probe task
 failure waits for the pool to finish and aborts preparation before warming or writing a selection.
 
+Each Prepare keeps a separate in-memory set of selected generation names per tag. Verified probe hits and verified
+miss selections join that set before pruning, so later prunes in the same Prepare cannot delete earlier selections.
+Protection does not skip manifest/payload verification or replace normal retention. It ends with the call; generations
+not yet selected and selections from earlier calls remain subject to normal pruning. No persistent pin is written.
+
 Both READY and fallback hits still hash the complete generation inside the probe's tag lock; only the immediate second
 hit verification is removed. Prune also hashes historical generations, and final selection validation before and after
 writing still performs full verification. Entries remain canonically sorted regardless of thread completion order.
