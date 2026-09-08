@@ -65,3 +65,8 @@ selected-node execution，以及 full inventory/byte drift。
 - Artifact 名称为 `gamesymbol-rebuilt-hosted-<run_id>-<run_attempt>` 或 `gamesymbol-rebuilt-self-hosted-<run_id>-<run_attempt>`，不包含 binary / IDA state；原有 validation failure 继续阻止门禁通过。
 - 排查时同时下载该 run 的 `gamesymbol-plan-<run_id>`，以 plan 绑定的 merge SHA 中的 Git blobs 作为 expected，与上传的 rebuilt YAML 比较；不能用当前 main 或当前工作副本替代该基线。
 - 上传步骤随 PR workflow 更新即可用于新的 run，不依赖新版诊断代码先进入 trusted base validator；旧 run 的重新执行不会自动采用修改后的 workflow。
+
+## 相关
+
+- [[gamesymbol PR validation routing 任务分流]] — hosted / self-hosted / fork 门控与 planner 影响分类来源。
+- [[ci-cd-and-repository-contract]] — CI、submodule 与仓库契约总览。

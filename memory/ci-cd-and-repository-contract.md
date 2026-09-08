@@ -39,7 +39,8 @@ only reachable on the runner host's private network.
 (artifact A/M/D/R/C ownership and downstream closure); rebuilds write only to an external temporary artifact root, force
 selected nodes to execute, then compare the complete inventory and bytes with merge Git blobs. `pr-validate` is the
 aggregate required check; the gamedata consistency gate (`mark -step gamedata`) is enforced by PR validation and
-`update_gamedata.py`. Forks that need self-hosted analysis fail closed. See
+`update_gamedata.py`. Forks that need self-hosted analysis fail closed. The route gate (four booleans -> four lanes) and
+the planner's seed/classification sources are in [[gamesymbol PR validation routing 任务分流]]. See
 [[gamesymbol PR validation candidate 基线复用]] for the materialize/compare mechanics.
 
 The reusable `warmup-idb` producer publishes an exact selection (see
