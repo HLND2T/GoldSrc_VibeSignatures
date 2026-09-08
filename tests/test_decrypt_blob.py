@@ -8,6 +8,7 @@ from pathlib import Path
 
 from binary_format import inspect_binary
 from binary_hashing import hash_file
+from binary_identity import validate_binary_is_blob
 from decrypt_blob import (
     BLOB_ALGORITHM,
     BLOB_HEADER_SIZE,
@@ -20,6 +21,8 @@ from decrypt_blob import (
 )
 from gamesymbol_snapshot_lib.model import BinaryTarget
 from gamesymbol_snapshot_lib.operations import collect_binary_metadata
+from ida_analyze_bin import prepare_analysis_binary
+from tests.test_support import write_elf32, write_pe32
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -234,6 +237,86 @@ class BlobDecryptionTests(unittest.TestCase):
             self.assertNotIn("path", metadata)
             for name in ("sha256", "md5", "crc32", "crc64", "size"):
                 self.assertEqual(hashes[name], metadata[name])
+            self.assertIs(True, metadata["is_blob"])
+
+
+class BinaryIdentityTests(unittest.TestCase):
+    """The shared detector feeds both snapshot metadata and analysis preparation."""
+
+    def _temp_binary(self, name: str, data: bytes) -> Path:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        path = Path(temporary.name) / name
+        path.write_bytes(data)
+        return path
+
+    def test_plain_pe_and_elf_are_not_blobs(self):
+        pe = self._temp_binary("hw.dll", b"")
+        write_pe32(pe)
+        self.assertIs(False, validate_binary_is_blob(pe, "windows"))
+
+        elf = self._temp_binary("hw.so", b"")
+        write_elf32(elf)
+        self.assertIs(False, validate_binary_is_blob(elf, "linux"))
+
+    def test_valid_blob_is_detected_across_snapshot_and_analyzer_paths(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        game_root = Path(temporary.name)
+        blob = game_root / "engine" / "hw.dll"
+        blob.parent.mkdir(parents=True)
+        blob.write_bytes(make_blob())
+        self.assertIs(True, validate_binary_is_blob(blob, "windows"))
+
+        metadata = collect_binary_metadata(
+            SimpleNamespace(
+                binary_game_root=game_root,
+                binary_targets={
+                    ("engine", "windows"): BinaryTarget(
+                        module_name="engine",
+                        platform="windows",
+                        source_path=None,
+                        binary_name="hw.dll",
+                    )
+                },
+            )
+        )
+        self.assertIs(True, metadata["engine"]["windows"]["is_blob"])
+
+        prepared = prepare_analysis_binary(blob, "windows")
+        self.assertEqual(blob.with_name("hw.decrypt.dll"), prepared)
+        self.assertNotEqual(blob, prepared)
+        # The rebuilt PE itself classifies as a plain binary, never as a blob.
+        self.assertIs(False, validate_binary_is_blob(prepared, "windows"))
+
+    def test_invalid_windows_input_reports_binary_error_without_unbound_local(self):
+        for data in (b"garbage" * 16, struct.pack("<I", BLOB_ALGORITHM) + b"\0" * 32):
+            binary = self._temp_binary("hw.dll", data)
+            with self.subTest(data=data[:8]):
+                with self.assertRaisesRegex(ValueError, "not a valid Metahook PE32 blob"):
+                    validate_binary_is_blob(binary, "windows")
+
+    def test_truncated_blob_is_rejected(self):
+        blob = self._temp_binary("hw.dll", make_blob()[:128])
+        with self.assertRaisesRegex(ValueError, "not a valid Metahook PE32 blob"):
+            validate_binary_is_blob(blob, "windows")
+
+    def test_platform_mismatch_and_linux_failure_propagate(self):
+        elf = self._temp_binary("hw.so", b"")
+        write_elf32(elf)
+        with self.assertRaises(ValueError):
+            validate_binary_is_blob(elf, "windows")
+
+        garbage = self._temp_binary("hw.so", b"garbage" * 8)
+        with self.assertRaises(ValueError):
+            validate_binary_is_blob(garbage, "linux")
+
+    def test_missing_file_raises(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            missing = Path(temporary) / "hw.dll"
+            for platform in ("windows", "linux"):
+                with self.subTest(platform=platform), self.assertRaises(ValueError):
+                    validate_binary_is_blob(missing, platform)
 
 
 class RealSampleTests(unittest.TestCase):

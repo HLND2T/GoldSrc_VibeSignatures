@@ -11,13 +11,13 @@ import yaml
 
 from analysis_config import resolve_analysis_config
 from analysis_output_contract import ANALYSIS_OUTPUT_CONTRACT_MISMATCH_REASON
-from binary_format import validate_binary
 from binary_hashing import hash_file
-from decrypt_blob import BlobFormatError, build_pe, parse_blob, verify_pe
+from binary_identity import validate_binary_is_blob
 from gamesymbol_snapshot_lib.codec import (
     SCHEMA_4_VERSION,
     SCHEMA_5_VERSION,
     SCHEMA_6_VERSION,
+    SCHEMA_7_VERSION,
     SCHEMA_VERSION,
     build_snapshot_document,
     canonical_snapshot_bytes,
@@ -115,24 +115,8 @@ def _ensure_plain_binary(path: Path, game_root: Path) -> None:
         current = current.parent
 
 
-def _validate_binary_identity(path: Path, platform: str) -> None:
-    try:
-        validate_binary(path, platform)
-        return
-    except ValueError as binary_error:
-        if platform != "windows":
-            raise binary_error
-
-    try:
-        parsed = parse_blob(path.read_bytes())
-        rebuilt = build_pe(parsed)
-        verify_pe(rebuilt, parsed)
-    except (OSError, BlobFormatError) as blob_error:
-        raise ValueError(f"{binary_error}; not a valid Metahook PE32 blob: {blob_error}") from blob_error
-
-
 def collect_binary_metadata(contract, schema_version: int = SCHEMA_VERSION) -> dict:
-    if schema_version not in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION}:
+    if schema_version not in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION, SCHEMA_7_VERSION}:
         raise SnapshotSchemaError(f"Binary metadata is unsupported for schema {schema_version}")
     binaries = {}
     for key in sorted(contract.binary_targets):
@@ -140,15 +124,17 @@ def collect_binary_metadata(contract, schema_version: int = SCHEMA_VERSION) -> d
         binary = _binary_path(contract, target)
         _ensure_plain_binary(binary, contract.binary_game_root)
         try:
-            _validate_binary_identity(binary, target.platform)
+            is_blob = validate_binary_is_blob(binary, target.platform)
         except ValueError as exc:
             raise SnapshotMismatchError(f"Invalid binary for {target.module_name}/{target.platform}: {exc}") from exc
         hashes = hash_file(binary)
         metadata = {"sha256": hashes["sha256"], "md5": hashes["md5"]}
         if schema_version in {SCHEMA_4_VERSION, SCHEMA_5_VERSION}:
             metadata["path"] = target.source_path or target.binary_name
-        if schema_version in {SCHEMA_5_VERSION, SCHEMA_6_VERSION}:
+        if schema_version in {SCHEMA_5_VERSION, SCHEMA_6_VERSION, SCHEMA_7_VERSION}:
             metadata.update({"crc32": hashes["crc32"], "crc64": hashes["crc64"], "size": hashes["size"]})
+        if schema_version == SCHEMA_7_VERSION:
+            metadata["is_blob"] = is_blob
         binaries.setdefault(target.module_name, {})[target.platform] = metadata
     return binaries
 
@@ -165,7 +151,7 @@ def build_actual_document(
     last_publish_time: str | None = None,
     binaries: dict | None = None,
 ) -> dict:
-    if schema_version in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION}:
+    if schema_version in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION, SCHEMA_7_VERSION}:
         last_publish_time = last_publish_time or _publish_time()
         binaries = collect_binary_metadata(contract, schema_version) if binaries is None else binaries
     return build_snapshot_document(
@@ -194,7 +180,7 @@ def validate_snapshot_contract(document: dict, contract) -> None:
         raise SnapshotMismatchError(
             "Snapshot files do not match the analysis contract", reason="snapshot_contract_mismatch"
         )
-    if document["schema_version"] in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION}:
+    if document["schema_version"] in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION, SCHEMA_7_VERSION}:
         expected = set(contract.binary_targets)
         actual = {(module, platform) for module, platforms in document["binaries"].items() for platform in platforms}
         if actual != expected:

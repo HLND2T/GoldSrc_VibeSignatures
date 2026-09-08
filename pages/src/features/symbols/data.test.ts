@@ -4,10 +4,10 @@ import { getGameSymbolDataset, getGameSymbolIndex } from './data'
 import type { GameSymbolDataset, GameSymbolIndexVersion } from './types'
 
 const dataset: GameSymbolDataset = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   source: {
     gameVersion: 'svencoop-10257',
-    snapshotSchemaVersion: 6,
+    snapshotSchemaVersion: 7,
     configDigestVersion: 2,
     analysisOutputContractVersion: 1,
     configSha256: 'sha256:test',
@@ -22,6 +22,7 @@ const dataset: GameSymbolDataset = {
         crc32: '3'.repeat(8),
         crc64: '4'.repeat(16),
         size: 123,
+        isBlob: false,
       },
     },
   },
@@ -39,11 +40,28 @@ function encodedDataset(): { bytes: Uint8Array; version: GameSymbolIndexVersion 
       url: `svencoop-10257.${sha256}.json`,
       sha256,
       size: bytes.byteLength,
-      snapshotSchemaVersion: 6,
+      snapshotSchemaVersion: 7,
       fileCount: 0,
       lastPublishTime: '2026-07-27T04:42:43Z',
     },
   }
+}
+
+async function fetchDataset(invalidDataset: unknown, versionOverride?: Partial<GameSymbolIndexVersion>) {
+  const bytes = Buffer.from(JSON.stringify(invalidDataset), 'utf8')
+  const sha256 = createHash('sha256').update(bytes).digest('hex')
+  const version: GameSymbolIndexVersion = {
+    gameVersion: 'svencoop-10257',
+    url: `svencoop-10257.${sha256}.json`,
+    sha256,
+    size: bytes.byteLength,
+    snapshotSchemaVersion: 7,
+    fileCount: 0,
+    lastPublishTime: '2026-07-27T04:42:43Z',
+    ...versionOverride,
+  }
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(bytes)))
+  return getGameSymbolDataset(version)
 }
 
 describe('game-symbol asset loading', () => {
@@ -104,19 +122,41 @@ describe('game-symbol asset loading', () => {
         },
       },
     }
-    const bytes = Buffer.from(JSON.stringify(invalidDataset), 'utf8')
-    const sha256 = createHash('sha256').update(bytes).digest('hex')
-    const version = {
-      gameVersion: 'svencoop-10257',
-      url: `svencoop-10257.${sha256}.json`,
-      sha256,
-      size: bytes.byteLength,
-      snapshotSchemaVersion: 6,
-      fileCount: 0,
-      lastPublishTime: '2026-07-27T04:42:43Z',
-    }
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(bytes)))
+    await expect(fetchDataset(invalidDataset)).rejects.toThrow(/binary crc64/)
+  })
 
-    await expect(getGameSymbolDataset(version)).rejects.toThrow(/binary crc64/)
+  it('rejects datasets that are not schema v4 derived from snapshot schema v7', async () => {
+    const legacyDataset = { ...dataset, schemaVersion: 3 }
+    await expect(fetchDataset(legacyDataset)).rejects.toThrow(/dataset schema v4/)
+
+    const staleSnapshotDataset = { ...dataset, source: { ...dataset.source, snapshotSchemaVersion: 6 } }
+    await expect(fetchDataset(staleSnapshotDataset)).rejects.toThrow(/dataset schema v4/)
+  })
+
+  it('rejects binary metadata without a real isBlob boolean', async () => {
+    for (const isBlob of [undefined, null, 'false', 0, 1]) {
+      const metadata: Record<string, unknown> = {
+        sha256: '1'.repeat(64),
+        md5: '2'.repeat(32),
+        crc32: '3'.repeat(8),
+        crc64: '4'.repeat(16),
+        size: 123,
+      }
+      if (isBlob !== undefined) metadata.isBlob = isBlob
+      const invalidDataset = { ...dataset, binaries: { server: { windows: metadata } } }
+      await expect(fetchDataset(invalidDataset)).rejects.toThrow(/binary isBlob/)
+    }
+  })
+
+  it('rejects linux binaries flagged as blobs', async () => {
+    const invalidDataset = {
+      ...dataset,
+      binaries: {
+        server: {
+          linux: { ...dataset.binaries.server.windows, isBlob: true },
+        },
+      },
+    }
+    await expect(fetchDataset(invalidDataset)).rejects.toThrow(/isBlob/)
   })
 })

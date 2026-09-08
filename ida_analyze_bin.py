@@ -63,6 +63,7 @@ from analysis_planner import (
     build_execution_plan as _build_execution_plan,
 )
 from binary_format import BinaryFormatError, validate_binary
+from binary_identity import validate_binary_is_blob
 from ida_analyze_util import (
     SymbolArtifactError,
     build_runtime_address_inspection_py_eval,
@@ -393,12 +394,8 @@ def _decrypt_blob_to_pe(binary_path, *, debug=False):
 
 def prepare_analysis_binary(binary_path, platform, *, debug=False) -> Path:
     binary = Path(binary_path)
-    try:
-        validate_binary(binary, platform)
+    if not validate_binary_is_blob(binary, platform):
         return binary
-    except BinaryFormatError:
-        if platform != "windows":
-            raise
     return _decrypt_blob_to_pe(binary, debug=debug)
 
 

@@ -6,6 +6,8 @@ const SHA256_PATTERN = /^[0-9a-f]{64}$/
 const MD5_PATTERN = /^[0-9a-f]{32}$/
 const CRC32_PATTERN = /^[0-9a-f]{8}$/
 const CRC64_PATTERN = /^[0-9a-f]{16}$/
+const DATASET_SCHEMA_VERSION = 4
+const REQUIRED_SNAPSHOT_SCHEMA_VERSION = 7
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -38,16 +40,17 @@ export async function getGameSymbolIndex(signal?: AbortSignal): Promise<GameSymb
   return value as unknown as GameSymbolIndex
 }
 
-function validateBinaryMetadata(value: unknown, context: string): void {
+function validateBinaryMetadata(value: unknown, platform: string, context: string): void {
   if (!isObject(value)) throw new Error(`Invalid binary metadata at ${context}`)
-  if (value.path !== undefined && (typeof value.path !== 'string' || value.path.length === 0)) {
-    throw new Error(`Invalid binary path at ${context}`)
-  }
+  if ('path' in value) throw new Error(`Invalid binary path at ${context}`)
   if (typeof value.sha256 !== 'string' || !SHA256_PATTERN.test(value.sha256)) throw new Error(`Invalid binary sha256 at ${context}`)
   if (typeof value.md5 !== 'string' || !MD5_PATTERN.test(value.md5)) throw new Error(`Invalid binary md5 at ${context}`)
   if (typeof value.crc32 !== 'string' || !CRC32_PATTERN.test(value.crc32)) throw new Error(`Invalid binary crc32 at ${context}`)
   if (typeof value.crc64 !== 'string' || !CRC64_PATTERN.test(value.crc64)) throw new Error(`Invalid binary crc64 at ${context}`)
   if (!Number.isInteger(value.size) || (value.size as number) < 0) throw new Error(`Invalid binary size at ${context}`)
+  if (typeof value.isBlob !== 'boolean') throw new Error(`Invalid binary isBlob at ${context}`)
+  // isBlob describes the original hashed file; Metahook blobs are Windows-only.
+  if (platform === 'linux' && value.isBlob) throw new Error(`Invalid binary isBlob at ${context}: linux binaries are never blobs`)
 }
 
 function validateDatasetBinaries(value: unknown): void {
@@ -56,7 +59,7 @@ function validateDatasetBinaries(value: unknown): void {
     if (!isObject(platforms)) throw new Error(`Invalid binary platforms for ${module}`)
     for (const [platform, metadata] of Object.entries(platforms)) {
       if (platform !== 'windows' && platform !== 'linux') throw new Error(`Invalid binary platform ${platform} for ${module}`)
-      validateBinaryMetadata(metadata, `${module}.${platform}`)
+      validateBinaryMetadata(metadata, platform, `${module}.${platform}`)
     }
   }
 }
@@ -81,8 +84,14 @@ export async function getGameSymbolDataset(version: GameSymbolIndexVersion, sign
   }
 
   const value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)) as unknown
-  if (!isObject(value) || value.schemaVersion !== 3 || !isObject(value.source) || value.source.gameVersion !== version.gameVersion) {
-    throw new Error(`Invalid game-symbol snapshot for ${version.gameVersion}`)
+  if (
+    !isObject(value)
+    || value.schemaVersion !== DATASET_SCHEMA_VERSION
+    || !isObject(value.source)
+    || value.source.gameVersion !== version.gameVersion
+    || value.source.snapshotSchemaVersion !== REQUIRED_SNAPSHOT_SCHEMA_VERSION
+  ) {
+    throw new Error(`Invalid game-symbol snapshot for ${version.gameVersion}; expected dataset schema v4 (snapshot schema v7)`)
   }
   validateDatasetBinaries(value.binaries)
   return value as unknown as GameSymbolDataset

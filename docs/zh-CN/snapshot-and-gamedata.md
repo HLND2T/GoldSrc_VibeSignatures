@@ -31,8 +31,8 @@ inventory 为空，gamedata 也有排除自身的 canonical manifest。本地 `p
 
 `release-build.yml` 在 checkout 外的 fresh root 强制重建全部 configured artifact，并与 Git `bin_artifacts` 做 exact
 byte comparison。随后每个 gamever 派生 snapshot、metadata，用 `gamesymbols_json.py` 从它们确定性派生浏览器 JSON
-dataset（schema 3，`<tag>.<sha256>.json`），`mark -step json` 后发布 snapshot/metadata，最后在 `release_bundle.py`
-中组装 index（schema 4）、打包唯一 all-in-one 7z，并构造封闭 bundle：
+dataset（schema 4，`<tag>.<sha256>.json`，含 per-binary `isBlob` 标志），`mark -step json` 后发布 snapshot/metadata，
+最后在 `release_bundle.py` 中组装 index（schema 4）、打包唯一 all-in-one 7z，并构造封闭 bundle：
 
 - `gamesymbols/<tag>.yaml` 与 `<tag>.metadata.yaml`（canonical snapshot/metadata，用于再派生校验）；
 - `gamesymbols-json/<tag>.<sha256>.json` 与 `gamesymbols-json/index.json`；
@@ -63,5 +63,8 @@ uv run python gamesymbol_snapshot.py restore-legacy -gamever cstrike-10210 -snap
   -bindir bin -artifactdir <compatibility-artifact-root>
 ```
 
-Writer 输出 schema 6，reader 接受 schema 1–6。Restore/verify 拒绝 link、path escape、未声明或缺失 YAML、
+Writer 输出 schema 7，reader 接受 schema 1–7。Schema 7 为每个 module/platform 记录必填布尔 `is_blob`：仅当原始
+Windows 二进制是通过完整校验的 Metahook blob 时为 `true`（普通 PE/ELF 为 `false`；非法二进制直接让 snapshot
+失败，而不是发布为 `false`）。JSON 生成器只接受 schema-7 snapshot，前端只接受 schema-4 dataset，没有旧
+dataset 兼容模式。Restore/verify 拒绝 link、path escape、未声明或缺失 YAML、
 非 canonical bytes 与 contract drift。

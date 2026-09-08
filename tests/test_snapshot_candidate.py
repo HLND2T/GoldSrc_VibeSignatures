@@ -53,7 +53,7 @@ def fixture(root: Path):
 
 
 class CodecTests(unittest.TestCase):
-    def test_reader_accepts_schema_one_through_six(self):
+    def test_reader_accepts_schema_one_through_seven(self):
         files = {"engine/a.windows.yaml": {"addr": "0x10"}}
         binaries4 = {"engine": {"windows": {"path": "Game/hw.dll", "sha256": "a" * 64, "md5": "b" * 32}}}
         binaries5 = {
@@ -79,12 +79,30 @@ class CodecTests(unittest.TestCase):
                 }
             }
         }
-        for schema in range(1, 7):
+        binaries7 = {
+            "engine": {
+                "windows": {
+                    "sha256": "a" * 64,
+                    "md5": "b" * 32,
+                    "crc32": "c" * 8,
+                    "crc64": "d" * 16,
+                    "size": 1,
+                    "is_blob": False,
+                }
+            }
+        }
+        for schema in range(1, 8):
             kwargs = {"schema_version": schema, "config_digest_version": 1 if schema == 1 else 2}
             if schema >= 4:
                 kwargs.update(
                     last_publish_time="2026-01-02T03:04:05Z",
-                    binaries=binaries4 if schema == 4 else binaries5 if schema == 5 else binaries6,
+                    binaries=binaries4
+                    if schema == 4
+                    else binaries5
+                    if schema == 5
+                    else binaries6
+                    if schema == 6
+                    else binaries7,
                 )
             document = build_snapshot_document("game-1", f"sha256:{'e' * 64}", files, **kwargs)
             data = canonical_snapshot_bytes(document)
@@ -111,6 +129,55 @@ class CodecTests(unittest.TestCase):
                 )
                 with self.assertRaises(SnapshotSchemaError):
                     parse_snapshot_bytes(canonical_yaml_bytes(document))
+
+    def test_schema_seven_requires_a_real_boolean_is_blob(self):
+        common = {
+            "sha256": "a" * 64,
+            "md5": "b" * 32,
+            "crc32": "c" * 8,
+            "crc64": "d" * 16,
+            "size": 1,
+        }
+        cases = (
+            ({**common}, "missing"),
+            ({**common, "is_blob": None}, "null"),
+            ({**common, "is_blob": "false"}, "string"),
+            ({**common, "is_blob": 0}, "numeric"),
+            ({**common, "is_blob": 1}, "numeric"),
+            ({**common, "path": "Game/hw.dll", "is_blob": False}, "path"),
+        )
+        for metadata, label in cases:
+            with self.subTest(label=label):
+                document = build_snapshot_document(
+                    "game-1",
+                    f"sha256:{'e' * 64}",
+                    {},
+                    schema_version=7,
+                    last_publish_time="2026-01-02T03:04:05Z",
+                    binaries={"engine": {"windows": metadata}},
+                )
+                with self.assertRaises(SnapshotSchemaError):
+                    parse_snapshot_bytes(canonical_yaml_bytes(document))
+
+    def test_schema_seven_rejects_blob_flag_on_linux(self):
+        metadata = {
+            "sha256": "a" * 64,
+            "md5": "b" * 32,
+            "crc32": "c" * 8,
+            "crc64": "d" * 16,
+            "size": 1,
+            "is_blob": True,
+        }
+        document = build_snapshot_document(
+            "game-1",
+            f"sha256:{'e' * 64}",
+            {},
+            schema_version=7,
+            last_publish_time="2026-01-02T03:04:05Z",
+            binaries={"engine": {"linux": metadata}},
+        )
+        with self.assertRaises(SnapshotSchemaError):
+            parse_snapshot_bytes(canonical_yaml_bytes(document))
 
     def test_rejects_nonflat_or_case_colliding_paths(self):
         for files in (
@@ -155,11 +222,12 @@ class SnapshotOperationTests(unittest.TestCase):
                 last_publish_time="2026-01-02T03:04:05Z",
             )
             document = parse_snapshot_bytes(packed)
-            self.assertEqual(6, document["schema_version"])
+            self.assertEqual(7, document["schema_version"])
             self.assertEqual(2, document["config_digest_version"])
             self.assertEqual(2, document["file_count"])
             self.assertEqual({"windows", "linux"}, set(document["binaries"]["engine"]))
             self.assertTrue(all("path" not in metadata for metadata in document["binaries"]["engine"].values()))
+            self.assertTrue(all(metadata["is_blob"] is False for metadata in document["binaries"]["engine"].values()))
             self.assertEqual(
                 packed,
                 verify_snapshot(tag, root / "bin", config, snapshot, artifactdir=root / "bin_artifacts"),

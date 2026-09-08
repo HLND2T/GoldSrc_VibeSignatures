@@ -5,6 +5,7 @@ rules:
       - analysis_planner.py
       - analysis_output_contract.py
       - binary_format.py
+      - binary_identity.py
       - trusted_yaml.py
       - ida_analyze_bin.py
       - ida_analyze_util.py
