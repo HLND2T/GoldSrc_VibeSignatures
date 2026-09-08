@@ -46,6 +46,10 @@ PR 与 release selection producer 先用有界线程池并发处理不同 tag �
 保持输入顺序，并共用原 tag lock。全部 probe task 成功结束后，逐组串行 warm/publish miss，保留组内 binary
 worker 并发和单一进程 memory owner。Probe task 失败时等待线程池结束，再中止 prepare，不启动 warm 或写 selection。
 
+每次 Prepare 为各 tag 独立维护内存中的已选 generation 名称集合。Probe hit 与 miss 的最终 selection 完整校验成功后，
+先加入集合再 prune，避免本次后续 prune 删除此前已选中的 generation。保护不跳过 manifest/payload 校验，且与普通保留
+规则叠加；集合仅在本次调用内有效，不写持久化 pin。尚未选中的 generation 与以前调用的 selection 仍遵守普通淘汰规则。
+
 READY 与 fallback 命中仍在 probe 的 tag lock 内全量哈希 generation，仅移除紧接其后的第二次 hit verify。
 Prune 还会哈希历史 generations；写 selection 前后仍执行完整校验。Entries 始终 canonical 排序，不受线程完成顺序影响。
 
