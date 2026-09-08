@@ -10,12 +10,8 @@ const MD5_PATTERN = /^[0-9a-f]{32}$/
 const CRC32_PATTERN = /^[0-9a-f]{8}$/
 const CRC64_PATTERN = /^[0-9a-f]{16}$/
 const SNAPSHOT_FILE_PATTERN = /^([a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+)\.([0-9a-f]{64})\.json$/
-const LEGACY_DATASET_SCHEMA_VERSION = 2
-const CURRENT_DATASET_SCHEMA_VERSION = 3
-const SUPPORTED_DATASET_SCHEMA_VERSIONS = new Set([
-  LEGACY_DATASET_SCHEMA_VERSION,
-  CURRENT_DATASET_SCHEMA_VERSION,
-])
+const CURRENT_DATASET_SCHEMA_VERSION = 4
+const REQUIRED_SNAPSHOT_SCHEMA_VERSION = 7
 
 function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex')
@@ -65,35 +61,38 @@ export function validateGameSymbolIndex(value, source = 'gamesymbols/index.json'
   return value
 }
 
-function validateBinaryMetadata(value, source) {
+function validateBinaryMetadata(value, platform, source) {
   if (!isObject(value)) throw new Error(`${source}: binary metadata must be an object`)
-  if (value.path !== undefined && (typeof value.path !== 'string' || value.path.length === 0)) {
-    throw new Error(`${source}.path is invalid`)
-  }
+  if ('path' in value) throw new Error(`${source}.path is not allowed in dataset schema v4`)
   if (typeof value.sha256 !== 'string' || !SHA256_PATTERN.test(value.sha256)) throw new Error(`${source}.sha256 is invalid`)
   if (typeof value.md5 !== 'string' || !MD5_PATTERN.test(value.md5)) throw new Error(`${source}.md5 is invalid`)
   if (typeof value.crc32 !== 'string' || !CRC32_PATTERN.test(value.crc32)) throw new Error(`${source}.crc32 is invalid`)
   if (typeof value.crc64 !== 'string' || !CRC64_PATTERN.test(value.crc64)) throw new Error(`${source}.crc64 is invalid`)
   if (!Number.isInteger(value.size) || value.size < 0) throw new Error(`${source}.size must be a non-negative integer`)
+  if (typeof value.isBlob !== 'boolean') throw new Error(`${source}.isBlob must be a boolean`)
+  // isBlob describes the original hashed file; Metahook blobs are Windows-only.
+  if (platform === 'linux' && value.isBlob) throw new Error(`${source}.isBlob must be false for linux binaries`)
 }
 
-function validateGameSymbolDataset(value, source, gameVersion, requiredSchemaVersion) {
+function validateGameSymbolDataset(value, source, gameVersion) {
   if (
     !isObject(value)
-    || !SUPPORTED_DATASET_SCHEMA_VERSIONS.has(value.schemaVersion)
+    || value.schemaVersion !== CURRENT_DATASET_SCHEMA_VERSION
     || !isObject(value.source)
     || value.source.gameVersion !== gameVersion
-    || (requiredSchemaVersion !== undefined && value.schemaVersion !== requiredSchemaVersion)
+    || value.source.snapshotSchemaVersion !== REQUIRED_SNAPSHOT_SCHEMA_VERSION
   ) {
-    throw new Error(`${source}: snapshot body game version or schema is invalid`)
+    throw new Error(
+      `${source}: dataset body must be schema v${CURRENT_DATASET_SCHEMA_VERSION}`
+      + ` derived from snapshot schema v${REQUIRED_SNAPSHOT_SCHEMA_VERSION}`,
+    )
   }
-  if (value.schemaVersion === LEGACY_DATASET_SCHEMA_VERSION) return
   if (!isObject(value.binaries)) throw new Error(`${source}: binaries must be an object`)
   for (const [module, platforms] of Object.entries(value.binaries)) {
     if (!isObject(platforms)) throw new Error(`${source}: binaries.${module} must be an object`)
     for (const [platform, metadata] of Object.entries(platforms)) {
       if (platform !== 'windows' && platform !== 'linux') throw new Error(`${source}: binaries.${module}.${platform} is unsupported`)
-      validateBinaryMetadata(metadata, `${source}: binaries.${module}.${platform}`)
+      validateBinaryMetadata(metadata, platform, `${source}: binaries.${module}.${platform}`)
     }
   }
 }
@@ -122,13 +121,18 @@ export function validateGameSymbolVerificationManifest(value, source = 'game-sym
   return value
 }
 
-function verifySnapshotBytes(fileName, bytes, source, expectedEntry, requiredSchemaVersion) {
+function verifySnapshotBytes(fileName, bytes, source, { expectedEntry, requireCurrentContract } = {}) {
   const match = SNAPSHOT_FILE_PATTERN.exec(fileName)
   if (!match) throw new Error(`${source}: snapshot filename must be <gameVersion>.<sha256>.json`)
   const actualSha256 = sha256(bytes)
   if (actualSha256 !== match[2]) throw new Error(`${source}: filename SHA-256 does not match content bytes`)
-  const value = parseJson(bytes, source)
-  validateGameSymbolDataset(value, source, match[1], requiredSchemaVersion)
+  if (requireCurrentContract) {
+    // Only datasets referenced by the current index are parsed against the
+    // current business schema; unreferenced historical bytes stay opaque
+    // archive content that must only satisfy the integrity checks below.
+    const value = parseJson(bytes, source)
+    validateGameSymbolDataset(value, source, match[1])
+  }
   if (expectedEntry) {
     if (fileName !== expectedEntry.url) throw new Error(`${source}: index URL does not match filename`)
     if (bytes.byteLength !== expectedEntry.size) {
@@ -151,12 +155,15 @@ async function snapshotFileNames(directory, allowIndex) {
   return files.sort()
 }
 
-async function verifySnapshotDirectory(directory, allowIndex) {
+async function verifySnapshotDirectory(directory, allowIndex, currentIndexUrls = new Set()) {
   const verified = new Map()
   for (const fileName of await snapshotFileNames(directory, allowIndex)) {
     const filePath = join(directory, fileName)
     const bytes = await readFile(filePath)
-    verified.set(fileName, verifySnapshotBytes(fileName, bytes, filePath))
+    verified.set(
+      fileName,
+      verifySnapshotBytes(fileName, bytes, filePath, { requireCurrentContract: currentIndexUrls.has(fileName) }),
+    )
   }
   return verified
 }
@@ -166,11 +173,12 @@ export async function verifyGameSymbolAssetDirectory(directory) {
   const indexPath = join(root, 'index.json')
   const indexBytes = await readFile(indexPath)
   const index = validateGameSymbolIndex(parseJson(indexBytes, indexPath), indexPath)
-  const snapshots = await verifySnapshotDirectory(root, true)
+  const currentIndexUrls = new Set(index.versions.map((entry) => entry.url))
+  const snapshots = await verifySnapshotDirectory(root, true, currentIndexUrls)
   for (const entry of index.versions) {
     const filePath = join(root, entry.url)
     const bytes = await readFile(filePath)
-    verifySnapshotBytes(entry.url, bytes, filePath, entry, CURRENT_DATASET_SCHEMA_VERSION)
+    verifySnapshotBytes(entry.url, bytes, filePath, { expectedEntry: entry, requireCurrentContract: true })
     if (!snapshots.has(entry.url)) throw new Error(`${filePath}: indexed snapshot is missing from the asset inventory`)
   }
   return {
@@ -260,11 +268,14 @@ async function fetchBytes(url) {
   return new Uint8Array(await response.arrayBuffer())
 }
 
-async function verifyRemoteSnapshotBatch(root, snapshots) {
+async function verifyRemoteSnapshotBatch(root, snapshots, currentIndexUrls) {
   await Promise.all(snapshots.map(async (snapshot) => {
     const assetUrl = new URL(snapshot.url, root)
     const bytes = await fetchBytes(assetUrl)
-    verifySnapshotBytes(snapshot.url, bytes, assetUrl.href, snapshot)
+    verifySnapshotBytes(snapshot.url, bytes, assetUrl.href, {
+      expectedEntry: snapshot,
+      requireCurrentContract: currentIndexUrls.has(snapshot.url),
+    })
   }))
 }
 
@@ -281,6 +292,7 @@ export async function verifyRemoteGameSymbolAssets(baseUrl, expectedManifest, { 
         throw new Error(`${indexUrl.href}: deployed index does not match this workflow's build`)
       }
       const index = validateGameSymbolIndex(parseJson(indexBytes, indexUrl.href), indexUrl.href)
+      const currentIndexUrls = new Set(index.versions.map((entry) => entry.url))
       const snapshotsByUrl = new Map(manifest.snapshots.map((snapshot) => [snapshot.url, snapshot]))
       for (const entry of index.versions) {
         const snapshot = snapshotsByUrl.get(entry.url)
@@ -289,7 +301,7 @@ export async function verifyRemoteGameSymbolAssets(baseUrl, expectedManifest, { 
         }
       }
       for (let offset = 0; offset < manifest.snapshots.length; offset += batchSize) {
-        await verifyRemoteSnapshotBatch(root, manifest.snapshots.slice(offset, offset + batchSize))
+        await verifyRemoteSnapshotBatch(root, manifest.snapshots.slice(offset, offset + batchSize), currentIndexUrls)
       }
       return { index, verified: manifest.snapshots.length }
     } catch (error) {

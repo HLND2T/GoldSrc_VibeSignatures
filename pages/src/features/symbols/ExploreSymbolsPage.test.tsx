@@ -13,15 +13,15 @@ vi.mock('./data', () => ({
 }))
 
 const dataset: GameSymbolDataset = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   source: {
-    gameVersion: 'svencoop-10257', snapshotSchemaVersion: 5, configDigestVersion: 2,
+    gameVersion: 'svencoop-10257', snapshotSchemaVersion: 7, configDigestVersion: 2,
     analysisOutputContractVersion: 1, configSha256: 'sha256:test', fileCount: 3,
     lastPublishTime: '2026-07-27T04:42:43Z',
   },
   binaries: {
     server: {
-      windows: { path: 'game/bin/win64/server.dll', sha256: '1'.repeat(64), md5: '2'.repeat(32), crc32: '3'.repeat(8), crc64: '4'.repeat(16), size: 123 },
+      windows: { sha256: '1'.repeat(64), md5: '2'.repeat(32), crc32: '3'.repeat(8), crc64: '4'.repeat(16), size: 123, isBlob: false },
     },
   },
   modules: [
@@ -47,8 +47,8 @@ describe('ExploreSymbolsPage', () => {
     vi.mocked(getGameSymbolIndex).mockResolvedValue({
       schemaVersion: 4,
       versions: [
-        { gameVersion: 'svencoop-10257', url: `svencoop-10257.${'a'.repeat(64)}.json`, sha256: 'a'.repeat(64), size: 123, snapshotSchemaVersion: 5, fileCount: 3, lastPublishTime: '2026-07-27T04:42:43Z' },
-        { gameVersion: 'svencoop-10256', url: `svencoop-10256.${'b'.repeat(64)}.json`, sha256: 'b'.repeat(64), size: 122, snapshotSchemaVersion: 5, fileCount: 2, lastPublishTime: '2026-07-26T01:02:03Z' },
+        { gameVersion: 'svencoop-10257', url: `svencoop-10257.${'a'.repeat(64)}.json`, sha256: 'a'.repeat(64), size: 123, snapshotSchemaVersion: 7, fileCount: 3, lastPublishTime: '2026-07-27T04:42:43Z' },
+        { gameVersion: 'svencoop-10256', url: `svencoop-10256.${'b'.repeat(64)}.json`, sha256: 'b'.repeat(64), size: 122, snapshotSchemaVersion: 7, fileCount: 2, lastPublishTime: '2026-07-26T01:02:03Z' },
       ],
     })
     vi.mocked(getGameSymbolDataset).mockImplementation(async (version) => ({

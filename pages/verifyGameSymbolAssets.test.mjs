@@ -21,8 +21,8 @@ async function temporaryRoot() {
 async function writeCurrentAssets(directory, gameVersion, marker) {
   await mkdir(directory, { recursive: true })
   const dataset = {
-    schemaVersion: 3,
-    source: { gameVersion },
+    schemaVersion: 4,
+    source: { gameVersion, snapshotSchemaVersion: 7 },
     binaries: {
       server: {
         windows: {
@@ -31,6 +31,7 @@ async function writeCurrentAssets(directory, gameVersion, marker) {
           crc32: '3'.repeat(8),
           crc64: '4'.repeat(16),
           size: 123,
+          isBlob: false,
         },
       },
     },
@@ -47,7 +48,7 @@ async function writeCurrentAssets(directory, gameVersion, marker) {
       url,
       sha256: digest,
       size: bytes.byteLength,
-      snapshotSchemaVersion: 6,
+      snapshotSchemaVersion: 7,
       fileCount: 1,
       lastPublishTime: '2026-07-28T00:00:00Z',
     }],
@@ -58,8 +59,8 @@ async function writeCurrentAssets(directory, gameVersion, marker) {
 async function writeLegacySnapshot(directory, gameVersion, marker) {
   await mkdir(directory, { recursive: true })
   const dataset = {
-    schemaVersion: 2,
-    source: { gameVersion },
+    schemaVersion: 3,
+    source: { gameVersion, snapshotSchemaVersion: 6 },
     records: [{ marker }],
   }
   const bytes = Buffer.from(JSON.stringify(dataset), 'utf8')
@@ -119,7 +120,7 @@ describe('immutable game-symbol asset verification', () => {
     expect(await readFile(join(current, second.url))).toEqual(second.bytes)
   })
 
-  it('preserves legacy schema v2 snapshots as immutable archive history', async () => {
+  it('preserves legacy schema v3 datasets as immutable archive history', async () => {
     const root = await temporaryRoot()
     const current = join(root, 'current')
     const archive = join(root, 'archive')
@@ -134,13 +135,71 @@ describe('immutable game-symbol asset verification', () => {
     expect(await readFile(join(current, legacy.url))).toEqual(legacy.bytes)
   })
 
-  it('rejects legacy schema v2 snapshots when the current index points to them', async () => {
+  it('rejects legacy datasets when the current index points to them', async () => {
     const root = await temporaryRoot()
     const current = join(root, 'current')
     const legacy = await writeLegacySnapshot(current, 'svencoop-10257', 'legacy')
     await writeIndex(current, 'svencoop-10257', legacy)
 
-    await expect(verifyGameSymbolAssetDirectory(current)).rejects.toThrow(/snapshot body game version or schema/)
+    await expect(verifyGameSymbolAssetDirectory(current)).rejects.toThrow(/dataset body must be schema v4/)
+  })
+
+  it('rejects current datasets whose isBlob violates the contract', async () => {
+    for (const mutation of [
+      (metadata) => ({ ...metadata, isBlob: 'false' }),
+      (metadata) => ({ ...metadata, isBlob: 1 }),
+      (metadata) => ({ sha256: metadata.sha256, md5: metadata.md5, crc32: metadata.crc32, crc64: metadata.crc64, size: metadata.size }),
+    ]) {
+      const root = await temporaryRoot()
+      const current = join(root, 'current')
+      await mkdir(current, { recursive: true })
+      const dataset = {
+        schemaVersion: 4,
+        source: { gameVersion: 'svencoop-10257', snapshotSchemaVersion: 7 },
+        binaries: { server: { windows: mutation({
+          sha256: '1'.repeat(64),
+          md5: '2'.repeat(32),
+          crc32: '3'.repeat(8),
+          crc64: '4'.repeat(16),
+          size: 123,
+          isBlob: false,
+        }) } },
+        records: [],
+      }
+      const bytes = Buffer.from(JSON.stringify(dataset), 'utf8')
+      const digest = createHash('sha256').update(bytes).digest('hex')
+      const url = `svencoop-10257.${digest}.json`
+      await writeFile(join(current, url), bytes)
+      await writeIndex(current, 'svencoop-10257', { url, digest, bytes })
+
+      await expect(verifyGameSymbolAssetDirectory(current)).rejects.toThrow(/isBlob/)
+    }
+  })
+
+  it('rejects a linux binary flagged as a blob in current datasets', async () => {
+    const root = await temporaryRoot()
+    const current = join(root, 'current')
+    await mkdir(current, { recursive: true })
+    const dataset = {
+      schemaVersion: 4,
+      source: { gameVersion: 'svencoop-10257', snapshotSchemaVersion: 7 },
+      binaries: { server: { linux: {
+        sha256: '1'.repeat(64),
+        md5: '2'.repeat(32),
+        crc32: '3'.repeat(8),
+        crc64: '4'.repeat(16),
+        size: 123,
+        isBlob: true,
+      } } },
+      records: [],
+    }
+    const bytes = Buffer.from(JSON.stringify(dataset), 'utf8')
+    const digest = createHash('sha256').update(bytes).digest('hex')
+    const url = `svencoop-10257.${digest}.json`
+    await writeFile(join(current, url), bytes)
+    await writeIndex(current, 'svencoop-10257', { url, digest, bytes })
+
+    await expect(verifyGameSymbolAssetDirectory(current)).rejects.toThrow(/isBlob/)
   })
 
   it('rejects any modification of an archived content-addressed snapshot', async () => {

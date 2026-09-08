@@ -13,7 +13,7 @@ download.yaml + configs/<tag>.yaml
   -> bin_artifacts/<tag>/<module>/<symbol>.<platform>.yaml（Git truth）
   -> 仅 release 阶段生成的不可变 candidate
   -> gamesymbols/<tag>.yaml + gamesymbols/<tag>.metadata.yaml（bundle）
-  -> gamesymbols_json.py 确定性派生浏览器 JSON dataset + index（schema 3/4）
+  -> gamesymbols_json.py 确定性派生浏览器 JSON dataset + index（schema 4/4）
   -> 打包唯一 all-in-one gamesymbols-<version>.7z
 
 RunRequest -> Redis Stream -> 单并发 scheduler -> Analyzer
@@ -103,8 +103,11 @@ Job controller 上，为每组重新采样 baseline 并创建 gate。
 
 ## Snapshot 边界
 
-writer 输出 schema 6，包含 config digest v2、analysis output contract version 2、UTC 发布时间、canonical YAML 工件，以及
-每个配置二进制与路径无关的 SHA-256、MD5、CRC32、CRC64 和 size。reader 兼容 schema 1–6；schema 5 仍严格要求
+writer 输出 schema 7，包含 config digest v2、analysis output contract version 2、UTC 发布时间、canonical YAML 工件，以及
+每个配置二进制与路径无关的 SHA-256、MD5、CRC32、CRC64、size 和必填布尔 `is_blob`。`is_blob` 仅在原始 Windows
+文件未通过普通 PE 校验、但通过完整 Metahook blob 解密/重建/校验流水线时为 `true`（该判定由 snapshot writer 与
+analyzer 共享）；普通 PE 与 Linux ELF 为 `false`，非法二进制直接让 snapshot 失败而不是发布为 `false`。reader 兼容
+schema 1–7；schema 5 仍严格要求
 旧 binary `path`。restore / verify 会拒绝链接、
 路径逃逸、未声明或缺失的 YAML、非 canonical bytes 与 contract drift。
 
@@ -126,10 +129,14 @@ reset contract 会要求客户端重新读取 atomic snapshot。
 
 React dashboard 提供 run list、graph/list、task detail、status filter 和 SSE live update，同时包含静态 Symbol
 Explorer。Symbol snapshot 使用 `<family-build>` tag，按 family 分组并在组内按数字 build 降序。release 流水线用
-Python 从 schema-6 snapshot 与 schema-1 metadata companion 确定性派生精确 UTF-8 content-addressed JSON dataset 与
-index schema v4；Vite 插件纯中继这些字节，不再派生，也绝不读取 live config alias。部署 workflow 下载
+Python 从 schema-7 snapshot 与 schema-1 metadata companion 确定性派生精确 UTF-8 content-addressed JSON dataset 与
+index schema v4；每个 dataset 为 schema v4，并携带 per-binary 的 `isBlob` 标志（来自 snapshot 的 `is_blob`）。
+JSON 生成器与 Pages 前端只接受 schema-7 snapshot 与 schema-4 dataset，不存在旧 dataset 兼容模式。Vite 插件纯中继
+这些字节，不再派生，也绝不读取 live config alias。部署 workflow 下载
 `gamesymbols-*.7z` 解压得到同一 JSON，把所有 digest 保存到 append-only `pages-snapshots` 分支，并校验
-current/archive/CDN bytes。该分支只是从 published Release 派生的非权威展示镜像，绝不是 source 或 release truth。
+current/archive/CDN bytes：当前 index 引用的 dataset 按新版业务 schema 完整校验，未被引用的历史文件仅作为不可变
+归档字节保留，只做文件名/SHA-256/size 完整性检查。该分支只是从 published Release 派生的非权威展示镜像，绝不是
+source 或 release truth。
 GitHub Pages 只托管静态资产，不托管 Process API。
 
 ## 当前排除与延期

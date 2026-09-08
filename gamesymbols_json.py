@@ -3,7 +3,7 @@
 
 The release bundle ships a single all-in-one ``gamesymbols-<version>.7z`` whose
 contents are the browser-consumable JSON bytes that the Pages application
-serves: one schema-3 dataset per game version (content-addressed filename) plus
+serves: one schema-4 dataset per game version (content-addressed filename) plus
 a schema-4 index. The canonical snapshot/metadata YAML remain the trusted
 source; this module deterministically derives those JSON bytes from them.
 """
@@ -25,7 +25,8 @@ GAME_VERSION_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+$")
 SYMBOL_PATH_PATTERN = re.compile(r"^([^/]+)/([^/]+)\.(windows|linux)\.yaml$")
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 PLATFORMS = ("windows", "linux")
-DATASET_SCHEMA_VERSION = 3
+REQUIRED_SNAPSHOT_SCHEMA_VERSION = 7
+DATASET_SCHEMA_VERSION = 4
 INDEX_SCHEMA_VERSION = 4
 SESSION_SCHEMA_VERSION = 1
 SESSION_KEYS = {
@@ -74,7 +75,7 @@ def _symbol_name(payload: dict, artifact: str) -> str:
     return artifact
 
 
-def _normalize_binaries(binaries: dict, schema: int) -> dict:
+def _normalize_binaries(binaries: dict) -> dict:
     result: dict = {}
     for module, platforms in binaries.items():
         if not isinstance(module, str) or not module or module in {".", ".."} or "/" in module or "\\" in module:
@@ -83,26 +84,34 @@ def _normalize_binaries(binaries: dict, schema: int) -> dict:
         for platform, metadata in platforms.items():
             if platform not in PLATFORMS:
                 raise GamesymbolsJsonError(f"Unsupported binary platform: {module}.{platform}")
-            entry = {
+            if "path" in metadata:
+                raise GamesymbolsJsonError(f"binaries.{module}.{platform}.path is not allowed in schema 7")
+            is_blob = metadata.get("is_blob")
+            if not isinstance(is_blob, bool):
+                raise GamesymbolsJsonError(f"binaries.{module}.{platform}.is_blob must be a boolean")
+            if platform != "windows" and is_blob:
+                raise GamesymbolsJsonError(
+                    f"binaries.{module}.{platform}.is_blob must be false for non-Windows binaries"
+                )
+            normalized[platform] = {
                 "sha256": metadata["sha256"],
                 "md5": metadata["md5"],
                 "crc32": metadata["crc32"],
                 "crc64": metadata["crc64"],
                 "size": metadata["size"],
+                "isBlob": is_blob,
             }
-            if schema == 5:
-                entry["path"] = metadata["path"]
-            elif "path" in metadata:
-                raise GamesymbolsJsonError(f"binaries.{module}.{platform}.path is not allowed in schema 6")
-            normalized[platform] = entry
         result[module] = normalized
     return result
 
 
 def _build_dataset(document: dict, metadata: dict, expected_game_version: str) -> dict:
     schema = document["schema_version"]
-    if schema not in (5, 6):
-        raise GamesymbolsJsonError(f"snapshot schema_version must be 5 or 6, got {schema}")
+    if schema != REQUIRED_SNAPSHOT_SCHEMA_VERSION:
+        raise GamesymbolsJsonError(
+            f"snapshot schema_version must be {REQUIRED_SNAPSHOT_SCHEMA_VERSION}, got {schema}; "
+            "regenerate the snapshot with the schema-7 writer before deriving a dataset"
+        )
     game_version = document["game_version"]
     if game_version != expected_game_version:
         raise GamesymbolsJsonError(f"snapshot game_version {game_version} does not match {expected_game_version}")
@@ -149,7 +158,7 @@ def _build_dataset(document: dict, metadata: dict, expected_game_version: str) -
     dataset = {
         "schemaVersion": DATASET_SCHEMA_VERSION,
         "source": source,
-        "binaries": _normalize_binaries(document["binaries"], schema),
+        "binaries": _normalize_binaries(document["binaries"]),
         "modules": modules,
         "records": records,
     }

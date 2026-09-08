@@ -1,12 +1,17 @@
 export type GameSymbolPlatform = 'windows' | 'linux'
 
+/**
+ * Metadata of the ORIGINAL game binary file covered by the hashes/size fields.
+ * `isBlob: true` means that original Windows file is a fully verified Metahook
+ * blob container (not a plain PE); it never describes the decrypted rebuild.
+ */
 export interface GameSymbolBinary {
-  path?: string
   sha256: string
   md5: string
   crc32: string
   crc64: string
   size: number
+  isBlob: boolean
 }
 
 export type GameSymbolBinaries = Record<string, Partial<Record<GameSymbolPlatform, GameSymbolBinary>>>
@@ -38,7 +43,7 @@ export interface GameSymbolRecord {
 }
 
 export interface GameSymbolDataset {
-  schemaVersion: 3
+  schemaVersion: 4
   source: {
     gameVersion: string
     snapshotSchemaVersion: number

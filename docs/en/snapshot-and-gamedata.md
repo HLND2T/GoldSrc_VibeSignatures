@@ -33,7 +33,8 @@ repository-root `gamesymbols/` or `gamedata/` trees.
 
 `release-build.yml` force-rebuilds all configured artifacts in a fresh external root and compares exact bytes with Git
 `bin_artifacts`. Per game version it derives a snapshot and metadata, deterministically derives the browser JSON dataset
-(schema 3, `<tag>.<sha256>.json`) from them with `gamesymbols_json.py`, marks `json`, and publishes the snapshot/metadata;
+(schema 4, `<tag>.<sha256>.json`, including the per-binary `isBlob` flag) from them with `gamesymbols_json.py`, marks
+`json`, and publishes the snapshot/metadata;
 `release_bundle.py` then assembles the index (schema 4), packs a single all-in-one archive, and builds a closed bundle
 containing:
 
@@ -68,5 +69,9 @@ uv run python gamesymbol_snapshot.py restore-legacy -gamever cstrike-10210 -snap
   -bindir bin -artifactdir <compatibility-artifact-root>
 ```
 
-The writer emits schema 6 and the reader accepts schemas 1–6. Restore and verification reject links, path escapes,
+The writer emits schema 7 and the reader accepts schemas 1–7. Schema 7 records a required boolean `is_blob` per
+module/platform: `true` only when the original Windows binary is a fully verified Metahook blob (plain PE/ELF is `false`;
+invalid binaries fail the snapshot rather than publishing `false`). The JSON generator only accepts schema-7 snapshots
+and the frontend only accepts schema-4 datasets — there is no legacy-dataset compatibility mode. Restore and
+verification reject links, path escapes,
 undeclared or missing YAML, non-canonical bytes, and contract drift.
