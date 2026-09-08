@@ -72,3 +72,13 @@ covers classification/closure/segmentation, the result contract, scheduler gatin
 memory parsing/host-headroom, and the locked dynamic-port retry. Real-runner concurrency/memory/cancel/license
 evidence is still required before raising the production Environment concurrency above 1 (see
 `docs/plans/full-analysis-concurrency-migration.md` §15).
+
+## Selected-node batches (issue #81)
+
+- Trigger: a PR affects multiple tags but its per-tag IDA calls serialize the expensive work.
+- Constraint: classify complete DAGs before filtering selections; otherwise an unselected cross-binary producer can erase a serial-tail dependency. Structural planning may defer external file checks, but selected external inputs must all pass after materialization and before any worker starts; selected predecessors are allowed to produce intermediate inputs later.
+- Correct approach: `-batch_selection` consumes schema-versioned generic tag/node selections, never a PR plan. Strictly reject invalid entries and conflicting selectors. Reuse one batch scheduler, shared analysis limits, global success barrier, exact restored/no-save workers and serial postprocessing. `-validate_selection_only` validates the full selection/DAG before materialization.
+- Diagnostics: unique invocation/task paths, redacted per-worker logs, atomic structured summary and scheduler events (including cancelled/not-executed/cleanup failure); PR upload only allowlists logs and summary, never worker requests or IDBs.
+- Verification: `tests.test_analysis_batch` covers exact selection, deferred/external inputs, CLI conflicts, real lightweight subprocess diagnostic capture on success/failure, and existing scheduler timeout/cancellation/cleanup contracts. Real IDA behavior is distinct from these fixtures.
+- Scope: selected PR analysis and the shared full-analysis coordinator. Single-tag public selection behavior remains on its existing path.
+- Activation decision (2026-09-08): user explicitly requested immediate use of existing concurrency and waived the concurrency-1/2 comparison. Do not claim measured speedup or substitute this authorization for real-IDA evidence. Rollback keeps the batch entry and sets concurrency to 1.

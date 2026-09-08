@@ -188,6 +188,9 @@ jobs:
       GSVIBE_LLM_EFFORT: ${{ secrets.GSVIBE_LLM_EFFORT }}
       GSVIBE_LLM_MODEL: ${{ secrets.GSVIBE_LLM_MODEL }}
       GSVIBE_LLM_TEMPERATURE: ${{ secrets.GSVIBE_LLM_TEMPERATURE }}
+      GSVIBE_ANALYSIS_MAX_CONCURRENCY: ${{ vars.GSVIBE_ANALYSIS_MAX_CONCURRENCY }}
+      GSVIBE_ANALYSIS_MAX_MEMORY_MIB: ${{ vars.GSVIBE_ANALYSIS_MAX_MEMORY_MIB }}
+      GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB: ${{ vars.GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB }}
     steps:
       - name: Checkout PR merge commit and exact binaries
         uses: actions/checkout@v5
@@ -295,16 +298,28 @@ jobs:
           $candidateCli = Join-Path $trustedRoot 'gamesymbol_candidate.py'
           $artifactRoot = Join-Path $env:RUNNER_TEMP 'rebuilt-bin-artifacts'
           $plan = Get-Content -Raw -LiteralPath $planPath | ConvertFrom-Json
+          $selectionPath = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\analysis-selection.json'
+          $diagnosticsRoot = Join-Path $env:RUNNER_TEMP 'gamesymbol-analysis-${{ github.run_id }}-${{ github.run_attempt }}'
+          $selections = @($plan.tags | Where-Object { $_.analysis_nodes.Count -gt 0 } | ForEach-Object {
+            @{ tag = $_.tag; node_ids = @($_.analysis_nodes) }
+          })
+          @{ schema_version = 1; selections = $selections } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $selectionPath -Encoding utf8
+          uv run python ida_analyze_bin.py -batch_selection $selectionPath -validate_selection_only `
+            -artifactdir $artifactRoot -batch_diagnostics $diagnosticsRoot
+          if ($LASTEXITCODE -ne 0) { throw 'batch selection validation failed' }
           foreach ($action in $plan.tags) {
             if ($action.analysis_nodes.Count -eq 0) { continue }
             $tag = $action.tag
             uv run --project $trustedRoot python $plannerCli materialize -repo-root $env:GITHUB_WORKSPACE `
               -plan $planPath -tag $tag -merge-ref HEAD -bindir bin -artifactdir $artifactRoot
             if ($LASTEXITCODE -ne 0) { throw "materialization failed for $tag" }
-            $analyzerArgs = @('ida_analyze_bin.py', '-gamever', $tag, '-oldgamever', 'none', '-bindir', 'bin', '-artifactdir', $artifactRoot)
-            foreach ($node in $action.analysis_nodes) { $analyzerArgs += @('-node', $node) }
-            uv run python @analyzerArgs
-            if ($LASTEXITCODE -ne 0) { throw "selected-node analysis failed for $tag" }
+          }
+          uv run python ida_analyze_bin.py -batch_selection $selectionPath -bindir bin `
+            -artifactdir $artifactRoot -batch_diagnostics $diagnosticsRoot
+          if ($LASTEXITCODE -ne 0) { throw 'selected-node batch analysis failed' }
+          foreach ($action in $plan.tags) {
+            if ($action.analysis_nodes.Count -eq 0) { continue }
+            $tag = $action.tag
             uv run --project $trustedRoot python $plannerCli compare -repo-root $env:GITHUB_WORKSPACE `
               -plan $planPath -tag $tag -merge-ref HEAD -bindir bin -artifactdir $artifactRoot
             if ($LASTEXITCODE -ne 0) { throw "artifact byte comparison failed for $tag" }
@@ -333,6 +348,15 @@ jobs:
           }
           git diff --exit-code -- bin_artifacts
           if ($LASTEXITCODE -ne 0) { throw 'tracked bin_artifacts changed during isolated rebuild' }
+      - name: Upload analysis diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gamesymbol-analysis-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/gamesymbol-analysis-${{ github.run_id }}-${{ github.run_attempt }}/**/*.log
+            ${{ runner.temp }}/gamesymbol-analysis-${{ github.run_id }}-${{ github.run_attempt }}/**/summary.json
+          if-no-files-found: warn
       - name: Remove generated submodule analysis state
         if: always()
         shell: pwsh

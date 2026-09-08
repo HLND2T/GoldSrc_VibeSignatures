@@ -17,6 +17,7 @@ import sys
 import tempfile
 import threading
 import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
@@ -33,7 +34,11 @@ from analysis_config import (
 from analysis_batch import (
     RESULT_SCHEMA_VERSION,
     BatchPlanError,
+    BatchSchedule,
+    BatchDiagnostics,
     build_batch_schedule,
+    select_batch_schedule,
+    validate_batch_selections,
     run_batch,
     terminate_process_tree,
     work_item_run_id,
@@ -2033,12 +2038,14 @@ def _select_requested_nodes(plan, requested_node_ids):
 def _validate_selected_inputs(plan, selected_nodes, game_root: Path) -> None:
     selected_ids = {node.id for node in selected_nodes}
     producers = {
-        output.casefold(): node.id for node in plan.nodes for output in (*node.required_outputs, *node.optional_outputs)
+        (node.platform, output.casefold()): node.id
+        for node in plan.nodes
+        for output in (*node.required_outputs, *node.optional_outputs)
     }
     missing = []
     for node in selected_nodes:
         for artifact in node.required_inputs:
-            producer = producers.get(artifact.casefold())
+            producer = producers.get((node.platform, artifact.casefold()))
             path = game_root / Path(*PurePosixPath(artifact).parts)
             if producer not in selected_ids and not path.is_file():
                 missing.append(f"{node.id}: {artifact}")
@@ -2215,6 +2222,7 @@ def analyze(
             tag=tag,
             default_max_retries=max_retries,
             declared_modules=[module["name"] for module in all_modules],
+            validate_external_inputs=not (force_all and selected_node_ids is not None),
         )
         selected_nodes = _select_requested_nodes(plan, selected_node_ids)
         process_plan = build_process_execution_plan(
@@ -2458,6 +2466,13 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("-skill", default=None, help="Exact skill name to run")
     parser.add_argument("-node", action="append", default=None, help="Exact module:platform:skill node ID to run")
+    parser.add_argument("-batch_selection", help="Versioned JSON tag/node selections for one bounded batch")
+    parser.add_argument(
+        "-validate_selection_only",
+        action="store_true",
+        help="Validate batch selections and complete DAGs without checking materialized inputs or starting workers",
+    )
+    parser.add_argument("-batch_diagnostics", help="Directory for batch worker logs and structured summaries")
     parser.add_argument("-force_all", action="store_true", help="Force every selected config node to execute")
     parser.add_argument(
         "-llm_model",
@@ -2553,6 +2568,33 @@ def parse_args(argv=None):
             parser.error(f"unrecognized arguments: {token}")
     args = parser.parse_args(raw_argv)
     explicit_options = {token.split("=", 1)[0] for token in raw_argv if token.startswith("-")}
+    if args.batch_selection is not None:
+        if not args.batch_selection.strip():
+            parser.error("-batch_selection must name a JSON file")
+        conflicts = sorted(
+            explicit_options
+            & {
+                "-gamever",
+                "-allgamever",
+                "-node",
+                "-skill",
+                "-modules",
+                "-platform",
+                "-force_all",
+                "-configyaml",
+                "-oldgamever",
+                "-skip_error",
+                "-run_id",
+            }
+        )
+        if conflicts:
+            parser.error(f"-batch_selection cannot be combined with {', '.join(conflicts)}")
+        if _optional_text(args.run_id) is not None:
+            parser.error("GSVIBE_RUN_ID cannot be used with -batch_selection")
+    if args.validate_selection_only and args.batch_selection is None:
+        parser.error("-validate_selection_only requires -batch_selection")
+    if args.batch_diagnostics and not (args.batch_selection or (args.allgamever and args.force_all)):
+        parser.error("-batch_diagnostics requires a batch entry point")
     if args.node is not None:
         conflicts = sorted(explicit_options & {"-skill", "-modules", "-platform", "-allgamever", "-force_all"})
         if conflicts:
@@ -2573,7 +2615,7 @@ def parse_args(argv=None):
         if _optional_text(args.run_id) is not None:
             parser.error("-run_id (or GSVIBE_RUN_ID) cannot be used with -allgamever")
         args.oldgamever = None
-    else:
+    elif args.batch_selection is None:
         gamever = _optional_text(args.gamever)
         if gamever is None:
             parser.error("-gamever is required, or use -allgamever")
@@ -2585,7 +2627,7 @@ def parse_args(argv=None):
     args.platforms = (
         list(PLATFORMS) if args.node is not None else _parse_csv(parser, args.platform, "-platform", allowed=PLATFORMS)
     )
-    args.modules = "*" if args.node is not None else str(args.modules).strip()
+    args.modules = "*" if args.node is not None or args.batch_selection is not None else str(args.modules).strip()
     if args.modules == "*":
         args.module_filter = None
     else:
@@ -2631,7 +2673,7 @@ def parse_args(argv=None):
     if not args.redis_prefix:
         parser.error("-redis_prefix cannot be empty")
 
-    if not args.allgamever:
+    if not args.allgamever and args.batch_selection is None:
         gamever = args.gamever
         if gamever is None:  # defensive: the non-all path always resolves a tag.
             parser.error("-gamever is required, or use -allgamever")
@@ -2996,9 +3038,70 @@ def _batch_binary_relative_paths(tag: str, modules, platforms) -> dict[tuple[str
     return paths
 
 
+def _load_batch_selection(path: str) -> dict[str, tuple[str, ...]]:
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise BatchPlanError(f"Duplicate JSON key in batch selection: {key}")
+            result[key] = value
+        return result
+
+    payload = json.loads(Path(path).read_text(encoding="utf-8-sig"), object_pairs_hook=unique_object)
+    return validate_batch_selections(payload, iter_analysis_config_tags())
+
+
 def _run_full_batch(args) -> int:
-    """Two-phase bounded-concurrency path for `-allgamever -force_all`."""
+    """Shared two-phase coordinator for full analysis and exact batch selections."""
+    batch_run_id = f"analysis-batch-{time.strftime('%Y%m%dT%H%M%S')}-{uuid.uuid4().hex}"
+    diagnostics = BatchDiagnostics(
+        Path(args.batch_diagnostics or (Path(tempfile.gettempdir()) / "gsvibe-analysis-diagnostics")),
+        batch_run_id,
+        BatchSchedule((), ()),
+        sensitive_values=[
+            args.llm_apikey,
+            args.llm_baseurl,
+            args.redis_url,
+            *[
+                value
+                for key, value in os.environ.items()
+                if any(word in key.upper() for word in ("SECRET", "TOKEN", "PASSWORD", "APIKEY", "API_KEY"))
+            ],
+        ],
+    )
+    print(f"Batch diagnostics: {diagnostics.root}")
+    try:
+        result = _run_analysis_batch(args, diagnostics)
+        if diagnostics.payload["status"] == "running":
+            diagnostics.finish(
+                "validated" if result == 0 else "failed", None if result == 0 else "batch_preflight_failed"
+            )
+        return result
+    except (
+        AnalysisConfigError,
+        AnalysisPlanError,
+        AnalysisRunError,
+        BatchPlanError,
+        AnalysisMemoryConfigError,
+        OSError,
+        ValueError,
+        yaml.YAMLError,
+    ) as exc:
+        diagnostics.finish("failed", str(exc))
+        print(diagnostics.redact(f"Error: analysis batch failed: {exc}"))
+        return 1
+    except BaseException as exc:
+        diagnostics.finish(
+            "cancelled" if isinstance(exc, (KeyboardInterrupt, SystemExit)) else "failed", type(exc).__name__
+        )
+        raise
+
+
+def _run_analysis_batch(args, diagnostics: BatchDiagnostics) -> int:
     tags = iter_analysis_config_tags()
+    selections = _load_batch_selection(args.batch_selection) if args.batch_selection else None
+    if selections is not None:
+        tags = list(selections)
     if not tags:
         print("Error: no analysis config files found to process with -allgamever")
         return 1
@@ -3022,19 +3125,28 @@ def _run_full_batch(args) -> int:
             tag=tag,
             default_max_retries=args.maxretry,
             declared_modules=[module["name"] for module in all_modules],
+            validate_external_inputs=selections is None,
         )
         tag_plans.append((tag, plan, _batch_binary_relative_paths(tag, all_modules, args.platforms)))
-    try:
-        schedule = build_batch_schedule(tag_plans)
-    except BatchPlanError as exc:
-        print(f"Error: full analysis batch classification failed: {exc}")
-        return 1
+    schedule = build_batch_schedule(tag_plans)
+    if selections is not None:
+        schedule = select_batch_schedule(schedule, selections)
+    diagnostics.set_schedule(schedule)
+    if args.validate_selection_only:
+        print(
+            f"Validated batch selection: {len(tags)} tag(s), {sum(len(item.node_ids) for item in schedule.all_items)} node(s)"
+        )
+        return 0
+    if selections is not None:
+        for tag, plan, _paths in tag_plans:
+            try:
+                _validate_selected_inputs(
+                    plan, _select_requested_nodes(plan, selections[tag]), Path(args.artifactdir) / tag
+                )
+            except AnalysisRunError as exc:
+                raise AnalysisRunError(f"Tag {tag}: {exc}") from exc
     effective_concurrency = min(limits.max_concurrency, len(schedule.parallel_items))
-    try:
-        validate_limits_for_effective_concurrency(limits, effective_concurrency)
-    except AnalysisMemoryConfigError as exc:
-        print(f"Error: {exc}")
-        return 1
+    validate_limits_for_effective_concurrency(limits, effective_concurrency)
     print(
         f"Full analysis batch: {len(schedule.parallel_items)} parallel binary work item(s), "
         f"{len(schedule.serial_items)} serial segment(s); configured concurrency "
@@ -3042,18 +3154,15 @@ def _run_full_batch(args) -> int:
     )
     memory_gate = None
     if limits.memory_guard_enabled:
-        try:
-            authority = analysis_memory_authority_from_environment()
-        except AnalysisMemoryConfigError as exc:
-            print(f"Error: {exc}")
-            return 1
+        authority = analysis_memory_authority_from_environment()
         memory_gate = authority.gate if authority is not None else None
     else:
         print("Full analysis batch: aggregate memory guard disabled (GSVIBE_ANALYSIS_MAX_MEMORY_MIB unset)")
 
-    batch_run_id = f"analysis-batch-{time.strftime('%Y%m%dT%H%M%S')}"
+    batch_run_id = diagnostics.payload["run_id"]
     request_root = Path(tempfile.mkdtemp(prefix="gsvibe-analysis-batch-"))
-    print_lock = threading.Lock()
+    readers = []
+    log_errors = []
 
     def launch_worker(item):
         request_path = request_root / f"{item.work_item_id}.request.json"
@@ -3110,13 +3219,22 @@ def _run_full_batch(args) -> int:
 
         def drain(prefix: str) -> None:
             assert process.stdout is not None
-            for raw in iter(process.stdout.readline, b""):
-                line = raw.decode("utf-8", errors="replace").rstrip()
-                with print_lock:
-                    print(f"{prefix} {line}")
-            process.stdout.close()
+            try:
+                with Path(diagnostics.tasks[item.work_item_id]["log_path"]).open("w", encoding="utf-8") as log_file:
+                    for raw in iter(process.stdout.readline, b""):
+                        line = raw.decode("utf-8", errors="replace").rstrip()
+                        log_file.write(diagnostics.redact(f"{prefix} {line}") + "\n")
+                        log_file.flush()
+            except Exception as exc:
+                log_errors.append(f"{item.work_item_id}: {type(exc).__name__}")
+                for _raw in iter(process.stdout.readline, b""):
+                    pass
+            finally:
+                process.stdout.close()
 
-        threading.Thread(target=drain, args=(item.log_prefix,), daemon=True).start()
+        reader = threading.Thread(target=drain, args=(item.log_prefix,), daemon=True)
+        reader.start()
+        readers.append(reader)
         return process, result_path
 
     try:
@@ -3127,10 +3245,20 @@ def _run_full_batch(args) -> int:
             max_concurrency=limits.max_concurrency,
             memory_gate=memory_gate,
             skip_error=args.skip_error,
+            on_event=diagnostics.event,
+            log=lambda text: print(diagnostics.redact(text)),
         )
+        diagnostics.finish("succeeded" if outcome.succeeded else "failed", outcome.failure_reason)
+    except BaseException as exc:
+        diagnostics.finish(
+            "cancelled" if isinstance(exc, (KeyboardInterrupt, SystemExit)) else "failed", type(exc).__name__
+        )
+        raise
     finally:
+        for reader in readers:
+            reader.join(timeout=5)
         try:
-            for path in request_root.glob("*.request.json"):
+            for path in request_root.glob("*.json"):
                 path.unlink()
             request_root.rmdir()
         except OSError as cleanup_error:
@@ -3151,6 +3279,10 @@ def _run_full_batch(args) -> int:
     print(f"  Successful: {outcome.successful}")
     print(f"  Failed: {outcome.failed}")
     print(f"  Skipped: {outcome.skipped}")
+    if log_errors or any(reader.is_alive() for reader in readers):
+        diagnostics.finish("failed", "diagnostic_capture_failed")
+        print("Error: worker diagnostic capture did not complete")
+        return 1
     return 0 if outcome.succeeded else 1
 
 
@@ -3162,7 +3294,7 @@ def main(argv=None) -> int:
             return 2
         return _batch_worker_main(raw_argv[1])
     args = parse_args(argv)
-    if args.allgamever and args.force_all:
+    if args.batch_selection or (args.allgamever and args.force_all):
         return _run_full_batch(args)
     if args.allgamever:
         return run_all(args)

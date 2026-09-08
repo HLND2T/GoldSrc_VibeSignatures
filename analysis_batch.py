@@ -8,6 +8,7 @@ and an aggregate memory admission gate.
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import time
@@ -233,6 +234,118 @@ def work_item_run_id(batch_run_id: str, work_item_id: str) -> str:
     reporter identity stay distinguishable.
     """
     return f"{batch_run_id}-{work_item_id}"
+
+
+def validate_batch_selections(payload: object, known_tags: Iterable[str]) -> dict[str, tuple[str, ...]]:
+    if not isinstance(payload, dict) or set(payload) != {"schema_version", "selections"}:
+        raise BatchPlanError("Batch selection must contain exactly schema_version and selections")
+    if type(payload["schema_version"]) is not int or payload["schema_version"] != 1:
+        raise BatchPlanError("Unsupported batch selection schema_version")
+    entries = payload["selections"]
+    if not isinstance(entries, list) or not entries:
+        raise BatchPlanError("Batch selections must be a non-empty array")
+    available_tags = set(known_tags)
+    selections = {}
+    for entry in entries:
+        if not isinstance(entry, dict) or set(entry) != {"tag", "node_ids"}:
+            raise BatchPlanError("Each selection must contain exactly tag and node_ids")
+        tag, node_ids = entry["tag"], entry["node_ids"]
+        if not isinstance(tag, str) or tag not in available_tags:
+            raise BatchPlanError(f"Unknown batch selection tag: {tag!r}")
+        if tag in selections:
+            raise BatchPlanError(f"Duplicate batch selection tag: {tag}")
+        if not isinstance(node_ids, list) or not node_ids:
+            raise BatchPlanError(f"Tag {tag}: node_ids must be a non-empty array")
+        if any(not isinstance(node_id, str) or not node_id or node_id.strip() != node_id for node_id in node_ids):
+            raise BatchPlanError(f"Tag {tag}: node_ids must contain non-empty exact strings")
+        if len(set(node_ids)) != len(node_ids):
+            raise BatchPlanError(f"Tag {tag}: duplicate node IDs")
+        selections[tag] = tuple(node_ids)
+    return selections
+
+
+def select_batch_schedule(schedule: BatchSchedule, selections: Mapping[str, tuple[str, ...]]) -> BatchSchedule:
+    available = {(item.binary.tag, node_id) for item in schedule.all_items for node_id in item.node_ids}
+    requested = {(tag, node_id) for tag, node_ids in selections.items() for node_id in node_ids}
+    missing = requested - available
+    if missing:
+        raise BatchPlanError(f"Unknown selected tag/node IDs: {sorted(missing)}")
+
+    def select(items):
+        selected = []
+        for item in items:
+            node_ids = tuple(node_id for node_id in item.node_ids if (item.binary.tag, node_id) in requested)
+            if not node_ids:
+                continue
+            if item.phase == PHASE_SERIAL and selected and selected[-1].binary == item.binary:
+                selected[-1] = replace(selected[-1], node_ids=selected[-1].node_ids + node_ids)
+            else:
+                selected.append(replace(item, node_ids=node_ids))
+        return tuple(replace(item, work_item_id=f"{item.phase}-{index:04d}") for index, item in enumerate(selected))
+
+    return BatchSchedule(select(schedule.parallel_items), select(schedule.serial_items))
+
+
+class BatchDiagnostics:
+    def __init__(self, root: Path, run_id: str, schedule: BatchSchedule, *, sensitive_values=()):
+        self.root = root / run_id
+        self.root.mkdir(parents=True, exist_ok=False)
+        self.sensitive_values = tuple(str(value) for value in sensitive_values if value)
+        self.payload = {"schema_version": 1, "run_id": run_id, "status": "running", "failure_reason": None, "tasks": []}
+        self.set_schedule(schedule)
+
+    def set_schedule(self, schedule: BatchSchedule) -> None:
+        self.tasks = {}
+        self.payload["tasks"] = []
+        for item in schedule.all_items:
+            log_path = (
+                self.root / item.binary.tag / f"{item.binary.module}-{item.binary.platform}-{item.work_item_id}.log"
+            )
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            task = {
+                "work_item_id": item.work_item_id,
+                "phase": item.phase,
+                "tag": item.binary.tag,
+                "binary_relative_path": item.binary.binary_relative_path,
+                "node_ids": list(item.node_ids),
+                "status": "not_executed",
+                "elapsed_seconds": 0.0,
+                "failure_reason": None,
+                "log_path": str(log_path),
+            }
+            self.tasks[item.work_item_id] = task
+            self.payload["tasks"].append(task)
+        self.write()
+
+    def redact(self, text: str) -> str:
+        for value in self.sensitive_values:
+            text = text.replace(value, "[REDACTED]")
+        return text
+
+    def write(self) -> None:
+        def redact_values(value):
+            if isinstance(value, str):
+                return self.redact(value)
+            if isinstance(value, list):
+                return [redact_values(entry) for entry in value]
+            if isinstance(value, dict):
+                return {key: redact_values(entry) for key, entry in value.items()}
+            return value
+
+        target = self.root / "summary.json"
+        temporary = target.with_suffix(".tmp")
+        temporary.write_text(json.dumps(redact_values(self.payload), ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(temporary, target)
+
+    def event(self, item: WorkItem, status: str, reason: str | None, elapsed: float) -> None:
+        task = self.tasks[item.work_item_id]
+        task.update(status=status, failure_reason=reason, elapsed_seconds=elapsed)
+        self.write()
+        print(self.redact(f"{item.log_prefix} {status} ({elapsed:.1f}s); reason={reason}; log={task['log_path']}"))
+
+    def finish(self, status: str, reason: str | None = None) -> None:
+        self.payload.update(status=status, failure_reason=reason)
+        self.write()
 
 
 @dataclass(frozen=True)
@@ -539,11 +652,28 @@ def run_batch(
     sleep: Callable[[float], None] = time.sleep,
     log: Callable[[str], None] = print,
     read_result_payload: Callable[[Path], object] = _read_result_payload,
+    on_event: Callable[[WorkItem, str, str | None, float], None] | None = None,
 ) -> BatchOutcome:
     """Execute the two-phase schedule under bounded concurrency and one success barrier."""
     outcome = BatchOutcome()
     item_summaries: list[tuple[str, str]] = []
     aborted: list[str] = []
+    started_at: dict[str, float] = {}
+    terminal_items: set[str] = set()
+    diagnostic_failures: list[str] = []
+
+    def notify(item, status, reason=None):
+        now = monotonic()
+        if status == "running":
+            started_at[item.work_item_id] = now
+        else:
+            terminal_items.add(item.work_item_id)
+        if on_event is not None:
+            try:
+                on_event(item, status, reason, now - started_at.get(item.work_item_id, now))
+            except Exception as exc:
+                diagnostic_failures.append(type(exc).__name__)
+                log(f"{item.log_prefix} diagnostic event failed: {type(exc).__name__}")
 
     def record_result(result: WorkerResult) -> None:
         outcome.successful += result.summary["successful"]
@@ -564,8 +694,10 @@ def run_batch(
             outcome.failed += len(worker.item.node_ids)
             item_summaries.append((worker.item.work_item_id, WORKER_STATUS_FAILED))
             log(f"{worker.item.log_prefix} worker result contract violation: {exc}")
+            notify(worker.item, "failed", f"worker_result_invalid: {exc}")
             return None
         if exit_code != result.exit_code:
+            notify(worker.item, "failed", "worker_exit_code_mismatch")
             outcome.failed += len(worker.item.node_ids)
             item_summaries.append((worker.item.work_item_id, WORKER_STATUS_FAILED))
             log(
@@ -573,6 +705,7 @@ def run_batch(
             )
             return None
         record_result(result)
+        notify(worker.item, result.status, result.failure_reason)
         return result
 
     parallel_items = list(schedule.parallel_items)
@@ -612,6 +745,8 @@ def run_batch(
                     if wait_reason is not None:
                         now = monotonic()
                         started = admission_wait_started.setdefault(item.work_item_id, now)
+                        if now == started:
+                            log(f"{item.log_prefix} resource wait: {wait_reason}")
                         if now - started >= admission_timeout_seconds:
                             admission_wait_started.pop(item.work_item_id, None)
                             _stop_for_gate_failure(
@@ -631,6 +766,7 @@ def run_batch(
                     parallel_failed = True
                     failure_reason = failure_reason or "worker_launch_failed"
                     log(f"{item.log_prefix} worker launch failed: {exc}")
+                    notify(item, "failed", f"worker_launch_failed: {exc}")
                     if not skip_error:
                         stop_admission = True
                     if memory_gate is not None:
@@ -640,6 +776,7 @@ def run_batch(
                 worker = _ActiveWorker(item=item, process=process, started_at=monotonic())
                 worker.result_path = result_path
                 active.append(worker)
+                notify(item, "running")
                 log(f"{item.log_prefix} worker admitted (pid {getattr(process, 'pid', '?')})")
             if not active:
                 if stop_admission or not pending:
@@ -657,6 +794,9 @@ def run_batch(
                         )
                         outcome.failed += len(worker.item.node_ids)
                         item_summaries.append((worker.item.work_item_id, WORKER_STATUS_FAILED))
+                        notify(
+                            worker.item, "failed", "worker_cleanup_failed" if exit_code is None else "worker_timeout"
+                        )
                         parallel_failed = True
                         if exit_code is None:
                             # Cleanup failure: the tree may still hold the binary,
@@ -713,9 +853,11 @@ def run_batch(
                             wait_reason = "error"
                         if wait_reason is None:
                             break
+                        log(f"{item.log_prefix} resource wait: {wait_reason}")
                         if monotonic() - admitted_at >= admission_timeout_seconds or wait_reason == "error":
                             outcome.failed += len(item.node_ids)
                             item_summaries.append((item.work_item_id, WORKER_STATUS_FAILED))
+                            notify(item, "failed", failure_reason or "memory_admission_timeout")
                             failure_reason = failure_reason or "memory_admission_timeout"
                             log(f"{item.log_prefix} serial memory admission failed; last reason: {wait_reason}")
                             for remaining in schedule.serial_items[schedule.serial_items.index(item) + 1 :]:
@@ -732,12 +874,14 @@ def run_batch(
                     item_summaries.append((item.work_item_id, WORKER_STATUS_FAILED))
                     failure_reason = failure_reason or "worker_launch_failed"
                     log(f"{item.log_prefix} serial worker launch failed: {exc}")
+                    notify(item, "failed", f"worker_launch_failed: {exc}")
                     if memory_gate is not None:
                         memory_gate.worker_finished()
                     break
                 worker = _ActiveWorker(item=item, process=process, started_at=monotonic())
                 worker.result_path = result_path
                 active.append(worker)
+                notify(item, "running")
                 log(f"{item.log_prefix} serial worker admitted (pid {getattr(process, 'pid', '?')})")
                 # Retire from `active` only on completed paths: an exception
                 # escaping wait()/finish_worker (cancellation) must leave the
@@ -751,6 +895,7 @@ def run_batch(
                     )
                     outcome.failed += len(item.node_ids)
                     item_summaries.append((item.work_item_id, WORKER_STATUS_FAILED))
+                    notify(item, "failed", "worker_cleanup_failed" if exit_code is None else "worker_timeout")
                     index = schedule.serial_items.index(item)
                     for remaining in schedule.serial_items[index + 1 :]:
                         aborted.extend(f"{remaining.binary.tag}:{nid}" for nid in remaining.node_ids)
@@ -775,7 +920,7 @@ def run_batch(
                     active.remove(worker)
                     break
                 active.remove(worker)
-    except BaseException:
+    except BaseException as exc:
         # Cancellation (KeyboardInterrupt/SystemExit) must not leak owned worker
         # process trees; tear them down bounded and confirm exit before re-raising.
         log("Batch coordinator: scheduling aborted; tearing down owned worker process trees")
@@ -787,8 +932,19 @@ def run_batch(
             # unconfirmed tree keeps its reservation.
             if exit_code is not None and memory_gate is not None:
                 memory_gate.worker_finished()
+            notify(
+                worker.item,
+                "cancelled" if exit_code is not None else "failed",
+                type(exc).__name__ if exit_code is not None else "worker_cleanup_failed",
+            )
+        for item in schedule.all_items:
+            if item.work_item_id not in terminal_items:
+                notify(item, "not_executed", "batch_cancelled")
         raise
 
+    for item in schedule.all_items:
+        if item.work_item_id not in terminal_items:
+            notify(item, "not_executed", failure_reason or "prior_failure")
     if aborted:
         outcome.failed += len(aborted)
     outcome.aborted_node_ids = tuple(aborted)
@@ -796,6 +952,8 @@ def run_batch(
     outcome.uncleaned_work_item_ids = tuple(worker.item.work_item_id for worker in uncleaned)
     # Worker-level failures (worker/gate/cleanup status failed, launch failed, timeout)
     # must fail the batch even when every reported node exited successfully.
+    if diagnostic_failures:
+        failure_reason = failure_reason or "diagnostic_event_failed"
     outcome.succeeded = outcome.failed == 0 and outcome.aborted_node_ids == () and failure_reason is None
     outcome.failure_reason = failure_reason
     return outcome

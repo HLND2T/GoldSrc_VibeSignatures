@@ -41,7 +41,7 @@ uv run python ida_analyze_bin.py -gamever cstrike-10210 -configyaml configs/cstr
 uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EXACT_SKILL_NAME> -platform windows,linux -debug
 ```
 
-必须显式指定 `-gamever` 或 `-allgamever`；analyzer 不再回退到 `GSVIBE_GAMEVER`。支持的参数：
+必须显式指定 `-gamever`、`-allgamever` 或 `-batch_selection`；analyzer 不再回退到 `GSVIBE_GAMEVER`。支持的参数：
 
 - `-configyaml` 选择显式分析配置（默认 `configs/<GAMEVER>.yaml`）。
 - 逗号分隔的 `-platform`（`windows`、`linux`）与 `-modules`。
@@ -79,6 +79,36 @@ generation，再启动 Analyzer。
 
 当 `-allgamever` 与 `-modules` 一起使用时，未声明任何请求模块的 tag 会被跳过；单独使用 `-gamever` 时，请求的
 模块不存在仍会报错。
+
+### 精确选中节点批量分析
+
+`-batch_selection selections.json` 接受通用清单，不直接读取 PR plan：
+
+```json
+{"schema_version":1,"selections":[{"tag":"cstrike-10210","node_ids":["engine:windows:EXACT_SKILL_NAME"]}]}
+```
+
+节点 ID 必须来自对应 tag 的配置 DAG。未知或重复 tag/节点、空集合、版本不支持、重复 JSON key、多余字段及类型错误，
+均在启动 worker 前使整批失败。不允许组合其他选择参数、`-configyaml`、`-oldgamever`、`-run_id` 或 `-skip_error`。
+`-validate_selection_only` 在 materialize 前校验清单与完整 DAG，不检查尚未准备的输入文件。
+
+先 exact warm restore，再 materialize 未选中上游产物，随后执行：
+
+```bash
+uv run python ida_analyze_bin.py -batch_selection selections.json -bindir bin -artifactdir <isolated-root> -batch_diagnostics <diagnostic-root>
+```
+
+先按完整 DAG 分类，再过滤精确节点集合；同 binary 的依赖保留在单 worker 内，跨 binary 的目标与下游闭包进入全局串行尾队列。
+只有全部并行 worker 成功退出，才启动尾队列；不扩展上游、不补跑节点。首个 worker 启动前统一检查所选节点的外部必需输入，
+由本批次前置节点生成的输入留到执行阶段检查。IDB 保持 `restored_strict`、不保存修改。
+
+整个批次共享既有 analysis 并发上限、内存预算和初始预留配置，默认并发仍为 `1`；有效并发大于 `1` 必须显式配置内存预算。
+首次失败停止派发并有界等待在途 worker；超时或取消仅清理所属进程树，未确认退出视为失败且不释放配额。
+全批次成功后才允许后处理。
+
+每批诊断目录唯一，包含独立 worker 日志与 `summary.json`，记录 tag、binary、阶段、节点、状态、耗时、失败原因及日志位置。
+控制台仅输出生命周期与资源等待状态，避免原始并发输出交错。诊断工件不含请求文件、IDB 或二进制，已知凭证值会脱敏。
+未指定 `-batch_diagnostics` 时，写入系统临时目录下的 `gsvibe-analysis-diagnostics`。
 
 ## 分析合约
 

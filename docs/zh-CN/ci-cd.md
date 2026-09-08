@@ -49,6 +49,17 @@ aggregate 内存门禁，同时阻止大于 `1` 的并发）。激活顺序渐�
 
 `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` 同样映射到 job，可调整每 worker 的初始预留下限，默认 `2048` MiB；配置规则见 requirements。
 
+## PR 选中节点分析
+
+`gamesymbol-pr-validation.yml` 从非空 `plan.tags[].analysis_nodes` 导出通用清单，先校验，再逐 tag 串行 materialize，
+随后单次调用选中节点批量入口。只有 IDA 分析并行；全局成功屏障后，compare、candidate build/guard、gamedata build/guard
+及 mark 仍逐 tag 串行。Exact-generation restore、trusted base validator、独立 per-tag stage 与 tracked `bin_artifacts`
+不变检查保持原契约。Job 映射与 release 相同的三个 `GSVIBE_ANALYSIS_*` 变量，不修改数值，也不借用 warmup 配置。
+`always()` 上传仅包含 worker 日志与汇总，成功/失败均保留，取消时尽力保留。
+
+Issue #81 的操作者于 2026-09-08 明确授权直接使用既有并发，并免除并发 1/2 性能对照。这是上线决策，不代表已有性能或真实 IDA
+验证证据。回退只需设置 `GSVIBE_ANALYSIS_MAX_CONCURRENCY=1`，保留同一批量路径；内存预算按 invocation 共享，不是全主机预算。
+
 ## Pages deployment
 
 `deploy-pages.yml` 由 published Release 触发，或通过显式 published tag 手动触发。它下载 `gamesymbols-*.7z` 并解压，

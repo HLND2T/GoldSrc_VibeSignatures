@@ -55,6 +55,19 @@ raise concurrency to `2` only after real-runner evidence supports it; rolling ba
 concurrency back to `1`. The runner-specific memory value is operational configuration and is never committed
 to the repository.
 
+## PR selected-node analysis
+
+`gamesymbol-pr-validation.yml` exports a generic selection manifest from non-empty `plan.tags[].analysis_nodes`,
+validates it, materializes each tag serially, then invokes one selected-node batch. Only IDA analysis is parallel;
+compare, candidate build/guard, gamedata build/guard and mark remain serial after the global success barrier.
+Exact-generation restore, trusted base validators, isolated per-tag stages and the tracked `bin_artifacts` check remain intact.
+The job maps the same three `GSVIBE_ANALYSIS_*` variables as release, without changing their values or using warmup limits.
+An `always()` upload retains only worker logs and summaries on success/failure, best-effort on cancellation.
+
+For issue #81, the operator explicitly authorized using existing concurrency immediately and waived the concurrency-1/2
+performance comparison on September 8, 2026. This is an activation decision, not measured performance or real-IDA evidence.
+Rollback sets `GSVIBE_ANALYSIS_MAX_CONCURRENCY=1` and retains the same batch path; the budget is per invocation, not host-wide.
+
 ## Pages deployment
 
 `deploy-pages.yml` triggers from a published Release or a manual dispatch with an explicit published tag. It downloads and
