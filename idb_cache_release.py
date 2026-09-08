@@ -42,6 +42,7 @@ from idb_cache_selection import (
     prepare_selection_entries,
     read_selection_with_evidence,
     restore_selection_entries,
+    timed_stage,
     validate_persisted_workspace,
     validate_selection_entries,
     write_selection_with_evidence,
@@ -263,17 +264,22 @@ def prepare_release_selection(
     persisted = validate_persisted_workspace(persisted_root, root)
     producer_lock_started = time.monotonic()
     with producer_lock(persisted, timeout_seconds=None):
-        print(f"IDB cache producer lock acquired: wait_seconds={time.monotonic() - producer_lock_started:.3f}")
-        context = _release_context(
-            repo_root=root,
-            bindir=bindir,
-            persisted_root=persisted,
-            kernel_version=kernel_version,
-            source_sha=source_sha,
+        print(
+            f"IDB cache producer lock acquired: wait_seconds={time.monotonic() - producer_lock_started:.3f}",
+            flush=True,
         )
+        with timed_stage("prepare_release_context_and_binary_identities"):
+            context = _release_context(
+                repo_root=root,
+                bindir=bindir,
+                persisted_root=persisted,
+                kernel_version=kernel_version,
+                source_sha=source_sha,
+            )
         print(
             f"IDB cache producer scope: release-all; source_sha={context.source_sha}; "
-            f"bin_commit={context.bin_commit}; groups={len(context.groups)}"
+            f"bin_commit={context.bin_commit}; groups={len(context.groups)}",
+            flush=True,
         )
         entries = prepare_selection_entries(
             groups=context.groups,
@@ -287,14 +293,17 @@ def prepare_release_selection(
             producer_memory=producer_memory or producer_memory_owner_from_environment(),
         )
         document = _selection_document(context, entries)
-        validate_release_selection(document=document, context=context)
-        raw, digest = write_selection_with_evidence(
-            document=document,
-            output_path=output_path,
-            output_sha256_path=output_sha256_path,
-        )
-        validate_release_selection(document=json.loads(raw), context=context, raw=raw)
-        print(f"Release cache selection SHA-256: {digest}")
+        with timed_stage("prepare_selection_validation"):
+            validate_release_selection(document=document, context=context)
+        with timed_stage("prepare_selection_write"):
+            raw, digest = write_selection_with_evidence(
+                document=document,
+                output_path=output_path,
+                output_sha256_path=output_sha256_path,
+            )
+        with timed_stage("prepare_written_selection_validation"):
+            validate_release_selection(document=json.loads(raw), context=context, raw=raw)
+        print(f"Release cache selection SHA-256: {digest}", flush=True)
         return document
 
 

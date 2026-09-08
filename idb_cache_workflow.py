@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import json
 import time
-from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -30,6 +29,7 @@ from idb_cache_selection import (
     prepare_selection_entries,
     read_selection_with_evidence,
     restore_selection_entries,
+    timed_stage as _timed_stage,
     validate_persisted_workspace,
     validate_selection_entries,
     write_selection_with_evidence,
@@ -207,12 +207,17 @@ def prepare_cache_selection(
     persisted = validate_persisted_workspace(persisted_root, root)
     producer_lock_started = time.monotonic()
     with producer_lock(persisted, timeout_seconds=None):
-        print(f"IDB cache producer lock acquired: wait_seconds={time.monotonic() - producer_lock_started:.3f}")
-        repo, plan = verify_bound_plan_checkout(repo_root=root, plan_path=plan_path, merge_ref=merge_ref)
-        groups = _selected_binary_groups(document=plan, repo_root=root, bindir=root / bindir, repo=repo)
-        if not groups:
-            raise IdbCacheWorkflowError("Warm plan selected no binary groups")
-        identities = _expected_identities(groups=groups, kernel_version=kernel_version)
+        print(
+            f"IDB cache producer lock acquired: wait_seconds={time.monotonic() - producer_lock_started:.3f}",
+            flush=True,
+        )
+        with _timed_stage("prepare_checkout_and_plan_binding"):
+            repo, plan = verify_bound_plan_checkout(repo_root=root, plan_path=plan_path, merge_ref=merge_ref)
+        with _timed_stage("prepare_bound_inputs_and_binary_identities"):
+            groups = _selected_binary_groups(document=plan, repo_root=root, bindir=root / bindir, repo=repo)
+            if not groups:
+                raise IdbCacheWorkflowError("Warm plan selected no binary groups")
+            identities = _expected_identities(groups=groups, kernel_version=kernel_version)
         entries = prepare_selection_entries(
             groups=groups,
             identities=identities,
@@ -225,38 +230,31 @@ def prepare_cache_selection(
             producer_memory=producer_memory or producer_memory_owner_from_environment(),
         )
         document = _selection_document(plan, entries)
-        validate_cache_selection(
-            document=document,
-            plan=plan,
-            groups=groups,
-            identities=identities,
-            persisted_root=persisted,
-        )
-        raw, digest = write_selection_with_evidence(
-            document=document,
-            output_path=output_path,
-            output_sha256_path=output_sha256_path,
-        )
-        validate_cache_selection(
-            document=json.loads(raw),
-            plan=plan,
-            groups=groups,
-            identities=identities,
-            persisted_root=persisted,
-            raw=raw,
-        )
-        print(f"Cache selection SHA-256: {digest}")
+        with _timed_stage("prepare_selection_validation"):
+            validate_cache_selection(
+                document=document,
+                plan=plan,
+                groups=groups,
+                identities=identities,
+                persisted_root=persisted,
+            )
+        with _timed_stage("prepare_selection_write"):
+            raw, digest = write_selection_with_evidence(
+                document=document,
+                output_path=output_path,
+                output_sha256_path=output_sha256_path,
+            )
+        with _timed_stage("prepare_written_selection_validation"):
+            validate_cache_selection(
+                document=json.loads(raw),
+                plan=plan,
+                groups=groups,
+                identities=identities,
+                persisted_root=persisted,
+                raw=raw,
+            )
+        print(f"Cache selection SHA-256: {digest}", flush=True)
         return document
-
-
-@contextmanager
-def _timed_stage(stage: str):
-    started = time.monotonic()
-    print(f"IDB cache stage started: {stage}", flush=True)
-    try:
-        yield
-    finally:
-        print(f"IDB cache stage ended: {stage}; wall_seconds={time.monotonic() - started:.3f}", flush=True)
 
 
 def verify_cache_selection_file(

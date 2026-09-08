@@ -16,11 +16,14 @@ from __future__ import annotations
 
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from pathlib import Path
 
 from ida_database_paths import is_reparse_point
 from idb_cache import (
     CACHE_SCHEMA_VERSION,
+    _resolved_max_concurrency,
     publish_generation,
     probe_generation,
     prune_tag,
@@ -41,6 +44,16 @@ SELECTION_ENTRY_KEYS = {"tag", "platform", "cache_key", "generation", "manifest_
 
 class IdbCacheSelectionError(ValueError):
     pass
+
+
+@contextmanager
+def timed_stage(stage: str):
+    started = time.monotonic()
+    print(f"IDB cache stage started: {stage}", flush=True)
+    try:
+        yield
+    finally:
+        print(f"IDB cache stage ended: {stage}; wall_seconds={time.monotonic() - started:.3f}", flush=True)
 
 
 def _is_within(path: Path, root: Path) -> bool:
@@ -142,50 +155,99 @@ def prepare_selection_entries(
     worker_timeout_seconds: float,
     producer_memory: ProducerMemoryOwner,
 ) -> list[dict]:
-    """Probe under a short lock, warm outside it, then re-probe and publish under the lock."""
+    """Probe tags concurrently, then warm misses serially outside their publication locks.
+
+    Platforms sharing a tag keep input order because READY and prune are tag-scoped.
+    Only the probe phase uses this pool: miss groups share a single process memory owner
+    and must not multiply the existing per-binary worker concurrency limit.
+    """
     persisted = Path(persisted_root)
+    concurrency = _resolved_max_concurrency(max_concurrency)
+    groups = tuple(groups)
+    by_tag = {}
+    for group in groups:
+        by_tag.setdefault(group.tag, []).append(group)
+
+    def log_selection(group, selection, hit, elapsed):
+        print(
+            f"IDB cache {'hit' if hit else 'miss'}: {group.tag}/{group.platform}; "
+            f"binaries={len(group.binaries)}; generation={selection['generation']}; "
+            f"manifest_sha256={selection['manifest_sha256']}; wall_seconds={elapsed:.3f}",
+            flush=True,
+        )
+
+    def probe_tag(tag_groups):
+        results = {}
+        for group in tag_groups:
+            pair = (group.tag, group.platform)
+            label = f"tag={group.tag}; platform={group.platform}"
+            started = time.monotonic()
+            with tag_lock(persisted, group.tag, timeout_seconds=None):
+                print(
+                    f"IDB cache initial tag lock acquired: {label}; wait_seconds={time.monotonic() - started:.3f}",
+                    flush=True,
+                )
+                with timed_stage(f"prepare_probe_verify; {label}"):
+                    selection = probe_generation(persisted_root=persisted, identity=identities[pair])
+                if selection is not None:
+                    # READY and fallback hits have already fully verified under this same lock.
+                    with timed_stage(f"prepare_prune; {label}"):
+                        prune_tag(persisted_root=persisted, tag=group.tag)
+            elapsed = time.monotonic() - started
+            results[pair] = (selection, elapsed)
+            if selection is not None:
+                log_selection(group, selection, True, elapsed)
+        return results
+
+    probed = {}
+    if by_tag:
+        with timed_stage("prepare_parallel_probe_verify_prune"):
+            with ThreadPoolExecutor(max_workers=min(concurrency, len(by_tag))) as pool:
+                # Exiting the pool waits for every task, including on failure. No warm or
+                # selection publication starts until the complete probe phase succeeds.
+                for results in pool.map(probe_tag, by_tag.values()):
+                    probed.update(results)
+
     entries = []
     for group in groups:
         identity = identities[(group.tag, group.platform)]
-        started = time.monotonic()
-        initial_lock_started = time.monotonic()
-        with tag_lock(persisted, group.tag, timeout_seconds=None):
-            print(
-                f"IDB cache initial tag lock acquired: tag={group.tag}; "
-                f"wait_seconds={time.monotonic() - initial_lock_started:.3f}"
-            )
-            selection = probe_generation(persisted_root=persisted, identity=identity)
-            hit = selection is not None
-            if hit:
-                verify_selection(persisted_root=persisted, selection=selection)
-                prune_tag(persisted_root=persisted, tag=group.tag)
+        selection, probe_elapsed = probed[(group.tag, group.platform)]
         if selection is None:
-            warm_group(
-                identity=identity,
-                workspace_root=group.workspace_root,
-                ida_python_executable=ida_python_executable,
-                max_concurrency=max_concurrency,
-                worker_timeout_seconds=worker_timeout_seconds,
-                producer_memory=producer_memory,
-            )
+            started = time.monotonic()
+            label = f"tag={group.tag}; platform={group.platform}"
+            with timed_stage(f"prepare_warm; {label}"):
+                warm_group(
+                    identity=identity,
+                    workspace_root=group.workspace_root,
+                    ida_python_executable=ida_python_executable,
+                    max_concurrency=concurrency,
+                    worker_timeout_seconds=worker_timeout_seconds,
+                    producer_memory=producer_memory,
+                )
             publish_lock_started = time.monotonic()
             with tag_lock(persisted, group.tag, timeout_seconds=None):
                 print(
-                    f"IDB cache publish tag lock acquired: tag={group.tag}; "
-                    f"wait_seconds={time.monotonic() - publish_lock_started:.3f}"
+                    f"IDB cache publish tag lock acquired: {label}; "
+                    f"wait_seconds={time.monotonic() - publish_lock_started:.3f}",
+                    flush=True,
                 )
-                selection = probe_generation(persisted_root=persisted, identity=identity)
-                print(f"IDB cache publish re-probe: tag={group.tag}; result={'hit' if selection else 'miss'}")
+                with timed_stage(f"prepare_publish_reprobe; {label}"):
+                    selection = probe_generation(persisted_root=persisted, identity=identity)
+                print(f"IDB cache publish re-probe: {label}; result={'hit' if selection else 'miss'}", flush=True)
                 if selection is None:
-                    selection = publish_generation(
-                        persisted_root=persisted,
-                        identity=identity,
-                        workspace_root=group.workspace_root,
-                        run_id=run_id,
-                        attempt=attempt,
-                    )
-                verify_selection(persisted_root=persisted, selection=selection)
-                prune_tag(persisted_root=persisted, tag=group.tag)
+                    with timed_stage(f"prepare_publish; {label}"):
+                        selection = publish_generation(
+                            persisted_root=persisted,
+                            identity=identity,
+                            workspace_root=group.workspace_root,
+                            run_id=run_id,
+                            attempt=attempt,
+                        )
+                with timed_stage(f"prepare_published_verify; {label}"):
+                    verify_selection(persisted_root=persisted, selection=selection)
+                with timed_stage(f"prepare_prune; {label}"):
+                    prune_tag(persisted_root=persisted, tag=group.tag)
+            log_selection(group, selection, False, probe_elapsed + time.monotonic() - started)
         entries.append(
             selection_entry(
                 tag=group.tag,
@@ -193,11 +255,6 @@ def prepare_selection_entries(
                 selection=selection,
                 binaries=identity["binaries"],
             )
-        )
-        print(
-            f"IDB cache {'hit' if hit else 'miss'}: {group.tag}/{group.platform}; "
-            f"binaries={len(group.binaries)}; generation={selection['generation']}; "
-            f"manifest_sha256={selection['manifest_sha256']}; wall_seconds={time.monotonic() - started:.3f}"
         )
     return sorted(entries, key=entry_sort_key)
 

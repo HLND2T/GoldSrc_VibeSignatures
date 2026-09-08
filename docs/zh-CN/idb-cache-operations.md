@@ -39,6 +39,22 @@ Miss 会发布新的 immutable generation；hit 必须先验证 exact generation
 READY 即恢复 exact entry，并运行 strict no-save analysis。Final workspace clean 删除 restored/modified database，
 但不删除 generation。
 
+### Prepare 性能
+
+PR 与 release selection producer 先用有界线程池并发处理不同 tag 的 probe/verify/prune。上限复用
+`--max-concurrency` / `IDB_WARMUP_MAX_CONCURRENCY`（默认 `2`，设为 `1` 即串行 probe）；同一 tag 内的平台组
+保持输入顺序，并共用原 tag lock。全部 probe task 成功结束后，逐组串行 warm/publish miss，保留组内 binary
+worker 并发和单一进程 memory owner。Probe task 失败时等待线程池结束，再中止 prepare，不启动 warm 或写 selection。
+
+READY 与 fallback 命中仍在 probe 的 tag lock 内全量哈希 generation，仅移除紧接其后的第二次 hit verify。
+Prune 还会哈希历史 generations；写 selection 前后仍执行完整校验。Entries 始终 canonical 排序，不受线程完成顺序影响。
+
+实时 flush 的 `prepare_*` 阶段日志区分绑定/binary identities、并发 probe 总耗时、各组 probe/verify、prune、warm、
+publish/re-probe/verify、selection 校验与写盘；锁获取日志记录等待时间。每组 hit/miss 耗时不含排队等待其他组的时间，
+并发组耗时不能相加当作总 wall time。性能验收应在同一 runner、相同 selection、可比冷/热存储状态下重复测量，记录
+各组 manifest `files[].size` 总和，并区分 prune 读取的历史 payload 与选中 payload。收益由磁盘吞吐决定，本地单元
+测试不代表生产环境加速幅度。
+
 release-all producer 的 accepted-bin materialization 统一走
 `uv run python release_workflow.py materialize-accepted-bin --repo-root <checkout> --persisted-root <root> --all-gamevers`。
 它持有 `<PERSISTED_WORKSPACE>/accepted-bin/locks/<gamever>.lock`，只复制 binary/side file（排除分析 YAML、IDA
