@@ -14,6 +14,7 @@ from pathlib import Path
 import yaml
 
 from analysis_config import validated_tag
+from artifact_diagnostics import append_artifact_diagnostics, render_artifact_diff
 from bin_artifact_contract import BinArtifactContractError, build_game_artifact_inventory
 from gamesymbol_snapshot_lib.analysis_sources import (
     build_source_index,
@@ -532,20 +533,52 @@ def compare_rebuilt_artifacts(
             contract,
             require_complete=True,
         )
+
+        def load_expected_bytes() -> dict[str, bytes]:
+            prefix = f"bin_artifacts/{tag}/"
+            blobs = repo.read_many(document["merge_sha"], (prefix + entry["path"] for entry in expected))
+            result = {}
+            for entry in expected:
+                raw = blobs[prefix + entry["path"]]
+                if raw is None:
+                    raise PrCliError(f"Expected Git blob is missing: {prefix}{entry['path']}")
+                result[entry["path"]] = raw
+            return result
+
+        def diagnostic(message: str) -> str:
+            return append_artifact_diagnostics(
+                message,
+                tag=tag,
+                actual_root=artifactdir,
+                load_expected=load_expected_bytes,
+                expected_source="merge Git blob",
+            )
+
         try:
             actual_inventory = build_game_artifact_inventory(tag, config_path, artifactdir)
         except BinArtifactContractError as exc:
-            raise PrCliError(f"Rebuilt artifact contract failed for {tag}: {exc}") from exc
+            raise PrCliError(diagnostic(f"Rebuilt artifact contract failed for {tag}: {exc}")) from exc
         actual = tuple(
             {"path": entry.path, "size": entry.size, "sha256": entry.sha256} for entry in actual_inventory.entries
         )
         if actual != expected:
-            raise PrCliError(f"Rebuilt artifact inventory differs from merge Git blobs for {tag}")
+            raise PrCliError(diagnostic(f"Rebuilt artifact inventory differs from merge Git blobs for {tag}"))
         for entry in expected:
             expected_raw = repo.read(document["merge_sha"], f"bin_artifacts/{tag}/{entry['path']}")
             actual_raw = path_from_key(contract.artifact_game_root, entry["path"]).read_bytes()
             if expected_raw != actual_raw:
-                raise PrCliError(f"Rebuilt artifact bytes differ from merge Git blob: {tag}/{entry['path']}")
+                message = f"Rebuilt artifact bytes differ from merge Git blob: {tag}/{entry['path']}"
+                if expected_raw is not None:
+                    try:
+                        message += render_artifact_diff(
+                            f"bin_artifacts/{tag}/{entry['path']}",
+                            expected_raw,
+                            actual_raw,
+                            expected_source="merge Git blob",
+                        )
+                    except Exception as exc:
+                        message += f"\n  artifact diagnostics unavailable: {exc}"
+                raise PrCliError(message)
         return tuple(entry["path"] for entry in expected)
 
 

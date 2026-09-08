@@ -689,7 +689,12 @@ class ArtifactRebuildComparisonTests(unittest.TestCase):
                                 "name": "engine",
                                 "path_windows": "Game/hw.dll",
                                 "module_windows": "hw.dll",
-                                "skills": [{"name": "find", "expected_output": ["Demo.{platform}.yaml"]}],
+                                "skills": [
+                                    {
+                                        "name": "find",
+                                        "expected_output": ["Demo.{platform}.yaml", "Other.{platform}.yaml"],
+                                    }
+                                ],
                                 "symbols": [{"name": "Demo", "category": "func"}],
                             }
                         ]
@@ -701,6 +706,8 @@ class ArtifactRebuildComparisonTests(unittest.TestCase):
             artifact = repo / "bin_artifacts" / "game-1" / "engine" / "Demo.windows.yaml"
             artifact.parent.mkdir(parents=True)
             artifact.write_bytes(canonical_symbol_yaml_bytes({"func_name": "Demo", "func_va": "0x10"}))
+            other_raw = canonical_symbol_yaml_bytes({"func_name": "Other", "func_va": "0x20"})
+            (artifact.parent / "Other.windows.yaml").write_bytes(other_raw)
             subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
             subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "base"], check=True)
             base_sha = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
@@ -733,8 +740,10 @@ class ArtifactRebuildComparisonTests(unittest.TestCase):
             rebuilt_artifact = rebuilt / "game-1" / "engine" / "Demo.windows.yaml"
             rebuilt_artifact.parent.mkdir(parents=True, exist_ok=True)
             rebuilt_artifact.write_bytes(expected_checkout_bytes)
+            rebuilt_other = rebuilt_artifact.parent / "Other.windows.yaml"
+            rebuilt_other.write_bytes(other_raw)
             self.assertEqual(
-                ("engine/Demo.windows.yaml",),
+                ("engine/Demo.windows.yaml", "engine/Other.windows.yaml"),
                 compare_rebuilt_artifacts(
                     repo_root=repo,
                     plan_path=plan_path,
@@ -746,7 +755,8 @@ class ArtifactRebuildComparisonTests(unittest.TestCase):
             )
             self.assertEqual(expected_checkout_bytes, artifact.read_bytes())
             rebuilt_artifact.write_bytes(canonical_symbol_yaml_bytes({"func_name": "Demo", "func_va": "0x12"}))
-            with self.assertRaisesRegex(PrCliError, "inventory differs"):
+            artifact.write_bytes(canonical_symbol_yaml_bytes({"func_name": "Demo", "func_va": "0x99"}))
+            with self.assertRaisesRegex(PrCliError, "inventory differs") as raised:
                 compare_rebuilt_artifacts(
                     repo_root=repo,
                     plan_path=plan_path,
@@ -755,6 +765,48 @@ class ArtifactRebuildComparisonTests(unittest.TestCase):
                     bindir=repo / "bin",
                     artifactdir=rebuilt,
                 )
+            message = str(raised.exception)
+            self.assertIn("changed=['engine/Demo.windows.yaml']", message)
+            self.assertIn("expected (merge Git blob): size=", message)
+            self.assertIn(hashlib.sha256(expected_checkout_bytes).hexdigest(), message)
+            self.assertIn("-func_va: '0x11'", message)
+            self.assertIn("+func_va: '0x12'", message)
+            self.assertNotIn("0x99", message)
+
+            rebuilt_other.unlink()
+            (rebuilt_artifact.parent / "extra.yaml").write_bytes(b"extra: true\n")
+            with self.assertRaises(PrCliError) as raised:
+                compare_rebuilt_artifacts(
+                    repo_root=repo,
+                    plan_path=plan_path,
+                    tag="game-1",
+                    merge_ref=merge_sha,
+                    bindir=repo / "bin",
+                    artifactdir=rebuilt,
+                )
+            self.assertIn("Missing required symbol YAML", str(raised.exception))
+            self.assertIn(
+                "missing=['engine/Other.windows.yaml']; extra=['engine/extra.yaml']; changed=['engine/Demo.windows.yaml']",
+                str(raised.exception),
+            )
+            self.assertIn("+func_va: '0x12'", str(raised.exception))
+
+            rebuilt_other.write_bytes(other_raw)
+            (rebuilt_artifact.parent / "extra.yaml").unlink()
+            for raw in (expected_checkout_bytes.replace(b"\n", b"\r\n"), b"\xff\n"):
+                with self.subTest(raw=raw):
+                    rebuilt_artifact.write_bytes(raw)
+                    with self.assertRaises(PrCliError) as raised:
+                        compare_rebuilt_artifacts(
+                            repo_root=repo,
+                            plan_path=plan_path,
+                            tag="game-1",
+                            merge_ref=merge_sha,
+                            bindir=repo / "bin",
+                            artifactdir=rebuilt,
+                        )
+                    self.assertIn("Rebuilt artifact contract failed", str(raised.exception))
+                    self.assertIn(hashlib.sha256(raw).hexdigest(), str(raised.exception))
 
 
 class GitBatchReadTests(unittest.TestCase):
