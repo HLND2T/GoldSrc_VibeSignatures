@@ -3,6 +3,13 @@ from __future__ import annotations
 import json
 import unittest
 import unittest.mock
+import contextlib
+import io
+import os
+import subprocess
+import sys
+import tempfile
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -57,6 +64,68 @@ def binary_paths_for(plan) -> dict[tuple[str, str], str]:
 
 
 class ClassifyTagPlanTests(unittest.TestCase):
+    def test_selected_schedule_classifies_complete_dag_before_filtering(self):
+        from analysis_batch import select_batch_schedule
+
+        nodes = [
+            make_node("a", "windows", "first", 0),
+            make_node("b", "windows", "bridge", 1),
+            make_node("a", "windows", "last", 2),
+        ]
+        plan = make_plan(nodes, [(nodes[0].id, nodes[1].id, "artifact"), (nodes[1].id, nodes[2].id, "artifact")])
+        schedule = select_batch_schedule(
+            build_batch_schedule([("tag-1", plan, binary_paths_for(plan))]), {"tag-1": (nodes[0].id, nodes[2].id)}
+        )
+        self.assertEqual([(nodes[0].id,)], [item.node_ids for item in schedule.parallel_items])
+        self.assertEqual([(nodes[2].id,)], [item.node_ids for item in schedule.serial_items])
+        self.assertEqual(schedule.parallel_items[0].binary, schedule.serial_items[0].binary)
+
+    def test_batch_manifest_rejects_invalid_structure_without_correction(self):
+        from analysis_batch import validate_batch_selections
+
+        valid = {"schema_version": 1, "selections": [{"tag": "tag-1", "node_ids": ["a:windows:first"]}]}
+        self.assertEqual({"tag-1": ("a:windows:first",)}, validate_batch_selections(valid, ["tag-1"]))
+        invalid = [
+            None,
+            [],
+            {},
+            {**valid, "schema_version": True},
+            {**valid, "schema_version": 2},
+            {**valid, "extra": 1},
+            {**valid, "selections": []},
+        ]
+        for entry in [
+            None,
+            {},
+            {"tag": "unknown", "node_ids": ["n"]},
+            {"tag": "tag-1", "node_ids": []},
+            {"tag": "tag-1", "node_ids": ["n", "n"]},
+            {"tag": "tag-1", "node_ids": [1]},
+            {"tag": "tag-1", "node_ids": "n"},
+            {"tag": "tag-1", "node_ids": [" n"]},
+        ]:
+            invalid.append({**valid, "selections": [entry]})
+        invalid.append({**valid, "selections": valid["selections"] * 2})
+        for payload in invalid:
+            with self.subTest(payload=payload), self.assertRaises(BatchPlanError):
+                validate_batch_selections(payload, ["tag-1"])
+
+    def test_selected_serial_segments_merge_only_after_filtering_without_losing_order(self):
+        from analysis_batch import select_batch_schedule
+
+        nodes = [
+            make_node("a", "windows", "first", 0),
+            make_node("b", "windows", "one", 1),
+            make_node("c", "windows", "middle", 2),
+            make_node("b", "windows", "two", 3),
+        ]
+        plan = make_plan(nodes, [(nodes[index].id, nodes[index + 1].id, "artifact") for index in range(3)])
+        schedule = select_batch_schedule(
+            build_batch_schedule([("tag-1", plan, binary_paths_for(plan))]), {"tag-1": (nodes[1].id, nodes[3].id)}
+        )
+        self.assertEqual((), schedule.parallel_items)
+        self.assertEqual([(nodes[1].id, nodes[3].id)], [item.node_ids for item in schedule.serial_items])
+
     def test_no_cross_binary_edges_puts_everything_in_parallel(self):
         plan = make_plan(
             [make_node("a", "windows", "s1", 0), make_node("a", "windows", "s2", 1), make_node("a", "linux", "s1", 2)],
@@ -1027,6 +1096,28 @@ class InternalWorkerEntryTests(unittest.TestCase):
 
 
 class MainRoutingTests(unittest.TestCase):
+    def test_batch_selection_cli_conflicts_are_explicit(self):
+        import ida_analyze_bin as analyzer
+
+        flags_list = [
+            ["-gamever", "hl-8684"],
+            ["-allgamever"],
+            ["-node", "a:windows:x"],
+            ["-modules", "*"],
+            ["-platform", "windows"],
+            ["-force_all"],
+            ["-oldgamever", "none"],
+            ["-configyaml", "x.yaml"],
+            ["-skill", "x"],
+            ["-skip_error"],
+        ]
+        for flags in flags_list:
+            with self.subTest(flags=flags), contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                analyzer.parse_args(["-batch_selection", "selection.json", *flags])
+        with unittest.mock.patch.object(analyzer, "_run_full_batch", return_value=0) as coordinator:
+            self.assertEqual(0, analyzer.main(["-batch_selection", "selection.json"]))
+        self.assertEqual("selection.json", coordinator.call_args.args[0].batch_selection)
+
     def test_full_force_all_routes_to_batch_coordinator(self):
         import ida_analyze_bin as iab
 
@@ -1052,6 +1143,237 @@ class MainRoutingTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         batch.assert_not_called()
         legacy.assert_called_once()
+
+
+class SelectedBatchCoordinatorTests(unittest.TestCase):
+    def setUp(self):
+        import ida_analyze_bin as analyzer
+
+        self.analyzer = analyzer
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.node = make_node("engine", "windows", "first", 0)
+        self.plan = make_plan([self.node])
+        self.manifest = self.root / "selection.json"
+        self.write_manifest([("tag-1", [self.node.id]), ("tag-2", [self.node.id])])
+        self.arguments = [
+            "-batch_selection",
+            str(self.manifest),
+            "-artifactdir",
+            str(self.root / "artifacts"),
+            "-batch_diagnostics",
+            str(self.root / "diagnostics"),
+        ]
+        self.stack = contextlib.ExitStack()
+        self.addCleanup(self.stack.close)
+        self.stack.enter_context(unittest.mock.patch.dict(os.environ, {}, clear=True))
+        self.stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
+        self.stack.enter_context(
+            unittest.mock.patch.object(analyzer, "iter_analysis_config_tags", return_value=["tag-1", "tag-2"])
+        )
+        self.stack.enter_context(
+            unittest.mock.patch.object(
+                analyzer, "resolve_analysis_config", side_effect=lambda tag, *args: Path(f"configs/{tag}.yaml")
+            )
+        )
+        self.stack.enter_context(
+            unittest.mock.patch.object(
+                analyzer, "load_config", return_value=({}, [{"name": "engine", "module_windows": "hw.dll"}])
+            )
+        )
+        self.planner = self.stack.enter_context(
+            unittest.mock.patch.object(analyzer, "_build_execution_plan", return_value=self.plan)
+        )
+
+    def write_manifest(self, entries):
+        self.manifest.write_text(
+            json.dumps(
+                {"schema_version": 1, "selections": [{"tag": tag, "node_ids": node_ids} for tag, node_ids in entries]}
+            ),
+            encoding="utf-8",
+        )
+
+    def test_invalid_late_tag_or_node_never_starts_a_worker(self):
+        for entries in [
+            [("tag-1", [self.node.id]), ("unknown", [self.node.id])],
+            [("tag-1", [self.node.id]), ("tag-2", ["unknown"])],
+        ]:
+            self.write_manifest(entries)
+            with self.subTest(entries=entries), unittest.mock.patch.object(self.analyzer.subprocess, "Popen") as launch:
+                self.assertEqual(1, self.analyzer.main(self.arguments))
+                launch.assert_not_called()
+
+    def test_duplicate_json_keys_rejected(self):
+        self.manifest.write_text('{"schema_version":1,"schema_version":1,"selections":[]}', encoding="utf-8")
+        with unittest.mock.patch.object(self.analyzer.subprocess, "Popen") as launch:
+            self.assertEqual(1, self.analyzer.main(self.arguments))
+            launch.assert_not_called()
+
+    def test_validate_only_defers_materialized_inputs_and_never_launches(self):
+        self.planner.return_value = make_plan([replace(self.node, required_inputs=("engine/external.yaml",))])
+        with unittest.mock.patch.object(self.analyzer.subprocess, "Popen") as launch:
+            self.assertEqual(0, self.analyzer.main([*self.arguments, "-validate_selection_only"]))
+            launch.assert_not_called()
+        self.assertFalse(self.planner.call_args.kwargs["validate_external_inputs"])
+
+    def test_all_tags_external_inputs_checked_before_first_launch(self):
+        consumer = replace(self.node, required_inputs=("engine/external.yaml",))
+        self.planner.return_value = make_plan([consumer])
+        materialized = self.root / "artifacts/tag-1/engine/external.yaml"
+        materialized.parent.mkdir(parents=True)
+        materialized.write_text("baseline", encoding="utf-8")
+        with unittest.mock.patch.object(self.analyzer.subprocess, "Popen") as launch:
+            self.assertEqual(1, self.analyzer.main(self.arguments))
+            launch.assert_not_called()
+
+    def test_required_inputs_distinguish_selected_producers_from_external_inputs(self):
+        producer = replace(self.node, required_outputs=("engine/input.yaml",))
+        consumer = replace(make_node("client", "windows", "last", 1), required_inputs=("engine/input.yaml",))
+        plan = make_plan([producer, consumer], [(producer.id, consumer.id, "artifact")])
+        self.analyzer._validate_selected_inputs(plan, plan.nodes, self.root)
+        with self.assertRaisesRegex(self.analyzer.AnalysisRunError, "client:windows:last: engine/input.yaml"):
+            self.analyzer._validate_selected_inputs(plan, (consumer,), self.root)
+
+    def test_effective_multitag_concurrency_requires_shared_memory_budget_before_launch(self):
+        with (
+            unittest.mock.patch.dict(os.environ, {"GSVIBE_ANALYSIS_MAX_CONCURRENCY": "2"}),
+            unittest.mock.patch.object(self.analyzer.subprocess, "Popen") as launch,
+        ):
+            self.assertEqual(1, self.analyzer.main(self.arguments))
+            launch.assert_not_called()
+
+    def test_structural_planning_defers_only_file_checks(self):
+        from analysis_planner import AnalysisPlanError, build_execution_plan
+        from tests.test_analysis_planner import module, skill
+
+        modules = module(
+            [
+                skill("first", output=["produced.yaml"], required_input=["external.yaml"]),
+                skill("last", required_input=["produced.yaml"]),
+            ]
+        )
+        options = dict(platforms=["windows"], bin_dir=self.root, tag="tag-1")
+        with self.assertRaisesRegex(AnalysisPlanError, "external.yaml"):
+            build_execution_plan(modules, **options)
+        plan = build_execution_plan(modules, **options, validate_external_inputs=False)
+        self.assertEqual(2, len(plan.nodes))
+        self.assertEqual([(plan.nodes[0].id, plan.nodes[1].id)], [(edge.source, edge.target) for edge in plan.edges])
+        cyclic = module([skill("first", prerequisite=["last"]), skill("last", prerequisite=["first"])])
+        with self.assertRaises(AnalysisPlanError):
+            build_execution_plan(cyclic, **options, validate_external_inputs=False)
+
+    def test_multitag_subprocess_diagnostics_survive_success_and_failure(self):
+        original_popen = subprocess.Popen
+        original_run = run_batch
+        fixture = """
+import json, pathlib, sys
+request = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding='utf-8'))
+failed = sys.argv[2] == 'failed'
+status = 'failed' if failed else 'succeeded'
+result = {key: request[key] for key in ('run_id', 'work_item_id', 'phase', 'tag', 'module', 'platform', 'binary_relative_path', 'node_ids')}
+result.update(schema_version=1, status=status, exit_code=int(failed), failure_reason='fixture_failure' if failed else None,
+              node_results=[{'node_id': node, 'status': status, 'reason': 'fixture_failure' if failed else None} for node in request['node_ids']],
+              summary={'successful': 0 if failed else len(request['node_ids']), 'failed': len(request['node_ids']) if failed else 0, 'skipped': 0})
+print('fixture log secret-value', flush=True)
+pathlib.Path(request['result_path']).write_text(json.dumps(result), encoding='utf-8')
+sys.exit(int(failed))
+"""
+        for status in ("succeeded", "failed"):
+            launched = []
+
+            def launch(command, **kwargs):
+                launched.append(command[-1])
+                return original_popen([sys.executable, "-c", fixture, command[-1], status], **kwargs)
+
+            with (
+                unittest.mock.patch.object(self.analyzer.subprocess, "Popen", side_effect=launch),
+                unittest.mock.patch.object(
+                    self.analyzer,
+                    "run_batch",
+                    side_effect=lambda *args, **kwargs: original_run(*args, **kwargs, poll_interval_seconds=0.01),
+                ),
+            ):
+                self.assertEqual(
+                    0 if status == "succeeded" else 1,
+                    self.analyzer.main([*self.arguments, "-llm_apikey", "secret-value"]),
+                )
+            self.assertEqual(2 if status == "succeeded" else 1, len(launched))
+            summaries = [
+                json.loads(path.read_text(encoding="utf-8"))
+                for path in (self.root / "diagnostics").glob("*/summary.json")
+            ]
+            summary = next(summary for summary in summaries if summary["status"] == status)
+            self.assertEqual(["tag-1", "tag-2"], [task["tag"] for task in summary["tasks"]])
+            self.assertEqual(
+                [status, status if status == "succeeded" else "not_executed"],
+                [task["status"] for task in summary["tasks"]],
+            )
+            for task in summary["tasks"]:
+                if task["status"] == "not_executed":
+                    continue
+                text = Path(task["log_path"]).read_text(encoding="utf-8")
+                self.assertIn("fixture log [REDACTED]", text)
+                self.assertNotIn("secret-value", text)
+                self.assertGreater(task["elapsed_seconds"], 0)
+            self.assertFalse(list((self.root / "diagnostics").rglob("*.request.json")))
+            self.assertFalse(list((self.root / "diagnostics").rglob("*.result.json")))
+
+
+class BatchDiagnosticTests(unittest.TestCase):
+    def test_json_redaction_preserves_structure_and_escapes(self):
+        from analysis_batch import BatchDiagnostics
+
+        with tempfile.TemporaryDirectory() as directory:
+            secret = 'credential"with\\escapes'
+            diagnostics = BatchDiagnostics(Path(directory), "run-1", BatchSchedule((), ()), sensitive_values=[secret])
+            diagnostics.finish("failed", f"failure: {secret}")
+            payload = json.loads((diagnostics.root / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual("failure: [REDACTED]", payload["failure_reason"])
+            self.assertEqual("failed", payload["status"])
+
+    def test_cancelled_and_not_executed_tasks_survive_cleanup(self):
+        from analysis_batch import BatchDiagnostics
+
+        items = tuple(replace(make_item(), work_item_id=f"parallel-{index:04d}") for index in range(3))
+        schedule = BatchSchedule(items, ())
+        processes = [FakeProcess(polls_until_exit=None), FakeProcess(polls_until_exit=None)]
+        gate = FakeGate()
+        with tempfile.TemporaryDirectory() as directory, contextlib.redirect_stdout(io.StringIO()):
+            diagnostics = BatchDiagnostics(Path(directory), "run-1", schedule)
+            with self.assertRaises(KeyboardInterrupt):
+                run_batch(
+                    schedule,
+                    run_id="run-1",
+                    launch_worker=lambda item: (processes[items.index(item)], Path(directory) / "unused.json"),
+                    max_concurrency=2,
+                    memory_gate=gate,
+                    on_event=diagnostics.event,
+                    sleep=lambda seconds: (_ for _ in ()).throw(KeyboardInterrupt()),
+                    kill_process_tree=lambda process: process.kill(),
+                    log=lambda text: None,
+                )
+            diagnostics.finish("cancelled", "KeyboardInterrupt")
+            payload = json.loads((diagnostics.root / "summary.json").read_text(encoding="utf-8"))
+            self.assertEqual(["cancelled", "cancelled", "not_executed"], [task["status"] for task in payload["tasks"]])
+            self.assertTrue(all(process.killed for process in processes))
+            self.assertEqual(0, gate.active)
+
+    def test_diagnostic_write_failure_does_not_interrupt_cancellation_sweep(self):
+        items = tuple(replace(make_item(), work_item_id=f"parallel-{index:04d}") for index in range(2))
+        processes = [FakeProcess(polls_until_exit=None), FakeProcess(polls_until_exit=None)]
+        with self.assertRaises(KeyboardInterrupt):
+            run_batch(
+                BatchSchedule(items, ()),
+                run_id="run-1",
+                launch_worker=lambda item: (processes[items.index(item)], Path("unused.json")),
+                max_concurrency=2,
+                on_event=lambda *args: (_ for _ in ()).throw(OSError("disk full")),
+                sleep=lambda seconds: (_ for _ in ()).throw(KeyboardInterrupt()),
+                kill_process_tree=lambda process: process.kill(),
+                log=lambda text: None,
+            )
+        self.assertTrue(all(process.killed for process in processes))
 
 
 class ProcessTreeKillHelperTests(unittest.TestCase):

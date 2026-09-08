@@ -35,7 +35,7 @@ uv run python ida_analyze_bin.py -gamever cstrike-10210 -configyaml configs/cstr
 uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EXACT_SKILL_NAME> -platform windows,linux -debug
 ```
 
-`-gamever` or `-allgamever` is required — the analyzer no longer falls back to `GSVIBE_GAMEVER`. Supported arguments:
+`-gamever`, `-allgamever`, or `-batch_selection` is required — the analyzer no longer falls back to `GSVIBE_GAMEVER`. Supported arguments:
 
 - `-configyaml` selects an explicit analysis config (defaults to `configs/<GAMEVER>.yaml`).
 - Comma-separated `-platform` (`windows`, `linux`) and `-modules`.
@@ -67,6 +67,40 @@ Analyzer.
 `ida_analyze_bin.py -allgamever` batches every game-version tag declared in `configs/config.yaml`. That index is the single authority for batch membership and order; a tag only runs when explicitly listed, and a declared tag whose `configs/<tag>.yaml` is missing is a fatal configuration error rather than a silent skip. Without `configs/config.yaml` the legacy order is used for compatibility: the `download.yaml` manifest declaration order, then remaining `configs/*.yaml` tags in lexical order.
 
 When `-modules` is used with `-allgamever`, tags that declare none of the requested modules are skipped; a single `-gamever` run still reports a missing requested module as an error.
+
+### Exact selected-node batches
+
+`-batch_selection selections.json` accepts a generic manifest, not a PR plan:
+
+```json
+{"schema_version":1,"selections":[{"tag":"cstrike-10210","node_ids":["engine:windows:EXACT_SKILL_NAME"]}]}
+```
+
+Use actual node IDs from the tag's configured DAG. Every entry must be valid: unknown or duplicate tags/nodes,
+empty selections, unsupported versions, duplicate JSON keys, extra fields and wrong types fail before any worker starts.
+The entry point rejects other selection flags, `-configyaml`, `-oldgamever`, `-run_id` and `-skip_error`.
+`-validate_selection_only` validates the manifest and complete DAGs before materialization; it does not verify input files.
+
+After exact warm restore and materializing unselected upstream artifacts, run:
+
+```bash
+uv run python ida_analyze_bin.py -batch_selection selections.json -bindir bin -artifactdir <isolated-root> -batch_diagnostics <diagnostic-root>
+```
+
+The coordinator classifies each complete DAG before filtering to the exact selected nodes. Same-binary dependencies
+stay in one worker; cross-binary targets and their downstream closure run in a global serial tail after every parallel
+worker succeeds. No upstream nodes are added. All selected external required inputs are checked before the first worker;
+inputs produced by selected predecessors are checked at execution time. IDBs remain `restored_strict` with no save.
+
+The batch shares the existing analysis concurrency, memory budget and initial reservation variables. Default concurrency
+is still `1`; effective concurrency above `1` requires an explicit memory budget. First failure stops admission and drains
+in-flight workers with bounded timeouts; cancellation cleans only owned trees. Failed/unconfirmed cleanup fails the batch.
+No postprocessing may start until the whole batch succeeds.
+
+Each invocation has a unique diagnostic directory containing per-task logs and `summary.json` with tag, binary, phase,
+nodes, status, duration, failure reason and log location. Console output reports lifecycle/resource-wait events rather
+than interleaving worker output. Diagnostic artifacts exclude requests, IDBs and binaries; known credential values are
+redacted. Without `-batch_diagnostics`, diagnostics go under the system temporary directory's `gsvibe-analysis-diagnostics`.
 
 ## Analysis contract
 

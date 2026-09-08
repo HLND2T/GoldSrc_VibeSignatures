@@ -411,6 +411,7 @@ def build_execution_plan(
     tag: str,
     default_max_retries: int = 3,
     declared_modules: Iterable[str] | None = None,
+    validate_external_inputs: bool = True,
 ) -> ExecutionPlan:
     selected = tuple(platforms)
     if not selected or any(platform not in PLATFORMS for platform in selected):
@@ -490,7 +491,7 @@ def build_execution_plan(
             producer = producers.get((node.platform, artifact.casefold()))
             if producer is not None:
                 edges.append(PlanEdge(producer, node.id, "artifact" if required else "optional_input", artifact))
-            elif required and not (root / Path(*PurePosixPath(artifact).parts)).is_file():
+            elif required and validate_external_inputs and not (root / Path(*PurePosixPath(artifact).parts)).is_file():
                 raise AnalysisPlanError(f"Missing required artifact for {node.id}: {artifact}")
         module_skills = {
             candidate.skill: candidate.id
