@@ -117,8 +117,36 @@ class BinArtifactContractTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 BinArtifactContractError,
                 r"missing=\[\]; extra=\[\]; changed=\['engine/symbol\.windows\.yaml'\]",
-            ):
+            ) as raised:
                 compare_repository_artifact_root(repo, rebuilt)
+            self.assertIn("expected (tracked checkout): size=", str(raised.exception))
+            self.assertIn("-func_va: '0x10'", str(raised.exception))
+            self.assertIn("+func_va: '0x99'", str(raised.exception))
+
+            (target / "symbol.linux.yaml").unlink()
+            (target / "extra.yaml").write_bytes(b"extra: true\n")
+            with self.assertRaises(BinArtifactContractError) as raised:
+                compare_repository_artifact_root(repo, rebuilt)
+            message = str(raised.exception)
+            self.assertIn("Missing required symbol YAML", message)
+            self.assertIn(
+                "missing=['engine/symbol.linux.yaml']; extra=['engine/extra.yaml']; changed=['engine/symbol.windows.yaml']",
+                message,
+            )
+            self.assertIn("+func_va: '0x99'", message)
+
+            (target / "symbol.linux.yaml").write_bytes((artifact_game_root / "symbol.linux.yaml").read_bytes())
+            (target / "extra.yaml").unlink()
+            for raw, reason in (
+                (b"func_name: symbol\r\nfunc_va: '0x10'\r\n", "canonical"),
+                (b"\xff\n", "Invalid bin artifact contract"),
+            ):
+                with self.subTest(raw=raw):
+                    (target / "symbol.windows.yaml").write_bytes(raw)
+                    with self.assertRaises(BinArtifactContractError) as raised:
+                        compare_repository_artifact_root(repo, rebuilt)
+                    self.assertIn(reason, str(raised.exception))
+                    self.assertIn("actual (isolated rebuild): size=", str(raised.exception))
 
 
 if __name__ == "__main__":

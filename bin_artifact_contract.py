@@ -12,10 +12,11 @@ from pathlib import Path, PurePosixPath
 
 import yaml
 
+from artifact_diagnostics import append_artifact_diagnostics
 from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.errors import SnapshotError
 from gamesymbol_snapshot_lib.operations import collect_actual_files
-from gamesymbol_snapshot_lib.paths import canonical_key, ensure_real_tree, is_reparse_point
+from gamesymbol_snapshot_lib.paths import canonical_key, ensure_real_tree, is_reparse_point, path_from_key
 from ida_analyze_util import canonical_symbol_yaml_bytes
 
 INVENTORY_SCHEMA_VERSION = 1
@@ -260,28 +261,44 @@ def compare_repository_artifact_root(
     if actual_root == repo_root or repo_root in actual_root.parents:
         raise BinArtifactContractError("Actual artifact root must be outside the source checkout")
     expected = validate_repository_artifact_contract(repo_root)
-    actual = tuple(
-        build_game_artifact_inventory(
-            inventory.game_version,
-            repo_root / "configs" / f"{inventory.game_version}.yaml",
-            actual_root,
+
+    def diagnostic(message: str, inventory: GameArtifactInventory) -> str:
+        def load_expected_bytes() -> dict[str, bytes]:
+            root = repo_root / "bin_artifacts"
+            game_root = root / inventory.game_version
+            ensure_real_tree(root, game_root)
+            _walk_artifact_tree(
+                game_root, frozenset(entry.path for entry in inventory.entries), allow_non_artifact_files=False
+            )
+            return {entry.path: path_from_key(game_root, entry.path).read_bytes() for entry in inventory.entries}
+
+        return append_artifact_diagnostics(
+            message,
+            tag=inventory.game_version,
+            actual_root=actual_root,
+            load_expected=load_expected_bytes,
+            expected_source="tracked checkout",
         )
-        for inventory in expected.gamevers
-    )
+
+    actual = []
+    for inventory in expected.gamevers:
+        try:
+            actual.append(
+                build_game_artifact_inventory(
+                    inventory.game_version,
+                    repo_root / "configs" / f"{inventory.game_version}.yaml",
+                    actual_root,
+                )
+            )
+        except BinArtifactContractError as exc:
+            raise BinArtifactContractError(diagnostic(str(exc), inventory)) from exc
     for expected_inventory, actual_inventory in zip(expected.gamevers, actual, strict=True):
         if expected_inventory.entries != actual_inventory.entries:
-            expected_by_path = {entry.path: entry for entry in expected_inventory.entries}
-            actual_by_path = {entry.path: entry for entry in actual_inventory.entries}
-            missing = sorted(expected_by_path.keys() - actual_by_path.keys())
-            extra = sorted(actual_by_path.keys() - expected_by_path.keys())
-            changed = sorted(
-                path
-                for path in expected_by_path.keys() & actual_by_path.keys()
-                if expected_by_path[path] != actual_by_path[path]
-            )
             raise BinArtifactContractError(
-                f"Rebuilt artifact inventory differs from Git truth for {expected_inventory.game_version}: "
-                f"missing={missing!r}; extra={extra!r}; changed={changed!r}"
+                diagnostic(
+                    f"Rebuilt artifact inventory differs from tracked checkout for {expected_inventory.game_version}:",
+                    expected_inventory,
+                )
             )
     expected_directories = {inventory.game_version for inventory in actual if inventory.entries}
     actual_directories = (
