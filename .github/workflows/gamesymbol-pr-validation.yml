@@ -129,6 +129,7 @@ jobs:
           name: gamesymbol-plan-${{ github.run_id }}
           path: ${{ runner.temp }}/gamesymbol-validation
       - name: Validate snapshot and gamedata-only actions
+        id: validate-artifacts
         shell: bash
         run: |
           set -euo pipefail
@@ -156,6 +157,14 @@ jobs:
             rm -rf "$stage"
             trap - EXIT
           done < <(jq -r '.tags[] | select((.analysis_nodes | length) == 0 and (.snapshot_rebuild or .gamedata_rebuild)) | .tag' "$plan")
+      - name: Upload rebuilt artifacts on validation failure
+        if: failure() && steps.validate-artifacts.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gamesymbol-rebuilt-hosted-${{ github.run_id }}-${{ github.run_attempt }}
+          # Preserve tag/module paths; expected bytes are bound by the separately uploaded plan.
+          path: ${{ runner.temp }}/rebuilt-bin-artifacts/**/*.yaml
+          if-no-files-found: warn
   warmup-idb:
     needs: plan
     if: needs.plan.outputs.has_analysis == 'true' && needs.plan.outputs.same_repository == 'true'
@@ -289,6 +298,7 @@ jobs:
             -selection-sha256 (Join-Path $bundle 'cache-selection.sha256')
           if ($LASTEXITCODE -ne 0) { throw 'warm cache restore failed' }
       - name: Analyze selected nodes and build self-consistent candidates
+        id: validate-artifacts
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -348,6 +358,14 @@ jobs:
           }
           git diff --exit-code -- bin_artifacts
           if ($LASTEXITCODE -ne 0) { throw 'tracked bin_artifacts changed during isolated rebuild' }
+      - name: Upload rebuilt artifacts on validation failure
+        if: failure() && steps.validate-artifacts.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gamesymbol-rebuilt-self-hosted-${{ github.run_id }}-${{ github.run_attempt }}
+          # Preserve partial rebuilds too, without uploading binaries or IDA state.
+          path: ${{ runner.temp }}/rebuilt-bin-artifacts/**/*.yaml
+          if-no-files-found: warn
       - name: Upload analysis diagnostics
         if: always()
         uses: actions/upload-artifact@v4

@@ -58,3 +58,10 @@ selected-node execution，以及 full inventory/byte drift。
 - 边界：原始 YAML 安全枚举拒绝链接/reparse point、非平坦路径与大小写碰撞；非 UTF-8 或仅换行漂移保留字节事实。PR workflow 使用 trusted base validator，新诊断须进入 base 后才用于后续 PR 的该校验。
 - 验证方式：`tests.test_artifact_diagnostics`、`tests.test_gamesymbol_pr_validation`、`tests.test_bin_artifact_contract` 覆盖真实 canonical 字段漂移、混合 missing/extra/changed、非规范字节、checkout 改写、截断及诊断失败。真实 release dry run / IDA 结果须单独报告。
 - 适用范围：只增强上述两条失败诊断路径，不修改 artifact schema、成功条件或 workflow 信任边界。
+
+## PR validation failure artifacts
+
+- hosted / self-hosted 的 validation step 失败时，workflow 上传 external rebuild root 中已有的 `**/*.yaml`，保留 tag/module 相对路径；部分重建失败也保留现有 YAML，没有文件时仅警告。
+- Artifact 名称为 `gamesymbol-rebuilt-hosted-<run_id>-<run_attempt>` 或 `gamesymbol-rebuilt-self-hosted-<run_id>-<run_attempt>`，不包含 binary / IDA state；原有 validation failure 继续阻止门禁通过。
+- 排查时同时下载该 run 的 `gamesymbol-plan-<run_id>`，以 plan 绑定的 merge SHA 中的 Git blobs 作为 expected，与上传的 rebuilt YAML 比较；不能用当前 main 或当前工作副本替代该基线。
+- 上传步骤随 PR workflow 更新即可用于新的 run，不依赖新版诊断代码先进入 trusted base validator；旧 run 的重新执行不会自动采用修改后的 workflow。
