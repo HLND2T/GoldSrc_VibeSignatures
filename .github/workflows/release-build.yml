@@ -46,7 +46,7 @@ jobs:
           fetch-depth: 0
           submodules: false
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv sync --locked
@@ -116,7 +116,7 @@ jobs:
           submodules: recursive
           token: ${{ secrets.GSVIBE_BIN_TOKEN || github.token }}
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv sync --locked
@@ -134,7 +134,7 @@ jobs:
           git -C $binRoot clean -ffdx
           if ($LASTEXITCODE -ne 0) { throw 'failed to clean bin submodule' }
       - name: Download exact warm IDB selection
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: ${{ needs.warmup-idb.outputs.selection_artifact_name }}
           path: ${{ runner.temp }}/idb-cache-selection
@@ -186,7 +186,7 @@ jobs:
           "REBUILT_ARTIFACT_ROOT=$artifactRoot" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Upload unverified rebuilt artifact diagnostics
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unverified-rebuilt-bin-artifacts-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/rebuilt-bin-artifacts
@@ -250,7 +250,7 @@ jobs:
             --cache-selection-sha256 "${{ needs.warmup-idb.outputs.selection_sha256 }}"
           if ($LASTEXITCODE -ne 0) { throw 'local release bundle verification failed' }
       - name: Upload release bundle transport artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ needs.preflight.outputs.build_artifact_name }}
           path: ${{ runner.temp }}/release-bundle
@@ -298,7 +298,7 @@ jobs:
           submodules: recursive
           token: ${{ secrets.GSVIBE_BIN_TOKEN || github.token }}
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv sync --locked
@@ -310,7 +310,7 @@ jobs:
           git fetch --no-tags origin "${{ github.event.repository.default_branch }}"
           git merge-base --is-ancestor HEAD "origin/${{ github.event.repository.default_branch }}"
       - name: Download exact build transport artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: ${{ needs.preflight.outputs.build_artifact_name }}
           path: ${{ runner.temp }}/release-bundle
@@ -324,7 +324,7 @@ jobs:
             --cache-selection-sha256 "${{ needs.warmup-idb.outputs.selection_sha256 }}"
       - name: Upload exact verified bundle
         id: upload-verified
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ needs.preflight.outputs.verified_artifact_name }}
           path: ${{ runner.temp }}/release-bundle
@@ -347,7 +347,7 @@ jobs:
           submodules: recursive
           token: ${{ secrets.GSVIBE_BIN_TOKEN || github.token }}
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv sync --locked
@@ -362,7 +362,7 @@ jobs:
           gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --paginate --slurp \
             | uv run python -c 'import json,os,sys; pages=json.load(sys.stdin); matches=[a for page in pages for a in page.get("artifacts",[]) if a.get("name")==os.environ["VERIFIED_ARTIFACT_NAME"]]; expected=os.environ["VERIFIED_ARTIFACT_DIGEST"].removeprefix("sha256:"); assert len(matches)==1 and str(matches[0].get("digest","")).removeprefix("sha256:")==expected, "verified Actions Artifact identity mismatch"'
       - name: Download exact verified bundle
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: ${{ needs.preflight.outputs.verified_artifact_name }}
           path: ${{ runner.temp }}/verified-release-bundle

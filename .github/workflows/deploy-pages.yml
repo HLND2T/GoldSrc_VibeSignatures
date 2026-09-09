@@ -65,7 +65,7 @@ jobs:
       - name: Run Pages E2E
         run: npm run test:e2e
       - name: Upload current Pages build
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: pages-current-build
           path: pages/dist
@@ -89,7 +89,7 @@ jobs:
         with:
           node-version: '24'
       - name: Download current Pages build
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: pages-current-build
           path: pages/dist
@@ -144,13 +144,13 @@ jobs:
             --write-manifest "$verification_root/manifest.json"
           cp verifyGameSymbolAssets.mjs "$verification_root/verifyGameSymbolAssets.mjs"
       - name: Upload game-symbol verification manifest
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: pages-gamesymbol-verification
           path: ${{ runner.temp }}/pages-verification
           retention-days: 1
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: pages/dist
   deploy:
@@ -168,7 +168,7 @@ jobs:
         with:
           node-version: '24'
       - name: Download game-symbol verification manifest
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: pages-gamesymbol-verification
           path: ${{ runner.temp }}/pages-verification

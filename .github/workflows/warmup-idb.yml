@@ -116,7 +116,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'failed to reset tracked bin files' }
           git -C $binRoot clean -ffdx
           if ($LASTEXITCODE -ne 0) { throw 'failed to clean persisted bin analysis state' }
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv sync --locked
@@ -146,7 +146,7 @@ jobs:
           "CACHE_BUNDLE=$(Join-Path $env:RUNNER_TEMP 'idb-cache-selection')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Download the bound plan
         if: inputs.scope == 'bound-plan'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: ${{ inputs.plan_artifact_name }}
           path: ${{ runner.temp }}/idb-cache-selection
@@ -215,7 +215,7 @@ jobs:
           "selection_schema_version=$schema" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
           "source_sha=$($env:SOURCE_SHA.ToLowerInvariant())" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
       - name: Upload the exact cache selection
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.selection_artifact_name }}
           path: |

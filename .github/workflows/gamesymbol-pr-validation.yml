@@ -34,7 +34,7 @@ jobs:
           submodules: false
           persist-credentials: false
           path: .trusted-planner
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - name: Sync trusted base planner environment
@@ -87,7 +87,7 @@ jobs:
             echo "no affected game-symbol actions"
           fi
       - name: Upload bound plan
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           # Failed-job reruns reuse the successful plan job from an earlier attempt.
           name: gamesymbol-plan-${{ github.run_id }}
@@ -121,12 +121,12 @@ jobs:
           set -euo pipefail
           git submodule sync --recursive
           git submodule update --init --recursive --force --depth 1 --jobs 8
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv sync --locked
       - run: uv sync --project .trusted-validator --locked
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: gamesymbol-plan-${{ github.run_id }}
           path: ${{ runner.temp }}/gamesymbol-validation
@@ -161,7 +161,7 @@ jobs:
           done < <(jq -r '.tags[] | select((.analysis_nodes | length) == 0 and (.snapshot_rebuild or .gamedata_rebuild)) | .tag' "$plan")
       - name: Upload rebuilt artifacts on validation failure
         if: failure() && steps.validate-artifacts.outcome == 'failure'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gamesymbol-rebuilt-hosted-${{ github.run_id }}-${{ github.run_attempt }}
           # Preserve tag/module paths; expected bytes are bound by the separately uploaded plan.
@@ -227,12 +227,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "git submodule sync failed." }
           git submodule update --init --recursive --force --depth 1 --jobs 8
           if ($LASTEXITCODE -ne 0) { throw "git submodule update failed." }
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - run: uv sync --locked
       - run: uv sync --project .trusted-validator --locked
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: gamesymbol-plan-${{ github.run_id }}
           path: ${{ runner.temp }}/gamesymbol-validation
@@ -271,7 +271,7 @@ jobs:
           }
           "IDA_KERNEL_VERSION=$idaVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Download exact warm IDB cache selection
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: ${{ needs.warmup-idb.outputs.selection_artifact_name }}
           path: ${{ runner.temp }}/gamesymbol-validation
@@ -362,7 +362,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'tracked bin_artifacts changed during isolated rebuild' }
       - name: Upload rebuilt artifacts on validation failure
         if: failure() && steps.validate-artifacts.outcome == 'failure'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gamesymbol-rebuilt-self-hosted-${{ github.run_id }}-${{ github.run_attempt }}
           # Preserve partial rebuilds too, without uploading binaries or IDA state.
@@ -370,7 +370,7 @@ jobs:
           if-no-files-found: warn
       - name: Upload analysis diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gamesymbol-analysis-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
