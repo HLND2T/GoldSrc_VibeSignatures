@@ -1,0 +1,5 @@
+func_name: Host_IsSinglePlayerGame
+func_va: '0x1d57ad0'
+func_rva: '0x57ad0'
+func_size: '0xc'
+func_sig: E8 ?? ?? ?? ?? 48 F7 D8 1B C0 40 C3

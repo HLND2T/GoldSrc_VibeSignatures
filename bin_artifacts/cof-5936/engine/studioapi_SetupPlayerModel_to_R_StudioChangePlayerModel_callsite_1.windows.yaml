@@ -1,0 +1,5 @@
+patch_name: studioapi_SetupPlayerModel_to_R_StudioChangePlayerModel_callsite_1
+patch_va: '0x1dc39fe'
+patch_rva: '0xc39fe'
+patch_sig: E8 58 BA FF FF 8B 45 ??
+patch_sig_disp: '0x0'

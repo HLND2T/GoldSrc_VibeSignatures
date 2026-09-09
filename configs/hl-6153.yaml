@@ -133,6 +133,40 @@ modules:
           - ClientDLL_Shutdown.{platform}.yaml
         expected_output:
           - FreeBlob.{platform}.yaml
+      - name: find-studioapi_SetupPlayerModel
+        expected_output:
+          - studioapi_SetupPlayerModel.{platform}.yaml
+      - name: find-R_StudioChangePlayerModel
+        platform: windows
+        expected_input:
+          - studioapi_SetupPlayerModel.{platform}.yaml
+        expected_output:
+          - R_StudioChangePlayerModel.{platform}.yaml
+      - name: find-DM_PlayerState
+        expected_input:
+          - studioapi_SetupPlayerModel.{platform}.yaml
+        expected_output:
+          - DM_PlayerState.{platform}.yaml
+      - name: find-Host_IsSinglePlayerGame
+        expected_input:
+          - studioapi_SetupPlayerModel.{platform}.yaml
+        expected_output:
+          - Host_IsSinglePlayerGame.{platform}.yaml
+      - name: find-cl_players_model
+        expected_input:
+          - studioapi_SetupPlayerModel.{platform}.yaml
+        expected_output:
+          - cl_players_model.{platform}.yaml
+      - name: find-engine
+        expected_output:
+          - engine.{platform}.yaml
+      - name: find-studioapi_SetupPlayerModel_to_R_StudioChangePlayerModel_CallSites
+        platform: windows
+        expected_input:
+          - studioapi_SetupPlayerModel.{platform}.yaml
+          - R_StudioChangePlayerModel.{platform}.yaml
+        expected_output:
+          - studioapi_SetupPlayerModel_to_R_StudioChangePlayerModel_callsite_0.{platform}.yaml
     symbols:
       - name: NLoadBlob
         category: func
@@ -206,3 +240,19 @@ modules:
         category: func
       - name: FreeBlob
         category: func
+      - name: studioapi_SetupPlayerModel
+        category: func
+      - name: R_StudioChangePlayerModel
+        category: func
+        platform: windows
+      - name: DM_PlayerState
+        category: gv
+      - name: Host_IsSinglePlayerGame
+        category: func
+      - name: cl_players_model
+        category: gv
+      - name: engine
+        category: gv
+      - name: studioapi_SetupPlayerModel_to_R_StudioChangePlayerModel_callsite_0
+        category: patch
+        platform: windows
