@@ -10,6 +10,10 @@ tags:
 - debugging
 ---
 
+## Update after issue #98 (2026-09-09)
+
+The per-phase `asyncio.run()` example below describes the previous implementation. For session reuse, keep `with IdaMcpLifecycle(...)` in synchronous code and call `run_mcp_operation(analyze(lifecycle.runtime))` from `mcp_worker_client` inside that scope. `open_ida_mcp_session(...)` inside the coroutine then borrows the lifecycle-owned session. Direct `asyncio.run()` remains a standalone, short-lived session path; never pass a retained owned session to it. Transport contexts must stay on the same owning task as well as the same loop. See [[idalib-mcp]] for restart, generation and cleanup rules.
+
 # idalib-mcp ad-hoc scripting pitfalls
 
 ## Trigger

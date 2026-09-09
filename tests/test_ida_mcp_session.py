@@ -1,7 +1,16 @@
 from __future__ import annotations
 
+import asyncio
+import hashlib
+import json
+import socket
+import tempfile
+import threading
+import traceback
 import unittest
 from contextlib import asynccontextmanager
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -13,15 +22,16 @@ from ida_mcp_session import (
     McpDatabaseSelectionError,
     McpDatabaseUnavailableError,
     McpToolCallError,
+    _split_streamable_http_result,
     _tool_result_is_error,
     _tool_result_payload,
     check_ida_mcp_supervisor_health,
-    _split_streamable_http_result,
     detect_database_requirement,
     normalize_binary_identity_path,
     open_ida_mcp_session,
     select_database_session,
 )
+from mcp_worker_client import WorkerMcpClient, run_mcp_operation
 
 ACTIVE_SERVER = {
     "session_id": "server-db",
@@ -40,6 +50,327 @@ ACTIVE_ENGINE = {
     "owned": False,
     "is_active": True,
 }
+
+
+class WorkerMcpClientTests(unittest.TestCase):
+    def test_transferred_exception_retains_operation_frames_without_executor_frame(self):
+        async def failed_operation():
+            try:
+                raise ValueError("original failure")
+            except ValueError as cause:
+                raise _TransportCloseError(cause) from cause
+
+        async def recovered_operation():
+            return "recovered"
+
+        with WorkerMcpClient("test.dll") as client:
+            try:
+                run_mcp_operation(failed_operation())
+            except _TransportCloseError as error:
+                for nested in (error, error.__cause__, *error.exceptions):
+                    names = [frame.f_code.co_name for frame, _ in traceback.walk_tb(nested.__traceback__)]
+                    self.assertIn("failed_operation", names)
+                    self.assertNotIn("_serve", names)
+                    traceback.clear_frames(nested.__traceback__)
+                self.assertEqual("original failure", str(error.__cause__))
+            else:
+                self.fail("The operation must report its failure")
+            client.run(client.reset())
+            self.assertEqual("recovered", run_mcp_operation(recovered_operation()))
+        self.assertFalse(client.thread.is_alive())
+
+    def test_operations_share_loop_and_owner_task_and_close_on_that_task(self):
+        events = []
+
+        @asynccontextmanager
+        async def transport(*args):
+            events.append(("open", asyncio.get_running_loop(), asyncio.current_task()))
+            yield SimpleNamespace()
+            events.append(("close", asyncio.get_running_loop(), asyncio.current_task()))
+
+        async def operation():
+            client = WorkerMcpClient.current()
+            await client.raw_session("localhost", 1234, 10, 300)
+            events.append(("call", asyncio.get_running_loop(), asyncio.current_task()))
+
+        with patch("ida_mcp_session._open_raw_ida_mcp_session", transport):
+            with WorkerMcpClient("test.dll") as client:
+                run_mcp_operation(operation())
+                run_mcp_operation(operation())
+            self.assertFalse(client.thread.is_alive())
+        self.assertEqual(["open", "call", "call", "close"], [event[0] for event in events])
+        self.assertEqual(1, len({id(event[1]) for event in events}))
+        self.assertEqual(1, len({id(event[2]) for event in events}))
+
+    def test_exception_is_not_replayed_and_next_operation_fails_closed(self):
+        calls = []
+
+        async def mutation():
+            calls.append("mutation")
+            raise OSError("connection lost after write")
+
+        with WorkerMcpClient("test.dll") as client:
+            with self.assertRaisesRegex(OSError, "connection lost"):
+                run_mcp_operation(mutation())
+            self.assertEqual(["mutation"], calls)
+            self.assertTrue(client.invalid)
+        self.assertFalse(client.thread.is_alive())
+
+    def test_timeout_cancels_operation_and_closes_thread(self):
+        cancelled = []
+
+        async def stalled():
+            try:
+                await asyncio.Event().wait()
+            finally:
+                cancelled.append(True)
+
+        with WorkerMcpClient("test.dll") as client:
+            with self.assertRaises(TimeoutError):
+                run_mcp_operation(stalled(), timeout=0.05)
+            self.assertEqual([True], cancelled)
+        self.assertFalse(client.thread.is_alive())
+
+    def test_loop_construction_timeout_does_not_wait_for_loop_timer(self):
+        release = threading.Event()
+        original = asyncio.new_event_loop
+
+        def delayed_loop():
+            release.wait(2.0)
+            return original()
+
+        client = WorkerMcpClient("test.dll")
+        with patch("mcp_worker_client.START_TIMEOUT", 0.02), patch("asyncio.new_event_loop", delayed_loop):
+            try:
+                with self.assertRaises(TimeoutError):
+                    client.__enter__()
+            finally:
+                release.set()
+                client.thread.join(2.0)
+        self.assertFalse(client.thread.is_alive())
+
+    def test_cancellation_closes_resources_without_replaying(self):
+        async def cancel():
+            raise asyncio.CancelledError()
+
+        with WorkerMcpClient("test.dll") as client:
+            with self.assertRaises(asyncio.CancelledError):
+                run_mcp_operation(cancel())
+            self.assertTrue(client.invalid)
+        self.assertFalse(client.thread.is_alive())
+
+    def test_workers_have_isolated_event_loops(self):
+        async def loop():
+            return asyncio.get_running_loop()
+
+        with WorkerMcpClient("first.dll"):
+            first = run_mcp_operation(loop())
+            with WorkerMcpClient("second.dll"):
+                second = run_mcp_operation(loop())
+            self.assertIs(first, run_mcp_operation(loop()))
+        self.assertIsNot(first, second)
+
+
+class _McpHttpServer(ThreadingHTTPServer):
+    daemon_threads = True
+
+    def __init__(self):
+        super().__init__(("127.0.0.1", 0), _McpHttpHandler)
+        self.initializations = 0
+        self.connections = 0
+        self.calls = []
+        self.database = dict(ACTIVE_SERVER)
+        self.sha256 = None
+
+    def get_request(self):
+        request = super().get_request()
+        self.connections += 1
+        return request
+
+
+class _McpHttpHandler(BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+
+    def log_message(self, *args):
+        pass
+
+    def do_GET(self):
+        self.send_response(405)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def do_POST(self):
+        request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        method = request["method"]
+        result = {}
+        if method == "initialize":
+            self.server.initializations += 1
+            result = {
+                "protocolVersion": request["params"]["protocolVersion"],
+                "capabilities": {"tools": {}},
+                "serverInfo": {"name": "test", "version": "1"},
+            }
+        elif method == "tools/list":
+            result = {
+                "tools": [
+                    {"name": "idb_list", "inputSchema": {"type": "object"}},
+                    {"name": "survey_binary", "inputSchema": {"type": "object", "required": ["database"]}},
+                    {
+                        "name": "py_eval",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {},
+                            "required": ["database"],
+                        },
+                    },
+                ]
+            }
+        elif method == "tools/call":
+            params = request["params"]
+            self.server.calls.append(params)
+            if params.get("arguments", {}).get("code") == "disconnect":
+                self.connection.shutdown(socket.SHUT_RDWR)
+                self.close_connection = True
+                return
+            payload = {"sessions": [self.server.database]} if params["name"] == "idb_list" else {"result": "1"}
+            if params["name"] == "survey_binary":
+                payload = {"metadata": {"path": self.server.database["input_path"], "sha256": self.server.sha256}}
+            result = {"content": [{"type": "text", "text": json.dumps(payload)}], "isError": False}
+        if "id" not in request:
+            self.send_response(202)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        body = json.dumps({"jsonrpc": "2.0", "id": request["id"], "result": result}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
+class PersistentHttpSessionTests(unittest.TestCase):
+    def setUp(self):
+        self.server = _McpHttpServer()
+        self.thread = threading.Thread(target=self.server.serve_forever)
+        self.thread.start()
+        self.addCleanup(self.thread.join)
+        self.addCleanup(self.server.server_close)
+        self.addCleanup(self.server.shutdown)
+
+    async def phase(self, code="1", **kwargs):
+        async with open_ida_mcp_session(
+            "127.0.0.1", self.server.server_port, expected_binary=r"D:\repo\bin\server.dll", **kwargs
+        ) as session:
+            await session.call_tool("py_eval", {"code": code})
+            return session.binding
+
+    def test_real_handshake_and_tcp_reuse_across_phases(self):
+        with WorkerMcpClient(r"D:\repo\bin\server.dll") as client:
+            self.assertTrue(run_mcp_operation(check_ida_mcp_supervisor_health("127.0.0.1", self.server.server_port)))
+            first = run_mcp_operation(self.phase("preprocess"))
+            connections_after_first_phase = self.server.connections
+            second = run_mcp_operation(self.phase("validate"))
+            third = run_mcp_operation(self.phase("health"))
+            self.assertEqual(first, second)
+            self.assertEqual(second, third)
+            self.assertEqual(1, self.server.initializations)
+            self.assertLessEqual(self.server.connections, 2)
+            self.assertEqual(connections_after_first_phase, self.server.connections)
+        self.assertFalse(client.thread.is_alive())
+        mutations = [call for call in self.server.calls if call["name"] == "py_eval"]
+        self.assertEqual(["preprocess", "validate", "health"], [call["arguments"]["code"] for call in mutations])
+        self.assertTrue(all(call["arguments"]["database"] == "server-db" for call in mutations))
+
+    def test_replacement_same_endpoint_invalidates_before_mutation(self):
+        with WorkerMcpClient(r"D:\repo\bin\server.dll") as client:
+            run_mcp_operation(self.phase("first"))
+            self.server.database["worker_pid"] += 1
+            with self.assertRaisesRegex(McpDatabaseUnavailableError, "instance changed"):
+                run_mcp_operation(self.phase("must not run"))
+            self.assertTrue(client.invalid)
+            client.run(client.reset())
+            run_mcp_operation(self.phase("new generation"))
+        self.assertEqual(2, self.server.initializations)
+        mutations = [call["arguments"]["code"] for call in self.server.calls if call["name"] == "py_eval"]
+        self.assertEqual(["first", "new generation"], mutations)
+
+    def test_rebuild_binding_to_wrong_binary_fails(self):
+        with WorkerMcpClient(r"D:\repo\bin\server.dll") as client:
+            run_mcp_operation(self.phase())
+            client.run(client.reset())
+            self.server.database["input_path"] = "wrong.dll"
+            with self.assertRaises(McpDatabaseSelectionError):
+                run_mcp_operation(self.phase("must not run"))
+        self.assertEqual(2, self.server.initializations)
+        self.assertEqual(1, sum(call["name"] == "py_eval" for call in self.server.calls))
+
+    def test_retained_session_cannot_be_used_after_reset_or_on_another_loop(self):
+        async def borrow():
+            async with open_ida_mcp_session("127.0.0.1", self.server.server_port) as session:
+                return session
+
+        with WorkerMcpClient(r"D:\repo\bin\server.dll") as client:
+            retained = run_mcp_operation(borrow())
+            with self.assertRaisesRegex(McpConnectionError, "different worker"):
+                asyncio.run(retained.call_tool("py_eval", {"code": "wrong loop"}))
+            client.run(client.reset())
+            run_mcp_operation(self.phase("current"))
+            with self.assertRaisesRegex(McpConnectionError, "expired generation"):
+                run_mcp_operation(retained.call_tool("py_eval", {"code": "stale"}))
+        self.assertEqual(1, sum(call["name"] == "py_eval" for call in self.server.calls))
+
+    def test_real_disconnect_does_not_replay_mutation_and_closes_transport(self):
+        with WorkerMcpClient(r"D:\repo\bin\server.dll") as client:
+            with self.assertRaises(McpConnectionError):
+                run_mcp_operation(self.phase("disconnect"), timeout=2.0)
+            self.assertTrue(client.invalid)
+        self.assertFalse(client.thread.is_alive())
+        self.assertEqual(1, sum(call["name"] == "py_eval" for call in self.server.calls))
+
+    def test_lifecycle_restart_revalidates_hash_and_rejects_mismatch(self):
+        import ida_analyze_bin as analyzer
+
+        with tempfile.TemporaryDirectory() as directory:
+            binary = Path(directory) / "test.dll"
+            binary.write_bytes(b"original binary")
+            self.server.database["input_path"] = str(binary)
+            self.server.sha256 = hashlib.sha256(binary.read_bytes()).hexdigest()
+            process = MagicMock()
+            process.poll.return_value = None
+
+            def restart(*args, **kwargs):
+                process.poll.return_value = None
+                self.server.database["session_id"] = "replacement-db"
+                self.server.sha256 = "0" * 64
+                return process
+
+            with (
+                patch.object(analyzer, "_has_ida_database", return_value=True),
+                patch.object(analyzer, "start_idalib_mcp", return_value=process) as start,
+                patch.object(analyzer, "quit_ida_gracefully"),
+                patch.object(analyzer, "is_port_in_use", return_value=False),
+                patch.object(analyzer, "wait_for_port_release", return_value=True),
+            ):
+                with analyzer.IdaMcpLifecycle(
+                    binary,
+                    "windows",
+                    "127.0.0.1",
+                    self.server.server_port,
+                    [],
+                    database_policy=analyzer.DATABASE_POLICY_RESTORED_STRICT,
+                    save_on_success=False,
+                ) as lifecycle:
+                    client = lifecycle._client
+                    self.assertEqual("server-db", lifecycle.runtime.binding.session_id)
+                    process.poll.return_value = 1
+                    start.side_effect = restart
+                    with self.assertRaisesRegex(analyzer.McpLifecycleError, "identity verification failed"):
+                        lifecycle.ensure_ready()
+                self.assertFalse(client.thread.is_alive())
+        self.assertEqual(2, self.server.initializations)
+        surveys = [call["arguments"]["database"] for call in self.server.calls if call["name"] == "survey_binary"]
+        self.assertEqual(["server-db", "replacement-db"], surveys)
 
 
 class _TransportCloseError(Exception):

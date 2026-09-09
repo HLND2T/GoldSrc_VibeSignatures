@@ -59,3 +59,23 @@ flowchart TD
 
 - `ida_analyze_bin.analyze` creates one lifecycle for each pending module/platform binary.
 - `generate_reference_yaml.autostart_mcp_session` creates the same lifecycle for `-auto_start_mcp`.
+
+## Persistent analysis client (issue #98)
+
+- Trigger: five concurrent analysis workers repeatedly initialized MCP sessions between preprocessing, artifact validation and health checks; Windows loop construction also repeatedly created socketpairs.
+- Root constraint: MCP/AnyIO transport contexts must be entered and exited by the same asyncio task, not merely the same loop. Caching an AsyncClient across repeated `asyncio.run()` calls is invalid.
+- `mcp_worker_client.py:WorkerMcpClient` is owned by `IdaMcpLifecycle`. It runs one event loop and one serial owner task on a dedicated thread. `run_mcp_operation` routes synchronous analysis phases through the current lifecycle's ContextVar; outside an owned lifecycle it retains standalone `asyncio.run` behavior.
+- `ida_mcp_session.open_ida_mcp_session` borrows the owned session within that task. Startup health and database binding share the raw session. HTTP limits are four total/two idle connections, with 15-second idle expiry. Each bound phase checks `idb_list` instance identity; each node's existing survey/hash checks remain enabled.
+- Restart/rebuild invalidates the transport, binding and generation. Retained session objects reject a different loop/worker or expired generation. The lifecycle rebinds and runs the existing binary/platform/hash verification before returning a recovered runtime. No transport-layer mutation replay is introduced.
+- Cleanup: save only when `save_on_success` permits it and the worker is owned/verified; `restored_strict` batch analysis retains no-save behavior. Graceful quit always retains a local process-tree stop fallback, then the client closes SDK contexts and joins its loop thread. Failed entry and cancellation also close the owner.
+- Timeouts: loop bootstrap is bounded from the calling thread (10s), tools use 300s, phases default to 3600s, health recovery uses 30s, and client close uses 10s. An uninterruptible OS/Python call still requires the existing outer batch worker process timeout; Python cannot forcibly kill a stuck thread safely.
+- Verification: `tests.test_ida_mcp_session` includes a real HTTP MCP fixture counting initialize and accepted TCP connections, instance replacement, changed hash on lifecycle restart, stale references/cross-loop rejection, disconnect without replay, cancellation, startup and operation timeouts, and thread cleanup. The 2026-09-09 five-way comparison completed 13/13 work items with the same 439-file contract digest; initialize calls fell from 1691 to 13, HTTP connection objects from 3440 to 26 (30 in the final repeat, still 13 initializations). TCP TIME_WAIT snapshots include other paths and are not proof of port exhaustion or resolution of the CI socketpair hang.
+- Scope: GoldSrc client lifecycle; the separate ida-pro-mcp supervisor→worker RPC pool remains an independent fix. See [[full-analysis-concurrency]].
+
+### Python 3.12 exception-transfer pitfall (PR #99)
+
+- Trigger: an operation exception crosses the executor's thread boundary; the caller uses `unittest.assertRaises` or otherwise clears its traceback frames. The next operation/cleanup reports `RuntimeError: cannot reuse already awaited coroutine` on Python 3.12, while 3.13 tests pass.
+- Root cause: the exported traceback includes the still-suspended `_serve` coroutine frame. Python 3.12 frame cleanup can close that coroutine. This is exception ownership, not request replay.
+- Correct approach: before setting the cross-thread Future exception, detach only the `_serve` frame from the exception traceback and recursively from causes, contexts and exception-group members. Preserve exception types and completed operation frames for diagnosis.
+- Verification: reproduce the original failure under an isolated Python 3.12 environment; test traceback cleanup explicitly, retain the original operation frame/cause, and verify reset plus the next operation and thread shutdown succeed. Run both 3.12 and 3.13 suites; never infer compatibility from 3.13 alone.
+- Scope: long-lived asyncio task executors exporting exceptions to synchronous callers.
