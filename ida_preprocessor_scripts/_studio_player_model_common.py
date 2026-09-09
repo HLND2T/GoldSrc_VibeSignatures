@@ -1,7 +1,9 @@
-"""Shared locator for studioapi_SetupPlayerModel across engine families.
+"""Shared locators for the studio player-model family across engine families.
 
-Anchor chain (validated on hl-3248..hl-10210, cof-5936, svencoop-10257; both
+Anchor chains (validated on hl-3248..hl-10210, cof-5936, svencoop-10257; both
 platforms where shipped):
+
+studioapi_SetupPlayerModel:
 
 1. The engine's ClientDLL_CheckStudioInterface diagnostic literal is unique.
    GoldSrc/HL25/CoF use one wording, SvEngine another, so each family ships
@@ -20,11 +22,31 @@ platforms where shipped):
 4. The slot function must reference "models/player/%s/%s.mdl", which only
    studioapi_SetupPlayerModel and R_StudioDrawPlayer do.
 
+R_StudioDrawPlayer:
+
+1. The same ClientDLL_CheckStudioInterface diagnostic anchors the owner, and
+   the same operand scan now keeps the &pStudioAPI argument.
+2. pStudioAPI's static initializer is the r_studio_interface_t studio object
+   {STUDIO_INTERFACE_VERSION, R_StudioDrawModel, R_StudioDrawPlayer}, so a
+   candidate validates only when its image dword points at writable data
+   whose first dword is 1 and whose +4/+8 slots are executable function
+   starts. &engine_studio_api (first member is a code pointer) and
+   &cl_funcs fields (zero in the image) never qualify.
+3. The interface entry is studio+8. GCC Linux builds move the
+   "models/player/%s/%s.mdl" Q_snprintf into an R_StudioDrawPlayer.part.N
+   cold clone that the entry only tail-jumps to, so the semantic check
+   accepts the format string on the entry or any direct call/jmp target,
+   and the remaining format-string owner must equal the verified
+   studioapi_SetupPlayerModel artifact (DAG input).
+
 Discovery never uses a byte signature or a prior artifact signature.
 """
 
+from pathlib import Path
+
 from ida_analyze_util import (
     _inspect_function_via_mcp,
+    _load_yaml_mapping,
     _output_for_symbol,
     parse_mcp_result,
     write_func_yaml,
@@ -37,7 +59,7 @@ SETUP_SLOT_OFFSET = 0x7C
 TABLE_DWORDS = 45
 MIN_TABLE_CODE_RUN = 43
 
-LOCATE_PY = r"""
+_LOCATE_SHARED_PY = r"""
 import ida_bytes
 import ida_funcs
 import ida_nalt
@@ -47,12 +69,6 @@ import idautils
 import idc
 import json
 import traceback
-
-STUDIO_STR = STUDIO_STR_PLACEHOLDER
-FMT_STR = 'models/player/%s/%s.mdl'
-SETUP_SLOT_OFF = 0x7C
-TABLE_DWORDS = 45
-MIN_TABLE_CODE_RUN = 43
 
 def find_exact_strings(text):
     hits = []
@@ -104,23 +120,6 @@ def func_items(start):
 
 def disasm(ea):
     return idc.generate_disasm_line(int(ea), 0) or ''
-
-def validate_table(cand):
-    if not is_writable_data(cand):
-        return None
-    run = 0
-    for i in range(TABLE_DWORDS):
-        value = ida_bytes.get_dword(int(cand) + i * 4)
-        if value != 0 and is_exec(value):
-            run += 1
-    if run < MIN_TABLE_CODE_RUN:
-        return None
-    slot = ida_bytes.get_dword(int(cand) + SETUP_SLOT_OFF)
-    fn = ida_funcs.get_func(slot) if slot else None
-    if fn is None or int(fn.start_ea) != slot:
-        return None
-    return {'table_ea': int(cand), 'table_seg': seg_name(cand),
-            'code_run': run, 'setup_slot': slot}
 
 def absolute_data_operands(ea):
     insn = idautils.DecodeInstruction(int(ea))
@@ -219,6 +218,43 @@ def references_string(func_start, string_eas):
                 return True
     return False
 
+def direct_transfer_targets(func_start):
+    # GCC .part.N cold clones hold the player-model format reference while
+    # the interface entry only tail-jumps to them; collect every direct
+    # call/jmp target of the entry so the semantic check can follow.
+    out = set()
+    for ea in func_items(func_start):
+        for target in idautils.CodeRefsFrom(int(ea), 0):
+            out.add(int(target))
+    return out
+"""
+
+LOCATE_PY = (
+    _LOCATE_SHARED_PY
+    + r"""
+STUDIO_STR = STUDIO_STR_PLACEHOLDER
+FMT_STR = 'models/player/%s/%s.mdl'
+SETUP_SLOT_OFF = 0x7C
+TABLE_DWORDS = 45
+MIN_TABLE_CODE_RUN = 43
+
+def validate_table(cand):
+    if not is_writable_data(cand):
+        return None
+    run = 0
+    for i in range(TABLE_DWORDS):
+        value = ida_bytes.get_dword(int(cand) + i * 4)
+        if value != 0 and is_exec(value):
+            run += 1
+    if run < MIN_TABLE_CODE_RUN:
+        return None
+    slot = ida_bytes.get_dword(int(cand) + SETUP_SLOT_OFF)
+    fn = ida_funcs.get_func(slot) if slot else None
+    if fn is None or int(fn.start_ea) != slot:
+        return None
+    return {'table_ea': int(cand), 'table_seg': seg_name(cand),
+            'code_run': run, 'setup_slot': slot}
+
 def main():
     strs = find_exact_strings(STUDIO_STR)
     if len(strs) != 1:
@@ -278,6 +314,100 @@ try:
 except Exception as exc:
     result = json.dumps({'error': str(exc), 'trace': traceback.format_exc()})
 """
+)
+
+LOCATE_DRAW_PLAYER_PY = (
+    _LOCATE_SHARED_PY
+    + r"""
+STUDIO_STR = STUDIO_STR_PLACEHOLDER
+FMT_STR = 'models/player/%s/%s.mdl'
+
+def validate_pstudio(cand, form, insn_text):
+    # cand is a candidate &pStudioAPI VA; its static image dword must point
+    # at the writable studio object {1, R_StudioDrawModel, R_StudioDrawPlayer}.
+    if not is_writable_data(cand):
+        return None
+    studio_ea = ida_bytes.get_dword(int(cand))
+    if studio_ea == 0 or not is_writable_data(studio_ea):
+        return None
+    if ida_bytes.get_dword(int(studio_ea)) != 1:
+        return None
+    slots = []
+    for offset in (4, 8):
+        value = ida_bytes.get_dword(int(studio_ea) + offset)
+        if value == 0 or not is_exec(value):
+            return None
+        fn = ida_funcs.get_func(int(value))
+        if fn is None or int(fn.start_ea) != int(value):
+            return None
+        slots.append(value)
+    return {'pstudio_ea': int(cand), 'pstudio_seg': seg_name(cand),
+            'studio_ea': int(studio_ea), 'studio_seg': seg_name(studio_ea),
+            'draw_model': int(slots[0]), 'draw_player': int(slots[1]),
+            'form': form, 'insn': insn_text}
+
+def main():
+    strs = find_exact_strings(STUDIO_STR)
+    if len(strs) != 1:
+        return {'error': 'studio interface string count %d' % len(strs)}
+    owners = functions_for_string(strs[0])
+    if not owners:
+        return {'error': 'studio interface string has no owning function'}
+    cands = {}
+    for own in owners:
+        for ea in func_items(own):
+            for off, value in absolute_data_operands(ea):
+                info = validate_pstudio(value, 'absolute', '%x: %s' % (ea, disasm(ea)))
+                if info and value not in cands:
+                    cands[value] = info
+        base = pic_anchor(own)
+        if base:
+            for item in pic_ebx_displacements(own, base):
+                info = validate_pstudio(item['resolved'], 'pic', item['disasm'])
+                if info and item['resolved'] not in cands:
+                    cands[item['resolved']] = info
+    if len(cands) != 1:
+        return {'error': 'pStudioAPI candidates: %d' % len(cands),
+                'cands': [hex(t) for t in sorted(cands)]}
+    pstudio_ea, info = next(iter(cands.items()))
+    draw_player = info['draw_player']
+    fmts = find_exact_strings(FMT_STR)
+    if not fmts:
+        return {'error': 'player model format string missing',
+                'pstudio_ea': hex(pstudio_ea)}
+    fmt_owners = []
+    for fmt_ea in fmts:
+        fmt_owners.extend(functions_for_string(fmt_ea))
+    fn = ida_funcs.get_func(int(draw_player))
+    return {
+        'pointer_size': 4,
+        'string_ea': hex(strs[0]),
+        'owners': [hex(x) for x in owners],
+        'pstudio_ea': hex(pstudio_ea),
+        'pstudio_seg': info['pstudio_seg'],
+        'studio_ea': hex(info['studio_ea']),
+        'studio_seg': info['studio_seg'],
+        'anchor_form': info['form'],
+        'anchor_insn': info['insn'],
+        'draw_model': hex(info['draw_model']),
+        'draw_player': hex(draw_player),
+        'draw_player_end': hex(int(fn.end_ea)) if fn else None,
+        'fmt_count': len(fmts),
+        'fmt_owners': [hex(x) for x in sorted(set(fmt_owners))],
+        'draw_refs_fmt': references_string(draw_player, fmts),
+        'draw_transfers': [hex(x) for x in sorted(direct_transfer_targets(draw_player))],
+    }
+
+globals().update(locals())
+try:
+    if idaapi.inf_is_64bit():
+        result = json.dumps({'error': 'expected 32-bit x86'})
+    else:
+        result = json.dumps(main())
+except Exception as exc:
+    result = json.dumps({'error': str(exc), 'trace': traceback.format_exc()})
+"""
+)
 
 
 async def locate_setup_player_model(session, studio_string):
@@ -348,6 +478,129 @@ async def preprocess_studio_setup_player_model(
             f"  {target_name}: table={located['table_ea']} ({located.get('table_form')}, "
             f"seg {located.get('table_seg')}, code_run {located.get('code_run')}) "
             f"setup={located['setup_va']} owners={located.get('owners')}"
+        )
+    payload = {
+        "func_name": target_name,
+        "func_va": function["func_va"],
+        "func_rva": function["func_rva"],
+        "func_size": function["func_size"],
+        "func_sig": function["func_sig"],
+    }
+    if allow_across:
+        payload["func_sig_allow_across_function_boundary"] = True
+    write_func_yaml(output, payload)
+    return True
+
+
+async def locate_draw_player(session, studio_string):
+    try:
+        code = LOCATE_DRAW_PLAYER_PY.replace("STUDIO_STR_PLACEHOLDER", repr(studio_string))
+        payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
+    except Exception:  # noqa: BLE001 - MCP failures fail closed.
+        return None
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("error") or payload.get("pointer_size") != 4:
+        return payload
+    required = ("pstudio_ea", "studio_ea", "draw_player", "fmt_owners", "draw_transfers")
+    if any(field not in payload for field in required):
+        return None
+    return payload
+
+
+def _setup_player_model_artifact(new_binary_dir, platform, image_base):
+    path = Path(new_binary_dir) / f"studioapi_SetupPlayerModel.{platform}.yaml"
+    artifact = _load_yaml_mapping(path)
+    if not artifact or artifact.get("func_name") != "studioapi_SetupPlayerModel":
+        return None
+    try:
+        value = artifact["func_va"]
+        func_ea = int(value, 0) if isinstance(value, str) else int(value)
+    except (TypeError, ValueError, KeyError):
+        return None
+    if func_ea < int(image_base):
+        return None
+    return func_ea
+
+
+async def preprocess_studio_draw_player(
+    session,
+    expected_outputs,
+    platform,
+    image_base,
+    *,
+    target_name,
+    studio_string,
+    new_binary_dir,
+    debug=False,
+):
+    if platform not in {"windows", "linux"}:
+        return False
+    output = _output_for_symbol(expected_outputs, target_name)
+    if output is None:
+        return False
+    setup_va = _setup_player_model_artifact(new_binary_dir, platform, image_base)
+    if setup_va is None:
+        if debug:
+            print(f"  {target_name}: missing studioapi_SetupPlayerModel artifact")
+        return False
+    located = await locate_draw_player(session, studio_string)
+    if located is None or located.get("error") or located.get("pointer_size") != 4:
+        if debug:
+            print(f"  {target_name}: locator failed {located}")
+        return False
+    try:
+        pstudio_ea = int(located["pstudio_ea"], 0)
+        draw_ea = int(located["draw_player"], 0)
+        fmt_owners = [int(x, 0) for x in located["fmt_owners"]]
+        transfers = [int(x, 0) for x in located["draw_transfers"]]
+    except (TypeError, ValueError):
+        return False
+    if pstudio_ea < int(image_base) or draw_ea < int(image_base):
+        return False
+    # Semantic gate: after the entry family (the interface entry plus its
+    # direct call/jmp targets, which cover GCC .part.N cold clones), the only
+    # remaining "models/player/%s/%s.mdl" owner must be the verified
+    # studioapi_SetupPlayerModel artifact.
+    entry_family = {draw_ea} | set(transfers)
+    remaining = [x for x in fmt_owners if x not in entry_family]
+    if len(remaining) != 1 or remaining[0] != setup_va:
+        if debug:
+            print(
+                f"  {target_name}: format-string owner cross-check failed "
+                f"owners={located['fmt_owners']} setup={hex(setup_va)}"
+            )
+        return False
+    if not bool(located.get("draw_refs_fmt")) and not any(x in transfers for x in fmt_owners):
+        if debug:
+            print(f"  {target_name}: player model format unreachable from the entry")
+        return False
+    function = await _inspect_function_via_mcp(session, draw_ea, image_base, target_name)
+    allow_across = False
+    if not function or not function.get("func_sig"):
+        # Short Linux entries jump straight into their .part.N clone; the
+        # across-boundary window still starts at the entry and only grows the
+        # validated extent.
+        function = await _inspect_function_via_mcp(
+            session, draw_ea, image_base, target_name, allow_across_function_boundary=True
+        )
+        allow_across = function is not None and bool(function.get("func_sig"))
+    if not function or not function.get("func_sig"):
+        if debug:
+            print(f"  {target_name}: failed to inspect entry function {located['draw_player']}")
+        return False
+    try:
+        func_va = int(function["func_va"], 0)
+    except (TypeError, ValueError):
+        return False
+    if func_va != draw_ea:
+        return False
+    if debug:
+        print(
+            f"  {target_name}: pstudio={located['pstudio_ea']} "
+            f"({located.get('anchor_form')}, seg {located.get('pstudio_seg')}) "
+            f"studio={located['studio_ea']} draw_player={located['draw_player']} "
+            f"owners={located.get('owners')}"
         )
     payload = {
         "func_name": target_name,
