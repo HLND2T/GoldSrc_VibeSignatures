@@ -25,27 +25,27 @@ import yaml
 from dotenv import load_dotenv
 
 import agent_runner
+from analysis_batch import (
+    RESULT_SCHEMA_VERSION,
+    BatchDiagnostics,
+    BatchPlanError,
+    BatchSchedule,
+    build_batch_schedule,
+    run_batch,
+    select_batch_schedule,
+    terminate_process_tree,
+    validate_batch_selections,
+    work_item_run_id,
+)
 from analysis_config import (
     AnalysisConfigError,
     iter_analysis_config_tags,
     resolve_analysis_config,
     validated_tag,
 )
-from analysis_batch import (
-    RESULT_SCHEMA_VERSION,
-    BatchPlanError,
-    BatchSchedule,
-    BatchDiagnostics,
-    build_batch_schedule,
-    select_batch_schedule,
-    validate_batch_selections,
-    run_batch,
-    terminate_process_tree,
-    work_item_run_id,
-)
 from analysis_memory import (
-    AnalysisMemoryConfigError,
     COORDINATED_CHILD_ENV,
+    AnalysisMemoryConfigError,
     analysis_memory_authority_from_environment,
     resolve_analysis_limits,
     validate_limits_for_effective_concurrency,
@@ -78,7 +78,6 @@ from ida_database_paths import (
     primary_database_paths,
 )
 from ida_llm_utils import validated_temperature
-from mcp_startup import mcp_startup_lock
 from ida_mcp_session import (
     McpConnectionError,
     McpContractError,
@@ -99,6 +98,8 @@ from ida_skill_preprocessor import (
     _normalize_preprocess_status,
     preprocess_single_skill_via_mcp,
 )
+from mcp_startup import mcp_startup_lock
+from mcp_worker_client import WorkerMcpClient, invalidate_mcp_client, run_mcp_operation
 from process_reporter import (
     BestEffortProcessReporter,
     NullProcessReporter,
@@ -676,7 +677,9 @@ def verify_opened_binary_via_mcp(
     last_reasons = ["survey_binary returned no metadata"]
     while True:
         try:
-            survey, binding = asyncio.run(_survey_opened_binary_via_mcp(host, port, binary_path, auto_started=True))
+            survey, binding = run_mcp_operation(
+                _survey_opened_binary_via_mcp(host, port, binary_path, auto_started=True)
+            )
         except McpDatabaseUnavailableError:
             raise
         except (McpConnectionError, McpContractError, McpDatabaseSelectionError, McpToolCallError) as exc:
@@ -748,8 +751,11 @@ def wait_for_mcp_ready(process, host, port, timeout=MCP_STARTUP_TIMEOUT, retry_i
     while True:
         if process.poll() is not None:
             return False
-        if is_port_in_use(host, port) and asyncio.run(check_ida_mcp_supervisor_health(host, port)):
+        if run_mcp_operation(
+            check_ida_mcp_supervisor_health(host, port), timeout=max(0.1, deadline - time.monotonic())
+        ):
             return True
+        invalidate_mcp_client()
         if time.monotonic() >= deadline:
             return False
         time.sleep(max(0.0, retry_interval))
@@ -864,12 +870,13 @@ def start_idalib_mcp(
     stdout=None,
     stderr=None,
 ):
+    invalidate_mcp_client()
     process = None
     with mcp_startup_lock():
         process = _spawn_idalib_mcp(binary_path, host, port, ida_args, debug, stdout, stderr)
     try:
         ready = process is not None and wait_for_mcp_ready(process, host, port)
-    except Exception:
+    except BaseException:
         # A raised readiness probe must not orphan the already-spawned worker;
         # the lifecycle owner cannot clean it up because its process handle is
         # never assigned when this helper raises.
@@ -978,7 +985,7 @@ def save_ida_database(host, port, *, expected_binary, debug=False):
     try:
         asyncio.get_running_loop()
     except RuntimeError:
-        saved = asyncio.run(
+        saved = run_mcp_operation(
             save_ida_database_via_mcp(
                 host,
                 port,
@@ -1019,15 +1026,20 @@ def quit_ida_gracefully(process, host, port, *, expected_binary, debug=False):
     try:
         asyncio.get_running_loop()
     except RuntimeError:
-        asyncio.run(
-            quit_ida_gracefully_async(
-                process,
-                host,
-                port,
-                expected_binary=expected_binary,
-                debug=debug,
+        try:
+            run_mcp_operation(
+                quit_ida_gracefully_async(
+                    process,
+                    host,
+                    port,
+                    expected_binary=expected_binary,
+                    debug=debug,
+                )
             )
-        )
+        finally:
+            # Transport cancellation must not bypass the owned process-tree stop.
+            if process.poll() is None:
+                stop_idalib_mcp_process(process, debug=debug)
         return
     raise RuntimeError(
         "quit_ida_gracefully() cannot run inside an active event loop; use await quit_ida_gracefully_async() instead"
@@ -1037,13 +1049,14 @@ def quit_ida_gracefully(process, host, port, *, expected_binary, debug=False):
 def ensure_mcp_available(process, binary_path, host, port, ida_args, debug, *, recovery_budget):
     if process is not None and process.poll() is not None:
         process = None
-    if process is not None and asyncio.run(check_mcp_worker_health(host, port, binary_path)):
+    if process is not None and run_mcp_operation(check_mcp_worker_health(host, port, binary_path), timeout=30.0):
         return process, True
     if not recovery_budget.consume_restart():
         return process, False
     if process is not None:
         quit_ida_gracefully(process, host, port, expected_binary=binary_path, debug=debug)
         process = None
+    invalidate_mcp_client()
     if is_port_in_use(host, port) and not wait_for_port_release(host, port):
         return None, False
     restarted = start_idalib_mcp(binary_path, host, port, ida_args, debug)
@@ -1112,10 +1125,12 @@ class IdaMcpLifecycle:
         self.runtime = None
         self.recovery_budget = McpRecoveryBudget()
         self._force_local_stop = True
+        self._client = None
 
     def _rebuild_stale_database(self) -> None:
         if not self.recovery_budget.consume_restart():
             return
+        invalidate_mcp_client()
         process = self.process
         if process is not None:
             stop_idalib_mcp_process(process, debug=self.debug)
@@ -1148,6 +1163,8 @@ class IdaMcpLifecycle:
         if self.database_policy == DATABASE_POLICY_RESTORED_STRICT and not _has_ida_database(self.binary_path):
             raise McpLifecycleError(f"Strict restored IDA database is missing for {self.binary_path}")
         try:
+            self._client = WorkerMcpClient(self.binary_path)
+            self._client.__enter__()
             if self.port is None:
                 self.process, self.port = start_dynamic_idalib_mcp(
                     self.binary_path,
@@ -1197,6 +1214,9 @@ class IdaMcpLifecycle:
         except Exception as exc:
             self._cleanup()
             raise McpLifecycleError(f"Unable to initialize IDA MCP lifecycle for {self.binary_path}: {exc}") from exc
+        except BaseException:
+            self._cleanup()
+            raise
 
     def ensure_ready(self):
         try:
@@ -1242,6 +1262,15 @@ class IdaMcpLifecycle:
             raise McpLifecycleError(f"Unable to verify IDA MCP lifecycle for {self.binary_path}: {exc}") from exc
 
     def _cleanup(self):
+        try:
+            self._cleanup_process()
+        finally:
+            self.runtime = None
+            if self._client is not None:
+                client, self._client = self._client, None
+                client.__exit__(None, None, None)
+
+    def _cleanup_process(self):
         process = self.process
         if process is None:
             return
@@ -1540,7 +1569,7 @@ def validate_runtime_artifacts(
     if inspections:
         if mcp_runtime is None:
             raise ArtifactValidationUnavailable("MCP runtime is required for current-binary address validation")
-        issues.extend(asyncio.run(_inspect_runtime_addresses(mcp_runtime, inspections)))
+        issues.extend(run_mcp_operation(_inspect_runtime_addresses(mcp_runtime, inspections)))
     return issues
 
 
@@ -1608,7 +1637,7 @@ def _finalize_produced_outputs(
 
 
 def _run_preprocessor(**kwargs):
-    return asyncio.run(preprocess_single_skill_via_mcp(**kwargs))
+    return run_mcp_operation(preprocess_single_skill_via_mcp(**kwargs))
 
 
 def run_analysis_pipeline(

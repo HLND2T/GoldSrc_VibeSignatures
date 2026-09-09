@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import re
@@ -11,11 +12,13 @@ from dataclasses import dataclass
 from typing import Any
 
 from ida_database_paths import IDA_DATABASE_SUFFIXES
+from mcp_worker_client import WorkerMcpClient
 
 WORKER_TOOL_NAMES = frozenset(
     {"py_eval", "survey_binary", "find_bytes", "rename", "define_func", "set_comments", "get_int"}
 )
 MANAGEMENT_TOOL_NAMES = frozenset({"idb_open", "idb_list"})
+MCP_TOOL_TIMEOUT = 300.0
 
 
 class McpContractError(RuntimeError):
@@ -174,8 +177,15 @@ class DatabaseBoundSession:
     def __init__(self, raw_session: Any, binding: McpDatabaseBinding) -> None:
         self.raw_session = raw_session
         self.binding = binding
+        self._owner = WorkerMcpClient.current()
+        self._generation = self._owner.generation if self._owner is not None else None
 
     async def call_tool(self, name: str, arguments: Mapping[str, Any] | None = None, **kwargs: Any) -> Any:
+        owner = WorkerMcpClient.current()
+        if self._owner is not None and (owner is not self._owner or self._generation != self._owner.generation):
+            raise McpConnectionError("MCP session belongs to an expired generation or a different worker")
+        if owner is not None and owner.invalid:
+            raise McpConnectionError("MCP session is invalid; lifecycle recovery is required")
         routed = dict(arguments or {})
         if self.binding.database_required and name not in MANAGEMENT_TOOL_NAMES:
             supplied = routed.get("database")
@@ -184,7 +194,14 @@ class DatabaseBoundSession:
                     f"Tool {name} database {supplied!r} conflicts with bound database {self.binding.session_id!r}"
                 )
             routed["database"] = self.binding.session_id
-        result = await self.raw_session.call_tool(name=name, arguments=routed, **kwargs)
+        try:
+            result = await asyncio.wait_for(
+                self.raw_session.call_tool(name=name, arguments=routed, **kwargs), timeout=MCP_TOOL_TIMEOUT
+            )
+        except BaseException:
+            if owner is not None:
+                owner.invalid = True
+            raise
         if _tool_result_is_error(result):
             raise McpToolCallError(f"MCP tool {name} failed: {_tool_result_error_text(result)}")
         return result
@@ -257,6 +274,7 @@ async def _open_raw_ida_mcp_session(
             httpx.AsyncClient(
                 follow_redirects=True,
                 timeout=httpx.Timeout(connect_timeout, read=read_timeout),
+                limits=httpx.Limits(max_connections=4, max_keepalive_connections=2, keepalive_expiry=15.0),
                 trust_env=False,
             )
         )
@@ -275,7 +293,8 @@ async def _open_raw_ida_mcp_session(
 
 async def check_ida_mcp_supervisor_health(host: str, port: int) -> bool:
     try:
-        async with _open_raw_ida_mcp_session(host, port, 10.0, 15.0) as raw_session:
+        read_timeout = MCP_TOOL_TIMEOUT if WorkerMcpClient.current() is not None else 15.0
+        async with _borrow_raw_ida_mcp_session(host, port, 10.0, read_timeout) as raw_session:
             await raw_session.list_tools()
             return True
     except Exception:  # noqa: BLE001 - a health probe converts every transport failure to False.
@@ -283,7 +302,27 @@ async def check_ida_mcp_supervisor_health(host: str, port: int) -> bool:
 
 
 @asynccontextmanager
-async def open_ida_mcp_session(
+async def _borrow_raw_ida_mcp_session(host, port, connect_timeout, read_timeout):
+    owner = WorkerMcpClient.current()
+    if owner is not None:
+        yield await owner.raw_session(host, port, connect_timeout, read_timeout)
+    else:
+        async with _open_raw_ida_mcp_session(host, port, connect_timeout, read_timeout) as raw:
+            yield raw
+
+
+@asynccontextmanager
+async def open_ida_mcp_session(host, port, **kwargs):
+    owner = WorkerMcpClient.current()
+    if owner is not None:
+        yield await owner.bound_session(host, port, **kwargs)
+    else:
+        async with _open_bound_ida_mcp_session(host, port, **kwargs) as session:
+            yield session
+
+
+@asynccontextmanager
+async def _open_bound_ida_mcp_session(
     host: str,
     port: int,
     *,
@@ -297,7 +336,7 @@ async def open_ida_mcp_session(
         async with AsyncExitStack() as stack:
             try:
                 raw = await stack.enter_async_context(
-                    _open_raw_ida_mcp_session(host, port, connect_timeout, read_timeout)
+                    _borrow_raw_ida_mcp_session(host, port, connect_timeout, read_timeout)
                 )
                 tools = (await raw.list_tools()).tools
                 required = detect_database_requirement(tools)
@@ -332,7 +371,9 @@ async def open_ida_mcp_session(
                 raise
             except Exception as exc:
                 raise McpConnectionError(f"Unable to open IDA MCP session at {host}:{port}: {exc}") from exc
-            yield DatabaseBoundSession(raw, binding)
+            session = DatabaseBoundSession(raw, binding)
+            session.database_instance = dict(selected) if required else None
+            yield session
     except Exception as exc:
         known_error = _find_mcp_error(exc)
         if known_error is not None and known_error is not exc:
