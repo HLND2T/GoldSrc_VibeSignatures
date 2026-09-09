@@ -136,6 +136,11 @@ modules:
       - name: find-studioapi_SetupPlayerModel
         expected_output:
           - studioapi_SetupPlayerModel.{platform}.yaml
+      - name: find-R_StudioDrawPlayer
+        expected_input:
+          - studioapi_SetupPlayerModel.{platform}.yaml
+        expected_output:
+          - R_StudioDrawPlayer.{platform}.yaml
       - name: find-R_StudioChangePlayerModel
         platform: windows
         expected_input:
@@ -241,6 +246,8 @@ modules:
       - name: FreeBlob
         category: func
       - name: studioapi_SetupPlayerModel
+        category: func
+      - name: R_StudioDrawPlayer
         category: func
       - name: R_StudioChangePlayerModel
         category: func

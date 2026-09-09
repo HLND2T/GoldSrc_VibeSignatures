@@ -127,6 +127,11 @@ modules:
       - name: find-studioapi_SetupPlayerModel-svencoop
         expected_output:
           - studioapi_SetupPlayerModel.{platform}.yaml
+      - name: find-R_StudioDrawPlayer-svencoop
+        expected_input:
+          - studioapi_SetupPlayerModel.{platform}.yaml
+        expected_output:
+          - R_StudioDrawPlayer.{platform}.yaml
       - name: find-R_StudioChangePlayerModel
         platform: windows
         expected_input:
@@ -237,6 +242,8 @@ modules:
       - name: Cvar_Set_to_Cvar_DirectSet_callsite_0
         category: patch
       - name: studioapi_SetupPlayerModel
+        category: func
+      - name: R_StudioDrawPlayer
         category: func
       - name: R_StudioChangePlayerModel
         category: func
