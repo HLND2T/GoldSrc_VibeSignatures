@@ -22,6 +22,18 @@ modules:
       - name: find-Sys_InitMemory-svencoop
         expected_output:
           - Sys_InitMemory.{platform}.yaml
+      - name: find-Sys_InitMemory_HeapLimitPatches
+        expected_input:
+          - Sys_InitMemory.{platform}.yaml
+        expected_output:
+          - Sys_InitMemory_HeapLimitPatches_0.{platform}.yaml
+          - Sys_InitMemory_HeapLimitPatches_1.{platform}.yaml
+          - Sys_InitMemory_HeapLimitPatches_2.{platform}.yaml
+          - Sys_InitMemory_HeapLimitPatches_3.{platform}.yaml
+          - Sys_InitMemory_HeapLimitPatches_4.{platform}.yaml
+        expected_output_linux:
+          - Sys_InitMemory_HeapLimitPatches_5.linux.yaml
+          - Sys_InitMemory_HeapLimitPatches_6.linux.yaml
       - name: find-S_LoadSound
         expected_output:
           - S_LoadSound.{platform}.yaml
@@ -123,6 +135,22 @@ modules:
         category: func
       - name: Sys_InitMemory
         category: func
+      - name: Sys_InitMemory_HeapLimitPatches_0
+        category: patch
+      - name: Sys_InitMemory_HeapLimitPatches_1
+        category: patch
+      - name: Sys_InitMemory_HeapLimitPatches_2
+        category: patch
+      - name: Sys_InitMemory_HeapLimitPatches_3
+        category: patch
+      - name: Sys_InitMemory_HeapLimitPatches_4
+        category: patch
+      - name: Sys_InitMemory_HeapLimitPatches_5
+        category: patch
+        platform: linux
+      - name: Sys_InitMemory_HeapLimitPatches_6
+        category: patch
+        platform: linux
       - name: S_LoadSound
         category: func
       - name: Mod_LoadModel

@@ -1,0 +1,5 @@
+patch_name: Sys_InitMemory_HeapLimitPatches_1
+patch_va: '0x1dba552'
+patch_rva: '0xba552'
+patch_sig: B8 00 00 80 02 A3 ?? ?? ?? ??
+patch_sig_disp: '0x0'

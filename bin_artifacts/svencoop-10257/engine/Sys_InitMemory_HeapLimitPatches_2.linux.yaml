@@ -1,0 +1,5 @@
+patch_name: Sys_InitMemory_HeapLimitPatches_2
+patch_va: '0xb1072'
+patch_rva: '0xb1072'
+patch_sig: C7 46 10 00 00 00 20 BF ?? ?? ?? ??
+patch_sig_disp: '0x0'
