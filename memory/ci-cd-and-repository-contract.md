@@ -43,6 +43,11 @@ aggregate required check; the gamedata consistency gate (`mark -step gamedata`) 
 the planner's seed/classification sources are in [[gamesymbol PR validation routing 任务分流]]. See
 [[gamesymbol PR validation candidate 基线复用]] for the materialize/compare mechanics.
 
+The trigger set is `opened`/`synchronize`/`reopened`/`ready_for_review` and deliberately excludes `edited`: title or body
+edits must not create a run, because workflow-level `cancel-in-progress: true` would cancel an in-flight validation and a
+second `pr-validate` check run on the same head SHA could supersede a real failure. Retargeting a PR to another base
+branch therefore does not revalidate, matching base-branch advancement, which fires no event either.
+
 The reusable `warmup-idb` producer publishes an exact selection (see
 [[Immutable warm IDB cache generations]]); consumers verify and restore that selection and never warm or save. The IDB
 key binds binary/kernel/worker identity and intentionally does not bind `bin_artifacts` content.

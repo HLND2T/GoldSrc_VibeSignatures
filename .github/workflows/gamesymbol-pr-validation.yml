@@ -1,7 +1,9 @@
 name: Game-symbol PR validation
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review, edited]
+    # Metadata-only edits (title/body) must not retrigger validation or cancel an
+    # in-flight run, so `edited` is deliberately excluded.
+    types: [opened, synchronize, reopened, ready_for_review]
 permissions:
   contents: read
 concurrency:

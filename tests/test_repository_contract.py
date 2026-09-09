@@ -249,7 +249,12 @@ class RepositoryContractTests(unittest.TestCase):
         workflow_text = (ROOT / ".github" / "workflows" / "gamesymbol-pr-validation.yml").read_text(encoding="utf-8")
         workflow = yaml.load(workflow_text, Loader=yaml.BaseLoader)
         jobs = workflow["jobs"]
-        self.assertIn("edited", workflow["on"]["pull_request"]["types"])
+        # Title/body edits must not retrigger expensive validation or cancel an
+        # in-flight run, so `edited` stays out of the trigger set.
+        self.assertEqual(
+            ["opened", "synchronize", "reopened", "ready_for_review"],
+            workflow["on"]["pull_request"]["types"],
+        )
         self.assertEqual("pr-validate", jobs["pr-validate"]["name"])
         self.assertEqual(
             {
