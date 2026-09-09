@@ -1,0 +1,5 @@
+patch_name: Sys_InitMemory_HeapLimitPatches_3
+patch_va: '0x1dbc599'
+patch_rva: '0xbc599'
+patch_sig: 81 FE 00 00 00 20 7E ?? BE ?? ?? ?? ??
+patch_sig_disp: '0x0'

@@ -22,6 +22,14 @@ modules:
       - name: find-Sys_InitMemory
         expected_output:
           - Sys_InitMemory.{platform}.yaml
+      - name: find-Sys_InitMemory_HeapLimitPatches
+        expected_input:
+          - Sys_InitMemory.{platform}.yaml
+        expected_output:
+          - Sys_InitMemory_HeapLimitPatches_0.{platform}.yaml
+          - Sys_InitMemory_HeapLimitPatches_1.{platform}.yaml
+          - Sys_InitMemory_HeapLimitPatches_2.{platform}.yaml
+          - Sys_InitMemory_HeapLimitPatches_3.{platform}.yaml
       - name: find-S_LoadSound
         expected_output:
           - S_LoadSound.{platform}.yaml
@@ -134,6 +142,14 @@ modules:
         category: func
       - name: Sys_InitMemory
         category: func
+      - name: Sys_InitMemory_HeapLimitPatches_0
+        category: patch
+      - name: Sys_InitMemory_HeapLimitPatches_1
+        category: patch
+      - name: Sys_InitMemory_HeapLimitPatches_2
+        category: patch
+      - name: Sys_InitMemory_HeapLimitPatches_3
+        category: patch
       - name: S_LoadSound
         category: func
       - name: Mod_LoadModel
