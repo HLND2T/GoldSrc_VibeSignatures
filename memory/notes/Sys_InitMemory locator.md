@@ -38,7 +38,7 @@ Need the engine heap-init root function (`Sys_InitMemory`, `engine/sys_dll2.cpp`
 - Sharable constraint: heap-limit immediate family in body — SvEngine 0x20000000 (512MB); GoldSrc 0x2000000/0x2800000/0x8000000 by buildnum (cof-5936 shows both 0x2800000 and 0x8000000 despite buildnum < 6153, so a future patch collector should not gate 0x8000000 on buildnum >= 6153).
 
 ## Correct approach
-1. Windows (all hl-*/cof-*, incl. blob gamevers via their decrypted `hw.decrypt.dll`): `xref_strings` with `FULLMATCH:Available memory less than 15MB!!! %i\n`.
+1. Windows (all hl-*/cof-*, incl. blob gamevers via their decrypted `hw.decrypt.dll` — see [[old-tag-blob-binaries-need-hw.decrypt.dll-for-byte-level-checks]]): `xref_strings` with `FULLMATCH:Available memory less than 15MB!!! %i\n`.
 2. hl Linux (hl-10210 AND hl-8684): `FULLMATCH:-heapsize` — the 15MB wording exists only in HL25-era Linux builds (hl-8684 hw.so drops it and instead parses `-heapsize`/`-minmemory` plus `"Unable to allocate %.2f MB\n"`; all three are uniquely owned by `_Z14Sys_InitMemoryv` in both builds).
 3. SvEngine Windows: `FULLMATCH:Available memory less than the %.2f MB requirement (%.2f MB).\nCheck your hardware against the system requirements.\n`; SvEngine Linux: `FULLMATCH:/proc/meminfo` (verify single string / single owner in the current IDB).
 4. Validate owner via in-body heap-limit immediates family and a `Sys_Error` call at the string site (Windows).

@@ -1,0 +1,5 @@
+func_name: studioapi_SetupPlayerModel
+func_va: '0x1d92a00'
+func_rva: '0x92a00'
+func_size: '0x10c'
+func_sig: D9 05 ?? ?? ?? ?? D9 EE 56 DA E9 DF E0 57 8B 7C 24 ?? 69 F7 0C 02 00 00 81 C6 ?? ?? ?? ?? F6 C4 44

@@ -1,0 +1,8 @@
+gv_name: engine
+gv_va: '0x1e8c97c'
+gv_rva: '0x18c97c'
+gv_sig: 83 EC 20 8B 44 24 ?? 53 8B 5C 24 ?? 56 57 A3 ?? ?? ?? ?? 8B FB 83 C9 FF 33 C0 C7 44 24 ?? ?? ?? ?? ?? F2 AE
+gv_sig_va: '0x1dc57a0'
+gv_inst_offset: '0x57'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

@@ -1,0 +1,8 @@
+gv_name: DM_PlayerState
+gv_va: '0x2767040'
+gv_rva: '0xa67040'
+gv_sig: 55 8B EC 51 8B 45 ?? 69 C0 0C 02 00 00 05 ?? ?? ?? ?? 89 45 ?? D9 05 ?? ?? ?? ?? D8 1D ?? ?? ?? ?? DF E0 F6 C4 40
+gv_sig_va: '0x1dc38b5'
+gv_inst_offset: '0xd'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

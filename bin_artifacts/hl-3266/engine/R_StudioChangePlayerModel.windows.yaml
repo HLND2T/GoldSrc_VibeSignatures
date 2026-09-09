@@ -1,0 +1,5 @@
+func_name: R_StudioChangePlayerModel
+func_va: '0x1d8ee50'
+func_rva: '0x8ee50'
+func_size: '0x27'
+func_sig: 56 57 33 F6 83 CF FF A1 ?? ?? ?? ?? 56 8B 08 51 E8 ?? ?? ?? ?? 83 C4 08 46 83 FE 0B 89 78 ?? 89 78 ??
