@@ -147,6 +147,16 @@ modules:
           - studioapi_SetupPlayerModel.{platform}.yaml
         expected_output:
           - DM_PlayerState.{platform}.yaml
+      - name: find-Host_IsSinglePlayerGame
+        expected_input:
+          - studioapi_SetupPlayerModel.{platform}.yaml
+        expected_output:
+          - Host_IsSinglePlayerGame.{platform}.yaml
+      - name: find-cl_players
+        expected_input:
+          - studioapi_SetupPlayerModel.{platform}.yaml
+        expected_output:
+          - cl_players.{platform}.yaml
       - name: find-engine
         expected_output:
           - engine.{platform}.yaml
@@ -236,6 +246,10 @@ modules:
         category: func
         platform: windows
       - name: DM_PlayerState
+        category: gv
+      - name: Host_IsSinglePlayerGame
+        category: func
+      - name: cl_players
         category: gv
       - name: engine
         category: gv

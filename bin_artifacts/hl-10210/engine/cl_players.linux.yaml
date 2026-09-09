@@ -1,0 +1,8 @@
+gv_name: cl_players
+gv_va: '0xdd5360'
+gv_rva: '0xdd5360'
+gv_sig: 55 57 56 53 83 EC ?? D9 05 ?? ?? ?? ?? D9 EE D9 C9 8B 5C 24 ?? DF E9 DD D8 7A ?? 0F 84 ?? ?? ?? ?? 8D 04 DB
+gv_sig_va: '0xc8690'
+gv_inst_offset: '0x2a'
+gv_inst_length: '0x7'
+gv_inst_disp: '0x2'
