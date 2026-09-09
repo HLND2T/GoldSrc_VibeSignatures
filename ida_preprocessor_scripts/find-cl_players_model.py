@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Locate cl_players, the engine per-client player info array (&cl.players).
+"""Locate cl_players_model, &cl.players[0].model in the engine player array.
 
 ``cl.players`` is ``player_info_t players[MAX_CLIENTS]`` embedded in
 ``client_state_t cl`` (engine/client.h). studioapi_SetupPlayerModel gates its
@@ -17,14 +17,15 @@ SvEngine Linux PIC, where the base register is itself a GOT-anchored
 ``lea reg, disp32[ebx]`` and the effective address is
 ``anchor + base_lea_disp + access_disp``.
 
-``player_info_t.model`` sits at +0x130 in every validated family (leading
+The emitted gv_va is ``&cl.players[0].model`` — exactly the address the
+anchor instruction's displacement (+ GOT base) resolves to, so the artifact
+stays self-consistent (gv_inst_disp resolves to gv_va like every other gv
+locator). Player ``i``'s model string sits at ``gv_va + i * stride``.
+``player_info_t.model`` is at +0x130 in every validated family (leading
 fields userid/userinfo[256]/name[32]/spectator/ping/packet_loss never moved;
 DWARF-verified on the unstripped hl-8684 and hl-10210 hw.so, where the
 struct size is 0x250 and offsetof(players) also cross-checks against
-client_state_t). The anchor instruction therefore addresses
-``&cl.players[0].model = gv_va + 0x130``; the finder subtracts the field
-offset before emitting, and gv_inst_disp marks the access displacement, not
-the array head.
+client_state_t); subtract it from gv_va to recover the array head.
 
 Direct-locator exception per the gv policy: the access pattern is
 source-defined and was validated on hl-3248..hl-10210, cof-5936, and
@@ -42,11 +43,8 @@ from ida_analyze_util import (
     write_gv_yaml,
 )
 
-TARGET_GV_NAME = "cl_players"
+TARGET_GV_NAME = "cl_players_model"
 OWNER_FUNC_NAME = "studioapi_SetupPlayerModel"
-# offsetof(player_info_t, model): userid + userinfo[MAX_INFO_STRING] +
-# name[MAX_SCOREBOARDNAME] + spectator + ping + packet_loss = 0x130.
-MODEL_FIELD_OFFSET = 0x130
 MIN_STRIDE = 0x170  # model end (0x170) must fit inside one element
 MAX_STRIDE = 0x400
 DM_STRIDE = 0x20C
@@ -63,7 +61,6 @@ import json
 import traceback
 
 SETUP_EA = SETUP_EA_PLACEHOLDER
-MODEL_FIELD_OFFSET = 0x130
 MIN_STRIDE = 0x170
 MAX_STRIDE = 0x400
 DM_STRIDE = 0x20C
@@ -251,16 +248,15 @@ def main():
                 if base_reg is None:
                     model_field = addr
                     form = 'absolute'
-                    if not is_writable_data(model_field):
-                        continue
                 else:
                     base_def = pic_base_defs.get(base_reg)
                     if base_def is None:
                         continue
                     model_field = (base_def['resolved'] + addr) & 0xFFFFFFFF
                     form = 'pic'
-                gv_ea = (model_field - MODEL_FIELD_OFFSET) & 0xFFFFFFFF
-                if not is_writable_data(gv_ea) or gv_ea % 4:
+                # gv_va is &cl.players[0].model: exactly what the anchor
+                # instruction's displacement (+ GOT base) resolves to.
+                if not is_writable_data(model_field) or model_field % 4:
                     continue
                 disp_off = operand_byte_offset(ea, addr)
                 if disp_off is None:
@@ -274,9 +270,8 @@ def main():
                     'form': form,
                     'stride': stride,
                     'base_reg': base_reg,
-                    'model_field_ea': model_field,
-                    'gv_ea': gv_ea,
-                    'gv_seg': seg_name(gv_ea),
+                    'gv_ea': model_field,
+                    'gv_seg': seg_name(model_field),
                     'insn_disasm': disasm(ea),
                 }
         # Sequential scale bookkeeping.
@@ -365,7 +360,7 @@ def main():
                           'cdq', 'inc', 'dec', 'xchg', 'neg', 'not', 'sar', 'shrd'):
                 scale.pop(dest, None)
     if len(found) != 1:
-        return {'error': 'cl.players candidates: %d' % len(found),
+        return {'error': 'cl_players_model candidates: %d' % len(found),
                 'candidates': [hex(key) for key in sorted(found)]}
     chosen = next(iter(found.values()))
     return {
@@ -378,7 +373,6 @@ def main():
         'form': chosen['form'],
         'stride': chosen['stride'],
         'base_reg': chosen['base_reg'],
-        'model_field_ea': hex(chosen['model_field_ea']),
         'gv_ea': hex(chosen['gv_ea']),
         'gv_seg': chosen['gv_seg'],
         'insn_disasm': chosen['insn_disasm'],
@@ -410,7 +404,7 @@ def _owner_artifact(new_binary_dir, platform, func_name, image_base):
     return artifact, func_ea
 
 
-async def _locate_cl_players(session, setup_ea):
+async def _locate_cl_players_model(session, setup_ea):
     try:
         code = LOCATE_PY.replace("SETUP_EA_PLACEHOLDER", str(int(setup_ea)))
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
@@ -448,7 +442,7 @@ async def preprocess_skill(
             print(f"  find-{TARGET_GV_NAME}: missing {OWNER_FUNC_NAME} artifact")
         return False
     owner_data, setup_ea = owner
-    located = await _locate_cl_players(session, setup_ea)
+    located = await _locate_cl_players_model(session, setup_ea)
     if located is None or located.get("error") or located.get("pointer_size") != 4:
         if debug:
             print(f"  find-{TARGET_GV_NAME}: locator failed {located}")
@@ -482,7 +476,7 @@ async def preprocess_skill(
     if debug:
         print(
             f"  find-{TARGET_GV_NAME}: gv={located['gv_ea']} (form {located.get('form')}, "
-            f"stride {hex(located.get('stride', 0))}, model field {located.get('model_field_ea')}, "
+            f"stride {hex(located.get('stride', 0))}, "
             f"seg {located.get('gv_seg')}) insn={located['insn_ea']} {located.get('insn_disasm', '')}"
         )
     write_gv_yaml(

@@ -1,6 +1,6 @@
-gv_name: cl_players
-gv_va: '0x113fd848'
-gv_rva: '0x13fd848'
+gv_name: cl_players_model
+gv_va: '0x113fd978'
+gv_rva: '0x13fd978'
 gv_sig: 55 8B EC F3 0F 10 05 ?? ?? ?? ?? 53 8B 5D ?? 56 57 69 FB 0C 02 00 00 0F 2E 05 ?? ?? ?? ?? 8D B7 ?? ?? ?? ?? 9F
 gv_sig_va: '0x101f3a90'
 gv_inst_offset: '0x39'
