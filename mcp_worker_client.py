@@ -14,12 +14,39 @@ import logging
 import threading
 from contextlib import AsyncExitStack
 from contextvars import ContextVar
+from types import TracebackType
 
 START_TIMEOUT = 10.0
 CLOSE_TIMEOUT = 10.0
 OPERATION_TIMEOUT = 3600.0
 _sync_client = ContextVar("sync_mcp_client", default=None)
 _async_client = ContextVar("async_mcp_client", default=None)
+
+
+def _detach_executor_tracebacks(exception):
+    """Keep caller-side traceback cleanup away from the suspended owner task."""
+    seen = set()
+
+    def detach(error):
+        if id(error) in seen:
+            return
+        seen.add(id(error))
+        frames = []
+        current = error.__traceback__
+        while current is not None:
+            if current.tb_frame.f_code is not WorkerMcpClient._serve.__code__:
+                frames.append(current)
+            current = current.tb_next
+        detached = None
+        for frame in reversed(frames):
+            detached = TracebackType(detached, frame.tb_frame, frame.tb_lasti, frame.tb_lineno)
+        error.__traceback__ = detached
+        for nested in (error.__cause__, error.__context__, *getattr(error, "exceptions", ())):
+            if isinstance(nested, BaseException):
+                detach(nested)
+
+    detach(exception)
+    return exception
 
 
 def run_mcp_operation(coroutine, *, timeout=OPERATION_TIMEOUT):
@@ -140,7 +167,10 @@ class WorkerMcpClient:
                 if expired:
                     failure = TimeoutError(f"MCP operation exceeded {timeout:g}s")
                 if failure is not None:
-                    result.set_exception(failure)
+                    # assertRaises/logging consumers can clear traceback frames.
+                    # On Python 3.12 clearing a suspended coroutine frame closes
+                    # it, so never export this long-lived task's frame.
+                    result.set_exception(_detach_executor_tracebacks(failure))
                 else:
                     result.set_result(value)
         finally:

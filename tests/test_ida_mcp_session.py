@@ -6,6 +6,7 @@ import json
 import socket
 import tempfile
 import threading
+import traceback
 import unittest
 from contextlib import asynccontextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -52,6 +53,32 @@ ACTIVE_ENGINE = {
 
 
 class WorkerMcpClientTests(unittest.TestCase):
+    def test_transferred_exception_retains_operation_frames_without_executor_frame(self):
+        async def failed_operation():
+            try:
+                raise ValueError("original failure")
+            except ValueError as cause:
+                raise _TransportCloseError(cause) from cause
+
+        async def recovered_operation():
+            return "recovered"
+
+        with WorkerMcpClient("test.dll") as client:
+            try:
+                run_mcp_operation(failed_operation())
+            except _TransportCloseError as error:
+                for nested in (error, error.__cause__, *error.exceptions):
+                    names = [frame.f_code.co_name for frame, _ in traceback.walk_tb(nested.__traceback__)]
+                    self.assertIn("failed_operation", names)
+                    self.assertNotIn("_serve", names)
+                    traceback.clear_frames(nested.__traceback__)
+                self.assertEqual("original failure", str(error.__cause__))
+            else:
+                self.fail("The operation must report its failure")
+            client.run(client.reset())
+            self.assertEqual("recovered", run_mcp_operation(recovered_operation()))
+        self.assertFalse(client.thread.is_alive())
+
     def test_operations_share_loop_and_owner_task_and_close_on_that_task(self):
         events = []
 

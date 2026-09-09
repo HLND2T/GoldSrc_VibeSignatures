@@ -71,3 +71,11 @@ flowchart TD
 - Timeouts: loop bootstrap is bounded from the calling thread (10s), tools use 300s, phases default to 3600s, health recovery uses 30s, and client close uses 10s. An uninterruptible OS/Python call still requires the existing outer batch worker process timeout; Python cannot forcibly kill a stuck thread safely.
 - Verification: `tests.test_ida_mcp_session` includes a real HTTP MCP fixture counting initialize and accepted TCP connections, instance replacement, changed hash on lifecycle restart, stale references/cross-loop rejection, disconnect without replay, cancellation, startup and operation timeouts, and thread cleanup. The 2026-09-09 five-way comparison completed 13/13 work items with the same 439-file contract digest; initialize calls fell from 1691 to 13, HTTP connection objects from 3440 to 26 (30 in the final repeat, still 13 initializations). TCP TIME_WAIT snapshots include other paths and are not proof of port exhaustion or resolution of the CI socketpair hang.
 - Scope: GoldSrc client lifecycle; the separate ida-pro-mcp supervisor→worker RPC pool remains an independent fix. See [[full-analysis-concurrency]].
+
+### Python 3.12 exception-transfer pitfall (PR #99)
+
+- Trigger: an operation exception crosses the executor's thread boundary; the caller uses `unittest.assertRaises` or otherwise clears its traceback frames. The next operation/cleanup reports `RuntimeError: cannot reuse already awaited coroutine` on Python 3.12, while 3.13 tests pass.
+- Root cause: the exported traceback includes the still-suspended `_serve` coroutine frame. Python 3.12 frame cleanup can close that coroutine. This is exception ownership, not request replay.
+- Correct approach: before setting the cross-thread Future exception, detach only the `_serve` frame from the exception traceback and recursively from causes, contexts and exception-group members. Preserve exception types and completed operation frames for diagnosis.
+- Verification: reproduce the original failure under an isolated Python 3.12 environment; test traceback cleanup explicitly, retain the original operation frame/cause, and verify reset plus the next operation and thread shutdown succeed. Run both 3.12 and 3.13 suites; never infer compatibility from 3.13 alone.
+- Scope: long-lived asyncio task executors exporting exceptions to synchronous callers.
