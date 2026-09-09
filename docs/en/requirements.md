@@ -8,7 +8,7 @@
 2. [DepotDownloader](https://github.com/SteamRE/DepotDownloader), with `depotdownloader.exe` available in `PATH`
 3. One supported agent CLI: Claude Code, Codex, or OpenCode
 4. IDA Pro 9.0+
-5. [ida-pro-mcp](https://github.com/mrexodia/ida-pro-mcp)
+5. [ida-pro-mcp](https://github.com/hzqst/ida-pro-mcp)
 6. [idalib](https://docs.hex-rays.com/user-guide/idalib), required by `ida_analyze_bin.py`
 
 Install the Python dependencies after cloning the repository:

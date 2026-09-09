@@ -8,7 +8,7 @@
 2. [DepotDownloader](https://github.com/SteamRE/DepotDownloader)，并确保 `depotdownloader.exe` 位于 `PATH` 中
 3. 一个受支持的 Agent CLI：Claude Code、Codex 或 OpenCode
 4. IDA Pro 9.0+
-5. [ida-pro-mcp](https://github.com/mrexodia/ida-pro-mcp)
+5. [ida-pro-mcp](https://github.com/hzqst/ida-pro-mcp)
 6. [idalib](https://docs.hex-rays.com/user-guide/idalib)，由 `ida_analyze_bin.py` 使用
 
 克隆仓库后安装 Python 依赖：
