@@ -128,6 +128,21 @@ class SignatureAndSymbolTests(unittest.TestCase):
             canonical_symbol_yaml_bytes(second, category="func"),
         )
 
+    def test_canonical_gv_yaml_normalizes_address_recovery_fields(self):
+        payload = {
+            "gv_sig_allow_across_function_boundary": True,
+            "gv_address_offset": 0xFFFFFFFC,
+            "gv_pic_addend": 0x2EE000,
+            "gv_name": "SyntheticGlobal",
+        }
+        expected = (
+            "gv_name: SyntheticGlobal\n"
+            "gv_pic_addend: '0x2ee000'\n"
+            "gv_address_offset: '0xfffffffc'\n"
+            "gv_sig_allow_across_function_boundary: true\n"
+        ).encode()
+        self.assertEqual(expected, canonical_symbol_yaml_bytes(payload, category="gv"))
+
     def test_canonical_patch_yaml_keeps_disp_and_omits_missing_bytes(self):
         payload = {
             "patch_sig_disp": 0,
