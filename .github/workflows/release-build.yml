@@ -330,9 +330,76 @@ jobs:
           path: ${{ runner.temp }}/release-bundle
           if-no-files-found: error
           retention-days: 7
+  release-notes:
+    needs: [preflight, verify-release-bundle]
+    if: needs.preflight.outputs.release_state != 'published'
+    runs-on: ubuntu-latest
+    environment: release
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      artifact_name: ${{ steps.identity.outputs.artifact_name }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+    steps:
+      - name: Checkout exact release history
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.preflight.outputs.source_sha }}
+          fetch-depth: 0
+          submodules: false
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Install pinned notes CLIs
+        run: npm install --global @anthropic-ai/claude-code@2.1.79 @openai/codex@0.114.0
+      - name: Prepare bounded release evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.preflight.outputs.version }}
+          SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+        run: |
+          uv run python release_notes.py context --repository "${{ github.repository }}" \
+            --version "$VERSION" --source-sha "$SOURCE_SHA" \
+            --output "$RUNNER_TEMP/release-context.txt"
+      - name: Generate bilingual release notes
+        env:
+          RELEASE_NOTES_PROVIDER: ${{ vars.RELEASE_NOTES_PROVIDER || 'claude' }}
+          RELEASE_NOTES_MODEL: ${{ vars.RELEASE_NOTES_MODEL }}
+          RELEASE_NOTES_BASE_URL: ${{ secrets.RELEASE_NOTES_BASE_URL }}
+          RELEASE_NOTES_API_KEY: ${{ secrets.RELEASE_NOTES_API_KEY }}
+          VERSION: ${{ needs.preflight.outputs.version }}
+          SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+        run: |
+          uv run python release_notes.py notes --repository "${{ github.repository }}" \
+            --version "$VERSION" --source-sha "$SOURCE_SHA" \
+            --input "$RUNNER_TEMP/release-context.txt" --output "$RUNNER_TEMP/release-notes.md"
+      - name: Bind notes artifact identity
+        id: identity
+        env:
+          VERSION: ${{ needs.preflight.outputs.version }}
+          SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+        run: echo "artifact_name=release-notes-$VERSION-$SOURCE_SHA-${{ github.run_id }}-${{ github.run_attempt }}" >> "$GITHUB_OUTPUT"
+      - name: Upload generated notes
+        id: upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.identity.outputs.artifact_name }}
+          path: ${{ runner.temp }}/release-notes.md
+          if-no-files-found: error
+          retention-days: 7
   publish-release:
-    needs: [preflight, warmup-idb, verify-release-bundle]
-    if: inputs.publish_release
+    needs: [preflight, warmup-idb, verify-release-bundle, release-notes]
+    if: >-
+      ${{ !cancelled() && inputs.publish_release && needs.preflight.result == 'success' &&
+          needs.warmup-idb.result == 'success' && needs.verify-release-bundle.result == 'success' &&
+          (needs.release-notes.result == 'success' ||
+           (needs.preflight.outputs.release_state == 'published' && needs.release-notes.result == 'skipped')) }}
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -366,6 +433,24 @@ jobs:
         with:
           name: ${{ needs.preflight.outputs.verified_artifact_name }}
           path: ${{ runner.temp }}/verified-release-bundle
+      - name: Verify exact notes Artifact identity
+        if: needs.release-notes.result == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTES_ARTIFACT_NAME: ${{ needs.release-notes.outputs.artifact_name }}
+          NOTES_ARTIFACT_DIGEST: ${{ needs.release-notes.outputs.artifact_digest }}
+        run: |
+          set -euo pipefail
+          test -n "$NOTES_ARTIFACT_NAME"
+          test -n "$NOTES_ARTIFACT_DIGEST"
+          gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --paginate --slurp \
+            | uv run python -c 'import json,os,sys; pages=json.load(sys.stdin); matches=[a for page in pages for a in page.get("artifacts",[]) if a.get("name")==os.environ["NOTES_ARTIFACT_NAME"]]; expected=os.environ["NOTES_ARTIFACT_DIGEST"].removeprefix("sha256:"); assert len(matches)==1 and not matches[0].get("expired") and str(matches[0].get("digest", "")).removeprefix("sha256:")==expected, "notes Actions Artifact identity mismatch"'
+      - name: Download exact generated notes
+        if: needs.release-notes.result == 'success'
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ needs.release-notes.outputs.artifact_name }}
+          path: ${{ runner.temp }}/release-notes
       - name: Publish immutable GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -377,7 +462,8 @@ jobs:
             --source-sha "${{ needs.preflight.outputs.source_sha }}" \
             --build-id "${{ needs.preflight.outputs.build_id }}" \
             --workflow-run-url "${{ needs.preflight.outputs.workflow_run_url }}" \
-            --cache-selection-sha256 "${{ needs.warmup-idb.outputs.selection_sha256 }}"
+            --cache-selection-sha256 "${{ needs.warmup-idb.outputs.selection_sha256 }}" \
+            --notes-file "$RUNNER_TEMP/release-notes/release-notes.md"
       - name: Dispatch Pages from the published immutable Release
         env:
           GH_TOKEN: ${{ github.token }}

@@ -261,7 +261,11 @@ class ReleasePublishTests(unittest.TestCase):
                     "inspect_preflight",
                     return_value=("published", "123", manifest["workflow_run_url"]),
                 ),
-                patch.object(release_publish, "remote_state", side_effect=[({}, release), ({}, release)]),
+                patch.object(
+                    release_publish,
+                    "remote_state",
+                    return_value=({"object": {"type": "commit", "sha": "a" * 40}}, release),
+                ),
                 patch.object(release_publish, "_release_assets", return_value=(asset,)),
                 patch.object(release_publish, "_run") as run,
             ):
@@ -288,7 +292,11 @@ class ReleasePublishTests(unittest.TestCase):
                     "inspect_preflight",
                     return_value=("published", "123", manifest["workflow_run_url"]),
                 ),
-                patch.object(release_publish, "remote_state", return_value=({}, release)),
+                patch.object(
+                    release_publish,
+                    "remote_state",
+                    return_value=({"object": {"type": "commit", "sha": "a" * 40}}, release),
+                ),
                 patch.object(release_publish, "_release_assets", return_value=(asset,)),
                 self.assertRaisesRegex(release_publish.ReleasePublishError, "missing asset"),
             ):
@@ -330,12 +338,24 @@ class ReleasePublishTests(unittest.TestCase):
                 "build_id": "123",
                 "workflow_run_url": workflow_run_url,
             }
+            notes_file = Path(temporary) / "notes.md"
+            notes_file.write_text("## English\n- Fixed symbols.\n\n## 中文\n- 修复符号。\n", encoding="utf-8")
+
+            def update_body(arguments):
+                if "--notes-file" in arguments:
+                    release["body"] = Path(arguments[arguments.index("--notes-file") + 1]).read_text(encoding="utf-8")
+                return completed(arguments)
+
             with (
                 patch.object(release_publish, "verify_release_bundle", return_value=manifest),
                 patch.object(release_publish, "inspect_preflight", return_value=("resume", "123", workflow_run_url)),
-                patch.object(release_publish, "remote_state", side_effect=[({}, release), ({}, release)]),
+                patch.object(
+                    release_publish,
+                    "remote_state",
+                    return_value=({"object": {"type": "commit", "sha": "a" * 40}}, release),
+                ),
                 patch.object(release_publish, "_release_assets", return_value=(asset,)),
-                patch.object(release_publish, "_run") as run,
+                patch.object(release_publish, "_run", side_effect=update_body) as run,
             ):
                 self.assertEqual(
                     "resume",
@@ -348,10 +368,17 @@ class ReleasePublishTests(unittest.TestCase):
                         build_id=manifest["build_id"],
                         workflow_run_url=manifest["workflow_run_url"],
                         cache_selection_sha256="b" * 64,
+                        notes_file=notes_file,
                     ),
                 )
-            run.assert_called_once_with(
+            run.assert_called_with(
                 ["gh", "release", "edit", "v20260831a", "--repo", "owner/repo", "--draft=false", "--verify-tag"]
+            )
+            self.assertEqual(2, run.call_count)
+            self.assertTrue(release["body"].startswith(notes_file.read_text(encoding="utf-8")))
+            self.assertEqual(
+                ("123", workflow_run_url),
+                release_publish._release_identity(release, version="v20260831a", source_sha="a" * 40),
             )
 
     def test_publish_command_never_uses_clobber(self):

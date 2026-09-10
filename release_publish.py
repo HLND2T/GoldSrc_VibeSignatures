@@ -12,6 +12,7 @@ import tempfile
 from pathlib import Path
 
 from release_bundle import ReleaseBundleError, verify_release_bundle
+from release_notes import ReleaseError, validate_notes
 from release_workflow_lib.manifests import require_sha, require_version
 
 
@@ -171,6 +172,8 @@ def _release_identity(release: dict, *, version: str, source_sha: str) -> tuple[
     body = release.get("body")
     if not isinstance(body, str):
         raise ReleasePublishError("Existing Release has no immutable build identity")
+    if body.count(IDENTITY_PREFIX) != 1:
+        raise ReleasePublishError("Existing Release must have exactly one immutable build identity")
     start = body.find(IDENTITY_PREFIX)
     end = body.find(IDENTITY_SUFFIX, start + len(IDENTITY_PREFIX))
     if start < 0 or end < 0:
@@ -269,6 +272,22 @@ def _release_assets(bundle_root: Path, manifest: dict, version: str) -> tuple[Pa
     return paths
 
 
+def _require_tag(tag: dict | None, source_sha: str) -> None:
+    if tag is None or tag.get("object", {}).get("type") != "commit" or tag["object"].get("sha") != source_sha:
+        raise ReleasePublishError("Remote tag no longer points directly to SOURCE_SHA")
+
+
+def _write_release_body(repository: str, version: str, source_sha: str, body: str, *, create: bool) -> None:
+    with tempfile.TemporaryDirectory(prefix="release-notes-") as temporary:
+        path = Path(temporary) / "notes.md"
+        path.write_text(body, encoding="utf-8", newline="\n")
+        arguments = ["gh", "release", "create" if create else "edit", version, "--repo", repository]
+        if create:
+            arguments.extend(["--target", source_sha, "--draft", "--verify-tag", "--title", version])
+        arguments.extend(["--notes-file", str(path)])
+        _run(arguments)
+
+
 def publish_release(
     *,
     repository: str,
@@ -279,6 +298,7 @@ def publish_release(
     build_id: str,
     workflow_run_url: str,
     cache_selection_sha256: str,
+    notes_file: str | Path | None = None,
 ) -> str:
     repo_root = Path(repo_root).resolve()
     bundle_root = Path(bundle_root).resolve()
@@ -298,6 +318,24 @@ def publish_release(
         build_id=manifest["build_id"],
         workflow_run_url=manifest["workflow_run_url"],
     )
+    body = None
+    if state != "published":
+        if notes_file is None:
+            raise ReleasePublishError("Unpublished releases require --notes-file")
+        try:
+            notes = validate_notes(Path(notes_file).read_text(encoding="utf-8"))
+        except ReleaseError as exc:
+            raise ReleasePublishError(str(exc)) from exc
+        body = (
+            notes.rstrip()
+            + "\n\n"
+            + _release_identity_notes(
+                version=version,
+                source_sha=source_sha,
+                build_id=manifest["build_id"],
+                workflow_run_url=manifest["workflow_run_url"],
+            )
+        )
     if state == "new":
         _run(
             [
@@ -312,31 +350,13 @@ def publish_release(
         )
 
     _tag, release = remote_state(repository, version)
+    _require_tag(_tag, source_sha)
     if release is None:
-        _run(
-            [
-                "gh",
-                "release",
-                "create",
-                version,
-                "--repo",
-                repository,
-                "--target",
-                source_sha,
-                "--draft",
-                "--verify-tag",
-                "--title",
-                version,
-                "--notes",
-                _release_identity_notes(
-                    version=version,
-                    source_sha=source_sha,
-                    build_id=manifest["build_id"],
-                    workflow_run_url=manifest["workflow_run_url"],
-                ),
-            ]
-        )
+        if state == "published":
+            raise ReleasePublishError("Published Release disappeared")
+        _write_release_body(repository, version, source_sha, body, create=True)
         _tag, release = remote_state(repository, version)
+        _require_tag(_tag, source_sha)
     if release is None:
         raise ReleasePublishError("Draft Release was not observable after creation")
     if _release_identity(release, version=version, source_sha=source_sha) != (
@@ -346,6 +366,10 @@ def publish_release(
         raise ReleasePublishError("Draft Release build identity differs from the verified bundle")
     if release.get("draft") is not True and state != "published":
         raise ReleasePublishError("Release became published before asset verification completed")
+    if state == "published" and release.get("draft") is not False:
+        raise ReleasePublishError("Published Release state changed")
+    if state != "published" and release.get("body") != body:
+        _write_release_body(repository, version, source_sha, body, create=False)
 
     remote_assets = {asset.get("name"): asset for asset in release.get("assets", []) if isinstance(asset, dict)}
     for path in _release_assets(bundle_root, manifest, version):
@@ -362,8 +386,17 @@ def publish_release(
             raise ReleasePublishError(f"Remote Release asset differs and cannot be overwritten: {path.name}")
 
     _tag, verified_release = remote_state(repository, version)
+    _require_tag(_tag, source_sha)
     if verified_release is None:
         raise ReleasePublishError("Release disappeared during verification")
+    if (
+        verified_release.get("id") != release.get("id")
+        or verified_release.get("draft") != release.get("draft")
+        or _release_identity(verified_release, version=version, source_sha=source_sha)
+        != (manifest["build_id"], manifest["workflow_run_url"])
+        or verified_release.get("body") != (body if state != "published" else release.get("body"))
+    ):
+        raise ReleasePublishError("Release identity, state or notes changed during verification")
     verified_assets = {
         asset.get("name"): asset for asset in verified_release.get("assets", []) if isinstance(asset, dict)
     }
@@ -401,6 +434,7 @@ def main(argv: list[str] | None = None) -> int:
     publish.add_argument("--build-id", required=True)
     publish.add_argument("--workflow-run-url", required=True)
     publish.add_argument("--cache-selection-sha256", required=True)
+    publish.add_argument("--notes-file", help="Required for a new or draft Release; ignored for published versions")
     args = parser.parse_args(argv)
     try:
         if args.command == "preflight":
@@ -428,6 +462,7 @@ def main(argv: list[str] | None = None) -> int:
                     build_id=args.build_id,
                     workflow_run_url=args.workflow_run_url,
                     cache_selection_sha256=args.cache_selection_sha256,
+                    notes_file=args.notes_file,
                 )
             )
     except (ReleasePublishError, ReleaseBundleError, OSError, ValueError) as exc:
