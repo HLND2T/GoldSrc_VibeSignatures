@@ -1,0 +1,422 @@
+func_name: "R_StudioCheckBBox"
+func_va: "0xc81f0"
+disasm_code: |-
+  .text:000C81F0                 push    ebx
+  .text:000C81F1                 sub     esp, 78h
+  .text:000C81F4                 mov     eax, ds:pstudiohdr
+  .text:000C81F9                 ; v1
+  .text:000C81F9                 mov     [esp+7Ch+v1], offset vec3_origin; v1
+  .text:000C8200                 add     eax, 70h ; 'p'
+  .text:000C8203                 ; v2
+  .text:000C8203                 mov     [esp+7Ch+v2], eax; v2
+  .text:000C8207                 call    VectorCompare
+  .text:000C820C                 test    eax, eax
+  .text:000C820E                 jnz     loc_C8510
+  .text:000C8214                 mov     edx, ds:pstudiohdr
+  .text:000C821A                 mov     eax, ds:currententity
+  .text:000C821F                 fld     dword ptr [edx+70h]
+  .text:000C8222                 fadd    dword ptr [eax+0B48h]
+  .text:000C8228                 fstp    [esp+7Ch+mins]
+  .text:000C822C                 fld     dword ptr [edx+74h]
+  .text:000C822F                 fadd    dword ptr [eax+0B4Ch]
+  .text:000C8235                 fstp    [esp+7Ch+mins+4]
+  .text:000C8239                 fld     dword ptr [edx+78h]
+  .text:000C823C                 fadd    dword ptr [eax+0B50h]
+  .text:000C8242                 fstp    [esp+7Ch+mins+8]
+  .text:000C8246                 fld     dword ptr [edx+7Ch]
+  .text:000C8249                 fadd    dword ptr [eax+0B48h]
+  .text:000C824F                 fstp    [esp+7Ch+maxs]
+  .text:000C8253                 fld     dword ptr [edx+80h]
+  .text:000C8259                 fadd    dword ptr [eax+0B4Ch]
+  .text:000C825F                 fstp    [esp+7Ch+maxs+4]
+  .text:000C8263                 fld     dword ptr [edx+84h]
+  .text:000C8269                 fadd    dword ptr [eax+0B50h]
+  .text:000C826F                 fstp    [esp+7Ch+maxs+8]
+  .text:000C8273                 mov     ecx, [eax+2DCh]
+  .text:000C8279                 cmp     ecx, [edx+0A4h]
+  .text:000C827F                 jge     loc_C84D8
+  .text:000C8285                 lea     eax, [ecx+ecx*4]
+  .text:000C8288                 lea     eax, [ecx+eax*2]
+  .text:000C828B                 shl     eax, 4
+  .text:000C828E                 fld     ds:rotationmatrix
+  .text:000C8294                 mov     ecx, [edx+0A8h]
+  .text:000C829A                 fstp    [esp+7Ch+var_68]
+  .text:000C829E                 fld     ds:rotationmatrix+4
+  .text:000C82A4                 fstp    [esp+7Ch+var_64]
+  .text:000C82A8                 add     eax, ecx
+  .text:000C82AA                 fld     ds:rotationmatrix+8
+  .text:000C82B0                 add     edx, eax
+  .text:000C82B2                 xor     eax, eax
+  .text:000C82B4                 fstp    [esp+7Ch+var_60]
+  .text:000C82B8                 fld     ds:rotationmatrix+0Ch
+  .text:000C82BE                 fstp    [esp+7Ch+var_5C]
+  .text:000C82C2                 fld     ds:rotationmatrix+10h
+  .text:000C82C8                 fstp    [esp+7Ch+var_58]
+  .text:000C82CC                 fld     ds:rotationmatrix+14h
+  .text:000C82D2                 fstp    [esp+7Ch+var_54]
+  .text:000C82D6                 fld     ds:rotationmatrix+18h
+  .text:000C82DC                 fstp    [esp+7Ch+var_50]
+  .text:000C82E0                 fld     ds:rotationmatrix+1Ch
+  .text:000C82E6                 fstp    [esp+7Ch+var_4C]
+  .text:000C82EA                 fld     ds:rotationmatrix+20h
+  .text:000C82F0                 fstp    [esp+7Ch+var_48]
+  .text:000C82F4                 fld     ds:rotationmatrix+24h
+  .text:000C82FA                 fstp    [esp+7Ch+var_44]
+  .text:000C82FE                 fld     ds:rotationmatrix+28h
+  .text:000C8304                 fstp    [esp+7Ch+var_40]
+  .text:000C8308                 fld     ds:rotationmatrix+2Ch
+  .text:000C830E                 fld     [esp+7Ch+maxs+8]
+  .text:000C8312                 jmp     loc_C8408
+  .text:000C8320                 test    al, 2
+  .text:000C8322                 fld     dword ptr [pseqdesc+60h]
+  .text:000C8325                 jz      loc_C841B
+  .text:000C832B                 test    al, 4
+  .text:000C832D                 fld     dword ptr [pseqdesc+64h]
+  .text:000C8330                 jz      loc_C8426
+  .text:000C8336                 fld     dword ptr [pseqdesc+68h]
+  .text:000C8339                 fld     [esp+7Ch+var_68]
+  .text:000C833D                 fmul    st, st(3)
+  .text:000C833F                 fld     [esp+7Ch+var_64]
+  .text:000C8343                 fmul    st, st(3)
+  .text:000C8345                 faddp   st(1), st
+  .text:000C8347                 fld     [esp+7Ch+var_60]
+  .text:000C834B                 fmul    st, st(2)
+  .text:000C834D                 faddp   st(1), st
+  .text:000C834F                 fadd    [esp+7Ch+var_5C]
+  .text:000C8353                 fld     [esp+7Ch+var_58]
+  .text:000C8357                 fmul    st, st(4)
+  .text:000C8359                 fld     [esp+7Ch+var_54]
+  .text:000C835D                 fmul    st, st(4)
+  .text:000C835F                 faddp   st(1), st
+  .text:000C8361                 fld     [esp+7Ch+var_50]
+  .text:000C8365                 fmul    st, st(3)
+  .text:000C8367                 faddp   st(1), st
+  .text:000C8369                 fadd    [esp+7Ch+var_4C]
+  .text:000C836D                 fxch    st(4)
+  .text:000C836F                 fmul    [esp+7Ch+var_48]
+  .text:000C8373                 fxch    st(3)
+  .text:000C8375                 fmul    [esp+7Ch+var_44]
+  .text:000C8379                 faddp   st(3), st
+  .text:000C837B                 fxch    st(1)
+  .text:000C837D                 fmul    [esp+7Ch+var_40]
+  .text:000C8381                 faddp   st(2), st
+  .text:000C8383                 fxch    st(1)
+  .text:000C8385                 fadd    st, st(4)
+  .text:000C8387                 fld     [esp+7Ch+mins]
+  .text:000C838B                 fucomip st, st(2)
+  .text:000C838D                 jbe     short loc_C8397
+  .text:000C838F                 fxch    st(1)
+  .text:000C8391                 fst     [esp+7Ch+mins]
+  .text:000C8395                 fxch    st(1)
+  .text:000C8397                 fld     [esp+7Ch+maxs]
+  .text:000C839B                 fxch    st(2)
+  .text:000C839D                 fucomi  st, st(2)
+  .text:000C839F                 fstp    st(2)
+  .text:000C83A1                 jbe     short loc_C83B0
+  .text:000C83A3                 fxch    st(1)
+  .text:000C83A5                 fstp    [esp+7Ch+maxs]
+  .text:000C83A9                 jmp     short loc_C83B2
+  .text:000C83B0                 fstp    st(1)
+  .text:000C83B2                 fld     [esp+7Ch+mins+4]
+  .text:000C83B6                 fucomip st, st(2)
+  .text:000C83B8                 jbe     short loc_C83C2
+  .text:000C83BA                 fxch    st(1)
+  .text:000C83BC                 fst     [esp+7Ch+mins+4]
+  .text:000C83C0                 fxch    st(1)
+  .text:000C83C2                 fld     [esp+7Ch+maxs+4]
+  .text:000C83C6                 fxch    st(2)
+  .text:000C83C8                 fucomi  st, st(2)
+  .text:000C83CA                 fstp    st(2)
+  .text:000C83CC                 jbe     short loc_C83E0
+  .text:000C83CE                 fxch    st(1)
+  .text:000C83D0                 fstp    [esp+7Ch+maxs+4]
+  .text:000C83D4                 jmp     short loc_C83E2
+  .text:000C83E0                 fstp    st(1)
+  .text:000C83E2                 fld     [esp+7Ch+mins+8]
+  .text:000C83E6                 fucomip st, st(1)
+  .text:000C83E8                 jbe     short loc_C83EE
+  .text:000C83EA                 fst     [esp+7Ch+mins+8]
+  .text:000C83EE                 fucomi  st, st(1)
+  .text:000C83F0                 jbe     short loc_C8400
+  .text:000C83F2                 fstp    st(1)
+  .text:000C83F4                 fst     [esp+7Ch+maxs+8]
+  .text:000C83F8                 jmp     short loc_C8402
+  .text:000C8400                 fstp    st
+  .text:000C8402                 inc     i
+  .text:000C8403                 cmp     i, 8
+  .text:000C8406                 jz      short loc_C8430
+  .text:000C8408                 test    al, 1
+  .text:000C840A                 jnz     loc_C8320
+  .text:000C8410                 test    al, 2
+  .text:000C8412                 fld     dword ptr [pseqdesc+6Ch]
+  .text:000C8415                 jnz     loc_C832B
+  .text:000C841B                 test    al, 4
+  .text:000C841D                 fld     dword ptr [pseqdesc+70h]
+  .text:000C8420                 jnz     loc_C8336
+  .text:000C8426                 fld     dword ptr [pseqdesc+74h]
+  .text:000C8429                 jmp     loc_C8339
+  .text:000C8430                 fstp    st
+  .text:000C8432                 fstp    st
+  .text:000C8434                 call    Host_IsSinglePlayerGame
+  .text:000C8439                 test    eax, eax
+  .text:000C843B                 jnz     short loc_C8457
+  .text:000C843D                 fld     r_cullsequencebox.value
+  .text:000C8443                 fldz
+  .text:000C8445                 fxch    st(1)
+  .text:000C8447                 fucomip st, st(1)
+  .text:000C8449                 fstp    st
+  .text:000C844B                 jp      loc_C84F0
+  .text:000C8451                 jnz     loc_C84F0
+  .text:000C8457                 fld     ds:vpn
+  .text:000C845D                 lea     ebx, [esp+7Ch+plane]
+  .text:000C8461                 ; out
+  .text:000C8461                 mov     [esp+7Ch+v1], ebx; out
+  .text:000C8464                 fst     [esp+7Ch+plane.normal]
+  .text:000C8468                 fld     ds:vpn+4
+  .text:000C846E                 mov     [esp+7Ch+plane.type], 5
+  .text:000C8473                 fst     [esp+7Ch+plane.normal+4]
+  .text:000C8477                 fld     ds:vpn+8
+  .text:000C847D                 fst     [esp+7Ch+plane.normal+8]
+  .text:000C8481                 fxch    st(2)
+  .text:000C8483                 fmul    ds:r_origin
+  .text:000C8489                 fxch    st(1)
+  .text:000C848B                 fmul    ds:r_origin+4
+  .text:000C8491                 faddp   st(1), st
+  .text:000C8493                 fxch    st(1)
+  .text:000C8495                 fmul    ds:r_origin+8
+  .text:000C849B                 faddp   st(1), st
+  .text:000C849D                 fstp    [esp+7Ch+plane.dist]
+  .text:000C84A1                 call    SignbitsForPlane
+  .text:000C84A6                 ; p
+  .text:000C84A6                 mov     [esp+7Ch+p], ebx; p
+  .text:000C84AA                 mov     [esp+7Ch+plane.signbits], al
+  .text:000C84AE                 lea     eax, [esp+7Ch+maxs]
+  .text:000C84B2                 ; emaxs
+  .text:000C84B2                 mov     [esp+7Ch+v2], eax; emaxs
+  .text:000C84B6                 lea     eax, [esp+7Ch+mins]
+  .text:000C84BA                 ; emins
+  .text:000C84BA                 mov     [esp+7Ch+v1], eax; emins
+  .text:000C84BD                 call    BoxOnPlaneSide
+  .text:000C84C2                 cmp     eax, 2
+  .text:000C84C5                 jz      short loc_C8508
+  .text:000C84C7                 add     esp, 78h
+  .text:000C84CA                 mov     eax, 1
+  .text:000C84CF                 pop     ebx
+  .text:000C84D0                 retn
+  .text:000C84D8                 xor     ebx, ebx
+  .text:000C84DA                 mov     [eax+2DCh], ebx
+  .text:000C84E0                 xor     eax, eax
+  .text:000C84E2                 jmp     loc_C828E
+  .text:000C84F0                 lea     eax, [esp+7Ch+maxs]
+  .text:000C84F4                 ; maxs
+  .text:000C84F4                 mov     [esp+7Ch+v2], eax; maxs
+  .text:000C84F8                 lea     eax, [esp+7Ch+mins]
+  .text:000C84FC                 ; mins
+  .text:000C84FC                 mov     [esp+7Ch+v1], eax; mins
+  .text:000C84FF                 call    R_CullBox
+  .text:000C8504                 test    eax, eax
+  .text:000C8506                 jz      short loc_C84C7
+  .text:000C8508                 add     esp, 78h
+  .text:000C850B                 xor     eax, eax
+  .text:000C850D                 pop     ebx
+  .text:000C850E                 retn
+  .text:000C8510                 mov     eax, ds:pstudiohdr
+  .text:000C8515                 ; v1
+  .text:000C8515                 mov     [esp+7Ch+v1], offset vec3_origin; v1
+  .text:000C851C                 add     eax, 58h ; 'X'
+  .text:000C851F                 ; v2
+  .text:000C851F                 mov     [esp+7Ch+v2], eax; v2
+  .text:000C8523                 call    VectorCompare
+  .text:000C8528                 test    eax, eax
+  .text:000C852A                 mov     eax, ds:currententity
+  .text:000C852F                 jnz     short loc_C8590
+  .text:000C8531                 mov     edx, ds:pstudiohdr
+  .text:000C8537                 fld     dword ptr [edx+58h]
+  .text:000C853A                 fadd    dword ptr [eax+0B48h]
+  .text:000C8540                 fstp    [esp+7Ch+mins]
+  .text:000C8544                 fld     dword ptr [edx+5Ch]
+  .text:000C8547                 fadd    dword ptr [eax+0B4Ch]
+  .text:000C854D                 fstp    [esp+7Ch+mins+4]
+  .text:000C8551                 fld     dword ptr [edx+60h]
+  .text:000C8554                 fadd    dword ptr [eax+0B50h]
+  .text:000C855A                 fstp    [esp+7Ch+mins+8]
+  .text:000C855E                 fld     dword ptr [edx+64h]
+  .text:000C8561                 fadd    dword ptr [eax+0B48h]
+  .text:000C8567                 fstp    [esp+7Ch+maxs]
+  .text:000C856B                 fld     dword ptr [edx+68h]
+  .text:000C856E                 fadd    dword ptr [eax+0B4Ch]
+  .text:000C8574                 fstp    [esp+7Ch+maxs+4]
+  .text:000C8578                 fld     dword ptr [edx+6Ch]
+  .text:000C857B                 fadd    dword ptr [eax+0B50h]
+  .text:000C8581                 fstp    [esp+7Ch+maxs+8]
+  .text:000C8585                 jmp     loc_C8273
+  .text:000C8590                 fld     ds:flt_246000
+  .text:000C8596                 fld     st
+  .text:000C8598                 mov     edx, ds:pstudiohdr
+  .text:000C859E                 fsubr   dword ptr [eax+0B48h]
+  .text:000C85A4                 fstp    [esp+7Ch+mins]
+  .text:000C85A8                 fld     st
+  .text:000C85AA                 fsubr   dword ptr [eax+0B4Ch]
+  .text:000C85B0                 fstp    [esp+7Ch+mins+4]
+  .text:000C85B4                 fld     st
+  .text:000C85B6                 fsubr   dword ptr [eax+0B50h]
+  .text:000C85BC                 fstp    [esp+7Ch+mins+8]
+  .text:000C85C0                 fld     dword ptr [eax+0B48h]
+  .text:000C85C6                 fadd    st, st(1)
+  .text:000C85C8                 fstp    [esp+7Ch+maxs]
+  .text:000C85CC                 fld     dword ptr [eax+0B4Ch]
+  .text:000C85D2                 fadd    st, st(1)
+  .text:000C85D4                 fstp    [esp+7Ch+maxs+4]
+  .text:000C85D8                 fadd    dword ptr [eax+0B50h]
+  .text:000C85DE                 fstp    [esp+7Ch+maxs+8]
+  .text:000C85E2                 jmp     loc_C8273
+procedure: |-
+  // Source: engine/r_studio.c R_StudioCheckBBox. R_StudioTransformVector is inlined while expanding eight sequence-box corners. The multiplayer sequence-box path calls R_CullBox(mins,maxs); the other path tests one view plane with BoxOnPlaneSide.
+  int __cdecl R_StudioCheckBBox()
+  {
+    studiohdr_t *v0; // edx
+    cl_entity_t_1 *v1; // eax
+    int sequence; // ecx
+    int v3; // eax
+    float *v4; // edx
+    int v5; // eax
+    long double v6; // fst6
+    long double v7; // fst5
+    long double v8; // fst4
+    long double v9; // fst3
+    long double v10; // fst2
+    long double v11; // fst1
+    long double v12; // fst5
+    long double v13; // fst3
+    long double v14; // fst4
+    long double v15; // fst5
+    bool v17; // zf
+    long double v18; // fst7
+    vec3_t mins; // [esp+44h] [ebp-38h] BYREF
+    vec3_t maxs; // [esp+50h] [ebp-2Ch] BYREF
+    mplane_t plane; // [esp+5Ch] [ebp-20h] BYREF
+
+    if ( VectorCompare(vec3_origin, pstudiohdr->bbmin) )
+    {
+      v17 = VectorCompare(vec3_origin, pstudiohdr->min) == 0;
+      v1 = currententity;
+      v0 = pstudiohdr;
+      if ( v17 )
+      {
+        mins[0] = pstudiohdr->min[0] + currententity->origin[0];
+        mins[1] = pstudiohdr->min[1] + currententity->origin[1];
+        mins[2] = pstudiohdr->min[2] + currententity->origin[2];
+        maxs[0] = pstudiohdr->max[0] + currententity->origin[0];
+        maxs[1] = pstudiohdr->max[1] + currententity->origin[1];
+        v18 = pstudiohdr->max[2] + currententity->origin[2];
+      }
+      else
+      {
+        mins[0] = currententity->origin[0] - 16.0;
+        mins[1] = currententity->origin[1] - 16.0;
+        mins[2] = currententity->origin[2] - 16.0;
+        maxs[0] = currententity->origin[0] + 16.0;
+        maxs[1] = currententity->origin[1] + 16.0;
+        v18 = currententity->origin[2] + 16.0;
+      }
+      maxs[2] = v18;
+    }
+    else
+    {
+      v0 = pstudiohdr;
+      v1 = currententity;
+      mins[0] = pstudiohdr->bbmin[0] + currententity->origin[0];
+      mins[1] = pstudiohdr->bbmin[1] + currententity->origin[1];
+      mins[2] = pstudiohdr->bbmin[2] + currententity->origin[2];
+      maxs[0] = pstudiohdr->bbmax[0] + currententity->origin[0];
+      maxs[1] = pstudiohdr->bbmax[1] + currententity->origin[1];
+      maxs[2] = pstudiohdr->bbmax[2] + currententity->origin[2];
+    }
+    sequence = v1->curstate.sequence;
+    if ( sequence >= v0->numseq )
+    {
+      v1->curstate.sequence = 0;
+      v3 = 0;
+    }
+    else
+    {
+      v3 = 176 * sequence;
+    }
+    v4 = (float *)((char *)&v0->id + v0->seqindex + v3);
+    v5 = 0;
+    v6 = maxs[2];
+    do
+    {
+      if ( (v5 & 1) != 0 )
+      {
+        v7 = v4[24];
+        if ( (v5 & 2) != 0 )
+          goto LABEL_7;
+      }
+      else
+      {
+        v7 = v4[27];
+        if ( (v5 & 2) != 0 )
+        {
+  LABEL_7:
+          v8 = v4[25];
+          if ( (v5 & 4) != 0 )
+            goto LABEL_8;
+          goto LABEL_26;
+        }
+      }
+      v8 = v4[28];
+      if ( (v5 & 4) != 0 )
+      {
+  LABEL_8:
+        v9 = v4[26];
+        goto LABEL_9;
+      }
+  LABEL_26:
+      v9 = v4[29];
+  LABEL_9:
+      v10 = rotationmatrix[0][0] * v7 + rotationmatrix[0][1] * v8 + rotationmatrix[0][2] * v9 + rotationmatrix[0][3];
+      v11 = v7;
+      v12 = rotationmatrix[1][0] * v7 + rotationmatrix[1][1] * v8 + rotationmatrix[1][2] * v9 + rotationmatrix[1][3];
+      v13 = v11 * rotationmatrix[2][0] + v8 * rotationmatrix[2][1] + v9 * rotationmatrix[2][2] + rotationmatrix[2][3];
+      if ( mins[0] > v10 )
+        mins[0] = v10;
+      if ( v10 > maxs[0] )
+        maxs[0] = v10;
+      if ( mins[1] > v12 )
+        mins[1] = v12;
+      if ( v12 <= maxs[1] )
+      {
+        v15 = v13;
+      }
+      else
+      {
+        v14 = v12;
+        v15 = v13;
+        maxs[1] = v14;
+      }
+      if ( mins[2] > v15 )
+        mins[2] = v15;
+      if ( v15 > v6 )
+      {
+        v6 = v15;
+        maxs[2] = v15;
+      }
+      ++v5;
+    }
+    while ( v5 != 8 );
+    if ( Host_IsSinglePlayerGame() || r_cullsequencebox.value == 0.0 )
+    {
+      plane.normal[0] = vpn[0];
+      plane.type = 5;
+      plane.normal[1] = vpn[1];
+      plane.normal[2] = vpn[2];
+      plane.dist = vpn[0] * r_origin[0] + vpn[1] * r_origin[1] + vpn[2] * r_origin[2];
+      plane.signbits = SignbitsForPlane(&plane);
+      return BoxOnPlaneSide(mins, maxs, &plane) != 2;
+    }
+    else
+    {
+      return R_CullBox(mins, maxs) == false;
+    }
+  }

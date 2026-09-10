@@ -1,0 +1,170 @@
+func_name: "GameStudioRenderer_StudioRenderModel"
+func_va: "0x63150"
+disasm_code: |-
+  .text:00063150                 push    ebx
+  .text:00063151                 sub     esp, 18h
+  .text:00063154                 mov     ebx, [esp+1Ch+this]
+  .text:00063158                 call    ds:IEngineStudio.SetChromeOrigin
+  .text:0006315E                 mov     [esp+1Ch+var_1C], 0
+  .text:00063165                 call    ds:IEngineStudio.SetForceFaceFlags
+  .text:0006316B                 mov     eax, [ebx+2Ch]
+  .text:0006316E                 cmp     dword ptr [eax+304h], 13h
+  .text:00063175                 jz      short loc_631B0
+  .text:00063177                 mov     eax, [ebx]
+  .text:00063179                 mov     eax, [eax+50h]
+  .text:0006317C                 cmp     eax, offset _ZN20CStudioModelRenderer17StudioRenderFinalEv; GameStudioRenderer_StudioRenderFinal function pointer, vtable offset 0x50; do not select the inlined hardware/software child slots
+  .text:00063181                 jnz     loc_63258
+  .text:00063187                 call    ds:IEngineStudio.IsHardware
+  .text:0006318D                 test    eax, eax
+  .text:0006318F                 mov     eax, [ebx]
+  .text:00063191                 mov     [esp+1Ch+this], ebx
+  .text:00063195                 jnz     short loc_631A0
+  .text:00063197                 mov     eax, [eax+54h]
+  .text:0006319A                 add     esp, 18h
+  .text:0006319D                 pop     ebx
+  .text:0006319E                 jmp     eax
+  .text:000631A0                 mov     eax, [eax+58h]
+  .text:000631A3                 add     esp, 18h
+  .text:000631A6                 pop     ebx
+  .text:000631A7                 jmp     eax
+  .text:000631B0                 xor     edx, edx
+  .text:000631B2                 mov     [eax+304h], edx
+  .text:000631B8                 mov     eax, [ebx]
+  .text:000631BA                 mov     eax, [eax+50h]
+  .text:000631BD                 cmp     eax, offset _ZN20CStudioModelRenderer17StudioRenderFinalEv; CStudioModelRenderer::StudioRenderFinal(void)
+  .text:000631C2                 jnz     loc_632A0
+  .text:000631C8                 call    ds:IEngineStudio.IsHardware
+  .text:000631CE                 test    eax, eax
+  .text:000631D0                 mov     eax, [ebx]
+  .text:000631D2                 mov     [esp+1Ch+var_1C], ebx
+  .text:000631D5                 jnz     short loc_63250
+  .text:000631D7                 call    dword ptr [eax+54h]
+  .text:000631DA                 call    ds:IEngineStudio.IsHardware
+  .text:000631E0                 test    eax, eax
+  .text:000631E2                 jz      loc_63288
+  .text:000631E8                 mov     [esp+1Ch+var_1C], 2
+  .text:000631EF                 call    ds:IEngineStudio.SetForceFaceFlags
+  .text:000631F5                 xor     edx, edx
+  .text:000631F7                 mov     [esp+1Ch+var_18], edx
+  .text:000631FB                 mov     eax, [ebx+54h]
+  .text:000631FE                 mov     [esp+1Ch+var_1C], eax
+  .text:00063201                 mov     eax, ds:gEngfuncs.pTriAPI
+  .text:00063206                 call    dword ptr [eax+2Ch]
+  .text:00063209                 mov     eax, [ebx+2Ch]
+  .text:0006320C                 mov     ecx, 13h
+  .text:00063211                 mov     [eax+304h], ecx
+  .text:00063217                 mov     eax, [ebx]
+  .text:00063219                 mov     eax, [eax+50h]
+  .text:0006321C                 cmp     eax, offset _ZN20CStudioModelRenderer17StudioRenderFinalEv; CStudioModelRenderer::StudioRenderFinal(void)
+  .text:00063221                 jnz     loc_632B0
+  .text:00063227                 call    ds:IEngineStudio.IsHardware
+  .text:0006322D                 test    eax, eax
+  .text:0006322F                 mov     eax, [ebx]
+  .text:00063231                 mov     [esp+1Ch+var_1C], ebx
+  .text:00063234                 jnz     short loc_63268
+  .text:00063236                 call    dword ptr [eax+54h]
+  .text:00063239                 call    ds:IEngineStudio.IsHardware
+  .text:0006323F                 test    eax, eax
+  .text:00063241                 jz      short loc_63270
+  .text:00063243                 add     esp, 18h
+  .text:00063246                 pop     ebx
+  .text:00063247                 retn
+  .text:00063250                 call    dword ptr [eax+58h]
+  .text:00063253                 jmp     short loc_631DA
+  .text:00063258                 mov     [esp+1Ch+this], ebx
+  .text:0006325C                 add     esp, 18h
+  .text:0006325F                 pop     ebx
+  .text:00063260                 jmp     eax
+  .text:00063268                 call    dword ptr [eax+58h]
+  .text:0006326B                 jmp     short loc_63239
+  .text:00063270                 xor     eax, eax
+  .text:00063272                 mov     [esp+1Ch+this], eax
+  .text:00063276                 mov     eax, ds:gEngfuncs.pTriAPI
+  .text:0006327B                 mov     eax, [eax+4]
+  .text:0006327E                 add     esp, 18h
+  .text:00063281                 pop     ebx
+  .text:00063282                 jmp     eax
+  .text:00063288                 mov     eax, ds:gEngfuncs.pTriAPI
+  .text:0006328D                 mov     [esp+1Ch+var_1C], 5
+  .text:00063294                 call    dword ptr [eax+4]
+  .text:00063297                 jmp     loc_631E8
+  .text:000632A0                 mov     [esp+1Ch+var_1C], ebx
+  .text:000632A3                 call    eax
+  .text:000632A5                 jmp     loc_631DA
+  .text:000632B0                 mov     [esp+1Ch+var_1C], ebx
+  .text:000632B3                 call    eax
+  .text:000632B5                 jmp     loc_63239
+procedure: |-
+  // Verified hl-10210 ELF32 layout: vptr 0, times 4/12, entity 44, studio header 64, cache names 92, transform arrays 4188/10332. The available source includes CS-specific viewmodel/shadow branches absent from this Half-Life binary; preserve the actual branch structure. Virtual slot offsets are measured from the current renderer vtable, not copied from MSVC.
+  void __cdecl CStudioModelRenderer::StudioRenderModel(issue106_renderer_linux_t *self)
+  {
+    struct cl_entity_s *m_pCurrentEntity; // eax
+    void (__cdecl *v2)(CStudioModelRenderer *const); // eax
+    bool v3; // zf
+    void **v4; // eax
+    void (__cdecl *v5)(CStudioModelRenderer *const); // eax
+    void **vtable; // eax
+    void (__cdecl *v7)(CStudioModelRenderer *const); // eax
+    void **v8; // eax
+
+    // GameStudioRenderer_StudioRenderFinal is self->vtable[20], byte offset 0x50. The comparisons identify its full entry before GCC inlines hardware/software dispatch.
+    IEngineStudio.SetChromeOrigin();
+    IEngineStudio.SetForceFaceFlags(0);
+    m_pCurrentEntity = self->m_pCurrentEntity;
+    if ( m_pCurrentEntity->curstate.renderfx == 19 )
+    {
+      m_pCurrentEntity->curstate.renderfx = 0;
+      v5 = *((void (__cdecl **)(CStudioModelRenderer *const))self->vtable + 20);
+      if ( v5 == CStudioModelRenderer::StudioRenderFinal )
+      {
+        v3 = IEngineStudio.IsHardware() == 0;
+        vtable = self->vtable;
+        if ( v3 )
+          ((void (__cdecl *)(issue106_renderer_linux_t *))vtable[21])(self);
+        else
+          ((void (__cdecl *)(issue106_renderer_linux_t *))vtable[22])(self);
+      }
+      else
+      {
+        v5((CStudioModelRenderer *const)self);
+      }
+      if ( !IEngineStudio.IsHardware() )
+        gEngfuncs.pTriAPI->RenderMode(5);
+      IEngineStudio.SetForceFaceFlags(2);
+      gEngfuncs.pTriAPI->SpriteTexture(self->m_pChromeSprite, 0);
+      self->m_pCurrentEntity->curstate.renderfx = 19;
+      v7 = *((void (__cdecl **)(CStudioModelRenderer *const))self->vtable + 20);
+      if ( v7 == CStudioModelRenderer::StudioRenderFinal )
+      {
+        v3 = IEngineStudio.IsHardware() == 0;
+        v8 = self->vtable;
+        if ( v3 )
+          ((void (__cdecl *)(issue106_renderer_linux_t *))v8[21])(self);
+        else
+          ((void (__cdecl *)(issue106_renderer_linux_t *))v8[22])(self);
+      }
+      else
+      {
+        v7((CStudioModelRenderer *const)self);
+      }
+      if ( !IEngineStudio.IsHardware() )
+        gEngfuncs.pTriAPI->RenderMode(0);
+    }
+    else
+    {
+      v2 = *((void (__cdecl **)(CStudioModelRenderer *const))self->vtable + 20);
+      if ( v2 == CStudioModelRenderer::StudioRenderFinal )
+      {
+        v3 = IEngineStudio.IsHardware() == 0;
+        v4 = self->vtable;
+        if ( v3 )
+          ((void (__cdecl *)(issue106_renderer_linux_t *))v4[21])(self);
+        else
+          ((void (__cdecl *)(issue106_renderer_linux_t *))v4[22])(self);
+      }
+      else
+      {
+        v2((CStudioModelRenderer *const)self);
+      }
+    }
+  }

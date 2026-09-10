@@ -1,0 +1,78 @@
+func_name: "GameStudioRenderer_StudioRenderModel"
+func_va: "0x10033090"
+disasm_code: |-
+  .text:10033090                 push    esi
+  .text:10033091                 mov     esi, ecx
+  .text:10033093                 call    IEngineStudio_SetChromeOrigin
+  .text:10033099                 push    0
+  .text:1003309B                 call    IEngineStudio_SetForceFaceFlags
+  .text:100330A1                 mov     eax, [esi+30h]
+  .text:100330A4                 add     esp, 4
+  .text:100330A7                 mov     ecx, esi
+  .text:100330A9                 cmp     dword ptr [eax+304h], 13h
+  .text:100330B0                 jnz     short loc_10033122
+  .text:100330B2                 mov     dword ptr [eax+304h], 0
+  .text:100330BC                 mov     eax, [esi]
+  .text:100330BE                 call    dword ptr [eax+4Ch] ; GameStudioRenderer_StudioRenderFinal, vtable offset 0x4c
+  .text:100330C1                 call    IEngineStudio_IsHardware
+  .text:100330C7                 test    eax, eax
+  .text:100330C9                 jnz     short loc_100330DA
+  .text:100330CB                 mov     eax, dword_10099360
+  .text:100330D0                 push    5
+  .text:100330D2                 mov     eax, [eax+4]
+  .text:100330D5                 call    eax
+  .text:100330D7                 add     esp, 4
+  .text:100330DA                 push    2
+  .text:100330DC                 call    IEngineStudio_SetForceFaceFlags
+  .text:100330E2                 mov     eax, dword_10099360
+  .text:100330E7                 push    0
+  .text:100330E9                 push    dword ptr [esi+58h]
+  .text:100330EC                 mov     eax, [eax+2Ch]
+  .text:100330EF                 call    eax
+  .text:100330F1                 mov     eax, [esi+30h]
+  .text:100330F4                 add     esp, 0Ch
+  .text:100330F7                 mov     ecx, esi
+  .text:100330F9                 mov     dword ptr [eax+304h], 13h
+  .text:10033103                 mov     eax, [esi]
+  .text:10033105                 call    dword ptr [eax+4Ch]
+  .text:10033108                 call    IEngineStudio_IsHardware
+  .text:1003310E                 test    eax, eax
+  .text:10033110                 jnz     short loc_10033120
+  .text:10033112                 push    eax
+  .text:10033113                 mov     eax, dword_10099360
+  .text:10033118                 mov     eax, [eax+4]
+  .text:1003311B                 call    eax
+  .text:1003311D                 add     esp, 4
+  .text:10033120                 pop     esi
+  .text:10033121                 retn
+  .text:10033122                 mov     eax, [esi]
+  .text:10033124                 pop     esi
+  .text:10033125                 jmp     dword ptr [eax+4Ch]
+procedure: |-
+  // Verified PE32 offsets: entity 48, header 68, cached names 96, matrices 4192/10336; double alignment differs from ELF32. Available source has CS-specific branches absent here. Preserve Half-Life control flow. Public engine studio API slot roles follow version 1.
+  void __thiscall CStudioModelRenderer_StudioRenderModel(issue106_renderer_windows_t *self)
+  {
+    _DWORD *m_pCurrentEntity; // eax
+
+    // GameStudioRenderer_StudioRenderFinal is self->vtable[19], byte offset 0x4c, in all three render passes below.
+    IEngineStudio_SetChromeOrigin();
+    IEngineStudio_SetForceFaceFlags(0);
+    m_pCurrentEntity = self->m_pCurrentEntity;
+    if ( m_pCurrentEntity[193] == 19 )
+    {
+      m_pCurrentEntity[193] = 0;
+      (*((void (__thiscall **)(issue106_renderer_windows_t *))self->vtable + 19))(self);
+      if ( !IEngineStudio_IsHardware() )
+        (*(void (__cdecl **)(int))(dword_10099360 + 4))(5);
+      IEngineStudio_SetForceFaceFlags(2);
+      (*(void (__cdecl **)(void *, _DWORD))(dword_10099360 + 44))(self->m_pChromeSprite, 0);
+      *((_DWORD *)self->m_pCurrentEntity + 193) = 19;
+      (*((void (__thiscall **)(issue106_renderer_windows_t *))self->vtable + 19))(self);
+      if ( !IEngineStudio_IsHardware() )
+        (*(void (__cdecl **)(_DWORD))(dword_10099360 + 4))(0);
+    }
+    else
+    {
+      (*((void (__thiscall **)(issue106_renderer_windows_t *))self->vtable + 19))(self);
+    }
+  }

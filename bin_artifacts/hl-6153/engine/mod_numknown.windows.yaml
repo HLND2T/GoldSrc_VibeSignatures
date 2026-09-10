@@ -1,0 +1,9 @@
+gv_name: mod_numknown
+gv_va: '0x232276c'
+gv_rva: '0x62276c'
+gv_sig: 55 8B EC 8B 45 ?? 53 56 57 8A 08 33 FF 84 C9 75 ?? 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 04 A1 ?? ?? ?? ?? 33 DB 85
+  C0
+gv_sig_va: '0x1d3ee90'
+gv_inst_offset: '0x1e'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

@@ -1,0 +1,9 @@
+gv_name: g_pGameStudioRenderer
+gv_va: '0x1f0b60'
+gv_rva: '0x1f0b60'
+gv_sig: 83 EC ?? 80 3D ?? ?? ?? ?? ?? 89 5C 24 ?? 8B 5C 24 ?? 89 74 24 ?? 8B 74 24 ?? 89 7C 24 ?? 75 ?? 89 5C 24 ?? 89 74
+  24 ??
+gv_sig_va: '0xab940'
+gv_inst_offset: '0x28'
+gv_inst_length: '0x7'
+gv_inst_disp: '0x3'

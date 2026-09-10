@@ -1,0 +1,145 @@
+func_name: "R_NewMap"
+func_va: "0x10246540"
+disasm_code: |-
+  .text:10246540                 push    ebp
+  .text:10246541                 mov     ebp, esp
+  .text:10246543                 sub     esp, 8
+  .text:10246546                 mov     [ebp+var_4], 0
+  .text:1024654D                 jmp     short loc_10246558
+  .text:1024654F                 mov     eax, [ebp+var_4]
+  .text:10246552                 add     eax, 1
+  .text:10246555                 mov     [ebp+var_4], eax
+  .text:10246558                 cmp     [ebp+var_4], 100h
+  .text:1024655F                 jge     short loc_10246571
+  .text:10246561                 mov     ecx, [ebp+var_4]
+  .text:10246564                 mov     d_lightstylevalue[ecx*4], 108h
+  .text:1024656F                 jmp     short loc_1024654F
+  .text:10246571                 ; count
+  .text:10246571                 push    0BB8h; count
+  .text:10246576                 ; fill
+  .text:10246576                 push    0; fill
+  .text:10246578                 ; dest
+  .text:10246578                 push    offset r_worldentity; dest
+  .text:1024657D                 call    Q_memset
+  .text:10246582                 add     esp, 0Ch
+  .text:10246585                 mov     edx, cl_worldmodel
+  .text:1024658B                 mov     r_worldentity.model, edx
+  .text:10246591                 mov     [ebp+var_4], 0
+  .text:10246598                 jmp     short loc_102465A3
+  .text:1024659A                 mov     eax, [ebp+var_4]
+  .text:1024659D                 add     eax, 1
+  .text:102465A0                 mov     [ebp+var_4], eax
+  .text:102465A3                 mov     ecx, cl_worldmodel
+  .text:102465A9                 mov     edx, [ebp+var_4]
+  .text:102465AC                 cmp     edx, [ecx+88h]
+  .text:102465B2                 jge     short loc_102465CE
+  .text:102465B4                 imul    eax, [ebp+var_4], 3Ch ; '<'
+  .text:102465B8                 mov     ecx, cl_worldmodel
+  .text:102465BE                 mov     edx, [ecx+8Ch]
+  .text:102465C4                 mov     dword ptr [edx+eax+28h], 0
+  .text:102465CC                 jmp     short loc_1024659A
+  .text:102465CE                 mov     dword_10DC5568, 0
+  .text:102465D8                 call    R_ClearParticles
+  .text:102465DD                 call    R_DecalInit
+  .text:102465E2                 call    V_InitLevel
+  .text:102465E7                 call    GL_BuildLightmaps
+  .text:102465EC                 mov     dword_109B41FC, 0FFFFFFFFh
+  .text:102465F6                 mov     dword_10DC50E8, 0FFFFFFFFh
+  .text:10246600                 mov     [ebp+var_4], 0
+  .text:10246607                 jmp     short loc_10246612
+  .text:10246609                 mov     eax, [ebp+var_4]
+  .text:1024660C                 add     eax, 1
+  .text:1024660F                 mov     [ebp+var_4], eax
+  .text:10246612                 mov     ecx, cl_worldmodel
+  .text:10246618                 mov     edx, [ebp+var_4]
+  .text:1024661B                 cmp     edx, [ecx+170h]
+  .text:10246621                 jge     loc_102466CD
+  .text:10246627                 mov     eax, cl_worldmodel
+  .text:1024662C                 mov     ecx, [eax+174h]
+  .text:10246632                 mov     edx, [ebp+var_4]
+  .text:10246635                 cmp     dword ptr [ecx+edx*4], 0
+  .text:10246639                 jnz     short loc_1024663D
+  .text:1024663B                 jmp     short loc_10246609
+  .text:1024663D                 mov     [ebp+var_8], 0
+  .text:10246644                 push    3
+  .text:10246646                 push    offset aSky; "sky"
+  .text:1024664B                 mov     eax, cl_worldmodel
+  .text:10246650                 mov     ecx, [eax+174h]
+  .text:10246656                 mov     edx, [ebp+var_4]
+  .text:10246659                 mov     eax, [ecx+edx*4]
+  .text:1024665C                 push    eax
+  .text:1024665D                 call    Q_strncmp
+  .text:10246662                 add     esp, 0Ch
+  .text:10246665                 test    eax, eax
+  .text:10246667                 jnz     short loc_10246681
+  .text:10246669                 cmp     dword_10531148, 0
+  .text:10246670                 jz      short loc_10246678
+  .text:10246672                 cmp     [ebp+var_8], 0
+  .text:10246676                 jnz     short loc_10246681
+  .text:10246678                 mov     ecx, [ebp+var_4]
+  .text:1024667B                 mov     dword_109B41FC, ecx
+  .text:10246681                 push    0Ah
+  .text:10246683                 push    offset aWindow021; "window02_1"
+  .text:10246688                 mov     edx, cl_worldmodel
+  .text:1024668E                 mov     eax, [edx+174h]
+  .text:10246694                 mov     ecx, [ebp+var_4]
+  .text:10246697                 mov     edx, [eax+ecx*4]
+  .text:1024669A                 push    edx
+  .text:1024669B                 call    Q_strncmp
+  .text:102466A0                 add     esp, 0Ch
+  .text:102466A3                 test    eax, eax
+  .text:102466A5                 jnz     short loc_102466AF
+  .text:102466A7                 mov     eax, [ebp+var_4]
+  .text:102466AA                 mov     dword_10DC50E8, eax
+  .text:102466AF                 mov     ecx, cl_worldmodel
+  .text:102466B5                 mov     edx, [ecx+174h]
+  .text:102466BB                 mov     eax, [ebp+var_4]
+  .text:102466BE                 mov     ecx, [edx+eax*4]
+  .text:102466C1                 mov     dword ptr [ecx+1Ch], 0
+  .text:102466C8                 jmp     loc_10246609
+  .text:102466CD                 call    R_LoadSkys
+  .text:102466D2                 mov     edx, 0BB8h
+  .text:102466D7                 imul    eax, edx, 0
+  .text:102466DA                 mov     ecx, cl_entities
+  .text:102466E0                 movss   xmm0, dword_10322CD4
+  .text:102466E8                 movss   dword ptr [ecx+eax+2F0h], xmm0
+  .text:102466F1                 call    GL_UnloadTextures
+  .text:102466F6                 mov     esp, ebp
+  .text:102466F8                 pop     ebp
+  .text:102466F9                 retn
+procedure: |-
+  // The memset argument is the complete 3000-byte r_worldentity object. Its model member is at +2964 and is assigned cl_worldmodel. Available gl_rmain source and ELF32 peer corroborate this layout.
+  void __cdecl R_NewMap()
+  {
+    int i; // [esp+4h] [ebp-4h]
+    int j; // [esp+4h] [ebp-4h]
+    int k; // [esp+4h] [ebp-4h]
+
+    for ( i = 0; i < 256; ++i )
+      d_lightstylevalue[i] = 264;
+    Q_memset(&r_worldentity, 0, 3000);
+    r_worldentity.model = cl_worldmodel;
+    for ( j = 0; j < *(_DWORD *)&cl_worldmodel->_pad_0048[64]; ++j )
+      *(_DWORD *)(*(_DWORD *)&cl_worldmodel->_pad_0048[68] + 60 * j + 40) = 0;
+    dword_10DC5568 = 0;
+    R_ClearParticles();
+    R_DecalInit();
+    V_InitLevel();
+    GL_BuildLightmaps();
+    dword_109B41FC = -1;
+    dword_10DC50E8 = -1;
+    for ( k = 0; k < *(_DWORD *)&cl_worldmodel->_pad_0048[296]; ++k )
+    {
+      if ( *(_DWORD *)(*(_DWORD *)&cl_worldmodel->_pad_0048[300] + 4 * k) )
+      {
+        if ( !Q_strncmp(*(_DWORD *)(*(_DWORD *)&cl_worldmodel->_pad_0048[300] + 4 * k), "sky", 3) )
+          dword_109B41FC = k;
+        if ( !Q_strncmp(*(_DWORD *)(*(_DWORD *)&cl_worldmodel->_pad_0048[300] + 4 * k), "window02_1", 10) )
+          dword_10DC50E8 = k;
+        *(_DWORD *)(*(_DWORD *)(*(_DWORD *)&cl_worldmodel->_pad_0048[300] + 4 * k) + 28) = 0;
+      }
+    }
+    R_LoadSkys();
+    *((_DWORD *)cl_entities + 188) = dword_10322CD4;
+    GL_UnloadTextures();
+  }

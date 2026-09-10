@@ -1,0 +1,379 @@
+func_name: "CL_InitTEnts"
+func_va: "0x13bee0"
+disasm_code: |-
+  .text:0013BEE0                 push    ebx
+  .text:0013BEE1                 sub     esp, 18h
+  .text:0013BEE4                 ; variable
+  .text:0013BEE4                 mov     [esp+1Ch+variable], offset tracerSpeed; variable
+  .text:0013BEEB                 call    Cvar_RegisterVariable
+  .text:0013BEF0                 ; variable
+  .text:0013BEF0                 mov     [esp+1Ch+variable], offset tracerOffset; variable
+  .text:0013BEF7                 call    Cvar_RegisterVariable
+  .text:0013BEFC                 ; variable
+  .text:0013BEFC                 mov     [esp+1Ch+variable], offset tracerLength; variable
+  .text:0013BF03                 call    Cvar_RegisterVariable
+  .text:0013BF08                 ; variable
+  .text:0013BF08                 mov     [esp+1Ch+variable], offset tracerRed; variable
+  .text:0013BF0F                 call    Cvar_RegisterVariable
+  .text:0013BF14                 ; variable
+  .text:0013BF14                 mov     [esp+1Ch+variable], offset tracerGreen; variable
+  .text:0013BF1B                 call    Cvar_RegisterVariable
+  .text:0013BF20                 ; variable
+  .text:0013BF20                 mov     [esp+1Ch+variable], offset tracerBlue; variable
+  .text:0013BF27                 call    Cvar_RegisterVariable
+  .text:0013BF2C                 ; variable
+  .text:0013BF2C                 mov     [esp+1Ch+variable], offset tracerAlpha; variable
+  .text:0013BF33                 call    Cvar_RegisterVariable
+  .text:0013BF38                 mov     [esp+1Ch+variable], offset aWeaponsRic1Wav; "weapons/ric1.wav"
+  .text:0013BF3F                 call    S_PrecacheSound
+  .text:0013BF44                 mov     [esp+1Ch+variable], offset aWeaponsRic2Wav; "weapons/ric2.wav"
+  .text:0013BF4B                 mov     ds:cl_sfx_ric1, eax
+  .text:0013BF50                 call    S_PrecacheSound
+  .text:0013BF55                 mov     [esp+1Ch+variable], offset aWeaponsRic3Wav; "weapons/ric3.wav"
+  .text:0013BF5C                 mov     ds:cl_sfx_ric2, eax
+  .text:0013BF61                 call    S_PrecacheSound
+  .text:0013BF66                 mov     [esp+1Ch+variable], offset aWeaponsRic4Wav; "weapons/ric4.wav"
+  .text:0013BF6D                 mov     ds:cl_sfx_ric3, eax
+  .text:0013BF72                 call    S_PrecacheSound
+  .text:0013BF77                 mov     [esp+1Ch+variable], offset aWeaponsRic5Wav; "weapons/ric5.wav"
+  .text:0013BF7E                 mov     ds:cl_sfx_ric4, eax
+  .text:0013BF83                 call    S_PrecacheSound
+  .text:0013BF88                 mov     [esp+1Ch+variable], offset aWeaponsExplode; "weapons/explode3.wav"
+  .text:0013BF8F                 mov     ds:cl_sfx_ric5, eax
+  .text:0013BF94                 call    S_PrecacheSound
+  .text:0013BF99                 mov     [esp+1Ch+variable], offset aWeaponsExplode_0; "weapons/explode4.wav"
+  .text:0013BFA0                 mov     ds:cl_sfx_r_exp1, eax
+  .text:0013BFA5                 call    S_PrecacheSound
+  .text:0013BFAA                 mov     [esp+1Ch+variable], offset aWeaponsExplode_1; "weapons/explode5.wav"
+  .text:0013BFB1                 mov     ds:cl_sfx_r_exp2, eax
+  .text:0013BFB6                 call    S_PrecacheSound
+  .text:0013BFBB                 mov     [esp+1Ch+variable], offset aPlayerPlShell1; "player/pl_shell1.wav"
+  .text:0013BFC2                 mov     ds:cl_sfx_r_exp3, eax
+  .text:0013BFC7                 call    S_PrecacheSound
+  .text:0013BFCC                 mov     [esp+1Ch+variable], offset aPlayerPlShell2; "player/pl_shell2.wav"
+  .text:0013BFD3                 mov     ds:cl_sfx_pl_shell1, eax
+  .text:0013BFD8                 call    S_PrecacheSound
+  .text:0013BFDD                 mov     [esp+1Ch+variable], offset aPlayerPlShell3; "player/pl_shell3.wav"
+  .text:0013BFE4                 mov     ds:cl_sfx_pl_shell2, eax
+  .text:0013BFE9                 call    S_PrecacheSound
+  .text:0013BFEE                 mov     [esp+1Ch+variable], offset aWeaponsSshell1; "weapons/sshell1.wav"
+  .text:0013BFF5                 mov     ds:cl_sfx_pl_shell3, eax
+  .text:0013BFFA                 call    S_PrecacheSound
+  .text:0013BFFF                 mov     [esp+1Ch+variable], offset aWeaponsSshell2; "weapons/sshell2.wav"
+  .text:0013C006                 mov     ds:cl_sfx_sshell1, eax
+  .text:0013C00B                 call    S_PrecacheSound
+  .text:0013C010                 mov     [esp+1Ch+variable], offset aWeaponsSshell3; "weapons/sshell3.wav"
+  .text:0013C017                 mov     ds:cl_sfx_sshell2, eax
+  .text:0013C01C                 call    S_PrecacheSound
+  .text:0013C021                 mov     [esp+1Ch+variable], offset aDebrisWood1Wav; "debris/wood1.wav"
+  .text:0013C028                 mov     ds:cl_sfx_sshell3, eax
+  .text:0013C02D                 call    S_PrecacheSound
+  .text:0013C032                 mov     [esp+1Ch+variable], offset aDebrisWood2Wav; "debris/wood2.wav"
+  .text:0013C039                 mov     ds:cl_sfx_wood1, eax
+  .text:0013C03E                 call    S_PrecacheSound
+  .text:0013C043                 mov     [esp+1Ch+variable], offset aDebrisWood3Wav; "debris/wood3.wav"
+  .text:0013C04A                 mov     ds:cl_sfx_wood2, eax
+  .text:0013C04F                 call    S_PrecacheSound
+  .text:0013C054                 mov     [esp+1Ch+variable], offset aDebrisMetal1Wa; "debris/metal1.wav"
+  .text:0013C05B                 mov     ds:cl_sfx_wood3, eax
+  .text:0013C060                 call    S_PrecacheSound
+  .text:0013C065                 mov     [esp+1Ch+variable], offset aDebrisMetal2Wa; "debris/metal2.wav"
+  .text:0013C06C                 mov     ds:cl_sfx_metal1, eax
+  .text:0013C071                 call    S_PrecacheSound
+  .text:0013C076                 mov     [esp+1Ch+variable], offset aDebrisMetal3Wa; "debris/metal3.wav"
+  .text:0013C07D                 mov     ds:cl_sfx_metal2, eax
+  .text:0013C082                 call    S_PrecacheSound
+  .text:0013C087                 mov     [esp+1Ch+variable], offset aDebrisGlass1Wa; "debris/glass1.wav"
+  .text:0013C08E                 mov     ds:cl_sfx_metal3, eax
+  .text:0013C093                 call    S_PrecacheSound
+  .text:0013C098                 mov     [esp+1Ch+variable], offset aDebrisGlass2Wa; "debris/glass2.wav"
+  .text:0013C09F                 mov     ds:cl_sfx_glass1, eax
+  .text:0013C0A4                 call    S_PrecacheSound
+  .text:0013C0A9                 mov     [esp+1Ch+variable], offset aDebrisGlass3Wa; "debris/glass3.wav"
+  .text:0013C0B0                 mov     ds:cl_sfx_glass2, eax
+  .text:0013C0B5                 call    S_PrecacheSound
+  .text:0013C0BA                 mov     [esp+1Ch+variable], offset aDebrisConcrete; "debris/concrete1.wav"
+  .text:0013C0C1                 mov     ds:cl_sfx_glass3, eax
+  .text:0013C0C6                 call    S_PrecacheSound
+  .text:0013C0CB                 mov     [esp+1Ch+variable], offset aDebrisConcrete_0; "debris/concrete2.wav"
+  .text:0013C0D2                 mov     ds:cl_sfx_concrete1, eax
+  .text:0013C0D7                 call    S_PrecacheSound
+  .text:0013C0DC                 xor     ebx, ebx
+  .text:0013C0DE                 mov     [esp+1Ch+variable], offset aDebrisConcrete_1; "debris/concrete3.wav"
+  .text:0013C0E5                 mov     ds:cl_sfx_concrete2, eax
+  .text:0013C0EA                 call    S_PrecacheSound
+  .text:0013C0EF                 mov     [esp+1Ch+variable], offset aDebrisFlesh1Wa; "debris/flesh1.wav"
+  .text:0013C0F6                 mov     ds:cl_sfx_concrete3, eax
+  .text:0013C0FB                 call    S_PrecacheSound
+  .text:0013C100                 mov     [esp+1Ch+variable], offset aDebrisFlesh2Wa; "debris/flesh2.wav"
+  .text:0013C107                 mov     ds:cl_sfx_flesh1, eax
+  .text:0013C10C                 call    S_PrecacheSound
+  .text:0013C111                 mov     [esp+1Ch+variable], offset aDebrisFlesh3Wa; "debris/flesh3.wav"
+  .text:0013C118                 mov     ds:cl_sfx_flesh2, eax
+  .text:0013C11D                 call    S_PrecacheSound
+  .text:0013C122                 mov     [esp+1Ch+variable], offset aDebrisFlesh5Wa; "debris/flesh5.wav"
+  .text:0013C129                 mov     ds:cl_sfx_flesh3, eax
+  .text:0013C12E                 call    S_PrecacheSound
+  .text:0013C133                 mov     [esp+1Ch+variable], offset aDebrisFlesh6Wa; "debris/flesh6.wav"
+  .text:0013C13A                 mov     ds:cl_sfx_flesh4, eax
+  .text:0013C13F                 call    S_PrecacheSound
+  .text:0013C144                 mov     [esp+1Ch+variable], offset aDebrisFlesh7Wa; "debris/flesh7.wav"
+  .text:0013C14B                 mov     ds:cl_sfx_flesh5, eax
+  .text:0013C150                 call    S_PrecacheSound
+  .text:0013C155                 mov     [esp+1Ch+variable], offset aPlayerGeiger1W; "player/geiger1.wav"
+  .text:0013C15C                 mov     ds:cl_sfx_flesh6, eax
+  .text:0013C161                 call    S_PrecacheSound
+  .text:0013C166                 mov     [esp+1Ch+variable], offset aPlayerGeiger2W; "player/geiger2.wav"
+  .text:0013C16D                 mov     ds:cl_sfx_geiger1, eax
+  .text:0013C172                 call    S_PrecacheSound
+  .text:0013C177                 mov     [esp+1Ch+variable], offset aPlayerGeiger3W; "player/geiger3.wav"
+  .text:0013C17E                 mov     ds:cl_sfx_geiger2, eax
+  .text:0013C183                 call    S_PrecacheSound
+  .text:0013C188                 mov     [esp+1Ch+variable], offset aPlayerGeiger4W; "player/geiger4.wav"
+  .text:0013C18F                 mov     ds:cl_sfx_geiger3, eax
+  .text:0013C194                 call    S_PrecacheSound
+  .text:0013C199                 mov     [esp+1Ch+variable], offset aPlayerGeiger5W; "player/geiger5.wav"
+  .text:0013C1A0                 mov     ds:cl_sfx_geiger4, eax
+  .text:0013C1A5                 call    S_PrecacheSound
+  .text:0013C1AA                 mov     [esp+1Ch+variable], offset aPlayerGeiger6W; "player/geiger6.wav"
+  .text:0013C1B1                 mov     ds:cl_sfx_geiger5, eax
+  .text:0013C1B6                 call    S_PrecacheSound
+  .text:0013C1BB                 ; trackCRC
+  .text:0013C1BB                 mov     [esp+1Ch+trackCRC], ebx; trackCRC
+  .text:0013C1BF                 mov     [esp+1Ch+variable], offset aSpritesDotSpr; "sprites/dot.spr"
+  .text:0013C1C6                 mov     ds:cl_sfx_geiger6, eax
+  .text:0013C1CB                 mov     eax, 1
+  .text:0013C1D0                 ; crash
+  .text:0013C1D0                 mov     [esp+1Ch+crash], eax; crash
+  .text:0013C1D4                 call    Mod_ForName
+  .text:0013C1D9                 ; pModel
+  .text:0013C1D9                 mov     [esp+1Ch+variable], eax; pModel
+  .text:0013C1DC                 mov     ebx, eax
+  .text:0013C1DE                 call    Mod_MarkClient
+  .text:0013C1E3                 xor     eax, eax
+  .text:0013C1E5                 ; trackCRC
+  .text:0013C1E5                 mov     [esp+1Ch+trackCRC], eax; trackCRC
+  .text:0013C1E9                 mov     eax, 1
+  .text:0013C1EE                 ; crash
+  .text:0013C1EE                 mov     [esp+1Ch+crash], eax; crash
+  .text:0013C1F2                 mov     [esp+1Ch+variable], offset aSpritesLgtning; "sprites/lgtning.spr"
+  .text:0013C1F9                 mov     ds:cl_sprite_dot, ebx
+  .text:0013C1FF                 call    Mod_ForName
+  .text:0013C204                 ; pModel
+  .text:0013C204                 mov     [esp+1Ch+variable], eax; pModel
+  .text:0013C207                 mov     ebx, eax
+  .text:0013C209                 call    Mod_MarkClient
+  .text:0013C20E                 xor     eax, eax
+  .text:0013C210                 ; trackCRC
+  .text:0013C210                 mov     [esp+1Ch+trackCRC], eax; trackCRC
+  .text:0013C214                 mov     eax, 1
+  .text:0013C219                 ; crash
+  .text:0013C219                 mov     [esp+1Ch+crash], eax; crash
+  .text:0013C21D                 mov     [esp+1Ch+variable], offset aSpritesWhiteSp; "sprites/white.spr"
+  .text:0013C224                 mov     ds:cl_sprite_lightning, ebx
+  .text:0013C22A                 call    Mod_ForName
+  .text:0013C22F                 ; pModel
+  .text:0013C22F                 mov     [esp+1Ch+variable], eax; pModel
+  .text:0013C232                 mov     ebx, eax
+  .text:0013C234                 call    Mod_MarkClient
+  .text:0013C239                 mov     edx, 1
+  .text:0013C23E                 xor     eax, eax
+  .text:0013C240                 ; crash
+  .text:0013C240                 mov     [esp+1Ch+crash], edx; crash
+  .text:0013C244                 ; trackCRC
+  .text:0013C244                 mov     [esp+1Ch+trackCRC], eax; trackCRC
+  .text:0013C248                 mov     [esp+1Ch+variable], offset aSpritesAnimglo; "sprites/animglow01.spr"
+  .text:0013C24F                 mov     ds:cl_sprite_white, ebx
+  .text:0013C255                 call    Mod_ForName
+  .text:0013C25A                 mov     ebx, eax
+  .text:0013C25C                 ; pModel
+  .text:0013C25C                 mov     [esp+1Ch+variable], eax; pModel
+  .text:0013C25F                 call    Mod_MarkClient
+  .text:0013C264                 xor     ecx, ecx
+  .text:0013C266                 mov     ds:cl_sprite_glow, ebx
+  .text:0013C26C                 mov     ebx, 1
+  .text:0013C271                 ; trackCRC
+  .text:0013C271                 mov     [esp+1Ch+trackCRC], ecx; trackCRC
+  .text:0013C275                 ; crash
+  .text:0013C275                 mov     [esp+1Ch+crash], ebx; crash
+  .text:0013C279                 mov     [esp+1Ch+variable], offset aSpritesMuzzlef; "sprites/muzzleflash1.spr"
+  .text:0013C280                 call    Mod_ForName
+  .text:0013C285                 ; pModel
+  .text:0013C285                 mov     [esp+1Ch+variable], eax; pModel
+  .text:0013C288                 mov     ebx, eax
+  .text:0013C28A                 call    Mod_MarkClient
+  .text:0013C28F                 xor     eax, eax
+  .text:0013C291                 ; trackCRC
+  .text:0013C291                 mov     [esp+1Ch+trackCRC], eax; trackCRC
+  .text:0013C295                 mov     eax, 1
+  .text:0013C29A                 ; crash
+  .text:0013C29A                 mov     [esp+1Ch+crash], eax; crash
+  .text:0013C29E                 mov     [esp+1Ch+variable], offset aSpritesMuzzlef_0; "sprites/muzzleflash2.spr"
+  .text:0013C2A5                 mov     ds:cl_sprite_muzzleflash, ebx
+  .text:0013C2AB                 call    Mod_ForName
+  .text:0013C2B0                 ; pModel
+  .text:0013C2B0                 mov     [esp+1Ch+variable], eax; pModel
+  .text:0013C2B3                 mov     ebx, eax
+  .text:0013C2B5                 call    Mod_MarkClient
+  .text:0013C2BA                 xor     eax, eax
+  .text:0013C2BC                 ; trackCRC
+  .text:0013C2BC                 mov     [esp+1Ch+trackCRC], eax; trackCRC
+  .text:0013C2C0                 mov     eax, 1
+  .text:0013C2C5                 ; crash
+  .text:0013C2C5                 mov     [esp+1Ch+crash], eax; crash
+  .text:0013C2C9                 mov     [esp+1Ch+variable], offset aSpritesMuzzlef_1; "sprites/muzzleflash3.spr"
+  .text:0013C2D0                 mov     ds:cl_sprite_muzzleflash+4, ebx
+  .text:0013C2D6                 call    Mod_ForName
+  .text:0013C2DB                 ; pModel
+  .text:0013C2DB                 mov     [esp+1Ch+variable], eax; pModel
+  .text:0013C2DE                 mov     ebx, eax
+  .text:0013C2E0                 call    Mod_MarkClient
+  .text:0013C2E5                 xor     eax, eax
+  .text:0013C2E7                 ; trackCRC
+  .text:0013C2E7                 mov     [esp+1Ch+trackCRC], eax; trackCRC
+  .text:0013C2EB                 mov     eax, 1
+  .text:0013C2F0                 ; crash
+  .text:0013C2F0                 mov     [esp+1Ch+crash], eax; crash
+  .text:0013C2F4                 mov     [esp+1Ch+variable], offset aSpritesRicho1S; "sprites/richo1.spr"
+  .text:0013C2FB                 mov     ds:cl_sprite_muzzleflash+8, ebx
+  .text:0013C301                 call    Mod_ForName
+  .text:0013C306                 ; pModel
+  .text:0013C306                 mov     [esp+1Ch+variable], eax; pModel
+  .text:0013C309                 mov     ebx, eax
+  .text:0013C30B                 call    Mod_MarkClient
+  .text:0013C310                 xor     edx, edx
+  .text:0013C312                 mov     ecx, 1
+  .text:0013C317                 ; trackCRC
+  .text:0013C317                 mov     [esp+1Ch+trackCRC], edx; trackCRC
+  .text:0013C31B                 ; crash
+  .text:0013C31B                 mov     [esp+1Ch+crash], ecx; crash
+  .text:0013C31F                 mov     [esp+1Ch+variable], offset aSpritesShellch; "sprites/shellchrome.spr"
+  .text:0013C326                 mov     ds:cl_sprite_ricochet, ebx
+  .text:0013C32C                 call    Mod_ForName
+  .text:0013C331                 mov     ebx, eax
+  .text:0013C333                 ; pModel
+  .text:0013C333                 mov     [esp+1Ch+variable], eax; pModel
+  .text:0013C336                 call    Mod_MarkClient
+  .text:0013C33B                 xor     eax, eax
+  .text:0013C33D                 mov     ds:cl_sprite_shell, ebx
+  .text:0013C343                 mov     ebx, 176830h
+  .text:0013C348                 ; fill
+  .text:0013C348                 mov     [esp+1Ch+crash], eax; fill
+  .text:0013C34C                 ; count
+  .text:0013C34C                 mov     [esp+1Ch+trackCRC], ebx; count
+  .text:0013C350                 ; dest
+  .text:0013C350                 mov     [esp+1Ch+variable], offset gTempEnts; dest
+  .text:0013C357                 call    Q_memset
+  .text:0013C35C                 mov     eax, (offset gTempEnts.flags+0BFCh)
+  .text:0013C361                 jmp     short loc_13C370
+  .text:0013C370                 mov     [eax-0BD0h], eax
+  .text:0013C376                 add     eax, 0BFCh
+  .text:0013C37B                 cmp     eax, offset unk_4D6450
+  .text:0013C380                 jnz     short loc_13C370
+  .text:0013C382                 xor     eax, eax
+  .text:0013C384                 mov     edx, offset gTempEnts
+  .text:0013C389                 xor     ecx, ecx
+  .text:0013C38B                 mov     ds:gTempEnts.next+175C34h, eax
+  .text:0013C390                 mov     ds:gpTempEntFree, edx
+  .text:0013C396                 mov     ds:gpTempEntActive, ecx
+  .text:0013C39C                 add     esp, 18h
+  .text:0013C39F                 pop     ebx
+  .text:0013C3A0                 retn
+procedure: |-
+  void CL_InitTEnts()
+  {
+    model_t *v0; // ebx
+    model_t *v1; // ebx
+    model_t *v2; // ebx
+    model_t *v3; // ebx
+    model_t *v4; // ebx
+    model_t *v5; // ebx
+    model_t *v6; // ebx
+    model_t *v7; // ebx
+    model_t *v8; // ebx
+    TEMPENTITY *v9; // eax
+
+    Cvar_RegisterVariable(&tracerSpeed);
+    Cvar_RegisterVariable(&tracerOffset);
+    Cvar_RegisterVariable(&tracerLength);
+    Cvar_RegisterVariable(&tracerRed);
+    Cvar_RegisterVariable(&tracerGreen);
+    Cvar_RegisterVariable(&tracerBlue);
+    Cvar_RegisterVariable(&tracerAlpha);
+    cl_sfx_ric1 = S_PrecacheSound("weapons/ric1.wav");
+    cl_sfx_ric2 = S_PrecacheSound("weapons/ric2.wav");
+    cl_sfx_ric3 = S_PrecacheSound("weapons/ric3.wav");
+    cl_sfx_ric4 = S_PrecacheSound("weapons/ric4.wav");
+    cl_sfx_ric5 = S_PrecacheSound("weapons/ric5.wav");
+    cl_sfx_r_exp1 = S_PrecacheSound("weapons/explode3.wav");
+    cl_sfx_r_exp2 = S_PrecacheSound("weapons/explode4.wav");
+    cl_sfx_r_exp3 = S_PrecacheSound("weapons/explode5.wav");
+    cl_sfx_pl_shell1 = S_PrecacheSound("player/pl_shell1.wav");
+    cl_sfx_pl_shell2 = S_PrecacheSound("player/pl_shell2.wav");
+    cl_sfx_pl_shell3 = S_PrecacheSound("player/pl_shell3.wav");
+    cl_sfx_sshell1 = S_PrecacheSound("weapons/sshell1.wav");
+    cl_sfx_sshell2 = S_PrecacheSound("weapons/sshell2.wav");
+    cl_sfx_sshell3 = S_PrecacheSound("weapons/sshell3.wav");
+    cl_sfx_wood1 = S_PrecacheSound("debris/wood1.wav");
+    cl_sfx_wood2 = S_PrecacheSound("debris/wood2.wav");
+    cl_sfx_wood3 = S_PrecacheSound("debris/wood3.wav");
+    cl_sfx_metal1 = S_PrecacheSound("debris/metal1.wav");
+    cl_sfx_metal2 = S_PrecacheSound("debris/metal2.wav");
+    cl_sfx_metal3 = S_PrecacheSound("debris/metal3.wav");
+    cl_sfx_glass1 = S_PrecacheSound("debris/glass1.wav");
+    cl_sfx_glass2 = S_PrecacheSound("debris/glass2.wav");
+    cl_sfx_glass3 = S_PrecacheSound("debris/glass3.wav");
+    cl_sfx_concrete1 = S_PrecacheSound("debris/concrete1.wav");
+    cl_sfx_concrete2 = S_PrecacheSound("debris/concrete2.wav");
+    cl_sfx_concrete3 = S_PrecacheSound("debris/concrete3.wav");
+    cl_sfx_flesh1 = S_PrecacheSound("debris/flesh1.wav");
+    cl_sfx_flesh2 = S_PrecacheSound("debris/flesh2.wav");
+    cl_sfx_flesh3 = S_PrecacheSound("debris/flesh3.wav");
+    cl_sfx_flesh4 = S_PrecacheSound("debris/flesh5.wav");
+    cl_sfx_flesh5 = S_PrecacheSound("debris/flesh6.wav");
+    cl_sfx_flesh6 = S_PrecacheSound("debris/flesh7.wav");
+    cl_sfx_geiger1 = S_PrecacheSound("player/geiger1.wav");
+    cl_sfx_geiger2 = S_PrecacheSound("player/geiger2.wav");
+    cl_sfx_geiger3 = S_PrecacheSound("player/geiger3.wav");
+    cl_sfx_geiger4 = S_PrecacheSound("player/geiger4.wav");
+    cl_sfx_geiger5 = S_PrecacheSound("player/geiger5.wav");
+    cl_sfx_geiger6 = S_PrecacheSound("player/geiger6.wav");
+    v0 = Mod_ForName("sprites/dot.spr", true, false);
+    Mod_MarkClient(v0);
+    cl_sprite_dot = v0;
+    v1 = Mod_ForName("sprites/lgtning.spr", true, false);
+    Mod_MarkClient(v1);
+    cl_sprite_lightning = v1;
+    v2 = Mod_ForName("sprites/white.spr", true, false);
+    Mod_MarkClient(v2);
+    cl_sprite_white = v2;
+    v3 = Mod_ForName("sprites/animglow01.spr", true, false);
+    Mod_MarkClient(v3);
+    cl_sprite_glow = v3;
+    v4 = Mod_ForName("sprites/muzzleflash1.spr", true, false);
+    Mod_MarkClient(v4);
+    cl_sprite_muzzleflash[0] = v4;
+    v5 = Mod_ForName("sprites/muzzleflash2.spr", true, false);
+    Mod_MarkClient(v5);
+    cl_sprite_muzzleflash[1] = v5;
+    v6 = Mod_ForName("sprites/muzzleflash3.spr", true, false);
+    Mod_MarkClient(v6);
+    cl_sprite_muzzleflash[2] = v6;
+    v7 = Mod_ForName("sprites/richo1.spr", true, false);
+    Mod_MarkClient(v7);
+    cl_sprite_ricochet = v7;
+    v8 = Mod_ForName("sprites/shellchrome.spr", true, false);
+    Mod_MarkClient(v8);
+    cl_sprite_shell = v8;
+    Q_memset(gTempEnts, 0, 1534000);
+    v9 = &gTempEnts[1];
+    do
+    {
+      v9[-1].next = (tempent_s *)v9;
+      ++v9;
+    }
+    while ( v9 != (TEMPENTITY *)&unk_4D6450 );
+    gTempEnts[499].next = nullptr;
+    gpTempEntFree = gTempEnts;
+    gpTempEntActive = nullptr;
+  }

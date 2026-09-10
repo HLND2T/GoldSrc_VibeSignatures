@@ -1,0 +1,277 @@
+func_name: "CL_InitTEnts"
+func_va: "0x1d3c33e"
+disasm_code: |-
+  .text:01D3C33E                 push    ebp
+  .text:01D3C33F                 mov     ebp, esp
+  .text:01D3C341                 push    offset off_1EB0320; "tracerspeed"
+  .text:01D3C346                 call    sub_1D4D48B
+  .text:01D3C34B                 add     esp, 4
+  .text:01D3C34E                 push    offset off_1EB0338; "traceroffset"
+  .text:01D3C353                 call    sub_1D4D48B
+  .text:01D3C358                 add     esp, 4
+  .text:01D3C35B                 push    offset off_1EB0350; "tracerlength"
+  .text:01D3C360                 call    sub_1D4D48B
+  .text:01D3C365                 add     esp, 4
+  .text:01D3C368                 push    offset off_1EB0368; "tracerred"
+  .text:01D3C36D                 call    sub_1D4D48B
+  .text:01D3C372                 add     esp, 4
+  .text:01D3C375                 push    offset off_1EB0380; "tracergreen"
+  .text:01D3C37A                 call    sub_1D4D48B
+  .text:01D3C37F                 add     esp, 4
+  .text:01D3C382                 push    offset off_1EB0398; "tracerblue"
+  .text:01D3C387                 call    sub_1D4D48B
+  .text:01D3C38C                 add     esp, 4
+  .text:01D3C38F                 push    offset off_1EB03B0; "traceralpha"
+  .text:01D3C394                 call    sub_1D4D48B
+  .text:01D3C399                 add     esp, 4
+  .text:01D3C39C                 push    offset aWeaponsRic1Wav; "weapons/ric1.wav"
+  .text:01D3C3A1                 call    sub_1DC8700
+  .text:01D3C3A6                 add     esp, 4
+  .text:01D3C3A9                 mov     dword_2D7DA98, eax
+  .text:01D3C3AE                 push    offset aWeaponsRic2Wav; "weapons/ric2.wav"
+  .text:01D3C3B3                 call    sub_1DC8700
+  .text:01D3C3B8                 add     esp, 4
+  .text:01D3C3BB                 mov     dword_2D7DAA0, eax
+  .text:01D3C3C0                 push    offset aWeaponsRic3Wav; "weapons/ric3.wav"
+  .text:01D3C3C5                 call    sub_1DC8700
+  .text:01D3C3CA                 add     esp, 4
+  .text:01D3C3CD                 mov     dword_2D7DA9C, eax
+  .text:01D3C3D2                 push    offset aWeaponsRic4Wav; "weapons/ric4.wav"
+  .text:01D3C3D7                 call    sub_1DC8700
+  .text:01D3C3DC                 add     esp, 4
+  .text:01D3C3DF                 mov     dword_2D7DA94, eax
+  .text:01D3C3E4                 push    offset aWeaponsRic5Wav; "weapons/ric5.wav"
+  .text:01D3C3E9                 call    sub_1DC8700
+  .text:01D3C3EE                 add     esp, 4
+  .text:01D3C3F1                 mov     dword_2D7DA90, eax
+  .text:01D3C3F6                 push    offset aWeaponsExplode; "weapons/explode3.wav"
+  .text:01D3C3FB                 call    sub_1DC8700
+  .text:01D3C400                 add     esp, 4
+  .text:01D3C403                 mov     dword_2D7DA5C, eax
+  .text:01D3C408                 push    offset aWeaponsExplode_0; "weapons/explode4.wav"
+  .text:01D3C40D                 call    sub_1DC8700
+  .text:01D3C412                 add     esp, 4
+  .text:01D3C415                 mov     dword_2D7DA60, eax
+  .text:01D3C41A                 push    offset aWeaponsExplode_1; "weapons/explode5.wav"
+  .text:01D3C41F                 call    sub_1DC8700
+  .text:01D3C424                 add     esp, 4
+  .text:01D3C427                 mov     dword_2D7DA64, eax
+  .text:01D3C42C                 push    offset aPlayerPlShell1; "player/pl_shell1.wav"
+  .text:01D3C431                 call    sub_1DC8700
+  .text:01D3C436                 add     esp, 4
+  .text:01D3C439                 mov     dword_2D7DA88, eax
+  .text:01D3C43E                 push    offset aPlayerPlShell2; "player/pl_shell2.wav"
+  .text:01D3C443                 call    sub_1DC8700
+  .text:01D3C448                 add     esp, 4
+  .text:01D3C44B                 mov     dword_2D7DA84, eax
+  .text:01D3C450                 push    offset aPlayerPlShell3; "player/pl_shell3.wav"
+  .text:01D3C455                 call    sub_1DC8700
+  .text:01D3C45A                 add     esp, 4
+  .text:01D3C45D                 mov     dword_2D7DA8C, eax
+  .text:01D3C462                 push    offset aWeaponsSshell1; "weapons/sshell1.wav"
+  .text:01D3C467                 call    sub_1DC8700
+  .text:01D3C46C                 add     esp, 4
+  .text:01D3C46F                 mov     dword_2D7DAB8, eax
+  .text:01D3C474                 push    offset aWeaponsSshell2; "weapons/sshell2.wav"
+  .text:01D3C479                 call    sub_1DC8700
+  .text:01D3C47E                 add     esp, 4
+  .text:01D3C481                 mov     dword_2D7DAB0, eax
+  .text:01D3C486                 push    offset aWeaponsSshell3; "weapons/sshell3.wav"
+  .text:01D3C48B                 call    sub_1DC8700
+  .text:01D3C490                 add     esp, 4
+  .text:01D3C493                 mov     dword_2D7DAA8, eax
+  .text:01D3C498                 push    offset aDebrisWood1Wav; "debris/wood1.wav"
+  .text:01D3C49D                 call    sub_1DC8700
+  .text:01D3C4A2                 add     esp, 4
+  .text:01D3C4A5                 mov     dword_2D7DAE8, eax
+  .text:01D3C4AA                 push    offset aDebrisWood2Wav; "debris/wood2.wav"
+  .text:01D3C4AF                 call    sub_1DC8700
+  .text:01D3C4B4                 add     esp, 4
+  .text:01D3C4B7                 mov     dword_2D7DAE4, eax
+  .text:01D3C4BC                 push    offset aDebrisWood3Wav; "debris/wood3.wav"
+  .text:01D3C4C1                 call    sub_1DC8700
+  .text:01D3C4C6                 add     esp, 4
+  .text:01D3C4C9                 mov     dword_2D7DAEC, eax
+  .text:01D3C4CE                 push    offset aDebrisMetal1Wa; "debris/metal1.wav"
+  .text:01D3C4D3                 call    sub_1DC8700
+  .text:01D3C4D8                 add     esp, 4
+  .text:01D3C4DB                 mov     dword_2D7DAC0, eax
+  .text:01D3C4E0                 push    offset aDebrisMetal2Wa; "debris/metal2.wav"
+  .text:01D3C4E5                 call    sub_1DC8700
+  .text:01D3C4EA                 add     esp, 4
+  .text:01D3C4ED                 mov     dword_2D7DAC4, eax
+  .text:01D3C4F2                 push    offset aDebrisMetal3Wa; "debris/metal3.wav"
+  .text:01D3C4F7                 call    sub_1DC8700
+  .text:01D3C4FC                 add     esp, 4
+  .text:01D3C4FF                 mov     dword_2D7DAC8, eax
+  .text:01D3C504                 push    offset aDebrisGlass1Wa; "debris/glass1.wav"
+  .text:01D3C509                 call    sub_1DC8700
+  .text:01D3C50E                 add     esp, 4
+  .text:01D3C511                 mov     dword_2D7DAAC, eax
+  .text:01D3C516                 push    offset aDebrisGlass2Wa; "debris/glass2.wav"
+  .text:01D3C51B                 call    sub_1DC8700
+  .text:01D3C520                 add     esp, 4
+  .text:01D3C523                 mov     dword_2D7DAB4, eax
+  .text:01D3C528                 push    offset aDebrisGlass3Wa; "debris/glass3.wav"
+  .text:01D3C52D                 call    sub_1DC8700
+  .text:01D3C532                 add     esp, 4
+  .text:01D3C535                 mov     dword_2D7DABC, eax
+  .text:01D3C53A                 push    offset aDebrisConcrete; "debris/concrete1.wav"
+  .text:01D3C53F                 call    sub_1DC8700
+  .text:01D3C544                 add     esp, 4
+  .text:01D3C547                 mov     dword_2D7DAD4, eax
+  .text:01D3C54C                 push    offset aDebrisConcrete_0; "debris/concrete2.wav"
+  .text:01D3C551                 call    sub_1DC8700
+  .text:01D3C556                 add     esp, 4
+  .text:01D3C559                 mov     dword_2D7DAD8, eax
+  .text:01D3C55E                 push    offset aDebrisConcrete_1; "debris/concrete3.wav"
+  .text:01D3C563                 call    sub_1DC8700
+  .text:01D3C568                 add     esp, 4
+  .text:01D3C56B                 mov     dword_2D7DAD0, eax
+  .text:01D3C570                 push    offset aDebrisFlesh1Wa; "debris/flesh1.wav"
+  .text:01D3C575                 call    sub_1DC8700
+  .text:01D3C57A                 add     esp, 4
+  .text:01D3C57D                 mov     dword_2D7DA6C, eax
+  .text:01D3C582                 push    offset aDebrisFlesh2Wa; "debris/flesh2.wav"
+  .text:01D3C587                 call    sub_1DC8700
+  .text:01D3C58C                 add     esp, 4
+  .text:01D3C58F                 mov     dword_2D7DA70, eax
+  .text:01D3C594                 push    offset aDebrisFlesh3Wa; "debris/flesh3.wav"
+  .text:01D3C599                 call    sub_1DC8700
+  .text:01D3C59E                 add     esp, 4
+  .text:01D3C5A1                 mov     dword_2D7DA74, eax
+  .text:01D3C5A6                 push    offset aDebrisFlesh5Wa; "debris/flesh5.wav"
+  .text:01D3C5AB                 call    sub_1DC8700
+  .text:01D3C5B0                 add     esp, 4
+  .text:01D3C5B3                 mov     dword_2D7DA78, eax
+  .text:01D3C5B8                 push    offset aDebrisFlesh6Wa; "debris/flesh6.wav"
+  .text:01D3C5BD                 call    sub_1DC8700
+  .text:01D3C5C2                 add     esp, 4
+  .text:01D3C5C5                 mov     dword_2D7DA7C, eax
+  .text:01D3C5CA                 push    offset aDebrisFlesh7Wa; "debris/flesh7.wav"
+  .text:01D3C5CF                 call    sub_1DC8700
+  .text:01D3C5D4                 add     esp, 4
+  .text:01D3C5D7                 mov     dword_2D7DA80, eax
+  .text:01D3C5DC                 push    offset aPlayerGeiger1W; "player/geiger1.wav"
+  .text:01D3C5E1                 call    sub_1DC8700
+  .text:01D3C5E6                 add     esp, 4
+  .text:01D3C5E9                 mov     dword_2D7DA54, eax
+  .text:01D3C5EE                 push    offset aPlayerGeiger2W; "player/geiger2.wav"
+  .text:01D3C5F3                 call    sub_1DC8700
+  .text:01D3C5F8                 add     esp, 4
+  .text:01D3C5FB                 mov     dword_2D7DA58, eax
+  .text:01D3C600                 push    offset aPlayerGeiger3W; "player/geiger3.wav"
+  .text:01D3C605                 call    sub_1DC8700
+  .text:01D3C60A                 add     esp, 4
+  .text:01D3C60D                 mov     dword_2D7DA4C, eax
+  .text:01D3C612                 push    offset aPlayerGeiger4W; "player/geiger4.wav"
+  .text:01D3C617                 call    sub_1DC8700
+  .text:01D3C61C                 add     esp, 4
+  .text:01D3C61F                 mov     dword_2D7DA50, eax
+  .text:01D3C624                 push    offset aPlayerGeiger5W; "player/geiger5.wav"
+  .text:01D3C629                 call    sub_1DC8700
+  .text:01D3C62E                 add     esp, 4
+  .text:01D3C631                 mov     dword_2D7DA44, eax
+  .text:01D3C636                 push    offset aPlayerGeiger6W; "player/geiger6.wav"
+  .text:01D3C63B                 call    sub_1DC8700
+  .text:01D3C640                 add     esp, 4
+  .text:01D3C643                 mov     dword_2D7DA48, eax
+  .text:01D3C648                 push    offset aSpritesDotSpr; "sprites/dot.spr"
+  .text:01D3C64D                 call    sub_1D3C314
+  .text:01D3C652                 add     esp, 4
+  .text:01D3C655                 mov     dword_2D7DA68, eax
+  .text:01D3C65A                 push    offset aSpritesLgtning; "sprites/lgtning.spr"
+  .text:01D3C65F                 call    sub_1D3C314
+  .text:01D3C664                 add     esp, 4
+  .text:01D3C667                 mov     dword_2D7DA40, eax
+  .text:01D3C66C                 push    offset aSpritesWhiteSp; "sprites/white.spr"
+  .text:01D3C671                 call    sub_1D3C314
+  .text:01D3C676                 add     esp, 4
+  .text:01D3C679                 mov     dword_2D7DADC, eax
+  .text:01D3C67E                 push    offset aSpritesAnimglo; "sprites/animglow01.spr"
+  .text:01D3C683                 call    sub_1D3C314
+  .text:01D3C688                 add     esp, 4
+  .text:01D3C68B                 mov     dword_2D7DAF0, eax
+  .text:01D3C690                 push    offset aSpritesMuzzlef; "sprites/muzzleflash1.spr"
+  .text:01D3C695                 call    sub_1D3C314
+  .text:01D3C69A                 add     esp, 4
+  .text:01D3C69D                 mov     dword_2D7DA30, eax
+  .text:01D3C6A2                 push    offset aSpritesMuzzlef_0; "sprites/muzzleflash2.spr"
+  .text:01D3C6A7                 call    sub_1D3C314
+  .text:01D3C6AC                 add     esp, 4
+  .text:01D3C6AF                 mov     dword_2D7DA34, eax
+  .text:01D3C6B4                 push    offset aSpritesMuzzlef_1; "sprites/muzzleflash3.spr"
+  .text:01D3C6B9                 call    sub_1D3C314
+  .text:01D3C6BE                 add     esp, 4
+  .text:01D3C6C1                 mov     dword_2D7DA38, eax
+  .text:01D3C6C6                 push    offset aSpritesRicho1S; "sprites/richo1.spr"
+  .text:01D3C6CB                 call    sub_1D3C314
+  .text:01D3C6D0                 add     esp, 4
+  .text:01D3C6D3                 mov     dword_2D7DAA4, eax
+  .text:01D3C6D8                 push    offset aSpritesShellch; "sprites/shellchrome.spr"
+  .text:01D3C6DD                 call    sub_1D3C314
+  .text:01D3C6E2                 add     esp, 4
+  .text:01D3C6E5                 mov     cl_sprite_shell, eax
+  .text:01D3C6EA                 call    CL_TempEntInit; Verified CL_TempEntInit: zero the complete 500-entry pool (3068 bytes each), link next pointers, terminate the last next pointer, and reset free/active list heads. The first memset argument is gTempEnts, not its next member or a pointer slot.
+  .text:01D3C6EF                 pop     ebp
+  .text:01D3C6F0                 retn
+procedure: |-
+  // CoF keeps CL_TentModel and CL_TempEntInit out of line, unlike the canonical Half-Life reference. The last call initializes the temporary entity free list after precaching the chrome sprite.
+  void __cdecl CL_InitTEnts()
+  {
+    sub_1D4D48B(off_1EB0320);
+    sub_1D4D48B(off_1EB0338);
+    sub_1D4D48B(off_1EB0350);
+    sub_1D4D48B(off_1EB0368);
+    sub_1D4D48B(off_1EB0380);
+    sub_1D4D48B(off_1EB0398);
+    sub_1D4D48B(off_1EB03B0);
+    dword_2D7DA98 = sub_1DC8700(aWeaponsRic1Wav);
+    dword_2D7DAA0 = sub_1DC8700(aWeaponsRic2Wav);
+    dword_2D7DA9C = sub_1DC8700(aWeaponsRic3Wav);
+    dword_2D7DA94 = sub_1DC8700(aWeaponsRic4Wav);
+    dword_2D7DA90 = sub_1DC8700(aWeaponsRic5Wav);
+    dword_2D7DA5C = sub_1DC8700(aWeaponsExplode);
+    dword_2D7DA60 = sub_1DC8700(aWeaponsExplode_0);
+    dword_2D7DA64 = sub_1DC8700(aWeaponsExplode_1);
+    dword_2D7DA88 = sub_1DC8700(aPlayerPlShell1);
+    dword_2D7DA84 = sub_1DC8700(aPlayerPlShell2);
+    dword_2D7DA8C = sub_1DC8700(aPlayerPlShell3);
+    dword_2D7DAB8 = sub_1DC8700(aWeaponsSshell1);
+    dword_2D7DAB0 = sub_1DC8700(aWeaponsSshell2);
+    dword_2D7DAA8 = sub_1DC8700(aWeaponsSshell3);
+    dword_2D7DAE8 = sub_1DC8700(aDebrisWood1Wav);
+    dword_2D7DAE4 = sub_1DC8700(aDebrisWood2Wav);
+    dword_2D7DAEC = sub_1DC8700(aDebrisWood3Wav);
+    dword_2D7DAC0 = sub_1DC8700(aDebrisMetal1Wa);
+    dword_2D7DAC4 = sub_1DC8700(aDebrisMetal2Wa);
+    dword_2D7DAC8 = sub_1DC8700(aDebrisMetal3Wa);
+    dword_2D7DAAC = sub_1DC8700(aDebrisGlass1Wa);
+    dword_2D7DAB4 = sub_1DC8700(aDebrisGlass2Wa);
+    dword_2D7DABC = sub_1DC8700(aDebrisGlass3Wa);
+    dword_2D7DAD4 = sub_1DC8700(aDebrisConcrete);
+    dword_2D7DAD8 = sub_1DC8700(aDebrisConcrete_0);
+    dword_2D7DAD0 = sub_1DC8700(aDebrisConcrete_1);
+    dword_2D7DA6C = sub_1DC8700(aDebrisFlesh1Wa);
+    dword_2D7DA70 = sub_1DC8700(aDebrisFlesh2Wa);
+    dword_2D7DA74 = sub_1DC8700(aDebrisFlesh3Wa);
+    dword_2D7DA78 = sub_1DC8700(aDebrisFlesh5Wa);
+    dword_2D7DA7C = sub_1DC8700(aDebrisFlesh6Wa);
+    dword_2D7DA80 = sub_1DC8700(aDebrisFlesh7Wa);
+    dword_2D7DA54 = sub_1DC8700(aPlayerGeiger1W);
+    dword_2D7DA58 = sub_1DC8700(aPlayerGeiger2W);
+    dword_2D7DA4C = sub_1DC8700(aPlayerGeiger3W);
+    dword_2D7DA50 = sub_1DC8700(aPlayerGeiger4W);
+    dword_2D7DA44 = sub_1DC8700(aPlayerGeiger5W);
+    dword_2D7DA48 = sub_1DC8700(aPlayerGeiger6W);
+    dword_2D7DA68 = sub_1D3C314(aSpritesDotSpr);
+    dword_2D7DA40 = sub_1D3C314(aSpritesLgtning);
+    dword_2D7DADC = sub_1D3C314(aSpritesWhiteSp);
+    *(_DWORD *)dword_2D7DAF0 = sub_1D3C314(aSpritesAnimglo);
+    dword_2D7DA30 = sub_1D3C314(aSpritesMuzzlef);
+    dword_2D7DA34 = sub_1D3C314(aSpritesMuzzlef_0);
+    dword_2D7DA38 = sub_1D3C314(aSpritesMuzzlef_1);
+    dword_2D7DAA4 = sub_1D3C314(aSpritesRicho1S);
+    cl_sprite_shell = sub_1D3C314(aSpritesShellch);
+    CL_TempEntInit();
+  }

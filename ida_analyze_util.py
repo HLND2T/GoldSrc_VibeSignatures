@@ -916,6 +916,19 @@ def _recover_function_entry(entry_ea, anchor_ea, expected_end, expected_signatur
         return None
     return _verified_entry_function(entry, anchor, expected_end, expected_signature)
 
+def _has_data_entry_reference(entry):
+    if not _is_executable_address(entry):
+        return False
+    for xref in idautils.XrefsTo(int(entry), 0):
+        source = int(xref.frm)
+        segment = ida_segment.getseg(source)
+        if segment is None or int(getattr(segment, 'perm', 0)) & int(getattr(idaapi, 'SEGPERM_EXEC', 4)):
+            continue
+        raw = ida_bytes.get_bytes(source, 4)
+        if raw and len(raw) == 4 and int.from_bytes(raw, 'little') == int(entry):
+            return True
+    return False
+
 def _ensure_function_owner(anchor_ea, expected_entry=None, expected_end=None, expected_signature=None):
     anchor = int(anchor_ea)
     existing = ida_funcs.get_func(anchor)
@@ -928,6 +941,11 @@ def _ensure_function_owner(anchor_ea, expected_entry=None, expected_end=None, ex
         return None if recovered is None else _function_payload(recovered, True, 'expected_entry')
     if existing is not None and int(existing.start_ea) < anchor:
         return _function_payload(existing, False, 'existing_owner')
+    # A vtable/function-pointer initializer proves an existing callable entry.
+    # Virtual-only functions need not have a direct CALL; nearby direct-call
+    # candidates must not merge or reject this independently referenced entry.
+    if existing is not None and int(existing.start_ea) == anchor and _has_data_entry_reference(anchor):
+        return _function_payload(existing, False, 'data_referenced_entry')
     lower_bound = max(0, anchor - FUNCTION_RECOVERY_BACKTRACK_LIMIT)
     candidates = _direct_call_entry_candidates(anchor, lower_bound)
     if existing is not None and int(existing.start_ea) == anchor and candidates in (set(), {anchor}):
@@ -996,6 +1014,20 @@ def _address_candidates(values):
         start = _function_start(int(value))
         if start is not None:
             found.add(start)
+    return found
+
+def _exact_function_candidates(values):
+    # exclude_funcs comes from current function artifacts. Honor those exact
+    # callable entries; owner backtracking here can discard the exclusion when
+    # an unrelated preceding function also has direct-call references.
+    found = set()
+    for value in values or ():
+        ea = _named_ea(value)
+        if ea is None or not _is_executable_address(ea):
+            continue
+        function = ida_funcs.get_func(ea)
+        if function is not None and int(function.start_ea) == int(ea):
+            found.add(int(ea))
     return found
 
 def _string_items():
@@ -1283,8 +1315,7 @@ for value in spec.get('exclude_strings') or []:
     excluded.update(_string_candidates(value))
 for value in spec.get('exclude_gvs') or []:
     excluded.update(_named_candidates(value))
-for value in spec.get('exclude_funcs') or []:
-    excluded.update(_address_candidates([_named_ea(value)]))
+excluded.update(_exact_function_candidates(spec.get('exclude_funcs')))
 for value in spec.get('exclude_callees') or []:
     excluded.update(_named_candidates(value))
 excluded.update(_address_candidates(spec.get('exclude_signature_eas')))
@@ -2632,7 +2663,64 @@ def _prepare_llm_context(spec, llm_config, new_binary_dir, platform, *, dependen
     }
 
 
-_INSPECT_LLM_INSTRUCTION_PY_EVAL = r"""
+_ADDRESS_FLOW_RESOLVER = r"""
+def address_write_register(register, is_byte):
+    # IDA numbers AH..BH as 4..7; they alias EAX..EBX, not ESP..EDI.
+    return register - 4 if is_byte and 4 <= register <= 7 else register
+
+def decode_address_load(raw):
+    if raw is None or len(raw) != 6 or raw[0] not in (0x8b, 0x8d):
+        return None
+    modrm = raw[1]
+    if modrm >> 6 != 2 or modrm & 7 == 4:
+        return None
+    return modrm & 7, int.from_bytes(raw[2:], 'little')
+
+def reachable_address_graph(graph, entry):
+    reachable = {entry} if entry in graph else set()
+    while True:
+        expanded = reachable | {block for block, data in graph.items()
+                                if any(parent in reachable for parent in data['preds'])}
+        if expanded == reachable:
+            break
+        reachable = expanded
+    return {block: {'preds': [parent for parent in data['preds'] if parent in reachable],
+                    'writes': data['writes']}
+            for block, data in graph.items() if block in reachable}
+
+def resolve_address_flow(graph, block, stop, register, visiting=frozenset()):
+    state = (block, stop, register)
+    if state in visiting or len(visiting) >= 128 or block not in graph:
+        return None
+    visiting = visiting | {state}
+    writes = graph[block]['writes']
+    for index in range(stop - 1, -1, -1):
+        if register not in writes[index]:
+            continue
+        definition = writes[index][register]
+        if definition is None:
+            return None
+        kind, value = definition
+        if kind == 'constant':
+            return value
+        if kind == 'register':
+            return resolve_address_flow(graph, block, index, value, visiting)
+        return None
+    predecessors = graph[block]['preds']
+    if not predecessors:
+        return None
+    values = [resolve_address_flow(graph, parent, len(graph[parent]['writes']), register, visiting)
+              for parent in predecessors if parent in graph]
+    if len(values) != len(predecessors) or any(value is None for value in values):
+        return None
+    return values[0] if len(set(values)) == 1 else None
+globals()['resolve_address_flow'] = resolve_address_flow
+"""
+
+
+_INSPECT_LLM_INSTRUCTION_PY_EVAL = (
+    _ADDRESS_FLOW_RESOLVER
+    + r"""
 import ida_bytes, ida_fixup, ida_funcs, ida_lines, ida_segment, ida_ua, idaapi, idautils, idc, json
 ea = EA_PLACEHOLDER
 pointer_size = 8 if idaapi.inf_is_64bit() else 4
@@ -2668,6 +2756,65 @@ if size:
             operand_dwords.append(None if dword == idaapi.BADADDR else hex(int(dword)))
         else:
             operand_dwords.append(None)
+computed_targets = []
+# An ELF compiler may reuse an address register for LEA or a memory load.
+# Resolve only an unindexed 32-bit address whose reaching definition is
+# identical along every CFG predecessor. Unknown writes and cycles fail closed.
+if (size == 6 and func is not None
+        and insn.ops[1].type == ida_ua.o_displ and insn.ops[1].offb == 2
+        and not list(idautils.DataRefsFrom(ea))):
+    import ida_gdl
+    address_load = decode_address_load(ida_bytes.get_bytes(ea, size))
+    if address_load is not None:
+        graph = {}
+        selected = None
+        entry_block = None
+        for block in ida_gdl.FlowChart(func):
+            if block.start_ea == func.start_ea:
+                entry_block = block.id
+            writes = []
+            for address in idautils.Heads(block.start_ea, block.end_ea):
+                if address == ea:
+                    selected = (block.id, len(writes))
+                decoded = idautils.DecodeInstruction(address)
+                if decoded is None:
+                    writes.append({reg: None for reg in range(8)})
+                    continue
+                mnemonic = idc.print_insn_mnem(address).lower()
+                changed = {}
+                if mnemonic == 'call':
+                    changed = {reg: None for reg in (0, 1, 2)}
+                elif mnemonic in ('mov', 'lea', 'pop', 'add', 'sub', 'xor', 'and', 'or', 'inc', 'dec', 'shl', 'shr', 'sar') or (mnemonic == 'imul' and decoded.ops[1].type != ida_ua.o_void):
+                    dest, source = decoded.ops[0], decoded.ops[1]
+                    if dest.type == ida_ua.o_reg:
+                        destination = address_write_register(dest.reg, dest.dtype == ida_ua.dt_byte)
+                        changed[destination] = None
+                        if dest.dtype != ida_ua.dt_dword:
+                            pass
+                        elif mnemonic == 'mov' and source.type == ida_ua.o_reg:
+                            changed[destination] = ('register', source.reg)
+                        elif mnemonic == 'mov' and source.type == ida_ua.o_imm:
+                            changed[destination] = ('constant', int(source.value) & 0xffffffff)
+                        elif mnemonic == 'lea':
+                            refs = {int(value) for value in idautils.DataRefsFrom(address)
+                                    if 0 <= value <= 0xffffffff and ida_segment.getseg(value) is not None}
+                            if len(refs) == 1:
+                                changed[destination] = ('constant', refs.pop())
+                elif not (mnemonic.startswith('j') or mnemonic.startswith('ret')
+                          or mnemonic in ('push', 'cmp', 'test', 'nop')):
+                    changed = {reg: None for reg in range(8)}
+                writes.append(changed)
+            graph[block.id] = {'preds': [parent.id for parent in block.preds()], 'writes': writes}
+        if selected is not None:
+            # IDA may leave a disconnected post-noreturn jump as a predecessor.
+            # It cannot carry a value from this function's callable entry.
+            graph = reachable_address_graph(graph, entry_block)
+            base = resolve_address_flow(graph, selected[0], selected[1], address_load[0])
+            if base is not None:
+                target = (base + address_load[1]) & 0xffffffff
+                segment = ida_segment.getseg(target)
+                if segment is not None and not (segment.perm & ida_segment.SEGPERM_EXEC):
+                    computed_targets.append(hex(target))
 result = json.dumps({
     'pointer_size': pointer_size,
     'size': int(size or 0),
@@ -2676,14 +2823,18 @@ result = json.dumps({
     'line': ida_lines.tag_remove(idc.generate_disasm_line(ea, 0) or '').split(';', 1)[0].strip(),
     'mnemonic': idc.print_insn_mnem(ea) or '',
     'code_refs': [hex(int(value)) for value in idautils.CodeRefsFrom(ea, 0)],
-    'data_refs': [hex(int(value)) for value in idautils.DataRefsFrom(ea)],
-    'operand_targets': [hex(value) for value in operand_targets],
+    # DataRefsFrom also includes IDA's synthetic type/member IDs. Only mapped
+    # x86 addresses can identify runtime data; preserve all genuine candidates.
+    'data_refs': [hex(int(value)) for value in idautils.DataRefsFrom(ea)
+                  if 0 <= int(value) <= 0xFFFFFFFF and ida_segment.getseg(int(value)) is not None],
+    'operand_targets': [hex(value) for value in operand_targets] + computed_targets,
     'displacements': [hex(value) for value in displacements],
     'operand_offsets': operand_offsets,
     'operand_pic': operand_pic,
     'operand_dwords': operand_dwords,
 })
 """
+)
 
 
 def _gv_resolution_fields(detail, gv_va, image_base, displacement=None, *, platform="linux"):
@@ -2986,6 +3137,26 @@ def _llm_entry_instruction_is_valid(entry, detail, target_ranges, rules):
     return not rules or any(re.fullmatch(rule["regex"], line) is not None for rule in rules)
 
 
+def _llm_global_targets(detail):
+    """Prefer encoded absolute targets over IDA's offset-expression base xrefs.
+
+    PIC operands still need resolved data xrefs. Multiple encoded targets stay
+    ambiguous; an instruction with two real addresses cannot pick either one.
+    """
+    operands = list(dict.fromkeys(detail.get("operand_targets") or ()))
+    candidates = list(dict.fromkeys((detail.get("data_refs") or []) + operands))
+    pic_flags = detail.get("operand_pic") or ()
+    if any(pic_flags):
+        return candidates
+    absolute_dwords = {
+        _parse_int(value, "operand_dword")
+        for index, value in enumerate(detail.get("operand_dwords") or ())
+        if value is not None and index < len(pic_flags) and not pic_flags[index]
+    }
+    encoded = [value for value in candidates if _parse_int(value, "operand_target") in absolute_dwords]
+    return encoded or candidates
+
+
 async def _preprocess_llm_target(
     *,
     session,
@@ -3069,6 +3240,16 @@ async def _preprocess_llm_target(
                     function = await _inspect_function_via_mcp(
                         session, _parse_int(raw_target, "vtable entry"), image_base, symbol_name
                     )
+                    if function is None and "vfunc_sig_allow_across_function_boundary" in desired_fields:
+                        function = await _inspect_function_via_mcp(
+                            session,
+                            _parse_int(raw_target, "vtable entry"),
+                            image_base,
+                            symbol_name,
+                            allow_across_function_boundary=True,
+                        )
+                        if function is not None:
+                            function["vfunc_sig_allow_across_function_boundary"] = True
                     if not function:
                         continue
                     function.update(
@@ -3094,7 +3275,7 @@ async def _preprocess_llm_target(
                         enriched["vfunc_sig"] = enriched.get("func_sig")
                         return enriched
             elif category == "gv":
-                targets = list(dict.fromkeys((detail.get("data_refs") or []) + (detail.get("operand_targets") or [])))
+                targets = _llm_global_targets(detail)
                 if len(targets) != 1:
                     continue
                 function = await _inspect_function_via_mcp(

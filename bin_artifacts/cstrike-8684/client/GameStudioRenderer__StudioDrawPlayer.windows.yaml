@@ -1,0 +1,8 @@
+func_name: GameStudioRenderer__StudioDrawPlayer
+func_va: '0x1949670'
+func_rva: '0x49670'
+func_size: '0xbd1'
+vtable_name: GameStudioRenderer
+vfunc_offset: '0x64'
+vfunc_index: 25
+vfunc_sig: 81 EC 00 0C 00 00 53 55 56 57 8B E9 FF 15 ?? ?? ?? ?? 8D 4D ?? 89 45 ?? 8D 55 ?? 8D 45 ?? 51 52

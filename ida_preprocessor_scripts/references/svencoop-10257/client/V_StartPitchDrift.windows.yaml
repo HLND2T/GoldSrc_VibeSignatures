@@ -1,0 +1,37 @@
+func_name: "V_StartPitchDrift"
+func_va: "0x10072bf0"
+disasm_code: |-
+  .text:10072BF0                 sub     esp, 8
+  .text:10072BF3                 call    gEngfuncs_GetClientTime
+  .text:10072BF9                 movsd   xmm0, g_pitchdrift.laststop
+  .text:10072C01                 fstp    [esp+8+var_8]
+  .text:10072C04                 ucomisd xmm0, [esp+8+var_8]
+  .text:10072C09                 lahf
+  .text:10072C0A                 test    ah, 44h
+  .text:10072C0D                 jnp     short loc_10072C52
+  .text:10072C0F                 cmp     g_pitchdrift.nodrift, 0
+  .text:10072C16                 xorps   xmm1, xmm1
+  .text:10072C19                 jnz     short loc_10072C2C
+  .text:10072C1B                 movss   xmm0, g_pitchdrift.pitchvel
+  .text:10072C23                 ucomiss xmm0, xmm1
+  .text:10072C26                 lahf
+  .text:10072C27                 test    ah, 44h
+  .text:10072C2A                 jp      short loc_10072C52
+  .text:10072C2C                 mov     eax, v_centerspeed
+  .text:10072C31                 mov     g_pitchdrift.nodrift, 0
+  .text:10072C3B                 mov     g_pitchdrift.driftmove, 0
+  .text:10072C45                 movss   xmm0, dword ptr [eax+0Ch]
+  .text:10072C4A                 movss   g_pitchdrift.pitchvel, xmm0
+  .text:10072C52                 add     esp, 8
+  .text:10072C55                 retn
+procedure: |-
+  // Source: cl_dll/view.cpp:241-264. g_pitchdrift is the g_pitchdrift object requested by BulletPhysics. Select pitchvel (offset zero) to recover its base. Current ABI laststop offset is 16 (Windows).
+  void __cdecl V_StartPitchDrift()
+  {
+    if ( g_pitchdrift.laststop != gEngfuncs_GetClientTime() && (g_pitchdrift.nodrift || g_pitchdrift.pitchvel == 0.0) )
+    {
+      g_pitchdrift.nodrift = 0;
+      g_pitchdrift.driftmove = 0.0;
+      g_pitchdrift.pitchvel = v_centerspeed->value;
+    }
+  }

@@ -1,0 +1,71 @@
+func_name: "V_CalcRefdef"
+func_va: "0x12df6a"
+disasm_code: |-
+  .text:0012DF6A                 push    esi
+  .text:0012DF6B                 push    ebx
+  .text:0012DF6C                 sub     esp, 14h
+  .text:0012DF6F                 call    sub_9E590
+  .text:0012DF74                 add     ebx, (offset qword_61E000 - $)
+  .text:0012DF7A                 mov     esi, [esp+1Ch+pparams]
+  .text:0012DF7E                 mov     edx, [esi+54h]
+  .text:0012DF81                 lea     eax, (g_iWaterLevel - 61E000h)[ebx]
+  .text:0012DF87                 mov     [eax], edx
+  .text:0012DF89                 mov     ecx, [esi+0E0h]
+  .text:0012DF8F                 test    ecx, ecx
+  .text:0012DF91                 jnz     short loc_12DF9E
+  .text:0012DF93                 lea     edx, (g_bRenderingPortals_SCClient - 61E000h)[ebx]
+  .text:0012DF99                 cmp     byte ptr [edx], 0
+  .text:0012DF9C                 jz      short loc_12DFCE
+  .text:0012DF9E                 mov     dword ptr [esi+0E0h], 0
+  .text:0012DFA8                 lea     edx, [esi+30h]
+  .text:0012DFAB                 ; up
+  .text:0012DFAB                 mov     [esp+1Ch+up], edx; up
+  .text:0012DFAF                 lea     eax, [esi+24h]
+  .text:0012DFB2                 ; right
+  .text:0012DFB2                 mov     [esp+1Ch+right], eax; right
+  .text:0012DFB6                 lea     ecx, [esi+18h]
+  .text:0012DFB9                 ; forward
+  .text:0012DFB9                 mov     [esp+1Ch+forward], ecx; forward
+  .text:0012DFBD                 add     esi, 0Ch
+  .text:0012DFC0                 ; angles
+  .text:0012DFC0                 mov     [esp+1Ch+angles], esi; angles
+  .text:0012DFC3                 call    View_AngleVectors
+  .text:0012DFC8                 add     esp, 14h
+  .text:0012DFCB                 pop     ebx
+  .text:0012DFCC                 pop     esi
+  .text:0012DFCD                 retn
+  .text:0012DFCE                 mov     dword ptr [esi+0E4h], 0
+  .text:0012DFD8                 mov     eax, [esi+44h]
+  .text:0012DFDB                 test    eax, eax
+  .text:0012DFDD                 jnz     short loc_12DFF0
+  .text:0012DFDF                 mov     ecx, [esi+48h]
+  .text:0012DFE2                 test    ecx, ecx
+  .text:0012DFE4                 jnz     short loc_12DF9E
+  .text:0012DFE6                 ; pparams
+  .text:0012DFE6                 mov     [esp+1Ch+angles], esi; pparams
+  .text:0012DFE9                 call    V_CalcNormalRefdef
+  .text:0012DFEE                 jmp     short loc_12DF9E
+  .text:0012DFF0                 ; pparams
+  .text:0012DFF0                 mov     [esp+1Ch+angles], esi; pparams
+  .text:0012DFF3                 call    V_CalcIntermissionRefdef
+  .text:0012DFF8                 jmp     short loc_12DF9E
+procedure: |-
+  // Source context: cl_dll/view.cpp V_CalcRefdef and common/ref_params.h. Sven extends this entry with a nextView/global portal-pass guard. g_bRenderingPortals_SCClient (requested g_bRenderingPortals_SCClient) suppresses normal/intermission view recalculation during the portal pass; the portal renderer sets it to true around rendering and clears it afterward. Windows inlines intermission calculation; Linux retains its direct call.
+  void __cdecl V_CalcRefdef(ref_params_sven_prefix *pparams)
+  {
+    g_iWaterLevel = pparams->waterlevel;
+    if ( !pparams->nextView && !g_bRenderingPortals_SCClient )
+    {
+      pparams->onlyClientDraw = 0;
+      if ( pparams->intermission )
+      {
+        V_CalcIntermissionRefdef(pparams);
+      }
+      else if ( !pparams->paused )
+      {
+        V_CalcNormalRefdef(pparams);
+      }
+    }
+    pparams->nextView = 0;
+    View_AngleVectors(pparams->viewangles, pparams->forward, pparams->right, pparams->up);
+  }

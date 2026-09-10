@@ -429,8 +429,20 @@ def parse_llm_decompile_response(response_text):
 def _strip_disasm_comments(disasm_code):
     rendered = []
     for line in str(disasm_code or "").splitlines():
-        if re.search(r"\s;", line):
-            line = re.split(r"\s;", line, maxsplit=1)[0]
+        quote = None
+        escaped = False
+        for index, character in enumerate(line):
+            if escaped:
+                escaped = False
+            elif quote is not None and character == "\\":
+                escaped = True
+            elif character == quote:
+                quote = None
+            elif quote is None and character in ("'", '"'):
+                quote = character
+            elif quote is None and character == ";":
+                line = line[:index]
+                break
         if line.strip():
             rendered.append(line.rstrip())
     return "\n".join(rendered)

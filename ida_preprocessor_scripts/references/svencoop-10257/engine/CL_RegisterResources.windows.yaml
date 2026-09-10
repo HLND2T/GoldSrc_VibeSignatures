@@ -1,0 +1,321 @@
+func_name: "CL_RegisterResources"
+func_va: "0x1d2c320"
+disasm_code: |-
+  .text:01D2C320                 cmp     dword_2109124, 0
+  .text:01D2C327                 jnz     loc_1D2C5C5
+  .text:01D2C32D                 cmp     dword_2108314, 2
+  .text:01D2C334                 jnz     short loc_1D2C343
+  .text:01D2C336                 cmp     dword_20D7D70, 5
+  .text:01D2C33D                 jz      loc_1D2C5C5
+  .text:01D2C343                 fld     flt_1EDF284
+  .text:01D2C349                 fldz
+  .text:01D2C34B                 fucom   st(1)
+  .text:01D2C34D                 fnstsw  ax
+  .text:01D2C34F                 fstp    st(1)
+  .text:01D2C351                 test    ah, 44h
+  .text:01D2C354                 jnp     short loc_1D2C367
+  .text:01D2C356                 push    offset aBeginClRegiste; "begin CL_RegisterResources()"
+  .text:01D2C35B                 fstp    st
+  .text:01D2C35D                 call    sub_1D27F60
+  .text:01D2C362                 fldz
+  .text:01D2C364                 add     esp, 4
+  .text:01D2C367                 ; ArgList
+  .text:01D2C367                 push    ebx; ArgList
+  .text:01D2C368                 push    ecx
+  .text:01D2C369                 ; float
+  .text:01D2C369                 fstp    [esp+8+var_8]; float
+  .text:01D2C36C                 ; int
+  .text:01D2C36C                 push    8; int
+  .text:01D2C36E                 push    offset aClientconnect; "ClientConnect"
+  .text:01D2C373                 call    sub_1D17100
+  .text:01D2C378                 mov     ebx, [esp+10h+playerSlot]
+  .text:01D2C37C                 add     esp, 0Ch
+  .text:01D2C37F                 cmp     dword_2108F6C, 0
+  .text:01D2C386                 jnz     short loc_1D2C391
+  .text:01D2C388                 push    ebx
+  .text:01D2C389                 call    sub_1D2D380
+  .text:01D2C38E                 add     esp, 4
+  .text:01D2C391                 mov     eax, dword_26CEF84
+  .text:01D2C396                 mov     input, eax
+  .text:01D2C39B                 test    eax, eax
+  .text:01D2C39D                 jz      loc_1D2C5A6
+  .text:01D2C3A3                 cmp     dword_270AFB4, 1
+  .text:01D2C3AA                 jl      loc_1D2C5A6
+  .text:01D2C3B0                 cmp     dword ptr [eax+44h], 0
+  .text:01D2C3B4                 jz      short loc_1D2C3D5
+  .text:01D2C3B6                 push    offset aClientWorldMod; "Client world model is invalid: Not a br"...
+  .text:01D2C3BB                 call    Con_Printf
+  .text:01D2C3C0                 push    offset aClientWorldMod_0; "Client world model is invalid. Not a br"...
+  .text:01D2C3C5                 ; int
+  .text:01D2C3C5                 push    1; int
+  .text:01D2C3C7                 call    sub_1D3F8C0
+  .text:01D2C3CC                 add     esp, 0Ch
+  .text:01D2C3CF                 pop     ebx
+  .text:01D2C3D0                 jmp     sub_1D26090
+  .text:01D2C3D5                 test    eax, eax
+  .text:01D2C3D7                 jz      loc_1D2C587
+  .text:01D2C3DD                 push    5
+  .text:01D2C3DF                 push    offset dword_1E67414
+  .text:01D2C3E4                 push    eax
+  .text:01D2C3E5                 call    sub_1D3DDD0
+  .text:01D2C3EA                 add     esp, 0Ch
+  .text:01D2C3ED                 test    eax, eax
+  .text:01D2C3EF                 jnz     loc_1D2C587
+  .text:01D2C3F5                 push    offset aBsp; ".bsp"
+  .text:01D2C3FA                 ; Str
+  .text:01D2C3FA                 push    input; Str
+  .text:01D2C400                 call    j__strstr
+  .text:01D2C405                 add     esp, 8
+  .text:01D2C408                 test    eax, eax
+  .text:01D2C40A                 jz      loc_1D2C587
+  .text:01D2C410                 mov     ecx, dword_2723390
+  .text:01D2C416                 test    ecx, ecx
+  .text:01D2C418                 jnz     short loc_1D2C42E
+  .text:01D2C41A                 push    dword_270AFB4
+  .text:01D2C420                 call    CL_ReallocateDynamicData
+  .text:01D2C425                 mov     ecx, dword_2723390
+  .text:01D2C42B                 add     esp, 4
+  .text:01D2C42E                 mov     eax, input
+  .text:01D2C433                 ; ArgList
+  .text:01D2C433                 push    esi; ArgList
+  .text:01D2C434                 mov     [ecx+0B94h], eax
+  .text:01D2C43A                 mov     esi, dword_26CEF84
+  .text:01D2C440                 test    esi, esi
+  .text:01D2C442                 jz      loc_1D2C50E
+  .text:01D2C448                 push    offset dword_1E67414
+  .text:01D2C44D                 call    sub_1D3D950
+  .text:01D2C452                 push    eax
+  .text:01D2C453                 push    offset dword_1E67414
+  .text:01D2C458                 push    esi
+  .text:01D2C459                 call    sub_1D3DDD0
+  .text:01D2C45E                 add     esp, 10h
+  .text:01D2C461                 test    eax, eax
+  .text:01D2C463                 jnz     loc_1D2C50E
+  .text:01D2C469                 push    offset aBsp; ".bsp"
+  .text:01D2C46E                 ; Str
+  .text:01D2C46E                 push    esi; Str
+  .text:01D2C46F                 call    j__strstr
+  .text:01D2C474                 add     esp, 8
+  .text:01D2C477                 test    eax, eax
+  .text:01D2C479                 jz      loc_1D2C50E
+  .text:01D2C47F                 fldz
+  .text:01D2C481                 push    ecx
+  .text:01D2C482                 ; float
+  .text:01D2C482                 fstp    [esp+0Ch+var_C]; float
+  .text:01D2C485                 ; int
+  .text:01D2C485                 push    9; int
+  .text:01D2C487                 push    offset aClientconnect; "ClientConnect"
+  .text:01D2C48C                 call    sub_1D17100
+  .text:01D2C491                 mov     esi, dword_2109354
+  .text:01D2C497                 add     esp, 0Ch
+  .text:01D2C49A                 cmp     esi, offset unk_21092D4
+  .text:01D2C4A0                 jz      short loc_1D2C50E
+  .text:01D2C4A2                 push    edi
+  .text:01D2C4A3                 cmp     dword ptr [esi+40h], 2
+  .text:01D2C4A7                 mov     edi, [esi+80h]
+  .text:01D2C4AD                 jnz     short loc_1D2C4EC
+  .text:01D2C4AF                 cmp     byte ptr [esi], 2Ah ; '*'
+  .text:01D2C4B2                 jnz     short loc_1D2C4EC
+  .text:01D2C4B4                 push    0
+  .text:01D2C4B6                 push    0
+  .text:01D2C4B8                 push    esi
+  .text:01D2C4B9                 call    sub_1D51AC0
+  .text:01D2C4BE                 mov     ecx, [esi+44h]
+  .text:01D2C4C1                 add     esp, 0Ch
+  .text:01D2C4C4                 mov     mod[ecx*4], eax
+  .text:01D2C4CB                 mov     eax, [esi+44h]
+  .text:01D2C4CE                 cmp     mod[eax*4], 0
+  .text:01D2C4D6                 jnz     short loc_1D2C4EC
+  .text:01D2C4D8                 ; ArgList
+  .text:01D2C4D8                 push    esi; ArgList
+  .text:01D2C4D9                 push    offset aModelSNotFound_0; "Model %s not found\n"
+  .text:01D2C4DE                 call    Con_Printf
+  .text:01D2C4E3                 add     esp, 8
+  .text:01D2C4E6                 test    byte ptr [esi+4Ch], 1
+  .text:01D2C4EA                 jnz     short loc_1D2C4F8
+  .text:01D2C4EC                 mov     esi, edi
+  .text:01D2C4EE                 cmp     edi, offset unk_21092D4
+  .text:01D2C4F4                 jnz     short loc_1D2C4A3
+  .text:01D2C4F6                 jmp     short loc_1D2C50D
+  .text:01D2C4F8                 ; ArgList
+  .text:01D2C4F8                 push    esi; ArgList
+  .text:01D2C4F9                 push    offset aCannotContinue_1; "Cannot continue without model %s, disco"...
+  .text:01D2C4FE                 ; int
+  .text:01D2C4FE                 push    1; int
+  .text:01D2C500                 call    sub_1D3F8C0
+  .text:01D2C505                 add     esp, 0Ch
+  .text:01D2C508                 call    sub_1D26090
+  .text:01D2C50D                 pop     edi
+  .text:01D2C50E                 cmp     dword_20D7D70, 1
+  .text:01D2C515                 jz      loc_1D2C5D0
+  .text:01D2C51B                 push    offset aSettingUpRende; "Setting up renderer...\n"
+  .text:01D2C520                 call    Con_DPrintf
+  .text:01D2C525                 ; R_NewMap: initializes lightstyles, clears the world entity and leaf efrags, scans sky textures. Next call Hunk_Check validates arena sentinels.
+  .text:01D2C525                 call    R_NewMap; R_NewMap: initializes lightstyles, clears the world entity and leaf efrags, scans sky textures. Next call Hunk_Check validates arena sentinels.
+  .text:01D2C52A                 call    Hunk_Check
+  .text:01D2C52F                 mov     esi, crc
+  .text:01D2C535                 push    3
+  .text:01D2C537                 push    ebx
+  .text:01D2C538                 mov     dword_8447580, 0
+  .text:01D2C542                 call    sub_1D3C090
+  .text:01D2C547                 push    esi
+  .text:01D2C548                 ; ArgList
+  .text:01D2C548                 push    dword_234B5EC; ArgList
+  .text:01D2C54E                 push    offset aSpawnII; "spawn %i %i"
+  .text:01D2C553                 call    sub_1D3BD70
+  .text:01D2C558                 push    eax
+  .text:01D2C559                 push    ebx
+  .text:01D2C55A                 call    sub_1D3C160
+  .text:01D2C55F                 add     esp, 20h
+  .text:01D2C562                 call    sub_1D03590
+  .text:01D2C567                 fld     flt_1EDF284
+  .text:01D2C56D                 fldz
+  .text:01D2C56F                 fucompp
+  .text:01D2C571                 fnstsw  ax
+  .text:01D2C573                 test    ah, 44h
+  .text:01D2C576                 jnp     short loc_1D2C5D0
+  .text:01D2C578                 pop     esi
+  .text:01D2C579                 pop     ebx
+  .text:01D2C57A                 mov     [esp+playerSlot], offset aEndClRegisterr; "end   CL_RegisterResources()"
+  .text:01D2C582                 jmp     sub_1D27F60
+  .text:01D2C587                 push    offset aClientWorldMod_1; "Client world model is invalid: Unexpect"...
+  .text:01D2C58C                 call    Con_Printf
+  .text:01D2C591                 push    offset aClientWorldMod_1; "Client world model is invalid: Unexpect"...
+  .text:01D2C596                 ; int
+  .text:01D2C596                 push    1; int
+  .text:01D2C598                 call    sub_1D3F8C0
+  .text:01D2C59D                 add     esp, 0Ch
+  .text:01D2C5A0                 pop     ebx
+  .text:01D2C5A1                 jmp     sub_1D26090
+  .text:01D2C5A6                 push    offset aClientWorldMod_2; "Client world model is NULL\n"
+  .text:01D2C5AB                 call    Con_Printf
+  .text:01D2C5B0                 push    offset aClientWorldMod_2; "Client world model is NULL\n"
+  .text:01D2C5B5                 ; int
+  .text:01D2C5B5                 push    1; int
+  .text:01D2C5B7                 call    sub_1D3F8C0
+  .text:01D2C5BC                 add     esp, 0Ch
+  .text:01D2C5BF                 pop     ebx
+  .text:01D2C5C0                 jmp     sub_1D26090
+  .text:01D2C5C5                 mov     dword_2109124, 0
+  .text:01D2C5CF                 retn
+  .text:01D2C5D0                 pop     esi
+  .text:01D2C5D1                 pop     ebx
+  .text:01D2C5D2                 retn
+procedure: |-
+  // Sven-specific CL_RegisterResources: validates brush world model and maps/*.bsp; Unlike canonical Half-Life this version has no spawn CRC-munge block. The renderer setup diagnostic precedes R_NewMap and Hunk_Check. Preserve actual Sven branch structure.
+  void __cdecl CL_RegisterResources(int playerSlot)
+  {
+    int v1; // edi
+    double v2; // st7
+    _DWORD *v3; // ecx
+    const char *v4; // esi
+    int v5; // eax
+    char *v6; // esi
+    char *v7; // edi
+    int v8; // eax
+    int v9; // [esp+0h] [ebp-Ch]
+    float v10; // [esp+4h] [ebp-8h]
+    char v11; // [esp+4h] [ebp-8h]
+    char v12; // [esp+4h] [ebp-8h]
+    char v13; // [esp+4h] [ebp-8h]
+
+    if ( dword_2109124 || *(_DWORD *)dword_2108314 == 2 && dword_20D7D70 == 5 )
+    {
+      dword_2109124 = 0;
+    }
+    else
+    {
+      v2 = 0.0;
+      if ( 0.0 != flt_1EDF284 )
+      {
+        sub_1D27F60((int)"begin CL_RegisterResources()");
+        v2 = 0.0;
+      }
+      v10 = v2;
+      sub_1D17100((int)"ClientConnect", 8, v10);
+      if ( !dword_2108F6C )
+        sub_1D2D380(playerSlot);
+      input = dword_26CEF84;
+      if ( dword_26CEF84 && dword_270AFB4 >= 1 )
+      {
+        if ( *((_DWORD *)dword_26CEF84 + 17) )
+        {
+          Con_Printf("Client world model is invalid: Not a brush.\n");
+          sub_1D3F8C0(1, "Client world model is invalid. Not a brush.\n", v11);
+          sub_1D26090(playerSlot);
+        }
+        else if ( dword_26CEF84 && !sub_1D3DDD0(dword_26CEF84, &dword_1E67414, 5) && j__strstr(input, ".bsp") )
+        {
+          v3 = dword_2723390;
+          if ( !dword_2723390 )
+          {
+            CL_ReallocateDynamicData(dword_270AFB4);
+            v3 = dword_2723390;
+          }
+          v3[741] = input;
+          v4 = dword_26CEF84;
+          if ( dword_26CEF84 )
+          {
+            v5 = sub_1D3D950(&dword_1E67414);
+            if ( !sub_1D3DDD0(v4, &dword_1E67414, v5) )
+            {
+              if ( j__strstr(v4, ".bsp") )
+              {
+                sub_1D17100((int)"ClientConnect", 9, 0.0);
+                v6 = dword_2109354;
+                if ( dword_2109354 != (char *)&unk_21092D4 )
+                {
+                  v9 = v1;
+                  while ( 1 )
+                  {
+                    v7 = *((char **)v6 + 32);
+                    if ( *((_DWORD *)v6 + 16) == 2 && *v6 == 42 )
+                    {
+                      *(&mod + *((_DWORD *)v6 + 17)) = (model_t *)sub_1D51AC0((model_t *)v6, 0, 0);
+                      if ( !*(&mod + *((_DWORD *)v6 + 17)) )
+                      {
+                        Con_Printf("Model %s not found\n", v6);
+                        if ( (v6[76] & 1) != 0 )
+                          break;
+                      }
+                    }
+                    v6 = v7;
+                    if ( v7 == (char *)&unk_21092D4 )
+                      goto LABEL_29;
+                  }
+                  sub_1D3F8C0(1, "Cannot continue without model %s, disconnecting.", (char)v6);
+                  sub_1D26090(v9);
+                }
+              }
+            }
+          }
+  LABEL_29:
+          if ( dword_20D7D70 != 1 )
+          {
+            Con_DPrintf("Setting up renderer...\n");
+            R_NewMap();
+            Hunk_Check();
+            dword_8447580 = 0;
+            sub_1D3C090(playerSlot, 3);
+            v8 = sub_1D3BD70("spawn %i %i", dword_234B5EC[0]);
+            sub_1D3C160(playerSlot, v8);
+            sub_1D03590();
+            if ( 0.0 != flt_1EDF284 )
+              sub_1D27F60((int)"end   CL_RegisterResources()");
+          }
+        }
+        else
+        {
+          Con_Printf("Client world model is invalid: Unexpected name.\n");
+          sub_1D3F8C0(1, "Client world model is invalid: Unexpected name.\n", v12);
+          sub_1D26090(playerSlot);
+        }
+      }
+      else
+      {
+        Con_Printf("Client world model is NULL\n");
+        sub_1D3F8C0(1, "Client world model is NULL\n", v13);
+        sub_1D26090(playerSlot);
+      }
+    }
+  }

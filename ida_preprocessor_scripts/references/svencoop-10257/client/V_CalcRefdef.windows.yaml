@@ -1,0 +1,175 @@
+func_name: "V_CalcRefdef"
+func_va: "0x10072390"
+disasm_code: |-
+  .text:10072390                 ; ; Exported entry 619. V_CalcRefdef
+  .text:10072390                 sub     esp, 8
+  .text:10072393                 push    esi
+  .text:10072394                 mov     esi, [esp+0Ch+pparams]
+  .text:10072398                 mov     eax, [esi+54h]
+  .text:1007239B                 mov     g_iWaterLevel, eax
+  .text:100723A0                 cmp     dword ptr [esi+0E0h], 0
+  .text:100723A7                 jnz     loc_10072554
+  .text:100723AD                 cmp     g_bRenderingPortals_SCClient, 0
+  .text:100723B4                 jnz     loc_10072554
+  .text:100723BA                 cmp     dword ptr [esi+44h], 0
+  .text:100723BE                 mov     dword ptr [esi+0E4h], 0
+  .text:100723C8                 jz      loc_10072545
+  .text:100723CE                 cmp     dword ptr [esi+0ACh], 1
+  .text:100723D5                 jle     short loc_10072417
+  .text:100723D7                 push    ecx
+  .text:100723D8                 mov     [esp+10h+var_10], 0
+  .text:100723DF                 push    offset aScrOfsx; "scr_ofsx"
+  .text:100723E4                 call    dword_101F8A2C
+  .text:100723EA                 add     esp, 4
+  .text:100723ED                 mov     [esp+10h+var_10], 0
+  .text:100723F4                 push    offset aScrOfsy; "scr_ofsy"
+  .text:100723F9                 call    dword_101F8A2C
+  .text:100723FF                 add     esp, 4
+  .text:10072402                 mov     [esp+10h+var_10], 0
+  .text:10072409                 push    offset aScrOfsz; "scr_ofsz"
+  .text:1007240E                 call    dword_101F8A2C
+  .text:10072414                 add     esp, 8
+  .text:10072417                 call    dword_101F8A64
+  .text:1007241D                 call    dword_101F8A68
+  .text:10072423                 mov     ecx, [esi+64h]
+  .text:10072426                 mov     edx, eax
+  .text:10072428                 mov     [esi], ecx
+  .text:1007242A                 mov     ecx, [esi+68h]
+  .text:1007242D                 mov     [esi+4], ecx
+  .text:10072430                 mov     ecx, [esi+6Ch]
+  .text:10072433                 mov     [esi+8], ecx
+  .text:10072436                 mov     ecx, [esi+80h]
+  .text:1007243C                 mov     [esi+0Ch], ecx
+  .text:1007243F                 mov     eax, [esi+84h]
+  .text:10072445                 mov     [esi+10h], eax
+  .text:10072448                 mov     eax, [esi+88h]
+  .text:1007244E                 mov     dword ptr [edx+0B94h], 0
+  .text:10072458                 mov     [esi+14h], eax
+  .text:1007245B                 movss   xmm0, dword_106458F8
+  .text:10072463                 movss   [esp+0Ch+var_4], xmm0
+  .text:10072469                 mov     dword_106458F8, 3F800000h
+  .text:10072473                 movss   xmm0, dword ptr [esi+40h]
+  .text:10072478                 mulss   xmm0, dword_101A2CF8
+  .text:10072480                 cvtps2pd xmm0, xmm0
+  .text:10072483                 call    __libm_sse2_sin_precise
+  .text:10072488                 cvtsd2ss xmm0, xmm0
+  .text:1007248C                 mulss   xmm0, dword_101A2D34
+  .text:10072494                 movss   [esp+0Ch+pparams], xmm0
+  .text:1007249A                 movss   xmm0, dword ptr [esi+40h]
+  .text:1007249F                 mulss   xmm0, dword_101A2D0C
+  .text:100724A7                 cvtps2pd xmm0, xmm0
+  .text:100724AA                 call    __libm_sse2_sin_precise
+  .text:100724AF                 cvtsd2ss xmm0, xmm0
+  .text:100724B3                 mulss   xmm0, dword_101A2D48
+  .text:100724BB                 movss   [esp+0Ch+var_8], xmm0
+  .text:100724C1                 movss   xmm0, dword ptr [esi+40h]
+  .text:100724C6                 mulss   xmm0, dword_101A2D20
+  .text:100724CE                 cvtps2pd xmm0, xmm0
+  .text:100724D1                 call    __libm_sse2_sin_precise
+  .text:100724D6                 cvtsd2ss xmm0, xmm0
+  .text:100724DA                 mulss   xmm0, dword_101A2D5C
+  .text:100724E2                 addss   xmm0, dword ptr [esi+0Ch]
+  .text:100724E7                 movss   dword ptr [esi+0Ch], xmm0
+  .text:100724EC                 movss   xmm0, [esp+0Ch+pparams]
+  .text:100724F2                 addss   xmm0, dword ptr [esi+10h]
+  .text:100724F7                 movss   dword ptr [esi+10h], xmm0
+  .text:100724FC                 movss   xmm0, [esp+0Ch+var_8]
+  .text:10072502                 addss   xmm0, dword ptr [esi+14h]
+  .text:10072507                 movss   dword ptr [esi+14h], xmm0
+  .text:1007250C                 movss   xmm0, [esp+0Ch+var_4]
+  .text:10072512                 movss   dword_106458F8, xmm0
+  .text:1007251A                 movq    xmm0, qword ptr [esi]
+  .text:1007251E                 movq    qword_10645A58, xmm0
+  .text:10072526                 mov     eax, [esi+8]
+  .text:10072529                 mov     dword_10645A60, eax
+  .text:1007252E                 movq    xmm0, qword ptr [esi+0Ch]
+  .text:10072533                 movq    qword_10645A64, xmm0
+  .text:1007253B                 mov     eax, [esi+14h]
+  .text:1007253E                 mov     dword_10645A6C, eax
+  .text:10072543                 jmp     short loc_10072554
+  .text:10072545                 cmp     dword ptr [esi+48h], 0
+  .text:10072549                 jnz     short loc_10072554
+  .text:1007254B                 ; pparams
+  .text:1007254B                 push    esi; pparams
+  .text:1007254C                 call    V_CalcNormalRefdef
+  .text:10072551                 add     esp, 4
+  .text:10072554                 lea     eax, [esi+30h]
+  .text:10072557                 mov     dword ptr [esi+0E0h], 0
+  .text:10072561                 ; up
+  .text:10072561                 push    eax; up
+  .text:10072562                 lea     eax, [esi+24h]
+  .text:10072565                 ; right
+  .text:10072565                 push    eax; right
+  .text:10072566                 lea     eax, [esi+18h]
+  .text:10072569                 ; forward
+  .text:10072569                 push    eax; forward
+  .text:1007256A                 lea     eax, [esi+0Ch]
+  .text:1007256D                 ; angles
+  .text:1007256D                 push    eax; angles
+  .text:1007256E                 call    View_AngleVectors
+  .text:10072573                 add     esp, 10h
+  .text:10072576                 pop     esi
+  .text:10072577                 add     esp, 8
+  .text:1007257A                 retn
+procedure: |-
+  // Source context: cl_dll/view.cpp V_CalcRefdef and common/ref_params.h. Sven extends this entry with a nextView/global portal-pass guard. g_bRenderingPortals_SCClient (requested g_bRenderingPortals_SCClient) suppresses normal/intermission view recalculation during the portal pass; the portal renderer sets it to true around rendering and clears it afterward. Windows inlines intermission calculation; Linux retains its direct call.
+  void __cdecl V_CalcRefdef(ref_params_sven_prefix *pparams)
+  {
+    bool v2; // zf
+    int v3; // edx
+    float v4; // eax
+    float v5; // xmm0_4
+    float v6; // xmm0_4
+    float v7; // xmm0_4
+    float v8; // [esp+8h] [ebp-8h]
+    int v9; // [esp+Ch] [ebp-4h]
+    float pparamsa; // [esp+14h] [ebp+4h]
+
+    g_iWaterLevel = pparams->waterlevel;
+    if ( !pparams->nextView && !g_bRenderingPortals_SCClient )
+    {
+      v2 = pparams->intermission == 0;
+      pparams->onlyClientDraw = 0;
+      if ( v2 )
+      {
+        if ( !pparams->paused )
+          V_CalcNormalRefdef(pparams);
+      }
+      else
+      {
+        if ( pparams->maxclients > 1 )
+        {
+          dword_101F8A2C("scr_ofsx");
+          dword_101F8A2C("scr_ofsy");
+          dword_101F8A2C("scr_ofsz");
+        }
+        ((void (__cdecl *)())dword_101F8A64)();
+        v3 = dword_101F8A68();
+        pparams->vieworg[0] = pparams->simorg[0];
+        pparams->vieworg[1] = pparams->simorg[1];
+        pparams->vieworg[2] = pparams->simorg[2];
+        pparams->viewangles[0] = pparams->cl_viewangles[0];
+        pparams->viewangles[1] = pparams->cl_viewangles[1];
+        v4 = pparams->cl_viewangles[2];
+        *(_DWORD *)(v3 + 2964) = 0;
+        pparams->viewangles[2] = v4;
+        v9 = dword_106458F8;
+        dword_106458F8 = 1065353216;
+        v5 = *(double *)_libm_sse2_sin_precise().m128_u64;
+        pparamsa = v5 * *(float *)&dword_101A2D34;
+        v6 = *(double *)_libm_sse2_sin_precise().m128_u64;
+        v8 = v6 * *(float *)&dword_101A2D48;
+        v7 = *(double *)_libm_sse2_sin_precise().m128_u64;
+        pparams->viewangles[0] = (float)(v7 * *(float *)&dword_101A2D5C) + pparams->viewangles[0];
+        pparams->viewangles[1] = pparamsa + pparams->viewangles[1];
+        pparams->viewangles[2] = v8 + pparams->viewangles[2];
+        dword_106458F8 = v9;
+        qword_10645A58 = *(_QWORD *)pparams->vieworg;
+        dword_10645A60 = LODWORD(pparams->vieworg[2]);
+        qword_10645A64 = *(_QWORD *)pparams->viewangles;
+        dword_10645A6C = LODWORD(pparams->viewangles[2]);
+      }
+    }
+    pparams->nextView = 0;
+    View_AngleVectors(pparams->viewangles, pparams->forward, pparams->right, pparams->up);
+  }

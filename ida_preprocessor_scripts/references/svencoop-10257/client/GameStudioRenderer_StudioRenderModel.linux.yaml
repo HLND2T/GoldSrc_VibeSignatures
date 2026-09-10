@@ -1,0 +1,79 @@
+func_name: "GameStudioRenderer_StudioRenderModel"
+func_va: "0x100bca"
+disasm_code: |-
+  .text:00100BCA                 push    edi
+  .text:00100BCB                 push    esi
+  .text:00100BCC                 push    ebx
+  .text:00100BCD                 sub     esp, 10h
+  .text:00100BD0                 call    sub_A343F
+  .text:00100BD5                 add     esi, (offset qword_61E000 - $)
+  .text:00100BDB                 mov     ebx, [esp+1Ch+self]
+  .text:00100BDF                 call    ds:(studioapi_SetChromeOrigin - 61E000h)[esi]
+  .text:00100BE5                 ; flags
+  .text:00100BE5                 mov     [esp+1Ch+flags], 0; flags
+  .text:00100BEC                 call    ds:(studioapi_SetForceFaceFlags - 61E000h)[esi]
+  .text:00100BF2                 mov     eax, [ebx+3Ch]
+  .text:00100BF5                 cmp     dword ptr [eax+304h], 13h
+  .text:00100BFC                 jz      short loc_100C10
+  .text:00100BFE                 mov     edx, [ebx]
+  .text:00100C00                 mov     [esp+1Ch+self], ebx
+  .text:00100C04                 mov     ecx, [edx+58h]
+  .text:00100C07                 add     esp, 10h
+  .text:00100C0A                 pop     ebx
+  .text:00100C0B                 pop     esi
+  .text:00100C0C                 pop     edi
+  .text:00100C0D                 jmp     ecx
+  .text:00100C10                 mov     dword ptr [eax+304h], 0
+  .text:00100C1A                 mov     edi, [ebx]
+  .text:00100C1C                 mov     [esp+1Ch+flags], ebx
+  .text:00100C1F                 call    dword ptr [edi+58h]; GameStudioRenderer_StudioRenderFinal
+  .text:00100C22                 lea     edi, (unk_A57FA0 - 61E000h)[esi]
+  .text:00100C28                 mov     eax, [edi+148h]
+  .text:00100C2E                 mov     [esp+1Ch+flags], 5
+  .text:00100C35                 call    dword ptr [eax+4]
+  .text:00100C38                 ; flags
+  .text:00100C38                 mov     [esp+1Ch+flags], 2; flags
+  .text:00100C3F                 call    ds:(studioapi_SetForceFaceFlags - 61E000h)[esi]
+  .text:00100C45                 mov     esi, [edi+148h]
+  .text:00100C4B                 mov     [esp+1Ch+var_18], 0
+  .text:00100C53                 mov     edx, [ebx+68h]
+  .text:00100C56                 mov     [esp+1Ch+flags], edx
+  .text:00100C59                 call    dword ptr [esi+2Ch]
+  .text:00100C5C                 mov     ecx, [ebx+3Ch]
+  .text:00100C5F                 mov     dword ptr [ecx+304h], 13h
+  .text:00100C69                 mov     eax, [ebx]
+  .text:00100C6B                 mov     [esp+1Ch+flags], ebx
+  .text:00100C6E                 call    dword ptr [eax+58h]; GameStudioRenderer_StudioRenderFinal
+  .text:00100C71                 mov     ebx, [edi+148h]
+  .text:00100C77                 mov     [esp+1Ch+self], 0
+  .text:00100C7F                 mov     ecx, [ebx+4]
+  .text:00100C82                 add     esp, 10h
+  .text:00100C85                 pop     ebx
+  .text:00100C86                 pop     esi
+  .text:00100C87                 pop     edi
+  .text:00100C88                 jmp     ecx
+procedure: |-
+  // Source role: CStudioModelRenderer::StudioRenderModel. Sven has no IsHardware guard around glow-shell triangle RenderMode; preserve that difference. GameStudioRenderer_StudioRenderFinal is the virtual call at byte offset 0x58 in this current ABI.
+  void __cdecl CStudioModelRenderer_StudioRenderModel(issue106_sc_renderer *self)
+  {
+    issue106_sc_entity *m_pCurrentEntity; // eax
+
+    studioapi_SetChromeOrigin();
+    studioapi_SetForceFaceFlags(0);
+    m_pCurrentEntity = self->m_pCurrentEntity;
+    if ( m_pCurrentEntity->renderfx == 19 )
+    {
+      m_pCurrentEntity->renderfx = 0;
+      self->vtable->StudioRenderFinal(self);
+      client_pTriAPI->RenderMode(5);
+      studioapi_SetForceFaceFlags(2);
+      client_pTriAPI->SpriteTexture(self->m_pChromeSprite, 0);
+      self->m_pCurrentEntity->renderfx = 19;
+      self->vtable->StudioRenderFinal(self);
+      client_pTriAPI->RenderMode(0);
+    }
+    else
+    {
+      self->vtable->StudioRenderFinal(self);
+    }
+  }

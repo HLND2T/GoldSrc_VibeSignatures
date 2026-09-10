@@ -1,0 +1,48 @@
+func_name: "CL_TempEntInit"
+func_va: "0x1d429bd"
+disasm_code: |-
+  .text:01D429BD                 push    ebp
+  .text:01D429BE                 mov     ebp, esp
+  .text:01D429C0                 push    ecx
+  .text:01D429C1                 ; count
+  .text:01D429C1                 push    176830h; count
+  .text:01D429C6                 ; value
+  .text:01D429C6                 push    0; value
+  .text:01D429C8                 ; dest
+  .text:01D429C8                 push    offset gTempEnts; dest
+  .text:01D429CD                 call    Q_memset
+  .text:01D429D2                 add     esp, 0Ch
+  .text:01D429D5                 mov     [ebp+var_4], 0
+  .text:01D429DC                 jmp     short loc_1D429E7
+  .text:01D429DE                 mov     eax, [ebp+var_4]
+  .text:01D429E1                 add     eax, 1
+  .text:01D429E4                 mov     [ebp+var_4], eax
+  .text:01D429E7                 cmp     [ebp+var_4], 1F3h
+  .text:01D429EE                 jge     short loc_1D42A13
+  .text:01D429F0                 mov     ecx, [ebp+var_4]
+  .text:01D429F3                 add     ecx, 1
+  .text:01D429F6                 imul    ecx, 0BFCh
+  .text:01D429FC                 add     ecx, offset gTempEnts
+  .text:01D42A02                 mov     edx, [ebp+var_4]
+  .text:01D42A05                 imul    edx, 0BFCh
+  .text:01D42A0B                 mov     dword_1EF483C[edx], ecx
+  .text:01D42A11                 jmp     short loc_1D429DE
+  .text:01D42A13                 mov     dword_206A470, 0
+  .text:01D42A1D                 mov     gpTempEntFree, offset gTempEnts
+  .text:01D42A27                 mov     gpTempEntActive, 0
+  .text:01D42A31                 mov     esp, ebp
+  .text:01D42A33                 pop     ebp
+  .text:01D42A34                 retn
+procedure: |-
+  // Verified CL_TempEntInit: zero the complete 500-entry pool (3068 bytes each), link next pointers, terminate the last next pointer, and reset free/active list heads. The first memset argument is gTempEnts, not its next member or a pointer slot.
+  void __cdecl CL_TempEntInit()
+  {
+    int i; // [esp+0h] [ebp-4h]
+
+    Q_memset(gTempEnts, 0, 1534000);
+    for ( i = 0; i < 499; ++i )
+      dword_1EF483C[767 * i] = (int)&gTempEnts[3068 * i + 3068];
+    dword_206A470 = 0;
+    gpTempEntFree = gTempEnts;
+    gpTempEntActive = nullptr;
+  }

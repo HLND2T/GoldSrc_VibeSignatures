@@ -1,0 +1,357 @@
+func_name: "R_DrawTEntitiesOnList"
+func_va: "0x1dc4539"
+disasm_code: |-
+  ; CoF-specific body: the MOV loads mutable cl_parsecount; the following AND reads memory-backed CL_UPDATE_MASK (0x3f). Select the counter load, not the mask operand. Source: engine/r_trans.c:291,305; counter write independently verified in the frame parser.
+  .text:01DC4539                 push    ebp
+  .text:01DC453A                 mov     ebp, esp
+  .text:01DC453C                 sub     esp, 14h
+  .text:01DC453F                 fld     flt_1EB9AFC
+  .text:01DC4545                 fcomp   ds:flt_1E8C384
+  .text:01DC454B                 fnstsw  ax
+  .text:01DC454D                 test    ah, 40h
+  .text:01DC4550                 jz      short loc_1DC4557
+  .text:01DC4552                 jmp     loc_1DC4915
+  .text:01DC4557                 cmp     [ebp+clientOnly], 0
+  .text:01DC455B                 jnz     loc_1DC48AF
+  .text:01DC4561                 mov     [ebp+var_4], 0
+  .text:01DC4568                 jmp     short loc_1DC4573
+  .text:01DC456A                 mov     eax, [ebp+var_4]
+  .text:01DC456D                 add     eax, 1
+  .text:01DC4570                 mov     [ebp+var_4], eax
+  .text:01DC4573                 mov     ecx, [ebp+var_4]
+  .text:01DC4576                 cmp     ecx, numTransObjs
+  .text:01DC457C                 jge     loc_1DC48AF
+  .text:01DC4582                 push    0B60h
+  .text:01DC4587                 call    qglDisable
+  .text:01DC458D                 mov     edx, [ebp+var_4]
+  .text:01DC4590                 mov     eax, transObjects
+  .text:01DC4595                 mov     ecx, [eax+edx*8]
+  .text:01DC4598                 mov     currententity, ecx
+  .text:01DC459E                 mov     edx, currententity
+  .text:01DC45A4                 push    edx
+  .text:01DC45A5                 call    CL_FxBlend
+  .text:01DC45AA                 add     esp, 4
+  .text:01DC45AD                 mov     [ebp+var_10], eax
+  .text:01DC45B0                 fild    [ebp+var_10]
+  .text:01DC45B3                 fst     r_blend
+  .text:01DC45B9                 fcomp   ds:flt_1E8C384
+  .text:01DC45BF                 fnstsw  ax
+  .text:01DC45C1                 test    ah, 41h
+  .text:01DC45C4                 jz      short loc_1DC45C8
+  .text:01DC45C6                 jmp     short loc_1DC456A
+  .text:01DC45C8                 fld     r_blend
+  .text:01DC45CE                 fmul    ds:dbl_1E8CC68
+  .text:01DC45D4                 fstp    r_blend
+  .text:01DC45DA                 mov     eax, currententity
+  .text:01DC45DF                 cmp     dword ptr [eax+2F8h], 3
+  .text:01DC45E6                 jnz     short loc_1DC4607
+  .text:01DC45E8                 mov     ecx, currententity
+  .text:01DC45EE                 mov     edx, [ecx+0B94h]
+  .text:01DC45F4                 cmp     dword ptr [edx+44h], 1
+  .text:01DC45F8                 jz      short loc_1DC4607
+  .text:01DC45FA                 push    offset aNonSpriteSetTo; "Non-sprite set to glow!\n"
+  .text:01DC45FF                 call    Con_DPrintf
+  .text:01DC4604                 add     esp, 4
+  .text:01DC4607                 mov     eax, currententity
+  .text:01DC460C                 mov     ecx, [eax+0B94h]
+  .text:01DC4612                 mov     edx, [ecx+44h]
+  .text:01DC4615                 mov     [ebp+var_14], edx
+  .text:01DC4618                 ; switch 4 cases
+  .text:01DC4618                 cmp     [ebp+var_14], 3; switch 4 cases
+  .text:01DC461C                 ja      def_1DC4625; jumptable 01DC4625 default case
+  .text:01DC4622                 mov     eax, [ebp+var_14]
+  .text:01DC4625                 ; switch jump
+  .text:01DC4625                 jmp     ds:jpt_1DC4625[eax*4]; switch jump
+  .text:01DC462C                 ; jumptable 01DC4625 case 2
+  .text:01DC462C                 mov     ecx, currententity; jumptable 01DC4625 case 2
+  .text:01DC4632                 push    ecx
+  .text:01DC4633                 call    R_DrawAliasModel
+  .text:01DC4638                 add     esp, 4
+  .text:01DC463B                 jmp     def_1DC4625; jumptable 01DC4625 default case
+  .text:01DC4640                 ; jumptable 01DC4625 case 0
+  .text:01DC4640                 cmp     g_bUserFogOn, 0; jumptable 01DC4625 case 0
+  .text:01DC4647                 jz      short loc_1DC4671
+  .text:01DC4649                 mov     edx, currententity
+  .text:01DC464F                 cmp     dword ptr [edx+2F8h], 3
+  .text:01DC4656                 jz      short loc_1DC4671
+  .text:01DC4658                 mov     eax, currententity
+  .text:01DC465D                 cmp     dword ptr [eax+2F8h], 5
+  .text:01DC4664                 jz      short loc_1DC4671
+  .text:01DC4666                 push    0B60h
+  .text:01DC466B                 call    qglEnable
+  .text:01DC4671                 mov     ecx, currententity
+  .text:01DC4677                 push    ecx
+  .text:01DC4678                 call    R_DrawBrushModel
+  .text:01DC467D                 add     esp, 4
+  .text:01DC4680                 jmp     def_1DC4625; jumptable 01DC4625 default case
+  .text:01DC4685                 ; jumptable 01DC4625 case 1
+  .text:01DC4685                 mov     edx, currententity; jumptable 01DC4625 case 1
+  .text:01DC468B                 cmp     dword ptr [edx+314h], 0
+  .text:01DC4692                 jz      short loc_1DC46DD
+  .text:01DC4694                 mov     eax, currententity
+  .text:01DC4699                 mov     ecx, [eax+314h]
+  .text:01DC469F                 push    ecx
+  .text:01DC46A0                 mov     edx, currententity
+  .text:01DC46A6                 movsx   eax, word ptr [edx+2E8h]
+  .text:01DC46AD                 push    eax
+  .text:01DC46AE                 call    R_GetAttachmentPoint
+  .text:01DC46B3                 add     esp, 8
+  .text:01DC46B6                 mov     [ebp+var_C], eax
+  .text:01DC46B9                 mov     ecx, [ebp+var_C]
+  .text:01DC46BC                 mov     edx, [ecx]
+  .text:01DC46BE                 mov     dword_2C0E4A0, edx
+  .text:01DC46C4                 mov     eax, [ebp+var_C]
+  .text:01DC46C7                 mov     ecx, [eax+4]
+  .text:01DC46CA                 mov     dword_2C0E4A4, ecx
+  .text:01DC46D0                 mov     edx, [ebp+var_C]
+  .text:01DC46D3                 mov     eax, [edx+8]
+  .text:01DC46D6                 mov     dword_2C0E4A8, eax
+  .text:01DC46DB                 jmp     short loc_1DC4711
+  .text:01DC46DD                 mov     ecx, currententity
+  .text:01DC46E3                 mov     edx, [ecx+0B48h]
+  .text:01DC46E9                 mov     dword_2C0E4A0, edx
+  .text:01DC46EF                 mov     eax, currententity
+  .text:01DC46F4                 mov     ecx, [eax+0B4Ch]
+  .text:01DC46FA                 mov     dword_2C0E4A4, ecx
+  .text:01DC4700                 mov     edx, currententity
+  .text:01DC4706                 mov     eax, [edx+0B50h]
+  .text:01DC470C                 mov     dword_2C0E4A8, eax
+  .text:01DC4711                 mov     ecx, currententity
+  .text:01DC4717                 cmp     dword ptr [ecx+2F8h], 3
+  .text:01DC471E                 jnz     short loc_1DC473B
+  .text:01DC4720                 mov     edx, currententity
+  .text:01DC4726                 push    edx
+  .text:01DC4727                 call    GlowBlend
+  .text:01DC472C                 add     esp, 4
+  .text:01DC472F                 fmul    r_blend
+  .text:01DC4735                 fstp    r_blend
+  .text:01DC473B                 fld     r_blend
+  .text:01DC4741                 fcomp   ds:flt_1E8C384
+  .text:01DC4747                 fnstsw  ax
+  .text:01DC4749                 test    ah, 40h
+  .text:01DC474C                 jnz     short loc_1DC475C
+  .text:01DC474E                 mov     eax, currententity
+  .text:01DC4753                 push    eax
+  .text:01DC4754                 call    R_DrawSpriteModel
+  .text:01DC4759                 add     esp, 4
+  .text:01DC475C                 jmp     def_1DC4625; jumptable 01DC4625 default case
+  .text:01DC4761                 ; jumptable 01DC4625 case 3
+  .text:01DC4761                 mov     ecx, currententity; jumptable 01DC4625 case 3
+  .text:01DC4767                 cmp     dword ptr [ecx+2FCh], 0
+  .text:01DC476E                 jnz     short loc_1DC4775
+  .text:01DC4770                 jmp     loc_1DC456A
+  .text:01DC4775                 mov     edx, currententity
+  .text:01DC477B                 cmp     dword ptr [edx+4], 0
+  .text:01DC477F                 jz      short loc_1DC47BE
+  .text:01DC4781                 mov     eax, cl_parsecount
+  .text:01DC4786                 and     eax, CL_UPDATE_MASK
+  .text:01DC478C                 imul    eax, 42C0h
+  .text:01DC4792                 mov     ecx, currententity
+  .text:01DC4798                 mov     edx, [ecx]
+  .text:01DC479A                 sub     edx, 1
+  .text:01DC479D                 imul    edx, 154h
+  .text:01DC47A3                 lea     eax, unk_2E11A48[eax+edx]
+  .text:01DC47AA                 push    eax
+  .text:01DC47AB                 push    3
+  .text:01DC47AD                 mov     ecx, pStudioAPI
+  .text:01DC47B3                 call    dword ptr [ecx+8]
+  .text:01DC47B6                 add     esp, 8
+  .text:01DC47B9                 jmp     def_1DC4625; jumptable 01DC4625 default case
+  .text:01DC47BE                 mov     edx, currententity
+  .text:01DC47C4                 cmp     dword ptr [edx+308h], 0Ch
+  .text:01DC47CB                 jnz     loc_1DC489D
+  .text:01DC47D1                 mov     [ebp+var_8], 0
+  .text:01DC47D8                 jmp     short loc_1DC47E3
+  .text:01DC47DA                 mov     eax, [ebp+var_8]
+  .text:01DC47DD                 add     eax, 1
+  .text:01DC47E0                 mov     [ebp+var_8], eax
+  .text:01DC47E3                 mov     ecx, [ebp+var_8]
+  .text:01DC47E6                 cmp     ecx, numTransObjs
+  .text:01DC47EC                 jge     loc_1DC489B
+  .text:01DC47F2                 mov     edx, [ebp+var_8]
+  .text:01DC47F5                 mov     eax, transObjects
+  .text:01DC47FA                 mov     ecx, [eax+edx*8]
+  .text:01DC47FD                 mov     edx, currententity
+  .text:01DC4803                 mov     eax, [ecx]
+  .text:01DC4805                 cmp     eax, [edx+344h]
+  .text:01DC480B                 jnz     loc_1DC4896
+  .text:01DC4811                 mov     ecx, [ebp+var_8]
+  .text:01DC4814                 mov     edx, transObjects
+  .text:01DC481A                 mov     eax, [edx+ecx*8]
+  .text:01DC481D                 mov     currententity, eax
+  .text:01DC4822                 mov     ecx, currententity
+  .text:01DC4828                 cmp     dword ptr [ecx+4], 0
+  .text:01DC482C                 jz      short loc_1DC4867
+  .text:01DC482E                 mov     edx, cl_parsecount
+  .text:01DC4834                 and     edx, CL_UPDATE_MASK
+  .text:01DC483A                 imul    edx, 42C0h
+  .text:01DC4840                 mov     eax, currententity
+  .text:01DC4845                 mov     ecx, [eax]
+  .text:01DC4847                 sub     ecx, 1
+  .text:01DC484A                 imul    ecx, 154h
+  .text:01DC4850                 lea     edx, unk_2E11A48[edx+ecx]
+  .text:01DC4857                 push    edx
+  .text:01DC4858                 push    0
+  .text:01DC485A                 mov     eax, pStudioAPI
+  .text:01DC485F                 call    dword ptr [eax+8]
+  .text:01DC4862                 add     esp, 8
+  .text:01DC4865                 jmp     short loc_1DC4875
+  .text:01DC4867                 push    0
+  .text:01DC4869                 mov     ecx, pStudioAPI
+  .text:01DC486F                 call    dword ptr [ecx+4]
+  .text:01DC4872                 add     esp, 4
+  .text:01DC4875                 mov     edx, [ebp+var_4]
+  .text:01DC4878                 mov     eax, transObjects
+  .text:01DC487D                 mov     ecx, [eax+edx*8]
+  .text:01DC4880                 mov     currententity, ecx
+  .text:01DC4886                 push    3
+  .text:01DC4888                 mov     edx, pStudioAPI
+  .text:01DC488E                 call    dword ptr [edx+4]
+  .text:01DC4891                 add     esp, 4
+  .text:01DC4894                 jmp     short loc_1DC489B
+  .text:01DC4896                 jmp     loc_1DC47DA
+  .text:01DC489B                 jmp     short def_1DC4625; jumptable 01DC4625 default case
+  .text:01DC489D                 push    3
+  .text:01DC489F                 mov     eax, pStudioAPI
+  .text:01DC48A4                 call    dword ptr [eax+4]
+  .text:01DC48A7                 add     esp, 4
+  .text:01DC48AA                 ; jumptable 01DC4625 default case
+  .text:01DC48AA                 jmp     loc_1DC456A; jumptable 01DC4625 default case
+  .text:01DC48AF                 call    GL_DisableMultitexture
+  .text:01DC48B4                 push    0BC0h
+  .text:01DC48B9                 call    qglEnable
+  .text:01DC48BF                 push    46040000h
+  .text:01DC48C4                 push    2200h
+  .text:01DC48C9                 push    2300h
+  .text:01DC48CE                 call    qglTexEnvf
+  .text:01DC48D4                 cmp     g_bUserFogOn, 0
+  .text:01DC48DB                 jz      short loc_1DC48E8
+  .text:01DC48DD                 push    0B60h
+  .text:01DC48E2                 call    qglDisable
+  .text:01DC48E8                 call    ClientDLL_DrawTransparentTriangles
+  .text:01DC48ED                 cmp     g_bUserFogOn, 0
+  .text:01DC48F4                 jz      short loc_1DC4901
+  .text:01DC48F6                 push    0B60h
+  .text:01DC48FB                 call    qglEnable
+  .text:01DC4901                 mov     numTransObjs, 0
+  .text:01DC490B                 mov     r_blend, 3F800000h
+  .text:01DC4915                 mov     esp, ebp
+  .text:01DC4917                 pop     ebp
+  .text:01DC4918                 retn
+procedure: |-
+  // Source engine/r_trans.c:219-343. CoF stores CL_UPDATE_MASK in memory (0x3f); cl_parsecount is the mutable server sequence counter loaded before AND. The AND memory operand is the mask, not cl_parsecount. Frame stride is 0x42c0; entity-state stride is 0x154. Partial source reconstruction: opaque entity/Studio API types retain verified offsets.
+  void __cdecl R_DrawTEntitiesOnList(int clientOnly)
+  {
+    double v1; // st7
+    int v2; // [esp+0h] [ebp-14h]
+    int *AttachmentPoint; // [esp+8h] [ebp-Ch]
+    int j; // [esp+Ch] [ebp-8h]
+    int i; // [esp+10h] [ebp-4h]
+
+    if ( flt_1EB9AFC != 0.0 )
+    {
+      if ( !clientOnly )
+      {
+        for ( i = 0; i < numTransObjs; ++i )
+        {
+          qglDisable(2912);
+          currententity = *((_DWORD *)transObjects + 2 * i);
+          v1 = (double)(int)CL_FxBlend(currententity);
+          *(float *)&r_blend = v1;
+          if ( v1 > 0.0 )
+          {
+            *(float *)&r_blend = *(float *)&r_blend * 0.00392156862745098;
+            if ( *(_DWORD *)(currententity + 760) == 3 && *(_DWORD *)(*(_DWORD *)(currententity + 2964) + 68) != 1 )
+              Con_DPrintf(aNonSpriteSetTo, v2);
+            v2 = *(_DWORD *)(*(_DWORD *)(currententity + 2964) + 68);
+            switch ( v2 )
+            {
+              case 0:
+                if ( g_bUserFogOn && *(_DWORD *)(currententity + 760) != 3 && *(_DWORD *)(currententity + 760) != 5 )
+                  qglEnable(2912);
+                R_DrawBrushModel(currententity);
+                break;
+              case 1:
+                if ( *(_DWORD *)(currententity + 788) )
+                {
+                  AttachmentPoint = (int *)R_GetAttachmentPoint(
+                                             *(__int16 *)(currententity + 744),
+                                             *(_DWORD *)(currententity + 788));
+                  dword_2C0E4A0 = *AttachmentPoint;
+                  dword_2C0E4A4 = AttachmentPoint[1];
+                  dword_2C0E4A8 = AttachmentPoint[2];
+                }
+                else
+                {
+                  dword_2C0E4A0 = *(_DWORD *)(currententity + 2888);
+                  dword_2C0E4A4 = *(_DWORD *)(currententity + 2892);
+                  dword_2C0E4A8 = *(_DWORD *)(currententity + 2896);
+                }
+                if ( *(_DWORD *)(currententity + 760) == 3 )
+                  *(float *)&r_blend = GlowBlend(currententity) * *(float *)&r_blend;
+                if ( *(float *)&r_blend != 0.0 )
+                  R_DrawSpriteModel(currententity);
+                break;
+              case 2:
+                R_DrawAliasModel(currententity);
+                break;
+              case 3:
+                if ( *(_DWORD *)(currententity + 764) )
+                {
+                  if ( *(_DWORD *)(currententity + 4) )
+                  {
+                    (*((void (__cdecl **)(int, char *))pStudioAPI + 2))(
+                      3,
+                      (char *)&unk_2E11A48
+                    + 17088 * (CL_UPDATE_MASK & cl_parsecount)
+                    + 340 * *(_DWORD *)currententity
+                    - 340);
+                  }
+                  else if ( *(_DWORD *)(currententity + 776) == 12 )
+                  {
+                    for ( j = 0; j < numTransObjs; ++j )
+                    {
+                      if ( **((_DWORD **)transObjects + 2 * j) == *(_DWORD *)(currententity + 836) )
+                      {
+                        currententity = *((_DWORD *)transObjects + 2 * j);
+                        if ( *(_DWORD *)(currententity + 4) )
+                          (*((void (__cdecl **)(_DWORD, char *))pStudioAPI + 2))(
+                            0,
+                            (char *)&unk_2E11A48
+                          + 17088 * (CL_UPDATE_MASK & cl_parsecount)
+                          + 340 * *(_DWORD *)currententity
+                          - 340);
+                        else
+                          (*((void (__cdecl **)(_DWORD))pStudioAPI + 1))(0);
+                        currententity = *((_DWORD *)transObjects + 2 * i);
+                        (*((void (__cdecl **)(int))pStudioAPI + 1))(3);
+                        goto LABEL_4;
+                      }
+                    }
+                  }
+                  else
+                  {
+                    (*((void (__cdecl **)(int))pStudioAPI + 1))(3);
+                  }
+                }
+                break;
+              default:
+                continue;
+            }
+          }
+  LABEL_4:
+          ;
+        }
+      }
+      GL_DisableMultitexture();
+      qglEnable(3008);
+      qglTexEnvf(8960, 8704, 1174667264);
+      if ( g_bUserFogOn )
+        qglDisable(2912);
+      ClientDLL_DrawTransparentTriangles();
+      if ( g_bUserFogOn )
+        qglEnable(2912);
+      numTransObjs = 0;
+      r_blend = 1065353216;
+    }
+  }

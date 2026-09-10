@@ -1,0 +1,10 @@
+func_name: GameStudioRenderer_StudioSetupBones
+func_va: '0x1008f860'
+func_rva: '0x8f860'
+func_size: '0x747'
+vtable_name: GameStudioRenderer
+vfunc_offset: '0x18'
+vfunc_index: 6
+vfunc_sig: 55 8B EC 83 EC 4C A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 57 8B F9 8B 4F ?? 8B 57 ?? 8B 81 ?? ?? ?? ?? 3B 82 ?? ??
+  ?? ??
+vfunc_sig_allow_across_function_boundary: true

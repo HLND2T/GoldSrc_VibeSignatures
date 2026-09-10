@@ -1,0 +1,458 @@
+func_name: "R_DrawTEntitiesOnList"
+func_va: "0x101fa870"
+disasm_code: |-
+  .text:101FA870                 push    ebp
+  .text:101FA871                 mov     ebp, esp
+  .text:101FA873                 sub     esp, 0E0h
+  .text:101FA879                 mov     eax, ___security_cookie
+  .text:101FA87E                 xor     eax, ebp
+  .text:101FA880                 mov     [ebp+var_4], eax
+  .text:101FA883                 movss   xmm0, dword_10322B98
+  .text:101FA88B                 ucomiss xmm0, ds:dword_102B3730
+  .text:101FA892                 lahf
+  .text:101FA893                 test    ah, 44h
+  .text:101FA896                 jnp     loc_101FACE3
+  .text:101FA89C                 cmp     [ebp+clientOnly], 0
+  .text:101FA8A0                 jnz     loc_101FAC7C
+  .text:101FA8A6                 push    edi
+  .text:101FA8A7                 xor     edi, edi
+  .text:101FA8A9                 cmp     numTransObjs, edi
+  .text:101FA8AF                 jle     loc_101FAC7B
+  .text:101FA8B5                 ; ArgList
+  .text:101FA8B5                 push    esi; ArgList
+  .text:101FA8B6                 push    0
+  .text:101FA8B8                 call    R_SetFogEnabled
+  .text:101FA8BD                 mov     eax, dword_10530C80
+  .text:101FA8C2                 mov     eax, [eax+edi*8]
+  .text:101FA8C5                 push    eax
+  .text:101FA8C6                 mov     currententity, eax
+  .text:101FA8CB                 call    CL_FxBlend
+  .text:101FA8D0                 xorps   xmm1, xmm1
+  .text:101FA8D3                 add     esp, 8
+  .text:101FA8D6                 movd    xmm0, eax
+  .text:101FA8DA                 cvtdq2ps xmm0, xmm0
+  .text:101FA8DD                 comiss  xmm1, xmm0
+  .text:101FA8E0                 movss   r_blend, xmm0
+  .text:101FA8E8                 jnb     def_101FA945; jumptable 101FA945 default case
+  .text:101FA8EE                 mov     esi, currententity
+  .text:101FA8F4                 cvtps2pd xmm0, xmm0
+  .text:101FA8F7                 mulsd   xmm0, ds:qword_102B9348
+  .text:101FA8FF                 cvtpd2ps xmm0, xmm0
+  .text:101FA903                 movss   r_blend, xmm0
+  .text:101FA90B                 cmp     dword ptr [esi+2F8h], 3
+  .text:101FA912                 jnz     short loc_101FA933
+  .text:101FA914                 mov     eax, [esi+0B94h]
+  .text:101FA91A                 cmp     dword ptr [eax+44h], 1
+  .text:101FA91E                 jz      short loc_101FA933
+  .text:101FA920                 push    offset aNonSpriteSetTo; "Non-sprite set to glow!\n"
+  .text:101FA925                 call    Con_DPrintf
+  .text:101FA92A                 mov     esi, currententity
+  .text:101FA930                 add     esp, 4
+  .text:101FA933                 mov     eax, [esi+0B94h]
+  .text:101FA939                 mov     eax, [eax+44h]
+  .text:101FA93C                 ; switch 4 cases
+  .text:101FA93C                 cmp     eax, 3; switch 4 cases
+  .text:101FA93F                 ja      def_101FA945; jumptable 101FA945 default case
+  .text:101FA945                 ; switch jump
+  .text:101FA945                 jmp     ds:jpt_101FA945[eax*4]; switch jump
+  .text:101FA94C                 ; jumptable 101FA945 case 2
+  .text:101FA94C                 push    esi; jumptable 101FA945 case 2
+  .text:101FA94D                 call    R_DrawAliasModel
+  .text:101FA952                 jmp     loc_101FAC6A
+  .text:101FA957                 ; jumptable 101FA945 case 0
+  .text:101FA957                 cmp     g_bUserFogOn, 0; jumptable 101FA945 case 0
+  .text:101FA95E                 jz      short loc_101FA980
+  .text:101FA960                 mov     eax, [esi+2F8h]
+  .text:101FA966                 cmp     eax, 3
+  .text:101FA969                 jz      short loc_101FA980
+  .text:101FA96B                 cmp     eax, 5
+  .text:101FA96E                 jz      short loc_101FA980
+  .text:101FA970                 push    1
+  .text:101FA972                 call    R_SetFogEnabled
+  .text:101FA977                 mov     esi, currententity
+  .text:101FA97D                 add     esp, 4
+  .text:101FA980                 push    esi
+  .text:101FA981                 call    R_DrawBrushModel
+  .text:101FA986                 jmp     loc_101FAC6A
+  .text:101FA98B                 ; jumptable 101FA945 case 1
+  .text:101FA98B                 mov     eax, [esi+314h]; jumptable 101FA945 case 1
+  .text:101FA991                 test    eax, eax
+  .text:101FA993                 jz      short loc_101FA9CC
+  .text:101FA995                 push    eax
+  .text:101FA996                 movsx   eax, word ptr [esi+2E8h]
+  .text:101FA99D                 push    eax
+  .text:101FA99E                 call    R_GetAttachmentPoint
+  .text:101FA9A3                 mov     esi, currententity
+  .text:101FA9A9                 add     esp, 8
+  .text:101FA9AC                 movss   xmm0, dword ptr [eax]
+  .text:101FA9B0                 movss   dword_10DC5620, xmm0
+  .text:101FA9B8                 movss   xmm1, dword ptr [eax+4]
+  .text:101FA9BD                 movss   dword_10DC5624, xmm1
+  .text:101FA9C5                 movss   xmm2, dword ptr [eax+8]
+  .text:101FA9CA                 jmp     short loc_101FA9F4
+  .text:101FA9CC                 movss   xmm0, dword ptr [esi+0B48h]
+  .text:101FA9D4                 movss   dword_10DC5620, xmm0
+  .text:101FA9DC                 movss   xmm1, dword ptr [esi+0B4Ch]
+  .text:101FA9E4                 movss   dword_10DC5624, xmm1
+  .text:101FA9EC                 movss   xmm2, dword ptr [esi+0B50h]
+  .text:101FA9F4                 movss   dword_10DC5628, xmm2
+  .text:101FA9FC                 cmp     dword ptr [esi+2F8h], 3
+  .text:101FAA03                 jnz     loc_101FAB61
+  .text:101FAA09                 subss   xmm0, dword ptr r_origin
+  .text:101FAA11                 subss   xmm1, dword ptr r_origin+4
+  .text:101FAA19                 subss   xmm2, dword_10DC5578
+  .text:101FAA21                 lea     eax, [ebp+var_10]
+  .text:101FAA24                 push    eax
+  .text:101FAA25                 movss   [ebp+var_10], xmm0
+  .text:101FAA2A                 movss   [ebp+var_C], xmm1
+  .text:101FAA2F                 movss   [ebp+var_8], xmm2
+  .text:101FAA34                 call    sub_101D99C0
+  .text:101FAA39                 mov     eax, dword_104D1350
+  .text:101FAA3E                 add     esp, 4
+  .text:101FAA41                 fstp    [ebp+var_14]
+  .text:101FAA44                 mov     dword ptr [eax+0BCh], 2
+  .text:101FAA4E                 movss   xmm0, dword_10322C9C
+  .text:101FAA56                 ucomiss xmm0, ds:dword_102B3730
+  .text:101FAA5D                 push    0FFFFFFFFh
+  .text:101FAA5F                 lahf
+  .text:101FAA60                 test    ah, 44h
+  .text:101FAA63                 jnp     short loc_101FAA6F
+  .text:101FAA65                 push    4
+  .text:101FAA67                 lea     eax, [ebp+var_9C]
+  .text:101FAA6D                 jmp     short loc_101FAA77
+  .text:101FAA6F                 push    5
+  .text:101FAA71                 lea     eax, [ebp+var_E0]
+  .text:101FAA77                 push    offset dword_10DC5620
+  .text:101FAA7C                 push    offset r_origin
+  .text:101FAA81                 push    eax
+  .text:101FAA82                 call    sub_101E2400
+  .text:101FAA87                 movss   xmm2, [ebp+var_14]
+  .text:101FAA8C                 add     esp, 14h
+  .text:101FAA8F                 movsd   xmm1, ds:qword_103065C0
+  .text:101FAA97                 cvtps2pd xmm3, xmm2
+  .text:101FAA9A                 movups  xmm0, xmmword ptr [eax]
+  .text:101FAA9D                 movups  [ebp+var_58], xmm0
+  .text:101FAAA1                 movups  xmm0, xmmword ptr [eax+10h]
+  .text:101FAAA5                 movups  [ebp+var_48], xmm0
+  .text:101FAAA9                 movups  xmm0, xmmword ptr [eax+20h]
+  .text:101FAAAD                 movups  [ebp+var_38], xmm0
+  .text:101FAAB1                 movups  xmm0, xmmword ptr [eax+30h]
+  .text:101FAAB5                 movups  [ebp+var_28], xmm0
+  .text:101FAAB9                 movss   xmm0, dword ptr [ebp+var_48]
+  .text:101FAABE                 cvtps2pd xmm0, xmm0
+  .text:101FAAC1                 subsd   xmm1, xmm0
+  .text:101FAAC5                 mulsd   xmm1, xmm3
+  .text:101FAAC9                 comisd  xmm1, ds:qword_103066A8
+  .text:101FAAD1                 jbe     short loc_101FAAD8
+  .text:101FAAD3                 xorps   xmm0, xmm0
+  .text:101FAAD6                 jmp     short loc_101FAB4B
+  .text:101FAAD8                 cmp     dword ptr [esi+304h], 0Eh
+  .text:101FAADF                 jnz     short loc_101FAAFB
+  .text:101FAAE1                 movd    xmm0, dword ptr [esi+2FCh]
+  .text:101FAAE9                 cvtdq2pd xmm0, xmm0
+  .text:101FAAED                 mulsd   xmm0, ds:qword_102B9348
+  .text:101FAAF5                 cvtpd2ps xmm0, xmm0
+  .text:101FAAF9                 jmp     short loc_101FAB4B
+  .text:101FAAFB                 movsd   xmm1, ds:qword_102C1C58
+  .text:101FAB03                 mulss   xmm2, xmm2
+  .text:101FAB07                 cvtps2pd xmm0, xmm2
+  .text:101FAB0A                 movsd   xmm2, ds:qword_103064E8
+  .text:101FAB12                 divsd   xmm1, xmm0
+  .text:101FAB16                 cvtpd2ps xmm1, xmm1
+  .text:101FAB1A                 cvtps2pd xmm0, xmm1
+  .text:101FAB1D                 comisd  xmm2, xmm0
+  .text:101FAB21                 jbe     short loc_101FAB2B
+  .text:101FAB23                 movss   xmm1, ds:dword_102C19FC
+  .text:101FAB2B                 mulsd   xmm3, ds:qword_10306490
+  .text:101FAB33                 cvtpd2ps xmm0, xmm3
+  .text:101FAB37                 movss   dword ptr [esi+2F0h], xmm0
+  .text:101FAB3F                 movss   xmm0, ds:dword_103064A8
+  .text:101FAB47                 minss   xmm0, xmm1
+  .text:101FAB4B                 mulss   xmm0, r_blend
+  .text:101FAB53                 mov     esi, currententity
+  .text:101FAB59                 movss   r_blend, xmm0
+  .text:101FAB61                 movss   xmm0, r_blend
+  .text:101FAB69                 ucomiss xmm0, ds:dword_102B3730
+  .text:101FAB70                 lahf
+  .text:101FAB71                 test    ah, 44h
+  .text:101FAB74                 jnp     def_101FA945; jumptable 101FA945 default case
+  .text:101FAB7A                 push    esi
+  .text:101FAB7B                 call    R_DrawSpriteModel
+  .text:101FAB80                 jmp     loc_101FAC6A
+  .text:101FAB85                 ; jumptable 101FA945 case 3
+  .text:101FAB85                 cmp     dword ptr [esi+2FCh], 0; jumptable 101FA945 case 3
+  .text:101FAB8C                 jz      def_101FA945; jumptable 101FA945 default case
+  .text:101FAB92                 cmp     dword ptr [esi+4], 0
+  .text:101FAB96                 jz      short loc_101FABCC
+  .text:101FAB98                 mov     eax, CL_UPDATE_MASK
+  .text:101FAB9D                 and     eax, cl_parsecount
+  .text:101FABA3                 imul    ecx, eax, 4318h
+  .text:101FABA9                 imul    eax, [esi], 154h
+  .text:101FABAF                 lea     eax, unk_11282DCC[eax]
+  .text:101FABB5                 add     eax, ecx
+  .text:101FABB7                 push    eax
+  .text:101FABB8                 mov     eax, off_1031C0F0
+  .text:101FABBD                 push    3
+  .text:101FABBF                 mov     eax, [eax+8]
+  .text:101FABC2                 call    eax
+  .text:101FABC4                 add     esp, 8
+  .text:101FABC7                 jmp     def_101FA945; jumptable 101FA945 default case
+  .text:101FABCC                 cmp     dword ptr [esi+308h], 0Ch
+  .text:101FABD3                 jnz     loc_101FAC5E
+  .text:101FABD9                 xor     eax, eax
+  .text:101FABDB                 cmp     numTransObjs, eax
+  .text:101FABE1                 jle     def_101FA945; jumptable 101FA945 default case
+  .text:101FABE7                 mov     ecx, [esi+344h]
+  .text:101FABED                 mov     esi, dword_10530C80
+  .text:101FABF3                 mov     edx, [esi+eax*8]
+  .text:101FABF6                 cmp     [edx], ecx
+  .text:101FABF8                 jz      short loc_101FAC05
+  .text:101FABFA                 inc     eax
+  .text:101FABFB                 cmp     eax, numTransObjs
+  .text:101FAC01                 jl      short loc_101FABF3
+  .text:101FAC03                 jmp     short def_101FA945; jumptable 101FA945 default case
+  .text:101FAC05                 mov     currententity, edx
+  .text:101FAC0B                 cmp     dword ptr [edx+4], 0
+  .text:101FAC0F                 jz      short loc_101FAC42
+  .text:101FAC11                 mov     eax, CL_UPDATE_MASK
+  .text:101FAC16                 and     eax, cl_parsecount
+  .text:101FAC1C                 imul    ecx, eax, 4318h
+  .text:101FAC22                 imul    eax, [edx], 154h
+  .text:101FAC28                 lea     eax, unk_11282DCC[eax]
+  .text:101FAC2E                 add     eax, ecx
+  .text:101FAC30                 push    eax
+  .text:101FAC31                 mov     eax, off_1031C0F0
+  .text:101FAC36                 push    0
+  .text:101FAC38                 mov     eax, [eax+8]
+  .text:101FAC3B                 call    eax
+  .text:101FAC3D                 add     esp, 8
+  .text:101FAC40                 jmp     short loc_101FAC51
+  .text:101FAC42                 mov     eax, off_1031C0F0
+  .text:101FAC47                 push    0
+  .text:101FAC49                 mov     eax, [eax+4]
+  .text:101FAC4C                 call    eax
+  .text:101FAC4E                 add     esp, 4
+  .text:101FAC51                 mov     eax, dword_10530C80
+  .text:101FAC56                 mov     eax, [eax+edi*8]
+  .text:101FAC59                 mov     currententity, eax
+  .text:101FAC5E                 mov     eax, off_1031C0F0
+  .text:101FAC63                 push    3
+  .text:101FAC65                 mov     eax, [eax+4]
+  .text:101FAC68                 call    eax
+  .text:101FAC6A                 add     esp, 4
+  .text:101FAC6D                 ; jumptable 101FA945 default case
+  .text:101FAC6D                 inc     edi; jumptable 101FA945 default case
+  .text:101FAC6E                 cmp     edi, numTransObjs
+  .text:101FAC74                 jl      loc_101FA8B6
+  .text:101FAC7A                 pop     esi
+  .text:101FAC7B                 pop     edi
+  .text:101FAC7C                 call    GL_DisableMultitexture
+  .text:101FAC81                 push    0BC0h
+  .text:101FAC86                 call    dword_109B3704
+  .text:101FAC8C                 push    ecx
+  .text:101FAC8D                 mov     [esp+0E4h+var_E4], 46040000h
+  .text:101FAC94                 push    2200h
+  .text:101FAC99                 push    2300h
+  .text:101FAC9E                 call    dword_109B339C
+  .text:101FACA4                 cmp     g_bUserFogOn, 0
+  .text:101FACAB                 jz      short loc_101FACB7
+  .text:101FACAD                 push    0
+  .text:101FACAF                 call    R_SetFogEnabled
+  .text:101FACB4                 add     esp, 4
+  .text:101FACB7                 call    ClientDLL_DrawTransparentTriangles
+  .text:101FACBC                 cmp     g_bUserFogOn, 0
+  .text:101FACC3                 jz      short loc_101FACCF
+  .text:101FACC5                 push    1
+  .text:101FACC7                 call    R_SetFogEnabled
+  .text:101FACCC                 add     esp, 4
+  .text:101FACCF                 mov     numTransObjs, 0
+  .text:101FACD9                 mov     r_blend, 3F800000h
+  .text:101FACE3                 mov     ecx, [ebp+var_4]
+  .text:101FACE6                 ; StackCookie
+  .text:101FACE6                 xor     ecx, ebp; StackCookie
+  .text:101FACE8                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101FACED                 mov     esp, ebp
+  .text:101FACEF                 pop     ebp
+  .text:101FACF0                 retn
+procedure: |-
+  // Source: engine/r_trans.c:219-343. cl_parsecount is cl.parsecount: AND with CL_UPDATE_MASK before indexing the frame ring passed to StudioDrawPlayer (flags 3 or 0). Do not select the update-mask global, currententity index, or frame stride. The current binary folds the playerstate offset and index-minus-one into its address arithmetic; the Linux DWARF client-state aggregate is named nMax and renders this inline frame region through predicted_origins. This expression is a compiler/type rendering of the same frame-ring access, not a different source array.
+  void __cdecl R_DrawTEntitiesOnList(int clientOnly)
+  {
+    int i; // edi
+    float v2; // xmm0_4
+    __int16 *v3; // esi
+    int v4; // eax
+    float *AttachmentPoint; // eax
+    float v6; // xmm0_4
+    float v7; // xmm1_4
+    float v8; // xmm2_4
+    __int128 *v9; // eax
+    float v10; // xmm0_4
+    float v11; // xmm1_4
+    float v12; // xmm0_4
+    int v13; // eax
+    _DWORD *v14; // edx
+    _BYTE v15[68]; // [esp+8h] [ebp-E0h] BYREF
+    _BYTE v16[68]; // [esp+4Ch] [ebp-9Ch] BYREF
+    __int128 v17; // [esp+90h] [ebp-58h]
+    __int128 v18; // [esp+A0h] [ebp-48h]
+    __int128 v19; // [esp+B0h] [ebp-38h]
+    __int128 v20; // [esp+C0h] [ebp-28h]
+    float v21; // [esp+D4h] [ebp-14h]
+    float v22[3]; // [esp+D8h] [ebp-10h] BYREF
+
+    if ( *(float *)&dword_10322B98 != 0.0 )
+    {
+      if ( !clientOnly )
+      {
+        for ( i = 0; i < numTransObjs; ++i )
+        {
+          R_SetFogEnabled(0);
+          currententity = *((void **)dword_10530C80 + 2 * i);
+          v2 = (float)(int)CL_FxBlend(currententity);
+          r_blend = v2;
+          if ( v2 > 0.0 )
+          {
+            v3 = (__int16 *)currententity;
+            r_blend = v2 * 0.00392156862745098;
+            if ( *((_DWORD *)currententity + 190) == 3 && *(_DWORD *)(*((_DWORD *)currententity + 741) + 68) != 1 )
+            {
+              Con_DPrintf("Non-sprite set to glow!\n");
+              v3 = (__int16 *)currententity;
+            }
+            switch ( *(_DWORD *)(*((_DWORD *)v3 + 741) + 68) )
+            {
+              case 0:
+                if ( g_bUserFogOn )
+                {
+                  v4 = *((_DWORD *)v3 + 190);
+                  if ( v4 != 3 && v4 != 5 )
+                  {
+                    R_SetFogEnabled(1);
+                    v3 = (__int16 *)currententity;
+                  }
+                }
+                R_DrawBrushModel(v3);
+                continue;
+              case 1:
+                if ( *((_DWORD *)v3 + 197) )
+                {
+                  AttachmentPoint = (float *)R_GetAttachmentPoint(v3[372], *((_DWORD *)v3 + 197));
+                  v3 = (__int16 *)currententity;
+                  v6 = *AttachmentPoint;
+                  dword_10DC5620 = *(_DWORD *)AttachmentPoint;
+                  v7 = AttachmentPoint[1];
+                  dword_10DC5624 = LODWORD(v7);
+                  v8 = AttachmentPoint[2];
+                }
+                else
+                {
+                  v6 = *((float *)v3 + 722);
+                  dword_10DC5620 = LODWORD(v6);
+                  v7 = *((float *)v3 + 723);
+                  dword_10DC5624 = LODWORD(v7);
+                  v8 = *((float *)v3 + 724);
+                }
+                dword_10DC5628 = LODWORD(v8);
+                if ( *((_DWORD *)v3 + 190) == 3 )
+                {
+                  v22[0] = v6 - r_origin[0];
+                  v22[1] = v7 - r_origin[1];
+                  v22[2] = v8 - *(float *)&dword_10DC5578;
+                  v21 = sub_101D99C0(v22);
+                  *(_DWORD *)(dword_104D1350 + 188) = 2;
+                  if ( *(float *)&dword_10322C9C == 0.0 )
+                    v9 = (__int128 *)sub_101E2400(v15, r_origin, &dword_10DC5620, 5, -1);
+                  else
+                    v9 = (__int128 *)sub_101E2400(v16, r_origin, &dword_10DC5620, 4, -1);
+                  v17 = *v9;
+                  v18 = v9[1];
+                  v19 = v9[2];
+                  v20 = v9[3];
+                  if ( (1.0 - *(float *)&v18) * v21 <= 8.0 )
+                  {
+                    if ( *((_DWORD *)v3 + 193) == 14 )
+                    {
+                      v10 = (double)*((int *)v3 + 191) * 0.00392156862745098;
+                    }
+                    else
+                    {
+                      v11 = 19000.0 / (float)(v21 * v21);
+                      if ( v11 < 0.05 )
+                        v11 = 0.050000001;
+                      v12 = v21 * 0.005;
+                      *((float *)v3 + 188) = v12;
+                      v10 = fminf(1.0, v11);
+                    }
+                  }
+                  else
+                  {
+                    v10 = 0;
+                  }
+                  v3 = (__int16 *)currententity;
+                  r_blend = v10 * r_blend;
+                }
+                if ( r_blend != 0.0 )
+                  R_DrawSpriteModel(v3);
+                continue;
+              case 2:
+                R_DrawAliasModel(v3);
+                continue;
+              case 3:
+                if ( !*((_DWORD *)v3 + 191) )
+                  continue;
+                if ( *((_DWORD *)v3 + 1) )
+                {
+                  (*((void (__cdecl **)(int, char *))off_1031C0F0 + 2))(
+                    3,
+                    (char *)&unk_11282DCC + 17176 * (cl_parsecount & CL_UPDATE_MASK) + 340 * *(_DWORD *)v3);
+                }
+                else
+                {
+                  if ( *((_DWORD *)v3 + 194) != 12 )
+                    goto LABEL_44;
+                  v13 = 0;
+                  if ( numTransObjs > 0 )
+                  {
+                    while ( 1 )
+                    {
+                      v14 = *((_DWORD **)dword_10530C80 + 2 * v13);
+                      if ( *v14 == *((_DWORD *)v3 + 209) )
+                        break;
+                      if ( ++v13 >= numTransObjs )
+                        goto LABEL_45;
+                    }
+                    currententity = *((void **)dword_10530C80 + 2 * v13);
+                    if ( v14[1] )
+                      (*((void (__cdecl **)(_DWORD, char *))off_1031C0F0 + 2))(
+                        0,
+                        (char *)&unk_11282DCC + 17176 * (cl_parsecount & CL_UPDATE_MASK) + 340 * *v14);
+                    else
+                      (*((void (__cdecl **)(_DWORD))off_1031C0F0 + 1))(0);
+                    currententity = *((void **)dword_10530C80 + 2 * i);
+  LABEL_44:
+                    (*((void (__cdecl **)(int))off_1031C0F0 + 1))(3);
+                    continue;
+                  }
+                }
+                break;
+              default:
+                continue;
+            }
+          }
+  LABEL_45:
+          ;
+        }
+      }
+      GL_DisableMultitexture();
+      dword_109B3704(3008);
+      dword_109B339C(8960, 8704, 1174667264);
+      if ( g_bUserFogOn )
+        R_SetFogEnabled(0);
+      ClientDLL_DrawTransparentTriangles();
+      if ( g_bUserFogOn )
+        R_SetFogEnabled(1);
+      numTransObjs = 0;
+      r_blend = 1.0;
+    }
+  }

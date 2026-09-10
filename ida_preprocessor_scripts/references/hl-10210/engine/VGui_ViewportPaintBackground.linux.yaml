@@ -1,0 +1,185 @@
+func_name: "VGui_ViewportPaintBackground"
+func_va: "0x168c40"
+disasm_code: |-
+  .text:00168C40                 push    ebp
+  .text:00168C41                 push    edi
+  .text:00168C42                 push    esi
+  .text:00168C43                 push    ebx
+  .text:00168C44                 sub     esp, 4Ch
+  .text:00168C47                 lea     eax, [esp+5Ch+extents]
+  .text:00168C4B                 mov     [esp+5Ch+wide], eax
+  .text:00168C4E                 call    g_engdstAddrs.VGui_ViewportPaintBackground
+  .text:00168C54                 call    GLFinishHud
+  .text:00168C59                 mov     eax, ds:glheight
+  .text:00168C5E                 lea     edx, [esp+5Ch+pnt.y]
+  .text:00168C62                 mov     [esp+5Ch+bpp], edx
+  .text:00168C66                 mov     ebp, ds:glx
+  .text:00168C6C                 mov     edi, ds:gly
+  .text:00168C72                 mov     esi, ds:glwidth
+  .text:00168C78                 mov     [esp+5Ch+var_44], eax
+  .text:00168C7C                 xor     old_3, old_3
+  .text:00168C7E                 mov     [esp+5Ch+pnt.x], eax
+  .text:00168C82                 xor     eax, eax
+  .text:00168C84                 mov     [esp+5Ch+pnt.y], eax
+  .text:00168C88                 lea     eax, [esp+5Ch+pnt]
+  .text:00168C8C                 mov     [esp+5Ch+tall], eax
+  .text:00168C90                 mov     eax, ds:pmainwindow
+  .text:00168C95                 mov     eax, [eax]
+  .text:00168C97                 mov     [esp+5Ch+wide], eax
+  .text:00168C9A                 call    SDL_GetWindowPosition
+  .text:00168C9F                 xor     eax, eax
+  .text:00168CA1                 mov     [esp+5Ch+rect.left], eax
+  .text:00168CA5                 xor     eax, eax
+  .text:00168CA7                 mov     [esp+5Ch+rect.top], eax
+  .text:00168CAB                 call    VideoMode_IsWindowed
+  .text:00168CB0                 test    eax, eax
+  .text:00168CB2                 jz      loc_168D98
+  .text:00168CB8                 lea     eax, [esp+5Ch+rect.bottom]
+  .text:00168CBC                 mov     [esp+5Ch+bpp], eax
+  .text:00168CC0                 lea     eax, [esp+5Ch+rect.right]
+  .text:00168CC4                 mov     [esp+5Ch+tall], eax
+  .text:00168CC8                 mov     eax, ds:pmainwindow
+  .text:00168CCD                 mov     eax, [eax]
+  .text:00168CCF                 mov     [esp+5Ch+wide], eax
+  .text:00168CD2                 call    SDL_GetWindowSize
+  .text:00168CD7                 mov     eax, [esp+5Ch+extents]
+  .text:00168CDB                 mov     ecx, [esp+5Ch+pnt.x]
+  .text:00168CDF                 mov     ebx, [esp+5Ch+pnt.y]
+  .text:00168CE3                 mov     edx, [eax]
+  .text:00168CE5                 sub     edx, ecx
+  .text:00168CE7                 mov     ds:glx, edx
+  .text:00168CED                 mov     edx, [eax+0Ch]
+  .text:00168CF0                 mov     ecx, edx
+  .text:00168CF2                 sub     ecx, ebx
+  .text:00168CF4                 mov     ebx, ds:glheight
+  .text:00168CFA                 sub     ebx, ecx
+  .text:00168CFC                 mov     ecx, [eax+8]
+  .text:00168CFF                 mov     ds:gly, ebx
+  .text:00168D05                 mov     ebx, [eax]
+  .text:00168D07                 sub     ecx, ebx
+  .text:00168D09                 mov     ds:glwidth, ecx
+  .text:00168D0F                 mov     ecx, [eax+4]
+  .text:00168D12                 sub     edx, ecx
+  .text:00168D14                 mov     ds:glheight, edx
+  .text:00168D1A                 call    SCR_CalcRefdef
+  .text:00168D1F                 call    V_RenderView
+  .text:00168D24                 call    GLBeginHud
+  .text:00168D29                 cmp     ds:cls.state, 5
+  .text:00168D30                 jz      loc_168DD0
+  .text:00168D36                 mov     edx, ds:scr_drawloading
+  .text:00168D3C                 test    edx, edx
+  .text:00168D3E                 jnz     short loc_168D52
+  .text:00168D40                 cmp     ds:nMax.intermission, 1
+  .text:00168D47                 jz      loc_168E20
+  .text:00168D4D                 call    SCR_DrawConsole
+  .text:00168D52                 call    SCR_DrawLoading
+  .text:00168D57                 cmp     ds:cls.state, 5
+  .text:00168D5E                 jz      short loc_168DC0
+  .text:00168D60                 call    GLFinishHud
+  .text:00168D65                 mov     eax, [esp+5Ch+var_44]
+  .text:00168D69                 mov     ds:glx, old_0
+  .text:00168D6F                 mov     ds:gly, old_1
+  .text:00168D75                 mov     ds:glwidth, old_2
+  .text:00168D7B                 mov     ds:glheight, eax
+  .text:00168D80                 call    SCR_CalcRefdef
+  .text:00168D85                 call    GLBeginHud
+  .text:00168D8A                 add     esp, 4Ch
+  .text:00168D8D                 pop     ebx
+  .text:00168D8E                 pop     old_2
+  .text:00168D8F                 pop     old_1
+  .text:00168D90                 pop     old_0
+  .text:00168D91                 retn
+  .text:00168D98                 lea     eax, [esp+5Ch+rect.bottom]
+  .text:00168D9C                 xor     ebx, ebx
+  .text:00168D9E                 ; tall
+  .text:00168D9E                 mov     [esp+5Ch+tall], eax; tall
+  .text:00168DA2                 lea     eax, [esp+5Ch+rect.right]
+  .text:00168DA6                 ; bpp
+  .text:00168DA6                 mov     [esp+5Ch+bpp], ebx; bpp
+  .text:00168DAA                 ; wide
+  .text:00168DAA                 mov     [esp+5Ch+wide], eax; wide
+  .text:00168DAD                 call    VideoMode_GetCurrentVideoMode
+  .text:00168DB2                 jmp     loc_168CD7
+  .text:00168DC0                 cmp     ds:cls.signon, 2
+  .text:00168DC7                 jnz     short loc_168D60
+  .text:00168DC9                 call    Sbar_Draw
+  .text:00168DCE                 jmp     short loc_168D60
+  .text:00168DD0                 cmp     ds:cls.signon, 2
+  .text:00168DD7                 jnz     loc_168D36
+  .text:00168DDD                 cmp     ds:nMax.intermission, 1
+  .text:00168DE4                 ; allowed
+  .text:00168DE4                 mov     [esp+5Ch+wide], 0; allowed
+  .text:00168DEB                 setz    [esp+5Ch+var_3D]
+  .text:00168DF0                 movzx   ebx, [esp+5Ch+var_3D]
+  .text:00168DF5                 call    AllowFog
+  .text:00168DFA                 movzx   eax, bl
+  .text:00168DFD                 ; intermission
+  .text:00168DFD                 mov     [esp+5Ch+wide], eax; intermission
+  .text:00168E00                 call    ClientDLL_HudRedraw
+  .text:00168E05                 ; allowed
+  .text:00168E05                 mov     [esp+5Ch+wide], 1; allowed
+  .text:00168E0C                 call    AllowFog
+  .text:00168E11                 jmp     loc_168D36
+  .text:00168E20                 mov     eax, ds:key_dest
+  .text:00168E25                 test    eax, eax
+  .text:00168E27                 jz      loc_168D52
+  .text:00168E2D                 lea     old_2, [old_2+0]
+  .text:00168E30                 jmp     loc_168D4D
+procedure: |-
+  // Source: engine/VGUI_EngineSurface.cpp. Current build brackets rendering with GLFinishHud/GLBeginHud; do not force the older GL_Set2D source body.
+  void __cdecl VGui_ViewportPaintBackground(int *extents)
+  {
+    GLint v1; // ebp
+    GLint v2; // edi
+    GLsizei v3; // esi
+    int v4; // edx
+    int v5; // ecx
+    bool v6; // bl
+    GLsizei v7; // [esp+18h] [ebp-44h]
+    POINT pnt; // [esp+28h] [ebp-34h] BYREF
+    RECT rect; // [esp+30h] [ebp-2Ch] BYREF
+
+    g_engdstAddrs.VGui_ViewportPaintBackground(&extents);
+    GLFinishHud();
+    v1 = glx;
+    v2 = gly;
+    v3 = glwidth;
+    v7 = glheight;
+    pnt.x = 0;
+    pnt.y = 0;
+    SDL_GetWindowPosition(*pmainwindow, &pnt, &pnt.y);
+    rect.left = 0;
+    rect.top = 0;
+    if ( VideoMode_IsWindowed() )
+      SDL_GetWindowSize(*pmainwindow, &rect.right, &rect.bottom);
+    else
+      VideoMode_GetCurrentVideoMode(&rect.right, &rect.bottom, nullptr);
+    glx = *extents - pnt.x;
+    v4 = extents[3];
+    v5 = extents[2];
+    gly = glheight - (v4 - pnt.y);
+    glwidth = v5 - *extents;
+    glheight = v4 - extents[1];
+    SCR_CalcRefdef();
+    V_RenderView();
+    GLBeginHud();
+    if ( cls.state == ca_active && cls.signon == 2 )
+    {
+      v6 = nMax.intermission == 1;
+      AllowFog(0);
+      ClientDLL_HudRedraw(v6);
+      AllowFog(1);
+    }
+    if ( scr_drawloading == false && (nMax.intermission != 1 || key_dest) )
+      SCR_DrawConsole();
+    SCR_DrawLoading();
+    if ( cls.state == ca_active && cls.signon == 2 )
+      Sbar_Draw();
+    GLFinishHud();
+    glx = v1;
+    gly = v2;
+    glwidth = v3;
+    glheight = v7;
+    SCR_CalcRefdef();
+    GLBeginHud();
+  }

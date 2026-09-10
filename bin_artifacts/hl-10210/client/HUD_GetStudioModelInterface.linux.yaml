@@ -1,0 +1,5 @@
+func_name: HUD_GetStudioModelInterface
+func_va: '0x4fa80'
+func_rva: '0x4fa80'
+func_size: '0x50'
+func_sig: 83 EC ?? 31 C0 83 7C 24 ?? ?? 74 ?? 83 C4 ?? C3 8B 44 24 ?? C7 00 ?? ?? ?? ?? 31 C0 8B 54 24 ?? 8B 0C 02

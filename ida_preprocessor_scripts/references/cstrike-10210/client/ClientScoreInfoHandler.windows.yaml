@@ -1,0 +1,141 @@
+func_name: "ClientScoreInfoHandler"
+func_va: "0x1002e8f0"
+disasm_code: |-
+  .text:1002E8F0                 push    ebp
+  .text:1002E8F1                 mov     ebp, esp
+  .text:1002E8F3                 push    ebx
+  .text:1002E8F4                 push    esi
+  .text:1002E8F5                 push    edi
+  .text:1002E8F6                 ; iSize
+  .text:1002E8F6                 push    [ebp+iSize]; iSize
+  .text:1002E8F9                 mov     ebx, ecx
+  .text:1002E8FB                 ; pbuf
+  .text:1002E8FB                 push    [ebp+pbuf]; pbuf
+  .text:1002E8FE                 call    BEGIN_READ
+  .text:1002E903                 add     esp, 8
+  .text:1002E906                 call    READ_BYTE
+  .text:1002E90B                 movzx   esi, ax
+  .text:1002E90E                 call    READ_SHORT
+  .text:1002E913                 movzx   edi, ax
+  .text:1002E916                 call    READ_SHORT
+  .text:1002E91B                 movzx   eax, ax
+  .text:1002E91E                 mov     [ebp+iSize], eax
+  .text:1002E921                 call    READ_SHORT
+  .text:1002E926                 movzx   eax, ax
+  .text:1002E929                 mov     [ebp+pbuf], eax
+  .text:1002E92C                 call    READ_SHORT
+  .text:1002E931                 lea     eax, [esi-1]
+  .text:1002E934                 cmp     ax, 3Fh ; '?'
+  .text:1002E938                 ja      loc_1002E9EC
+  .text:1002E93E                 mov     ecx, [ebp+iSize]
+  .text:1002E941                 movsx   eax, si
+  .text:1002E944                 imul    eax, 74h ; 't'
+  .text:1002E947                 cmp     g_PlayerExtraInfo.teamnumber[eax], 0
+  .text:1002E94F                 mov     g_PlayerExtraInfo.deaths[eax], cx
+  .text:1002E956                 mov     ecx, [ebp+pbuf]
+  .text:1002E959                 mov     word ptr g_PlayerExtraInfo.frags[eax], di ; g_PlayerExtraInfo: zero-offset frags store resolves the array base
+  .text:1002E960                 mov     g_PlayerExtraInfo.playerclass[eax], cx
+  .text:1002E967                 jge     short loc_1002E972
+  .text:1002E969                 xor     ecx, ecx
+  .text:1002E96B                 mov     g_PlayerExtraInfo.teamnumber[eax], cx
+  .text:1002E972                 cmp     dword ptr [ebx+72Ch], 0
+  .text:1002E979                 jz      short loc_1002E9A7
+  .text:1002E97B                 ; numTeams
+  .text:1002E97B                 push    dword ptr [ebx+69Ch]; numTeams
+  .text:1002E981                 cmp     dword ptr [ebx+6A4h], 0
+  .text:1002E988                 lea     eax, [ebx+4]
+  .text:1002E98B                 ; teamNames
+  .text:1002E98B                 push    eax; teamNames
+  .text:1002E98C                 setnz   al
+  .text:1002E98F                 ; this
+  .text:1002E98F                 lea     ecx, [ebx-8]; this
+  .text:1002E992                 movzx   eax, al
+  .text:1002E995                 ; allowSpectators
+  .text:1002E995                 push    eax; allowSpectators
+  .text:1002E996                 call    TeamFortressViewport_GetMapName
+  .text:1002E99B                 ; this
+  .text:1002E99B                 mov     ecx, [ebx+72Ch]; this
+  .text:1002E9A1                 ; mapName
+  .text:1002E9A1                 push    eax; mapName
+  .text:1002E9A2                 call    CCSTeamMenu_Update
+  .text:1002E9A7                 mov     eax, [ebx-8]
+  .text:1002E9AA                 lea     ecx, [ebx-8]
+  .text:1002E9AD                 call    dword ptr [eax+10h]
+  .text:1002E9B0                 mov     eax, [ebx+20h]
+  .text:1002E9B3                 mov     ecx, [ebx+1Ch]
+  .text:1002E9B6                 mov     esi, [eax]
+  .text:1002E9B8                 mov     eax, [ecx]
+  .text:1002E9BA                 mov     eax, [eax+30h]
+  .text:1002E9BD                 call    eax
+  .text:1002E9BF                 cmp     dword_10117BA4, 0
+  .text:1002E9C6                 lea     ecx, [ebx-8]
+  .text:1002E9C9                 movzx   eax, al
+  .text:1002E9CC                 push    eax
+  .text:1002E9CD                 setnz   al
+  .text:1002E9D0                 movzx   eax, al
+  .text:1002E9D3                 push    eax
+  .text:1002E9D4                 mov     eax, [ebx-8]
+  .text:1002E9D7                 call    dword ptr [eax+0A8h]
+  .text:1002E9DD                 mov     ecx, [ebx+20h]
+  .text:1002E9E0                 push    eax
+  .text:1002E9E1                 call    dword ptr [esi+4]
+  .text:1002E9E4                 mov     ecx, [ebx+1Ch]
+  .text:1002E9E7                 mov     eax, [ecx]
+  .text:1002E9E9                 call    dword ptr [eax+24h]
+  .text:1002E9EC                 pop     edi
+  .text:1002E9ED                 pop     esi
+  .text:1002E9EE                 mov     eax, 1
+  .text:1002E9F3                 pop     ebx
+  .text:1002E9F4                 pop     ebp
+  .text:1002E9F5                 retn    0Ch
+procedure: |-
+  // Source: cl_dll/VGUI/counterstrikeviewport.cpp:618-652. Current binary permits 64 players and has stride 0x74; do not copy an older SDK structure tail. Recover the array base from the frags store (member offset zero), not deaths/playerclass/team member addresses.
+  int __thiscall CounterStrikeViewport_MsgFunc_ScoreInfo(void *this, const char *pszName, int iSize, void *pbuf)
+  {
+    __int16 cl; // si
+    __int16 frags; // di
+    int v7; // eax
+    bool v8; // sf
+    const char *MapName; // eax
+    int v10; // esi
+    unsigned __int8 v11; // al
+    int v12; // eax
+    bool v14; // [esp-Ch] [ebp-18h]
+    int v15; // [esp-4h] [ebp-10h]
+    __int16 deaths; // [esp+18h] [ebp+Ch]
+    __int16 playerclass; // [esp+1Ch] [ebp+10h]
+
+    BEGIN_READ(pbuf, iSize);
+    cl = READ_BYTE();
+    frags = READ_SHORT();
+    deaths = READ_SHORT();
+    playerclass = READ_SHORT();
+    READ_SHORT();
+    if ( (unsigned __int16)(cl - 1) <= 0x3Fu )
+    {
+      v7 = cl;
+      v8 = g_PlayerExtraInfo[v7].teamnumber < 0;
+      g_PlayerExtraInfo[v7].deaths = deaths;
+      g_PlayerExtraInfo[v7].frags = frags;
+      g_PlayerExtraInfo[v7].playerclass = playerclass;
+      if ( v8 )
+        g_PlayerExtraInfo[cl].teamnumber = 0;
+      if ( *((_DWORD *)this + 459) )
+      {
+        v15 = *((_DWORD *)this + 423);
+        v14 = *((_DWORD *)this + 425) != 0;
+        MapName = TeamFortressViewport_GetMapName((char *)this - 8);
+        CCSTeamMenu_Update(*((void **)this + 459), MapName, v14, (const char **)this + 1, v15);
+      }
+      (*(void (__thiscall **)(char *))(*((_DWORD *)this - 2) + 16))((char *)this - 8);
+      v10 = **((_DWORD **)this + 8);
+      v11 = (*(int (__thiscall **)(_DWORD))(**((_DWORD **)this + 7) + 48))(*((_DWORD *)this + 7));
+      v12 = (*(int (__thiscall **)(char *, bool, _DWORD))(*((_DWORD *)this - 2) + 168))(
+              (char *)this - 8,
+              dword_10117BA4 != 0,
+              v11);
+      (*(void (__thiscall **)(_DWORD, int))(v10 + 4))(*((_DWORD *)this + 8), v12);
+      (*(void (__thiscall **)(_DWORD))(**((_DWORD **)this + 7) + 36))(*((_DWORD *)this + 7));
+    }
+    return 1;
+  }

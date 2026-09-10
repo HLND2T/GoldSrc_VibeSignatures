@@ -1,0 +1,581 @@
+func_name: "GameStudioRenderer_StudioDrawModel"
+func_va: "0x632c0"
+disasm_code: |-
+  .text:000632C0                 push    ebp
+  .text:000632C1                 push    edi
+  .text:000632C2                 push    esi
+  .text:000632C3                 push    ebx
+  .text:000632C4                 sub     esp, 1ACh
+  .text:000632CA                 mov     ebx, [esp+1BCh+this]
+  .text:000632D1                 mov     eax, large gs:14h
+  .text:000632D7                 mov     [esp+1BCh+var_20], eax
+  .text:000632DE                 xor     eax, eax
+  .text:000632E0                 call    ds:IEngineStudio.GetCurrentEntity
+  .text:000632E6                 mov     [ebx+2Ch], eax
+  .text:000632E9                 lea     eax, [ebx+0Ch]
+  .text:000632EC                 mov     [esp+1BCh+out], eax
+  .text:000632F0                 lea     eax, [ebx+4]
+  .text:000632F3                 mov     [esp+1BCh+src], eax
+  .text:000632F7                 lea     eax, [ebx+1Ch]
+  .text:000632FA                 mov     [esp+1BCh+dest], eax
+  .text:000632FD                 call    ds:IEngineStudio.GetTimes
+  .text:00063303                 lea     eax, [ebx+407Ch]
+  .text:00063309                 mov     [esp+1BCh+var_1B0], eax
+  .text:0006330D                 lea     eax, [ebx+4070h]
+  .text:00063313                 mov     [esp+1BCh+out], eax
+  .text:00063317                 lea     eax, [ebx+4064h]
+  .text:0006331D                 mov     [esp+1BCh+src], eax
+  .text:00063321                 lea     eax, [ebx+4088h]
+  .text:00063327                 mov     [esp+1BCh+dest], eax
+  .text:0006332A                 call    ds:IEngineStudio.GetViewInfo
+  .text:00063330                 lea     eax, [ebx+4060h]
+  .text:00063336                 mov     [esp+1BCh+src], eax
+  .text:0006333A                 lea     eax, [ebx+405Ch]
+  .text:00063340                 mov     [esp+1BCh+dest], eax
+  .text:00063343                 call    ds:IEngineStudio.GetAliasScale
+  .text:00063349                 mov     eax, [ebx+2Ch]
+  .text:0006334C                 cmp     dword ptr [eax+304h], 11h
+  .text:00063353                 jz      loc_63500
+  .text:00063359                 mov     eax, [eax+0B94h]
+  .text:0006335F                 xor     edi, edi
+  .text:00063361                 mov     [ebx+30h], eax
+  .text:00063364                 mov     [esp+1BCh+dest], eax
+  .text:00063367                 call    ds:IEngineStudio.Mod_Extradata
+  .text:0006336D                 mov     [ebx+40h], eax
+  .text:00063370                 mov     [esp+1BCh+dest], eax
+  .text:00063373                 call    ds:IEngineStudio.StudioSetHeader
+  .text:00063379                 mov     eax, [ebx+30h]
+  .text:0006337C                 mov     [esp+1BCh+dest], eax
+  .text:0006337F                 call    ds:IEngineStudio.SetRenderModel
+  .text:00063385                 mov     eax, [ebx]
+  .text:00063387                 mov     [esp+1BCh+src], edi
+  .text:0006338B                 mov     [esp+1BCh+dest], ebx
+  .text:0006338E                 call    dword ptr [eax+18h]
+  .text:00063391                 mov     eax, [esp+1BCh+flags]
+  .text:00063398                 and     eax, 1
+  .text:0006339B                 mov     [esp+1BCh+var_1A0], eax
+  .text:0006339F                 jnz     loc_63610
+  .text:000633A5                 mov     eax, [ebx+2Ch]
+  .text:000633A8                 cmp     dword ptr [eax+308h], 0Ch
+  .text:000633AF                 jz      loc_63740
+  .text:000633B5                 mov     eax, [ebx]
+  .text:000633B7                 mov     [esp+1BCh+dest], ebx
+  .text:000633BA                 call    dword ptr [eax+1Ch] ; GameStudioRenderer_StudioSetupBones, vtable offset 0x1c
+  .text:000633BD                 mov     eax, [ebx]
+  .text:000633BF                 mov     eax, [eax+24h]
+  .text:000633C2                 cmp     eax, offset _ZN20CStudioModelRenderer15StudioSaveBonesEv; GameStudioRenderer_StudioSaveBones function pointer, vtable offset 0x24
+  .text:000633C7                 jnz     loc_63758
+  .text:000633CD                 mov     eax, [ebx+40h]
+  .text:000633D0                 mov     ecx, [eax+8Ch]
+  .text:000633D6                 mov     edx, [eax+90h]
+  .text:000633DC                 mov     [ebx+58h], ecx
+  .text:000633DF                 mov     ecx, [eax+8Ch]
+  .text:000633E5                 test    ecx, ecx
+  .text:000633E7                 jle     short loc_63465
+  .text:000633E9                 lea     ecx, [ebx+5Ch]
+  .text:000633EC                 add     edx, eax
+  .text:000633EE                 lea     ebp, [ebx+105Ch]
+  .text:000633F4                 xor     edi, edi
+  .text:000633F6                 lea     esi, [esi+0]
+  .text:000633F9                 lea     edi, [edi+0]
+  .text:00063400                 ; src
+  .text:00063400                 mov     [esp+1BCh+src], edx; src
+  .text:00063404                 lea     esi, [edi+edi*2]
+  .text:00063407                 inc     edi
+  .text:00063408                 ; dest
+  .text:00063408                 mov     [esp+1BCh+dest], ecx; dest
+  .text:0006340B                 shl     esi, 4
+  .text:0006340E                 mov     [esp+1BCh+var_1A4], edx
+  .text:00063412                 mov     [esp+1BCh+var_1A8], ecx
+  .text:00063416                 call    strcpy
+  .text:0006341B                 ; out
+  .text:0006341B                 mov     [esp+1BCh+src], ebp; out
+  .text:0006341F                 mov     eax, [ebx+40A4h]
+  .text:00063425                 add     eax, esi
+  .text:00063427                 ; in
+  .text:00063427                 mov     [esp+1BCh+dest], eax; in
+  .text:0006342A                 call    _Z10MatrixCopyPA4_fS0_; MatrixCopy(float (*)[4],float (*)[4])
+  .text:0006342F                 lea     eax, [ebp+1800h]
+  .text:00063435                 add     ebp, 30h ; '0'
+  .text:00063438                 ; out
+  .text:00063438                 mov     [esp+1BCh+src], eax; out
+  .text:0006343C                 mov     eax, [ebx+40A8h]
+  .text:00063442                 add     esi, eax
+  .text:00063444                 ; in
+  .text:00063444                 mov     [esp+1BCh+dest], esi; in
+  .text:00063447                 call    _Z10MatrixCopyPA4_fS0_; MatrixCopy(float (*)[4],float (*)[4])
+  .text:0006344C                 mov     ecx, [esp+1BCh+var_1A8]
+  .text:00063450                 mov     edx, [esp+1BCh+var_1A4]
+  .text:00063454                 mov     eax, [ebx+40h]
+  .text:00063457                 add     ecx, 20h ; ' '
+  .text:0006345A                 add     edx, 70h ; 'p'
+  .text:0006345D                 cmp     [eax+8Ch], edi
+  .text:00063463                 jg      short loc_63400
+  .text:00063465                 test    byte ptr [esp+1BCh+flags], 2
+  .text:0006346D                 jnz     loc_63648
+  .text:00063473                 mov     edi, [esp+1BCh+var_1A0]
+  .text:00063477                 test    edi, edi
+  .text:00063479                 jz      short loc_634D5
+  .text:0006347B                 lea     esi, [esp+1BCh+lighting]
+  .text:0006347F                 lea     eax, [esp+1BCh+dir]
+  .text:00063483                 mov     [esp+1BCh+src], esi
+  .text:00063487                 mov     [esp+1BCh+lighting.plightvec], eax
+  .text:0006348B                 mov     eax, [ebx+2Ch]
+  .text:0006348E                 mov     [esp+1BCh+dest], eax
+  .text:00063491                 call    ds:IEngineStudio.StudioDynamicLight
+  .text:00063497                 mov     [esp+1BCh+dest], esi
+  .text:0006349A                 call    ds:IEngineStudio.StudioEntityLight
+  .text:000634A0                 mov     [esp+1BCh+dest], esi
+  .text:000634A3                 call    ds:IEngineStudio.StudioSetupLighting
+  .text:000634A9                 mov     edx, [ebx+2Ch]
+  .text:000634AC                 movzx   eax, byte ptr [edx+2E4h]
+  .text:000634B3                 mov     [ebx+4Ch], eax
+  .text:000634B6                 movzx   edx, byte ptr [edx+2E5h]
+  .text:000634BD                 mov     [ebx+50h], edx
+  .text:000634C0                 mov     [esp+1BCh+dest], eax
+  .text:000634C3                 mov     [esp+1BCh+src], edx
+  .text:000634C7                 call    ds:IEngineStudio.StudioSetRemapColors
+  .text:000634CD                 mov     eax, [ebx]
+  .text:000634CF                 mov     [esp+1BCh+dest], ebx
+  .text:000634D2                 call    dword ptr [eax+4Ch] ; GameStudioRenderer_StudioRenderModel, vtable offset 0x4c
+  .text:000634D5                 mov     eax, 1
+  .text:000634DA                 mov     edi, [esp+1BCh+var_20]
+  .text:000634E1                 xor     edi, large gs:14h
+  .text:000634E8                 jnz     loc_637AD
+  .text:000634EE                 add     esp, 1ACh
+  .text:000634F4                 pop     ebx
+  .text:000634F5                 pop     esi
+  .text:000634F6                 pop     edi
+  .text:000634F7                 pop     ebp
+  .text:000634F8                 retn
+  .text:00063500                 mov     esi, [eax+2FCh]
+  .text:00063506                 test    esi, esi
+  .text:00063508                 jle     loc_63600
+  .text:0006350E                 call    ds:gEngfuncs.GetMaxClients
+  .text:00063514                 cmp     esi, eax
+  .text:00063516                 jg      loc_63600
+  .text:0006351C                 mov     eax, [ebx+2Ch]
+  .text:0006351F                 mov     eax, [eax+2FCh]
+  .text:00063525                 dec     eax
+  .text:00063526                 mov     [esp+1BCh+dest], eax
+  .text:00063529                 call    ds:IEngineStudio.GetPlayerState
+  .text:0006352F                 xor     edx, edx
+  .text:00063531                 mov     esi, [eax+edx]
+  .text:00063534                 mov     ecx, [eax+edx+4]
+  .text:00063538                 mov     [esp+edx+1BCh+deadplayer.entityType], esi
+  .text:0006353C                 mov     [esp+edx+1BCh+deadplayer.number], ecx
+  .text:00063540                 add     edx, 8
+  .text:00063543                 cmp     edx, 150h
+  .text:00063549                 jb      short loc_63531
+  .text:0006354B                 mov     eax, [eax+edx]
+  .text:0006354E                 xor     esi, esi
+  .text:00063550                 xor     ecx, ecx
+  .text:00063552                 lea     edi, [esp+1BCh+deadplayer]
+  .text:00063556                 mov     [esp+1BCh+deadplayer.movetype], esi
+  .text:0006355D                 mov     esi, [ebx+14h]
+  .text:00063560                 mov     [esp+1BCh+deadplayer.gaitsequence], ecx
+  .text:00063567                 mov     [esp+edx+1BCh+deadplayer.entityType], eax
+  .text:0006356B                 mov     eax, [ebx+2Ch]
+  .text:0006356E                 mov     edx, [eax+2FCh]
+  .text:00063574                 movss   xmm0, dword ptr [eax+2CCh]
+  .text:0006357C                 movss   xmm1, dword ptr [eax+2D0h]
+  .text:00063584                 movss   xmm2, dword ptr [eax+2D4h]
+  .text:0006358C                 movss   xmm3, dword ptr [eax+2C0h]
+  .text:00063594                 movss   xmm4, dword ptr [eax+2C4h]
+  .text:0006359C                 movss   xmm5, dword ptr [eax+2C8h]
+  .text:000635A4                 mov     dword ptr [ebx+14h], 0
+  .text:000635AB                 mov     eax, [ebx]
+  .text:000635AD                 mov     [esp+1BCh+out], edi
+  .text:000635B1                 mov     edi, [esp+1BCh+flags]
+  .text:000635B8                 mov     [esp+1BCh+deadplayer.number], edx
+  .text:000635BC                 xor     edx, edx
+  .text:000635BE                 movss   [esp+1BCh+deadplayer.angles.x], xmm0
+  .text:000635C4                 movss   [esp+1BCh+deadplayer.angles.y], xmm1
+  .text:000635CA                 movss   [esp+1BCh+deadplayer.angles.z], xmm2
+  .text:000635D0                 movss   [esp+1BCh+deadplayer.origin.x], xmm3
+  .text:000635D6                 movss   [esp+1BCh+deadplayer.origin.y], xmm4
+  .text:000635DC                 movss   [esp+1BCh+deadplayer.origin.z], xmm5
+  .text:000635E2                 mov     [esp+1BCh+deadplayer.weaponmodel], edx
+  .text:000635E9                 mov     [esp+1BCh+src], edi
+  .text:000635ED                 mov     [esp+1BCh+dest], ebx
+  .text:000635F0                 call    dword ptr [eax+10h] ; GameStudioRenderer_StudioDrawPlayer, vtable offset 0x10, dead-player model branch
+  .text:000635F3                 mov     [ebx+14h], save_interp
+  .text:000635F6                 jmp     loc_634DA
+  .text:00063600                 xor     eax, eax
+  .text:00063602                 jmp     loc_634DA
+  .text:00063610                 call    ds:IEngineStudio.StudioCheckBBox
+  .text:00063616                 test    eax, eax
+  .text:00063618                 jz      loc_634DA
+  .text:0006361E                 mov     eax, [ebx+4098h]
+  .text:00063624                 inc     dword ptr [eax]
+  .text:00063626                 mov     eax, [ebx+4094h]
+  .text:0006362C                 inc     dword ptr [eax]
+  .text:0006362E                 mov     eax, [ebx+40h]
+  .text:00063631                 mov     esi, [eax+0CCh]
+  .text:00063637                 test    esi, esi
+  .text:00063639                 jnz     loc_633A5
+  .text:0006363F                 jmp     loc_634D5
+  .text:00063648                 mov     eax, [ebx]
+  .text:0006364A                 mov     eax, [eax+20h]
+  .text:0006364D                 cmp     eax, offset _ZN20CStudioModelRenderer21StudioCalcAttachmentsEv; GameStudioRenderer_StudioCalcAttachments function pointer, vtable offset 0x20; not the cold diagnostic clone
+  .text:00063652                 jnz     loc_63765
+  .text:00063658                 mov     eax, [ebx+40h]
+  .text:0006365B                 mov     edx, [eax+0D4h]
+  .text:00063661                 cmp     edx, 4
+  .text:00063664                 jg      loc_637B2
+  .text:0006366A                 mov     ecx, [eax+0D8h]
+  .text:00063670                 xor     esi, esi
+  .text:00063672                 test    edx, edx
+  .text:00063674                 lea     edi, [eax+ecx+28h]
+  .text:00063678                 jle     short loc_636BD
+  .text:0006367A                 lea     esi, [esi+0]
+  .text:00063680                 mov     eax, [ebx+2Ch]
+  .text:00063683                 lea     edx, [esi+esi*2]
+  .text:00063686                 inc     esi
+  .text:00063687                 lea     eax, [eax+edx*4+0B60h]
+  .text:0006368E                 ; out
+  .text:0006368E                 mov     [esp+1BCh+out], eax; out
+  .text:00063692                 mov     eax, [edi-4]
+  .text:00063695                 mov     ebp, [ebx+40A8h]
+  .text:0006369B                 ; in1
+  .text:0006369B                 mov     [esp+1BCh+dest], edi; in1
+  .text:0006369E                 add     edi, 58h ; 'X'
+  .text:000636A1                 lea     eax, [eax+eax*2]
+  .text:000636A4                 shl     eax, 4
+  .text:000636A7                 add     eax, ebp
+  .text:000636A9                 ; in2
+  .text:000636A9                 mov     [esp+1BCh+src], eax; in2
+  .text:000636AD                 call    _Z15VectorTransformPKfPA4_fPf; VectorTransform(float const*,float (*)[4],float *)
+  .text:000636B2                 mov     eax, [ebx+40h]
+  .text:000636B5                 cmp     [eax+0D4h], esi
+  .text:000636BB                 jg      short loc_63680
+  .text:000636BD                 call    ds:IEngineStudio.StudioClientEvents
+  .text:000636C3                 mov     eax, [ebx+2Ch]
+  .text:000636C6                 mov     eax, [eax]
+  .text:000636C8                 test    eax, eax
+  .text:000636CA                 jle     loc_63473
+  .text:000636D0                 mov     [esp+1BCh+dest], eax
+  .text:000636D3                 mov     esi, 30h ; '0'
+  .text:000636D8                 call    ds:gEngfuncs.GetEntityByIndex
+  .text:000636DE                 mov     edi, [ebx+2Ch]
+  .text:000636E1                 lea     ecx, [edi+0B60h]
+  .text:000636E7                 lea     edx, [ent+0B60h]
+  .text:000636ED                 test    dl, 1
+  .text:000636F0                 jnz     loc_6378A
+  .text:000636F6                 test    dl, 2
+  .text:000636F9                 jnz     short loc_63775
+  .text:000636FB                 mov     edi, esi
+  .text:000636FD                 xor     eax, eax
+  .text:000636FF                 and     edi, 0FFFFFFFCh
+  .text:00063702                 mov     ebp, [ecx+eax]
+  .text:00063705                 mov     [edx+eax], ebp
+  .text:00063708                 add     eax, 4
+  .text:0006370B                 cmp     eax, edi
+  .text:0006370D                 jb      short loc_63702
+  .text:0006370F                 add     edx, eax
+  .text:00063711                 add     ecx, eax
+  .text:00063713                 xor     edi, edi
+  .text:00063715                 test    esi, 2
+  .text:0006371B                 jz      short loc_63728
+  .text:0006371D                 movzx   eax, word ptr [ecx]
+  .text:00063720                 mov     edi, 2
+  .text:00063725                 mov     [edx], ax
+  .text:00063728                 and     esi, 1
+  .text:0006372B                 jz      loc_63473
+  .text:00063731                 movzx   eax, byte ptr [ecx+edi]
+  .text:00063735                 mov     [edx+edi], al
+  .text:00063738                 jmp     loc_63473
+  .text:00063740                 mov     edx, [ebx+30h]
+  .text:00063743                 mov     eax, [ebx]
+  .text:00063745                 mov     [esp+1BCh+dest], ebx
+  .text:00063748                 mov     [esp+1BCh+src], edx
+  .text:0006374C                 call    dword ptr [eax+28h] ; GameStudioRenderer_StudioMergeBones, vtable offset 0x28
+  .text:0006374F                 jmp     loc_633BD
+  .text:00063758                 mov     [esp+1BCh+dest], ebx
+  .text:0006375B                 call    eax
+  .text:0006375D                 lea     esi, [esi+0]
+  .text:00063760                 jmp     loc_63465
+  .text:00063765                 mov     [esp+1BCh+dest], ebx
+  .text:00063768                 call    eax
+  .text:0006376A                 lea     esi, [esi+0]
+  .text:00063770                 jmp     loc_636BD
+  .text:00063775                 movzx   ent, word ptr [ecx]
+  .text:00063778                 add     edx, 2
+  .text:0006377B                 add     ecx, 2
+  .text:0006377E                 sub     esi, 2
+  .text:00063781                 mov     [edx-2], ax
+  .text:00063785                 jmp     loc_636FB
+  .text:0006378A                 movzx   edx, byte ptr [edi+0B60h]
+  .text:00063791                 lea     ecx, [edi+0B61h]
+  .text:00063797                 mov     esi, 2Fh ; '/'
+  .text:0006379C                 mov     [ent+0B60h], dl
+  .text:000637A2                 lea     edx, [ent+0B61h]
+  .text:000637A8                 jmp     loc_636F6
+  .text:000637AD                 call    __stack_chk_fail
+  .text:000637B2                 ; this
+  .text:000637B2                 mov     eax, ebx; this
+  .text:000637B4                 call    _ZN20CStudioModelRenderer21StudioCalcAttachmentsEv_part_3_constprop_4; CStudioModelRenderer::StudioCalcAttachments(void) [clone]
+procedure: |-
+  // Verified hl-10210 ELF32 layout: vptr 0, times 4/12, entity 44, studio header 64, cache names 92, transform arrays 4188/10332. The available source includes CS-specific viewmodel/shadow branches absent from this Half-Life binary; preserve the actual branch structure. Virtual slot offsets are measured from the current renderer vtable, not copied from MSVC.
+  int __cdecl CStudioModelRenderer::StudioDrawModel(issue106_renderer_linux_t *self, int flags)
+  {
+    struct cl_entity_s *m_pCurrentEntity; // eax
+    struct model_s *model; // eax
+    studiohdr_t *v5; // eax
+    void (__cdecl *v6)(CStudioModelRenderer *const); // eax
+    studiohdr_t *m_pStudioHeader; // eax
+    int boneindex; // edx
+    char *v9; // ecx
+    const char *src; // edx
+    float *v11; // ebp
+    int v12; // edi
+    int v13; // esi
+    float *v14; // eax
+    struct cl_entity_s *v15; // edx
+    int colormap_low; // eax
+    int v17; // edx
+    int result; // eax
+    int renderamt; // esi
+    entity_state_s *v20; // eax
+    unsigned int i; // edx
+    int v22; // ecx
+    int v23; // eax
+    int m_fDoInterp; // esi
+    struct cl_entity_s *v25; // eax
+    int v26; // edx
+    vec_t x; // xmm0_4
+    vec_t y; // xmm1_4
+    vec_t z; // xmm2_4
+    vec_t v30; // xmm3_4
+    vec_t v31; // xmm4_4
+    vec_t v32; // xmm5_4
+    void **vtable; // eax
+    void (__cdecl *v34)(CStudioModelRenderer *const); // eax
+    studiohdr_t *v35; // eax
+    int numattachments; // edx
+    int v37; // esi
+    int v38; // edi
+    int v39; // edx
+    int v40; // eax
+    int v41; // esi
+    cl_entity_s *v42; // eax
+    struct cl_entity_s *v43; // edi
+    Vector *attachment; // ecx
+    Vector *v45; // edx
+    unsigned int v46; // eax
+    _WORD *v47; // edx
+    _WORD *v48; // ecx
+    int v49; // edi
+    __int16 x_low; // ax
+    char *dest; // [esp+0h] [ebp-1BCh]
+    char *v52; // [esp+14h] [ebp-1A8h]
+    const char *v53; // [esp+18h] [ebp-1A4h]
+    Vector dir; // [esp+24h] [ebp-198h] BYREF
+    alight_t lighting; // [esp+30h] [ebp-18Ch] BYREF
+    entity_state_t deadplayer; // [esp+48h] [ebp-174h] BYREF
+    unsigned int v57; // [esp+19Ch] [ebp-20h]
+
+    v57 = __readgsdword(0x14u);
+    self->m_pCurrentEntity = IEngineStudio.GetCurrentEntity();
+    IEngineStudio.GetTimes(&self->m_nFrameCount, &self->m_clTime, &self->m_clOldTime);
+    IEngineStudio.GetViewInfo(self->m_vRenderOrigin, self->m_vUp, self->m_vRight, self->m_vNormal);
+    IEngineStudio.GetAliasScale(&self->m_fSoftwareXScale, &self->m_fSoftwareYScale);
+    m_pCurrentEntity = self->m_pCurrentEntity;
+    if ( m_pCurrentEntity->curstate.renderfx == 17 )
+    {
+      renderamt = m_pCurrentEntity->curstate.renderamt;
+      if ( renderamt <= 0 || renderamt > gEngfuncs.GetMaxClients() )
+      {
+        return 0;
+      }
+      else
+      {
+        v20 = IEngineStudio.GetPlayerState(self->m_pCurrentEntity->curstate.renderamt - 1);
+        for ( i = 0; i < 0x150; i += 8 )
+        {
+          v22 = *(int *)((char *)&v20->number + i);
+          *(int *)((char *)&deadplayer.entityType + i) = *(int *)((char *)&v20->entityType + i);
+          *(int *)((char *)&deadplayer.number + i) = v22;
+        }
+        v23 = *(int *)((char *)&v20->entityType + i);
+        deadplayer.movetype = 0;
+        m_fDoInterp = self->m_fDoInterp;
+        deadplayer.gaitsequence = 0;
+        *(int *)((char *)&deadplayer.entityType + i) = v23;
+        v25 = self->m_pCurrentEntity;
+        v26 = v25->curstate.renderamt;
+        x = v25->curstate.angles.x;
+        y = v25->curstate.angles.y;
+        z = v25->curstate.angles.z;
+        v30 = v25->curstate.origin.x;
+        v31 = v25->curstate.origin.y;
+        v32 = v25->curstate.origin.z;
+        self->m_fDoInterp = 0;
+        vtable = self->vtable;
+        deadplayer.number = v26;
+        deadplayer.angles.x = x;
+        deadplayer.angles.y = y;
+        deadplayer.angles.z = z;
+        deadplayer.origin.x = v30;
+        deadplayer.origin.y = v31;
+        deadplayer.origin.z = v32;
+        deadplayer.weaponmodel = 0;
+        // GameStudioRenderer_StudioDrawPlayer, vtable offset 0x10
+        result = ((int (__cdecl *)(issue106_renderer_linux_t *, int, entity_state_t *))vtable[4])(
+                   self,
+                   flags,
+                   &deadplayer);
+        self->m_fDoInterp = m_fDoInterp;
+      }
+    }
+    else
+    {
+      model = m_pCurrentEntity->model;
+      self->m_pRenderModel = model;
+      v5 = (studiohdr_t *)IEngineStudio.Mod_Extradata(model);
+      self->m_pStudioHeader = v5;
+      IEngineStudio.StudioSetHeader(v5);
+      IEngineStudio.SetRenderModel(self->m_pRenderModel);
+      (*((void (__cdecl **)(issue106_renderer_linux_t *, _DWORD))self->vtable + 6))(self, 0);
+      if ( (flags & 1) == 0 )
+        goto LABEL_3;
+      result = IEngineStudio.StudioCheckBBox();
+      if ( result )
+      {
+        ++*self->m_pModelsDrawn;
+        ++*self->m_pStudioModelCount;
+        if ( !self->m_pStudioHeader->numbodyparts )
+          return 1;
+  LABEL_3:
+        if ( self->m_pCurrentEntity->curstate.movetype == 12 )
+          // GameStudioRenderer_StudioMergeBones, vtable offset 0x28
+          (*((void (__cdecl **)(issue106_renderer_linux_t *, struct model_s *))self->vtable + 10))(
+            self,
+            self->m_pRenderModel);
+        else
+          (*((void (__cdecl **)(issue106_renderer_linux_t *))self->vtable + 7))(self); // GameStudioRenderer_StudioSetupBones, offset 0x1c
+        v6 = *((void (__cdecl **)(CStudioModelRenderer *const))self->vtable + 9);
+        if ( v6 == CStudioModelRenderer::StudioSaveBones ) // GameStudioRenderer_StudioSaveBones, offset 0x24; devirtualization guard
+        {
+          m_pStudioHeader = self->m_pStudioHeader;
+          boneindex = m_pStudioHeader->boneindex;
+          self->m_nCachedBones = m_pStudioHeader->numbones;
+          if ( m_pStudioHeader->numbones > 0 )
+          {
+            v9 = self->m_nCachedBoneNames[0];
+            src = (char *)m_pStudioHeader + boneindex;
+            v11 = self->m_rgCachedBoneTransform[0][0];
+            v12 = 0;
+            do
+            {
+              v13 = 3 * v12++;
+              v13 *= 16;
+              v53 = src;
+              v52 = v9;
+              strcpy(v9, src);
+              MatrixCopy((float (*)[4])((char *)(*self->m_pbonetransform)[0] + v13), (float (*)[4])v11);
+              v14 = v11 + 1536;
+              v11 += 12;
+              MatrixCopy((float (*)[4])((char *)(*self->m_plighttransform)[0] + v13), (float (*)[4])v14);
+              v9 = v52 + 32;
+              src = v53 + 112;
+            }
+            while ( self->m_pStudioHeader->numbones > v12 );
+          }
+        }
+        else
+        {
+          v6((CStudioModelRenderer *const)self);
+        }
+        if ( (flags & 2) != 0 )
+        {
+          v34 = *((void (__cdecl **)(CStudioModelRenderer *const))self->vtable + 8);
+          if ( v34 == CStudioModelRenderer::StudioCalcAttachments ) // GameStudioRenderer_StudioCalcAttachments, offset 0x20; full method, not cold clone
+          {
+            v35 = self->m_pStudioHeader;
+            numattachments = v35->numattachments;
+            if ( numattachments > 4 )
+              CStudioModelRenderer::StudioCalcAttachments((CStudioModelRenderer *const)self);
+            v37 = 0;
+            v38 = (int)&v35->name[v35->attachmentindex + 32];
+            if ( numattachments > 0 )
+            {
+              do
+              {
+                v39 = v37++;
+                v40 = *(_DWORD *)(v38 - 4);
+                dest = (char *)v38;
+                v38 += 88;
+                VectorTransform(
+                  (const float *)dest,
+                  (*self->m_plighttransform)[v40],
+                  &self->m_pCurrentEntity->attachment[v39].x);
+              }
+              while ( self->m_pStudioHeader->numattachments > v37 );
+            }
+          }
+          else
+          {
+            v34((CStudioModelRenderer *const)self);
+          }
+          IEngineStudio.StudioClientEvents();
+          if ( self->m_pCurrentEntity->index > 0 )
+          {
+            v41 = 48;
+            v42 = gEngfuncs.GetEntityByIndex(self->m_pCurrentEntity->index);
+            v43 = self->m_pCurrentEntity;
+            attachment = v43->attachment;
+            v45 = v42->attachment;
+            if ( (((_BYTE)v42 + 96) & 1) != 0 )
+            {
+              attachment = (Vector *)((char *)&v43->attachment[0].x + 1);
+              v41 = 47;
+              LOBYTE(v42->attachment[0].x) = LOBYTE(v43->attachment[0].x);
+              v45 = (Vector *)((char *)&v42->attachment[0].x + 1);
+            }
+            if ( ((unsigned __int8)v45 & 2) != 0 )
+            {
+              x_low = LOWORD(attachment->x);
+              v45 = (Vector *)((char *)v45 + 2);
+              attachment = (Vector *)((char *)attachment + 2);
+              v41 -= 2;
+              HIWORD(v45[-1].z) = x_low;
+            }
+            v46 = 0;
+            do
+            {
+              *(vec_t *)((char *)&v45->x + v46) = *(vec_t *)((char *)&attachment->x + v46);
+              v46 += 4;
+            }
+            while ( v46 < (v41 & 0xFFFFFFFC) );
+            v47 = (_WORD *)((char *)v45 + v46);
+            v48 = (_WORD *)((char *)attachment + v46);
+            v49 = 0;
+            if ( (v41 & 2) != 0 )
+            {
+              v49 = 1;
+              *v47 = *v48;
+            }
+            if ( (v41 & 1) != 0 )
+              LOBYTE(v47[v49]) = v48[v49];
+          }
+        }
+        if ( (flags & 1) != 0 )
+        {
+          lighting.plightvec = (float *)&dir;
+          IEngineStudio.StudioDynamicLight(self->m_pCurrentEntity, &lighting);
+          IEngineStudio.StudioEntityLight(&lighting);
+          IEngineStudio.StudioSetupLighting(&lighting);
+          v15 = self->m_pCurrentEntity;
+          colormap_low = LOBYTE(v15->curstate.colormap);
+          self->m_nTopColor = colormap_low;
+          v17 = BYTE1(v15->curstate.colormap);
+          self->m_nBottomColor = v17;
+          IEngineStudio.StudioSetRemapColors(colormap_low, v17);
+          (*((void (__cdecl **)(issue106_renderer_linux_t *))self->vtable + 19))(self); // GameStudioRenderer_StudioRenderModel, offset 0x4c
+        }
+        return 1;
+      }
+    }
+    return result;
+  }

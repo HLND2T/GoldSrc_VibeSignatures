@@ -1,0 +1,68 @@
+func_name: "CL_CreateVisibleEntity"
+func_va: "0x10196180"
+disasm_code: |-
+  .text:10196180                 push    ebp
+  .text:10196181                 mov     ebp, esp
+  .text:10196183                 lea     eax, [ebp+ent]
+  .text:10196186                 ; ent
+  .text:10196186                 push    eax; ent
+  .text:10196187                 lea     eax, [ebp+type]
+  .text:1019618A                 ; type
+  .text:1019618A                 push    eax; type
+  .text:1019618B                 call    engdst_CreateVisibleEntity
+  .text:10196191                 add     esp, 8
+  .text:10196194                 cmp     [ebp+type], 3
+  .text:10196198                 jz      short loc_101961C0
+  .text:1019619A                 mov     ecx, cl_numvisedicts
+  .text:101961A0                 cmp     ecx, 200h
+  .text:101961A6                 jge     short loc_101961E3
+  .text:101961A8                 mov     eax, [ebp+ent]
+  .text:101961AB                 mov     cl_visedicts[ecx*4], eax
+  .text:101961B2                 inc     ecx
+  .text:101961B3                 mov     cl_numvisedicts, ecx
+  .text:101961B9                 mov     eax, 1
+  .text:101961BE                 pop     ebp
+  .text:101961BF                 retn
+  .text:101961C0                 mov     edx, cl_numbeamentities
+  .text:101961C6                 cmp     edx, 40h ; '@'
+  .text:101961C9                 jge     short loc_101961E3
+  .text:101961CB                 mov     ecx, [ebp+ent]
+  .text:101961CE                 mov     eax, 1
+  .text:101961D3                 mov     cl_beamentities[edx*4], ecx
+  .text:101961DA                 inc     edx
+  .text:101961DB                 mov     cl_numbeamentities, edx
+  .text:101961E1                 pop     ebp
+  .text:101961E2                 retn
+  .text:101961E3                 xor     eax, eax
+  .text:101961E5                 pop     ebp
+  .text:101961E6                 retn
+procedure: |-
+  // Source: engine/cdll_int.c CL_CreateVisibleEntity. type 3 is ET_BEAM; only the other branch owns cl_numvisedicts/cl_visedicts. The current build additionally invokes the engine API interception hook.
+  int __cdecl CL_CreateVisibleEntity(int type, void *ent)
+  {
+    int v2; // ecx
+    int v4; // edx
+
+    engdst_CreateVisibleEntity(&type, &ent);
+    if ( type == 3 )
+    {
+      v4 = cl_numbeamentities;
+      if ( cl_numbeamentities < 64 )
+      {
+        cl_beamentities[cl_numbeamentities] = ent;
+        cl_numbeamentities = v4 + 1;
+        return 1;
+      }
+    }
+    else
+    {
+      v2 = cl_numvisedicts;
+      if ( cl_numvisedicts < 512 )
+      {
+        cl_visedicts[cl_numvisedicts] = ent;
+        cl_numvisedicts = v2 + 1;
+        return 1;
+      }
+    }
+    return 0;
+  }

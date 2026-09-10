@@ -1,0 +1,1920 @@
+func_name: "R_StudioDrawPlayerBody"
+func_va: "0xd1550"
+disasm_code: |-
+  .text:000D1550                 push    ebp
+  .text:000D1551                 push    edi
+  .text:000D1552                 push    esi
+  .text:000D1553                 push    ebx
+  .text:000D1554                 sub     esp, 0C2Ch
+  .text:000D155A                 fld     developer.value
+  .text:000D1560                 fldz
+  .text:000D1562                 fxch    st(1)
+  .text:000D1564                 mov     [esp+0C3Ch+flags], flags_0
+  .text:000D1568                 mov     flags_0, large gs:14h
+  .text:000D156E                 mov     [esp+0C3Ch+var_20], flags_0
+  .text:000D1575                 xor     flags_0, flags_0
+  .text:000D1577                 fucomip st, st(1)
+  .text:000D1579                 fstp    st
+  .text:000D157B                 mov     [esp+0C3Ch+pplayer], pplayer_0
+  .text:000D157F                 jp      short loc_D1587
+  .text:000D1581                 jz      loc_D2133
+  .text:000D1587                 mov     eax, ds:r_playerindex
+  .text:000D158C                 lea     edx, [eax+eax*8]
+  .text:000D158F                 lea     edx, [eax+edx*4]
+  .text:000D1592                 shl     edx, 4
+  .text:000D1595                 cmp     ds:nMax.players.model[edx], 0
+  .text:000D159C                 jnz     loc_D214A
+  .text:000D15A2                 imul    edx, eax, 20Ch
+  .text:000D15A8                 lea     ecx, DM_PlayerState.name[edx]
+  .text:000D15AE                 mov     byte ptr ds:DM_PlayerState.name[edx], 0
+  .text:000D15B5                 mov     edx, ds:currententity
+  .text:000D15BB                 mov     ebx, [edx+0B94h]
+  .text:000D15C1                 cmp     [ecx+208h], ebx
+  .text:000D15C7                 jz      loc_D1ADD
+  .text:000D15CD                 mov     [ecx+208h], ebx
+  .text:000D15D3                 mov     esi, [edx]
+  .text:000D15D5                 lea     ecx, [esi+esi*4]
+  .text:000D15D8                 lea     ecx, [esi+ecx*2]
+  .text:000D15DB                 mov     ebx, ds:pDM_RemapSkin[ecx*4]
+  .text:000D15E2                 test    ebx, ebx
+  .text:000D15E4                 jz      short loc_D15EA
+  .text:000D15E6                 cmp     [ebx], esi
+  .text:000D15E8                 jz      short loc_D1633
+  .text:000D15EA                 mov     ecx, ds:r_remapindex
+  .text:000D15F0                 imul    ebp, ecx, 0CB8h
+  .text:000D15F6                 inc     ecx
+  .text:000D15F7                 mov     edi, ecx
+  .text:000D15F9                 sar     edi, 1Fh
+  .text:000D15FC                 shr     edi, 1Ah
+  .text:000D15FF                 add     ecx, edi
+  .text:000D1601                 and     ecx, 3Fh
+  .text:000D1604                 sub     ecx, edi
+  .text:000D1606                 mov     ds:r_remapindex, ecx
+  .text:000D160C                 lea     ecx, [esi+esi*4]
+  .text:000D160F                 lea     ebx, DM_RemapSkin.keynum[ebp]
+  .text:000D1615                 lea     ecx, [esi+ecx*2]
+  .text:000D1618                 mov     ds:pDM_RemapSkin[ecx*4], ebx
+  .text:000D161F                 mov     dword ptr ss:DM_RemapSkin.keynum[ebp], esi
+  .text:000D1625                 mov     dword ptr [ebx+4], 0FFFFFFFFh
+  .text:000D162C                 mov     dword ptr [ebx+8], 0FFFFFFFFh
+  .text:000D1633                 mov     dword ptr [ebx+4], 0FFFFFFFFh
+  .text:000D163A                 mov     dword ptr [ebx+8], 0FFFFFFFFh
+  .text:000D1641                 mov     ebx, [edx]
+  .text:000D1643                 lea     ecx, [ebx+ebx*4]
+  .text:000D1646                 lea     ecx, [ebx+ecx*2]
+  .text:000D1649                 mov     esi, ds:(pDM_RemapSkin+4)[ecx*4]
+  .text:000D1650                 test    esi, esi
+  .text:000D1652                 jz      short loc_D1658
+  .text:000D1654                 cmp     [esi], ebx
+  .text:000D1656                 jz      short loc_D16A9
+  .text:000D1658                 mov     ecx, ds:r_remapindex
+  .text:000D165E                 imul    edi, ecx, 0CB8h
+  .text:000D1664                 inc     ecx
+  .text:000D1665                 mov     ebp, ecx
+  .text:000D1667                 sar     ebp, 1Fh
+  .text:000D166A                 shr     ebp, 1Ah
+  .text:000D166D                 add     ecx, ebp
+  .text:000D166F                 and     ecx, 3Fh
+  .text:000D1672                 sub     ecx, ebp
+  .text:000D1674                 mov     ebp, 0FFFFFFFFh
+  .text:000D1679                 mov     ds:r_remapindex, ecx
+  .text:000D167F                 lea     ecx, [ebx+ebx*4]
+  .text:000D1682                 lea     ecx, [ebx+ecx*2]
+  .text:000D1685                 lea     esi, (DM_RemapSkin.keynum+128h)[edi]
+  .text:000D168B                 mov     ds:(pDM_RemapSkin+4)[ecx*4], esi
+  .text:000D1692                 mov     ecx, 0FFFFFFFFh
+  .text:000D1697                 mov     ds:(DM_RemapSkin.keynum+128h)[edi], ebx
+  .text:000D169D                 mov     ds:(DM_RemapSkin.topcolor+128h)[edi], ebp
+  .text:000D16A3                 mov     ds:(DM_RemapSkin.bottomcolor+128h)[edi], ecx
+  .text:000D16A9                 mov     dword ptr [esi+4], 0FFFFFFFFh
+  .text:000D16B0                 mov     dword ptr [esi+8], 0FFFFFFFFh
+  .text:000D16B7                 mov     ebx, [edx]
+  .text:000D16B9                 lea     ecx, [ebx+ebx*4]
+  .text:000D16BC                 lea     ecx, [ebx+ecx*2]
+  .text:000D16BF                 mov     esi, ds:(pDM_RemapSkin+8)[ecx*4]
+  .text:000D16C6                 test    esi, esi
+  .text:000D16C8                 jz      short loc_D16CE
+  .text:000D16CA                 cmp     [esi], ebx
+  .text:000D16CC                 jz      short loc_D171F
+  .text:000D16CE                 mov     ecx, ds:r_remapindex
+  .text:000D16D4                 imul    edi, ecx, 0CB8h
+  .text:000D16DA                 inc     ecx
+  .text:000D16DB                 mov     ebp, ecx
+  .text:000D16DD                 sar     ebp, 1Fh
+  .text:000D16E0                 shr     ebp, 1Ah
+  .text:000D16E3                 add     ecx, ebp
+  .text:000D16E5                 and     ecx, 3Fh
+  .text:000D16E8                 sub     ecx, ebp
+  .text:000D16EA                 mov     ds:r_remapindex, ecx
+  .text:000D16F0                 lea     ecx, [ebx+ebx*4]
+  .text:000D16F3                 lea     ecx, [ebx+ecx*2]
+  .text:000D16F6                 lea     esi, (DM_RemapSkin.keynum+250h)[edi]
+  .text:000D16FC                 mov     ds:(pDM_RemapSkin+8)[ecx*4], esi
+  .text:000D1703                 mov     ecx, 0FFFFFFFFh
+  .text:000D1708                 mov     ds:(DM_RemapSkin.keynum+250h)[edi], ebx
+  .text:000D170E                 mov     ebx, 0FFFFFFFFh
+  .text:000D1713                 mov     ds:(DM_RemapSkin.topcolor+250h)[edi], ecx
+  .text:000D1719                 mov     ds:(DM_RemapSkin.bottomcolor+250h)[edi], ebx
+  .text:000D171F                 mov     dword ptr [esi+4], 0FFFFFFFFh
+  .text:000D1726                 mov     dword ptr [esi+8], 0FFFFFFFFh
+  .text:000D172D                 mov     ebx, [edx]
+  .text:000D172F                 lea     ecx, [ebx+ebx*4]
+  .text:000D1732                 lea     ecx, [ebx+ecx*2]
+  .text:000D1735                 mov     esi, ds:(pDM_RemapSkin+0Ch)[ecx*4]
+  .text:000D173C                 test    esi, esi
+  .text:000D173E                 jz      short loc_D1744
+  .text:000D1740                 cmp     [esi], ebx
+  .text:000D1742                 jz      short loc_D1795
+  .text:000D1744                 mov     ecx, ds:r_remapindex
+  .text:000D174A                 imul    edi, ecx, 0CB8h
+  .text:000D1750                 inc     ecx
+  .text:000D1751                 mov     ebp, ecx
+  .text:000D1753                 sar     ebp, 1Fh
+  .text:000D1756                 shr     ebp, 1Ah
+  .text:000D1759                 add     ecx, ebp
+  .text:000D175B                 and     ecx, 3Fh
+  .text:000D175E                 sub     ecx, ebp
+  .text:000D1760                 mov     ebp, 0FFFFFFFFh
+  .text:000D1765                 mov     ds:r_remapindex, ecx
+  .text:000D176B                 lea     ecx, [ebx+ebx*4]
+  .text:000D176E                 lea     ecx, [ebx+ecx*2]
+  .text:000D1771                 lea     esi, (DM_RemapSkin.keynum+378h)[edi]
+  .text:000D1777                 mov     ds:(DM_RemapSkin.keynum+378h)[edi], ebx
+  .text:000D177D                 mov     ebx, 0FFFFFFFFh
+  .text:000D1782                 mov     ds:(pDM_RemapSkin+0Ch)[ecx*4], esi
+  .text:000D1789                 mov     ds:(DM_RemapSkin.topcolor+378h)[edi], ebx
+  .text:000D178F                 mov     ds:(DM_RemapSkin.bottomcolor+378h)[edi], ebp
+  .text:000D1795                 mov     dword ptr [esi+4], 0FFFFFFFFh
+  .text:000D179C                 mov     dword ptr [esi+8], 0FFFFFFFFh
+  .text:000D17A3                 mov     ebx, [edx]
+  .text:000D17A5                 lea     ecx, [ebx+ebx*4]
+  .text:000D17A8                 lea     ecx, [ebx+ecx*2]
+  .text:000D17AB                 mov     esi, ds:(pDM_RemapSkin+10h)[ecx*4]
+  .text:000D17B2                 test    esi, esi
+  .text:000D17B4                 jz      short loc_D17BA
+  .text:000D17B6                 cmp     ebx, [esi]
+  .text:000D17B8                 jz      short loc_D180B
+  .text:000D17BA                 mov     ecx, ds:r_remapindex
+  .text:000D17C0                 imul    edi, ecx, 0CB8h
+  .text:000D17C6                 inc     ecx
+  .text:000D17C7                 mov     ebp, ecx
+  .text:000D17C9                 sar     ebp, 1Fh
+  .text:000D17CC                 shr     ebp, 1Ah
+  .text:000D17CF                 add     ecx, ebp
+  .text:000D17D1                 and     ecx, 3Fh
+  .text:000D17D4                 sub     ecx, ebp
+  .text:000D17D6                 mov     ebp, 0FFFFFFFFh
+  .text:000D17DB                 mov     ds:r_remapindex, ecx
+  .text:000D17E1                 lea     ecx, [ebx+ebx*4]
+  .text:000D17E4                 lea     ecx, [ebx+ecx*2]
+  .text:000D17E7                 lea     esi, (DM_RemapSkin.keynum+4A0h)[edi]
+  .text:000D17ED                 mov     ds:(pDM_RemapSkin+10h)[ecx*4], esi
+  .text:000D17F4                 mov     ecx, 0FFFFFFFFh
+  .text:000D17F9                 mov     ds:(DM_RemapSkin.keynum+4A0h)[edi], ebx
+  .text:000D17FF                 mov     ds:(DM_RemapSkin.topcolor+4A0h)[edi], ebp
+  .text:000D1805                 mov     ds:(DM_RemapSkin.bottomcolor+4A0h)[edi], ecx
+  .text:000D180B                 mov     dword ptr [esi+4], 0FFFFFFFFh
+  .text:000D1812                 mov     dword ptr [esi+8], 0FFFFFFFFh
+  .text:000D1819                 mov     ebx, [edx]
+  .text:000D181B                 lea     ecx, [ebx+ebx*4]
+  .text:000D181E                 lea     ecx, [ebx+ecx*2]
+  .text:000D1821                 mov     esi, ds:(pDM_RemapSkin+14h)[ecx*4]
+  .text:000D1828                 test    esi, esi
+  .text:000D182A                 jz      short loc_D1830
+  .text:000D182C                 cmp     ebx, [esi]
+  .text:000D182E                 jz      short loc_D1881
+  .text:000D1830                 mov     ecx, ds:r_remapindex
+  .text:000D1836                 imul    edi, ecx, 0CB8h
+  .text:000D183C                 inc     ecx
+  .text:000D183D                 mov     ebp, ecx
+  .text:000D183F                 sar     ebp, 1Fh
+  .text:000D1842                 shr     ebp, 1Ah
+  .text:000D1845                 add     ecx, ebp
+  .text:000D1847                 and     ecx, 3Fh
+  .text:000D184A                 sub     ecx, ebp
+  .text:000D184C                 mov     ds:r_remapindex, ecx
+  .text:000D1852                 lea     ecx, [ebx+ebx*4]
+  .text:000D1855                 lea     ecx, [ebx+ecx*2]
+  .text:000D1858                 lea     esi, (DM_RemapSkin.keynum+5C8h)[edi]
+  .text:000D185E                 mov     ds:(pDM_RemapSkin+14h)[ecx*4], esi
+  .text:000D1865                 mov     ecx, 0FFFFFFFFh
+  .text:000D186A                 mov     ds:(DM_RemapSkin.keynum+5C8h)[edi], ebx
+  .text:000D1870                 mov     ebx, 0FFFFFFFFh
+  .text:000D1875                 mov     ds:(DM_RemapSkin.topcolor+5C8h)[edi], ecx
+  .text:000D187B                 mov     ds:(DM_RemapSkin.bottomcolor+5C8h)[edi], ebx
+  .text:000D1881                 mov     dword ptr [esi+4], 0FFFFFFFFh
+  .text:000D1888                 mov     dword ptr [esi+8], 0FFFFFFFFh
+  .text:000D188F                 mov     ebx, [edx]
+  .text:000D1891                 lea     ecx, [ebx+ebx*4]
+  .text:000D1894                 lea     ecx, [ebx+ecx*2]
+  .text:000D1897                 mov     esi, ds:(pDM_RemapSkin+18h)[ecx*4]
+  .text:000D189E                 test    esi, esi
+  .text:000D18A0                 jz      short loc_D18A6
+  .text:000D18A2                 cmp     ebx, [esi]
+  .text:000D18A4                 jz      short loc_D18F7
+  .text:000D18A6                 mov     ecx, ds:r_remapindex
+  .text:000D18AC                 imul    edi, ecx, 0CB8h
+  .text:000D18B2                 inc     ecx
+  .text:000D18B3                 mov     ebp, ecx
+  .text:000D18B5                 sar     ebp, 1Fh
+  .text:000D18B8                 shr     ebp, 1Ah
+  .text:000D18BB                 add     ecx, ebp
+  .text:000D18BD                 and     ecx, 3Fh
+  .text:000D18C0                 sub     ecx, ebp
+  .text:000D18C2                 mov     ebp, 0FFFFFFFFh
+  .text:000D18C7                 mov     ds:r_remapindex, ecx
+  .text:000D18CD                 lea     ecx, [ebx+ebx*4]
+  .text:000D18D0                 lea     ecx, [ebx+ecx*2]
+  .text:000D18D3                 lea     esi, (DM_RemapSkin.keynum+6F0h)[edi]
+  .text:000D18D9                 mov     ds:(DM_RemapSkin.keynum+6F0h)[edi], ebx
+  .text:000D18DF                 mov     ebx, 0FFFFFFFFh
+  .text:000D18E4                 mov     ds:(pDM_RemapSkin+18h)[ecx*4], esi
+  .text:000D18EB                 mov     ds:(DM_RemapSkin.topcolor+6F0h)[edi], ebx
+  .text:000D18F1                 mov     ds:(DM_RemapSkin.bottomcolor+6F0h)[edi], ebp
+  .text:000D18F7                 mov     dword ptr [esi+4], 0FFFFFFFFh
+  .text:000D18FE                 mov     dword ptr [esi+8], 0FFFFFFFFh
+  .text:000D1905                 mov     ebx, [edx]
+  .text:000D1907                 lea     ecx, [ebx+ebx*4]
+  .text:000D190A                 lea     ecx, [ebx+ecx*2]
+  .text:000D190D                 mov     esi, ds:(pDM_RemapSkin+1Ch)[ecx*4]
+  .text:000D1914                 test    esi, esi
+  .text:000D1916                 jz      short loc_D191C
+  .text:000D1918                 cmp     ebx, [esi]
+  .text:000D191A                 jz      short loc_D196D
+  .text:000D191C                 mov     ecx, ds:r_remapindex
+  .text:000D1922                 imul    edi, ecx, 0CB8h
+  .text:000D1928                 inc     ecx
+  .text:000D1929                 mov     ebp, ecx
+  .text:000D192B                 sar     ebp, 1Fh
+  .text:000D192E                 shr     ebp, 1Ah
+  .text:000D1931                 add     ecx, ebp
+  .text:000D1933                 and     ecx, 3Fh
+  .text:000D1936                 sub     ecx, ebp
+  .text:000D1938                 mov     ebp, 0FFFFFFFFh
+  .text:000D193D                 mov     ds:r_remapindex, ecx
+  .text:000D1943                 lea     ecx, [ebx+ebx*4]
+  .text:000D1946                 lea     ecx, [ebx+ecx*2]
+  .text:000D1949                 lea     esi, (DM_RemapSkin.keynum+818h)[edi]
+  .text:000D194F                 mov     ds:(pDM_RemapSkin+1Ch)[ecx*4], esi
+  .text:000D1956                 mov     ecx, 0FFFFFFFFh
+  .text:000D195B                 mov     ds:(DM_RemapSkin.keynum+818h)[edi], ebx
+  .text:000D1961                 mov     ds:(DM_RemapSkin.topcolor+818h)[edi], ebp
+  .text:000D1967                 mov     ds:(DM_RemapSkin.bottomcolor+818h)[edi], ecx
+  .text:000D196D                 mov     dword ptr [esi+4], 0FFFFFFFFh
+  .text:000D1974                 mov     dword ptr [esi+8], 0FFFFFFFFh
+  .text:000D197B                 mov     ebx, [edx]
+  .text:000D197D                 lea     ecx, [ebx+ebx*4]
+  .text:000D1980                 lea     ecx, [ebx+ecx*2]
+  .text:000D1983                 mov     esi, ds:(pDM_RemapSkin+20h)[ecx*4]
+  .text:000D198A                 test    esi, esi
+  .text:000D198C                 jz      short loc_D1992
+  .text:000D198E                 cmp     ebx, [esi]
+  .text:000D1990                 jz      short loc_D19E3
+  .text:000D1992                 mov     ecx, ds:r_remapindex
+  .text:000D1998                 imul    edi, ecx, 0CB8h
+  .text:000D199E                 inc     ecx
+  .text:000D199F                 mov     ebp, ecx
+  .text:000D19A1                 sar     ebp, 1Fh
+  .text:000D19A4                 shr     ebp, 1Ah
+  .text:000D19A7                 add     ecx, ebp
+  .text:000D19A9                 and     ecx, 3Fh
+  .text:000D19AC                 sub     ecx, ebp
+  .text:000D19AE                 mov     ds:r_remapindex, ecx
+  .text:000D19B4                 lea     ecx, [ebx+ebx*4]
+  .text:000D19B7                 lea     ecx, [ebx+ecx*2]
+  .text:000D19BA                 lea     esi, (DM_RemapSkin.keynum+940h)[edi]
+  .text:000D19C0                 mov     ds:(pDM_RemapSkin+20h)[ecx*4], esi
+  .text:000D19C7                 mov     ecx, 0FFFFFFFFh
+  .text:000D19CC                 mov     ds:(DM_RemapSkin.keynum+940h)[edi], ebx
+  .text:000D19D2                 mov     ebx, 0FFFFFFFFh
+  .text:000D19D7                 mov     ds:(DM_RemapSkin.topcolor+940h)[edi], ecx
+  .text:000D19DD                 mov     ds:(DM_RemapSkin.bottomcolor+940h)[edi], ebx
+  .text:000D19E3                 mov     dword ptr [esi+4], 0FFFFFFFFh
+  .text:000D19EA                 mov     dword ptr [esi+8], 0FFFFFFFFh
+  .text:000D19F1                 mov     ebx, [edx]
+  .text:000D19F3                 lea     ecx, [ebx+ebx*4]
+  .text:000D19F6                 lea     ecx, [ebx+ecx*2]
+  .text:000D19F9                 mov     esi, ds:(pDM_RemapSkin+24h)[ecx*4]
+  .text:000D1A00                 test    esi, esi
+  .text:000D1A02                 jz      short loc_D1A08
+  .text:000D1A04                 cmp     ebx, [esi]
+  .text:000D1A06                 jz      short loc_D1A59
+  .text:000D1A08                 mov     ecx, ds:r_remapindex
+  .text:000D1A0E                 imul    edi, ecx, 0CB8h
+  .text:000D1A14                 inc     ecx
+  .text:000D1A15                 mov     ebp, ecx
+  .text:000D1A17                 sar     ebp, 1Fh
+  .text:000D1A1A                 shr     ebp, 1Ah
+  .text:000D1A1D                 add     ecx, ebp
+  .text:000D1A1F                 and     ecx, 3Fh
+  .text:000D1A22                 sub     ecx, ebp
+  .text:000D1A24                 mov     ebp, 0FFFFFFFFh
+  .text:000D1A29                 mov     ds:r_remapindex, ecx
+  .text:000D1A2F                 lea     ecx, [ebx+ebx*4]
+  .text:000D1A32                 lea     ecx, [ebx+ecx*2]
+  .text:000D1A35                 lea     esi, (DM_RemapSkin.keynum+0A68h)[edi]
+  .text:000D1A3B                 mov     ds:(DM_RemapSkin.keynum+0A68h)[edi], ebx
+  .text:000D1A41                 mov     ebx, 0FFFFFFFFh
+  .text:000D1A46                 mov     ds:(pDM_RemapSkin+24h)[ecx*4], esi
+  .text:000D1A4D                 mov     ds:(DM_RemapSkin.topcolor+0A68h)[edi], ebx
+  .text:000D1A53                 mov     ds:(DM_RemapSkin.bottomcolor+0A68h)[edi], ebp
+  .text:000D1A59                 mov     dword ptr [esi+4], 0FFFFFFFFh
+  .text:000D1A60                 mov     dword ptr [esi+8], 0FFFFFFFFh
+  .text:000D1A67                 mov     ecx, [edx]
+  .text:000D1A69                 lea     edx, [ecx+ecx*4]
+  .text:000D1A6C                 lea     edx, [ecx+edx*2]
+  .text:000D1A6F                 mov     ebx, ds:(pDM_RemapSkin+28h)[edx*4]
+  .text:000D1A76                 test    ebx, ebx
+  .text:000D1A78                 jz      short loc_D1A7E
+  .text:000D1A7A                 cmp     ecx, [ebx]
+  .text:000D1A7C                 jz      short loc_D1ACF
+  .text:000D1A7E                 mov     edx, ds:r_remapindex
+  .text:000D1A84                 imul    esi, edx, 0CB8h
+  .text:000D1A8A                 inc     edx
+  .text:000D1A8B                 mov     edi, edx
+  .text:000D1A8D                 sar     edi, 1Fh
+  .text:000D1A90                 shr     edi, 1Ah
+  .text:000D1A93                 add     edx, edi
+  .text:000D1A95                 and     edx, 3Fh
+  .text:000D1A98                 sub     edx, edi
+  .text:000D1A9A                 mov     ds:r_remapindex, edx
+  .text:000D1AA0                 lea     edx, [ecx+ecx*4]
+  .text:000D1AA3                 lea     edx, [ecx+edx*2]
+  .text:000D1AA6                 lea     ebx, (DM_RemapSkin.keynum+0B90h)[esi]
+  .text:000D1AAC                 mov     ds:(pDM_RemapSkin+28h)[edx*4], ebx
+  .text:000D1AB3                 mov     edx, 0FFFFFFFFh
+  .text:000D1AB8                 mov     ds:(DM_RemapSkin.keynum+0B90h)[esi], ecx
+  .text:000D1ABE                 mov     ecx, 0FFFFFFFFh
+  .text:000D1AC3                 mov     ds:(DM_RemapSkin.topcolor+0B90h)[esi], edx
+  .text:000D1AC9                 mov     ds:(DM_RemapSkin.bottomcolor+0B90h)[esi], ecx
+  .text:000D1ACF                 mov     dword ptr [ebx+4], 0FFFFFFFFh
+  .text:000D1AD6                 mov     dword ptr [ebx+8], 0FFFFFFFFh
+  .text:000D1ADD                 imul    eax, 20Ch
+  .text:000D1AE3                 mov     eax, ds:DM_PlayerState.model[eax]
+  .text:000D1AE9                 test    eax, eax
+  .text:000D1AEB                 mov     ds:r_model, eax
+  .text:000D1AF0                 jz      loc_D212C
+  .text:000D1AF6                 ; mod
+  .text:000D1AF6                 mov     [esp+0C3Ch+mod], eax; mod
+  .text:000D1AF9                 call    Mod_Extradata
+  .text:000D1AFE                 mov     edi, [esp+0C3Ch+pplayer]
+  .text:000D1B02                 mov     ebp, [edi+0B8h]
+  .text:000D1B08                 mov     ds:pstudiohdr, eax
+  .text:000D1B0D                 test    ebp, ebp
+  .text:000D1B0F                 jnz     loc_D2084
+  .text:000D1B15                 mov     eax, ds:currententity
+  .text:000D1B1A                 xor     esi, esi
+  .text:000D1B1C                 mov     byte ptr [eax+318h], 7Fh
+  .text:000D1B23                 mov     byte ptr [eax+319h], 7Fh
+  .text:000D1B2A                 mov     byte ptr [eax+31Ah], 7Fh
+  .text:000D1B31                 mov     byte ptr [eax+31Bh], 7Fh
+  .text:000D1B38                 mov     byte ptr [eax+0B3Ch], 7Fh
+  .text:000D1B3F                 mov     byte ptr [eax+0B3Dh], 7Fh
+  .text:000D1B46                 mov     byte ptr [eax+0B3Eh], 7Fh
+  .text:000D1B4D                 mov     byte ptr [eax+0B3Fh], 7Fh
+  .text:000D1B54                 mov     eax, ds:r_playerindex
+  .text:000D1B59                 ; trivial_accept
+  .text:000D1B59                 mov     [esp+0C3Ch+mod], 0; trivial_accept
+  .text:000D1B60                 lea     edx, [eax+eax*8]
+  .text:000D1B63                 lea     eax, [eax+edx*4]
+  .text:000D1B66                 shl     eax, 4
+  .text:000D1B69                 mov     ds:nMax.players.gaitsequence[eax], esi
+  .text:000D1B6F                 call    R_StudioSetUpTransform
+  .text:000D1B74                 mov     eax, [esp+0C3Ch+flags]
+  .text:000D1B78                 and     eax, 1
+  .text:000D1B7B                 mov     [esp+0C3Ch+var_C00], eax
+  .text:000D1B7F                 jz      short loc_D1BAD
+  .text:000D1B81                 call    R_StudioCheckBBox; Source: engine/r_studio.c R_StudioCheckBBox. R_StudioTransformVector is inlined while expanding eight sequence-box corners. The multiplayer sequence-box path calls R_CullBox(mins,maxs); the other path tests one view plane with BoxOnPlaneSide.
+  .text:000D1B86                 test    eax, eax
+  .text:000D1B88                 jz      loc_D212C
+  .text:000D1B8E                 mov     eax, ds:pstudiohdr
+  .text:000D1B93                 inc     ds:r_amodels_drawn
+  .text:000D1B99                 inc     ds:r_smodels_total
+  .text:000D1B9F                 mov     ebx, [eax+0CCh]
+  .text:000D1BA5                 test    ebx, ebx
+  .text:000D1BA7                 jz      loc_D2060
+  .text:000D1BAD                 mov     eax, ds:r_playerindex
+  .text:000D1BB2                 lea     edx, [eax+eax*8]
+  .text:000D1BB5                 lea     eax, [eax+edx*4]
+  .text:000D1BB8                 shl     eax, 4
+  .text:000D1BBB                 add     eax, offset nMax.players
+  .text:000D1BC0                 mov     ds:r_playerinfo, eax
+  .text:000D1BC5                 call    R_StudioSetupBones
+  .text:000D1BCA                 mov     ecx, ds:pstudiohdr
+  .text:000D1BD0                 mov     eax, [ecx+8Ch]
+  .text:000D1BD6                 mov     edx, [ecx+90h]
+  .text:000D1BDC                 test    eax, eax
+  .text:000D1BDE                 mov     ds:cached_numbones, eax
+  .text:000D1BE3                 jle     loc_D1C8A
+  .text:000D1BE9                 add     edx, ecx
+  .text:000D1BEB                 mov     ecx, offset lighttransform
+  .text:000D1BF0                 mov     ebx, offset cached_bonename
+  .text:000D1BF5                 mov     ebp, offset cached_bonetransform
+  .text:000D1BFA                 mov     edi, offset bonetransform
+  .text:000D1BFF                 mov     esi, offset cached_lighttransform
+  .text:000D1C04                 mov     [esp+0C3Ch+var_C14], ecx
+  .text:000D1C08                 xor     eax, eax
+  .text:000D1C0A                 lea     esi, [esi+0]
+  .text:000D1C10                 mov     [esp+0C3Ch+var_C0C], eax
+  .text:000D1C14                 mov     eax, 1Fh
+  .text:000D1C19                 ; src
+  .text:000D1C19                 mov     [esp+0C3Ch+src], edx; src
+  .text:000D1C1D                 ; count
+  .text:000D1C1D                 mov     [esp+0C3Ch+count], eax; count
+  .text:000D1C21                 ; dest
+  .text:000D1C21                 mov     [esp+0C3Ch+mod], ebx; dest
+  .text:000D1C24                 add     ebx, 20h ; ' '
+  .text:000D1C27                 mov     [esp+0C3Ch+saveheader], edx
+  .text:000D1C2B                 call    Q_strncpy
+  .text:000D1C30                 mov     eax, 30h ; '0'
+  .text:000D1C35                 mov     byte ptr [ebx-1], 0
+  .text:000D1C39                 ; count
+  .text:000D1C39                 mov     [esp+0C3Ch+count], eax; count
+  .text:000D1C3D                 ; src
+  .text:000D1C3D                 mov     [esp+0C3Ch+src], edi; src
+  .text:000D1C41                 add     edi, 30h ; '0'
+  .text:000D1C44                 ; dest
+  .text:000D1C44                 mov     [esp+0C3Ch+mod], ebp; dest
+  .text:000D1C47                 add     ebp, 30h ; '0'
+  .text:000D1C4A                 call    Q_memcpy
+  .text:000D1C4F                 mov     eax, 30h ; '0'
+  .text:000D1C54                 ; count
+  .text:000D1C54                 mov     [esp+0C3Ch+count], eax; count
+  .text:000D1C58                 mov     eax, [esp+0C3Ch+var_C14]
+  .text:000D1C5C                 ; dest
+  .text:000D1C5C                 mov     [esp+0C3Ch+mod], esi; dest
+  .text:000D1C5F                 add     esi, 30h ; '0'
+  .text:000D1C62                 ; src
+  .text:000D1C62                 mov     [esp+0C3Ch+src], eax; src
+  .text:000D1C66                 call    Q_memcpy
+  .text:000D1C6B                 mov     eax, [esp+0C3Ch+var_C0C]
+  .text:000D1C6F                 mov     ecx, ds:pstudiohdr
+  .text:000D1C75                 mov     edx, [esp+0C3Ch+saveheader]
+  .text:000D1C79                 add     [esp+0C3Ch+var_C14], 30h ; '0'
+  .text:000D1C7E                 inc     eax
+  .text:000D1C7F                 add     edx, 70h ; 'p'
+  .text:000D1C82                 cmp     eax, [ecx+8Ch]
+  .text:000D1C88                 jl      short loc_D1C10
+  .text:000D1C8A                 mov     eax, ds:r_playerinfo
+  .text:000D1C8F                 mov     edx, ds:r_framecount
+  .text:000D1C95                 mov     [eax+178h], edx
+  .text:000D1C9B                 xor     eax, eax
+  .text:000D1C9D                 mov     ds:r_playerinfo, eax
+  .text:000D1CA2                 mov     eax, [esp+0C3Ch+flags]
+  .text:000D1CA6                 and     eax, 2
+  .text:000D1CA9                 mov     [esp+0C3Ch+var_C14], eax
+  .text:000D1CAD                 jz      loc_D1D8D
+  .text:000D1CB3                 mov     eax, [esp+0C3Ch+var_C00]
+  .text:000D1CB7                 test    eax, eax
+  .text:000D1CB9                 jz      short loc_D1CF1
+  .text:000D1CBB                 mov     edi, [esp+0C3Ch+pplayer]
+  .text:000D1CBF                 test    edi, edi
+  .text:000D1CC1                 mov     eax, [edi+0B4h]
+  .text:000D1CC7                 jz      short loc_D1CF1
+  .text:000D1CC9                 test    eax, eax
+  .text:000D1CCB                 jz      short loc_D1CF1
+  .text:000D1CCD                 ; index
+  .text:000D1CCD                 mov     [esp+0C3Ch+mod], eax; index
+  .text:000D1CD0                 call    CL_GetModelByIndex
+  .text:000D1CD5                 ; mod
+  .text:000D1CD5                 mov     [esp+0C3Ch+mod], eax; mod
+  .text:000D1CD8                 call    Mod_Extradata
+  .text:000D1CDD                 mov     eax, [eax+0D4h]
+  .text:000D1CE3                 test    eax, eax
+  .text:000D1CE5                 jnz     loc_D1D99
+  .text:000D1CEB                 mov     ecx, ds:pstudiohdr
+  .text:000D1CF1                 mov     eax, [ecx+0D4h]
+  .text:000D1CF7                 cmp     eax, 4
+  .text:000D1CFA                 jg      loc_D2742
+  .text:000D1D00                 mov     edx, [ecx+0D8h]
+  .text:000D1D06                 xor     ebx, ebx
+  .text:000D1D08                 test    eax, eax
+  .text:000D1D0A                 lea     esi, [ecx+edx+28h]
+  .text:000D1D0E                 jle     short loc_D1D4E
+  .text:000D1D10                 mov     eax, ds:currententity
+  .text:000D1D15                 lea     edx, [ebx+ebx*2]
+  .text:000D1D18                 inc     ebx
+  .text:000D1D19                 lea     eax, [eax+edx*4+0B60h]
+  .text:000D1D20                 ; out
+  .text:000D1D20                 mov     [esp+0C3Ch+count], eax; out
+  .text:000D1D24                 mov     eax, [esi-4]
+  .text:000D1D27                 ; in1
+  .text:000D1D27                 mov     [esp+0C3Ch+mod], esi; in1
+  .text:000D1D2A                 add     esi, 58h ; 'X'
+  .text:000D1D2D                 lea     eax, [eax+eax*2]
+  .text:000D1D30                 shl     eax, 4
+  .text:000D1D33                 add     eax, offset lighttransform
+  .text:000D1D38                 ; in2
+  .text:000D1D38                 mov     [esp+0C3Ch+src], eax; in2
+  .text:000D1D3C                 call    VectorTransform
+  .text:000D1D41                 mov     eax, ds:pstudiohdr
+  .text:000D1D46                 cmp     ebx, [eax+0D4h]
+  .text:000D1D4C                 jl      short loc_D1D10
+  .text:000D1D4E                 call    R_StudioClientEvents
+  .text:000D1D53                 mov     edx, ds:currententity
+  .text:000D1D59                 mov     eax, [edx]
+  .text:000D1D5B                 test    eax, eax
+  .text:000D1D5D                 jle     short loc_D1D8D
+  .text:000D1D5F                 imul    eax, 0BB8h
+  .text:000D1D65                 mov     ebp, ds:cl_entities
+  .text:000D1D6B                 mov     edi, 30h ; '0'
+  .text:000D1D70                 add     edx, 0B60h
+  .text:000D1D76                 ; count
+  .text:000D1D76                 mov     [esp+0C3Ch+count], edi; count
+  .text:000D1D7A                 ; src
+  .text:000D1D7A                 mov     [esp+0C3Ch+src], edx; src
+  .text:000D1D7E                 add     eax, ebp
+  .text:000D1D80                 add     eax, 0B60h
+  .text:000D1D85                 ; dest
+  .text:000D1D85                 mov     [esp+0C3Ch+mod], eax; dest
+  .text:000D1D88                 call    Q_memcpy
+  .text:000D1D8D                 mov     esi, [esp+0C3Ch+var_C00]
+  .text:000D1D91                 test    esi, esi
+  .text:000D1D93                 jz      loc_D2060
+  .text:000D1D99                 fld     cl_himodels.value
+  .text:000D1D9F                 fldz
+  .text:000D1DA1                 fxch    st(1)
+  .text:000D1DA3                 fucomip st, st(1)
+  .text:000D1DA5                 fstp    st
+  .text:000D1DA7                 jp      loc_D26EA
+  .text:000D1DAD                 jnz     loc_D26EA
+  .text:000D1DB3                 fld     developer.value
+  .text:000D1DB9                 fldz
+  .text:000D1DBB                 fxch    st(1)
+  .text:000D1DBD                 fucomip st, st(1)
+  .text:000D1DBF                 fstp    st
+  .text:000D1DC1                 jp      short loc_D1DC9
+  .text:000D1DC3                 jz      loc_D276E
+  .text:000D1DC9                 imul    eax, ds:r_playerindex, 20Ch
+  .text:000D1DD3                 cmp     byte ptr ds:DM_PlayerState.name[eax], 0
+  .text:000D1DDA                 lea     edx, DM_PlayerState.name[eax]
+  .text:000D1DE0                 jnz     loc_D271B
+  .text:000D1DE6                 mov     eax, ds:currententity
+  .text:000D1DEB                 lea     ebx, [esp+0C3Ch+lighting]
+  .text:000D1DEF                 lea     edx, [esp+0C3Ch+dir]
+  .text:000D1DF3                 ; ent
+  .text:000D1DF3                 mov     [esp+0C3Ch+mod], eax; ent
+  .text:000D1DF6                 ; plight
+  .text:000D1DF6                 mov     [esp+0C3Ch+src], ebx; plight
+  .text:000D1DFA                 mov     [esp+0C3Ch+lighting.plightvec], edx
+  .text:000D1DFE                 call    R_StudioDynamicLight
+  .text:000D1E03                 ; plight
+  .text:000D1E03                 mov     [esp+0C3Ch+mod], ebx; plight
+  .text:000D1E06                 call    R_StudioEntityLight
+  .text:000D1E0B                 ; plighting
+  .text:000D1E0B                 mov     [esp+0C3Ch+mod], ebx; plighting
+  .text:000D1E0E                 call    R_StudioSetupLighting
+  .text:000D1E13                 mov     eax, ds:r_playerindex
+  .text:000D1E18                 lea     edx, [eax+eax*8]
+  .text:000D1E1B                 lea     edx, [eax+edx*4]
+  .text:000D1E1E                 shl     edx, 4
+  .text:000D1E21                 lea     ecx, nMax.players.userid[edx]
+  .text:000D1E27                 mov     edx, ds:nMax.players.topcolor[edx]
+  .text:000D1E2D                 mov     ds:r_playerinfo, ecx
+  .text:000D1E33                 test    edx, edx
+  .text:000D1E35                 js      loc_D2791
+  .text:000D1E3B                 cmp     edx, 168h
+  .text:000D1E41                 mov     ecx, 168h
+  .text:000D1E46                 cmovg   edx, ecx
+  .text:000D1E49                 mov     ds:r_topcolor, edx
+  .text:000D1E4F                 lea     edx, [eax+eax*8]
+  .text:000D1E52                 lea     eax, [eax+edx*4]
+  .text:000D1E55                 shl     eax, 4
+  .text:000D1E58                 mov     eax, ds:nMax.players.bottomcolor[eax]
+  .text:000D1E5E                 test    eax, eax
+  .text:000D1E60                 js      loc_D2785
+  .text:000D1E66                 cmp     eax, 168h
+  .text:000D1E6B                 mov     edx, 168h
+  .text:000D1E70                 cmovg   eax, edx
+  .text:000D1E73                 mov     ds:r_bottomcolor, eax
+  .text:000D1E78                 mov     eax, ds:currententity
+  .text:000D1E7D                 xor     ebp, ebp
+  .text:000D1E7F                 movss   xmm3, ds:r_origin
+  .text:000D1E87                 movss   xmm4, ds:r_origin+4
+  .text:000D1E8F                 movss   xmm5, ds:r_origin+8
+  .text:000D1E97                 cmp     dword ptr [eax+304h], 13h
+  .text:000D1E9E                 movss   ds:g_ChromeOrigin, xmm3
+  .text:000D1EA6                 movss   ds:g_ChromeOrigin+4, xmm4
+  .text:000D1EAE                 movss   ds:g_ChromeOrigin+8, xmm5
+  .text:000D1EB6                 mov     ds:g_ForcedFaceFlags, ebp
+  .text:000D1EBC                 jz      loc_D279E
+  .text:000D1EC2                 call    R_StudioRenderFinal
+  .text:000D1EC7                 xor     eax, eax
+  .text:000D1EC9                 mov     ds:r_playerinfo, eax
+  .text:000D1ECE                 mov     eax, [esp+0C3Ch+pplayer]
+  .text:000D1ED2                 mov     eax, [eax+0B4h]
+  .text:000D1ED8                 test    eax, eax
+  .text:000D1EDA                 jz      loc_D2060
+  .text:000D1EE0                 mov     edi, ds:pstudiohdr
+  .text:000D1EE6                 lea     ebp, [esp+0C3Ch+saveent]
+  .text:000D1EEA                 mov     ecx, 0BB8h
+  .text:000D1EEF                 test    ebp, 4
+  .text:000D1EF5                 mov     esi, ds:currententity
+  .text:000D1EFB                 mov     [esp+0C3Ch+saveheader], edi
+  .text:000D1EFF                 mov     saveheader_0, ebp
+  .text:000D1F01                 jnz     loc_D287F
+  .text:000D1F07                 shr     ecx, 2
+  .text:000D1F0A                 rep movsd
+  .text:000D1F0C                 ; index
+  .text:000D1F0C                 mov     [esp+0C3Ch+mod], eax; index
+  .text:000D1F0F                 call    CL_GetModelByIndex
+  .text:000D1F14                 ; mod
+  .text:000D1F14                 mov     [esp+0C3Ch+mod], eax; mod
+  .text:000D1F17                 mov     esi, eax
+  .text:000D1F19                 call    Mod_Extradata
+  .text:000D1F1E                 ; psubmodel
+  .text:000D1F1E                 mov     [esp+0C3Ch+mod], pweaponmodel; psubmodel
+  .text:000D1F21                 mov     ds:pstudiohdr, eax
+  .text:000D1F26                 call    R_StudioMergeBones
+  .text:000D1F2B                 ; plighting
+  .text:000D1F2B                 mov     [esp+0C3Ch+mod], ebx; plighting
+  .text:000D1F2E                 call    R_StudioSetupLighting
+  .text:000D1F33                 xor     eax, eax
+  .text:000D1F35                 mov     ds:g_ForcedFaceFlags, eax
+  .text:000D1F3A                 mov     eax, ds:currententity
+  .text:000D1F3F                 movss   xmm6, ds:r_origin
+  .text:000D1F47                 movss   xmm7, ds:r_origin+4
+  .text:000D1F4F                 movss   ds:g_ChromeOrigin, xmm6
+  .text:000D1F57                 cmp     dword ptr [eax+304h], 13h
+  .text:000D1F5E                 movss   xmm6, ds:r_origin+8
+  .text:000D1F66                 movss   ds:g_ChromeOrigin+4, xmm7
+  .text:000D1F6E                 movss   ds:g_ChromeOrigin+8, xmm6
+  .text:000D1F76                 jz      loc_D2821
+  .text:000D1F7C                 call    R_StudioRenderFinal
+  .text:000D1F81                 mov     edx, ds:pstudiohdr
+  .text:000D1F87                 mov     eax, [edx+0D4h]
+  .text:000D1F8D                 cmp     eax, 4
+  .text:000D1F90                 jg      loc_D27F5
+  .text:000D1F96                 test    eax, eax
+  .text:000D1F98                 mov     ecx, [edx+0D8h]
+  .text:000D1F9E                 jle     short loc_D1FF0
+  .text:000D1FA0                 lea     esi, [edx+ecx+28h]
+  .text:000D1FA4                 xor     ebx, ebx
+  .text:000D1FA6                 lea     esi, [esi+0]
+  .text:000D1FA9                 lea     edi, [edi+0]
+  .text:000D1FB0                 mov     eax, ds:currententity
+  .text:000D1FB5                 lea     edx, [ebx+ebx*2]
+  .text:000D1FB8                 inc     ebx
+  .text:000D1FB9                 lea     eax, [eax+edx*4+0B60h]
+  .text:000D1FC0                 ; out
+  .text:000D1FC0                 mov     [esp+0C3Ch+count], eax; out
+  .text:000D1FC4                 mov     eax, [esi-4]
+  .text:000D1FC7                 ; in1
+  .text:000D1FC7                 mov     [esp+0C3Ch+mod], esi; in1
+  .text:000D1FCA                 add     esi, 58h ; 'X'
+  .text:000D1FCD                 lea     eax, [eax+eax*2]
+  .text:000D1FD0                 shl     eax, 4
+  .text:000D1FD3                 add     eax, offset lighttransform
+  .text:000D1FD8                 ; in2
+  .text:000D1FD8                 mov     [esp+0C3Ch+src], eax; in2
+  .text:000D1FDC                 call    VectorTransform
+  .text:000D1FE1                 mov     eax, ds:pstudiohdr
+  .text:000D1FE6                 mov     eax, [eax+0D4h]
+  .text:000D1FEC                 cmp     ebx, eax
+  .text:000D1FEE                 jl      short loc_D1FB0
+  .text:000D1FF0                 mov     edi, ds:currententity
+  .text:000D1FF6                 mov     edx, [edi]
+  .text:000D1FF8                 test    edx, edx
+  .text:000D1FFA                 jle     short loc_D2025
+  .text:000D1FFC                 lea     eax, [eax+eax*2]
+  .text:000D1FFF                 add     edi, 0B60h
+  .text:000D2005                 shl     eax, 2
+  .text:000D2008                 ; count
+  .text:000D2008                 mov     [esp+0C3Ch+count], eax; count
+  .text:000D200C                 lea     eax, [esp+0C3Ch+saveent.attachment]
+  .text:000D2013                 ; src
+  .text:000D2013                 mov     [esp+0C3Ch+src], edi; src
+  .text:000D2017                 ; dest
+  .text:000D2017                 mov     [esp+0C3Ch+mod], eax; dest
+  .text:000D201A                 call    Q_memcpy
+  .text:000D201F                 mov     edi, ds:currententity
+  .text:000D2025                 test    edi, 4
+  .text:000D202B                 mov     esi, ebp
+  .text:000D202D                 mov     ecx, 0BB8h
+  .text:000D2032                 jnz     loc_D2867
+  .text:000D2038                 shr     ecx, 2
+  .text:000D203B                 rep movsd
+  .text:000D203D                 mov     eax, [esp+0C3Ch+saveheader]
+  .text:000D2041                 mov     ds:pstudiohdr, eax
+  .text:000D2046                 mov     eax, [esp+0C3Ch+var_C14]
+  .text:000D204A                 test    eax, eax
+  .text:000D204C                 jnz     loc_D27E4
+  .text:000D2052                 lea     esi, [esi+0]
+  .text:000D2059                 lea     edi, [edi+0]
+  .text:000D2060                 mov     eax, 1
+  .text:000D2065                 mov     edi, [esp+0C3Ch+var_20]
+  .text:000D206C                 xor     edi, large gs:14h
+  .text:000D2073                 jnz     loc_D28A7
+  .text:000D2079                 add     esp, 0C2Ch
+  .text:000D207F                 pop     ebx
+  .text:000D2080                 pop     esi
+  .text:000D2081                 pop     edi
+  .text:000D2082                 pop     ebp
+  .text:000D2083                 retn
+  .text:000D2084                 mov     eax, ds:r_playerindex
+  .text:000D2089                 lea     edx, [eax+eax*8]
+  .text:000D208C                 lea     eax, [eax+edx*4]
+  .text:000D208F                 shl     eax, 4
+  .text:000D2092                 add     eax, offset nMax.players
+  .text:000D2097                 mov     ds:r_playerinfo, eax
+  .text:000D209C                 mov     eax, ds:currententity
+  .text:000D20A1                 movss   xmm2, dword ptr [eax+0B54h]
+  .text:000D20A9                 movss   xmm1, dword ptr [eax+0B58h]
+  .text:000D20B1                 movss   xmm0, dword ptr [eax+0B5Ch]
+  .text:000D20B9                 ; pplayer
+  .text:000D20B9                 mov     [esp+0C3Ch+mod], edi; pplayer
+  .text:000D20BC                 movss   [esp+0C3Ch+var_C0C], xmm2
+  .text:000D20C2                 movss   [esp+0C3Ch+saveheader], xmm1
+  .text:000D20C8                 movss   [esp+0C3Ch+var_C14], xmm0
+  .text:000D20CE                 call    R_StudioProcessGait
+  .text:000D20D3                 mov     edx, [edi+0B8h]
+  .text:000D20D9                 xor     edi, edi
+  .text:000D20DB                 mov     eax, ds:r_playerinfo
+  .text:000D20E0                 mov     ds:r_playerinfo, edi
+  .text:000D20E6                 mov     [eax+17Ch], edx
+  .text:000D20EC                 ; trivial_accept
+  .text:000D20EC                 mov     [esp+0C3Ch+mod], 0; trivial_accept
+  .text:000D20F3                 call    R_StudioSetUpTransform
+  .text:000D20F8                 mov     eax, ds:currententity
+  .text:000D20FD                 movss   xmm2, [esp+0C3Ch+var_C0C]
+  .text:000D2103                 movss   xmm1, [esp+0C3Ch+saveheader]
+  .text:000D2109                 movss   xmm0, [esp+0C3Ch+var_C14]
+  .text:000D210F                 movss   dword ptr [eax+0B54h], xmm2
+  .text:000D2117                 movss   dword ptr [eax+0B58h], xmm1
+  .text:000D211F                 movss   dword ptr [eax+0B5Ch], xmm0
+  .text:000D2127                 jmp     loc_D1B74
+  .text:000D212C                 xor     eax, eax
+  .text:000D212E                 jmp     loc_D2065
+  .text:000D2133                 call    Host_IsSinglePlayerGame
+  .text:000D2138                 test    eax, eax
+  .text:000D213A                 jz      loc_D1587
+  .text:000D2140                 mov     eax, ds:r_playerindex
+  .text:000D2145                 jmp     loc_D15A2
+  .text:000D214A                 imul    eax, 20Ch
+  .text:000D2150                 add     edx, offset nMax.players.model
+  .text:000D2156                 ; s2
+  .text:000D2156                 mov     [esp+0C3Ch+src], edx; s2
+  .text:000D215A                 add     eax, offset DM_PlayerState
+  .text:000D215F                 ; s1
+  .text:000D215F                 mov     [esp+0C3Ch+mod], eax; s1
+  .text:000D2162                 call    Q_strcmp
+  .text:000D2167                 test    eax, eax
+  .text:000D2169                 mov     eax, ds:r_playerindex
+  .text:000D216E                 jz      loc_D1ADD
+  .text:000D2174                 lea     edx, [eax+eax*8]
+  .text:000D2177                 mov     ebx, 103h
+  .text:000D217C                 lea     edx, [eax+edx*4]
+  .text:000D217F                 mov     edi, 104h
+  .text:000D2184                 imul    eax, 20Ch
+  .text:000D218A                 mov     esi, offset aModelsPlayerSS; "models/player/%s/%s.mdl"
+  .text:000D218F                 shl     edx, 4
+  .text:000D2192                 mov     ebp, 1
+  .text:000D2197                 add     edx, offset nMax.players.model
+  .text:000D219D                 ; count
+  .text:000D219D                 mov     [esp+0C3Ch+count], ebx; count
+  .text:000D21A1                 add     eax, offset DM_PlayerState
+  .text:000D21A6                 ; src
+  .text:000D21A6                 mov     [esp+0C3Ch+src], edx; src
+  .text:000D21AA                 ; dest
+  .text:000D21AA                 mov     [esp+0C3Ch+mod], eax; dest
+  .text:000D21AD                 call    Q_strncpy
+  .text:000D21B2                 mov     eax, ds:r_playerindex
+  .text:000D21B7                 mov     [esp+0C3Ch+var_C30], edi
+  .text:000D21BB                 mov     [esp+0C3Ch+var_C2C], esi
+  .text:000D21BF                 mov     [esp+0C3Ch+count], ebp
+  .text:000D21C3                 imul    edx, eax, 20Ch
+  .text:000D21C9                 lea     ecx, [eax+eax*8]
+  .text:000D21CC                 lea     eax, [eax+ecx*4]
+  .text:000D21CF                 shl     eax, 4
+  .text:000D21D2                 add     eax, offset nMax.players.model
+  .text:000D21D7                 mov     ds:(DM_PlayerState.name+103h)[edx], 0
+  .text:000D21DE                 add     edx, offset DM_PlayerState.modelname
+  .text:000D21E4                 mov     [esp+0C3Ch+var_C24], eax
+  .text:000D21E8                 mov     [esp+0C3Ch+var_C28], eax
+  .text:000D21EC                 mov     eax, 104h
+  .text:000D21F1                 mov     [esp+0C3Ch+mod], edx
+  .text:000D21F4                 mov     [esp+0C3Ch+src], eax
+  .text:000D21F8                 call    __snprintf_chk
+  .text:000D21FD                 mov     eax, 1
+  .text:000D2202                 imul    ebx, ds:r_playerindex, 20Ch
+  .text:000D220C                 ; trackCRC
+  .text:000D220C                 mov     [esp+0C3Ch+count], eax; trackCRC
+  .text:000D2210                 xor     eax, eax
+  .text:000D2212                 ; crash
+  .text:000D2212                 mov     [esp+0C3Ch+src], eax; crash
+  .text:000D2216                 lea     eax, DM_PlayerState.modelname[ebx]
+  .text:000D221C                 ; name
+  .text:000D221C                 mov     [esp+0C3Ch+mod], eax; name
+  .text:000D221F                 call    Mod_ForName
+  .text:000D2224                 mov     edi, ds:currententity
+  .text:000D222A                 mov     ds:DM_PlayerState.model[ebx], eax
+  .text:000D2230                 mov     eax, ds:r_playerindex
+  .text:000D2235                 imul    edx, eax, 20Ch
+  .text:000D223B                 add     edx, offset DM_PlayerState
+  .text:000D2241                 mov     ecx, [edx+208h]
+  .text:000D2247                 test    ecx, ecx
+  .text:000D2249                 jz      loc_D2896
+  .text:000D224F                 mov     ecx, [edi]
+  .text:000D2251                 lea     edx, [ecx+ecx*4]
+  .text:000D2254                 lea     edx, [ecx+edx*2]
+  .text:000D2257                 mov     edx, ds:pDM_RemapSkin[edx*4]
+  .text:000D225E                 test    edx, edx
+  .text:000D2260                 jz      short loc_D2266
+  .text:000D2262                 cmp     ecx, [edx]
+  .text:000D2264                 jz      short loc_D22AF
+  .text:000D2266                 mov     ebx, ds:r_remapindex
+  .text:000D226C                 imul    ebp, ebx, 0CB8h
+  .text:000D2272                 inc     ebx
+  .text:000D2273                 mov     esi, ebx
+  .text:000D2275                 sar     esi, 1Fh
+  .text:000D2278                 shr     esi, 1Ah
+  .text:000D227B                 add     ebx, esi
+  .text:000D227D                 and     ebx, 3Fh
+  .text:000D2280                 sub     ebx, esi
+  .text:000D2282                 mov     ds:r_remapindex, ebx
+  .text:000D2288                 lea     ebx, [ecx+ecx*4]
+  .text:000D228B                 lea     edx, DM_RemapSkin.keynum[ebp]
+  .text:000D2291                 lea     ebx, [ecx+ebx*2]
+  .text:000D2294                 mov     ds:pDM_RemapSkin[ebx*4], edx
+  .text:000D229B                 mov     dword ptr ss:DM_RemapSkin.keynum[ebp], ecx
+  .text:000D22A1                 mov     dword ptr [edx+4], 0FFFFFFFFh
+  .text:000D22A8                 mov     dword ptr [edx+8], 0FFFFFFFFh
+  .text:000D22AF                 mov     dword ptr [edx+4], 0FFFFFFFFh
+  .text:000D22B6                 mov     dword ptr [edx+8], 0FFFFFFFFh
+  .text:000D22BD                 mov     edx, [edi]
+  .text:000D22BF                 lea     ecx, [edx+edx*4]
+  .text:000D22C2                 lea     ecx, [edx+ecx*2]
+  .text:000D22C5                 mov     ebx, ds:(pDM_RemapSkin+4)[ecx*4]
+  .text:000D22CC                 test    ebx, ebx
+  .text:000D22CE                 jz      short loc_D22D4
+  .text:000D22D0                 cmp     edx, [ebx]
+  .text:000D22D2                 jz      short loc_D2325
+  .text:000D22D4                 mov     ecx, ds:r_remapindex
+  .text:000D22DA                 imul    ebp, ecx, 0CB8h
+  .text:000D22E0                 inc     ecx
+  .text:000D22E1                 mov     esi, ecx
+  .text:000D22E3                 sar     esi, 1Fh
+  .text:000D22E6                 shr     esi, 1Ah
+  .text:000D22E9                 add     ecx, esi
+  .text:000D22EB                 and     ecx, 3Fh
+  .text:000D22EE                 sub     ecx, esi
+  .text:000D22F0                 mov     ds:r_remapindex, ecx
+  .text:000D22F6                 lea     ecx, [edx+edx*4]
+  .text:000D22F9                 lea     ecx, [edx+ecx*2]
+  .text:000D22FC                 lea     ebx, (DM_RemapSkin.keynum+128h)[ebp]
+  .text:000D2302                 mov     ds:(pDM_RemapSkin+4)[ecx*4], ebx
+  .text:000D2309                 mov     ecx, 0FFFFFFFFh
+  .text:000D230E                 mov     ss:(DM_RemapSkin.keynum+128h)[ebp], edx
+  .text:000D2314                 mov     edx, 0FFFFFFFFh
+  .text:000D2319                 mov     ss:(DM_RemapSkin.topcolor+128h)[ebp], edx
+  .text:000D231F                 mov     ss:(DM_RemapSkin.bottomcolor+128h)[ebp], ecx
+  .text:000D2325                 mov     dword ptr [ebx+4], 0FFFFFFFFh
+  .text:000D232C                 mov     dword ptr [ebx+8], 0FFFFFFFFh
+  .text:000D2333                 mov     edx, [edi]
+  .text:000D2335                 lea     ecx, [edx+edx*4]
+  .text:000D2338                 lea     ecx, [edx+ecx*2]
+  .text:000D233B                 mov     ebx, ds:(pDM_RemapSkin+8)[ecx*4]
+  .text:000D2342                 test    ebx, ebx
+  .text:000D2344                 jz      short loc_D234A
+  .text:000D2346                 cmp     edx, [ebx]
+  .text:000D2348                 jz      short loc_D239B
+  .text:000D234A                 mov     ecx, ds:r_remapindex
+  .text:000D2350                 imul    ebp, ecx, 0CB8h
+  .text:000D2356                 inc     ecx
+  .text:000D2357                 mov     esi, ecx
+  .text:000D2359                 sar     esi, 1Fh
+  .text:000D235C                 shr     esi, 1Ah
+  .text:000D235F                 add     ecx, esi
+  .text:000D2361                 and     ecx, 3Fh
+  .text:000D2364                 sub     ecx, esi
+  .text:000D2366                 mov     esi, 0FFFFFFFFh
+  .text:000D236B                 mov     ds:r_remapindex, ecx
+  .text:000D2371                 lea     ecx, [edx+edx*4]
+  .text:000D2374                 lea     ecx, [edx+ecx*2]
+  .text:000D2377                 lea     ebx, (DM_RemapSkin.keynum+250h)[ebp]
+  .text:000D237D                 mov     ds:(pDM_RemapSkin+8)[ecx*4], ebx
+  .text:000D2384                 mov     ecx, 0FFFFFFFFh
+  .text:000D2389                 mov     ss:(DM_RemapSkin.keynum+250h)[ebp], edx
+  .text:000D238F                 mov     ss:(DM_RemapSkin.topcolor+250h)[ebp], ecx
+  .text:000D2395                 mov     ss:(DM_RemapSkin.bottomcolor+250h)[ebp], esi
+  .text:000D239B                 mov     dword ptr [ebx+4], 0FFFFFFFFh
+  .text:000D23A2                 mov     dword ptr [ebx+8], 0FFFFFFFFh
+  .text:000D23A9                 mov     edx, [edi]
+  .text:000D23AB                 lea     ecx, [edx+edx*4]
+  .text:000D23AE                 lea     ecx, [edx+ecx*2]
+  .text:000D23B1                 mov     ebx, ds:(pDM_RemapSkin+0Ch)[ecx*4]
+  .text:000D23B8                 test    ebx, ebx
+  .text:000D23BA                 jz      short loc_D23C0
+  .text:000D23BC                 cmp     edx, [ebx]
+  .text:000D23BE                 jz      short loc_D2411
+  .text:000D23C0                 mov     ecx, ds:r_remapindex
+  .text:000D23C6                 imul    ebp, ecx, 0CB8h
+  .text:000D23CC                 inc     ecx
+  .text:000D23CD                 mov     esi, ecx
+  .text:000D23CF                 sar     esi, 1Fh
+  .text:000D23D2                 shr     esi, 1Ah
+  .text:000D23D5                 add     ecx, esi
+  .text:000D23D7                 and     ecx, 3Fh
+  .text:000D23DA                 sub     ecx, esi
+  .text:000D23DC                 mov     esi, 0FFFFFFFFh
+  .text:000D23E1                 mov     ds:r_remapindex, ecx
+  .text:000D23E7                 lea     ecx, [edx+edx*4]
+  .text:000D23EA                 lea     ecx, [edx+ecx*2]
+  .text:000D23ED                 lea     ebx, (DM_RemapSkin.keynum+378h)[ebp]
+  .text:000D23F3                 mov     ss:(DM_RemapSkin.keynum+378h)[ebp], edx
+  .text:000D23F9                 mov     edx, 0FFFFFFFFh
+  .text:000D23FE                 mov     ds:(pDM_RemapSkin+0Ch)[ecx*4], ebx
+  .text:000D2405                 mov     ss:(DM_RemapSkin.topcolor+378h)[ebp], esi
+  .text:000D240B                 mov     ss:(DM_RemapSkin.bottomcolor+378h)[ebp], edx
+  .text:000D2411                 mov     dword ptr [ebx+4], 0FFFFFFFFh
+  .text:000D2418                 mov     dword ptr [ebx+8], 0FFFFFFFFh
+  .text:000D241F                 mov     edx, [edi]
+  .text:000D2421                 lea     ecx, [edx+edx*4]
+  .text:000D2424                 lea     ecx, [edx+ecx*2]
+  .text:000D2427                 mov     ebx, ds:(pDM_RemapSkin+10h)[ecx*4]
+  .text:000D242E                 test    ebx, ebx
+  .text:000D2430                 jz      short loc_D2436
+  .text:000D2432                 cmp     edx, [ebx]
+  .text:000D2434                 jz      short loc_D2487
+  .text:000D2436                 mov     ecx, ds:r_remapindex
+  .text:000D243C                 imul    ebp, ecx, 0CB8h
+  .text:000D2442                 inc     ecx
+  .text:000D2443                 mov     esi, ecx
+  .text:000D2445                 sar     esi, 1Fh
+  .text:000D2448                 shr     esi, 1Ah
+  .text:000D244B                 add     ecx, esi
+  .text:000D244D                 and     ecx, 3Fh
+  .text:000D2450                 sub     ecx, esi
+  .text:000D2452                 mov     ds:r_remapindex, ecx
+  .text:000D2458                 lea     ecx, [edx+edx*4]
+  .text:000D245B                 lea     ecx, [edx+ecx*2]
+  .text:000D245E                 lea     ebx, (DM_RemapSkin.keynum+4A0h)[ebp]
+  .text:000D2464                 mov     ds:(pDM_RemapSkin+10h)[ecx*4], ebx
+  .text:000D246B                 mov     ecx, 0FFFFFFFFh
+  .text:000D2470                 mov     ss:(DM_RemapSkin.keynum+4A0h)[ebp], edx
+  .text:000D2476                 mov     edx, 0FFFFFFFFh
+  .text:000D247B                 mov     ss:(DM_RemapSkin.topcolor+4A0h)[ebp], edx
+  .text:000D2481                 mov     ss:(DM_RemapSkin.bottomcolor+4A0h)[ebp], ecx
+  .text:000D2487                 mov     dword ptr [ebx+4], 0FFFFFFFFh
+  .text:000D248E                 mov     dword ptr [ebx+8], 0FFFFFFFFh
+  .text:000D2495                 mov     edx, [edi]
+  .text:000D2497                 lea     ecx, [edx+edx*4]
+  .text:000D249A                 lea     ecx, [edx+ecx*2]
+  .text:000D249D                 mov     ebx, ds:(pDM_RemapSkin+14h)[ecx*4]
+  .text:000D24A4                 test    ebx, ebx
+  .text:000D24A6                 jz      short loc_D24AC
+  .text:000D24A8                 cmp     edx, [ebx]
+  .text:000D24AA                 jz      short loc_D24FD
+  .text:000D24AC                 mov     ecx, ds:r_remapindex
+  .text:000D24B2                 imul    ebp, ecx, 0CB8h
+  .text:000D24B8                 inc     ecx
+  .text:000D24B9                 mov     esi, ecx
+  .text:000D24BB                 sar     esi, 1Fh
+  .text:000D24BE                 shr     esi, 1Ah
+  .text:000D24C1                 add     ecx, esi
+  .text:000D24C3                 and     ecx, 3Fh
+  .text:000D24C6                 sub     ecx, esi
+  .text:000D24C8                 mov     esi, 0FFFFFFFFh
+  .text:000D24CD                 mov     ds:r_remapindex, ecx
+  .text:000D24D3                 lea     ecx, [edx+edx*4]
+  .text:000D24D6                 lea     ecx, [edx+ecx*2]
+  .text:000D24D9                 lea     ebx, (DM_RemapSkin.keynum+5C8h)[ebp]
+  .text:000D24DF                 mov     ds:(pDM_RemapSkin+14h)[ecx*4], ebx
+  .text:000D24E6                 mov     ecx, 0FFFFFFFFh
+  .text:000D24EB                 mov     ss:(DM_RemapSkin.keynum+5C8h)[ebp], edx
+  .text:000D24F1                 mov     ss:(DM_RemapSkin.topcolor+5C8h)[ebp], ecx
+  .text:000D24F7                 mov     ss:(DM_RemapSkin.bottomcolor+5C8h)[ebp], esi
+  .text:000D24FD                 mov     dword ptr [ebx+4], 0FFFFFFFFh
+  .text:000D2504                 mov     dword ptr [ebx+8], 0FFFFFFFFh
+  .text:000D250B                 mov     edx, [edi]
+  .text:000D250D                 lea     ecx, [edx+edx*4]
+  .text:000D2510                 lea     ecx, [edx+ecx*2]
+  .text:000D2513                 mov     ebx, ds:(pDM_RemapSkin+18h)[ecx*4]
+  .text:000D251A                 test    ebx, ebx
+  .text:000D251C                 jz      short loc_D2522
+  .text:000D251E                 cmp     edx, [ebx]
+  .text:000D2520                 jz      short loc_D2573
+  .text:000D2522                 mov     ecx, ds:r_remapindex
+  .text:000D2528                 imul    ebp, ecx, 0CB8h
+  .text:000D252E                 inc     ecx
+  .text:000D252F                 mov     esi, ecx
+  .text:000D2531                 sar     esi, 1Fh
+  .text:000D2534                 shr     esi, 1Ah
+  .text:000D2537                 add     ecx, esi
+  .text:000D2539                 and     ecx, 3Fh
+  .text:000D253C                 sub     ecx, esi
+  .text:000D253E                 mov     esi, 0FFFFFFFFh
+  .text:000D2543                 mov     ds:r_remapindex, ecx
+  .text:000D2549                 lea     ecx, [edx+edx*4]
+  .text:000D254C                 lea     ecx, [edx+ecx*2]
+  .text:000D254F                 lea     ebx, (DM_RemapSkin.keynum+6F0h)[ebp]
+  .text:000D2555                 mov     ss:(DM_RemapSkin.keynum+6F0h)[ebp], edx
+  .text:000D255B                 mov     edx, 0FFFFFFFFh
+  .text:000D2560                 mov     ds:(pDM_RemapSkin+18h)[ecx*4], ebx
+  .text:000D2567                 mov     ss:(DM_RemapSkin.topcolor+6F0h)[ebp], esi
+  .text:000D256D                 mov     ss:(DM_RemapSkin.bottomcolor+6F0h)[ebp], edx
+  .text:000D2573                 mov     dword ptr [ebx+4], 0FFFFFFFFh
+  .text:000D257A                 mov     dword ptr [ebx+8], 0FFFFFFFFh
+  .text:000D2581                 mov     edx, [edi]
+  .text:000D2583                 lea     ecx, [edx+edx*4]
+  .text:000D2586                 lea     ecx, [edx+ecx*2]
+  .text:000D2589                 mov     ebx, ds:(pDM_RemapSkin+1Ch)[ecx*4]
+  .text:000D2590                 test    ebx, ebx
+  .text:000D2592                 jz      short loc_D2598
+  .text:000D2594                 cmp     edx, [ebx]
+  .text:000D2596                 jz      short loc_D25E9
+  .text:000D2598                 mov     ecx, ds:r_remapindex
+  .text:000D259E                 imul    ebp, ecx, 0CB8h
+  .text:000D25A4                 inc     ecx
+  .text:000D25A5                 mov     esi, ecx
+  .text:000D25A7                 sar     esi, 1Fh
+  .text:000D25AA                 shr     esi, 1Ah
+  .text:000D25AD                 add     ecx, esi
+  .text:000D25AF                 and     ecx, 3Fh
+  .text:000D25B2                 sub     ecx, esi
+  .text:000D25B4                 mov     ds:r_remapindex, ecx
+  .text:000D25BA                 lea     ecx, [edx+edx*4]
+  .text:000D25BD                 lea     ecx, [edx+ecx*2]
+  .text:000D25C0                 lea     ebx, (DM_RemapSkin.keynum+818h)[ebp]
+  .text:000D25C6                 mov     ds:(pDM_RemapSkin+1Ch)[ecx*4], ebx
+  .text:000D25CD                 mov     ecx, 0FFFFFFFFh
+  .text:000D25D2                 mov     ss:(DM_RemapSkin.keynum+818h)[ebp], edx
+  .text:000D25D8                 mov     edx, 0FFFFFFFFh
+  .text:000D25DD                 mov     ss:(DM_RemapSkin.topcolor+818h)[ebp], edx
+  .text:000D25E3                 mov     ss:(DM_RemapSkin.bottomcolor+818h)[ebp], ecx
+  .text:000D25E9                 mov     dword ptr [ebx+4], 0FFFFFFFFh
+  .text:000D25F0                 mov     dword ptr [ebx+8], 0FFFFFFFFh
+  .text:000D25F7                 mov     edx, [edi]
+  .text:000D25F9                 lea     ecx, [edx+edx*4]
+  .text:000D25FC                 lea     ecx, [edx+ecx*2]
+  .text:000D25FF                 mov     ebx, ds:(pDM_RemapSkin+20h)[ecx*4]
+  .text:000D2606                 test    ebx, ebx
+  .text:000D2608                 jz      short loc_D260E
+  .text:000D260A                 cmp     edx, [ebx]
+  .text:000D260C                 jz      short loc_D265F
+  .text:000D260E                 mov     ecx, ds:r_remapindex
+  .text:000D2614                 imul    ebp, ecx, 0CB8h
+  .text:000D261A                 inc     ecx
+  .text:000D261B                 mov     esi, ecx
+  .text:000D261D                 sar     esi, 1Fh
+  .text:000D2620                 shr     esi, 1Ah
+  .text:000D2623                 add     ecx, esi
+  .text:000D2625                 and     ecx, 3Fh
+  .text:000D2628                 sub     ecx, esi
+  .text:000D262A                 mov     esi, 0FFFFFFFFh
+  .text:000D262F                 mov     ds:r_remapindex, ecx
+  .text:000D2635                 lea     ecx, [edx+edx*4]
+  .text:000D2638                 lea     ecx, [edx+ecx*2]
+  .text:000D263B                 lea     ebx, (DM_RemapSkin.keynum+940h)[ebp]
+  .text:000D2641                 mov     ds:(pDM_RemapSkin+20h)[ecx*4], ebx
+  .text:000D2648                 mov     ecx, 0FFFFFFFFh
+  .text:000D264D                 mov     ss:(DM_RemapSkin.keynum+940h)[ebp], edx
+  .text:000D2653                 mov     ss:(DM_RemapSkin.topcolor+940h)[ebp], ecx
+  .text:000D2659                 mov     ss:(DM_RemapSkin.bottomcolor+940h)[ebp], esi
+  .text:000D265F                 mov     dword ptr [ebx+4], 0FFFFFFFFh
+  .text:000D2666                 mov     dword ptr [ebx+8], 0FFFFFFFFh
+  .text:000D266D                 mov     edx, [edi]
+  .text:000D266F                 lea     ecx, [edx+edx*4]
+  .text:000D2672                 lea     ecx, [edx+ecx*2]
+  .text:000D2675                 mov     ebx, ds:(pDM_RemapSkin+24h)[ecx*4]
+  .text:000D267C                 test    ebx, ebx
+  .text:000D267E                 jz      short loc_D2684
+  .text:000D2680                 cmp     edx, [ebx]
+  .text:000D2682                 jz      short loc_D26D5
+  .text:000D2684                 mov     ecx, ds:r_remapindex
+  .text:000D268A                 imul    ebp, ecx, 0CB8h
+  .text:000D2690                 inc     ecx
+  .text:000D2691                 mov     esi, ecx
+  .text:000D2693                 sar     esi, 1Fh
+  .text:000D2696                 shr     esi, 1Ah
+  .text:000D2699                 add     ecx, esi
+  .text:000D269B                 and     ecx, 3Fh
+  .text:000D269E                 sub     ecx, esi
+  .text:000D26A0                 mov     esi, 0FFFFFFFFh
+  .text:000D26A5                 mov     ds:r_remapindex, ecx
+  .text:000D26AB                 lea     ecx, [edx+edx*4]
+  .text:000D26AE                 lea     ecx, [edx+ecx*2]
+  .text:000D26B1                 lea     ebx, (DM_RemapSkin.keynum+0A68h)[ebp]
+  .text:000D26B7                 mov     ss:(DM_RemapSkin.keynum+0A68h)[ebp], edx
+  .text:000D26BD                 mov     edx, 0FFFFFFFFh
+  .text:000D26C2                 mov     ds:(pDM_RemapSkin+24h)[ecx*4], ebx
+  .text:000D26C9                 mov     ss:(DM_RemapSkin.topcolor+0A68h)[ebp], esi
+  .text:000D26CF                 mov     ss:(DM_RemapSkin.bottomcolor+0A68h)[ebp], edx
+  .text:000D26D5                 mov     dword ptr [ebx+4], 0FFFFFFFFh
+  .text:000D26DC                 mov     dword ptr [ebx+8], 0FFFFFFFFh
+  .text:000D26E3                 mov     ecx, [edi]
+  .text:000D26E5                 jmp     loc_D1A69
+  .text:000D26EA                 mov     eax, ds:currententity
+  .text:000D26EF                 imul    edx, ds:r_playerindex, 20Ch
+  .text:000D26F9                 mov     edi, [eax+0B94h]
+  .text:000D26FF                 cmp     ds:DM_PlayerState.model[edx], edi
+  .text:000D2705                 jz      loc_D1DB3
+  .text:000D270B                 mov     ebx, 0FFh
+  .text:000D2710                 mov     [eax+314h], ebx
+  .text:000D2716                 jmp     loc_D1DB3
+  .text:000D271B                 mov     eax, ds:currententity
+  .text:000D2720                 mov     edi, [eax+0B94h]
+  .text:000D2726                 cmp     [edx+208h], edi
+  .text:000D272C                 jnz     loc_D1DEB
+  .text:000D2732                 mov     ecx, 1
+  .text:000D2737                 mov     [eax+314h], ecx
+  .text:000D273D                 jmp     loc_D1DEB
+  .text:000D2742                 mov     eax, ds:currententity
+  .text:000D2747                 mov     eax, [eax+0B94h]
+  .text:000D274D                 mov     [esp+0C3Ch+mod], offset aTooManyAttachm; "Too many attachments on %s\n"
+  .text:000D2754                 mov     [esp+0C3Ch+src], eax
+  .text:000D2758                 call    Sys_Error
+  .text:000D275D                 mov     ecx, ds:pstudiohdr
+  .text:000D2763                 mov     eax, [ecx+0D4h]
+  .text:000D2769                 jmp     loc_D1D00
+  .text:000D276E                 call    Host_IsSinglePlayerGame
+  .text:000D2773                 test    eax, eax
+  .text:000D2775                 jz      loc_D1DC9
+  .text:000D277B                 nop
+  .text:000D277C                 lea     esi, [esi+0]
+  .text:000D2780                 jmp     loc_D1DE6
+  .text:000D2785                 xor     eax, eax
+  .text:000D2787                 mov     ds:r_bottomcolor, eax
+  .text:000D278C                 jmp     loc_D1E78
+  .text:000D2791                 xor     edx, edx
+  .text:000D2793                 mov     ds:r_topcolor, edx
+  .text:000D2799                 jmp     loc_D1E4F
+  .text:000D279E                 xor     edx, edx
+  .text:000D27A0                 xor     esi, esi
+  .text:000D27A2                 mov     [eax+304h], edx
+  .text:000D27A8                 mov     edi, 13h
+  .text:000D27AD                 call    R_StudioRenderFinal
+  .text:000D27B2                 mov     eax, ds:cl_sprite_shell
+  .text:000D27B7                 mov     ecx, 2
+  .text:000D27BC                 ; frame
+  .text:000D27BC                 mov     [esp+0C3Ch+src], esi; frame
+  .text:000D27C0                 mov     ds:g_ForcedFaceFlags, ecx
+  .text:000D27C6                 ; pSpriteModel
+  .text:000D27C6                 mov     [esp+0C3Ch+mod], eax; pSpriteModel
+  .text:000D27C9                 call    tri.SpriteTexture
+  .text:000D27CF                 mov     eax, ds:currententity
+  .text:000D27D4                 mov     [eax+304h], edi
+  .text:000D27DA                 call    R_StudioRenderFinal
+  .text:000D27DF                 jmp     loc_D1EC7
+  .text:000D27E4                 call    R_StudioClientEvents
+  .text:000D27E9                 lea     esi, [esi+0]
+  .text:000D27F0                 jmp     loc_D2060
+  .text:000D27F5                 mov     eax, ds:currententity
+  .text:000D27FA                 mov     eax, [eax+0B94h]
+  .text:000D2800                 mov     [esp+0C3Ch+mod], offset aTooManyAttachm; "Too many attachments on %s\n"
+  .text:000D2807                 mov     [esp+0C3Ch+src], eax
+  .text:000D280B                 call    Sys_Error
+  .text:000D2810                 mov     edx, ds:pstudiohdr
+  .text:000D2816                 mov     eax, [edx+0D4h]
+  .text:000D281C                 jmp     loc_D1F96
+  .text:000D2821                 xor     ecx, ecx
+  .text:000D2823                 xor     pweaponmodel, pweaponmodel
+  .text:000D2825                 mov     [eax+304h], ecx
+  .text:000D282B                 mov     ebx, 2
+  .text:000D2830                 mov     edi, 13h
+  .text:000D2835                 call    R_StudioRenderFinal
+  .text:000D283A                 mov     eax, ds:cl_sprite_shell
+  .text:000D283F                 ; frame
+  .text:000D283F                 mov     [esp+0C3Ch+src], esi; frame
+  .text:000D2843                 mov     ds:g_ForcedFaceFlags, ebx
+  .text:000D2849                 ; pSpriteModel
+  .text:000D2849                 mov     [esp+0C3Ch+mod], eax; pSpriteModel
+  .text:000D284C                 call    tri.SpriteTexture
+  .text:000D2852                 mov     eax, ds:currententity
+  .text:000D2857                 mov     [eax+304h], edi
+  .text:000D285D                 call    R_StudioRenderFinal
+  .text:000D2862                 jmp     loc_D1F81
+  .text:000D2867                 mov     eax, [esp+0C3Ch+saveent.index]
+  .text:000D286B                 add     edi, 4
+  .text:000D286E                 mov     ecx, 0BB4h
+  .text:000D2873                 lea     esi, [esp+0C3Ch+saveent.player]
+  .text:000D2877                 mov     [edi-4], eax
+  .text:000D287A                 jmp     loc_D2038
+  .text:000D287F                 mov     edx, [esi]
+  .text:000D2881                 lea     edi, [esp+0C3Ch+saveent.player]
+  .text:000D2885                 add     esi, 4
+  .text:000D2888                 mov     ecx, 0BB4h
+  .text:000D288D                 mov     [esp+0C3Ch+saveent.index], edx
+  .text:000D2891                 jmp     loc_D1F07
+  .text:000D2896                 mov     ecx, [edi+0B94h]
+  .text:000D289C                 mov     [edx+208h], ecx
+  .text:000D28A2                 jmp     loc_D224F
+  .text:000D28A7                 call    __stack_chk_fail
+procedure: |-
+  // Alternative name is 'R_StudioDrawPlayer.part.9'
+  int __usercall R_StudioDrawPlayer_0@<eax>(char flags@<al>, entity_state_t_0 *pplayer@<edx>)
+  {
+    int v2; // eax
+    player_model_t *v3; // ecx
+    cl_entity_t_1 *v4; // edx
+    model_s *model; // ebx
+    int index; // esi
+    skin_t *v7; // ebx
+    int v8; // ebp
+    int v9; // ebx
+    skin_t *v10; // esi
+    int v11; // edi
+    int v12; // ebx
+    skin_t *v13; // esi
+    int v14; // edi
+    int v15; // ebx
+    skin_t *v16; // esi
+    int v17; // edi
+    int v18; // ebx
+    skin_t *v19; // esi
+    int v20; // edi
+    int v21; // ebx
+    skin_t *v22; // esi
+    int v23; // edi
+    int v24; // ebx
+    skin_t *v25; // esi
+    int v26; // edi
+    int v27; // ebx
+    skin_t *v28; // esi
+    int v29; // edi
+    int v30; // ebx
+    skin_t *v31; // esi
+    int v32; // edi
+    int v33; // ebx
+    skin_t *v34; // esi
+    int v35; // edi
+    int v36; // ecx
+    skin_t *v37; // ebx
+    int v38; // esi
+    model_t *v39; // eax
+    studiohdr_t *v40; // eax
+    int gaitsequence; // ebp
+    cl_entity_t_1 *v42; // eax
+    studiohdr_t *v43; // ecx
+    int boneindex; // edx
+    const char *bbmin; // edx
+    char *v46; // ebx
+    float *v47; // ebp
+    float *v48; // edi
+    float *v49; // esi
+    int v50; // eax
+    model_t *ModelByIndex; // eax
+    int numattachments; // eax
+    int v53; // ebx
+    int v54; // esi
+    int v55; // edx
+    int v56; // eax
+    cl_entity_t_1 *v57; // eax
+    int topcolor; // edx
+    int bottomcolor; // eax
+    bool v60; // zf
+    int weaponmodel; // eax
+    unsigned int v62; // ecx
+    qboolean_0 *p_player; // esi
+    qboolean_0 *p_saveent; // edi
+    model_t *v65; // esi
+    int v66; // eax
+    char *v67; // esi
+    int v68; // ebx
+    int v69; // edx
+    int v70; // eax
+    cl_entity_t_1 *v71; // edi
+    const void *v72; // esi
+    unsigned int v73; // ecx
+    int v75; // edx
+    player_info_t_0 *v76; // eax
+    cl_entity_t_1 *v77; // eax
+    int v78; // edx
+    char *v79; // eax
+    int v80; // ebx
+    model_t *v81; // eax
+    cl_entity_t_1 *v82; // edi
+    player_model_t *v83; // edx
+    int v84; // ecx
+    skin_t *v85; // edx
+    int v86; // ebp
+    int v87; // edx
+    skin_t *v88; // ebx
+    int v89; // ebp
+    int v90; // edx
+    skin_t *v91; // ebx
+    int v92; // ebp
+    int v93; // edx
+    skin_t *v94; // ebx
+    int v95; // ebp
+    int v96; // edx
+    skin_t *v97; // ebx
+    int v98; // ebp
+    int v99; // edx
+    skin_t *v100; // ebx
+    int v101; // ebp
+    int v102; // edx
+    skin_t *v103; // ebx
+    int v104; // ebp
+    int v105; // edx
+    skin_t *v106; // ebx
+    int v107; // ebp
+    int v108; // edx
+    skin_t *v109; // ebx
+    int v110; // ebp
+    int v111; // edx
+    skin_t *v112; // ebx
+    int v113; // ebp
+    model_t *mod; // [esp+0h] [ebp-C3Ch]
+    model_t *moda; // [esp+0h] [ebp-C3Ch]
+    model_t *modb; // [esp+0h] [ebp-C3Ch]
+    model_t *modc; // [esp+0h] [ebp-C3Ch]
+    model_t *modd; // [esp+0h] [ebp-C3Ch]
+    char *src; // [esp+4h] [ebp-C38h]
+    float *v120; // [esp+28h] [ebp-C14h]
+    vec_t v121; // [esp+28h] [ebp-C14h]
+    studiohdr_t *saveheadera; // [esp+2Ch] [ebp-C10h]
+    studiohdr_t *saveheader; // [esp+2Ch] [ebp-C10h]
+    vec_t saveheaderb; // [esp+2Ch] [ebp-C10h]
+    int v125; // [esp+30h] [ebp-C0Ch]
+    vec_t v126; // [esp+30h] [ebp-C0Ch]
+    vec3_t dir; // [esp+40h] [ebp-BFCh] BYREF
+    alight_t lighting; // [esp+4Ch] [ebp-BF0h] BYREF
+    cl_entity_t_1 saveent; // [esp+64h] [ebp-BD8h] BYREF
+    unsigned int v132; // [esp+C1Ch] [ebp-20h]
+
+    v132 = __readgsdword(0x14u);
+    if ( developer.value == 0.0 && Host_IsSinglePlayerGame() )
+    {
+      v2 = r_playerindex;
+      goto LABEL_3;
+    }
+    v2 = r_playerindex;
+    if ( !nMax.players[r_playerindex].model[0] )
+    {
+  LABEL_3:
+      v3 = &DM_PlayerState[v2];
+      v3->name[0] = 0;
+      v4 = currententity;
+      model = currententity->model;
+      if ( v3->model == model )
+        goto LABEL_39;
+      v3->model = model;
+      index = v4->index;
+      v7 = pDM_RemapSkin[v4->index][0];
+      if ( !v7 || v7->keynum != index )
+      {
+        v8 = r_remapindex;
+        r_remapindex = (r_remapindex + 1) % 64;
+        v7 = DM_RemapSkin[v8];
+        pDM_RemapSkin[index][0] = DM_RemapSkin[v8];
+        DM_RemapSkin[v8][0].keynum = index;
+        v7->topcolor = -1;
+        v7->bottomcolor = -1;
+      }
+      v7->topcolor = -1;
+      v7->bottomcolor = -1;
+      v9 = v4->index;
+      v10 = pDM_RemapSkin[v4->index][1];
+      if ( !v10 || v10->keynum != v9 )
+      {
+        v11 = r_remapindex;
+        r_remapindex = (r_remapindex + 1) % 64;
+        v10 = &DM_RemapSkin[v11][1];
+        pDM_RemapSkin[v9][1] = &DM_RemapSkin[v11][1];
+        DM_RemapSkin[v11][1].keynum = v9;
+        DM_RemapSkin[v11][1].topcolor = -1;
+        DM_RemapSkin[v11][1].bottomcolor = -1;
+      }
+      v10->topcolor = -1;
+      v10->bottomcolor = -1;
+      v12 = v4->index;
+      v13 = pDM_RemapSkin[v4->index][2];
+      if ( !v13 || v13->keynum != v12 )
+      {
+        v14 = r_remapindex;
+        r_remapindex = (r_remapindex + 1) % 64;
+        v13 = &DM_RemapSkin[v14][2];
+        pDM_RemapSkin[v12][2] = &DM_RemapSkin[v14][2];
+        DM_RemapSkin[v14][2].keynum = v12;
+        DM_RemapSkin[v14][2].topcolor = -1;
+        DM_RemapSkin[v14][2].bottomcolor = -1;
+      }
+      v13->topcolor = -1;
+      v13->bottomcolor = -1;
+      v15 = v4->index;
+      v16 = pDM_RemapSkin[v4->index][3];
+      if ( !v16 || v16->keynum != v15 )
+      {
+        v17 = r_remapindex;
+        r_remapindex = (r_remapindex + 1) % 64;
+        v16 = &DM_RemapSkin[v17][3];
+        DM_RemapSkin[v17][3].keynum = v15;
+        pDM_RemapSkin[v15][3] = &DM_RemapSkin[v17][3];
+        DM_RemapSkin[v17][3].topcolor = -1;
+        DM_RemapSkin[v17][3].bottomcolor = -1;
+      }
+      v16->topcolor = -1;
+      v16->bottomcolor = -1;
+      v18 = v4->index;
+      v19 = pDM_RemapSkin[v4->index][4];
+      if ( !v19 || v18 != v19->keynum )
+      {
+        v20 = r_remapindex;
+        r_remapindex = (r_remapindex + 1) % 64;
+        v19 = &DM_RemapSkin[v20][4];
+        pDM_RemapSkin[v18][4] = &DM_RemapSkin[v20][4];
+        DM_RemapSkin[v20][4].keynum = v18;
+        DM_RemapSkin[v20][4].topcolor = -1;
+        DM_RemapSkin[v20][4].bottomcolor = -1;
+      }
+      v19->topcolor = -1;
+      v19->bottomcolor = -1;
+      v21 = v4->index;
+      v22 = pDM_RemapSkin[v4->index][5];
+      if ( !v22 || v21 != v22->keynum )
+      {
+        v23 = r_remapindex;
+        r_remapindex = (r_remapindex + 1) % 64;
+        v22 = &DM_RemapSkin[v23][5];
+        pDM_RemapSkin[v21][5] = &DM_RemapSkin[v23][5];
+        DM_RemapSkin[v23][5].keynum = v21;
+        DM_RemapSkin[v23][5].topcolor = -1;
+        DM_RemapSkin[v23][5].bottomcolor = -1;
+      }
+      v22->topcolor = -1;
+      v22->bottomcolor = -1;
+      v24 = v4->index;
+      v25 = pDM_RemapSkin[v4->index][6];
+      if ( !v25 || v24 != v25->keynum )
+      {
+        v26 = r_remapindex;
+        r_remapindex = (r_remapindex + 1) % 64;
+        v25 = &DM_RemapSkin[v26][6];
+        DM_RemapSkin[v26][6].keynum = v24;
+        pDM_RemapSkin[v24][6] = &DM_RemapSkin[v26][6];
+        DM_RemapSkin[v26][6].topcolor = -1;
+        DM_RemapSkin[v26][6].bottomcolor = -1;
+      }
+      v25->topcolor = -1;
+      v25->bottomcolor = -1;
+      v27 = v4->index;
+      v28 = pDM_RemapSkin[v4->index][7];
+      if ( !v28 || v27 != v28->keynum )
+      {
+        v29 = r_remapindex;
+        r_remapindex = (r_remapindex + 1) % 64;
+        v28 = &DM_RemapSkin[v29][7];
+        pDM_RemapSkin[v27][7] = &DM_RemapSkin[v29][7];
+        DM_RemapSkin[v29][7].keynum = v27;
+        DM_RemapSkin[v29][7].topcolor = -1;
+        DM_RemapSkin[v29][7].bottomcolor = -1;
+      }
+      v28->topcolor = -1;
+      v28->bottomcolor = -1;
+      v30 = v4->index;
+      v31 = pDM_RemapSkin[v4->index][8];
+      if ( !v31 || v30 != v31->keynum )
+      {
+        v32 = r_remapindex;
+        r_remapindex = (r_remapindex + 1) % 64;
+        v31 = &DM_RemapSkin[v32][8];
+        pDM_RemapSkin[v30][8] = &DM_RemapSkin[v32][8];
+        DM_RemapSkin[v32][8].keynum = v30;
+        DM_RemapSkin[v32][8].topcolor = -1;
+        DM_RemapSkin[v32][8].bottomcolor = -1;
+      }
+      v31->topcolor = -1;
+      v31->bottomcolor = -1;
+      v33 = v4->index;
+      v34 = pDM_RemapSkin[v4->index][9];
+      if ( !v34 || v33 != v34->keynum )
+      {
+        v35 = r_remapindex;
+        r_remapindex = (r_remapindex + 1) % 64;
+        v34 = &DM_RemapSkin[v35][9];
+        DM_RemapSkin[v35][9].keynum = v33;
+        pDM_RemapSkin[v33][9] = &DM_RemapSkin[v35][9];
+        DM_RemapSkin[v35][9].topcolor = -1;
+        DM_RemapSkin[v35][9].bottomcolor = -1;
+      }
+      v34->topcolor = -1;
+      v34->bottomcolor = -1;
+      v36 = v4->index;
+      goto LABEL_35;
+    }
+    v60 = Q_strcmp(DM_PlayerState[r_playerindex].name, nMax.players[r_playerindex].model) == 0;
+    v2 = r_playerindex;
+    if ( v60 )
+      goto LABEL_39;
+    Q_strncpy(DM_PlayerState[r_playerindex].name, nMax.players[r_playerindex].model, 259);
+    v78 = r_playerindex;
+    v79 = nMax.players[r_playerindex].model;
+    DM_PlayerState[v78].name[259] = 0;
+    _snprintf_chk(DM_PlayerState[v78].modelname, 260, 1, 260, "models/player/%s/%s.mdl", v79, v79);
+    v80 = r_playerindex;
+    v81 = Mod_ForName(DM_PlayerState[r_playerindex].modelname, false, true);
+    v82 = currententity;
+    DM_PlayerState[v80].model = v81;
+    v2 = r_playerindex;
+    v83 = &DM_PlayerState[r_playerindex];
+    if ( !v83->model )
+      v83->model = v82->model;
+    v84 = v82->index;
+    v85 = pDM_RemapSkin[v82->index][0];
+    if ( !v85 || v84 != v85->keynum )
+    {
+      v86 = r_remapindex;
+      r_remapindex = (r_remapindex + 1) % 64;
+      v85 = DM_RemapSkin[v86];
+      pDM_RemapSkin[v84][0] = DM_RemapSkin[v86];
+      DM_RemapSkin[v86][0].keynum = v84;
+      v85->topcolor = -1;
+      v85->bottomcolor = -1;
+    }
+    v85->topcolor = -1;
+    v85->bottomcolor = -1;
+    v87 = v82->index;
+    v88 = pDM_RemapSkin[v82->index][1];
+    if ( !v88 || v87 != v88->keynum )
+    {
+      v89 = r_remapindex;
+      r_remapindex = (r_remapindex + 1) % 64;
+      v88 = &DM_RemapSkin[v89][1];
+      pDM_RemapSkin[v87][1] = &DM_RemapSkin[v89][1];
+      DM_RemapSkin[v89][1].keynum = v87;
+      DM_RemapSkin[v89][1].topcolor = -1;
+      DM_RemapSkin[v89][1].bottomcolor = -1;
+    }
+    v88->topcolor = -1;
+    v88->bottomcolor = -1;
+    v90 = v82->index;
+    v91 = pDM_RemapSkin[v82->index][2];
+    if ( !v91 || v90 != v91->keynum )
+    {
+      v92 = r_remapindex;
+      r_remapindex = (r_remapindex + 1) % 64;
+      v91 = &DM_RemapSkin[v92][2];
+      pDM_RemapSkin[v90][2] = &DM_RemapSkin[v92][2];
+      DM_RemapSkin[v92][2].keynum = v90;
+      DM_RemapSkin[v92][2].topcolor = -1;
+      DM_RemapSkin[v92][2].bottomcolor = -1;
+    }
+    v91->topcolor = -1;
+    v91->bottomcolor = -1;
+    v93 = v82->index;
+    v94 = pDM_RemapSkin[v82->index][3];
+    if ( !v94 || v93 != v94->keynum )
+    {
+      v95 = r_remapindex;
+      r_remapindex = (r_remapindex + 1) % 64;
+      v94 = &DM_RemapSkin[v95][3];
+      DM_RemapSkin[v95][3].keynum = v93;
+      pDM_RemapSkin[v93][3] = &DM_RemapSkin[v95][3];
+      DM_RemapSkin[v95][3].topcolor = -1;
+      DM_RemapSkin[v95][3].bottomcolor = -1;
+    }
+    v94->topcolor = -1;
+    v94->bottomcolor = -1;
+    v96 = v82->index;
+    v97 = pDM_RemapSkin[v82->index][4];
+    if ( !v97 || v96 != v97->keynum )
+    {
+      v98 = r_remapindex;
+      r_remapindex = (r_remapindex + 1) % 64;
+      v97 = &DM_RemapSkin[v98][4];
+      pDM_RemapSkin[v96][4] = &DM_RemapSkin[v98][4];
+      DM_RemapSkin[v98][4].keynum = v96;
+      DM_RemapSkin[v98][4].topcolor = -1;
+      DM_RemapSkin[v98][4].bottomcolor = -1;
+    }
+    v97->topcolor = -1;
+    v97->bottomcolor = -1;
+    v99 = v82->index;
+    v100 = pDM_RemapSkin[v82->index][5];
+    if ( !v100 || v99 != v100->keynum )
+    {
+      v101 = r_remapindex;
+      r_remapindex = (r_remapindex + 1) % 64;
+      v100 = &DM_RemapSkin[v101][5];
+      pDM_RemapSkin[v99][5] = &DM_RemapSkin[v101][5];
+      DM_RemapSkin[v101][5].keynum = v99;
+      DM_RemapSkin[v101][5].topcolor = -1;
+      DM_RemapSkin[v101][5].bottomcolor = -1;
+    }
+    v100->topcolor = -1;
+    v100->bottomcolor = -1;
+    v102 = v82->index;
+    v103 = pDM_RemapSkin[v82->index][6];
+    if ( !v103 || v102 != v103->keynum )
+    {
+      v104 = r_remapindex;
+      r_remapindex = (r_remapindex + 1) % 64;
+      v103 = &DM_RemapSkin[v104][6];
+      DM_RemapSkin[v104][6].keynum = v102;
+      pDM_RemapSkin[v102][6] = &DM_RemapSkin[v104][6];
+      DM_RemapSkin[v104][6].topcolor = -1;
+      DM_RemapSkin[v104][6].bottomcolor = -1;
+    }
+    v103->topcolor = -1;
+    v103->bottomcolor = -1;
+    v105 = v82->index;
+    v106 = pDM_RemapSkin[v82->index][7];
+    if ( !v106 || v105 != v106->keynum )
+    {
+      v107 = r_remapindex;
+      r_remapindex = (r_remapindex + 1) % 64;
+      v106 = &DM_RemapSkin[v107][7];
+      pDM_RemapSkin[v105][7] = &DM_RemapSkin[v107][7];
+      DM_RemapSkin[v107][7].keynum = v105;
+      DM_RemapSkin[v107][7].topcolor = -1;
+      DM_RemapSkin[v107][7].bottomcolor = -1;
+    }
+    v106->topcolor = -1;
+    v106->bottomcolor = -1;
+    v108 = v82->index;
+    v109 = pDM_RemapSkin[v82->index][8];
+    if ( !v109 || v108 != v109->keynum )
+    {
+      v110 = r_remapindex;
+      r_remapindex = (r_remapindex + 1) % 64;
+      v109 = &DM_RemapSkin[v110][8];
+      pDM_RemapSkin[v108][8] = &DM_RemapSkin[v110][8];
+      DM_RemapSkin[v110][8].keynum = v108;
+      DM_RemapSkin[v110][8].topcolor = -1;
+      DM_RemapSkin[v110][8].bottomcolor = -1;
+    }
+    v109->topcolor = -1;
+    v109->bottomcolor = -1;
+    v111 = v82->index;
+    v112 = pDM_RemapSkin[v82->index][9];
+    if ( !v112 || v111 != v112->keynum )
+    {
+      v113 = r_remapindex;
+      r_remapindex = (r_remapindex + 1) % 64;
+      v112 = &DM_RemapSkin[v113][9];
+      DM_RemapSkin[v113][9].keynum = v111;
+      pDM_RemapSkin[v111][9] = &DM_RemapSkin[v113][9];
+      DM_RemapSkin[v113][9].topcolor = -1;
+      DM_RemapSkin[v113][9].bottomcolor = -1;
+    }
+    v112->topcolor = -1;
+    v112->bottomcolor = -1;
+    v36 = v82->index;
+  LABEL_35:
+    v37 = pDM_RemapSkin[v36][10];
+    if ( !v37 || v36 != v37->keynum )
+    {
+      v38 = r_remapindex;
+      r_remapindex = (r_remapindex + 1) % 64;
+      v37 = &DM_RemapSkin[v38][10];
+      pDM_RemapSkin[v36][10] = &DM_RemapSkin[v38][10];
+      DM_RemapSkin[v38][10].keynum = v36;
+      DM_RemapSkin[v38][10].topcolor = -1;
+      DM_RemapSkin[v38][10].bottomcolor = -1;
+    }
+    v37->topcolor = -1;
+    v37->bottomcolor = -1;
+  LABEL_39:
+    v39 = DM_PlayerState[v2].model;
+    r_model = v39;
+    if ( v39 )
+    {
+      v40 = (studiohdr_t *)Mod_Extradata(v39);
+      gaitsequence = pplayer->gaitsequence;
+      pstudiohdr = v40;
+      if ( gaitsequence )
+      {
+        r_playerinfo = &nMax.players[r_playerindex];
+        v126 = currententity->angles[0];
+        saveheaderb = currententity->angles[1];
+        v121 = currententity->angles[2];
+        R_StudioProcessGait(pplayer);
+        v75 = pplayer->gaitsequence;
+        v76 = r_playerinfo;
+        r_playerinfo = nullptr;
+        v76->gaitsequence = v75;
+        R_StudioSetUpTransform(0);
+        v77 = currententity;
+        currententity->angles[0] = v126;
+        v77->angles[1] = saveheaderb;
+        v77->angles[2] = v121;
+      }
+      else
+      {
+        v42 = currententity;
+        currententity->curstate.controller[0] = 127;
+        v42->curstate.controller[1] = 127;
+        v42->curstate.controller[2] = 127;
+        v42->curstate.controller[3] = 127;
+        v42->latched.prevcontroller[0] = 127;
+        v42->latched.prevcontroller[1] = 127;
+        v42->latched.prevcontroller[2] = 127;
+        v42->latched.prevcontroller[3] = 127;
+        nMax.players[r_playerindex].gaitsequence = 0;
+        R_StudioSetUpTransform(0);
+      }
+      if ( (flags & 1) == 0 )
+      {
+  LABEL_45:
+        r_playerinfo = &nMax.players[r_playerindex];
+        R_StudioSetupBones();
+        v43 = pstudiohdr;
+        boneindex = pstudiohdr->boneindex;
+        cached_numbones = pstudiohdr->numbones;
+        if ( cached_numbones > 0 )
+        {
+          bbmin = (char *)pstudiohdr + boneindex;
+          v46 = cached_bonename;
+          v47 = cached_bonetransform[0][0];
+          v48 = bonetransform[0][0];
+          v49 = cached_lighttransform[0][0];
+          v120 = lighttransform[0][0];
+          v50 = 0;
+          do
+          {
+            v125 = v50;
+            mod = (model_t *)v46;
+            v46 += 32;
+            saveheadera = (studiohdr_t *)bbmin;
+            Q_strncpy(mod->name, bbmin, 31);
+            *(v46 - 1) = 0;
+            src = (char *)v48;
+            v48 += 12;
+            moda = (model_t *)v47;
+            v47 += 12;
+            Q_memcpy(moda, src, 48);
+            modb = (model_t *)v49;
+            v49 += 12;
+            Q_memcpy(modb, v120, 48);
+            v43 = pstudiohdr;
+            v120 += 12;
+            v50 = v125 + 1;
+            bbmin = (const char *)saveheadera->bbmin;
+          }
+          while ( v125 + 1 < pstudiohdr->numbones );
+        }
+        r_playerinfo->renderframe = r_framecount;
+        r_playerinfo = nullptr;
+        if ( (flags & 2) != 0 )
+        {
+          if ( (flags & 1) != 0 && pplayer && pplayer->weaponmodel )
+          {
+            ModelByIndex = CL_GetModelByIndex(pplayer->weaponmodel);
+            if ( *((_DWORD *)Mod_Extradata(ModelByIndex) + 53) )
+              goto LABEL_60;
+            v43 = pstudiohdr;
+          }
+          numattachments = v43->numattachments;
+          if ( numattachments > 4 )
+            Sys_Error("Too many attachments on %s\n", currententity->model->name);
+          v53 = 0;
+          v54 = (int)&v43->name[v43->attachmentindex + 32];
+          if ( numattachments > 0 )
+          {
+            do
+            {
+              v55 = v53++;
+              v56 = *(_DWORD *)(v54 - 4);
+              modc = (model_t *)v54;
+              v54 += 88;
+              VectorTransform((const vec_t *)modc->name, lighttransform[v56], currententity->attachment[v55]);
+            }
+            while ( v53 < pstudiohdr->numattachments );
+          }
+          R_StudioClientEvents();
+          if ( currententity->index > 0 )
+            Q_memcpy(cl_entities[currententity->index].attachment, currententity->attachment, 48);
+        }
+        if ( (flags & 1) != 0 )
+        {
+  LABEL_60:
+          if ( cl_himodels.value != 0.0 && DM_PlayerState[r_playerindex].model != currententity->model )
+            currententity->curstate.body = 255;
+          if ( developer.value == 0.0 && Host_IsSinglePlayerGame() || !DM_PlayerState[r_playerindex].name[0] )
+          {
+            v57 = currententity;
+          }
+          else
+          {
+            v57 = currententity;
+            if ( DM_PlayerState[r_playerindex].model == currententity->model )
+              currententity->curstate.body = 1;
+          }
+          lighting.plightvec = dir;
+          R_StudioDynamicLight(v57, &lighting);
+          R_StudioEntityLight(&lighting);
+          R_StudioSetupLighting(&lighting);
+          topcolor = nMax.players[r_playerindex].topcolor;
+          r_playerinfo = &nMax.players[r_playerindex];
+          if ( topcolor < 0 )
+          {
+            r_topcolor = 0;
+          }
+          else
+          {
+            if ( topcolor > 360 )
+              topcolor = 360;
+            r_topcolor = topcolor;
+          }
+          bottomcolor = nMax.players[r_playerindex].bottomcolor;
+          if ( bottomcolor < 0 )
+          {
+            r_bottomcolor = 0;
+          }
+          else
+          {
+            if ( bottomcolor > 360 )
+              bottomcolor = 360;
+            r_bottomcolor = bottomcolor;
+          }
+          v60 = currententity->curstate.renderfx == 19;
+          g_ChromeOrigin[0] = r_origin[0];
+          g_ChromeOrigin[1] = r_origin[1];
+          g_ChromeOrigin[2] = r_origin[2];
+          g_ForcedFaceFlags = 0;
+          if ( v60 )
+          {
+            currententity->curstate.renderfx = 0;
+            R_StudioRenderFinal();
+            g_ForcedFaceFlags = 2;
+            tri.SpriteTexture(cl_sprite_shell, 0);
+            currententity->curstate.renderfx = 19;
+          }
+          R_StudioRenderFinal();
+          r_playerinfo = nullptr;
+          weaponmodel = pplayer->weaponmodel;
+          if ( weaponmodel )
+          {
+            v62 = 3000;
+            p_player = (qboolean_0 *)currententity;
+            saveheader = pstudiohdr;
+            p_saveent = (qboolean_0 *)&saveent;
+            if ( ((unsigned int)&saveent & 4) != 0 )
+            {
+              p_saveent = &saveent.player;
+              p_player = &currententity->player;
+              v62 = 2996;
+              saveent.index = currententity->index;
+            }
+            qmemcpy(p_saveent, p_player, 4 * (v62 >> 2));
+            v65 = CL_GetModelByIndex(weaponmodel);
+            pstudiohdr = (studiohdr_t *)Mod_Extradata(v65);
+            R_StudioMergeBones(v65);
+            R_StudioSetupLighting(&lighting);
+            g_ForcedFaceFlags = 0;
+            g_ChromeOrigin[0] = r_origin[0];
+            v60 = currententity->curstate.renderfx == 19;
+            g_ChromeOrigin[1] = r_origin[1];
+            g_ChromeOrigin[2] = r_origin[2];
+            if ( v60 )
+            {
+              currententity->curstate.renderfx = 0;
+              R_StudioRenderFinal();
+              g_ForcedFaceFlags = 2;
+              tri.SpriteTexture(cl_sprite_shell, 0);
+              currententity->curstate.renderfx = 19;
+            }
+            R_StudioRenderFinal();
+            v66 = pstudiohdr->numattachments;
+            if ( v66 > 4 )
+              Sys_Error("Too many attachments on %s\n", currententity->model->name);
+            if ( v66 > 0 )
+            {
+              v67 = &pstudiohdr->name[pstudiohdr->attachmentindex + 32];
+              v68 = 0;
+              do
+              {
+                v69 = v68++;
+                v70 = *((_DWORD *)v67 - 1);
+                modd = (model_t *)v67;
+                v67 += 88;
+                VectorTransform((const vec_t *)modd->name, lighttransform[v70], currententity->attachment[v69]);
+                v66 = pstudiohdr->numattachments;
+              }
+              while ( v68 < v66 );
+            }
+            v71 = currententity;
+            if ( currententity->index > 0 )
+            {
+              Q_memcpy(saveent.attachment, currententity->attachment, 12 * v66);
+              v71 = currententity;
+            }
+            v72 = &saveent;
+            v73 = 3000;
+            if ( ((unsigned __int8)v71 & 4) != 0 )
+            {
+              v71 = (cl_entity_t_1 *)((char *)v71 + 4);
+              v73 = 2996;
+              v72 = &saveent.player;
+              v71[-1].cvFloorColor.a = saveent.index;
+            }
+            qmemcpy(v71, v72, 4 * (v73 >> 2));
+            pstudiohdr = saveheader;
+            if ( (flags & 2) != 0 )
+              R_StudioClientEvents();
+          }
+        }
+        return 1;
+      }
+      if ( R_StudioCheckBBox() )
+      {
+        ++r_amodels_drawn;
+        ++r_smodels_total;
+        if ( !pstudiohdr->numbodyparts )
+          return 1;
+        goto LABEL_45;
+      }
+    }
+    return 0;
+  }

@@ -1,0 +1,14 @@
+func_name: "CL_Parse_SetView"
+func_va: "0x127d00"
+disasm_code: |-
+  .text:00127D00                 sub     esp, 0Ch
+  .text:00127D03                 call    MSG_ReadShort
+  .text:00127D08                 mov     ds:cl_viewentity, eax
+  .text:00127D0D                 add     esp, 0Ch
+  .text:00127D10                 retn
+procedure: |-
+  // Source: engine/cl_parsefn.c CL_Parse_SetView. The received MSG_ReadShort value is cl.viewentity (cl_viewentity), not cl.viewent/viewmodel.
+  void __cdecl CL_Parse_SetView()
+  {
+    cl_viewentity = MSG_ReadShort();
+  }

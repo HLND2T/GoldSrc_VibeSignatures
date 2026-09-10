@@ -1,0 +1,50 @@
+func_name: "CL_ReallocateDynamicData"
+func_va: "0x146ac0"
+disasm_code: |-
+  .text:00146AC0                 sub     esp, 1Ch
+  .text:00146AC3                 mov     eax, [esp+1Ch+nMaxClients]
+  .text:00146AC7                 ; nPlayers
+  .text:00146AC7                 mov     [esp+1Ch+nPlayers], eax; nPlayers
+  .text:00146ACA                 call    COM_EntsForPlayerSlots
+  .text:00146ACF                 test    eax, eax
+  .text:00146AD1                 mov     ds:cl_max_edicts, eax
+  .text:00146AD6                 jle     short loc_146B40
+  .text:00146AD8                 mov     edx, ds:cl_entities
+  .text:00146ADE                 test    edx, edx
+  .text:00146AE0                 jz      short loc_146AEE
+  .text:00146AE2                 mov     [esp+1Ch+nPlayers], offset aClReallocateCl; "CL_Reallocate cl_entities\n"
+  .text:00146AE9                 call    Con_Printf
+  .text:00146AEE                 imul    eax, ds:cl_max_edicts, 0BB8h
+  .text:00146AF8                 ; size
+  .text:00146AF8                 mov     [esp+1Ch+nPlayers], eax; size
+  .text:00146AFB                 call    Mem_ZeroMalloc
+  .text:00146B00                 mov     ds:cl_entities, eax
+  .text:00146B05                 mov     eax, ds:cl_max_edicts
+  .text:00146B0A                 ; nMax
+  .text:00146B0A                 mov     [esp+1Ch+nPlayers], eax; nMax
+  .text:00146B0D                 call    R_AllocObjects
+  .text:00146B12                 imul    eax, CL_UPDATE_BACKUP, 4318h
+  .text:00146B1C                 ; dest
+  .text:00146B1C                 mov     [esp+1Ch+nPlayers], offset cl_frames; dest
+  .text:00146B23                 ; count
+  .text:00146B23                 mov     [esp+1Ch+count], eax; count
+  .text:00146B27                 xor     eax, eax
+  .text:00146B29                 ; fill
+  .text:00146B29                 mov     [esp+1Ch+fill], eax; fill
+  .text:00146B2D                 call    Q_memset
+  .text:00146B32                 add     esp, 1Ch
+  .text:00146B35                 retn
+  .text:00146B40                 mov     [esp+1Ch+nPlayers], offset aClReallocatedy; "CL_ReallocateDynamicData allocating 0 e"...
+  .text:00146B47                 call    Sys_Error
+procedure: |-
+  void __cdecl CL_ReallocateDynamicData(int nMaxClients)
+  {
+    cl_max_edicts = COM_EntsForPlayerSlots(nMaxClients);
+    if ( cl_max_edicts <= 0 )
+      Sys_Error("CL_ReallocateDynamicData allocating 0 entities");
+    if ( cl_entities )
+      Con_Printf("CL_Reallocate cl_entities\n");
+    cl_entities = (cl_entity_t_3 *)Mem_ZeroMalloc(3000 * cl_max_edicts);
+    R_AllocObjects(cl_max_edicts);
+    Q_memset(cl_frames, 0, 17176 * CL_UPDATE_BACKUP);
+  }

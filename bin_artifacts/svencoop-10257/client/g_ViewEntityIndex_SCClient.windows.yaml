@@ -1,0 +1,10 @@
+gv_name: g_ViewEntityIndex_SCClient
+gv_va: '0x106458c0'
+gv_rva: '0x6458c0'
+gv_sig: 81 EC FC 0B 00 00 A1 ?? ?? ?? ?? 33 C4 89 84 24 ?? ?? ?? ?? 53 55 8B AC 24 ?? ?? ?? ?? 8B D9 56 57 C7 44 24 ?? ??
+  ?? ?? ??
+gv_sig_va: '0x10056ee0'
+gv_inst_offset: '0xc6'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
+gv_sig_allow_across_function_boundary: true

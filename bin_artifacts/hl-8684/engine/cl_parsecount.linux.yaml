@@ -1,0 +1,10 @@
+gv_name: cl_parsecount
+gv_va: '0xc6f264'
+gv_rva: '0xc6f264'
+gv_sig: 55 57 56 53 83 EC ?? D9 EE D9 05 ?? ?? ?? ?? DF E9 DD D8 7A ?? 0F 84 ?? ?? ?? ?? 8B 6C 24 ?? 85 ED 0F 85 ?? ?? ??
+  ??
+gv_sig_va: '0x200a30'
+gv_inst_offset: '0x2c3'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
+gv_sig_allow_across_function_boundary: true

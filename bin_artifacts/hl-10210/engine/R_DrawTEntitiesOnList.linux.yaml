@@ -1,0 +1,5 @@
+func_name: R_DrawTEntitiesOnList
+func_va: '0x1b0c90'
+func_rva: '0x1b0c90'
+func_size: '0x455'
+func_sig: 55 57 56 53 83 EC ?? D9 05 ?? ?? ?? ?? D9 EE D9 C9 DF E9 DD D8 7A ?? 0F 84 ?? ?? ?? ?? 8B 44 24 ?? 85 C0

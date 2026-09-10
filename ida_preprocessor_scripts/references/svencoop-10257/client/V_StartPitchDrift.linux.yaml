@@ -1,0 +1,51 @@
+func_name: "V_StartPitchDrift"
+func_va: "0x12aee0"
+disasm_code: |-
+  .text:0012AEE0                 push    ebx
+  .text:0012AEE1                 sub     esp, 18h
+  .text:0012AEE4                 call    sub_9E590
+  .text:0012AEE9                 add     ebx, (offset qword_61E000 - $)
+  .text:0012AEEF                 fld     ds:(g_pitchdrift.laststop - 61E000h)[ebx]
+  .text:0012AEF5                 fstp    [esp+1Ch+var_1C]
+  .text:0012AEF8                 lea     eax, (unk_A57FA0 - 61E000h)[ebx]
+  .text:0012AEFE                 call    dword ptr [eax+0D8h]
+  .text:0012AF04                 fld     [esp+1Ch+var_1C]
+  .text:0012AF07                 fucomip st, st(1)
+  .text:0012AF09                 fstp    st
+  .text:0012AF0B                 jp      short loc_12AF0F
+  .text:0012AF0D                 jz      short loc_12AF5D
+  .text:0012AF0F                 mov     edx, ds:(g_pitchdrift.nodrift - 61E000h)[ebx]
+  .text:0012AF15                 test    edx, edx
+  .text:0012AF17                 jnz     short loc_12AF30
+  .text:0012AF19                 fldz
+  .text:0012AF1B                 fst     [esp+1Ch+var_10]
+  .text:0012AF1F                 fld     dword ptr ds:(g_pitchdrift.pitchvel - 61E000h)[ebx]
+  .text:0012AF25                 fst     dword ptr [esp+1Ch+var_1C]
+  .text:0012AF28                 fucomip st, st(1)
+  .text:0012AF2A                 fstp    st
+  .text:0012AF2C                 jp      short loc_12AF5D
+  .text:0012AF2E                 jnz     short loc_12AF5D
+  .text:0012AF30                 mov     ecx, ds:(v_centerspeed - 61E000h)[ebx]
+  .text:0012AF36                 fld     dword ptr [ecx+0Ch]
+  .text:0012AF39                 fstp    dword ptr [esp+1Ch+var_1C]
+  .text:0012AF3C                 movss   xmm0, dword ptr [esp+1Ch+var_1C]
+  .text:0012AF41                 movss   dword ptr ds:(g_pitchdrift.pitchvel - 61E000h)[ebx], xmm0
+  .text:0012AF49                 mov     ds:(g_pitchdrift.nodrift - 61E000h)[ebx], 0
+  .text:0012AF53                 mov     ds:(g_pitchdrift.driftmove - 61E000h)[ebx], 0
+  .text:0012AF5D                 add     esp, 18h
+  .text:0012AF60                 pop     ebx
+  .text:0012AF61                 retn
+procedure: |-
+  // Source: cl_dll/view.cpp:241-264. g_pitchdrift is the g_pitchdrift object requested by BulletPhysics. Select pitchvel (offset zero) to recover its base. Current ABI laststop offset is 12 (Linux).
+  void __cdecl V_StartPitchDrift()
+  {
+    double laststop; // [esp+0h] [ebp-1Ch]
+
+    laststop = g_pitchdrift.laststop;
+    if ( laststop != gEngfuncs_GetClientTime() && (g_pitchdrift.nodrift || g_pitchdrift.pitchvel == 0.0) )
+    {
+      g_pitchdrift.pitchvel = v_centerspeed->value;
+      g_pitchdrift.nodrift = 0;
+      g_pitchdrift.driftmove = 0.0;
+    }
+  }

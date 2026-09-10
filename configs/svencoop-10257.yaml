@@ -5,6 +5,166 @@ modules:
     depot_windows: hw.dll
     depot_linux: hw.so
     skills:
+      - name: find-ClientDLL_Init-pic-enginefuncs
+        platform: linux
+        expected_input:
+          - ClientDLL_Init.{platform}.yaml
+        expected_output:
+          - cl_enginefuncs.{platform}.yaml
+      - name: find-CL_CreateVisibleEntity-decompiles
+        expected_input:
+          - CL_CreateVisibleEntity.{platform}.yaml
+        expected_output:
+          - cl_numvisedicts.{platform}.yaml
+          - cl_visedicts.{platform}.yaml
+      - name: find-R_StudioCheckBBox
+        expected_output:
+          - R_StudioCheckBBox.{platform}.yaml
+      - name: find-R_StudioCheckBBox-decompiles
+        expected_input:
+          - R_StudioCheckBBox.{platform}.yaml
+        expected_output:
+          - R_CullBox.{platform}.yaml
+      - name: find-CL_Parse_SetView
+        expected_input:
+          - cl_parsefuncs.{platform}.yaml
+        expected_output:
+          - CL_Parse_SetView.{platform}.yaml
+      - name: find-CL_Parse_SetView-decompiles
+        expected_input:
+          - CL_Parse_SetView.{platform}.yaml
+        expected_output:
+          - cl_viewentity.{platform}.yaml
+      - name: find-CL_CreateVisibleEntity
+        expected_input:
+          - cl_enginefuncs.{platform}.yaml
+        expected_output:
+          - CL_CreateVisibleEntity.{platform}.yaml
+      - name: find-VGui_ViewportPaintBackground
+        expected_input:
+          - cl_enginefuncs.{platform}.yaml
+        expected_output:
+          - VGui_ViewportPaintBackground.{platform}.yaml
+      - name: find-VGui_ViewportPaintBackground-decompiles
+        expected_input:
+          - VGui_ViewportPaintBackground.{platform}.yaml
+        expected_output:
+          - V_RenderView.{platform}.yaml
+      - name: find-CL_Set_ServerExtraInfo
+        expected_input:
+          - cl_parsefuncs.{platform}.yaml
+        expected_output:
+          - CL_Set_ServerExtraInfo.{platform}.yaml
+      - name: find-CL_Set_ServerExtraInfo-decompiles
+        expected_input:
+          - CL_Set_ServerExtraInfo.{platform}.yaml
+        expected_output:
+          - allow_cheats.{platform}.yaml
+      - name: find-CL_RegisterResources
+        expected_output:
+          - CL_RegisterResources.{platform}.yaml
+      - name: find-CL_ReallocateDynamicData
+        expected_output:
+          - CL_ReallocateDynamicData.{platform}.yaml
+      - name: find-CL_InitTEnts-studio-decompiles
+        expected_input:
+          - CL_InitTEnts.{platform}.yaml
+        expected_output:
+          - cl_sprite_shell.{platform}.yaml
+      - name: find-R_StudioMergeBones-decompiles
+        expected_input:
+          - R_StudioMergeBones.{platform}.yaml
+        expected_output:
+          - cached_numbones.{platform}.yaml
+          - cached_bonename.{platform}.yaml
+      - name: find-R_StudioSaveBones
+        expected_input:
+          - cached_numbones.{platform}.yaml
+          - cached_bonename.{platform}.yaml
+          - R_StudioMergeBones.{platform}.yaml
+          - R_StudioDrawPlayerBody.{platform}.yaml
+          - R_StudioDrawPlayer.{platform}.yaml
+          - R_StudioDrawModel.{platform}.yaml
+          - R_StudioSetupBones.{platform}.yaml
+          - R_StudioCalcAttachments.{platform}.yaml
+        expected_output:
+          - R_StudioSaveBones.{platform}.yaml
+      - name: find-R_StudioDrawPlayerBody-decompiles
+        expected_input:
+          - R_StudioDrawPlayerBody.{platform}.yaml
+        expected_output:
+          - R_StudioMergeBones.{platform}.yaml
+      - name: find-R_StudioDrawPlayer-body
+        expected_input:
+          - R_StudioDrawPlayer.{platform}.yaml
+        expected_output:
+          - R_StudioDrawPlayerBody.{platform}.yaml
+      - name: find-R_StudioRenderModel-decompiles
+        expected_input:
+          - R_StudioRenderModel.{platform}.yaml
+        expected_output:
+          - R_StudioRenderFinal.{platform}.yaml
+      - name: find-R_StudioRenderModel
+        expected_input:
+          - cl_sprite_shell.{platform}.yaml
+          - g_ChromeOrigin.{platform}.yaml
+          - R_StudioDrawModel.{platform}.yaml
+          - R_StudioDrawPlayer.{platform}.yaml
+          - R_StudioSetupBones.{platform}.yaml
+          - R_StudioCalcAttachments.{platform}.yaml
+        expected_output:
+          - R_StudioRenderModel.{platform}.yaml
+      - name: find-R_DrawTEntitiesOnList-decompiles
+        expected_input:
+          - R_DrawTEntitiesOnList.{platform}.yaml
+        expected_output:
+          - cl_parsecount.{platform}.yaml
+      - name: find-R_DrawTEntitiesOnList
+        expected_output:
+          - R_DrawTEntitiesOnList.{platform}.yaml
+      - name: find-R_StudioSetupBones
+        expected_output:
+          - R_StudioSetupBones.{platform}.yaml
+      - name: find-R_StudioCalcAttachments
+        expected_input:
+          - R_StudioDrawModel.{platform}.yaml
+        expected_output:
+          - R_StudioCalcAttachments.{platform}.yaml
+      - name: find-CL_RegisterResources-decompiles
+        expected_input:
+          - CL_RegisterResources.{platform}.yaml
+        expected_output:
+          - R_NewMap.{platform}.yaml
+      - name: find-Mod_FindName
+        expected_output:
+          - Mod_FindName.{platform}.yaml
+      - name: find-CL_InitTEnts
+        expected_output:
+          - CL_InitTEnts.{platform}.yaml
+      - name: find-CL_ReallocateDynamicData-decompiles
+        expected_input:
+          - CL_ReallocateDynamicData.{platform}.yaml
+        expected_output:
+          - cl_max_edicts.{platform}.yaml
+          - cl_entities.{platform}.yaml
+          - cl_frames.{platform}.yaml
+      - name: find-Mod_FindName-decompiles
+        expected_input:
+          - Mod_FindName.{platform}.yaml
+        expected_output:
+          - mod_known.{platform}.yaml
+          - mod_numknown.{platform}.yaml
+      - name: find-CL_InitTEnts-decompiles
+        expected_input:
+          - CL_InitTEnts.{platform}.yaml
+        expected_output:
+          - gTempEnts.{platform}.yaml
+      - name: find-R_NewMap-decompiles
+        expected_input:
+          - R_NewMap.{platform}.yaml
+        expected_output:
+          - r_worldentity.{platform}.yaml
+          - cl_worldmodel.{platform}.yaml
       - name: find-R_RenderView
         expected_output:
           - R_RenderView.{platform}.yaml
@@ -187,6 +347,78 @@ modules:
           - studioapi_SetupPlayerModel_to_R_StudioChangePlayerModel_callsite_0.{platform}.yaml
           - studioapi_SetupPlayerModel_to_R_StudioChangePlayerModel_callsite_1.{platform}.yaml
     symbols:
+      - name: CL_Set_ServerExtraInfo
+        category: func
+      - name: allow_cheats
+        category: gv
+      - name: CL_RegisterResources
+        category: func
+      - name: VGui_ViewportPaintBackground
+        category: func
+      - name: CL_CreateVisibleEntity
+        category: func
+      - name: CL_Parse_SetView
+        category: func
+      - name: R_StudioCheckBBox
+        category: func
+      - name: R_CullBox
+        category: func
+      - name: cl_viewentity
+        category: gv
+      - name: cl_numvisedicts
+        category: gv
+      - name: cl_visedicts
+        category: gv
+      - name: V_RenderView
+        category: func
+      - name: CL_ReallocateDynamicData
+        category: func
+      - name: cl_sprite_shell
+        category: gv
+      - name: cached_numbones
+        category: gv
+      - name: cached_bonename
+        category: gv
+      - name: R_StudioSaveBones
+        category: func
+      - name: R_StudioMergeBones
+        category: func
+      - name: R_StudioDrawPlayerBody
+        category: func
+      - name: R_StudioRenderFinal
+        category: func
+      - name: R_StudioRenderModel
+        category: func
+      - name: cl_parsecount
+        category: gv
+      - name: R_DrawTEntitiesOnList
+        category: func
+      - name: R_StudioSetupBones
+        category: func
+      - name: R_StudioCalcAttachments
+        category: func
+      - name: Mod_FindName
+        category: func
+      - name: CL_InitTEnts
+        category: func
+      - name: R_NewMap
+        category: func
+      - name: cl_max_edicts
+        category: gv
+      - name: cl_entities
+        category: gv
+      - name: cl_frames
+        category: gv
+      - name: mod_known
+        category: gv
+      - name: mod_numknown
+        category: gv
+      - name: gTempEnts
+        category: gv
+      - name: r_worldentity
+        category: gv
+      - name: cl_worldmodel
+        category: gv
       - name: R_RenderView
         category: func
       - name: SV_SendServerinfo
@@ -237,7 +469,6 @@ modules:
         category: gv
       - name: cl_enginefuncs
         category: gv
-        platform: windows
       - name: cl_funcs
         category: gv
         platform: windows
@@ -309,8 +540,99 @@ modules:
     module_linux: client.so
     depot_windows: svencoop/cl_dlls/client.dll
     depot_linux: svencoop/cl_dlls/client.so
-    skills: []
-    symbols: []
+    skills:
+      - name: find-CL_IsThirdPerson-decompiles
+        expected_input:
+          - CL_IsThirdPerson.{platform}.yaml
+        expected_output:
+          - g_iUser1.{platform}.yaml
+          - g_iUser2.{platform}.yaml
+      - name: find-GameStudioRenderer_StudioDrawModel-decompiles
+        expected_input:
+          - GameStudioRenderer_StudioDrawModel.{platform}.yaml
+          - GameStudioRenderer_vtable.{platform}.yaml
+        expected_output:
+          - GameStudioRenderer_StudioDrawPlayer.{platform}.yaml
+          - GameStudioRenderer_StudioSetupBones.{platform}.yaml
+          - GameStudioRenderer_StudioCalcAttachments.{platform}.yaml
+          - GameStudioRenderer_StudioSaveBones.{platform}.yaml
+          - GameStudioRenderer_StudioMergeBones.{platform}.yaml
+          - GameStudioRenderer_StudioRenderModel.{platform}.yaml
+      - name: find-GameStudioRenderer_StudioRenderModel-decompiles
+        expected_input:
+          - GameStudioRenderer_StudioRenderModel.{platform}.yaml
+          - GameStudioRenderer_vtable.{platform}.yaml
+        expected_output:
+          - GameStudioRenderer_StudioRenderFinal.{platform}.yaml
+      - name: find-client-studio-interface
+        expected_input:
+          - HUD_GetStudioModelInterface.{platform}.yaml
+        expected_output:
+          - GameStudioRenderer_vtable.{platform}.yaml
+          - GameStudioRenderer_StudioDrawModel.{platform}.yaml
+          - g_pGameStudioRenderer.{platform}.yaml
+      - name: find-client-private-predecessors
+        expected_output:
+          - HUD_GetStudioModelInterface.{platform}.yaml
+          - CL_IsThirdPerson.{platform}.yaml
+          - V_CalcRefdef.{platform}.yaml
+      - name: find-V_StartPitchDrift
+        expected_output:
+          - V_StartPitchDrift.{platform}.yaml
+      - name: find-V_CalcRefdef-decompiles
+        expected_input:
+          - V_CalcRefdef.{platform}.yaml
+        expected_output:
+          - g_bRenderingPortals_SCClient.{platform}.yaml
+      - name: find-GameStudioRenderer_StudioDrawPlayer-globals
+        expected_input:
+          - GameStudioRenderer_StudioDrawPlayer.{platform}.yaml
+        expected_output:
+          - g_ViewEntityIndex_SCClient.{platform}.yaml
+      - name: find-V_StartPitchDrift-decompiles
+        expected_input:
+          - V_StartPitchDrift.{platform}.yaml
+        expected_output:
+          - g_pitchdrift.{platform}.yaml
+    symbols:
+      - name: g_pitchdrift
+        category: gv
+      - name: g_bRenderingPortals_SCClient
+        category: gv
+      - name: g_ViewEntityIndex_SCClient
+        category: gv
+      - name: V_StartPitchDrift
+        category: func
+      - name: V_CalcRefdef
+        category: func
+      - name: GameStudioRenderer_StudioSetupBones
+        category: vfunc
+      - name: GameStudioRenderer_StudioSaveBones
+        category: vfunc
+      - name: GameStudioRenderer_StudioMergeBones
+        category: vfunc
+      - name: GameStudioRenderer_StudioRenderModel
+        category: vfunc
+      - name: GameStudioRenderer_StudioRenderFinal
+        category: vfunc
+      - name: GameStudioRenderer_StudioCalcAttachments
+        category: vfunc
+      - name: GameStudioRenderer_vtable
+        category: vtable
+      - name: GameStudioRenderer_StudioDrawModel
+        category: vfunc
+      - name: GameStudioRenderer_StudioDrawPlayer
+        category: vfunc
+      - name: g_pGameStudioRenderer
+        category: gv
+      - name: g_iUser1
+        category: gv
+      - name: g_iUser2
+        category: gv
+      - name: HUD_GetStudioModelInterface
+        category: func
+      - name: CL_IsThirdPerson
+        category: func
   - name: gameui
     module_windows: GameUI.dll
     module_linux: gameui.so

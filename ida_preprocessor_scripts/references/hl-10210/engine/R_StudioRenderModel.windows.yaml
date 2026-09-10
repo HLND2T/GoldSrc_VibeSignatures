@@ -1,0 +1,40 @@
+func_name: "R_StudioRenderModel"
+func_va: "0x101f9260"
+disasm_code: |-
+  .text:101F9260                 mov     eax, r_origin+8
+  .text:101F9265                 movq    xmm0, qword ptr r_origin
+  .text:101F926D                 mov     g_ChromeOrigin+8, eax
+  .text:101F9272                 mov     eax, currententity
+  .text:101F9277                 movq    qword ptr g_ChromeOrigin, xmm0
+  .text:101F927F                 mov     g_ForcedFaceFlags, 0
+  .text:101F9289                 cmp     dword ptr [eax+304h], 13h
+  .text:101F9290                 jnz     short loc_101F92CB
+  .text:101F9292                 mov     dword ptr [eax+304h], 0
+  .text:101F929C                 call    R_StudioRenderFinal
+  .text:101F92A1                 ; frame
+  .text:101F92A1                 push    0; frame
+  .text:101F92A3                 ; model
+  .text:101F92A3                 push    cl_sprite_shell; model
+  .text:101F92A9                 mov     g_ForcedFaceFlags, 2
+  .text:101F92B3                 call    tri_SpriteTexture
+  .text:101F92B9                 mov     eax, currententity
+  .text:101F92BE                 add     esp, 8
+  .text:101F92C1                 mov     dword ptr [eax+304h], 13h
+  .text:101F92CB                 jmp     R_StudioRenderFinal
+procedure: |-
+  // Source: engine/r_studio.c R_StudioRenderModel. Reset chrome origin and forced face flags; in the kRenderFxGlowShell (19) branch temporarily clear renderfx and call R_StudioRenderFinal, select the shell sprite texture, restore renderfx, then render the final pass again. The direct call before SpriteTexture identifies R_StudioRenderFinal; the terminal jump is a second invocation of that same callee.
+  void __cdecl R_StudioRenderModel()
+  {
+    g_ChromeOrigin[2] = r_origin[2];
+    *(_QWORD *)g_ChromeOrigin = *(_QWORD *)r_origin;
+    g_ForcedFaceFlags = 0;
+    if ( currententity->renderfx == 19 )
+    {
+      currententity->renderfx = 0;
+      R_StudioRenderFinal();
+      g_ForcedFaceFlags = 2;
+      tri_SpriteTexture(cl_sprite_shell, 0);
+      currententity->renderfx = 19;
+    }
+    R_StudioRenderFinal();
+  }
