@@ -1071,6 +1071,19 @@ def _consume_padding(cursor, limit_end, segment_start):
         flags = ida_bytes.get_full_flags(cursor)
         if ida_bytes.is_code(flags) and ida_bytes.is_head(flags):
             return cursor, padding, True
+        if ida_bytes.is_align(flags) and ida_bytes.is_head(flags):
+            # GNU multi-byte align padding (lea-style nops) is marked as a
+            # non-code align item; consume the whole item so the
+            # across-boundary window can reach the next real function.
+            size = int(ida_bytes.get_item_size(cursor))
+            if size <= 0 or cursor + size > limit_end:
+                return cursor, padding, False
+            raw = ida_bytes.get_bytes(cursor, size) or b''
+            if len(raw) != size:
+                return cursor, padding, False
+            padding.append(list(raw))
+            cursor += size
+            continue
         nop_bytes = _try_decode_padding_nop(cursor, limit_end)
         if nop_bytes:
             padding.append(nop_bytes)
@@ -1773,6 +1786,19 @@ def _consume_padding(cursor, limit_end, segment_start):
         flags = ida_bytes.get_full_flags(cursor)
         if ida_bytes.is_code(flags) and ida_bytes.is_head(flags):
             return cursor, padding, True
+        if ida_bytes.is_align(flags) and ida_bytes.is_head(flags):
+            # GNU multi-byte align padding (lea-style nops) is marked as a
+            # non-code align item; consume the whole item so the
+            # across-boundary window can reach the next real function.
+            size = int(ida_bytes.get_item_size(cursor))
+            if size <= 0 or cursor + size > limit_end:
+                return cursor, padding, False
+            raw = ida_bytes.get_bytes(cursor, size) or b''
+            if len(raw) != size:
+                return cursor, padding, False
+            padding.append(list(raw))
+            cursor += size
+            continue
         nop_bytes = _try_decode_padding_nop(cursor, limit_end)
         if nop_bytes:
             padding.append(nop_bytes)
