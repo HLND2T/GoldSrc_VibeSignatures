@@ -1076,6 +1076,19 @@ def _consume_padding(cursor, limit_end, segment_start):
         flags = ida_bytes.get_full_flags(cursor)
         if ida_bytes.is_code(flags) and ida_bytes.is_head(flags):
             return cursor, padding, True
+        if ida_bytes.is_align(flags) and ida_bytes.is_head(flags):
+            # GNU multi-byte align padding (lea-style nops) is marked as a
+            # non-code align item; consume the whole item so the
+            # across-boundary window can reach the next real function.
+            size = int(ida_bytes.get_item_size(cursor))
+            if size <= 0 or cursor + size > limit_end:
+                return cursor, padding, False
+            raw = ida_bytes.get_bytes(cursor, size) or b''
+            if len(raw) != size:
+                return cursor, padding, False
+            padding.append(list(raw))
+            cursor += size
+            continue
         nop_bytes = _try_decode_padding_nop(cursor, limit_end)
         if nop_bytes:
             padding.append(nop_bytes)
@@ -1778,6 +1791,19 @@ def _consume_padding(cursor, limit_end, segment_start):
         flags = ida_bytes.get_full_flags(cursor)
         if ida_bytes.is_code(flags) and ida_bytes.is_head(flags):
             return cursor, padding, True
+        if ida_bytes.is_align(flags) and ida_bytes.is_head(flags):
+            # GNU multi-byte align padding (lea-style nops) is marked as a
+            # non-code align item; consume the whole item so the
+            # across-boundary window can reach the next real function.
+            size = int(ida_bytes.get_item_size(cursor))
+            if size <= 0 or cursor + size > limit_end:
+                return cursor, padding, False
+            raw = ida_bytes.get_bytes(cursor, size) or b''
+            if len(raw) != size:
+                return cursor, padding, False
+            padding.append(list(raw))
+            cursor += size
+            continue
         nop_bytes = _try_decode_padding_nop(cursor, limit_end)
         if nop_bytes:
             padding.append(nop_bytes)
@@ -2003,12 +2029,14 @@ async def preprocess_patch_via_mcp(session, new_path, old_path, image_base, new_
 
 
 _RESOLVE_X86_GV_PY_EVAL = r"""
-import ida_bytes, ida_ua, idautils, idaapi, json
+import ida_bytes, ida_fixup, ida_ua, idautils, idaapi, json
 sig_addr = SIG_ADDR_PLACEHOLDER
 inst_addr = sig_addr + INST_OFFSET_PLACEHOLDER
 operand_index = OPERAND_INDEX_PLACEHOLDER
 ref_kind = REF_KIND_PLACEHOLDER
 deref_count = DEREF_COUNT_PLACEHOLDER
+disp_off = DISP_PLACEHOLDER
+pic_allowed = PIC_ALLOWED_PLACEHOLDER
 pointer_size = 8 if idaapi.inf_is_64bit() else 4
 insn = ida_ua.insn_t()
 size = ida_ua.decode_insn(insn, inst_addr)
@@ -2033,12 +2061,26 @@ if size and pointer_size == 4:
         if address is None:
             break
         address = int(ida_bytes.get_dword(address))
-result = json.dumps({'pointer_size': pointer_size, 'address': None if address is None else hex(address), 'inst_length': int(size or 0)})
+pic_addend = None
+if size and pointer_size == 4 and disp_off and address is not None:
+    for op in insn.ops:
+        if op.type == ida_ua.o_void:
+            break
+        if int(op.offb or 0) != int(disp_off):
+            continue
+        # Indexed absolute operands can also be o_displ. ELF fixups
+        # distinguish their relocated addresses from unrelocated PIC offsets.
+        if pic_allowed and op.type == ida_ua.o_displ and not ida_fixup.get_fixup(ida_fixup.fixup_data_t(), inst_addr + int(disp_off)):
+            embedded = ida_bytes.get_dword(inst_addr + int(disp_off))
+            if embedded is not None and embedded != idaapi.BADADDR:
+                pic_addend = (int(address) - int(embedded)) & 0xFFFFFFFF
+        break
+result = json.dumps({'pointer_size': pointer_size, 'address': None if address is None else hex(address), 'inst_length': int(size or 0), 'pic_addend': None if pic_addend is None else hex(pic_addend)})
 """
 
 
 async def preprocess_gv_sig_via_mcp(session, new_path, old_path, image_base, new_binary_dir, platform, debug=False):
-    del new_binary_dir, platform, debug
+    del new_binary_dir, debug
     old_data = _load_yaml_mapping(old_path)
     if not old_data or not old_data.get("gv_sig"):
         return None
@@ -2049,12 +2091,15 @@ async def preprocess_gv_sig_via_mcp(session, new_path, old_path, image_base, new
     ref_kind = old_data.get("gv_ref_kind", "operand")
     ref_index = _parse_int(old_data.get("gv_ref_index", 0), "gv_ref_index")
     deref_count = _parse_int(old_data.get("gv_ref_deref_count", 0), "gv_ref_deref_count")
+    disp_off = _parse_int(old_data.get("gv_inst_disp", 0), "gv_inst_disp")
     code = (
         _RESOLVE_X86_GV_PY_EVAL.replace("SIG_ADDR_PLACEHOLDER", str(sig_addr))
         .replace("INST_OFFSET_PLACEHOLDER", str(inst_offset))
         .replace("OPERAND_INDEX_PLACEHOLDER", str(ref_index))
         .replace("REF_KIND_PLACEHOLDER", json.dumps(ref_kind))
         .replace("DEREF_COUNT_PLACEHOLDER", str(deref_count))
+        .replace("DISP_PLACEHOLDER", str(disp_off))
+        .replace("PIC_ALLOWED_PLACEHOLDER", repr(platform == "linux"))
     )
     try:
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
@@ -2062,10 +2107,11 @@ async def preprocess_gv_sig_via_mcp(session, new_path, old_path, image_base, new
         return None
     if not isinstance(payload, Mapping) or payload.get("pointer_size") != 4 or payload.get("address") is None:
         return None
-    gv_va = int(payload["address"], 0)
+    address_offset = _parse_int(old_data.get("gv_address_offset", 0), "gv_address_offset")
+    gv_va = (int(payload["address"], 0) + address_offset) & 0xFFFFFFFF
     if gv_va < int(image_base):
         return None
-    return {
+    result = {
         "gv_name": old_data.get("gv_name") or Path(new_path).name.rsplit(".", 2)[0],
         "gv_va": hex(gv_va),
         "gv_rva": hex(gv_va - int(image_base)),
@@ -2073,11 +2119,18 @@ async def preprocess_gv_sig_via_mcp(session, new_path, old_path, image_base, new
         "gv_sig_va": hex(sig_addr),
         "gv_inst_offset": inst_offset,
         "gv_inst_length": int(payload.get("inst_length", 0)),
-        "gv_inst_disp": _parse_int(old_data.get("gv_inst_disp", 0), "gv_inst_disp"),
+        "gv_inst_disp": disp_off,
         "gv_ref_kind": ref_kind,
         "gv_ref_index": ref_index,
         "gv_ref_deref_count": deref_count,
     }
+    pic_addend = payload.get("pic_addend")
+    if pic_addend is not None:
+        addend = _parse_int(pic_addend, "pic_addend")
+        result["gv_pic_addend"] = hex((addend - int(image_base)) & 0xFFFFFFFF)
+    if address_offset:
+        result["gv_address_offset"] = hex(address_offset & 0xFFFFFFFF)
+    return result
 
 
 _RESOLVE_STRUCT_OFFSET_PY_EVAL = r"""
@@ -2580,7 +2633,7 @@ def _prepare_llm_context(spec, llm_config, new_binary_dir, platform, *, dependen
 
 
 _INSPECT_LLM_INSTRUCTION_PY_EVAL = r"""
-import ida_funcs, ida_lines, ida_segment, ida_ua, idaapi, idautils, idc, json
+import ida_bytes, ida_fixup, ida_funcs, ida_lines, ida_segment, ida_ua, idaapi, idautils, idc, json
 ea = EA_PLACEHOLDER
 pointer_size = 8 if idaapi.inf_is_64bit() else 4
 insn = ida_ua.insn_t()
@@ -2589,11 +2642,14 @@ func = ida_funcs.get_func(ea)
 operand_targets = []
 displacements = []
 operand_offsets = []
+operand_pic = []
+operand_dwords = []
 if size:
     for op in insn.ops:
         if op.type == ida_ua.o_void:
             break
-        operand_offsets.append(int(op.offb or 0))
+        offb = int(op.offb or 0)
+        operand_offsets.append(offb)
         if op.type in (ida_ua.o_mem, ida_ua.o_far, ida_ua.o_near):
             operand_targets.append(int(op.addr))
         elif op.type == ida_ua.o_imm and ida_segment.getseg(int(op.value)) is not None:
@@ -2602,6 +2658,16 @@ if size:
             displacements.append(int(op.addr) & 0xFFFFFFFF)
         elif op.type == ida_ua.o_phrase:
             displacements.append(0)
+        # Register-relative operands without ELF fixups may be PIC. The
+        # emitter separately excludes Windows indexed absolute operands.
+        is_pic = (op.type == ida_ua.o_displ and offb
+                  and not ida_fixup.get_fixup(ida_fixup.fixup_data_t(), int(ea) + offb))
+        operand_pic.append(is_pic)
+        if offb and pointer_size == 4:
+            dword = ida_bytes.get_dword(int(ea) + offb)
+            operand_dwords.append(None if dword == idaapi.BADADDR else hex(int(dword)))
+        else:
+            operand_dwords.append(None)
 result = json.dumps({
     'pointer_size': pointer_size,
     'size': int(size or 0),
@@ -2614,8 +2680,52 @@ result = json.dumps({
     'operand_targets': [hex(value) for value in operand_targets],
     'displacements': [hex(value) for value in displacements],
     'operand_offsets': operand_offsets,
+    'operand_pic': operand_pic,
+    'operand_dwords': operand_dwords,
 })
 """
+
+
+def _gv_resolution_fields(detail, gv_va, image_base, displacement=None, *, platform="linux"):
+    """Encode the validated target relative to its selected x86 operand.
+
+    PIC addends recover an RVA, including multi-hop bases and member offsets.
+    Absolute operands are already loader-relocated; only a member adjustment
+    may be needed. IDA supplies relocated dwords for absolute ELF operands.
+    """
+    offsets = list(detail.get("operand_offsets") or ())
+    pic_flags = list(detail.get("operand_pic") or ())
+    dwords = list(detail.get("operand_dwords") or ())
+    for index, offset in enumerate(offsets):
+        if not offset or (displacement is not None and offset != displacement):
+            continue
+        if index >= len(dwords) or dwords[index] is None:
+            return {}
+        embedded = _parse_int(dwords[index], "operand_dword")
+        if platform == "linux" and index < len(pic_flags) and pic_flags[index]:
+            return {"gv_pic_addend": hex((int(gv_va) - int(image_base) - embedded) & 0xFFFFFFFF)}
+        offset = (int(gv_va) - embedded) & 0xFFFFFFFF
+        if offset:
+            return {"gv_address_offset": hex(offset)}
+        return {}
+    return {}
+
+
+async def gv_resolution_fields_via_mcp(session, insn_ea, insn_disp, gv_va, image_base, platform):
+    """Inspect a direct locator's operand; missing evidence fails closed."""
+    detail = await _inspect_llm_instruction(session, insn_ea)
+    if not detail or detail.get("pointer_size") != 4:
+        return None
+    if insn_disp <= 0 or insn_disp + 4 > int(detail.get("size", 0)):
+        return None
+    offsets = detail.get("operand_offsets") or []
+    dwords = detail.get("operand_dwords") or []
+    if insn_disp not in offsets:
+        return None
+    index = offsets.index(insn_disp)
+    if index >= len(dwords) or dwords[index] is None:
+        return None
+    return _gv_resolution_fields(detail, gv_va, image_base, insn_disp, platform=platform)
 
 
 def _build_llm_function_export_py_eval(func_va_int: int, output_path: str | Path) -> str:
@@ -3014,6 +3124,7 @@ async def _preprocess_llm_target(
                     "gv_inst_length": detail["size"],
                     "gv_inst_disp": next((value for value in detail.get("operand_offsets") or () if value), 0),
                 }
+                candidate.update(_gv_resolution_fields(detail, gv_va, image_base, platform=platform))
                 if used_across_boundary_budget:
                     candidate["gv_sig_allow_across_function_boundary"] = True
                 return candidate
@@ -3142,6 +3253,12 @@ async def preprocess_common_skill(
         if target is None:
             return False
         payload = {field: candidate[field] for field in fields if field in candidate}
+        if category == "gv":
+            # Address recovery metadata is semantic, never an optional display
+            # projection: dropping it silently changes the resolved address.
+            for field in ("gv_pic_addend", "gv_address_offset"):
+                if field in candidate:
+                    payload[field] = candidate[field]
         if category in {"func", "vfunc"}:
             write_func_yaml(target, payload)
         elif category == "gv":

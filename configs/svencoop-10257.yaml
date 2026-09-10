@@ -132,6 +132,28 @@ modules:
           - studioapi_SetupPlayerModel.{platform}.yaml
         expected_output:
           - R_StudioDrawPlayer.{platform}.yaml
+      - name: find-studioapi_GetCurrentEntity-svencoop
+        expected_output:
+          - studioapi_GetCurrentEntity.{platform}.yaml
+          - currententity.{platform}.yaml
+      - name: find-studioapi_SetRenderModel-svencoop
+        expected_output:
+          - studioapi_SetRenderModel.{platform}.yaml
+          - r_model.{platform}.yaml
+      - name: find-studioapi_StudioSetHeader-svencoop
+        expected_output:
+          - studioapi_StudioSetHeader.{platform}.yaml
+          - pstudiohdr.{platform}.yaml
+      - name: find-studioapi_SetChromeOrigin-svencoop
+        expected_output:
+          - studioapi_SetChromeOrigin.{platform}.yaml
+          - r_origin.{platform}.yaml
+          - g_ChromeOrigin.{platform}.yaml
+      - name: find-R_StudioDrawModel-svencoop
+        expected_input:
+          - R_StudioDrawPlayer.{platform}.yaml
+        expected_output:
+          - R_StudioDrawModel.{platform}.yaml
       - name: find-R_StudioChangePlayerModel
         platform: windows
         expected_input:
@@ -244,6 +266,26 @@ modules:
       - name: studioapi_SetupPlayerModel
         category: func
       - name: R_StudioDrawPlayer
+        category: func
+      - name: studioapi_GetCurrentEntity
+        category: func
+      - name: currententity
+        category: gv
+      - name: studioapi_SetRenderModel
+        category: func
+      - name: r_model
+        category: gv
+      - name: studioapi_StudioSetHeader
+        category: func
+      - name: pstudiohdr
+        category: gv
+      - name: studioapi_SetChromeOrigin
+        category: func
+      - name: r_origin
+        category: gv
+      - name: g_ChromeOrigin
+        category: gv
+      - name: R_StudioDrawModel
         category: func
       - name: R_StudioChangePlayerModel
         category: func

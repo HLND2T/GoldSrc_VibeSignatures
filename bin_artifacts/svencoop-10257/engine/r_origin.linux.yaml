@@ -1,0 +1,10 @@
+gv_name: r_origin
+gv_va: '0x30f6ee0'
+gv_rva: '0x30f6ee0'
+gv_sig: E8 ?? ?? ?? ?? 05 ?? ?? ?? ?? 83 EC ?? 8D 90 ?? ?? ?? ?? D9 42 ?? F3 0F 10 02 D9 1C 24 F3 0F 10 4A ?? F3 0F 10 14
+  24
+gv_sig_va: '0x9fc10'
+gv_inst_offset: '0xd'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
+gv_pic_addend: '0x2ee000'

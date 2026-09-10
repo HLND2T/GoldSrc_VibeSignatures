@@ -28,6 +28,8 @@ from ida_analyze_util import (
     _preprocess_llm_target,
     _resolve_llm_template,
     _resolve_reference_resource,
+    canonical_symbol_yaml_bytes,
+    _gv_resolution_fields,
     parse_mcp_result,
     preprocess_common_skill,
     preprocess_func_sig_via_mcp,
@@ -1632,6 +1634,214 @@ found_struct_offset: []
         self.assertIn("gv_sig_allow_across_function_boundary", field_spec["fields"])
         self.assertIn("gv_sig_allow_across_function_boundary", field_spec["optional_fields"])
         self.assertNotIn("gv_sig_allow_across_function_boundary", field_spec["generation_options"])
+
+    async def test_llm_global_emits_pic_addend_for_register_relative_displacement(self):
+        llm_result = {
+            "found_vcall": [],
+            "found_call": [],
+            "found_funcptr": [],
+            "found_gv": [
+                {
+                    "gv_name": "g_Target",
+                    "insn_va": "0x401040",
+                    "insn_disasm": "mov [eax+0x4A388D4], edx",
+                }
+            ],
+            "found_struct_offset": [],
+        }
+        function = {
+            "func_va": "0x401000",
+            "func_sig": "8B 54 24 ?? 89 90 ?? ?? ?? ?? C3",
+        }
+        desired_fields = [
+            "gv_name",
+            "gv_va",
+            "gv_rva",
+            "gv_sig",
+            "gv_sig_va",
+            "gv_inst_offset",
+            "gv_inst_length",
+            "gv_inst_disp",
+            "gv_pic_addend?",
+        ]
+
+        async def run(operand_pic, operand_dwords):
+            with (
+                patch(
+                    "ida_analyze_util._inspect_llm_instruction",
+                    new=AsyncMock(
+                        return_value={
+                            "func_start": "0x401000",
+                            "line": "mov [eax+0x4A388D4], edx",
+                            "size": 6,
+                            "data_refs": ["0x4d268d4"],
+                            "operand_targets": [],
+                            "operand_offsets": [2],
+                            "operand_pic": operand_pic,
+                            "operand_dwords": operand_dwords,
+                        }
+                    ),
+                ),
+                patch("ida_analyze_util._inspect_function_via_mcp", new=AsyncMock(return_value=function)),
+            ):
+                return await _preprocess_llm_target(
+                    session=SimpleNamespace(call_tool=AsyncMock()),
+                    symbol_name="g_Target",
+                    category="gv",
+                    spec={"expected_result_sections": ["found_gv"]},
+                    llm_config={"model": "test-model"},
+                    new_binary_dir=Path("D:/game/engine"),
+                    platform="linux",
+                    image_base=0x400000,
+                    desired_fields=desired_fields,
+                    llm_result=llm_result,
+                    target_ranges=[(0x401000, 0x401100)],
+                )
+
+        pic_candidate = await run([True], ["0x4a388d4"])
+        self.assertIsNotNone(pic_candidate)
+        # The addend recovers an RVA even when the IDB image base is nonzero.
+        self.assertEqual("0xffeee000", pic_candidate["gv_pic_addend"])
+
+        absolute_candidate = await run([False], ["0x4d268d4"])
+        self.assertIsNotNone(absolute_candidate)
+        # Absolute form: the embedded dword already is the address.
+        self.assertNotIn("gv_pic_addend", absolute_candidate)
+
+    def test_gv_resolution_rebases_pic_and_adjusts_absolute_members(self):
+        # MSVC indexed absolute operands may also decode as o_displ.
+        self.assertEqual(
+            {},
+            _gv_resolution_fields(
+                {"operand_offsets": [2], "operand_pic": [True], "operand_dwords": ["0x2345678"]},
+                0x2345678,
+                0x1D00000,
+                platform="windows",
+            ),
+        )
+        for embedded, target_rva, pic in (
+            (0xA388D4, 0xD268D4, True),
+            (0x602A14, 0x1BDA774, True),
+            (0xFFFF4044, 0x2E2040, True),
+            (0x2579C4, 0x2579C0, False),
+        ):
+            for image_base in (0, 0x400000):
+                with self.subTest(embedded=embedded, image_base=image_base):
+                    operand = embedded if pic else embedded + image_base
+                    detail = {"operand_offsets": [2], "operand_pic": [pic], "operand_dwords": [hex(operand)]}
+                    fields = _gv_resolution_fields(detail, target_rva + image_base, image_base)
+                    load_base = 0x50000000
+                    if pic:
+                        actual = load_base + ((operand + int(fields["gv_pic_addend"], 0)) & 0xFFFFFFFF)
+                    else:
+                        actual = load_base + embedded + int(fields.get("gv_address_offset", "0"), 0)
+                    self.assertEqual(load_base + target_rva, actual & 0xFFFFFFFF)
+
+    def test_instruction_inspection_distinguishes_relocated_indexed_operands(self):
+        class Fixup:
+            pass
+
+        for relocated in (False, True):
+
+            def get_fixup(fixup, address):
+                self.assertIsInstance(fixup, Fixup)
+                self.assertEqual(0x1002, address)
+                return relocated
+
+            modules = {
+                "ida_bytes": SimpleNamespace(get_dword=lambda ea: 0x2004),
+                "ida_fixup": SimpleNamespace(fixup_data_t=Fixup, get_fixup=get_fixup),
+                "ida_funcs": SimpleNamespace(get_func=lambda ea: SimpleNamespace(start_ea=0x1000, end_ea=0x1010)),
+                "ida_lines": SimpleNamespace(tag_remove=lambda text: text),
+                "ida_segment": SimpleNamespace(getseg=lambda ea: None),
+                "idaapi": SimpleNamespace(inf_is_64bit=lambda: False, BADADDR=0xFFFFFFFF),
+                "ida_ua": SimpleNamespace(
+                    o_void=0,
+                    o_mem=2,
+                    o_far=7,
+                    o_near=6,
+                    o_imm=5,
+                    o_displ=4,
+                    o_phrase=3,
+                    insn_t=lambda: SimpleNamespace(
+                        ops=[SimpleNamespace(type=4, offb=2, addr=0x2004), SimpleNamespace(type=0)]
+                    ),
+                    decode_insn=lambda insn, ea: 6,
+                ),
+                "idautils": SimpleNamespace(DataRefsFrom=lambda ea: [0x2004], CodeRefsFrom=lambda ea, flow: []),
+                "idc": SimpleNamespace(
+                    generate_disasm_line=lambda ea, flags: "mov eax, [ebx+2004h]", print_insn_mnem=lambda ea: "mov"
+                ),
+            }
+            namespace = {}
+            with patch.dict("sys.modules", modules):
+                exec(ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", "4096"), namespace)
+            self.assertEqual([not relocated], json.loads(namespace["result"])["operand_pic"])
+
+    async def test_gv_emission_preserves_resolution_metadata_without_desired_fields(self):
+        for metadata in ({"gv_pic_addend": "0x2ee000"}, {"gv_address_offset": "0xfffffffc"}):
+            with tempfile.TemporaryDirectory() as temporary:
+                output = Path(temporary) / "g_Target.linux.yaml"
+                candidate = {
+                    "gv_name": "g_Target",
+                    "gv_va": "0xd268d4",
+                    "gv_rva": "0xd268d4",
+                    "gv_sig": "89 90 ?? ?? ?? ??",
+                    "gv_sig_va": "0x9fe7e",
+                    "gv_inst_offset": 0,
+                    "gv_inst_length": 6,
+                    "gv_inst_disp": 2,
+                }
+                fields = list(candidate)
+                candidate.update(metadata)
+                with (
+                    patch("ida_analyze_util.preprocess_gv_sig_via_mcp", new=AsyncMock(return_value=candidate)),
+                ):
+                    ok = await preprocess_common_skill(
+                        session=SimpleNamespace(call_tool=AsyncMock()),
+                        expected_outputs=[str(output)],
+                        new_binary_dir=temporary,
+                        platform="linux",
+                        image_base=0,
+                        gv_names=["g_Target"],
+                        generate_yaml_desired_fields=[("g_Target", fields)],
+                    )
+                self.assertTrue(ok)
+                emitted = yaml.safe_load(output.read_text())
+                for key, value in metadata.items():
+                    self.assertEqual(value, emitted[key])
+
+    def test_canonical_gv_yaml_orders_pic_addend_after_inst_disp(self):
+        payload = {
+            "gv_sig_allow_across_function_boundary": True,
+            "gv_pic_addend": 0x2EE000,
+            "gv_inst_disp": 2,
+            "gv_inst_length": 6,
+            "gv_inst_offset": 0,
+            "gv_sig_va": "0x401000",
+            "gv_sig": "8b 54 ??",
+            "gv_rva": 0x9268D4,
+            "gv_va": 0x4D268D4,
+            "gv_name": "g_Target",
+        }
+        raw = canonical_symbol_yaml_bytes(payload, category="gv").decode("utf-8")
+        lines = [line.split(":")[0] for line in raw.splitlines() if ":" in line]
+        self.assertEqual(
+            [
+                "gv_name",
+                "gv_va",
+                "gv_rva",
+                "gv_sig",
+                "gv_sig_va",
+                "gv_inst_offset",
+                "gv_inst_length",
+                "gv_inst_disp",
+                "gv_pic_addend",
+                "gv_sig_allow_across_function_boundary",
+            ],
+            lines,
+        )
+        self.assertIn("gv_pic_addend: '0x2ee000'", raw)
 
     async def test_llm_found_funcptr_generates_regular_function(self):
         with tempfile.TemporaryDirectory() as temporary:

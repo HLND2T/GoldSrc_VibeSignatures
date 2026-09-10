@@ -119,3 +119,11 @@ The skill automatically detects the platform based on file extension:
   never write generic `name`, `type`, or `kind`
 - On x86-32 the `gv_inst_disp` points at the 4-byte **absolute-address** displacement (the GV's address), not a
   RIP-relative offset; `gv_inst_length` is used only to skip past the instruction when scanning
+
+For validated direct locators that use PIC or reference a member of the target, also persist the
+resolution metadata from `generate-signature-for-globalvar`: `gv_pic_addend` means
+`address = module_base + uint32(embedded_dword + gv_pic_addend)`; optional
+`gv_address_offset` adjusts the recovered address modulo 2^32 (default zero). Without
+`gv_pic_addend`, the embedded dword is loader-relocated absolute data. Preserve these fields even
+when the signature starts at an owning function and `gv_inst_offset` is nonzero. A PIC addend may
+include an intermediate register base or member correction and need not equal the GOT RVA.

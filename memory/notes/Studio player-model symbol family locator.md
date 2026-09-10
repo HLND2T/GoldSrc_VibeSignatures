@@ -21,6 +21,9 @@ Need the engine's player-model studio chain — `studioapi_SetupPlayerModel` (fu
 
 ## Facts
 
+
+- Issue #104 delivery (2026-09-10, fourth wave): the remaining `engine_studio_api_t` ABI slots and their globals — `studioapi_GetCurrentEntity`@0x18 → `currententity` (gv), `studioapi_StudioSetHeader`@0x8C → `pstudiohdr`, `studioapi_SetRenderModel`@0x90 → `r_model`, `studioapi_SetChromeOrigin`@0x9C → `r_origin`+`g_ChromeOrigin`, plus `R_StudioDrawModel` = studio+4 (gate: studio+8 equals the verified R_StudioDrawPlayer artifact via expected_input; the dead-player call edge exists on every Windows build but GCC .part.N hides it on Linux). Accessor shapes gate through IDA data references (resolve absolute, SSE `movss`, x87 `fld/fstp`, and GOTOFF `[eax+disp32]` — SvEngine accessors anchor on **eax** while the owner function still anchors on ebx); only instructions carrying a real 4-byte displacement operand contribute refs, so pointer-chasing `[reg]` loads and `[esp+disp8]` stack operands never pollute the shape. `r_origin`/`g_ChromeOrigin` share the SetChromeOrigin owner; each gv points at the first base-referencing instruction of its cluster. The tiny accessors are strict-sig ambiguous (6-84 wildcard matches per binary) so every accessor emits `func_sig_allow_across_function_boundary` (across window measured 1-match unique on all binaries). Regression row: 25/25 nodes (13 binaries × new skills), 130 artifacts; DWARF truth 20/20 on both official hw.so (hl-8684: GetCurrentEntity 0x129aa0/currententity 0xf25950/r_model 0x3008b0/pstudiohdr 0x2fca60/r_origin 0xf25760/g_ChromeOrigin 0x3008a0/R_StudioDrawModel 0x136230; hl-10210: 0xc6090/0xf7d930/0x320fd4/0x3378c0/0xf7d760/0x320fc0/0xd28e0). SvEngine table runs 47/48 ABI-compatible entries.
+
 - `studioapi_SetupPlayerModel` = `engine_studio_api_t` slot **0x7C** (index 31, `common/r_studioint.h`). The table is recovered from `ClientDLL_CheckStudioInterface` via its unique interface-mismatch diagnostic; SvEngine words it differently (`client library` vs `client .dll`), so the svencoop finder is a `-svencoop` variant. Validated table = writable-data run of ≥43 non-zero code dwords and a function-start slot 0x7C.
 - Linux .so has **two** string owners (both reference the same table): collapse on the unique table VA, not on the owner. SvEngine Linux is PIC: table VA from `lea reg, [ebx+disp32]` with the ebx GOT anchor (`add ebx, imm32` after `call thunk`, anchor RVA 0x2EE000). `is_exec(0)` must be excluded (ELF base 0 maps address 0 into .text).
 - `engine` = first post-TraceInit load of a writable-data slot whose static value points at the static `CEngine g_Engine` object and which is dereferenced within a few instructions (feeds `SetQuitting(QUIT_NOTQUITTING)`, vtable +0x40 Windows / +0x44 Linux). Inlined Sys_InitArgv (hl-10210 hw.so) loads com_argc/com_argv first; those slots are zero in the image, so the non-zero-static-pointer requirement rejects them. hl-10210/svencoop Windows place `g_Engine` 8 bytes after the slot — adjacency is normal.
@@ -37,6 +40,9 @@ Need the engine's player-model studio chain — `studioapi_SetupPlayerModel` (fu
 - `R_StudioDrawPlayer` (issue #102, 2026-09-09 third delivery) = `studio+8` of the static `r_studio_interface_t studio` object. Chain: the same ClientDLL_CheckStudioInterface diagnostic anchors the owner; its `&pStudioAPI` argument (absolute operand, or SvEngine PIC `lea reg,[ebx+disp32]`) is a writable-data candidate only when its image dword points at writable data whose dword0 is 1 (`STUDIO_INTERFACE_VERSION`) and whose +4/+8 slots are executable function starts — `&engine_studio_api` (deref is a code pointer) and `&cl_funcs` fields (zero in image) never qualify; 13/13 binaries yield exactly one candidate. `r_studio_interface_t` is the engine↔client public ABI (`common/r_studioint.h`), so the {version, DrawModel, DrawPlayer} layout cannot drift. DWARF truth: 0x136200 (hl-8684 hw.so), 0xd28b0 (hl-10210 hw.so). The fmt-string cross-check consumes the studioapi artifact (expected_input DAG edge): after removing the entry ∪ its direct call/jmp targets from the `"models/player/%s/%s.mdl"` owner set, exactly the studioapi artifact must remain. Regression row: R_StudioDrawPlayer 13/13; `find-R_StudioDrawPlayer.py` + `find-R_StudioDrawPlayer-svencoop.py` (SvEngine diagnostic wording), both consuming the studioapi artifact.
 
 ## Implementation pitfalls (all hit during the 2026-09-09 delivery)
+
+9. **GNU align padding killed the across-boundary walk** (issue #104, hl-8684 hw.so): GCC pads tiny getters with lea-style multi-byte nops (`8d 76 00` / `8d bc 27 00 00 00 00`) that IDA marks as **non-code align items** (is_align, no mnemonic). `_consume_padding` only accepted `90`/`CC` bytes and `'nop'` mnemonics, so the across signature stopped at the function tail and every `A1 ?? ?? ?? ?? C3` getter stayed 40-way ambiguous. Fixed in both `_FUNC_XREF_PY_EVAL_TEMPLATE` and `_INSPECT_FUNCTION_PY_EVAL_TEMPLATE`: consume a whole head align item (`get_item_size`) as fixed padding bytes, then continue into the next function. Without it the accessor family is undeliverable on hl-8684 hw.so.
+
 6. **SIB-scaled absolute operands are o_mem, not o_displ**: WON-era `lea edi, ds:2F5A6F4h[eax*4]` / `mov al, byte_X[eax*4]` classify as o_mem (type 2) because the displacement carries the base label and the register is pure index. Accept both o_mem and o_displ when hunting indexed data operands, or WON builds yield zero candidates.
 7. **Ad-hoc idalib-mcp probes leave stale `.id0` locks**: after stopping probe workers, `bin/<tag>/engine/<binary>.id0` lock files remain and the analyzer refuses the database ("another IDA instance has this database open"). Delete stale `*.id0` under bin/ once no idalib process is running before analysis runs.
 
@@ -53,8 +59,20 @@ Implemented as `ida_preprocessor_scripts/_studio_player_model_common.py` (shared
 
 ## 验证方式
 
+### PR #105 地址恢复契约修正（2026-09-10）
+
+- 触发信号：IDA 的 GV 地址正确、签名唯一，但运行时读出的 disp32 不等于目标地址。
+- 根因：SvEngine Linux 的 GOTOFF 位移没有 loader 重定位；`cl_players_model` 还包含中间寄存器基址，`cl_parsefuncs` 指令引用的是表的 +4 成员。此前所谓“PIC gv convention”只记录位移位置，缺少恢复信息。
+- 正确做法：`gv_pic_addend` 存在时，先以 `uint32(embedded + addend)` 得到目标 RVA，再加模块加载基址；它包含两级基址或成员修正，不一定是 GOT RVA。绝对地址按 loader 重定位处理，`gv_address_offset` 可在恢复后修正成员偏移（-4 编码为 0xfffffffc）。直接 finder 使用 `gv_resolution_fields_via_mcp`，共享 emitter 自动保留两个字段。仅修正 gv_va 或签名唯一性不解决运行时问题。
+- 验证方式：对原始 PE/ELF 操作数应用实际重定位，在首选基址和另一加载基址恢复地址并比较 gv_rva；同时检查签名唯一性，强制重建生产 finder，运行共享行为回归测试。
+- 适用范围：所有真 GV 的绝对地址、PIC 静态基址和表成员恢复；需要读取运行时动态指针的多次间接寻址不能仅靠常量加数表达。
+- 最终验证：受影响 finder 91/91 节点成功；完整 engine 强制重建 534/534（5 路并发，20 GiB 进程预算）；原始 PE/ELF 校验 208 个 GV（Windows 162、Linux 46），全部签名唯一且在两种加载基址下恢复正确；unit 669、repository-contract 14、格式检查通过。unit 的默认并发测试以进程环境值 1 隔离本地 `.env` 设置。
+
 Per-skill `ida_analyze_bin.py -allgamever -modules engine -skill find-... -debug` runs (13 Windows + Linux nodes), DWARF name cross-check on both official hw.so, `format_repo_files.py --check`, unit (664) + repository-contract suites after staging artifacts.
 
 ## 适用范围
 
 Future player-model / studio-interface symbol requests, SCModelDownloader gamedata consumers, any finder that must distinguish DM_PlayerState from cl.players, and PIC (SvEngine Linux) global recovery work.
+
+
+**跟进（PR #105 CI 修复，2026-09-10）**: `_consume_padding` 的 GNU align 修复改变了两个*既有*跨函数签名的重建输出（hl-10210 `Cvar_DirectSet.linux` 穿过 `8D B6 00 00 00 00`；svencoop-10257 `Cvar_Set.windows` 穿过 `8D 49 00`），CI 的"全量隔离重建 vs merge Git blob 逐字节比对"门禁因此失败。教训：**改动 ida_analyze_util.py 共享签名生成逻辑后，必须本地 `-allgamever -force_all` 全量重建并提交差异**——普通运行对已有产物的 skill 是跳过语义，不会暴露此类漂移；且 CI 门禁在第一个失败 tag 即 throw，其后 tag 的隐藏差异（如本次的 svencoop）只有全量重建才能抓全。修复提交 f8c2ee2，CI run 34462652327 全绿。
