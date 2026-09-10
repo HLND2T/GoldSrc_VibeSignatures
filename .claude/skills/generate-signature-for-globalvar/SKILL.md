@@ -37,6 +37,22 @@ GV_Address = *(uint32_t*)(inst_addr + gv_inst_disp)
 The 4-byte displacement bytes **are** the GV's absolute address. There is **no RIP-relative formula** (that is
 x86-64 Source2-specific and must not be used).
 
+### PIC GOTOFF Addressing (SvEngine Linux)
+
+SvEngine Linux (e.g. svencoop hw.so) is position-independent and accesses globals through a GOT-anchored
+register (`call __i686.get_pc_thunk.ax; add eax, _GLOBAL_OFFSET_TABLE_` then `mov [eax+disp32], edx`).
+The embedded disp32 is then the **GOTOFF displacement** (`var - GOT base`), not an address:
+
+```
+89 90 D4 88 A3 00    mov [eax+0xA388D4], edx   ; r_model = 0xD268D4 = 0xA388D4 + GOT 0x2EE000
+```
+
+No relocation patches these sites, so the runtime dword stays the GOTOFF displacement forever. Such
+artifacts must emit the optional **gv_pic_addend** field (the target RVA minus the embedded dword) and consumers must add
+it (see Runtime Resolution Formula below). Absolute-form sites never emit it; their embedded dword is
+either the link-time address (`R_386_RELATIVE`) or loader-filled from the symbol (`R_386_32`), both of
+which hold the true runtime address after loading.
+
 ## Prerequisites
 
 - Global variable address. `dword_XXXXXX` for example.
@@ -278,6 +294,17 @@ Provide the following information for runtime GV resolution:
 3. **gv_inst_length**: Total length of the GV-accessing instruction (from output metadata)
 4. **gv_inst_disp**: Position of the 4-byte absolute-address displacement within the instruction (from output metadata)
 
+### Optional Output Fields
+
+1. **gv_pic_addend**: Present for PIC register-relative `disp32` sites. The variable RVA equals the
+   embedded disp32 plus this value (mod 2^32). It includes any constant intermediate base and member
+   adjustment; it is not necessarily the GOT RVA. Presence, including zero, selects module rebasing.
+2. **gv_address_offset**: Optional adjustment after address recovery (mod 2^32). For example,
+   `0xfffffffc` recovers a table base from a relocated absolute operand holding `table + 4`.
+
+The shared emitter always preserves these semantic fields, even when a finder's desired-field list
+omits them. Direct locators use `gv_resolution_fields_via_mcp` after validating ownership and the target.
+
 ### Example Output
 
 ```yaml
@@ -295,15 +322,38 @@ At runtime, after pattern scan finds the signature at address `scan_result`:
 ```cpp
 // C++ example
 uint8_t* inst_addr = scan_result + gv_inst_offset;
-uint32_t gv_address = *(uint32_t*)(inst_addr + gv_inst_disp);
+uint32_t gv_address = *(uint32_t*)(inst_addr + gv_inst_disp) + gv_address_offset; // default offset: 0
 ```
 
 ```python
 # Python example
 import struct
 inst_addr = scan_result + gv_inst_offset
-gv_address = struct.unpack('<I', memory[inst_addr + gv_inst_disp : inst_addr + gv_inst_disp + 4])[0]
+gv_address = (struct.unpack('<I', memory[inst_addr + gv_inst_disp : inst_addr + gv_inst_disp + 4])[0]
+              + gv_address_offset) & 0xFFFFFFFF  # default offset: 0
 ```
 
 The displacement **is** the GV's absolute address. Do **not** add `inst_length` (that is the x86-64 RIP-relative
 formula and produces a wrong address on x86-32).
+
+### Runtime Resolution Formula (x86-32 — PIC GOTOFF addressing)
+
+When the artifact carries `gv_pic_addend` (register-relative disp32, SvEngine Linux), add it to the
+embedded dword to recover the variable RVA, then rebase onto the loaded module:
+
+```cpp
+// C++ example
+uint8_t* inst_addr = scan_result + gv_inst_offset;
+uint32_t disp = *(uint32_t*)(inst_addr + gv_inst_disp);
+uint32_t gv_rva = disp + gv_pic_addend;          // mod 2^32
+uint32_t gv_address = module_base + gv_rva + gv_address_offset; // default offset: 0
+```
+
+```python
+# Python example
+import struct
+inst_addr = scan_result + gv_inst_offset
+disp = struct.unpack('<I', memory[inst_addr + gv_inst_disp : inst_addr + gv_inst_disp + 4])[0]
+gv_rva = (disp + gv_pic_addend) & 0xFFFFFFFF
+gv_address = (module_base + gv_rva + gv_address_offset) & 0xFFFFFFFF  # default offset: 0
+```

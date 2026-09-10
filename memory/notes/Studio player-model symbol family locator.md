@@ -59,8 +59,20 @@ Implemented as `ida_preprocessor_scripts/_studio_player_model_common.py` (shared
 
 ## 验证方式
 
+### PR #105 地址恢复契约修正（2026-09-10）
+
+- 触发信号：IDA 的 GV 地址正确、签名唯一，但运行时读出的 disp32 不等于目标地址。
+- 根因：SvEngine Linux 的 GOTOFF 位移没有 loader 重定位；`cl_players_model` 还包含中间寄存器基址，`cl_parsefuncs` 指令引用的是表的 +4 成员。此前所谓“PIC gv convention”只记录位移位置，缺少恢复信息。
+- 正确做法：`gv_pic_addend` 存在时，先以 `uint32(embedded + addend)` 得到目标 RVA，再加模块加载基址；它包含两级基址或成员修正，不一定是 GOT RVA。绝对地址按 loader 重定位处理，`gv_address_offset` 可在恢复后修正成员偏移（-4 编码为 0xfffffffc）。直接 finder 使用 `gv_resolution_fields_via_mcp`，共享 emitter 自动保留两个字段。仅修正 gv_va 或签名唯一性不解决运行时问题。
+- 验证方式：对原始 PE/ELF 操作数应用实际重定位，在首选基址和另一加载基址恢复地址并比较 gv_rva；同时检查签名唯一性，强制重建生产 finder，运行共享行为回归测试。
+- 适用范围：所有真 GV 的绝对地址、PIC 静态基址和表成员恢复；需要读取运行时动态指针的多次间接寻址不能仅靠常量加数表达。
+- 最终验证：受影响 finder 91/91 节点成功；完整 engine 强制重建 534/534（5 路并发，20 GiB 进程预算）；原始 PE/ELF 校验 208 个 GV（Windows 162、Linux 46），全部签名唯一且在两种加载基址下恢复正确；unit 669、repository-contract 14、格式检查通过。unit 的默认并发测试以进程环境值 1 隔离本地 `.env` 设置。
+
 Per-skill `ida_analyze_bin.py -allgamever -modules engine -skill find-... -debug` runs (13 Windows + Linux nodes), DWARF name cross-check on both official hw.so, `format_repo_files.py --check`, unit (664) + repository-contract suites after staging artifacts.
 
 ## 适用范围
 
 Future player-model / studio-interface symbol requests, SCModelDownloader gamedata consumers, any finder that must distinguish DM_PlayerState from cl.players, and PIC (SvEngine Linux) global recovery work.
+
+
+**跟进（PR #105 CI 修复，2026-09-10）**: `_consume_padding` 的 GNU align 修复改变了两个*既有*跨函数签名的重建输出（hl-10210 `Cvar_DirectSet.linux` 穿过 `8D B6 00 00 00 00`；svencoop-10257 `Cvar_Set.windows` 穿过 `8D 49 00`），CI 的"全量隔离重建 vs merge Git blob 逐字节比对"门禁因此失败。教训：**改动 ida_analyze_util.py 共享签名生成逻辑后，必须本地 `-allgamever -force_all` 全量重建并提交差异**——普通运行对已有产物的 skill 是跳过语义，不会暴露此类漂移；且 CI 门禁在第一个失败 tag 即 throw，其后 tag 的隐藏差异（如本次的 svencoop）只有全量重建才能抓全。修复提交 f8c2ee2，CI run 34462652327 全绿。

@@ -24,6 +24,7 @@ signature is generated only after the locator validates the instruction.
 from pathlib import Path
 
 from ida_analyze_util import (
+    gv_resolution_fields_via_mcp,
     _inspect_function_via_mcp,
     _load_yaml_mapping,
     _output_for_symbol,
@@ -378,6 +379,9 @@ async def preprocess_skill(
             f"seg {located.get('gv_seg')}) insn={located['insn_ea']} "
             f"{located.get('insn_disasm', '')} bases={located.get('model_bases')}"
         )
+    resolution = await gv_resolution_fields_via_mcp(session, insn_ea, insn_disp, gv_ea, image_base, platform)
+    if resolution is None:
+        return False
     write_gv_yaml(
         output,
         {
@@ -389,6 +393,7 @@ async def preprocess_skill(
             "gv_inst_offset": hex(insn_ea - func_va),
             "gv_inst_length": hex(insn_len),
             "gv_inst_disp": hex(insn_disp),
+            **resolution,
         },
     )
     return True

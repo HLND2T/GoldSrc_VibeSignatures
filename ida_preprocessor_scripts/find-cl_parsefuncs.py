@@ -19,6 +19,7 @@ does not use a byte signature or old YAML.
 """
 
 from ida_analyze_util import (
+    gv_resolution_fields_via_mcp,
     _inspect_function_via_mcp,
     _output_for_symbol,
     parse_mcp_result,
@@ -377,6 +378,9 @@ async def preprocess_skill(
             f"owner={located['owner_ea']} insn={located['insn_ea']} "
             f"{located.get('insn_disasm', '')}"
         )
+    resolution = await gv_resolution_fields_via_mcp(session, insn_ea, insn_disp, table_ea, image_base, platform)
+    if resolution is None:
+        return False
     write_gv_yaml(
         output,
         {
@@ -388,6 +392,7 @@ async def preprocess_skill(
             "gv_inst_offset": hex(insn_ea - func_va),
             "gv_inst_length": hex(insn_len),
             "gv_inst_disp": hex(insn_disp),
+            **resolution,
         },
     )
     return True

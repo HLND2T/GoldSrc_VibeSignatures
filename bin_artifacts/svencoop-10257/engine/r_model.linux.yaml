@@ -12,4 +12,5 @@ gv_sig_va: '0x9fe70'
 gv_inst_offset: '0xe'
 gv_inst_length: '0x6'
 gv_inst_disp: '0x2'
+gv_pic_addend: '0x2ee000'
 gv_sig_allow_across_function_boundary: true

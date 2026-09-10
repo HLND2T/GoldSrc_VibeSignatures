@@ -54,7 +54,14 @@ SetRenderModel 0x90, SetChromeOrigin 0x9C) and their engine globals:
    (currententity), StudioSetHeader/SetRenderModel store exactly one global
    (pstudiohdr/r_model), SetChromeOrigin reads one 12-byte cluster
    (r_origin) and writes another (g_ChromeOrigin); SvEngine Linux accesses
-   the globals through an eax-anchored GOTOFF prologue.
+   the globals through an eax-anchored GOTOFF prologue. SvEngine Linux GV
+   artifacts additionally emit gv_pic_addend: register-relative disp32
+   sites embed var-GOT (no relocation; e.g. r_model disp 0xA388D4 + GOT RVA
+   0x2EE000 = declared 0xD268D4), so the runtime decoder must add the GOT
+   RVA to the embedded dword. Absolute-form sites (all other binaries) keep
+   the plain *(u32*) decode because their embedded dword is either the
+   link-time address (R_386_RELATIVE) or loader-filled from the symbol
+   (R_386_32), both yielding the true runtime address.
 3. Direct-locator exception (find-cl_resourcesonhand precedent): the gv
    artifacts use the owner accessor's func_sig with gv_inst_offset/disp
    pointing at the first base-referencing instruction. Cross-version
@@ -511,6 +518,30 @@ def disp32_operand_offset(insn):
                 return offb
     return 0
 
+def reg_relative_disp32(insn, offb, pic_fn):
+    # True when the disp32 at offb is register-based; that is the GOTOFF PIC
+    # form whose embedded dword is var-GOT, not an address. On x86 any o_displ
+    # operand has a base register (op.phrase is its number and eax == 0, so
+    # truthiness must not be tested), while absolute accesses are o_mem.
+    # pic_fn additionally requires the accessor's GOT-anchor prologue, so
+    # non-PIC binaries never take the GOTOFF path even on stray o_displ ops.
+    if pic_fn is None:
+        return False
+    for op in insn.ops:
+        if int(op.type) == int(idaapi.o_void):
+            break
+        if int(getattr(op, 'offb', 0) or 0) == int(offb):
+            return int(op.type) == int(idaapi.o_displ)
+    return False
+
+def gotoff_addend(ea, offb, target):
+    # SvEngine GOTOFF sites embed var-GOT with no relocation: the runtime
+    # dword must be rebased by the GOT RVA to yield the variable address.
+    embedded = ida_bytes.get_dword(int(ea) + int(offb))
+    if embedded is None or embedded == idaapi.BADADDR:
+        return 0
+    return (int(target) - int(embedded)) & 0xFFFFFFFF
+
 def insn_direction(ea, insn):
     # lea counts as read: SvEngine's GOTOFF address-of feeds the real load.
     mnem = (idc.print_insn_mnem(int(ea)) or '').lower()
@@ -589,7 +620,10 @@ def main():
                       'targets': [hex(x) for x in targets],
                       'disasm': disasm(ea)})
         for target in targets:
-            ref_insns.setdefault(target, []).append({'ea': int(ea), 'len': int(insn.size), 'offb': offb})
+            addend = (gotoff_addend(ea, offb, target)
+                      if reg_relative_disp32(insn, offb, anchor) else 0)
+            ref_insns.setdefault(target, []).append(
+                {'ea': int(ea), 'len': int(insn.size), 'offb': offb, 'addend': addend})
             if direction == 'read':
                 reads.append(target)
             elif direction == 'write':
@@ -600,7 +634,7 @@ def main():
     for base in read_bases + write_bases:
         for item in ref_insns.get(base, ()):
             gv_refs[hex(base)] = {'ea': hex(item['ea']), 'len': item['len'], 'offb': item['offb'],
-                                  'disasm': disasm(item['ea'])}
+                                  'addend': item['addend'], 'disasm': disasm(item['ea'])}
             break
     return {
         'pointer_size': 4,
@@ -928,7 +962,7 @@ async def preprocess_studio_slot(
             if debug:
                 print(f"  {func_name}: no disp32 reference for gv {hex(base)}")
             return False
-        gv_items.append((base, int(ref["ea"], 0), int(ref["len"]), int(ref["offb"])))
+        gv_items.append((base, int(ref["ea"], 0), int(ref["len"]), int(ref["offb"]), int(ref.get("addend") or 0)))
     function = await _inspect_function_via_mcp(session, slot_ea, image_base, func_name)
     allow_across = False
     if not function or not function.get("func_sig"):
@@ -965,7 +999,7 @@ async def preprocess_studio_slot(
     if allow_across:
         func_payload["func_sig_allow_across_function_boundary"] = True
     write_func_yaml(func_output, func_payload)
-    for gv_name, (base, insn_ea, insn_len, insn_disp) in zip(gv_names, gv_items):
+    for index, (gv_name, (base, insn_ea, insn_len, insn_disp, pic_addend)) in enumerate(zip(gv_names, gv_items)):
         gv_payload = {
             "gv_name": gv_name,
             "gv_va": hex(base),
@@ -976,9 +1010,13 @@ async def preprocess_studio_slot(
             "gv_inst_length": hex(insn_len),
             "gv_inst_disp": hex(insn_disp),
         }
+        if pic_addend:
+            # Register-relative disp32 (GOTOFF): the embedded dword is
+            # var-GOT and must be rebased by the GOT RVA at decode time.
+            gv_payload["gv_pic_addend"] = hex(pic_addend)
         if allow_across:
             gv_payload["gv_sig_allow_across_function_boundary"] = True
-        write_gv_yaml(gv_outputs[gv_names.index(gv_name)], gv_payload)
+        write_gv_yaml(gv_outputs[index], gv_payload)
     return True
 
 

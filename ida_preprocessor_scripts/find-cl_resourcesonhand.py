@@ -28,6 +28,7 @@ from one fixed instruction encoding.
 from pathlib import Path
 
 from ida_analyze_util import (
+    gv_resolution_fields_via_mcp,
     _inspect_function_via_mcp,
     _load_yaml_mapping,
     _output_for_symbol,
@@ -306,6 +307,9 @@ async def preprocess_skill(
         return False
     if not owner_ea <= insn_ea and insn_ea + insn_len <= owner_end_ea:
         return False
+    resolution = await gv_resolution_fields_via_mcp(session, insn_ea, insn_disp, gv_ea, image_base, platform)
+    if resolution is None:
+        return False
     payload = {
         "gv_name": TARGET_GV_NAME,
         "gv_va": hex(gv_ea),
@@ -315,6 +319,7 @@ async def preprocess_skill(
         "gv_inst_offset": hex(insn_ea - owner_ea),
         "gv_inst_length": hex(insn_len),
         "gv_inst_disp": hex(insn_disp),
+        **resolution,
     }
     if allow_across:
         payload["gv_sig_allow_across_function_boundary"] = True
