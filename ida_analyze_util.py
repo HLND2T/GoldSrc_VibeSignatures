@@ -58,6 +58,8 @@ GV_YAML_ORDER = [
     "gv_inst_offset",
     "gv_inst_length",
     "gv_inst_disp",
+    "gv_pic_addend",
+    "gv_address_offset",
     "gv_sig_allow_across_function_boundary",
 ]
 VTABLE_YAML_ORDER = [
@@ -261,7 +263,10 @@ def normalize_symbol_artifact(payload: Mapping[str, object], *, category: str | 
     for field, value in tuple(normalized.items()):
         if field.endswith("_sig") and value is not None:
             normalized[field] = normalize_signature(value)
-        if field.endswith(("_addr", "_va", "_rva", "_size", "_offset", "_length", "_disp")) and value is not None:
+        if (
+            field.endswith(("_addr", "_va", "_rva", "_size", "_offset", "_length", "_disp", "_addend"))
+            and value is not None
+        ):
             normalized[field] = quoted_hex(_parse_int(value, field))
     if category == "vfunc":
         if "vfunc_slot_size" in normalized and _parse_int(normalized["vfunc_slot_size"], "vfunc_slot_size") != 4:
