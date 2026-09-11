@@ -23,4 +23,7 @@ Return only a YAML mapping with the keys found_vcall, found_call, found_funcptr,
 found_gv, and found_struct_offset. All lists except found_gv must be empty.
 The found_gv entry must contain insn_va, insn_disasm, and gv_name. Use the exact current
 target instruction text and address, and the requested canonical symbol as gv_name.
+Write insn_va as a quoted 0x-prefixed hexadecimal string, without an IDA segment prefix.
+For example, an instruction labeled .text:00401A40 must use insn_va: '0x00401A40'.
+Keep insn_disasm as the instruction text alone, without its address or segment label.
 If the target evidence cannot identify one zero-offset frags store, return all five lists empty.

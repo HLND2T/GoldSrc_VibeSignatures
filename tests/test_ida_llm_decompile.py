@@ -305,6 +305,40 @@ found_struct_offset:
 
 
 class LlmDecompileCallTests(unittest.IsolatedAsyncioTestCase):
+    async def test_unparseable_instruction_address_gets_actionable_retry(self):
+        for address in ("000ABCDE", ".text:000ABCDE"):
+            with self.subTest(address=address):
+                calls = []
+
+                def transport(**kwargs):
+                    calls.append(kwargs)
+                    if len(calls) == 1:
+                        output_address = address
+                    else:
+                        output_address = "0xABCDE"
+                    return (
+                        "found_gv:\n"
+                        f"  - insn_va: '{output_address}'\n"
+                        "    insn_disasm: mov word ptr ds:g_Test.frags[ebx], ax\n"
+                        "    gv_name: g_Test\n"
+                    )
+
+                result = await call_llm_decompile(
+                    model="test-model",
+                    symbol_name_list=["g_Test"],
+                    expected_result_sections={"g_Test": ["found_gv"]},
+                    target_disasm_codes=[".text:000ABCDE mov word ptr ds:g_Test.frags[ebx], ax"],
+                    prompt_template="{symbol_name_list}",
+                    max_retries=2,
+                    call_llm_text_func=transport,
+                )
+                self.assertEqual(2, len(calls))
+                self.assertEqual("0xABCDE", result["found_gv"][0]["insn_va"])
+                correction = calls[1]["messages"][-1]["content"]
+                self.assertIn("0x", correction)
+                self.assertIn("segment", correction)
+                self.assertIn("insn_va", correction)
+
     async def test_retries_invalid_yaml_then_accepts_canonical_response(self):
         responses = iter(
             [
