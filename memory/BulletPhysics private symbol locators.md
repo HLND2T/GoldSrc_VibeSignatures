@@ -112,5 +112,5 @@ ScoreInfo registration supplies a wrapper, which can dispatch through a differen
 
 - Final current-binary grouped finder run: 13/13 targets succeeded across all 10 configured engine versions. The only pre-existing artifact change is the approved Sven Linux cl_parsecount correction; all other existing YAML bytes are unchanged.
 - Values: configured HL-3248 through HL-8684 = 17080 (0x42B8), HL-10210 = 17176 (0x4318), CoF-5936 = 17088 (0x42C0), Sven-10257 = 34072 (0x8518). These are evidence, never cross-build fallbacks.
-- Evidence: ida_preprocessor_scripts/references/size_of_frame-evidence.md contains original/analyzed SHA-256 values, two independent player-path traces per binary, root literal and predecessor signature counts, lifecycle policy, and exact verification commands.
+- Evidence: docs/size_of_frame-evidence.md contains original/analyzed SHA-256 values, two independent player-path traces per binary, root literal and predecessor signature counts, lifecycle policy, and exact verification commands.
 - Gates: unit 766 tests (2 skips), repository-contract 14 tests, full Python 784 tests (6 skips), Pages 50 tests plus lint/build. All 10 real snapshots/datasets passed scalar store/JSON round trips (13 values) and the built Pages asset validator. Skips cover opt-in CLI/environment tests and unavailable Redis; real IDA analysis was executed separately.
