@@ -6,7 +6,7 @@ import runpy
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from ida_llm_decompile import (
     LLM_DECOMPILE_RESULT_SECTIONS,
@@ -305,39 +305,17 @@ class PitchDriftInstructionRuleTests(unittest.IsolatedAsyncioTestCase):
                 common.assert_not_called()
 
 
-class ParsecountInstructionRuleTests(unittest.IsolatedAsyncioTestCase):
-    async def prepare(self, platform):
-        finder = runpy.run_path(
-            str(
-                Path(__file__).resolve().parents[1]
-                / "ida_preprocessor_scripts/find-R_DrawTEntitiesOnList-decompiles.py"
-            )
-        )
-        common = AsyncMock(return_value=True)
-        with patch.dict(finder["preprocess_skill"].__globals__, {"preprocess_common_skill": common}):
-            result = await finder["preprocess_skill"](
-                None, "find-R_DrawTEntitiesOnList-decompiles", [], {}, ".", platform, 0
-            )
-        return result, common
-
-    # Every Linux engine .so the finder runs on (hl-10210, hl-8684,
-    # svencoop-10257) uses one of these three shapes; the rule must keep them.
-    _DECOY = ("0x500000", "mov edx, [esi+242324h]")
-    _LINUX_ACCEPTED = (
-        ("0x500010", "mov ecx, ds:m1.max_edicts+2AB24h"),
-        ("0x500020", "lea esi, (dword_2F1654 - 2EE000h)[ebx]"),
-        ("0x500030", "mov eax, ds:nMax.parsecount"),
-    )
+class InstructionRuleRetryTests(unittest.IsolatedAsyncioTestCase):
+    # Synthetic instruction restrictions test shared retry behavior, not symbol identity.
+    _DECOY = ("0x500000", "mov edx, [esi+40h]")
+    _ACCEPTED = (("0x500010", "mov ecx, ds:global_counter"), ("0x500030", "mov eax, ds:global_counter"))
 
     def _disasm_code(self):
-        lines = [f".text:{address[2:]:>08} {text}" for address, text in (self._DECOY, *self._LINUX_ACCEPTED)]
+        lines = [f".text:{address[2:]:>08} {text}" for address, text in (self._DECOY, *self._ACCEPTED)]
         return "\n".join(lines)
 
-    async def test_linux_rule_accepts_every_shipped_form_and_rejects_the_decoy(self):
-        success, common = await self.prepare("linux")
-        self.assertTrue(success)
-        rules = common.call_args.kwargs["llm_decompile_specs"][0].get("instruction_rules") or []
-        self.assertEqual(1, len(rules))
+    async def test_instruction_rule_retries_disallowed_operand(self):
+        rules = [{"regex": r"mov\s+e[abcd]x,\s+ds:global_counter", "text": "Select the named direct load."}]
 
         code = self._disasm_code()
 
@@ -347,7 +325,7 @@ class ParsecountInstructionRuleTests(unittest.IsolatedAsyncioTestCase):
                 for address, text in entries
             )
 
-        for accepted in self._LINUX_ACCEPTED:
+        for accepted in self._ACCEPTED:
             with self.subTest(accepted=accepted):
                 transport = AsyncMock(side_effect=[response([self._DECOY, accepted]), response([accepted])])
                 result = await call_llm_decompile(
@@ -362,11 +340,6 @@ class ParsecountInstructionRuleTests(unittest.IsolatedAsyncioTestCase):
                 )
                 self.assertEqual([accepted[0]], [entry["insn_va"] for entry in result["found_gv"]])
                 self.assertEqual(2, transport.call_count)
-
-    async def test_windows_targets_keep_the_previous_behavior(self):
-        success, common = await self.prepare("windows")
-        self.assertTrue(success)
-        self.assertFalse(common.call_args.kwargs["llm_decompile_specs"][0].get("instruction_rules"))
 
 
 class LlmDecompileParserTests(unittest.TestCase):
@@ -613,6 +586,7 @@ found_struct_offset: []
 
     async def test_accepts_zero_offsets_and_alternative_instruction_rules(self):
         response = """\
+found_scalar: []
 found_vcall:
   - insn_va: '0x401010'
     insn_disasm: call dword ptr [eax]

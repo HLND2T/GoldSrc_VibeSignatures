@@ -21,8 +21,8 @@ async function temporaryRoot() {
 async function writeCurrentAssets(directory, gameVersion, marker) {
   await mkdir(directory, { recursive: true })
   const dataset = {
-    schemaVersion: 4,
-    source: { gameVersion, snapshotSchemaVersion: 7 },
+    schemaVersion: 5,
+    source: { gameVersion, snapshotSchemaVersion: 8 },
     binaries: {
       server: {
         windows: {
@@ -48,7 +48,7 @@ async function writeCurrentAssets(directory, gameVersion, marker) {
       url,
       sha256: digest,
       size: bytes.byteLength,
-      snapshotSchemaVersion: 7,
+      snapshotSchemaVersion: 8,
       fileCount: 1,
       lastPublishTime: '2026-07-28T00:00:00Z',
     }],
@@ -141,7 +141,7 @@ describe('immutable game-symbol asset verification', () => {
     const legacy = await writeLegacySnapshot(current, 'svencoop-10257', 'legacy')
     await writeIndex(current, 'svencoop-10257', legacy)
 
-    await expect(verifyGameSymbolAssetDirectory(current)).rejects.toThrow(/dataset body must be schema v4/)
+    await expect(verifyGameSymbolAssetDirectory(current)).rejects.toThrow(/dataset body must be schema v5/)
   })
 
   it('rejects current datasets whose isBlob violates the contract', async () => {
@@ -154,8 +154,8 @@ describe('immutable game-symbol asset verification', () => {
       const current = join(root, 'current')
       await mkdir(current, { recursive: true })
       const dataset = {
-        schemaVersion: 4,
-        source: { gameVersion: 'svencoop-10257', snapshotSchemaVersion: 7 },
+        schemaVersion: 5,
+        source: { gameVersion: 'svencoop-10257', snapshotSchemaVersion: 8 },
         binaries: { server: { windows: mutation({
           sha256: '1'.repeat(64),
           md5: '2'.repeat(32),
@@ -181,8 +181,8 @@ describe('immutable game-symbol asset verification', () => {
     const current = join(root, 'current')
     await mkdir(current, { recursive: true })
     const dataset = {
-      schemaVersion: 4,
-      source: { gameVersion: 'svencoop-10257', snapshotSchemaVersion: 7 },
+      schemaVersion: 5,
+      source: { gameVersion: 'svencoop-10257', snapshotSchemaVersion: 8 },
       binaries: { server: { linux: {
         sha256: '1'.repeat(64),
         md5: '2'.repeat(32),

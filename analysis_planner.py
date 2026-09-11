@@ -25,7 +25,7 @@ from process_reporter import (
 )
 
 PLATFORMS = ("windows", "linux")
-SYMBOL_CATEGORIES = frozenset({"func", "gv", "vfunc", "vtable", "patch", "struct", "structmember"})
+SYMBOL_CATEGORIES = frozenset({"func", "gv", "vfunc", "vtable", "patch", "struct", "structmember", "scalar"})
 SAFE_NAME_RE = re.compile(r"^[A-Za-z0-9_.@$:+~-]+$", re.ASCII)
 
 

@@ -16,7 +16,6 @@ from binary_identity import validate_binary_is_blob
 from gamesymbol_snapshot_lib.codec import (
     SCHEMA_4_VERSION,
     SCHEMA_5_VERSION,
-    SCHEMA_6_VERSION,
     SCHEMA_7_VERSION,
     SCHEMA_VERSION,
     build_snapshot_document,
@@ -116,7 +115,7 @@ def _ensure_plain_binary(path: Path, game_root: Path) -> None:
 
 
 def collect_binary_metadata(contract, schema_version: int = SCHEMA_VERSION) -> dict:
-    if schema_version not in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION, SCHEMA_7_VERSION}:
+    if not SCHEMA_4_VERSION <= schema_version <= SCHEMA_VERSION:
         raise SnapshotSchemaError(f"Binary metadata is unsupported for schema {schema_version}")
     binaries = {}
     for key in sorted(contract.binary_targets):
@@ -131,9 +130,9 @@ def collect_binary_metadata(contract, schema_version: int = SCHEMA_VERSION) -> d
         metadata = {"sha256": hashes["sha256"], "md5": hashes["md5"]}
         if schema_version in {SCHEMA_4_VERSION, SCHEMA_5_VERSION}:
             metadata["path"] = target.source_path or target.binary_name
-        if schema_version in {SCHEMA_5_VERSION, SCHEMA_6_VERSION, SCHEMA_7_VERSION}:
+        if schema_version >= SCHEMA_5_VERSION:
             metadata.update({"crc32": hashes["crc32"], "crc64": hashes["crc64"], "size": hashes["size"]})
-        if schema_version == SCHEMA_7_VERSION:
+        if schema_version >= SCHEMA_7_VERSION:
             metadata["is_blob"] = is_blob
         binaries.setdefault(target.module_name, {})[target.platform] = metadata
     return binaries
@@ -151,7 +150,7 @@ def build_actual_document(
     last_publish_time: str | None = None,
     binaries: dict | None = None,
 ) -> dict:
-    if schema_version in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION, SCHEMA_7_VERSION}:
+    if SCHEMA_4_VERSION <= schema_version <= SCHEMA_VERSION:
         last_publish_time = last_publish_time or _publish_time()
         binaries = collect_binary_metadata(contract, schema_version) if binaries is None else binaries
     return build_snapshot_document(
@@ -180,7 +179,7 @@ def validate_snapshot_contract(document: dict, contract) -> None:
         raise SnapshotMismatchError(
             "Snapshot files do not match the analysis contract", reason="snapshot_contract_mismatch"
         )
-    if document["schema_version"] in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION, SCHEMA_7_VERSION}:
+    if SCHEMA_4_VERSION <= document["schema_version"] <= SCHEMA_VERSION:
         expected = set(contract.binary_targets)
         actual = {(module, platform) for module, platforms in document["binaries"].items() for platform in platforms}
         if actual != expected:

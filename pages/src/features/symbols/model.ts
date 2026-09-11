@@ -15,6 +15,7 @@ export function filterSymbolRecords(records: GameSymbolRecord[], filters: Symbol
 
 export function symbolKindLabel(kind: string, t: TFunction): string {
   const labels: Record<string, string> = {
+    scalar: t('symbols.kinds.scalar'),
     function: t('symbols.kinds.function'),
     virtualFunction: t('symbols.kinds.virtualFunction'),
     global: t('symbols.kinds.global'),

@@ -1,0 +1,506 @@
+func_name: "R_DrawTEntitiesOnList"
+func_va: "0x1d932a0"
+disasm_code: |-
+  ; scalar size_of_frame: both IMUL 8518h chains take (cl_parsecount & update mask) into the second StudioDrawPlayer argument. Return the verified BYTE stride (34072 here); IMUL 154h is entity-state indexing. The AND memory operand accesses mutable cl_parsecount; the preceding MOV supplies the separate update mask. Reference constants must never be copied to another build.
+  .text:01D932A0                 push    ebp
+  .text:01D932A1                 mov     ebp, esp
+  .text:01D932A3                 and     esp, 0FFFFFFF8h
+  .text:01D932A6                 sub     esp, 0ACh
+  .text:01D932AC                 mov     eax, ___security_cookie
+  .text:01D932B1                 xor     eax, esp
+  .text:01D932B3                 mov     [esp+0ACh+var_4], eax
+  .text:01D932BA                 fld     flt_1EE02A8
+  .text:01D932C0                 fldz
+  .text:01D932C2                 fucompp
+  .text:01D932C4                 fnstsw  ax
+  .text:01D932C6                 push    ebx
+  .text:01D932C7                 push    esi
+  .text:01D932C8                 ; ArgList
+  .text:01D932C8                 push    edi; ArgList
+  .text:01D932C9                 test    ah, 44h
+  .text:01D932CC                 jnp     loc_1D93700
+  .text:01D932D2                 cmp     [ebp+clientOnly], 0
+  .text:01D932D6                 mov     ebx, ds:glDisable
+  .text:01D932DC                 mov     esi, ds:glEnable
+  .text:01D932E2                 jnz     loc_1D936A3
+  .text:01D932E8                 xor     edi, edi
+  .text:01D932EA                 mov     [esp+0B8h+var_A4], edi
+  .text:01D932EE                 cmp     dword_8E36314, edi
+  .text:01D932F4                 jle     loc_1D936A3
+  .text:01D932FA                 lea     ebx, [ebx+0]
+  .text:01D93300                 ; cap
+  .text:01D93300                 push    0B60h; cap
+  .text:01D93305                 call    ebx ; glDisable
+  .text:01D93307                 mov     eax, dword_8E3631C
+  .text:01D9330C                 mov     eax, [eax+edi*8]
+  .text:01D9330F                 push    eax
+  .text:01D93310                 mov     dword_3F94150, eax
+  .text:01D93315                 call    sub_1D32A60
+  .text:01D9331A                 mov     [esp+0BCh+var_A8], eax
+  .text:01D9331E                 add     esp, 4
+  .text:01D93321                 fild    [esp+0B8h+var_A8]
+  .text:01D93325                 fst     flt_8E36310
+  .text:01D9332B                 fldz
+  .text:01D9332D                 fcomp   st(1)
+  .text:01D9332F                 fnstsw  ax
+  .text:01D93331                 test    ah, 1
+  .text:01D93334                 jz      loc_1D9368A
+  .text:01D9333A                 fmul    ds:dbl_1E66878
+  .text:01D93340                 mov     ebx, dword_3F94150
+  .text:01D93346                 fstp    flt_8E36310
+  .text:01D9334C                 cmp     dword ptr [ebx+2F8h], 3
+  .text:01D93353                 jnz     short loc_1D93374
+  .text:01D93355                 mov     eax, [ebx+0B94h]
+  .text:01D9335B                 cmp     dword ptr [eax+44h], 1
+  .text:01D9335F                 jz      short loc_1D93374
+  .text:01D93361                 push    offset aNonSpriteSetTo; "Non-sprite set to glow!\n"
+  .text:01D93366                 call    sub_1D03B90
+  .text:01D9336B                 mov     ebx, dword_3F94150
+  .text:01D93371                 add     esp, 4
+  .text:01D93374                 mov     eax, [ebx+0B94h]
+  .text:01D9337A                 mov     eax, [eax+44h]
+  .text:01D9337D                 sub     eax, 0
+  .text:01D93380                 jz      loc_1D93653
+  .text:01D93386                 sub     eax, 1
+  .text:01D93389                 jz      loc_1D9349E
+  .text:01D9338F                 sub     eax, 2
+  .text:01D93392                 jnz     loc_1D9364B
+  .text:01D93398                 cmp     [ebx+2FCh], eax
+  .text:01D9339E                 jz      loc_1D9364B
+  .text:01D933A4                 cmp     [ebx+4], eax
+  .text:01D933A7                 jz      short loc_1D933E3
+  .text:01D933A9                 mov     eax, dword_1EDF2E4
+  .text:01D933AE                 and     eax, cl_parsecount
+  .text:01D933B4                 imul    ecx, eax, 8518h
+  .text:01D933BA                 imul    eax, [ebx], 154h
+  .text:01D933C0                 lea     eax, unk_234B93C[eax]
+  .text:01D933C6                 add     eax, ecx
+  .text:01D933C8                 push    eax
+  .text:01D933C9                 mov     eax, off_1EE297C
+  .text:01D933CE                 push    3
+  .text:01D933D0                 mov     eax, [eax+8]
+  .text:01D933D3                 call    eax
+  .text:01D933D5                 mov     ebx, ds:glDisable
+  .text:01D933DB                 add     esp, 8
+  .text:01D933DE                 jmp     loc_1D9368C
+  .text:01D933E3                 cmp     dword ptr [ebx+308h], 0Ch
+  .text:01D933EA                 jnz     loc_1D93484
+  .text:01D933F0                 xor     eax, eax
+  .text:01D933F2                 cmp     dword_8E36314, eax
+  .text:01D933F8                 jle     loc_1D9364B
+  .text:01D933FE                 mov     ecx, [ebx+344h]
+  .text:01D93404                 mov     esi, dword_8E3631C
+  .text:01D9340A                 lea     ebx, [ebx+0]
+  .text:01D93410                 mov     edx, [esi+eax*8]
+  .text:01D93413                 cmp     [edx], ecx
+  .text:01D93415                 jz      short loc_1D9342B
+  .text:01D93417                 inc     eax
+  .text:01D93418                 cmp     eax, dword_8E36314
+  .text:01D9341E                 jl      short loc_1D93410
+  .text:01D93420                 mov     ebx, ds:glDisable
+  .text:01D93426                 jmp     loc_1D9368C
+  .text:01D9342B                 mov     dword_3F94150, edx
+  .text:01D93431                 cmp     dword ptr [edx+4], 0
+  .text:01D93435                 jz      short loc_1D93468
+  .text:01D93437                 mov     eax, dword_1EDF2E4
+  .text:01D9343C                 and     eax, cl_parsecount
+  .text:01D93442                 imul    ecx, eax, 8518h
+  .text:01D93448                 imul    eax, [edx], 154h
+  .text:01D9344E                 lea     eax, unk_234B93C[eax]
+  .text:01D93454                 add     eax, ecx
+  .text:01D93456                 push    eax
+  .text:01D93457                 mov     eax, off_1EE297C
+  .text:01D9345C                 push    0
+  .text:01D9345E                 mov     eax, [eax+8]
+  .text:01D93461                 call    eax
+  .text:01D93463                 add     esp, 8
+  .text:01D93466                 jmp     short loc_1D93477
+  .text:01D93468                 mov     eax, off_1EE297C
+  .text:01D9346D                 push    0
+  .text:01D9346F                 mov     eax, [eax+4]
+  .text:01D93472                 call    eax
+  .text:01D93474                 add     esp, 4
+  .text:01D93477                 mov     eax, dword_8E3631C
+  .text:01D9347C                 mov     eax, [eax+edi*8]
+  .text:01D9347F                 mov     dword_3F94150, eax
+  .text:01D93484                 mov     eax, off_1EE297C
+  .text:01D93489                 push    3
+  .text:01D9348B                 mov     eax, [eax+4]
+  .text:01D9348E                 call    eax
+  .text:01D93490                 mov     ebx, ds:glDisable
+  .text:01D93496                 add     esp, 4
+  .text:01D93499                 jmp     loc_1D9368C
+  .text:01D9349E                 mov     eax, [ebx+314h]
+  .text:01D934A4                 test    eax, eax
+  .text:01D934A6                 jz      short loc_1D934D5
+  .text:01D934A8                 push    eax
+  .text:01D934A9                 movsx   eax, word ptr [ebx+2E8h]
+  .text:01D934B0                 push    eax
+  .text:01D934B1                 call    sub_1D35A80
+  .text:01D934B6                 mov     ebx, dword_3F94150
+  .text:01D934BC                 add     esp, 8
+  .text:01D934BF                 fld     dword ptr [eax]
+  .text:01D934C1                 fst     flt_3F94144
+  .text:01D934C7                 fld     dword ptr [eax+4]
+  .text:01D934CA                 fst     flt_3F94148
+  .text:01D934D0                 fld     dword ptr [eax+8]
+  .text:01D934D3                 jmp     short loc_1D934F3
+  .text:01D934D5                 fld     dword ptr [ebx+0B48h]
+  .text:01D934DB                 fst     flt_3F94144
+  .text:01D934E1                 fld     dword ptr [ebx+0B4Ch]
+  .text:01D934E7                 fst     flt_3F94148
+  .text:01D934ED                 fld     dword ptr [ebx+0B50h]
+  .text:01D934F3                 fst     flt_3F9414C
+  .text:01D934F9                 cmp     dword ptr [ebx+2F8h], 3
+  .text:01D93500                 jnz     loc_1D9362B
+  .text:01D93506                 fxch    st(2)
+  .text:01D93508                 lea     eax, [esp+0B8h+var_10]
+  .text:01D9350F                 fsub    flt_3F941D8
+  .text:01D93515                 push    eax
+  .text:01D93516                 fstp    [esp+0BCh+var_10]
+  .text:01D9351D                 fsub    flt_3F941DC
+  .text:01D93523                 fstp    [esp+0BCh+var_C]
+  .text:01D9352A                 fsub    flt_3F941E0
+  .text:01D93530                 fstp    [esp+0BCh+var_8]
+  .text:01D93537                 call    sub_1D71F90
+  .text:01D9353C                 mov     eax, dword_855B54C
+  .text:01D93541                 add     esp, 4
+  .text:01D93544                 fstp    [esp+0B8h+var_A8]
+  .text:01D93548                 mov     dword ptr [eax+0BCh], 2
+  .text:01D93552                 fld     flt_1EE0384
+  .text:01D93558                 fldz
+  .text:01D9355A                 fucompp
+  .text:01D9355C                 fnstsw  ax
+  .text:01D9355E                 push    0FFFFFFFFh
+  .text:01D93560                 test    ah, 44h
+  .text:01D93563                 lea     eax, [esp+0BCh+var_58]
+  .text:01D93567                 jnp     short loc_1D9356D
+  .text:01D93569                 push    4
+  .text:01D9356B                 jmp     short loc_1D9356F
+  .text:01D9356D                 push    5
+  .text:01D9356F                 push    offset flt_3F94144
+  .text:01D93574                 push    offset flt_3F941D8
+  .text:01D93579                 push    eax
+  .text:01D9357A                 call    sub_1D7B1F0
+  .text:01D9357F                 fld     [esp+0CCh+var_A8]
+  .text:01D93583                 lea     edi, [esp+0CCh+var_A0]
+  .text:01D93587                 fld     st
+  .text:01D93589                 mov     esi, eax
+  .text:01D9358B                 mov     ecx, 11h
+  .text:01D93590                 add     esp, 14h
+  .text:01D93593                 rep movsd
+  .text:01D93595                 fld     [esp+0B8h+var_90]
+  .text:01D93599                 fld1
+  .text:01D9359B                 fsubrp  st(1), st
+  .text:01D9359D                 fmul    st, st(1)
+  .text:01D9359F                 fcomp   ds:dbl_1E6A3B8
+  .text:01D935A5                 fnstsw  ax
+  .text:01D935A7                 test    ah, 41h
+  .text:01D935AA                 jnz     short loc_1D935B4
+  .text:01D935AC                 fstp    st(1)
+  .text:01D935AE                 fstp    st
+  .text:01D935B0                 fldz
+  .text:01D935B2                 jmp     short loc_1D93613
+  .text:01D935B4                 cmp     dword ptr [ebx+304h], 0Eh
+  .text:01D935BB                 jnz     short loc_1D935CF
+  .text:01D935BD                 fstp    st(1)
+  .text:01D935BF                 fstp    st
+  .text:01D935C1                 fild    dword ptr [ebx+2FCh]
+  .text:01D935C7                 fmul    ds:dbl_1E66878
+  .text:01D935CD                 jmp     short loc_1D93613
+  .text:01D935CF                 fxch    st(1)
+  .text:01D935D1                 fmul    st, st
+  .text:01D935D3                 fdivr   ds:flt_1E73778
+  .text:01D935D9                 fld     ds:dbl_1E6A370
+  .text:01D935DF                 fcomp   st(1)
+  .text:01D935E1                 fnstsw  ax
+  .text:01D935E3                 test    ah, 41h
+  .text:01D935E6                 jnz     short loc_1D935F2
+  .text:01D935E8                 fstp    st
+  .text:01D935EA                 fld     ds:flt_1E73454
+  .text:01D935F0                 jmp     short loc_1D93603
+  .text:01D935F2                 fld1
+  .text:01D935F4                 fcom    st(1)
+  .text:01D935F6                 fnstsw  ax
+  .text:01D935F8                 test    ah, 5
+  .text:01D935FB                 jp      short loc_1D93601
+  .text:01D935FD                 fstp    st(1)
+  .text:01D935FF                 jmp     short loc_1D93603
+  .text:01D93601                 fstp    st
+  .text:01D93603                 fld     ds:dbl_1E73480
+  .text:01D93609                 fmulp   st(2), st
+  .text:01D9360B                 fxch    st(1)
+  .text:01D9360D                 fstp    dword ptr [ebx+2F0h]
+  .text:01D93613                 fmul    flt_8E36310
+  .text:01D93619                 mov     ebx, dword_3F94150
+  .text:01D9361F                 mov     edi, [esp+0B8h+var_A4]
+  .text:01D93623                 fstp    flt_8E36310
+  .text:01D93629                 jmp     short loc_1D93631
+  .text:01D9362B                 fstp    st(2)
+  .text:01D9362D                 fstp    st
+  .text:01D9362F                 fstp    st
+  .text:01D93631                 fld     flt_8E36310
+  .text:01D93637                 fldz
+  .text:01D93639                 fucompp
+  .text:01D9363B                 fnstsw  ax
+  .text:01D9363D                 test    ah, 44h
+  .text:01D93640                 jnp     short loc_1D9364B
+  .text:01D93642                 push    ebx
+  .text:01D93643                 call    sub_1D532C0
+  .text:01D93648                 add     esp, 4
+  .text:01D9364B                 mov     ebx, ds:glDisable
+  .text:01D93651                 jmp     short loc_1D9368C
+  .text:01D93653                 cmp     dword_3F93560, 0
+  .text:01D9365A                 jz      short loc_1D93679
+  .text:01D9365C                 mov     eax, [ebx+2F8h]
+  .text:01D93662                 cmp     eax, 3
+  .text:01D93665                 jz      short loc_1D93679
+  .text:01D93667                 cmp     eax, 5
+  .text:01D9366A                 jz      short loc_1D93679
+  .text:01D9366C                 ; cap
+  .text:01D9366C                 push    0B60h; cap
+  .text:01D93671                 call    esi ; glEnable
+  .text:01D93673                 mov     ebx, dword_3F94150
+  .text:01D93679                 push    ebx
+  .text:01D9367A                 call    sub_1D5A280
+  .text:01D9367F                 mov     ebx, ds:glDisable
+  .text:01D93685                 add     esp, 4
+  .text:01D93688                 jmp     short loc_1D9368C
+  .text:01D9368A                 fstp    st
+  .text:01D9368C                 mov     esi, ds:glEnable
+  .text:01D93692                 inc     edi
+  .text:01D93693                 mov     [esp+0B8h+var_A4], edi
+  .text:01D93697                 cmp     edi, dword_8E36314
+  .text:01D9369D                 jl      loc_1D93300
+  .text:01D936A3                 call    sub_1D57B60
+  .text:01D936A8                 ; cap
+  .text:01D936A8                 push    0BC0h; cap
+  .text:01D936AD                 call    esi ; glEnable
+  .text:01D936AF                 fld     ds:flt_1E6CA6C
+  .text:01D936B5                 push    ecx
+  .text:01D936B6                 ; param
+  .text:01D936B6                 fstp    [esp+0BCh+param]; param
+  .text:01D936B9                 ; pname
+  .text:01D936B9                 push    2200h; pname
+  .text:01D936BE                 ; target
+  .text:01D936BE                 push    2300h; target
+  .text:01D936C3                 call    ds:glTexEnvf
+  .text:01D936C9                 cmp     dword_3F93560, 0
+  .text:01D936D0                 jz      short loc_1D936D9
+  .text:01D936D2                 ; cap
+  .text:01D936D2                 push    0B60h; cap
+  .text:01D936D7                 call    ebx ; glDisable
+  .text:01D936D9                 call    sub_1D1A3F0
+  .text:01D936DE                 cmp     dword_3F93560, 0
+  .text:01D936E5                 jz      short loc_1D936EE
+  .text:01D936E7                 ; cap
+  .text:01D936E7                 push    0B60h; cap
+  .text:01D936EC                 call    esi ; glEnable
+  .text:01D936EE                 fld1
+  .text:01D936F0                 fstp    flt_8E36310
+  .text:01D936F6                 mov     dword_8E36314, 0
+  .text:01D93700                 mov     ecx, [esp+0B8h+var_4]
+  .text:01D93707                 pop     edi
+  .text:01D93708                 pop     esi
+  .text:01D93709                 pop     ebx
+  .text:01D9370A                 ; StackCookie
+  .text:01D9370A                 xor     ecx, esp; StackCookie
+  .text:01D9370C                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:01D93711                 mov     esp, ebp
+  .text:01D93713                 pop     ebp
+  .text:01D93714                 retn
+procedure: |-
+  // scalar size_of_frame is the 34072-BYTE frame-ring multiplier in both StudioDrawPlayer (off_1EE297C slot 2) arguments; 340 is the entity-state stride. cl_parsecount is the mutable counter; dword_1EDF2E4 is the separate update mask.
+  // Partial source reconstruction: engine/r_trans.c:219-343 supplies semantic roles, not this Sven layout. Both player paths use frame byte stride 0x8518, entity-state stride 0x154. cl_parsecount is mutable client state; CL_UPDATE_MASK is the independent mask. Other opaque Sven fields and unknown helpers retain neutral types/names.
+  void __cdecl R_DrawTEntitiesOnList(int clientOnly)
+  {
+    char v1; // di
+    void (__stdcall *v2)(GLenum); // ebx
+    void (__stdcall *v3)(GLenum); // esi
+    int v4; // edi
+    double v5; // st7
+    int v6; // ebx
+    int v7; // eax
+    int v8; // eax
+    int v9; // eax
+    _DWORD *v10; // edx
+    float *v11; // eax
+    double v12; // st7
+    double v13; // st6
+    double v14; // st5
+    const void *v15; // eax
+    double v16; // st7
+    double v17; // st6
+    int v18; // eax
+    char v19; // [esp+4h] [ebp-B8h]
+    float v20; // [esp+14h] [ebp-A8h]
+    int i; // [esp+18h] [ebp-A4h]
+    float v22[17]; // [esp+1Ch] [ebp-A0h] BYREF
+    _BYTE v23[72]; // [esp+64h] [ebp-58h] BYREF
+    float v24[3]; // [esp+ACh] [ebp-10h] BYREF
+
+    v19 = v1;
+    if ( 0.0 != flt_1EE02A8 )
+    {
+      v2 = glDisable;
+      v3 = glEnable;
+      if ( !clientOnly )
+      {
+        v4 = 0;
+        for ( i = 0; v4 < dword_8E36314; i = ++v4 )
+        {
+          v2(0xB60u);
+          dword_3F94150 = *((_DWORD *)dword_8E3631C + 2 * v4);
+          v5 = (double)(int)sub_1D32A60(dword_3F94150);
+          flt_8E36310 = v5;
+          if ( v5 > 0.0 )
+          {
+            v6 = dword_3F94150;
+            flt_8E36310 = v5 * 0.00392156862745098;
+            if ( *(_DWORD *)(dword_3F94150 + 760) == 3 && *(_DWORD *)(*(_DWORD *)(dword_3F94150 + 2964) + 68) != 1 )
+            {
+              sub_1D03B90("Non-sprite set to glow!\n", v19);
+              v6 = dword_3F94150;
+            }
+            v7 = *(_DWORD *)(*(_DWORD *)(v6 + 2964) + 68);
+            if ( !v7 )
+            {
+              if ( dword_3F93560 )
+              {
+                v18 = *(_DWORD *)(v6 + 760);
+                if ( v18 != 3 && v18 != 5 )
+                {
+                  v3(0xB60u);
+                  v6 = dword_3F94150;
+                }
+              }
+              sub_1D5A280(v6);
+              v2 = glDisable;
+              goto LABEL_49;
+            }
+            v8 = v7 - 1;
+            if ( !v8 )
+            {
+              if ( *(_DWORD *)(v6 + 788) )
+              {
+                v11 = (float *)sub_1D35A80(*(__int16 *)(v6 + 744), *(_DWORD *)(v6 + 788));
+                v6 = dword_3F94150;
+                v12 = *v11;
+                flt_3F94144 = *v11;
+                v13 = v11[1];
+                flt_3F94148 = v11[1];
+                v14 = v11[2];
+              }
+              else
+              {
+                v12 = *(float *)(v6 + 2888);
+                flt_3F94144 = *(float *)(v6 + 2888);
+                v13 = *(float *)(v6 + 2892);
+                flt_3F94148 = *(float *)(v6 + 2892);
+                v14 = *(float *)(v6 + 2896);
+              }
+              flt_3F9414C = v14;
+              if ( *(_DWORD *)(v6 + 760) == 3 )
+              {
+                v24[0] = v12 - flt_3F941D8;
+                v24[1] = v13 - flt_3F941DC;
+                v24[2] = v14 - flt_3F941E0;
+                v20 = sub_1D71F90(v24);
+                *(_DWORD *)(dword_855B54C + 188) = 2;
+                if ( 0.0 == flt_1EE0384 )
+                  v15 = (const void *)sub_1D7B1F0(v23, &flt_3F941D8, &flt_3F94144, 5, -1);
+                else
+                  v15 = (const void *)sub_1D7B1F0(v23, &flt_3F941D8, &flt_3F94144, 4, -1);
+                qmemcpy(v22, v15, sizeof(v22));
+                if ( (1.0 - v22[4]) * v20 <= 8.0 )
+                {
+                  if ( *(_DWORD *)(v6 + 772) == 14 )
+                  {
+                    v16 = (double)*(int *)(v6 + 764) * 0.00392156862745098;
+                  }
+                  else
+                  {
+                    v17 = 19000.0 / (v20 * v20);
+                    if ( v17 >= 0.05 )
+                    {
+                      if ( v17 > 1.0 )
+                        v17 = 1.0;
+                    }
+                    else
+                    {
+                      v17 = 0.050000001;
+                    }
+                    v16 = v17;
+                    *(float *)(v6 + 752) = v20 * 0.005;
+                  }
+                }
+                else
+                {
+                  v16 = 0.0;
+                }
+                v6 = dword_3F94150;
+                v4 = i;
+                flt_8E36310 = v16 * flt_8E36310;
+              }
+              if ( 0.0 != flt_8E36310 )
+                sub_1D532C0(v6);
+  LABEL_43:
+              v2 = glDisable;
+              goto LABEL_49;
+            }
+            if ( v8 != 2 || !*(_DWORD *)(v6 + 764) )
+              goto LABEL_43;
+            if ( *(_DWORD *)(v6 + 4) )
+            {
+              (*((void (__cdecl **)(int, char *))off_1EE297C + 2))(
+                3,
+                (char *)&unk_234B93C + 34072 * (cl_parsecount & dword_1EDF2E4) + 340 * *(_DWORD *)v6);
+              v2 = glDisable;
+            }
+            else
+            {
+              if ( *(_DWORD *)(v6 + 776) == 12 )
+              {
+                v9 = 0;
+                if ( dword_8E36314 <= 0 )
+                  goto LABEL_43;
+                while ( 1 )
+                {
+                  v10 = *((_DWORD **)dword_8E3631C + 2 * v9);
+                  if ( *v10 == *(_DWORD *)(v6 + 836) )
+                    break;
+                  if ( ++v9 >= dword_8E36314 )
+                  {
+                    v2 = glDisable;
+                    goto LABEL_49;
+                  }
+                }
+                dword_3F94150 = *((_DWORD *)dword_8E3631C + 2 * v9);
+                if ( v10[1] )
+                  (*((void (__cdecl **)(_DWORD, char *))off_1EE297C + 2))(
+                    0,
+                    (char *)&unk_234B93C + 34072 * (cl_parsecount & dword_1EDF2E4) + 340 * *v10);
+                else
+                  (*((void (__cdecl **)(_DWORD))off_1EE297C + 1))(0);
+                dword_3F94150 = *((_DWORD *)dword_8E3631C + 2 * v4);
+              }
+              (*((void (__cdecl **)(int))off_1EE297C + 1))(3);
+              v2 = glDisable;
+            }
+          }
+  LABEL_49:
+          v3 = glEnable;
+        }
+      }
+      sub_1D57B60();
+      v3(0xBC0u);
+      glTexEnvf(0x2300u, 0x2200u, 8448.0);
+      if ( dword_3F93560 )
+        v2(0xB60u);
+      sub_1D1A3F0();
+      if ( dword_3F93560 )
+        v3(0xB60u);
+      flt_8E36310 = 1.0;
+      dword_8E36314 = 0;
+    }
+  }

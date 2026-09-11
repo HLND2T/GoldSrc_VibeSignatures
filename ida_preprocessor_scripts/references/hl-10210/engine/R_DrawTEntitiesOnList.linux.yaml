@@ -1,6 +1,7 @@
 func_name: "R_DrawTEntitiesOnList"
 func_va: "0x1b0c90"
 disasm_code: |-
+  ; scalar size_of_frame is the byte coefficient of (cl_parsecount & CL_UPDATE_MASK) in the StudioDrawPlayer argument. Here IMUL 4318h supplies it; another compiler may use equivalent LEA/SHL/ADD/SUB arithmetic. Report the current target's numeric byte stride, not an instruction address; reject entity-state indexing arithmetic.
   .text:001B0C90                 push    ebp
   .text:001B0C91                 push    edi
   .text:001B0C92                 push    esi
@@ -253,6 +254,7 @@ disasm_code: |-
   .text:001B10DD                 call    dword ptr [eax+4]
   .text:001B10E0                 jmp     loc_1B0E0B
 procedure: |-
+  // scalar size_of_frame is the frame-ring BYTE stride: 4294 typed dword elements here represent 17176 bytes, encoded as IMUL 4318h in both StudioDrawPlayer paths. Report the numeric BYTE stride verified from target arithmetic, never the scaled pseudocode coefficient or the 85-element player index multiplier.
   // Source: engine/r_trans.c:219-343. cl_parsecount is cl.parsecount: AND with CL_UPDATE_MASK before indexing the frame ring passed to StudioDrawPlayer (flags 3 or 0). Do not select the update-mask global, currententity index, or frame stride. The current binary folds the playerstate offset and index-minus-one into its address arithmetic; the Linux DWARF client-state aggregate is named nMax and renders this inline frame region through predicted_origins. This expression is a compiler/type rendering of the same frame-ring access, not a different source array.
   void __cdecl R_DrawTEntitiesOnList(int clientOnly)
   {

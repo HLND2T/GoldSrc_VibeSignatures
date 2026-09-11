@@ -47,7 +47,7 @@ ScoreInfo registration supplies a wrapper, which can dispatch through a differen
 
 - Boundary: allow_cheats, g_bRenderingPortals_SCClient, g_ViewEntityIndex_SCClient and g_pitchdrift are Sven-only; extra-info arrays are CS-family-only. CZDS has no CS/CZ prediction wrapper's inner _StudioDrawPlayer; do not manufacture an inner virtual there.
 - ABI: Sven's existing R_RenderView reads an int argument on Windows (0x1d537b0) and Linux (0x13ba80). It is the entry called R_RenderView_SvEngine(int viewIdx) by MetaHook; no duplicate scanner is needed. Addresses are evidence only.
-- Deferred: size_of_frame is an immediate scalar stride, not a GV pointer. Its proposed category/schema extension requires separate user approval (Issue #106 comment 5625307789); it is not implemented by this delivery.
+- size_of_frame uses the user-approved numeric scalar contract (Issue #106 comment 5636344998): only scalar_name and uint32 scalar_value. Consumers use the value directly for the matching binary identity. The original imm32-only proposal was superseded because HL-3248 pseudocode shows 17080 (0x42B8), while the machine code computes it with LEA/SHL/SUB. No signature or instruction-address fields are required.
 - Trigger: exact cached_bonename xrefs find MergeBones but miss SaveBones. Root cause: optimized SaveBones references the first name's trailing byte at base+31. Correct approach: intersect cached_numbones owners with references into the first 32-byte name, exclude verified merge/top-level/setup/attachment roles, and require one candidate. Validate all engine peers and require SaveBones, MergeBones and SetupBones to remain distinct.
 - Trigger: a verified exclusion disappears during owner recovery. Root cause: nearby direct-call candidates confuse backtracking. Honor exact executable function starts supplied by current validated dependency artifacts; do not infer an alternative exclusion entry. Covered by a synthetic regression.
 - Trigger: Linux GV access has no IDA data xref. Root cause: a compiler reuses an address register across basic blocks. Resolve unindexed disp32 MOV/LEA only when every reachable predecessor has the same known definition; invalidate clobbers (including AH/BH aliases), reject loops/ambiguity, and preserve existing gv_pic_addend metadata. Verify relocation behavior with synthetic tests and current binaries.
@@ -90,3 +90,27 @@ ScoreInfo registration supplies a wrapper, which can dispatch through a differen
 ## Callers
 
 - Production configs invoke these finders through ida_analyze_bin's dependency DAG.
+
+### Numeric scalar extraction (Issue #106)
+
+- Trigger: a frame stride is visible as a constant in Hex-Rays, but has no single machine-code immediate. HL-3248 computes coefficients 9 → 72 → 71 → 213 → 427 → 2135 → 17080. Root constraint: compiler strength reduction changes encoding, not frame_t byte size.
+- Correct approach: scalar_artifact.py owns the two-field uint32 contract, writer/normalizer and snapshot/store/JSON retain the value, and consumers do not scan or interpret expressions. Snapshot 8 / dataset 5 / analysis-output contract 3 carry the new category; index stays 4. Legacy snapshots cannot contain scalar fields and must be rebuilt through the current pipeline.
+- Discovery: find-R_DrawTEntitiesOnList-decompiles.py groups cl_parsecount and size_of_frame under the same annotated predecessor. ida_scalar.recover_masked_index_stride independently traces the masked-index coefficient through register copies, IMUL, LEA, shifts and constant additions/subtractions to every StudioDrawPlayer argument. It also recognizes a slot-8 callback loaded into a register before CALL reg; INC/DEC of the independent entity index preserves its zero coefficient. The minimum-size filter is only a coarse exclusion, never the semantic locator.
+- LLM contract: found_scalar contains scalar_name and scalar_value only. The finder supplies dynamically recovered expected_value; shared validation retries mismatches and rejects missing/conflicting values. Never hardcode a reference build's value. Pseudocode typed-element coefficients need byte-unit validation against actual arithmetic.
+- Verification: synthetic regressions cover immediate and optimized forms, callback-register forwarding, partial/implicit register clobbers, unsupported control flow/arithmetic, conflicting or unverified paths, LLM value correction, strict uint32 validation, legacy rejection, and artifact → snapshot → SymbolStore → JSON round-trip. Real-target and final suite evidence belongs in the delivery PR.
+- Scope: numeric scalar outputs and offline frame-stride verification. Other GV/function candidate-selection behavior remains unchanged.
+
+### Sven Linux parsecount correction during scalar validation
+
+- Trigger: the grouped size_of_frame/cl_parsecount finder rejected both real Sven Linux counter loads and accepted a PIC LEA naming the mask.
+- Root cause: a Linux operand-shape rule incorrectly declared all register-relative member loads to be decoys. Current hw.so has CL_UPDATE_MASK at 0x2F1654, initialized to 63; cl.parsecount is at client base 0x15D7D60 + 0x242324 = 0x181A084. Loads 0x17E5D4 and 0x17E6DF feed the frame ring; parser store 0xFEEB5 independently confirms the mutable member. These addresses are evidence for this binary only.
+- Correct approach: remove the spelling-based restriction, generate Sven Windows/Linux references through generate_reference_yaml.py, and let the existing shared CFG address resolver prove the member base and unique runtime signature. The user approved updating the existing Sven Linux artifact as part of issue #106.
+- Verification: rerun all 13 engine combinations and compare all pre-existing outputs; only the corrected Sven Linux cl_parsecount output may change. The scalar verifier also decodes actual ESP operand displacements and accepts only the second call argument at [esp+4], irrespective of named stack variables or when flags were stored.
+- Scope: semantic counter/mask distinction and register-relative global access; no new GV artifact contract or runtime expression evaluator.
+
+### size_of_frame completion evidence
+
+- Final current-binary grouped finder run: 13/13 targets succeeded across all 10 configured engine versions. The only pre-existing artifact change is the approved Sven Linux cl_parsecount correction; all other existing YAML bytes are unchanged.
+- Values: configured HL-3248 through HL-8684 = 17080 (0x42B8), HL-10210 = 17176 (0x4318), CoF-5936 = 17088 (0x42C0), Sven-10257 = 34072 (0x8518). These are evidence, never cross-build fallbacks.
+- Evidence: ida_preprocessor_scripts/references/size_of_frame-evidence.md contains original/analyzed SHA-256 values, two independent player-path traces per binary, root literal and predecessor signature counts, lifecycle policy, and exact verification commands.
+- Gates: unit 766 tests (2 skips), repository-contract 14 tests, full Python 784 tests (6 skips), Pages 50 tests plus lint/build. All 10 real snapshots/datasets passed scalar store/JSON round trips (13 values) and the built Pages asset validator. Skips cover opt-in CLI/environment tests and unavailable Redis; real IDA analysis was executed separately.

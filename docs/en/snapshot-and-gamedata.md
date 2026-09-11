@@ -33,7 +33,7 @@ repository-root `gamesymbols/` or `gamedata/` trees.
 
 `release-build.yml` force-rebuilds all configured artifacts in a fresh external root and compares exact bytes with Git
 `bin_artifacts`. Per game version it derives a snapshot and metadata, deterministically derives the browser JSON dataset
-(schema 4, `<tag>.<sha256>.json`, including the per-binary `isBlob` flag) from them with `gamesymbols_json.py`, marks
+(schema 5, `<tag>.<sha256>.json`, including the per-binary `isBlob` flag) from them with `gamesymbols_json.py`, marks
 `json`, and publishes the snapshot/metadata;
 `release_bundle.py` then assembles the index (schema 4), packs a single all-in-one archive, and builds a closed bundle
 containing:
@@ -69,9 +69,24 @@ uv run python gamesymbol_snapshot.py restore-legacy -gamever cstrike-10210 -snap
   -bindir bin -artifactdir <compatibility-artifact-root>
 ```
 
-The writer emits schema 7 and the reader accepts schemas 1–7. Schema 7 records a required boolean `is_blob` per
+The writer emits schema 8 and the legacy reader accepts schemas 1–8. Schema 7 introduced a required boolean `is_blob` per
 module/platform: `true` only when the original Windows binary is a fully verified Metahook blob (plain PE/ELF is `false`;
-invalid binaries fail the snapshot rather than publishing `false`). The JSON generator only accepts schema-7 snapshots
-and the frontend only accepts schema-4 datasets — there is no legacy-dataset compatibility mode. Restore and
+invalid binaries fail the snapshot rather than publishing `false`). The JSON generator only accepts schema-8 snapshots
+and the frontend only accepts schema-5 datasets — there is no legacy-dataset compatibility mode. Restore and
 verification reject links, path escapes,
 undeclared or missing YAML, non-canonical bytes, and contract drift.
+
+## Numeric scalars
+
+Schema 8 / analysis-output contract 3 add `category: scalar`. The artifact contains only `scalar_name`
+and `scalar_value` (uint32). Consumers use the value directly for the matching binary identity, without
+image-base adjustment, pointer dereference, or runtime scanning. The finder independently verifies
+current-binary dataflow and requires the LLM's semantic mapping to agree. For example, an optimizing
+compiler can express a frame stride through LEA/SHL/SUB even when pseudocode shows a constant multiplier;
+the numeric artifact must not depend on the existence of a single IMUL. Reject conflicting or unsupported
+evidence and never borrow a value from another build. JSON exports `kind: scalar` and preserves the payload.
+Index remains schema 4.
+
+Old snapshots must not contain scalar fields. Use explicit legacy restore into an isolated artifact root,
+analyze missing current artifacts, and rebuild the snapshot and dataset through the current candidate
+pipeline. Editing the schema number alone is not a migration. Historical archive bytes remain immutable.

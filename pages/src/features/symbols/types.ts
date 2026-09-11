@@ -43,7 +43,7 @@ export interface GameSymbolRecord {
 }
 
 export interface GameSymbolDataset {
-  schemaVersion: 4
+  schemaVersion: 5
   source: {
     gameVersion: string
     snapshotSchemaVersion: number

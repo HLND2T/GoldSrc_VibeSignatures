@@ -16,9 +16,10 @@ ida_preprocessor_scripts/references/<gamever>/<module>/<func_name>.<platform>.ya
 共享 prompt 是 `ida_preprocessor_scripts/prompt/call_llm_decompile.md`。运行时格式化支持
 `{reference_blocks}`、`{target_blocks}`、`{symbol_name_list}`、`{platform}`、`{module}`、`{module_name}`。
 
-响应必须是包含全部五个 section 的 canonical YAML mapping：
+响应必须是包含全部六个 section 的 canonical YAML mapping：
 
 ```yaml
+found_scalar: []
 found_vcall: []
 found_call: []
 found_funcptr: []
@@ -26,7 +27,7 @@ found_gv: []
 found_struct_offset: []
 ```
 
-每个非空条目必须包含来自导出当前二进制 target 的精确 `insn_va` / `insn_disasm` 对。运行时校验请求的 symbol
+每个非空的指令型条目必须包含来自导出当前二进制 target 的精确 `insn_va` / `insn_disasm` 对。运行时校验请求的 symbol
 identity、允许的 section、指令对、可选指令 regex、vcall 或 struct displacement 与可选 struct size。非法 YAML 或
 语义结果会收到有界的纠正请求；只有瞬时传输故障使用指数退避。重试耗尽或不可重试的失败返回完整空结果，
 preprocessor 以 fail-closed 结束。
@@ -35,6 +36,9 @@ preprocessor 以 fail-closed 结束。
 批量合并。依赖策略与 config input 分类在快速路径前校验；缺失的可选 predecessor 只跳过其 reference/target 对。
 func、vfunc、gv 与 structmember 结果仍由普通 x86 MCP helper 消费，它们校验 tail chunks、要求唯一
 target/anchor signature、跟随请求的直接调用 jump thunk，并强制 4 字节 vtable slot。
+
+`found_scalar` 条目仅包含 `scalar_name`、`scalar_value`，数值必须与 finder 独立核验当前二进制得到的
+`expected_value` 一致，不绑定指令地址或签名。消费端直接用数值；详见 [scalar 契约](snapshot-and-gamedata.md)。
 
 ## Canonical reference 游戏版本
 
@@ -94,7 +98,7 @@ LLM_DECOMPILE = [
 ]
 ```
 
-合法的结果 section 是 `found_call`、`found_vcall`、`found_funcptr`、`found_gv`、`found_struct_offset`。一个
+合法的结果 section 是 `found_call`、`found_vcall`、`found_funcptr`、`found_gv`、 `found_scalar`、`found_struct_offset`。一个
 symbol 使用多个 `reference_yaml_paths`，而不是在多个 specification 中重复同一 symbol。每个被引用工件必须有匹配
 的 `dependency_policy` 条目，值为 `required` 或 `optional`；required 工件属于 expected-input 集合，optional
 工件属于 optional-input 集合。`required` 依赖放在 config `expected_input`，`optional` 依赖放在

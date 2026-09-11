@@ -42,6 +42,7 @@ const STRUCT_MEMBER_EXTRA_FIELDS: ExtraField[] = [
 ]
 
 function extraFieldsFor(record: GameSymbolRecord): ExtraField[] {
+  if (record.kind === 'scalar') return [{ labelKey: 'symbols.scalarValue', field: 'scalar_value' }]
   const specs = record.kind === 'virtualFunction'
     ? VFUNC_EXTRA_FIELDS
     : record.kind === 'structMember'
