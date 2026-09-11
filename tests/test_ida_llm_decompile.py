@@ -26,14 +26,14 @@ found_struct_offset: []
 
 class ScoreInfoInstructionRuleTests(unittest.IsolatedAsyncioTestCase):
     async def test_linux_retries_member_references_and_accepts_only_frags_store(self):
-        finder = runpy.run_path(str(
-            Path(__file__).resolve().parents[1]
-            / "ida_preprocessor_scripts/find-ClientScoreInfoHandler-decompiles.py"
-        ))
-        with patch.dict(finder["preprocess_skill"].__globals__, {"preprocess_common_skill": AsyncMock()}) as namespace:
-            await finder["preprocess_skill"](
-                None, "find-ClientScoreInfoHandler-decompiles", [], {}, ".", "linux", 0
+        finder = runpy.run_path(
+            str(
+                Path(__file__).resolve().parents[1]
+                / "ida_preprocessor_scripts/find-ClientScoreInfoHandler-decompiles.py"
             )
+        )
+        with patch.dict(finder["preprocess_skill"].__globals__, {"preprocess_common_skill": AsyncMock()}) as namespace:
+            await finder["preprocess_skill"](None, "find-ClientScoreInfoHandler-decompiles", [], {}, ".", "linux", 0)
             spec = namespace["preprocess_common_skill"].call_args.kwargs["llm_decompile_specs"][0]
 
         accepted = "mov word ptr ds:g_PlayerExtraInfo.frags[ebx], ax"
@@ -58,9 +58,11 @@ class ScoreInfoInstructionRuleTests(unittest.IsolatedAsyncioTestCase):
                     model="test-model",
                     symbol_name_list=["g_PlayerExtraInfo"],
                     expected_result_sections={"g_PlayerExtraInfo": ["found_gv"]},
-                    instruction_validations={"g_PlayerExtraInfo": {
-                        "instruction_rules": spec.get("instruction_rules", []),
-                    }},
+                    instruction_validations={
+                        "g_PlayerExtraInfo": {
+                            "instruction_rules": spec.get("instruction_rules", []),
+                        }
+                    },
                     target_disasm_codes=[f"0xDDD83: {instruction}\n0xDDD8A: {accepted}"],
                     prompt_template="Find {symbol_name_list}.",
                     max_retries=2,
