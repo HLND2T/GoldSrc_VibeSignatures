@@ -33,7 +33,8 @@ disasm_code: |-
   .text:1002E947                 cmp     g_PlayerExtraInfo.teamnumber[eax], 0
   .text:1002E94F                 mov     g_PlayerExtraInfo.deaths[eax], cx
   .text:1002E956                 mov     ecx, [ebp+pbuf]
-  .text:1002E959                 mov     word ptr g_PlayerExtraInfo.frags[eax], di ; g_PlayerExtraInfo: zero-offset frags store resolves the array base
+  .text:1002E959                 ; g_PlayerExtraInfo: return ONLY the corresponding frags store in found_gv. Its member offset is zero and its value comes from the FIRST READ_SHORT. Reject deaths/frags+2, playerclass, teamnumber, and interior-address arithmetic even if they resolve the same array. Map target data flow; do not copy this address or register.
+  .text:1002E959                 mov     word ptr g_PlayerExtraInfo.frags[eax], di ; SELECT: zero-offset frags store resolves the array base without address correction
   .text:1002E960                 mov     g_PlayerExtraInfo.playerclass[eax], cx
   .text:1002E967                 jge     short loc_1002E972
   .text:1002E969                 xor     ecx, ecx

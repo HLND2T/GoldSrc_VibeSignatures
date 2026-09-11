@@ -45,6 +45,24 @@ async def preprocess_skill(
             "dependency_policy": {"ClientScoreInfoHandler.{platform}.yaml": "required"},
         }
     ]
+    if platform == "linux":
+        # Linux retains member names; Windows uses anonymous word_<address>
+        # operands, whose member offset cannot be inferred by a text rule.
+        specs[0]["instruction_rules"] = [
+            {
+                "regex": (
+                    r"(?i)mov\s+(?:word ptr\s+)?(?:ds:)?"
+                    r"g_PlayerExtraInfo\.frags\[e(?:ax|bx|cx|dx|si|di|bp)\],\s*"
+                    r"(?:ax|bx|cx|dx|si|di|bp)"
+                ),
+                "text": (
+                    "Select only the 16-bit frags store at array member offset zero: "
+                    "mov [word ptr] [ds:]g_PlayerExtraInfo.frags[index], reg16. "
+                    "Reject frags+2, deaths, playerclass, teamnumber, interior-address "
+                    "arithmetic, and loads. Return only this one found_gv instruction."
+                ),
+            }
+        ]
     return await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,

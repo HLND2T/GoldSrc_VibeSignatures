@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import runpy
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -13,7 +15,6 @@ from ida_llm_decompile import (
     parse_llm_decompile_response,
 )
 
-
 CANONICAL_EMPTY = """\
 found_vcall: []
 found_call: []
@@ -21,6 +22,52 @@ found_funcptr: []
 found_gv: []
 found_struct_offset: []
 """
+
+
+class ScoreInfoInstructionRuleTests(unittest.IsolatedAsyncioTestCase):
+    async def test_linux_retries_member_references_and_accepts_only_frags_store(self):
+        finder = runpy.run_path(str(
+            Path(__file__).resolve().parents[1]
+            / "ida_preprocessor_scripts/find-ClientScoreInfoHandler-decompiles.py"
+        ))
+        with patch.dict(finder["preprocess_skill"].__globals__, {"preprocess_common_skill": AsyncMock()}) as namespace:
+            await finder["preprocess_skill"](
+                None, "find-ClientScoreInfoHandler-decompiles", [], {}, ".", "linux", 0
+            )
+            spec = namespace["preprocess_common_skill"].call_args.kwargs["llm_decompile_specs"][0]
+
+        accepted = "mov word ptr ds:g_PlayerExtraInfo.frags[ebx], ax"
+        rejected = (
+            "mov word ptr ds:(g_PlayerExtraInfo.frags+2)[ebx], bp",
+            "mov word ptr ds:(g_PlayerExtraInfo.frags+28h)[ebx], di",
+            "mov ds:g_PlayerExtraInfo.deaths[ebx], bp",
+            "add ebx, (offset g_PlayerExtraInfo+20h)",
+            "mov ax, word ptr ds:g_PlayerExtraInfo.frags[ebx]",
+        )
+
+        def response(address, instruction):
+            return (
+                f"found_gv:\n  - insn_va: '{address}'\n"
+                f"    insn_disasm: '{instruction}'\n    gv_name: g_PlayerExtraInfo\n"
+            )
+
+        for instruction in rejected:
+            with self.subTest(instruction=instruction):
+                transport = AsyncMock(side_effect=[response("0xDDD83", instruction), response("0xDDD8A", accepted)])
+                result = await call_llm_decompile(
+                    model="test-model",
+                    symbol_name_list=["g_PlayerExtraInfo"],
+                    expected_result_sections={"g_PlayerExtraInfo": ["found_gv"]},
+                    instruction_validations={"g_PlayerExtraInfo": {
+                        "instruction_rules": spec.get("instruction_rules", []),
+                    }},
+                    target_disasm_codes=[f"0xDDD83: {instruction}\n0xDDD8A: {accepted}"],
+                    prompt_template="Find {symbol_name_list}.",
+                    max_retries=2,
+                    call_llm_text_func=transport,
+                )
+                self.assertEqual("0xDDD8A", result["found_gv"][0]["insn_va"])
+                self.assertEqual(2, transport.call_count)
 
 
 class LlmDecompileParserTests(unittest.TestCase):
