@@ -20,6 +20,7 @@ GROUP_FILES = {
         "test_generate_reference_yaml.py",
         "test_format_repo_files.py",
         "test_ida_llm_decompile.py",
+        "test_llm_diagnostics.py",
         "test_ida_skill_preprocessor.py",
         "test_cvar_hooks_preprocessor.py",
         "test_cvar_set_callsites_preprocessor.py",
