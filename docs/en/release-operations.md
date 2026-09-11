@@ -50,7 +50,8 @@ endpoint with function calls; include `/v1` if required by the service, as the C
 Chat Completions-only endpoints do not work. URLs must not contain credentials, query strings or fragments, and TLS
 certificates must be publicly trusted. Model selection is independent of the binary-analysis `GSVIBE_LLM_*` settings.
 
-The notes job uses Node 22, `@anthropic-ai/claude-code@2.1.79` and `@openai/codex@0.114.0`, with an isolated temporary
+The notes job installs `@anthropic-ai/claude-code@latest` and `@openai/codex@latest` on every run and logs their resolved
+versions for troubleshooting. It uses Node 22 with an isolated temporary
 home/work directory and an allowlisted environment. API secrets are injected only into the generation step; the AI CLI
 does not receive GitHub or artifact credentials. Only the local `release_git` stdio MCP tool is exposed, supporting
 validated `log`, `show`, `diff` and `ls-tree` queries against source SHA and its ancestors. Shell, editing, arbitrary Git
@@ -92,7 +93,7 @@ actionlint .github/workflows/release-build.yml
 git diff --check
 ```
 
-For Linux real-CLI/fake-API smoke tests, install the pinned packages above and Node 22 on `PATH`, then run
+For Linux real-CLI/fake-API smoke tests, install the latest packages above and Node 22 on `PATH`, then run
 `RELEASE_CLI_SMOKE=1 uv run python -B -m unittest discover -s tests -p test_release_cli.py -v`.
 These tests use synthetic responses and a fake key to verify evidence exchange and denied write tools. They neither
 publish a Release nor call a paid API, and do not replace hosted-runner/real-endpoint acceptance.

@@ -365,8 +365,11 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
-      - name: Install pinned notes CLIs
-        run: npm install --global @anthropic-ai/claude-code@2.1.79 @openai/codex@0.114.0
+      - name: Install latest notes CLIs
+        run: |
+          npm install --global @anthropic-ai/claude-code@latest @openai/codex@latest
+          claude --version
+          codex --version
       - name: Prepare bounded release evidence
         env:
           GH_TOKEN: ${{ github.token }}

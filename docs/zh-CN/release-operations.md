@@ -44,7 +44,8 @@ CLI 追加 `/v1/messages`。Codex 需要支持 streaming 和 function calls 的 
 服务要求 `/v1` 时须包含在 base URL 中；只有 Chat Completions 的端点不适用。URL 不允许用户名密码、query 或 fragment，
 TLS 证书须公开受信任。模型配置独立于二进制分析使用的 `GSVIBE_LLM_*`。
 
-notes job 使用 Node 22、`@anthropic-ai/claude-code@2.1.79` 和 `@openai/codex@0.114.0`，运行于隔离的临时 home/work 目录，
+notes job 每次安装 `@anthropic-ai/claude-code@latest` 和 `@openai/codex@latest`，并打印实际版本以便排障。
+使用 Node 22，运行于隔离的临时 home/work 目录，
 环境变量采用 allowlist。API secrets 只注入生成步骤，AI CLI 不接收 GitHub/artifact 凭证。仅开放本地 `release_git` stdio MCP，
 支持经过参数校验的 `log`、`show`、`diff`、`ls-tree`，revision 限于 source SHA 及祖先。不开放 Shell、编辑、任意 Git 参数、
 外部 diff/textconv 或 remote transport，Git 子进程不继承 API 凭证。检出完整主仓库历史，不检出私有 `bin` 子模块。
@@ -82,7 +83,7 @@ actionlint .github/workflows/release-build.yml
 git diff --check
 ```
 
-Linux 上将上述固定版本 CLI 与 Node 22 放入 `PATH` 后，可运行
+Linux 上将上述最新版 CLI 与 Node 22 放入 `PATH` 后，可运行
 `RELEASE_CLI_SMOKE=1 uv run python -B -m unittest discover -s tests -p test_release_cli.py -v`。
 该测试用模拟 API 和假 key 验证证据往返及写工具拒绝，不创建 Release、不调用付费 API，也不能替代 hosted-runner/真实端点验收。
 

@@ -13,7 +13,7 @@ import release_notes as release
 NOTES = "## English\n- Fixed symbols.\n\n## 中文\n- 修复符号。\n"
 
 
-@unittest.skipUnless(os.environ.get("RELEASE_CLI_SMOKE") == "1", "Opt-in test: requires pinned CLIs on PATH")
+@unittest.skipUnless(os.environ.get("RELEASE_CLI_SMOKE") == "1", "Opt-in test: requires notes CLIs on PATH")
 class CliSmokeTests(unittest.TestCase):
     def setUp(self):
         self.requests = []
