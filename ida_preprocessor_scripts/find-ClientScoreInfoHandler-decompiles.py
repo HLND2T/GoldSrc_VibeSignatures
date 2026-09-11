@@ -12,6 +12,7 @@ from ida_preprocessor_scripts._scoreinfo_dataflow import (
     CZDS_PLAYER_STRIDE,
     windows_frags_instruction_rule,
 )
+from ida_preprocessor_scripts._scoreinfo_prompt import scoreinfo_prompt_path
 
 GV_FIELDS = [
     "gv_name",
@@ -38,13 +39,22 @@ async def preprocess_skill(
     debug=False,
 ):
     _ = skill_name, old_yaml_map
+    with scoreinfo_prompt_path() as prompt_path:
+        return await _preprocess_scoreinfo(
+            session, expected_outputs, new_binary_dir, platform, image_base, llm_config, debug, prompt_path
+        )
+
+
+async def _preprocess_scoreinfo(
+    session, expected_outputs, new_binary_dir, platform, image_base, llm_config, debug, prompt_path
+):
     czds = _output_for_symbol(expected_outputs, "g_PlayerExtraInfo_CZDS") is not None
     name = "g_PlayerExtraInfo_CZDS" if czds else "g_PlayerExtraInfo"
     family = "czeror-10210" if czds else "cstrike-10210"
     specs = [
         {
             "symbol_name": name,
-            "prompt_path": "prompt/call_llm_scoreinfo.md",
+            "prompt_path": prompt_path,
             "reference_yaml_paths": [f"references/{family}/client/ClientScoreInfoHandler.{{platform}}.yaml"],
             "expected_result_sections": ["found_gv"],
             "dependency_policy": {"ClientScoreInfoHandler.{platform}.yaml": "required"},
