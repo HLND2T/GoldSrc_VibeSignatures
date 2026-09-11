@@ -16,8 +16,7 @@ workflow. The separate Pages workflow may write only its non-authoritative appen
 
 ## Responsibilities
 
-- Force-rebuild every configured analysis artifact into a fresh checkout-external root and compare exact inventory and
-  bytes with Git `bin_artifacts`.
+- Default `source_artifact_mode=rebuild`: force-rebuild every configured analysis artifact into a fresh checkout-external root and compare exact inventory and bytes with Git `bin_artifacts`. Manual `tracked` mode instead binds the selected source SHA's committed artifacts without proving rebuildability.
 - Derive snapshot/metadata pairs and browser JSON datasets (`mark -step json`), pack the single
   `gamesymbols-<version>.7z`, and write a canonical Release manifest and `SHA256SUMS` into one allowlisted bundle.
 - Upload the bundle as an Actions Artifact for build-to-verifier-to-publisher transport only.
@@ -39,7 +38,7 @@ workflow. The separate Pages workflow may write only its non-authoritative appen
 
 ## Architecture
 
-`source SHA + bin gitlink + bin_artifacts -> warm selection -> read-only full rebuild -> closed bundle -> hosted verify ->
+`source SHA + bin gitlink + bin_artifacts -> warm selection -> read-only full rebuild OR tracked source binding -> closed bundle -> hosted verify ->
 protected draft upload/remote verification -> published GitHub Release`.
 
 The Release manifest and checksums are assets inside that publication boundary. Actions Artifacts are transport, while a
@@ -86,3 +85,9 @@ source inventory. A verified `.incoming` backup and a partial deletion are resum
 - Correct action: fix configuration/endpoint, rerun failed jobs within artifact retention; rerun all jobs with the same version/source after expiration. Drafts recover original build identity. Do not manually edit/publish a draft during the workflow because GitHub has no atomic compare-and-publish transaction.
 - Verification: deterministic release tests cover evidence, retries, read-only queries, no mutation before valid notes, Draft recovery, remote drift and immutable published bodies. Opt-in Linux `RELEASE_CLI_SMOKE=1` tests use the latest real CLIs with a fake API/key to check evidence exchange and denied write tools. Hosted-runner/real-endpoint acceptance remains a separate `publish_release=false` run with administrator-provided Environment settings.
 - Scope: AI-generated GitHub Release body only; no bundle schema/asset change, no historical published-body rewrite. See `docs/en/release-operations.md` and `docs/zh-CN/release-operations.md`.
+
+## Build-free tracked artifact binding
+
+- `release_bundle.py bind-tracked` binds HEAD/source SHA, bin gitlink, configuration inventory and complete artifact inventory. It compares the index and disk inventory with immutable Git objects, batch-reads exact blob bytes, and enforces canonical artifact and no-link/reparse-point contracts. Tracked artifacts are source truth; accepted-bin and warm-IDB remain caches.
+- Bundle build requires `--tracked-binding` exactly when `--source-artifact-mode tracked` is selected. Build, hosted verify and publisher recheck the binding against source inputs; the verifier/publisher receive the expected mode from the workflow. New schema-3 manifests record `source_artifact_mode` and `tracked_artifact_binding_sha256` (null for rebuild); schema 2 is accepted only as rebuild. Public archive payload format is unchanged.
+- Trigger: an explicitly selected build-free release or recovery attempt. Constraint: tracked mode does not prove analysis reproducibility and still requires warm-IDB/runtime, snapshots/JSON, notes and protected publication. Correct action: keep source and mode fixed during draft recovery; never bypass binding failures or overwrite assets when switching modes. Verification: deterministic tests cover staged/unstaged/index-only drift, missing/extra inputs, links, tampered binding, mode mismatch and legacy schema compatibility; real runner acceptance uses `publish_release=false`. Scope: the existing all-game-version immutable release workflow and its trigger skill.

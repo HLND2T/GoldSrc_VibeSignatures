@@ -15,6 +15,44 @@ def completed(arguments, stdout="", returncode=0, stderr=""):
 
 
 class ReleasePublishTests(unittest.TestCase):
+    def test_tracked_mode_is_verified_before_any_remote_work(self):
+        with (
+            patch.object(
+                release_publish,
+                "verify_release_bundle",
+                side_effect=release_publish.ReleaseBundleError("mode mismatch"),
+            ) as verify,
+            patch.object(release_publish, "remote_state") as remote,
+            patch.object(release_publish, "_run") as run,
+        ):
+            self.assertEqual(
+                1,
+                release_publish.main(
+                    [
+                        "publish",
+                        "--repository",
+                        "owner/repo",
+                        "--bundle-root",
+                        "unused",
+                        "--version",
+                        "v20260831a",
+                        "--source-sha",
+                        "a" * 40,
+                        "--build-id",
+                        "1",
+                        "--workflow-run-url",
+                        "https://example.invalid/1",
+                        "--cache-selection-sha256",
+                        "b" * 64,
+                        "--source-artifact-mode",
+                        "tracked",
+                    ]
+                ),
+            )
+        self.assertEqual("tracked", verify.call_args.kwargs["source_artifact_mode"])
+        remote.assert_not_called()
+        run.assert_not_called()
+
     def test_preflight_accepts_absent_resume_and_published_identity(self):
         with patch.object(release_publish, "remote_state", return_value=(None, None)):
             self.assertEqual("new", release_publish.preflight("owner/repo", "v20260831a", "a" * 40))

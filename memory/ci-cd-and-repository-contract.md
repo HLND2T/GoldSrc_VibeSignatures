@@ -56,7 +56,7 @@ key binds binary/kernel/worker identity and intentionally does not bind `bin_art
 
 Release DAG: `preflight -> warmup-idb -> build-release-bundle -> verify-release-bundle -> publish-release`. The
 GitHub-hosted verifier independently re-derives the JSON datasets and compares them byte-for-byte with the bundle;
-`publish-release` is the only release workflow job with `contents: write`. See
+`publish-release` is the only release workflow job with `contents: write`. Manual `source_artifact_mode=tracked` skips full analysis and rebuild comparison while retaining the warm-IDB/runtime stages; the default remains `rebuild`. The trigger skill asks for the build path only when unspecified and passes the selected mode explicitly. See
 [[Release bundle publication and recovery]] for the full trust/immutability contract (not repeated here).
 
 `deploy-pages.yml` triggers from a published Release (or manual dispatch with an explicit published tag), downloads and

@@ -11,6 +11,7 @@ an independent verifier can re-derive those JSON bytes and compare them exactly.
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import os
 import re
@@ -43,7 +44,11 @@ from release_workflow_lib.hashing import (
 )
 from release_workflow_lib.manifests import require_gamever, require_sha, require_version
 
-BUNDLE_SCHEMA_VERSION = 2
+BUNDLE_SCHEMA_VERSION = 3
+LEGACY_BUNDLE_SCHEMA_VERSION = 2
+TRACKED_BINDING_SCHEMA_VERSION = 1
+SOURCE_ARTIFACT_MODES = ("rebuild", "tracked")
+TRACKED_BINDING_PATH = "evidence/tracked-artifact-binding.json"
 MANIFEST_KEYS = {
     "schema_version",
     "release_version",
@@ -58,6 +63,8 @@ MANIFEST_KEYS = {
     "gamevers",
     "assets",
 }
+LEGACY_MANIFEST_KEYS = MANIFEST_KEYS.copy()
+MANIFEST_KEYS |= {"source_artifact_mode", "tracked_artifact_binding_sha256"}
 GAMEVER_RECORD_KEYS = {
     "game_version",
     "artifact_inventory_sha256",
@@ -99,6 +106,96 @@ SEVEN_ZIP_CRC_RE = re.compile(r"^[0-9A-F]{8}$")
 
 class ReleaseBundleError(ValueError):
     pass
+
+
+def require_source_artifact_mode(mode: str) -> str:
+    if mode not in SOURCE_ARTIFACT_MODES:
+        raise ReleaseBundleError(f"Unknown source artifact mode: {mode!r}")
+    return mode
+
+
+def _git_bytes(repo_root: Path, *arguments: str, input: bytes | None = None) -> bytes:
+    result = subprocess.run(["git", "-C", str(repo_root), *arguments], input=input, capture_output=True, check=False)
+    if result.returncode != 0:
+        raise ReleaseBundleError(result.stderr.decode("utf-8", errors="replace").strip())
+    return result.stdout
+
+
+def bind_tracked_artifacts(*, repo_root: str | Path, source_sha: str) -> dict:
+    """Bind exact committed artifacts, without claiming they were rebuilt."""
+    repo_root = Path(repo_root).resolve()
+    source_sha = require_sha(source_sha, "SOURCE_SHA")
+    if _git(repo_root, "rev-parse", "HEAD") != source_sha:
+        raise ReleaseBundleError("Tracked binding source SHA does not match checkout HEAD")
+    try:
+        # Compare the index as well as disk: restored disk bytes must not conceal a staged change.
+        source_entries = {}
+        for record in _git_bytes(repo_root, "ls-tree", "-rz", source_sha, "--", "configs", "bin_artifacts").split(
+            b"\0"
+        ):
+            if not record:
+                continue
+            metadata, path = record.split(b"\t", 1)
+            mode, kind, oid = metadata.split()
+            if mode not in {b"100644", b"100755"} or kind != b"blob":
+                raise ReleaseBundleError("Tracked source inputs must be regular Git blobs")
+            source_entries[path.decode("utf-8")] = (mode, oid)
+        index_entries = {}
+        for record in _git_bytes(repo_root, "ls-files", "--stage", "-z", "--", "configs", "bin_artifacts").split(b"\0"):
+            if not record:
+                continue
+            metadata, path = record.split(b"\t", 1)
+            mode, oid, stage = metadata.split()
+            if stage != b"0":
+                raise ReleaseBundleError("Tracked source inputs have unmerged index entries")
+            index_entries[path.decode("utf-8")] = (mode, oid)
+        if source_entries != index_entries:
+            raise ReleaseBundleError("Tracked source input index differs from the selected Git commit")
+        disk_entries = {}
+        for directory in ("configs", "bin_artifacts"):
+            for entry in file_inventory(repo_root / directory):
+                disk_entries[f"{directory}/{entry['path']}"] = entry
+        if set(disk_entries) != set(source_entries):
+            raise ReleaseBundleError("Tracked source input inventory differs from the selected Git commit")
+        ordered_paths = sorted(source_entries)
+        blobs = io.BytesIO(
+            _git_bytes(
+                repo_root,
+                "cat-file",
+                "--batch",
+                input=b"".join(source_entries[path][1] + b"\n" for path in ordered_paths),
+            )
+        )
+        config_records = []
+        for path in ordered_paths:
+            header = blobs.readline().split()
+            if len(header) != 3 or header[:2] != [source_entries[path][1], b"blob"]:
+                raise ReleaseBundleError(f"Unable to read source Git blob: {path}")
+            raw = blobs.read(int(header[2]))
+            if blobs.read(1) != b"\n" or (repo_root / path).read_bytes() != raw:
+                raise ReleaseBundleError(f"Tracked source input bytes differ from Git: {path}")
+            if path.startswith("configs/"):
+                config_records.append({"path": path, "size": len(raw), "sha256": sha256_bytes(raw)})
+        artifacts = validate_repository_artifact_contract(repo_root)
+    except (BinArtifactContractError, ReleaseWorkflowError, OSError, UnicodeError) as exc:
+        raise ReleaseBundleError(f"Tracked source artifact binding failed: {exc}") from exc
+    return {
+        "schema_version": TRACKED_BINDING_SCHEMA_VERSION,
+        "binding_mode": "tracked",
+        "source_sha": source_sha,
+        "bin_gitlink_sha": _gitlink(repo_root),
+        "config_inventory_sha256": sha256_bytes(canonical_json_bytes(config_records)),
+        "artifact_inventory_sha256": artifacts.digest.removeprefix("sha256:"),
+        "file_count": len(artifacts.paths),
+    }
+
+
+def _verify_tracked_binding(path: Path, *, repo_root: Path, source_sha: str) -> dict:
+    binding = _load_canonical_json(path, "tracked artifact binding")
+    expected = bind_tracked_artifacts(repo_root=repo_root, source_sha=source_sha)
+    if canonical_json_bytes(binding) != canonical_json_bytes(expected):
+        raise ReleaseBundleError("Tracked artifact binding differs from immutable source inputs")
+    return binding
 
 
 def _git(repo_root: Path, *arguments: str) -> str:
@@ -339,7 +436,16 @@ def _parse_manifest(path: Path) -> dict:
         document = json.loads(raw)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ReleaseBundleError(f"Unable to parse release manifest {path}: {exc}") from exc
-    if not isinstance(document, dict) or set(document) != MANIFEST_KEYS or document.get("schema_version") != 2:
+    if (
+        not isinstance(document, dict)
+        or type(document.get("schema_version")) is not int
+        or document["schema_version"] not in {LEGACY_BUNDLE_SCHEMA_VERSION, BUNDLE_SCHEMA_VERSION}
+    ):
+        raise ReleaseBundleError("Release manifest has unexpected fields or schema")
+    expected_keys = (
+        LEGACY_MANIFEST_KEYS if document["schema_version"] == LEGACY_BUNDLE_SCHEMA_VERSION else MANIFEST_KEYS
+    )
+    if set(document) != expected_keys:
         raise ReleaseBundleError("Release manifest has unexpected fields or schema")
     if canonical_json_bytes(document) != raw:
         raise ReleaseBundleError("Release manifest is not canonical JSON")
@@ -578,7 +684,12 @@ def build_release_bundle(
     build_id: str,
     workflow_run_url: str,
     source_sha: str,
+    source_artifact_mode: str = "rebuild",
+    tracked_binding_path: str | Path | None = None,
 ) -> dict:
+    require_source_artifact_mode(source_artifact_mode)
+    if (source_artifact_mode == "tracked") != (tracked_binding_path is not None):
+        raise ReleaseBundleError("Tracked mode requires --tracked-binding; rebuild mode forbids it")
     repo_root = Path(repo_root).resolve()
     bundle_root = Path(bundle_root).resolve()
     version = require_version(version)
@@ -587,6 +698,8 @@ def build_release_bundle(
         raise ReleaseBundleError("build_id and workflow_run_url must be non-empty")
     if _git(repo_root, "rev-parse", "HEAD") != source_sha:
         raise ReleaseBundleError("Bundle source SHA does not match checkout HEAD")
+    if tracked_binding_path is not None:
+        _verify_tracked_binding(Path(tracked_binding_path), repo_root=repo_root, source_sha=source_sha)
     if bundle_root.exists() and any(bundle_root.iterdir()):
         raise ReleaseBundleError(f"Bundle root must be empty: {bundle_root}")
     bundle_root.mkdir(parents=True, exist_ok=True)
@@ -600,6 +713,9 @@ def build_release_bundle(
     cache_selection = Path(cache_selection_path)
     _copy_file(ida_runtime, bundle_root / "evidence/ida-runtime.json")
     _copy_file(cache_selection, bundle_root / "evidence/cache-selection.json")
+    if tracked_binding_path is not None:
+        _copy_file(Path(tracked_binding_path), bundle_root / TRACKED_BINDING_PATH)
+        _verify_tracked_binding(bundle_root / TRACKED_BINDING_PATH, repo_root=repo_root, source_sha=source_sha)
 
     artifacts_by_tag = {item.game_version: item for item in repository_artifacts.gamevers}
     gamesymbols_root = Path(gamesymbols_root)
@@ -658,6 +774,10 @@ def build_release_bundle(
     payload = _asset_record(bundle_root, f"archives/gamesymbols-{version}.7z")
     manifest = {
         "schema_version": BUNDLE_SCHEMA_VERSION,
+        "source_artifact_mode": source_artifact_mode,
+        "tracked_artifact_binding_sha256": (
+            sha256_file(bundle_root / TRACKED_BINDING_PATH) if source_artifact_mode == "tracked" else None
+        ),
         "release_version": version,
         "build_id": str(build_id),
         "workflow_run_url": str(workflow_run_url),
@@ -698,7 +818,9 @@ def verify_release_bundle(
     build_id: str,
     workflow_run_url: str,
     cache_selection_sha256: str,
+    source_artifact_mode: str = "rebuild",
 ) -> dict:
+    require_source_artifact_mode(source_artifact_mode)
     repo_root = Path(repo_root).resolve()
     bundle_root = Path(bundle_root).resolve()
     version = require_version(version)
@@ -707,6 +829,10 @@ def verify_release_bundle(
         raise ReleaseBundleError("Bound build ID and workflow run URL must be non-empty strings")
     manifest_relative = f"release-manifest-{version}.json"
     manifest = _parse_manifest(bundle_root / manifest_relative)
+    if manifest.get("source_artifact_mode", "rebuild") != source_artifact_mode:
+        raise ReleaseBundleError("Release source artifact mode differs from the bound workflow mode")
+    if source_artifact_mode == "rebuild" and manifest.get("tracked_artifact_binding_sha256") is not None:
+        raise ReleaseBundleError("Rebuild mode forbids tracked artifact binding evidence")
     gamevers = _configured_gamevers(repo_root)
     _validate_manifest_identity(
         manifest,
@@ -746,6 +872,12 @@ def verify_release_bundle(
         "gamesymbols-json/index.json",
         f"archives/gamesymbols-{version}.7z",
     }
+    if source_artifact_mode == "tracked":
+        binding_path = bundle_root / TRACKED_BINDING_PATH
+        _verify_tracked_binding(binding_path, repo_root=repo_root, source_sha=source_sha)
+        if sha256_file(binding_path) != manifest["tracked_artifact_binding_sha256"]:
+            raise ReleaseBundleError("Tracked artifact binding digest mismatch")
+        expected_paths.add(TRACKED_BINDING_PATH)
     artifact_by_tag = {item.game_version: item for item in repository_artifacts.gamevers}
     manifest_by_tag = {item["game_version"]: item for item in manifest["gamevers"]}
     json_dir = bundle_root / "gamesymbols-json"
@@ -834,6 +966,10 @@ def verify_release_bundle(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    bind = commands.add_parser("bind-tracked")
+    bind.add_argument("--repo-root", default=".")
+    bind.add_argument("--source-sha", required=True)
+    bind.add_argument("--output", required=True)
     build = commands.add_parser("build")
     build.add_argument("--repo-root", default=".")
     build.add_argument("--bundle-root", required=True)
@@ -845,6 +981,8 @@ def main(argv: list[str] | None = None) -> int:
     build.add_argument("--build-id", required=True)
     build.add_argument("--workflow-run-url", required=True)
     build.add_argument("--source-sha", required=True)
+    build.add_argument("--source-artifact-mode", choices=SOURCE_ARTIFACT_MODES, default="rebuild")
+    build.add_argument("--tracked-binding")
     verify = commands.add_parser("verify")
     verify.add_argument("--repo-root", default=".")
     verify.add_argument("--bundle-root", required=True)
@@ -853,9 +991,14 @@ def main(argv: list[str] | None = None) -> int:
     verify.add_argument("--build-id", required=True)
     verify.add_argument("--workflow-run-url", required=True)
     verify.add_argument("--cache-selection-sha256", required=True)
+    verify.add_argument("--source-artifact-mode", choices=SOURCE_ARTIFACT_MODES, default="rebuild")
     args = parser.parse_args(argv)
     try:
-        if args.command == "build":
+        if args.command == "bind-tracked":
+            write_canonical_json(
+                args.output, bind_tracked_artifacts(repo_root=args.repo_root, source_sha=args.source_sha)
+            )
+        elif args.command == "build":
             build_release_bundle(
                 repo_root=args.repo_root,
                 bundle_root=args.bundle_root,
@@ -867,6 +1010,8 @@ def main(argv: list[str] | None = None) -> int:
                 build_id=args.build_id,
                 workflow_run_url=args.workflow_run_url,
                 source_sha=args.source_sha,
+                source_artifact_mode=args.source_artifact_mode,
+                tracked_binding_path=args.tracked_binding,
             )
         else:
             verify_release_bundle(
@@ -877,6 +1022,7 @@ def main(argv: list[str] | None = None) -> int:
                 build_id=args.build_id,
                 workflow_run_url=args.workflow_run_url,
                 cache_selection_sha256=args.cache_selection_sha256,
+                source_artifact_mode=args.source_artifact_mode,
             )
     except (ReleaseBundleError, ReleaseWorkflowError, GamedataContractError, OSError, ValueError) as exc:
         print(f"Error: {exc}")

@@ -13,6 +13,7 @@ ALLOWED_REPOSITORIES = {"HLND2T/GoldSrc_VibeSignatures"}
 VERSION_RE = re.compile(r"^v[0-9]{8}[a-z]?\Z")
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 WORKFLOW = "release-build.yml"
+SOURCE_ARTIFACT_MODES = ("rebuild", "tracked")
 RUN_LIST_LIMIT = "100"
 RUN_DISCOVERY_ATTEMPTS = 10
 RUN_DISCOVERY_DELAY_SECONDS = 2
@@ -168,7 +169,7 @@ def require_main_unchanged(root: Path, source_sha: str) -> None:
         raise TriggerError("origin/main advanced while validating the rebuild request; run the skill again")
 
 
-def dispatch(root: Path, version: str, source_sha: str) -> None:
+def dispatch(root: Path, version: str, source_sha: str, *, source_artifact_mode: str = "rebuild") -> None:
     run_command(
         [
             "gh",
@@ -181,6 +182,8 @@ def dispatch(root: Path, version: str, source_sha: str) -> None:
             f"version={version}",
             "-f",
             f"source_sha={source_sha}",
+            "-f",
+            f"source_artifact_mode={source_artifact_mode}",
         ],
         root,
     )
@@ -201,7 +204,9 @@ def discover_run(root: Path, known_ids: set[int], *, version: str, source_sha: s
     raise TriggerError("workflow was dispatched but its Actions run URL could not be discovered")
 
 
-def execute(requested: str) -> dict:
+def execute(requested: str, *, source_artifact_mode: str = "rebuild") -> dict:
+    if source_artifact_mode not in SOURCE_ARTIFACT_MODES:
+        raise TriggerError(f"unknown source artifact mode: {source_artifact_mode!r}")
     root = repository_root()
     repository = require_repository(root)
     require_github_access(root, repository)
@@ -210,10 +215,11 @@ def execute(requested: str) -> dict:
     state = release_state(root, repository, version, source_sha)
     known_ids = require_no_duplicate(root, version)
     require_main_unchanged(root, source_sha)
-    dispatch(root, version, source_sha)
+    dispatch(root, version, source_sha, source_artifact_mode=source_artifact_mode)
     run_url = discover_run(root, known_ids, version=version, source_sha=source_sha)
     return {
         "version": version,
+        "source_artifact_mode": source_artifact_mode,
         "state": state,
         "source_sha": source_sha,
         "subject": subject,
@@ -224,14 +230,16 @@ def execute(requested: str) -> dict:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("version", help="A release version of the form vYYYYMMDD[a-z]")
+    parser.add_argument("--source-artifact-mode", choices=SOURCE_ARTIFACT_MODES, default="rebuild")
     args = parser.parse_args(argv)
     try:
-        result = execute(args.version)
+        result = execute(args.version, source_artifact_mode=args.source_artifact_mode)
     except (TriggerError, OSError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
     print(f"Selected VERSION: {result['version']}")
     print(f"Release state: {result['state']}")
+    print(f"Source artifact mode: {result['source_artifact_mode']}")
     print(f"SOURCE_SHA: {result['source_sha']}")
     print(f"Commit: {result['subject']}")
     print(f"Actions run: {result['run_url']}")

@@ -141,6 +141,8 @@ class TestTriggerReleaseBuild(unittest.TestCase):
                 "version=v20260825a",
                 "-f",
                 f"source_sha={'1' * 40}",
+                "-f",
+                "source_artifact_mode=rebuild",
             ],
             root,
         )
@@ -186,12 +188,13 @@ class TestTriggerReleaseBuild(unittest.TestCase):
         access.assert_called_once()
         release_state.assert_called_once_with(root, "HLND2T/GoldSrc_VibeSignatures", "v20260825a", "1" * 40)
         unchanged.assert_called_once_with(root, "1" * 40)
-        dispatch.assert_called_once_with(root, "v20260825a", "1" * 40)
+        dispatch.assert_called_once_with(root, "v20260825a", "1" * 40, source_artifact_mode="rebuild")
 
     def test_main_reports_selected_state(self) -> None:
         result = {
             "version": "v20260825a",
             "state": "new",
+            "source_artifact_mode": "rebuild",
             "source_sha": "1" * 40,
             "subject": "subject",
             "run_url": "https://run/11",
@@ -199,8 +202,31 @@ class TestTriggerReleaseBuild(unittest.TestCase):
         with patch.object(trigger, "execute", return_value=result) as execute, patch("builtins.print") as output:
             self.assertEqual(0, trigger.main(["v20260825a"]))
 
-        execute.assert_called_once_with("v20260825a")
+        execute.assert_called_once_with("v20260825a", source_artifact_mode="rebuild")
         output.assert_any_call("Release state: new")
+        output.assert_any_call("Source artifact mode: rebuild")
+
+    def test_tracked_dispatch_and_cli_preserve_selected_mode(self):
+        with patch.object(trigger, "run_command", return_value=completed([])) as run:
+            trigger.dispatch(Path("repo"), "v20260825a", "1" * 40, source_artifact_mode="tracked")
+        self.assertIn("source_artifact_mode=tracked", run.call_args.args[0])
+        result = dict(
+            version="v20260825a",
+            state="new",
+            source_artifact_mode="tracked",
+            source_sha="1" * 40,
+            subject="subject",
+            run_url="https://run/11",
+        )
+        with patch.object(trigger, "execute", return_value=result) as execute, patch("builtins.print") as output:
+            self.assertEqual(0, trigger.main(["v20260825a", "--source-artifact-mode", "tracked"]))
+        execute.assert_called_once_with("v20260825a", source_artifact_mode="tracked")
+        output.assert_any_call("Source artifact mode: tracked")
+
+    def test_invalid_mode_stops_before_repository_or_remote_work(self):
+        with patch.object(trigger, "repository_root") as root, self.assertRaises(trigger.TriggerError):
+            trigger.execute("v20260825a", source_artifact_mode="unknown")
+        root.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -16,6 +16,14 @@ on:
         required: false
         default: true
         type: boolean
+      source_artifact_mode:
+        description: Rebuild analysis artifacts, or bind tracked Git artifacts without proving rebuildability
+        required: false
+        default: rebuild
+        type: choice
+        options:
+          - rebuild
+          - tracked
       cleanup_legacy_yaml:
         description: One-time cleanup of backed-up legacy accepted-bin YAML after the bundle is locally verified
         required: false
@@ -170,6 +178,7 @@ jobs:
           "IDA_KERNEL_VERSION=$kernelVersion" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
           "IDA_RUNTIME_PATH=$runtimePath" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Force full analysis in a fresh artifact root
+        if: inputs.source_artifact_mode != 'tracked'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -184,9 +193,20 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'rebuilt artifacts differ from Git truth' }
           git diff --exit-code -- bin_artifacts
           if ($LASTEXITCODE -ne 0) { throw 'tracked bin_artifacts changed during release rebuild' }
-          "REBUILT_ARTIFACT_ROOT=$artifactRoot" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "RELEASE_ARTIFACT_ROOT=$artifactRoot" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Bind tracked source-owned artifacts without rebuilding
+        if: inputs.source_artifact_mode == 'tracked'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $binding = Join-Path $env:RUNNER_TEMP 'tracked-artifact-binding.json'
+          uv run python release_bundle.py bind-tracked --repo-root $env:GITHUB_WORKSPACE `
+            --source-sha "${{ needs.preflight.outputs.source_sha }}" --output $binding
+          if ($LASTEXITCODE -ne 0) { throw 'tracked artifacts differ from immutable Git truth' }
+          "RELEASE_TRACKED_BINDING=$binding" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          "RELEASE_ARTIFACT_ROOT=$(Join-Path $env:GITHUB_WORKSPACE 'bin_artifacts')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Upload batch analysis diagnostics
-        if: always()
+        if: always() && inputs.source_artifact_mode != 'tracked'
         uses: actions/upload-artifact@v7
         with:
           name: analysis-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
@@ -194,7 +214,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
       - name: Upload unverified rebuilt artifact diagnostics
-        if: failure()
+        if: failure() && inputs.source_artifact_mode != 'tracked'
         uses: actions/upload-artifact@v7
         with:
           name: unverified-rebuilt-bin-artifacts-${{ github.run_id }}-${{ github.run_attempt }}
@@ -221,7 +241,7 @@ jobs:
             $symbolSession = Join-Path $stage 'symbol-session.json'
             $jsonSession = Join-Path $stage 'json-session.json'
             uv run python gamesymbol_candidate.py build -gamever $gamever -bindir bin `
-              -artifactdir $env:REBUILT_ARTIFACT_ROOT -configyaml "configs/$gamever.yaml" `
+              -artifactdir $env:RELEASE_ARTIFACT_ROOT -configyaml "configs/$gamever.yaml" `
               -output $candidate -session $symbolSession -last-publish-time $publishTime
             if ($LASTEXITCODE -ne 0) { throw "snapshot candidate failed for $gamever" }
             uv run python gamesymbols_json.py build -snapshot $candidate `
@@ -242,7 +262,12 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $bundleRoot = Join-Path $env:RUNNER_TEMP 'release-bundle'
           if (Test-Path -LiteralPath $bundleRoot) { Remove-Item -LiteralPath $bundleRoot -Recurse -Force }
+          $sourceBinding = @()
+          if ("${{ inputs.source_artifact_mode }}" -eq 'tracked') {
+            $sourceBinding = @('--tracked-binding', $env:RELEASE_TRACKED_BINDING)
+          }
           uv run python release_bundle.py build --repo-root $env:GITHUB_WORKSPACE --bundle-root $bundleRoot `
+            --source-artifact-mode "${{ inputs.source_artifact_mode || 'rebuild' }}" @sourceBinding `
             --gamesymbols-root (Join-Path $env:GENERATED_ROOT 'gamesymbols') `
             --gamesymbols-json-root (Join-Path $env:GENERATED_ROOT 'gamesymbols-json') `
             --ida-runtime $env:IDA_RUNTIME_PATH `
@@ -252,6 +277,7 @@ jobs:
             --source-sha "${{ needs.preflight.outputs.source_sha }}"
           if ($LASTEXITCODE -ne 0) { throw 'release bundle build failed' }
           uv run python release_bundle.py verify --repo-root $env:GITHUB_WORKSPACE --bundle-root $bundleRoot `
+            --source-artifact-mode "${{ inputs.source_artifact_mode || 'rebuild' }}" `
             --version "${{ needs.preflight.outputs.version }}" `
             --source-sha "${{ needs.preflight.outputs.source_sha }}" `
             --build-id "${{ needs.preflight.outputs.build_id }}" `
@@ -326,6 +352,7 @@ jobs:
       - name: Verify release bundle on GitHub-hosted runner
         run: |
           uv run python release_bundle.py verify --repo-root "$GITHUB_WORKSPACE" \
+            --source-artifact-mode "${{ inputs.source_artifact_mode || 'rebuild' }}" \
             --bundle-root "$RUNNER_TEMP/release-bundle" --version "${{ needs.preflight.outputs.version }}" \
             --source-sha "${{ needs.preflight.outputs.source_sha }}" \
             --build-id "${{ needs.preflight.outputs.build_id }}" \
@@ -469,6 +496,7 @@ jobs:
         run: |-
           set -euo pipefail
           uv run python release_publish.py publish --repository "${{ github.repository }}" \
+            --source-artifact-mode "${{ inputs.source_artifact_mode || 'rebuild' }}" \
             --repo-root "$GITHUB_WORKSPACE" --bundle-root "$RUNNER_TEMP/verified-release-bundle" \
             --version "${{ needs.preflight.outputs.version }}" \
             --source-sha "${{ needs.preflight.outputs.source_sha }}" \

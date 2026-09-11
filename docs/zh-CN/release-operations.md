@@ -1,9 +1,35 @@
 # Release 运维
 
 `release-build.yml` 接受 immutable `version`、可选 `source_sha`、默认开启的 `publish_release`，以及默认关闭的
-`cleanup_legacy_yaml`。生产 source 必须可从 default branch 到达。`publish_release=false` 只用于不发布的 workflow
+`cleanup_legacy_yaml`，以及 `source_artifact_mode`（默认 `rebuild`，也可选 `tracked`）。生产 source 必须可从 default branch 到达。`publish_release=false` 只用于不发布的 workflow
 verification，并要求 source 等于 dispatch commit。两种模式都会在 bundle 验证后生成 AI notes。
 已发布版本跳过 AI，保留原正文并继续资产幂等检查，以便恢复失败的 Pages dispatch。
+
+## 使用已跟踪产物的 build-free 发布
+
+`source_artifact_mode=tracked` 跳过 full analysis 和重建产物比对，直接使用选定 source SHA 已提交的
+`bin_artifacts`。它证明产物来自该提交，不证明产物可以重建。Warm-IDB 准备/恢复、runtime 证据、snapshot/JSON
+生成、hosted verification、notes 和受保护的发布步骤仍然执行。
+
+Trigger skill 在未指定构建路径时先询问，已经明确选择时直接沿用。脚本调用方式：
+
+```powershell
+uv run python .claude/skills/trigger-release-build/scripts/trigger_release_build.py <VERSION> --source-artifact-mode tracked
+```
+
+常规完整分析使用 `rebuild`，脚本默认值也为 `rebuild`，兼容已有调用。两种模式共用同一 workflow 和版本互斥。
+脚本检查 immutable source、权限、版本及重复运行，完整 artifact 绑定由 CI 检查。本地未提交产物不会用于发布。
+
+`release_bundle.py bind-tracked --repo-root <checkout> --source-sha <SHA> --output <binding.json>` 校验 HEAD、
+配置及 artifact 清单、暂存区 identity、Git blob 原始字节，以及 artifact 规范和链接约束。
+Bundle `build --source-artifact-mode tracked --tracked-binding <binding.json>` 将 canonical binding 证据写入包内。
+Bundle `verify` 和 publisher `publish` 必须传入匹配的 `--source-artifact-mode tracked`，并独立重算绑定。
+缺失、修改、额外、暂存或链接形式的 source input 漂移均阻断发布。
+
+新 manifest 使用 schema 3，增加 `source_artifact_mode` 和 `tracked_artifact_binding_sha256`（rebuild 为 null）。
+Schema 2 仅按 rebuild 兼容读取，公开压缩包内容格式保持不变。Draft 重试须保持 mode/source；切换模式不能覆盖
+已有资产。Runner 验收使用 `publish_release=false`，source 等于 dispatch commit，检查两种模式的 job 结果及
+verified bundle；该验收仍依赖已配置的 runner、warm-IDB 基础设施和 notes 端点。
 
 ## 信任与权限边界
 

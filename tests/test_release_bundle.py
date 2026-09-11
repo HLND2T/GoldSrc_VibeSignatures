@@ -52,6 +52,7 @@ class ReleaseBundleTests(unittest.TestCase):
         repo = root / "repo"
         repo.mkdir()
         subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        subprocess.run(["git", "-C", str(repo), "config", "core.autocrlf", "false"], check=True)
         subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.com"], check=True)
         subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True)
         configs = repo / "configs"
@@ -142,7 +143,7 @@ class ReleaseBundleTests(unittest.TestCase):
         )
         return repo, generated, source_sha
 
-    def _build(self, repo: Path, generated: Path, bundle: Path, source_sha: str) -> dict:
+    def _build(self, repo: Path, generated: Path, bundle: Path, source_sha: str, **kwargs) -> dict:
         return build_release_bundle(
             repo_root=repo,
             bundle_root=bundle,
@@ -154,7 +155,185 @@ class ReleaseBundleTests(unittest.TestCase):
             build_id="run-1-1",
             workflow_run_url="https://example.invalid/run/1",
             source_sha=source_sha,
+            **kwargs,
         )
+
+    def test_tracked_bundle_and_independent_binding_verification(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, generated, source_sha = self.fixture(root)
+            binding = root / "binding.json"
+            self.assertEqual(
+                0,
+                release_bundle.main(
+                    ["bind-tracked", "--repo-root", str(repo), "--source-sha", source_sha, "--output", str(binding)]
+                ),
+            )
+            bundle = root / "bundle"
+            manifest = self._build(
+                repo, generated, bundle, source_sha, source_artifact_mode="tracked", tracked_binding_path=binding
+            )
+            self.assertEqual(3, manifest["schema_version"])
+            self.assertEqual("tracked", manifest["source_artifact_mode"])
+            self.assertEqual(sha256_file(binding), manifest["tracked_artifact_binding_sha256"])
+            args = self._verification_arguments(repo, generated, source_sha)
+            self.assertEqual(
+                manifest, verify_release_bundle(bundle_root=bundle, source_artifact_mode="tracked", **args)
+            )
+            self.assertEqual(
+                0,
+                release_bundle.main(
+                    [
+                        "verify",
+                        "--repo-root",
+                        str(repo),
+                        "--bundle-root",
+                        str(bundle),
+                        "--version",
+                        args["version"],
+                        "--source-sha",
+                        source_sha,
+                        "--build-id",
+                        args["build_id"],
+                        "--workflow-run-url",
+                        args["workflow_run_url"],
+                        "--cache-selection-sha256",
+                        args["cache_selection_sha256"],
+                        "--source-artifact-mode",
+                        "tracked",
+                    ]
+                ),
+            )
+            with self.assertRaisesRegex(ReleaseBundleError, "mode"):
+                verify_release_bundle(bundle_root=bundle, **args)
+            evidence = bundle / "evidence/tracked-artifact-binding.json"
+            original = evidence.read_bytes()
+            evidence.unlink()
+            with self.assertRaisesRegex(ReleaseBundleError, "binding"):
+                verify_release_bundle(bundle_root=bundle, source_artifact_mode="tracked", **args)
+            evidence.write_bytes(original + b"\n")
+            with self.assertRaisesRegex(ReleaseBundleError, "canonical"):
+                verify_release_bundle(bundle_root=bundle, source_artifact_mode="tracked", **args)
+            evidence.write_bytes(original)
+            self._rewrite_manifest_and_checksums(bundle, lambda m: m.update(tracked_artifact_binding_sha256="0" * 64))
+            with self.assertRaisesRegex(ReleaseBundleError, "digest"):
+                verify_release_bundle(bundle_root=bundle, source_artifact_mode="tracked", **args)
+            document = json.loads(evidence.read_bytes())
+            document["artifact_inventory_sha256"] = "0" * 64
+            evidence.write_bytes(canonical_json_bytes(document))
+            self._rewrite_manifest_and_checksums(
+                bundle, lambda m: m.update(tracked_artifact_binding_sha256=sha256_file(evidence))
+            )
+            with self.assertRaisesRegex(ReleaseBundleError, "binding"):
+                verify_release_bundle(bundle_root=bundle, source_artifact_mode="tracked", **args)
+
+    def test_tracked_build_and_verifier_recheck_source_after_binding(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, generated, source_sha = self.fixture(root)
+            binding = root / "binding.json"
+            binding.write_bytes(
+                canonical_json_bytes(release_bundle.bind_tracked_artifacts(repo_root=repo, source_sha=source_sha))
+            )
+            bundle = root / "bundle"
+            self._build(
+                repo, generated, bundle, source_sha, source_artifact_mode="tracked", tracked_binding_path=binding
+            )
+            config = repo / "configs/game-1.yaml"
+            config.write_bytes(config.read_bytes() + b"# changed after binding\n")
+            with self.assertRaisesRegex(ReleaseBundleError, "Git"):
+                self._build(
+                    repo,
+                    generated,
+                    root / "changed-bundle",
+                    source_sha,
+                    source_artifact_mode="tracked",
+                    tracked_binding_path=binding,
+                )
+            with self.assertRaisesRegex(ReleaseBundleError, "Git"):
+                verify_release_bundle(
+                    bundle_root=bundle,
+                    source_artifact_mode="tracked",
+                    **self._verification_arguments(repo, generated, source_sha),
+                )
+
+    def test_tracked_binding_rejects_boolean_integer_substitution(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, _, source_sha = self.fixture(root)
+            binding = release_bundle.bind_tracked_artifacts(repo_root=repo, source_sha=source_sha)
+            binding["file_count"] = True
+            path = root / "binding.json"
+            path.write_bytes(canonical_json_bytes(binding))
+            with self.assertRaisesRegex(ReleaseBundleError, "binding"):
+                release_bundle._verify_tracked_binding(path, repo_root=repo, source_sha=source_sha)
+
+    def test_tracked_binding_rejects_source_and_checkout_drift(self):
+        cases = ("sha", "artifact", "staged", "index-only", "missing", "extra", "config", "gamevers")
+        for case in cases:
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as temporary:
+                repo, _, source_sha = self.fixture(Path(temporary))
+                artifact = repo / "bin_artifacts/game-1/engine/Demo.windows.yaml"
+                original = artifact.read_bytes()
+                if case == "sha":
+                    source_sha = "0" * 40
+                elif case in {"artifact", "staged", "index-only"}:
+                    artifact.write_bytes(canonical_symbol_yaml_bytes({"func_name": "Demo", "func_va": "0x20"}))
+                    if case != "artifact":
+                        subprocess.run(["git", "-C", str(repo), "add", "bin_artifacts"], check=True)
+                    if case == "index-only":
+                        artifact.write_bytes(original)
+                elif case == "missing":
+                    artifact.unlink()
+                elif case == "extra":
+                    artifact.with_name("Extra.windows.yaml").write_bytes(original)
+                else:
+                    config = repo / "configs" / ("config.yaml" if case == "gamevers" else "game-1.yaml")
+                    config.write_bytes(config.read_bytes() + b"# drift\n")
+                with self.assertRaises(ReleaseBundleError):
+                    release_bundle.bind_tracked_artifacts(repo_root=repo, source_sha=source_sha)
+
+    def test_tracked_binding_rejects_links(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, _, source_sha = self.fixture(root)
+            artifact = repo / "bin_artifacts/game-1/engine/Demo.windows.yaml"
+            target = root / "outside.yaml"
+            target.write_bytes(artifact.read_bytes())
+            artifact.unlink()
+            try:
+                artifact.symlink_to(target)
+            except OSError as exc:
+                self.skipTest(f"symlink creation unavailable: {exc}")
+            with self.assertRaises(ReleaseBundleError):
+                release_bundle.bind_tracked_artifacts(repo_root=repo, source_sha=source_sha)
+
+    def test_binding_arguments_and_legacy_manifest_modes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, generated, source_sha = self.fixture(root)
+            for kwargs in (
+                {"source_artifact_mode": "tracked"},
+                {"tracked_binding_path": root / "unused"},
+                {"source_artifact_mode": "unknown"},
+            ):
+                with self.subTest(kwargs=kwargs), self.assertRaises(ReleaseBundleError):
+                    self._build(repo, generated, root / "invalid", source_sha, **kwargs)
+            bundle = root / "bundle"
+            manifest = self._build(repo, generated, bundle, source_sha)
+            self.assertEqual("rebuild", manifest["source_artifact_mode"])
+            self.assertIsNone(manifest["tracked_artifact_binding_sha256"])
+
+            def legacy(document):
+                document["schema_version"] = 2
+                del document["source_artifact_mode"]
+                del document["tracked_artifact_binding_sha256"]
+
+            self._rewrite_manifest_and_checksums(bundle, legacy)
+            args = self._verification_arguments(repo, generated, source_sha)
+            self.assertEqual(2, verify_release_bundle(bundle_root=bundle, **args)["schema_version"])
+            with self.assertRaisesRegex(ReleaseBundleError, "mode"):
+                verify_release_bundle(bundle_root=bundle, source_artifact_mode="tracked", **args)
 
     def test_archive_verifier_accepts_required_empty_artifact_directory(self):
         with tempfile.TemporaryDirectory() as temporary:

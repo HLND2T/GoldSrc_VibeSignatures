@@ -1,10 +1,38 @@
 # Release operations
 
 `release-build.yml` accepts an immutable `version`, optional `source_sha`, `publish_release` (default `true`), and
-`cleanup_legacy_yaml` (default `false`). A production source must be reachable from the default branch.
+`cleanup_legacy_yaml` (default `false`), and `source_artifact_mode` (`rebuild` by default, or `tracked`). A production source must be reachable from the default branch.
 `publish_release=false` is only a non-publishing workflow verification mode and requires the source to equal the dispatch
 commit. Both modes generate AI notes after bundle verification. A version already published skips AI generation and
 retains its existing body while checking assets and allowing Pages dispatch recovery.
+
+## Build-free release from tracked artifacts
+
+`source_artifact_mode=tracked` skips full analysis and rebuilt-artifact comparison. It uses only the selected source
+SHA's committed `bin_artifacts`; it proves source identity, not rebuildability. Warm-IDB preparation/restore, runtime
+evidence, snapshot/JSON generation, hosted verification, notes, and protected publication remain required.
+
+The trigger skill asks for the build path when unspecified and uses an already explicit choice. Its script accepts:
+
+```powershell
+uv run python .claude/skills/trigger-release-build/scripts/trigger_release_build.py <VERSION> --source-artifact-mode tracked
+```
+
+Use `rebuild` for normal full analysis; the script defaults to it for existing callers. Both modes share the same
+workflow and version concurrency guard. The script checks immutable source/auth/version/run identity; CI performs
+the artifact binding checks. Local uncommitted artifacts are never release inputs.
+
+`release_bundle.py bind-tracked --repo-root <checkout> --source-sha <SHA> --output <binding.json>` checks HEAD,
+configuration and artifact inventory, index identity, exact Git blob bytes, and canonical artifact/link contracts.
+Bundle `build --source-artifact-mode tracked --tracked-binding <binding.json>` embeds canonical binding evidence.
+Bundle `verify` and publisher `publish` require the matching `--source-artifact-mode tracked` and independently
+recompute the binding. Missing, changed, extra, staged or linked source inputs fail closed.
+
+New manifests use schema 3, with `source_artifact_mode` and `tracked_artifact_binding_sha256` (null for rebuild).
+Schema 2 remains readable as rebuild only. Public archive payloads retain their format. Keep mode/source unchanged
+when resuming a draft; switching modes must not overwrite existing assets. For runner acceptance, use
+`publish_release=false` with source equal to the dispatch commit and inspect both modes' job outcomes and verified
+bundles. This still requires the configured runner, warm-IDB infrastructure and notes endpoint.
 
 ## Trust and permission boundary
 

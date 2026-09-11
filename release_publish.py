@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from release_bundle import ReleaseBundleError, verify_release_bundle
+from release_bundle import SOURCE_ARTIFACT_MODES, ReleaseBundleError, verify_release_bundle
 from release_notes import ReleaseError, validate_notes
 from release_workflow_lib.manifests import require_sha, require_version
 
@@ -299,6 +299,7 @@ def publish_release(
     workflow_run_url: str,
     cache_selection_sha256: str,
     notes_file: str | Path | None = None,
+    source_artifact_mode: str = "rebuild",
 ) -> str:
     repo_root = Path(repo_root).resolve()
     bundle_root = Path(bundle_root).resolve()
@@ -310,6 +311,7 @@ def publish_release(
         build_id=build_id,
         workflow_run_url=workflow_run_url,
         cache_selection_sha256=cache_selection_sha256,
+        source_artifact_mode=source_artifact_mode,
     )
     state, _build_id, _workflow_run_url = inspect_preflight(
         repository,
@@ -434,6 +436,7 @@ def main(argv: list[str] | None = None) -> int:
     publish.add_argument("--build-id", required=True)
     publish.add_argument("--workflow-run-url", required=True)
     publish.add_argument("--cache-selection-sha256", required=True)
+    publish.add_argument("--source-artifact-mode", choices=SOURCE_ARTIFACT_MODES, default="rebuild")
     publish.add_argument("--notes-file", help="Required for a new or draft Release; ignored for published versions")
     args = parser.parse_args(argv)
     try:
@@ -463,6 +466,7 @@ def main(argv: list[str] | None = None) -> int:
                     workflow_run_url=args.workflow_run_url,
                     cache_selection_sha256=args.cache_selection_sha256,
                     notes_file=args.notes_file,
+                    source_artifact_mode=args.source_artifact_mode,
                 )
             )
     except (ReleasePublishError, ReleaseBundleError, OSError, ValueError) as exc:
