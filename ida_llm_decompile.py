@@ -826,6 +826,7 @@ async def call_llm_decompile(
     retry_max_delay=None,
     debug=False,
     instruction_validations=None,
+    result_validator=None,
     call_llm_text_func=_UNSET,
 ):
     diagnostic = _debug_diagnostic(
@@ -946,6 +947,10 @@ async def call_llm_decompile(
             disasm_index=disasm_index,
         )
         issues = schema_issues + semantic_issues
+        if not issues and result_validator is not None:
+            address_issues = await result_validator(result)
+            semantic_issues.extend(address_issues)
+            issues.extend(address_issues)
         report_attempt("validation", schema_issues=schema_issues, semantic_issues=semantic_issues)
         if not issues:
             report_attempt("completed", status="succeeded", result=result)

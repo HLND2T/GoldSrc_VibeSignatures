@@ -2670,7 +2670,7 @@ def address_write_register(register, is_byte):
     return register - 4 if is_byte and 4 <= register <= 7 else register
 
 def decode_address_load(raw):
-    if raw is None or len(raw) != 6 or raw[0] not in (0x8b, 0x8d):
+    if raw is None or len(raw) != 6 or raw[0] not in (0x89, 0x8b, 0x8d):
         return None
     modrm = raw[1]
     if modrm >> 6 != 2 or modrm & 7 == 4:
@@ -2706,6 +2706,12 @@ def resolve_address_flow(graph, block, stop, register, visiting=frozenset()):
             return value
         if kind == 'register':
             return resolve_address_flow(graph, block, index, value, visiting)
+        if kind == 'offset':
+            base = resolve_address_flow(graph, block, index, register, visiting)
+            return None if base is None else (base + value) & 0xffffffff
+        if kind == 'address':
+            base = resolve_address_flow(graph, block, index, value[0], visiting)
+            return None if base is None else (base + value[1]) & 0xffffffff
         return None
     predecessors = graph[block]['preds']
     if not predecessors:
@@ -2758,12 +2764,28 @@ if size:
         else:
             operand_dwords.append(None)
 computed_targets = []
+relative_store_address = None
+# A MOV store's IDA xref can name only its displacement, even when that
+# displacement happens to be mapped. Resolve the effective address instead.
+store_operand = None
+if (pointer_size == 4 and size == 6 and insn.ops[0].type == ida_ua.o_displ
+        and insn.ops[0].offb == 2 and operand_pic[0]):
+    raw = ida_bytes.get_bytes(ea, size)
+    if raw and raw[0] == 0x89:
+        store_operand = decode_address_load(raw)
+if store_operand is not None:
+    register_name = ('eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi')[store_operand[0]]
+    relative_store_address = {
+        'target': None,
+        'issue': f'Cannot determine {register_name.upper()} base for [{register_name}+{hex(store_operand[1])}]. '
+                 'The displacement is not a complete global address, even if IDA gives it a mapped data label.'
+    }
 # An ELF compiler may reuse an address register for LEA or a memory load.
 # Resolve only an unindexed 32-bit address whose reaching definition is
 # identical along every CFG predecessor. Unknown writes and cycles fail closed.
-if (size == 6 and func is not None
+if (func is not None and (store_operand is not None or (size == 6
         and insn.ops[1].type == ida_ua.o_displ and insn.ops[1].offb == 2
-        and not list(idautils.DataRefsFrom(ea))):
+        and not list(idautils.DataRefsFrom(ea))))):
     import ida_gdl
     address_load = decode_address_load(ida_bytes.get_bytes(ea, size))
     if address_load is not None:
@@ -2785,7 +2807,20 @@ if (size == 6 and func is not None
                 changed = {}
                 if mnemonic == 'call':
                     changed = {reg: None for reg in (0, 1, 2)}
-                elif mnemonic in ('mov', 'lea', 'pop', 'add', 'sub', 'xor', 'and', 'or', 'inc', 'dec', 'shl', 'shr', 'sar') or (mnemonic == 'imul' and decoded.ops[1].type != ida_ua.o_void):
+                    # Verified x86 get-PC thunk: MOV reg, [ESP]; RET.
+                    refs = list(idautils.CodeRefsFrom(address, 0))
+                    thunk = ida_bytes.get_bytes(refs[0], 4) if len(refs) == 1 else None
+                    if (thunk and len(thunk) == 4 and thunk[0] == 0x8b
+                            and thunk[1] & 0xc7 == 0x04 and thunk[2:] == b'\x24\xc3'):
+                        changed[(thunk[1] >> 3) & 7] = ('constant', address + decoded.size)
+                elif mnemonic == 'xchg':
+                    changed = {address_write_register(op.reg, op.dtype == ida_ua.dt_byte): None
+                               for op in (decoded.ops[0], decoded.ops[1]) if op.type == ida_ua.o_reg}
+                elif mnemonic.startswith('set'):
+                    dest = decoded.ops[0]
+                    if dest.type == ida_ua.o_reg:
+                        changed[address_write_register(dest.reg, True)] = None
+                elif mnemonic in ('mov', 'movzx', 'movsx', 'lea', 'pop', 'add', 'sub', 'xor', 'and', 'or', 'inc', 'dec', 'shl', 'shr', 'sar') or (mnemonic == 'imul' and decoded.ops[1].type != ida_ua.o_void):
                     dest, source = decoded.ops[0], decoded.ops[1]
                     if dest.type == ida_ua.o_reg:
                         destination = address_write_register(dest.reg, dest.dtype == ida_ua.dt_byte)
@@ -2796,11 +2831,20 @@ if (size == 6 and func is not None
                             changed[destination] = ('register', source.reg)
                         elif mnemonic == 'mov' and source.type == ida_ua.o_imm:
                             changed[destination] = ('constant', int(source.value) & 0xffffffff)
+                        elif mnemonic in ('add', 'sub') and source.type == ida_ua.o_imm:
+                            changed[destination] = ('offset', int(source.value) * (1 if mnemonic == 'add' else -1))
                         elif mnemonic == 'lea':
-                            refs = {int(value) for value in idautils.DataRefsFrom(address)
-                                    if 0 <= value <= 0xffffffff and ida_segment.getseg(value) is not None}
-                            if len(refs) == 1:
-                                changed[destination] = ('constant', refs.pop())
+                            if store_operand is not None:
+                                operand = decode_address_load(ida_bytes.get_bytes(address, decoded.size))
+                                if operand is not None:
+                                    changed[destination] = ('address', operand)
+                                elif source.type == ida_ua.o_mem:
+                                    changed[destination] = ('constant', int(source.addr))
+                            else:
+                                refs = {int(value) for value in idautils.DataRefsFrom(address)
+                                        if 0 <= value <= 0xffffffff and ida_segment.getseg(value) is not None}
+                                if len(refs) == 1:
+                                    changed[destination] = ('constant', refs.pop())
                 elif not (mnemonic.startswith('j') or mnemonic.startswith('ret')
                           or mnemonic in ('push', 'cmp', 'test', 'nop')):
                     changed = {reg: None for reg in range(8)}
@@ -2814,7 +2858,16 @@ if (size == 6 and func is not None
             if base is not None:
                 target = (base + address_load[1]) & 0xffffffff
                 segment = ida_segment.getseg(target)
-                if segment is not None and not (segment.perm & ida_segment.SEGPERM_EXEC):
+                if relative_store_address is not None:
+                    if (segment is not None and not (segment.perm & ida_segment.SEGPERM_EXEC)
+                            and target + 4 <= segment.end_ea):
+                        relative_store_address = {'target': hex(target)}
+                    else:
+                        relative_store_address['issue'] = (
+                            f'Effective store address {hex(base)} + {hex(address_load[1])} = {hex(target)} '
+                            'does not identify a complete 4-byte range in a data segment.'
+                        )
+                elif segment is not None and not (segment.perm & ida_segment.SEGPERM_EXEC):
                     computed_targets.append(hex(target))
 result = json.dumps({
     'pointer_size': pointer_size,
@@ -2833,6 +2886,7 @@ result = json.dumps({
     'operand_offsets': operand_offsets,
     'operand_pic': operand_pic,
     'operand_dwords': operand_dwords,
+    'relative_store_address': relative_store_address,
 })
 """
 )
@@ -3021,6 +3075,28 @@ def _build_llm_instruction_validations(symbol_names, specs):
     }
 
 
+async def _validate_llm_global_addresses(session, result, platform):
+    issues = []
+    if platform != "linux":
+        return issues
+    for index, entry in enumerate(result.get("found_gv", ())):
+        detail = await _inspect_llm_instruction(session, entry["insn_va"])
+        resolution = (detail or {}).get("relative_store_address")
+        if resolution is not None and resolution.get("issue"):
+            issues.append(
+                {
+                    "issue_type": "unresolved_global_address",
+                    "message": (
+                        f"found_gv[{index}] {entry['gv_name']!r} at {entry['insn_va']}: {resolution['issue']} "
+                        "Select another current-target instruction referencing the same global whose full address "
+                        "can be resolved. Preserve the actual instruction text; do not replace its displacement "
+                        "with a calculated address."
+                    ),
+                }
+            )
+    return issues
+
+
 async def _call_llm_for_targets(
     *,
     session,
@@ -3060,12 +3136,17 @@ async def _call_llm_for_targets(
     expected_sections = {
         symbol_name: list(specs[symbol_name]["expected_result_sections"]) for symbol_name in symbol_names
     }
+
+    async def validate_global_addresses(result):
+        return await _validate_llm_global_addresses(session, result, platform)
+
     async with keepalive_worker_during(session, debug=debug, activity="llm_decompile"):
         result = await call_llm_decompile(
             model=context["model"],
             symbol_name_list=symbol_names,
             expected_result_sections=expected_sections,
             instruction_validations=_build_llm_instruction_validations(symbol_names, specs),
+            result_validator=validate_global_addresses,
             disasm_code=exported_targets[0].get("disasm_code", ""),
             target_disasm_codes=[target.get("disasm_code", "") for target in exported_targets],
             procedure=exported_targets[0].get("procedure", ""),
@@ -3139,12 +3220,15 @@ def _llm_entry_instruction_is_valid(entry, detail, target_ranges, rules):
     return not rules or any(re.fullmatch(rule["regex"], line) is not None for rule in rules)
 
 
-def _llm_global_targets(detail):
+def _llm_global_targets(detail, *, platform="linux"):
     """Prefer encoded absolute targets over IDA's offset-expression base xrefs.
 
     PIC operands still need resolved data xrefs. Multiple encoded targets stay
     ambiguous; an instruction with two real addresses cannot pick either one.
     """
+    if platform == "linux" and detail.get("relative_store_address") is not None:
+        target = detail["relative_store_address"].get("target")
+        return [target] if target is not None else []
     operands = list(dict.fromkeys(detail.get("operand_targets") or ()))
     candidates = list(dict.fromkeys((detail.get("data_refs") or []) + operands))
     pic_flags = detail.get("operand_pic") or ()
@@ -3277,7 +3361,7 @@ async def _preprocess_llm_target(
                         enriched["vfunc_sig"] = enriched.get("func_sig")
                         return enriched
             elif category == "gv":
-                targets = _llm_global_targets(detail)
+                targets = _llm_global_targets(detail, platform=platform)
                 if len(targets) != 1:
                     continue
                 function = await _inspect_function_via_mcp(

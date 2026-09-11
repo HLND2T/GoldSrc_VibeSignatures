@@ -1862,14 +1862,116 @@ found_struct_offset: []
         self.assertEqual((6, 0x242324), decode(bytes.fromhex("8B 96 24 23 24 00")))
         self.assertEqual((1, 0x242324), decode(bytes.fromhex("8B 89 24 23 24 00")))
         self.assertEqual((6, 0xFFFFFFFC), decode(bytes.fromhex("8D 86 FC FF FF FF")))
+        self.assertEqual((2, 0x6020), decode(bytes.fromhex("89 82 20 60 00 00")))
         for unsupported in (
-            "89 86 24 23 24 00",
+            "89 04 B5 24 23 24 00",
             "8B 04 B5 24 23 24 00",
             "66 8B 86 24 23 24 00",
             "8B 46 04",
             "8B 05 24 23 24 00",
         ):
             self.assertIsNone(decode(bytes.fromhex(unsupported)))
+
+    def test_relative_store_resolution_overrides_mapped_displacement(self):
+        detail = {
+            "data_refs": ["0x6020"],
+            "operand_targets": [],
+            "operand_pic": [True, False],
+            "relative_store_address": {"target": "0x806020"},
+        }
+        self.assertEqual(["0x806020"], ida_analyze_util._llm_global_targets(detail))
+        detail["relative_store_address"] = {"target": None, "issue": "Unknown EDX base"}
+        self.assertEqual([], ida_analyze_util._llm_global_targets(detail))
+        self.assertEqual(["0x6020"], ida_analyze_util._llm_global_targets(detail, platform="windows"))
+
+    def test_relative_store_inspection_checks_effective_address(self):
+        for base, mapped, clobbered, width, permission, unknown_lea in (
+            (0x8000, True, False, 4, 6, False),
+            (0xA000, True, False, 4, 6, False),
+            (0x8000, False, False, 4, 6, False),
+            (0x8000, True, True, 4, 6, False),
+            (0x8000, True, False, 3, 6, False),
+            (0x8000, True, False, 4, 7, False),
+            (0x8000, True, False, 4, 6, True),
+        ):
+            with self.subTest(
+                base=base,
+                mapped=mapped,
+                clobbered=clobbered,
+                width=width,
+                permission=permission,
+                unknown_lea=unknown_lea,
+            ):
+                ea, displacement = 0x1010, 0x2000
+                register = SimpleNamespace(type=1, reg=2, dtype=2, offb=0)
+                source = SimpleNamespace(type=1, reg=0, dtype=2, offb=0)
+                memory = SimpleNamespace(type=4, addr=displacement, offb=2, dtype=2)
+                void = SimpleNamespace(type=0)
+                store = SimpleNamespace(ops=[memory, source, void])
+                definition = SimpleNamespace(
+                    ops=[register, memory if unknown_lea else SimpleNamespace(type=5, value=base), void], size=6
+                )
+                segment = SimpleNamespace(perm=permission, end_ea=base + displacement + width)
+
+                def getseg(address):
+                    if address in (base, displacement) or (mapped and address == base + displacement):
+                        return segment
+                    return None
+
+                block = SimpleNamespace(id=0, start_ea=0x1000, end_ea=0x1016, preds=lambda: [])
+                modules = {
+                    "ida_bytes": SimpleNamespace(
+                        get_dword=lambda address: displacement,
+                        get_bytes=lambda address, size: bytes.fromhex(
+                            "8D 91 00 20 00 00" if address == 0x1000 else "89 82 00 20 00 00"
+                        ),
+                    ),
+                    "ida_fixup": SimpleNamespace(fixup_data_t=lambda: None, get_fixup=lambda *args: False),
+                    "ida_funcs": SimpleNamespace(get_func=lambda address: block),
+                    "ida_lines": SimpleNamespace(tag_remove=lambda text: text),
+                    "ida_segment": SimpleNamespace(getseg=getseg, SEGPERM_EXEC=1),
+                    "idaapi": SimpleNamespace(inf_is_64bit=lambda: False, BADADDR=0xFFFFFFFF),
+                    "ida_ua": SimpleNamespace(
+                        o_void=0,
+                        o_reg=1,
+                        o_mem=2,
+                        o_phrase=3,
+                        o_displ=4,
+                        o_imm=5,
+                        o_near=6,
+                        o_far=7,
+                        dt_byte=0,
+                        dt_dword=2,
+                        insn_t=lambda: store,
+                        decode_insn=lambda *args: 6,
+                    ),
+                    "ida_gdl": SimpleNamespace(FlowChart=lambda func: [block]),
+                    "idautils": SimpleNamespace(
+                        DataRefsFrom=lambda address: [base] if address == 0x1000 else [displacement],
+                        CodeRefsFrom=lambda *args: [],
+                        Heads=lambda *args: [0x1000, 0x1006, ea] if clobbered else [0x1000, ea],
+                        DecodeInstruction=lambda address: definition if address != ea else store,
+                    ),
+                    "idc": SimpleNamespace(
+                        generate_disasm_line=lambda *args: "mov [edx+2000h], eax",
+                        print_insn_mnem=lambda address: (
+                            "lea" if unknown_lea and address == 0x1000 else "xor" if address == 0x1006 else "mov"
+                        ),
+                    ),
+                }
+                namespace = {}
+                with patch.dict("sys.modules", modules):
+                    exec(
+                        ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)), namespace
+                    )
+                detail = json.loads(namespace["result"])
+                self.assertEqual([hex(displacement)], detail["data_refs"])
+                if mapped and not clobbered and width >= 4 and permission == 6 and not unknown_lea:
+                    self.assertEqual([hex(base + displacement)], ida_analyze_util._llm_global_targets(detail))
+                    self.assertEqual(hex(base), _gv_resolution_fields(detail, base + displacement, 0)["gv_pic_addend"])
+                else:
+                    self.assertEqual([], ida_analyze_util._llm_global_targets(detail))
+                    self.assertTrue(detail["relative_store_address"]["issue"])
 
     def test_address_flow_requires_agreement_on_every_incoming_path(self):
         namespace = {}
@@ -1898,6 +2000,25 @@ found_struct_offset: []
         graph[0]["writes"] = []
         self.assertIsNone(resolve(graph, 3, 1, 7))
 
+    def test_address_flow_preserves_pic_base_arithmetic_and_rejects_clobbers(self):
+        namespace = {}
+        exec(ida_analyze_util._ADDRESS_FLOW_RESOLVER, namespace)
+        graph = {
+            0: {
+                "preds": [],
+                "writes": [
+                    {3: ("constant", 0x1005)},
+                    {3: ("offset", 0x6FFB)},
+                    {2: ("register", 3)},
+                    {2: ("offset", -4)},
+                ],
+            }
+        }
+        resolve = namespace["resolve_address_flow"]
+        self.assertEqual(0x7FFC, resolve(graph, 0, 4, 2))
+        graph[0]["writes"][0] = {3: None}
+        self.assertIsNone(resolve(graph, 0, 4, 2))
+
     def test_address_flow_high_byte_write_invalidates_its_parent_register(self):
         namespace = {}
         exec(ida_analyze_util._ADDRESS_FLOW_RESOLVER, namespace)
@@ -1920,7 +2041,9 @@ found_struct_offset: []
                 return relocated
 
             modules = {
-                "ida_bytes": SimpleNamespace(get_dword=lambda ea: 0x2004),
+                "ida_bytes": SimpleNamespace(
+                    get_dword=lambda ea: 0x2004, get_bytes=lambda ea, size: bytes.fromhex("8B 83 04 20 00 00")
+                ),
                 "ida_fixup": SimpleNamespace(fixup_data_t=Fixup, get_fixup=get_fixup),
                 "ida_funcs": SimpleNamespace(get_func=lambda ea: SimpleNamespace(start_ea=0x1000, end_ea=0x1010)),
                 "ida_lines": SimpleNamespace(tag_remove=lambda text: text),
@@ -2544,6 +2667,70 @@ found_struct_offset: []
 
         payload = await _export_llm_function(SimpleNamespace(call_tool=fake_call_tool), 0x1AEBF0)
         self.assertEqual(exported, payload)
+
+    async def test_llm_global_address_feedback_retries_unknown_base(self):
+        exported = {
+            "func_name": "Owner",
+            "func_start": "0x1000",
+            "func_end": "0x1020",
+            "disasm_code": "0x1000: mov [edx+2000h], eax\n0x1010: mov [ecx+3000h], eax",
+            "procedure": "",
+            "func_va": "0x1000",
+        }
+        context = {
+            "targets": [({}, 0x1000)],
+            "reference_items": [exported],
+            "model": "test-model",
+            "prompt_template": "{target_blocks}",
+            "max_retries": 2,
+        }
+        for unknown_base, exhausted in ((False, False), (True, False), (True, True)):
+            with self.subTest(unknown_base=unknown_base, exhausted=exhausted):
+                requests = []
+
+                def transport(**kwargs):
+                    requests.append(kwargs["messages"])
+                    use_first = len(requests) == 1 or exhausted
+                    address, instruction = (
+                        ("0x1000", "mov [edx+2000h], eax") if use_first else ("0x1010", "mov [ecx+3000h], eax")
+                    )
+                    return (
+                        f"found_gv:\n  - insn_va: '{address}'\n    insn_disasm: '{instruction}'\n    gv_name: Target\n"
+                    )
+
+                async def inspect_instruction(session, address):
+                    if unknown_base and address == "0x1000":
+                        return {
+                            "relative_store_address": {
+                                "target": None,
+                                "issue": "Cannot determine EDX base. 0x2000 is a displacement, not a complete global address.",
+                            }
+                        }
+                    return {"relative_store_address": {"target": "0x9000"}}
+
+                with (
+                    patch("ida_analyze_util._export_llm_function", new=AsyncMock(return_value=exported)),
+                    patch("ida_analyze_util._inspect_llm_instruction", side_effect=inspect_instruction),
+                    patch("ida_llm_decompile._default_transport", side_effect=transport),
+                ):
+                    result, _ranges = await _call_llm_for_targets(
+                        session=SimpleNamespace(),
+                        symbol_names=["Target"],
+                        specs={"Target": {"expected_result_sections": ["found_gv"]}},
+                        context=context,
+                        platform="linux",
+                        new_binary_dir=Path("engine"),
+                    )
+                self.assertEqual(2 if unknown_base else 1, len(requests))
+                if unknown_base:
+                    feedback = requests[1][-1]["content"]
+                    self.assertIn("EDX", feedback)
+                    self.assertIn("displacement", feedback)
+                    self.assertIn("same global", feedback)
+                if exhausted:
+                    self.assertEqual([], result["found_gv"])
+                else:
+                    self.assertEqual("0x1010" if unknown_base else "0x1000", result["found_gv"][0]["insn_va"])
 
     async def test_call_llm_for_targets_preserves_tail_chunk_ranges(self):
         keepalive_called = asyncio.Event()
