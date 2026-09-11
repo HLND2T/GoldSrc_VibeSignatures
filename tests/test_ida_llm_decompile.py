@@ -230,6 +230,81 @@ class ScoreInfoInstructionRuleTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(2, transport.call_count)
 
 
+class PitchDriftInstructionRuleTests(unittest.IsolatedAsyncioTestCase):
+    async def prepare(self, code, platform):
+        finder = runpy.run_path(
+            str(Path(__file__).resolve().parents[1] / "ida_preprocessor_scripts/find-V_StartPitchDrift-decompiles.py")
+        )
+        common = AsyncMock(return_value=True)
+        with patch.dict(
+            finder["preprocess_skill"].__globals__,
+            {
+                "preprocess_common_skill": common,
+                "_prepare_llm_context": lambda *args: {"targets": [({}, 0x500000)]},
+                "_export_llm_function": AsyncMock(return_value={"disasm_code": code}),
+            },
+        ):
+            result = await finder["preprocess_skill"](
+                None, "find-V_StartPitchDrift-decompiles", [], {}, ".", platform, 0
+            )
+        return result, common
+
+    async def test_member_and_load_candidates_retry_in_either_order(self):
+        cases = (
+            ("windows", "movsd xmm0, dbl_700010", "movss xmm0, dword_700000", "movss dword_700000, xmm2"),
+            (
+                "linux",
+                "fld ds:(dbl_80000C - 600000h)[ebx]",
+                "fld ds:(flt_800000 - 600000h)[ebx]",
+                "movss ds:(flt_800000 - 600000h)[ebx], xmm3",
+            ),
+        )
+        for platform, member, load, store in cases:
+            code = f".text:00500000 {member}\n.text:00500010 {load}\n.text:00500020 {store}"
+            success, common = await self.prepare(code, platform)
+            self.assertTrue(success)
+            spec = common.call_args.kwargs["llm_decompile_specs"][0]
+
+            def response(entries):
+                return "found_gv:\n" + "".join(
+                    f"  - insn_va: '{address}'\n    insn_disasm: '{line}'\n    gv_name: g_pitchdrift\n"
+                    for address, line in entries
+                )
+
+            accepted = ("0x500020", store)
+            wrong = [("0x500000", member), ("0x500010", load)]
+            for entries in (wrong + [accepted], [accepted] + wrong):
+                with self.subTest(platform=platform, entries=entries):
+                    transport = AsyncMock(side_effect=[response(entries), response([accepted])])
+                    result = await call_llm_decompile(
+                        model="test-model",
+                        symbol_name_list=["g_pitchdrift"],
+                        expected_result_sections={"g_pitchdrift": ["found_gv"]},
+                        instruction_validations={
+                            "g_pitchdrift": {"instruction_rules": spec.get("instruction_rules", [])}
+                        },
+                        target_disasm_codes=[code],
+                        prompt_template="Find {symbol_name_list}.",
+                        max_retries=2,
+                        call_llm_text_func=transport,
+                    )
+                    self.assertEqual([accepted[0]], [entry["insn_va"] for entry in result["found_gv"]])
+                    self.assertEqual(2, transport.call_count)
+
+    async def test_missing_or_ambiguous_global_store_stops_before_generation(self):
+        cases = (
+            ".text:00500000 movss xmm0, dword_700000",
+            ".text:00500000 movss dword ptr [esp+8], xmm0",
+            ".text:00500000 movss dword_700000, xmm0\n.text:00500010 movss dword_700004, xmm1",
+            ".text:00500000 movss dword_700000, xmm0\n.text:00500010 movss dword_700000, xmm0",
+        )
+        for code in cases:
+            with self.subTest(code=code):
+                success, common = await self.prepare(code, "windows")
+                self.assertFalse(success)
+                common.assert_not_called()
+
+
 class LlmDecompileParserTests(unittest.TestCase):
     def test_disassembly_comments_need_no_space_before_semicolon(self):
         from ida_llm_decompile import _build_target_disasm_index, render_llm_decompile_blocks
