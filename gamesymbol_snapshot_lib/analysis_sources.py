@@ -88,7 +88,7 @@ def _source_metadata(path: str, tree: Mapping[str, bytes | str]) -> tuple[set[st
             if value.endswith(".yaml") and (value.startswith("references/") or "/references/" in value):
                 references.add(value[value.index("references/") :])
             if value.endswith(".md") and (value.startswith("prompt/") or "/prompt/" in value):
-                prompts.add(value[value.index("prompt/") :])
+                prompts.add(value.removeprefix(f"{PREPROCESSOR_ROOT}/"))
     return dependencies, references, prompts
 
 
@@ -116,6 +116,16 @@ def _resolve_reference(
         if value in tree:
             return value
     return None
+
+
+def _resolve_prompt(template: str, *, contract: SnapshotContract, node, tree: Mapping[str, bytes | str]) -> str | None:
+    relative = template.replace("{platform}", node.platform).replace("{gamever}", contract.game_version)
+    relative = relative.replace("{module_name}", node.module_name).replace("{module}", node.module_name)
+    path = PurePosixPath(PREPROCESSOR_ROOT) / relative
+    if path.is_absolute() or ".." in path.parts or not path.as_posix().startswith(f"{PROMPT_ROOT}/"):
+        raise AnalysisSourceError(f"Prompt template escapes the prompt root: {template!r}")
+    value = path.as_posix()
+    return value if value in tree else None
 
 
 def build_source_index(
@@ -160,10 +170,10 @@ def build_source_index(
             )
             if resolved:
                 add(resolved, node.node_id)
-        if prompts:
-            for path in tree:
-                if path.startswith(f"{PROMPT_ROOT}/"):
-                    add(path, node.node_id)
+        for template in prompts:
+            resolved = _resolve_prompt(template, contract=contract, node=node, tree=tree)
+            if resolved:
+                add(resolved, node.node_id)
 
     analysis_paths = frozenset(path for path in tree if is_analysis_source_path(path))
     index = SourceIndex({path: frozenset(node_ids) for path, node_ids in owners.items()}, analysis_paths)

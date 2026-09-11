@@ -89,6 +89,64 @@ class ImpactRegistryTests(unittest.TestCase):
 
 
 class AnalysisSourceIndexTests(unittest.TestCase):
+    def _prompt_contract(self):
+        nodes = {}
+        for skill in ("find-first", "find-second"):
+            for platform in ("windows", "linux"):
+                node_id = f"client:{platform}:{skill}"
+                nodes[node_id] = SimpleNamespace(
+                    node_id=node_id, skill_name=skill, platform=platform, module_name="client"
+                )
+        return SimpleNamespace(game_version="game-1", nodes=nodes)
+
+    def test_prompt_ownership_follows_exact_literals_and_shared_imports(self):
+        tree = {
+            "ida_preprocessor_scripts/find-first.py": (
+                "from ida_preprocessor_scripts._shared_prompt import SHARED\nPROMPT = 'prompt/first.md'\n"
+            ),
+            "ida_preprocessor_scripts/find-second.py": (
+                "from ida_preprocessor_scripts._shared_prompt import SHARED\nPROMPT = 'prompt/second.md'\n"
+            ),
+            "ida_preprocessor_scripts/_shared_prompt.py": "SHARED = 'prompt/shared.md'\n",
+            **{
+                f"ida_preprocessor_scripts/prompt/{name}.md": "template"
+                for name in ("first", "second", "shared", "unused")
+            },
+        }
+        contract = self._prompt_contract()
+        index = build_source_index(contract, tree)
+        for skill in ("first", "second"):
+            self.assertEqual(
+                frozenset(f"client:{platform}:find-{skill}" for platform in ("windows", "linux")),
+                index.owners(f"ida_preprocessor_scripts/prompt/{skill}.md"),
+            )
+        self.assertEqual(frozenset(contract.nodes), index.owners("ida_preprocessor_scripts/prompt/shared.md"))
+        self.assertEqual(frozenset(), index.owners("ida_preprocessor_scripts/prompt/unused.md"))
+
+    def test_prompt_templates_resolve_per_node_without_cross_platform_ownership(self):
+        tree = {
+            "ida_preprocessor_scripts/find-first.py": "PROMPT = 'prompt/{gamever}/{module_name}.{platform}.md'\n",
+            "ida_preprocessor_scripts/find-second.py": "PROMPT = 'prompt/{gamever}/{module}.{platform}.md'\n",
+            "ida_preprocessor_scripts/prompt/game-1/client.windows.md": "windows template",
+            "ida_preprocessor_scripts/prompt/game-1/client.linux.md": "linux template",
+            "ida_preprocessor_scripts/prompt/game-2/client.windows.md": "other game template",
+        }
+        index = build_source_index(self._prompt_contract(), tree)
+        for platform in ("windows", "linux"):
+            self.assertEqual(
+                frozenset(f"client:{platform}:find-{skill}" for skill in ("first", "second")),
+                index.owners(f"ida_preprocessor_scripts/prompt/game-1/client.{platform}.md"),
+            )
+        self.assertEqual(frozenset(), index.owners("ida_preprocessor_scripts/prompt/game-2/client.windows.md"))
+
+    def test_prompt_paths_cannot_escape_the_prompt_root(self):
+        for template in ("prompt/../../outside.md", "../prompt/outside.md", "/prompt/outside.md"):
+            with self.subTest(template=template), self.assertRaises(AnalysisSourceError):
+                build_source_index(
+                    self._prompt_contract(),
+                    {"ida_preprocessor_scripts/find-first.py": f"PROMPT = {template!r}\n"},
+                )
+
     def _contract(self, root: Path, tag: str):
         config = root / f"{tag}.yaml"
         config.write_text(

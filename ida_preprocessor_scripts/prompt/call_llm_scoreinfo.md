@@ -1,15 +1,4 @@
-"""A finder-owned template exposed through the common file-based prompt API.
-
-The source planner conservatively treats the shared prompt directory as a
-dependency of every LLM finder. Keeping this specialized template in an imported
-module makes its ownership precise without changing the shared planner contract.
-"""
-
-from contextlib import contextmanager
-from pathlib import Path
-from tempfile import TemporaryDirectory
-
-SCOREINFO_PROMPT = """Identify the array base of "{symbol_name_list}" in the current ScoreInfo message handler.
+Identify the array base of "{symbol_name_list}" in the current ScoreInfo message handler.
 
 Annotated reference:
 
@@ -35,12 +24,3 @@ found_gv, and found_struct_offset. All lists except found_gv must be empty.
 The found_gv entry must contain insn_va, insn_disasm, and gv_name. Use the exact current
 target instruction text and address, and the requested canonical symbol as gv_name.
 If the target evidence cannot identify one zero-offset frags store, return all five lists empty.
-"""
-
-
-@contextmanager
-def scoreinfo_prompt_path():
-    with TemporaryDirectory(prefix="gsvibe-scoreinfo-prompt-") as directory:
-        path = Path(directory) / "scoreinfo.md"
-        path.write_text(SCOREINFO_PROMPT, encoding="utf-8")
-        yield str(path)
