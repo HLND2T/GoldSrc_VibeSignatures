@@ -177,13 +177,22 @@ jobs:
           if (Test-Path -LiteralPath $artifactRoot) { Remove-Item -LiteralPath $artifactRoot -Recurse -Force }
           New-Item -ItemType Directory -Path $artifactRoot | Out-Null
           uv run python ida_analyze_bin.py -allgamever -force_all -bindir bin -artifactdir $artifactRoot `
-            -debug -process_reporter console
+            -debug -process_reporter console `
+            -batch_diagnostics "${{ runner.temp }}/analysis-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}"
           if ($LASTEXITCODE -ne 0) { throw 'fresh all-gamever analysis failed' }
           uv run python bin_artifact_contract.py --repo-root $env:GITHUB_WORKSPACE --actual-root $artifactRoot
           if ($LASTEXITCODE -ne 0) { throw 'rebuilt artifacts differ from Git truth' }
           git diff --exit-code -- bin_artifacts
           if ($LASTEXITCODE -ne 0) { throw 'tracked bin_artifacts changed during release rebuild' }
           "REBUILT_ARTIFACT_ROOT=$artifactRoot" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Upload batch analysis diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: analysis-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/analysis-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: warn
+          retention-days: 7
       - name: Upload unverified rebuilt artifact diagnostics
         if: failure()
         uses: actions/upload-artifact@v7

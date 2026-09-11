@@ -7,6 +7,7 @@ import inspect
 import json
 import os
 import re
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
@@ -16,7 +17,6 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from ida_llm_utils import LlmResponseError, extract_json_object, validated_temperature
-
 
 _UNSET = object()
 LLM_DECOMPILE_RESULT_SECTIONS = (
@@ -106,7 +106,58 @@ def _normalize_response_messages(messages):
     return normalized
 
 
-def request_text(messages, *, config: LlmConfig | None = None, client=None) -> str:
+def _notify_diagnostic(callback, event, **payload):
+    if callback is not None:
+        try:
+            callback(event, **payload)
+        except Exception:  # noqa: BLE001, S110 - logging failures must not affect analysis or recurse.
+            pass  # Diagnostics must never change analysis behavior.
+
+
+def _debug_diagnostic(enabled, *, api_key, base_url, **context):
+    if not enabled:
+        return None
+    sensitive = [
+        api_key,
+        base_url,
+        *[
+            value
+            for key, value in os.environ.items()
+            if any(word in key.upper() for word in ("SECRET", "TOKEN", "PASSWORD", "APIKEY", "API_KEY"))
+        ],
+    ]
+    sensitive = sorted({str(value) for value in sensitive if value}, key=len, reverse=True)
+    context = {"call_id": uuid.uuid4().hex, **context}
+
+    def emit(event, **payload):
+        def sanitize(value):
+            if isinstance(value, str):
+                for secret in sensitive:
+                    value = value.replace(secret, "[REDACTED]")
+                return value
+            if isinstance(value, dict):
+                return {
+                    key: (
+                        "[REDACTED]"
+                        if str(key).lower()
+                        in {"authorization", "api_key", "apikey", "headers", "access_token", "refresh_token"}
+                        else sanitize(entry)
+                    )
+                    for key, entry in value.items()
+                }
+            if isinstance(value, (list, tuple)):
+                return [sanitize(entry) for entry in value]
+            return value
+
+        print(
+            "LLM diagnostic: " + json.dumps(sanitize({**context, "event": event, **payload}), ensure_ascii=False),
+            flush=True,
+        )
+
+    return emit
+
+
+def request_text(messages, *, config: LlmConfig | None = None, client=None, diagnostic_callback=None) -> str:
     config = config or LlmConfig.from_environment()
     if client is None and not config.api_key:
         raise LlmResponseError("GSVIBE_LLM_APIKEY is required for LLM analysis")
@@ -122,8 +173,17 @@ def request_text(messages, *, config: LlmConfig | None = None, client=None) -> s
     if config.fake_as is not None:
         arguments["extra_body"] = {"fake_as": config.fake_as}
     response = client.responses.create(**arguments)
+    if diagnostic_callback is not None:
+        try:
+            payload = response.model_dump(mode="json")
+        except Exception as exc:  # noqa: BLE001 - response diagnostics are best effort.
+            _notify_diagnostic(diagnostic_callback, "response_serialization_failed", error=str(exc))
+        else:
+            _notify_diagnostic(diagnostic_callback, "api_response", response=payload)
     output_text = getattr(response, "output_text", None)
+    _notify_diagnostic(diagnostic_callback, "output_text", output_text=output_text)
     if not isinstance(output_text, str) or not output_text.strip():
+        _notify_diagnostic(diagnostic_callback, "response_extraction_failed", reason="missing_output_text")
         raise LlmResponseError("OpenAI response did not contain output_text")
     return output_text
 
@@ -710,7 +770,12 @@ def _default_transport(**kwargs):
         fake_as=kwargs.get("fake_as"),
         max_retries=1,
     )
-    return request_text(kwargs["messages"], config=config, client=kwargs.get("client"))
+    return request_text(
+        kwargs["messages"],
+        config=config,
+        client=kwargs.get("client"),
+        diagnostic_callback=kwargs.get("diagnostic_callback"),
+    )
 
 
 async def _invoke_transport(transport, request_kwargs):
@@ -751,14 +816,23 @@ async def call_llm_decompile(
     instruction_validations=None,
     call_llm_text_func=_UNSET,
 ):
-    del debug
+    diagnostic = _debug_diagnostic(
+        debug,
+        api_key=api_key,
+        base_url=base_url,
+        symbols=symbol_name_list,
+        platform=platform,
+        binary_dir=str(new_binary_dir or ""),
+    )
     transport = _default_transport if call_llm_text_func is _UNSET else call_llm_text_func
     if not callable(transport):
+        _notify_diagnostic(diagnostic, "completed", status="failed", reason="invalid_transport")
         return _empty_llm_decompile_result()
     requested_symbols = _normalize_requested_symbols(symbol_name_list)
     expected_sections = _normalize_expected_result_sections(expected_result_sections)
     validations = _normalize_instruction_validations(instruction_validations)
     if not requested_symbols or not expected_sections or validations is None:
+        _notify_diagnostic(diagnostic, "completed", status="failed", reason="invalid_request")
         return _empty_llm_decompile_result()
     module_name = Path(new_binary_dir).resolve().name if new_binary_dir else ""
     if reference_blocks is None or target_blocks is None:
@@ -794,7 +868,8 @@ async def call_llm_decompile(
             module_name=module_name,
             module=module_name,
         )
-    except Exception:
+    except Exception as exc:
+        _notify_diagnostic(diagnostic, "completed", status="failed", reason="template_failed", error=str(exc))
         return _empty_llm_decompile_result()
     requirements = _build_section_requirements(expected_sections)
     if requirements:
@@ -821,15 +896,35 @@ async def call_llm_decompile(
     disasm_index = _build_target_disasm_index(target_disasm_codes, disasm_code)
     for attempt_index in range(attempts):
         request_kwargs["messages"] = list(messages)
+        attempt = attempt_index + 1
+
+        def report_attempt(event, *, attempt=attempt, **payload):
+            _notify_diagnostic(diagnostic, event, attempt=attempt, max_attempts=attempts, **payload)
+
+        if diagnostic is not None and transport is _default_transport:
+            request_kwargs["diagnostic_callback"] = report_attempt
+        report_attempt(
+            "request", model=model, temperature=temperature, effort=effort, fake_as=fake_as, messages=messages
+        )
         try:
             content = await _invoke_transport(transport, request_kwargs)
         except Exception as exc:
+            report_attempt(
+                "request_failed",
+                error_type=type(exc).__name__,
+                error=str(exc),
+                status_code=getattr(exc, "status_code", None),
+                body=getattr(exc, "body", None),
+            )
             if not _is_transient_llm_error(exc) or attempt_index >= attempts - 1:
+                report_attempt("completed", status="failed", reason="transport_failed")
                 return _empty_llm_decompile_result()
+            report_attempt("retry", reason="transient_transport_error", delay=delay)
             if delay > 0:
                 await asyncio.sleep(delay)
             delay = min(delay * backoff, max_delay)
             continue
+        report_attempt("response_text", content=content)
         result, schema_issues = _parse_llm_decompile_response_with_issues(content, requested_symbols)
         semantic_issues = _validate_llm_result(
             result,
@@ -839,10 +934,14 @@ async def call_llm_decompile(
             disasm_index=disasm_index,
         )
         issues = schema_issues + semantic_issues
+        report_attempt("validation", schema_issues=schema_issues, semantic_issues=semantic_issues)
         if not issues:
+            report_attempt("completed", status="succeeded", result=result)
             return result
         if attempt_index >= attempts - 1:
+            report_attempt("completed", status="failed", reason="validation_retries_exhausted")
             return _empty_llm_decompile_result()
+        report_attempt("correction", prompt=_build_correction_prompt(issues))
         messages.extend(
             [
                 {"role": "assistant", "content": content},
