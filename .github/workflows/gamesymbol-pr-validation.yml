@@ -148,7 +148,7 @@ jobs:
               -artifactdir "$artifact_root"
             uv run --project .trusted-validator python .trusted-validator/gamesymbol_candidate.py build \
               -gamever "$tag" -bindir bin -artifactdir "$artifact_root" -configyaml "configs/$tag.yaml" \
-              -output "$stage/$tag.yaml" -session "$stage/symbol-session.json"
+              -output "$stage/$tag.yaml" -session "$stage/symbol-session.json" -snapshot-schema-version 8
             uv run python gamesymbol_candidate.py guard -candidate "$stage/$tag.yaml" -session "$stage/symbol-session.json"
             uv run python gamedata_candidate.py build -gamever "$tag" -build-id "pr-${{ github.run_id }}" \
               -snapshot "$stage/$tag.yaml" -configyaml "configs/$tag.yaml" -modulesdir gamedata-generators \
@@ -342,7 +342,8 @@ jobs:
               $symbolSession = Join-Path $stage 'symbol-session.json'
               $gamedataSession = Join-Path $stage 'gamedata-session.json'
               uv run --project $trustedRoot python $candidateCli build -gamever $tag -bindir bin `
-                -artifactdir $artifactRoot -configyaml "configs/$tag.yaml" -output $candidate -session $symbolSession
+                -artifactdir $artifactRoot -configyaml "configs/$tag.yaml" -output $candidate -session $symbolSession `
+                -snapshot-schema-version 8
               if ($LASTEXITCODE -ne 0) { throw "candidate build failed for $tag" }
               uv run python gamesymbol_candidate.py guard -candidate $candidate -session $symbolSession
               if ($LASTEXITCODE -ne 0) { throw "candidate guard failed for $tag" }
