@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import logging
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import PurePosixPath
@@ -13,6 +14,7 @@ PREPROCESSOR_ROOT = "ida_preprocessor_scripts"
 REFERENCE_ROOT = f"{PREPROCESSOR_ROOT}/references"
 PROMPT_ROOT = f"{PREPROCESSOR_ROOT}/prompt"
 DEFAULT_REFERENCE_GAMEVER = "hl-10210"
+logger = logging.getLogger(__name__)
 
 
 class AnalysisSourceError(ValueError):
@@ -30,6 +32,10 @@ class SourceIndex:
 
 def is_analysis_source_path(path: str) -> bool:
     return path.startswith(f"{PREPROCESSOR_ROOT}/")
+
+
+def is_reference_source_path(path: str) -> bool:
+    return path.startswith(f"{REFERENCE_ROOT}/") and path.endswith(".yaml")
 
 
 def _decode(path: str, value: bytes | str) -> str:
@@ -159,16 +165,16 @@ def build_source_index(
                 if path.startswith(f"{PROMPT_ROOT}/"):
                     add(path, node.node_id)
 
-    reference_paths = {path for path in tree if path.startswith(f"{REFERENCE_ROOT}/") and path.endswith(".yaml")}
-    orphaned = sorted(path for path in reference_paths if not owners.get(path))
-    if reject_orphan_references and orphaned:
-        raise AnalysisSourceError("Active reference YAML has no analysis consumer:\n" + "\n".join(orphaned))
     analysis_paths = frozenset(path for path in tree if is_analysis_source_path(path))
-    return SourceIndex({path: frozenset(node_ids) for path, node_ids in owners.items()}, analysis_paths)
+    index = SourceIndex({path: frozenset(node_ids) for path, node_ids in owners.items()}, analysis_paths)
+    # Retain the legacy keyword for callers; orphan references are diagnostic only.
+    if reject_orphan_references:
+        validate_reference_consumers(tree, [index])
+    return index
 
 
 def validate_reference_consumers(tree: Mapping[str, bytes | str], indices: list[SourceIndex]) -> None:
-    reference_paths = {path for path in tree if path.startswith(f"{REFERENCE_ROOT}/") and path.endswith(".yaml")}
+    reference_paths = {path for path in tree if is_reference_source_path(path)}
     orphaned = sorted(path for path in reference_paths if not any(index.owners(path) for index in indices))
     if orphaned:
-        raise AnalysisSourceError("Active reference YAML has no analysis consumer:\n" + "\n".join(orphaned))
+        logger.warning("Active reference YAML has no analysis consumer:\n%s", "\n".join(orphaned))

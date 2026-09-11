@@ -143,7 +143,7 @@ class AnalysisSourceIndexTests(unittest.TestCase):
                 fallback.owners("ida_preprocessor_scripts/references/hl-10210/engine/Demo.windows.yaml"),
             )
 
-    def test_rejects_orphan_head_reference(self):
+    def test_warns_for_orphan_head_reference_without_rejecting_index(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             tree = {
@@ -151,8 +151,13 @@ class AnalysisSourceIndexTests(unittest.TestCase):
                 "ida_analyze_util.py": "x = 1\n",
                 "ida_preprocessor_scripts/references/hl-10210/engine/Orphan.windows.yaml": "func_name: x\n",
             }
-            with self.assertRaisesRegex(AnalysisSourceError, "no analysis consumer"):
+            with self.assertLogs("gamesymbol_snapshot_lib.analysis_sources", level="WARNING") as captured:
                 validate_reference_consumers(tree, [build_source_index(self._contract(root, "game-1"), tree)])
+            self.assertIn("no analysis consumer", captured.output[0])
+            self.assertIn("Orphan.windows.yaml", captured.output[0])
+            with self.assertLogs("gamesymbol_snapshot_lib.analysis_sources", level="WARNING"):
+                index = build_source_index(self._contract(root, "game-1"), tree, reject_orphan_references=True)
+            self.assertEqual(frozenset({"engine:windows:find-demo"}), index.owners("ida_analyze_util.py"))
 
 
 class ImpactPlanningTests(unittest.TestCase):
