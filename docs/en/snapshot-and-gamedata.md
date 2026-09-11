@@ -69,9 +69,23 @@ uv run python gamesymbol_snapshot.py restore-legacy -gamever cstrike-10210 -snap
   -bindir bin -artifactdir <compatibility-artifact-root>
 ```
 
-The writer emits schema 7 and the reader accepts schemas 1–7. Schema 7 records a required boolean `is_blob` per
+The default writer emits schema 7 and the reader accepts schemas 1–8. Schema 7 records a required boolean `is_blob` per
 module/platform: `true` only when the original Windows binary is a fully verified Metahook blob (plain PE/ELF is `false`;
 invalid binaries fail the snapshot rather than publishing `false`). The JSON generator only accepts schema-7 snapshots
 and the frontend only accepts schema-4 datasets — there is no legacy-dataset compatibility mode. Restore and
 verification reject links, path escapes,
 undeclared or missing YAML, non-canonical bytes, and contract drift.
+
+### Trusted scalar compatibility rollout
+
+The trusted PR planner and candidate builder run from the PR base revision. A prerequisite change must therefore
+teach them the new contract before a feature PR enables it. The default writer remains snapshot 7 / analysis-output
+contract 2 during this compatibility stage. `gamesymbol_candidate.py build -snapshot-schema-version 8` explicitly
+selects the supported snapshot 8 / analysis-output contract 3 pair. The builder validates artifacts, builds metadata,
+and reopens the candidate against that selected contract; unsupported formats fail closed. The ordinary SymbolStore
+reader still requires its current contract unless a caller explicitly selects another supported contract.
+
+`category: scalar` artifacts contain exactly `scalar_name` and uint32 `scalar_value`. The value is used directly,
+without rebasing or pointer dereference. Scalar payloads are rejected under snapshots 1–7 and analysis-output contract 2.
+This stage does not enable scalar finders or change dataset/index formats. The consuming feature PR enables the new
+writer/export/UI defaults and requests format 8 from the trusted builder after the prerequisite reaches main.

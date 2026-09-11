@@ -67,6 +67,14 @@ tags:
 - 门控是 **tag 粗粒度** `any(...)`：任一 tag 命中，整个 job 就跑；per-tag / per-node 粒度只存在于 job 内部（`analysis-selection.json` + 循环）。
 - `analysis_batch.py:90 classify_tag_plan` 是 **job 内** parallel/serial DAG 调度分类（见 [[full-analysis-concurrency]]），**不是** PR 分流。
 
+## Trusted contract rollout
+
+- Trigger: a PR introduces a new symbol category or snapshot contract and `plan` fails inside `.trusted-planner`, even though tests against the PR code pass.
+- Root cause: the planner and candidate validator are loaded from `pull_request.base.sha`; they must understand the merge commit's config and artifact payloads before feature activation. Updating only the PR's parser cannot update the trusted base checkout.
+- Correct procedure: land shared parser, artifact validation, snapshot/candidate and consumer compatibility in a prerequisite PR without enabling new config symbols or changing binary artifacts. Then merge the updated main into the feature branch. Keep the base checkout trust boundary intact.
+- Verification: run the prerequisite tools against the feature revision's bound plan and artifacts; verify candidates built by the old base remain consumable during the prerequisite PR. Run Pages E2E separately from Vitest/build whenever dataset or snapshot versions change.
+- Scope: cross-revision game-symbol PR validation, including the scalar rollout required by #109. The prerequisite retains default snapshot 7 / output contract 2 and adds explicit writer profile 8/3; #109 requests `-snapshot-schema-version 8` only after the trusted base supports it. Switching the prerequisite's default consumer to contract 3 would reject the old base's contract-2 candidates in gamedata build. Dataset 5 / snapshot 8 also require matching E2E assertions; index stays 4.
+
 ## Verification
 
 - `tests/test_gamesymbol_pr_validation.py` 覆盖 plan/route/aggregate 断言；`pr-validate` 的聚合 step 本身即路由断言的运行时证据。

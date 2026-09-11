@@ -13,6 +13,7 @@ from gamesymbol_snapshot_lib.candidate import (
 )
 from gamesymbol_snapshot_lib.candidate_session import CandidateContractError
 from gamesymbol_snapshot_lib.errors import SnapshotError
+from gamesymbol_snapshot_lib.codec import SCHEMA_VERSION, WRITABLE_SNAPSHOT_CONTRACTS
 from gamesymbol_store import SymbolStoreError
 
 
@@ -27,6 +28,9 @@ def _parser():
     build.add_argument("-output", required=True)
     build.add_argument("-session", required=True)
     build.add_argument("-last-publish-time", default=None)
+    build.add_argument(
+        "-snapshot-schema-version", type=int, choices=sorted(WRITABLE_SNAPSHOT_CONTRACTS), default=SCHEMA_VERSION
+    )
     for name in ("guard", "mark", "publish"):
         command = commands.add_parser(name)
         command.add_argument("-candidate", required=True)
@@ -52,6 +56,7 @@ def main(argv=None):
                 output_path=args.output,
                 session_path=args.session,
                 last_publish_time=args.last_publish_time,
+                schema_version=args.snapshot_schema_version,
             )
         elif args.command == "guard":
             guard_candidate(candidate_path=args.candidate, session_path=args.session)

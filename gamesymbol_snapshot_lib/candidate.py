@@ -21,6 +21,8 @@ from gamesymbol_snapshot_lib.candidate_session import (
     update_session,
 )
 from gamesymbol_snapshot_lib.codec import (
+    SCHEMA_VERSION,
+    snapshot_writer_output_contract,
     canonical_snapshot_bytes,
     parse_snapshot_bytes,
     snapshot_config_digest_version,
@@ -115,7 +117,9 @@ def build_candidate_snapshot(
     session_path,
     metadata_output_path=None,
     last_publish_time=None,
+    schema_version: int = SCHEMA_VERSION,
 ) -> CandidateInfo:
+    output_contract = snapshot_writer_output_contract(schema_version)
     output, session = absolute_path(output_path), absolute_path(session_path)
     if snapshot_tag_from_filename(output.name) != str(game_version):
         raise CandidateContractError(f"Candidate snapshot must be named {game_version}.yaml")
@@ -137,14 +141,21 @@ def build_candidate_snapshot(
             artifactdir=artifact_root,
             last_publish_time=last_publish_time,
             strict=True,
+            schema_version=schema_version,
         )
         write_metadata(
             snapshot_path=output,
             config_path=config_path,
             game_version=str(game_version),
             output_path=metadata_output,
+            analysis_output_contract_version=output_contract,
         )
-        store = SnapshotSymbolStore.open(output, expected_game_version=str(game_version), config_path=config_path)
+        store = SnapshotSymbolStore.open(
+            output,
+            expected_game_version=str(game_version),
+            config_path=config_path,
+            analysis_output_contract_version=output_contract,
+        )
         info = _candidate_info(output, metadata_output)
         if store.candidate_sha256 != info.candidate_sha256:
             raise CandidateChangedError("Candidate hash changed during reopen validation")

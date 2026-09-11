@@ -14,6 +14,7 @@ from typing import Any, Protocol
 import yaml
 
 from analysis_config import AnalysisConfigError, resolve_analysis_config
+from analysis_output_contract import ANALYSIS_OUTPUT_CONTRACT_VERSION
 from gamesymbol_snapshot_lib.codec import (
     SCHEMA_VERSION,
     canonical_snapshot_bytes,
@@ -196,7 +197,14 @@ class _MemorySymbolStore:
 
 class SnapshotSymbolStore(_MemorySymbolStore):
     @classmethod
-    def open(cls, snapshot_path, *, expected_game_version: str, config_path=None):
+    def open(
+        cls,
+        snapshot_path,
+        *,
+        expected_game_version: str,
+        config_path=None,
+        analysis_output_contract_version: int = ANALYSIS_OUTPUT_CONTRACT_VERSION,
+    ):
         path = Path(os.path.abspath(snapshot_path))
         if not path.is_file() or any(
             candidate.exists() and is_reparse_point(candidate) for candidate in (path, *path.parents)
@@ -220,6 +228,7 @@ class SnapshotSymbolStore(_MemorySymbolStore):
                 "bin",
                 digest_version,
                 artifactdir="bin_artifacts",
+                analysis_output_contract_version=analysis_output_contract_version,
             )
             validate_snapshot_contract(document, contract)
         except (AnalysisConfigError, SnapshotConfigError, SnapshotMismatchError) as exc:

@@ -16,9 +16,10 @@ from binary_identity import validate_binary_is_blob
 from gamesymbol_snapshot_lib.codec import (
     SCHEMA_4_VERSION,
     SCHEMA_5_VERSION,
-    SCHEMA_6_VERSION,
     SCHEMA_7_VERSION,
     SCHEMA_VERSION,
+    MAX_SUPPORTED_SCHEMA_VERSION,
+    snapshot_writer_output_contract,
     build_snapshot_document,
     canonical_snapshot_bytes,
     canonical_yaml_bytes,
@@ -116,7 +117,7 @@ def _ensure_plain_binary(path: Path, game_root: Path) -> None:
 
 
 def collect_binary_metadata(contract, schema_version: int = SCHEMA_VERSION) -> dict:
-    if schema_version not in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION, SCHEMA_7_VERSION}:
+    if not SCHEMA_4_VERSION <= schema_version <= MAX_SUPPORTED_SCHEMA_VERSION:
         raise SnapshotSchemaError(f"Binary metadata is unsupported for schema {schema_version}")
     binaries = {}
     for key in sorted(contract.binary_targets):
@@ -131,9 +132,9 @@ def collect_binary_metadata(contract, schema_version: int = SCHEMA_VERSION) -> d
         metadata = {"sha256": hashes["sha256"], "md5": hashes["md5"]}
         if schema_version in {SCHEMA_4_VERSION, SCHEMA_5_VERSION}:
             metadata["path"] = target.source_path or target.binary_name
-        if schema_version in {SCHEMA_5_VERSION, SCHEMA_6_VERSION, SCHEMA_7_VERSION}:
+        if schema_version >= SCHEMA_5_VERSION:
             metadata.update({"crc32": hashes["crc32"], "crc64": hashes["crc64"], "size": hashes["size"]})
-        if schema_version == SCHEMA_7_VERSION:
+        if schema_version >= SCHEMA_7_VERSION:
             metadata["is_blob"] = is_blob
         binaries.setdefault(target.module_name, {})[target.platform] = metadata
     return binaries
@@ -151,7 +152,7 @@ def build_actual_document(
     last_publish_time: str | None = None,
     binaries: dict | None = None,
 ) -> dict:
-    if schema_version in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION, SCHEMA_7_VERSION}:
+    if SCHEMA_4_VERSION <= schema_version <= MAX_SUPPORTED_SCHEMA_VERSION:
         last_publish_time = last_publish_time or _publish_time()
         binaries = collect_binary_metadata(contract, schema_version) if binaries is None else binaries
     return build_snapshot_document(
@@ -180,7 +181,7 @@ def validate_snapshot_contract(document: dict, contract) -> None:
         raise SnapshotMismatchError(
             "Snapshot files do not match the analysis contract", reason="snapshot_contract_mismatch"
         )
-    if document["schema_version"] in {SCHEMA_4_VERSION, SCHEMA_5_VERSION, SCHEMA_6_VERSION, SCHEMA_7_VERSION}:
+    if SCHEMA_4_VERSION <= document["schema_version"] <= MAX_SUPPORTED_SCHEMA_VERSION:
         expected = set(contract.binary_targets)
         actual = {(module, platform) for module, platforms in document["binaries"].items() for platform in platforms}
         if actual != expected:
@@ -235,7 +236,9 @@ def pack_snapshot(
     artifactdir="bin_artifacts",
     last_publish_time: str | None = None,
     strict: bool = True,
+    schema_version: int = SCHEMA_VERSION,
 ) -> bytes:
+    output_contract = snapshot_writer_output_contract(schema_version)
     output = _required_snapshot_path(snapshot_path)
     config = resolve_analysis_config(game_version, config_path)
     contract = load_contract(
@@ -244,10 +247,13 @@ def pack_snapshot(
         bindir,
         LATEST_CONFIG_DIGEST_VERSION,
         artifactdir=artifactdir,
+        analysis_output_contract_version=output_contract,
     )
     ensure_real_tree(Path(bindir), contract.binary_game_root)
     ensure_real_tree(Path(artifactdir), contract.artifact_game_root)
-    document = build_actual_document(contract, strict=strict, last_publish_time=last_publish_time)
+    document = build_actual_document(
+        contract, strict=strict, last_publish_time=last_publish_time, schema_version=schema_version
+    )
     data = canonical_snapshot_bytes(document)
     reparsed = parse_snapshot_bytes(data, str(game_version))
     validate_snapshot_contract(reparsed, contract)

@@ -63,8 +63,21 @@ uv run python gamesymbol_snapshot.py restore-legacy -gamever cstrike-10210 -snap
   -bindir bin -artifactdir <compatibility-artifact-root>
 ```
 
-Writer 输出 schema 7，reader 接受 schema 1–7。Schema 7 为每个 module/platform 记录必填布尔 `is_blob`：仅当原始
+默认 writer 输出 schema 7，reader 接受 schema 1–8。Schema 7 为每个 module/platform 记录必填布尔 `is_blob`：仅当原始
 Windows 二进制是通过完整校验的 Metahook blob 时为 `true`（普通 PE/ELF 为 `false`；非法二进制直接让 snapshot
 失败，而不是发布为 `false`）。JSON 生成器只接受 schema-7 snapshot，前端只接受 schema-4 dataset，没有旧
 dataset 兼容模式。Restore/verify 拒绝 link、path escape、未声明或缺失 YAML、
 非 canonical bytes 与 contract drift。
+
+### Trusted scalar 契约的分阶段升级
+
+PR 的 trusted planner 和 candidate builder 来自 base revision，因此必须先合入契约支持，再启用新符号。
+兼容阶段默认仍写 snapshot 7 / analysis-output contract 2；显式传入
+`gamesymbol_candidate.py build -snapshot-schema-version 8` 才选择 snapshot 8 / contract 3。
+Builder 按选定契约校验 artifact、生成 metadata 并重新打开 candidate，拒绝不支持的版本。
+普通 SymbolStore 仍严格要求当前 contract；只有显式指定受支持版本的调用方可以选择另一版本。
+
+`category: scalar` 的 artifact 仅包含 `scalar_name` 和 uint32 `scalar_value`，直接使用数值，不加 image base、
+不解引用。Snapshot 1–7 和 analysis-output contract 2 不得携带 scalar。
+兼容阶段不启用 scalar finder，也不改变 dataset/index 格式；后续功能 PR 切换 writer/export/UI 默认契约，
+并在兼容代码进入 main 后向 trusted builder 显式请求格式 8。
