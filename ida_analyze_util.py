@@ -14,6 +14,7 @@ from pathlib import Path
 import yaml
 
 from analysis_config import validated_tag
+from ida_mcp_keepalive import keepalive_worker_during
 from ida_llm_decompile import (
     _build_llm_decompile_request_cache_key,
     _empty_llm_decompile_result,
@@ -3059,30 +3060,31 @@ async def _call_llm_for_targets(
     expected_sections = {
         symbol_name: list(specs[symbol_name]["expected_result_sections"]) for symbol_name in symbol_names
     }
-    result = await call_llm_decompile(
-        model=context["model"],
-        symbol_name_list=symbol_names,
-        expected_result_sections=expected_sections,
-        instruction_validations=_build_llm_instruction_validations(symbol_names, specs),
-        disasm_code=exported_targets[0].get("disasm_code", ""),
-        target_disasm_codes=[target.get("disasm_code", "") for target in exported_targets],
-        procedure=exported_targets[0].get("procedure", ""),
-        reference_blocks=reference_blocks,
-        target_blocks=target_blocks,
-        prompt_template=context["prompt_template"],
-        platform=platform,
-        new_binary_dir=new_binary_dir,
-        temperature=context.get("temperature"),
-        effort=context.get("effort"),
-        api_key=context.get("api_key"),
-        base_url=context.get("base_url"),
-        fake_as=context.get("fake_as"),
-        max_retries=context.get("max_retries"),
-        retry_initial_delay=context.get("retry_initial_delay"),
-        retry_backoff_factor=context.get("retry_backoff_factor"),
-        retry_max_delay=context.get("retry_max_delay"),
-        debug=debug,
-    )
+    async with keepalive_worker_during(session, debug=debug, activity="llm_decompile"):
+        result = await call_llm_decompile(
+            model=context["model"],
+            symbol_name_list=symbol_names,
+            expected_result_sections=expected_sections,
+            instruction_validations=_build_llm_instruction_validations(symbol_names, specs),
+            disasm_code=exported_targets[0].get("disasm_code", ""),
+            target_disasm_codes=[target.get("disasm_code", "") for target in exported_targets],
+            procedure=exported_targets[0].get("procedure", ""),
+            reference_blocks=reference_blocks,
+            target_blocks=target_blocks,
+            prompt_template=context["prompt_template"],
+            platform=platform,
+            new_binary_dir=new_binary_dir,
+            temperature=context.get("temperature"),
+            effort=context.get("effort"),
+            api_key=context.get("api_key"),
+            base_url=context.get("base_url"),
+            fake_as=context.get("fake_as"),
+            max_retries=context.get("max_retries"),
+            retry_initial_delay=context.get("retry_initial_delay"),
+            retry_backoff_factor=context.get("retry_backoff_factor"),
+            retry_max_delay=context.get("retry_max_delay"),
+            debug=debug,
+        )
     return result, target_ranges
 
 

@@ -79,3 +79,10 @@ flowchart TD
 - Correct approach: before setting the cross-thread Future exception, detach only the `_serve` frame from the exception traceback and recursively from causes, contexts and exception-group members. Preserve exception types and completed operation frames for diagnosis.
 - Verification: reproduce the original failure under an isolated Python 3.12 environment; test traceback cleanup explicitly, retain the original operation frame/cause, and verify reset plus the next operation and thread shutdown succeed. Run both 3.12 and 3.13 suites; never infer compatibility from 3.13 alone.
 - Scope: long-lived asyncio task executors exporting exceptions to synchronous callers.
+
+### Worker keepalive during LLM waits (PR #108)
+
+- Trigger: run `34584601153` waited about 610 seconds for Sven Linux `cl_viewentity` LLM analysis, then spawned another IDA worker and failed preprocessing. The worker's default idle TTL is 600 seconds; idle expiry is the leading explanation, but the original MCP exception was not preserved.
+- Correct approach: port CS2's `ida_mcp_keepalive.py` unchanged. `_call_llm_for_targets` wraps the remote LLM call, including retries, in `keepalive_worker_during(session, debug=debug, activity="llm_decompile")`. Every 240 seconds it sends `py_eval(code="1")` through the existing bound session. Context exit cancels and awaits the task; keepalive errors only emit debug output and stop the heartbeat without replacing the foreground result.
+- Verification: the two CS2 behavior tests cover forwarded requests, cleanup and foreground-result preservation; the existing LLM caller test waits for a real keepalive request while the mocked LLM is pending. It timed out before caller integration and passed afterward. Both copied files are byte-identical to CS2. Full suite: 758 tests, OK with 6 skips; formatting check passed.
+- Scope: LLM-wait keepalive only; no new configuration, session recovery, MCP exception handling or address-resolution changes.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import asyncio
 import io
 import json
 import os
@@ -2545,6 +2546,19 @@ found_struct_offset: []
         self.assertEqual(exported, payload)
 
     async def test_call_llm_for_targets_preserves_tail_chunk_ranges(self):
+        keepalive_called = asyncio.Event()
+        session = SimpleNamespace(call_tool=AsyncMock(side_effect=lambda **kwargs: keepalive_called.set()))
+
+        async def call_llm_with_keepalive(**kwargs):
+            await asyncio.wait_for(keepalive_called.wait(), timeout=1)
+            return {
+                "found_vcall": [],
+                "found_call": [],
+                "found_funcptr": [],
+                "found_gv": [],
+                "found_struct_offset": [],
+            }
+
         exported = {
             "func_name": "Predecessor",
             "func_start": "0x401000",
@@ -2570,19 +2584,12 @@ found_struct_offset: []
             patch("ida_analyze_util._export_llm_function", new=AsyncMock(return_value=exported)),
             patch(
                 "ida_analyze_util.call_llm_decompile",
-                new=AsyncMock(
-                    return_value={
-                        "found_vcall": [],
-                        "found_call": [],
-                        "found_funcptr": [],
-                        "found_gv": [],
-                        "found_struct_offset": [],
-                    }
-                ),
+                new=AsyncMock(side_effect=call_llm_with_keepalive),
             ),
+            patch("ida_mcp_keepalive.WORKER_KEEPALIVE_INTERVAL_SECONDS", 0.001),
         ):
             _result, target_ranges = await _call_llm_for_targets(
-                session=SimpleNamespace(call_tool=AsyncMock()),
+                session=session,
                 symbol_names=["Target"],
                 specs={"Target": {"expected_result_sections": ["found_call"]}},
                 context=context,
@@ -2590,6 +2597,7 @@ found_struct_offset: []
                 new_binary_dir=Path("D:/game/engine"),
             )
 
+        session.call_tool.assert_awaited_with(name="py_eval", arguments={"code": "1"})
         self.assertEqual([(0x401000, 0x401050), (0x402000, 0x402020)], target_ranges)
         self.assertTrue(
             _llm_entry_instruction_is_valid(
