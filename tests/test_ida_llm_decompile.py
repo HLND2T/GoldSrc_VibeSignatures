@@ -305,6 +305,70 @@ class PitchDriftInstructionRuleTests(unittest.IsolatedAsyncioTestCase):
                 common.assert_not_called()
 
 
+class ParsecountInstructionRuleTests(unittest.IsolatedAsyncioTestCase):
+    async def prepare(self, platform):
+        finder = runpy.run_path(
+            str(
+                Path(__file__).resolve().parents[1]
+                / "ida_preprocessor_scripts/find-R_DrawTEntitiesOnList-decompiles.py"
+            )
+        )
+        common = AsyncMock(return_value=True)
+        with patch.dict(finder["preprocess_skill"].__globals__, {"preprocess_common_skill": common}):
+            result = await finder["preprocess_skill"](
+                None, "find-R_DrawTEntitiesOnList-decompiles", [], {}, ".", platform, 0
+            )
+        return result, common
+
+    # Every Linux engine .so the finder runs on (hl-10210, hl-8684,
+    # svencoop-10257) uses one of these three shapes; the rule must keep them.
+    _DECOY = ("0x500000", "mov edx, [esi+242324h]")
+    _LINUX_ACCEPTED = (
+        ("0x500010", "mov ecx, ds:m1.max_edicts+2AB24h"),
+        ("0x500020", "lea esi, (dword_2F1654 - 2EE000h)[ebx]"),
+        ("0x500030", "mov eax, ds:nMax.parsecount"),
+    )
+
+    def _disasm_code(self):
+        lines = [f".text:{address[2:]:>08} {text}" for address, text in (self._DECOY, *self._LINUX_ACCEPTED)]
+        return "\n".join(lines)
+
+    async def test_linux_rule_accepts_every_shipped_form_and_rejects_the_decoy(self):
+        success, common = await self.prepare("linux")
+        self.assertTrue(success)
+        rules = common.call_args.kwargs["llm_decompile_specs"][0].get("instruction_rules") or []
+        self.assertEqual(1, len(rules))
+
+        code = self._disasm_code()
+
+        def response(entries):
+            return "found_gv:\n" + "".join(
+                f"  - insn_va: '{address}'\n    insn_disasm: '{text}'\n    gv_name: cl_parsecount\n"
+                for address, text in entries
+            )
+
+        for accepted in self._LINUX_ACCEPTED:
+            with self.subTest(accepted=accepted):
+                transport = AsyncMock(side_effect=[response([self._DECOY, accepted]), response([accepted])])
+                result = await call_llm_decompile(
+                    model="test-model",
+                    symbol_name_list=["cl_parsecount"],
+                    expected_result_sections={"cl_parsecount": ["found_gv"]},
+                    instruction_validations={"cl_parsecount": {"instruction_rules": rules}},
+                    target_disasm_codes=[code],
+                    prompt_template="Find {symbol_name_list}.",
+                    max_retries=2,
+                    call_llm_text_func=transport,
+                )
+                self.assertEqual([accepted[0]], [entry["insn_va"] for entry in result["found_gv"]])
+                self.assertEqual(2, transport.call_count)
+
+    async def test_windows_targets_keep_the_previous_behavior(self):
+        success, common = await self.prepare("windows")
+        self.assertTrue(success)
+        self.assertFalse(common.call_args.kwargs["llm_decompile_specs"][0].get("instruction_rules"))
+
+
 class LlmDecompileParserTests(unittest.TestCase):
     def test_disassembly_comments_need_no_space_before_semicolon(self):
         from ida_llm_decompile import _build_target_disasm_index, render_llm_decompile_blocks
