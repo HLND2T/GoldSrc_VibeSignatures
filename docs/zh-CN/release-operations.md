@@ -60,6 +60,10 @@ notes 和 publisher 都使用现有 `release` Environment，已有 reviewer/ref 
 变化。空白、格式错误、超过 120 KiB、包含凭证或保留 identity 标记的输出被拒绝。每轮最多 10 分钟，总计最多两轮；失败阻断
 发布，不自动降级为提交摘要。不打印或上传原始 prompt、CLI 输出或凭证。结构校验不代表内容事实正确。
 
+失败日志只记录固定诊断类别：例如 `cli_timeout`、`cli_exit=<退出码>`、`invalid_json`、`notes_language_sections`、
+`missing_model_or_key`。CLI/模型返回错误时，`output_hint` 可包含白名单 HTTP 状态和认证、模型、参数或连接错误标记；
+这些只是从不可信输出中识别的线索，不代表已验证的 HTTP 响应或根因。无法识别时显示 `unclassified`，不会回退打印原文。
+
 只将 Markdown 上传至 `release-notes-<version>-<source_sha>-<run_id>-<attempt>` artifact，保留 7 天。publisher 下载前校验
 同次 run 的名称和 digest。notes 不进入封闭 bundle 或资产 manifest。`release_publish.py publish --notes-file <path>` 在创建
 未发布版本的 tag/Draft 之前要求有效 notes，并在正文末尾追加程序生成的 immutable identity。重试可更新 matching Draft 的 notes，

@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import subprocess
@@ -126,6 +127,59 @@ class ContextTests(unittest.TestCase):
 
 
 class NotesTests(unittest.TestCase):
+    def test_safe_diagnostics_distinguish_failures_without_exception_text(self):
+        cases = [
+            (FileNotFoundError("private-key /private/path"), "cli_or_file_missing"),
+            (PermissionError("private-key"), "permission_denied"),
+            (subprocess.TimeoutExpired("secret-command", 600, output="private-key"), "cli_timeout"),
+            (subprocess.CalledProcessError(7, "secret-command", output="private-key"), "cli_exit=7"),
+            (json.JSONDecodeError("private-key", "private-context", 0), "invalid_json"),
+            (
+                release.ReleaseError("Release notes must contain exactly the two language sections"),
+                "notes_language_sections",
+            ),
+            (release.ReleaseError("private-key https://private.invalid private-context"), "release_error"),
+        ]
+        for error, expected in cases:
+            with self.subTest(expected=expected):
+                self.assertEqual(expected, release.safe_diagnostic(error))
+
+    def test_real_cli_failure_logs_only_allowlisted_hints(self):
+        with tempfile.TemporaryDirectory() as root:
+            command = [
+                sys.executable,
+                "-c",
+                (
+                    "import sys; print('API Error: 401 private-key private-context'); "
+                    "print('authentication_error https://private.invalid', file=sys.stderr); sys.exit(3)"
+                ),
+            ]
+            with self.assertRaises(subprocess.CalledProcessError) as caught:
+                release.run_cli_process(command, "", root, os.environ.copy())
+            error = caught.exception
+            self.assertEqual("cli_exit=3; output_hint=http_401,authentication", release.safe_diagnostic(error))
+            self.assertIsNone(error.output)
+            self.assertIsNone(error.stderr)
+            with (
+                patch.object(release, "run_cli_once", side_effect=error),
+                patch("sys.stderr", new_callable=io.StringIO) as log,
+                self.assertRaises(release.ReleaseError),
+            ):
+                release.generate_notes("private-context", "claude", "model", "https://private.invalid", "private-key")
+            self.assertEqual(2, log.getvalue().count("cli_exit=3"))
+            for secret in ("private-key", "private-context", "https://private.invalid", "import sys"):
+                self.assertNotIn(secret, log.getvalue())
+
+    def test_provider_error_hints_and_untrusted_output(self):
+        with self.assertRaises(release.ReleaseError) as caught:
+            release.claude_result(json.dumps({"is_error": True, "result": "API Error: 429 private-key"}))
+        self.assertEqual("provider_error; output_hint=http_429", release.safe_diagnostic(caught.exception))
+        self.assertEqual("unclassified", release.cli_output_hint("private-key HTTP 123 secret 401"))
+        self.assertEqual("cli_arguments", release.cli_output_hint("error: unknown option '--private-key'"))
+        with self.assertRaises(release.ReleaseError) as caught:
+            release.validate_codex_events(json.dumps({"type": "turn.failed", "error": {"message": "HTTP 503 secret"}}))
+        self.assertEqual("provider_error; output_hint=http_503", release.safe_diagnostic(caught.exception))
+
     def test_duplicate_sections_reserved_marker_and_oversize_fail(self):
         for text in (
             NOTES + "\n## English\nextra",

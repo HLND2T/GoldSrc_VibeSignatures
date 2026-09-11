@@ -48,6 +48,82 @@ class ReleaseError(Exception):
     pass
 
 
+def cli_output_hint(output):
+    """Extract fixed diagnostic labels, never excerpts from untrusted CLI output.
+
+    These are output markers, not verified API status or a root-cause verdict.
+    """
+    hints = []
+    for status in (400, 401, 403, 404, 408, 413, 422, 429, 500, 502, 503, 504, 529):
+        if re.search(
+            rf"(?:HTTP(?:/\d(?:\.\d)?)?|API Error|status(?:_code| code)?)\s*[:=]?\s*{status}\b", output, re.IGNORECASE
+        ):
+            hints.append(f"http_{status}")
+    for label, pattern in (
+        ("authentication", r"authentication_error|invalid[ _-]api[ _-]key|not logged in"),
+        ("model_unavailable", r"model_not_found|unknown model|invalid model"),
+        ("cli_arguments", r"unknown option|unrecognized argument|missing required argument"),
+        ("connection", r"ECONNREFUSED|ENOTFOUND|ETIMEDOUT|connection error"),
+    ):
+        if re.search(pattern, output, re.IGNORECASE):
+            hints.append(label)
+    return ",".join(hints) or "unclassified"
+
+
+class CliFailure(subprocess.CalledProcessError):
+    def __init__(self, returncode, output):
+        super().__init__(returncode, "AI CLI")
+        self.hint = cli_output_hint(output)
+
+
+class ProviderFailure(ReleaseError):
+    def __init__(self, output):
+        super().__init__("AI provider returned an error")
+        self.hint = cli_output_hint(output)
+
+
+def safe_diagnostic(error):
+    """Return allowlisted metadata only; exception messages may contain secrets."""
+    if isinstance(error, subprocess.TimeoutExpired):
+        return "cli_timeout"
+    if isinstance(error, subprocess.CalledProcessError):
+        diagnostic = f"cli_exit={int(error.returncode)}"
+        return diagnostic + (f"; output_hint={error.hint}" if isinstance(error, CliFailure) else "")
+    if isinstance(error, ProviderFailure):
+        return f"provider_error; output_hint={error.hint}"
+    if isinstance(error, FileNotFoundError):
+        return "cli_or_file_missing"
+    if isinstance(error, PermissionError):
+        return "permission_denied"
+    if isinstance(error, json.JSONDecodeError):
+        return "invalid_json"
+    if isinstance(error, UnicodeError):
+        return "invalid_text_encoding"
+    if isinstance(error, ReleaseError):
+        return {
+            "Release notes are empty or too large": "notes_empty_or_oversize",
+            "Release notes contain a reserved identity marker or code fence": "notes_reserved_content",
+            "Release notes must contain exactly the two language sections": "notes_language_sections",
+            "Release notes must contain English and Chinese sections": "notes_empty_language_section",
+            "Claude did not return a successful text result": "provider_result_shape",
+            "Codex attempted to use a tool outside the read-only Git allowlist": "tool_not_allowed",
+            "Refusing notes containing a credential": "notes_contain_credential",
+            "RELEASE_NOTES_PROVIDER must be codex or claude": "invalid_provider",
+            "RELEASE_NOTES_MODEL and RELEASE_NOTES_API_KEY are required": "missing_model_or_key",
+            "RELEASE_NOTES_BASE_URL must be an HTTPS URL without credentials, query or fragment": "invalid_endpoint",
+            "Release context exceeds the 200 KiB limit": "context_oversize",
+            "AI notes generation failed; release will not be published": "attempts_exhausted",
+            "Checkout does not match SOURCE_SHA": "source_mismatch",
+        }.get(str(error), "release_error")
+    if isinstance(error, QueryError):
+        return "git_query_error"
+    if isinstance(error, OSError):
+        return "os_error"
+    if isinstance(error, subprocess.SubprocessError):
+        return "subprocess_error"
+    return "invalid_value"
+
+
 class GitHub:
     def __init__(self, repository, token):
         if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository) or not token:
@@ -225,7 +301,9 @@ def validate_notes(text):
 
 def claude_result(output):
     result = json.loads(output)
-    if not isinstance(result, dict) or result.get("is_error") or not isinstance(result.get("result"), str):
+    if isinstance(result, dict) and result.get("is_error"):
+        raise ProviderFailure(output)
+    if not isinstance(result, dict) or not isinstance(result.get("result"), str):
         raise ReleaseError("Claude did not return a successful text result")
     return validate_notes(result["result"])
 
@@ -234,7 +312,7 @@ def validate_codex_events(output):
     for line in output.splitlines():
         event = json.loads(line)
         if event.get("type") in ("error", "turn.failed"):
-            raise ReleaseError("Codex generation failed")
+            raise ProviderFailure(line)
         item = event.get("item", {})
         if (
             item.get("type") == "mcp_tool_call"
@@ -300,7 +378,7 @@ def run_cli_process(command, context, work, environment):
         start_new_session=os.name != "nt",
     ) as process:
         try:
-            stdout, _ = process.communicate(context, timeout=CLI_TIMEOUT_SECONDS)
+            stdout, stderr = process.communicate(context, timeout=CLI_TIMEOUT_SECONDS)
         except subprocess.TimeoutExpired:
             if os.name != "nt":
                 os.killpg(process.pid, signal.SIGKILL)
@@ -309,7 +387,7 @@ def run_cli_process(command, context, work, environment):
             process.communicate()
             raise
         if process.returncode:
-            raise subprocess.CalledProcessError(process.returncode, command[0])
+            raise CliFailure(process.returncode, stdout + "\n" + stderr)
         return stdout
 
 
@@ -411,8 +489,11 @@ def generate_notes(context, provider, model, endpoint, key, repository=None, sou
             if key in text or endpoint in text:
                 raise ReleaseError("Refusing notes containing a credential")
             return text
-        except (ReleaseError, subprocess.SubprocessError, OSError, ValueError):
-            print(f"AI attempt {attempt + 1}/{CLI_ATTEMPTS} failed; raw CLI output suppressed", file=sys.stderr)
+        except (ReleaseError, subprocess.SubprocessError, OSError, ValueError) as error:
+            print(
+                f"AI attempt {attempt + 1}/{CLI_ATTEMPTS} failed: {safe_diagnostic(error)}; raw CLI output suppressed",
+                file=sys.stderr,
+            )
     raise ReleaseError("AI notes generation failed; release will not be published")
 
 
@@ -449,8 +530,11 @@ def main(argv=None):
             )
         args.output.write_text(result, encoding="utf-8", newline="\n")
         return 0
-    except (ReleaseError, QueryError, OSError, ValueError, subprocess.SubprocessError):
-        print("Release notes failed; raw context, API errors and credentials suppressed", file=sys.stderr)
+    except (ReleaseError, QueryError, OSError, ValueError, subprocess.SubprocessError) as error:
+        print(
+            f"Release notes failed: {safe_diagnostic(error)}; raw context, API errors and credentials suppressed",
+            file=sys.stderr,
+        )
         return 1
 
 
