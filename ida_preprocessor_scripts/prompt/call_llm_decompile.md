@@ -1,5 +1,7 @@
 I have disassembly outputs and procedure code for multiple related GoldSrc x86 functions.
 
+Your task is semantic symbol mapping: use the annotated references to identify the corresponding canonical symbols in the current target functions. Reference and target code may come from different binaries, game versions, builds, or platforms. Do not assume they share an address space, symbol table, or identical structure layout.
+
 These are the annotated reference functions:
 
 {reference_blocks}
@@ -9,6 +11,15 @@ These are the current target functions to reverse-engineer:
 {target_blocks}
 
 Collect every reference to "{symbol_name_list}" in the target functions and output those references as YAML.
+
+Identify each requested symbol by its role and behavior before collecting its target instruction references:
+
+- Compare operations, argument roles, constants, data flow, callers/callees, and initialization or access patterns. Account for compiler transformations such as inlining, tail calls, and optimized loops.
+- Different addresses or IDA names are not evidence that symbols differ across binaries. An unnamed target `unk_XXXXXXXX`, `dword_XXXXXXXX`, or `sub_XXXXXXXX` can correspond to a named reference symbol. The target does not need to contain the canonical name literally.
+- Distinguish an object's base from an interior member address, an array-end address, and a separate pointer variable that stores the base. An anonymous label used in a reference member access does not establish the named object's base address. If that base address is not shown, do not invent it or infer that the member offset is zero.
+- For example, a pool initializer that clears `N * stride` bytes at `base`, links entries by `stride`, assigns `base` to a free-list head, and clears an active-list head provides evidence for the pool's identity. A loop writing at `base + member_offset + i * stride` accesses a member of that pool; it does not by itself imply a different pool. Corroborate the mapping using the complete behavior, not just a matching size.
+- Once a pool or object base is identified, instructions passing that base to a memory operation or storing it into a pointer variable are references to the object. Do not substitute the destination pointer variable or an interior member address for the requested base symbol.
+- Before returning no matches, check for a semantic counterpart under anonymous target names. Return an empty result only when the supplied target evidence does not support a mapping; do not force a match merely because a symbol was requested.
 
 Return exactly one YAML mapping. The only permitted top-level keys are `found_vcall`, `found_call`, `found_funcptr`, `found_gv`, and `found_struct_offset`. Never use a requested symbol name as a top-level key. For batched requests, place every result under its result-category list. If no references are found, return all five top-level keys with empty lists. Do not return blank YAML, null, or an empty mapping.
 
@@ -57,7 +68,7 @@ Rules:
 - `found_vcall` is only for virtual dispatch or vtable-slot access. GoldSrc vtable slots are 4 bytes.
 - `found_gv` is for a global-variable reference.
 - `found_struct_offset` must identify the exact member-access instruction and include `offset`, `size`, `struct_name`, and `member_name`.
-- Report the requested canonical symbol identity, never an anonymous `sub_XXXXXXXX`, `dword_XXXXXXXX`, or `unk_XXXXXXXX` name.
+- In `func_name`, `funcptr_name`, `gv_name`, and `struct_name`, report the requested canonical symbol identity, never an anonymous `sub_XXXXXXXX`, `dword_XXXXXXXX`, or `unk_XXXXXXXX` name. Preserve the actual target names in `insn_disasm`; do not rename operands to the canonical identity or copy reference addresses into target results.
 - When a direct call targets an IDA `j_XXXX` jump thunk, report the logical target name without the `j_` prefix.
 
 If nothing is found, output this complete canonical response:

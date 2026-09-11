@@ -8,7 +8,7 @@ disasm_code: |-
   .text:01D429C1                 push    176830h; count
   .text:01D429C6                 ; value
   .text:01D429C6                 push    0; value
-  .text:01D429C8                 ; dest
+  .text:01D429C8                 ; dest: gTempEnts pool base = 0x01EF4810, the first Q_memset argument; not the next member at 0x01EF483C
   .text:01D429C8                 push    offset gTempEnts; dest
   .text:01D429CD                 call    Q_memset
   .text:01D429D2                 add     esp, 0Ch
@@ -25,6 +25,7 @@ disasm_code: |-
   .text:01D429FC                 add     ecx, offset gTempEnts
   .text:01D42A02                 mov     edx, [ebp+var_4]
   .text:01D42A05                 imul    edx, 0BFCh
+  .text:01D42A0B                 ; dword_1EF483C = gTempEnts + 0x2C: store gTempEnts[i].next, not a pool-base alias
   .text:01D42A0B                 mov     dword_1EF483C[edx], ecx
   .text:01D42A11                 jmp     short loc_1D429DE
   .text:01D42A13                 mov     dword_206A470, 0
@@ -35,12 +36,16 @@ disasm_code: |-
   .text:01D42A34                 retn
 procedure: |-
   // Verified CL_TempEntInit: zero the complete 500-entry pool (3068 bytes each), link next pointers, terminate the last next pointer, and reset free/active list heads. The first memset argument is gTempEnts, not its next member or a pointer slot.
+  // Reference layout: gTempEnts = 0x01EF4810; dword_1EF483C = gTempEnts + 0x2C, the first entry's next member. Do not infer a zero next offset from the anonymous dword label.
+  // Match target pools by initialization behavior; these reference addresses and names need not appear in another binary version.
   void __cdecl CL_TempEntInit()
   {
     int i; // [esp+0h] [ebp-4h]
 
+    // The destination is the entire pool base; use the corresponding target memset destination to identify gTempEnts.
     Q_memset(gTempEnts, 0, 1534000);
     for ( i = 0; i < 499; ++i )
+      // Store the next entry's base into the current entry's next member at byte offset 0x2C, with a 3068-byte stride.
       dword_1EF483C[767 * i] = (int)&gTempEnts[3068 * i + 3068];
     dword_206A470 = 0;
     gpTempEntFree = gTempEnts;
