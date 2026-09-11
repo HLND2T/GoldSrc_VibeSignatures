@@ -1,0 +1,562 @@
+func_name: "R_StudioDrawPlayerBody"
+func_va: "0x101f0580"
+disasm_code: |-
+  .text:101F0580                 push    ebp
+  .text:101F0581                 mov     ebp, esp
+  .text:101F0583                 sub     esp, 0BECh
+  .text:101F0589                 mov     eax, ___security_cookie
+  .text:101F058E                 xor     eax, ebp
+  .text:101F0590                 mov     [ebp+var_4], eax
+  .text:101F0593                 push    ebx
+  .text:101F0594                 push    esi
+  .text:101F0595                 push    edi
+  .text:101F0596                 mov     edi, [ebp+pplayer]
+  .text:101F0599                 mov     esi, [edi+4]
+  .text:101F059C                 sub     esi, 1
+  .text:101F059F                 mov     r_playerindex, esi
+  .text:101F05A5                 js      loc_101F0B4D
+  .text:101F05AB                 cmp     esi, nMaxClients
+  .text:101F05B1                 jge     loc_101F0B4D
+  .text:101F05B7                 movss   xmm0, developer_value
+  .text:101F05BF                 xorps   xmm1, xmm1
+  .text:101F05C2                 ucomiss xmm0, xmm1
+  .text:101F05C5                 lahf
+  .text:101F05C6                 test    ah, 44h
+  .text:101F05C9                 jp      short loc_101F05DA
+  .text:101F05CB                 call    Host_IsSinglePlayerGame
+  .text:101F05D0                 mov     esi, r_playerindex
+  .text:101F05D6                 test    eax, eax
+  .text:101F05D8                 jnz     short loc_101F05EF
+  .text:101F05DA                 imul    eax, esi, 250h
+  .text:101F05E0                 cmp     byte_113FD978[eax], 0
+  .text:101F05E7                 lea     eax, byte_113FD978[eax]
+  .text:101F05ED                 jnz     short loc_101F0623
+  .text:101F05EF                 mov     eax, currententity
+  .text:101F05F4                 imul    ecx, esi, 20Ch
+  .text:101F05FA                 mov     byte_11217EE0[ecx], 0
+  .text:101F0601                 mov     eax, [eax+0B94h]
+  .text:101F0607                 cmp     dword_112180E8[ecx], eax
+  .text:101F060D                 jz      loc_101F06F3
+  .text:101F0613                 mov     dword_112180E8[ecx], eax
+  .text:101F0619                 call    R_StudioChangePlayerModel
+  .text:101F061E                 jmp     loc_101F06F3
+  .text:101F0623                 push    eax
+  .text:101F0624                 imul    eax, esi, 20Ch
+  .text:101F062A                 add     eax, offset byte_11217EE0
+  .text:101F062F                 push    eax
+  .text:101F0630                 call    Q_strcmp
+  .text:101F0635                 add     esp, 8
+  .text:101F0638                 test    eax, eax
+  .text:101F063A                 jz      loc_101F06ED
+  .text:101F0640                 imul    eax, r_playerindex, 250h
+  .text:101F064A                 push    103h
+  .text:101F064F                 add     eax, offset byte_113FD978
+  .text:101F0654                 push    eax
+  .text:101F0655                 imul    eax, r_playerindex, 20Ch
+  .text:101F065F                 add     eax, offset byte_11217EE0
+  .text:101F0664                 push    eax
+  .text:101F0665                 call    Q_strncpy
+  .text:101F066A                 imul    eax, r_playerindex, 250h
+  .text:101F0674                 imul    ecx, r_playerindex, 20Ch
+  .text:101F067E                 lea     eax, byte_113FD978[eax]
+  .text:101F0684                 push    eax
+  .text:101F0685                 ; ArgList
+  .text:101F0685                 push    eax; ArgList
+  .text:101F0686                 push    offset aModelsPlayerSS; "models/player/%s/%s.mdl"
+  .text:101F068B                 lea     eax, unk_11217FE4[ecx]
+  .text:101F0691                 mov     byte_11217FE3[ecx], 0
+  .text:101F0698                 ; BufferCount
+  .text:101F0698                 push    104h; BufferCount
+  .text:101F069D                 ; Buffer
+  .text:101F069D                 push    eax; Buffer
+  .text:101F069E                 call    sub_10192040
+  .text:101F06A3                 imul    eax, r_playerindex, 20Ch
+  .text:101F06AD                 push    1
+  .text:101F06AF                 push    0
+  .text:101F06B1                 add     eax, offset unk_11217FE4
+  .text:101F06B6                 push    eax
+  .text:101F06B7                 call    Mod_ForName
+  .text:101F06BC                 mov     esi, r_playerindex
+  .text:101F06C2                 add     esp, 2Ch
+  .text:101F06C5                 imul    ecx, esi, 20Ch
+  .text:101F06CB                 mov     dword_112180E8[ecx], eax
+  .text:101F06D1                 test    eax, eax
+  .text:101F06D3                 jnz     short loc_101F06E6
+  .text:101F06D5                 mov     eax, currententity
+  .text:101F06DA                 mov     eax, [eax+0B94h]
+  .text:101F06E0                 mov     dword_112180E8[ecx], eax
+  .text:101F06E6                 call    R_StudioChangePlayerModel
+  .text:101F06EB                 jmp     short loc_101F06F3
+  .text:101F06ED                 mov     esi, r_playerindex
+  .text:101F06F3                 imul    eax, esi, 20Ch
+  .text:101F06F9                 mov     eax, dword_112180E8[eax]
+  .text:101F06FF                 mov     r_model, eax
+  .text:101F0704                 test    eax, eax
+  .text:101F0706                 jz      loc_101F0B4D
+  .text:101F070C                 ; model
+  .text:101F070C                 push    eax; model
+  .text:101F070D                 call    Mod_Extradata
+  .text:101F0712                 add     esp, 4
+  .text:101F0715                 mov     pstudiohdr, eax
+  .text:101F071A                 cmp     dword ptr [edi+0B8h], 0
+  .text:101F0721                 jz      loc_101F07DF
+  .text:101F0727                 imul    eax, r_playerindex, 250h
+  .text:101F0731                 push    edi
+  .text:101F0732                 add     eax, offset dword_113FD848
+  .text:101F0737                 mov     dword_104EA084, eax
+  .text:101F073C                 mov     eax, currententity
+  .text:101F0741                 movss   xmm0, dword ptr [eax+0B54h]
+  .text:101F0749                 movss   [ebp+var_BD0], xmm0
+  .text:101F0751                 movss   xmm0, dword ptr [eax+0B58h]
+  .text:101F0759                 movss   [ebp+var_BD4], xmm0
+  .text:101F0761                 movss   xmm0, dword ptr [eax+0B5Ch]
+  .text:101F0769                 movss   [ebp+var_BCC], xmm0
+  .text:101F0771                 call    R_StudioProcessGait
+  .text:101F0776                 mov     eax, dword_104EA084
+  .text:101F077B                 mov     ecx, [edi+0B8h]
+  .text:101F0781                 push    0
+  .text:101F0783                 mov     dword_104EA084, 0
+  .text:101F078D                 mov     [eax+17Ch], ecx
+  .text:101F0793                 call    R_StudioSetUpTransform
+  .text:101F0798                 mov     eax, currententity
+  .text:101F079D                 add     esp, 8
+  .text:101F07A0                 movss   xmm0, [ebp+var_BD0]
+  .text:101F07A8                 movss   dword ptr [eax+0B54h], xmm0
+  .text:101F07B0                 mov     eax, currententity
+  .text:101F07B5                 movss   xmm0, [ebp+var_BD4]
+  .text:101F07BD                 movss   dword ptr [eax+0B58h], xmm0
+  .text:101F07C5                 mov     eax, currententity
+  .text:101F07CA                 movss   xmm0, [ebp+var_BCC]
+  .text:101F07D2                 movss   dword ptr [eax+0B5Ch], xmm0
+  .text:101F07DA                 jmp     loc_101F0875
+  .text:101F07DF                 mov     eax, currententity
+  .text:101F07E4                 push    0
+  .text:101F07E6                 mov     byte ptr [eax+318h], 7Fh
+  .text:101F07ED                 mov     eax, currententity
+  .text:101F07F2                 mov     byte ptr [eax+319h], 7Fh
+  .text:101F07F9                 mov     eax, currententity
+  .text:101F07FE                 mov     byte ptr [eax+31Ah], 7Fh
+  .text:101F0805                 mov     eax, currententity
+  .text:101F080A                 mov     byte ptr [eax+31Bh], 7Fh
+  .text:101F0811                 mov     ecx, currententity
+  .text:101F0817                 mov     al, [ecx+318h]
+  .text:101F081D                 mov     [ecx+0B3Ch], al
+  .text:101F0823                 mov     ecx, currententity
+  .text:101F0829                 mov     al, [ecx+319h]
+  .text:101F082F                 mov     [ecx+0B3Dh], al
+  .text:101F0835                 mov     ecx, currententity
+  .text:101F083B                 mov     al, [ecx+31Ah]
+  .text:101F0841                 mov     [ecx+0B3Eh], al
+  .text:101F0847                 mov     ecx, currententity
+  .text:101F084D                 mov     al, [ecx+31Bh]
+  .text:101F0853                 mov     [ecx+0B3Fh], al
+  .text:101F0859                 imul    eax, r_playerindex, 250h
+  .text:101F0863                 mov     dword_113FD9C4[eax], 0
+  .text:101F086D                 call    R_StudioSetUpTransform
+  .text:101F0872                 add     esp, 4
+  .text:101F0875                 mov     ebx, [ebp+flags]
+  .text:101F0878                 mov     esi, ebx
+  .text:101F087A                 and     esi, 1
+  .text:101F087D                 jz      short loc_101F08AA
+  .text:101F087F                 call    R_StudioCheckBBox; Source: engine/r_studio.c R_StudioCheckBBox. R_StudioTransformVector is inlined while expanding eight sequence-box corners. The multiplayer sequence-box path calls R_CullBox(mins,maxs); the other path tests one view plane with BoxOnPlaneSide.
+  .text:101F0884                 test    eax, eax
+  .text:101F0886                 jz      loc_101F0B4D
+  .text:101F088C                 mov     eax, pstudiohdr
+  .text:101F0891                 inc     dword_1121C064
+  .text:101F0897                 inc     dword_1121C060
+  .text:101F089D                 cmp     dword ptr [eax+0CCh], 0
+  .text:101F08A4                 jz      loc_101F0B37
+  .text:101F08AA                 imul    eax, r_playerindex, 250h
+  .text:101F08B4                 add     eax, offset dword_113FD848
+  .text:101F08B9                 mov     dword_104EA084, eax
+  .text:101F08BE                 call    R_StudioSetupBones
+  .text:101F08C3                 call    R_StudioSaveBones
+  .text:101F08C8                 mov     ecx, dword_104EA084
+  .text:101F08CE                 mov     eax, dword_10DC5610
+  .text:101F08D3                 mov     dword_104EA084, 0
+  .text:101F08DD                 mov     [ecx+178h], eax
+  .text:101F08E3                 and     ebx, 2
+  .text:101F08E6                 jz      short loc_101F0948
+  .text:101F08E8                 test    esi, esi
+  .text:101F08EA                 jz      short loc_101F090E
+  .text:101F08EC                 mov     eax, [edi+0B4h]
+  .text:101F08F2                 test    eax, eax
+  .text:101F08F4                 jz      short loc_101F090E
+  .text:101F08F6                 ; index
+  .text:101F08F6                 push    eax; index
+  .text:101F08F7                 call    CL_GetModelByIndex
+  .text:101F08FC                 ; model
+  .text:101F08FC                 push    eax; model
+  .text:101F08FD                 call    Mod_Extradata
+  .text:101F0902                 add     esp, 8
+  .text:101F0905                 cmp     dword ptr [eax+0D4h], 0
+  .text:101F090C                 jnz     short loc_101F0950
+  .text:101F090E                 call    R_StudioCalcAttachments
+  .text:101F0913                 call    R_StudioClientEvents
+  .text:101F0918                 mov     ecx, currententity
+  .text:101F091E                 mov     edx, [ecx]
+  .text:101F0920                 test    edx, edx
+  .text:101F0922                 jle     short loc_101F0948
+  .text:101F0924                 lea     eax, [ecx+0B60h]
+  .text:101F092A                 imul    ecx, edx, 0BB8h
+  .text:101F0930                 push    30h ; '0'
+  .text:101F0932                 push    eax
+  .text:101F0933                 mov     eax, cl_entities
+  .text:101F0938                 add     eax, 0B60h
+  .text:101F093D                 add     eax, ecx
+  .text:101F093F                 push    eax
+  .text:101F0940                 call    Q_memcpy
+  .text:101F0945                 add     esp, 0Ch
+  .text:101F0948                 test    esi, esi
+  .text:101F094A                 jz      loc_101F0B37
+  .text:101F0950                 movss   xmm0, dword_10319ED4
+  .text:101F0958                 xorps   xmm1, xmm1
+  .text:101F095B                 mov     edx, r_playerindex
+  .text:101F0961                 ucomiss xmm0, xmm1
+  .text:101F0964                 lahf
+  .text:101F0965                 test    ah, 44h
+  .text:101F0968                 jnp     short loc_101F098E
+  .text:101F096A                 mov     ecx, currententity
+  .text:101F0970                 imul    eax, edx, 20Ch
+  .text:101F0976                 mov     eax, dword_112180E8[eax]
+  .text:101F097C                 cmp     eax, [ecx+0B94h]
+  .text:101F0982                 jz      short loc_101F098E
+  .text:101F0984                 mov     dword ptr [ecx+314h], 0FFh
+  .text:101F098E                 movss   xmm0, developer_value
+  .text:101F0996                 ucomiss xmm0, xmm1
+  .text:101F0999                 lahf
+  .text:101F099A                 test    ah, 44h
+  .text:101F099D                 jp      short loc_101F09AE
+  .text:101F099F                 call    Host_IsSinglePlayerGame
+  .text:101F09A4                 test    eax, eax
+  .text:101F09A6                 jnz     short loc_101F09DB
+  .text:101F09A8                 mov     edx, r_playerindex
+  .text:101F09AE                 imul    eax, edx, 20Ch
+  .text:101F09B4                 cmp     byte_11217EE0[eax], 0
+  .text:101F09BB                 jz      short loc_101F09DB
+  .text:101F09BD                 mov     ecx, currententity
+  .text:101F09C3                 mov     eax, dword_112180E8[eax]
+  .text:101F09C9                 cmp     eax, [ecx+0B94h]
+  .text:101F09CF                 jnz     short loc_101F09DB
+  .text:101F09D1                 mov     dword ptr [ecx+314h], 1
+  .text:101F09DB                 lea     eax, [ebp+var_10]
+  .text:101F09DE                 mov     [ebp+var_BD8], eax
+  .text:101F09E4                 lea     eax, [ebp+var_BEC]
+  .text:101F09EA                 push    eax
+  .text:101F09EB                 push    currententity
+  .text:101F09F1                 call    R_StudioDynamicLight
+  .text:101F09F6                 lea     eax, [ebp+var_BEC]
+  .text:101F09FC                 push    eax
+  .text:101F09FD                 call    R_StudioEntityLight
+  .text:101F0A02                 lea     eax, [ebp+var_BEC]
+  .text:101F0A08                 push    eax
+  .text:101F0A09                 call    R_StudioSetupLighting
+  .text:101F0A0E                 imul    ecx, r_playerindex, 250h
+  .text:101F0A18                 add     esp, 10h
+  .text:101F0A1B                 mov     edx, 168h
+  .text:101F0A20                 add     ecx, offset dword_113FD848
+  .text:101F0A26                 mov     dword_104EA084, ecx
+  .text:101F0A2C                 mov     eax, [ecx+170h]
+  .text:101F0A32                 test    eax, eax
+  .text:101F0A34                 jns     short loc_101F0A42
+  .text:101F0A36                 mov     dword_104F0EE4, 0
+  .text:101F0A40                 jmp     short loc_101F0A4F
+  .text:101F0A42                 cmp     eax, 168h
+  .text:101F0A47                 cmovg   eax, edx
+  .text:101F0A4A                 mov     dword_104F0EE4, eax
+  .text:101F0A4F                 mov     eax, [ecx+174h]
+  .text:101F0A55                 test    eax, eax
+  .text:101F0A57                 jns     short loc_101F0A65
+  .text:101F0A59                 mov     dword_1050F6E8, 0
+  .text:101F0A63                 jmp     short loc_101F0A72
+  .text:101F0A65                 cmp     eax, 168h
+  .text:101F0A6A                 cmovg   eax, edx
+  .text:101F0A6D                 mov     dword_1050F6E8, eax
+  .text:101F0A72                 call    R_StudioRenderModel; Source: engine/r_studio.c R_StudioRenderModel. Reset chrome origin and forced face flags; in the kRenderFxGlowShell (19) branch temporarily clear renderfx and call R_StudioRenderFinal, select the shell sprite texture, restore renderfx, then render the final pass again. The direct call before SpriteTexture identifies R_StudioRenderFinal; the terminal jump is a second invocation of that same callee.
+  .text:101F0A77                 mov     eax, [edi+0B4h]
+  .text:101F0A7D                 mov     dword_104EA084, 0
+  .text:101F0A87                 test    eax, eax
+  .text:101F0A89                 jz      loc_101F0B37
+  .text:101F0A8F                 mov     ecx, pstudiohdr
+  .text:101F0A95                 lea     edi, [ebp+var_BC8]
+  .text:101F0A9B                 mov     esi, currententity
+  .text:101F0AA1                 mov     [ebp+var_BCC], ecx
+  .text:101F0AA7                 mov     ecx, 2EEh
+  .text:101F0AAC                 rep movsd
+  .text:101F0AAE                 ; index
+  .text:101F0AAE                 push    eax; index
+  .text:101F0AAF                 call    CL_GetModelByIndex
+  .text:101F0AB4                 mov     esi, eax
+  .text:101F0AB6                 ; model
+  .text:101F0AB6                 push    esi; model
+  .text:101F0AB7                 call    Mod_Extradata
+  .text:101F0ABC                 ; model
+  .text:101F0ABC                 push    esi; model
+  .text:101F0ABD                 mov     pstudiohdr, eax
+  .text:101F0AC2                 call    R_StudioMergeBones
+  .text:101F0AC7                 lea     eax, [ebp+var_BEC]
+  .text:101F0ACD                 push    eax
+  .text:101F0ACE                 call    R_StudioSetupLighting
+  .text:101F0AD3                 add     esp, 10h
+  .text:101F0AD6                 call    R_StudioRenderModel; Source: engine/r_studio.c R_StudioRenderModel. Reset chrome origin and forced face flags; in the kRenderFxGlowShell (19) branch temporarily clear renderfx and call R_StudioRenderFinal, select the shell sprite texture, restore renderfx, then render the final pass again. The direct call before SpriteTexture identifies R_StudioRenderFinal; the terminal jump is a second invocation of that same callee.
+  .text:101F0ADB                 call    R_StudioCalcAttachments
+  .text:101F0AE0                 mov     edi, currententity
+  .text:101F0AE6                 cmp     dword ptr [edi], 0
+  .text:101F0AE9                 jle     short loc_101F0B16
+  .text:101F0AEB                 mov     eax, pstudiohdr
+  .text:101F0AF0                 mov     eax, [eax+0D4h]
+  .text:101F0AF6                 lea     eax, [eax+eax*2]
+  .text:101F0AF9                 shl     eax, 2
+  .text:101F0AFC                 push    eax
+  .text:101F0AFD                 lea     eax, [edi+0B60h]
+  .text:101F0B03                 push    eax
+  .text:101F0B04                 lea     eax, [ebp+var_68]
+  .text:101F0B07                 push    eax
+  .text:101F0B08                 call    Q_memcpy
+  .text:101F0B0D                 mov     edi, currententity
+  .text:101F0B13                 add     esp, 0Ch
+  .text:101F0B16                 mov     eax, [ebp+var_BCC]
+  .text:101F0B1C                 mov     ecx, 2EEh
+  .text:101F0B21                 mov     pstudiohdr, eax
+  .text:101F0B26                 lea     esi, [ebp+var_BC8]
+  .text:101F0B2C                 rep movsd
+  .text:101F0B2E                 test    ebx, ebx
+  .text:101F0B30                 jz      short loc_101F0B37
+  .text:101F0B32                 call    R_StudioClientEvents
+  .text:101F0B37                 pop     edi
+  .text:101F0B38                 pop     esi
+  .text:101F0B39                 mov     eax, 1
+  .text:101F0B3E                 pop     ebx
+  .text:101F0B3F                 mov     ecx, [ebp+var_4]
+  .text:101F0B42                 ; StackCookie
+  .text:101F0B42                 xor     ecx, ebp; StackCookie
+  .text:101F0B44                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101F0B49                 mov     esp, ebp
+  .text:101F0B4B                 pop     ebp
+  .text:101F0B4C                 retn
+  .text:101F0B4D                 mov     ecx, [ebp+var_4]
+  .text:101F0B50                 xor     eax, eax
+  .text:101F0B52                 pop     edi
+  .text:101F0B53                 pop     esi
+  .text:101F0B54                 ; StackCookie
+  .text:101F0B54                 xor     ecx, ebp; StackCookie
+  .text:101F0B56                 pop     ebx
+  .text:101F0B57                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101F0B5C                 mov     esp, ebp
+  .text:101F0B5E                 pop     ebp
+  .text:101F0B5F                 retn
+procedure: |-
+  // Source: engine/r_studio.c:3158-3327. The weaponmodel branch saves the studio header/entity, calls CL_GetModelByIndex, sets pstudiohdr from Mod_Extradata, then calls R_StudioMergeBones(pweaponmodel) before R_StudioSetupLighting. This model-argument call is distinct from no-argument R_StudioSetupBones. Linux outlines the checked player path with register arguments and inlines the SaveBones cache copy; preserve that ABI and inline behavior. Windows retains the SaveBones direct call. Current binary additionally copies weapon attachments back into the saved player entity.
+  int __cdecl R_StudioDrawPlayer(int flags, studio_player_state_prefix *pplayer)
+  {
+    int v2; // esi
+    int IsSinglePlayerGame; // eax
+    studio_player_entity_partial *v4; // eax
+    int name; // eax
+    char *v6; // eax
+    int v7; // eax
+    int v8; // ecx
+    model_t *v9; // eax
+    int v10; // eax
+    int gaitsequence; // ecx
+    int v12; // ecx
+    model_t *ModelByIndex; // eax
+    int v14; // edx
+    int *v15; // ecx
+    int v16; // eax
+    int v17; // eax
+    int weaponmodel; // eax
+    model_t *v19; // esi
+    studio_player_entity_partial *v20; // edi
+    char *v22; // [esp-14h] [ebp-C0Ch]
+    _BYTE v23[20]; // [esp+Ch] [ebp-BECh] BYREF
+    char *v24; // [esp+20h] [ebp-BD8h]
+    float v25; // [esp+24h] [ebp-BD4h]
+    float v26; // [esp+28h] [ebp-BD0h]
+    studio_player_header_partial *v27; // [esp+2Ch] [ebp-BCCh]
+    _BYTE v28[3000]; // [esp+30h] [ebp-BC8h] BYREF
+    char v29; // [esp+BE8h] [ebp-10h] BYREF
+
+    v2 = pplayer->number - 1;
+    r_playerindex = v2;
+    if ( v2 >= 0 && v2 < *(int *)nMaxClients )
+    {
+      if ( developer_value == 0.0
+        && (IsSinglePlayerGame = Host_IsSinglePlayerGame(), v2 = r_playerindex, IsSinglePlayerGame)
+        || !byte_113FD978[592 * v2] )
+      {
+        v4 = currententity;
+        byte_11217EE0[524 * v2] = 0;
+        name = (int)v4->model->name;
+        if ( dword_112180E8[131 * v2] != name )
+        {
+          dword_112180E8[131 * v2] = name;
+          R_StudioChangePlayerModel();
+        }
+      }
+      else if ( Q_strcmp(&byte_11217EE0[524 * v2], &byte_113FD978[592 * v2]) )
+      {
+        Q_strncpy(&byte_11217EE0[524 * r_playerindex], &byte_113FD978[592 * r_playerindex], 259);
+        v22 = &byte_113FD978[592 * r_playerindex];
+        v6 = (char *)&unk_11217FE4 + 524 * r_playerindex;
+        byte_11217FE3[524 * r_playerindex] = 0;
+        sub_10192040(v6, 0x104u, "models/player/%s/%s.mdl", (char)v22);
+        v7 = Mod_ForName((char *)&unk_11217FE4 + 524 * r_playerindex, 0, 1);
+        v2 = r_playerindex;
+        v8 = 131 * r_playerindex;
+        dword_112180E8[131 * r_playerindex] = v7;
+        if ( !v7 )
+          dword_112180E8[v8] = (int)currententity->model->name;
+        R_StudioChangePlayerModel();
+      }
+      else
+      {
+        v2 = r_playerindex;
+      }
+      v9 = (model_t *)dword_112180E8[131 * v2];
+      r_model = v9;
+      if ( v9 )
+      {
+        pstudiohdr = (studio_player_header_partial *)Mod_Extradata(v9);
+        if ( pplayer->gaitsequence )
+        {
+          dword_104EA084 = (int)&dword_113FD848[148 * r_playerindex];
+          v26 = currententity->angles[0];
+          v25 = currententity->angles[1];
+          v27 = (studio_player_header_partial *)LODWORD(currententity->angles[2]);
+          R_StudioProcessGait(pplayer);
+          v10 = dword_104EA084;
+          gaitsequence = pplayer->gaitsequence;
+          dword_104EA084 = 0;
+          *(_DWORD *)(v10 + 380) = gaitsequence;
+          R_StudioSetUpTransform(0);
+          currententity->angles[0] = v26;
+          currententity->angles[1] = v25;
+          LODWORD(currententity->angles[2]) = v27;
+        }
+        else
+        {
+          currententity->controller[0] = 127;
+          currententity->controller[1] = 127;
+          currententity->controller[2] = 127;
+          currententity->controller[3] = 127;
+          currententity->prevcontroller[0] = currententity->controller[0];
+          currententity->prevcontroller[1] = currententity->controller[1];
+          currententity->prevcontroller[2] = currententity->controller[2];
+          currententity->prevcontroller[3] = currententity->controller[3];
+          dword_113FD9C4[148 * r_playerindex] = 0;
+          R_StudioSetUpTransform(0);
+        }
+        if ( (flags & 1) == 0 )
+        {
+  LABEL_20:
+          dword_104EA084 = (int)&dword_113FD848[148 * r_playerindex];
+          R_StudioSetupBones();
+          R_StudioSaveBones();
+          v12 = dword_104EA084;
+          dword_104EA084 = 0;
+          *(_DWORD *)(v12 + 376) = dword_10DC5610;
+          if ( (flags & 2) != 0 )
+          {
+            if ( (flags & 1) != 0 )
+            {
+              if ( pplayer->weaponmodel )
+              {
+                ModelByIndex = CL_GetModelByIndex(pplayer->weaponmodel);
+                if ( *((_DWORD *)Mod_Extradata(ModelByIndex) + 53) )
+                {
+  LABEL_27:
+                  v14 = r_playerindex;
+                  if ( *(float *)&dword_10319ED4 != 0.0
+                    && (model_t *)dword_112180E8[131 * r_playerindex] != currententity->model )
+                  {
+                    currententity->body = 255;
+                  }
+                  if ( developer_value == 0.0 )
+                  {
+                    if ( Host_IsSinglePlayerGame() )
+                    {
+  LABEL_36:
+                      v24 = &v29;
+                      R_StudioDynamicLight(currententity, v23);
+                      R_StudioEntityLight(v23);
+                      R_StudioSetupLighting(v23);
+                      v15 = &dword_113FD848[148 * r_playerindex];
+                      dword_104EA084 = (int)v15;
+                      v16 = v15[92];
+                      if ( v16 >= 0 )
+                      {
+                        if ( v16 > 360 )
+                          v16 = 360;
+                        dword_104F0EE4 = v16;
+                      }
+                      else
+                      {
+                        dword_104F0EE4 = 0;
+                      }
+                      v17 = v15[93];
+                      if ( v17 >= 0 )
+                      {
+                        if ( v17 > 360 )
+                          v17 = 360;
+                        dword_1050F6E8 = v17;
+                      }
+                      else
+                      {
+                        dword_1050F6E8 = 0;
+                      }
+                      R_StudioRenderModel();
+                      weaponmodel = pplayer->weaponmodel;
+                      dword_104EA084 = 0;
+                      if ( weaponmodel )
+                      {
+                        v27 = pstudiohdr;
+                        qmemcpy(v28, currententity, sizeof(v28));
+                        v19 = CL_GetModelByIndex(weaponmodel);
+                        pstudiohdr = (studio_player_header_partial *)Mod_Extradata(v19);
+                        R_StudioMergeBones(v19);
+                        R_StudioSetupLighting(v23);
+                        R_StudioRenderModel();
+                        R_StudioCalcAttachments();
+                        v20 = currententity;
+                        if ( currententity->index > 0 )
+                        {
+                          Q_memcpy(&v28[2912], (float *)currententity->attachment, 12 * pstudiohdr->numattachments);
+                          v20 = currententity;
+                        }
+                        pstudiohdr = v27;
+                        qmemcpy(v20, v28, sizeof(studio_player_entity_partial));
+                        if ( (flags & 2) != 0 )
+                          R_StudioClientEvents();
+                      }
+                      return 1;
+                    }
+                    v14 = r_playerindex;
+                  }
+                  if ( byte_11217EE0[524 * v14] && (model_t *)dword_112180E8[131 * v14] == currententity->model )
+                    currententity->body = 1;
+                  goto LABEL_36;
+                }
+              }
+            }
+            R_StudioCalcAttachments();
+            R_StudioClientEvents();
+            if ( currententity->index > 0 )
+              Q_memcpy((char *)cl_entities + 3000 * currententity->index + 2912, (float *)currententity->attachment, 48);
+          }
+          if ( (flags & 1) != 0 )
+            goto LABEL_27;
+          return 1;
+        }
+        if ( R_StudioCheckBBox() )
+        {
+          ++dword_1121C064;
+          ++dword_1121C060;
+          if ( !pstudiohdr->numbodyparts )
+            return 1;
+          goto LABEL_20;
+        }
+      }
+    }
+    return 0;
+  }

@@ -1,0 +1,328 @@
+func_name: "CL_InitTEnts"
+func_va: "0x101ada80"
+disasm_code: |-
+  .text:101ADA80                 push    esi
+  .text:101ADA81                 push    offset off_1031A59C; "tracerspeed"
+  .text:101ADA86                 call    Cvar_RegisterVariable
+  .text:101ADA8B                 push    offset off_1031A5B0; "traceroffset"
+  .text:101ADA90                 call    Cvar_RegisterVariable
+  .text:101ADA95                 push    offset off_1031A5D8; "tracerlength"
+  .text:101ADA9A                 call    Cvar_RegisterVariable
+  .text:101ADA9F                 push    offset off_1031A5EC; "tracerred"
+  .text:101ADAA4                 call    Cvar_RegisterVariable
+  .text:101ADAA9                 push    offset off_1031A600; "tracergreen"
+  .text:101ADAAE                 call    Cvar_RegisterVariable
+  .text:101ADAB3                 push    offset off_1031A614; "tracerblue"
+  .text:101ADAB8                 call    Cvar_RegisterVariable
+  .text:101ADABD                 push    offset off_1031A628; "traceralpha"
+  .text:101ADAC2                 call    Cvar_RegisterVariable
+  .text:101ADAC7                 push    offset aWeaponsRic1Wav; "weapons/ric1.wav"
+  .text:101ADACC                 call    S_PrecacheSound
+  .text:101ADAD1                 push    offset aWeaponsRic2Wav; "weapons/ric2.wav"
+  .text:101ADAD6                 mov     dword_1124CD14, eax
+  .text:101ADADB                 call    S_PrecacheSound
+  .text:101ADAE0                 push    offset aWeaponsRic3Wav; "weapons/ric3.wav"
+  .text:101ADAE5                 mov     dword_1124CD10, eax
+  .text:101ADAEA                 call    S_PrecacheSound
+  .text:101ADAEF                 push    offset aWeaponsRic4Wav; "weapons/ric4.wav"
+  .text:101ADAF4                 mov     dword_1124CD0C, eax
+  .text:101ADAF9                 call    S_PrecacheSound
+  .text:101ADAFE                 push    offset aWeaponsRic5Wav; "weapons/ric5.wav"
+  .text:101ADB03                 mov     dword_1124CD08, eax
+  .text:101ADB08                 call    S_PrecacheSound
+  .text:101ADB0D                 push    offset aWeaponsExplode; "weapons/explode3.wav"
+  .text:101ADB12                 mov     dword_1124CD04, eax
+  .text:101ADB17                 call    S_PrecacheSound
+  .text:101ADB1C                 push    offset aWeaponsExplode_0; "weapons/explode4.wav"
+  .text:101ADB21                 mov     dword_1124CD00, eax
+  .text:101ADB26                 call    S_PrecacheSound
+  .text:101ADB2B                 push    offset aWeaponsExplode_1; "weapons/explode5.wav"
+  .text:101ADB30                 mov     dword_1124CCFC, eax
+  .text:101ADB35                 call    S_PrecacheSound
+  .text:101ADB3A                 push    offset aPlayerPlShell1; "player/pl_shell1.wav"
+  .text:101ADB3F                 mov     dword_1124CCF8, eax
+  .text:101ADB44                 call    S_PrecacheSound
+  .text:101ADB49                 add     esp, 40h
+  .text:101ADB4C                 mov     dword_1124CCF4, eax
+  .text:101ADB51                 push    offset aPlayerPlShell2; "player/pl_shell2.wav"
+  .text:101ADB56                 call    S_PrecacheSound
+  .text:101ADB5B                 push    offset aPlayerPlShell3; "player/pl_shell3.wav"
+  .text:101ADB60                 mov     dword_1124CCF0, eax
+  .text:101ADB65                 call    S_PrecacheSound
+  .text:101ADB6A                 push    offset aWeaponsSshell1; "weapons/sshell1.wav"
+  .text:101ADB6F                 mov     dword_1124CCEC, eax
+  .text:101ADB74                 call    S_PrecacheSound
+  .text:101ADB79                 push    offset aWeaponsSshell2; "weapons/sshell2.wav"
+  .text:101ADB7E                 mov     dword_1124CCE8, eax
+  .text:101ADB83                 call    S_PrecacheSound
+  .text:101ADB88                 push    offset aWeaponsSshell3; "weapons/sshell3.wav"
+  .text:101ADB8D                 mov     dword_1124CCE4, eax
+  .text:101ADB92                 call    S_PrecacheSound
+  .text:101ADB97                 push    offset aDebrisWood1Wav; "debris/wood1.wav"
+  .text:101ADB9C                 mov     dword_1124CCE0, eax
+  .text:101ADBA1                 call    S_PrecacheSound
+  .text:101ADBA6                 push    offset aDebrisWood2Wav; "debris/wood2.wav"
+  .text:101ADBAB                 mov     dword_1124CCDC, eax
+  .text:101ADBB0                 call    S_PrecacheSound
+  .text:101ADBB5                 push    offset aDebrisWood3Wav; "debris/wood3.wav"
+  .text:101ADBBA                 mov     dword_1124CCD8, eax
+  .text:101ADBBF                 call    S_PrecacheSound
+  .text:101ADBC4                 push    offset aDebrisMetal1Wa; "debris/metal1.wav"
+  .text:101ADBC9                 mov     dword_1124CCD4, eax
+  .text:101ADBCE                 call    S_PrecacheSound
+  .text:101ADBD3                 push    offset aDebrisMetal2Wa; "debris/metal2.wav"
+  .text:101ADBD8                 mov     dword_1124CCD0, eax
+  .text:101ADBDD                 call    S_PrecacheSound
+  .text:101ADBE2                 push    offset aDebrisMetal3Wa; "debris/metal3.wav"
+  .text:101ADBE7                 mov     dword_1124CCCC, eax
+  .text:101ADBEC                 call    S_PrecacheSound
+  .text:101ADBF1                 push    offset aDebrisGlass1Wa; "debris/glass1.wav"
+  .text:101ADBF6                 mov     dword_1124CCC8, eax
+  .text:101ADBFB                 call    S_PrecacheSound
+  .text:101ADC00                 push    offset aDebrisGlass2Wa; "debris/glass2.wav"
+  .text:101ADC05                 mov     dword_1124CCC4, eax
+  .text:101ADC0A                 call    S_PrecacheSound
+  .text:101ADC0F                 push    offset aDebrisGlass3Wa; "debris/glass3.wav"
+  .text:101ADC14                 mov     dword_1124CCC0, eax
+  .text:101ADC19                 call    S_PrecacheSound
+  .text:101ADC1E                 push    offset aDebrisConcrete; "debris/concrete1.wav"
+  .text:101ADC23                 mov     dword_1124CCBC, eax
+  .text:101ADC28                 call    S_PrecacheSound
+  .text:101ADC2D                 push    offset aDebrisConcrete_0; "debris/concrete2.wav"
+  .text:101ADC32                 mov     dword_1124CCB8, eax
+  .text:101ADC37                 call    S_PrecacheSound
+  .text:101ADC3C                 add     esp, 40h
+  .text:101ADC3F                 mov     dword_1124CCB4, eax
+  .text:101ADC44                 push    offset aDebrisConcrete_1; "debris/concrete3.wav"
+  .text:101ADC49                 call    S_PrecacheSound
+  .text:101ADC4E                 push    offset aDebrisFlesh1Wa; "debris/flesh1.wav"
+  .text:101ADC53                 mov     dword_1124CCB0, eax
+  .text:101ADC58                 call    S_PrecacheSound
+  .text:101ADC5D                 push    offset aDebrisFlesh2Wa; "debris/flesh2.wav"
+  .text:101ADC62                 mov     dword_1124CCAC, eax
+  .text:101ADC67                 call    S_PrecacheSound
+  .text:101ADC6C                 push    offset aDebrisFlesh3Wa; "debris/flesh3.wav"
+  .text:101ADC71                 mov     dword_1124CCA8, eax
+  .text:101ADC76                 call    S_PrecacheSound
+  .text:101ADC7B                 push    offset aDebrisFlesh5Wa; "debris/flesh5.wav"
+  .text:101ADC80                 mov     dword_1124CCA4, eax
+  .text:101ADC85                 call    S_PrecacheSound
+  .text:101ADC8A                 push    offset aDebrisFlesh6Wa; "debris/flesh6.wav"
+  .text:101ADC8F                 mov     dword_1124CCA0, eax
+  .text:101ADC94                 call    S_PrecacheSound
+  .text:101ADC99                 push    offset aDebrisFlesh7Wa; "debris/flesh7.wav"
+  .text:101ADC9E                 mov     dword_1124CC9C, eax
+  .text:101ADCA3                 call    S_PrecacheSound
+  .text:101ADCA8                 push    offset aPlayerGeiger1W; "player/geiger1.wav"
+  .text:101ADCAD                 mov     dword_1124CC98, eax
+  .text:101ADCB2                 call    S_PrecacheSound
+  .text:101ADCB7                 push    offset aPlayerGeiger2W; "player/geiger2.wav"
+  .text:101ADCBC                 mov     dword_1124CC94, eax
+  .text:101ADCC1                 call    S_PrecacheSound
+  .text:101ADCC6                 push    offset aPlayerGeiger3W; "player/geiger3.wav"
+  .text:101ADCCB                 mov     dword_1124CC90, eax
+  .text:101ADCD0                 call    S_PrecacheSound
+  .text:101ADCD5                 push    offset aPlayerGeiger4W; "player/geiger4.wav"
+  .text:101ADCDA                 mov     dword_1124CC8C, eax
+  .text:101ADCDF                 call    S_PrecacheSound
+  .text:101ADCE4                 push    offset aPlayerGeiger5W; "player/geiger5.wav"
+  .text:101ADCE9                 mov     dword_1124CC88, eax
+  .text:101ADCEE                 call    S_PrecacheSound
+  .text:101ADCF3                 push    offset aPlayerGeiger6W; "player/geiger6.wav"
+  .text:101ADCF8                 mov     dword_1124CC84, eax
+  .text:101ADCFD                 call    S_PrecacheSound
+  .text:101ADD02                 push    0
+  .text:101ADD04                 push    1
+  .text:101ADD06                 push    offset aSpritesDotSpr; "sprites/dot.spr"
+  .text:101ADD0B                 mov     dword_1124CC80, eax
+  .text:101ADD10                 call    Mod_ForName
+  .text:101ADD15                 add     esp, 40h
+  .text:101ADD18                 mov     esi, eax
+  .text:101ADD1A                 push    esi
+  .text:101ADD1B                 call    Mod_MarkClient
+  .text:101ADD20                 push    0
+  .text:101ADD22                 push    1
+  .text:101ADD24                 push    offset aSpritesLgtning; "sprites/lgtning.spr"
+  .text:101ADD29                 mov     dword_1124CC64, esi
+  .text:101ADD2F                 call    Mod_ForName
+  .text:101ADD34                 mov     esi, eax
+  .text:101ADD36                 push    esi
+  .text:101ADD37                 call    Mod_MarkClient
+  .text:101ADD3C                 push    0
+  .text:101ADD3E                 push    1
+  .text:101ADD40                 push    offset aSpritesWhiteSp; "sprites/white.spr"
+  .text:101ADD45                 mov     dword_1124CC60, esi
+  .text:101ADD4B                 call    Mod_ForName
+  .text:101ADD50                 mov     esi, eax
+  .text:101ADD52                 push    esi
+  .text:101ADD53                 call    Mod_MarkClient
+  .text:101ADD58                 push    0
+  .text:101ADD5A                 push    1
+  .text:101ADD5C                 push    offset aSpritesAnimglo; "sprites/animglow01.spr"
+  .text:101ADD61                 mov     dword_1124CC5C, esi
+  .text:101ADD67                 call    Mod_ForName
+  .text:101ADD6C                 mov     esi, eax
+  .text:101ADD6E                 push    esi
+  .text:101ADD6F                 call    Mod_MarkClient
+  .text:101ADD74                 push    0
+  .text:101ADD76                 push    1
+  .text:101ADD78                 push    offset aSpritesMuzzlef; "sprites/muzzleflash1.spr"
+  .text:101ADD7D                 mov     dword_1124CC7C, esi
+  .text:101ADD83                 call    Mod_ForName
+  .text:101ADD88                 add     esp, 40h
+  .text:101ADD8B                 mov     esi, eax
+  .text:101ADD8D                 push    esi
+  .text:101ADD8E                 call    Mod_MarkClient
+  .text:101ADD93                 push    0
+  .text:101ADD95                 push    1
+  .text:101ADD97                 push    offset aSpritesMuzzlef_0; "sprites/muzzleflash2.spr"
+  .text:101ADD9C                 mov     dword_1124CC70, esi
+  .text:101ADDA2                 call    Mod_ForName
+  .text:101ADDA7                 mov     esi, eax
+  .text:101ADDA9                 push    esi
+  .text:101ADDAA                 call    Mod_MarkClient
+  .text:101ADDAF                 push    0
+  .text:101ADDB1                 push    1
+  .text:101ADDB3                 push    offset aSpritesMuzzlef_1; "sprites/muzzleflash3.spr"
+  .text:101ADDB8                 mov     dword_1124CC74, esi
+  .text:101ADDBE                 call    Mod_ForName
+  .text:101ADDC3                 mov     esi, eax
+  .text:101ADDC5                 push    esi
+  .text:101ADDC6                 call    Mod_MarkClient
+  .text:101ADDCB                 push    0
+  .text:101ADDCD                 push    1
+  .text:101ADDCF                 push    offset aSpritesRicho1S; "sprites/richo1.spr"
+  .text:101ADDD4                 mov     dword_1124CC78, esi
+  .text:101ADDDA                 call    Mod_ForName
+  .text:101ADDDF                 mov     esi, eax
+  .text:101ADDE1                 push    esi
+  .text:101ADDE2                 call    Mod_MarkClient
+  .text:101ADDE7                 push    0
+  .text:101ADDE9                 push    1
+  .text:101ADDEB                 push    offset aSpritesShellch; "sprites/shellchrome.spr"
+  .text:101ADDF0                 mov     dword_1124CC6C, esi
+  .text:101ADDF6                 call    Mod_ForName
+  .text:101ADDFB                 add     esp, 40h
+  .text:101ADDFE                 mov     esi, eax
+  .text:101ADE00                 push    esi
+  .text:101ADE01                 call    Mod_MarkClient
+  .text:101ADE06                 ; count
+  .text:101ADE06                 push    176830h; count
+  .text:101ADE0B                 ; fill
+  .text:101ADE0B                 push    0; fill
+  .text:101ADE0D                 ; dest
+  .text:101ADE0D                 push    offset gTempEnts; dest
+  .text:101ADE12                 mov     cl_sprite_shell, esi
+  .text:101ADE18                 call    Q_memset
+  .text:101ADE1D                 add     esp, 10h
+  .text:101ADE20                 mov     eax, offset unk_1032F3D4
+  .text:101ADE25                 pop     esi
+  .text:101ADE26                 nop     word ptr [eax+eax+00000000h]
+  .text:101ADE30                 lea     ecx, [eax+0BD0h]
+  .text:101ADE36                 mov     [eax], ecx
+  .text:101ADE38                 add     eax, 0BFCh
+  .text:101ADE3D                 cmp     eax, offset dword_104A5008
+  .text:101ADE42                 jl      short loc_101ADE30
+  .text:101ADE44                 mov     dword_104A5008, 0
+  .text:101ADE4E                 mov     gpTempEntFree, offset gTempEnts
+  .text:101ADE58                 mov     gpTempEntActive, 0
+  .text:101ADE62                 retn
+procedure: |-
+  // CL_TentModel and CL_TempEntInit are inlined. gTempEnts is the entire zeroed pool, not gpTempEntFree or a next-field address. TEMPENTITY stride is 3068 and the pool holds 500 entries.
+  void __cdecl CL_InitTEnts()
+  {
+    int v0; // esi
+    int v1; // esi
+    int v2; // esi
+    int v3; // esi
+    int v4; // esi
+    int v5; // esi
+    int v6; // esi
+    int v7; // esi
+    model_t *v8; // esi
+    int *v9; // eax
+
+    Cvar_RegisterVariable(off_1031A59C);
+    Cvar_RegisterVariable(off_1031A5B0);
+    Cvar_RegisterVariable(off_1031A5D8);
+    Cvar_RegisterVariable(off_1031A5EC);
+    Cvar_RegisterVariable(off_1031A600);
+    Cvar_RegisterVariable(off_1031A614);
+    Cvar_RegisterVariable(off_1031A628);
+    dword_1124CD14 = S_PrecacheSound("weapons/ric1.wav");
+    dword_1124CD10 = S_PrecacheSound("weapons/ric2.wav");
+    dword_1124CD0C = S_PrecacheSound("weapons/ric3.wav");
+    dword_1124CD08 = S_PrecacheSound("weapons/ric4.wav");
+    dword_1124CD04 = S_PrecacheSound("weapons/ric5.wav");
+    dword_1124CD00 = S_PrecacheSound("weapons/explode3.wav");
+    dword_1124CCFC = S_PrecacheSound("weapons/explode4.wav");
+    dword_1124CCF8 = S_PrecacheSound("weapons/explode5.wav");
+    dword_1124CCF4 = S_PrecacheSound("player/pl_shell1.wav");
+    dword_1124CCF0 = S_PrecacheSound("player/pl_shell2.wav");
+    dword_1124CCEC = S_PrecacheSound("player/pl_shell3.wav");
+    dword_1124CCE8 = S_PrecacheSound("weapons/sshell1.wav");
+    dword_1124CCE4 = S_PrecacheSound("weapons/sshell2.wav");
+    dword_1124CCE0 = S_PrecacheSound("weapons/sshell3.wav");
+    dword_1124CCDC = S_PrecacheSound("debris/wood1.wav");
+    dword_1124CCD8 = S_PrecacheSound("debris/wood2.wav");
+    dword_1124CCD4 = S_PrecacheSound("debris/wood3.wav");
+    dword_1124CCD0 = S_PrecacheSound("debris/metal1.wav");
+    dword_1124CCCC = S_PrecacheSound("debris/metal2.wav");
+    dword_1124CCC8 = S_PrecacheSound("debris/metal3.wav");
+    dword_1124CCC4 = S_PrecacheSound("debris/glass1.wav");
+    dword_1124CCC0 = S_PrecacheSound("debris/glass2.wav");
+    dword_1124CCBC = S_PrecacheSound("debris/glass3.wav");
+    dword_1124CCB8 = S_PrecacheSound("debris/concrete1.wav");
+    dword_1124CCB4 = S_PrecacheSound("debris/concrete2.wav");
+    dword_1124CCB0 = S_PrecacheSound("debris/concrete3.wav");
+    dword_1124CCAC = S_PrecacheSound("debris/flesh1.wav");
+    dword_1124CCA8 = S_PrecacheSound("debris/flesh2.wav");
+    dword_1124CCA4 = S_PrecacheSound("debris/flesh3.wav");
+    dword_1124CCA0 = S_PrecacheSound("debris/flesh5.wav");
+    dword_1124CC9C = S_PrecacheSound("debris/flesh6.wav");
+    dword_1124CC98 = S_PrecacheSound("debris/flesh7.wav");
+    dword_1124CC94 = S_PrecacheSound("player/geiger1.wav");
+    dword_1124CC90 = S_PrecacheSound("player/geiger2.wav");
+    dword_1124CC8C = S_PrecacheSound("player/geiger3.wav");
+    dword_1124CC88 = S_PrecacheSound("player/geiger4.wav");
+    dword_1124CC84 = S_PrecacheSound("player/geiger5.wav");
+    dword_1124CC80 = S_PrecacheSound("player/geiger6.wav");
+    v0 = Mod_ForName("sprites/dot.spr", 1, 0);
+    Mod_MarkClient(v0);
+    dword_1124CC64 = v0;
+    v1 = Mod_ForName("sprites/lgtning.spr", 1, 0);
+    Mod_MarkClient(v1);
+    dword_1124CC60 = v1;
+    v2 = Mod_ForName("sprites/white.spr", 1, 0);
+    Mod_MarkClient(v2);
+    dword_1124CC5C = v2;
+    v3 = Mod_ForName("sprites/animglow01.spr", 1, 0);
+    Mod_MarkClient(v3);
+    dword_1124CC7C = v3;
+    v4 = Mod_ForName("sprites/muzzleflash1.spr", 1, 0);
+    Mod_MarkClient(v4);
+    dword_1124CC70 = v4;
+    v5 = Mod_ForName("sprites/muzzleflash2.spr", 1, 0);
+    Mod_MarkClient(v5);
+    dword_1124CC74 = v5;
+    v6 = Mod_ForName("sprites/muzzleflash3.spr", 1, 0);
+    Mod_MarkClient(v6);
+    dword_1124CC78 = v6;
+    v7 = Mod_ForName("sprites/richo1.spr", 1, 0);
+    Mod_MarkClient(v7);
+    dword_1124CC6C = v7;
+    v8 = (model_t *)Mod_ForName("sprites/shellchrome.spr", 1, 0);
+    Mod_MarkClient(v8);
+    cl_sprite_shell = v8;
+    Q_memset(gTempEnts, 0, 1534000);
+    v9 = (int *)&unk_1032F3D4;
+    do
+    {
+      *v9 = (int)(v9 + 756);
+      v9 += 767;
+    }
+    while ( (int)v9 < (int)&dword_104A5008 );
+    dword_104A5008 = 0;
+    gpTempEntFree = gTempEnts;
+    gpTempEntActive = nullptr;
+  }

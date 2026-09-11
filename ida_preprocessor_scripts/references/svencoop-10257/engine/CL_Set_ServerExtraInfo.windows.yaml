@@ -1,0 +1,49 @@
+func_name: "CL_Set_ServerExtraInfo"
+func_va: "0x1d30170"
+disasm_code: |-
+  .text:01D30170                 sub     esp, 24h
+  .text:01D30173                 mov     eax, ___security_cookie
+  .text:01D30178                 xor     eax, esp
+  .text:01D3017A                 mov     [esp+24h+var_4], eax
+  .text:01D3017E                 push    esi
+  .text:01D3017F                 call    MSG_ReadString
+  .text:01D30184                 mov     esi, eax
+  .text:01D30186                 call    MSG_ReadByte
+  .text:01D3018B                 ; ArgList
+  .text:01D3018B                 push    eax; ArgList
+  .text:01D3018C                 push    offset aD_3; "%d"
+  .text:01D30191                 mov     allow_cheats, eax
+  .text:01D30196                 lea     eax, [esp+30h+Buffer]
+  .text:01D3019A                 ; size
+  .text:01D3019A                 push    20h ; ' '; size
+  .text:01D3019C                 ; buffer
+  .text:01D3019C                 push    eax; buffer
+  .text:01D3019D                 call    Q_snprintf_ServerExtraInfo
+  .text:01D301A2                 lea     eax, [esp+38h+Buffer]
+  .text:01D301A6                 push    eax
+  .text:01D301A7                 push    offset sv_cheats
+  .text:01D301AC                 call    Cvar_DirectSet
+  .text:01D301B1                 ; dir
+  .text:01D301B1                 push    esi; dir
+  .text:01D301B2                 call    COM_AddDefaultDir
+  .text:01D301B7                 mov     ecx, [esp+44h+var_4]
+  .text:01D301BB                 add     esp, 1Ch
+  .text:01D301BE                 pop     esi
+  .text:01D301BF                 ; StackCookie
+  .text:01D301BF                 xor     ecx, esp; StackCookie
+  .text:01D301C1                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:01D301C6                 add     esp, 24h
+  .text:01D301C9                 retn
+procedure: |-
+  // Source role: engine/cl_parsefn.c CL_Set_ServerExtraInfo. Sven binary checked against source semantics; source revision is not assumed identical.
+  void __cdecl CL_Set_ServerExtraInfo()
+  {
+    char *dir; // esi
+    char val[32]; // [esp+4h] [ebp-24h] BYREF
+
+    dir = MSG_ReadString();
+    allow_cheats = MSG_ReadByte();
+    Q_snprintf_ServerExtraInfo(val, 0x20u, "%d", allow_cheats);
+    Cvar_DirectSet(sv_cheats, val);
+    COM_AddDefaultDir(dir);
+  }

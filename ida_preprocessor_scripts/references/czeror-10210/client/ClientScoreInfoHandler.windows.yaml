@@ -1,0 +1,134 @@
+func_name: "ClientScoreInfoHandler"
+func_va: "0x10036260"
+disasm_code: |-
+  .text:10036260                 push    ebp
+  .text:10036261                 mov     ebp, esp
+  .text:10036263                 push    ebx
+  .text:10036264                 push    esi
+  .text:10036265                 push    edi
+  .text:10036266                 ; iSize
+  .text:10036266                 push    [ebp+iSize]; iSize
+  .text:10036269                 mov     edi, ecx
+  .text:1003626B                 ; pbuf
+  .text:1003626B                 push    [ebp+pbuf]; pbuf
+  .text:1003626E                 call    BEGIN_READ
+  .text:10036273                 add     esp, 8
+  .text:10036276                 call    READ_BYTE
+  .text:1003627B                 movzx   esi, ax
+  .text:1003627E                 call    READ_SHORT
+  .text:10036283                 movzx   ebx, ax
+  .text:10036286                 call    READ_SHORT
+  .text:1003628B                 movzx   eax, ax
+  .text:1003628E                 mov     [ebp+iSize], eax
+  .text:10036291                 call    READ_SHORT
+  .text:10036296                 movzx   eax, ax
+  .text:10036299                 mov     [ebp+pbuf], eax
+  .text:1003629C                 call    READ_SHORT
+  .text:100362A1                 movzx   edx, ax
+  .text:100362A4                 lea     eax, [esi-1]
+  .text:100362A7                 cmp     ax, 3Fh ; '?'
+  .text:100362AB                 ja      loc_1003636A
+  .text:100362B1                 movsx   eax, si
+  .text:100362B4                 lea     ecx, ds:0[eax*8]
+  .text:100362BB                 sub     ecx, eax
+  .text:100362BD                 mov     eax, [ebp+iSize]
+  .text:100362C0                 mov     g_PlayerExtraInfo_CZDS.deaths[ecx*4], ax
+  .text:100362C8                 mov     eax, [ebp+pbuf]
+  .text:100362CB                 mov     word ptr g_PlayerExtraInfo_CZDS.frags[ecx*4], bx ; g_PlayerExtraInfo_CZDS: zero-offset frags store resolves the array base
+  .text:100362D3                 mov     g_PlayerExtraInfo_CZDS.playerclass[ecx*4], ax
+  .text:100362DB                 mov     g_PlayerExtraInfo_CZDS.teamnumber[ecx*4], dx
+  .text:100362E3                 test    dx, dx
+  .text:100362E6                 jns     short loc_100362F2
+  .text:100362E8                 xor     eax, eax
+  .text:100362EA                 mov     g_PlayerExtraInfo_CZDS.teamnumber[ecx*4], ax
+  .text:100362F2                 ; this
+  .text:100362F2                 mov     ecx, [edi+0B0h]; this
+  .text:100362F8                 test    ecx, ecx
+  .text:100362FA                 jz      short loc_10036320
+  .text:100362FC                 ; numTeams
+  .text:100362FC                 push    dword ptr [edi+124h]; numTeams
+  .text:10036302                 cmp     dword ptr [edi+72Ch], 0
+  .text:10036309                 lea     eax, [edi+4]
+  .text:1003630C                 ; teamNames
+  .text:1003630C                 push    eax; teamNames
+  .text:1003630D                 setnz   al
+  .text:10036310                 movzx   eax, al
+  .text:10036313                 ; allowSpectators
+  .text:10036313                 push    eax; allowSpectators
+  .text:10036314                 lea     eax, [edi+730h]
+  .text:1003631A                 ; mapName
+  .text:1003631A                 push    eax; mapName
+  .text:1003631B                 call    CTeamMenu_Update
+  .text:10036320                 mov     eax, [edi-8]
+  .text:10036323                 lea     ecx, [edi-8]
+  .text:10036326                 call    dword ptr [eax+8]
+  .text:10036329                 mov     eax, [edi+0ACh]
+  .text:1003632F                 mov     ecx, [edi+0A8h]
+  .text:10036335                 mov     esi, [eax]
+  .text:10036337                 mov     eax, [ecx]
+  .text:10036339                 mov     eax, [eax+30h]
+  .text:1003633C                 call    eax
+  .text:1003633E                 cmp     dword_100E03AC, 0
+  .text:10036345                 mov     ecx, [edi+0ACh]
+  .text:1003634B                 movzx   eax, al
+  .text:1003634E                 push    eax
+  .text:1003634F                 setnz   al
+  .text:10036352                 movzx   eax, al
+  .text:10036355                 push    eax
+  .text:10036356                 lea     eax, [edi+104h]
+  .text:1003635C                 push    eax
+  .text:1003635D                 call    dword ptr [esi]
+  .text:1003635F                 mov     ecx, [edi+0A8h]
+  .text:10036365                 mov     eax, [ecx]
+  .text:10036367                 call    dword ptr [eax+24h]
+  .text:1003636A                 pop     edi
+  .text:1003636B                 pop     esi
+  .text:1003636C                 mov     eax, 1
+  .text:10036371                 pop     ebx
+  .text:10036372                 pop     ebp
+  .text:10036373                 retn    0Ch
+procedure: |-
+  // Source: vgui2/game_controls/vgui_TeamFortressViewport_msgs.cpp:238-268. The reference source comments out this legacy body, but CZDS retains it. Current binary has stride 0x1c and team assignment. Recover the array base from the frags store (member offset zero), not deaths/playerclass/team member addresses.
+  int __thiscall TeamFortressViewport_MsgFunc_ScoreInfo(void *this, const char *pszName, int iSize, void *pbuf)
+  {
+    __int16 cl; // si
+    __int16 frags; // bx
+    __int16 v7; // dx
+    int v8; // ecx
+    void *v9; // ecx
+    void (__thiscall **v10)(_DWORD, char *, bool, _DWORD); // esi
+    unsigned __int8 v11; // al
+    __int16 deaths; // [esp+18h] [ebp+Ch]
+    __int16 playerclass; // [esp+1Ch] [ebp+10h]
+
+    BEGIN_READ(pbuf, iSize);
+    cl = READ_BYTE();
+    frags = READ_SHORT();
+    deaths = READ_SHORT();
+    playerclass = READ_SHORT();
+    v7 = READ_SHORT();
+    if ( (unsigned __int16)(cl - 1) <= 0x3Fu )
+    {
+      v8 = cl;
+      g_PlayerExtraInfo_CZDS[v8].deaths = deaths;
+      g_PlayerExtraInfo_CZDS[v8].frags = frags;
+      g_PlayerExtraInfo_CZDS[v8].playerclass = playerclass;
+      g_PlayerExtraInfo_CZDS[v8].teamnumber = v7;
+      if ( v7 < 0 )
+        g_PlayerExtraInfo_CZDS[cl].teamnumber = 0;
+      v9 = *((void **)this + 44);
+      if ( v9 )
+        CTeamMenu_Update(
+          v9,
+          (const char *)this + 1840,
+          *((_DWORD *)this + 459) != 0,
+          (const char **)this + 1,
+          *((_DWORD *)this + 73));
+      (*(void (__thiscall **)(char *))(*((_DWORD *)this - 2) + 8))((char *)this - 8);
+      v10 = **((void (__thiscall ****)(_DWORD, char *, bool, _DWORD))this + 43);
+      v11 = (*(int (__thiscall **)(_DWORD))(**((_DWORD **)this + 42) + 48))(*((_DWORD *)this + 42));
+      (*v10)(*((_DWORD *)this + 43), (char *)this + 260, dword_100E03AC != 0, v11);
+      (*(void (__thiscall **)(_DWORD))(**((_DWORD **)this + 42) + 36))(*((_DWORD *)this + 42));
+    }
+    return 1;
+  }

@@ -1,0 +1,543 @@
+func_name: "GameStudioRenderer_StudioDrawPlayer"
+func_va: "0x10056ee0"
+disasm_code: |-
+  .text:10056EE0                 sub     esp, 0BFCh
+  .text:10056EE6                 mov     eax, ___security_cookie
+  .text:10056EEB                 xor     eax, esp
+  .text:10056EED                 mov     [esp+0BFCh+var_4], eax
+  .text:10056EF4                 push    ebx
+  .text:10056EF5                 push    ebp
+  .text:10056EF6                 mov     ebp, [esp+0C04h+pplayer]
+  .text:10056EFD                 mov     ebx, ecx
+  .text:10056EFF                 push    esi
+  .text:10056F00                 push    edi
+  .text:10056F01                 mov     [esp+0C0Ch+var_BCC], 0
+  .text:10056F09                 cmp     byte ptr [ebx+40C4h], 0
+  .text:10056F10                 mov     [esp+0C0Ch+var_BC8], 0
+  .text:10056F18                 mov     [esp+0C0Ch+var_BC4], 0
+  .text:10056F20                 mov     [esp+0C0Ch+var_BE0], 0
+  .text:10056F28                 mov     [esp+0C0Ch+var_BDC], 0
+  .text:10056F30                 mov     [esp+0C0Ch+var_BD8], 0
+  .text:10056F38                 mov     byte ptr [esp+0C0Ch+var_BFC+3], 0
+  .text:10056F3D                 jz      short loc_10056F47
+  .text:10056F3F                 call    gEngfuncs_GetLocalPlayer
+  .text:10056F45                 jmp     short loc_10056F4D
+  .text:10056F47                 call    dword_1063C888
+  .text:10056F4D                 mov     [ebx+40h], eax
+  .text:10056F50                 call    gEngfuncs_GetLocalPlayer
+  .text:10056F56                 cmp     [ebx+40h], eax
+  .text:10056F59                 jnz     short loc_10056FB2
+  .text:10056F5B                 call    CL_IsThirdPerson
+  .text:10056F60                 test    eax, eax
+  .text:10056F62                 jnz     short loc_10056FB2
+  .text:10056F64                 mov     [esp+0C0Ch+var_BEC], eax
+  .text:10056F68                 mov     [esp+0C0Ch+var_BE8], eax
+  .text:10056F6C                 mov     [esp+0C0Ch+var_BE4], eax
+  .text:10056F70                 lea     eax, [esp+0C0Ch+var_BEC]
+  .text:10056F74                 push    eax
+  .text:10056F75                 call    dword_101F8A20
+  .text:10056F7B                 movss   xmm0, [esp+0C10h+var_BEC]
+  .text:10056F81                 movss   [esp+0C10h+var_C10], xmm0
+  .text:10056F86                 push    dword ptr [ebx+40h]
+  .text:10056F89                 call    sub_100725F0
+  .text:10056F8E                 add     esp, 8
+  .text:10056F91                 cmp     g_bRenderingPortals, 0
+  .text:10056F98                 jnz     short loc_10056FB2
+  .text:10056F9A                 call    gEngfuncs_GetLocalPlayer
+  .text:10056FA0                 test    eax, eax
+  .text:10056FA2                 jz      short loc_10056FB2
+  .text:10056FA4                 mov     eax, [eax]
+  .text:10056FA6                 cmp     eax, g_ViewEntityIndex_SCClient
+  .text:10056FAC                 jz      loc_1005738B
+  .text:10056FB2                 lea     eax, [ebx+10h]
+  .text:10056FB5                 push    eax
+  .text:10056FB6                 lea     eax, [ebx+8]
+  .text:10056FB9                 lea     ecx, [ebx+20h]
+  .text:10056FBC                 push    eax
+  .text:10056FBD                 push    ecx
+  .text:10056FBE                 call    dword_1063C898
+  .text:10056FC4                 lea     eax, [ebx+4094h]
+  .text:10056FCA                 push    eax
+  .text:10056FCB                 lea     eax, [ebx+4088h]
+  .text:10056FD1                 push    eax
+  .text:10056FD2                 lea     eax, [ebx+407Ch]
+  .text:10056FD8                 push    eax
+  .text:10056FD9                 lea     eax, [ebx+40A0h]
+  .text:10056FDF                 push    eax
+  .text:10056FE0                 call    dword_1063C8A0
+  .text:10056FE6                 lea     eax, [ebx+4078h]
+  .text:10056FEC                 push    eax
+  .text:10056FED                 lea     eax, [ebx+4074h]
+  .text:10056FF3                 push    eax
+  .text:10056FF4                 call    dword_1063C8AC
+  .text:10056FFA                 mov     eax, [ebp+4]
+  .text:10056FFD                 add     esp, 24h
+  .text:10057000                 add     eax, 0FFFFFFFFh
+  .text:10057003                 mov     [ebx+50h], eax
+  .text:10057006                 js      loc_1005738B
+  .text:1005700C                 mov     esi, eax
+  .text:1005700E                 call    dword_101F8A28
+  .text:10057014                 cmp     esi, eax
+  .text:10057016                 jge     loc_1005738B
+  .text:1005701C                 mov     eax, dword_1063C8EC
+  .text:10057021                 push    esi
+  .text:10057022                 call    eax ; dword_1063C8EC
+  .text:10057024                 add     esp, 4
+  .text:10057027                 mov     [ebx+44h], eax
+  .text:1005702A                 test    eax, eax
+  .text:1005702C                 jz      loc_1005738B
+  .text:10057032                 mov     ecx, dword_1063C880
+  .text:10057038                 push    eax
+  .text:10057039                 call    ecx ; dword_1063C880
+  .text:1005703B                 push    eax
+  .text:1005703C                 mov     [ebx+58h], eax
+  .text:1005703F                 call    dword_1063C8FC
+  .text:10057045                 push    dword ptr [ebx+44h]
+  .text:10057048                 call    dword_1063C900
+  .text:1005704E                 push    dword ptr [ebx+50h]
+  .text:10057051                 mov     eax, dword_1063C88C
+  .text:10057056                 call    eax ; dword_1063C88C
+  .text:10057058                 mov     [ebx+48h], eax
+  .text:1005705B                 add     esp, 10h
+  .text:1005705E                 mov     eax, [ebx+40h]
+  .text:10057061                 mov     ecx, ebx
+  .text:10057063                 push    ebp
+  .text:10057064                 movss   xmm0, dword ptr [eax+0B54h]
+  .text:1005706C                 movss   [esp+0C10h+var_BF0], xmm0
+  .text:10057072                 movss   xmm0, dword ptr [eax+0B58h]
+  .text:1005707A                 movss   [esp+0C10h+var_BF4], xmm0
+  .text:10057080                 movss   xmm0, dword ptr [eax+0B5Ch]
+  .text:10057088                 mov     eax, [ebx]
+  .text:1005708A                 movss   [esp+0C10h+var_BF8], xmm0
+  .text:10057090                 call    dword ptr [eax+70h]
+  .text:10057093                 mov     ecx, [ebx+48h]
+  .text:10057096                 mov     eax, [ebp+0B8h]
+  .text:1005709C                 push    0
+  .text:1005709E                 mov     [ecx+17Ch], eax
+  .text:100570A4                 mov     ecx, ebx
+  .text:100570A6                 mov     eax, [ebx]
+  .text:100570A8                 mov     dword ptr [ebx+48h], 0
+  .text:100570AF                 call    dword ptr [eax+18h]
+  .text:100570B2                 mov     eax, [ebx+40h]
+  .text:100570B5                 movss   xmm0, [esp+0C0Ch+var_BF0]
+  .text:100570BB                 mov     edi, [esp+0C0Ch+flags]
+  .text:100570C2                 movss   dword ptr [eax+0B54h], xmm0
+  .text:100570CA                 mov     eax, [ebx+40h]
+  .text:100570CD                 movss   xmm0, [esp+0C0Ch+var_BF4]
+  .text:100570D3                 movss   dword ptr [eax+0B58h], xmm0
+  .text:100570DB                 mov     eax, [ebx+40h]
+  .text:100570DE                 movss   xmm0, [esp+0C0Ch+var_BF8]
+  .text:100570E4                 movss   dword ptr [eax+0B5Ch], xmm0
+  .text:100570EC                 and     edi, 1
+  .text:100570EF                 jz      short loc_1005711F
+  .text:100570F1                 call    dword_1063C8C4
+  .text:100570F7                 test    eax, eax
+  .text:100570F9                 jz      loc_1005738B
+  .text:100570FF                 mov     eax, [ebx+40B0h]
+  .text:10057105                 inc     dword ptr [eax]
+  .text:10057107                 mov     eax, [ebx+40ACh]
+  .text:1005710D                 inc     dword ptr [eax]
+  .text:1005710F                 mov     eax, [ebx+58h]
+  .text:10057112                 cmp     dword ptr [eax+0CCh], 0
+  .text:10057119                 jz      loc_10057387
+  .text:1005711F                 push    dword ptr [ebx+50h]
+  .text:10057122                 mov     eax, dword_1063C88C
+  .text:10057127                 call    eax ; dword_1063C88C
+  .text:10057129                 mov     [ebx+48h], eax
+  .text:1005712C                 add     esp, 4
+  .text:1005712F                 mov     eax, [ebx]
+  .text:10057131                 mov     ecx, ebx
+  .text:10057133                 call    dword ptr [eax+1Ch]
+  .text:10057136                 mov     eax, [ebx]
+  .text:10057138                 mov     ecx, ebx
+  .text:1005713A                 call    dword ptr [eax+24h]
+  .text:1005713D                 test    byte ptr [esp+0C0Ch+flags], 2
+  .text:10057145                 mov     ecx, [ebx+48h]
+  .text:10057148                 mov     eax, [ebx+20h]
+  .text:1005714B                 mov     [ecx+178h], eax
+  .text:10057151                 mov     dword ptr [ebx+48h], 0
+  .text:10057158                 jz      short loc_100571D8
+  .text:1005715A                 test    edi, edi
+  .text:1005715C                 jz      short loc_10057185
+  .text:1005715E                 mov     ecx, [ebp+0B4h]
+  .text:10057164                 test    ecx, ecx
+  .text:10057166                 jz      short loc_10057185
+  .text:10057168                 mov     eax, dword_1063C884
+  .text:1005716D                 mov     esi, dword_1063C880
+  .text:10057173                 push    ecx
+  .text:10057174                 call    eax ; dword_1063C884
+  .text:10057176                 push    eax
+  .text:10057177                 call    esi ; dword_1063C880
+  .text:10057179                 add     esp, 8
+  .text:1005717C                 cmp     dword ptr [eax+0D4h], 0
+  .text:10057183                 jnz     short loc_100571E0
+  .text:10057185                 mov     eax, [ebx]
+  .text:10057187                 mov     ecx, ebx
+  .text:10057189                 call    dword ptr [eax+20h]
+  .text:1005718C                 call    dword_1063C8F0
+  .text:10057192                 mov     eax, [ebx+40h]
+  .text:10057195                 mov     byte ptr [esp+0C0Ch+var_BFC+3], 1
+  .text:1005719A                 mov     ecx, [eax]
+  .text:1005719C                 test    ecx, ecx
+  .text:1005719E                 jle     short loc_100571D8
+  .text:100571A0                 mov     eax, dword_101F8A6C
+  .text:100571A5                 push    ecx
+  .text:100571A6                 call    eax ; dword_101F8A6C
+  .text:100571A8                 mov     ecx, [ebx+40h]
+  .text:100571AB                 add     esp, 4
+  .text:100571AE                 movups  xmm0, xmmword ptr [ecx+0B60h]
+  .text:100571B5                 movups  xmmword ptr [eax+0B60h], xmm0
+  .text:100571BC                 movups  xmm0, xmmword ptr [ecx+0B70h]
+  .text:100571C3                 movups  xmmword ptr [eax+0B70h], xmm0
+  .text:100571CA                 movups  xmm0, xmmword ptr [ecx+0B80h]
+  .text:100571D1                 movups  xmmword ptr [eax+0B80h], xmm0
+  .text:100571D8                 test    edi, edi
+  .text:100571DA                 jz      loc_10057387
+  .text:100571E0                 mov     eax, [ebx+24h]
+  .text:100571E3                 movss   xmm0, dword ptr [eax+0Ch]
+  .text:100571E8                 ucomiss xmm0, ds:dword_1011CAE0
+  .text:100571EF                 lahf
+  .text:100571F0                 test    ah, 44h
+  .text:100571F3                 jnp     short loc_10057202
+  .text:100571F5                 mov     eax, [ebx+40h]
+  .text:100571F8                 mov     dword ptr [eax+314h], 0FFh
+  .text:10057202                 lea     eax, [esp+0C0Ch+var_BE0]
+  .text:10057206                 mov     [esp+0C0Ch+var_BC0], eax
+  .text:1005720A                 lea     eax, [esp+0C0Ch+var_BD4]
+  .text:1005720E                 push    eax
+  .text:1005720F                 push    dword ptr [ebx+40h]
+  .text:10057212                 call    dword_1063C8C8
+  .text:10057218                 lea     eax, [esp+0C14h+var_BD4]
+  .text:1005721C                 push    eax
+  .text:1005721D                 call    dword_1063C8CC
+  .text:10057223                 lea     eax, [esp+0C18h+var_BD4]
+  .text:10057227                 push    eax
+  .text:10057228                 call    dword_1063C8D0
+  .text:1005722E                 push    dword ptr [ebx+50h]
+  .text:10057231                 mov     eax, dword_1063C88C
+  .text:10057236                 call    eax ; dword_1063C88C
+  .text:10057238                 mov     edi, eax
+  .text:1005723A                 mov     [esp+0C20h+var_BF4], 0FFh
+  .text:10057242                 mov     [ebx+48h], edi
+  .text:10057245                 lea     ecx, [edi+170h]
+  .text:1005724B                 mov     edx, [ecx]
+  .text:1005724D                 lea     esi, [esp+0C20h+var_BF8]
+  .text:10057251                 test    edx, edx
+  .text:10057253                 mov     [esp+0C20h+var_BF8], 0
+  .text:1005725B                 lea     eax, [esp+0C20h+var_BF4]
+  .text:1005725F                 cmovns  esi, ecx
+  .text:10057262                 cmp     edx, 0FFh
+  .text:10057268                 lea     edx, [esp+0C20h+var_BF8]
+  .text:1005726C                 cmovle  eax, esi
+  .text:1005726F                 mov     esi, [eax]
+  .text:10057271                 lea     eax, [edi+174h]
+  .text:10057277                 mov     [ebx+64h], esi
+  .text:1005727A                 mov     ecx, [eax]
+  .text:1005727C                 test    ecx, ecx
+  .text:1005727E                 mov     [esp+0C20h+var_BF4], 0FFh
+  .text:10057286                 cmovns  edx, eax
+  .text:10057289                 mov     [esp+0C20h+var_BF8], 0
+  .text:10057291                 cmp     ecx, 0FFh
+  .text:10057297                 lea     eax, [esp+0C20h+var_BF4]
+  .text:1005729B                 cmovle  eax, edx
+  .text:1005729E                 mov     eax, [eax]
+  .text:100572A0                 push    eax
+  .text:100572A1                 push    esi
+  .text:100572A2                 mov     [ebx+68h], eax
+  .text:100572A5                 call    dword_1063C8E8
+  .text:100572AB                 mov     eax, [ebx]
+  .text:100572AD                 add     esp, 1Ch
+  .text:100572B0                 mov     ecx, ebx
+  .text:100572B2                 call    dword ptr [eax+50h]
+  .text:100572B5                 mov     dword ptr [ebx+48h], 0
+  .text:100572BC                 cmp     dword ptr [ebp+0B4h], 0
+  .text:100572C3                 jz      loc_10057387
+  .text:100572C9                 push    dword ptr [ebx+40h]
+  .text:100572CC                 lea     ecx, [esp+0C10h+var_BBC]
+  .text:100572D0                 call    sub_1005A880
+  .text:100572D5                 mov     eax, [ebx+58h]
+  .text:100572D8                 push    dword ptr [ebp+0B4h]
+  .text:100572DE                 mov     [esp+0C10h+var_BF8], eax
+  .text:100572E2                 mov     eax, dword_1063C884
+  .text:100572E7                 call    eax ; dword_1063C884
+  .text:100572E9                 mov     ecx, dword_1063C880
+  .text:100572EF                 mov     esi, eax
+  .text:100572F1                 push    esi
+  .text:100572F2                 call    ecx ; dword_1063C880
+  .text:100572F4                 push    eax
+  .text:100572F5                 mov     [ebx+58h], eax
+  .text:100572F8                 call    dword_1063C8FC
+  .text:100572FE                 mov     eax, [ebx]
+  .text:10057300                 add     esp, 0Ch
+  .text:10057303                 mov     ecx, ebx
+  .text:10057305                 push    esi
+  .text:10057306                 call    dword ptr [eax+28h]
+  .text:10057309                 lea     eax, [esp+0C0Ch+var_BD4]
+  .text:1005730D                 push    eax
+  .text:1005730E                 call    dword_1063C8D0
+  .text:10057314                 mov     eax, [ebx]
+  .text:10057316                 add     esp, 4
+  .text:10057319                 mov     ecx, ebx
+  .text:1005731B                 call    dword ptr [eax+50h]
+  .text:1005731E                 mov     eax, [ebx]
+  .text:10057320                 mov     ecx, ebx
+  .text:10057322                 call    dword ptr [eax+20h]
+  .text:10057325                 mov     edi, [ebx+40h]
+  .text:10057328                 cmp     dword ptr [edi], 0
+  .text:1005732B                 jle     short loc_10057354
+  .text:1005732D                 mov     eax, [ebx+58h]
+  .text:10057330                 mov     eax, [eax+0D4h]
+  .text:10057336                 lea     eax, [eax+eax*2]
+  .text:10057339                 shl     eax, 2
+  .text:1005733C                 ; Size
+  .text:1005733C                 push    eax; Size
+  .text:1005733D                 lea     eax, [edi+0B60h]
+  .text:10057343                 ; Src
+  .text:10057343                 push    eax; Src
+  .text:10057344                 lea     eax, [esp+0C14h+var_5C]
+  .text:1005734B                 ; void *
+  .text:1005734B                 push    eax; void *
+  .text:1005734C                 call    _memmove
+  .text:10057351                 add     esp, 0Ch
+  .text:10057354                 mov     eax, [esp+0C0Ch+var_BF8]
+  .text:10057358                 lea     esi, [esp+0C0Ch+var_BBC]
+  .text:1005735C                 mov     ecx, 2EEh
+  .text:10057361                 rep movsd
+  .text:10057363                 push    eax
+  .text:10057364                 mov     [ebx+58h], eax
+  .text:10057367                 call    dword_1063C8FC
+  .text:1005736D                 add     esp, 4
+  .text:10057370                 test    byte ptr [esp+0C0Ch+flags], 2
+  .text:10057378                 jz      short loc_10057387
+  .text:1005737A                 cmp     byte ptr [esp+0C0Ch+var_BFC+3], 0
+  .text:1005737F                 jnz     short loc_10057387
+  .text:10057381                 call    dword_1063C8F0
+  .text:10057387                 mov     al, 1
+  .text:10057389                 jmp     short loc_1005738D
+  .text:1005738B                 xor     al, al
+  .text:1005738D                 mov     ecx, [esp+0C0Ch+var_4]
+  .text:10057394                 pop     edi
+  .text:10057395                 pop     esi
+  .text:10057396                 pop     ebp
+  .text:10057397                 pop     ebx
+  .text:10057398                 ; StackCookie
+  .text:10057398                 xor     ecx, esp; StackCookie
+  .text:1005739A                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1005739F                 add     esp, 0BFCh
+  .text:100573A5                 retn    8
+procedure: |-
+  // Source context: GameStudioModelRenderer.cpp CGameStudioRenderer::StudioDrawPlayer. Sven adds a first-person local-player suppression condition not present in the available Half-Life source. The guard compares GetLocalPlayer()->index with g_ViewEntityIndex_SCClient (requested g_ViewEntityIndex_SCClient), after checking third-person and g_bRenderingPortals. Independently corroborated by V_CalcNormalRefdef storing pparams->viewentity into this same global. Renderer and entity types intentionally expose only confirmed fields; Sven-specific opaque layout is not copied from HL.
+  int __thiscall CGameStudioRenderer_StudioDrawPlayer(renderer_view_prefix *this, int flags, void *pplayer)
+  {
+    bool v4; // zf
+    view_entity_partial *LocalPlayer; // eax
+    view_entity_partial *v6; // eax
+    int result; // eax
+    int v8; // eax
+    bool v9; // sf
+    int v10; // esi
+    int v11; // eax
+    view_entity_partial *currententity; // eax
+    int v13; // xmm0_4
+    void (__thiscall **vtable)(renderer_view_prefix *, void *); // eax
+    void (__thiscall **v15)(renderer_view_prefix *, _DWORD); // eax
+    int (__cdecl *v16)(int); // esi
+    int v17; // eax
+    view_entity_partial *v18; // ecx
+    int v19; // edi
+    int v20; // edx
+    int *v21; // esi
+    int *v22; // eax
+    bool v23; // cc
+    int *v24; // edx
+    int v25; // esi
+    int v26; // ecx
+    int *v27; // eax
+    int v28; // esi
+    int v29; // eax
+    view_entity_partial *v30; // edi
+    int v31; // eax
+    int v32; // [esp-14h] [ebp-C24h]
+    int v33; // [esp+0h] [ebp-C10h]
+    char v34; // [esp+17h] [ebp-BF9h]
+    int v35; // [esp+18h] [ebp-BF8h] BYREF
+    int v36; // [esp+1Ch] [ebp-BF4h] BYREF
+    int v37; // [esp+20h] [ebp-BF0h]
+    _DWORD v38[3]; // [esp+24h] [ebp-BECh] BYREF
+    _DWORD v39[3]; // [esp+30h] [ebp-BE0h] BYREF
+    _BYTE v40[8]; // [esp+3Ch] [ebp-BD4h] BYREF
+    int v41; // [esp+44h] [ebp-BCCh]
+    int v42; // [esp+48h] [ebp-BC8h]
+    int v43; // [esp+4Ch] [ebp-BC4h]
+    _DWORD *v44; // [esp+50h] [ebp-BC0h]
+    _BYTE v45[3000]; // [esp+54h] [ebp-BBCh] BYREF
+
+    v41 = 0;
+    v4 = *((_BYTE *)this + 16580) == 0;
+    v42 = 0;
+    v43 = 0;
+    memset(v39, 0, sizeof(v39));
+    v34 = 0;
+    if ( v4 )
+      LocalPlayer = (view_entity_partial *)dword_1063C888();
+    else
+      LocalPlayer = gEngfuncs_GetLocalPlayer();
+    this->currententity = LocalPlayer;
+    if ( this->currententity != gEngfuncs_GetLocalPlayer()
+      || CL_IsThirdPerson()
+      || (memset(v38, 0, sizeof(v38)), dword_101F8A20(v38), sub_100725F0(this->currententity, v38[0]), g_bRenderingPortals)
+      || (v6 = gEngfuncs_GetLocalPlayer()) == nullptr
+      || (result = v6->index, result != g_ViewEntityIndex_SCClient) )
+    {
+      dword_1063C898(&this->prefix[28], &this->prefix[4], &this->prefix[12]);
+      dword_1063C8A0((char *)this + 16544, (char *)this + 16508, (char *)this + 16520, (char *)this + 16532);
+      dword_1063C8AC((char *)this + 16500, (char *)this + 16504);
+      v8 = *((_DWORD *)pplayer + 1);
+      v9 = v8 - 1 < 0;
+      result = v8 - 1;
+      *((_DWORD *)this + 20) = result;
+      if ( !v9 )
+      {
+        v10 = result;
+        result = dword_101F8A28();
+        if ( v10 < result )
+        {
+          result = dword_1063C8EC(v10);
+          *((_DWORD *)this + 17) = result;
+          if ( result )
+          {
+            v11 = dword_1063C880(result);
+            *((_DWORD *)this + 22) = v11;
+            dword_1063C8FC(v11);
+            dword_1063C900(*((_DWORD *)this + 17));
+            *((_DWORD *)this + 18) = dword_1063C88C(*((_DWORD *)this + 20));
+            currententity = this->currententity;
+            v37 = *(_DWORD *)&currententity->opaque[2896];
+            v36 = *(_DWORD *)&currententity->opaque[2900];
+            v13 = *(_DWORD *)&currententity->opaque[2904];
+            vtable = (void (__thiscall **)(renderer_view_prefix *, void *))this->vtable;
+            v35 = v13;
+            vtable[28](this, pplayer);
+            *(_DWORD *)(*((_DWORD *)this + 18) + 380) = *((_DWORD *)pplayer + 46);
+            v15 = (void (__thiscall **)(renderer_view_prefix *, _DWORD))this->vtable;
+            *((_DWORD *)this + 18) = 0;
+            v15[6](this, 0);
+            *(_DWORD *)&this->currententity->opaque[2896] = v37;
+            *(_DWORD *)&this->currententity->opaque[2900] = v36;
+            *(_DWORD *)&this->currententity->opaque[2904] = v35;
+            if ( (flags & 1) == 0 )
+            {
+  LABEL_15:
+              *((_DWORD *)this + 18) = dword_1063C88C(*((_DWORD *)this + 20));
+              (*((void (__thiscall **)(renderer_view_prefix *))this->vtable + 7))(this);
+              (*((void (__thiscall **)(renderer_view_prefix *))this->vtable + 9))(this);
+              result = *(_DWORD *)&this->prefix[28];
+              *(_DWORD *)(*((_DWORD *)this + 18) + 376) = result;
+              *((_DWORD *)this + 18) = 0;
+              if ( (flags & 2) != 0 )
+              {
+                if ( (flags & 1) != 0 )
+                {
+                  if ( *((_DWORD *)pplayer + 45) )
+                  {
+                    v16 = dword_1063C880;
+                    v17 = dword_1063C884(*((_DWORD *)pplayer + 45));
+                    if ( *(_DWORD *)(v16(v17) + 212) )
+                      goto LABEL_22;
+                  }
+                }
+                (*((void (__thiscall **)(renderer_view_prefix *))this->vtable + 8))(this);
+                dword_1063C8F0();
+                result = (int)this->currententity;
+                v34 = 1;
+                if ( *(int *)result > 0 )
+                {
+                  result = dword_101F8A6C(*(_DWORD *)result);
+                  v18 = this->currententity;
+                  *(_OWORD *)(result + 2912) = *(_OWORD *)&v18->opaque[2908];
+                  *(_OWORD *)(result + 2928) = *(_OWORD *)&v18->opaque[2924];
+                  *(_OWORD *)(result + 2944) = *(_OWORD *)&v18->opaque[2940];
+                }
+              }
+              if ( (flags & 1) != 0 )
+              {
+  LABEL_22:
+                if ( *(float *)(*(_DWORD *)&this->prefix[32] + 12) != 0.0 )
+                  *(_DWORD *)&this->currententity->opaque[784] = 255;
+                v44 = v39;
+                dword_1063C8C8(this->currententity, v40);
+                dword_1063C8CC(v40);
+                dword_1063C8D0(v40);
+                v19 = dword_1063C88C(*((_DWORD *)this + 20));
+                v36 = 255;
+                *((_DWORD *)this + 18) = v19;
+                v20 = *(_DWORD *)(v19 + 368);
+                v21 = &v35;
+                v35 = 0;
+                v22 = &v36;
+                if ( v20 >= 0 )
+                  v21 = (int *)(v19 + 368);
+                v23 = v20 <= 255;
+                v24 = &v35;
+                if ( v23 )
+                  v22 = v21;
+                v25 = *v22;
+                *((_DWORD *)this + 25) = *v22;
+                v26 = *(_DWORD *)(v19 + 372);
+                v36 = 255;
+                if ( v26 >= 0 )
+                  v24 = (int *)(v19 + 372);
+                v35 = 0;
+                v27 = &v36;
+                if ( v26 <= 255 )
+                  v27 = v24;
+                v32 = *v27;
+                *((_DWORD *)this + 26) = *v27;
+                dword_1063C8E8(v25, v32);
+                result = (*((int (__thiscall **)(renderer_view_prefix *))this->vtable + 20))(this);
+                *((_DWORD *)this + 18) = 0;
+                if ( *((_DWORD *)pplayer + 45) )
+                {
+                  sub_1005A880(this->currententity);
+                  v33 = *((_DWORD *)pplayer + 45);
+                  v35 = *((_DWORD *)this + 22);
+                  v28 = dword_1063C884(v33);
+                  v29 = dword_1063C880(v28);
+                  *((_DWORD *)this + 22) = v29;
+                  dword_1063C8FC(v29);
+                  (*((void (__thiscall **)(renderer_view_prefix *, int))this->vtable + 10))(this, v28);
+                  dword_1063C8D0(v40);
+                  (*((void (__thiscall **)(renderer_view_prefix *))this->vtable + 20))(this);
+                  (*((void (__thiscall **)(renderer_view_prefix *))this->vtable + 8))(this);
+                  v30 = this->currententity;
+                  if ( v30->index > 0 )
+                    memmove(&v45[2912], &v30->opaque[2908], 12 * *(_DWORD *)(*((_DWORD *)this + 22) + 212));
+                  v31 = v35;
+                  qmemcpy(v30, v45, sizeof(view_entity_partial));
+                  *((_DWORD *)this + 22) = v31;
+                  result = dword_1063C8FC(v31);
+                  if ( (flags & 2) != 0 && !v34 )
+                    result = dword_1063C8F0();
+                }
+              }
+  LABEL_38:
+              LOBYTE(result) = 1;
+              return result;
+            }
+            result = dword_1063C8C4();
+            if ( result )
+            {
+              ++**((_DWORD **)this + 4140);
+              ++**((_DWORD **)this + 4139);
+              result = *((_DWORD *)this + 22);
+              if ( !*(_DWORD *)(result + 204) )
+                goto LABEL_38;
+              goto LABEL_15;
+            }
+          }
+        }
+      }
+    }
+    LOBYTE(result) = 0;
+    return result;
+  }

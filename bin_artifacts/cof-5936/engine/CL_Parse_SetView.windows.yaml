@@ -1,0 +1,5 @@
+func_name: CL_Parse_SetView
+func_va: '0x1d38b77'
+func_rva: '0x38b77'
+func_size: '0xf'
+func_sig: 55 8B EC E8 ?? ?? ?? ?? A3 ?? ?? ?? ?? 5D C3

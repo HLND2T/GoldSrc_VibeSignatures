@@ -1,0 +1,9 @@
+gv_name: cl_viewentity
+gv_va: '0x2f8ab74'
+gv_rva: '0x128ab74'
+gv_sig: 55 8B EC E8 ?? ?? ?? ?? A3 ?? ?? ?? ?? 5D C3
+gv_sig_va: '0x1d38b77'
+gv_inst_offset: '0x8'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'
+gv_sig_allow_across_function_boundary: true

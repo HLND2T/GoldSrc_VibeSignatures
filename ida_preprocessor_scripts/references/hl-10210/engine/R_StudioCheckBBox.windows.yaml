@@ -1,0 +1,431 @@
+func_name: "R_StudioCheckBBox"
+func_va: "0x101f1ab0"
+disasm_code: |-
+  .text:101F1AB0                 push    ebp
+  .text:101F1AB1                 mov     ebp, esp
+  .text:101F1AB3                 sub     esp, 44h
+  .text:101F1AB6                 mov     eax, ___security_cookie
+  .text:101F1ABB                 xor     eax, ebp
+  .text:101F1ABD                 mov     [ebp+var_4], eax
+  .text:101F1AC0                 mov     eax, pstudiohdr
+  .text:101F1AC5                 add     eax, 70h ; 'p'
+  .text:101F1AC8                 ; b
+  .text:101F1AC8                 push    eax; b
+  .text:101F1AC9                 ; a
+  .text:101F1AC9                 push    offset vec3_origin; a
+  .text:101F1ACE                 call    VectorCompare
+  .text:101F1AD3                 add     esp, 8
+  .text:101F1AD6                 test    eax, eax
+  .text:101F1AD8                 jnz     short loc_101F1B50
+  .text:101F1ADA                 mov     edx, pstudiohdr
+  .text:101F1AE0                 mov     ecx, currententity
+  .text:101F1AE6                 movss   xmm1, dword ptr [edx+70h]
+  .text:101F1AEB                 addss   xmm1, dword ptr [ecx+0B48h]
+  .text:101F1AF3                 movss   [ebp+mins], xmm1
+  .text:101F1AF8                 movss   xmm7, dword ptr [edx+74h]
+  .text:101F1AFD                 addss   xmm7, dword ptr [ecx+0B4Ch]
+  .text:101F1B05                 movss   [ebp+var_18], xmm7
+  .text:101F1B0A                 movss   xmm3, dword ptr [edx+78h]
+  .text:101F1B0F                 addss   xmm3, dword ptr [ecx+0B50h]
+  .text:101F1B17                 movss   [ebp+var_14], xmm3
+  .text:101F1B1C                 movss   xmm0, dword ptr [edx+7Ch]
+  .text:101F1B21                 addss   xmm0, dword ptr [ecx+0B48h]
+  .text:101F1B29                 movss   [ebp+maxs], xmm0
+  .text:101F1B2E                 movss   xmm5, dword ptr [edx+80h]
+  .text:101F1B36                 addss   xmm5, dword ptr [ecx+0B4Ch]
+  .text:101F1B3E                 movss   [ebp+var_C], xmm5
+  .text:101F1B43                 movss   xmm4, dword ptr [edx+84h]
+  .text:101F1B4B                 jmp     loc_101F1C48
+  .text:101F1B50                 mov     eax, pstudiohdr
+  .text:101F1B55                 add     eax, 58h ; 'X'
+  .text:101F1B58                 ; b
+  .text:101F1B58                 push    eax; b
+  .text:101F1B59                 ; a
+  .text:101F1B59                 push    offset vec3_origin; a
+  .text:101F1B5E                 call    VectorCompare
+  .text:101F1B63                 mov     ecx, currententity
+  .text:101F1B69                 add     esp, 8
+  .text:101F1B6C                 mov     edx, pstudiohdr
+  .text:101F1B72                 test    eax, eax
+  .text:101F1B74                 jnz     short loc_101F1BD7
+  .text:101F1B76                 movss   xmm1, dword ptr [edx+58h]
+  .text:101F1B7B                 addss   xmm1, dword ptr [ecx+0B48h]
+  .text:101F1B83                 movss   [ebp+mins], xmm1
+  .text:101F1B88                 movss   xmm7, dword ptr [edx+5Ch]
+  .text:101F1B8D                 addss   xmm7, dword ptr [ecx+0B4Ch]
+  .text:101F1B95                 movss   [ebp+var_18], xmm7
+  .text:101F1B9A                 movss   xmm3, dword ptr [edx+60h]
+  .text:101F1B9F                 addss   xmm3, dword ptr [ecx+0B50h]
+  .text:101F1BA7                 movss   [ebp+var_14], xmm3
+  .text:101F1BAC                 movss   xmm0, dword ptr [edx+64h]
+  .text:101F1BB1                 addss   xmm0, dword ptr [ecx+0B48h]
+  .text:101F1BB9                 movss   [ebp+maxs], xmm0
+  .text:101F1BBE                 movss   xmm5, dword ptr [edx+68h]
+  .text:101F1BC3                 addss   xmm5, dword ptr [ecx+0B4Ch]
+  .text:101F1BCB                 movss   [ebp+var_C], xmm5
+  .text:101F1BD0                 movss   xmm4, dword ptr [edx+6Ch]
+  .text:101F1BD5                 jmp     short loc_101F1C48
+  .text:101F1BD7                 movss   xmm1, gFakeHullMins
+  .text:101F1BDF                 addss   xmm1, dword ptr [ecx+0B48h]
+  .text:101F1BE7                 movss   xmm7, dword_1031C2C0
+  .text:101F1BEF                 movss   xmm3, dword_1031C2C4
+  .text:101F1BF7                 movss   xmm0, gFakeHullMaxs
+  .text:101F1BFF                 movss   xmm5, dword_1031C2CC
+  .text:101F1C07                 movss   xmm4, dword_1031C2D0
+  .text:101F1C0F                 movss   [ebp+mins], xmm1
+  .text:101F1C14                 addss   xmm7, dword ptr [ecx+0B4Ch]
+  .text:101F1C1C                 movss   [ebp+var_18], xmm7
+  .text:101F1C21                 addss   xmm3, dword ptr [ecx+0B50h]
+  .text:101F1C29                 movss   [ebp+var_14], xmm3
+  .text:101F1C2E                 addss   xmm0, dword ptr [ecx+0B48h]
+  .text:101F1C36                 movss   [ebp+maxs], xmm0
+  .text:101F1C3B                 addss   xmm5, dword ptr [ecx+0B4Ch]
+  .text:101F1C43                 movss   [ebp+var_C], xmm5
+  .text:101F1C48                 addss   xmm4, dword ptr [ecx+0B50h]
+  .text:101F1C50                 movss   [ebp+var_34], xmm1
+  .text:101F1C55                 movss   [ebp+var_38], xmm0
+  .text:101F1C5A                 movss   [ebp+var_8], xmm4
+  .text:101F1C5F                 mov     eax, [ecx+2DCh]
+  .text:101F1C65                 cmp     eax, [edx+0A4h]
+  .text:101F1C6B                 jl      short loc_101F1CA5
+  .text:101F1C6D                 mov     dword ptr [ecx+2DCh], 0
+  .text:101F1C77                 movss   xmm0, [ebp+mins]
+  .text:101F1C7C                 movss   xmm3, [ebp+var_14]
+  .text:101F1C81                 movss   xmm7, [ebp+var_18]
+  .text:101F1C86                 movss   xmm4, [ebp+var_8]
+  .text:101F1C8B                 movss   xmm5, [ebp+var_C]
+  .text:101F1C90                 mov     ecx, currententity
+  .text:101F1C96                 movss   [ebp+var_34], xmm0
+  .text:101F1C9B                 movss   xmm0, [ebp+maxs]
+  .text:101F1CA0                 movss   [ebp+var_38], xmm0
+  .text:101F1CA5                 imul    eax, [ecx+2DCh], 0B0h
+  .text:101F1CAF                 add     eax, [edx+0A8h]
+  .text:101F1CB5                 add     eax, edx
+  .text:101F1CB7                 xor     ecx, ecx
+  .text:101F1CB9                 nop     dword ptr [eax+00000000h]
+  .text:101F1CC0                 test    cl, 1
+  .text:101F1CC3                 jz      short loc_101F1CCC
+  .text:101F1CC5                 movss   xmm1, dword ptr [eax+60h]
+  .text:101F1CCA                 jmp     short loc_101F1CD1
+  .text:101F1CCC                 movss   xmm1, dword ptr [eax+6Ch]
+  .text:101F1CD1                 movss   [ebp+var_40], xmm1
+  .text:101F1CD6                 test    cl, 2
+  .text:101F1CD9                 jz      short loc_101F1CE2
+  .text:101F1CDB                 movss   xmm0, dword ptr [eax+64h]
+  .text:101F1CE0                 jmp     short loc_101F1CE7
+  .text:101F1CE2                 movss   xmm0, dword ptr [eax+70h]
+  .text:101F1CE7                 movss   [ebp+var_3C], xmm0
+  .text:101F1CEC                 test    cl, 4
+  .text:101F1CEF                 jz      short loc_101F1CF8
+  .text:101F1CF1                 movss   xmm2, dword ptr [eax+68h]
+  .text:101F1CF6                 jmp     short loc_101F1CFD
+  .text:101F1CF8                 movss   xmm2, dword ptr [eax+74h]
+  .text:101F1CFD                 movss   xmm6, dword_112230C4
+  .text:101F1D05                 mulss   xmm6, xmm0
+  .text:101F1D09                 movss   xmm0, rotationmatrix
+  .text:101F1D11                 mulss   xmm0, xmm1
+  .text:101F1D15                 movss   xmm1, dword_112230D4
+  .text:101F1D1D                 mulss   xmm1, [ebp+var_3C]
+  .text:101F1D22                 addss   xmm6, xmm0
+  .text:101F1D26                 movss   [ebp+var_44], xmm2
+  .text:101F1D2B                 movss   xmm0, dword_112230C8
+  .text:101F1D33                 mulss   xmm0, xmm2
+  .text:101F1D37                 addss   xmm6, xmm0
+  .text:101F1D3B                 movss   xmm0, dword_112230D0
+  .text:101F1D43                 mulss   xmm0, [ebp+var_40]
+  .text:101F1D48                 addss   xmm6, dword_112230CC
+  .text:101F1D50                 addss   xmm1, xmm0
+  .text:101F1D54                 movss   xmm0, dword_112230D8
+  .text:101F1D5C                 mulss   xmm0, xmm2
+  .text:101F1D60                 movss   xmm2, dword_112230E4
+  .text:101F1D68                 mulss   xmm2, [ebp+var_3C]
+  .text:101F1D6D                 addss   xmm1, xmm0
+  .text:101F1D71                 movss   xmm0, dword_112230E0
+  .text:101F1D79                 mulss   xmm0, [ebp+var_40]
+  .text:101F1D7E                 addss   xmm1, dword_112230DC
+  .text:101F1D86                 addss   xmm2, xmm0
+  .text:101F1D8A                 movss   xmm0, dword_112230E8
+  .text:101F1D92                 mulss   xmm0, [ebp+var_44]
+  .text:101F1D97                 addss   xmm2, xmm0
+  .text:101F1D9B                 movss   xmm0, [ebp+var_34]
+  .text:101F1DA0                 comiss  xmm0, xmm6
+  .text:101F1DA3                 addss   xmm2, dword_112230EC
+  .text:101F1DAB                 jbe     short loc_101F1DBA
+  .text:101F1DAD                 movaps  xmm0, xmm6
+  .text:101F1DB0                 movss   [ebp+var_34], xmm0
+  .text:101F1DB5                 movss   [ebp+mins], xmm0
+  .text:101F1DBA                 comiss  xmm6, [ebp+var_38]
+  .text:101F1DBE                 jbe     short loc_101F1DCD
+  .text:101F1DC0                 movaps  xmm0, xmm6
+  .text:101F1DC3                 movss   [ebp+var_38], xmm0
+  .text:101F1DC8                 movss   [ebp+maxs], xmm0
+  .text:101F1DCD                 comiss  xmm7, xmm1
+  .text:101F1DD0                 jbe     short loc_101F1DDA
+  .text:101F1DD2                 movaps  xmm7, xmm1
+  .text:101F1DD5                 movss   [ebp+var_18], xmm7
+  .text:101F1DDA                 comiss  xmm1, xmm5
+  .text:101F1DDD                 jbe     short loc_101F1DE7
+  .text:101F1DDF                 movaps  xmm5, xmm1
+  .text:101F1DE2                 movss   [ebp+var_C], xmm5
+  .text:101F1DE7                 comiss  xmm3, xmm2
+  .text:101F1DEA                 jbe     short loc_101F1DF4
+  .text:101F1DEC                 movaps  xmm3, xmm2
+  .text:101F1DEF                 movss   [ebp+var_14], xmm3
+  .text:101F1DF4                 comiss  xmm2, xmm4
+  .text:101F1DF7                 jbe     short loc_101F1E01
+  .text:101F1DF9                 movaps  xmm4, xmm2
+  .text:101F1DFC                 movss   [ebp+var_8], xmm4
+  .text:101F1E01                 inc     ecx
+  .text:101F1E02                 cmp     ecx, 8
+  .text:101F1E05                 jl      loc_101F1CC0
+  .text:101F1E0B                 call    Host_IsSinglePlayerGame
+  .text:101F1E10                 test    eax, eax
+  .text:101F1E12                 jnz     short loc_101F1E54
+  .text:101F1E14                 movss   xmm0, r_cullsequencebox_value
+  .text:101F1E1C                 ucomiss xmm0, ds:dword_102B3730
+  .text:101F1E23                 lahf
+  .text:101F1E24                 test    ah, 44h
+  .text:101F1E27                 jnp     short loc_101F1E54
+  .text:101F1E29                 lea     eax, [ebp+maxs]
+  .text:101F1E2C                 ; maxs
+  .text:101F1E2C                 push    eax; maxs
+  .text:101F1E2D                 lea     eax, [ebp+mins]
+  .text:101F1E30                 ; mins
+  .text:101F1E30                 push    eax; mins
+  .text:101F1E31                 call    R_CullBox
+  .text:101F1E36                 add     esp, 8
+  .text:101F1E39                 test    eax, eax
+  .text:101F1E3B                 jnz     loc_101F1ED9
+  .text:101F1E41                 mov     eax, 1
+  .text:101F1E46                 mov     ecx, [ebp+var_4]
+  .text:101F1E49                 ; StackCookie
+  .text:101F1E49                 xor     ecx, ebp; StackCookie
+  .text:101F1E4B                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101F1E50                 mov     esp, ebp
+  .text:101F1E52                 pop     ebp
+  .text:101F1E53                 retn
+  .text:101F1E54                 movss   xmm0, dword ptr vpn+4
+  .text:101F1E5C                 lea     eax, [ebp+plane]
+  .text:101F1E5F                 movss   xmm1, dword ptr r_origin+4
+  .text:101F1E67                 movss   xmm3, dword ptr vpn
+  .text:101F1E6F                 movss   xmm2, dword_10DC5598
+  .text:101F1E77                 mulss   xmm1, xmm0
+  .text:101F1E7B                 ; plane
+  .text:101F1E7B                 push    eax; plane
+  .text:101F1E7C                 movss   [ebp+plane.normal+4], xmm0
+  .text:101F1E81                 movss   xmm0, dword ptr r_origin
+  .text:101F1E89                 mulss   xmm0, xmm3
+  .text:101F1E8D                 mov     [ebp+plane.type], 5
+  .text:101F1E91                 movss   [ebp+plane.normal], xmm3
+  .text:101F1E96                 movss   [ebp+plane.normal+8], xmm2
+  .text:101F1E9B                 addss   xmm1, xmm0
+  .text:101F1E9F                 movss   xmm0, dword_10DC5578
+  .text:101F1EA7                 mulss   xmm0, xmm2
+  .text:101F1EAB                 addss   xmm1, xmm0
+  .text:101F1EAF                 movss   [ebp+plane.dist], xmm1
+  .text:101F1EB4                 call    SignbitsForPlane
+  .text:101F1EB9                 mov     [ebp+plane.signbits], al
+  .text:101F1EBC                 lea     eax, [ebp+plane]
+  .text:101F1EBF                 ; plane
+  .text:101F1EBF                 push    eax; plane
+  .text:101F1EC0                 lea     eax, [ebp+maxs]
+  .text:101F1EC3                 ; maxs
+  .text:101F1EC3                 push    eax; maxs
+  .text:101F1EC4                 lea     eax, [ebp+mins]
+  .text:101F1EC7                 ; mins
+  .text:101F1EC7                 push    eax; mins
+  .text:101F1EC8                 call    BoxOnPlaneSide
+  .text:101F1ECD                 add     esp, 10h
+  .text:101F1ED0                 cmp     eax, 2
+  .text:101F1ED3                 jnz     loc_101F1E41
+  .text:101F1ED9                 mov     ecx, [ebp+var_4]
+  .text:101F1EDC                 xor     eax, eax
+  .text:101F1EDE                 ; StackCookie
+  .text:101F1EDE                 xor     ecx, ebp; StackCookie
+  .text:101F1EE0                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101F1EE5                 mov     esp, ebp
+  .text:101F1EE7                 pop     ebp
+  .text:101F1EE8                 retn
+procedure: |-
+  // Source: engine/r_studio.c R_StudioCheckBBox. R_StudioTransformVector is inlined while expanding eight sequence-box corners. The multiplayer sequence-box path calls R_CullBox(mins,maxs); the other path tests one view plane with BoxOnPlaneSide.
+  int __cdecl R_StudioCheckBBox()
+  {
+    issue106_bbox_header *header; // edx
+    issue106_bbox_entity *entity; // ecx
+    float v2; // xmm1_4
+    float v3; // xmm7_4
+    float v4; // xmm3_4
+    float v5; // xmm0_4
+    float v6; // xmm5_4
+    float v7; // xmm4_4
+    int v8; // eax
+    float v9; // xmm4_4
+    issue106_bbox_seqdesc *pseqdesc; // eax
+    int i; // ecx
+    float v12; // xmm1_4
+    float v13; // xmm0_4
+    float v14; // xmm2_4
+    float v15; // xmm6_4
+    float v16; // xmm0_4
+    float v17; // xmm1_4
+    float v18; // xmm2_4
+    float v20; // [esp+0h] [ebp-44h]
+    float v21; // [esp+4h] [ebp-40h]
+    float v22; // [esp+8h] [ebp-3Ch]
+    float v23; // [esp+Ch] [ebp-38h]
+    float v24; // [esp+10h] [ebp-34h]
+    issue106_bbox_plane plane; // [esp+14h] [ebp-30h] BYREF
+    float mins; // [esp+28h] [ebp-1Ch] BYREF
+    float v27; // [esp+2Ch] [ebp-18h]
+    float v28; // [esp+30h] [ebp-14h]
+    float maxs; // [esp+34h] [ebp-10h] BYREF
+    float v30; // [esp+38h] [ebp-Ch]
+    float v31; // [esp+3Ch] [ebp-8h]
+
+    if ( VectorCompare(vec3_origin, pstudiohdr->bbmin) )
+    {
+      v8 = VectorCompare(vec3_origin, pstudiohdr->min);
+      entity = currententity;
+      header = pstudiohdr;
+      if ( v8 )
+      {
+        v2 = gFakeHullMins[0] + currententity->origin[0];
+        v7 = *(float *)&dword_1031C2D0;
+        mins = v2;
+        v3 = *(float *)&dword_1031C2C0 + currententity->origin[1];
+        v27 = v3;
+        v4 = *(float *)&dword_1031C2C4 + currententity->origin[2];
+        v28 = v4;
+        v5 = gFakeHullMaxs[0] + currententity->origin[0];
+        maxs = v5;
+        v6 = *(float *)&dword_1031C2CC + currententity->origin[1];
+        v30 = v6;
+      }
+      else
+      {
+        v2 = pstudiohdr->min[0] + currententity->origin[0];
+        mins = v2;
+        v3 = pstudiohdr->min[1] + currententity->origin[1];
+        v27 = v3;
+        v4 = pstudiohdr->min[2] + currententity->origin[2];
+        v28 = v4;
+        v5 = pstudiohdr->max[0] + currententity->origin[0];
+        maxs = v5;
+        v6 = pstudiohdr->max[1] + currententity->origin[1];
+        v30 = v6;
+        v7 = pstudiohdr->max[2];
+      }
+    }
+    else
+    {
+      header = pstudiohdr;
+      entity = currententity;
+      v2 = pstudiohdr->bbmin[0] + currententity->origin[0];
+      mins = v2;
+      v3 = pstudiohdr->bbmin[1] + currententity->origin[1];
+      v27 = v3;
+      v4 = pstudiohdr->bbmin[2] + currententity->origin[2];
+      v28 = v4;
+      v5 = pstudiohdr->bbmax[0] + currententity->origin[0];
+      maxs = v5;
+      v6 = pstudiohdr->bbmax[1] + currententity->origin[1];
+      v30 = v6;
+      v7 = pstudiohdr->bbmax[2];
+    }
+    v9 = v7 + entity->origin[2];
+    v24 = v2;
+    v23 = v5;
+    v31 = v9;
+    if ( entity->sequence >= header->numseq )
+    {
+      entity->sequence = 0;
+      v4 = v28;
+      v3 = v27;
+      v9 = v31;
+      v6 = v30;
+      entity = currententity;
+      v24 = mins;
+      v23 = maxs;
+    }
+    pseqdesc = (issue106_bbox_seqdesc *)((char *)header + 176 * entity->sequence + header->seqindex);
+    for ( i = 0; i < 8; ++i )
+    {
+      if ( (i & 1) != 0 )
+        v12 = pseqdesc->bbmin[0];
+      else
+        v12 = pseqdesc->bbmax[0];
+      v21 = v12;
+      if ( (i & 2) != 0 )
+        v13 = pseqdesc->bbmin[1];
+      else
+        v13 = pseqdesc->bbmax[1];
+      v22 = v13;
+      if ( (i & 4) != 0 )
+        v14 = pseqdesc->bbmin[2];
+      else
+        v14 = pseqdesc->bbmax[2];
+      v20 = v14;
+      v15 = (float)((float)((float)(*(float *)&dword_112230C4 * v13) + (float)(rotationmatrix[0][0] * v12))
+                  + (float)(*(float *)&dword_112230C8 * v14))
+          + *(float *)&dword_112230CC;
+      v16 = *(float *)&dword_112230D8 * v14;
+      v17 = (float)((float)((float)(*(float *)&dword_112230D4 * v22) + (float)(*(float *)&dword_112230D0 * v12))
+                  + (float)(*(float *)&dword_112230D8 * v14))
+          + *(float *)&dword_112230DC;
+      v18 = (float)((float)((float)(*(float *)&dword_112230E4 * v22) + (float)(*(float *)&dword_112230E0 * v21))
+                  + (float)(*(float *)&dword_112230E8 * v14))
+          + *(float *)&dword_112230EC;
+      if ( v24 > v15 )
+      {
+        v24 = v15;
+        mins = v15;
+      }
+      if ( v15 > v23 )
+      {
+        v23 = v15;
+        maxs = v15;
+      }
+      if ( v3 > v17 )
+      {
+        v3 = (float)((float)((float)(*(float *)&dword_112230D4 * v22) + (float)(*(float *)&dword_112230D0 * v21)) + v16)
+           + *(float *)&dword_112230DC;
+        v27 = v3;
+      }
+      if ( v17 > v6 )
+      {
+        v6 = (float)((float)((float)(*(float *)&dword_112230D4 * v22) + (float)(*(float *)&dword_112230D0 * v21)) + v16)
+           + *(float *)&dword_112230DC;
+        v30 = v6;
+      }
+      if ( v4 > v18 )
+      {
+        v4 = (float)((float)((float)(*(float *)&dword_112230E4 * v22) + (float)(*(float *)&dword_112230E0 * v21))
+                   + (float)(*(float *)&dword_112230E8 * v20))
+           + *(float *)&dword_112230EC;
+        v28 = v4;
+      }
+      if ( v18 > v9 )
+      {
+        v9 = (float)((float)((float)(*(float *)&dword_112230E4 * v22) + (float)(*(float *)&dword_112230E0 * v21))
+                   + (float)(*(float *)&dword_112230E8 * v20))
+           + *(float *)&dword_112230EC;
+        v31 = v9;
+      }
+    }
+    if ( Host_IsSinglePlayerGame() || r_cullsequencebox_value == 0.0 )
+    {
+      plane.type = 5;
+      *(_QWORD *)plane.normal = *(_QWORD *)vpn;
+      LODWORD(plane.normal[2]) = dword_10DC5598;
+      plane.dist = (float)((float)(r_origin[1] * vpn[1]) + (float)(r_origin[0] * vpn[0]))
+                 + (float)(*(float *)&dword_10DC5578 * *(float *)&dword_10DC5598);
+      plane.signbits = SignbitsForPlane(&plane);
+      if ( BoxOnPlaneSide(&mins, &maxs, &plane) != 2 )
+        return 1;
+    }
+    else if ( !R_CullBox(&mins, &maxs) )
+    {
+      return 1;
+    }
+    return 0;
+  }

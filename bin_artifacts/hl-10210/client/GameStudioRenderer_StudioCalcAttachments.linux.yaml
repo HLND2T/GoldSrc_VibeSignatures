@@ -1,0 +1,10 @@
+func_name: GameStudioRenderer_StudioCalcAttachments
+func_va: '0x61820'
+func_rva: '0x61820'
+func_size: '0x7b'
+vtable_name: GameStudioRenderer
+vfunc_offset: '0x20'
+vfunc_index: 8
+vfunc_sig: 57 56 53 83 EC ?? 8B 7C 24 ?? 8B 47 ?? 8B 90 ?? ?? ?? ?? 83 FA ?? 7F ?? 8B 88 ?? ?? ?? ?? 31 DB 85 D2 8D 74 08
+  ??
+vfunc_sig_allow_across_function_boundary: true

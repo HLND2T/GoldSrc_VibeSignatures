@@ -1,0 +1,52 @@
+func_name: "CL_Set_ServerExtraInfo"
+func_va: "0x103820"
+disasm_code: |-
+  .text:00103820                 sub     esp, 3Ch
+  .text:00103823                 mov     [esp+3Ch+var_C], ebx
+  .text:00103827                 call    sub_56390
+  .text:0010382C                 add     ebx, (offset dbl_2EE000 - $)
+  .text:00103832                 mov     [esp+3Ch+var_8], esi
+  .text:00103836                 lea     esi, [esp+3Ch+nptr]
+  .text:0010383A                 mov     [esp+3Ch+var_4], edi
+  .text:0010383E                 call    MSG_ReadString
+  .text:00103843                 mov     edi, eax
+  .text:00103845                 call    MSG_ReadByte
+  .text:0010384A                 lea     edx, (allow_cheats - 2EE000h)[ebx]
+  .text:00103850                 mov     [edx], eax
+  .text:00103852                 mov     [esp+3Ch+var_30], eax
+  .text:00103856                 lea     eax, (aModNumknownD+10h - 2EE000h)[ebx]; "%d"
+  .text:0010385C                 ; format
+  .text:0010385C                 mov     [esp+3Ch+format], eax; format
+  .text:00103860                 mov     eax, 20h ; ' '
+  .text:00103865                 ; s
+  .text:00103865                 mov     [esp+3Ch+s], esi; s
+  .text:00103868                 ; maxlen
+  .text:00103868                 mov     [esp+3Ch+maxlen], eax; maxlen
+  .text:0010386C                 call    _snprintf
+  .text:00103871                 lea     eax, (sv_cheats - 2EE000h)[ebx]
+  .text:00103877                 ; nptr
+  .text:00103877                 mov     [esp+3Ch+maxlen], esi; nptr
+  .text:0010387B                 ; int
+  .text:0010387B                 mov     [esp+3Ch+s], eax; int
+  .text:0010387E                 call    Cvar_DirectSet
+  .text:00103883                 ; dir
+  .text:00103883                 mov     [esp+3Ch+s], edi; dir
+  .text:00103886                 call    COM_AddDefaultDir
+  .text:0010388B                 mov     ebx, [esp+3Ch+var_C]
+  .text:0010388F                 mov     esi, [esp+3Ch+var_8]
+  .text:00103893                 mov     edi, [esp+3Ch+var_4]
+  .text:00103897                 add     esp, 3Ch
+  .text:0010389A                 retn
+procedure: |-
+  // Source role: engine/cl_parsefn.c CL_Set_ServerExtraInfo. Sven binary checked against source semantics; source revision is not assumed identical.
+  void __cdecl CL_Set_ServerExtraInfo()
+  {
+    char *dir; // edi
+    char val[32]; // [esp+10h] [ebp-2Ch] BYREF
+
+    dir = MSG_ReadString();
+    allow_cheats = MSG_ReadByte();
+    snprintf(val, 0x20u, "%d", allow_cheats);
+    Cvar_DirectSet((int)&sv_cheats, val);
+    COM_AddDefaultDir(dir);
+  }

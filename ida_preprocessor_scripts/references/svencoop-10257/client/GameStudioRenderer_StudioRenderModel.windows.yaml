@@ -1,0 +1,70 @@
+func_name: "GameStudioRenderer_StudioRenderModel"
+func_va: "0x10059a90"
+disasm_code: |-
+  .text:10059A90                 push    esi
+  .text:10059A91                 mov     esi, ecx
+  .text:10059A93                 call    studioapi_SetChromeOrigin
+  .text:10059A99                 ; flags
+  .text:10059A99                 push    0; flags
+  .text:10059A9B                 call    studioapi_SetForceFaceFlags
+  .text:10059AA1                 mov     eax, [esi+40h]
+  .text:10059AA4                 add     esp, 4
+  .text:10059AA7                 mov     ecx, esi
+  .text:10059AA9                 cmp     dword ptr [eax+304h], 13h
+  .text:10059AB0                 jnz     short loc_10059B0C
+  .text:10059AB2                 mov     dword ptr [eax+304h], 0
+  .text:10059ABC                 mov     eax, [esi]
+  .text:10059ABE                 call    dword ptr [eax+54h]; GameStudioRenderer_StudioRenderFinal
+  .text:10059AC1                 mov     eax, client_pTriAPI
+  .text:10059AC6                 push    5
+  .text:10059AC8                 mov     eax, [eax+4]
+  .text:10059ACB                 call    eax
+  .text:10059ACD                 ; flags
+  .text:10059ACD                 push    2; flags
+  .text:10059ACF                 call    studioapi_SetForceFaceFlags
+  .text:10059AD5                 mov     eax, client_pTriAPI
+  .text:10059ADA                 push    0
+  .text:10059ADC                 push    dword ptr [esi+6Ch]
+  .text:10059ADF                 mov     eax, [eax+2Ch]
+  .text:10059AE2                 call    eax
+  .text:10059AE4                 mov     eax, [esi+40h]
+  .text:10059AE7                 add     esp, 10h
+  .text:10059AEA                 mov     ecx, esi
+  .text:10059AEC                 mov     dword ptr [eax+304h], 13h
+  .text:10059AF6                 mov     eax, [esi]
+  .text:10059AF8                 call    dword ptr [eax+54h]; GameStudioRenderer_StudioRenderFinal
+  .text:10059AFB                 mov     eax, client_pTriAPI
+  .text:10059B00                 push    0
+  .text:10059B02                 mov     eax, [eax+4]
+  .text:10059B05                 call    eax
+  .text:10059B07                 add     esp, 4
+  .text:10059B0A                 pop     esi
+  .text:10059B0B                 retn
+  .text:10059B0C                 mov     eax, [esi]
+  .text:10059B0E                 pop     esi
+  .text:10059B0F                 jmp     dword ptr [eax+54h]
+procedure: |-
+  // Source role: CStudioModelRenderer::StudioRenderModel. Sven has no IsHardware guard around glow-shell triangle RenderMode; preserve that difference. GameStudioRenderer_StudioRenderFinal is the virtual call at byte offset 0x54 in this current ABI.
+  void __thiscall CStudioModelRenderer_StudioRenderModel(issue106_sc_renderer *self)
+  {
+    issue106_sc_entity *m_pCurrentEntity; // eax
+
+    studioapi_SetChromeOrigin();
+    studioapi_SetForceFaceFlags(0);
+    m_pCurrentEntity = self->m_pCurrentEntity;
+    if ( m_pCurrentEntity->renderfx == 19 )
+    {
+      m_pCurrentEntity->renderfx = 0;
+      self->vtable->StudioRenderFinal(self);
+      client_pTriAPI->RenderMode(5);
+      studioapi_SetForceFaceFlags(2);
+      client_pTriAPI->SpriteTexture(self->m_pChromeSprite, 0);
+      self->m_pCurrentEntity->renderfx = 19;
+      self->vtable->StudioRenderFinal(self);
+      client_pTriAPI->RenderMode(0);
+    }
+    else
+    {
+      self->vtable->StudioRenderFinal(self);
+    }
+  }

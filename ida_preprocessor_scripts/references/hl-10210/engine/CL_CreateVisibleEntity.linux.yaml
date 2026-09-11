@@ -1,0 +1,66 @@
+func_name: "CL_CreateVisibleEntity"
+func_va: "0x156e40"
+disasm_code: |-
+  .text:00156E40                 sub     esp, 1Ch
+  .text:00156E43                 lea     eax, [esp+1Ch+ent]
+  .text:00156E47                 mov     [esp+1Ch+var_18], eax
+  .text:00156E4B                 lea     eax, [esp+1Ch+type]
+  .text:00156E4F                 mov     [esp+1Ch+var_1C], eax
+  .text:00156E52                 call    g_engdstAddrs.CL_CreateVisibleEntity
+  .text:00156E58                 cmp     [esp+1Ch+type], 3
+  .text:00156E5D                 jnz     short loc_156E90
+  .text:00156E5F                 mov     edx, ds:cl_numbeamentities
+  .text:00156E65                 xor     eax, eax
+  .text:00156E67                 cmp     edx, 3Fh ; '?'
+  .text:00156E6A                 jg      short loc_156E84
+  .text:00156E6C                 lea     eax, [edx+1]
+  .text:00156E6F                 mov     ds:cl_numbeamentities, eax
+  .text:00156E74                 mov     eax, [esp+1Ch+ent]
+  .text:00156E78                 mov     ds:cl_beamentities[edx*4], eax
+  .text:00156E7F                 mov     eax, 1
+  .text:00156E84                 add     esp, 1Ch
+  .text:00156E87                 retn
+  .text:00156E90                 mov     edx, ds:cl_numvisedicts
+  .text:00156E96                 xor     eax, eax
+  .text:00156E98                 cmp     edx, 1FFh
+  .text:00156E9E                 jg      short loc_156E84
+  .text:00156EA0                 lea     eax, [edx+1]
+  .text:00156EA3                 mov     ds:cl_numvisedicts, eax
+  .text:00156EA8                 mov     eax, [esp+1Ch+ent]
+  .text:00156EAC                 mov     ds:cl_visedicts[edx*4], eax
+  .text:00156EB3                 mov     eax, 1
+  .text:00156EB8                 add     esp, 1Ch
+  .text:00156EBB                 retn
+procedure: |-
+  // Source: engine/cdll_int.c CL_CreateVisibleEntity. type 3 is ET_BEAM; only the other branch owns cl_numvisedicts/cl_visedicts. The current build additionally invokes the engine API interception hook.
+  int __cdecl CL_CreateVisibleEntity(int type, cl_entity_s_1 *ent)
+  {
+    int v2; // edx
+    int result; // eax
+    int v4; // edx
+
+    g_engdstAddrs.CL_CreateVisibleEntity(&type, (cl_entity_s **)&ent);
+    if ( type == 3 )
+    {
+      v2 = cl_numbeamentities;
+      result = 0;
+      if ( cl_numbeamentities <= 63 )
+      {
+        ++cl_numbeamentities;
+        cl_beamentities[v2] = (cl_entity_t *)ent;
+        return 1;
+      }
+    }
+    else
+    {
+      v4 = cl_numvisedicts;
+      result = 0;
+      if ( cl_numvisedicts <= 511 )
+      {
+        ++cl_numvisedicts;
+        cl_visedicts[v4] = (cl_entity_t *)ent;
+        return 1;
+      }
+    }
+    return result;
+  }

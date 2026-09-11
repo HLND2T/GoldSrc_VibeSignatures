@@ -1,0 +1,8 @@
+func_name: GameStudioRenderer_StudioRenderFinal
+func_va: '0x1008edd0'
+func_rva: '0x8edd0'
+func_size: '0x18'
+vtable_name: GameStudioRenderer
+vfunc_offset: '0x4c'
+vfunc_index: 19
+vfunc_sig: 56 8B F1 FF 15 ?? ?? ?? ?? 8B 16 8B CE 5E 85 C0 74 ?? FF 62 ?? FF 62 ??

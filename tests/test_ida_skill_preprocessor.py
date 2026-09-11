@@ -152,6 +152,7 @@ class PreprocessStatusTests(unittest.TestCase):
             "FUNCTION_RECOVERY_BACKTRACK_LIMIT": 0x200,
             "ida_funcs": SimpleNamespace(get_func=lambda ea: suffix if ea == anchor_ea else None),
             "_direct_call_entry_candidates": lambda _anchor, _lower: {entry_ea},
+            "_has_data_entry_reference": lambda _entry: False,
             "_recover_function_entry": recover,
             "_function_payload": lambda func, was_recovered, reason: {
                 "function_start": int(func.start_ea),
@@ -170,6 +171,46 @@ class PreprocessStatusTests(unittest.TestCase):
         self.assertEqual(entry_ea, result["function_start"])
         self.assertTrue(result["recovered"])
         self.assertEqual([(entry_ea, anchor_ea, None, None)], calls)
+
+    def test_function_owner_preserves_data_referenced_virtual_entry(self):
+        tree = ast.parse(ida_analyze_util._FUNCTION_OWNER_RECOVERY_PY_EVAL)
+        function_node = next(
+            node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "_ensure_function_owner"
+        )
+        entry = 0x401100
+        existing = SimpleNamespace(start_ea=entry, end_ea=0x401190)
+        namespace = {
+            "FUNCTION_RECOVERY_BACKTRACK_LIMIT": 0x200,
+            "ida_funcs": SimpleNamespace(get_func=lambda _ea: existing),
+            "_has_data_entry_reference": lambda value: value == entry,
+            "_direct_call_entry_candidates": lambda *_args: {0x401000, 0x401080},
+            "_recover_function_entry": lambda *_args: self.fail("a vtable entry must not be merged with nearby code"),
+            "_function_payload": lambda func, recovered, reason: (func.start_ea, recovered),
+        }
+        exec(
+            compile(ast.Module(body=[function_node], type_ignores=[]), "<virtual-entry-recovery>", "exec"),
+            namespace,
+        )
+        self.assertEqual((entry, False), namespace["_ensure_function_owner"](entry))
+
+    def test_exact_function_exclusion_preserves_verified_dependency_entries(self):
+        tree = ast.parse(ida_analyze_util._build_func_xref_py_eval({}, 0))
+        node = next(
+            node
+            for node in tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == "_exact_function_candidates"
+        )
+        entry = 0x401100
+        namespace = {
+            "_named_ea": lambda value: value,
+            "_is_executable_address": lambda ea: ea in (entry, entry + 4),
+            "ida_funcs": SimpleNamespace(
+                get_func=lambda ea: SimpleNamespace(start_ea=entry) if ea in (entry, entry + 4) else None
+            ),
+            "_function_start": lambda _ea: self.fail("a verified exclusion must not infer a neighboring owner"),
+        }
+        exec(compile(ast.Module(body=[node], type_ignores=[]), "<exact-function-exclusion>", "exec"), namespace)
+        self.assertEqual({entry}, namespace["_exact_function_candidates"]([entry, entry + 4, None, 0x501000]))
 
     def test_function_owner_recovery_fails_closed_on_ambiguous_entries(self):
         tree = ast.parse(ida_analyze_util._FUNCTION_OWNER_RECOVERY_PY_EVAL)
@@ -565,6 +606,82 @@ class PreprocessorDispatchTests(unittest.IsolatedAsyncioTestCase):
 
 
 class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
+    async def test_engine_callback_rejects_forwarding_cycles(self):
+        from ida_preprocessor_scripts import _engine_public_callback_common as callback
+
+        instructions = {
+            0x401000: SimpleNamespace(ops=[SimpleNamespace(type=1, addr=0x402000)]),
+            0x402000: SimpleNamespace(ops=[SimpleNamespace(type=1, addr=0x401000)]),
+        }
+        modules = {
+            "ida_bytes": SimpleNamespace(get_dword=lambda _ea: 0x401000),
+            "ida_funcs": SimpleNamespace(get_func=lambda ea: SimpleNamespace(start_ea=ea)),
+            "ida_segment": SimpleNamespace(getseg=lambda _ea: SimpleNamespace(perm=4), SEGPERM_EXEC=4),
+            "ida_ua": SimpleNamespace(o_near=1),
+            "idaapi": SimpleNamespace(inf_is_64bit=lambda: False),
+            "idautils": SimpleNamespace(FuncItems=lambda ea: [ea], DecodeInstruction=instructions.get),
+            "idc": SimpleNamespace(print_insn_mnem=lambda _ea: "jmp"),
+        }
+
+        async def evaluate(_tool, args):
+            namespace = {}
+            with patch.dict("sys.modules", modules):
+                exec(args["code"], namespace)
+            return json.loads(namespace["result"])
+
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            (directory / "cl_enginefuncs.windows.yaml").write_text("gv_va: '0x500000'\n")
+            inspected = AsyncMock(return_value=None)
+            with patch.object(callback, "_inspect_function_via_mcp", inspected):
+                result = await callback.preprocess_engine_callback(
+                    SimpleNamespace(call_tool=evaluate),
+                    [str(directory / "Target.windows.yaml")],
+                    directory,
+                    "windows",
+                    0x400000,
+                    name="Target",
+                    slot=0,
+                )
+            self.assertFalse(result)
+            inspected.assert_not_awaited()
+
+    def test_global_targets_use_decoded_absolute_operand_over_offset_base_xref(self):
+        detail = {
+            "data_refs": ["0x2000"],
+            "operand_targets": ["0x3800"],
+            "operand_dwords": [None, "0x3800"],
+            "operand_pic": [False, False],
+        }
+        self.assertEqual(["0x3800"], ida_analyze_util._llm_global_targets(detail))
+
+    def test_global_targets_keep_two_encoded_operands_ambiguous(self):
+        detail = {
+            "data_refs": ["0x2000", "0x3800"],
+            "operand_targets": ["0x2000", "0x3800"],
+            "operand_dwords": ["0x2000", "0x3800"],
+            "operand_pic": [False, False],
+        }
+        self.assertEqual(["0x2000", "0x3800"], ida_analyze_util._llm_global_targets(detail))
+
+    def test_global_targets_preserve_pic_relocation_xrefs(self):
+        detail = {
+            "data_refs": ["0x3800"],
+            "operand_targets": [],
+            "operand_dwords": [None, "0xffffe010"],
+            "operand_pic": [False, True],
+        }
+        self.assertEqual(["0x3800"], ida_analyze_util._llm_global_targets(detail))
+
+    def test_global_targets_keep_mixed_pic_and_absolute_operands_ambiguous(self):
+        detail = {
+            "data_refs": ["0x3800", "0x4800"],
+            "operand_targets": ["0x4800"],
+            "operand_dwords": ["0xffffe010", "0x4800"],
+            "operand_pic": [True, False],
+        }
+        self.assertEqual(["0x3800", "0x4800"], ida_analyze_util._llm_global_targets(detail))
+
     async def test_xref_string_function_uses_cs2_api_and_writes_canonical_yaml(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "R_RenderView.windows.yaml"
@@ -1737,6 +1854,59 @@ found_struct_offset: []
                         actual = load_base + embedded + int(fields.get("gv_address_offset", "0"), 0)
                     self.assertEqual(load_base + target_rva, actual & 0xFFFFFFFF)
 
+    def test_unindexed_address_load_decoder_preserves_the_memory_address(self):
+        namespace = {}
+        exec(ida_analyze_util._ADDRESS_FLOW_RESOLVER, namespace)
+        decode = namespace["decode_address_load"]
+        self.assertEqual((6, 0x242324), decode(bytes.fromhex("8B 96 24 23 24 00")))
+        self.assertEqual((1, 0x242324), decode(bytes.fromhex("8B 89 24 23 24 00")))
+        self.assertEqual((6, 0xFFFFFFFC), decode(bytes.fromhex("8D 86 FC FF FF FF")))
+        for unsupported in (
+            "89 86 24 23 24 00",
+            "8B 04 B5 24 23 24 00",
+            "66 8B 86 24 23 24 00",
+            "8B 46 04",
+            "8B 05 24 23 24 00",
+        ):
+            self.assertIsNone(decode(bytes.fromhex(unsupported)))
+
+    def test_address_flow_requires_agreement_on_every_incoming_path(self):
+        namespace = {}
+        exec(ida_analyze_util._ADDRESS_FLOW_RESOLVER, namespace)
+        resolve = namespace["resolve_address_flow"]
+        graph = {
+            0: {"preds": [], "writes": [{6: ("constant", 0x2000)}]},
+            1: {"preds": [0], "writes": [{0: None, 1: None, 2: None}]},
+            2: {"preds": [0], "writes": []},
+            3: {"preds": [1, 2], "writes": []},
+        }
+        self.assertEqual(0x2000, resolve(graph, 3, 0, 6))
+        graph[2]["writes"] = [{6: ("constant", 0x3000)}]
+        self.assertIsNone(resolve(graph, 3, 0, 6))
+        graph[2]["writes"] = [{6: None}]
+        self.assertIsNone(resolve(graph, 3, 0, 6))
+        graph[2]["writes"] = []
+        graph[3]["writes"] = [{7: ("register", 6)}]
+        self.assertEqual(0x2000, resolve(graph, 3, 1, 7))
+        graph[4] = {"preds": [], "writes": []}
+        graph[3]["preds"].append(4)
+        reachable = namespace["reachable_address_graph"](graph, 0)
+        self.assertEqual(0x2000, resolve(reachable, 3, 1, 7))
+        graph[3]["preds"].remove(4)
+        graph[0]["preds"] = [3]
+        graph[0]["writes"] = []
+        self.assertIsNone(resolve(graph, 3, 1, 7))
+
+    def test_address_flow_high_byte_write_invalidates_its_parent_register(self):
+        namespace = {}
+        exec(ida_analyze_util._ADDRESS_FLOW_RESOLVER, namespace)
+        register = namespace["address_write_register"]
+        self.assertEqual(0, register(4, True))  # AH writes EAX, not ESP.
+        self.assertEqual(3, register(7, True))  # BH writes EBX, not EDI.
+        self.assertEqual(4, register(4, False))
+        graph = {0: {"preds": [], "writes": [{0: ("constant", 0x2000)}, {register(4, True): None}]}}
+        self.assertIsNone(namespace["resolve_address_flow"](graph, 0, 2, 0))
+
     def test_instruction_inspection_distinguishes_relocated_indexed_operands(self):
         class Fixup:
             pass
@@ -1753,7 +1923,7 @@ found_struct_offset: []
                 "ida_fixup": SimpleNamespace(fixup_data_t=Fixup, get_fixup=get_fixup),
                 "ida_funcs": SimpleNamespace(get_func=lambda ea: SimpleNamespace(start_ea=0x1000, end_ea=0x1010)),
                 "ida_lines": SimpleNamespace(tag_remove=lambda text: text),
-                "ida_segment": SimpleNamespace(getseg=lambda ea: None),
+                "ida_segment": SimpleNamespace(getseg=lambda ea: object() if ea in (0x2004, 0x3004) else None),
                 "idaapi": SimpleNamespace(inf_is_64bit=lambda: False, BADADDR=0xFFFFFFFF),
                 "ida_ua": SimpleNamespace(
                     o_void=0,
@@ -1768,7 +1938,12 @@ found_struct_offset: []
                     ),
                     decode_insn=lambda insn, ea: 6,
                 ),
-                "idautils": SimpleNamespace(DataRefsFrom=lambda ea: [0x2004], CodeRefsFrom=lambda ea, flow: []),
+                # IDA can return UDT/member IDs as data xrefs. They are not
+                # runtime addresses; two genuine mapped refs must still survive.
+                "idautils": SimpleNamespace(
+                    DataRefsFrom=lambda ea: [0x2004, 0xFF0000000000346B, 0xDEAD0000, 0x3004],
+                    CodeRefsFrom=lambda ea, flow: [],
+                ),
                 "idc": SimpleNamespace(
                     generate_disasm_line=lambda ea, flags: "mov eax, [ebx+2004h]", print_insn_mnem=lambda ea: "mov"
                 ),
@@ -1777,6 +1952,7 @@ found_struct_offset: []
             with patch.dict("sys.modules", modules):
                 exec(ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", "4096"), namespace)
             self.assertEqual([not relocated], json.loads(namespace["result"])["operand_pic"])
+            self.assertEqual(["0x2004", "0x3004"], json.loads(namespace["result"])["data_refs"])
 
     async def test_gv_emission_preserves_resolution_metadata_without_desired_fields(self):
         for metadata in ({"gv_pic_addend": "0x2ee000"}, {"gv_address_offset": "0xfffffffc"}):
@@ -2072,6 +2248,56 @@ found_struct_offset: []
 
             self.assertEqual("0x0", candidate["vfunc_offset"])
             self.assertEqual(0, candidate["vfunc_index"])
+
+    async def test_llm_vcall_retries_requested_signature_budget(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "TargetClass_vtable.windows.yaml").write_text("vtable_entries:\n  0: '0x402000'\n")
+            inspected = AsyncMock(
+                side_effect=[
+                    None,
+                    {
+                        "func_name": "VirtualTarget",
+                        "func_va": "0x402000",
+                        "func_rva": "0x2000",
+                        "func_size": "0x200",
+                        "func_sig": "55 8B EC",
+                    },
+                ]
+            )
+            with (
+                patch(
+                    "ida_analyze_util._inspect_llm_instruction",
+                    new=AsyncMock(
+                        return_value={
+                            "func_start": "0x401000",
+                            "line": "call dword ptr [eax]",
+                            "displacements": ["0x0"],
+                        }
+                    ),
+                ),
+                patch("ida_analyze_util._inspect_function_via_mcp", new=inspected),
+            ):
+                candidate = await _preprocess_llm_target(
+                    session=None,
+                    symbol_name="VirtualTarget",
+                    category="vfunc",
+                    spec={"expected_result_sections": ["found_vcall"]},
+                    llm_config={},
+                    new_binary_dir=root,
+                    platform="windows",
+                    image_base=0x400000,
+                    desired_fields=["vfunc_sig", "vfunc_sig_allow_across_function_boundary"],
+                    vtable_name="TargetClass",
+                    target_ranges=[(0x401000, 0x401100)],
+                    llm_result={
+                        "found_vcall": [{"func_name": "VirtualTarget", "insn_va": "0x401010", "vfunc_offset": "0x0"}]
+                    },
+                )
+            self.assertIsNotNone(candidate)
+            self.assertTrue(candidate["vfunc_sig_allow_across_function_boundary"])
+            self.assertEqual(2, inspected.await_count)
+            self.assertEqual({"allow_across_function_boundary": True}, inspected.await_args.kwargs)
 
     async def test_incomplete_vfunc_fast_path_still_enters_llm_batch(self):
         with tempfile.TemporaryDirectory() as temporary:

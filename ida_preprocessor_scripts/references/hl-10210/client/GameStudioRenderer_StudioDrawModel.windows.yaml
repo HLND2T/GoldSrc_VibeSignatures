@@ -1,0 +1,308 @@
+func_name: "GameStudioRenderer_StudioDrawModel"
+func_va: "0x10031ab0"
+disasm_code: |-
+  .text:10031AB0                 push    ebp
+  .text:10031AB1                 mov     ebp, esp
+  .text:10031AB3                 sub     esp, 17Ch
+  .text:10031AB9                 mov     eax, ___security_cookie
+  .text:10031ABE                 xor     eax, ebp
+  .text:10031AC0                 mov     [ebp+var_4], eax
+  .text:10031AC3                 push    ebx
+  .text:10031AC4                 push    esi
+  .text:10031AC5                 mov     ebx, ecx
+  .text:10031AC7                 call    IEngineStudio_GetCurrentEntity
+  .text:10031ACD                 mov     [ebx+30h], eax
+  .text:10031AD0                 lea     eax, [ebx+10h]
+  .text:10031AD3                 push    eax
+  .text:10031AD4                 lea     eax, [ebx+8]
+  .text:10031AD7                 push    eax
+  .text:10031AD8                 lea     eax, [ebx+20h]
+  .text:10031ADB                 push    eax
+  .text:10031ADC                 call    IEngineStudio_GetTimes
+  .text:10031AE2                 lea     eax, [ebx+4080h]
+  .text:10031AE8                 push    eax
+  .text:10031AE9                 lea     eax, [ebx+4074h]
+  .text:10031AEF                 push    eax
+  .text:10031AF0                 lea     eax, [ebx+4068h]
+  .text:10031AF6                 push    eax
+  .text:10031AF7                 lea     eax, [ebx+408Ch]
+  .text:10031AFD                 push    eax
+  .text:10031AFE                 call    IEngineStudio_GetViewInfo
+  .text:10031B04                 lea     eax, [ebx+4064h]
+  .text:10031B0A                 push    eax
+  .text:10031B0B                 lea     eax, [ebx+4060h]
+  .text:10031B11                 push    eax
+  .text:10031B12                 call    IEngineStudio_GetAliasScale
+  .text:10031B18                 mov     eax, [ebx+30h]
+  .text:10031B1B                 add     esp, 24h
+  .text:10031B1E                 cmp     dword ptr [eax+304h], 11h
+  .text:10031B25                 jnz     loc_10031C27
+  .text:10031B2B                 cmp     dword ptr [eax+2FCh], 0
+  .text:10031B32                 jle     loc_10031C68
+  .text:10031B38                 mov     esi, [eax+2FCh]
+  .text:10031B3E                 call    dword_100992A8
+  .text:10031B44                 cmp     esi, eax
+  .text:10031B46                 jg      loc_10031C68
+  .text:10031B4C                 lea     eax, [esi-1]
+  .text:10031B4F                 push    edi
+  .text:10031B50                 push    eax
+  .text:10031B51                 call    IEngineStudio_GetPlayerState
+  .text:10031B57                 mov     esi, eax
+  .text:10031B59                 lea     edi, [ebp+var_158]
+  .text:10031B5F                 mov     ecx, 55h ; 'U'
+  .text:10031B64                 add     esp, 4
+  .text:10031B67                 rep movsd
+  .text:10031B69                 mov     ecx, [ebx+30h]
+  .text:10031B6C                 mov     esi, [ebx+18h]
+  .text:10031B6F                 mov     eax, [ecx+2FCh]
+  .text:10031B75                 mov     [ebp+var_154], eax
+  .text:10031B7B                 mov     eax, [ebx]
+  .text:10031B7D                 mov     [ebp+var_A4], 0
+  .text:10031B87                 mov     [ebp+var_A0], 0
+  .text:10031B91                 mov     [ebp+var_100], 0
+  .text:10031B9B                 movss   xmm0, dword ptr [ecx+2CCh]
+  .text:10031BA3                 movss   [ebp+var_13C], xmm0
+  .text:10031BAB                 movss   xmm0, dword ptr [ecx+2D0h]
+  .text:10031BB3                 movss   [ebp+var_138], xmm0
+  .text:10031BBB                 movss   xmm0, dword ptr [ecx+2D4h]
+  .text:10031BC3                 movss   [ebp+var_134], xmm0
+  .text:10031BCB                 movss   xmm0, dword ptr [ecx+2C0h]
+  .text:10031BD3                 movss   [ebp+var_148], xmm0
+  .text:10031BDB                 movss   xmm0, dword ptr [ecx+2C4h]
+  .text:10031BE3                 movss   [ebp+var_144], xmm0
+  .text:10031BEB                 movss   xmm0, dword ptr [ecx+2C8h]
+  .text:10031BF3                 lea     ecx, [ebp+var_158]
+  .text:10031BF9                 push    ecx
+  .text:10031BFA                 push    [ebp+flags]
+  .text:10031BFD                 mov     ecx, ebx
+  .text:10031BFF                 movss   [ebp+var_140], xmm0
+  .text:10031C07                 mov     dword ptr [ebx+18h], 0
+  .text:10031C0E                 call    dword ptr [eax+0Ch] ; GameStudioRenderer_StudioDrawPlayer, vtable offset 0x0c, dead-player model branch
+  .text:10031C11                 pop     edi
+  .text:10031C12                 mov     [ebx+18h], esi
+  .text:10031C15                 pop     esi
+  .text:10031C16                 pop     ebx
+  .text:10031C17                 mov     ecx, [ebp+var_4]
+  .text:10031C1A                 ; StackCookie
+  .text:10031C1A                 xor     ecx, ebp; StackCookie
+  .text:10031C1C                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10031C21                 mov     esp, ebp
+  .text:10031C23                 pop     ebp
+  .text:10031C24                 retn    4
+  .text:10031C27                 mov     eax, [eax+0B94h]
+  .text:10031C2D                 push    eax
+  .text:10031C2E                 mov     [ebx+34h], eax
+  .text:10031C31                 call    IEngineStudio_Mod_Extradata
+  .text:10031C37                 push    eax
+  .text:10031C38                 mov     [ebx+44h], eax
+  .text:10031C3B                 call    IEngineStudio_StudioSetHeader
+  .text:10031C41                 push    dword ptr [ebx+34h]
+  .text:10031C44                 call    IEngineStudio_SetRenderModel
+  .text:10031C4A                 mov     eax, [ebx]
+  .text:10031C4C                 add     esp, 0Ch
+  .text:10031C4F                 mov     ecx, ebx
+  .text:10031C51                 push    0
+  .text:10031C53                 call    dword ptr [eax+14h]
+  .text:10031C56                 mov     esi, [ebp+flags]
+  .text:10031C59                 and     esi, 1
+  .text:10031C5C                 jz      short loc_10031C9C
+  .text:10031C5E                 call    IEngineStudio_StudioCheckBBox
+  .text:10031C64                 test    eax, eax
+  .text:10031C66                 jnz     short loc_10031C7C
+  .text:10031C68                 pop     esi
+  .text:10031C69                 xor     eax, eax
+  .text:10031C6B                 pop     ebx
+  .text:10031C6C                 mov     ecx, [ebp+var_4]
+  .text:10031C6F                 ; StackCookie
+  .text:10031C6F                 xor     ecx, ebp; StackCookie
+  .text:10031C71                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10031C76                 mov     esp, ebp
+  .text:10031C78                 pop     ebp
+  .text:10031C79                 retn    4
+  .text:10031C7C                 mov     eax, [ebx+409Ch]
+  .text:10031C82                 inc     dword ptr [eax]
+  .text:10031C84                 mov     eax, [ebx+4098h]
+  .text:10031C8A                 inc     dword ptr [eax]
+  .text:10031C8C                 mov     eax, [ebx+44h]
+  .text:10031C8F                 cmp     dword ptr [eax+0CCh], 0
+  .text:10031C96                 jz      loc_10031D7E
+  .text:10031C9C                 mov     eax, [ebx+30h]
+  .text:10031C9F                 mov     ecx, ebx
+  .text:10031CA1                 mov     edx, [ebx]
+  .text:10031CA3                 cmp     dword ptr [eax+308h], 0Ch
+  .text:10031CAA                 jnz     short loc_10031CB4
+  .text:10031CAC                 push    dword ptr [ebx+34h]
+  .text:10031CAF                 call    dword ptr [edx+24h] ; GameStudioRenderer_StudioMergeBones, vtable offset 0x24
+  .text:10031CB2                 jmp     short loc_10031CB7
+  .text:10031CB4                 call    dword ptr [edx+18h] ; GameStudioRenderer_StudioSetupBones, vtable offset 0x18
+  .text:10031CB7                 mov     eax, [ebx]
+  .text:10031CB9                 mov     ecx, ebx
+  .text:10031CBB                 call    dword ptr [eax+20h] ; GameStudioRenderer_StudioSaveBones, vtable offset 0x20
+  .text:10031CBE                 test    byte ptr [ebp+flags], 2
+  .text:10031CC2                 jz      short loc_10031D11
+  .text:10031CC4                 mov     eax, [ebx]
+  .text:10031CC6                 mov     ecx, ebx
+  .text:10031CC8                 call    dword ptr [eax+1Ch] ; GameStudioRenderer_StudioCalcAttachments, vtable offset 0x1c
+  .text:10031CCB                 call    IEngineStudio_StudioClientEvents
+  .text:10031CD1                 mov     eax, [ebx+30h]
+  .text:10031CD4                 mov     eax, [eax]
+  .text:10031CD6                 test    eax, eax
+  .text:10031CD8                 jle     short loc_10031D11
+  .text:10031CDA                 push    eax
+  .text:10031CDB                 call    dword_100992EC
+  .text:10031CE1                 mov     ecx, [ebx+30h]
+  .text:10031CE4                 add     esp, 4
+  .text:10031CE7                 movups  xmm0, xmmword ptr [ecx+0B60h]
+  .text:10031CEE                 movups  xmmword ptr [eax+0B60h], xmm0
+  .text:10031CF5                 movups  xmm0, xmmword ptr [ecx+0B70h]
+  .text:10031CFC                 movups  xmmword ptr [eax+0B70h], xmm0
+  .text:10031D03                 movups  xmm0, xmmword ptr [ecx+0B80h]
+  .text:10031D0A                 movups  xmmword ptr [eax+0B80h], xmm0
+  .text:10031D11                 test    esi, esi
+  .text:10031D13                 jz      short loc_10031D7E
+  .text:10031D15                 lea     eax, [ebp+var_17C]
+  .text:10031D1B                 mov     [ebp+var_15C], eax
+  .text:10031D21                 lea     eax, [ebp+var_170]
+  .text:10031D27                 push    eax
+  .text:10031D28                 push    dword ptr [ebx+30h]
+  .text:10031D2B                 call    IEngineStudio_StudioDynamicLight
+  .text:10031D31                 lea     eax, [ebp+var_170]
+  .text:10031D37                 push    eax
+  .text:10031D38                 call    IEngineStudio_StudioEntityLight
+  .text:10031D3E                 lea     eax, [ebp+var_170]
+  .text:10031D44                 push    eax
+  .text:10031D45                 call    IEngineStudio_StudioSetupLighting
+  .text:10031D4B                 mov     eax, [ebx+30h]
+  .text:10031D4E                 mov     ecx, [eax+2E4h]
+  .text:10031D54                 and     ecx, 0FFh
+  .text:10031D5A                 mov     [ebx+50h], ecx
+  .text:10031D5D                 mov     eax, [eax+2E4h]
+  .text:10031D63                 sar     eax, 8
+  .text:10031D66                 movzx   eax, al
+  .text:10031D69                 push    eax
+  .text:10031D6A                 push    ecx
+  .text:10031D6B                 mov     [ebx+54h], eax
+  .text:10031D6E                 call    IEngineStudio_StudioSetRemapColors
+  .text:10031D74                 mov     eax, [ebx]
+  .text:10031D76                 add     esp, 18h
+  .text:10031D79                 mov     ecx, ebx
+  .text:10031D7B                 call    dword ptr [eax+48h] ; GameStudioRenderer_StudioRenderModel, vtable offset 0x48
+  .text:10031D7E                 mov     ecx, [ebp+var_4]
+  .text:10031D81                 mov     eax, 1
+  .text:10031D86                 pop     esi
+  .text:10031D87                 ; StackCookie
+  .text:10031D87                 xor     ecx, ebp; StackCookie
+  .text:10031D89                 pop     ebx
+  .text:10031D8A                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10031D8F                 mov     esp, ebp
+  .text:10031D91                 pop     ebp
+  .text:10031D92                 retn    4
+procedure: |-
+  // Verified PE32 offsets: entity 48, header 68, cached names 96, matrices 4192/10336; double alignment differs from ELF32. Available source has CS-specific branches absent here. Preserve Half-Life control flow. Public engine studio API slot roles follow version 1.
+  int __thiscall CStudioModelRenderer_StudioDrawModel(issue106_renderer_windows_t *self, int flags)
+  {
+    _DWORD *m_pCurrentEntity; // eax
+    int v4; // esi
+    _DWORD *v5; // ecx
+    int m_fDoInterp; // esi
+    void **vtable; // eax
+    int result; // eax
+    void *v9; // eax
+    void **v10; // edx
+    _OWORD *v11; // eax
+    _OWORD *v12; // ecx
+    _DWORD *v13; // eax
+    int v14; // ecx
+    int v15; // [esp-14h] [ebp-198h]
+    void *v16; // [esp-4h] [ebp-188h]
+    char v17; // [esp+8h] [ebp-17Ch] BYREF
+    _BYTE v18[20]; // [esp+14h] [ebp-170h] BYREF
+    char *v19; // [esp+28h] [ebp-15Ch]
+    _DWORD v20[85]; // [esp+2Ch] [ebp-158h] BYREF
+
+    self->m_pCurrentEntity = (void *)IEngineStudio_GetCurrentEntity();
+    IEngineStudio_GetTimes(&self->m_nFrameCount, &self->m_clTime, &self->m_clOldTime);
+    IEngineStudio_GetViewInfo(self->m_vRenderOrigin, self->m_vUp, self->m_vRight, self->m_vNormal);
+    IEngineStudio_GetAliasScale(&self->m_fSoftwareXScale, &self->m_fSoftwareYScale);
+    m_pCurrentEntity = self->m_pCurrentEntity;
+    if ( m_pCurrentEntity[193] == 17 )
+    {
+      if ( (int)m_pCurrentEntity[191] > 0 )
+      {
+        v4 = m_pCurrentEntity[191];
+        if ( v4 <= dword_100992A8() )
+        {
+          qmemcpy(v20, (const void *)IEngineStudio_GetPlayerState(v4 - 1), sizeof(v20));
+          v5 = self->m_pCurrentEntity;
+          m_fDoInterp = self->m_fDoInterp;
+          v20[1] = v5[191];
+          vtable = self->vtable;
+          v20[45] = 0;
+          v20[46] = 0;
+          v20[22] = 0;
+          v20[7] = v5[179];
+          v20[8] = v5[180];
+          v20[9] = v5[181];
+          v20[4] = v5[176];
+          v20[5] = v5[177];
+          v20[6] = v5[178];
+          self->m_fDoInterp = 0;
+          result = ((int (__thiscall *)(issue106_renderer_windows_t *, int, _DWORD *))vtable[3])(self, flags, v20); // GameStudioRenderer_StudioDrawPlayer, offset 0x0c
+          self->m_fDoInterp = m_fDoInterp;
+          return result;
+        }
+      }
+      return 0;
+    }
+    v16 = (void *)m_pCurrentEntity[741];
+    self->m_pRenderModel = v16;
+    v9 = (void *)IEngineStudio_Mod_Extradata(v16);
+    self->m_pStudioHeader = v9;
+    IEngineStudio_StudioSetHeader(v9);
+    IEngineStudio_SetRenderModel(self->m_pRenderModel);
+    (*((void (__thiscall **)(issue106_renderer_windows_t *, _DWORD))self->vtable + 5))(self, 0);
+    if ( (flags & 1) == 0 )
+      goto LABEL_9;
+    if ( !IEngineStudio_StudioCheckBBox() )
+      return 0;
+    ++*self->m_pModelsDrawn;
+    ++*self->m_pStudioModelCount;
+    if ( *((_DWORD *)self->m_pStudioHeader + 51) )
+    {
+  LABEL_9:
+      v10 = self->vtable;
+      if ( *((_DWORD *)self->m_pCurrentEntity + 194) == 12 )
+        ((void (__thiscall *)(issue106_renderer_windows_t *, void *))v10[9])(self, self->m_pRenderModel); // GameStudioRenderer_StudioMergeBones, offset 0x24
+      else
+        ((void (__thiscall *)(issue106_renderer_windows_t *))v10[6])(self); // GameStudioRenderer_StudioSetupBones, offset 0x18
+      (*((void (__thiscall **)(issue106_renderer_windows_t *))self->vtable + 8))(self); // GameStudioRenderer_StudioSaveBones, offset 0x20
+      if ( (flags & 2) != 0 )
+      {
+        (*((void (__thiscall **)(issue106_renderer_windows_t *))self->vtable + 7))(self); // GameStudioRenderer_StudioCalcAttachments, offset 0x1c
+        IEngineStudio_StudioClientEvents();
+        if ( *(int *)self->m_pCurrentEntity > 0 )
+        {
+          v11 = (_OWORD *)dword_100992EC(*(_DWORD *)self->m_pCurrentEntity);
+          v12 = self->m_pCurrentEntity;
+          v11[182] = v12[182];
+          v11[183] = v12[183];
+          v11[184] = v12[184];
+        }
+      }
+      if ( (flags & 1) != 0 )
+      {
+        v19 = &v17;
+        IEngineStudio_StudioDynamicLight(self->m_pCurrentEntity, v18);
+        IEngineStudio_StudioEntityLight(v18);
+        IEngineStudio_StudioSetupLighting(v18);
+        v13 = self->m_pCurrentEntity;
+        v14 = (unsigned __int8)v13[185];
+        self->m_nTopColor = v14;
+        v15 = (unsigned __int8)BYTE1(v13[185]);
+        self->m_nBottomColor = (unsigned __int8)v15;
+        IEngineStudio_StudioSetRemapColors(v14, v15);
+        (*((void (__thiscall **)(issue106_renderer_windows_t *))self->vtable + 18))(self); // GameStudioRenderer_StudioRenderModel, offset 0x48
+      }
+    }
+    return 1;
+  }

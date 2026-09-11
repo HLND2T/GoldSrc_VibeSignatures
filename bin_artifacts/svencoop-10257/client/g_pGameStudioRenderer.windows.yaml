@@ -1,0 +1,8 @@
+gv_name: g_pGameStudioRenderer
+gv_va: '0x105fb5d8'
+gv_rva: '0x5fb5d8'
+gv_sig: FF 74 24 ?? B9 ?? ?? ?? ?? FF 74 24 ?? E8 ?? ?? ?? ?? 0F B6 C0 C3
+gv_sig_va: '0x10026c00'
+gv_inst_offset: '0x4'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

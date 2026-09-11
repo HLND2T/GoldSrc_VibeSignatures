@@ -1,0 +1,33 @@
+func_name: "CL_IsThirdPerson"
+func_va: "0x55a90"
+disasm_code: |-
+  .text:00055A90                 mov     edx, ds:cam_thirdperson
+  .text:00055A96                 mov     eax, 1
+  .text:00055A9B                 test    edx, edx
+  .text:00055A9D                 jnz     short locret_55AA8
+  .text:00055A9F                 mov     eax, ds:g_iUser1
+  .text:00055AA4                 test    eax, eax
+  .text:00055AA6                 jnz     short loc_55AB0
+  .text:00055AA8                 retn
+  .text:00055AB0                 sub     esp, 0Ch
+  .text:00055AB3                 call    ds:gEngfuncs.GetLocalPlayer
+  .text:00055AB9                 mov     edx, ds:g_iUser2
+  .text:00055ABF                 cmp     [eax], edx
+  .text:00055AC1                 setz    al
+  .text:00055AC4                 add     esp, 0Ch
+  .text:00055AC7                 movzx   eax, al
+  .text:00055ACA                 retn
+procedure: |-
+  int CL_IsThirdPerson()
+  {
+    int result; // eax
+
+    result = 1;
+    if ( !cam_thirdperson )
+    {
+      result = g_iUser1;
+      if ( g_iUser1 )
+        return gEngfuncs.GetLocalPlayer()->index == g_iUser2;
+    }
+    return result;
+  }

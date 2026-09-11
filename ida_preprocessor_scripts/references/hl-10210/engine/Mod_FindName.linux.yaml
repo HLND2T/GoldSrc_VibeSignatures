@@ -1,0 +1,203 @@
+func_name: "Mod_FindName"
+func_va: "0x151ea0"
+disasm_code: |-
+  .text:00151EA0                 push    ebp
+  .text:00151EA1                 push    edi
+  .text:00151EA2                 push    esi
+  .text:00151EA3                 push    ebx
+  .text:00151EA4                 sub     esp, 1Ch
+  .text:00151EA7                 mov     edi, [esp+2Ch+name]
+  .text:00151EAB                 cmp     byte ptr [edi], 0
+  .text:00151EAE                 jz      loc_151FC0
+  .text:00151EB4                 cmp     ds:mod_numknown, 0
+  .text:00151EBB                 jle     loc_152006
+  .text:00151EC1                 xor     ebp, ebp
+  .text:00151EC3                 mov     ebx, offset mod_known
+  .text:00151EC8                 xor     esi, esi
+  .text:00151ECA                 jmp     short loc_151EE0
+  .text:00151ED0                 mov     eax, ds:mod_numknown
+  .text:00151ED5                 inc     i
+  .text:00151ED6                 add     mod, 188h
+  .text:00151EDC                 cmp     eax, i
+  .text:00151EDE                 jle     short loc_151F1A
+  .text:00151EE0                 ; s2
+  .text:00151EE0                 mov     [esp+2Ch+s2], edi; s2
+  .text:00151EE4                 ; s1
+  .text:00151EE4                 mov     [esp+2Ch+s1], mod; s1
+  .text:00151EE7                 call    Q_strcmp
+  .text:00151EEC                 test    eax, eax
+  .text:00151EEE                 jz      short loc_151F30
+  .text:00151EF0                 cmp     dword ptr [mod+40h], 2
+  .text:00151EF4                 jnz     short loc_151ED0
+  .text:00151EF6                 test    avail, avail
+  .text:00151EF8                 jz      loc_151FB0
+  .text:00151EFE                 mov     eax, [mod+44h]
+  .text:00151F01                 sub     eax, 2
+  .text:00151F04                 cmp     eax, 2
+  .text:00151F07                 mov     eax, ds:mod_numknown
+  .text:00151F0C                 cmovnb  avail, mod
+  .text:00151F0F                 inc     i
+  .text:00151F10                 add     mod, 188h
+  .text:00151F16                 cmp     eax, i
+  .text:00151F18                 jg      short loc_151EE0
+  .text:00151F1A                 cmp     i, eax
+  .text:00151F1C                 jz      short loc_151F39
+  .text:00151F1E                 add     esp, 1Ch
+  .text:00151F21                 mov     eax, mod
+  .text:00151F23                 pop     mod
+  .text:00151F24                 pop     esi
+  .text:00151F25                 pop     edi
+  .text:00151F26                 pop     ebp
+  .text:00151F27                 retn
+  .text:00151F30                 mov     eax, ds:mod_numknown
+  .text:00151F35                 cmp     i, eax
+  .text:00151F37                 jnz     short loc_151F1E
+  .text:00151F39                 cmp     i, 3FFh
+  .text:00151F3F                 jle     loc_151FD8
+  .text:00151F45                 test    avail, avail
+  .text:00151F47                 jz      loc_152020
+  .text:00151F4D                 mov     eax, avail
+  .text:00151F4F                 mov     ecx, [esp+2Ch+trackCRC]
+  .text:00151F53                 xor     edx, edx
+  .text:00151F55                 sub     eax, offset mod_known
+  .text:00151F5A                 mov     ebx, avail
+  .text:00151F5C                 sar     eax, 3
+  .text:00151F5F                 imul    eax, 1A1F58D1h
+  .text:00151F65                 lea     eax, [eax+eax*2]
+  .text:00151F68                 shl     eax, 2
+  .text:00151F6B                 mov     dword ptr ds:mod_known_info.shouldCRC[eax], ecx
+  .text:00151F71                 xor     ecx, ecx
+  .text:00151F73                 mov     ds:mod_known_info.firstCRCDone[eax], edx
+  .text:00151F79                 mov     ds:mod_known_info.initialCRC[eax], ecx
+  .text:00151F7F                 mov     eax, 3Fh ; '?'
+  .text:00151F84                 ; count
+  .text:00151F84                 mov     [esp+2Ch+count], eax; count
+  .text:00151F88                 ; src
+  .text:00151F88                 mov     [esp+2Ch+s2], edi; src
+  .text:00151F8C                 ; dest
+  .text:00151F8C                 mov     [esp+2Ch+s1], mod; dest
+  .text:00151F8F                 call    Q_strncpy
+  .text:00151F94                 cmp     dword ptr [mod+40h], 3
+  .text:00151F98                 mov     byte ptr [mod+3Fh], 0
+  .text:00151F9C                 jz      short loc_151F1E
+  .text:00151F9E                 mov     dword ptr [mod+40h], 1
+  .text:00151FA5                 add     esp, 1Ch
+  .text:00151FA8                 mov     eax, mod
+  .text:00151FAA                 pop     mod
+  .text:00151FAB                 pop     esi
+  .text:00151FAC                 pop     edi
+  .text:00151FAD                 pop     ebp
+  .text:00151FAE                 retn
+  .text:00151FB0                 mov     avail, mod
+  .text:00151FB2                 jmp     loc_151ED0
+  .text:00151FC0                 mov     [esp+2Ch+s1], offset aModFindnameNul; "Mod_FindName: NULL name"
+  .text:00151FC7                 call    Sys_Error
+  .text:00151FCC                 jmp     loc_151EB4
+  .text:00151FD8                 lea     ecx, [i+1]
+  .text:00151FDB                 lea     eax, [esi+esi*2]
+  .text:00151FDE                 mov     esi, [esp+2Ch+trackCRC]
+  .text:00151FE2                 xor     edx, edx
+  .text:00151FE4                 shl     eax, 2
+  .text:00151FE7                 mov     ds:mod_known_info.firstCRCDone[eax], edx
+  .text:00151FED                 mov     ds:mod_numknown, ecx
+  .text:00151FF3                 mov     dword ptr ds:mod_known_info.shouldCRC[eax], esi
+  .text:00151FF9                 xor     esi, esi
+  .text:00151FFB                 mov     ds:mod_known_info.initialCRC[eax], esi
+  .text:00152001                 jmp     loc_151F7F
+  .text:00152006                 jz      short loc_152012
+  .text:00152008                 mov     ebx, offset mod_known
+  .text:0015200D                 jmp     loc_151F1E
+  .text:00152012                 mov     ecx, 1
+  .text:00152017                 mov     ebx, offset mod_known
+  .text:0015201C                 xor     esi, esi
+  .text:0015201E                 jmp     short loc_151FDB
+  .text:00152020                 mov     [esp+2Ch+s1], offset aModNumknownMax; "mod_numknown >= MAX_KNOWN_MODELS"
+  .text:00152027                 call    Sys_Error
+procedure: |-
+  model_t *__cdecl Mod_FindName(qboolean_0 trackCRC, const char *name)
+  {
+    model_t *v2; // ebp
+    model_t *s1; // ebx
+    int v4; // esi
+    int v5; // eax
+    int v7; // eax
+    bool v8; // zf
+    int v9; // ecx
+    int v10; // eax
+
+    if ( !*name )
+      Sys_Error("Mod_FindName: NULL name");
+    if ( mod_numknown <= 0 )
+    {
+      if ( mod_numknown )
+        return mod_known;
+      v9 = 1;
+      s1 = mod_known;
+      v4 = 0;
+  LABEL_22:
+      v10 = v4;
+      mod_known_info[v10].firstCRCDone = false;
+      mod_numknown = v9;
+      mod_known_info[v10].shouldCRC = trackCRC;
+      mod_known_info[v10].initialCRC = 0;
+      goto LABEL_17;
+    }
+    v2 = nullptr;
+    s1 = mod_known;
+    v4 = 0;
+    while ( Q_strcmp(s1->name, name) )
+    {
+      if ( s1->needload == 2 )
+      {
+        if ( !v2 )
+        {
+          v2 = s1;
+          goto LABEL_4;
+        }
+        v5 = mod_numknown;
+        if ( (unsigned int)(s1->type - 2) >= 2 )
+          v2 = s1;
+        ++v4;
+        ++s1;
+        if ( mod_numknown <= v4 )
+        {
+  LABEL_11:
+          if ( v4 != v5 )
+            return s1;
+          goto LABEL_14;
+        }
+      }
+      else
+      {
+  LABEL_4:
+        v5 = mod_numknown;
+        ++v4;
+        ++s1;
+        if ( mod_numknown <= v4 )
+          goto LABEL_11;
+      }
+    }
+    if ( v4 != mod_numknown )
+      return s1;
+  LABEL_14:
+    if ( v4 <= 1023 )
+    {
+      v9 = v4 + 1;
+      goto LABEL_22;
+    }
+    if ( !v2 )
+      Sys_Error("mod_numknown >= MAX_KNOWN_MODELS");
+    s1 = v2;
+    v7 = 964176332 * (((char *)v2 - (char *)mod_known) >> 3);
+    *(qboolean_0 *)((char *)&mod_known_info[0].shouldCRC + v7) = trackCRC;
+    *(qboolean_0 *)((char *)&mod_known_info[0].firstCRCDone + v7) = false;
+    *(CRC32_t *)((char *)&mod_known_info[0].initialCRC + v7) = 0;
+  LABEL_17:
+    Q_strncpy(s1->name, name, 63);
+    v8 = s1->needload == 3;
+    s1->name[63] = 0;
+    if ( v8 )
+      return s1;
+    s1->needload = true;
+    return s1;
+  }

@@ -1,0 +1,21 @@
+func_name: "CL_IsThirdPerson"
+func_va: "0x10023820"
+disasm_code: |-
+  .text:10023820                 ; ; Exported entry 570. CL_IsThirdPerson
+  .text:10023820                 cmp     cam_thirdperson, 0
+  .text:10023827                 jnz     short loc_10023845
+  .text:10023829                 cmp     g_iUser1, 0
+  .text:10023830                 jz      short loc_10023842
+  .text:10023832                 call    engine_GetLocalPlayer
+  .text:10023838                 mov     ecx, g_iUser2
+  .text:1002383E                 cmp     ecx, [eax]
+  .text:10023840                 jz      short loc_10023845
+  .text:10023842                 xor     eax, eax
+  .text:10023844                 retn
+  .text:10023845                 mov     eax, 1
+  .text:1002384A                 retn
+procedure: |-
+  int __cdecl CL_IsThirdPerson()
+  {
+    return cam_thirdperson || g_iUser1 && g_iUser2 == engine_GetLocalPlayer()->index;
+  }

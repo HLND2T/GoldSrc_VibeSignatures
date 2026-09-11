@@ -1,0 +1,9 @@
+gv_name: cl_parsecount
+gv_va: '0xc5a5a4'
+gv_rva: '0xc5a5a4'
+gv_sig: 55 57 56 53 83 EC ?? D9 05 ?? ?? ?? ?? D9 EE D9 C9 DF E9 DD D8 7A ?? 0F 84 ?? ?? ?? ?? 8B 44 24 ?? 85 C0
+gv_sig_va: '0x1b0c90'
+gv_inst_offset: '0x15b'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'
+gv_sig_allow_across_function_boundary: true

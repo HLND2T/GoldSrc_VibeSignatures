@@ -327,7 +327,7 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw "materialization failed for $tag" }
           }
           uv run python ida_analyze_bin.py -batch_selection $selectionPath -bindir bin `
-            -artifactdir $artifactRoot -batch_diagnostics $diagnosticsRoot
+            -artifactdir $artifactRoot -batch_diagnostics $diagnosticsRoot -debug -process_reporter console
           if ($LASTEXITCODE -ne 0) { throw 'selected-node batch analysis failed' }
           foreach ($action in $plan.tags) {
             if ($action.analysis_nodes.Count -eq 0) { continue }

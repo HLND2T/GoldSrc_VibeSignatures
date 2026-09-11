@@ -1,0 +1,54 @@
+func_name: "R_StudioRenderModel"
+func_va: "0xd14b0"
+disasm_code: |-
+  .text:000D14B0                 mov     eax, ds:currententity
+  .text:000D14B5                 xor     ecx, ecx
+  .text:000D14B7                 movss   xmm0, ds:r_origin
+  .text:000D14BF                 movss   xmm1, ds:r_origin+4
+  .text:000D14C7                 movss   xmm2, ds:r_origin+8
+  .text:000D14CF                 cmp     dword ptr [eax+304h], 13h
+  .text:000D14D6                 movss   ds:g_ChromeOrigin, xmm0
+  .text:000D14DE                 movss   ds:g_ChromeOrigin+4, xmm1
+  .text:000D14E6                 movss   ds:g_ChromeOrigin+8, xmm2
+  .text:000D14EE                 mov     ds:g_ForcedFaceFlags, ecx
+  .text:000D14F4                 jz      short loc_D1500
+  .text:000D14F6                 jmp     R_StudioRenderFinal
+  .text:000D1500                 xor     edx, edx
+  .text:000D1502                 sub     esp, 1Ch
+  .text:000D1505                 mov     [eax+304h], edx
+  .text:000D150B                 call    R_StudioRenderFinal
+  .text:000D1510                 xor     eax, eax
+  .text:000D1512                 mov     ecx, 2
+  .text:000D1517                 ; frame
+  .text:000D1517                 mov     [esp+1Ch+frame], eax; frame
+  .text:000D151B                 mov     eax, ds:cl_sprite_shell
+  .text:000D1520                 mov     ds:g_ForcedFaceFlags, ecx
+  .text:000D1526                 ; pSpriteModel
+  .text:000D1526                 mov     [esp+1Ch+pSpriteModel], eax; pSpriteModel
+  .text:000D1529                 call    tri.SpriteTexture
+  .text:000D152F                 mov     eax, ds:currententity
+  .text:000D1534                 mov     edx, 13h
+  .text:000D1539                 mov     [eax+304h], edx
+  .text:000D153F                 add     esp, 1Ch
+  .text:000D1542                 jmp     R_StudioRenderFinal
+procedure: |-
+  // Source: engine/r_studio.c R_StudioRenderModel. Reset chrome origin and forced face flags; in the kRenderFxGlowShell (19) branch temporarily clear renderfx and call R_StudioRenderFinal, select the shell sprite texture, restore renderfx, then render the final pass again. The direct call before SpriteTexture identifies R_StudioRenderFinal; the terminal jump is a second invocation of that same callee.
+  void __cdecl R_StudioRenderModel()
+  {
+    bool v0; // zf
+
+    v0 = currententity->curstate.renderfx == 19;
+    g_ChromeOrigin[0] = r_origin[0];
+    g_ChromeOrigin[1] = r_origin[1];
+    g_ChromeOrigin[2] = r_origin[2];
+    g_ForcedFaceFlags = 0;
+    if ( v0 )
+    {
+      currententity->curstate.renderfx = 0;
+      R_StudioRenderFinal();
+      g_ForcedFaceFlags = 2;
+      tri.SpriteTexture(cl_sprite_shell, 0);
+      currententity->curstate.renderfx = 19;
+    }
+    R_StudioRenderFinal();
+  }

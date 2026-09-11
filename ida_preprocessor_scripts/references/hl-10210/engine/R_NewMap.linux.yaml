@@ -1,0 +1,286 @@
+func_name: "R_NewMap"
+func_va: "0x1aac00"
+disasm_code: |-
+  .text:001AAC00                 push    ebp
+  .text:001AAC01                 mov     eax, offset d_lightstylevalue
+  .text:001AAC06                 push    edi
+  .text:001AAC07                 and     eax, 0Fh
+  .text:001AAC0A                 push    esi
+  .text:001AAC0B                 shr     eax, 2
+  .text:001AAC0E                 push    ebx
+  .text:001AAC0F                 neg     eax
+  .text:001AAC11                 sub     esp, 1Ch
+  .text:001AAC14                 and     eax, 3
+  .text:001AAC17                 jz      loc_1AAE30
+  .text:001AAC1D                 mov     ebx, 108h
+  .text:001AAC22                 cmp     eax, 1
+  .text:001AAC25                 mov     ds:d_lightstylevalue, ebx
+  .text:001AAC2B                 jz      loc_1AAE60
+  .text:001AAC31                 mov     ecx, 108h
+  .text:001AAC36                 cmp     eax, 3
+  .text:001AAC39                 mov     ds:d_lightstylevalue+4, ecx
+  .text:001AAC3F                 jnz     loc_1AAE50
+  .text:001AAC45                 mov     edx, 108h
+  .text:001AAC4A                 mov     esi, 0FDh
+  .text:001AAC4F                 mov     ds:d_lightstylevalue+8, edx
+  .text:001AAC55                 mov     ebx, 3
+  .text:001AAC5A                 mov     edi, 100h
+  .text:001AAC5F                 mov     ebp, 0FCh
+  .text:001AAC64                 sub     edi, eax
+  .text:001AAC66                 mov     ecx, 3Fh ; '?'
+  .text:001AAC6B                 lea     edx, d_lightstylevalue[eax*4]
+  .text:001AAC72                 xor     eax, eax
+  .text:001AAC74                 movdqa  xmm0, ds:xmmword_25F860
+  .text:001AAC7C                 lea     esi, [esi+0]
+  .text:001AAC80                 inc     eax
+  .text:001AAC81                 movdqa  xmmword ptr [edx], xmm0
+  .text:001AAC85                 add     edx, 10h
+  .text:001AAC88                 cmp     eax, ecx
+  .text:001AAC8A                 jb      short loc_1AAC80
+  .text:001AAC8C                 add     ebx, ebp
+  .text:001AAC8E                 sub     esi, ebp
+  .text:001AAC90                 cmp     edi, ebp
+  .text:001AAC92                 jz      short loc_1AACC8
+  .text:001AAC94                 mov     ebp, 108h
+  .text:001AAC99                 cmp     esi, 1
+  .text:001AAC9C                 mov     ds:d_lightstylevalue[i*4], ebp
+  .text:001AACA3                 lea     eax, [i+1]
+  .text:001AACA6                 jz      short loc_1AACC8
+  .text:001AACA8                 mov     edi, 108h
+  .text:001AACAD                 add     ebx, 2
+  .text:001AACB0                 cmp     esi, 2
+  .text:001AACB3                 mov     ds:d_lightstylevalue[i*4], edi
+  .text:001AACBA                 jz      short loc_1AACC8
+  .text:001AACBC                 mov     eax, 108h
+  .text:001AACC1                 mov     ds:d_lightstylevalue[ebx*4], eax
+  .text:001AACC8                 mov     eax, 0BB8h
+  .text:001AACCD                 ; count
+  .text:001AACCD                 mov     [esp+2Ch+count], eax; count
+  .text:001AACD1                 xor     eax, eax
+  .text:001AACD3                 ; fill
+  .text:001AACD3                 mov     [esp+2Ch+fill], eax; fill
+  .text:001AACD7                 ; dest
+  .text:001AACD7                 mov     [esp+2Ch+dest], offset r_worldentity; dest
+  .text:001AACDE                 call    Q_memset
+  .text:001AACE3                 mov     eax, ds:cl_worldmodel
+  .text:001AACE8                 xor     ecx, ecx
+  .text:001AACEA                 xor     edx, edx
+  .text:001AACEC                 mov     ds:r_worldentity.model, eax
+  .text:001AACF1                 mov     ebx, [eax+88h]
+  .text:001AACF7                 test    ebx, ebx
+  .text:001AACF9                 jle     short loc_1AAD1D
+  .text:001AACFB                 nop
+  .text:001AACFC                 lea     esi, [esi+0]
+  .text:001AAD00                 mov     eax, [eax+8Ch]
+  .text:001AAD06                 xor     ebp, ebp
+  .text:001AAD08                 inc     i
+  .text:001AAD09                 mov     [eax+ecx+28h], ebp
+  .text:001AAD0D                 add     ecx, 3Ch ; '<'
+  .text:001AAD10                 mov     eax, ds:cl_worldmodel
+  .text:001AAD15                 cmp     [eax+88h], i
+  .text:001AAD1B                 jg      short loc_1AAD00
+  .text:001AAD1D                 xor     eax, eax
+  .text:001AAD1F                 xor     ebx, ebx
+  .text:001AAD21                 mov     ds:r_viewleaf, eax
+  .text:001AAD26                 call    R_ClearParticles
+  .text:001AAD2B                 call    R_DecalInit
+  .text:001AAD30                 call    V_InitLevel
+  .text:001AAD35                 call    GL_BuildLightmaps
+  .text:001AAD3A                 mov     edx, ds:cl_worldmodel
+  .text:001AAD40                 mov     eax, 0FFFFFFFFh
+  .text:001AAD45                 mov     ds:skytexturenum, eax
+  .text:001AAD4A                 mov     eax, 0FFFFFFFFh
+  .text:001AAD4F                 mov     ds:mirrortexturenum, eax
+  .text:001AAD54                 mov     ecx, [edx+170h]
+  .text:001AAD5A                 test    ecx, ecx
+  .text:001AAD5C                 jle     loc_1AAE04
+  .text:001AAD62                 lea     esi, [esi+0]
+  .text:001AAD69                 lea     edi, [edi+0]
+  .text:001AAD70                 mov     eax, [edx+174h]
+  .text:001AAD76                 lea     esi, ds:0[i*4]
+  .text:001AAD7D                 mov     eax, [eax+esi]
+  .text:001AAD80                 test    eax, eax
+  .text:001AAD82                 jz      short loc_1AADFB
+  .text:001AAD84                 mov     ecx, 3
+  .text:001AAD89                 mov     edi, offset off_2583C0
+  .text:001AAD8E                 ; count
+  .text:001AAD8E                 mov     [esp+2Ch+count], ecx; count
+  .text:001AAD92                 ; s2
+  .text:001AAD92                 mov     [esp+2Ch+fill], edi; s2
+  .text:001AAD96                 ; s1
+  .text:001AAD96                 mov     [esp+2Ch+dest], eax; s1
+  .text:001AAD99                 call    Q_strncmp
+  .text:001AAD9E                 test    eax, eax
+  .text:001AADA0                 jnz     short loc_1AADA8
+  .text:001AADA2                 mov     ds:skytexturenum, i
+  .text:001AADA8                 mov     eax, 0Ah
+  .text:001AADAD                 mov     edx, offset aWindow021; "window02_1"
+  .text:001AADB2                 ; count
+  .text:001AADB2                 mov     [esp+2Ch+count], eax; count
+  .text:001AADB6                 mov     eax, ds:cl_worldmodel
+  .text:001AADBB                 ; s2
+  .text:001AADBB                 mov     [esp+2Ch+fill], edx; s2
+  .text:001AADBF                 mov     eax, [eax+174h]
+  .text:001AADC5                 mov     eax, [eax+esi]
+  .text:001AADC8                 ; s1
+  .text:001AADC8                 mov     [esp+2Ch+dest], eax; s1
+  .text:001AADCB                 call    Q_strncmp
+  .text:001AADD0                 test    eax, eax
+  .text:001AADD2                 jnz     short loc_1AADDA
+  .text:001AADD4                 mov     ds:mirrortexturenum, i
+  .text:001AADDA                 mov     eax, ds:cl_worldmodel
+  .text:001AADDF                 mov     eax, [eax+174h]
+  .text:001AADE5                 mov     eax, [eax+esi]
+  .text:001AADE8                 mov     dword ptr [eax+1Ch], 0
+  .text:001AADEF                 mov     edx, ds:cl_worldmodel
+  .text:001AADF5                 mov     ecx, [edx+170h]
+  .text:001AADFB                 inc     i
+  .text:001AADFC                 cmp     i, ecx
+  .text:001AADFE                 jl      loc_1AAD70
+  .text:001AAE04                 call    R_LoadSkys
+  .text:001AAE09                 mov     eax, ds:cl_entities
+  .text:001AAE0E                 movss   xmm1, gl_wateramp.value
+  .text:001AAE16                 movss   dword ptr [eax+2F0h], xmm1
+  .text:001AAE1E                 add     esp, 1Ch
+  .text:001AAE21                 pop     ebx
+  .text:001AAE22                 pop     esi
+  .text:001AAE23                 pop     edi
+  .text:001AAE24                 pop     ebp
+  .text:001AAE25                 jmp     GL_UnloadTextures
+  .text:001AAE30                 mov     ebp, 100h
+  .text:001AAE35                 mov     ecx, 40h ; '@'
+  .text:001AAE3A                 mov     esi, 100h
+  .text:001AAE3F                 mov     edi, 100h
+  .text:001AAE44                 xor     ebx, ebx
+  .text:001AAE46                 jmp     loc_1AAC6B
+  .text:001AAE50                 mov     esi, 0FEh
+  .text:001AAE55                 mov     ebx, 2
+  .text:001AAE5A                 jmp     loc_1AAC5A
+  .text:001AAE60                 mov     esi, 0FFh
+  .text:001AAE65                 mov     ebx, 1
+  .text:001AAE6A                 jmp     loc_1AAC5A
+procedure: |-
+  void R_NewMap()
+  {
+    unsigned int v0; // eax
+    int v1; // esi
+    int v2; // ebx
+    int v3; // ebp
+    int v4; // edi
+    unsigned int v5; // ecx
+    __m128i *v6; // edx
+    unsigned int v7; // eax
+    __m128i si128; // xmm0
+    int v9; // ebx
+    int v10; // esi
+    int v11; // eax
+    int v12; // ebx
+    model_s *worldmodel; // eax
+    int v14; // ecx
+    int v15; // edx
+    int v16; // ebx
+    model_s *v17; // edx
+    int numtextures; // ecx
+    const char *name; // eax
+
+    v0 = -(((unsigned int)d_lightstylevalue & 0xF) >> 2) & 3;
+    if ( v0 )
+    {
+      d_lightstylevalue[0] = 264;
+      if ( v0 == 1 )
+      {
+        v1 = 255;
+        v2 = 1;
+      }
+      else
+      {
+        d_lightstylevalue[1] = 264;
+        if ( v0 == 3 )
+        {
+          v1 = 253;
+          d_lightstylevalue[2] = 264;
+          v2 = 3;
+        }
+        else
+        {
+          v1 = 254;
+          v2 = 2;
+        }
+      }
+      v3 = 252;
+      v4 = 256 - v0;
+      v5 = 63;
+    }
+    else
+    {
+      v3 = 256;
+      v5 = 64;
+      v1 = 256;
+      v4 = 256;
+      v2 = 0;
+    }
+    v6 = (__m128i *)&d_lightstylevalue[v0];
+    v7 = 0;
+    si128 = _mm_load_si128((const __m128i *)&xmmword_25F860);
+    do
+    {
+      ++v7;
+      *v6++ = si128;
+    }
+    while ( v7 < v5 );
+    v9 = v3 + v2;
+    v10 = v1 - v3;
+    if ( v4 != v3 )
+    {
+      d_lightstylevalue[v9] = 264;
+      v11 = v9 + 1;
+      if ( v10 != 1 )
+      {
+        v12 = v9 + 2;
+        d_lightstylevalue[v11] = 264;
+        if ( v10 != 2 )
+          d_lightstylevalue[v12] = 264;
+      }
+    }
+    Q_memset(&r_worldentity, 0, 3000);
+    worldmodel = cl_worldmodel;
+    v14 = 0;
+    v15 = 0;
+    for ( r_worldentity.model = cl_worldmodel; cl_worldmodel->numleafs > v15; worldmodel = cl_worldmodel )
+    {
+      ++v15;
+      worldmodel->leafs[v14++].efrags = nullptr;
+    }
+    v16 = 0;
+    r_viewleaf = nullptr;
+    R_ClearParticles();
+    R_DecalInit();
+    V_InitLevel();
+    GL_BuildLightmaps();
+    v17 = cl_worldmodel;
+    skytexturenum = -1;
+    mirrortexturenum = -1;
+    numtextures = cl_worldmodel->numtextures;
+    if ( numtextures > 0 )
+    {
+      do
+      {
+        name = v17->textures[v16]->name;
+        if ( name )
+        {
+          if ( !Q_strncmp(name, off_2583C0, 3) )
+            skytexturenum = v16;
+          if ( !Q_strncmp(cl_worldmodel->textures[v16]->name, "window02_1", 10) )
+            mirrortexturenum = v16;
+          cl_worldmodel->textures[v16]->anim_min = 0;
+          v17 = cl_worldmodel;
+          numtextures = cl_worldmodel->numtextures;
+        }
+        ++v16;
+      }
+      while ( v16 < numtextures );
+    }
+    R_LoadSkys();
+    cl_entities->curstate.scale = gl_wateramp.value;
+    GL_UnloadTextures();
+  }

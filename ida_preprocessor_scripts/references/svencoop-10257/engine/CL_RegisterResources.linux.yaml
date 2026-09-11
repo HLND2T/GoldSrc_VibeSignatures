@@ -1,0 +1,275 @@
+func_name: "CL_RegisterResources"
+func_va: "0x122690"
+disasm_code: |-
+  .text:00122690                 sub     esp, 3Ch
+  .text:00122693                 mov     [esp+3Ch+var_10], ebx
+  .text:00122697                 call    sub_56390
+  .text:0012269C                 add     ebx, (offset dbl_2EE000 - $)
+  .text:001226A2                 mov     [esp+3Ch+var_C], esi
+  .text:001226A6                 mov     [esp+3Ch+var_8], edi
+  .text:001226AA                 mov     [esp+3Ch+var_4], ebp
+  .text:001226AE                 lea     esi, (dword_1BE6220 - 2EE000h)[ebx]
+  .text:001226B4                 mov     eax, dword ptr ds:word_312A0[esi]
+  .text:001226BA                 test    eax, eax
+  .text:001226BC                 jnz     loc_1227C0
+  .text:001226C2                 cmp     dword ptr ds:aUngetc[esi], 2; "ungetc"
+  .text:001226C9                 jz      loc_1227B0
+  .text:001226CF                 lea     edi, (off_2F1228 - 2EE000h)[ebx]; "fs_startup_timings"
+  .text:001226D5                 fldz
+  .text:001226D7                 fst     [esp+3Ch+var_20]
+  .text:001226DB                 fld     dword ptr [edi+0Ch]
+  .text:001226DE                 fucomip st, st(1)
+  .text:001226E0                 fstp    st
+  .text:001226E2                 jp      loc_1227E8
+  .text:001226E8                 jnz     loc_1227E8
+  .text:001226EE                 mov     ecx, 8
+  .text:001226F3                 lea     eax, (aClientconnect - 2EE000h)[ebx]; "ClientConnect"
+  .text:001226F9                 mov     [esp+3Ch+count], 0
+  .text:00122701                 ; char
+  .text:00122701                 mov     [esp+3Ch+var_38], ecx; char
+  .text:00122705                 mov     [esp+3Ch+var_3C], eax
+  .text:00122708                 call    sub_1608E0
+  .text:0012270D                 mov     ebp, dword ptr ds:word_310E8[esi]
+  .text:00122713                 test    ebp, ebp
+  .text:00122715                 jz      loc_1227D0
+  .text:0012271B                 lea     ebp, (dword_15D7D60 - 2EE000h)[ebx]
+  .text:00122721                 mov     eax, ss:dword_5C5CB0[ebp]
+  .text:00122727                 test    eax, eax
+  .text:00122729                 mov     ss:dword_601CEC[ebp], eax
+  .text:0012272F                 jz      loc_122800
+  .text:00122735                 mov     edx, ss:dword_601CE0[ebp]
+  .text:0012273B                 test    edx, edx
+  .text:0012273D                 jle     loc_122800
+  .text:00122743                 mov     ecx, [eax+44h]
+  .text:00122746                 test    ecx, ecx
+  .text:00122748                 jnz     loc_122810
+  .text:0012274E                 mov     edx, 5
+  .text:00122753                 lea     ecx, (aMaps_0 - 2EE000h)[ebx]; "maps/"
+  .text:00122759                 ; size_t
+  .text:00122759                 mov     [esp+3Ch+count], edx; size_t
+  .text:0012275D                 ; char
+  .text:0012275D                 mov     [esp+3Ch+var_38], ecx; char
+  .text:00122761                 ; int
+  .text:00122761                 mov     [esp+3Ch+var_3C], eax; int
+  .text:00122764                 call    sub_5AA20
+  .text:00122769                 test    eax, eax
+  .text:0012276B                 jz      loc_122840
+  .text:00122771                 lea     esi, (aClientWorldMod - 2EE000h)[ebx]; "Client world model is invalid: Unexpect"...
+  .text:00122777                 ; fmt
+  .text:00122777                 mov     [esp+3Ch+var_3C], esi; fmt
+  .text:0012277A                 call    Con_Printf
+  .text:0012277F                 ; char *
+  .text:0012277F                 mov     [esp+3Ch+var_38], esi; char *
+  .text:00122783                 ; int
+  .text:00122783                 mov     [esp+3Ch+var_3C], 1; int
+  .text:0012278A                 call    sub_5B2F0
+  .text:0012278F                 call    sub_113040
+  .text:00122794                 mov     ebx, [esp+3Ch+var_10]
+  .text:00122798                 mov     esi, [esp+3Ch+var_C]
+  .text:0012279C                 mov     edi, [esp+3Ch+var_8]
+  .text:001227A0                 mov     ebp, [esp+3Ch+var_4]
+  .text:001227A4                 add     esp, 3Ch
+  .text:001227A7                 retn
+  .text:001227B0                 cmp     dword ptr [esi], 5
+  .text:001227B3                 jnz     loc_1226CF
+  .text:001227B9                 lea     esi, [esi+0]
+  .text:001227C0                 xor     eax, eax
+  .text:001227C2                 mov     dword ptr ds:word_312A0[esi], eax
+  .text:001227C8                 jmp     short loc_122794
+  .text:001227D0                 mov     eax, [esp+3Ch+playerSlot]
+  .text:001227D4                 mov     [esp+3Ch+var_3C], eax
+  .text:001227D7                 call    sub_1221B0
+  .text:001227DC                 jmp     loc_12271B
+  .text:001227E8                 lea     eax, (aBeginClRegiste - 2EE000h)[ebx]; "begin CL_RegisterResources()"
+  .text:001227EE                 mov     [esp+3Ch+var_3C], eax
+  .text:001227F1                 call    sub_111160
+  .text:001227F6                 jmp     loc_1226EE
+  .text:00122800                 lea     esi, (aClientWorldMod_0 - 2EE000h)[ebx]; "Client world model is NULL\n"
+  .text:00122806                 jmp     loc_122777
+  .text:00122810                 lea     eax, (aClientWorldMod_1 - 2EE000h)[ebx]; "Client world model is invalid: Not a br"...
+  .text:00122816                 ; fmt
+  .text:00122816                 mov     [esp+3Ch+var_3C], eax; fmt
+  .text:00122819                 call    Con_Printf
+  .text:0012281E                 lea     eax, (aClientWorldMod_2 - 2EE000h)[ebx]; "Client world model is invalid. Not a br"...
+  .text:00122824                 ; char *
+  .text:00122824                 mov     [esp+3Ch+var_38], eax; char *
+  .text:00122828                 ; int
+  .text:00122828                 mov     [esp+3Ch+var_3C], 1; int
+  .text:0012282F                 call    sub_5B2F0
+  .text:00122834                 call    sub_113040
+  .text:00122839                 jmp     loc_122794
+  .text:00122840                 lea     eax, (aMapsSBsp+7 - 2EE000h)[ebx]; ".bsp"
+  .text:00122846                 ; char
+  .text:00122846                 mov     [esp+3Ch+var_38], eax; char
+  .text:0012284A                 mov     eax, ss:dword_601CEC[ebp]
+  .text:00122850                 ; char *
+  .text:00122850                 mov     [esp+3Ch+var_3C], eax; char *
+  .text:00122853                 call    sub_5AE70
+  .text:00122858                 test    eax, eax
+  .text:0012285A                 jz      loc_122771
+  .text:00122860                 lea     eax, (dword_15D4100 - 2EE000h)[ebx]
+  .text:00122866                 mov     [esp+3Ch+var_20], eax
+  .text:0012286A                 mov     eax, [eax]
+  .text:0012286C                 test    eax, eax
+  .text:0012286E                 jz      loc_122938
+  .text:00122874                 mov     ecx, ss:dword_601CEC[ebp]
+  .text:0012287A                 mov     [eax+0B94h], ecx
+  .text:00122880                 mov     eax, ss:dword_5C5CB0[ebp]
+  .text:00122886                 ; char *
+  .text:00122886                 mov     [esp+3Ch+var_3C], eax; char *
+  .text:00122889                 call    sub_122070
+  .text:0012288E                 cmp     dword ptr [esi], 1
+  .text:00122891                 jz      loc_122794
+  .text:00122897                 lea     eax, (aSettingUpRende - 2EE000h)[ebx]; "Setting up renderer...\n"
+  .text:0012289D                 ; fmt
+  .text:0012289D                 mov     [esp+3Ch+var_3C], eax; fmt
+  .text:001228A0                 call    Con_DPrintf
+  .text:001228A5                 ; R_NewMap: initializes lightstyles, clears the world entity and leaf efrags, scans sky textures. Next call Hunk_Check validates arena sentinels.
+  .text:001228A5                 call    R_NewMap; R_NewMap: initializes lightstyles, clears the world entity and leaf efrags, scans sky textures. Next call Hunk_Check validates arena sentinels.
+  .text:001228AA                 call    Hunk_Check
+  .text:001228AF                 lea     eax, (dword_30AD68 - 2EE000h)[ebx]
+  .text:001228B5                 mov     esi, ss:dword_60C7E8[ebp]
+  .text:001228BB                 mov     dword ptr [eax], 0
+  .text:001228C1                 mov     eax, 3
+  .text:001228C6                 mov     [esp+3Ch+var_38], eax
+  .text:001228CA                 mov     eax, [esp+3Ch+playerSlot]
+  .text:001228CE                 mov     [esp+3Ch+var_3C], eax
+  .text:001228D1                 call    sub_5B530
+  .text:001228D6                 mov     [esp+3Ch+count], esi
+  .text:001228DA                 mov     eax, dword ptr ss:loc_24231C[ebp]
+  .text:001228E0                 mov     [esp+3Ch+var_38], eax
+  .text:001228E4                 lea     eax, (aSpawnII - 2EE000h)[ebx]; "spawn %i %i"
+  .text:001228EA                 ; char *
+  .text:001228EA                 mov     [esp+3Ch+var_3C], eax; char *
+  .text:001228ED                 call    sub_61A30
+  .text:001228F2                 mov     [esp+3Ch+var_38], eax
+  .text:001228F6                 mov     eax, [esp+3Ch+playerSlot]
+  .text:001228FA                 mov     [esp+3Ch+var_3C], eax
+  .text:001228FD                 call    sub_5ECD0
+  .text:00122902                 call    sub_108F40
+  .text:00122907                 fld     dword ptr [edi+0Ch]
+  .text:0012290A                 fldz
+  .text:0012290C                 fst     [esp+3Ch+var_20]
+  .text:00122910                 fxch    st(1)
+  .text:00122912                 fucomip st, st(1)
+  .text:00122914                 fstp    st
+  .text:00122916                 jp      short loc_12291E
+  .text:00122918                 jz      loc_122794
+  .text:0012291E                 lea     eax, (aEndClRegisterr - 2EE000h)[ebx]; "end   CL_RegisterResources()"
+  .text:00122924                 mov     [esp+3Ch+var_3C], eax
+  .text:00122927                 call    sub_111160
+  .text:0012292C                 jmp     loc_122794
+  .text:00122938                 mov     eax, ss:dword_601CE0[ebp]
+  .text:0012293E                 mov     [esp+3Ch+var_3C], eax
+  .text:00122941                 call    sub_62F60
+  .text:00122946                 test    eax, eax
+  .text:00122948                 mov     [ebp+0], eax
+  .text:0012294B                 jle     short loc_1229B2
+  .text:0012294D                 mov     eax, [esp+3Ch+var_20]
+  .text:00122951                 mov     ecx, [eax]
+  .text:00122953                 test    ecx, ecx
+  .text:00122955                 jz      short loc_122965
+  .text:00122957                 lea     eax, (aClReallocateCl - 2EE000h)[ebx]; "CL_Reallocate cl_entities\n"
+  .text:0012295D                 ; fmt
+  .text:0012295D                 mov     [esp+3Ch+var_3C], eax; fmt
+  .text:00122960                 call    Con_Printf
+  .text:00122965                 imul    eax, [ebp+0], 0BB8h
+  .text:0012296C                 ; size_t
+  .text:0012296C                 mov     [esp+3Ch+var_3C], eax; size_t
+  .text:0012296F                 call    sub_8CBE0
+  .text:00122974                 mov     edx, [esp+3Ch+var_20]
+  .text:00122978                 mov     [edx], eax
+  .text:0012297A                 mov     eax, [ebp+0]
+  .text:0012297D                 mov     [esp+3Ch+var_3C], eax
+  .text:00122980                 call    sub_17DE00
+  .text:00122985                 xor     edx, edx
+  .text:00122987                 imul    eax, (off_2F1658 - 2EE000h)[ebx], 8518h
+  .text:00122991                 ; c
+  .text:00122991                 mov     [esp+3Ch+var_38], edx; c
+  .text:00122995                 ; count
+  .text:00122995                 mov     [esp+3Ch+count], eax; count
+  .text:00122999                 lea     eax, [ebp+2427A4h]
+  .text:0012299F                 ; dest
+  .text:0012299F                 mov     [esp+3Ch+var_3C], eax; dest
+  .text:001229A2                 call    Q_memset
+  .text:001229A7                 mov     edx, [esp+3Ch+var_20]
+  .text:001229AB                 mov     eax, [edx]
+  .text:001229AD                 jmp     loc_122874
+  .text:001229B2                 lea     eax, (aClReallocatedy - 2EE000h)[ebx]; "CL_ReallocateDynamicData allocating 0 e"...
+  .text:001229B8                 ; fmt
+  .text:001229B8                 mov     [esp+3Ch+var_3C], eax; fmt
+  .text:001229BB                 call    Sys_Error
+  .text:001229C0                 jmp     short loc_12294D
+procedure: |-
+  // Sven-specific CL_RegisterResources: validates brush world model and maps/*.bsp; Unlike canonical Half-Life this version has no spawn CRC-munge block. The renderer setup diagnostic precedes R_NewMap and Hunk_Check. Preserve actual Sven branch structure.
+  void __cdecl CL_RegisterResources(int playerSlot)
+  {
+    char *v1; // esi
+    int v2; // eax
+    int v3; // esi
+    char *v4; // [esp+4h] [ebp-38h]
+
+    if ( *(_DWORD *)((char *)&word_312A0 + (_DWORD)&dword_1BE6220)
+      || *(_DWORD *)&aUngetc[(_DWORD)&dword_1BE6220] == 2 && dword_1BE6220 == 5 )
+    {
+      *(_DWORD *)((char *)&word_312A0 + (_DWORD)&dword_1BE6220) = 0;
+      return;
+    }
+    if ( flt_2F1234 != 0.0 )
+      sub_111160("begin CL_RegisterResources()");
+    sub_1608E0("ClientConnect", 8, 0);
+    if ( !*(_DWORD *)((char *)&word_310E8 + (_DWORD)&dword_1BE6220) )
+      sub_1221B0(playerSlot);
+    dword_1BD9A4C = unk_1B9DA10;
+    if ( !unk_1B9DA10 || dword_1BD9A40 <= 0 )
+    {
+      v1 = "Client world model is NULL\n";
+      Con_Printf("Client world model is NULL\n");
+      goto LABEL_12;
+    }
+    if ( *(_DWORD *)(unk_1B9DA10 + 68) )
+    {
+      Con_Printf("Client world model is invalid: Not a brush.\n");
+      sub_5B2F0(1, "Client world model is invalid. Not a brush.\n");
+      sub_113040();
+      return;
+    }
+    if ( sub_5AA20(unk_1B9DA10, "maps/", 5u) || !sub_5AE70((char *)dword_1BD9A4C, (int)".bsp") )
+    {
+      v1 = "Client world model is invalid: Unexpected name.\n";
+      Con_Printf("Client world model is invalid: Unexpected name.\n");
+  LABEL_12:
+      sub_5B2F0(1, v1);
+      sub_113040();
+      return;
+    }
+    v2 = dword_15D4100;
+    if ( !dword_15D4100 )
+    {
+      dword_15D7D60 = sub_62F60(dword_1BD9A40);
+      if ( dword_15D7D60 <= 0 )
+        Sys_Error("CL_ReallocateDynamicData allocating 0 entities");
+      if ( dword_15D4100 )
+        Con_Printf("CL_Reallocate cl_entities\n");
+      dword_15D4100 = sub_8CBE0(3000 * dword_15D7D60);
+      sub_17DE00(dword_15D7D60);
+      Q_memset(&unk_181A504, 0, 34072 * (_DWORD)off_2F1658);
+      v2 = dword_15D4100;
+    }
+    *(_DWORD *)(v2 + 2964) = dword_1BD9A4C;
+    sub_122070(unk_1B9DA10);
+    if ( dword_1BE6220 != 1 )
+    {
+      Con_DPrintf("Setting up renderer...\n");
+      R_NewMap();
+      Hunk_Check();
+      v3 = unk_1BE4548;
+      dword_30AD68 = 0;
+      sub_5B530(playerSlot, 3);
+      v4 = (char *)sub_61A30("spawn %i %i", *(_DWORD *)((char *)&loc_24231C + (_DWORD)&dword_15D7D60), v3);
+      sub_5ECD0(playerSlot, v4);
+      sub_108F40();
+      if ( flt_2F1234 != 0.0 )
+        sub_111160("end   CL_RegisterResources()");
+    }
+  }

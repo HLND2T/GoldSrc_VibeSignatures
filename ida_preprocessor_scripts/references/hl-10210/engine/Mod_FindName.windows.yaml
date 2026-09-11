@@ -1,0 +1,155 @@
+func_name: "Mod_FindName"
+func_va: "0x1023e610"
+disasm_code: |-
+  .text:1023E610                 push    ebp
+  .text:1023E611                 mov     ebp, esp
+  .text:1023E613                 mov     eax, [ebp+name]
+  .text:1023E616                 push    ebx
+  .text:1023E617                 xor     ebx, ebx
+  .text:1023E619                 push    esi
+  .text:1023E61A                 cmp     [eax], bl
+  .text:1023E61C                 jnz     short loc_1023E62E
+  .text:1023E61E                 push    offset aModFindnameNul; "Mod_FindName: NULL name"
+  .text:1023E623                 call    Sys_Error
+  .text:1023E628                 mov     eax, [ebp+name]
+  .text:1023E62B                 add     esp, 4
+  .text:1023E62E                 mov     edx, mod_numknown
+  .text:1023E634                 mov     esi, offset mod_known
+  .text:1023E639                 push    edi
+  .text:1023E63A                 xor     edi, edi
+  .text:1023E63C                 test    edx, edx
+  .text:1023E63E                 jle     short loc_1023E683
+  .text:1023E640                 push    eax
+  .text:1023E641                 push    esi
+  .text:1023E642                 call    Q_strcmp
+  .text:1023E647                 add     esp, 8
+  .text:1023E64A                 test    eax, eax
+  .text:1023E64C                 jz      short loc_1023E67D
+  .text:1023E64E                 cmp     dword ptr [esi+40h], 2
+  .text:1023E652                 jnz     short loc_1023E667
+  .text:1023E654                 test    ebx, ebx
+  .text:1023E656                 jz      short loc_1023E665
+  .text:1023E658                 mov     eax, [esi+44h]
+  .text:1023E65B                 cmp     eax, 2
+  .text:1023E65E                 jz      short loc_1023E667
+  .text:1023E660                 cmp     eax, 3
+  .text:1023E663                 jz      short loc_1023E667
+  .text:1023E665                 mov     ebx, esi
+  .text:1023E667                 mov     edx, mod_numknown
+  .text:1023E66D                 inc     edi
+  .text:1023E66E                 mov     eax, [ebp+name]
+  .text:1023E671                 add     esi, 188h
+  .text:1023E677                 cmp     edi, edx
+  .text:1023E679                 jl      short loc_1023E640
+  .text:1023E67B                 jmp     short loc_1023E683
+  .text:1023E67D                 mov     edx, mod_numknown
+  .text:1023E683                 cmp     edi, edx
+  .text:1023E685                 pop     edi
+  .text:1023E686                 jnz     loc_1023E714
+  .text:1023E68C                 cmp     edx, 400h
+  .text:1023E692                 jl      short loc_1023E6C5
+  .text:1023E694                 test    ebx, ebx
+  .text:1023E696                 jz      short loc_1023E6B6
+  .text:1023E698                 mov     esi, ebx
+  .text:1023E69A                 mov     eax, 5397829Dh
+  .text:1023E69F                 sub     ebx, offset mod_known
+  .text:1023E6A5                 imul    ebx
+  .text:1023E6A7                 sar     edx, 7
+  .text:1023E6AA                 mov     eax, edx
+  .text:1023E6AC                 shr     eax, 1Fh
+  .text:1023E6AF                 add     eax, edx
+  .text:1023E6B1                 lea     ecx, [eax+eax*2]
+  .text:1023E6B4                 jmp     short loc_1023E6CF
+  .text:1023E6B6                 push    offset aModNumknownMax; "mod_numknown >= MAX_KNOWN_MODELS"
+  .text:1023E6BB                 call    Sys_Error
+  .text:1023E6C0                 add     esp, 4
+  .text:1023E6C3                 jmp     short loc_1023E6EF
+  .text:1023E6C5                 lea     ecx, [edx+edx*2]
+  .text:1023E6C8                 inc     edx
+  .text:1023E6C9                 mov     mod_numknown, edx
+  .text:1023E6CF                 mov     eax, [ebp+trackCRC]
+  .text:1023E6D2                 mov     dword ptr (mod_known_info+8)[ecx*4], 0
+  .text:1023E6DD                 mov     dword ptr (mod_known_info+4)[ecx*4], 0
+  .text:1023E6E8                 mov     dword ptr mod_known_info[ecx*4], eax
+  .text:1023E6EF                 push    3Fh ; '?'
+  .text:1023E6F1                 push    [ebp+name]
+  .text:1023E6F4                 push    esi
+  .text:1023E6F5                 call    Q_strncpy
+  .text:1023E6FA                 add     esp, 0Ch
+  .text:1023E6FD                 mov     byte ptr [esi+3Fh], 0
+  .text:1023E701                 cmp     dword ptr [esi+40h], 3
+  .text:1023E705                 mov     eax, esi
+  .text:1023E707                 jz      short loc_1023E716
+  .text:1023E709                 mov     dword ptr [esi+40h], 1
+  .text:1023E710                 pop     esi
+  .text:1023E711                 pop     ebx
+  .text:1023E712                 pop     ebp
+  .text:1023E713                 retn
+  .text:1023E714                 mov     eax, esi
+  .text:1023E716                 pop     esi
+  .text:1023E717                 pop     ebx
+  .text:1023E718                 pop     ebp
+  .text:1023E719                 retn
+procedure: |-
+  // Actual binary reuses an unreferenced model slot when the registry is full, unlike the available gl_model.c revision. mod_known is the complete model array; mod_numknown is its used-count global.
+  model_t *__cdecl Mod_FindName(int trackCRC, const char *name)
+  {
+    const char *v2; // eax
+    model_t *v3; // ebx
+    int v4; // edx
+    model_t *v5; // esi
+    int v6; // edi
+    modtype_t type; // eax
+    int v8; // ecx
+    model_t *result; // eax
+
+    v2 = name;
+    v3 = nullptr;
+    if ( !*name )
+      Sys_Error("Mod_FindName: NULL name");
+    v4 = mod_numknown;
+    v5 = mod_known;
+    v6 = 0;
+    if ( mod_numknown > 0 )
+    {
+      while ( Q_strcmp(v5, v2) )
+      {
+        if ( v5->needload == NL_UNREFERENCED )
+        {
+          if ( !v3 || (type = v5->type, type != mod_alias) && type != mod_studio )
+            v3 = v5;
+        }
+        v4 = mod_numknown;
+        ++v6;
+        v2 = name;
+        ++v5;
+        if ( v6 >= mod_numknown )
+          goto LABEL_13;
+      }
+      v4 = mod_numknown;
+    }
+  LABEL_13:
+    if ( v6 != v4 )
+      return v5;
+    if ( v4 < 1024 )
+    {
+      v8 = v4;
+      mod_numknown = v4 + 1;
+    }
+    else
+    {
+      if ( !v3 )
+        Sys_Error("mod_numknown >= MAX_KNOWN_MODELS");
+      v5 = v3;
+      v8 = v3 - mod_known;
+    }
+    mod_known_info[v8].initialCRC = 0;
+    mod_known_info[v8].firstCRCDone = 0;
+    mod_known_info[v8].shouldCRC = trackCRC;
+    Q_strncpy(v5, name, 63);
+    v5->name[63] = 0;
+    result = v5;
+    if ( v5->needload != NL_CLIENT )
+      v5->needload = NL_NEEDS_LOADED;
+    return result;
+  }

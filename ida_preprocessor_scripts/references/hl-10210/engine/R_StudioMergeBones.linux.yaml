@@ -1,0 +1,366 @@
+func_name: "R_StudioMergeBones"
+func_va: "0xcd6a0"
+disasm_code: |-
+  .text:000CD6A0                 push    ebp
+  .text:000CD6A1                 push    edi
+  .text:000CD6A2                 push    esi
+  .text:000CD6A3                 push    ebx
+  .text:000CD6A4                 sub     esp, 6Ch
+  .text:000CD6A7                 mov     edx, ds:currententity
+  .text:000CD6AD                 mov     esi, ds:pstudiohdr
+  .text:000CD6B3                 mov     eax, [edx+2DCh]
+  .text:000CD6B9                 cmp     eax, [esi+0A4h]
+  .text:000CD6BF                 jge     loc_CD938
+  .text:000CD6C5                 lea     edx, [eax+eax*4]
+  .text:000CD6C8                 lea     ebx, [eax+edx*2]
+  .text:000CD6CB                 shl     ebx, 4
+  .text:000CD6CE                 mov     edi, [esi+0A8h]
+  .text:000CD6D4                 add     ebx, edi
+  .text:000CD6D6                 add     ebx, esi
+  .text:000CD6D8                 ; pseqdesc
+  .text:000CD6D8                 mov     [esp+7Ch+pos], pseqdesc; pseqdesc
+  .text:000CD6DB                 call    CL_StudioEstimateFrame
+  .text:000CD6E0                 mov     edi, [pseqdesc+9Ch]
+  .text:000CD6E6                 test    edi, edi
+  .text:000CD6E8                 jz      loc_CD947
+  .text:000CD6EE                 mov     eax, [esi+0B0h]
+  .text:000CD6F4                 mov     [esp+7Ch+out], eax
+  .text:000CD6F8                 mov     eax, [esp+7Ch+psubmodel]
+  .text:000CD6FF                 mov     ebp, [eax+7Ch]
+  .text:000CD702                 mov     eax, edi
+  .text:000CD704                 test    ebp, ebp
+  .text:000CD706                 jz      loc_CD993
+  .text:000CD70C                 lea     eax, [ebp+eax*4+0]
+  .text:000CD710                 ; c
+  .text:000CD710                 mov     [esp+7Ch+pos], eax; c
+  .text:000CD713                 fstp    [esp+7Ch+i]
+  .text:000CD717                 call    Cache_Check
+  .text:000CD71C                 fld     [esp+7Ch+i]
+  .text:000CD720                 test    eax, eax
+  .text:000CD722                 jz      loc_CD951
+  .text:000CD728                 mov     ecx, [pseqdesc+9Ch]
+  .text:000CD72E                 mov     eax, [pseqdesc+7Ch]
+  .text:000CD731                 mov     edx, [ebp+ecx*4+0]
+  .text:000CD735                 add     eax, edx
+  .text:000CD737                 ; panim
+  .text:000CD737                 mov     [esp+7Ch+panim], eax; panim
+  .text:000CD73B                 mov     eax, offset q_29153
+  .text:000CD740                 ; pseqdesc
+  .text:000CD740                 mov     [esp+7Ch+var_74], pseqdesc; pseqdesc
+  .text:000CD744                 ; f
+  .text:000CD744                 fstp    [esp+7Ch+f]; f
+  .text:000CD748                 ; q
+  .text:000CD748                 mov     [esp+7Ch+q], eax; q
+  .text:000CD74C                 ; pos
+  .text:000CD74C                 mov     [esp+7Ch+pos], offset pos_29151; pos
+  .text:000CD753                 call    R_StudioCalcRotations
+  .text:000CD758                 mov     eax, ds:pstudiohdr
+  .text:000CD75D                 mov     pseqdesc, [eax+90h]
+  .text:000CD763                 add     ebx, eax
+  .text:000CD765                 mov     eax, [eax+8Ch]
+  .text:000CD76B                 test    eax, eax
+  .text:000CD76D                 jle     loc_CD855
+  .text:000CD773                 mov     edx, offset bonetransform
+  .text:000CD778                 mov     ecx, offset lighttransform
+  .text:000CD77D                 mov     esi, offset q_29153
+  .text:000CD782                 xor     ebp, ebp
+  .text:000CD784                 mov     [esp+7Ch+dest], edx
+  .text:000CD788                 mov     edi, offset pos_29151
+  .text:000CD78D                 mov     [esp+7Ch+out], ecx
+  .text:000CD791                 mov     [esp+7Ch+quaternion], esi
+  .text:000CD795                 mov     [esp+7Ch+i], ebp
+  .text:000CD799                 lea     esi, [esi+0]
+  .text:000CD7A0                 mov     eax, ds:cached_numbones
+  .text:000CD7A5                 xor     ebp, ebp
+  .text:000CD7A7                 mov     esi, offset cached_bonename
+  .text:000CD7AC                 test    eax, eax
+  .text:000CD7AE                 jg      short loc_CD7C8
+  .text:000CD7B0                 jmp     loc_CD860
+  .text:000CD7B8                 inc     j
+  .text:000CD7B9                 add     esi, 20h ; ' '
+  .text:000CD7BC                 cmp     ds:cached_numbones, j
+  .text:000CD7C2                 jle     loc_CD860
+  .text:000CD7C8                 ; s2
+  .text:000CD7C8                 mov     [esp+7Ch+q], esi; s2
+  .text:000CD7CC                 ; s1
+  .text:000CD7CC                 mov     [esp+7Ch+pos], ebx; s1
+  .text:000CD7CF                 call    Q_stricmp
+  .text:000CD7D4                 test    eax, eax
+  .text:000CD7D6                 jnz     short loc_CD7B8
+  .text:000CD7D8                 mov     eax, 30h ; '0'
+  .text:000CD7DD                 ; count
+  .text:000CD7DD                 mov     [esp+7Ch+var_74], eax; count
+  .text:000CD7E1                 lea     eax, [j+j*2+0]
+  .text:000CD7E5                 shl     eax, 4
+  .text:000CD7E8                 lea     ecx, cached_bonetransform[eax]
+  .text:000CD7EE                 mov     esi, eax
+  .text:000CD7F0                 mov     eax, [esp+7Ch+dest]
+  .text:000CD7F4                 ; src
+  .text:000CD7F4                 mov     [esp+7Ch+q], ecx; src
+  .text:000CD7F8                 ; dest
+  .text:000CD7F8                 mov     [esp+7Ch+pos], eax; dest
+  .text:000CD7FB                 call    Q_memcpy
+  .text:000CD800                 mov     eax, 30h ; '0'
+  .text:000CD805                 ; count
+  .text:000CD805                 mov     [esp+7Ch+var_74], eax; count
+  .text:000CD809                 lea     eax, cached_lighttransform[esi]
+  .text:000CD80F                 ; src
+  .text:000CD80F                 mov     [esp+7Ch+q], eax; src
+  .text:000CD813                 mov     eax, [esp+7Ch+out]
+  .text:000CD817                 ; dest
+  .text:000CD817                 mov     [esp+7Ch+pos], eax; dest
+  .text:000CD81A                 call    Q_memcpy
+  .text:000CD81F                 cmp     ds:cached_numbones, j
+  .text:000CD825                 jle     short loc_CD860
+  .text:000CD827                 inc     [esp+7Ch+i]
+  .text:000CD82B                 add     ebx, 70h ; 'p'
+  .text:000CD82E                 mov     eax, ds:pstudiohdr
+  .text:000CD833                 add     edi, 0Ch
+  .text:000CD836                 add     [esp+7Ch+dest], 30h ; '0'
+  .text:000CD83B                 mov     edx, [esp+7Ch+i]
+  .text:000CD83F                 add     [esp+7Ch+out], 30h ; '0'
+  .text:000CD844                 add     [esp+7Ch+quaternion], 10h
+  .text:000CD849                 cmp     [eax+8Ch], i_0
+  .text:000CD84F                 jg      loc_CD7A0
+  .text:000CD855                 add     esp, 6Ch
+  .text:000CD858                 pop     ebx
+  .text:000CD859                 pop     esi
+  .text:000CD85A                 pop     edi
+  .text:000CD85B                 pop     ebp
+  .text:000CD85C                 retn
+  .text:000CD860                 lea     eax, [esp+7Ch+bonematrix]
+  .text:000CD864                 ; matrix
+  .text:000CD864                 mov     [esp+7Ch+q], eax; matrix
+  .text:000CD868                 mov     eax, [esp+7Ch+quaternion]
+  .text:000CD86C                 ; quaternion
+  .text:000CD86C                 mov     [esp+7Ch+pos], eax; quaternion
+  .text:000CD86F                 call    QuaternionMatrix
+  .text:000CD874                 movss   xmm0, dword ptr [edi]
+  .text:000CD878                 movss   xmm1, dword ptr [edi+4]
+  .text:000CD87D                 movss   xmm2, dword ptr [edi+8]
+  .text:000CD882                 movss   [esp+7Ch+bonematrix+0Ch], xmm0
+  .text:000CD888                 movss   [esp+7Ch+bonematrix+1Ch], xmm1
+  .text:000CD88E                 movss   [esp+7Ch+bonematrix+2Ch], xmm2
+  .text:000CD894                 mov     eax, [ebx+20h]
+  .text:000CD897                 cmp     eax, 0FFFFFFFFh
+  .text:000CD89A                 jz      short loc_CD8EA
+  .text:000CD89C                 mov     ecx, [esp+7Ch+dest]
+  .text:000CD8A0                 lea     eax, [eax+eax*2]
+  .text:000CD8A3                 shl     eax, 4
+  .text:000CD8A6                 add     eax, offset bonetransform
+  .text:000CD8AB                 ; in1
+  .text:000CD8AB                 mov     [esp+7Ch+pos], eax; in1
+  .text:000CD8AE                 ; out
+  .text:000CD8AE                 mov     [esp+7Ch+var_74], ecx; out
+  .text:000CD8B2                 lea     ecx, [esp+7Ch+bonematrix]
+  .text:000CD8B6                 ; in2
+  .text:000CD8B6                 mov     [esp+7Ch+q], ecx; in2
+  .text:000CD8BA                 call    R_ConcatTransforms
+  .text:000CD8BF                 mov     eax, [esp+7Ch+out]
+  .text:000CD8C3                 ; out
+  .text:000CD8C3                 mov     [esp+7Ch+var_74], eax; out
+  .text:000CD8C7                 lea     eax, [esp+7Ch+bonematrix]
+  .text:000CD8CB                 ; in2
+  .text:000CD8CB                 mov     [esp+7Ch+q], eax; in2
+  .text:000CD8CF                 mov     eax, [ebx+20h]
+  .text:000CD8D2                 lea     eax, [eax+eax*2]
+  .text:000CD8D5                 shl     eax, 4
+  .text:000CD8D8                 add     eax, offset lighttransform
+  .text:000CD8DD                 ; in1
+  .text:000CD8DD                 mov     [esp+7Ch+pos], eax; in1
+  .text:000CD8E0                 call    R_ConcatTransforms
+  .text:000CD8E5                 jmp     loc_CD827
+  .text:000CD8EA                 mov     esi, [esp+7Ch+dest]
+  .text:000CD8EE                 lea     eax, [esp+7Ch+bonematrix]
+  .text:000CD8F2                 ; in2
+  .text:000CD8F2                 mov     [esp+7Ch+q], eax; in2
+  .text:000CD8F6                 ; in1
+  .text:000CD8F6                 mov     [esp+7Ch+pos], offset rotationmatrix; in1
+  .text:000CD8FD                 ; out
+  .text:000CD8FD                 mov     [esp+7Ch+var_74], esi; out
+  .text:000CD901                 call    R_ConcatTransforms
+  .text:000CD906                 mov     eax, [esp+7Ch+out]
+  .text:000CD90A                 ; in1
+  .text:000CD90A                 mov     [esp+7Ch+pos], offset rotationmatrix; in1
+  .text:000CD911                 ; out
+  .text:000CD911                 mov     [esp+7Ch+var_74], eax; out
+  .text:000CD915                 lea     eax, [esp+7Ch+bonematrix]
+  .text:000CD919                 ; in2
+  .text:000CD919                 mov     [esp+7Ch+q], eax; in2
+  .text:000CD91D                 call    R_ConcatTransforms
+  .text:000CD922                 mov     eax, ds:currententity
+  .text:000CD927                 ; transform
+  .text:000CD927                 mov     [esp+7Ch+q], esi; transform
+  .text:000CD92B                 ; ent
+  .text:000CD92B                 mov     [esp+7Ch+pos], eax; ent
+  .text:000CD92E                 call    CL_FxTransform
+  .text:000CD933                 jmp     loc_CD827
+  .text:000CD938                 xor     ebp, ebp
+  .text:000CD93A                 xor     ebx, ebx
+  .text:000CD93C                 mov     [edx+2DCh], ebp
+  .text:000CD942                 jmp     loc_CD6CE
+  .text:000CD947                 mov     eax, [pseqdesc+7Ch]
+  .text:000CD94A                 add     eax, esi
+  .text:000CD94C                 jmp     loc_CD737
+  .text:000CD951                 fstp    st
+  .text:000CD953                 mov     ecx, [esp+7Ch+out]
+  .text:000CD957                 lea     eax, [edi+edi*2]
+  .text:000CD95A                 lea     eax, [edi+eax*4]
+  .text:000CD95D                 ; fmt
+  .text:000CD95D                 mov     [esp+7Ch+pos], (offset aFailedLoadingS+7); fmt
+  .text:000CD964                 lea     eax, [ecx+eax*8]
+  .text:000CD967                 lea     esi, [esi+eax+20h]
+  .text:000CD96B                 mov     [esp+7Ch+q], esi
+  .text:000CD96F                 call    Con_DPrintf
+  .text:000CD974                 mov     eax, [pseqdesc+9Ch]
+  .text:000CD97A                 ; path
+  .text:000CD97A                 mov     [esp+7Ch+pos], esi; path
+  .text:000CD97D                 lea     eax, [ebp+eax*4+0]
+  .text:000CD981                 ; cu
+  .text:000CD981                 mov     [esp+7Ch+q], eax; cu
+  .text:000CD985                 call    COM_LoadCacheFile
+  .text:000CD98A                 fld     [esp+7Ch+i]
+  .text:000CD98E                 jmp     loc_CD728
+  .text:000CD993                 mov     ecx, 4
+  .text:000CD998                 ; size
+  .text:000CD998                 mov     [esp+7Ch+q], ecx; size
+  .text:000CD99C                 fstp    [esp+7Ch+i]
+  .text:000CD9A0                 ; num
+  .text:000CD9A0                 mov     [esp+7Ch+pos], 10h; num
+  .text:000CD9A7                 call    Mem_Calloc
+  .text:000CD9AC                 fld     [esp+7Ch+i]
+  .text:000CD9B0                 mov     ebp, eax
+  .text:000CD9B2                 mov     eax, [esp+7Ch+psubmodel]
+  .text:000CD9B9                 mov     [eax+7Ch], ebp
+  .text:000CD9BC                 mov     eax, [pseqdesc+9Ch]
+  .text:000CD9C2                 jmp     loc_CD70C
+procedure: |-
+  // Source: engine/r_studio.c:1907-1978. For each model bone, search j < cached_numbones and compare the source bone name with cached_bonename[j] (32-byte entries). On a match copy the two cached matrices. cached_numbones is distinct from pstudiohdr->numbones. cached_bonename means the array base, not an incremented element. The same objects are populated by R_StudioSaveBones. QuaternionMatrix/R_GetAnim may be inlined in this binary; preserve the observed code.
+  void __cdecl R_StudioMergeBones(model_t *psubmodel)
+  {
+    studiohdr_t *v1; // esi
+    int sequence; // eax
+    int v3; // ebx
+    mstudioseqdesc_t *v4; // ebx
+    long double v5; // fst7
+    int seqgroup; // edi
+    dmodel_t *submodels; // ebp
+    int v8; // eax
+    mstudioanim_t *panim; // eax
+    const char *v10; // ebx
+    vec_t *v11; // edi
+    int v12; // ebp
+    const char *v13; // esi
+    float v14; // xmm1_4
+    float v15; // xmm2_4
+    int v16; // eax
+    char *v17; // esi
+    float f; // [esp+10h] [ebp-6Ch]
+    int i; // [esp+20h] [ebp-5Ch]
+    int ia; // [esp+20h] [ebp-5Ch]
+    float ib; // [esp+20h] [ebp-5Ch]
+    float *out; // [esp+24h] [ebp-58h]
+    float *outa; // [esp+24h] [ebp-58h]
+    float *dest; // [esp+28h] [ebp-54h]
+    vec_t *quaternion; // [esp+2Ch] [ebp-50h]
+    float bonematrix[4][4]; // [esp+30h] [ebp-4Ch] BYREF
+
+    v1 = pstudiohdr;
+    sequence = currententity->curstate.sequence;
+    if ( sequence >= pstudiohdr->numseq )
+    {
+      v3 = 0;
+      currententity->curstate.sequence = 0;
+    }
+    else
+    {
+      v3 = 176 * sequence;
+    }
+    v4 = (mstudioseqdesc_t *)((char *)v1 + v1->seqindex + v3);
+    v5 = CL_StudioEstimateFrame(v4);
+    seqgroup = v4->seqgroup;
+    if ( seqgroup )
+    {
+      out = (float *)v1->seqgroupindex;
+      submodels = psubmodel->submodels;
+      v8 = v4->seqgroup;
+      if ( !submodels )
+      {
+        ib = v5;
+        v5 = ib;
+        submodels = (dmodel_t *)Mem_Calloc(16, 4u);
+        psubmodel->submodels = submodels;
+        v8 = v4->seqgroup;
+      }
+      *(float *)&i = v5;
+      v5 = *(float *)&i;
+      if ( !Cache_Check((cache_user_t *)&submodels->mins[v8]) )
+      {
+        v17 = (char *)&out[26 * seqgroup + 8] + (_DWORD)v1;
+        Con_DPrintf((char *)"loading %s\n", v17);
+        COM_LoadCacheFile(v17, (cache_user_s *)&submodels->mins[v4->seqgroup]);
+        v5 = *(float *)&i;
+      }
+      panim = (mstudioanim_t *)(LODWORD(submodels->mins[v4->seqgroup]) + v4->animindex);
+    }
+    else
+    {
+      panim = (mstudioanim_t *)((char *)v1 + v4->animindex);
+    }
+    f = v5;
+    R_StudioCalcRotations(pos_29151, q_29153, v4, panim, f);
+    v10 = (char *)pstudiohdr + pstudiohdr->boneindex;
+    if ( pstudiohdr->numbones > 0 )
+    {
+      dest = bonetransform[0][0];
+      v11 = pos_29151[0];
+      outa = lighttransform[0][0];
+      quaternion = q_29153[0];
+      ia = 0;
+      do
+      {
+        v12 = 0;
+        v13 = cached_bonename;
+        if ( cached_numbones <= 0 )
+          goto LABEL_18;
+        while ( Q_stricmp(v10, v13) )
+        {
+          ++v12;
+          v13 += 32;
+          if ( cached_numbones <= v12 )
+            goto LABEL_18;
+        }
+        Q_memcpy(dest, cached_bonetransform[v12], 48);
+        Q_memcpy(outa, cached_lighttransform[v12], 48);
+        if ( cached_numbones <= v12 )
+        {
+  LABEL_18:
+          QuaternionMatrix(quaternion, bonematrix);
+          v14 = v11[1];
+          v15 = v11[2];
+          bonematrix[0][3] = *v11;
+          bonematrix[1][3] = v14;
+          bonematrix[2][3] = v15;
+          v16 = *((_DWORD *)v10 + 8);
+          if ( v16 == -1 )
+          {
+            R_ConcatTransforms(rotationmatrix, bonematrix, (float (*)[4])dest);
+            R_ConcatTransforms(rotationmatrix, bonematrix, (float (*)[4])outa);
+            CL_FxTransform(currententity, (float (*)[4])dest);
+          }
+          else
+          {
+            R_ConcatTransforms(bonetransform[v16], bonematrix, (float (*)[4])dest);
+            R_ConcatTransforms(lighttransform[*((_DWORD *)v10 + 8)], bonematrix, (float (*)[4])outa);
+          }
+        }
+        ++ia;
+        v10 += 112;
+        v11 += 3;
+        dest += 12;
+        outa += 12;
+        quaternion += 4;
+      }
+      while ( pstudiohdr->numbones > ia );
+    }
+  }

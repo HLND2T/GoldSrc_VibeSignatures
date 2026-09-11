@@ -1,0 +1,374 @@
+func_name: "R_StudioMergeBones"
+func_va: "0x101f86f0"
+disasm_code: |-
+  .text:101F86F0                 push    ebp
+  .text:101F86F1                 mov     ebp, esp
+  .text:101F86F3                 sub     esp, 5Ch
+  .text:101F86F6                 mov     eax, ___security_cookie
+  .text:101F86FB                 xor     eax, ebp
+  .text:101F86FD                 mov     [ebp+var_4], eax
+  .text:101F8700                 mov     ecx, currententity
+  .text:101F8706                 mov     edx, pstudiohdr
+  .text:101F870C                 push    ebx
+  .text:101F870D                 push    esi
+  .text:101F870E                 mov     eax, [ecx+2DCh]
+  .text:101F8714                 push    edi
+  .text:101F8715                 mov     edi, [ebp+model]
+  .text:101F8718                 cmp     eax, [edx+0A4h]
+  .text:101F871E                 jl      short loc_101F8730
+  .text:101F8720                 mov     dword ptr [ecx+2DCh], 0
+  .text:101F872A                 mov     ecx, currententity
+  .text:101F8730                 imul    esi, [ecx+2DCh], 0B0h
+  .text:101F873A                 add     esi, [edx+0A8h]
+  .text:101F8740                 add     esi, edx
+  .text:101F8742                 push    esi
+  .text:101F8743                 call    CL_StudioEstimateFrame
+  .text:101F8748                 push    esi
+  .text:101F8749                 push    edi
+  .text:101F874A                 fstp    [ebp+var_4C]
+  .text:101F874D                 call    R_GetAnim
+  .text:101F8752                 movsd   xmm0, [ebp+var_4C]
+  .text:101F8757                 add     esp, 8
+  .text:101F875A                 cvtpd2ps xmm0, xmm0
+  .text:101F875E                 movss   [esp+6Ch+var_6C], xmm0
+  .text:101F8763                 push    eax
+  .text:101F8764                 push    esi
+  .text:101F8765                 push    offset unk_1050EEE8
+  .text:101F876A                 push    offset unk_1050E8E8
+  .text:101F876F                 call    R_StudioCalcRotations
+  .text:101F8774                 mov     eax, pstudiohdr
+  .text:101F8779                 add     esp, 14h
+  .text:101F877C                 mov     dword ptr [ebp+var_4C+4], 0
+  .text:101F8783                 mov     ebx, [eax+90h]
+  .text:101F8789                 add     ebx, 20h ; ' '
+  .text:101F878C                 cmp     dword ptr [eax+8Ch], 0
+  .text:101F8793                 jle     loc_101F8A16
+  .text:101F8799                 add     ebx, eax
+  .text:101F879B                 mov     [ebp+var_3C], offset unk_1050E8EC
+  .text:101F87A2                 mov     edx, offset unk_1050EEF0
+  .text:101F87A7                 xor     esi, esi
+  .text:101F87A9                 mov     [ebp+var_38], edx
+  .text:101F87AC                 mov     [ebp+var_40], esi
+  .text:101F87AF                 nop
+  .text:101F87B0                 xor     edi, edi
+  .text:101F87B2                 cmp     cached_numbones, edi
+  .text:101F87B8                 jle     short loc_101F882A
+  .text:101F87BA                 mov     esi, offset cached_bonename
+  .text:101F87BF                 nop
+  .text:101F87C0                 lea     eax, [ebx-20h]
+  .text:101F87C3                 push    esi
+  .text:101F87C4                 push    eax
+  .text:101F87C5                 call    Q_stricmp
+  .text:101F87CA                 add     esp, 8
+  .text:101F87CD                 test    eax, eax
+  .text:101F87CF                 jz      short loc_101F87E2
+  .text:101F87D1                 inc     edi
+  .text:101F87D2                 add     esi, 20h ; ' '
+  .text:101F87D5                 cmp     edi, cached_numbones
+  .text:101F87DB                 jl      short loc_101F87C0
+  .text:101F87DD                 mov     esi, [ebp+var_40]
+  .text:101F87E0                 jmp     short loc_101F8827
+  .text:101F87E2                 lea     esi, [edi+edi*2]
+  .text:101F87E5                 shl     esi, 4
+  .text:101F87E8                 push    30h ; '0'
+  .text:101F87EA                 lea     eax, cached_bonetransform[esi]
+  .text:101F87F0                 push    eax
+  .text:101F87F1                 mov     eax, [ebp+var_40]
+  .text:101F87F4                 lea     eax, dword_112218C0[eax]
+  .text:101F87FA                 push    eax
+  .text:101F87FB                 call    Q_memcpy
+  .text:101F8800                 lea     eax, cached_lighttransform[esi]
+  .text:101F8806                 mov     esi, [ebp+var_40]
+  .text:101F8809                 push    30h ; '0'
+  .text:101F880B                 push    eax
+  .text:101F880C                 lea     eax, dword_112200C0[esi]
+  .text:101F8812                 push    eax
+  .text:101F8813                 call    Q_memcpy
+  .text:101F8818                 add     esp, 18h
+  .text:101F881B                 cmp     edi, cached_numbones
+  .text:101F8821                 jl      loc_101F89E8
+  .text:101F8827                 mov     edx, [ebp+var_38]
+  .text:101F882A                 movss   xmm6, dword ptr [edx-4]
+  .text:101F882F                 lea     edi, dword_112218C0[esi]
+  .text:101F8835                 movss   xmm4, dword ptr [edx]
+  .text:101F8839                 movsd   xmm0, ds:qword_103065C0
+  .text:101F8841                 cvtps2pd xmm6, xmm6
+  .text:101F8844                 push    edi
+  .text:101F8845                 cvtps2pd xmm4, xmm4
+  .text:101F8848                 movaps  xmm2, xmm6
+  .text:101F884B                 movss   xmm7, dword ptr [edx+4]
+  .text:101F8850                 addsd   xmm2, xmm6
+  .text:101F8854                 movaps  xmm1, xmm4
+  .text:101F8857                 addsd   xmm1, xmm4
+  .text:101F885B                 cvtps2pd xmm7, xmm7
+  .text:101F885E                 movsd   [ebp+var_54], xmm2
+  .text:101F8863                 mulsd   xmm2, xmm6
+  .text:101F8867                 addsd   xmm7, xmm7
+  .text:101F886B                 mulsd   xmm1, xmm4
+  .text:101F886F                 subsd   xmm0, xmm2
+  .text:101F8873                 movsd   [ebp+var_5C], xmm2
+  .text:101F8878                 movaps  xmm2, xmm7
+  .text:101F887B                 movsd   qword ptr [ebp-44h], xmm1
+  .text:101F8880                 mulsd   xmm2, xmm4
+  .text:101F8884                 subsd   xmm0, xmm1
+  .text:101F8888                 cvtpd2ps xmm0, xmm0
+  .text:101F888C                 movss   [ebp+var_34], xmm0
+  .text:101F8891                 movss   xmm0, dword ptr [edx-8]
+  .text:101F8896                 cvtps2pd xmm0, xmm0
+  .text:101F8899                 movaps  xmm3, xmm0
+  .text:101F889C                 addsd   xmm3, xmm0
+  .text:101F88A0                 movaps  xmm1, xmm3
+  .text:101F88A3                 movaps  xmm5, xmm3
+  .text:101F88A6                 mulsd   xmm1, xmm6
+  .text:101F88AA                 mulsd   xmm5, xmm4
+  .text:101F88AE                 movaps  xmm4, xmm7
+  .text:101F88B1                 mulsd   xmm4, xmm6
+  .text:101F88B5                 movaps  xmm0, xmm1
+  .text:101F88B8                 subsd   xmm1, xmm2
+  .text:101F88BC                 addsd   xmm0, xmm2
+  .text:101F88C0                 movss   xmm2, dword ptr [edx-8]
+  .text:101F88C5                 cvtps2pd xmm2, xmm2
+  .text:101F88C8                 cvtpd2ps xmm0, xmm0
+  .text:101F88CC                 mulsd   xmm3, xmm2
+  .text:101F88D0                 movss   [ebp+var_24], xmm0
+  .text:101F88D5                 movaps  xmm0, xmm5
+  .text:101F88D8                 subsd   xmm0, xmm4
+  .text:101F88DC                 mulsd   xmm2, xmm7
+  .text:101F88E0                 addsd   xmm4, xmm5
+  .text:101F88E4                 cvtpd2ps xmm0, xmm0
+  .text:101F88E8                 movss   [ebp+var_14], xmm0
+  .text:101F88ED                 cvtpd2ps xmm0, xmm1
+  .text:101F88F1                 movsd   xmm1, ds:qword_103065C0
+  .text:101F88F9                 movss   [ebp+var_30], xmm0
+  .text:101F88FE                 subsd   xmm1, xmm3
+  .text:101F8902                 movsd   xmm3, [ebp+var_54]
+  .text:101F8907                 movaps  xmm0, xmm1
+  .text:101F890A                 subsd   xmm0, qword ptr [ebp-44h]
+  .text:101F890F                 subsd   xmm1, [ebp+var_5C]
+  .text:101F8914                 cvtpd2ps xmm0, xmm0
+  .text:101F8918                 movss   [ebp+var_20], xmm0
+  .text:101F891D                 movss   xmm0, dword ptr [edx]
+  .text:101F8921                 cvtps2pd xmm0, xmm0
+  .text:101F8924                 mov     edx, [ebp+var_3C]
+  .text:101F8927                 mulsd   xmm3, xmm0
+  .text:101F892B                 movaps  xmm0, xmm2
+  .text:101F892E                 addsd   xmm0, xmm3
+  .text:101F8932                 subsd   xmm3, xmm2
+  .text:101F8936                 cvtpd2ps xmm0, xmm0
+  .text:101F893A                 movss   [ebp+var_10], xmm0
+  .text:101F893F                 cvtpd2ps xmm0, xmm4
+  .text:101F8943                 movss   [ebp+var_2C], xmm0
+  .text:101F8948                 cvtpd2ps xmm0, xmm3
+  .text:101F894C                 movss   [ebp+var_1C], xmm0
+  .text:101F8951                 cvtpd2ps xmm0, xmm1
+  .text:101F8955                 movss   [ebp+var_C], xmm0
+  .text:101F895A                 movss   xmm0, dword ptr [edx-4]
+  .text:101F895F                 movss   [ebp+var_28], xmm0
+  .text:101F8964                 movss   xmm0, dword ptr [edx]
+  .text:101F8968                 movss   [ebp+var_18], xmm0
+  .text:101F896D                 movss   xmm0, dword ptr [edx+4]
+  .text:101F8972                 movss   [ebp+var_8], xmm0
+  .text:101F8977                 mov     eax, [ebx]
+  .text:101F8979                 cmp     eax, 0FFFFFFFFh
+  .text:101F897C                 jnz     short loc_101F89B2
+  .text:101F897E                 lea     eax, [ebp+var_34]
+  .text:101F8981                 push    eax
+  .text:101F8982                 push    offset rotationmatrix
+  .text:101F8987                 call    R_ConcatTransforms
+  .text:101F898C                 lea     eax, dword_112200C0[esi]
+  .text:101F8992                 push    eax
+  .text:101F8993                 lea     eax, [ebp+var_34]
+  .text:101F8996                 push    eax
+  .text:101F8997                 push    offset rotationmatrix
+  .text:101F899C                 call    R_ConcatTransforms
+  .text:101F89A1                 push    edi
+  .text:101F89A2                 push    currententity
+  .text:101F89A8                 call    CL_FxTransform
+  .text:101F89AD                 add     esp, 20h
+  .text:101F89B0                 jmp     short loc_101F89E8
+  .text:101F89B2                 lea     eax, [eax+eax*2]
+  .text:101F89B5                 lea     ecx, [ebp+var_34]
+  .text:101F89B8                 shl     eax, 4
+  .text:101F89BB                 push    ecx
+  .text:101F89BC                 add     eax, offset dword_112218C0
+  .text:101F89C1                 push    eax
+  .text:101F89C2                 call    R_ConcatTransforms
+  .text:101F89C7                 lea     eax, dword_112200C0[esi]
+  .text:101F89CD                 push    eax
+  .text:101F89CE                 lea     eax, [ebp+var_34]
+  .text:101F89D1                 push    eax
+  .text:101F89D2                 mov     eax, [ebx]
+  .text:101F89D4                 lea     eax, [eax+eax*2]
+  .text:101F89D7                 shl     eax, 4
+  .text:101F89DA                 add     eax, offset dword_112200C0
+  .text:101F89DF                 push    eax
+  .text:101F89E0                 call    R_ConcatTransforms
+  .text:101F89E5                 add     esp, 18h
+  .text:101F89E8                 mov     ecx, dword ptr [ebp+var_4C+4]
+  .text:101F89EB                 add     esi, 30h ; '0'
+  .text:101F89EE                 mov     eax, pstudiohdr
+  .text:101F89F3                 inc     ecx
+  .text:101F89F4                 mov     edx, [ebp+var_38]
+  .text:101F89F7                 add     ebx, 70h ; 'p'
+  .text:101F89FA                 add     [ebp+var_3C], 0Ch
+  .text:101F89FE                 add     edx, 10h
+  .text:101F8A01                 mov     dword ptr [ebp+var_4C+4], ecx
+  .text:101F8A04                 mov     [ebp+var_38], edx
+  .text:101F8A07                 mov     [ebp+var_40], esi
+  .text:101F8A0A                 cmp     ecx, [eax+8Ch]
+  .text:101F8A10                 jl      loc_101F87B0
+  .text:101F8A16                 mov     ecx, [ebp+var_4]
+  .text:101F8A19                 pop     edi
+  .text:101F8A1A                 pop     esi
+  .text:101F8A1B                 ; StackCookie
+  .text:101F8A1B                 xor     ecx, ebp; StackCookie
+  .text:101F8A1D                 pop     ebx
+  .text:101F8A1E                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101F8A23                 mov     esp, ebp
+  .text:101F8A25                 pop     ebp
+  .text:101F8A26                 retn
+procedure: |-
+  // Source: engine/r_studio.c:1907-1978. For each model bone, search j < cached_numbones and compare the source bone name with cached_bonename[j] (32-byte entries). On a match copy the two cached matrices. cached_numbones is distinct from pstudiohdr->numbones. cached_bonename means the array base, not an incremented element. The same objects are populated by R_StudioSaveBones. QuaternionMatrix/R_GetAnim may be inlined in this binary; preserve the observed code.
+  void __cdecl R_StudioMergeBones(model_t *model)
+  {
+    studio_merge_entity_partial *v1; // ecx
+    studio_merge_header_partial *v2; // edx
+    char *v3; // esi
+    int Anim; // eax
+    char *v5; // ebx
+    float *v6; // edx
+    int v7; // esi
+    int v8; // edi
+    char *v9; // esi
+    double v10; // xmm6_8
+    double v11; // xmm4_8
+    double v12; // xmm7_8
+    float v13; // xmm0_4
+    double v14; // xmm3_8
+    double v15; // xmm5_8
+    double v16; // xmm1_8
+    double v17; // xmm2_8
+    float v18; // xmm0_4
+    double v19; // xmm3_8
+    double v20; // xmm2_8
+    float v21; // xmm0_4
+    float v22; // xmm0_4
+    double v23; // xmm1_8
+    float v24; // xmm0_4
+    double v25; // xmm3_8
+    float v26; // xmm0_4
+    float v27; // xmm0_4
+    float v28; // xmm0_4
+    float v29; // xmm0_4
+    float v30; // [esp+0h] [ebp-6Ch]
+    char *v31; // [esp+0h] [ebp-6Ch]
+    double v32; // [esp+20h] [ebp-4Ch]
+    int v33; // [esp+24h] [ebp-48h]
+    double v34; // [esp+28h] [ebp-44h]
+    int v35; // [esp+2Ch] [ebp-40h]
+    _DWORD *v36; // [esp+30h] [ebp-3Ch]
+    float *v37; // [esp+34h] [ebp-38h]
+    _DWORD v38[12]; // [esp+38h] [ebp-34h] BYREF
+
+    v1 = currententity;
+    v2 = pstudiohdr;
+    if ( currententity->sequence >= pstudiohdr->numseq )
+    {
+      currententity->sequence = 0;
+      v1 = currententity;
+    }
+    v3 = &v2->prefix[176 * v1->sequence + v2->seqindex];
+    v32 = CL_StudioEstimateFrame(v3);
+    Anim = R_GetAnim(model, v3);
+    v30 = v32;
+    R_StudioCalcRotations(&unk_1050E8E8, &unk_1050EEE8, v3, Anim, LODWORD(v30));
+    v33 = 0;
+    if ( pstudiohdr->numbones > 0 )
+    {
+      v5 = &pstudiohdr->prefix[pstudiohdr->boneindex + 32];
+      v36 = &unk_1050E8EC;
+      v6 = (float *)&unk_1050EEF0;
+      v7 = 0;
+      v37 = (float *)&unk_1050EEF0;
+      v35 = 0;
+      do
+      {
+        v8 = 0;
+        if ( cached_numbones > 0 )
+        {
+          v9 = cached_bonename;
+          while ( Q_stricmp(v5 - 32, v9) )
+          {
+            ++v8;
+            v9 += 32;
+            if ( v8 >= cached_numbones )
+            {
+              v7 = v35;
+              goto LABEL_11;
+            }
+          }
+          Q_memcpy((char *)dword_112218C0 + v35, (float *)cached_bonetransform[v8], 48);
+          v7 = v35;
+          Q_memcpy((char *)dword_112200C0 + v35, (float *)cached_lighttransform[v8], 48);
+          if ( v8 < cached_numbones )
+            goto LABEL_15;
+  LABEL_11:
+          v6 = v37;
+        }
+        v10 = *(v6 - 1);
+        v31 = (char *)dword_112218C0 + v7;
+        v11 = *v6;
+        v12 = v6[1] + v6[1];
+        v34 = (v11 + v11) * v11;
+        v13 = 1.0 - (v10 + v10) * v10 - v34;
+        *(float *)v38 = v13;
+        v14 = *(v6 - 2) + *(v6 - 2);
+        v15 = v14 * v11;
+        v16 = v14 * v10 - v12 * v11;
+        v17 = *(v6 - 2);
+        v18 = v14 * v10 + v12 * v11;
+        v19 = v14 * v17;
+        *(float *)&v38[4] = v18;
+        v20 = v17 * v12;
+        v21 = v15 - v12 * v10;
+        *(float *)&v38[8] = v21;
+        v22 = v16;
+        *(float *)&v38[1] = v22;
+        v23 = 1.0 - v19;
+        v24 = 1.0 - v19 - v34;
+        *(float *)&v38[5] = v24;
+        v25 = (v10 + v10) * *v6;
+        v26 = v20 + v25;
+        *(float *)&v38[9] = v26;
+        v27 = v12 * v10 + v15;
+        *(float *)&v38[2] = v27;
+        v28 = v25 - v20;
+        *(float *)&v38[6] = v28;
+        v29 = v23 - (v10 + v10) * v10;
+        *(float *)&v38[10] = v29;
+        v38[3] = *(v36 - 1);
+        v38[7] = *v36;
+        v38[11] = v36[1];
+        if ( *(_DWORD *)v5 == -1 )
+        {
+          R_ConcatTransforms((float *)rotationmatrix, v38, v31);
+          R_ConcatTransforms((float *)rotationmatrix, v38, (char *)dword_112200C0 + v7);
+          CL_FxTransform(currententity, (char *)dword_112218C0 + v7);
+        }
+        else
+        {
+          R_ConcatTransforms(&dword_112218C0[12 * *(_DWORD *)v5], v38, v31);
+          R_ConcatTransforms(&dword_112200C0[12 * *(_DWORD *)v5], v38, (char *)dword_112200C0 + v7);
+        }
+  LABEL_15:
+        v7 += 48;
+        v5 += 112;
+        v36 += 3;
+        v6 = v37 + 4;
+        ++v33;
+        v37 += 4;
+        v35 = v7;
+      }
+      while ( v33 < pstudiohdr->numbones );
+    }
+  }

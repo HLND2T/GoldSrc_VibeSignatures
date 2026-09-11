@@ -1,0 +1,60 @@
+func_name: "CL_ReallocateDynamicData"
+func_va: "0x101a8500"
+disasm_code: |-
+  .text:101A8500                 push    ebp
+  .text:101A8501                 mov     ebp, esp
+  .text:101A8503                 ; nPlayers
+  .text:101A8503                 push    [ebp+nMaxClients]; nPlayers
+  .text:101A8506                 call    COM_EntsForPlayerSlots
+  .text:101A850B                 add     esp, 4
+  .text:101A850E                 mov     cl_max_edicts, eax
+  .text:101A8513                 test    eax, eax
+  .text:101A8515                 jg      short loc_101A8529
+  .text:101A8517                 push    offset aClReallocatedy; "CL_ReallocateDynamicData allocating 0 e"...
+  .text:101A851C                 call    Sys_Error
+  .text:101A8521                 mov     eax, cl_max_edicts
+  .text:101A8526                 add     esp, 4
+  .text:101A8529                 cmp     cl_entities, 0
+  .text:101A8530                 jz      short loc_101A8544
+  .text:101A8532                 push    offset aClReallocateCl; "CL_Reallocate cl_entities\n"
+  .text:101A8537                 call    Con_Printf
+  .text:101A853C                 mov     eax, cl_max_edicts
+  .text:101A8541                 add     esp, 4
+  .text:101A8544                 imul    eax, 0BB8h
+  .text:101A854A                 ; size
+  .text:101A854A                 push    eax; size
+  .text:101A854B                 call    Mem_ZeroMalloc
+  .text:101A8550                 ; nMaxObjects
+  .text:101A8550                 push    cl_max_edicts; nMaxObjects
+  .text:101A8556                 mov     cl_entities, eax
+  .text:101A855B                 call    R_AllocObjects
+  .text:101A8560                 imul    eax, dword_1031A22C, 4318h
+  .text:101A856A                 ; count
+  .text:101A856A                 push    eax; count
+  .text:101A856B                 ; fill
+  .text:101A856B                 push    0; fill
+  .text:101A856D                 ; dest
+  .text:101A856D                 push    offset cl_frames; dest
+  .text:101A8572                 call    Q_memset
+  .text:101A8577                 add     esp, 14h
+  .text:101A857A                 pop     ebp
+  .text:101A857B                 retn
+procedure: |-
+  // Source role: engine/cl_parse.c CL_ReallocateDynamicData. hl-10210 Windows uses a 3000-byte entity stride and a runtime frame reset count; retain this binary layout instead of imposing the source build's constants.
+  void __cdecl CL_ReallocateDynamicData(int nMaxClients)
+  {
+    int max_edicts; // eax
+
+    max_edicts = COM_EntsForPlayerSlots(nMaxClients);
+    cl_max_edicts = max_edicts;
+    if ( max_edicts <= 0 )
+      Sys_Error("CL_ReallocateDynamicData allocating 0 entities");
+    if ( cl_entities )
+    {
+      Con_Printf("CL_Reallocate cl_entities\n");
+      max_edicts = cl_max_edicts;
+    }
+    cl_entities = Mem_ZeroMalloc(3000 * max_edicts);
+    R_AllocObjects(cl_max_edicts);
+    Q_memset(&cl_frames, 0, 17176 * dword_1031A22C);
+  }

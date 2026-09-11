@@ -1,0 +1,1707 @@
+func_name: "GameStudioRenderer_StudioDrawPlayer"
+func_va: "0x104278"
+disasm_code: |-
+  .text:00104278                 push    ebp
+  .text:00104279                 push    edi
+  .text:0010427A                 push    esi
+  .text:0010427B                 push    ebx
+  .text:0010427C                 sub     esp, 0C1Ch
+  .text:00104282                 call    sub_9E590
+  .text:00104287                 add     ebx, (offset qword_61E000 - $)
+  .text:0010428D                 mov     ebp, [esp+0C2Ch+pplayer]
+  .text:00104294                 fldz
+  .text:00104296                 fst     [esp+0C2Ch+var_BE4]
+  .text:0010429A                 fst     [esp+0C2Ch+var_BE0]
+  .text:0010429E                 fst     [esp+0C2Ch+var_BDC]
+  .text:001042A2                 fst     [esp+0C2Ch+var_BF8]
+  .text:001042A6                 fst     [esp+0C2Ch+var_BF4]
+  .text:001042AA                 fstp    [esp+0C2Ch+var_BF0]
+  .text:001042AE                 mov     eax, [esp+0C2Ch+this]
+  .text:001042B5                 cmp     byte ptr [eax+40C0h], 0
+  .text:001042BC                 jz      loc_1043B4
+  .text:001042C2                 lea     edi, (unk_A57FA0 - 61E000h)[ebx]
+  .text:001042C8                 call    dword ptr [edi+0CCh]
+  .text:001042CE                 mov     esi, eax
+  .text:001042D0                 mov     ecx, [esp+0C2Ch+this]
+  .text:001042D7                 mov     [ecx+3Ch], eax
+  .text:001042DA                 call    dword ptr [edi+0CCh]
+  .text:001042E0                 cmp     eax, esi
+  .text:001042E2                 jz      loc_10476E
+  .text:001042E8                 mov     ecx, [esp+0C2Ch+this]
+  .text:001042EF                 add     ecx, 0Ch
+  .text:001042F2                 mov     [esp+0C2Ch+var_C24], ecx
+  .text:001042F6                 mov     eax, [esp+0C2Ch+this]
+  .text:001042FD                 add     eax, 4
+  .text:00104300                 mov     [esp+0C2Ch+var_C28], eax
+  .text:00104304                 mov     esi, [esp+0C2Ch+this]
+  .text:0010430B                 add     esi, 1Ch
+  .text:0010430E                 mov     [esp+0C2Ch+var_C2C], esi
+  .text:00104311                 call    ds:(dword_A9ABA8 - 61E000h)[ebx]
+  .text:00104317                 mov     edx, [esp+0C2Ch+this]
+  .text:0010431E                 add     edx, 4090h
+  .text:00104324                 mov     [esp+0C2Ch+var_C20], edx
+  .text:00104328                 mov     ecx, [esp+0C2Ch+this]
+  .text:0010432F                 add     ecx, 4084h
+  .text:00104335                 mov     [esp+0C2Ch+var_C24], ecx
+  .text:00104339                 mov     eax, [esp+0C2Ch+this]
+  .text:00104340                 add     eax, 4078h
+  .text:00104345                 mov     [esp+0C2Ch+var_C28], eax
+  .text:00104349                 mov     esi, [esp+0C2Ch+this]
+  .text:00104350                 add     esi, 409Ch
+  .text:00104356                 mov     [esp+0C2Ch+var_C2C], esi
+  .text:00104359                 call    ds:(dword_A9ABB0 - 61E000h)[ebx]
+  .text:0010435F                 mov     edx, [esp+0C2Ch+this]
+  .text:00104366                 add     edx, 4074h
+  .text:0010436C                 mov     [esp+0C2Ch+var_C28], edx
+  .text:00104370                 mov     ecx, [esp+0C2Ch+this]
+  .text:00104377                 add     ecx, 4070h
+  .text:0010437D                 mov     [esp+0C2Ch+var_C2C], ecx
+  .text:00104380                 call    ds:(dword_A9ABBC - 61E000h)[ebx]
+  .text:00104386                 mov     eax, [ebp+4]
+  .text:00104389                 lea     esi, [eax-1]
+  .text:0010438C                 mov     edx, [esp+0C2Ch+this]
+  .text:00104393                 mov     [edx+4Ch], esi
+  .text:00104396                 test    esi, esi
+  .text:00104398                 js      short loc_1043A4
+  .text:0010439A                 call    dword ptr [edi+90h]
+  .text:001043A0                 cmp     esi, eax
+  .text:001043A2                 jl      short loc_1043D2
+  .text:001043A4                 xor     edx, edx
+  .text:001043A6                 mov     eax, edx
+  .text:001043A8                 add     esp, 0C1Ch
+  .text:001043AE                 pop     ebx
+  .text:001043AF                 pop     esi
+  .text:001043B0                 pop     edi
+  .text:001043B1                 pop     ebp
+  .text:001043B2                 retn
+  .text:001043B4                 call    ds:(dword_A9AB98 - 61E000h)[ebx]
+  .text:001043BA                 mov     esi, eax
+  .text:001043BC                 mov     edx, [esp+0C2Ch+this]
+  .text:001043C3                 mov     [edx+3Ch], eax
+  .text:001043C6                 lea     edi, (unk_A57FA0 - 61E000h)[ebx]
+  .text:001043CC                 jmp     loc_1042DA
+  .text:001043D2                 mov     ecx, [esp+0C2Ch+this]
+  .text:001043D9                 mov     eax, [ecx+4Ch]
+  .text:001043DC                 mov     [esp+0C2Ch+var_C2C], eax
+  .text:001043DF                 call    ds:(dword_A9ABFC - 61E000h)[ebx]
+  .text:001043E5                 mov     esi, [esp+0C2Ch+this]
+  .text:001043EC                 mov     [esi+40h], eax
+  .text:001043EF                 test    eax, eax
+  .text:001043F1                 jz      short loc_1043A4
+  .text:001043F3                 mov     [esp+0C2Ch+var_C2C], eax
+  .text:001043F6                 call    ds:(dword_A9AB90 - 61E000h)[ebx]
+  .text:001043FC                 mov     edx, [esp+0C2Ch+this]
+  .text:00104403                 mov     [edx+54h], eax
+  .text:00104406                 mov     [esp+0C2Ch+var_C2C], eax
+  .text:00104409                 call    ds:(dword_A9AC0C - 61E000h)[ebx]
+  .text:0010440F                 mov     ecx, [esp+0C2Ch+this]
+  .text:00104416                 mov     eax, [ecx+40h]
+  .text:00104419                 mov     [esp+0C2Ch+var_C2C], eax
+  .text:0010441C                 call    ds:(dword_A9AC10 - 61E000h)[ebx]
+  .text:00104422                 mov     esi, [esp+0C2Ch+this]
+  .text:00104429                 mov     edx, [esi+4Ch]
+  .text:0010442C                 mov     [esp+0C2Ch+var_C2C], edx
+  .text:0010442F                 call    ds:(dword_A9AB9C - 61E000h)[ebx]
+  .text:00104435                 mov     ecx, [esp+0C2Ch+this]
+  .text:0010443C                 mov     [ecx+44h], eax
+  .text:0010443F                 mov     esi, [ecx+3Ch]
+  .text:00104442                 fld     dword ptr [esi+0B54h]
+  .text:00104448                 fstp    [esp+0C2Ch+var_C10]
+  .text:0010444C                 fld     dword ptr [esi+0B58h]
+  .text:00104452                 fstp    [esp+0C2Ch+var_C0C]
+  .text:00104456                 fld     dword ptr [esi+0B5Ch]
+  .text:0010445C                 fstp    [esp+0C2Ch+var_C08]
+  .text:00104460                 mov     eax, [ecx]
+  .text:00104462                 mov     [esp+0C2Ch+var_C28], ebp
+  .text:00104466                 mov     [esp+0C2Ch+var_C2C], ecx
+  .text:00104469                 call    dword ptr [eax+74h]
+  .text:0010446C                 mov     ecx, [esp+0C2Ch+this]
+  .text:00104473                 mov     esi, [ecx+44h]
+  .text:00104476                 mov     edx, [ebp+0B8h]
+  .text:0010447C                 mov     [esi+17Ch], edx
+  .text:00104482                 mov     eax, [esp+0C2Ch+this]
+  .text:00104489                 mov     dword ptr [eax+44h], 0
+  .text:00104490                 mov     ecx, [eax]
+  .text:00104492                 mov     [esp+0C2Ch+var_C28], 0
+  .text:0010449A                 mov     esi, [esp+0C2Ch+this]
+  .text:001044A1                 mov     [esp+0C2Ch+var_C2C], esi
+  .text:001044A4                 call    dword ptr [ecx+1Ch]
+  .text:001044A7                 mov     edx, [esp+0C2Ch+this]
+  .text:001044AE                 mov     eax, [edx+3Ch]
+  .text:001044B1                 movss   xmm5, [esp+0C2Ch+var_C10]
+  .text:001044B7                 movss   dword ptr [eax+0B54h], xmm5
+  .text:001044BF                 movss   xmm6, [esp+0C2Ch+var_C0C]
+  .text:001044C5                 movss   dword ptr [eax+0B58h], xmm6
+  .text:001044CD                 movss   xmm7, [esp+0C2Ch+var_C08]
+  .text:001044D3                 movss   dword ptr [eax+0B5Ch], xmm7
+  .text:001044DB                 mov     ecx, [esp+0C2Ch+flags]
+  .text:001044E2                 and     ecx, 1
+  .text:001044E5                 mov     [esp+0C2Ch+var_C10], ecx
+  .text:001044E9                 jz      short loc_104531
+  .text:001044EB                 call    ds:(dword_A9ABD4 - 61E000h)[ebx]
+  .text:001044F1                 test    eax, eax
+  .text:001044F3                 jz      loc_1043A4
+  .text:001044F9                 mov     esi, [esp+0C2Ch+this]
+  .text:00104500                 mov     edx, [esi+40ACh]
+  .text:00104506                 add     dword ptr [edx], 1
+  .text:00104509                 mov     eax, [esp+0C2Ch+this]
+  .text:00104510                 mov     ecx, [eax+40A8h]
+  .text:00104516                 add     dword ptr [ecx], 1
+  .text:00104519                 mov     esi, [esp+0C2Ch+this]
+  .text:00104520                 mov     edx, [esi+54h]
+  .text:00104523                 mov     eax, [edx+0CCh]
+  .text:00104529                 test    eax, eax
+  .text:0010452B                 jz      loc_1046B4
+  .text:00104531                 mov     ecx, [esp+0C2Ch+this]
+  .text:00104538                 mov     esi, [ecx+4Ch]
+  .text:0010453B                 mov     [esp+0C2Ch+var_C2C], esi
+  .text:0010453E                 call    ds:(dword_A9AB9C - 61E000h)[ebx]
+  .text:00104544                 mov     edx, [esp+0C2Ch+this]
+  .text:0010454B                 mov     [edx+44h], eax
+  .text:0010454E                 mov     ecx, [edx]
+  .text:00104550                 mov     [esp+0C2Ch+var_C2C], edx
+  .text:00104553                 call    dword ptr [ecx+20h]
+  .text:00104556                 mov     esi, [esp+0C2Ch+this]
+  .text:0010455D                 mov     eax, [esi]
+  .text:0010455F                 mov     edx, [esp+0C2Ch+this]
+  .text:00104566                 mov     [esp+0C2Ch+var_C2C], edx
+  .text:00104569                 call    dword ptr [eax+28h]
+  .text:0010456C                 mov     ecx, [esp+0C2Ch+this]
+  .text:00104573                 mov     esi, [ecx+44h]
+  .text:00104576                 mov     eax, [esp+0C2Ch+this]
+  .text:0010457D                 mov     edx, [eax+1Ch]
+  .text:00104580                 mov     [esi+178h], edx
+  .text:00104586                 mov     dword ptr [eax+44h], 0
+  .text:0010458D                 mov     esi, [esp+0C2Ch+flags]
+  .text:00104594                 and     esi, 2
+  .text:00104597                 mov     [esp+0C2Ch+var_C0C], esi
+  .text:0010459B                 jnz     loc_1046C6
+  .text:001045A1                 mov     byte ptr [esp+0C2Ch+var_C08], 0
+  .text:001045A6                 mov     esi, [esp+0C2Ch+var_C10]
+  .text:001045AA                 test    esi, esi
+  .text:001045AC                 jz      loc_1046B4
+  .text:001045B2                 mov     ecx, [esp+0C2Ch+this]
+  .text:001045B9                 mov     edx, [ecx+20h]
+  .text:001045BC                 fld     dword ptr [edx+0Ch]
+  .text:001045BF                 fldz
+  .text:001045C1                 fst     [esp+0C2Ch+var_C10]
+  .text:001045C5                 fxch    st(1)
+  .text:001045C7                 fucomip st, st(1)
+  .text:001045C9                 fstp    st
+  .text:001045CB                 jp      loc_1047F2
+  .text:001045D1                 jnz     loc_1047F2
+  .text:001045D7                 mov     eax, [esp+0C2Ch+this]
+  .text:001045DE                 mov     esi, [eax+3Ch]
+  .text:001045E1                 lea     ecx, [esp+0C2Ch+var_BF8]
+  .text:001045E5                 mov     [esp+0C2Ch+var_BD8], ecx
+  .text:001045E9                 lea     edx, [esp+0C2Ch+var_BEC]
+  .text:001045ED                 mov     edi, edx
+  .text:001045EF                 mov     [esp+0C2Ch+var_C04], edx
+  .text:001045F3                 mov     [esp+0C2Ch+var_C28], edx
+  .text:001045F7                 mov     [esp+0C2Ch+var_C2C], esi
+  .text:001045FA                 call    ds:(dword_A9ABD8 - 61E000h)[ebx]
+  .text:00104600                 mov     [esp+0C2Ch+var_C2C], edi
+  .text:00104603                 call    ds:(dword_A9ABDC - 61E000h)[ebx]
+  .text:00104609                 mov     [esp+0C2Ch+var_C2C], edi
+  .text:0010460C                 call    ds:(dword_A9ABE0 - 61E000h)[ebx]
+  .text:00104612                 mov     esi, [esp+0C2Ch+this]
+  .text:00104619                 mov     ecx, [esi+4Ch]
+  .text:0010461C                 mov     [esp+0C2Ch+var_C2C], ecx
+  .text:0010461F                 call    ds:(dword_A9AB9C - 61E000h)[ebx]
+  .text:00104625                 mov     edx, [esp+0C2Ch+this]
+  .text:0010462C                 mov     [edx+44h], eax
+  .text:0010462F                 mov     ecx, 0FFh
+  .text:00104634                 cmp     dword ptr [eax+170h], 0FFh
+  .text:0010463E                 mov     esi, ecx
+  .text:00104640                 cmovle  esi, [eax+170h]
+  .text:00104647                 xor     edi, edi
+  .text:00104649                 test    esi, esi
+  .text:0010464B                 cmovs   esi, edi
+  .text:0010464E                 mov     edx, [esp+0C2Ch+this]
+  .text:00104655                 mov     [edx+60h], esi
+  .text:00104658                 cmp     dword ptr [eax+174h], 0FFh
+  .text:00104662                 cmovle  ecx, [eax+174h]
+  .text:00104669                 test    ecx, ecx
+  .text:0010466B                 cmovns  edi, ecx
+  .text:0010466E                 mov     [edx+64h], edi
+  .text:00104671                 mov     [esp+0C2Ch+var_C28], edi
+  .text:00104675                 mov     [esp+0C2Ch+var_C2C], esi
+  .text:00104678                 call    ds:(dword_A9ABF8 - 61E000h)[ebx]
+  .text:0010467E                 mov     eax, [esp+0C2Ch+this]
+  .text:00104685                 mov     ecx, [eax]
+  .text:00104687                 mov     esi, [esp+0C2Ch+this]
+  .text:0010468E                 mov     [esp+0C2Ch+var_C2C], esi
+  .text:00104691                 call    dword ptr [ecx+54h]
+  .text:00104694                 mov     edi, [esp+0C2Ch+this]
+  .text:0010469B                 mov     dword ptr [edi+44h], 0
+  .text:001046A2                 mov     ebp, [ebp+0B4h]
+  .text:001046A8                 mov     [esp+0C2Ch+var_C10], ebp
+  .text:001046AC                 test    ebp, ebp
+  .text:001046AE                 jnz     loc_104838
+  .text:001046B4                 mov     edx, 1
+  .text:001046B9                 mov     eax, edx
+  .text:001046BB                 add     esp, 0C1Ch
+  .text:001046C1                 pop     ebx
+  .text:001046C2                 pop     esi
+  .text:001046C3                 pop     edi
+  .text:001046C4                 pop     ebp
+  .text:001046C5                 retn
+  .text:001046C6                 mov     eax, [esp+0C2Ch+var_C10]
+  .text:001046CA                 test    eax, eax
+  .text:001046CC                 jz      short loc_1046DC
+  .text:001046CE                 mov     edx, [ebp+0B4h]
+  .text:001046D4                 test    edx, edx
+  .text:001046D6                 jnz     loc_10480C
+  .text:001046DC                 mov     eax, [esp+0C2Ch+this]
+  .text:001046E3                 mov     esi, [eax]
+  .text:001046E5                 mov     edx, [esp+0C2Ch+this]
+  .text:001046EC                 mov     [esp+0C2Ch+var_C2C], edx
+  .text:001046EF                 call    dword ptr [esi+24h]
+  .text:001046F2                 call    ds:(dword_A9AC00 - 61E000h)[ebx]
+  .text:001046F8                 mov     ecx, [esp+0C2Ch+this]
+  .text:001046FF                 mov     eax, [ecx+3Ch]
+  .text:00104702                 mov     esi, [eax]
+  .text:00104704                 test    esi, esi
+  .text:00104706                 jle     short loc_104764
+  .text:00104708                 mov     [esp+0C2Ch+var_C2C], esi
+  .text:0010470B                 call    dword ptr [edi+0D4h]
+  .text:00104711                 mov     edi, [esp+0C2Ch+this]
+  .text:00104718                 mov     ecx, [edi+3Ch]
+  .text:0010471B                 lea     edx, [eax+0B60h]
+  .text:00104721                 mov     edi, edx
+  .text:00104723                 lea     esi, [ecx+0B60h]
+  .text:00104729                 mov     [esp+0C2Ch+var_C08], 30h ; '0'
+  .text:00104731                 and     edx, 1
+  .text:00104734                 jnz     loc_105CCF
+  .text:0010473A                 mov     eax, edi
+  .text:0010473C                 test    al, 2
+  .text:0010473E                 jnz     loc_105CB9
+  .text:00104744                 mov     edx, [esp+0C2Ch+var_C08]
+  .text:00104748                 mov     ecx, edx
+  .text:0010474A                 shr     ecx, 2
+  .text:0010474D                 rep movsd
+  .text:0010474F                 mov     eax, edi
+  .text:00104751                 and     edx, 2
+  .text:00104754                 jz      short loc_10475A
+  .text:00104756                 movsw
+  .text:00104758                 mov     eax, edi
+  .text:0010475A                 test    byte ptr [esp+0C2Ch+var_C08], 1
+  .text:0010475F                 jz      short loc_104764
+  .text:00104761                 mov     edi, eax
+  .text:00104763                 movsb
+  .text:00104764                 mov     byte ptr [esp+0C2Ch+var_C08], 1
+  .text:00104769                 jmp     loc_1045A6
+  .text:0010476E                 call    _CL_IsThirdPerson
+  .text:00104773                 test    eax, eax
+  .text:00104775                 jnz     loc_1042E8
+  .text:0010477B                 fldz
+  .text:0010477D                 fst     [esp+0C2Ch+var_BD4]
+  .text:00104781                 fst     [esp+0C2Ch+var_BD0]
+  .text:00104785                 fstp    [esp+0C2Ch+var_BCC]
+  .text:00104789                 lea     eax, [esp+0C2Ch+var_BD4]
+  .text:0010478D                 mov     [esp+0C2Ch+var_C2C], eax
+  .text:00104790                 call    dword ptr [edi+88h]
+  .text:00104796                 movss   xmm4, [esp+0C2Ch+var_BD4]
+  .text:0010479C                 ; float
+  .text:0010479C                 movss   [esp+0C2Ch+var_C28], xmm4; float
+  .text:001047A2                 mov     esi, [esp+0C2Ch+this]
+  .text:001047A9                 mov     edx, [esi+3Ch]
+  .text:001047AC                 ; int
+  .text:001047AC                 mov     [esp+0C2Ch+var_C2C], edx; int
+  .text:001047AF                 call    sub_12C1EC
+  .text:001047B4                 lea     ecx, (g_bRenderingPortals - 61E000h)[ebx]
+  .text:001047BA                 movzx   eax, byte ptr [ecx]
+  .text:001047BD                 test    al, al
+  .text:001047BF                 jnz     loc_1042E8
+  .text:001047C5                 mov     byte ptr [esp+0C2Ch+var_C10], al
+  .text:001047C9                 call    dword ptr [edi+0CCh]
+  .text:001047CF                 test    eax, eax
+  .text:001047D1                 jz      loc_1042E8
+  .text:001047D7                 lea     esi, (g_ViewEntityIndex_SCClient - 61E000h)[ebx]
+  .text:001047DD                 mov     edx, [esi]
+  .text:001047DF                 cmp     [eax], edx
+  .text:001047E1                 movzx   edx, byte ptr [esp+0C2Ch+var_C10]
+  .text:001047E6                 jnz     loc_1042E8
+  .text:001047EC                 jmp     loc_1043A6
+  .text:001047F2                 mov     edi, [esp+0C2Ch+this]
+  .text:001047F9                 mov     esi, [edi+3Ch]
+  .text:001047FC                 mov     dword ptr [esi+314h], 0FFh
+  .text:00104806                 jmp     loc_1045E1
+  .text:0010480C                 mov     esi, ds:(dword_A9AB90 - 61E000h)[ebx]
+  .text:00104812                 mov     [esp+0C2Ch+var_C2C], edx
+  .text:00104815                 call    ds:(dword_A9AB94 - 61E000h)[ebx]
+  .text:0010481B                 mov     [esp+0C2Ch+var_C2C], eax
+  .text:0010481E                 call    esi
+  .text:00104820                 mov     byte ptr [esp+0C2Ch+var_C08], 0
+  .text:00104825                 mov     ecx, [eax+0D4h]
+  .text:0010482B                 test    ecx, ecx
+  .text:0010482D                 jnz     loc_1045B2
+  .text:00104833                 jmp     loc_1046DC
+  .text:00104838                 mov     edx, [esp+0C2Ch+this]
+  .text:0010483F                 mov     eax, [edx+3Ch]
+  .text:00104842                 mov     ecx, [eax]
+  .text:00104844                 mov     [esp+0C2Ch+var_BD4], ecx
+  .text:00104848                 mov     esi, [eax+4]
+  .text:0010484B                 mov     [esp+0C2Ch+var_BD0], esi
+  .text:0010484F                 mov     edi, [eax+8]
+  .text:00104852                 mov     [esp+0C2Ch+var_BCC], edi
+  .text:00104856                 mov     ebp, [eax+0Ch]
+  .text:00104859                 mov     [esp+0C2Ch+var_BC8], ebp
+  .text:0010485D                 movss   xmm0, dword ptr [eax+10h]
+  .text:00104862                 movss   [esp+0C2Ch+var_BC4], xmm0
+  .text:00104868                 mov     edx, [eax+14h]
+  .text:0010486B                 mov     [esp+0C2Ch+var_BC0], edx
+  .text:0010486F                 movss   xmm1, dword ptr [eax+18h]
+  .text:00104874                 movss   [esp+0C2Ch+var_BBC], xmm1
+  .text:0010487A                 movss   xmm2, dword ptr [eax+1Ch]
+  .text:0010487F                 movss   [esp+0C2Ch+var_BB8], xmm2
+  .text:00104885                 movss   xmm3, dword ptr [eax+20h]
+  .text:0010488A                 movss   [esp+0C2Ch+var_BB4], xmm3
+  .text:00104890                 movss   xmm4, dword ptr [eax+24h]
+  .text:00104895                 movss   [esp+0C2Ch+var_BB0], xmm4
+  .text:0010489B                 movss   xmm5, dword ptr [eax+28h]
+  .text:001048A0                 movss   [esp+0C2Ch+var_BAC], xmm5
+  .text:001048A9                 movss   xmm6, dword ptr [eax+2Ch]
+  .text:001048AE                 movss   [esp+0C2Ch+var_BA8], xmm6
+  .text:001048B7                 mov     ecx, [eax+30h]
+  .text:001048BA                 mov     [esp+0C2Ch+var_BA4], ecx
+  .text:001048C1                 mov     esi, [eax+34h]
+  .text:001048C4                 mov     [esp+0C2Ch+var_BA0], esi
+  .text:001048CB                 movss   xmm7, dword ptr [eax+38h]
+  .text:001048D0                 movss   [esp+0C2Ch+var_B9C], xmm7
+  .text:001048D9                 mov     edi, [eax+3Ch]
+  .text:001048DC                 mov     [esp+0C2Ch+var_B98], edi
+  .text:001048E3                 movzx   ebp, word ptr [eax+40h]
+  .text:001048E7                 mov     [esp+0C2Ch+var_B94], bp
+  .text:001048EF                 movzx   edx, word ptr [eax+42h]
+  .text:001048F3                 mov     [esp+0C2Ch+var_B92], dx
+  .text:001048FB                 mov     ecx, [eax+44h]
+  .text:001048FE                 mov     [esp+0C2Ch+var_B90], ecx
+  .text:00104905                 movss   xmm0, dword ptr [eax+48h]
+  .text:0010490A                 movss   [esp+0C2Ch+var_B8C], xmm0
+  .text:00104913                 movzx   edx, byte ptr [eax+4Ch]
+  .text:00104917                 mov     [esp+0C2Ch+var_B88], dl
+  .text:0010491E                 mov     esi, [eax+50h]
+  .text:00104921                 mov     [esp+0C2Ch+var_B84], esi
+  .text:00104928                 mov     edi, [eax+54h]
+  .text:0010492B                 mov     [esp+0C2Ch+var_B80], edi
+  .text:00104932                 movzx   ebp, word ptr [eax+58h]
+  .text:00104936                 mov     [esp+0C2Ch+var_B7C], bp
+  .text:0010493E                 movzx   ecx, byte ptr [eax+5Ah]
+  .text:00104942                 mov     [esp+0C2Ch+var_B7A], cl
+  .text:00104949                 mov     edx, [eax+5Ch]
+  .text:0010494C                 mov     [esp+0C2Ch+var_B78], edx
+  .text:00104953                 mov     esi, [eax+60h]
+  .text:00104956                 mov     [esp+0C2Ch+var_B74], esi
+  .text:0010495D                 movss   xmm1, dword ptr [eax+64h]
+  .text:00104962                 movss   [esp+0C2Ch+var_B70], xmm1
+  .text:0010496B                 movss   xmm2, dword ptr [eax+68h]
+  .text:00104970                 movss   [esp+0C2Ch+var_B6C], xmm2
+  .text:00104979                 mov     edi, [eax+6Ch]
+  .text:0010497C                 mov     [esp+0C2Ch+var_B68], edi
+  .text:00104983                 mov     ebp, [eax+70h]
+  .text:00104986                 mov     [esp+0C2Ch+var_B64], ebp
+  .text:0010498D                 mov     ecx, [eax+74h]
+  .text:00104990                 mov     [esp+0C2Ch+var_B60], ecx
+  .text:00104997                 movss   xmm3, dword ptr [eax+78h]
+  .text:0010499C                 movss   [esp+0C2Ch+var_B5C], xmm3
+  .text:001049A5                 movss   xmm4, dword ptr [eax+7Ch]
+  .text:001049AA                 movss   [esp+0C2Ch+var_B58], xmm4
+  .text:001049B3                 movss   xmm5, dword ptr [eax+80h]
+  .text:001049BB                 movss   [esp+0C2Ch+var_B54], xmm5
+  .text:001049C4                 movss   xmm6, dword ptr [eax+84h]
+  .text:001049CC                 movss   [esp+0C2Ch+var_B50], xmm6
+  .text:001049D5                 movss   xmm7, dword ptr [eax+88h]
+  .text:001049DD                 movss   [esp+0C2Ch+var_B4C], xmm7
+  .text:001049E6                 movss   xmm0, dword ptr [eax+8Ch]
+  .text:001049EE                 movss   [esp+0C2Ch+var_B48], xmm0
+  .text:001049F7                 movss   xmm1, dword ptr [eax+90h]
+  .text:001049FF                 movss   [esp+0C2Ch+var_B44], xmm1
+  .text:00104A08                 movss   xmm2, dword ptr [eax+94h]
+  .text:00104A10                 movss   [esp+0C2Ch+var_B40], xmm2
+  .text:00104A19                 movss   xmm3, dword ptr [eax+98h]
+  .text:00104A21                 movss   [esp+0C2Ch+var_B3C], xmm3
+  .text:00104A2A                 mov     edx, [eax+9Ch]
+  .text:00104A30                 mov     [esp+0C2Ch+var_B38], edx
+  .text:00104A37                 mov     esi, [eax+0A0h]
+  .text:00104A3D                 mov     [esp+0C2Ch+var_B34], esi
+  .text:00104A44                 movss   xmm4, dword ptr [eax+0A4h]
+  .text:00104A4C                 movss   [esp+0C2Ch+var_B30], xmm4
+  .text:00104A55                 movss   xmm5, dword ptr [eax+0A8h]
+  .text:00104A5D                 movss   [esp+0C2Ch+var_B2C], xmm5
+  .text:00104A66                 mov     edi, [eax+0ACh]
+  .text:00104A6C                 mov     [esp+0C2Ch+var_B28], edi
+  .text:00104A73                 mov     ebp, [eax+0B0h]
+  .text:00104A79                 mov     [esp+0C2Ch+var_B24], ebp
+  .text:00104A80                 mov     ecx, [eax+0B4h]
+  .text:00104A86                 mov     [esp+0C2Ch+var_B20], ecx
+  .text:00104A8D                 mov     edx, [eax+0B8h]
+  .text:00104A93                 mov     [esp+0C2Ch+var_B1C], edx
+  .text:00104A9A                 mov     esi, [eax+0BCh]
+  .text:00104AA0                 mov     [esp+0C2Ch+var_B18], esi
+  .text:00104AA7                 mov     edi, [eax+0C0h]
+  .text:00104AAD                 mov     [esp+0C2Ch+var_B14], edi
+  .text:00104AB4                 movss   xmm6, dword ptr [eax+0C4h]
+  .text:00104ABC                 movss   [esp+0C2Ch+var_B10], xmm6
+  .text:00104AC5                 movss   xmm7, dword ptr [eax+0C8h]
+  .text:00104ACD                 movss   [esp+0C2Ch+var_B0C], xmm7
+  .text:00104AD6                 movss   xmm0, dword ptr [eax+0CCh]
+  .text:00104ADE                 movss   [esp+0C2Ch+var_B08], xmm0
+  .text:00104AE7                 mov     ebp, [eax+0D0h]
+  .text:00104AED                 mov     [esp+0C2Ch+var_B04], ebp
+  .text:00104AF4                 mov     ecx, [eax+0D4h]
+  .text:00104AFA                 mov     [esp+0C2Ch+var_B00], ecx
+  .text:00104B01                 mov     edx, [eax+0D8h]
+  .text:00104B07                 mov     [esp+0C2Ch+var_AFC], edx
+  .text:00104B0E                 mov     esi, [eax+0DCh]
+  .text:00104B14                 mov     [esp+0C2Ch+var_AF8], esi
+  .text:00104B1B                 movss   xmm1, dword ptr [eax+0E0h]
+  .text:00104B23                 movss   [esp+0C2Ch+var_AF4], xmm1
+  .text:00104B2C                 movss   xmm2, dword ptr [eax+0E4h]
+  .text:00104B34                 movss   [esp+0C2Ch+var_AF0], xmm2
+  .text:00104B3D                 mov     edi, [eax+0E8h]
+  .text:00104B43                 mov     [esp+0C2Ch+var_AEC], edi
+  .text:00104B4A                 movss   xmm3, dword ptr [eax+0ECh]
+  .text:00104B52                 movss   [esp+0C2Ch+var_AE8], xmm3
+  .text:00104B5B                 movss   xmm4, dword ptr [eax+0F0h]
+  .text:00104B63                 movss   [esp+0C2Ch+var_AE4], xmm4
+  .text:00104B6C                 movss   xmm5, dword ptr [eax+0F4h]
+  .text:00104B74                 movss   [esp+0C2Ch+var_AE0], xmm5
+  .text:00104B7D                 movss   xmm6, dword ptr [eax+0F8h]
+  .text:00104B85                 movss   [esp+0C2Ch+var_ADC], xmm6
+  .text:00104B8E                 movss   xmm7, dword ptr [eax+0FCh]
+  .text:00104B96                 movss   [esp+0C2Ch+var_AD8], xmm7
+  .text:00104B9F                 movss   xmm0, dword ptr [eax+100h]
+  .text:00104BA7                 movss   [esp+0C2Ch+var_AD4], xmm0
+  .text:00104BB0                 movss   xmm1, dword ptr [eax+104h]
+  .text:00104BB8                 movss   [esp+0C2Ch+var_AD0], xmm1
+  .text:00104BC1                 movss   xmm2, dword ptr [eax+108h]
+  .text:00104BC9                 movss   [esp+0C2Ch+var_ACC], xmm2
+  .text:00104BD2                 mov     ebp, [eax+10Ch]
+  .text:00104BD8                 mov     [esp+0C2Ch+var_AC8], ebp
+  .text:00104BDF                 mov     ecx, [eax+110h]
+  .text:00104BE5                 mov     [esp+0C2Ch+var_AC4], ecx
+  .text:00104BEC                 mov     edx, [eax+114h]
+  .text:00104BF2                 mov     [esp+0C2Ch+var_AC0], edx
+  .text:00104BF9                 mov     esi, [eax+118h]
+  .text:00104BFF                 mov     [esp+0C2Ch+var_ABC], esi
+  .text:00104C06                 movss   xmm3, dword ptr [eax+11Ch]
+  .text:00104C0E                 movss   [esp+0C2Ch+var_AB8], xmm3
+  .text:00104C17                 movss   xmm4, dword ptr [eax+120h]
+  .text:00104C1F                 movss   [esp+0C2Ch+var_AB4], xmm4
+  .text:00104C28                 movss   xmm5, dword ptr [eax+124h]
+  .text:00104C30                 movss   [esp+0C2Ch+var_AB0], xmm5
+  .text:00104C39                 movss   xmm6, dword ptr [eax+128h]
+  .text:00104C41                 movss   [esp+0C2Ch+var_AAC], xmm6
+  .text:00104C4A                 movss   xmm7, dword ptr [eax+12Ch]
+  .text:00104C52                 movss   [esp+0C2Ch+var_AA8], xmm7
+  .text:00104C5B                 movss   xmm0, dword ptr [eax+130h]
+  .text:00104C63                 movss   [esp+0C2Ch+var_AA4], xmm0
+  .text:00104C6C                 movss   xmm1, dword ptr [eax+134h]
+  .text:00104C74                 movss   [esp+0C2Ch+var_AA0], xmm1
+  .text:00104C7D                 movss   xmm2, dword ptr [eax+138h]
+  .text:00104C85                 movss   [esp+0C2Ch+var_A9C], xmm2
+  .text:00104C8E                 movss   xmm3, dword ptr [eax+13Ch]
+  .text:00104C96                 movss   [esp+0C2Ch+var_A98], xmm3
+  .text:00104C9F                 movss   xmm4, dword ptr [eax+140h]
+  .text:00104CA7                 movss   [esp+0C2Ch+var_A94], xmm4
+  .text:00104CB0                 movss   xmm5, dword ptr [eax+144h]
+  .text:00104CB8                 movss   [esp+0C2Ch+var_A90], xmm5
+  .text:00104CC1                 movss   xmm6, dword ptr [eax+148h]
+  .text:00104CC9                 movss   [esp+0C2Ch+var_A8C], xmm6
+  .text:00104CD2                 movss   xmm7, dword ptr [eax+14Ch]
+  .text:00104CDA                 movss   [esp+0C2Ch+var_A88], xmm7
+  .text:00104CE3                 movss   xmm0, dword ptr [eax+150h]
+  .text:00104CEB                 movss   [esp+0C2Ch+var_A84], xmm0
+  .text:00104CF4                 movss   xmm1, dword ptr [eax+154h]
+  .text:00104CFC                 movss   [esp+0C2Ch+var_A80], xmm1
+  .text:00104D05                 movss   xmm2, dword ptr [eax+158h]
+  .text:00104D0D                 movss   [esp+0C2Ch+var_A7C], xmm2
+  .text:00104D16                 mov     edi, [eax+15Ch]
+  .text:00104D1C                 mov     [esp+0C2Ch+var_A78], edi
+  .text:00104D23                 mov     ebp, [eax+160h]
+  .text:00104D29                 mov     [esp+0C2Ch+var_A74], ebp
+  .text:00104D30                 movss   xmm3, dword ptr [eax+164h]
+  .text:00104D38                 movss   [esp+0C2Ch+var_A70], xmm3
+  .text:00104D41                 mov     ecx, [eax+168h]
+  .text:00104D47                 mov     [esp+0C2Ch+var_A6C], ecx
+  .text:00104D4E                 movss   xmm4, dword ptr [eax+16Ch]
+  .text:00104D56                 movss   [esp+0C2Ch+var_A68], xmm4
+  .text:00104D5F                 movss   xmm5, dword ptr [eax+170h]
+  .text:00104D67                 movss   [esp+0C2Ch+var_A64], xmm5
+  .text:00104D70                 movss   xmm6, dword ptr [eax+174h]
+  .text:00104D78                 movss   [esp+0C2Ch+var_A60], xmm6
+  .text:00104D81                 movss   xmm7, dword ptr [eax+178h]
+  .text:00104D89                 movss   [esp+0C2Ch+var_A5C], xmm7
+  .text:00104D92                 movss   xmm0, dword ptr [eax+17Ch]
+  .text:00104D9A                 movss   [esp+0C2Ch+var_A58], xmm0
+  .text:00104DA3                 movss   xmm1, dword ptr [eax+180h]
+  .text:00104DAB                 movss   [esp+0C2Ch+var_A54], xmm1
+  .text:00104DB4                 mov     edx, [eax+184h]
+  .text:00104DBA                 mov     [esp+0C2Ch+var_A50], edx
+  .text:00104DC1                 mov     esi, [eax+188h]
+  .text:00104DC7                 mov     [esp+0C2Ch+var_A4C], esi
+  .text:00104DCE                 movss   xmm2, dword ptr [eax+18Ch]
+  .text:00104DD6                 movss   [esp+0C2Ch+var_A48], xmm2
+  .text:00104DDF                 mov     edi, [eax+190h]
+  .text:00104DE5                 mov     [esp+0C2Ch+var_A44], edi
+  .text:00104DEC                 movzx   ebp, word ptr [eax+194h]
+  .text:00104DF3                 mov     [esp+0C2Ch+var_A40], bp
+  .text:00104DFB                 movzx   ecx, word ptr [eax+196h]
+  .text:00104E02                 mov     [esp+0C2Ch+var_A3E], cx
+  .text:00104E0A                 mov     edx, [eax+198h]
+  .text:00104E10                 mov     [esp+0C2Ch+var_A3C], edx
+  .text:00104E17                 movss   xmm3, dword ptr [eax+19Ch]
+  .text:00104E1F                 movss   [esp+0C2Ch+var_A38], xmm3
+  .text:00104E28                 movzx   ecx, byte ptr [eax+1A0h]
+  .text:00104E2F                 mov     [esp+0C2Ch+var_A34], cl
+  .text:00104E36                 mov     esi, [eax+1A4h]
+  .text:00104E3C                 mov     [esp+0C2Ch+var_A30], esi
+  .text:00104E43                 mov     edi, [eax+1A8h]
+  .text:00104E49                 mov     [esp+0C2Ch+var_A2C], edi
+  .text:00104E50                 movzx   ebp, word ptr [eax+1ACh]
+  .text:00104E57                 mov     [esp+0C2Ch+var_A28], bp
+  .text:00104E5F                 movzx   edx, byte ptr [eax+1AEh]
+  .text:00104E66                 mov     [esp+0C2Ch+var_A26], dl
+  .text:00104E6D                 mov     ecx, [eax+1B0h]
+  .text:00104E73                 mov     [esp+0C2Ch+var_A24], ecx
+  .text:00104E7A                 mov     esi, [eax+1B4h]
+  .text:00104E80                 mov     [esp+0C2Ch+var_A20], esi
+  .text:00104E87                 movss   xmm4, dword ptr [eax+1B8h]
+  .text:00104E8F                 movss   [esp+0C2Ch+var_A1C], xmm4
+  .text:00104E98                 movss   xmm5, dword ptr [eax+1BCh]
+  .text:00104EA0                 movss   [esp+0C2Ch+var_A18], xmm5
+  .text:00104EA9                 mov     edi, [eax+1C0h]
+  .text:00104EAF                 mov     [esp+0C2Ch+var_A14], edi
+  .text:00104EB6                 mov     ebp, [eax+1C4h]
+  .text:00104EBC                 mov     [esp+0C2Ch+var_A10], ebp
+  .text:00104EC3                 mov     edx, [eax+1C8h]
+  .text:00104EC9                 mov     [esp+0C2Ch+var_A0C], edx
+  .text:00104ED0                 movss   xmm6, dword ptr [eax+1CCh]
+  .text:00104ED8                 movss   [esp+0C2Ch+var_A08], xmm6
+  .text:00104EE1                 movss   xmm7, dword ptr [eax+1D0h]
+  .text:00104EE9                 movss   [esp+0C2Ch+var_A04], xmm7
+  .text:00104EF2                 movss   xmm0, dword ptr [eax+1D4h]
+  .text:00104EFA                 movss   [esp+0C2Ch+var_A00], xmm0
+  .text:00104F03                 movss   xmm1, dword ptr [eax+1D8h]
+  .text:00104F0B                 movss   [esp+0C2Ch+var_9FC], xmm1
+  .text:00104F14                 movss   xmm2, dword ptr [eax+1DCh]
+  .text:00104F1C                 movss   [esp+0C2Ch+var_9F8], xmm2
+  .text:00104F25                 movss   xmm3, dword ptr [eax+1E0h]
+  .text:00104F2D                 movss   [esp+0C2Ch+var_9F4], xmm3
+  .text:00104F36                 movss   xmm4, dword ptr [eax+1E4h]
+  .text:00104F3E                 movss   [esp+0C2Ch+var_9F0], xmm4
+  .text:00104F47                 movss   xmm5, dword ptr [eax+1E8h]
+  .text:00104F4F                 movss   [esp+0C2Ch+var_9EC], xmm5
+  .text:00104F58                 movss   xmm6, dword ptr [eax+1ECh]
+  .text:00104F60                 movss   [esp+0C2Ch+var_9E8], xmm6
+  .text:00104F69                 mov     ecx, [eax+1F0h]
+  .text:00104F6F                 mov     [esp+0C2Ch+var_9E4], ecx
+  .text:00104F76                 mov     esi, [eax+1F4h]
+  .text:00104F7C                 mov     [esp+0C2Ch+var_9E0], esi
+  .text:00104F83                 movss   xmm7, dword ptr [eax+1F8h]
+  .text:00104F8B                 movss   [esp+0C2Ch+var_9DC], xmm7
+  .text:00104F94                 movss   xmm0, dword ptr [eax+1FCh]
+  .text:00104F9C                 movss   [esp+0C2Ch+var_9D8], xmm0
+  .text:00104FA5                 mov     edi, [eax+200h]
+  .text:00104FAB                 mov     [esp+0C2Ch+var_9D4], edi
+  .text:00104FB2                 mov     ebp, [eax+204h]
+  .text:00104FB8                 mov     [esp+0C2Ch+var_9D0], ebp
+  .text:00104FBF                 mov     edx, [eax+208h]
+  .text:00104FC5                 mov     [esp+0C2Ch+var_9CC], edx
+  .text:00104FCC                 mov     ecx, [eax+20Ch]
+  .text:00104FD2                 mov     [esp+0C2Ch+var_9C8], ecx
+  .text:00104FD9                 mov     esi, [eax+210h]
+  .text:00104FDF                 mov     [esp+0C2Ch+var_9C4], esi
+  .text:00104FE6                 mov     edi, [eax+214h]
+  .text:00104FEC                 mov     [esp+0C2Ch+var_9C0], edi
+  .text:00104FF3                 movss   xmm1, dword ptr [eax+218h]
+  .text:00104FFB                 movss   [esp+0C2Ch+var_9BC], xmm1
+  .text:00105004                 movss   xmm2, dword ptr [eax+21Ch]
+  .text:0010500C                 movss   [esp+0C2Ch+var_9B8], xmm2
+  .text:00105015                 movss   xmm3, dword ptr [eax+220h]
+  .text:0010501D                 movss   [esp+0C2Ch+var_9B4], xmm3
+  .text:00105026                 mov     ebp, [eax+224h]
+  .text:0010502C                 mov     [esp+0C2Ch+var_9B0], ebp
+  .text:00105033                 mov     edx, [eax+228h]
+  .text:00105039                 mov     [esp+0C2Ch+var_9AC], edx
+  .text:00105040                 mov     ecx, [eax+22Ch]
+  .text:00105046                 mov     [esp+0C2Ch+var_9A8], ecx
+  .text:0010504D                 mov     esi, [eax+230h]
+  .text:00105053                 mov     [esp+0C2Ch+var_9A4], esi
+  .text:0010505A                 movss   xmm4, dword ptr [eax+234h]
+  .text:00105062                 movss   [esp+0C2Ch+var_9A0], xmm4
+  .text:0010506B                 movss   xmm5, dword ptr [eax+238h]
+  .text:00105073                 movss   [esp+0C2Ch+var_99C], xmm5
+  .text:0010507C                 mov     edi, [eax+23Ch]
+  .text:00105082                 mov     [esp+0C2Ch+var_998], edi
+  .text:00105089                 movss   xmm6, dword ptr [eax+240h]
+  .text:00105091                 movss   [esp+0C2Ch+var_994], xmm6
+  .text:0010509A                 movss   xmm7, dword ptr [eax+244h]
+  .text:001050A2                 movss   [esp+0C2Ch+var_990], xmm7
+  .text:001050AB                 movss   xmm0, dword ptr [eax+248h]
+  .text:001050B3                 movss   [esp+0C2Ch+var_98C], xmm0
+  .text:001050BC                 movss   xmm1, dword ptr [eax+24Ch]
+  .text:001050C4                 movss   [esp+0C2Ch+var_988], xmm1
+  .text:001050CD                 movss   xmm2, dword ptr [eax+250h]
+  .text:001050D5                 movss   [esp+0C2Ch+var_984], xmm2
+  .text:001050DE                 movss   xmm3, dword ptr [eax+254h]
+  .text:001050E6                 movss   [esp+0C2Ch+var_980], xmm3
+  .text:001050EF                 movss   xmm4, dword ptr [eax+258h]
+  .text:001050F7                 movss   [esp+0C2Ch+var_97C], xmm4
+  .text:00105100                 movss   xmm5, dword ptr [eax+25Ch]
+  .text:00105108                 movss   [esp+0C2Ch+var_978], xmm5
+  .text:00105111                 mov     ebp, [eax+260h]
+  .text:00105117                 mov     [esp+0C2Ch+var_974], ebp
+  .text:0010511E                 mov     edx, [eax+264h]
+  .text:00105124                 mov     [esp+0C2Ch+var_970], edx
+  .text:0010512B                 mov     ecx, [eax+268h]
+  .text:00105131                 mov     [esp+0C2Ch+var_96C], ecx
+  .text:00105138                 mov     esi, [eax+26Ch]
+  .text:0010513E                 mov     [esp+0C2Ch+var_968], esi
+  .text:00105145                 movss   xmm6, dword ptr [eax+270h]
+  .text:0010514D                 movss   [esp+0C2Ch+var_964], xmm6
+  .text:00105156                 movss   xmm7, dword ptr [eax+274h]
+  .text:0010515E                 movss   [esp+0C2Ch+var_960], xmm7
+  .text:00105167                 movss   xmm0, dword ptr [eax+278h]
+  .text:0010516F                 movss   [esp+0C2Ch+var_95C], xmm0
+  .text:00105178                 movss   xmm1, dword ptr [eax+27Ch]
+  .text:00105180                 movss   [esp+0C2Ch+var_958], xmm1
+  .text:00105189                 movss   xmm2, dword ptr [eax+280h]
+  .text:00105191                 movss   [esp+0C2Ch+var_954], xmm2
+  .text:0010519A                 movss   xmm3, dword ptr [eax+284h]
+  .text:001051A2                 movss   [esp+0C2Ch+var_950], xmm3
+  .text:001051AB                 movss   xmm4, dword ptr [eax+288h]
+  .text:001051B3                 movss   [esp+0C2Ch+var_94C], xmm4
+  .text:001051BC                 movss   xmm5, dword ptr [eax+28Ch]
+  .text:001051C4                 movss   [esp+0C2Ch+var_948], xmm5
+  .text:001051CD                 movss   xmm6, dword ptr [eax+290h]
+  .text:001051D5                 movss   [esp+0C2Ch+var_944], xmm6
+  .text:001051DE                 movss   xmm7, dword ptr [eax+294h]
+  .text:001051E6                 movss   [esp+0C2Ch+var_940], xmm7
+  .text:001051EF                 movss   xmm0, dword ptr [eax+298h]
+  .text:001051F7                 movss   [esp+0C2Ch+var_93C], xmm0
+  .text:00105200                 movss   xmm1, dword ptr [eax+29Ch]
+  .text:00105208                 movss   [esp+0C2Ch+var_938], xmm1
+  .text:00105211                 movss   xmm2, dword ptr [eax+2A0h]
+  .text:00105219                 movss   [esp+0C2Ch+var_934], xmm2
+  .text:00105222                 movss   xmm3, dword ptr [eax+2A4h]
+  .text:0010522A                 movss   [esp+0C2Ch+var_930], xmm3
+  .text:00105233                 movss   xmm4, dword ptr [eax+2A8h]
+  .text:0010523B                 movss   [esp+0C2Ch+var_92C], xmm4
+  .text:00105244                 movss   xmm5, dword ptr [eax+2ACh]
+  .text:0010524C                 movss   [esp+0C2Ch+var_928], xmm5
+  .text:00105255                 mov     edi, [eax+2B0h]
+  .text:0010525B                 mov     [esp+0C2Ch+var_924], edi
+  .text:00105262                 mov     ebp, [eax+2B4h]
+  .text:00105268                 mov     [esp+0C2Ch+var_920], ebp
+  .text:0010526F                 movss   xmm6, dword ptr [eax+2B8h]
+  .text:00105277                 movss   [esp+0C2Ch+var_91C], xmm6
+  .text:00105280                 mov     edx, [eax+2BCh]
+  .text:00105286                 mov     [esp+0C2Ch+var_918], edx
+  .text:0010528D                 movss   xmm7, dword ptr [eax+2C0h]
+  .text:00105295                 movss   [esp+0C2Ch+var_914], xmm7
+  .text:0010529E                 movss   xmm0, dword ptr [eax+2C4h]
+  .text:001052A6                 movss   [esp+0C2Ch+var_910], xmm0
+  .text:001052AF                 movss   xmm1, dword ptr [eax+2C8h]
+  .text:001052B7                 movss   [esp+0C2Ch+var_90C], xmm1
+  .text:001052C0                 movss   xmm2, dword ptr [eax+2CCh]
+  .text:001052C8                 movss   [esp+0C2Ch+var_908], xmm2
+  .text:001052D1                 movss   xmm3, dword ptr [eax+2D0h]
+  .text:001052D9                 movss   [esp+0C2Ch+var_904], xmm3
+  .text:001052E2                 movss   xmm4, dword ptr [eax+2D4h]
+  .text:001052EA                 movss   [esp+0C2Ch+var_900], xmm4
+  .text:001052F3                 mov     ecx, [eax+2D8h]
+  .text:001052F9                 mov     [esp+0C2Ch+var_8FC], ecx
+  .text:00105300                 mov     esi, [eax+2DCh]
+  .text:00105306                 mov     [esp+0C2Ch+var_8F8], esi
+  .text:0010530D                 movss   xmm5, dword ptr [eax+2E0h]
+  .text:00105315                 movss   [esp+0C2Ch+var_8F4], xmm5
+  .text:0010531E                 mov     edi, [eax+2E4h]
+  .text:00105324                 mov     [esp+0C2Ch+var_8F0], edi
+  .text:0010532B                 movzx   ebp, word ptr [eax+2E8h]
+  .text:00105332                 mov     [esp+0C2Ch+var_8EC], bp
+  .text:0010533A                 movzx   edx, word ptr [eax+2EAh]
+  .text:00105341                 mov     [esp+0C2Ch+var_8EA], dx
+  .text:00105349                 mov     ecx, [eax+2ECh]
+  .text:0010534F                 mov     [esp+0C2Ch+var_8E8], ecx
+  .text:00105356                 movss   xmm6, dword ptr [eax+2F0h]
+  .text:0010535E                 movss   [esp+0C2Ch+var_8E4], xmm6
+  .text:00105367                 movzx   edx, byte ptr [eax+2F4h]
+  .text:0010536E                 mov     [esp+0C2Ch+var_8E0], dl
+  .text:00105375                 mov     esi, [eax+2F8h]
+  .text:0010537B                 mov     [esp+0C2Ch+var_8DC], esi
+  .text:00105382                 mov     edi, [eax+2FCh]
+  .text:00105388                 mov     [esp+0C2Ch+var_8D8], edi
+  .text:0010538F                 movzx   ebp, word ptr [eax+300h]
+  .text:00105396                 mov     [esp+0C2Ch+var_8D4], bp
+  .text:0010539E                 movzx   ecx, byte ptr [eax+302h]
+  .text:001053A5                 mov     [esp+0C2Ch+var_8D2], cl
+  .text:001053AC                 mov     edx, [eax+304h]
+  .text:001053B2                 mov     [esp+0C2Ch+var_8D0], edx
+  .text:001053B9                 mov     esi, [eax+308h]
+  .text:001053BF                 mov     [esp+0C2Ch+var_8CC], esi
+  .text:001053C6                 movss   xmm7, dword ptr [eax+30Ch]
+  .text:001053CE                 movss   [esp+0C2Ch+var_8C8], xmm7
+  .text:001053D7                 movss   xmm0, dword ptr [eax+310h]
+  .text:001053DF                 movss   [esp+0C2Ch+var_8C4], xmm0
+  .text:001053E8                 mov     edi, [eax+314h]
+  .text:001053EE                 mov     [esp+0C2Ch+var_8C0], edi
+  .text:001053F5                 mov     ebp, [eax+318h]
+  .text:001053FB                 mov     [esp+0C2Ch+var_8BC], ebp
+  .text:00105402                 mov     ecx, [eax+31Ch]
+  .text:00105408                 mov     [esp+0C2Ch+var_8B8], ecx
+  .text:0010540F                 movss   xmm1, dword ptr [eax+320h]
+  .text:00105417                 movss   [esp+0C2Ch+var_8B4], xmm1
+  .text:00105420                 movss   xmm2, dword ptr [eax+324h]
+  .text:00105428                 movss   [esp+0C2Ch+var_8B0], xmm2
+  .text:00105431                 movss   xmm3, dword ptr [eax+328h]
+  .text:00105439                 movss   [esp+0C2Ch+var_8AC], xmm3
+  .text:00105442                 movss   xmm4, dword ptr [eax+32Ch]
+  .text:0010544A                 movss   [esp+0C2Ch+var_8A8], xmm4
+  .text:00105453                 movss   xmm5, dword ptr [eax+330h]
+  .text:0010545B                 movss   [esp+0C2Ch+var_8A4], xmm5
+  .text:00105464                 movss   xmm6, dword ptr [eax+334h]
+  .text:0010546C                 movss   [esp+0C2Ch+var_8A0], xmm6
+  .text:00105475                 movss   xmm7, dword ptr [eax+338h]
+  .text:0010547D                 movss   [esp+0C2Ch+var_89C], xmm7
+  .text:00105486                 movss   xmm0, dword ptr [eax+33Ch]
+  .text:0010548E                 movss   [esp+0C2Ch+var_898], xmm0
+  .text:00105497                 movss   xmm1, dword ptr [eax+340h]
+  .text:0010549F                 movss   [esp+0C2Ch+var_894], xmm1
+  .text:001054A8                 mov     edx, [eax+344h]
+  .text:001054AE                 mov     [esp+0C2Ch+var_890], edx
+  .text:001054B5                 mov     esi, [eax+348h]
+  .text:001054BB                 mov     [esp+0C2Ch+var_88C], esi
+  .text:001054C2                 movss   xmm2, dword ptr [eax+34Ch]
+  .text:001054CA                 movss   [esp+0C2Ch+var_888], xmm2
+  .text:001054D3                 movss   xmm3, dword ptr [eax+350h]
+  .text:001054DB                 movss   [esp+0C2Ch+var_884], xmm3
+  .text:001054E4                 mov     edi, [eax+354h]
+  .text:001054EA                 mov     [esp+0C2Ch+var_880], edi
+  .text:001054F1                 mov     ebp, [eax+358h]
+  .text:001054F7                 mov     [esp+0C2Ch+var_87C], ebp
+  .text:001054FE                 mov     ecx, [eax+35Ch]
+  .text:00105504                 mov     [esp+0C2Ch+var_878], ecx
+  .text:0010550B                 mov     edx, [eax+360h]
+  .text:00105511                 mov     [esp+0C2Ch+var_874], edx
+  .text:00105518                 mov     esi, [eax+364h]
+  .text:0010551E                 mov     [esp+0C2Ch+var_870], esi
+  .text:00105525                 mov     edi, [eax+368h]
+  .text:0010552B                 mov     [esp+0C2Ch+var_86C], edi
+  .text:00105532                 movss   xmm4, dword ptr [eax+36Ch]
+  .text:0010553A                 movss   [esp+0C2Ch+var_868], xmm4
+  .text:00105543                 movss   xmm5, dword ptr [eax+370h]
+  .text:0010554B                 movss   [esp+0C2Ch+var_864], xmm5
+  .text:00105554                 movss   xmm6, dword ptr [eax+374h]
+  .text:0010555C                 movss   [esp+0C2Ch+var_860], xmm6
+  .text:00105565                 mov     ebp, [eax+378h]
+  .text:0010556B                 mov     [esp+0C2Ch+var_85C], ebp
+  .text:00105572                 mov     ecx, [eax+37Ch]
+  .text:00105578                 mov     [esp+0C2Ch+var_858], ecx
+  .text:0010557F                 mov     edx, [eax+380h]
+  .text:00105585                 mov     [esp+0C2Ch+var_854], edx
+  .text:0010558C                 mov     esi, [eax+384h]
+  .text:00105592                 mov     [esp+0C2Ch+var_850], esi
+  .text:00105599                 movss   xmm7, dword ptr [eax+388h]
+  .text:001055A1                 movss   [esp+0C2Ch+var_84C], xmm7
+  .text:001055AA                 movss   xmm0, dword ptr [eax+38Ch]
+  .text:001055B2                 movss   [esp+0C2Ch+var_848], xmm0
+  .text:001055BB                 mov     edi, [eax+390h]
+  .text:001055C1                 mov     [esp+0C2Ch+var_844], edi
+  .text:001055C8                 movss   xmm1, dword ptr [eax+394h]
+  .text:001055D0                 movss   [esp+0C2Ch+var_840], xmm1
+  .text:001055D9                 movss   xmm2, dword ptr [eax+398h]
+  .text:001055E1                 movss   [esp+0C2Ch+var_83C], xmm2
+  .text:001055EA                 movss   xmm3, dword ptr [eax+39Ch]
+  .text:001055F2                 movss   [esp+0C2Ch+var_838], xmm3
+  .text:001055FB                 movss   xmm4, dword ptr [eax+3A0h]
+  .text:00105603                 movss   [esp+0C2Ch+var_834], xmm4
+  .text:0010560C                 movss   xmm5, dword ptr [eax+3A4h]
+  .text:00105614                 movss   [esp+0C2Ch+var_830], xmm5
+  .text:0010561D                 movss   xmm6, dword ptr [eax+3A8h]
+  .text:00105625                 movss   [esp+0C2Ch+var_82C], xmm6
+  .text:0010562E                 movss   xmm7, dword ptr [eax+3ACh]
+  .text:00105636                 movss   [esp+0C2Ch+var_828], xmm7
+  .text:0010563F                 movss   xmm0, dword ptr [eax+3B0h]
+  .text:00105647                 movss   [esp+0C2Ch+var_824], xmm0
+  .text:00105650                 mov     ebp, [eax+3B4h]
+  .text:00105656                 mov     [esp+0C2Ch+var_820], ebp
+  .text:0010565D                 mov     ecx, [eax+3B8h]
+  .text:00105663                 mov     [esp+0C2Ch+var_81C], ecx
+  .text:0010566A                 mov     edx, [eax+3BCh]
+  .text:00105670                 mov     [esp+0C2Ch+var_818], edx
+  .text:00105677                 mov     esi, [eax+3C0h]
+  .text:0010567D                 mov     [esp+0C2Ch+var_814], esi
+  .text:00105684                 movss   xmm1, dword ptr [eax+3C4h]
+  .text:0010568C                 movss   [esp+0C2Ch+var_810], xmm1
+  .text:00105695                 movss   xmm2, dword ptr [eax+3C8h]
+  .text:0010569D                 movss   [esp+0C2Ch+var_80C], xmm2
+  .text:001056A6                 movss   xmm3, dword ptr [eax+3CCh]
+  .text:001056AE                 movss   [esp+0C2Ch+var_808], xmm3
+  .text:001056B7                 movss   xmm4, dword ptr [eax+3D0h]
+  .text:001056BF                 movss   [esp+0C2Ch+var_804], xmm4
+  .text:001056C8                 movss   xmm5, dword ptr [eax+3D4h]
+  .text:001056D0                 movss   [esp+0C2Ch+var_800], xmm5
+  .text:001056D9                 movss   xmm6, dword ptr [eax+3D8h]
+  .text:001056E1                 movss   [esp+0C2Ch+var_7FC], xmm6
+  .text:001056EA                 movss   xmm7, dword ptr [eax+3DCh]
+  .text:001056F2                 movss   [esp+0C2Ch+var_7F8], xmm7
+  .text:001056FB                 movss   xmm0, dword ptr [eax+3E0h]
+  .text:00105703                 movss   [esp+0C2Ch+var_7F4], xmm0
+  .text:0010570C                 movss   xmm1, dword ptr [eax+3E4h]
+  .text:00105714                 movss   [esp+0C2Ch+var_7F0], xmm1
+  .text:0010571D                 movss   xmm2, dword ptr [eax+3E8h]
+  .text:00105725                 movss   [esp+0C2Ch+var_7EC], xmm2
+  .text:0010572E                 movss   xmm3, dword ptr [eax+3ECh]
+  .text:00105736                 movss   [esp+0C2Ch+var_7E8], xmm3
+  .text:0010573F                 movss   xmm4, dword ptr [eax+3F0h]
+  .text:00105747                 movss   [esp+0C2Ch+var_7E4], xmm4
+  .text:00105750                 movss   xmm5, dword ptr [eax+3F4h]
+  .text:00105758                 movss   [esp+0C2Ch+var_7E0], xmm5
+  .text:00105761                 movss   xmm6, dword ptr [eax+3F8h]
+  .text:00105769                 movss   [esp+0C2Ch+var_7DC], xmm6
+  .text:00105772                 movss   xmm7, dword ptr [eax+3FCh]
+  .text:0010577A                 movss   [esp+0C2Ch+var_7D8], xmm7
+  .text:00105783                 movss   xmm0, dword ptr [eax+400h]
+  .text:0010578B                 movss   [esp+0C2Ch+var_7D4], xmm0
+  .text:00105794                 mov     edi, [eax+404h]
+  .text:0010579A                 mov     [esp+0C2Ch+var_7D0], edi
+  .text:001057A1                 lea     ecx, [esp+0C2Ch+var_7CC]
+  .text:001057A8                 lea     ebp, [eax+408h]
+  .text:001057AE                 lea     edi, [esp+0C2Ch+var_CC]
+  .text:001057B5                 mov     [esp+0C2Ch+var_C00], eax
+  .text:001057B9                 mov     eax, edi
+  .text:001057BB                 mov     edx, [esp+0C2Ch+this]
+  .text:001057C2                 movss   xmm1, dword ptr [ebp+0]
+  .text:001057C7                 movss   dword ptr [ecx], xmm1
+  .text:001057CB                 movss   xmm2, dword ptr [ebp+4]
+  .text:001057D0                 movss   dword ptr [ecx+4], xmm2
+  .text:001057D5                 movss   xmm3, dword ptr [ebp+8]
+  .text:001057DA                 movss   dword ptr [ecx+8], xmm3
+  .text:001057DF                 movss   xmm4, dword ptr [ebp+0Ch]
+  .text:001057E4                 movss   dword ptr [ecx+0Ch], xmm4
+  .text:001057E9                 movss   xmm5, dword ptr [ebp+10h]
+  .text:001057EE                 movss   dword ptr [ecx+10h], xmm5
+  .text:001057F3                 movss   xmm6, dword ptr [ebp+14h]
+  .text:001057F8                 movss   dword ptr [ecx+14h], xmm6
+  .text:001057FD                 movss   xmm7, dword ptr [ebp+18h]
+  .text:00105802                 movss   dword ptr [ecx+18h], xmm7
+  .text:00105807                 movss   xmm0, dword ptr [ebp+1Ch]
+  .text:0010580C                 movss   dword ptr [ecx+1Ch], xmm0
+  .text:00105811                 movss   xmm1, dword ptr [ebp+20h]
+  .text:00105816                 movss   dword ptr [ecx+20h], xmm1
+  .text:0010581B                 movss   xmm2, dword ptr [ebp+24h]
+  .text:00105820                 movss   dword ptr [ecx+24h], xmm2
+  .text:00105825                 movss   xmm3, dword ptr [ebp+28h]
+  .text:0010582A                 movss   dword ptr [ecx+28h], xmm3
+  .text:0010582F                 movss   xmm4, dword ptr [ebp+2Ch]
+  .text:00105834                 movss   dword ptr [ecx+2Ch], xmm4
+  .text:00105839                 movss   xmm5, dword ptr [ebp+30h]
+  .text:0010583E                 movss   dword ptr [ecx+30h], xmm5
+  .text:00105843                 movss   xmm6, dword ptr [ebp+34h]
+  .text:00105848                 movss   dword ptr [ecx+34h], xmm6
+  .text:0010584D                 movss   xmm7, dword ptr [ebp+38h]
+  .text:00105852                 movss   dword ptr [ecx+38h], xmm7
+  .text:00105857                 movss   xmm0, dword ptr [ebp+3Ch]
+  .text:0010585C                 movss   dword ptr [ecx+3Ch], xmm0
+  .text:00105861                 movss   xmm1, dword ptr [ebp+40h]
+  .text:00105866                 movss   dword ptr [ecx+40h], xmm1
+  .text:0010586B                 movss   xmm2, dword ptr [ebp+44h]
+  .text:00105870                 movss   dword ptr [ecx+44h], xmm2
+  .text:00105875                 movss   xmm3, dword ptr [ebp+48h]
+  .text:0010587A                 movss   dword ptr [ecx+48h], xmm3
+  .text:0010587F                 movss   xmm4, dword ptr [ebp+4Ch]
+  .text:00105884                 movss   dword ptr [ecx+4Ch], xmm4
+  .text:00105889                 movss   xmm5, dword ptr [ebp+50h]
+  .text:0010588E                 movss   dword ptr [ecx+50h], xmm5
+  .text:00105893                 movss   xmm6, dword ptr [ebp+54h]
+  .text:00105898                 movss   dword ptr [ecx+54h], xmm6
+  .text:0010589D                 movss   xmm7, dword ptr [ebp+58h]
+  .text:001058A2                 movss   dword ptr [ecx+58h], xmm7
+  .text:001058A7                 movss   xmm0, dword ptr [ebp+5Ch]
+  .text:001058AC                 movss   dword ptr [ecx+5Ch], xmm0
+  .text:001058B1                 movss   xmm1, dword ptr [ebp+60h]
+  .text:001058B6                 movss   dword ptr [ecx+60h], xmm1
+  .text:001058BB                 movss   xmm2, dword ptr [ebp+64h]
+  .text:001058C0                 movss   dword ptr [ecx+64h], xmm2
+  .text:001058C5                 movss   xmm3, dword ptr [ebp+68h]
+  .text:001058CA                 movss   dword ptr [ecx+68h], xmm3
+  .text:001058CF                 movss   xmm4, dword ptr [ebp+6Ch]
+  .text:001058D4                 movss   dword ptr [ecx+6Ch], xmm4
+  .text:001058D9                 add     ecx, 70h ; 'p'
+  .text:001058DC                 add     ebp, 70h ; 'p'
+  .text:001058DF                 cmp     eax, ecx
+  .text:001058E1                 jnz     loc_1057C2
+  .text:001058E7                 mov     ebp, [esp+0C2Ch+var_C00]
+  .text:001058EB                 mov     [esp+0C2Ch+this], edx
+  .text:001058F2                 mov     esi, [ebp+0B08h]
+  .text:001058F8                 mov     ecx, [ebp+0B0Ch]
+  .text:001058FE                 mov     [esp+0C2Ch+var_CC], esi
+  .text:00105905                 mov     [esp+0C2Ch+var_C8], ecx
+  .text:0010590C                 movss   xmm5, dword ptr [ebp+0B10h]
+  .text:00105914                 movss   [esp+0C2Ch+var_C4], xmm5
+  .text:0010591D                 movss   xmm6, dword ptr [ebp+0B14h]
+  .text:00105925                 movss   [esp+0C2Ch+var_C0], xmm6
+  .text:0010592E                 movzx   edi, word ptr [ebp+0B18h]
+  .text:00105935                 mov     [esp+0C2Ch+var_BC], di
+  .text:0010593D                 movss   xmm7, dword ptr [ebp+0B1Ch]
+  .text:00105945                 movss   [esp+0C2Ch+var_B8], xmm7
+  .text:0010594E                 movss   xmm0, dword ptr [ebp+0B20h]
+  .text:00105956                 movss   [esp+0C2Ch+var_B4], xmm0
+  .text:0010595F                 movss   xmm1, dword ptr [ebp+0B24h]
+  .text:00105967                 movss   [esp+0C2Ch+var_B0], xmm1
+  .text:00105970                 movss   xmm2, dword ptr [ebp+0B28h]
+  .text:00105978                 movss   [esp+0C2Ch+var_AC], xmm2
+  .text:00105981                 movss   xmm3, dword ptr [ebp+0B2Ch]
+  .text:00105989                 movss   [esp+0C2Ch+var_A8], xmm3
+  .text:00105992                 movss   xmm4, dword ptr [ebp+0B30h]
+  .text:0010599A                 movss   [esp+0C2Ch+var_A4], xmm4
+  .text:001059A3                 mov     eax, [ebp+0B34h]
+  .text:001059A9                 mov     [esp+0C2Ch+var_A0], eax
+  .text:001059B0                 movss   xmm5, dword ptr [ebp+0B38h]
+  .text:001059B8                 movss   [esp+0C2Ch+var_9C], xmm5
+  .text:001059C1                 mov     esi, [ebp+0B3Ch]
+  .text:001059C7                 mov     [esp+0C2Ch+var_98], esi
+  .text:001059CE                 movzx   ecx, word ptr [ebp+0B40h]
+  .text:001059D5                 mov     [esp+0C2Ch+var_94], cx
+  .text:001059DD                 movss   xmm6, dword ptr [ebp+0B44h]
+  .text:001059E5                 movss   [esp+0C2Ch+var_90], xmm6
+  .text:001059EE                 movss   xmm7, dword ptr [ebp+0B48h]
+  .text:001059F6                 movss   [esp+0C2Ch+var_8C], xmm7
+  .text:001059FF                 movss   xmm0, dword ptr [ebp+0B4Ch]
+  .text:00105A07                 movss   [esp+0C2Ch+var_88], xmm0
+  .text:00105A10                 movss   xmm1, dword ptr [ebp+0B50h]
+  .text:00105A18                 movss   [esp+0C2Ch+var_84], xmm1
+  .text:00105A21                 movss   xmm2, dword ptr [ebp+0B54h]
+  .text:00105A29                 movss   [esp+0C2Ch+var_80], xmm2
+  .text:00105A32                 movss   xmm3, dword ptr [ebp+0B58h]
+  .text:00105A3A                 movss   [esp+0C2Ch+var_7C], xmm3
+  .text:00105A43                 movss   xmm4, dword ptr [ebp+0B5Ch]
+  .text:00105A4B                 movss   [esp+0C2Ch+var_78], xmm4
+  .text:00105A54                 movss   xmm5, dword ptr [ebp+0B60h]
+  .text:00105A5C                 movss   [esp+0C2Ch+var_74], xmm5
+  .text:00105A65                 movss   xmm6, dword ptr [ebp+0B64h]
+  .text:00105A6D                 movss   [esp+0C2Ch+var_70], xmm6
+  .text:00105A76                 movss   xmm7, dword ptr [ebp+0B68h]
+  .text:00105A7E                 movss   [esp+0C2Ch+var_6C], xmm7
+  .text:00105A87                 movss   xmm0, dword ptr [ebp+0B6Ch]
+  .text:00105A8F                 movss   [esp+0C2Ch+var_68], xmm0
+  .text:00105A98                 movss   xmm1, dword ptr [ebp+0B70h]
+  .text:00105AA0                 movss   [esp+0C2Ch+var_64], xmm1
+  .text:00105AA9                 movss   xmm2, dword ptr [ebp+0B74h]
+  .text:00105AB1                 movss   [esp+0C2Ch+var_60], xmm2
+  .text:00105ABA                 movss   xmm3, dword ptr [ebp+0B78h]
+  .text:00105AC2                 movss   [esp+0C2Ch+var_5C], xmm3
+  .text:00105ACB                 movss   xmm4, dword ptr [ebp+0B7Ch]
+  .text:00105AD3                 movss   [esp+0C2Ch+var_58], xmm4
+  .text:00105ADC                 movss   xmm5, dword ptr [ebp+0B80h]
+  .text:00105AE4                 movss   [esp+0C2Ch+var_54], xmm5
+  .text:00105AED                 movss   xmm6, dword ptr [ebp+0B84h]
+  .text:00105AF5                 movss   [esp+0C2Ch+var_50], xmm6
+  .text:00105AFE                 movss   xmm7, dword ptr [ebp+0B88h]
+  .text:00105B06                 movss   [esp+0C2Ch+var_4C], xmm7
+  .text:00105B0F                 movss   xmm0, dword ptr [ebp+0B8Ch]
+  .text:00105B17                 movss   [esp+0C2Ch+var_48], xmm0
+  .text:00105B20                 mov     edi, [ebp+0B90h]
+  .text:00105B26                 mov     [esp+0C2Ch+var_44], edi
+  .text:00105B2D                 mov     eax, [ebp+0B94h]
+  .text:00105B33                 mov     [esp+0C2Ch+var_40], eax
+  .text:00105B3A                 mov     esi, [ebp+0B98h]
+  .text:00105B40                 mov     [esp+0C2Ch+var_3C], esi
+  .text:00105B47                 mov     ecx, [ebp+0B9Ch]
+  .text:00105B4D                 mov     [esp+0C2Ch+var_38], ecx
+  .text:00105B54                 movss   xmm1, dword ptr [ebp+0BA0h]
+  .text:00105B5C                 movss   [esp+0C2Ch+var_34], xmm1
+  .text:00105B65                 mov     edi, [ebp+0BA4h]
+  .text:00105B6B                 mov     [esp+0C2Ch+var_30], edi
+  .text:00105B72                 mov     eax, [ebp+0BA8h]
+  .text:00105B78                 mov     [esp+0C2Ch+var_2C], eax
+  .text:00105B7F                 mov     esi, [ebp+0BACh]
+  .text:00105B85                 mov     [esp+0C2Ch+var_28], esi
+  .text:00105B8C                 mov     ecx, [ebp+0BB0h]
+  .text:00105B92                 mov     [esp+0C2Ch+var_24], ecx
+  .text:00105B99                 mov     ebp, [ebp+0BB4h]
+  .text:00105B9F                 mov     [esp+0C2Ch+var_20], ebp
+  .text:00105BA6                 mov     ebp, [edx+54h]
+  .text:00105BA9                 mov     edi, [esp+0C2Ch+var_C10]
+  .text:00105BAD                 mov     [esp+0C2Ch+var_C2C], edi
+  .text:00105BB0                 call    ds:(dword_A9AB94 - 61E000h)[ebx]
+  .text:00105BB6                 mov     esi, eax
+  .text:00105BB8                 mov     [esp+0C2Ch+var_C2C], eax
+  .text:00105BBB                 call    ds:(dword_A9AB90 - 61E000h)[ebx]
+  .text:00105BC1                 mov     ecx, [esp+0C2Ch+this]
+  .text:00105BC8                 mov     [ecx+54h], eax
+  .text:00105BCB                 mov     [esp+0C2Ch+var_C2C], eax
+  .text:00105BCE                 call    ds:(dword_A9AC0C - 61E000h)[ebx]
+  .text:00105BD4                 mov     eax, [esp+0C2Ch+this]
+  .text:00105BDB                 mov     edi, [eax]
+  .text:00105BDD                 mov     [esp+0C2Ch+var_C28], esi
+  .text:00105BE1                 mov     edx, [esp+0C2Ch+this]
+  .text:00105BE8                 mov     [esp+0C2Ch+var_C2C], edx
+  .text:00105BEB                 call    dword ptr [edi+2Ch]
+  .text:00105BEE                 mov     esi, [esp+0C2Ch+var_C04]
+  .text:00105BF2                 mov     [esp+0C2Ch+var_C2C], esi
+  .text:00105BF5                 call    ds:(dword_A9ABE0 - 61E000h)[ebx]
+  .text:00105BFB                 mov     ecx, [esp+0C2Ch+this]
+  .text:00105C02                 mov     eax, [ecx]
+  .text:00105C04                 mov     edi, [esp+0C2Ch+this]
+  .text:00105C0B                 mov     [esp+0C2Ch+var_C2C], edi
+  .text:00105C0E                 call    dword ptr [eax+54h]
+  .text:00105C11                 mov     edx, [esp+0C2Ch+this]
+  .text:00105C18                 mov     esi, [edx]
+  .text:00105C1A                 mov     ecx, [esp+0C2Ch+this]
+  .text:00105C21                 mov     [esp+0C2Ch+var_C2C], ecx
+  .text:00105C24                 call    dword ptr [esi+24h]
+  .text:00105C27                 mov     eax, [esp+0C2Ch+this]
+  .text:00105C2E                 mov     eax, [eax+3Ch]
+  .text:00105C31                 mov     edi, [eax]
+  .text:00105C33                 test    edi, edi
+  .text:00105C35                 jle     short loc_105C77
+  .text:00105C37                 mov     edx, [esp+0C2Ch+this]
+  .text:00105C3E                 mov     esi, [edx+54h]
+  .text:00105C41                 mov     edi, [esi+0D4h]
+  .text:00105C47                 lea     ecx, [edi+edi]
+  .text:00105C4A                 add     ecx, edi
+  .text:00105C4C                 add     ecx, ecx
+  .text:00105C4E                 lea     edx, [ecx+ecx]
+  .text:00105C51                 lea     edi, [esp+0C2Ch+var_74]
+  .text:00105C58                 lea     esi, [eax+0B60h]
+  .text:00105C5E                 cmp     edx, 4
+  .text:00105C61                 jb      short loc_105C6A
+  .text:00105C63                 mov     ecx, edx
+  .text:00105C65                 shr     ecx, 2
+  .text:00105C68                 rep movsd
+  .text:00105C6A                 test    dl, 2
+  .text:00105C6D                 jz      short loc_105C71
+  .text:00105C6F                 movsw
+  .text:00105C71                 and     edx, 1
+  .text:00105C74                 jz      short loc_105C77
+  .text:00105C76                 movsb
+  .text:00105C77                 lea     esi, [esp+0C2Ch+var_BD4]
+  .text:00105C7B                 mov     ecx, 2EEh
+  .text:00105C80                 mov     edi, eax
+  .text:00105C82                 rep movsd
+  .text:00105C84                 mov     eax, [esp+0C2Ch+this]
+  .text:00105C8B                 mov     [eax+54h], ebp
+  .text:00105C8E                 mov     [esp+0C2Ch+var_C2C], ebp
+  .text:00105C91                 call    ds:(dword_A9AC0C - 61E000h)[ebx]
+  .text:00105C97                 mov     ebp, [esp+0C2Ch+var_C0C]
+  .text:00105C9B                 test    ebp, ebp
+  .text:00105C9D                 jz      loc_1046B4
+  .text:00105CA3                 cmp     byte ptr [esp+0C2Ch+var_C08], 0
+  .text:00105CA8                 jnz     loc_1046B4
+  .text:00105CAE                 call    ds:(dword_A9AC00 - 61E000h)[ebx]
+  .text:00105CB4                 jmp     loc_1046B4
+  .text:00105CB9                 movzx   ecx, word ptr [esi]
+  .text:00105CBC                 mov     [edi], cx
+  .text:00105CBF                 lea     edi, [edi+2]
+  .text:00105CC2                 add     esi, 2
+  .text:00105CC5                 sub     [esp+0C2Ch+var_C08], 2
+  .text:00105CCA                 jmp     loc_104744
+  .text:00105CCF                 movzx   edx, byte ptr [ecx+0B60h]
+  .text:00105CD6                 mov     [eax+0B60h], dl
+  .text:00105CDC                 add     eax, 0B61h
+  .text:00105CE1                 mov     edi, eax
+  .text:00105CE3                 lea     esi, [ecx+0B61h]
+  .text:00105CE9                 mov     [esp+0C2Ch+var_C08], 2Fh ; '/'
+  .text:00105CF1                 jmp     loc_10473A
+procedure: |-
+  // Source context: GameStudioModelRenderer.cpp CGameStudioRenderer::StudioDrawPlayer. Sven adds a first-person local-player suppression condition not present in the available Half-Life source. The guard compares GetLocalPlayer()->index with g_ViewEntityIndex_SCClient (requested g_ViewEntityIndex_SCClient), after checking third-person and g_bRenderingPortals. Independently corroborated by V_CalcNormalRefdef storing pparams->viewentity into this same global. Renderer and entity types intentionally expose only confirmed fields; Sven-specific opaque layout is not copied from HL.
+  int __cdecl CGameStudioRenderer_StudioDrawPlayer(renderer_view_prefix *this, int flags, void *pplayer)
+  {
+    view_entity_partial *LocalPlayer; // esi
+    int v4; // esi
+    int v6; // eax
+    int v7; // eax
+    float *p_index; // esi
+    float *v9; // eax
+    view_entity_partial *v10; // esi
+    int v11; // eax
+    int v12; // ecx
+    int v13; // esi
+    int v14; // edi
+    view_entity_partial *currententity; // eax
+    int v16; // eax
+    view_entity_partial *v17; // ecx
+    _WORD *v18; // edi
+    char *v19; // esi
+    char *v20; // edi
+    char *v21; // esi
+    char *v22; // eax
+    view_entity_partial *v23; // eax
+    int (__cdecl *v24)(int); // esi
+    int v25; // eax
+    view_entity_partial *v26; // eax
+    float *v27; // ecx
+    float *v28; // ebp
+    float v29; // ecx
+    int v30; // ebp
+    int v31; // esi
+    int v32; // eax
+    view_entity_partial *v33; // eax
+    unsigned int v34; // edx
+    float *v35; // edi
+    char *v36; // esi
+    float v37; // [esp+1Ch] [ebp-C10h]
+    int v38; // [esp+1Ch] [ebp-C10h]
+    float v39; // [esp+20h] [ebp-C0Ch]
+    float v40; // [esp+24h] [ebp-C08h]
+    char v41; // [esp+24h] [ebp-C08h]
+    unsigned int v42; // [esp+24h] [ebp-C08h]
+    float v43[3]; // [esp+34h] [ebp-BF8h] BYREF
+    _BYTE v44[8]; // [esp+40h] [ebp-BECh] BYREF
+    float v45; // [esp+48h] [ebp-BE4h]
+    float v46; // [esp+4Ch] [ebp-BE0h]
+    float v47; // [esp+50h] [ebp-BDCh]
+    float *v48; // [esp+54h] [ebp-BD8h]
+    float v49[757]; // [esp+58h] [ebp-BD4h] BYREF
+
+    v45 = 0.0;
+    v46 = 0.0;
+    v47 = 0.0;
+    v43[0] = 0.0;
+    v43[1] = 0.0;
+    v43[2] = 0.0;
+    if ( *((_BYTE *)this + 16576) )
+      LocalPlayer = gEngfuncs_GetLocalPlayer();
+    else
+      LocalPlayer = (view_entity_partial *)dword_A9AB98();
+    this->currententity = LocalPlayer;
+    if ( gEngfuncs_GetLocalPlayer() == LocalPlayer && !CL_IsThirdPerson() )
+    {
+      v49[0] = 0.0;
+      v49[1] = 0.0;
+      v49[2] = 0.0;
+      unk_A58028(v49);
+      sub_12C1EC((int)this->currententity, v49[0]);
+      if ( !g_bRenderingPortals )
+      {
+        v23 = gEngfuncs_GetLocalPlayer();
+        if ( v23 )
+        {
+          if ( v23->index == g_ViewEntityIndex_SCClient )
+            return 0;
+        }
+      }
+    }
+    ((void (__cdecl *)(char *, char *, char *))dword_A9ABA8)(&this->prefix[24], this->prefix, &this->prefix[8]);
+    ((void (__cdecl *)(char *, char *, char *, char *))dword_A9ABB0)(
+      (char *)this + 16540,
+      (char *)this + 16504,
+      (char *)this + 16516,
+      (char *)this + 16528);
+    ((void (__cdecl *)(char *, char *))dword_A9ABBC)((char *)this + 16496, (char *)this + 16500);
+    v4 = *((_DWORD *)pplayer + 1) - 1;
+    *((_DWORD *)this + 19) = v4;
+    if ( v4 < 0 )
+      return 0;
+    if ( v4 >= unk_A58030() )
+      return 0;
+    v6 = ((int (__cdecl *)(_DWORD))dword_A9ABFC)(*((_DWORD *)this + 19));
+    *((_DWORD *)this + 16) = v6;
+    if ( !v6 )
+      return 0;
+    v7 = ((int (__cdecl *)(int))dword_A9AB90)(v6);
+    *((_DWORD *)this + 21) = v7;
+    ((void (__cdecl *)(int))dword_A9AC0C)(v7);
+    ((void (__cdecl *)(_DWORD))dword_A9AC10)(*((_DWORD *)this + 16));
+    *((_DWORD *)this + 17) = ((int (__cdecl *)(_DWORD))dword_A9AB9C)(*((_DWORD *)this + 19));
+    p_index = (float *)&this->currententity->index;
+    v37 = p_index[725];
+    v39 = p_index[726];
+    v40 = p_index[727];
+    (*((void (__cdecl **)(renderer_view_prefix *, void *))this->vtable + 29))(this, pplayer);
+    *(_DWORD *)(*((_DWORD *)this + 17) + 380) = *((_DWORD *)pplayer + 46);
+    *((_DWORD *)this + 17) = 0;
+    (*((void (__cdecl **)(renderer_view_prefix *, _DWORD))this->vtable + 7))(this, 0);
+    v9 = (float *)&this->currententity->index;
+    v9[725] = v37;
+    v9[726] = v39;
+    v9[727] = v40;
+    if ( (flags & 1) != 0 )
+    {
+      if ( ((int (*)(void))dword_A9ABD4)() )
+      {
+        ++**((_DWORD **)this + 4139);
+        ++**((_DWORD **)this + 4138);
+        if ( !*(_DWORD *)(*((_DWORD *)this + 21) + 204) )
+          return 1;
+        goto LABEL_12;
+      }
+      return 0;
+    }
+  LABEL_12:
+    *((_DWORD *)this + 17) = ((int (__cdecl *)(_DWORD))dword_A9AB9C)(*((_DWORD *)this + 19));
+    (*((void (__cdecl **)(renderer_view_prefix *))this->vtable + 8))(this);
+    (*((void (__cdecl **)(renderer_view_prefix *))this->vtable + 10))(this);
+    *(_DWORD *)(*((_DWORD *)this + 17) + 376) = *(_DWORD *)&this->prefix[24];
+    *((_DWORD *)this + 17) = 0;
+    if ( (flags & 2) != 0 )
+    {
+      if ( (flags & 1) != 0 )
+      {
+        if ( *((_DWORD *)pplayer + 45) )
+        {
+          v24 = (int (__cdecl *)(int))dword_A9AB90;
+          v25 = ((int (__cdecl *)(_DWORD))dword_A9AB94)(*((_DWORD *)pplayer + 45));
+          v41 = 0;
+          if ( *(_DWORD *)(v24(v25) + 212) )
+            goto LABEL_15;
+        }
+      }
+      (*((void (__cdecl **)(renderer_view_prefix *))this->vtable + 9))(this);
+      ((void (*)(void))dword_A9AC00)();
+      currententity = this->currententity;
+      if ( currententity->index > 0 )
+      {
+        v16 = unk_A58074(currententity->index);
+        v17 = this->currententity;
+        v18 = (_WORD *)(v16 + 2912);
+        v19 = &v17->opaque[2908];
+        v42 = 48;
+        if ( ((v16 + 2912) & 1) != 0 )
+        {
+          *(_BYTE *)(v16 + 2912) = v17->opaque[2908];
+          v18 = (_WORD *)(v16 + 2913);
+          v19 = &v17->opaque[2909];
+          v42 = 47;
+        }
+        if ( ((unsigned __int8)v18 & 2) != 0 )
+        {
+          *v18++ = *(_WORD *)v19;
+          v19 += 2;
+          v42 -= 2;
+        }
+        qmemcpy(v18, v19, 4 * (v42 >> 2));
+        v21 = &v19[4 * (v42 >> 2)];
+        v20 = (char *)&v18[2 * (v42 >> 2)];
+        v22 = v20;
+        if ( (v42 & 2) != 0 )
+        {
+          *(_WORD *)v20 = *(_WORD *)v21;
+          v21 += 2;
+          v22 = v20 + 2;
+        }
+        if ( (v42 & 1) != 0 )
+          *v22 = *v21;
+      }
+      v41 = 1;
+    }
+    else
+    {
+      v41 = 0;
+    }
+    if ( (flags & 1) != 0 )
+    {
+  LABEL_15:
+      v10 = this->currententity;
+      if ( *(float *)(*(_DWORD *)&this->prefix[28] + 12) != 0.0 )
+        *(_DWORD *)&v10->opaque[784] = 255;
+      v48 = v43;
+      ((void (__cdecl *)(view_entity_partial *, _BYTE *))dword_A9ABD8)(v10, v44);
+      ((void (__cdecl *)(_BYTE *))dword_A9ABDC)(v44);
+      ((void (__cdecl *)(_BYTE *))dword_A9ABE0)(v44);
+      v11 = ((int (__cdecl *)(_DWORD))dword_A9AB9C)(*((_DWORD *)this + 19));
+      *((_DWORD *)this + 17) = v11;
+      v12 = 255;
+      v13 = 255;
+      if ( *(int *)(v11 + 368) <= 255 )
+        v13 = *(_DWORD *)(v11 + 368);
+      v14 = 0;
+      if ( v13 < 0 )
+        v13 = 0;
+      *((_DWORD *)this + 24) = v13;
+      if ( *(int *)(v11 + 372) <= 255 )
+        v12 = *(_DWORD *)(v11 + 372);
+      if ( v12 >= 0 )
+        v14 = v12;
+      *((_DWORD *)this + 25) = v14;
+      ((void (__cdecl *)(int, int))dword_A9ABF8)(v13, v14);
+      (*((void (__cdecl **)(renderer_view_prefix *))this->vtable + 21))(this);
+      *((_DWORD *)this + 17) = 0;
+      v38 = *((_DWORD *)pplayer + 45);
+      if ( v38 )
+      {
+        v26 = this->currententity;
+        v49[0] = *(float *)&v26->index;
+        v49[1] = *(float *)v26->opaque;
+        v49[2] = *(float *)&v26->opaque[4];
+        v49[3] = *(float *)&v26->opaque[8];
+        v49[4] = *(float *)&v26->opaque[12];
+        v49[5] = *(float *)&v26->opaque[16];
+        v49[6] = *(float *)&v26->opaque[20];
+        v49[7] = *(float *)&v26->opaque[24];
+        v49[8] = *(float *)&v26->opaque[28];
+        v49[9] = *(float *)&v26->opaque[32];
+        v49[10] = *(float *)&v26->opaque[36];
+        v49[11] = *(float *)&v26->opaque[40];
+        v49[12] = *(float *)&v26->opaque[44];
+        v49[13] = *(float *)&v26->opaque[48];
+        v49[14] = *(float *)&v26->opaque[52];
+        v49[15] = *(float *)&v26->opaque[56];
+        v49[16] = *(float *)&v26->opaque[60];
+        v49[17] = *(float *)&v26->opaque[64];
+        v49[18] = *(float *)&v26->opaque[68];
+        LOBYTE(v49[19]) = v26->opaque[72];
+        v49[20] = *(float *)&v26->opaque[76];
+        v49[21] = *(float *)&v26->opaque[80];
+        LOWORD(v49[22]) = *(_WORD *)&v26->opaque[84];
+        BYTE2(v49[22]) = v26->opaque[86];
+        v49[23] = *(float *)&v26->opaque[88];
+        v49[24] = *(float *)&v26->opaque[92];
+        v49[25] = *(float *)&v26->opaque[96];
+        v49[26] = *(float *)&v26->opaque[100];
+        v49[27] = *(float *)&v26->opaque[104];
+        v49[28] = *(float *)&v26->opaque[108];
+        v49[29] = *(float *)&v26->opaque[112];
+        v49[30] = *(float *)&v26->opaque[116];
+        v49[31] = *(float *)&v26->opaque[120];
+        v49[32] = *(float *)&v26->opaque[124];
+        v49[33] = *(float *)&v26->opaque[128];
+        v49[34] = *(float *)&v26->opaque[132];
+        v49[35] = *(float *)&v26->opaque[136];
+        v49[36] = *(float *)&v26->opaque[140];
+        v49[37] = *(float *)&v26->opaque[144];
+        v49[38] = *(float *)&v26->opaque[148];
+        v49[39] = *(float *)&v26->opaque[152];
+        v49[40] = *(float *)&v26->opaque[156];
+        v49[41] = *(float *)&v26->opaque[160];
+        v49[42] = *(float *)&v26->opaque[164];
+        v49[43] = *(float *)&v26->opaque[168];
+        v49[44] = *(float *)&v26->opaque[172];
+        v49[45] = *(float *)&v26->opaque[176];
+        v49[46] = *(float *)&v26->opaque[180];
+        v49[47] = *(float *)&v26->opaque[184];
+        v49[48] = *(float *)&v26->opaque[188];
+        v49[49] = *(float *)&v26->opaque[192];
+        v49[50] = *(float *)&v26->opaque[196];
+        v49[51] = *(float *)&v26->opaque[200];
+        v49[52] = *(float *)&v26->opaque[204];
+        v49[53] = *(float *)&v26->opaque[208];
+        v49[54] = *(float *)&v26->opaque[212];
+        v49[55] = *(float *)&v26->opaque[216];
+        v49[56] = *(float *)&v26->opaque[220];
+        v49[57] = *(float *)&v26->opaque[224];
+        v49[58] = *(float *)&v26->opaque[228];
+        v49[59] = *(float *)&v26->opaque[232];
+        v49[60] = *(float *)&v26->opaque[236];
+        v49[61] = *(float *)&v26->opaque[240];
+        v49[62] = *(float *)&v26->opaque[244];
+        v49[63] = *(float *)&v26->opaque[248];
+        v49[64] = *(float *)&v26->opaque[252];
+        v49[65] = *(float *)&v26->opaque[256];
+        v49[66] = *(float *)&v26->opaque[260];
+        v49[67] = *(float *)&v26->opaque[264];
+        v49[68] = *(float *)&v26->opaque[268];
+        v49[69] = *(float *)&v26->opaque[272];
+        v49[70] = *(float *)&v26->opaque[276];
+        v49[71] = *(float *)&v26->opaque[280];
+        v49[72] = *(float *)&v26->opaque[284];
+        v49[73] = *(float *)&v26->opaque[288];
+        v49[74] = *(float *)&v26->opaque[292];
+        v49[75] = *(float *)&v26->opaque[296];
+        v49[76] = *(float *)&v26->opaque[300];
+        v49[77] = *(float *)&v26->opaque[304];
+        v49[78] = *(float *)&v26->opaque[308];
+        v49[79] = *(float *)&v26->opaque[312];
+        v49[80] = *(float *)&v26->opaque[316];
+        v49[81] = *(float *)&v26->opaque[320];
+        v49[82] = *(float *)&v26->opaque[324];
+        v49[83] = *(float *)&v26->opaque[328];
+        v49[84] = *(float *)&v26->opaque[332];
+        v49[85] = *(float *)&v26->opaque[336];
+        v49[86] = *(float *)&v26->opaque[340];
+        v49[87] = *(float *)&v26->opaque[344];
+        v49[88] = *(float *)&v26->opaque[348];
+        v49[89] = *(float *)&v26->opaque[352];
+        v49[90] = *(float *)&v26->opaque[356];
+        v49[91] = *(float *)&v26->opaque[360];
+        v49[92] = *(float *)&v26->opaque[364];
+        v49[93] = *(float *)&v26->opaque[368];
+        v49[94] = *(float *)&v26->opaque[372];
+        v49[95] = *(float *)&v26->opaque[376];
+        v49[96] = *(float *)&v26->opaque[380];
+        v49[97] = *(float *)&v26->opaque[384];
+        v49[98] = *(float *)&v26->opaque[388];
+        v49[99] = *(float *)&v26->opaque[392];
+        v49[100] = *(float *)&v26->opaque[396];
+        v49[101] = *(float *)&v26->opaque[400];
+        v49[102] = *(float *)&v26->opaque[404];
+        v49[103] = *(float *)&v26->opaque[408];
+        LOBYTE(v49[104]) = v26->opaque[412];
+        v49[105] = *(float *)&v26->opaque[416];
+        v49[106] = *(float *)&v26->opaque[420];
+        LOWORD(v49[107]) = *(_WORD *)&v26->opaque[424];
+        BYTE2(v49[107]) = v26->opaque[426];
+        v49[108] = *(float *)&v26->opaque[428];
+        v49[109] = *(float *)&v26->opaque[432];
+        v49[110] = *(float *)&v26->opaque[436];
+        v49[111] = *(float *)&v26->opaque[440];
+        v49[112] = *(float *)&v26->opaque[444];
+        v49[113] = *(float *)&v26->opaque[448];
+        v49[114] = *(float *)&v26->opaque[452];
+        v49[115] = *(float *)&v26->opaque[456];
+        v49[116] = *(float *)&v26->opaque[460];
+        v49[117] = *(float *)&v26->opaque[464];
+        v49[118] = *(float *)&v26->opaque[468];
+        v49[119] = *(float *)&v26->opaque[472];
+        v49[120] = *(float *)&v26->opaque[476];
+        v49[121] = *(float *)&v26->opaque[480];
+        v49[122] = *(float *)&v26->opaque[484];
+        v49[123] = *(float *)&v26->opaque[488];
+        v49[124] = *(float *)&v26->opaque[492];
+        v49[125] = *(float *)&v26->opaque[496];
+        v49[126] = *(float *)&v26->opaque[500];
+        v49[127] = *(float *)&v26->opaque[504];
+        v49[128] = *(float *)&v26->opaque[508];
+        v49[129] = *(float *)&v26->opaque[512];
+        v49[130] = *(float *)&v26->opaque[516];
+        v49[131] = *(float *)&v26->opaque[520];
+        v49[132] = *(float *)&v26->opaque[524];
+        v49[133] = *(float *)&v26->opaque[528];
+        v49[134] = *(float *)&v26->opaque[532];
+        v49[135] = *(float *)&v26->opaque[536];
+        v49[136] = *(float *)&v26->opaque[540];
+        v49[137] = *(float *)&v26->opaque[544];
+        v49[138] = *(float *)&v26->opaque[548];
+        v49[139] = *(float *)&v26->opaque[552];
+        v49[140] = *(float *)&v26->opaque[556];
+        v49[141] = *(float *)&v26->opaque[560];
+        v49[142] = *(float *)&v26->opaque[564];
+        v49[143] = *(float *)&v26->opaque[568];
+        v49[144] = *(float *)&v26->opaque[572];
+        v49[145] = *(float *)&v26->opaque[576];
+        v49[146] = *(float *)&v26->opaque[580];
+        v49[147] = *(float *)&v26->opaque[584];
+        v49[148] = *(float *)&v26->opaque[588];
+        v49[149] = *(float *)&v26->opaque[592];
+        v49[150] = *(float *)&v26->opaque[596];
+        v49[151] = *(float *)&v26->opaque[600];
+        v49[152] = *(float *)&v26->opaque[604];
+        v49[153] = *(float *)&v26->opaque[608];
+        v49[154] = *(float *)&v26->opaque[612];
+        v49[155] = *(float *)&v26->opaque[616];
+        v49[156] = *(float *)&v26->opaque[620];
+        v49[157] = *(float *)&v26->opaque[624];
+        v49[158] = *(float *)&v26->opaque[628];
+        v49[159] = *(float *)&v26->opaque[632];
+        v49[160] = *(float *)&v26->opaque[636];
+        v49[161] = *(float *)&v26->opaque[640];
+        v49[162] = *(float *)&v26->opaque[644];
+        v49[163] = *(float *)&v26->opaque[648];
+        v49[164] = *(float *)&v26->opaque[652];
+        v49[165] = *(float *)&v26->opaque[656];
+        v49[166] = *(float *)&v26->opaque[660];
+        v49[167] = *(float *)&v26->opaque[664];
+        v49[168] = *(float *)&v26->opaque[668];
+        v49[169] = *(float *)&v26->opaque[672];
+        v49[170] = *(float *)&v26->opaque[676];
+        v49[171] = *(float *)&v26->opaque[680];
+        v49[172] = *(float *)&v26->opaque[684];
+        v49[173] = *(float *)&v26->opaque[688];
+        v49[174] = *(float *)&v26->opaque[692];
+        v49[175] = *(float *)&v26->opaque[696];
+        v49[176] = *(float *)&v26->opaque[700];
+        v49[177] = *(float *)&v26->opaque[704];
+        v49[178] = *(float *)&v26->opaque[708];
+        v49[179] = *(float *)&v26->opaque[712];
+        v49[180] = *(float *)&v26->opaque[716];
+        v49[181] = *(float *)&v26->opaque[720];
+        v49[182] = *(float *)&v26->opaque[724];
+        v49[183] = *(float *)&v26->opaque[728];
+        v49[184] = *(float *)&v26->opaque[732];
+        v49[185] = *(float *)&v26->opaque[736];
+        v49[186] = *(float *)&v26->opaque[740];
+        v49[187] = *(float *)&v26->opaque[744];
+        v49[188] = *(float *)&v26->opaque[748];
+        LOBYTE(v49[189]) = v26->opaque[752];
+        v49[190] = *(float *)&v26->opaque[756];
+        v49[191] = *(float *)&v26->opaque[760];
+        LOWORD(v49[192]) = *(_WORD *)&v26->opaque[764];
+        BYTE2(v49[192]) = v26->opaque[766];
+        v49[193] = *(float *)&v26->opaque[768];
+        v49[194] = *(float *)&v26->opaque[772];
+        v49[195] = *(float *)&v26->opaque[776];
+        v49[196] = *(float *)&v26->opaque[780];
+        v49[197] = *(float *)&v26->opaque[784];
+        v49[198] = *(float *)&v26->opaque[788];
+        v49[199] = *(float *)&v26->opaque[792];
+        v49[200] = *(float *)&v26->opaque[796];
+        v49[201] = *(float *)&v26->opaque[800];
+        v49[202] = *(float *)&v26->opaque[804];
+        v49[203] = *(float *)&v26->opaque[808];
+        v49[204] = *(float *)&v26->opaque[812];
+        v49[205] = *(float *)&v26->opaque[816];
+        v49[206] = *(float *)&v26->opaque[820];
+        v49[207] = *(float *)&v26->opaque[824];
+        v49[208] = *(float *)&v26->opaque[828];
+        v49[209] = *(float *)&v26->opaque[832];
+        v49[210] = *(float *)&v26->opaque[836];
+        v49[211] = *(float *)&v26->opaque[840];
+        v49[212] = *(float *)&v26->opaque[844];
+        v49[213] = *(float *)&v26->opaque[848];
+        v49[214] = *(float *)&v26->opaque[852];
+        v49[215] = *(float *)&v26->opaque[856];
+        v49[216] = *(float *)&v26->opaque[860];
+        v49[217] = *(float *)&v26->opaque[864];
+        v49[218] = *(float *)&v26->opaque[868];
+        v49[219] = *(float *)&v26->opaque[872];
+        v49[220] = *(float *)&v26->opaque[876];
+        v49[221] = *(float *)&v26->opaque[880];
+        v49[222] = *(float *)&v26->opaque[884];
+        v49[223] = *(float *)&v26->opaque[888];
+        v49[224] = *(float *)&v26->opaque[892];
+        v49[225] = *(float *)&v26->opaque[896];
+        v49[226] = *(float *)&v26->opaque[900];
+        v49[227] = *(float *)&v26->opaque[904];
+        v49[228] = *(float *)&v26->opaque[908];
+        v49[229] = *(float *)&v26->opaque[912];
+        v49[230] = *(float *)&v26->opaque[916];
+        v49[231] = *(float *)&v26->opaque[920];
+        v49[232] = *(float *)&v26->opaque[924];
+        v49[233] = *(float *)&v26->opaque[928];
+        v49[234] = *(float *)&v26->opaque[932];
+        v49[235] = *(float *)&v26->opaque[936];
+        v49[236] = *(float *)&v26->opaque[940];
+        v49[237] = *(float *)&v26->opaque[944];
+        v49[238] = *(float *)&v26->opaque[948];
+        v49[239] = *(float *)&v26->opaque[952];
+        v49[240] = *(float *)&v26->opaque[956];
+        v49[241] = *(float *)&v26->opaque[960];
+        v49[242] = *(float *)&v26->opaque[964];
+        v49[243] = *(float *)&v26->opaque[968];
+        v49[244] = *(float *)&v26->opaque[972];
+        v49[245] = *(float *)&v26->opaque[976];
+        v49[246] = *(float *)&v26->opaque[980];
+        v49[247] = *(float *)&v26->opaque[984];
+        v49[248] = *(float *)&v26->opaque[988];
+        v49[249] = *(float *)&v26->opaque[992];
+        v49[250] = *(float *)&v26->opaque[996];
+        v49[251] = *(float *)&v26->opaque[1000];
+        v49[252] = *(float *)&v26->opaque[1004];
+        v49[253] = *(float *)&v26->opaque[1008];
+        v49[254] = *(float *)&v26->opaque[1012];
+        v49[255] = *(float *)&v26->opaque[1016];
+        v49[256] = *(float *)&v26->opaque[1020];
+        v49[257] = *(float *)&v26->opaque[1024];
+        v27 = &v49[258];
+        v28 = (float *)&v26->opaque[1028];
+        do
+        {
+          *v27 = *v28;
+          v27[1] = v28[1];
+          v27[2] = v28[2];
+          v27[3] = v28[3];
+          v27[4] = v28[4];
+          v27[5] = v28[5];
+          v27[6] = v28[6];
+          v27[7] = v28[7];
+          v27[8] = v28[8];
+          v27[9] = v28[9];
+          v27[10] = v28[10];
+          v27[11] = v28[11];
+          v27[12] = v28[12];
+          v27[13] = v28[13];
+          v27[14] = v28[14];
+          v27[15] = v28[15];
+          v27[16] = v28[16];
+          v27[17] = v28[17];
+          v27[18] = v28[18];
+          v27[19] = v28[19];
+          v27[20] = v28[20];
+          v27[21] = v28[21];
+          v27[22] = v28[22];
+          v27[23] = v28[23];
+          v27[24] = v28[24];
+          v27[25] = v28[25];
+          v27[26] = v28[26];
+          v27[27] = v28[27];
+          v27 += 28;
+          v28 += 28;
+        }
+        while ( &v49[706] != v27 );
+        v29 = *(float *)&v26->opaque[2824];
+        v49[706] = *(float *)&v26->opaque[2820];
+        v49[707] = v29;
+        v49[708] = *(float *)&v26->opaque[2828];
+        v49[709] = *(float *)&v26->opaque[2832];
+        LOWORD(v49[710]) = *(_WORD *)&v26->opaque[2836];
+        v49[711] = *(float *)&v26->opaque[2840];
+        v49[712] = *(float *)&v26->opaque[2844];
+        v49[713] = *(float *)&v26->opaque[2848];
+        v49[714] = *(float *)&v26->opaque[2852];
+        v49[715] = *(float *)&v26->opaque[2856];
+        v49[716] = *(float *)&v26->opaque[2860];
+        v49[717] = *(float *)&v26->opaque[2864];
+        v49[718] = *(float *)&v26->opaque[2868];
+        v49[719] = *(float *)&v26->opaque[2872];
+        LOWORD(v49[720]) = *(_WORD *)&v26->opaque[2876];
+        v49[721] = *(float *)&v26->opaque[2880];
+        v49[722] = *(float *)&v26->opaque[2884];
+        v49[723] = *(float *)&v26->opaque[2888];
+        v49[724] = *(float *)&v26->opaque[2892];
+        v49[725] = *(float *)&v26->opaque[2896];
+        v49[726] = *(float *)&v26->opaque[2900];
+        v49[727] = *(float *)&v26->opaque[2904];
+        v49[728] = *(float *)&v26->opaque[2908];
+        v49[729] = *(float *)&v26->opaque[2912];
+        v49[730] = *(float *)&v26->opaque[2916];
+        v49[731] = *(float *)&v26->opaque[2920];
+        v49[732] = *(float *)&v26->opaque[2924];
+        v49[733] = *(float *)&v26->opaque[2928];
+        v49[734] = *(float *)&v26->opaque[2932];
+        v49[735] = *(float *)&v26->opaque[2936];
+        v49[736] = *(float *)&v26->opaque[2940];
+        v49[737] = *(float *)&v26->opaque[2944];
+        v49[738] = *(float *)&v26->opaque[2948];
+        v49[739] = *(float *)&v26->opaque[2952];
+        v49[740] = *(float *)&v26->opaque[2956];
+        v49[741] = *(float *)&v26->opaque[2960];
+        v49[742] = *(float *)&v26->opaque[2964];
+        v49[743] = *(float *)&v26->opaque[2968];
+        v49[744] = *(float *)&v26->opaque[2972];
+        v49[745] = *(float *)&v26->opaque[2976];
+        v49[746] = *(float *)&v26->opaque[2980];
+        v49[747] = *(float *)&v26->opaque[2984];
+        v49[748] = *(float *)&v26->opaque[2988];
+        v49[749] = *(float *)&v26->opaque[2992];
+        v30 = *((_DWORD *)this + 21);
+        v31 = ((int (__cdecl *)(int))dword_A9AB94)(v38);
+        v32 = ((int (__cdecl *)(int))dword_A9AB90)(v31);
+        *((_DWORD *)this + 21) = v32;
+        ((void (__cdecl *)(int))dword_A9AC0C)(v32);
+        (*((void (__cdecl **)(renderer_view_prefix *, int))this->vtable + 11))(this, v31);
+        ((void (__cdecl *)(_BYTE *))dword_A9ABE0)(v44);
+        (*((void (__cdecl **)(renderer_view_prefix *))this->vtable + 21))(this);
+        (*((void (__cdecl **)(renderer_view_prefix *))this->vtable + 9))(this);
+        v33 = this->currententity;
+        if ( v33->index > 0 )
+        {
+          v34 = 12 * *(_DWORD *)(*((_DWORD *)this + 21) + 212);
+          v35 = &v49[728];
+          v36 = &v33->opaque[2908];
+          if ( v34 >= 4 )
+          {
+            qmemcpy(&v49[728], v36, 4 * (v34 >> 2));
+            v36 += 4 * (v34 >> 2);
+            v35 = &v49[(v34 >> 2) + 728];
+          }
+          if ( (v34 & 2) != 0 )
+          {
+            *(_WORD *)v35 = *(_WORD *)v36;
+            v36 += 2;
+            v35 = (float *)((char *)v35 + 2);
+          }
+          if ( (v34 & 1) != 0 )
+            *(_BYTE *)v35 = *v36;
+        }
+        qmemcpy(v33, v49, sizeof(view_entity_partial));
+        *((_DWORD *)this + 21) = v30;
+        ((void (__cdecl *)(int))dword_A9AC0C)(v30);
+        if ( (flags & 2) != 0 && !v41 )
+          ((void (*)(void))dword_A9AC00)();
+      }
+    }
+    return 1;
+  }

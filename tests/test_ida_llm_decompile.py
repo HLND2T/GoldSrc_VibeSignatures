@@ -24,6 +24,21 @@ found_struct_offset: []
 
 
 class LlmDecompileParserTests(unittest.TestCase):
+    def test_disassembly_comments_need_no_space_before_semicolon(self):
+        from ida_llm_decompile import _build_target_disasm_index, render_llm_decompile_blocks
+
+        code = '.text:00401010 call sub_402000; source role\n.text:00401015 db "a;b" ; literal\n'
+        reference, target = render_llm_decompile_blocks(
+            [{"func_name": "Reference", "disasm_code": code}],
+            [{"func_name": "Target", "disasm_code": code}],
+        )
+        self.assertIn("source role", reference)
+        self.assertNotIn("source role", target)
+        self.assertIn('db "a;b"', target)
+        instructions, _ = _build_target_disasm_index([code])
+        self.assertEqual({"call sub_402000"}, instructions[0x401010])
+        self.assertEqual({'db "a;b"'}, instructions[0x401015])
+
     def test_parser_normalizes_all_canonical_sections(self):
         result = parse_llm_decompile_response(
             """\

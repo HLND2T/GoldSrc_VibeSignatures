@@ -1,0 +1,9 @@
+gv_name: cl_numvisedicts
+gv_va: '0xbc7780'
+gv_rva: '0xbc7780'
+gv_sig: 83 EC ?? 8D 44 24 ?? 89 44 24 ?? 8D 44 24 ?? 89 04 24 FF 15 ?? ?? ?? ?? 83 7C 24 ?? ?? 75 ?? 8B 15 ?? ?? ?? ?? 31
+  C0
+gv_sig_va: '0x156e40'
+gv_inst_offset: '0x50'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
