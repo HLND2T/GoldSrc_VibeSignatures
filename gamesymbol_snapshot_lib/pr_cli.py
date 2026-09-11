@@ -19,6 +19,7 @@ from bin_artifact_contract import BinArtifactContractError, build_game_artifact_
 from gamesymbol_snapshot_lib.analysis_sources import (
     build_source_index,
     is_analysis_source_path,
+    is_reference_source_path,
     validate_reference_consumers,
 )
 from gamesymbol_snapshot_lib.config import load_contract
@@ -352,7 +353,9 @@ def build_plan(
 
         validate_reference_consumers(merge_tree, list(merge_sources.values()))
         for path in sorted({path for change in changes for path in change.paths if is_analysis_source_path(path)}):
-            if not any(index.owners(path) for index in (*base_sources.values(), *merge_sources.values())):
+            if not is_reference_source_path(path) and not any(
+                index.owners(path) for index in (*base_sources.values(), *merge_sources.values())
+            ):
                 raise ImpactPlanningError(f"Changed analysis source has no mapped consumer: {path}")
         for tag in ordered_tags:
             impact = plan_tag_impact(
