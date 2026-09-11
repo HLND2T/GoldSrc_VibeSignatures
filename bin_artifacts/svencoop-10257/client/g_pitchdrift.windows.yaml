@@ -1,9 +1,9 @@
 gv_name: g_pitchdrift
-gv_va: '0x10645ab0'
-gv_rva: '0x645ab0'
+gv_va: '0x10645aa0'
+gv_rva: '0x645aa0'
 gv_sig: 83 EC 08 FF 15 ?? ?? ?? ?? F2 0F 10 05 ?? ?? ?? ?? DD 1C 24 66 0F 2E 04 24 9F F6 C4 44 7B ?? 83 3D ?? ?? ?? ?? ??
 gv_sig_va: '0x10072bf0'
-gv_inst_offset: '0x9'
+gv_inst_offset: '0x5a'
 gv_inst_length: '0x8'
 gv_inst_disp: '0x4'
 gv_sig_allow_across_function_boundary: true

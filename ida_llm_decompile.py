@@ -660,7 +660,19 @@ def _validate_llm_result(
             insn_va = _parse_int_value(entry.get("insn_va"))
             reported_disasm = _normalize_disasm_whitespace(entry.get("insn_disasm"))
             actual_disasms = instructions_by_va.get(insn_va, set()) if insn_va is not None else set()
-            if reported_disasm not in actual_disasms:
+            if insn_va is None:
+                issues.append(
+                    {
+                        "issue_type": "invalid_instruction_address",
+                        "message": (
+                            f"{section}[{index}] insn_va {entry.get('insn_va')!r} cannot be parsed. "
+                            "Write the current target instruction address as a quoted 0x-prefixed hex string "
+                            "(for example, '0x00401A40'), without a segment prefix such as '.text:'. "
+                            "Preserve the instruction text and numeric address."
+                        ),
+                    }
+                )
+            elif reported_disasm not in actual_disasms:
                 issues.append(
                     {
                         "issue_type": "instruction_mismatch",
@@ -814,6 +826,7 @@ async def call_llm_decompile(
     retry_max_delay=None,
     debug=False,
     instruction_validations=None,
+    result_validator=None,
     call_llm_text_func=_UNSET,
 ):
     diagnostic = _debug_diagnostic(
@@ -934,6 +947,10 @@ async def call_llm_decompile(
             disasm_index=disasm_index,
         )
         issues = schema_issues + semantic_issues
+        if not issues and result_validator is not None:
+            address_issues = await result_validator(result)
+            semantic_issues.extend(address_issues)
+            issues.extend(address_issues)
         report_attempt("validation", schema_issues=schema_issues, semantic_issues=semantic_issues)
         if not issues:
             report_attempt("completed", status="succeeded", result=result)

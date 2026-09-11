@@ -30,7 +30,8 @@ disasm_code: |-
   .text:00084A3E                 mov     ecx, dword ptr [esp+4Ch+playerclass]
   .text:00084A42                 imul    edx, 74h ; 't'
   .text:00084A45                 test    byte ptr ds:(g_PlayerExtraInfo.teamnumber+1)[edx], 80h
-  .text:00084A4C                 mov     word ptr ds:g_PlayerExtraInfo.frags[edx], bp ; g_PlayerExtraInfo: zero-offset frags store resolves the array base
+  .text:00084A4C                 ; g_PlayerExtraInfo: return ONLY the corresponding frags store in found_gv. Its member offset is zero and its value comes from the FIRST READ_SHORT. Reject deaths/frags+2, playerclass, teamnumber, and interior-address arithmetic even if they resolve the same array. Map target data flow; do not copy this address or register.
+  .text:00084A4C                 mov     word ptr ds:g_PlayerExtraInfo.frags[edx], bp ; SELECT: zero-offset frags store resolves the array base without address correction
   .text:00084A53                 mov     ds:g_PlayerExtraInfo.deaths[edx], di
   .text:00084A5A                 mov     ds:g_PlayerExtraInfo.playerclass[edx], cx
   .text:00084A61                 jnz     loc_84B30

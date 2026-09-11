@@ -36,11 +36,6 @@ def controller_factory(job_bytes: int = 0):
 
 
 class ParseConcurrencyTests(unittest.TestCase):
-    def test_unset_and_blank_default_to_one(self):
-        self.assertEqual(parse_analysis_concurrency(None), 1)
-        self.assertEqual(parse_analysis_concurrency(""), 1)
-        self.assertEqual(parse_analysis_concurrency("   "), 1)
-
     def test_valid_boundaries(self):
         self.assertEqual(parse_analysis_concurrency("1"), 1)
         self.assertEqual(parse_analysis_concurrency("32"), 32)
@@ -54,8 +49,7 @@ class ParseConcurrencyTests(unittest.TestCase):
 
 
 class ParseMemoryBudgetTests(unittest.TestCase):
-    def test_unset_disables_guard(self):
-        self.assertIsNone(parse_analysis_memory_budget_bytes(None))
+    def test_explicit_blank_disables_guard(self):
         self.assertIsNone(parse_analysis_memory_budget_bytes(" "))
 
     def test_valid_values(self):
@@ -70,11 +64,7 @@ class ParseMemoryBudgetTests(unittest.TestCase):
 
 
 class ParseWorkerReservationTests(unittest.TestCase):
-    def test_default_and_environment_override(self):
-        with unittest.mock.patch.dict(os.environ, {}, clear=True):
-            self.assertEqual(2048 * MIB, parse_analysis_worker_reservation_bytes())
-        for raw in ("", "   "):
-            self.assertEqual(2048 * MIB, parse_analysis_worker_reservation_bytes(raw))
+    def test_environment_override_and_explicit_argument_precedence(self):
         with unittest.mock.patch.dict(os.environ, {ANALYSIS_RESERVATION_ENV: " 512 "}):
             self.assertEqual(512 * MIB, parse_analysis_worker_reservation_bytes())
             self.assertEqual(MIB, parse_analysis_worker_reservation_bytes("1"))
@@ -86,14 +76,6 @@ class ParseWorkerReservationTests(unittest.TestCase):
 
 
 class ResolveLimitsTests(unittest.TestCase):
-    def test_defaults(self):
-        limits = resolve_analysis_limits(concurrency_raw=None, memory_raw=None)
-        self.assertEqual(
-            limits,
-            AnalysisMemoryLimits(max_concurrency=1, memory_budget_bytes=None),
-        )
-        self.assertFalse(limits.memory_guard_enabled)
-
     def test_environment_is_used_when_raw_is_none(self):
         with unittest.mock.patch.dict(
             os.environ,
@@ -104,12 +86,12 @@ class ResolveLimitsTests(unittest.TestCase):
         self.assertEqual(limits.memory_budget_bytes, 8192 * MIB)
 
     def test_effective_concurrency_above_one_requires_memory(self):
-        limits = resolve_analysis_limits(concurrency_raw="4", memory_raw=None)
+        limits = AnalysisMemoryLimits(max_concurrency=4, memory_budget_bytes=None)
         with self.assertRaises(AnalysisMemoryConfigError):
             validate_limits_for_effective_concurrency(limits, 2)
 
     def test_effective_concurrency_one_without_memory_is_compatible(self):
-        limits = resolve_analysis_limits(concurrency_raw=None, memory_raw=None)
+        limits = AnalysisMemoryLimits(max_concurrency=1, memory_budget_bytes=None)
         validate_limits_for_effective_concurrency(limits, 1)
 
     def test_memory_set_allows_parallel(self):

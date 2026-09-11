@@ -9,8 +9,7 @@ gv_sig: 83 EC ?? 8B 44 24 ?? 89 5C 24 ?? 89 74 24 ?? 8B 74 24 ?? 89 7C 24 ?? 89 
   89 04 24 E8 ?? ?? ?? ?? 8B 06 89 34 24 FF 50 ?? 8B 46 ?? 8B 00 8B 78 ?? 8B 46 ?? 8B 10 89 04 24 FF 52 ?? 8B 2D ?? ?? ??
   ?? 85 ED 88 C3 0F 95 C0 0F B6 E8 8B 06 0F B6 DB 89 34 24
 gv_sig_va: '0xddd20'
-gv_inst_offset: '0x63'
+gv_inst_offset: '0x6a'
 gv_inst_length: '0x7'
 gv_inst_disp: '0x3'
-gv_address_offset: '0xfffffffe'
 gv_sig_allow_across_function_boundary: true
