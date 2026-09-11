@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import importlib
+import re
 import runpy
 import unittest
 from pathlib import Path
@@ -24,7 +26,163 @@ found_struct_offset: []
 """
 
 
+def scoreinfo_code(*, stride="imul eax, 74h", extra=(), store="mov word_600000[eax], di"):
+    instructions = [
+        "call sub_700000",  # BEGIN_READ
+        "call sub_700100",  # READ_BYTE: player index
+        "movzx esi, ax",
+        "call sub_700200",  # First READ_SHORT: frags
+        "movzx edi, ax",
+        "call sub_700200",  # deaths
+        "movzx ebx, ax",
+        "call sub_700200",  # playerclass
+        "mov ebp, eax",
+        "call sub_700200",  # teamnumber
+        "movsx eax, si",
+        *stride.splitlines(),
+        "cmp word_60002A[eax], 0",
+        "mov word_600002[eax], bx",
+        *extra,
+        store,
+        "ret",
+    ]
+    return "\n".join(f".text:{0x500000 + index * 0x10:08X} {line}" for index, line in enumerate(instructions))
+
+
+class ScoreInfoWindowsDataflowTests(unittest.TestCase):
+    def rule(self, code, stride=0x74):
+        helper = importlib.import_module("ida_preprocessor_scripts._scoreinfo_dataflow")
+        return helper.windows_frags_instruction_rule(code, stride)
+
+    def test_selects_first_short_value_not_first_member_access(self):
+        rule = self.rule(scoreinfo_code())
+        self.assertIsNotNone(rule)
+        self.assertIsNotNone(re.fullmatch(rule["regex"], "mov word_600000[eax], di"))
+        self.assertIsNone(re.fullmatch(rule["regex"], "cmp word_60002A[eax], 0"))
+        self.assertIsNone(re.fullmatch(rule["regex"], "mov word_600002[eax], bx"))
+
+    def test_compiler_stride_forms_and_register_renaming(self):
+        cases = (
+            (0x74, "lea edx, ds:0[eax*8]\nsub edx, eax\nlea eax, [eax+edx*4]\nshl eax, 2", "eax"),
+            (0x1C, "lea ecx, ds:0[eax*8]\nsub ecx, eax", "ecx*4"),
+        )
+        for stride, calculation, index in cases:
+            with self.subTest(stride=stride):
+                store = f"mov word_800000[{index}], di"
+                code = scoreinfo_code(stride=calculation, store=store)
+                renames = {"edi": "ebx", "di": "bx", "ebx": "edi", "bx": "di"}
+                code = re.sub(r"\b(?:edi|di|ebx|bx)\b", lambda match: renames[match[0]], code)
+                rule = self.rule(code, stride)
+                self.assertIsNotNone(rule)
+                self.assertIsNotNone(re.fullmatch(rule["regex"], store.replace(", di", ", bx")))
+
+    def test_clobbers_wrong_values_and_biased_indexes_fail_closed(self):
+        cases = (
+            scoreinfo_code(extra=("xor edi, edi",)),
+            scoreinfo_code(extra=("mov di, bx",)),
+            scoreinfo_code(extra=("mov edi, eax",)),
+            scoreinfo_code(extra=("add eax, 2",)),
+            scoreinfo_code(extra=("mov al, 1",)),
+            scoreinfo_code(extra=("mov ah, 1",)),
+            scoreinfo_code(store="mov word_600000[eax], bx"),
+            scoreinfo_code(store="mov dword_600000[eax], edi"),
+            scoreinfo_code(stride="imul eax, 78h"),
+            scoreinfo_code().replace("call sub_700200", "call eax", 1),
+            scoreinfo_code().replace("movzx edi, ax", "movzx ecx, ax").replace(", di", ", cx"),
+            scoreinfo_code(extra=("mov [ebp+var_4], edi", "xor edi, edi", "mov edi, [ebp+var_4]")),
+        )
+        for code in cases:
+            with self.subTest(code=code):
+                self.assertIsNone(self.rule(code))
+
+    def test_register_copy_is_traced(self):
+        rule = self.rule(scoreinfo_code(extra=("mov ecx, edi",), store="mov word_600000[eax], cx"))
+        self.assertIsNotNone(rule)
+
+    def test_ambiguous_stores_are_rejected(self):
+        self.assertIsNone(self.rule(scoreinfo_code(extra=("mov word_610000[eax], di",))))
+
+    def test_branch_merges_and_loops_cannot_supply_unproven_values(self):
+        # The conditional branch can skip a clobber on the path to the same store.
+        self.assertIsNone(self.rule(scoreinfo_code(extra=("jz loc_500100", "xor edi, edi"))))
+        self.assertIsNone(self.rule(scoreinfo_code(extra=("jmp loc_500000",))))
+
+    def test_player_bounds_branch_preserves_proven_value(self):
+        code = scoreinfo_code(extra=("ja loc_500100",))
+        self.assertIsNotNone(self.rule(code))
+
+
 class ScoreInfoInstructionRuleTests(unittest.IsolatedAsyncioTestCase):
+    async def test_windows_ambiguous_dataflow_stops_before_llm_and_generation(self):
+        finder = runpy.run_path(
+            str(
+                Path(__file__).resolve().parents[1]
+                / "ida_preprocessor_scripts/find-ClientScoreInfoHandler-decompiles.py"
+            )
+        )
+        common = AsyncMock(return_value=True)
+        with patch.dict(
+            finder["preprocess_skill"].__globals__,
+            {
+                "preprocess_common_skill": common,
+                "_prepare_llm_context": lambda *args: {"targets": [({}, 0x500000)]},
+                "_export_llm_function": AsyncMock(
+                    return_value={"disasm_code": scoreinfo_code(extra=("mov word_610000[eax], di",))}
+                ),
+            },
+        ):
+            result = await finder["preprocess_skill"](
+                None, "find-ClientScoreInfoHandler-decompiles", [], {}, ".", "windows", 0
+            )
+        self.assertFalse(result)
+        common.assert_not_called()
+
+    async def test_windows_retries_ci_multi_member_response(self):
+        finder = runpy.run_path(
+            str(
+                Path(__file__).resolve().parents[1]
+                / "ida_preprocessor_scripts/find-ClientScoreInfoHandler-decompiles.py"
+            )
+        )
+        code = scoreinfo_code()
+        common = AsyncMock(return_value=True)
+        with patch.dict(
+            finder["preprocess_skill"].__globals__,
+            {
+                "preprocess_common_skill": common,
+                "_prepare_llm_context": lambda *args: {"targets": [({}, 0x500000)]},
+                "_export_llm_function": AsyncMock(return_value={"disasm_code": code}),
+            },
+        ):
+            await finder["preprocess_skill"](None, "find-ClientScoreInfoHandler-decompiles", [], {}, ".", "windows", 0)
+        spec = common.call_args.kwargs["llm_decompile_specs"][0]
+
+        def response(entries):
+            return "found_gv:\n" + "".join(
+                f"  - insn_va: '{address}'\n    insn_disasm: '{line}'\n    gv_name: g_PlayerExtraInfo\n"
+                for address, line in entries
+            )
+
+        accepted = ("0x5000E0", "mov word_600000[eax], di")
+        wrong = [("0x5000C0", "cmp word_60002A[eax], 0"), ("0x5000D0", "mov word_600002[eax], bx")]
+        for entries in (wrong + [accepted], [accepted] + wrong):
+            with self.subTest(entries=entries):
+                transport = AsyncMock(side_effect=[response(entries), response([accepted])])
+                result = await call_llm_decompile(
+                    model="test-model",
+                    symbol_name_list=["g_PlayerExtraInfo"],
+                    expected_result_sections={"g_PlayerExtraInfo": ["found_gv"]},
+                    instruction_validations={
+                        "g_PlayerExtraInfo": {"instruction_rules": spec.get("instruction_rules", [])}
+                    },
+                    target_disasm_codes=[code],
+                    prompt_template="Find {symbol_name_list}.",
+                    max_retries=2,
+                    call_llm_text_func=transport,
+                )
+                self.assertEqual([accepted[0]], [entry["insn_va"] for entry in result["found_gv"]])
+                self.assertEqual(2, transport.call_count)
+
     async def test_linux_retries_member_references_and_accepts_only_frags_store(self):
         finder = runpy.run_path(
             str(

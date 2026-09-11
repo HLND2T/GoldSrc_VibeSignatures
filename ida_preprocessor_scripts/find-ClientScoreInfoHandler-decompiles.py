@@ -6,7 +6,12 @@ TeamFortressViewport body and layout. Neither exists in canonical Half-Life,
 so each body has one explicit reference family, shared across its builds.
 """
 
-from ida_analyze_util import _output_for_symbol, preprocess_common_skill
+from ida_analyze_util import _export_llm_function, _output_for_symbol, _prepare_llm_context, preprocess_common_skill
+from ida_preprocessor_scripts._scoreinfo_dataflow import (
+    CS_PLAYER_STRIDE,
+    CZDS_PLAYER_STRIDE,
+    windows_frags_instruction_rule,
+)
 
 GV_FIELDS = [
     "gv_name",
@@ -39,15 +44,14 @@ async def preprocess_skill(
     specs = [
         {
             "symbol_name": name,
-            "prompt_path": "prompt/call_llm_decompile.md",
+            "prompt_path": "prompt/call_llm_scoreinfo.md",
             "reference_yaml_paths": [f"references/{family}/client/ClientScoreInfoHandler.{{platform}}.yaml"],
             "expected_result_sections": ["found_gv"],
             "dependency_policy": {"ClientScoreInfoHandler.{platform}.yaml": "required"},
         }
     ]
     if platform == "linux":
-        # Linux retains member names; Windows uses anonymous word_<address>
-        # operands, whose member offset cannot be inferred by a text rule.
+        # Linux retains member names, so a text rule proves the zero member.
         specs[0]["instruction_rules"] = [
             {
                 "regex": (
@@ -63,6 +67,21 @@ async def preprocess_skill(
                 ),
             }
         ]
+    elif platform == "windows":
+        # Anonymous Windows operands need current-handler dataflow evidence.
+        # The LLM still maps the symbol; this rule rejects every other access
+        # before candidate generation can pick the first returned member.
+        context = _prepare_llm_context(specs[0], llm_config, new_binary_dir, platform)
+        if context is None or len(context["targets"]) != 1:
+            return False
+        exported = await _export_llm_function(session, context["targets"][0][1])
+        rule = windows_frags_instruction_rule(
+            (exported or {}).get("disasm_code", ""), CZDS_PLAYER_STRIDE if czds else CS_PLAYER_STRIDE
+        )
+        if rule is None:
+            print(f"ScoreInfo: cannot prove one zero-offset frags store for {name}")
+            return False
+        specs[0]["instruction_rules"] = [rule]
     return await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,
