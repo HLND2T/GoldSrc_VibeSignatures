@@ -22,10 +22,13 @@ from ida_llm_decompile import (
     render_llm_decompile_blocks,
 )
 
-SYMBOL_CATEGORIES = frozenset({"func", "gv", "vfunc", "vtable", "patch", "structmember"})
+from scalar_artifact import SCALAR_FIELDS, validate_scalar_artifact
+
+SYMBOL_CATEGORIES = frozenset({"func", "gv", "vfunc", "vtable", "patch", "structmember", "scalar"})
 SIGNATURE_RE = re.compile(r"^(?:[0-9A-F]{2}|\?\?)(?: (?:[0-9A-F]{2}|\?\?))*$")
 LEGACY_ARTIFACT_FIELDS = frozenset({"name", "type", "kind"})
 CATEGORY_IDENTITY_FIELDS = {
+    "scalar": ("scalar_name",),
     "func": ("func_name",),
     "vfunc": ("func_name",),
     "gv": ("gv_name",),
@@ -84,6 +87,7 @@ STRUCT_MEMBER_YAML_ORDER = [
     "offset_sig_allow_across_function_boundary",
 ]
 CATEGORY_FIELD_ORDER = {
+    "scalar": SCALAR_FIELDS,
     "func": FUNC_YAML_ORDER,
     "vfunc": FUNC_YAML_ORDER,
     "gv": GV_YAML_ORDER,
@@ -232,6 +236,8 @@ def resolve_x86_global_reference(
 
 def _infer_artifact_category(payload: Mapping[str, object]) -> str:
     candidates: set[str] = set()
+    if "scalar_name" in payload:
+        candidates.add("scalar")
     if "func_name" in payload:
         candidates.add("vfunc" if any(key.startswith("vfunc_") or key == "vtable_name" for key in payload) else "func")
     if "gv_name" in payload:
@@ -261,6 +267,11 @@ def normalize_symbol_artifact(payload: Mapping[str, object], *, category: str | 
         if not isinstance(value, str) or not value.strip():
             raise SymbolArtifactError(f"{category} artifact requires non-empty {identity_field}")
     normalized = dict(payload)
+    if category == "scalar":
+        try:
+            validate_scalar_artifact(payload)
+        except ValueError as exc:
+            raise SymbolArtifactError(str(exc)) from exc
     for field, value in tuple(normalized.items()):
         if field.endswith("_sig") and value is not None:
             normalized[field] = normalize_signature(value)

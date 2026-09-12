@@ -11,6 +11,7 @@ from pathlib import Path
 import yaml
 
 from analysis_planner import PLATFORMS, load_config, module_declares_platform, symbol_artifact_filename
+from analysis_output_contract import ANALYSIS_OUTPUT_CONTRACT_VERSION
 from gamesymbol_snapshot_lib.codec import CanonicalDumper, DIGEST_PATTERN, SHA256_PATTERN, parse_snapshot_bytes
 from gamesymbol_snapshot_lib.paths import metadata_path_for_snapshot, snapshot_tag_from_filename
 from gamesymbol_store import SnapshotSymbolStore
@@ -72,7 +73,13 @@ def _snapshot_owner_keys(snapshot_document: Mapping) -> set[tuple[str, str, str]
     return owners
 
 
-def build_metadata_document(*, snapshot_path: str | Path, config_path: str | Path, expected_game_version: str) -> dict:
+def build_metadata_document(
+    *,
+    snapshot_path: str | Path,
+    config_path: str | Path,
+    expected_game_version: str,
+    analysis_output_contract_version: int = ANALYSIS_OUTPUT_CONTRACT_VERSION,
+) -> dict:
     snapshot = Path(snapshot_path)
     filename_tag = snapshot_tag_from_filename(snapshot.name)
     if filename_tag != str(expected_game_version):
@@ -81,6 +88,7 @@ def build_metadata_document(*, snapshot_path: str | Path, config_path: str | Pat
         snapshot,
         expected_game_version=str(expected_game_version),
         config_path=config_path,
+        analysis_output_contract_version=analysis_output_contract_version,
     )
     snapshot_raw = snapshot.read_bytes()
     snapshot_document = parse_snapshot_bytes(snapshot_raw, str(expected_game_version))
@@ -224,7 +232,12 @@ def parse_metadata_bytes(
 
 
 def verify_metadata(
-    *, metadata_path: str | Path, snapshot_path: str | Path, config_path: str | Path, game_version: str
+    *,
+    metadata_path: str | Path,
+    snapshot_path: str | Path,
+    config_path: str | Path,
+    game_version: str,
+    analysis_output_contract_version: int = ANALYSIS_OUTPUT_CONTRACT_VERSION,
 ) -> dict:
     metadata = Path(metadata_path)
     snapshot_raw = Path(snapshot_path).read_bytes()
@@ -234,6 +247,7 @@ def verify_metadata(
         snapshot_path=snapshot_path,
         config_path=config_path,
         expected_game_version=str(game_version),
+        analysis_output_contract_version=analysis_output_contract_version,
     )
     if actual != expected:
         raise MetadataContractError(
@@ -289,12 +303,18 @@ def compare_metadata(
 
 
 def write_metadata(
-    *, snapshot_path: str | Path, config_path: str | Path, game_version: str, output_path: str | Path
+    *,
+    snapshot_path: str | Path,
+    config_path: str | Path,
+    game_version: str,
+    output_path: str | Path,
+    analysis_output_contract_version: int = ANALYSIS_OUTPUT_CONTRACT_VERSION,
 ) -> dict:
     document = build_metadata_document(
         snapshot_path=snapshot_path,
         config_path=config_path,
         expected_game_version=str(game_version),
+        analysis_output_contract_version=analysis_output_contract_version,
     )
     raw = canonical_metadata_bytes(document)
     output = Path(output_path)
@@ -315,6 +335,7 @@ def write_metadata(
         snapshot_path=snapshot_path,
         config_path=config_path,
         game_version=str(game_version),
+        analysis_output_contract_version=analysis_output_contract_version,
     )
     return document
 

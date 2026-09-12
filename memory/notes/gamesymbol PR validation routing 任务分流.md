@@ -67,6 +67,23 @@ tags:
 - 门控是 **tag 粗粒度** `any(...)`：任一 tag 命中，整个 job 就跑；per-tag / per-node 粒度只存在于 job 内部（`analysis-selection.json` + 循环）。
 - `analysis_batch.py:90 classify_tag_plan` 是 **job 内** parallel/serial DAG 调度分类（见 [[full-analysis-concurrency]]），**不是** PR 分流。
 
+## Trusted contract rollout
+
+- Trigger: a PR introduces a new symbol category or snapshot contract and `plan` fails inside `.trusted-planner`, even though tests against the PR code pass.
+- Root cause: the planner and candidate validator are loaded from `pull_request.base.sha`; they must understand the merge commit's config and artifact payloads before feature activation. Updating only the PR's parser cannot update the trusted base checkout.
+- Correct procedure: land shared parser, artifact validation, snapshot/candidate and consumer compatibility in a prerequisite PR without enabling new config symbols or changing binary artifacts. Then merge the updated main into the feature branch. Keep the base checkout trust boundary intact.
+- Verification: run the prerequisite tools against the feature revision's bound plan and artifacts; verify candidates built by the old base remain consumable during the prerequisite PR. Run Pages E2E separately from Vitest/build whenever dataset or snapshot versions change.
+- Scope: cross-revision game-symbol PR validation, including the scalar rollout required by #109. The prerequisite retains default snapshot 7 / output contract 2 and adds explicit writer profile 8/3; #109 requests `-snapshot-schema-version 8` only after the trusted base supports it. Switching the prerequisite's default consumer to contract 3 would reject the old base's contract-2 candidates in gamedata build. Dataset 5 / snapshot 8 also require matching E2E assertions; index stays 4.
+
+## Prerequisite PRs can expose existing finder failures
+
+- Trigger: PR #110 run `34622171768` passed planning and IDB warmup, but full analysis stopped at Sven 10257 Linux `find-R_DrawTEntitiesOnList-decompiles`.
+- Root cause: the inherited finder rejected register-relative `cl.parsecount` member accesses. The LLM correctly selected `0x17e5d4` and `0x17e6df`, but the instruction regex rejected both; an empty retry then reached an unavailable fallback skill. The aggregate failure and unexecuted CoF tasks were consequences, not additional scalar contract failures.
+- Correct approach: extract the already verified `cl_parsecount` fix from #109 into the prerequisite. Remove the operand-spelling restriction while retaining semantic references, current-instruction decoding, CFG base-address proof and unique signature validation. Sven Linux resolves `0x15d7d60 + 0x242324 = 0x181a084`; the former artifact pointed to `CL_UPDATE_MASK` at `0x2f1654`.
+- Verification: force the finder on all 13 configured engine/platform targets using the prerequisite revision and compare generated artifacts with the reviewed payloads; run the shared address-resolution regression and repository gates. Do not skip affected nodes or substitute the feature revision for the trusted base.
+- Result (2026-09-12): owned IDA batch `analysis-batch-20260912T103809-c1b701ea1536456a8d1ef14d316ca98e` succeeded for 13/13 targets. All generated `cl_parsecount` files byte-match the reviewed artifacts; only the Sven Linux tracked artifact changes. The companion #109 test repair replaces the test that incorrectly classified the Sven member as a decoy with a synthetic shared instruction-rule retry test.
+- Scope: splitting prerequisite compatibility work from feature PRs that also repair existing finders. Review which existing repairs the prerequisite's broader analysis requires.
+
 ## Verification
 
 - `tests/test_gamesymbol_pr_validation.py` 覆盖 plan/route/aggregate 断言；`pr-validate` 的聚合 step 本身即路由断言的运行时证据。
