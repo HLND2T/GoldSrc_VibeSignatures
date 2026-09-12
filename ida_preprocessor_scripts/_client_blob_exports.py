@@ -101,10 +101,11 @@ def recover_client_export_table(instructions):
 
 
 _EXPORT_INITIALIZER = r"""
-import ida_bytes, ida_funcs, ida_ua, idautils, idc, json, re
+import ida_bytes, ida_funcs, ida_segment, ida_ua, idautils, idc, json, re
 entry = BLOB_ENTRY
 instructions = []
 function_starts = set()
+executable_addresses = set()
 owner = ida_funcs.get_func(entry)
 if owner and owner.start_ea == entry:
     for ea in idautils.FuncItems(entry):
@@ -124,6 +125,9 @@ if owner and owner.start_ea == entry:
                 func = ida_funcs.get_func(op.value)
                 if func and func.start_ea == op.value:
                     function_starts.add(int(op.value))
+                segment = ida_segment.getseg(op.value)
+                if segment and segment.perm & ida_segment.SEGPERM_EXEC and ida_bytes.is_loaded(op.value):
+                    executable_addresses.add(int(op.value))
             elif op.type == ida_ua.o_mem and not re.search(r"\be(?:ax|bx|cx|dx|si|di|bp|sp)\b", text):
                 operand.update(kind="absolute")
             elif op.type in (ida_ua.o_displ, ida_ua.o_phrase):
@@ -138,7 +142,7 @@ if owner and owner.start_ea == entry:
         if ida_bytes.get_bytes(ea, 2) == b"\xf3\xa5":
             mnemonic, operands = "rep movsd", []
         instructions.append({"mnemonic": mnemonic, "operands": operands})
-result = json.dumps({"instructions": instructions, "function_starts": sorted(function_starts)})
+result = json.dumps({"instructions": instructions, "function_starts": sorted(function_starts), "executable_addresses": sorted(executable_addresses)})
 """
 
 
@@ -161,6 +165,10 @@ async def locate_blob_client_entries(session, input_path, image_base):
     if not isinstance(located, dict):
         return {}
     table = recover_client_export_table(located.get("instructions", []))
-    if table is None or not set(table).issubset(located.get("function_starts", [])):
+    if table is None or not set(table).issubset(located.get("executable_addresses", [])):
+        return {}
+    # Warm autoanalysis need not define unused ABI callbacks as functions. Only
+    # the roots we consume require exact function starts and signature validation.
+    if not {table[slot] for slot in CLIENT_EXPORT_SLOTS.values()}.issubset(located.get("function_starts", [])):
         return {}
     return {name: [table[slot]] for name, slot in CLIENT_EXPORT_SLOTS.items()}

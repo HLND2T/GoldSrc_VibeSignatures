@@ -100,13 +100,23 @@ class ClientBlobExportsTests(unittest.TestCase):
 class ClientBlobIdentityTests(unittest.IsolatedAsyncioTestCase):
     async def test_binary_bytes_image_base_and_function_starts_must_match(self):
         cases = (
-            (b"matching-pe", 0x400000, True, True),
-            (b"different-pe", 0x400000, True, False),
-            (b"matching-pe", 0x500000, True, False),
-            (b"matching-pe", 0x400000, False, False),
+            (b"matching-pe", 0x400000, None, None, True),
+            (b"different-pe", 0x400000, None, None, False),
+            (b"matching-pe", 0x500000, None, None, False),
+            (b"matching-pe", 0x400000, 42, None, True),
+            (b"matching-pe", 0x400000, 15, None, False),
+            (b"matching-pe", 0x400000, 19, None, False),
+            (b"matching-pe", 0x400000, 39, None, False),
+            (b"matching-pe", 0x400000, None, 42, False),
+            (b"matching-pe", 0x400000, None, 15, False),
         )
-        for binary_bytes, image_base, complete_functions, accepted in cases:
-            with self.subTest(binary_bytes=binary_bytes, image_base=image_base, complete_functions=complete_functions):
+        for binary_bytes, image_base, missing_function, nonexecutable, accepted in cases:
+            with self.subTest(
+                binary_bytes=binary_bytes,
+                image_base=image_base,
+                missing_function=missing_function,
+                nonexecutable=nonexecutable,
+            ):
                 with TemporaryDirectory() as directory:
                     binary = Path(directory) / "client.decrypt.dll"
                     binary.write_bytes(binary_bytes)
@@ -116,7 +126,8 @@ class ClientBlobIdentityTests(unittest.IsolatedAsyncioTestCase):
                         call_tool=AsyncMock(
                             return_value={
                                 "instructions": initializer(),
-                                "function_starts": functions if complete_functions else functions[:-1],
+                                "function_starts": [ea for i, ea in enumerate(functions) if i != missing_function],
+                                "executable_addresses": [ea for i, ea in enumerate(functions) if i != nonexecutable],
                             }
                         )
                     )
