@@ -12,7 +12,8 @@ from collections import deque
 
 from ida_llm_decompile import _build_target_disasm_index
 
-CS_PLAYER_STRIDE = 0x74
+# CS keeps the zero-member frags layout but older builds use smaller records.
+CS_PLAYER_STRIDES = (0x74, 0x68)
 CZDS_PLAYER_STRIDE = 0x1C
 _READ_SHORT_COUNT = 4
 _HEADER_CALL_COUNT = 2 + _READ_SHORT_COUNT
@@ -156,7 +157,7 @@ def windows_frags_instruction_rule(disasm_code, stride):
         line = next(iter(lines))
         parts = line.lower().split(None, 1)
         instructions[address] = (line, parts[0], [op.strip() for op in parts[1].split(",")] if len(parts) > 1 else [])
-    if not instructions or stride not in {CS_PLAYER_STRIDE, CZDS_PLAYER_STRIDE}:
+    if not instructions or stride not in {*CS_PLAYER_STRIDES, CZDS_PLAYER_STRIDE}:
         return None
     addresses = sorted(instructions)
     prefix_calls = []

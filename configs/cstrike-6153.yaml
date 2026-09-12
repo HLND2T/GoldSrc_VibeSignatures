@@ -1,0 +1,90 @@
+modules:
+  - name: client
+    module_windows: client.dll
+    module_linux: client.so
+    depot_windows: cstrike/cl_dlls/client.dll
+    depot_linux: cstrike/cl_dlls/client.so
+    skills:
+      - name: find-CL_IsThirdPerson-decompiles
+        expected_input:
+          - CL_IsThirdPerson.{platform}.yaml
+        expected_output:
+          - g_iUser1.{platform}.yaml
+          - g_iUser2.{platform}.yaml
+      - name: find-GameStudioRenderer_StudioDrawModel-decompiles
+        expected_input:
+          - GameStudioRenderer_StudioDrawModel.{platform}.yaml
+          - GameStudioRenderer_vtable.{platform}.yaml
+        expected_output:
+          - GameStudioRenderer_StudioDrawPlayer.{platform}.yaml
+          - GameStudioRenderer_StudioSetupBones.{platform}.yaml
+          - GameStudioRenderer_StudioCalcAttachments.{platform}.yaml
+          - GameStudioRenderer_StudioSaveBones.{platform}.yaml
+          - GameStudioRenderer_StudioMergeBones.{platform}.yaml
+          - GameStudioRenderer_StudioRenderModel.{platform}.yaml
+      - name: find-GameStudioRenderer-inner-player
+        expected_input:
+          - GameStudioRenderer_StudioDrawPlayer.{platform}.yaml
+          - GameStudioRenderer_vtable.{platform}.yaml
+        expected_output:
+          - GameStudioRenderer__StudioDrawPlayer.{platform}.yaml
+      - name: find-GameStudioRenderer_StudioRenderModel-decompiles
+        expected_input:
+          - GameStudioRenderer_StudioRenderModel.{platform}.yaml
+          - GameStudioRenderer_vtable.{platform}.yaml
+        expected_output:
+          - GameStudioRenderer_StudioRenderFinal.{platform}.yaml
+      - name: find-client-studio-interface
+        expected_input:
+          - HUD_GetStudioModelInterface.{platform}.yaml
+        expected_output:
+          - GameStudioRenderer_vtable.{platform}.yaml
+          - GameStudioRenderer_StudioDrawModel.{platform}.yaml
+          - g_pGameStudioRenderer.{platform}.yaml
+      - name: find-ClientScoreInfoHandler-decompiles
+        expected_input:
+          - ClientScoreInfoHandler.{platform}.yaml
+        expected_output:
+          - g_PlayerExtraInfo.{platform}.yaml
+      - name: find-client-ScoreInfo-handler
+        expected_output:
+          - ClientScoreInfoHandler.{platform}.yaml
+      - name: find-client-private-predecessors
+        expected_output:
+          - HUD_GetStudioModelInterface.{platform}.yaml
+          - CL_IsThirdPerson.{platform}.yaml
+    symbols:
+      - name: g_PlayerExtraInfo
+        category: gv
+      - name: ClientScoreInfoHandler
+        category: func
+      - name: GameStudioRenderer_StudioSetupBones
+        category: vfunc
+      - name: GameStudioRenderer_StudioSaveBones
+        category: vfunc
+      - name: GameStudioRenderer_StudioMergeBones
+        category: vfunc
+      - name: GameStudioRenderer_StudioRenderModel
+        category: vfunc
+      - name: GameStudioRenderer_StudioRenderFinal
+        category: vfunc
+      - name: GameStudioRenderer_StudioCalcAttachments
+        category: vfunc
+      - name: GameStudioRenderer_vtable
+        category: vtable
+      - name: GameStudioRenderer_StudioDrawModel
+        category: vfunc
+      - name: GameStudioRenderer_StudioDrawPlayer
+        category: vfunc
+      - name: GameStudioRenderer__StudioDrawPlayer
+        category: vfunc
+      - name: g_pGameStudioRenderer
+        category: gv
+      - name: g_iUser1
+        category: gv
+      - name: g_iUser2
+        category: gv
+      - name: HUD_GetStudioModelInterface
+        category: func
+      - name: CL_IsThirdPerson
+        category: func
