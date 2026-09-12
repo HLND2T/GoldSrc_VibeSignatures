@@ -26,7 +26,7 @@ execution plan.
 - Inputs may reference a sibling module with `../<module>/<artifact>`; the planner normalizes both producer and
   consumer to one game-root-relative owner path and creates a real cross-module edge.
 - Config symbols use `name` plus the sole classifier `category`; `type` and `kind` are rejected. Categories: `func`,
-  `gv`, `vfunc`, `vtable`, `patch`, `struct`, `structmember`.
+  `gv`, `vfunc`, `vtable`, `patch`, `struct`, `structmember`, `scalar` (numeric scalar_name/scalar_value payload).
 - Artifact payloads reject generic `name/type/kind` and use category-specific identity: `func_name`, `gv_name`,
   `patch_name`, `vtable_class`, or `struct_name`/`member_name`. Payload identity is deliberately not compared with the
   config symbol name (CS2 loader contract).

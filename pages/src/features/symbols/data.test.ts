@@ -4,10 +4,10 @@ import { getGameSymbolDataset, getGameSymbolIndex } from './data'
 import type { GameSymbolDataset, GameSymbolIndexVersion } from './types'
 
 const dataset: GameSymbolDataset = {
-  schemaVersion: 4,
+  schemaVersion: 5,
   source: {
     gameVersion: 'svencoop-10257',
-    snapshotSchemaVersion: 7,
+    snapshotSchemaVersion: 8,
     configDigestVersion: 2,
     analysisOutputContractVersion: 1,
     configSha256: 'sha256:test',
@@ -40,7 +40,7 @@ function encodedDataset(): { bytes: Uint8Array; version: GameSymbolIndexVersion 
       url: `svencoop-10257.${sha256}.json`,
       sha256,
       size: bytes.byteLength,
-      snapshotSchemaVersion: 7,
+      snapshotSchemaVersion: 8,
       fileCount: 0,
       lastPublishTime: '2026-07-27T04:42:43Z',
     },
@@ -55,7 +55,7 @@ async function fetchDataset(invalidDataset: unknown, versionOverride?: Partial<G
     url: `svencoop-10257.${sha256}.json`,
     sha256,
     size: bytes.byteLength,
-    snapshotSchemaVersion: 7,
+    snapshotSchemaVersion: 8,
     fileCount: 0,
     lastPublishTime: '2026-07-27T04:42:43Z',
     ...versionOverride,
@@ -125,12 +125,12 @@ describe('game-symbol asset loading', () => {
     await expect(fetchDataset(invalidDataset)).rejects.toThrow(/binary crc64/)
   })
 
-  it('rejects datasets that are not schema v4 derived from snapshot schema v7', async () => {
-    const legacyDataset = { ...dataset, schemaVersion: 3 }
-    await expect(fetchDataset(legacyDataset)).rejects.toThrow(/dataset schema v4/)
+  it('rejects datasets that are not schema v5 derived from snapshot schema v8', async () => {
+    const legacyDataset = { ...dataset, schemaVersion: 4 }
+    await expect(fetchDataset(legacyDataset)).rejects.toThrow(/dataset schema v5/)
 
-    const staleSnapshotDataset = { ...dataset, source: { ...dataset.source, snapshotSchemaVersion: 6 } }
-    await expect(fetchDataset(staleSnapshotDataset)).rejects.toThrow(/dataset schema v4/)
+    const staleSnapshotDataset = { ...dataset, source: { ...dataset.source, snapshotSchemaVersion: 7 } }
+    await expect(fetchDataset(staleSnapshotDataset)).rejects.toThrow(/dataset schema v5/)
   })
 
   it('rejects binary metadata without a real isBlob boolean', async () => {

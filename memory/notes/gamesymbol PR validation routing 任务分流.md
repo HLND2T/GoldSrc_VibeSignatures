@@ -84,6 +84,14 @@ tags:
 - Result (2026-09-12): owned IDA batch `analysis-batch-20260912T103809-c1b701ea1536456a8d1ef14d316ca98e` succeeded for 13/13 targets. All generated `cl_parsecount` files byte-match the reviewed artifacts; only the Sven Linux tracked artifact changes. The companion #109 test repair replaces the test that incorrectly classified the Sven member as a decoy with a synthetic shared instruction-rule retry test.
 - Scope: splitting prerequisite compatibility work from feature PRs that also repair existing finders. Review which existing repairs the prerequisite's broader analysis requires.
 
+## Integrating the prerequisite into the feature branch
+
+- Trigger: after #110 merged as `8b63610`, #109 reported conflicts in shared codec, writer, finder imports, test registration and contract documentation.
+- Root cause: the prerequisite deliberately retained snapshot 7 / output contract 2 defaults, while the feature enabled snapshot 8 / output contract 3. Selecting either side wholesale would lose the feature defaults or the explicit compatibility entry points.
+- Correct approach: merge current main into dev, retain default 8/3 and explicit writer profiles 7/2 and 8/3, enforce scalar payload rejection under the old contract, and register both scalar test modules. Keep the full scalar finder and the already merged parsecount repair together. Describe the completed rollout in documentation.
+- Verification: run all Python and Pages checks, exercise main's trusted planner against the merged revision, and build explicit schema-8 candidates with main's trusted code for consumption by the feature's default store and dataset-5 exporter. Compare finder and artifact files with the pre-merge feature revision to avoid introducing unverified binary changes.
+- Scope: prerequisite/feature PR pairs with intentionally different default contracts. Refresh the existing feature PR after integration and wait for its new CI results.
+
 ## Verification
 
 - `tests/test_gamesymbol_pr_validation.py` 覆盖 plan/route/aggregate 断言；`pr-validate` 的聚合 step 本身即路由断言的运行时证据。

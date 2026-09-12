@@ -1442,7 +1442,15 @@ def _load_runtime_artifact(path: Path, expected_type: str | None):
     if any(field in payload for field in ("name", "type", "kind")):
         issues.append(f"{path}: legacy name/type/kind fields are not accepted")
     symbol_type = expected_type
-    identity_fields = {"func_name", "gv_name", "patch_name", "vtable_class", "member_name", "struct_name"}
+    identity_fields = {
+        "func_name",
+        "gv_name",
+        "patch_name",
+        "vtable_class",
+        "member_name",
+        "struct_name",
+        "scalar_name",
+    }
     if symbol_type is not None or identity_fields.intersection(payload):
         try:
             normalized = normalize_symbol_artifact(payload, category=symbol_type)

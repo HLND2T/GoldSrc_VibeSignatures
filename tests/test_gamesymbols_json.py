@@ -67,7 +67,7 @@ class EncoderTests(unittest.TestCase):
             _symbol_name(payload, "ignored"),
         )
 
-    def test_encode_dataset_is_canonical_and_schema_four(self):
+    def test_encode_dataset_is_canonical_and_schema_five(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             tag, config = fixture(root)
@@ -90,8 +90,8 @@ class EncoderTests(unittest.TestCase):
             dataset = encode_dataset(snapshot.read_bytes(), metadata.read_bytes(), tag)
             raw = canonical_json_bytes(dataset)
             self.assertEqual(raw, canonical_json_bytes(dataset))
-            self.assertEqual(4, dataset["schemaVersion"])
-            self.assertEqual(7, dataset["source"]["snapshotSchemaVersion"])
+            self.assertEqual(5, dataset["schemaVersion"])
+            self.assertEqual(8, dataset["source"]["snapshotSchemaVersion"])
             self.assertEqual(tag, dataset["source"]["gameVersion"])
             self.assertEqual(2, dataset["source"]["fileCount"])
             self.assertEqual({"engine"}, set(dataset["binaries"]))
@@ -134,7 +134,7 @@ class EncoderTests(unittest.TestCase):
                 "modules": [],
             }
         )
-        with self.assertRaisesRegex(GamesymbolsJsonError, "schema-7"):
+        with self.assertRaisesRegex(GamesymbolsJsonError, "schema-8"):
             encode_dataset(raw, metadata, "game-1")
 
     def test_non_engine_blob_publishes_is_blob_true_from_original_binary(self):

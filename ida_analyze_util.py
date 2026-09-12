@@ -21,8 +21,7 @@ from ida_llm_decompile import (
     call_llm_decompile,
     render_llm_decompile_blocks,
 )
-
-from scalar_artifact import SCALAR_FIELDS, validate_scalar_artifact
+from scalar_artifact import SCALAR_FIELDS, select_scalar_value, validate_scalar_artifact
 
 SYMBOL_CATEGORIES = frozenset({"func", "gv", "vfunc", "vtable", "patch", "structmember", "scalar"})
 SIGNATURE_RE = re.compile(r"^(?:[0-9A-F]{2}|\?\?)(?: (?:[0-9A-F]{2}|\?\?))*$")
@@ -370,6 +369,10 @@ def write_func_yaml(path, data):
 
 def write_gv_yaml(path, data):
     write_symbol_yaml(path, data, category="gv")
+
+
+def write_scalar_yaml(path, data):
+    write_symbol_yaml(path, data, category="scalar")
 
 
 def write_patch_yaml(path, data):
@@ -2414,7 +2417,9 @@ async def preprocess_index_based_vfunc_via_mcp(
     return function
 
 
-LLM_RESULT_SECTIONS = frozenset({"found_vcall", "found_call", "found_funcptr", "found_gv", "found_struct_offset"})
+LLM_RESULT_SECTIONS = frozenset(
+    {"found_vcall", "found_call", "found_funcptr", "found_gv", "found_struct_offset", "found_scalar"}
+)
 LLM_SPEC_REQUIRED_KEYS = frozenset(
     {
         "symbol_name",
@@ -2424,7 +2429,7 @@ LLM_SPEC_REQUIRED_KEYS = frozenset(
         "dependency_policy",
     }
 )
-LLM_SPEC_OPTIONAL_KEYS = frozenset({"instruction_rules", "expected_size"})
+LLM_SPEC_OPTIONAL_KEYS = frozenset({"instruction_rules", "expected_size", "expected_value"})
 
 
 def _normalize_llm_decompile_specs(specs):
@@ -2494,6 +2499,12 @@ def _normalize_llm_decompile_specs(specs):
             if isinstance(expected_size, bool) or not isinstance(expected_size, int) or expected_size <= 0:
                 return None
             spec["expected_size"] = expected_size
+        if "expected_value" in raw_spec:
+            try:
+                validate_scalar_artifact({"scalar_name": symbol_name, "scalar_value": raw_spec["expected_value"]})
+            except ValueError:
+                return None
+            spec["expected_value"] = raw_spec["expected_value"]
         normalized[symbol_name] = spec
     return normalized
 
@@ -3081,6 +3092,7 @@ def _build_llm_instruction_validations(symbol_names, specs):
         symbol_name: {
             "instruction_rules": specs[symbol_name].get("instruction_rules") or [],
             "expected_size": specs[symbol_name].get("expected_size"),
+            "expected_value": specs[symbol_name].get("expected_value"),
         }
         for symbol_name in symbol_names
     }
@@ -3205,6 +3217,7 @@ def _resolve_struct_member_entry_names(
 
 def _entry_identity_matches(entry, symbol_name, category, section):
     field = {
+        "scalar": "scalar_name",
         "func": "func_name",
         "vfunc": "func_name",
         "gv": "gv_name",
@@ -3288,6 +3301,15 @@ async def _preprocess_llm_target(
         )
     if not isinstance(result, Mapping) or not target_ranges:
         return None
+    if category == "scalar":
+        try:
+            return select_scalar_value(
+                symbol_name,
+                [entry for entry in result.get("found_scalar", ()) if entry.get("scalar_name") == symbol_name],
+                (spec or {}).get("expected_value"),
+            )
+        except ValueError:
+            return None
     rules = spec.get("instruction_rules") or ()
 
     section_order = {
@@ -3457,6 +3479,7 @@ def _llm_spec_matches_target(spec, category):
     if not isinstance(spec, Mapping):
         return False
     allowed_sections = {
+        "scalar": {"found_scalar"},
         "func": {"found_call", "found_funcptr"},
         "vfunc": {"found_vcall", "found_funcptr"},
         "gv": {"found_gv"},
@@ -3464,6 +3487,10 @@ def _llm_spec_matches_target(spec, category):
     }[category]
     sections = set(spec.get("expected_result_sections") or ())
     if not sections or not sections <= allowed_sections:
+        return False
+    if category == "scalar":
+        return "expected_value" in spec and not spec.get("instruction_rules") and spec.get("expected_size") is None
+    if "expected_value" in spec:
         return False
     return category == "structmember" or spec.get("expected_size") is None
 
@@ -3501,6 +3528,7 @@ async def preprocess_common_skill(
     mangled_class_names=None,
     debug=False,
     canonical_vtable_symbols=None,
+    scalar_names=None,
 ):
     """GoldSrc x86 implementation of the CS2 finder/helper API."""
 
@@ -3541,6 +3569,8 @@ async def preprocess_common_skill(
             write_func_yaml(target, payload)
         elif category == "gv":
             write_gv_yaml(target, payload)
+        elif category == "scalar":
+            write_scalar_yaml(target, payload)
         elif category == "patch":
             write_patch_yaml(target, payload)
         elif category == "vtable":
@@ -3579,6 +3609,7 @@ async def preprocess_common_skill(
 
     target_categories = {name: ("vfunc" if name in vtable_by_name else "func") for name in function_targets}
     target_categories.update({name: "gv" for name in gv_names or ()})
+    target_categories.update({name: "scalar" for name in scalar_names or ()})
     target_categories.update({name: "structmember" for name in struct_member_names or ()})
     if set(llm_specs) - set(target_categories) or any(
         not _llm_spec_matches_target(spec, target_categories[name]) for name, spec in llm_specs.items()
@@ -3785,6 +3816,7 @@ async def preprocess_common_skill(
         for name, candidate in {**gv_fast_results, **struct_fast_results}.items()
         if candidate is None and name in llm_specs
     )
+    unresolved_symbols.extend(name for name in scalar_names or () if name in llm_specs)
     request_groups = {}
     for symbol_name in unresolved_symbols:
         context = _prepare_llm_context(llm_specs[symbol_name], llm_config, new_binary_dir, platform)
@@ -3933,6 +3965,28 @@ async def preprocess_common_skill(
                 debug=debug,
             )
         if not emit(gv_name, "gv", candidate, output):
+            return False
+
+    for scalar_name in scalar_names or ():
+        field_spec = desired.get(scalar_name)
+        if field_spec is None or scalar_name not in llm_specs:
+            return False
+        llm_result, target_ranges = llm_batch_results.get(scalar_name, (_empty_llm_decompile_result(), []))
+        candidate = await _preprocess_llm_target(
+            session=session,
+            symbol_name=scalar_name,
+            category="scalar",
+            spec=llm_specs[scalar_name],
+            llm_config=llm_config,
+            new_binary_dir=new_binary_dir,
+            platform=platform,
+            image_base=image_base,
+            desired_fields=field_spec["fields"],
+            llm_result=llm_result,
+            target_ranges=target_ranges,
+            debug=debug,
+        )
+        if not emit(scalar_name, "scalar", candidate):
             return False
 
     for patch_name in patch_names or ():

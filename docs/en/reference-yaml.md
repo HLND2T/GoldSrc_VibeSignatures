@@ -14,9 +14,10 @@ ida_preprocessor_scripts/references/<gamever>/<module>/<func_name>.<platform>.ya
 
 The shared prompt is `ida_preprocessor_scripts/prompt/call_llm_decompile.md`. Runtime formatting supports `{reference_blocks}`, `{target_blocks}`, `{symbol_name_list}`, `{platform}`, `{module}`, and `{module_name}`.
 
-The response must be one canonical YAML mapping with all five sections:
+The response must be one canonical YAML mapping with all six sections:
 
 ```yaml
+found_scalar: []
 found_vcall: []
 found_call: []
 found_funcptr: []
@@ -24,9 +25,14 @@ found_gv: []
 found_struct_offset: []
 ```
 
-Each non-empty entry must include an exact `insn_va` / `insn_disasm` pair from the exported current-binary target. The runtime validates the requested symbol identity, permitted section, instruction pair, optional instruction regexes, vcall or struct displacement, and optional struct size. Invalid YAML or semantic results receive a bounded correction request; only transient transport failures use exponential backoff. Exhausted or non-retryable failures return a complete empty result and the preprocessor fails closed.
+Each non-empty instruction-based entry must include an exact `insn_va` / `insn_disasm` pair from the exported current-binary target. The runtime validates the requested symbol identity, permitted section, instruction pair, optional instruction regexes, vcall or struct displacement, and optional struct size. Invalid YAML or semantic results receive a bounded correction request; only transient transport failures use exponential backoff. Exhausted or non-retryable failures return a complete empty result and the preprocessor fails closed.
 
 Requests sharing `(model, prompt path, reference paths, temperature)` are batched after every deterministic fast path has failed or returned an incomplete candidate. Dependency policy and config input classification are validated before fast paths; a missing optional predecessor skips only its reference/target pair. Function, virtual-function, global-variable, and struct-member results are still consumed by the normal x86 MCP helpers, which validate tail chunks, require unique target/anchor signatures, follow requested direct-call jump thunks, and enforce four-byte vtable slots.
+
+`found_scalar` entries contain `scalar_name` and `scalar_value`. Their values must agree with independently
+verified current-binary evidence, supplied as the scalar spec's `expected_value`; no instruction address
+is required. Values are numeric scalars, not addresses. See the scalar contract in
+[Snapshots and gamedata](snapshot-and-gamedata.md).
 
 ## Canonical reference game version
 
@@ -78,7 +84,7 @@ LLM_DECOMPILE = [
 ]
 ```
 
-Valid result sections are `found_call`, `found_vcall`, `found_funcptr`, `found_gv`, and `found_struct_offset`. Use multiple `reference_yaml_paths` for one symbol instead of repeating the same symbol in multiple specifications. Every referenced artifact must have a matching `dependency_policy` entry whose value is `required` or `optional`; required artifacts belong to the expected-input set, while optional artifacts belong to the optional-input set. A `required` dependency belongs in config `expected_input`; an `optional` dependency belongs in `optional_input`. The two sets must not overlap.
+Valid result sections are `found_call`, `found_vcall`, `found_funcptr`, `found_gv`, `found_scalar`, and `found_struct_offset`. Use multiple `reference_yaml_paths` for one symbol instead of repeating the same symbol in multiple specifications. Every referenced artifact must have a matching `dependency_policy` entry whose value is `required` or `optional`; required artifacts belong to the expected-input set, while optional artifacts belong to the optional-input set. A `required` dependency belongs in config `expected_input`; an `optional` dependency belongs in `optional_input`. The two sets must not overlap.
 
 `LLM_DECOMPILE` uses the shared Analyzer flags `-llm_model`, `-llm_apikey`, `-llm_baseurl`, `-llm_temperature`, `-llm_effort`, and `-llm_fake_as`.
 

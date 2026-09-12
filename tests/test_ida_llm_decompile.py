@@ -6,7 +6,7 @@ import runpy
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from ida_llm_decompile import (
     LLM_DECOMPILE_RESULT_SECTIONS,
@@ -586,6 +586,7 @@ found_struct_offset: []
 
     async def test_accepts_zero_offsets_and_alternative_instruction_rules(self):
         response = """\
+found_scalar: []
 found_vcall:
   - insn_va: '0x401010'
     insn_disasm: call dword ptr [eax]

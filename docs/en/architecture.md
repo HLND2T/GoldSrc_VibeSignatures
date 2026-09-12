@@ -13,7 +13,7 @@ download.yaml + configs/<tag>.yaml
   -> bin_artifacts/<tag>/<module>/<symbol>.<platform>.yaml (Git truth)
   -> release-only immutable candidate
   -> gamesymbols/<tag>.yaml + gamesymbols/<tag>.metadata.yaml (bundle)
-  -> gamesymbols_json.py deterministically derives browser JSON datasets + index (schema 4/4)
+  -> gamesymbols_json.py deterministically derives browser JSON datasets + index (schema 5/4)
   -> packs the single all-in-one gamesymbols-<version>.7z
 
 RunRequest -> Redis Stream -> single-concurrency scheduler -> analyzer
@@ -38,7 +38,7 @@ Outputs are module-local. Inputs may reference a sibling module with `../<module
 both producer and consumer to one game-root-relative owner path and creates a real cross-module edge.
 
 Config symbols use `name + category` and reject `type/kind`. Artifact payloads use category-specific identities
-(`func_name`, `gv_name`, `patch_name`, `vtable_class`, or `struct_name/member_name`) and reject generic
+(`func_name`, `gv_name`, `scalar_name`, `patch_name`, `vtable_class`, or `struct_name/member_name`) and reject generic
 `name/type/kind`. Payload identity is deliberately not compared with config symbol identity.
 
 ## Analysis layers
@@ -111,12 +111,12 @@ process-level Windows Job controller across groups and a fresh gate/baseline for
 
 ## Snapshot boundary
 
-The writer emits schema 7 with config digest v2, analysis-output contract version 2, UTC publication time, canonical
+The writer emits schema 8 with config digest v2, analysis-output contract version 3, UTC publication time, canonical
 file payloads, and path-independent SHA-256/MD5/CRC32/CRC64/size metadata plus a required boolean `is_blob` for every
 configured binary. `is_blob` is `true` only when the original Windows file fails plain PE validation but passes the full
 Metahook blob decrypt/rebuild/verify pipeline (shared by the snapshot writer and the analyzer); plain PE and Linux ELF
 are `false`, and invalid binaries fail the snapshot instead of being published as `false`. The reader accepts schemas
-1–7; schema 5 retains its required legacy binary `path`.
+1–8; schema 5 retains its required legacy binary `path`. Scalars require schema 8.
 Restore and verification reject links, path escapes, undeclared YAML, missing required YAML, non-canonical bytes, and
 contract drift.
 
@@ -142,9 +142,9 @@ private-network preflights only by explicit opt-in.
 The React dashboard displays run lists, graph/list views, task details, status filters, live SSE updates, and a static
 Symbol Explorer. Symbol snapshots use `<family-build>` tags, are grouped by family, and sort builds numerically descending.
 The release pipeline deterministically derives the exact UTF-8 content-addressed JSON datasets plus index schema v4 in
-Python from the schema-7 snapshot and schema-1 metadata companion; each dataset is schema v4 and carries the per-binary
-`isBlob` flag (`is_blob` from the snapshot). The JSON generator and the Pages frontend accept only schema-7 snapshots and
-schema-4 datasets — there is no legacy-dataset compatibility mode. The Vite plugin relays those bytes without re-deriving
+Python from the schema-8 snapshot and schema-1 metadata companion; each dataset is schema v5 and carries the per-binary
+`isBlob` flag (`is_blob` from the snapshot). The JSON generator and the Pages frontend accept only schema-8 snapshots and
+schema-5 datasets — there is no legacy-dataset compatibility mode. The Vite plugin relays those bytes without re-deriving
 and never reads live config aliases. The deployment workflow downloads and extracts `gamesymbols-*.7z` to obtain the same
 JSON, preserves every digest on an append-only `pages-snapshots` branch, and verifies current, archived, and deployed CDN
 bytes: datasets referenced by the current index are fully schema-validated, while unreferenced historical files are kept

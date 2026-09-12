@@ -20,6 +20,7 @@ from ida_llm_utils import LlmResponseError, extract_json_object, validated_tempe
 
 _UNSET = object()
 LLM_DECOMPILE_RESULT_SECTIONS = (
+    "found_scalar",
     "found_vcall",
     "found_call",
     "found_funcptr",
@@ -27,12 +28,14 @@ LLM_DECOMPILE_RESULT_SECTIONS = (
     "found_struct_offset",
 )
 _LLM_RESULT_SYMBOL_KEYS = {
+    "found_scalar": "scalar_name",
     "found_vcall": "func_name",
     "found_call": "func_name",
     "found_funcptr": "funcptr_name",
     "found_gv": "gv_name",
 }
 _LLM_RESULT_REQUIRED_KEYS = {
+    "found_scalar": ("scalar_name", "scalar_value"),
     "found_vcall": ("insn_va", "insn_disasm", "vfunc_offset", "func_name"),
     "found_call": ("insn_va", "insn_disasm", "func_name"),
     "found_funcptr": ("insn_va", "insn_disasm", "funcptr_name"),
@@ -407,7 +410,7 @@ def _validate_raw_mapping(mapping, *, require_all_sections):
         issues.append(
             {
                 "issue_type": "yaml_schema_mismatch",
-                "message": "The YAML mapping must contain all five canonical result sections.",
+                "message": "The YAML mapping must contain all six canonical result sections.",
             }
         )
     for section in keys & permitted:
@@ -602,7 +605,15 @@ def _normalize_instruction_validations(instruction_validations):
         normalized[str(symbol_name)] = {
             "instruction_rules": normalized_rules,
             "expected_size": raw.get("expected_size"),
+            "expected_value": raw.get("expected_value"),
         }
+        expected_value = raw.get("expected_value")
+        if expected_value is not None and (
+            isinstance(expected_value, bool)
+            or not isinstance(expected_value, int)
+            or not 0 <= expected_value <= 0xFFFFFFFF
+        ):
+            return None
     return normalized
 
 
@@ -657,6 +668,19 @@ def _validate_llm_result(
                         "message": f"{symbol_name!r} is not allowed in {section}.",
                     }
                 )
+            if section == "found_scalar":
+                value = _parse_int_value(entry.get("scalar_value"))
+                expected = instruction_validations.get(symbol_name, {}).get("expected_value")
+                if value is None or not 0 <= value <= 0xFFFFFFFF or expected is None or value != expected:
+                    issues.append(
+                        {
+                            "issue_type": "scalar_value_mismatch",
+                            "message": f"{symbol_name}: scalar_value must be an unsigned 32-bit integer agreeing with "
+                            "the independently verified current-binary dataflow. Recheck the requested scalar's "
+                            "units and semantic role; do not copy reference-build constants.",
+                        }
+                    )
+                continue
             insn_va = _parse_int_value(entry.get("insn_va"))
             reported_disasm = _normalize_disasm_whitespace(entry.get("insn_disasm"))
             actual_disasms = instructions_by_va.get(insn_va, set()) if insn_va is not None else set()
@@ -723,6 +747,17 @@ def _validate_llm_result(
                             "message": f"{section}[{index}] size does not match expected_size.",
                         }
                     )
+    for symbol, sections in expected_sections.items():
+        if "found_scalar" in sections and not any(
+            entry.get("scalar_name") == symbol for entry in result["found_scalar"]
+        ):
+            issues.append(
+                {
+                    "issue_type": "missing_scalar",
+                    "message": f"{symbol}: missing scalar value; inspect the "
+                    "current pseudocode and verified dataflow; the value need not appear in one instruction.",
+                }
+            )
     return issues
 
 
@@ -741,8 +776,9 @@ def _build_correction_prompt(issues):
         "Your previous YAML output is invalid.\n"
         f"Problems:\n{issue_text}\n\n"
         "Return the complete YAML mapping, not a patch or partial document. It must contain exactly "
-        "found_vcall, found_call, found_funcptr, found_gv, and found_struct_offset. Every entry must "
-        "contain the required scalar fields, and each insn_va / insn_disasm pair must exactly match the "
+        "found_scalar, found_vcall, found_call, found_funcptr, found_gv, and found_struct_offset. Every entry must "
+        "contain its required fields (found_scalar uses scalar_name and scalar_value only), and each "
+        "instruction-based insn_va / insn_disasm pair must exactly match the "
         "target disassembly except for whitespace. Return no explanation or text outside the complete YAML."
     )
 

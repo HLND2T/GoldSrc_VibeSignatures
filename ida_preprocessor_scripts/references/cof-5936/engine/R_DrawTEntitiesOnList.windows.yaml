@@ -1,6 +1,7 @@
 func_name: "R_DrawTEntitiesOnList"
 func_va: "0x1dc4539"
 disasm_code: |-
+  ; scalar size_of_frame is the byte coefficient of (cl_parsecount & CL_UPDATE_MASK) in the StudioDrawPlayer argument. Here IMUL 42C0h supplies it; another compiler may use equivalent LEA/SHL/ADD/SUB arithmetic. Report the current target's numeric byte stride, not an instruction address. Reject the 154h entity-state multiplier.
   ; CoF-specific body: the MOV loads mutable cl_parsecount; the following AND reads memory-backed CL_UPDATE_MASK (0x3f). Select the counter load, not the mask operand. Source: engine/r_trans.c:291,305; counter write independently verified in the frame parser.
   .text:01DC4539                 push    ebp
   .text:01DC453A                 mov     ebp, esp
@@ -239,6 +240,7 @@ disasm_code: |-
   .text:01DC4917                 pop     ebp
   .text:01DC4918                 retn
 procedure: |-
+  // scalar size_of_frame is the 17088-byte multiplier of (cl_parsecount & CL_UPDATE_MASK) in both StudioDrawPlayer arguments. The 340-byte player index multiplier is not size_of_frame. Values are reference evidence only.
   // Source engine/r_trans.c:219-343. CoF stores CL_UPDATE_MASK in memory (0x3f); cl_parsecount is the mutable server sequence counter loaded before AND. The AND memory operand is the mask, not cl_parsecount. Frame stride is 0x42c0; entity-state stride is 0x154. Partial source reconstruction: opaque entity/Studio API types retain verified offsets.
   void __cdecl R_DrawTEntitiesOnList(int clientOnly)
   {

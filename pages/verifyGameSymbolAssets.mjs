@@ -10,8 +10,8 @@ const MD5_PATTERN = /^[0-9a-f]{32}$/
 const CRC32_PATTERN = /^[0-9a-f]{8}$/
 const CRC64_PATTERN = /^[0-9a-f]{16}$/
 const SNAPSHOT_FILE_PATTERN = /^([a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+)\.([0-9a-f]{64})\.json$/
-const CURRENT_DATASET_SCHEMA_VERSION = 4
-const REQUIRED_SNAPSHOT_SCHEMA_VERSION = 7
+const CURRENT_DATASET_SCHEMA_VERSION = 5
+const REQUIRED_SNAPSHOT_SCHEMA_VERSION = 8
 
 function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex')
@@ -63,7 +63,7 @@ export function validateGameSymbolIndex(value, source = 'gamesymbols/index.json'
 
 function validateBinaryMetadata(value, platform, source) {
   if (!isObject(value)) throw new Error(`${source}: binary metadata must be an object`)
-  if ('path' in value) throw new Error(`${source}.path is not allowed in dataset schema v4`)
+  if ('path' in value) throw new Error(`${source}.path is not allowed in dataset schema v5`)
   if (typeof value.sha256 !== 'string' || !SHA256_PATTERN.test(value.sha256)) throw new Error(`${source}.sha256 is invalid`)
   if (typeof value.md5 !== 'string' || !MD5_PATTERN.test(value.md5)) throw new Error(`${source}.md5 is invalid`)
   if (typeof value.crc32 !== 'string' || !CRC32_PATTERN.test(value.crc32)) throw new Error(`${source}.crc32 is invalid`)

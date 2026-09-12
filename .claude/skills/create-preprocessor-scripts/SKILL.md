@@ -35,7 +35,7 @@ Config keeps the CS2 identity contract:
 
 - `name` is the config symbol identity.
 - `category` is the only classifier. Supported values are `func`, `gv`, `vfunc`, `vtable`,
-  `patch`, `structmember`, and metadata-only `struct`.
+  `patch`, `structmember`, `scalar`, and metadata-only `struct`.
 - Reject `type` and `kind`; do not preserve or generate them.
 - A `structmember` also requires `struct` and `member`, and its parent `category: struct`
   declaration must exist in the same module.
@@ -49,6 +49,7 @@ Artifacts never contain generic `name`, `type`, or `kind` fields.
 |---|---|
 | `func` / `vfunc` | `func_name` |
 | `gv` | `gv_name` |
+| `scalar` | `scalar_name` |
 | `patch` | `patch_name` |
 | `vtable` | `vtable_class` |
 | `structmember` | `struct_name` and `member_name` |
@@ -95,6 +96,7 @@ async def preprocess_common_skill(
     mangled_class_names=None,
     debug=False,
     canonical_vtable_symbols=None,
+    scalar_names=None,
 ):
 ```
 
@@ -249,14 +251,14 @@ LLM_DECOMPILE = [
 ]
 ```
 
-Allowed result sections are `found_vcall`, `found_call`, `found_funcptr`, `found_gv`, and
+Allowed result sections are `found_scalar`, `found_vcall`, `found_call`, `found_funcptr`, `found_gv`, and
 `found_struct_offset`.
 
 - Every reference artifact must appear exactly once in `dependency_policy`.
 - `required` dependencies belong in config `expected_input`; `optional` dependencies belong in
   `optional_input`.
 - The runtime rejects ambiguous input basenames and expected/optional overlap.
-- Returned instruction addresses must lie inside the current predecessor function.
+- Instruction-based result addresses must lie inside the current predecessor function.
 - Optional `instruction_rules` validate the actual IDA disassembly with regexes.
 - Optional `expected_size` is valid only for struct members.
 - Pattern C must emit `vfunc_sig`; pure slot-only LLM output is invalid.
@@ -265,6 +267,19 @@ Allowed result sections are `found_vcall`, `found_call`, `found_funcptr`, `found
   `generate_reference_yaml.py`; do not hand-build the initial YAML or call IDA APIs directly.
 
 ## Workflow
+
+### Numeric scalar contract
+
+Use `scalar_names` and `found_scalar` for a numeric value, never `gv` or a fictional struct member.
+The result and artifact contain only `scalar_name` and `scalar_value` (uint32). A scalar is not tied
+to an instruction or runtime signature: consumers directly use the value for the matched binary identity.
+The finder must independently verify current-IDB evidence, then supply the recovered `expected_value`
+in its scalar LLM spec. Never hardcode another build's value. Map the current pseudocode's semantic role
+through the reference and require the LLM value to agree with the independently verified evidence.
+For optimized frame indexing, verify IMUL or equivalent LEA/SHL/ADD/SUB dataflow to StudioDrawPlayer;
+typed pseudocode coefficients must be converted to byte units. Conflicting/unsupported evidence fails
+closed. `write_scalar_yaml` and shared scalar validation enforce the two-field contract.
+Snapshot schema 8 / dataset schema 5 carry scalars; index remains schema 4.
 
 ### 1. Inspect repository context
 

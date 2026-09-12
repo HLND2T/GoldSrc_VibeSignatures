@@ -9,8 +9,8 @@ permalink: goldsrc-vibesignatures/llm-decompile-runtime
 ## Contract
 
 - Finder opt-in: accept `llm_config=None`; pass normalized `LLM_DECOMPILE` specs and config input metadata into `preprocess_common_skill`.
-- Response is canonical five-section YAML: `found_vcall`, `found_call`, `found_funcptr`, `found_gv`, `found_struct_offset`; failures return all five empty lists.
-- Every non-empty result must match requested identity/category and an exact exported `insn_va + insn_disasm` pair. Multiple `instruction_rules` are alternatives (OR), not cumulative constraints.
+- Response is canonical six-section YAML: `found_scalar`, `found_vcall`, `found_call`, `found_funcptr`, `found_gv`, `found_struct_offset`; failures return all six empty lists. `found_scalar` carries only scalar_name and uint32 scalar_value, validated against the finder's independently recovered current-binary expected_value; it has no instruction-address requirement.
+- Every non-empty result must match requested identity/category. Instruction-based results additionally require an exact exported `insn_va + insn_disasm` pair; numeric scalars require agreement with independently verified dataflow. Multiple `instruction_rules` are alternatives (OR), not cumulative constraints.
 - GoldSrc runtime is x86-only: 4-byte vtable slots; implicit memory operands such as `[eax]` / `[ecx]` represent displacement 0.
 
 ## Request lifecycle
@@ -26,7 +26,7 @@ permalink: goldsrc-vibesignatures/llm-decompile-runtime
 
 - Reference YAML generation and annotation workflow: [[reference_yaml_generation]].
 - Reference comments and Hex-Rays procedure are preserved; target comments are stripped before prompting to avoid leaking stale annotations.
-- Consumers re-check the live IDA instruction, unique code/data target, displacement/size, target-function membership, and pointer size before emitting canonical symbol YAML.
+- Instruction-based producers re-check the live IDA instruction, unique code/data target, displacement/size, target-function membership, and pointer size before emitting canonical symbol YAML. Scalar producers emit the independently verified uint32 directly; no address or signature is fabricated.
 
 ## Verification
 

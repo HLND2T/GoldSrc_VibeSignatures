@@ -119,6 +119,7 @@ modules:
           - R_DrawTEntitiesOnList.{platform}.yaml
         expected_output:
           - cl_parsecount.{platform}.yaml
+          - size_of_frame.{platform}.yaml
       - name: find-R_DrawTEntitiesOnList
         expected_output:
           - R_DrawTEntitiesOnList.{platform}.yaml
@@ -391,6 +392,8 @@ modules:
         category: func
       - name: cl_parsecount
         category: gv
+      - name: size_of_frame
+        category: scalar
       - name: R_DrawTEntitiesOnList
         category: func
       - name: R_StudioSetupBones

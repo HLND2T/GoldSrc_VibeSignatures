@@ -13,12 +13,12 @@ await rm(fixtureRoot, { force: true, recursive: true })
 await mkdir(fixtureRoot, { recursive: true })
 
 const dataset = {
-  schemaVersion: 4,
+  schemaVersion: 5,
   source: {
     gameVersion: 'test-1',
-    snapshotSchemaVersion: 7,
+    snapshotSchemaVersion: 8,
     configDigestVersion: 2,
-    analysisOutputContractVersion: 1,
+    analysisOutputContractVersion: 3,
     configSha256: `sha256:${'a'.repeat(64)}`,
     fileCount: 1,
     lastPublishTime: '2026-01-02T03:04:05Z',
@@ -62,7 +62,7 @@ const index = {
       url,
       sha256,
       size: bytes.byteLength,
-      snapshotSchemaVersion: 7,
+      snapshotSchemaVersion: 8,
       fileCount: 1,
       lastPublishTime: '2026-01-02T03:04:05Z',
     },

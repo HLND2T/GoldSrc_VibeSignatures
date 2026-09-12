@@ -91,7 +91,7 @@ class CodecTests(unittest.TestCase):
                 }
             }
         }
-        for schema in range(1, 8):
+        for schema in range(1, 9):
             kwargs = {"schema_version": schema, "config_digest_version": 1 if schema == 1 else 2}
             if schema >= 4:
                 kwargs.update(
@@ -222,7 +222,7 @@ class SnapshotOperationTests(unittest.TestCase):
                 last_publish_time="2026-01-02T03:04:05Z",
             )
             document = parse_snapshot_bytes(packed)
-            self.assertEqual(7, document["schema_version"])
+            self.assertEqual(8, document["schema_version"])
             self.assertEqual(2, document["config_digest_version"])
             self.assertEqual(2, document["file_count"])
             self.assertEqual({"windows", "linux"}, set(document["binaries"]["engine"]))

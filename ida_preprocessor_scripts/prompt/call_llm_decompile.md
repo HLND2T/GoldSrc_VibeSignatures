@@ -21,11 +21,15 @@ Identify each requested symbol by its role and behavior before collecting its ta
 - Once a pool or object base is identified, instructions passing that base to a memory operation or storing it into a pointer variable are references to the object. Do not substitute the destination pointer variable or an interior member address for the requested base symbol.
 - Before returning no matches, check for a semantic counterpart under anonymous target names. Return an empty result only when the supplied target evidence does not support a mapping; do not force a match merely because a symbol was requested.
 
-Return exactly one YAML mapping. The only permitted top-level keys are `found_vcall`, `found_call`, `found_funcptr`, `found_gv`, and `found_struct_offset`. Never use a requested symbol name as a top-level key. For batched requests, place every result under its result-category list. If no references are found, return all five top-level keys with empty lists. Do not return blank YAML, null, or an empty mapping.
+Return exactly one YAML mapping. The only permitted top-level keys are `found_scalar`, `found_vcall`, `found_call`, `found_funcptr`, `found_gv`, and `found_struct_offset`. Never use a requested symbol name as a top-level key. For batched requests, place every result under its result-category list. If no references are found, return all six top-level keys with empty lists. Do not return blank YAML, null, or an empty mapping.
 
 Example:
 
 ```yaml
+found_scalar:
+  - scalar_name: size_of_frame
+    scalar_value: 17176
+
 found_vcall:
   - insn_va: '0x00401710'
     insn_disasm: call dword ptr [eax+14h]
@@ -62,11 +66,12 @@ found_struct_offset:
 
 Rules:
 
-- `insn_va` and `insn_disasm` must identify the exact same instruction from the current target disassembly.
+- For instruction-based result categories, `insn_va` and `insn_disasm` must identify the exact same instruction from the current target disassembly. Scalars have no instruction-address requirement.
 - `found_call` is for a direct call or tail jump to a regular non-virtual function.
 - `found_funcptr` is for loading or referencing a regular function pointer without directly calling it.
 - `found_vcall` is only for virtual dispatch or vtable-slot access. GoldSrc vtable slots are 4 bytes.
 - `found_gv` is for a global-variable reference.
+- `found_scalar` reports a verified unsigned 32-bit numeric value. Include only `scalar_name` and `scalar_value`, without instruction addresses or signatures. For size_of_frame, identify the frame-ring BYTE stride in the current StudioDrawPlayer player-state argument, then cross-check the masked parse counter's IMUL or equivalent LEA/SHL/ADD/SUB chain. Pseudocode may express the multiplier in typed-element units: convert it to bytes using the actual instruction arithmetic. Reject the entity-state index multiplier and never copy the reference build's value. Return the same value for all equivalent accesses; if the evidence is insufficient, return an empty scalar list.
 - `found_struct_offset` must identify the exact member-access instruction and include `offset`, `size`, `struct_name`, and `member_name`.
 - In `func_name`, `funcptr_name`, `gv_name`, and `struct_name`, report the requested canonical symbol identity, never an anonymous `sub_XXXXXXXX`, `dword_XXXXXXXX`, or `unk_XXXXXXXX` name. Preserve the actual target names in `insn_disasm`; do not rename operands to the canonical identity or copy reference addresses into target results.
 - When a direct call targets an IDA `j_XXXX` jump thunk, report the logical target name without the `j_` prefix.
@@ -74,6 +79,7 @@ Rules:
 If nothing is found, output this complete canonical response:
 
 ```yaml
+found_scalar: []
 found_vcall: []
 found_call: []
 found_funcptr: []

@@ -6,8 +6,8 @@ const SHA256_PATTERN = /^[0-9a-f]{64}$/
 const MD5_PATTERN = /^[0-9a-f]{32}$/
 const CRC32_PATTERN = /^[0-9a-f]{8}$/
 const CRC64_PATTERN = /^[0-9a-f]{16}$/
-const DATASET_SCHEMA_VERSION = 4
-const REQUIRED_SNAPSHOT_SCHEMA_VERSION = 7
+const DATASET_SCHEMA_VERSION = 5
+const REQUIRED_SNAPSHOT_SCHEMA_VERSION = 8
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -91,7 +91,7 @@ export async function getGameSymbolDataset(version: GameSymbolIndexVersion, sign
     || value.source.gameVersion !== version.gameVersion
     || value.source.snapshotSchemaVersion !== REQUIRED_SNAPSHOT_SCHEMA_VERSION
   ) {
-    throw new Error(`Invalid game-symbol snapshot for ${version.gameVersion}; expected dataset schema v4 (snapshot schema v7)`)
+    throw new Error(`Invalid game-symbol snapshot for ${version.gameVersion}; expected dataset schema v5 (snapshot schema v8)`)
   }
   validateDatasetBinaries(value.binaries)
   return value as unknown as GameSymbolDataset
