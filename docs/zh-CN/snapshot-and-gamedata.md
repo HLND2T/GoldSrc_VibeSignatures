@@ -79,3 +79,16 @@ Finder 独立核验当前二进制数据流，并要求 LLM 的语义映射结�
 
 旧 snapshot 不得携带 scalar 字段。先显式恢复到独立兼容 artifact 目录，再分析缺少的当前产物，通过当前
 candidate 流程重建 snapshot/dataset；直接修改 schema 数字不算迁移。历史归档字节保持不可变。
+
+### Trusted scalar 契约的分阶段升级
+
+PR 的 trusted planner 和 candidate builder 来自 base revision，因此必须先合入契约支持，再启用新符号。
+前置兼容 PR 保留 snapshot 7 / analysis-output contract 2 默认值；本功能将默认值切换为 snapshot 8 / contract 3。
+显式传入 `gamesymbol_candidate.py build -snapshot-schema-version 8` 同样选择 snapshot 8 / contract 3。
+Builder 按选定契约校验 artifact、生成 metadata 并重新打开 candidate，拒绝不支持的版本。
+普通 SymbolStore 仍严格要求当前 contract；只有显式指定受支持版本的调用方可以选择另一版本。
+
+`category: scalar` 的 artifact 仅包含 `scalar_name` 和 uint32 `scalar_value`，直接使用数值，不加 image base、
+不解引用。Snapshot 1–7 和 analysis-output contract 2 不得携带 scalar。
+兼容代码已进入 main，PR workflow 向 trusted builder 显式请求格式 8。Profile 7 仍供不含 scalar 产物的
+兼容调用方显式选择；它不迁移旧数据，也不放宽当前 export/UI 的版本要求。

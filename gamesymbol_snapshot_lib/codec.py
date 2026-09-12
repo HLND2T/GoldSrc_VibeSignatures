@@ -23,6 +23,16 @@ SCHEMA_6_VERSION = 6
 SCHEMA_7_VERSION = 7
 SCHEMA_8_VERSION = 8
 SCHEMA_VERSION = 8
+MAX_SUPPORTED_SCHEMA_VERSION = 8
+WRITABLE_SNAPSHOT_CONTRACTS = {7: 2, 8: 3}
+
+
+def snapshot_writer_output_contract(schema_version: int) -> int:
+    if type(schema_version) is not int or schema_version not in WRITABLE_SNAPSHOT_CONTRACTS:
+        raise SnapshotSchemaError(f"Unsupported writer snapshot schema: {schema_version!r}")
+    return WRITABLE_SNAPSHOT_CONTRACTS[schema_version]
+
+
 SCHEMA_KEYS = {
     1: ("schema_version", "game_version", "config_sha256", "file_count", "files"),
     2: ("schema_version", "config_digest_version", "game_version", "config_sha256", "file_count", "files"),
@@ -193,7 +203,13 @@ def build_snapshot_document(
     if schema_version not in SCHEMA_KEYS:
         raise SnapshotSchemaError(f"Unsupported snapshot schema_version: {schema_version!r}")
     ordered_files = {path: canonicalize(files[path]) for path in sorted(files)}
-    _validate_scalar_payloads(ordered_files, schema_version)
+    _validate_scalar_payloads(
+        ordered_files,
+        schema_version,
+        ANALYSIS_OUTPUT_CONTRACT_VERSION
+        if analysis_output_contract_version is None
+        else analysis_output_contract_version,
+    )
     common = {
         "game_version": str(game_version),
         "config_sha256": config_sha256,
@@ -303,13 +319,15 @@ def _validate_binaries(document: dict) -> None:
                     raise SnapshotSchemaError(f"{context}.is_blob must be false for non-Windows binaries")
 
 
-def _validate_scalar_payloads(files, schema):
+def _validate_scalar_payloads(files, schema, output_contract):
     from scalar_artifact import validate_scalar_artifact
 
     for path, payload in files.items():
         if isinstance(payload, Mapping) and any(str(key).startswith("scalar_") for key in payload):
             if schema < SCHEMA_8_VERSION:
                 raise SnapshotSchemaError(f"Scalar payload requires snapshot schema 8: {path}")
+            if output_contract != WRITABLE_SNAPSHOT_CONTRACTS[SCHEMA_8_VERSION]:
+                raise SnapshotSchemaError(f"Scalar payload requires analysis output contract 3: {path}")
             try:
                 validate_scalar_artifact(payload)
             except ValueError as exc:
@@ -352,7 +370,7 @@ def parse_snapshot_bytes(data: bytes, expected_game_version: str | None = None) 
             raise SnapshotSchemaError(f"Snapshot payload must be a mapping: {path}")
         normalized[path] = payload
     document["files"] = normalized
-    _validate_scalar_payloads(normalized, schema)
+    _validate_scalar_payloads(normalized, schema, snapshot_analysis_output_contract_version(document))
     if schema >= SCHEMA_4_VERSION:
         publish_time = document.get("last_publish_time")
         if not isinstance(publish_time, str) or not PUBLISH_TIME_PATTERN.fullmatch(publish_time):

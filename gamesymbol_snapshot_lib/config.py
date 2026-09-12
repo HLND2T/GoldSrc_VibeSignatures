@@ -110,7 +110,10 @@ def load_contract(
     config_digest_version: int = LATEST_CONFIG_DIGEST_VERSION,
     *,
     artifactdir: str | Path,
+    analysis_output_contract_version: int = ANALYSIS_OUTPUT_CONTRACT_VERSION,
 ) -> SnapshotContract:
+    if type(analysis_output_contract_version) is not int or analysis_output_contract_version not in {2, 3}:
+        raise SnapshotConfigError(f"Unsupported analysis output contract: {analysis_output_contract_version!r}")
     try:
         document, modules = load_config(config_path)
         analysis_plan = build_execution_plan(
@@ -146,7 +149,7 @@ def load_contract(
         artifact_game_root=Path(artifactdir) / str(game_version),
         config_digest_version=config_digest_version,
         config_sha256=config_digest(document, config_digest_version),
-        analysis_output_contract_version=ANALYSIS_OUTPUT_CONTRACT_VERSION,
+        analysis_output_contract_version=analysis_output_contract_version,
         required_paths=frozenset(required),
         optional_paths=frozenset(optional),
         binary_targets=targets,

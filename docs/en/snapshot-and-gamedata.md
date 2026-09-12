@@ -90,3 +90,19 @@ Index remains schema 4.
 Old snapshots must not contain scalar fields. Use explicit legacy restore into an isolated artifact root,
 analyze missing current artifacts, and rebuild the snapshot and dataset through the current candidate
 pipeline. Editing the schema number alone is not a migration. Historical archive bytes remain immutable.
+
+### Trusted scalar compatibility rollout
+
+The trusted PR planner and candidate builder run from the PR base revision. A prerequisite change must therefore
+teach them the new contract before a feature PR enables it. The prerequisite retained snapshot 7 / analysis-output
+contract 2 defaults; this feature switches the defaults to snapshot 8 / contract 3.
+`gamesymbol_candidate.py build -snapshot-schema-version 8` explicitly
+selects the supported snapshot 8 / analysis-output contract 3 pair. The builder validates artifacts, builds metadata,
+and reopens the candidate against that selected contract; unsupported formats fail closed. The ordinary SymbolStore
+reader still requires its current contract unless a caller explicitly selects another supported contract.
+
+`category: scalar` artifacts contain exactly `scalar_name` and uint32 `scalar_value`. The value is used directly,
+without rebasing or pointer dereference. Scalar payloads are rejected under snapshots 1–7 and analysis-output contract 2.
+The PR workflow requests format 8 from the trusted builder now that the prerequisite is on main. Explicit profile 7
+remains available for compatibility callers with non-scalar artifacts; it does not migrate old data or relax the
+current export/UI requirements.
