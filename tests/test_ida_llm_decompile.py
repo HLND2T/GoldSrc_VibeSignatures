@@ -64,6 +64,7 @@ class ScoreInfoWindowsDataflowTests(unittest.TestCase):
     def test_compiler_stride_forms_and_register_renaming(self):
         cases = (
             (0x74, "lea edx, ds:0[eax*8]\nsub edx, eax\nlea eax, [eax+edx*4]\nshl eax, 2", "eax"),
+            (0x68, "lea edx, [eax+eax*2]\nlea eax, [eax+edx*4]\nshl eax, 3", "eax"),
             (0x1C, "lea ecx, ds:0[eax*8]\nsub ecx, eax", "ecx*4"),
         )
         for stride, calculation, index in cases:
@@ -113,6 +114,51 @@ class ScoreInfoWindowsDataflowTests(unittest.TestCase):
 
 
 class ScoreInfoInstructionRuleTests(unittest.IsolatedAsyncioTestCase):
+    async def test_windows_legacy_stride_is_proven_and_other_strides_fail_closed(self):
+        finder = runpy.run_path(
+            str(
+                Path(__file__).resolve().parents[1]
+                / "ida_preprocessor_scripts/find-ClientScoreInfoHandler-decompiles.py"
+            )
+        )
+        cases = (
+            ("g_PlayerExtraInfo", 0x68, True),
+            ("g_PlayerExtraInfo", 0x74, True),
+            ("g_PlayerExtraInfo", 0x1C, False),
+            ("g_PlayerExtraInfo", 0x78, False),
+            ("g_PlayerExtraInfo_CZDS", 0x1C, True),
+            ("g_PlayerExtraInfo_CZDS", 0x68, False),
+            ("g_PlayerExtraInfo_CZDS", 0x74, False),
+        )
+        for symbol, stride, accepted in cases:
+            with self.subTest(symbol=symbol, stride=stride):
+                common = AsyncMock(return_value=True)
+                with patch.dict(
+                    finder["preprocess_skill"].__globals__,
+                    {
+                        "preprocess_common_skill": common,
+                        "_prepare_llm_context": lambda *args: {"targets": [({}, 0x500000)]},
+                        "_export_llm_function": AsyncMock(
+                            return_value={"disasm_code": scoreinfo_code(stride=f"imul eax, {stride:X}h")}
+                        ),
+                    },
+                ):
+                    result = await finder["preprocess_skill"](
+                        None,
+                        "find-ClientScoreInfoHandler-decompiles",
+                        [f"{symbol}.windows.yaml"],
+                        {},
+                        ".",
+                        "windows",
+                        0,
+                    )
+                self.assertEqual(accepted, result)
+                if accepted:
+                    rule = common.call_args.kwargs["llm_decompile_specs"][0]["instruction_rules"][0]
+                    self.assertIsNotNone(re.fullmatch(rule["regex"], "mov word_600000[eax], di"))
+                else:
+                    common.assert_not_called()
+
     async def test_windows_ambiguous_dataflow_stops_before_llm_and_generation(self):
         finder = runpy.run_path(
             str(
@@ -129,6 +175,29 @@ class ScoreInfoInstructionRuleTests(unittest.IsolatedAsyncioTestCase):
                 "_export_llm_function": AsyncMock(
                     return_value={"disasm_code": scoreinfo_code(extra=("mov word_610000[eax], di",))}
                 ),
+            },
+        ):
+            result = await finder["preprocess_skill"](
+                None, "find-ClientScoreInfoHandler-decompiles", [], {}, ".", "windows", 0
+            )
+        self.assertFalse(result)
+        common.assert_not_called()
+
+    async def test_windows_multiple_supported_strides_are_ambiguous(self):
+        finder = runpy.run_path(
+            str(
+                Path(__file__).resolve().parents[1]
+                / "ida_preprocessor_scripts/find-ClientScoreInfoHandler-decompiles.py"
+            )
+        )
+        code = scoreinfo_code(extra=("mov word_610000[eax], di", "movsx eax, si", "imul eax, 68h"))
+        common = AsyncMock(return_value=True)
+        with patch.dict(
+            finder["preprocess_skill"].__globals__,
+            {
+                "preprocess_common_skill": common,
+                "_prepare_llm_context": lambda *args: {"targets": [({}, 0x500000)]},
+                "_export_llm_function": AsyncMock(return_value={"disasm_code": code}),
             },
         ):
             result = await finder["preprocess_skill"](

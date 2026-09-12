@@ -56,14 +56,20 @@ def main(registered_callbacks):
             if value: registers[dest.reg]=value
     if len(dispatches)!=1: return {'error':'ScoreInfo interface dispatch is not unique','dispatches':list(dispatches)}
     pointer,slot=dispatches.pop()
-    writers={ida_funcs.get_func(x).start_ea for x in idautils.DataRefsTo(pointer) if ida_funcs.get_func(x)}
+    writers=set()
+    for ea in idautils.DataRefsTo(pointer):
+        insn=idautils.DecodeInstruction(ea)
+        owner=ida_funcs.get_func(ea)
+        if owner and insn and idc.print_insn_mnem(ea).lower()=='mov' and insn.ops[0].type==ida_ua.o_mem and int(insn.ops[0].addr)==pointer:
+            writers.add(owner.start_ea)
     tables=set()
     def plus(expr,offset):
         if expr is None: return None
         return (expr[0],(expr[1]+offset)&0xffffffff) if expr[0]=='constant' else (expr[0],expr[1],expr[2]+offset)
+    max_constructor_instructions=8192
     for writer in writers:
-        registers={reg:('register',reg,0) for reg in range(8)}
-        memory={}; cursor=writer; seen=set()
+        pending=[(writer,{reg:('register',reg,0) for reg in range(8)},{},set())]
+        instruction_budget=max_constructor_instructions
         def address(op):
             if op.type==ida_ua.o_mem: return ('constant',int(op.addr))
             if op.type in (ida_ua.o_phrase,ida_ua.o_displ) and not op.specflag1:
@@ -71,51 +77,70 @@ def main(registered_callbacks):
                 if offset & 0x80000000: offset-=0x100000000
                 return plus(registers.get(op.phrase),offset)
             return None
-        for _ in range(2048):
-            if cursor in seen: break
-            seen.add(cursor)
-            insn=idautils.DecodeInstruction(cursor)
-            if not insn: break
-            mnemonic=idc.print_insn_mnem(cursor).lower()
-            dest,source=insn.ops[0],insn.ops[1]
-            if mnemonic=='jmp' and dest.type==ida_ua.o_near:
-                cursor=int(dest.addr); continue
-            if mnemonic.startswith('j') or mnemonic.startswith('ret'): break
-            if mnemonic=='call':
-                for reg in (0,1,2): registers.pop(reg,None)
-                memory={}
-            elif mnemonic in ('mov','lea'):
-                value=None
-                if mnemonic=='lea':
-                    refs={int(x) for x in idautils.DataRefsFrom(cursor) if 0<=x<=0xffffffff and data(x)}
-                    value=('constant',refs.pop()) if len(refs)==1 else address(source)
-                elif source.type==ida_ua.o_imm: value=('constant',int(source.value))
-                elif source.type==ida_ua.o_reg: value=registers.get(source.reg)
-                else:
-                    source_address=address(source)
-                    value=memory.get(source_address)
-                    # A cdecl constructor receives this through its stack argument.
-                    # Preserve that symbolic object across the base constructor call
-                    # when it is kept in a callee-saved register.
-                    if value is None and source.type in (ida_ua.o_phrase,ida_ua.o_displ) and '[esp' in idc.print_operand(cursor,1).lower():
-                        value=('stack_value',cursor,0)
-                if dest.type==ida_ua.o_reg:
+        while pending:
+            cursor,registers,memory,seen=pending.pop()
+            while True:
+                instruction_budget-=1
+                if instruction_budget<0 or cursor in seen:
+                    return {'error':'ScoreInfo constructor control flow is cyclic or exceeds its bound'}
+                seen.add(cursor)
+                insn=idautils.DecodeInstruction(cursor)
+                if not insn: break
+                mnemonic=idc.print_insn_mnem(cursor).lower()
+                dest,source=insn.ops[0],insn.ops[1]
+                if mnemonic.startswith('ret'): break
+                if mnemonic.startswith('j'):
+                    if dest.type!=ida_ua.o_near:
+                        return {'error':'ScoreInfo constructor has an unresolved branch'}
+                    if mnemonic=='jmp':
+                        cursor=int(dest.addr); continue
+                    # Null-guarded subobject conversions still carry the same
+                    # vptr evidence on the non-null path. Keep branch states
+                    # separate and require one concrete handler across them.
+                    pending.append((int(dest.addr),dict(registers),dict(memory),set(seen)))
+                    cursor+=insn.size
+                    continue
+                if mnemonic.startswith('loop'):
+                    return {'error':'ScoreInfo constructor has unsupported loop control flow'}
+                if mnemonic=='call':
+                    for reg in (0,1,2): registers.pop(reg,None)
+                    memory={}
+                elif mnemonic in ('mov','lea'):
+                    value=None
+                    if mnemonic=='lea':
+                        refs={int(x) for x in idautils.DataRefsFrom(cursor) if 0<=x<=0xffffffff and data(x)}
+                        value=('constant',refs.pop()) if len(refs)==1 else address(source)
+                    elif source.type==ida_ua.o_imm: value=('constant',int(source.value))
+                    elif source.type==ida_ua.o_reg: value=registers.get(source.reg)
+                    else:
+                        source_address=address(source)
+                        value=memory.get(source_address)
+                        # A cdecl constructor receives this through its stack argument.
+                        # Preserve that symbolic object across the base constructor call
+                        # when it is kept in a callee-saved register.
+                        if value is None and source.type in (ida_ua.o_phrase,ida_ua.o_displ) and '[esp' in idc.print_operand(cursor,1).lower():
+                            value=('stack_value',cursor,0)
+                    if dest.type==ida_ua.o_reg:
+                        registers.pop(dest.reg,None)
+                        if value is not None: registers[dest.reg]=value
+                    else:
+                        destination=address(dest)
+                        if destination is not None:
+                            memory[destination]=value
+                            if destination==('constant',pointer) and value!=('constant',0):
+                                table=memory.get(value)
+                                if not table or table[0]!='constant' or not data(table[1]):
+                                    return {'error':'ScoreInfo constructor has an unproven non-null interface assignment'}
+                                tables.add(table[1])
+                elif mnemonic=='xor' and dest.type==ida_ua.o_reg and source.type==ida_ua.o_reg and dest.reg==source.reg:
+                    registers[dest.reg]=('constant',0)
+                elif mnemonic in ('add','sub') and dest.type==ida_ua.o_reg and source.type==ida_ua.o_imm:
+                    value=plus(registers.get(dest.reg),int(source.value)*(1 if mnemonic=='add' else -1))
                     registers.pop(dest.reg,None)
                     if value is not None: registers[dest.reg]=value
-                else:
-                    destination=address(dest)
-                    if destination is not None:
-                        memory[destination]=value
-                        if destination==('constant',pointer) and value is not None:
-                            table=memory.get(value)
-                            if table and table[0]=='constant' and data(table[1]): tables.add(table[1])
-            elif mnemonic in ('add','sub') and dest.type==ida_ua.o_reg and source.type==ida_ua.o_imm:
-                value=plus(registers.get(dest.reg),int(source.value)*(1 if mnemonic=='add' else -1))
-                registers.pop(dest.reg,None)
-                if value is not None: registers[dest.reg]=value
-            elif dest.type==ida_ua.o_reg and mnemonic not in ('push','cmp','test'):
-                registers.pop(dest.reg,None)
-            cursor+=insn.size
+                elif dest.type==ida_ua.o_reg and mnemonic not in ('push','cmp','test'):
+                    registers.pop(dest.reg,None)
+                cursor+=insn.size
     targets=set()
     for table in tables:
         target=ida_bytes.get_dword(table+slot)

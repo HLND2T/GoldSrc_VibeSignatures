@@ -8,7 +8,7 @@ so each body has one explicit reference family, shared across its builds.
 
 from ida_analyze_util import _export_llm_function, _output_for_symbol, _prepare_llm_context, preprocess_common_skill
 from ida_preprocessor_scripts._scoreinfo_dataflow import (
-    CS_PLAYER_STRIDE,
+    CS_PLAYER_STRIDES,
     CZDS_PLAYER_STRIDE,
     windows_frags_instruction_rule,
 )
@@ -75,13 +75,16 @@ async def preprocess_skill(
         if context is None or len(context["targets"]) != 1:
             return False
         exported = await _export_llm_function(session, context["targets"][0][1])
-        rule = windows_frags_instruction_rule(
-            (exported or {}).get("disasm_code", ""), CZDS_PLAYER_STRIDE if czds else CS_PLAYER_STRIDE
-        )
-        if rule is None:
+        strides = (CZDS_PLAYER_STRIDE,) if czds else CS_PLAYER_STRIDES
+        rules = [
+            rule
+            for stride in strides
+            if (rule := windows_frags_instruction_rule((exported or {}).get("disasm_code", ""), stride)) is not None
+        ]
+        if len(rules) != 1:
             print(f"ScoreInfo: cannot prove one zero-offset frags store for {name}")
             return False
-        specs[0]["instruction_rules"] = [rule]
+        specs[0]["instruction_rules"] = rules
     return await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,

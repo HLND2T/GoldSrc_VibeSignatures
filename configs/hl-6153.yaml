@@ -528,3 +528,8 @@ modules:
       - name: studioapi_SetupPlayerModel_to_R_StudioChangePlayerModel_callsite_0
         category: patch
         platform: windows
+  - name: gameui
+    module_windows: GameUI.dll
+    depot_windows: valve/cl_dlls/GameUI.dll
+    skills: []
+    symbols: []
