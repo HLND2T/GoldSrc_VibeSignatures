@@ -1,0 +1,5 @@
+func_name: GL_SetMode
+func_va: '0x1d4c8a0'
+func_rva: '0x4c8a0'
+func_size: '0x6c8'
+func_sig: 55 8B EC 81 EC 50 01 00 00 53 56 8B 75 ?? 33 DB 3B F3 57 89 1D ?? ?? ?? ?? 74 ?? 89 1E 8B 7D ??

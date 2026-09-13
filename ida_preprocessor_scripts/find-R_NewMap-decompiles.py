@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""Recover the world entity base and model from the verified map-reset body.
+"""Recover the world entity base, model, and texture reset from the verified map-reset body.
 
 R_NewMap clears the complete r_worldentity object. R_RenderView's access to its
 model member alone would encode a field address instead of the entity base.
+The same body drops every loaded GL texture through GL_UnloadTextures before
+rebuilding the lightmaps; the call (or tail jmp on Linux) resolves the full
+function entry.
 """
 
 from ida_analyze_util import preprocess_common_skill
 
-TARGET_FUNCTION_NAMES = []
+TARGET_FUNCTION_NAMES = ["GL_UnloadTextures"]
 TARGET_GLOBAL_NAMES = ["r_worldentity", "cl_worldmodel"]
 LLM_DECOMPILE = [
     {
@@ -22,6 +25,17 @@ LLM_DECOMPILE = [
     for name in TARGET_FUNCTION_NAMES + TARGET_GLOBAL_NAMES
 ]
 FUNC_FIELDS = ["func_name", "func_sig", "func_va", "func_rva", "func_size"]
+# GL_UnloadTextures is a chain of small texture-slot loops whose in-function
+# wildcarded signature mirrors the adjacent unload helpers on some builds, so
+# only an across-boundary window stays unique there.
+UNLOAD_TEXTURES_FIELDS = [
+    "func_name",
+    "func_sig",
+    "func_va",
+    "func_rva",
+    "func_size",
+    "func_sig_allow_across_function_boundary:true",
+]
 GV_FIELDS = [
     "gv_name",
     "gv_va",
@@ -33,7 +47,7 @@ GV_FIELDS = [
     "gv_inst_disp",
 ]
 GENERATE_YAML_DESIRED_FIELDS = [
-    *((name, FUNC_FIELDS) for name in TARGET_FUNCTION_NAMES),
+    *((name, UNLOAD_TEXTURES_FIELDS) for name in TARGET_FUNCTION_NAMES),
     *((name, GV_FIELDS) for name in TARGET_GLOBAL_NAMES),
 ]
 

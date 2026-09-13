@@ -148,6 +148,7 @@ modules:
         expected_output:
           - r_worldentity.{platform}.yaml
           - cl_worldmodel.{platform}.yaml
+          - GL_UnloadTextures.{platform}.yaml
       - name: find-R_RenderView
         expected_output:
           - R_RenderView.{platform}.yaml
@@ -354,6 +355,7 @@ modules:
           - GL_BeginRendering.{platform}.yaml
           - GL_EndRendering.{platform}.yaml
           - GL_Finish2D.{platform}.yaml
+          - GL_Set2D.{platform}.yaml
       - name: find-CGame_DrawStartupVideo
         expected_output:
           - CGame_DrawStartupVideo.{platform}.yaml
@@ -377,6 +379,24 @@ modules:
           - GL_BuildLightmaps.{platform}.yaml
         expected_output:
           - GL_Bind.{platform}.yaml
+          - GL_SelectTexture.{platform}.yaml
+      - name: find-Draw_MiptexTexture
+        platform: linux
+        expected_output:
+          - Draw_MiptexTexture.{platform}.yaml
+      - name: find-GL_LoadTexture2
+        platform: windows
+        expected_output:
+          - GL_LoadTexture2.{platform}.yaml
+      - name: find-Draw_MiptexTexture-decompiles
+        platform: linux
+        expected_input:
+          - Draw_MiptexTexture.{platform}.yaml
+        expected_output:
+          - GL_LoadTexture2.{platform}.yaml
+      - name: find-GL_SetMode
+        expected_output:
+          - GL_SetMode.{platform}.yaml
     symbols:
       - name: CL_RegisterResources
         category: func
@@ -580,6 +600,19 @@ modules:
         category: func
       - name: GL_Bind
         category: func
+      - name: GL_Set2D
+        category: func
+      - name: GL_SelectTexture
+        category: func
+      - name: GL_UnloadTextures
+        category: func
+      - name: GL_LoadTexture2
+        category: func
+      - name: GL_SetMode
+        category: func
+      - name: Draw_MiptexTexture
+        category: func
+        platform: linux
   - name: client
     module_windows: client.dll
     module_linux: client.so

@@ -5,13 +5,15 @@ SCR_UpdateScreen_RenderBody frames every rendered frame with
 GL_BeginRendering (four output pointers: zeroed x/y plus window-rectangle
 width/height), then GL_Finish2D for the HUD pass (two HUD call sites converge
 on the same entry), and finally GL_EndRendering (older builds keep a wrapper
-that forwards through the VID_FlipScreen pointer). The three are mined as
-found_call targets from one annotated reference body.
+that forwards through the VID_FlipScreen pointer). GL_Set2D is the HUD 2D
+projection setup entered through the same pipeline (MetaHook field
+GLBeginHud; two HUD call sites converge on the same entry). The four are
+mined as found_call targets from one annotated reference body.
 """
 
 from ida_analyze_util import preprocess_common_skill
 
-TARGET_FUNCTION_NAMES = ["GL_BeginRendering", "GL_EndRendering", "GL_Finish2D"]
+TARGET_FUNCTION_NAMES = ["GL_BeginRendering", "GL_EndRendering", "GL_Finish2D", "GL_Set2D"]
 REFERENCE = "SCR_UpdateScreen_RenderBody"
 LLM_DECOMPILE = [
     {
@@ -36,9 +38,20 @@ END_RENDERING_FIELDS = [
     "func_size",
     "func_sig_allow_across_function_boundary:true",
 ]
+# GL_Set2D bodies end in a tail jump and mirror the adjacent HUD pass
+# helpers closely enough that only an across-boundary window stays unique.
+SET_2D_FIELDS = [
+    "func_name",
+    "func_sig",
+    "func_va",
+    "func_rva",
+    "func_size",
+    "func_sig_allow_across_function_boundary:true",
+]
 GENERATE_YAML_DESIRED_FIELDS = [
-    *((name, FUNC_FIELDS) for name in TARGET_FUNCTION_NAMES if name != "GL_EndRendering"),
+    *((name, FUNC_FIELDS) for name in TARGET_FUNCTION_NAMES if name not in {"GL_EndRendering", "GL_Set2D"}),
     ("GL_EndRendering", END_RENDERING_FIELDS),
+    ("GL_Set2D", SET_2D_FIELDS),
 ]
 
 

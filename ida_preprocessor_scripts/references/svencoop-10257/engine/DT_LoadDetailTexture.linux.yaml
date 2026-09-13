@@ -1,0 +1,893 @@
+func_name: "DT_LoadDetailTexture"
+func_va: "0x145ea0"
+disasm_code: |-
+  .text:00145EA0                 push    ebp
+  .text:00145EA1                 push    edi
+  .text:00145EA2                 xor     edi, edi
+  .text:00145EA4                 push    esi
+  .text:00145EA5                 push    ebx
+  .text:00145EA6                 call    sub_56390
+  .text:00145EAB                 add     ebx, (offset dbl_2EE000 - $)
+  .text:00145EB1                 sub     esp, 13Ch
+  .text:00145EB7                 lea     eax, [esp+14Ch+var_DC]
+  .text:00145EBB                 mov     [esp+14Ch+var_108], eax
+  .text:00145EBF                 mov     [esp+14Ch+var_E4], eax
+  .text:00145EC3                 mov     [esp+14Ch+var_E0], edi
+  .text:00145EC7                 mov     [esp+14Ch+var_DC], 0
+  .text:00145ECC                 cmp     ds:(byte_34F80E0 - 2EE000h)[ebx], 0
+  .text:00145ED3                 jz      loc_146061
+  .text:00145ED9                 fldz
+  .text:00145EDB                 fst     [esp+14Ch+var_110]
+  .text:00145EDF                 fld     (flt_2F1BF0 - 2EE000h)[ebx]
+  .text:00145EE5                 fst     [esp+14Ch+var_114]
+  .text:00145EE9                 fucomip st, st(1)
+  .text:00145EEB                 fstp    st
+  .text:00145EED                 jp      short loc_145EF1
+  .text:00145EEF                 jz      short loc_145F50
+  .text:00145EF1                 mov     eax, ds:(dword_34F8158 - 2EE000h)[ebx]
+  .text:00145EF7                 mov     edx, ds:(dword_34F8154 - 2EE000h)[ebx]
+  .text:00145EFD                 mov     [esp+14Ch+var_114], eax
+  .text:00145F01                 sub     eax, edx
+  .text:00145F03                 sar     eax, 2
+  .text:00145F06                 mov     [esp+14Ch+var_10C], eax
+  .text:00145F0A                 jz      loc_146061
+  .text:00145F10                 mov     eax, [edx]
+  .text:00145F12                 lea     ecx, [esp+14Ch+var_C4]
+  .text:00145F19                 mov     [esp+14Ch+var_CC], ecx
+  .text:00145F20                 mov     [esp+14Ch+var_114], ecx
+  .text:00145F24                 mov     esi, [eax]
+  .text:00145F26                 mov     edi, [eax+4]
+  .text:00145F29                 mov     eax, esi
+  .text:00145F2B                 add     eax, edi
+  .text:00145F2D                 jz      loc_146070
+  .text:00145F33                 test    esi, esi
+  .text:00145F35                 jnz     loc_146070
+  .text:00145F3B                 nop
+  .text:00145F3C                 lea     esi, [esi+0]
+  .text:00145F40                 lea     eax, (aBasicStringMCo - 2EE000h)[ebx]; "basic_string::_M_construct null not val"...
+  .text:00145F46                 ; char *
+  .text:00145F46                 mov     [esp+14Ch+s], eax; char *
+  .text:00145F49                 call    __ZSt19__throw_logic_errorPKc; std::__throw_logic_error(char const*)
+  .text:00145F50                 mov     esi, [esp+14Ch+s1]
+  .text:00145F57                 lea     eax, [esp+14Ch+var_9C]
+  .text:00145F5E                 lea     ebp, [esp+14Ch+var_94]
+  .text:00145F65                 mov     [esp+14Ch+var_10C], eax
+  .text:00145F69                 mov     [esp+14Ch+var_9C], ebp
+  .text:00145F70                 test    esi, esi
+  .text:00145F72                 jz      short loc_145F40
+  .text:00145F74                 mov     eax, [esp+14Ch+s1]
+  .text:00145F7B                 ; s
+  .text:00145F7B                 mov     [esp+14Ch+s], eax; s
+  .text:00145F7E                 call    _strlen
+  .text:00145F83                 cmp     eax, 0Fh
+  .text:00145F86                 mov     esi, eax
+  .text:00145F88                 mov     [esp+14Ch+var_B4], eax
+  .text:00145F8F                 ja      loc_1463E0
+  .text:00145F95                 cmp     eax, 1
+  .text:00145F98                 jz      loc_146453
+  .text:00145F9E                 test    eax, eax
+  .text:00145FA0                 mov     edx, ebp
+  .text:00145FA2                 jnz     loc_1464DD
+  .text:00145FA8                 mov     [esp+14Ch+var_98], eax
+  .text:00145FAF                 mov     byte ptr [edx+eax], 0
+  .text:00145FB3                 mov     eax, [esp+14Ch+arg_4]
+  .text:00145FBA                 mov     [esp+14Ch+var_84], eax
+  .text:00145FC1                 mov     eax, ds:(dword_34F80E8 - 2EE000h)[ebx]
+  .text:00145FC7                 cmp     eax, ds:(dword_34F80EC - 2EE000h)[ebx]
+  .text:00145FCD                 jz      loc_1464BB
+  .text:00145FD3                 test    eax, eax
+  .text:00145FD5                 mov     edx, [esp+14Ch+var_9C]
+  .text:00145FDC                 jz      short loc_14603A
+  .text:00145FDE                 lea     edx, [eax+8]
+  .text:00145FE1                 mov     [eax], edx
+  .text:00145FE3                 mov     edx, [esp+14Ch+var_9C]
+  .text:00145FEA                 cmp     edx, ebp
+  .text:00145FEC                 jz      loc_14646B
+  .text:00145FF2                 mov     [eax], edx
+  .text:00145FF4                 mov     edx, dword ptr [esp+14Ch+var_94]
+  .text:00145FFB                 mov     [eax+8], edx
+  .text:00145FFE                 mov     edx, [esp+14Ch+var_98]
+  .text:00146005                 xor     ecx, ecx
+  .text:00146007                 mov     [eax+4], edx
+  .text:0014600A                 xor     edx, edx
+  .text:0014600C                 mov     byte ptr [esp+14Ch+var_94], dl
+  .text:00146013                 mov     edx, [esp+14Ch+var_84]
+  .text:0014601A                 mov     [esp+14Ch+var_9C], ebp
+  .text:00146021                 lea     ebp, [esp+14Ch+var_94]
+  .text:00146028                 mov     [esp+14Ch+var_98], ecx
+  .text:0014602F                 mov     [eax+18h], edx
+  .text:00146032                 mov     eax, ds:(dword_34F80E8 - 2EE000h)[ebx]
+  .text:00146038                 mov     edx, ebp
+  .text:0014603A                 add     eax, 1Ch
+  .text:0014603D                 mov     ds:(dword_34F80E8 - 2EE000h)[ebx], eax
+  .text:00146043                 cmp     edx, ebp
+  .text:00146045                 jz      short loc_14604F
+  .text:00146047                 ; void *
+  .text:00146047                 mov     [esp+14Ch+s], edx; void *
+  .text:0014604A                 call    __ZdlPv; operator delete(void *)
+  .text:0014604F                 mov     eax, [esp+14Ch+var_E4]
+  .text:00146053                 cmp     eax, [esp+14Ch+var_108]
+  .text:00146057                 jz      short loc_146061
+  .text:00146059                 ; void *
+  .text:00146059                 mov     [esp+14Ch+s], eax; void *
+  .text:0014605C                 call    __ZdlPv; operator delete(void *)
+  .text:00146061                 add     esp, 13Ch
+  .text:00146067                 pop     ebx
+  .text:00146068                 pop     esi
+  .text:00146069                 pop     edi
+  .text:0014606A                 pop     ebp
+  .text:0014606B                 retn
+  .text:00146070                 lea     eax, [esp+14Ch+var_9C]
+  .text:00146077                 xor     ebp, ebp
+  .text:00146079                 mov     [esp+14Ch+var_104], eax
+  .text:0014607D                 lea     eax, [esp+14Ch+var_CC]
+  .text:00146084                 mov     [esp+14Ch+var_100], eax
+  .text:00146088                 nop
+  .text:00146089                 lea     esi, [esi+0]
+  .text:00146090                 lea     eax, ds:0[ebp*4]
+  .text:00146097                 cmp     edi, 0Fh
+  .text:0014609A                 mov     [esp+14Ch+var_110], eax
+  .text:0014609E                 mov     [esp+14Ch+var_9C], edi
+  .text:001460A5                 ja      loc_146140
+  .text:001460AB                 cmp     edi, 1
+  .text:001460AE                 jz      loc_146190
+  .text:001460B4                 test    edi, edi
+  .text:001460B6                 mov     eax, [esp+14Ch+var_114]
+  .text:001460BA                 jnz     loc_14616F
+  .text:001460C0                 mov     [esp+14Ch+var_C8], edi
+  .text:001460C7                 mov     byte ptr [eax+edi], 0
+  .text:001460CB                 mov     eax, [esp+14Ch+s1]
+  .text:001460D2                 mov     esi, [esp+14Ch+var_CC]
+  .text:001460D9                 ; s1
+  .text:001460D9                 mov     [esp+14Ch+s], eax; s1
+  .text:001460DC                 ; s2
+  .text:001460DC                 mov     [esp+14Ch+s2], esi; s2
+  .text:001460E0                 call    _strcasecmp
+  .text:001460E5                 cmp     esi, [esp+14Ch+var_114]
+  .text:001460E9                 mov     edi, eax
+  .text:001460EB                 jz      short loc_1460F5
+  .text:001460ED                 ; void *
+  .text:001460ED                 mov     [esp+14Ch+s], esi; void *
+  .text:001460F0                 call    __ZdlPv; operator delete(void *)
+  .text:001460F5                 test    edi, edi
+  .text:001460F7                 jz      loc_1461E0
+  .text:001460FD                 inc     ebp
+  .text:001460FE                 cmp     ebp, [esp+14Ch+var_10C]
+  .text:00146102                 jz      loc_14604F
+  .text:00146108                 mov     eax, ds:(dword_34F8154 - 2EE000h)[ebx]
+  .text:0014610E                 mov     ecx, [esp+14Ch+var_110]
+  .text:00146112                 mov     edx, [esp+14Ch+var_114]
+  .text:00146116                 mov     eax, [eax+ecx+4]
+  .text:0014611A                 mov     [esp+14Ch+var_CC], edx
+  .text:00146121                 mov     esi, [eax]
+  .text:00146123                 mov     edi, [eax+4]
+  .text:00146126                 mov     eax, esi
+  .text:00146128                 add     eax, edi
+  .text:0014612A                 jz      loc_146090
+  .text:00146130                 test    esi, esi
+  .text:00146132                 jz      loc_145F40
+  .text:00146138                 jmp     loc_146090
+  .text:00146140                 mov     eax, [esp+14Ch+var_104]
+  .text:00146144                 xor     edx, edx
+  .text:00146146                 mov     [esp+14Ch+var_144], edx
+  .text:0014614A                 mov     [esp+14Ch+s2], eax
+  .text:0014614E                 mov     eax, [esp+14Ch+var_100]
+  .text:00146152                 mov     [esp+14Ch+s], eax
+  .text:00146155                 call    __ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE9_M_createERjj; std::string::_M_create(uint &,uint)
+  .text:0014615A                 mov     edx, [esp+14Ch+var_9C]
+  .text:00146161                 mov     [esp+14Ch+var_C4], edx
+  .text:00146168                 mov     [esp+14Ch+var_CC], eax
+  .text:0014616F                 mov     ecx, edi
+  .text:00146171                 mov     edi, eax
+  .text:00146173                 cmp     ecx, 8
+  .text:00146176                 jnb     short loc_1461B0
+  .text:00146178                 rep movsb
+  .text:0014617A                 mov     edi, [esp+14Ch+var_9C]
+  .text:00146181                 mov     eax, [esp+14Ch+var_CC]
+  .text:00146188                 jmp     loc_1460C0
+  .text:00146190                 movzx   eax, byte ptr [esi]
+  .text:00146193                 mov     byte ptr [esp+14Ch+var_C4], al
+  .text:0014619A                 mov     eax, [esp+14Ch+var_CC]
+  .text:001461A1                 jmp     loc_1460C0
+  .text:001461B0                 test    al, 1
+  .text:001461B2                 jnz     loc_1463C8
+  .text:001461B8                 test    edi, 2
+  .text:001461BE                 jnz     loc_1463B0
+  .text:001461C4                 test    edi, 4
+  .text:001461CA                 jz      short loc_146178
+  .text:001461CC                 mov     eax, [esi]
+  .text:001461CE                 add     edi, 4
+  .text:001461D1                 add     esi, 4
+  .text:001461D4                 sub     ecx, 4
+  .text:001461D7                 mov     [edi-4], eax
+  .text:001461DA                 jmp     short loc_146178
+  .text:001461E0                 mov     eax, ds:(dword_34F8154 - 2EE000h)[ebx]
+  .text:001461E6                 lea     ebp, [esp+14Ch+var_AC]
+  .text:001461ED                 mov     ecx, [esp+14Ch+var_110]
+  .text:001461F1                 mov     eax, [eax+ecx]
+  .text:001461F4                 mov     [esp+14Ch+var_B4], ebp
+  .text:001461FB                 mov     esi, [eax+18h]
+  .text:001461FE                 mov     edi, [eax+1Ch]
+  .text:00146201                 mov     eax, esi
+  .text:00146203                 add     eax, edi
+  .text:00146205                 jz      short loc_14620F
+  .text:00146207                 test    esi, esi
+  .text:00146209                 jz      loc_145F40
+  .text:0014620F                 cmp     edi, 0Fh
+  .text:00146212                 mov     [esp+14Ch+var_9C], edi
+  .text:00146219                 ja      loc_146328
+  .text:0014621F                 cmp     edi, 1
+  .text:00146222                 jz      loc_146437
+  .text:00146228                 lea     ecx, [esp+14Ch+var_B4]
+  .text:0014622F                 test    edi, edi
+  .text:00146231                 mov     eax, ebp
+  .text:00146233                 mov     [esp+14Ch+var_114], ecx
+  .text:00146237                 jnz     loc_146361
+  .text:0014623D                 mov     [esp+14Ch+var_B0], edi
+  .text:00146244                 lea     esi, [esp+14Ch+var_E4]
+  .text:00146248                 mov     byte ptr [eax+edi], 0
+  .text:0014624C                 mov     eax, [esp+14Ch+var_114]
+  .text:00146250                 mov     [esp+14Ch+s], esi
+  .text:00146253                 mov     [esp+14Ch+s2], eax
+  .text:00146257                 call    __ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE9_M_assignERKS4_; std::string::_M_assign(std::string const&)
+  .text:0014625C                 mov     eax, [esp+14Ch+var_B4]
+  .text:00146263                 cmp     eax, ebp
+  .text:00146265                 jz      short loc_14626F
+  .text:00146267                 ; void *
+  .text:00146267                 mov     [esp+14Ch+s], eax; void *
+  .text:0014626A                 call    __ZdlPv; operator delete(void *)
+  .text:0014626F                 lea     ebp, [esp+14Ch+var_F0]
+  .text:00146273                 lea     edi, (unk_34F810C - 2EE000h)[ebx]
+  .text:00146279                 mov     [esp+14Ch+var_144], esi
+  .text:0014627D                 mov     [esp+14Ch+s2], edi
+  .text:00146281                 mov     [esp+14Ch+s], ebp
+  .text:00146284                 call    _ZNSt8_Rb_treeINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESt4pairIKS5_iESt10_Select1stIS8_ESt4lessIS5_ESaIS8_EE4findERS7_; std::_Rb_tree<std::string,std::pair<std::string const,int>,std::_Select1st<std::pair<std::string const,int>>,std::less<std::string>,std::allocator<std::pair<std::string const,int>>>::find(std::string const&)
+  .text:00146289                 lea     edx, (dword_34F8110 - 2EE000h)[ebx]
+  .text:0014628F                 sub     esp, 4
+  .text:00146292                 cmp     edx, [esp+14Ch+var_F0]
+  .text:00146296                 jnz     loc_14604F
+  .text:0014629C                 lea     eax, (unk_34F8124 - 2EE000h)[ebx]
+  .text:001462A2                 mov     [esp+14Ch+s2], eax
+  .text:001462A6                 mov     [esp+14Ch+var_144], esi
+  .text:001462AA                 mov     [esp+14Ch+s], ebp
+  .text:001462AD                 mov     [esp+14Ch+var_104], eax
+  .text:001462B1                 call    _ZNSt8_Rb_treeINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESt4pairIKS5_iESt10_Select1stIS8_ESt4lessIS5_ESaIS8_EE4findERS7_; std::_Rb_tree<std::string,std::pair<std::string const,int>,std::_Select1st<std::pair<std::string const,int>>,std::less<std::string>,std::allocator<std::pair<std::string const,int>>>::find(std::string const&)
+  .text:001462B6                 lea     eax, (dword_34F8128 - 2EE000h)[ebx]
+  .text:001462BC                 sub     esp, 4
+  .text:001462BF                 mov     edx, [esp+14Ch+var_F0]
+  .text:001462C3                 cmp     edx, eax
+  .text:001462C5                 jz      loc_146527
+  .text:001462CB                 mov     ecx, ds:(dword_34F8154 - 2EE000h)[ebx]
+  .text:001462D1                 mov     eax, [esp+14Ch+var_110]
+  .text:001462D5                 mov     esi, [esp+14Ch+arg_4]
+  .text:001462DC                 add     eax, ecx
+  .text:001462DE                 mov     ecx, [eax]
+  .text:001462E0                 mov     [ecx+38h], esi
+  .text:001462E3                 mov     ecx, [edx+28h]
+  .text:001462E6                 mov     edx, [eax]
+  .text:001462E8                 mov     [edx+3Ch], ecx
+  .text:001462EB                 lea     edx, [esp+14Ch+var_9C]
+  .text:001462F2                 mov     [esp+14Ch+var_9C], esi
+  .text:001462F9                 mov     eax, [eax]
+  .text:001462FB                 mov     [esp+14Ch+var_144], edx
+  .text:001462FF                 lea     edx, (unk_34F813C - 2EE000h)[ebx]
+  .text:00146305                 mov     [esp+14Ch+s2], edx
+  .text:00146309                 mov     [esp+14Ch+var_98], eax
+  .text:00146310                 lea     eax, [esp+14Ch+var_FC]
+  .text:00146314                 mov     [esp+14Ch+s], eax
+  .text:00146317                 call    sub_146CA0
+  .text:0014631C                 sub     esp, 4
+  .text:0014631F                 jmp     loc_14604F
+  .text:00146328                 xor     eax, eax
+  .text:0014632A                 mov     [esp+14Ch+var_144], eax
+  .text:0014632E                 lea     eax, [esp+14Ch+var_9C]
+  .text:00146335                 mov     [esp+14Ch+s2], eax
+  .text:00146339                 lea     eax, [esp+14Ch+var_B4]
+  .text:00146340                 mov     [esp+14Ch+s], eax
+  .text:00146343                 mov     [esp+14Ch+var_114], eax
+  .text:00146347                 call    __ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE9_M_createERjj; std::string::_M_create(uint &,uint)
+  .text:0014634C                 mov     edx, [esp+14Ch+var_9C]
+  .text:00146353                 mov     [esp+14Ch+var_AC], edx
+  .text:0014635A                 mov     [esp+14Ch+var_B4], eax
+  .text:00146361                 mov     ecx, edi
+  .text:00146363                 mov     edi, eax
+  .text:00146365                 cmp     ecx, 8
+  .text:00146368                 jnb     short loc_14637F
+  .text:0014636A                 rep movsb
+  .text:0014636C                 mov     edi, [esp+14Ch+var_9C]
+  .text:00146373                 mov     eax, [esp+14Ch+var_B4]
+  .text:0014637A                 jmp     loc_14623D
+  .text:0014637F                 test    al, 1
+  .text:00146381                 jnz     loc_1464F9
+  .text:00146387                 test    edi, 2
+  .text:0014638D                 jnz     loc_1464E4
+  .text:00146393                 test    edi, 4
+  .text:00146399                 jz      short loc_14636A
+  .text:0014639B                 mov     eax, [esi]
+  .text:0014639D                 add     edi, 4
+  .text:001463A0                 add     esi, 4
+  .text:001463A3                 sub     ecx, 4
+  .text:001463A6                 mov     [edi-4], eax
+  .text:001463A9                 jmp     short loc_14636A
+  .text:001463B0                 movzx   eax, word ptr [esi]
+  .text:001463B3                 add     edi, 2
+  .text:001463B6                 add     esi, 2
+  .text:001463B9                 sub     ecx, 2
+  .text:001463BC                 mov     [edi-2], ax
+  .text:001463C0                 jmp     loc_1461C4
+  .text:001463C8                 movzx   eax, byte ptr [esi]
+  .text:001463CB                 inc     edi
+  .text:001463CC                 inc     esi
+  .text:001463CD                 dec     ecx
+  .text:001463CE                 mov     [edi-1], al
+  .text:001463D1                 jmp     loc_1461B8
+  .text:001463E0                 lea     eax, [esp+14Ch+var_B4]
+  .text:001463E7                 xor     ecx, ecx
+  .text:001463E9                 mov     [esp+14Ch+s2], eax
+  .text:001463ED                 mov     eax, [esp+14Ch+var_10C]
+  .text:001463F1                 mov     [esp+14Ch+var_144], ecx
+  .text:001463F5                 mov     [esp+14Ch+s], eax
+  .text:001463F8                 call    __ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE9_M_createERjj; std::string::_M_create(uint &,uint)
+  .text:001463FD                 mov     edx, [esp+14Ch+var_B4]
+  .text:00146404                 mov     dword ptr [esp+14Ch+var_94], edx
+  .text:0014640B                 mov     [esp+14Ch+var_9C], eax
+  .text:00146412                 mov     ecx, esi
+  .text:00146414                 mov     edi, eax
+  .text:00146416                 mov     esi, [esp+14Ch+s1]
+  .text:0014641D                 cmp     ecx, 8
+  .text:00146420                 jnb     short loc_14648C
+  .text:00146422                 rep movsb
+  .text:00146424                 mov     eax, [esp+14Ch+var_B4]
+  .text:0014642B                 mov     edx, [esp+14Ch+var_9C]
+  .text:00146432                 jmp     loc_145FA8
+  .text:00146437                 movzx   eax, byte ptr [esi]
+  .text:0014643A                 lea     edx, [esp+14Ch+var_B4]
+  .text:00146441                 mov     [esp+14Ch+var_114], edx
+  .text:00146445                 mov     byte ptr [esp+14Ch+var_AC], al
+  .text:0014644C                 mov     eax, ebp
+  .text:0014644E                 jmp     loc_14623D
+  .text:00146453                 mov     edx, [esp+14Ch+s1]
+  .text:0014645A                 movzx   edx, byte ptr [edx]
+  .text:0014645D                 mov     byte ptr [esp+14Ch+var_94], dl
+  .text:00146464                 mov     edx, ebp
+  .text:00146466                 jmp     loc_145FA8
+  .text:0014646B                 pxor    xmm0, xmm0
+  .text:0014646F                 movlps  xmm0, [esp+14Ch+var_94]
+  .text:00146477                 movhps  xmm0, [esp+14Ch+var_8C]
+  .text:0014647F                 movlps  qword ptr [eax+8], xmm0
+  .text:00146483                 movhps  qword ptr [eax+10h], xmm0
+  .text:00146487                 jmp     loc_145FFE
+  .text:0014648C                 test    al, 1
+  .text:0014648E                 jnz     loc_146519
+  .text:00146494                 test    edi, 2
+  .text:0014649A                 jnz     short loc_146507
+  .text:0014649C                 test    edi, 4
+  .text:001464A2                 jz      loc_146422
+  .text:001464A8                 mov     eax, [esi]
+  .text:001464AA                 add     edi, 4
+  .text:001464AD                 add     esi, 4
+  .text:001464B0                 sub     ecx, 4
+  .text:001464B3                 mov     [edi-4], eax
+  .text:001464B6                 jmp     loc_146422
+  .text:001464BB                 mov     eax, [esp+14Ch+var_10C]
+  .text:001464BF                 mov     [esp+14Ch+s2], eax
+  .text:001464C3                 lea     eax, (dword_34F80E4 - 2EE000h)[ebx]
+  .text:001464C9                 mov     [esp+14Ch+s], eax
+  .text:001464CC                 call    _ZNSt6vectorISt4pairINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEiESaIS7_EE19_M_emplace_back_auxIJS7_EEEvDpOT_; std::vector<std::pair<std::string,int>>::_M_emplace_back_aux<std::pair<std::string,int>>(std::pair<std::string,int> &&)
+  .text:001464D1                 mov     edx, [esp+14Ch+var_9C]
+  .text:001464D8                 jmp     loc_146043
+  .text:001464DD                 mov     eax, ebp
+  .text:001464DF                 jmp     loc_146412
+  .text:001464E4                 movzx   eax, word ptr [esi]
+  .text:001464E7                 add     edi, 2
+  .text:001464EA                 add     esi, 2
+  .text:001464ED                 sub     ecx, 2
+  .text:001464F0                 mov     [edi-2], ax
+  .text:001464F4                 jmp     loc_146393
+  .text:001464F9                 movzx   eax, byte ptr [esi]
+  .text:001464FC                 inc     edi
+  .text:001464FD                 inc     esi
+  .text:001464FE                 dec     ecx
+  .text:001464FF                 mov     [edi-1], al
+  .text:00146502                 jmp     loc_146387
+  .text:00146507                 movzx   eax, word ptr [esi]
+  .text:0014650A                 add     edi, 2
+  .text:0014650D                 add     esi, 2
+  .text:00146510                 sub     ecx, 2
+  .text:00146513                 mov     [edi-2], ax
+  .text:00146517                 jmp     short loc_14649C
+  .text:00146519                 movzx   eax, byte ptr [esi]
+  .text:0014651C                 inc     edi
+  .text:0014651D                 inc     esi
+  .text:0014651E                 dec     ecx
+  .text:0014651F                 mov     [edi-1], al
+  .text:00146522                 jmp     loc_146494
+  .text:00146527                 mov     edx, [esp+14Ch+var_E4]
+  .text:0014652B                 lea     eax, (aGfxSTga - 2EE000h)[ebx]; "gfx/%s.tga"
+  .text:00146531                 ; format
+  .text:00146531                 mov     [esp+14Ch+s2], eax; format
+  .text:00146535                 lea     eax, [esp+14Ch+var_9C]
+  .text:0014653C                 ; s
+  .text:0014653C                 mov     [esp+14Ch+s], eax; s
+  .text:0014653F                 mov     ebp, eax
+  .text:00146541                 mov     [esp+14Ch+var_10C], eax
+  .text:00146545                 lea     esi, (unk_30F8060 - 2EE000h)[ebx]
+  .text:0014654B                 mov     [esp+14Ch+var_144], edx
+  .text:0014654F                 mov     [esp+14Ch+var_100], edx
+  .text:00146553                 call    _sprintf
+  .text:00146558                 mov     eax, [esp+14Ch+var_114]
+  .text:0014655C                 mov     [esp+14Ch+s2], esi
+  .text:00146560                 mov     [esp+14Ch+s], ebp
+  .text:00146563                 mov     [esp+14Ch+var_13C], eax
+  .text:00146567                 lea     eax, [esp+14Ch+var_CC]
+  .text:0014656E                 mov     [esp+14Ch+var_140], eax
+  .text:00146572                 mov     eax, offset unk_400000
+  .text:00146577                 mov     [esp+14Ch+var_144], eax
+  .text:0014657B                 call    sub_149420
+  .text:00146580                 test    eax, eax
+  .text:00146582                 jz      loc_14668C
+  .text:00146588                 xor     eax, eax
+  .text:0014658A                 mov     edx, [esp+14Ch+var_100]
+  .text:0014658E                 mov     ecx, 2703h
+  .text:00146593                 ; int
+  .text:00146593                 mov     [esp+14Ch+var_130], eax; int
+  .text:00146597                 mov     eax, 3
+  .text:0014659C                 ; int
+  .text:0014659C                 mov     [esp+14Ch+var_134], eax; int
+  .text:001465A0                 mov     eax, 1
+  .text:001465A5                 ; GLint
+  .text:001465A5                 mov     [esp+14Ch+var_138], eax; GLint
+  .text:001465A9                 mov     eax, [esp+14Ch+var_B4]
+  .text:001465B0                 ; int
+  .text:001465B0                 mov     [esp+14Ch+var_13C], esi; int
+  .text:001465B4                 ; GLint
+  .text:001465B4                 mov     [esp+14Ch+var_12C], ecx; GLint
+  .text:001465B8                 ; GLsizei
+  .text:001465B8                 mov     [esp+14Ch+s], edx; GLsizei
+  .text:001465BB                 ; int
+  .text:001465BB                 mov     [esp+14Ch+var_140], eax; int
+  .text:001465BF                 mov     eax, [esp+14Ch+var_CC]
+  .text:001465C6                 ; int
+  .text:001465C6                 mov     [esp+14Ch+var_144], eax; int
+  .text:001465CA                 mov     eax, offset byte_6
+  .text:001465CF                 ; GLvoid *
+  .text:001465CF                 mov     [esp+14Ch+s2], eax; GLvoid *
+  .text:001465D3                 call    GL_LoadTexture2; full 9-argument GL_LoadTexture2 wrapper (identifier, textureType, width, height, data, mipmap, iType, pPal, filter; trailing filter 9987 = GL_LINEAR_MIPMAP_LINEAR)
+  .text:001465D8                 cmp     eax, 0FFFFFFFFh
+  .text:001465DB                 mov     esi, eax
+  .text:001465DD                 jz      loc_14668C
+  .text:001465E3                 mov     edx, ds:(dword_34F8154 - 2EE000h)[ebx]
+  .text:001465E9                 lea     edi, [esp+14Ch+var_FC]
+  .text:001465ED                 mov     eax, [esp+14Ch+var_110]
+  .text:001465F1                 mov     ecx, [esp+14Ch+arg_4]
+  .text:001465F8                 add     eax, edx
+  .text:001465FA                 mov     edx, [eax]
+  .text:001465FC                 mov     [edx+38h], ecx
+  .text:001465FF                 mov     edx, [eax]
+  .text:00146601                 mov     [edx+3Ch], esi
+  .text:00146604                 mov     [esp+14Ch+var_9C], ecx
+  .text:0014660B                 mov     eax, [eax]
+  .text:0014660D                 mov     [esp+14Ch+var_144], ebp
+  .text:00146611                 mov     [esp+14Ch+s], edi
+  .text:00146614                 mov     [esp+14Ch+var_98], eax
+  .text:0014661B                 lea     eax, (unk_34F813C - 2EE000h)[ebx]
+  .text:00146621                 mov     [esp+14Ch+s2], eax
+  .text:00146625                 call    sub_146CA0
+  .text:0014662A                 sub     esp, 4
+  .text:0014662D                 mov     edx, [esp+14Ch+var_E4]
+  .text:00146631                 lea     eax, [esp+14Ch+var_94]
+  .text:00146638                 mov     ecx, [esp+14Ch+var_E0]
+  .text:0014663C                 mov     [esp+14Ch+var_114], eax
+  .text:00146640                 mov     [esp+14Ch+var_9C], eax
+  .text:00146647                 mov     eax, ebp
+  .text:00146649                 add     ecx, edx
+  .text:0014664B                 call    sub_144A60
+  .text:00146650                 mov     edx, [esp+14Ch+var_104]
+  .text:00146654                 mov     [esp+14Ch+var_144], ebp
+  .text:00146658                 mov     [esp+14Ch+s], edi
+  .text:0014665B                 mov     [esp+14Ch+var_84], esi
+  .text:00146662                 mov     [esp+14Ch+s2], edx
+  .text:00146666                 call    _ZNSt8_Rb_treeINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESt4pairIKS5_iESt10_Select1stIS8_ESt4lessIS5_ESaIS8_EE16_M_insert_uniqueIS6_IS5_iEEES6_ISt17_Rb_tree_iteratorIS8_EbEOT_; std::_Rb_tree<std::string,std::pair<std::string const,int>,std::_Select1st<std::pair<std::string const,int>>,std::less<std::string>,std::allocator<std::pair<std::string const,int>>>::_M_insert_unique<std::pair<std::string,int>>(std::pair<std::string,int> &&)
+  .text:0014666B                 sub     esp, 4
+  .text:0014666E                 mov     eax, [esp+14Ch+var_9C]
+  .text:00146675                 cmp     eax, [esp+14Ch+var_114]
+  .text:00146679                 jz      loc_14604F
+  .text:0014667F                 ; void *
+  .text:0014667F                 mov     [esp+14Ch+s], eax; void *
+  .text:00146682                 call    __ZdlPv; operator delete(void *)
+  .text:00146687                 jmp     loc_14604F
+  .text:0014668C                 mov     eax, [esp+14Ch+var_E4]
+  .text:00146690                 lea     esi, [esp+14Ch+var_94]
+  .text:00146697                 ; char
+  .text:00146697                 mov     [esp+14Ch+s2], eax; char
+  .text:0014669B                 lea     eax, (aDetailTextureM_0 - 2EE000h)[ebx]; "Detail texture map load failed: %s\n"
+  .text:001466A1                 ; fmt
+  .text:001466A1                 mov     [esp+14Ch+s], eax; fmt
+  .text:001466A4                 call    Con_Printf
+  .text:001466A9                 mov     ebp, [esp+14Ch+var_10C]
+  .text:001466AD                 mov     edx, [esp+14Ch+var_E4]
+  .text:001466B1                 mov     ecx, [esp+14Ch+var_E0]
+  .text:001466B5                 mov     [esp+14Ch+var_9C], esi
+  .text:001466BC                 mov     eax, ebp
+  .text:001466BE                 add     ecx, edx
+  .text:001466C0                 call    sub_144A60
+  .text:001466C5                 lea     eax, [esp+14Ch+var_FC]
+  .text:001466C9                 mov     [esp+14Ch+s2], edi
+  .text:001466CD                 mov     [esp+14Ch+s], eax
+  .text:001466D0                 mov     [esp+14Ch+var_144], ebp
+  .text:001466D4                 mov     [esp+14Ch+var_84], 0
+  .text:001466DF                 call    _ZNSt8_Rb_treeINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESt4pairIKS5_iESt10_Select1stIS8_ESt4lessIS5_ESaIS8_EE16_M_insert_uniqueIS6_IS5_iEEES6_ISt17_Rb_tree_iteratorIS8_EbEOT_; std::_Rb_tree<std::string,std::pair<std::string const,int>,std::_Select1st<std::pair<std::string const,int>>,std::less<std::string>,std::allocator<std::pair<std::string const,int>>>::_M_insert_unique<std::pair<std::string,int>>(std::pair<std::string,int> &&)
+  .text:001466E4                 push    edi
+  .text:001466E5                 mov     eax, [esp+14Ch+var_9C]
+  .text:001466EC                 cmp     eax, esi
+  .text:001466EE                 jnz     short loc_14667F
+  .text:001466F0                 jmp     loc_14604F
+procedure: |-
+  void __cdecl DT_LoadDetailTexture(char *s1, void *a2)
+  {
+    int v2; // eax
+    char *v3; // esi
+    char *v4; // edi
+    char *v5; // eax
+    unsigned int v6; // esi
+    __int64 *v7; // edx
+    int v8; // eax
+    __int64 *v9; // edx
+    int v10; // ebp
+    char *v11; // eax
+    char *v12; // esi
+    int v13; // edi
+    int v14; // eax
+    unsigned int v15; // ecx
+    _WORD *v16; // edi
+    int v17; // eax
+    int v18; // eax
+    char *v19; // esi
+    unsigned int v20; // edi
+    int v21; // eax
+    int v22; // edx
+    int v23; // eax
+    unsigned int v24; // ecx
+    _WORD *v25; // edi
+    int v26; // eax
+    __int16 v27; // ax
+    char v28; // al
+    int v29; // eax
+    unsigned int v30; // ecx
+    _WORD *v31; // edi
+    char *v32; // esi
+    __m128 v33; // xmm0
+    int v34; // eax
+    __int16 v35; // ax
+    char v36; // al
+    __int16 v37; // ax
+    int v38; // esi
+    int v39; // eax
+    void *v40; // eax
+    int v41; // [esp+3Ch] [ebp-110h]
+    int v42; // [esp+40h] [ebp-10Ch]
+    void *v43; // [esp+4Ch] [ebp-100h]
+    _BYTE v44[12]; // [esp+50h] [ebp-FCh] BYREF
+    _DWORD v45[3]; // [esp+5Ch] [ebp-F0h] BYREF
+    void *v46; // [esp+68h] [ebp-E4h] BYREF
+    int v47; // [esp+6Ch] [ebp-E0h]
+    _BYTE v48[16]; // [esp+70h] [ebp-DCh] BYREF
+    char *s2[2]; // [esp+80h] [ebp-CCh] BYREF
+    _DWORD v50[4]; // [esp+88h] [ebp-C4h] BYREF
+    void *v51[2]; // [esp+98h] [ebp-B4h] BYREF
+    _DWORD v52[4]; // [esp+A0h] [ebp-ACh] BYREF
+    void *s; // [esp+B0h] [ebp-9Ch] BYREF
+    char *v54; // [esp+B4h] [ebp-98h]
+    __int64 v55; // [esp+B8h] [ebp-94h] BYREF
+    double v56; // [esp+C0h] [ebp-8Ch] BYREF
+    int v57; // [esp+C8h] [ebp-84h]
+  
+    v46 = v48;
+    v47 = 0;
+    v48[0] = 0;
+    if ( !byte_34F80E0 )
+      return;
+    if ( flt_2F1BF0 == 0.0 )
+    {
+      s = &v55;
+      if ( !s1 )
+        goto LABEL_6;
+      v5 = (char *)strlen(s1);
+      v6 = (unsigned int)v5;
+      v51[0] = v5;
+      if ( (unsigned int)v5 > 0xF )
+      {
+        v29 = std::string::_M_create(&s, v51, 0);
+        *(void **)&v55 = v51[0];
+        s = (void *)v29;
+      }
+      else
+      {
+        if ( v5 == (_BYTE *)&dword_0 + 1 )
+        {
+          LOBYTE(v55) = *s1;
+          v7 = &v55;
+          goto LABEL_11;
+        }
+        v7 = &v55;
+        if ( !v5 )
+        {
+  LABEL_11:
+          v54 = v5;
+          v5[(_DWORD)v7] = 0;
+          v57 = (int)a2;
+          v8 = dword_34F80E8;
+          if ( dword_34F80E8 == dword_34F80EC )
+          {
+            std::vector<std::pair<std::string,int>>::_M_emplace_back_aux<std::pair<std::string,int>>(&dword_34F80E4, &s);
+            v9 = (__int64 *)s;
+          }
+          else
+          {
+            v9 = (__int64 *)s;
+            if ( dword_34F80E8 )
+            {
+              *(_DWORD *)dword_34F80E8 = dword_34F80E8 + 8;
+              if ( s == &v55 )
+              {
+                v33 = _mm_loadh_ps(&v56);
+                _mm_storel_ps((double *)(v8 + 8), v33);
+                _mm_storeh_ps((double *)(v8 + 16), v33);
+              }
+              else
+              {
+                *(_DWORD *)v8 = s;
+                *(_DWORD *)(v8 + 8) = v55;
+              }
+              *(_DWORD *)(v8 + 4) = v54;
+              LOBYTE(v55) = 0;
+              s = &v55;
+              v54 = nullptr;
+              *(_DWORD *)(v8 + 24) = v57;
+              v8 = dword_34F80E8;
+              v9 = &v55;
+            }
+            dword_34F80E8 = v8 + 28;
+          }
+          if ( v9 != &v55 )
+            operator delete(v9);
+          goto LABEL_19;
+        }
+        v29 = (int)&v55;
+      }
+      v30 = v6;
+      v31 = (_WORD *)v29;
+      v32 = s1;
+      if ( v30 >= 8 )
+      {
+        if ( (v29 & 1) != 0 )
+        {
+          v31 = (_WORD *)(v29 + 1);
+          v32 = s1 + 1;
+          --v30;
+          *(_BYTE *)v29 = *s1;
+        }
+        if ( ((unsigned __int8)v31 & 2) != 0 )
+        {
+          v37 = *(_WORD *)v32;
+          ++v31;
+          v32 += 2;
+          v30 -= 2;
+          *(v31 - 1) = v37;
+        }
+        if ( ((unsigned __int8)v31 & 4) != 0 )
+        {
+          v34 = *(_DWORD *)v32;
+          v31 += 2;
+          v32 += 4;
+          v30 -= 4;
+          *((_DWORD *)v31 - 1) = v34;
+        }
+      }
+      qmemcpy(v31, v32, v30);
+      v5 = (char *)v51[0];
+      v7 = (__int64 *)s;
+      goto LABEL_11;
+    }
+    v42 = (dword_34F8158 - dword_34F8154) >> 2;
+    if ( !v42 )
+      return;
+    v2 = *(_DWORD *)dword_34F8154;
+    s2[0] = (char *)v50;
+    v3 = *(char **)v2;
+    v4 = *(char **)(v2 + 4);
+    if ( &v4[*(_DWORD *)v2] && !v3 )
+  LABEL_6:
+      std::__throw_logic_error("basic_string::_M_construct null not valid");
+    v10 = 0;
+    while ( 1 )
+    {
+      v41 = 4 * v10;
+      s = v4;
+      if ( (unsigned int)v4 > 0xF )
+      {
+        v11 = (char *)std::string::_M_create(s2, &s, 0);
+        v50[0] = s;
+        s2[0] = v11;
+      }
+      else
+      {
+        if ( v4 == (_BYTE *)&dword_0 + 1 )
+        {
+          LOBYTE(v50[0]) = *v3;
+          v11 = s2[0];
+          goto LABEL_26;
+        }
+        v11 = (char *)v50;
+        if ( !v4 )
+          goto LABEL_26;
+      }
+      v15 = (unsigned int)v4;
+      v16 = v11;
+      if ( v15 >= 8 )
+      {
+        if ( ((unsigned __int8)v11 & 1) != 0 )
+        {
+          v28 = *v3;
+          v16 = (_WORD *)((char *)v16 + 1);
+          ++v3;
+          --v15;
+          *((_BYTE *)v16 - 1) = v28;
+        }
+        if ( ((unsigned __int8)v16 & 2) != 0 )
+        {
+          v27 = *(_WORD *)v3;
+          ++v16;
+          v3 += 2;
+          v15 -= 2;
+          *(v16 - 1) = v27;
+        }
+        if ( ((unsigned __int8)v16 & 4) != 0 )
+        {
+          v17 = *(_DWORD *)v3;
+          v16 += 2;
+          v3 += 4;
+          v15 -= 4;
+          *((_DWORD *)v16 - 1) = v17;
+        }
+      }
+      qmemcpy(v16, v3, v15);
+      v4 = (char *)s;
+      v11 = s2[0];
+  LABEL_26:
+      s2[1] = v4;
+      v4[(_DWORD)v11] = 0;
+      v12 = s2[0];
+      v13 = strcasecmp(s1, s2[0]);
+      if ( v12 != (char *)v50 )
+        operator delete(v12);
+      if ( !v13 )
+        break;
+      if ( ++v10 == v42 )
+        goto LABEL_19;
+      v14 = *(_DWORD *)(dword_34F8154 + v41 + 4);
+      s2[0] = (char *)v50;
+      v3 = *(char **)v14;
+      v4 = *(char **)(v14 + 4);
+      if ( &v4[*(_DWORD *)v14] && !v3 )
+        goto LABEL_6;
+    }
+    v18 = *(_DWORD *)(dword_34F8154 + 4 * v10);
+    v51[0] = v52;
+    v19 = *(char **)(v18 + 24);
+    v20 = *(_DWORD *)(v18 + 28);
+    if ( &v19[v20] && !v19 )
+      goto LABEL_6;
+    s = *(void **)(v18 + 28);
+    if ( v20 > 0xF )
+    {
+      v21 = std::string::_M_create(v51, &s, 0);
+      v52[0] = s;
+      v51[0] = (void *)v21;
+      goto LABEL_54;
+    }
+    if ( v20 == 1 )
+    {
+      LOBYTE(v52[0]) = *v19;
+      v21 = (int)v52;
+    }
+    else
+    {
+      v21 = (int)v52;
+      if ( !v20 )
+        goto LABEL_48;
+  LABEL_54:
+      v24 = v20;
+      v25 = (_WORD *)v21;
+      if ( v24 >= 8 )
+      {
+        if ( (v21 & 1) != 0 )
+        {
+          v36 = *v19;
+          v25 = (_WORD *)((char *)v25 + 1);
+          ++v19;
+          --v24;
+          *((_BYTE *)v25 - 1) = v36;
+        }
+        if ( ((unsigned __int8)v25 & 2) != 0 )
+        {
+          v35 = *(_WORD *)v19;
+          ++v25;
+          v19 += 2;
+          v24 -= 2;
+          *(v25 - 1) = v35;
+        }
+        if ( ((unsigned __int8)v25 & 4) != 0 )
+        {
+          v26 = *(_DWORD *)v19;
+          v25 += 2;
+          v19 += 4;
+          v24 -= 4;
+          *((_DWORD *)v25 - 1) = v26;
+        }
+      }
+      qmemcpy(v25, v19, v24);
+      v20 = (unsigned int)s;
+      v21 = (int)v51[0];
+    }
+  LABEL_48:
+    v51[1] = (void *)v20;
+    *(_BYTE *)(v21 + v20) = 0;
+    std::string::_M_assign(&v46, v51);
+    if ( v51[0] != v52 )
+      operator delete(v51[0]);
+    std::_Rb_tree<std::string,std::pair<std::string const,int>,std::_Select1st<std::pair<std::string const,int>>,std::less<std::string>,std::allocator<std::pair<std::string const,int>>>::find(v45);
+    if ( &dword_34F8110 == (int *)v45[0] )
+    {
+      std::_Rb_tree<std::string,std::pair<std::string const,int>,std::_Select1st<std::pair<std::string const,int>>,std::less<std::string>,std::allocator<std::pair<std::string const,int>>>::find(v45);
+      v22 = v45[0];
+      if ( (int *)v45[0] == &dword_34F8128 )
+      {
+        v43 = v46;
+        sprintf((char *)&s, "gfx/%s.tga", v46);
+        if ( !sub_149420(&s, &unk_30F8060, &unk_400000, s2, v51)
+          || (// Full 9-argument GL_LoadTexture2 upload: identifier,
+              // textureType, width, height, data, mipmap, iType, pPal,
+              // filter (9987 = GL_LINEAR_MIPMAP_LINEAR).
+              v38 = GL_LoadTexture2((GLsizei)v43, &byte_6, (GLsizei)s2[0], (GLsizei)v51[0], &unk_30F8060, 1, 3, 0, 9987),
+              v38 == -1) )
+        {
+          Con_Printf("Detail texture map load failed: %s\n", v46);
+          s = &v55;
+          sub_144A60((char *)v46 + v47);
+          v57 = 0;
+          std::_Rb_tree<std::string,std::pair<std::string const,int>,std::_Select1st<std::pair<std::string const,int>>,std::less<std::string>,std::allocator<std::pair<std::string const,int>>>::_M_insert_unique<std::pair<std::string,int>>(v44);
+          v40 = s;
+          if ( s == &v55 )
+            goto LABEL_19;
+        }
+        else
+        {
+          v39 = dword_34F8154 + v41;
+          *(_DWORD *)(*(_DWORD *)v39 + 56) = a2;
+          *(_DWORD *)(*(_DWORD *)v39 + 60) = v38;
+          s = a2;
+          v54 = *(char **)v39;
+          sub_146CA0(v44);
+          s = &v55;
+          sub_144A60((char *)v46 + v47);
+          v57 = v38;
+          std::_Rb_tree<std::string,std::pair<std::string const,int>,std::_Select1st<std::pair<std::string const,int>>,std::less<std::string>,std::allocator<std::pair<std::string const,int>>>::_M_insert_unique<std::pair<std::string,int>>(v44);
+          v40 = s;
+          if ( s == &v55 )
+            goto LABEL_19;
+        }
+        operator delete(v40);
+        goto LABEL_19;
+      }
+      v23 = dword_34F8154 + v41;
+      *(_DWORD *)(*(_DWORD *)v23 + 56) = a2;
+      *(_DWORD *)(*(_DWORD *)v23 + 60) = *(_DWORD *)(v22 + 40);
+      s = a2;
+      v54 = *(char **)v23;
+      sub_146CA0(v44);
+    }
+  LABEL_19:
+    if ( v46 != v48 )
+      operator delete(v46);
+  }

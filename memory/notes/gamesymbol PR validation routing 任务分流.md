@@ -92,6 +92,14 @@ tags:
 - Verification: run all Python and Pages checks, exercise main's trusted planner against the merged revision, and build explicit schema-8 candidates with main's trusted code for consumption by the feature's default store and dataset-5 exporter. Compare finder and artifact files with the pre-merge feature revision to avoid introducing unverified binary changes.
 - Scope: prerequisite/feature PR pairs with intentionally different default contracts. Refresh the existing feature PR after integration and wait for its new CI results.
 
+## Per-game references must preserve every consumer's annotations
+
+- Trigger: PR #116 run `34758762364` passed ordinary CI but failed Sven Windows `find-GL_BuildLightmaps` after adding a game-specific `R_NewMap` reference.
+- Root cause: the new reference superseded the shared reference for every consumer. It annotated `GL_UnloadTextures` but left `GL_BuildLightmaps` as `sub_1D5B010`, so the LLM selected another call. Eight committed `GL_Set2D` artifacts also lacked the across-boundary flag emitted by the finder; the aborted analysis hid the subsequent byte-comparison failure.
+- Correct approach: inspect all consumers before specializing a reference, preserve their canonical annotations in both disassembly and procedure, and regenerate artifacts whenever generation options change. A missing fallback skill is a downstream symptom here.
+- Verification: force affected nodes with their outputs absent in an isolated artifact directory, then compare every selected output byte-for-byte with the committed candidate. Signature uniqueness alone does not prove rediscovery or rebuild consistency. Inspect the actual PR validation run as part of review.
+- Scope: shared LLM references, finder generation metadata, and game-symbol PR reviews.
+
 ## Verification
 
 - `tests/test_gamesymbol_pr_validation.py` 覆盖 plan/route/aggregate 断言；`pr-validate` 的聚合 step 本身即路由断言的运行时证据。

@@ -1,0 +1,324 @@
+func_name: "Draw_MiptexTexture"
+func_va: "0x150570"
+disasm_code: |-
+  .text:00150570                 push    ebp
+  .text:00150571                 push    edi
+  .text:00150572                 push    esi
+  .text:00150573                 push    ebx
+  .text:00150574                 sub     esp, 7Ch
+  .text:00150577                 mov     edi, [esp+8Ch+wad]
+  .text:0015057E                 mov     eax, large gs:14h
+  .text:00150584                 mov     [esp+8Ch+var_20], eax
+  .text:00150588                 xor     eax, eax
+  .text:0015058A                 mov     ebx, [esp+8Ch+tex]
+  .text:00150591                 mov     edx, [edi+18h]
+  .text:00150594                 cmp     edx, 20h ; ' '
+  .text:00150597                 jz      short loc_1505AE
+  .text:00150599                 mov     eax, [edi]
+  .text:0015059B                 mov     [esp+8Ch+error], offset aDrawMiptextext; "Draw_MiptexTexture: Bad cached wad %s\n"
+  .text:001505A2                 mov     [esp+8Ch+src], eax
+  .text:001505A6                 call    Sys_Error
+  .text:001505AB                 mov     edx, [edi+18h]
+  .text:001505AE                 xor     eax, eax
+  .text:001505B0                 add     edx, ebx
+  .text:001505B2                 mov     ecx, [mip+eax]
+  .text:001505B5                 mov     dword ptr [esp+eax+8Ch+tmp.name], ecx
+  .text:001505B9                 add     eax, 4
+  .text:001505BC                 cmp     eax, 28h ; '('
+  .text:001505BF                 jb      short loc_1505B2
+  .text:001505C1                 mov     ecx, 10h
+  .text:001505C6                 xor     esi, esi
+  .text:001505C8                 lea     ebp, [esp+8Ch+tmp]
+  .text:001505CC                 ; count
+  .text:001505CC                 mov     [esp+8Ch+count], ecx; count
+  .text:001505D0                 ; src
+  .text:001505D0                 mov     [esp+8Ch+src], ebp; src
+  .text:001505D4                 ; dest
+  .text:001505D4                 mov     [esp+8Ch+error], tex_0; dest
+  .text:001505D7                 call    Q_memcpy
+  .text:001505DC                 mov     eax, [esp+8Ch+tmp.width]
+  .text:001505E0                 ; int32
+  .text:001505E0                 mov     [esp+8Ch+error], eax; int32
+  .text:001505E3                 call    ds:LittleLong
+  .text:001505E9                 mov     [tex_0+10h], eax
+  .text:001505EC                 mov     eax, [esp+8Ch+tmp.height]
+  .text:001505F0                 ; int32
+  .text:001505F0                 mov     [esp+8Ch+error], eax; int32
+  .text:001505F3                 call    ds:LittleLong
+  .text:001505F9                 mov     dword ptr [tex_0+28h], 0
+  .text:00150600                 mov     dword ptr [tex_0+24h], 0
+  .text:00150607                 mov     dword ptr [tex_0+20h], 0
+  .text:0015060E                 mov     dword ptr [tex_0+30h], 0
+  .text:00150615                 mov     dword ptr [tex_0+2Ch], 0
+  .text:0015061C                 mov     [tex_0+14h], eax
+  .text:0015061F                 nop
+  .text:00150620                 mov     eax, [ebp+i*4+18h]
+  .text:00150624                 ; int32
+  .text:00150624                 mov     [esp+8Ch+error], eax; int32
+  .text:00150627                 call    ds:LittleLong
+  .text:0015062D                 mov     edx, [edi+18h]
+  .text:00150630                 add     eax, edx
+  .text:00150632                 mov     [tex_0+i*4+34h], eax
+  .text:00150636                 inc     i
+  .text:00150637                 cmp     i, 4
+  .text:0015063A                 jnz     short loc_150620
+  .text:0015063C                 mov     edx, [tex_0+14h]
+  .text:0015063F                 mov     eax, [tex_0+10h]
+  .text:00150642                 mov     ebp, [tex_0+34h]
+  .text:00150645                 imul    eax, edx
+  .text:00150648                 mov     ecx, pix
+  .text:0015064A                 mov     edx, pix
+  .text:0015064C                 sar     edx, 4
+  .text:0015064F                 sar     ecx, 2
+  .text:00150652                 add     ecx, edx
+  .text:00150654                 mov     edx, pix
+  .text:00150656                 sar     edx, 6
+  .text:00150659                 add     edx, ecx
+  .text:0015065B                 mov     ecx, ds:gfCustomBuild
+  .text:00150661                 add     eax, edx
+  .text:00150663                 lea     edi, [ebp+pix+2]
+  .text:00150667                 add     paloffset, tex_0
+  .text:00150669                 lea     pix, [tex_0+ebp]
+  .text:0015066C                 test    ecx, ecx
+  .text:0015066E                 mov     [esp+8Ch+bitmap], eax
+  .text:00150672                 jnz     short loc_1506E0
+  .text:00150674                 cmp     byte ptr [pal+2FDh], 0
+  .text:0015067B                 jnz     short loc_150693
+  .text:0015067D                 cmp     byte ptr [pal+2FEh], 0
+  .text:00150684                 jnz     short loc_150693
+  .text:00150686                 cmp     byte ptr [pal+2FFh], 0FFh
+  .text:0015068D                 jz      loc_1507BD
+  .text:00150693                 mov     byte ptr [tex_0], 7Dh ; '}'
+  .text:00150696                 mov     ebp, ds:gfCustomBuild
+  .text:0015069C                 test    ebp, ebp
+  .text:0015069E                 jnz     short loc_150708
+  .text:001506A0                 mov     eax, gl_filter_max
+  .text:001506A5                 mov     ecx, [tex_0+14h]
+  .text:001506A8                 mov     edx, [tex_0+10h]
+  .text:001506AB                 ; textureType
+  .text:001506AB                 mov     [esp+8Ch+src], pal; textureType
+  .text:001506AF                 ; width
+  .text:001506AF                 mov     [esp+8Ch+count], eax; width
+  .text:001506B3                 mov     eax, [esp+8Ch+bitmap]
+  .text:001506B7                 ; identifier
+  .text:001506B7                 mov     [esp+8Ch+error], eax; identifier
+  .text:001506BA                 mov     eax, tex_0
+  .text:001506BC                 call    GL_LoadTexture2_1; specialized 6-arg palette upload entry; NOT the GL_LoadTexture2 target
+  .text:001506C1                 mov     [tex_0+18h], eax
+  .text:001506C4                 mov     eax, [esp+8Ch+var_20]
+  .text:001506C8                 xor     eax, large gs:14h
+  .text:001506CF                 jnz     loc_15080E
+  .text:001506D5                 add     esp, 7Ch
+  .text:001506D8                 pop     tex_0
+  .text:001506D9                 pop     esi
+  .text:001506DA                 pop     pal
+  .text:001506DB                 pop     ebp
+  .text:001506DC                 retn
+  .text:001506E0                 mov     bitmap_0, 0Fh
+  .text:001506E5                 ; count
+  .text:001506E5                 mov     [esp+8Ch+count], eax; count
+  .text:001506E9                 mov     eax, offset szCustName
+  .text:001506EE                 ; src
+  .text:001506EE                 mov     [esp+8Ch+src], eax; src
+  .text:001506F2                 ; dest
+  .text:001506F2                 mov     [esp+8Ch+error], tex_0; dest
+  .text:001506F5                 call    Q_strncpy
+  .text:001506FA                 mov     byte ptr [tex_0+0Fh], 0
+  .text:001506FE                 jmp     loc_150674
+  .text:00150708                 mov     i, ds:numgltextures
+  .text:0015070E                 test    esi, esi
+  .text:00150710                 jle     short loc_1506A0
+  .text:00150712                 xor     ebp, ebp
+  .text:00150714                 mov     esi, offset gltextures
+  .text:00150719                 jmp     short loc_150730
+  .text:00150720                 inc     ebp
+  .text:00150721                 add     esi, 54h ; 'T'
+  .text:00150724                 cmp     ebp, ds:numgltextures
+  .text:0015072A                 jge     loc_1506A0
+  .text:00150730                 lea     eax, [esi+14h]
+  .text:00150733                 ; s2
+  .text:00150733                 mov     [esp+8Ch+src], eax; s2
+  .text:00150737                 ; s1
+  .text:00150737                 mov     [esp+8Ch+error], tex_0; s1
+  .text:0015073A                 call    Q_strcmp
+  .text:0015073F                 test    eax, eax
+  .text:00150741                 jnz     short loc_150720
+  .text:00150743                 test    byte ptr [esi+5], 80h
+  .text:00150747                 jnz     loc_1506A0
+  .text:0015074D                 ; GLuint *
+  .text:0015074D                 mov     [esp+8Ch+src], esi; GLuint *
+  .text:00150751                 ; GLsizei
+  .text:00150751                 mov     [esp+8Ch+error], 1; GLsizei
+  .text:00150758                 call    ds:qglDeleteTextures
+  .text:0015075E                 movsx   eax, word ptr [esi+6]
+  .text:00150762                 test    eax, eax
+  .text:00150764                 js      short loc_150780
+  .text:00150766                 imul    ebp, eax, 308h
+  .text:0015076C                 lea     edx, gGLPalette.tag[ebp]
+  .text:00150772                 mov     ecx, [edx+4]
+  .text:00150775                 cmp     ecx, 1
+  .text:00150778                 jle     short loc_1507A2
+  .text:0015077A                 lea     eax, [ecx-1]
+  .text:0015077D                 mov     [edx+4], eax
+  .text:00150780                 mov     eax, 54h ; 'T'
+  .text:00150785                 xor     edx, edx
+  .text:00150787                 ; count
+  .text:00150787                 mov     [esp+8Ch+count], eax; count
+  .text:0015078B                 ; fill
+  .text:0015078B                 mov     [esp+8Ch+src], edx; fill
+  .text:0015078F                 ; dest
+  .text:0015078F                 mov     [esp+8Ch+error], esi; dest
+  .text:00150792                 call    Q_memset
+  .text:00150797                 mov     word ptr [esi+4], 0FFFFh
+  .text:0015079D                 jmp     loc_1506A0
+  .text:001507A2                 cmp     eax, 15Dh
+  .text:001507A7                 jg      short loc_150780
+  .text:001507A9                 mov     ecx, 0FFFFFFFFh
+  .text:001507AE                 mov     dword ptr ss:gGLPalette.tag[ebp], ecx
+  .text:001507B4                 mov     dword ptr [edx+4], 0
+  .text:001507BB                 jmp     short loc_150780
+  .text:001507BD                 mov     byte ptr [tex_0], 7Bh ; '{'
+  .text:001507C0                 mov     eax, gl_filter_max
+  .text:001507C5                 ; pPal
+  .text:001507C5                 mov     [esp+8Ch+pPal], pal; pPal
+  .text:001507C9                 ; filter
+  .text:001507C9                 mov     [esp+8Ch+filter], eax; filter
+  .text:001507CD                 mov     eax, 1
+  .text:001507D2                 ; iType
+  .text:001507D2                 mov     [esp+8Ch+iType], eax; iType
+  .text:001507D6                 mov     eax, 1
+  .text:001507DB                 ; mipmap
+  .text:001507DB                 mov     [esp+8Ch+mipmap], eax; mipmap
+  .text:001507DF                 mov     eax, [esp+8Ch+bitmap]
+  .text:001507E3                 ; data
+  .text:001507E3                 mov     [esp+8Ch+data], eax; data
+  .text:001507E7                 mov     eax, [tex_0+14h]
+  .text:001507EA                 ; height
+  .text:001507EA                 mov     [esp+8Ch+height], eax; height
+  .text:001507EE                 mov     eax, [tex_0+10h]
+  .text:001507F1                 ; identifier
+  .text:001507F1                 mov     [esp+8Ch+error], tex_0; identifier
+  .text:001507F4                 ; width
+  .text:001507F4                 mov     [esp+8Ch+count], eax; width
+  .text:001507F8                 mov     eax, 1
+  .text:001507FD                 ; textureType
+  .text:001507FD                 mov     [esp+8Ch+src], eax; textureType
+  .text:00150801                 call    GL_LoadTexture2; full 9-argument GL_LoadTexture2 wrapper (identifier, textureType, width, height, data, mipmap, iType, pPal, filter)
+  .text:00150806                 mov     [tex_0+18h], eax
+  .text:00150809                 jmp     loc_1506C4
+  .text:0015080E                 call    __stack_chk_fail
+procedure: |-
+  void __cdecl Draw_MiptexTexture(cachewad_t *wad, byte *data)
+  {
+    unsigned int i; // eax
+    int v3; // esi
+    int32 v4; // eax
+    int v5; // ebp
+    int v6; // eax
+    byte *pPal; // edi
+    int v8; // ebp
+    GLuint *v9; // esi
+    int v10; // eax
+    GL_PALETTE *v11; // edx
+    int referenceCount; // ecx
+    byte *bitmap; // [esp+3Ch] [ebp-50h]
+    miptex_t tmp; // [esp+44h] [ebp-48h] BYREF
+    unsigned int v15; // [esp+6Ch] [ebp-20h]
+  
+    v15 = __readgsdword(0x14u);
+    if ( wad->cacheExtra != 32 )
+      Sys_Error("Draw_MiptexTexture: Bad cached wad %s\n", wad->name);
+    for ( i = 0; i < 0x28; i += 4 )
+      *(_DWORD *)&tmp.name[i] = *(_DWORD *)&data[i + 32];
+    v3 = 0;
+    Q_memcpy(data, &tmp, 16);
+    *((_DWORD *)data + 4) = LittleLong(tmp.width);
+    v4 = LittleLong(tmp.height);
+    *((_DWORD *)data + 10) = 0;
+    *((_DWORD *)data + 9) = 0;
+    *((_DWORD *)data + 8) = 0;
+    *((_DWORD *)data + 12) = 0;
+    *((_DWORD *)data + 11) = 0;
+    *((_DWORD *)data + 5) = v4;
+    do
+    {
+      *(_DWORD *)&data[4 * v3 + 52] = wad->cacheExtra + LittleLong(tmp.offsets[v3]);
+      ++v3;
+    }
+    while ( v3 != 4 );
+    v5 = *((_DWORD *)data + 13);
+    v6 = *((_DWORD *)data + 5) * *((_DWORD *)data + 4);
+    pPal = &data[v5 + 2 + (v6 >> 4) + (v6 >> 2) + (v6 >> 6) + v6];
+    bitmap = &data[v5];
+    if ( gfCustomBuild )
+    {
+      Q_strncpy((char *)data, szCustName, 15);
+      data[15] = 0;
+    }
+    if ( pPal[765] || pPal[766] || pPal[767] != 0xFF )
+    {
+      *data = 125;
+      if ( gfCustomBuild && numgltextures > 0 )
+      {
+        v8 = 0;
+        v9 = &gltextures;
+        while ( Q_strcmp((const char *)data, (const char *)v9 + 20) )
+        {
+          ++v8;
+          v9 += 21;
+          if ( v8 >= numgltextures )
+            goto LABEL_13;
+        }
+        if ( *((char *)v9 + 5) >= 0 )
+        {
+          qglDeleteTextures(1, v9);
+          v10 = *((__int16 *)v9 + 3);
+          if ( v10 >= 0 )
+          {
+            v11 = &gGLPalette[v10];
+            referenceCount = v11->referenceCount;
+            if ( referenceCount <= 1 )
+            {
+              if ( v10 <= 349 )
+              {
+                gGLPalette[v10].tag = -1;
+                v11->referenceCount = 0;
+              }
+            }
+            else
+            {
+              v11->referenceCount = referenceCount - 1;
+            }
+          }
+          Q_memset(v9, 0, 84);
+          *((_WORD *)v9 + 2) = -1;
+        }
+      }
+  LABEL_13:
+      // GL_LoadTexture2_1 is the specialized 6-arg palette upload entry; it is
+      // NOT the requested GL_LoadTexture2 target.
+      *((_DWORD *)data + 6) = GL_LoadTexture2_1(
+                                (int)data,
+                                *((_DWORD *)data + 4),
+                                *((_DWORD *)data + 5),
+                                (char *)bitmap,
+                                pPal,
+                                gl_filter_max);
+    }
+    else
+    {
+      *data = 123;
+      // Full 9-argument GL_LoadTexture2 upload: identifier, textureType,
+      // width, height, data, mipmap, iType, pPal, filter.
+      *((_DWORD *)data + 6) = GL_LoadTexture2(
+                                (char *)data,
+                                GLT_DECAL,
+                                *((_DWORD *)data + 4),
+                                *((_DWORD *)data + 5),
+                                bitmap,
+                                true,
+                                1,
+                                pPal,
+                                gl_filter_max);
+    }
+  }

@@ -222,7 +222,7 @@ disasm_code: |-
   .text:10247258                 pop     ebx
   .text:10247259                 jnz     short loc_10247269
   .text:1024725B                 push    dword_103230C4
-  .text:10247261                 call    sub_1023CDC0
+  .text:10247261                 call    GL_SelectTexture
   .text:10247266                 add     esp, 4
   .text:10247269                 xor     esi, esi
   .text:1024726B                 mov     edi, offset dword_10DBB640
@@ -266,7 +266,7 @@ disasm_code: |-
   .text:10247323                 pop     esi
   .text:10247324                 jnz     short loc_10247334
   .text:10247326                 push    dword_103230C0
-  .text:1024732C                 call    sub_1023CDC0
+  .text:1024732C                 call    GL_SelectTexture
   .text:10247331                 add     esp, 4
   .text:10247334                 mov     esp, ebp
   .text:10247336                 pop     ebp
@@ -466,7 +466,7 @@ procedure: |-
     }
     while ( v2 < 512 );
     if ( !dword_10322E30 )
-      result = (model_t *)sub_1023CDC0(dword_103230C4);
+      result = (model_t *)GL_SelectTexture(dword_103230C4);
     v23 = 0;
     v24 = dword_10DBB640;
     do
@@ -494,6 +494,6 @@ procedure: |-
     }
     while ( (int)v24 < (int)dword_10DC3640 );
     if ( !dword_10322E30 )
-      return (model_t *)sub_1023CDC0(dword_103230C0);
+      return (model_t *)GL_SelectTexture(dword_103230C0);
     return result;
   }
