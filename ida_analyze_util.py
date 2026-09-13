@@ -979,7 +979,7 @@ globals().update(locals())
 
 
 _FUNC_XREF_PY_EVAL_TEMPLATE = r"""
-import ida_auto, ida_bytes, ida_funcs, ida_name, ida_nalt, ida_netnode, ida_segment, ida_ua, ida_xref, idaapi, idautils, idc, json, math, struct
+import ida_auto, ida_bytes, ida_funcs, ida_name, ida_nalt, ida_netnode, ida_segment, ida_strlist, ida_ua, ida_xref, idaapi, idautils, idc, json, math, struct
 
 spec = json.loads(SPEC_PLACEHOLDER)
 image_base = IMAGE_BASE_PLACEHOLDER
@@ -1089,32 +1089,27 @@ unicode_strings_without_owner = []
 
 def _unicode_string_items():
     strings = idautils.Strings(default_setup=False)
-    min_length = spec.get('string_min_length')
-    if min_length is None:
-        strings.setup(strtypes=UNICODE_STRING_TYPES)
-        return strings
-    expected_state = {
-        'version': STRING_SETUP_STATE_VERSION_PLACEHOLDER,
-        'minlen': int(min_length),
-        'strtypes': 'STRTYPE_C_16',
+    options = ida_strlist.get_strlist_options()
+    saved_options = {
+        'strtypes': list(options.strtypes),
+        'minlen': int(options.minlen),
+        'only_7bit': bool(options.only_7bit),
+        'ignore_instructions': bool(options.ignore_heads),
+        'display_only_existing_strings': bool(options.display_only_existing_strings),
     }
+    scan_options = {'strtypes': UNICODE_STRING_TYPES}
+    min_length = spec.get('string_min_length')
+    if min_length is not None:
+        scan_options['minlen'] = int(min_length)
     try:
-        node = ida_netnode.netnode(STRING_SETUP_STATE_NODE_PLACEHOLDER, 0, True)
-        raw_state = node.valobj()
-        if isinstance(raw_state, bytes):
-            raw_state = raw_state.decode('utf-8', errors='ignore')
-        current_state = json.loads(str(raw_state)) if raw_state not in (None, '') else None
-    except Exception:
-        node = None
-        current_state = None
-    if current_state != expected_state:
-        strings.setup(strtypes=UNICODE_STRING_TYPES, minlen=int(min_length))
-        if node is not None:
-            try:
-                node.set(json.dumps(expected_state, sort_keys=True))
-            except Exception:
-                pass
-    return strings
+        strings.setup(**scan_options)
+        # StringItem snapshots must be collected before restoring IDA's shared
+        # list. Returning the lazy Strings iterator would enumerate that list.
+        return list(strings)
+    finally:
+        # Restore even if enumeration fails. The ASCII setup netnode remains
+        # valid because this temporary scan never changes its cached state.
+        strings.setup(**saved_options)
 
 def _unicode_string_candidates(query):
     exact = str(query).startswith('FULLMATCH:')
