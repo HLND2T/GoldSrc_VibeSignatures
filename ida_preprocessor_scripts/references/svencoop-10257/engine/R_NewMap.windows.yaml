@@ -42,7 +42,7 @@ disasm_code: |-
   .text:01D56E76                 call    sub_1D82CD0
   .text:01D56E7B                 call    sub_1D5B640
   .text:01D56E80                 call    sub_1DCDEC0
-  .text:01D56E85                 call    sub_1D5B010
+  .text:01D56E85                 call    GL_BuildLightmaps
   .text:01D56E8A                 mov     dword_8028E88, 0FFFFFFFFh
   .text:01D56E94                 mov     [ebp+var_4], 0
   .text:01D56E9B                 jmp     short loc_1D56EA6
@@ -106,7 +106,7 @@ procedure: |-
     sub_1D82CD0();
     sub_1D5B640();
     sub_1DCDEC0();
-    sub_1D5B010();
+    GL_BuildLightmaps();
     dword_8028E88 = -1;
     for ( k = 0; k < *((_DWORD *)cl_worldmodel + 92); ++k )
     {
