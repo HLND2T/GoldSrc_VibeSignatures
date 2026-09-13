@@ -1,0 +1,5 @@
+func_name: GL_LoadTexture2
+func_va: '0x1d4a660'
+func_rva: '0x4a660'
+func_size: '0x3d5'
+func_sig: B8 0C 40 00 00 E8 ?? ?? ?? ?? 8B 84 24 ?? ?? ?? ?? 53 55 33 DB 8A 08 56 84 C9 57 89 5C 24 ?? 74 ?? 33 F6

@@ -126,7 +126,7 @@ disasm_code: |-
   .text:1024D77B                 movups  xmmword_109B41E0, xmm0
   .text:1024D782                 pop     edi
   .text:1024D783                 call    sub_101BB6C0
-  .text:1024D788                 call    GLBeginHud
+  .text:1024D788                 call    GL_Set2D
   .text:1024D78D                 mov     eax, dword ptr xmmword_10DC6320
   .text:1024D792                 test    eax, eax
   .text:1024D794                 jle     short loc_1024D7D3
@@ -201,7 +201,7 @@ disasm_code: |-
   .text:1024D8A5                 call    sub_1024CEC0
   .text:1024D8AA                 call    sub_1022AA70
   .text:1024D8AF                 call    GL_Finish2D
-  .text:1024D8B4                 call    GLBeginHud
+  .text:1024D8B4                 call    GL_Set2D
   .text:1024D8B9                 call    sub_101E0440
   .text:1024D8BE                 call    sub_101E04F0
   .text:1024D8C3                 call    sub_1022B870
@@ -365,7 +365,7 @@ procedure: |-
         xmmword_109B41E0 = xmmword_10DC6320;
       }
       sub_101BB6C0();
-      GLBeginHud();
+      GL_Set2D();
       v8 = xmmword_10DC6320;
       if ( (int)xmmword_10DC6320 > 0 )
       {
@@ -414,7 +414,7 @@ procedure: |-
       sub_1024CEC0();
       sub_1022AA70();
       GL_Finish2D();
-      GLBeginHud();
+      GL_Set2D();
       sub_101E0440();
       sub_101E04F0();
       if ( !sub_1022B870() )

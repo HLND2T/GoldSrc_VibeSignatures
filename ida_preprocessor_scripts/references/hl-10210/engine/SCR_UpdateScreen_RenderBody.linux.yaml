@@ -37,7 +37,7 @@ disasm_code: |-
   .text:0016B63C                 test    eax, eax
   .text:0016B63E                 jnz     loc_16B960
   .text:0016B644                 call    Con_CheckResize
-  .text:0016B649                 call    GLBeginHud
+  .text:0016B649                 call    GL_Set2D
   .text:0016B64E                 mov     eax, ds:r_refdef.vrect.x
   .text:0016B653                 test    eax, eax
   .text:0016B655                 jle     short loc_16B6A8
@@ -137,7 +137,7 @@ disasm_code: |-
   .text:0016B78D                 lea     esi, [esi+0]
   .text:0016B790                 call    VGui_Paint
   .text:0016B795                 call    GL_Finish2D
-  .text:0016B79A                 call    GLBeginHud
+  .text:0016B79A                 call    GL_Set2D
   .text:0016B79F                 nop
   .text:0016B7A0                 call    SCR_DrawFPS
   .text:0016B7A5                 call    SCR_NetGraph
@@ -321,7 +321,7 @@ procedure: |-
     if ( vid.recalc_refdef )
       SCR_CalcRefdef();
     Con_CheckResize();
-    GLBeginHud();
+    GL_Set2D();
     if ( r_refdef.vrect.x > 0 )
     {
       Draw_TileClear(0, 0, r_refdef.vrect.x, 152);
@@ -367,7 +367,7 @@ procedure: |-
     SCR_ConnectMsg();
     VGui_Paint();
     GL_Finish2D();
-    GLBeginHud();
+    GL_Set2D();
     SCR_DrawFPS();
     SCR_NetGraph();
     if ( !VGuiWrap2_IsGameUIVisible() )

@@ -1,0 +1,126 @@
+func_name: "R_NewMap"
+func_va: "0x1d56de0"
+disasm_code: |-
+  .text:01D56DE0                 push    ebp
+  .text:01D56DE1                 mov     ebp, esp
+  .text:01D56DE3                 push    ecx
+  .text:01D56DE4                 mov     [ebp+var_4], 0
+  .text:01D56DEB                 jmp     short loc_1D56DF6
+  .text:01D56DED                 mov     eax, [ebp+var_4]
+  .text:01D56DF0                 add     eax, 1
+  .text:01D56DF3                 mov     [ebp+var_4], eax
+  .text:01D56DF6                 cmp     [ebp+var_4], 100h
+  .text:01D56DFD                 jge     short loc_1D56E0F
+  .text:01D56DFF                 mov     ecx, [ebp+var_4]
+  .text:01D56E02                 mov     dword_3F941F0[ecx*4], 108h
+  .text:01D56E0D                 jmp     short loc_1D56DED
+  .text:01D56E0F                 ; count
+  .text:01D56E0F                 push    0BB8h; count
+  .text:01D56E14                 ; c
+  .text:01D56E14                 push    0; c
+  .text:01D56E16                 ; dest
+  .text:01D56E16                 push    offset r_worldentity; dest
+  .text:01D56E1B                 call    Q_memset
+  .text:01D56E20                 add     esp, 0Ch
+  .text:01D56E23                 mov     edx, cl_worldmodel
+  .text:01D56E29                 mov     dword_3F94114, edx
+  .text:01D56E2F                 mov     [ebp+var_4], 0
+  .text:01D56E36                 jmp     short loc_1D56E41
+  .text:01D56E38                 mov     eax, [ebp+var_4]
+  .text:01D56E3B                 add     eax, 1
+  .text:01D56E3E                 mov     [ebp+var_4], eax
+  .text:01D56E41                 mov     ecx, cl_worldmodel
+  .text:01D56E47                 mov     edx, [ebp+var_4]
+  .text:01D56E4A                 cmp     edx, [ecx+88h]
+  .text:01D56E50                 jge     short loc_1D56E6C
+  .text:01D56E52                 imul    eax, [ebp+var_4], 3Ch ; '<'
+  .text:01D56E56                 mov     ecx, cl_worldmodel
+  .text:01D56E5C                 mov     edx, [ecx+8Ch]
+  .text:01D56E62                 mov     dword ptr [edx+eax+28h], 0
+  .text:01D56E6A                 jmp     short loc_1D56E38
+  .text:01D56E6C                 mov     dword_3F941E4, 0
+  .text:01D56E76                 call    sub_1D82CD0
+  .text:01D56E7B                 call    sub_1D5B640
+  .text:01D56E80                 call    sub_1DCDEC0
+  .text:01D56E85                 call    sub_1D5B010
+  .text:01D56E8A                 mov     dword_8028E88, 0FFFFFFFFh
+  .text:01D56E94                 mov     [ebp+var_4], 0
+  .text:01D56E9B                 jmp     short loc_1D56EA6
+  .text:01D56E9D                 mov     eax, [ebp+var_4]
+  .text:01D56EA0                 add     eax, 1
+  .text:01D56EA3                 mov     [ebp+var_4], eax
+  .text:01D56EA6                 mov     ecx, cl_worldmodel
+  .text:01D56EAC                 mov     edx, [ebp+var_4]
+  .text:01D56EAF                 cmp     edx, [ecx+170h]
+  .text:01D56EB5                 jge     short loc_1D56F16
+  .text:01D56EB7                 mov     eax, cl_worldmodel
+  .text:01D56EBC                 mov     ecx, [eax+174h]
+  .text:01D56EC2                 mov     edx, [ebp+var_4]
+  .text:01D56EC5                 cmp     dword ptr [ecx+edx*4], 0
+  .text:01D56EC9                 jnz     short loc_1D56ECD
+  .text:01D56ECB                 jmp     short loc_1D56E9D
+  .text:01D56ECD                 push    3
+  .text:01D56ECF                 push    offset aSky; "sky"
+  .text:01D56ED4                 mov     eax, cl_worldmodel
+  .text:01D56ED9                 mov     ecx, [eax+174h]
+  .text:01D56EDF                 mov     edx, [ebp+var_4]
+  .text:01D56EE2                 mov     eax, [ecx+edx*4]
+  .text:01D56EE5                 push    eax
+  .text:01D56EE6                 call    sub_1D3DA20
+  .text:01D56EEB                 add     esp, 0Ch
+  .text:01D56EEE                 test    eax, eax
+  .text:01D56EF0                 jnz     short loc_1D56EFB
+  .text:01D56EF2                 mov     ecx, [ebp+var_4]
+  .text:01D56EF5                 mov     dword_8028E88, ecx
+  .text:01D56EFB                 mov     edx, cl_worldmodel
+  .text:01D56F01                 mov     eax, [edx+174h]
+  .text:01D56F07                 mov     ecx, [ebp+var_4]
+  .text:01D56F0A                 mov     edx, [eax+ecx*4]
+  .text:01D56F0D                 mov     dword ptr [edx+1Ch], 0
+  .text:01D56F14                 jmp     short loc_1D56E9D
+  .text:01D56F16                 call    sub_1D603E0
+  .text:01D56F1B                 mov     eax, 0BB8h
+  .text:01D56F20                 imul    ecx, eax, 0
+  .text:01D56F23                 mov     edx, dword_2723390
+  .text:01D56F29                 fld     flt_1EE03BC
+  .text:01D56F2F                 fstp    dword ptr [edx+ecx+2F0h]
+  .text:01D56F36                 call    sub_1D90150; memset wrapper clearing a 0x32E00-byte array; NOT GL_UnloadTextures
+  .text:01D56F3B                 call    GL_UnloadTextures; iterates gltextures (stride 0x54) and calls glDeleteTextures
+  .text:01D56F40                 mov     esp, ebp
+  .text:01D56F42                 pop     ebp
+  .text:01D56F43                 retn
+procedure: |-
+  void __cdecl R_NewMap()
+  {
+    int i; // [esp+0h] [ebp-4h]
+    int j; // [esp+0h] [ebp-4h]
+    int k; // [esp+0h] [ebp-4h]
+  
+    for ( i = 0; i < 256; ++i )
+      dword_3F941F0[i] = 264;
+    Q_memset(&r_worldentity, 0, 0xBB8u);
+    dword_3F94114 = (int)cl_worldmodel;
+    for ( j = 0; j < *((_DWORD *)cl_worldmodel + 34); ++j )
+      *(_DWORD *)(*((_DWORD *)cl_worldmodel + 35) + 60 * j + 40) = 0;
+    dword_3F941E4 = 0;
+    sub_1D82CD0();
+    sub_1D5B640();
+    sub_1DCDEC0();
+    sub_1D5B010();
+    dword_8028E88 = -1;
+    for ( k = 0; k < *((_DWORD *)cl_worldmodel + 92); ++k )
+    {
+      if ( *(_DWORD *)(*((_DWORD *)cl_worldmodel + 93) + 4 * k) )
+      {
+        if ( !sub_1D3DA20(*(_DWORD *)(*((_DWORD *)cl_worldmodel + 93) + 4 * k), "sky", 3) )
+          dword_8028E88 = k;
+        *(_DWORD *)(*(_DWORD *)(*((_DWORD *)cl_worldmodel + 93) + 4 * k) + 28) = 0;
+      }
+    }
+    sub_1D603E0();
+    *((float *)dword_2723390 + 188) = flt_1EE03BC;
+    // sub_1D90150 is a memset wrapper clearing a 0x32E00-byte array;
+    // it is NOT the requested GL_UnloadTextures target.
+    sub_1D90150();
+    GL_UnloadTextures();
+  }

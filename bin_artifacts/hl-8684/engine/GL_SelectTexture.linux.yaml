@@ -1,0 +1,5 @@
+func_name: GL_SelectTexture
+func_va: '0x1a1120'
+func_rva: '0x1a1120'
+func_size: '0x62'
+func_sig: 53 83 EC ?? 8B 0D ?? ?? ?? ?? 8B 5C 24 ?? 85 C9 75 ?? 83 C4 ?? 5B C3
