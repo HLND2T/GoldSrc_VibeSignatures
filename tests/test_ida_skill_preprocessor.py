@@ -59,6 +59,95 @@ def _image_base_result(value="0x400000"):
     return SimpleNamespace(structuredContent={"result": value}, content=[], isError=False)
 
 
+class UnicodeStringScanTests(unittest.TestCase):
+    def _scan_namespace(self, min_length, *, fail_unicode=False):
+        options = SimpleNamespace(
+            strtypes=[0], minlen=3, only_7bit=False, ignore_heads=True, display_only_existing_strings=True
+        )
+        cache = [None]
+
+        class StringItem:
+            def __init__(self, text, ea):
+                self.text, self.ea = text, ea
+
+            def __str__(self):
+                return self.text
+
+        class Strings:
+            # Model IDA's shared options/list, including setup's default values.
+            def __init__(self, default_setup=False):
+                if default_setup:
+                    self.setup()
+
+            def setup(
+                self,
+                strtypes=(0,),
+                minlen=5,
+                only_7bit=True,
+                ignore_instructions=False,
+                display_only_existing_strings=False,
+            ):
+                options.strtypes = list(strtypes)
+                options.minlen = minlen
+                options.only_7bit = only_7bit
+                options.ignore_heads = ignore_instructions
+                options.display_only_existing_strings = display_only_existing_strings
+
+            def __iter__(self):
+                if 1 in options.strtypes:
+                    if fail_unicode:
+                        raise RuntimeError("string enumeration failed")
+                    return iter([StringItem("wide anchor", 0x5000)])
+                return iter([StringItem("Cache_Alloc: size %i", 0x6000)])
+
+        tree = ast.parse(_build_func_xref_py_eval({}, 0))
+        helpers = {"_string_items", "_string_candidates", "_unicode_string_items", "_unicode_string_candidates"}
+        namespace = {
+            "spec": {"string_min_length": min_length},
+            "json": json,
+            "idautils": SimpleNamespace(Strings=Strings),
+            "ida_nalt": SimpleNamespace(STRTYPE_C=0, STRTYPE_C_16=1),
+            "ida_strlist": SimpleNamespace(get_strlist_options=lambda: options),
+            "ida_netnode": SimpleNamespace(
+                netnode=lambda *_args: SimpleNamespace(
+                    valobj=lambda: cache[0], set=lambda value: cache.__setitem__(0, value)
+                )
+            ),
+            "UNICODE_STRING_TYPES": [1],
+            "unicode_strings_without_owner": [],
+            "_functions_referencing": lambda ea: {0x401000 if ea == 0x5000 else 0x402000},
+        }
+        nodes = [node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name in helpers]
+        exec(  # noqa: S102 - execute the production-generated string scan helpers.
+            compile(ast.Module(body=nodes, type_ignores=[]), "<string-scans>", "exec"), namespace
+        )
+        return namespace, options, cache
+
+    def test_unicode_scan_preserves_following_ascii_scans_and_cached_options(self):
+        for min_length in (None, 7):
+            with self.subTest(min_length=min_length):
+                namespace, options, cache = self._scan_namespace(min_length)
+                ascii_scan = lambda: namespace["_string_candidates"]("FULLMATCH:Cache_Alloc: size %i")
+                self.assertEqual({0x402000}, ascii_scan())
+                before_options, before_cache = dict(vars(options)), cache[0]
+                for _ in range(2):
+                    self.assertEqual({0x401000}, namespace["_unicode_string_candidates"]("FULLMATCH:wide anchor"))
+                    self.assertEqual(before_options, vars(options))
+                    self.assertEqual(before_cache, cache[0])
+                    # Custom finders enumerate the shared list without the ASCII helper.
+                    self.assertEqual(["Cache_Alloc: size %i"], [str(item) for item in namespace["idautils"].Strings()])
+                    self.assertEqual({0x402000}, ascii_scan())
+
+    def test_unicode_enumeration_failure_restores_shared_options(self):
+        namespace, options, cache = self._scan_namespace(None, fail_unicode=True)
+        before_options = dict(vars(options))
+        with self.assertRaisesRegex(RuntimeError, "string enumeration failed"):
+            namespace["_unicode_string_candidates"]("wide anchor")
+        self.assertEqual(before_options, vars(options))
+        self.assertIsNone(cache[0])
+        self.assertEqual({0x402000}, namespace["_string_candidates"]("Cache_Alloc: size %i"))
+
+
 class PreprocessStatusTests(unittest.TestCase):
     def test_status_truthiness_and_legacy_normalization(self):
         self.assertTrue(PREPROCESS_STATUS_SUCCESS)
@@ -931,6 +1020,62 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(7, captured_spec["string_min_length"])
         self.assertEqual("Target", result["func_name"])
+
+    async def test_func_xref_accepts_unicode_string_sources(self):
+        captured_spec = {}
+
+        async def call_tool(name, arguments):
+            self.assertEqual("py_eval", name)
+            spec_line = next(line for line in arguments["code"].splitlines() if line.startswith("spec = "))
+            namespace = {"json": json}
+            exec(spec_line, namespace)  # noqa: S102 - validates generated IDAPython source.
+            captured_spec.update(namespace["spec"])
+            self.assertIn("_unicode_string_candidates", arguments["code"])
+            self.assertIn("STRTYPE_C_16", arguments["code"])
+            return {
+                "pointer_size": 4,
+                "candidates": [
+                    {
+                        "func_name": "Target",
+                        "func_va": "0x401000",
+                        "func_rva": "0x1000",
+                        "func_size": "0x40",
+                    }
+                ],
+            }
+
+        result = await preprocess_func_xrefs_via_mcp(
+            session=SimpleNamespace(call_tool=call_tool),
+            func_name="Target",
+            xref_strings=[],
+            xref_unicode_strings=["FULLMATCH:wide anchor"],
+            xref_gvs=[],
+            xref_signatures=[],
+            xref_funcs=[],
+            exclude_funcs=[],
+            exclude_strings=[],
+            exclude_gvs=[],
+            exclude_signatures=[],
+            new_binary_dir=None,
+            platform="windows",
+            image_base=0x400000,
+        )
+
+        self.assertEqual(["FULLMATCH:wide anchor"], captured_spec["xref_unicode_strings"])
+        self.assertEqual([], captured_spec["xref_strings"])
+        self.assertEqual("Target", result["func_name"])
+
+        # A unicode literal alone is a positive source: normalize must accept
+        # it, while an empty spec still fails.
+        normalized = ida_analyze_util._normalize_func_xref_specs(
+            [{"func_name": "Target", "xref_strings": [], "xref_unicode_strings": ["FULLMATCH:wide"]}]
+        )
+        self.assertEqual(["FULLMATCH:wide"], normalized["Target"]["xref_unicode_strings"])
+        self.assertIsNone(
+            ida_analyze_util._normalize_func_xref_specs(
+                [{"func_name": "Target", "xref_strings": [], "xref_unicode_strings": []}]
+            )
+        )
 
     async def test_func_xref_rejects_explicit_function_addresses_but_allows_gv_literals(self):
         with tempfile.TemporaryDirectory() as temporary:

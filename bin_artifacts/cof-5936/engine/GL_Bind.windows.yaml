@@ -1,0 +1,5 @@
+func_name: GL_Bind
+func_va: '0x1d5d8ea'
+func_rva: '0x5d8ea'
+func_size: '0x56'
+func_sig: 55 8B EC 51 8B 45 ?? C1 F8 10 83 E8 01 89 45 ?? 8B 4D ?? 81 E1 FF FF 00 00 89 4D ??

@@ -3,11 +3,16 @@ import io
 import json
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from ida_llm_decompile import LlmConfig, call_llm_decompile, request_text
 
 VALID = "found_call:\n  - insn_va: '0x401020'\n    insn_disasm: call sub_402000\n    func_name: build_number\n"
+
+
+def response(text=VALID, *, status="completed", reason=None, output=None):
+    payload = {"status": status, "incomplete_details": {"reason": reason}, "output": output or []}
+    return SimpleNamespace(output_text=text, model_dump=lambda **_: payload, **payload)
 
 
 class LlmDiagnosticsTests(unittest.IsolatedAsyncioTestCase):
@@ -66,7 +71,92 @@ class LlmDiagnosticsTests(unittest.IsolatedAsyncioTestCase):
         _, events = await self.run_call(debug=True, client=client)
         self.assertIn("api_response", [event["event"] for event in events])
         self.assertIn("response_extraction_failed", [event["event"] for event in events])
-        self.assertEqual("transport_failed", events[-1]["reason"])
+        self.assertEqual("empty_output", events[-1]["reason"])
+        self.assertEqual(3, events[-1]["attempt"])
+
+    async def test_truncated_output_is_retried_even_when_text_is_valid_yaml(self):
+        for text in ("", VALID):
+            with self.subTest(text=text):
+                create = Mock(side_effect=[response(text, status="incomplete", reason="max_output_tokens"), response()])
+                result, events = await self.run_call(
+                    debug=True, client=SimpleNamespace(responses=SimpleNamespace(create=create)), max_retries=2
+                )
+                self.assertEqual(2, create.call_count)
+                self.assertTrue(result["found_call"])
+                retry = next(event for event in events if event["event"] == "retry")
+                self.assertEqual("output_truncated", retry["reason"])
+                failure = next(event for event in events if event["event"] == "response_extraction_failed")
+                self.assertEqual("incomplete", failure["response_status"])
+                self.assertEqual("max_output_tokens", failure["incomplete_reason"])
+                self.assertEqual(1, sum(event["event"] == "validation" for event in events))
+
+    async def test_correction_then_truncation_preserves_history_and_total_budget(self):
+        create = Mock(
+            side_effect=[
+                response("not: [valid"),
+                response("partial", status="incomplete", reason="max_output_tokens"),
+                response(),
+            ]
+        )
+        result, events = await self.run_call(
+            debug=True, client=SimpleNamespace(responses=SimpleNamespace(create=create)), max_retries=3
+        )
+        self.assertTrue(result["found_call"])
+        self.assertEqual(3, create.call_count)
+        inputs = [call.kwargs["input"] for call in create.call_args_list]
+        self.assertEqual(inputs[1], inputs[2])
+        self.assertIn("complete YAML", str(inputs[2]))
+        self.assertNotIn({"role": "assistant", "content": "partial"}, inputs[2])
+
+    async def test_unknown_incomplete_status_does_not_accept_text(self):
+        create = Mock(return_value=response(VALID, status="incomplete", reason="unknown"))
+        result, events = await self.run_call(
+            debug=True, client=SimpleNamespace(responses=SimpleNamespace(create=create))
+        )
+        self.assertEqual(1, create.call_count)
+        self.assertFalse(any(result.values()))
+        self.assertEqual("output_incomplete", events[-1]["reason"])
+
+    async def test_empty_custom_transport_uses_output_retry_classification(self):
+        transport = Mock(side_effect=["", VALID])
+        result, events = await self.run_call(debug=True, call_llm_text_func=transport, max_retries=2)
+        self.assertTrue(result["found_call"])
+        self.assertEqual(2, transport.call_count)
+        self.assertEqual("empty_output", next(event for event in events if event["event"] == "retry")["reason"])
+
+    async def test_empty_output_can_recover_and_output_retries_are_bounded(self):
+        create = Mock(side_effect=[response(" \n"), response()])
+        result, _ = await self.run_call(client=SimpleNamespace(responses=SimpleNamespace(create=create)), max_retries=2)
+        self.assertTrue(result["found_call"])
+        self.assertEqual(2, create.call_count)
+        for reply, expected in (
+            (response(""), "empty_output"),
+            (response(VALID, status="incomplete", reason="max_output_tokens"), "output_truncated"),
+        ):
+            with self.subTest(reason=expected):
+                create = Mock(return_value=reply)
+                result, events = await self.run_call(
+                    debug=True, client=SimpleNamespace(responses=SimpleNamespace(create=create)), max_retries=3
+                )
+                self.assertEqual(3, create.call_count)
+                self.assertFalse(any(result.values()))
+                self.assertEqual(expected, events[-1]["reason"])
+
+    async def test_refusal_and_content_filter_do_not_retry_or_accept_partial_text(self):
+        replies = [
+            response(VALID, status="incomplete", reason="content_filter"),
+            response(VALID, output=[{"type": "message", "content": [{"type": "refusal", "refusal": "Declined"}]}]),
+            response(VALID, output=[SimpleNamespace(type="message", content=[SimpleNamespace(type="refusal")])]),
+        ]
+        for reply in replies:
+            with self.subTest(reply=reply):
+                create = Mock(return_value=reply)
+                result, events = await self.run_call(
+                    debug=True, client=SimpleNamespace(responses=SimpleNamespace(create=create)), max_retries=3
+                )
+                self.assertEqual(1, create.call_count)
+                self.assertFalse(any(result.values()))
+                self.assertEqual("output_refused", events[-1]["reason"])
 
     async def test_transport_exception_and_template_failure(self):
         def fail(**_):

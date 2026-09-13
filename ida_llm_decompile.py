@@ -160,6 +160,44 @@ def _debug_diagnostic(enabled, *, api_key, base_url, **context):
     return emit
 
 
+class LlmOutputError(LlmResponseError):
+    """A received response cannot supply a complete, usable model answer."""
+
+    def __init__(self, reason, *, response_status=None, incomplete_reason=None):
+        self.reason = reason
+        self.response_status = response_status
+        self.incomplete_reason = incomplete_reason
+        self.retryable = reason in {"output_truncated", "empty_output"}
+        super().__init__(f"LLM {reason}: status={response_status}, incomplete_reason={incomplete_reason}")
+
+
+def _response_field(value, name):
+    return value.get(name) if isinstance(value, Mapping) else getattr(value, name, None)
+
+
+def _check_response_output(response):
+    status = _response_field(response, "status")
+    incomplete_reason = _response_field(_response_field(response, "incomplete_details"), "reason")
+    refused = any(
+        _response_field(content, "type") == "refusal"
+        for item in _response_field(response, "output") or ()
+        for content in _response_field(item, "content") or ()
+    )
+    if refused or incomplete_reason == "content_filter":
+        reason = "output_refused"
+    elif incomplete_reason == "max_output_tokens":
+        # Some compatible providers omit status but still report the reason.
+        reason = "output_truncated"
+    elif status not in (None, "completed") or incomplete_reason is not None:
+        reason = "output_incomplete"
+    else:
+        text = _response_field(response, "output_text")
+        if isinstance(text, str) and text.strip():
+            return text
+        reason = "empty_output"
+    raise LlmOutputError(reason, response_status=status, incomplete_reason=incomplete_reason)
+
+
 def request_text(messages, *, config: LlmConfig | None = None, client=None, diagnostic_callback=None) -> str:
     config = config or LlmConfig.from_environment()
     if client is None and not config.api_key:
@@ -185,10 +223,17 @@ def request_text(messages, *, config: LlmConfig | None = None, client=None, diag
             _notify_diagnostic(diagnostic_callback, "api_response", response=payload)
     output_text = getattr(response, "output_text", None)
     _notify_diagnostic(diagnostic_callback, "output_text", output_text=output_text)
-    if not isinstance(output_text, str) or not output_text.strip():
-        _notify_diagnostic(diagnostic_callback, "response_extraction_failed", reason="missing_output_text")
-        raise LlmResponseError("OpenAI response did not contain output_text")
-    return output_text
+    try:
+        return _check_response_output(response)
+    except LlmOutputError as exc:
+        _notify_diagnostic(
+            diagnostic_callback,
+            "response_extraction_failed",
+            reason=exc.reason,
+            response_status=exc.response_status,
+            incomplete_reason=exc.incomplete_reason,
+        )
+        raise
 
 
 def request_json(prompt: str, *, config: LlmConfig | None = None, client=None) -> dict:
@@ -832,6 +877,8 @@ async def _invoke_transport(transport, request_kwargs):
         value = await value
     if not isinstance(value, str):
         raise LlmResponseError("LLM transport did not return text")
+    if not value.strip():
+        raise LlmOutputError("empty_output")
     return value
 
 
@@ -957,6 +1004,22 @@ async def call_llm_decompile(
         )
         try:
             content = await _invoke_transport(transport, request_kwargs)
+        except LlmOutputError as exc:
+            details = {
+                "reason": exc.reason,
+                "response_status": exc.response_status,
+                "incomplete_reason": exc.incomplete_reason,
+            }
+            if not exc.retryable or attempt_index >= attempts - 1:
+                report_attempt("completed", status="failed", **details)
+                return _empty_llm_decompile_result()
+            # Reuse the task and prior validation corrections; never feed a
+            # truncated answer back as assistant context or increase the budget.
+            report_attempt("retry", delay=delay, **details)
+            if delay > 0:
+                await asyncio.sleep(delay)
+            delay = min(delay * backoff, max_delay)
+            continue
         except Exception as exc:
             report_attempt(
                 "request_failed",

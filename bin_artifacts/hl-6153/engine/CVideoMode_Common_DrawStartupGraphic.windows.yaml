@@ -1,0 +1,5 @@
+func_name: CVideoMode_Common_DrawStartupGraphic
+func_va: '0x1dabe80'
+func_rva: '0xabe80'
+func_size: '0x648'
+func_sig: 55 8B EC 83 EC 78 53 56 8B F1 33 DB 57 89 75 ?? 39 9E ?? ?? ?? ?? 0F 84 ?? ?? ?? ?? 8B 55 ?? 8D 45 ?? 8D 4D ??

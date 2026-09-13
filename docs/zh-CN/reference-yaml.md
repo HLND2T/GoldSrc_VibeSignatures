@@ -29,8 +29,10 @@ found_struct_offset: []
 
 每个非空的指令型条目必须包含来自导出当前二进制 target 的精确 `insn_va` / `insn_disasm` 对。运行时校验请求的 symbol
 identity、允许的 section、指令对、可选指令 regex、vcall 或 struct displacement 与可选 struct size。非法 YAML 或
-语义结果会收到有界的纠正请求；只有瞬时传输故障使用指数退避。重试耗尽或不可重试的失败返回完整空结果，
-preprocessor 以 fail-closed 结束。
+语义结果会收到有界的纠正请求。瞬时传输故障、token 截断与原因不明的空正文使用指数退避，并共享同一个总尝试预算。
+输出重试保留原任务与已有纠错信息，不把截断正文加入对话。拒绝、内容过滤及其他明确不完整的响应不重试；部分 YAML 不会被接受。
+重试耗尽或不可重试的失败返回完整空结果，preprocessor 以 fail-closed 结束。诊断将 `output_truncated`、`empty_output`、
+`output_refused` 和 `output_incomplete` 与 `transport_failed` 区分，并保留响应状态及不完整原因。
 
 共享 `(model, prompt path, reference paths, temperature)` 的请求会在每个确定性快速路径失败或返回不完整候选后
 批量合并。依赖策略与 config input 分类在快速路径前校验；缺失的可选 predecessor 只跳过其 reference/target 对。

@@ -1,0 +1,445 @@
+func_name: "SCR_UpdateScreen_RenderBody"
+func_va: "0x1024d550"
+disasm_code: |-
+  .text:1024D550                 push    ebp
+  .text:1024D551                 mov     ebp, esp
+  .text:1024D553                 sub     esp, 8
+  .text:1024D556                 cmp     dword_109A68E0, 0
+  .text:1024D55D                 jnz     loc_1024D997
+  .text:1024D563                 mov     dword_109A68E0, 1
+  .text:1024D56D                 call    sub_10231470
+  .text:1024D572                 cmp     dword_10538A40, 0
+  .text:1024D579                 jnz     loc_1024D98D
+  .text:1024D57F                 cmp     dword_109B3D40, 0
+  .text:1024D586                 jnz     loc_1024D98D
+  .text:1024D58C                 cmp     dword_109A68E4, 0
+  .text:1024D593                 jz      short loc_1024D5AD
+  .text:1024D595                 mov     dword_109A68E4, 0
+  .text:1024D59F                 mov     dword_109A68E0, 0
+  .text:1024D5A9                 mov     esp, ebp
+  .text:1024D5AB                 pop     ebp
+  .text:1024D5AC                 retn
+  .text:1024D5AD                 cmp     cls.state, 0
+  .text:1024D5B4                 mov     dword_109B3D74, 0
+  .text:1024D5BE                 mov     dword_109B3D70, 0
+  .text:1024D5C8                 jz      loc_1024D98D
+  .text:1024D5CE                 cmp     dword_109B41F8, 0
+  .text:1024D5D5                 jz      loc_1024D98D
+  .text:1024D5DB                 cmp     dword_1124BF10, 0
+  .text:1024D5E2                 jz      loc_1024D98D
+  .text:1024D5E8                 call    sub_1021FE20
+  .text:1024D5ED                 mov     eax, cls.state
+  .text:1024D5F2                 xorps   xmm0, xmm0
+  .text:1024D5F5                 fstp    [ebp+var_8]
+  .text:1024D5F8                 cmp     eax, 3
+  .text:1024D5FB                 jz      short loc_1024D607
+  .text:1024D5FD                 cmp     eax, 2
+  .text:1024D600                 jz      short loc_1024D607
+  .text:1024D602                 cmp     eax, 5
+  .text:1024D605                 jnz     short loc_1024D648
+  .text:1024D607                 movss   xmm1, dword_1032EAE0
+  .text:1024D60F                 comiss  xmm1, xmm0
+  .text:1024D612                 jbe     short loc_1024D648
+  .text:1024D614                 cvtps2pd xmm0, xmm1
+  .text:1024D617                 movsd   xmm1, [ebp+var_8]
+  .text:1024D61C                 subsd   xmm1, xmm0
+  .text:1024D620                 comisd  xmm1, ds:qword_102CDE88
+  .text:1024D628                 jbe     short loc_1024D648
+  .text:1024D62A                 push    offset aLoadFailed; "load failed.\n"
+  .text:1024D62F                 call    Con_Printf
+  .text:1024D634                 push    offset aConnectionToSe; "Connection to server lost during level "...
+  .text:1024D639                 ; bPrint
+  .text:1024D639                 push    1; bPrint
+  .text:1024D63B                 call    COM_ExplainDisconnection
+  .text:1024D640                 add     esp, 0Ch
+  .text:1024D643                 call    CL_Disconnect
+  .text:1024D648                 mov     eax, dword_104B9844
+  .text:1024D64D                 test    eax, eax
+  .text:1024D64F                 jz      short loc_1024D653
+  .text:1024D651                 call    eax ; dword_104B9844
+  .text:1024D653                 push    esi
+  .text:1024D654                 call    sub_10232360
+  .text:1024D659                 push    offset glheight
+  .text:1024D65E                 push    offset glwidth
+  .text:1024D663                 push    offset gly
+  .text:1024D668                 push    offset glx
+  .text:1024D66D                 call    GL_BeginRendering
+  .text:1024D672                 add     esp, 10h
+  .text:1024D675                 cmp     dword_109B3D0C, 0
+  .text:1024D67C                 jz      loc_1024D783
+  .text:1024D682                 movss   xmm0, ds:dword_102B7374
+  .text:1024D68A                 movss   xmm1, dword_10322F60
+  .text:1024D692                 comiss  xmm0, xmm1
+  .text:1024D695                 mov     dword_109B3D7C, 0
+  .text:1024D69F                 mov     dword_109B3D0C, 0
+  .text:1024D6A9                 mov     dword_10323010, 42F00000h
+  .text:1024D6B3                 jbe     short loc_1024D6C1
+  .text:1024D6B5                 mov     dword_10322F60, 41200000h
+  .text:1024D6BF                 jmp     short loc_1024D6D4
+  .text:1024D6C1                 comiss  xmm1, ds:dword_102CDE90
+  .text:1024D6C8                 jbe     short loc_1024D6D4
+  .text:1024D6CA                 mov     dword_10322F60, 43160000h
+  .text:1024D6D4                 mov     edx, glwidth
+  .text:1024D6DA                 movss   xmm1, ds:dword_103064A8
+  .text:1024D6E2                 push    edi
+  .text:1024D6E3                 mov     edi, glheight
+  .text:1024D6E9                 movd    xmm0, edx
+  .text:1024D6ED                 cvtdq2ps xmm0, xmm0
+  .text:1024D6F0                 mov     dword_109B3D84, 0
+  .text:1024D6FA                 cvttss2si ecx, xmm0
+  .text:1024D6FE                 mov     dword ptr xmmword_10DC6320+8, ecx
+  .text:1024D704                 cmp     ecx, 60h ; '`'
+  .text:1024D707                 jge     short loc_1024D72C
+  .text:1024D709                 movsd   xmm1, ds:qword_102CDE80
+  .text:1024D711                 movd    xmm0, ecx
+  .text:1024D715                 mov     ecx, 60h ; '`'
+  .text:1024D71A                 cvtdq2pd xmm0, xmm0
+  .text:1024D71E                 mov     dword ptr xmmword_10DC6320+8, ecx
+  .text:1024D724                 divsd   xmm1, xmm0
+  .text:1024D728                 cvtpd2ps xmm1, xmm1
+  .text:1024D72C                 movd    xmm0, edi
+  .text:1024D730                 cvtdq2ps xmm0, xmm0
+  .text:1024D733                 mulss   xmm0, xmm1
+  .text:1024D737                 cvttss2si esi, xmm0
+  .text:1024D73B                 cmp     esi, edi
+  .text:1024D73D                 mov     eax, esi
+  .text:1024D73F                 cmovg   eax, edi
+  .text:1024D742                 sub     edx, ecx
+  .text:1024D744                 mov     dword ptr xmmword_10DC6320+0Ch, eax
+  .text:1024D749                 mov     ecx, edi
+  .text:1024D74B                 mov     eax, edx
+  .text:1024D74D                 cdq
+  .text:1024D74E                 sub     eax, edx
+  .text:1024D750                 sar     eax, 1
+  .text:1024D752                 cmp     esi, edi
+  .text:1024D754                 mov     dword ptr xmmword_10DC6320, eax
+  .text:1024D759                 cmovle  ecx, esi
+  .text:1024D75C                 sub     edi, ecx
+  .text:1024D75E                 mov     eax, edi
+  .text:1024D760                 cdq
+  .text:1024D761                 sub     eax, edx
+  .text:1024D763                 sar     eax, 1
+  .text:1024D765                 mov     dword ptr xmmword_10DC6320+4, eax
+  .text:1024D76A                 movups  xmm0, xmmword_10DC6320
+  .text:1024D771                 mov     eax, dword_10DC6330
+  .text:1024D776                 mov     dword_109B41F0, eax
+  .text:1024D77B                 movups  xmmword_109B41E0, xmm0
+  .text:1024D782                 pop     edi
+  .text:1024D783                 call    sub_101BB6C0
+  .text:1024D788                 call    GLBeginHud
+  .text:1024D78D                 mov     eax, dword ptr xmmword_10DC6320
+  .text:1024D792                 test    eax, eax
+  .text:1024D794                 jle     short loc_1024D7D3
+  .text:1024D796                 push    98h
+  .text:1024D79B                 push    eax
+  .text:1024D79C                 push    0
+  .text:1024D79E                 push    0
+  .text:1024D7A0                 call    sub_1023BCD0
+  .text:1024D7A5                 mov     edx, dword ptr xmmword_10DC6320+8
+  .text:1024D7AB                 mov     eax, edx
+  .text:1024D7AD                 mov     ecx, dword ptr xmmword_10DC6320
+  .text:1024D7B3                 sub     eax, ecx
+  .text:1024D7B5                 push    98h
+  .text:1024D7BA                 add     eax, 140h
+  .text:1024D7BF                 push    eax
+  .text:1024D7C0                 lea     eax, [ecx+edx]
+  .text:1024D7C3                 push    0
+  .text:1024D7C5                 push    eax
+  .text:1024D7C6                 call    sub_1023BCD0
+  .text:1024D7CB                 mov     eax, dword ptr xmmword_10DC6320
+  .text:1024D7D0                 add     esp, 20h
+  .text:1024D7D3                 cmp     dword ptr xmmword_10DC6320+0Ch, 98h
+  .text:1024D7DD                 jge     short loc_1024D821
+  .text:1024D7DF                 push    dword ptr xmmword_10DC6320+4
+  .text:1024D7E5                 push    dword ptr xmmword_10DC6320+8
+  .text:1024D7EB                 push    0
+  .text:1024D7ED                 push    eax
+  .text:1024D7EE                 call    sub_1023BCD0
+  .text:1024D7F3                 mov     edx, dword ptr xmmword_10DC6320+4
+  .text:1024D7F9                 mov     eax, 98h
+  .text:1024D7FE                 mov     ecx, dword ptr xmmword_10DC6320+0Ch
+  .text:1024D804                 sub     eax, edx
+  .text:1024D806                 sub     eax, ecx
+  .text:1024D808                 push    eax
+  .text:1024D809                 push    dword ptr xmmword_10DC6320+8
+  .text:1024D80F                 lea     eax, [edx+ecx]
+  .text:1024D812                 push    eax
+  .text:1024D813                 push    dword ptr xmmword_10DC6320
+  .text:1024D819                 call    sub_1023BCD0
+  .text:1024D81E                 add     esp, 20h
+  .text:1024D821                 cmp     scr_drawloading, 0
+  .text:1024D828                 jnz     short loc_1024D8A5
+  .text:1024D82A                 mov     eax, cl_intermission
+  .text:1024D82F                 cmp     eax, 1
+  .text:1024D832                 jnz     loc_1024D99B
+  .text:1024D838                 cmp     key_dest, 0
+  .text:1024D83F                 jz      short loc_1024D8A5
+  .text:1024D841                 mov     eax, dword_10DC5560
+  .text:1024D846                 push    dword ptr [eax+18h]
+  .text:1024D849                 call    sub_1023BD90
+  .text:1024D84E                 mov     eax, dword ptr qword_109B3CFC+4
+  .text:1024D853                 add     esp, 4
+  .text:1024D856                 movd    xmm0, eax
+  .text:1024D85A                 cvtdq2pd xmm0, xmm0
+  .text:1024D85E                 shr     eax, 1Fh
+  .text:1024D861                 addsd   xmm0, ds:qword_103074C0[eax*8]
+  .text:1024D86A                 cvtpd2ps xmm0, xmm0
+  .text:1024D86E                 comiss  xmm0, dword_109B3D80
+  .text:1024D875                 jbe     short loc_1024D87C
+  .text:1024D877                 call    Sbar_Draw
+  .text:1024D87C                 movss   xmm0, developer_value
+  .text:1024D884                 xorps   xmm1, xmm1
+  .text:1024D887                 ucomiss xmm0, xmm1
+  .text:1024D88A                 lahf
+  .text:1024D88B                 test    ah, 44h
+  .text:1024D88E                 jnp     short loc_1024D8A5
+  .text:1024D890                 mov     eax, dword_10DC5560
+  .text:1024D895                 push    dword ptr [eax+18h]
+  .text:1024D898                 call    sub_1023BD90
+  .text:1024D89D                 add     esp, 4
+  .text:1024D8A0                 call    sub_101BBA50
+  .text:1024D8A5                 call    sub_1024CEC0
+  .text:1024D8AA                 call    sub_1022AA70
+  .text:1024D8AF                 call    GL_Finish2D
+  .text:1024D8B4                 call    GLBeginHud
+  .text:1024D8B9                 call    sub_101E0440
+  .text:1024D8BE                 call    sub_101E04F0
+  .text:1024D8C3                 call    sub_1022B870
+  .text:1024D8C8                 test    eax, eax
+  .text:1024D8CA                 jnz     loc_1024D966
+  .text:1024D8D0                 movss   xmm0, dword_10322F84
+  .text:1024D8D8                 xorps   xmm1, xmm1
+  .text:1024D8DB                 ucomiss xmm0, xmm1
+  .text:1024D8DE                 lahf
+  .text:1024D8DF                 test    ah, 44h
+  .text:1024D8E2                 jnp     short loc_1024D961
+  .text:1024D8E4                 cmp     dword_11282EC0, 0
+  .text:1024D8EB                 jz      short loc_1024D961
+  .text:1024D8ED                 call    sub_1022B870
+  .text:1024D8F2                 test    eax, eax
+  .text:1024D8F4                 jnz     short loc_1024D961
+  .text:1024D8F6                 cmp     dword_10531148, eax
+  .text:1024D8FC                 jz      short loc_1024D925
+  .text:1024D8FE                 mov     eax, dword_11198EAC
+  .text:1024D903                 test    eax, eax
+  .text:1024D905                 jz      short loc_1024D925
+  .text:1024D907                 mov     ecx, dword_11198F4C
+  .text:1024D90D                 test    ecx, ecx
+  .text:1024D90F                 jz      short loc_1024D925
+  .text:1024D911                 add     eax, ecx
+  .text:1024D913                 push    offset aCzWorldmap; "cz_worldmap"
+  .text:1024D918                 push    eax
+  .text:1024D919                 call    Q_stricmp
+  .text:1024D91E                 add     esp, 8
+  .text:1024D921                 test    eax, eax
+  .text:1024D923                 jz      short loc_1024D961
+  .text:1024D925                 mov     esi, dword_109B41F4
+  .text:1024D92B                 push    esi
+  .text:1024D92C                 mov     eax, [esi+4]
+  .text:1024D92F                 cdq
+  .text:1024D930                 sub     eax, edx
+  .text:1024D932                 mov     ecx, eax
+  .text:1024D934                 mov     eax, glheight
+  .text:1024D939                 cdq
+  .text:1024D93A                 sub     eax, edx
+  .text:1024D93C                 sar     ecx, 1
+  .text:1024D93E                 sar     eax, 1
+  .text:1024D940                 sub     eax, ecx
+  .text:1024D942                 push    eax
+  .text:1024D943                 mov     eax, [esi]
+  .text:1024D945                 cdq
+  .text:1024D946                 sub     eax, edx
+  .text:1024D948                 mov     ecx, eax
+  .text:1024D94A                 mov     eax, glwidth
+  .text:1024D94F                 cdq
+  .text:1024D950                 sub     eax, edx
+  .text:1024D952                 sar     ecx, 1
+  .text:1024D954                 sar     eax, 1
+  .text:1024D956                 sub     eax, ecx
+  .text:1024D958                 push    eax
+  .text:1024D959                 call    sub_1023B8A0
+  .text:1024D95E                 add     esp, 0Ch
+  .text:1024D961                 call    sub_1024CE50
+  .text:1024D966                 call    GL_Finish2D
+  .text:1024D96B                 mov     eax, dword_104B9848
+  .text:1024D970                 pop     esi
+  .text:1024D971                 test    eax, eax
+  .text:1024D973                 jz      short loc_1024D977
+  .text:1024D975                 call    eax ; dword_104B9848
+  .text:1024D977                 call    GL_EndRendering
+  .text:1024D97C                 movsd   xmm0, [ebp+var_8]
+  .text:1024D981                 cvtpd2ps xmm0, xmm0
+  .text:1024D985                 movss   dword_1032EAE0, xmm0
+  .text:1024D98D                 mov     dword_109A68E0, 0
+  .text:1024D997                 mov     esp, ebp
+  .text:1024D999                 pop     ebp
+  .text:1024D99A                 retn
+  .text:1024D99B                 cmp     eax, 2
+  .text:1024D99E                 jz      short loc_1024D9A9
+  .text:1024D9A0                 cmp     eax, 3
+  .text:1024D9A3                 jnz     loc_1024D841
+  .text:1024D9A9                 cmp     key_dest, 0
+  .text:1024D9B0                 jnz     loc_1024D841
+  .text:1024D9B6                 call    sub_1024CE50
+  .text:1024D9BB                 jmp     loc_1024D8A5
+procedure: |-
+  void SCR_UpdateScreen_RenderBody()
+  {
+    double v0; // st7
+    float v1; // xmm1_4
+    signed int v2; // ecx
+    __m128i v3; // xmm0
+    float v4; // xmm0_4
+    int v5; // eax
+    int v6; // edx
+    int v7; // ecx
+    int v8; // eax
+    float v9; // xmm0_4
+  
+    if ( !dword_109A68E0 )
+    {
+      dword_109A68E0 = 1;
+      sub_10231470();
+      if ( dword_10538A40 || dword_109B3D40 )
+        goto LABEL_53;
+      if ( dword_109A68E4 )
+      {
+        dword_109A68E4 = 0;
+        dword_109A68E0 = 0;
+        return;
+      }
+      dword_109B3D74 = 0;
+      dword_109B3D70 = 0;
+      if ( cls.state == ca_dedicated || !dword_109B41F8 || !dword_1124BF10 )
+        goto LABEL_53;
+      v0 = sub_1021FE20();
+      if ( (cls.state == ca_connected || cls.state == ca_connecting || cls.state == ca_active)
+        && *(float *)&dword_1032EAE0 > 0.0
+        && v0 - *(float *)&dword_1032EAE0 > 120.0 )
+      {
+        Con_Printf("load failed.\n");
+        COM_ExplainDisconnection(1, "Connection to server lost during level change.");
+        CL_Disconnect();
+      }
+      if ( dword_104B9844 )
+        dword_104B9844();
+      sub_10232360();
+      GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
+      if ( dword_109B3D0C )
+      {
+        dword_109B3D7C = 0;
+        dword_109B3D0C = 0;
+        dword_10323010 = 1123024896;
+        if ( *(float *)&dword_10322F60 >= 10.0 )
+        {
+          if ( *(float *)&dword_10322F60 > 150.0 )
+            dword_10322F60 = 1125515264;
+        }
+        else
+        {
+          dword_10322F60 = 1092616192;
+        }
+        v1 = 1.0;
+        dword_109B3D84 = 0;
+        v2 = (int)(float)glwidth;
+        DWORD2(xmmword_10DC6320) = v2;
+        if ( v2 < 96 )
+        {
+          v3 = _mm_cvtsi32_si128(v2);
+          v2 = 96;
+          DWORD2(xmmword_10DC6320) = 96;
+          v1 = 96.0 / _mm_cvtepi32_pd(v3).m128d_f64[0];
+        }
+        v4 = (float)glheight * v1;
+        v5 = (int)v4;
+        if ( (int)v4 > glheight )
+          v5 = glheight;
+        v6 = glwidth - v2;
+        HIDWORD(xmmword_10DC6320) = v5;
+        v7 = glheight;
+        LODWORD(xmmword_10DC6320) = v6 / 2;
+        if ( (int)v4 <= glheight )
+          v7 = (int)v4;
+        DWORD1(xmmword_10DC6320) = (glheight - v7) / 2;
+        dword_109B41F0 = dword_10DC6330;
+        xmmword_109B41E0 = xmmword_10DC6320;
+      }
+      sub_101BB6C0();
+      GLBeginHud();
+      v8 = xmmword_10DC6320;
+      if ( (int)xmmword_10DC6320 > 0 )
+      {
+        sub_1023BCD0(0, 0, xmmword_10DC6320, 152);
+        sub_1023BCD0(
+          xmmword_10DC6320 + DWORD2(xmmword_10DC6320),
+          0,
+          DWORD2(xmmword_10DC6320) - xmmword_10DC6320 + 320,
+          152);
+        v8 = xmmword_10DC6320;
+      }
+      if ( SHIDWORD(xmmword_10DC6320) < 152 )
+      {
+        sub_1023BCD0(v8, 0, DWORD2(xmmword_10DC6320), DWORD1(xmmword_10DC6320));
+        sub_1023BCD0(
+          xmmword_10DC6320,
+          DWORD1(xmmword_10DC6320) + HIDWORD(xmmword_10DC6320),
+          DWORD2(xmmword_10DC6320),
+          152 - DWORD1(xmmword_10DC6320) - HIDWORD(xmmword_10DC6320));
+      }
+      if ( !scr_drawloading )
+      {
+        if ( cl_intermission == 1 )
+        {
+          if ( key_dest )
+          {
+  LABEL_36:
+            sub_1023BD90(*(_DWORD *)(dword_10DC5560 + 24));
+            v9 = (float)HIDWORD(qword_109B3CFC);
+            if ( v9 > *(float *)&dword_109B3D80 )
+              Sbar_Draw();
+            if ( developer_value != 0.0 )
+            {
+              sub_1023BD90(*(_DWORD *)(dword_10DC5560 + 24));
+              sub_101BBA50();
+            }
+          }
+        }
+        else
+        {
+          if ( cl_intermission != 2 && cl_intermission != 3 || key_dest )
+            goto LABEL_36;
+          sub_1024CE50();
+        }
+      }
+      sub_1024CEC0();
+      sub_1022AA70();
+      GL_Finish2D();
+      GLBeginHud();
+      sub_101E0440();
+      sub_101E04F0();
+      if ( !sub_1022B870() )
+      {
+        if ( *(float *)&dword_10322F84 != 0.0
+          && dword_11282EC0
+          && !sub_1022B870()
+          && (!dword_10531148
+           || !dword_11198EAC
+           || !dword_11198F4C
+           || Q_stricmp(dword_11198F4C + dword_11198EAC, "cz_worldmap")) )
+        {
+          sub_1023B8A0(
+            glwidth / 2 - *(_DWORD *)dword_109B41F4 / 2,
+            glheight / 2 - *(_DWORD *)(dword_109B41F4 + 4) / 2,
+            dword_109B41F4);
+        }
+        sub_1024CE50();
+      }
+      GL_Finish2D();
+      if ( dword_104B9848 )
+        dword_104B9848();
+      GL_EndRendering();
+      *(float *)&dword_1032EAE0 = v0;
+  LABEL_53:
+      dword_109A68E0 = 0;
+    }
+  }

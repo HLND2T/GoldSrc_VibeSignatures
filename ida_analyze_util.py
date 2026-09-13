@@ -98,6 +98,7 @@ FUNC_XREF_ALLOWED_KEYS = frozenset(
     {
         "func_name",
         "xref_strings",
+        "xref_unicode_strings",
         "xref_gvs",
         "xref_signatures",
         "xref_funcs",
@@ -978,7 +979,7 @@ globals().update(locals())
 
 
 _FUNC_XREF_PY_EVAL_TEMPLATE = r"""
-import ida_auto, ida_bytes, ida_funcs, ida_name, ida_nalt, ida_netnode, ida_segment, ida_ua, ida_xref, idaapi, idautils, idc, json, math, struct
+import ida_auto, ida_bytes, ida_funcs, ida_name, ida_nalt, ida_netnode, ida_segment, ida_strlist, ida_ua, ida_xref, idaapi, idautils, idc, json, math, struct
 
 spec = json.loads(SPEC_PLACEHOLDER)
 image_base = IMAGE_BASE_PLACEHOLDER
@@ -1081,6 +1082,50 @@ def _string_candidates(query):
         text = str(item)
         if (text == needle) if exact else (needle in text):
             found.update(_functions_referencing(int(item.ea)))
+    return found
+
+UNICODE_STRING_TYPES = [ida_nalt.STRTYPE_C_16]
+unicode_strings_without_owner = []
+
+def _unicode_string_items():
+    strings = idautils.Strings(default_setup=False)
+    options = ida_strlist.get_strlist_options()
+    saved_options = {
+        'strtypes': list(options.strtypes),
+        'minlen': int(options.minlen),
+        'only_7bit': bool(options.only_7bit),
+        'ignore_instructions': bool(options.ignore_heads),
+        'display_only_existing_strings': bool(options.display_only_existing_strings),
+    }
+    scan_options = {'strtypes': UNICODE_STRING_TYPES}
+    min_length = spec.get('string_min_length')
+    if min_length is not None:
+        scan_options['minlen'] = int(min_length)
+    try:
+        strings.setup(**scan_options)
+        # StringItem snapshots must be collected before restoring IDA's shared
+        # list. Returning the lazy Strings iterator would enumerate that list.
+        return list(strings)
+    finally:
+        # Restore even if enumeration fails. The ASCII setup netnode remains
+        # valid because this temporary scan never changes its cached state.
+        strings.setup(**saved_options)
+
+def _unicode_string_candidates(query):
+    exact = str(query).startswith('FULLMATCH:')
+    needle = str(query)[10:] if exact else str(query)
+    found = set()
+    matched = False
+    for item in _unicode_string_items():
+        text = str(item)
+        if (text == needle) if exact else (needle in text):
+            matched = True
+            found.update(_functions_referencing(int(item.ea)))
+    # A present literal with no recoverable owner must fail closed: it is
+    # evidence the database lacks the owning function boundary, not that the
+    # string is absent (issue #114 batch8 UTF-16 lesson).
+    if matched and not found:
+        unicode_strings_without_owner.append({'query': str(query), 'needle': needle})
     return found
 
 def _named_ea(value):
@@ -1295,6 +1340,8 @@ positive_sets = []
 vtable_candidates = _address_candidates(spec.get('vtable_entries'))
 for value in spec.get('xref_strings') or []:
     positive_sets.append(_string_candidates(value))
+for value in spec.get('xref_unicode_strings') or []:
+    positive_sets.append(_unicode_string_candidates(value))
 for value in spec.get('xref_gvs') or []:
     positive_sets.append(_named_candidates(value))
 signature_texts = spec.get('xref_signatures') or []
@@ -1364,7 +1411,10 @@ if len(items) == 1:
     except Exception:
         pass
 
-result = json.dumps({'pointer_size': pointer_size, 'candidates': items})
+result_payload = {'pointer_size': pointer_size, 'candidates': items}
+if unicode_strings_without_owner:
+    result_payload['unicode_strings_without_owner'] = unicode_strings_without_owner
+result = json.dumps(result_payload)
 """
 
 
@@ -1419,7 +1469,10 @@ def _normalize_func_xref_specs(specs):
             return None
         spec["inline_alias"] = inline_alias
         if (
-            not any(spec[key] for key in ("xref_strings", "xref_gvs", "xref_signatures", "xref_funcs"))
+            not any(
+                spec[key]
+                for key in ("xref_strings", "xref_unicode_strings", "xref_gvs", "xref_signatures", "xref_funcs")
+            )
             and not inline_alias
         ):
             return None
@@ -1498,6 +1551,7 @@ async def preprocess_func_xrefs_via_mcp(
     exclude_floats=None,
     inline_alias=None,
     exclude_callees=None,
+    xref_unicode_strings=None,
 ):
     del debug
     try:
@@ -1518,6 +1572,7 @@ async def preprocess_func_xrefs_via_mcp(
     spec = {
         "func_name": func_name,
         "xref_strings": list(xref_strings or ()),
+        "xref_unicode_strings": list(xref_unicode_strings or ()),
         "xref_gvs": [],
         "xref_funcs": [],
         "exclude_funcs": [],
@@ -1593,6 +1648,7 @@ async def preprocess_func_xrefs_via_mcp(
             return None
     positive = (
         spec["xref_strings"]
+        or spec["xref_unicode_strings"]
         or spec["xref_gvs"]
         or spec["xref_signatures"]
         or spec["xref_funcs"]
@@ -3337,7 +3393,22 @@ async def _preprocess_llm_target(
                     if target_va is None:
                         continue
                 function = await _inspect_function_via_mcp(session, target_va, image_base, symbol_name)
+                used_across_boundary_budget = False
+                if function is None and "func_sig_allow_across_function_boundary" in desired_fields:
+                    # Tiny wrappers (e.g. legacy GL_EndRendering VID_FlipScreen
+                    # forwards) have no unique in-function signature; the
+                    # across-boundary window keeps the entry and grows the extent.
+                    function = await _inspect_function_via_mcp(
+                        session,
+                        target_va,
+                        image_base,
+                        symbol_name,
+                        allow_across_function_boundary=True,
+                    )
+                    used_across_boundary_budget = function is not None
                 if function:
+                    if used_across_boundary_budget:
+                        function["func_sig_allow_across_function_boundary"] = True
                     return function
             elif category == "vfunc":
                 if section == "found_vcall":
@@ -3671,6 +3742,7 @@ async def preprocess_common_skill(
                 session=session,
                 func_name=func_name,
                 xref_strings=xref_spec.get("xref_strings"),
+                xref_unicode_strings=xref_spec.get("xref_unicode_strings"),
                 xref_gvs=xref_spec.get("xref_gvs"),
                 xref_signatures=xref_spec.get("xref_signatures"),
                 xref_funcs=xref_spec.get("xref_funcs"),

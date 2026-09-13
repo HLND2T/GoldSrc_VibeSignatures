@@ -345,6 +345,43 @@ modules:
         expected_output:
           - studioapi_SetupPlayerModel_to_R_StudioChangePlayerModel_callsite_0.{platform}.yaml
           - studioapi_SetupPlayerModel_to_R_StudioChangePlayerModel_callsite_1.{platform}.yaml
+      - name: find-Cache_Alloc
+        expected_output:
+          - Cache_Alloc.{platform}.yaml
+      - name: find-Draw_DecalTexture
+        expected_output:
+          - Draw_DecalTexture.{platform}.yaml
+      - name: find-GL_Init
+        expected_output:
+          - GL_Init.{platform}.yaml
+      - name: find-SCR_UpdateScreen_RenderBody
+        expected_output:
+          - SCR_UpdateScreen_RenderBody.{platform}.yaml
+      - name: find-SCR_UpdateScreen_RenderBody-decompiles
+        expected_input:
+          - SCR_UpdateScreen_RenderBody.{platform}.yaml
+        expected_output:
+          - GL_BeginRendering.{platform}.yaml
+          - GL_EndRendering.{platform}.yaml
+          - GL_Finish2D.{platform}.yaml
+      - name: find-CVideoMode_Common_Init
+        expected_output:
+          - CVideoMode_Common_Init.{platform}.yaml
+      - name: find-CVideoMode_Common_DrawStartupGraphic-decompiles
+        expected_input:
+          - CVideoMode_Common_Init.{platform}.yaml
+        expected_output:
+          - CVideoMode_Common_DrawStartupGraphic.{platform}.yaml
+      - name: find-GL_BuildLightmaps
+        expected_input:
+          - R_NewMap.{platform}.yaml
+        expected_output:
+          - GL_BuildLightmaps.{platform}.yaml
+      - name: find-GL_BuildLightmaps-decompiles
+        expected_input:
+          - GL_BuildLightmaps.{platform}.yaml
+        expected_output:
+          - GL_Bind.{platform}.yaml
     symbols:
       - name: NLoadBlob
         category: func
@@ -532,3 +569,25 @@ modules:
       - name: studioapi_SetupPlayerModel_to_R_StudioChangePlayerModel_callsite_1
         category: patch
         platform: windows
+      - name: Cache_Alloc
+        category: func
+      - name: Draw_DecalTexture
+        category: func
+      - name: GL_Init
+        category: func
+      - name: SCR_UpdateScreen_RenderBody
+        category: func
+      - name: GL_BeginRendering
+        category: func
+      - name: GL_EndRendering
+        category: func
+      - name: GL_Finish2D
+        category: func
+      - name: CVideoMode_Common_Init
+        category: func
+      - name: CVideoMode_Common_DrawStartupGraphic
+        category: func
+      - name: GL_BuildLightmaps
+        category: func
+      - name: GL_Bind
+        category: func

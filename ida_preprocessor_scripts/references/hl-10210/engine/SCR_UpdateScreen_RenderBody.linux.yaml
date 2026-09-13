@@ -1,0 +1,399 @@
+func_name: "SCR_UpdateScreen_RenderBody"
+func_va: "0x16b5c0"
+disasm_code: |-
+  .text:0016B5C0                 push    esi
+  .text:0016B5C1                 push    ebx
+  .text:0016B5C2                 sub     esp, 34h
+  .text:0016B5C5                 call    Sys_FloatTime
+  .text:0016B5CA                 mov     eax, ds:cls.state
+  .text:0016B5CF                 lea     edx, [eax-2]
+  .text:0016B5D2                 cmp     edx, 1
+  .text:0016B5D5                 fstp    [esp+3Ch+fCurrentTime]
+  .text:0016B5D9                 jbe     loc_16B7E8
+  .text:0016B5DF                 cmp     eax, 5
+  .text:0016B5E2                 jz      loc_16B7E8
+  .text:0016B5E8                 jmp     short loc_16B600
+  .text:0016B5F0                 fstp    st
+  .text:0016B5F2                 lea     esi, [esi+0]
+  .text:0016B5F9                 lea     edi, [edi+0]
+  .text:0016B600                 mov     eax, ds:g_modfuncs.m_pfnFrameRender1
+  .text:0016B605                 test    eax, eax
+  .text:0016B607                 jz      short loc_16B60B
+  .text:0016B609                 call    eax
+  .text:0016B60B                 call    V_UpdatePalette
+  .text:0016B610                 mov     eax, offset glwidth
+  .text:0016B615                 mov     esi, offset glheight
+  .text:0016B61A                 ; width
+  .text:0016B61A                 mov     [esp+3Ch+width], eax; width
+  .text:0016B61E                 mov     eax, offset gly
+  .text:0016B623                 ; y
+  .text:0016B623                 mov     [esp+3Ch+y], eax; y
+  .text:0016B627                 ; height
+  .text:0016B627                 mov     [esp+3Ch+height], esi; height
+  .text:0016B62B                 ; x
+  .text:0016B62B                 mov     [esp+3Ch+x], offset glx; x
+  .text:0016B632                 call    GL_BeginRendering
+  .text:0016B637                 mov     eax, ds:vid.recalc_refdef
+  .text:0016B63C                 test    eax, eax
+  .text:0016B63E                 jnz     loc_16B960
+  .text:0016B644                 call    Con_CheckResize
+  .text:0016B649                 call    GLBeginHud
+  .text:0016B64E                 mov     eax, ds:r_refdef.vrect.x
+  .text:0016B653                 test    eax, eax
+  .text:0016B655                 jle     short loc_16B6A8
+  .text:0016B657                 mov     ebx, 98h
+  .text:0016B65C                 xor     esi, esi
+  .text:0016B65E                 ; h
+  .text:0016B65E                 mov     [esp+3Ch+height], ebx; h
+  .text:0016B662                 xor     ebx, ebx
+  .text:0016B664                 ; w
+  .text:0016B664                 mov     [esp+3Ch+width], eax; w
+  .text:0016B668                 ; y
+  .text:0016B668                 mov     [esp+3Ch+y], esi; y
+  .text:0016B66C                 ; x
+  .text:0016B66C                 mov     [esp+3Ch+x], 0; x
+  .text:0016B673                 call    Draw_TileClear
+  .text:0016B678                 mov     eax, ds:r_refdef.vrect.width
+  .text:0016B67D                 mov     ecx, 98h
+  .text:0016B682                 mov     edx, ds:r_refdef.vrect.x
+  .text:0016B688                 ; h
+  .text:0016B688                 mov     [esp+3Ch+height], ecx; h
+  .text:0016B68C                 ; y
+  .text:0016B68C                 mov     [esp+3Ch+y], ebx; y
+  .text:0016B690                 mov     ecx, eax
+  .text:0016B692                 sub     ecx, edx
+  .text:0016B694                 add     eax, edx
+  .text:0016B696                 add     ecx, 140h
+  .text:0016B69C                 ; w
+  .text:0016B69C                 mov     [esp+3Ch+width], ecx; w
+  .text:0016B6A0                 ; x
+  .text:0016B6A0                 mov     [esp+3Ch+x], eax; x
+  .text:0016B6A3                 call    Draw_TileClear
+  .text:0016B6A8                 cmp     ds:r_refdef.vrect.height, 97h
+  .text:0016B6B2                 jg      short loc_16B70C
+  .text:0016B6B4                 mov     eax, ds:r_refdef.vrect.y
+  .text:0016B6B9                 xor     edx, edx
+  .text:0016B6BB                 ; y
+  .text:0016B6BB                 mov     [esp+3Ch+y], edx; y
+  .text:0016B6BF                 ; h
+  .text:0016B6BF                 mov     [esp+3Ch+height], eax; h
+  .text:0016B6C3                 mov     eax, ds:r_refdef.vrect.width
+  .text:0016B6C8                 ; w
+  .text:0016B6C8                 mov     [esp+3Ch+width], eax; w
+  .text:0016B6CC                 mov     eax, ds:r_refdef.vrect.x
+  .text:0016B6D1                 ; x
+  .text:0016B6D1                 mov     [esp+3Ch+x], eax; x
+  .text:0016B6D4                 call    Draw_TileClear
+  .text:0016B6D9                 mov     eax, ds:r_refdef.vrect.height
+  .text:0016B6DE                 mov     edx, 98h
+  .text:0016B6E3                 mov     ecx, ds:r_refdef.vrect.y
+  .text:0016B6E9                 add     eax, ecx
+  .text:0016B6EB                 sub     edx, eax
+  .text:0016B6ED                 ; h
+  .text:0016B6ED                 mov     [esp+3Ch+height], edx; h
+  .text:0016B6F1                 mov     edx, ds:r_refdef.vrect.width
+  .text:0016B6F7                 ; y
+  .text:0016B6F7                 mov     [esp+3Ch+y], eax; y
+  .text:0016B6FB                 mov     eax, ds:r_refdef.vrect.x
+  .text:0016B700                 ; w
+  .text:0016B700                 mov     [esp+3Ch+width], edx; w
+  .text:0016B704                 ; x
+  .text:0016B704                 mov     [esp+3Ch+x], eax; x
+  .text:0016B707                 call    Draw_TileClear
+  .text:0016B70C                 mov     eax, ds:scr_drawloading
+  .text:0016B711                 test    eax, eax
+  .text:0016B713                 jnz     short loc_16B788
+  .text:0016B715                 mov     eax, ds:nMax.intermission
+  .text:0016B71A                 cmp     eax, 1
+  .text:0016B71D                 jz      loc_16B980
+  .text:0016B723                 cmp     eax, 2
+  .text:0016B726                 jz      short loc_16B72D
+  .text:0016B728                 cmp     eax, 3
+  .text:0016B72B                 jnz     short loc_16B73A
+  .text:0016B72D                 mov     eax, ds:key_dest
+  .text:0016B732                 test    eax, eax
+  .text:0016B734                 jz      loc_16B9C8
+  .text:0016B73A                 mov     eax, ds:r_notexture_mip
+  .text:0016B73F                 mov     eax, [eax+18h]
+  .text:0016B742                 ; texnum
+  .text:0016B742                 mov     [esp+3Ch+x], eax; texnum
+  .text:0016B745                 call    GL_Bind
+  .text:0016B74A                 movd    xmm0, ds:vid.height
+  .text:0016B752                 movq    [esp+3Ch+var_1C], xmm0
+  .text:0016B758                 fild    [esp+3Ch+var_1C]
+  .text:0016B75C                 fld     ds:scr_con_current
+  .text:0016B762                 fxch    st(1)
+  .text:0016B764                 fucomip st, st(1)
+  .text:0016B766                 fstp    st
+  .text:0016B768                 ja      loc_16B9B8
+  .text:0016B76E                 fld     developer.value
+  .text:0016B774                 fldz
+  .text:0016B776                 fxch    st(1)
+  .text:0016B778                 fucomip st, st(1)
+  .text:0016B77A                 fstp    st
+  .text:0016B77C                 jp      loc_16B998
+  .text:0016B782                 jnz     loc_16B998
+  .text:0016B788                 call    SCR_ConnectMsg
+  .text:0016B78D                 lea     esi, [esi+0]
+  .text:0016B790                 call    VGui_Paint
+  .text:0016B795                 call    GL_Finish2D
+  .text:0016B79A                 call    GLBeginHud
+  .text:0016B79F                 nop
+  .text:0016B7A0                 call    SCR_DrawFPS
+  .text:0016B7A5                 call    SCR_NetGraph
+  .text:0016B7AA                 call    VGuiWrap2_IsGameUIVisible
+  .text:0016B7AF                 test    eax, eax
+  .text:0016B7B1                 jz      loc_16B840
+  .text:0016B7B7                 call    GL_Finish2D
+  .text:0016B7BC                 mov     eax, ds:g_modfuncs.m_pfnFrameRender2
+  .text:0016B7C1                 test    eax, eax
+  .text:0016B7C3                 jz      short loc_16B7C7
+  .text:0016B7C5                 call    eax
+  .text:0016B7C7                 call    GL_EndRendering
+  .text:0016B7CC                 xor     eax, eax
+  .text:0016B7CE                 mov     ds:recursionGuard_25173, eax
+  .text:0016B7D3                 fld     [esp+3Ch+fCurrentTime]
+  .text:0016B7D7                 fstp    ds:g_LastScreenUpdateTime
+  .text:0016B7DD                 add     esp, 34h
+  .text:0016B7E0                 pop     ebx
+  .text:0016B7E1                 pop     esi
+  .text:0016B7E2                 retn
+  .text:0016B7E8                 fld     ds:g_LastScreenUpdateTime
+  .text:0016B7EE                 fldz
+  .text:0016B7F0                 fxch    st(1)
+  .text:0016B7F2                 fucomi  st, st(1)
+  .text:0016B7F4                 fstp    st(1)
+  .text:0016B7F6                 jbe     loc_16B5F0
+  .text:0016B7FC                 fld     [esp+3Ch+fCurrentTime]
+  .text:0016B800                 fsubrp  st(1), st
+  .text:0016B802                 fld     ds:flt_24BC50
+  .text:0016B808                 fxch    st(1)
+  .text:0016B80A                 fucomip st, st(1)
+  .text:0016B80C                 fstp    st
+  .text:0016B80E                 jbe     loc_16B600
+  .text:0016B814                 mov     [esp+3Ch+x], offset aLoadFailed; "load failed.\n"
+  .text:0016B81B                 call    Con_Printf
+  .text:0016B820                 mov     eax, offset aConnectionToSe; "Connection to server lost during level "...
+  .text:0016B825                 ; fmt
+  .text:0016B825                 mov     [esp+3Ch+y], eax; fmt
+  .text:0016B829                 ; bPrint
+  .text:0016B829                 mov     [esp+3Ch+x], 1; bPrint
+  .text:0016B830                 call    COM_ExplainDisconnection
+  .text:0016B835                 call    CL_Disconnect
+  .text:0016B83A                 jmp     loc_16B600
+  .text:0016B840                 fld     scr_showpause.value
+  .text:0016B846                 fldz
+  .text:0016B848                 fxch    st(1)
+  .text:0016B84A                 fucomip st, st(1)
+  .text:0016B84C                 fstp    st
+  .text:0016B84E                 jp      short loc_16B856
+  .text:0016B850                 jz      loc_16B900
+  .text:0016B856                 mov     eax, ds:nMax.paused
+  .text:0016B85B                 test    eax, eax
+  .text:0016B85D                 jz      loc_16B900
+  .text:0016B863                 call    VGuiWrap2_IsGameUIVisible
+  .text:0016B868                 test    eax, eax
+  .text:0016B86A                 jnz     loc_16B900
+  .text:0016B870                 mov     eax, ds:g_bIsCZeroRitual
+  .text:0016B875                 test    eax, eax
+  .text:0016B877                 jz      short loc_16B8B0
+  .text:0016B879                 mov     eax, ds:gGlobalVariables.mapname
+  .text:0016B87E                 test    eax, eax
+  .text:0016B880                 jz      short loc_16B8B0
+  .text:0016B882                 mov     edx, ds:pr_strings
+  .text:0016B888                 test    edx, edx
+  .text:0016B88A                 jz      short loc_16B8B0
+  .text:0016B88C                 add     eax, edx
+  .text:0016B88E                 mov     esi, offset aCzWorld; "cz_world"
+  .text:0016B893                 ; s2
+  .text:0016B893                 mov     [esp+3Ch+y], esi; s2
+  .text:0016B897                 ; s1
+  .text:0016B897                 mov     [esp+3Ch+x], eax; s1
+  .text:0016B89A                 call    Q_stricmp
+  .text:0016B89F                 test    eax, eax
+  .text:0016B8A1                 jz      short loc_16B900
+  .text:0016B8A3                 lea     esi, [esi+0]
+  .text:0016B8A9                 lea     edi, [edi+0]
+  .text:0016B8B0                 mov     eax, ds:glwidth
+  .text:0016B8B5                 mov     ebx, ds:scr_paused
+  .text:0016B8BB                 mov     edx, eax
+  .text:0016B8BD                 shr     edx, 1Fh
+  .text:0016B8C0                 add     eax, edx
+  .text:0016B8C2                 mov     edx, ds:glheight
+  .text:0016B8C8                 ; pic
+  .text:0016B8C8                 mov     [esp+3Ch+width], ebx; pic
+  .text:0016B8CC                 sar     eax, 1
+  .text:0016B8CE                 mov     ecx, edx
+  .text:0016B8D0                 shr     ecx, 1Fh
+  .text:0016B8D3                 add     edx, ecx
+  .text:0016B8D5                 mov     ecx, [ebx+4]
+  .text:0016B8D8                 sar     edx, 1
+  .text:0016B8DA                 mov     esi, ecx
+  .text:0016B8DC                 shr     esi, 1Fh
+  .text:0016B8DF                 add     ecx, esi
+  .text:0016B8E1                 sar     ecx, 1
+  .text:0016B8E3                 sub     edx, ecx
+  .text:0016B8E5                 ; y
+  .text:0016B8E5                 mov     [esp+3Ch+y], edx; y
+  .text:0016B8E9                 mov     edx, [ebx]
+  .text:0016B8EB                 mov     ecx, edx
+  .text:0016B8ED                 shr     ecx, 1Fh
+  .text:0016B8F0                 add     edx, ecx
+  .text:0016B8F2                 sar     edx, 1
+  .text:0016B8F4                 sub     eax, edx
+  .text:0016B8F6                 ; x
+  .text:0016B8F6                 mov     [esp+3Ch+x], eax; x
+  .text:0016B8F9                 call    Draw_Pic
+  .text:0016B8FE                 xchg    ax, ax
+  .text:0016B900                 mov     eax, ds:scr_center_lines
+  .text:0016B905                 mov     ebx, 1
+  .text:0016B90A                 cmp     eax, ds:scr_erase_lines
+  .text:0016B910                 mov     ds:scr_copytop, ebx
+  .text:0016B916                 jg      short loc_16B970
+  .text:0016B918                 fld     ds:scr_centertime_off
+  .text:0016B91E                 fsub    ds:host_frametime
+  .text:0016B924                 fstp    [esp+3Ch+var_10]
+  .text:0016B928                 fld     [esp+3Ch+var_10]
+  .text:0016B92C                 fst     ds:scr_centertime_off
+  .text:0016B932                 fldz
+  .text:0016B934                 fucomip st, st(1)
+  .text:0016B936                 fstp    st
+  .text:0016B938                 jnb     loc_16BA00
+  .text:0016B93E                 mov     edx, ds:key_dest
+  .text:0016B944                 test    edx, edx
+  .text:0016B946                 jnz     loc_16B7B7
+  .text:0016B94C                 call    SCR_DrawCenterString
+  .text:0016B951                 jmp     loc_16B7B7
+  .text:0016B960                 call    SCR_CalcRefdef
+  .text:0016B965                 jmp     loc_16B644
+  .text:0016B970                 mov     ds:scr_erase_lines, eax
+  .text:0016B975                 jmp     short loc_16B918
+  .text:0016B980                 mov     eax, ds:key_dest
+  .text:0016B985                 test    eax, eax
+  .text:0016B987                 jz      loc_16B788
+  .text:0016B98D                 jmp     loc_16B73A
+  .text:0016B998                 mov     eax, ds:r_notexture_mip
+  .text:0016B99D                 mov     eax, [eax+18h]
+  .text:0016B9A0                 ; texnum
+  .text:0016B9A0                 mov     [esp+3Ch+x], eax; texnum
+  .text:0016B9A3                 call    GL_Bind
+  .text:0016B9A8                 call    Con_DrawNotify
+  .text:0016B9AD                 jmp     loc_16B788
+  .text:0016B9B8                 call    Sbar_Draw
+  .text:0016B9BD                 lea     esi, [esi+0]
+  .text:0016B9C0                 jmp     loc_16B76E
+  .text:0016B9C8                 mov     eax, 1
+  .text:0016B9CD                 mov     ds:scr_copytop, eax
+  .text:0016B9D2                 mov     eax, ds:scr_center_lines
+  .text:0016B9D7                 cmp     eax, ds:scr_erase_lines
+  .text:0016B9DD                 jle     short loc_16B9E4
+  .text:0016B9DF                 mov     ds:scr_erase_lines, eax
+  .text:0016B9E4                 fld     ds:scr_centertime_off
+  .text:0016B9EA                 fsub    ds:host_frametime
+  .text:0016B9F0                 fstp    ds:scr_centertime_off
+  .text:0016B9F6                 call    SCR_DrawCenterString
+  .text:0016B9FB                 jmp     loc_16B788
+  .text:0016BA00                 mov     ecx, ds:nMax.intermission
+  .text:0016BA06                 test    ecx, ecx
+  .text:0016BA08                 jnz     loc_16B93E
+  .text:0016BA0E                 xchg    ax, ax
+  .text:0016BA10                 jmp     loc_16B7B7
+procedure: |-
+  // Alternative name is 'SCR_UpdateScreen.part.2'
+  void SCR_UpdateScreen_0()
+  {
+    double fCurrentTime; // [esp+18h] [ebp-24h]
+    float v1; // [esp+2Ch] [ebp-10h]
+  
+    fCurrentTime = Sys_FloatTime();
+    if ( ((unsigned int)(cls.state - 2) <= 1 || cls.state == ca_active)
+      && g_LastScreenUpdateTime > 0.0
+      && fCurrentTime - g_LastScreenUpdateTime > 120.0 )
+    {
+      Con_Printf("load failed.\n");
+      COM_ExplainDisconnection(true, "Connection to server lost during level change.");
+      CL_Disconnect();
+    }
+    if ( g_modfuncs.m_pfnFrameRender1 )
+      g_modfuncs.m_pfnFrameRender1();
+    V_UpdatePalette();
+    GL_BeginRendering(&glx, &gly, &glwidth, &glheight);
+    if ( vid.recalc_refdef )
+      SCR_CalcRefdef();
+    Con_CheckResize();
+    GLBeginHud();
+    if ( r_refdef.vrect.x > 0 )
+    {
+      Draw_TileClear(0, 0, r_refdef.vrect.x, 152);
+      Draw_TileClear(r_refdef.vrect.x + r_refdef.vrect.width, 0, r_refdef.vrect.width - r_refdef.vrect.x + 320, 152);
+    }
+    if ( r_refdef.vrect.height <= 151 )
+    {
+      Draw_TileClear(r_refdef.vrect.x, 0, r_refdef.vrect.width, r_refdef.vrect.y);
+      Draw_TileClear(
+        r_refdef.vrect.x,
+        r_refdef.vrect.y + r_refdef.vrect.height,
+        r_refdef.vrect.width,
+        152 - (r_refdef.vrect.y + r_refdef.vrect.height));
+    }
+    if ( scr_drawloading == false )
+    {
+      if ( nMax.intermission == 1 )
+      {
+        if ( key_dest == key_game )
+          goto LABEL_20;
+        goto LABEL_16;
+      }
+      if ( nMax.intermission != 2 && nMax.intermission != 3 || key_dest )
+      {
+  LABEL_16:
+        GL_Bind(r_notexture_mip->anim_total);
+        if ( (long double)_mm_cvtsi32_si128(vid.height).m128i_i64[0] > scr_con_current )
+          Sbar_Draw();
+        if ( developer.value != 0.0 )
+        {
+          GL_Bind(r_notexture_mip->anim_total);
+          Con_DrawNotify();
+        }
+        goto LABEL_20;
+      }
+      scr_copytop = 1;
+      if ( scr_center_lines > scr_erase_lines )
+        scr_erase_lines = scr_center_lines;
+      scr_centertime_off = scr_centertime_off - host_frametime;
+      SCR_DrawCenterString();
+    }
+  LABEL_20:
+    SCR_ConnectMsg();
+    VGui_Paint();
+    GL_Finish2D();
+    GLBeginHud();
+    SCR_DrawFPS();
+    SCR_NetGraph();
+    if ( !VGuiWrap2_IsGameUIVisible() )
+    {
+      if ( scr_showpause.value != 0.0
+        && nMax.paused
+        && !VGuiWrap2_IsGameUIVisible()
+        && (!g_bIsCZeroRitual
+         || !gGlobalVariables.mapname
+         || !pr_strings
+         || Q_stricmp(&pr_strings[gGlobalVariables.mapname], aCzWorld)) )
+      {
+        Draw_Pic(glwidth / 2 - scr_paused->width / 2, glheight / 2 - scr_paused->height / 2, scr_paused);
+      }
+      scr_copytop = 1;
+      if ( scr_center_lines > scr_erase_lines )
+        scr_erase_lines = scr_center_lines;
+      v1 = scr_centertime_off - host_frametime;
+      scr_centertime_off = v1;
+      if ( (v1 > 0.0 || nMax.intermission) && key_dest == key_game )
+        SCR_DrawCenterString();
+    }
+    GL_Finish2D();
+    if ( g_modfuncs.m_pfnFrameRender2 )
+      g_modfuncs.m_pfnFrameRender2();
+    GL_EndRendering();
+    recursionGuard_25173 = false;
+    g_LastScreenUpdateTime = fCurrentTime;
+  }

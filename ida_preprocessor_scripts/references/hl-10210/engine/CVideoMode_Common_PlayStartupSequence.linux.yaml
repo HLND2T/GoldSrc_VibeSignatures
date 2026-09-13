@@ -1,0 +1,34 @@
+func_name: "CVideoMode_Common_PlayStartupSequence"
+func_va: "0x1b42a0"
+disasm_code: |-
+  .text:001B42A0                 sub     esp, 1Ch
+  .text:001B42A3                 mov     [esp+1Ch+parm], offset aNovid; "-novid"
+  .text:001B42AA                 call    COM_CheckParm
+  .text:001B42AF                 test    eax, eax
+  .text:001B42B1                 jnz     short loc_1B42C0
+  .text:001B42B3                 mov     eax, game
+  .text:001B42B8                 mov     edx, [eax]
+  .text:001B42BA                 mov     [esp+1Ch+parm], eax
+  .text:001B42BD                 call    dword ptr [edx+34h]
+  .text:001B42C0                 mov     eax, game
+  .text:001B42C5                 mov     edx, [eax]
+  .text:001B42C7                 mov     [esp+1Ch+parm], eax
+  .text:001B42CA                 call    dword ptr [edx+18h]
+  .text:001B42CD                 ; window
+  .text:001B42CD                 mov     [esp+1Ch+window], eax; window
+  .text:001B42D1                 mov     eax, [esp+1Ch+this]
+  .text:001B42D5                 ; this
+  .text:001B42D5                 mov     [esp+1Ch+parm], eax; this
+  .text:001B42D8                 call    _ZN17CVideoMode_Common18DrawStartupGraphicEPv; CVideoMode_Common_DrawStartupGraphic
+  .text:001B42DD                 add     esp, 1Ch
+  .text:001B42E0                 retn
+procedure: |-
+  void __cdecl CVideoMode_Common::PlayStartupSequence(CVideoMode_Common *const this)
+  {
+    HWND window; // [esp+4h] [ebp-18h]
+  
+    if ( !COM_CheckParm("-novid") )
+      (*((void (__cdecl **)(IGame *))game->_vptr_IGame + 13))(game);
+    window = (HWND)(*((int (__cdecl **)(IGame *))game->_vptr_IGame + 6))(game);
+    CVideoMode_Common_DrawStartupGraphic(this, window);
+  }
