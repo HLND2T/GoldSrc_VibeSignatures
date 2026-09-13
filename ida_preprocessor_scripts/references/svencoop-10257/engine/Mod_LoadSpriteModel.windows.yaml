@@ -1,0 +1,247 @@
+func_name: "Mod_LoadSpriteModel"
+func_va: "0x1d09d00"
+disasm_code: |-
+  .text:01D09D00                 ; SvEngine Mod_LoadSpriteModel validates the sprite header, allocates the sprite block with Hunk_AllocName(size, loadname), then fills frame entries. Current binary behavior is authoritative.
+  .text:01D09D00                 mov     eax, LittleLong; SvEngine Mod_LoadSpriteModel validates the sprite header, allocates the sprite block with Hunk_AllocName(size, loadname), then fills frame entries. Current binary behavior is authoritative.
+  .text:01D09D05                 sub     esp, 8
+  .text:01D09D08                 push    ebx
+  .text:01D09D09                 push    ebp
+  .text:01D09D0A                 push    esi
+  .text:01D09D0B                 push    edi
+  .text:01D09D0C                 mov     edi, [esp+18h+buffer]
+  .text:01D09D10                 ; int
+  .text:01D09D10                 push    dword ptr [edi+4]; int
+  .text:01D09D13                 call    eax ; LittleLong
+  .text:01D09D15                 mov     ebp, [esp+1Ch+ArgList]
+  .text:01D09D19                 add     esp, 4
+  .text:01D09D1C                 cmp     eax, 2
+  .text:01D09D1F                 jz      short loc_1D09D32
+  .text:01D09D21                 push    2
+  .text:01D09D23                 push    eax
+  .text:01D09D24                 ; ArgList
+  .text:01D09D24                 push    ebp; ArgList
+  .text:01D09D25                 push    offset aSpriteSHasWron; "Sprite \"%s\" has wrong version number "...
+  .text:01D09D2A                 call    Sys_Error
+  .text:01D09D2F                 add     esp, 10h
+  .text:01D09D32                 ; int
+  .text:01D09D32                 push    dword ptr [edi+1Ch]; int
+  .text:01D09D35                 mov     eax, LittleLong
+  .text:01D09D3A                 call    eax ; LittleLong
+  .text:01D09D3C                 movsx   ecx, word ptr [edi+28h]
+  .text:01D09D40                 mov     esi, eax
+  .text:01D09D42                 ; int
+  .text:01D09D42                 push    offset loadname; int
+  .text:01D09D47                 mov     [esp+20h+var_8], esi
+  .text:01D09D4B                 lea     eax, [ecx+1]
+  .text:01D09D4E                 lea     eax, [ecx+eax*2]
+  .text:01D09D51                 lea     ecx, [eax+1Ch]
+  .text:01D09D54                 mov     [esp+20h+buffer], eax
+  .text:01D09D58                 lea     ecx, [ecx+esi*8]
+  .text:01D09D5B                 ; ArgList
+  .text:01D09D5B                 push    ecx; ArgList
+  .text:01D09D5C                 call    Hunk_AllocName
+  .text:01D09D61                 mov     ebx, eax
+  .text:01D09D63                 mov     [ebp+184h], ebx
+  .text:01D09D69                 ; int
+  .text:01D09D69                 push    dword ptr [edi+8]; int
+  .text:01D09D6C                 mov     ecx, LittleLong
+  .text:01D09D72                 call    ecx ; LittleLong
+  .text:01D09D74                 mov     [ebx], ax
+  .text:01D09D77                 ; int
+  .text:01D09D77                 push    dword ptr [edi+0Ch]; int
+  .text:01D09D7A                 mov     ecx, LittleLong
+  .text:01D09D80                 call    ecx ; LittleLong
+  .text:01D09D82                 mov     [ebx+2], ax
+  .text:01D09D86                 ; int
+  .text:01D09D86                 push    dword ptr [edi+14h]; int
+  .text:01D09D89                 mov     eax, LittleLong
+  .text:01D09D8E                 call    eax ; LittleLong
+  .text:01D09D90                 mov     [ebx+4], eax
+  .text:01D09D93                 ; int
+  .text:01D09D93                 push    dword ptr [edi+18h]; int
+  .text:01D09D96                 mov     eax, LittleLong
+  .text:01D09D9B                 call    eax ; LittleLong
+  .text:01D09D9D                 add     esp, 18h
+  .text:01D09DA0                 mov     [ebx+8], eax
+  .text:01D09DA3                 fld     dword ptr [edi+20h]
+  .text:01D09DA6                 mov     eax, dword_2D29AF0
+  .text:01D09DAB                 mov     [esp+1Ch+var_4], eax
+  .text:01D09DAF                 fstp    [esp+1Ch+var_1C]
+  .text:01D09DB2                 call    [esp+1Ch+var_4]
+  .text:01D09DB6                 fstp    dword ptr [ebx+14h]
+  .text:01D09DB9                 ; int
+  .text:01D09DB9                 push    dword ptr [edi+24h]; int
+  .text:01D09DBC                 mov     eax, LittleLong
+  .text:01D09DC1                 call    eax ; LittleLong
+  .text:01D09DC3                 mov     [ebp+4Ch], eax
+  .text:01D09DC6                 lea     ecx, [ebx+1Ch]
+  .text:01D09DC9                 mov     eax, [ebx+4]
+  .text:01D09DCC                 lea     ecx, [ecx+esi*8]
+  .text:01D09DCF                 cdq
+  .text:01D09DD0                 sub     eax, edx
+  .text:01D09DD2                 mov     [ebx+0Ch], esi
+  .text:01D09DD5                 sar     eax, 1
+  .text:01D09DD7                 neg     eax
+  .text:01D09DD9                 mov     [esp+20h+var_4], eax
+  .text:01D09DDD                 fild    [esp+20h+var_4]
+  .text:01D09DE1                 fst     dword ptr [ebp+58h]
+  .text:01D09DE4                 fstp    dword ptr [ebp+54h]
+  .text:01D09DE7                 mov     eax, [ebx+4]
+  .text:01D09DEA                 cdq
+  .text:01D09DEB                 sub     eax, edx
+  .text:01D09DED                 sar     eax, 1
+  .text:01D09DEF                 mov     [esp+20h+var_4], eax
+  .text:01D09DF3                 fild    [esp+20h+var_4]
+  .text:01D09DF7                 fst     dword ptr [ebp+64h]
+  .text:01D09DFA                 fstp    dword ptr [ebp+60h]
+  .text:01D09DFD                 mov     eax, [ebx+8]
+  .text:01D09E00                 cdq
+  .text:01D09E01                 sub     eax, edx
+  .text:01D09E03                 sar     eax, 1
+  .text:01D09E05                 neg     eax
+  .text:01D09E07                 mov     [esp+20h+var_4], eax
+  .text:01D09E0B                 fild    [esp+20h+var_4]
+  .text:01D09E0F                 fstp    dword ptr [ebp+5Ch]
+  .text:01D09E12                 mov     eax, [ebx+8]
+  .text:01D09E15                 cdq
+  .text:01D09E16                 sub     eax, edx
+  .text:01D09E18                 sar     eax, 1
+  .text:01D09E1A                 mov     [esp+20h+var_4], eax
+  .text:01D09E1E                 lea     eax, ds:1Eh[esi*8]
+  .text:01D09E25                 fild    [esp+20h+var_4]
+  .text:01D09E29                 fstp    dword ptr [ebp+68h]
+  .text:01D09E2C                 mov     [ebx+10h], eax
+  .text:01D09E2F                 mov     dword_2040594, ecx
+  .text:01D09E35                 push    [esp+20h+buffer]
+  .text:01D09E39                 lea     eax, [edi+2Ah]
+  .text:01D09E3C                 push    eax
+  .text:01D09E3D                 push    ecx
+  .text:01D09E3E                 call    sub_1D3D800
+  .text:01D09E43                 add     esp, 14h
+  .text:01D09E46                 cmp     esi, 1
+  .text:01D09E49                 jge     short loc_1D09E5D
+  .text:01D09E4B                 push    esi
+  .text:01D09E4C                 ; ArgList
+  .text:01D09E4C                 push    ebp; ArgList
+  .text:01D09E4D                 push    offset aSpriteSHasInva; "Sprite \"%s\" has invalid number of fra"...
+  .text:01D09E52                 lfence
+  .text:01D09E55                 call    Sys_Error
+  .text:01D09E5A                 add     esp, 0Ch
+  .text:01D09E5D                 add     edi, 28h ; '('
+  .text:01D09E60                 mov     [ebp+48h], esi
+  .text:01D09E63                 add     edi, [esp+18h+buffer]
+  .text:01D09E67                 xor     esi, esi
+  .text:01D09E69                 mov     dword ptr [ebp+50h], 0
+  .text:01D09E70                 cmp     [esp+18h+var_8], esi
+  .text:01D09E74                 jle     short loc_1D09EBB
+  .text:01D09E76                 mov     ebp, [esp+18h+var_8]
+  .text:01D09E7A                 lfence
+  .text:01D09E7D                 lea     ecx, [ecx+0]
+  .text:01D09E80                 ; int
+  .text:01D09E80                 push    dword ptr [edi]; int
+  .text:01D09E82                 mov     eax, LittleLong
+  .text:01D09E87                 call    eax ; LittleLong
+  .text:01D09E89                 add     esp, 4
+  .text:01D09E8C                 mov     [ebx+esi*8+1Ch], eax
+  .text:01D09E90                 lea     ecx, [ebx+20h]
+  .text:01D09E93                 add     edi, 4
+  .text:01D09E96                 lea     ecx, [ecx+esi*8]
+  .text:01D09E99                 push    esi
+  .text:01D09E9A                 push    ecx
+  .text:01D09E9B                 push    edi
+  .text:01D09E9C                 push    ebx
+  .text:01D09E9D                 test    eax, eax
+  .text:01D09E9F                 jnz     short loc_1D09EA8
+  .text:01D09EA1                 call    sub_1D09EF0
+  .text:01D09EA6                 jmp     short loc_1D09EAD
+  .text:01D09EA8                 call    sub_1D0A080
+  .text:01D09EAD                 inc     esi
+  .text:01D09EAE                 add     esp, 10h
+  .text:01D09EB1                 mov     edi, eax
+  .text:01D09EB3                 cmp     esi, ebp
+  .text:01D09EB5                 jl      short loc_1D09E80
+  .text:01D09EB7                 mov     ebp, [esp+18h+ArgList]
+  .text:01D09EBB                 pop     edi
+  .text:01D09EBC                 pop     esi
+  .text:01D09EBD                 mov     dword ptr [ebp+44h], 1
+  .text:01D09EC4                 pop     ebp
+  .text:01D09EC5                 pop     ebx
+  .text:01D09EC6                 add     esp, 8
+  .text:01D09EC9                 retn
+procedure: |-
+  void __cdecl Mod_LoadSpriteModel(model_t *mod, void *buffer)
+  {
+    int v3; // eax
+    model_t *v4; // ebp
+    int v5; // esi
+    char *v6; // ebx
+    int v7; // kr00_4
+    double v8; // st7
+    double v9; // st7
+    int *v10; // edi
+    int v11; // esi
+    int v12; // eax
+    int *v13; // eax
+    int *v14; // [esp-8h] [ebp-24h]
+    int v15; // [esp-4h] [ebp-20h]
+    int v16; // [esp+14h] [ebp-8h]
+    void *buffera; // [esp+24h] [ebp+8h]
+  
+    v3 = LittleLong(*((_DWORD *)buffer + 1));
+    v4 = mod;
+    if ( v3 != 2 )
+      Sys_Error("Sprite \"%s\" has wrong version number (%i should be %i)", mod->name, v3, 2);
+    v5 = LittleLong(*((_DWORD *)buffer + 7));
+    v16 = v5;
+    buffera = (void *)(*((__int16 *)buffer + 20) + 2 * (*((__int16 *)buffer + 20) + 1));
+    v6 = Hunk_AllocName((int)buffera + 8 * v5 + 28, loadname);
+    *(_DWORD *)&mod->_pad_0044[320] = v6;
+    *(_WORD *)v6 = LittleLong(*((_DWORD *)buffer + 2));
+    *((_WORD *)v6 + 1) = LittleLong(*((_DWORD *)buffer + 3));
+    *((_DWORD *)v6 + 1) = LittleLong(*((_DWORD *)buffer + 5));
+    *((_DWORD *)v6 + 2) = LittleLong(*((_DWORD *)buffer + 6));
+    *((float *)v6 + 5) = dword_2D29AF0(*((float *)buffer + 8));
+    *(_DWORD *)&mod->_pad_0044[8] = LittleLong(*((_DWORD *)buffer + 9));
+    v7 = *((_DWORD *)v6 + 1);
+    *((_DWORD *)v6 + 3) = v5;
+    v8 = (double)(v7 / -2);
+    *(float *)&mod->_pad_0044[20] = v8;
+    *(float *)&mod->_pad_0044[16] = v8;
+    v9 = (double)(*((_DWORD *)v6 + 1) / 2);
+    *(float *)&mod->_pad_0044[32] = v9;
+    *(float *)&mod->_pad_0044[28] = v9;
+    *(float *)&mod->_pad_0044[24] = (float)(*((_DWORD *)v6 + 2) / -2);
+    *(float *)&mod->_pad_0044[36] = (float)(*((_DWORD *)v6 + 2) / 2);
+    *((_DWORD *)v6 + 4) = 8 * v5 + 30;
+    dword_2040594 = (int)&v6[8 * v5 + 28];
+    sub_1D3D800(&v6[8 * v5 + 28], (char *)buffer + 42, buffera);
+    if ( v5 < 1 )
+    {
+      _mm_lfence();
+      Sys_Error("Sprite \"%s\" has invalid number of frames (%d)\n", mod->name, v5);
+    }
+    *(_DWORD *)&mod->_pad_0044[4] = v5;
+    v10 = (int *)((char *)buffer + (_DWORD)buffera + 40);
+    v11 = 0;
+    *(_DWORD *)&mod->_pad_0044[12] = 0;
+    if ( v16 > 0 )
+    {
+      _mm_lfence();
+      do
+      {
+        v12 = LittleLong(*v10);
+        *(_DWORD *)&v6[8 * v11 + 28] = v12;
+        v15 = (int)&v6[8 * v11 + 32];
+        v14 = v10 + 1;
+        if ( v12 )
+          v13 = (int *)sub_1D0A080(v6, v14, v15, v11);
+        else
+          v13 = (int *)sub_1D09EF0(v6, v14, v15, v11);
+        ++v11;
+        v10 = v13;
+      }
+      while ( v11 < v16 );
+      v4 = mod;
+    }
+    *(_DWORD *)v4->_pad_0044 = 1;
+  }

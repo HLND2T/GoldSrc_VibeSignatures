@@ -1,0 +1,5 @@
+func_name: Mod_LoadBrushModel
+func_va: '0x1d42660'
+func_rva: '0x42660'
+func_size: '0x22e'
+func_sig: 83 EC 0C A1 ?? ?? ?? ?? 53 55 56 57 8B 7C 24 ?? 33 DB 89 58 ?? 8B 0F 51 FF 15 ?? ?? ?? ?? 8B 74 24 ?? 83 C4 04

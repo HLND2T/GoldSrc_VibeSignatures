@@ -1,0 +1,5 @@
+func_name: Mod_LoadStudioModel
+func_va: '0x1d61a00'
+func_rva: '0x61a00'
+func_size: '0x18d'
+func_sig: 81 EC 0C 01 00 00 53 8B 9C 24 ?? ?? ?? ?? 55 56 8B 43 ?? 57 50 FF 15 ?? ?? ?? ?? 83 C4 04 83 F8 0A

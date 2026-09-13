@@ -404,6 +404,38 @@ modules:
       - name: find-GL_SetMode
         expected_output:
           - GL_SetMode.{platform}.yaml
+      - name: find-Host_ClearMemory
+        expected_output:
+          - Host_ClearMemory.{platform}.yaml
+      - name: find-Mod_LoadSpriteModel
+        expected_output:
+          - Mod_LoadSpriteModel.{platform}.yaml
+      - name: find-Mod_LoadStudioModel
+        expected_output:
+          - Mod_LoadStudioModel.{platform}.yaml
+      - name: find-Mod_PointInLeaf
+        expected_output:
+          - Mod_PointInLeaf.{platform}.yaml
+      - name: find-Hunk_AllocName
+        platform: windows
+        expected_output:
+          - Hunk_AllocName.{platform}.yaml
+      - name: find-Mod_LoadSpriteModel-decompiles
+        platform: linux
+        expected_input:
+          - Mod_LoadSpriteModel.{platform}.yaml
+        expected_output:
+          - Hunk_AllocName.{platform}.yaml
+      - name: find-Mod_LoadBrushModel
+        platform: windows
+        expected_output:
+          - Mod_LoadBrushModel.{platform}.yaml
+      - name: find-Mod_LoadModel-brushmodel-decompiles
+        platform: linux
+        expected_input:
+          - Mod_LoadModel.{platform}.yaml
+        expected_output:
+          - Mod_LoadBrushModel.{platform}.yaml
     symbols:
       - name: CL_Set_ServerExtraInfo
         category: func
@@ -630,6 +662,18 @@ modules:
       - name: DT_LoadDetailTexture
         category: func
         platform: linux
+      - name: Host_ClearMemory
+        category: func
+      - name: Hunk_AllocName
+        category: func
+      - name: Mod_LoadBrushModel
+        category: func
+      - name: Mod_LoadSpriteModel
+        category: func
+      - name: Mod_LoadStudioModel
+        category: func
+      - name: Mod_PointInLeaf
+        category: func
   - name: client
     module_windows: client.dll
     module_linux: client.so
