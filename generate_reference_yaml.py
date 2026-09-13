@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 
 from analysis_config import AnalysisConfigError, resolve_analysis_config, validated_tag
 from binary_format import BinaryFormatError, inspect_binary, validate_binary
+from binary_identity import validate_binary_is_blob
 from ida_analyze_util import (
     build_function_detail_export_py_eval,
     build_remote_text_export_py_eval,
@@ -216,6 +217,40 @@ def _infer_platform_from_binary_name(binary_name: str) -> str | None:
     if ".so" in suffixes:
         return "linux"
     return None
+
+
+def _prepare_configured_binary(binary_path: Path, platform: str) -> Path:
+    """Decrypt a Metahook blob into its sibling PE so references can be generated.
+
+    Mirrors ida_analyze_bin.prepare_analysis_binary: blob game versions only
+    expose a decryptable container as the configured module binary, while the
+    analysis IDB and reference generation target the decrypted PE.
+    """
+    binary_path = Path(binary_path)
+    try:
+        is_blob = validate_binary_is_blob(binary_path, platform)
+    except (ValueError, OSError):
+        # Missing/corrupt source: fall through to the normal validation path
+        # so the failure mode matches the non-blob behavior exactly.
+        return binary_path
+    if not is_blob:
+        return binary_path
+    import decrypt_blob
+
+    output = binary_path.with_name(f"{binary_path.stem}.decrypt{binary_path.suffix}")
+    if output.is_file():
+        try:
+            validate_binary(output, platform)
+        except BinaryFormatError:
+            pass
+        else:
+            return output
+    parsed = decrypt_blob.parse_blob(binary_path.read_bytes())
+    pe = decrypt_blob.build_pe(parsed)
+    decrypt_blob.verify_pe(pe, parsed)
+    output.write_bytes(pe)
+    validate_binary(output, platform)
+    return output
 
 
 def validate_autostart_binary(binary_path: str | Path, platform: str | None) -> str:
@@ -853,12 +888,15 @@ async def run_reference_generation(
             )
         except AnalysisConfigError as exc:
             raise ReferenceGenerationError(str(exc)) from exc
-        configured_binary = resolve_configured_binary_path(
-            resolved_repo_root,
-            resolved_target_before_session["gamever"],
-            resolved_target_before_session["module"],
+        configured_binary = _prepare_configured_binary(
+            resolve_configured_binary_path(
+                resolved_repo_root,
+                resolved_target_before_session["gamever"],
+                resolved_target_before_session["module"],
+                resolved_target_before_session["platform"],
+                config_path,
+            ),
             resolved_target_before_session["platform"],
-            config_path,
         )
         validate_autostart_binary(configured_binary, resolved_target_before_session["platform"])
 
@@ -908,12 +946,15 @@ async def run_reference_generation(
                 raise ReferenceGenerationError(str(exc)) from exc
         print(f"Analysis config: {config_path}")
         if configured_binary is None:
-            configured_binary = resolve_configured_binary_path(
-                resolved_repo_root,
-                resolved_target["gamever"],
-                resolved_target["module"],
+            configured_binary = _prepare_configured_binary(
+                resolve_configured_binary_path(
+                    resolved_repo_root,
+                    resolved_target["gamever"],
+                    resolved_target["module"],
+                    resolved_target["platform"],
+                    config_path,
+                ),
                 resolved_target["platform"],
-                config_path,
             )
             validate_autostart_binary(configured_binary, resolved_target["platform"])
         if args.auto_start_mcp:

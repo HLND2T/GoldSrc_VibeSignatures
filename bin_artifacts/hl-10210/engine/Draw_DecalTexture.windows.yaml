@@ -1,0 +1,5 @@
+func_name: Draw_DecalTexture
+func_va: '0x101bf520'
+func_rva: '0x1bf520'
+func_size: '0x8f'
+func_sig: 55 8B EC 8B 4D ?? 85 C9 79 ?? F7 D1 69 D1 50 02 00 00 8B 82 ?? ?? ?? ?? 85 C0 74 ?? 83 38 00

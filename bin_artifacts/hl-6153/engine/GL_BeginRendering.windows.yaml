@@ -1,0 +1,5 @@
+func_name: GL_BeginRendering
+func_va: '0x1d4c140'
+func_rva: '0x4c140'
+func_size: '0x12c'
+func_sig: 55 8B EC 8B 45 ?? 8B 4D ?? 56 57 C7 00 00 00 00 00 C7 01 00 00 00 00 E8 ?? ?? ?? ?? 8B 7D ??

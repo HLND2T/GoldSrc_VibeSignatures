@@ -1,0 +1,386 @@
+func_name: "CVideoMode_Common_Init"
+func_va: "0x1dad810"
+disasm_code: |-
+  .text:01DAD810                 push    ebp
+  .text:01DAD811                 mov     ebp, esp
+  .text:01DAD813                 sub     esp, 20h
+  .text:01DAD816                 push    esi
+  .text:01DAD817                 mov     esi, ecx
+  .text:01DAD819                 mov     ecx, off_1E5CEF0
+  .text:01DAD81F                 mov     eax, [ecx]
+  .text:01DAD821                 call    dword ptr [eax+0Ch]
+  .text:01DAD824                 test    al, al
+  .text:01DAD826                 jnz     short loc_1DAD82F
+  .text:01DAD828                 pop     esi
+  .text:01DAD829                 mov     esp, ebp
+  .text:01DAD82B                 pop     ebp
+  .text:01DAD82C                 retn    4
+  .text:01DAD82F                 mov     ecx, off_1E53520
+  .text:01DAD835                 push    ebx
+  .text:01DAD836                 push    edi
+  .text:01DAD837                 push    400h
+  .text:01DAD83C                 mov     edx, [ecx]
+  .text:01DAD83E                 push    offset aScreenwidth; "ScreenWidth"
+  .text:01DAD843                 call    dword ptr [edx+8]
+  .text:01DAD846                 mov     ecx, off_1E53520
+  .text:01DAD84C                 mov     [ebp+var_4], eax
+  .text:01DAD84F                 push    300h
+  .text:01DAD854                 push    offset aScreenheight; "ScreenHeight"
+  .text:01DAD859                 mov     eax, [ecx]
+  .text:01DAD85B                 call    dword ptr [eax+8]
+  .text:01DAD85E                 mov     ecx, off_1E53520
+  .text:01DAD864                 mov     ebx, eax
+  .text:01DAD866                 push    20h ; ' '
+  .text:01DAD868                 push    offset aScreenbpp; "ScreenBPP"
+  .text:01DAD86D                 mov     edx, [ecx]
+  .text:01DAD86F                 mov     [ebp+var_8], ebx
+  .text:01DAD872                 call    dword ptr [edx+8]
+  .text:01DAD875                 push    offset a16bpp; "-16bpp"
+  .text:01DAD87A                 call    sub_1D2B320
+  .text:01DAD87F                 push    offset a24bpp; "-24bpp"
+  .text:01DAD884                 call    sub_1D2B320
+  .text:01DAD889                 push    offset a32bpp; "-32bpp"
+  .text:01DAD88E                 call    sub_1D2B320
+  .text:01DAD893                 mov     eax, [esi]
+  .text:01DAD895                 add     esp, 0Ch
+  .text:01DAD898                 mov     ecx, esi
+  .text:01DAD89A                 call    dword ptr [eax+3Ch]
+  .text:01DAD89D                 mov     dword ptr [esi+190h], 0
+  .text:01DAD8A7                 call    sub_1DAD7A0
+  .text:01DAD8AC                 mov     eax, [esi+190h]
+  .text:01DAD8B2                 cmp     eax, 2
+  .text:01DAD8B5                 jl      short loc_1DAD8CB
+  .text:01DAD8B7                 ; CompareFunction
+  .text:01DAD8B7                 push    offset sub_1DADB00; CompareFunction
+  .text:01DAD8BC                 ; SizeOfElements
+  .text:01DAD8BC                 push    0Ch; SizeOfElements
+  .text:01DAD8BE                 lea     ecx, [esi+4]
+  .text:01DAD8C1                 ; NumOfElements
+  .text:01DAD8C1                 push    eax; NumOfElements
+  .text:01DAD8C2                 ; Base
+  .text:01DAD8C2                 push    ecx; Base
+  .text:01DAD8C3                 call    _qsort
+  .text:01DAD8C8                 add     esp, 10h
+  .text:01DAD8CB                 push    offset aWidth; "-width"
+  .text:01DAD8D0                 mov     [ebp+var_10], 0FFFFFFFFh
+  .text:01DAD8D7                 call    sub_1D2B320
+  .text:01DAD8DC                 add     esp, 4
+  .text:01DAD8DF                 test    eax, eax
+  .text:01DAD8E1                 jz      short loc_1DAD8F9
+  .text:01DAD8E3                 mov     edx, dword_2D077E8
+  .text:01DAD8E9                 mov     eax, [edx+eax*4+4]
+  .text:01DAD8ED                 ; String
+  .text:01DAD8ED                 push    eax; String
+  .text:01DAD8EE                 call    _atoi
+  .text:01DAD8F3                 add     esp, 4
+  .text:01DAD8F6                 mov     [ebp+var_4], eax
+  .text:01DAD8F9                 push    offset aW_6; "-w"
+  .text:01DAD8FE                 call    sub_1D2B320
+  .text:01DAD903                 add     esp, 4
+  .text:01DAD906                 test    eax, eax
+  .text:01DAD908                 jz      short loc_1DAD920
+  .text:01DAD90A                 mov     ecx, dword_2D077E8
+  .text:01DAD910                 mov     edx, [ecx+eax*4+4]
+  .text:01DAD914                 ; String
+  .text:01DAD914                 push    edx; String
+  .text:01DAD915                 call    _atoi
+  .text:01DAD91A                 add     esp, 4
+  .text:01DAD91D                 mov     [ebp+var_4], eax
+  .text:01DAD920                 push    offset aHeight; "-height"
+  .text:01DAD925                 call    sub_1D2B320
+  .text:01DAD92A                 add     esp, 4
+  .text:01DAD92D                 test    eax, eax
+  .text:01DAD92F                 jz      short loc_1DAD949
+  .text:01DAD931                 mov     ecx, dword_2D077E8
+  .text:01DAD937                 mov     edx, [ecx+eax*4+4]
+  .text:01DAD93B                 ; String
+  .text:01DAD93B                 push    edx; String
+  .text:01DAD93C                 call    _atoi
+  .text:01DAD941                 mov     ebx, eax
+  .text:01DAD943                 add     esp, 4
+  .text:01DAD946                 mov     [ebp+var_8], ebx
+  .text:01DAD949                 push    offset asc_1E5C3F8; "-h"
+  .text:01DAD94E                 call    sub_1D2B320
+  .text:01DAD953                 add     esp, 4
+  .text:01DAD956                 test    eax, eax
+  .text:01DAD958                 jz      short loc_1DAD972
+  .text:01DAD95A                 mov     ecx, dword_2D077E8
+  .text:01DAD960                 mov     edx, [ecx+eax*4+4]
+  .text:01DAD964                 ; String
+  .text:01DAD964                 push    edx; String
+  .text:01DAD965                 call    _atoi
+  .text:01DAD96A                 mov     ebx, eax
+  .text:01DAD96C                 add     esp, 4
+  .text:01DAD96F                 mov     [ebp+var_8], ebx
+  .text:01DAD972                 mov     eax, [esi]
+  .text:01DAD974                 mov     ecx, esi
+  .text:01DAD976                 call    dword ptr [eax+1Ch]
+  .text:01DAD979                 test    al, al
+  .text:01DAD97B                 jz      short loc_1DAD9A8
+  .text:01DAD97D                 lea     ecx, [ebp+var_20]
+  .text:01DAD980                 push    ecx
+  .text:01DAD981                 push    0
+  .text:01DAD983                 call    SDL_GetDisplayBounds
+  .text:01DAD988                 add     esp, 8
+  .text:01DAD98B                 test    eax, eax
+  .text:01DAD98D                 jnz     short loc_1DAD9A8
+  .text:01DAD98F                 mov     eax, [ebp+var_18]
+  .text:01DAD992                 mov     ecx, [ebp+var_4]
+  .text:01DAD995                 cmp     ecx, eax
+  .text:01DAD997                 jle     short loc_1DAD99C
+  .text:01DAD999                 mov     [ebp+var_4], eax
+  .text:01DAD99C                 mov     eax, [ebp+var_14]
+  .text:01DAD99F                 cmp     ebx, eax
+  .text:01DAD9A1                 jle     short loc_1DAD9A8
+  .text:01DAD9A3                 mov     ebx, eax
+  .text:01DAD9A5                 mov     [ebp+var_8], ebx
+  .text:01DAD9A8                 mov     eax, [ebp+var_4]
+  .text:01DAD9AB                 test    eax, eax
+  .text:01DAD9AD                 jle     short loc_1DAD9D2
+  .text:01DAD9AF                 test    ebx, ebx
+  .text:01DAD9B1                 jge     short loc_1DAD9D2
+  .text:01DAD9B3                 fild    [ebp+var_4]
+  .text:01DAD9B6                 fstp    qword ptr [ebp-0Ch]
+  .text:01DAD9B9                 fld     qword ptr [ebp-0Ch]
+  .text:01DAD9BC                 fmul    ds:dbl_1E1DBD0
+  .text:01DAD9C2                 fdiv    ds:dbl_1E1D400
+  .text:01DAD9C8                 call    __ftol
+  .text:01DAD9CD                 mov     ebx, eax
+  .text:01DAD9CF                 mov     [ebp+var_8], ebx
+  .text:01DAD9D2                 mov     ecx, [esi+190h]
+  .text:01DAD9D8                 xor     edi, edi
+  .text:01DAD9DA                 test    ecx, ecx
+  .text:01DAD9DC                 jle     short loc_1DAD9FA
+  .text:01DAD9DE                 lea     eax, [esi+8]
+  .text:01DAD9E1                 mov     edx, [ebp+var_4]
+  .text:01DAD9E4                 cmp     [eax-4], edx
+  .text:01DAD9E7                 jnz     short loc_1DAD9F2
+  .text:01DAD9E9                 cmp     [eax], ebx
+  .text:01DAD9EB                 mov     edx, edi
+  .text:01DAD9ED                 mov     [ebp+var_10], edx
+  .text:01DAD9F0                 jz      short loc_1DAD9FD
+  .text:01DAD9F2                 inc     edi
+  .text:01DAD9F3                 add     eax, 0Ch
+  .text:01DAD9F6                 cmp     edi, ecx
+  .text:01DAD9F8                 jl      short loc_1DAD9E1
+  .text:01DAD9FA                 mov     edx, [ebp+var_10]
+  .text:01DAD9FD                 cmp     edi, ecx
+  .text:01DAD9FF                 jl      short loc_1DADA0A
+  .text:01DADA01                 mov     edi, edx
+  .text:01DADA03                 inc     edi
+  .text:01DADA04                 neg     edi
+  .text:01DADA06                 sbb     edi, edi
+  .text:01DADA08                 and     edi, edx
+  .text:01DADA0A                 mov     eax, [esi]
+  .text:01DADA0C                 mov     ecx, esi
+  .text:01DADA0E                 mov     [esi+194h], edi
+  .text:01DADA14                 call    dword ptr [eax+1Ch]
+  .text:01DADA17                 test    al, al
+  .text:01DADA19                 jnz     short loc_1DADA35
+  .text:01DADA1B                 push    offset aNofbo_0; "-nofbo"
+  .text:01DADA20                 call    sub_1D2B320
+  .text:01DADA25                 add     esp, 4
+  .text:01DADA28                 test    eax, eax
+  .text:01DADA2A                 jnz     short loc_1DADA75
+  .text:01DADA2C                 call    sub_1D3AC00
+  .text:01DADA31                 test    eax, eax
+  .text:01DADA33                 jg      short loc_1DADA75
+  .text:01DADA35                 push    offset aForceres; "-forceres"
+  .text:01DADA3A                 call    sub_1D2B320
+  .text:01DADA3F                 add     esp, 4
+  .text:01DADA42                 test    eax, eax
+  .text:01DADA44                 jnz     short loc_1DADA4F
+  .text:01DADA46                 cmp     dword ptr [esi+190h], 2
+  .text:01DADA4D                 jge     short loc_1DADA75
+  .text:01DADA4F                 mov     edx, [ebp+var_4]
+  .text:01DADA52                 lea     ecx, [edi+edi*2]
+  .text:01DADA55                 lea     eax, [esi+ecx*4]
+  .text:01DADA58                 mov     ecx, [ebp+var_8]
+  .text:01DADA5B                 mov     [eax+4], edx
+  .text:01DADA5E                 mov     [eax+8], ecx
+  .text:01DADA61                 mov     eax, [esi+190h]
+  .text:01DADA67                 test    eax, eax
+  .text:01DADA69                 jnz     short loc_1DADA75
+  .text:01DADA6B                 mov     dword ptr [esi+190h], 1
+  .text:01DADA75                 mov     ecx, off_1E53520
+  .text:01DADA7B                 lea     edx, [edi+edi*2]
+  .text:01DADA7E                 mov     eax, [ecx]
+  .text:01DADA80                 lea     ebx, [esi+edx*4]
+  .text:01DADA83                 mov     edx, [esi+edx*4+4]
+  .text:01DADA87                 push    edx
+  .text:01DADA88                 push    offset aScreenwidth_0; "ScreenWidth"
+  .text:01DADA8D                 call    dword ptr [eax+0Ch]
+  .text:01DADA90                 mov     ecx, off_1E53520
+  .text:01DADA96                 mov     edx, [ebx+8]
+  .text:01DADA99                 push    edx
+  .text:01DADA9A                 push    offset aScreenheight_0; "ScreenHeight"
+  .text:01DADA9F                 mov     eax, [ecx]
+  .text:01DADAA1                 call    dword ptr [eax+0Ch]
+  .text:01DADAA4                 mov     ecx, off_1E53520
+  .text:01DADAAA                 lea     edx, [edi+edi*2+3]
+  .text:01DADAAE                 mov     edx, [esi+edx*4]
+  .text:01DADAB1                 mov     eax, [ecx]
+  .text:01DADAB3                 push    edx
+  .text:01DADAB4                 push    offset aScreenbpp_0; "ScreenBPP"
+  .text:01DADAB9                 call    dword ptr [eax+0Ch]
+  .text:01DADABC                 mov     ecx, esi
+  .text:01DADABE                 call    sub_1DADD30
+  .text:01DADAC3                 mov     ecx, esi
+  .text:01DADAC5                 call    sub_1DADBD0
+  .text:01DADACA                 mov     ecx, off_1E5CEF0
+  .text:01DADAD0                 mov     eax, [ecx]
+  .text:01DADAD2                 call    dword ptr [eax+30h]
+  .text:01DADAD5                 mov     ecx, off_1E5CEF0
+  .text:01DADADB                 mov     edx, [ecx]
+  .text:01DADADD                 call    dword ptr [edx+14h]
+  .text:01DADAE0                 push    eax
+  .text:01DADAE1                 mov     ecx, esi
+  .text:01DADAE3                 call    CVideoMode_Common_DrawStartupGraphic
+  .text:01DADAE8                 pop     edi
+  .text:01DADAE9                 pop     ebx
+  .text:01DADAEA                 mov     al, 1
+  .text:01DADAEC                 pop     esi
+  .text:01DADAED                 mov     esp, ebp
+  .text:01DADAEF                 pop     ebp
+  .text:01DADAF0                 retn    4
+procedure: |-
+  char __userpurge sub_1DAD810@<al>(_DWORD *a1@<ecx>, int a2@<ebx>, int a3@<edi>, int a4)
+  {
+    char result; // al
+    int v6; // ebx
+    int v7; // edx
+    signed int v8; // eax
+    int v9; // eax
+    int v10; // eax
+    int v11; // eax
+    int v12; // eax
+    int v13; // ecx
+    int v14; // edi
+    _DWORD *v15; // eax
+    bool v16; // zf
+    int v17; // edx
+    int v18; // eax
+    _DWORD *v19; // eax
+    int v20; // ecx
+    _DWORD *v21; // ebx
+    int v22; // eax
+    _BYTE v23[8]; // [esp+4h] [ebp-20h] BYREF
+    int v24; // [esp+Ch] [ebp-18h]
+    int v25; // [esp+10h] [ebp-14h]
+    int v26; // [esp+14h] [ebp-10h]
+    double v27; // [esp+18h] [ebp-Ch]
+    int v28; // [esp+20h] [ebp-4h]
+  
+    result = (*(int (__thiscall **)(void *))(*(_DWORD *)off_1E5CEF0 + 12))(off_1E5CEF0);
+    if ( result )
+    {
+      v28 = (*(int (__thiscall **)(void *, char *, int, int, int))(*(_DWORD *)off_1E53520 + 8))(
+              off_1E53520,
+              aScreenwidth,
+              1024,
+              a3,
+              a2);
+      v6 = (*(int (__thiscall **)(void *, char *, int))(*(_DWORD *)off_1E53520 + 8))(off_1E53520, aScreenheight, 768);
+      v7 = *(_DWORD *)off_1E53520;
+      HIDWORD(v27) = v6;
+      (*(void (__thiscall **)(void *, char *, int))(v7 + 8))(off_1E53520, aScreenbpp, 32);
+      sub_1D2B320(a16bpp);
+      sub_1D2B320(a24bpp);
+      sub_1D2B320(a32bpp);
+      (*(void (__thiscall **)(_DWORD *))(*a1 + 60))(a1);
+      a1[100] = 0;
+      sub_1DAD7A0();
+      v8 = a1[100];
+      if ( v8 >= 2 )
+        qsort(a1 + 1, v8, 0xCu, sub_1DADB00);
+      v26 = -1;
+      v9 = sub_1D2B320(aWidth);
+      if ( v9 )
+        v28 = atoi(*(const char **)(dword_2D077E8 + 4 * v9 + 4));
+      v10 = sub_1D2B320(aW_6);
+      if ( v10 )
+        v28 = atoi(*(const char **)(dword_2D077E8 + 4 * v10 + 4));
+      v11 = sub_1D2B320(aHeight);
+      if ( v11 )
+      {
+        v6 = atoi(*(const char **)(dword_2D077E8 + 4 * v11 + 4));
+        HIDWORD(v27) = v6;
+      }
+      v12 = sub_1D2B320(asc_1E5C3F8);
+      if ( v12 )
+      {
+        v6 = atoi(*(const char **)(dword_2D077E8 + 4 * v12 + 4));
+        HIDWORD(v27) = v6;
+      }
+      if ( (*(unsigned __int8 (__thiscall **)(_DWORD *))(*a1 + 28))(a1) && !SDL_GetDisplayBounds(0, v23) )
+      {
+        if ( v28 > v24 )
+          v28 = v24;
+        if ( v6 > v25 )
+        {
+          v6 = v25;
+          HIDWORD(v27) = v25;
+        }
+      }
+      if ( v28 > 0 && v6 < 0 )
+      {
+        v27 = (double)v28;
+        v6 = (__int64)(v27 * 3.0 / 4.0);
+        HIDWORD(v27) = v6;
+      }
+      v13 = a1[100];
+      v14 = 0;
+      if ( v13 <= 0 )
+      {
+  LABEL_26:
+        v17 = v26;
+      }
+      else
+      {
+        v15 = a1 + 2;
+        while ( 1 )
+        {
+          if ( *(v15 - 1) == v28 )
+          {
+            v16 = *v15 == v6;
+            v17 = v14;
+            v26 = v14;
+            if ( v16 )
+              break;
+          }
+          ++v14;
+          v15 += 3;
+          if ( v14 >= v13 )
+            goto LABEL_26;
+        }
+      }
+      if ( v14 >= v13 )
+        v14 = v17 != -1 ? v17 : 0;
+      v18 = *a1;
+      a1[101] = v14;
+      if ( ((*(unsigned __int8 (__thiscall **)(_DWORD *))(v18 + 28))(a1) || !sub_1D2B320(aNofbo_0) && sub_1D3AC00() <= 0)
+        && (sub_1D2B320(aForceres) || (int)a1[100] < 2) )
+      {
+        v19 = &a1[3 * v14];
+        v20 = HIDWORD(v27);
+        v19[1] = v28;
+        v19[2] = v20;
+        if ( !a1[100] )
+          a1[100] = 1;
+      }
+      v21 = &a1[3 * v14];
+      (*(void (__thiscall **)(void *, char *, _DWORD))(*(_DWORD *)off_1E53520 + 12))(off_1E53520, aScreenwidth_0, v21[1]);
+      (*(void (__thiscall **)(void *, char *, _DWORD))(*(_DWORD *)off_1E53520 + 12))(off_1E53520, aScreenheight_0, v21[2]);
+      (*(void (__thiscall **)(void *, char *, _DWORD))(*(_DWORD *)off_1E53520 + 12))(
+        off_1E53520,
+        aScreenbpp_0,
+        a1[3 * v14 + 3]);
+      sub_1DADD30(a1);
+      sub_1DADBD0(a1);
+      (*(void (__thiscall **)(void *))(*(_DWORD *)off_1E5CEF0 + 48))(off_1E5CEF0);
+      v22 = (*(int (__thiscall **)(void *))(*(_DWORD *)off_1E5CEF0 + 20))(off_1E5CEF0);
+      CVideoMode_Common_DrawStartupGraphic(v22);
+      return 1;
+    }
+    return result;
+  }

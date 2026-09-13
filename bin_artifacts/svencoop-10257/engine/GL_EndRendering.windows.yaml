@@ -1,0 +1,5 @@
+func_name: GL_EndRendering
+func_va: '0x1d5dd90'
+func_rva: '0x5dd90'
+func_size: '0x450'
+func_sig: 55 8B EC 83 E4 C0 83 EC 30 83 3D ?? ?? ?? ?? ?? 53 55 56 57 0F 84 ?? ?? ?? ?? 6A 00 8D 44 24 ?? 50 8D 44 24 ??

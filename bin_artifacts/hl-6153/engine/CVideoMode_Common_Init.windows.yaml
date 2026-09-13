@@ -1,0 +1,5 @@
+func_name: CVideoMode_Common_Init
+func_va: '0x1dab5e0'
+func_rva: '0xab5e0'
+func_size: '0x2e3'
+func_sig: 55 8B EC 83 EC 20 56 8B F1 8B 0D ?? ?? ?? ?? 8B 01 FF 50 ?? 84 C0 75 ?? 5E 8B E5 5D C2 04 00

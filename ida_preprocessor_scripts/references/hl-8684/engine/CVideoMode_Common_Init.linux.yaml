@@ -1,0 +1,416 @@
+func_name: "CVideoMode_Common_Init"
+func_va: "0x203c00"
+disasm_code: |-
+  .text:00203C00                 push    ebp
+  .text:00203C01                 mov     ebp, 300h
+  .text:00203C06                 push    edi
+  .text:00203C07                 mov     edi, offset aScreenwidth; "ScreenWidth"
+  .text:00203C0C                 push    esi
+  .text:00203C0D                 mov     esi, 400h
+  .text:00203C12                 push    ebx
+  .text:00203C13                 mov     ebx, this
+  .text:00203C15                 sub     esp, 3Ch
+  .text:00203C18                 mov     this, registry
+  .text:00203C1D                 mov     edx, [eax]
+  .text:00203C1F                 mov     [esp+4Ch+size], esi
+  .text:00203C23                 mov     [esp+4Ch+nmemb], edi
+  .text:00203C27                 mov     [esp+4Ch+parm], eax
+  .text:00203C2A                 call    dword ptr [edx+8]
+  .text:00203C2D                 mov     ecx, offset aScreenheight; "ScreenHeight"
+  .text:00203C32                 mov     esi, eax
+  .text:00203C34                 mov     x, registry
+  .text:00203C39                 mov     edx, [eax]
+  .text:00203C3B                 mov     [esp+4Ch+size], ebp
+  .text:00203C3F                 mov     ebp, 20h ; ' '
+  .text:00203C44                 mov     [esp+4Ch+nmemb], ecx
+  .text:00203C48                 mov     [esp+4Ch+parm], eax
+  .text:00203C4B                 call    dword ptr [edx+8]
+  .text:00203C4E                 mov     ecx, offset aScreenbpp; "ScreenBPP"
+  .text:00203C53                 mov     edi, eax
+  .text:00203C55                 mov     y, registry
+  .text:00203C5A                 mov     edx, [eax]
+  .text:00203C5C                 mov     [esp+4Ch+nmemb], ecx
+  .text:00203C60                 mov     [esp+4Ch+size], ebp
+  .text:00203C64                 xor     ebp, ebp
+  .text:00203C66                 mov     [esp+4Ch+parm], eax
+  .text:00203C69                 call    dword ptr [edx+8]
+  .text:00203C6C                 mov     [esp+4Ch+parm], offset a16bpp; "-16bpp"
+  .text:00203C73                 call    COM_CheckParm
+  .text:00203C78                 mov     [esp+4Ch+parm], offset a24bpp; "-24bpp"
+  .text:00203C7F                 call    COM_CheckParm
+  .text:00203C84                 mov     [esp+4Ch+parm], offset a32bpp; "-32bpp"
+  .text:00203C8B                 call    COM_CheckParm
+  .text:00203C90                 mov     eax, [this]
+  .text:00203C92                 mov     [esp+4Ch+parm], this
+  .text:00203C95                 call    dword ptr [eax+40h]
+  .text:00203C98                 mov     [this+190h], ebp
+  .text:00203C9E                 call    _Z18SetupSDLVideoModesv; SetupSDLVideoModes(void)
+  .text:00203CA3                 mov     eax, [this+190h]
+  .text:00203CA9                 cmp     eax, 1
+  .text:00203CAC                 jle     short loc_203CCF
+  .text:00203CAE                 mov     edx, offset _ZL16VideoModeComparePKvS0_; VideoModeCompare(void const*,void const*)
+  .text:00203CB3                 mov     ecx, 0Ch
+  .text:00203CB8                 ; nmemb
+  .text:00203CB8                 mov     [esp+4Ch+nmemb], eax; nmemb
+  .text:00203CBC                 lea     eax, [this+4]
+  .text:00203CBF                 ; compar
+  .text:00203CBF                 mov     [esp+4Ch+compar], edx; compar
+  .text:00203CC3                 ; size
+  .text:00203CC3                 mov     [esp+4Ch+size], ecx; size
+  .text:00203CC7                 ; base
+  .text:00203CC7                 mov     [esp+4Ch+parm], eax; base
+  .text:00203CCA                 call    qsort
+  .text:00203CCF                 mov     [esp+4Ch+parm], offset aWidth; "-width"
+  .text:00203CD6                 call    COM_CheckParm
+  .text:00203CDB                 test    i, i
+  .text:00203CDD                 jnz     loc_203ED0
+  .text:00203CE3                 mov     [esp+4Ch+parm], offset aW_0; "-w"
+  .text:00203CEA                 call    COM_CheckParm
+  .text:00203CEF                 test    i, i
+  .text:00203CF1                 jnz     loc_203EA8
+  .text:00203CF7                 mov     [esp+4Ch+parm], offset aHeight; "-height"
+  .text:00203CFE                 call    COM_CheckParm
+  .text:00203D03                 test    i, i
+  .text:00203D05                 jnz     loc_203E08
+  .text:00203D0B                 mov     [esp+4Ch+parm], offset asc_28544B; "-h"
+  .text:00203D12                 call    COM_CheckParm
+  .text:00203D17                 test    i, i
+  .text:00203D19                 jnz     loc_203E3F
+  .text:00203D1F                 mov     i, [this]
+  .text:00203D21                 mov     [esp+4Ch+parm], this
+  .text:00203D24                 call    dword ptr [eax+1Ch]
+  .text:00203D27                 test    al, al
+  .text:00203D29                 jnz     loc_203E72
+  .text:00203D2F                 mov     edx, y
+  .text:00203D31                 shr     edx, 1Fh
+  .text:00203D34                 test    dl, dl
+  .text:00203D36                 jz      short loc_203D40
+  .text:00203D38                 test    x, x
+  .text:00203D3A                 jg      loc_203DE0
+  .text:00203D40                 mov     edx, [this+190h]
+  .text:00203D46                 xor     ebp, ebp
+  .text:00203D48                 test    edx, edx
+  .text:00203D4A                 jle     short loc_203D83
+  .text:00203D4C                 lea     eax, [this+4]
+  .text:00203D4F                 mov     ecx, 0FFFFFFFFh
+  .text:00203D54                 jmp     short loc_203D68
+  .text:00203D60                 inc     ebp
+  .text:00203D61                 add     eax, 0Ch
+  .text:00203D64                 cmp     i, edx
+  .text:00203D66                 jz      short loc_203D7B
+  .text:00203D68                 cmp     x, [eax]
+  .text:00203D6A                 jnz     short loc_203D60
+  .text:00203D6C                 cmp     [eax+4], y
+  .text:00203D6F                 jz      short loc_203D83
+  .text:00203D71                 mov     ecx, iOK
+  .text:00203D73                 inc     ebp
+  .text:00203D74                 add     eax, 0Ch
+  .text:00203D77                 cmp     i, edx
+  .text:00203D79                 jnz     short loc_203D68
+  .text:00203D7B                 xor     i, i
+  .text:00203D7D                 cmp     iOK, 0FFFFFFFFh
+  .text:00203D80                 cmovnz  ebp, iOK
+  .text:00203D83                 mov     eax, [this]
+  .text:00203D85                 mov     [this+194h], i
+  .text:00203D8B                 mov     [esp+4Ch+parm], this
+  .text:00203D8E                 call    dword ptr [eax+1Ch]
+  .text:00203D91                 test    al, al
+  .text:00203D93                 jz      loc_203F00
+  .text:00203D99                 mov     [esp+4Ch+parm], offset aForceres; "-forceres"
+  .text:00203DA0                 call    COM_CheckParm
+  .text:00203DA5                 test    eax, eax
+  .text:00203DA7                 mov     eax, [this+190h]
+  .text:00203DAD                 jz      loc_203FB8
+  .text:00203DB3                 lea     edx, [i+i*2+0]
+  .text:00203DB7                 test    eax, eax
+  .text:00203DB9                 lea     edx, [this+edx*4]
+  .text:00203DBC                 mov     [edx+4], x
+  .text:00203DBF                 mov     [edx+8], y
+  .text:00203DC2                 jnz     loc_203F14
+  .text:00203DC8                 mov     eax, 1
+  .text:00203DCD                 mov     [this+190h], eax
+  .text:00203DD3                 jmp     loc_203F14
+  .text:00203DE0                 mov     [esp+4Ch+var_30], x
+  .text:00203DE4                 fild    [esp+4Ch+var_30]
+  .text:00203DE8                 fmul    ds:flt_270B74
+  .text:00203DEE                 fmul    ds:flt_26EB94
+  .text:00203DF4                 fstp    [esp+4Ch+var_3C]
+  .text:00203DF8                 cvttsd2si y, [esp+4Ch+var_3C]
+  .text:00203DFE                 jmp     loc_203D40
+  .text:00203E08                 mov     edx, ds:com_argv
+  .text:00203E0E                 mov     y, 0Ah
+  .text:00203E13                 xor     ebp, ebp
+  .text:00203E15                 ; base
+  .text:00203E15                 mov     [esp+4Ch+size], edi; base
+  .text:00203E19                 ; endptr
+  .text:00203E19                 mov     [esp+4Ch+nmemb], ebp; endptr
+  .text:00203E1D                 mov     i, [edx+i*4+4]
+  .text:00203E21                 ; nptr
+  .text:00203E21                 mov     [esp+4Ch+parm], eax; nptr
+  .text:00203E24                 call    strtol
+  .text:00203E29                 mov     [esp+4Ch+parm], offset asc_28544B; "-h"
+  .text:00203E30                 mov     edi, eax
+  .text:00203E32                 call    COM_CheckParm
+  .text:00203E37                 test    i, i
+  .text:00203E39                 jz      loc_203D1F
+  .text:00203E3F                 mov     edx, 0Ah
+  .text:00203E44                 xor     ecx, ecx
+  .text:00203E46                 ; base
+  .text:00203E46                 mov     [esp+4Ch+size], edx; base
+  .text:00203E4A                 mov     edx, ds:com_argv
+  .text:00203E50                 ; endptr
+  .text:00203E50                 mov     [esp+4Ch+nmemb], ecx; endptr
+  .text:00203E54                 mov     i, [edx+i*4+4]
+  .text:00203E58                 ; nptr
+  .text:00203E58                 mov     [esp+4Ch+parm], eax; nptr
+  .text:00203E5B                 call    strtol
+  .text:00203E60                 mov     [esp+4Ch+parm], this
+  .text:00203E63                 mov     y, eax
+  .text:00203E65                 mov     y, [this]
+  .text:00203E67                 call    dword ptr [eax+1Ch]
+  .text:00203E6A                 test    al, al
+  .text:00203E6C                 jz      loc_203D2F
+  .text:00203E72                 lea     eax, [esp+4Ch+wide]
+  .text:00203E76                 mov     [esp+4Ch+nmemb], eax
+  .text:00203E7A                 mov     [esp+4Ch+parm], 0
+  .text:00203E81                 call    SDL_GetDisplayBounds
+  .text:00203E86                 test    eax, eax
+  .text:00203E88                 jnz     loc_203D2F
+  .text:00203E8E                 mov     edx, [esp+4Ch+var_24]
+  .text:00203E92                 mov     eax, [esp+4Ch+tall]
+  .text:00203E96                 cmp     x, edx
+  .text:00203E98                 cmovg   x, edx
+  .text:00203E9B                 cmp     eax, y
+  .text:00203E9D                 cmovl   y, eax
+  .text:00203EA0                 jmp     loc_203D2F
+  .text:00203EA8                 mov     edx, 0Ah
+  .text:00203EAD                 xor     ecx, ecx
+  .text:00203EAF                 ; base
+  .text:00203EAF                 mov     [esp+4Ch+size], edx; base
+  .text:00203EB3                 mov     edx, ds:com_argv
+  .text:00203EB9                 ; endptr
+  .text:00203EB9                 mov     [esp+4Ch+nmemb], ecx; endptr
+  .text:00203EBD                 mov     i, [edx+i*4+4]
+  .text:00203EC1                 ; nptr
+  .text:00203EC1                 mov     [esp+4Ch+parm], eax; nptr
+  .text:00203EC4                 call    strtol
+  .text:00203EC9                 mov     x, eax
+  .text:00203ECB                 jmp     loc_203CF7
+  .text:00203ED0                 mov     edx, ds:com_argv
+  .text:00203ED6                 mov     x, 0Ah
+  .text:00203EDB                 xor     ebp, ebp
+  .text:00203EDD                 ; base
+  .text:00203EDD                 mov     [esp+4Ch+size], esi; base
+  .text:00203EE1                 ; endptr
+  .text:00203EE1                 mov     [esp+4Ch+nmemb], ebp; endptr
+  .text:00203EE5                 mov     i, [edx+i*4+4]
+  .text:00203EE9                 ; nptr
+  .text:00203EE9                 mov     [esp+4Ch+parm], eax; nptr
+  .text:00203EEC                 call    strtol
+  .text:00203EF1                 mov     esi, eax
+  .text:00203EF3                 jmp     loc_203CE3
+  .text:00203F00                 mov     [esp+4Ch+parm], offset aNofbo; "-nofbo"
+  .text:00203F07                 call    COM_CheckParm
+  .text:00203F0C                 test    eax, eax
+  .text:00203F0E                 jz      loc_203FD0
+  .text:00203F14                 mov     eax, registry
+  .text:00203F19                 lea     ecx, [i+i*2+0]
+  .text:00203F1D                 mov     y, offset aScreenheight; "ScreenHeight"
+  .text:00203F22                 lea     x, [this+ecx*4]
+  .text:00203F25                 mov     i, offset aScreenbpp; "ScreenBPP"
+  .text:00203F2A                 mov     ecx, [esi+4]
+  .text:00203F2D                 mov     edx, [eax]
+  .text:00203F2F                 mov     [esp+4Ch+parm], eax
+  .text:00203F32                 mov     [esp+4Ch+size], ecx
+  .text:00203F36                 mov     ecx, offset aScreenwidth; "ScreenWidth"
+  .text:00203F3B                 mov     [esp+4Ch+nmemb], ecx
+  .text:00203F3F                 call    dword ptr [edx+0Ch]
+  .text:00203F42                 mov     eax, registry
+  .text:00203F47                 mov     ecx, [esi+8]
+  .text:00203F4A                 mov     edx, [eax]
+  .text:00203F4C                 mov     [esp+4Ch+size], ecx
+  .text:00203F50                 mov     [esp+4Ch+nmemb], edi
+  .text:00203F54                 mov     [esp+4Ch+parm], eax
+  .text:00203F57                 call    dword ptr [edx+0Ch]
+  .text:00203F5A                 mov     eax, registry
+  .text:00203F5F                 mov     ecx, [esi+0Ch]
+  .text:00203F62                 mov     edx, [eax]
+  .text:00203F64                 mov     [esp+4Ch+size], ecx
+  .text:00203F68                 mov     [esp+4Ch+parm], eax
+  .text:00203F6B                 mov     [esp+4Ch+nmemb], ebp
+  .text:00203F6F                 call    dword ptr [edx+0Ch]
+  .text:00203F72                 ; this
+  .text:00203F72                 mov     [esp+4Ch+parm], this; this
+  .text:00203F75                 call    _ZN17CVideoMode_Common18LoadStartupGraphicEv; CVideoMode_Common::LoadStartupGraphic(void)
+  .text:00203F7A                 ; this
+  .text:00203F7A                 mov     [esp+4Ch+parm], this; this
+  .text:00203F7D                 call    _ZN17CVideoMode_Common19AdjustWindowForModeEv; CVideoMode_Common::AdjustWindowForMode(void)
+  .text:00203F82                 mov     eax, game
+  .text:00203F87                 mov     edx, [eax]
+  .text:00203F89                 mov     [esp+4Ch+parm], eax
+  .text:00203F8C                 call    dword ptr [edx+34h]
+  .text:00203F8F                 mov     eax, game
+  .text:00203F94                 mov     edx, [eax]
+  .text:00203F96                 mov     [esp+4Ch+parm], eax
+  .text:00203F99                 call    dword ptr [edx+18h]
+  .text:00203F9C                 ; this
+  .text:00203F9C                 mov     [esp+4Ch+parm], this; this
+  .text:00203F9F                 ; window
+  .text:00203F9F                 mov     [esp+4Ch+nmemb], eax; window
+  .text:00203FA3                 call    _ZN17CVideoMode_Common18DrawStartupGraphicEPv; CVideoMode_Common_DrawStartupGraphic
+  .text:00203FA8                 add     esp, 3Ch
+  .text:00203FAB                 mov     al, 1
+  .text:00203FAD                 pop     this
+  .text:00203FAE                 pop     esi
+  .text:00203FAF                 pop     edi
+  .text:00203FB0                 pop     ebp
+  .text:00203FB1                 retn
+  .text:00203FB8                 cmp     eax, 1
+  .text:00203FBB                 jg      loc_203F14
+  .text:00203FC1                 jmp     loc_203DB3
+  .text:00203FD0                 call    Host_GetVideoLevel
+  .text:00203FD5                 test    eax, eax
+  .text:00203FD7                 jg      loc_203F14
+  .text:00203FDD                 lea     x, [x+0]
+  .text:00203FE0                 jmp     loc_203D99
+procedure: |-
+  char __usercall CVideoMode_Common::Init@<al>(CVideoMode_Common *a1@<eax>, CVideoMode_Common *const this)
+  {
+    int v3; // esi
+    int v4; // edi
+    int v5; // eax
+    int v6; // eax
+    int v7; // eax
+    int v8; // eax
+    int m_nNumModes; // edx
+    int v10; // ebp
+    vmode_s *m_rgModeList; // eax
+    int v12; // ecx
+    int (**vptr_IVideoMode)(...); // eax
+    bool v14; // zf
+    int v15; // eax
+    char *v16; // edx
+    int (***v17)(...); // esi
+    void *v18; // eax
+    int wide; // [esp+20h] [ebp-2Ch] BYREF
+    int v21; // [esp+28h] [ebp-24h]
+    int tall; // [esp+2Ch] [ebp-20h]
+  
+    v3 = (*((int (__cdecl **)(IRegistry *, const char *, int))registry->_vptr_IRegistry + 2))(
+           registry,
+           "ScreenWidth",
+           1024);
+    v4 = (*((int (__cdecl **)(IRegistry *, const char *, int))registry->_vptr_IRegistry + 2))(
+           registry,
+           "ScreenHeight",
+           768);
+    (*((void (__cdecl **)(IRegistry *, const char *, int))registry->_vptr_IRegistry + 2))(registry, "ScreenBPP", 32);
+    COM_CheckParm("-16bpp");
+    COM_CheckParm("-24bpp");
+    COM_CheckParm("-32bpp");
+    (*((void (__cdecl **)(CVideoMode_Common *))a1->_vptr_IVideoMode + 16))(a1);
+    a1->m_nNumModes = 0;
+    SetupSDLVideoModes();
+    if ( a1->m_nNumModes > 1 )
+      qsort(a1->m_rgModeList, a1->m_nNumModes, 0xCu, VideoModeCompare);
+    v5 = COM_CheckParm("-width");
+    if ( v5 )
+      v3 = strtol(com_argv[v5 + 1], nullptr, 10);
+    v6 = COM_CheckParm("-w");
+    if ( v6 )
+      v3 = strtol(com_argv[v6 + 1], nullptr, 10);
+    v7 = COM_CheckParm("-height");
+    if ( v7 )
+    {
+      v4 = strtol(com_argv[v7 + 1], nullptr, 10);
+      v8 = COM_CheckParm("-h");
+      if ( !v8 )
+      {
+  LABEL_9:
+        if ( !(*((unsigned __int8 (__cdecl **)(CVideoMode_Common *))a1->_vptr_IVideoMode + 7))(a1) )
+          goto LABEL_10;
+        goto LABEL_27;
+      }
+    }
+    else
+    {
+      v8 = COM_CheckParm("-h");
+      if ( !v8 )
+        goto LABEL_9;
+    }
+    v4 = strtol(com_argv[v8 + 1], nullptr, 10);
+    if ( !(*((unsigned __int8 (__cdecl **)(CVideoMode_Common *))a1->_vptr_IVideoMode + 7))(a1) )
+      goto LABEL_10;
+  LABEL_27:
+    if ( !SDL_GetDisplayBounds(0, &wide) )
+    {
+      if ( v3 > v21 )
+        v3 = v21;
+      if ( tall < v4 )
+        v4 = tall;
+    }
+  LABEL_10:
+    if ( v4 < 0 && v3 > 0 )
+      v4 = (int)(double)((long double)v3 * 3.0 * 0.25);
+    m_nNumModes = a1->m_nNumModes;
+    v10 = 0;
+    if ( m_nNumModes > 0 )
+    {
+      m_rgModeList = a1->m_rgModeList;
+      v12 = -1;
+      do
+      {
+        while ( v3 != m_rgModeList->width )
+        {
+          ++v10;
+          ++m_rgModeList;
+          if ( v10 == m_nNumModes )
+            goto LABEL_19;
+        }
+        if ( m_rgModeList->height == v4 )
+          goto LABEL_21;
+        v12 = v10++;
+        ++m_rgModeList;
+      }
+      while ( v10 != m_nNumModes );
+  LABEL_19:
+      v10 = 0;
+      if ( v12 != -1 )
+        v10 = v12;
+    }
+  LABEL_21:
+    vptr_IVideoMode = a1->_vptr_IVideoMode;
+    a1->m_nGameMode = v10;
+    if ( (unsigned __int8)vptr_IVideoMode[7](a1) || !COM_CheckParm("-nofbo") && Host_GetVideoLevel() <= 0 )
+    {
+      v14 = COM_CheckParm("-forceres") == 0;
+      v15 = a1->m_nNumModes;
+      if ( !v14 || v15 <= 1 )
+      {
+        v16 = (char *)a1 + 12 * v10;
+        *((_DWORD *)v16 + 1) = v3;
+        *((_DWORD *)v16 + 2) = v4;
+        if ( !v15 )
+          a1->m_nNumModes = 1;
+      }
+    }
+    v17 = &a1->_vptr_IVideoMode + 3 * v10;
+    (*((void (__cdecl **)(IRegistry *, const char *, int (**)(...)))registry->_vptr_IRegistry + 3))(
+      registry,
+      "ScreenWidth",
+      v17[1]);
+    (*((void (__cdecl **)(IRegistry *, const char *, int (**)(...)))registry->_vptr_IRegistry + 3))(
+      registry,
+      "ScreenHeight",
+      v17[2]);
+    (*((void (__cdecl **)(IRegistry *, const char *, int (**)(...)))registry->_vptr_IRegistry + 3))(
+      registry,
+      "ScreenBPP",
+      v17[3]);
+    CVideoMode_Common::LoadStartupGraphic(a1);
+    CVideoMode_Common::AdjustWindowForMode(a1);
+    (*((void (__cdecl **)(IGame *))game->_vptr_IGame + 13))(game);
+    v18 = (void *)(*((int (__cdecl **)(IGame *))game->_vptr_IGame + 6))(game);
+    CVideoMode_Common_DrawStartupGraphic(a1, v18);
+    return 1;
+  }

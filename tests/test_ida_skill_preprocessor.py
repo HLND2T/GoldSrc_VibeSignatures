@@ -932,6 +932,62 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(7, captured_spec["string_min_length"])
         self.assertEqual("Target", result["func_name"])
 
+    async def test_func_xref_accepts_unicode_string_sources(self):
+        captured_spec = {}
+
+        async def call_tool(name, arguments):
+            self.assertEqual("py_eval", name)
+            spec_line = next(line for line in arguments["code"].splitlines() if line.startswith("spec = "))
+            namespace = {"json": json}
+            exec(spec_line, namespace)  # noqa: S102 - validates generated IDAPython source.
+            captured_spec.update(namespace["spec"])
+            self.assertIn("_unicode_string_candidates", arguments["code"])
+            self.assertIn("STRTYPE_C_16", arguments["code"])
+            return {
+                "pointer_size": 4,
+                "candidates": [
+                    {
+                        "func_name": "Target",
+                        "func_va": "0x401000",
+                        "func_rva": "0x1000",
+                        "func_size": "0x40",
+                    }
+                ],
+            }
+
+        result = await preprocess_func_xrefs_via_mcp(
+            session=SimpleNamespace(call_tool=call_tool),
+            func_name="Target",
+            xref_strings=[],
+            xref_unicode_strings=["FULLMATCH:wide anchor"],
+            xref_gvs=[],
+            xref_signatures=[],
+            xref_funcs=[],
+            exclude_funcs=[],
+            exclude_strings=[],
+            exclude_gvs=[],
+            exclude_signatures=[],
+            new_binary_dir=None,
+            platform="windows",
+            image_base=0x400000,
+        )
+
+        self.assertEqual(["FULLMATCH:wide anchor"], captured_spec["xref_unicode_strings"])
+        self.assertEqual([], captured_spec["xref_strings"])
+        self.assertEqual("Target", result["func_name"])
+
+        # A unicode literal alone is a positive source: normalize must accept
+        # it, while an empty spec still fails.
+        normalized = ida_analyze_util._normalize_func_xref_specs(
+            [{"func_name": "Target", "xref_strings": [], "xref_unicode_strings": ["FULLMATCH:wide"]}]
+        )
+        self.assertEqual(["FULLMATCH:wide"], normalized["Target"]["xref_unicode_strings"])
+        self.assertIsNone(
+            ida_analyze_util._normalize_func_xref_specs(
+                [{"func_name": "Target", "xref_strings": [], "xref_unicode_strings": []}]
+            )
+        )
+
     async def test_func_xref_rejects_explicit_function_addresses_but_allows_gv_literals(self):
         with tempfile.TemporaryDirectory() as temporary:
             base_kwargs = {

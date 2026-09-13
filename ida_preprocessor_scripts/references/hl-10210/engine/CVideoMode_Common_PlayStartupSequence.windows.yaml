@@ -1,0 +1,31 @@
+func_name: "CVideoMode_Common_PlayStartupSequence"
+func_va: "0x10222aa0"
+disasm_code: |-
+  .text:10222AA0                 push    esi
+  .text:10222AA1                 push    offset aNovid; "-novid"
+  .text:10222AA6                 mov     esi, ecx
+  .text:10222AA8                 call    COM_CheckParm
+  .text:10222AAD                 add     esp, 4
+  .text:10222AB0                 test    eax, eax
+  .text:10222AB2                 jnz     short loc_10222ABF
+  .text:10222AB4                 mov     ecx, off_1031DBD4
+  .text:10222ABA                 mov     eax, [ecx]
+  .text:10222ABC                 call    dword ptr [eax+30h]
+  .text:10222ABF                 mov     ecx, off_1031DBD4
+  .text:10222AC5                 mov     eax, [ecx]
+  .text:10222AC7                 call    dword ptr [eax+14h]
+  .text:10222ACA                 push    eax
+  .text:10222ACB                 mov     ecx, esi
+  .text:10222ACD                 call    CVideoMode_Common_DrawStartupGraphic
+  .text:10222AD2                 pop     esi
+  .text:10222AD3                 retn
+procedure: |-
+  int sub_10222AA0()
+  {
+    int v0; // eax
+  
+    if ( !COM_CheckParm("-novid") )
+      ((void (__thiscall *)(int (__thiscall ***)(void *, char)))(*off_1031DBD4)[12])(off_1031DBD4);
+    v0 = ((int (__thiscall *)(int (__thiscall ***)(void *, char)))(*off_1031DBD4)[5])(off_1031DBD4);
+    return CVideoMode_Common_DrawStartupGraphic(v0);
+  }
