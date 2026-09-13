@@ -390,6 +390,24 @@ modules:
       - name: find-GL_SetMode
         expected_output:
           - GL_SetMode.{platform}.yaml
+      - name: find-Host_ClearMemory
+        expected_output:
+          - Host_ClearMemory.{platform}.yaml
+      - name: find-Hunk_AllocName
+        expected_output:
+          - Hunk_AllocName.{platform}.yaml
+      - name: find-Mod_LoadBrushModel
+        expected_output:
+          - Mod_LoadBrushModel.{platform}.yaml
+      - name: find-Mod_LoadSpriteModel
+        expected_output:
+          - Mod_LoadSpriteModel.{platform}.yaml
+      - name: find-Mod_LoadStudioModel
+        expected_output:
+          - Mod_LoadStudioModel.{platform}.yaml
+      - name: find-Mod_PointInLeaf
+        expected_output:
+          - Mod_PointInLeaf.{platform}.yaml
     symbols:
       - name: NLoadBlob
         category: func
@@ -605,6 +623,18 @@ modules:
       - name: GL_LoadTexture2
         category: func
       - name: GL_SetMode
+        category: func
+      - name: Host_ClearMemory
+        category: func
+      - name: Hunk_AllocName
+        category: func
+      - name: Mod_LoadBrushModel
+        category: func
+      - name: Mod_LoadSpriteModel
+        category: func
+      - name: Mod_LoadStudioModel
+        category: func
+      - name: Mod_PointInLeaf
         category: func
   - name: gameui
     module_windows: GameUI.dll

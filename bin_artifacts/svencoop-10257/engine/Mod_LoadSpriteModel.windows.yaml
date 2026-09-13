@@ -1,0 +1,5 @@
+func_name: Mod_LoadSpriteModel
+func_va: '0x1d09d00'
+func_rva: '0x9d00'
+func_size: '0x1ca'
+func_sig: A1 ?? ?? ?? ?? 83 EC 08 53 55 56 57 8B 7C 24 ?? FF 77 ?? FF D0 8B 6C 24 ?? 83 C4 04 83 F8 02

@@ -1,0 +1,267 @@
+func_name: "Mod_LoadSpriteModel"
+func_va: "0x8abd0"
+disasm_code: |-
+  .text:0008ABD0                 ; SvEngine Mod_LoadSpriteModel validates the sprite header, allocates the sprite block with Hunk_AllocName(size, loadname), then fills frame entries. Current binary behavior is authoritative.
+  .text:0008ABD0                 push    ebp; SvEngine Mod_LoadSpriteModel validates the sprite header, allocates the sprite block with Hunk_AllocName(size, loadname), then fills frame entries. Current binary behavior is authoritative.
+  .text:0008ABD1                 push    edi
+  .text:0008ABD2                 push    esi
+  .text:0008ABD3                 push    ebx
+  .text:0008ABD4                 sub     esp, 3Ch
+  .text:0008ABD7                 call    sub_56390
+  .text:0008ABDC                 add     ebx, (offset dbl_2EE000 - $)
+  .text:0008ABE2                 mov     ebp, [esp+4Ch+buffer]
+  .text:0008ABE6                 mov     eax, [ebp+4]
+  .text:0008ABE9                 lea     edi, (LittleLong - 2EE000h)[ebx]
+  .text:0008ABEF                 mov     [esp+4Ch+fmt], eax
+  .text:0008ABF2                 call    dword ptr [edi]
+  .text:0008ABF4                 cmp     eax, 2
+  .text:0008ABF7                 jz      short loc_8AC1C
+  .text:0008ABF9                 mov     [esp+4Ch+var_44], eax
+  .text:0008ABFD                 mov     eax, [esp+4Ch+mod]
+  .text:0008AC01                 mov     edx, 2
+  .text:0008AC06                 mov     [esp+4Ch+var_40], edx
+  .text:0008AC0A                 mov     [esp+4Ch+var_48], eax
+  .text:0008AC0E                 lea     eax, (aSpriteSHasWron - 2EE000h)[ebx]; "Sprite \"%s\" has wrong version number "...
+  .text:0008AC14                 ; fmt
+  .text:0008AC14                 mov     [esp+4Ch+fmt], eax; fmt
+  .text:0008AC17                 call    Sys_Error
+  .text:0008AC1C                 mov     eax, [ebp+1Ch]
+  .text:0008AC1F                 mov     [esp+4Ch+fmt], eax
+  .text:0008AC22                 call    dword ptr [edi]
+  .text:0008AC24                 lea     edx, ds:0FFFFFFF8h[eax*8]
+  .text:0008AC2B                 mov     [esp+4Ch+var_34], eax
+  .text:0008AC2F                 movsx   eax, word ptr [ebp+28h]
+  .text:0008AC33                 lea     ecx, [edx+24h]
+  .text:0008AC36                 mov     [esp+4Ch+var_30], edx
+  .text:0008AC3A                 mov     [esp+4Ch+var_2C], ecx
+  .text:0008AC3E                 lea     esi, [eax+eax*2]
+  .text:0008AC41                 lea     eax, (loadname - 2EE000h)[ebx]
+  .text:0008AC47                 lea     edx, [esi+2]
+  .text:0008AC4A                 mov     [esp+4Ch+var_24], edx
+  .text:0008AC4E                 mov     [esp+4Ch+var_20], esi
+  .text:0008AC52                 ; char *
+  .text:0008AC52                 mov     [esp+4Ch+var_48], eax; char *
+  .text:0008AC56                 lea     eax, [ecx+edx]
+  .text:0008AC59                 ; int
+  .text:0008AC59                 mov     [esp+4Ch+fmt], eax; int
+  .text:0008AC5C                 call    Hunk_AllocName; allocates the sprite block: Hunk_AllocName(size, loadname)
+  .text:0008AC61                 mov     esi, eax
+  .text:0008AC63                 mov     eax, [esp+4Ch+mod]
+  .text:0008AC67                 mov     [eax+184h], esi
+  .text:0008AC6D                 mov     eax, [ebp+8]
+  .text:0008AC70                 mov     [esp+4Ch+fmt], eax
+  .text:0008AC73                 call    dword ptr [edi]
+  .text:0008AC75                 mov     [esi], ax
+  .text:0008AC78                 mov     eax, [ebp+0Ch]
+  .text:0008AC7B                 mov     [esp+4Ch+fmt], eax
+  .text:0008AC7E                 call    dword ptr [edi]
+  .text:0008AC80                 mov     [esi+2], ax
+  .text:0008AC84                 mov     eax, [ebp+14h]
+  .text:0008AC87                 mov     [esp+4Ch+fmt], eax
+  .text:0008AC8A                 call    dword ptr [edi]
+  .text:0008AC8C                 mov     [esi+4], eax
+  .text:0008AC8F                 mov     eax, [ebp+18h]
+  .text:0008AC92                 mov     [esp+4Ch+fmt], eax
+  .text:0008AC95                 call    dword ptr [edi]
+  .text:0008AC97                 mov     [esi+8], eax
+  .text:0008AC9A                 lea     eax, (dword_2F8F8C - 2EE000h)[ebx]
+  .text:0008ACA0                 movss   xmm0, dword ptr [ebp+20h]
+  .text:0008ACA5                 movss   [esp+4Ch+fmt], xmm0
+  .text:0008ACAA                 call    dword ptr [eax]
+  .text:0008ACAC                 fstp    dword ptr [esi+14h]
+  .text:0008ACAF                 mov     eax, [ebp+24h]
+  .text:0008ACB2                 mov     [esp+4Ch+fmt], eax
+  .text:0008ACB5                 call    dword ptr [edi]
+  .text:0008ACB7                 mov     edx, [esp+4Ch+mod]
+  .text:0008ACBB                 mov     [edx+4Ch], eax
+  .text:0008ACBE                 mov     eax, [esp+4Ch+var_34]
+  .text:0008ACC2                 mov     ecx, [esi+4]
+  .text:0008ACC5                 mov     [esi+0Ch], eax
+  .text:0008ACC8                 mov     eax, ecx
+  .text:0008ACCA                 shr     eax, 1Fh
+  .text:0008ACCD                 add     eax, ecx
+  .text:0008ACCF                 sar     eax, 1
+  .text:0008ACD1                 neg     eax
+  .text:0008ACD3                 mov     [esp+4Ch+var_28], eax
+  .text:0008ACD7                 fild    [esp+4Ch+var_28]
+  .text:0008ACDB                 fst     dword ptr [edx+58h]
+  .text:0008ACDE                 fstp    dword ptr [edx+54h]
+  .text:0008ACE1                 mov     ecx, [esi+4]
+  .text:0008ACE4                 mov     eax, ecx
+  .text:0008ACE6                 shr     eax, 1Fh
+  .text:0008ACE9                 add     eax, ecx
+  .text:0008ACEB                 sar     eax, 1
+  .text:0008ACED                 mov     [esp+4Ch+var_28], eax
+  .text:0008ACF1                 fild    [esp+4Ch+var_28]
+  .text:0008ACF5                 fst     dword ptr [edx+64h]
+  .text:0008ACF8                 fstp    dword ptr [edx+60h]
+  .text:0008ACFB                 mov     ecx, [esi+8]
+  .text:0008ACFE                 mov     eax, ecx
+  .text:0008AD00                 shr     eax, 1Fh
+  .text:0008AD03                 add     eax, ecx
+  .text:0008AD05                 sar     eax, 1
+  .text:0008AD07                 neg     eax
+  .text:0008AD09                 mov     [esp+4Ch+var_28], eax
+  .text:0008AD0D                 fild    [esp+4Ch+var_28]
+  .text:0008AD11                 fstp    dword ptr [edx+5Ch]
+  .text:0008AD14                 mov     ecx, [esi+8]
+  .text:0008AD17                 mov     eax, ecx
+  .text:0008AD19                 shr     eax, 1Fh
+  .text:0008AD1C                 add     eax, ecx
+  .text:0008AD1E                 mov     ecx, [esp+4Ch+var_2C]
+  .text:0008AD22                 sar     eax, 1
+  .text:0008AD24                 mov     [esp+4Ch+var_28], eax
+  .text:0008AD28                 fild    [esp+4Ch+var_28]
+  .text:0008AD2C                 fstp    dword ptr [edx+68h]
+  .text:0008AD2F                 mov     edx, [esp+4Ch+var_30]
+  .text:0008AD33                 lea     eax, [edx+26h]
+  .text:0008AD36                 mov     edx, [esp+4Ch+var_24]
+  .text:0008AD3A                 mov     [esi+10h], eax
+  .text:0008AD3D                 lea     eax, [esi+ecx]
+  .text:0008AD40                 lea     ecx, [ebp+2Ah]
+  .text:0008AD43                 mov     [esp+4Ch+fmt], eax
+  .text:0008AD46                 mov     [esp+4Ch+var_48], ecx
+  .text:0008AD4A                 mov     ds:(dword_45F4B0 - 2EE000h)[ebx], eax
+  .text:0008AD50                 mov     [esp+4Ch+var_44], edx
+  .text:0008AD54                 call    sub_5A620
+  .text:0008AD59                 mov     eax, [esp+4Ch+var_34]
+  .text:0008AD5D                 test    eax, eax
+  .text:0008AD5F                 jle     loc_8ADF0
+  .text:0008AD65                 mov     eax, [esp+4Ch+mod]
+  .text:0008AD69                 xor     ebx, ebx
+  .text:0008AD6B                 mov     edx, [esp+4Ch+var_34]
+  .text:0008AD6F                 mov     [esp+4Ch+var_30], esi
+  .text:0008AD73                 mov     dword ptr [eax+50h], 0
+  .text:0008AD7A                 mov     [eax+48h], edx
+  .text:0008AD7D                 mov     eax, [esp+4Ch+var_20]
+  .text:0008AD81                 lea     edx, [ebp+eax+2Ah]
+  .text:0008AD85                 lea     ebp, [esi+20h]
+  .text:0008AD88                 mov     esi, ebx
+  .text:0008AD8A                 mov     ebx, edx
+  .text:0008AD8C                 jmp     short loc_8ADA1
+  .text:0008AD90                 call    sub_8A790
+  .text:0008AD95                 inc     esi
+  .text:0008AD96                 add     ebp, 8
+  .text:0008AD99                 cmp     [esp+4Ch+var_34], esi
+  .text:0008AD9D                 mov     ebx, eax
+  .text:0008AD9F                 jz      short loc_8ADD6
+  .text:0008ADA1                 mov     eax, dword ptr ds:(dbl_2EE000 - 2EE000h)[ebx]
+  .text:0008ADA3                 add     ebx, 4
+  .text:0008ADA6                 mov     [esp+4Ch+fmt], eax
+  .text:0008ADA9                 call    dword ptr [edi]
+  .text:0008ADAB                 mov     [ebp-4], eax
+  .text:0008ADAE                 test    eax, eax
+  .text:0008ADB0                 mov     eax, [esp+4Ch+var_30]
+  .text:0008ADB4                 mov     [esp+4Ch+var_40], esi
+  .text:0008ADB8                 mov     [esp+4Ch+var_44], ebp
+  .text:0008ADBC                 mov     [esp+4Ch+var_48], ebx
+  .text:0008ADC0                 mov     [esp+4Ch+fmt], eax
+  .text:0008ADC3                 jz      short loc_8AD90
+  .text:0008ADC5                 call    sub_8AA80
+  .text:0008ADCA                 inc     esi
+  .text:0008ADCB                 add     ebp, 8
+  .text:0008ADCE                 cmp     [esp+4Ch+var_34], esi
+  .text:0008ADD2                 mov     ebx, eax
+  .text:0008ADD4                 jnz     short loc_8ADA1
+  .text:0008ADD6                 mov     eax, [esp+4Ch+mod]
+  .text:0008ADDA                 mov     dword ptr [eax+44h], 1
+  .text:0008ADE1                 add     esp, 3Ch
+  .text:0008ADE4                 pop     ebx
+  .text:0008ADE5                 pop     esi
+  .text:0008ADE6                 pop     edi
+  .text:0008ADE7                 pop     ebp
+  .text:0008ADE8                 retn
+  .text:0008ADF0                 mov     eax, [esp+4Ch+mod]
+  .text:0008ADF4                 mov     edi, [esp+4Ch+var_34]
+  .text:0008ADF8                 mov     [esp+4Ch+var_48], eax
+  .text:0008ADFC                 lea     eax, (aSpriteSHasInva - 2EE000h)[ebx]; "Sprite \"%s\" has invalid number of fra"...
+  .text:0008AE02                 mov     [esp+4Ch+var_44], edi
+  .text:0008AE06                 ; fmt
+  .text:0008AE06                 mov     [esp+4Ch+fmt], eax; fmt
+  .text:0008AE09                 call    Sys_Error
+  .text:0008AE0E                 mov     edx, [esp+4Ch+mod]
+  .text:0008AE12                 mov     [edx+48h], edi
+  .text:0008AE15                 mov     dword ptr [edx+50h], 0
+  .text:0008AE1C                 jmp     short loc_8ADD6
+procedure: |-
+  void __cdecl Mod_LoadSpriteModel(model_t *mod, void *buffer)
+  {
+    int v2; // eax
+    int v3; // esi
+    int v4; // ecx
+    long double v5; // fst7
+    long double v6; // fst7
+    int v7; // ebp
+    int v8; // esi
+    int *v9; // ebx
+    int v10; // eax
+    char *v11; // [esp+4h] [ebp-48h]
+    int v12; // [esp+8h] [ebp-44h]
+    int v13; // [esp+Ch] [ebp-40h]
+    int v14; // [esp+18h] [ebp-34h]
+    int v15; // [esp+1Ch] [ebp-30h]
+    int v16; // [esp+1Ch] [ebp-30h]
+    int v17; // [esp+28h] [ebp-24h]
+    int v18; // [esp+2Ch] [ebp-20h]
+  
+    v2 = LittleLong(*((_DWORD *)buffer + 1));
+    if ( v2 != 2 )
+      Sys_Error("Sprite \"%s\" has wrong version number (%i should be %i)", mod, v2, 2);
+    v14 = LittleLong(*((_DWORD *)buffer + 7));
+    v15 = 8 * v14 - 8;
+    v17 = 3 * *((__int16 *)buffer + 20) + 2;
+    v18 = 3 * *((__int16 *)buffer + 20);
+    v3 = Hunk_AllocName(v15 + 36 + v17, loadname); // allocates the sprite block (sprite header + frame storage)
+    *(_DWORD *)&mod->_pad_0044[320] = v3;
+    *(_WORD *)v3 = LittleLong(*((_DWORD *)buffer + 2));
+    *(_WORD *)(v3 + 2) = LittleLong(*((_DWORD *)buffer + 3));
+    *(_DWORD *)(v3 + 4) = LittleLong(*((_DWORD *)buffer + 5));
+    *(_DWORD *)(v3 + 8) = LittleLong(*((_DWORD *)buffer + 6));
+    *(float *)(v3 + 20) = ((long double (__cdecl *)(_DWORD))dword_2F8F8C)(*((_DWORD *)buffer + 8));
+    *(_DWORD *)&mod->_pad_0044[8] = LittleLong(*((_DWORD *)buffer + 9));
+    v4 = *(_DWORD *)(v3 + 4);
+    *(_DWORD *)(v3 + 12) = v14;
+    v5 = (long double)(v4 / -2);
+    *(float *)&mod->_pad_0044[20] = v5;
+    *(float *)&mod->_pad_0044[16] = v5;
+    v6 = (long double)(*(_DWORD *)(v3 + 4) / 2);
+    *(float *)&mod->_pad_0044[32] = v6;
+    *(float *)&mod->_pad_0044[28] = v6;
+    *(float *)&mod->_pad_0044[24] = (float)(*(_DWORD *)(v3 + 8) / -2);
+    *(float *)&mod->_pad_0044[36] = (float)(*(_DWORD *)(v3 + 8) / 2);
+    *(_DWORD *)(v3 + 16) = v15 + 38;
+    dword_45F4B0 = v3 + v15 + 36;
+    sub_5A620(v3 + v15 + 36, (char *)buffer + 42, v17);
+    if ( v14 <= 0 )
+      Sys_Error("Sprite \"%s\" has invalid number of frames (%d)\n", mod, v14);
+    v16 = v3;
+    *(_DWORD *)&mod->_pad_0044[12] = 0;
+    *(_DWORD *)&mod->_pad_0044[4] = v14;
+    v7 = v3 + 32;
+    v8 = 0;
+    v9 = (int *)((char *)buffer + v18 + 42);
+    do
+    {
+      while ( 1 )
+      {
+        v10 = LittleLong(*v9);
+        *(_DWORD *)(v7 - 4) = v10;
+        v13 = v8;
+        v12 = v7;
+        v11 = (char *)(v9 + 1);
+        if ( v10 )
+          break;
+        ++v8;
+        v7 += 8;
+        v9 = (int *)sub_8A790(v16, v11, v12, v13);
+        if ( v14 == v8 )
+          goto LABEL_8;
+      }
+      ++v8;
+      v7 += 8;
+      v9 = (int *)sub_8AA80(v16, v11, v12, v13);
+    }
+    while ( v14 != v8 );
+  LABEL_8:
+    *(_DWORD *)mod->_pad_0044 = 1;
+  }
