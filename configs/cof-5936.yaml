@@ -416,7 +416,24 @@ modules:
       - name: find-R_LoadSkys
         expected_output:
           - R_LoadSkys.{platform}.yaml
+      - name: find-BuildGammaTable
+        expected_output:
+          - BuildGammaTable.{platform}.yaml
+      - name: find-studioapi_StudioSetRenderamt
+        expected_output:
+          - studioapi_StudioSetRenderamt.{platform}.yaml
+      - name: find-CL_FxBlend
+        expected_input:
+          - studioapi_StudioSetRenderamt.{platform}.yaml
+        expected_output:
+          - CL_FxBlend.{platform}.yaml
     symbols:
+      - name: BuildGammaTable
+        category: func
+      - name: studioapi_StudioSetRenderamt
+        category: func
+      - name: CL_FxBlend
+        category: func
       - name: NLoadBlob
         category: func
         platform: windows

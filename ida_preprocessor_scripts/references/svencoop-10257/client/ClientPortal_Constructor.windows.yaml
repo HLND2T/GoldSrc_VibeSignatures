@@ -1,0 +1,280 @@
+func_name: "ClientPortal_Constructor"
+func_va: "0x10050860"
+disasm_code: |-
+  ; ClientPortal_origin_offset = 0; ClientPortal_angles_offset = 12 (byte offsets).
+  ; Copies at 10050978..10050995 move ctor origin/angles inputs into the same this object; [edx] encodes offset zero.
+  .text:1002FF50                 push    esi
+  .text:1002FF51                 mov     esi, ecx
+  .text:1002FF53                 mov     eax, [esi]
+  .text:1002FF55                 test    eax, eax
+  .text:1002FF57                 jz      short loc_1002FF99
+  .text:1002FF59                 mov     edx, [esi+8]
+  .text:1002FF5C                 sub     edx, eax
+  .text:1002FF5E                 and     edx, 0FFFFFFFCh
+  .text:1002FF61                 cmp     edx, 1000h
+  .text:1002FF67                 jb      short loc_1002FF7B
+  .text:1002FF69                 mov     ecx, [eax-4]
+  .text:1002FF6C                 add     edx, 23h ; '#'
+  .text:1002FF6F                 sub     eax, ecx
+  .text:1002FF71                 add     eax, 0FFFFFFFCh
+  .text:1002FF74                 cmp     eax, 1Fh
+  .text:1002FF77                 ja      short loc_1002FF9B
+  .text:1002FF79                 mov     eax, ecx
+  .text:1002FF7B                 push    edx
+  .text:1002FF7C                 ; Block
+  .text:1002FF7C                 push    eax; Block
+  .text:1002FF7D                 call    sub_100E8485
+  .text:1002FF82                 add     esp, 8
+  .text:1002FF85                 mov     dword ptr [esi], 0
+  .text:1002FF8B                 mov     dword ptr [esi+4], 0
+  .text:1002FF92                 mov     dword ptr [esi+8], 0
+  .text:1002FF99                 pop     esi
+  .text:1002FF9A                 retn
+  .text:1002FF9B                 call    __invalid_parameter_noinfo_noreturn
+  .text:10050860                 push    ebp
+  .text:10050861                 mov     ebp, esp
+  .text:10050863                 push    0FFFFFFFFh
+  .text:10050865                 push    offset SEH_10050860
+  .text:1005086A                 mov     eax, large fs:0
+  .text:10050870                 push    eax
+  .text:10050871                 sub     esp, 8
+  .text:10050874                 push    ebx
+  .text:10050875                 push    esi
+  .text:10050876                 push    edi
+  .text:10050877                 mov     eax, ___security_cookie
+  .text:1005087C                 xor     eax, ebp
+  .text:1005087E                 push    eax
+  .text:1005087F                 lea     eax, [ebp+var_C]
+  .text:10050882                 mov     large fs:0, eax
+  .text:10050888                 mov     esi, ecx
+  .text:1005088A                 mov     [ebp+var_10], esi
+  .text:1005088D                 mov     [ebp+var_14], esi
+  .text:10050890                 mov     ebx, [ebp+height]
+  .text:10050893                 lea     eax, [esi+28h]
+  .text:10050896                 mov     edi, [ebp+width]
+  .text:10050899                 ; void (__thiscall *)(void *)
+  .text:10050899                 push    offset nullsub_1; void (__thiscall *)(void *)
+  .text:1005089E                 ; void (__thiscall *)(void *)
+  .text:1005089E                 push    offset sub_100543C0; void (__thiscall *)(void *)
+  .text:100508A3                 mov     dword ptr [esi], 0
+  .text:100508A9                 mov     dword ptr [esi+4], 0
+  .text:100508B0                 mov     dword ptr [esi+8], 0
+  .text:100508B7                 ; unsigned int
+  .text:100508B7                 push    6; unsigned int
+  .text:100508B9                 mov     dword ptr [esi+0Ch], 0
+  .text:100508C0                 mov     dword ptr [esi+10h], 0
+  .text:100508C7                 mov     dword ptr [esi+14h], 0
+  .text:100508CE                 ; unsigned int
+  .text:100508CE                 push    10h; unsigned int
+  .text:100508D0                 ; void *
+  .text:100508D0                 push    eax; void *
+  .text:100508D1                 mov     dword ptr [esi+18h], 0
+  .text:100508D8                 mov     dword ptr [esi+1Ch], 0
+  .text:100508DF                 mov     dword ptr [esi+20h], 0
+  .text:100508E6                 call    ??_L@YGXPAXIIP6EX0@Z1@Z; `eh vector constructor iterator'(void *,uint,uint,void (*)(void *),void (*)(void *))
+  .text:100508EB                 lea     ecx, [esi+88h]
+  .text:100508F1                 mov     [ebp+var_4], 0
+  .text:100508F8                 call    sub_10054310
+  .text:100508FD                 add     esi, 0A8h
+  .text:10050903                 mov     [ebp+height], 0
+  .text:1005090A                 mov     eax, [ebp+height]
+  .text:1005090D                 mov     [ebp+width], esi
+  .text:10050910                 mov     byte ptr [ebp+var_4], 1
+  .text:10050914                 mov     [esi], eax
+  .text:10050916                 mov     dword ptr [esi+4], 0
+  .text:1005091D                 mov     dword ptr [esi+8], 0
+  .text:10050924                 ; Size
+  .text:10050924                 push    0Ch; Size
+  .text:10050926                 lfence
+  .text:10050929                 call    ??2@YAPAXI@Z; operator new(uint)
+  .text:1005092E                 add     esp, 4
+  .text:10050931                 mov     [eax], eax
+  .text:10050933                 mov     [eax+4], eax
+  .text:10050936                 mov     [esi+4], eax
+  .text:10050939                 lea     ecx, [esi+0Ch]
+  .text:1005093C                 mov     dword ptr [ecx], 0
+  .text:10050942                 mov     dword ptr [ecx+4], 0
+  .text:10050949                 mov     dword ptr [ecx+8], 0
+  .text:10050950                 mov     dword ptr [esi+18h], 7
+  .text:10050957                 mov     dword ptr [esi+1Ch], 8
+  .text:1005095E                 mov     dword ptr [esi], 3F800000h
+  .text:10050964                 push    dword ptr [esi+4]
+  .text:10050967                 mov     byte ptr [ebp+var_4], 3
+  .text:1005096B                 push    10h
+  .text:1005096D                 call    sub_10054C70
+  .text:10050972                 mov     edx, [ebp+var_10]
+  .text:10050975                 mov     eax, [ebp+origin]
+  .text:10050978                 movq    xmm0, qword ptr [eax]
+  .text:1005097C                 movq    qword ptr [edx], xmm0
+  .text:10050980                 mov     eax, [eax+8]
+  .text:10050983                 mov     [edx+8], eax
+  .text:10050986                 mov     eax, [ebp+angles]
+  .text:10050989                 movq    xmm0, qword ptr [eax]
+  .text:1005098D                 movq    qword ptr [edx+0Ch], xmm0
+  .text:10050992                 mov     eax, [eax+8]
+  .text:10050995                 mov     [edx+14h], eax
+  .text:10050998                 mov     eax, [ebp+surface_origin]
+  .text:1005099B                 movq    xmm0, qword ptr [eax]
+  .text:1005099F                 movq    qword ptr [edx+18h], xmm0
+  .text:100509A4                 mov     eax, [eax+8]
+  .text:100509A7                 mov     [edx+20h], eax
+  .text:100509AA                 mov     al, [ebp+mirror]
+  .text:100509AD                 mov     [edx+0C8h], al
+  .text:100509B3                 mov     al, [ebp+linked]
+  .text:100509B6                 mov     [edx+0C9h], al
+  .text:100509BC                 mov     eax, edi
+  .text:100509BE                 mov     dword ptr [edx+0CCh], 0
+  .text:100509C8                 mov     dword ptr [edx+24h], 0
+  .text:100509CF                 and     eax, 80000001h
+  .text:100509D4                 jns     short loc_100509DB
+  .text:100509D6                 dec     eax
+  .text:100509D7                 or      eax, 0FFFFFFFEh
+  .text:100509DA                 inc     eax
+  .text:100509DB                 cmp     eax, 1
+  .text:100509DE                 lea     ecx, [edi+1]
+  .text:100509E1                 mov     eax, ebx
+  .text:100509E3                 cmovnz  ecx, edi
+  .text:100509E6                 mov     [edx+0D0h], ecx
+  .text:100509EC                 and     eax, 80000001h
+  .text:100509F1                 jns     short loc_100509F8
+  .text:100509F3                 dec     eax
+  .text:100509F4                 or      eax, 0FFFFFFFEh
+  .text:100509F7                 inc     eax
+  .text:100509F8                 cmp     eax, 1
+  .text:100509FB                 lea     ecx, [ebx+1]
+  .text:100509FE                 mov     eax, edx
+  .text:10050A00                 cmovnz  ecx, ebx
+  .text:10050A03                 mov     [edx+0D4h], ecx
+  .text:10050A09                 mov     ecx, [ebp+var_C]
+  .text:10050A0C                 mov     large fs:0, ecx
+  .text:10050A13                 pop     ecx
+  .text:10050A14                 pop     edi
+  .text:10050A15                 pop     esi
+  .text:10050A16                 pop     ebx
+  .text:10050A17                 mov     esp, ebp
+  .text:10050A19                 pop     ebp
+  .text:10050A1A                 retn    20h ; ' '
+  .text:10054590                 push    edi
+  .text:10054591                 mov     edi, ecx
+  .text:10054593                 mov     edx, [edi]
+  .text:10054595                 mov     eax, [edx+4]
+  .text:10054598                 mov     dword ptr [eax], 0
+  .text:1005459E                 mov     eax, [edx]
+  .text:100545A0                 test    eax, eax
+  .text:100545A2                 jz      short loc_100545B9
+  .text:100545A4                 push    esi
+  .text:100545A5                 mov     esi, [eax]
+  .text:100545A7                 push    0Ch
+  .text:100545A9                 ; Block
+  .text:100545A9                 push    eax; Block
+  .text:100545AA                 call    sub_100E8485
+  .text:100545AF                 add     esp, 8
+  .text:100545B2                 mov     eax, esi
+  .text:100545B4                 test    esi, esi
+  .text:100545B6                 jnz     short loc_100545A5
+  .text:100545B8                 pop     esi
+  .text:100545B9                 push    0Ch
+  .text:100545BB                 ; Block
+  .text:100545BB                 push    dword ptr [edi]; Block
+  .text:100545BD                 call    sub_100E8485
+  .text:100545C2                 add     esp, 8
+  .text:100545C5                 pop     edi
+  .text:100545C6                 retn
+  .text:10114C78                 ; void (__thiscall *)(void *)
+  .text:10114C78                 push    offset nullsub_1; void (__thiscall *)(void *)
+  .text:10114C7D                 ; unsigned int
+  .text:10114C7D                 push    6; unsigned int
+  .text:10114C7F                 ; unsigned int
+  .text:10114C7F                 push    10h; unsigned int
+  .text:10114C81                 mov     eax, [ebp+var_14]
+  .text:10114C84                 add     eax, 28h ; '('
+  .text:10114C87                 ; void *
+  .text:10114C87                 push    eax; void *
+  .text:10114C88                 call    ??_M@YGXPAXIIP6EX0@Z@Z; `eh vector destructor iterator'(void *,uint,uint,void (*)(void *))
+  .text:10114C8D                 retn
+  .text:10114C8E                 mov     ecx, [ebp+var_14]
+  .text:10114C91                 add     ecx, 88h
+  .text:10114C97                 jmp     sub_10054600
+  .text:10114C9C                 mov     ecx, [ebp+width]
+  .text:10114C9F                 add     ecx, 4
+  .text:10114CA2                 jmp     loc_10054590
+  .text:10114CA7                 mov     ecx, [ebp+width]
+  .text:10114CAA                 add     ecx, 0Ch
+  .text:10114CAD                 jmp     loc_1002FF50
+  .text:10114CB7                 nop
+  .text:10114CB8                 nop
+  .text:10114CB9                 mov     edx, [esp-4+origin]
+  .text:10114CBD                 lea     eax, [edx+0Ch]
+  .text:10114CC0                 mov     ecx, [edx-18h]
+  .text:10114CC3                 ; StackCookie
+  .text:10114CC3                 xor     ecx, eax; StackCookie
+  .text:10114CC5                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10114CCA                 mov     eax, offset stru_1016BC48
+  .text:10114CCF                 jmp     ___CxxFrameHandler3
+procedure: |-
+  // scalar ClientPortal_origin_offset = 0; scalar ClientPortal_angles_offset = 12.
+  // Map constructor input origin/angles to self->origin/self->angles; values are byte offsets, not float indices.
+  // Verified current-binary layout: origin/angles copied from ctor inputs. texture offsets 204/208/212. mode belongs to ClientPortalSource, not this object. Unmapped containers remain opaque.
+  ClientPortalVerified *__thiscall sub_10050860(
+          ClientPortalVerified *self,
+          void *context,
+          const float *origin,
+          const float *angles,
+          const float *surface_origin,
+          char mirror,
+          int width,
+          int height,
+          char linked)
+  {
+    _DWORD *v10; // eax
+    int v11; // ecx
+    int v12; // ecx
+    ClientPortalVerified *result; // eax
+
+    self->origin[0] = 0.0;
+    self->origin[1] = 0.0;
+    self->origin[2] = 0.0;
+    self->angles[0] = 0.0;
+    self->angles[1] = 0.0;
+    self->angles[2] = 0.0;
+    self->surface_origin[0] = 0.0;
+    self->surface_origin[1] = 0.0;
+    self->surface_origin[2] = 0.0;
+    `eh vector constructor iterator'(&self->unknown[4], 0x10u, 6u, sub_100543C0, nullsub_1);
+    sub_10054310();
+    *(_DWORD *)&self->unknown[132] = 0;
+    *(_DWORD *)&self->unknown[136] = 0;
+    *(_DWORD *)&self->unknown[140] = 0;
+    _mm_lfence();
+    v10 = operator new(0xCu);
+    *v10 = v10;
+    v10[1] = v10;
+    *(_DWORD *)&self->unknown[136] = v10;
+    *(_DWORD *)&self->unknown[144] = 0;
+    *(_DWORD *)&self->unknown[148] = 0;
+    *(_DWORD *)&self->unknown[152] = 0;
+    *(_DWORD *)&self->unknown[156] = 7;
+    *(_DWORD *)&self->unknown[160] = 8;
+    *(_DWORD *)&self->unknown[132] = 1065353216;
+    sub_10054C70(16, *(_DWORD *)&self->unknown[136]);
+    *(_QWORD *)self->origin = *(_QWORD *)origin;
+    self->origin[2] = origin[2];
+    *(_QWORD *)self->angles = *(_QWORD *)angles;
+    self->angles[2] = angles[2];
+    *(_QWORD *)self->surface_origin = *(_QWORD *)surface_origin;
+    self->surface_origin[2] = surface_origin[2];
+    self->unknown[164] = mirror;
+    self->unknown[165] = linked;
+    self->texture_id = 0;
+    *(_DWORD *)self->unknown = 0;
+    v11 = width + 1;
+    if ( width % 2 != 1 )
+      v11 = width;
+    self->texture_width = v11;
+    v12 = height + 1;
+    result = self;
+    if ( height % 2 != 1 )
+      v12 = height;
+    self->texture_height = v12;
+    return result;
+  }

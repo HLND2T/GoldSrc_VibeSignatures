@@ -4,7 +4,9 @@ import ast
 import asyncio
 import io
 import json
+import math
 import os
+import struct
 import tempfile
 import unittest
 from contextlib import asynccontextmanager, redirect_stderr
@@ -38,6 +40,7 @@ from ida_analyze_util import (
     preprocess_index_based_vfunc_via_mcp,
 )
 from ida_preprocessor_scripts._indirect_vcall_target_common import preprocess_indirect_vcall_target_skill
+from ida_preprocessor_scripts._client_portal_offsets import recover_portal_offsets
 from ida_preprocessor_scripts._ordinal_vtable_common import preprocess_ordinal_vtable_via_mcp
 from ida_skill_preprocessor import (
     PREPROCESS_STATUS_ABSENT_OK,
@@ -146,6 +149,249 @@ class UnicodeStringScanTests(unittest.TestCase):
         self.assertEqual(before_options, vars(options))
         self.assertIsNone(cache[0])
         self.assertEqual({0x402000}, namespace["_string_candidates"]("Cache_Alloc: size %i"))
+
+
+class FloatFilterBehaviorTests(unittest.TestCase):
+    def _matches(self, mnemonic, width, blob, required, excluded=(), *, decoded=True):
+        tree = ast.parse(_build_func_xref_py_eval({}, 0))
+        helpers = {
+            "_scalar_float_kind",
+            "_has_xmm_operand",
+            "_is_readonly_float_segment",
+            "_float_matches",
+            "_function_matches_float_filters",
+        }
+        constants = {"SINGLE_FLOAT_MNEMS", "DOUBLE_FLOAT_MNEMS", "X87_FLOAT_MNEMS", "MEMORY_OPERAND_TYPES"}
+        nodes = [
+            node
+            for node in tree.body
+            if (isinstance(node, ast.FunctionDef) and node.name in helpers)
+            or (
+                isinstance(node, ast.Assign)
+                and any(isinstance(t, ast.Name) and t.id in constants for t in node.targets)
+            )
+        ]
+        operand = SimpleNamespace(dtype=width)
+        namespace = {
+            "math": math,
+            "struct": struct,
+            "idc": SimpleNamespace(
+                o_mem=2,
+                o_displ=4,
+                o_phrase=3,
+                print_insn_mnem=lambda ea: mnemonic,
+                print_operand=lambda ea, index: "xmm0" if index == 1 else "pool",
+                get_operand_type=lambda ea, index: 2 if index == 0 else 0,
+                get_operand_value=lambda ea, index: 0x2000,
+            ),
+            "ida_ua": SimpleNamespace(
+                insn_t=lambda: SimpleNamespace(ops=[operand]),
+                decode_insn=lambda insn, ea: 6 if decoded else 0,
+                get_dtype_size=lambda dtype: dtype,
+            ),
+            "ida_segment": SimpleNamespace(getseg=lambda ea: object(), get_segm_name=lambda seg: ".rdata"),
+            "idautils": SimpleNamespace(FuncItems=lambda start: [0x1000]),
+            "ida_bytes": SimpleNamespace(get_bytes=lambda ea, count: blob[:count]),
+        }
+        exec(compile(ast.Module(body=nodes, type_ignores=[]), "<float-filters>", "exec"), namespace)
+        return namespace["_function_matches_float_filters"](0x1000, required, excluded)
+
+    def test_x87_double_does_not_also_reference_its_low_float_word(self):
+        blob = struct.pack("<d", 1023.0)
+        self.assertFalse(self._matches("fld", 8, blob, [0.0]))
+        self.assertTrue(self._matches("fld", 8, blob, [1023.0], [0.0]))
+
+    def test_x87_float_reads_only_its_four_bytes(self):
+        self.assertTrue(self._matches("fmul", 4, struct.pack("<f", 0.875), [0.875]))
+        blob = struct.pack("<d", 1023.0)
+        self.assertFalse(self._matches("fld", 4, blob, [1023.0]))
+
+    def test_x87_bad_decode_unsupported_width_and_truncation_fail_closed(self):
+        blob = struct.pack("<d", 1023.0)
+        for width, data, decoded in ((10, blob, True), (8, blob[:4], True), (8, blob, False)):
+            with self.subTest(width=width, decoded=decoded):
+                self.assertFalse(self._matches("fld", width, data, [1023.0], decoded=decoded))
+
+    def test_sse_and_x87_required_and_excluded_constants(self):
+        for mnemonic, width, fmt in (("mulss", 4, "<f"), ("mulsd", 8, "<d"), ("fld", 4, "<f"), ("fdiv", 8, "<d")):
+            with self.subTest(mnemonic=mnemonic, width=width):
+                blob = struct.pack(fmt, 0.875)
+                self.assertTrue(self._matches(mnemonic, width, blob, [0.875]))
+                self.assertFalse(self._matches(mnemonic, width, blob, [0.875], [0.875]))
+                self.assertFalse(self._matches(mnemonic, width, blob, [0.075]))
+
+
+class PortalOffsetBehaviorTests(unittest.TestCase):
+    @staticmethod
+    def reg(name, size=4):
+        return {"kind": "reg", "reg": name, "size": size}
+
+    @staticmethod
+    def mem(base, disp=0):
+        return {"kind": "mem", "base": base, "disp": disp, "size": 4}
+
+    @staticmethod
+    def imm(value):
+        return {"kind": "imm", "value": value, "size": 4}
+
+    @staticmethod
+    def ins(mnemonic, *operands, successors=()):
+        writes = []
+        if operands and operands[0]["kind"] == "reg" and mnemonic in {"mov", "lea", "xor", "add", "sub", "pop"}:
+            writes = [operands[0]["reg"]]
+        return {"mnemonic": mnemonic, "operands": list(operands), "writes": writes, "successors": successors}
+
+    def api(self, name):
+        return self.ins("call", {"kind": "api", "name": name, "size": 4})
+
+    def vector(self, platform="windows", begin=140):
+        r, m, c, i = self.reg, self.mem, self.imm, self.ins
+        prefix = [i("mov", r("ebx"), r("ecx"))]
+        if platform == "linux":
+            prefix = [i("push", r("ebp")), i("sub", r("esp"), c(32)), i("mov", r("ebx"), m("esp", 40))]
+        return prefix + [
+            i("mov", r("esi"), m("ebx", begin)),
+            i("mov", r("eax"), m("ebx", begin + 4)),
+            i("cmp", r("esi"), r("eax")),
+            i("jz", successors=(len(prefix) + 4,)),
+            i("mov", r("edi"), m("esi")),
+        ]
+
+    def texture(self, offset=204):
+        r, m, c, i = self.reg, self.mem, self.imm, self.ins
+        return [
+            i("cmp", m("ebx", offset), c(0)),
+            i("lea", r("esi"), m("ebx", offset)),
+            i("push", r("esi")),
+            i("push", c(1)),
+            self.api("glGenTextures"),
+            i("push", c(0xDE1)),
+            self.api("glEnable"),
+            i("push", m("esi")),
+            i("push", c(0xDE1)),
+            self.api("glBindTexture"),
+            i("push", c(0)),
+            i("push", c(0x1400)),
+            i("push", c(0x1908)),
+            i("push", c(0)),
+            i("push", m("ebx", offset + 8)),
+            i("push", m("ebx", offset + 4)),
+            i("push", c(0x1908)),
+            i("push", c(0)),
+            i("push", c(0xDE1)),
+            self.api("glTexImage2D"),
+        ]
+
+    def test_recovers_platform_specific_vector_from_this_argument(self):
+        self.assertEqual(
+            {"vector_begin": 132, "vector_end": 136}, recover_portal_offsets(self.vector("linux", 132), "linux")
+        )
+        # Synthetic offsets deliberately differ from the shipped build.
+        self.assertEqual(
+            {"vector_begin": 64, "vector_end": 68, "texture_id": 96, "texture_width": 100, "texture_height": 104},
+            recover_portal_offsets(self.vector(begin=64) + self.texture(96), "windows"),
+        )
+
+    def test_vector_rejects_unrelated_base_clobber_missing_iteration_and_ambiguity(self):
+        i, r, m, c = self.ins, self.reg, self.mem, self.imm
+        invalid = []
+        code = self.vector()
+        code[0] = i("mov", r("ebx"), r("edx"))
+        invalid.append(code)
+        code = self.vector()
+        code.insert(3, i("xor", r("esi"), r("esi")))
+        invalid.append(code)
+        invalid.append(self.vector()[:-1])
+        code = self.vector() + self.vector(begin=40)[1:]
+        code[-2]["successors"] = (len(code) - 1,)
+        invalid.append(code)
+        for code in invalid:
+            with self.subTest(code=code), self.assertRaises(ValueError):
+                recover_portal_offsets(code + self.texture(), "windows")
+
+    def test_texture_rejects_unrelated_pushes_without_gl_calls(self):
+        i, r, m, c = self.ins, self.reg, self.mem, self.imm
+        code = self.vector() + [
+            i("cmp", m("ebx", 204), c(0)),
+            i("lea", r("esi"), m("ebx", 204)),
+            i("push", m("edi", 212)),
+            i("push", m("eax", 208)),
+        ]
+        with self.assertRaises(ValueError):
+            recover_portal_offsets(code, "windows")
+
+    def test_vector_branch_paths_cannot_borrow_this_from_dead_code(self):
+        code = self.vector()
+        # Skip the only assignment carrying the this argument to ebx.
+        code.insert(0, self.ins("jmp", successors=(2,)))
+        code[-2]["successors"] = (len(code) - 1,)
+        with self.assertRaises(ValueError):
+            recover_portal_offsets(code + self.texture(), "windows")
+
+    def test_texture_requires_same_object_argument_order_and_complete_call_chain(self):
+        i, r, m, c = self.ins, self.reg, self.mem, self.imm
+        for index, replacement in (
+            (2, i("push", r("edi"))),
+            (3, i("push", c(2))),
+            (4, self.api("unrelated")),
+            (7, i("push", m("edi"))),
+            (9, self.api("unrelated")),
+            (14, i("push", m("edi", 212))),
+            (15, i("push", m("eax", 208))),
+            (19, self.api("unrelated")),
+        ):
+            code = self.texture()
+            code[index] = replacement
+            with self.subTest(index=index), self.assertRaises(ValueError):
+                recover_portal_offsets(self.vector() + code, "windows")
+        code = self.texture()
+        code[14], code[15] = code[15], code[14]
+        with self.assertRaises(ValueError):
+            recover_portal_offsets(self.vector() + code, "windows")
+
+    def test_texture_clobbers_and_conflicting_triples_fail_closed(self):
+        for index, register in ((2, "esi"), (7, "esi"), (14, "ebx")):
+            code = self.texture()
+            code.insert(index, self.ins("xor", self.reg(register), self.reg(register)))
+            with self.subTest(index=index), self.assertRaises(ValueError):
+                recover_portal_offsets(self.vector() + code, "windows")
+        with self.assertRaises(ValueError):
+            recover_portal_offsets(self.vector() + self.texture() + self.texture(100), "windows")
+        code = self.texture()
+        partial_write = self.ins("mov", self.reg("bl", 1), self.imm(0))
+        partial_write["writes"] = ["ebx"]
+        code.insert(14, partial_write)
+        with self.assertRaises(ValueError):
+            recover_portal_offsets(self.vector() + code, "windows")
+        code = self.texture()
+        code.insert(14, self.ins("mul", self.reg("esi")))
+        with self.assertRaises(ValueError):
+            recover_portal_offsets(self.vector() + code, "windows")
+
+    def test_texture_branch_paths_do_not_share_register_provenance(self):
+        code = self.vector()
+        start = len(code)
+        texture = self.texture()
+        # The fallthrough overwrites esi then jumps past the restoring LEA.
+        # The taken branch restores esi but exits before the GL sequence.
+        branch = [
+            self.ins("jz", successors=(start + 3, start + 5)),
+            self.ins("xor", self.reg("esi"), self.reg("esi")),
+            self.ins("jmp", successors=(start + 7,)),
+            self.ins("lea", self.reg("esi"), self.mem("ebx", 204)),
+            self.ins("ret"),
+        ]
+        code += texture[:2] + branch + texture[2:]
+        with self.assertRaises(ValueError):
+            recover_portal_offsets(code, "windows")
+        # Two forward paths retaining the same pointer both prove the triple.
+        code = (
+            self.vector()
+            + texture[:2]
+            + [self.ins("jz", successors=(start + 3, start + 4)), self.ins("nop")]
+            + texture[2:]
+        )
+        self.assertEqual(204, recover_portal_offsets(code, "windows")["texture_id"])
 
 
 class PreprocessStatusTests(unittest.TestCase):

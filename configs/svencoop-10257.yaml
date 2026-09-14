@@ -453,7 +453,26 @@ modules:
           - SkyboxCommand.{platform}.yaml
         expected_output:
           - R_LoadSkyBox_SvEngine.{platform}.yaml
+      - name: find-BuildGammaTable
+        platform: windows
+        expected_output:
+          - BuildGammaTable.{platform}.yaml
+      - name: find-studioapi_StudioSetRenderamt
+        expected_output:
+          - studioapi_StudioSetRenderamt.{platform}.yaml
+      - name: find-CL_FxBlend
+        expected_input:
+          - studioapi_StudioSetRenderamt.{platform}.yaml
+        expected_output:
+          - CL_FxBlend.{platform}.yaml
     symbols:
+      - name: BuildGammaTable
+        platform: windows
+        category: func
+      - name: studioapi_StudioSetRenderamt
+        category: func
+      - name: CL_FxBlend
+        category: func
       - name: CL_Set_ServerExtraInfo
         category: func
       - name: allow_cheats
@@ -757,7 +776,82 @@ modules:
           - V_StartPitchDrift.{platform}.yaml
         expected_output:
           - g_pitchdrift.{platform}.yaml
+      - name: find-ClientPortalManager_RenderPortals
+        expected_output:
+          - ClientPortalManager_RenderPortals.{platform}.yaml
+      - name: find-ClientPortalManager_EnableClipPlane
+        expected_output:
+          - ClientPortalManager_EnableClipPlane.{platform}.yaml
+      - name: find-ClientPortalManager_CreateInvisiblePortalTextures
+        expected_output:
+          - ClientPortalManager_CreateInvisiblePortalTextures.{platform}.yaml
+      - name: find-ClientPortalManager_ResetAll
+        expected_input:
+          - ClientPortalManager_CreateInvisiblePortalTextures.{platform}.yaml
+        expected_output:
+          - ClientPortalManager_ResetAll.{platform}.yaml
+      - name: find-ClientPortal-offsets-decompiles
+        expected_input:
+          - ClientPortalManager_RenderPortals.{platform}.yaml
+          - ClientPortalManager_EnableClipPlane.{platform}.yaml
+          - ClientPortal_Constructor.{platform}.yaml
+        expected_output:
+          - ClientPortalManager_vector_begin_offset.{platform}.yaml
+          - ClientPortalManager_vector_end_offset.{platform}.yaml
+          - ClientPortal_origin_offset.{platform}.yaml
+          - ClientPortal_angles_offset.{platform}.yaml
+          - ClientPortalSource_mode_offset.{platform}.yaml
+        optional_output_windows:
+          - ClientPortal_texture_id_offset.windows.yaml
+          - ClientPortal_texture_width_offset.windows.yaml
+          - ClientPortal_texture_height_offset.windows.yaml
+      - name: find-ClientPortal_Constructor
+        expected_input:
+          - ClientPortalManager_RenderPortals.{platform}.yaml
+        expected_output:
+          - ClientPortal_Constructor.{platform}.yaml
+      - name: find-ClientPortal_CreateTexture
+        platform: linux
+        expected_output:
+          - ClientPortal_CreateTexture.{platform}.yaml
+      - name: find-ClientPortal-texture-decompiles
+        platform: linux
+        expected_input:
+          - ClientPortal_CreateTexture.{platform}.yaml
+        expected_output:
+          - ClientPortal_texture_id_offset.{platform}.yaml
+          - ClientPortal_texture_width_offset.{platform}.yaml
+          - ClientPortal_texture_height_offset.{platform}.yaml
     symbols:
+      - name: ClientPortal_Constructor
+        category: func
+      - name: ClientPortal_CreateTexture
+        category: func
+        platform: linux
+      - name: ClientPortal_origin_offset
+        category: scalar
+      - name: ClientPortal_angles_offset
+        category: scalar
+      - name: ClientPortalSource_mode_offset
+        category: scalar
+      - name: ClientPortalManager_RenderPortals
+        category: func
+      - name: ClientPortalManager_EnableClipPlane
+        category: func
+      - name: ClientPortalManager_CreateInvisiblePortalTextures
+        category: func
+      - name: ClientPortalManager_ResetAll
+        category: func
+      - name: ClientPortalManager_vector_begin_offset
+        category: scalar
+      - name: ClientPortalManager_vector_end_offset
+        category: scalar
+      - name: ClientPortal_texture_id_offset
+        category: scalar
+      - name: ClientPortal_texture_width_offset
+        category: scalar
+      - name: ClientPortal_texture_height_offset
+        category: scalar
       - name: g_pitchdrift
         category: gv
       - name: g_bRenderingPortals_SCClient

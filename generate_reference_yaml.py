@@ -10,6 +10,7 @@ import json
 import os
 from collections.abc import Mapping, Sequence
 from contextlib import asynccontextmanager
+from contextvars import copy_context
 from pathlib import Path
 from typing import Any
 
@@ -761,6 +762,19 @@ async def attach_existing_mcp_session(
         raise ReferenceGenerationError(str(exc)) from exc
 
 
+async def _wait_lifecycle_task(task: asyncio.Task) -> asyncio.CancelledError | None:
+    """Drain a synchronous lifecycle operation even after repeated cancellation."""
+    cancellation = None
+    while not task.done():
+        try:
+            await asyncio.shield(task)
+        except asyncio.CancelledError as exc:
+            cancellation = cancellation or exc
+        except Exception:
+            break  # The caller retrieves the operation's result or exception.
+    return cancellation
+
+
 @asynccontextmanager
 async def autostart_mcp_session(
     binary_path: str,
@@ -773,18 +787,25 @@ async def autostart_mcp_session(
     explicit_database: str | None = None,
 ):
     lifecycle = create_ida_mcp_lifecycle(binary_path, platform, host, port, ida_args, debug)
+    # to_thread copies its caller's context on every call. Re-enter this one
+    # context serially so the client's ContextVar token can be reset on exit.
+    lifecycle_context = copy_context()
     entered = False
+    primary_error = None
     try:
-        startup_task = asyncio.create_task(asyncio.to_thread(lifecycle.__enter__))
+        startup_task = asyncio.create_task(asyncio.to_thread(lifecycle_context.run, lifecycle.__enter__))
+        cancellation = await _wait_lifecycle_task(startup_task)
         try:
-            await asyncio.shield(startup_task)
+            startup_task.result()
             entered = True
-        except asyncio.CancelledError:
-            startup_result = await asyncio.gather(startup_task, return_exceptions=True)
-            entered = not isinstance(startup_result[0], BaseException)
-            raise
         except Exception as exc:
+            if cancellation is not None:
+                if hasattr(cancellation, "add_note"):
+                    cancellation.add_note(f"IDA MCP startup also failed: {exc}")
+                raise cancellation from exc
             raise ReferenceGenerationError(f"failed to start IDA MCP lifecycle for {binary_path}: {exc}") from exc
+        if cancellation is not None:
+            raise cancellation
 
         session_kwargs = {
             "expected_binary": binary_path,
@@ -797,12 +818,31 @@ async def autostart_mcp_session(
                 yield session
         except (McpConnectionError, McpDatabaseSelectionError, McpToolCallError) as exc:
             raise ReferenceGenerationError(str(exc)) from exc
+    except BaseException as exc:
+        primary_error = exc
+        raise
     finally:
         if entered:
+            exc_info = (
+                (type(primary_error), primary_error, primary_error.__traceback__)
+                if primary_error is not None
+                else (None, None, None)
+            )
+            cleanup_task = asyncio.create_task(asyncio.to_thread(lifecycle_context.run, lifecycle.__exit__, *exc_info))
+            cancellation = await _wait_lifecycle_task(cleanup_task)
+            pending_error = primary_error if primary_error is not None else cancellation
             try:
-                await asyncio.to_thread(lifecycle.__exit__, None, None, None)
+                cleanup_task.result()
             except Exception as exc:
-                raise ReferenceGenerationError(f"failed to stop IDA MCP lifecycle for {binary_path}: {exc}") from exc
+                message = f"failed to stop IDA MCP lifecycle for {binary_path}: {exc}"
+                if pending_error is None:
+                    raise ReferenceGenerationError(message) from exc
+                if hasattr(pending_error, "add_note"):
+                    pending_error.add_note(message)
+                else:
+                    print(f"ERROR: {message}")
+            if primary_error is None and cancellation is not None:
+                raise cancellation
 
 
 def _normalize_explicit_target(

@@ -1,0 +1,136 @@
+func_name: "ClientPortal_CreateTexture"
+func_va: "0xf42f8"
+disasm_code: |-
+  ; scalars ClientPortal_texture_id_offset = 196, ClientPortal_texture_width_offset = 200, ClientPortal_texture_height_offset = 204.
+  ; ESI retains the portal input. Its +0xC4 address feeds glGenTextures; +0xC4 value feeds glBindTexture; +0xC8/+0xCC feed GL width/height.
+  .text:000F42F8                 push    esi
+  .text:000F42F9                 push    ebx
+  .text:000F42FA                 sub     esp, 44h
+  .text:000F42FD                 call    sub_9E590
+  .text:000F4302                 add     ebx, (offset qword_61E000 - $)
+  .text:000F4308                 mov     esi, eax
+  .text:000F430A                 lea     eax, [esp+4Ch+var_14]
+  .text:000F430E                 ; params
+  .text:000F430E                 mov     [esp+4Ch+params], eax; params
+  .text:000F4312                 ; pname
+  .text:000F4312                 mov     [esp+4Ch+pname], 84E0h; pname
+  .text:000F4319                 call    _glGetIntegerv
+  .text:000F431E                 cmp     [esp+4Ch+var_14], 84C0h
+  .text:000F4326                 jz      short loc_F4384
+  .text:000F4328                 mov     [esp+4Ch+pname], 84C0h
+  .text:000F432F                 mov     edx, ds:(__glewActiveTexture_ptr - 61E000h)[ebx]
+  .text:000F4335                 call    dword ptr [edx]
+  .text:000F4337                 lea     ecx, [esp+4Ch+var_10]
+  .text:000F433B                 ; params
+  .text:000F433B                 mov     [esp+4Ch+params], ecx; params
+  .text:000F433F                 ; pname
+  .text:000F433F                 mov     [esp+4Ch+pname], 84E0h; pname
+  .text:000F4346                 call    _glGetIntegerv
+  .text:000F434B                 cmp     [esp+4Ch+var_10], 84C0h
+  .text:000F4353                 jz      short loc_F4384
+  .text:000F4355                 lea     esi, (aInvalidGlActiv - 61E000h)[ebx]; "Invalid GL_ACTIVE_TEXTURE, unable to re"...
+  .text:000F435B                 ; y
+  .text:000F435B                 mov     [esp+4Ch+params], esi; y
+  .text:000F435F                 ; int
+  .text:000F435F                 mov     [esp+4Ch+pname], 1; int
+  .text:000F4366                 call    sub_CD350
+  .text:000F436B                 mov     eax, [esp+4Ch+var_14]
+  .text:000F436F                 cmp     eax, 84C0h
+  .text:000F4374                 jz      short loc_F437E
+  .text:000F4376                 mov     [esp+4Ch+pname], eax
+  .text:000F4379                 call    sub_F42B8
+  .text:000F437E                 add     esp, 44h
+  .text:000F4381                 pop     ebx
+  .text:000F4382                 pop     esi
+  .text:000F4383                 retn
+  .text:000F4384                 lea     eax, [esi+0C4h]
+  .text:000F438A                 ; textures
+  .text:000F438A                 mov     [esp+4Ch+params], eax; textures
+  .text:000F438E                 ; n
+  .text:000F438E                 mov     [esp+4Ch+pname], 1; n
+  .text:000F4395                 call    _glGenTextures
+  .text:000F439A                 ; cap
+  .text:000F439A                 mov     [esp+4Ch+pname], 0DE1h; cap
+  .text:000F43A1                 call    _glEnable
+  .text:000F43A6                 mov     edx, [esi+0C4h]
+  .text:000F43AC                 ; texture
+  .text:000F43AC                 mov     [esp+4Ch+params], edx; texture
+  .text:000F43B0                 ; target
+  .text:000F43B0                 mov     [esp+4Ch+pname], 0DE1h; target
+  .text:000F43B7                 call    _glBindTexture
+  .text:000F43BC                 ; pixels
+  .text:000F43BC                 mov     [esp+4Ch+pixels], 0; pixels
+  .text:000F43C4                 ; type
+  .text:000F43C4                 mov     [esp+4Ch+type], 1400h; type
+  .text:000F43CC                 ; format
+  .text:000F43CC                 mov     [esp+4Ch+format], 1908h; format
+  .text:000F43D4                 ; border
+  .text:000F43D4                 mov     [esp+4Ch+border], 0; border
+  .text:000F43DC                 mov     ecx, [esi+0CCh]
+  .text:000F43E2                 ; height
+  .text:000F43E2                 mov     [esp+4Ch+height], ecx; height
+  .text:000F43E6                 mov     esi, [esi+0C8h]
+  .text:000F43EC                 ; width
+  .text:000F43EC                 mov     [esp+4Ch+width], esi; width
+  .text:000F43F0                 ; internalFormat
+  .text:000F43F0                 mov     [esp+4Ch+internalFormat], 1908h; internalFormat
+  .text:000F43F8                 ; level
+  .text:000F43F8                 mov     [esp+4Ch+params], 0; level
+  .text:000F4400                 ; target
+  .text:000F4400                 mov     [esp+4Ch+pname], 0DE1h; target
+  .text:000F4407                 call    _glTexImage2D
+  .text:000F440C                 ; param
+  .text:000F440C                 mov     [esp+4Ch+internalFormat], 2601h; param
+  .text:000F4414                 ; pname
+  .text:000F4414                 mov     [esp+4Ch+params], 2801h; pname
+  .text:000F441C                 ; target
+  .text:000F441C                 mov     [esp+4Ch+pname], 0DE1h; target
+  .text:000F4423                 call    _glTexParameteri
+  .text:000F4428                 ; param
+  .text:000F4428                 mov     [esp+4Ch+internalFormat], 2601h; param
+  .text:000F4430                 ; pname
+  .text:000F4430                 mov     [esp+4Ch+params], 2800h; pname
+  .text:000F4438                 ; target
+  .text:000F4438                 mov     [esp+4Ch+pname], 0DE1h; target
+  .text:000F443F                 call    _glTexParameteri
+  .text:000F4444                 ; texture
+  .text:000F4444                 mov     [esp+4Ch+params], 0; texture
+  .text:000F444C                 ; target
+  .text:000F444C                 mov     [esp+4Ch+pname], 0DE1h; target
+  .text:000F4453                 call    _glBindTexture
+  .text:000F4458                 mov     ebx, [esp+4Ch+var_14]
+  .text:000F445C                 mov     [esp+4Ch+pname], ebx
+  .text:000F445F                 call    sub_F42B8
+  .text:000F4464                 jmp     loc_F436B
+procedure: |-
+  // scalar byte offsets: ClientPortal_texture_id_offset=196; ClientPortal_texture_width_offset=200; ClientPortal_texture_height_offset=204.
+  // Linux layout differs from Windows. Confirm roles using GL argument positions, not the Windows values.
+  int __usercall ClientPortal_CreateTexture@<eax>(ClientPortalVerified *self@<eax>)
+  {
+    int result; // eax
+    GLint params; // [esp+38h] [ebp-14h] BYREF
+    GLint v4[4]; // [esp+3Ch] [ebp-10h] BYREF
+
+    glGetIntegerv(0x84E0u, &params);
+    if ( params == 33984 || (_glewActiveTexture(33984), glGetIntegerv(0x84E0u, v4), v4[0] == 33984) )
+    {
+      glGenTextures(1, &self->texture_id);
+      glEnable(0xDE1u);
+      glBindTexture(0xDE1u, self->texture_id);
+      glTexImage2D(0xDE1u, 0, 6408, self->texture_width, self->texture_height, 0, 0x1908u, 0x1400u, nullptr);
+      glTexParameteri(0xDE1u, 0x2801u, 9729);
+      glTexParameteri(0xDE1u, 0x2800u, 9729);
+      glBindTexture(0xDE1u, 0);
+      sub_F42B8(params);
+    }
+    else
+    {
+      sub_CD350(
+        1,
+        COERCE_GLFLOAT("Invalid GL_ACTIVE_TEXTURE, unable to reset. Couldn't create texture for PortalSource.\n"));
+    }
+    result = params;
+    if ( params != 33984 )
+      return sub_F42B8(params);
+    return result;
+  }

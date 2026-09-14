@@ -205,7 +205,9 @@ Each entry uses `func_name` and any combination of:
 
 - Positive string/GV/signature/function/inline-alias sources are intersected.
 - Exclusions are applied after the positive intersection.
-- Float filters are post-intersection filters and do not count as a positive source.
+- Float filters are post-intersection filters. They may serve as the sole positive source only when the constant set
+  is validated to select exactly one function on every requested platform and game family; the candidate set is then
+  every function whose body references all required constants.
 - Symbolic GV/function references are loaded from current-version YAML; explicit `0x...` GV
   addresses are permitted.
 - `FULLMATCH:` requires exact string equality.

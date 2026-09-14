@@ -877,6 +877,9 @@ async def preprocess_studio_draw_player(
 SLOT_SHAPE_READ = "read"
 SLOT_SHAPE_WRITE = "write"
 SLOT_SHAPE_COPY12 = "copy12"
+# Emits only the slot function artifact: the accessor's global accesses are
+# intentionally not recovered (the consumer only needs the function entry).
+SLOT_SHAPE_SKIP_GVS = "skip"
 
 
 async def locate_studio_slot(session, studio_string, slot_offset):
@@ -912,6 +915,8 @@ def _shape_gv_bases(located, shape):
     elif shape == SLOT_SHAPE_COPY12:
         if len(reads) == 1 and len(writes) == 1 and reads[0] != writes[0]:
             return reads + writes
+    elif shape == SLOT_SHAPE_SKIP_GVS:
+        return []
     return None
 
 

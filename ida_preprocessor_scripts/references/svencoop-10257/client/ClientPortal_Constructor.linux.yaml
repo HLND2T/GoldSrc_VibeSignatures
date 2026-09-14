@@ -1,0 +1,209 @@
+func_name: "ClientPortal_Constructor"
+func_va: "0xf554e"
+disasm_code: |-
+  ; ClientPortal_origin_offset = 0; ClientPortal_angles_offset = 12 (byte offsets).
+  ; F565A..F5678 copies ctor origin/angles inputs into the same this object. [eax] is a validated zero-offset store.
+  .text:000F554E                 push    ebp
+  .text:000F554F                 push    edi
+  .text:000F5550                 push    esi
+  .text:000F5551                 push    ebx
+  .text:000F5552                 mov     eax, [esp+10h+self]
+  .text:000F5556                 mov     edi, [esp+10h+origin]
+  .text:000F555A                 mov     esi, [esp+10h+angles]
+  .text:000F555E                 mov     ecx, [esp+10h+width]
+  .text:000F5562                 mov     edx, [esp+10h+height]
+  .text:000F5566                 fldz
+  .text:000F5568                 fst     dword ptr [eax]
+  .text:000F556A                 fst     dword ptr [eax+4]
+  .text:000F556D                 fst     dword ptr [eax+8]
+  .text:000F5570                 fst     dword ptr [eax+0Ch]
+  .text:000F5573                 fst     dword ptr [eax+10h]
+  .text:000F5576                 fst     dword ptr [eax+14h]
+  .text:000F5579                 fst     dword ptr [eax+18h]
+  .text:000F557C                 fst     dword ptr [eax+1Ch]
+  .text:000F557F                 fst     dword ptr [eax+20h]
+  .text:000F5582                 fst     dword ptr [eax+28h]
+  .text:000F5585                 fst     dword ptr [eax+2Ch]
+  .text:000F5588                 fst     dword ptr [eax+30h]
+  .text:000F558B                 fst     dword ptr [eax+34h]
+  .text:000F558E                 fst     dword ptr [eax+38h]
+  .text:000F5591                 fst     dword ptr [eax+3Ch]
+  .text:000F5594                 fst     dword ptr [eax+40h]
+  .text:000F5597                 fst     dword ptr [eax+44h]
+  .text:000F559A                 fst     dword ptr [eax+48h]
+  .text:000F559D                 fst     dword ptr [eax+4Ch]
+  .text:000F55A0                 fst     dword ptr [eax+50h]
+  .text:000F55A3                 fst     dword ptr [eax+54h]
+  .text:000F55A6                 fst     dword ptr [eax+58h]
+  .text:000F55A9                 fst     dword ptr [eax+5Ch]
+  .text:000F55AC                 fst     dword ptr [eax+60h]
+  .text:000F55AF                 fst     dword ptr [eax+64h]
+  .text:000F55B2                 fst     dword ptr [eax+68h]
+  .text:000F55B5                 fst     dword ptr [eax+6Ch]
+  .text:000F55B8                 fst     dword ptr [eax+70h]
+  .text:000F55BB                 fst     dword ptr [eax+74h]
+  .text:000F55BE                 fst     dword ptr [eax+78h]
+  .text:000F55C1                 fst     dword ptr [eax+7Ch]
+  .text:000F55C4                 fst     dword ptr [eax+80h]
+  .text:000F55CA                 fstp    dword ptr [eax+84h]
+  .text:000F55D0                 lea     ebx, [eax+0A0h]
+  .text:000F55D6                 mov     [eax+88h], ebx
+  .text:000F55DC                 mov     dword ptr [eax+8Ch], 1
+  .text:000F55E6                 mov     dword ptr [eax+90h], 0
+  .text:000F55F0                 mov     dword ptr [eax+94h], 0
+  .text:000F55FA                 fld1
+  .text:000F55FC                 fst     dword ptr [eax+98h]
+  .text:000F5602                 mov     dword ptr [eax+9Ch], 0
+  .text:000F560C                 mov     dword ptr [eax+0A0h], 0
+  .text:000F5616                 lea     ebp, [eax+0BCh]
+  .text:000F561C                 mov     [eax+0A4h], ebp
+  .text:000F5622                 mov     dword ptr [eax+0A8h], 1
+  .text:000F562C                 mov     dword ptr [eax+0ACh], 0
+  .text:000F5636                 mov     dword ptr [eax+0B0h], 0
+  .text:000F5640                 fstp    dword ptr [eax+0B4h]
+  .text:000F5646                 mov     dword ptr [eax+0B8h], 0
+  .text:000F5650                 mov     dword ptr [eax+0BCh], 0
+  .text:000F565A                 mov     ebx, [edi]
+  .text:000F565C                 mov     [eax], ebx
+  .text:000F565E                 mov     ebp, [edi+4]
+  .text:000F5661                 mov     [eax+4], ebp
+  .text:000F5664                 mov     edi, [edi+8]
+  .text:000F5667                 mov     [eax+8], edi
+  .text:000F566A                 mov     ebx, [esi]
+  .text:000F566C                 mov     [eax+0Ch], ebx
+  .text:000F566F                 mov     ebp, [esi+4]
+  .text:000F5672                 mov     [eax+10h], ebp
+  .text:000F5675                 mov     esi, [esi+8]
+  .text:000F5678                 mov     [eax+14h], esi
+  .text:000F567B                 mov     edi, [esp+10h+surface_origin]
+  .text:000F567F                 mov     ebx, [edi]
+  .text:000F5681                 mov     [eax+18h], ebx
+  .text:000F5684                 mov     ebp, [edi+4]
+  .text:000F5687                 mov     [eax+1Ch], ebp
+  .text:000F568A                 mov     esi, [edi+8]
+  .text:000F568D                 mov     [eax+20h], esi
+  .text:000F5690                 movzx   ebx, [esp+10h+mirror]
+  .text:000F5695                 mov     [eax+0C0h], bl
+  .text:000F569B                 movzx   ebx, [esp+10h+linked]
+  .text:000F56A0                 mov     [eax+0C1h], bl
+  .text:000F56A6                 mov     dword ptr [eax+0C4h], 0
+  .text:000F56B0                 mov     dword ptr [eax+24h], 0
+  .text:000F56B7                 mov     edi, ecx
+  .text:000F56B9                 sar     edi, 1Fh
+  .text:000F56BC                 mov     ebp, ecx
+  .text:000F56BE                 xor     ebp, edi
+  .text:000F56C0                 sub     ebp, edi
+  .text:000F56C2                 and     ebp, 1
+  .text:000F56C5                 xor     ebp, edi
+  .text:000F56C7                 sub     ebp, edi
+  .text:000F56C9                 lea     esi, [ecx+1]
+  .text:000F56CC                 cmp     ebp, 1
+  .text:000F56CF                 cmovz   ecx, esi
+  .text:000F56D2                 mov     edi, edx
+  .text:000F56D4                 sar     edi, 1Fh
+  .text:000F56D7                 mov     ebx, edx
+  .text:000F56D9                 xor     ebx, edi
+  .text:000F56DB                 sub     ebx, edi
+  .text:000F56DD                 and     ebx, 1
+  .text:000F56E0                 xor     ebx, edi
+  .text:000F56E2                 sub     ebx, edi
+  .text:000F56E4                 lea     ebp, [edx+1]
+  .text:000F56E7                 cmp     ebx, 1
+  .text:000F56EA                 cmovz   edx, ebp
+  .text:000F56ED                 mov     [eax+0C8h], ecx
+  .text:000F56F3                 mov     [eax+0CCh], edx
+  .text:000F56F9                 pop     ebx
+  .text:000F56FA                 pop     esi
+  .text:000F56FB                 pop     edi
+  .text:000F56FC                 pop     ebp
+  .text:000F56FD                 retn
+procedure: |-
+  // scalar ClientPortal_origin_offset = 0; scalar ClientPortal_angles_offset = 12.
+  // Map constructor input origin/angles to self->origin/self->angles; values are byte offsets, not float indices.
+  // Verified current-binary layout: origin/angles copied from ctor inputs. texture offsets 196/200/204. mode belongs to ClientPortalSource, not this object. Unmapped containers remain opaque.
+  ClientPortalVerified *__cdecl sub_F554E(
+          ClientPortalVerified *self,
+          void *context,
+          const float *origin,
+          const float *angles,
+          const float *surface_origin,
+          char mirror,
+          int width,
+          int height,
+          char linked)
+  {
+    ClientPortalVerified *result; // eax
+    int v10; // ecx
+    int v11; // edx
+
+    result = self;
+    v10 = width;
+    v11 = height;
+    self->origin[0] = 0.0;
+    self->origin[1] = 0.0;
+    self->origin[2] = 0.0;
+    self->angles[0] = 0.0;
+    self->angles[1] = 0.0;
+    self->angles[2] = 0.0;
+    self->surface_origin[0] = 0.0;
+    self->surface_origin[1] = 0.0;
+    self->surface_origin[2] = 0.0;
+    *(float *)&self->unknown[4] = 0.0;
+    *(float *)&self->unknown[8] = 0.0;
+    *(float *)&self->unknown[12] = 0.0;
+    *(float *)&self->unknown[16] = 0.0;
+    *(float *)&self->unknown[20] = 0.0;
+    *(float *)&self->unknown[24] = 0.0;
+    *(float *)&self->unknown[28] = 0.0;
+    *(float *)&self->unknown[32] = 0.0;
+    *(float *)&self->unknown[36] = 0.0;
+    *(float *)&self->unknown[40] = 0.0;
+    *(float *)&self->unknown[44] = 0.0;
+    *(float *)&self->unknown[48] = 0.0;
+    *(float *)&self->unknown[52] = 0.0;
+    *(float *)&self->unknown[56] = 0.0;
+    *(float *)&self->unknown[60] = 0.0;
+    *(float *)&self->unknown[64] = 0.0;
+    *(float *)&self->unknown[68] = 0.0;
+    *(float *)&self->unknown[72] = 0.0;
+    *(float *)&self->unknown[76] = 0.0;
+    *(float *)&self->unknown[80] = 0.0;
+    *(float *)&self->unknown[84] = 0.0;
+    *(float *)&self->unknown[88] = 0.0;
+    *(float *)&self->unknown[92] = 0.0;
+    *(float *)&self->unknown[96] = 0.0;
+    *(_DWORD *)&self->unknown[100] = &self->unknown[124];
+    *(_DWORD *)&self->unknown[104] = 1;
+    *(_DWORD *)&self->unknown[108] = 0;
+    *(_DWORD *)&self->unknown[112] = 0;
+    *(float *)&self->unknown[116] = 1.0;
+    *(_DWORD *)&self->unknown[120] = 0;
+    *(_DWORD *)&self->unknown[124] = 0;
+    *(_DWORD *)&self->unknown[128] = &self->unknown[152];
+    *(_DWORD *)&self->unknown[132] = 1;
+    *(_DWORD *)&self->unknown[136] = 0;
+    *(_DWORD *)&self->unknown[140] = 0;
+    *(float *)&self->unknown[144] = 1.0;
+    *(_DWORD *)&self->unknown[148] = 0;
+    *(_DWORD *)&self->unknown[152] = 0;
+    self->origin[0] = *origin;
+    self->origin[1] = origin[1];
+    self->origin[2] = origin[2];
+    self->angles[0] = *angles;
+    self->angles[1] = angles[1];
+    self->angles[2] = angles[2];
+    self->surface_origin[0] = *surface_origin;
+    self->surface_origin[1] = surface_origin[1];
+    self->surface_origin[2] = surface_origin[2];
+    self->unknown[156] = mirror;
+    self->unknown[157] = linked;
+    self->texture_id = 0;
+    *(_DWORD *)self->unknown = 0;
+    if ( width % 2 == 1 )
+      v10 = width + 1;
+    if ( height % 2 == 1 )
+      v11 = height + 1;
+    self->texture_width = v10;
+    self->texture_height = v11;
+    return result;
+  }
