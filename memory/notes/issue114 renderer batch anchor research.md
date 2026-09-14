@@ -66,7 +66,7 @@ All shipped as finders + configs + artifacts:
 - **Linux portal member layout diverges from Windows**: pseudocode shows L texture id at +196 (0xC4) vs W +204; the RenderPortals-L EnableClipPlane arg loads [portal?+0x48] vs W mode +0x40 — register provenance unresolved, verification failed closed. mode/texture offsets are windows-only scalars this round.
 - origin/angles offsets: structurally invisible (origin=+0 has no displacement encoding; L ctor inlined into its factory). Needs a portal-constructor/factory artifact chain (W factory=0x1004CED0, ctor=0x10050860 writes +0/+0xC/+204/+208/+212) or an agreed pure-LLM contract change.
 - ClientPortal_entity_offset: no entity pointer field in the 10257 ctor; MetaHookSv +0x70 was 5.25-only. Not emitted.
-- generate_reference_yaml.py autostart cleanup raises a Python 3.12 ContextVar `Token was created in a different Context` error AFTER writing the reference (artifact unaffected); likely the PR #99 exception-transfer pattern in the finally path.
+- generate_reference_yaml.py autostart cleanup previously raised `Token was created in a different Context` after writing the reference; confirmed and fixed as a lifecycle context ownership bug (see below), rather than an exception-transfer issue.
 - py_eval direct delivery of the offsets walk failed with an empty payload while the same code exec'd inside a wrapper worked; the finder ships the json-embedded exec wrapper (also surfaces remote tracebacks).
 
 ## PR #119 review follow-up: operand width and offset provenance
@@ -77,3 +77,11 @@ All shipped as finders + configs + artifacts:
 - Verification: execute the production float helpers and portal dataflow on synthetic success/error fixtures, including alternate layouts, missing GL calls, swapped arguments, unrelated bases, partial/implicit register writes, and branch provenance. Real IDA reruns use a fresh `-artifactdir` so existing YAML cannot skip the finder; all 12 BuildGammaTable artifacts and all 7 portal scalars retain the committed payloads.
 - MCP constraint: RenderPortals' decoded instruction payload exceeds the remote result limit. Embed the same tested Python helper alongside the IDA decoder inside the worker and return only the recovered offsets; do not transfer the full instruction list through `py_eval` results.
 - Scope: shared x87 float filters and Sven 10257 portal scalar discovery; future unsupported compiler shapes fail closed instead of borrowing a known layout.
+
+## PR #119 follow-up: reference lifecycle context ownership
+
+- Trigger: reference YAML is written successfully, but automatic MCP shutdown raises a ContextVar token reset error. Also reproduced on Python 3.13, so this is not specific to Python 3.12.
+- Root cause: separate `asyncio.to_thread` calls copy separate contexts for lifecycle entry and exit. `WorkerMcpClient` sets its token in the first context and cannot reset it in the second; reset failure precedes client transport/thread cleanup. Repeated startup cancellation could also abandon cleanup, and cleanup errors could mask the original body error.
+- Correct approach: enter and exit through one dedicated `copy_context().run`, serially. Shield and drain each lifecycle operation through repeated cancellation, then propagate cancellation. Pass the original exception to exit and retain it if cleanup also fails, reporting the cleanup failure as a note where supported.
+- Verification: real ContextVar test doubles cover success, body/startup/cleanup failures, combined body and cleanup failures, and repeated cancellation during startup or cleanup. All 35 reference tests pass on Python 3.12 and 3.13. A real Python 3.12 Sven client RenderPortals export writes its YAML to a temporary path, exits with status 0, and verifies every owned MCP client thread is closed.
+- Scope: the synchronous lifecycle bridge in `generate_reference_yaml.py`; MCP SDK async transport ownership remains in its existing owner task. Sharing a Context is not a general replacement for same-task ownership of async transports.

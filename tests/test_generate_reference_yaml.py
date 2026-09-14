@@ -7,6 +7,7 @@ import tempfile
 import threading
 import unittest
 from contextlib import asynccontextmanager
+from contextvars import ContextVar
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
@@ -15,6 +16,111 @@ import yaml
 
 import generate_reference_yaml
 from tests.test_support import write_elf32, write_pe32
+
+
+class ReferenceLifecycleContextTests(unittest.IsolatedAsyncioTestCase):
+    async def test_context_ownership_and_cancellation(self):
+        for scenario in (
+            "success",
+            "body_error",
+            "startup_cancel",
+            "cleanup_cancel",
+            "startup_error",
+            "cleanup_error",
+            "both_errors",
+        ):
+            with self.subTest(scenario=scenario):
+                binding = ContextVar("test_lifecycle", default="caller")
+                enter_started = threading.Event()
+                exit_started = threading.Event()
+                allow_enter = threading.Event()
+                allow_exit = threading.Event()
+                if scenario != "startup_cancel":
+                    allow_enter.set()
+                if scenario != "cleanup_cancel":
+                    allow_exit.set()
+                calls = []
+                body_error = RuntimeError("body failed")
+
+                class Lifecycle:
+                    def __enter__(self):
+                        self.token = binding.set("owned")
+                        enter_started.set()
+                        if not allow_enter.wait(5):
+                            raise TimeoutError("test startup gate")
+                        if scenario == "startup_error":
+                            binding.reset(self.token)
+                            raise RuntimeError("startup failed")
+                        return self
+
+                    def __exit__(self, *exc):
+                        calls.append((binding.get(), exc))
+                        exit_started.set()
+                        if not allow_exit.wait(5):
+                            raise TimeoutError("test cleanup gate")
+                        binding.reset(self.token)
+                        calls.append("closed")
+                        if scenario in ("cleanup_error", "both_errors"):
+                            raise RuntimeError("cleanup failed")
+
+                @asynccontextmanager
+                async def open_session(*args, **kwargs):
+                    yield object()
+
+                async def run():
+                    async with generate_reference_yaml.autostart_mcp_session(
+                        "fake.dll", "windows", "127.0.0.1", 13337, "", False
+                    ):
+                        self.assertEqual("caller", binding.get())
+                        if scenario in ("body_error", "both_errors"):
+                            raise body_error
+                        if scenario == "startup_cancel":
+                            self.fail("cancelled startup yielded a session")
+
+                with (
+                    patch.object(generate_reference_yaml, "create_ida_mcp_lifecycle", return_value=Lifecycle()),
+                    patch.object(generate_reference_yaml, "open_ida_mcp_session", open_session),
+                ):
+                    task = asyncio.create_task(run())
+                    try:
+                        if scenario in ("startup_cancel", "cleanup_cancel"):
+                            started = enter_started if scenario == "startup_cancel" else exit_started
+                            self.assertTrue(await asyncio.to_thread(started.wait, 5))
+                            task.cancel()
+                            await asyncio.sleep(0)
+                            task.cancel()
+                            await asyncio.sleep(0)
+                            self.assertFalse(task.done(), "cancellation must wait for lifecycle cleanup")
+                            allow_enter.set()
+                            allow_exit.set()
+                            with self.assertRaises(asyncio.CancelledError):
+                                await task
+                        elif scenario in ("body_error", "both_errors"):
+                            with self.assertRaises(RuntimeError) as caught:
+                                await task
+                            self.assertIs(body_error, caught.exception)
+                            if scenario == "both_errors":
+                                self.assertTrue(any("cleanup failed" in note for note in caught.exception.__notes__))
+                        elif scenario in ("startup_error", "cleanup_error"):
+                            with self.assertRaises(generate_reference_yaml.ReferenceGenerationError):
+                                await task
+                        else:
+                            await task
+                    finally:
+                        allow_enter.set()
+                        allow_exit.set()
+                        await asyncio.gather(task, return_exceptions=True)
+                self.assertEqual("caller", binding.get())
+                if scenario == "startup_error":
+                    self.assertEqual([], calls)
+                else:
+                    self.assertEqual(2, len(calls))
+                    self.assertEqual("owned", calls[0][0])
+                    self.assertEqual("closed", calls[1])
+                    if scenario in ("body_error", "both_errors"):
+                        self.assertIs(body_error, calls[0][1][1])
+                    if scenario == "startup_cancel":
+                        self.assertIs(asyncio.CancelledError, calls[0][1][0])
 
 
 class _FakeTextContent:
@@ -617,7 +723,8 @@ class ReferenceYamlMcpTests(unittest.IsolatedAsyncioTestCase):
                 await task
 
         lifecycle.__enter__.assert_called_once_with()
-        lifecycle.__exit__.assert_called_once_with(None, None, None)
+        lifecycle.__exit__.assert_called_once()
+        self.assertIs(asyncio.CancelledError, lifecycle.__exit__.call_args.args[0])
 
     async def test_resolve_generation_target_surveys_only_missing_fields(self) -> None:
         session = object()
