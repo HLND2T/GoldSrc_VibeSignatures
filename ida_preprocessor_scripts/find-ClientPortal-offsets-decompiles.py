@@ -25,7 +25,7 @@ from ida_analyze_util import (
     preprocess_common_skill,
 )
 from scalar_artifact import SCALAR_FIELDS
-from ida_preprocessor_scripts import _client_portal_offsets
+import ida_preprocessor_scripts._client_portal_offsets as _client_portal_offsets
 
 PREDECESSOR = "ClientPortalManager_RenderPortals"
 REFERENCE = "references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"
