@@ -1,0 +1,5 @@
+func_name: Draw_SpriteFrameAdditive
+func_va: '0x1d3dcd0'
+func_rva: '0x3dcd0'
+func_size: '0x3d'
+func_sig: 68 E2 0B 00 00 FF 15 ?? ?? ?? ?? 6A 01 6A 01 FF 15 ?? ?? ?? ?? 8B 44 24 ?? 8B 4C 24 ?? 8B 54 24 ?? 50 8B 44 24 ??

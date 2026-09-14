@@ -1,0 +1,5 @@
+func_name: Draw_SpriteFrameGeneric
+func_va: '0x1d3c5a0'
+func_rva: '0x3c5a0'
+func_size: '0x5c'
+func_sig: 55 8B EC 8B 45 ?? 8B 4D ?? 53 56 8B 75 ?? 57 68 E2 0B 00 00 8B 3E 8B 5E ?? 89 06 89 4E ??

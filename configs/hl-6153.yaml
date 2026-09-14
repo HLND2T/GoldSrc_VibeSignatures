@@ -428,6 +428,23 @@ modules:
           - studioapi_StudioSetRenderamt.{platform}.yaml
         expected_output:
           - CL_FxBlend.{platform}.yaml
+      - name: find-Draw_SpriteFrame-family
+        expected_output:
+          - Draw_SpriteFrameHoles.{platform}.yaml
+          - Draw_SpriteFrameAdditive.{platform}.yaml
+          - Draw_SpriteFrameGeneric.{platform}.yaml
+          - Draw_Frame.{platform}.yaml
+      - name: find-renderer-draw-helpers
+        expected_input:
+          - SCR_UpdateScreen_RenderBody.{platform}.yaml
+          - Sys_Error.{platform}.yaml
+          - cl_enginefuncs.{platform}.yaml
+        expected_output:
+          - Draw_Pic.{platform}.yaml
+          - D_FillRect.{platform}.yaml
+          - Draw_FillRGBA.{platform}.yaml
+          - Draw_FillRGBABlend.{platform}.yaml
+          - DT_Initialize.{platform}.yaml
     symbols:
       - name: BuildGammaTable
         category: func
@@ -667,6 +684,24 @@ modules:
       - name: R_LoadSkys
         category: func
       - name: SDL_InitGL
+        category: func
+      - name: Draw_SpriteFrameHoles
+        category: func
+      - name: Draw_SpriteFrameAdditive
+        category: func
+      - name: Draw_SpriteFrameGeneric
+        category: func
+      - name: Draw_Frame
+        category: func
+      - name: Draw_Pic
+        category: func
+      - name: D_FillRect
+        category: func
+      - name: Draw_FillRGBA
+        category: func
+      - name: Draw_FillRGBABlend
+        category: func
+      - name: DT_Initialize
         category: func
   - name: gameui
     module_windows: GameUI.dll

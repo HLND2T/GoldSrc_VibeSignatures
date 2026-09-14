@@ -1,0 +1,5 @@
+func_name: Draw_SpriteFrameHoles_SvEngine
+func_va: '0x1d4f860'
+func_rva: '0x4f860'
+func_size: '0x64'
+func_sig: 56 8B 35 ?? ?? ?? ?? 68 C0 0B 00 00 FF D6 D9 05 ?? ?? ?? ?? D9 EE DA E9 DF E0 F6 C4 44 7B ?? 68 03 03 00 00
