@@ -1,0 +1,5 @@
+func_name: R_GetSpriteFrame
+func_va: '0x1d2a230'
+func_rva: '0x2a230'
+func_size: '0x64'
+func_sig: 56 8B 74 24 ?? 57 33 FF 85 F6 75 ?? 68 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 C4 04 33 C0 5F 5E C3 8B 4E ?? 85 C9

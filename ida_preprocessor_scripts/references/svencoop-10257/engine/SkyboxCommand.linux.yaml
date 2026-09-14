@@ -1,0 +1,89 @@
+func_name: "SkyboxCommand"
+func_va: "0x149c10"
+disasm_code: |-
+  .text:00149C10                 ; SvEngine SkyboxCommand: the "skybox" console command; requires a loaded map and cheats, then forwards Cmd_Argv(1) to R_LoadSkyBox_SvEngine. Current binary behavior is authoritative.
+  .text:00149C10                 push    ebx; SvEngine SkyboxCommand: the "skybox" console command; requires a loaded map and cheats, then forwards Cmd_Argv(1) to R_LoadSkyBox_SvEngine. Current binary behavior is authoritative.
+  .text:00149C11                 call    sub_56390
+  .text:00149C16                 add     ebx, (offset dbl_2EE000 - $)
+  .text:00149C1C                 sub     esp, 28h
+  .text:00149C1F                 lea     eax, (dword_15D7D60 - 2EE000h)[ebx]
+  .text:00149C25                 mov     edx, ds:dword_601CEC[eax]
+  .text:00149C2B                 test    edx, edx
+  .text:00149C2D                 jz      loc_149CC8
+  .text:00149C33                 lea     eax, (allow_cheats - 2EE000h)[ebx]
+  .text:00149C39                 mov     eax, [eax]
+  .text:00149C3B                 test    eax, eax
+  .text:00149C3D                 jz      short loc_149C5F
+  .text:00149C3F                 lea     edx, (flt_F1AD80 - 2EE000h)[ebx]
+  .text:00149C45                 fld     dword ptr [edx+14h]
+  .text:00149C48                 fldz
+  .text:00149C4A                 fst     [esp+2Ch+var_10]
+  .text:00149C4E                 fxch    st(1)
+  .text:00149C50                 fucomip st, st(1)
+  .text:00149C52                 fstp    st
+  .text:00149C54                 jp      short loc_149C58
+  .text:00149C56                 jz      short loc_149C78
+  .text:00149C58                 cmp     eax, 0FEh
+  .text:00149C5D                 jg      short loc_149C78
+  .text:00149C5F                 lea     eax, (aCheatsNotEnabl - 2EE000h)[ebx]; "Cheats not enabled\n"
+  .text:00149C65                 ; fmt
+  .text:00149C65                 mov     [esp+2Ch+fmt], eax; fmt
+  .text:00149C68                 call    Con_Printf
+  .text:00149C6D                 add     esp, 28h
+  .text:00149C70                 pop     ebx
+  .text:00149C71                 retn
+  .text:00149C78                 call    Cmd_Argc
+  .text:00149C7D                 dec     eax
+  .text:00149C7E                 xchg    ax, ax
+  .text:00149C80                 jle     short loc_149CB0
+  .text:00149C82                 mov     eax, 1
+  .text:00149C87                 mov     [esp+2Ch+fmt], 1
+  .text:00149C8E                 mov     ds:(dword_34F81D4 - 2EE000h)[ebx], eax
+  .text:00149C94                 call    Cmd_Argv
+  .text:00149C99                 mov     [esp+2Ch+fmt], eax
+  .text:00149C9C                 call    R_LoadSkyBox_SvEngine; outer skybox loader: loading-state gate, clears the six sky textures, calls the internal loader, falls back to desert then missing texture
+  .text:00149CA1                 add     esp, 28h
+  .text:00149CA4                 pop     ebx
+  .text:00149CA5                 retn
+  .text:00149CB0                 lea     eax, (aNoSkyboxNameSp - 2EE000h)[ebx]; "No skybox name specified\n"
+  .text:00149CB6                 ; fmt
+  .text:00149CB6                 mov     [esp+2Ch+fmt], eax; fmt
+  .text:00149CB9                 call    Con_Printf
+  .text:00149CBE                 add     esp, 28h
+  .text:00149CC1                 pop     ebx
+  .text:00149CC2                 retn
+  .text:00149CC8                 lea     eax, (aNoMapLoaded - 2EE000h)[ebx]; "No map loaded\n"
+  .text:00149CCE                 ; fmt
+  .text:00149CCE                 mov     [esp+2Ch+fmt], eax; fmt
+  .text:00149CD1                 call    Con_Printf
+  .text:00149CD6                 jmp     short loc_149CA1
+procedure: |-
+  void SkyboxCommand() // the "skybox" console command: forwards Cmd_Argv(1) to R_LoadSkyBox_SvEngine
+  {
+    _BYTE *v0; // eax
+  
+    if ( dword_1BD9A4C )
+    {
+      if ( allow_cheats && (*(float *)&dword_F1AD94 == 0.0 || allow_cheats > 254) )
+      {
+        if ( Cmd_Argc() <= 1 )
+        {
+          Con_Printf("No skybox name specified\n");
+        }
+        else
+        {
+          dword_34F81D4 = 1;
+          v0 = (_BYTE *)Cmd_Argv(1);
+          R_LoadSkyBox_SvEngine(v0); // outer skybox loader: loading gate, clears old sky textures, internal loader, desert fallback
+        }
+      }
+      else
+      {
+        Con_Printf("Cheats not enabled\n");
+      }
+    }
+    else
+    {
+      Con_Printf("No map loaded\n");
+    }
+  }
