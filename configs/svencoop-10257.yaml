@@ -447,7 +447,7 @@ modules:
         platform: windows
         expected_output:
           - R_LoadSkyBox_SvEngine.{platform}.yaml
-      - name: find-R_LoadSkyBox_SvEngine-decompiles
+      - name: find-SkyboxCommand-decompiles
         platform: linux
         expected_input:
           - SkyboxCommand.{platform}.yaml

@@ -7,7 +7,7 @@ skybox before filling a missing texture (MetaHookSv gl_hooks.cpp keeps the
 same role). On SvEngine Windows the desert literal has exactly one function
 owner, R_LoadSkyBox_SvEngine. On Linux the literal is shared by the
 parameterized wrapper and an inlined no-argument function, so the Linux
-branch uses find-R_LoadSkyBox_SvEngine-decompiles instead.
+branch uses find-SkyboxCommand-decompiles instead.
 """
 
 from ida_analyze_util import preprocess_common_skill
