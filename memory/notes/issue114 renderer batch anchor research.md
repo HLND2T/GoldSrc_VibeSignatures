@@ -44,7 +44,7 @@ Manager singleton: W dword_1063C800 (size 0x1EC), L dword_A9AAB8 (size 0x1E0); c
 
 ## Derived offsets (scalar contract: scalar_name + scalar_value, per platform)
 
-- ClientPortal (size 0xD8=216, ctor W 0x10050860 authoritative): origin +0, angles +12, texture_id +204 (0xCC, glBindTexture evidence), width +208 (0xD0), height +212 (0xD4), mode +64 (0x40; passed to GetSettings/EnableClipPlane on both platforms; NOTE ctor shows an eh-vector at +0x28..+0x88 — dataflow recheck at implementation). **entity pointer: no such field in 10257 ctor/layout** (MetaHookSv +0x70 was build 8948/5.25 only) -> emit nothing, document N/A.
+- Corrected after constructor/dataflow verification: ClientPortal origin +0 and angles +12 on both platforms; texture id/width/height W +204/+208/+212, L +196/+200/+204. Object sizes are W 0xD8 and L 0xD0. The +64 mode field belongs to a separate ClientPortalSource, not ClientPortal (whose +64 lies inside its plane array). Emit it as ClientPortalSource_mode_offset, as approved by the user. **entity pointer: not emitted for 10257**; do not transfer MetaHookSv build 8948/5.25's +0x70 into this layout.
 - Manager portal vector: **W begin +140 (0x8C) / end +144 (0x90); L begin +132 (0x84) / end +136 (0x88)** — GCC/MSVC layout differs; ctor + RenderPortals iteration evidence on both.
 
 ## Open items
@@ -63,8 +63,8 @@ All shipped as finders + configs + artifacts:
 
 ## Follow-up findings (not emitted this round)
 
-- **Linux portal member layout diverges from Windows**: pseudocode shows L texture id at +196 (0xC4) vs W +204; the RenderPortals-L EnableClipPlane arg loads [portal?+0x48] vs W mode +0x40 — register provenance unresolved, verification failed closed. mode/texture offsets are windows-only scalars this round.
-- origin/angles offsets: structurally invisible (origin=+0 has no displacement encoding; L ctor inlined into its factory). Needs a portal-constructor/factory artifact chain (W factory=0x1004CED0, ctor=0x10050860 writes +0/+0xC/+204/+208/+212) or an agreed pure-LLM contract change.
+- Resolved in the portal completion follow-up below: Linux texture offsets differ, and the apparent Linux mode +72 is node-relative; source-relative mode remains +64.
+- Resolved: origin/angles can be verified through decoded zero-displacement stores and constructor input copies. Linux's constructor is standalone at 0xF554E, called by the factory at 0xF5EC2; the earlier inlining hypothesis was incorrect.
 - ClientPortal_entity_offset: no entity pointer field in the 10257 ctor; MetaHookSv +0x70 was 5.25-only. Not emitted.
 - generate_reference_yaml.py autostart cleanup previously raised `Token was created in a different Context` after writing the reference; confirmed and fixed as a lifecycle context ownership bug (see below), rather than an exception-transfer issue.
 - py_eval direct delivery of the offsets walk failed with an empty payload while the same code exec'd inside a wrapper worked; the finder ships the json-embedded exec wrapper (also surfaces remote tracebacks).
@@ -85,3 +85,13 @@ All shipped as finders + configs + artifacts:
 - Correct approach: enter and exit through one dedicated `copy_context().run`, serially. Shield and drain each lifecycle operation through repeated cancellation, then propagate cancellation. Pass the original exception to exit and retain it if cleanup also fails, reporting the cleanup failure as a note where supported.
 - Verification: real ContextVar test doubles cover success, body/startup/cleanup failures, combined body and cleanup failures, and repeated cancellation during startup or cleanup. All 35 reference tests pass on Python 3.12 and 3.13. A real Python 3.12 Sven client RenderPortals export writes its YAML to a temporary path, exits with status 0, and verifies every owned MCP client thread is closed.
 - Scope: the synchronous lifecycle bridge in `generate_reference_yaml.py`; MCP SDK async transport ownership remains in its existing owner task. Sharing a Context is not a general replacement for same-task ownership of async transports.
+
+## PR #119 portal scalar completion
+
+- Trigger: the initial offset table mixed ClientPortalSource and ClientPortal, copied Windows texture offsets onto Linux, and treated a zero-displacement origin store as unverifiable.
+- Evidence: RenderPortals -> factory (W 0x1004CED0, L 0xF5EC2) -> constructor (W 0x10050860, L 0xF554E). Both constructors copy three vec3 inputs into the same this object; origin/angles begin at 0/12. Factory allocations independently show 216/208-byte platform layouts. No matching portal source was found under D:/HLND2T_official; reconstruction uses current instructions and the peer binary, with unmapped containers kept opaque.
+- Texture: Windows retains the existing inline allocation/bind/upload proof. Linux's diagnostic-owned initializer at 0xF42F8 receives the portal in EAX; verified register provenance and imported GL argument slots establish 196/200/204. Linux PLT names may carry a leading dot; normalize it only after confirming the target lies in .plt and matches an import name.
+- Source mode: Windows passes source+64 to EnableClipPlane. Linux retains a list-node pointer in EBP, computes Source*=node+8 at FC4A5, spills it at FC539, and loads mode at node+72 at FC9F7. Dominating definitions, stable registers and an unmodified stack slot prove 72-8=64; the ClientPortal passed to EnableClipPlane is a different object.
+- Correct approach: emit ClientPortalSource_mode_offset (64/64), ClientPortal_origin_offset (0/0), ClientPortal_angles_offset (12/12), texture id/width/height (204/196, 208/200, 212/204), and manager vector begin/end (140/132, 144/136). Keep scalar_name/scalar_value only. No entity scalar is produced.
+- Verification: synthetic behavior tests cover alternate layouts, full vec3 copies including offset zero, wrong objects, register/partial-memory clobbers, non-dominating source spills, and GL argument ambiguity. New constructor and Linux initializer references were generated through generate_reference_yaml.py after restoring confirmed prototypes and per-platform partial layouts, then annotated in both disassembly and pseudocode. Current-IDB values must agree with LLM scalar extraction.
+- Scope: svencoop-10257/client only. The new constructor is a two-edge descendant uniquely selected by constructor copy evidence; stored research addresses never serve as production locators. Unsupported or ambiguous traces fail closed.

@@ -793,14 +793,47 @@ modules:
       - name: find-ClientPortal-offsets-decompiles
         expected_input:
           - ClientPortalManager_RenderPortals.{platform}.yaml
+          - ClientPortalManager_EnableClipPlane.{platform}.yaml
+          - ClientPortal_Constructor.{platform}.yaml
         expected_output:
           - ClientPortalManager_vector_begin_offset.{platform}.yaml
           - ClientPortalManager_vector_end_offset.{platform}.yaml
+          - ClientPortal_origin_offset.{platform}.yaml
+          - ClientPortal_angles_offset.{platform}.yaml
+          - ClientPortalSource_mode_offset.{platform}.yaml
         optional_output_windows:
           - ClientPortal_texture_id_offset.windows.yaml
           - ClientPortal_texture_width_offset.windows.yaml
           - ClientPortal_texture_height_offset.windows.yaml
+      - name: find-ClientPortal_Constructor
+        expected_input:
+          - ClientPortalManager_RenderPortals.{platform}.yaml
+        expected_output:
+          - ClientPortal_Constructor.{platform}.yaml
+      - name: find-ClientPortal_CreateTexture
+        platform: linux
+        expected_output:
+          - ClientPortal_CreateTexture.{platform}.yaml
+      - name: find-ClientPortal-texture-decompiles
+        platform: linux
+        expected_input:
+          - ClientPortal_CreateTexture.{platform}.yaml
+        expected_output:
+          - ClientPortal_texture_id_offset.{platform}.yaml
+          - ClientPortal_texture_width_offset.{platform}.yaml
+          - ClientPortal_texture_height_offset.{platform}.yaml
     symbols:
+      - name: ClientPortal_Constructor
+        category: func
+      - name: ClientPortal_CreateTexture
+        category: func
+        platform: linux
+      - name: ClientPortal_origin_offset
+        category: scalar
+      - name: ClientPortal_angles_offset
+        category: scalar
+      - name: ClientPortalSource_mode_offset
+        category: scalar
       - name: ClientPortalManager_RenderPortals
         category: func
       - name: ClientPortalManager_EnableClipPlane
@@ -814,13 +847,10 @@ modules:
       - name: ClientPortalManager_vector_end_offset
         category: scalar
       - name: ClientPortal_texture_id_offset
-        platform: windows
         category: scalar
       - name: ClientPortal_texture_width_offset
-        platform: windows
         category: scalar
       - name: ClientPortal_texture_height_offset
-        platform: windows
         category: scalar
       - name: g_pitchdrift
         category: gv

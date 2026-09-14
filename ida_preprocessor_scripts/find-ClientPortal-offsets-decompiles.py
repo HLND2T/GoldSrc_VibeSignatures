@@ -11,7 +11,9 @@ the portal-surface block, its +0xCC slot is tested/used for glGenTextures and
 glBindTexture, and +0xD0/+0xD4 are pushed directly as the glTexImage2D
 width/height arguments. Each value is verified against the current IDB by the
 walk below before the LLM agreement pass; ambiguous provenance (Linux texture
-fields, mode/origin/angles) fails closed and stays unemitted.
+fields) use their separate initializer finder. Constructor copies prove
+origin/angles, including an address with zero displacement. The mode belongs
+to ClientPortalSource, independently rooted in EnableClipPlane's arguments.
 """
 
 import inspect
@@ -26,6 +28,7 @@ from ida_analyze_util import (
 )
 from scalar_artifact import SCALAR_FIELDS
 import ida_preprocessor_scripts._client_portal_offsets as _client_portal_offsets
+from ida_preprocessor_scripts._portal_layout_ida import run_layout_walk
 
 PREDECESSOR = "ClientPortalManager_RenderPortals"
 REFERENCE = "references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"
@@ -98,12 +101,16 @@ result = json.dumps(main(VALUES))
 
 
 def _llm_spec(symbol_name, expected_value):
+    constructor = symbol_name in {"ClientPortal_origin_offset", "ClientPortal_angles_offset"}
+    predecessor = "ClientPortal_Constructor" if constructor else PREDECESSOR
     return {
         "symbol_name": symbol_name,
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [REFERENCE],
+        "reference_yaml_paths": ["references/{gamever}/client/ClientPortal_Constructor.{platform}.yaml"]
+        if constructor
+        else [REFERENCE],
         "expected_result_sections": ["found_scalar"],
-        "dependency_policy": {f"{PREDECESSOR}.{{platform}}.yaml": "required"},
+        "dependency_policy": {f"{predecessor}.{{platform}}.yaml": "required"},
         "expected_value": expected_value,
     }
 
@@ -156,7 +163,29 @@ async def preprocess_skill(
             print("ClientPortal offset walk failed:", located)
         return False
 
+    try:
+        anchors = {}
+        for key, name in [("constructor", "ClientPortal_Constructor"), ("clip", "ClientPortalManager_EnableClipPlane")]:
+            payload = _load_yaml_mapping(Path(new_binary_dir) / f"{name}.{platform}.yaml")
+            if not payload or payload.get("func_name") != name:
+                return False
+            anchors[key] = _parse_int(payload["func_va"], "func_va")
+        layout = await run_layout_walk(
+            session,
+            {**anchors, "render": predecessor_ea, "platform": platform},
+            """
+result = constructor_offsets(decode_function(values['constructor']), values['platform'])
+result['source_mode'] = source_mode_offset(decode_function(values['render']), values['platform'], values['clip'])
+""",
+        )
+    except (ValueError, KeyError) as exc:
+        if debug:
+            print(exc)
+        return False
     verified = {
+        "ClientPortal_origin_offset": layout["origin"],
+        "ClientPortal_angles_offset": layout["angles"],
+        "ClientPortalSource_mode_offset": layout["source_mode"],
         VECTOR_BEGIN: located.get("vector_begin"),
         VECTOR_END: located.get("vector_end"),
         TEXTURE_ID: located.get("texture_id"),
