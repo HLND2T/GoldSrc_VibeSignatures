@@ -1331,37 +1331,33 @@ def _function_matches_float_filters(start, required_values, excluded_values):
             if not _is_readonly_float_segment(target_ea):
                 continue
             if kind == 'x87':
-                # x87 operand dtype is not a reliable width signal (fld reads
-                # dword floats and qword doubles with the same mnemonic), so
-                # the constant is accepted under either encoding.
-                raw = ida_bytes.get_bytes(int(target_ea), 8)
-                if not raw or len(raw) != 8:
+                # The mnemonic is shared, but the decoded operand dtype records
+                # the actual memory width. Never reinterpret adjacent pool bytes.
+                insn = ida_ua.insn_t()
+                if ida_ua.decode_insn(insn, ea) <= 0:
                     continue
-                try:
-                    candidate_values = [
-                        (struct.unpack('<f', raw[:4])[0], 'float'),
-                        (struct.unpack('<d', raw)[0], 'double'),
-                    ]
-                except Exception:
+                width = ida_ua.get_dtype_size(insn.ops[operand_index].dtype)
+                if width not in (4, 8):
                     continue
+                value_kind = 'float' if width == 4 else 'double'
             else:
-                width, fmt = (4, '<f') if kind == 'float' else (8, '<d')
-                raw = ida_bytes.get_bytes(int(target_ea), width)
-                if not raw or len(raw) != width:
-                    continue
-                try:
-                    candidate_values = [(struct.unpack(fmt, raw)[0], kind)]
-                except Exception:
-                    continue
-            for value, value_kind in candidate_values:
-                if not math.isfinite(value):
-                    continue
-                for index, expected in enumerate(required_values):
-                    if _float_matches(value, expected, value_kind):
-                        required_hits[index] = True
-                for expected in excluded_values:
-                    if _float_matches(value, expected, value_kind):
-                        excluded_hit = True
+                value_kind = kind
+                width = 4 if kind == 'float' else 8
+            raw = ida_bytes.get_bytes(int(target_ea), width)
+            if not raw or len(raw) != width:
+                continue
+            try:
+                value = struct.unpack('<f' if width == 4 else '<d', raw)[0]
+            except Exception:
+                continue
+            if not math.isfinite(value):
+                continue
+            for index, expected in enumerate(required_values):
+                if _float_matches(value, expected, value_kind):
+                    required_hits[index] = True
+            for expected in excluded_values:
+                if _float_matches(value, expected, value_kind):
+                    excluded_hit = True
     return all(required_hits) and not excluded_hit
 
 globals().update(locals())

@@ -68,3 +68,12 @@ All shipped as finders + configs + artifacts:
 - ClientPortal_entity_offset: no entity pointer field in the 10257 ctor; MetaHookSv +0x70 was 5.25-only. Not emitted.
 - generate_reference_yaml.py autostart cleanup raises a Python 3.12 ContextVar `Token was created in a different Context` error AFTER writing the reference (artifact unaffected); likely the PR #99 exception-transfer pattern in the finally path.
 - py_eval direct delivery of the offsets walk failed with an empty payload while the same code exec'd inside a wrapper worked; the finder ships the json-embedded exec wrapper (also surfaces remote tracebacks).
+
+## PR #119 review follow-up: operand width and offset provenance
+
+- Trigger: synthetic behavior checks showed `fld qword [1023.0]` incorrectly matching `0.0`, and unrelated pushes satisfying the portal texture walk without any GL calls.
+- Root cause: x87 pools were decoded as both f32/f64; the portal walk combined unrelated register displacements and accepted the first vector pair without proving its origin.
+- Correct approach: read x87 pools at the decoded operand's actual 4/8-byte width. `_client_portal_offsets` consumes decoded byte offsets, roots the vector in the platform's `this` argument, and requires the empty-vector guard plus iterator dereference. For Windows textures, track each branch separately and require matching-object `glGenTextures` / `glBindTexture` / `glTexImage2D` arguments in ABI order; reject conflicting candidates, register clobbers, unsupported effects, and unbounded walks. Linux continues to emit only the vector pair.
+- Verification: execute the production float helpers and portal dataflow on synthetic success/error fixtures, including alternate layouts, missing GL calls, swapped arguments, unrelated bases, partial/implicit register writes, and branch provenance. Real IDA reruns use a fresh `-artifactdir` so existing YAML cannot skip the finder; all 12 BuildGammaTable artifacts and all 7 portal scalars retain the committed payloads.
+- MCP constraint: RenderPortals' decoded instruction payload exceeds the remote result limit. Embed the same tested Python helper alongside the IDA decoder inside the worker and return only the recovered offsets; do not transfer the full instruction list through `py_eval` results.
+- Scope: shared x87 float filters and Sven 10257 portal scalar discovery; future unsupported compiler shapes fail closed instead of borrowing a known layout.

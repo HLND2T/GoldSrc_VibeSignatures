@@ -14,8 +14,8 @@ walk below before the LLM agreement pass; ambiguous provenance (Linux texture
 fields, mode/origin/angles) fails closed and stays unemitted.
 """
 
+import inspect
 import json
-import re
 from pathlib import Path
 
 from ida_analyze_util import (
@@ -25,6 +25,7 @@ from ida_analyze_util import (
     preprocess_common_skill,
 )
 from scalar_artifact import SCALAR_FIELDS
+from ida_preprocessor_scripts import _client_portal_offsets
 
 PREDECESSOR = "ClientPortalManager_RenderPortals"
 REFERENCE = "references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"
@@ -37,81 +38,60 @@ TEXTURE_HEIGHT = "ClientPortal_texture_height_offset"
 
 WALK = r"""
 def main(values):
-    import idautils, ida_funcs, idc, json
+    import idautils, ida_funcs, ida_ua, ida_idp, ida_nalt, idaapi, idc, json, re
+    if idaapi.inf_is_64bit():
+        return {'error': 'portal walk requires x86-32'}
     func = ida_funcs.get_func(int(values['predecessor']))
-    if func is None:
-        return {'error': 'predecessor missing'}
+    if func is None or int(func.start_ea) != int(values['predecessor']):
+        return {'error': 'predecessor is not a function start'}
+    imports = {}
+    def imported(ea, name, ordinal):
+        if name:
+            imports[int(ea)] = name.lstrip('_').split('@')[0]
+        return True
+    for module_index in range(ida_nalt.get_import_module_qty()):
+        ida_nalt.enum_import_names(module_index, imported)
     insns = []
+    addresses = list(idautils.FuncItems(func.start_ea))
+    indices = {int(ea): index for index, ea in enumerate(addresses)}
     for ea in idautils.FuncItems(func.start_ea):
-        insns.append((int(ea), (idc.print_insn_mnem(ea) or '').lower(),
-                      idc.generate_disasm_line(ea, 0) or ''))
-    out = {}
-
-    # Vector begin/end: within the first 40 instructions, a manager-base pair
-    # whose two slot loads are compared against each other.
-    for i in range(min(40, len(insns))):
-        ea, mnem, line = insns[i]
-        if mnem != 'mov':
-            continue
-        m1 = re.search(r'mov\s+(\w+), \[(\w+)\+([0-9A-Fa-f]+)h?\]', line)
-        if not m1:
-            continue
-        rx, rm, d1s = m1.group(1), m1.group(2), m1.group(3)
-        d1 = int(d1s.rstrip('h'), 16)
-        for j in range(i + 1, min(i + 16, len(insns))):
-            _, mnem2, line2 = insns[j]
-            if mnem2 != 'cmp':
-                continue
-            pair = None
-            m2 = re.search(r'cmp\s+%s, \[(%s)\+([0-9A-Fa-f]+)h?\]' % (rx, rm), line2)
-            m3 = re.search(r'cmp\s+\[(%s)\+([0-9A-Fa-f]+)h?\], %s' % (rm, rx), line2)
-            m4 = re.search(r'cmp\s+%s, (\w+)' % rx, line2)
-            if m2:
-                pair = int(m2.group(2).rstrip('h'), 16)
-            elif m3:
-                pair = int(m3.group(2).rstrip('h'), 16)
-            elif m4:
-                ry = m4.group(1)
-                for k in range(i + 1, j):
-                    mk = re.search(r'mov\s+%s, \[%s\+([0-9A-Fa-f]+)h?\]' % (ry, rm), insns[k][2])
-                    if mk:
-                        pair = int(mk.group(1).rstrip('h'), 16)
-                        break
-            if pair is not None and pair - d1 == 4:
-                out['vector_begin'] = d1
-                out['vector_end'] = pair
+        decoded = idautils.DecodeInstruction(ea)
+        if decoded is None:
+            return {'error': 'instruction decode failed'}
+        operands, writes = [], []
+        feature = decoded.get_canon_feature()
+        for index, op in enumerate(decoded.ops):
+            if op.type == ida_ua.o_void:
                 break
-        if 'vector_begin' in out:
-            break
-    if 'vector_begin' not in out:
-        return {'error': 'vector loop not found'}
-
-    # Texture triple (Windows shape): the portal pointer reload is followed by
-    # a test of portal+T and lea of the same slot, then pushes of portal+T+4
-    # and portal+T+8 directly as glTexImage2D width/height.
-    for i in range(len(insns)):
-        _, mnem, line = insns[i]
-        if mnem != 'cmp':
-            continue
-        m5 = re.search(r'cmp\s+(?:dword ptr )?\[(\w+)\+([0-9A-Fa-f]+)h?\], 0', line)
-        if not m5:
-            continue
-        base, ts = m5.group(1), m5.group(2)
-        t = int(ts.rstrip('h'), 16)
-        window = insns[i + 1:i + 4]
-        if not any(re.search(r'lea\s+\w+, \[%s\+%sh?\]' % (base, ts), w[2]) for w in window):
-            continue
-        pushed = set()
-        for _, _, lw in insns:
-            for mm in re.finditer(r'push\s+(?:dword ptr )?\[\w+\+([0-9A-Fa-f]+)h?\]', lw):
-                pushed.add(int(mm.group(1).rstrip('h'), 16))
-        if {t + 4, t + 8} <= pushed:
-            out['texture_id'] = t
-            out['texture_width'] = t + 4
-            out['texture_height'] = t + 8
-            break
-    return {'pointer_size': 4, **out}
-import re
+            operand = {'kind': 'unsupported', 'size': ida_ua.get_dtype_size(op.dtype)}
+            text = (idc.print_operand(ea, index) or '').lower()
+            if op.type == ida_ua.o_reg:
+                operand.update(kind='reg', reg=text)
+                if feature & getattr(ida_idp, 'CF_CHG%d' % (index + 1)):
+                    # Partial-register writes invalidate the corresponding full register.
+                    root = {'al':'eax','ah':'eax','ax':'eax','bl':'ebx','bh':'ebx','bx':'ebx',
+                            'cl':'ecx','ch':'ecx','cx':'ecx','dl':'edx','dh':'edx','dx':'edx',
+                            'si':'esi','di':'edi','bp':'ebp','sp':'esp'}.get(text, text)
+                    writes.append(root)
+            elif op.type == ida_ua.o_imm:
+                operand.update(kind='imm', value=int(op.value))
+            elif op.type == ida_ua.o_mem and int(op.addr) in imports:
+                operand.update(kind='api', name=imports[int(op.addr)])
+            elif op.type in (ida_ua.o_displ, ida_ua.o_phrase) and 'fs:' not in text and 'gs:' not in text:
+                regs = re.findall(r'\be(?:ax|bx|cx|dx|si|di|bp|sp)\b', text)
+                if len(regs) == 1 and '*' not in text:
+                    disp = int(op.addr) & 0xFFFFFFFF if op.type == ida_ua.o_displ else 0
+                    if disp & 0x80000000:
+                        disp -= 0x100000000
+                    operand.update(kind='mem', base=regs[0], disp=disp)
+            operands.append(operand)
+        mnemonic = (idc.print_insn_mnem(ea) or '').lower()
+        successors = [indices[int(target)] for target in idautils.CodeRefsFrom(ea, 1) if int(target) in indices]
+        insns.append({'mnemonic': mnemonic, 'operands': operands, 'writes': writes, 'successors': successors})
+    try:
+        return {'pointer_size': 4, **recover_portal_offsets(insns, values['platform'])}
+    except ValueError as exc:
+        return {'error': str(exc)}
 import json
 result = json.dumps(main(VALUES))
 """
@@ -149,11 +129,13 @@ async def preprocess_skill(
         return False
     if predecessor_ea < int(image_base):
         return False
-    values = json.dumps({"predecessor": predecessor_ea})
+    values = json.dumps({"predecessor": predecessor_ea, "platform": platform})
     # The walk body is delivered json-embedded: the remote py_eval executes it
     # through this wrapper, which also surfaces tracebacks instead of an empty
     # payload when the walk body fails inside the worker.
-    walk_body = WALK.replace("VALUES", values)
+    # Execute the tested helper beside the IDA decoder, keeping the large
+    # instruction payload inside the worker (MCP truncates oversized results).
+    walk_body = inspect.getsource(_client_portal_offsets) + "\n" + WALK.replace("VALUES", values)
     wrapper = (
         "def _main():\n"
         "    import json, traceback\n"
