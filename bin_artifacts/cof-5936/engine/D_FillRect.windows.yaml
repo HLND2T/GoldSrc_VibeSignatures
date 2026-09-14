@@ -1,0 +1,5 @@
+func_name: D_FillRect
+func_va: '0x1d72839'
+func_rva: '0x72839'
+func_size: '0x199'
+func_sig: 55 8B EC 83 EC 28 68 E1 0D 00 00 FF 15 ?? ?? ?? ?? 68 E2 0B 00 00 FF 15 ?? ?? ?? ?? 68 00 00 04 46

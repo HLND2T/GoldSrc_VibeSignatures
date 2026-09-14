@@ -1,0 +1,5 @@
+func_name: Draw_Frame
+func_va: '0x1023b1c0'
+func_rva: '0x23b1c0'
+func_size: '0x305'
+func_sig: 55 8B EC 83 EC 20 F3 0F 10 0D ?? ?? ?? ?? 0F 57 C0 8B 45 ?? F3 0F 11 4D ?? F3 0F 11 4D ?? 66 0F 6E 4D ??

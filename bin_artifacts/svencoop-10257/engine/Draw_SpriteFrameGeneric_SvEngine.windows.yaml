@@ -1,0 +1,5 @@
+func_name: Draw_SpriteFrameGeneric_SvEngine
+func_va: '0x1d4f910'
+func_rva: '0x4f910'
+func_size: '0x5b'
+func_sig: 8B 44 24 ?? 53 8B 5C 24 ?? 56 57 68 E2 0B 00 00 8B 3B 8B 73 ?? 89 03 8B 44 24 ?? 89 43 ??

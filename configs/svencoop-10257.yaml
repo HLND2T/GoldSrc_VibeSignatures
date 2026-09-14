@@ -465,6 +465,24 @@ modules:
           - studioapi_StudioSetRenderamt.{platform}.yaml
         expected_output:
           - CL_FxBlend.{platform}.yaml
+      - name: find-Draw_SpriteFrame-family-svencoop
+        platform: windows
+        expected_output:
+          - Draw_SpriteFrameHoles_SvEngine.{platform}.yaml
+          - Draw_SpriteFrameAdditive_SvEngine.{platform}.yaml
+          - Draw_SpriteFrameGeneric_SvEngine.{platform}.yaml
+          - Draw_Frame.{platform}.yaml
+      - name: find-renderer-draw-helpers-svencoop
+        platform: windows
+        expected_input:
+          - SCR_UpdateScreen_RenderBody.{platform}.yaml
+        expected_output:
+          - Draw_Pic.{platform}.yaml
+          - DT_Initialize.{platform}.yaml
+      - name: find-DT_Initialize-svencoop
+        platform: linux
+        expected_output:
+          - DT_Initialize.{platform}.yaml
     symbols:
       - name: BuildGammaTable
         platform: windows
@@ -716,6 +734,23 @@ modules:
         category: func
         platform: linux
       - name: R_LoadSkyBox_SvEngine
+        category: func
+      - name: Draw_SpriteFrameHoles_SvEngine
+        category: func
+        platform: windows
+      - name: Draw_SpriteFrameAdditive_SvEngine
+        category: func
+        platform: windows
+      - name: Draw_SpriteFrameGeneric_SvEngine
+        category: func
+        platform: windows
+      - name: Draw_Frame
+        category: func
+        platform: windows
+      - name: Draw_Pic
+        category: func
+        platform: windows
+      - name: DT_Initialize
         category: func
   - name: client
     module_windows: client.dll
