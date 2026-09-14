@@ -856,6 +856,11 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
                 self.assertIn("3735928559", arguments["code"])
                 self.assertIn("3.5", arguments["code"])
                 self.assertIn("4198656", arguments["code"])
+                # x87 memory-float filters ship with the same template: MSVC x87
+                # and GCC -mfpmath=387 builds reference float pools without xmm.
+                self.assertIn("X87_FLOAT_MNEMS", arguments["code"])
+                self.assertIn("'fld'", arguments["code"])
+                self.assertIn("if kind != 'x87' and not _has_xmm_operand(ea):", arguments["code"])
                 candidate = {
                     "func_name": "Target",
                     "func_va": "0x401000",

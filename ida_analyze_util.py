@@ -1254,6 +1254,13 @@ DOUBLE_FLOAT_MNEMS = {
     'addsd', 'subsd', 'mulsd', 'divsd', 'minsd', 'maxsd', 'sqrtsd', 'movsd', 'comisd', 'ucomisd',
     'vaddsd', 'vsubsd', 'vmulsd', 'vdivsd', 'vminsd', 'vmaxsd', 'vsqrtsd', 'vmovsd', 'vcomisd', 'vucomisd',
 }
+# x87 memory-source float instructions. GoldSrc engine builds (MSVC x87 and
+# GCC -mfpmath=387) reference .rodata/.rdata float pools through these while
+# never touching an xmm register, so SSE-only float filters cannot see them.
+X87_FLOAT_MNEMS = {
+    'fld', 'fmul', 'fdiv', 'fdivr', 'fadd', 'fsub', 'fsubr',
+    'fcom', 'fcomp', 'fucom', 'fucomp',
+}
 MEMORY_OPERAND_TYPES = {idc.o_mem, idc.o_displ, idc.o_phrase}
 
 def _scalar_float_kind(ea):
@@ -1262,6 +1269,8 @@ def _scalar_float_kind(ea):
         return 'float'
     if mnem in DOUBLE_FLOAT_MNEMS and mnem.endswith('sd'):
         return 'double'
+    if mnem in X87_FLOAT_MNEMS:
+        return 'x87'
     return None
 
 def _has_xmm_operand(ea):
@@ -1309,7 +1318,11 @@ def _function_matches_float_filters(start, required_values, excluded_values):
     excluded_hit = False
     for ea in idautils.FuncItems(start):
         kind = _scalar_float_kind(ea)
-        if kind is None or not _has_xmm_operand(ea):
+        if kind is None:
+            continue
+        # x87 memory operands never carry an xmm register; only SSE filters keep
+        # that requirement.
+        if kind != 'x87' and not _has_xmm_operand(ea):
             continue
         for operand_index in range(8):
             if idc.get_operand_type(ea, operand_index) not in MEMORY_OPERAND_TYPES:
@@ -1317,22 +1330,38 @@ def _function_matches_float_filters(start, required_values, excluded_values):
             target_ea = idc.get_operand_value(ea, operand_index)
             if not _is_readonly_float_segment(target_ea):
                 continue
-            width, fmt = (4, '<f') if kind == 'float' else (8, '<d')
-            raw = ida_bytes.get_bytes(int(target_ea), width)
-            if not raw or len(raw) != width:
-                continue
-            try:
-                value = struct.unpack(fmt, raw)[0]
-            except Exception:
-                continue
-            if not math.isfinite(value):
-                continue
-            for index, expected in enumerate(required_values):
-                if _float_matches(value, expected, kind):
-                    required_hits[index] = True
-            for expected in excluded_values:
-                if _float_matches(value, expected, kind):
-                    excluded_hit = True
+            if kind == 'x87':
+                # x87 operand dtype is not a reliable width signal (fld reads
+                # dword floats and qword doubles with the same mnemonic), so
+                # the constant is accepted under either encoding.
+                raw = ida_bytes.get_bytes(int(target_ea), 8)
+                if not raw or len(raw) != 8:
+                    continue
+                try:
+                    candidate_values = [
+                        (struct.unpack('<f', raw[:4])[0], 'float'),
+                        (struct.unpack('<d', raw)[0], 'double'),
+                    ]
+                except Exception:
+                    continue
+            else:
+                width, fmt = (4, '<f') if kind == 'float' else (8, '<d')
+                raw = ida_bytes.get_bytes(int(target_ea), width)
+                if not raw or len(raw) != width:
+                    continue
+                try:
+                    candidate_values = [(struct.unpack(fmt, raw)[0], kind)]
+                except Exception:
+                    continue
+            for value, value_kind in candidate_values:
+                if not math.isfinite(value):
+                    continue
+                for index, expected in enumerate(required_values):
+                    if _float_matches(value, expected, value_kind):
+                        required_hits[index] = True
+                for expected in excluded_values:
+                    if _float_matches(value, expected, value_kind):
+                        excluded_hit = True
     return all(required_hits) and not excluded_hit
 
 globals().update(locals())
@@ -1364,6 +1393,21 @@ for value in spec.get('xref_funcs') or []:
     positive_sets.append(callers)
 if spec.get('vtable_entries'):
     positive_sets.append(vtable_candidates)
+
+if not positive_sets and spec.get('xref_floats'):
+    # A validated float-constant set may serve as the sole positive source: the
+    # candidate set is every function whose body references all required
+    # constants. exclude_floats still apply through the post-intersection
+    # filter below.
+    positive_sets.append(
+        {
+            start
+            for start in idautils.Functions()
+            if _function_matches_float_filters(
+                start, [float(value) for value in spec['xref_floats']], []
+            )
+        }
+    )
 
 if positive_sets:
     candidates = set(positive_sets[0])
@@ -1471,7 +1515,14 @@ def _normalize_func_xref_specs(specs):
         if (
             not any(
                 spec[key]
-                for key in ("xref_strings", "xref_unicode_strings", "xref_gvs", "xref_signatures", "xref_funcs")
+                for key in (
+                    "xref_strings",
+                    "xref_unicode_strings",
+                    "xref_gvs",
+                    "xref_signatures",
+                    "xref_funcs",
+                    "xref_floats",
+                )
             )
             and not inline_alias
         ):
@@ -1653,6 +1704,7 @@ async def preprocess_func_xrefs_via_mcp(
         or spec["xref_signatures"]
         or spec["xref_funcs"]
         or spec["inline_alias"]
+        or spec["xref_floats"]
     )
     if not positive:
         return None
