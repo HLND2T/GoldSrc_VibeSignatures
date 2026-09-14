@@ -91,7 +91,7 @@ unions = {
 }
 if not all(unions.values()):
     print(MARKER + json.dumps({"error": "literal refs unresolved",
-                               "counts": {k: len(v) for k, v in families.items()}}))
+                               "counts": {k: len(v) for k, v in unions.items()}}))
 else:
     helper = set.intersection(*unions.values())
     candidates = {key: union - helper for key, union in unions.items()}
