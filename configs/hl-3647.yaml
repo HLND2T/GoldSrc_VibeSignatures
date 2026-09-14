@@ -409,6 +409,12 @@ modules:
       - name: find-Mod_PointInLeaf
         expected_output:
           - Mod_PointInLeaf.{platform}.yaml
+      - name: find-R_GetSpriteFrame
+        expected_output:
+          - R_GetSpriteFrame.{platform}.yaml
+      - name: find-R_LoadSkys
+        expected_output:
+          - R_LoadSkys.{platform}.yaml
     symbols:
       - name: NLoadBlob
         category: func
@@ -639,4 +645,8 @@ modules:
       - name: Mod_LoadStudioModel
         category: func
       - name: Mod_PointInLeaf
+        category: func
+      - name: R_GetSpriteFrame
+        category: func
+      - name: R_LoadSkys
         category: func

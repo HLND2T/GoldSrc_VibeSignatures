@@ -436,6 +436,23 @@ modules:
           - Mod_LoadModel.{platform}.yaml
         expected_output:
           - Mod_LoadBrushModel.{platform}.yaml
+      - name: find-R_GetSpriteFrame
+        expected_output:
+          - R_GetSpriteFrame.{platform}.yaml
+      - name: find-SkyboxCommand-svencoop
+        platform: linux
+        expected_output:
+          - SkyboxCommand.{platform}.yaml
+      - name: find-R_LoadSkyBox_SvEngine
+        platform: windows
+        expected_output:
+          - R_LoadSkyBox_SvEngine.{platform}.yaml
+      - name: find-SkyboxCommand-decompiles
+        platform: linux
+        expected_input:
+          - SkyboxCommand.{platform}.yaml
+        expected_output:
+          - R_LoadSkyBox_SvEngine.{platform}.yaml
     symbols:
       - name: CL_Set_ServerExtraInfo
         category: func
@@ -673,6 +690,13 @@ modules:
       - name: Mod_LoadStudioModel
         category: func
       - name: Mod_PointInLeaf
+        category: func
+      - name: R_GetSpriteFrame
+        category: func
+      - name: SkyboxCommand
+        category: func
+        platform: linux
+      - name: R_LoadSkyBox_SvEngine
         category: func
   - name: client
     module_windows: client.dll
