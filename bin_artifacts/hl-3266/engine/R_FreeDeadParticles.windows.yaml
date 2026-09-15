@@ -1,0 +1,5 @@
+func_name: R_FreeDeadParticles
+func_va: '0x1d83f20'
+func_rva: '0x83f20'
+func_size: '0x9c'
+func_sig: 53 56 57 8B 7C 24 ?? 33 DB 8B 37 3B F3 74 ?? D9 46 ?? DC 1D ?? ?? ?? ?? DF E0 F6 C4 05 7A ?? 8B 46 ??

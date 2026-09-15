@@ -462,6 +462,61 @@ modules:
           - Draw_FillRGBA.{platform}.yaml
           - Draw_FillRGBABlend.{platform}.yaml
           - DT_Initialize.{platform}.yaml
+      - name: find-R_CheckVariables
+        expected_input:
+          - GL_LoadFilterTexture.{platform}.yaml
+        expected_output:
+          - R_CheckVariables.{platform}.yaml
+      - name: find-R_ForceCVars_R-AnimateLight
+        expected_input:
+          - R_CheckVariables.{platform}.yaml
+        expected_output:
+          - R_ForceCVars.{platform}.yaml
+          - R_AnimateLight.{platform}.yaml
+      - name: find-S_ExtraUpdate
+        expected_input:
+          - R_RenderView.{platform}.yaml
+          - R_CheckVariables.{platform}.yaml
+        expected_output:
+          - S_ExtraUpdate.{platform}.yaml
+      - name: find-PVSNode
+        expected_output:
+          - PVSNode.{platform}.yaml
+      - name: find-R_DrawParticles
+        expected_output:
+          - R_DrawParticles.{platform}.yaml
+      - name: find-R_DrawParticles-calls
+        expected_input:
+          - R_DrawParticles.{platform}.yaml
+        expected_output:
+          - R_FreeDeadParticles.{platform}.yaml
+          - R_BeamDrawList.{platform}.yaml
+        expected_output_windows:
+          - R_TracerDraw.windows.yaml
+      - name: find-R_GlowBlend
+        expected_input:
+          - R_DrawTEntitiesOnList.{platform}.yaml
+        expected_output:
+          - R_GlowBlend.{platform}.yaml
+      - name: find-R_ResetLatched
+        expected_output:
+          - R_ResetLatched.{platform}.yaml
+          - CL_LinkPacketEntities_to_R_ResetLatched_callsite_0.{platform}.yaml
+          - CL_LinkPacketEntities_to_R_ResetLatched_callsite_1.{platform}.yaml
+      - name: find-R_GLStudioDrawPoints
+        expected_input:
+          - studioapi_GetCurrentEntity.{platform}.yaml
+          - studioapi_StudioSetHeader.{platform}.yaml
+          - studioapi_SetRenderModel.{platform}.yaml
+          - studioapi_SetChromeOrigin.{platform}.yaml
+        expected_output:
+          - R_GLStudioDrawPoints.{platform}.yaml
+      - name: find-Mod_UnloadSpriteTextures
+        platform: windows
+        expected_input:
+          - ClientDLL_Shutdown.{platform}.yaml
+        expected_output:
+          - Mod_UnloadSpriteTextures.{platform}.yaml
     symbols:
       - name: BuildGammaTable
         category: func
@@ -731,6 +786,38 @@ modules:
         category: func
       - name: DT_Initialize
         category: func
+      - name: R_CheckVariables
+        category: func
+      - name: R_ForceCVars
+        category: func
+      - name: R_AnimateLight
+        category: func
+      - name: S_ExtraUpdate
+        category: func
+      - name: PVSNode
+        category: func
+      - name: R_DrawParticles
+        category: func
+      - name: R_FreeDeadParticles
+        category: func
+      - name: R_TracerDraw
+        category: func
+        platform: windows
+      - name: R_BeamDrawList
+        category: func
+      - name: R_GlowBlend
+        category: func
+      - name: R_ResetLatched
+        category: func
+      - name: CL_LinkPacketEntities_to_R_ResetLatched_callsite_0
+        category: patch
+      - name: CL_LinkPacketEntities_to_R_ResetLatched_callsite_1
+        category: patch
+      - name: R_GLStudioDrawPoints
+        category: func
+      - name: Mod_UnloadSpriteTextures
+        category: func
+        platform: windows
   - name: gameui
     module_windows: GameUI.dll
     depot_windows: valve/cl_dlls/GameUI.dll

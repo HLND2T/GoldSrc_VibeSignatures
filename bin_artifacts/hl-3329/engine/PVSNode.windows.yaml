@@ -1,0 +1,5 @@
+func_name: PVSNode
+func_va: '0x1d77000'
+func_rva: '0x77000'
+func_size: '0xb5'
+func_sig: 8B 0D ?? ?? ?? ?? 56 8B 74 24 ?? 8B 46 ?? 3B C1 74 ?? 33 C0 5E C3 8B 06 85 C0 7D ?? 83 E8 FE F7 D8

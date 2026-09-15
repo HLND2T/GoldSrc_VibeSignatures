@@ -151,26 +151,103 @@ class UnicodeStringScanTests(unittest.TestCase):
         self.assertEqual({0x402000}, namespace["_string_candidates"]("Cache_Alloc: size %i"))
 
 
-class FloatFilterBehaviorTests(unittest.TestCase):
-    def _matches(self, mnemonic, width, blob, required, excluded=(), *, decoded=True):
-        tree = ast.parse(_build_func_xref_py_eval({}, 0))
-        helpers = {
-            "_scalar_float_kind",
-            "_has_xmm_operand",
-            "_is_readonly_float_segment",
-            "_float_matches",
-            "_function_matches_float_filters",
-        }
-        constants = {"SINGLE_FLOAT_MNEMS", "DOUBLE_FLOAT_MNEMS", "X87_FLOAT_MNEMS", "MEMORY_OPERAND_TYPES"}
-        nodes = [
-            node
+class GLShutdownAnchorScanTests(unittest.TestCase):
+    def _anchor_owners(self, *, fail_readonly=False):
+        datarefs_seen = []
+
+        class Segment:
+            def __init__(self, start_ea, end_ea, name, perm):
+                self.start_ea, self.end_ea, self.name, self.perm = start_ea, end_ea, name, perm
+
+        # .rdata holds one true literal at offset 1 (preceded by NUL) and one
+        # embedded in a longer literal (preceded by 'x'); .data holds the same
+        # writable copy the old Windows hw.dll family really stores; the
+        # exec-only .text copy must never be scanned.
+        blob = b"\x00Sys_Shutdown()\x00prefixSys_Shutdown()\x00"
+        seg_rdata = Segment(0x1000, 0x1000 + len(blob), ".rdata", 4)
+        seg_data = Segment(0x8000, 0x8020, ".data", 6)
+        seg_text = Segment(0x400000, 0x400040, ".text", 1)
+
+        def getseg(ea):
+            for seg in (seg_rdata, seg_data, seg_text):
+                if seg.start_ea <= ea < seg.end_ea:
+                    return seg
+            return None
+
+        def data_refs_to(ea):
+            datarefs_seen.append(ea)
+            return [0x5000 + ea]
+
+        def get_bytes(ea, count):
+            if ea == seg_rdata.start_ea:
+                if fail_readonly:
+                    raise RuntimeError("segment read failed")
+                return blob
+            if ea == seg_data.start_ea:
+                return b"Sys_Shutdown()\x00"
+            return b"Sys_Shutdown()\x00"
+
+        finder_path = Path(__file__).resolve().parent.parent / "ida_preprocessor_scripts" / "find-GL_Shutdown.py"
+        tree = ast.parse(finder_path.read_text(encoding="utf-8"))
+        locate_py = next(
+            node.value.value
             for node in tree.body
-            if (isinstance(node, ast.FunctionDef) and node.name in helpers)
-            or (
-                isinstance(node, ast.Assign)
-                and any(isinstance(t, ast.Name) and t.id in constants for t in node.targets)
-            )
+            if isinstance(node, ast.Assign)
+            and any(isinstance(t, ast.Name) and t.id == "LOCATE_PY" for t in node.targets)
+        )
+        locate_tree = ast.parse(locate_py)
+        anchors = [
+            node
+            for node in locate_tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == "anchor_string_owners"
         ]
+        self.assertEqual(1, len(anchors))
+        # No idautils.Strings is provided on purpose: the anchor scan must not
+        # touch the shared string list, whose setup() rebuild is IDB-wide
+        # state (a minlen=6 rebuild hid Mod_LoadStudioModel's 5-char "bogus"
+        # anchor from later skills in PR CI).
+        namespace = {
+            "ANCHOR_STRING": "Sys_Shutdown()",
+            "idautils": SimpleNamespace(
+                Segments=lambda: [seg_text.start_ea, seg_rdata.start_ea, seg_data.start_ea],
+                DataRefsTo=data_refs_to,
+            ),
+            "ida_segment": SimpleNamespace(getseg=getseg, get_segm_name=lambda seg: seg.name),
+            "ida_bytes": SimpleNamespace(get_bytes=get_bytes),
+            "func_start": lambda ea: 0x1000 + ea,
+        }
+        exec(  # noqa: S102 - execute the production anchor scan in isolation.
+            compile(ast.Module(body=anchors, type_ignores=[]), "<gl-shutdown-anchor>", "exec"), namespace
+        )
+        return namespace["anchor_string_owners"](), datarefs_seen
+
+    def test_anchor_scan_reads_readable_segments_without_shared_string_list(self):
+        owners, datarefs_seen = self._anchor_owners()
+        # Standalone literals resolve owners (.rdata offset 1 and the writable
+        # .data copy); the embedded occurrence and the exec-only copy do not.
+        self.assertEqual([0x1000 + 0x5000 + 0x1001, 0x1000 + 0x5000 + 0x8000], owners)
+        self.assertEqual([0x1001, 0x8000], datarefs_seen)
+
+    def test_anchor_scan_survives_segment_read_failure(self):
+        owners, datarefs_seen = self._anchor_owners(fail_readonly=True)
+        self.assertEqual([0x1000 + 0x5000 + 0x8000], owners)
+        self.assertEqual([0x8000], datarefs_seen)
+
+
+class FloatFilterBehaviorTests(unittest.TestCase):
+    FLOAT_FILTER_HELPERS = {
+        "_scalar_float_kind",
+        "_has_xmm_operand",
+        "_is_readonly_float_segment",
+        "_is_readonly_float_segment_name",
+        "_float_fallback_owners",
+        "_float_matches",
+        "_float_read_width",
+        "_function_matches_float_filters",
+    }
+
+    def _matches(self, mnemonic, width, blob, required, excluded=(), *, decoded=True):
+        nodes = self._float_filter_nodes(with_constants=True)
         operand = SimpleNamespace(dtype=width)
         namespace = {
             "math": math,
@@ -190,11 +267,94 @@ class FloatFilterBehaviorTests(unittest.TestCase):
                 get_dtype_size=lambda dtype: dtype,
             ),
             "ida_segment": SimpleNamespace(getseg=lambda ea: object(), get_segm_name=lambda seg: ".rdata"),
-            "idautils": SimpleNamespace(FuncItems=lambda start: [0x1000]),
+            "idautils": SimpleNamespace(
+                FuncItems=lambda start: [0x1000], Segments=lambda: (), DataRefsTo=lambda ea: ()
+            ),
             "ida_bytes": SimpleNamespace(get_bytes=lambda ea, count: blob[:count]),
         }
         exec(compile(ast.Module(body=nodes, type_ignores=[]), "<float-filters>", "exec"), namespace)
         return namespace["_function_matches_float_filters"](0x1000, required, excluded)
+
+    def _float_filter_nodes(self, *, with_constants):
+        tree = ast.parse(_build_func_xref_py_eval({}, 0))
+        constants = {
+            "SINGLE_FLOAT_MNEMS",
+            "DOUBLE_FLOAT_MNEMS",
+            "X87_FLOAT_MNEMS",
+            "MEMORY_OPERAND_TYPES",
+            "_FLOAT_FALLBACK_OWNERS_CACHE",
+        }
+        return [
+            node
+            for node in tree.body
+            if (isinstance(node, ast.FunctionDef) and node.name in self.FLOAT_FILTER_HELPERS)
+            or (
+                with_constants
+                and isinstance(node, ast.Assign)
+                and any(isinstance(t, ast.Name) and t.id in constants for t in node.targets)
+            )
+        ]
+
+    def _matches_got(self, required, pool_blob, *, owner_hit=True, excluded=None):
+        # GOT fallback exercise: the float instruction's operands decode to
+        # no constant address (operand type o_void), so only the stored-
+        # constant xref path can match. The fld dtype mirrors the stored
+        # instance width, as a real fldl/flds decode would.
+        width = len(pool_blob) if len(pool_blob) in (4, 8) else 8
+        nodes = self._float_filter_nodes(with_constants=True)
+        namespace = {
+            "math": math,
+            "struct": struct,
+            "ida_funcs": SimpleNamespace(get_func=lambda ea: SimpleNamespace(start_ea=0x1000)),
+            "idc": SimpleNamespace(
+                o_mem=2,
+                o_displ=4,
+                o_phrase=3,
+                print_insn_mnem=lambda ea: "fld",
+                print_operand=lambda ea, index: "st(0)",
+                get_operand_type=lambda ea, index: 0,
+            ),
+            "ida_ua": SimpleNamespace(
+                insn_t=lambda: SimpleNamespace(ops=[SimpleNamespace(type=4, dtype=width)]),
+                decode_insn=lambda insn, ea: 6,
+                get_dtype_size=lambda dtype: dtype,
+            ),
+            "ida_segment": SimpleNamespace(
+                getseg=lambda ea: SimpleNamespace(start_ea=0x3000, end_ea=0x3100),
+                get_segm_name=lambda seg: ".rodata",
+            ),
+            "idautils": SimpleNamespace(
+                FuncItems=lambda start: [0x1000],
+                Segments=lambda: [0x3000],
+                DataRefsTo=lambda ea: [0x1000] if owner_hit else [],
+            ),
+            "ida_bytes": SimpleNamespace(get_bytes=lambda ea, count: pool_blob),
+        }
+        exec(compile(ast.Module(body=nodes, type_ignores=[]), "<float-filters>", "exec"), namespace)
+        return namespace["_function_matches_float_filters"](0x1000, required, excluded or [])
+
+    def test_got_fallback_matches_stored_constant_reference(self):
+        self.assertTrue(self._matches_got([0.004], struct.pack("<f", 0.004)))
+        self.assertTrue(self._matches_got([20.0], struct.pack("<d", 20.0)))
+
+    def test_got_fallback_still_requires_the_function_reference(self):
+        pool = struct.pack("<f", 0.004)
+        self.assertFalse(self._matches_got([0.004], pool, owner_hit=False))
+        self.assertFalse(self._matches_got([0.5], pool))
+
+    def test_got_fallback_rejects_double_reader_for_its_low_float_word(self):
+        # The only reference is fld qword [double_1023]; the low word of the
+        # f64 encoding reinterprets as float 0.0 and must not credit the
+        # function with a float 0.0 reference, while the double itself does.
+        pool = struct.pack("<d", 1023.0)
+        self.assertFalse(self._matches_got([0.0], pool))
+        self.assertTrue(self._matches_got([1023.0], pool))
+
+    def test_got_fallback_applies_excluded_constants(self):
+        # A forbidden constant reached only through the stored-instance xref
+        # must exclude the candidate through the same resolution path.
+        pool = struct.pack("<f", 0.004)
+        self.assertFalse(self._matches_got([0.004], pool, excluded=[0.004]))
 
     def test_x87_double_does_not_also_reference_its_low_float_word(self):
         blob = struct.pack("<d", 1023.0)
@@ -635,6 +795,8 @@ class PreprocessStatusTests(unittest.TestCase):
             "_has_xmm_operand": lambda _ea: True,
             "_is_readonly_float_segment": lambda _ea: True,
             "_scalar_float_kind": lambda _ea: "float",
+            "_float_read_width": lambda _ea, _operand_index=None: 4,
+            "_float_fallback_owners": lambda _value: set(),
         }
         exec(  # noqa: S102 - executes only selected generated helper definitions.
             compile(ast.Module(body=function_nodes, type_ignores=[]), "<func-xref-floats>", "exec"),
