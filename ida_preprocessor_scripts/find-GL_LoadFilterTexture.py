@@ -87,19 +87,24 @@ def function_calls_glbind(start):
 
 
 def function_imm_constants(start):
-    # Immediate-operand values only: addresses of globals and branch targets
-    # are o_mem/o_displ/o_near operands and must never satisfy the constant
-    # pair, so a synthetic function whose bytes merely contain the sequences
-    # (e.g. a displacement or an unrelated 32-bit word) is rejected here.
+    # Immediate-operand values normalized by the operand's actual width:
+    # addresses of globals and branch targets are o_mem/o_displ/o_near
+    # operands and must never satisfy the constant pair, and a wider
+    # immediate (e.g. 0x100C0) must not truncate into a match. Only a value
+    # genuinely encoded at the compared width counts.
+    import ida_ua
+
     values = set()
     for ea in idautils.FuncItems(int(start)):
         insn = idautils.DecodeInstruction(ea)
         if insn is None:
             continue
         for op in insn.ops:
-            if int(op.type) == int(idaapi.o_imm):
-                values.add(int(op.value) & 0xFFFFFFFF)
-                values.add(int(op.value) & 0xFFFF)
+            if int(op.type) != int(idaapi.o_imm):
+                continue
+            width = ida_ua.get_dtype_size(getattr(op, 'dtype', getattr(op, 'dtyp', 0)))
+            mask = 0xFFFFFFFF if width >= 4 else (0xFFFF if width == 2 else 0xFF)
+            values.add(int(op.value) & mask)
     return values
 
 
