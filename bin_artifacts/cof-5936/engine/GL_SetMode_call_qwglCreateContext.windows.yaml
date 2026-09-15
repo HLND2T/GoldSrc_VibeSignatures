@@ -1,0 +1,5 @@
+patch_name: GL_SetMode_call_qwglCreateContext
+patch_va: '0x1d73963'
+patch_rva: '0x73963'
+patch_sig: FF 15 ?? ?? ?? ?? 8B 4D ?? 89 01 8B 55 ?? 83 3A ?? 75 ?? EB ??
+patch_sig_disp: '0x0'

@@ -392,6 +392,23 @@ modules:
       - name: find-GL_SetModeLegacy
         expected_output:
           - GL_SetModeLegacy.{platform}.yaml
+      - name: find-GL_SelectPixelFormat
+        platform: windows
+        expected_output:
+          - GL_SelectPixelFormat.{platform}.yaml
+      - name: find-GL_Shutdown
+        expected_output:
+          - GL_Shutdown.{platform}.yaml
+      - name: find-GL_LoadFilterTexture
+        expected_output:
+          - GL_LoadFilterTexture.{platform}.yaml
+      - name: find-GL_SetMode_call_qwglCreateContext
+        platform: windows
+        expected_input:
+          - GL_SetModeLegacy.{platform}.yaml
+          - GL_SelectPixelFormat.{platform}.yaml
+        expected_output:
+          - GL_SetMode_call_qwglCreateContext.{platform}.yaml
       - name: find-Host_ClearMemory
         expected_output:
           - Host_ClearMemory.{platform}.yaml
@@ -672,6 +689,16 @@ modules:
         category: func
       - name: GL_SetModeLegacy
         category: func
+      - name: GL_SelectPixelFormat
+        category: func
+        platform: windows
+      - name: GL_Shutdown
+        category: func
+      - name: GL_LoadFilterTexture
+        category: func
+      - name: GL_SetMode_call_qwglCreateContext
+        category: patch
+        platform: windows
       - name: Host_ClearMemory
         category: func
       - name: Hunk_AllocName

@@ -404,6 +404,13 @@ modules:
       - name: find-GL_SetMode
         expected_output:
           - GL_SetMode.{platform}.yaml
+      - name: find-GL_Shutdown
+        platform: windows
+        expected_output:
+          - GL_Shutdown.{platform}.yaml
+      - name: find-GL_LoadFilterTexture
+        expected_output:
+          - GL_LoadFilterTexture.{platform}.yaml
       - name: find-Host_ClearMemory
         expected_output:
           - Host_ClearMemory.{platform}.yaml
@@ -712,6 +719,11 @@ modules:
       - name: GL_LoadTexture2
         category: func
       - name: GL_SetMode
+        category: func
+      - name: GL_Shutdown
+        category: func
+        platform: windows
+      - name: GL_LoadFilterTexture
         category: func
       - name: DT_LoadDetailTexture
         category: func

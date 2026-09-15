@@ -1,0 +1,5 @@
+patch_name: GL_SetMode_call_qwglCreateContext
+patch_va: '0x1d5935c'
+patch_rva: '0x5935c'
+patch_sig: FF 15 ?? ?? ?? ?? 85 C0 89 03
+patch_sig_disp: '0x0'

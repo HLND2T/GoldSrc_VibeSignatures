@@ -1,0 +1,5 @@
+func_name: GL_LoadFilterTexture
+func_va: '0x1023be90'
+func_rva: '0x23be90'
+func_size: '0x20c'
+func_sig: 55 8B EC 83 EC 0C 83 3D ?? ?? ?? ?? ?? F3 0F 10 45 ?? 0F 28 C8 F3 0F 59 4D ?? 53 56 F3 0F 11 4D ??
