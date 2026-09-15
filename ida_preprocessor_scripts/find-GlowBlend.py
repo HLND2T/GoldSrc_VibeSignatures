@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Locate GlowBlend (MetaHookSv field R_GlowBlend) through its falloff constants.
+"""Locate GlowBlend (previously emitted as R_GlowBlend) through its falloff constants.
 
 engine/r_trans.c GlowBlend owns three in-body constants:
 
@@ -16,10 +16,10 @@ config-gated to Linux instead of emitting the inlined host.
 
 from ida_analyze_util import preprocess_common_skill
 
-TARGET_FUNCTION_NAMES = ["R_GlowBlend"]
+TARGET_FUNCTION_NAMES = ["GlowBlend"]
 FUNC_XREFS = [
     {
-        "func_name": "R_GlowBlend",
+        "func_name": "GlowBlend",
         "xref_strings": [],
         "xref_gvs": [],
         "xref_signatures": [],
@@ -29,7 +29,7 @@ FUNC_XREFS = [
     },
 ]
 GENERATE_YAML_DESIRED_FIELDS = [
-    ("R_GlowBlend", ["func_name", "func_sig", "func_va", "func_rva", "func_size"]),
+    ("GlowBlend", ["func_name", "func_sig", "func_va", "func_rva", "func_size"]),
 ]
 
 

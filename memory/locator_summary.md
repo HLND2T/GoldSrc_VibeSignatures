@@ -97,7 +97,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | --- | --- | --- | --- | --- |
 | [BuildGammaTable](locators/BuildGammaTable.md) | engine | func | — | xref_floats = ["1023.0", "0.075", "0.875"] is the *sole* positive source (positive_sets stays empty, so the float set becomes the candidate set). |
 | [R_DrawParticles](locators/R_DrawParticles.md) | engine | func | — | xref_floats = ["20.0", "0.004"] is the sole positive source; the candidate set is every function whose body references both constants. |
-| [R_GlowBlend](locators/R_GlowBlend.md) | engine | func | `R_DrawTEntitiesOnList` | xref_floats = ["19000.0", "0.005", "0.05"] is the sole positive source, combined with exclude_funcs = ["R_DrawTEntitiesOnList"]. |
+| [GlowBlend](locators/GlowBlend.md) | engine | func | `R_DrawTEntitiesOnList` | xref_floats = ["19000.0", "0.005", "0.05"] is the sole positive source, combined with exclude_funcs = ["R_DrawTEntitiesOnList"]. |
 
 ## 表 / 结构 / 数据段扫描 (34)
 

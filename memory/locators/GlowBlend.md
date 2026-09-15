@@ -1,21 +1,23 @@
 ---
-title: R_GlowBlend locator
+title: GlowBlend locator
 type: note
-permalink: goldsrc-vibesignatures/locators/r-glowblend
+permalink: goldsrc-vibesignatures/locators/glowblend
 tags:
   - locator
   - engine
   - func
 ---
 
-# R_GlowBlend
+# GlowBlend
 
 ## Symbol
 
-- **Name**: `R_GlowBlend`
+- **Name**: `GlowBlend`
 - **Category**: `func`
 - **Module**: engine (`hw.dll` / `hw.so`)
-- **Producer**: `ida_preprocessor_scripts/find-R_GlowBlend.py`
+- **Producer**: `ida_preprocessor_scripts/find-GlowBlend.py`
+- **Historical alias**: the symbol was emitted as `R_GlowBlend` until it was renamed to the real
+  `engine/r_trans.c` name; older artifacts and configs use the `R_` form.
 
 ## Availability
 
@@ -40,7 +42,7 @@ tags:
 
 ## Pitfalls
 
-- The exclusion is what makes the platform split work. Without it, the inlined host would match and the finder would emit `R_DrawTEntitiesOnList`'s address under the `R_GlowBlend` name.
+- The exclusion is what makes the platform split work. Without it, the inlined host would match and the finder would emit `R_DrawTEntitiesOnList`'s address under the `GlowBlend` name.
 - `exclude_funcs` uses the exact executable function start recovered from the predecessor artifact; do not substitute a name-based or adjacency-based exclusion.
 - `19000.0` is a unique owner on every platform, so the anchor survives even where `0.05`/`0.005` are pooled differently.
 - Do not "fix" the Windows gap by anchoring the inlined host: the config-level `platform: linux` gate is the sanctioned answer for hl-10210 and svencoop-10257.

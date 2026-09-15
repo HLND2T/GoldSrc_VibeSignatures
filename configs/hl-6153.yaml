@@ -502,11 +502,11 @@ modules:
           - R_BeamDrawList.{platform}.yaml
         expected_output_windows:
           - R_TracerDraw.windows.yaml
-      - name: find-R_GlowBlend
+      - name: find-GlowBlend
         expected_input:
           - R_DrawTEntitiesOnList.{platform}.yaml
         expected_output:
-          - R_GlowBlend.{platform}.yaml
+          - GlowBlend.{platform}.yaml
       - name: find-R_ResetLatched
         expected_output:
           - R_ResetLatched.{platform}.yaml
@@ -817,7 +817,7 @@ modules:
         platform: windows
       - name: R_BeamDrawList
         category: func
-      - name: R_GlowBlend
+      - name: GlowBlend
         category: func
       - name: R_ResetLatched
         category: func

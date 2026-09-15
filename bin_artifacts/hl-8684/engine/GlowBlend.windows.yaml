@@ -1,4 +1,4 @@
-func_name: R_GlowBlend
+func_name: GlowBlend
 func_va: '0x1d88670'
 func_rva: '0x88670'
 func_size: '0x14c'

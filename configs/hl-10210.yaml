@@ -506,12 +506,12 @@ modules:
           - R_FreeDeadParticles.{platform}.yaml
           - R_TracerDraw.{platform}.yaml
           - R_BeamDrawList.{platform}.yaml
-      - name: find-R_GlowBlend
+      - name: find-GlowBlend
         platform: linux
         expected_input:
           - R_DrawTEntitiesOnList.{platform}.yaml
         expected_output:
-          - R_GlowBlend.{platform}.yaml
+          - GlowBlend.{platform}.yaml
       - name: find-R_ResetLatched
         expected_output:
           - R_ResetLatched.{platform}.yaml
@@ -817,7 +817,7 @@ modules:
       - name: R_BeamDrawList
         category: func
         platform: windows
-      - name: R_GlowBlend
+      - name: GlowBlend
         category: func
         platform: linux
       - name: R_ResetLatched

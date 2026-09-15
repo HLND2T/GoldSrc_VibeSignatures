@@ -38,4 +38,4 @@ tags:
 
 - The literal guards a specific branch (`currententity` render mode 3 with a non-sprite model), so it is a *body* anchor, not a table entry; it is unique per binary but do not treat the neighbouring `r_blend`/`GlowBlend` symbols as anchors.
 - CoF's body differs from canonical HL: both sides of the `(cl_parsecount & CL_UPDATE_MASK)` frame-ring AND are memory-backed there (the counter has parser writes; the mask starts at 0x3f and supplies the AND). That is a real body difference, not an address the finder may copy — see `cl_parsecount`.
-- R_DrawTEntitiesOnList is also an input to `find-R_GlowBlend` (Linux), so a wrong owner here propagates.
+- R_DrawTEntitiesOnList is also an input to `find-GlowBlend` (Linux), so a wrong owner here propagates.
