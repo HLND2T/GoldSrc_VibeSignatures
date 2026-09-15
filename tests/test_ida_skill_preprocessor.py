@@ -152,25 +152,18 @@ class UnicodeStringScanTests(unittest.TestCase):
 
 
 class FloatFilterBehaviorTests(unittest.TestCase):
+    FLOAT_FILTER_HELPERS = {
+        "_scalar_float_kind",
+        "_has_xmm_operand",
+        "_is_readonly_float_segment",
+        "_is_readonly_float_segment_name",
+        "_float_fallback_owners",
+        "_float_matches",
+        "_function_matches_float_filters",
+    }
+
     def _matches(self, mnemonic, width, blob, required, excluded=(), *, decoded=True):
-        tree = ast.parse(_build_func_xref_py_eval({}, 0))
-        helpers = {
-            "_scalar_float_kind",
-            "_has_xmm_operand",
-            "_is_readonly_float_segment",
-            "_float_matches",
-            "_function_matches_float_filters",
-        }
-        constants = {"SINGLE_FLOAT_MNEMS", "DOUBLE_FLOAT_MNEMS", "X87_FLOAT_MNEMS", "MEMORY_OPERAND_TYPES"}
-        nodes = [
-            node
-            for node in tree.body
-            if (isinstance(node, ast.FunctionDef) and node.name in helpers)
-            or (
-                isinstance(node, ast.Assign)
-                and any(isinstance(t, ast.Name) and t.id in constants for t in node.targets)
-            )
-        ]
+        nodes = self._float_filter_nodes(with_constants=True)
         operand = SimpleNamespace(dtype=width)
         namespace = {
             "math": math,
@@ -190,11 +183,70 @@ class FloatFilterBehaviorTests(unittest.TestCase):
                 get_dtype_size=lambda dtype: dtype,
             ),
             "ida_segment": SimpleNamespace(getseg=lambda ea: object(), get_segm_name=lambda seg: ".rdata"),
-            "idautils": SimpleNamespace(FuncItems=lambda start: [0x1000]),
+            "idautils": SimpleNamespace(FuncItems=lambda start: [0x1000], Segments=lambda: (), DataRefsTo=lambda ea: ()),
             "ida_bytes": SimpleNamespace(get_bytes=lambda ea, count: blob[:count]),
         }
         exec(compile(ast.Module(body=nodes, type_ignores=[]), "<float-filters>", "exec"), namespace)
         return namespace["_function_matches_float_filters"](0x1000, required, excluded)
+
+    def _float_filter_nodes(self, *, with_constants):
+        tree = ast.parse(_build_func_xref_py_eval({}, 0))
+        constants = {
+            "SINGLE_FLOAT_MNEMS",
+            "DOUBLE_FLOAT_MNEMS",
+            "X87_FLOAT_MNEMS",
+            "MEMORY_OPERAND_TYPES",
+            "_FLOAT_FALLBACK_OWNERS_CACHE",
+        }
+        return [
+            node
+            for node in tree.body
+            if (isinstance(node, ast.FunctionDef) and node.name in self.FLOAT_FILTER_HELPERS)
+            or (
+                with_constants
+                and isinstance(node, ast.Assign)
+                and any(isinstance(t, ast.Name) and t.id in constants for t in node.targets)
+            )
+        ]
+
+    def _matches_got(self, required, pool_blob, *, owner_hit=True):
+        # GOT fallback exercise: the float instruction decodes to no memory
+        # operand at all, so only the stored-constant xref path can match.
+        nodes = self._float_filter_nodes(with_constants=True)
+        namespace = {
+            "math": math,
+            "struct": struct,
+            "ida_funcs": SimpleNamespace(get_func=lambda ea: SimpleNamespace(start_ea=0x1000)),
+            "idc": SimpleNamespace(
+                o_mem=2,
+                o_displ=4,
+                o_phrase=3,
+                print_insn_mnem=lambda ea: "fld",
+                print_operand=lambda ea, index: "xmm0",
+                get_operand_type=lambda ea, index: 0,
+            ),
+            "ida_segment": SimpleNamespace(
+                getseg=lambda ea: SimpleNamespace(start_ea=0x3000, end_ea=0x3100),
+                get_segm_name=lambda seg: ".rodata",
+            ),
+            "idautils": SimpleNamespace(
+                FuncItems=lambda start: [0x1000],
+                Segments=lambda: [0x3000],
+                DataRefsTo=lambda ea: [0x1000] if owner_hit else [],
+            ),
+            "ida_bytes": SimpleNamespace(get_bytes=lambda ea, count: pool_blob),
+        }
+        exec(compile(ast.Module(body=nodes, type_ignores=[]), "<float-filters>", "exec"), namespace)
+        return namespace["_function_matches_float_filters"](0x1000, required, [])
+
+    def test_got_fallback_matches_stored_constant_reference(self):
+        self.assertTrue(self._matches_got([0.004], struct.pack("<f", 0.004)))
+        self.assertTrue(self._matches_got([20.0], struct.pack("<d", 20.0)))
+
+    def test_got_fallback_still_requires_the_function_reference(self):
+        pool = struct.pack("<f", 0.004)
+        self.assertFalse(self._matches_got([0.004], pool, owner_hit=False))
+        self.assertFalse(self._matches_got([0.5], pool))
 
     def test_x87_double_does_not_also_reference_its_low_float_word(self):
         blob = struct.pack("<d", 1023.0)
@@ -635,6 +687,7 @@ class PreprocessStatusTests(unittest.TestCase):
             "_has_xmm_operand": lambda _ea: True,
             "_is_readonly_float_segment": lambda _ea: True,
             "_scalar_float_kind": lambda _ea: "float",
+            "_float_fallback_owners": lambda _value: set(),
         }
         exec(  # noqa: S102 - executes only selected generated helper definitions.
             compile(ast.Module(body=function_nodes, type_ignores=[]), "<func-xref-floats>", "exec"),

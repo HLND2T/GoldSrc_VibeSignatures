@@ -1,0 +1,5 @@
+func_name: R_ResetLatched
+func_va: '0x1dc2ebe'
+func_rva: '0xc2ebe'
+func_size: '0x128'
+func_sig: 55 8B EC 56 57 83 7D ?? ?? 74 ?? 6A 04 8B 45 ?? 05 18 03 00 00 50 8B 4D ?? 81 C1 3C 0B 00 00

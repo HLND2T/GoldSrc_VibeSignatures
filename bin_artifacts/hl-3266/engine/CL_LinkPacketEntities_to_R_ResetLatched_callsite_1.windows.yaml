@@ -1,0 +1,5 @@
+patch_name: CL_LinkPacketEntities_to_R_ResetLatched_callsite_1
+patch_va: '0x1d16373'
+patch_rva: '0x16373'
+patch_sig: E8 A8 BA 07 00 83 C4 ??
+patch_sig_disp: '0x0'

@@ -1,0 +1,5 @@
+func_name: Mod_UnloadSpriteTextures
+func_va: '0x1d41790'
+func_rva: '0x41790'
+func_size: '0x5d'
+func_sig: 55 8B EC 81 EC 00 01 00 00 53 8B 5D ?? B8 01 00 00 00 56 8B 4B ?? 57 3B C8 75 ??

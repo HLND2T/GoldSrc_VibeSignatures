@@ -1,0 +1,5 @@
+func_name: R_GLStudioDrawPoints
+func_va: '0x1dc213c'
+func_rva: '0xc213c'
+func_size: '0xac6'
+func_sig: 55 8B EC 83 EC 70 C7 45 ?? ?? ?? ?? ?? 68 F0 87 00 00 FF 15 ?? ?? ?? ?? 68 F6 87 00 00 68 F2 87 00 00

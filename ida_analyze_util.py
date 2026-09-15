@@ -1276,12 +1276,15 @@ def _scalar_float_kind(ea):
 def _has_xmm_operand(ea):
     return any('xmm' in (idc.print_operand(ea, index) or '').lower() for index in range(8))
 
+def _is_readonly_float_segment_name(name):
+    return name == '.rdata' or name.startswith('.rodata')
+
+
 def _is_readonly_float_segment(ea):
     segment = ida_segment.getseg(int(ea))
     if segment is None:
         return False
-    name = ida_segment.get_segm_name(segment) or ''
-    return name == '.rdata' or name.startswith('.rodata')
+    return _is_readonly_float_segment_name(ida_segment.get_segm_name(segment) or '')
 
 def _float_matches(value, expected, kind):
     epsilon = 1e-6 if kind == 'float' else 1e-12
@@ -1312,6 +1315,49 @@ def _signature_candidates(narrowed, signature, match_eas):
     if narrowed and len(narrowed) <= SIGNATURE_XREF_PROBE_MAX_CANDIDATES:
         return {start for start in narrowed if _function_contains_signature(start, signature)}
     return _address_candidates(match_eas)
+
+_FLOAT_FALLBACK_OWNERS_CACHE = {}
+
+
+def _float_fallback_owners(value):
+    # Position-independent builds (for example SvEngine Linux) load float
+    # constants through GOT-relative operands whose operand value does not
+    # decode to the constant address. This helper collects, once per constant,
+    # every function whose own instructions hold a recorded data xref to a
+    # stored instance of that constant. It never emits triple-quoted text
+    # because this whole block lives inside the py_eval template literal.
+    if value in _FLOAT_FALLBACK_OWNERS_CACHE:
+        return _FLOAT_FALLBACK_OWNERS_CACHE[value]
+    owners = set()
+    for size in (4, 8):
+        packed = struct.pack('<f' if size == 4 else '<d', value)
+        for seg_start in idautils.Segments():
+            segment = ida_segment.getseg(int(seg_start))
+            if segment is None:
+                continue
+            name = ida_segment.get_segm_name(segment) or ''
+            if not _is_readonly_float_segment_name(name):
+                continue
+            span = int(segment.end_ea) - int(seg_start)
+            if span <= 0:
+                continue
+            try:
+                data = ida_bytes.get_bytes(int(seg_start), span)
+            except Exception:
+                continue
+            if not data:
+                continue
+            offset = data.find(packed)
+            while offset != -1:
+                constant_ea = int(seg_start) + offset
+                for x in idautils.DataRefsTo(constant_ea):
+                    f = ida_funcs.get_func(x)
+                    if f is not None:
+                        owners.add(int(f.start_ea))
+                offset = data.find(packed, offset + 1)
+    _FLOAT_FALLBACK_OWNERS_CACHE[value] = owners
+    return owners
+
 
 def _function_matches_float_filters(start, required_values, excluded_values):
     required_hits = [False] * len(required_values)
@@ -1358,6 +1404,10 @@ def _function_matches_float_filters(start, required_values, excluded_values):
             for expected in excluded_values:
                 if _float_matches(value, expected, value_kind):
                     excluded_hit = True
+    if not all(required_hits):
+        for index, expected in enumerate(required_values):
+            if not required_hits[index] and start in _float_fallback_owners(expected):
+                required_hits[index] = True
     return all(required_hits) and not excluded_hit
 
 globals().update(locals())
