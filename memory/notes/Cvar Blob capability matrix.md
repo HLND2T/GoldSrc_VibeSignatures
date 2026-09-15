@@ -70,11 +70,5 @@ Required MetaHook changes (do not ship fake symbols here):
 6. Blob TODO is `NLoadBlob` (not `NLoadBlobFile` / `LoadBlobFile`). Sven must not require `NLoadBlob`/`FreeBlob`.
 
 ## Finders
-- `find-Cvar_Set`: unique `Cvar_Set: variable %s not found\n` owner; printable C-strings of length >= 2; optional `Cvar_DirectSet` call/jmp (including PLT thunk) when multiple owners remain. Small bodies may set `func_sig_allow_across_function_boundary`.
-- `find-Cvar_DirectSet`: existing `FULLMATCH:***PROTECTED***`.
-- `find-cvar_hooks`: unchanged; hl-8684 / hl-10210 only.
-- `find-Cvar_Set_to_Cvar_DirectSet_callsites`: direct `E8`/`E9` in Cvar_Set whose xref resolves to Cvar_DirectSet.
-- `find-FreeBlob`: LLM_DECOMPILE from `ClientDLL_Init` (inlined Shutdown). Registered on hl-10210 Windows+Linux and hl-8684 Linux. hl-8684 Linux predecessor body differs (`0xb2d`, inlined LoadInsecureClient); reference is `references/hl-8684/engine/ClientDLL_Init.linux.yaml` rather than the hl-10210 fallback.
-- `find-ClientDLL_Shutdown`: unique `ClientDLL_Init` callee that is larger than the FreeBlob wrapper and calls FreeLibrary/dlclose. Old GoldSrc + hl-8684 Windows.
-- `find-FreeBlob-legacy`: LLM_DECOMPILE from standalone `ClientDLL_Shutdown`. Reference: `references/hl-6153/engine/ClientDLL_Shutdown.windows.yaml` (public leak comments out FreeBlob; this body keeps the call).
-- `find-NLoadBlob`: existing Windows-only xref signatures.
+每个符号的定位方式已迁移到 `memory/locators/`（`Cvar_Set`、`Cvar_DirectSet`、`cvar_hooks`、
+`NLoadBlob`、`NLoadBlobFile`、`FreeBlob`、`Cvar_Set_to_Cvar_DirectSet_callsite_0`）。

@@ -22,7 +22,7 @@ tags:
 
 - WON 时代 hl tag 的 `hw.dll` 是加密 "blob" 镜像：不是 MZ/ELF（hl-3248/3266/3329 开头 `00 00 …`，hl-3647 开头 `LS`）。对它做原始字节搜索会**静默返回 0 命中**——没有任何错误把"字符串不存在"和"文件不可读"区分开。
 - 分析管线（现有 artifact、IDB、finder）对这些 tag 全部运行在解密后的 PE32 上：`bin/<tag>/engine/hw.decrypt.dll`（+ `hw.decrypt.dll.i64`）。`configs/hl-32xx.yaml` 里 `module_windows` 仍写 `hw.dll`；解密是仓库维护的预处理步骤（`decrypt_blob.py`，仅通过用户 slash 命令 `/decrypt-blob-gamebin` 触发，skill 为 `disable-model-invocation`，模型不会自动撞见）。
-- 旧知识只作为一句附带表述埋在 [[sys-init-memory-locator]]（"incl. blob gamevers via their decrypted `hw.decrypt.dll`"）里，按 blob/decrypt/encrypted 搜索不出来，因此坑重复踩了。
+- 旧知识只作为一句附带表述埋在 `Sys_InitMemory` locator（现为 [[goldsrc-vibesignatures/locators/sys-init-memory]]，"incl. blob gamevers via their decrypted `hw.decrypt.dll`"）里，按 blob/decrypt/encrypted 搜索不出来，因此坑重复踩了。
 
 ## Correct approach（正确做法）
 

@@ -11,6 +11,9 @@ tags:
 
 # CBaseUI::Initialize Linux reconstruction
 
+> 符号定位（finder、artifact 字段、reference 路径）已迁移到
+> `memory/locators/CBaseUI__Initialize.md`；这里只保留 IDA 恢复该函数时的重建经验。
+
 ## Trigger
 
 Linux `hw.so` Hex-Rays still shows `VGuiWrap2_Startup_0` / `MEMORY[0x...]` after the Windows `CBaseUI__Initialize` restore.
@@ -20,7 +23,7 @@ Linux `hw.so` Hex-Rays still shows `VGuiWrap2_Startup_0` / `MEMORY[0x...]` after
 - Official source: `CBaseUI::Initialize` in `engine/vgui2/BaseUI_Interface.cpp`.
 - `VGuiWrap2_Startup` at `0x193ed0` is a different wrapper that calls `IBaseUI::Initialize` virtually.
 - GCC outlined `if (staticGameUIFuncs) return;` into the cdecl ABI/vtable entry `_ZN7CBaseUI10InitializeEPPFPvPKcPiEi` at `0x1c1e90`.
-- The hot body is the usercall function at `0x1c1cf0` (`this@eax`, `factories@edx`). Finder artifact `CBaseUI__Initialize` must keep this body address because `VClientVGUI001` and `g_pClientFactory.linux.yaml` `gv_sig_va` live there.
+- The hot body is the usercall function at `0x1c1cf0` (`this@eax`, `factories@edx`).
 
 ## BSS split pitfall
 
@@ -48,4 +51,3 @@ Correct sequence:
 
 - `server_health` on `bin/hl-10210/engine/hw.so.i64`
 - `analyze_function` / `decompile` at `0x1c1cf0` has no `MEMORY[` and no `VGuiWrap2_Startup_0`
-- Reference: `ida_preprocessor_scripts/references/hl-10210/engine/CBaseUI__Initialize.linux.yaml`

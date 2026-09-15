@@ -6,6 +6,10 @@ permalink: goldsrc-vibesignatures/notes/metahook-studio-interface-transaction
 
 # MetaHook Studio 接口初始化事务：定位结论与改进建议
 
+> 说明：本笔记原先记录的二进制实测地址、槽位推导与定位锚点已迁移到
+> `memory/locators/g_ppStudioInterfaceCall.md` 与 `memory/locators/ClientDLL_CheckStudioInterface.md`。
+> 这里只保留事务设计与 hook 决策。
+
 日期：2026-08-18  
 读者：MetaHook 引擎加载 / hook 事务实现  
 来源：GoldSrc_VibeSignatures 对 `hw.dll` / `hw.so` 的 IDA 实测，对照 `D:\HLND2T_official` 与当前 `src/metahook.cpp`
@@ -84,102 +88,6 @@ void ClientDLL_CheckStudioInterface( HINSTANCE hClientDLL )
 `ClientDLL_HudInit` 本身由 `cl_main.c` 的 `CL_Init` 调用；二者不在同一编译单元。
 
 `STUDIO_INTERFACE_VERSION` 在已核对的 HL25 构建里编译为立即数 `1`。
-
----
-
-## 3. 关键实测：函数经常不是入口，调用点还在
-
-### 3.1 `hl-10210` Windows `hw.dll`
-
-- SHA-256：`9ba9a2db5e07598fd59afa35507a98c86162e4e15b3835177b78c11842cd2295`
-- 映像基址：`0x10000000`
-- 诊断字符串 1 次：`0x102b4418`  
-  `Couldn't get client .dll studio model rendering interface.  Version mismatch?\n`
-- 代码 xref **1** 个 → `ClientDLL_HudInit` `0x10196e50` / RVA `0x196e50` / size `0xd2`
-- **没有**独立的 `ClientDLL_CheckStudioInterface` 入口；整段被内联进 `HudInit`
-
-调用形态是直接调用，不是 `FF 15 [slot]`：
-
-```text
-10196E87  push    "HUD_GetStudioModelInterface"
-10196E8D  call    ds:GetProcAddress          ; 这是 IAT 的 FF 15，不是目标槽
-10196E93  mov     eax, cl_funcs.pStudioInterface   ; A1 DC EF 45 11
-10196E98  test    eax, eax
-10196E9C  push    offset engine_studio_api         ; 0x1031C1E0
-10196EA1  push    offset pStudioAPI                ; 0x1031C0F0
-10196EA6  push    1
-10196EA8  call    eax                              ; FF D0
-10196EB1  push    aCouldnTGetClie                  ; 诊断字符串
-```
-
-| 项 | 值 |
-| --- | --- |
-| `cl_funcs` | `0x1145EF40`（`.data`） |
-| `cl_funcs.pStudioInterface` | `0x1145EFDC` = `cl_funcs+0x9C`，RVA `0x145EFDC` |
-| 槽引用指令 | `0x10196E93`，`A1 DC EF 45 11`，len 5，disp 1 |
-| MetaHook `g_ppStudioInterfaceCall` | 按现逻辑应保持 **NULL**（无 `FF 15 [slot]`） |
-
-`GetProcAddress` 的返回值在该构建里没有写回槽；槽沿用 `ClientDLL_Init` 阶段已经填好的值。定位应读 `cl_funcs.pStudioInterface`，不要把 IAT 当成目标。
-
-### 3.2 `hl-10210` Linux `hw.so`（DWARF）
-
-- SHA-256：`fca6628b5a4d76a945e11b9796f327004edc65420d9f9cc23f883143508edd78`
-- 映像基址：`0x0`
-- 同一诊断字符串 1 次：`0x259620`
-- 代码 xref **2** 个，解出**同一个槽**：
-  1. `ClientDLL_HudInit` `0x159020` / size `0x105`（内联副本，xref `0x1590F9`）
-  2. 独立 `ClientDLL_CheckStudioInterface` `0x1593F0` / size `0x6E`（xref `0x159449`）
-
-`HudInit` 走的是内联块（`0x1590B8` 起），**并不 call** `0x1593F0`。  
-独立副本是 gcc 留下的 out-of-line 符号，HUD 初始化热路径用不到。
-
-内联副本：
-
-```text
-1590C9  mov     eax, ds:cl_funcs.pStudioInterface   ; A1 1C 80 F7 00
-1590CE  test    eax, eax
-1590D6  mov     edx, offset engine_studio_api       ; 0x2BD3C0
-1590DB  mov     ecx, offset pStudioAPI              ; 0x2BD39C
-1590E8  mov     [esp], 1
-1590EF  call    eax                                 ; FF D0
-1590F9  mov     [esp], offset aCouldnTGetClie
-```
-
-独立函数里同一条 load：`0x159421` `A1 1C 80 F7 00`。
-
-| 项 | 值 |
-| --- | --- |
-| `cl_funcs` | `0xF77F80`（`.bss`） |
-| `cl_funcs.pStudioInterface` | `0xF7801C` = `cl_funcs+0x9C` |
-| 调用形态 | 同样是 `call eax`，`g_ppStudioInterfaceCall` 应保持 NULL |
-
-### 3.3 已有 `ClientDLL_HudInit` 产物（是否被内联进 `CL_Init`）
-
-仓库里用 `FULLMATCH:cl_righthand` 锚到的 `ClientDLL_HudInit` 全部是独立小函数，体积完全不像巨大的 `CL_Init`：
-
-| 构建 | 平台 | `func_size` | 备注 |
-| --- | --- | --- | --- |
-| hl-3248 … hl-8684 | Windows | `0x3F` | 独立；随后 `E8` 调用独立的 `CheckStudioInterface` |
-| cof-5936 | Windows | `0x46` | 独立 |
-| svencoop-10257 | Windows | `0x84` | 独立 |
-| hl-8684 | Linux | `0xA5` | 独立 |
-| hl-10210 | Windows / Linux | `0xD2` / `0x105` | 独立，但 studio 检查已被内联进来 |
-
-Sven Linux 没有 `ClientDLL_HudInit` 产物，未验证。
-
-老 Windows 的 `0x3F` 函数体形态（示意）是：
-
-```text
-mov eax, [pHudInitFunc]
-test / Sys_Error
-call dword ptr [pHudInitFunc]     ; HUD_Init
-push hClientDLL
-call ClientDLL_CheckStudioInterface
-push "cl_righthand"
-call Cvar_FindVar
-```
-
-也就是：**旧构建上 `CheckStudioInterface` 仍是独立 callee；HL25 上被内联进 `HudInit`。**
 
 ---
 
@@ -290,23 +198,6 @@ HL25 Windows/Linux 会走 fallback。不能把函数 hook 当唯一路径。
 - 每次加载都验证 `cl_righthand` 的拥有函数体积/角色仍是 HudInit，而不是 `CL_Init`
 
 这不是更正确的事务语义，只是实现更简单、窗口更大。
-
----
-
-## 7. 稳健定位用的锚点（给实现，不是给扫描器当字节特征）
-
-优先顺序：
-
-1. 诊断字符串（函数内字面量，不是 caller 字符串）。  
-2. 同函数内的 `"HUD_GetStudioModelInterface"`。  
-3. 调用参数：`1`、`pStudioAPI`、`engine_studio_api`。  
-4. 槽地址与 `cl_funcs` 基址的 `+0x9C` 关系（布局不变时作校验，不要当唯一依据）。
-
-不要用：
-
-- 原始 VA/RVA 当跨版本锚点
-- 单独的 `"studio model rendering"` 子串
-- MetaHook 现有 `pattern2`/`pattern3` 当唯一发现手段（可作回归，不可作定位）
 
 ---
 
