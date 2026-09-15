@@ -25,20 +25,22 @@ tags:
 
 ## Predecessors
 
-- `studioapi_StudioSetRenderamt` (produced by `find-studioapi_StudioSetRenderamt`, consumed via `expected_input` and the `func_va` field).
+None. The finder has no config inputs. `studioapi_StudioSetRenderamt` remains a confirmed caller but is no longer a discovery dependency.
 
 ## How it is located
 
-1. Load the predecessor artifact; require `func_name == studioapi_StudioSetRenderamt` and `func_va >= image_base` (fails closed on a missing or malformed dependency).
-2. Enumerate every `call` inside the predecessor body and resolve its direct target.
-3. Drop `__x86.get_pc_thunk.<reg>` stubs — SvEngine Linux compiles the accessor PIC, and every such function opens with a `call` to a <= 4-byte stub that is not a source-level call. Any target whose function span is `<= 4` bytes is skipped.
-4. Require **exactly one** surviving target ("sole-call contract"): the accessor only calls `CL_FxBlend`.
-5. Verify the role of the callee independently: its body must reference the pulse de-sync constant `363.0` (`ent->curstate.number * 363.0`, `engine/cl_tent.c`). The constant is looked for in `.rdata`/`.rodata` through absolute/SSE/x87 operands *and* through the SvEngine Linux PIC form — the walk finds the callee's GOT anchor (`call pc_thunk` followed by `add reg, imm32`, `op.type == o_imm`) and rebases `[gotreg+disp32]` operands before reading the rodata blob. Both an f32 and an f64 read of the 8-byte blob are tested, with a `1e-4` tolerance. At least one hit is required.
-6. Emit `func_name`/`func_sig`/`func_va`/`func_rva`/`func_size`; if the strict window fails, retry with `allow_across_function_boundary` and set `func_sig_allow_across_function_boundary`.
+1. Call `preprocess_common_skill` with `old_yaml_map=None` and `xref_floats: ["363.0", "20.0", "16.0"]` as the sole positive source.
+2. Search current-IDB functions for scalar SSE/x87 reads of all three numeric constants. The shared reader matches f32/f64 memory width; its PIC fallback follows recorded data xrefs from readonly constant pools.
+3. Require exactly one candidate. Source roles in `engine/cl_tent.c`: 363 de-syncs effects by entity number, 20 scales strobe/flicker, and 16 scales fast pulse or selected effect frequencies.
+4. Emit `func_name`/`func_sig`/`func_va`/`func_rva`/`func_size` after shared x86 and unique-signature validation. No old signature or predecessor can bypass float discovery.
+
+Validation on 2026-09-16: `uv run python ida_analyze_bin.py -allgamever -modules engine -skill find-CL_FxBlend -platform windows,linux -artifactdir .tmp/cl-fxblend-artifacts -debug` executed with a fresh artifact directory: 13 successful, 0 failed, 0 skipped across all 10 configured engine versions. Every regenerated YAML payload exactly matched its tracked predecessor-based artifact, including VA/RVA, size, and signature. Unit, repository-contract, format, and both modified skill validators passed.
 
 ## Pitfalls
 
-- The sole-call contract is the whole locator: if the thunk filter is removed or the stub threshold changes, SvEngine Linux reports "sole-call contract violated" with the pc-thunk in the target list.
-- The `363.0` check is a fail-closed semantic gate, not a hint. A wrong callee (for example a CRT helper) must not be accepted just because the call graph looked right.
-- The de-sync float may be reached only through the PIC GOTOFF form on SvEngine Linux; an absolute-only scan would reject a correct callee.
-- Historical fallback (not used by the finder): on very old builds whose studio table has < 46 entries, the note records an LLM `found_call` route from the existing `R_DrawTEntitiesOnList` reference — no such build is currently registered.
+- Trigger: a function has no distinctive string but contains characteristic coefficients. Use a verified combination of target-owned scalar float reads, not mere constant-pool bytes.
+- Source literals need not be float32; instruction and operand widths distinguish f32 from f64. Do not reinterpret an arbitrary immediate or half of a double as a valid float read.
+- SvEngine Linux uses PIC/GOT-relative pools. The shared fallback succeeded on the configured binary through recorded IDA data xrefs; it does not evaluate arbitrary GOT register dataflow.
+- Existing output YAML can cause the analyzer to skip a finder. Validate replacements with fresh artifact paths and compare their results with the previous verified locator.
+- A missing or ambiguous candidate fails closed. Recheck current-IDB references and compiler transformations before choosing another independently validated anchor.
+- Scope: the 13 configured platform pairs above. Future builds still require independent uniqueness and semantic validation.

@@ -452,8 +452,6 @@ modules:
         expected_output:
           - studioapi_StudioSetRenderamt.{platform}.yaml
       - name: find-CL_FxBlend
-        expected_input:
-          - studioapi_StudioSetRenderamt.{platform}.yaml
         expected_output:
           - CL_FxBlend.{platform}.yaml
       - name: find-Draw_SpriteFrame-family

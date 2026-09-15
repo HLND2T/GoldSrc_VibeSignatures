@@ -40,7 +40,7 @@ Use this order. Do not advance to a weaker method after a stronger method produc
 Byte signatures are output validation only. Never put a byte pattern in `xref_signatures` or
 `exclude_signatures` to locate or disambiguate a target. A finder governed by this skill must pass
 `old_yaml_map=None` to `preprocess_common_skill` so a prior artifact's `func_sig` cannot bypass the
-required string/LLM discovery chain.
+required anchor discovery chain.
 
 ### 1. Direct `xref_strings` for the Owning Function
 
@@ -64,12 +64,40 @@ FUNC_XREFS = [
 
 Use a plain substring only when an exact literal is impossible and record why it is still unique. Never use a raw address as a cross-platform anchor.
 
-### 2. `LLM_DECOMPILE` from a Predecessor
+### 2. Floating-Point Constant References
 
-Use this only if no direct `xref_strings` anchor can identify one target function. Locate the
-predecessor itself through direct `xref_strings`; do not use a signature to locate it.
+When no useful target-owned string exists, try a distinctive set of numeric coefficients
+before introducing an LLM predecessor. Use Pattern A's
+[floating-point reference pattern](../create-preprocessor-scripts/references/pattern-A.md#floating-point-reference-pattern).
+For example:
 
-1. Deterministically locate a predecessor with its own stable string or existing artifact.
+```python
+FUNC_XREFS = [{"func_name": "CL_FxBlend", "xref_floats": ["363.0", "20.0", "16.0"]}]
+```
+
+The source roles are entity-number phase offset (363), strobe/flicker amplitude (20), and
+fast pulse amplitude / selected effect frequencies (16). `BuildGammaTable` illustrates
+another set: `["1023.0", "0.075", "0.875"]`.
+
+Require the same function to reference every value and the resulting candidate to be unique
+across each requested version/platform. Verify behavior as well as uniqueness. Constants
+need not occupy unique pool entries, but finding their bytes without an owning scalar read
+does not identify a function.
+
+Reuse the shared width-aware SSE/x87 f32/f64 reader rather than assuming all values are
+`float32`. PIC/GOT references rely on recorded IDA data xrefs in the shared fallback;
+validate them on the actual Linux IDB. Missing xrefs, compiler transformations, or multiple
+candidates require investigation, not guessed addresses or silent removal of constraints.
+Pass `old_yaml_map=None`; generated signatures remain output validation only.
+
+### 3. `LLM_DECOMPILE` from a Predecessor
+
+Use this only if no validated direct string or floating-point constant anchor can identify
+one target function. Locate the predecessor itself through a validated deterministic anchor;
+do not use a signature to locate it.
+
+1. Deterministically locate a predecessor with its own stable string, validated constant set,
+   or current artifact produced by such a locator.
 2. Export the predecessor's current-binary disassembly and pseudocode.
 3. Configure `LLM_DECOMPILE` with the smallest relevant reference YAML and `expected_result_sections: ["found_call"]`.
 4. Require the returned `insn_va` and `insn_disasm` to match the current target IDB and resolve exactly one direct call target.
@@ -104,7 +132,9 @@ For `cl_enginefuncs`, retain the distinction in the delivery: report the operand
 Require every applicable check:
 
 1. The MCP session remains bound to the requested binary and reports 32-bit x86.
-2. The exact string occurs once, and all of its code xrefs resolve to one owning function start.
+2. For a string anchor, the exact string occurs once and its code xrefs resolve to one owning
+   function start. For a floating-point anchor, actual scalar reads of all required values
+   identify exactly one owning function; duplicate constant-pool entries are allowed.
 3. A function's RVA is `func_va - image_base`; a true global's RVA is `gv_va - image_base`. Persist RVA and a category-appropriate signature, never a process-load address alone.
 4. The generated `func_sig` or `gv_sig` is unique in the current binary and passes the repository artifact validator. A code-operand locator must separately validate its instruction form, operand offset, and decoded value.
 5. Cross-platform peers have the same source role and compatible ABI/control-flow evidence; do not require equal VAs, RVAs, sizes, or compiler output.
@@ -134,8 +164,11 @@ Treat these values only as regression evidence for their exact SHA-256 inputs, n
 ## Repository Integration
 
 - Implement deterministic discovery in `ida_preprocessor_scripts/find-<symbol>.py` through `preprocess_common_skill`, `func_xrefs`, and the target category's supported field set.
-- Direct target strings are the first locator. When a function or a global's owning function has no usable in-function string, add a string-located predecessor finder, generate its reference YAML, and use `LLM_DECOMPILE` to recover the direct call target or data reference.
-- Pass `old_yaml_map=None` for string/LLM discovery. The shared helper must validate the emitted category-appropriate signature after discovery, but must not use a prior artifact signature to locate the symbol.
+- Direct target strings are the first locator, followed by validated target-owned floating-point
+  constant sets. If neither works, locate a predecessor deterministically, generate its reference
+  YAML, and use `LLM_DECOMPILE` to recover the direct call target. For a global, continue from
+  its verified owning function to recover the data reference.
+- Pass `old_yaml_map=None` for string/float/LLM discovery. The shared helper must validate the emitted category-appropriate signature after discovery, but must not use a prior artifact signature to locate the symbol.
 - Add `LLM_DECOMPILE` only for the explicit predecessor fallback described above. Its result section must match the target: `found_call` for functions and `found_gv` for globals.
 - Use the repository's owned lifecycle described in [[idalib-mcp]] on `127.0.0.1:13337`. The installed `ida-pro-mcp` command is an IDA plugin configurator, not this repository's HTTP supervisor.
 - Add Windows and Linux expected outputs, category-correct config symbols, and tests whenever the finder is registered in a production config.

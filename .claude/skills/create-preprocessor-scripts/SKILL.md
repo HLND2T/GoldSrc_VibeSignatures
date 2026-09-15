@@ -122,7 +122,7 @@ non-unique signatures.
 
 | Pattern | Use case | GoldSrc status |
 |---|---|---|
-| A | ordinary function via string/GV/signature/callee xrefs | retained |
+| A | ordinary function via string/GV/signature/callee xrefs or a validated floating-point constant set | retained |
 | B | vfunc via xrefs plus vtable relation | retained, 4-byte slots |
 | C | vfunc via validated LLM decompile | retained, 4-byte slots |
 | D | ordinary function via validated LLM decompile | retained |
@@ -170,7 +170,7 @@ cross-version evidence in the finder or its reference documentation.
 
 Read the chosen reference before implementation:
 
-- [Pattern A](references/pattern-A.md)
+- [Pattern A](references/pattern-A.md), including the [floating-point reference pattern](references/pattern-A.md#floating-point-reference-pattern)
 - [Pattern B](references/pattern-B.md)
 - [Pattern C](references/pattern-C.md)
 - [Pattern D](references/pattern-D.md)
@@ -215,6 +215,11 @@ Each entry uses `func_name` and any combination of:
   exists.
 - Exactly one function must remain.
 - The generated `func_sig` must also resolve uniquely to that function.
+
+For a function with characteristic numeric coefficients but no useful string, consider the
+floating-point reference pattern before an LLM predecessor. Match actual scalar f32/f64 reads
+owned by the function, not mere constant bytes in a pool. Validate the complete constant set
+on every configured target platform; PIC support depends on the current IDB's recorded data xrefs.
 
 ## Desired YAML fields
 

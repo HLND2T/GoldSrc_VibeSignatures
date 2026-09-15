@@ -152,7 +152,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
-| [CL_FxBlend](locators/CL_FxBlend.md) | engine | func | `studioapi_StudioSetRenderamt` | Load the predecessor artifact; require func_name == studioapi_StudioSetRenderamt and func_va >= image_base (fails closed on a missing or malformed dependency). |
+| [CL_FxBlend](locators/CL_FxBlend.md) | engine | func | — | Locate the unique function referencing 363.0, 20.0, and 16.0 through shared width-aware floating-point xrefs; no predecessor input. |
 | [CVideoMode_Common_DrawStartupGraphic](locators/CVideoMode_Common_DrawStartupGraphic.md) | engine | func | `CVideoMode_Common_Init`, `CVideoMode_Common_PlayStartupSequence` | This is an LLM_DECOMPILE finder (found_call) whose *reference* is branched by build family while the *target* is always the current build's predecessor: |
 | [ClientDLL_Shutdown](locators/ClientDLL_Shutdown.md) | engine | func | `ClientDLL_Init` | Load the ClientDLL_Init.{platform}.yaml artifact from the new binary dir and re-verify it in the live IDB with _inspect_function_via_mcp (function start plus… |
 | [ClientScoreInfoHandler](locators/ClientScoreInfoHandler.md) | client | func | — | _client_registration_common.REGISTRATION_QUERY recovers cdecl registration arguments for the message name ScoreInfo. Candidate strings are those whose… |
