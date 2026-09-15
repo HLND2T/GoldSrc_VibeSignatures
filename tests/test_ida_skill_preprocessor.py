@@ -183,7 +183,9 @@ class FloatFilterBehaviorTests(unittest.TestCase):
                 get_dtype_size=lambda dtype: dtype,
             ),
             "ida_segment": SimpleNamespace(getseg=lambda ea: object(), get_segm_name=lambda seg: ".rdata"),
-            "idautils": SimpleNamespace(FuncItems=lambda start: [0x1000], Segments=lambda: (), DataRefsTo=lambda ea: ()),
+            "idautils": SimpleNamespace(
+                FuncItems=lambda start: [0x1000], Segments=lambda: (), DataRefsTo=lambda ea: ()
+            ),
             "ida_bytes": SimpleNamespace(get_bytes=lambda ea, count: blob[:count]),
         }
         exec(compile(ast.Module(body=nodes, type_ignores=[]), "<float-filters>", "exec"), namespace)
