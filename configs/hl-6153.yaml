@@ -398,6 +398,8 @@ modules:
         expected_output:
           - GL_Shutdown.{platform}.yaml
       - name: find-GL_LoadFilterTexture
+        optional_input:
+          - GL_Bind.{platform}.yaml
         expected_output:
           - GL_LoadFilterTexture.{platform}.yaml
       - name: find-GL_SetMode_call_qwglCreateContext

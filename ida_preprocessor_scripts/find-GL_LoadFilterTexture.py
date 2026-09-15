@@ -4,11 +4,14 @@
 GL_LoadFilterTexture (engine/gl_draw.c) allocates an 8*8*3 (0xC0) byte RGB
 (0x1907) buffer and uploads it through the GL filter texture. It owns no
 diagnostic string, so the deterministic locator is the pair of body constants
-0xC0 and 0x1907: the function whose body references both immediates is unique
-on every validated Windows and Linux engine build (SvEngine keeps the same
-constants while restructuring the GL_Bind call out of the body; Linux inlines
-GL_Bind entirely). Discovery is a semantic-constant scan, not a byte-signature
-anchor.
+0xC0 and 0x1907: the function whose body uses both as instruction immediates
+is unique on every validated Windows and Linux engine build (SvEngine keeps
+the same constants while restructuring the GL_Bind call out of the body;
+Linux inlines GL_Bind entirely). A byte-level prefilter narrows the scan,
+then every candidate is verified instruction-by-instruction so the constants
+must come from o_imm operands, never from displacements or unrelated data.
+The optional GL_Bind artifact (declared as optional_input in the configs)
+adds a direct-callee discriminator when present.
 """
 
 from pathlib import Path
@@ -83,6 +86,23 @@ def function_calls_glbind(start):
     return False
 
 
+def function_imm_constants(start):
+    # Immediate-operand values only: addresses of globals and branch targets
+    # are o_mem/o_displ/o_near operands and must never satisfy the constant
+    # pair, so a synthetic function whose bytes merely contain the sequences
+    # (e.g. a displacement or an unrelated 32-bit word) is rejected here.
+    values = set()
+    for ea in idautils.FuncItems(int(start)):
+        insn = idautils.DecodeInstruction(ea)
+        if insn is None:
+            continue
+        for op in insn.ops:
+            if int(op.type) == int(idaapi.o_imm):
+                values.add(int(op.value) & 0xFFFFFFFF)
+                values.add(int(op.value) & 0xFFFF)
+    return values
+
+
 def collect_constant_pair_functions():
     found = []
     for start in idautils.Functions():
@@ -96,6 +116,9 @@ def collect_constant_pair_functions():
         if b'\xC0\x00\x00\x00' not in body:
             continue
         if b'\x07\x19\x00\x00' not in body:
+            continue
+        immediates = function_imm_constants(start)
+        if 0xC0 not in immediates or 0x1907 not in immediates:
             continue
         found.append({
             'ea': hex(int(start)),
