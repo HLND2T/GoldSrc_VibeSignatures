@@ -415,6 +415,15 @@ modules:
       - name: find-GL_Shutdown
         expected_output:
           - GL_Shutdown.{platform}.yaml
+      - name: find-Sys_ShutdownGame
+        expected_output:
+          - Sys_ShutdownGame.{platform}.yaml
+      - name: find-Sys_ShutdownGame_to_GL_Shutdown_callsite_0
+        expected_input:
+          - Sys_ShutdownGame.{platform}.yaml
+          - GL_Shutdown.{platform}.yaml
+        expected_output:
+          - Sys_ShutdownGame_to_GL_Shutdown_callsite_0.{platform}.yaml
       - name: find-GL_LoadFilterTexture
         optional_input:
           - GL_Bind.{platform}.yaml
@@ -768,6 +777,10 @@ modules:
         platform: windows
       - name: GL_Shutdown
         category: func
+      - name: Sys_ShutdownGame
+        category: func
+      - name: Sys_ShutdownGame_to_GL_Shutdown_callsite_0
+        category: patch
       - name: GL_LoadFilterTexture
         category: func
       - name: GL_SetMode_call_qwglCreateContext
