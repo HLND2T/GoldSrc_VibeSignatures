@@ -1,0 +1,5 @@
+patch_name: Sys_ShutdownGame_to_GL_Shutdown_callsite_0
+patch_va: '0x13a356'
+patch_rva: '0x13a356'
+patch_sig: E8 55 DA 08 00 83 C4 ??
+patch_sig_disp: '0x0'

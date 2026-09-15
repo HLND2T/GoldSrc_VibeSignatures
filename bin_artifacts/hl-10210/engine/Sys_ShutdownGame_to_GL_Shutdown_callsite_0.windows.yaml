@@ -1,0 +1,5 @@
+patch_name: Sys_ShutdownGame_to_GL_Shutdown_callsite_0
+patch_va: '0x10220ee6'
+patch_rva: '0x220ee6'
+patch_sig: E8 65 E5 02 00 83 C4 ?? C3
+patch_sig_disp: '0x0'

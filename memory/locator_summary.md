@@ -10,15 +10,15 @@ permalink: goldsrc-vibesignatures/locator-summary
 分类依据是每个 finder 的主要发现锚；部分符号实际会组合多种机制（例如先字符串锚定 owning function，再读表槽），
 此处归入其决定性的一步。**Summary** 列摘自各 locator 文件 `## How it is located` 的首段。
 
-共 **203** 个 locator；模块 engine 166，client 37。
+共 **205** 个 locator；模块 engine 168，client 37。
 
 | 定位机制 | 数量 |
 | --- | --- |
-| 字符串锚 | 59 |
+| 字符串锚 | 60 |
 | 浮点常量锚 | 3 |
 | 表 / 结构 / 数据段扫描 | 34 |
 | 确定性 xref 交集锚 | 5 |
-| 前驱产物复用（下游确定性恢复） | 20 |
+| 前驱产物复用（下游确定性恢复） | 21 |
 | LLM_DECOMPILE 定位 | 47 |
 | vtable / vfunc 槽恢复 | 10 |
 | 数值 scalar 提取 | 9 |
@@ -86,6 +86,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [S_LoadSound](locators/S_LoadSound.md) | engine | func | — | preprocess_common_skill with a single exact string xref: FULLMATCH:S_LoadSound: Couldn't load %s\n — the Con_DPrintf that engine/snd_mem.c emits when the sound file… |
 | [SkyboxCommand](locators/SkyboxCommand.md) | engine | func | — | preprocess_common_skill with a single exact string xref: FULLMATCH:No skybox name specified\n — the usage message the SvEngine skybox console command prints when… |
 | [Sys_Error](locators/Sys_Error.md) | engine | func | — | xref_strings = ["FATAL ERROR (shutting down): %s"] — substring match (the note records the anchor with a trailing \n, the script does not require it). XrefsTo on… |
+| [Sys_ShutdownGame](locators/Sys_ShutdownGame.md) | engine | func | — | xref_strings: ["FULLMATCH:Sys_Shutdown()"] maps the stringified TRACESHUTDOWN argument to its owning function; the same literal is also owned by Sys_InitGame, which stringifies the TRACEINIT(Sys_Init(), Sys_Shutdown()) pair, so exclude_strings: ["FULLMATCH:Sys_Init()"] removes it. FULLMATCH: keeps "Sys_Shutdown()" from matching "Sys_ShutdownMemory()" and vice versa. Exactly one function must survive. |
 | [Sys_InitMemory](locators/Sys_InitMemory.md) | engine | func | — | Both producers use the same Pattern A machinery (preprocess_common_skill → preprocess_func_xrefs_via_mcp): one FULLMATCH: string anchor, XrefsTo → owning function… |
 | [VideoMode_Create](locators/VideoMode_Create.md) | engine | func | — | Single positive anchor: xref_strings: ["FULLMATCH:-fullscreen"] — exact C-string match on the fullscreen command-line literal, then the owning functions of its… |
 | [g_pClientFactory](locators/g_pClientFactory.md) | engine | gv | `CBaseUI__Initialize` | Despite the -decompiles suffix this finder is not LLM-based: it runs one direct py_eval locator (LOCATE_PY) inside the owner function and fails closed on any… |
@@ -167,6 +168,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [R_StudioSaveBones](locators/R_StudioSaveBones.md) | engine | func | `R_StudioCalcAttachments`, `R_StudioDrawModel`, `R_StudioDrawPlayer`, `R_StudioDrawPlayerBody`, `R_StudioMergeBones`, `R_StudioSetupBones`, `cached_bonename`, `cached_numbones` | Deterministic intersection locator (no LLM): Load all eight predecessor artifacts and read cached_numbones.gv_va, |
 | [R_TracerDraw](locators/R_TracerDraw.md) | engine | func | `R_DrawParticles` | Load the R_DrawParticles artifact func_va; the walk covers only that function's body. Enumerate the renderer's internal direct calls (exact function starts, size >… |
 | [S_ExtraUpdate](locators/S_ExtraUpdate.md) | engine | func | `R_CheckVariables`, `R_RenderView` | Load both predecessor func_va values; either missing fails closed. Recover R_RenderScene without a stored artifact. Primary path: the unique function that is both a… |
+| [Sys_ShutdownGame_to_GL_Shutdown_callsite_0](locators/Sys_ShutdownGame_to_GL_Shutdown_callsite_0.md) | engine | patch | `Sys_ShutdownGame`, `GL_Shutdown` | Load both predecessor artifacts and re-verify the owner's func_va in the live IDB. Build the scan set = the owner function plus every direct rel32 call/jmp target of the owner that is an exact function start, then keep direct E8 calls whose rel32 target equals the callee EA. |
 | [cl_players_model](locators/cl_players_model.md) | engine | gv | `studioapi_SetupPlayerModel` | Load the verified studioapi_SetupPlayerModel artifact; require its func_va to be a function start. Walk the body in instruction order while tracking the element… |
 | [cvar_hooks](locators/cvar_hooks.md) | engine | gv | `Cvar_DirectSet`, `Cvar_Set` | Load both predecessor artifacts from the new binary dir, resolve their func_va, and confirm Cvar_Set still verifies in the live IDB via _inspect_function_via_mcp… |
 | [g_PlayerExtraInfo](locators/g_PlayerExtraInfo.md) | client | gv | `ClientScoreInfoHandler` | The predecessor's annotated body is the reference; the dedicated prompt prompt/call_llm_scoreinfo.md is used (not the generic decompile prompt), with reference YAML… |

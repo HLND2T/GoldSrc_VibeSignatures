@@ -1,0 +1,5 @@
+patch_name: Sys_ShutdownGame_to_GL_Shutdown_callsite_0
+patch_va: '0x1dbca5f'
+patch_rva: '0xbca5f'
+patch_sig: E8 AC 2D FA FF 83 C4 ??
+patch_sig_disp: '0x0'
