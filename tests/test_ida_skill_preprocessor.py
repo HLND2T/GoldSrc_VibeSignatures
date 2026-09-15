@@ -151,6 +151,89 @@ class UnicodeStringScanTests(unittest.TestCase):
         self.assertEqual({0x402000}, namespace["_string_candidates"]("Cache_Alloc: size %i"))
 
 
+class GLShutdownAnchorScanTests(unittest.TestCase):
+    def _anchor_owners(self, *, fail_readonly=False):
+        datarefs_seen = []
+
+        class Segment:
+            def __init__(self, start_ea, end_ea, name, perm):
+                self.start_ea, self.end_ea, self.name, self.perm = start_ea, end_ea, name, perm
+
+        # .rdata holds one true literal at offset 1 (preceded by NUL) and one
+        # embedded in a longer literal (preceded by 'x'); .data holds the same
+        # writable copy the old Windows hw.dll family really stores; the
+        # exec-only .text copy must never be scanned.
+        blob = b"\x00Sys_Shutdown()\x00prefixSys_Shutdown()\x00"
+        seg_rdata = Segment(0x1000, 0x1000 + len(blob), ".rdata", 4)
+        seg_data = Segment(0x8000, 0x8020, ".data", 6)
+        seg_text = Segment(0x400000, 0x400040, ".text", 1)
+
+        def getseg(ea):
+            for seg in (seg_rdata, seg_data, seg_text):
+                if seg.start_ea <= ea < seg.end_ea:
+                    return seg
+            return None
+
+        def data_refs_to(ea):
+            datarefs_seen.append(ea)
+            return [0x5000 + ea]
+
+        def get_bytes(ea, count):
+            if ea == seg_rdata.start_ea:
+                if fail_readonly:
+                    raise RuntimeError("segment read failed")
+                return blob
+            if ea == seg_data.start_ea:
+                return b"Sys_Shutdown()\x00"
+            return b"Sys_Shutdown()\x00"
+
+        finder_path = Path(__file__).resolve().parent.parent / "ida_preprocessor_scripts" / "find-GL_Shutdown.py"
+        tree = ast.parse(finder_path.read_text(encoding="utf-8"))
+        locate_py = next(
+            node.value.value
+            for node in tree.body
+            if isinstance(node, ast.Assign)
+            and any(isinstance(t, ast.Name) and t.id == "LOCATE_PY" for t in node.targets)
+        )
+        locate_tree = ast.parse(locate_py)
+        anchors = [
+            node
+            for node in locate_tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == "anchor_string_owners"
+        ]
+        self.assertEqual(1, len(anchors))
+        # No idautils.Strings is provided on purpose: the anchor scan must not
+        # touch the shared string list, whose setup() rebuild is IDB-wide
+        # state (a minlen=6 rebuild hid Mod_LoadStudioModel's 5-char "bogus"
+        # anchor from later skills in PR CI).
+        namespace = {
+            "ANCHOR_STRING": "Sys_Shutdown()",
+            "idautils": SimpleNamespace(
+                Segments=lambda: [seg_text.start_ea, seg_rdata.start_ea, seg_data.start_ea],
+                DataRefsTo=data_refs_to,
+            ),
+            "ida_segment": SimpleNamespace(getseg=getseg, get_segm_name=lambda seg: seg.name),
+            "ida_bytes": SimpleNamespace(get_bytes=get_bytes),
+            "func_start": lambda ea: 0x1000 + ea,
+        }
+        exec(  # noqa: S102 - execute the production anchor scan in isolation.
+            compile(ast.Module(body=anchors, type_ignores=[]), "<gl-shutdown-anchor>", "exec"), namespace
+        )
+        return namespace["anchor_string_owners"](), datarefs_seen
+
+    def test_anchor_scan_reads_readable_segments_without_shared_string_list(self):
+        owners, datarefs_seen = self._anchor_owners()
+        # Standalone literals resolve owners (.rdata offset 1 and the writable
+        # .data copy); the embedded occurrence and the exec-only copy do not.
+        self.assertEqual([0x1000 + 0x5000 + 0x1001, 0x1000 + 0x5000 + 0x8000], owners)
+        self.assertEqual([0x1001, 0x8000], datarefs_seen)
+
+    def test_anchor_scan_survives_segment_read_failure(self):
+        owners, datarefs_seen = self._anchor_owners(fail_readonly=True)
+        self.assertEqual([0x1000 + 0x5000 + 0x8000], owners)
+        self.assertEqual([0x8000], datarefs_seen)
+
+
 class FloatFilterBehaviorTests(unittest.TestCase):
     FLOAT_FILTER_HELPERS = {
         "_scalar_float_kind",

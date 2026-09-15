@@ -33,7 +33,6 @@ MAX_OWNER_CALLEES = 64
 LOCATE_PY = r"""
 import ida_bytes
 import ida_funcs
-import ida_nalt
 import ida_segment
 import idaapi
 import idautils
@@ -57,16 +56,36 @@ def func_start(ea):
 
 
 def anchor_string_owners():
+    # Scan readable segments for the exact C literal instead of the shared
+    # string list: strings.setup() rebuilds IDB-wide state that later skills
+    # enumerate (a minlen=6 rebuild hid the 5-char "bogus" anchor of
+    # find-Mod_LoadStudioModel in PR CI). The literal is writable .data on the
+    # old Windows hw.dll family, so segment permissions gate the scan, not
+    # section names. A trailing NUL plus a preceding NUL/segment start give
+    # the same FULLMATCH semantics as the list scan.
     owners = set()
-    strings = idautils.Strings(default_setup=False)
-    strings.setup(strtypes=[ida_nalt.STRTYPE_C], minlen=6)
-    for item in strings:
-        if str(item) != ANCHOR_STRING:
+    needle = ANCHOR_STRING.encode('ascii') + b'\x00'
+    for seg_start in idautils.Segments():
+        seg = ida_segment.getseg(int(seg_start))
+        if seg is None or not (int(getattr(seg, 'perm', 0)) & 4):
             continue
-        for xref in idautils.DataRefsTo(int(item.ea)):
-            start = func_start(xref)
-            if start is not None:
-                owners.add(start)
+        span = int(seg.end_ea) - int(seg_start)
+        if span <= 0:
+            continue
+        try:
+            data = ida_bytes.get_bytes(int(seg_start), span)
+        except Exception:
+            continue
+        if not data:
+            continue
+        offset = data.find(needle)
+        while offset != -1:
+            if offset == 0 or data[offset - 1] == 0:
+                for xref in idautils.DataRefsTo(int(seg_start) + offset):
+                    start = func_start(xref)
+                    if start is not None:
+                        owners.add(start)
+            offset = data.find(needle, offset + 1)
     return sorted(owners)
 
 
