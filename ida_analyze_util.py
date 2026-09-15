@@ -1290,6 +1290,35 @@ def _float_matches(value, expected, kind):
     epsilon = 1e-6 if kind == 'float' else 1e-12
     return abs(value - expected) < epsilon
 
+def _float_read_width(ea, operand_index=None):
+    # Width of the scalar float memory read at ea, or None when the
+    # instruction is not one. SSE mnemonics pin the width and need an xmm
+    # register; an x87 mnemonic needs the decoded operand dtype because fld
+    # loads dwords and qwords with the same mnemonic. operand_index checks
+    # one already-located memory operand (direct path); None scans every
+    # decoded memory operand (GOT fallback, where the operand value does not
+    # decode to the constant address).
+    kind = _scalar_float_kind(ea)
+    if kind is None:
+        return None
+    if kind != 'x87':
+        return (4 if kind == 'float' else 8) if _has_xmm_operand(ea) else None
+    insn = ida_ua.insn_t()
+    if ida_ua.decode_insn(insn, ea) <= 0:
+        return None
+    if operand_index is not None:
+        widths = [ida_ua.get_dtype_size(insn.ops[operand_index].dtype)]
+    else:
+        widths = [
+            ida_ua.get_dtype_size(op.dtype)
+            for op in insn.ops
+            if int(op.type) in MEMORY_OPERAND_TYPES
+        ]
+    for width in widths:
+        if width in (4, 8):
+            return width
+    return None
+
 def _function_contains_signature(start, signature):
     func = ida_funcs.get_func(start)
     if func is None:
@@ -1324,8 +1353,12 @@ def _float_fallback_owners(value):
     # constants through GOT-relative operands whose operand value does not
     # decode to the constant address. This helper collects, once per constant,
     # every function whose own instructions hold a recorded data xref to a
-    # stored instance of that constant. It never emits triple-quoted text
-    # because this whole block lives inside the py_eval template literal.
+    # stored instance of that constant, validated like a direct read: the
+    # referencing instruction must be a scalar float read whose memory width
+    # equals the stored instance width, so an f64 pool entry whose low word
+    # reinterprets as the wanted f32 value cannot credit a double reader.
+    # It never emits triple-quoted text because this whole block lives inside
+    # the py_eval template literal.
     if value in _FLOAT_FALLBACK_OWNERS_CACHE:
         return _FLOAT_FALLBACK_OWNERS_CACHE[value]
     owners = set()
@@ -1352,8 +1385,11 @@ def _float_fallback_owners(value):
                 constant_ea = int(seg_start) + offset
                 for x in idautils.DataRefsTo(constant_ea):
                     f = ida_funcs.get_func(x)
-                    if f is not None:
-                        owners.add(int(f.start_ea))
+                    if f is None:
+                        continue
+                    if _float_read_width(x) != size:
+                        continue
+                    owners.add(int(f.start_ea))
                 offset = data.find(packed, offset + 1)
     _FLOAT_FALLBACK_OWNERS_CACHE[value] = owners
     return owners
@@ -1363,12 +1399,7 @@ def _function_matches_float_filters(start, required_values, excluded_values):
     required_hits = [False] * len(required_values)
     excluded_hit = False
     for ea in idautils.FuncItems(start):
-        kind = _scalar_float_kind(ea)
-        if kind is None:
-            continue
-        # x87 memory operands never carry an xmm register; only SSE filters keep
-        # that requirement.
-        if kind != 'x87' and not _has_xmm_operand(ea):
+        if _scalar_float_kind(ea) is None:
             continue
         for operand_index in range(8):
             if idc.get_operand_type(ea, operand_index) not in MEMORY_OPERAND_TYPES:
@@ -1376,19 +1407,10 @@ def _function_matches_float_filters(start, required_values, excluded_values):
             target_ea = idc.get_operand_value(ea, operand_index)
             if not _is_readonly_float_segment(target_ea):
                 continue
-            if kind == 'x87':
-                # The mnemonic is shared, but the decoded operand dtype records
-                # the actual memory width. Never reinterpret adjacent pool bytes.
-                insn = ida_ua.insn_t()
-                if ida_ua.decode_insn(insn, ea) <= 0:
-                    continue
-                width = ida_ua.get_dtype_size(insn.ops[operand_index].dtype)
-                if width not in (4, 8):
-                    continue
-                value_kind = 'float' if width == 4 else 'double'
-            else:
-                value_kind = kind
-                width = 4 if kind == 'float' else 8
+            width = _float_read_width(ea, operand_index)
+            if width is None:
+                continue
+            value_kind = 'float' if width == 4 else 'double'
             raw = ida_bytes.get_bytes(int(target_ea), width)
             if not raw or len(raw) != width:
                 continue
@@ -1404,10 +1426,14 @@ def _function_matches_float_filters(start, required_values, excluded_values):
             for expected in excluded_values:
                 if _float_matches(value, expected, value_kind):
                     excluded_hit = True
-    if not all(required_hits):
+    if not all(required_hits) or not excluded_hit:
         for index, expected in enumerate(required_values):
             if not required_hits[index] and start in _float_fallback_owners(expected):
                 required_hits[index] = True
+        if not excluded_hit:
+            for expected in excluded_values:
+                if start in _float_fallback_owners(expected):
+                    excluded_hit = True
     return all(required_hits) and not excluded_hit
 
 globals().update(locals())

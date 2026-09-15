@@ -242,6 +242,7 @@ class FloatFilterBehaviorTests(unittest.TestCase):
         "_is_readonly_float_segment_name",
         "_float_fallback_owners",
         "_float_matches",
+        "_float_read_width",
         "_function_matches_float_filters",
     }
 
@@ -294,9 +295,12 @@ class FloatFilterBehaviorTests(unittest.TestCase):
             )
         ]
 
-    def _matches_got(self, required, pool_blob, *, owner_hit=True):
-        # GOT fallback exercise: the float instruction decodes to no memory
-        # operand at all, so only the stored-constant xref path can match.
+    def _matches_got(self, required, pool_blob, *, owner_hit=True, excluded=None):
+        # GOT fallback exercise: the float instruction's operands decode to
+        # no constant address (operand type o_void), so only the stored-
+        # constant xref path can match. The fld dtype mirrors the stored
+        # instance width, as a real fldl/flds decode would.
+        width = len(pool_blob) if len(pool_blob) in (4, 8) else 8
         nodes = self._float_filter_nodes(with_constants=True)
         namespace = {
             "math": math,
@@ -307,8 +311,13 @@ class FloatFilterBehaviorTests(unittest.TestCase):
                 o_displ=4,
                 o_phrase=3,
                 print_insn_mnem=lambda ea: "fld",
-                print_operand=lambda ea, index: "xmm0",
+                print_operand=lambda ea, index: "st(0)",
                 get_operand_type=lambda ea, index: 0,
+            ),
+            "ida_ua": SimpleNamespace(
+                insn_t=lambda: SimpleNamespace(ops=[SimpleNamespace(type=4, dtype=width)]),
+                decode_insn=lambda insn, ea: 6,
+                get_dtype_size=lambda dtype: dtype,
             ),
             "ida_segment": SimpleNamespace(
                 getseg=lambda ea: SimpleNamespace(start_ea=0x3000, end_ea=0x3100),
@@ -322,7 +331,7 @@ class FloatFilterBehaviorTests(unittest.TestCase):
             "ida_bytes": SimpleNamespace(get_bytes=lambda ea, count: pool_blob),
         }
         exec(compile(ast.Module(body=nodes, type_ignores=[]), "<float-filters>", "exec"), namespace)
-        return namespace["_function_matches_float_filters"](0x1000, required, [])
+        return namespace["_function_matches_float_filters"](0x1000, required, excluded or [])
 
     def test_got_fallback_matches_stored_constant_reference(self):
         self.assertTrue(self._matches_got([0.004], struct.pack("<f", 0.004)))
@@ -332,6 +341,20 @@ class FloatFilterBehaviorTests(unittest.TestCase):
         pool = struct.pack("<f", 0.004)
         self.assertFalse(self._matches_got([0.004], pool, owner_hit=False))
         self.assertFalse(self._matches_got([0.5], pool))
+
+    def test_got_fallback_rejects_double_reader_for_its_low_float_word(self):
+        # The only reference is fld qword [double_1023]; the low word of the
+        # f64 encoding reinterprets as float 0.0 and must not credit the
+        # function with a float 0.0 reference, while the double itself does.
+        pool = struct.pack("<d", 1023.0)
+        self.assertFalse(self._matches_got([0.0], pool))
+        self.assertTrue(self._matches_got([1023.0], pool))
+
+    def test_got_fallback_applies_excluded_constants(self):
+        # A forbidden constant reached only through the stored-instance xref
+        # must exclude the candidate through the same resolution path.
+        pool = struct.pack("<f", 0.004)
+        self.assertFalse(self._matches_got([0.004], pool, excluded=[0.004]))
 
     def test_x87_double_does_not_also_reference_its_low_float_word(self):
         blob = struct.pack("<d", 1023.0)
@@ -772,6 +795,7 @@ class PreprocessStatusTests(unittest.TestCase):
             "_has_xmm_operand": lambda _ea: True,
             "_is_readonly_float_segment": lambda _ea: True,
             "_scalar_float_kind": lambda _ea: "float",
+            "_float_read_width": lambda _ea, _operand_index=None: 4,
             "_float_fallback_owners": lambda _value: set(),
         }
         exec(  # noqa: S102 - executes only selected generated helper definitions.
