@@ -446,7 +446,6 @@ modules:
         expected_output:
           - Mod_LoadBrushModel.{platform}.yaml
       - name: find-Mod_LoadSpriteFrame
-        platform: windows
         expected_output:
           - Mod_LoadSpriteFrame.{platform}.yaml
       - name: find-Mod_LoadSpriteModel
@@ -796,7 +795,6 @@ modules:
         category: func
       - name: Mod_LoadSpriteFrame
         category: func
-        platform: windows
       - name: Mod_LoadSpriteModel
         category: func
       - name: Mod_LoadStudioModel

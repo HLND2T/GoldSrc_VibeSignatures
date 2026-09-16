@@ -448,6 +448,15 @@ modules:
       - name: find-Mod_LoadBrushModel
         expected_output:
           - Mod_LoadBrushModel.{platform}.yaml
+      - name: find-Mod_LoadSpriteGroup
+        platform: windows
+        expected_output:
+          - Mod_LoadSpriteGroup.{platform}.yaml
+      - name: find-Mod_LoadSpriteFrame
+        expected_input_windows:
+          - Mod_LoadSpriteGroup.{platform}.yaml
+        expected_output:
+          - Mod_LoadSpriteFrame.{platform}.yaml
       - name: find-Mod_LoadSpriteModel
         expected_output:
           - Mod_LoadSpriteModel.{platform}.yaml
@@ -783,6 +792,11 @@ modules:
       - name: Hunk_AllocName
         category: func
       - name: Mod_LoadBrushModel
+        category: func
+      - name: Mod_LoadSpriteGroup
+        category: func
+        platform: windows
+      - name: Mod_LoadSpriteFrame
         category: func
       - name: Mod_LoadSpriteModel
         category: func
