@@ -4,8 +4,22 @@ modules:
     module_linux: hw.so
     depot_windows: hw.dll
     depot_linux: hw.so
-    skills: []
-    symbols: []
+    skills:
+      - name: find-SV_SendServerinfo-svencoop
+        expected_output:
+          - SV_SendServerinfo.{platform}.yaml
+      - name: find-build_number
+        platform: windows
+        expected_output:
+          - build_number.{platform}.yaml
+        expected_input:
+          - SV_SendServerinfo.{platform}.yaml
+    symbols:
+      - name: SV_SendServerinfo
+        category: func
+      - name: build_number
+        category: func
+        platform: windows
   - name: client
     module_windows: client.dll
     module_linux: client.so
