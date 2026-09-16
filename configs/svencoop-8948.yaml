@@ -893,6 +893,11 @@ modules:
           - GameStudioRenderer_vtable.{platform}.yaml
         expected_output:
           - GameStudioRenderer_StudioRenderFinal.{platform}.yaml
+      - name: find-UpdatePlayerPitch
+        expected_input:
+          - GameStudioRenderer_StudioDrawPlayer.{platform}.yaml
+        expected_output:
+          - UpdatePlayerPitch.{platform}.yaml
       - name: find-client-studio-interface
         expected_input:
           - HUD_GetStudioModelInterface.{platform}.yaml
@@ -1014,6 +1019,8 @@ modules:
       - name: V_StartPitchDrift
         category: func
       - name: V_CalcRefdef
+        category: func
+      - name: UpdatePlayerPitch
         category: func
       - name: GameStudioRenderer_StudioSetupBones
         category: vfunc
