@@ -67,3 +67,12 @@ This is a Pattern E (`-decompiles`) finder: a symbolic `LLM_DECOMPILE` spec inst
   `func_sig_resolve_jmp_thunk`, so tiny wrappers/thunks are handled only through the normal entry path.
 - The `SV_SendServerinfo` reference body differs between the hl family and SvEngine, which is why the
   predecessor itself has two producers (`find-SV_SendServerinfo-svencoop` on svencoop-10257).
+
+## Platform caveats
+
+`build_number` is not a stored constant — it is derived from the compile-time `__DATE__`, so
+the Windows and Linux engines of one release report different values, and the repository's
+`svencoop-<N>` tag tracks the **Windows** value. Concretely: `svencoop-8948` is 8948 on
+`hw.dll` but 8997 on `hw.so`; `svencoop-10257` is 10257 on `hw.dll` but 10269 on `hw.so`.
+See [[Sven Co-op engine build_number differs between Windows and Linux]] for the derivation
+formula and verification evidence before trusting any build number read from a Linux binary.
