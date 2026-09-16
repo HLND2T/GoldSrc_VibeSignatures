@@ -38,23 +38,17 @@ local symbol `_Z17UpdatePlayerPitchP11cl_entity_sf` (size 98 = artifact `func_si
   consumed via `expected_input`.
 
 ## How it is located
-
-1. The producer loads the predecessor `func_va`, then walks its **direct callee set** through the
-   shared `run_layout_walk` decoder (`ida_preprocessor_scripts/_portal_layout_ida.py`). The
-   decoder's `o_near` branch routes PLT entries through `resolve_elf_plt`, so the 8948 Linux
-   `.plt.got` thunk is resolved to the real target before the callee set is built.
-2. A candidate must contain exactly four 4/8-byte float memory writes whose displacement set is
+2. A candidate must contain exactly four memory writes whose displacement set is
    `{0xB54, 0x2CC, 0x178, 0xB28}` with a single shared base register (the first argument),
-   exactly two float comparisons (any of comiss/ucomiss/fcom/fcomp/fucom/fucomp/fucomi/fucomip/
-   fcomip/fcompp), and exactly one float division (div/divsd/fdiv/fdivp/fdivr/fidiv). The two
-   compile flavors on record are MSVC SSE2 and GCC x87; the predicate is mnemonic-based and
-   platform-neutral.
-3. Exactly one candidate must survive, else the finder fails closed.
-   `CGameStudioRenderer` (8948: `CStudioModelRenderer`)`::StudioDrawPlayer` is the only
-   cross-TU caller, so the walk is discriminating in practice (callee counts 3-5 per binary).
-4. `_inspect_function_via_mcp` then emits `func_name`/`func_va`/`func_rva`/`func_size`/`func_sig`
-   (with the across-boundary fallback available).
-
+   where **every pitch-field write is itself an SSE scalar or x87 float store**
+   (`movss`/`movsd`/`fst`/`fstp`, 4 or 8 bytes — integer `mov` to a pitch displacement is
+   rejected), plus exactly two float comparisons (any of comiss/ucomiss/fcom/fcomp/fucom/
+   fucomp/fucomi/fucomip/fcomip/fcompp) and exactly one **float** division
+   (`divss`/`divsd`/`fdiv`/`fdivp`/`fdivr`; integer `div` and integer-operand `fidiv` are
+   rejected). The predicate lives in `ida_preprocessor_scripts/_pitch_store_predicate.py`
+   (pure Python, source-injected into the walk) and is covered by
+   `tests/test_pitch_store_predicate.py` synthetic fixtures including the two
+   reviewer-reproduced false positives (integer mov stores, integer div).
 ## Recorded evidence
 
 | Binary | func_va | func_rva | func_size | Cross-check |
@@ -65,6 +59,11 @@ local symbol `_Z17UpdatePlayerPitchP11cl_entity_sf` (size 98 = artifact `func_si
 | svencoop-8948/client/client.so | `0x18a326` | `0x18a326` | `0x62` | symbol table `_Z17UpdatePlayerPitchP11cl_entity_sf` |
 
 ## Pitfalls
+- **Width is not float semantics.** The shared decoder's `memory_writes` records operand shape
+  (base/disp/size) for every store; a 4/8-byte width alone cannot prove a float store, and the
+  walk's downstream `func_sig` uniqueness only proves address uniqueness, never function
+  identity. The predicate therefore whitelists the float store mnemonics and float division
+  mnemonics explicitly (PR #129 review).
 
 - **"10257-exclusive" is a MetaHookSv artifact, not a fact.** The MetaHookSv byte signature
   `FF 73 40 E8 ? ? ? ? 83 C4 08 80 3D ? ? ? ? 00` requires the `cmp g_bIsRenderingPortals, 0`
