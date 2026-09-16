@@ -218,7 +218,7 @@ disasm_code: |-
   .text:10244A3A                 call    R_RenderScene
   .text:10244A3F                 cmp     clientOnly, 0
   .text:10244A46                 jnz     short loc_10244A52
-  .text:10244A48                 call    sub_10243150
+  .text:10244A48                 call    R_DrawViewModel
   .text:10244A4D                 call    R_PolyBlend
   .text:10244A52                 call    sub_101FD510
   .text:10244A57                 movss   xmm0, dword_10322BC0
@@ -373,7 +373,7 @@ procedure: |-
     R_RenderScene();
     if ( !clientOnly )
     {
-      sub_10243150();
+      R_DrawViewModel();
       R_PolyBlend();
     }
     sub_101FD510();

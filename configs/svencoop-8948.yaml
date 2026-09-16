@@ -170,6 +170,12 @@ modules:
       - name: find-R_RenderView
         expected_output:
           - R_RenderView.{platform}.yaml
+      - name: find-R_DrawViewModel-decompiles
+        platform: linux
+        expected_input:
+          - R_RenderView.{platform}.yaml
+        expected_output:
+          - R_DrawViewModel.{platform}.yaml
       - name: find-R_PolyBlend-decompiles
         expected_input:
           - R_RenderView.{platform}.yaml
@@ -185,6 +191,11 @@ modules:
           - R_RenderView.{platform}.yaml
         expected_output:
           - R_RenderScene.{platform}.yaml
+      - name: find-R_SetupGL-from-R_RenderScene-decompiles
+        expected_input:
+          - R_RenderScene.{platform}.yaml
+        expected_output:
+          - R_SetupGL.{platform}.yaml
       - name: find-R_DrawBrushModel-decompiles
         expected_input:
           - R_DrawTEntitiesOnList.{platform}.yaml
@@ -683,11 +694,16 @@ modules:
         category: gv
       - name: R_RenderView
         category: func
+      - name: R_DrawViewModel
+        category: func
+        platform: linux
       - name: R_PolyBlend
         category: func
       - name: V_FadeAlpha
         category: func
       - name: R_RenderScene
+        category: func
+      - name: R_SetupGL
         category: func
       - name: R_DrawBrushModel
         category: func

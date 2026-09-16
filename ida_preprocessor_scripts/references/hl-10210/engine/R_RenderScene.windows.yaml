@@ -90,7 +90,7 @@ disasm_code: |-
   .text:102442C6                 mov     dword_10DC55B0, 0
   .text:102442D0                 mov     dword_10DC55AC, 0
   .text:102442DA                 call    sub_10244D90
-  .text:102442DF                 call    sub_10245010
+  .text:102442DF                 call    R_SetupGL
   .text:102442E4                 call    R_MarkLeaves
   .text:102442E9                 cmp     clientOnly, 0
   .text:102442F0                 jnz     loc_10244560
@@ -343,7 +343,7 @@ procedure: |-
     dword_10DC55B0 = 0;
     dword_10DC55AC = 0;
     sub_10244D90();
-    sub_10245010();
+    R_SetupGL();
     R_MarkLeaves();
     if ( !clientOnly )
     {

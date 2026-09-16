@@ -10,7 +10,7 @@ disasm_code: |-
   .text:0013B816                 jnz     loc_13B9F8
   .text:0013B81C                 call    sub_139700
   .text:0013B821                 call    sub_139040
-  .text:0013B826                 call    sub_13A880
+  .text:0013B826                 call    R_SetupGL
   .text:0013B82B                 nop
   .text:0013B82C                 lea     esi, [esi+0]
   .text:0013B830                 call    R_MarkLeaves
@@ -161,7 +161,7 @@ procedure: |-
       sub_109040((int)&dword_30F6D40);
     sub_139700();
     sub_139040();
-    sub_13A880();
+    R_SetupGL();
     R_MarkLeaves();
     if ( !dword_30F6D6C )
     {

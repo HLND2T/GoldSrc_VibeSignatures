@@ -134,7 +134,7 @@ disasm_code: |-
   .text:01D563A1                 fstp    st(1)
   .text:01D563A3                 push    esi
   .text:01D563A4                 fstp    st
-  .text:01D563A6                 call    sub_1D55A10
+  .text:01D563A6                 call    R_SetupGL
   .text:01D563AB                 call    R_MarkLeaves
   .text:01D563B0                 cmp     dword_3F54494, 0
   .text:01D563B7                 jnz     loc_1D56605
@@ -458,7 +458,7 @@ procedure: |-
       v6 += 5;
     }
     while ( (int)v6 < (int)&dword_3F53FE0 );
-    sub_1D55A10();
+    R_SetupGL();
     R_MarkLeaves();
     if ( !dword_3F54494 )
     {

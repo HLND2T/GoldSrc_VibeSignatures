@@ -189,7 +189,7 @@ disasm_code: |-
   .text:0013BD78                 call    sub_1371B0
   .text:0013BD7D                 lea     esi, [esi+0]
   .text:0013BD80                 jmp     loc_13BB3D
-  .text:0013BD88                 call    sub_13A5A0
+  .text:0013BD88                 call    R_DrawViewModel
   .text:0013BD8D                 lea     esi, [esi+0]
   .text:0013BD90                 call    R_PolyBlend
   .text:0013BD95                 jmp     loc_13BBF7
@@ -275,7 +275,7 @@ procedure: |-
           R_RenderScene();
           if ( !dword_30F6D6C )
           {
-            sub_13A5A0();
+            R_DrawViewModel();
             R_PolyBlend();
           }
           sub_166C70((unsigned int)v1);

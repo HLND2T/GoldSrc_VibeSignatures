@@ -215,7 +215,7 @@ disasm_code: |-
   .text:01D53B31                 add     esp, 4
   .text:01D53B34                 call    sub_1D55BA0
   .text:01D53B39                 call    sub_1D556B0
-  .text:01D53B3E                 call    sub_1D56280
+  .text:01D53B3E                 call    R_SetupGL
   .text:01D53B43                 call    R_MarkLeaves
   .text:01D53B48                 cmp     dword_3F9344C, 0
   .text:01D53B4F                 jnz     short loc_1D53B88
@@ -323,7 +323,7 @@ disasm_code: |-
   .text:01D53C86                 call    R_DrawParticles
   .text:01D53C8B                 cmp     dword_3F9344C, 0
   .text:01D53C92                 jnz     short loc_1D53C9E
-  .text:01D53C94                 call    sub_1D54E10
+  .text:01D53C94                 call    R_DrawViewModel
   .text:01D53C99                 call    R_PolyBlend
   .text:01D53C9E                 call    sub_1D97C20
   .text:01D53CA3                 test    edi, edi
@@ -451,7 +451,7 @@ procedure: |-
         sub_1D03700(&dword_3F93420);
       sub_1D55BA0();
       sub_1D556B0();
-      sub_1D56280();
+      R_SetupGL();
       R_MarkLeaves();
       if ( !dword_3F9344C )
       {
@@ -494,7 +494,7 @@ procedure: |-
         R_DrawParticles();
         if ( !dword_3F9344C )
         {
-          sub_1D54E10();
+          R_DrawViewModel();
           R_PolyBlend();
         }
       }

@@ -1,0 +1,284 @@
+func_name: "R_RenderView"
+func_va: "0x187a90"
+disasm_code: |-
+  .text:00187A90                 sub     esp, 5Ch
+  .text:00187A93                 mov     [esp+5Ch+var_C], esi
+  .text:00187A97                 mov     esi, [esp+5Ch+viewIdx]
+  .text:00187A9B                 mov     [esp+5Ch+var_10], ebx
+  .text:00187A9F                 call    __x86_get_pc_thunk_bx
+  .text:00187AA4                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:00187AAA                 mov     [esp+5Ch+var_8], edi
+  .text:00187AAE                 test    esi, esi
+  .text:00187AB0                 mov     [esp+5Ch+var_4], ebp
+  .text:00187AB4                 jnz     short loc_187AC6
+  .text:00187AB6                 xor     eax, eax
+  .text:00187AB8                 mov     ds:(c_brush_polys - 33A000h)[ebx], eax
+  .text:00187ABE                 xor     eax, eax
+  .text:00187AC0                 mov     ds:(c_model_polys - 33A000h)[ebx], eax
+  .text:00187AC6                 mov     eax, ds:(r_norefresh_ptr - 33A000h)[ebx]
+  .text:00187ACC                 fld     dword ptr [eax+0Ch]
+  .text:00187ACF                 fldz
+  .text:00187AD1                 fst     dword ptr [esp+5Ch+var_34]
+  .text:00187AD5                 fxch    st(1)
+  .text:00187AD7                 fucomip st, st(1)
+  .text:00187AD9                 fstp    st
+  .text:00187ADB                 jp      loc_187CB7
+  .text:00187AE1                 jnz     loc_187CB7
+  .text:00187AE7                 mov     ebp, ds:(dword_30D7994 - 33A000h)[ebx]
+  .text:00187AED                 mov     edi, ds:(off_339CE0 - 33A000h)[ebx]
+  .text:00187AF3                 test    ebp, ebp
+  .text:00187AF5                 jz      loc_187D68
+  .text:00187AFB                 mov     ecx, ds:dword_600CEC[edi]
+  .text:00187B01                 test    ecx, ecx
+  .text:00187B03                 jz      loc_187D68
+  .text:00187B09                 test    esi, esi
+  .text:00187B0B                 jnz     loc_187CD0
+  .text:00187B11                 mov     eax, ds:(r_speeds_ptr - 33A000h)[ebx]
+  .text:00187B17                 fld     dword ptr [eax+0Ch]
+  .text:00187B1A                 fldz
+  .text:00187B1C                 fst     dword ptr [esp+5Ch+var_34]
+  .text:00187B20                 fxch    st(1)
+  .text:00187B22                 fucomip st, st(1)
+  .text:00187B24                 fstp    st
+  .text:00187B26                 jp      loc_187DC0
+  .text:00187B2C                 jnz     loc_187DC0
+  .text:00187B32                 cmp     ds:dword_600CE0[edi], 1
+  .text:00187B39                 jle     short loc_187B4D
+  .text:00187B3B                 mov     eax, ds:(cheats_level_ptr - 33A000h)[ebx]
+  .text:00187B41                 cmp     dword ptr [eax], 0FEh
+  .text:00187B47                 jle     loc_187D88
+  .text:00187B4D                 mov     ebp, ds:(g_clearColor_ptr - 33A000h)[ebx]
+  .text:00187B53                 mov     eax, ds:(gl_clearcolor_ptr - 33A000h)[ebx]
+  .text:00187B59                 mov     [esp+5Ch+red+4], ebp
+  .text:00187B5D                 mov     [esp+5Ch+red], eax
+  .text:00187B60                 call    __Z13Cvar_GetColorP6cvar_sPf; Cvar_GetColor(cvar_s *,float *)
+  .text:00187B65                 ; alpha
+  .text:00187B65                 mov     [esp+5Ch+blue+4], 0; alpha
+  .text:00187B6D                 movss   xmm0, dword ptr [ebp+8]
+  .text:00187B72                 ; blue
+  .text:00187B72                 movss   [esp+5Ch+blue], xmm0; blue
+  .text:00187B78                 movss   xmm1, dword ptr [ebp+4]
+  .text:00187B7D                 ; green
+  .text:00187B7D                 movss   [esp+5Ch+red+4], xmm1; green
+  .text:00187B83                 movss   xmm2, dword ptr [ebp+0]
+  .text:00187B88                 ; red
+  .text:00187B88                 movss   [esp+5Ch+red], xmm2; red
+  .text:00187B8D                 call    _glClearColor
+  .text:00187B92                 mov     edx, ds:(gl_clear_ptr - 33A000h)[ebx]
+  .text:00187B98                 test    esi, esi
+  .text:00187B9A                 setz    byte ptr [esp+5Ch+var_34]
+  .text:00187B9F                 mov     al, 1
+  .text:00187BA1                 fld     dword ptr [edx+0Ch]
+  .text:00187BA4                 fldz
+  .text:00187BA6                 fxch    st(1)
+  .text:00187BA8                 fucomip st, st(1)
+  .text:00187BAA                 fstp    st
+  .text:00187BAC                 jp      short loc_187BB4
+  .text:00187BAE                 jz      loc_187D40
+  .text:00187BB4                 and     al, byte ptr [esp+5Ch+var_34]
+  .text:00187BB8                 jnz     loc_187D4C
+  .text:00187BBE                 ; mask
+  .text:00187BBE                 mov     [esp+5Ch+red], 100h; mask
+  .text:00187BC5                 call    _glClear
+  .text:00187BCA                 ; func
+  .text:00187BCA                 mov     [esp+5Ch+red], 203h; func
+  .text:00187BD1                 call    _glDepthFunc
+  .text:00187BD6                 fld1
+  .text:00187BD8                 ; far_val
+  .text:00187BD8                 fstp    qword ptr [esp+5Ch+blue]; far_val
+  .text:00187BDC                 fldz
+  .text:00187BDE                 ; near_val
+  .text:00187BDE                 fstp    qword ptr [esp+5Ch+red]; near_val
+  .text:00187BE1                 call    _glDepthRange
+  .text:00187BE6                 mov     edx, ds:(dword_30D6BCC - 33A000h)[ebx]
+  .text:00187BEC                 test    edx, edx
+  .text:00187BEE                 jz      loc_187DB0
+  .text:00187BF4                 call    R_RenderScene
+  .text:00187BF9                 mov     eax, ds:(dword_30D6BCC - 33A000h)[ebx]
+  .text:00187BFF                 test    eax, eax
+  .text:00187C01                 jz      loc_187D98
+  .text:00187C07                 call    __Z13S_ExtraUpdatev; S_ExtraUpdate(void)
+  .text:00187C0C                 cmp     byte ptr [esp+5Ch+var_34], 0
+  .text:00187C11                 jz      loc_187CB7
+  .text:00187C17                 mov     eax, ds:(r_speeds_ptr - 33A000h)[ebx]
+  .text:00187C1D                 fld     dword ptr [eax+0Ch]
+  .text:00187C20                 fldz
+  .text:00187C22                 fst     dword ptr [esp+5Ch+var_34]
+  .text:00187C26                 fxch    st(1)
+  .text:00187C28                 fucomip st, st(1)
+  .text:00187C2A                 fstp    st
+  .text:00187C2C                 jp      short loc_187C34
+  .text:00187C2E                 jz      loc_187CB7
+  .text:00187C34                 fld     qword ptr [edi+242794h]
+  .text:00187C3A                 fsub    qword ptr [edi+24279Ch]
+  .text:00187C40                 fstp    [esp+5Ch+var_20]
+  .text:00187C44                 fld     [esp+5Ch+var_20]
+  .text:00187C48                 fldz
+  .text:00187C4A                 fst     dword ptr [esp+5Ch+var_34]
+  .text:00187C4E                 fxch    st(1)
+  .text:00187C50                 fucomi  st, st(1)
+  .text:00187C52                 fstp    st(1)
+  .text:00187C54                 jbe     short loc_187C5C
+  .text:00187C56                 fdivr   ds:(flt_2ABF80 - 33A000h)[ebx]
+  .text:00187C5C                 fstp    [esp+5Ch+var_24]
+  .text:00187C60                 call    __Z13Sys_FloatTimev; Sys_FloatTime(void)
+  .text:00187C65                 mov     eax, ds:(c_model_polys - 33A000h)[ebx]
+  .text:00187C6B                 mov     [esp+5Ch+var_4C], eax
+  .text:00187C6F                 mov     eax, ds:(c_brush_polys - 33A000h)[ebx]
+  .text:00187C75                 fsub    [esp+5Ch+var_2C]
+  .text:00187C79                 mov     [esp+5Ch+blue+4], eax
+  .text:00187C7D                 fmul    ds:(flt_2AABB8 - 33A000h)[ebx]
+  .text:00187C83                 fstp    [esp+5Ch+var_34]
+  .text:00187C87                 fld     [esp+5Ch+var_24]
+  .text:00187C8B                 cvttsd2si eax, [esp+5Ch+var_34]
+  .text:00187C91                 fadd    ds:(flt_2ABF8C - 33A000h)[ebx]
+  .text:00187C97                 mov     [esp+5Ch+blue], eax
+  .text:00187C9B                 fstp    [esp+5Ch+var_34]
+  .text:00187C9F                 cvttsd2si eax, [esp+5Ch+var_34]
+  .text:00187CA5                 mov     [esp+5Ch+red+4], eax
+  .text:00187CA9                 lea     eax, (a3iFps3iMs6iWpo - 33A000h)[ebx]; "%3i fps %3i ms %6i wpoly %6i epoly\n"
+  .text:00187CAF                 mov     [esp+5Ch+red], eax
+  .text:00187CB2                 call    sub_A3CB0
+  .text:00187CB7                 mov     ebx, [esp+5Ch+var_10]
+  .text:00187CBB                 mov     esi, [esp+5Ch+var_C]
+  .text:00187CBF                 mov     edi, [esp+5Ch+var_8]
+  .text:00187CC3                 mov     ebp, [esp+5Ch+var_4]
+  .text:00187CC7                 add     esp, 5Ch
+  .text:00187CCA                 retn
+  .text:00187CD0                 cmp     ds:dword_600CE0[edi], 1
+  .text:00187CD7                 jle     loc_187DD0
+  .text:00187CDD                 mov     eax, ds:(cheats_level_ptr - 33A000h)[ebx]
+  .text:00187CE3                 cmp     dword ptr [eax], 0FEh
+  .text:00187CE9                 jle     loc_187D88
+  .text:00187CEF                 mov     esi, ds:(g_clearColor_ptr - 33A000h)[ebx]
+  .text:00187CF5                 mov     eax, ds:(gl_clearcolor_ptr - 33A000h)[ebx]
+  .text:00187CFB                 mov     [esp+5Ch+red+4], esi
+  .text:00187CFF                 mov     [esp+5Ch+red], eax
+  .text:00187D02                 call    __Z13Cvar_GetColorP6cvar_sPf; Cvar_GetColor(cvar_s *,float *)
+  .text:00187D07                 ; alpha
+  .text:00187D07                 mov     [esp+5Ch+blue+4], 0; alpha
+  .text:00187D0F                 movss   xmm3, dword ptr [esi+8]
+  .text:00187D14                 ; blue
+  .text:00187D14                 movss   [esp+5Ch+blue], xmm3; blue
+  .text:00187D1A                 movss   xmm4, dword ptr [esi+4]
+  .text:00187D1F                 ; green
+  .text:00187D1F                 movss   [esp+5Ch+red+4], xmm4; green
+  .text:00187D25                 movss   xmm5, dword ptr [esi]
+  .text:00187D29                 ; red
+  .text:00187D29                 movss   [esp+5Ch+red], xmm5; red
+  .text:00187D2E                 call    _glClearColor
+  .text:00187D33                 mov     byte ptr [esp+5Ch+var_34], 0
+  .text:00187D38                 jmp     loc_187BBE
+  .text:00187D40                 xor     eax, eax
+  .text:00187D42                 and     al, byte ptr [esp+5Ch+var_34]
+  .text:00187D46                 jz      loc_187BBE
+  .text:00187D4C                 ; mask
+  .text:00187D4C                 mov     [esp+5Ch+red], 4100h; mask
+  .text:00187D53                 mov     byte ptr [esp+5Ch+var_34], al
+  .text:00187D57                 call    _glClear
+  .text:00187D5C                 jmp     loc_187BCA
+  .text:00187D68                 lea     eax, (aRRenderviewNul - 33A000h)[ebx]; "R_RenderView: NULL worldmodel"
+  .text:00187D6E                 ; char *
+  .text:00187D6E                 mov     [esp+5Ch+red], eax; char *
+  .text:00187D71                 call    __Z9Sys_ErrorPcz; Sys_Error(char *,...)
+  .text:00187D76                 test    esi, esi
+  .text:00187D78                 jnz     loc_187CD0
+  .text:00187D7E                 jmp     loc_187B11
+  .text:00187D88                 call    _Z12R_ForceCVarsi_part_3; R_ForceCVars(int) [clone]
+  .text:00187D8D                 lea     esi, [esi+0]
+  .text:00187D90                 jmp     loc_187B4D
+  .text:00187D98                 call    R_DrawViewModel
+  .text:00187D9D                 lea     esi, [esi+0]
+  .text:00187DA0                 call    _Z11R_PolyBlendv; R_PolyBlend(void)
+  .text:00187DA5                 jmp     loc_187C07
+  .text:00187DB0                 call    _Z18R_PreDrawViewModelv; R_PreDrawViewModel(void)
+  .text:00187DB5                 jmp     loc_187BF4
+  .text:00187DC0                 call    __Z13Sys_FloatTimev; Sys_FloatTime(void)
+  .text:00187DC5                 fstp    [esp+5Ch+var_2C]
+  .text:00187DC9                 jmp     loc_187B32
+  .text:00187DD0                 mov     esi, ds:(g_clearColor_ptr - 33A000h)[ebx]
+  .text:00187DD6                 mov     eax, ds:(gl_clearcolor_ptr - 33A000h)[ebx]
+  .text:00187DDC                 mov     [esp+5Ch+red+4], esi
+  .text:00187DE0                 mov     [esp+5Ch+red], eax
+  .text:00187DE3                 call    __Z13Cvar_GetColorP6cvar_sPf; Cvar_GetColor(cvar_s *,float *)
+  .text:00187DE8                 ; alpha
+  .text:00187DE8                 mov     [esp+5Ch+blue+4], 0; alpha
+  .text:00187DF0                 movss   xmm6, dword ptr [esi+8]
+  .text:00187DF5                 ; blue
+  .text:00187DF5                 movss   [esp+5Ch+blue], xmm6; blue
+  .text:00187DFB                 movss   xmm7, dword ptr [esi+4]
+  .text:00187E00                 ; green
+  .text:00187E00                 movss   [esp+5Ch+red+4], xmm7; green
+  .text:00187E06                 movss   xmm6, dword ptr [esi]
+  .text:00187E0A                 ; red
+  .text:00187E0A                 movss   [esp+5Ch+red], xmm6; red
+  .text:00187E0F                 call    _glClearColor
+  .text:00187E14                 mov     byte ptr [esp+5Ch+var_34], 0
+  .text:00187E19                 jmp     loc_187BBE
+procedure: |-
+  void __cdecl R_RenderView(int viewIdx)
+  {
+    int red; // [esp+0h] [ebp-5Ch]
+    bool v2; // [esp+28h] [ebp-34h]
+
+    if ( !viewIdx )
+    {
+      c_brush_polys = 0;
+      c_model_polys = 0;
+    }
+    if ( unk_340F50 == 0.0 )
+    {
+      if ( !dword_30D7994 || !dword_1BEF58C )
+        Sys_Error("R_RenderView: NULL worldmodel");
+      if ( viewIdx )
+      {
+        if ( dword_1BEF580 <= 1 || cheats_level > 254 )
+        {
+          Cvar_GetColor(gl_clearcolor, g_clearColor);
+          glClearColor(g_clearColor[0], g_clearColor[1], g_clearColor[2], 0.0);
+          v2 = 0;
+          goto LABEL_13;
+        }
+      }
+      else
+      {
+        if ( unk_340F14 != 0.0 )
+          Sys_FloatTime();
+        if ( dword_1BEF580 <= 1 || cheats_level > 254 )
+        {
+  LABEL_11:
+          Cvar_GetColor(gl_clearcolor, g_clearColor);
+          glClearColor(g_clearColor[0], g_clearColor[1], g_clearColor[2], 0.0);
+          v2 = viewIdx == 0;
+          if ( unk_340E24 != 0.0 && !viewIdx )
+          {
+            v2 = 1;
+            glClear(0x4100u);
+            goto LABEL_14;
+          }
+  LABEL_13:
+          glClear(0x100u);
+  LABEL_14:
+          glDepthFunc(0x203u);
+          glDepthRange(0.0, 1.0);
+          if ( !dword_30D6BCC )
+            R_PreDrawViewModel();
+          R_RenderScene();
+          if ( !dword_30D6BCC )
+          {
+            R_DrawViewModel();
+            R_PolyBlend();
+          }
+          S_ExtraUpdate();
+          if ( v2 && unk_340F14 != 0.0 )
+          {
+            Sys_FloatTime();
+            sub_A3CB0((int)&GLOBAL_OFFSET_TABLE_);
+          }
+          return;
+        }
+      }
+      R_ForceCVars(red);
+      goto LABEL_11;
+    }
+  }
