@@ -175,6 +175,11 @@ modules:
           - R_RenderView.{platform}.yaml
         expected_output:
           - R_RenderScene.{platform}.yaml
+      - name: find-R_RenderFinalFog-from-R_RenderScene-decompiles
+        expected_input:
+          - R_RenderScene.{platform}.yaml
+        expected_output:
+          - R_RenderFinalFog.{platform}.yaml
       - name: find-R_SetupGL-from-R_RenderScene-decompiles
         expected_input:
           - R_RenderScene.{platform}.yaml
@@ -671,6 +676,8 @@ modules:
       - name: R_RenderScene
         category: func
       - name: R_SetupGL
+        category: func
+      - name: R_RenderFinalFog
         category: func
       - name: R_DrawBrushModel
         category: func

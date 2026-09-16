@@ -1,0 +1,5 @@
+func_name: R_RenderFinalFog
+func_va: '0x1dc4930'
+func_rva: '0xc4930'
+func_size: '0x80'
+func_sig: 55 8B EC 83 3D ?? ?? ?? ?? ?? 75 ?? EB ?? 68 60 0B 00 00 FF 15 ?? ?? ?? ?? 68 01 08 00 00 68 65 0B 00 00
