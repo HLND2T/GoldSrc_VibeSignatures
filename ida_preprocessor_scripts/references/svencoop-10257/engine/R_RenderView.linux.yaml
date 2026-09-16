@@ -191,7 +191,7 @@ disasm_code: |-
   .text:0013BD80                 jmp     loc_13BB3D
   .text:0013BD88                 call    sub_13A5A0
   .text:0013BD8D                 lea     esi, [esi+0]
-  .text:0013BD90                 call    sub_138D30
+  .text:0013BD90                 call    R_PolyBlend
   .text:0013BD95                 jmp     loc_13BBF7
   .text:0013BDA0                 call    sub_138AA0
   .text:0013BDA5                 jmp     loc_13BBE4
@@ -276,7 +276,7 @@ procedure: |-
           if ( !dword_30F6D6C )
           {
             sub_13A5A0();
-            sub_138D30();
+            R_PolyBlend();
           }
           sub_166C70((unsigned int)v1);
           if ( v4 && unk_2F3954 != 0.0 )

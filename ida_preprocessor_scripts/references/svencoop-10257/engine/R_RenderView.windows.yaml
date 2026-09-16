@@ -324,7 +324,7 @@ disasm_code: |-
   .text:01D53C8B                 cmp     dword_3F9344C, 0
   .text:01D53C92                 jnz     short loc_1D53C9E
   .text:01D53C94                 call    sub_1D54E10
-  .text:01D53C99                 call    sub_1D55430
+  .text:01D53C99                 call    R_PolyBlend
   .text:01D53C9E                 call    sub_1D97C20
   .text:01D53CA3                 test    edi, edi
   .text:01D53CA5                 jnz     short loc_1D53D26
@@ -495,7 +495,7 @@ procedure: |-
         if ( !dword_3F9344C )
         {
           sub_1D54E10();
-          sub_1D55430();
+          R_PolyBlend();
         }
       }
       sub_1D97C20();

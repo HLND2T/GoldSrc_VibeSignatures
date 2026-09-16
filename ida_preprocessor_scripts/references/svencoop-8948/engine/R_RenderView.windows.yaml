@@ -352,7 +352,7 @@ disasm_code: |-
   .text:01D53A03                 mul     ecx
   .text:01D53A05                 shr     edx, 1
   .text:01D53A07                 mov     dword_230D70C, edx
-  .text:01D53A0D                 call    sub_1D54CE0
+  .text:01D53A0D                 call    R_PolyBlend
   .text:01D53A12                 call    sub_1D96E00
   .text:01D53A17                 test    edi, edi
   .text:01D53A19                 jnz     loc_1D53AA0
@@ -536,7 +536,7 @@ procedure: |-
       v1 = (float *)*v8;
       dword_230D70C = (*v8 + v8[1] + v8[2]) / 3;
   LABEL_46:
-      sub_1D54CE0();
+      R_PolyBlend();
   LABEL_47:
       sub_1D96E00(viewIdx, (int)v1);
       if ( !viewIdx && 0.0 != flt_1ED82C0 )

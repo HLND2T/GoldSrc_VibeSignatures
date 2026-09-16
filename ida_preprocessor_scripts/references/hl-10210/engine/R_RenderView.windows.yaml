@@ -219,7 +219,7 @@ disasm_code: |-
   .text:10244A3F                 cmp     clientOnly, 0
   .text:10244A46                 jnz     short loc_10244A52
   .text:10244A48                 call    sub_10243150
-  .text:10244A4D                 call    sub_10243EA0
+  .text:10244A4D                 call    R_PolyBlend
   .text:10244A52                 call    sub_101FD510
   .text:10244A57                 movss   xmm0, dword_10322BC0
   .text:10244A5F                 xorps   xmm1, xmm1
@@ -374,7 +374,7 @@ procedure: |-
     if ( !clientOnly )
     {
       sub_10243150();
-      sub_10243EA0();
+      R_PolyBlend();
     }
     sub_101FD510();
     if ( *(float *)&dword_10322BC0 != 0.0 )

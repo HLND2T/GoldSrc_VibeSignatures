@@ -156,6 +156,16 @@ modules:
       - name: find-R_RenderView
         expected_output:
           - R_RenderView.{platform}.yaml
+      - name: find-R_PolyBlend-decompiles
+        expected_input:
+          - R_RenderView.{platform}.yaml
+        expected_output:
+          - R_PolyBlend.{platform}.yaml
+      - name: find-V_FadeAlpha-decompiles
+        expected_input:
+          - R_PolyBlend.{platform}.yaml
+        expected_output:
+          - V_FadeAlpha.{platform}.yaml
       - name: find-R_RenderScene-decompiles
         expected_input:
           - R_RenderView.{platform}.yaml
@@ -643,6 +653,10 @@ modules:
       - name: cl_worldmodel
         category: gv
       - name: R_RenderView
+        category: func
+      - name: R_PolyBlend
+        category: func
+      - name: V_FadeAlpha
         category: func
       - name: R_RenderScene
         category: func

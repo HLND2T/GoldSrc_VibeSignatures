@@ -1,0 +1,269 @@
+func_name: "R_PolyBlend"
+func_va: "0x16e0d0"
+disasm_code: |-
+  .text:0016E0D0                 ; Binary omits the public-source v_blend 3D quad path; the runtime body starts with V_FadeAlpha.
+  .text:0016E0D0                 push    ebx; Binary omits the public-source v_blend 3D quad path; the runtime body starts with V_FadeAlpha.
+  .text:0016E0D1                 sub     esp, 48h
+  .text:0016E0D4                 mov     eax, large gs:14h
+  .text:0016E0DA                 mov     [esp+4Ch+var_10], eax
+  .text:0016E0DE                 xor     eax, eax
+  .text:0016E0E0                 call    V_FadeAlpha
+  .text:0016E0E5                 test    alpha, alpha
+  .text:0016E0E7                 jnz     short loc_16E108
+  .text:0016E0E9                 mov     eax, [esp+4Ch+var_10]
+  .text:0016E0ED                 xor     eax, large gs:14h
+  .text:0016E0F4                 jnz     loc_16E3D1
+  .text:0016E0FA                 add     esp, 48h
+  .text:0016E0FD                 pop     ebx
+  .text:0016E0FE                 xchg    ax, ax
+  .text:0016E100                 retn
+  .text:0016E108                 mov     ebx, alpha
+  .text:0016E10A                 call    GL_DisableMultitexture
+  .text:0016E10F                 ; GLenum
+  .text:0016E10F                 mov     [esp+4Ch+var_4C], 0BC0h; GLenum
+  .text:0016E116                 call    ds:qglDisable
+  .text:0016E11C                 ; GLenum
+  .text:0016E11C                 mov     [esp+4Ch+var_4C], 0BE2h; GLenum
+  .text:0016E123                 call    ds:qglEnable
+  .text:0016E129                 ; GLenum
+  .text:0016E129                 mov     [esp+4Ch+var_4C], 0B71h; GLenum
+  .text:0016E130                 call    ds:qglDisable
+  .text:0016E136                 ; GLenum
+  .text:0016E136                 mov     [esp+4Ch+var_4C], 0DE1h; GLenum
+  .text:0016E13D                 call    ds:qglDisable
+  .text:0016E143                 test    byte ptr ds:nMax.sf.fadeFlags, 2
+  .text:0016E14A                 jnz     loc_16E350
+  .text:0016E150                 mov     eax, 303h
+  .text:0016E155                 ; GLenum
+  .text:0016E155                 mov     [esp+4Ch+var_48], eax; GLenum
+  .text:0016E159                 ; GLenum
+  .text:0016E159                 mov     [esp+4Ch+var_4C], 302h; GLenum
+  .text:0016E160                 call    ds:qglBlendFunc
+  .text:0016E166                 movzx   eax, ds:nMax.sf.fader
+  .text:0016E16D                 mov     [esp+4Ch+color+3], bl
+  .text:0016E171                 mov     [esp+4Ch+color], al
+  .text:0016E175                 movzx   eax, ds:nMax.sf.fadeg
+  .text:0016E17C                 mov     [esp+4Ch+color+1], al
+  .text:0016E180                 movzx   eax, ds:nMax.sf.fadeb
+  .text:0016E187                 mov     [esp+4Ch+color+2], al
+  .text:0016E18B                 ; GLenum
+  .text:0016E18B                 mov     [esp+4Ch+var_4C], 0B60h; GLenum
+  .text:0016E192                 call    ds:qglIsEnabled
+  .text:0016E198                 movzx   eax, al
+  .text:0016E19B                 mov     ds:isFogEnabled_26640, eax
+  .text:0016E1A0                 dec     eax
+  .text:0016E1A1                 jz      loc_16E3C0
+  .text:0016E1A7                 mov     eax, ds:glheight
+  .text:0016E1AC                 mov     ebx, 0C0F869F0h
+  .text:0016E1B1                 ; GLsizei
+  .text:0016E1B1                 mov     [esp+4Ch+var_44+4], eax; GLsizei
+  .text:0016E1B5                 mov     eax, ds:glwidth
+  .text:0016E1BA                 ; GLsizei
+  .text:0016E1BA                 mov     [esp+4Ch+var_44], eax; GLsizei
+  .text:0016E1BE                 mov     eax, ds:gly
+  .text:0016E1C3                 ; GLint
+  .text:0016E1C3                 mov     [esp+4Ch+var_48], eax; GLint
+  .text:0016E1C7                 mov     eax, ds:glx
+  .text:0016E1CC                 ; GLint
+  .text:0016E1CC                 mov     [esp+4Ch+var_4C], eax; GLint
+  .text:0016E1CF                 call    ds:qglViewport
+  .text:0016E1D5                 ; GLenum
+  .text:0016E1D5                 mov     [esp+4Ch+var_4C], 1701h; GLenum
+  .text:0016E1DC                 call    ds:qglMatrixMode
+  .text:0016E1E2                 call    ds:qglPushMatrix
+  .text:0016E1E8                 call    ds:qglLoadIdentity
+  .text:0016E1EE                 xor     eax, eax
+  .text:0016E1F0                 xor     ecx, ecx
+  .text:0016E1F2                 ; GLdouble
+  .text:0016E1F2                 mov     dword ptr [esp+4Ch+var_24], eax; GLdouble
+  .text:0016E1F6                 xor     eax, eax
+  .text:0016E1F8                 mov     edx, 40F869F0h
+  .text:0016E1FD                 ; GLdouble
+  .text:0016E1FD                 mov     dword ptr [esp+4Ch+var_34], eax; GLdouble
+  .text:0016E201                 xor     eax, eax
+  .text:0016E203                 mov     dword ptr [esp+4Ch+var_34+4], eax
+  .text:0016E207                 xor     eax, eax
+  .text:0016E209                 mov     dword ptr [esp+4Ch+var_24+4], edx
+  .text:0016E20D                 fild    ds:glheight
+  .text:0016E213                 ; GLdouble
+  .text:0016E213                 mov     dword ptr [esp+4Ch+var_2C], ecx; GLdouble
+  .text:0016E217                 mov     [esp+4Ch+var_48], eax
+  .text:0016E21B                 mov     dword ptr [esp+4Ch+var_2C+4], ebx
+  .text:0016E21F                 ; GLdouble
+  .text:0016E21F                 mov     [esp+4Ch+var_4C], 0; GLdouble
+  .text:0016E226                 ; GLdouble
+  .text:0016E226                 fstp    [esp+4Ch+var_3C]; GLdouble
+  .text:0016E22A                 fild    ds:glwidth
+  .text:0016E230                 ; GLdouble
+  .text:0016E230                 fstp    qword ptr [esp+4Ch+var_44]; GLdouble
+  .text:0016E234                 call    ds:qglOrtho
+  .text:0016E23A                 ; GLenum
+  .text:0016E23A                 mov     [esp+4Ch+var_4C], 1700h; GLenum
+  .text:0016E241                 call    ds:qglMatrixMode
+  .text:0016E247                 call    ds:qglPushMatrix
+  .text:0016E24D                 call    ds:qglLoadIdentity
+  .text:0016E253                 ; GLenum
+  .text:0016E253                 mov     [esp+4Ch+var_4C], 0B44h; GLenum
+  .text:0016E25A                 call    ds:qglDisable
+  .text:0016E260                 lea     eax, [esp+4Ch+color]
+  .text:0016E264                 ; GLubyte *
+  .text:0016E264                 mov     [esp+4Ch+var_4C], eax; GLubyte *
+  .text:0016E267                 call    ds:qglColor4ubv
+  .text:0016E26D                 ; GLenum
+  .text:0016E26D                 mov     [esp+4Ch+var_4C], 7; GLenum
+  .text:0016E274                 call    ds:qglBegin
+  .text:0016E27A                 ; GLfloat
+  .text:0016E27A                 mov     [esp+4Ch+var_48], 0; GLfloat
+  .text:0016E282                 ; GLfloat
+  .text:0016E282                 mov     [esp+4Ch+var_4C], 0; GLfloat
+  .text:0016E289                 call    ds:qglVertex2f
+  .text:0016E28F                 ; GLfloat
+  .text:0016E28F                 mov     [esp+4Ch+var_4C], 0; GLfloat
+  .text:0016E296                 fild    ds:glheight
+  .text:0016E29C                 ; GLfloat
+  .text:0016E29C                 fstp    [esp+4Ch+var_48]; GLfloat
+  .text:0016E2A0                 call    ds:qglVertex2f
+  .text:0016E2A6                 fild    ds:glheight
+  .text:0016E2AC                 ; GLfloat
+  .text:0016E2AC                 fstp    [esp+4Ch+var_48]; GLfloat
+  .text:0016E2B0                 fild    ds:glwidth
+  .text:0016E2B6                 ; GLfloat
+  .text:0016E2B6                 fstp    [esp+4Ch+var_4C]; GLfloat
+  .text:0016E2B9                 call    ds:qglVertex2f
+  .text:0016E2BF                 ; GLfloat
+  .text:0016E2BF                 mov     [esp+4Ch+var_48], 0; GLfloat
+  .text:0016E2C7                 fild    ds:glwidth
+  .text:0016E2CD                 ; GLfloat
+  .text:0016E2CD                 fstp    [esp+4Ch+var_4C]; GLfloat
+  .text:0016E2D0                 call    ds:qglVertex2f
+  .text:0016E2D6                 call    ds:qglEnd
+  .text:0016E2DC                 call    ds:qglPopMatrix
+  .text:0016E2E2                 ; GLenum
+  .text:0016E2E2                 mov     [esp+4Ch+var_4C], 1701h; GLenum
+  .text:0016E2E9                 call    ds:qglMatrixMode
+  .text:0016E2EF                 call    ds:qglPopMatrix
+  .text:0016E2F5                 ; GLenum
+  .text:0016E2F5                 mov     [esp+4Ch+var_4C], 0B71h; GLenum
+  .text:0016E2FC                 call    ds:qglEnable
+  .text:0016E302                 ; GLenum
+  .text:0016E302                 mov     [esp+4Ch+var_4C], 0B44h; GLenum
+  .text:0016E309                 call    ds:qglEnable
+  .text:0016E30F                 ; GLenum
+  .text:0016E30F                 mov     [esp+4Ch+var_4C], 0DE1h; GLenum
+  .text:0016E316                 call    ds:qglEnable
+  .text:0016E31C                 ; GLenum
+  .text:0016E31C                 mov     [esp+4Ch+var_4C], 0BC0h; GLenum
+  .text:0016E323                 call    ds:qglEnable
+  .text:0016E329                 cmp     ds:isFogEnabled_26640, 1
+  .text:0016E330                 jnz     loc_16E0E9
+  .text:0016E336                 ; enabled
+  .text:0016E336                 mov     [esp+4Ch+var_4C], 1; enabled
+  .text:0016E33D                 call    R_SetFogEnabled
+  .text:0016E342                 jmp     loc_16E0E9
+  .text:0016E350                 mov     eax, 300h
+  .text:0016E355                 ; GLenum
+  .text:0016E355                 mov     [esp+4Ch+var_48], eax; GLenum
+  .text:0016E359                 ; GLenum
+  .text:0016E359                 mov     [esp+4Ch+var_4C], 0; GLenum
+  .text:0016E360                 call    ds:qglBlendFunc
+  .text:0016E366                 mov     eax, 0FFh
+  .text:0016E36B                 sub     eax, alpha
+  .text:0016E36D                 mov     edx, eax
+  .text:0016E36F                 shl     edx, 8
+  .text:0016E372                 sub     edx, eax
+  .text:0016E374                 movzx   eax, ds:nMax.sf.fader
+  .text:0016E37B                 mov     [esp+4Ch+color+3], 0FFh
+  .text:0016E380                 imul    eax, alpha
+  .text:0016E383                 add     eax, edx
+  .text:0016E385                 sar     eax, 8
+  .text:0016E388                 mov     [esp+4Ch+color], al
+  .text:0016E38C                 movzx   eax, ds:nMax.sf.fadeg
+  .text:0016E393                 imul    eax, alpha
+  .text:0016E396                 add     eax, edx
+  .text:0016E398                 sar     eax, 8
+  .text:0016E39B                 mov     [esp+4Ch+color+1], al
+  .text:0016E39F                 movzx   eax, ds:nMax.sf.fadeb
+  .text:0016E3A6                 imul    alpha, eax
+  .text:0016E3A9                 add     edx, ebx
+  .text:0016E3AB                 sar     edx, 8
+  .text:0016E3AE                 mov     [esp+4Ch+color+2], dl
+  .text:0016E3B2                 jmp     loc_16E18B
+  .text:0016E3C0                 ; enabled
+  .text:0016E3C0                 mov     [esp+4Ch+var_4C], 0; enabled
+  .text:0016E3C7                 call    R_SetFogEnabled
+  .text:0016E3CC                 jmp     loc_16E1A7
+  .text:0016E3D1                 call    __stack_chk_fail
+procedure: |-
+  void __cdecl R_PolyBlend()
+  {
+    int v0; // eax
+    __int16 v1; // bx
+    __int16 v2; // dx
+    GLfloat v3; // [esp+0h] [ebp-4Ch]
+    GLfloat v4; // [esp+0h] [ebp-4Ch]
+    GLfloat v5; // [esp+4h] [ebp-48h]
+    GLfloat v6; // [esp+4h] [ebp-48h]
+    byte color[4]; // [esp+38h] [ebp-14h] BYREF
+    unsigned int v8; // [esp+3Ch] [ebp-10h]
+
+    v8 = __readgsdword(0x14u);
+    v0 = V_FadeAlpha();
+    if ( v0 )
+    {
+      v1 = v0;
+      GL_DisableMultitexture();
+      qglDisable(0xBC0u);
+      qglEnable(0xBE2u);
+      qglDisable(0xB71u);
+      qglDisable(0xDE1u);
+      if ( (nMax.sf.fadeFlags & 2) != 0 )
+      {
+        qglBlendFunc(0, 0x300u);
+        v2 = 255 * (255 - v1);
+        color[3] = -1;
+        color[0] = (unsigned __int16)(v2 + v1 * nMax.sf.fader) >> 8;
+        color[1] = (unsigned __int16)(v2 + v1 * nMax.sf.fadeg) >> 8;
+        color[2] = (unsigned __int16)(nMax.sf.fadeb * v1 + v2) >> 8;
+      }
+      else
+      {
+        qglBlendFunc(0x302u, 0x303u);
+        color[3] = v1;
+        color[0] = nMax.sf.fader;
+        color[1] = nMax.sf.fadeg;
+        color[2] = nMax.sf.fadeb;
+      }
+      isFogEnabled_26640 = qglIsEnabled(0xB60u);
+      if ( isFogEnabled_26640 == 1 )
+        R_SetFogEnabled(0);
+      qglViewport(glx, gly, glwidth, glheight);
+      qglMatrixMode(0x1701u);
+      qglPushMatrix();
+      qglLoadIdentity();
+      qglOrtho(0.0, (double)glwidth, (double)glheight, 0.0, -99999.0, 99999.0);
+      qglMatrixMode(0x1700u);
+      qglPushMatrix();
+      qglLoadIdentity();
+      qglDisable(0xB44u);
+      qglColor4ubv(color);
+      qglBegin(7u);
+      qglVertex2f(0.0, 0.0);
+      v5 = (float)glheight;
+      qglVertex2f(0.0, v5);
+      v6 = (float)glheight;
+      v3 = (float)glwidth;
+      qglVertex2f(v3, v6);
+      v4 = (float)glwidth;
+      qglVertex2f(v4, 0.0);
+      qglEnd();
+      qglPopMatrix();
+      qglMatrixMode(0x1701u);
+      qglPopMatrix();
+      qglEnable(0xB71u);
+      qglEnable(0xB44u);
+      qglEnable(0xDE1u);
+      qglEnable(0xBC0u);
+      if ( isFogEnabled_26640 == 1 )
+        R_SetFogEnabled(1);
+    }
+  }
