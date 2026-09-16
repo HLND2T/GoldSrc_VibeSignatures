@@ -1,0 +1,29 @@
+modules:
+  - name: engine
+    module_windows: hw.dll
+    module_linux: hw.so
+    depot_windows: hw.dll
+    depot_linux: hw.so
+    skills: []
+    symbols: []
+  - name: client
+    module_windows: client.dll
+    module_linux: client.so
+    depot_windows: svencoop/cl_dlls/client.dll
+    depot_linux: svencoop/cl_dlls/client.so
+    skills: []
+    symbols: []
+  - name: gameui
+    module_windows: GameUI.dll
+    module_linux: gameui.so
+    depot_windows: svencoop/cl_dlls/GameUI.dll
+    depot_linux: svencoop/cl_dlls/gameui.so
+    skills: []
+    symbols: []
+  - name: server
+    module_windows: server.dll
+    module_linux: server.so
+    depot_windows: svencoop/dlls/server.dll
+    depot_linux: svencoop/dlls/server.so
+    skills: []
+    symbols: []
