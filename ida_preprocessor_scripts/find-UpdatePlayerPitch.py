@@ -27,7 +27,7 @@ from ida_analyze_util import (
     _parse_int,
     write_func_yaml,
 )
-from ida_preprocessor_scripts import _pitch_store_predicate
+import ida_preprocessor_scripts._pitch_store_predicate as _pitch_store_predicate
 from ida_preprocessor_scripts._portal_layout_ida import run_layout_walk
 
 NAME = "UpdatePlayerPitch"
