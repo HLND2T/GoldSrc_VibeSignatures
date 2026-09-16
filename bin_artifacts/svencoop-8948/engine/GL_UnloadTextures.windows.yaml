@@ -1,0 +1,6 @@
+func_name: GL_UnloadTextures
+func_va: '0x1d4ef40'
+func_rva: '0x4ef40'
+func_size: '0x7d'
+func_sig: 56 8B 35 ?? ?? ?? ?? 83 EE 01 78 ?? 53 8B 1D ?? ?? ?? ?? 57 6B FE 54 EB ??
+func_sig_allow_across_function_boundary: true

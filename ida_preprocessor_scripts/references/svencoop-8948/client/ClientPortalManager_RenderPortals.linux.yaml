@@ -1,0 +1,2046 @@
+func_name: ClientPortalManager_RenderPortals
+func_va: '0x15d88c'
+disasm_code: |-
+  ; ClientPortalManager_vector_begin_offset = 132; ClientPortalManager_vector_end_offset = 136. This vector contains PortalSource pointers.
+  ; CalculateClipPlane receives mode from ClientPortal+0x28: ClientPortal_mode_offset = 40.
+  ; Its origin/angles arguments use the entity pointer at ClientPortal+0x70: ClientPortal_entity_offset = 112.
+  ; ClientPortal::GetOrigin/GetAngles return entity+0xB48/entity+0xB54: cl_entity_origin_offset = 2888; cl_entity_angles_offset = 2900.
+  ; These entity vectors are distinct from ClientPortal source-origin/source-angles at +0/+12 and PortalSource copied vectors at +0/+12.
+  ; PortalSource_texture_id_offset = 196; PortalSource_texture_width_offset = 200; PortalSource_texture_height_offset = 204. Verify glGenTextures, glBindTexture and glTexImage2D on the PortalSource object.
+  .text:0015D88C                 push    ebp
+  .text:0015D88D                 push    edi
+  .text:0015D88E                 push    esi
+  .text:0015D88F                 push    ebx
+  .text:0015D890                 sub     esp, 6Ch
+  .text:0015D893                 call    __x86_get_pc_thunk_bx
+  .text:0015D898                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:0015D89E                 mov     ebp, [esp+7Ch+arg_0]
+  .text:0015D8A5                 mov     esi, [ebp+84h]
+  .text:0015D8AB                 cmp     [ebp+88h], esi
+  .text:0015D8B1                 jz      short loc_15D8DF
+  .text:0015D8B3                 nop
+  .text:0015D8B4                 mov     edi, [esi]
+  .text:0015D8B6                 test    edi, edi
+  .text:0015D8B8                 jz      short loc_15D8CE
+  .text:0015D8BA                 sub     esp, 0Ch
+  .text:0015D8BD                 ; this
+  .text:0015D8BD                 push    edi; this
+  .text:0015D8BE                 call    __ZN12PortalSourceD1Ev; PortalSource::~PortalSource()
+  .text:0015D8C3                 ; void *
+  .text:0015D8C3                 mov     [esp+8Ch+red], edi; void *
+  .text:0015D8C6                 call    __ZdlPv; operator delete(void *)
+  .text:0015D8CB                 add     esp, 10h
+  .text:0015D8CE                 add     esi, 4
+  .text:0015D8D1                 cmp     esi, [ebp+88h]
+  .text:0015D8D7                 jnz     short loc_15D8B4
+  .text:0015D8D9                 mov     esi, [ebp+84h]
+  .text:0015D8DF                 lea     eax, [ebp+84h]
+  .text:0015D8E5                 mov     [esp+7Ch+var_40], eax
+  .text:0015D8E9                 mov     [ebp+88h], esi
+  .text:0015D8EF                 sub     esp, 0Ch
+  .text:0015D8F2                 ; this
+  .text:0015D8F2                 push    ebp; this
+  .text:0015D8F3                 call    __ZN19ClientPortalManager14UpdateSettingsEv; ClientPortalManager::UpdateSettings(void)
+  .text:0015D8F8                 add     esp, 10h
+  .text:0015D8FB                 cmp     byte ptr [ebp+0], 0
+  .text:0015D8FF                 jz      short loc_15D90B
+  .text:0015D901                 cmp     byte ptr [ebp+30h], 0
+  .text:0015D905                 jnz     loc_15E0C6
+  .text:0015D90B                 lea     edx, [ebp+0C4h]
+  .text:0015D911                 push    edx
+  .text:0015D912                 lea     ecx, [ebp+0B8h]
+  .text:0015D918                 push    ecx
+  .text:0015D919                 lea     edi, [ebp+0ACh]
+  .text:0015D91F                 push    edi
+  .text:0015D920                 mov     esi, [esp+88h+view_parameters]
+  .text:0015D927                 lea     eax, [esi+0Ch]
+  .text:0015D92A                 mov     [esp+88h+var_78], eax
+  .text:0015D92E                 push    eax
+  .text:0015D92F                 call    __Z12AngleVectorsRK6VectorPS_S2_S2_; AngleVectors(Vector const&,Vector*,Vector*,Vector*)
+  .text:0015D934                 inc     dword ptr [ebp+19Ch]
+  .text:0015D93A                 add     esp, 10h
+  .text:0015D93D                 mov     edi, ds:(gEngfuncs_ptr - 308000h)[ebx]
+  .text:0015D943                 mov     [esp+7Ch+var_44], edi
+  .text:0015D947                 call    dword ptr [edi+0CCh]
+  .text:0015D94D                 mov     edx, [eax+2BCh]
+  .text:0015D953                 mov     [ebp+1A0h], edx
+  .text:0015D959                 lea     edi, [ebp+0F0h]
+  .text:0015D95F                 mov     [esp+7Ch+params], edi
+  .text:0015D963                 mov     edx, 3
+  .text:0015D968                 mov     esi, [esp+7Ch+view_parameters]
+  .text:0015D96F                 mov     ecx, edx
+  .text:0015D971                 rep movsd
+  .text:0015D973                 lea     edi, [ebp+0FCh]
+  .text:0015D979                 mov     [esp+7Ch+var_4C], edi
+  .text:0015D97D                 mov     esi, [esp+7Ch+var_78]
+  .text:0015D981                 mov     ecx, edx
+  .text:0015D983                 rep movsd
+  .text:0015D985                 lea     edi, [ebp+108h]
+  .text:0015D98B                 mov     [esp+7Ch+var_48], edi
+  .text:0015D98F                 mov     eax, [esp+7Ch+view_parameters]
+  .text:0015D996                 lea     esi, [eax+18h]
+  .text:0015D999                 mov     ecx, edx
+  .text:0015D99B                 rep movsd
+  .text:0015D99D                 lea     edi, [ebp+114h]
+  .text:0015D9A3                 mov     eax, [esp+7Ch+view_parameters]
+  .text:0015D9AA                 lea     esi, [eax+24h]
+  .text:0015D9AD                 mov     ecx, edx
+  .text:0015D9AF                 rep movsd
+  .text:0015D9B1                 lea     edi, [ebp+120h]
+  .text:0015D9B7                 mov     eax, [esp+7Ch+view_parameters]
+  .text:0015D9BE                 lea     esi, [eax+30h]
+  .text:0015D9C1                 mov     ecx, edx
+  .text:0015D9C3                 rep movsd
+  .text:0015D9C5                 mov     edx, [esp+7Ch+view_parameters]
+  .text:0015D9CC                 fild    dword ptr [edx+0D0h]
+  .text:0015D9D2                 fstp    dword ptr [ebp+12Ch]
+  .text:0015D9D8                 fild    dword ptr [edx+0D4h]
+  .text:0015D9DE                 fstp    dword ptr [ebp+130h]
+  .text:0015D9E4                 fild    dword ptr [edx+0D8h]
+  .text:0015D9EA                 fstp    dword ptr [ebp+134h]
+  .text:0015D9F0                 fild    dword ptr [edx+0DCh]
+  .text:0015D9F6                 fstp    dword ptr [ebp+138h]
+  .text:0015D9FC                 lea     eax, [ebp+13Ch]
+  .text:0015DA02                 mov     [esp+7Ch+var_50], eax
+  .text:0015DA06                 sub     esp, 8
+  .text:0015DA09                 push    eax
+  .text:0015DA0A                 mov     esi, [esp+88h+view_parameters]
+  .text:0015DA11                 push    esi
+  .text:0015DA12                 call    __Z29CalculateFrustumFromRefParamsPK12ref_params_sP5PLANE; CalculateFrustumFromRefParams(ref_params_s const*,PLANE *)
+  .text:0015DA17                 add     esp, 10h
+  .text:0015DA1A                 mov     edx, [ebp+54h]
+  .text:0015DA1D                 mov     dword ptr [esp+7Ch+var_74], edx
+  .text:0015DA21                 lea     edi, [esp+7Ch+var_28]
+  .text:0015DA25                 mov     [esp+7Ch+var_3C], edi
+  .text:0015DA29                 mov     edi, ebp
+  .text:0015DA2B                 test    edx, edx
+  .text:0015DA2D                 jnz     short loc_15DA47
+  .text:0015DA2F                 jmp     loc_15E0AC
+  .text:0015DA34                 mov     ebp, dword ptr [esp+7Ch+var_74]
+  .text:0015DA38                 mov     ecx, [ebp+0]
+  .text:0015DA3B                 mov     dword ptr [esp+7Ch+var_74], ecx
+  .text:0015DA3F                 test    ecx, ecx
+  .text:0015DA41                 jz      loc_15E0AA
+  .text:0015DA47                 mov     ebp, dword ptr [esp+7Ch+var_74]
+  .text:0015DA4B                 lea     ebp, [ebp+8]
+  .text:0015DA4E                 push    eax
+  .text:0015DA4F                 ; bool
+  .text:0015DA4F                 push    0; bool
+  .text:0015DA51                 ; ClientPortalManager *
+  .text:0015DA51                 push    edi; ClientPortalManager *
+  .text:0015DA52                 ; this
+  .text:0015DA52                 push    ebp; this
+  .text:0015DA53                 call    __ZN12ClientPortal17CheckModelChangedEP19ClientPortalManagerb; ClientPortal::CheckModelChanged(ClientPortalManager *,bool)
+  .text:0015DA58                 pop     edx
+  .text:0015DA59                 pop     ecx
+  .text:0015DA5A                 mov     ecx, [esp+84h+var_50]
+  .text:0015DA5E                 ; PLANE *
+  .text:0015DA5E                 push    ecx; PLANE *
+  .text:0015DA5F                 mov     eax, [esp+88h+params]
+  .text:0015DA63                 ; int
+  .text:0015DA63                 push    eax; int
+  .text:0015DA64                 mov     esi, [edi+1A0h]
+  .text:0015DA6A                 ; int
+  .text:0015DA6A                 push    esi; int
+  .text:0015DA6B                 mov     edx, [edi+19Ch]
+  .text:0015DA71                 ; int
+  .text:0015DA71                 push    edx; int
+  .text:0015DA72                 ; int
+  .text:0015DA72                 push    edi; int
+  .text:0015DA73                 ; ClientPortal *
+  .text:0015DA73                 push    ebp; ClientPortal *
+  .text:0015DA74                 call    __ZN12ClientPortal9IsVisibleEP19ClientPortalManagermiRK6VectorP5PLANE; ClientPortal::IsVisible(ClientPortalManager *,ulong,int,Vector const&,PLANE *)
+  .text:0015DA79                 add     esp, 20h
+  .text:0015DA7C                 test    al, al
+  .text:0015DA7E                 jz      short loc_15DA34
+  .text:0015DA80                 push    eax
+  .text:0015DA81                 mov     ecx, [edi+19Ch]
+  .text:0015DA87                 ; unsigned int
+  .text:0015DA87                 push    ecx; unsigned int
+  .text:0015DA88                 ; ClientPortalManager *
+  .text:0015DA88                 push    edi; ClientPortalManager *
+  .text:0015DA89                 ; this
+  .text:0015DA89                 push    ebp; this
+  .text:0015DA8A                 call    __ZN12ClientPortal12ShouldRenderEP19ClientPortalManagerm; ClientPortal::ShouldRender(ClientPortalManager *,ulong)
+  .text:0015DA8F                 add     esp, 10h
+  .text:0015DA92                 test    al, al
+  .text:0015DA94                 jz      short loc_15DA34
+  .text:0015DA96                 sub     esp, 8
+  .text:0015DA99                 ; ClientPortalManager *
+  .text:0015DA99                 push    edi; ClientPortalManager *
+  .text:0015DA9A                 ; this
+  .text:0015DA9A                 push    ebp; this
+  .text:0015DA9B                 call    __ZN12ClientPortal18PrepareForNewFrameEP19ClientPortalManager; ClientPortal::PrepareForNewFrame(ClientPortalManager *)
+  .text:0015DAA0                 mov     eax, dword ptr [esp+8Ch+var_74]
+  .text:0015DAA4                 mov     esi, [eax+0D4h]
+  .text:0015DAAA                 add     esp, 10h
+  .text:0015DAAD                 test    esi, esi
+  .text:0015DAAF                 jz      short loc_15DA34
+  .text:0015DAB1                 mov     [esp+7Ch+var_54], esi
+  .text:0015DAB5                 jmp     short loc_15DACA
+  .text:0015DAB8                 mov     eax, [esp+7Ch+var_54]
+  .text:0015DABC                 mov     edx, [eax]
+  .text:0015DABE                 mov     [esp+7Ch+var_54], edx
+  .text:0015DAC2                 test    edx, edx
+  .text:0015DAC4                 jz      loc_15DA34
+  .text:0015DACA                 mov     edx, [esp+7Ch+var_54]
+  .text:0015DACE                 mov     ecx, [edx+4]
+  .text:0015DAD1                 mov     [esp+7Ch+var_78], ecx
+  .text:0015DAD5                 ; int
+  .text:0015DAD5                 push    ecx; int
+  .text:0015DAD6                 mov     eax, [esp+80h+var_50]
+  .text:0015DADA                 ; PLANE *
+  .text:0015DADA                 push    eax; PLANE *
+  .text:0015DADB                 mov     esi, [esp+84h+var_48]
+  .text:0015DADF                 ; int
+  .text:0015DADF                 push    esi; int
+  .text:0015DAE0                 mov     edx, [esp+88h+params]
+  .text:0015DAE4                 ; int
+  .text:0015DAE4                 push    edx; int
+  .text:0015DAE5                 mov     ecx, [edi+1A0h]
+  .text:0015DAEB                 ; int
+  .text:0015DAEB                 push    ecx; int
+  .text:0015DAEC                 mov     eax, [edi+19Ch]
+  .text:0015DAF2                 ; int
+  .text:0015DAF2                 push    eax; int
+  .text:0015DAF3                 ; int
+  .text:0015DAF3                 push    edi; int
+  .text:0015DAF4                 ; ClientPortal *
+  .text:0015DAF4                 push    ebp; ClientPortal *
+  .text:0015DAF5                 call    __ZN12ClientPortal16IsSurfaceVisibleEP19ClientPortalManagermiRK6VectorS4_P5PLANEP10msurface_s; ClientPortal::IsSurfaceVisible(ClientPortalManager *,ulong,int,Vector const&,Vector const&,PLANE *,msurface_s *)
+  .text:0015DAFA                 mov     byte ptr [esp+9Ch+var_58], al
+  .text:0015DAFE                 add     esp, 20h
+  .text:0015DB01                 test    al, al
+  .text:0015DB03                 jz      short loc_15DAB8
+  .text:0015DB05                 push    eax
+  .text:0015DB06                 mov     esi, [esp+80h+var_78]
+  .text:0015DB0A                 ; int
+  .text:0015DB0A                 push    esi; int
+  .text:0015DB0B                 fld     dword ptr [edi+138h]
+  .text:0015DB11                 fnstcw  [esp+84h+var_32]
+  .text:0015DB15                 mov     dx, [esp+84h+var_32]
+  .text:0015DB1A                 mov     dh, 0Ch
+  .text:0015DB1C                 mov     [esp+84h+var_34], dx
+  .text:0015DB21                 fldcw   [esp+84h+var_34]
+  .text:0015DB25                 fistp   [esp+84h+y]
+  .text:0015DB29                 fldcw   [esp+84h+var_32]
+  .text:0015DB2D                 mov     ecx, [esp+84h+y]
+  .text:0015DB31                 ; int
+  .text:0015DB31                 push    ecx; int
+  .text:0015DB32                 fld     dword ptr [edi+134h]
+  .text:0015DB38                 fldcw   [esp+88h+var_34]
+  .text:0015DB3C                 fistp   [esp+88h+y]
+  .text:0015DB40                 fldcw   [esp+88h+var_32]
+  .text:0015DB44                 mov     eax, [esp+88h+y]
+  .text:0015DB48                 ; int
+  .text:0015DB48                 push    eax; int
+  .text:0015DB49                 mov     esi, [esp+8Ch+var_4C]
+  .text:0015DB4D                 ; int
+  .text:0015DB4D                 push    esi; int
+  .text:0015DB4E                 mov     edx, [esp+90h+params]
+  .text:0015DB52                 ; int
+  .text:0015DB52                 push    edx; int
+  .text:0015DB53                 ; ClientPortal *
+  .text:0015DB53                 push    ebp; ClientPortal *
+  .text:0015DB54                 ; int
+  .text:0015DB54                 push    edi; int
+  .text:0015DB55                 call    __ZN19ClientPortalManager18CreatePortalSourceER12ClientPortalRK6VectorS4_iiP10msurface_s; ClientPortalManager::CreatePortalSource(ClientPortal &,Vector const&,Vector const&,int,int,msurface_s *)
+  .text:0015DB5A                 mov     esi, eax
+  .text:0015DB5C                 mov     [esp+9Ch+var_28], eax
+  .text:0015DB60                 mov     ecx, [edi+84h]
+  .text:0015DB66                 mov     eax, [edi+88h]
+  .text:0015DB6C                 mov     [esp+9Ch+var_64], eax
+  .text:0015DB70                 add     esp, 20h
+  .text:0015DB73                 cmp     ecx, eax
+  .text:0015DB75                 jz      loc_15DF79
+  .text:0015DB7B                 mov     dl, [esi+0C0h]
+  .text:0015DB81                 mov     byte ptr [esp+7Ch+var_60], dl
+  .text:0015DB85                 mov     [esp+7Ch+var_68], ecx
+  .text:0015DB89                 mov     eax, [esp+7Ch+var_64]
+  .text:0015DB8D                 sub     eax, ecx
+  .text:0015DB8F                 mov     edx, eax
+  .text:0015DB91                 sub     edx, 4
+  .text:0015DB94                 shr     edx, 2
+  .text:0015DB97                 mov     eax, edx
+  .text:0015DB99                 and     eax, 1
+  .text:0015DB9C                 mov     [esp+7Ch+var_5C], eax
+  .text:0015DBA0                 mov     edx, [ecx]
+  .text:0015DBA2                 cmp     byte ptr [esp+7Ch+var_60], 0
+  .text:0015DBA7                 jz      loc_15E06A
+  .text:0015DBAD                 cmp     byte ptr [edx+0C0h], 0
+  .text:0015DBB4                 jz      loc_15E06A
+  .text:0015DBBA                 fld     dword ptr [esi+0Ch]
+  .text:0015DBBD                 fld     dword ptr [edx+0Ch]
+  .text:0015DBC0                 fxch    st(1)
+  .text:0015DBC2                 fucompp
+  .text:0015DBC4                 fnstsw  ax
+  .text:0015DBC6                 and     ah, 45h
+  .text:0015DBC9                 xor     ah, 40h
+  .text:0015DBCC                 jnz     loc_15DC78
+  .text:0015DBD2                 fld     dword ptr [esi+10h]
+  .text:0015DBD5                 fld     dword ptr [edx+10h]
+  .text:0015DBD8                 fxch    st(1)
+  .text:0015DBDA                 fucompp
+  .text:0015DBDC                 fnstsw  ax
+  .text:0015DBDE                 and     ah, 45h
+  .text:0015DBE1                 xor     ah, 40h
+  .text:0015DBE4                 jnz     loc_15DC78
+  .text:0015DBEA                 fld     dword ptr [esi+14h]
+  .text:0015DBED                 fld     dword ptr [edx+14h]
+  .text:0015DBF0                 fxch    st(1)
+  .text:0015DBF2                 fucompp
+  .text:0015DBF4                 fnstsw  ax
+  .text:0015DBF6                 and     ah, 45h
+  .text:0015DBF9                 cmp     ah, 40h ; '@'
+  .text:0015DBFC                 jnz     short loc_15DC78
+  .text:0015DBFE                 fld     dword ptr [esi]
+  .text:0015DC00                 fld     dword ptr [edx]
+  .text:0015DC02                 fxch    st(1)
+  .text:0015DC04                 fucompp
+  .text:0015DC06                 fnstsw  ax
+  .text:0015DC08                 and     ah, 45h
+  .text:0015DC0B                 cmp     ah, 40h ; '@'
+  .text:0015DC0E                 jnz     short loc_15DC78
+  .text:0015DC10                 fld     dword ptr [esi+4]
+  .text:0015DC13                 fld     dword ptr [edx+4]
+  .text:0015DC16                 fxch    st(1)
+  .text:0015DC18                 fucompp
+  .text:0015DC1A                 fnstsw  ax
+  .text:0015DC1C                 and     ah, 45h
+  .text:0015DC1F                 xor     ah, 40h
+  .text:0015DC22                 jnz     short loc_15DC78
+  .text:0015DC24                 fld     dword ptr [esi+8]
+  .text:0015DC27                 fld     dword ptr [edx+8]
+  .text:0015DC2A                 fxch    st(1)
+  .text:0015DC2C                 fucompp
+  .text:0015DC2E                 fnstsw  ax
+  .text:0015DC30                 and     ah, 45h
+  .text:0015DC33                 cmp     ah, 40h ; '@'
+  .text:0015DC36                 jnz     short loc_15DC78
+  .text:0015DC38                 fld     dword ptr [esi+18h]
+  .text:0015DC3B                 fld     dword ptr [edx+18h]
+  .text:0015DC3E                 fxch    st(1)
+  .text:0015DC40                 fucompp
+  .text:0015DC42                 fnstsw  ax
+  .text:0015DC44                 and     ah, 45h
+  .text:0015DC47                 cmp     ah, 40h ; '@'
+  .text:0015DC4A                 jnz     short loc_15DC78
+  .text:0015DC4C                 fld     dword ptr [esi+1Ch]
+  .text:0015DC4F                 fld     dword ptr [edx+1Ch]
+  .text:0015DC52                 fxch    st(1)
+  .text:0015DC54                 fucompp
+  .text:0015DC56                 fnstsw  ax
+  .text:0015DC58                 and     ah, 45h
+  .text:0015DC5B                 xor     ah, 40h
+  .text:0015DC5E                 jnz     short loc_15DC78
+  .text:0015DC60                 fld     dword ptr [esi+20h]
+  .text:0015DC63                 fld     dword ptr [edx+20h]
+  .text:0015DC66                 fxch    st(1)
+  .text:0015DC68                 fucompp
+  .text:0015DC6A                 fnstsw  ax
+  .text:0015DC6C                 and     ah, 45h
+  .text:0015DC6F                 cmp     ah, 40h ; '@'
+  .text:0015DC72                 jz      loc_15DD86
+  .text:0015DC78                 lea     edx, [ecx+4]
+  .text:0015DC7B                 mov     [esp+7Ch+var_68], edx
+  .text:0015DC7F                 cmp     [esp+7Ch+var_64], edx
+  .text:0015DC83                 jz      loc_15DF79
+  .text:0015DC89                 mov     eax, [esp+7Ch+var_5C]
+  .text:0015DC8D                 test    eax, eax
+  .text:0015DC8F                 jz      loc_15DF00
+  .text:0015DC95                 mov     ecx, [ecx+4]
+  .text:0015DC98                 cmp     byte ptr [esp+7Ch+var_60], 0
+  .text:0015DC9D                 jz      loc_15DF54
+  .text:0015DCA3                 cmp     byte ptr [ecx+0C0h], 0
+  .text:0015DCAA                 jz      loc_15DF54
+  .text:0015DCB0                 fld     dword ptr [esi+0Ch]
+  .text:0015DCB3                 fld     dword ptr [ecx+0Ch]
+  .text:0015DCB6                 fxch    st(1)
+  .text:0015DCB8                 fucompp
+  .text:0015DCBA                 fnstsw  ax
+  .text:0015DCBC                 and     ah, 45h
+  .text:0015DCBF                 xor     ah, 40h
+  .text:0015DCC2                 jnz     loc_15DF6A
+  .text:0015DCC8                 fld     dword ptr [esi+10h]
+  .text:0015DCCB                 fld     dword ptr [ecx+10h]
+  .text:0015DCCE                 fxch    st(1)
+  .text:0015DCD0                 fucompp
+  .text:0015DCD2                 fnstsw  ax
+  .text:0015DCD4                 and     ah, 45h
+  .text:0015DCD7                 xor     ah, 40h
+  .text:0015DCDA                 jnz     loc_15DF6A
+  .text:0015DCE0                 fld     dword ptr [esi+14h]
+  .text:0015DCE3                 fld     dword ptr [ecx+14h]
+  .text:0015DCE6                 fxch    st(1)
+  .text:0015DCE8                 fucompp
+  .text:0015DCEA                 fnstsw  ax
+  .text:0015DCEC                 and     ah, 45h
+  .text:0015DCEF                 cmp     ah, 40h ; '@'
+  .text:0015DCF2                 jnz     loc_15DF6A
+  .text:0015DCF8                 fld     dword ptr [esi]
+  .text:0015DCFA                 fld     dword ptr [ecx]
+  .text:0015DCFC                 fxch    st(1)
+  .text:0015DCFE                 fucompp
+  .text:0015DD00                 fnstsw  ax
+  .text:0015DD02                 and     ah, 45h
+  .text:0015DD05                 cmp     ah, 40h ; '@'
+  .text:0015DD08                 jnz     loc_15DF6A
+  .text:0015DD0E                 fld     dword ptr [esi+4]
+  .text:0015DD11                 fld     dword ptr [ecx+4]
+  .text:0015DD14                 fxch    st(1)
+  .text:0015DD16                 fucompp
+  .text:0015DD18                 fnstsw  ax
+  .text:0015DD1A                 and     ah, 45h
+  .text:0015DD1D                 xor     ah, 40h
+  .text:0015DD20                 jnz     loc_15DF6A
+  .text:0015DD26                 fld     dword ptr [esi+8]
+  .text:0015DD29                 fld     dword ptr [ecx+8]
+  .text:0015DD2C                 fxch    st(1)
+  .text:0015DD2E                 fucompp
+  .text:0015DD30                 fnstsw  ax
+  .text:0015DD32                 and     ah, 45h
+  .text:0015DD35                 cmp     ah, 40h ; '@'
+  .text:0015DD38                 jnz     loc_15DF6A
+  .text:0015DD3E                 fld     dword ptr [esi+18h]
+  .text:0015DD41                 fld     dword ptr [ecx+18h]
+  .text:0015DD44                 fxch    st(1)
+  .text:0015DD46                 fucompp
+  .text:0015DD48                 fnstsw  ax
+  .text:0015DD4A                 and     ah, 45h
+  .text:0015DD4D                 cmp     ah, 40h ; '@'
+  .text:0015DD50                 jnz     loc_15DF6A
+  .text:0015DD56                 fld     dword ptr [esi+1Ch]
+  .text:0015DD59                 fld     dword ptr [ecx+1Ch]
+  .text:0015DD5C                 fxch    st(1)
+  .text:0015DD5E                 fucompp
+  .text:0015DD60                 fnstsw  ax
+  .text:0015DD62                 and     ah, 45h
+  .text:0015DD65                 xor     ah, 40h
+  .text:0015DD68                 jnz     loc_15DF6A
+  .text:0015DD6E                 fld     dword ptr [esi+20h]
+  .text:0015DD71                 fld     dword ptr [ecx+20h]
+  .text:0015DD74                 fxch    st(1)
+  .text:0015DD76                 fucompp
+  .text:0015DD78                 fnstsw  ax
+  .text:0015DD7A                 and     ah, 45h
+  .text:0015DD7D                 cmp     ah, 40h ; '@'
+  .text:0015DD80                 jnz     loc_15DF6A
+  .text:0015DD86                 sub     esp, 0Ch
+  .text:0015DD89                 ; this
+  .text:0015DD89                 push    esi; this
+  .text:0015DD8A                 call    __ZN12PortalSourceD1Ev; PortalSource::~PortalSource()
+  .text:0015DD8F                 ; void *
+  .text:0015DD8F                 mov     [esp+8Ch+red], esi; void *
+  .text:0015DD92                 call    __ZdlPv; operator delete(void *)
+  .text:0015DD97                 mov     edx, [esp+8Ch+var_68]
+  .text:0015DD9B                 mov     esi, [edx]
+  .text:0015DD9D                 mov     [esp+8Ch+var_28], esi
+  .text:0015DDA1                 add     esp, 10h
+  .text:0015DDA4                 jmp     loc_15DF7E
+  .text:0015DDAA                 fld     dword ptr [esi+14h]
+  .text:0015DDAD                 fld     dword ptr [edx+14h]
+  .text:0015DDB0                 fxch    st(1)
+  .text:0015DDB2                 fucompp
+  .text:0015DDB4                 fnstsw  ax
+  .text:0015DDB6                 and     ah, 45h
+  .text:0015DDB9                 cmp     ah, 40h ; '@'
+  .text:0015DDBC                 jnz     short loc_15DDFC
+  .text:0015DDBE                 fld     dword ptr [esi]
+  .text:0015DDC0                 fld     dword ptr [edx]
+  .text:0015DDC2                 fxch    st(1)
+  .text:0015DDC4                 fucompp
+  .text:0015DDC6                 fnstsw  ax
+  .text:0015DDC8                 and     ah, 45h
+  .text:0015DDCB                 cmp     ah, 40h ; '@'
+  .text:0015DDCE                 jnz     short loc_15DDFC
+  .text:0015DDD0                 fld     dword ptr [esi+4]
+  .text:0015DDD3                 fld     dword ptr [edx+4]
+  .text:0015DDD6                 fxch    st(1)
+  .text:0015DDD8                 fucompp
+  .text:0015DDDA                 fnstsw  ax
+  .text:0015DDDC                 and     ah, 45h
+  .text:0015DDDF                 xor     ah, 40h
+  .text:0015DDE2                 jnz     short loc_15DDFC
+  .text:0015DDE4                 fld     dword ptr [esi+8]
+  .text:0015DDE7                 fld     dword ptr [edx+8]
+  .text:0015DDEA                 fxch    st(1)
+  .text:0015DDEC                 fucompp
+  .text:0015DDEE                 fnstsw  ax
+  .text:0015DDF0                 and     ah, 45h
+  .text:0015DDF3                 cmp     ah, 40h ; '@'
+  .text:0015DDF6                 jz      loc_15E0D8
+  .text:0015DDFC                 mov     ecx, [esp+7Ch+var_68]
+  .text:0015DE00                 add     ecx, 4
+  .text:0015DE03                 mov     [esp+7Ch+var_68], ecx
+  .text:0015DE07                 mov     edx, [ecx]
+  .text:0015DE09                 cmp     byte ptr [esp+7Ch+var_60], 0
+  .text:0015DE0E                 jz      short loc_15DE19
+  .text:0015DE10                 cmp     byte ptr [edx+0C0h], 0
+  .text:0015DE17                 jnz     short loc_15DE33
+  .text:0015DE19                 cmp     byte ptr [esi+0C1h], 0
+  .text:0015DE20                 jz      loc_15DEF2
+  .text:0015DE26                 cmp     byte ptr [edx+0C1h], 0
+  .text:0015DE2D                 jz      loc_15DEF2
+  .text:0015DE33                 fld     dword ptr [esi+0Ch]
+  .text:0015DE36                 fld     dword ptr [edx+0Ch]
+  .text:0015DE39                 fxch    st(1)
+  .text:0015DE3B                 fucompp
+  .text:0015DE3D                 fnstsw  ax
+  .text:0015DE3F                 and     ah, 45h
+  .text:0015DE42                 xor     ah, 40h
+  .text:0015DE45                 jnz     loc_15DEF2
+  .text:0015DE4B                 fld     dword ptr [esi+10h]
+  .text:0015DE4E                 fld     dword ptr [edx+10h]
+  .text:0015DE51                 fxch    st(1)
+  .text:0015DE53                 fucompp
+  .text:0015DE55                 fnstsw  ax
+  .text:0015DE57                 and     ah, 45h
+  .text:0015DE5A                 xor     ah, 40h
+  .text:0015DE5D                 jnz     loc_15DEF2
+  .text:0015DE63                 fld     dword ptr [esi+14h]
+  .text:0015DE66                 fld     dword ptr [edx+14h]
+  .text:0015DE69                 fxch    st(1)
+  .text:0015DE6B                 fucompp
+  .text:0015DE6D                 fnstsw  ax
+  .text:0015DE6F                 and     ah, 45h
+  .text:0015DE72                 cmp     ah, 40h ; '@'
+  .text:0015DE75                 jnz     short loc_15DEF2
+  .text:0015DE77                 fld     dword ptr [esi]
+  .text:0015DE79                 fld     dword ptr [edx]
+  .text:0015DE7B                 fxch    st(1)
+  .text:0015DE7D                 fucompp
+  .text:0015DE7F                 fnstsw  ax
+  .text:0015DE81                 and     ah, 45h
+  .text:0015DE84                 cmp     ah, 40h ; '@'
+  .text:0015DE87                 jnz     short loc_15DEF2
+  .text:0015DE89                 fld     dword ptr [esi+4]
+  .text:0015DE8C                 fld     dword ptr [edx+4]
+  .text:0015DE8F                 fxch    st(1)
+  .text:0015DE91                 fucompp
+  .text:0015DE93                 fnstsw  ax
+  .text:0015DE95                 and     ah, 45h
+  .text:0015DE98                 xor     ah, 40h
+  .text:0015DE9B                 jnz     short loc_15DEF2
+  .text:0015DE9D                 fld     dword ptr [esi+8]
+  .text:0015DEA0                 fld     dword ptr [edx+8]
+  .text:0015DEA3                 fxch    st(1)
+  .text:0015DEA5                 fucompp
+  .text:0015DEA7                 fnstsw  ax
+  .text:0015DEA9                 and     ah, 45h
+  .text:0015DEAC                 cmp     ah, 40h ; '@'
+  .text:0015DEAF                 jnz     short loc_15DEF2
+  .text:0015DEB1                 fld     dword ptr [esi+18h]
+  .text:0015DEB4                 fld     dword ptr [edx+18h]
+  .text:0015DEB7                 fxch    st(1)
+  .text:0015DEB9                 fucompp
+  .text:0015DEBB                 fnstsw  ax
+  .text:0015DEBD                 and     ah, 45h
+  .text:0015DEC0                 cmp     ah, 40h ; '@'
+  .text:0015DEC3                 jnz     short loc_15DEF2
+  .text:0015DEC5                 fld     dword ptr [esi+1Ch]
+  .text:0015DEC8                 fld     dword ptr [edx+1Ch]
+  .text:0015DECB                 fxch    st(1)
+  .text:0015DECD                 fucompp
+  .text:0015DECF                 fnstsw  ax
+  .text:0015DED1                 and     ah, 45h
+  .text:0015DED4                 xor     ah, 40h
+  .text:0015DED7                 jnz     short loc_15DEF2
+  .text:0015DED9                 fld     dword ptr [esi+20h]
+  .text:0015DEDC                 fld     dword ptr [edx+20h]
+  .text:0015DEDF                 fxch    st(1)
+  .text:0015DEE1                 fucompp
+  .text:0015DEE3                 fnstsw  ax
+  .text:0015DEE5                 and     ah, 45h
+  .text:0015DEE8                 cmp     ah, 40h ; '@'
+  .text:0015DEEB                 jz      loc_15DD86
+  .text:0015DEF1                 nop
+  .text:0015DEF2                 lea     ecx, [ecx+4]
+  .text:0015DEF5                 mov     [esp+7Ch+var_68], ecx
+  .text:0015DEF9                 cmp     [esp+7Ch+var_64], ecx
+  .text:0015DEFD                 jz      short loc_15DF79
+  .text:0015DEFF                 nop
+  .text:0015DF00                 mov     ecx, [esp+7Ch+var_68]
+  .text:0015DF04                 mov     edx, [ecx]
+  .text:0015DF06                 cmp     byte ptr [esp+7Ch+var_60], 0
+  .text:0015DF0B                 jz      loc_15E08A
+  .text:0015DF11                 cmp     byte ptr [edx+0C0h], 0
+  .text:0015DF18                 jz      loc_15E08A
+  .text:0015DF1E                 fld     dword ptr [esi+0Ch]
+  .text:0015DF21                 fld     dword ptr [edx+0Ch]
+  .text:0015DF24                 fxch    st(1)
+  .text:0015DF26                 fucompp
+  .text:0015DF28                 fnstsw  ax
+  .text:0015DF2A                 and     ah, 45h
+  .text:0015DF2D                 xor     ah, 40h
+  .text:0015DF30                 jnz     loc_15DDFC
+  .text:0015DF36                 fld     dword ptr [esi+10h]
+  .text:0015DF39                 fld     dword ptr [edx+10h]
+  .text:0015DF3C                 fxch    st(1)
+  .text:0015DF3E                 fucompp
+  .text:0015DF40                 fnstsw  ax
+  .text:0015DF42                 and     ah, 45h
+  .text:0015DF45                 xor     ah, 40h
+  .text:0015DF48                 jnz     loc_15DDFC
+  .text:0015DF4E                 jmp     loc_15DDAA
+  .text:0015DF54                 cmp     byte ptr [esi+0C1h], 0
+  .text:0015DF5B                 jz      short loc_15DF6A
+  .text:0015DF5D                 cmp     byte ptr [ecx+0C1h], 0
+  .text:0015DF64                 jnz     loc_15DCB0
+  .text:0015DF6A                 add     [esp+7Ch+var_68], 4
+  .text:0015DF6F                 mov     edx, [esp+7Ch+var_68]
+  .text:0015DF73                 cmp     [esp+7Ch+var_64], edx
+  .text:0015DF77                 jnz     short loc_15DF00
+  .text:0015DF79                 mov     byte ptr [esp+7Ch+var_58], 0
+  .text:0015DF7E                 sub     esp, 0Ch
+  .text:0015DF81                 ; this
+  .text:0015DF81                 push    ebp; this
+  .text:0015DF82                 call    __ZN12ClientPortal7GetZoomEv; ClientPortal::GetZoom(void)
+  .text:0015DF87                 fstp    [esp+8Ch+var_5C]
+  .text:0015DF8B                 ; this
+  .text:0015DF8B                 mov     [esp+8Ch+red], ebp; this
+  .text:0015DF8E                 call    __ZN12ClientPortal15GetSourceAnglesEv; ClientPortal::GetSourceAngles(void)
+  .text:0015DF93                 mov     [esp+8Ch+var_60], eax
+  .text:0015DF97                 ; this
+  .text:0015DF97                 mov     [esp+8Ch+red], ebp; this
+  .text:0015DF9A                 call    __ZN12ClientPortal15GetSourceOriginEv; ClientPortal::GetSourceOrigin(void)
+  .text:0015DF9F                 mov     [esp+8Ch+var_64], eax
+  .text:0015DFA3                 ; this
+  .text:0015DFA3                 mov     [esp+8Ch+red], ebp; this
+  .text:0015DFA6                 call    __ZN12ClientPortal9GetAnglesEv; ClientPortal::GetAngles(void)
+  .text:0015DFAB                 mov     [esp+8Ch+var_68], eax
+  .text:0015DFAF                 ; this
+  .text:0015DFAF                 mov     [esp+8Ch+red], ebp; this
+  .text:0015DFB2                 call    __ZN12ClientPortal9GetOriginEv; ClientPortal::GetOrigin(void)
+  .text:0015DFB7                 mov     esi, eax
+  .text:0015DFB9                 ; this
+  .text:0015DFB9                 mov     [esp+8Ch+red], ebp; this
+  .text:0015DFBC                 call    __ZN12ClientPortal13GetPortalModeEv; ClientPortal::GetPortalMode(void)
+  .text:0015DFC1                 pop     ecx
+  .text:0015DFC2                 pop     edx
+  .text:0015DFC3                 mov     edx, [esp+84h+var_78]
+  .text:0015DFC7                 ; int
+  .text:0015DFC7                 push    edx; int
+  .text:0015DFC8                 fld     [esp+88h+var_5C]
+  .text:0015DFCC                 push    edx
+  .text:0015DFCD                 ; float
+  .text:0015DFCD                 fstp    [esp+8Ch+red]; float
+  .text:0015DFD0                 mov     ecx, [esp+8Ch+var_60]
+  .text:0015DFD4                 ; int
+  .text:0015DFD4                 push    ecx; int
+  .text:0015DFD5                 mov     edx, [esp+90h+var_64]
+  .text:0015DFD9                 ; int
+  .text:0015DFD9                 push    edx; int
+  .text:0015DFDA                 mov     ecx, [esp+94h+var_68]
+  .text:0015DFDE                 ; int
+  .text:0015DFDE                 push    ecx; int
+  .text:0015DFDF                 ; int
+  .text:0015DFDF                 push    esi; int
+  .text:0015DFE0                 mov     esi, [esp+9Ch+var_4C]
+  .text:0015DFE4                 ; int
+  .text:0015DFE4                 push    esi; int
+  .text:0015DFE5                 mov     edx, [esp+0A0h+params]
+  .text:0015DFE9                 ; int
+  .text:0015DFE9                 push    edx; int
+  .text:0015DFEA                 ; int
+  .text:0015DFEA                 push    eax; int
+  .text:0015DFEB                 mov     eax, [esp+0A8h+var_28]
+  .text:0015DFF2                 ; int
+  .text:0015DFF2                 push    eax; int
+  .text:0015DFF3                 call    __ZN12PortalSource18CalculateClipPlaneE10PortalModeRK6VectorS3_S3_S3_S3_S3_fP10msurface_s; PortalSource::CalculateClipPlane(PortalMode,Vector const&,Vector const&,Vector const&,Vector const&,Vector const&,Vector const&,float,msurface_s *)
+  .text:0015DFF8                 add     esp, 24h
+  .text:0015DFFB                 mov     ecx, [esp+88h+var_28]
+  .text:0015DFFF                 ; this
+  .text:0015DFFF                 push    ecx; this
+  .text:0015E000                 call    __ZN12PortalSource13CreateTextureEv; PortalSource::CreateTexture(void)
+  .text:0015E005                 add     esp, 0Ch
+  .text:0015E008                 mov     esi, [esp+80h+var_28]
+  .text:0015E00C                 mov     edx, [esi+0C4h]
+  .text:0015E012                 push    edx
+  .text:0015E013                 mov     eax, [esp+84h+var_78]
+  .text:0015E017                 push    eax
+  .text:0015E018                 push    ebp
+  .text:0015E019                 call    __ZN12ClientPortal24AddTextureForQuickLookupEP10msurface_sj; ClientPortal::AddTextureForQuickLookup(msurface_s *,uint)
+  .text:0015E01E                 pop     eax
+  .text:0015E01F                 pop     edx
+  .text:0015E020                 mov     ecx, [esp+84h+var_28]
+  .text:0015E024                 mov     esi, [ecx+0C4h]
+  .text:0015E02A                 ; char
+  .text:0015E02A                 push    esi; char
+  .text:0015E02B                 ; this
+  .text:0015E02B                 push    edi; this
+  .text:0015E02C                 call    __ZN19ClientPortalManager22IncrementSharedTextureEj; ClientPortalManager::IncrementSharedTexture(uint)
+  .text:0015E031                 add     esp, 10h
+  .text:0015E034                 cmp     byte ptr [esp+7Ch+var_58], 0
+  .text:0015E039                 jnz     loc_15DAB8
+  .text:0015E03F                 mov     eax, [edi+88h]
+  .text:0015E045                 cmp     eax, [edi+8Ch]
+  .text:0015E04B                 jz      loc_15E705
+  .text:0015E051                 mov     esi, [esp+7Ch+var_28]
+  .text:0015E055                 test    eax, eax
+  .text:0015E057                 jz      short loc_15E05B
+  .text:0015E059                 mov     [eax], esi
+  .text:0015E05B                 add     eax, 4
+  .text:0015E05E                 mov     [edi+88h], eax
+  .text:0015E064                 jmp     loc_15DAB8
+  .text:0015E06A                 cmp     byte ptr [esi+0C1h], 0
+  .text:0015E071                 jz      loc_15DC78
+  .text:0015E077                 cmp     byte ptr [edx+0C1h], 0
+  .text:0015E07E                 jnz     loc_15DBBA
+  .text:0015E084                 jmp     loc_15DC78
+  .text:0015E08A                 cmp     byte ptr [esi+0C1h], 0
+  .text:0015E091                 jz      loc_15DDFC
+  .text:0015E097                 cmp     byte ptr [edx+0C1h], 0
+  .text:0015E09E                 jnz     loc_15DF1E
+  .text:0015E0A4                 jmp     loc_15DDFC
+  .text:0015E0AA                 mov     ebp, edi
+  .text:0015E0AC                 mov     edi, [ebp+88h]
+  .text:0015E0B2                 sub     edi, [ebp+84h]
+  .text:0015E0B8                 shr     edi, 2
+  .text:0015E0BB                 jnz     short loc_15E126
+  .text:0015E0BD                 add     esp, 6Ch
+  .text:0015E0C0                 pop     ebx
+  .text:0015E0C1                 pop     esi
+  .text:0015E0C2                 pop     edi
+  .text:0015E0C3                 pop     ebp
+  .text:0015E0C4                 retn
+  .text:0015E0C6                 cmp     byte ptr [ebp+18h], 0
+  .text:0015E0CA                 jz      loc_15D90B
+  .text:0015E0D0                 add     esp, 6Ch
+  .text:0015E0D3                 pop     ebx
+  .text:0015E0D4                 pop     esi
+  .text:0015E0D5                 pop     edi
+  .text:0015E0D6                 pop     ebp
+  .text:0015E0D7                 retn
+  .text:0015E0D8                 fld     dword ptr [esi+18h]
+  .text:0015E0DB                 fld     dword ptr [edx+18h]
+  .text:0015E0DE                 fxch    st(1)
+  .text:0015E0E0                 fucompp
+  .text:0015E0E2                 fnstsw  ax
+  .text:0015E0E4                 and     ah, 45h
+  .text:0015E0E7                 cmp     ah, 40h ; '@'
+  .text:0015E0EA                 jnz     loc_15DDFC
+  .text:0015E0F0                 fld     dword ptr [esi+1Ch]
+  .text:0015E0F3                 fld     dword ptr [edx+1Ch]
+  .text:0015E0F6                 fxch    st(1)
+  .text:0015E0F8                 fucompp
+  .text:0015E0FA                 fnstsw  ax
+  .text:0015E0FC                 and     ah, 45h
+  .text:0015E0FF                 xor     ah, 40h
+  .text:0015E102                 jnz     loc_15DDFC
+  .text:0015E108                 fld     dword ptr [esi+20h]
+  .text:0015E10B                 fld     dword ptr [edx+20h]
+  .text:0015E10E                 fxch    st(1)
+  .text:0015E110                 fucompp
+  .text:0015E112                 fnstsw  ax
+  .text:0015E114                 and     ah, 45h
+  .text:0015E117                 cmp     ah, 40h ; '@'
+  .text:0015E11A                 jz      loc_15DD86
+  .text:0015E120                 jmp     loc_15DDFC
+  .text:0015E126                 mov     esi, ds:(g_pEngineClient_ptr - 308000h)[ebx]
+  .text:0015E12C                 mov     [esp+7Ch+var_5C], esi
+  .text:0015E130                 mov     eax, [esi]
+  .text:0015E132                 mov     edx, [eax]
+  .text:0015E134                 push    0
+  .text:0015E136                 push    0
+  .text:0015E138                 push    0
+  .text:0015E13A                 push    eax
+  .text:0015E13B                 call    dword ptr [edx+28h]
+  .text:0015E13E                 mov     ecx, ds:(g_bRenderingPortals_ptr - 308000h)[ebx]
+  .text:0015E144                 mov     [esp+8Ch+var_4C], ecx
+  .text:0015E148                 mov     byte ptr [ecx], 1
+  .text:0015E14B                 mov     edx, [ebp+84h]
+  .text:0015E151                 mov     edi, [ebp+88h]
+  .text:0015E157                 sub     edi, edx
+  .text:0015E159                 add     esp, 10h
+  .text:0015E15C                 shr     edi, 2
+  .text:0015E15F                 jz      loc_15E602
+  .text:0015E165                 mov     [esp+7Ch+var_78], 0
+  .text:0015E16D                 lea     ecx, [esp+7Ch+var_28]
+  .text:0015E171                 lea     esi, [ebp+0DCh]
+  .text:0015E177                 mov     [esp+7Ch+var_64], esi
+  .text:0015E17B                 lea     eax, [esp+7Ch+var_2C]
+  .text:0015E17F                 mov     [esp+7Ch+var_60], eax
+  .text:0015E183                 mov     esi, [esp+7Ch+view_parameters]
+  .text:0015E18A                 mov     [esp+7Ch+params], ecx
+  .text:0015E18E                 mov     edi, [esp+7Ch+var_78]
+  .text:0015E192                 mov     edi, [edx+edi*4]
+  .text:0015E195                 push    eax
+  .text:0015E196                 ; int
+  .text:0015E196                 push    esi; int
+  .text:0015E197                 ; ClientPortalManager *
+  .text:0015E197                 push    ebp; ClientPortalManager *
+  .text:0015E198                 ; int
+  .text:0015E198                 push    edi; int
+  .text:0015E199                 call    __ZN12PortalSource14SetupRenderingEP19ClientPortalManagerP12ref_params_s; PortalSource::SetupRendering(ClientPortalManager *,ref_params_s *)
+  .text:0015E19E                 add     esp, 0Ch
+  .text:0015E1A1                 fldz
+  .text:0015E1A3                 ; alpha
+  .text:0015E1A3                 fst     [esp+80h+alpha]; alpha
+  .text:0015E1A6                 ; blue
+  .text:0015E1A6                 push    3F800000h; blue
+  .text:0015E1AB                 sub     esp, 8
+  .text:0015E1AE                 ; green
+  .text:0015E1AE                 fst     [esp+8Ch+green]; green
+  .text:0015E1B2                 ; red
+  .text:0015E1B2                 fstp    [esp+8Ch+red]; red
+  .text:0015E1B5                 call    _glClearColor
+  .text:0015E1BA                 ; mask
+  .text:0015E1BA                 mov     [esp+8Ch+red], 4000h; mask
+  .text:0015E1C1                 call    _glClear
+  .text:0015E1C6                 add     esp, 10h
+  .text:0015E1C9                 mov     eax, [esp+7Ch+var_44]
+  .text:0015E1CD                 call    dword ptr [eax+0CCh]
+  .text:0015E1D3                 mov     dword ptr [esp+7Ch+var_74], eax
+  .text:0015E1D7                 mov     edx, [esp+7Ch+var_44]
+  .text:0015E1DB                 call    dword ptr [edx+0D8h]
+  .text:0015E1E1                 fld     dword ptr [ebp+0E8h]
+  .text:0015E1E7                 fxch    st(1)
+  .text:0015E1E9                 fucom   st(1)
+  .text:0015E1EB                 fnstsw  ax
+  .text:0015E1ED                 fstp    st(1)
+  .text:0015E1EF                 test    ah, 5
+  .text:0015E1F2                 jnz     loc_15E46C
+  .text:0015E1F8                 mov     ecx, [ebp+0ECh]
+  .text:0015E1FE                 mov     [esp+7Ch+var_58], ecx
+  .text:0015E202                 test    ecx, ecx
+  .text:0015E204                 jz      loc_15E6D4
+  .text:0015E20A                 mov     ecx, [ebp+0DCh]
+  .text:0015E210                 mov     edx, [ebp+0E0h]
+  .text:0015E216                 mov     [esp+7Ch+var_68], edx
+  .text:0015E21A                 cmp     ecx, edx
+  .text:0015E21C                 jz      loc_15E30C
+  .text:0015E222                 mov     edx, [esp+7Ch+var_68]
+  .text:0015E226                 sub     edx, ecx
+  .text:0015E228                 sub     edx, 4
+  .text:0015E22B                 shr     edx, 2
+  .text:0015E22E                 and     edx, 7
+  .text:0015E231                 mov     eax, [ecx]
+  .text:0015E233                 or      dword ptr [eax], 40000h
+  .text:0015E239                 lea     eax, [ecx+4]
+  .text:0015E23C                 cmp     [esp+7Ch+var_68], eax
+  .text:0015E240                 jz      loc_15E30C
+  .text:0015E246                 test    edx, edx
+  .text:0015E248                 jz      short loc_15E2BC
+  .text:0015E24A                 cmp     edx, 1
+  .text:0015E24D                 jz      short loc_15E2AB
+  .text:0015E24F                 cmp     edx, 2
+  .text:0015E252                 jz      short loc_15E2A0
+  .text:0015E254                 cmp     edx, 3
+  .text:0015E257                 jz      short loc_15E295
+  .text:0015E259                 cmp     edx, 4
+  .text:0015E25C                 jz      short loc_15E28A
+  .text:0015E25E                 cmp     edx, 5
+  .text:0015E261                 jz      short loc_15E27F
+  .text:0015E263                 cmp     edx, 6
+  .text:0015E266                 jz      short loc_15E274
+  .text:0015E268                 mov     edx, [ecx+4]
+  .text:0015E26B                 or      dword ptr [edx], 40000h
+  .text:0015E271                 lea     eax, [ecx+8]
+  .text:0015E274                 mov     edx, [eax]
+  .text:0015E276                 or      dword ptr [edx], 40000h
+  .text:0015E27C                 add     eax, 4
+  .text:0015E27F                 mov     edx, [eax]
+  .text:0015E281                 or      dword ptr [edx], 40000h
+  .text:0015E287                 add     eax, 4
+  .text:0015E28A                 mov     edx, [eax]
+  .text:0015E28C                 or      dword ptr [edx], 40000h
+  .text:0015E292                 add     eax, 4
+  .text:0015E295                 mov     edx, [eax]
+  .text:0015E297                 or      dword ptr [edx], 40000h
+  .text:0015E29D                 add     eax, 4
+  .text:0015E2A0                 mov     edx, [eax]
+  .text:0015E2A2                 or      dword ptr [edx], 40000h
+  .text:0015E2A8                 add     eax, 4
+  .text:0015E2AB                 mov     edx, [eax]
+  .text:0015E2AD                 or      dword ptr [edx], 40000h
+  .text:0015E2B3                 add     eax, 4
+  .text:0015E2B6                 cmp     [esp+7Ch+var_68], eax
+  .text:0015E2BA                 jz      short loc_15E30C
+  .text:0015E2BC                 mov     edx, [eax]
+  .text:0015E2BE                 or      dword ptr [edx], 40000h
+  .text:0015E2C4                 mov     edx, [eax+4]
+  .text:0015E2C7                 or      dword ptr [edx], 40000h
+  .text:0015E2CD                 mov     edx, [eax+8]
+  .text:0015E2D0                 or      dword ptr [edx], 40000h
+  .text:0015E2D6                 mov     edx, [eax+0Ch]
+  .text:0015E2D9                 or      dword ptr [edx], 40000h
+  .text:0015E2DF                 mov     edx, [eax+10h]
+  .text:0015E2E2                 or      dword ptr [edx], 40000h
+  .text:0015E2E8                 mov     edx, [eax+14h]
+  .text:0015E2EB                 or      dword ptr [edx], 40000h
+  .text:0015E2F1                 mov     edx, [eax+18h]
+  .text:0015E2F4                 or      dword ptr [edx], 40000h
+  .text:0015E2FA                 mov     edx, [eax+1Ch]
+  .text:0015E2FD                 or      dword ptr [edx], 40000h
+  .text:0015E303                 add     eax, 20h ; ' '
+  .text:0015E306                 cmp     [esp+7Ch+var_68], eax
+  .text:0015E30A                 jnz     short loc_15E2BC
+  .text:0015E30C                 fstp    [esp+7Ch+var_50]
+  .text:0015E310                 mov     [ebp+0E0h], ecx
+  .text:0015E316                 mov     [esp+7Ch+var_28], 0
+  .text:0015E31E                 fld     ds:(flt_272C34 - 308000h)[ebx]
+  .text:0015E324                 fst     [esp+7Ch+var_54]
+  .text:0015E328                 fstp    [esp+7Ch+var_24]
+  .text:0015E32C                 fld     ds:(flt_254E6C - 308000h)[ebx]
+  .text:0015E332                 fst     [esp+7Ch+var_68]
+  .text:0015E336                 fstp    [esp+7Ch+var_20]
+  .text:0015E33A                 sub     esp, 0Ch
+  .text:0015E33D                 mov     eax, [esp+88h+params]
+  .text:0015E341                 push    eax
+  .text:0015E342                 mov     ecx, [esp+8Ch+var_58]
+  .text:0015E346                 push    ecx
+  .text:0015E347                 push    3F800000h
+  .text:0015E34C                 mov     edx, dword ptr [esp+94h+var_74]
+  .text:0015E350                 push    edx
+  .text:0015E351                 push    ebp
+  .text:0015E352                 call    __ZN19ClientPortalManager29CreateTempEntityForIntelHDFixEP11cl_entity_sfiRK6Vector; ClientPortalManager::CreateTempEntityForIntelHDFix(cl_entity_s *,float,int,Vector const&)
+  .text:0015E357                 mov     [esp+9Ch+var_2C], eax
+  .text:0015E35B                 add     esp, 18h
+  .text:0015E35E                 mov     eax, [esp+84h+var_60]
+  .text:0015E362                 push    eax
+  .text:0015E363                 mov     ecx, [esp+88h+var_64]
+  .text:0015E367                 push    ecx
+  .text:0015E368                 call    __ZNSt6vectorIP9tempent_sSaIS1_EE12emplace_backIJS1_EEEvDpOT_; std::vector<tempent_s *>::emplace_back<tempent_s *>(tempent_s * &&)
+  .text:0015E36D                 mov     [esp+8Ch+var_28], 0
+  .text:0015E375                 fld     ds:(flt_254F2C - 308000h)[ebx]
+  .text:0015E37B                 fst     [esp+8Ch+var_58]
+  .text:0015E37F                 fstp    [esp+8Ch+var_24]
+  .text:0015E383                 fld     [esp+8Ch+var_68]
+  .text:0015E387                 fstp    [esp+8Ch+var_20]
+  .text:0015E38B                 pop     edx
+  .text:0015E38C                 mov     edx, [esp+88h+params]
+  .text:0015E390                 push    edx
+  .text:0015E391                 mov     eax, [ebp+0ECh]
+  .text:0015E397                 push    eax
+  .text:0015E398                 push    3F800000h
+  .text:0015E39D                 mov     ecx, dword ptr [esp+94h+var_74]
+  .text:0015E3A1                 push    ecx
+  .text:0015E3A2                 push    ebp
+  .text:0015E3A3                 call    __ZN19ClientPortalManager29CreateTempEntityForIntelHDFixEP11cl_entity_sfiRK6Vector; ClientPortalManager::CreateTempEntityForIntelHDFix(cl_entity_s *,float,int,Vector const&)
+  .text:0015E3A8                 mov     [esp+9Ch+var_2C], eax
+  .text:0015E3AC                 add     esp, 18h
+  .text:0015E3AF                 mov     edx, [esp+84h+var_60]
+  .text:0015E3B3                 push    edx
+  .text:0015E3B4                 mov     eax, [esp+88h+var_64]
+  .text:0015E3B8                 push    eax
+  .text:0015E3B9                 call    __ZNSt6vectorIP9tempent_sSaIS1_EE12emplace_backIJS1_EEEvDpOT_; std::vector<tempent_s *>::emplace_back<tempent_s *>(tempent_s * &&)
+  .text:0015E3BE                 fld     [esp+8Ch+var_54]
+  .text:0015E3C2                 fstp    [esp+8Ch+var_28]
+  .text:0015E3C6                 mov     [esp+8Ch+var_24], 0
+  .text:0015E3CE                 fld     [esp+8Ch+var_68]
+  .text:0015E3D2                 fstp    [esp+8Ch+var_20]
+  .text:0015E3D6                 pop     eax
+  .text:0015E3D7                 mov     ecx, [esp+88h+params]
+  .text:0015E3DB                 push    ecx
+  .text:0015E3DC                 mov     edx, [ebp+0ECh]
+  .text:0015E3E2                 push    edx
+  .text:0015E3E3                 push    3F800000h
+  .text:0015E3E8                 mov     eax, dword ptr [esp+94h+var_74]
+  .text:0015E3EC                 push    eax
+  .text:0015E3ED                 push    ebp
+  .text:0015E3EE                 call    __ZN19ClientPortalManager29CreateTempEntityForIntelHDFixEP11cl_entity_sfiRK6Vector; ClientPortalManager::CreateTempEntityForIntelHDFix(cl_entity_s *,float,int,Vector const&)
+  .text:0015E3F3                 mov     [esp+9Ch+var_2C], eax
+  .text:0015E3F7                 add     esp, 18h
+  .text:0015E3FA                 mov     ecx, [esp+84h+var_60]
+  .text:0015E3FE                 push    ecx
+  .text:0015E3FF                 mov     edx, [esp+88h+var_64]
+  .text:0015E403                 push    edx
+  .text:0015E404                 call    __ZNSt6vectorIP9tempent_sSaIS1_EE12emplace_backIJS1_EEEvDpOT_; std::vector<tempent_s *>::emplace_back<tempent_s *>(tempent_s * &&)
+  .text:0015E409                 fld     [esp+8Ch+var_58]
+  .text:0015E40D                 fstp    [esp+8Ch+var_28]
+  .text:0015E411                 mov     [esp+8Ch+var_24], 0
+  .text:0015E419                 fld     [esp+8Ch+var_68]
+  .text:0015E41D                 fstp    [esp+8Ch+var_20]
+  .text:0015E421                 pop     eax
+  .text:0015E422                 mov     eax, [esp+88h+params]
+  .text:0015E426                 push    eax
+  .text:0015E427                 mov     ecx, [ebp+0ECh]
+  .text:0015E42D                 push    ecx
+  .text:0015E42E                 push    3F800000h
+  .text:0015E433                 mov     edx, dword ptr [esp+94h+var_74]
+  .text:0015E437                 push    edx
+  .text:0015E438                 push    ebp
+  .text:0015E439                 call    __ZN19ClientPortalManager29CreateTempEntityForIntelHDFixEP11cl_entity_sfiRK6Vector; ClientPortalManager::CreateTempEntityForIntelHDFix(cl_entity_s *,float,int,Vector const&)
+  .text:0015E43E                 mov     [esp+9Ch+var_2C], eax
+  .text:0015E442                 add     esp, 18h
+  .text:0015E445                 mov     eax, [esp+84h+var_60]
+  .text:0015E449                 push    eax
+  .text:0015E44A                 mov     ecx, [esp+88h+var_64]
+  .text:0015E44E                 push    ecx
+  .text:0015E44F                 call    __ZNSt6vectorIP9tempent_sSaIS1_EE12emplace_backIJS1_EEEvDpOT_; std::vector<tempent_s *>::emplace_back<tempent_s *>(tempent_s * &&)
+  .text:0015E454                 fld     [esp+8Ch+var_50]
+  .text:0015E458                 fadd    ds:(flt_2715BC - 308000h)[ebx]
+  .text:0015E45E                 fstp    dword ptr [ebp+0E8h]
+  .text:0015E464                 add     esp, 10h
+  .text:0015E467                 jmp     loc_15E46E
+  .text:0015E46C                 fstp    st
+  .text:0015E46E                 call    _CL_IsThirdPerson
+  .text:0015E473                 test    eax, eax
+  .text:0015E475                 jnz     short loc_15E47E
+  .text:0015E477                 mov     byte ptr [ebp+1DCh], 1
+  .text:0015E47E                 mov     edx, [esp+7Ch+var_5C]
+  .text:0015E482                 mov     eax, [edx]
+  .text:0015E484                 sub     esp, 0Ch
+  .text:0015E487                 mov     ecx, [eax]
+  .text:0015E489                 push    1
+  .text:0015E48B                 push    0
+  .text:0015E48D                 push    0
+  .text:0015E48F                 push    esi
+  .text:0015E490                 push    eax
+  .text:0015E491                 call    dword ptr [ecx+30h]
+  .text:0015E494                 add     esp, 18h
+  .text:0015E497                 mov     edx, [esp+84h+params]
+  .text:0015E49B                 ; params
+  .text:0015E49B                 push    edx; params
+  .text:0015E49C                 ; pname
+  .text:0015E49C                 push    84E0h; pname
+  .text:0015E4A1                 call    _glGetIntegerv
+  .text:0015E4A6                 add     esp, 10h
+  .text:0015E4A9                 cmp     [esp+7Ch+var_28], 84C0h
+  .text:0015E4B1                 jz      loc_15E642
+  .text:0015E4B7                 sub     esp, 0Ch
+  .text:0015E4BA                 ; unsigned int
+  .text:0015E4BA                 push    84C0h; unsigned int
+  .text:0015E4BF                 call    __Z16SetActiveTexturej; SetActiveTexture(uint)
+  .text:0015E4C4                 add     esp, 10h
+  .text:0015E4C7                 test    al, al
+  .text:0015E4C9                 jnz     loc_15E642
+  .text:0015E4CF                 sub     esp, 8
+  .text:0015E4D2                 lea     edi, (aInvalidGlActiv_2 - 308000h)[ebx]; "Invalid GL_ACTIVE_TEXTURE, unable to re"...
+  .text:0015E4D8                 push    edi
+  .text:0015E4D9                 push    1
+  .text:0015E4DB                 call    sub_A5528
+  .text:0015E4E0                 add     esp, 10h
+  .text:0015E4E3                 mov     ecx, [esp+7Ch+var_28]
+  .text:0015E4E7                 cmp     ecx, 84C0h
+  .text:0015E4ED                 jz      short loc_15E4FB
+  .text:0015E4EF                 sub     esp, 0Ch
+  .text:0015E4F2                 ; unsigned int
+  .text:0015E4F2                 push    ecx; unsigned int
+  .text:0015E4F3                 call    __Z16SetActiveTexturej; SetActiveTexture(uint)
+  .text:0015E4F8                 add     esp, 10h
+  .text:0015E4FB                 fld     dword ptr [ebp+0F0h]
+  .text:0015E501                 fstp    dword ptr [esi]
+  .text:0015E503                 fld     dword ptr [ebp+0F4h]
+  .text:0015E509                 fstp    dword ptr [esi+4]
+  .text:0015E50C                 fld     dword ptr [ebp+0F8h]
+  .text:0015E512                 fstp    dword ptr [esi+8]
+  .text:0015E515                 fld     dword ptr [ebp+0FCh]
+  .text:0015E51B                 fstp    dword ptr [esi+0Ch]
+  .text:0015E51E                 fld     dword ptr [ebp+100h]
+  .text:0015E524                 fstp    dword ptr [esi+10h]
+  .text:0015E527                 fld     dword ptr [ebp+104h]
+  .text:0015E52D                 fstp    dword ptr [esi+14h]
+  .text:0015E530                 fld     dword ptr [ebp+108h]
+  .text:0015E536                 fstp    dword ptr [esi+18h]
+  .text:0015E539                 fld     dword ptr [ebp+10Ch]
+  .text:0015E53F                 fstp    dword ptr [esi+1Ch]
+  .text:0015E542                 fld     dword ptr [ebp+110h]
+  .text:0015E548                 fstp    dword ptr [esi+20h]
+  .text:0015E54B                 fld     dword ptr [ebp+114h]
+  .text:0015E551                 fstp    dword ptr [esi+24h]
+  .text:0015E554                 fld     dword ptr [ebp+118h]
+  .text:0015E55A                 fstp    dword ptr [esi+28h]
+  .text:0015E55D                 fld     dword ptr [ebp+11Ch]
+  .text:0015E563                 fstp    dword ptr [esi+2Ch]
+  .text:0015E566                 fld     dword ptr [ebp+120h]
+  .text:0015E56C                 fstp    dword ptr [esi+30h]
+  .text:0015E56F                 fld     dword ptr [ebp+124h]
+  .text:0015E575                 fstp    dword ptr [esi+34h]
+  .text:0015E578                 fld     dword ptr [ebp+128h]
+  .text:0015E57E                 fstp    dword ptr [esi+38h]
+  .text:0015E581                 fld     dword ptr [ebp+12Ch]
+  .text:0015E587                 fnstcw  [esp+7Ch+var_32]
+  .text:0015E58B                 mov     dx, [esp+7Ch+var_32]
+  .text:0015E590                 mov     dh, 0Ch
+  .text:0015E592                 mov     [esp+7Ch+var_34], dx
+  .text:0015E597                 fldcw   [esp+7Ch+var_34]
+  .text:0015E59B                 fistp   dword ptr [esi+0D0h]
+  .text:0015E5A1                 fldcw   [esp+7Ch+var_32]
+  .text:0015E5A5                 fld     dword ptr [ebp+130h]
+  .text:0015E5AB                 fldcw   [esp+7Ch+var_34]
+  .text:0015E5AF                 fistp   dword ptr [esi+0D4h]
+  .text:0015E5B5                 fldcw   [esp+7Ch+var_32]
+  .text:0015E5B9                 fld     dword ptr [ebp+134h]
+  .text:0015E5BF                 fldcw   [esp+7Ch+var_34]
+  .text:0015E5C3                 fistp   dword ptr [esi+0D8h]
+  .text:0015E5C9                 fldcw   [esp+7Ch+var_32]
+  .text:0015E5CD                 fld     dword ptr [ebp+138h]
+  .text:0015E5D3                 fldcw   [esp+7Ch+var_34]
+  .text:0015E5D7                 fistp   dword ptr [esi+0DCh]
+  .text:0015E5DD                 fldcw   [esp+7Ch+var_32]
+  .text:0015E5E1                 inc     [esp+7Ch+var_78]
+  .text:0015E5E5                 mov     edi, [esp+7Ch+var_78]
+  .text:0015E5E9                 mov     edx, [ebp+84h]
+  .text:0015E5EF                 mov     eax, [ebp+88h]
+  .text:0015E5F5                 sub     eax, edx
+  .text:0015E5F7                 sar     eax, 2
+  .text:0015E5FA                 cmp     edi, eax
+  .text:0015E5FC                 jb      loc_15E18E
+  .text:0015E602                 sub     esp, 0Ch
+  .text:0015E605                 ; this
+  .text:0015E605                 push    ebp; this
+  .text:0015E606                 call    __ZN19ClientPortalManager17DisableClipPlanesEv; ClientPortalManager::DisableClipPlanes(void)
+  .text:0015E60B                 fldz
+  .text:0015E60D                 ; alpha
+  .text:0015E60D                 fst     [esp+8Ch+alpha]; alpha
+  .text:0015E611                 ; blue
+  .text:0015E611                 fst     [esp+8Ch+blue]; blue
+  .text:0015E615                 ; green
+  .text:0015E615                 fst     [esp+8Ch+green]; green
+  .text:0015E619                 ; red
+  .text:0015E619                 fstp    [esp+8Ch+red]; red
+  .text:0015E61C                 call    _glClearColor
+  .text:0015E621                 mov     ebx, [esp+8Ch+var_4C]
+  .text:0015E625                 mov     byte ptr ds:(_GLOBAL_OFFSET_TABLE_ - 308000h)[ebx], 0
+  .text:0015E628                 mov     esi, [esp+8Ch+var_5C]
+  .text:0015E62C                 mov     ebp, [esi]
+  .text:0015E62E                 mov     ecx, [ebp+0]
+  .text:0015E631                 mov     [esp+8Ch+red], ebp
+  .text:0015E634                 call    dword ptr [ecx+2Ch]
+  .text:0015E637                 add     esp, 10h
+  .text:0015E63A                 add     esp, 6Ch
+  .text:0015E63D                 pop     ebx
+  .text:0015E63E                 pop     esi
+  .text:0015E63F                 pop     edi
+  .text:0015E640                 pop     ebp
+  .text:0015E641                 retn
+  .text:0015E642                 sub     esp, 0Ch
+  .text:0015E645                 ; cap
+  .text:0015E645                 push    0DE1h; cap
+  .text:0015E64A                 call    _glEnable
+  .text:0015E64F                 pop     edx
+  .text:0015E650                 pop     ecx
+  .text:0015E651                 mov     eax, [edi+0C4h]
+  .text:0015E657                 ; texture
+  .text:0015E657                 push    eax; texture
+  .text:0015E658                 ; target
+  .text:0015E658                 push    0DE1h; target
+  .text:0015E65D                 call    _glBindTexture
+  .text:0015E662                 mov     ecx, [edi+0CCh]
+  .text:0015E668                 add     esp, 10h
+  .text:0015E66B                 ; height
+  .text:0015E66B                 push    ecx; height
+  .text:0015E66C                 mov     edx, [edi+0C8h]
+  .text:0015E672                 ; width
+  .text:0015E672                 push    edx; width
+  .text:0015E673                 mov     dword ptr [esp+84h+var_74], ecx
+  .text:0015E677                 mov     dword ptr [esp+84h+var_74+4], 0
+  .text:0015E67F                 fild    [esp+84h+var_74]
+  .text:0015E683                 fsubr   dword ptr [ebp+138h]
+  .text:0015E689                 fnstcw  [esp+84h+var_32]
+  .text:0015E68D                 mov     ax, [esp+84h+var_32]
+  .text:0015E692                 mov     ah, 0Ch
+  .text:0015E694                 mov     [esp+84h+var_34], ax
+  .text:0015E699                 fldcw   [esp+84h+var_34]
+  .text:0015E69D                 fistp   [esp+84h+y]
+  .text:0015E6A1                 fldcw   [esp+84h+var_32]
+  .text:0015E6A5                 mov     edi, [esp+84h+y]
+  .text:0015E6A9                 ; y
+  .text:0015E6A9                 push    edi; y
+  .text:0015E6AA                 ; x
+  .text:0015E6AA                 push    0; x
+  .text:0015E6AC                 ; yoffset
+  .text:0015E6AC                 push    0; yoffset
+  .text:0015E6AE                 ; xoffset
+  .text:0015E6AE                 push    0; xoffset
+  .text:0015E6B0                 ; level
+  .text:0015E6B0                 push    0; level
+  .text:0015E6B2                 ; target
+  .text:0015E6B2                 push    0DE1h; target
+  .text:0015E6B7                 call    _glCopyTexSubImage2D
+  .text:0015E6BC                 add     esp, 18h
+  .text:0015E6BF                 ; texture
+  .text:0015E6BF                 push    0; texture
+  .text:0015E6C1                 ; target
+  .text:0015E6C1                 push    0DE1h; target
+  .text:0015E6C6                 call    _glBindTexture
+  .text:0015E6CB                 add     esp, 10h
+  .text:0015E6CE                 jmp     loc_15E4E3
+  .text:0015E6D4                 fstp    [esp+7Ch+var_68]
+  .text:0015E6D8                 sub     esp, 0Ch
+  .text:0015E6DB                 mov     edx, [esp+88h+var_44]
+  .text:0015E6DF                 mov     eax, [edx+150h]
+  .text:0015E6E5                 lea     ecx, (aModelsShellMdl - 308000h)[ebx]; "models/shell.mdl"
+  .text:0015E6EB                 push    ecx
+  .text:0015E6EC                 call    dword ptr [eax+0Ch]
+  .text:0015E6EF                 mov     [esp+8Ch+var_58], eax
+  .text:0015E6F3                 mov     [ebp+0ECh], eax
+  .text:0015E6F9                 add     esp, 10h
+  .text:0015E6FC                 fld     [esp+7Ch+var_68]
+  .text:0015E700                 jmp     loc_15E20A
+  .text:0015E705                 sub     esp, 8
+  .text:0015E708                 mov     edx, [esp+84h+var_3C]
+  .text:0015E70C                 push    edx
+  .text:0015E70D                 mov     ecx, [esp+88h+var_40]
+  .text:0015E711                 push    ecx
+  .text:0015E712                 call    __ZNSt6vectorIP12PortalSourceSaIS1_EE19_M_emplace_back_auxIJRKS1_EEEvDpOT_; std::vector<PortalSource *>::_M_emplace_back_aux<PortalSource * const&>(PortalSource * const&)
+  .text:0015E717                 add     esp, 10h
+  .text:0015E71A                 jmp     loc_15DAB8
+procedure: |-
+  // ClientPortalManager_vector_begin_offset = 132; ClientPortalManager_vector_end_offset = 136. This vector contains PortalSource pointers.
+  // CalculateClipPlane receives mode from ClientPortal+0x28: ClientPortal_mode_offset = 40.
+  // Its origin/angles arguments use the entity pointer at ClientPortal+0x70: ClientPortal_entity_offset = 112.
+  // ClientPortal::GetOrigin/GetAngles return entity+0xB48/entity+0xB54: cl_entity_origin_offset = 2888; cl_entity_angles_offset = 2900.
+  // These entity vectors are distinct from ClientPortal source-origin/source-angles at +0/+12 and PortalSource copied vectors at +0/+12.
+  // PortalSource_texture_id_offset = 196; PortalSource_texture_width_offset = 200; PortalSource_texture_height_offset = 204. Verify glGenTextures, glBindTexture and glTexImage2D on the PortalSource object.
+  void __cdecl ClientPortalManager_RenderPortals(void *manager, void *view_parameters)
+  {
+    ClientPortalManager *v2; // ebp
+    PortalSource **v3; // esi
+    PortalSource *v4; // edi
+    ClientPortal *v5; // ebp
+    long double v6; // fst7
+    int PortalSource; // esi
+    _DWORD *v8; // ecx
+    int v9; // edx
+    char v10; // fps^1
+    long double v11; // fst6
+    bool v12; // c0
+    char v13; // c2
+    bool v14; // c3
+    char v15; // fps^1
+    long double v16; // fst6
+    bool v17; // c0
+    char v18; // c2
+    bool v19; // c3
+    char v20; // fps^1
+    long double v21; // fst6
+    bool v22; // c0
+    char v23; // c2
+    bool v24; // c3
+    char v25; // fps^1
+    long double v26; // fst6
+    bool v27; // c0
+    char v28; // c2
+    bool v29; // c3
+    char v30; // fps^1
+    long double v31; // fst6
+    bool v32; // c0
+    char v33; // c2
+    bool v34; // c3
+    char v35; // fps^1
+    long double v36; // fst6
+    bool v37; // c0
+    char v38; // c2
+    bool v39; // c3
+    char v40; // fps^1
+    long double v41; // fst6
+    bool v42; // c0
+    char v43; // c2
+    bool v44; // c3
+    char v45; // fps^1
+    long double v46; // fst6
+    bool v47; // c0
+    char v48; // c2
+    bool v49; // c3
+    char v50; // fps^1
+    long double v51; // fst6
+    bool v52; // c0
+    char v53; // c2
+    bool v54; // c3
+    int v55; // ecx
+    char v56; // fps^1
+    long double v57; // fst6
+    bool v58; // c0
+    char v59; // c2
+    bool v60; // c3
+    char v61; // fps^1
+    long double v62; // fst6
+    bool v63; // c0
+    char v64; // c2
+    bool v65; // c3
+    char v66; // fps^1
+    long double v67; // fst6
+    bool v68; // c0
+    char v69; // c2
+    bool v70; // c3
+    char v71; // fps^1
+    long double v72; // fst6
+    bool v73; // c0
+    char v74; // c2
+    bool v75; // c3
+    char v76; // fps^1
+    long double v77; // fst6
+    bool v78; // c0
+    char v79; // c2
+    bool v80; // c3
+    char v81; // fps^1
+    long double v82; // fst6
+    bool v83; // c0
+    char v84; // c2
+    bool v85; // c3
+    char v86; // fps^1
+    long double v87; // fst6
+    bool v88; // c0
+    char v89; // c2
+    bool v90; // c3
+    char v91; // fps^1
+    long double v92; // fst6
+    bool v93; // c0
+    char v94; // c2
+    bool v95; // c3
+    char v96; // fps^1
+    long double v97; // fst6
+    bool v98; // c0
+    char v99; // c2
+    bool v100; // c3
+    char v101; // fps^1
+    long double v102; // fst6
+    bool v103; // c0
+    char v104; // c2
+    bool v105; // c3
+    char v106; // fps^1
+    long double v107; // fst6
+    bool v108; // c0
+    char v109; // c2
+    bool v110; // c3
+    char v111; // fps^1
+    long double v112; // fst6
+    bool v113; // c0
+    char v114; // c2
+    bool v115; // c3
+    char v116; // fps^1
+    long double v117; // fst6
+    bool v118; // c0
+    char v119; // c2
+    bool v120; // c3
+    PortalSource **v121; // ecx
+    PortalSource *v122; // edx
+    char v123; // fps^1
+    long double v124; // fst6
+    bool v125; // c0
+    char v126; // c2
+    bool v127; // c3
+    char v128; // fps^1
+    long double v129; // fst6
+    bool v130; // c0
+    char v131; // c2
+    bool v132; // c3
+    char v133; // fps^1
+    long double v134; // fst6
+    bool v135; // c0
+    char v136; // c2
+    bool v137; // c3
+    char v138; // fps^1
+    long double v139; // fst6
+    bool v140; // c0
+    char v141; // c2
+    bool v142; // c3
+    char v143; // fps^1
+    long double v144; // fst6
+    bool v145; // c0
+    char v146; // c2
+    bool v147; // c3
+    char v148; // fps^1
+    long double v149; // fst6
+    bool v150; // c0
+    char v151; // c2
+    bool v152; // c3
+    char v153; // fps^1
+    long double v154; // fst6
+    bool v155; // c0
+    char v156; // c2
+    bool v157; // c3
+    char v158; // fps^1
+    long double v159; // fst6
+    bool v160; // c0
+    char v161; // c2
+    bool v162; // c3
+    char v163; // fps^1
+    long double v164; // fst6
+    bool v165; // c0
+    char v166; // c2
+    bool v167; // c3
+    PortalSource *v168; // edx
+    char v169; // fps^1
+    long double v170; // fst6
+    bool v171; // c0
+    char v172; // c2
+    bool v173; // c3
+    char v174; // fps^1
+    long double v175; // fst6
+    bool v176; // c0
+    char v177; // c2
+    bool v178; // c3
+    int Origin; // esi
+    int PortalMode; // eax
+    float *v181; // eax
+    char v182; // fps^1
+    long double v183; // fst6
+    bool v184; // c0
+    char v185; // c2
+    bool v186; // c3
+    char v187; // fps^1
+    long double v188; // fst6
+    bool v189; // c0
+    char v190; // c2
+    bool v191; // c3
+    char v192; // fps^1
+    long double v193; // fst6
+    bool v194; // c0
+    char v195; // c2
+    bool v196; // c3
+    int v197; // edx
+    int v198; // edi
+    long double v199; // fst6
+    long double v200; // fst7
+    _DWORD **v201; // ecx
+    unsigned int v202; // edx
+    _DWORD **v203; // eax
+    int v204; // [esp+14h] [ebp-78h]
+    unsigned int v205; // [esp+14h] [ebp-78h]
+    _DWORD *v206; // [esp+18h] [ebp-74h]
+    int v207; // [esp+18h] [ebp-74h]
+    GLint *params; // [esp+20h] [ebp-6Ch]
+    PortalSource **v209; // [esp+24h] [ebp-68h]
+    int Angles; // [esp+24h] [ebp-68h]
+    int v211; // [esp+24h] [ebp-68h]
+    float v212; // [esp+24h] [ebp-68h]
+    int v213; // [esp+28h] [ebp-64h]
+    int SourceOrigin; // [esp+28h] [ebp-64h]
+    int v215; // [esp+28h] [ebp-64h]
+    char v216; // [esp+2Ch] [ebp-60h]
+    int SourceAngles; // [esp+2Ch] [ebp-60h]
+    float v218; // [esp+30h] [ebp-5Ch]
+    char IsSurfaceVisible; // [esp+34h] [ebp-58h]
+    int v220; // [esp+34h] [ebp-58h]
+    _DWORD *v221; // [esp+38h] [ebp-54h]
+    PLANE *v222; // [esp+3Ch] [ebp-50h]
+    float v223; // [esp+3Ch] [ebp-50h]
+    char *v224; // [esp+40h] [ebp-4Ch]
+    int v225; // [esp+60h] [ebp-2Ch] BYREF
+    PortalSource *v226; // [esp+64h] [ebp-28h] BYREF
+    float v227; // [esp+68h] [ebp-24h]
+    float v228; // [esp+6Ch] [ebp-20h]
+
+    v2 = (ClientPortalManager *)manager;
+    v3 = *((PortalSource ***)manager + 33);
+    if ( *((PortalSource ***)manager + 34) != v3 )
+    {
+      do
+      {
+        v4 = *v3;
+        if ( *v3 )
+        {
+          PortalSource::~PortalSource(*v3);
+          operator delete(v4);
+        }
+        ++v3;
+      }
+      while ( v3 != *((PortalSource ***)manager + 34) );
+      v3 = *((PortalSource ***)manager + 33);
+    }
+    *((_DWORD *)manager + 34) = v3;
+    ClientPortalManager::UpdateSettings((ClientPortalManager *)manager);
+    if ( *(_BYTE *)manager && *((_BYTE *)manager + 48) && *((_BYTE *)manager + 24) )
+      return;
+    AngleVectors((char *)view_parameters + 12, (char *)manager + 172, (char *)manager + 184, (char *)manager + 196);
+    ++*((_DWORD *)manager + 103);
+    *((_DWORD *)manager + 104) = *(_DWORD *)(unk_76184C() + 700);
+    params = (GLint *)((char *)manager + 240);
+    qmemcpy((char *)manager + 240, view_parameters, 0xCu);
+    v224 = (char *)manager + 252;
+    qmemcpy((char *)manager + 252, (char *)view_parameters + 12, 0xCu);
+    qmemcpy((char *)manager + 264, (char *)view_parameters + 24, 0xCu);
+    qmemcpy((char *)manager + 276, (char *)view_parameters + 36, 0xCu);
+    qmemcpy((char *)manager + 288, (char *)view_parameters + 48, 0xCu);
+    *((float *)manager + 75) = (float)*((int *)view_parameters + 52);
+    *((float *)manager + 76) = (float)*((int *)view_parameters + 53);
+    *((float *)manager + 77) = (float)*((int *)view_parameters + 54);
+    *((float *)manager + 78) = (float)*((int *)view_parameters + 55);
+    v222 = (PLANE *)((char *)manager + 316);
+    CalculateFrustumFromRefParams(view_parameters, (char *)manager + 316);
+    v206 = *((_DWORD **)manager + 21);
+    if ( !v206 )
+      goto LABEL_82;
+    do
+    {
+      v5 = (ClientPortal *)(v206 + 2);
+      ClientPortal::CheckModelChanged((ClientPortal *)(v206 + 2), (ClientPortalManager *)manager, 0);
+      if ( (unsigned __int8)ClientPortal::IsVisible(
+                              (ClientPortal *)(v206 + 2),
+                              (int)manager,
+                              *((_DWORD *)manager + 103),
+                              *((_DWORD *)manager + 104),
+                              (int)params,
+                              v222) )
+      {
+        if ( (unsigned __int8)ClientPortal::ShouldRender(v5, (ClientPortalManager *)manager, *((_DWORD *)manager + 103)) )
+        {
+          ClientPortal::PrepareForNewFrame(v5, (ClientPortalManager *)manager);
+          if ( v206[53] )
+          {
+            v221 = (_DWORD *)v206[53];
+            while ( 1 )
+            {
+              v204 = v221[1];
+              IsSurfaceVisible = ClientPortal::IsSurfaceVisible(
+                                   v5,
+                                   (int)manager,
+                                   *((_DWORD *)manager + 103),
+                                   *((_DWORD *)manager + 104),
+                                   (int)params,
+                                   (int)manager + 264,
+                                   v222,
+                                   v204);
+              if ( IsSurfaceVisible )
+                break;
+  LABEL_15:
+              v221 = (_DWORD *)*v221;
+              if ( !v221 )
+                goto LABEL_10;
+            }
+            v6 = *((float *)manager + 77);
+            PortalSource = ClientPortalManager::CreatePortalSource(
+                             (int)manager,
+                             v5,
+                             (int)params,
+                             (int)v224,
+                             (int)v6,
+                             (int)*((float *)manager + 78),
+                             v204);
+            v226 = (PortalSource *)PortalSource;
+            v8 = *((_DWORD **)manager + 33);
+            v213 = *((_DWORD *)manager + 34);
+            if ( v8 != (_DWORD *)v213 )
+            {
+              v216 = *(_BYTE *)(PortalSource + 192);
+              v209 = *((PortalSource ***)manager + 33);
+              v9 = *v8;
+              if ( v216 && *(_BYTE *)(v9 + 192) || *(_BYTE *)(PortalSource + 193) && *(_BYTE *)(v9 + 193) )
+              {
+                v11 = *(float *)(PortalSource + 12);
+                v6 = *(float *)(v9 + 12);
+                v12 = v11 < v6;
+                v13 = 0;
+                v14 = v11 == v6;
+                if ( (v10 & 0x45) == 0x40 )
+                {
+                  v16 = *(float *)(PortalSource + 16);
+                  v6 = *(float *)(v9 + 16);
+                  v17 = v16 < v6;
+                  v18 = 0;
+                  v19 = v16 == v6;
+                  if ( (v15 & 0x45) == 0x40 )
+                  {
+                    v21 = *(float *)(PortalSource + 20);
+                    v6 = *(float *)(v9 + 20);
+                    v22 = v21 < v6;
+                    v23 = 0;
+                    v24 = v21 == v6;
+                    if ( (v20 & 0x45) == 0x40 )
+                    {
+                      v26 = *(float *)PortalSource;
+                      v6 = *(float *)v9;
+                      v27 = v26 < v6;
+                      v28 = 0;
+                      v29 = v26 == v6;
+                      if ( (v25 & 0x45) == 0x40 )
+                      {
+                        v31 = *(float *)(PortalSource + 4);
+                        v6 = *(float *)(v9 + 4);
+                        v32 = v31 < v6;
+                        v33 = 0;
+                        v34 = v31 == v6;
+                        if ( (v30 & 0x45) == 0x40 )
+                        {
+                          v36 = *(float *)(PortalSource + 8);
+                          v6 = *(float *)(v9 + 8);
+                          v37 = v36 < v6;
+                          v38 = 0;
+                          v39 = v36 == v6;
+                          if ( (v35 & 0x45) == 0x40 )
+                          {
+                            v41 = *(float *)(PortalSource + 24);
+                            v6 = *(float *)(v9 + 24);
+                            v42 = v41 < v6;
+                            v43 = 0;
+                            v44 = v41 == v6;
+                            if ( (v40 & 0x45) == 0x40 )
+                            {
+                              v46 = *(float *)(PortalSource + 28);
+                              v6 = *(float *)(v9 + 28);
+                              v47 = v46 < v6;
+                              v48 = 0;
+                              v49 = v46 == v6;
+                              if ( (v45 & 0x45) == 0x40 )
+                              {
+                                v51 = *(float *)(PortalSource + 32);
+                                v6 = *(float *)(v9 + 32);
+                                v52 = v51 < v6;
+                                v53 = 0;
+                                v54 = v51 == v6;
+                                if ( (v50 & 0x45) == 0x40 )
+                                {
+  LABEL_42:
+                                  PortalSource::~PortalSource((PortalSource *)PortalSource);
+                                  operator delete((void *)PortalSource);
+                                  v226 = *v209;
+                                  goto LABEL_70;
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              v209 = (PortalSource **)(v8 + 1);
+              if ( (_DWORD *)v213 != v8 + 1 )
+              {
+                if ( ((v213 - (_DWORD)v8 - 4) & 4) == 0 )
+                  goto LABEL_61;
+                v55 = v8[1];
+                if ( v216 && *(_BYTE *)(v55 + 192) || *(_BYTE *)(PortalSource + 193) && *(_BYTE *)(v55 + 193) )
+                {
+                  v57 = *(float *)(PortalSource + 12);
+                  v6 = *(float *)(v55 + 12);
+                  v58 = v57 < v6;
+                  v59 = 0;
+                  v60 = v57 == v6;
+                  if ( (v56 & 0x45) == 0x40 )
+                  {
+                    v62 = *(float *)(PortalSource + 16);
+                    v6 = *(float *)(v55 + 16);
+                    v63 = v62 < v6;
+                    v64 = 0;
+                    v65 = v62 == v6;
+                    if ( (v61 & 0x45) == 0x40 )
+                    {
+                      v67 = *(float *)(PortalSource + 20);
+                      v6 = *(float *)(v55 + 20);
+                      v68 = v67 < v6;
+                      v69 = 0;
+                      v70 = v67 == v6;
+                      if ( (v66 & 0x45) == 0x40 )
+                      {
+                        v72 = *(float *)PortalSource;
+                        v6 = *(float *)v55;
+                        v73 = v72 < v6;
+                        v74 = 0;
+                        v75 = v72 == v6;
+                        if ( (v71 & 0x45) == 0x40 )
+                        {
+                          v77 = *(float *)(PortalSource + 4);
+                          v6 = *(float *)(v55 + 4);
+                          v78 = v77 < v6;
+                          v79 = 0;
+                          v80 = v77 == v6;
+                          if ( (v76 & 0x45) == 0x40 )
+                          {
+                            v82 = *(float *)(PortalSource + 8);
+                            v6 = *(float *)(v55 + 8);
+                            v83 = v82 < v6;
+                            v84 = 0;
+                            v85 = v82 == v6;
+                            if ( (v81 & 0x45) == 0x40 )
+                            {
+                              v87 = *(float *)(PortalSource + 24);
+                              v6 = *(float *)(v55 + 24);
+                              v88 = v87 < v6;
+                              v89 = 0;
+                              v90 = v87 == v6;
+                              if ( (v86 & 0x45) == 0x40 )
+                              {
+                                v92 = *(float *)(PortalSource + 28);
+                                v6 = *(float *)(v55 + 28);
+                                v93 = v92 < v6;
+                                v94 = 0;
+                                v95 = v92 == v6;
+                                if ( (v91 & 0x45) == 0x40 )
+                                {
+                                  v97 = *(float *)(PortalSource + 32);
+                                  v6 = *(float *)(v55 + 32);
+                                  v98 = v97 < v6;
+                                  v99 = 0;
+                                  v100 = v97 == v6;
+                                  if ( (v96 & 0x45) == 0x40 )
+                                    goto LABEL_42;
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                if ( (PortalSource **)v213 != ++v209 )
+                {
+  LABEL_61:
+                  do
+                  {
+                    if ( (v168 = *v209, v216) && *((_BYTE *)v168 + 192)
+                      || *(_BYTE *)(PortalSource + 193) && *((_BYTE *)v168 + 193) )
+                    {
+                      v170 = *(float *)(PortalSource + 12);
+                      v6 = *((float *)v168 + 3);
+                      v171 = v170 < v6;
+                      v172 = 0;
+                      v173 = v170 == v6;
+                      if ( (v169 & 0x45) == 0x40 )
+                      {
+                        v175 = *(float *)(PortalSource + 16);
+                        v6 = *((float *)v168 + 4);
+                        v176 = v175 < v6;
+                        v177 = 0;
+                        v178 = v175 == v6;
+                        if ( (v174 & 0x45) == 0x40 )
+                        {
+                          v102 = *(float *)(PortalSource + 20);
+                          v6 = *((float *)v168 + 5);
+                          v103 = v102 < v6;
+                          v104 = 0;
+                          v105 = v102 == v6;
+                          if ( (v101 & 0x45) == 0x40 )
+                          {
+                            v107 = *(float *)PortalSource;
+                            v6 = *(float *)v168;
+                            v108 = v107 < v6;
+                            v109 = 0;
+                            v110 = v107 == v6;
+                            if ( (v106 & 0x45) == 0x40 )
+                            {
+                              v112 = *(float *)(PortalSource + 4);
+                              v6 = *((float *)v168 + 1);
+                              v113 = v112 < v6;
+                              v114 = 0;
+                              v115 = v112 == v6;
+                              if ( (v111 & 0x45) == 0x40 )
+                              {
+                                v117 = *(float *)(PortalSource + 8);
+                                v6 = *((float *)v168 + 2);
+                                v118 = v117 < v6;
+                                v119 = 0;
+                                v120 = v117 == v6;
+                                if ( (v116 & 0x45) == 0x40 )
+                                {
+                                  v183 = *(float *)(PortalSource + 24);
+                                  v6 = *((float *)v168 + 6);
+                                  v184 = v183 < v6;
+                                  v185 = 0;
+                                  v186 = v183 == v6;
+                                  if ( (v182 & 0x45) == 0x40 )
+                                  {
+                                    v188 = *(float *)(PortalSource + 28);
+                                    v6 = *((float *)v168 + 7);
+                                    v189 = v188 < v6;
+                                    v190 = 0;
+                                    v191 = v188 == v6;
+                                    if ( (v187 & 0x45) == 0x40 )
+                                    {
+                                      v193 = *(float *)(PortalSource + 32);
+                                      v6 = *((float *)v168 + 8);
+                                      v194 = v193 < v6;
+                                      v195 = 0;
+                                      v196 = v193 == v6;
+                                      if ( (v192 & 0x45) == 0x40 )
+                                        goto LABEL_42;
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    if ( (v121 = v209 + 1, v209 = v121, v122 = *v121, v216) && *((_BYTE *)v122 + 192)
+                      || *(_BYTE *)(PortalSource + 193) && *((_BYTE *)v122 + 193) )
+                    {
+                      v124 = *(float *)(PortalSource + 12);
+                      v6 = *((float *)v122 + 3);
+                      v125 = v124 < v6;
+                      v126 = 0;
+                      v127 = v124 == v6;
+                      if ( (v123 & 0x45) == 0x40 )
+                      {
+                        v129 = *(float *)(PortalSource + 16);
+                        v6 = *((float *)v122 + 4);
+                        v130 = v129 < v6;
+                        v131 = 0;
+                        v132 = v129 == v6;
+                        if ( (v128 & 0x45) == 0x40 )
+                        {
+                          v134 = *(float *)(PortalSource + 20);
+                          v6 = *((float *)v122 + 5);
+                          v135 = v134 < v6;
+                          v136 = 0;
+                          v137 = v134 == v6;
+                          if ( (v133 & 0x45) == 0x40 )
+                          {
+                            v139 = *(float *)PortalSource;
+                            v6 = *(float *)v122;
+                            v140 = v139 < v6;
+                            v141 = 0;
+                            v142 = v139 == v6;
+                            if ( (v138 & 0x45) == 0x40 )
+                            {
+                              v144 = *(float *)(PortalSource + 4);
+                              v6 = *((float *)v122 + 1);
+                              v145 = v144 < v6;
+                              v146 = 0;
+                              v147 = v144 == v6;
+                              if ( (v143 & 0x45) == 0x40 )
+                              {
+                                v149 = *(float *)(PortalSource + 8);
+                                v6 = *((float *)v122 + 2);
+                                v150 = v149 < v6;
+                                v151 = 0;
+                                v152 = v149 == v6;
+                                if ( (v148 & 0x45) == 0x40 )
+                                {
+                                  v154 = *(float *)(PortalSource + 24);
+                                  v6 = *((float *)v122 + 6);
+                                  v155 = v154 < v6;
+                                  v156 = 0;
+                                  v157 = v154 == v6;
+                                  if ( (v153 & 0x45) == 0x40 )
+                                  {
+                                    v159 = *(float *)(PortalSource + 28);
+                                    v6 = *((float *)v122 + 7);
+                                    v160 = v159 < v6;
+                                    v161 = 0;
+                                    v162 = v159 == v6;
+                                    if ( (v158 & 0x45) == 0x40 )
+                                    {
+                                      v164 = *(float *)(PortalSource + 32);
+                                      v6 = *((float *)v122 + 8);
+                                      v165 = v164 < v6;
+                                      v166 = 0;
+                                      v167 = v164 == v6;
+                                      if ( (v163 & 0x45) == 0x40 )
+                                        goto LABEL_42;
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                    v209 = v121 + 1;
+                  }
+                  while ( (PortalSource **)v213 != v121 + 1 );
+                }
+              }
+            }
+            IsSurfaceVisible = 0;
+  LABEL_70:
+            ClientPortal::GetZoom(v5);
+            v218 = v6;
+            SourceAngles = ClientPortal::GetSourceAngles(v5);
+            SourceOrigin = ClientPortal::GetSourceOrigin(v5);
+            Angles = ClientPortal::GetAngles(v5);
+            Origin = ClientPortal::GetOrigin(v5);
+            PortalMode = ClientPortal::GetPortalMode(v5);
+            PortalSource::CalculateClipPlane(
+              (int)v226,
+              PortalMode,
+              (int)params,
+              (int)v224,
+              Origin,
+              Angles,
+              SourceOrigin,
+              SourceAngles,
+              v218,
+              v204);
+            PortalSource::CreateTexture(v226);
+            ClientPortal::AddTextureForQuickLookup(v5, v204, *((_DWORD *)v226 + 49));
+            ClientPortalManager::IncrementSharedTexture((ClientPortalManager *)manager, *((_DWORD *)v226 + 49));
+            if ( !IsSurfaceVisible )
+            {
+              v181 = *((float **)manager + 34);
+              if ( v181 == *((float **)manager + 35) )
+              {
+                std::vector<PortalSource *>::_M_emplace_back_aux<PortalSource * const&>((char *)manager + 132, &v226);
+              }
+              else
+              {
+                if ( v181 )
+                  *v181 = *(float *)&v226;
+                *((_DWORD *)manager + 34) = v181 + 1;
+              }
+            }
+            goto LABEL_15;
+          }
+        }
+      }
+  LABEL_10:
+      v206 = (_DWORD *)*v206;
+    }
+    while ( v206 );
+    v2 = (ClientPortalManager *)manager;
+  LABEL_82:
+    if ( (unsigned int)(*((_DWORD *)v2 + 34) - *((_DWORD *)v2 + 33)) >> 2 )
+    {
+      (*(void (__cdecl **)(_DWORD *, _DWORD, _DWORD, _DWORD))(*g_pEngineClient + 40))(g_pEngineClient, 0, 0, 0);
+      g_bRenderingPortals = 1;
+      v197 = *((_DWORD *)v2 + 33);
+      if ( (unsigned int)(*((_DWORD *)v2 + 34) - v197) >> 2 )
+      {
+        v205 = 0;
+        v215 = (int)v2 + 220;
+        do
+        {
+          v198 = *(_DWORD *)(v197 + 4 * v205);
+          PortalSource::SetupRendering(v198, v2, (int)view_parameters);
+          glClearColor(0.0, 0.0, 1.0, 0.0);
+          glClear(0x4000u);
+          v207 = unk_76184C();
+          v199 = unk_761858();
+          v200 = v199;
+          if ( v199 >= *((float *)v2 + 58) )
+          {
+            v220 = *((_DWORD *)v2 + 59);
+            if ( !v220 )
+            {
+              v212 = v199;
+              v220 = (*(int (__cdecl **)(const char *))(unk_7618D0 + 12))("models/shell.mdl");
+              *((_DWORD *)v2 + 59) = v220;
+              v200 = v212;
+            }
+            v201 = *((_DWORD ***)v2 + 55);
+            v211 = *((_DWORD *)v2 + 56);
+            if ( v201 != (_DWORD **)v211 )
+            {
+              v202 = ((unsigned int)(v211 - (_DWORD)v201 - 4) >> 2) & 7;
+              **v201 |= 0x40000u;
+              v203 = v201 + 1;
+              if ( (_DWORD **)v211 != v201 + 1 )
+              {
+                if ( !v202 )
+                  goto LABEL_126;
+                if ( v202 != 1 )
+                {
+                  if ( v202 != 2 )
+                  {
+                    if ( v202 != 3 )
+                    {
+                      if ( v202 != 4 )
+                      {
+                        if ( v202 != 5 )
+                        {
+                          if ( v202 != 6 )
+                          {
+                            *v201[1] |= 0x40000u;
+                            v203 = v201 + 2;
+                          }
+                          **v203++ |= 0x40000u;
+                        }
+                        **v203++ |= 0x40000u;
+                      }
+                      **v203++ |= 0x40000u;
+                    }
+                    **v203++ |= 0x40000u;
+                  }
+                  **v203++ |= 0x40000u;
+                }
+                **v203++ |= 0x40000u;
+                if ( (_DWORD **)v211 != v203 )
+                {
+  LABEL_126:
+                  do
+                  {
+                    **v203 |= 0x40000u;
+                    *v203[1] |= 0x40000u;
+                    *v203[2] |= 0x40000u;
+                    *v203[3] |= 0x40000u;
+                    *v203[4] |= 0x40000u;
+                    *v203[5] |= 0x40000u;
+                    *v203[6] |= 0x40000u;
+                    *v203[7] |= 0x40000u;
+                    v203 += 8;
+                  }
+                  while ( (_DWORD **)v211 != v203 );
+                }
+              }
+            }
+            v223 = v200;
+            *((_DWORD *)v2 + 56) = v201;
+            *(float *)&v226 = 0.0;
+            v227 = -10.0;
+            v228 = 20.0;
+            v225 = ClientPortalManager::CreateTempEntityForIntelHDFix(v2, v207, 1065353216, v220, &v226);
+            std::vector<tempent_s *>::emplace_back<tempent_s *>(v215, &v225);
+            *(float *)&v226 = 0.0;
+            v227 = 10.0;
+            v228 = 20.0;
+            v225 = ClientPortalManager::CreateTempEntityForIntelHDFix(v2, v207, 1065353216, *((_DWORD *)v2 + 59), &v226);
+            std::vector<tempent_s *>::emplace_back<tempent_s *>(v215, &v225);
+            *(float *)&v226 = -10.0;
+            v227 = 0.0;
+            v228 = 20.0;
+            v225 = ClientPortalManager::CreateTempEntityForIntelHDFix(v2, v207, 1065353216, *((_DWORD *)v2 + 59), &v226);
+            std::vector<tempent_s *>::emplace_back<tempent_s *>(v215, &v225);
+            *(float *)&v226 = 10.0;
+            v227 = 0.0;
+            v228 = 20.0;
+            v225 = ClientPortalManager::CreateTempEntityForIntelHDFix(v2, v207, 1065353216, *((_DWORD *)v2 + 59), &v226);
+            std::vector<tempent_s *>::emplace_back<tempent_s *>(v215, &v225);
+            *((float *)v2 + 58) = v223 + 0.89999998;
+          }
+          if ( !CL_IsThirdPerson() )
+            *((_BYTE *)v2 + 476) = 1;
+          (*(void (__cdecl **)(_DWORD *, void *, _DWORD, _DWORD, int))(*g_pEngineClient + 48))(
+            g_pEngineClient,
+            view_parameters,
+            0,
+            0,
+            1);
+          glGetIntegerv(0x84E0u, (GLint *)&v226);
+          if ( v226 == (PortalSource *)&elf_gnu_hash_chain[2267] || (unsigned __int8)SetActiveTexture(0x84C0u) )
+          {
+            glEnable(0xDE1u);
+            glBindTexture(0xDE1u, *(_DWORD *)(v198 + 196));
+            glCopyTexSubImage2D(
+              0xDE1u,
+              0,
+              0,
+              0,
+              0,
+              (int)(*((float *)v2 + 78) - (long double)*(unsigned int *)(v198 + 204)),
+              *(_DWORD *)(v198 + 200),
+              *(_DWORD *)(v198 + 204));
+            glBindTexture(0xDE1u, 0);
+          }
+          else
+          {
+            sub_A5528(1, "Invalid GL_ACTIVE_TEXTURE, unable to reset. Portal not drawn.\n");
+          }
+          if ( v226 != (PortalSource *)&elf_gnu_hash_chain[2267] )
+            SetActiveTexture((unsigned int)v226);
+          *(float *)view_parameters = *((float *)v2 + 60);
+          *((float *)view_parameters + 1) = *((float *)v2 + 61);
+          *((float *)view_parameters + 2) = *((float *)v2 + 62);
+          *((float *)view_parameters + 3) = *((float *)v2 + 63);
+          *((float *)view_parameters + 4) = *((float *)v2 + 64);
+          *((float *)view_parameters + 5) = *((float *)v2 + 65);
+          *((float *)view_parameters + 6) = *((float *)v2 + 66);
+          *((float *)view_parameters + 7) = *((float *)v2 + 67);
+          *((float *)view_parameters + 8) = *((float *)v2 + 68);
+          *((float *)view_parameters + 9) = *((float *)v2 + 69);
+          *((float *)view_parameters + 10) = *((float *)v2 + 70);
+          *((float *)view_parameters + 11) = *((float *)v2 + 71);
+          *((float *)view_parameters + 12) = *((float *)v2 + 72);
+          *((float *)view_parameters + 13) = *((float *)v2 + 73);
+          *((float *)view_parameters + 14) = *((float *)v2 + 74);
+          *((_DWORD *)view_parameters + 52) = (int)*((float *)v2 + 75);
+          *((_DWORD *)view_parameters + 53) = (int)*((float *)v2 + 76);
+          *((_DWORD *)view_parameters + 54) = (int)*((float *)v2 + 77);
+          *((_DWORD *)view_parameters + 55) = (int)*((float *)v2 + 78);
+          ++v205;
+          v197 = *((_DWORD *)v2 + 33);
+        }
+        while ( v205 < (*((_DWORD *)v2 + 34) - v197) >> 2 );
+      }
+      ClientPortalManager::DisableClipPlanes(v2);
+      glClearColor(0.0, 0.0, 0.0, 0.0);
+      g_bRenderingPortals = 0;
+      (*(void (__cdecl **)(_DWORD *))(*g_pEngineClient + 44))(g_pEngineClient);
+    }
+  }

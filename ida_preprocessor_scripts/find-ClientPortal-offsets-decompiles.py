@@ -32,6 +32,10 @@ from ida_preprocessor_scripts._portal_layout_ida import run_layout_walk
 
 PREDECESSOR = "ClientPortalManager_RenderPortals"
 REFERENCE = "references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"
+CONSTRUCTOR_REFERENCES = {
+    "ClientPortal": "references/{gamever}/client/ClientPortal_Constructor.{platform}.yaml",
+    "PortalSource": "references/{gamever}/client/PortalSource_Constructor.{platform}.yaml",
+}
 
 VECTOR_BEGIN = "ClientPortalManager_vector_begin_offset"
 VECTOR_END = "ClientPortalManager_vector_end_offset"
@@ -100,15 +104,13 @@ result = json.dumps(main(VALUES))
 """
 
 
-def _llm_spec(symbol_name, expected_value):
-    constructor = symbol_name in {"ClientPortal_origin_offset", "ClientPortal_angles_offset"}
-    predecessor = "ClientPortal_Constructor" if constructor else PREDECESSOR
+def _llm_spec(symbol_name, expected_value, source_name="ClientPortal"):
+    constructor = symbol_name in {f"{source_name}_origin_offset", f"{source_name}_angles_offset"}
+    predecessor = f"{source_name}_Constructor" if constructor else PREDECESSOR
     return {
         "symbol_name": symbol_name,
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": ["references/{gamever}/client/ClientPortal_Constructor.{platform}.yaml"]
-        if constructor
-        else [REFERENCE],
+        "reference_yaml_paths": [CONSTRUCTOR_REFERENCES[source_name]] if constructor else [REFERENCE],
         "expected_result_sections": ["found_scalar"],
         "dependency_policy": {f"{predecessor}.{{platform}}.yaml": "required"},
         "expected_value": expected_value,
@@ -127,6 +129,11 @@ async def preprocess_skill(
     debug=False,
 ):
     _ = skill_name, old_yaml_map
+    source_name = (
+        "PortalSource"
+        if any(Path(path).name.startswith("PortalSource_") for path in expected_outputs)
+        else "ClientPortal"
+    )
     predecessor = _load_yaml_mapping(Path(new_binary_dir) / f"{PREDECESSOR}.{platform}.yaml")
     if not predecessor or predecessor.get("func_name") != PREDECESSOR:
         return False
@@ -165,7 +172,10 @@ async def preprocess_skill(
 
     try:
         anchors = {}
-        for key, name in [("constructor", "ClientPortal_Constructor"), ("clip", "ClientPortalManager_EnableClipPlane")]:
+        inputs = [("constructor", f"{source_name}_Constructor")]
+        if source_name == "ClientPortal":
+            inputs.append(("clip", "ClientPortalManager_EnableClipPlane"))
+        for key, name in inputs:
             payload = _load_yaml_mapping(Path(new_binary_dir) / f"{name}.{platform}.yaml")
             if not payload or payload.get("func_name") != name:
                 return False
@@ -175,7 +185,8 @@ async def preprocess_skill(
             {**anchors, "render": predecessor_ea, "platform": platform},
             """
 result = constructor_offsets(decode_function(values['constructor']), values['platform'])
-result['source_mode'] = source_mode_offset(decode_function(values['render']), values['platform'], values['clip'])
+if 'clip' in values:
+    result['source_mode'] = source_mode_offset(decode_function(values['render']), values['platform'], values['clip'])
 """,
         )
     except (ValueError, KeyError) as exc:
@@ -183,19 +194,20 @@ result['source_mode'] = source_mode_offset(decode_function(values['render']), va
             print(exc)
         return False
     verified = {
-        "ClientPortal_origin_offset": layout["origin"],
-        "ClientPortal_angles_offset": layout["angles"],
-        "ClientPortalSource_mode_offset": layout["source_mode"],
+        f"{source_name}_origin_offset": layout["origin"],
+        f"{source_name}_angles_offset": layout["angles"],
         VECTOR_BEGIN: located.get("vector_begin"),
         VECTOR_END: located.get("vector_end"),
-        TEXTURE_ID: located.get("texture_id"),
-        TEXTURE_WIDTH: located.get("texture_width"),
-        TEXTURE_HEIGHT: located.get("texture_height"),
+        f"{source_name}_texture_id_offset": located.get("texture_id"),
+        f"{source_name}_texture_width_offset": located.get("texture_width"),
+        f"{source_name}_texture_height_offset": located.get("texture_height"),
     }
+    if "source_mode" in layout:
+        verified["ClientPortalSource_mode_offset"] = layout["source_mode"]
     scalar_names = [name for name, value in verified.items() if isinstance(value, int)]
     if not scalar_names:
         return False
-    specs = [_llm_spec(name, verified[name]) for name in scalar_names]
+    specs = [_llm_spec(name, verified[name], source_name) for name in scalar_names]
     if debug:
         print("ClientPortal verified offsets:", {name: verified[name] for name in scalar_names})
     return await preprocess_common_skill(

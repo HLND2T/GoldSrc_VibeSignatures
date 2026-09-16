@@ -2582,6 +2582,25 @@ found_struct_offset: []
         graph = {0: {"preds": [], "writes": [{0: ("constant", 0x2000)}, {register(4, True): None}]}}
         self.assertIsNone(namespace["resolve_address_flow"](graph, 0, 2, 0))
 
+    def test_address_flow_got_load_requires_matching_reaching_address(self):
+        namespace = {}
+        exec(ida_analyze_util._ADDRESS_FLOW_RESOLVER, namespace)
+        graph = {
+            0: {
+                "preds": [],
+                "writes": [
+                    {3: ("constant", 0x8000)},
+                    {2: ("got_load", (3, -0x20, {0x7FE0: 0x9000}))},
+                ],
+            }
+        }
+        resolve = namespace["resolve_address_flow"]
+        self.assertEqual(0x9000, resolve(graph, 0, 2, 2))
+        graph[0]["writes"][0] = {3: ("constant", 0x7000)}
+        self.assertIsNone(resolve(graph, 0, 2, 2))
+        graph[0]["writes"][0] = {3: None}
+        self.assertIsNone(resolve(graph, 0, 2, 2))
+
     def test_instruction_inspection_distinguishes_relocated_indexed_operands(self):
         class Fixup:
             pass
@@ -2604,6 +2623,7 @@ found_struct_offset: []
                 "idaapi": SimpleNamespace(inf_is_64bit=lambda: False, BADADDR=0xFFFFFFFF),
                 "ida_ua": SimpleNamespace(
                     o_void=0,
+                    o_reg=1,
                     o_mem=2,
                     o_far=7,
                     o_near=6,
@@ -3540,6 +3560,31 @@ found_struct_offset: []
                     "windows",
                 )
         self.assertEqual(canonical.resolve(), resolved)
+
+    def test_reference_fallback_order_is_current_family_then_global(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            reference_root = root / "references"
+            template = "references/{gamever}/engine/Target.{platform}.yaml"
+            paths = [reference_root / tag / "engine/Target.linux.yaml" for tag in ("sample-1", "sample-9", "other-8")]
+            for path in paths:
+                path.parent.mkdir(parents=True)
+                path.touch()
+
+            def resolve(value, binary_dir, platform):
+                return root / _resolve_llm_template(value, binary_dir, platform)
+
+            with (
+                patch.object(ida_analyze_util, "_resolve_preprocessor_resource", side_effect=resolve),
+                patch.object(ida_analyze_util, "REFERENCE_RESOURCE_ROOT", reference_root),
+                patch.object(ida_analyze_util, "FAMILY_REFERENCE_GAMEVERS", {"sample": "sample-9"}, create=True),
+                patch.object(ida_analyze_util, "_reference_gamever", return_value="other-8"),
+            ):
+                for expected in paths:
+                    self.assertEqual(
+                        expected.resolve(), _resolve_reference_resource(template, root / "sample-1/engine", "linux")
+                    )
+                    expected.unlink()
 
     def test_resolve_reference_resource_without_gamever_placeholder_has_no_fallback(self):
         with tempfile.TemporaryDirectory() as temporary:

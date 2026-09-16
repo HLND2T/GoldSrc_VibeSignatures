@@ -1,0 +1,160 @@
+func_name: PortalSource_CreateTexture
+func_va: '0x1575ce'
+disasm_code: |-
+  ; PortalSource_texture_id_offset = 196; PortalSource_texture_width_offset = 200; PortalSource_texture_height_offset = 204.
+  ; glGenTextures writes texture_id; glBindTexture reads it; glTexImage2D consumes texture_width/texture_height.
+  .text:001575CE                 push    esi
+  .text:001575CF                 push    ebx
+  .text:001575D0                 sub     esp, 14h
+  .text:001575D3                 call    __x86_get_pc_thunk_bx
+  .text:001575D8                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:001575DE                 mov     esi, [esp+1Ch+this]
+  .text:001575E2                 mov     eax, [esi+0C4h]
+  .text:001575E8                 test    eax, eax
+  .text:001575EA                 jz      short loc_1575F2
+  .text:001575EC                 add     esp, 14h
+  .text:001575EF                 pop     ebx
+  .text:001575F0                 pop     esi
+  .text:001575F1                 retn
+  .text:001575F2                 sub     esp, 8
+  .text:001575F5                 lea     edx, [esp+24h+params]
+  .text:001575F9                 ; params
+  .text:001575F9                 push    edx; params
+  .text:001575FA                 ; pname
+  .text:001575FA                 push    84E0h; pname
+  .text:001575FF                 call    _glGetIntegerv
+  .text:00157604                 add     esp, 10h
+  .text:00157607                 cmp     [esp+1Ch+params], 84C0h
+  .text:0015760F                 jz      short loc_157658
+  .text:00157611                 sub     esp, 0Ch
+  .text:00157614                 ; unsigned int
+  .text:00157614                 push    84C0h; unsigned int
+  .text:00157619                 call    __Z16SetActiveTexturej; SetActiveTexture(uint)
+  .text:0015761E                 add     esp, 10h
+  .text:00157621                 test    al, al
+  .text:00157623                 jnz     short loc_157658
+  .text:00157625                 sub     esp, 8
+  .text:00157628                 lea     ecx, (aInvalidGlActiv - 308000h)[ebx]; "Invalid GL_ACTIVE_TEXTURE, unable to re"...
+  .text:0015762E                 push    ecx
+  .text:0015762F                 push    1
+  .text:00157631                 call    sub_A5528
+  .text:00157636                 add     esp, 10h
+  .text:00157639                 mov     edx, [esp+1Ch+params]
+  .text:0015763D                 cmp     edx, 84C0h
+  .text:00157643                 jz      short loc_1575EC
+  .text:00157645                 sub     esp, 0Ch
+  .text:00157648                 ; unsigned int
+  .text:00157648                 push    edx; unsigned int
+  .text:00157649                 call    __Z16SetActiveTexturej; SetActiveTexture(uint)
+  .text:0015764E                 add     esp, 10h
+  .text:00157651                 add     esp, 14h
+  .text:00157654                 pop     ebx
+  .text:00157655                 pop     esi
+  .text:00157656                 retn
+  .text:00157658                 sub     esp, 8
+  .text:0015765B                 lea     eax, [esi+0C4h]
+  .text:00157661                 ; textures
+  .text:00157661                 push    eax; textures
+  .text:00157662                 ; n
+  .text:00157662                 push    1; n
+  .text:00157664                 call    _glGenTextures
+  .text:00157669                 ; cap
+  .text:00157669                 mov     [esp+2Ch+cap], 0DE1h; cap
+  .text:00157670                 call    _glEnable
+  .text:00157675                 pop     eax
+  .text:00157676                 pop     edx
+  .text:00157677                 mov     edx, [esi+0C4h]
+  .text:0015767D                 ; texture
+  .text:0015767D                 push    edx; texture
+  .text:0015767E                 ; target
+  .text:0015767E                 push    0DE1h; target
+  .text:00157683                 call    _glBindTexture
+  .text:00157688                 ; pixels
+  .text:00157688                 mov     [esp+2Ch+cap], 0; pixels
+  .text:0015768F                 ; type
+  .text:0015768F                 push    1400h; type
+  .text:00157694                 ; format
+  .text:00157694                 push    1908h; format
+  .text:00157699                 ; border
+  .text:00157699                 push    0; border
+  .text:0015769B                 mov     ecx, [esi+0CCh]
+  .text:001576A1                 ; height
+  .text:001576A1                 push    ecx; height
+  .text:001576A2                 mov     esi, [esi+0C8h]
+  .text:001576A8                 ; width
+  .text:001576A8                 push    esi; width
+  .text:001576A9                 ; internalFormat
+  .text:001576A9                 push    1908h; internalFormat
+  .text:001576AE                 ; level
+  .text:001576AE                 push    0; level
+  .text:001576B0                 ; target
+  .text:001576B0                 push    0DE1h; target
+  .text:001576B5                 call    _glTexImage2D
+  .text:001576BA                 add     esp, 2Ch
+  .text:001576BD                 ; param
+  .text:001576BD                 push    2601h; param
+  .text:001576C2                 ; pname
+  .text:001576C2                 push    2801h; pname
+  .text:001576C7                 ; target
+  .text:001576C7                 push    0DE1h; target
+  .text:001576CC                 call    _glTexParameteri
+  .text:001576D1                 add     esp, 0Ch
+  .text:001576D4                 ; param
+  .text:001576D4                 push    2601h; param
+  .text:001576D9                 ; pname
+  .text:001576D9                 push    2800h; pname
+  .text:001576DE                 ; target
+  .text:001576DE                 push    0DE1h; target
+  .text:001576E3                 call    _glTexParameteri
+  .text:001576E8                 pop     eax
+  .text:001576E9                 pop     edx
+  .text:001576EA                 ; texture
+  .text:001576EA                 push    0; texture
+  .text:001576EC                 ; target
+  .text:001576EC                 push    0DE1h; target
+  .text:001576F1                 call    _glBindTexture
+  .text:001576F6                 pop     ecx
+  .text:001576F7                 mov     eax, [esp+28h+params]
+  .text:001576FB                 ; unsigned int
+  .text:001576FB                 push    eax; unsigned int
+  .text:001576FC                 call    __Z16SetActiveTexturej; SetActiveTexture(uint)
+  .text:00157701                 add     esp, 10h
+  .text:00157704                 mov     edx, [esp+1Ch+params]
+  .text:00157708                 cmp     edx, 84C0h
+  .text:0015770E                 jnz     loc_157645
+  .text:00157714                 jmp     loc_1575EC
+procedure: |-
+  // PortalSource_texture_id_offset = 196; PortalSource_texture_width_offset = 200; PortalSource_texture_height_offset = 204.
+  // glGenTextures writes texture_id; glBindTexture reads it; glTexImage2D consumes texture_width/texture_height.
+  void __cdecl PortalSource_CreateTexture(PortalSource_8948 *self)
+  {
+    unsigned int v1; // edx
+    GLint params[4]; // [esp+1Ch] [ebp-10h] BYREF
+
+    if ( !self->texture_id )
+    {
+      glGetIntegerv(0x84E0u, params);
+      if ( params[0] == 33984 || (unsigned __int8)SetActiveTexture(0x84C0u) )
+      {
+        glGenTextures(1, &self->texture_id);
+        glEnable(0xDE1u);
+        glBindTexture(0xDE1u, self->texture_id);
+        glTexImage2D(0xDE1u, 0, 6408, self->texture_width, self->texture_height, 0, 0x1908u, 0x1400u, nullptr);
+        glTexParameteri(0xDE1u, 0x2801u, 9729);
+        glTexParameteri(0xDE1u, 0x2800u, 9729);
+        glBindTexture(0xDE1u, 0);
+        SetActiveTexture(params[0]);
+        v1 = params[0];
+        if ( params[0] == 33984 )
+          return;
+      }
+      else
+      {
+        sub_A5528(1, "Invalid GL_ACTIVE_TEXTURE, unable to reset. Couldn't create texture for PortalSource.\n");
+        v1 = params[0];
+        if ( params[0] == 33984 )
+          return;
+      }
+      SetActiveTexture(v1);
+    }
+  }

@@ -6,12 +6,17 @@ import re
 from ida_analyze_util import _export_llm_function, _prepare_llm_context, preprocess_common_skill
 from ida_llm_decompile import _build_target_disasm_index
 
-# Both supported Sven bodies assign v_centerspeed->value to pitchvel with
-# one scalar-float global store. Stack transfers and loads are not anchors.
+# Sven bodies assign v_centerspeed->value with SSE or x87 scalar stores.
+# Stack transfers and loads are not anchors.
 _GLOBAL_LABEL = r"(?!xmm[0-7]\b)[A-Za-z_?$][\w.$?@]*"
 _PITCHVEL_STORE_RE = re.compile(
     rf"movss\s+(?:dword ptr\s+)?(?:ds:)?(?:{_GLOBAL_LABEL}|"
     rf"\({_GLOBAL_LABEL}\s*-\s*(?:0x[0-9a-f]+|[0-9a-f]+h)\)\[e(?:ax|bx|cx|dx|si|di|bp)\]),\s*xmm[0-7]",
+    re.I,
+)
+_PITCHVEL_X87_STORE_RE = re.compile(
+    rf"fstp\s+(?!st\b)(?:dword ptr\s+)?(?:ds:)?(?:{_GLOBAL_LABEL}|"
+    rf"\({_GLOBAL_LABEL}\s*-\s*(?:0x[0-9a-f]+|[0-9a-f]+h)\)\[e(?:ax|bx|cx|dx|si|di|bp)\])",
     re.I,
 )
 
@@ -55,7 +60,12 @@ async def preprocess_skill(
         return False
     exported = await _export_llm_function(session, context["targets"][0][1])
     instructions, _ = _build_target_disasm_index((exported or {}).get("disasm_code", ""))
-    stores = [line for lines in instructions.values() for line in lines if _PITCHVEL_STORE_RE.fullmatch(line)]
+    stores = [
+        line
+        for lines in instructions.values()
+        for line in lines
+        if _PITCHVEL_STORE_RE.fullmatch(line) or _PITCHVEL_X87_STORE_RE.fullmatch(line)
+    ]
     if len(stores) != 1:
         print("PitchDrift: expected one scalar-float global store in V_StartPitchDrift")
         return False

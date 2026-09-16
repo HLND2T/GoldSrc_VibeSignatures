@@ -28,6 +28,7 @@ function directly.
 """
 
 from pathlib import Path
+from ida_elf import ELF_RESOLVER_PY
 
 from ida_analyze_util import (
     _inspect_function_via_mcp,
@@ -40,7 +41,9 @@ from ida_analyze_util import (
 TARGET_FUNC_NAME = "Host_IsSinglePlayerGame"
 OWNER_FUNC_NAME = "studioapi_SetupPlayerModel"
 
-LOCATE_PY = r"""
+LOCATE_PY = (
+    ELF_RESOLVER_PY
+    + r"""
 import ida_funcs
 import ida_idp
 import idaapi
@@ -66,11 +69,7 @@ def squeezed(text):
     return ''.join(str(text).split())
 
 def code_xref_count(ea):
-    count = 0
-    for ref in idautils.XrefsTo(int(ea), 0):
-        if ref.iscode:
-            count += 1
-    return count
+    return len(elf_code_refs_to(int(ea)))
 
 def callee_matches(target):
     fn = ida_funcs.get_func(int(target))
@@ -133,6 +132,7 @@ def main():
                 target = int(op.addr)
         if target is None:
             continue
+        target = resolve_elf_plt(target)
         window = [texts[x] for x in items[index + 1:index + 6]]
         test_pos = None
         for offset, text in enumerate(window[:2]):
@@ -184,6 +184,7 @@ try:
 except Exception as exc:
     result = json.dumps({'error': str(exc), 'trace': traceback.format_exc()})
 """
+)
 
 
 def _owner_artifact(new_binary_dir, platform, func_name, image_base):

@@ -51,7 +51,7 @@ async def preprocess_skill(
     debug=False,
 ):
     _ = skill_name, old_yaml_map
-    func_xrefs = SVENCOOP_FUNC_XREFS if Path(new_binary_dir).parent.name == "svencoop-10257" else FUNC_XREFS
+    func_xrefs = SVENCOOP_FUNC_XREFS if Path(new_binary_dir).parent.name.startswith("svencoop-") else FUNC_XREFS
     return await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,

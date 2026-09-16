@@ -8,6 +8,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
+from analysis_config import FAMILY_REFERENCE_GAMEVERS
 from gamesymbol_snapshot_lib.model import SnapshotContract
 
 PREPROCESSOR_ROOT = "ida_preprocessor_scripts"
@@ -53,8 +54,8 @@ def _repo_module_path(module: str, source_path: str, tree: Mapping[str, bytes | 
         for _ in range(level - 1):
             parent = parent.parent
         candidate = parent / PurePosixPath(*module.split(".")) if module else parent
-    elif module == "ida_analyze_util":
-        candidate = PurePosixPath("ida_analyze_util.py")
+    elif module in {"ida_analyze_util", "ida_elf", "analysis_config"}:
+        candidate = PurePosixPath(f"{module}.py")
     elif module.startswith("ida_preprocessor_scripts"):
         candidate = PurePosixPath(*module.split(".")).with_suffix(".py")
     elif "/" not in module and source_path.startswith(f"{PREPROCESSOR_ROOT}/"):
@@ -105,6 +106,9 @@ def _resolve_reference(
     candidates = []
     if "{gamever}" in relative:
         candidates.append(relative.replace("{gamever}", contract.game_version))
+        family_reference = FAMILY_REFERENCE_GAMEVERS.get(contract.game_version.rsplit("-", 1)[0])
+        if family_reference:
+            candidates.append(relative.replace("{gamever}", family_reference))
         candidates.append(relative.replace("{gamever}", reference_gamever))
     else:
         candidates.append(relative)

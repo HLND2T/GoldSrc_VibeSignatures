@@ -84,40 +84,20 @@ All `svencoop-*` engine nodes; any GoldSrc engine build that computes its build 
 `__DATE__` (the `hl-*` / `cstrike-*` families use the same algorithm, so the same
 platform divergence applies wherever Windows and Linux were compiled on different days).
 
-## Known gap: `svencoop-8948` Linux `build_number` is not registered
+## Resolved gap: `svencoop-8948` Linux PLT support
+The former Windows-only limitation was removed during the 8948 port (2026-09-16), with explicit approval to change shared analysis infrastructure.
 
-`find-build-number` is declared `platform: windows` for `svencoop-8948`, so only
-`bin_artifacts/svencoop-8948/engine/build_number.windows.yaml` is produced. The Linux node
-cannot be produced by the current finder and was deliberately left out rather than committed
-as a broken declaration.
+Root cause remains relevant: `_Z12build_numberv` is a preemptible GLOBAL symbol in this build. All fifteen calls use PLT `0x9ddf0` → GOT `0x33a368` → local implementation `0xa5350`; none call the implementation directly. The `SV_SendServerinfo` call site is `0x106e30`. 10257 instead has direct calls.
 
-Root cause: in this build `_Z12build_numberv` is exported as a **preemptible GLOBAL** symbol
-(present in `.dynsym`), so all fifteen call sites go through the ELF PLT stub at `0x9ddf0`
-(`jmp dword ptr [ebx + 0x368]` → GOT slot `0x33a368`); the module contains **zero** direct
-`call` instructions targeting `0xa5350`. `svencoop-10257` differs: its `build_number` is not
-preemptible, has fifteen direct call sites, and therefore resolves normally.
+The shared resolver now follows verified GOT-indirect thunks: mapped pointer bytes must equal IDA's resolved target, which must be an executable function start. `find-build_number.py` enables `func_sig_resolve_jmp_thunk`; `ida_elf.py` also supplies canonical PLT targets and reverse call edges for structural locators. Unresolved external imports are not treated as local functions.
 
-The LLM step answers correctly (`insn_va 0x106E30`, `call __Z12build_numberv` in
-`SV_SendServerinfo`), but `_inspect_llm_instruction` resolves the instruction target to the
-16-byte PLT stub, and `_inspect_function_via_mcp` cannot turn that into a unique function, so
-the node fails closed and falls back to a missing Agent skill (`agent_failed`).
-
-Enabling `func_sig_resolve_jmp_thunk` does **not** fix this: `_RESOLVE_JMP_THUNK_PY_EVAL`
-(`ida_analyze_util.py`) only follows `o_near` direct jumps and breaks on the PLT stub's
-indirect operand type.
-
-This cannot be worked around with `-oldgamever`: CI's analyzer step never passes it, and
-`resolve_oldgamever` only accepts a **strictly older same-family** tag (`svencoop-8948` is the
-oldest), so CI would hit the same failure.
-
-Remediation (separate change, touches shared analysis infrastructure): extend
-`_RESOLVE_JMP_THUNK_PY_EVAL` to follow GOT-indirect PLT jumps, enable
-`func_sig_resolve_jmp_thunk` in `find-build-number`'s `GENERATE_YAML_DESIRED_FIELDS`, then
-re-validate every registered `find-build-number` node (11 tags) so no committed artifact moves.
-
+Verification: 8948 Linux emits `func_va=0xa5350`, `func_size=0x10b`. All 15 registered platform nodes across 11 tags were rerun successfully, with all 15 prior function addresses unchanged. The platform gate has been removed from `configs/svencoop-8948.yaml`.
 ## Verification commands
-
+```powershell
+uv run python ida_analyze_bin.py -gamever svencoop-8948 -node engine:linux:find-build_number -oldgamever none -debug
 ```
+
+Check the resulting function address against `_Z12build_numberv` in `.symtab`, then follow that function's `__DATE__` pointer and apply the formula above. The Linux reported build remains 8997, despite the tag being 8948.
 # Resolve build_number per platform and confirm the reported value.
 # 1. Read .symtab for _Z12build_numberv (unstripped ELF) to get its func_va/size.
 # 2. Locate the __DATE__ pointer its body loads (the GOT slot referenced near the

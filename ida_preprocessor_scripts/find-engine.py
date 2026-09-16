@@ -152,7 +152,10 @@ def pic_lea_info(ea, ebx_base):
     else:
         off = 2
     disp = int.from_bytes(raw[off:off + 4], 'little', signed=True)
-    return {'operand_off': off, 'resolved': (ebx_base + disp) & 0xFFFFFFFF}
+    resolved = (ebx_base + disp) & 0xFFFFFFFF
+    if raw[0] == 0x8B and seg_name(resolved) in ('.got', '.got.plt'):
+        resolved = int(ida_bytes.get_dword(resolved))
+    return {'operand_off': off, 'resolved': resolved}
 
 def next_instructions(ea, count):
     out = []

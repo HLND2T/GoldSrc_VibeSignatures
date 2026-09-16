@@ -201,6 +201,29 @@ class AnalysisSourceIndexTests(unittest.TestCase):
                 fallback.owners("ida_preprocessor_scripts/references/hl-10210/engine/Demo.windows.yaml"),
             )
 
+    def test_family_reference_ownership_and_shared_elf_dependency(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            contract = self._contract(Path(temporary), "svencoop-8948")
+            node = "engine:windows:find-demo"
+            references = [
+                f"ida_preprocessor_scripts/references/{tag}/engine/Demo.windows.yaml"
+                for tag in ("svencoop-8948", "svencoop-10257", "hl-10210")
+            ]
+            tree = {
+                "ida_preprocessor_scripts/find-demo.py": "from ida_analyze_util import x\nREF='references/{gamever}/engine/Demo.{platform}.yaml'\n",
+                "ida_analyze_util.py": "from ida_elf import ELF_RESOLVER_PY\n",
+                "ida_elf.py": "ELF_RESOLVER_PY = ''\n",
+                **{path: "func_name: Demo\n" for path in references},
+            }
+            for selected in references:
+                index = build_source_index(contract, tree)
+                self.assertEqual(frozenset({node}), index.owners(selected))
+                self.assertEqual(frozenset({node}), index.owners("ida_elf.py"))
+                for other in references:
+                    if other != selected:
+                        self.assertFalse(index.owners(other))
+                del tree[selected]
+
     def test_warns_for_orphan_head_reference_without_rejecting_index(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 import re
 import runpy
 import unittest
@@ -24,6 +25,176 @@ found_funcptr: []
 found_gv: []
 found_struct_offset: []
 """
+
+
+class JumpThunkResolutionTests(unittest.TestCase):
+    def resolve(self, *, indirect=False, target=0x2000, pointer=0x3000, stored=0x2000, entry=True):
+        from ida_analyze_util import _RESOLVE_JMP_THUNK_PY_EVAL
+
+        functions = {0x1000: SimpleNamespace(start_ea=0x1000)}
+        if entry:
+            functions[0x2000] = SimpleNamespace(start_ea=0x2000)
+        operand = SimpleNamespace(type=2 if indirect else 1, addr=target)
+        modules = {
+            "ida_funcs": SimpleNamespace(
+                get_func=functions.get,
+                calc_thunk_func_target=lambda func: (target, pointer),
+            ),
+            "ida_ua": SimpleNamespace(
+                insn_t=lambda: SimpleNamespace(ops=[operand]),
+                decode_insn=lambda insn, ea: 6,
+                o_near=1,
+                o_displ=2,
+                o_mem=3,
+            ),
+            "idc": SimpleNamespace(print_insn_mnem=lambda ea: "jmp" if ea == 0x1000 else "push"),
+            "ida_bytes": SimpleNamespace(is_loaded=lambda ea: 0x3000 <= ea < 0x3004, get_dword=lambda ea: stored),
+            "ida_ida": SimpleNamespace(inf_is_64bit=lambda: False),
+            "ida_idaapi": SimpleNamespace(BADADDR=0xFFFFFFFFFFFFFFFF),
+        }
+        namespace = {}
+        with patch.dict("sys.modules", modules):
+            exec(_RESOLVE_JMP_THUNK_PY_EVAL.replace("EA_PLACEHOLDER", "4096"), {}, namespace)
+        return int(json.loads(namespace["result"])["func_va"], 16)
+
+    def test_direct_jump_still_resolves(self):
+        self.assertEqual(0x2000, self.resolve())
+
+    def test_got_indirect_jump_resolves_to_defined_function(self):
+        self.assertEqual(0x2000, self.resolve(indirect=True))
+
+    def test_indirect_jump_without_verified_pointer_stays_unresolved(self):
+        for changes in ({"stored": 0x1006}, {"pointer": 0x4000}, {"entry": False}, {"target": 0xFFFFFFFFFFFFFFFF}):
+            with self.subTest(changes=changes):
+                self.assertEqual(0x1000, self.resolve(indirect=True, **changes))
+
+
+class StudioPicArgumentTests(unittest.TestCase):
+    def test_global_locators_resolve_got_loads_but_preserve_lea(self):
+        for name in ("find-DM_PlayerState.py", "find-engine.py"):
+            source = runpy.run_path(str(Path(__file__).resolve().parents[1] / "ida_preprocessor_scripts" / name))[
+                "LOCATE_PY"
+            ]
+            for opcode, segment, expected in ((0x8B, ".got", 0x5000), (0x8D, ".got", 0x3020), (0x8B, ".data", 0x3020)):
+                with self.subTest(name=name, opcode=opcode, segment=segment):
+                    raw = bytes([opcode, 0x93, 0x20, 0, 0, 0])
+                    modules = {
+                        key: SimpleNamespace()
+                        for key in (
+                            "ida_bytes",
+                            "ida_funcs",
+                            "ida_idp",
+                            "ida_nalt",
+                            "ida_segment",
+                            "idaapi",
+                            "idautils",
+                            "idc",
+                        )
+                    }
+                    modules["ida_bytes"] = SimpleNamespace(get_bytes=lambda ea, size: raw, get_dword=lambda ea: 0x5000)
+                    modules["idautils"] = SimpleNamespace(DecodeInstruction=lambda ea: SimpleNamespace(size=6))
+                    namespace = {}
+                    with patch.dict("sys.modules", modules):
+                        exec(source.replace("SETUP_EA_PLACEHOLDER", "4096"), namespace)
+                    namespace["seg_name"] = lambda ea: segment
+                    self.assertEqual(expected, namespace["pic_lea_info"](0x1000, 0x3000)["resolved"])
+
+    def resolve(self, opcode, segment):
+        from ida_preprocessor_scripts._studio_player_model_common import _LOCATE_SHARED_PY
+
+        raw = bytes([opcode, 0x93, 0x20, 0, 0, 0])
+        modules = {
+            name: SimpleNamespace()
+            for name in ("ida_bytes", "ida_funcs", "ida_nalt", "ida_segment", "idaapi", "idautils", "idc")
+        }
+        modules["ida_bytes"] = SimpleNamespace(get_bytes=lambda ea, size: raw, get_dword=lambda ea: 0x5000)
+        modules["idautils"] = SimpleNamespace(DecodeInstruction=lambda ea: SimpleNamespace(size=6))
+        namespace = {}
+        with patch.dict("sys.modules", modules):
+            exec(_LOCATE_SHARED_PY, namespace)
+        namespace.update(func_items=lambda start: [start], disasm=lambda ea: "fixture", seg_name=lambda ea: segment)
+        return namespace["pic_ebx_displacements"](0x1000, 0x3000)[0]["resolved"]
+
+    def test_got_load_yields_argument_pointee(self):
+        self.assertEqual(0x5000, self.resolve(0x8B, ".got"))
+
+    def test_lea_and_ordinary_data_load_keep_operand_address(self):
+        self.assertEqual(0x3020, self.resolve(0x8D, ".got"))
+        self.assertEqual(0x3020, self.resolve(0x8B, ".data"))
+
+
+class GotGlobalValidationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_alias_suffix_is_not_an_aggregate_field(self):
+        import ida_analyze_util as util
+
+        detail = {"got_symbol_names": ["g_bRenderingPortals"], "got_indirect_targets": ["0x7a40f4"]}
+        result = {"found_gv": [{"gv_name": "g_bRenderingPortals_SCClient", "insn_va": "0x1000"}]}
+        with patch.object(util, "_inspect_llm_instruction", AsyncMock(return_value=detail)):
+            self.assertEqual([], await util._validate_llm_global_addresses(None, result, "linux"))
+        self.assertEqual(["0x7a40f4"], util._llm_global_targets(detail))
+
+    async def test_aggregate_owner_and_null_immediate_are_not_member_addresses(self):
+        import ida_analyze_util as util
+
+        result = {"found_gv": [{"gv_name": "cl_max_edicts", "insn_va": "0x1000"}]}
+        for detail in (
+            {"got_symbol_names": ["cl"], "got_indirect_targets": ["0x5000"]},
+            {"operand_targets": ["0x0"], "operand_dwords": ["0x0"], "operand_pic": [False]},
+        ):
+            with patch.object(util, "_inspect_llm_instruction", AsyncMock(return_value=detail)):
+                self.assertEqual(1, len(await util._validate_llm_global_addresses(None, result, "linux")))
+        self.assertEqual([], util._llm_global_targets({"operand_targets": ["0x0"]}))
+
+
+class PitchDriftStoreTests(unittest.TestCase):
+    def test_x87_global_store_excludes_fpu_register_and_stack_stores(self):
+        module = runpy.run_path(
+            str(
+                Path(__file__).resolve().parents[1]
+                / "ida_preprocessor_scripts"
+                / "find-V_StartPitchDrift-decompiles.py"
+            )
+        )
+        pattern = module["_PITCHVEL_X87_STORE_RE"]
+        self.assertIsNotNone(pattern.fullmatch("fstp ds:(_ZL2pd - 308000h)[ebx]"))
+        for line in ("fstp st", "fstp st(0)", "fstp dword ptr [esp+4]", "fld ds:(_ZL2pd - 308000h)[ebx]"):
+            self.assertIsNone(pattern.fullmatch(line))
+
+
+class ElfIndirectionTests(unittest.TestCase):
+    def test_defined_plt_targets_and_reverse_call_edges(self):
+        from ida_elf import ELF_RESOLVER_PY
+
+        segments = {
+            0x1000: SimpleNamespace(name=".plt", perm=5),
+            0x2000: SimpleNamespace(name=".text", perm=5),
+            0x3000: SimpleNamespace(name=".got.plt", perm=6),
+        }
+        functions = {ea: SimpleNamespace(start_ea=ea) for ea in (0x1000, 0x2000)}
+        stored = [0x2000]
+        modules = {
+            "ida_bytes": SimpleNamespace(is_loaded=lambda ea: 0x3000 <= ea < 0x3004, get_dword=lambda ea: stored[0]),
+            "ida_funcs": SimpleNamespace(get_func=functions.get, calc_thunk_func_target=lambda fn: (0x2000, 0x3000)),
+            "ida_segment": SimpleNamespace(getseg=segments.get, get_segm_name=lambda seg: seg.name, SEGPERM_EXEC=4),
+            "idaapi": SimpleNamespace(BADADDR=0xFFFFFFFF),
+            "idautils": SimpleNamespace(
+                CodeRefsTo=lambda ea, flow: {0x1000: [0x4000, 0x4010], 0x2000: [0x1000, 0x4020]}.get(ea, []),
+                DataRefsTo=lambda ea: {0x2000: [0x3000], 0x3000: [0x1000]}.get(ea, []),
+            ),
+        }
+        namespace = {}
+        with patch.dict("sys.modules", modules):
+            exec(ELF_RESOLVER_PY, namespace)
+            resolve = namespace["resolve_elf_plt"]
+            self.assertEqual(0x2000, resolve(0x1000))
+            self.assertEqual([0x4000, 0x4010, 0x4020], namespace["elf_code_refs_to"](0x2000))
+            self.assertEqual(0x2000, resolve(0x2000))
+            stored[0] = 0x1006
+            self.assertEqual(0x1000, resolve(0x1000))
+            self.assertEqual([0x4020], namespace["elf_code_refs_to"](0x2000))
+            stored[0] = 0x2000
+            segments[0x2000].perm = 2
+            self.assertEqual(0x1000, resolve(0x1000))
 
 
 def scoreinfo_code(*, stride="imul eax, 74h", extra=(), store="mov word_600000[eax], di"):

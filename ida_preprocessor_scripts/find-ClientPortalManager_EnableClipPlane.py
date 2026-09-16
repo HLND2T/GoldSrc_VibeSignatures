@@ -13,6 +13,7 @@ matching MetaHookSv's EnableClipPlane role.
 from ida_preprocessor_scripts._sven_client_pic_common import (
     preprocess_string_owner_skill_with_pic_fallback,
 )
+from ida_analyze_util import _output_for_symbol
 
 TARGET_FUNCTION_NAMES = ["ClientPortalManager_EnableClipPlane"]
 LITERAL = "Error: Too many clip planes on portal! Maximum: 6 (Too many surfaces on brush?)\n"
@@ -35,7 +36,9 @@ async def preprocess_skill(
         new_binary_dir=new_binary_dir,
         platform=platform,
         image_base=image_base,
-        func_name=TARGET_FUNCTION_NAMES[0],
+        func_name="PortalSource_CalculateClipPlane"
+        if _output_for_symbol(expected_outputs, "PortalSource_CalculateClipPlane")
+        else TARGET_FUNCTION_NAMES[0],
         literal=LITERAL,
         debug=debug,
     )

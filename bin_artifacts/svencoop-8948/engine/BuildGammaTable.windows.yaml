@@ -1,0 +1,5 @@
+func_name: BuildGammaTable
+func_va: '0x1dccba0'
+func_rva: '0xccba0'
+func_size: '0x35e'
+func_sig: 83 EC 14 6A 05 E8 ?? ?? ?? ?? D9 EE 83 C4 04 85 C0 74 ?? D9 05 ?? ?? ?? ?? DA E9 DF E0 F6 C4 44 7A ??

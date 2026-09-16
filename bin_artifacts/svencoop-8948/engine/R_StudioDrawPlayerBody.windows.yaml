@@ -1,0 +1,5 @@
+func_name: R_StudioDrawPlayerBody
+func_va: '0x1d89640'
+func_rva: '0x89640'
+func_size: '0x612'
+func_sig: 55 8B EC 83 E4 F8 81 EC EC 0B 00 00 A1 ?? ?? ?? ?? 33 C4 89 84 24 ?? ?? ?? ?? 53 56 57 8B 7D ?? 8B 77 ??

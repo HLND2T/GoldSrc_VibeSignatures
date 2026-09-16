@@ -7,6 +7,7 @@ virtual calls were devirtualized. No compiler-specific vtable index is assumed.
 """
 
 from pathlib import Path
+from ida_elf import ELF_RESOLVER_PY
 
 from ida_analyze_util import (
     _inspect_function_via_mcp,
@@ -19,7 +20,9 @@ from ida_analyze_util import (
     write_vtable_yaml,
 )
 
-LOCATE = r'''
+LOCATE = (
+    ELF_RESOLVER_PY
+    + r'''
 import ida_bytes, ida_funcs, ida_gdl, ida_segment, ida_ua, idaapi, idautils, idc, json
 export_ea = EXPORT_EA
 target_platform = TARGET_PLATFORM
@@ -32,6 +35,9 @@ def data(ea):
     return seg is not None and not (seg.perm & ida_segment.SEGPERM_EXEC)
 
 def function(ea):
+    segment = ida_segment.getseg(int(ea)) if mapped(ea) else None
+    if segment is None or not (segment.perm & ida_segment.SEGPERM_EXEC):
+        return False
     f = ida_funcs.get_func(int(ea)) if mapped(ea) else None
     # Some builds leave constructor and vtable-only entries as unowned code.
     # Materialize only an existing instruction head in an executable segment.
@@ -105,12 +111,13 @@ def dispatch(ea):
         if idc.print_insn_mnem(insn_ea).lower() not in ('call', 'jmp'):
             continue
         op = insn.ops[0]
-        if op.type == ida_ua.o_near and function(op.addr) and op.addr != ea:
-            items = body(op.addr)
+        if op.type == ida_ua.o_near and function(resolve_elf_plt(op.addr)) and resolve_elf_plt(op.addr) != ea:
+            target = resolve_elf_plt(op.addr)
+            items = body(target)
             # GCC's PC thunk only materializes the return address, not dispatch.
             if len(items) == 2 and idc.print_insn_mnem(items[0]) == 'mov' and idc.print_operand(items[0], 1) == '[esp]' and idc.print_insn_mnem(items[1]) == 'retn':
                 continue
-            direct.add(int(op.addr))
+            direct.add(int(target))
         elif op.type in (ida_ua.o_displ, ida_ua.o_phrase):
             offset = int(op.addr) if op.type == ida_ua.o_displ else 0
             if offset >= 0 and offset % 4 == 0:
@@ -166,7 +173,10 @@ def constructor_tables(object_access, obj):
     stack_this = (mnemonic == 'push' or (mnemonic == 'mov' and first.ops[0].type in (ida_ua.o_phrase, ida_ua.o_displ) and first.ops[0].addr == 0 and '[esp' in dest_text))
     if not (msvc_this or stack_this):
         return set()
-    if obj not in refs(object_access):
+    sources = expand(refs(object_access))
+    if mnemonic == 'push' and first.ops[0].type == ida_ua.o_reg:
+        sources.update(register_source(object_access, dest_text))
+    if obj not in sources:
         return set()
     cursor = object_access
     target = None
@@ -178,7 +188,7 @@ def constructor_tables(object_access, obj):
         mnemonic = idc.print_insn_mnem(cursor).lower()
         if mnemonic in ('call', 'jmp'):
             if insn.ops[0].type == ida_ua.o_near:
-                target = int(insn.ops[0].addr)
+                target = resolve_elf_plt(insn.ops[0].addr)
             break
         dest_text = idc.print_operand(cursor, 0).lower()
         if mnemonic.startswith('j') or mnemonic.startswith('ret') or (msvc_this and dest_text == 'ecx'):
@@ -201,6 +211,7 @@ def constructor_tables(object_access, obj):
     stack_delta = 0
     frame_delta = None
     tables = set()
+    addresses = {}
     for cursor in linear_body(target):
         insn = idautils.DecodeInstruction(cursor)
         if not insn:
@@ -216,11 +227,16 @@ def constructor_tables(object_access, obj):
         dest_name = idc.print_operand(cursor, 0).lower()
         source_name = idc.print_operand(cursor, 1).lower()
         if mnemonic == 'mov':
+            if dest.type in (ida_ua.o_phrase, ida_ua.o_displ) and dest.addr == 0 and source.type == ida_ua.o_reg:
+                operand = dest_name.replace('dword ptr ', '')
+                if operand in {'[' + register + ']' for register in aliases}:
+                    tables.update(addresses.get(source_name, set()))
             if dest.type in (ida_ua.o_phrase, ida_ua.o_displ) and dest.addr == 0 and source.type == ida_ua.o_imm:
                 operand = idc.print_operand(cursor, 0).lower().replace('dword ptr ', '')
                 if operand in {'[' + register + ']' for register in aliases} and data(source.value):
                     tables.add(int(source.value))
             if dest.type == ida_ua.o_reg:
+                addresses[dest_name] = expand(refs(cursor)) if source.type != ida_ua.o_reg else addresses.get(source_name, set())
                 source_is_this = source.type == ida_ua.o_reg and source_name in aliases
                 if stack_this and source.type == ida_ua.o_displ:
                     if '[esp' in source_name and int(source.addr) == 4 - stack_delta:
@@ -233,11 +249,17 @@ def constructor_tables(object_access, obj):
                 if dest_name == 'ebp' and source_name == 'esp':
                     frame_delta = stack_delta
         elif mnemonic == 'call':
+            for register in ('eax', 'ecx', 'edx'):
+                addresses.pop(register, None)
             returns_this = 'ecx' in aliases and dest.type == ida_ua.o_near and returns_msvc_this(int(dest.addr))
             aliases.difference_update({'eax', 'ecx', 'edx'})
             if returns_this:
                 aliases.add('eax')
+        elif mnemonic == 'add' and dest.type == ida_ua.o_reg and source.type == ida_ua.o_imm and dest_name != 'esp':
+            addresses[dest_name] = {value + int(source.value) for value in addresses.get(dest_name, set()) if data(value + int(source.value))}
+            aliases.discard(dest_name)
         elif dest.type == ida_ua.o_reg and mnemonic not in ('push', 'cmp', 'test'):
+            addresses.pop(dest_name, None)
             aliases.discard(idc.print_operand(cursor, 0).lower())
         if mnemonic == 'push':
             stack_delta -= 4
@@ -264,15 +286,24 @@ def main():
     thunks = [ida_bytes.get_dword(studio + 4), ida_bytes.get_dword(studio + 8)]
     dispatches = [dispatch(ea) for ea in thunks]
     shared_objects = set(x[0] for x in dispatches[0][2]) & set(x[0] for x in dispatches[1][2])
+    shared_objects = {obj for obj in shared_objects if ida_segment.get_segm_name(ida_segment.getseg(obj)) not in ('.got', '.got.plt')}
     resolved = []
     evidence = []
     for obj in shared_objects:
         vtables = set()
         if data(ida_bytes.get_dword(obj)):
             vtables.add(int(ida_bytes.get_dword(obj)))
-        for xref in idautils.XrefsTo(obj):
-            ea = int(xref.frm)
+        for ea in elf_data_refs_to(obj):
             vtables.update(constructor_tables(ea, obj))
+            # A PIC load may pass the singleton through a register push.
+            following = idc.next_head(ea)
+            for _ in range(16):
+                mnemonic = idc.print_insn_mnem(following).lower()
+                if mnemonic.startswith(('j', 'ret')) or mnemonic == 'call':
+                    break
+                if mnemonic == 'push':
+                    vtables.update(constructor_tables(following, obj))
+                following = idc.next_head(following)
             insn = idautils.DecodeInstruction(ea)
             if not insn or idc.print_insn_mnem(ea).lower() != 'mov':
                 continue
@@ -322,6 +353,7 @@ try:
 except Exception as exc:
     result = json.dumps({'error': str(exc)})
 '''
+)
 
 
 async def preprocess_skill(

@@ -14,6 +14,7 @@ consumer computes the redirect at runtime.
 """
 
 from pathlib import Path
+from ida_elf import ELF_RESOLVER_PY
 
 from ida_analyze_util import (
     _find_unique_bytes,
@@ -24,7 +25,9 @@ from ida_analyze_util import (
     write_patch_yaml,
 )
 
-LOCATE_PY = r"""
+LOCATE_PY = (
+    ELF_RESOLVER_PY
+    + r"""
 import ida_bytes
 import ida_funcs
 import ida_idp
@@ -173,7 +176,7 @@ def xref_function_starts(ea):
     for xref in idautils.XrefsFrom(int(ea), 0):
         if xref.type in (idaapi.fl_CN, idaapi.fl_CF, idaapi.fl_JN, idaapi.fl_JF):
             func = ida_funcs.get_func(int(xref.to))
-            starts.add(int(func.start_ea) if func is not None else int(xref.to))
+            starts.add(resolve_elf_plt(int(func.start_ea) if func is not None else int(xref.to)))
     return starts
 
 def is_direct_rel32_branch(ea):
@@ -239,6 +242,7 @@ try:
 except Exception as exc:
     result = json.dumps({'error': str(exc), 'trace': traceback.format_exc()})
 """
+)
 
 
 def _function_artifact_path(new_binary_dir, platform, func_name):

@@ -2,8 +2,8 @@ vtable_class: GameStudioRenderer
 vtable_symbol: GameStudioRenderer
 vtable_va: '0x5ed94c'
 vtable_rva: '0x5ed94c'
-vtable_size: '0x80'
-vtable_numvfunc: 32
+vtable_size: '0x7c'
+vtable_numvfunc: 31
 vtable_entries:
   0: '0xc94b2'
   1: '0xc94da'
@@ -36,4 +36,3 @@ vtable_entries:
   28: '0x105e9a'
   29: '0x1008b6'
   30: '0x100872'
-  31: '0xac6f7c'

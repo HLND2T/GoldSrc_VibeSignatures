@@ -21,7 +21,10 @@ FUNC_XREFS = [
     },
 ]
 GENERATE_YAML_DESIRED_FIELDS = [
-    ("ClientPortalManager_ResetAll", ["func_name", "func_sig", "func_va", "func_rva", "func_size"]),
+    (
+        "ClientPortalManager_ResetAll",
+        ["func_name", "func_sig", "func_va", "func_rva", "func_size"],
+    ),
 ]
 
 
@@ -36,15 +39,22 @@ async def preprocess_skill(
     debug=False,
 ):
     _ = skill_name, old_yaml_map
-    return await preprocess_common_skill(
-        session=session,
-        expected_outputs=expected_outputs,
-        old_yaml_map=None,
-        new_binary_dir=new_binary_dir,
-        platform=platform,
-        image_base=image_base,
-        func_names=TARGET_FUNCTION_NAMES,
-        func_xrefs=FUNC_XREFS,
-        generate_yaml_desired_fields=GENERATE_YAML_DESIRED_FIELDS,
-        debug=debug,
-    )
+    for extend_signature in (False, True):
+        fields = [
+            (name, desired + (["func_sig_allow_across_function_boundary:true"] if extend_signature else []))
+            for name, desired in GENERATE_YAML_DESIRED_FIELDS
+        ]
+        if await preprocess_common_skill(
+            session=session,
+            expected_outputs=expected_outputs,
+            old_yaml_map=None,
+            new_binary_dir=new_binary_dir,
+            platform=platform,
+            image_base=image_base,
+            func_names=TARGET_FUNCTION_NAMES,
+            func_xrefs=FUNC_XREFS,
+            generate_yaml_desired_fields=fields,
+            debug=debug,
+        ):
+            return True
+    return False

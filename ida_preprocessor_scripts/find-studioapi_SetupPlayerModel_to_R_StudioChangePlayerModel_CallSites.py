@@ -12,8 +12,8 @@ a separate patch artifact:
 
 Numbering is the studioapi_SetupPlayerModel-body instruction address order,
 starting at 0. MSVC merges the two source call sites into one on
-hl-4554..hl-10210 and cof-5936 (single artifact); the WON-era hl builds and
-SvEngine keep both. Linux builds inline the callee, so this finder is
+hl-4554..hl-10210, cof-5936, and svencoop-8948 (single artifact); the WON-era
+hl builds and svencoop-10257 keep both. Linux builds inline the callee, so this finder is
 Windows-only by design.
 
 patch_va / patch_rva are the unique patch_sig match start. patch_sig_disp

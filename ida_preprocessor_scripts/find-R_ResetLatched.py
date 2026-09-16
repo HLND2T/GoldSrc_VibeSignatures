@@ -17,6 +17,7 @@ import re
 from pathlib import Path
 
 import ida_analyze_util as u
+from ida_elf import ELF_RESOLVER_PY
 from ida_preprocessor_scripts._func_to_func_callsites_common import locate_callsites
 
 TARGET = "R_ResetLatched"
@@ -28,7 +29,9 @@ MAX_SIZE = 1200
 MIN_EXTRA_CALLERS = 1
 MAX_EXTRA_CALLERS = 4
 
-WALK = r"""
+WALK = (
+    ELF_RESOLVER_PY
+    + r"""
 import idautils, ida_funcs, idc, ida_segment, ida_bytes, json
 
 MARKER = @@MARKER@@
@@ -54,7 +57,7 @@ def internal_calls(o):
     for pc in idautils.FuncItems(o):
         if (idc.print_insn_mnem(pc) or "").lower() != "call":
             continue
-        t = idc.get_operand_value(pc, 0)
+        t = resolve_elf_plt(idc.get_operand_value(pc, 0))
         tf = fn(t) if t else None
         if tf is None or tf != t or fsize(tf) <= 16:
             continue
@@ -62,7 +65,7 @@ def internal_calls(o):
     return out
 
 def callers(o):
-    return sorted({fn(x) for x in idautils.CodeRefsTo(o, False) if fn(x)})
+    return sorted({fn(x) for x in elf_code_refs_to(o) if fn(x)})
 
 def find_cstr(s):
     hits = []
@@ -121,6 +124,7 @@ else:
         res["R_ResetLatched"] = cands[0]
     emit(res)
 """
+)
 
 
 async def _eval(session, code):

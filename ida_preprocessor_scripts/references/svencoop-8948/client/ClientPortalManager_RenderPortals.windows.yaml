@@ -1,0 +1,1657 @@
+func_name: ClientPortalManager_RenderPortals
+func_va: '0x100969f0'
+disasm_code: |-
+  ; ClientPortalManager_vector_begin_offset = 140; ClientPortalManager_vector_end_offset = 144. This vector contains PortalSource pointers.
+  ; CalculateClipPlane receives mode from ClientPortal+0x28: ClientPortal_mode_offset = 40.
+  ; Its origin/angles arguments use the entity pointer at ClientPortal+0x70: ClientPortal_entity_offset = 112.
+  ; ClientPortal::GetOrigin/GetAngles return entity+0xB48/entity+0xB54: cl_entity_origin_offset = 2888; cl_entity_angles_offset = 2900.
+  ; These entity vectors are distinct from ClientPortal source-origin/source-angles at +0/+12 and PortalSource copied vectors at +0/+12.
+  ; PortalSource_texture_id_offset = 204; PortalSource_texture_width_offset = 208; PortalSource_texture_height_offset = 212. Verify glGenTextures, glBindTexture and glTexImage2D on the PortalSource object.
+  .text:100969F0                 push    ebp
+  .text:100969F1                 mov     ebp, esp
+  .text:100969F3                 push    0FFFFFFFFh
+  .text:100969F5                 push    offset SEH_100969F0
+  .text:100969FA                 mov     eax, large fs:0
+  .text:10096A00                 push    eax
+  .text:10096A01                 sub     esp, 80h
+  .text:10096A07                 push    ebx
+  .text:10096A08                 push    esi
+  .text:10096A09                 push    edi
+  .text:10096A0A                 mov     eax, ___security_cookie
+  .text:10096A0F                 xor     eax, ebp
+  .text:10096A11                 push    eax
+  .text:10096A12                 lea     eax, [ebp+var_C]
+  .text:10096A15                 mov     large fs:0, eax
+  .text:10096A1B                 mov     ebx, ecx
+  .text:10096A1D                 mov     [ebp+var_14], ebx
+  .text:10096A20                 mov     edi, [ebx+8Ch]
+  .text:10096A26                 lea     esi, [ebx+8Ch]
+  .text:10096A2C                 mov     [ebp+var_2C], esi
+  .text:10096A2F                 cmp     edi, [ebx+90h]
+  .text:10096A35                 jz      short loc_10096A98
+  .text:10096A37                 mov     esi, [edi]
+  .text:10096A39                 test    esi, esi
+  .text:10096A3B                 jz      short loc_10096A81
+  .text:10096A3D                 lea     ecx, [esi+0A8h]
+  .text:10096A43                 mov     [ebp+var_4], 0
+  .text:10096A4A                 call    sub_1009C920
+  .text:10096A4F                 lea     ecx, [esi+88h]
+  .text:10096A55                 call    sub_1009C920
+  .text:10096A5A                 ; void (__thiscall *)(void *)
+  .text:10096A5A                 push    offset nullsub_1; void (__thiscall *)(void *)
+  .text:10096A5F                 ; unsigned int
+  .text:10096A5F                 push    6; unsigned int
+  .text:10096A61                 ; unsigned int
+  .text:10096A61                 push    10h; unsigned int
+  .text:10096A63                 lea     eax, [esi+28h]
+  .text:10096A66                 ; void *
+  .text:10096A66                 push    eax; void *
+  .text:10096A67                 call    ??_M@YGXPAXIIP6EX0@Z@Z; `eh vector destructor iterator'(void *,uint,uint,void (*)(void *))
+  .text:10096A6C                 push    0D8h
+  .text:10096A71                 ; Block
+  .text:10096A71                 push    esi; Block
+  .text:10096A72                 mov     [ebp+var_4], 0FFFFFFFFh
+  .text:10096A79                 call    sub_100BED28
+  .text:10096A7E                 add     esp, 8
+  .text:10096A81                 add     edi, 4
+  .text:10096A84                 cmp     edi, [ebx+90h]
+  .text:10096A8A                 jnz     short loc_10096A37
+  .text:10096A8C                 mov     edi, [ebx+8Ch]
+  .text:10096A92                 lea     esi, [ebx+8Ch]
+  .text:10096A98                 mov     ecx, ebx
+  .text:10096A9A                 mov     [esi+4], edi
+  .text:10096A9D                 call    sub_10094E60
+  .text:10096AA2                 cmp     byte ptr [ebx], 0
+  .text:10096AA5                 jz      short loc_10096AB7
+  .text:10096AA7                 cmp     byte ptr [ebx+30h], 0
+  .text:10096AAB                 jz      short loc_10096AB7
+  .text:10096AAD                 cmp     byte ptr [ebx+18h], 0
+  .text:10096AB1                 jnz     loc_1009764D
+  .text:10096AB7                 mov     edi, [ebp+view_parameters]
+  .text:10096ABA                 lea     eax, [ebx+0D0h]
+  .text:10096AC0                 push    eax
+  .text:10096AC1                 lea     eax, [ebx+0C4h]
+  .text:10096AC7                 push    eax
+  .text:10096AC8                 lea     eax, [ebx+0B8h]
+  .text:10096ACE                 lea     ecx, [edi+0Ch]
+  .text:10096AD1                 push    eax
+  .text:10096AD2                 push    ecx
+  .text:10096AD3                 mov     [ebp+var_48], ecx
+  .text:10096AD6                 call    sub_1000FCC0
+  .text:10096ADB                 inc     dword ptr [ebx+1A8h]
+  .text:10096AE1                 call    dword_101BA954
+  .text:10096AE7                 lea     ecx, [ebx+0FCh]
+  .text:10096AED                 mov     [ebp+var_3C], ecx
+  .text:10096AF0                 mov     eax, [eax+2BCh]
+  .text:10096AF6                 mov     [ebx+1ACh], eax
+  .text:10096AFC                 movq    xmm0, qword ptr [edi]
+  .text:10096B00                 movq    qword ptr [ecx], xmm0
+  .text:10096B04                 mov     eax, [edi+8]
+  .text:10096B07                 mov     [ecx+8], eax
+  .text:10096B0A                 movq    xmm0, qword ptr [edi+0Ch]
+  .text:10096B0F                 movq    qword ptr [ecx+0Ch], xmm0
+  .text:10096B14                 mov     eax, [edi+14h]
+  .text:10096B17                 mov     [ecx+14h], eax
+  .text:10096B1A                 lea     eax, [edi+18h]
+  .text:10096B1D                 movq    xmm0, qword ptr [eax]
+  .text:10096B21                 movq    qword ptr [ecx+18h], xmm0
+  .text:10096B26                 mov     [ebp+var_4C], eax
+  .text:10096B29                 mov     eax, [eax+8]
+  .text:10096B2C                 mov     [ecx+20h], eax
+  .text:10096B2F                 lea     eax, [edi+24h]
+  .text:10096B32                 movq    xmm0, qword ptr [eax]
+  .text:10096B36                 movq    qword ptr [ecx+24h], xmm0
+  .text:10096B3B                 mov     [ebp+var_50], eax
+  .text:10096B3E                 mov     eax, [eax+8]
+  .text:10096B41                 mov     [ecx+2Ch], eax
+  .text:10096B44                 lea     eax, [edi+30h]
+  .text:10096B47                 movq    xmm0, qword ptr [eax]
+  .text:10096B4B                 movq    qword ptr [ecx+30h], xmm0
+  .text:10096B50                 mov     [ebp+var_54], eax
+  .text:10096B53                 mov     eax, [eax+8]
+  .text:10096B56                 mov     [ecx+38h], eax
+  .text:10096B59                 lea     eax, [edi+0D0h]
+  .text:10096B5F                 movd    xmm0, dword ptr [eax]
+  .text:10096B63                 cvtdq2ps xmm0, xmm0
+  .text:10096B66                 mov     [ebp+var_34], eax
+  .text:10096B69                 lea     eax, [ecx+4Ch]
+  .text:10096B6C                 push    eax
+  .text:10096B6D                 push    edi
+  .text:10096B6E                 movss   dword ptr [ecx+3Ch], xmm0
+  .text:10096B73                 movd    xmm0, dword ptr [edi+0D4h]
+  .text:10096B7B                 cvtdq2ps xmm0, xmm0
+  .text:10096B7E                 movss   dword ptr [ecx+40h], xmm0
+  .text:10096B83                 movd    xmm0, dword ptr [edi+0D8h]
+  .text:10096B8B                 cvtdq2ps xmm0, xmm0
+  .text:10096B8E                 movss   dword ptr [ecx+44h], xmm0
+  .text:10096B93                 movd    xmm0, dword ptr [edi+0DCh]
+  .text:10096B9B                 cvtdq2ps xmm0, xmm0
+  .text:10096B9E                 movss   dword ptr [ecx+48h], xmm0
+  .text:10096BA3                 call    sub_100936C0
+  .text:10096BA8                 mov     ecx, [ebx+50h]
+  .text:10096BAB                 add     esp, 18h
+  .text:10096BAE                 mov     eax, [ecx]
+  .text:10096BB0                 mov     [ebp+var_30], eax
+  .text:10096BB3                 cmp     eax, ecx
+  .text:10096BB5                 jz      loc_10097100
+  .text:10096BBB                 nop     dword ptr [eax+eax+00h]
+  .text:10096BC0                 mov     edi, [eax+7Ch]
+  .text:10096BC3                 lea     esi, [eax+0Ch]
+  .text:10096BC6                 mov     [ebp+var_18], esi
+  .text:10096BC9                 test    edi, edi
+  .text:10096BCB                 jz      short loc_10096BD5
+  .text:10096BCD                 mov     edi, [edi+0B94h]
+  .text:10096BD3                 jmp     short loc_10096BD7
+  .text:10096BD5                 xor     edi, edi
+  .text:10096BD7                 cmp     [esi+78h], edi
+  .text:10096BDA                 jz      short loc_10096BF1
+  .text:10096BDC                 push    0
+  .text:10096BDE                 push    ebx
+  .text:10096BDF                 mov     ecx, esi
+  .text:10096BE1                 call    sub_10093C30
+  .text:10096BE6                 push    ebx
+  .text:10096BE7                 mov     ecx, esi
+  .text:10096BE9                 mov     [esi+78h], edi
+  .text:10096BEC                 call    sub_10093AB0
+  .text:10096BF1                 lea     eax, [ebx+148h]
+  .text:10096BF7                 mov     ecx, esi
+  .text:10096BF9                 push    eax
+  .text:10096BFA                 lea     eax, [ebx+0FCh]
+  .text:10096C00                 push    eax
+  .text:10096C01                 push    dword ptr [ebx+1ACh]
+  .text:10096C07                 push    dword ptr [ebx+1A8h]
+  .text:10096C0D                 push    ebx
+  .text:10096C0E                 call    sub_100940F0
+  .text:10096C13                 test    al, al
+  .text:10096C15                 jz      loc_100970E9
+  .text:10096C1B                 cmp     byte ptr [esi+84h], 0
+  .text:10096C22                 mov     edi, [ebx+1A8h]
+  .text:10096C28                 jz      loc_100970E9
+  .text:10096C2E                 mov     ecx, [esi+28h]
+  .text:10096C31                 mov     eax, ecx
+  .text:10096C33                 sub     eax, 0
+  .text:10096C36                 jz      short loc_10096C68
+  .text:10096C38                 sub     eax, 1
+  .text:10096C3B                 jz      short loc_10096C63
+  .text:10096C3D                 sub     eax, 1
+  .text:10096C40                 jz      short loc_10096C5F
+  .text:10096C42                 push    ecx
+  .text:10096C43                 push    offset aWarningClientp; "Warning: ClientPortalManager::GetSettin"...
+  .text:10096C48                 push    1
+  .text:10096C4A                 call    sub_10075570
+  .text:10096C4F                 add     esp, 0Ch
+  .text:10096C52                 mov     ecx, ebx
+  .text:10096C54                 push    1
+  .text:10096C56                 push    0
+  .text:10096C58                 call    sub_10096510
+  .text:10096C5D                 jmp     short loc_10096C6B
+  .text:10096C5F                 mov     eax, ebx
+  .text:10096C61                 jmp     short loc_10096C6B
+  .text:10096C63                 lea     eax, [ebx+30h]
+  .text:10096C66                 jmp     short loc_10096C6B
+  .text:10096C68                 lea     eax, [ebx+18h]
+  .text:10096C6B                 cmp     byte ptr [eax], 0
+  .text:10096C6E                 jnz     loc_100970E9
+  .text:10096C74                 cmp     byte ptr [esi+64h], 0
+  .text:10096C78                 jnz     short loc_10096CBD
+  .text:10096C7A                 mov     ecx, [esi+28h]
+  .text:10096C7D                 mov     eax, ecx
+  .text:10096C7F                 sub     eax, 0
+  .text:10096C82                 jz      short loc_10096CB4
+  .text:10096C84                 sub     eax, 1
+  .text:10096C87                 jz      short loc_10096CAF
+  .text:10096C89                 sub     eax, 1
+  .text:10096C8C                 jz      short loc_10096CAB
+  .text:10096C8E                 push    ecx
+  .text:10096C8F                 push    offset aWarningClientp; "Warning: ClientPortalManager::GetSettin"...
+  .text:10096C94                 push    1
+  .text:10096C96                 call    sub_10075570
+  .text:10096C9B                 add     esp, 0Ch
+  .text:10096C9E                 mov     ecx, ebx
+  .text:10096CA0                 push    1
+  .text:10096CA2                 push    0
+  .text:10096CA4                 call    sub_10096510
+  .text:10096CA9                 jmp     short loc_10096CB7
+  .text:10096CAB                 mov     eax, ebx
+  .text:10096CAD                 jmp     short loc_10096CB7
+  .text:10096CAF                 lea     eax, [ebx+30h]
+  .text:10096CB2                 jmp     short loc_10096CB7
+  .text:10096CB4                 lea     eax, [ebx+18h]
+  .text:10096CB7                 cmp     byte ptr [eax+2], 0
+  .text:10096CBB                 jz      short loc_10096CC9
+  .text:10096CBD                 and     edi, 1
+  .text:10096CC0                 cmp     edi, [esi+54h]
+  .text:10096CC3                 jz      loc_100970E9
+  .text:10096CC9                 call    dword_101BA960
+  .text:10096CCF                 movss   xmm0, dword ptr [esi+60h]
+  .text:10096CD4                 fstp    [ebp+var_24]
+  .text:10096CD7                 movss   xmm2, [ebp+var_24]
+  .text:10096CDC                 movaps  xmm1, xmm2
+  .text:10096CDF                 subss   xmm1, dword ptr [esi+58h]
+  .text:10096CE4                 comiss  xmm0, xmm1
+  .text:10096CE7                 movss   [ebp+Block], xmm1
+  .text:10096CEC                 ja      loc_100970E9
+  .text:10096CF2                 mov     ecx, [esi+28h]
+  .text:10096CF5                 mov     eax, ecx
+  .text:10096CF7                 sub     eax, 0
+  .text:10096CFA                 jz      short loc_10096D36
+  .text:10096CFC                 sub     eax, 1
+  .text:10096CFF                 jz      short loc_10096D31
+  .text:10096D01                 sub     eax, 1
+  .text:10096D04                 jz      short loc_10096D2D
+  .text:10096D06                 push    ecx
+  .text:10096D07                 push    offset aWarningClientp; "Warning: ClientPortalManager::GetSettin"...
+  .text:10096D0C                 push    1
+  .text:10096D0E                 call    sub_10075570
+  .text:10096D13                 add     esp, 0Ch
+  .text:10096D16                 mov     ecx, ebx
+  .text:10096D18                 push    1
+  .text:10096D1A                 push    0
+  .text:10096D1C                 call    sub_10096510
+  .text:10096D21                 movss   xmm1, [ebp+Block]
+  .text:10096D26                 movss   xmm2, [ebp+var_24]
+  .text:10096D2B                 jmp     short loc_10096D39
+  .text:10096D2D                 mov     eax, ebx
+  .text:10096D2F                 jmp     short loc_10096D39
+  .text:10096D31                 lea     eax, [ebx+30h]
+  .text:10096D34                 jmp     short loc_10096D39
+  .text:10096D36                 lea     eax, [ebx+18h]
+  .text:10096D39                 movss   xmm0, dword ptr [eax+0Ch]
+  .text:10096D3E                 comiss  xmm0, xmm1
+  .text:10096D41                 ja      loc_100970E9
+  .text:10096D47                 push    ebx
+  .text:10096D48                 mov     ecx, esi
+  .text:10096D4A                 movss   dword ptr [esi+58h], xmm2
+  .text:10096D4F                 call    sub_10094900
+  .text:10096D54                 mov     eax, [esi+0D0h]
+  .text:10096D5A                 mov     edi, [eax]
+  .text:10096D5C                 cmp     edi, eax
+  .text:10096D5E                 jz      loc_100970E9
+  .text:10096D64                 lea     ecx, [ebx+114h]
+  .text:10096D6A                 nop     word ptr [eax+eax+00h]
+  .text:10096D70                 mov     eax, [edi+8]
+  .text:10096D73                 push    eax
+  .text:10096D74                 mov     [ebp+Block], eax
+  .text:10096D77                 lea     eax, [ebx+148h]
+  .text:10096D7D                 push    eax
+  .text:10096D7E                 push    ecx
+  .text:10096D7F                 lea     eax, [ebx+0FCh]
+  .text:10096D85                 mov     ecx, esi
+  .text:10096D87                 push    eax
+  .text:10096D88                 push    dword ptr [ebx+1ACh]
+  .text:10096D8E                 push    dword ptr [ebx+1A8h]
+  .text:10096D94                 push    ebx
+  .text:10096D95                 call    sub_10094370
+  .text:10096D9A                 test    al, al
+  .text:10096D9C                 jz      loc_100970D5
+  .text:10096DA2                 cvttss2si eax, dword ptr [ebx+144h]
+  .text:10096DAA                 lea     ecx, [ebx+108h]
+  .text:10096DB0                 mov     [ebp+var_38], ecx
+  .text:10096DB3                 ; Block
+  .text:10096DB3                 push    [ebp+Block]; Block
+  .text:10096DB6                 ; int
+  .text:10096DB6                 push    eax; int
+  .text:10096DB7                 cvttss2si eax, dword ptr [ebx+140h]
+  .text:10096DBF                 ; int
+  .text:10096DBF                 push    eax; int
+  .text:10096DC0                 ; void *
+  .text:10096DC0                 push    ecx; void *
+  .text:10096DC1                 lea     eax, [ebx+0FCh]
+  .text:10096DC7                 mov     ecx, ebx
+  .text:10096DC9                 ; int
+  .text:10096DC9                 push    eax; int
+  .text:10096DCA                 ; int
+  .text:10096DCA                 push    esi; int
+  .text:10096DCB                 call    sub_100950D0
+  .text:10096DD0                 mov     edx, [ebp+var_14]
+  .text:10096DD3                 mov     ebx, eax
+  .text:10096DD5                 mov     eax, [ebp+var_2C]
+  .text:10096DD8                 mov     [ebp+var_24], ebx
+  .text:10096DDB                 mov     esi, [eax]
+  .text:10096DDD                 nop     dword ptr [eax]
+  .text:10096DE0                 mov     [ebp+var_D], 0
+  .text:10096DE4                 cmp     esi, [edx+90h]
+  .text:10096DEA                 jz      loc_10096EF8
+  .text:10096DF0                 cmp     byte ptr [ebx+0C8h], 0
+  .text:10096DF7                 mov     ecx, [esi]
+  .text:10096DF9                 jz      short loc_10096E04
+  .text:10096DFB                 cmp     byte ptr [ecx+0C8h], 0
+  .text:10096E02                 jnz     short loc_10096E1E
+  .text:10096E04                 cmp     byte ptr [ebx+0C9h], 0
+  .text:10096E0B                 jz      loc_10096EA3
+  .text:10096E11                 cmp     byte ptr [ecx+0C9h], 0
+  .text:10096E18                 jz      loc_10096EA3
+  .text:10096E1E                 movss   xmm0, dword ptr [ebx+0Ch]
+  .text:10096E23                 ucomiss xmm0, dword ptr [ecx+0Ch]
+  .text:10096E27                 lahf
+  .text:10096E28                 test    ah, 44h
+  .text:10096E2B                 jp      short loc_10096EA3
+  .text:10096E2D                 movss   xmm0, dword ptr [ebx+10h]
+  .text:10096E32                 ucomiss xmm0, dword ptr [ecx+10h]
+  .text:10096E36                 lahf
+  .text:10096E37                 test    ah, 44h
+  .text:10096E3A                 jp      short loc_10096EA3
+  .text:10096E3C                 movss   xmm0, dword ptr [ebx+14h]
+  .text:10096E41                 ucomiss xmm0, dword ptr [ecx+14h]
+  .text:10096E45                 lahf
+  .text:10096E46                 test    ah, 44h
+  .text:10096E49                 jp      short loc_10096EA3
+  .text:10096E4B                 movss   xmm0, dword ptr [ebx]
+  .text:10096E4F                 ucomiss xmm0, dword ptr [ecx]
+  .text:10096E52                 lahf
+  .text:10096E53                 test    ah, 44h
+  .text:10096E56                 jp      short loc_10096EA3
+  .text:10096E58                 movss   xmm0, dword ptr [ebx+4]
+  .text:10096E5D                 ucomiss xmm0, dword ptr [ecx+4]
+  .text:10096E61                 lahf
+  .text:10096E62                 test    ah, 44h
+  .text:10096E65                 jp      short loc_10096EA3
+  .text:10096E67                 movss   xmm0, dword ptr [ebx+8]
+  .text:10096E6C                 ucomiss xmm0, dword ptr [ecx+8]
+  .text:10096E70                 lahf
+  .text:10096E71                 test    ah, 44h
+  .text:10096E74                 jp      short loc_10096EA3
+  .text:10096E76                 movss   xmm0, dword ptr [ebx+18h]
+  .text:10096E7B                 ucomiss xmm0, dword ptr [ecx+18h]
+  .text:10096E7F                 lahf
+  .text:10096E80                 test    ah, 44h
+  .text:10096E83                 jp      short loc_10096EA3
+  .text:10096E85                 movss   xmm0, dword ptr [ebx+1Ch]
+  .text:10096E8A                 ucomiss xmm0, dword ptr [ecx+1Ch]
+  .text:10096E8E                 lahf
+  .text:10096E8F                 test    ah, 44h
+  .text:10096E92                 jp      short loc_10096EA3
+  .text:10096E94                 movss   xmm0, dword ptr [ebx+20h]
+  .text:10096E99                 ucomiss xmm0, dword ptr [ecx+20h]
+  .text:10096E9D                 lahf
+  .text:10096E9E                 test    ah, 44h
+  .text:10096EA1                 jnp     short loc_10096EAB
+  .text:10096EA3                 add     esi, 4
+  .text:10096EA6                 jmp     loc_10096DE0
+  .text:10096EAB                 lea     ecx, [ebx+0A8h]
+  .text:10096EB1                 mov     [ebp+var_4], 1
+  .text:10096EB8                 call    sub_1009C920
+  .text:10096EBD                 lea     ecx, [ebx+88h]
+  .text:10096EC3                 call    sub_1009C920
+  .text:10096EC8                 ; void (__thiscall *)(void *)
+  .text:10096EC8                 push    offset nullsub_1; void (__thiscall *)(void *)
+  .text:10096ECD                 ; unsigned int
+  .text:10096ECD                 push    6; unsigned int
+  .text:10096ECF                 ; unsigned int
+  .text:10096ECF                 push    10h; unsigned int
+  .text:10096ED1                 lea     eax, [ebx+28h]
+  .text:10096ED4                 ; void *
+  .text:10096ED4                 push    eax; void *
+  .text:10096ED5                 call    ??_M@YGXPAXIIP6EX0@Z@Z; `eh vector destructor iterator'(void *,uint,uint,void (*)(void *))
+  .text:10096EDA                 push    0D8h
+  .text:10096EDF                 ; Block
+  .text:10096EDF                 push    ebx; Block
+  .text:10096EE0                 mov     [ebp+var_4], 0FFFFFFFFh
+  .text:10096EE7                 call    sub_100BED28
+  .text:10096EEC                 mov     ebx, [esi]
+  .text:10096EEE                 add     esp, 8
+  .text:10096EF1                 mov     [ebp+var_24], ebx
+  .text:10096EF4                 mov     [ebp+var_D], 1
+  .text:10096EF8                 mov     edx, [ebp+var_18]
+  .text:10096EFB                 push    [ebp+Block]
+  .text:10096EFE                 mov     ecx, [edx+70h]
+  .text:10096F01                 lea     eax, [edx+0Ch]
+  .text:10096F04                 movss   xmm0, dword ptr [edx+20h]
+  .text:10096F09                 push    ecx
+  .text:10096F0A                 movss   [esp+0A4h+blue], xmm0
+  .text:10096F0F                 push    eax
+  .text:10096F10                 push    edx
+  .text:10096F11                 lea     eax, [ecx+0B54h]
+  .text:10096F17                 push    eax
+  .text:10096F18                 lea     eax, [ecx+0B48h]
+  .text:10096F1E                 mov     ecx, ebx
+  .text:10096F20                 push    eax
+  .text:10096F21                 push    [ebp+var_38]
+  .text:10096F24                 push    [ebp+var_3C]
+  .text:10096F27                 push    dword ptr [edx+28h]
+  .text:10096F2A                 call    PortalSource_CalculateClipPlane
+  .text:10096F2F                 cmp     dword ptr [ebx+0CCh], 0
+  .text:10096F36                 lea     esi, [ebx+0CCh]
+  .text:10096F3C                 mov     [ebp+var_38], esi
+  .text:10096F3F                 jnz     loc_10097052
+  .text:10096F45                 lea     eax, [ebp+params]
+  .text:10096F48                 ; params
+  .text:10096F48                 push    eax; params
+  .text:10096F49                 ; pname
+  .text:10096F49                 push    84E0h; pname
+  .text:10096F4E                 call    ds:glGetIntegerv
+  .text:10096F54                 cmp     [ebp+params], 84C0h
+  .text:10096F5B                 jz      short loc_10096F9A
+  .text:10096F5D                 push    84C0h
+  .text:10096F62                 call    __glewActiveTexture
+  .text:10096F68                 lea     eax, [ebp+var_40]
+  .text:10096F6B                 ; params
+  .text:10096F6B                 push    eax; params
+  .text:10096F6C                 ; pname
+  .text:10096F6C                 push    84E0h; pname
+  .text:10096F71                 call    ds:glGetIntegerv
+  .text:10096F77                 cmp     [ebp+var_40], 84C0h
+  .text:10096F7E                 jz      short loc_10096F9A
+  .text:10096F80                 push    offset aInvalidGlActiv_0; "Invalid GL_ACTIVE_TEXTURE, unable to re"...
+  .text:10096F85                 push    1
+  .text:10096F87                 call    sub_10075570
+  .text:10096F8C                 mov     ebx, ds:glGetIntegerv
+  .text:10096F92                 add     esp, 8
+  .text:10096F95                 jmp     loc_10097036
+  .text:10096F9A                 ; textures
+  .text:10096F9A                 push    esi; textures
+  .text:10096F9B                 ; n
+  .text:10096F9B                 push    1; n
+  .text:10096F9D                 call    ds:glGenTextures
+  .text:10096FA3                 ; cap
+  .text:10096FA3                 push    0DE1h; cap
+  .text:10096FA8                 call    ds:glEnable
+  .text:10096FAE                 ; texture
+  .text:10096FAE                 push    dword ptr [esi]; texture
+  .text:10096FB0                 ; target
+  .text:10096FB0                 push    0DE1h; target
+  .text:10096FB5                 call    ds:glBindTexture
+  .text:10096FBB                 ; pixels
+  .text:10096FBB                 push    0; pixels
+  .text:10096FBD                 ; type
+  .text:10096FBD                 push    1400h; type
+  .text:10096FC2                 ; format
+  .text:10096FC2                 push    1908h; format
+  .text:10096FC7                 ; border
+  .text:10096FC7                 push    0; border
+  .text:10096FC9                 ; height
+  .text:10096FC9                 push    dword ptr [ebx+0D4h]; height
+  .text:10096FCF                 ; width
+  .text:10096FCF                 push    dword ptr [ebx+0D0h]; width
+  .text:10096FD5                 ; internalformat
+  .text:10096FD5                 push    1908h; internalformat
+  .text:10096FDA                 ; level
+  .text:10096FDA                 push    0; level
+  .text:10096FDC                 ; target
+  .text:10096FDC                 push    0DE1h; target
+  .text:10096FE1                 call    ds:glTexImage2D
+  .text:10096FE7                 mov     ebx, ds:glTexParameteri
+  .text:10096FED                 ; param
+  .text:10096FED                 push    2601h; param
+  .text:10096FF2                 ; pname
+  .text:10096FF2                 push    2801h; pname
+  .text:10096FF7                 ; target
+  .text:10096FF7                 push    0DE1h; target
+  .text:10096FFC                 call    ebx ; glTexParameteri
+  .text:10096FFE                 ; param
+  .text:10096FFE                 push    2601h; param
+  .text:10097003                 ; pname
+  .text:10097003                 push    2800h; pname
+  .text:10097008                 ; target
+  .text:10097008                 push    0DE1h; target
+  .text:1009700D                 call    ebx ; glTexParameteri
+  .text:1009700F                 ; texture
+  .text:1009700F                 push    0; texture
+  .text:10097011                 ; target
+  .text:10097011                 push    0DE1h; target
+  .text:10097016                 call    ds:glBindTexture
+  .text:1009701C                 push    [ebp+params]
+  .text:1009701F                 call    __glewActiveTexture
+  .text:10097025                 mov     ebx, ds:glGetIntegerv
+  .text:1009702B                 lea     eax, [ebp+var_58]
+  .text:1009702E                 ; params
+  .text:1009702E                 push    eax; params
+  .text:1009702F                 ; pname
+  .text:1009702F                 push    84E0h; pname
+  .text:10097034                 call    ebx ; glGetIntegerv
+  .text:10097036                 mov     eax, [ebp+params]
+  .text:10097039                 cmp     eax, 84C0h
+  .text:1009703E                 jz      short loc_10097052
+  .text:10097040                 push    eax
+  .text:10097041                 call    __glewActiveTexture
+  .text:10097047                 lea     eax, [ebp+var_5C]
+  .text:1009704A                 ; params
+  .text:1009704A                 push    eax; params
+  .text:1009704B                 ; pname
+  .text:1009704B                 push    84E0h; pname
+  .text:10097050                 call    ebx ; glGetIntegerv
+  .text:10097052                 mov     esi, [esi]
+  .text:10097054                 mov     eax, [ebp+Block]
+  .text:10097057                 mov     ecx, [ebp+var_18]
+  .text:1009705A                 mov     [ebp+var_44], eax
+  .text:1009705D                 add     ecx, 88h
+  .text:10097063                 lea     eax, [ebp+var_44]
+  .text:10097066                 push    eax
+  .text:10097067                 call    sub_1009CB60
+  .text:1009706C                 mov     ebx, [ebp+var_14]
+  .text:1009706F                 mov     [eax], esi
+  .text:10097071                 mov     eax, [ebp+var_38]
+  .text:10097074                 lea     ecx, [ebx+98h]
+  .text:1009707A                 mov     eax, [eax]
+  .text:1009707C                 mov     [ebp+var_28], eax
+  .text:1009707F                 lea     eax, [ebp+var_28]
+  .text:10097082                 push    eax
+  .text:10097083                 lea     eax, [ebp+var_64]
+  .text:10097086                 push    eax
+  .text:10097087                 call    sub_1009BF40
+  .text:1009708C                 lea     ecx, [ebx+98h]
+  .text:10097092                 mov     esi, [eax]
+  .text:10097094                 lea     eax, [ebp+var_28]
+  .text:10097097                 push    eax
+  .text:10097098                 lea     eax, [ebp+var_70]
+  .text:1009709B                 push    eax
+  .text:1009709C                 call    sub_1009BF40
+  .text:100970A1                 mov     ecx, [eax]
+  .text:100970A3                 mov     eax, [esi+0Ch]
+  .text:100970A6                 inc     eax
+  .text:100970A7                 cmp     [ebp+var_D], 0
+  .text:100970AB                 mov     [ecx+0Ch], eax
+  .text:100970AE                 jnz     short loc_100970D2
+  .text:100970B0                 mov     edx, [ebp+var_2C]
+  .text:100970B3                 mov     ecx, [edx+4]
+  .text:100970B6                 cmp     ecx, [edx+8]
+  .text:100970B9                 jz      short loc_100970C6
+  .text:100970BB                 mov     eax, [ebp+var_24]
+  .text:100970BE                 mov     [ecx], eax
+  .text:100970C0                 add     dword ptr [edx+4], 4
+  .text:100970C4                 jmp     short loc_100970D2
+  .text:100970C6                 lea     eax, [ebp+var_24]
+  .text:100970C9                 ; int
+  .text:100970C9                 push    eax; int
+  .text:100970CA                 ; Src
+  .text:100970CA                 push    ecx; Src
+  .text:100970CB                 mov     ecx, edx
+  .text:100970CD                 call    sub_1009BB00
+  .text:100970D2                 mov     esi, [ebp+var_18]
+  .text:100970D5                 mov     edi, [edi]
+  .text:100970D7                 lea     ecx, [ebx+114h]
+  .text:100970DD                 cmp     edi, [esi+0D0h]
+  .text:100970E3                 jnz     loc_10096D70
+  .text:100970E9                 mov     eax, [ebp+var_30]
+  .text:100970EC                 mov     eax, [eax]
+  .text:100970EE                 mov     [ebp+var_30], eax
+  .text:100970F1                 cmp     eax, [ebx+50h]
+  .text:100970F4                 jnz     loc_10096BC0
+  .text:100970FA                 lea     esi, [ebx+8Ch]
+  .text:10097100                 mov     eax, [esi+4]
+  .text:10097103                 sub     eax, [esi]
+  .text:10097105                 sar     eax, 2
+  .text:10097108                 test    eax, eax
+  .text:1009710A                 jz      loc_1009764D
+  .text:10097110                 mov     ecx, dword_105BCD5C
+  .text:10097116                 push    0
+  .text:10097118                 push    0
+  .text:1009711A                 push    0
+  .text:1009711C                 mov     eax, [ecx]
+  .text:1009711E                 call    dword ptr [eax+24h]
+  .text:10097121                 mov     byte_105FE1ED, 1
+  .text:10097128                 xor     edx, edx
+  .text:1009712A                 mov     eax, [esi+4]
+  .text:1009712D                 mov     ecx, [esi]
+  .text:1009712F                 sub     eax, ecx
+  .text:10097131                 mov     esi, ds:glDisable
+  .text:10097137                 sar     eax, 2
+  .text:1009713A                 mov     [ebp+var_2C], edx
+  .text:1009713D                 test    eax, eax
+  .text:1009713F                 jz      loc_100975E9
+  .text:10097145                 mov     edi, [ecx+edx*4]
+  .text:10097148                 mov     edx, [ebp+view_parameters]
+  .text:1009714B                 lea     ecx, [edi+0Ch]
+  .text:1009714E                 mov     [ebp+var_24], edi
+  .text:10097151                 mov     eax, [edi]
+  .text:10097153                 mov     [edx], eax
+  .text:10097155                 mov     eax, [edi+4]
+  .text:10097158                 mov     [edx+4], eax
+  .text:1009715B                 mov     eax, [edi+8]
+  .text:1009715E                 mov     [edx+8], eax
+  .text:10097161                 mov     eax, [ecx]
+  .text:10097163                 mov     [edx+0Ch], eax
+  .text:10097166                 mov     eax, [ecx+4]
+  .text:10097169                 mov     [edx+10h], eax
+  .text:1009716C                 mov     eax, [ecx+8]
+  .text:1009716F                 mov     [edx+14h], eax
+  .text:10097172                 mov     eax, [edi+18h]
+  .text:10097175                 mov     [edx+0ECh], eax
+  .text:1009717B                 mov     eax, [edi+1Ch]
+  .text:1009717E                 mov     [edx+0F0h], eax
+  .text:10097184                 mov     eax, [edi+20h]
+  .text:10097187                 mov     [edx+0F4h], eax
+  .text:1009718D                 lea     eax, [edx+30h]
+  .text:10097190                 push    eax
+  .text:10097191                 lea     eax, [edx+24h]
+  .text:10097194                 mov     dword ptr [edx+0E8h], 1
+  .text:1009719E                 push    eax
+  .text:1009719F                 lea     eax, [edx+18h]
+  .text:100971A2                 push    eax
+  .text:100971A3                 push    ecx
+  .text:100971A4                 call    sub_1000FCC0
+  .text:100971A9                 mov     ecx, [ebp+view_parameters]
+  .text:100971AC                 add     esp, 10h
+  .text:100971AF                 mov     eax, [ebp+var_34]
+  .text:100971B2                 mov     dword ptr [ecx+0D4h], 0
+  .text:100971BC                 mov     dword ptr [eax], 0
+  .text:100971C2                 mov     eax, [edi+0D0h]
+  .text:100971C8                 mov     [ecx+0D8h], eax
+  .text:100971CE                 mov     eax, [edi+0D4h]
+  .text:100971D4                 ; cap
+  .text:100971D4                 push    3000h; cap
+  .text:100971D9                 mov     [ecx+0DCh], eax
+  .text:100971DF                 call    esi ; glDisable
+  .text:100971E1                 ; cap
+  .text:100971E1                 push    3001h; cap
+  .text:100971E6                 call    esi ; glDisable
+  .text:100971E8                 ; cap
+  .text:100971E8                 push    3002h; cap
+  .text:100971ED                 call    esi ; glDisable
+  .text:100971EF                 ; cap
+  .text:100971EF                 push    3003h; cap
+  .text:100971F4                 call    esi ; glDisable
+  .text:100971F6                 ; cap
+  .text:100971F6                 push    3004h; cap
+  .text:100971FB                 call    esi ; glDisable
+  .text:100971FD                 ; cap
+  .text:100971FD                 push    3005h; cap
+  .text:10097202                 call    esi ; glDisable
+  .text:10097204                 xor     esi, esi
+  .text:10097206                 cmp     [edi+24h], esi
+  .text:10097209                 jbe     short loc_1009722D
+  .text:1009720B                 mov     ecx, [ebp+var_24]
+  .text:1009720E                 add     edi, 28h ; '('
+  .text:10097211                 push    edi
+  .text:10097212                 push    ecx
+  .text:10097213                 lea     eax, [ecx+0Ch]
+  .text:10097216                 mov     ecx, ebx
+  .text:10097218                 push    eax
+  .text:10097219                 push    esi
+  .text:1009721A                 call    sub_10097EA0
+  .text:1009721F                 mov     ecx, [ebp+var_24]
+  .text:10097222                 inc     esi
+  .text:10097223                 add     edi, 10h
+  .text:10097226                 cmp     esi, [ecx+24h]
+  .text:10097229                 jb      short loc_10097211
+  .text:1009722B                 mov     edi, ecx
+  .text:1009722D                 sub     esp, 10h
+  .text:10097230                 ; alpha
+  .text:10097230                 mov     [esp+0ACh+alpha], 0; alpha
+  .text:10097238                 ; blue
+  .text:10097238                 mov     [esp+0ACh+blue], 3F800000h; blue
+  .text:10097240                 ; green
+  .text:10097240                 mov     [esp+0ACh+green], 0; green
+  .text:10097248                 ; red
+  .text:10097248                 mov     [esp+0ACh+red], 0; red
+  .text:1009724F                 call    ds:glClearColor
+  .text:10097255                 ; mask
+  .text:10097255                 push    4000h; mask
+  .text:1009725A                 call    ds:glClear
+  .text:10097260                 call    dword_101BA954
+  .text:10097266                 mov     [ebp+var_18], eax
+  .text:10097269                 call    dword_101BA960
+  .text:1009726F                 fstp    [ebp+var_44]
+  .text:10097272                 movss   xmm0, [ebp+var_44]
+  .text:10097277                 comiss  xmm0, dword ptr [ebx+0F4h]
+  .text:1009727E                 movss   [ebp+var_40], xmm0
+  .text:10097283                 jb      loc_10097439
+  .text:10097289                 cmp     dword ptr [ebx+0F8h], 0
+  .text:10097290                 jnz     short loc_100972AA
+  .text:10097292                 mov     eax, dword_101BA9D8
+  .text:10097297                 push    offset aModelsShellMdl; "models/shell.mdl"
+  .text:1009729C                 mov     eax, [eax+0Ch]
+  .text:1009729F                 call    eax
+  .text:100972A1                 add     esp, 4
+  .text:100972A4                 mov     [ebx+0F8h], eax
+  .text:100972AA                 mov     ecx, [ebx+0E8h]
+  .text:100972B0                 lea     esi, [ebx+0E8h]
+  .text:100972B6                 cmp     ecx, [ebx+0ECh]
+  .text:100972BC                 jz      short loc_100972D5
+  .text:100972BE                 xchg    ax, ax
+  .text:100972C0                 mov     eax, [ecx]
+  .text:100972C2                 add     ecx, 4
+  .text:100972C5                 or      dword ptr [eax], 40000h
+  .text:100972CB                 cmp     ecx, [ebx+0ECh]
+  .text:100972D1                 jnz     short loc_100972C0
+  .text:100972D3                 mov     ecx, [esi]
+  .text:100972D5                 lea     eax, [ebp+var_74]
+  .text:100972D8                 mov     [esi+4], ecx
+  .text:100972DB                 push    eax
+  .text:100972DC                 push    dword ptr [ebx+0F8h]
+  .text:100972E2                 mov     [ebp+var_74], 0
+  .text:100972E9                 push    ecx
+  .text:100972EA                 mov     [esp+0A8h+green], 3F800000h
+  .text:100972F1                 mov     ecx, ebx
+  .text:100972F3                 push    [ebp+var_18]
+  .text:100972F6                 mov     [ebp+var_70], 0C1200000h
+  .text:100972FD                 mov     [ebp+var_6C], 41A00000h
+  .text:10097304                 call    sub_100958C0
+  .text:10097309                 mov     ecx, [esi+4]
+  .text:1009730C                 mov     [ebp+var_44], eax
+  .text:1009730F                 cmp     ecx, [esi+8]
+  .text:10097312                 jz      short loc_1009731C
+  .text:10097314                 mov     [ecx], eax
+  .text:10097316                 add     dword ptr [esi+4], 4
+  .text:1009731A                 jmp     short loc_10097328
+  .text:1009731C                 lea     eax, [ebp+var_44]
+  .text:1009731F                 ; int
+  .text:1009731F                 push    eax; int
+  .text:10097320                 ; Src
+  .text:10097320                 push    ecx; Src
+  .text:10097321                 mov     ecx, esi
+  .text:10097323                 call    sub_1009BB00
+  .text:10097328                 lea     eax, [ebp+var_68]
+  .text:1009732B                 mov     [ebp+var_68], 0
+  .text:10097332                 push    eax
+  .text:10097333                 push    dword ptr [ebx+0F8h]
+  .text:10097339                 mov     [ebp+var_64], 41200000h
+  .text:10097340                 push    ecx
+  .text:10097341                 mov     [esp+0A8h+green], 3F800000h
+  .text:10097348                 mov     ecx, ebx
+  .text:1009734A                 push    [ebp+var_18]
+  .text:1009734D                 mov     [ebp+var_60], 41A00000h
+  .text:10097354                 call    sub_100958C0
+  .text:10097359                 mov     ecx, [esi+4]
+  .text:1009735C                 mov     [ebp+var_44], eax
+  .text:1009735F                 cmp     ecx, [esi+8]
+  .text:10097362                 jz      short loc_1009736C
+  .text:10097364                 mov     [ecx], eax
+  .text:10097366                 add     dword ptr [esi+4], 4
+  .text:1009736A                 jmp     short loc_10097378
+  .text:1009736C                 lea     eax, [ebp+var_44]
+  .text:1009736F                 ; int
+  .text:1009736F                 push    eax; int
+  .text:10097370                 ; Src
+  .text:10097370                 push    ecx; Src
+  .text:10097371                 mov     ecx, esi
+  .text:10097373                 call    sub_1009BB00
+  .text:10097378                 lea     eax, [ebp+var_80]
+  .text:1009737B                 mov     [ebp+var_80], 0C1200000h
+  .text:10097382                 push    eax
+  .text:10097383                 push    dword ptr [ebx+0F8h]
+  .text:10097389                 mov     [ebp+var_7C], 0
+  .text:10097390                 push    ecx
+  .text:10097391                 mov     [esp+0A8h+green], 3F800000h
+  .text:10097398                 mov     ecx, ebx
+  .text:1009739A                 push    [ebp+var_18]
+  .text:1009739D                 mov     [ebp+var_78], 41A00000h
+  .text:100973A4                 call    sub_100958C0
+  .text:100973A9                 mov     ecx, [esi+4]
+  .text:100973AC                 mov     [ebp+var_44], eax
+  .text:100973AF                 cmp     ecx, [esi+8]
+  .text:100973B2                 jz      short loc_100973BC
+  .text:100973B4                 mov     [ecx], eax
+  .text:100973B6                 add     dword ptr [esi+4], 4
+  .text:100973BA                 jmp     short loc_100973C8
+  .text:100973BC                 lea     eax, [ebp+var_44]
+  .text:100973BF                 ; int
+  .text:100973BF                 push    eax; int
+  .text:100973C0                 ; Src
+  .text:100973C0                 push    ecx; Src
+  .text:100973C1                 mov     ecx, esi
+  .text:100973C3                 call    sub_1009BB00
+  .text:100973C8                 lea     eax, [ebp+var_8C]
+  .text:100973CE                 mov     [ebp+var_8C], 41200000h
+  .text:100973D8                 push    eax
+  .text:100973D9                 push    dword ptr [ebx+0F8h]
+  .text:100973DF                 mov     [ebp+var_88], 0
+  .text:100973E9                 push    ecx
+  .text:100973EA                 mov     [esp+0A8h+green], 3F800000h
+  .text:100973F1                 mov     ecx, ebx
+  .text:100973F3                 push    [ebp+var_18]
+  .text:100973F6                 mov     [ebp+var_84], 41A00000h
+  .text:10097400                 call    sub_100958C0
+  .text:10097405                 mov     ecx, [esi+4]
+  .text:10097408                 mov     [ebp+var_44], eax
+  .text:1009740B                 cmp     ecx, [esi+8]
+  .text:1009740E                 jz      short loc_10097418
+  .text:10097410                 mov     [ecx], eax
+  .text:10097412                 add     dword ptr [esi+4], 4
+  .text:10097416                 jmp     short loc_10097424
+  .text:10097418                 lea     eax, [ebp+var_44]
+  .text:1009741B                 ; int
+  .text:1009741B                 push    eax; int
+  .text:1009741C                 ; Src
+  .text:1009741C                 push    ecx; Src
+  .text:1009741D                 mov     ecx, esi
+  .text:1009741F                 call    sub_1009BB00
+  .text:10097424                 movss   xmm0, [ebp+var_40]
+  .text:10097429                 addss   xmm0, ds:dword_1010E548
+  .text:10097431                 movss   dword ptr [ebx+0F4h], xmm0
+  .text:10097439                 call    CL_IsThirdPerson
+  .text:1009743E                 test    eax, eax
+  .text:10097440                 jnz     short loc_10097449
+  .text:10097442                 mov     byte ptr [ebx+1E8h], 1
+  .text:10097449                 mov     ecx, dword_105BCD5C
+  .text:1009744F                 push    1
+  .text:10097451                 push    0
+  .text:10097453                 push    0
+  .text:10097455                 mov     eax, [ecx]
+  .text:10097457                 push    [ebp+view_parameters]
+  .text:1009745A                 call    dword ptr [eax+2Ch]
+  .text:1009745D                 mov     esi, ds:glGetIntegerv
+  .text:10097463                 lea     eax, [ebp+var_30]
+  .text:10097466                 ; params
+  .text:10097466                 push    eax; params
+  .text:10097467                 ; pname
+  .text:10097467                 push    84E0h; pname
+  .text:1009746C                 call    esi ; glGetIntegerv
+  .text:1009746E                 cmp     [ebp+var_30], 84C0h
+  .text:10097475                 jz      short loc_100974A7
+  .text:10097477                 push    84C0h
+  .text:1009747C                 call    __glewActiveTexture
+  .text:10097482                 lea     eax, [ebp+var_3C]
+  .text:10097485                 ; params
+  .text:10097485                 push    eax; params
+  .text:10097486                 ; pname
+  .text:10097486                 push    84E0h; pname
+  .text:1009748B                 call    esi ; glGetIntegerv
+  .text:1009748D                 cmp     [ebp+var_3C], 84C0h
+  .text:10097494                 jz      short loc_100974A7
+  .text:10097496                 push    offset aInvalidGlActiv_1; "Invalid GL_ACTIVE_TEXTURE, unable to re"...
+  .text:1009749B                 push    1
+  .text:1009749D                 call    sub_10075570
+  .text:100974A2                 add     esp, 8
+  .text:100974A5                 jmp     short loc_10097519
+  .text:100974A7                 ; cap
+  .text:100974A7                 push    0DE1h; cap
+  .text:100974AC                 call    ds:glEnable
+  .text:100974B2                 ; texture
+  .text:100974B2                 push    dword ptr [edi+0CCh]; texture
+  .text:100974B8                 ; target
+  .text:100974B8                 push    0DE1h; target
+  .text:100974BD                 call    ds:glBindTexture
+  .text:100974C3                 mov     eax, [edi+0D4h]
+  .text:100974C9                 movss   xmm1, dword ptr [ebx+144h]
+  .text:100974D1                 ; height
+  .text:100974D1                 push    eax; height
+  .text:100974D2                 ; width
+  .text:100974D2                 push    dword ptr [edi+0D0h]; width
+  .text:100974D8                 movd    xmm0, eax
+  .text:100974DC                 cvtdq2pd xmm0, xmm0
+  .text:100974E0                 shr     eax, 1Fh
+  .text:100974E3                 addsd   xmm0, ds:qword_100E60F0[eax*8]
+  .text:100974EC                 cvtpd2ps xmm0, xmm0
+  .text:100974F0                 subss   xmm1, xmm0
+  .text:100974F4                 cvttss2si eax, xmm1
+  .text:100974F8                 ; y
+  .text:100974F8                 push    eax; y
+  .text:100974F9                 ; x
+  .text:100974F9                 push    0; x
+  .text:100974FB                 ; yoffset
+  .text:100974FB                 push    0; yoffset
+  .text:100974FD                 ; xoffset
+  .text:100974FD                 push    0; xoffset
+  .text:100974FF                 ; level
+  .text:100974FF                 push    0; level
+  .text:10097501                 ; target
+  .text:10097501                 push    0DE1h; target
+  .text:10097506                 call    ds:glCopyTexSubImage2D
+  .text:1009750C                 ; texture
+  .text:1009750C                 push    0; texture
+  .text:1009750E                 ; target
+  .text:1009750E                 push    0DE1h; target
+  .text:10097513                 call    ds:glBindTexture
+  .text:10097519                 mov     eax, [ebp+var_30]
+  .text:1009751C                 cmp     eax, 84C0h
+  .text:10097521                 jz      short loc_10097535
+  .text:10097523                 push    eax
+  .text:10097524                 call    __glewActiveTexture
+  .text:1009752A                 lea     eax, [ebp+var_14]
+  .text:1009752D                 ; params
+  .text:1009752D                 push    eax; params
+  .text:1009752E                 ; pname
+  .text:1009752E                 push    84E0h; pname
+  .text:10097533                 call    esi ; glGetIntegerv
+  .text:10097535                 mov     eax, [ebx+0FCh]
+  .text:1009753B                 lea     edx, [ebx+0FCh]
+  .text:10097541                 mov     ecx, [ebp+view_parameters]
+  .text:10097544                 mov     esi, 4
+  .text:10097549                 mov     [ecx], eax
+  .text:1009754B                 mov     eax, [edx+4]
+  .text:1009754E                 mov     [ecx+4], eax
+  .text:10097551                 mov     eax, [edx+8]
+  .text:10097554                 mov     [ecx+8], eax
+  .text:10097557                 mov     eax, [edx+0Ch]
+  .text:1009755A                 mov     ecx, [ebp+var_48]
+  .text:1009755D                 mov     [ecx], eax
+  .text:1009755F                 mov     eax, [edx+10h]
+  .text:10097562                 mov     [ecx+4], eax
+  .text:10097565                 mov     eax, [edx+14h]
+  .text:10097568                 mov     [ecx+8], eax
+  .text:1009756B                 mov     eax, [edx+18h]
+  .text:1009756E                 mov     ecx, [ebp+var_4C]
+  .text:10097571                 mov     [ecx], eax
+  .text:10097573                 mov     eax, [edx+1Ch]
+  .text:10097576                 mov     [ecx+4], eax
+  .text:10097579                 mov     eax, [edx+20h]
+  .text:1009757C                 mov     [ecx+8], eax
+  .text:1009757F                 mov     eax, [edx+24h]
+  .text:10097582                 mov     ecx, [ebp+var_50]
+  .text:10097585                 mov     [ecx], eax
+  .text:10097587                 mov     eax, [edx+28h]
+  .text:1009758A                 mov     [ecx+4], eax
+  .text:1009758D                 mov     eax, [edx+2Ch]
+  .text:10097590                 mov     [ecx+8], eax
+  .text:10097593                 mov     ecx, [ebp+var_54]
+  .text:10097596                 mov     eax, [edx+30h]
+  .text:10097599                 mov     [ecx], eax
+  .text:1009759B                 mov     eax, [edx+34h]
+  .text:1009759E                 mov     [ecx+4], eax
+  .text:100975A1                 mov     eax, [edx+38h]
+  .text:100975A4                 add     edx, 3Ch ; '<'
+  .text:100975A7                 mov     [ecx+8], eax
+  .text:100975AA                 mov     ecx, [ebp+var_34]
+  .text:100975AD                 nop     dword ptr [eax]
+  .text:100975B0                 lea     edx, [edx+4]
+  .text:100975B3                 lea     ecx, [ecx+4]
+  .text:100975B6                 cvttss2si eax, dword ptr [edx-4]
+  .text:100975BB                 mov     [ecx-4], eax
+  .text:100975BE                 sub     esi, 1
+  .text:100975C1                 jnz     short loc_100975B0
+  .text:100975C3                 mov     eax, [ebx+90h]
+  .text:100975C9                 mov     edx, [ebp+var_2C]
+  .text:100975CC                 mov     ecx, [ebx+8Ch]
+  .text:100975D2                 inc     edx
+  .text:100975D3                 mov     esi, ds:glDisable
+  .text:100975D9                 sub     eax, ecx
+  .text:100975DB                 sar     eax, 2
+  .text:100975DE                 mov     [ebp+var_2C], edx
+  .text:100975E1                 cmp     edx, eax
+  .text:100975E3                 jb      loc_10097145
+  .text:100975E9                 ; cap
+  .text:100975E9                 push    3000h; cap
+  .text:100975EE                 call    esi ; glDisable
+  .text:100975F0                 ; cap
+  .text:100975F0                 push    3001h; cap
+  .text:100975F5                 call    esi ; glDisable
+  .text:100975F7                 ; cap
+  .text:100975F7                 push    3002h; cap
+  .text:100975FC                 call    esi ; glDisable
+  .text:100975FE                 ; cap
+  .text:100975FE                 push    3003h; cap
+  .text:10097603                 call    esi ; glDisable
+  .text:10097605                 ; cap
+  .text:10097605                 push    3004h; cap
+  .text:1009760A                 call    esi ; glDisable
+  .text:1009760C                 ; cap
+  .text:1009760C                 push    3005h; cap
+  .text:10097611                 call    esi ; glDisable
+  .text:10097613                 sub     esp, 10h
+  .text:10097616                 ; alpha
+  .text:10097616                 mov     [esp+0ACh+alpha], 0; alpha
+  .text:1009761E                 ; blue
+  .text:1009761E                 mov     [esp+0ACh+blue], 0; blue
+  .text:10097626                 ; green
+  .text:10097626                 mov     [esp+0ACh+green], 0; green
+  .text:1009762E                 ; red
+  .text:1009762E                 mov     [esp+0ACh+red], 0; red
+  .text:10097635                 call    ds:glClearColor
+  .text:1009763B                 mov     ecx, dword_105BCD5C
+  .text:10097641                 mov     byte_105FE1ED, 0
+  .text:10097648                 mov     eax, [ecx]
+  .text:1009764A                 call    dword ptr [eax+28h]
+  .text:1009764D                 mov     ecx, [ebp+var_C]
+  .text:10097650                 mov     large fs:0, ecx
+  .text:10097657                 pop     ecx
+  .text:10097658                 pop     edi
+  .text:10097659                 pop     esi
+  .text:1009765A                 pop     ebx
+  .text:1009765B                 mov     esp, ebp
+  .text:1009765D                 pop     ebp
+  .text:1009765E                 retn    4
+  .text:100C0A09                 jmp     _terminate
+  .text:100E2B58                 nop
+  .text:100E2B59                 nop
+  .text:100E2B5A                 mov     edx, [esp-4+arg_4]
+  .text:100E2B5E                 lea     eax, [edx+0Ch]
+  .text:100E2B61                 mov     ecx, [edx-90h]
+  .text:100E2B67                 ; StackCookie
+  .text:100E2B67                 xor     ecx, eax; StackCookie
+  .text:100E2B69                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:100E2B6E                 mov     eax, offset stru_1012C748
+  .text:100E2B73                 jmp     ___CxxFrameHandler3
+procedure: |-
+  // ClientPortalManager_vector_begin_offset = 140; ClientPortalManager_vector_end_offset = 144. This vector contains PortalSource pointers.
+  // CalculateClipPlane receives mode from ClientPortal+0x28: ClientPortal_mode_offset = 40.
+  // Its origin/angles arguments use the entity pointer at ClientPortal+0x70: ClientPortal_entity_offset = 112.
+  // ClientPortal::GetOrigin/GetAngles return entity+0xB48/entity+0xB54: cl_entity_origin_offset = 2888; cl_entity_angles_offset = 2900.
+  // These entity vectors are distinct from ClientPortal source-origin/source-angles at +0/+12 and PortalSource copied vectors at +0/+12.
+  // PortalSource_texture_id_offset = 204; PortalSource_texture_width_offset = 208; PortalSource_texture_height_offset = 212. Verify glGenTextures, glBindTexture and glTexImage2D on the PortalSource object.
+  void __thiscall ClientPortalManager__PortalRender(void *manager, void *view_parameters)
+  {
+    char *v2; // ebx
+    int *v3; // edi
+    int *v4; // esi
+    int v5; // esi
+    float v6; // xmm0_4
+    GLint *v7; // ecx
+    GLint v8; // eax
+    int v9; // edi
+    int v10; // esi
+    int v11; // edi
+    int v12; // edi
+    int v13; // eax
+    int v14; // eax
+    _BYTE *v15; // eax
+    int v16; // eax
+    int v17; // eax
+    char *v18; // eax
+    double v19; // st7
+    float v20; // xmm0_4
+    int v21; // xmm2_4
+    void *v22; // xmm1_4
+    int v23; // eax
+    int v24; // eax
+    float *v25; // eax
+    void ***v26; // eax
+    void **v27; // edi
+    char *v28; // ecx
+    int v29; // eax
+    float *v30; // ebx
+    int *i; // esi
+    int v32; // ecx
+    bool v33; // zf
+    GLuint *v34; // esi
+    void (__stdcall *v35)(GLenum, GLint *); // ebx
+    GLuint v36; // esi
+    GLuint *v37; // eax
+    int v38; // esi
+    int v39; // eax
+    char *v40; // edx
+    float *v41; // ecx
+    unsigned int v42; // edx
+    int v43; // ecx
+    int v44; // eax
+    void (__stdcall *v45)(GLenum); // esi
+    _DWORD *v46; // edi
+    _DWORD *v47; // eax
+    unsigned int v48; // esi
+    int v49; // ecx
+    _DWORD *v50; // edi
+    bool v51; // cf
+    _DWORD **v52; // ecx
+    _DWORD *v53; // eax
+    int v54; // eax
+    int *v55; // ecx
+    int v56; // eax
+    int *v57; // ecx
+    int v58; // eax
+    int *v59; // ecx
+    int v60; // eax
+    int *v61; // ecx
+    int v62; // esi
+    _DWORD *v63; // ecx
+    _DWORD *v64; // ecx
+    _DWORD *v65; // ecx
+    _DWORD *v66; // ecx
+    float *v67; // edx
+    char *v68; // ecx
+    unsigned int v69; // eax
+    int blue; // [esp+30h] [ebp-A4h]
+    int bluea; // [esp+30h] [ebp-A4h]
+    int blueb; // [esp+30h] [ebp-A4h]
+    int bluec; // [esp+30h] [ebp-A4h]
+    _DWORD v74[3]; // [esp+48h] [ebp-8Ch] BYREF
+    _DWORD v75[3]; // [esp+54h] [ebp-80h] BYREF
+    int v76; // [esp+60h] [ebp-74h] BYREF
+    _DWORD v77[2]; // [esp+64h] [ebp-70h] BYREF
+    int v78; // [esp+6Ch] [ebp-68h] BYREF
+    _DWORD v79[2]; // [esp+70h] [ebp-64h] BYREF
+    GLint v80; // [esp+78h] [ebp-5Ch] BYREF
+    GLint v81; // [esp+7Ch] [ebp-58h] BYREF
+    _DWORD *v82; // [esp+80h] [ebp-54h]
+    _DWORD *v83; // [esp+84h] [ebp-50h]
+    _DWORD *v84; // [esp+88h] [ebp-4Ch]
+    _DWORD *v85; // [esp+8Ch] [ebp-48h]
+    int v86; // [esp+90h] [ebp-44h] BYREF
+    GLint v87; // [esp+94h] [ebp-40h] BYREF
+    GLint v88; // [esp+98h] [ebp-3Ch] BYREF
+    int *v89; // [esp+9Ch] [ebp-38h]
+    char *v90; // [esp+A0h] [ebp-34h]
+    GLint v91; // [esp+A4h] [ebp-30h] BYREF
+    char *v92; // [esp+A8h] [ebp-2Ch]
+    int v93; // [esp+ACh] [ebp-28h] BYREF
+    int v94; // [esp+B0h] [ebp-24h] BYREF
+    void *Block; // [esp+B4h] [ebp-20h]
+    GLint params; // [esp+B8h] [ebp-1Ch] BYREF
+    _DWORD *v97; // [esp+BCh] [ebp-18h]
+    GLint v98; // [esp+C0h] [ebp-14h] BYREF
+    char v99; // [esp+C7h] [ebp-Dh]
+    int v100; // [esp+D0h] [ebp-4h]
+
+    v2 = (char *)manager;
+    v98 = (GLint)manager;
+    v3 = *((int **)manager + 35);
+    v4 = (int *)((char *)manager + 140);
+    v92 = (char *)manager + 140;
+    if ( v3 != *((int **)manager + 36) )
+    {
+      do
+      {
+        v5 = *v3;
+        if ( *v3 )
+        {
+          sub_1009C920(v5 + 168);
+          sub_1009C920(v5 + 136);
+          `eh vector destructor iterator'((void *)(v5 + 40), 0x10u, 6u, nullsub_1);
+          v100 = -1;
+          sub_100BED28((void *)v5);
+        }
+        ++v3;
+      }
+      while ( v3 != *((int **)v2 + 36) );
+      v3 = *((int **)v2 + 35);
+      v4 = (int *)(v2 + 140);
+    }
+    v4[1] = (int)v3;
+    sub_10094E60(v2);
+    if ( !*v2 || !v2[48] || !v2[24] )
+    {
+      v85 = (char *)view_parameters + 12;
+      sub_1000FCC0((char *)view_parameters + 12, v2 + 184, v2 + 196, v2 + 208);
+      ++*((_DWORD *)v2 + 106);
+      v88 = (GLint)(v2 + 252);
+      *((_DWORD *)v2 + 107) = *(_DWORD *)(dword_101BA954() + 700);
+      *(_QWORD *)(v2 + 252) = *(_QWORD *)view_parameters;
+      *((_DWORD *)v2 + 65) = *((_DWORD *)view_parameters + 2);
+      *((_QWORD *)v2 + 33) = *(_QWORD *)((char *)view_parameters + 12);
+      *((_DWORD *)v2 + 68) = *((_DWORD *)view_parameters + 5);
+      *(_QWORD *)(v2 + 276) = *((_QWORD *)view_parameters + 3);
+      v84 = (char *)view_parameters + 24;
+      *((_DWORD *)v2 + 71) = *((_DWORD *)view_parameters + 8);
+      *((_QWORD *)v2 + 36) = *(_QWORD *)((char *)view_parameters + 36);
+      v83 = (char *)view_parameters + 36;
+      *((_DWORD *)v2 + 74) = *((_DWORD *)view_parameters + 11);
+      *(_QWORD *)(v2 + 300) = *((_QWORD *)view_parameters + 6);
+      v82 = (char *)view_parameters + 48;
+      *((_DWORD *)v2 + 77) = *((_DWORD *)view_parameters + 14);
+      v6 = (float)*((int *)view_parameters + 52);
+      v90 = (char *)view_parameters + 208;
+      *((float *)v2 + 78) = v6;
+      *((float *)v2 + 79) = (float)*((int *)view_parameters + 53);
+      *((float *)v2 + 80) = (float)*((int *)view_parameters + 54);
+      *((float *)v2 + 81) = (float)*((int *)view_parameters + 55);
+      sub_100936C0(view_parameters, v2 + 328);
+      v7 = *((GLint **)v2 + 20);
+      v8 = *v7;
+      v91 = v8;
+      if ( (GLint *)v8 != v7 )
+      {
+        do
+        {
+          v9 = *(_DWORD *)(v8 + 124);
+          v10 = v8 + 12;
+          v97 = (_DWORD *)(v8 + 12);
+          if ( v9 )
+            v11 = *(_DWORD *)(v9 + 2964);
+          else
+            v11 = 0;
+          if ( *(_DWORD *)(v8 + 132) != v11 )
+          {
+            sub_10093C30(v2, 0);
+            *(_DWORD *)(v10 + 120) = v11;
+            sub_10093AB0(v2);
+          }
+          if ( (unsigned __int8)sub_100940F0(v2, *((_DWORD *)v2 + 106), *((_DWORD *)v2 + 107), v2 + 252, v2 + 328) )
+          {
+            v12 = *((_DWORD *)v2 + 106);
+            if ( *(_BYTE *)(v10 + 132) )
+            {
+              v13 = *(_DWORD *)(v10 + 40);
+              if ( v13 )
+              {
+                v14 = v13 - 1;
+                if ( v14 )
+                {
+                  if ( v14 == 1 )
+                  {
+                    v15 = v2;
+                  }
+                  else
+                  {
+                    sub_10075570(
+                      1,
+                      "Warning: ClientPortalManager::GetSettings() called with unknown Portal Mode: %i\n",
+                      *(_DWORD *)(v10 + 40));
+                    v15 = (_BYTE *)sub_10096510(0, 1);
+                  }
+                }
+                else
+                {
+                  v15 = v2 + 48;
+                }
+              }
+              else
+              {
+                v15 = v2 + 24;
+              }
+              if ( !*v15 )
+              {
+                if ( !*(_BYTE *)(v10 + 100)
+                  && ((v16 = *(_DWORD *)(v10 + 40)) == 0
+                    ? (v18 = v2 + 24)
+                    : (v17 = v16 - 1) == 0
+                    ? (v18 = v2 + 48)
+                    : v17 == 1
+                    ? (v18 = v2)
+                    : (sub_10075570(
+                         1,
+                         "Warning: ClientPortalManager::GetSettings() called with unknown Portal Mode: %i\n",
+                         *(_DWORD *)(v10 + 40)),
+                       v18 = (char *)sub_10096510(0, 1)),
+                      !v18[2])
+                  || (v12 & 1) != *(_DWORD *)(v10 + 84) )
+                {
+                  v19 = dword_101BA960();
+                  v20 = *(float *)(v10 + 96);
+                  *(float *)&v94 = v19;
+                  v21 = v94;
+                  *(float *)&Block = *(float *)&v94 - *(float *)(v10 + 88);
+                  v22 = Block;
+                  if ( v20 <= *(float *)&Block )
+                  {
+                    v23 = *(_DWORD *)(v10 + 40);
+                    if ( v23 )
+                    {
+                      v24 = v23 - 1;
+                      if ( v24 )
+                      {
+                        if ( v24 == 1 )
+                        {
+                          v25 = (float *)v2;
+                        }
+                        else
+                        {
+                          sub_10075570(
+                            1,
+                            "Warning: ClientPortalManager::GetSettings() called with unknown Portal Mode: %i\n",
+                            *(_DWORD *)(v10 + 40));
+                          v25 = (float *)sub_10096510(0, 1);
+                          v22 = Block;
+                          v21 = v94;
+                        }
+                      }
+                      else
+                      {
+                        v25 = (float *)(v2 + 48);
+                      }
+                    }
+                    else
+                    {
+                      v25 = (float *)(v2 + 24);
+                    }
+                    if ( v25[3] <= *(float *)&v22 )
+                    {
+                      *(_DWORD *)(v10 + 88) = v21;
+                      sub_10094900(v2);
+                      v26 = *(void ****)(v10 + 208);
+                      v27 = *v26;
+                      if ( *v26 != (void **)v26 )
+                      {
+                        v28 = v2 + 276;
+                        do
+                        {
+                          Block = v27[2];
+                          if ( (unsigned __int8)sub_10094370(
+                                                  v2,
+                                                  *((_DWORD *)v2 + 106),
+                                                  *((_DWORD *)v2 + 107),
+                                                  v2 + 252,
+                                                  v28,
+                                                  v2 + 328,
+                                                  Block) )
+                          {
+                            v29 = (int)*((float *)v2 + 81);
+                            v89 = (int *)(v2 + 264);
+                            v30 = (float *)sub_100950D0(
+                                             v10,
+                                             (int)(v2 + 252),
+                                             v2 + 264,
+                                             (int)*((float *)v2 + 80),
+                                             v29,
+                                             Block);
+                            v94 = (int)v30;
+                            for ( i = *(int **)v92; ; ++i )
+                            {
+                              v99 = 0;
+                              if ( i == *(int **)(v98 + 144) )
+                                break;
+                              v32 = *i;
+                              if ( (*((_BYTE *)v30 + 200) && *(_BYTE *)(v32 + 200)
+                                 || *((_BYTE *)v30 + 201) && *(_BYTE *)(v32 + 201))
+                                && v30[3] == *(float *)(v32 + 12)
+                                && v30[4] == *(float *)(v32 + 16)
+                                && v30[5] == *(float *)(v32 + 20)
+                                && *v30 == *(float *)v32
+                                && v30[1] == *(float *)(v32 + 4)
+                                && v30[2] == *(float *)(v32 + 8)
+                                && v30[6] == *(float *)(v32 + 24)
+                                && v30[7] == *(float *)(v32 + 28)
+                                && v30[8] == *(float *)(v32 + 32) )
+                              {
+                                v100 = 1;
+                                sub_1009C920(v30 + 42);
+                                sub_1009C920(v30 + 34);
+                                `eh vector destructor iterator'(v30 + 10, 0x10u, 6u, nullsub_1);
+                                v100 = -1;
+                                sub_100BED28(v30);
+                                v30 = (float *)*i;
+                                v94 = *i;
+                                v99 = 1;
+                                break;
+                              }
+                            }
+                            PortalSource_CalculateClipPlane(
+                              v97[10],
+                              v88,
+                              v89,
+                              v97[28] + 2888,
+                              v97[28] + 2900,
+                              v97,
+                              v97 + 3,
+                              v97[8],
+                              Block);
+                            v33 = *((_DWORD *)v30 + 51) == 0;
+                            v34 = (GLuint *)(v30 + 51);
+                            v89 = (int *)(v30 + 51);
+                            if ( v33 )
+                            {
+                              glGetIntegerv(0x84E0u, &params);
+                              if ( params == 33984
+                                || (_glewActiveTexture(33984), glGetIntegerv(0x84E0u, &v87), v87 == 33984) )
+                              {
+                                glGenTextures(1, (GLuint *)v30 + 51);
+                                glEnable(0xDE1u);
+                                glBindTexture(0xDE1u, *v34);
+                                glTexImage2D(
+                                  0xDE1u,
+                                  0,
+                                  6408,
+                                  *((_DWORD *)v30 + 52),
+                                  *((_DWORD *)v30 + 53),
+                                  0,
+                                  0x1908u,
+                                  0x1400u,
+                                  nullptr);
+                                glTexParameteri(0xDE1u, 0x2801u, 9729);
+                                glTexParameteri(0xDE1u, 0x2800u, 9729);
+                                glBindTexture(0xDE1u, 0);
+                                _glewActiveTexture(params);
+                                v35 = glGetIntegerv;
+                                glGetIntegerv(0x84E0u, &v81);
+                              }
+                              else
+                              {
+                                sub_10075570(
+                                  1,
+                                  "Invalid GL_ACTIVE_TEXTURE, unable to reset. Couldn't create texture for PortalSource.\n");
+                                v35 = glGetIntegerv;
+                              }
+                              if ( params != 33984 )
+                              {
+                                _glewActiveTexture(params);
+                                v35(0x84E0u, &v80);
+                              }
+                            }
+                            v36 = *v34;
+                            v86 = (int)Block;
+                            v37 = (GLuint *)sub_1009CB60(&v86);
+                            v2 = (char *)v98;
+                            *v37 = v36;
+                            v93 = *v89;
+                            v38 = *(_DWORD *)sub_1009BF40(v79, &v93);
+                            v39 = sub_1009BF40(v77, &v93);
+                            v33 = v99 == 0;
+                            *(_DWORD *)(*(_DWORD *)v39 + 12) = *(_DWORD *)(v38 + 12) + 1;
+                            if ( v33 )
+                            {
+                              v40 = v92;
+                              v41 = *((float **)v92 + 1);
+                              if ( v41 == *((float **)v92 + 2) )
+                              {
+                                sub_1009BB00(v41, (int)&v94);
+                              }
+                              else
+                              {
+                                *v41 = *(float *)&v94;
+                                *((_DWORD *)v40 + 1) += 4;
+                              }
+                            }
+                            v10 = (int)v97;
+                          }
+                          v27 = (void **)*v27;
+                          v28 = v2 + 276;
+                        }
+                        while ( v27 != *(void ***)(v10 + 208) );
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          v8 = *(_DWORD *)v91;
+          v91 = v8;
+        }
+        while ( v8 != *((_DWORD *)v2 + 20) );
+        v4 = (int *)(v2 + 140);
+      }
+      if ( (v4[1] - *v4) >> 2 )
+      {
+        (*(void (__thiscall **)(int, _DWORD, _DWORD, _DWORD))(*(_DWORD *)dword_105BCD5C + 36))(dword_105BCD5C, 0, 0, 0);
+        byte_105FE1ED = 1;
+        v42 = 0;
+        v43 = *v4;
+        v44 = v4[1] - *v4;
+        v45 = glDisable;
+        v92 = nullptr;
+        if ( v44 >> 2 )
+        {
+          do
+          {
+            v46 = *(_DWORD **)(v43 + 4 * v42);
+            v94 = (int)v46;
+            *(_DWORD *)view_parameters = *v46;
+            *((_DWORD *)view_parameters + 1) = v46[1];
+            *((_DWORD *)view_parameters + 2) = v46[2];
+            *((_DWORD *)view_parameters + 3) = v46[3];
+            *((_DWORD *)view_parameters + 4) = v46[4];
+            *((_DWORD *)view_parameters + 5) = v46[5];
+            *((_DWORD *)view_parameters + 59) = v46[6];
+            *((_DWORD *)view_parameters + 60) = v46[7];
+            *((_DWORD *)view_parameters + 61) = v46[8];
+            *((_DWORD *)view_parameters + 58) = 1;
+            sub_1000FCC0(
+              v46 + 3,
+              (char *)view_parameters + 24,
+              (char *)view_parameters + 36,
+              (char *)view_parameters + 48);
+            v47 = v90;
+            *((_DWORD *)view_parameters + 53) = 0;
+            *v47 = 0;
+            *((_DWORD *)view_parameters + 54) = v46[52];
+            *((_DWORD *)view_parameters + 55) = v46[53];
+            v45(0x3000u);
+            v45(0x3001u);
+            v45(0x3002u);
+            v45(0x3003u);
+            v45(0x3004u);
+            v45(0x3005u);
+            v48 = 0;
+            if ( v46[9] )
+            {
+              v49 = v94;
+              v50 = v46 + 10;
+              do
+              {
+                sub_10097EA0(v48, v49 + 12, v49, v50);
+                v49 = v94;
+                ++v48;
+                v50 += 4;
+              }
+              while ( v48 < *(_DWORD *)(v94 + 36) );
+              v46 = (_DWORD *)v94;
+            }
+            glClearColor(0.0, 0.0, 1.0, 0.0);
+            glClear(0x4000u);
+            v97 = (_DWORD *)dword_101BA954();
+            *(float *)&v86 = dword_101BA960();
+            v51 = *(float *)&v86 < *((float *)v2 + 61);
+            v87 = v86;
+            if ( !v51 )
+            {
+              if ( !*((_DWORD *)v2 + 62) )
+                *((_DWORD *)v2 + 62) = (*(int (__cdecl **)(const char *))(dword_101BA9D8 + 12))("models/shell.mdl");
+              v52 = *((_DWORD ***)v2 + 58);
+              if ( v52 != *((_DWORD ***)v2 + 59) )
+              {
+                do
+                {
+                  v53 = *v52++;
+                  *v53 |= 0x40000u;
+                }
+                while ( v52 != *((_DWORD ***)v2 + 59) );
+                v52 = *((_DWORD ***)v2 + 58);
+              }
+              *((_DWORD *)v2 + 59) = v52;
+              blue = *((_DWORD *)v2 + 62);
+              v76 = 0;
+              v77[0] = -1054867456;
+              v77[1] = 1101004800;
+              v54 = sub_100958C0(v97, 1065353216, blue, &v76);
+              v55 = *((int **)v2 + 59);
+              v86 = v54;
+              if ( v55 == *((int **)v2 + 60) )
+              {
+                sub_1009BB00(v55, (int)&v86);
+              }
+              else
+              {
+                *v55 = v54;
+                *((_DWORD *)v2 + 59) += 4;
+              }
+              v78 = 0;
+              bluea = *((_DWORD *)v2 + 62);
+              v79[0] = 1092616192;
+              v79[1] = 1101004800;
+              v56 = sub_100958C0(v97, 1065353216, bluea, &v78);
+              v57 = *((int **)v2 + 59);
+              v86 = v56;
+              if ( v57 == *((int **)v2 + 60) )
+              {
+                sub_1009BB00(v57, (int)&v86);
+              }
+              else
+              {
+                *v57 = v56;
+                *((_DWORD *)v2 + 59) += 4;
+              }
+              v75[0] = -1054867456;
+              blueb = *((_DWORD *)v2 + 62);
+              v75[1] = 0;
+              v75[2] = 1101004800;
+              v58 = sub_100958C0(v97, 1065353216, blueb, v75);
+              v59 = *((int **)v2 + 59);
+              v86 = v58;
+              if ( v59 == *((int **)v2 + 60) )
+              {
+                sub_1009BB00(v59, (int)&v86);
+              }
+              else
+              {
+                *v59 = v58;
+                *((_DWORD *)v2 + 59) += 4;
+              }
+              v74[0] = 1092616192;
+              bluec = *((_DWORD *)v2 + 62);
+              v74[1] = 0;
+              v74[2] = 1101004800;
+              v60 = sub_100958C0(v97, 1065353216, bluec, v74);
+              v61 = *((int **)v2 + 59);
+              v86 = v60;
+              if ( v61 == *((int **)v2 + 60) )
+              {
+                sub_1009BB00(v61, (int)&v86);
+              }
+              else
+              {
+                *v61 = v60;
+                *((_DWORD *)v2 + 59) += 4;
+              }
+              *((float *)v2 + 61) = *(float *)&v87 + 0.89999998;
+            }
+            if ( !CL_IsThirdPerson() )
+              v2[488] = 1;
+            (*(void (__thiscall **)(int, void *, _DWORD, _DWORD, int))(*(_DWORD *)dword_105BCD5C + 44))(
+              dword_105BCD5C,
+              view_parameters,
+              0,
+              0,
+              1);
+            glGetIntegerv(0x84E0u, &v91);
+            if ( v91 == 33984 || (_glewActiveTexture(33984), glGetIntegerv(0x84E0u, &v88), v88 == 33984) )
+            {
+              glEnable(0xDE1u);
+              glBindTexture(0xDE1u, v46[51]);
+              glCopyTexSubImage2D(
+                0xDE1u,
+                0,
+                0,
+                0,
+                0,
+                (int)(float)(*((float *)v2 + 81) - (float)(unsigned int)v46[53]),
+                v46[52],
+                v46[53]);
+              glBindTexture(0xDE1u, 0);
+            }
+            else
+            {
+              sub_10075570(1, "Invalid GL_ACTIVE_TEXTURE, unable to reset. Portal not drawn.\n");
+            }
+            if ( v91 != 33984 )
+            {
+              _glewActiveTexture(v91);
+              glGetIntegerv(0x84E0u, &v98);
+            }
+            v62 = 4;
+            *(_DWORD *)view_parameters = *((_DWORD *)v2 + 63);
+            *((_DWORD *)view_parameters + 1) = *((_DWORD *)v2 + 64);
+            *((_DWORD *)view_parameters + 2) = *((_DWORD *)v2 + 65);
+            v63 = v85;
+            *v85 = *((_DWORD *)v2 + 66);
+            v63[1] = *((_DWORD *)v2 + 67);
+            v63[2] = *((_DWORD *)v2 + 68);
+            v64 = v84;
+            *v84 = *((_DWORD *)v2 + 69);
+            v64[1] = *((_DWORD *)v2 + 70);
+            v64[2] = *((_DWORD *)v2 + 71);
+            v65 = v83;
+            *v83 = *((_DWORD *)v2 + 72);
+            v65[1] = *((_DWORD *)v2 + 73);
+            v65[2] = *((_DWORD *)v2 + 74);
+            v66 = v82;
+            *v82 = *((_DWORD *)v2 + 75);
+            v66[1] = *((_DWORD *)v2 + 76);
+            v67 = (float *)(v2 + 312);
+            v66[2] = *((_DWORD *)v2 + 77);
+            v68 = v90;
+            do
+            {
+              ++v67;
+              v68 += 4;
+              *((_DWORD *)v68 - 1) = (int)*(v67 - 1);
+              --v62;
+            }
+            while ( v62 );
+            v43 = *((_DWORD *)v2 + 35);
+            v42 = (unsigned int)(v92 + 1);
+            v45 = glDisable;
+            v69 = (*((_DWORD *)v2 + 36) - v43) >> 2;
+            v92 = (char *)v42;
+          }
+          while ( v42 < v69 );
+        }
+        v45(0x3000u);
+        v45(0x3001u);
+        v45(0x3002u);
+        v45(0x3003u);
+        v45(0x3004u);
+        v45(0x3005u);
+        glClearColor(0.0, 0.0, 0.0, 0.0);
+        byte_105FE1ED = 0;
+        (*(void (__thiscall **)(int))(*(_DWORD *)dword_105BCD5C + 40))(dword_105BCD5C);
+      }
+    }
+  }

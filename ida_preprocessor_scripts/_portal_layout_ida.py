@@ -4,10 +4,13 @@ import inspect
 import json
 
 from ida_analyze_util import parse_mcp_result
+from ida_elf import ELF_RESOLVER_PY
 import ida_preprocessor_scripts._portal_layout as layout
 
-DECODER = r"""
-import ida_funcs, ida_ua, ida_idp, ida_nalt, ida_frame, idaapi, idautils, idc, re
+DECODER = (
+    ELF_RESOLVER_PY
+    + r"""
+import ida_funcs, ida_ua, ida_idp, ida_nalt, ida_frame, ida_bytes, idaapi, idautils, idc, re
 def decode_function(ea):
     if idaapi.inf_is_64bit():
         raise ValueError('portal layout requires x86-32')
@@ -50,6 +53,7 @@ def decode_function(ea):
                 if (idc.get_segm_name(target) or '').startswith('.plt') and name in imports.values():
                     item.update(kind='api',size=4,name=name)
                 else:
+                    target = resolve_elf_plt(target)
                     item.update(kind='func',size=4,value=target)
             elif op.type == ida_ua.o_mem and int(op.addr) in imports:
                 item.update(kind='api',name=imports[int(op.addr)])
@@ -63,8 +67,12 @@ def decode_function(ea):
             ops.append(item)
             if item['kind'] == 'mem' and insn.get_canon_feature() & getattr(ida_idp, 'CF_CHG%d' % (i+1)):
                 memory_writes.append(item)
-        result.append({'ea':int(address),'mnemonic':(idc.print_insn_mnem(address) or '').lower(),
-                       'operands':ops,'writes':writes,'memory_writes':memory_writes,'stack_delta':ida_frame.get_sp_delta(f,address+insn.size)})
+        mnemonic = (idc.print_insn_mnem(address) or '').lower()
+        if ida_bytes.get_bytes(address, insn.size) == b'\xf3\xa5':
+            mnemonic = 'rep_movsd'
+        result.append({'ea':int(address),'mnemonic':mnemonic,
+                       'operands':ops,'writes':writes,'memory_writes':memory_writes,
+                       'stack_offset':ida_frame.get_spd(f,address),'stack_delta':ida_frame.get_sp_delta(f,address+insn.size)})
     indices = {item['ea']: i for i, item in enumerate(result)}
     for item in result:
         item['successors'] = [indices[int(target)] for target in idautils.CodeRefsFrom(item['ea'], 1) if int(target) in indices]
@@ -82,6 +90,7 @@ def callees(ea):
             for op in insn['operands'] if op['kind']=='func' and ida_funcs.get_func(op['value'])
             and ida_funcs.get_func(op['value']).start_ea == op['value']}
 """
+)
 
 
 async def run_layout_walk(session, values, body):

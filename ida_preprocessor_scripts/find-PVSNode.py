@@ -15,6 +15,7 @@ import json
 from pathlib import Path
 
 import ida_analyze_util as u
+from ida_elf import ELF_RESOLVER_PY
 
 TARGETS = ("PVSNode",)
 MARKER = "__R124_PVSNODE__"
@@ -22,7 +23,9 @@ TRI_SLOT_BOXINPVS = 16
 TRI_FUNC_PTRS = 19
 MIN_CALLERS = 4
 
-WALK = r"""
+WALK = (
+    ELF_RESOLVER_PY
+    + r"""
 import idautils, ida_funcs, idc, ida_segment, ida_bytes, json
 
 MARKER = @@MARKER@@
@@ -42,14 +45,14 @@ def callees(o):
     for pc in idautils.FuncItems(o):
         if (idc.print_insn_mnem(pc) or "").lower() != "call":
             continue
-        t = idc.get_operand_value(pc, 0)
+        t = resolve_elf_plt(idc.get_operand_value(pc, 0))
         tf = fn(t) if t else None
         if tf is not None and tf == t:
             out.add(tf)
     return out
 
 def callers(o):
-    return {fn(x) for x in idautils.CodeRefsTo(o, False) if fn(x)}
+    return {fn(x) for x in elf_code_refs_to(o) if fn(x)}
 
 def fsize(ea):
     f = ida_funcs.get_func(ea)
@@ -98,6 +101,7 @@ for si in range(ida_segment.get_segm_qty()):
             })
 emit(res)
 """
+)
 
 
 async def _eval(session, code):

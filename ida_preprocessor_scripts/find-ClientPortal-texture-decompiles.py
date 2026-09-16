@@ -5,6 +5,11 @@ from ida_analyze_util import _load_yaml_mapping, _parse_int, preprocess_common_s
 from ida_preprocessor_scripts._portal_layout_ida import run_layout_walk
 from scalar_artifact import SCALAR_FIELDS
 
+TEXTURE_REFERENCES = {
+    "ClientPortal": "references/{gamever}/client/ClientPortal_CreateTexture.{platform}.yaml",
+    "PortalSource": "references/{gamever}/client/PortalSource_CreateTexture.{platform}.yaml",
+}
+
 
 async def preprocess_skill(
     session,
@@ -19,7 +24,12 @@ async def preprocess_skill(
 ):
     if platform != "linux":
         return False
-    name = "ClientPortal_CreateTexture"
+    source_name = (
+        "PortalSource"
+        if any(Path(path).name.startswith("PortalSource_") for path in expected_outputs)
+        else "ClientPortal"
+    )
+    name = f"{source_name}_CreateTexture"
     payload = _load_yaml_mapping(Path(new_binary_dir) / f"{name}.{platform}.yaml")
     if not payload or payload.get("func_name") != name:
         return False
@@ -33,14 +43,14 @@ async def preprocess_skill(
         if debug:
             print(exc)
         return False
-    verified = {f"ClientPortal_{key}_offset": value for key, value in values.items()}
+    verified = {f"{source_name}_{key}_offset": value for key, value in values.items()}
     specs = [
         {
             "symbol_name": name,
             "prompt_path": "prompt/call_llm_decompile.md",
-            "reference_yaml_paths": ["references/{gamever}/client/ClientPortal_CreateTexture.{platform}.yaml"],
+            "reference_yaml_paths": [TEXTURE_REFERENCES[source_name]],
             "expected_result_sections": ["found_scalar"],
-            "dependency_policy": {"ClientPortal_CreateTexture.{platform}.yaml": "required"},
+            "dependency_policy": {f"{source_name}_CreateTexture.{{platform}}.yaml": "required"},
             "expected_value": value,
         }
         for name, value in verified.items()

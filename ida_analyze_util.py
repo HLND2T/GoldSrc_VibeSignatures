@@ -13,7 +13,8 @@ from pathlib import Path
 
 import yaml
 
-from analysis_config import validated_tag
+from analysis_config import FAMILY_REFERENCE_GAMEVERS, validated_tag
+from ida_elf import ELF_RESOLVER_PY
 from ida_mcp_keepalive import keepalive_worker_during
 from ida_llm_decompile import (
     _build_llm_decompile_request_cache_key,
@@ -978,7 +979,9 @@ globals().update(locals())
 """
 
 
-_FUNC_XREF_PY_EVAL_TEMPLATE = r"""
+_FUNC_XREF_PY_EVAL_TEMPLATE = (
+    ELF_RESOLVER_PY
+    + r"""
 import ida_auto, ida_bytes, ida_funcs, ida_name, ida_nalt, ida_netnode, ida_segment, ida_strlist, ida_ua, ida_xref, idaapi, idautils, idc, json, math, struct
 
 spec = json.loads(SPEC_PLACEHOLDER)
@@ -996,8 +999,10 @@ def _function_start(ea):
 
 def _functions_referencing(ea):
     found = set()
-    for xref in idautils.XrefsTo(int(ea), 0):
-        source_ea = int(xref.frm)
+    for source_ea in set(elf_data_refs_to(int(ea))) | set(elf_code_refs_to(int(ea))):
+        segment = ida_segment.getseg(source_ea)
+        if segment is None or not (segment.perm & ida_segment.SEGPERM_EXEC) or ida_segment.get_segm_name(segment).startswith('.plt'):
+            continue
         start = _function_start(source_ea)
         if start is not None:
             found.add(start)
@@ -1532,6 +1537,7 @@ if unicode_strings_without_owner:
     result_payload['unicode_strings_without_owner'] = unicode_strings_without_owner
 result = json.dumps(result_payload)
 """
+)
 
 
 def _build_func_xref_py_eval(spec, image_base):
@@ -1976,9 +1982,11 @@ async def _find_unique_bytes(session, signature):
         return None
 
 
-_INSPECT_FUNCTION_PY_EVAL_TEMPLATE = r"""
+_INSPECT_FUNCTION_PY_EVAL_TEMPLATE = (
+    ELF_RESOLVER_PY
+    + r"""
 import ida_auto, ida_bytes, ida_funcs, ida_name, ida_segment, ida_ua, idaapi, idautils, idc, json
-ea = EA_PLACEHOLDER
+ea = resolve_elf_plt(EA_PLACEHOLDER)
 image_base = IMAGE_BASE_PLACEHOLDER
 pointer_size = 8 if idaapi.inf_is_64bit() else 4
 allow_across_function_boundary = ALLOW_ACROSS_FUNCTION_BOUNDARY_PLACEHOLDER
@@ -2104,6 +2112,7 @@ else:
         'func_sig': _signature(ea, end),
     }})
 """
+)
 
 
 _INSPECT_FUNCTION_PY_EVAL = _INSPECT_FUNCTION_PY_EVAL_TEMPLATE.replace(
@@ -2732,6 +2741,14 @@ def _resolve_reference_resource(value, new_binary_dir, platform):
     current_path = _confine_reference_resource(current_path)
     if current_path.is_file():
         return current_path
+    family = Path(new_binary_dir).resolve().parent.name.rsplit("-", 1)[0]
+    family_gamever = FAMILY_REFERENCE_GAMEVERS.get(family)
+    if family_gamever:
+        family_path = _confine_reference_resource(
+            _resolve_preprocessor_resource(text.replace("{gamever}", family_gamever), new_binary_dir, platform)
+        )
+        if family_path.is_file():
+            return family_path
     fallback_text = text.replace("{gamever}", _reference_gamever())
     return _confine_reference_resource(_resolve_preprocessor_resource(fallback_text, new_binary_dir, platform))
 
@@ -2914,6 +2931,9 @@ def resolve_address_flow(graph, block, stop, register, visiting=frozenset()):
         if kind == 'address':
             base = resolve_address_flow(graph, block, index, value[0], visiting)
             return None if base is None else (base + value[1]) & 0xffffffff
+        if kind == 'got_load':
+            base = resolve_address_flow(graph, block, index, value[0], visiting)
+            return None if base is None else value[2].get((base + value[1]) & 0xffffffff)
         return None
     predecessors = graph[block]['preds']
     if not predecessors:
@@ -2966,6 +2986,17 @@ if size:
         else:
             operand_dwords.append(None)
 computed_targets = []
+got_indirect_targets = []
+got_symbol_names = []
+if pointer_size == 4 and (idc.print_insn_mnem(ea) or '').lower() == 'mov' and insn.ops[0].type == ida_ua.o_reg:
+    for ref in idautils.DataRefsFrom(ea):
+        segment = ida_segment.getseg(ref)
+        if (segment is not None and ida_segment.get_segm_name(segment) in ('.got', '.got.plt')
+                and int(ref) % 4 == 0 and int(ref) + 4 <= segment.end_ea):
+            pointee = int(ida_bytes.get_dword(ref))
+            if ida_segment.getseg(pointee) is not None:
+                got_indirect_targets.append(hex(pointee))
+                got_symbol_names.append(idc.get_name(pointee) or '')
 relative_store_address = None
 # A MOV store's IDA xref can name only its displacement, even when that
 # displacement happens to be mapped. Resolve the effective address instead.
@@ -3033,6 +3064,19 @@ if (func is not None and (store_operand is not None or (size == 6
                             changed[destination] = ('register', source.reg)
                         elif mnemonic == 'mov' and source.type == ida_ua.o_imm:
                             changed[destination] = ('constant', int(source.value) & 0xffffffff)
+                        elif mnemonic == 'mov' and source.type == ida_ua.o_displ:
+                            operand = decode_address_load(ida_bytes.get_bytes(address, decoded.size))
+                            got_values = {}
+                            if operand is not None:
+                                for ref in idautils.DataRefsFrom(address):
+                                    segment = ida_segment.getseg(ref)
+                                    if (segment is not None and ref % 4 == 0 and ref + 4 <= segment.end_ea
+                                            and ida_segment.get_segm_name(segment) in ('.got', '.got.plt')):
+                                        pointee = int(ida_bytes.get_dword(ref))
+                                        if ida_segment.getseg(pointee) is not None:
+                                            got_values[int(ref)] = pointee
+                                if got_values:
+                                    changed[destination] = ('got_load', (*operand, got_values))
                         elif mnemonic in ('add', 'sub') and source.type == ida_ua.o_imm:
                             changed[destination] = ('offset', int(source.value) * (1 if mnemonic == 'add' else -1))
                         elif mnemonic == 'lea':
@@ -3089,6 +3133,8 @@ result = json.dumps({
     'operand_pic': operand_pic,
     'operand_dwords': operand_dwords,
     'relative_store_address': relative_store_address,
+    'got_indirect_targets': got_indirect_targets,
+    'got_symbol_names': got_symbol_names,
 })
 """
 )
@@ -3224,7 +3270,7 @@ async def _inspect_llm_instruction(session, ea):
 
 
 _RESOLVE_JMP_THUNK_PY_EVAL = r"""
-import ida_funcs, ida_ua, idc, json
+import ida_funcs, ida_ua, ida_bytes, ida_ida, ida_idaapi, idc, json
 current_ea = EA_PLACEHOLDER
 resolved_ea = current_ea
 visited = set()
@@ -3240,9 +3286,26 @@ for _ in range(8):
         break
     if (idc.print_insn_mnem(current_ea) or '').strip().lower() != 'jmp':
         break
-    if insn.ops[0].type != ida_ua.o_near:
+    if insn.ops[0].type == ida_ua.o_near:
+        target_ea = int(insn.ops[0].addr)
+    elif insn.ops[0].type in (ida_ua.o_mem, ida_ua.o_displ) and not ida_ida.inf_is_64bit():
+        # IDA's loader resolves locally defined ELF PLT/GOT relocations. Use
+        # that evidence rather than guessing a PIC register base or a name.
+        target_ea, pointer_ea = ida_funcs.calc_thunk_func_target(func)
+        if target_ea == ida_idaapi.BADADDR or pointer_ea == ida_idaapi.BADADDR:
+            break
+        pointer_loaded = True
+        for offset in range(4):
+            if not ida_bytes.is_loaded(pointer_ea + offset):
+                pointer_loaded = False
+                break
+        if not pointer_loaded:
+            break
+        if int(ida_bytes.get_dword(pointer_ea)) != int(target_ea):
+            break
+        target_ea = int(target_ea)
+    else:
         break
-    target_ea = int(insn.ops[0].addr)
     target_func = ida_funcs.get_func(target_ea)
     if target_func is None or int(target_func.start_ea) != target_ea:
         break
@@ -3285,6 +3348,18 @@ async def _validate_llm_global_addresses(session, result, platform):
     for index, entry in enumerate(result.get("found_gv", ())):
         detail = await _inspect_llm_instruction(session, entry["insn_va"])
         resolution = (detail or {}).get("relative_store_address")
+        if detail and resolution is None and not _llm_global_targets(detail, platform=platform):
+            resolution = {
+                "issue": "The instruction has no resolvable non-null global address; a zero immediate is not a global reference."
+            }
+        for owner in (detail or {}).get("got_symbol_names", ()):
+            # These established artifact prefixes describe fields of the
+            # engine state aggregates. Other underscores can be aliases such
+            # as g_bRenderingPortals_SCClient, not an object/member boundary.
+            if owner in {"cl", "cls", "sv"} and entry["gv_name"].startswith(owner + "_"):
+                resolution = {
+                    "issue": f"This GOT load identifies the containing object {owner!r}, not its requested field {entry['gv_name']!r}. Select the field access after the pointer load."
+                }
         if resolution is not None and resolution.get("issue"):
             issues.append(
                 {
@@ -3432,9 +3507,17 @@ def _llm_global_targets(detail, *, platform="linux"):
     """
     if platform == "linux" and detail.get("relative_store_address") is not None:
         target = detail["relative_store_address"].get("target")
-        return [target] if target is not None else []
+        return [target] if target is not None and _parse_int(target, "operand_target") != 0 else []
+    if platform == "linux" and detail.get("got_indirect_targets"):
+        return [
+            value for value in dict.fromkeys(detail["got_indirect_targets"]) if _parse_int(value, "operand_target") != 0
+        ]
     operands = list(dict.fromkeys(detail.get("operand_targets") or ()))
-    candidates = list(dict.fromkeys((detail.get("data_refs") or []) + operands))
+    candidates = [
+        value
+        for value in dict.fromkeys((detail.get("data_refs") or []) + operands)
+        if _parse_int(value, "operand_target") != 0
+    ]
     pic_flags = detail.get("operand_pic") or ()
     if any(pic_flags):
         return candidates

@@ -1,0 +1,274 @@
+func_name: PortalSource_Constructor
+func_va: '0x10098ec0'
+disasm_code: |-
+  ; The three constructor vector copies belong to PortalSource, not ClientPortal.
+  ; PortalSource_origin_offset = 0 (structmember, struct=PortalSource, member=origin).
+  ; PortalSource_angles_offset = 12 (structmember, struct=PortalSource, member=angles).
+  .text:10002B50                 push    esi
+  .text:10002B51                 mov     esi, ecx
+  .text:10002B53                 mov     edx, [esi+4]
+  .text:10002B56                 mov     eax, [esi]
+  .text:10002B58                 sub     edx, eax
+  .text:10002B5A                 and     edx, 0FFFFFFFCh
+  .text:10002B5D                 cmp     edx, 1000h
+  .text:10002B63                 jb      short loc_10002B77
+  .text:10002B65                 mov     ecx, [eax-4]
+  .text:10002B68                 add     edx, 23h ; '#'
+  .text:10002B6B                 sub     eax, ecx
+  .text:10002B6D                 add     eax, 0FFFFFFFCh
+  .text:10002B70                 cmp     eax, 1Fh
+  .text:10002B73                 ja      short loc_10002B97
+  .text:10002B75                 mov     eax, ecx
+  .text:10002B77                 push    edx
+  .text:10002B78                 ; Block
+  .text:10002B78                 push    eax; Block
+  .text:10002B79                 call    sub_100BED28
+  .text:10002B7E                 add     esp, 8
+  .text:10002B81                 mov     dword ptr [esi], 0
+  .text:10002B87                 mov     dword ptr [esi+4], 0
+  .text:10002B8E                 mov     dword ptr [esi+8], 0
+  .text:10002B95                 pop     esi
+  .text:10002B96                 retn
+  .text:10002B97                 call    __invalid_parameter_noinfo_noreturn
+  .text:10098EC0                 push    ebp
+  .text:10098EC1                 mov     ebp, esp
+  .text:10098EC3                 push    0FFFFFFFFh
+  .text:10098EC5                 push    offset SEH_10098EC0
+  .text:10098ECA                 mov     eax, large fs:0
+  .text:10098ED0                 push    eax
+  .text:10098ED1                 sub     esp, 0Ch
+  .text:10098ED4                 push    esi
+  .text:10098ED5                 push    edi
+  .text:10098ED6                 mov     eax, ___security_cookie
+  .text:10098EDB                 xor     eax, ebp
+  .text:10098EDD                 push    eax
+  .text:10098EDE                 lea     eax, [ebp+var_C]
+  .text:10098EE1                 mov     large fs:0, eax
+  .text:10098EE7                 mov     edi, ecx
+  .text:10098EE9                 mov     [ebp+var_14], edi
+  .text:10098EEC                 ; void (__thiscall *)(void *)
+  .text:10098EEC                 push    offset nullsub_1; void (__thiscall *)(void *)
+  .text:10098EF1                 ; void (__thiscall *)(void *)
+  .text:10098EF1                 push    offset sub_1009C850; void (__thiscall *)(void *)
+  .text:10098EF6                 mov     dword ptr [edi], 0
+  .text:10098EFC                 lea     eax, [edi+28h]
+  .text:10098EFF                 mov     dword ptr [edi+4], 0
+  .text:10098F06                 mov     dword ptr [edi+8], 0
+  .text:10098F0D                 ; unsigned int
+  .text:10098F0D                 push    6; unsigned int
+  .text:10098F0F                 mov     dword ptr [edi+0Ch], 0
+  .text:10098F16                 mov     dword ptr [edi+10h], 0
+  .text:10098F1D                 mov     dword ptr [edi+14h], 0
+  .text:10098F24                 ; unsigned int
+  .text:10098F24                 push    10h; unsigned int
+  .text:10098F26                 ; void *
+  .text:10098F26                 push    eax; void *
+  .text:10098F27                 mov     dword ptr [edi+18h], 0
+  .text:10098F2E                 mov     dword ptr [edi+1Ch], 0
+  .text:10098F35                 mov     dword ptr [edi+20h], 0
+  .text:10098F3C                 call    ??_L@YGXPAXIIP6EX0@Z1@Z; `eh vector constructor iterator'(void *,uint,uint,void (*)(void *),void (*)(void *))
+  .text:10098F41                 lea     ecx, [edi+88h]
+  .text:10098F47                 mov     [ebp+var_4], 0
+  .text:10098F4E                 call    sub_1009C7A0
+  .text:10098F53                 lea     esi, [edi+0A8h]
+  .text:10098F59                 mov     [ebp+var_10], 0
+  .text:10098F60                 mov     eax, [ebp+var_10]
+  .text:10098F63                 mov     [ebp+var_18], esi
+  .text:10098F66                 mov     [esi], eax
+  .text:10098F68                 mov     byte ptr [ebp+var_4], 1
+  .text:10098F6C                 mov     dword ptr [esi+4], 0
+  .text:10098F73                 mov     dword ptr [esi+8], 0
+  .text:10098F7A                 ; Size
+  .text:10098F7A                 push    0Ch; Size
+  .text:10098F7C                 lfence
+  .text:10098F7F                 call    ??2@YAPAXI@Z; operator new(uint)
+  .text:10098F84                 add     esp, 4
+  .text:10098F87                 mov     [eax], eax
+  .text:10098F89                 mov     [eax+4], eax
+  .text:10098F8C                 mov     [esi+4], eax
+  .text:10098F8F                 lea     ecx, [esi+0Ch]
+  .text:10098F92                 mov     dword ptr [ecx], 0
+  .text:10098F98                 mov     dword ptr [ecx+4], 0
+  .text:10098F9F                 mov     dword ptr [ecx+8], 0
+  .text:10098FA6                 push    dword ptr [esi+4]
+  .text:10098FA9                 mov     byte ptr [ebp+var_4], 3
+  .text:10098FAD                 push    10h
+  .text:10098FAF                 mov     dword ptr [esi+18h], 7
+  .text:10098FB6                 mov     dword ptr [esi+1Ch], 8
+  .text:10098FBD                 mov     dword ptr [esi], 3F800000h
+  .text:10098FC3                 call    sub_10002C70
+  .text:10098FC8                 mov     eax, [ebp+origin]
+  .text:10098FCB                 mov     edx, [ebp+width]
+  .text:10098FCE                 movq    xmm0, qword ptr [eax]
+  .text:10098FD2                 movq    qword ptr [edi], xmm0
+  .text:10098FD6                 mov     eax, [eax+8]
+  .text:10098FD9                 mov     [edi+8], eax
+  .text:10098FDC                 mov     eax, [ebp+angles]
+  .text:10098FDF                 movq    xmm0, qword ptr [eax]
+  .text:10098FE3                 movq    qword ptr [edi+0Ch], xmm0
+  .text:10098FE8                 mov     eax, [eax+8]
+  .text:10098FEB                 mov     [edi+14h], eax
+  .text:10098FEE                 mov     eax, [ebp+surface_origin]
+  .text:10098FF1                 movq    xmm0, qword ptr [eax]
+  .text:10098FF5                 movq    qword ptr [edi+18h], xmm0
+  .text:10098FFA                 mov     eax, [eax+8]
+  .text:10098FFD                 mov     [edi+20h], eax
+  .text:10099000                 mov     al, [ebp+flag]
+  .text:10099003                 mov     [edi+0C8h], al
+  .text:10099009                 mov     al, [ebp+other_flag]
+  .text:1009900C                 mov     [edi+0C9h], al
+  .text:10099012                 mov     eax, edx
+  .text:10099014                 mov     dword ptr [edi+0CCh], 0
+  .text:1009901E                 mov     dword ptr [edi+24h], 0
+  .text:10099025                 and     eax, 80000001h
+  .text:1009902A                 jns     short loc_10099031
+  .text:1009902C                 dec     eax
+  .text:1009902D                 or      eax, 0FFFFFFFEh
+  .text:10099030                 inc     eax
+  .text:10099031                 cmp     eax, 1
+  .text:10099034                 lea     ecx, [edx+1]
+  .text:10099037                 cmovnz  ecx, edx
+  .text:1009903A                 mov     edx, [ebp+height]
+  .text:1009903D                 mov     eax, edx
+  .text:1009903F                 mov     [edi+0D0h], ecx
+  .text:10099045                 and     eax, 80000001h
+  .text:1009904A                 jns     short loc_10099051
+  .text:1009904C                 dec     eax
+  .text:1009904D                 or      eax, 0FFFFFFFEh
+  .text:10099050                 inc     eax
+  .text:10099051                 cmp     eax, 1
+  .text:10099054                 lea     ecx, [edx+1]
+  .text:10099057                 mov     eax, edi
+  .text:10099059                 cmovnz  ecx, edx
+  .text:1009905C                 mov     [edi+0D4h], ecx
+  .text:10099062                 mov     ecx, [ebp+var_C]
+  .text:10099065                 mov     large fs:0, ecx
+  .text:1009906C                 pop     ecx
+  .text:1009906D                 pop     edi
+  .text:1009906E                 pop     esi
+  .text:1009906F                 mov     esp, ebp
+  .text:10099071                 pop     ebp
+  .text:10099072                 retn    20h ; ' '
+  .text:1009CA00                 push    edi
+  .text:1009CA01                 mov     edi, ecx
+  .text:1009CA03                 mov     edx, [edi]
+  .text:1009CA05                 mov     eax, [edx+4]
+  .text:1009CA08                 mov     dword ptr [eax], 0
+  .text:1009CA0E                 mov     eax, [edx]
+  .text:1009CA10                 test    eax, eax
+  .text:1009CA12                 jz      short loc_1009CA29
+  .text:1009CA14                 push    esi
+  .text:1009CA15                 mov     esi, [eax]
+  .text:1009CA17                 push    0Ch
+  .text:1009CA19                 ; Block
+  .text:1009CA19                 push    eax; Block
+  .text:1009CA1A                 call    sub_100BED28
+  .text:1009CA1F                 add     esp, 8
+  .text:1009CA22                 mov     eax, esi
+  .text:1009CA24                 test    esi, esi
+  .text:1009CA26                 jnz     short loc_1009CA15
+  .text:1009CA28                 pop     esi
+  .text:1009CA29                 push    0Ch
+  .text:1009CA2B                 ; Block
+  .text:1009CA2B                 push    dword ptr [edi]; Block
+  .text:1009CA2D                 call    sub_100BED28
+  .text:1009CA32                 add     esp, 8
+  .text:1009CA35                 pop     edi
+  .text:1009CA36                 retn
+  .text:100E2C16                 ; void (__thiscall *)(void *)
+  .text:100E2C16                 push    offset nullsub_1; void (__thiscall *)(void *)
+  .text:100E2C1B                 ; unsigned int
+  .text:100E2C1B                 push    6; unsigned int
+  .text:100E2C1D                 ; unsigned int
+  .text:100E2C1D                 push    10h; unsigned int
+  .text:100E2C1F                 mov     eax, [ebp+var_14]
+  .text:100E2C22                 add     eax, 28h ; '('
+  .text:100E2C25                 ; void *
+  .text:100E2C25                 push    eax; void *
+  .text:100E2C26                 call    ??_M@YGXPAXIIP6EX0@Z@Z; `eh vector destructor iterator'(void *,uint,uint,void (*)(void *))
+  .text:100E2C2B                 retn
+  .text:100E2C2C                 mov     ecx, [ebp+var_14]
+  .text:100E2C2F                 add     ecx, 88h
+  .text:100E2C35                 jmp     sub_1009CA70
+  .text:100E2C3A                 mov     ecx, [ebp+var_18]
+  .text:100E2C3D                 add     ecx, 4
+  .text:100E2C40                 jmp     loc_1009CA00
+  .text:100E2C45                 mov     ecx, [ebp+var_18]
+  .text:100E2C48                 add     ecx, 0Ch
+  .text:100E2C4B                 jmp     loc_10002B50
+  .text:100E2C55                 nop
+  .text:100E2C56                 nop
+  .text:100E2C57                 mov     edx, [esp-4+origin]
+  .text:100E2C5B                 lea     eax, [edx+0Ch]
+  .text:100E2C5E                 mov     ecx, [edx-18h]
+  .text:100E2C61                 ; StackCookie
+  .text:100E2C61                 xor     ecx, eax; StackCookie
+  .text:100E2C63                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:100E2C68                 mov     eax, offset stru_1012C700
+  .text:100E2C6D                 jmp     ___CxxFrameHandler3
+procedure: |-
+  // The three constructor vector copies belong to PortalSource, not ClientPortal.
+  // PortalSource_origin_offset = 0 (structmember, struct=PortalSource, member=origin).
+  // PortalSource_angles_offset = 12 (structmember, struct=PortalSource, member=angles).
+  void __thiscall PortalSource__PortalSource(
+          PortalSource_8948 *self,
+          PortalSettings_8948 *settings,
+          const float *origin,
+          const float *angles,
+          const float *surface_origin,
+          bool flag,
+          unsigned int width,
+          unsigned int height,
+          bool other_flag)
+  {
+    _DWORD *v10; // eax
+    unsigned int v11; // ecx
+    unsigned int v12; // ecx
+    int v13; // [esp-4h] [ebp-28h]
+
+    self->origin[0] = 0.0;
+    self->origin[1] = 0.0;
+    self->origin[2] = 0.0;
+    self->angles[0] = 0.0;
+    self->angles[1] = 0.0;
+    self->angles[2] = 0.0;
+    self->surface_origin[0] = 0.0;
+    self->surface_origin[1] = 0.0;
+    self->surface_origin[2] = 0.0;
+    `eh vector constructor iterator'(self->containers, 0x10u, 6u, sub_1009C850, nullsub_1);
+    sub_1009C7A0();
+    *(_DWORD *)&self->containers[128] = 0;
+    *(_DWORD *)&self->containers[132] = 0;
+    *(_DWORD *)&self->containers[136] = 0;
+    _mm_lfence();
+    v10 = operator new(0xCu);
+    *v10 = v10;
+    v10[1] = v10;
+    *(_DWORD *)&self->containers[132] = v10;
+    *(_DWORD *)&self->containers[140] = 0;
+    *(_DWORD *)&self->containers[144] = 0;
+    *(_DWORD *)&self->containers[148] = 0;
+    v13 = *(_DWORD *)&self->containers[132];
+    *(_DWORD *)&self->containers[152] = 7;
+    *(_DWORD *)&self->containers[156] = 8;
+    *(_DWORD *)&self->containers[128] = 1065353216;
+    sub_10002C70(16, v13);
+    *(_QWORD *)self->origin = *(_QWORD *)origin;
+    self->origin[2] = origin[2];
+    *(_QWORD *)self->angles = *(_QWORD *)angles;
+    self->angles[2] = angles[2];
+    *(_QWORD *)self->surface_origin = *(_QWORD *)surface_origin;
+    self->surface_origin[2] = surface_origin[2];
+    self->containers[160] = flag;
+    self->containers[161] = other_flag;
+    self->texture_id = 0;
+    self->mode = 0;
+    v11 = width + 1;
+    if ( (int)width % 2 != 1 )
+      v11 = width;
+    self->texture_width = v11;
+    v12 = height + 1;
+    if ( (int)height % 2 != 1 )
+      v12 = height;
+    self->texture_height = v12;
+  }

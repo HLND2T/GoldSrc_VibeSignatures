@@ -10,6 +10,7 @@ import yaml
 
 TAG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*-[0-9]+$", re.ASCII)
 REPO_ROOT = Path(__file__).resolve().parent
+FAMILY_REFERENCE_GAMEVERS = {"svencoop": "svencoop-10257"}
 
 
 class AnalysisConfigError(RuntimeError):

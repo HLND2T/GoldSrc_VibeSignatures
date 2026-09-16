@@ -44,6 +44,14 @@ def registered_callbacks(label):
                     if len(refs)==1: value=refs.pop()
                 elif mnemonic=='mov':
                     value=int(source.value) if source.type==ida_ua.o_imm else registers.get(source.reg) if source.type==ida_ua.o_reg else None
+                    if source.type in (ida_ua.o_mem,ida_ua.o_displ):
+                        targets=set()
+                        for slot in idautils.DataRefsFrom(ea):
+                            segment=ida_segment.getseg(slot)
+                            if segment and ida_segment.get_segm_name(segment) in ('.got','.got.plt'):
+                                target=ida_bytes.get_dword(slot)
+                                if function(target): targets.add(int(target))
+                        if len(targets)==1: value=targets.pop()
                 if dest.type==ida_ua.o_reg and mnemonic not in ('cmp','test'):
                     registers.pop(dest.reg,None)
                     if value is not None: registers[dest.reg]=value

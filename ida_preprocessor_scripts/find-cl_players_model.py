@@ -171,7 +171,14 @@ def pic_lea_info(ea, ebx_base):
     else:
         off = 2
     disp = int.from_bytes(raw[off:off + 4], 'little', signed=True)
-    return {'operand_off': off, 'resolved': (ebx_base + disp) & 0xFFFFFFFF}
+    resolved = (ebx_base + disp) & 0xFFFFFFFF
+    if raw[0] == 0x8B:
+        if seg_name(resolved) not in ('.got', '.got.plt'):
+            return None
+        resolved = int(ida_bytes.get_dword(resolved))
+        if not is_writable_data(resolved):
+            return None
+    return {'operand_off': off, 'resolved': resolved}
 
 def operand_byte_offset(ea, value):
     insn = idautils.DecodeInstruction(int(ea))
@@ -286,6 +293,10 @@ def main():
             src = insn.ops[1] if len(insn.ops) > 1 else None
             src_type = int(src.type) if src is not None else -1
             if mnem == 'mov':
+                info = pic_lea_info(ea, ebx_base) if ebx_base is not None else None
+                pic_base_defs.pop(dest, None)
+                if info is not None:
+                    pic_base_defs[dest] = {'resolved': info['resolved'], 'ea': int(ea)}
                 if src_type in (int(idaapi.o_displ), int(idaapi.o_phrase)):
                     base = reg_name(src)
                     if base in ('ebp', 'esp'):

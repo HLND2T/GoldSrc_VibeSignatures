@@ -61,6 +61,66 @@ def texture(offset=196):
 
 
 class PortalLayoutTests(unittest.TestCase):
+    def test_getter_tracks_pointer_arithmetic_after_entity_load(self):
+        from ida_preprocessor_scripts._portal_layout import getter_return
+
+        code = [
+            ins("mov", reg("eax"), mem("esp", 4)),
+            ins("mov", reg("eax"), mem("eax", 112)),
+            ins("add", reg("eax"), imm(2888)),
+            ins("ret"),
+        ]
+        self.assertEqual(("ptr", ("load", ("ptr", "this", 112), 4), 2888), getter_return(code, "linux"))
+        code[1]["operands"][1]["size"] = 1
+        self.assertIsNone(getter_return(code, "linux"))
+
+    def test_client_transform_keeps_entity_indirection_separate(self):
+        from ida_preprocessor_scripts._portal_layout import client_transform_offsets
+
+        for platform in ("windows", "linux"):
+            for entity, origin, mode in ((112, 2888, 40), (64, 120, 24)):
+                code = [
+                    ins("mov", reg("edi"), mem("esi", entity)),
+                    ins("lea", reg("eax"), mem("edi", origin)),
+                    ins("lea", reg("edx"), mem("edi", origin + 12)),
+                    ins("lea", reg("ecx"), mem("esi", 12)),
+                ]
+                args = [mem("esi", mode), imm(1), imm(2), reg("eax"), reg("edx"), reg("esi"), reg("ecx")]
+                if platform == "linux":
+                    args.insert(0, reg("ebx"))
+                code += [ins("push", arg) for arg in reversed(args)]
+                code.append(ins("call", {"kind": "func", "size": 4, "value": 1234}))
+                self.assertEqual(
+                    {"mode": mode, "entity": entity, "origin": origin, "angles": origin + 12},
+                    client_transform_offsets(code, platform, 1234, {}),
+                )
+                code[0]["operands"][1]["base"] = "ebx"
+                with self.assertRaises(ValueError):
+                    client_transform_offsets(code, platform, 1234, {})
+
+    def test_constructor_accepts_bounded_rep_movsd_vec3_copies(self):
+        code = [ins("mov", reg("ebx"), mem("esp", 4))]
+        for index in range(3):
+            code += [
+                ins("lea", reg("edi"), mem("ebx", index * 12)),
+                ins("mov", reg("esi"), mem("esp", 12 + index * 4)),
+                ins("mov", reg("ecx"), imm(3)),
+                ins("rep_movsd"),
+            ]
+        self.assertEqual({"origin": 0, "angles": 12}, constructor_offsets(code, "linux"))
+        code[3] = ins("mov", reg("ecx"), imm(2))
+        with self.assertRaises(ValueError):
+            constructor_offsets(code, "linux")
+
+    def test_texture_accepts_verified_cdecl_this_stack_argument(self):
+        load = ins("mov", reg("esi"), mem("esp", 32))
+        load["stack_offset"] = -28
+        code = [load, ins("nop")] + texture()
+        self.assertEqual({"texture_id": 196, "texture_width": 200, "texture_height": 204}, linux_texture_offsets(code))
+        load["stack_offset"] = -24
+        with self.assertRaises(ValueError):
+            linux_texture_offsets(code)
+
     def test_constructor_reads_zero_displacement_and_alternate_layouts(self):
         for platform in ("windows", "linux"):
             for start in (0, 16):

@@ -60,6 +60,18 @@ class Trace:
 
     def step(self, insn):
         m, ops = insn["mnemonic"], insn["operands"]
+        if m == "rep_movsd":
+            source, destination = self.registers.get("esi"), self.registers.get("edi")
+            if self.registers.get("ecx") == ("constant", VECTOR_BYTES // WORD) and source and destination:
+                for offset in range(0, VECTOR_BYTES, WORD):
+                    self.memory[pointer(destination, offset), WORD] = ("load", pointer(source, offset), WORD)
+                self.registers["esi"] = pointer(source, VECTOR_BYTES)
+                self.registers["edi"] = pointer(destination, VECTOR_BYTES)
+                self.registers["ecx"] = ("constant", 0)
+            else:
+                self.registers.clear()
+                self.memory.clear()
+            return
         if m in {"mov", "movq", "movss", "movsd", "movaps", "movups", "movdqu", "movdqa", "lea"} and len(ops) == 2:
             dst, src = ops
             value = self.address(src) if m == "lea" else self.value(src)
@@ -82,11 +94,18 @@ class Trace:
             if self.registers["esp"] is not None:
                 self.memory[self.registers["esp"], WORD] = value
             return
+        elif m == "pop" and ops and ops[0].get("kind") == "reg":
+            esp = self.registers.get("esp")
+            self.registers[ops[0]["reg"]] = self.memory.get((esp, WORD))
+            self.registers["esp"] = pointer(esp, WORD)
+            return
         elif m in {"add", "sub"} and len(ops) == 2 and ops[0].get("kind") == "reg" and ops[1].get("kind") == "imm":
             reg = ops[0]["reg"]
             before = self.registers.get(reg)
             self.registers[reg] = (
-                pointer(before, ops[1]["value"] * (1 if m == "add" else -1)) if before and before[0] == "ptr" else None
+                pointer(before, ops[1]["value"] * (1 if m == "add" else -1))
+                if before and (before[0] == "ptr" or (before[0] == "load" and before[2] == WORD))
+                else None
             )
             return
         elif m == "call":
@@ -266,6 +285,75 @@ def source_mode_offset(instructions, platform, clip_ea):
     return next(iter(candidates))
 
 
+def getter_return(instructions, platform):
+    """Summarize a branch-free accessor using its actual this argument."""
+    if len(instructions) > 12:
+        return None
+    trace = Trace(platform, constructor=True)
+    for item in instructions:
+        if item["mnemonic"].startswith("ret"):
+            return trace.registers.get("eax")
+        if item["mnemonic"] not in {"mov", "lea", "add", "sub", "push", "pop"}:
+            return None
+        trace.step(item)
+    return None
+
+
+def _substitute_this(value, this):
+    if not isinstance(value, tuple):
+        return value
+    if len(value) == 3 and value[:2] == ("ptr", "this"):
+        return pointer(this, value[2])
+    return tuple(_substitute_this(part, this) for part in value)
+
+
+def client_transform_offsets(instructions, platform, clip_ea, getters):
+    """Prove CalculateClipPlane's mode and entity vectors share one ClientPortal."""
+    candidates = set()
+    for index, item in enumerate(instructions):
+        if item["mnemonic"] != "call" or item["operands"] != [{"kind": "func", "size": WORD, "value": clip_ea}]:
+            continue
+        start = index
+        while (
+            start and index - start < TRACE_LIMIT and not instructions[start - 1]["mnemonic"].startswith(("j", "ret"))
+        ):
+            start -= 1
+        trace = Trace(platform)
+        for instruction in instructions[start:index]:
+            summary = None
+            if instruction["mnemonic"] == "call" and instruction["operands"]:
+                summary = getters.get(instruction["operands"][0].get("value"))
+            this = trace.arguments(1)[0] if platform == "linux" else trace.registers.get("ecx")
+            trace.step(instruction)
+            if summary is not None and this is not None:
+                trace.registers["eax"] = _substitute_this(summary, this)
+        args = trace.arguments(10)
+        if platform == "linux":
+            args = args[1:]
+        mode, origin, angles, owner, source_angles = (
+            args[0],
+            pointer(args[3]),
+            pointer(args[4]),
+            pointer(args[5]),
+            pointer(args[6]),
+        )
+        if not all((mode, origin, angles, owner, source_angles)) or mode[0] != "load" or mode[2] != WORD:
+            continue
+        if source_angles != pointer(owner, VECTOR_BYTES) or mode[1][1] != owner[1]:
+            continue
+        entity_load = origin[1]
+        if not isinstance(entity_load, tuple) or entity_load[0] != "load" or entity_load[2] != WORD:
+            continue
+        if angles[1] != entity_load or entity_load[1][1] != owner[1] or angles[2] != origin[2] + VECTOR_BYTES:
+            continue
+        values = (mode[1][2] - owner[2], entity_load[1][2] - owner[2], origin[2], angles[2])
+        if all(value >= 0 and value % WORD == 0 for value in values):
+            candidates.add(values)
+    if len(candidates) != 1:
+        raise ValueError("ClientPortal entity/transform call arguments are missing or ambiguous")
+    return dict(zip(("mode", "entity", "origin", "angles"), next(iter(candidates))))
+
+
 def _entry_register(instructions, use, register, expected):
     predecessors = {i: [] for i in range(len(instructions))}
     for i, item in enumerate(instructions):
@@ -318,11 +406,21 @@ def _entry_register(instructions, use, register, expected):
                     and ops[1].get("size") == WORD
                 ):
                     pending.append((previous, ops[1]["reg"]))
+                elif (
+                    item["mnemonic"] == "mov"
+                    and len(ops) == 2
+                    and ops[1].get("kind") == "mem"
+                    and ops[1].get("base") == "esp"
+                    and ops[1].get("size") == WORD
+                    and item.get("stack_offset") is not None
+                    and ops[1].get("disp", 0) + item["stack_offset"] == WORD
+                ):
+                    roots.add("stack_this")
                 else:
                     return False
             else:
                 pending.append((previous, reg))
-    return roots == {expected}
+    return roots == {expected} or roots == {"stack_this"}
 
 
 def linux_texture_offsets(instructions):
@@ -334,14 +432,15 @@ def linux_texture_offsets(instructions):
         block = start
         while block and start - block < 16 and not instructions[block - 1]["mnemonic"].startswith(("j", "call", "ret")):
             block -= 1
-        trace = Trace("linux")
+        trace = Trace("linux", constructor=True)
+        trace.registers["esp"] = ("ptr", "stack", instructions[block].get("stack_offset", 0))
         for item in instructions[block:start]:
             trace.step(item)
         count, texture = trace.arguments(2)
         if count != ("constant", 1) or not texture or texture[0] != "ptr":
             continue
         root = texture[1]
-        if (
+        if root != "this" and (
             not isinstance(root, tuple)
             or root[0] != "entry"
             or not _entry_register(instructions, block, root[1], "eax")

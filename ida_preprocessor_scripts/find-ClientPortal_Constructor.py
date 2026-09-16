@@ -25,19 +25,20 @@ for factory in callees(values['render']):
             offsets = constructor_offsets(decode_function(target), values['platform'])
         except ValueError:
             continue
-        candidates[target] = offsets
+        candidates[(target, factory)] = offsets
 if len(candidates) != 1:
     raise ValueError('portal constructor candidates: %r' % candidates)
-target, offsets = next(iter(candidates.items()))
-result = {'target': target, **offsets}
+(target, factory), offsets = next(iter(candidates.items()))
+result = {'target': target, 'factory': factory, **offsets}
 """
 
 
 async def preprocess_skill(
     session, skill_name, expected_outputs, old_yaml_map, new_binary_dir, platform, image_base, debug=False
 ):
+    name = "PortalSource_Constructor" if _output_for_symbol(expected_outputs, "PortalSource_Constructor") else NAME
     predecessor = _load_yaml_mapping(Path(new_binary_dir) / f"{PREDECESSOR}.{platform}.yaml")
-    output = _output_for_symbol(expected_outputs, NAME)
+    output = _output_for_symbol(expected_outputs, name)
     if not predecessor or predecessor.get("func_name") != PREDECESSOR or output is None:
         return False
     try:
@@ -46,11 +47,11 @@ async def preprocess_skill(
         )
         if debug:
             print("Portal constructor located:", result)
-        function = await _inspect_function_via_mcp(session, result["target"], image_base, NAME)
+        function = await _inspect_function_via_mcp(session, result["target"], image_base, name)
         across = function is None
         if across:
             function = await _inspect_function_via_mcp(
-                session, result["target"], image_base, NAME, allow_across_function_boundary=True
+                session, result["target"], image_base, name, allow_across_function_boundary=True
             )
         if not function:
             return False

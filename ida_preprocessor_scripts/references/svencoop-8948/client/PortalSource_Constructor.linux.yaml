@@ -1,0 +1,207 @@
+func_name: PortalSource_Constructor
+func_va: '0x15969c'
+disasm_code: |-
+  ; The three constructor vector copies belong to PortalSource, not ClientPortal.
+  ; PortalSource_origin_offset = 0 (structmember, struct=PortalSource, member=origin).
+  ; PortalSource_angles_offset = 12 (structmember, struct=PortalSource, member=angles).
+  .text:0015969C                 push    ebp
+  .text:0015969D                 mov     ebp, esp
+  .text:0015969F                 push    edi
+  .text:001596A0                 push    esi
+  .text:001596A1                 push    ebx
+  .text:001596A2                 sub     esp, 24h
+  .text:001596A5                 call    __x86_get_pc_thunk_bx
+  .text:001596AA                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:001596B0                 mov     [ebp+var_1C], ebx
+  .text:001596B3                 mov     esi, [ebp+origin]
+  .text:001596B6                 fldz
+  .text:001596B8                 mov     eax, [ebp+self]
+  .text:001596BB                 fst     dword ptr [eax]
+  .text:001596BD                 fst     dword ptr [eax+4]
+  .text:001596C0                 fst     dword ptr [eax+8]
+  .text:001596C3                 fst     dword ptr [eax+0Ch]
+  .text:001596C6                 fst     dword ptr [eax+10h]
+  .text:001596C9                 fst     dword ptr [eax+14h]
+  .text:001596CC                 fst     dword ptr [eax+18h]
+  .text:001596CF                 fst     dword ptr [eax+1Ch]
+  .text:001596D2                 fst     dword ptr [eax+20h]
+  .text:001596D5                 fst     dword ptr [eax+28h]
+  .text:001596D8                 fst     dword ptr [eax+2Ch]
+  .text:001596DB                 fst     dword ptr [eax+30h]
+  .text:001596DE                 fst     dword ptr [eax+34h]
+  .text:001596E1                 fst     dword ptr [eax+38h]
+  .text:001596E4                 fst     dword ptr [eax+3Ch]
+  .text:001596E7                 fst     dword ptr [eax+40h]
+  .text:001596EA                 fst     dword ptr [eax+44h]
+  .text:001596ED                 fst     dword ptr [eax+48h]
+  .text:001596F0                 fst     dword ptr [eax+4Ch]
+  .text:001596F3                 fst     dword ptr [eax+50h]
+  .text:001596F6                 fst     dword ptr [eax+54h]
+  .text:001596F9                 fst     dword ptr [eax+58h]
+  .text:001596FC                 fst     dword ptr [eax+5Ch]
+  .text:001596FF                 fst     dword ptr [eax+60h]
+  .text:00159702                 fst     dword ptr [eax+64h]
+  .text:00159705                 fst     dword ptr [eax+68h]
+  .text:00159708                 fst     dword ptr [eax+6Ch]
+  .text:0015970B                 fst     dword ptr [eax+70h]
+  .text:0015970E                 fst     dword ptr [eax+74h]
+  .text:00159711                 fst     dword ptr [eax+78h]
+  .text:00159714                 fst     dword ptr [eax+7Ch]
+  .text:00159717                 fst     dword ptr [eax+80h]
+  .text:0015971D                 fstp    dword ptr [eax+84h]
+  .text:00159723                 add     eax, 0A0h
+  .text:00159728                 mov     edx, [ebp+self]
+  .text:0015972B                 mov     [edx+88h], eax
+  .text:00159731                 mov     ecx, edx
+  .text:00159733                 mov     dword ptr [edx+8Ch], 1
+  .text:0015973D                 mov     dword ptr [edx+90h], 0
+  .text:00159747                 mov     dword ptr [edx+94h], 0
+  .text:00159751                 fld1
+  .text:00159753                 mov     edi, edx
+  .text:00159755                 fst     dword ptr [edx+98h]
+  .text:0015975B                 mov     dword ptr [edx+9Ch], 0
+  .text:00159765                 mov     dword ptr [edx+0A0h], 0
+  .text:0015976F                 add     edi, 0BCh
+  .text:00159775                 mov     [edx+0A4h], edi
+  .text:0015977B                 mov     eax, edx
+  .text:0015977D                 mov     dword ptr [edx+0A8h], 1
+  .text:00159787                 mov     dword ptr [edx+0ACh], 0
+  .text:00159791                 mov     dword ptr [edx+0B0h], 0
+  .text:0015979B                 fstp    dword ptr [edx+0B4h]
+  .text:001597A1                 mov     dword ptr [edx+0B8h], 0
+  .text:001597AB                 mov     dword ptr [edx+0BCh], 0
+  .text:001597B5                 mov     edx, 3
+  .text:001597BA                 mov     edi, ecx
+  .text:001597BC                 mov     ecx, edx
+  .text:001597BE                 rep movsd
+  .text:001597C0                 add     eax, 0Ch
+  .text:001597C3                 mov     edi, eax
+  .text:001597C5                 mov     esi, [ebp+angles]
+  .text:001597C8                 mov     ecx, edx
+  .text:001597CA                 rep movsd
+  .text:001597CC                 mov     edi, [ebp+self]
+  .text:001597CF                 add     edi, 18h
+  .text:001597D2                 mov     esi, [ebp+surface_origin]
+  .text:001597D5                 mov     ecx, edx
+  .text:001597D7                 rep movsd
+  .text:001597D9                 mov     eax, dword ptr [ebp+flag]
+  .text:001597DC                 mov     edi, [ebp+self]
+  .text:001597DF                 mov     [edi+0C0h], al
+  .text:001597E5                 mov     edx, dword ptr [ebp+other_flag]
+  .text:001597E8                 mov     [edi+0C1h], dl
+  .text:001597EE                 mov     ecx, edi
+  .text:001597F0                 mov     dword ptr [edi+0C4h], 0
+  .text:001597FA                 mov     dword ptr [edi+24h], 0
+  .text:00159801                 add     ecx, 0CCh
+  .text:00159807                 push    ecx
+  .text:00159808                 mov     eax, edi
+  .text:0015980A                 add     eax, 0C8h
+  .text:0015980F                 push    eax
+  .text:00159810                 mov     edi, [ebp+height]
+  .text:00159813                 push    edi
+  .text:00159814                 mov     edx, [ebp+width]
+  .text:00159817                 push    edx
+  .text:00159818                 mov     esi, [ebp+settings]
+  .text:0015981B                 push    esi
+  .text:0015981C                 mov     eax, ds:(g_portalManager_ptr - 308000h)[ebx]
+  .text:00159822                 mov     edi, [eax]
+  .text:00159824                 push    edi
+  .text:00159825                 call    __ZN19ClientPortalManager11MakeQualityEP14PortalSettingsjjPjS2_; ClientPortalManager::MakeQuality(PortalSettings *,uint,uint,uint *,uint *)
+  .text:0015982A                 add     esp, 20h
+  .text:0015982D                 lea     esp, [ebp-0Ch]
+  .text:00159830                 pop     ebx
+  .text:00159831                 pop     esi
+  .text:00159832                 pop     edi
+  .text:00159833                 pop     ebp
+  .text:00159834                 retn
+  .text:00159835                 mov     esi, eax
+  .text:00159837                 sub     esp, 0Ch
+  .text:0015983A                 mov     ebx, [ebp+self]
+  .text:0015983D                 add     ebx, 0A4h
+  .text:00159843                 push    ebx
+  .text:00159844                 mov     ebx, [ebp+var_1C]
+  .text:00159847                 call    __ZNSt10_HashtableIP8mplane_sS1_SaIS1_ENSt8__detail9_IdentityESt8equal_toIS1_ESt4hashIS1_ENS3_18_Mod_range_hashingENS3_20_Default_ranged_hashENS3_20_Prime_rehash_policyENS3_17_Hashtable_traitsILb0ELb1ELb1EEEED1Ev; std::_Hashtable<mplane_s *,mplane_s *,std::allocator<mplane_s *>,std::__detail::_Identity,std::equal_to<mplane_s *>,std::hash<mplane_s *>,std::__detail::_Mod_range_hashing,std::__detail::_Default_ranged_hash,std::__detail::_Prime_rehash_policy,std::__detail::_Hashtable_traits<false,true,true>>::~_Hashtable()
+  .text:0015984C                 mov     ecx, [ebp+self]
+  .text:0015984F                 add     ecx, 88h
+  .text:00159855                 mov     [esp], ecx
+  .text:00159858                 call    __ZNSt10_HashtableIP10msurface_sS1_SaIS1_ENSt8__detail9_IdentityESt8equal_toIS1_ESt4hashIS1_ENS3_18_Mod_range_hashingENS3_20_Default_ranged_hashENS3_20_Prime_rehash_policyENS3_17_Hashtable_traitsILb0ELb1ELb1EEEED1Ev; std::_Hashtable<msurface_s *,msurface_s *,std::allocator<msurface_s *>,std::__detail::_Identity,std::equal_to<msurface_s *>,std::hash<msurface_s *>,std::__detail::_Mod_range_hashing,std::__detail::_Default_ranged_hash,std::__detail::_Prime_rehash_policy,std::__detail::_Hashtable_traits<false,true,true>>::~_Hashtable()
+  .text:0015985D                 mov     [esp], esi
+  .text:00159860                 call    __Unwind_Resume
+procedure: |-
+  // The three constructor vector copies belong to PortalSource, not ClientPortal.
+  // PortalSource_origin_offset = 0 (structmember, struct=PortalSource, member=origin).
+  // PortalSource_angles_offset = 12 (structmember, struct=PortalSource, member=angles).
+  // Alternative name is '_ZN12PortalSourceC2EP14PortalSettingsRK6VectorS4_S4_bjjb'
+  void __cdecl PortalSource::PortalSource(
+          PortalSource_8948 *self,
+          PortalSettings_8948 *settings,
+          const float *origin,
+          const float *angles,
+          const float *surface_origin,
+          bool flag,
+          unsigned int width,
+          unsigned int height,
+          bool other_flag)
+  {
+    self->origin[0] = 0.0;
+    self->origin[1] = 0.0;
+    self->origin[2] = 0.0;
+    self->angles[0] = 0.0;
+    self->angles[1] = 0.0;
+    self->angles[2] = 0.0;
+    self->surface_origin[0] = 0.0;
+    self->surface_origin[1] = 0.0;
+    self->surface_origin[2] = 0.0;
+    *(float *)self->containers = 0.0;
+    *(float *)&self->containers[4] = 0.0;
+    *(float *)&self->containers[8] = 0.0;
+    *(float *)&self->containers[12] = 0.0;
+    *(float *)&self->containers[16] = 0.0;
+    *(float *)&self->containers[20] = 0.0;
+    *(float *)&self->containers[24] = 0.0;
+    *(float *)&self->containers[28] = 0.0;
+    *(float *)&self->containers[32] = 0.0;
+    *(float *)&self->containers[36] = 0.0;
+    *(float *)&self->containers[40] = 0.0;
+    *(float *)&self->containers[44] = 0.0;
+    *(float *)&self->containers[48] = 0.0;
+    *(float *)&self->containers[52] = 0.0;
+    *(float *)&self->containers[56] = 0.0;
+    *(float *)&self->containers[60] = 0.0;
+    *(float *)&self->containers[64] = 0.0;
+    *(float *)&self->containers[68] = 0.0;
+    *(float *)&self->containers[72] = 0.0;
+    *(float *)&self->containers[76] = 0.0;
+    *(float *)&self->containers[80] = 0.0;
+    *(float *)&self->containers[84] = 0.0;
+    *(float *)&self->containers[88] = 0.0;
+    *(float *)&self->containers[92] = 0.0;
+    *(_DWORD *)&self->containers[96] = &self->containers[120];
+    *(_DWORD *)&self->containers[100] = 1;
+    *(_DWORD *)&self->containers[104] = 0;
+    *(_DWORD *)&self->containers[108] = 0;
+    *(float *)&self->containers[112] = 1.0;
+    *(_DWORD *)&self->containers[116] = 0;
+    *(_DWORD *)&self->containers[120] = 0;
+    *(_DWORD *)&self->containers[124] = &self->containers[148];
+    *(_DWORD *)&self->containers[128] = 1;
+    *(_DWORD *)&self->containers[132] = 0;
+    *(_DWORD *)&self->containers[136] = 0;
+    *(float *)&self->containers[140] = 1.0;
+    *(_DWORD *)&self->containers[144] = 0;
+    *(_DWORD *)&self->containers[148] = 0;
+    qmemcpy(self, origin, 0xCu);
+    qmemcpy(self->angles, angles, sizeof(self->angles));
+    qmemcpy(self->surface_origin, surface_origin, sizeof(self->surface_origin));
+    self->containers[152] = flag;
+    self->containers[153] = other_flag;
+    self->texture_id = 0;
+    self->mode = 0;
+    ClientPortalManager::MakeQuality(
+      g_portalManager,
+      settings,
+      width,
+      height,
+      &self->texture_width,
+      &self->texture_height);
+  }

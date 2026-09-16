@@ -21,7 +21,10 @@ LLM_DECOMPILE = [
 ]
 
 GENERATE_YAML_DESIRED_FIELDS = [
-    ("build_number", ["func_name", "func_sig", "func_va", "func_rva", "func_size"]),
+    (
+        "build_number",
+        ["func_name", "func_sig", "func_va", "func_rva", "func_size", "func_sig_resolve_jmp_thunk:true"],
+    ),
 ]
 
 

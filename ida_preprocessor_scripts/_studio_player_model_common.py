@@ -226,8 +226,14 @@ def pic_ebx_displacements(func_start, ebx_base):
         else:
             disp = int.from_bytes(raw[2:6], 'little', signed=True)
             off = 2
+        resolved = (ebx_base + disp) & 0xFFFFFFFF
+        # Preemptible ELF globals are passed through a GOT pointer load,
+        # unlike the GOTOFF LEA used for locally bound globals. The table
+        # validators below still require the complete object at the pointee.
+        if raw[0] == 0x8B and seg_name(resolved) in ('.got', '.got.plt'):
+            resolved = int(ida_bytes.get_dword(resolved))
         out.append({'ea': int(ea), 'insn_len': int(insn.size), 'operand_off': off,
-                    'resolved': (ebx_base + disp) & 0xFFFFFFFF,
+                    'resolved': resolved,
                     'disasm': disasm(ea)})
     return out
 
@@ -620,6 +626,11 @@ def main():
                       'targets': [hex(x) for x in targets],
                       'disasm': disasm(ea)})
         for target in targets:
+            if seg_name(target) in ('.got', '.got.plt') and (idc.print_insn_mnem(ea) or '').lower() == 'mov':
+                pointee = int(ida_bytes.get_dword(target))
+                if not is_writable_data(pointee):
+                    continue
+                target = pointee
             addend = (gotoff_addend(ea, offb, target)
                       if reg_relative_disp32(insn, offb, anchor) else 0)
             ref_insns.setdefault(target, []).append(

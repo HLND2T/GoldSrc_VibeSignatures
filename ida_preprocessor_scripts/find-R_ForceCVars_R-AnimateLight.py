@@ -19,13 +19,16 @@ from pathlib import Path
 import json
 
 import ida_analyze_util as u
+from ida_elf import ELF_RESOLVER_PY
 
 TARGETS = ("R_ForceCVars", "R_AnimateLight")
 RCV = "R_CheckVariables"
 MARKER = "__R124_SETUP_TRIPLE__"
 MAX_NEIGHBOR_GAP = 96
 
-WALK = r"""
+WALK = (
+    ELF_RESOLVER_PY
+    + r"""
 import idautils, ida_funcs, idc, ida_bytes, json
 
 MARKER = @@MARKER@@
@@ -51,7 +54,7 @@ def internal_calls(o):
     for pc in idautils.FuncItems(o):
         if (idc.print_insn_mnem(pc) or "").lower() != "call":
             continue
-        t = idc.get_operand_value(pc, 0)
+        t = resolve_elf_plt(idc.get_operand_value(pc, 0))
         if not t:
             continue
         tf = fn(t)
@@ -64,7 +67,7 @@ def internal_calls(o):
     return out
 
 def callers(o):
-    return sorted({fn(x) for x in idautils.CodeRefsTo(o, False) if fn(x)})
+    return sorted({fn(x) for x in elf_code_refs_to(o) if fn(x)})
 
 res = {}
 seq_hosts = callers(RCV)
@@ -109,6 +112,7 @@ else:
             res["animate_callees"] = [hex(t) for _, t in internal_calls(next_t)]
     emit(res)
 """
+)
 
 
 async def _eval(session, code):
