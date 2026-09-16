@@ -1,0 +1,154 @@
+func_name: "R_RenderScene"
+func_va: "0x16fee0"
+disasm_code: |-
+  .text:0016FEE0                 sub     esp, 1Ch
+  .text:0016FEE3                 call    CL_IsDevOverviewMode
+  .text:0016FEE8                 test    eax, eax
+  .text:0016FEEA                 jnz     loc_170018
+  .text:0016FEF0                 call    R_SetupFrame
+  .text:0016FEF5                 call    R_SetFrustum
+  .text:0016FEFA                 call    R_SetupGL
+  .text:0016FEFF                 nop
+  .text:0016FF00                 call    R_MarkLeaves
+  .text:0016FF05                 mov     eax, ds:r_refdef.onlyClientDraws
+  .text:0016FF0A                 test    eax, eax
+  .text:0016FF0C                 jz      loc_16FFD8
+  .text:0016FF12                 mov     eax, ds:g_bUserFogOn
+  .text:0016FF17                 test    eax, eax
+  .text:0016FF19                 jnz     loc_16FFC8
+  .text:0016FF1F                 ; GLenum
+  .text:0016FF1F                 mov     [esp+1Ch+var_1C], 0B60h; GLenum
+  .text:0016FF26                 call    ds:qglIsEnabled
+  .text:0016FF2C                 movzx   eax, al
+  .text:0016FF2F                 mov     ds:isFogEnabled_26640, eax
+  .text:0016FF34                 dec     eax
+  .text:0016FF35                 jz      loc_170030
+  .text:0016FF3B                 call    ClientDLL_DrawNormalTriangles
+  .text:0016FF40                 cmp     ds:isFogEnabled_26640, 1
+  .text:0016FF47                 jz      loc_170050
+  .text:0016FF4D                 cmp     ds:nMax.waterlevel, 2
+  .text:0016FF54                 jle     short loc_16FF90
+  .text:0016FF56                 mov     ecx, ds:r_refdef.onlyClientDraws
+  .text:0016FF5C                 test    ecx, ecx
+  .text:0016FF5E                 jnz     short loc_16FF90
+  .text:0016FF60                 ; bEnable
+  .text:0016FF60                 mov     [esp+1Ch+var_1C], 0; bEnable
+  .text:0016FF67                 call    R_SetFogEnabled
+  .text:0016FF6C                 mov     eax, ds:r_refdef.onlyClientDraws
+  .text:0016FF71                 ; clientOnly
+  .text:0016FF71                 mov     [esp+1Ch+var_1C], eax; clientOnly
+  .text:0016FF74                 call    R_DrawTEntitiesOnList; Source: engine/r_trans.c:219-343. cl_parsecount is cl.parsecount: AND with CL_UPDATE_MASK before indexing the frame ring passed to StudioDrawPlayer (flags 3 or 0). Do not select the update-mask global, currententity index, or frame stride. The current binary folds the playerstate offset and index-minus-one into its address arithmetic; the Linux DWARF client-state aggregate is named nMax and renders this inline frame region through predicted_origins. This expression is a compiler/type rendering of the same frame-ring access, not a different source array.
+  .text:0016FF79                 call    S_ExtraUpdate
+  .text:0016FF7E                 mov     eax, ds:r_refdef.onlyClientDraws
+  .text:0016FF83                 test    eax, eax
+  .text:0016FF85                 jz      short loc_16FFB0
+  .text:0016FF87                 add     esp, 1Ch
+  .text:0016FF8A                 retn
+  .text:0016FF90                 mov     edx, ds:g_bUserFogOn
+  .text:0016FF96                 test    edx, edx
+  .text:0016FF98                 jnz     short loc_16FF6C
+  .text:0016FF9A                 ; bEnable
+  .text:0016FF9A                 mov     [esp+1Ch+var_1C], 0; bEnable
+  .text:0016FFA1                 call    R_SetFogEnabled
+  .text:0016FFA6                 jmp     short loc_16FF6C
+  .text:0016FFB0                 call    R_RenderDlights
+  .text:0016FFB5                 call    GL_DisableMultitexture
+  .text:0016FFBA                 add     esp, 1Ch
+  .text:0016FFBD                 jmp     R_DrawParticles
+  .text:0016FFC8                 call    R_RenderFinalFog
+  .text:0016FFCD                 jmp     loc_16FF1F
+  .text:0016FFD8                 call    CL_IsDevOverviewMode
+  .text:0016FFDD                 test    eax, eax
+  .text:0016FFDF                 nop
+  .text:0016FFE0                 jnz     loc_170068
+  .text:0016FFE6                 call    R_DrawWorld
+  .text:0016FFEB                 nop
+  .text:0016FFEC                 lea     esi, [esi+0]
+  .text:0016FFF0                 call    S_ExtraUpdate
+  .text:0016FFF5                 fld     r_drawentities.value
+  .text:0016FFFB                 fldz
+  .text:0016FFFD                 fxch    st(1)
+  .text:0016FFFF                 fucomip st, st(1)
+  .text:00170001                 fstp    st
+  .text:00170003                 jp      short loc_17000B
+  .text:00170005                 jz      loc_16FF12
+  .text:0017000B                 call    R_DrawEntitiesOnList_0
+  .text:00170010                 jmp     loc_16FF12
+  .text:00170018                 ; refdef
+  .text:00170018                 mov     [esp+1Ch+var_1C], offset r_refdef; refdef
+  .text:0017001F                 call    CL_SetDevOverView
+  .text:00170024                 jmp     loc_16FEF0
+  .text:00170030                 ; bEnable
+  .text:00170030                 mov     [esp+1Ch+var_1C], 0; bEnable
+  .text:00170037                 call    R_SetFogEnabled
+  .text:0017003C                 call    ClientDLL_DrawNormalTriangles
+  .text:00170041                 cmp     ds:isFogEnabled_26640, 1
+  .text:00170048                 jnz     loc_16FF4D
+  .text:0017004E                 xchg    ax, ax
+  .text:00170050                 ; bEnable
+  .text:00170050                 mov     [esp+1Ch+var_1C], 1; bEnable
+  .text:00170057                 call    R_SetFogEnabled
+  .text:0017005C                 jmp     loc_16FF4D
+  .text:00170068                 ; GLclampf
+  .text:00170068                 mov     [esp+1Ch+var_10], 0; GLclampf
+  .text:00170070                 ; GLclampf
+  .text:00170070                 mov     [esp+1Ch+var_14], 0; GLclampf
+  .text:00170078                 ; GLclampf
+  .text:00170078                 mov     [esp+1Ch+var_18], 3F800000h; GLclampf
+  .text:00170080                 ; GLclampf
+  .text:00170080                 mov     [esp+1Ch+var_1C], 0; GLclampf
+  .text:00170087                 call    ds:qglClearColor
+  .text:0017008D                 ; GLbitfield
+  .text:0017008D                 mov     [esp+1Ch+var_1C], 4000h; GLbitfield
+  .text:00170094                 call    ds:qglClear
+  .text:0017009A                 jmp     loc_16FFE6
+procedure: |-
+  void __cdecl R_RenderScene()
+  {
+    if ( CL_IsDevOverviewMode() )
+      CL_SetDevOverView(&r_refdef);
+    R_SetupFrame();
+    R_SetFrustum();
+    R_SetupGL();
+    R_MarkLeaves();
+    if ( r_refdef.onlyClientDraws == false )
+    {
+      if ( CL_IsDevOverviewMode() )
+      {
+        qglClearColor(0.0, 1.0, 0.0, 0.0);
+        qglClear(0x4000u);
+      }
+      R_DrawWorld();
+      S_ExtraUpdate();
+      if ( r_drawentities.value != 0.0 )
+        R_DrawEntitiesOnList_0();
+    }
+    if ( g_bUserFogOn )
+      R_RenderFinalFog();
+    isFogEnabled_26640 = qglIsEnabled(0xB60u);
+    if ( isFogEnabled_26640 == 1 )
+    {
+      R_SetFogEnabled(false);
+      ClientDLL_DrawNormalTriangles();
+      if ( isFogEnabled_26640 != 1 )
+        goto LABEL_8;
+    }
+    else
+    {
+      ClientDLL_DrawNormalTriangles();
+      if ( isFogEnabled_26640 != 1 )
+        goto LABEL_8;
+    }
+    R_SetFogEnabled(true);
+  LABEL_8:
+    if ( nMax.waterlevel > 2 && r_refdef.onlyClientDraws == false || !g_bUserFogOn )
+      R_SetFogEnabled(false);
+    R_DrawTEntitiesOnList(r_refdef.onlyClientDraws);
+    S_ExtraUpdate();
+    if ( r_refdef.onlyClientDraws == false )
+    {
+      R_RenderDlights();
+      GL_DisableMultitexture();
+      R_DrawParticles();
+    }
+  }

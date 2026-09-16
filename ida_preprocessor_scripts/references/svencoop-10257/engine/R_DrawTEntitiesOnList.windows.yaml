@@ -262,7 +262,7 @@ disasm_code: |-
   .text:01D93671                 call    esi ; glEnable
   .text:01D93673                 mov     ebx, dword_3F94150
   .text:01D93679                 push    ebx
-  .text:01D9367A                 call    sub_1D5A280
+  .text:01D9367A                 call    R_DrawBrushModel
   .text:01D9367F                 mov     ebx, ds:glDisable
   .text:01D93685                 add     esp, 4
   .text:01D93688                 jmp     short loc_1D9368C
@@ -374,7 +374,7 @@ procedure: |-
                   v6 = dword_3F94150;
                 }
               }
-              sub_1D5A280(v6);
+              R_DrawBrushModel(v6);
               v2 = glDisable;
               goto LABEL_49;
             }

@@ -1,0 +1,283 @@
+func_name: "R_DrawWorld"
+func_va: "0x187510"
+disasm_code: |-
+  .text:00187510                 push    ebx
+  .text:00187511                 mov     ebx, 0BB8h
+  .text:00187516                 sub     esp, 0BD8h
+  .text:0018751C                 mov     eax, large gs:14h
+  .text:00187522                 mov     [esp+0BDCh+var_10], eax
+  .text:00187529                 xor     eax, eax
+  .text:0018752B                 xor     eax, eax
+  .text:0018752D                 ; count
+  .text:0018752D                 mov     [esp+0BDCh+count], ebx; count
+  .text:00187531                 lea     ebx, [esp+0BDCh+ent]
+  .text:00187535                 ; fill
+  .text:00187535                 mov     [esp+0BDCh+fill], eax; fill
+  .text:00187539                 ; dest
+  .text:00187539                 mov     [esp+0BDCh+dest], ebx; dest
+  .text:0018753C                 call    Q_memset
+  .text:00187541                 mov     eax, ds:nMax.worldmodel
+  .text:00187546                 movss   xmm0, ds:r_refdef.vieworg
+  .text:0018754E                 movss   xmm1, ds:r_refdef.vieworg+4
+  .text:00187556                 movss   xmm2, ds:r_refdef.vieworg+8
+  .text:0018755E                 mov     [esp+0BDCh+ent.model], eax
+  .text:00187565                 mov     eax, 0FFFFFFFFh
+  .text:0018756A                 mov     currenttexture, eax
+  .text:0018756F                 mov     eax, ds:gWaterColor.r
+  .text:00187574                 movss   ds:modelorg, xmm0
+  .text:0018757C                 movss   ds:modelorg+4, xmm1
+  .text:00187584                 movss   ds:modelorg+8, xmm2
+  .text:0018758C                 mov     [esp+0BDCh+ent.curstate.rendercolor.r], al
+  .text:00187593                 mov     eax, ds:gWaterColor.g
+  .text:00187598                 mov     ds:currententity, ebx
+  .text:0018759E                 ; GLfloat
+  .text:0018759E                 mov     [esp+0BDCh+count], 3F800000h; GLfloat
+  .text:001875A6                 ; GLfloat
+  .text:001875A6                 mov     [esp+0BDCh+fill], 3F800000h; GLfloat
+  .text:001875AE                 mov     [esp+0BDCh+ent.curstate.rendercolor.g], al
+  .text:001875B5                 mov     eax, ds:gWaterColor.b
+  .text:001875BA                 ; GLfloat
+  .text:001875BA                 mov     [esp+0BDCh+dest], 3F800000h; GLfloat
+  .text:001875C1                 mov     [esp+0BDCh+ent.curstate.rendercolor.b], al
+  .text:001875C8                 call    ds:qglColor3f
+  .text:001875CE                 mov     eax, 100h
+  .text:001875D3                 ; count
+  .text:001875D3                 mov     [esp+0BDCh+count], eax; count
+  .text:001875D7                 xor     eax, eax
+  .text:001875D9                 ; fill
+  .text:001875D9                 mov     [esp+0BDCh+fill], eax; fill
+  .text:001875DD                 ; dest
+  .text:001875DD                 mov     [esp+0BDCh+dest], offset lightmap_polys; dest
+  .text:001875E4                 call    Q_memset
+  .text:001875E9                 call    R_ClearSkyBox
+  .text:001875EE                 mov     eax, ds:g_bHasShaderFunctions
+  .text:001875F3                 test    eax, eax
+  .text:001875F5                 jz      short loc_187627
+  .text:001875F7                 fld     gl_use_shaders.value
+  .text:001875FD                 fldz
+  .text:001875FF                 fxch    st(1)
+  .text:00187601                 fucomip st, st(1)
+  .text:00187603                 fstp    st
+  .text:00187605                 jp      short loc_18760E
+  .text:00187607                 mov     eax, 0
+  .text:0018760C                 jz      short loc_187627
+  .text:0018760E                 fld     sv_allow_shaders.value
+  .text:00187614                 xor     eax, eax
+  .text:00187616                 mov     edx, 1
+  .text:0018761B                 fldz
+  .text:0018761D                 fucomip st, st(1)
+  .text:0018761F                 fstp    st
+  .text:00187621                 setp    al
+  .text:00187624                 cmovnz  eax, edx
+  .text:00187627                 cmp     ds:wasUsingShaders, eax
+  .text:0018762D                 jz      short loc_187646
+  .text:0018762F                 call    R_ReUploadLightmaps
+  .text:00187634                 mov     eax, ds:g_bHasShaderFunctions
+  .text:00187639                 test    eax, eax
+  .text:0018763B                 jnz     loc_187710
+  .text:00187641                 mov     ds:wasUsingShaders, eax
+  .text:00187646                 mov     ecx, gl_texsort
+  .text:0018764C                 test    ecx, ecx
+  .text:0018764E                 jnz     short loc_187676
+  .text:00187650                 mov     eax, gl_lightmap_format
+  .text:00187655                 cmp     eax, 1909h
+  .text:0018765A                 jz      loc_187790
+  .text:00187660                 cmp     eax, 8049h
+  .text:00187665                 jz      loc_1877D8
+  .text:0018766B                 cmp     eax, 1908h
+  .text:00187670                 jz      loc_1877B0
+  .text:00187676                 fld     gl_reduce_shader_changes.value
+  .text:0018767C                 xor     eax, eax
+  .text:0018767E                 mov     edx, 0
+  .text:00187683                 fldz
+  .text:00187685                 mov     ds:gDecalSurfCount, eax
+  .text:0018768A                 xor     eax, eax
+  .text:0018768C                 fucomip st, st(1)
+  .text:0018768E                 fstp    st
+  .text:00187690                 setnp   al
+  .text:00187693                 cmovnz  eax, edx
+  .text:00187696                 ; cleanUpShaderState
+  .text:00187696                 mov     [esp+0BDCh+fill], eax; cleanUpShaderState
+  .text:0018769A                 mov     eax, ds:nMax.worldmodel
+  .text:0018769F                 mov     eax, [eax+0A4h]
+  .text:001876A5                 ; node
+  .text:001876A5                 mov     [esp+0BDCh+dest], eax; node
+  .text:001876A8                 call    R_RecursiveWorldNode
+  .text:001876AD                 mov     eax, ds:g_bHasShaderFunctions
+  .text:001876B2                 test    eax, eax
+  .text:001876B4                 jz      short loc_1876D4
+  .text:001876B6                 mov     eax, ds:g_uCurrentProgram
+  .text:001876BB                 test    eax, eax
+  .text:001876BD                 jz      short loc_1876D4
+  .text:001876BF                 ; bMultitexture
+  .text:001876BF                 mov     [esp+0BDCh+dest], 0; bMultitexture
+  .text:001876C6                 xor     ebx, ebx
+  .text:001876C8                 call    ds:qglUseProgram
+  .text:001876CE                 mov     ds:g_uCurrentProgram, ebx
+  .text:001876D4                 xor     ecx, ecx
+  .text:001876D6                 mov     ds:gDecalSurfCount, ecx
+  .text:001876DC                 call    DrawTextureChains
+  .text:001876E1                 call    S_ExtraUpdate
+  .text:001876E6                 call    CL_IsDevOverviewMode
+  .text:001876EB                 test    eax, eax
+  .text:001876ED                 lea     esi, [esi+0]
+  .text:001876F0                 jz      short loc_187750
+  .text:001876F2                 mov     eax, [esp+0BDCh+var_10]
+  .text:001876F9                 xor     eax, large gs:14h
+  .text:00187700                 jnz     loc_187836
+  .text:00187706                 add     esp, 0BD8h
+  .text:0018770C                 pop     ebx
+  .text:0018770D                 retn
+  .text:00187710                 fld     gl_use_shaders.value
+  .text:00187716                 fldz
+  .text:00187718                 fxch    st(1)
+  .text:0018771A                 fucomip st, st(1)
+  .text:0018771C                 fstp    st
+  .text:0018771E                 jp      short loc_18772B
+  .text:00187720                 mov     eax, 0
+  .text:00187725                 jz      loc_187641
+  .text:0018772B                 fld     sv_allow_shaders.value
+  .text:00187731                 xor     eax, eax
+  .text:00187733                 mov     edx, 1
+  .text:00187738                 fldz
+  .text:0018773A                 fucomip st, st(1)
+  .text:0018773C                 fstp    st
+  .text:0018773E                 setp    al
+  .text:00187741                 cmovnz  eax, edx
+  .text:00187744                 jmp     loc_187641
+  .text:00187750                 call    R_DrawDecals_0
+  .text:00187755                 mov     edx, ds:filterMode
+  .text:0018775B                 test    edx, edx
+  .text:0018775D                 jnz     short loc_1876F2
+  .text:0018775F                 fld     r_fullbright.value
+  .text:00187765                 fldz
+  .text:00187767                 fxch    st(1)
+  .text:00187769                 fucomip st, st(1)
+  .text:0018776B                 fstp    st
+  .text:0018776D                 jp      loc_1876F2
+  .text:00187773                 jnz     loc_1876F2
+  .text:00187779                 mov     eax, gl_texsort
+  .text:0018777E                 test    eax, eax
+  .text:00187780                 jz      loc_1876F2
+  .text:00187786                 call    R_BlendLightmaps_0
+  .text:0018778B                 jmp     loc_1876F2
+  .text:00187790                 mov     edx, 301h
+  .text:00187795                 ; GLenum
+  .text:00187795                 mov     [esp+0BDCh+fill], edx; GLenum
+  .text:00187799                 ; GLenum
+  .text:00187799                 mov     [esp+0BDCh+dest], 0; GLenum
+  .text:001877A0                 call    ds:qglBlendFunc
+  .text:001877A6                 jmp     loc_187676
+  .text:001877B0                 mov     eax, 2200h
+  .text:001877B5                 ; GLfloat
+  .text:001877B5                 mov     [esp+0BDCh+count], 46040000h; GLfloat
+  .text:001877BD                 ; GLenum
+  .text:001877BD                 mov     [esp+0BDCh+fill], eax; GLenum
+  .text:001877C1                 ; GLenum
+  .text:001877C1                 mov     [esp+0BDCh+dest], 2300h; GLenum
+  .text:001877C8                 call    ds:qglTexEnvf
+  .text:001877CE                 jmp     loc_187676
+  .text:001877D8                 mov     eax, 2200h
+  .text:001877DD                 ; GLenum
+  .text:001877DD                 mov     [esp+0BDCh+fill], eax; GLenum
+  .text:001877E1                 ; GLfloat
+  .text:001877E1                 mov     [esp+0BDCh+count], 46040000h; GLfloat
+  .text:001877E9                 ; GLenum
+  .text:001877E9                 mov     [esp+0BDCh+dest], 2300h; GLenum
+  .text:001877F0                 call    ds:qglTexEnvf
+  .text:001877F6                 ; GLfloat
+  .text:001877F6                 mov     [esp+0BDCh+var_BD0], 3F800000h; GLfloat
+  .text:001877FE                 ; GLfloat
+  .text:001877FE                 mov     [esp+0BDCh+count], 0; GLfloat
+  .text:00187806                 ; GLfloat
+  .text:00187806                 mov     [esp+0BDCh+fill], 0; GLfloat
+  .text:0018780E                 ; GLfloat
+  .text:0018780E                 mov     [esp+0BDCh+dest], 0; GLfloat
+  .text:00187815                 call    ds:qglColor4f
+  .text:0018781B                 mov     eax, 303h
+  .text:00187820                 ; GLenum
+  .text:00187820                 mov     [esp+0BDCh+fill], eax; GLenum
+  .text:00187824                 ; GLenum
+  .text:00187824                 mov     [esp+0BDCh+dest], 302h; GLenum
+  .text:0018782B                 call    ds:qglBlendFunc
+  .text:00187831                 jmp     loc_187676
+  .text:00187836                 call    __stack_chk_fail
+procedure: |-
+  void __cdecl R_DrawWorld()
+  {
+    qboolean_0 v0; // eax
+    qboolean_0 v1; // eax
+    void *dest; // [esp+0h] [ebp-BDCh]
+    cl_entity_t_1 ent; // [esp+14h] [ebp-BC8h] BYREF
+    unsigned int v4; // [esp+BCCh] [ebp-10h]
+
+    v4 = __readgsdword(0x14u);
+    Q_memset(&ent, 0, 3000);
+    ent.model = nMax.worldmodel;
+    currenttexture = -1;
+    modelorg[0] = r_refdef.vieworg[0];
+    modelorg[1] = r_refdef.vieworg[1];
+    modelorg[2] = r_refdef.vieworg[2];
+    ent.curstate.rendercolor.r = gWaterColor.r;
+    currententity = &ent;
+    ent.curstate.rendercolor.g = gWaterColor.g;
+    ent.curstate.rendercolor.b = gWaterColor.b;
+    qglColor3f(1.0, 1.0, 1.0);
+    Q_memset(lightmap_polys, 0, 256);
+    R_ClearSkyBox();
+    v0 = g_bHasShaderFunctions;
+    if ( g_bHasShaderFunctions )
+    {
+      v0 = false;
+      if ( gl_use_shaders.value != 0.0 )
+        v0 = 0.0 != sv_allow_shaders.value;
+    }
+    if ( wasUsingShaders != v0 )
+    {
+      R_ReUploadLightmaps();
+      v1 = g_bHasShaderFunctions;
+      if ( g_bHasShaderFunctions )
+      {
+        v1 = false;
+        if ( gl_use_shaders.value != 0.0 )
+          v1 = 0.0 != sv_allow_shaders.value;
+      }
+      wasUsingShaders = v1;
+    }
+    if ( gl_texsort == false )
+    {
+      switch ( gl_lightmap_format )
+      {
+        case 0x1909u:
+          qglBlendFunc(0, 0x301u);
+          break;
+        case 0x8049u:
+          qglTexEnvf(0x2300u, 0x2200u, 8448.0);
+          qglColor4f(0.0, 0.0, 0.0, 1.0);
+          qglBlendFunc(0x302u, 0x303u);
+          break;
+        case 0x1908u:
+          qglTexEnvf(0x2300u, 0x2200u, 8448.0);
+          break;
+      }
+    }
+    gDecalSurfCount = 0;
+    R_RecursiveWorldNode(nMax.worldmodel->nodes, 0.0 == gl_reduce_shader_changes.value);
+    if ( g_bHasShaderFunctions && g_uCurrentProgram )
+    {
+      qglUseProgram(0);
+      g_uCurrentProgram = 0;
+    }
+    gDecalSurfCount = 0;
+    DrawTextureChains();
+    S_ExtraUpdate();
+    if ( !CL_IsDevOverviewMode() )
+    {
+      R_DrawDecals_0((qboolean_0)dest);
+      if ( filterMode == false && r_fullbright.value == 0.0 )
+      {
+        if ( gl_texsort )
+          R_BlendLightmaps_0();
+      }
+    }
+  }

@@ -1,0 +1,213 @@
+func_name: "R_RenderScene"
+func_va: "0x13b800"
+disasm_code: |-
+  .text:0013B800                 push    ebx
+  .text:0013B801                 call    sub_56390
+  .text:0013B806                 add     ebx, (offset dbl_2EE000 - $)
+  .text:0013B80C                 sub     esp, 28h
+  .text:0013B80F                 call    sub_108D60
+  .text:0013B814                 test    eax, eax
+  .text:0013B816                 jnz     loc_13B9F8
+  .text:0013B81C                 call    sub_139700
+  .text:0013B821                 call    sub_139040
+  .text:0013B826                 call    sub_13A880
+  .text:0013B82B                 nop
+  .text:0013B82C                 lea     esi, [esi+0]
+  .text:0013B830                 call    R_MarkLeaves
+  .text:0013B835                 mov     eax, ds:(dword_30F6D6C - 2EE000h)[ebx]
+  .text:0013B83B                 test    eax, eax
+  .text:0013B83D                 jz      loc_13B9B0
+  .text:0013B843                 mov     eax, ds:(dword_30F6D9C - 2EE000h)[ebx]
+  .text:0013B849                 test    eax, eax
+  .text:0013B84B                 jnz     loc_13B8F0
+  .text:0013B851                 ; cap
+  .text:0013B851                 mov     [esp+2Ch+cap], 0B60h; cap
+  .text:0013B858                 call    _glIsEnabled
+  .text:0013B85D                 movzx   eax, al
+  .text:0013B860                 mov     ds:(dword_30F7B58 - 2EE000h)[ebx], eax
+  .text:0013B866                 dec     eax
+  .text:0013B867                 jz      loc_13BA10
+  .text:0013B86D                 call    sub_12F230
+  .text:0013B872                 cmp     ds:(dword_30F7B58 - 2EE000h)[ebx], 1
+  .text:0013B879                 jz      loc_13BA30
+  .text:0013B87F                 lea     eax, (dword_15D7D60 - 2EE000h)[ebx]
+  .text:0013B885                 cmp     dword ptr [eax+24276Ch], 2
+  .text:0013B88C                 jle     short loc_13B8D8
+  .text:0013B88E                 mov     ecx, ds:(dword_30F6D6C - 2EE000h)[ebx]
+  .text:0013B894                 test    ecx, ecx
+  .text:0013B896                 jnz     short loc_13B8D8
+  .text:0013B898                 ; cap
+  .text:0013B898                 mov     [esp+2Ch+cap], 0B60h; cap
+  .text:0013B89F                 call    _glDisable
+  .text:0013B8A4                 mov     eax, ds:(dword_30F6D6C - 2EE000h)[ebx]
+  .text:0013B8AA                 mov     [esp+2Ch+cap], eax
+  .text:0013B8AD                 call    R_DrawTEntitiesOnList
+  .text:0013B8B2                 call    sub_166C70
+  .text:0013B8B7                 mov     eax, ds:(dword_30F6D6C - 2EE000h)[ebx]
+  .text:0013B8BD                 test    eax, eax
+  .text:0013B8BF                 jnz     short loc_13B8CB
+  .text:0013B8C1                 call    sub_14CAE0
+  .text:0013B8C6                 call    R_DrawParticles
+  .text:0013B8CB                 add     esp, 28h
+  .text:0013B8CE                 pop     ebx
+  .text:0013B8CF                 nop
+  .text:0013B8D0                 retn
+  .text:0013B8D8                 mov     edx, ds:(dword_30F6D9C - 2EE000h)[ebx]
+  .text:0013B8DE                 test    edx, edx
+  .text:0013B8E0                 jnz     short loc_13B8A4
+  .text:0013B8E2                 ; cap
+  .text:0013B8E2                 mov     [esp+2Ch+cap], 0B60h; cap
+  .text:0013B8E9                 call    _glDisable
+  .text:0013B8EE                 jmp     short loc_13B8A4
+  .text:0013B8F0                 ; cap
+  .text:0013B8F0                 mov     [esp+2Ch+cap], 0B60h; cap
+  .text:0013B8F7                 call    _glEnable
+  .text:0013B8FC                 mov     eax, 801h
+  .text:0013B901                 ; param
+  .text:0013B901                 mov     [esp+2Ch+param], eax; param
+  .text:0013B905                 ; pname
+  .text:0013B905                 mov     [esp+2Ch+cap], 0B65h; pname
+  .text:0013B90C                 call    _glFogi
+  .text:0013B911                 ; pname
+  .text:0013B911                 mov     [esp+2Ch+cap], 0B62h; pname
+  .text:0013B918                 fld     ds:(dword_30F6D88 - 2EE000h)[ebx]
+  .text:0013B91E                 fstp    [esp+2Ch+var_10]
+  .text:0013B922                 movss   xmm0, [esp+2Ch+var_10]
+  .text:0013B928                 ; param
+  .text:0013B928                 movss   [esp+2Ch+param], xmm0; param
+  .text:0013B92E                 call    _glFogf
+  .text:0013B933                 mov     eax, 1102h
+  .text:0013B938                 ; mode
+  .text:0013B938                 mov     [esp+2Ch+param], eax; mode
+  .text:0013B93C                 ; target
+  .text:0013B93C                 mov     [esp+2Ch+cap], 0C54h; target
+  .text:0013B943                 call    _glHint
+  .text:0013B948                 lea     eax, (flt_30F6D8C - 2EE000h)[ebx]
+  .text:0013B94E                 ; params
+  .text:0013B94E                 mov     [esp+2Ch+param], eax; params
+  .text:0013B952                 ; pname
+  .text:0013B952                 mov     [esp+2Ch+cap], 0B66h; pname
+  .text:0013B959                 call    _glFogfv
+  .text:0013B95E                 ; pname
+  .text:0013B95E                 mov     [esp+2Ch+cap], 0B63h; pname
+  .text:0013B965                 fld     ds:(dword_30F6D84 - 2EE000h)[ebx]
+  .text:0013B96B                 fstp    [esp+2Ch+var_10]
+  .text:0013B96F                 movss   xmm1, [esp+2Ch+var_10]
+  .text:0013B975                 ; param
+  .text:0013B975                 movss   [esp+2Ch+param], xmm1; param
+  .text:0013B97B                 call    _glFogf
+  .text:0013B980                 ; pname
+  .text:0013B980                 mov     [esp+2Ch+cap], 0B64h; pname
+  .text:0013B987                 fld     ds:(dword_30F6D80 - 2EE000h)[ebx]
+  .text:0013B98D                 fstp    [esp+2Ch+var_10]
+  .text:0013B991                 movss   xmm2, [esp+2Ch+var_10]
+  .text:0013B997                 ; param
+  .text:0013B997                 movss   [esp+2Ch+param], xmm2; param
+  .text:0013B99D                 call    _glFogf
+  .text:0013B9A2                 jmp     loc_13B851
+  .text:0013B9B0                 call    sub_108D60
+  .text:0013B9B5                 test    eax, eax
+  .text:0013B9B7                 jnz     loc_13BA48
+  .text:0013B9BD                 lea     esi, [esi+0]
+  .text:0013B9C0                 call    R_DrawWorld
+  .text:0013B9C5                 call    sub_166C70
+  .text:0013B9CA                 lea     eax, (off_2F3970 - 2EE000h)[ebx]; "r_drawentities"
+  .text:0013B9D0                 fld     dword ptr [eax+0Ch]
+  .text:0013B9D3                 fldz
+  .text:0013B9D5                 fst     [esp+2Ch+var_10]
+  .text:0013B9D9                 fxch    st(1)
+  .text:0013B9DB                 fucomip st, st(1)
+  .text:0013B9DD                 fstp    st
+  .text:0013B9DF                 jp      short loc_13B9E7
+  .text:0013B9E1                 jz      loc_13B843
+  .text:0013B9E7                 call    sub_1383A0
+  .text:0013B9EC                 lea     esi, [esi+0]
+  .text:0013B9F0                 jmp     loc_13B843
+  .text:0013B9F8                 lea     eax, (dword_30F6D40 - 2EE000h)[ebx]
+  .text:0013B9FE                 mov     [esp+2Ch+cap], eax
+  .text:0013BA01                 call    sub_109040
+  .text:0013BA06                 jmp     loc_13B81C
+  .text:0013BA10                 ; cap
+  .text:0013BA10                 mov     [esp+2Ch+cap], 0B60h; cap
+  .text:0013BA17                 call    _glDisable
+  .text:0013BA1C                 call    sub_12F230
+  .text:0013BA21                 cmp     ds:(dword_30F7B58 - 2EE000h)[ebx], 1
+  .text:0013BA28                 jnz     loc_13B87F
+  .text:0013BA2E                 xchg    ax, ax
+  .text:0013BA30                 ; cap
+  .text:0013BA30                 mov     [esp+2Ch+cap], 0B60h; cap
+  .text:0013BA37                 call    _glEnable
+  .text:0013BA3C                 jmp     loc_13B87F
+  .text:0013BA48                 fldz
+  .text:0013BA4A                 ; green
+  .text:0013BA4A                 mov     [esp+2Ch+param], 3F800000h; green
+  .text:0013BA52                 ; alpha
+  .text:0013BA52                 fst     [esp+2Ch+alpha]; alpha
+  .text:0013BA56                 ; blue
+  .text:0013BA56                 fst     [esp+2Ch+blue]; blue
+  .text:0013BA5A                 ; red
+  .text:0013BA5A                 fstp    [esp+2Ch+cap]; red
+  .text:0013BA5D                 call    _glClearColor
+  .text:0013BA62                 ; mask
+  .text:0013BA62                 mov     [esp+2Ch+cap], 4000h; mask
+  .text:0013BA69                 call    _glClear
+  .text:0013BA6E                 jmp     loc_13B9BD
+procedure: |-
+  void __cdecl R_RenderScene()
+  {
+    unsigned int v0; // esi
+
+    if ( sub_108D60() )
+      sub_109040((int)&dword_30F6D40);
+    sub_139700();
+    sub_139040();
+    sub_13A880();
+    R_MarkLeaves();
+    if ( !dword_30F6D6C )
+    {
+      if ( sub_108D60() )
+      {
+        glClearColor(0.0, 1.0, 0.0, 0.0);
+        glClear(0x4000u);
+      }
+      R_DrawWorld();
+      sub_166C70(v0);
+      if ( unk_2F397C != 0.0 )
+        sub_1383A0();
+    }
+    if ( dword_30F6D9C )
+    {
+      glEnable(0xB60u);
+      glFogi(0xB65u, 2049);
+      glFogf(0xB62u, *(GLfloat *)&dword_30F6D88);
+      glHint(0xC54u, 0x1102u);
+      glFogfv(0xB66u, &flt_30F6D8C);
+      glFogf(0xB63u, *(GLfloat *)&dword_30F6D84);
+      glFogf(0xB64u, *(GLfloat *)&dword_30F6D80);
+    }
+    dword_30F7B58 = glIsEnabled(0xB60u);
+    if ( dword_30F7B58 == 1 )
+    {
+      glDisable(0xB60u);
+      sub_12F230();
+      if ( dword_30F7B58 != 1 )
+        goto LABEL_8;
+    }
+    else
+    {
+      sub_12F230();
+      if ( dword_30F7B58 != 1 )
+        goto LABEL_8;
+    }
+    glEnable(0xB60u);
+  LABEL_8:
+    if ( unk_181A4CC > 2 && !dword_30F6D6C || !dword_30F6D9C )
+      glDisable(0xB60u);
+    R_DrawTEntitiesOnList(dword_30F6D6C);
+    sub_166C70(v0);
+    if ( !dword_30F6D6C )
+    {
+      sub_14CAE0();
+      R_DrawParticles();
+    }
+  }

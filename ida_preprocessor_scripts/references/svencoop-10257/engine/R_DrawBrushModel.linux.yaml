@@ -1,0 +1,706 @@
+func_name: "R_DrawBrushModel"
+func_va: "0x1534d0"
+disasm_code: |-
+  .text:001534D0                 push    ebp
+  .text:001534D1                 push    edi
+  .text:001534D2                 push    esi
+  .text:001534D3                 push    ebx
+  .text:001534D4                 call    sub_56390
+  .text:001534D9                 add     ebx, (offset dbl_2EE000 - $)
+  .text:001534DF                 sub     esp, 8Ch
+  .text:001534E5                 mov     edi, [esp+9Ch+entity]
+  .text:001534EC                 fldz
+  .text:001534EE                 fst     [esp+9Ch+var_7C]
+  .text:001534F2                 fld     dword ptr [edi+0B54h]
+  .text:001534F8                 lea     eax, (dword_30F6F78 - 2EE000h)[ebx]
+  .text:001534FE                 fucomip st, st(1)
+  .text:00153500                 mov     [eax], edi
+  .text:00153502                 mov     [esp+9Ch+var_68], eax
+  .text:00153506                 lea     eax, (unk_2F1B78 - 2EE000h)[ebx]
+  .text:0015350C                 mov     dword ptr [eax], 0FFFFFFFFh
+  .text:00153512                 mov     eax, [edi+0B94h]
+  .text:00153518                 mov     [esp+9Ch+var_70], eax
+  .text:0015351C                 jp      short loc_153528
+  .text:0015351E                 jz      loc_1535B0
+  .text:00153524                 fstp    st
+  .text:00153526                 jmp     short loc_153530
+  .text:00153528                 fstp    st
+  .text:0015352A                 lea     esi, [esi+0]
+  .text:00153530                 fld     dword ptr [eax+6Ch]
+  .text:00153533                 mov     esi, 1
+  .text:00153538                 fld     st
+  .text:0015353A                 fsubr   dword ptr [edi+0B48h]
+  .text:00153540                 fstp    [esp+9Ch+var_58]
+  .text:00153544                 fld     dword ptr [edi+0B48h]
+  .text:0015354A                 fadd    st, st(1)
+  .text:0015354C                 fstp    [esp+9Ch+var_4C]
+  .text:00153550                 fld     st
+  .text:00153552                 fsubr   dword ptr [edi+0B4Ch]
+  .text:00153558                 fstp    [esp+9Ch+var_54]
+  .text:0015355C                 fld     dword ptr [edi+0B4Ch]
+  .text:00153562                 fadd    st, st(1)
+  .text:00153564                 fstp    [esp+9Ch+var_48]
+  .text:00153568                 fld     st
+  .text:0015356A                 fsubr   dword ptr [edi+0B50h]
+  .text:00153570                 fstp    [esp+9Ch+var_50]
+  .text:00153574                 fadd    dword ptr [edi+0B50h]
+  .text:0015357A                 fstp    [esp+9Ch+var_44]
+  .text:0015357E                 lea     eax, [esp+9Ch+var_4C]
+  .text:00153582                 mov     [esp+9Ch+green], eax
+  .text:00153586                 lea     eax, [esp+9Ch+var_58]
+  .text:0015358A                 mov     [esp+9Ch+red], eax
+  .text:0015358D                 call    sub_137A30
+  .text:00153592                 test    eax, eax
+  .text:00153594                 mov     [esp+9Ch+var_64], eax
+  .text:00153598                 jz      loc_153640
+  .text:0015359E                 add     esp, 8Ch
+  .text:001535A4                 pop     ebx
+  .text:001535A5                 pop     esi
+  .text:001535A6                 pop     edi
+  .text:001535A7                 pop     ebp
+  .text:001535A8                 retn
+  .text:001535B0                 fld     dword ptr [edi+0B58h]
+  .text:001535B6                 fucomip st, st(1)
+  .text:001535B8                 fstp    st
+  .text:001535BA                 jp      loc_153530
+  .text:001535C0                 jnz     loc_153530
+  .text:001535C6                 fld     dword ptr [edi+0B5Ch]
+  .text:001535CC                 fld     [esp+9Ch+var_7C]
+  .text:001535D0                 fxch    st(1)
+  .text:001535D2                 fucomip st, st(1)
+  .text:001535D4                 fstp    st
+  .text:001535D6                 jp      loc_153530
+  .text:001535DC                 jnz     loc_153530
+  .text:001535E2                 fld     dword ptr [eax+54h]
+  .text:001535E5                 xor     esi, esi
+  .text:001535E7                 fadd    dword ptr [edi+0B48h]
+  .text:001535ED                 fstp    [esp+9Ch+var_58]
+  .text:001535F1                 fld     dword ptr [eax+58h]
+  .text:001535F4                 fadd    dword ptr [edi+0B4Ch]
+  .text:001535FA                 fstp    [esp+9Ch+var_54]
+  .text:001535FE                 fld     dword ptr [eax+5Ch]
+  .text:00153601                 fadd    dword ptr [edi+0B50h]
+  .text:00153607                 fstp    [esp+9Ch+var_50]
+  .text:0015360B                 fld     dword ptr [eax+60h]
+  .text:0015360E                 fadd    dword ptr [edi+0B48h]
+  .text:00153614                 fstp    [esp+9Ch+var_4C]
+  .text:00153618                 fld     dword ptr [eax+64h]
+  .text:0015361B                 fadd    dword ptr [edi+0B4Ch]
+  .text:00153621                 fstp    [esp+9Ch+var_48]
+  .text:00153625                 fld     dword ptr [eax+68h]
+  .text:00153628                 fadd    dword ptr [edi+0B50h]
+  .text:0015362E                 fstp    [esp+9Ch+var_44]
+  .text:00153632                 jmp     loc_15357E
+  .text:00153640                 fld1
+  .text:00153642                 mov     ebp, 1000h
+  .text:00153647                 ; blue
+  .text:00153647                 fst     [esp+9Ch+blue]; blue
+  .text:0015364B                 ; green
+  .text:0015364B                 fst     [esp+9Ch+green]; green
+  .text:0015364F                 ; red
+  .text:0015364F                 fstp    [esp+9Ch+red]; red
+  .text:00153652                 call    _glColor3f
+  .text:00153657                 xor     eax, eax
+  .text:00153659                 ; c
+  .text:00153659                 mov     [esp+9Ch+green], eax; c
+  .text:0015365D                 lea     eax, (dword_7984680 - 2EE000h)[ebx]
+  .text:00153663                 ; dest
+  .text:00153663                 mov     [esp+9Ch+red], eax; dest
+  .text:00153666                 ; count
+  .text:00153666                 mov     [esp+9Ch+blue], ebp; count
+  .text:0015366A                 call    Q_memset
+  .text:0015366F                 lea     eax, (dword_30F6D40 - 2EE000h)[ebx]
+  .text:00153675                 test    esi, esi
+  .text:00153677                 lea     edx, (unk_30F6F88 - 2EE000h)[ebx]
+  .text:0015367D                 mov     [esp+9Ch+var_6C], edx
+  .text:00153681                 fld     dword ptr [eax+10h]
+  .text:00153684                 fsub    dword ptr [edi+0B48h]
+  .text:0015368A                 fst     dword ptr [edx]
+  .text:0015368C                 fld     dword ptr [eax+14h]
+  .text:0015368F                 fsub    dword ptr [edi+0B4Ch]
+  .text:00153695                 fst     dword ptr [edx+4]
+  .text:00153698                 fld     dword ptr [eax+18h]
+  .text:0015369B                 fsub    dword ptr [edi+0B50h]
+  .text:001536A1                 fst     dword ptr [edx+8]
+  .text:001536A4                 jnz     loc_153A6F
+  .text:001536AA                 fstp    st
+  .text:001536AC                 fstp    st
+  .text:001536AE                 fstp    st
+  .text:001536B0                 mov     ecx, [esp+9Ch+var_70]
+  .text:001536B4                 mov     eax, [ecx+70h]
+  .text:001536B7                 mov     esi, [ecx+0B4h]
+  .text:001536BD                 imul    edx, eax, 5Ch ; '\'
+  .text:001536C0                 add     edx, esi
+  .text:001536C2                 test    eax, eax
+  .text:001536C4                 mov     [esp+9Ch+surface], edx
+  .text:001536C8                 jnz     loc_1538B0
+  .text:001536CE                 call    _glPushMatrix
+  .text:001536D3                 lea     eax, [edi+0B48h]
+  .text:001536D9                 mov     [esp+9Ch+red], eax
+  .text:001536DC                 mov     [esp+9Ch+green], edi
+  .text:001536E0                 call    sub_137AA0
+  .text:001536E5                 mov     [esp+9Ch+red], edi
+  .text:001536E8                 call    sub_14DC60
+  .text:001536ED                 mov     eax, [esp+9Ch+var_70]
+  .text:001536F1                 lea     ebp, (dword_2F3750 - 2EE000h)[ebx]
+  .text:001536F7                 mov     esi, [eax+74h]
+  .text:001536FA                 test    esi, esi
+  .text:001536FC                 jle     loc_1537D4
+  .text:00153702                 lea     eax, (dword_30F6F1C - 2EE000h)[ebx]
+  .text:00153708                 mov     [esp+9Ch+entity], edi
+  .text:0015370F                 mov     edi, [esp+9Ch+surface]
+  .text:00153713                 mov     [esp+9Ch+var_78], ebp
+  .text:00153717                 mov     ebp, [esp+9Ch+var_64]
+  .text:0015371B                 mov     [esp+9Ch+var_7C], esi
+  .text:0015371F                 mov     [esp+9Ch+var_74], eax
+  .text:00153723                 jmp     short loc_15379A
+  .text:00153728                 fld     dword ptr [eax+0Ch]
+  .text:0015372B                 mov     esi, [esp+9Ch+var_6C]
+  .text:0015372F                 test    dl, 2
+  .text:00153732                 fld     dword ptr [esi]
+  .text:00153734                 fld     dword ptr [eax]
+  .text:00153736                 fmulp   st(1), st
+  .text:00153738                 fld     dword ptr [esi+4]
+  .text:0015373B                 fld     dword ptr [eax+4]
+  .text:0015373E                 fmulp   st(1), st
+  .text:00153740                 faddp   st(1), st
+  .text:00153742                 fld     dword ptr [esi+8]
+  .text:00153745                 fst     dword ptr [esp+9Ch+var_84]
+  .text:00153749                 fld     dword ptr [eax+8]
+  .text:0015374C                 fmulp   st(1), st
+  .text:0015374E                 faddp   st(1), st
+  .text:00153750                 fsubrp  st(1), st
+  .text:00153752                 jnz     loc_153840
+  .text:00153758                 fld     ds:(dbl_263610 - 2EE000h)[ebx]
+  .text:0015375E                 fst     [esp+9Ch+var_84]
+  .text:00153762                 fxch    st(1)
+  .text:00153764                 fucomip st, st(1)
+  .text:00153766                 fstp    st
+  .text:00153768                 jbe     loc_153854
+  .text:0015376E                 mov     eax, [esp+9Ch+var_78]
+  .text:00153772                 mov     eax, [eax]
+  .text:00153774                 test    eax, eax
+  .text:00153776                 jz      loc_153890
+  .text:0015377C                 mov     eax, [esp+9Ch+var_74]
+  .text:00153780                 inc     dword ptr [eax]
+  .text:00153782                 test    dl, 4
+  .text:00153785                 jz      loc_153A58
+  .text:0015378B                 nop
+  .text:0015378C                 lea     esi, [esi+0]
+  .text:00153790                 inc     ebp
+  .text:00153791                 add     edi, 5Ch ; '\'
+  .text:00153794                 cmp     ebp, [esp+9Ch+var_7C]
+  .text:00153798                 jge     short loc_1537D0
+  .text:0015379A                 mov     edx, [edi+8]
+  .text:0015379D                 mov     eax, [edi+4]
+  .text:001537A0                 mov     ecx, edx
+  .text:001537A2                 and     ecx, 10h
+  .text:001537A5                 jz      short loc_153728
+  .text:001537A7                 cmp     byte ptr [eax+10h], 2
+  .text:001537AB                 jnz     short loc_153790
+  .text:001537AD                 fld     dword ptr [eax+0Ch]
+  .text:001537B0                 fld     [esp+9Ch+var_50]
+  .text:001537B4                 fucomip st, st(1)
+  .text:001537B6                 jb      loc_15372B
+  .text:001537BC                 fstp    st
+  .text:001537BE                 inc     ebp
+  .text:001537BF                 add     edi, 5Ch ; '\'
+  .text:001537C2                 cmp     ebp, [esp+9Ch+var_7C]
+  .text:001537C6                 jl      short loc_15379A
+  .text:001537C8                 nop
+  .text:001537C9                 lea     esi, [esi+0]
+  .text:001537D0                 mov     ebp, [esp+9Ch+var_78]
+  .text:001537D4                 mov     eax, [esp+9Ch+var_68]
+  .text:001537D8                 mov     eax, [eax]
+  .text:001537DA                 mov     eax, [eax+2F8h]
+  .text:001537E0                 test    eax, eax
+  .text:001537E2                 jnz     loc_1539AC
+  .text:001537E8                 mov     eax, [ebp+0]
+  .text:001537EB                 test    eax, eax
+  .text:001537ED                 jnz     loc_1539F3
+  .text:001537F3                 call    _glPopMatrix
+  .text:001537F8                 ; flag
+  .text:001537F8                 mov     [esp+9Ch+red], 1; flag
+  .text:001537FF                 call    _glDepthMask
+  .text:00153804                 ; cap
+  .text:00153804                 mov     [esp+9Ch+red], 0BC0h; cap
+  .text:0015380B                 call    _glDisable
+  .text:00153810                 ; ref
+  .text:00153810                 mov     [esp+9Ch+green], 0; ref
+  .text:00153818                 ; func
+  .text:00153818                 mov     [esp+9Ch+red], 205h; func
+  .text:0015381F                 call    _glAlphaFunc
+  .text:00153824                 ; cap
+  .text:00153824                 mov     [esp+9Ch+red], 0BE2h; cap
+  .text:0015382B                 call    _glDisable
+  .text:00153830                 add     esp, 8Ch
+  .text:00153836                 pop     ebx
+  .text:00153837                 pop     esi
+  .text:00153838                 pop     edi
+  .text:00153839                 pop     ebp
+  .text:0015383A                 retn
+  .text:00153840                 fld     ds:(dbl_263618 - 2EE000h)[ebx]
+  .text:00153846                 fst     [esp+9Ch+var_84]
+  .text:0015384A                 fucomip st, st(1)
+  .text:0015384C                 fstp    st
+  .text:0015384E                 ja      loc_15376E
+  .text:00153854                 test    ecx, ecx
+  .text:00153856                 jz      loc_153790
+  .text:0015385C                 mov     eax, [esp+9Ch+entity]
+  .text:00153863                 mov     [esp+9Ch+red], eax
+  .text:00153866                 call    sub_14DC60
+  .text:0015386B                 mov     ecx, 1
+  .text:00153870                 ; face
+  .text:00153870                 mov     [esp+9Ch+green], ecx; face
+  .text:00153874                 ; surface
+  .text:00153874                 mov     [esp+9Ch+red], edi; surface
+  .text:00153877                 call    R_DrawSequentialPoly
+  .text:0015387C                 mov     eax, [esp+9Ch+var_70]
+  .text:00153880                 mov     eax, [eax+74h]
+  .text:00153883                 mov     [esp+9Ch+var_7C], eax
+  .text:00153887                 jmp     loc_153790
+  .text:00153890                 mov     eax, [esp+9Ch+entity]
+  .text:00153897                 xor     esi, esi
+  .text:00153899                 mov     [esp+9Ch+red], eax
+  .text:0015389C                 call    sub_14DC60
+  .text:001538A1                 mov     [esp+9Ch+green], esi
+  .text:001538A5                 mov     [esp+9Ch+red], edi
+  .text:001538A8                 jmp     short loc_153877
+  .text:001538B0                 mov     [esp+9Ch+entity], edi
+  .text:001538B7                 lea     esi, (unk_15CD500 - 2EE000h)[ebx]
+  .text:001538BD                 xor     ecx, ecx
+  .text:001538BF                 lea     ebp, (dword_15D7D60 - 2EE000h)[ebx]
+  .text:001538C5                 mov     edi, [esp+9Ch+var_70]
+  .text:001538C9                 jmp     short loc_1538E0
+  .text:001538D0                 inc     ecx
+  .text:001538D1                 add     esi, 28h ; '('
+  .text:001538D4                 cmp     ecx, 100h
+  .text:001538DA                 jz      loc_1539A0
+  .text:001538E0                 fld     dword ptr [esi+14h]
+  .text:001538E3                 fld     qword ptr ss:loc_242794[ebp]
+  .text:001538E9                 fucomip st, st(1)
+  .text:001538EB                 fstp    st
+  .text:001538ED                 ja      short loc_1538D0
+  .text:001538EF                 fldz
+  .text:001538F1                 fst     [esp+9Ch+var_7C]
+  .text:001538F5                 fld     dword ptr [esi+0Ch]
+  .text:001538F8                 fucomip st, st(1)
+  .text:001538FA                 fstp    st
+  .text:001538FC                 jp      short loc_153900
+  .text:001538FE                 jz      short loc_1538D0
+  .text:00153900                 fld     dword ptr [esi]
+  .text:00153902                 fld     dword ptr [esi+4]
+  .text:00153905                 mov     eax, [esp+9Ch+entity]
+  .text:0015390C                 fld     dword ptr [esi+8]
+  .text:0015390F                 fld     st(2)
+  .text:00153911                 fstp    [esp+9Ch+var_74]
+  .text:00153915                 fxch    st(2)
+  .text:00153917                 fsub    dword ptr [eax+0B48h]
+  .text:0015391D                 mov     [esp+9Ch+var_7C], ecx
+  .text:00153921                 fstp    dword ptr [esi]
+  .text:00153923                 fld     st
+  .text:00153925                 fstp    [esp+9Ch+var_78]
+  .text:00153929                 fsub    dword ptr [eax+0B4Ch]
+  .text:0015392F                 fstp    dword ptr [esi+4]
+  .text:00153932                 fld     st
+  .text:00153934                 fstp    dword ptr [esp+9Ch+var_84]
+  .text:00153938                 fsub    dword ptr [eax+0B50h]
+  .text:0015393E                 fstp    dword ptr [esi+8]
+  .text:00153941                 mov     eax, [edi+0D8h]
+  .text:00153947                 lea     edx, [eax+eax*2]
+  .text:0015394A                 lea     edx, [eax+edx*4]
+  .text:0015394D                 mov     eax, [edi+0A4h]
+  .text:00153953                 mov     [esp+9Ch+red], esi
+  .text:00153956                 add     esi, 28h ; '('
+  .text:00153959                 lea     eax, [eax+edx*4]
+  .text:0015395C                 mov     [esp+9Ch+blue], eax
+  .text:00153960                 mov     eax, 1
+  .text:00153965                 shl     eax, cl
+  .text:00153967                 mov     [esp+9Ch+green], eax
+  .text:0015396B                 call    sub_154730
+  .text:00153970                 mov     ecx, [esp+9Ch+var_7C]
+  .text:00153974                 inc     ecx
+  .text:00153975                 fld     [esp+9Ch+var_74]
+  .text:00153979                 fstp    dword ptr [esi-28h]
+  .text:0015397C                 fld     [esp+9Ch+var_78]
+  .text:00153980                 fstp    dword ptr [esi-24h]
+  .text:00153983                 fld     dword ptr [esp+9Ch+var_84]
+  .text:00153987                 fstp    dword ptr [esi-20h]
+  .text:0015398A                 cmp     ecx, 100h
+  .text:00153990                 jnz     loc_1538E0
+  .text:00153996                 lea     esi, [esi+0]
+  .text:00153999                 lea     edi, [edi+0]
+  .text:001539A0                 mov     edi, [esp+9Ch+entity]
+  .text:001539A7                 jmp     loc_1536CE
+  .text:001539AC                 mov     eax, 2200h
+  .text:001539B1                 ; pname
+  .text:001539B1                 mov     [esp+9Ch+green], eax; pname
+  .text:001539B5                 ; param
+  .text:001539B5                 mov     [esp+9Ch+blue], 46040000h; param
+  .text:001539BD                 ; target
+  .text:001539BD                 mov     [esp+9Ch+red], 2300h; target
+  .text:001539C4                 call    _glTexEnvf
+  .text:001539C9                 ; cap
+  .text:001539C9                 mov     [esp+9Ch+red], 0BE2h; cap
+  .text:001539D0                 call    _glDisable
+  .text:001539D5                 mov     edx, [ebp+0]
+  .text:001539D8                 mov     eax, [esp+9Ch+var_68]
+  .text:001539DC                 test    edx, edx
+  .text:001539DE                 mov     eax, [eax]
+  .text:001539E0                 jnz     loc_153B02
+  .text:001539E6                 cmp     dword ptr [eax+2F8h], 1
+  .text:001539ED                 jnz     loc_1537F3
+  .text:001539F3                 call    sub_151CD0
+  .text:001539F8                 mov     eax, [esp+9Ch+var_68]
+  .text:001539FC                 mov     eax, [eax]
+  .text:001539FE                 mov     eax, [eax+2F8h]
+  .text:00153A04                 test    eax, eax
+  .text:00153A06                 jnz     loc_1537F3
+  .text:00153A0C                 lea     eax, (dword_79DFD74 - 2EE000h)[ebx]
+  .text:00153A12                 mov     edi, [eax]
+  .text:00153A14                 test    edi, edi
+  .text:00153A16                 jnz     loc_1537F3
+  .text:00153A1C                 lea     eax, (off_2F3934 - 2EE000h)[ebx]; "r_fullbright"
+  .text:00153A22                 fld     dword ptr [eax+0Ch]
+  .text:00153A25                 fldz
+  .text:00153A27                 fst     [esp+9Ch+var_7C]
+  .text:00153A2B                 fxch    st(1)
+  .text:00153A2D                 fucomip st, st(1)
+  .text:00153A2F                 fstp    st
+  .text:00153A31                 jp      loc_1537F3
+  .text:00153A37                 jnz     loc_1537F3
+  .text:00153A3D                 mov     esi, [ebp+0]
+  .text:00153A40                 test    esi, esi
+  .text:00153A42                 jz      loc_1537F3
+  .text:00153A48                 call    start
+  .text:00153A4D                 lea     esi, [esi+0]
+  .text:00153A50                 jmp     loc_1537F3
+  .text:00153A58                 mov     eax, edi
+  .text:00153A5A                 call    sub_14D4C0
+  .text:00153A5F                 mov     eax, [esp+9Ch+var_70]
+  .text:00153A63                 mov     eax, [eax+74h]
+  .text:00153A66                 mov     [esp+9Ch+var_7C], eax
+  .text:00153A6A                 jmp     loc_153790
+  .text:00153A6F                 lea     eax, [esp+9Ch+var_28]
+  .text:00153A73                 mov     [esp+9Ch+var_90], eax
+  .text:00153A77                 lea     eax, [esp+9Ch+var_34]
+  .text:00153A7B                 mov     [esp+9Ch+blue], eax
+  .text:00153A7F                 lea     eax, [esp+9Ch+var_40]
+  .text:00153A83                 fstp    [esp+9Ch+var_78]
+  .text:00153A87                 mov     [esp+9Ch+green], eax
+  .text:00153A8B                 lea     eax, [edi+0B54h]
+  .text:00153A91                 fstp    dword ptr [esp+9Ch+var_84]
+  .text:00153A95                 mov     [esp+9Ch+red], eax
+  .text:00153A98                 fstp    [esp+9Ch+var_7C]
+  .text:00153A9C                 call    sub_8B7D0
+  .text:00153AA1                 mov     eax, [esp+9Ch+var_6C]
+  .text:00153AA5                 fld     [esp+9Ch+var_7C]
+  .text:00153AA9                 fld     [esp+9Ch+var_40]
+  .text:00153AAD                 fmul    st, st(1)
+  .text:00153AAF                 fld     dword ptr [esp+9Ch+var_84]
+  .text:00153AB3                 fld     [esp+9Ch+var_3C]
+  .text:00153AB7                 fmul    st, st(1)
+  .text:00153AB9                 faddp   st(2), st
+  .text:00153ABB                 fld     [esp+9Ch+var_78]
+  .text:00153ABF                 fld     [esp+9Ch+var_38]
+  .text:00153AC3                 fmul    st, st(1)
+  .text:00153AC5                 faddp   st(3), st
+  .text:00153AC7                 fxch    st(2)
+  .text:00153AC9                 fstp    dword ptr [eax]
+  .text:00153ACB                 fld     [esp+9Ch+var_34]
+  .text:00153ACF                 fmul    st, st(3)
+  .text:00153AD1                 fld     [esp+9Ch+var_30]
+  .text:00153AD5                 fmul    st, st(2)
+  .text:00153AD7                 faddp   st(1), st
+  .text:00153AD9                 fld     [esp+9Ch+var_2C]
+  .text:00153ADD                 fmul    st, st(3)
+  .text:00153ADF                 faddp   st(1), st
+  .text:00153AE1                 fchs
+  .text:00153AE3                 fstp    dword ptr [eax+4]
+  .text:00153AE6                 fxch    st(2)
+  .text:00153AE8                 fmul    [esp+9Ch+var_28]
+  .text:00153AEC                 fxch    st(2)
+  .text:00153AEE                 fmul    [esp+9Ch+var_24]
+  .text:00153AF2                 faddp   st(2), st
+  .text:00153AF4                 fmul    [esp+9Ch+var_20]
+  .text:00153AF8                 faddp   st(1), st
+  .text:00153AFA                 fstp    dword ptr [eax+8]
+  .text:00153AFD                 jmp     loc_1536B0
+  .text:00153B02                 cmp     dword ptr [eax+2F8h], 4
+  .text:00153B09                 jnz     loc_1539F3
+  .text:00153B0F                 lea     eax, (off_2F37E0 - 2EE000h)[ebx]; "gl_lightholes"
+  .text:00153B15                 fld     dword ptr [eax+0Ch]
+  .text:00153B18                 fldz
+  .text:00153B1A                 fst     [esp+9Ch+var_7C]
+  .text:00153B1E                 fxch    st(1)
+  .text:00153B20                 fucomip st, st(1)
+  .text:00153B22                 fstp    st
+  .text:00153B24                 jp      short loc_153B2C
+  .text:00153B26                 jz      loc_1537F3
+  .text:00153B2C                 ; func
+  .text:00153B2C                 mov     [esp+9Ch+red], 202h; func
+  .text:00153B33                 call    _glDepthFunc
+  .text:00153B38                 lea     eax, (dword_79DFD74 - 2EE000h)[ebx]
+  .text:00153B3E                 mov     ecx, [eax]
+  .text:00153B40                 test    ecx, ecx
+  .text:00153B42                 jnz     short loc_153B69
+  .text:00153B44                 lea     eax, (off_2F3934 - 2EE000h)[ebx]; "r_fullbright"
+  .text:00153B4A                 fld     dword ptr [eax+0Ch]
+  .text:00153B4D                 fldz
+  .text:00153B4F                 fst     [esp+9Ch+var_7C]
+  .text:00153B53                 fxch    st(1)
+  .text:00153B55                 fucomip st, st(1)
+  .text:00153B57                 fstp    st
+  .text:00153B59                 jp      short loc_153B69
+  .text:00153B5B                 jnz     short loc_153B69
+  .text:00153B5D                 mov     edx, [ebp+0]
+  .text:00153B60                 test    edx, edx
+  .text:00153B62                 jz      short loc_153B69
+  .text:00153B64                 call    start
+  .text:00153B69                 ; func
+  .text:00153B69                 mov     [esp+9Ch+red], 203h; func
+  .text:00153B70                 call    _glDepthFunc
+  .text:00153B75                 jmp     loc_1537F3
+procedure: |-
+  void __cdecl R_DrawBrushModel(void *entity)
+  {
+    char *v1; // edi
+    long double v2; // fst6
+    float *v3; // eax
+    long double v4; // fst7
+    int v5; // esi
+    long double v6; // fst7
+    long double v7; // fst6
+    long double v8; // fst5
+    int v9; // eax
+    _DWORD *v10; // edi
+    int v11; // ebp
+    long double v12; // fst7
+    long double v13; // fst7
+    int v14; // edx
+    int v15; // eax
+    float *v16; // esi
+    int v17; // ecx
+    long double v18; // fst6
+    long double v19; // rt2
+    float *red; // [esp+0h] [ebp-9Ch]
+    float v21; // [esp+18h] [ebp-84h]
+    float v22; // [esp+18h] [ebp-84h]
+    int v23; // [esp+20h] [ebp-7Ch]
+    int v24; // [esp+20h] [ebp-7Ch]
+    float v25; // [esp+20h] [ebp-7Ch]
+    float v26; // [esp+24h] [ebp-78h]
+    float v27; // [esp+24h] [ebp-78h]
+    float v28; // [esp+28h] [ebp-74h]
+    float *v29; // [esp+2Ch] [ebp-70h]
+    _DWORD *surface; // [esp+3Ch] [ebp-60h]
+    float v31; // [esp+44h] [ebp-58h] BYREF
+    float v32; // [esp+48h] [ebp-54h]
+    float v33; // [esp+4Ch] [ebp-50h]
+    float v34; // [esp+50h] [ebp-4Ch] BYREF
+    float v35; // [esp+54h] [ebp-48h]
+    float v36; // [esp+58h] [ebp-44h]
+    float v37[3]; // [esp+5Ch] [ebp-40h] BYREF
+    float v38[3]; // [esp+68h] [ebp-34h] BYREF
+    float v39[10]; // [esp+74h] [ebp-28h] BYREF
+    void *entitya; // [esp+A0h] [ebp+4h]
+
+    v1 = (char *)entity;
+    v2 = *((float *)entity + 725);
+    dword_30F6F78 = (int)entity;
+    unk_2F1B78 = -1;
+    v3 = *((float **)entity + 741);
+    v29 = v3;
+    if ( v2 == 0.0 && *((float *)entity + 726) == 0.0 && *((float *)entity + 727) == (float)0.0 )
+    {
+      v5 = 0;
+      v31 = v3[21] + *((float *)entity + 722);
+      v32 = v3[22] + *((float *)entity + 723);
+      v33 = v3[23] + *((float *)entity + 724);
+      v34 = v3[24] + *((float *)entity + 722);
+      v35 = v3[25] + *((float *)entity + 723);
+      v36 = v3[26] + *((float *)entity + 724);
+    }
+    else
+    {
+      v4 = v3[27];
+      v5 = 1;
+      v31 = *((float *)entity + 722) - v4;
+      v34 = *((float *)entity + 722) + v4;
+      v32 = *((float *)entity + 723) - v4;
+      v35 = *((float *)entity + 723) + v4;
+      v33 = *((float *)entity + 724) - v4;
+      v36 = v4 + *((float *)entity + 724);
+    }
+    if ( !sub_137A30(&v31, &v34) )
+    {
+      glColor3f(1.0, 1.0, 1.0);
+      Q_memset(dword_7984680, 0, 0x1000u);
+      v6 = flt_30F6D50 - *((float *)entity + 722);
+      unk_30F6F88 = v6;
+      v7 = flt_30F6D54 - *((float *)entity + 723);
+      unk_30F6F8C = v7;
+      v8 = flt_30F6D58 - *((float *)entity + 724);
+      unk_30F6F90 = v8;
+      if ( v5 )
+      {
+        v27 = v8;
+        v22 = v7;
+        v25 = v6;
+        sub_8B7D0((char *)entity + 2900, v37, v38, v39);
+        unk_30F6F88 = v37[0] * v25 + v37[1] * v22 + v37[2] * v27;
+        unk_30F6F8C = -(v38[0] * v25 + v38[1] * v22 + v38[2] * v27);
+        unk_30F6F90 = v25 * v39[0] + v22 * v39[1] + v27 * v39[2];
+      }
+      v9 = *((_DWORD *)v29 + 28);
+      surface = (_DWORD *)(*((_DWORD *)v29 + 45) + 92 * v9);
+      if ( v9 )
+      {
+        v16 = (float *)&unk_15CD500;
+        v17 = 0;
+        do
+        {
+          while ( *(double *)((char *)&loc_242794 + (_DWORD)dword_15D7D60) > (long double)v16[5] || v16[3] == 0.0 )
+          {
+            ++v17;
+            v16 += 10;
+            if ( v17 == 256 )
+              goto LABEL_37;
+          }
+          v18 = v16[1];
+          v28 = *v16;
+          v19 = v16[2];
+          v24 = v17;
+          *v16 = v28 - *((float *)entity + 722);
+          v26 = v18;
+          v16[1] = v18 - *((float *)entity + 723);
+          v21 = v19;
+          v16[2] = v19 - *((float *)entity + 724);
+          red = v16;
+          v16 += 10;
+          sub_154730(red, 1 << v17, *((_DWORD *)v29 + 41) + 52 * *((_DWORD *)v29 + 54));
+          v17 = v24 + 1;
+          *(v16 - 10) = v28;
+          *(v16 - 9) = v26;
+          *(v16 - 8) = v21;
+        }
+        while ( v24 != 255 );
+  LABEL_37:
+        v1 = (char *)entity;
+      }
+      glPushMatrix();
+      sub_137AA0(v1 + 2888, v1);
+      sub_14DC60(v1);
+      if ( *((int *)v29 + 29) > 0 )
+      {
+        entitya = v1;
+        v10 = surface;
+        v11 = 0;
+        v23 = *((_DWORD *)v29 + 29);
+        while ( 1 )
+        {
+          v14 = v10[2];
+          v15 = v10[1];
+          if ( (v14 & 0x10) == 0 )
+            break;
+          if ( *(_BYTE *)(v15 + 16) != 2 )
+            goto LABEL_19;
+          v12 = *(float *)(v15 + 12);
+          if ( v33 < v12 )
+          {
+  LABEL_14:
+            v13 = unk_30F6F88 * *(float *)v15
+                + unk_30F6F8C * *(float *)(v15 + 4)
+                + unk_30F6F90 * *(float *)(v15 + 8)
+                - v12;
+            if ( (v14 & 2) != 0 )
+            {
+              if ( v13 < -0.01 )
+              {
+  LABEL_16:
+                if ( dword_2F3750 )
+                {
+                  ++dword_30F6F1C;
+                  if ( (v14 & 4) == 0 )
+                  {
+                    sub_14D4C0((int)v10);
+                    v23 = *((_DWORD *)v29 + 29);
+                  }
+                  goto LABEL_19;
+                }
+                sub_14DC60(entitya);
+                R_DrawSequentialPoly(v10, 0);
+                goto LABEL_30;
+              }
+            }
+            else if ( v13 > 0.01 )
+            {
+              goto LABEL_16;
+            }
+            if ( (v10[2] & 0x10) != 0 )
+            {
+              sub_14DC60(entitya);
+              R_DrawSequentialPoly(v10, 1);
+  LABEL_30:
+              v23 = *((_DWORD *)v29 + 29);
+            }
+  LABEL_19:
+            ++v11;
+            v10 += 23;
+            if ( v11 >= v23 )
+              goto LABEL_24;
+          }
+          else
+          {
+            ++v11;
+            v10 += 23;
+            if ( v11 >= v23 )
+              goto LABEL_24;
+          }
+        }
+        v12 = *(float *)(v15 + 12);
+        goto LABEL_14;
+      }
+  LABEL_24:
+      if ( *(_DWORD *)(dword_30F6F78 + 760) )
+      {
+        glTexEnvf(0x2300u, 0x2200u, 8448.0);
+        glDisable(0xBE2u);
+        if ( dword_2F3750 )
+        {
+          if ( *(_DWORD *)(dword_30F6F78 + 760) == 4 )
+          {
+            if ( unk_2F37EC != 0.0 )
+            {
+              glDepthFunc(0x202u);
+              if ( !dword_79DFD74 && unk_2F3940 == 0.0 && dword_2F3750 )
+                start();
+              glDepthFunc(0x203u);
+            }
+            goto LABEL_26;
+          }
+        }
+        else if ( *(_DWORD *)(dword_30F6F78 + 760) != 1 )
+        {
+          goto LABEL_26;
+        }
+      }
+      else if ( !dword_2F3750 )
+      {
+  LABEL_26:
+        glPopMatrix();
+        glDepthMask(1u);
+        glDisable(0xBC0u);
+        glAlphaFunc(0x205u, 0.0);
+        glDisable(0xBE2u);
+        return;
+      }
+      sub_151CD0();
+      if ( !*(_DWORD *)(dword_30F6F78 + 760) && !dword_79DFD74 && unk_2F3940 == 0.0 )
+      {
+        if ( dword_2F3750 )
+          start();
+      }
+      goto LABEL_26;
+    }
+  }

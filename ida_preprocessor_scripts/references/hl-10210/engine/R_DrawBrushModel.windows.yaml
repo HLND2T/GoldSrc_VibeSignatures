@@ -1,0 +1,622 @@
+func_name: "R_DrawBrushModel"
+func_va: "0x10249960"
+disasm_code: |-
+  .text:10249960                 push    ebp
+  .text:10249961                 mov     ebp, esp
+  .text:10249963                 sub     esp, 5Ch
+  .text:10249966                 mov     eax, ___security_cookie
+  .text:1024996B                 xor     eax, ebp
+  .text:1024996D                 mov     [ebp+var_4], eax
+  .text:10249970                 push    esi
+  .text:10249971                 push    edi
+  .text:10249972                 mov     edi, [ebp+entity]
+  .text:10249975                 xorps   xmm1, xmm1
+  .text:10249978                 mov     currententity, edi
+  .text:1024997E                 mov     dword_10322B6C, 0FFFFFFFFh
+  .text:10249988                 mov     [ebp+cleanUpShaderState], edi
+  .text:1024998B                 movss   xmm0, dword ptr [edi+0B54h]
+  .text:10249993                 mov     esi, [edi+0B94h]
+  .text:10249999                 ucomiss xmm0, xmm1
+  .text:1024999C                 mov     [ebp+var_44], esi
+  .text:1024999F                 lahf
+  .text:102499A0                 test    ah, 44h
+  .text:102499A3                 jp      loc_10249A2C
+  .text:102499A9                 movss   xmm0, dword ptr [edi+0B58h]
+  .text:102499B1                 ucomiss xmm0, xmm1
+  .text:102499B4                 lahf
+  .text:102499B5                 test    ah, 44h
+  .text:102499B8                 jp      short loc_10249A2C
+  .text:102499BA                 movss   xmm0, dword ptr [edi+0B5Ch]
+  .text:102499C2                 ucomiss xmm0, xmm1
+  .text:102499C5                 lahf
+  .text:102499C6                 test    ah, 44h
+  .text:102499C9                 jp      short loc_10249A2C
+  .text:102499CB                 movss   xmm3, dword ptr [edi+0B48h]
+  .text:102499D3                 movss   xmm2, dword ptr [edi+0B4Ch]
+  .text:102499DB                 movaps  xmm0, xmm3
+  .text:102499DE                 addss   xmm0, dword ptr [esi+54h]
+  .text:102499E3                 movss   xmm1, dword ptr [edi+0B50h]
+  .text:102499EB                 mov     [ebp+var_48], 0
+  .text:102499F2                 movss   [ebp+mins], xmm0
+  .text:102499F7                 movaps  xmm0, xmm2
+  .text:102499FA                 addss   xmm0, dword ptr [esi+58h]
+  .text:102499FF                 movss   [ebp+var_C], xmm0
+  .text:10249A04                 movaps  xmm0, xmm1
+  .text:10249A07                 addss   xmm0, dword ptr [esi+5Ch]
+  .text:10249A0C                 movss   [ebp+var_8], xmm0
+  .text:10249A11                 addss   xmm3, dword ptr [esi+60h]
+  .text:10249A16                 movss   [ebp+maxs], xmm3
+  .text:10249A1B                 addss   xmm2, dword ptr [esi+64h]
+  .text:10249A20                 movss   [ebp+var_18], xmm2
+  .text:10249A25                 addss   xmm1, dword ptr [esi+68h]
+  .text:10249A2A                 jmp     short loc_10249A8B
+  .text:10249A2C                 movss   xmm1, dword ptr [edi+0B48h]
+  .text:10249A34                 movaps  xmm0, xmm1
+  .text:10249A37                 mov     [ebp+var_48], 1
+  .text:10249A3E                 subss   xmm0, dword ptr [esi+6Ch]
+  .text:10249A43                 movss   [ebp+mins], xmm0
+  .text:10249A48                 addss   xmm1, dword ptr [esi+6Ch]
+  .text:10249A4D                 movss   [ebp+maxs], xmm1
+  .text:10249A52                 movss   xmm1, dword ptr [edi+0B4Ch]
+  .text:10249A5A                 movaps  xmm0, xmm1
+  .text:10249A5D                 subss   xmm0, dword ptr [esi+6Ch]
+  .text:10249A62                 movss   [ebp+var_C], xmm0
+  .text:10249A67                 addss   xmm1, dword ptr [esi+6Ch]
+  .text:10249A6C                 movss   [ebp+var_18], xmm1
+  .text:10249A71                 movss   xmm1, dword ptr [edi+0B50h]
+  .text:10249A79                 movaps  xmm0, xmm1
+  .text:10249A7C                 subss   xmm0, dword ptr [esi+6Ch]
+  .text:10249A81                 movss   [ebp+var_8], xmm0
+  .text:10249A86                 addss   xmm1, dword ptr [esi+6Ch]
+  .text:10249A8B                 lea     eax, [ebp+maxs]
+  .text:10249A8E                 movss   [ebp+var_14], xmm1
+  .text:10249A93                 ; maxs
+  .text:10249A93                 push    eax; maxs
+  .text:10249A94                 lea     eax, [ebp+mins]
+  .text:10249A97                 ; mins
+  .text:10249A97                 push    eax; mins
+  .text:10249A98                 call    R_CullBox
+  .text:10249A9D                 add     esp, 8
+  .text:10249AA0                 test    eax, eax
+  .text:10249AA2                 jnz     loc_10249FCB
+  .text:10249AA8                 sub     esp, 0Ch
+  .text:10249AAB                 mov     [esp+70h+var_68], 3F800000h
+  .text:10249AB3                 mov     [esp+70h+var_6C], 3F800000h
+  .text:10249ABB                 mov     [esp+70h+var_70], 3F800000h
+  .text:10249AC2                 call    dword_109B37D0
+  .text:10249AC8                 ; count
+  .text:10249AC8                 push    100h; count
+  .text:10249ACD                 ; fill
+  .text:10249ACD                 push    0; fill
+  .text:10249ACF                 ; dest
+  .text:10249ACF                 push    offset dword_10DC3B40; dest
+  .text:10249AD4                 call    Q_memset
+  .text:10249AD9                 movss   xmm0, dword ptr xmmword_10DC6390
+  .text:10249AE1                 add     esp, 0Ch
+  .text:10249AE4                 cmp     [ebp+var_48], 0
+  .text:10249AE8                 subss   xmm0, dword ptr [edi+0B48h]
+  .text:10249AF0                 movss   [ebp+var_54], xmm0
+  .text:10249AF5                 movss   dword ptr qword_10DC5630, xmm0
+  .text:10249AFD                 movss   xmm0, dword ptr xmmword_10DC6390+4
+  .text:10249B05                 subss   xmm0, dword ptr [edi+0B4Ch]
+  .text:10249B0D                 movss   [ebp+var_4C], xmm0
+  .text:10249B12                 movss   dword ptr qword_10DC5630+4, xmm0
+  .text:10249B1A                 movss   xmm0, dword ptr xmmword_10DC6390+8
+  .text:10249B22                 subss   xmm0, dword ptr [edi+0B50h]
+  .text:10249B2A                 movss   [ebp+var_58], xmm0
+  .text:10249B2F                 movss   dword_10DC5638, xmm0
+  .text:10249B37                 jz      loc_10249BEF
+  .text:10249B3D                 lea     eax, [ebp+var_40]
+  .text:10249B40                 push    eax
+  .text:10249B41                 lea     eax, [ebp+var_34]
+  .text:10249B44                 push    eax
+  .text:10249B45                 lea     eax, [ebp+var_28]
+  .text:10249B48                 push    eax
+  .text:10249B49                 lea     eax, [edi+0B54h]
+  .text:10249B4F                 push    eax
+  .text:10249B50                 call    sub_101D8870
+  .text:10249B55                 movss   xmm3, [ebp+var_4C]
+  .text:10249B5A                 add     esp, 10h
+  .text:10249B5D                 movss   xmm2, [ebp+var_54]
+  .text:10249B62                 movss   xmm1, [ebp+var_24]
+  .text:10249B67                 movss   xmm0, [ebp+var_28]
+  .text:10249B6C                 movss   xmm4, [ebp+var_58]
+  .text:10249B71                 mulss   xmm1, xmm3
+  .text:10249B75                 mulss   xmm0, xmm2
+  .text:10249B79                 addss   xmm1, xmm0
+  .text:10249B7D                 movss   xmm0, [ebp+var_20]
+  .text:10249B82                 mulss   xmm0, xmm4
+  .text:10249B86                 addss   xmm1, xmm0
+  .text:10249B8A                 movss   xmm0, [ebp+var_34]
+  .text:10249B8F                 mulss   xmm0, xmm2
+  .text:10249B93                 movss   dword ptr qword_10DC5630, xmm1
+  .text:10249B9B                 movss   xmm1, [ebp+var_30]
+  .text:10249BA0                 mulss   xmm1, xmm3
+  .text:10249BA4                 addss   xmm1, xmm0
+  .text:10249BA8                 movss   xmm0, [ebp+var_2C]
+  .text:10249BAD                 mulss   xmm0, xmm4
+  .text:10249BB1                 addss   xmm1, xmm0
+  .text:10249BB5                 movss   xmm0, [ebp+var_40]
+  .text:10249BBA                 mulss   xmm0, xmm2
+  .text:10249BBE                 xorps   xmm1, ds:xmmword_10307650
+  .text:10249BC5                 movss   dword ptr qword_10DC5630+4, xmm1
+  .text:10249BCD                 movss   xmm1, [ebp+var_3C]
+  .text:10249BD2                 mulss   xmm1, xmm3
+  .text:10249BD6                 addss   xmm1, xmm0
+  .text:10249BDA                 movss   xmm0, [ebp+var_38]
+  .text:10249BDF                 mulss   xmm0, xmm4
+  .text:10249BE3                 addss   xmm1, xmm0
+  .text:10249BE7                 movss   dword_10DC5638, xmm1
+  .text:10249BEF                 mov     eax, [esi+70h]
+  .text:10249BF2                 mov     edx, [ebp+var_44]
+  .text:10249BF5                 imul    esi, eax, 6Ch ; 'l'
+  .text:10249BF8                 add     esi, [edx+0B4h]
+  .text:10249BFE                 mov     [ebp+var_5C], esi
+  .text:10249C01                 test    eax, eax
+  .text:10249C03                 jz      loc_10249D0D
+  .text:10249C09                 movss   xmm0, dword_10322D4C
+  .text:10249C11                 xorps   xmm2, xmm2
+  .text:10249C14                 ucomiss xmm0, xmm2
+  .text:10249C17                 lahf
+  .text:10249C18                 test    ah, 44h
+  .text:10249C1B                 jp      loc_10249D0D
+  .text:10249C21                 mov     esi, [ebp+cleanUpShaderState]
+  .text:10249C24                 mov     ecx, 1
+  .text:10249C29                 mov     [ebp+var_48], ecx
+  .text:10249C2C                 mov     edi, offset unk_11254160
+  .text:10249C31                 nop     dword ptr [eax+00h]
+  .text:10249C35                 nop     word ptr [eax+eax+00000000h]
+  .text:10249C40                 movss   xmm1, dword ptr [edi+14h]
+  .text:10249C45                 movsd   xmm0, dbl_11282EF8
+  .text:10249C4D                 cvtps2pd xmm1, xmm1
+  .text:10249C50                 comisd  xmm0, xmm1
+  .text:10249C54                 ja      loc_10249CF3
+  .text:10249C5A                 movss   xmm0, dword ptr [edi+0Ch]
+  .text:10249C5F                 ucomiss xmm0, xmm2
+  .text:10249C62                 lahf
+  .text:10249C63                 test    ah, 44h
+  .text:10249C66                 jnp     loc_10249CF3
+  .text:10249C6C                 movss   xmm0, dword ptr [edi]
+  .text:10249C70                 movss   xmm2, dword ptr [edi+4]
+  .text:10249C75                 movss   xmm1, dword ptr [edi+8]
+  .text:10249C7A                 movss   [ebp+var_58], xmm0
+  .text:10249C7F                 subss   xmm0, dword ptr [esi+0B48h]
+  .text:10249C87                 movss   [ebp+var_54], xmm2
+  .text:10249C8C                 movss   [ebp+var_4C], xmm1
+  .text:10249C91                 movss   dword ptr [edi], xmm0
+  .text:10249C95                 movaps  xmm0, xmm2
+  .text:10249C98                 subss   xmm0, dword ptr [esi+0B4Ch]
+  .text:10249CA0                 movss   dword ptr [edi+4], xmm0
+  .text:10249CA5                 movaps  xmm0, xmm1
+  .text:10249CA8                 subss   xmm0, dword ptr [esi+0B50h]
+  .text:10249CB0                 movss   dword ptr [edi+8], xmm0
+  .text:10249CB5                 imul    eax, [edx+0D8h], 34h ; '4'
+  .text:10249CBC                 add     eax, [edx+0A4h]
+  .text:10249CC2                 push    eax
+  .text:10249CC3                 push    ecx
+  .text:10249CC4                 push    edi
+  .text:10249CC5                 call    sub_10241B10
+  .text:10249CCA                 movss   xmm0, [ebp+var_58]
+  .text:10249CCF                 add     esp, 0Ch
+  .text:10249CD2                 mov     ecx, [ebp+var_48]
+  .text:10249CD5                 xorps   xmm2, xmm2
+  .text:10249CD8                 mov     edx, [ebp+var_44]
+  .text:10249CDB                 movss   dword ptr [edi], xmm0
+  .text:10249CDF                 movss   xmm0, [ebp+var_54]
+  .text:10249CE4                 movss   dword ptr [edi+4], xmm0
+  .text:10249CE9                 movss   xmm0, [ebp+var_4C]
+  .text:10249CEE                 movss   dword ptr [edi+8], xmm0
+  .text:10249CF3                 add     edi, 28h ; '('
+  .text:10249CF6                 rol     ecx, 1
+  .text:10249CF8                 mov     [ebp+var_48], ecx
+  .text:10249CFB                 cmp     edi, offset dword_11254660
+  .text:10249D01                 jl      loc_10249C40
+  .text:10249D07                 mov     esi, [ebp+var_5C]
+  .text:10249D0A                 mov     edi, [ebp+cleanUpShaderState]
+  .text:10249D0D                 call    dword_109B34DC
+  .text:10249D13                 lea     eax, [edi+0B48h]
+  .text:10249D19                 push    edi
+  .text:10249D1A                 push    eax
+  .text:10249D1B                 call    sub_10244AF0
+  .text:10249D20                 movss   xmm0, dword_10322EEC
+  .text:10249D28                 add     esp, 8
+  .text:10249D2B                 xorps   xmm1, xmm1
+  .text:10249D2E                 ucomiss xmm0, xmm1
+  .text:10249D31                 lahf
+  .text:10249D32                 test    ah, 44h
+  .text:10249D35                 jp      short loc_10249D47
+  .text:10249D37                 mov     [ebp+cleanUpShaderState], 1
+  .text:10249D3E                 mov     [ebp+var_48], 1
+  .text:10249D45                 jmp     short loc_10249D55
+  .text:10249D47                 mov     [ebp+cleanUpShaderState], 0
+  .text:10249D4E                 mov     [ebp+var_48], 0
+  .text:10249D55                 push    edi
+  .text:10249D56                 call    sub_1024C2C0
+  .text:10249D5B                 mov     eax, [ebp+var_44]
+  .text:10249D5E                 add     esp, 4
+  .text:10249D61                 mov     [ebp+var_4C], 0
+  .text:10249D68                 cmp     dword ptr [eax+74h], 0
+  .text:10249D6C                 jle     loc_10249E31
+  .text:10249D72                 mov     edx, [esi+8]
+  .text:10249D75                 mov     ecx, [esi+4]
+  .text:10249D78                 and     edx, 10h
+  .text:10249D7B                 jz      short loc_10249DB1
+  .text:10249D7D                 cmp     byte ptr [ecx+10h], 2
+  .text:10249D81                 jz      short loc_10249D9E
+  .text:10249D83                 movss   xmm0, dword_10322CE8
+  .text:10249D8B                 xorps   xmm1, xmm1
+  .text:10249D8E                 ucomiss xmm0, xmm1
+  .text:10249D91                 lahf
+  .text:10249D92                 test    ah, 44h
+  .text:10249D95                 mov     eax, [ebp+var_44]
+  .text:10249D98                 jnp     loc_10249E1E
+  .text:10249D9E                 movss   xmm0, [ebp+var_8]
+  .text:10249DA3                 addss   xmm0, ds:dword_103064A8
+  .text:10249DAB                 comiss  xmm0, dword ptr [ecx+0Ch]
+  .text:10249DAF                 jnb     short loc_10249E1E
+  .text:10249DB1                 test    byte ptr [esi+8], 2
+  .text:10249DB5                 movss   xmm0, dword ptr qword_10DC5630
+  .text:10249DBD                 mulss   xmm0, dword ptr [ecx]
+  .text:10249DC1                 movss   xmm1, dword ptr [ecx+4]
+  .text:10249DC6                 mulss   xmm1, dword ptr qword_10DC5630+4
+  .text:10249DCE                 addss   xmm1, xmm0
+  .text:10249DD2                 movss   xmm0, dword ptr [ecx+8]
+  .text:10249DD7                 mulss   xmm0, dword_10DC5638
+  .text:10249DDF                 addss   xmm1, xmm0
+  .text:10249DE3                 subss   xmm1, dword ptr [ecx+0Ch]
+  .text:10249DE8                 cvtps2pd xmm0, xmm1
+  .text:10249DEB                 jz      loc_10249ED4
+  .text:10249DF1                 movsd   xmm1, ds:qword_102C1BE8
+  .text:10249DF9                 comisd  xmm1, xmm0
+  .text:10249DFD                 ja      loc_10249EE2
+  .text:10249E03                 test    edx, edx
+  .text:10249E05                 jz      short loc_10249E1E
+  .text:10249E07                 push    edi
+  .text:10249E08                 call    sub_1024C2C0
+  .text:10249E0D                 ; cleanUpShaderState
+  .text:10249E0D                 push    [ebp+cleanUpShaderState]; cleanUpShaderState
+  .text:10249E10                 ; face
+  .text:10249E10                 push    1; face
+  .text:10249E12                 ; surface
+  .text:10249E12                 push    esi; surface
+  .text:10249E13                 call    R_DrawSequentialPoly
+  .text:10249E18                 add     esp, 10h
+  .text:10249E1B                 mov     eax, [ebp+var_44]
+  .text:10249E1E                 mov     ecx, [ebp+var_4C]
+  .text:10249E21                 add     esi, 6Ch ; 'l'
+  .text:10249E24                 inc     ecx
+  .text:10249E25                 mov     [ebp+var_4C], ecx
+  .text:10249E28                 cmp     ecx, [eax+74h]
+  .text:10249E2B                 jl      loc_10249D72
+  .text:10249E31                 cmp     dword_109A68D8, 0
+  .text:10249E38                 jz      short loc_10249E55
+  .text:10249E3A                 cmp     dword_109A68D4, 0
+  .text:10249E41                 jz      short loc_10249E55
+  .text:10249E43                 push    0
+  .text:10249E45                 call    dword_109B326C
+  .text:10249E4B                 mov     dword_109A68D4, 0
+  .text:10249E55                 mov     eax, currententity
+  .text:10249E5A                 cmp     dword ptr [eax+2F8h], 0
+  .text:10249E61                 jz      short loc_10249E8B
+  .text:10249E63                 push    ecx
+  .text:10249E64                 mov     [esp+68h+var_68], 46040000h
+  .text:10249E6B                 push    2200h
+  .text:10249E70                 push    2300h
+  .text:10249E75                 call    dword_109B339C
+  .text:10249E7B                 push    0BE2h
+  .text:10249E80                 call    dword_109B3728
+  .text:10249E86                 mov     eax, currententity
+  .text:10249E8B                 cmp     dword_10322E30, 0
+  .text:10249E92                 jnz     short loc_10249EA1
+  .text:10249E94                 cmp     dword ptr [eax+2F8h], 1
+  .text:10249E9B                 jnz     loc_10249F94
+  .text:10249EA1                 cmp     dword ptr [eax+2F8h], 4
+  .text:10249EA8                 jz      loc_10249F39
+  .text:10249EAE                 push    0
+  .text:10249EB0                 call    sub_10249FE0
+  .text:10249EB5                 mov     eax, currententity
+  .text:10249EBA                 add     esp, 4
+  .text:10249EBD                 cmp     dword ptr [eax+2F8h], 0
+  .text:10249EC4                 jnz     loc_10249F94
+  .text:10249ECA                 call    sub_10247600
+  .text:10249ECF                 jmp     loc_10249F94
+  .text:10249ED4                 comisd  xmm0, ds:qword_103064B0
+  .text:10249EDC                 jbe     loc_10249E03
+  .text:10249EE2                 cmp     dword_10322E30, 0
+  .text:10249EE9                 jz      short loc_10249F1D
+  .text:10249EEB                 cmp     dword_109A68D8, 0
+  .text:10249EF2                 jz      short loc_10249F0F
+  .text:10249EF4                 cmp     dword_109A68D4, 0
+  .text:10249EFB                 jz      short loc_10249F0F
+  .text:10249EFD                 push    0
+  .text:10249EFF                 call    dword_109B326C
+  .text:10249F05                 mov     dword_109A68D4, 0
+  .text:10249F0F                 push    esi
+  .text:10249F10                 call    sub_1024BC10
+  .text:10249F15                 add     esp, 4
+  .text:10249F18                 jmp     loc_10249E1B
+  .text:10249F1D                 push    edi
+  .text:10249F1E                 call    sub_1024C2C0
+  .text:10249F23                 add     esp, 4
+  .text:10249F26                 ; cleanUpShaderState
+  .text:10249F26                 push    [ebp+var_48]; cleanUpShaderState
+  .text:10249F29                 ; face
+  .text:10249F29                 push    0; face
+  .text:10249F2B                 ; surface
+  .text:10249F2B                 push    esi; surface
+  .text:10249F2C                 call    R_DrawSequentialPoly
+  .text:10249F31                 add     esp, 0Ch
+  .text:10249F34                 jmp     loc_10249E1B
+  .text:10249F39                 movss   xmm0, dword_10322DB0
+  .text:10249F41                 xorps   xmm1, xmm1
+  .text:10249F44                 ucomiss xmm0, xmm1
+  .text:10249F47                 lahf
+  .text:10249F48                 test    ah, 44h
+  .text:10249F4B                 jnp     short loc_10249F94
+  .text:10249F4D                 push    202h
+  .text:10249F52                 call    dword_109B3734
+  .text:10249F58                 call    sub_10247600
+  .text:10249F5D                 movss   xmm0, dword_10323028
+  .text:10249F65                 xorps   xmm1, xmm1
+  .text:10249F68                 ucomiss xmm0, xmm1
+  .text:10249F6B                 lahf
+  .text:10249F6C                 test    ah, 44h
+  .text:10249F6F                 jnp     short loc_10249F89
+  .text:10249F71                 movss   xmm0, ds:dword_10306478
+  .text:10249F79                 comiss  xmm0, dword_109B3CD4
+  .text:10249F80                 ja      short loc_10249F89
+  .text:10249F82                 push    206h
+  .text:10249F87                 jmp     short loc_10249F8E
+  .text:10249F89                 push    203h
+  .text:10249F8E                 call    dword_109B3734
+  .text:10249F94                 call    dword_109B34F0
+  .text:10249F9A                 push    1
+  .text:10249F9C                 call    dword_109B3730
+  .text:10249FA2                 push    0BC0h
+  .text:10249FA7                 call    dword_109B3728
+  .text:10249FAD                 push    ecx
+  .text:10249FAE                 mov     [esp+68h+var_68], 0
+  .text:10249FB5                 push    205h
+  .text:10249FBA                 call    dword_109B3820
+  .text:10249FC0                 push    0BE2h
+  .text:10249FC5                 call    dword_109B3728
+  .text:10249FCB                 mov     ecx, [ebp+var_4]
+  .text:10249FCE                 pop     edi
+  .text:10249FCF                 ; StackCookie
+  .text:10249FCF                 xor     ecx, ebp; StackCookie
+  .text:10249FD1                 pop     esi
+  .text:10249FD2                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10249FD7                 mov     esp, ebp
+  .text:10249FD9                 pop     ebp
+  .text:10249FDA                 retn
+procedure: |-
+  void __cdecl R_DrawBrushModel(void *entity)
+  {
+    char *v1; // edi
+    int v2; // esi
+    float v3; // xmm3_4
+    float v4; // xmm2_4
+    float v5; // xmm1_4
+    float v6; // xmm1_4
+    float v7; // xmm1_4
+    float v8; // xmm1_4
+    float v9; // xmm1_4
+    int v10; // eax
+    int v11; // edx
+    _DWORD *v12; // esi
+    int v13; // ecx
+    float *v14; // edi
+    int v15; // eax
+    int v16; // ecx
+    double v17; // xmm0_8
+    studio_merge_entity_partial *v18; // eax
+    float v19; // [esp+40h] [ebp-58h]
+    float v20; // [esp+40h] [ebp-58h]
+    float v21; // [esp+44h] [ebp-54h]
+    float v22; // [esp+44h] [ebp-54h]
+    int cleanUpShaderState; // [esp+48h] [ebp-50h]
+    float v24; // [esp+4Ch] [ebp-4Ch]
+    float v25; // [esp+4Ch] [ebp-4Ch]
+    int i; // [esp+4Ch] [ebp-4Ch]
+    int v27; // [esp+50h] [ebp-48h]
+    int v28; // [esp+50h] [ebp-48h]
+    int v29; // [esp+50h] [ebp-48h]
+    int v30; // [esp+54h] [ebp-44h]
+    float v31[3]; // [esp+58h] [ebp-40h] BYREF
+    float v32[3]; // [esp+64h] [ebp-34h] BYREF
+    float v33[3]; // [esp+70h] [ebp-28h] BYREF
+    float maxs; // [esp+7Ch] [ebp-1Ch] BYREF
+    float v35; // [esp+80h] [ebp-18h]
+    float v36; // [esp+84h] [ebp-14h]
+    float mins; // [esp+88h] [ebp-10h] BYREF
+    float v38; // [esp+8Ch] [ebp-Ch]
+    float v39; // [esp+90h] [ebp-8h]
+
+    v1 = (char *)entity;
+    currententity = (studio_merge_entity_partial *)entity;
+    dword_10322B6C = -1;
+    v2 = *((_DWORD *)entity + 741);
+    v30 = v2;
+    if ( *((float *)entity + 725) == 0.0 && *((float *)entity + 726) == 0.0 && *((float *)entity + 727) == 0.0 )
+    {
+      v3 = *((float *)entity + 722);
+      v4 = *((float *)entity + 723);
+      v5 = *((float *)entity + 724);
+      v27 = 0;
+      mins = v3 + *(float *)(v2 + 84);
+      v38 = v4 + *(float *)(v2 + 88);
+      v39 = v5 + *(float *)(v2 + 92);
+      maxs = v3 + *(float *)(v2 + 96);
+      v35 = v4 + *(float *)(v2 + 100);
+      v6 = v5 + *(float *)(v2 + 104);
+    }
+    else
+    {
+      v7 = *((float *)entity + 722);
+      v27 = 1;
+      mins = v7 - *(float *)(v2 + 108);
+      maxs = v7 + *(float *)(v2 + 108);
+      v8 = *((float *)entity + 723);
+      v38 = v8 - *(float *)(v2 + 108);
+      v35 = v8 + *(float *)(v2 + 108);
+      v9 = *((float *)entity + 724);
+      v39 = v9 - *(float *)(v2 + 108);
+      v6 = v9 + *(float *)(v2 + 108);
+    }
+    v36 = v6;
+    if ( !R_CullBox(&mins, &maxs) )
+    {
+      dword_109B37D0(1065353216, 1065353216, 1065353216);
+      Q_memset(dword_10DC3B40, 0, 256);
+      v21 = *(float *)&xmmword_10DC6390 - *((float *)entity + 722);
+      *(float *)&qword_10DC5630 = v21;
+      v24 = *((float *)&xmmword_10DC6390 + 1) - *((float *)entity + 723);
+      *((float *)&qword_10DC5630 + 1) = v24;
+      v19 = *((float *)&xmmword_10DC6390 + 2) - *((float *)entity + 724);
+      *(float *)&dword_10DC5638 = v19;
+      if ( v27 )
+      {
+        sub_101D8870((char *)entity + 2900, v33, v32, v31);
+        *(float *)&qword_10DC5630 = (float)((float)(v33[1] * v24) + (float)(v33[0] * v21)) + (float)(v33[2] * v19);
+        *((float *)&qword_10DC5630 + 1) = -(float)((float)((float)(v32[1] * v24) + (float)(v32[0] * v21))
+                                                 + (float)(v32[2] * v19));
+        *(float *)&dword_10DC5638 = (float)((float)(v31[1] * v24) + (float)(v31[0] * v21)) + (float)(v31[2] * v19);
+      }
+      v10 = *(_DWORD *)(v2 + 112);
+      v11 = v2;
+      v12 = (_DWORD *)(*(_DWORD *)(v2 + 180) + 108 * v10);
+      if ( v10 && *(float *)&dword_10322D4C == 0.0 )
+      {
+        v13 = 1;
+        v28 = 1;
+        v14 = (float *)&unk_11254160;
+        do
+        {
+          if ( dbl_11282EF8 <= v14[5] && v14[3] != 0.0 )
+          {
+            v20 = *v14;
+            v22 = v14[1];
+            v25 = v14[2];
+            *v14 = *v14 - *((float *)entity + 722);
+            v14[1] = v22 - *((float *)entity + 723);
+            v14[2] = v25 - *((float *)entity + 724);
+            sub_10241B10(v14, v13, *(_DWORD *)(v11 + 164) + 52 * *(_DWORD *)(v11 + 216));
+            v13 = v28;
+            v11 = v30;
+            *v14 = v20;
+            v14[1] = v22;
+            v14[2] = v25;
+          }
+          v14 += 10;
+          v13 = __ROL4__(v13, 1);
+          v28 = v13;
+        }
+        while ( (int)v14 < (int)&dword_11254660 );
+        v1 = (char *)entity;
+      }
+      dword_109B34DC();
+      sub_10244AF0(v1 + 2888, v1);
+      if ( *(float *)&dword_10322EEC == 0.0 )
+      {
+        cleanUpShaderState = 1;
+        v29 = 1;
+      }
+      else
+      {
+        cleanUpShaderState = 0;
+        v29 = 0;
+      }
+      sub_1024C2C0(v1);
+      v15 = v30;
+      for ( i = 0; i < *(_DWORD *)(v15 + 116); ++i )
+      {
+        v16 = v12[1];
+        if ( (v12[2] & 0x10) != 0 )
+        {
+          if ( *(_BYTE *)(v16 + 16) != 2 )
+          {
+            v15 = v30;
+            if ( *(float *)&dword_10322CE8 == 0.0 )
+              goto LABEL_30;
+          }
+          if ( (float)(v39 + 1.0) >= *(float *)(v16 + 12) )
+            goto LABEL_30;
+        }
+        v17 = (float)((float)((float)((float)(*(float *)(v16 + 4) * *((float *)&qword_10DC5630 + 1))
+                                    + (float)(*(float *)&qword_10DC5630 * *(float *)v16))
+                            + (float)(*(float *)(v16 + 8) * *(float *)&dword_10DC5638))
+                    - *(float *)(v16 + 12));
+        if ( (v12[2] & 2) != 0 )
+        {
+          if ( v17 < -0.01 )
+            goto LABEL_42;
+        }
+        else if ( v17 > 0.01 )
+        {
+  LABEL_42:
+          if ( dword_10322E30 )
+          {
+            if ( dword_109A68D8 && dword_109A68D4 )
+            {
+              dword_109B326C(0);
+              dword_109A68D4 = 0;
+            }
+            sub_1024BC10((int)v12);
+          }
+          else
+          {
+            sub_1024C2C0(v1);
+            R_DrawSequentialPoly(v12, 0, v29);
+          }
+          goto LABEL_29;
+        }
+        if ( (v12[2] & 0x10) != 0 )
+        {
+          sub_1024C2C0(v1);
+          R_DrawSequentialPoly(v12, 1, cleanUpShaderState);
+  LABEL_29:
+          v15 = v30;
+        }
+  LABEL_30:
+        v12 += 27;
+      }
+      if ( dword_109A68D8 && dword_109A68D4 )
+      {
+        dword_109B326C(0);
+        dword_109A68D4 = 0;
+      }
+      v18 = currententity;
+      if ( *(_DWORD *)&currententity->before_renderfx[24] )
+      {
+        dword_109B339C(8960, 8704, 1174667264);
+        dword_109B3728(3042);
+        v18 = currententity;
+      }
+      if ( dword_10322E30 || *(_DWORD *)&v18->before_renderfx[24] == 1 )
+      {
+        if ( *(_DWORD *)&v18->before_renderfx[24] == 4 )
+        {
+          if ( *(float *)&dword_10322DB0 != 0.0 )
+          {
+            dword_109B3734(514);
+            sub_10247600();
+            if ( *(float *)&dword_10323028 == 0.0 || *(float *)&dword_109B3CD4 < 0.5 )
+              dword_109B3734(515);
+            else
+              dword_109B3734(518);
+          }
+        }
+        else
+        {
+          sub_10249FE0(0);
+          if ( !*(_DWORD *)&currententity->before_renderfx[24] )
+            sub_10247600();
+        }
+      }
+      dword_109B34F0();
+      dword_109B3730(1);
+      dword_109B3728(3008);
+      dword_109B3820(517, 0);
+      dword_109B3728(3042);
+    }
+  }

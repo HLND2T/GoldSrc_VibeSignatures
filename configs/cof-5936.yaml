@@ -155,6 +155,32 @@ modules:
       - name: find-R_RenderView
         expected_output:
           - R_RenderView.{platform}.yaml
+      - name: find-R_RenderScene-decompiles
+        expected_input:
+          - R_RenderView.{platform}.yaml
+        expected_output:
+          - R_RenderScene.{platform}.yaml
+      - name: find-R_DrawBrushModel-decompiles
+        expected_input:
+          - R_DrawTEntitiesOnList.{platform}.yaml
+        expected_output:
+          - R_DrawBrushModel.{platform}.yaml
+      - name: find-R_DrawSequentialPoly-decompiles
+        expected_input:
+          - R_DrawBrushModel.{platform}.yaml
+        expected_output:
+          - R_DrawSequentialPoly.{platform}.yaml
+      - name: find-R_DrawWorld-R_MarkLeaves-decompiles
+        expected_input:
+          - R_RenderScene.{platform}.yaml
+        expected_output:
+          - R_DrawWorld.{platform}.yaml
+          - R_MarkLeaves.{platform}.yaml
+      - name: find-R_RecursiveWorldNode-decompiles
+        expected_input:
+          - R_DrawWorld.{platform}.yaml
+        expected_output:
+          - R_RecursiveWorldNode.{platform}.yaml
       - name: find-SV_SendServerinfo
         expected_output:
           - SV_SendServerinfo.{platform}.yaml
@@ -615,6 +641,18 @@ modules:
       - name: cl_worldmodel
         category: gv
       - name: R_RenderView
+        category: func
+      - name: R_RenderScene
+        category: func
+      - name: R_DrawBrushModel
+        category: func
+      - name: R_DrawSequentialPoly
+        category: func
+      - name: R_DrawWorld
+        category: func
+      - name: R_MarkLeaves
+        category: func
+      - name: R_RecursiveWorldNode
         category: func
       - name: SV_SendServerinfo
         category: func
