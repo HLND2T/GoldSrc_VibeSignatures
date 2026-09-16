@@ -51,8 +51,15 @@ downloads:
     appid: 100
     manifests:
       "101": "8145292884440584734" # DepotDownloader -app 100 -depot 101 -manifest 8145292884440584734 -all-platforms -dir depots/Condition-Zero-Deleted-Scenes-10210 [-username XXX] [-password XXX] [-remember-password]
+  - tag: "svencoop-8948"
+    name: Sven Co-op buildnum 8948 # Sven Co-op 5.25
+    basepath: Sven-Coop-8948
+    appid: 225840
+    manifests:
+      "225842": "4348064197401485554" # DepotDownloader -app 225840 -depot 225842 -manifest 4348064197401485554 -all-platforms -dir depots/Sven-Coop-8948 [-username XXX] [-password XXX] [-remember-password]
+      "225843": "465327562389906137" # DepotDownloader -app 225840 -depot 225843 -manifest 465327562389906137 -all-platforms -dir depots/Sven-Coop-8948 [-username XXX] [-password XXX] [-remember-password]
   - tag: "svencoop-10257"
-    name: Sven Co-op buildnum 10257
+    name: Sven Co-op buildnum 10257 # Sven Co-op 5.26
     basepath: Sven-Coop-10257
     appid: 225840
     manifests:
