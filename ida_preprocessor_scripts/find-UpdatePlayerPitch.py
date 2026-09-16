@@ -33,7 +33,9 @@ from ida_preprocessor_scripts._portal_layout_ida import run_layout_walk
 NAME = "UpdatePlayerPitch"
 PREDECESSOR = "GameStudioRenderer_StudioDrawPlayer"
 
-WALK = inspect.getsource(_pitch_store_predicate) + """
+WALK = (
+    inspect.getsource(_pitch_store_predicate)
+    + """
 
 candidates = {}
 for target in sorted(callees(values['studio_draw_player'])):
@@ -48,6 +50,7 @@ if len(candidates) != 1:
                      % sorted(hex(target) for target in candidates))
 result = {'target': next(iter(candidates))}
 """
+)
 
 
 async def preprocess_skill(

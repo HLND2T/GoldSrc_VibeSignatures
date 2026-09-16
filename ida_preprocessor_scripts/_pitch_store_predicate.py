@@ -9,8 +9,7 @@ PITCH_FIELD_DISPS = (0xB54, 0x2CC, 0x178, 0xB28)
 # Only SSE scalar stores and x87 FST/FSTP carry float semantics; an integer
 # mov to a pitch-field displacement must not satisfy the store quad.
 FLOAT_STORES = ("movss", "movsd", "fst", "fstp")
-COMPARISONS = ("comiss", "ucomiss", "fcom", "fcomp", "fucom", "fucomp",
-               "fucomi", "fucomip", "fcomip", "fcompp")
+COMPARISONS = ("comiss", "ucomiss", "fcom", "fcomp", "fucom", "fucomp", "fucomi", "fucomip", "fcomip", "fcompp")
 # 'div' is the integer divide and 'fidiv' divides by an integer memory
 # operand; neither proves the float division of the clamp arithmetic.
 FLOAT_DIVISIONS = ("divss", "divsd", "fdiv", "fdivp", "fdivr")
@@ -19,15 +18,9 @@ FLOAT_DIVISIONS = ("divss", "divsd", "fdiv", "fdivp", "fdivr")
 def is_update_player_pitch_insns(insns):
     """Accept only the clamp-then-store quad over the four cl_entity_t pitch fields."""
     pitch_stores = [
-        (insn, w)
-        for insn in insns
-        for w in insn.get("memory_writes", ())
-        if w.get("disp") in PITCH_FIELD_DISPS
+        (insn, w) for insn in insns for w in insn.get("memory_writes", ()) if w.get("disp") in PITCH_FIELD_DISPS
     ]
-    if any(
-        insn["mnemonic"] not in FLOAT_STORES or w["size"] not in (4, 8)
-        for insn, w in pitch_stores
-    ):
+    if any(insn["mnemonic"] not in FLOAT_STORES or w["size"] not in (4, 8) for insn, w in pitch_stores):
         return False
     if len(pitch_stores) != len(PITCH_FIELD_DISPS):
         return False
