@@ -36,15 +36,15 @@ disasm_code: |-
   .text:01D578C6                 call    Q_memset
   .text:01D578CB                 fld     flt_3F93430
   .text:01D578D1                 mov     eax, input
-  .text:01D578D6                 fstp    flt_3F94138
+  .text:01D578D6                 fstp    modelorg
   .text:01D578DC                 fld     flt_3F93434
-  .text:01D578E2                 fstp    flt_3F9413C
+  .text:01D578E2                 fstp    modelorg+4
   .text:01D578E8                 fld     flt_3F93438
   .text:01D578EE                 mov     [esp+0BC8h+var_28], eax
   .text:01D578F5                 lea     eax, [esp+0BC8h+dest]
   .text:01D578F9                 mov     dword_3F94150, eax
   .text:01D578FE                 movzx   eax, byte ptr dword_8046B24
-  .text:01D57905                 fstp    flt_3F94140
+  .text:01D57905                 fstp    modelorg+8
   .text:01D5790B                 fld1
   .text:01D5790D                 mov     [esp+0BC8h+var_8BC], al
   .text:01D57914                 movzx   eax, byte ptr dword_8046B28
@@ -235,11 +235,11 @@ procedure: |-
       glPolygonOffset(1.0, 1.0);
     }
     Q_memset(dest, 0, 0xBB8u);
-    flt_3F94138 = flt_3F93430;
-    flt_3F9413C = flt_3F93434;
+    modelorg[0] = flt_3F93430;
+    modelorg[1] = flt_3F93434;
     v10 = input;
     dword_3F94150 = dest;
-    flt_3F94140 = flt_3F93438;
+    modelorg[2] = flt_3F93438;
     dest[768] = dword_8046B24;
     dest[769] = dword_8046B28;
     dword_1EE0278 = -1;

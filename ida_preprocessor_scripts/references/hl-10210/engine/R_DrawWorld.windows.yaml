@@ -21,17 +21,17 @@ disasm_code: |-
   .text:1024ACC6                 lea     eax, [ebp+dest]
   .text:1024ACCC                 mov     currententity, eax
   .text:1024ACD1                 mov     al, byte ptr dword_109B3BF0
-  .text:1024ACD6                 movss   dword ptr qword_10DC5630, xmm0
+  .text:1024ACD6                 movss   dword ptr modelorg, xmm0
   .text:1024ACDE                 movss   xmm0, dword ptr xmmword_10DC6390+4
   .text:1024ACE6                 mov     [ebp+var_8BC], al
   .text:1024ACEC                 mov     al, byte ptr dword_109B3BF4
-  .text:1024ACF1                 movss   dword ptr qword_10DC5630+4, xmm0
+  .text:1024ACF1                 movss   dword ptr modelorg+4, xmm0
   .text:1024ACF9                 movss   xmm0, dword ptr xmmword_10DC6390+8
   .text:1024AD01                 mov     [ebp+var_8BB], al
   .text:1024AD07                 mov     al, byte ptr dword_109B3BF8
   .text:1024AD0C                 mov     [esp+0BCCh+var_BC4], 3F800000h
   .text:1024AD14                 mov     [esp+0BCCh+var_BC8], 3F800000h
-  .text:1024AD1C                 movss   dword_10DC5638, xmm0
+  .text:1024AD1C                 movss   modelorg+8, xmm0
   .text:1024AD24                 mov     dword_10322B6C, 0FFFFFFFFh
   .text:1024AD2E                 mov     [ebp+var_8BA], al
   .text:1024AD34                 mov     [esp+0BCCh+var_BCC], 3F800000h
@@ -273,10 +273,10 @@ procedure: |-
     Q_memset(dest, 0, 3000);
     v10 = cl_worldmodel;
     currententity = (studio_merge_entity_partial *)dest;
-    qword_10DC5630 = xmmword_10DC6390;
+    qword_10DC5630 = xmmword_10DC6390; // modelorg[0..1] = r_refdef.vieworg[0..1]
     dest[768] = dword_109B3BF0;
     dest[769] = dword_109B3BF4;
-    dword_10DC5638 = DWORD2(xmmword_10DC6390);
+    dword_10DC5638 = DWORD2(xmmword_10DC6390); // modelorg[2] = r_refdef.vieworg[2]
     dword_10322B6C = -1;
     dest[770] = dword_109B3BF8;
     dword_109B37D0(1065353216, 1065353216, 1065353216);

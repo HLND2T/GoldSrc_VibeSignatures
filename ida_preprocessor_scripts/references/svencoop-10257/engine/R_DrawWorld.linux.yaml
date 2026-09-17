@@ -33,7 +33,7 @@ disasm_code: |-
   .text:001532F6                 movss   xmm1, dword ptr [edx+14h]
   .text:001532FB                 movss   xmm2, dword ptr [edx+18h]
   .text:00153300                 mov     [esp+0BFCh+var_40], eax
-  .text:00153307                 lea     eax, (unk_30F6F88 - 2EE000h)[ebx]
+  .text:00153307                 lea     eax, (modelorg - 2EE000h)[ebx]
   .text:0015330D                 fld1
   .text:0015330F                 movss   dword ptr [eax], xmm0
   .text:00153313                 movss   dword ptr [eax+4], xmm1
@@ -169,9 +169,9 @@ procedure: |-
     }
     Q_memset(dest, 0, 0xBB8u);
     v1 = dword_1BD9A4C;
-    unk_30F6F88 = LODWORD(flt_30F6D50);
-    unk_30F6F8C = LODWORD(flt_30F6D54);
-    unk_30F6F90 = LODWORD(flt_30F6D58);
+    modelorg[0] = LODWORD(flt_30F6D50);
+    modelorg[1] = LODWORD(flt_30F6D54);
+    modelorg[2] = LODWORD(flt_30F6D58);
     dword_30F6F78 = (int)dest;
     unk_2F1B78 = -1;
     dest[768] = dword_34F820C;
