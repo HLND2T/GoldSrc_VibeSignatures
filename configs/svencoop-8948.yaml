@@ -579,6 +579,11 @@ modules:
       - name: find-R_DrawParticles
         expected_output:
           - R_DrawParticles.{platform}.yaml
+      - name: find-active_particles
+        expected_input:
+          - R_DrawParticles.{platform}.yaml
+        expected_output:
+          - active_particles.{platform}.yaml
       - name: find-R_DrawParticles-calls
         expected_input:
           - R_DrawParticles.{platform}.yaml
@@ -925,6 +930,8 @@ modules:
         category: func
       - name: R_DrawParticles
         category: func
+      - name: active_particles
+        category: gv
       - name: R_FreeDeadParticles
         category: func
       - name: R_TracerDraw

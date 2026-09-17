@@ -1,0 +1,5 @@
+patch_name: texture_extension_number_mov_site_LoadTransPic_increment
+patch_va: '0x1d4ac7f'
+patch_rva: '0x4ac7f'
+patch_sig: A1 ?? ?? ?? ?? B9 ?? ?? ?? ?? 55
+patch_sig_disp: '0x0'

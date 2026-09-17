@@ -1,0 +1,5 @@
+patch_name: texture_extension_number_mov_site_R_InitParticleTexture
+patch_va: '0x1d470c0'
+patch_rva: '0x470c0'
+patch_sig: A1 ?? ?? ?? ?? 81 EC ?? ?? ?? ?? 8B C8
+patch_sig_disp: '0x0'
