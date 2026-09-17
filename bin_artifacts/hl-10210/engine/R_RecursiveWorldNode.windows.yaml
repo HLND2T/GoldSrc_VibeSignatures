@@ -1,0 +1,5 @@
+func_name: R_RecursiveWorldNode
+func_va: '0x1024b9b0'
+func_rva: '0x24b9b0'
+func_size: '0x23f'
+func_sig: 55 8B EC 83 EC 08 53 8B 5D ?? 83 3B FE 0F 84 ?? ?? ?? ?? 56 57 66 66 66 0F 1F 84 00 ?? ?? ?? ?? 8B 43 ??

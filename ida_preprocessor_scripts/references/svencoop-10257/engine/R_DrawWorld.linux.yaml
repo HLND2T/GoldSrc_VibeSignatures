@@ -1,0 +1,201 @@
+func_name: "R_DrawWorld"
+func_va: "0x153290"
+disasm_code: |-
+  .text:00153290                 push    ebp
+  .text:00153291                 push    edi
+  .text:00153292                 push    esi
+  .text:00153293                 push    ebx
+  .text:00153294                 call    sub_56390
+  .text:00153299                 add     ebx, (offset dbl_2EE000 - $)
+  .text:0015329F                 sub     esp, 0BECh
+  .text:001532A5                 fldz
+  .text:001532A7                 fst     [esp+0BFCh+var_BE0]
+  .text:001532AB                 lea     esi, (off_2F3768 - 2EE000h)[ebx]; "gl_wireframe"
+  .text:001532B1                 fld     dword ptr [esi+0Ch]
+  .text:001532B4                 fucomip st, st(1)
+  .text:001532B6                 fstp    st
+  .text:001532B8                 jp      loc_1533E0
+  .text:001532BE                 jnz     loc_1533E0
+  .text:001532C4                 mov     eax, 0BB8h
+  .text:001532C9                 lea     edi, [esp+0BFCh+dest]
+  .text:001532CD                 ; count
+  .text:001532CD                 mov     [esp+0BFCh+blue], eax; count
+  .text:001532D1                 xor     eax, eax
+  .text:001532D3                 ; c
+  .text:001532D3                 mov     [esp+0BFCh+green], eax; c
+  .text:001532D7                 ; dest
+  .text:001532D7                 mov     [esp+0BFCh+red], edi; dest
+  .text:001532DA                 call    Q_memset
+  .text:001532DF                 lea     ebp, (dword_15D7D60 - 2EE000h)[ebx]
+  .text:001532E5                 lea     edx, (dword_30F6D40 - 2EE000h)[ebx]
+  .text:001532EB                 mov     eax, ss:dword_601CEC[ebp]
+  .text:001532F1                 movss   xmm0, dword ptr [edx+10h]
+  .text:001532F6                 movss   xmm1, dword ptr [edx+14h]
+  .text:001532FB                 movss   xmm2, dword ptr [edx+18h]
+  .text:00153300                 mov     [esp+0BFCh+var_40], eax
+  .text:00153307                 lea     eax, (unk_30F6F88 - 2EE000h)[ebx]
+  .text:0015330D                 fld1
+  .text:0015330F                 movss   dword ptr [eax], xmm0
+  .text:00153313                 movss   dword ptr [eax+4], xmm1
+  .text:00153318                 movss   dword ptr [eax+8], xmm2
+  .text:0015331D                 lea     eax, (dword_30F6F78 - 2EE000h)[ebx]
+  .text:00153323                 mov     [eax], edi
+  .text:00153325                 lea     eax, (unk_2F1B78 - 2EE000h)[ebx]
+  .text:0015332B                 mov     dword ptr [eax], 0FFFFFFFFh
+  .text:00153331                 lea     eax, (dword_34F820C - 2EE000h)[ebx]
+  .text:00153337                 mov     edx, [eax]
+  .text:00153339                 mov     [esp+0BFCh+var_8D4], dl
+  .text:00153340                 mov     edx, [eax+4]
+  .text:00153343                 mov     eax, [eax+8]
+  .text:00153346                 ; blue
+  .text:00153346                 fst     [esp+0BFCh+blue]; blue
+  .text:0015334A                 ; green
+  .text:0015334A                 fst     [esp+0BFCh+green]; green
+  .text:0015334E                 ; red
+  .text:0015334E                 fstp    [esp+0BFCh+red]; red
+  .text:00153351                 mov     [esp+0BFCh+var_8D3], dl
+  .text:00153358                 mov     [esp+0BFCh+var_8D2], al
+  .text:0015335F                 call    _glColor3f
+  .text:00153364                 mov     eax, 1000h
+  .text:00153369                 ; count
+  .text:00153369                 mov     [esp+0BFCh+blue], eax; count
+  .text:0015336D                 xor     eax, eax
+  .text:0015336F                 ; c
+  .text:0015336F                 mov     [esp+0BFCh+green], eax; c
+  .text:00153373                 lea     eax, (dword_7984680 - 2EE000h)[ebx]
+  .text:00153379                 ; dest
+  .text:00153379                 mov     [esp+0BFCh+red], eax; dest
+  .text:0015337C                 call    Q_memset
+  .text:00153381                 call    sub_14A720
+  .text:00153386                 lea     edi, (dword_2F3750 - 2EE000h)[ebx]
+  .text:0015338C                 mov     eax, [edi]
+  .text:0015338E                 test    eax, eax
+  .text:00153390                 jz      loc_153490
+  .text:00153396                 mov     eax, ss:dword_601CEC[ebp]
+  .text:0015339C                 xor     ecx, ecx
+  .text:0015339E                 xor     ebp, ebp
+  .text:001533A0                 mov     ds:(dword_79A9840 - 2EE000h)[ebx], ecx
+  .text:001533A6                 mov     eax, [eax+0A4h]
+  .text:001533AC                 ; node
+  .text:001533AC                 mov     [esp+0BFCh+red], eax; node
+  .text:001533AF                 call    R_RecursiveWorldNode
+  .text:001533B4                 mov     ds:(dword_79A9840 - 2EE000h)[ebx], ebp
+  .text:001533BA                 call    sub_14DA30
+  .text:001533BF                 call    sub_166C70
+  .text:001533C4                 call    sub_108D60
+  .text:001533C9                 test    eax, eax
+  .text:001533CB                 jz      short loc_153420
+  .text:001533CD                 add     esp, 0BECh
+  .text:001533D3                 pop     ebx
+  .text:001533D4                 pop     esi
+  .text:001533D5                 pop     edi
+  .text:001533D6                 pop     ebp
+  .text:001533D7                 retn
+  .text:001533E0                 lea     eax, (flt_38FF658 - 2EE000h)[ebx]
+  .text:001533E6                 mov     [esp+0BFCh+green], eax
+  .text:001533EA                 lea     eax, (off_2F3754 - 2EE000h)[ebx]; "gl_wireframecolor"
+  .text:001533F0                 mov     [esp+0BFCh+red], eax
+  .text:001533F3                 call    sub_654A0
+  .text:001533F8                 ; cap
+  .text:001533F8                 mov     [esp+0BFCh+red], 8037h; cap
+  .text:001533FF                 call    _glEnable
+  .text:00153404                 fld1
+  .text:00153406                 fst     ds:(flt_38FF654 - 2EE000h)[ebx]
+  .text:0015340C                 ; units
+  .text:0015340C                 fst     [esp+0BFCh+green]; units
+  .text:00153410                 ; factor
+  .text:00153410                 fstp    [esp+0BFCh+red]; factor
+  .text:00153413                 call    _glPolygonOffset
+  .text:00153418                 jmp     loc_1532C4
+  .text:00153420                 call    sub_151CD0
+  .text:00153425                 lea     eax, (dword_79DFD74 - 2EE000h)[ebx]
+  .text:0015342B                 mov     edx, [eax]
+  .text:0015342D                 test    edx, edx
+  .text:0015342F                 jnz     short loc_153450
+  .text:00153431                 lea     eax, (off_2F3934 - 2EE000h)[ebx]; "r_fullbright"
+  .text:00153437                 fld     dword ptr [eax+0Ch]
+  .text:0015343A                 fldz
+  .text:0015343C                 fst     [esp+0BFCh+var_BE0]
+  .text:00153440                 fxch    st(1)
+  .text:00153442                 fucomip st, st(1)
+  .text:00153444                 fstp    st
+  .text:00153446                 jp      short loc_153450
+  .text:00153448                 jnz     short loc_153450
+  .text:0015344A                 mov     eax, [edi]
+  .text:0015344C                 test    eax, eax
+  .text:0015344E                 jnz     short loc_1534B8
+  .text:00153450                 fld     dword ptr [esi+0Ch]
+  .text:00153453                 fldz
+  .text:00153455                 fst     [esp+0BFCh+var_BE0]
+  .text:00153459                 fxch    st(1)
+  .text:0015345B                 fucomip st, st(1)
+  .text:0015345D                 fstp    st
+  .text:0015345F                 jp      short loc_153467
+  .text:00153461                 jz      loc_1533CD
+  .text:00153467                 ; cap
+  .text:00153467                 mov     [esp+0BFCh+red], 8037h; cap
+  .text:0015346E                 call    _glDisable
+  .text:00153473                 mov     ds:(flt_38FF654 - 2EE000h)[ebx], 0
+  .text:0015347D                 add     esp, 0BECh
+  .text:00153483                 pop     ebx
+  .text:00153484                 pop     esi
+  .text:00153485                 pop     edi
+  .text:00153486                 pop     ebp
+  .text:00153487                 retn
+  .text:00153490                 mov     eax, 2200h
+  .text:00153495                 ; param
+  .text:00153495                 mov     [esp+0BFCh+blue], 46040000h; param
+  .text:0015349D                 ; pname
+  .text:0015349D                 mov     [esp+0BFCh+green], eax; pname
+  .text:001534A1                 ; target
+  .text:001534A1                 mov     [esp+0BFCh+red], 2300h; target
+  .text:001534A8                 call    _glTexEnvf
+  .text:001534AD                 jmp     loc_153396
+  .text:001534B8                 call    start
+  .text:001534BD                 lea     esi, [esi+0]
+  .text:001534C0                 jmp     short loc_153450
+procedure: |-
+  void __cdecl R_DrawWorld()
+  {
+    _BYTE dest[2964]; // [esp+28h] [ebp-BD4h] BYREF
+    int v1; // [esp+BBCh] [ebp-40h]
+
+    if ( unk_2F3774 != 0.0 )
+    {
+      sub_654A0((int)off_2F3754, (int)&flt_38FF658);
+      glEnable(0x8037u);
+      flt_38FF654 = 1.0;
+      glPolygonOffset(1.0, 1.0);
+    }
+    Q_memset(dest, 0, 0xBB8u);
+    v1 = dword_1BD9A4C;
+    unk_30F6F88 = LODWORD(flt_30F6D50);
+    unk_30F6F8C = LODWORD(flt_30F6D54);
+    unk_30F6F90 = LODWORD(flt_30F6D58);
+    dword_30F6F78 = (int)dest;
+    unk_2F1B78 = -1;
+    dest[768] = dword_34F820C;
+    dest[769] = dword_34F8210;
+    dest[770] = dword_34F8214;
+    glColor3f(1.0, 1.0, 1.0);
+    Q_memset(dword_7984680, 0, 0x1000u);
+    sub_14A720();
+    if ( !dword_2F3750 )
+      glTexEnvf(0x2300u, 0x2200u, 8448.0);
+    dword_79A9840 = 0;
+    R_RecursiveWorldNode(*(void **)(dword_1BD9A4C + 164));
+    dword_79A9840 = 0;
+    sub_14DA30();
+    sub_166C70((unsigned int)&off_2F3768);
+    if ( !sub_108D60() )
+    {
+      sub_151CD0();
+      if ( !dword_79DFD74 && unk_2F3940 == 0.0 && dword_2F3750 )
+        start();
+      if ( unk_2F3774 != 0.0 )
+      {
+        glDisable(0x8037u);
+        flt_38FF654 = 0.0;
+      }
+    }
+  }

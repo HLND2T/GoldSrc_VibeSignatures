@@ -156,6 +156,57 @@ modules:
       - name: find-R_RenderView
         expected_output:
           - R_RenderView.{platform}.yaml
+      - name: find-R_DrawViewModel-decompiles
+        expected_input:
+          - R_RenderView.{platform}.yaml
+        expected_output:
+          - R_DrawViewModel.{platform}.yaml
+      - name: find-R_PolyBlend-decompiles
+        expected_input:
+          - R_RenderView.{platform}.yaml
+        expected_output:
+          - R_PolyBlend.{platform}.yaml
+      - name: find-V_FadeAlpha-decompiles
+        expected_input:
+          - R_PolyBlend.{platform}.yaml
+        expected_output:
+          - V_FadeAlpha.{platform}.yaml
+      - name: find-R_RenderScene-decompiles
+        expected_input:
+          - R_RenderView.{platform}.yaml
+        expected_output:
+          - R_RenderScene.{platform}.yaml
+      - name: find-R_RenderFinalFog-from-R_RenderScene-decompiles
+        expected_input:
+          - R_RenderScene.{platform}.yaml
+        expected_output:
+          - R_RenderFinalFog.{platform}.yaml
+      - name: find-R_SetupGL-from-R_RenderScene-decompiles
+        expected_input:
+          - R_RenderScene.{platform}.yaml
+        expected_output:
+          - R_SetupGL.{platform}.yaml
+      - name: find-R_DrawBrushModel-decompiles
+        expected_input:
+          - R_DrawTEntitiesOnList.{platform}.yaml
+        expected_output:
+          - R_DrawBrushModel.{platform}.yaml
+      - name: find-R_DrawSequentialPoly-decompiles
+        expected_input:
+          - R_DrawBrushModel.{platform}.yaml
+        expected_output:
+          - R_DrawSequentialPoly.{platform}.yaml
+      - name: find-R_DrawWorld-R_MarkLeaves-decompiles
+        expected_input:
+          - R_RenderScene.{platform}.yaml
+        expected_output:
+          - R_DrawWorld.{platform}.yaml
+          - R_MarkLeaves.{platform}.yaml
+      - name: find-R_RecursiveWorldNode-decompiles
+        expected_input:
+          - R_DrawWorld.{platform}.yaml
+        expected_output:
+          - R_RecursiveWorldNode.{platform}.yaml
       - name: find-SV_SendServerinfo
         expected_output:
           - SV_SendServerinfo.{platform}.yaml
@@ -427,6 +478,10 @@ modules:
       - name: find-Mod_LoadBrushModel
         expected_output:
           - Mod_LoadBrushModel.{platform}.yaml
+      - name: find-Mod_LoadSpriteFrame
+        platform: windows
+        expected_output:
+          - Mod_LoadSpriteFrame.{platform}.yaml
       - name: find-Mod_LoadSpriteModel
         expected_output:
           - Mod_LoadSpriteModel.{platform}.yaml
@@ -614,6 +669,28 @@ modules:
         category: gv
       - name: R_RenderView
         category: func
+      - name: R_DrawViewModel
+        category: func
+      - name: R_PolyBlend
+        category: func
+      - name: V_FadeAlpha
+        category: func
+      - name: R_RenderScene
+        category: func
+      - name: R_SetupGL
+        category: func
+      - name: R_RenderFinalFog
+        category: func
+      - name: R_DrawBrushModel
+        category: func
+      - name: R_DrawSequentialPoly
+        category: func
+      - name: R_DrawWorld
+        category: func
+      - name: R_MarkLeaves
+        category: func
+      - name: R_RecursiveWorldNode
+        category: func
       - name: SV_SendServerinfo
         category: func
       - name: build_number
@@ -768,6 +845,9 @@ modules:
         category: func
       - name: Mod_LoadBrushModel
         category: func
+      - name: Mod_LoadSpriteFrame
+        category: func
+        platform: windows
       - name: Mod_LoadSpriteModel
         category: func
       - name: Mod_LoadStudioModel

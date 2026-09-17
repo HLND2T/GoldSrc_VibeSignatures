@@ -1,0 +1,397 @@
+func_name: "R_DrawWorld"
+func_va: "0x1024ac90"
+disasm_code: |-
+  .text:1024AC90                 push    ebp
+  .text:1024AC91                 mov     ebp, esp
+  .text:1024AC93                 sub     esp, 0BC0h
+  .text:1024AC99                 mov     eax, ___security_cookie
+  .text:1024AC9E                 xor     eax, ebp
+  .text:1024ACA0                 mov     [ebp+var_4], eax
+  .text:1024ACA3                 ; count
+  .text:1024ACA3                 push    0BB8h; count
+  .text:1024ACA8                 lea     eax, [ebp+dest]
+  .text:1024ACAE                 ; fill
+  .text:1024ACAE                 push    0; fill
+  .text:1024ACB0                 ; dest
+  .text:1024ACB0                 push    eax; dest
+  .text:1024ACB1                 call    Q_memset
+  .text:1024ACB6                 mov     eax, cl_worldmodel
+  .text:1024ACBB                 movss   xmm0, dword ptr xmmword_10DC6390
+  .text:1024ACC3                 mov     [ebp+var_28], eax
+  .text:1024ACC6                 lea     eax, [ebp+dest]
+  .text:1024ACCC                 mov     currententity, eax
+  .text:1024ACD1                 mov     al, byte ptr dword_109B3BF0
+  .text:1024ACD6                 movss   dword ptr qword_10DC5630, xmm0
+  .text:1024ACDE                 movss   xmm0, dword ptr xmmword_10DC6390+4
+  .text:1024ACE6                 mov     [ebp+var_8BC], al
+  .text:1024ACEC                 mov     al, byte ptr dword_109B3BF4
+  .text:1024ACF1                 movss   dword ptr qword_10DC5630+4, xmm0
+  .text:1024ACF9                 movss   xmm0, dword ptr xmmword_10DC6390+8
+  .text:1024AD01                 mov     [ebp+var_8BB], al
+  .text:1024AD07                 mov     al, byte ptr dword_109B3BF8
+  .text:1024AD0C                 mov     [esp+0BCCh+var_BC4], 3F800000h
+  .text:1024AD14                 mov     [esp+0BCCh+var_BC8], 3F800000h
+  .text:1024AD1C                 movss   dword_10DC5638, xmm0
+  .text:1024AD24                 mov     dword_10322B6C, 0FFFFFFFFh
+  .text:1024AD2E                 mov     [ebp+var_8BA], al
+  .text:1024AD34                 mov     [esp+0BCCh+var_BCC], 3F800000h
+  .text:1024AD3B                 call    dword_109B37D0
+  .text:1024AD41                 ; count
+  .text:1024AD41                 push    100h; count
+  .text:1024AD46                 ; fill
+  .text:1024AD46                 push    0; fill
+  .text:1024AD48                 ; dest
+  .text:1024AD48                 push    offset dword_10DC3B40; dest
+  .text:1024AD4D                 call    Q_memset
+  .text:1024AD52                 add     esp, 0Ch
+  .text:1024AD55                 call    sub_102512C0
+  .text:1024AD5A                 cmp     dword_109A68D8, 0
+  .text:1024AD61                 xorps   xmm1, xmm1
+  .text:1024AD64                 jz      short loc_1024AD8F
+  .text:1024AD66                 movss   xmm0, dword_10322ED8
+  .text:1024AD6E                 ucomiss xmm0, xmm1
+  .text:1024AD71                 lahf
+  .text:1024AD72                 test    ah, 44h
+  .text:1024AD75                 jnp     short loc_1024AD8F
+  .text:1024AD77                 movss   xmm0, dword_1031CD20
+  .text:1024AD7F                 ucomiss xmm0, xmm1
+  .text:1024AD82                 lahf
+  .text:1024AD83                 test    ah, 44h
+  .text:1024AD86                 jnp     short loc_1024AD8F
+  .text:1024AD88                 mov     eax, 1
+  .text:1024AD8D                 jmp     short loc_1024AD91
+  .text:1024AD8F                 xor     eax, eax
+  .text:1024AD91                 cmp     dword_109A68DC, eax
+  .text:1024AD97                 jz      short loc_1024ADE0
+  .text:1024AD99                 call    sub_1024B7F0
+  .text:1024AD9E                 cmp     dword_109A68D8, 0
+  .text:1024ADA5                 jz      short loc_1024ADD6
+  .text:1024ADA7                 movss   xmm0, dword_10322ED8
+  .text:1024ADAF                 xorps   xmm1, xmm1
+  .text:1024ADB2                 ucomiss xmm0, xmm1
+  .text:1024ADB5                 lahf
+  .text:1024ADB6                 test    ah, 44h
+  .text:1024ADB9                 jnp     short loc_1024ADD6
+  .text:1024ADBB                 movss   xmm0, dword_1031CD20
+  .text:1024ADC3                 ucomiss xmm0, xmm1
+  .text:1024ADC6                 mov     dword_109A68DC, 1
+  .text:1024ADD0                 lahf
+  .text:1024ADD1                 test    ah, 44h
+  .text:1024ADD4                 jp      short loc_1024ADE0
+  .text:1024ADD6                 mov     dword_109A68DC, 0
+  .text:1024ADE0                 cmp     dword_10322E30, 0
+  .text:1024ADE7                 jnz     loc_1024AE80
+  .text:1024ADED                 mov     eax, dword_1031E3B0
+  .text:1024ADF2                 cmp     eax, 1909h
+  .text:1024ADF7                 jnz     short loc_1024AE08
+  .text:1024ADF9                 push    301h
+  .text:1024ADFE                 push    0
+  .text:1024AE00                 call    dword_109B3808
+  .text:1024AE06                 jmp     short loc_1024AE80
+  .text:1024AE08                 cmp     eax, 8049h
+  .text:1024AE0D                 jnz     short loc_1024AE61
+  .text:1024AE0F                 push    ecx
+  .text:1024AE10                 mov     [esp+0BC4h+var_BC4], 46040000h
+  .text:1024AE17                 push    2200h
+  .text:1024AE1C                 push    2300h
+  .text:1024AE21                 call    dword_109B339C
+  .text:1024AE27                 sub     esp, 10h
+  .text:1024AE2A                 mov     [esp+0BD0h+var_BC4], 3F800000h
+  .text:1024AE32                 mov     [esp+0BD0h+var_BC8], 0
+  .text:1024AE3A                 mov     [esp+0BD0h+var_BCC], 0
+  .text:1024AE42                 mov     [esp+0BD0h+var_BD0], 0
+  .text:1024AE49                 call    dword_109B3790
+  .text:1024AE4F                 push    303h
+  .text:1024AE54                 push    302h
+  .text:1024AE59                 call    dword_109B3808
+  .text:1024AE5F                 jmp     short loc_1024AE80
+  .text:1024AE61                 cmp     eax, 1908h
+  .text:1024AE66                 jnz     short loc_1024AE80
+  .text:1024AE68                 push    ecx
+  .text:1024AE69                 mov     [esp+0BC4h+var_BC4], 46040000h
+  .text:1024AE70                 push    2200h
+  .text:1024AE75                 push    2300h
+  .text:1024AE7A                 call    dword_109B339C
+  .text:1024AE80                 movss   xmm0, dword_10322EEC
+  .text:1024AE88                 xorps   xmm1, xmm1
+  .text:1024AE8B                 ucomiss xmm0, xmm1
+  .text:1024AE8E                 mov     edx, 1
+  .text:1024AE93                 mov     dword_10989B00, 0
+  .text:1024AE9D                 lahf
+  .text:1024AE9E                 xor     ecx, ecx
+  .text:1024AEA0                 test    ah, 44h
+  .text:1024AEA3                 mov     eax, cl_worldmodel
+  .text:1024AEA8                 cmovnp  ecx, edx
+  .text:1024AEAB                 ; cleanUpShaderState
+  .text:1024AEAB                 push    ecx; cleanUpShaderState
+  .text:1024AEAC                 ; node
+  .text:1024AEAC                 push    dword ptr [eax+0A4h]; node
+  .text:1024AEB2                 call    R_RecursiveWorldNode
+  .text:1024AEB7                 add     esp, 8
+  .text:1024AEBA                 cmp     dword_109A68D8, 0
+  .text:1024AEC1                 jz      short loc_1024AEDE
+  .text:1024AEC3                 cmp     dword_109A68D4, 0
+  .text:1024AECA                 jz      short loc_1024AEDE
+  .text:1024AECC                 push    0
+  .text:1024AECE                 call    dword_109B326C
+  .text:1024AED4                 mov     dword_109A68D4, 0
+  .text:1024AEDE                 cmp     dword_10322E30, 0
+  .text:1024AEE5                 mov     eax, cl_entities
+  .text:1024AEEA                 push    ebx
+  .text:1024AEEB                 push    esi
+  .text:1024AEEC                 push    edi
+  .text:1024AEED                 mov     dword_10989B00, 0
+  .text:1024AEF7                 mov     ebx, 64h ; 'd'
+  .text:1024AEFC                 mov     currententity, eax
+  .text:1024AF01                 jnz     loc_1024AF99
+  .text:1024AF07                 cmp     dword_10989328, 0
+  .text:1024AF0E                 jz      short loc_1024AF33
+  .text:1024AF10                 push    0DE1h
+  .text:1024AF15                 call    dword_109B3728
+  .text:1024AF1B                 push    dword_103230C0
+  .text:1024AF21                 call    sub_1023CDC0
+  .text:1024AF26                 add     esp, 4
+  .text:1024AF29                 mov     dword_10989328, 0
+  .text:1024AF33                 mov     eax, dword_10989320
+  .text:1024AF38                 test    eax, eax
+  .text:1024AF3A                 jz      short loc_1024AF4F
+  .text:1024AF3C                 push    eax
+  .text:1024AF3D                 call    sub_102513C0
+  .text:1024AF42                 add     esp, 4
+  .text:1024AF45                 mov     dword_10989320, 0
+  .text:1024AF4F                 mov     esi, dword_10989324
+  .text:1024AF55                 test    esi, esi
+  .text:1024AF57                 jz      short loc_1024AF99
+  .text:1024AF59                 push    0FFh
+  .text:1024AF5E                 push    0FFh
+  .text:1024AF63                 push    0FFh
+  .text:1024AF68                 push    0FFh
+  .text:1024AF6D                 call    dword_109B3778
+  .text:1024AF73                 mov     eax, [esi+2Ch]
+  .text:1024AF76                 mov     eax, [eax+24h]
+  .text:1024AF79                 push    dword ptr [eax+18h]
+  .text:1024AF7C                 call    sub_1023BD90
+  .text:1024AF81                 push    0
+  .text:1024AF83                 push    esi
+  .text:1024AF84                 call    sub_102505F0
+  .text:1024AF89                 mov     esi, [esi+28h]
+  .text:1024AF8C                 add     esp, 0Ch
+  .text:1024AF8F                 test    esi, esi
+  .text:1024AF91                 jnz     short loc_1024AF73
+  .text:1024AF93                 mov     dword_10989324, esi
+  .text:1024AF99                 mov     ecx, cl_worldmodel
+  .text:1024AF9F                 xor     edi, edi
+  .text:1024AFA1                 cmp     [ecx+170h], edi
+  .text:1024AFA7                 jle     loc_1024B081
+  .text:1024AFAD                 nop     dword ptr [eax]
+  .text:1024AFB0                 mov     eax, [ecx+174h]
+  .text:1024AFB6                 mov     eax, [eax+edi*4]
+  .text:1024AFB9                 mov     [ebp+var_BC0], eax
+  .text:1024AFBF                 test    eax, eax
+  .text:1024AFC1                 jz      loc_1024B074
+  .text:1024AFC7                 mov     esi, [eax+1Ch]
+  .text:1024AFCA                 test    esi, esi
+  .text:1024AFCC                 jz      loc_1024B074
+  .text:1024AFD2                 cmp     edi, dword_109B41FC
+  .text:1024AFD8                 jnz     short loc_1024AFE5
+  .text:1024AFDA                 push    esi
+  .text:1024AFDB                 call    sub_102513C0
+  .text:1024AFE0                 add     esp, 4
+  .text:1024AFE3                 jmp     short loc_1024B050
+  .text:1024AFE5                 movss   xmm1, ds:dword_103064A8
+  .text:1024AFED                 cmp     edi, dword_10DC50E8
+  .text:1024AFF3                 jnz     short loc_1024B023
+  .text:1024AFF5                 movss   xmm0, dword_10322C38
+  .text:1024AFFD                 ucomiss xmm0, xmm1
+  .text:1024B000                 lahf
+  .text:1024B001                 test    ah, 44h
+  .text:1024B004                 jnp     short loc_1024B023
+  .text:1024B006                 cmp     dword_10DC50E4, 0
+  .text:1024B00D                 jnz     short loc_1024B074
+  .text:1024B00F                 mov     dword_10DC50E4, 1
+  .text:1024B019                 mov     eax, [esi+4]
+  .text:1024B01C                 mov     dword_10DC50E0, eax
+  .text:1024B021                 jmp     short loc_1024B074
+  .text:1024B023                 test    byte ptr [esi+8], 10h
+  .text:1024B027                 jz      short loc_1024B040
+  .text:1024B029                 movss   xmm0, dword_10322C4C
+  .text:1024B031                 ucomiss xmm0, xmm1
+  .text:1024B034                 lahf
+  .text:1024B035                 test    ah, 44h
+  .text:1024B038                 jp      short loc_1024B074
+  .text:1024B03A                 nop     word ptr [eax+eax+00h]
+  .text:1024B040                 push    esi
+  .text:1024B041                 call    sub_1024BC10
+  .text:1024B046                 mov     esi, [esi+28h]
+  .text:1024B049                 add     esp, 4
+  .text:1024B04C                 test    esi, esi
+  .text:1024B04E                 jnz     short loc_1024B040
+  .text:1024B050                 mov     eax, [ebp+var_BC0]
+  .text:1024B056                 mov     dword ptr [eax+1Ch], 0
+  .text:1024B05D                 mov     eax, ebx
+  .text:1024B05F                 dec     ebx
+  .text:1024B060                 test    eax, eax
+  .text:1024B062                 jnz     short loc_1024B06E
+  .text:1024B064                 call    sub_101FD510
+  .text:1024B069                 mov     ebx, 64h ; 'd'
+  .text:1024B06E                 mov     ecx, cl_worldmodel
+  .text:1024B074                 inc     edi
+  .text:1024B075                 cmp     edi, [ecx+170h]
+  .text:1024B07B                 jl      loc_1024AFB0
+  .text:1024B081                 call    sub_101FD510
+  .text:1024B086                 call    sub_101AD020
+  .text:1024B08B                 pop     edi
+  .text:1024B08C                 pop     esi
+  .text:1024B08D                 pop     ebx
+  .text:1024B08E                 test    eax, eax
+  .text:1024B090                 jnz     short loc_1024B0A0
+  .text:1024B092                 push    eax
+  .text:1024B093                 call    sub_10249FE0
+  .text:1024B098                 add     esp, 4
+  .text:1024B09B                 call    sub_10247600
+  .text:1024B0A0                 mov     ecx, [ebp+var_4]
+  .text:1024B0A3                 ; StackCookie
+  .text:1024B0A3                 xor     ecx, ebp; StackCookie
+  .text:1024B0A5                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1024B0AA                 mov     esp, ebp
+  .text:1024B0AC                 pop     ebp
+  .text:1024B0AD                 retn
+procedure: |-
+  void __cdecl R_DrawWorld()
+  {
+    int v0; // eax
+    int v1; // ebx
+    int v2; // esi
+    model_t *v3; // ecx
+    int i; // edi
+    int v5; // eax
+    int v6; // esi
+    int v8; // [esp+28h] [ebp-BC0h]
+    _BYTE dest[2964]; // [esp+2Ch] [ebp-BBCh] BYREF
+    model_t *v10; // [esp+BC0h] [ebp-28h]
+
+    Q_memset(dest, 0, 3000);
+    v10 = cl_worldmodel;
+    currententity = (studio_merge_entity_partial *)dest;
+    qword_10DC5630 = xmmword_10DC6390;
+    dest[768] = dword_109B3BF0;
+    dest[769] = dword_109B3BF4;
+    dword_10DC5638 = DWORD2(xmmword_10DC6390);
+    dword_10322B6C = -1;
+    dest[770] = dword_109B3BF8;
+    dword_109B37D0(1065353216, 1065353216, 1065353216);
+    Q_memset(dword_10DC3B40, 0, 256);
+    sub_102512C0();
+    v0 = dword_109A68D8 && *(float *)&dword_10322ED8 != 0.0 && *(float *)&dword_1031CD20 != 0.0;
+    if ( dword_109A68DC != v0 )
+    {
+      sub_1024B7F0();
+      if ( !dword_109A68D8 || *(float *)&dword_10322ED8 == 0.0 || (dword_109A68DC = 1, *(float *)&dword_1031CD20 == 0.0) )
+        dword_109A68DC = 0;
+    }
+    if ( !dword_10322E30 )
+    {
+      switch ( dword_1031E3B0 )
+      {
+        case 6409:
+          dword_109B3808(0, 769);
+          break;
+        case 32841:
+          dword_109B339C(8960, 8704, 1174667264);
+          dword_109B3790(0, 0, 0, 1065353216);
+          dword_109B3808(770, 771);
+          break;
+        case 6408:
+          dword_109B339C(8960, 8704, 1174667264);
+          break;
+      }
+    }
+    dword_10989B00 = 0;
+    R_RecursiveWorldNode(*(void **)&cl_worldmodel->_pad_0048[92], *(float *)&dword_10322EEC == 0.0);
+    if ( dword_109A68D8 && dword_109A68D4 )
+    {
+      dword_109B326C(0);
+      dword_109A68D4 = 0;
+    }
+    dword_10989B00 = 0;
+    v1 = 100;
+    currententity = (studio_merge_entity_partial *)cl_entities;
+    if ( !dword_10322E30 )
+    {
+      if ( dword_10989328 )
+      {
+        dword_109B3728(3553);
+        sub_1023CDC0(dword_103230C0);
+        dword_10989328 = 0;
+      }
+      if ( dword_10989320 )
+      {
+        sub_102513C0(dword_10989320);
+        dword_10989320 = 0;
+      }
+      v2 = dword_10989324;
+      if ( dword_10989324 )
+      {
+        dword_109B3778(255, 255, 255, 255);
+        do
+        {
+          sub_1023BD90(*(_DWORD *)(*(_DWORD *)(*(_DWORD *)(v2 + 44) + 36) + 24));
+          sub_102505F0(v2, 0);
+          v2 = *(_DWORD *)(v2 + 40);
+        }
+        while ( v2 );
+        dword_10989324 = 0;
+      }
+    }
+    v3 = cl_worldmodel;
+    for ( i = 0; i < *(_DWORD *)&v3->_pad_0048[296]; ++i )
+    {
+      v5 = *(_DWORD *)(*(_DWORD *)&v3->_pad_0048[300] + 4 * i);
+      v8 = v5;
+      if ( v5 )
+      {
+        v6 = *(_DWORD *)(v5 + 28);
+        if ( v6 )
+        {
+          if ( i == dword_109B41FC )
+          {
+            sub_102513C0(*(_DWORD *)(v5 + 28));
+  LABEL_42:
+            *(_DWORD *)(v8 + 28) = 0;
+            if ( !v1-- )
+            {
+              sub_101FD510();
+              v1 = 100;
+            }
+            v3 = cl_worldmodel;
+            continue;
+          }
+          if ( i == dword_10DC50E8 && *(float *)&dword_10322C38 != 1.0 )
+          {
+            if ( !dword_10DC50E4 )
+            {
+              dword_10DC50E4 = 1;
+              dword_10DC50E0 = *(_DWORD *)(v6 + 4);
+            }
+            continue;
+          }
+          if ( (*(_BYTE *)(v6 + 8) & 0x10) == 0 || *(float *)&dword_10322C4C == 1.0 )
+          {
+            do
+            {
+              sub_1024BC10(v6);
+              v6 = *(_DWORD *)(v6 + 40);
+            }
+            while ( v6 );
+            goto LABEL_42;
+          }
+        }
+      }
+    }
+    sub_101FD510();
+    if ( !sub_101AD020() )
+    {
+      sub_10249FE0(0);
+      sub_10247600();
+    }
+  }

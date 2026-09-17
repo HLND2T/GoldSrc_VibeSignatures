@@ -1,0 +1,561 @@
+func_name: "R_DrawBrushModel"
+func_va: "0x1d5a280"
+disasm_code: |-
+  .text:01D5A280                 sub     esp, 54h
+  .text:01D5A283                 mov     eax, ___security_cookie
+  .text:01D5A288                 xor     eax, esp
+  .text:01D5A28A                 mov     [esp+54h+var_4], eax
+  .text:01D5A28E                 push    ebx
+  .text:01D5A28F                 mov     ebx, [esp+58h+entity]
+  .text:01D5A293                 push    ebp
+  .text:01D5A294                 push    esi
+  .text:01D5A295                 push    edi
+  .text:01D5A296                 mov     dword_3F94150, ebx
+  .text:01D5A29C                 lea     edi, [ebx+0B54h]
+  .text:01D5A2A2                 mov     dword_1EE0278, 0FFFFFFFFh
+  .text:01D5A2AC                 fld     dword ptr [edi]
+  .text:01D5A2AE                 fldz
+  .text:01D5A2B0                 mov     ebp, [ebx+0B94h]
+  .text:01D5A2B6                 fucom   st(1)
+  .text:01D5A2B8                 fnstsw  ax
+  .text:01D5A2BA                 mov     [esp+64h+var_44], ebp
+  .text:01D5A2BE                 fstp    st(1)
+  .text:01D5A2C0                 test    ah, 44h
+  .text:01D5A2C3                 jp      short loc_1D5A335
+  .text:01D5A2C5                 fld     dword ptr [ebx+0B58h]
+  .text:01D5A2CB                 fucomp  st(1)
+  .text:01D5A2CD                 fnstsw  ax
+  .text:01D5A2CF                 test    ah, 44h
+  .text:01D5A2D2                 jp      short loc_1D5A335
+  .text:01D5A2D4                 fld     dword ptr [ebx+0B5Ch]
+  .text:01D5A2DA                 fucompp
+  .text:01D5A2DC                 fnstsw  ax
+  .text:01D5A2DE                 test    ah, 44h
+  .text:01D5A2E1                 jp      short loc_1D5A337
+  .text:01D5A2E3                 fld     dword ptr [ebx+0B48h]
+  .text:01D5A2E9                 lea     esi, [ebx+0B48h]
+  .text:01D5A2EF                 fld     dword ptr [ebp+54h]
+  .text:01D5A2F2                 fadd    st, st(1)
+  .text:01D5A2F4                 mov     [esp+64h+var_54], 0
+  .text:01D5A2FC                 fstp    [esp+64h+var_40]
+  .text:01D5A300                 fld     dword ptr [ebx+0B4Ch]
+  .text:01D5A306                 fld     dword ptr [ebp+58h]
+  .text:01D5A309                 fadd    st, st(1)
+  .text:01D5A30B                 fstp    [esp+64h+var_3C]
+  .text:01D5A30F                 fld     dword ptr [ebx+0B50h]
+  .text:01D5A315                 fld     dword ptr [ebp+5Ch]
+  .text:01D5A318                 fadd    st, st(1)
+  .text:01D5A31A                 fstp    [esp+64h+var_38]
+  .text:01D5A31E                 fld     dword ptr [ebp+60h]
+  .text:01D5A321                 faddp   st(3), st
+  .text:01D5A323                 fxch    st(2)
+  .text:01D5A325                 fstp    [esp+64h+var_34]
+  .text:01D5A329                 fadd    dword ptr [ebp+64h]
+  .text:01D5A32C                 fstp    [esp+64h+var_30]
+  .text:01D5A330                 fadd    dword ptr [ebp+68h]
+  .text:01D5A333                 jmp     short loc_1D5A383
+  .text:01D5A335                 fstp    st
+  .text:01D5A337                 fld     dword ptr [ebx+0B48h]
+  .text:01D5A33D                 lea     esi, [ebx+0B48h]
+  .text:01D5A343                 fld     st
+  .text:01D5A345                 mov     [esp+64h+var_54], 1
+  .text:01D5A34D                 fsub    dword ptr [ebp+6Ch]
+  .text:01D5A350                 fstp    [esp+64h+var_40]
+  .text:01D5A354                 fadd    dword ptr [ebp+6Ch]
+  .text:01D5A357                 fstp    [esp+64h+var_34]
+  .text:01D5A35B                 fld     dword ptr [ebx+0B4Ch]
+  .text:01D5A361                 fld     st
+  .text:01D5A363                 fsub    dword ptr [ebp+6Ch]
+  .text:01D5A366                 fstp    [esp+64h+var_3C]
+  .text:01D5A36A                 fadd    dword ptr [ebp+6Ch]
+  .text:01D5A36D                 fstp    [esp+64h+var_30]
+  .text:01D5A371                 fld     dword ptr [ebx+0B50h]
+  .text:01D5A377                 fld     st
+  .text:01D5A379                 fsub    dword ptr [ebp+6Ch]
+  .text:01D5A37C                 fstp    [esp+64h+var_38]
+  .text:01D5A380                 fadd    dword ptr [ebp+6Ch]
+  .text:01D5A383                 lea     eax, [esp+64h+var_34]
+  .text:01D5A387                 push    eax
+  .text:01D5A388                 lea     eax, [esp+68h+var_40]
+  .text:01D5A38C                 push    eax
+  .text:01D5A38D                 fstp    [esp+6Ch+var_2C]
+  .text:01D5A391                 call    sub_1D53020
+  .text:01D5A396                 add     esp, 8
+  .text:01D5A399                 test    eax, eax
+  .text:01D5A39B                 jnz     loc_1D5A70B
+  .text:01D5A3A1                 fld1
+  .text:01D5A3A3                 sub     esp, 0Ch
+  .text:01D5A3A6                 ; blue
+  .text:01D5A3A6                 fst     [esp+70h+blue]; blue
+  .text:01D5A3AA                 ; green
+  .text:01D5A3AA                 fst     [esp+70h+green]; green
+  .text:01D5A3AE                 ; red
+  .text:01D5A3AE                 fstp    [esp+70h+red]; red
+  .text:01D5A3B1                 call    ds:glColor3f
+  .text:01D5A3B7                 ; count
+  .text:01D5A3B7                 push    1000h; count
+  .text:01D5A3BC                 ; c
+  .text:01D5A3BC                 push    0; c
+  .text:01D5A3BE                 ; dest
+  .text:01D5A3BE                 push    offset dword_3F9BA60; dest
+  .text:01D5A3C3                 call    Q_memset
+  .text:01D5A3C8                 fld     flt_3F93430
+  .text:01D5A3CE                 add     esp, 0Ch
+  .text:01D5A3D1                 cmp     [esp+64h+var_54], 0
+  .text:01D5A3D6                 fsub    dword ptr [esi]
+  .text:01D5A3D8                 fst     [esp+64h+var_4C]
+  .text:01D5A3DC                 fstp    flt_3F94138
+  .text:01D5A3E2                 fld     flt_3F93434
+  .text:01D5A3E8                 fsub    dword ptr [ebx+0B4Ch]
+  .text:01D5A3EE                 fst     [esp+64h+var_50]
+  .text:01D5A3F2                 fstp    flt_3F9413C
+  .text:01D5A3F8                 fld     flt_3F93438
+  .text:01D5A3FE                 fsub    dword ptr [ebx+0B50h]
+  .text:01D5A404                 fst     [esp+64h+var_48]
+  .text:01D5A408                 fstp    flt_3F94140
+  .text:01D5A40E                 jz      short loc_1D5A48E
+  .text:01D5A410                 lea     eax, [esp+64h+var_10]
+  .text:01D5A414                 push    eax
+  .text:01D5A415                 lea     eax, [esp+68h+var_1C]
+  .text:01D5A419                 push    eax
+  .text:01D5A41A                 lea     eax, [esp+6Ch+var_28]
+  .text:01D5A41E                 push    eax
+  .text:01D5A41F                 push    edi
+  .text:01D5A420                 call    sub_1D72490
+  .text:01D5A425                 fld     [esp+74h+var_24]
+  .text:01D5A429                 add     esp, 10h
+  .text:01D5A42C                 fld     [esp+64h+var_50]
+  .text:01D5A430                 fmul    st(1), st
+  .text:01D5A432                 fld     [esp+64h+var_28]
+  .text:01D5A436                 fld     [esp+64h+var_4C]
+  .text:01D5A43A                 fmul    st(1), st
+  .text:01D5A43C                 fxch    st(3)
+  .text:01D5A43E                 faddp   st(1), st
+  .text:01D5A440                 fld     [esp+64h+var_20]
+  .text:01D5A444                 fld     [esp+64h+var_48]
+  .text:01D5A448                 fmul    st(1), st
+  .text:01D5A44A                 fxch    st(2)
+  .text:01D5A44C                 faddp   st(1), st
+  .text:01D5A44E                 fstp    flt_3F94138
+  .text:01D5A454                 fld     [esp+64h+var_18]
+  .text:01D5A458                 fmul    st, st(2)
+  .text:01D5A45A                 fld     [esp+64h+var_1C]
+  .text:01D5A45E                 fmul    st, st(4)
+  .text:01D5A460                 faddp   st(1), st
+  .text:01D5A462                 fld     [esp+64h+var_14]
+  .text:01D5A466                 fmul    st, st(2)
+  .text:01D5A468                 faddp   st(1), st
+  .text:01D5A46A                 fchs
+  .text:01D5A46C                 fstp    flt_3F9413C
+  .text:01D5A472                 fld     [esp+64h+var_C]
+  .text:01D5A476                 fmulp   st(2), st
+  .text:01D5A478                 fld     [esp+64h+var_10]
+  .text:01D5A47C                 fmulp   st(3), st
+  .text:01D5A47E                 fxch    st(1)
+  .text:01D5A480                 faddp   st(2), st
+  .text:01D5A482                 fmul    [esp+64h+var_8]
+  .text:01D5A486                 faddp   st(1), st
+  .text:01D5A488                 fstp    flt_3F94140
+  .text:01D5A48E                 mov     eax, [ebp+70h]
+  .text:01D5A491                 imul    edi, eax, 5Ch ; '\'
+  .text:01D5A494                 add     edi, [ebp+0B4h]
+  .text:01D5A49A                 mov     [esp+64h+var_54], edi
+  .text:01D5A49E                 test    eax, eax
+  .text:01D5A4A0                 jz      loc_1D5A54D
+  .text:01D5A4A6                 mov     edi, [esp+64h+var_44]
+  .text:01D5A4AA                 mov     ebp, 1
+  .text:01D5A4AF                 mov     esi, offset unk_271E390
+  .text:01D5A4B4                 fld     dword ptr [esi+14h]
+  .text:01D5A4B7                 fcomp   dbl_234BA68
+  .text:01D5A4BD                 fnstsw  ax
+  .text:01D5A4BF                 test    ah, 5
+  .text:01D5A4C2                 jnp     short loc_1D5A52E
+  .text:01D5A4C4                 fld     dword ptr [esi+0Ch]
+  .text:01D5A4C7                 fldz
+  .text:01D5A4C9                 fucompp
+  .text:01D5A4CB                 fnstsw  ax
+  .text:01D5A4CD                 test    ah, 44h
+  .text:01D5A4D0                 jnp     short loc_1D5A52E
+  .text:01D5A4D2                 fld     dword ptr [esi]
+  .text:01D5A4D4                 fst     [esp+64h+var_48]
+  .text:01D5A4D8                 fld     dword ptr [esi+4]
+  .text:01D5A4DB                 fst     [esp+64h+var_4C]
+  .text:01D5A4DF                 fld     dword ptr [esi+8]
+  .text:01D5A4E2                 fst     [esp+64h+var_50]
+  .text:01D5A4E6                 fxch    st(2)
+  .text:01D5A4E8                 fsub    dword ptr [ebx+0B48h]
+  .text:01D5A4EE                 fstp    dword ptr [esi]
+  .text:01D5A4F0                 fsub    dword ptr [ebx+0B4Ch]
+  .text:01D5A4F6                 fstp    dword ptr [esi+4]
+  .text:01D5A4F9                 fsub    dword ptr [ebx+0B50h]
+  .text:01D5A4FF                 fstp    dword ptr [esi+8]
+  .text:01D5A502                 imul    eax, [edi+0D8h], 34h ; '4'
+  .text:01D5A509                 add     eax, [edi+0A4h]
+  .text:01D5A50F                 push    eax
+  .text:01D5A510                 push    ebp
+  .text:01D5A511                 push    esi
+  .text:01D5A512                 call    sub_1D525B0
+  .text:01D5A517                 fld     [esp+70h+var_48]
+  .text:01D5A51B                 add     esp, 0Ch
+  .text:01D5A51E                 fstp    dword ptr [esi]
+  .text:01D5A520                 fld     [esp+64h+var_4C]
+  .text:01D5A524                 fstp    dword ptr [esi+4]
+  .text:01D5A527                 fld     [esp+64h+var_50]
+  .text:01D5A52B                 fstp    dword ptr [esi+8]
+  .text:01D5A52E                 add     esi, 28h ; '('
+  .text:01D5A531                 rol     ebp, 1
+  .text:01D5A533                 cmp     esi, offset flt_2720B90
+  .text:01D5A539                 jl      loc_1D5A4B4
+  .text:01D5A53F                 mov     edi, [esp+64h+var_54]
+  .text:01D5A543                 lea     esi, [ebx+0B48h]
+  .text:01D5A549                 mov     ebp, [esp+64h+var_44]
+  .text:01D5A54D                 call    ds:glPushMatrix
+  .text:01D5A553                 push    ebx
+  .text:01D5A554                 push    esi
+  .text:01D5A555                 call    sub_1D53060
+  .text:01D5A55A                 push    ebx
+  .text:01D5A55B                 call    sub_1D5A110
+  .text:01D5A560                 xor     esi, esi
+  .text:01D5A562                 add     esp, 0Ch
+  .text:01D5A565                 cmp     [ebp+74h], esi
+  .text:01D5A568                 jle     loc_1D5A607
+  .text:01D5A56E                 fld     ds:dbl_1E6DA60
+  .text:01D5A574                 fld     ds:dbl_1E66B18
+  .text:01D5A57A                 mov     edx, [edi+8]
+  .text:01D5A57D                 mov     ecx, [edi+4]
+  .text:01D5A580                 test    dl, 10h
+  .text:01D5A583                 jz      short loc_1D5A599
+  .text:01D5A585                 cmp     byte ptr [ecx+10h], 2
+  .text:01D5A589                 jnz     short loc_1D5A5F6
+  .text:01D5A58B                 fld     [esp+64h+var_38]
+  .text:01D5A58F                 fcomp   dword ptr [ecx+0Ch]
+  .text:01D5A592                 fnstsw  ax
+  .text:01D5A594                 test    ah, 1
+  .text:01D5A597                 jz      short loc_1D5A5F6
+  .text:01D5A599                 fld     dword ptr [ecx+4]
+  .text:01D5A59C                 fmul    flt_3F9413C
+  .text:01D5A5A2                 fld     dword ptr [ecx]
+  .text:01D5A5A4                 fmul    flt_3F94138
+  .text:01D5A5AA                 faddp   st(1), st
+  .text:01D5A5AC                 fld     dword ptr [ecx+8]
+  .text:01D5A5AF                 fmul    flt_3F94140
+  .text:01D5A5B5                 faddp   st(1), st
+  .text:01D5A5B7                 fsub    dword ptr [ecx+0Ch]
+  .text:01D5A5BA                 test    dl, 2
+  .text:01D5A5BD                 jz      loc_1D5A67F
+  .text:01D5A5C3                 fcomp   st(2)
+  .text:01D5A5C5                 fnstsw  ax
+  .text:01D5A5C7                 test    ah, 5
+  .text:01D5A5CA                 jnp     loc_1D5A68C
+  .text:01D5A5D0                 test    dl, 10h
+  .text:01D5A5D3                 jz      short loc_1D5A5F6
+  .text:01D5A5D5                 fstp    st(1)
+  .text:01D5A5D7                 push    ebx
+  .text:01D5A5D8                 fstp    st
+  .text:01D5A5DA                 call    sub_1D5A110
+  .text:01D5A5DF                 ; face
+  .text:01D5A5DF                 push    1; face
+  .text:01D5A5E1                 ; surface
+  .text:01D5A5E1                 push    edi; surface
+  .text:01D5A5E2                 call    R_DrawSequentialPoly
+  .text:01D5A5E7                 add     esp, 0Ch
+  .text:01D5A5EA                 fld     ds:dbl_1E6DA60
+  .text:01D5A5F0                 fld     ds:dbl_1E66B18
+  .text:01D5A5F6                 inc     esi
+  .text:01D5A5F7                 add     edi, 5Ch ; '\'
+  .text:01D5A5FA                 cmp     esi, [ebp+74h]
+  .text:01D5A5FD                 jl      loc_1D5A57A
+  .text:01D5A603                 fstp    st(1)
+  .text:01D5A605                 fstp    st
+  .text:01D5A607                 mov     eax, dword_3F94150
+  .text:01D5A60C                 mov     edi, ds:glDisable
+  .text:01D5A612                 cmp     dword ptr [eax+2F8h], 0
+  .text:01D5A619                 jz      short loc_1D5A641
+  .text:01D5A61B                 fld     ds:flt_1E6CA6C
+  .text:01D5A621                 push    ecx
+  .text:01D5A622                 ; param
+  .text:01D5A622                 fstp    [esp+68h+blue]; param
+  .text:01D5A625                 ; pname
+  .text:01D5A625                 push    2200h; pname
+  .text:01D5A62A                 ; target
+  .text:01D5A62A                 push    2300h; target
+  .text:01D5A62F                 call    ds:glTexEnvf
+  .text:01D5A635                 ; cap
+  .text:01D5A635                 push    0BE2h; cap
+  .text:01D5A63A                 call    edi ; glDisable
+  .text:01D5A63C                 mov     eax, dword_3F94150
+  .text:01D5A641                 cmp     dword_1EE04B4, 0
+  .text:01D5A648                 jnz     short loc_1D5A657
+  .text:01D5A64A                 cmp     dword ptr [eax+2F8h], 1
+  .text:01D5A651                 jnz     loc_1D5A6DE
+  .text:01D5A657                 cmp     dword ptr [eax+2F8h], 4
+  .text:01D5A65E                 jz      short loc_1D5A6B4
+  .text:01D5A660                 push    0
+  .text:01D5A662                 call    sub_1D57CD0
+  .text:01D5A667                 mov     eax, dword_3F94150
+  .text:01D5A66C                 add     esp, 4
+  .text:01D5A66F                 cmp     dword ptr [eax+2F8h], 0
+  .text:01D5A676                 jnz     short loc_1D5A6DE
+  .text:01D5A678                 call    sub_1D59910
+  .text:01D5A67D                 jmp     short loc_1D5A6DE
+  .text:01D5A67F                 fcomp   st(1)
+  .text:01D5A681                 fnstsw  ax
+  .text:01D5A683                 test    ah, 41h
+  .text:01D5A686                 jnz     loc_1D5A5D0
+  .text:01D5A68C                 cmp     dword_1EE04B4, 0
+  .text:01D5A693                 fstp    st(1)
+  .text:01D5A695                 fstp    st
+  .text:01D5A697                 jz      short loc_1D5A6A7
+  .text:01D5A699                 push    edi
+  .text:01D5A69A                 call    sub_1D59CC0
+  .text:01D5A69F                 add     esp, 4
+  .text:01D5A6A2                 jmp     loc_1D5A5EA
+  .text:01D5A6A7                 push    ebx
+  .text:01D5A6A8                 call    sub_1D5A110
+  .text:01D5A6AD                 push    0
+  .text:01D5A6AF                 jmp     loc_1D5A5E1
+  .text:01D5A6B4                 fld     flt_1EE0448
+  .text:01D5A6BA                 fldz
+  .text:01D5A6BC                 fucompp
+  .text:01D5A6BE                 fnstsw  ax
+  .text:01D5A6C0                 test    ah, 44h
+  .text:01D5A6C3                 jnp     short loc_1D5A6DE
+  .text:01D5A6C5                 mov     esi, ds:glDepthFunc
+  .text:01D5A6CB                 ; func
+  .text:01D5A6CB                 push    202h; func
+  .text:01D5A6D0                 call    esi ; glDepthFunc
+  .text:01D5A6D2                 call    sub_1D59910
+  .text:01D5A6D7                 ; func
+  .text:01D5A6D7                 push    203h; func
+  .text:01D5A6DC                 call    esi ; glDepthFunc
+  .text:01D5A6DE                 call    ds:glPopMatrix
+  .text:01D5A6E4                 ; flag
+  .text:01D5A6E4                 push    1; flag
+  .text:01D5A6E6                 call    ds:glDepthMask
+  .text:01D5A6EC                 ; cap
+  .text:01D5A6EC                 push    0BC0h; cap
+  .text:01D5A6F1                 call    edi ; glDisable
+  .text:01D5A6F3                 fldz
+  .text:01D5A6F5                 push    ecx
+  .text:01D5A6F6                 ; ref
+  .text:01D5A6F6                 fstp    [esp+68h+blue]; ref
+  .text:01D5A6F9                 ; func
+  .text:01D5A6F9                 push    205h; func
+  .text:01D5A6FE                 call    ds:glAlphaFunc
+  .text:01D5A704                 ; cap
+  .text:01D5A704                 push    0BE2h; cap
+  .text:01D5A709                 call    edi ; glDisable
+  .text:01D5A70B                 mov     ecx, [esp+64h+var_4]
+  .text:01D5A70F                 pop     edi
+  .text:01D5A710                 pop     esi
+  .text:01D5A711                 pop     ebp
+  .text:01D5A712                 pop     ebx
+  .text:01D5A713                 ; StackCookie
+  .text:01D5A713                 xor     ecx, esp; StackCookie
+  .text:01D5A715                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:01D5A71A                 add     esp, 54h
+  .text:01D5A71D                 retn
+procedure: |-
+  void __cdecl R_DrawBrushModel(void *entity)
+  {
+    int v1; // ebp
+    double v2; // st7
+    float *v3; // esi
+    double v4; // st6
+    double v5; // st5
+    double v6; // st7
+    double v7; // st7
+    double v8; // st7
+    double v9; // st7
+    int v10; // eax
+    _DWORD *v11; // edi
+    int v12; // ebp
+    float *v13; // esi
+    double v14; // st6
+    int v15; // esi
+    double v16; // st7
+    double v17; // st6
+    int v18; // edx
+    int v19; // ecx
+    double v20; // st5
+    _DWORD *v21; // eax
+    int v22; // [esp+1Ch] [ebp-54h]
+    float v23; // [esp+20h] [ebp-50h]
+    float v24; // [esp+20h] [ebp-50h]
+    float v25; // [esp+24h] [ebp-4Ch]
+    float v26; // [esp+24h] [ebp-4Ch]
+    float v27; // [esp+28h] [ebp-48h]
+    float v28; // [esp+28h] [ebp-48h]
+    int v29; // [esp+2Ch] [ebp-44h]
+    float v30; // [esp+30h] [ebp-40h] BYREF
+    float v31; // [esp+34h] [ebp-3Ch]
+    float v32; // [esp+38h] [ebp-38h]
+    float v33; // [esp+3Ch] [ebp-34h] BYREF
+    float v34; // [esp+40h] [ebp-30h]
+    float v35; // [esp+44h] [ebp-2Ch]
+    float v36[3]; // [esp+48h] [ebp-28h] BYREF
+    float v37[3]; // [esp+54h] [ebp-1Ch] BYREF
+    float v38[3]; // [esp+60h] [ebp-10h] BYREF
+
+    dword_3F94150 = entity;
+    dword_1EE0278 = -1;
+    v1 = *((_DWORD *)entity + 741);
+    v29 = v1;
+    if ( 0.0 == *((float *)entity + 725) && *((float *)entity + 726) == 0.0 && *((float *)entity + 727) == 0.0 )
+    {
+      v2 = *((float *)entity + 722);
+      v3 = (float *)((char *)entity + 2888);
+      v22 = 0;
+      v30 = *(float *)(v1 + 84) + v2;
+      v4 = *((float *)entity + 723);
+      v31 = *(float *)(v1 + 88) + v4;
+      v5 = *((float *)entity + 724);
+      v32 = *(float *)(v1 + 92) + v5;
+      v33 = v2 + *(float *)(v1 + 96);
+      v34 = v4 + *(float *)(v1 + 100);
+      v6 = v5 + *(float *)(v1 + 104);
+    }
+    else
+    {
+      v7 = *((float *)entity + 722);
+      v3 = (float *)((char *)entity + 2888);
+      v22 = 1;
+      v30 = v7 - *(float *)(v1 + 108);
+      v33 = v7 + *(float *)(v1 + 108);
+      v8 = *((float *)entity + 723);
+      v31 = v8 - *(float *)(v1 + 108);
+      v34 = v8 + *(float *)(v1 + 108);
+      v9 = *((float *)entity + 724);
+      v32 = v9 - *(float *)(v1 + 108);
+      v6 = v9 + *(float *)(v1 + 108);
+    }
+    v35 = v6;
+    if ( !sub_1D53020(&v30, &v33) )
+    {
+      glColor3f(1.0, 1.0, 1.0);
+      Q_memset(dword_3F9BA60, 0, 0x1000u);
+      v25 = flt_3F93430 - *v3;
+      flt_3F94138 = v25;
+      v23 = flt_3F93434 - *((float *)entity + 723);
+      flt_3F9413C = v23;
+      v27 = flt_3F93438 - *((float *)entity + 724);
+      flt_3F94140 = v27;
+      if ( v22 )
+      {
+        sub_1D72490((float *)entity + 725, v36, v37, v38);
+        flt_3F94138 = v36[2] * v27 + v36[0] * v25 + v36[1] * v23;
+        flt_3F9413C = -(v37[1] * v23 + v37[0] * v25 + v37[2] * v27);
+        flt_3F94140 = v25 * v38[0] + v23 * v38[1] + v27 * v38[2];
+      }
+      v10 = *(_DWORD *)(v1 + 112);
+      v11 = (_DWORD *)(*(_DWORD *)(v1 + 180) + 92 * v10);
+      if ( v10 )
+      {
+        v12 = 1;
+        v13 = (float *)&unk_271E390;
+        do
+        {
+          if ( v13[5] >= dbl_234BA68 && 0.0 != v13[3] )
+          {
+            v28 = *v13;
+            v14 = v13[1];
+            v26 = v13[1];
+            v24 = v13[2];
+            *v13 = v28 - *((float *)entity + 722);
+            v13[1] = v14 - *((float *)entity + 723);
+            v13[2] = v24 - *((float *)entity + 724);
+            sub_1D525B0(v13, v12, *(_DWORD *)(v29 + 164) + 52 * *(_DWORD *)(v29 + 216));
+            *v13 = v28;
+            v13[1] = v26;
+            v13[2] = v24;
+          }
+          v13 += 10;
+          v12 = __ROL4__(v12, 1);
+        }
+        while ( (int)v13 < (int)&flt_2720B90 );
+        v3 = (float *)((char *)entity + 2888);
+        v1 = v29;
+      }
+      glPushMatrix();
+      sub_1D53060(v3, entity);
+      sub_1D5A110(entity);
+      v15 = 0;
+      if ( *(int *)(v1 + 116) > 0 )
+      {
+        v16 = -0.01;
+        v17 = 0.01;
+        do
+        {
+          v18 = v11[2];
+          v19 = v11[1];
+          if ( (v18 & 0x10) != 0 && (*(_BYTE *)(v19 + 16) != 2 || v32 >= (double)*(float *)(v19 + 12)) )
+            goto LABEL_26;
+          v20 = *(float *)(v19 + 4) * flt_3F9413C
+              + *(float *)v19 * flt_3F94138
+              + *(float *)(v19 + 8) * flt_3F94140
+              - *(float *)(v19 + 12);
+          if ( (v18 & 2) != 0 )
+          {
+            if ( v20 < v16 )
+              goto LABEL_35;
+          }
+          else if ( v20 > v17 )
+          {
+  LABEL_35:
+            if ( dword_1EE04B4 )
+            {
+              sub_1D59CC0(v11);
+            }
+            else
+            {
+              sub_1D5A110(entity);
+              R_DrawSequentialPoly(v11, 0);
+            }
+            goto LABEL_25;
+          }
+          if ( (v18 & 0x10) != 0 )
+          {
+            sub_1D5A110(entity);
+            R_DrawSequentialPoly(v11, 1);
+  LABEL_25:
+            v16 = -0.01;
+            v17 = 0.01;
+          }
+  LABEL_26:
+          ++v15;
+          v11 += 23;
+        }
+        while ( v15 < *(_DWORD *)(v1 + 116) );
+      }
+      v21 = dword_3F94150;
+      if ( *((_DWORD *)dword_3F94150 + 190) )
+      {
+        glTexEnvf(0x2300u, 0x2200u, 8448.0);
+        glDisable(0xBE2u);
+        v21 = dword_3F94150;
+      }
+      if ( dword_1EE04B4 || v21[190] == 1 )
+      {
+        if ( v21[190] == 4 )
+        {
+          if ( 0.0 != flt_1EE0448 )
+          {
+            glDepthFunc(0x202u);
+            sub_1D59910();
+            glDepthFunc(0x203u);
+          }
+        }
+        else
+        {
+          sub_1D57CD0(0);
+          if ( !*((_DWORD *)dword_3F94150 + 190) )
+            sub_1D59910();
+        }
+      }
+      glPopMatrix();
+      glDepthMask(1u);
+      glDisable(0xBC0u);
+      glAlphaFunc(0x205u, 0.0);
+      glDisable(0xBE2u);
+    }
+  }

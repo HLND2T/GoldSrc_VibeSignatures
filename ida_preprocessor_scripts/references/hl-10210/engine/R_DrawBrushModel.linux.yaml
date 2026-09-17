@@ -1,0 +1,721 @@
+func_name: "R_DrawBrushModel"
+func_va: "0x187840"
+disasm_code: |-
+  .text:00187840                 push    ebp
+  .text:00187841                 mov     ebp, 0FFFFFFFFh
+  .text:00187846                 push    edi
+  .text:00187847                 push    esi
+  .text:00187848                 push    ebx
+  .text:00187849                 sub     esp, 6Ch
+  .text:0018784C                 mov     edi, [esp+7Ch+e]
+  .text:00187853                 mov     currenttexture, ebp
+  .text:00187859                 fld     dword ptr [edi+0B54h]
+  .text:0018785F                 fldz
+  .text:00187861                 fxch    st(1)
+  .text:00187863                 mov     ebp, [edi+0B94h]
+  .text:00187869                 fucomip st, st(1)
+  .text:0018786B                 mov     ds:currententity, edi
+  .text:00187871                 jp      short loc_18787D
+  .text:00187873                 jz      loc_1878F8
+  .text:00187879                 fstp    st
+  .text:0018787B                 jmp     short loc_187880
+  .text:0018787D                 fstp    st
+  .text:0018787F                 nop
+  .text:00187880                 fld     dword ptr [clmodel+6Ch]
+  .text:00187883                 mov     ebx, 1
+  .text:00187888                 fld     st
+  .text:0018788A                 fsubr   dword ptr [edi+0B48h]
+  .text:00187890                 fstp    [esp+7Ch+mins]
+  .text:00187894                 fld     dword ptr [edi+0B48h]
+  .text:0018789A                 fadd    st, st(1)
+  .text:0018789C                 fstp    [esp+7Ch+maxs]
+  .text:001878A0                 fld     st
+  .text:001878A2                 fsubr   dword ptr [edi+0B4Ch]
+  .text:001878A8                 fstp    [esp+7Ch+mins+4]
+  .text:001878AC                 fld     dword ptr [edi+0B4Ch]
+  .text:001878B2                 fadd    st, st(1)
+  .text:001878B4                 fstp    [esp+7Ch+maxs+4]
+  .text:001878B8                 fld     st
+  .text:001878BA                 fsubr   dword ptr [edi+0B50h]
+  .text:001878C0                 fstp    [esp+7Ch+mins+8]
+  .text:001878C4                 fadd    dword ptr [edi+0B50h]
+  .text:001878CA                 fstp    [esp+7Ch+maxs+8]
+  .text:001878CE                 lea     eax, [esp+7Ch+maxs]
+  .text:001878D2                 ; maxs
+  .text:001878D2                 mov     [esp+7Ch+var_78], eax; maxs
+  .text:001878D6                 lea     eax, [esp+7Ch+mins]
+  .text:001878DA                 ; mins
+  .text:001878DA                 mov     [esp+7Ch+var_7C], eax; mins
+  .text:001878DD                 call    R_CullBox
+  .text:001878E2                 test    eax, eax
+  .text:001878E4                 jz      loc_187980
+  .text:001878EA                 add     esp, 6Ch
+  .text:001878ED                 pop     rotated
+  .text:001878EE                 pop     esi
+  .text:001878EF                 pop     edi
+  .text:001878F0                 pop     clmodel
+  .text:001878F1                 retn
+  .text:001878F8                 fld     dword ptr [edi+0B58h]
+  .text:001878FE                 fucomip st, st(1)
+  .text:00187900                 fstp    st
+  .text:00187902                 jp      loc_187880
+  .text:00187908                 jnz     loc_187880
+  .text:0018790E                 fld     dword ptr [edi+0B5Ch]
+  .text:00187914                 fldz
+  .text:00187916                 fxch    st(1)
+  .text:00187918                 fucomip st, st(1)
+  .text:0018791A                 fstp    st
+  .text:0018791C                 jp      loc_187880
+  .text:00187922                 jnz     loc_187880
+  .text:00187928                 fld     dword ptr [clmodel+54h]
+  .text:0018792B                 xor     ebx, ebx
+  .text:0018792D                 fadd    dword ptr [edi+0B48h]
+  .text:00187933                 fstp    [esp+7Ch+mins]
+  .text:00187937                 fld     dword ptr [clmodel+58h]
+  .text:0018793A                 fadd    dword ptr [edi+0B4Ch]
+  .text:00187940                 fstp    [esp+7Ch+mins+4]
+  .text:00187944                 fld     dword ptr [clmodel+5Ch]
+  .text:00187947                 fadd    dword ptr [edi+0B50h]
+  .text:0018794D                 fstp    [esp+7Ch+mins+8]
+  .text:00187951                 fld     dword ptr [clmodel+60h]
+  .text:00187954                 fadd    dword ptr [edi+0B48h]
+  .text:0018795A                 fstp    [esp+7Ch+maxs]
+  .text:0018795E                 fld     dword ptr [clmodel+64h]
+  .text:00187961                 fadd    dword ptr [edi+0B4Ch]
+  .text:00187967                 fstp    [esp+7Ch+maxs+4]
+  .text:0018796B                 fld     dword ptr [clmodel+68h]
+  .text:0018796E                 fadd    dword ptr [edi+0B50h]
+  .text:00187974                 fstp    [esp+7Ch+maxs+8]
+  .text:00187978                 jmp     loc_1878CE
+  .text:00187980                 ; GLfloat
+  .text:00187980                 mov     [esp+7Ch+var_74], 3F800000h; GLfloat
+  .text:00187988                 xor     esi, esi
+  .text:0018798A                 ; GLfloat
+  .text:0018798A                 mov     [esp+7Ch+var_78], 3F800000h; GLfloat
+  .text:00187992                 ; GLfloat
+  .text:00187992                 mov     [esp+7Ch+var_7C], 3F800000h; GLfloat
+  .text:00187999                 call    ds:qglColor3f
+  .text:0018799F                 mov     ecx, 100h
+  .text:001879A4                 ; count
+  .text:001879A4                 mov     [esp+7Ch+var_74], ecx; count
+  .text:001879A8                 ; fill
+  .text:001879A8                 mov     [esp+7Ch+var_78], esi; fill
+  .text:001879AC                 ; dest
+  .text:001879AC                 mov     [esp+7Ch+var_7C], offset lightmap_polys; dest
+  .text:001879B3                 call    Q_memset
+  .text:001879B8                 test    rotated, rotated
+  .text:001879BA                 fld     ds:r_refdef.vieworg
+  .text:001879C0                 fsub    dword ptr [edi+0B48h]
+  .text:001879C6                 fst     ds:modelorg
+  .text:001879CC                 fld     ds:r_refdef.vieworg+4
+  .text:001879D2                 fsub    dword ptr [edi+0B4Ch]
+  .text:001879D8                 fst     ds:modelorg+4
+  .text:001879DE                 fld     ds:r_refdef.vieworg+8
+  .text:001879E4                 fsub    dword ptr [edi+0B50h]
+  .text:001879EA                 fst     ds:modelorg+8
+  .text:001879F0                 jnz     loc_187E10
+  .text:001879F6                 fstp    st
+  .text:001879F8                 fstp    st
+  .text:001879FA                 fstp    st
+  .text:001879FC                 mov     eax, [clmodel+70h]
+  .text:001879FF                 lea     edx, [eax+eax*2]
+  .text:00187A02                 test    eax, eax
+  .text:00187A04                 lea     ecx, [edx+edx*8]
+  .text:00187A07                 mov     edx, [clmodel+0B4h]
+  .text:00187A0D                 lea     esi, [edx+ecx*4]
+  .text:00187A10                 jz      loc_187AF0
+  .text:00187A16                 fld     gl_flashblend.value
+  .text:00187A1C                 fldz
+  .text:00187A1E                 fxch    st(1)
+  .text:00187A20                 fucomip st, st(1)
+  .text:00187A22                 fstp    st
+  .text:00187A24                 jp      loc_187AF0
+  .text:00187A2A                 jnz     loc_187AF0
+  .text:00187A30                 mov     rotated, offset cl_dlights
+  .text:00187A35                 xor     ecx, ecx
+  .text:00187A37                 jmp     short loc_187A4D
+  .text:00187A40                 inc     ecx
+  .text:00187A41                 add     ebx, 28h ; '('
+  .text:00187A44                 cmp     k_0, 20h ; ' '
+  .text:00187A47                 jz      loc_187AF0
+  .text:00187A4D                 fld     dword ptr [ebx+14h]
+  .text:00187A50                 fld     ds:nMax.time
+  .text:00187A56                 fucomip st, st(1)
+  .text:00187A58                 fstp    st
+  .text:00187A5A                 ja      short loc_187A40
+  .text:00187A5C                 fld     dword ptr [ebx+0Ch]
+  .text:00187A5F                 fldz
+  .text:00187A61                 fxch    st(1)
+  .text:00187A63                 fucomip st, st(1)
+  .text:00187A65                 fstp    st
+  .text:00187A67                 jp      short loc_187A6B
+  .text:00187A69                 jz      short loc_187A40
+  .text:00187A6B                 fld     dword ptr [ebx]
+  .text:00187A6D                 fld     dword ptr [ebx+4]
+  .text:00187A70                 fld     dword ptr [ebx+8]
+  .text:00187A73                 fld     st(2)
+  .text:00187A75                 fstp    [esp+7Ch+var_60]
+  .text:00187A79                 fxch    st(2)
+  .text:00187A7B                 fsub    dword ptr [edi+0B48h]
+  .text:00187A81                 mov     [esp+7Ch+temp_2], k_0
+  .text:00187A85                 fstp    dword ptr [ebx]
+  .text:00187A87                 fld     st
+  .text:00187A89                 fstp    [esp+7Ch+var_64]
+  .text:00187A8D                 fsub    dword ptr [edi+0B4Ch]
+  .text:00187A93                 fstp    dword ptr [ebx+4]
+  .text:00187A96                 fld     st
+  .text:00187A98                 fstp    [esp+7Ch+var_68]
+  .text:00187A9C                 fsub    dword ptr [edi+0B50h]
+  .text:00187AA2                 fstp    dword ptr [ebx+8]
+  .text:00187AA5                 mov     eax, [clmodel+0D8h]
+  .text:00187AAB                 lea     edx, [eax+eax*2]
+  .text:00187AAE                 lea     edx, [eax+edx*4]
+  .text:00187AB1                 mov     eax, [clmodel+0A4h]
+  .text:00187AB7                 ; light
+  .text:00187AB7                 mov     [esp+7Ch+var_7C], ebx; light
+  .text:00187ABA                 lea     eax, [eax+edx*4]
+  .text:00187ABD                 ; node
+  .text:00187ABD                 mov     [esp+7Ch+var_74], eax; node
+  .text:00187AC1                 mov     eax, 1
+  .text:00187AC6                 shl     eax, cl
+  .text:00187AC8                 ; bit
+  .text:00187AC8                 mov     [esp+7Ch+var_78], eax; bit
+  .text:00187ACC                 call    R_MarkLights
+  .text:00187AD1                 mov     ecx, [esp+7Ch+temp_2]
+  .text:00187AD5                 fld     [esp+7Ch+var_60]
+  .text:00187AD9                 fstp    dword ptr [ebx]
+  .text:00187ADB                 fld     [esp+7Ch+var_64]
+  .text:00187ADF                 fstp    dword ptr [ebx+4]
+  .text:00187AE2                 fld     [esp+7Ch+var_68]
+  .text:00187AE6                 fstp    dword ptr [ebx+8]
+  .text:00187AE9                 jmp     loc_187A40
+  .text:00187AF0                 call    ds:qglPushMatrix
+  .text:00187AF6                 lea     eax, [edi+0B48h]
+  .text:00187AFC                 ; e
+  .text:00187AFC                 mov     [esp+7Ch+var_78], edi; e
+  .text:00187B00                 ; origin
+  .text:00187B00                 mov     [esp+7Ch+var_7C], eax; origin
+  .text:00187B03                 call    R_RotateForEntity
+  .text:00187B08                 mov     byte ptr [esp+7Ch+temp_2], 1
+  .text:00187B0D                 fld     gl_reduce_shader_changes.value
+  .text:00187B13                 fldz
+  .text:00187B15                 fxch    st(1)
+  .text:00187B17                 fucomip st, st(1)
+  .text:00187B19                 fstp    st
+  .text:00187B1B                 jp      loc_187D48
+  .text:00187B21                 jnz     loc_187D48
+  .text:00187B27                 ; pEntity
+  .text:00187B27                 mov     [esp+7Ch+var_7C], edi; pEntity
+  .text:00187B2A                 call    R_SetRenderMode
+  .text:00187B2F                 mov     ebx, [clmodel+74h]
+  .text:00187B32                 xor     edx, edx
+  .text:00187B34                 movzx   eax, byte ptr [esp+7Ch+temp_2]
+  .text:00187B39                 test    ebx, ebx
+  .text:00187B3B                 mov     [esp+7Ch+temp_2], eax
+  .text:00187B3F                 jle     loc_187C0C
+  .text:00187B45                 mov     [esp+7Ch+e], edi
+  .text:00187B4C                 mov     edi, edx
+  .text:00187B4E                 xchg    ax, ax
+  .text:00187B50                 mov     ecx, [psurf+8]
+  .text:00187B53                 mov     eax, [psurf+4]
+  .text:00187B56                 mov     edx, ecx
+  .text:00187B58                 and     edx, 10h
+  .text:00187B5B                 jnz     loc_187CA0
+  .text:00187B61                 fld     dword ptr [pplane+0Ch]
+  .text:00187B64                 fld     ds:modelorg
+  .text:00187B6A                 test    cl, 2
+  .text:00187B6D                 fmul    dword ptr [pplane]
+  .text:00187B6F                 fld     ds:modelorg+4
+  .text:00187B75                 fmul    dword ptr [pplane+4]
+  .text:00187B78                 faddp   st(1), st
+  .text:00187B7A                 fld     ds:modelorg+8
+  .text:00187B80                 fmul    dword ptr [pplane+8]
+  .text:00187B83                 faddp   st(1), st
+  .text:00187B85                 fsubrp  st(1), st
+  .text:00187B87                 jnz     loc_187CD8
+  .text:00187B8D                 fld     ds:dbl_24BC90
+  .text:00187B93                 fxch    st(1)
+  .text:00187B95                 fucomip st, st(1)
+  .text:00187B97                 fstp    st
+  .text:00187B99                 jbe     loc_187CE8
+  .text:00187B9F                 mov     pplane, gl_texsort
+  .text:00187BA4                 test    eax, eax
+  .text:00187BA6                 jz      loc_187D20
+  .text:00187BAC                 mov     eax, ds:g_bHasShaderFunctions
+  .text:00187BB1                 test    eax, eax
+  .text:00187BB3                 jz      short loc_187BD5
+  .text:00187BB5                 mov     eax, ds:g_uCurrentProgram
+  .text:00187BBA                 test    eax, eax
+  .text:00187BBC                 jz      short loc_187BD5
+  .text:00187BBE                 ; GLuint
+  .text:00187BBE                 mov     [esp+7Ch+var_7C], 0; GLuint
+  .text:00187BC5                 call    ds:qglUseProgram
+  .text:00187BCB                 mov     ecx, [psurf+8]
+  .text:00187BCE                 xor     eax, eax
+  .text:00187BD0                 mov     ds:g_uCurrentProgram, eax
+  .text:00187BD5                 inc     ds:c_brush_polys
+  .text:00187BDB                 test    cl, 4
+  .text:00187BDE                 jz      loc_187E00
+  .text:00187BE4                 mov     ebx, [clmodel+74h]
+  .text:00187BE7                 jmp     short loc_187C00
+  .text:00187BF0                 fstp    st
+  .text:00187BF2                 lea     psurf, [psurf+0]
+  .text:00187BF9                 lea     i, [i+0]
+  .text:00187C00                 inc     i
+  .text:00187C01                 add     psurf, 6Ch ; 'l'
+  .text:00187C04                 cmp     i, ebx
+  .text:00187C06                 jl      loc_187B50
+  .text:00187C0C                 mov     edx, ds:g_bHasShaderFunctions
+  .text:00187C12                 test    edx, edx
+  .text:00187C14                 jz      short loc_187C35
+  .text:00187C16                 mov     psurf, ds:g_uCurrentProgram
+  .text:00187C1C                 test    esi, esi
+  .text:00187C1E                 jz      short loc_187C35
+  .text:00187C20                 ; GLuint
+  .text:00187C20                 mov     [esp+7Ch+var_7C], 0; GLuint
+  .text:00187C27                 xor     ebx, ebx
+  .text:00187C29                 call    ds:qglUseProgram
+  .text:00187C2F                 mov     ds:g_uCurrentProgram, ebx
+  .text:00187C35                 mov     eax, ds:currententity
+  .text:00187C3A                 mov     ecx, [eax+2F8h]
+  .text:00187C40                 test    ecx, ecx
+  .text:00187C42                 jnz     loc_187D58
+  .text:00187C48                 mov     eax, gl_texsort
+  .text:00187C4D                 test    eax, eax
+  .text:00187C4F                 jnz     loc_187DA3
+  .text:00187C55                 call    ds:qglPopMatrix
+  .text:00187C5B                 ; GLboolean
+  .text:00187C5B                 mov     [esp+7Ch+var_7C], 1; GLboolean
+  .text:00187C62                 call    ds:qglDepthMask
+  .text:00187C68                 ; GLenum
+  .text:00187C68                 mov     [esp+7Ch+var_7C], 0BC0h; GLenum
+  .text:00187C6F                 call    ds:qglDisable
+  .text:00187C75                 ; GLclampf
+  .text:00187C75                 mov     [esp+7Ch+var_78], 0; GLclampf
+  .text:00187C7D                 ; GLenum
+  .text:00187C7D                 mov     [esp+7Ch+var_7C], 205h; GLenum
+  .text:00187C84                 call    ds:qglAlphaFunc
+  .text:00187C8A                 ; GLenum
+  .text:00187C8A                 mov     [esp+7Ch+var_7C], 0BE2h; GLenum
+  .text:00187C91                 call    ds:qglDisable
+  .text:00187C97                 add     esp, 6Ch
+  .text:00187C9A                 pop     ebx
+  .text:00187C9B                 pop     esi
+  .text:00187C9C                 pop     edi
+  .text:00187C9D                 pop     ebp
+  .text:00187C9E                 retn
+  .text:00187CA0                 cmp     byte ptr [pplane+10h], 2
+  .text:00187CA4                 jz      short loc_187CBC
+  .text:00187CA6                 fld     gl_watersides.value
+  .text:00187CAC                 fldz
+  .text:00187CAE                 fxch    st(1)
+  .text:00187CB0                 fucomip st, st(1)
+  .text:00187CB2                 fstp    st
+  .text:00187CB4                 jp      short loc_187CBC
+  .text:00187CB6                 jz      loc_187C00
+  .text:00187CBC                 fld     dword ptr [pplane+0Ch]
+  .text:00187CBF                 fld1
+  .text:00187CC1                 fadd    [esp+7Ch+mins+8]
+  .text:00187CC5                 fucomip st, st(1)
+  .text:00187CC7                 jnb     loc_187BF0
+  .text:00187CCD                 jmp     loc_187B64
+  .text:00187CD8                 fld     ds:dbl_24BC98
+  .text:00187CDE                 fucomip st, st(1)
+  .text:00187CE0                 fstp    st
+  .text:00187CE2                 ja      loc_187B9F
+  .text:00187CE8                 test    edx, edx
+  .text:00187CEA                 jz      loc_187C00
+  .text:00187CF0                 mov     pplane, [esp+7Ch+e]
+  .text:00187CF7                 ; pEntity
+  .text:00187CF7                 mov     [esp+7Ch+var_7C], eax; pEntity
+  .text:00187CFA                 call    R_SetRenderMode
+  .text:00187CFF                 mov     eax, [esp+7Ch+temp_2]
+  .text:00187D03                 ; surface
+  .text:00187D03                 mov     [esp+7Ch+var_7C], psurf; surface
+  .text:00187D06                 ; cleanUpShaderState
+  .text:00187D06                 mov     [esp+7Ch+var_74], eax; cleanUpShaderState
+  .text:00187D0A                 mov     eax, 1
+  .text:00187D0F                 ; face
+  .text:00187D0F                 mov     [esp+7Ch+var_78], eax; face
+  .text:00187D13                 call    R_DrawSequentialPoly
+  .text:00187D18                 jmp     loc_187BE4
+  .text:00187D20                 mov     eax, [esp+7Ch+e]
+  .text:00187D27                 ; pEntity
+  .text:00187D27                 mov     [esp+7Ch+var_7C], eax; pEntity
+  .text:00187D2A                 call    R_SetRenderMode
+  .text:00187D2F                 mov     eax, [esp+7Ch+temp_2]
+  .text:00187D33                 mov     [esp+7Ch+var_7C], psurf
+  .text:00187D36                 mov     [esp+7Ch+var_74], eax
+  .text:00187D3A                 xor     eax, eax
+  .text:00187D3C                 mov     [esp+7Ch+var_78], eax
+  .text:00187D40                 jmp     short loc_187D13
+  .text:00187D48                 mov     byte ptr [esp+7Ch+temp_2], 0
+  .text:00187D4D                 jmp     loc_187B27
+  .text:00187D58                 mov     clmodel, 2200h
+  .text:00187D5D                 ; GLfloat
+  .text:00187D5D                 mov     [esp+7Ch+var_74], 46040000h; GLfloat
+  .text:00187D65                 ; GLenum
+  .text:00187D65                 mov     [esp+7Ch+var_78], ebp; GLenum
+  .text:00187D69                 ; GLenum
+  .text:00187D69                 mov     [esp+7Ch+var_7C], 2300h; GLenum
+  .text:00187D70                 call    ds:qglTexEnvf
+  .text:00187D76                 ; bMultitexture
+  .text:00187D76                 mov     [esp+7Ch+var_7C], 0BE2h; bMultitexture
+  .text:00187D7D                 call    ds:qglDisable
+  .text:00187D83                 mov     edx, gl_texsort
+  .text:00187D89                 mov     eax, ds:currententity
+  .text:00187D8E                 test    edx, edx
+  .text:00187D90                 jnz     loc_187EB0
+  .text:00187D96                 cmp     dword ptr [eax+2F8h], 1
+  .text:00187D9D                 jnz     loc_187C55
+  .text:00187DA3                 call    R_DrawDecals_0
+  .text:00187DA8                 mov     eax, ds:currententity
+  .text:00187DAD                 mov     edi, [eax+2F8h]
+  .text:00187DB3                 test    edi, edi
+  .text:00187DB5                 jnz     loc_187C55
+  .text:00187DBB                 mov     esi, ds:filterMode
+  .text:00187DC1                 test    esi, esi
+  .text:00187DC3                 jnz     loc_187C55
+  .text:00187DC9                 fld     r_fullbright.value
+  .text:00187DCF                 fldz
+  .text:00187DD1                 fxch    st(1)
+  .text:00187DD3                 fucomip st, st(1)
+  .text:00187DD5                 fstp    st
+  .text:00187DD7                 jp      loc_187C55
+  .text:00187DDD                 jnz     loc_187C55
+  .text:00187DE3                 mov     ebx, gl_texsort
+  .text:00187DE9                 test    ebx, ebx
+  .text:00187DEB                 jz      loc_187C55
+  .text:00187DF1                 call    R_BlendLightmaps_0
+  .text:00187DF6                 jmp     loc_187C55
+  .text:00187E00                 ; fa
+  .text:00187E00                 mov     eax, psurf; fa
+  .text:00187E02                 call    R_RenderBrushPoly_0
+  .text:00187E07                 mov     ebx, [clmodel+74h]
+  .text:00187E0A                 jmp     loc_187C00
+  .text:00187E10                 lea     eax, [esp+7Ch+up]
+  .text:00187E14                 ; up
+  .text:00187E14                 mov     [esp+7Ch+var_70], eax; up
+  .text:00187E18                 lea     eax, [esp+7Ch+right]
+  .text:00187E1C                 ; right
+  .text:00187E1C                 mov     [esp+7Ch+var_74], eax; right
+  .text:00187E20                 lea     eax, [esp+7Ch+forward]
+  .text:00187E24                 fstp    [esp+7Ch+var_64]
+  .text:00187E28                 ; forward
+  .text:00187E28                 mov     [esp+7Ch+var_78], eax; forward
+  .text:00187E2C                 lea     eax, [edi+0B54h]
+  .text:00187E32                 fstp    [esp+7Ch+var_68]
+  .text:00187E36                 ; angles
+  .text:00187E36                 mov     [esp+7Ch+var_7C], eax; angles
+  .text:00187E39                 fstp    [esp+7Ch+temp_2]
+  .text:00187E3D                 call    AngleVectors
+  .text:00187E42                 fld     [esp+7Ch+temp_2]
+  .text:00187E46                 fld     [esp+7Ch+forward]
+  .text:00187E4A                 fmul    st, st(1)
+  .text:00187E4C                 fld     [esp+7Ch+var_68]
+  .text:00187E50                 fld     [esp+7Ch+forward+4]
+  .text:00187E54                 fmul    st, st(1)
+  .text:00187E56                 faddp   st(2), st
+  .text:00187E58                 fld     [esp+7Ch+var_64]
+  .text:00187E5C                 fld     [esp+7Ch+forward+8]
+  .text:00187E60                 fmul    st, st(1)
+  .text:00187E62                 faddp   st(3), st
+  .text:00187E64                 fxch    st(2)
+  .text:00187E66                 fstp    ds:modelorg
+  .text:00187E6C                 fld     [esp+7Ch+right]
+  .text:00187E70                 fmul    st, st(3)
+  .text:00187E72                 fld     [esp+7Ch+right+4]
+  .text:00187E76                 fmul    st, st(2)
+  .text:00187E78                 faddp   st(1), st
+  .text:00187E7A                 fld     [esp+7Ch+right+8]
+  .text:00187E7E                 fmul    st, st(3)
+  .text:00187E80                 faddp   st(1), st
+  .text:00187E82                 fchs
+  .text:00187E84                 fstp    ds:modelorg+4
+  .text:00187E8A                 fxch    st(2)
+  .text:00187E8C                 fmul    [esp+7Ch+up]
+  .text:00187E90                 fxch    st(2)
+  .text:00187E92                 fmul    [esp+7Ch+up+4]
+  .text:00187E96                 faddp   st(2), st
+  .text:00187E98                 fmul    [esp+7Ch+up+8]
+  .text:00187E9C                 faddp   st(1), st
+  .text:00187E9E                 fstp    ds:modelorg+8
+  .text:00187EA4                 jmp     loc_1879FC
+  .text:00187EB0                 cmp     dword ptr [eax+2F8h], 4
+  .text:00187EB7                 jnz     loc_187DA3
+  .text:00187EBD                 fld     gl_lightholes.value
+  .text:00187EC3                 fldz
+  .text:00187EC5                 fxch    st(1)
+  .text:00187EC7                 fucomip st, st(1)
+  .text:00187EC9                 fstp    st
+  .text:00187ECB                 jp      short loc_187ED3
+  .text:00187ECD                 jz      loc_187C55
+  .text:00187ED3                 ; GLenum
+  .text:00187ED3                 mov     [esp+7Ch+var_7C], 202h; GLenum
+  .text:00187EDA                 call    ds:qglDepthFunc
+  .text:00187EE0                 mov     ecx, ds:filterMode
+  .text:00187EE6                 test    ecx, ecx
+  .text:00187EE8                 jnz     short loc_187F10
+  .text:00187EEA                 fld     r_fullbright.value
+  .text:00187EF0                 fldz
+  .text:00187EF2                 fxch    st(1)
+  .text:00187EF4                 fucomip st, st(1)
+  .text:00187EF6                 fstp    st
+  .text:00187EF8                 jp      short loc_187F10
+  .text:00187EFA                 jnz     short loc_187F10
+  .text:00187EFC                 mov     edx, gl_texsort
+  .text:00187F02                 test    edx, edx
+  .text:00187F04                 jz      short loc_187F10
+  .text:00187F06                 call    R_BlendLightmaps_0
+  .text:00187F0B                 nop
+  .text:00187F0C                 lea     esi, [esi+0]
+  .text:00187F10                 fld     gl_ztrick.value
+  .text:00187F16                 fldz
+  .text:00187F18                 fxch    st(1)
+  .text:00187F1A                 fucomip st, st(1)
+  .text:00187F1C                 fstp    st
+  .text:00187F1E                 jp      short loc_187F22
+  .text:00187F20                 jz      short loc_187F36
+  .text:00187F22                 fld     ds:flt_248810
+  .text:00187F28                 fld     ds:gldepthmin
+  .text:00187F2E                 fxch    st(1)
+  .text:00187F30                 fucomip st, st(1)
+  .text:00187F32                 fstp    st
+  .text:00187F34                 jbe     short loc_187F48
+  .text:00187F36                 ; GLenum
+  .text:00187F36                 mov     [esp+7Ch+var_7C], 203h; GLenum
+  .text:00187F3D                 call    ds:qglDepthFunc
+  .text:00187F43                 jmp     loc_187C55
+  .text:00187F48                 ; GLenum
+  .text:00187F48                 mov     [esp+7Ch+var_7C], 206h; GLenum
+  .text:00187F4F                 call    ds:qglDepthFunc
+  .text:00187F55                 jmp     loc_187C55
+procedure: |-
+  void __cdecl R_DrawBrushModel(void *entity)
+  {
+    long double v1; // fst6
+    int v2; // ebp
+    long double v3; // fst7
+    int v4; // ebx
+    long double v5; // fst7
+    long double v6; // fst6
+    long double v7; // fst5
+    int v8; // eax
+    msurface_t *v9; // esi
+    dlight_t *v10; // ebx
+    int i; // ecx
+    long double v12; // fst6
+    long double v13; // rt0
+    int v14; // ebx
+    int j; // edi
+    int dlightbits; // ecx
+    int dlightframe; // eax
+    long double v18; // fst7
+    long double v19; // fst7
+    qboolean_0 v20; // [esp+0h] [ebp-7Ch]
+    int temp_2b; // [esp+10h] [ebp-6Ch]
+    bool temp_2; // [esp+10h] [ebp-6Ch]
+    vec_t temp_2a; // [esp+10h] [ebp-6Ch]
+    vec_t v24; // [esp+14h] [ebp-68h]
+    float v25; // [esp+14h] [ebp-68h]
+    vec_t v26; // [esp+18h] [ebp-64h]
+    float v27; // [esp+18h] [ebp-64h]
+    vec_t v28; // [esp+1Ch] [ebp-60h]
+    vec3_t mins; // [esp+24h] [ebp-58h] BYREF
+    vec3_t maxs; // [esp+30h] [ebp-4Ch] BYREF
+    vec3_t forward; // [esp+3Ch] [ebp-40h] BYREF
+    vec3_t right; // [esp+48h] [ebp-34h] BYREF
+    vec_t up[10]; // [esp+54h] [ebp-28h] BYREF
+
+    currenttexture = -1;
+    v1 = *((float *)entity + 725);
+    v2 = *((_DWORD *)entity + 741);
+    currententity = (cl_entity_t_1 *)entity;
+    if ( v1 == 0.0 && *((float *)entity + 726) == 0.0 && *((float *)entity + 727) == 0.0 )
+    {
+      v4 = 0;
+      mins[0] = *(float *)(v2 + 84) + *((float *)entity + 722);
+      mins[1] = *(float *)(v2 + 88) + *((float *)entity + 723);
+      mins[2] = *(float *)(v2 + 92) + *((float *)entity + 724);
+      maxs[0] = *(float *)(v2 + 96) + *((float *)entity + 722);
+      maxs[1] = *(float *)(v2 + 100) + *((float *)entity + 723);
+      maxs[2] = *(float *)(v2 + 104) + *((float *)entity + 724);
+    }
+    else
+    {
+      v3 = *(float *)(v2 + 108);
+      v4 = 1;
+      mins[0] = *((float *)entity + 722) - v3;
+      maxs[0] = *((float *)entity + 722) + v3;
+      mins[1] = *((float *)entity + 723) - v3;
+      maxs[1] = *((float *)entity + 723) + v3;
+      mins[2] = *((float *)entity + 724) - v3;
+      maxs[2] = v3 + *((float *)entity + 724);
+    }
+    if ( R_CullBox(mins, maxs) == false )
+    {
+      qglColor3f(1.0, 1.0, 1.0);
+      Q_memset(lightmap_polys, 0, 256);
+      v5 = r_refdef.vieworg[0] - *((float *)entity + 722);
+      modelorg[0] = v5;
+      v6 = r_refdef.vieworg[1] - *((float *)entity + 723);
+      modelorg[1] = v6;
+      v7 = r_refdef.vieworg[2] - *((float *)entity + 724);
+      modelorg[2] = v7;
+      if ( v4 )
+      {
+        v27 = v7;
+        v25 = v6;
+        temp_2a = v5;
+        AngleVectors((const vec_t *)entity + 725, forward, right, up);
+        modelorg[0] = forward[0] * temp_2a + forward[1] * v25 + forward[2] * v27;
+        modelorg[1] = -(right[0] * temp_2a + right[1] * v25 + right[2] * v27);
+        modelorg[2] = temp_2a * up[0] + v25 * up[1] + v27 * up[2];
+      }
+      v8 = *(_DWORD *)(v2 + 112);
+      v9 = (msurface_t *)(*(_DWORD *)(v2 + 180) + 108 * v8);
+      if ( v8 && gl_flashblend.value == 0.0 )
+      {
+        v10 = cl_dlights;
+        for ( i = 0; i != 32; ++i )
+        {
+          if ( nMax.time <= (long double)v10->die && v10->radius != 0.0 )
+          {
+            v12 = v10->origin[1];
+            v28 = v10->origin[0];
+            v13 = v10->origin[2];
+            temp_2b = i;
+            v10->origin[0] = v28 - *((float *)entity + 722);
+            v26 = v12;
+            v10->origin[1] = v12 - *((float *)entity + 723);
+            v24 = v13;
+            v10->origin[2] = v13 - *((float *)entity + 724);
+            R_MarkLights(v10, 1 << i, (mnode_t *)(*(_DWORD *)(v2 + 164) + 52 * *(_DWORD *)(v2 + 216)));
+            i = temp_2b;
+            v10->origin[0] = v28;
+            v10->origin[1] = v26;
+            v10->origin[2] = v24;
+          }
+          ++v10;
+        }
+      }
+      qglPushMatrix();
+      R_RotateForEntity((vec_t *)entity + 722, (cl_entity_t_1 *)entity);
+      temp_2 = gl_reduce_shader_changes.value == 0.0;
+      R_SetRenderMode((cl_entity_t_1 *)entity);
+      v14 = *(_DWORD *)(v2 + 116);
+      if ( v14 > 0 )
+      {
+        for ( j = 0; j < v14; ++j )
+        {
+          dlightbits = v9->dlightbits;
+          dlightframe = v9->dlightframe;
+          if ( (dlightbits & 0x10) != 0 )
+          {
+            if ( *(_BYTE *)(dlightframe + 16) != 2 && gl_watersides.value == 0.0 )
+              goto LABEL_29;
+            v18 = *(float *)(dlightframe + 12);
+            if ( mins[2] + 1.0 >= v18 )
+              goto LABEL_29;
+          }
+          else
+          {
+            v18 = *(float *)(dlightframe + 12);
+          }
+          v19 = modelorg[0] * *(float *)dlightframe
+              + modelorg[1] * *(float *)(dlightframe + 4)
+              + modelorg[2] * *(float *)(dlightframe + 8)
+              - v18;
+          if ( (dlightbits & 2) != 0 )
+          {
+            if ( v19 < -0.01 )
+            {
+  LABEL_23:
+              if ( gl_texsort )
+              {
+                if ( g_bHasShaderFunctions && g_uCurrentProgram )
+                {
+                  qglUseProgram(0);
+                  dlightbits = v9->dlightbits;
+                  g_uCurrentProgram = 0;
+                }
+                ++c_brush_polys;
+                if ( (dlightbits & 4) == 0 )
+                {
+                  R_RenderBrushPoly_0(v9);
+                  v14 = *(_DWORD *)(v2 + 116);
+                  goto LABEL_29;
+                }
+              }
+              else
+              {
+                R_SetRenderMode((cl_entity_t_1 *)entity);
+                R_DrawSequentialPoly(v9, 0, temp_2);
+              }
+              goto LABEL_28;
+            }
+          }
+          else if ( v19 > 0.01 )
+          {
+            goto LABEL_23;
+          }
+          if ( (v9->dlightbits & 0x10) == 0 )
+            goto LABEL_29;
+          R_SetRenderMode((cl_entity_t_1 *)entity);
+          R_DrawSequentialPoly(v9, 1, temp_2);
+  LABEL_28:
+          v14 = *(_DWORD *)(v2 + 116);
+  LABEL_29:
+          v9 = (msurface_t *)((char *)v9 + 108);
+        }
+      }
+      if ( g_bHasShaderFunctions && g_uCurrentProgram )
+      {
+        qglUseProgram(0);
+        g_uCurrentProgram = 0;
+      }
+      if ( currententity->curstate.rendermode )
+      {
+        qglTexEnvf(0x2300u, 0x2200u, 8448.0);
+        qglDisable(0xBE2u);
+        if ( gl_texsort )
+        {
+          if ( currententity->curstate.rendermode == 4 )
+          {
+            if ( gl_lightholes.value != 0.0 )
+            {
+              qglDepthFunc(0x202u);
+              if ( filterMode == false && r_fullbright.value == 0.0 && gl_texsort )
+                R_BlendLightmaps_0();
+              if ( gl_ztrick.value == 0.0 || gldepthmin < 0.5 )
+                qglDepthFunc(0x203u);
+              else
+                qglDepthFunc(0x206u);
+            }
+            goto LABEL_35;
+          }
+        }
+        else if ( currententity->curstate.rendermode != 1 )
+        {
+          goto LABEL_35;
+        }
+      }
+      else if ( gl_texsort == false )
+      {
+  LABEL_35:
+        qglPopMatrix();
+        qglDepthMask(1u);
+        qglDisable(0xBC0u);
+        qglAlphaFunc(0x205u, 0.0);
+        qglDisable(0xBE2u);
+        return;
+      }
+      R_DrawDecals_0(v20);
+      if ( !currententity->curstate.rendermode && filterMode == false && r_fullbright.value == 0.0 )
+      {
+        if ( gl_texsort )
+          R_BlendLightmaps_0();
+      }
+      goto LABEL_35;
+    }
+  }

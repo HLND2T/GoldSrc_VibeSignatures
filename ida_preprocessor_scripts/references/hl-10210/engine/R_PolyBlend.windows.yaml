@@ -1,0 +1,220 @@
+func_name: "R_PolyBlend"
+func_va: "0x10243ea0"
+disasm_code: |-
+  .text:10243EA0                 ; Binary omits the public-source v_blend 3D quad path; the runtime body starts with V_FadeAlpha.
+  .text:10243EA0                 push    ebp; Binary omits the public-source v_blend 3D quad path; the runtime body starts with V_FadeAlpha.
+  .text:10243EA1                 mov     ebp, esp
+  .text:10243EA3                 push    ecx
+  .text:10243EA4                 push    ebx
+  .text:10243EA5                 call    V_FadeAlpha
+  .text:10243EAA                 mov     ebx, eax
+  .text:10243EAC                 test    ebx, ebx
+  .text:10243EAE                 jz      loc_10244129
+  .text:10243EB4                 call    GL_DisableMultitexture
+  .text:10243EB9                 push    0BC0h
+  .text:10243EBE                 call    dword_109B3728
+  .text:10243EC4                 push    0BE2h
+  .text:10243EC9                 call    dword_109B3704
+  .text:10243ECF                 push    0B71h
+  .text:10243ED4                 call    dword_109B3728
+  .text:10243EDA                 push    0DE1h
+  .text:10243EDF                 call    dword_109B3728
+  .text:10243EE5                 test    byte ptr qword_11282EB8+4, 2
+  .text:10243EEC                 jz      short loc_10243F4C
+  .text:10243EEE                 push    300h
+  .text:10243EF3                 push    0
+  .text:10243EF5                 call    dword_109B3808
+  .text:10243EFB                 movzx   eax, byte ptr qword_11282EB8
+  .text:10243F02                 sub     eax, 0FFh
+  .text:10243F07                 mov     [ebp+var_1], 0FFh
+  .text:10243F0B                 imul    eax, ebx
+  .text:10243F0E                 add     eax, 0FE01h
+  .text:10243F13                 sar     eax, 8
+  .text:10243F16                 mov     byte ptr [ebp+var_4], al
+  .text:10243F19                 movzx   eax, byte ptr qword_11282EB8+1
+  .text:10243F20                 sub     eax, 0FFh
+  .text:10243F25                 imul    eax, ebx
+  .text:10243F28                 add     eax, 0FE01h
+  .text:10243F2D                 sar     eax, 8
+  .text:10243F30                 mov     byte ptr [ebp+var_4+1], al
+  .text:10243F33                 movzx   eax, byte ptr qword_11282EB8+2
+  .text:10243F3A                 sub     eax, 0FFh
+  .text:10243F3F                 imul    eax, ebx
+  .text:10243F42                 add     eax, 0FE01h
+  .text:10243F47                 sar     eax, 8
+  .text:10243F4A                 jmp     short loc_10243F74
+  .text:10243F4C                 push    303h
+  .text:10243F51                 push    302h
+  .text:10243F56                 call    dword_109B3808
+  .text:10243F5C                 mov     al, byte ptr qword_11282EB8
+  .text:10243F61                 mov     byte ptr [ebp+var_4], al
+  .text:10243F64                 mov     al, byte ptr qword_11282EB8+1
+  .text:10243F69                 mov     byte ptr [ebp+var_4+1], al
+  .text:10243F6C                 mov     al, byte ptr qword_11282EB8+2
+  .text:10243F71                 mov     [ebp+var_1], bl
+  .text:10243F74                 push    0B60h
+  .text:10243F79                 mov     [ebp+var_2], al
+  .text:10243F7C                 call    dword_109B35E8
+  .text:10243F82                 movzx   eax, al
+  .text:10243F85                 mov     dword_109891FC, eax
+  .text:10243F8A                 cmp     eax, 1
+  .text:10243F8D                 jnz     short loc_10243F99
+  .text:10243F8F                 ; enabled
+  .text:10243F8F                 push    0; enabled
+  .text:10243F91                 call    R_SetFogEnabled
+  .text:10243F96                 add     esp, 4
+  .text:10243F99                 push    glheight
+  .text:10243F9F                 push    glwidth
+  .text:10243FA5                 push    gly
+  .text:10243FAB                 push    glx
+  .text:10243FB1                 call    dword_109B32E0
+  .text:10243FB7                 push    1701h
+  .text:10243FBC                 call    dword_109B356C
+  .text:10243FC2                 call    dword_109B34DC
+  .text:10243FC8                 call    dword_109B35B0
+  .text:10243FCE                 movaps  xmm0, ds:xmmword_102CD510
+  .text:10243FD5                 sub     esp, 30h
+  .text:10243FD8                 xorps   xmm1, xmm1
+  .text:10243FDB                 movups  [esp+38h+var_18], xmm0
+  .text:10243FE0                 movd    xmm0, glheight
+  .text:10243FE8                 cvtdq2pd xmm0, xmm0
+  .text:10243FEC                 movsd   [esp+38h+var_20], xmm1
+  .text:10243FF2                 movsd   [esp+38h+var_28], xmm0
+  .text:10243FF8                 movd    xmm0, glwidth
+  .text:10244000                 cvtdq2pd xmm0, xmm0
+  .text:10244004                 movsd   [esp+38h+var_30], xmm0
+  .text:1024400A                 movsd   [esp+38h+var_38], xmm1
+  .text:1024400F                 call    dword_109B3530
+  .text:10244015                 push    1700h
+  .text:1024401A                 call    dword_109B356C
+  .text:10244020                 call    dword_109B34DC
+  .text:10244026                 call    dword_109B35B0
+  .text:1024402C                 push    0B44h
+  .text:10244031                 call    dword_109B3728
+  .text:10244037                 lea     eax, [ebp+var_4]
+  .text:1024403A                 push    eax
+  .text:1024403B                 call    dword_109B3774
+  .text:10244041                 push    7
+  .text:10244043                 call    dword_109B3814
+  .text:10244049                 sub     esp, 8
+  .text:1024404C                 mov     dword ptr [esp+10h+var_18+0Ch], 0
+  .text:10244054                 mov     dword ptr [esp+10h+var_18+8], 0
+  .text:1024405B                 call    dword_109B3344
+  .text:10244061                 movd    xmm0, glheight
+  .text:10244069                 sub     esp, 8
+  .text:1024406C                 cvtdq2ps xmm0, xmm0
+  .text:1024406F                 movss   dword ptr [esp+10h+var_18+0Ch], xmm0
+  .text:10244075                 mov     dword ptr [esp+10h+var_18+8], 0
+  .text:1024407C                 call    dword_109B3344
+  .text:10244082                 movd    xmm0, glheight
+  .text:1024408A                 sub     esp, 8
+  .text:1024408D                 cvtdq2ps xmm0, xmm0
+  .text:10244090                 movss   dword ptr [esp+10h+var_18+0Ch], xmm0
+  .text:10244096                 movd    xmm0, glwidth
+  .text:1024409E                 cvtdq2ps xmm0, xmm0
+  .text:102440A1                 movss   dword ptr [esp+10h+var_18+8], xmm0
+  .text:102440A6                 call    dword_109B3344
+  .text:102440AC                 movd    xmm0, glwidth
+  .text:102440B4                 sub     esp, 8
+  .text:102440B7                 cvtdq2ps xmm0, xmm0
+  .text:102440BA                 mov     dword ptr [esp+10h+var_18+0Ch], 0
+  .text:102440C2                 movss   dword ptr [esp+10h+var_18+8], xmm0
+  .text:102440C7                 call    dword_109B3344
+  .text:102440CD                 call    dword_109B36FC
+  .text:102440D3                 call    dword_109B34F0
+  .text:102440D9                 push    1701h
+  .text:102440DE                 call    dword_109B356C
+  .text:102440E4                 call    dword_109B34F0
+  .text:102440EA                 push    0B71h
+  .text:102440EF                 call    dword_109B3704
+  .text:102440F5                 push    0B44h
+  .text:102440FA                 call    dword_109B3704
+  .text:10244100                 push    0DE1h
+  .text:10244105                 call    dword_109B3704
+  .text:1024410B                 push    0BC0h
+  .text:10244110                 call    dword_109B3704
+  .text:10244116                 cmp     dword_109891FC, 1
+  .text:1024411D                 jnz     short loc_10244129
+  .text:1024411F                 ; enabled
+  .text:1024411F                 push    1; enabled
+  .text:10244121                 call    R_SetFogEnabled
+  .text:10244126                 add     esp, 4
+  .text:10244129                 pop     ebx
+  .text:1024412A                 mov     esp, ebp
+  .text:1024412C                 pop     ebp
+  .text:1024412D                 retn
+procedure: |-
+  void __cdecl R_PolyBlend()
+  {
+    int v0; // ebx
+    int v1; // eax
+    __int16 v2; // [esp+94h] [ebp-4h] BYREF
+    char v3; // [esp+96h] [ebp-2h]
+    char v4; // [esp+97h] [ebp-1h]
+
+    v0 = V_FadeAlpha();
+    if ( v0 )
+    {
+      GL_DisableMultitexture();
+      dword_109B3728(3008);
+      dword_109B3704(3042);
+      dword_109B3728(2929);
+      dword_109B3728(3553);
+      if ( (qword_11282EB8 & 0x200000000LL) != 0 )
+      {
+        dword_109B3808(0, 768);
+        v4 = -1;
+        LOBYTE(v2) = (unsigned __int16)(v0 * ((unsigned __int8)qword_11282EB8 - 255) - 511) >> 8;
+        HIBYTE(v2) = (unsigned __int16)(v0 * (BYTE1(qword_11282EB8) - 255) - 511) >> 8;
+        v1 = (v0 * (BYTE2(qword_11282EB8) - 255) + 65025) >> 8;
+      }
+      else
+      {
+        dword_109B3808(770, 771);
+        v2 = qword_11282EB8;
+        LOBYTE(v1) = BYTE2(qword_11282EB8);
+        v4 = v0;
+      }
+      v3 = v1;
+      dword_109891FC = (unsigned __int8)dword_109B35E8(2912);
+      if ( dword_109891FC == 1 )
+        R_SetFogEnabled(0);
+      dword_109B32E0(glx, gly, glwidth, glheight);
+      dword_109B356C(5889);
+      dword_109B34DC();
+      dword_109B35B0();
+      dword_109B3530(
+        0,
+        0,
+        COERCE_UNSIGNED_INT64((double)glwidth),
+        HIDWORD(COERCE_UNSIGNED_INT64((double)glwidth)),
+        COERCE_UNSIGNED_INT64((double)glheight),
+        HIDWORD(COERCE_UNSIGNED_INT64((double)glheight)),
+        0,
+        0,
+        0,
+        -1057461776,
+        0,
+        1090021872);
+      dword_109B356C(5888);
+      dword_109B34DC();
+      dword_109B35B0();
+      dword_109B3728(2884);
+      dword_109B3774(&v2);
+      dword_109B3814(7);
+      dword_109B3344(0, 0);
+      ((void (__stdcall *)(_DWORD, _DWORD))dword_109B3344)(0, (float)glheight);
+      ((void (__stdcall *)(_DWORD, _DWORD))dword_109B3344)((float)glwidth, (float)glheight);
+      ((void (__stdcall *)(_DWORD, _DWORD))dword_109B3344)((float)glwidth, 0);
+      dword_109B36FC();
+      dword_109B34F0();
+      dword_109B356C(5889);
+      dword_109B34F0();
+      dword_109B3704(2929);
+      dword_109B3704(2884);
+      dword_109B3704(3553);
+      dword_109B3704(3008);
+      if ( dword_109891FC == 1 )
+        R_SetFogEnabled(1);
+    }
+  }

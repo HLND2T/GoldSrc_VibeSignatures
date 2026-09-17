@@ -171,7 +171,7 @@ disasm_code: |-
   .text:0017E536                 lea     esi, [esi+0]
   .text:0017E539                 lea     edi, [edi+0]
   .text:0017E540                 mov     [esp+5Ch+cap], eax
-  .text:0017E543                 call    sub_1534D0
+  .text:0017E543                 call    R_DrawBrushModel
   .text:0017E548                 mov     edx, ds:(dword_7AE12D8 - 2EE000h)[ebx]
   .text:0017E54E                 jmp     loc_17E3D8
   .text:0017E558                 mov     edx, ds:(dword_7AE12D8 - 2EE000h)[ebx]
@@ -381,7 +381,7 @@ procedure: |-
               glEnable(0xB60u);
               v4 = dword_30F6F78;
             }
-            sub_1534D0(v4);
+            R_DrawBrushModel(v4);
             v7 = dword_7AE12D8;
             goto LABEL_14;
           }

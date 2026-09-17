@@ -1,0 +1,5 @@
+func_name: R_PolyBlend
+func_va: '0x1c43a0'
+func_rva: '0x1c43a0'
+func_size: '0x2ea'
+func_sig: 53 83 EC ?? E8 ?? ?? ?? ?? 85 C0 89 C3 75 ?? 83 C4 ?? 5B C3

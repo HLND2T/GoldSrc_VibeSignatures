@@ -1,0 +1,212 @@
+func_name: "R_RenderScene"
+func_va: "0x187810"
+disasm_code: |-
+  .text:00187810                 push    ebx
+  .text:00187811                 call    __x86_get_pc_thunk_bx
+  .text:00187816                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:0018781C                 sub     esp, 28h
+  .text:0018781F                 call    __Z20CL_IsDevOverviewModev; CL_IsDevOverviewMode(void)
+  .text:00187824                 test    eax, eax
+  .text:00187826                 jnz     loc_187A08
+  .text:0018782C                 call    _Z12R_SetupFramev; R_SetupFrame(void)
+  .text:00187831                 call    _Z12R_SetFrustumv; R_SetFrustum(void)
+  .text:00187836                 call    R_SetupGL
+  .text:0018783B                 nop
+  .text:0018783C                 lea     esi, [esi+0]
+  .text:00187840                 call    __Z12R_MarkLeavesv; R_MarkLeaves(void)
+  .text:00187845                 mov     eax, ds:(dword_30D6BCC - 33A000h)[ebx]
+  .text:0018784B                 test    eax, eax
+  .text:0018784D                 jz      loc_1879C0
+  .text:00187853                 mov     eax, ds:(g_bUserFogOn - 33A000h)[ebx]
+  .text:00187859                 test    eax, eax
+  .text:0018785B                 jnz     loc_187900
+  .text:00187861                 ; cap
+  .text:00187861                 mov     [esp+2Ch+cap], 0B60h; cap
+  .text:00187868                 call    _glIsEnabled
+  .text:0018786D                 movzx   eax, al
+  .text:00187870                 mov     ds:(_ZZ8AllowFogbE12isFogEnabled - 33A000h)[ebx], eax; AllowFog(bool)::isFogEnabled
+  .text:00187876                 dec     eax
+  .text:00187877                 jz      loc_187A20
+  .text:0018787D                 call    __Z29ClientDLL_DrawNormalTrianglesv; ClientDLL_DrawNormalTriangles(void)
+  .text:00187882                 cmp     ds:(_ZZ8AllowFogbE12isFogEnabled - 33A000h)[ebx], 1; AllowFog(bool)::isFogEnabled
+  .text:00187889                 jz      loc_187A40
+  .text:0018788F                 mov     eax, ds:(off_339CE0 - 33A000h)[ebx]
+  .text:00187895                 cmp     dword ptr ds:loc_24276C[eax], 2
+  .text:0018789C                 jle     short loc_1878E8
+  .text:0018789E                 mov     ecx, ds:(dword_30D6BCC - 33A000h)[ebx]
+  .text:001878A4                 test    ecx, ecx
+  .text:001878A6                 jnz     short loc_1878E8
+  .text:001878A8                 ; cap
+  .text:001878A8                 mov     [esp+2Ch+cap], 0B60h; cap
+  .text:001878AF                 call    _glDisable
+  .text:001878B4                 mov     eax, ds:(dword_30D6BCC - 33A000h)[ebx]
+  .text:001878BA                 ; int
+  .text:001878BA                 mov     [esp+2Ch+cap], eax; int
+  .text:001878BD                 call    __Z19R_DrawTransEntitiesi; R_DrawTransEntities(int)
+  .text:001878C2                 call    __Z13S_ExtraUpdatev; S_ExtraUpdate(void)
+  .text:001878C7                 mov     eax, ds:(dword_30D6BCC - 33A000h)[ebx]
+  .text:001878CD                 test    eax, eax
+  .text:001878CF                 jnz     short loc_1878DB
+  .text:001878D1                 call    __Z22GL_DisableMultitexturev; GL_DisableMultitexture(void)
+  .text:001878D6                 call    __Z15R_DrawParticlesv; R_DrawParticles(void)
+  .text:001878DB                 add     esp, 28h
+  .text:001878DE                 pop     ebx
+  .text:001878DF                 nop
+  .text:001878E0                 retn
+  .text:001878E8                 mov     edx, ds:(g_bUserFogOn - 33A000h)[ebx]
+  .text:001878EE                 test    edx, edx
+  .text:001878F0                 jnz     short loc_1878B4
+  .text:001878F2                 ; cap
+  .text:001878F2                 mov     [esp+2Ch+cap], 0B60h; cap
+  .text:001878F9                 call    _glDisable
+  .text:001878FE                 jmp     short loc_1878B4
+  .text:00187900                 ; cap
+  .text:00187900                 mov     [esp+2Ch+cap], 0B60h; cap
+  .text:00187907                 call    _glEnable
+  .text:0018790C                 mov     eax, 801h
+  .text:00187911                 ; param
+  .text:00187911                 mov     [esp+2Ch+param], eax; param
+  .text:00187915                 ; pname
+  .text:00187915                 mov     [esp+2Ch+cap], 0B65h; pname
+  .text:0018791C                 call    _glFogi
+  .text:00187921                 ; pname
+  .text:00187921                 mov     [esp+2Ch+cap], 0B62h; pname
+  .text:00187928                 fld     ds:(flFogDensity - 33A000h)[ebx]
+  .text:0018792E                 fstp    [esp+2Ch+var_10]
+  .text:00187932                 movss   xmm0, [esp+2Ch+var_10]
+  .text:00187938                 ; param
+  .text:00187938                 movss   [esp+2Ch+param], xmm0; param
+  .text:0018793E                 call    _glFogf
+  .text:00187943                 mov     eax, 1102h
+  .text:00187948                 ; mode
+  .text:00187948                 mov     [esp+2Ch+param], eax; mode
+  .text:0018794C                 ; target
+  .text:0018794C                 mov     [esp+2Ch+cap], 0C54h; target
+  .text:00187953                 call    _glHint
+  .text:00187958                 lea     eax, (flFinalFogColor - 33A000h)[ebx]
+  .text:0018795E                 ; params
+  .text:0018795E                 mov     [esp+2Ch+param], eax; params
+  .text:00187962                 ; pname
+  .text:00187962                 mov     [esp+2Ch+cap], 0B66h; pname
+  .text:00187969                 call    _glFogfv
+  .text:0018796E                 ; pname
+  .text:0018796E                 mov     [esp+2Ch+cap], 0B63h; pname
+  .text:00187975                 fld     ds:(flFogStart - 33A000h)[ebx]
+  .text:0018797B                 fstp    [esp+2Ch+var_10]
+  .text:0018797F                 movss   xmm1, [esp+2Ch+var_10]
+  .text:00187985                 ; param
+  .text:00187985                 movss   [esp+2Ch+param], xmm1; param
+  .text:0018798B                 call    _glFogf
+  .text:00187990                 ; pname
+  .text:00187990                 mov     [esp+2Ch+cap], 0B64h; pname
+  .text:00187997                 fld     ds:(flFogEnd - 33A000h)[ebx]
+  .text:0018799D                 fstp    [esp+2Ch+var_10]
+  .text:001879A1                 movss   xmm2, [esp+2Ch+var_10]
+  .text:001879A7                 ; param
+  .text:001879A7                 movss   [esp+2Ch+param], xmm2; param
+  .text:001879AD                 call    _glFogf
+  .text:001879B2                 jmp     loc_187861
+  .text:001879C0                 call    __Z20CL_IsDevOverviewModev; CL_IsDevOverviewMode(void)
+  .text:001879C5                 test    eax, eax
+  .text:001879C7                 jnz     loc_187A58
+  .text:001879CD                 lea     esi, [esi+0]
+  .text:001879D0                 call    __Z11R_DrawWorldv; R_DrawWorld(void)
+  .text:001879D5                 call    __Z13S_ExtraUpdatev; S_ExtraUpdate(void)
+  .text:001879DA                 mov     eax, ds:(r_drawentities_ptr - 33A000h)[ebx]
+  .text:001879E0                 fld     dword ptr [eax+0Ch]
+  .text:001879E3                 fldz
+  .text:001879E5                 fst     [esp+2Ch+var_10]
+  .text:001879E9                 fxch    st(1)
+  .text:001879EB                 fucomip st, st(1)
+  .text:001879ED                 fstp    st
+  .text:001879EF                 jp      short loc_1879F7
+  .text:001879F1                 jz      loc_187853
+  .text:001879F7                 call    _Z14R_DrawEntitiesv_part_0; R_DrawEntities(void) [clone]
+  .text:001879FC                 lea     esi, [esi+0]
+  .text:00187A00                 jmp     loc_187853
+  .text:00187A08                 lea     eax, (r_refdef - 33A000h)[ebx]
+  .text:00187A0E                 mov     [esp+2Ch+cap], eax
+  .text:00187A11                 call    __Z17CL_SetDevOverViewP8refdef_t; CL_SetDevOverView(refdef_t *)
+  .text:00187A16                 jmp     loc_18782C
+  .text:00187A20                 ; cap
+  .text:00187A20                 mov     [esp+2Ch+cap], 0B60h; cap
+  .text:00187A27                 call    _glDisable
+  .text:00187A2C                 call    __Z29ClientDLL_DrawNormalTrianglesv; ClientDLL_DrawNormalTriangles(void)
+  .text:00187A31                 cmp     ds:(_ZZ8AllowFogbE12isFogEnabled - 33A000h)[ebx], 1; AllowFog(bool)::isFogEnabled
+  .text:00187A38                 jnz     loc_18788F
+  .text:00187A3E                 xchg    ax, ax
+  .text:00187A40                 ; cap
+  .text:00187A40                 mov     [esp+2Ch+cap], 0B60h; cap
+  .text:00187A47                 call    _glEnable
+  .text:00187A4C                 jmp     loc_18788F
+  .text:00187A58                 fldz
+  .text:00187A5A                 ; green
+  .text:00187A5A                 mov     [esp+2Ch+param], 3F800000h; green
+  .text:00187A62                 ; alpha
+  .text:00187A62                 fst     [esp+2Ch+alpha]; alpha
+  .text:00187A66                 ; blue
+  .text:00187A66                 fst     [esp+2Ch+blue]; blue
+  .text:00187A6A                 ; red
+  .text:00187A6A                 fstp    [esp+2Ch+cap]; red
+  .text:00187A6D                 call    _glClearColor
+  .text:00187A72                 ; mask
+  .text:00187A72                 mov     [esp+2Ch+cap], 4000h; mask
+  .text:00187A79                 call    _glClear
+  .text:00187A7E                 jmp     loc_1879CD
+procedure: |-
+  void __cdecl R_RenderScene()
+  {
+    if ( CL_IsDevOverviewMode() )
+      CL_SetDevOverView(&r_refdef);
+    R_SetupFrame();
+    R_SetFrustum();
+    R_SetupGL();
+    R_MarkLeaves();
+    if ( !dword_30D6BCC )
+    {
+      if ( CL_IsDevOverviewMode() )
+      {
+        glClearColor(0.0, 1.0, 0.0, 0.0);
+        glClear(0x4000u);
+      }
+      R_DrawWorld();
+      S_ExtraUpdate();
+      if ( unk_340F3C != 0.0 )
+        R_DrawEntities();
+    }
+    if ( g_bUserFogOn )
+    {
+      glEnable(0xB60u);
+      glFogi(0xB65u, 2049);
+      glFogf(0xB62u, *(GLfloat *)&flFogDensity);
+      glHint(0xC54u, 0x1102u);
+      glFogfv(0xB66u, &flFinalFogColor);
+      glFogf(0xB63u, *(GLfloat *)&flFogStart);
+      glFogf(0xB64u, *(GLfloat *)&flFogEnd);
+    }
+    AllowFog(bool)::isFogEnabled = glIsEnabled(0xB60u);
+    if ( AllowFog(bool)::isFogEnabled == 1 )
+    {
+      glDisable(0xB60u);
+      ClientDLL_DrawNormalTriangles();
+      if ( AllowFog(bool)::isFogEnabled != 1 )
+        goto LABEL_8;
+    }
+    else
+    {
+      ClientDLL_DrawNormalTriangles();
+      if ( AllowFog(bool)::isFogEnabled != 1 )
+        goto LABEL_8;
+    }
+    glEnable(0xB60u);
+  LABEL_8:
+    if ( *(int *)((char *)&loc_24276C + (_DWORD)dword_15EE8A0) > 2 && !dword_30D6BCC || !g_bUserFogOn )
+      glDisable(0xB60u);
+    R_DrawTransEntities(dword_30D6BCC);
+    S_ExtraUpdate();
+    if ( !dword_30D6BCC )
+    {
+      GL_DisableMultitexture();
+      R_DrawParticles();
+    }
+  }

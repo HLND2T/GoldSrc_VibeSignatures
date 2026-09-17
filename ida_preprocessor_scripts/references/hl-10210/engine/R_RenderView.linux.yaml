@@ -1,0 +1,149 @@
+func_name: "R_RenderView"
+func_va: "0x1700b0"
+disasm_code: |-
+  .text:001700B0                 fld     r_norefresh.value
+  .text:001700B6                 fldz
+  .text:001700B8                 fxch    st(1)
+  .text:001700BA                 fucomip st, st(1)
+  .text:001700BC                 fstp    st
+  .text:001700BE                 jp      locret_1701C3
+  .text:001700C4                 jnz     locret_1701C3
+  .text:001700CA                 sub     esp, 3Ch
+  .text:001700CD                 mov     eax, ds:r_worldentity.model
+  .text:001700D2                 test    eax, eax
+  .text:001700D4                 jz      loc_170228
+  .text:001700DA                 mov     eax, ds:nMax.worldmodel
+  .text:001700DF                 test    eax, eax
+  .text:001700E1                 jz      loc_170228
+  .text:001700E7                 fld     r_speeds.value
+  .text:001700ED                 fldz
+  .text:001700EF                 fxch    st(1)
+  .text:001700F1                 fucomip st, st(1)
+  .text:001700F3                 fstp    st
+  .text:001700F5                 jp      loc_170200
+  .text:001700FB                 jnz     loc_170200
+  .text:00170101                 xor     edx, edx
+  .text:00170103                 mov     ds:mirror, edx
+  .text:00170109                 call    R_Clear
+  .text:0017010E                 mov     ecx, ds:r_refdef.onlyClientDraws
+  .text:00170114                 test    ecx, ecx
+  .text:00170116                 jz      loc_1701E0
+  .text:0017011C                 call    R_RenderScene
+  .text:00170121                 mov     eax, ds:r_refdef.onlyClientDraws
+  .text:00170126                 test    eax, eax
+  .text:00170128                 jz      loc_1701C8
+  .text:0017012E                 call    S_ExtraUpdate
+  .text:00170133                 fld     r_speeds.value
+  .text:00170139                 fldz
+  .text:0017013B                 fxch    st(1)
+  .text:0017013D                 fucomip st, st(1)
+  .text:0017013F                 fstp    st
+  .text:00170141                 jp      short loc_170145
+  .text:00170143                 jz      short loc_1701C0
+  .text:00170145                 fld     ds:nMax.time
+  .text:0017014B                 fsub    ds:nMax.oldtime
+  .text:00170151                 fstp    [esp+3Ch+framerate]
+  .text:00170155                 fld     [esp+3Ch+framerate]
+  .text:00170159                 fldz
+  .text:0017015B                 fxch    st(1)
+  .text:0017015D                 fucomi  st, st(1)
+  .text:0017015F                 fstp    st(1)
+  .text:00170161                 jbe     short loc_170169
+  .text:00170163                 fdivr   ds:flt_248808
+  .text:00170169                 fstp    [esp+3Ch+var_14]
+  .text:0017016D                 call    Sys_FloatTime
+  .text:00170172                 mov     eax, ds:c_alias_polys
+  .text:00170177                 mov     [esp+3Ch+fmt], offset a3ifps3iMs4iWpo; "%3ifps %3i ms  %4i wpoly %4i epoly\n"
+  .text:0017017E                 mov     [esp+3Ch+var_2C], eax
+  .text:00170182                 mov     eax, ds:c_brush_polys
+  .text:00170187                 fsub    [esp+3Ch+time1]
+  .text:0017018B                 mov     [esp+3Ch+var_30], eax
+  .text:0017018F                 fmul    ds:flt_247788
+  .text:00170195                 fstp    [esp+3Ch+time1]
+  .text:00170199                 fld     [esp+3Ch+var_14]
+  .text:0017019D                 cvttsd2si eax, [esp+3Ch+time1]
+  .text:001701A3                 fadd    ds:flt_248810
+  .text:001701A9                 mov     [esp+3Ch+var_34], eax
+  .text:001701AD                 fstp    [esp+3Ch+time1]
+  .text:001701B1                 cvttsd2si eax, [esp+3Ch+time1]
+  .text:001701B7                 mov     [esp+3Ch+var_38], eax
+  .text:001701BB                 call    Con_Printf
+  .text:001701C0                 add     esp, 3Ch
+  .text:001701C3                 retn
+  .text:001701C8                 call    R_DrawViewModel
+  .text:001701CD                 lea     esi, [esi+0]
+  .text:001701D0                 call    R_PolyBlend
+  .text:001701D5                 jmp     loc_17012E
+  .text:001701E0                 call    R_PreDrawViewModel
+  .text:001701E5                 call    R_RenderScene
+  .text:001701EA                 mov     eax, ds:r_refdef.onlyClientDraws
+  .text:001701EF                 test    eax, eax
+  .text:001701F1                 jnz     loc_17012E
+  .text:001701F7                 jmp     short loc_1701C8
+  .text:00170200                 call    ds:qglFinish
+  .text:00170206                 call    Sys_FloatTime
+  .text:0017020B                 xor     eax, eax
+  .text:0017020D                 mov     ds:c_brush_polys, eax
+  .text:00170212                 xor     eax, eax
+  .text:00170214                 mov     ds:c_alias_polys, eax
+  .text:00170219                 fstp    [esp+3Ch+time1]
+  .text:0017021D                 jmp     loc_170101
+  .text:00170228                 mov     [esp+3Ch+fmt], offset aRRenderviewNul; "R_RenderView: NULL worldmodel"
+  .text:0017022F                 call    Sys_Error
+procedure: |-
+  void __cdecl R_RenderView()
+  {
+    long double v0; // fst7
+    long double v1; // fst7
+    long double v2; // fst7
+    double time1; // [esp+20h] [ebp-1Ch]
+    float v4; // [esp+28h] [ebp-14h]
+    float framerate; // [esp+2Ch] [ebp-10h]
+
+    if ( r_norefresh.value != 0.0 )
+      return;
+    if ( !r_worldentity.model || !nMax.worldmodel )
+      Sys_Error("R_RenderView: NULL worldmodel");
+    if ( r_speeds.value != 0.0 )
+    {
+      qglFinish();
+      v2 = Sys_FloatTime();
+      c_brush_polys = 0;
+      c_alias_polys = 0;
+      time1 = v2;
+    }
+    mirror = false;
+    R_Clear();
+    if ( r_refdef.onlyClientDraws )
+    {
+      R_RenderScene();
+      if ( r_refdef.onlyClientDraws )
+        goto LABEL_8;
+      goto LABEL_13;
+    }
+    R_PreDrawViewModel();
+    R_RenderScene();
+    if ( r_refdef.onlyClientDraws == false )
+    {
+  LABEL_13:
+      R_DrawViewModel();
+      R_PolyBlend();
+    }
+  LABEL_8:
+    S_ExtraUpdate();
+    if ( r_speeds.value != 0.0 )
+    {
+      framerate = nMax.time - nMax.oldtime;
+      v0 = framerate;
+      if ( framerate > 0.0 )
+        v0 = 1.0 / v0;
+      v4 = v0;
+      v1 = Sys_FloatTime();
+      Con_Printf(
+        "%3ifps %3i ms  %4i wpoly %4i epoly\n",
+        (int)(double)(v4 + 0.5),
+        (int)(double)((v1 - time1) * 1000.0),
+        c_brush_polys,
+        c_alias_polys);
+    }
+  }
