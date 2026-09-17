@@ -2908,11 +2908,20 @@ def reachable_address_graph(graph, entry):
                     'writes': data['writes']}
             for block, data in graph.items() if block in reachable}
 
-def resolve_address_flow(graph, block, stop, register, visiting=frozenset()):
+def cycle_writes_register(graph, path, ancestor, register):
+    if ancestor not in path:
+        return True
+    for state in path[path.index(ancestor):]:
+        if any(register in writes for writes in graph[state[0]]['writes'][:state[1]]):
+            return True
+    return False
+
+def resolve_address_flow(graph, block, stop, register, visiting=frozenset(), path=()):
     state = (block, stop, register)
     if state in visiting or len(visiting) >= 128 or block not in graph:
         return None
     visiting = visiting | {state}
+    path = path + (state,)
     writes = graph[block]['writes']
     for index in range(stop - 1, -1, -1):
         if register not in writes[index]:
@@ -2924,15 +2933,15 @@ def resolve_address_flow(graph, block, stop, register, visiting=frozenset()):
         if kind == 'constant':
             return value
         if kind == 'register':
-            return resolve_address_flow(graph, block, index, value, visiting)
+            return resolve_address_flow(graph, block, index, value, visiting, path)
         if kind == 'offset':
-            base = resolve_address_flow(graph, block, index, register, visiting)
+            base = resolve_address_flow(graph, block, index, register, visiting, path)
             return None if base is None else (base + value) & 0xffffffff
         if kind == 'address':
-            base = resolve_address_flow(graph, block, index, value[0], visiting)
+            base = resolve_address_flow(graph, block, index, value[0], visiting, path)
             return None if base is None else (base + value[1]) & 0xffffffff
         if kind == 'got_load':
-            base = resolve_address_flow(graph, block, index, value[0], visiting)
+            base = resolve_address_flow(graph, block, index, value[0], visiting, path)
             return None if base is None else value[2].get((base + value[1]) & 0xffffffff)
         return None
     predecessors = graph[block]['preds']
@@ -2943,19 +2952,24 @@ def resolve_address_flow(graph, block, stop, register, visiting=frozenset()):
         if parent not in graph:
             return None
         parent_stop = len(graph[parent]['writes'])
-        # A back edge that re-enters this exact state without having defined the
-        # register on the way cannot supply a definition: the value is the one
-        # reaching the loop header. Skipping it keeps a register that the loop
-        # never writes resolvable instead of poisoning the merge below.
-        if (parent, parent_stop, register) in visiting:
+        ancestor = (parent, parent_stop, register)
+        if ancestor in visiting:
+            # Skipping a cycle is only sound while it never wrote the register
+            # between the ancestor state and here: the value is then the one
+            # reaching the loop header. A write on the cycle (`add reg, 4` per
+            # iteration, or a self-referential operand) makes the value depend on
+            # the iteration count, so fail closed exactly as before.
+            if cycle_writes_register(graph, path, ancestor, register):
+                return None
             continue
-        value = resolve_address_flow(graph, parent, parent_stop, register, visiting)
+        value = resolve_address_flow(graph, parent, parent_stop, register, visiting, path)
         if value is None:
             return None
         reaching.append(value)
     if not reaching:
         return None
     return reaching[0] if len(set(reaching)) == 1 else None
+globals()['cycle_writes_register'] = cycle_writes_register
 globals()['resolve_address_flow'] = resolve_address_flow
 """
 

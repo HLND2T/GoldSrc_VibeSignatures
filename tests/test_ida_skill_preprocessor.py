@@ -2667,6 +2667,26 @@ found_struct_offset: []
         graph[5]["writes"] = [{0: None}, {3: None}]
         self.assertIsNone(resolve(graph, 6, 0, 3))
 
+    def test_address_flow_rejects_cycles_that_write_the_register(self):
+        namespace = {}
+        exec(ida_analyze_util._ADDRESS_FLOW_RESOLVER, namespace)
+        resolve = namespace["resolve_address_flow"]
+        # The entry block sets the register once and the loop adds 4 per
+        # iteration. The value after the loop depends on the iteration count, so
+        # the entry constant must not stand in for it even though the loop body
+        # contains no `None` clobber.
+        graph = {
+            0: {"preds": [], "writes": [{3: ("constant", 0x8000)}]},
+            1: {"preds": [0, 1], "writes": [{3: ("offset", 4)}]},
+            2: {"preds": [1], "writes": []},
+        }
+        self.assertIsNone(resolve(graph, 2, 0, 3))
+        # A self-referential operand in one block is the same hazard.
+        self.assertIsNone(resolve(graph, 1, 1, 3))
+        # Removing the loop write still resolves the entry constant.
+        graph[1]["writes"] = []
+        self.assertEqual(0x8000, resolve(graph, 2, 0, 3))
+
     def test_address_flow_preserves_pic_base_arithmetic_and_rejects_clobbers(self):
         namespace = {}
         exec(ida_analyze_util._ADDRESS_FLOW_RESOLVER, namespace)

@@ -40,12 +40,27 @@ fixing either in isolation does not help:
 The first fix makes the second visible and vice versa: instrumenting `resolve_address_flow`
 was necessary to stop guessing which one was live.
 
+### Regression found in the first version of the cycle fix
+
+Skipping every revisited-state predecessor was too weak a proof and turned an unknown into a
+wrong answer: with the entry block setting `EBX = 0x8000` and a loop doing `add ebx, 4`, the
+definition at the loop is `('offset', 4)`, so `resolve` recurses into the same block with a
+smaller `stop`, merges the predecessor list, and the self-reference was skipped. Only the entry
+constant survived, and the resolution returned `0x8004` where the baseline returned `None`. If
+that value had landed in a mapped data segment the consumer would have accepted it and emitted
+a wrong GV address instead of failing. The guard is therefore "the cycle never wrote the
+register", which needs the ordered `path`, and both shapes are pinned by tests.
+
 ## Correct approach
 
-- `resolve_address_flow`: skip a predecessor whose state is already on the current path. A
-  back edge that re-enters the same state without defining the register cannot supply a
-  definition; the value is the one reaching the loop header. If every predecessor is such a
-  back edge, return `None`.
+- `resolve_address_flow`: skip a predecessor whose state is already on the current path **only
+  when the cycle from that ancestor state back to the current state never wrote the register**.
+  The value is then the one reaching the loop header. Any write on the cycle — `add reg, 4` per
+  iteration, or a self-referential operand such as `('offset', 4)` whose base resolves to the
+  same state — makes the value depend on the iteration count, so those cycles must keep failing
+  closed. The path therefore has to be carried in order (`path`), not just as the `visiting`
+  set: membership alone cannot tell a def-free cycle from an arithmetic one. If every
+  predecessor is a skipped back edge, return `None`.
 - Instruction walk: treat `wait`/`fnop` and `f*` as non-clobbering **only when no operand is
   an `o_reg` with `reg < 8`**. `fnstsw ax` / `fstsw ax` keep a GPR operand and must stay
   clobbers, otherwise the walk would silently keep a stale definition and could emit a wrong
@@ -56,9 +71,12 @@ an address that already resolved.
 
 ## Verification
 
-- `uv run python -m unittest tests.test_ida_skill_preprocessor` — 108 tests OK.
+- `uv run python -m unittest tests.test_ida_skill_preprocessor` — 109 tests OK.
   `test_address_flow_ignores_loop_paths_that_never_define_the_register` covers a self-loop plus
-  a back edge and also a loop that does clobber the register;
+  a back edge and a loop that clobbers the register with `None`;
+  `test_address_flow_rejects_cycles_that_write_the_register` pins the arithmetic counterexample
+  above (both the cross-block and the same-block self-referential form, plus the def-free
+  variant that must still resolve);
   `test_relative_store_ignores_x87_paths_that_cannot_define_the_base` drives the full
   inspector with synthetic IDA modules for `fld` (resolves) and `fnstsw ax` (stays `None`).
 - Live: `-gamever svencoop-8948 ... -oldgamever none -debug` now succeeds and emits
@@ -73,6 +91,8 @@ an address that already resolved.
 
 Shared LLM-gv address resolution on x86-32 PE/ELF: any `found_gv` whose selected instruction
 is a store or `lea` with a base register defined behind a loop or behind an FP-only
-instruction. Not specific to `Mod_LoadModel`. The changes are monotonic (fail-less), but they
-do widen what resolves, so a regression shows up as a newly accepted address rather than as a
-missing artifact — keep the `fnstsw ax` counter-example test when touching this rule.
+instruction. Not specific to `Mod_LoadModel`. The changes widen what resolves, and the first
+version of the cycle rule showed the failure mode that makes that dangerous: an unsound skip
+turns `None` into a plausible address rather than into a missing artifact, and the downstream
+mapped-segment check cannot tell the difference. Keep both counter-example tests —
+`fnstsw ax` and the arithmetic loop — whenever this rule is touched.
