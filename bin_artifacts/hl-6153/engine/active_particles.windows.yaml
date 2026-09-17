@@ -1,0 +1,8 @@
+gv_name: active_particles
+gv_va: '0x278e058'
+gv_rva: '0xa8e058'
+gv_sig: 55 8B EC 83 EC 40 A1 ?? ?? ?? ?? 53 56 50 E8 ?? ?? ?? ?? 83 C4 04 68 C0 0B 00 00 FF 15 ?? ?? ?? ?? 68 E2 0B 00 00
+gv_sig_va: '0x1d7b1b0'
+gv_inst_offset: '0xda'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

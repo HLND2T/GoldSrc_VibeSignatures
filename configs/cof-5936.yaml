@@ -440,6 +440,35 @@ modules:
       - name: find-GL_LoadTexture2
         expected_output:
           - GL_LoadTexture2.{platform}.yaml
+      - name: find-texture_extension_number
+        expected_input:
+          - GL_LoadTexture2.{platform}.yaml
+        expected_output:
+          - texture_extension_number.{platform}.yaml
+      - name: find-texture_extension_number-owners
+        expected_input:
+          - GL_Bind.{platform}.yaml
+          - GL_BuildLightmaps.{platform}.yaml
+          - GL_LoadFilterTexture.{platform}.yaml
+          - GL_LoadTexture2.{platform}.yaml
+          - texture_extension_number.{platform}.yaml
+        expected_output:
+          - GL_GenTexture.{platform}.yaml
+          - R_InitParticleTexture.{platform}.yaml
+          - R_Init.{platform}.yaml
+      - name: find-texture_extension_number-mov-sites
+        expected_input:
+          - GL_Bind.{platform}.yaml
+          - GL_BuildLightmaps.{platform}.yaml
+          - GL_LoadFilterTexture.{platform}.yaml
+          - GL_LoadTexture2.{platform}.yaml
+          - GL_GenTexture.{platform}.yaml
+          - R_InitParticleTexture.{platform}.yaml
+          - R_Init.{platform}.yaml
+          - texture_extension_number.{platform}.yaml
+        expected_output:
+          - texture_extension_number_mov_site_GL_LoadFilterTexture.{platform}.yaml
+          - texture_extension_number_mov_site_R_InitParticleTexture.{platform}.yaml
       - name: find-GL_SetModeLegacy
         expected_output:
           - GL_SetModeLegacy.{platform}.yaml
@@ -548,6 +577,11 @@ modules:
       - name: find-R_DrawParticles
         expected_output:
           - R_DrawParticles.{platform}.yaml
+      - name: find-active_particles
+        expected_input:
+          - R_DrawParticles.{platform}.yaml
+        expected_output:
+          - active_particles.{platform}.yaml
       - name: find-R_DrawParticles-calls
         expected_input:
           - R_DrawParticles.{platform}.yaml
@@ -828,6 +862,18 @@ modules:
         category: func
       - name: GL_LoadTexture2
         category: func
+      - name: texture_extension_number
+        category: gv
+      - name: GL_GenTexture
+        category: func
+      - name: R_InitParticleTexture
+        category: func
+      - name: R_Init
+        category: func
+      - name: texture_extension_number_mov_site_GL_LoadFilterTexture
+        category: patch
+      - name: texture_extension_number_mov_site_R_InitParticleTexture
+        category: patch
       - name: GL_SetModeLegacy
         category: func
       - name: GL_SelectPixelFormat
@@ -893,6 +939,8 @@ modules:
         category: func
       - name: R_DrawParticles
         category: func
+      - name: active_particles
+        category: gv
       - name: R_FreeDeadParticles
         category: func
       - name: R_TracerDraw

@@ -1,0 +1,5 @@
+func_name: LoadTransPic
+func_va: '0x1d3f8c0'
+func_rva: '0x3f8c0'
+func_size: '0x1dd'
+func_sig: 83 EC 0C 53 55 56 57 8B 7C 24 ?? 85 FF 75 ?? 5F 5E 5D 33 C0 5B 83 C4 0C C3 6A 20
