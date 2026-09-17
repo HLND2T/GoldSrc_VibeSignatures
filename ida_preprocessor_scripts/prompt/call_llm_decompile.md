@@ -21,7 +21,7 @@ Identify each requested symbol by its role and behavior before collecting its ta
 - Once a pool or object base is identified, instructions passing that base to a memory operation or storing it into a pointer variable are references to the object. Do not substitute the destination pointer variable or an interior member address for the requested base symbol.
 - Before returning no matches, check for a semantic counterpart under anonymous target names. Return an empty result only when the supplied target evidence does not support a mapping; do not force a match merely because a symbol was requested.
 
-Return exactly one YAML mapping. The only permitted top-level keys are `found_scalar`, `found_vcall`, `found_call`, `found_funcptr`, `found_gv`, and `found_struct_offset`. Never use a requested symbol name as a top-level key. For batched requests, place every result under its result-category list. If no references are found, return all six top-level keys with empty lists. Do not return blank YAML, null, or an empty mapping.
+Return exactly one YAML mapping. The only permitted top-level keys are `found_scalar`, `found_vcall`, `found_call`, `found_funcptr`, `found_gv`, and `found_struct_offset`. All six top-level keys must appear in every response, whether or not they have matches: use an empty list for a section with no matches, and never omit a section. Never use a requested symbol name as a top-level key. For batched requests, place every result under its result-category list. Do not return blank YAML, null, or an empty mapping.
 
 Example:
 
