@@ -217,6 +217,7 @@ modules:
           - R_DrawWorld.{platform}.yaml
         expected_output:
           - R_RecursiveWorldNode.{platform}.yaml
+          - modelorg.{platform}.yaml
       - name: find-SV_SendServerinfo-svencoop
         expected_output:
           - SV_SendServerinfo.{platform}.yaml
@@ -720,6 +721,8 @@ modules:
         category: func
       - name: R_RecursiveWorldNode
         category: func
+      - name: modelorg
+        category: gv
       - name: SV_SendServerinfo
         category: func
       - name: build_number

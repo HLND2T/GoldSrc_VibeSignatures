@@ -36,15 +36,15 @@ disasm_code: |-
   .text:01D576E6                 call    sub_1D3D430
   .text:01D576EB                 fld     flt_3F54478
   .text:01D576F1                 mov     eax, dword_26CBC80
-  .text:01D576F6                 fstp    flt_3F53F68
+  .text:01D576F6                 fstp    modelorg
   .text:01D576FC                 fld     flt_3F5447C
-  .text:01D57702                 fstp    flt_3F53F6C
+  .text:01D57702                 fstp    modelorg+4
   .text:01D57708                 fld     flt_3F54480
   .text:01D5770E                 mov     [esp+0BC8h+var_28], eax
   .text:01D57715                 lea     eax, [esp+0BC8h+var_BBC]
   .text:01D57719                 mov     dword_3F53F80, eax
   .text:01D5771E                 movzx   eax, byte ptr dword_8006980
-  .text:01D57725                 fstp    flt_3F53F70
+  .text:01D57725                 fstp    modelorg+8
   .text:01D5772B                 fld1
   .text:01D5772D                 mov     [esp+0BC8h+var_8BC], al
   .text:01D57734                 movzx   eax, byte ptr dword_8006984
@@ -234,11 +234,11 @@ procedure: |-
       glPolygonOffset(1.0, 1.0);
     }
     sub_1D3D430(v8, 0, 0xBB8u);
-    flt_3F53F68 = flt_3F54478;
-    flt_3F53F6C = flt_3F5447C;
+    modelorg[0] = flt_3F54478;
+    modelorg[1] = flt_3F5447C;
     v9 = dword_26CBC80;
     dword_3F53F80 = (int)v8;
-    flt_3F53F70 = flt_3F54480;
+    modelorg[2] = flt_3F54480;
     v8[768] = dword_8006980;
     v8[769] = dword_8006984;
     dword_1ED826C = -1;
