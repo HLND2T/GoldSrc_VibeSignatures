@@ -2908,11 +2908,20 @@ def reachable_address_graph(graph, entry):
                     'writes': data['writes']}
             for block, data in graph.items() if block in reachable}
 
-def resolve_address_flow(graph, block, stop, register, visiting=frozenset()):
+def cycle_writes_register(graph, path, ancestor, register):
+    if ancestor not in path:
+        return True
+    for state in path[path.index(ancestor):]:
+        if any(register in writes for writes in graph[state[0]]['writes'][:state[1]]):
+            return True
+    return False
+
+def resolve_address_flow(graph, block, stop, register, visiting=frozenset(), path=()):
     state = (block, stop, register)
     if state in visiting or len(visiting) >= 128 or block not in graph:
         return None
     visiting = visiting | {state}
+    path = path + (state,)
     writes = graph[block]['writes']
     for index in range(stop - 1, -1, -1):
         if register not in writes[index]:
@@ -2924,25 +2933,43 @@ def resolve_address_flow(graph, block, stop, register, visiting=frozenset()):
         if kind == 'constant':
             return value
         if kind == 'register':
-            return resolve_address_flow(graph, block, index, value, visiting)
+            return resolve_address_flow(graph, block, index, value, visiting, path)
         if kind == 'offset':
-            base = resolve_address_flow(graph, block, index, register, visiting)
+            base = resolve_address_flow(graph, block, index, register, visiting, path)
             return None if base is None else (base + value) & 0xffffffff
         if kind == 'address':
-            base = resolve_address_flow(graph, block, index, value[0], visiting)
+            base = resolve_address_flow(graph, block, index, value[0], visiting, path)
             return None if base is None else (base + value[1]) & 0xffffffff
         if kind == 'got_load':
-            base = resolve_address_flow(graph, block, index, value[0], visiting)
+            base = resolve_address_flow(graph, block, index, value[0], visiting, path)
             return None if base is None else value[2].get((base + value[1]) & 0xffffffff)
         return None
     predecessors = graph[block]['preds']
     if not predecessors:
         return None
-    values = [resolve_address_flow(graph, parent, len(graph[parent]['writes']), register, visiting)
-              for parent in predecessors if parent in graph]
-    if len(values) != len(predecessors) or any(value is None for value in values):
+    reaching = []
+    for parent in predecessors:
+        if parent not in graph:
+            return None
+        parent_stop = len(graph[parent]['writes'])
+        ancestor = (parent, parent_stop, register)
+        if ancestor in visiting:
+            # Skipping a cycle is only sound while it never wrote the register
+            # between the ancestor state and here: the value is then the one
+            # reaching the loop header. A write on the cycle (`add reg, 4` per
+            # iteration, or a self-referential operand) makes the value depend on
+            # the iteration count, so fail closed exactly as before.
+            if cycle_writes_register(graph, path, ancestor, register):
+                return None
+            continue
+        value = resolve_address_flow(graph, parent, parent_stop, register, visiting, path)
+        if value is None:
+            return None
+        reaching.append(value)
+    if not reaching:
         return None
-    return values[0] if len(set(values)) == 1 else None
+    return reaching[0] if len(set(reaching)) == 1 else None
+globals()['cycle_writes_register'] = cycle_writes_register
 globals()['resolve_address_flow'] = resolve_address_flow
 """
 
@@ -3092,7 +3119,13 @@ if (func is not None and (store_operand is not None or (size == 6
                                 if len(refs) == 1:
                                     changed[destination] = ('constant', refs.pop())
                 elif not (mnemonic.startswith('j') or mnemonic.startswith('ret')
-                          or mnemonic in ('push', 'cmp', 'test', 'nop')):
+                          or mnemonic in ('push', 'cmp', 'test', 'nop', 'wait', 'fnop')
+                          # x87 loads/stores/comparisons carry no general purpose
+                          # register operand and cannot define one, so they must
+                          # not invalidate an address register. `fnstsw ax` and
+                          # friends still carry an o_reg operand and stay clobbers.
+                          or (mnemonic.startswith('f') and not any(
+                              op.type == ida_ua.o_reg and op.reg < 8 for op in decoded.ops))):
                     changed = {reg: None for reg in range(8)}
                 writes.append(changed)
             graph[block.id] = {'preds': [parent.id for parent in block.preds()], 'writes': writes}

@@ -241,6 +241,8 @@ modules:
           - Mod_LoadModel.{platform}.yaml
         expected_output:
           - FS_Open.{platform}.yaml
+          - loadname.{platform}.yaml
+          - loadmodel.{platform}.yaml
       - name: find-S_LoadSound_to_FS_Open_callsites
         expected_input:
           - S_LoadSound.{platform}.yaml
@@ -719,6 +721,10 @@ modules:
         category: func
       - name: Mod_LoadModel
         category: func
+      - name: loadname
+        category: gv
+      - name: loadmodel
+        category: gv
       - name: FS_Open
         category: func
       - name: S_LoadSound_to_FS_Open_callsite_0

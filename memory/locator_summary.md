@@ -10,7 +10,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 分类依据是每个 finder 的主要发现锚；部分符号实际会组合多种机制（例如先字符串锚定 owning function，再读表槽），
 此处归入其决定性的一步。**Summary** 列摘自各 locator 文件 `## How it is located` 的首段。
 
-共 **205** 个 locator；模块 engine 168，client 37。
+共 **207** 个 locator；模块 engine 170，client 37。
 
 | 定位机制 | 数量 |
 | --- | --- |
@@ -19,7 +19,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | 表 / 结构 / 数据段扫描 | 34 |
 | 确定性 xref 交集锚 | 5 |
 | 前驱产物复用（下游确定性恢复） | 21 |
-| LLM_DECOMPILE 定位 | 47 |
+| LLM_DECOMPILE 定位 | 49 |
 | vtable / vfunc 槽恢复 | 10 |
 | 数值 scalar 提取 | 9 |
 | 调用点 patch | 16 |
@@ -174,7 +174,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [g_PlayerExtraInfo](locators/g_PlayerExtraInfo.md) | client | gv | `ClientScoreInfoHandler` | The predecessor's annotated body is the reference; the dedicated prompt prompt/call_llm_scoreinfo.md is used (not the generic decompile prompt), with reference YAML… |
 | [g_PlayerExtraInfo_CZDS](locators/g_PlayerExtraInfo_CZDS.md) | client | gv | `ClientScoreInfoHandler` | The producer picks the symbol by output declaration: _output_for_symbol(expected_outputs, "g_PlayerExtraInfo_CZDS") selects the CZDS name and family =… |
 
-## LLM_DECOMPILE 定位 (47)
+## LLM_DECOMPILE 定位 (49)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -221,6 +221,8 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [g_iUser2](locators/g_iUser2.md) | client | gv | `CL_IsThirdPerson` | Recovered together with g_iUser1 — TARGET_GLOBAL_NAMES = ["g_iUser1", "g_iUser2"] produces one LLM_DECOMPILE spec per name, both against |
 | [g_phClientModule](locators/g_phClientModule.md) | engine | gv | `ClientDLL_HudInit`, `ClientDLL_Init` | This symbol is the LLM_DECOMPILE half of find-ClientDLL_HudInit-decompiles; it runs only after the deterministic _write_direct_globals phase has successfully emitted |
 | [g_pitchdrift](locators/g_pitchdrift.md) | client | gv | `V_StartPitchDrift` | _prepare_llm_context resolves the predecessor reference YAML references/svencoop-10257/client/V_StartPitchDrift.{platform}.yaml; exactly one target |
+| [loadmodel](locators/loadmodel.md) | engine | gv | `Mod_LoadModel` | -decompiles (LLM) finder — no deterministic anchor of its own: Load the required predecessor Mod_LoadModel.{platform}.yaml, export that function from |
+| [loadname](locators/loadname.md) | engine | gv | `Mod_LoadModel` | -decompiles (LLM) finder — no deterministic anchor of its own: Load the required predecessor Mod_LoadModel.{platform}.yaml, export that function from |
 | [mod_known](locators/mod_known.md) | engine | gv | `Mod_FindName` | -decompiles (LLM) finder — no deterministic anchor of its own: Load the required predecessor Mod_FindName.{platform}.yaml, export that function from |
 | [mod_numknown](locators/mod_numknown.md) | engine | gv | `Mod_FindName` | -decompiles (LLM) finder — no deterministic anchor of its own: Load the required predecessor Mod_FindName.{platform}.yaml, export that function from |
 | [r_worldentity](locators/r_worldentity.md) | engine | gv | `R_NewMap` | -decompiles (LLM) finder — no deterministic anchor of its own: Load the required predecessor R_NewMap.{platform}.yaml and export that function from the |
