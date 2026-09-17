@@ -2938,11 +2938,24 @@ def resolve_address_flow(graph, block, stop, register, visiting=frozenset()):
     predecessors = graph[block]['preds']
     if not predecessors:
         return None
-    values = [resolve_address_flow(graph, parent, len(graph[parent]['writes']), register, visiting)
-              for parent in predecessors if parent in graph]
-    if len(values) != len(predecessors) or any(value is None for value in values):
+    reaching = []
+    for parent in predecessors:
+        if parent not in graph:
+            return None
+        parent_stop = len(graph[parent]['writes'])
+        # A back edge that re-enters this exact state without having defined the
+        # register on the way cannot supply a definition: the value is the one
+        # reaching the loop header. Skipping it keeps a register that the loop
+        # never writes resolvable instead of poisoning the merge below.
+        if (parent, parent_stop, register) in visiting:
+            continue
+        value = resolve_address_flow(graph, parent, parent_stop, register, visiting)
+        if value is None:
+            return None
+        reaching.append(value)
+    if not reaching:
         return None
-    return values[0] if len(set(values)) == 1 else None
+    return reaching[0] if len(set(reaching)) == 1 else None
 globals()['resolve_address_flow'] = resolve_address_flow
 """
 
@@ -3092,7 +3105,13 @@ if (func is not None and (store_operand is not None or (size == 6
                                 if len(refs) == 1:
                                     changed[destination] = ('constant', refs.pop())
                 elif not (mnemonic.startswith('j') or mnemonic.startswith('ret')
-                          or mnemonic in ('push', 'cmp', 'test', 'nop')):
+                          or mnemonic in ('push', 'cmp', 'test', 'nop', 'wait', 'fnop')
+                          # x87 loads/stores/comparisons carry no general purpose
+                          # register operand and cannot define one, so they must
+                          # not invalidate an address register. `fnstsw ax` and
+                          # friends still carry an o_reg operand and stay clobbers.
+                          or (mnemonic.startswith('f') and not any(
+                              op.type == ida_ua.o_reg and op.reg < 8 for op in decoded.ops))):
                     changed = {reg: None for reg in range(8)}
                 writes.append(changed)
             graph[block.id] = {'preds': [parent.id for parent in block.preds()], 'writes': writes}

@@ -2553,6 +2553,120 @@ found_struct_offset: []
         graph[0]["writes"] = []
         self.assertIsNone(resolve(graph, 3, 1, 7))
 
+    def test_relative_store_ignores_x87_paths_that_cannot_define_the_base(self):
+        # SvEngine Linux Mod_LoadModel shape: the GOT base is built in the entry
+        # block, an x87 comparison sits between it and the store, and the store
+        # block carries a self-loop. The comparison has no general purpose
+        # register operand, so it must not invalidate EBX; `fnstsw ax` does.
+        ea, displacement, base, thunk = 0x1006, 0x2000, 0x8000, 0x2000
+        void = SimpleNamespace(type=0)
+        for mnemonic, float_ops, expected in (
+            ("fld", [SimpleNamespace(type=4, addr=0, offb=2, dtype=2), void], "0xa000"),
+            ("fnstsw", [SimpleNamespace(type=1, reg=0, dtype=2, offb=0), void], None),
+        ):
+            with self.subTest(mnemonic=mnemonic):
+                function = SimpleNamespace(start_ea=0x1000, end_ea=0x100C)
+                block0 = SimpleNamespace(id=0, start_ea=0x1000, end_ea=0x1004)
+                block1 = SimpleNamespace(id=1, start_ea=0x1004, end_ea=0x1006)
+                block2 = SimpleNamespace(id=2, start_ea=0x1006, end_ea=0x100C)
+                block0.preds = lambda: []
+                block1.preds = lambda: [block0]
+                block2.preds = lambda: [block1, block2]
+                call = SimpleNamespace(ops=[SimpleNamespace(type=5, value=thunk), void], size=2)
+                add = SimpleNamespace(
+                    ops=[
+                        SimpleNamespace(type=1, reg=3, dtype=2, offb=0),
+                        SimpleNamespace(type=5, value=0x6FFE),
+                        void,
+                    ],
+                    size=2,
+                )
+                float_insn = SimpleNamespace(ops=float_ops, size=2)
+                store = SimpleNamespace(
+                    ops=[
+                        SimpleNamespace(type=4, addr=displacement, offb=2, dtype=2),
+                        SimpleNamespace(type=1, reg=6, dtype=2, offb=0),
+                        void,
+                    ],
+                    size=6,
+                )
+                instructions = {0x1000: call, 0x1002: add, 0x1004: float_insn, ea: store}
+                mnemonics = {0x1000: "call", 0x1002: "add", 0x1004: mnemonic, ea: "mov"}
+                heads = {0x1000: [0x1000, 0x1002], 0x1004: [0x1004], ea: [ea]}
+                segment = SimpleNamespace(perm=6, end_ea=base + displacement + 6)
+                modules = {
+                    "ida_bytes": SimpleNamespace(
+                        get_dword=lambda address: displacement,
+                        get_bytes=lambda address, size: (
+                            bytes.fromhex("8B 1C 24 C3") if address == thunk else bytes.fromhex("89 B3 00 20 00 00")
+                        ),
+                    ),
+                    "ida_fixup": SimpleNamespace(fixup_data_t=lambda: None, get_fixup=lambda *args: False),
+                    "ida_funcs": SimpleNamespace(get_func=lambda address: function),
+                    "ida_lines": SimpleNamespace(tag_remove=lambda text: text),
+                    "ida_segment": SimpleNamespace(
+                        getseg=lambda address: (
+                            segment if address in (base, displacement, base + displacement) else None
+                        ),
+                        SEGPERM_EXEC=1,
+                    ),
+                    "idaapi": SimpleNamespace(inf_is_64bit=lambda: False, BADADDR=0xFFFFFFFF),
+                    "ida_gdl": SimpleNamespace(FlowChart=lambda func: [block0, block1, block2]),
+                    "ida_ua": SimpleNamespace(
+                        o_void=0,
+                        o_reg=1,
+                        o_mem=2,
+                        o_phrase=3,
+                        o_displ=4,
+                        o_imm=5,
+                        o_near=6,
+                        o_far=7,
+                        dt_byte=0,
+                        dt_dword=2,
+                        insn_t=lambda: store,
+                        decode_insn=lambda *args: 6,
+                    ),
+                    "idautils": SimpleNamespace(
+                        DataRefsFrom=lambda address: [displacement],
+                        CodeRefsFrom=lambda address, flow: [thunk] if address == 0x1000 else [],
+                        Heads=lambda start, end: heads[start],
+                        DecodeInstruction=lambda address: instructions[address],
+                    ),
+                    "idc": SimpleNamespace(
+                        generate_disasm_line=lambda *args: "mov [ebx+2000h], esi",
+                        print_insn_mnem=lambda address: mnemonics[address],
+                    ),
+                }
+                namespace = {}
+                with patch.dict("sys.modules", modules):
+                    exec(
+                        ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)), namespace
+                    )
+                detail = json.loads(namespace["result"])
+                self.assertEqual(expected, detail["relative_store_address"]["target"])
+                self.assertEqual([expected] if expected else [], ida_analyze_util._llm_global_targets(detail))
+
+    def test_address_flow_ignores_loop_paths_that_never_define_the_register(self):
+        namespace = {}
+        exec(ida_analyze_util._ADDRESS_FLOW_RESOLVER, namespace)
+        resolve = namespace["resolve_address_flow"]
+        # SvEngine Linux Mod_LoadModel shape: the GOT base loaded in the entry
+        # block survives a self-loop and a back edge into the loop header that
+        # never write the register.
+        graph = {
+            0: {"preds": [], "writes": [{3: ("constant", 0x1005)}, {3: ("offset", 0x6FFB)}]},
+            1: {"preds": [0], "writes": []},
+            2: {"preds": [1, 5], "writes": [{0: None}]},
+            3: {"preds": [2], "writes": []},
+            4: {"preds": [1], "writes": [{0: None}]},
+            5: {"preds": [4, 5], "writes": [{0: None}]},
+            6: {"preds": [2, 3], "writes": []},
+        }
+        self.assertEqual(0x8000, resolve(graph, 6, 0, 3))
+        # A loop that does clobber the register still fails closed.
+        graph[5]["writes"] = [{0: None}, {3: None}]
+        self.assertIsNone(resolve(graph, 6, 0, 3))
+
     def test_address_flow_preserves_pic_base_arithmetic_and_rejects_clobbers(self):
         namespace = {}
         exec(ida_analyze_util._ADDRESS_FLOW_RESOLVER, namespace)

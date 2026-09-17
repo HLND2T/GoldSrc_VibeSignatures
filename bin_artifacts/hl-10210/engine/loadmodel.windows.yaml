@@ -1,0 +1,8 @@
+gv_name: loadmodel
+gv_va: '0x10e37e60'
+gv_rva: '0xe37e60'
+gv_sig: 55 8B EC 81 EC 14 01 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 57 8B 7D ?? 8B 47 ?? 83 F8 02
+gv_sig_va: '0x10240290'
+gv_inst_offset: '0x286'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
