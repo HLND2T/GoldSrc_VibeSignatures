@@ -7,9 +7,10 @@ verification，并要求 source 等于 dispatch commit。两种模式都会在 b
 
 ## 使用已跟踪产物的 build-free 发布
 
-`source_artifact_mode=tracked` 跳过 full analysis 和重建产物比对，直接使用选定 source SHA 已提交的
-`bin_artifacts`。它证明产物来自该提交，不证明产物可以重建。Warm-IDB 准备/恢复、runtime 证据、snapshot/JSON
-生成、hosted verification、notes 和受保护的发布步骤仍然执行。
+`source_artifact_mode=tracked` 跳过 full analysis、重建产物比对以及整个 warm-IDB 阶段，直接使用选定 source SHA
+已提交的 `bin_artifacts`。它证明产物来自该提交，不证明产物可以重建。build job 不会运行 `warmup-idb`、不会下载或
+恢复 cache selection、也不会打开任何 IDB。IDA runtime 证据、snapshot/JSON 生成、hosted verification、notes 和
+受保护的发布步骤仍然执行。
 
 Trigger skill 在未指定构建路径时先询问，已经明确选择时直接沿用。脚本调用方式：
 
@@ -26,10 +27,13 @@ Bundle `build --source-artifact-mode tracked --tracked-binding <binding.json>` �
 Bundle `verify` 和 publisher `publish` 必须传入匹配的 `--source-artifact-mode tracked`，并独立重算绑定。
 缺失、修改、额外、暂存或链接形式的 source input 漂移均阻断发布。
 
-新 manifest 使用 schema 3，增加 `source_artifact_mode` 和 `tracked_artifact_binding_sha256`（rebuild 为 null）。
+新 manifest 使用 schema 4，包含 `source_artifact_mode` 和 `tracked_artifact_binding_sha256`（rebuild 为 null）。
+rebuild manifest 另外绑定 `warm_idb_selection_sha256` 并携带 `evidence/cache-selection.json`，因为 rebuild 会消费该
+缓存；tracked manifest 两者都不含，因为其流水线不读取任何 IDB。`--cache-selection` /
+`--cache-selection-sha256` 与 mode 不匹配时立即失败。Schema 3 仍可读取，且两种模式都要求 selection digest；
 Schema 2 仅按 rebuild 兼容读取，公开压缩包内容格式保持不变。Draft 重试须保持 mode/source；切换模式不能覆盖
 已有资产。Runner 验收使用 `publish_release=false`，source 等于 dispatch commit，检查两种模式的 job 结果及
-verified bundle；该验收仍依赖已配置的 runner、warm-IDB 基础设施和 notes 端点。
+verified bundle；rebuild 验收仍依赖已配置的 runner 与 warm-IDB 基础设施，tracked 验收只需 runner 和 notes 端点。
 
 ## 信任与权限边界
 

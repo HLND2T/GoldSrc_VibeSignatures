@@ -37,7 +37,8 @@ dataset（schema 5，`<tag>.<sha256>.json`，含 per-binary `isBlob` 标志）�
 - `gamesymbols/<tag>.yaml` 与 `<tag>.metadata.yaml`（canonical snapshot/metadata，用于再派生校验）；
 - `gamesymbols-json/<tag>.<sha256>.json` 与 `gamesymbols-json/index.json`；
 - `archives/gamesymbols-<version>.7z` —— **唯一发布载荷**，内含 `gamesymbols/index.json` 与全部 dataset；
-- `evidence/ida-runtime.json`、`evidence/cache-selection.json`；
+- `evidence/ida-runtime.json`，`rebuild` 另含 `evidence/cache-selection.json`——`tracked` bundle 不含 selection，因为其
+  流水线没有任何步骤读取 warm IDB cache；
 - `release-manifest-<version>.json` 与 `SHA256SUMS-<version>.txt`。
 
 GitHub Release 只发布 3 个资产：`gamesymbols-<version>.7z`、`release-manifest-<version>.json`、

@@ -32,8 +32,11 @@ self-hosted analysis fail closed. `pr-validate` is the aggregate required check.
 The release DAG is:
 
 ```text
-preflight -> warmup-idb -> build-release-bundle -> verify-release-bundle -> publish-release
+preflight -> [warmup-idb] -> build-release-bundle -> verify-release-bundle -> publish-release
 ```
+
+`warmup-idb` is skipped for `source_artifact_mode=tracked`, which binds committed artifacts instead of rebuilding and
+therefore never consumes a warm IDB; every other job runs in both modes.
 
 The self-hosted read-only build force-rebuilds all analysis artifacts in a fresh root, compares them with Git truth,
 derives snapshots/metadata and the browser JSON datasets, marks `json`, publishes them, then derives the single all-in-one

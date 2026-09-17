@@ -8,9 +8,10 @@ retains its existing body while checking assets and allowing Pages dispatch reco
 
 ## Build-free release from tracked artifacts
 
-`source_artifact_mode=tracked` skips full analysis and rebuilt-artifact comparison. It uses only the selected source
-SHA's committed `bin_artifacts`; it proves source identity, not rebuildability. Warm-IDB preparation/restore, runtime
-evidence, snapshot/JSON generation, hosted verification, notes, and protected publication remain required.
+`source_artifact_mode=tracked` skips full analysis, rebuilt-artifact comparison, and the entire warm-IDB stage. It uses
+only the selected source SHA's committed `bin_artifacts`; it proves source identity, not rebuildability. The build never
+runs `warmup-idb`, never downloads or restores a cache selection, and never opens an IDB. IDA runtime evidence,
+snapshot/JSON generation, hosted verification, notes, and protected publication remain required.
 
 The trigger skill asks for the build path when unspecified and uses an already explicit choice. Its script accepts:
 
@@ -28,11 +29,15 @@ Bundle `build --source-artifact-mode tracked --tracked-binding <binding.json>` e
 Bundle `verify` and publisher `publish` require the matching `--source-artifact-mode tracked` and independently
 recompute the binding. Missing, changed, extra, staged or linked source inputs fail closed.
 
-New manifests use schema 3, with `source_artifact_mode` and `tracked_artifact_binding_sha256` (null for rebuild).
-Schema 2 remains readable as rebuild only. Public archive payloads retain their format. Keep mode/source unchanged
-when resuming a draft; switching modes must not overwrite existing assets. For runner acceptance, use
-`publish_release=false` with source equal to the dispatch commit and inspect both modes' job outcomes and verified
-bundles. This still requires the configured runner, warm-IDB infrastructure and notes endpoint.
+New manifests use schema 4, with `source_artifact_mode` and `tracked_artifact_binding_sha256` (null for rebuild). A
+rebuild manifest also binds `warm_idb_selection_sha256` and carries `evidence/cache-selection.json`, because the rebuild
+consumes that cache. A tracked manifest omits both, because nothing in its pipeline reads an IDB. Supplying or omitting
+`--cache-selection` / `--cache-selection-sha256` against the wrong mode fails closed. Schema 3 stays readable and still
+requires the selection digest in both modes; schema 2 remains readable as rebuild only. Public archive payloads retain
+their format. Keep mode/source unchanged when resuming a draft; switching modes must not overwrite existing assets. For
+runner acceptance, use `publish_release=false` with source equal to the dispatch commit and inspect both modes' job
+outcomes and verified bundles. A rebuild still requires the configured runner, warm-IDB infrastructure and notes
+endpoint; tracked acceptance requires the runner and the notes endpoint only.
 
 ## Trust and permission boundary
 

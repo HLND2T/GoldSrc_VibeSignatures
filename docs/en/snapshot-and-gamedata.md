@@ -41,7 +41,8 @@ containing:
 - `gamesymbols/<tag>.yaml` and `<tag>.metadata.yaml` (canonical snapshot/metadata used for re-derivation);
 - `gamesymbols-json/<tag>.<sha256>.json` and `gamesymbols-json/index.json`;
 - `archives/gamesymbols-<version>.7z` — the sole published payload, containing `gamesymbols/index.json` and every dataset;
-- `evidence/ida-runtime.json`, `evidence/cache-selection.json`;
+- `evidence/ida-runtime.json`, plus `evidence/cache-selection.json` for `rebuild`—a `tracked` bundle omits the selection
+  because no step in its pipeline reads the warm IDB cache;
 - `release-manifest-<version>.json` and `SHA256SUMS-<version>.txt`.
 
 The GitHub Release publishes only three assets: `gamesymbols-<version>.7z`, `release-manifest-<version>.json`, and

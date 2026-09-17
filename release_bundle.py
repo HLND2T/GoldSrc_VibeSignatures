@@ -44,27 +44,45 @@ from release_workflow_lib.hashing import (
 )
 from release_workflow_lib.manifests import require_gamever, require_sha, require_version
 
-BUNDLE_SCHEMA_VERSION = 3
+BUNDLE_SCHEMA_VERSION = 4
+MODE_BUNDLE_SCHEMA_VERSION = 3
 LEGACY_BUNDLE_SCHEMA_VERSION = 2
 TRACKED_BINDING_SCHEMA_VERSION = 1
 SOURCE_ARTIFACT_MODES = ("rebuild", "tracked")
 TRACKED_BINDING_PATH = "evidence/tracked-artifact-binding.json"
-MANIFEST_KEYS = {
-    "schema_version",
-    "release_version",
-    "build_id",
-    "workflow_run_url",
-    "source_sha",
-    "source_subject",
-    "bin_gitlink_sha",
-    "ida_runtime_sha256",
-    "warm_idb_selection_sha256",
-    "gamesymbols_json",
-    "gamevers",
-    "assets",
-}
-LEGACY_MANIFEST_KEYS = MANIFEST_KEYS.copy()
-MANIFEST_KEYS |= {"source_artifact_mode", "tracked_artifact_binding_sha256"}
+WARM_SELECTION_MANIFEST_KEY = "warm_idb_selection_sha256"
+COMMON_MANIFEST_KEYS = frozenset(
+    {
+        "schema_version",
+        "release_version",
+        "build_id",
+        "workflow_run_url",
+        "source_sha",
+        "source_subject",
+        "bin_gitlink_sha",
+        "ida_runtime_sha256",
+        "gamesymbols_json",
+        "gamevers",
+        "assets",
+    }
+)
+MODE_BINDING_MANIFEST_KEYS = frozenset({"source_artifact_mode", "tracked_artifact_binding_sha256"})
+
+
+def expected_manifest_keys(*, schema_version: int, source_artifact_mode: str) -> frozenset[str]:
+    """Return the exact manifest key set for one schema and source artifact mode.
+
+    A rebuild consumes the warm IDB cache, so its manifest must bind the selection digest. Schema 4 tracked
+    publication never reads an IDB and drops that evidence; schema 3 bound it in both modes.
+    """
+    if schema_version == LEGACY_BUNDLE_SCHEMA_VERSION:
+        return COMMON_MANIFEST_KEYS | {WARM_SELECTION_MANIFEST_KEY}
+    keys = COMMON_MANIFEST_KEYS | MODE_BINDING_MANIFEST_KEYS
+    if schema_version == MODE_BUNDLE_SCHEMA_VERSION or source_artifact_mode == "rebuild":
+        return keys | {WARM_SELECTION_MANIFEST_KEY}
+    return keys
+
+
 GAMEVER_RECORD_KEYS = {
     "game_version",
     "artifact_inventory_sha256",
@@ -439,17 +457,22 @@ def _parse_manifest(path: Path) -> dict:
     if (
         not isinstance(document, dict)
         or type(document.get("schema_version")) is not int
-        or document["schema_version"] not in {LEGACY_BUNDLE_SCHEMA_VERSION, BUNDLE_SCHEMA_VERSION}
+        or document["schema_version"]
+        not in {LEGACY_BUNDLE_SCHEMA_VERSION, MODE_BUNDLE_SCHEMA_VERSION, BUNDLE_SCHEMA_VERSION}
     ):
-        raise ReleaseBundleError("Release manifest has unexpected fields or schema")
-    expected_keys = (
-        LEGACY_MANIFEST_KEYS if document["schema_version"] == LEGACY_BUNDLE_SCHEMA_VERSION else MANIFEST_KEYS
-    )
-    if set(document) != expected_keys:
         raise ReleaseBundleError("Release manifest has unexpected fields or schema")
     if canonical_json_bytes(document) != raw:
         raise ReleaseBundleError("Release manifest is not canonical JSON")
     return document
+
+
+def _validate_manifest_keys(manifest: dict, *, source_artifact_mode: str) -> None:
+    expected_keys = expected_manifest_keys(
+        schema_version=manifest["schema_version"],
+        source_artifact_mode=source_artifact_mode,
+    )
+    if set(manifest) != expected_keys:
+        raise ReleaseBundleError("Release manifest has unexpected fields or schema")
 
 
 def _validate_manifest_identity(
@@ -470,7 +493,9 @@ def _validate_manifest_identity(
         raise ReleaseBundleError("Release manifest workflow identity mismatch")
     if manifest["source_subject"] != _git(repo_root, "show", "-s", "--format=%s", "HEAD"):
         raise ReleaseBundleError("Release manifest source subject mismatch")
-    for key in ("ida_runtime_sha256", "warm_idb_selection_sha256"):
+    for key in ("ida_runtime_sha256", WARM_SELECTION_MANIFEST_KEY):
+        if key not in manifest:
+            continue
         try:
             normalized_sha256(manifest[key], f"release manifest {key}")
         except ReleaseWorkflowError as exc:
@@ -536,12 +561,11 @@ def _validate_evidence(
     manifest: dict,
     source_sha: str,
     bin_gitlink_sha: str,
-    cache_selection_sha256: str,
+    cache_selection_sha256: str | None,
     gamevers: tuple[str, ...],
     expected_cache_pairs: tuple[tuple[str, str], ...],
 ) -> None:
     runtime_path = bundle_root / "evidence/ida-runtime.json"
-    selection_path = bundle_root / "evidence/cache-selection.json"
     runtime = _load_canonical_json(runtime_path, "IDA runtime evidence")
     if set(runtime) != IDA_RUNTIME_EVIDENCE_KEYS:
         raise ReleaseBundleError("IDA runtime evidence has unexpected fields")
@@ -553,6 +577,18 @@ def _validate_evidence(
         raise ReleaseBundleError("IDA runtime kernel version must be a trimmed non-empty string")
     try:
         normalized_sha256(runtime["idalib_mcp_sha256"], "IDA runtime idalib-mcp digest")
+    except ReleaseWorkflowError as exc:
+        raise ReleaseBundleError(str(exc)) from exc
+    if sha256_file(runtime_path) != manifest["ida_runtime_sha256"]:
+        raise ReleaseBundleError("IDA runtime evidence digest mismatch")
+    if WARM_SELECTION_MANIFEST_KEY not in manifest:
+        if cache_selection_sha256 is not None:
+            raise ReleaseBundleError("Tracked release forbids a bound warm IDB selection digest")
+        return
+    if cache_selection_sha256 is None:
+        raise ReleaseBundleError("Release manifest requires a bound warm IDB selection digest")
+    selection_path = bundle_root / "evidence/cache-selection.json"
+    try:
         expected_selection_digest = normalized_sha256(cache_selection_sha256, "bound warm IDB selection digest")
     except ReleaseWorkflowError as exc:
         raise ReleaseBundleError(str(exc)) from exc
@@ -610,10 +646,8 @@ def _validate_evidence(
         pairs.append((tag, platform))
     if tuple(pairs) != expected_cache_pairs:
         raise ReleaseBundleError("Warm IDB selection entries do not cover the configured tag/platform inventory")
-    if sha256_file(runtime_path) != manifest["ida_runtime_sha256"]:
-        raise ReleaseBundleError("IDA runtime evidence digest mismatch")
     if (
-        sha256_file(selection_path) != manifest["warm_idb_selection_sha256"]
+        sha256_file(selection_path) != manifest[WARM_SELECTION_MANIFEST_KEY]
         or sha256_file(selection_path) != expected_selection_digest
     ):
         raise ReleaseBundleError("Warm IDB selection evidence digest mismatch")
@@ -679,17 +713,19 @@ def build_release_bundle(
     gamesymbols_root: str | Path,
     gamesymbols_json_root: str | Path,
     ida_runtime_path: str | Path,
-    cache_selection_path: str | Path,
     version: str,
     build_id: str,
     workflow_run_url: str,
     source_sha: str,
     source_artifact_mode: str = "rebuild",
+    cache_selection_path: str | Path | None = None,
     tracked_binding_path: str | Path | None = None,
 ) -> dict:
     require_source_artifact_mode(source_artifact_mode)
     if (source_artifact_mode == "tracked") != (tracked_binding_path is not None):
         raise ReleaseBundleError("Tracked mode requires --tracked-binding; rebuild mode forbids it")
+    if (source_artifact_mode == "rebuild") != (cache_selection_path is not None):
+        raise ReleaseBundleError("Rebuild mode requires --cache-selection; tracked mode forbids it")
     repo_root = Path(repo_root).resolve()
     bundle_root = Path(bundle_root).resolve()
     version = require_version(version)
@@ -710,9 +746,9 @@ def build_release_bundle(
         raise ReleaseBundleError(str(exc)) from exc
 
     ida_runtime = Path(ida_runtime_path)
-    cache_selection = Path(cache_selection_path)
     _copy_file(ida_runtime, bundle_root / "evidence/ida-runtime.json")
-    _copy_file(cache_selection, bundle_root / "evidence/cache-selection.json")
+    if cache_selection_path is not None:
+        _copy_file(Path(cache_selection_path), bundle_root / "evidence/cache-selection.json")
     if tracked_binding_path is not None:
         _copy_file(Path(tracked_binding_path), bundle_root / TRACKED_BINDING_PATH)
         _verify_tracked_binding(bundle_root / TRACKED_BINDING_PATH, repo_root=repo_root, source_sha=source_sha)
@@ -785,7 +821,6 @@ def build_release_bundle(
         "source_subject": _git(repo_root, "show", "-s", "--format=%s", "HEAD"),
         "bin_gitlink_sha": _gitlink(repo_root),
         "ida_runtime_sha256": sha256_file(bundle_root / "evidence/ida-runtime.json"),
-        "warm_idb_selection_sha256": sha256_file(bundle_root / "evidence/cache-selection.json"),
         "gamesymbols_json": {
             "index_sha256": index_record["sha256"],
             "index_size": index_record["size"],
@@ -801,6 +836,12 @@ def build_release_bundle(
         "gamevers": gamever_records,
         "assets": [payload],
     }
+    if cache_selection_path is not None:
+        manifest[WARM_SELECTION_MANIFEST_KEY] = sha256_file(bundle_root / "evidence/cache-selection.json")
+    if set(manifest) != expected_manifest_keys(
+        schema_version=BUNDLE_SCHEMA_VERSION, source_artifact_mode=source_artifact_mode
+    ):
+        raise ReleaseBundleError("Built manifest does not match its declared schema and source artifact mode")
     manifest_relative = f"release-manifest-{version}.json"
     manifest_path = bundle_root / manifest_relative
     write_canonical_json(manifest_path, manifest)
@@ -817,7 +858,7 @@ def verify_release_bundle(
     source_sha: str,
     build_id: str,
     workflow_run_url: str,
-    cache_selection_sha256: str,
+    cache_selection_sha256: str | None = None,
     source_artifact_mode: str = "rebuild",
 ) -> dict:
     require_source_artifact_mode(source_artifact_mode)
@@ -831,6 +872,7 @@ def verify_release_bundle(
     manifest = _parse_manifest(bundle_root / manifest_relative)
     if manifest.get("source_artifact_mode", "rebuild") != source_artifact_mode:
         raise ReleaseBundleError("Release source artifact mode differs from the bound workflow mode")
+    _validate_manifest_keys(manifest, source_artifact_mode=source_artifact_mode)
     if source_artifact_mode == "rebuild" and manifest.get("tracked_artifact_binding_sha256") is not None:
         raise ReleaseBundleError("Rebuild mode forbids tracked artifact binding evidence")
     gamevers = _configured_gamevers(repo_root)
@@ -868,10 +910,11 @@ def verify_release_bundle(
         manifest_relative,
         f"SHA256SUMS-{version}.txt",
         "evidence/ida-runtime.json",
-        "evidence/cache-selection.json",
         "gamesymbols-json/index.json",
         f"archives/gamesymbols-{version}.7z",
     }
+    if WARM_SELECTION_MANIFEST_KEY in manifest:
+        expected_paths.add("evidence/cache-selection.json")
     if source_artifact_mode == "tracked":
         binding_path = bundle_root / TRACKED_BINDING_PATH
         _verify_tracked_binding(binding_path, repo_root=repo_root, source_sha=source_sha)
@@ -976,7 +1019,7 @@ def main(argv: list[str] | None = None) -> int:
     build.add_argument("--gamesymbols-root", required=True)
     build.add_argument("--gamesymbols-json-root", required=True)
     build.add_argument("--ida-runtime", required=True)
-    build.add_argument("--cache-selection", required=True)
+    build.add_argument("--cache-selection")
     build.add_argument("--version", required=True)
     build.add_argument("--build-id", required=True)
     build.add_argument("--workflow-run-url", required=True)
@@ -990,7 +1033,7 @@ def main(argv: list[str] | None = None) -> int:
     verify.add_argument("--source-sha", required=True)
     verify.add_argument("--build-id", required=True)
     verify.add_argument("--workflow-run-url", required=True)
-    verify.add_argument("--cache-selection-sha256", required=True)
+    verify.add_argument("--cache-selection-sha256")
     verify.add_argument("--source-artifact-mode", choices=SOURCE_ARTIFACT_MODES, default="rebuild")
     args = parser.parse_args(argv)
     try:

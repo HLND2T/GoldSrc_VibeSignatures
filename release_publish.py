@@ -297,7 +297,7 @@ def publish_release(
     source_sha: str,
     build_id: str,
     workflow_run_url: str,
-    cache_selection_sha256: str,
+    cache_selection_sha256: str | None = None,
     notes_file: str | Path | None = None,
     source_artifact_mode: str = "rebuild",
 ) -> str:
@@ -435,7 +435,7 @@ def main(argv: list[str] | None = None) -> int:
     publish.add_argument("--source-sha", required=True)
     publish.add_argument("--build-id", required=True)
     publish.add_argument("--workflow-run-url", required=True)
-    publish.add_argument("--cache-selection-sha256", required=True)
+    publish.add_argument("--cache-selection-sha256")
     publish.add_argument("--source-artifact-mode", choices=SOURCE_ARTIFACT_MODES, default="rebuild")
     publish.add_argument("--notes-file", help="Required for a new or draft Release; ignored for published versions")
     args = parser.parse_args(argv)
