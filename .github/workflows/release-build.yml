@@ -394,7 +394,12 @@ jobs:
           retention-days: 7
   release-notes:
     needs: [preflight, verify-release-bundle]
-    if: needs.preflight.outputs.release_state != 'published'
+    # Keep the status gate explicit: a skipped warmup-idb sits upstream, and an implicit success() here would
+    # decide whether notes run based on the whole dependency graph rather than these two jobs.
+    if: >-
+      ${{ !cancelled() && needs.preflight.result == 'success' &&
+          needs.verify-release-bundle.result == 'success' &&
+          needs.preflight.outputs.release_state != 'published' }}
     runs-on: ubuntu-latest
     environment: release
     timeout-minutes: 30
