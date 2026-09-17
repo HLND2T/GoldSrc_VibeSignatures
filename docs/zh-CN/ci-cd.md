@@ -31,8 +31,11 @@ required check。
 Release DAG：
 
 ```text
-preflight -> warmup-idb -> build-release-bundle -> verify-release-bundle -> publish-release
+preflight -> [warmup-idb] -> build-release-bundle -> verify-release-bundle -> publish-release
 ```
+
+`source_artifact_mode=tracked` 时跳过 `warmup-idb`：它绑定已提交 artifact 而非重建，因此不消费 warm IDB；其余 job
+在两种模式下都执行。
 
 self-hosted read-only build 在 fresh root 强制重建全部分析 artifact、与 Git truth 比较、派生 snapshot/metadata 与浏览器
 JSON dataset、`mark -step json` 后发布，再派生唯一 all-in-one `gamesymbols-<version>.7z` 并组装完整 release bundle，

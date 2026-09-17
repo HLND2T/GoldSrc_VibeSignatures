@@ -14,9 +14,11 @@ command, accept a user-supplied SHA, move a tag, edit a Release, cancel work, or
 1. Extract the requested release version, of the form `vYYYYMMDD[a-z]`.
 2. Resolve the build path before dispatch. If the user has not specified it, ask whether to use a normal rebuild
    (`rebuild`) or build-free (`tracked`). Use an already explicit choice without asking again.
-   - `rebuild` performs full analysis and compares rebuilt artifacts with Git truth.
-   - `tracked` binds the selected SHA's tracked `bin_artifacts` without proving rebuildability. Warm-IDB preparation,
-     runtime evidence, snapshot/JSON generation, independent verification, and publication protections still run.
+   - `rebuild` performs full analysis and compares rebuilt artifacts with Git truth. It runs `warmup-idb`, restores the
+     verified warm IDBs, and binds the warm IDB selection digest into the release manifest.
+   - `tracked` binds the selected SHA's tracked `bin_artifacts` without proving rebuildability. It skips the `warmup-idb`
+     job and the IDB selection/restore steps entirely, so its manifest carries no warm IDB selection digest. IDA runtime
+     evidence, snapshot/JSON generation, independent verification, and publication protections still run.
 3. Run from the repository root, passing the selected mode explicitly (from another directory, use the absolute script path):
 
    ```powershell

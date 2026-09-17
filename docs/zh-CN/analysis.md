@@ -68,7 +68,8 @@ evidence；consumer（`idb_cache_release.py restore` / `idb_cache_workflow.py re
 exact generation，再以 `database_policy=restored_strict` 与 `save_on_success=false` 运行 Analyzer。Miss、corrupt
 generation 或 runtime mismatch 会使 run 失败；任何 analysis consumer 都不能回退为重建。Consumer 绝不重新
 probe `READY.json`，只 restore 其自身 producer 发布的 exact generation。本地调用也必须先恢复已验证的 exact
-generation，再启动 Analyzer。
+generation，再启动 Analyzer。`tracked` release 不是 analysis consumer：它不 restore 任何 generation，也不运行
+`warmup-idb` job。
 
 ### 使用 `-allgamever` 批量分析
 

@@ -50,6 +50,8 @@ Warm IDB cache is a rebuildable performance layer for neutral databases created 
 ## Workflow integration
 The schema-2 trusted PR plan carries the invariant evidence field `cache_mode=warm`; it is not user-selectable. Every official analysis route uses the reusable `warmup-idb.yml` producer. The workflow canonicalizes one PATH-resolved IDA Python executable, obtains its kernel version through `idb_warm_worker.py --print-ida-version`, and passes that executable to release-all or bound-plan preparation. The producer no longer requires `idalib-mcp` or `IDADIR`; strict consumers still use [[idalib-mcp]] for analysis.
 
+A `source_artifact_mode=tracked` release is not an analysis route: it schedules no `warmup-idb` producer, downloads or restores no selection, and never opens an IDB, so its manifest carries no warm IDB selection digest.
+
 Official producers share the repository-wide Actions concurrency group (`idb-warmup-${{ github.repository }}`, `cancel-in-progress: false`). Official and direct producers also share persisted `idb-cache/.locks/producer.lock`, so a bypass invocation cannot overlap the official producer. Verify/restore never re-read READY. A failed, cancelled, or skipped producer blocks analysis; there is no cold or consumer-side rebuild fallback.
 
 ## Bound-plan consumer validation cost

@@ -28,15 +28,17 @@ class ReleaseBundleTests(unittest.TestCase):
         )
 
     @staticmethod
-    def _verification_arguments(repo: Path, generated: Path, source_sha: str) -> dict:
-        return {
+    def _verification_arguments(repo: Path, generated: Path, source_sha: str, *, tracked: bool = False) -> dict:
+        arguments = {
             "repo_root": repo,
             "version": "v20260831a",
             "source_sha": source_sha,
             "build_id": "run-1-1",
             "workflow_run_url": "https://example.invalid/run/1",
-            "cache_selection_sha256": sha256_file(generated / "evidence/cache-selection.json"),
         }
+        if not tracked:
+            arguments["cache_selection_sha256"] = sha256_file(generated / "evidence/cache-selection.json")
+        return arguments
 
     @staticmethod
     def _rewrite_manifest_and_checksums(bundle: Path, mutate) -> None:
@@ -144,17 +146,20 @@ class ReleaseBundleTests(unittest.TestCase):
         return repo, generated, source_sha
 
     def _build(self, repo: Path, generated: Path, bundle: Path, source_sha: str, **kwargs) -> dict:
+        selection = {}
+        if "cache_selection_path" not in kwargs and kwargs.get("source_artifact_mode", "rebuild") != "tracked":
+            selection["cache_selection_path"] = generated / "evidence/cache-selection.json"
         return build_release_bundle(
             repo_root=repo,
             bundle_root=bundle,
             gamesymbols_root=generated / "gamesymbols",
             gamesymbols_json_root=generated / "gamesymbols-json",
             ida_runtime_path=generated / "evidence/ida-runtime.json",
-            cache_selection_path=generated / "evidence/cache-selection.json",
             version="v20260831a",
             build_id="run-1-1",
             workflow_run_url="https://example.invalid/run/1",
             source_sha=source_sha,
+            **selection,
             **kwargs,
         )
 
@@ -173,10 +178,12 @@ class ReleaseBundleTests(unittest.TestCase):
             manifest = self._build(
                 repo, generated, bundle, source_sha, source_artifact_mode="tracked", tracked_binding_path=binding
             )
-            self.assertEqual(3, manifest["schema_version"])
+            self.assertEqual(4, manifest["schema_version"])
             self.assertEqual("tracked", manifest["source_artifact_mode"])
+            self.assertNotIn("warm_idb_selection_sha256", manifest)
+            self.assertFalse((bundle / "evidence/cache-selection.json").exists())
             self.assertEqual(sha256_file(binding), manifest["tracked_artifact_binding_sha256"])
-            args = self._verification_arguments(repo, generated, source_sha)
+            args = self._verification_arguments(repo, generated, source_sha, tracked=True)
             self.assertEqual(
                 manifest, verify_release_bundle(bundle_root=bundle, source_artifact_mode="tracked", **args)
             )
@@ -197,15 +204,24 @@ class ReleaseBundleTests(unittest.TestCase):
                         args["build_id"],
                         "--workflow-run-url",
                         args["workflow_run_url"],
-                        "--cache-selection-sha256",
-                        args["cache_selection_sha256"],
                         "--source-artifact-mode",
                         "tracked",
                     ]
                 ),
             )
+            selection_digest = sha256_file(generated / "evidence/cache-selection.json")
+            with self.assertRaisesRegex(ReleaseBundleError, "forbids"):
+                verify_release_bundle(
+                    bundle_root=bundle,
+                    source_artifact_mode="tracked",
+                    cache_selection_sha256=selection_digest,
+                    **args,
+                )
             with self.assertRaisesRegex(ReleaseBundleError, "mode"):
-                verify_release_bundle(bundle_root=bundle, **args)
+                verify_release_bundle(
+                    bundle_root=bundle,
+                    **self._verification_arguments(repo, generated, source_sha),
+                )
             evidence = bundle / "evidence/tracked-artifact-binding.json"
             original = evidence.read_bytes()
             evidence.unlink()
@@ -254,7 +270,7 @@ class ReleaseBundleTests(unittest.TestCase):
                 verify_release_bundle(
                     bundle_root=bundle,
                     source_artifact_mode="tracked",
-                    **self._verification_arguments(repo, generated, source_sha),
+                    **self._verification_arguments(repo, generated, source_sha, tracked=True),
                 )
 
     def test_tracked_binding_rejects_boolean_integer_substitution(self):
@@ -321,8 +337,14 @@ class ReleaseBundleTests(unittest.TestCase):
                     self._build(repo, generated, root / "invalid", source_sha, **kwargs)
             bundle = root / "bundle"
             manifest = self._build(repo, generated, bundle, source_sha)
+            self.assertEqual(4, manifest["schema_version"])
             self.assertEqual("rebuild", manifest["source_artifact_mode"])
             self.assertIsNone(manifest["tracked_artifact_binding_sha256"])
+            self.assertIn("warm_idb_selection_sha256", manifest)
+
+            args = self._verification_arguments(repo, generated, source_sha)
+            self._rewrite_manifest_and_checksums(bundle, lambda document: document.update(schema_version=3))
+            self.assertEqual(3, verify_release_bundle(bundle_root=bundle, **args)["schema_version"])
 
             def legacy(document):
                 document["schema_version"] = 2
@@ -330,10 +352,36 @@ class ReleaseBundleTests(unittest.TestCase):
                 del document["tracked_artifact_binding_sha256"]
 
             self._rewrite_manifest_and_checksums(bundle, legacy)
-            args = self._verification_arguments(repo, generated, source_sha)
             self.assertEqual(2, verify_release_bundle(bundle_root=bundle, **args)["schema_version"])
             with self.assertRaisesRegex(ReleaseBundleError, "mode"):
                 verify_release_bundle(bundle_root=bundle, source_artifact_mode="tracked", **args)
+
+    def test_selection_evidence_is_required_exactly_when_the_mode_consumes_it(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, generated, source_sha = self.fixture(root)
+            binding = root / "binding.json"
+            binding.write_bytes(
+                canonical_json_bytes(release_bundle.bind_tracked_artifacts(repo_root=repo, source_sha=source_sha))
+            )
+            cases = (
+                {"cache_selection_path": None},
+                {
+                    "source_artifact_mode": "tracked",
+                    "tracked_binding_path": binding,
+                    "cache_selection_path": generated / "evidence/cache-selection.json",
+                },
+            )
+            for case in cases:
+                with self.subTest(case=sorted(case)), self.assertRaises(ReleaseBundleError):
+                    self._build(repo, generated, root / "invalid", source_sha, **case)
+            bundle = root / "bundle"
+            self._build(repo, generated, bundle, source_sha)
+            with self.assertRaisesRegex(ReleaseBundleError, "requires"):
+                verify_release_bundle(
+                    bundle_root=bundle,
+                    **self._verification_arguments(repo, generated, source_sha, tracked=True),
+                )
 
     def test_archive_verifier_accepts_required_empty_artifact_directory(self):
         with tempfile.TemporaryDirectory() as temporary:

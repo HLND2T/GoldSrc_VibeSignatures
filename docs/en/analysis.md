@@ -60,7 +60,7 @@ that selection, restores the exact generations, and then runs the Analyzer with
 `database_policy=restored_strict` and `save_on_success=false`. A miss, corrupt generation, or runtime mismatch fails the
 run; no analysis consumer can fall back to rebuilding. The consumer never re-probes `READY.json`; it restores exactly
 what its own producer published. Local callers must likewise restore a verified exact generation before invoking the
-Analyzer.
+Analyzer. A `tracked` release is not an analysis consumer: it restores no generation and runs no `warmup-idb` job.
 
 ### Batch analysis with `-allgamever`
 
