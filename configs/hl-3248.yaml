@@ -633,7 +633,6 @@ modules:
           - D_FillRect.{platform}.yaml
           - Draw_FillRGBA.{platform}.yaml
           - Draw_FillRGBABlend.{platform}.yaml
-          - DT_Initialize.{platform}.yaml
       - name: find-R_CheckVariables
         expected_input:
           - GL_LoadFilterTexture.{platform}.yaml
@@ -1059,8 +1058,6 @@ modules:
       - name: Draw_FillRGBA
         category: func
       - name: Draw_FillRGBABlend
-        category: func
-      - name: DT_Initialize
         category: func
       - name: R_CheckVariables
         category: func

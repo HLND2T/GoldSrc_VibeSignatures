@@ -17,6 +17,9 @@ Anchors (approved issue #120 plan). Discovery never uses a byte pattern.
   factor immediates (GL_SRC_ALPHA 0x302, GL_ONE_MINUS_SRC_ALPHA 0x303) are an
   output validator, not a discovery anchor.
 * ``DT_Initialize`` - the unique function pushing ``GL_RGB_SCALE`` (0x8573).
+  The BLOB builds (hl-3248/3266/3329/3647) inline it into
+  ``CheckMultiTextureExtensions``, so the immediate there belongs to the host
+  function; those configs do not declare the symbol and the walk is skipped.
 """
 
 import json
@@ -337,13 +340,14 @@ async def preprocess_skill(
     located = await _eval(session, code + WALK)
     if not located:
         return False
-    dt_hits = await _eval(
-        session,
-        "GL_RGB_SCALE=" + repr(GL_RGB_SCALE) + "\nMARKER=" + repr(MARKER) + "\n" + DT_WALK,
-    )
-    if not dt_hits:
-        return False
-    located.update(dt_hits)
+    if outputs["DT_Initialize"] is not None:
+        dt_hits = await _eval(
+            session,
+            "GL_RGB_SCALE=" + repr(GL_RGB_SCALE) + "\nMARKER=" + repr(MARKER) + "\n" + DT_WALK,
+        )
+        if not dt_hits:
+            return False
+        located.update(dt_hits)
 
     slots = {"Draw_FillRGBA": table + 11 * 4, "Draw_FillRGBABlend": table + 130 * 4}
     table_code = (

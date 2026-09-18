@@ -35,11 +35,13 @@ at `0x33F140`), which the shared `.got` pointee handling resolves.
 ## `detTexSupported` — owner `DT_LoadDetailMapFile`
 
 `DT_Initialize` cannot be the predecessor on the BLOB builds
-(`hl-3248/3266/3329/3647`): there it is **inlined into `GL_MultiTexInit`** and the
-`detTexSupported = true` store lives in a jump-target block (e.g. hl-3248
-`loc_1D35590`, store `0x20807EB`) that IDA owns as a tail *outside* the recorded
-function range, so the GV contract cannot express it. The repository's existing
-`DT_Initialize` artifact for those tags points at the `GL_MultiTexInit` body.
+(`hl-3248/3266/3329/3647`): there it is **inlined into `CheckMultiTextureExtensions`**
+(`engine/gl_vidnt.c`) and the `detTexSupported = true` store lives in a jump-target
+block (e.g. hl-3248 `loc_1D35590`, store `0x20807EB`) that IDA owns as a tail
+*outside* the recorded function range, so the GV contract cannot express it.
+Those four tags no longer declare `DT_Initialize` at all — the registration and the
+`DT_Initialize.windows.yaml` artifacts pointing at the `CheckMultiTextureExtensions`
+body were removed (2026-09-18); see `memory/locators/DT_Initialize.md`.
 
 `DT_LoadDetailMapFile` opens with `if (!detTexSupported) { return; }` and is a
 standalone function on every family. It is located by

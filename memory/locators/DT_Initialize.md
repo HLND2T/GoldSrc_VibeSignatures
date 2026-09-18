@@ -21,15 +21,38 @@ tags:
 
 ## Availability
 
-- Declared in 10 engine configs: cof-5936, hl-10210, hl-3248, hl-3266, hl-3329,
-  hl-3647, hl-4554, hl-6153, hl-8684, svencoop-10257.
+- Declared in 7 engine configs: cof-5936, hl-10210, hl-4554, hl-6153, hl-8684,
+  svencoop-8948, svencoop-10257.
 - Platforms: Windows + Linux.
-- Branch split on svencoop-10257: Windows is emitted by `find-renderer-draw-helpers-svencoop`
-  (`platform: windows`), Linux by `find-DT_Initialize-svencoop` (`platform: linux`).
-  The 9 HL/CoF configs use `find-renderer-draw-helpers` (no platform gating).
-- Inlined / absent: none observed. `engine/DetailTexture.cpp DT_Initialize` stays a
-  standalone function on every validated branch, including SvEngine Linux — unlike the
-  sprite-frame renderers, which are inlined there.
+- Branch split on svencoop-8948 / svencoop-10257: Windows is emitted by
+  `find-renderer-draw-helpers-svencoop` (`platform: windows`), Linux by
+  `find-DT_Initialize-svencoop` (`platform: linux`). The 5 HL/CoF configs use
+  `find-renderer-draw-helpers` (no platform gating).
+- **Inlined on the BLOB builds** (`hl-3248` / `hl-3266` / `hl-3329` / `hl-3647`):
+  `DT_Initialize` has no standalone body there — it is inlined into
+  `CheckMultiTextureExtensions` (`engine/gl_vidnt.c`). Those four configs therefore
+  **must not declare the symbol**; the registration and the four
+  `bin_artifacts/hl-<tag>/engine/DT_Initialize.windows.yaml` files were removed
+  (2026-09-18) because they recorded the host function, not `DT_Initialize`.
+- Everywhere else `engine/DetailTexture.cpp DT_Initialize` stays a standalone
+  function, including SvEngine Linux — unlike the sprite-frame renderers, which are
+  inlined there.
+
+### Evidence for the BLOB inlining
+
+Read straight out of `bin/<tag>/engine/hw.decrypt.dll` at the recorded RVA:
+
+- The four removed artifacts were byte-identical in shape — `func_size 0x18d`,
+  `func_sig` opening `51 D9 05 ?? ?? ?? ?? D8 1D ?? ?? ?? ?? DF E0 F6 C4 44 0F 8A`
+  (an FPU compare, not the two `Cvar_RegisterVariable` pushes of the real function).
+- Their bodies push `GL_ARB_multitexture `, `ARB Multitexture extensions found.\n`,
+  `glMultiTexCoord2fARB`, `glActiveTextureARB`, `GL_SGIS_multitexture `,
+  `NO Multitexture extensions found.\n` **and** the inlined detail-texture line
+  `%d texture units.  Detail texture supported.\n` — i.e. the whole
+  `CheckMultiTextureExtensions` body.
+- The 7 kept Windows artifacts are `0x8d`-`0x95` bytes and register the
+  `r_detailtextures` / `r_detailtexturessupported` cvars, which is the genuine
+  `DT_Initialize`.
 
 ## Predecessors
 
@@ -51,12 +74,21 @@ tags:
 4. The three producers run the identical `DT_WALK`; they differ only in entry gating
    (`find-renderer-draw-helpers` additionally requires the SCR/Sys_Error/cl_enginefuncs
    YAMLs to exist and carry `func_va` / `gv_va`). No byte pattern participates in discovery.
+5. `find-renderer-draw-helpers` skips `DT_WALK` entirely when the config does not list
+   `DT_Initialize.{platform}.yaml` in `expected_output`; the other four draw helpers it
+   produces are unaffected, which is what keeps the BLOB configs working.
 
 ## Pitfalls
 
 - The anchor is an `o_imm` operand, so a build that materializes `GL_RGB_SCALE` through a
   computed or register-relative value would not match; there is no secondary anchor.
 - Uniqueness is mandatory — the walk has no recovery path if two functions push `0x8573`.
+- **Uniqueness is not a correctness proof.** The `0x8573` immediate survives inlining, so
+  on the BLOB builds the walk returned exactly one hit and looked healthy while pointing at
+  `CheckMultiTextureExtensions`. Before declaring the symbol for a new build, check that the
+  hit is `DT_Initialize`-sized (`0x8d`-`0x95`) and registers `r_detailtextures` /
+  `r_detailtexturessupported`; a `0x18d`-byte hit full of `*_multitexture` strings is the
+  host function.
 - Prior float/immediate matching work (issue #114) noted that SvEngine Linux hides
   `.rodata` operands behind GOT-relative displacements for *float* constants; `0x8573` is
   a plain integer immediate here and is unaffected, but the same PIC reasoning explains
