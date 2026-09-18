@@ -665,6 +665,15 @@ modules:
           - Mod_UnloadSpriteTextures.{platform}.yaml
           - gSpriteList.{platform}.yaml
           - gSpriteCount.{platform}.yaml
+      - name: find-CGame_AppActivate
+        expected_output:
+          - CGame_AppActivate.{platform}.yaml
+      - name: find-SPR_Shutdown-host_initialized
+        expected_input:
+          - SPR_Shutdown.{platform}.yaml
+          - CGame_AppActivate.{platform}.yaml
+        expected_output:
+          - host_initialized.{platform}.yaml
     symbols:
       - name: currenttexture
         category: gv
@@ -1050,6 +1059,10 @@ modules:
       - name: gSpriteList
         category: gv
       - name: gSpriteCount
+        category: gv
+      - name: CGame_AppActivate
+        category: func
+      - name: host_initialized
         category: gv
   - name: gameui
     module_windows: GameUI.dll
