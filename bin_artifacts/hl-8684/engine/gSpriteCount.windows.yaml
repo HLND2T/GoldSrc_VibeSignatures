@@ -1,0 +1,9 @@
+gv_name: gSpriteCount
+gv_va: '0x1e6c4b8'
+gv_rva: '0x16c4b8'
+gv_sig: A1 ?? ?? ?? ?? 53 33 DB 3B C3 74 ?? 8B 0D ?? ?? ?? ?? 3B CB 74 ?? A1 ?? ?? ?? ?? 57 33 FF 3B C3 7E ?? 56 33 F6 8B
+  04 0E
+gv_sig_va: '0x1d117e0'
+gv_inst_offset: '0x16'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

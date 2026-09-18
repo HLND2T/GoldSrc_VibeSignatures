@@ -660,11 +660,11 @@ modules:
         expected_output:
           - R_GLStudioDrawPoints.{platform}.yaml
       - name: find-Mod_UnloadSpriteTextures
-        platform: windows
-        expected_input:
-          - ClientDLL_Shutdown.{platform}.yaml
         expected_output:
+          - SPR_Shutdown.{platform}.yaml
           - Mod_UnloadSpriteTextures.{platform}.yaml
+          - gSpriteList.{platform}.yaml
+          - gSpriteCount.{platform}.yaml
     symbols:
       - name: currenttexture
         category: gv
@@ -1043,9 +1043,14 @@ modules:
         category: patch
       - name: R_GLStudioDrawPoints
         category: func
+      - name: SPR_Shutdown
+        category: func
       - name: Mod_UnloadSpriteTextures
         category: func
-        platform: windows
+      - name: gSpriteList
+        category: gv
+      - name: gSpriteCount
+        category: gv
   - name: gameui
     module_windows: GameUI.dll
     depot_windows: valve/cl_dlls/GameUI.dll

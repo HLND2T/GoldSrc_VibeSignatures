@@ -18,31 +18,28 @@ tags:
 - **Producer**: `ida_preprocessor_scripts/find-Mod_UnloadSpriteTextures.py`
 
 ## Availability
-
-- Declared in 8 engine configs: cof-5936, hl-3248, hl-3266, hl-3329, hl-3647, hl-4554, hl-6153, hl-8684.
-- Platforms: Windows-only (the finder node carries `platform: windows`). Not declared in hl-10210 and not declared in svencoop-10257.
-- Inlined / absent: absent as a separately anchored symbol on HL25 and SvEngine — those builds inline `ClientDLL_Shutdown` into `ClientDLL_Init`, so the whole depth-two walk has no root and the skill is not registered there.
-- Not applicable to cstrike/czero/czeror (no engine module in this repo).
-
+- Declared in all 11 engine configs: cof-5936, hl-3248, hl-3266, hl-3329, hl-3647, hl-4554, hl-6153, hl-8684, hl-10210, svencoop-8948, svencoop-10257.
+- Platforms: every platform shipped by those engine modules — Windows for all 11 configs, plus Linux for hl-8684, hl-10210, svencoop-8948, and svencoop-10257.
+- `SPR_Shutdown` and `Mod_UnloadSpriteTextures` remain independent functions in every validated target. HL25/SvEngine inline a copy of the broader `ClientDLL_Shutdown` flow into `ClientDLL_Init`, but that does not inline either sprite function.
+- Not applicable to cstrike/czero/czeror because those configs have no engine module.
 ## Predecessors
-
-- `ClientDLL_Shutdown.{platform}.yaml` (produced by `find-ClientDLL_Shutdown`, consumed via `expected_input`).
-
+- No artifact predecessor. Discovery starts from the exact `SPR_Load` allocation-error literal and the `%s_%i` sprite-texture-name literal in the current IDB.
+- The same producer emits `[[SPR_Shutdown locator]]`, `[[gSpriteList locator]]`, and `[[gSpriteCount locator]]`.
 ## How it is located
+The producer performs one deterministic, fail-closed graph/data-flow walk; no prior artifact or byte signature participates in discovery:
 
-Graph walk below the predecessor, not a string anchor and **no byte signature participates in discovery**:
+1. Find the unique owner of the case-insensitive exact literal `cannot allocate more than %d HUD sprites\n`. Orphan PE code is promoted to a function only from the bounded gap immediately after the previous function. This owner is `SPR_Load`.
+2. Find owners of `%s_%i` and their direct callers. Keep functions using member displacements `model_t::type +0x44`, `needload +0x40`, `cache.data +0x184`, and `msprite_t::numframes +0x0C`.
+3. Normalize ELF PLT/internal thunks. Keep the unique candidate whose sole semantic caller has one call to it, two calls to the same free helper, and a 12-byte `SPRITELIST` loop. The callee is `Mod_UnloadSpriteTextures`; the caller is `SPR_Shutdown`.
+4. Intersect writable globals used by `SPR_Load` with globals stored by `SPR_Shutdown`. Exactly two must survive. Classify `gSpriteCount` through the unique common owner that stores 256 and allocates either literal `0xC00` or `256 * 12`; the other slot is `gSpriteList`.
+5. Generate unique function signatures after discovery. The two GV artifacts reuse the verified `SPR_Shutdown` signature plus the selected access-instruction offset and `gv_resolution_fields_via_mcp` metadata.
 
-1. Load `ClientDLL_Shutdown.{platform}.yaml` and take its `func_va`.
-2. In one `py_eval`, collect the internal direct callees of `ClientDLL_Shutdown` (`call` whose operand resolves to a function start with size > 16).
-3. For each such callee `x`, collect `x`'s own internal callees `y`; keep `y` only when `callers(y) == [x]` (unique caller), `fsize(y) >= 60` (`MIN_SIZE`) and `y` has `>= 2` internal callees (`MIN_CALLEES`).
-4. The surviving candidate must be **unique** — otherwise the walk returns `error: Mod_UnloadSpriteTextures candidate is not unique` and the skill fails. This encodes the engine source shape: `SPR_Shutdown` (the only `ClientDLL_Shutdown` callee looping over the loaded HUD-sprite list) calls exactly one function that both unloads by sprite-texture name and calls the shared free helper.
-5. `_inspect_function_via_mcp` emits `func_name / func_va / func_rva / func_size / func_sig`; if no unique in-function signature exists, it retries with `allow_across_function_boundary=True` and records `func_sig_allow_across_function_boundary: true`.
-
-Note the ordering: the walk finds the function, the signature is generated afterwards. Discovery never depends on the old artifact.
-
+The final fresh-artifact validation covered all 15 configured engine/platform targets with 15 successes, zero failures, and zero skips.
 ## Pitfalls
-
-- The uniqueness gate is the whole safety net. `MIN_SIZE = 60` and `MIN_CALLEES = 2` are tuned to the classic `engine/cl_draw.c` + `engine/gl_model.c` pair; loosening either reintroduces ambiguity, tightening either drops builds where the loop was inlined differently.
-- The depth-two shape means a compiler that inlines `SPR_Shutdown` into `ClientDLL_Shutdown`, or the callee into `SPR_Shutdown`, removes the candidate entirely — this is exactly why HL25/SvEngine are not registered.
-- `callers(y) == [x]` is computed from `CodeRefsTo`, so a build where the same function is also reached through a tail-jump or via an extra thunk will report two callers and fail closed.
-- On failure the walk prints no diagnostic unless `debug=True`; a "candidate is not unique" result is indistinguishable from a missing predecessor in the default logs.
+- The allocation diagnostic starts with lowercase `cannot` in classic/HL25 builds and uppercase `Cannot` in SvEngine; matching is full-string and case-insensitive only for that first-letter family difference.
+- Older classic builds keep `Mod_SpriteTextureName` out of line, while newer builds inline it. Therefore `%s_%i` may belong to the target or to its helper; member-offset and shutdown-caller gates provide the identity.
+- HL8684 Linux has another `%s_%i` context in `Mod_LoadAliasModel`; the unique shutdown caller/free/stride graph rejects it.
+- Windows import thunks such as `free` may have no internal body. They retain the thunk entry for semantic call counting. ELF PLT thunks are resolved to their internal bodies.
+- HL8684/HL25 Linux use relocated absolute operands; SvEngine Linux uses EBX/GOTOFF. The latter emits `gv_pic_addend`; never treat the raw displacement as a VA.
+- CoF computes the list allocation as `gSpriteCount * 12` instead of embedding `0xC00`.
+- Missing/ambiguous strings, function owners, caller edges, globals, initializer classification, unique signatures, or PIC resolution all fail closed.
