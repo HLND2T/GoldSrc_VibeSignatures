@@ -675,6 +675,12 @@ modules:
           - studioapi_SetChromeOrigin.{platform}.yaml
         expected_output:
           - R_GLStudioDrawPoints.{platform}.yaml
+      - name: find-Mod_UnloadSpriteTextures
+        expected_output:
+          - SPR_Shutdown.{platform}.yaml
+          - Mod_UnloadSpriteTextures.{platform}.yaml
+          - gSpriteList.{platform}.yaml
+          - gSpriteCount.{platform}.yaml
     symbols:
       - name: currenttexture
         category: gv
@@ -1058,6 +1064,14 @@ modules:
         category: patch
       - name: R_GLStudioDrawPoints
         category: func
+      - name: SPR_Shutdown
+        category: func
+      - name: Mod_UnloadSpriteTextures
+        category: func
+      - name: gSpriteList
+        category: gv
+      - name: gSpriteCount
+        category: gv
   - name: client
     module_windows: client.dll
     module_linux: client.so
