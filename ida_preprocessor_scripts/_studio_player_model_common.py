@@ -103,6 +103,10 @@ from ida_analyze_util import (
     write_func_yaml,
     write_gv_yaml,
 )
+from ida_preprocessor_scripts._direct_gv_common import (
+    inspect_owner_artifact,
+    write_located_globals,
+)
 
 HL_STUDIO_STRING = "Couldn't get client .dll studio model rendering interface.  Version mismatch?\n"
 SVC_STUDIO_STRING = "Couldn't get client library studio model rendering interface. Version mismatch?\n"
@@ -613,6 +617,7 @@ def main():
     writes = []
     ref_insns = {}
     insns = []
+    known_bases = {}
     for ea in func_items(slot_va):
         insn = idautils.DecodeInstruction(ea)
         if not insn:
@@ -622,6 +627,37 @@ def main():
             continue
         direction = insn_direction(ea, insn)
         targets = [x for x in writable_refs(ea) if anchor is None or x != anchor]
+        # IDA can fold an absolute reference to a structure member onto the
+        # structure base (observed for hl-8684's m1.oldtime).  The runtime GV
+        # decoder consumes the embedded absolute dword, so prefer that exact
+        # value for o_mem operands instead of the coarser DataRefsFrom target.
+        absolute = []
+        for op in insn.ops:
+            if int(op.type) == int(idaapi.o_void):
+                break
+            if (int(op.type) == int(idaapi.o_mem)
+                    and int(getattr(op, 'offb', 0) or 0) == int(offb)):
+                value = int(ida_bytes.get_dword(int(ea) + int(offb)))
+                if is_writable_data(value):
+                    absolute.append(value)
+        if absolute:
+            targets = sorted(set(absolute))
+        # Some PIC builds load the client-state base through the GOT and then
+        # address fields through that register. IDA may label only
+        # GOT+member; recover the real member target from the tracked pointee.
+        computed = []
+        for op in insn.ops:
+            if int(op.type) == int(idaapi.o_void):
+                break
+            if int(op.type) != int(idaapi.o_displ):
+                continue
+            base_reg = int(getattr(op, 'reg', -1))
+            if base_reg in known_bases:
+                value = (int(known_bases[base_reg]) + int(op.addr)) & 0xFFFFFFFF
+                if is_writable_data(value):
+                    computed.append(value)
+        if computed:
+            targets = sorted(set(computed))
         insns.append({'ea': hex(int(ea)), 'offb': offb, 'dir': direction,
                       'targets': [hex(x) for x in targets],
                       'disasm': disasm(ea)})
@@ -639,10 +675,31 @@ def main():
                 reads.append(target)
             elif direction == 'write':
                 writes.append(target)
+        mnem = (idc.print_insn_mnem(ea) or '').lower()
+        if int(insn.ops[0].type) == int(idaapi.o_reg):
+            destination = int(insn.ops[0].reg)
+            next_base = None
+            if mnem == 'mov' and int(insn.ops[1].type) == int(idaapi.o_reg):
+                next_base = known_bases.get(int(insn.ops[1].reg))
+            elif mnem == 'mov' and int(insn.ops[1].type) == int(idaapi.o_displ):
+                for ref in idautils.DataRefsFrom(int(ea)):
+                    seg = ida_segment.getseg(int(ref))
+                    if seg is None or ida_segment.get_segm_name(seg) not in ('.got', '.got.plt'):
+                        continue
+                    pointee = int(ida_bytes.get_dword(int(ref)))
+                    if is_writable_data(pointee):
+                        next_base = pointee
+                        break
+            elif mnem == 'lea' and len(targets) == 1:
+                next_base = int(targets[0])
+            if next_base is None:
+                known_bases.pop(destination, None)
+            else:
+                known_bases[destination] = int(next_base)
     read_bases = cluster_bases(reads)
     write_bases = cluster_bases(writes)
     gv_refs = {}
-    for base in read_bases + write_bases:
+    for base in sorted(set(reads + writes)):
         for item in ref_insns.get(base, ()):
             gv_refs[hex(base)] = {'ea': hex(item['ea']), 'len': item['len'], 'offb': item['offb'],
                                   'addend': item['addend'], 'disasm': disasm(item['ea'])}
@@ -659,6 +716,7 @@ def main():
         'slot_end': hex(int(fn.end_ea)),
         'got_anchor': hex(anchor) if anchor is not None else None,
         'read_bases': [hex(x) for x in read_bases],
+        'raw_read_refs': [hex(x) for x in sorted(set(reads))],
         'write_bases': [hex(x) for x in write_bases],
         'ref_counts': {hex(t): len({int(f.start_ea) for f in
                                     (ida_funcs.get_func(int(x)) for x in idautils.DataRefsTo(t))
@@ -905,7 +963,14 @@ async def locate_studio_slot(session, studio_string, slot_offset):
         return None
     if payload.get("error") or payload.get("pointer_size") != 4:
         return payload
-    required = ("table_ea", "slot_va", "read_bases", "write_bases", "gv_refs")
+    required = (
+        "table_ea",
+        "slot_va",
+        "read_bases",
+        "raw_read_refs",
+        "write_bases",
+        "gv_refs",
+    )
     if any(field not in payload for field in required):
         return None
     return payload
@@ -929,6 +994,88 @@ def _shape_gv_bases(located, shape):
     elif shape == SLOT_SHAPE_SKIP_GVS:
         return []
     return None
+
+
+def _get_times_gv_items(located):
+    """Return the adjacent cl.time/cl.oldtime pair without clustering them."""
+    try:
+        reads = sorted({int(value, 0) for value in located["raw_read_refs"]})
+    except (KeyError, TypeError, ValueError):
+        return None
+    candidates = [(value, value + 8) for value in reads if value + 8 in reads]
+    if not candidates:
+        return None
+    # Old MSVC copies each double as two dwords, yielding the equivalent
+    # candidates (T,T+8) and (T+4,T+12). The lower pair is the object base.
+    candidate_starts = [first for first, _second in candidates]
+    lowest = min(candidate_starts)
+    if any(first not in (lowest, lowest + 4) for first in candidate_starts):
+        return None
+    first, second = min(candidates)
+    refs = located.get("gv_refs") or {}
+    items = []
+    for value in (first, second):
+        ref = refs.get(hex(value))
+        if not ref or not ref.get("offb"):
+            return None
+        items.append(
+            {
+                "gv_ea": value,
+                "insn_ea": ref["ea"],
+                "insn_len": ref["len"],
+                "insn_disp": ref["offb"],
+                "insn_disasm": ref.get("disasm", ""),
+            }
+        )
+    return items
+
+
+async def preprocess_studio_get_times_globals(
+    session,
+    expected_outputs,
+    new_binary_dir,
+    platform,
+    image_base,
+    *,
+    studio_string,
+    debug=False,
+):
+    """Recover cl.time and cl.oldtime from a verified GetTimes predecessor."""
+    func_name = "studioapi_GetTimes"
+    owner = await inspect_owner_artifact(session, new_binary_dir, platform, image_base, func_name)
+    if owner is None:
+        if debug:
+            print("  studioapi_GetTimes globals: missing or invalid owner artifact")
+        return False
+    located = await locate_studio_slot(session, studio_string, 0x28)
+    if located is None or located.get("error") or located.get("pointer_size") != 4:
+        if debug:
+            print(f"  studioapi_GetTimes globals: slot locator failed {located}")
+        return False
+    try:
+        if int(located["slot_va"], 0) != owner["owner_ea"]:
+            return False
+    except (KeyError, TypeError, ValueError):
+        return False
+    items = _get_times_gv_items(located)
+    if items is None:
+        if debug:
+            print(f"  studioapi_GetTimes globals: adjacent double pair not unique reads={located.get('raw_read_refs')}")
+        return False
+    names = ("cl_time", "cl_oldtime")
+    if debug:
+        print(
+            "  studioapi_GetTimes globals: "
+            + ", ".join(f"{name}={hex(int(item['gv_ea']))}" for name, item in zip(names, items))
+        )
+    return await write_located_globals(
+        session,
+        expected_outputs,
+        platform,
+        image_base,
+        owner,
+        dict(zip(names, items)),
+    )
 
 
 async def preprocess_studio_slot(

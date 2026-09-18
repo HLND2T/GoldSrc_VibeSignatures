@@ -12,9 +12,9 @@ disasm_code: |-
   .text:0013BAA0                 mov     [esp+5Ch+var_4], ebp
   .text:0013BAA4                 jnz     short loc_13BAB6
   .text:0013BAA6                 xor     eax, eax
-  .text:0013BAA8                 mov     ds:(dword_30F6F1C - 2EE000h)[ebx], eax
+  .text:0013BAA8                 mov     ds:(dword_30F6F1C - 2EE000h)[ebx], eax; c_brush_polys
   .text:0013BAAE                 xor     eax, eax
-  .text:0013BAB0                 mov     ds:(dword_30F6F18 - 2EE000h)[ebx], eax
+  .text:0013BAB0                 mov     ds:(dword_30F6F18 - 2EE000h)[ebx], eax; c_model_polys
   .text:0013BAB6                 lea     eax, (off_2F3984 - 2EE000h)[ebx]; "r_norefresh"
   .text:0013BABC                 fld     dword ptr [eax+0Ch]
   .text:0013BABF                 fldz
@@ -231,8 +231,8 @@ procedure: |-
     v1 = (GLclampf *)viewIdx;
     if ( !viewIdx )
     {
-      dword_30F6F1C = 0;
-      dword_30F6F18 = 0;
+      dword_30F6F1C = 0; // c_brush_polys
+      dword_30F6F18 = 0; // c_model_polys
     }
     if ( unk_2F3990 == 0.0 )
     {

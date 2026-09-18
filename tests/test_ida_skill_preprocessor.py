@@ -1104,6 +1104,74 @@ class PreprocessorDispatchTests(unittest.IsolatedAsyncioTestCase):
 
 
 class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
+    async def test_engine_callback_resolves_indirect_efx_table_slot(self):
+        from ida_preprocessor_scripts import _engine_public_callback_common as callback
+
+        table_ea = 0x500000
+        efx_table = 0x600000
+        slot = 64
+        target = 0x401000
+        dwords = {
+            table_ea + 0x14C: efx_table,
+            efx_table + slot * 4: target,
+        }
+        instruction = SimpleNamespace(ops=[SimpleNamespace(type=0, addr=0)])
+
+        def get_segment(ea):
+            if ea in (efx_table, efx_table + slot * 4):
+                return SimpleNamespace(perm=2)
+            if ea == target:
+                return SimpleNamespace(perm=4)
+            return None
+
+        modules = {
+            "ida_bytes": SimpleNamespace(get_dword=lambda ea: dwords.get(ea, 0)),
+            "ida_funcs": SimpleNamespace(get_func=lambda ea: SimpleNamespace(start_ea=ea) if ea == target else None),
+            "ida_segment": SimpleNamespace(getseg=get_segment, SEGPERM_EXEC=4),
+            "ida_ua": SimpleNamespace(o_near=1, o_reg=2),
+            "idaapi": SimpleNamespace(inf_is_64bit=lambda: False),
+            "idautils": SimpleNamespace(
+                FuncItems=lambda ea: [ea] if ea == target else [],
+                DecodeInstruction=lambda ea: instruction if ea == target else None,
+            ),
+            "idc": SimpleNamespace(
+                print_insn_mnem=lambda _ea: "ret",
+                print_operand=lambda _ea, _index: "",
+            ),
+        }
+
+        async def evaluate(_tool, args):
+            namespace = {}
+            with patch.dict("sys.modules", modules):
+                exec(args["code"], namespace)
+            return json.loads(namespace["result"])
+
+        function = {
+            "func_name": "CL_AllocDlight",
+            "func_va": hex(target),
+            "func_rva": "0x1000",
+            "func_size": "0x20",
+            "func_sig": "55 8B EC",
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            (directory / "cl_enginefuncs.windows.yaml").write_text(f"gv_va: '{hex(table_ea)}'\n")
+            output = directory / "CL_AllocDlight.windows.yaml"
+            with patch.object(callback, "_inspect_function_via_mcp", AsyncMock(return_value=function)):
+                result = await callback.preprocess_engine_callback(
+                    SimpleNamespace(call_tool=evaluate),
+                    [str(output)],
+                    directory,
+                    "windows",
+                    0x400000,
+                    name="CL_AllocDlight",
+                    slot=slot,
+                    indirect_table_offset=0x14C,
+                )
+
+            self.assertTrue(result)
+            self.assertEqual(function, yaml.safe_load(output.read_text()))
+
     async def test_engine_callback_rejects_forwarding_cycles(self):
         from ida_preprocessor_scripts import _engine_public_callback_common as callback
 
@@ -1143,6 +1211,34 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
                 )
             self.assertFalse(result)
             inspected.assert_not_awaited()
+
+    def test_get_times_globals_keep_adjacent_double_fields_separate(self):
+        from ida_preprocessor_scripts._studio_player_model_common import _get_times_gv_items
+
+        located = {
+            "raw_read_refs": ["0x700000", "0x700004", "0x700008", "0x70000c", "0x900000"],
+            "gv_refs": {
+                "0x700000": {"ea": "0x401010", "len": 6, "offb": 2},
+                "0x700004": {"ea": "0x401016", "len": 6, "offb": 2},
+                "0x700008": {"ea": "0x401020", "len": 6, "offb": 2},
+                "0x70000c": {"ea": "0x401026", "len": 6, "offb": 2},
+            },
+        }
+
+        items = _get_times_gv_items(located)
+
+        self.assertIsNotNone(items)
+        self.assertEqual([0x700000, 0x700008], [item["gv_ea"] for item in items])
+
+    def test_get_times_globals_reject_unrelated_adjacent_pair(self):
+        from ida_preprocessor_scripts._studio_player_model_common import _get_times_gv_items
+
+        located = {
+            "raw_read_refs": ["0x700000", "0x700008", "0x800000", "0x800008"],
+            "gv_refs": {},
+        }
+
+        self.assertIsNone(_get_times_gv_items(located))
 
     def test_global_targets_use_decoded_absolute_operand_over_offset_base_xref(self):
         detail = {

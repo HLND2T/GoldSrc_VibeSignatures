@@ -83,9 +83,9 @@ disasm_code: |-
   .text:00170200                 call    ds:qglFinish
   .text:00170206                 call    Sys_FloatTime
   .text:0017020B                 xor     eax, eax
-  .text:0017020D                 mov     ds:c_brush_polys, eax
+  .text:0017020D                 mov     ds:c_brush_polys, eax; renderer brush polygon counter
   .text:00170212                 xor     eax, eax
-  .text:00170214                 mov     ds:c_alias_polys, eax
+  .text:00170214                 mov     ds:c_alias_polys, eax; renderer alias polygon counter
   .text:00170219                 fstp    [esp+3Ch+time1]
   .text:0017021D                 jmp     loc_170101
   .text:00170228                 mov     [esp+3Ch+fmt], offset aRRenderviewNul; "R_RenderView: NULL worldmodel"
@@ -108,8 +108,8 @@ procedure: |-
     {
       qglFinish();
       v2 = Sys_FloatTime();
-      c_brush_polys = 0;
-      c_alias_polys = 0;
+      c_brush_polys = 0; // renderer brush polygon counter
+      c_alias_polys = 0; // renderer alias polygon counter
       time1 = v2;
     }
     mirror = false;

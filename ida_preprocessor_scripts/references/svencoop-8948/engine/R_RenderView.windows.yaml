@@ -11,8 +11,8 @@ disasm_code: |-
   .text:01D5347C                 mov     edi, [ebp+viewIdx]
   .text:01D5347F                 test    edi, edi
   .text:01D53481                 jnz     short loc_1D5348F
-  .text:01D53483                 mov     dword_3F53F8C, edi
-  .text:01D53489                 mov     dword_3F53FE0, edi
+  .text:01D53483                 mov     dword_3F53F8C, edi; c_brush_polys
+  .text:01D53489                 mov     dword_3F53FE0, edi; c_model_polys
   .text:01D5348F                 fld     flt_1ED8284
   .text:01D53495                 fldz
   .text:01D53497                 fucom   st(1)
@@ -423,8 +423,8 @@ procedure: |-
 
     if ( !viewIdx )
     {
-      dword_3F53F8C = 0;
-      dword_3F53FE0 = 0;
+      dword_3F53F8C = 0; // c_brush_polys
+      dword_3F53FE0 = 0; // c_model_polys
     }
     if ( 0.0 == flt_1ED8284 )
     {

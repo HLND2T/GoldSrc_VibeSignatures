@@ -1,0 +1,10 @@
+gv_name: cache_head
+gv_va: '0xbb4800'
+gv_rva: '0xbb4800'
+gv_sig: 55 57 56 53 83 EC ?? 8B 74 24 ?? 8B 5C 24 ?? 8B 2E 85 ED 74 ?? C7 04 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 DB 0F 8E ??
+  ?? ?? ??
+gv_sig_va: '0x165a30'
+gv_inst_offset: '0x68'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'
+gv_address_offset: '0xffffffb0'

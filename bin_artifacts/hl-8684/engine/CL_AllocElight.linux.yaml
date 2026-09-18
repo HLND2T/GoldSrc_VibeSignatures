@@ -1,0 +1,5 @@
+func_name: CL_AllocElight
+func_va: '0x191ac0'
+func_rva: '0x191ac0'
+func_size: '0xb0'
+func_sig: 56 53 83 EC ?? 8B 74 24 ?? 85 F6 74 ?? BB ?? ?? ?? ?? EB ??

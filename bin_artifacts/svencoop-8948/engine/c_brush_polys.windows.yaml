@@ -1,0 +1,9 @@
+gv_name: c_brush_polys
+gv_va: '0x3f53f8c'
+gv_rva: '0x2253f8c'
+gv_sig: 55 8B EC 83 E4 C0 83 EC 34 53 56 57 8B 7D ?? 85 FF 75 ?? 89 3D ?? ?? ?? ?? 89 3D ?? ?? ?? ?? D9 05 ?? ?? ?? ?? D9
+  EE
+gv_sig_va: '0x1d53470'
+gv_inst_offset: '0x13'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

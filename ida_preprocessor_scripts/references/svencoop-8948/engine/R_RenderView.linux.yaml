@@ -12,9 +12,9 @@ disasm_code: |-
   .text:00187AB0                 mov     [esp+5Ch+var_4], ebp
   .text:00187AB4                 jnz     short loc_187AC6
   .text:00187AB6                 xor     eax, eax
-  .text:00187AB8                 mov     ds:(c_brush_polys - 33A000h)[ebx], eax
+  .text:00187AB8                 mov     ds:(c_brush_polys - 33A000h)[ebx], eax; renderer brush polygon counter
   .text:00187ABE                 xor     eax, eax
-  .text:00187AC0                 mov     ds:(c_model_polys - 33A000h)[ebx], eax
+  .text:00187AC0                 mov     ds:(c_model_polys - 33A000h)[ebx], eax; renderer model polygon counter
   .text:00187AC6                 mov     eax, ds:(r_norefresh_ptr - 33A000h)[ebx]
   .text:00187ACC                 fld     dword ptr [eax+0Ch]
   .text:00187ACF                 fldz
@@ -223,8 +223,8 @@ procedure: |-
 
     if ( !viewIdx )
     {
-      c_brush_polys = 0;
-      c_model_polys = 0;
+      c_brush_polys = 0; // renderer brush polygon counter
+      c_model_polys = 0; // renderer model polygon counter
     }
     if ( unk_340F50 == 0.0 )
     {
