@@ -481,6 +481,9 @@ modules:
       - name: find-GL_Init
         expected_output:
           - GL_Init.{platform}.yaml
+      - name: find-CheckMultiTextureExtensions
+        expected_output:
+          - CheckMultiTextureExtensions.{platform}.yaml
       - name: find-SCR_UpdateScreen_RenderBody
         expected_output:
           - SCR_UpdateScreen_RenderBody.{platform}.yaml
@@ -927,6 +930,8 @@ modules:
       - name: Draw_DecalTexture
         category: func
       - name: GL_Init
+        category: func
+      - name: CheckMultiTextureExtensions
         category: func
       - name: SCR_UpdateScreen_RenderBody
         category: func

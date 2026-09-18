@@ -10,11 +10,11 @@ permalink: goldsrc-vibesignatures/locator-summary
 分类依据是每个 finder 的主要发现锚；部分符号实际会组合多种机制（例如先字符串锚定 owning function，再读表槽），
 此处归入其决定性的一步。**Summary** 列摘自各 locator 文件 `## How it is located` 的首段。
 
-共 **207** 个 locator；模块 engine 170，client 37。
+共 **209** 个 locator；模块 engine 172，client 37。
 
 | 定位机制 | 数量 |
 | --- | --- |
-| 字符串锚 | 60 |
+| 字符串锚 | 62 |
 | 浮点常量锚 | 3 |
 | 表 / 结构 / 数据段扫描 | 34 |
 | 确定性 xref 交集锚 | 5 |
@@ -26,7 +26,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 
 ---
 
-## 字符串锚 (59)
+## 字符串锚 (61)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -38,6 +38,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [CL_Set_ServerExtraInfo](locators/CL_Set_ServerExtraInfo.md) | engine | func | `cl_parsefuncs` | Loads cl_parsefuncs.{platform}.yaml from the new binary dir and reads its gv_va as the table base TABLE_EA. If the predecessor is missing the finder returns False. |
 | [CVideoMode_Common_Init](locators/CVideoMode_Common_Init.md) | engine | func | — | FUNC_XREFS_SPECS is an ordered list of two complete anchor sets, tried in order; the first that yields a single owner wins (preprocess_common_skill is called per… |
 | [Cache_Alloc](locators/Cache_Alloc.md) | engine | func | — | xref_strings = ["FULLMATCH:Cache_Alloc: size %i"] — exact-match C string lookup (_string_candidates requires text == needle), then XrefsTo maps each referencing… |
+| [CheckMultiTextureExtensions](locators/CheckMultiTextureExtensions.md) | engine | func | — | preprocess_common_skill with a single exact string xref: FULLMATCH:NO Multitexture extensions found.\n — the engine/gl_vidnt.c diagnostic printed when neither ARB nor SGIS multitexture is advertised. HL25 Windows inlines it into GL_Init, so that tag is linux-only. |
 | [ClientDLL_CheckStudioInterface](locators/ClientDLL_CheckStudioInterface.md) | engine | func | — | Source (engine/cdll_int.c): c R_ResetStudio(); cl_funcs.pStudioInterface = (HUD_STUDIO_INTERFACE_FUNC)GetProcAddress(hClientDLL, "HUD_GetStudioModelInterface"); |
 | [ClientDLL_HudInit](locators/ClientDLL_HudInit.md) | engine | func | — | xref_strings: ["FULLMATCH:cl_righthand"] — exact-string match (not substring). The literal is used *inside* the target function (Cvar_FindVar("cl_righthand") at the… |
 | [ClientDLL_Init](locators/ClientDLL_Init.md) | engine | func | — | xref_strings: ["FULLMATCH:ScreenShake"] — exact match on the literal passed to HookServerMsg("ScreenShake", ...) *inside* ClientDLL_Init. |
@@ -68,6 +69,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [GL_SetModeLegacy](locators/GL_SetModeLegacy.md) | engine | func | — | Single exact-match string anchor: FULLMATCH:Error initializing gl driver, check that the GL driver file opengl32.dll exists through xref_strings. The legacy build… |
 | [GL_Shutdown](locators/GL_Shutdown.md) | engine | func | — | GL_Shutdown (engine/gl_vidnt.c, Windows) owns no diagnostic string, so the anchor is the TRACESHUTDOWN literal Sys_Shutdown() from sys_dll2.cpp. |
 | [Host_ClearMemory](locators/Host_ClearMemory.md) | engine | func | — | xref_strings = ["FULLMATCH:Clearing memory\n"] — exact-match C string including the trailing newline, so the engine/host.c memory-scrub report does not collide with… |
+| [InitMultitexturing](locators/InitMultitexturing.md) | engine | func | — | preprocess_common_skill with a single exact string xref: FULLMATCH:Multitexturing disabled\n — the SvEngine diagnostic printed when the ARB/SGIS multitexture path is not taken. SvEngine Windows inlines it into GL_Init, so both tags are linux-only. |
 | [Mod_FindName](locators/Mod_FindName.md) | engine | func | — | Pattern A string xref in FUNC_XREFS: xref_strings: ["FULLMATCH:Mod_FindName: NULL name"] — exact equality. The docstring |
 | [Mod_LoadModel](locators/Mod_LoadModel.md) | engine | func | — | Plain preprocess_common_skill with two FUNC_XREF_ALTERNATIVES, tried in order; the first alternative that yields a single-owner match wins. Each alternative is an… |
 | [Mod_LoadSpriteModel](locators/Mod_LoadSpriteModel.md) | engine | func | — | preprocess_common_skill with two FUNC_XREFS_SPECS tried in order; the first spec that produces a single-owner exact match wins: |

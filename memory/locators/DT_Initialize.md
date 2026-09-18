@@ -34,6 +34,7 @@ tags:
   **must not declare the symbol**; the registration and the four
   `bin_artifacts/hl-<tag>/engine/DT_Initialize.windows.yaml` files were removed
   (2026-09-18) because they recorded the host function, not `DT_Initialize`.
+  The host is now a first-class symbol produced by `find-CheckMultiTextureExtensions`.
 - Everywhere else `engine/DetailTexture.cpp DT_Initialize` stays a standalone
   function, including SvEngine Linux — unlike the sprite-frame renderers, which are
   inlined there.
