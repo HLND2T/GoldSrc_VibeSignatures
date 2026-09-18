@@ -30,7 +30,9 @@ tags:
 - `CGame_AppActivate.{platform}.yaml` — the independent cross-check. See [[CGame_AppActivate locator]].
 
 Both artifacts are re-validated in the current IDB (function start + `func_sig`) through
-`inspect_owner_artifact` before discovery runs; a missing or stale artifact fails closed.
+`inspect_owner_artifact` before discovery runs. For `CGame_AppActivate`, the shared
+`inspect_cgame_appactivate_artifact` helper retries validation after semantic boundary recovery
+when needed. A missing artifact or a declared entry that disagrees with discovery fails closed.
 
 ## How it is located
 
@@ -89,6 +91,11 @@ Regression evidence for those exact inputs only.
   immediate address, and register-to-register propagation), and is invalidated across `call`
   for the caller-saved registers.
 - The flag is `qboolean` (four bytes). Do not apply a byte-size filter as if it were a C `bool`.
+- Reusing an upstream YAML must not require the upstream finder to have run in this IDB session.
+  On merged-constructor builds, the downstream finder restores the CGame method boundary through
+  `_cgame_appactivate_common` before scanning it, checks the recovered entry against the artifact,
+  and leaves the upstream YAML untouched. Regression coverage includes fresh merged IDBs, stale
+  entries, discontinuous components, and failed recovery with boundary rollback.
 
 ## Relations
 

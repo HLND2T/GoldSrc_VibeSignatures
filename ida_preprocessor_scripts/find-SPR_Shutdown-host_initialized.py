@@ -17,6 +17,7 @@ validate the located output but never participate in discovery.
 """
 
 from ida_analyze_util import parse_mcp_result
+from ida_preprocessor_scripts._cgame_appactivate_common import inspect_cgame_appactivate_artifact
 from ida_preprocessor_scripts._direct_gv_common import (
     inspect_owner_artifact,
     write_located_globals,
@@ -344,7 +345,7 @@ async def preprocess_skill(
         if debug:
             print(f"  {skill_name}: missing or invalid {OWNER_FUNCTION} artifact")
         return False
-    cross = await inspect_owner_artifact(session, new_binary_dir, platform, image_base, CROSS_FUNCTION)
+    cross = await inspect_cgame_appactivate_artifact(session, new_binary_dir, platform, image_base, debug=debug)
     if cross is None:
         if debug:
             print(f"  {skill_name}: missing or invalid {CROSS_FUNCTION} artifact")

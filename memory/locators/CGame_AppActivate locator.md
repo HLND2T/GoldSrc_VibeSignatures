@@ -16,6 +16,8 @@ tags:
 - **Category**: `func`
 - **Module**: engine (`hw.dll` / `hw.so`)
 - **Producer**: `ida_preprocessor_scripts/find-CGame_AppActivate.py`
+- **Shared recovery**: `ida_preprocessor_scripts/_cgame_appactivate_common.py`, also used by
+  the `host_initialized` finder when reusing an existing upstream artifact in a fresh IDB session.
 
 ## Availability
 
@@ -83,6 +85,16 @@ Treat these as regression evidence for those exact inputs, never as a locator fo
   must be interior to the owner, the component span must be contiguous and ≤ `0x4000` bytes,
   stay in one executable segment, and be reached by a direct `call` from outside itself. Any
   failed guard fails closed rather than mutating the IDB.
+- A noncontiguous component is rejected when recovery would split a merged owner. Falling back
+  to `owner.end_ea` in that case would include unrelated methods and bypass the continuity guard.
+  An already separate function can retain its existing boundary even with noncontiguous blocks.
+- Failed truncation, function creation, automatic analysis, or final boundary verification
+  rolls back the split: remove functions created inside the released main-chunk range, restore
+  the original owner end, and verify its original chunks. Existing constructor tails are preserved.
+  If the IDA API refuses rollback, report that failure explicitly rather than claiming restoration.
+- IDB recovery is session-local. An existing `CGame_AppActivate` YAML does not prove the current
+  warm IDB is split. The downstream finder can invoke the same semantic recovery without rewriting
+  the upstream YAML; its declared entry must agree with discovery before any split occurs.
 - **hl-8684 Linux ships two bodies.** `_ZN5CGame11AppActivateEb` (`0x205650`) and
   `_ZN5CGame11AppActivateEb.constprop.4` (`0x204d10`) are both `0x197` bytes and both
   reference the literals. The clone takes `fActive` in a register (`mov bl, al`) instead of
