@@ -177,6 +177,20 @@ modules:
           - cl_weaponstarttime.{platform}.yaml
           - cl_weaponsequence.{platform}.yaml
           - cl_light_level.{platform}.yaml
+          - envmap.{platform}.yaml
+      - name: find-GL_Bind-currenttexture
+        expected_input:
+          - GL_Bind.{platform}.yaml
+        expected_output:
+          - currenttexture.{platform}.yaml
+      - name: find-DT_LoadDetailMapFile
+        expected_output:
+          - DT_LoadDetailMapFile.{platform}.yaml
+      - name: find-DT_LoadDetailMapFile-detTexSupported-decompiles
+        expected_input:
+          - DT_LoadDetailMapFile.{platform}.yaml
+        expected_output:
+          - detTexSupported.{platform}.yaml
       - name: find-R_PolyBlend-decompiles
         expected_input:
           - R_RenderView.{platform}.yaml
@@ -658,6 +672,14 @@ modules:
         expected_output:
           - R_GLStudioDrawPoints.{platform}.yaml
     symbols:
+      - name: currenttexture
+        category: gv
+      - name: detTexSupported
+        category: gv
+      - name: envmap
+        category: gv
+      - name: DT_LoadDetailMapFile
+        category: func
       - name: BuildGammaTable
         category: func
       - name: studioapi_StudioSetRenderamt

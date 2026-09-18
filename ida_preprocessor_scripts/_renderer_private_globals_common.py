@@ -1015,6 +1015,32 @@ def locate(start):
             'light': [hex(value) for value in sorted(light)],
             'call_store_candidates': [hex(value) for value in sorted(call_store_candidates)],
         }]
+
+    # envmap is the integer absolute-global test that immediately precedes the
+    # cl.stats[STAT_HEALTH] test in the R_DrawViewModel early-out chain
+    # (ClientDLL_IsThirdPerson / chase_active / envmap / r_drawentities /
+    # cl.stats).  Scanning backwards from the cl_stats site skips the float cvar
+    # tests and stops at that global.
+    envmap = {}
+    stats_info = next(iter(stats.values()))
+    stats_index = None
+    for index, entry in enumerate(entries):
+        if entry['ea'] == stats_info['insn_ea']:
+            stats_index = index
+            break
+    if stats_index is not None:
+        for back in range(stats_index - 1, max(0, stats_index - 40) - 1, -1):
+            info = _probe_envmap(entries, back)
+            if info is not None:
+                envmap = {int(info['gv_ea']): info}
+                break
+
+    if len(envmap) != 1:
+        return [{
+            'error': 'viewmodel envmap candidate is not unique',
+            'stats': [hex(value) for value in sorted(stats)],
+            'envmap': [hex(value) for value in sorted(envmap)],
+        }]
     stats_item = next(iter(stats.values()))
     weapon_start, weapon_sequence = next(iter(weapon_pairs.values()))
     light_item = next(iter(light.values()))
@@ -1023,7 +1049,56 @@ def locate(start):
         'cl_weaponstarttime': weapon_start,
         'cl_weaponsequence': weapon_sequence,
         'cl_light_level': light_item,
+        'envmap': next(iter(envmap.values())),
     }]
+
+
+def _probe_envmap(entries, index):
+    entry = entries[index]
+    if not entry['infos']:
+        return None
+    insn = idautils.DecodeInstruction(entry['ea'])
+    if insn is None:
+        return None
+    op0 = insn.ops[0]
+    if entry['mnem'] == 'cmp':
+        if int(op0.type) not in (int(idaapi.o_mem), int(idaapi.o_displ)):
+            return None
+        if int(op0.type) == int(idaapi.o_displ) and reg_name(op0) in ('esp', 'ebp'):
+            return None
+        for info in entry['infos']:
+            if info.get('insn_disp'):
+                return info
+        return None
+    if entry['mnem'] != 'mov' or int(op0.type) != int(idaapi.o_reg):
+        return None
+    src = insn.ops[1] if len(insn.ops) > 1 else None
+    if src is None or int(src.type) not in (int(idaapi.o_mem), int(idaapi.o_displ)):
+        return None
+    if int(src.type) == int(idaapi.o_displ) and reg_name(src) in ('esp', 'ebp'):
+        return None
+    if index + 1 >= len(entries):
+        return None
+    follower = entries[index + 1]
+    follower_insn = idautils.DecodeInstruction(follower['ea'])
+    if follower_insn is None:
+        return None
+    loaded = reg_name(op0)
+    tested = reg_name(follower_insn.ops[0])
+    if follower['mnem'] == 'test':
+        if tested != loaded or reg_name(follower_insn.ops[1]) != loaded:
+            return None
+    elif follower['mnem'] == 'cmp':
+        if (tested != loaded
+                or int(follower_insn.ops[1].type) != int(idaapi.o_imm)
+                or int(follower_insn.ops[1].value) != 0):
+            return None
+    else:
+        return None
+    for info in entry['infos']:
+        if info.get('insn_disp'):
+            return info
+    return None
 
 
 globals().update(locals())
@@ -1064,6 +1139,7 @@ async def preprocess_viewmodel_globals(
         "cl_weaponstarttime",
         "cl_weaponsequence",
         "cl_light_level",
+        "envmap",
     )
     if (
         not isinstance(located, dict)
@@ -1343,4 +1419,203 @@ async def preprocess_cshift_water(
         image_base,
         semantic_owner,
         {"cshift_water": located},
+    )
+
+
+LOCATE_CURRENTTEXTURE_PY = r"""
+import ida_bytes
+import ida_funcs
+import ida_idp
+import ida_segment
+import idaapi
+import idautils
+import idc
+import json
+import traceback
+
+OWNER_EA = OWNER_EA_PLACEHOLDER
+
+
+def is_writable_data(ea):
+    seg = ida_segment.getseg(int(ea))
+    if seg is None or int(ea) == 0:
+        return False
+    perms = int(getattr(seg, 'perm', 0))
+    return bool(perms & int(getattr(ida_segment, 'SEGPERM_WRITE', 2))) and not bool(
+        perms & int(getattr(ida_segment, 'SEGPERM_EXEC', 1)))
+
+
+def reg_name(op):
+    try:
+        reg = int(getattr(op, 'reg', -1))
+        return (ida_idp.get_reg_name(reg, 4) or '').lower() if reg >= 0 else None
+    except Exception:
+        return None
+
+
+def signed32(value):
+    value = int(value) & 0xFFFFFFFF
+    return value - 0x100000000 if value & 0x80000000 else value
+
+
+def disp32_offset(insn):
+    for op in insn.ops:
+        if int(op.type) == int(idaapi.o_void):
+            break
+        offb = int(getattr(op, 'offb', 0) or 0)
+        if offb and int(insn.size) - offb >= 4 and int(op.type) in (
+                int(idaapi.o_mem), int(idaapi.o_displ), int(idaapi.o_imm), int(idaapi.o_phrase)):
+            return offb
+    return 0
+
+
+def is_got(ea):
+    seg = ida_segment.getseg(int(ea))
+    return seg is not None and ida_segment.get_segm_name(seg) in ('.got', '.got.plt')
+
+
+def referenced_globals(ea, insn, known_bases):
+    targets = set()
+    for ref in idautils.DataRefsFrom(int(ea)):
+        ref = int(ref)
+        if is_got(ref):
+            pointee = int(ida_bytes.get_dword(ref))
+            if is_writable_data(pointee):
+                targets.add(pointee)
+        elif is_writable_data(ref):
+            targets.add(ref)
+    for op in insn.ops:
+        if int(op.type) == int(idaapi.o_void):
+            break
+        if int(op.type) == int(idaapi.o_mem) and is_writable_data(int(op.addr)):
+            targets.add(int(op.addr))
+        elif int(op.type) in (int(idaapi.o_displ), int(idaapi.o_phrase)):
+            base = reg_name(op)
+            if base in known_bases:
+                value = (int(known_bases[base]) + signed32(op.addr)) & 0xFFFFFFFF
+                if is_writable_data(value):
+                    targets.add(value)
+    return targets
+
+
+globals().update(locals())
+
+try:
+    if idaapi.inf_is_64bit():
+        raise RuntimeError('expected 32-bit x86')
+    owner = ida_funcs.get_func(int(OWNER_EA))
+    if owner is None or int(owner.start_ea) != int(OWNER_EA):
+        raise RuntimeError('GL_Bind is not a function start')
+    known_bases = {}
+    entries = []
+    for ea in idautils.FuncItems(int(owner.start_ea)):
+        insn = idautils.DecodeInstruction(int(ea))
+        if not insn:
+            continue
+        mnem = (idc.print_insn_mnem(int(ea)) or '').lower()
+        targets = referenced_globals(int(ea), insn, known_bases)
+        entries.append({
+            'ea': int(ea),
+            'insn': insn,
+            'mnem': mnem,
+            'targets': targets,
+            'len': int(insn.size),
+            'disp': disp32_offset(insn),
+            'disasm': idc.generate_disasm_line(int(ea), 0) or '',
+        })
+        # Address loads only: ``lea reg, [abs]`` and a PIC ``mov reg, [.got slot]``.
+        if int(insn.ops[0].type) == int(idaapi.o_reg) and mnem in ('lea', 'mov'):
+            destination = reg_name(insn.ops[0])
+            base = None
+            if mnem == 'lea':
+                if len(targets) == 1 and int(insn.ops[1].type) == int(idaapi.o_displ):
+                    base = next(iter(targets))
+            elif int(insn.ops[1].type) in (int(idaapi.o_mem), int(idaapi.o_displ)):
+                refs = [int(ref) for ref in idautils.DataRefsFrom(int(ea))]
+                if any(is_got(ref) for ref in refs) and len(targets) == 1:
+                    base = next(iter(targets))
+            if base is None:
+                known_bases.pop(destination, None)
+            else:
+                known_bases[destination] = base
+    first = {}
+    read = set()
+    written = set()
+    for index, entry in enumerate(entries):
+        if len(entry['targets']) != 1:
+            continue
+        gv = next(iter(entry['targets']))
+        op0 = entry['insn'].ops[0]
+        mem_dest = int(op0.type) in (int(idaapi.o_mem), int(idaapi.o_displ), int(idaapi.o_phrase))
+        if entry['mnem'] == 'mov' and mem_dest:
+            written.add(gv)
+        elif entry['mnem'] in ('mov', 'cmp', 'test', 'lea'):
+            read.add(gv)
+        if entry['disp'] and gv not in first:
+            first[gv] = index
+    # GL_Bind reads currenttexture (``if (currenttexture == texnum) return;``)
+    # and writes it immediately before qglBindTexture.  g_currentpalette is the
+    # only other writable global the body touches and is read later, so the
+    # earliest global that is both read and written is currenttexture.
+    globals().update(locals())
+    candidates = []
+    for gv in first:
+        if gv in read and gv in written:
+            candidates.append(gv)
+    candidates.sort(key=lambda gv: first[gv])
+    if not candidates:
+        result = json.dumps({'error': 'currenttexture candidate missing'})
+    else:
+        gv = candidates[0]
+        entry = entries[first[gv]]
+        result = json.dumps({
+            'pointer_size': 4,
+            'owner_ea': hex(int(owner.start_ea)),
+            'gv_ea': hex(gv),
+            'insn_ea': hex(entry['ea']),
+            'insn_len': hex(entry['len']),
+            'insn_disp': hex(entry['disp']),
+            'insn_disasm': entry['disasm'],
+        })
+except Exception as exc:
+    result = json.dumps({'error': str(exc), 'trace': traceback.format_exc()})
+"""
+
+
+async def preprocess_currenttexture(
+    session,
+    expected_outputs,
+    new_binary_dir,
+    platform,
+    image_base,
+    *,
+    predecessor="GL_Bind",
+    debug=False,
+):
+    owner = await inspect_owner_artifact(session, new_binary_dir, platform, image_base, predecessor)
+    if owner is None:
+        if debug:
+            print(f"  currenttexture: missing or invalid {predecessor} artifact")
+        return False
+    code = LOCATE_CURRENTTEXTURE_PY.replace("OWNER_EA_PLACEHOLDER", str(owner["owner_ea"]))
+    try:
+        located = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
+    except Exception:  # noqa: BLE001 - MCP failures fail closed.
+        return False
+    if not isinstance(located, dict) or located.get("error") or located.get("pointer_size") != 4:
+        if debug:
+            print(f"  currenttexture: locator failed {located}")
+        return False
+    if debug:
+        print(
+            f"  currenttexture: gv={located.get('gv_ea')} insn={located.get('insn_ea')} "
+            f"{located.get('insn_disasm', '')}"
+        )
+    return await write_located_globals(
+        session,
+        expected_outputs,
+        platform,
+        image_base,
+        owner,
+        {"currenttexture": located},
     )
