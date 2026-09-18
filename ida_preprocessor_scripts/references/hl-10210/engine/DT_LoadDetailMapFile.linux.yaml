@@ -1,0 +1,697 @@
+func_name: "DT_LoadDetailMapFile"
+func_va: "0x179770"
+disasm_code: |-
+  .text:00179770                 cmp     ds:detTexSupported, 0; detTexSupported
+  .text:00179777                 jz      locret_179A38
+  .text:0017977D                 push    ebp
+  .text:0017977E                 push    edi
+  .text:0017977F                 push    esi
+  .text:00179780                 push    ebx
+  .text:00179781                 sub     esp, 4Ch
+  .text:00179784                 fld     r_detailtextures.value
+  .text:0017978A                 fldz
+  .text:0017978C                 fxch    st(1)
+  .text:0017978E                 fucomip st, st(1)
+  .text:00179790                 fstp    st
+  .text:00179792                 jp      short loc_17979A
+  .text:00179794                 jz      loc_179B00
+  .text:0017979A                 cmp     ds:_ZL12g_demandLoad, 0; g_demandLoad
+  .text:001797A1                 mov     ds:_ZL14g_detTexLoaded, 1; g_detTexLoaded
+  .text:001797A8                 jz      loc_179B30
+  .text:001797AE                 mov     eax, ds:_ZL14g_detailVector._M_impl._M_start; g_detailVector ...
+  .text:001797B3                 mov     edx, ds:_ZL14g_detailVector._M_impl._M_finish; g_detailVector ...
+  .text:001797B9                 sub     edx, eax
+  .text:001797BB                 sar     edx, 2
+  .text:001797BE                 jz      short loc_179823
+  .text:001797C0                 xor     edi, edi
+  .text:001797C2                 mov     [esp+5Ch+var_40], edx
+  .text:001797C6                 lea     esi, [esi+0]
+  .text:001797C9                 lea     idx, [idx+0]
+  .text:001797D0                 lea     esi, ds:0[idx*4]
+  .text:001797D7                 add     eax, esi
+  .text:001797D9                 mov     ebx, [eax]
+  .text:001797DB                 test    ebx, ebx
+  .text:001797DD                 jz      short loc_179811
+  .text:001797DF                 mov     eax, [ebx+4]
+  .text:001797E2                 lea     edx, [eax-0Ch]
+  .text:001797E5                 cmp     edx, offset _ZNSs4_Rep20_S_empty_rep_storageE; std::string::_Rep::_S_empty_rep_storage
+  .text:001797EB                 jnz     loc_179A80
+  .text:001797F1                 mov     eax, [ebx]
+  .text:001797F3                 lea     edx, [eax-0Ch]
+  .text:001797F6                 cmp     edx, offset _ZNSs4_Rep20_S_empty_rep_storageE; std::string::_Rep::_S_empty_rep_storage
+  .text:001797FC                 jnz     loc_179A40
+  .text:00179802                 ; void *
+  .text:00179802                 mov     [esp+5Ch+var_5C], ebx; void *
+  .text:00179805                 call    _ZdlPv; operator delete(void *)
+  .text:0017980A                 mov     eax, ds:_ZL14g_detailVector._M_impl._M_start; g_detailVector ...
+  .text:0017980F                 add     eax, esi
+  .text:00179811                 inc     idx
+  .text:00179812                 cmp     idx, [esp+5Ch+var_40]
+  .text:00179816                 mov     dword ptr [eax], 0
+  .text:0017981C                 mov     eax, ds:_ZL14g_detailVector._M_impl._M_start; g_detailVector ...
+  .text:00179821                 jnz     short loc_1797D0
+  .text:00179823                 mov     ds:_ZL14g_detailVector._M_impl._M_finish, eax; g_detailVector ...
+  .text:00179828                 mov     eax, ds:_ZL7g_idMap._M_t._M_impl._M_header._M_parent; g_idMap ...
+  .text:0017982D                 xor     ebx, ebx
+  .text:0017982F                 ; this
+  .text:0017982F                 mov     [esp+5Ch+var_5C], offset _ZL7g_idMap; this
+  .text:00179836                 mov     esi, offset _ZL7g_idMap._M_t._M_impl._M_header; g_idMap ...
+  .text:0017983B                 mov     edi, offset _ZL7g_idMap._M_t._M_impl._M_header; g_idMap ...
+  .text:00179840                 xor     ebp, ebp
+  .text:00179842                 ; __x
+  .text:00179842                 mov     [esp+5Ch+__x], eax; __x
+  .text:00179846                 call    _ZNSt8_Rb_treeIiSt4pairIKiP9DetailMapESt10_Select1stIS4_ESt4lessIiESaIS4_EE8_M_eraseEPSt13_Rb_tree_nodeIS4_E; std::_Rb_tree<int,std::pair<int const,DetailMap *>,std::_Select1st<std::pair<int const,DetailMap *>>,std::less<int>,std::allocator<std::pair<int const,DetailMap *>>>::_M_erase(std::_Rb_tree_node<std::pair<int const,DetailMap *>> *)
+  .text:0017984B                 mov     eax, ds:_ZL19g_detailNameToIdMap._M_t._M_impl._M_header._M_parent; g_detailNameToIdMap ...
+  .text:00179850                 ; this
+  .text:00179850                 mov     [esp+5Ch+var_5C], offset _ZL19g_detailNameToIdMap; this
+  .text:00179857                 mov     ds:_ZL7g_idMap._M_t._M_impl._M_header._M_parent, ebx; g_idMap ...
+  .text:0017985D                 mov     ebx, offset aMaps_0; "maps/"
+  .text:00179862                 mov     ds:_ZL7g_idMap._M_t._M_impl._M_header._M_left, esi; g_idMap ...
+  .text:00179868                 lea     esi, [esp+5Ch+fileName]
+  .text:0017986C                 ; __x
+  .text:0017986C                 mov     [esp+5Ch+__x], eax; __x
+  .text:00179870                 mov     ds:_ZL7g_idMap._M_t._M_impl._M_header._M_right, edi; g_idMap ...
+  .text:00179876                 mov     edi, offset aDetailTxt; "_detail.txt"
+  .text:0017987B                 mov     ds:_ZL7g_idMap._M_t._M_impl._M_node_count, ebp; g_idMap ...
+  .text:00179881                 call    _ZNSt8_Rb_treeISsSt4pairIKSsiESt10_Select1stIS2_ESt4lessISsESaIS2_EE8_M_eraseEPSt13_Rb_tree_nodeIS2_E; std::_Rb_tree<std::string,std::pair<std::string const,int>,std::_Select1st<std::pair<std::string const,int>>,std::less<std::string>,std::allocator<std::pair<std::string const,int>>>::_M_erase(std::_Rb_tree_node<std::pair<std::string const,int>> *)
+  .text:00179886                 xor     eax, eax
+  .text:00179888                 mov     ds:_ZL19g_detailNameToIdMap._M_t._M_impl._M_header._M_parent, eax; g_detailNameToIdMap ...
+  .text:0017988D                 mov     eax, offset _ZL19g_detailNameToIdMap._M_t._M_impl._M_header; g_detailNameToIdMap ...
+  .text:00179892                 mov     ds:_ZL19g_detailNameToIdMap._M_t._M_impl._M_header._M_left, eax; g_detailNameToIdMap ...
+  .text:00179897                 mov     eax, offset _ZL19g_detailNameToIdMap._M_t._M_impl._M_header; g_detailNameToIdMap ...
+  .text:0017989C                 mov     ds:_ZL19g_detailNameToIdMap._M_t._M_impl._M_header._M_right, eax; g_detailNameToIdMap ...
+  .text:001798A1                 xor     eax, eax
+  .text:001798A3                 mov     ds:_ZL19g_detailNameToIdMap._M_t._M_impl._M_node_count, eax; g_detailNameToIdMap ...
+  .text:001798A8                 mov     eax, ds:_ZL21g_detailLoadFailedMap._M_t._M_impl._M_header._M_parent; g_detailLoadFailedMap ...
+  .text:001798AD                 ; this
+  .text:001798AD                 mov     [esp+5Ch+var_5C], offset _ZL21g_detailLoadFailedMap; this
+  .text:001798B4                 ; __x
+  .text:001798B4                 mov     [esp+5Ch+__x], eax; __x
+  .text:001798B8                 call    _ZNSt8_Rb_treeISsSt4pairIKSsiESt10_Select1stIS2_ESt4lessISsESaIS2_EE8_M_eraseEPSt13_Rb_tree_nodeIS2_E; std::_Rb_tree<std::string,std::pair<std::string const,int>,std::_Select1st<std::pair<std::string const,int>>,std::less<std::string>,std::allocator<std::pair<std::string const,int>>>::_M_erase(std::_Rb_tree_node<std::pair<std::string const,int>> *)
+  .text:001798BD                 xor     eax, eax
+  .text:001798BF                 mov     edx, offset _ZL21g_detailLoadFailedMap._M_t._M_impl._M_header; g_detailLoadFailedMap ...
+  .text:001798C4                 mov     ds:_ZL21g_detailLoadFailedMap._M_t._M_impl._M_header._M_parent, eax; g_detailLoadFailedMap ...
+  .text:001798C9                 mov     eax, offset _ZL21g_detailLoadFailedMap._M_t._M_impl._M_header; g_detailLoadFailedMap ...
+  .text:001798CE                 xor     ecx, ecx
+  .text:001798D0                 mov     ds:_ZL21g_detailLoadFailedMap._M_t._M_impl._M_header._M_left, eax; g_detailLoadFailedMap ...
+  .text:001798D5                 lea     eax, [esp+5Ch+var_20]
+  .text:001798D9                 mov     [esp+5Ch+count], eax
+  .text:001798DD                 mov     [esp+5Ch+__x], ebx
+  .text:001798E1                 lea     ebx, [esp+5Ch+var_24]
+  .text:001798E5                 mov     [esp+5Ch+var_5C], esi
+  .text:001798E8                 mov     ds:_ZL21g_detailLoadFailedMap._M_t._M_impl._M_header._M_right, edx; g_detailLoadFailedMap ...
+  .text:001798EE                 mov     ds:_ZL21g_detailLoadFailedMap._M_t._M_impl._M_node_count, ecx; g_detailLoadFailedMap ...
+  .text:001798F4                 call    _ZNSsC1EPKcRKSaIcE; std::string::string(char const*,std::allocator<char> const&)
+  .text:001798F9                 lea     eax, [esp+5Ch+var_2E]
+  .text:001798FD                 mov     [esp+5Ch+count], eax
+  .text:00179901                 mov     [esp+5Ch+__x], edi
+  .text:00179905                 mov     [esp+5Ch+var_5C], ebx
+  .text:00179908                 call    _ZNSsC1EPKcRKSaIcE; std::string::string(char const*,std::allocator<char> const&)
+  .text:0017990D                 lea     eax, [esp+5Ch+var_2F]
+  .text:00179911                 mov     [esp+5Ch+count], eax
+  .text:00179915                 mov     eax, [esp+5Ch+levelName]
+  .text:00179919                 lea     edi, [esp+5Ch+var_28]
+  .text:0017991D                 mov     [esp+5Ch+var_5C], edi
+  .text:00179920                 mov     [esp+5Ch+__x], eax
+  .text:00179924                 call    _ZNSsC1EPKcRKSaIcE; std::string::string(char const*,std::allocator<char> const&)
+  .text:00179929                 mov     eax, [esp+5Ch+var_28._M_dataplus._M_p]
+  .text:0017992D                 mov     edx, [esp+5Ch+var_24._M_dataplus._M_p]
+  .text:00179931                 mov     ebp, [eax-0Ch]
+  .text:00179934                 mov     ecx, [edx-0Ch]
+  .text:00179937                 add     ecx, ebp
+  .text:00179939                 cmp     ecx, [eax-8]
+  .text:0017993C                 ja      loc_179AB8
+  .text:00179942                 ; std::string *
+  .text:00179942                 mov     [esp+5Ch+__x], ebx; std::string *
+  .text:00179946                 ; this
+  .text:00179946                 mov     [esp+5Ch+var_5C], edi; this
+  .text:00179949                 call    _ZNSs6appendERKSs; std::string::append(std::string const&)
+  .text:0017994E                 mov     edx, [eax]
+  .text:00179950                 mov     [esp+5Ch+var_20._M_dataplus._M_p], edx
+  .text:00179954                 mov     dword ptr [eax], (offset _ZNSs4_Rep20_S_empty_rep_storageE+0Ch); std::string::_Rep::_S_empty_rep_storage
+  .text:0017995A                 lea     eax, [esp+5Ch+var_20]
+  .text:0017995E                 ; std::string *
+  .text:0017995E                 mov     [esp+5Ch+__x], eax; std::string *
+  .text:00179962                 ; this
+  .text:00179962                 mov     [esp+5Ch+var_5C], esi; this
+  .text:00179965                 call    _ZNSs6appendERKSs; std::string::append(std::string const&)
+  .text:0017996A                 mov     eax, [esp+5Ch+var_20._M_dataplus._M_p]
+  .text:0017996E                 lea     edx, [eax-0Ch]
+  .text:00179971                 cmp     edx, offset _ZNSs4_Rep20_S_empty_rep_storageE; std::string::_Rep::_S_empty_rep_storage
+  .text:00179977                 jnz     loc_179C79
+  .text:0017997D                 mov     eax, [esp+5Ch+var_28._M_dataplus._M_p]
+  .text:00179981                 lea     edx, [eax-0Ch]
+  .text:00179984                 cmp     edx, offset _ZNSs4_Rep20_S_empty_rep_storageE; std::string::_Rep::_S_empty_rep_storage
+  .text:0017998A                 jnz     loc_179CAF
+  .text:00179990                 mov     eax, [esp+5Ch+var_24._M_dataplus._M_p]
+  .text:00179994                 lea     edx, [eax-0Ch]
+  .text:00179997                 cmp     edx, offset _ZNSs4_Rep20_S_empty_rep_storageE; std::string::_Rep::_S_empty_rep_storage
+  .text:0017999D                 jnz     loc_179C0D
+  .text:001799A3                 mov     eax, [esp+5Ch+fileName._M_dataplus._M_p]
+  .text:001799A7                 mov     ecx, offset aRb; "rb"
+  .text:001799AC                 ; pOptions
+  .text:001799AC                 mov     [esp+5Ch+__x], ecx; pOptions
+  .text:001799B0                 ; pFileName
+  .text:001799B0                 mov     [esp+5Ch+var_5C], eax; pFileName
+  .text:001799B3                 call    FS_Open
+  .text:001799B8                 mov     esi, eax
+  .text:001799BA                 mov     fileHandle, [esp+5Ch+fileName._M_dataplus._M_p]
+  .text:001799BE                 test    fileHandle, fileHandle
+  .text:001799C0                 jz      loc_179BF8
+  .text:001799C6                 ; pFileName
+  .text:001799C6                 mov     [esp+5Ch+var_5C], eax; pFileName
+  .text:001799C9                 call    FS_FileSize
+  .text:001799CE                 mov     edi, eax
+  .text:001799D0                 lea     fileSize, [fileSize+0Ah]
+  .text:001799D3                 ; unsigned int
+  .text:001799D3                 mov     [esp+5Ch+var_5C], eax; unsigned int
+  .text:001799D6                 call    _Znaj; operator new[](uint)
+  .text:001799DB                 mov     edx, 1
+  .text:001799E0                 mov     ebx, eax
+  .text:001799E2                 ; file
+  .text:001799E2                 mov     [esp+5Ch+file], fileHandle; file
+  .text:001799E6                 ; count
+  .text:001799E6                 mov     [esp+5Ch+count], edx; count
+  .text:001799EA                 ; size
+  .text:001799EA                 mov     [esp+5Ch+__x], fileSize; size
+  .text:001799EE                 ; pOutput
+  .text:001799EE                 mov     [esp+5Ch+var_5C], pBuffer; pOutput
+  .text:001799F1                 call    FS_Read
+  .text:001799F6                 test    readSuccess, readSuccess
+  .text:001799F8                 jle     loc_179BE0
+  .text:001799FE                 ; file
+  .text:001799FE                 mov     [esp+5Ch+var_5C], fileHandle; file
+  .text:00179A01                 call    FS_Close
+  .text:00179A06                 mov     byte ptr [pBuffer+numberBytesRead], 0FFh
+  .text:00179A0A                 ; pBuffer
+  .text:00179A0A                 mov     [esp+5Ch+var_5C], pBuffer; pBuffer
+  .text:00179A0D                 call    _Z8DT_ParsePc; DT_Parse(char *)
+  .text:00179A12                 test    pBuffer, pBuffer
+  .text:00179A14                 jz      short loc_179A1E
+  .text:00179A16                 ; void *
+  .text:00179A16                 mov     [esp+5Ch+var_5C], pBuffer; void *
+  .text:00179A19                 call    _ZdaPv; operator delete[](void *)
+  .text:00179A1E                 mov     eax, [esp+5Ch+fileName._M_dataplus._M_p]
+  .text:00179A22                 lea     edx, [eax-0Ch]
+  .text:00179A25                 cmp     edx, offset _ZNSs4_Rep20_S_empty_rep_storageE; std::string::_Rep::_S_empty_rep_storage
+  .text:00179A2B                 jnz     loc_179C43
+  .text:00179A31                 add     esp, 4Ch
+  .text:00179A34                 pop     ebx
+  .text:00179A35                 pop     esi
+  .text:00179A36                 pop     edi
+  .text:00179A37                 pop     ebp
+  .text:00179A38                 retn
+  .text:00179A40                 mov     ecx, offset __pthread_key_create
+  .text:00179A45                 test    ecx, ecx
+  .text:00179A47                 jz      loc_179AE0
+  .text:00179A4D                 mov     ecx, 0FFFFFFFFh
+  .text:00179A52                 lock xadd [eax-4], ecx
+  .text:00179A57                 mov     eax, ecx
+  .text:00179A59                 test    eax, eax
+  .text:00179A5B                 jg      loc_179802
+  .text:00179A61                 lea     eax, [esp+5Ch+var_20]
+  .text:00179A65                 mov     [esp+5Ch+__x], eax
+  .text:00179A69                 mov     [esp+5Ch+var_5C], edx
+  .text:00179A6C                 call    _ZNSs4_Rep10_M_destroyERKSaIcE; std::string::_Rep::_M_destroy(std::allocator<char> const&)
+  .text:00179A71                 jmp     loc_179802
+  .text:00179A80                 mov     ecx, offset __pthread_key_create
+  .text:00179A85                 test    ecx, ecx
+  .text:00179A87                 jz      short loc_179AF0
+  .text:00179A89                 mov     ecx, 0FFFFFFFFh
+  .text:00179A8E                 lock xadd [eax-4], ecx
+  .text:00179A93                 mov     eax, ecx
+  .text:00179A95                 test    eax, eax
+  .text:00179A97                 jg      loc_1797F1
+  .text:00179A9D                 lea     eax, [esp+5Ch+var_20]
+  .text:00179AA1                 mov     [esp+5Ch+__x], eax
+  .text:00179AA5                 mov     [esp+5Ch+var_5C], edx
+  .text:00179AA8                 call    _ZNSs4_Rep10_M_destroyERKSaIcE; std::string::_Rep::_M_destroy(std::allocator<char> const&)
+  .text:00179AAD                 jmp     loc_1797F1
+  .text:00179AB8                 cmp     ecx, [edx-8]
+  .text:00179ABB                 ja      loc_179942
+  .text:00179AC1                 ; char *
+  .text:00179AC1                 mov     [esp+5Ch+count], eax; char *
+  .text:00179AC5                 xor     eax, eax
+  .text:00179AC7                 ; unsigned int
+  .text:00179AC7                 mov     [esp+5Ch+file], ebp; unsigned int
+  .text:00179ACB                 ; unsigned int
+  .text:00179ACB                 mov     [esp+5Ch+__x], eax; unsigned int
+  .text:00179ACF                 ; this
+  .text:00179ACF                 mov     [esp+5Ch+var_5C], ebx; this
+  .text:00179AD2                 call    _ZNSs6insertEjPKcj; std::string::insert(uint,char const*,uint)
+  .text:00179AD7                 jmp     loc_17994E
+  .text:00179AE0                 mov     ecx, [eax-4]
+  .text:00179AE3                 lea     ebp, [ecx-1]
+  .text:00179AE6                 mov     [eax-4], ebp
+  .text:00179AE9                 mov     eax, ecx
+  .text:00179AEB                 jmp     loc_179A59
+  .text:00179AF0                 mov     ecx, [eax-4]
+  .text:00179AF3                 lea     ebp, [ecx-1]
+  .text:00179AF6                 mov     [eax-4], ebp
+  .text:00179AF9                 mov     eax, ecx
+  .text:00179AFB                 jmp     short loc_179A95
+  .text:00179B00                 mov     eax, [esp+5Ch+levelName]
+  .text:00179B04                 mov     ds:_ZL14g_detTexLoaded, 0; g_detTexLoaded
+  .text:00179B0B                 ; s
+  .text:00179B0B                 mov     [esp+5Ch+var_5C], eax; s
+  .text:00179B0E                 call    strlen
+  .text:00179B13                 ; this
+  .text:00179B13                 mov     [esp+5Ch+var_5C], offset _ZL11g_levelName; this
+  .text:00179B1A                 ; unsigned int
+  .text:00179B1A                 mov     [esp+5Ch+count], eax; unsigned int
+  .text:00179B1E                 mov     eax, [esp+5Ch+levelName]
+  .text:00179B22                 ; char *
+  .text:00179B22                 mov     [esp+5Ch+__x], eax; char *
+  .text:00179B26                 call    _ZNSs6assignEPKcj; std::string::assign(char const*,uint)
+  .text:00179B2B                 jmp     loc_179A31
+  .text:00179B30                 mov     edi, ds:_ZL13g_decalTexIDs._M_impl._M_start; g_decalTexIDs ...
+  .text:00179B36                 mov     esi, ds:_ZL13g_decalTexIDs._M_impl._M_finish; g_decalTexIDs ...
+  .text:00179B3C                 cmp     edi, esi
+  .text:00179B3E                 jz      loc_179BD0
+  .text:00179B44                 mov     eax, offset __pthread_key_create
+  .text:00179B49                 mov     ebx, edi
+  .text:00179B4B                 test    eax, eax
+  .text:00179B4D                 jnz     short loc_179B5F
+  .text:00179B4F                 jmp     short loc_179BB7
+  .text:00179B58                 add     ebx, 8
+  .text:00179B5B                 cmp     esi, ebx
+  .text:00179B5D                 jz      short loc_179BD0
+  .text:00179B5F                 mov     eax, [ebx]
+  .text:00179B61                 lea     edx, [eax-0Ch]
+  .text:00179B64                 cmp     edx, offset _ZNSs4_Rep20_S_empty_rep_storageE; std::string::_Rep::_S_empty_rep_storage
+  .text:00179B6A                 jz      short loc_179B58
+  .text:00179B6C                 mov     ecx, 0FFFFFFFFh
+  .text:00179B71                 lock xadd [eax-4], ecx
+  .text:00179B76                 test    ecx, ecx
+  .text:00179B78                 jg      short loc_179B58
+  .text:00179B7A                 lea     eax, [esp+5Ch+var_20]
+  .text:00179B7E                 mov     [esp+5Ch+__x], eax
+  .text:00179B82                 mov     [esp+5Ch+var_5C], edx
+  .text:00179B85                 call    _ZNSs4_Rep10_M_destroyERKSaIcE; std::string::_Rep::_M_destroy(std::allocator<char> const&)
+  .text:00179B8A                 jmp     short loc_179B58
+  .text:00179B8C                 mov     ecx, [eax-4]
+  .text:00179B8F                 lea     ebp, [ecx-1]
+  .text:00179B92                 test    ecx, ecx
+  .text:00179B94                 mov     [eax-4], ebp
+  .text:00179B97                 jg      short loc_179BB0
+  .text:00179B99                 lea     eax, [esp+5Ch+var_20]
+  .text:00179B9D                 mov     [esp+5Ch+__x], eax
+  .text:00179BA1                 mov     [esp+5Ch+var_5C], edx
+  .text:00179BA4                 call    _ZNSs4_Rep10_M_destroyERKSaIcE; std::string::_Rep::_M_destroy(std::allocator<char> const&)
+  .text:00179BA9                 lea     esi, [esi+0]
+  .text:00179BB0                 add     ebx, 8
+  .text:00179BB3                 cmp     esi, ebx
+  .text:00179BB5                 jz      short loc_179BD0
+  .text:00179BB7                 mov     eax, [ebx]
+  .text:00179BB9                 lea     edx, [eax-0Ch]
+  .text:00179BBC                 cmp     edx, offset _ZNSs4_Rep20_S_empty_rep_storageE; std::string::_Rep::_S_empty_rep_storage
+  .text:00179BC2                 jz      short loc_179BB0
+  .text:00179BC4                 jmp     short loc_179B8C
+  .text:00179BD0                 mov     ds:_ZL13g_decalTexIDs._M_impl._M_finish, edi; g_decalTexIDs ...
+  .text:00179BD6                 jmp     loc_1797AE
+  .text:00179BE0                 mov     [esp+5Ch+var_5C], offset aDetailTextureM; "Detail texture mapping file read failed"...
+  .text:00179BE7                 call    Con_Printf
+  .text:00179BEC                 jmp     loc_179A1E
+  .text:00179BF8                 mov     [esp+5Ch+__x], eax
+  .text:00179BFC                 mov     [esp+5Ch+var_5C], offset aNoDetailTextur; "No detail texture mapping file: %s\n"
+  .text:00179C03                 call    Con_Printf
+  .text:00179C08                 jmp     loc_179A1E
+  .text:00179C0D                 mov     ecx, offset __pthread_key_create
+  .text:00179C12                 test    ecx, ecx
+  .text:00179C14                 jz      loc_179CE1
+  .text:00179C1A                 mov     ecx, 0FFFFFFFFh
+  .text:00179C1F                 lock xadd [eax-4], ecx
+  .text:00179C24                 mov     eax, ecx
+  .text:00179C26                 test    eax, eax
+  .text:00179C28                 jg      loc_1799A3
+  .text:00179C2E                 lea     eax, [esp+5Ch+var_20]
+  .text:00179C32                 mov     [esp+5Ch+__x], eax
+  .text:00179C36                 mov     [esp+5Ch+var_5C], edx
+  .text:00179C39                 call    _ZNSs4_Rep10_M_destroyERKSaIcE; std::string::_Rep::_M_destroy(std::allocator<char> const&)
+  .text:00179C3E                 jmp     loc_1799A3
+  .text:00179C43                 mov     ecx, offset __pthread_key_create
+  .text:00179C48                 test    ecx, ecx
+  .text:00179C4A                 jz      loc_179CFE
+  .text:00179C50                 mov     ecx, 0FFFFFFFFh
+  .text:00179C55                 lock xadd [eax-4], ecx
+  .text:00179C5A                 mov     eax, ecx
+  .text:00179C5C                 test    eax, eax
+  .text:00179C5E                 jg      loc_179A31
+  .text:00179C64                 lea     eax, [esp+5Ch+var_20]
+  .text:00179C68                 mov     [esp+5Ch+__x], eax
+  .text:00179C6C                 mov     [esp+5Ch+var_5C], edx
+  .text:00179C6F                 call    _ZNSs4_Rep10_M_destroyERKSaIcE; std::string::_Rep::_M_destroy(std::allocator<char> const&)
+  .text:00179C74                 jmp     loc_179A31
+  .text:00179C79                 mov     ecx, offset __pthread_key_create
+  .text:00179C7E                 test    ecx, ecx
+  .text:00179C80                 jz      loc_179D0E
+  .text:00179C86                 mov     ecx, 0FFFFFFFFh
+  .text:00179C8B                 lock xadd [eax-4], ecx
+  .text:00179C90                 mov     eax, ecx
+  .text:00179C92                 test    eax, eax
+  .text:00179C94                 jg      loc_17997D
+  .text:00179C9A                 lea     eax, [esp+5Ch+var_2D]
+  .text:00179C9E                 mov     [esp+5Ch+__x], eax
+  .text:00179CA2                 mov     [esp+5Ch+var_5C], edx
+  .text:00179CA5                 call    _ZNSs4_Rep10_M_destroyERKSaIcE; std::string::_Rep::_M_destroy(std::allocator<char> const&)
+  .text:00179CAA                 jmp     loc_17997D
+  .text:00179CAF                 mov     ecx, offset __pthread_key_create
+  .text:00179CB4                 test    ecx, ecx
+  .text:00179CB6                 jz      short loc_179CF1
+  .text:00179CB8                 mov     ecx, 0FFFFFFFFh
+  .text:00179CBD                 lock xadd [eax-4], ecx
+  .text:00179CC2                 mov     eax, ecx
+  .text:00179CC4                 test    eax, eax
+  .text:00179CC6                 jg      loc_179990
+  .text:00179CCC                 lea     eax, [esp+5Ch+var_20]
+  .text:00179CD0                 mov     [esp+5Ch+__x], eax
+  .text:00179CD4                 mov     [esp+5Ch+var_5C], edx
+  .text:00179CD7                 call    _ZNSs4_Rep10_M_destroyERKSaIcE; std::string::_Rep::_M_destroy(std::allocator<char> const&)
+  .text:00179CDC                 jmp     loc_179990
+  .text:00179CE1                 mov     ecx, [eax-4]
+  .text:00179CE4                 lea     ebx, [ecx-1]
+  .text:00179CE7                 mov     [eax-4], ebx
+  .text:00179CEA                 mov     eax, ecx
+  .text:00179CEC                 jmp     loc_179C26
+  .text:00179CF1                 mov     ecx, [eax-4]
+  .text:00179CF4                 lea     ebx, [ecx-1]
+  .text:00179CF7                 mov     [eax-4], ebx
+  .text:00179CFA                 mov     eax, ecx
+  .text:00179CFC                 jmp     short loc_179CC4
+  .text:00179CFE                 mov     ecx, [eax-4]
+  .text:00179D01                 lea     ebx, [ecx-1]
+  .text:00179D04                 mov     [eax-4], ebx
+  .text:00179D07                 mov     eax, ecx
+  .text:00179D09                 jmp     loc_179C5C
+  .text:00179D0E                 mov     ecx, [eax-4]
+  .text:00179D11                 lea     ebx, [ecx-1]
+  .text:00179D14                 mov     [eax-4], ebx
+  .text:00179D17                 mov     eax, ecx
+  .text:00179D19                 jmp     loc_179C92
+  .text:00179D1E                 mov     ebx, eax
+  .text:00179D20                 mov     eax, [esp+arg_30]
+  .text:00179D24                 ; this
+  .text:00179D24                 sub     eax, 0Ch; this
+  .text:00179D27                 cmp     eax, offset _ZNSs4_Rep20_S_empty_rep_storageE; std::string::_Rep::_S_empty_rep_storage
+  .text:00179D2C                 jz      short loc_179D37
+  .text:00179D2E                 ; __a
+  .text:00179D2E                 lea     edx, [esp+__a]; __a
+  .text:00179D32                 call    _ZNSs4_Rep10_M_disposeERKSaIcE_part_0; std::string::_Rep::_M_dispose(std::allocator<char> const&) [clone]
+  .text:00179D37                 mov     eax, [esp+arg_34]
+  .text:00179D3B                 ; this
+  .text:00179D3B                 sub     eax, 0Ch; this
+  .text:00179D3E                 cmp     eax, offset _ZNSs4_Rep20_S_empty_rep_storageE; std::string::_Rep::_S_empty_rep_storage
+  .text:00179D43                 jz      short loc_179D4E
+  .text:00179D45                 ; __a
+  .text:00179D45                 lea     edx, [esp+__a]; __a
+  .text:00179D49                 call    _ZNSs4_Rep10_M_disposeERKSaIcE_part_0; std::string::_Rep::_M_dispose(std::allocator<char> const&) [clone]
+  .text:00179D4E                 mov     eax, [esp+arg_2C]
+  .text:00179D52                 ; this
+  .text:00179D52                 sub     eax, 0Ch; this
+  .text:00179D55                 cmp     eax, offset _ZNSs4_Rep20_S_empty_rep_storageE; std::string::_Rep::_S_empty_rep_storage
+  .text:00179D5A                 jz      short loc_179D65
+  .text:00179D5C                 ; __a
+  .text:00179D5C                 lea     edx, [esp+__a]; __a
+  .text:00179D60                 call    _ZNSs4_Rep10_M_disposeERKSaIcE_part_0; std::string::_Rep::_M_dispose(std::allocator<char> const&) [clone]
+  .text:00179D65                 mov     [esp+0], ebx
+  .text:00179D68                 call    _Unwind_Resume
+  .text:00179D6D                 mov     ebx, eax
+  .text:00179D6F                 mov     eax, dword ptr [esp+__a.gap0]
+  .text:00179D73                 ; this
+  .text:00179D73                 sub     eax, 0Ch; this
+  .text:00179D76                 cmp     eax, offset _ZNSs4_Rep20_S_empty_rep_storageE; std::string::_Rep::_S_empty_rep_storage
+  .text:00179D7B                 jz      short loc_179D20
+  .text:00179D7D                 ; __a
+  .text:00179D7D                 lea     edx, [esp+arg_2B]; __a
+  .text:00179D81                 call    _ZNSs4_Rep10_M_disposeERKSaIcE_part_0; std::string::_Rep::_M_dispose(std::allocator<char> const&) [clone]
+  .text:00179D86                 jmp     short loc_179D20
+  .text:00179D88                 mov     ebx, eax
+  .text:00179D8A                 jmp     short loc_179D4E
+  .text:00179D8C                 mov     ebx, eax
+  .text:00179D8E                 xchg    ax, ax
+  .text:00179D90                 jmp     short loc_179D37
+procedure: |-
+  void __cdecl DT_LoadDetailMapFile(char *levelName)
+  {
+    DetailMap **v1; // eax
+    int v2; // edi
+    DetailMap **v3; // eax
+    DetailMap *v4; // ebx
+    char *v5; // eax
+    char *v6; // eax
+    char *v7; // edx
+    unsigned int v8; // ebp
+    unsigned int v9; // ecx
+    char **v10; // eax
+    char *v11; // edx
+    char *v12; // edx
+    char *v13; // edx
+    FileHandle_t file; // esi
+    unsigned int v15; // edi
+    char *v16; // ebx
+    char *v17; // edx
+    int v18; // ecx
+    int v19; // ecx
+    std::pair<std::string,int> *M_start; // edi
+    std::_Vector_base<std::pair<std::string,int>>::pointer M_finish; // esi
+    std::_Vector_base<std::pair<std::string,int>>::pointer v22; // ebx
+    char *v23; // edx
+    int v24; // ecx
+    char *M_p; // eax
+    char *v26; // edx
+    int v27; // ecx
+    int v28; // ecx
+    int v29; // ecx
+    int v30; // ecx
+    size_t count; // [esp+8h] [ebp-54h]
+    int v32; // [esp+1Ch] [ebp-40h]
+    char v33; // [esp+2Dh] [ebp-2Fh] BYREF
+    char v34; // [esp+2Eh] [ebp-2Eh] BYREF
+    char v35; // [esp+2Fh] [ebp-2Dh] BYREF
+    std::string fileName; // [esp+30h] [ebp-2Ch] BYREF
+    std::string v37; // [esp+34h] [ebp-28h] BYREF
+    std::string v38; // [esp+38h] [ebp-24h] BYREF
+    std::string v39; // [esp+3Ch] [ebp-20h] BYREF
+  
+    if ( detTexSupported )
+    {
+      if ( r_detailtextures.value == 0.0 )
+      {
+        g_detTexLoaded = 0;
+        count = strlen(levelName);
+        std::string::assign(&g_levelName, levelName, count);
+      }
+      else
+      {
+        g_detTexLoaded = 1;
+        if ( !g_demandLoad )
+        {
+          M_start = g_decalTexIDs._M_impl._M_start;
+          M_finish = g_decalTexIDs._M_impl._M_finish;
+          if ( g_decalTexIDs._M_impl._M_start != g_decalTexIDs._M_impl._M_finish )
+          {
+            v22 = g_decalTexIDs._M_impl._M_start;
+            if ( &_pthread_key_create )
+            {
+              do
+              {
+                v23 = v22->first._M_dataplus._M_p - 12;
+                if ( v23 != (char *)&std::string::_Rep::_S_empty_rep_storage
+                  && _InterlockedExchangeAdd((volatile signed __int32 *)v22->first._M_dataplus._M_p - 1, 0xFFFFFFFF) <= 0 )
+                {
+                  std::string::_Rep::_M_destroy(v23, &v39);
+                }
+                ++v22;
+              }
+              while ( M_finish != v22 );
+            }
+            else
+            {
+              do
+              {
+                M_p = v22->first._M_dataplus._M_p;
+                v26 = v22->first._M_dataplus._M_p - 12;
+                if ( v26 != (char *)&std::string::_Rep::_S_empty_rep_storage )
+                {
+                  v24 = *((_DWORD *)M_p - 1);
+                  *((_DWORD *)M_p - 1) = v24 - 1;
+                  if ( v24 <= 0 )
+                    std::string::_Rep::_M_destroy(v26, &v39);
+                }
+                ++v22;
+              }
+              while ( M_finish != v22 );
+            }
+          }
+          g_decalTexIDs._M_impl._M_finish = M_start;
+        }
+        v1 = g_detailVector._M_impl._M_start;
+        if ( g_detailVector._M_impl._M_finish - g_detailVector._M_impl._M_start )
+        {
+          v2 = 0;
+          v32 = g_detailVector._M_impl._M_finish - g_detailVector._M_impl._M_start;
+          do
+          {
+            v3 = &v1[v2];
+            v4 = *v3;
+            if ( *v3 )
+            {
+              v5 = v4->_detailName._M_dataplus._M_p;
+              if ( v5 - 12 != (char *)&std::string::_Rep::_S_empty_rep_storage )
+              {
+                if ( &_pthread_key_create )
+                {
+                  v19 = _InterlockedExchangeAdd((volatile signed __int32 *)v5 - 1, 0xFFFFFFFF);
+                }
+                else
+                {
+                  v19 = *((_DWORD *)v5 - 1);
+                  *((_DWORD *)v5 - 1) = v19 - 1;
+                }
+                if ( v19 <= 0 )
+                  std::string::_Rep::_M_destroy(v5 - 12, &v39);
+              }
+              v6 = v4->_diffuseName._M_dataplus._M_p;
+              v7 = v4->_diffuseName._M_dataplus._M_p - 12;
+              if ( v7 != (char *)&std::string::_Rep::_S_empty_rep_storage )
+              {
+                if ( &_pthread_key_create )
+                {
+                  v18 = _InterlockedExchangeAdd((volatile signed __int32 *)v6 - 1, 0xFFFFFFFF);
+                }
+                else
+                {
+                  v18 = *((_DWORD *)v6 - 1);
+                  *((_DWORD *)v6 - 1) = v18 - 1;
+                }
+                if ( v18 <= 0 )
+                  std::string::_Rep::_M_destroy(v7, &v39);
+              }
+              operator delete(v4);
+              v3 = &g_detailVector._M_impl._M_start[v2];
+            }
+            ++v2;
+            *v3 = nullptr;
+            v1 = g_detailVector._M_impl._M_start;
+          }
+          while ( v2 != v32 );
+        }
+        g_detailVector._M_impl._M_finish = v1;
+        std::_Rb_tree<int,std::pair<int const,DetailMap *>,std::_Select1st<std::pair<int const,DetailMap *>>,std::less<int>,std::allocator<std::pair<int const,DetailMap *>>>::_M_erase(
+          &g_idMap._M_t,
+          (std::_Rb_tree<int,std::pair<int const,DetailMap*>,std::_Select1st<std::pair<int const,DetailMap*> >,std::less<int>,std::allocator<std::pair<int const,DetailMap*> > >::_Link_type)g_idMap._M_t._M_impl._M_header._M_parent);
+        g_idMap._M_t._M_impl._M_header._M_parent = nullptr;
+        g_idMap._M_t._M_impl._M_header._M_left = &g_idMap._M_t._M_impl._M_header;
+        g_idMap._M_t._M_impl._M_header._M_right = &g_idMap._M_t._M_impl._M_header;
+        g_idMap._M_t._M_impl._M_node_count = 0;
+        std::_Rb_tree<std::string,std::pair<std::string const,int>,std::_Select1st<std::pair<std::string const,int>>,std::less<std::string>,std::allocator<std::pair<std::string const,int>>>::_M_erase(
+          &g_detailNameToIdMap._M_t,
+          (std::_Rb_tree<std::string,std::pair<const std::string,int>,std::_Select1st<std::pair<const std::string,int> >,std::less<std::string >,std::allocator<std::pair<const std::string,int> > >::_Link_type)g_detailNameToIdMap._M_t._M_impl._M_header._M_parent);
+        g_detailNameToIdMap._M_t._M_impl._M_header._M_parent = nullptr;
+        g_detailNameToIdMap._M_t._M_impl._M_header._M_left = &g_detailNameToIdMap._M_t._M_impl._M_header;
+        g_detailNameToIdMap._M_t._M_impl._M_header._M_right = &g_detailNameToIdMap._M_t._M_impl._M_header;
+        g_detailNameToIdMap._M_t._M_impl._M_node_count = 0;
+        std::_Rb_tree<std::string,std::pair<std::string const,int>,std::_Select1st<std::pair<std::string const,int>>,std::less<std::string>,std::allocator<std::pair<std::string const,int>>>::_M_erase(
+          &g_detailLoadFailedMap._M_t,
+          (std::_Rb_tree<std::string,std::pair<const std::string,int>,std::_Select1st<std::pair<const std::string,int> >,std::less<std::string >,std::allocator<std::pair<const std::string,int> > >::_Link_type)g_detailLoadFailedMap._M_t._M_impl._M_header._M_parent);
+        g_detailLoadFailedMap._M_t._M_impl._M_header._M_parent = nullptr;
+        g_detailLoadFailedMap._M_t._M_impl._M_header._M_left = &g_detailLoadFailedMap._M_t._M_impl._M_header;
+        g_detailLoadFailedMap._M_t._M_impl._M_header._M_right = &g_detailLoadFailedMap._M_t._M_impl._M_header;
+        g_detailLoadFailedMap._M_t._M_impl._M_node_count = 0;
+        std::string::string(&fileName, "maps/", &v39);
+        std::string::string(&v38, "_detail.txt", &v34);
+        std::string::string(&v37, levelName, &v33);
+        v8 = *((_DWORD *)v37._M_dataplus._M_p - 3);
+        v9 = v8 + *((_DWORD *)v38._M_dataplus._M_p - 3);
+        if ( v9 <= *((_DWORD *)v37._M_dataplus._M_p - 2) || v9 > *((_DWORD *)v38._M_dataplus._M_p - 2) )
+          v10 = (char **)std::string::append(&v37, &v38);
+        else
+          v10 = (char **)std::string::insert(&v38, 0, v37._M_dataplus._M_p, v8);
+        v39._M_dataplus._M_p = *v10;
+        *v10 = (char *)&std::string::_Rep::_S_empty_rep_storage + 12;
+        std::string::append(&fileName, &v39);
+        v11 = v39._M_dataplus._M_p - 12;
+        if ( v39._M_dataplus._M_p - 12 != (char *)&std::string::_Rep::_S_empty_rep_storage )
+        {
+          if ( &_pthread_key_create )
+          {
+            v29 = _InterlockedExchangeAdd((volatile signed __int32 *)v39._M_dataplus._M_p - 1, 0xFFFFFFFF);
+          }
+          else
+          {
+            v29 = *((_DWORD *)v39._M_dataplus._M_p - 1);
+            *((_DWORD *)v39._M_dataplus._M_p - 1) = v29 - 1;
+          }
+          if ( v29 <= 0 )
+            std::string::_Rep::_M_destroy(v11, &v35);
+        }
+        v12 = v37._M_dataplus._M_p - 12;
+        if ( v37._M_dataplus._M_p - 12 != (char *)&std::string::_Rep::_S_empty_rep_storage )
+        {
+          if ( &_pthread_key_create )
+          {
+            v30 = _InterlockedExchangeAdd((volatile signed __int32 *)v37._M_dataplus._M_p - 1, 0xFFFFFFFF);
+          }
+          else
+          {
+            v30 = *((_DWORD *)v37._M_dataplus._M_p - 1);
+            *((_DWORD *)v37._M_dataplus._M_p - 1) = v30 - 1;
+          }
+          if ( v30 <= 0 )
+            std::string::_Rep::_M_destroy(v12, &v39);
+        }
+        v13 = v38._M_dataplus._M_p - 12;
+        if ( v38._M_dataplus._M_p - 12 != (char *)&std::string::_Rep::_S_empty_rep_storage )
+        {
+          if ( &_pthread_key_create )
+          {
+            v27 = _InterlockedExchangeAdd((volatile signed __int32 *)v38._M_dataplus._M_p - 1, 0xFFFFFFFF);
+          }
+          else
+          {
+            v27 = *((_DWORD *)v38._M_dataplus._M_p - 1);
+            *((_DWORD *)v38._M_dataplus._M_p - 1) = v27 - 1;
+          }
+          if ( v27 <= 0 )
+            std::string::_Rep::_M_destroy(v13, &v39);
+        }
+        file = FS_Open(fileName._M_dataplus._M_p, "rb");
+        if ( file )
+        {
+          v15 = FS_FileSize(fileName._M_dataplus._M_p);
+          v16 = (char *)operator new[](v15 + 10);
+          if ( FS_Read(v16, v15, 1, file) <= 0 )
+          {
+            Con_Printf("Detail texture mapping file read failed\n");
+          }
+          else
+          {
+            FS_Close(file);
+            v16[v15] = -1;
+            DT_Parse(v16);
+            if ( v16 )
+              operator delete[](v16);
+          }
+        }
+        else
+        {
+          Con_Printf("No detail texture mapping file: %s\n", fileName._M_dataplus._M_p);
+        }
+        v17 = fileName._M_dataplus._M_p - 12;
+        if ( fileName._M_dataplus._M_p - 12 != (char *)&std::string::_Rep::_S_empty_rep_storage )
+        {
+          if ( &_pthread_key_create )
+          {
+            v28 = _InterlockedExchangeAdd((volatile signed __int32 *)fileName._M_dataplus._M_p - 1, 0xFFFFFFFF);
+          }
+          else
+          {
+            v28 = *((_DWORD *)fileName._M_dataplus._M_p - 1);
+            *((_DWORD *)fileName._M_dataplus._M_p - 1) = v28 - 1;
+          }
+          if ( v28 <= 0 )
+            std::string::_Rep::_M_destroy(v17, &v39);
+        }
+      }
+    }
+  }

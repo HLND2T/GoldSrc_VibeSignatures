@@ -1,0 +1,8 @@
+gv_name: currenttexture
+gv_va: '0x10322b6c'
+gv_rva: '0x322b6c'
+gv_sig: 55 8B EC 8B 45 ?? 56 8B F0 0F B7 C0 C1 FE 10 4E 39 05 ?? ?? ?? ?? 74 ?? 50 68 E1 0D 00 00
+gv_sig_va: '0x1023bd90'
+gv_inst_offset: '0x10'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

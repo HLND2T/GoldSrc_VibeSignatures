@@ -1,0 +1,8 @@
+gv_name: envmap
+gv_va: '0x3f941ec'
+gv_rva: '0x22941ec'
+gv_sig: 55 8B EC 83 E4 C0 D9 05 ?? ?? ?? ?? 83 EC 38 D9 EE B9 ?? ?? ?? ?? DA E9 89 0D ?? ?? ?? ?? DF E0 53 56 F6 C4 44
+gv_sig_va: '0x1d54e10'
+gv_inst_offset: '0x4f'
+gv_inst_length: '0x7'
+gv_inst_disp: '0x2'

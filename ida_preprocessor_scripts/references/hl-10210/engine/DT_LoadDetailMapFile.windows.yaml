@@ -1,0 +1,565 @@
+func_name: "DT_LoadDetailMapFile"
+func_va: "0x101c33f0"
+disasm_code: |-
+  .text:101C33F0                 push    ebp
+  .text:101C33F1                 mov     ebp, esp
+  .text:101C33F3                 sub     esp, 68h
+  .text:101C33F6                 mov     eax, ___security_cookie
+  .text:101C33FB                 xor     eax, ebp
+  .text:101C33FD                 mov     [ebp+var_4], eax
+  .text:101C3400                 cmp     detTexSupported, 0
+  .text:101C3407                 push    ebx
+  .text:101C3408                 mov     ebx, [ebp+levelName]
+  .text:101C340B                 mov     [ebp+var_68], ebx
+  .text:101C340E                 jz      loc_101C3814
+  .text:101C3414                 movss   xmm0, r_detailtextures.value
+  .text:101C341C                 ucomiss xmm0, ds:dword_102B3730
+  .text:101C3423                 lahf
+  .text:101C3424                 test    ah, 44h
+  .text:101C3427                 jp      short loc_101C3459
+  .text:101C3429                 mov     ecx, ebx
+  .text:101C342B                 mov     g_detTexLoaded, 0
+  .text:101C3432                 lea     edx, [ecx+1]
+  .text:101C3435                 mov     al, [ecx]
+  .text:101C3437                 inc     ecx
+  .text:101C3438                 test    al, al
+  .text:101C343A                 jnz     short loc_101C3435
+  .text:101C343C                 sub     ecx, edx
+  .text:101C343E                 ; Size
+  .text:101C343E                 push    ecx; Size
+  .text:101C343F                 ; Src
+  .text:101C343F                 push    ebx; Src
+  .text:101C3440                 ; void *
+  .text:101C3440                 mov     ecx, offset levelName; void *
+  .text:101C3445                 call    sub_101C3220
+  .text:101C344A                 pop     ebx
+  .text:101C344B                 mov     ecx, [ebp+var_4]
+  .text:101C344E                 ; StackCookie
+  .text:101C344E                 xor     ecx, ebp; StackCookie
+  .text:101C3450                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101C3455                 mov     esp, ebp
+  .text:101C3457                 pop     ebp
+  .text:101C3458                 retn
+  .text:101C3459                 cmp     byte_104B7828, 0
+  .text:101C3460                 mov     g_detTexLoaded, 1
+  .text:101C3467                 jnz     short loc_101C348C
+  .text:101C3469                 push    offset dword_104B781C
+  .text:101C346E                 push    dword_104B7820
+  .text:101C3474                 push    dword_104B781C
+  .text:101C347A                 call    sub_101C1AE0
+  .text:101C347F                 mov     eax, dword_104B781C
+  .text:101C3484                 add     esp, 0Ch
+  .text:101C3487                 mov     dword_104B7820, eax
+  .text:101C348C                 mov     ebx, dword_104B7804
+  .text:101C3492                 mov     eax, dword_104B7800
+  .text:101C3497                 sub     ebx, eax
+  .text:101C3499                 push    esi
+  .text:101C349A                 ; ArgList
+  .text:101C349A                 push    edi; ArgList
+  .text:101C349B                 sar     ebx, 2
+  .text:101C349E                 xor     edi, edi
+  .text:101C34A0                 test    ebx, ebx
+  .text:101C34A2                 jz      loc_101C356A
+  .text:101C34A8                 nop     dword ptr [eax+eax+00000000h]
+  .text:101C34B0                 mov     esi, [eax+edi*4]
+  .text:101C34B3                 test    esi, esi
+  .text:101C34B5                 jz      loc_101C3555
+  .text:101C34BB                 mov     ecx, [esi+2Ch]
+  .text:101C34BE                 cmp     ecx, 10h
+  .text:101C34C1                 jb      short loc_101C34EF
+  .text:101C34C3                 mov     eax, [esi+18h]
+  .text:101C34C6                 inc     ecx
+  .text:101C34C7                 cmp     ecx, 1000h
+  .text:101C34CD                 jb      short loc_101C34E5
+  .text:101C34CF                 mov     edx, [eax-4]
+  .text:101C34D2                 add     ecx, 23h ; '#'
+  .text:101C34D5                 sub     eax, edx
+  .text:101C34D7                 add     eax, 0FFFFFFFCh
+  .text:101C34DA                 cmp     eax, 1Fh
+  .text:101C34DD                 ja      loc_101C3804
+  .text:101C34E3                 mov     eax, edx
+  .text:101C34E5                 push    ecx
+  .text:101C34E6                 ; Block
+  .text:101C34E6                 push    eax; Block
+  .text:101C34E7                 call    sub_102AB6F9
+  .text:101C34EC                 add     esp, 8
+  .text:101C34EF                 mov     dword ptr [esi+28h], 0
+  .text:101C34F6                 mov     dword ptr [esi+2Ch], 0Fh
+  .text:101C34FD                 mov     byte ptr [esi+18h], 0
+  .text:101C3501                 mov     ecx, [esi+14h]
+  .text:101C3504                 cmp     ecx, 10h
+  .text:101C3507                 jb      short loc_101C3534
+  .text:101C3509                 mov     eax, [esi]
+  .text:101C350B                 inc     ecx
+  .text:101C350C                 cmp     ecx, 1000h
+  .text:101C3512                 jb      short loc_101C352A
+  .text:101C3514                 mov     edx, [eax-4]
+  .text:101C3517                 add     ecx, 23h ; '#'
+  .text:101C351A                 sub     eax, edx
+  .text:101C351C                 add     eax, 0FFFFFFFCh
+  .text:101C351F                 cmp     eax, 1Fh
+  .text:101C3522                 ja      loc_101C3804
+  .text:101C3528                 mov     eax, edx
+  .text:101C352A                 push    ecx
+  .text:101C352B                 ; Block
+  .text:101C352B                 push    eax; Block
+  .text:101C352C                 call    sub_102AB6F9
+  .text:101C3531                 add     esp, 8
+  .text:101C3534                 push    40h ; '@'
+  .text:101C3536                 ; Block
+  .text:101C3536                 push    esi; Block
+  .text:101C3537                 mov     dword ptr [esi+10h], 0
+  .text:101C353E                 mov     dword ptr [esi+14h], 0Fh
+  .text:101C3545                 mov     byte ptr [esi], 0
+  .text:101C3548                 call    sub_102AB6F9
+  .text:101C354D                 mov     eax, dword_104B7800
+  .text:101C3552                 add     esp, 8
+  .text:101C3555                 mov     dword ptr [eax+edi*4], 0
+  .text:101C355C                 inc     edi
+  .text:101C355D                 mov     eax, dword_104B7800
+  .text:101C3562                 cmp     edi, ebx
+  .text:101C3564                 jb      loc_101C34B0
+  .text:101C356A                 mov     edi, dword_104B7814
+  .text:101C3570                 mov     dword_104B7804, eax
+  .text:101C3575                 mov     esi, [edi+4]
+  .text:101C3578                 cmp     byte ptr [esi+0Dh], 0
+  .text:101C357C                 jnz     short loc_101C35A7
+  .text:101C357E                 xchg    ax, ax
+  .text:101C3580                 ; Block
+  .text:101C3580                 push    dword ptr [esi+8]; Block
+  .text:101C3583                 mov     ecx, offset dword_104B7814
+  .text:101C3588                 ; int
+  .text:101C3588                 push    offset dword_104B7814; int
+  .text:101C358D                 call    sub_101C1EB0
+  .text:101C3592                 mov     eax, esi
+  .text:101C3594                 mov     esi, [esi]
+  .text:101C3596                 push    18h
+  .text:101C3598                 ; Block
+  .text:101C3598                 push    eax; Block
+  .text:101C3599                 call    sub_102AB6F9
+  .text:101C359E                 add     esp, 8
+  .text:101C35A1                 cmp     byte ptr [esi+0Dh], 0
+  .text:101C35A5                 jz      short loc_101C3580
+  .text:101C35A7                 mov     [edi+4], edi
+  .text:101C35AA                 mov     ecx, offset dword_104B77F8
+  .text:101C35AF                 mov     [edi], edi
+  .text:101C35B1                 mov     [edi+8], edi
+  .text:101C35B4                 mov     esi, dword_104B77F8
+  .text:101C35BA                 mov     dword_104B7818, 0
+  .text:101C35C4                 ; Block
+  .text:101C35C4                 push    dword ptr [esi+4]; Block
+  .text:101C35C7                 ; int
+  .text:101C35C7                 push    offset dword_104B77F8; int
+  .text:101C35CC                 call    sub_101C1EF0
+  .text:101C35D1                 mov     [esi+4], esi
+  .text:101C35D4                 mov     ecx, offset dword_104B780C
+  .text:101C35D9                 mov     [esi], esi
+  .text:101C35DB                 mov     [esi+8], esi
+  .text:101C35DE                 mov     esi, dword_104B780C
+  .text:101C35E4                 mov     dword_104B77FC, 0
+  .text:101C35EE                 ; Block
+  .text:101C35EE                 push    dword ptr [esi+4]; Block
+  .text:101C35F1                 ; int
+  .text:101C35F1                 push    offset dword_104B780C; int
+  .text:101C35F6                 call    sub_101C1EF0
+  .text:101C35FB                 mov     [esi+4], esi
+  .text:101C35FE                 mov     [esi], esi
+  .text:101C3600                 mov     [esi+8], esi
+  .text:101C3603                 mov     eax, dword ptr ds:aMaps_0; "maps/"
+  .text:101C3608                 mov     esi, [ebp+var_68]
+  .text:101C360B                 mov     ecx, esi
+  .text:101C360D                 movq    xmm0, ds:qword_102BBED4
+  .text:101C3615                 mov     [ebp+Src], eax
+  .text:101C3618                 mov     al, byte ptr ds:aMaps_0+4; "/"
+  .text:101C361D                 mov     [ebp+var_18], al
+  .text:101C3620                 lea     edx, [ecx+1]
+  .text:101C3623                 mov     ax, ds:word_102BBEDC
+  .text:101C3629                 mov     [ebp+var_2C], ax
+  .text:101C362D                 mov     al, ds:byte_102BBEDE
+  .text:101C3632                 mov     dword_104B7810, 0
+  .text:101C363C                 mov     [ebp+var_8], 0Fh
+  .text:101C3643                 mov     [ebp+var_C], 5
+  .text:101C364A                 mov     [ebp+var_17], 0
+  .text:101C364E                 mov     [ebp+var_20], 0Fh
+  .text:101C3655                 mov     [ebp+var_24], 0Bh
+  .text:101C365C                 movq    qword ptr [ebp+var_34], xmm0
+  .text:101C3661                 mov     [ebp+var_2A], al
+  .text:101C3664                 mov     [ebp+var_29], 0
+  .text:101C3668                 mov     [ebp+var_4C], 0
+  .text:101C366F                 mov     [ebp+var_3C], 0
+  .text:101C3676                 mov     [ebp+var_38], 0Fh
+  .text:101C367D                 nop     dword ptr [eax]
+  .text:101C3680                 mov     al, [ecx]
+  .text:101C3682                 inc     ecx
+  .text:101C3683                 test    al, al
+  .text:101C3685                 jnz     short loc_101C3680
+  .text:101C3687                 sub     ecx, edx
+  .text:101C3689                 ; Size
+  .text:101C3689                 push    ecx; Size
+  .text:101C368A                 ; Src
+  .text:101C368A                 push    esi; Src
+  .text:101C368B                 ; void *
+  .text:101C368B                 lea     ecx, [ebp+var_4C]; void *
+  .text:101C368E                 call    sub_101C3220
+  .text:101C3693                 lea     eax, [ebp+var_34]
+  .text:101C3696                 ; Src
+  .text:101C3696                 push    eax; Src
+  .text:101C3697                 lea     eax, [ebp+var_4C]
+  .text:101C369A                 ; void *
+  .text:101C369A                 push    eax; void *
+  .text:101C369B                 ; int
+  .text:101C369B                 push    [ebp+var_68]; int
+  .text:101C369E                 lea     ecx, [ebp+Block]
+  .text:101C36A1                 call    sub_101C23C0
+  .text:101C36A6                 lea     eax, [ebp+Block]
+  .text:101C36A9                 ; void *
+  .text:101C36A9                 push    eax; void *
+  .text:101C36AA                 ; Src
+  .text:101C36AA                 lea     ecx, [ebp+Src]; Src
+  .text:101C36AD                 call    sub_101C30B0
+  .text:101C36B2                 mov     edx, [ebp+var_50]
+  .text:101C36B5                 cmp     edx, 10h
+  .text:101C36B8                 jb      short loc_101C36E6
+  .text:101C36BA                 mov     ecx, [ebp+Block]
+  .text:101C36BD                 inc     edx
+  .text:101C36BE                 mov     eax, ecx
+  .text:101C36C0                 cmp     edx, 1000h
+  .text:101C36C6                 jb      short loc_101C36DC
+  .text:101C36C8                 mov     ecx, [ecx-4]
+  .text:101C36CB                 add     edx, 23h ; '#'
+  .text:101C36CE                 sub     eax, ecx
+  .text:101C36D0                 add     eax, 0FFFFFFFCh
+  .text:101C36D3                 cmp     eax, 1Fh
+  .text:101C36D6                 ja      loc_101C3804
+  .text:101C36DC                 push    edx
+  .text:101C36DD                 ; Block
+  .text:101C36DD                 push    ecx; Block
+  .text:101C36DE                 call    sub_102AB6F9
+  .text:101C36E3                 add     esp, 8
+  .text:101C36E6                 mov     edx, [ebp+var_38]
+  .text:101C36E9                 cmp     edx, 10h
+  .text:101C36EC                 jb      short loc_101C371A
+  .text:101C36EE                 mov     ecx, [ebp+var_4C]
+  .text:101C36F1                 inc     edx
+  .text:101C36F2                 mov     eax, ecx
+  .text:101C36F4                 cmp     edx, 1000h
+  .text:101C36FA                 jb      short loc_101C3710
+  .text:101C36FC                 mov     ecx, [ecx-4]
+  .text:101C36FF                 add     edx, 23h ; '#'
+  .text:101C3702                 sub     eax, ecx
+  .text:101C3704                 add     eax, 0FFFFFFFCh
+  .text:101C3707                 cmp     eax, 1Fh
+  .text:101C370A                 ja      loc_101C3804
+  .text:101C3710                 push    edx
+  .text:101C3711                 ; Block
+  .text:101C3711                 push    ecx; Block
+  .text:101C3712                 call    sub_102AB6F9
+  .text:101C3717                 add     esp, 8
+  .text:101C371A                 mov     edx, [ebp+var_20]
+  .text:101C371D                 cmp     edx, 10h
+  .text:101C3720                 jb      short loc_101C374E
+  .text:101C3722                 mov     ecx, [ebp+var_34]
+  .text:101C3725                 inc     edx
+  .text:101C3726                 mov     eax, ecx
+  .text:101C3728                 cmp     edx, 1000h
+  .text:101C372E                 jb      short loc_101C3744
+  .text:101C3730                 mov     ecx, [ecx-4]
+  .text:101C3733                 add     edx, 23h ; '#'
+  .text:101C3736                 sub     eax, ecx
+  .text:101C3738                 add     eax, 0FFFFFFFCh
+  .text:101C373B                 cmp     eax, 1Fh
+  .text:101C373E                 ja      loc_101C3804
+  .text:101C3744                 push    edx
+  .text:101C3745                 ; Block
+  .text:101C3745                 push    ecx; Block
+  .text:101C3746                 call    sub_102AB6F9
+  .text:101C374B                 add     esp, 8
+  .text:101C374E                 cmp     [ebp+var_8], 10h
+  .text:101C3752                 lea     eax, [ebp+Src]
+  .text:101C3755                 push    offset pOptions; "rb"
+  .text:101C375A                 cmovnb  eax, [ebp+Src]
+  .text:101C375E                 ; pFileName
+  .text:101C375E                 push    eax; pFileName
+  .text:101C375F                 call    FS_Open
+  .text:101C3764                 mov     edi, eax
+  .text:101C3766                 add     esp, 8
+  .text:101C3769                 lea     eax, [ebp+Src]
+  .text:101C376C                 test    edi, edi
+  .text:101C376E                 jnz     short loc_101C3788
+  .text:101C3770                 cmp     [ebp+var_8], 10h
+  .text:101C3774                 cmovnb  eax, [ebp+Src]
+  .text:101C3778                 ; ArgList
+  .text:101C3778                 push    eax; ArgList
+  .text:101C3779                 push    offset aNoDetailTextur; "No detail texture mapping file: %s\n"
+  .text:101C377E                 call    Con_Printf
+  .text:101C3783                 add     esp, 8
+  .text:101C3786                 jmp     short loc_101C37DC
+  .text:101C3788                 cmp     [ebp+var_8], 10h
+  .text:101C378C                 cmovnb  eax, [ebp+Src]
+  .text:101C3790                 push    eax
+  .text:101C3791                 call    sub_101C7D20
+  .text:101C3796                 mov     ebx, eax
+  .text:101C3798                 lea     ecx, [ebx+0Ah]
+  .text:101C379B                 push    ecx
+  .text:101C379C                 call    unknown_libname_10; Microsoft VisualC 14/net runtime
+  .text:101C37A1                 ; file
+  .text:101C37A1                 push    edi; file
+  .text:101C37A2                 ; count
+  .text:101C37A2                 push    1; count
+  .text:101C37A4                 mov     esi, eax
+  .text:101C37A6                 ; size
+  .text:101C37A6                 push    ebx; size
+  .text:101C37A7                 ; pOutput
+  .text:101C37A7                 push    esi; pOutput
+  .text:101C37A8                 call    FS_Read
+  .text:101C37AD                 add     esp, 18h
+  .text:101C37B0                 test    eax, eax
+  .text:101C37B2                 jg      short loc_101C37C3
+  .text:101C37B4                 push    offset aDetailTextureM; "Detail texture mapping file read failed"...
+  .text:101C37B9                 call    Con_Printf
+  .text:101C37BE                 add     esp, 4
+  .text:101C37C1                 jmp     short loc_101C37DC
+  .text:101C37C3                 ; file
+  .text:101C37C3                 push    edi; file
+  .text:101C37C4                 call    FS_Close
+  .text:101C37C9                 push    esi
+  .text:101C37CA                 mov     byte ptr [esi+ebx], 0FFh
+  .text:101C37CE                 call    sub_101C29F0
+  .text:101C37D3                 ; Block
+  .text:101C37D3                 push    esi; Block
+  .text:101C37D4                 call    j_j_free_0
+  .text:101C37D9                 add     esp, 0Ch
+  .text:101C37DC                 mov     edx, [ebp+var_8]
+  .text:101C37DF                 pop     edi
+  .text:101C37E0                 pop     esi
+  .text:101C37E1                 cmp     edx, 10h
+  .text:101C37E4                 jb      short loc_101C3814
+  .text:101C37E6                 mov     ecx, [ebp+Src]
+  .text:101C37E9                 inc     edx
+  .text:101C37EA                 mov     eax, ecx
+  .text:101C37EC                 cmp     edx, 1000h
+  .text:101C37F2                 jb      short loc_101C380A
+  .text:101C37F4                 mov     ecx, [ecx-4]
+  .text:101C37F7                 add     edx, 23h ; '#'
+  .text:101C37FA                 sub     eax, ecx
+  .text:101C37FC                 add     eax, 0FFFFFFFCh
+  .text:101C37FF                 cmp     eax, 1Fh
+  .text:101C3802                 jbe     short loc_101C380A
+  .text:101C3804                 call    ds:_invalid_parameter_noinfo_noreturn
+  .text:101C380A                 push    edx
+  .text:101C380B                 ; Block
+  .text:101C380B                 push    ecx; Block
+  .text:101C380C                 call    sub_102AB6F9
+  .text:101C3811                 add     esp, 8
+  .text:101C3814                 mov     ecx, [ebp+var_4]
+  .text:101C3817                 ; StackCookie
+  .text:101C3817                 xor     ecx, ebp; StackCookie
+  .text:101C3819                 pop     ebx
+  .text:101C381A                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101C381F                 mov     esp, ebp
+  .text:101C3821                 pop     ebp
+  .text:101C3822                 retn
+procedure: |-
+  void __cdecl DT_LoadDetailMapFile(char *levelName)
+  {
+    _DWORD *v1; // eax
+    unsigned int v2; // ebx
+    unsigned int i; // edi
+    _DWORD *v4; // esi
+    unsigned int v5; // ecx
+    _DWORD *v6; // eax
+    unsigned int v7; // ecx
+    _DWORD *v8; // eax
+    _DWORD *v9; // edi
+    _DWORD *v10; // esi
+    void *v11; // eax
+    _DWORD *v12; // esi
+    _DWORD *v13; // esi
+    _BYTE *v14; // ecx
+    void *v15; // ecx
+    void *v16; // ecx
+    void **v17; // eax
+    FileHandle_t v18; // edi
+    void **v19; // eax
+    int v20; // ebx
+    _BYTE *v21; // esi
+    void *v22; // ecx
+    int v23; // [esp-Ch] [ebp-78h]
+    void *Block; // [esp+8h] [ebp-64h] BYREF
+    unsigned int v25; // [esp+1Ch] [ebp-50h]
+    void *v26[5]; // [esp+20h] [ebp-4Ch] BYREF
+    unsigned int v27; // [esp+34h] [ebp-38h]
+    _DWORD v28[5]; // [esp+38h] [ebp-34h] BYREF
+    unsigned int v29; // [esp+4Ch] [ebp-20h]
+    void *Src[5]; // [esp+50h] [ebp-1Ch] BYREF
+    unsigned int v31; // [esp+64h] [ebp-8h]
+  
+    if ( !detTexSupported )
+      return;
+    if ( *(float *)&r_detailtextures.value == 0.0 )
+    {
+      g_detTexLoaded = 0;
+      sub_101C3220(&::levelName, levelName, strlen(levelName));
+      return;
+    }
+    g_detTexLoaded = 1;
+    if ( !byte_104B7828 )
+    {
+      sub_101C1AE0(dword_104B781C, dword_104B7820);
+      dword_104B7820 = (int)dword_104B781C;
+    }
+    v1 = dword_104B7800;
+    v2 = ((_BYTE *)dword_104B7804 - (_BYTE *)dword_104B7800) >> 2;
+    for ( i = 0; i < v2; v1 = dword_104B7800 )
+    {
+      v4 = (_DWORD *)v1[i];
+      if ( v4 )
+      {
+        v5 = v4[11];
+        if ( v5 >= 0x10 )
+        {
+          v6 = (_DWORD *)v4[6];
+          if ( v5 + 1 >= 0x1000 )
+          {
+            if ( (unsigned int)v6 - *(v6 - 1) - 4 > 0x1F )
+              goto LABEL_48;
+            v6 = (_DWORD *)*(v6 - 1);
+          }
+          sub_102AB6F9(v6);
+        }
+        v4[10] = 0;
+        v4[11] = 15;
+        *((_BYTE *)v4 + 24) = 0;
+        v7 = v4[5];
+        if ( v7 >= 0x10 )
+        {
+          v8 = (_DWORD *)*v4;
+          if ( v7 + 1 >= 0x1000 )
+          {
+            if ( (unsigned int)v8 - *(v8 - 1) - 4 > 0x1F )
+              goto LABEL_48;
+            v8 = (_DWORD *)*(v8 - 1);
+          }
+          sub_102AB6F9(v8);
+        }
+        v4[4] = 0;
+        v4[5] = 15;
+        *(_BYTE *)v4 = 0;
+        sub_102AB6F9(v4);
+        v1 = dword_104B7800;
+      }
+      v1[i++] = 0;
+    }
+    v9 = (_DWORD *)dword_104B7814;
+    dword_104B7804 = v1;
+    v10 = *(_DWORD **)(dword_104B7814 + 4);
+    while ( !*((_BYTE *)v10 + 13) )
+    {
+      sub_101C1EB0((int)&dword_104B7814, (void *)v10[2]);
+      v11 = v10;
+      v10 = (_DWORD *)*v10;
+      sub_102AB6F9(v11);
+    }
+    v9[1] = v9;
+    *v9 = v9;
+    v9[2] = v9;
+    v12 = dword_104B77F8;
+    dword_104B7818 = 0;
+    sub_101C1EF0((int)&dword_104B77F8, *((void **)dword_104B77F8 + 1));
+    v12[1] = v12;
+    *v12 = v12;
+    v12[2] = v12;
+    v13 = dword_104B780C;
+    dword_104B77FC = 0;
+    sub_101C1EF0((int)&dword_104B780C, *((void **)dword_104B780C + 1));
+    v13[1] = v13;
+    *v13 = v13;
+    v13[2] = v13;
+    strcpy((char *)Src, "maps/");
+    dword_104B7810 = 0;
+    v31 = 15;
+    Src[4] = (void *)5;
+    v29 = 15;
+    v28[4] = 11;
+    strcpy((char *)v28, "_detail.txt");
+    v26[0] = nullptr;
+    v26[4] = nullptr;
+    v27 = 15;
+    sub_101C3220(v26, levelName, strlen(levelName));
+    sub_101C23C0((int)levelName, v26, v28);
+    sub_101C30B0(Src, &Block);
+    if ( v25 >= 0x10 )
+    {
+      v14 = Block;
+      if ( v25 + 1 >= 0x1000 )
+      {
+        v14 = *((_BYTE **)Block - 1);
+        if ( (unsigned int)((_BYTE *)Block - v14 - 4) > 0x1F )
+          goto LABEL_48;
+      }
+      sub_102AB6F9(v14);
+    }
+    if ( v27 >= 0x10 )
+    {
+      v15 = v26[0];
+      if ( v27 + 1 >= 0x1000 )
+      {
+        v15 = *((void **)v26[0] - 1);
+        if ( (unsigned int)((char *)v26[0] - (char *)v15 - 4) > 0x1F )
+          goto LABEL_48;
+      }
+      sub_102AB6F9(v15);
+    }
+    if ( v29 < 0x10 )
+      goto LABEL_34;
+    v16 = (void *)v28[0];
+    if ( v29 + 1 >= 0x1000 )
+    {
+      v16 = *(void **)(v28[0] - 4);
+      if ( (unsigned int)(v28[0] - (_DWORD)v16 - 4) > 0x1F )
+  LABEL_48:
+        invalid_parameter_noinfo_noreturn();
+    }
+    sub_102AB6F9(v16);
+  LABEL_34:
+    v17 = Src;
+    if ( v31 >= 0x10 )
+      v17 = (void **)Src[0];
+    v18 = FS_Open((const char *)v17, "rb");
+    v19 = Src;
+    if ( v18 )
+    {
+      if ( v31 >= 0x10 )
+        v19 = (void **)Src[0];
+      v20 = sub_101C7D20(v19);
+      v21 = (_BYTE *)unknown_libname_10(v20 + 10);
+      if ( FS_Read(v21, v20, 1, v18) > 0 )
+      {
+        FS_Close(v18);
+        v21[v20] = -1;
+        sub_101C29F0(v21, v23);
+        j_j_free_0(v21);
+      }
+      else
+      {
+        Con_Printf("Detail texture mapping file read failed\n");
+      }
+    }
+    else
+    {
+      if ( v31 >= 0x10 )
+        v19 = (void **)Src[0];
+      Con_Printf("No detail texture mapping file: %s\n", (const char *)v19);
+    }
+    if ( v31 >= 0x10 )
+    {
+      v22 = Src[0];
+      if ( v31 + 1 >= 0x1000 )
+      {
+        v22 = *((void **)Src[0] - 1);
+        if ( (unsigned int)((char *)Src[0] - (char *)v22 - 4) > 0x1F )
+          goto LABEL_48;
+      }
+      sub_102AB6F9(v22);
+    }
+  }
