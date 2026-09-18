@@ -50,6 +50,12 @@ modules:
           - VGui_ViewportPaintBackground.{platform}.yaml
         expected_output:
           - V_RenderView.{platform}.yaml
+      - name: find-V_RenderView-ref-params-globals
+        expected_input:
+          - V_RenderView.{platform}.yaml
+        expected_output:
+          - cl_waterlevel.{platform}.yaml
+          - cl_simorg.{platform}.yaml
       - name: find-CL_Set_ServerExtraInfo
         expected_input:
           - cl_parsefuncs.{platform}.yaml
@@ -170,12 +176,36 @@ modules:
       - name: find-R_RenderView
         expected_output:
           - R_RenderView.{platform}.yaml
+      - name: find-R_RenderView-polys-svencoop-decompiles
+        expected_input:
+          - R_RenderView.{platform}.yaml
+        expected_output:
+          - c_model_polys.{platform}.yaml
+          - c_brush_polys.{platform}.yaml
+      - name: find-R_RenderView-viewmodel-globals-svencoop-inlined
+        platform: windows
+        expected_input:
+          - R_RenderView.{platform}.yaml
+        expected_output:
+          - cl_stats.{platform}.yaml
+          - cl_weaponstarttime.{platform}.yaml
+          - cl_weaponsequence.{platform}.yaml
+          - cl_light_level.{platform}.yaml
       - name: find-R_DrawViewModel-decompiles
         platform: linux
         expected_input:
           - R_RenderView.{platform}.yaml
         expected_output:
           - R_DrawViewModel.{platform}.yaml
+      - name: find-R_DrawViewModel-private-globals
+        platform: linux
+        expected_input:
+          - R_DrawViewModel.{platform}.yaml
+        expected_output:
+          - cl_stats.{platform}.yaml
+          - cl_weaponstarttime.{platform}.yaml
+          - cl_weaponsequence.{platform}.yaml
+          - cl_light_level.{platform}.yaml
       - name: find-R_PolyBlend-decompiles
         expected_input:
           - R_RenderView.{platform}.yaml
@@ -191,6 +221,11 @@ modules:
           - R_RenderView.{platform}.yaml
         expected_output:
           - R_RenderScene.{platform}.yaml
+      - name: find-R_RenderScene-cshift-water
+        expected_input:
+          - R_RenderScene.{platform}.yaml
+        expected_output:
+          - cshift_water.{platform}.yaml
       - name: find-R_SetupGL-from-R_RenderScene-decompiles
         expected_input:
           - R_RenderScene.{platform}.yaml
@@ -348,6 +383,35 @@ modules:
         expected_output:
           - studioapi_GetCurrentEntity.{platform}.yaml
           - currententity.{platform}.yaml
+      - name: find-studioapi_GetTimes-svencoop
+        expected_output:
+          - studioapi_GetTimes.{platform}.yaml
+      - name: find-studioapi_GetTimes-globals-svencoop
+        expected_input:
+          - studioapi_GetTimes.{platform}.yaml
+        expected_output:
+          - cl_time.{platform}.yaml
+          - cl_oldtime.{platform}.yaml
+      - name: find-CL_AllocDlight
+        expected_input:
+          - cl_enginefuncs.{platform}.yaml
+        expected_output:
+          - CL_AllocDlight.{platform}.yaml
+      - name: find-CL_AllocDlight-globals
+        expected_input:
+          - CL_AllocDlight.{platform}.yaml
+        expected_output:
+          - cl_dlights.{platform}.yaml
+      - name: find-CL_AllocElight
+        expected_input:
+          - cl_enginefuncs.{platform}.yaml
+        expected_output:
+          - CL_AllocElight.{platform}.yaml
+      - name: find-CL_AllocElight-globals
+        expected_input:
+          - CL_AllocElight.{platform}.yaml
+        expected_output:
+          - cl_elights.{platform}.yaml
       - name: find-studioapi_SetRenderModel-svencoop
         expected_output:
           - studioapi_SetRenderModel.{platform}.yaml
@@ -400,6 +464,11 @@ modules:
       - name: find-Cache_Alloc
         expected_output:
           - Cache_Alloc.{platform}.yaml
+      - name: find-Cache_Alloc-cache-head
+        expected_input:
+          - Cache_Alloc.{platform}.yaml
+        expected_output:
+          - cache_head.{platform}.yaml
       - name: find-Draw_DecalTexture
         expected_output:
           - Draw_DecalTexture.{platform}.yaml
@@ -702,6 +771,34 @@ modules:
         category: gv
       - name: R_RenderView
         category: func
+      - name: c_model_polys
+        category: gv
+      - name: c_brush_polys
+        category: gv
+      - name: cache_head
+        category: gv
+      - name: cl_dlights
+        category: gv
+      - name: cl_elights
+        category: gv
+      - name: cl_time
+        category: gv
+      - name: cl_oldtime
+        category: gv
+      - name: cl_simorg
+        category: gv
+      - name: cl_waterlevel
+        category: gv
+      - name: cl_stats
+        category: gv
+      - name: cl_light_level
+        category: gv
+      - name: cl_weaponstarttime
+        category: gv
+      - name: cl_weaponsequence
+        category: gv
+      - name: cshift_water
+        category: gv
       - name: R_DrawViewModel
         category: func
         platform: linux
@@ -810,6 +907,12 @@ modules:
         category: func
       - name: currententity
         category: gv
+      - name: studioapi_GetTimes
+        category: func
+      - name: CL_AllocDlight
+        category: func
+      - name: CL_AllocElight
+        category: func
       - name: studioapi_SetRenderModel
         category: func
       - name: r_model

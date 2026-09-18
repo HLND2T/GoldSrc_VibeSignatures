@@ -1,0 +1,5 @@
+func_name: CL_AllocDlight
+func_va: '0x1919e0'
+func_rva: '0x1919e0'
+func_size: '0xde'
+func_sig: 56 53 83 EC ?? 8B 74 24 ?? 85 F6 74 ?? BB ?? ?? ?? ?? 31 C9 EB ??

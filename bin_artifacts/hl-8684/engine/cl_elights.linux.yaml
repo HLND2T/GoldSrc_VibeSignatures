@@ -1,0 +1,8 @@
+gv_name: cl_elights
+gv_va: '0xdf66e0'
+gv_rva: '0xdf66e0'
+gv_sig: 56 53 83 EC ?? 8B 74 24 ?? 85 F6 74 ?? BB ?? ?? ?? ?? EB ??
+gv_sig_va: '0x191ac0'
+gv_inst_offset: '0xd'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

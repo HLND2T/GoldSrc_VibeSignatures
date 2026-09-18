@@ -1,0 +1,9 @@
+gv_name: cl_weaponstarttime
+gv_va: '0xdd5350'
+gv_rva: '0xdd5350'
+gv_sig: D9 EE 83 EC ?? 89 74 24 ?? BE ?? ?? ?? ?? D9 54 24 ?? D9 54 24 ?? D9 05 ?? ?? ?? ?? DF E9 DD D8 89 5C 24 ?? 89 7C
+  24 ??
+gv_sig_va: '0x16da90'
+gv_inst_offset: '0x1fa'
+gv_inst_length: '0x8'
+gv_inst_disp: '0x4'

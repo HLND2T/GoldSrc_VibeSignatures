@@ -1,0 +1,8 @@
+gv_name: cl_waterlevel
+gv_va: '0x2e119f0'
+gv_rva: '0x11119f0'
+gv_sig: 55 8B EC 68 E8 00 00 00 6A 00 8B 45 ?? 50 E8 ?? ?? ?? ?? 83 C4 0C 8B 4D ?? 8B 15 ?? ?? ?? ?? 89 11 8B 45 ??
+gv_sig_va: '0x1e0a012'
+gv_inst_offset: '0x127'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

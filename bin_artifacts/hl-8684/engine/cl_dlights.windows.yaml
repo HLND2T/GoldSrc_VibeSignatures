@@ -1,0 +1,8 @@
+gv_name: cl_dlights
+gv_va: '0x2d595e0'
+gv_rva: '0x10595e0'
+gv_sig: 55 8B EC 53 8B 5D ?? 56 57 85 DB 74 ?? BE ?? ?? ?? ?? 33 FF 39 5E ?? 74 ?? 47 83 C6 28 83 FF 20
+gv_sig_va: '0x1d18ac0'
+gv_inst_offset: '0xd'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

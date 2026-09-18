@@ -26,8 +26,8 @@ disasm_code: |-
   .text:10244661                 call    dword_109B36C0
   .text:10244667                 call    sub_1021FE20
   .text:1024466C                 fstp    [ebp+var_14]
-  .text:1024466F                 mov     dword_10DC55B0, 0
-  .text:10244679                 mov     dword_10DC55AC, 0
+  .text:1024466F                 mov     dword_10DC55B0, 0; c_brush_polys
+  .text:10244679                 mov     dword_10DC55AC, 0; c_alias_polys
   .text:10244683                 xor     eax, eax
   .text:10244685                 mov     dword_10DC50E4, 0
   .text:1024468F                 cmp     nMaxClients, 1
@@ -281,8 +281,8 @@ procedure: |-
     {
       dword_109B36C0();
       v9 = sub_1021FE20();
-      dword_10DC55B0 = 0;
-      dword_10DC55AC = 0;
+      dword_10DC55B0 = 0; // c_brush_polys
+      dword_10DC55AC = 0; // c_alias_polys
     }
     dword_10DC50E4 = 0;
     v1 = *(_DWORD *)nMaxClients == 0;

@@ -1,0 +1,8 @@
+gv_name: cl_simorg
+gv_va: '0x234b6d8'
+gv_rva: '0x64b6d8'
+gv_sig: 56 8B 74 24 ?? 68 F8 00 00 00 6A 00 56 E8 ?? ?? ?? ?? D9 05 ?? ?? ?? ?? 33 C0 D9 1E D9 05 ?? ?? ?? ?? 83 C4 0C
+gv_sig_va: '0x1dce720'
+gv_inst_offset: '0x102'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

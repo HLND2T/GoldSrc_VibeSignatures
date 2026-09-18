@@ -21,14 +21,22 @@ async def preprocess_engine_callback(
     *,
     name,
     slot,
+    indirect_table_offset=None,
 ):
     table = _load_yaml_mapping(Path(new_binary_dir) / f"cl_enginefuncs.{platform}.yaml")
     if not table:
         return False
-    entry = int(table["gv_va"], 0) + slot * 4
+    table_ea = int(table["gv_va"], 0)
     code = f"""
 import ida_bytes, ida_funcs, ida_segment, ida_ua, idaapi, idautils, idc, json
-entry = {entry}
+table_ea = {table_ea}
+indirect_table_offset = {indirect_table_offset!r}
+slot = {int(slot)}
+if indirect_table_offset is None:
+    callback_table = table_ea
+else:
+    callback_table = ida_bytes.get_dword(table_ea + int(indirect_table_offset))
+entry = int(callback_table or 0) + slot * 4
 target = ida_bytes.get_dword(entry)
 def unwrap(start):
     items=list(idautils.FuncItems(start))
@@ -63,12 +71,19 @@ while target not in seen:
     target=next_target
 else:
     cycle=True
+table_segment = ida_segment.getseg(callback_table)
+entry_segment = ida_segment.getseg(entry)
 segment = ida_segment.getseg(target)
 function = ida_funcs.get_func(target)
-valid = (not cycle and not idaapi.inf_is_64bit() and segment is not None
+valid = (not cycle and not idaapi.inf_is_64bit()
+         and table_segment is not None and entry_segment is not None
+         and not (table_segment.perm & ida_segment.SEGPERM_EXEC)
+         and not (entry_segment.perm & ida_segment.SEGPERM_EXEC)
+         and segment is not None
          and segment.perm & ida_segment.SEGPERM_EXEC
          and function is not None and function.start_ea == target)
-result = json.dumps({{'target': int(target)}} if valid else {{}})
+result = json.dumps({{'target': int(target), 'callback_table': int(callback_table),
+                      'entry': int(entry)}} if valid else {{}})
 """
     located = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
     if not isinstance(located, dict) or "target" not in located:
