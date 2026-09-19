@@ -1,0 +1,5 @@
+func_name: Draw_FillRGBABlend
+func_va: '0x174bb0'
+func_rva: '0x174bb0'
+func_size: '0x14b'
+func_sig: 53 E8 ?? ?? ?? ?? 81 C3 4A 54 1C 00

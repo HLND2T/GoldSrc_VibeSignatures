@@ -22,9 +22,10 @@ tags:
 - Declared in 9 engine configs: cof-5936, hl-10210, hl-3248, hl-3266, hl-3329,
   hl-3647, hl-4554, hl-6153, hl-8684.
 - Platforms: Windows + Linux (producer has no `platform` gating).
-- Inlined / absent: not declared for svencoop-10257 — SvEngine has a **different
-  `cl_enginefuncs` layout**, where slot 11 is not a function start, so the HL/CoF indices
-  must not be reused there.
+- SvEngine: svencoop-10257 and svencoop-8948, Windows + Linux, via
+  `ida_preprocessor_scripts/find-svengine-fill-rgba.py` (issue #147). Both have
+  distinct drawing bodies; neither is absent or inlined. The existing table indices
+  remain valid, but their entries forward to the actual GL implementation.
 
 ## Predecessors
 
@@ -32,7 +33,7 @@ tags:
 - `SCR_UpdateScreen_RenderBody` and `Sys_Error` — declared `expected_input` entry gate; the
   finder returns False if their `func_va` (or the table's `gv_va`) is missing.
 
-## How it is located
+## How it is located (HL/CoF)
 
 1. Read `cl_enginefuncs`'s `gv_va` and compute the slot address
    `table + 11 * 4` (`cl_enginefunc_t` field order, `engine/APIProxy.h`).
@@ -63,9 +64,35 @@ deterministic anchor. Discovery never uses a byte pattern or an old YAML.
 - `ida_bytes.find_bytes` wildcard search returns `BADADDR` on the terminating probe;
   uniqueness is decided by "a second match appeared", so the last match must be kept in a
   separate variable.
-- The slot index is only valid for the HL/CoF `cl_enginefunc_t` order, validated across
-  hl-10210 / hl-8684 / hl-4554 / hl-6153 and cof-5936. Do not transfer these indices to
-  SvEngine.
+- SvEngine retains the same slot index but requires forwarding resolution. Checking
+  the slot entry as if it were the GL body fails; see the SvEngine section below.
 - The GL enum check is a validator, not a discriminator — if a build's body no longer
   mentions the blend factors the finder fails closed rather than falling back to a raw
   table read.
+
+## SvEngine forwarding locator (issue #147)
+
+- Trigger: slot validation fails although the public SDK entry exists.
+- Root cause: Windows uses a direct JMP entry; Linux uses an eight-int cdecl wrapper
+  with a get-PC thunk. 8948 Linux additionally resolves the body through PLT/GOT.
+  The prior "different table layout" explanation was incorrect.
+- Dependency: only current-binary `cl_enginefuncs.{platform}.yaml`; no SCR/Sys_Error input.
+- Anchor: slot 11, then verified forwarding to the drawing body. Linux must pass
+  all eight arguments unchanged and have one non-PIC call. Windows RGBA code may lack
+  an IDA function definition; create it only after validating code bounds and behavior.
+- Validator: exact ordered GL operations, including texture/blend setup, four vertices,
+  state restoration, and actual `glBlendFunc(0x302, 1)` arguments.
+  The destination factor is 1 (GL_ONE). Unknown control/data flow fails closed.
+- Symbol identity: 8948 ELF preserves the C++ body name `Draw_FillRGBA(int,int,int,int,int,int,int,int)`;
+  its `Draw_FillRGBA_I` forwarding entry is not the artifact target. Anonymous peers use
+  the source-role identity corroborated by the table, ABI and GL implementation.
+- Discovery never uses byte signatures or old YAML. Output generation shares
+  `renderer_draw_signatures.CUSTOM_SIG` with HL/CoF and validates uniqueness after discovery.
+  Immediates are pinned (including ELF's position-independent GOT delta); absolute and
+  instruction-relative address operands are wildcarded. These are per-binary signatures.
+- Verified body RVAs: 10257 Windows `0x4f970`, Linux `0x127f70`; 8948 Windows `0x4f6d0`, Linux `0x174a60`.
+- Verification: owned IDA sessions on all four exact binaries; formal analyzer runs
+  with an initially empty target-output directory prevent skip-existing from masking work.
+  Regression tests exercise argument corruption, caller clobbers, multiple calls,
+  unsupported flow and stdcall cleanup using synthetic instructions.
+- Scope: engine / func, SvEngine 10257 and 8948 on Windows/Linux. HL/CoF discovery is unchanged.
