@@ -646,6 +646,12 @@ modules:
       - name: find-R_LoadSkys
         expected_output:
           - R_LoadSkys.{platform}.yaml
+      - name: find-R_LoadSkys-decompiles
+        expected_input:
+          - R_LoadSkys.{platform}.yaml
+        expected_output:
+          - gLoadSky.{platform}.yaml
+          - gSkyTexNumber.{platform}.yaml
       - name: find-SDL_InitGL
         expected_output:
           - SDL_InitGL.{platform}.yaml
@@ -1116,6 +1122,10 @@ modules:
         category: func
       - name: R_LoadSkys
         category: func
+      - name: gLoadSky
+        category: gv
+      - name: gSkyTexNumber
+        category: gv
       - name: SDL_InitGL
         category: func
       - name: Draw_SpriteFrameHoles

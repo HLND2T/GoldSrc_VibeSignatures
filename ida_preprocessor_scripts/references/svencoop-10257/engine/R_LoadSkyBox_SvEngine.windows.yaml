@@ -1,0 +1,104 @@
+func_name: "R_LoadSkyBox_SvEngine"
+func_va: "0x1d60300"
+disasm_code: |-
+  .text:01D60300                 cmp     gLoadSky, 0
+  .text:01D60307                 jz      locret_1D603D6
+  .text:01D6030D                 push    esi
+  .text:01D6030E                 push    edi
+  .text:01D6030F                 mov     edi, ds:glDeleteTextures
+  .text:01D60315                 mov     esi, offset gSkyTexNumber
+  .text:01D6031A                 lea     ebx, [ebx+0]
+  .text:01D60320                 push    dword ptr [esi]
+  .text:01D60322                 call    GL_IsTextureValid
+  .text:01D60327                 add     esp, 4
+  .text:01D6032A                 test    eax, eax
+  .text:01D6032C                 jz      short loc_1D60339
+  .text:01D6032E                 ; textures
+  .text:01D6032E                 push    esi; textures
+  .text:01D6032F                 ; n
+  .text:01D6032F                 push    1; n
+  .text:01D60331                 call    edi ; glDeleteTextures
+  .text:01D60333                 mov     dword ptr [esi], 0
+  .text:01D60339                 add     esi, 4
+  .text:01D6033C                 cmp     esi, offset gLoadSky
+  .text:01D60342                 jl      short loc_1D60320
+  .text:01D60344                 mov     esi, [esp+8+arg_0]
+  .text:01D60348                 test    esi, esi
+  .text:01D6034A                 jz      loc_1D603D4
+  .text:01D60350                 cmp     byte ptr [esi], 0
+  .text:01D60353                 jz      short loc_1D603D4
+  .text:01D60355                 push    esi
+  .text:01D60356                 call    R_LoadSkyboxInt_SvEngine
+  .text:01D6035B                 add     esp, 4
+  .text:01D6035E                 test    eax, eax
+  .text:01D60360                 jnz     short loc_1D603D4
+  .text:01D60362                 push    offset aDesert; "desert"
+  .text:01D60367                 push    esi
+  .text:01D60368                 call    Q_strcmp
+  .text:01D6036D                 add     esp, 8
+  .text:01D60370                 test    eax, eax
+  .text:01D60372                 jz      short loc_1D60394
+  .text:01D60374                 push    offset aDesert; "desert"
+  .text:01D60379                 push    offset movevars_skyName
+  .text:01D6037E                 call    Q_strcpy
+  .text:01D60383                 push    offset aDesert; "desert"
+  .text:01D60388                 call    R_LoadSkyboxInt_SvEngine
+  .text:01D6038D                 add     esp, 0Ch
+  .text:01D60390                 test    eax, eax
+  .text:01D60392                 jnz     short loc_1D603D4
+  .text:01D60394                 mov     ecx, r_missingtexture
+  .text:01D6039A                 mov     eax, [ecx+18h]
+  .text:01D6039D                 mov     gSkyTexNumber, eax
+  .text:01D603A2                 mov     eax, [ecx+18h]
+  .text:01D603A5                 mov     gSkyTexNumber+4, eax
+  .text:01D603AA                 mov     eax, [ecx+18h]
+  .text:01D603AD                 mov     gSkyTexNumber+8, eax
+  .text:01D603B2                 mov     eax, [ecx+18h]
+  .text:01D603B5                 mov     gSkyTexNumber+0Ch, eax
+  .text:01D603BA                 mov     eax, [ecx+18h]
+  .text:01D603BD                 mov     gSkyTexNumber+10h, eax
+  .text:01D603C2                 mov     eax, [ecx+18h]
+  .text:01D603C5                 mov     gSkyTexNumber+14h, eax
+  .text:01D603CA                 mov     gLoadSky, 0
+  .text:01D603D4                 pop     edi
+  .text:01D603D5                 pop     esi
+  .text:01D603D6                 retn
+procedure: |-
+  void __cdecl R_LoadSkyBox_SvEngine(const char *a1)
+  {
+    const GLuint *v1; // esi
+  
+    if ( gLoadSky )
+    {
+      v1 = &gSkyTexNumber;
+      do
+      {
+        if ( GL_IsTextureValid(*v1) )
+        {
+          glDeleteTextures(1, v1);
+          *v1 = 0;
+        }
+        ++v1;
+      }
+      while ( (int)v1 < (int)&gLoadSky );
+      if ( a1 )
+      {
+        if ( *a1 )
+        {
+          if ( !R_LoadSkyboxInt_SvEngine(a1) )
+          {
+            if ( !Q_strcmp(a1, "desert") || (Q_strcpy(movevars_skyName, "desert"), !R_LoadSkyboxInt_SvEngine("desert")) )
+            {
+              gSkyTexNumber = *(_DWORD *)(r_missingtexture + 24);
+              MEMORY[0x8046A98] = *(_DWORD *)(r_missingtexture + 24);
+              MEMORY[0x8046A9C] = *(_DWORD *)(r_missingtexture + 24);
+              MEMORY[0x8046AA0] = *(_DWORD *)(r_missingtexture + 24);
+              MEMORY[0x8046AA4] = *(_DWORD *)(r_missingtexture + 24);
+              MEMORY[0x8046AA8] = *(_DWORD *)(r_missingtexture + 24);
+              gLoadSky = 0;
+            }
+          }
+        }
+      }
+    }
+  }

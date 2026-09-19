@@ -1,0 +1,701 @@
+func_name: "R_LoadSkys"
+func_va: "0x17cb10"
+disasm_code: |-
+  .text:0017CB10                 push    ebp
+  .text:0017CB11                 push    edi
+  .text:0017CB12                 push    esi
+  .text:0017CB13                 push    ebx
+  .text:0017CB14                 sub     esp, 0BCh
+  .text:0017CB1A                 mov     eax, large gs:14h
+  .text:0017CB20                 mov     [esp+0CCh+var_20], eax
+  .text:0017CB27                 xor     eax, eax
+  .text:0017CB29                 mov     eax, ds:gLoadSky
+  .text:0017CB2E                 test    eax, eax
+  .text:0017CB30                 jnz     short loc_17CBA1
+  .text:0017CB32                 mov     eax, ds:gSkyTexNumber
+  .text:0017CB37                 test    eax, eax
+  .text:0017CB39                 jnz     loc_17D06E
+  .text:0017CB3F                 mov     eax, ds:gSkyTexNumber+4
+  .text:0017CB44                 test    eax, eax
+  .text:0017CB46                 jnz     loc_17D040
+  .text:0017CB4C                 mov     esi, ds:gSkyTexNumber+8
+  .text:0017CB52                 test    esi, esi
+  .text:0017CB54                 jnz     loc_17D09A
+  .text:0017CB5A                 mov     edx, ds:gSkyTexNumber+0Ch
+  .text:0017CB60                 test    edx, edx
+  .text:0017CB62                 jnz     loc_17D0C6
+  .text:0017CB68                 mov     eax, ds:gSkyTexNumber+10h
+  .text:0017CB6D                 test    eax, eax
+  .text:0017CB6F                 jnz     loc_17D0F0
+  .text:0017CB75                 mov     eax, ds:gSkyTexNumber+14h
+  .text:0017CB7A                 test    eax, eax
+  .text:0017CB7C                 jnz     loc_17D01D
+  .text:0017CB82                 mov     eax, [esp+0CCh+var_20]
+  .text:0017CB89                 xor     eax, large gs:14h
+  .text:0017CB90                 jnz     loc_17D1D2
+  .text:0017CB96                 add     esp, 0BCh
+  .text:0017CB9C                 pop     ebx
+  .text:0017CB9D                 pop     esi
+  .text:0017CB9E                 pop     edi
+  .text:0017CB9F                 pop     ebp
+  .text:0017CBA0                 retn
+  .text:0017CBA1                 mov     esi, ds:qglColorTableEXT
+  .text:0017CBA7                 test    esi, esi
+  .text:0017CBA9                 jz      short loc_17CBC5
+  .text:0017CBAB                 fld     gl_palette_tex.value
+  .text:0017CBB1                 fldz
+  .text:0017CBB3                 fxch    st(1)
+  .text:0017CBB5                 fucomip st, st(1)
+  .text:0017CBB7                 fstp    st
+  .text:0017CBB9                 jp      loc_17D170
+  .text:0017CBBF                 jnz     loc_17D170
+  .text:0017CBC5                 mov     ecx, 1
+  .text:0017CBCA                 mov     [esp+0CCh+skipBMP], ecx
+  .text:0017CBCE                 ; size
+  .text:0017CBCE                 mov     [esp+0CCh+size], offset stru_40000; size
+  .text:0017CBD5                 lea     edi, [esp+0CCh+name]
+  .text:0017CBD9                 call    Mem_Malloc
+  .text:0017CBDE                 xor     edx, edx
+  .text:0017CBE0                 mov     [esp+0CCh+printed], edx
+  .text:0017CBE4                 mov     ebp, eax
+  .text:0017CBE6                 lea     ebx, stru_40000.r_offset[buffer]
+  .text:0017CBEC                 xor     esi, esi
+  .text:0017CBEE                 xchg    ax, ax
+  .text:0017CBF0                 mov     eax, suf[i*4]
+  .text:0017CBF7                 mov     [esp+0CCh+size], edi
+  .text:0017CBFA                 mov     [esp+0CCh+var_B4], eax
+  .text:0017CBFE                 mov     eax, offset movevars.skyName
+  .text:0017CC03                 mov     [esp+0CCh+errFail], eax
+  .text:0017CC07                 mov     eax, offset aGfxEnvSSBmp; "gfx/env/%s%s.bmp"
+  .text:0017CC0C                 mov     [esp+0CCh+height], eax
+  .text:0017CC10                 mov     eax, 40h ; '@'
+  .text:0017CC15                 mov     [esp+0CCh+width], eax
+  .text:0017CC19                 mov     eax, 1
+  .text:0017CC1E                 mov     [esp+0CCh+bufferSize], eax
+  .text:0017CC22                 mov     eax, 40h ; '@'
+  .text:0017CC27                 mov     [esp+0CCh+var_C8], eax
+  .text:0017CC2B                 call    __snprintf_chk
+  .text:0017CC30                 mov     eax, [esp+0CCh+skipBMP]
+  .text:0017CC34                 test    eax, eax
+  .text:0017CC36                 jz      loc_17CE58
+  .text:0017CC3C                 mov     eax, suf[i*4]
+  .text:0017CC43                 mov     ecx, offset movevars.skyName
+  .text:0017CC48                 mov     [esp+0CCh+errFail], ecx
+  .text:0017CC4C                 mov     [esp+0CCh+size], edi
+  .text:0017CC4F                 mov     [esp+0CCh+var_B4], eax
+  .text:0017CC53                 mov     eax, offset aGfxEnvSSTga; "gfx/env/%s%s.tga"
+  .text:0017CC58                 mov     [esp+0CCh+height], eax
+  .text:0017CC5C                 mov     eax, 40h ; '@'
+  .text:0017CC61                 mov     [esp+0CCh+width], eax
+  .text:0017CC65                 mov     eax, 1
+  .text:0017CC6A                 mov     [esp+0CCh+bufferSize], eax
+  .text:0017CC6E                 mov     eax, 40h ; '@'
+  .text:0017CC73                 mov     [esp+0CCh+var_C8], eax
+  .text:0017CC77                 call    __snprintf_chk
+  .text:0017CC7C                 xor     eax, eax
+  .text:0017CC7E                 xor     edx, edx
+  .text:0017CC80                 ; errFail
+  .text:0017CC80                 mov     [esp+0CCh+errFail], eax; errFail
+  .text:0017CC84                 mov     ecx, offset stru_40000
+  .text:0017CC89                 xor     eax, eax
+  .text:0017CC8B                 ; height
+  .text:0017CC8B                 mov     [esp+0CCh+height], eax; height
+  .text:0017CC8F                 ; width
+  .text:0017CC8F                 mov     [esp+0CCh+width], edx; width
+  .text:0017CC93                 ; bufferSize
+  .text:0017CC93                 mov     [esp+0CCh+bufferSize], ecx; bufferSize
+  .text:0017CC97                 ; buffer
+  .text:0017CC97                 mov     [esp+0CCh+var_C8], buffer; buffer
+  .text:0017CC9B                 ; szFilename
+  .text:0017CC9B                 mov     [esp+0CCh+size], edi; szFilename
+  .text:0017CC9E                 call    LoadTGA2
+  .text:0017CCA3                 test    eax, eax
+  .text:0017CCA5                 jz      loc_17CFC5
+  .text:0017CCAB                 fld     gl_dither.value
+  .text:0017CCB1                 fldz
+  .text:0017CCB3                 fxch    st(1)
+  .text:0017CCB5                 fucomip st, st(1)
+  .text:0017CCB7                 fstp    st
+  .text:0017CCB9                 jp      short loc_17CCBD
+  .text:0017CCBB                 jz      short loc_17CD24
+  .text:0017CCBD                 mov     eax, buffer
+  .text:0017CCBF                 nop
+  .text:0017CCC0                 movzx   edx, byte ptr [eax]
+  .text:0017CCC3                 cmp     dl, 0FBh
+  .text:0017CCC6                 ja      short loc_17CCDD
+  .text:0017CCC8                 mov     cl, dl
+  .text:0017CCCA                 shr     cl, 6
+  .text:0017CCCD                 or      dl, cl
+  .text:0017CCCF                 mov     [eax], dl
+  .text:0017CCD1                 movzx   edx, dl
+  .text:0017CCD4                 movzx   edx, ds:texgammatable[edx]
+  .text:0017CCDB                 mov     [eax], dl
+  .text:0017CCDD                 movzx   edx, byte ptr [eax+1]
+  .text:0017CCE1                 cmp     dl, 0FBh
+  .text:0017CCE4                 ja      short loc_17CCFD
+  .text:0017CCE6                 mov     cl, dl
+  .text:0017CCE8                 shr     cl, 6
+  .text:0017CCEB                 or      dl, cl
+  .text:0017CCED                 mov     [eax+1], dl
+  .text:0017CCF0                 movzx   edx, dl
+  .text:0017CCF3                 movzx   edx, ds:texgammatable[edx]
+  .text:0017CCFA                 mov     [eax+1], dl
+  .text:0017CCFD                 movzx   edx, byte ptr [eax+2]
+  .text:0017CD01                 cmp     dl, 0FBh
+  .text:0017CD04                 ja      short loc_17CD1D
+  .text:0017CD06                 mov     cl, dl
+  .text:0017CD08                 shr     cl, 6
+  .text:0017CD0B                 or      dl, cl
+  .text:0017CD0D                 mov     [eax+2], dl
+  .text:0017CD10                 movzx   edx, dl
+  .text:0017CD13                 movzx   edx, ds:texgammatable[edx]
+  .text:0017CD1A                 mov     [eax+2], dl
+  .text:0017CD1D                 add     eax, 4
+  .text:0017CD20                 cmp     eax, ebx
+  .text:0017CD22                 jnz     short loc_17CCC0
+  .text:0017CD24                 mov     eax, ds:gSkyTexNumber[i*4]
+  .text:0017CD2B                 test    eax, eax
+  .text:0017CD2D                 jz      loc_17CFEB
+  .text:0017CD33                 ; texnum
+  .text:0017CD33                 mov     [esp+0CCh+size], eax; texnum
+  .text:0017CD36                 call    GL_Bind
+  .text:0017CD3B                 lea     eax, [esp+0CCh+bpp]
+  .text:0017CD3F                 ; bpp
+  .text:0017CD3F                 mov     [esp+0CCh+bufferSize], eax; bpp
+  .text:0017CD43                 lea     eax, [esp+0CCh+h]
+  .text:0017CD47                 ; tall
+  .text:0017CD47                 mov     [esp+0CCh+var_C8], eax; tall
+  .text:0017CD4B                 lea     eax, [esp+0CCh+w]
+  .text:0017CD4F                 ; wide
+  .text:0017CD4F                 mov     [esp+0CCh+size], eax; wide
+  .text:0017CD52                 call    VideoMode_GetCurrentVideoMode
+  .text:0017CD57                 mov     eax, 0
+  .text:0017CD5C                 mov     edx, 1401h
+  .text:0017CD61                 cmp     [esp+0CCh+bpp], 20h ; ' '
+  .text:0017CD66                 mov     ecx, 1908h
+  .text:0017CD6B                 ; GLint
+  .text:0017CD6B                 mov     [esp+0CCh+errFail], eax; GLint
+  .text:0017CD6F                 mov     eax, 100h
+  .text:0017CD74                 ; GLsizei
+  .text:0017CD74                 mov     [esp+0CCh+height], eax; GLsizei
+  .text:0017CD78                 mov     eax, 100h
+  .text:0017CD7D                 ; GLvoid *
+  .text:0017CD7D                 mov     [esp+0CCh+var_AC], buffer; GLvoid *
+  .text:0017CD81                 ; GLenum
+  .text:0017CD81                 mov     [esp+0CCh+var_B0], edx; GLenum
+  .text:0017CD85                 ; GLenum
+  .text:0017CD85                 mov     [esp+0CCh+var_B4], ecx; GLenum
+  .text:0017CD89                 ; GLsizei
+  .text:0017CD89                 mov     [esp+0CCh+width], eax; GLsizei
+  .text:0017CD8D                 jz      loc_17CFFC
+  .text:0017CD93                 mov     eax, 8057h
+  .text:0017CD98                 ; GLint
+  .text:0017CD98                 mov     [esp+0CCh+bufferSize], eax; GLint
+  .text:0017CD9C                 xor     eax, eax
+  .text:0017CD9E                 ; GLint
+  .text:0017CD9E                 mov     [esp+0CCh+var_C8], eax; GLint
+  .text:0017CDA2                 ; GLenum
+  .text:0017CDA2                 mov     [esp+0CCh+size], 0DE1h; GLenum
+  .text:0017CDA9                 call    ds:qglTexImage2D
+  .text:0017CDAF                 mov     ecx, 2801h
+  .text:0017CDB4                 ; GLenum
+  .text:0017CDB4                 mov     [esp+0CCh+var_C8], ecx; GLenum
+  .text:0017CDB8                 ; GLfloat
+  .text:0017CDB8                 mov     [esp+0CCh+bufferSize], 46180400h; GLfloat
+  .text:0017CDC0                 ; GLenum
+  .text:0017CDC0                 mov     [esp+0CCh+size], 0DE1h; GLenum
+  .text:0017CDC7                 call    ds:qglTexParameterf
+  .text:0017CDCD                 mov     eax, 2800h
+  .text:0017CDD2                 ; GLenum
+  .text:0017CDD2                 mov     [esp+0CCh+var_C8], eax; GLenum
+  .text:0017CDD6                 ; GLfloat
+  .text:0017CDD6                 mov     [esp+0CCh+bufferSize], 46180400h; GLfloat
+  .text:0017CDDE                 ; GLenum
+  .text:0017CDDE                 mov     [esp+0CCh+size], 0DE1h; GLenum
+  .text:0017CDE5                 call    ds:qglTexParameterf
+  .text:0017CDEB                 mov     eax, [esp+0CCh+printed]
+  .text:0017CDEF                 test    eax, eax
+  .text:0017CDF1                 jz      loc_17D19D
+  .text:0017CDF7                 mov     eax, 1
+  .text:0017CDFC                 mov     [esp+0CCh+skipBMP], eax
+  .text:0017CE00                 mov     eax, suf[i*4]
+  .text:0017CE07                 mov     ecx, offset movevars.skyName
+  .text:0017CE0C                 mov     [esp+0CCh+var_C8], ecx
+  .text:0017CE10                 mov     [esp+0CCh+size], offset aSS; "%s%s, "
+  .text:0017CE17                 mov     [esp+0CCh+bufferSize], eax
+  .text:0017CE1B                 call    Con_DPrintf
+  .text:0017CE20                 inc     i
+  .text:0017CE21                 cmp     i, 6
+  .text:0017CE24                 jnz     loc_17CBF0
+  .text:0017CE2A                 mov     edx, [esp+0CCh+printed]
+  .text:0017CE2E                 test    edx, edx
+  .text:0017CE30                 jz      short loc_17CE3E
+  .text:0017CE32                 mov     [esp+0CCh+size], offset aDone_0; "done\n"
+  .text:0017CE39                 call    Con_DPrintf
+  .text:0017CE3E                 ; p
+  .text:0017CE3E                 mov     [esp+0CCh+size], buffer; p
+  .text:0017CE41                 call    Mem_Free
+  .text:0017CE46                 xor     eax, eax
+  .text:0017CE48                 mov     ds:gLoadSky, eax
+  .text:0017CE4D                 jmp     loc_17CB82
+  .text:0017CE58                 mov     ecx, offset aRb; "rb"
+  .text:0017CE5D                 ; pOptions
+  .text:0017CE5D                 mov     [esp+0CCh+var_C8], ecx; pOptions
+  .text:0017CE61                 ; pFileName
+  .text:0017CE61                 mov     [esp+0CCh+size], edi; pFileName
+  .text:0017CE64                 call    FS_Open
+  .text:0017CE69                 test    hFile, hFile
+  .text:0017CE6B                 jz      loc_17CC3C
+  .text:0017CE71                 lea     edx, [esp+0CCh+bmpHeight]
+  .text:0017CE75                 ; nHeight
+  .text:0017CE75                 mov     [esp+0CCh+errFail], edx; nHeight
+  .text:0017CE79                 lea     edx, [esp+0CCh+bmpWidth]
+  .text:0017CE7D                 ; nWidth
+  .text:0017CE7D                 mov     [esp+0CCh+height], edx; nWidth
+  .text:0017CE81                 lea     edx, [esp+0CCh+pImage]
+  .text:0017CE85                 ; pImage
+  .text:0017CE85                 mov     [esp+0CCh+width], edx; pImage
+  .text:0017CE89                 lea     edx, [esp+0CCh+palCount]
+  .text:0017CE8D                 ; nPalette
+  .text:0017CE8D                 mov     [esp+0CCh+bufferSize], edx; nPalette
+  .text:0017CE91                 lea     edx, [esp+0CCh+packPalette]
+  .text:0017CE95                 ; pPalette
+  .text:0017CE95                 mov     [esp+0CCh+var_C8], edx; pPalette
+  .text:0017CE99                 ; hFile
+  .text:0017CE99                 mov     [esp+0CCh+size], hFile; hFile
+  .text:0017CE9C                 call    LoadBMP8
+  .text:0017CEA1                 mov     eax, [esp+0CCh+bmpWidth]
+  .text:0017CEA5                 mov     edx, [esp+0CCh+bmpHeight]
+  .text:0017CEA9                 imul    eax, edx
+  .text:0017CEAC                 test    eax, eax
+  .text:0017CEAE                 jle     loc_17CC3C
+  .text:0017CEB4                 mov     eax, 1
+  .text:0017CEB9                 ; isSky
+  .text:0017CEB9                 mov     [esp+0CCh+var_C8], eax; isSky
+  .text:0017CEBD                 mov     eax, [esp+0CCh+packPalette]
+  .text:0017CEC1                 ; pPal
+  .text:0017CEC1                 mov     [esp+0CCh+size], eax; pPal
+  .text:0017CEC4                 call    GL_PaletteAdd
+  .text:0017CEC9                 test    ax, 8000h
+  .text:0017CECD                 jnz     loc_17D180
+  .text:0017CED3                 mov     eax, ds:gSkyTexNumber[i*4]
+  .text:0017CEDA                 test    eax, eax
+  .text:0017CEDC                 jz      loc_17D11F
+  .text:0017CEE2                 ; texnum
+  .text:0017CEE2                 mov     [esp+0CCh+size], eax; texnum
+  .text:0017CEE5                 call    GL_Bind
+  .text:0017CEEA                 mov     eax, [esp+0CCh+pImage]
+  .text:0017CEEE                 xor     edx, edx
+  .text:0017CEF0                 ; GLint
+  .text:0017CEF0                 mov     [esp+0CCh+var_C8], edx; GLint
+  .text:0017CEF4                 ; GLenum
+  .text:0017CEF4                 mov     [esp+0CCh+size], 0DE1h; GLenum
+  .text:0017CEFB                 ; GLvoid *
+  .text:0017CEFB                 mov     [esp+0CCh+var_AC], eax; GLvoid *
+  .text:0017CEFF                 mov     eax, 1401h
+  .text:0017CF04                 ; GLenum
+  .text:0017CF04                 mov     [esp+0CCh+var_B0], eax; GLenum
+  .text:0017CF08                 mov     eax, 1900h
+  .text:0017CF0D                 ; GLenum
+  .text:0017CF0D                 mov     [esp+0CCh+var_B4], eax; GLenum
+  .text:0017CF11                 xor     eax, eax
+  .text:0017CF13                 ; GLint
+  .text:0017CF13                 mov     [esp+0CCh+errFail], eax; GLint
+  .text:0017CF17                 mov     eax, 100h
+  .text:0017CF1C                 ; GLsizei
+  .text:0017CF1C                 mov     [esp+0CCh+height], eax; GLsizei
+  .text:0017CF20                 mov     eax, 100h
+  .text:0017CF25                 ; GLsizei
+  .text:0017CF25                 mov     [esp+0CCh+width], eax; GLsizei
+  .text:0017CF29                 mov     eax, 80E5h
+  .text:0017CF2E                 ; GLint
+  .text:0017CF2E                 mov     [esp+0CCh+bufferSize], eax; GLint
+  .text:0017CF32                 call    ds:qglTexImage2D
+  .text:0017CF38                 mov     eax, [esp+0CCh+pImage]
+  .text:0017CF3C                 ; p
+  .text:0017CF3C                 mov     [esp+0CCh+size], eax; p
+  .text:0017CF3F                 call    Mem_Free
+  .text:0017CF44                 mov     eax, [esp+0CCh+packPalette]
+  .text:0017CF48                 ; p
+  .text:0017CF48                 mov     [esp+0CCh+size], eax; p
+  .text:0017CF4B                 call    Mem_Free
+  .text:0017CF50                 mov     ecx, 2801h
+  .text:0017CF55                 ; GLenum
+  .text:0017CF55                 mov     [esp+0CCh+var_C8], ecx; GLenum
+  .text:0017CF59                 ; GLfloat
+  .text:0017CF59                 mov     [esp+0CCh+bufferSize], 46180400h; GLfloat
+  .text:0017CF61                 ; GLenum
+  .text:0017CF61                 mov     [esp+0CCh+size], 0DE1h; GLenum
+  .text:0017CF68                 call    ds:qglTexParameterf
+  .text:0017CF6E                 mov     eax, 2800h
+  .text:0017CF73                 ; GLenum
+  .text:0017CF73                 mov     [esp+0CCh+var_C8], eax; GLenum
+  .text:0017CF77                 ; GLfloat
+  .text:0017CF77                 mov     [esp+0CCh+bufferSize], 46180400h; GLfloat
+  .text:0017CF7F                 ; GLenum
+  .text:0017CF7F                 mov     [esp+0CCh+size], 0DE1h; GLenum
+  .text:0017CF86                 call    ds:qglTexParameterf
+  .text:0017CF8C                 mov     eax, [esp+0CCh+printed]
+  .text:0017CF90                 test    eax, eax
+  .text:0017CF92                 jz      loc_17D1D7
+  .text:0017CF98                 nop
+  .text:0017CF99                 lea     i, [i+0]
+  .text:0017CFA0                 mov     eax, suf[i*4]
+  .text:0017CFA7                 mov     [esp+0CCh+size], offset aSSPaletted; "%s%s - paletted, "
+  .text:0017CFAE                 mov     [esp+0CCh+bufferSize], eax
+  .text:0017CFB2                 mov     eax, offset movevars.skyName
+  .text:0017CFB7                 mov     [esp+0CCh+var_C8], eax
+  .text:0017CFBB                 call    Con_DPrintf
+  .text:0017CFC0                 jmp     loc_17CE20
+  .text:0017CFC5                 mov     [esp+0CCh+var_C8], edi
+  .text:0017CFC9                 mov     [esp+0CCh+size], offset aRLoadskysCould; "R_LoadSkys: Couldn't load %s\n"
+  .text:0017CFD0                 call    Con_Printf
+  .text:0017CFD5                 test    i, i
+  .text:0017CFD7                 jz      loc_17D130
+  .text:0017CFDD                 mov     eax, 1
+  .text:0017CFE2                 mov     [esp+0CCh+skipBMP], eax
+  .text:0017CFE6                 jmp     loc_17CE20
+  .text:0017CFEB                 call    GL_GenTexture
+  .text:0017CFF0                 mov     ds:gSkyTexNumber[i*4], eax
+  .text:0017CFF7                 jmp     loc_17CD33
+  .text:0017CFFC                 mov     eax, 8058h
+  .text:0017D001                 ; GLint
+  .text:0017D001                 mov     [esp+0CCh+bufferSize], eax; GLint
+  .text:0017D005                 xor     eax, eax
+  .text:0017D007                 ; GLint
+  .text:0017D007                 mov     [esp+0CCh+var_C8], eax; GLint
+  .text:0017D00B                 ; GLenum
+  .text:0017D00B                 mov     [esp+0CCh+size], 0DE1h; GLenum
+  .text:0017D012                 call    ds:qglTexImage2D
+  .text:0017D018                 jmp     loc_17CDAF
+  .text:0017D01D                 mov     edi, (offset gSkyTexNumber+14h)
+  .text:0017D022                 xor     ebp, ebp
+  .text:0017D024                 ; GLuint *
+  .text:0017D024                 mov     [esp+0CCh+var_C8], edi; GLuint *
+  .text:0017D028                 ; GLsizei
+  .text:0017D028                 mov     [esp+0CCh+size], 1; GLsizei
+  .text:0017D02F                 call    ds:qglDeleteTextures
+  .text:0017D035                 mov     ds:gSkyTexNumber+14h, ebp
+  .text:0017D03B                 jmp     loc_17CB82
+  .text:0017D040                 mov     edi, (offset gSkyTexNumber+4)
+  .text:0017D045                 xor     ebp, ebp
+  .text:0017D047                 ; GLuint *
+  .text:0017D047                 mov     [esp+0CCh+var_C8], edi; GLuint *
+  .text:0017D04B                 ; GLsizei
+  .text:0017D04B                 mov     [esp+0CCh+size], 1; GLsizei
+  .text:0017D052                 call    ds:qglDeleteTextures
+  .text:0017D058                 mov     esi, ds:gSkyTexNumber+8
+  .text:0017D05E                 mov     ds:gSkyTexNumber+4, ebp
+  .text:0017D064                 test    esi, esi
+  .text:0017D066                 jz      loc_17CB5A
+  .text:0017D06C                 jmp     short loc_17D09A
+  .text:0017D06E                 mov     eax, offset gSkyTexNumber
+  .text:0017D073                 ; GLuint *
+  .text:0017D073                 mov     [esp+0CCh+var_C8], eax; GLuint *
+  .text:0017D077                 ; GLsizei
+  .text:0017D077                 mov     [esp+0CCh+size], 1; GLsizei
+  .text:0017D07E                 call    ds:qglDeleteTextures
+  .text:0017D084                 xor     eax, eax
+  .text:0017D086                 mov     ds:gSkyTexNumber, eax
+  .text:0017D08B                 mov     eax, ds:gSkyTexNumber+4
+  .text:0017D090                 test    eax, eax
+  .text:0017D092                 jz      loc_17CB4C
+  .text:0017D098                 jmp     short loc_17D040
+  .text:0017D09A                 mov     ecx, (offset gSkyTexNumber+8)
+  .text:0017D09F                 xor     ebx, ebx
+  .text:0017D0A1                 ; GLuint *
+  .text:0017D0A1                 mov     [esp+0CCh+var_C8], ecx; GLuint *
+  .text:0017D0A5                 ; GLsizei
+  .text:0017D0A5                 mov     [esp+0CCh+size], 1; GLsizei
+  .text:0017D0AC                 call    ds:qglDeleteTextures
+  .text:0017D0B2                 mov     edx, ds:gSkyTexNumber+0Ch
+  .text:0017D0B8                 mov     ds:gSkyTexNumber+8, ebx
+  .text:0017D0BE                 test    edx, edx
+  .text:0017D0C0                 jz      loc_17CB68
+  .text:0017D0C6                 mov     eax, (offset gSkyTexNumber+0Ch)
+  .text:0017D0CB                 ; GLuint *
+  .text:0017D0CB                 mov     [esp+0CCh+var_C8], eax; GLuint *
+  .text:0017D0CF                 ; GLsizei
+  .text:0017D0CF                 mov     [esp+0CCh+size], 1; GLsizei
+  .text:0017D0D6                 call    ds:qglDeleteTextures
+  .text:0017D0DC                 xor     eax, eax
+  .text:0017D0DE                 mov     ds:gSkyTexNumber+0Ch, eax
+  .text:0017D0E3                 mov     eax, ds:gSkyTexNumber+10h
+  .text:0017D0E8                 test    eax, eax
+  .text:0017D0EA                 jz      loc_17CB75
+  .text:0017D0F0                 mov     eax, (offset gSkyTexNumber+10h)
+  .text:0017D0F5                 ; GLuint *
+  .text:0017D0F5                 mov     [esp+0CCh+var_C8], eax; GLuint *
+  .text:0017D0F9                 ; GLsizei
+  .text:0017D0F9                 mov     [esp+0CCh+size], 1; GLsizei
+  .text:0017D100                 call    ds:qglDeleteTextures
+  .text:0017D106                 xor     eax, eax
+  .text:0017D108                 mov     ds:gSkyTexNumber+10h, eax
+  .text:0017D10D                 mov     eax, ds:gSkyTexNumber+14h
+  .text:0017D112                 test    eax, eax
+  .text:0017D114                 jz      loc_17CB82
+  .text:0017D11A                 jmp     loc_17D01D
+  .text:0017D11F                 call    GL_GenTexture
+  .text:0017D124                 mov     ds:gSkyTexNumber[i*4], eax
+  .text:0017D12B                 jmp     loc_17CEE2
+  .text:0017D130                 mov     edx, offset aDesert; "desert"
+  .text:0017D135                 ; s2
+  .text:0017D135                 mov     [esp+0CCh+var_C8], edx; s2
+  .text:0017D139                 ; s1
+  .text:0017D139                 mov     [esp+0CCh+size], offset movevars.skyName; s1
+  .text:0017D140                 call    Q_strcmp
+  .text:0017D145                 test    eax, eax
+  .text:0017D147                 jz      loc_17CFDD
+  .text:0017D14D                 mov     eax, offset aDesert; "desert"
+  .text:0017D152                 ; src
+  .text:0017D152                 mov     [esp+0CCh+var_C8], eax; src
+  .text:0017D156                 ; dest
+  .text:0017D156                 mov     [esp+0CCh+size], offset movevars.skyName; dest
+  .text:0017D15D                 call    Q_strcpy
+  .text:0017D162                 mov     eax, 1
+  .text:0017D167                 mov     [esp+0CCh+skipBMP], eax
+  .text:0017D16B                 jmp     retry
+  .text:0017D170                 xor     ebx, ebx
+  .text:0017D172                 call    GL_PaletteClearSky
+  .text:0017D177                 mov     [esp+0CCh+skipBMP], ebx
+  .text:0017D17B                 jmp     loc_17CBCE
+  .text:0017D180                 mov     eax, [esp+0CCh+pImage]
+  .text:0017D184                 ; p
+  .text:0017D184                 mov     [esp+0CCh+size], eax; p
+  .text:0017D187                 call    Mem_Free
+  .text:0017D18C                 mov     eax, [esp+0CCh+packPalette]
+  .text:0017D190                 ; p
+  .text:0017D190                 mov     [esp+0CCh+size], eax; p
+  .text:0017D193                 call    Mem_Free
+  .text:0017D198                 jmp     loc_17CC3C
+  .text:0017D19D                 xor     eax, eax
+  .text:0017D19F                 mov     edx, 1
+  .text:0017D1A4                 mov     [esp+0CCh+printed], eax
+  .text:0017D1A8                 mov     [esp+0CCh+skipBMP], edx
+  .text:0017D1AC                 mov     [esp+0CCh+size], offset aSky; "SKY:  "
+  .text:0017D1B3                 call    Con_DPrintf
+  .text:0017D1B8                 mov     eax, [esp+0CCh+printed]
+  .text:0017D1BC                 test    eax, eax
+  .text:0017D1BE                 mov     eax, 1
+  .text:0017D1C3                 mov     [esp+0CCh+printed], eax
+  .text:0017D1C7                 jnz     loc_17CFA0
+  .text:0017D1CD                 jmp     loc_17CE00
+  .text:0017D1D2                 call    __stack_chk_fail
+  .text:0017D1D7                 mov     eax, 1
+  .text:0017D1DC                 mov     [esp+0CCh+printed], eax
+  .text:0017D1E0                 jmp     short loc_17D1AC
+procedure: |-
+  void R_LoadSkys()
+  {
+    unsigned __int8 *v0; // ebp
+    int i; // esi
+    unsigned __int8 *v2; // eax
+    unsigned __int8 v3; // dl
+    unsigned __int8 v4; // dl
+    unsigned __int8 v5; // dl
+    unsigned __int8 v6; // dl
+    unsigned __int8 v7; // dl
+    int v8; // eax
+    FileHandle_t v9; // eax
+    int v10; // eax
+    bool v11; // zf
+    int skipBMP; // [esp+38h] [ebp-94h]
+    qboolean_0 printed; // [esp+3Ch] [ebp-90h]
+    qboolean_0 printeda; // [esp+3Ch] [ebp-90h]
+    int palCount; // [esp+4Ch] [ebp-80h] BYREF
+    int bmpWidth; // [esp+50h] [ebp-7Ch] BYREF
+    int bmpHeight; // [esp+54h] [ebp-78h] BYREF
+    byte *packPalette; // [esp+58h] [ebp-74h] BYREF
+    byte *pImage; // [esp+5Ch] [ebp-70h] BYREF
+    int w; // [esp+60h] [ebp-6Ch] BYREF
+    int h; // [esp+64h] [ebp-68h] BYREF
+    int bpp; // [esp+68h] [ebp-64h] BYREF
+    char name[64]; // [esp+6Ch] [ebp-60h] BYREF
+    unsigned int v24; // [esp+ACh] [ebp-20h]
+  
+    v24 = __readgsdword(0x14u);
+    if ( !gLoadSky )
+    {
+      if ( gSkyTexNumber )
+      {
+        qglDeleteTextures(1, &gSkyTexNumber);
+        gSkyTexNumber = 0;
+        if ( !*(&gSkyTexNumber + 1) )
+        {
+  LABEL_4:
+          if ( !*(&gSkyTexNumber + 2) )
+            goto LABEL_5;
+          goto LABEL_51;
+        }
+      }
+      else if ( !*(&gSkyTexNumber + 1) )
+      {
+        goto LABEL_4;
+      }
+      qglDeleteTextures(1, &gSkyTexNumber + 1);
+      *(&gSkyTexNumber + 1) = 0;
+      if ( !*(&gSkyTexNumber + 2) )
+      {
+  LABEL_5:
+        if ( !*(&gSkyTexNumber + 3) )
+          goto LABEL_6;
+        goto LABEL_52;
+      }
+  LABEL_51:
+      qglDeleteTextures(1, &gSkyTexNumber + 2);
+      *(&gSkyTexNumber + 2) = 0;
+      if ( !*(&gSkyTexNumber + 3) )
+      {
+  LABEL_6:
+        if ( !*(&gSkyTexNumber + 4) )
+          goto LABEL_7;
+        goto LABEL_53;
+      }
+  LABEL_52:
+      qglDeleteTextures(1, &gSkyTexNumber + 3);
+      *(&gSkyTexNumber + 3) = 0;
+      if ( !*(&gSkyTexNumber + 4) )
+      {
+  LABEL_7:
+        if ( !*(&gSkyTexNumber + 5) )
+          return;
+        goto LABEL_46;
+      }
+  LABEL_53:
+      qglDeleteTextures(1, &gSkyTexNumber + 4);
+      *(&gSkyTexNumber + 4) = 0;
+      if ( !*(&gSkyTexNumber + 5) )
+        return;
+  LABEL_46:
+      qglDeleteTextures(1, &gSkyTexNumber + 5);
+      *(&gSkyTexNumber + 5) = 0;
+      return;
+    }
+    if ( qglColorTableEXT && gl_palette_tex.value != 0.0 )
+    {
+      GL_PaletteClearSky();
+      skipBMP = 0;
+    }
+    else
+    {
+      skipBMP = 1;
+    }
+    printed = false;
+    v0 = (unsigned __int8 *)Mem_Malloc((size_t)&stru_40000);
+  retry:
+    for ( i = 0; i != 6; ++i )
+    {
+      _snprintf_chk(name, 64, 1, 64, "gfx/env/%s%s.bmp", movevars.skyName, suf[i]);
+      if ( !skipBMP )
+      {
+        v9 = FS_Open(name, "rb");
+        if ( v9 )
+        {
+          LoadBMP8(v9, &packPalette, &palCount, &pImage, &bmpWidth, &bmpHeight);
+          if ( bmpHeight * bmpWidth > 0 )
+          {
+            if ( GL_PaletteAdd(packPalette, true) >= 0 )
+            {
+              v10 = *(&gSkyTexNumber + i);
+              if ( !v10 )
+              {
+                v10 = GL_GenTexture();
+                *(&gSkyTexNumber + i) = v10;
+              }
+              GL_Bind(v10);
+              qglTexImage2D(0xDE1u, 0, 32997, 256, 256, 0, 0x1900u, 0x1401u, pImage);
+              Mem_Free(pImage);
+              Mem_Free(packPalette);
+              qglTexParameterf(0xDE1u, 0x2801u, 9729.0);
+              qglTexParameterf(0xDE1u, 0x2800u, 9729.0);
+              if ( printed )
+              {
+  LABEL_42:
+                Con_DPrintf("%s%s - paletted, ", movevars.skyName, suf[i]);
+                continue;
+              }
+              printeda = true;
+  LABEL_60:
+              Con_DPrintf("SKY:  ");
+              v11 = printeda == false;
+              printed = true;
+              if ( v11 )
+                goto LABEL_31;
+              goto LABEL_42;
+            }
+            Mem_Free(pImage);
+            Mem_Free(packPalette);
+          }
+        }
+      }
+      _snprintf_chk(name, 64, 1, 64, "gfx/env/%s%s.tga", movevars.skyName, suf[i]);
+      if ( LoadTGA2(name, v0, (int)&stru_40000, nullptr, nullptr, 0) )
+      {
+        if ( gl_dither.value != 0.0 )
+        {
+          v2 = v0;
+          do
+          {
+            if ( *v2 <= 0xFBu )
+            {
+              v3 = (*v2 >> 6) | *v2;
+              *v2 = v3;
+              *v2 = texgammatable[v3];
+            }
+            v4 = v2[1];
+            if ( v4 <= 0xFBu )
+            {
+              v5 = (v4 >> 6) | v4;
+              v2[1] = v5;
+              v2[1] = texgammatable[v5];
+            }
+            v6 = v2[2];
+            if ( v6 <= 0xFBu )
+            {
+              v7 = (v6 >> 6) | v6;
+              v2[2] = v7;
+              v2[2] = texgammatable[v7];
+            }
+            v2 += 4;
+          }
+          while ( v2 != (unsigned __int8 *)&stru_40000 + (_DWORD)v0 );
+        }
+        v8 = *(&gSkyTexNumber + i);
+        if ( !v8 )
+        {
+          v8 = GL_GenTexture();
+          *(&gSkyTexNumber + i) = v8;
+        }
+        GL_Bind(v8);
+        VideoMode_GetCurrentVideoMode(&w, &h, &bpp);
+        if ( bpp == 32 )
+          qglTexImage2D(0xDE1u, 0, 32856, 256, 256, 0, 0x1908u, 0x1401u, v0);
+        else
+          qglTexImage2D(0xDE1u, 0, 32855, 256, 256, 0, 0x1908u, 0x1401u, v0);
+        qglTexParameterf(0xDE1u, 0x2801u, 9729.0);
+        qglTexParameterf(0xDE1u, 0x2800u, 9729.0);
+        if ( printed )
+        {
+          skipBMP = 1;
+  LABEL_31:
+          Con_DPrintf("%s%s, ", movevars.skyName, suf[i]);
+          continue;
+        }
+        printeda = false;
+        skipBMP = 1;
+        goto LABEL_60;
+      }
+      Con_Printf("R_LoadSkys: Couldn't load %s\n", name);
+      if ( !i && Q_strcmp(movevars.skyName, "desert") )
+      {
+        Q_strcpy(movevars.skyName, "desert");
+        skipBMP = 1;
+        goto retry;
+      }
+      skipBMP = 1;
+    }
+    if ( printed )
+      Con_DPrintf("done\n");
+    Mem_Free(v0);
+    gLoadSky = 0;
+  }
