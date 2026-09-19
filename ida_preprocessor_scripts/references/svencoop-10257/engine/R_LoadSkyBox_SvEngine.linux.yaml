@@ -1,0 +1,119 @@
+func_name: "R_LoadSkyBox_SvEngine"
+func_va: "0x1499e0"
+disasm_code: |-
+  .text:001499E0                 sub     esp, 2Ch
+  .text:001499E3                 mov     [esp+2Ch+var_C], ebx
+  .text:001499E7                 call    __x86_get_pc_thunk_bx
+  .text:001499EC                 add     ebx, (offset dbl_2EE000 - $)
+  .text:001499F2                 mov     [esp+2Ch+var_8], esi
+  .text:001499F6                 mov     [esp+2Ch+var_4], edi
+  .text:001499FA                 mov     ecx, ds:(gLoadSky - 2EE000h)[ebx]
+  .text:00149A00                 test    ecx, ecx
+  .text:00149A02                 jnz     short loc_149A18
+  .text:00149A04                 mov     ebx, [esp+2Ch+var_C]
+  .text:00149A08                 mov     esi, [esp+2Ch+var_8]
+  .text:00149A0C                 mov     edi, [esp+2Ch+var_4]
+  .text:00149A10                 add     esp, 2Ch
+  .text:00149A13                 retn
+  .text:00149A18                 lea     esi, (gSkyTexNumber - 2EE000h)[ebx]
+  .text:00149A1E                 lea     edi, (unk_34F81F8 - 2EE000h)[ebx]
+  .text:00149A24                 jmp     short loc_149A37
+  .text:00149A30                 add     esi, 4
+  .text:00149A33                 cmp     esi, edi
+  .text:00149A35                 jz      short loc_149A63
+  .text:00149A37                 mov     eax, [esi]
+  .text:00149A39                 mov     [esp+2Ch+n], eax
+  .text:00149A3C                 call    GL_IsTextureValid
+  .text:00149A41                 test    eax, eax
+  .text:00149A43                 jz      short loc_149A30
+  .text:00149A45                 ; textures
+  .text:00149A45                 mov     [esp+2Ch+textures], esi; textures
+  .text:00149A49                 add     esi, 4
+  .text:00149A4C                 ; n
+  .text:00149A4C                 mov     [esp+2Ch+n], 1; n
+  .text:00149A53                 call    _glDeleteTextures
+  .text:00149A58                 mov     dword ptr [esi-4], 0
+  .text:00149A5F                 cmp     esi, edi
+  .text:00149A61                 jnz     short loc_149A37
+  .text:00149A63                 mov     edx, [esp+2Ch+arg_0]
+  .text:00149A67                 test    edx, edx
+  .text:00149A69                 jz      short loc_149A04
+  .text:00149A6B                 mov     eax, [esp+2Ch+arg_0]
+  .text:00149A6F                 cmp     byte ptr [eax], 0
+  .text:00149A72                 jz      short loc_149A04
+  .text:00149A74                 mov     [esp+2Ch+n], eax
+  .text:00149A77                 call    R_LoadSkyboxInt_SvEngine
+  .text:00149A7C                 test    eax, eax
+  .text:00149A7E                 jnz     short loc_149A04
+  .text:00149A80                 mov     eax, [esp+2Ch+arg_0]
+  .text:00149A84                 lea     esi, (aDesert - 2EE000h)[ebx]; "desert"
+  .text:00149A8A                 mov     [esp+2Ch+textures], esi
+  .text:00149A8E                 mov     [esp+2Ch+n], eax
+  .text:00149A91                 call    Q_strcmp
+  .text:00149A96                 test    eax, eax
+  .text:00149A98                 jnz     short loc_149AD3
+  .text:00149A9A                 lea     eax, (r_missingtexture - 2EE000h)[ebx]
+  .text:00149AA0                 mov     eax, [eax]
+  .text:00149AA2                 mov     eax, [eax+18h]
+  .text:00149AA5                 movd    xmm1, eax
+  .text:00149AA9                 mov     [esp+2Ch+var_10], eax
+  .text:00149AAD                 pshufd  xmm0, xmm1, 0
+  .text:00149AB2                 mov     ds:(gSkyTexNumber+10h - 2EE000h)[ebx], eax
+  .text:00149AB8                 movdqa  xmmword ptr ds:(gSkyTexNumber - 2EE000h)[ebx], xmm0
+  .text:00149AC0                 mov     ds:(gSkyTexNumber+14h - 2EE000h)[ebx], eax
+  .text:00149AC6                 xor     eax, eax
+  .text:00149AC8                 mov     ds:(gLoadSky - 2EE000h)[ebx], eax
+  .text:00149ACE                 jmp     loc_149A04
+  .text:00149AD3                 lea     eax, (unk_464BA0 - 2EE000h)[ebx]
+  .text:00149AD9                 mov     [esp+2Ch+textures], esi
+  .text:00149ADD                 add     eax, 44h ; 'D'
+  .text:00149AE0                 mov     [esp+2Ch+n], eax
+  .text:00149AE3                 call    Q_strcpy
+  .text:00149AE8                 mov     [esp+2Ch+n], esi
+  .text:00149AEB                 call    R_LoadSkyboxInt_SvEngine
+  .text:00149AF0                 test    eax, eax
+  .text:00149AF2                 jz      short loc_149A9A
+  .text:00149AF4                 jmp     loc_149A04
+procedure: |-
+  void __cdecl sub_1499E0(_BYTE *a1)
+  {
+    __int128 *v1; // esi
+    GLuint *textures; // [esp+4h] [ebp-28h]
+  
+    if ( gLoadSky )
+    {
+      v1 = &gSkyTexNumber;
+      do
+      {
+        while ( !GL_IsTextureValid(*(_DWORD *)v1) )
+        {
+          v1 = (__int128 *)((char *)v1 + 4);
+          if ( v1 == (__int128 *)&unk_34F81F8 )
+            goto LABEL_7;
+        }
+        textures = (GLuint *)v1;
+        v1 = (__int128 *)((char *)v1 + 4);
+        glDeleteTextures(1, textures);
+        *((_DWORD *)v1 - 1) = 0;
+      }
+      while ( v1 != (__int128 *)&unk_34F81F8 );
+  LABEL_7:
+      if ( a1 )
+      {
+        if ( *a1 )
+        {
+          if ( !R_LoadSkyboxInt_SvEngine((int)a1) )
+          {
+            if ( !Q_strcmp(a1, "desert")
+              || (Q_strcpy(&movevars_skyName, "desert"), !R_LoadSkyboxInt_SvEngine((int)"desert")) )
+            {
+              MEMORY[0x34F81F0] = *(_DWORD *)(r_missingtexture + 24);
+              gSkyTexNumber = (__int128)_mm_shuffle_epi32(_mm_cvtsi32_si128(MEMORY[0x34F81F0]), 0);
+              MEMORY[0x34F81F4] = MEMORY[0x34F81F0];
+              gLoadSky = 0;
+            }
+          }
+        }
+      }
+    }
+  }

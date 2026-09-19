@@ -689,10 +689,19 @@ modules:
         platform: linux
         expected_output:
           - SkyboxCommand.{platform}.yaml
+      - name: find-R_LoadSkyboxInt_SvEngine
+        expected_output:
+          - R_LoadSkyboxInt_SvEngine.{platform}.yaml
       - name: find-R_LoadSkyBox_SvEngine
         platform: windows
         expected_output:
           - R_LoadSkyBox_SvEngine.{platform}.yaml
+      - name: find-R_LoadSkyBox_SvEngine-decompiles
+        expected_input:
+          - R_LoadSkyBox_SvEngine.{platform}.yaml
+        expected_output:
+          - gLoadSky.{platform}.yaml
+          - gSkyTexNumber.{platform}.yaml
       - name: find-SkyboxCommand-decompiles
         platform: linux
         expected_input:
@@ -1186,6 +1195,12 @@ modules:
         platform: linux
       - name: R_LoadSkyBox_SvEngine
         category: func
+      - name: R_LoadSkyboxInt_SvEngine
+        category: func
+      - name: gLoadSky
+        category: gv
+      - name: gSkyTexNumber
+        category: gv
       - name: Draw_SpriteFrameHoles_SvEngine
         category: func
         platform: windows

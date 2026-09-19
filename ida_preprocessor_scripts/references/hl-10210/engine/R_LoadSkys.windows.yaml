@@ -1,0 +1,486 @@
+func_name: "R_LoadSkys"
+func_va: "0x10251740"
+disasm_code: |-
+  .text:10251740                 push    ebp
+  .text:10251741                 mov     ebp, esp
+  .text:10251743                 sub     esp, 6Ch
+  .text:10251746                 mov     eax, ___security_cookie
+  .text:1025174B                 xor     eax, ebp
+  .text:1025174D                 mov     [ebp+var_4], eax
+  .text:10251750                 cmp     gLoadSky, 0
+  .text:10251757                 push    esi
+  .text:10251758                 mov     [ebp+var_54], 0
+  .text:1025175F                 jnz     short loc_10251794
+  .text:10251761                 mov     esi, offset gSkyTexNumber
+  .text:10251766                 cmp     dword ptr [esi], 0
+  .text:10251769                 jz      short loc_1025177A
+  .text:1025176B                 push    esi
+  .text:1025176C                 push    1
+  .text:1025176E                 call    qglDeleteTextures
+  .text:10251774                 mov     dword ptr [esi], 0
+  .text:1025177A                 add     esi, 4
+  .text:1025177D                 cmp     esi, offset dword_109A6A44
+  .text:10251783                 jl      short loc_10251766
+  .text:10251785                 pop     esi
+  .text:10251786                 mov     ecx, [ebp+var_4]
+  .text:10251789                 ; StackCookie
+  .text:10251789                 xor     ecx, ebp; StackCookie
+  .text:1025178B                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10251790                 mov     esp, ebp
+  .text:10251792                 pop     ebp
+  .text:10251793                 retn
+  .text:10251794                 cmp     qglColorTableEXT, 0
+  .text:1025179B                 xorps   xmm1, xmm1
+  .text:1025179E                 push    ebx
+  .text:1025179F                 ; ArgList
+  .text:1025179F                 push    edi; ArgList
+  .text:102517A0                 jz      short loc_102517BF
+  .text:102517A2                 movss   xmm0, gl_palette_tex_value
+  .text:102517AA                 ucomiss xmm0, xmm1
+  .text:102517AD                 lahf
+  .text:102517AE                 test    ah, 44h
+  .text:102517B1                 jnp     short loc_102517BF
+  .text:102517B3                 xor     edi, edi
+  .text:102517B5                 mov     [ebp+var_48], edi
+  .text:102517B8                 call    GL_PaletteClearSky
+  .text:102517BD                 jmp     short loc_102517C7
+  .text:102517BF                 mov     edi, 1
+  .text:102517C4                 mov     [ebp+var_48], edi
+  .text:102517C7                 push    40000h
+  .text:102517CC                 call    Mem_Malloc
+  .text:102517D1                 add     esp, 4
+  .text:102517D4                 mov     ebx, eax
+  .text:102517D6                 nop     word ptr [eax+eax+00000000h]
+  .text:102517E0                 xor     esi, esi
+  .text:102517E2                 cmp     esi, 6
+  .text:102517E5                 jge     loc_10251AE5
+  .text:102517EB                 push    suf[esi*4]
+  .text:102517F2                 lea     eax, [ebp+Buffer]
+  .text:102517F5                 ; ArgList
+  .text:102517F5                 push    offset movevars_skyName; ArgList
+  .text:102517FA                 push    offset aGfxEnvSSBmp; "gfx/env/%s%s.bmp"
+  .text:102517FF                 ; BufferCount
+  .text:102517FF                 push    40h ; '@'; BufferCount
+  .text:10251801                 ; Buffer
+  .text:10251801                 push    eax; Buffer
+  .text:10251802                 call    Q_snprintf
+  .text:10251807                 add     esp, 14h
+  .text:1025180A                 test    edi, edi
+  .text:1025180C                 jnz     loc_102518E4
+  .text:10251812                 lea     eax, [ebp+Buffer]
+  .text:10251815                 push    offset pOptions; "rb"
+  .text:1025181A                 ; pFileName
+  .text:1025181A                 push    eax; pFileName
+  .text:1025181B                 call    FS_Open
+  .text:10251820                 add     esp, 8
+  .text:10251823                 test    eax, eax
+  .text:10251825                 jz      loc_102518E4
+  .text:1025182B                 lea     ecx, [ebp+var_5C]
+  .text:1025182E                 push    ecx
+  .text:1025182F                 lea     ecx, [ebp+var_58]
+  .text:10251832                 push    ecx
+  .text:10251833                 lea     ecx, [ebp+Block]
+  .text:10251836                 push    ecx
+  .text:10251837                 lea     ecx, [ebp+var_64]
+  .text:1025183A                 push    ecx
+  .text:1025183B                 lea     ecx, [ebp+var_50]
+  .text:1025183E                 push    ecx
+  .text:1025183F                 push    eax
+  .text:10251840                 call    LoadBMP8
+  .text:10251845                 mov     eax, [ebp+var_58]
+  .text:10251848                 add     esp, 18h
+  .text:1025184B                 imul    eax, [ebp+var_5C]
+  .text:1025184F                 test    eax, eax
+  .text:10251851                 jle     loc_102518E4
+  .text:10251857                 push    1
+  .text:10251859                 push    [ebp+var_50]
+  .text:1025185C                 call    GL_PaletteAdd
+  .text:10251861                 add     esp, 8
+  .text:10251864                 test    ax, ax
+  .text:10251867                 js      short loc_102518D1
+  .text:10251869                 mov     eax, gSkyTexNumber[esi*4]
+  .text:10251870                 test    eax, eax
+  .text:10251872                 jnz     short loc_10251880
+  .text:10251874                 call    GL_GenTexture
+  .text:10251879                 mov     gSkyTexNumber[esi*4], eax
+  .text:10251880                 push    eax
+  .text:10251881                 call    GL_Bind
+  .text:10251886                 add     esp, 4
+  .text:10251889                 push    [ebp+Block]
+  .text:1025188C                 push    1401h
+  .text:10251891                 push    1900h
+  .text:10251896                 push    0
+  .text:10251898                 push    100h
+  .text:1025189D                 push    100h
+  .text:102518A2                 push    80E5h
+  .text:102518A7                 push    0
+  .text:102518A9                 push    0DE1h
+  .text:102518AE                 call    qglTexImage2D
+  .text:102518B4                 ; Block
+  .text:102518B4                 push    [ebp+Block]; Block
+  .text:102518B7                 mov     edi, 1
+  .text:102518BC                 call    free
+  .text:102518C1                 ; Block
+  .text:102518C1                 push    [ebp+var_50]; Block
+  .text:102518C4                 call    free
+  .text:102518C9                 add     esp, 8
+  .text:102518CC                 jmp     loc_10251A5E
+  .text:102518D1                 ; Block
+  .text:102518D1                 push    [ebp+Block]; Block
+  .text:102518D4                 call    free
+  .text:102518D9                 ; Block
+  .text:102518D9                 push    [ebp+var_50]; Block
+  .text:102518DC                 call    free
+  .text:102518E1                 add     esp, 8
+  .text:102518E4                 push    suf[esi*4]
+  .text:102518EB                 lea     eax, [ebp+Buffer]
+  .text:102518EE                 mov     edi, 1
+  .text:102518F3                 ; ArgList
+  .text:102518F3                 push    offset movevars_skyName; ArgList
+  .text:102518F8                 push    offset aGfxEnvSSTga; "gfx/env/%s%s.tga"
+  .text:102518FD                 ; BufferCount
+  .text:102518FD                 push    40h ; '@'; BufferCount
+  .text:102518FF                 ; Buffer
+  .text:102518FF                 push    eax; Buffer
+  .text:10251900                 mov     [ebp+var_48], edi
+  .text:10251903                 call    Q_snprintf
+  .text:10251908                 push    0
+  .text:1025190A                 push    0
+  .text:1025190C                 push    0
+  .text:1025190E                 push    40000h
+  .text:10251913                 lea     eax, [ebp+Buffer]
+  .text:10251916                 push    ebx
+  .text:10251917                 push    eax
+  .text:10251918                 call    LoadTGA2
+  .text:1025191D                 add     esp, 2Ch
+  .text:10251920                 test    eax, eax
+  .text:10251922                 jnz     short loc_1025196E
+  .text:10251924                 lea     eax, [ebp+Buffer]
+  .text:10251927                 ; ArgList
+  .text:10251927                 push    eax; ArgList
+  .text:10251928                 push    offset aRLoadskysCould; "R_LoadSkys: Couldn't load %s\n"
+  .text:1025192D                 call    Con_Printf
+  .text:10251932                 add     esp, 8
+  .text:10251935                 test    esi, esi
+  .text:10251937                 jnz     loc_10251ADF
+  .text:1025193D                 push    offset aDesert; "desert"
+  .text:10251942                 push    offset movevars_skyName
+  .text:10251947                 call    Q_strcmp
+  .text:1025194C                 add     esp, 8
+  .text:1025194F                 test    eax, eax
+  .text:10251951                 jz      loc_10251ADF
+  .text:10251957                 push    offset aDesert; "desert"
+  .text:1025195C                 push    offset movevars_skyName
+  .text:10251961                 call    Q_strcpy
+  .text:10251966                 add     esp, 8
+  .text:10251969                 jmp     loc_102517E0
+  .text:1025196E                 movss   xmm0, gl_dither_value
+  .text:10251976                 xorps   xmm1, xmm1
+  .text:10251979                 ucomiss xmm0, xmm1
+  .text:1025197C                 lahf
+  .text:1025197D                 test    ah, 44h
+  .text:10251980                 jnp     short loc_102519F5
+  .text:10251982                 lea     edx, [ebx+2]
+  .text:10251985                 mov     edi, 10000h
+  .text:1025198A                 nop     word ptr [eax+eax+00h]
+  .text:10251990                 mov     al, [edx-2]
+  .text:10251993                 cmp     al, 0FCh
+  .text:10251995                 jnb     short loc_102519B0
+  .text:10251997                 movzx   eax, al
+  .text:1025199A                 mov     ecx, eax
+  .text:1025199C                 shr     ecx, 6
+  .text:1025199F                 or      cl, al
+  .text:102519A1                 movzx   eax, cl
+  .text:102519A4                 mov     [edx-2], cl
+  .text:102519A7                 mov     al, texgammatable[eax]
+  .text:102519AD                 mov     [edx-2], al
+  .text:102519B0                 mov     al, [edx-1]
+  .text:102519B3                 cmp     al, 0FCh
+  .text:102519B5                 jnb     short loc_102519D0
+  .text:102519B7                 movzx   eax, al
+  .text:102519BA                 mov     ecx, eax
+  .text:102519BC                 shr     ecx, 6
+  .text:102519BF                 or      cl, al
+  .text:102519C1                 movzx   eax, cl
+  .text:102519C4                 mov     [edx-1], cl
+  .text:102519C7                 mov     al, texgammatable[eax]
+  .text:102519CD                 mov     [edx-1], al
+  .text:102519D0                 mov     al, [edx]
+  .text:102519D2                 cmp     al, 0FCh
+  .text:102519D4                 jnb     short loc_102519ED
+  .text:102519D6                 movzx   eax, al
+  .text:102519D9                 mov     ecx, eax
+  .text:102519DB                 shr     ecx, 6
+  .text:102519DE                 or      cl, al
+  .text:102519E0                 movzx   eax, cl
+  .text:102519E3                 mov     [edx], cl
+  .text:102519E5                 mov     al, texgammatable[eax]
+  .text:102519EB                 mov     [edx], al
+  .text:102519ED                 add     edx, 4
+  .text:102519F0                 sub     edi, 1
+  .text:102519F3                 jnz     short loc_10251990
+  .text:102519F5                 mov     eax, gSkyTexNumber[esi*4]
+  .text:102519FC                 test    eax, eax
+  .text:102519FE                 jnz     short loc_10251A0C
+  .text:10251A00                 call    GL_GenTexture
+  .text:10251A05                 mov     gSkyTexNumber[esi*4], eax
+  .text:10251A0C                 push    eax
+  .text:10251A0D                 call    GL_Bind
+  .text:10251A12                 lea     eax, [ebp+bpp]
+  .text:10251A15                 ; bpp
+  .text:10251A15                 push    eax; bpp
+  .text:10251A16                 lea     eax, [ebp+height]
+  .text:10251A19                 ; height
+  .text:10251A19                 push    eax; height
+  .text:10251A1A                 lea     eax, [ebp+width]
+  .text:10251A1D                 ; width
+  .text:10251A1D                 push    eax; width
+  .text:10251A1E                 call    VideoMode_GetCurrentVideoMode
+  .text:10251A23                 add     esp, 10h
+  .text:10251A26                 cmp     [ebp+bpp], 20h ; ' '
+  .text:10251A2A                 push    ebx
+  .text:10251A2B                 push    1401h
+  .text:10251A30                 push    1908h
+  .text:10251A35                 push    0
+  .text:10251A37                 push    100h
+  .text:10251A3C                 push    100h
+  .text:10251A41                 jnz     short loc_10251A4A
+  .text:10251A43                 push    8058h
+  .text:10251A48                 jmp     short loc_10251A4F
+  .text:10251A4A                 push    8057h
+  .text:10251A4F                 push    0
+  .text:10251A51                 push    0DE1h
+  .text:10251A56                 call    qglTexImage2D
+  .text:10251A5C                 xor     edi, edi
+  .text:10251A5E                 push    ecx
+  .text:10251A5F                 mov     [esp+74h+var_74], 46180400h
+  .text:10251A66                 ; ArgList
+  .text:10251A66                 push    2801h; ArgList
+  .text:10251A6B                 push    0DE1h
+  .text:10251A70                 call    qglTexParameterf
+  .text:10251A76                 push    ecx
+  .text:10251A77                 mov     [esp+7Ch+var_7C], 46180400h
+  .text:10251A7E                 push    2800h
+  .text:10251A83                 push    0DE1h
+  .text:10251A88                 call    qglTexParameterf
+  .text:10251A8E                 cmp     [ebp+var_54], 0
+  .text:10251A92                 jnz     short loc_10251AA8
+  .text:10251A94                 push    offset aSky_0; "SKY:  "
+  .text:10251A99                 mov     [ebp+var_54], 1
+  .text:10251AA0                 call    Con_DPrintf
+  .text:10251AA5                 add     esp, 4
+  .text:10251AA8                 mov     eax, suf[esi*4]
+  .text:10251AAF                 push    eax
+  .text:10251AB0                 ; ArgList
+  .text:10251AB0                 push    offset movevars_skyName; ArgList
+  .text:10251AB5                 test    edi, edi
+  .text:10251AB7                 jz      short loc_10251ACF
+  .text:10251AB9                 push    offset aSSPaletted; "%s%s - paletted, "
+  .text:10251ABE                 call    Con_DPrintf
+  .text:10251AC3                 mov     edi, [ebp+var_48]
+  .text:10251AC6                 add     esp, 0Ch
+  .text:10251AC9                 inc     esi
+  .text:10251ACA                 jmp     loc_102517E2
+  .text:10251ACF                 push    offset aSS_7; "%s%s, "
+  .text:10251AD4                 call    Con_DPrintf
+  .text:10251AD9                 mov     edi, [ebp+var_48]
+  .text:10251ADC                 add     esp, 0Ch
+  .text:10251ADF                 inc     esi
+  .text:10251AE0                 jmp     loc_102517E2
+  .text:10251AE5                 cmp     [ebp+var_54], 0
+  .text:10251AE9                 jz      short loc_10251AF8
+  .text:10251AEB                 push    offset aDone_0; "done\n"
+  .text:10251AF0                 call    Con_DPrintf
+  .text:10251AF5                 add     esp, 4
+  .text:10251AF8                 ; Block
+  .text:10251AF8                 push    ebx; Block
+  .text:10251AF9                 call    free
+  .text:10251AFE                 mov     ecx, [ebp+var_4]
+  .text:10251B01                 add     esp, 4
+  .text:10251B04                 ; StackCookie
+  .text:10251B04                 xor     ecx, ebp; StackCookie
+  .text:10251B06                 mov     gLoadSky, 0
+  .text:10251B10                 pop     edi
+  .text:10251B11                 pop     ebx
+  .text:10251B12                 pop     esi
+  .text:10251B13                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10251B18                 mov     esp, ebp
+  .text:10251B1A                 pop     ebp
+  .text:10251B1B                 retn
+procedure: |-
+  void R_LoadSkys()
+  {
+    int *v0; // esi
+    int v1; // edi
+    char *v2; // ebx
+    int v3; // esi
+    FileHandle_t v4; // eax
+    int v5; // eax
+    int v6; // edi
+    unsigned __int8 *v7; // edx
+    int v8; // edi
+    unsigned __int8 v9; // al
+    unsigned __int8 v10; // cl
+    unsigned __int8 v11; // al
+    unsigned __int8 v12; // cl
+    unsigned __int8 v13; // cl
+    int v14; // eax
+    const char *v15; // [esp+30h] [ebp-7Ch]
+    int width; // [esp+40h] [ebp-6Ch] BYREF
+    int height; // [esp+44h] [ebp-68h] BYREF
+    char v18[4]; // [esp+48h] [ebp-64h] BYREF
+    int bpp; // [esp+4Ch] [ebp-60h] BYREF
+    int v20; // [esp+50h] [ebp-5Ch] BYREF
+    int v21; // [esp+54h] [ebp-58h] BYREF
+    int v22; // [esp+58h] [ebp-54h]
+    void *v23; // [esp+5Ch] [ebp-50h] BYREF
+    void *Block; // [esp+60h] [ebp-4Ch] BYREF
+    int v25; // [esp+64h] [ebp-48h]
+    char Buffer[64]; // [esp+68h] [ebp-44h] BYREF
+  
+    v22 = 0;
+    if ( !gLoadSky )
+    {
+      v0 = gSkyTexNumber;
+      do
+      {
+        if ( *v0 )
+        {
+          qglDeleteTextures(1, v0);
+          *v0 = 0;
+        }
+        ++v0;
+      }
+      while ( (int)v0 < (int)&dword_109A6A44 );
+      return;
+    }
+    if ( !qglColorTableEXT || *(float *)&gl_palette_tex_value == 0.0 )
+    {
+      v1 = 1;
+      v25 = 1;
+    }
+    else
+    {
+      v1 = 0;
+      v25 = 0;
+      GL_PaletteClearSky();
+    }
+    v2 = (char *)Mem_Malloc(0x40000);
+  LABEL_12:
+    v3 = 0;
+    while ( v3 < 6 )
+    {
+      Q_snprintf(Buffer, 0x40u, "gfx/env/%s%s.bmp", (char)movevars_skyName);
+      if ( !v1 )
+      {
+        v4 = FS_Open(Buffer, "rb");
+        if ( v4 )
+        {
+          LoadBMP8(v4, &v23, v18, &Block, &v21, &v20);
+          if ( v20 * v21 > 0 )
+          {
+            if ( (GL_PaletteAdd(v23, 1) & 0x8000u) == 0 )
+            {
+              v5 = gSkyTexNumber[v3];
+              if ( !v5 )
+              {
+                v5 = GL_GenTexture();
+                gSkyTexNumber[v3] = v5;
+              }
+              GL_Bind(v5);
+              qglTexImage2D(3553, 0, 32997, 256, 256, 0, 6400, 5121, Block);
+              v6 = 1;
+              free(Block);
+              free(v23);
+              goto LABEL_41;
+            }
+            free(Block);
+            free(v23);
+          }
+        }
+      }
+      v1 = 1;
+      v25 = 1;
+      Q_snprintf(Buffer, 0x40u, "gfx/env/%s%s.tga", (char)movevars_skyName);
+      if ( LoadTGA2(Buffer, v2, 0x40000, 0, 0, 0) )
+      {
+        if ( *(float *)&gl_dither_value != 0.0 )
+        {
+          v7 = (unsigned __int8 *)(v2 + 2);
+          v8 = 0x10000;
+          do
+          {
+            v9 = *(v7 - 2);
+            if ( v9 < 0xFCu )
+            {
+              v10 = v9 | (v9 >> 6);
+              *(v7 - 2) = v10;
+              *(v7 - 2) = texgammatable[v10];
+            }
+            v11 = *(v7 - 1);
+            if ( v11 < 0xFCu )
+            {
+              v12 = v11 | (v11 >> 6);
+              *(v7 - 1) = v12;
+              *(v7 - 1) = texgammatable[v12];
+            }
+            if ( *v7 < 0xFCu )
+            {
+              v13 = *v7 | (*v7 >> 6);
+              *v7 = v13;
+              *v7 = texgammatable[v13];
+            }
+            v7 += 4;
+            --v8;
+          }
+          while ( v8 );
+        }
+        v14 = gSkyTexNumber[v3];
+        if ( !v14 )
+        {
+          v14 = GL_GenTexture();
+          gSkyTexNumber[v3] = v14;
+        }
+        GL_Bind(v14);
+        VideoMode_GetCurrentVideoMode(&width, &height, &bpp);
+        if ( bpp == 32 )
+          qglTexImage2D(3553, 0, 32856, 256, 256, 0, 6408, 5121, v2);
+        else
+          qglTexImage2D(3553, 0, 32855, 256, 256, 0, 6408, 5121, v2);
+        v6 = 0;
+  LABEL_41:
+        qglTexParameterf(3553, 10241, 1175979008);
+        qglTexParameterf(3553, 10240, 1175979008);
+        if ( !v22 )
+        {
+          v22 = 1;
+          Con_DPrintf("SKY:  ");
+        }
+        v15 = suf[v3];
+        if ( !v6 )
+        {
+          Con_DPrintf("%s%s, ", movevars_skyName, v15);
+          v1 = v25;
+          goto LABEL_46;
+        }
+        Con_DPrintf("%s%s - paletted, ", movevars_skyName, v15);
+        v1 = v25;
+        ++v3;
+      }
+      else
+      {
+        Con_Printf("R_LoadSkys: Couldn't load %s\n", Buffer);
+        if ( !v3 && Q_strcmp(movevars_skyName, "desert") )
+        {
+          Q_strcpy(movevars_skyName, "desert");
+          goto LABEL_12;
+        }
+  LABEL_46:
+        ++v3;
+      }
+    }
+    if ( v22 )
+      Con_DPrintf("done\n");
+    free(v2);
+    gLoadSky = 0;
+  }
