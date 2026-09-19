@@ -10,15 +10,15 @@ permalink: goldsrc-vibesignatures/locator-summary
 分类依据是每个 finder 的主要发现锚；部分符号实际会组合多种机制（例如先字符串锚定 owning function，再读表槽），
 此处归入其决定性的一步。**Summary** 列摘自各 locator 文件 `## How it is located` 的首段。
 
-共 **214** 个 locator；模块 engine 175，client 39。
+共 **224** 个 locator；模块 engine 185，client 39。
 
 | 定位机制 | 数量 |
 | --- | --- |
-| 字符串锚 | 63 |
+| 字符串锚 | 64 |
 | 浮点常量锚 | 3 |
-| 表 / 结构 / 数据段扫描 | 34 |
+| 表 / 结构 / 数据段扫描 | 36 |
 | 确定性 xref 交集锚 | 7 |
-| 前驱产物复用（下游确定性恢复） | 21 |
+| 前驱产物复用（下游确定性恢复） | 28 |
 | LLM_DECOMPILE 定位 | 51 |
 | vtable / vfunc 槽恢复 | 10 |
 | 数值 scalar 提取 | 9 |
@@ -26,11 +26,12 @@ permalink: goldsrc-vibesignatures/locator-summary
 
 ---
 
-## 字符串锚 (63)
+## 字符串锚 (64)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
 | [CBaseUI__Initialize](locators/CBaseUI__Initialize.md) | engine | func | — | Single positive anchor: xref_strings: ["FULLMATCH:VClientVGUI001"]. FULLMATCH: makes _string_candidates require an exact C-string equality (not a substring), then… |
+| [CL_SetDevOverView](locators/CL_SetDevOverView.md) | engine | func | — | Exact literal " Overview: Zoom %.2f, Map Origin (%.2f, %.2f, %.2f), Z Min %.2f, Z Max %.2f, Rotated %i\n" — one string instance and one owning function on every configured build. |
 | [CL_InitTEnts](locators/CL_InitTEnts.md) | engine | func | — | FUNC_XREFS anchors the function on FULLMATCH:sprites/shellchrome.spr — the chrome shell sprite CL_InitTEnts precaches at the very end of the function (immediately… |
 | [CL_PrecacheResources](locators/CL_PrecacheResources.md) | engine | func | — | Pattern A (preprocess_func_xrefs_via_mcp) string xref, with a SvEngine-specific anchor set selected by the binary directory name (Path(new_binary_dir).parent.name == |
 | [CL_ReallocateDynamicData](locators/CL_ReallocateDynamicData.md) | engine | func | — | Pattern A string xref with an exclusion set, in FUNC_XREFS: Positive: xref_strings: ["FULLMATCH:CL_Reallocate cl_entities\n"] — exact equality |
@@ -102,11 +103,13 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [R_DrawParticles](locators/R_DrawParticles.md) | engine | func | — | xref_floats = ["20.0", "0.004"] is the sole positive source; the candidate set is every function whose body references both constants. |
 | [GlowBlend](locators/GlowBlend.md) | engine | func | `R_DrawTEntitiesOnList` | xref_floats = ["19000.0", "0.005", "0.05"] is the sole positive source, combined with exclude_funcs = ["R_DrawTEntitiesOnList"]. |
 
-## 表 / 结构 / 数据段扫描 (34)
+## 表 / 结构 / 数据段扫描 (36)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
 | [CGame_DrawStartupVideo](locators/CGame_DrawStartupVideo.md) | engine | func | — | Single positive anchor: xref_strings: ["FULLMATCH:WebMPlayer::PlayVideo %s\n"] — an exact C-string match on the diagnostic literal *including* the %s format… |
+| [gDevOverview](locators/gDevOverview.md) | engine | gv | `CL_SetDevOverView` | The overviewInfo_t shape is the anchor: inside CL_SetDevOverView exactly one writable address has all seven members +0 +4 +8 +0xc +0x10 +0x14 +0x18 separately referenced. |
+| [gWaterColor](locators/gWaterColor.md) | engine | gv | `R_DrawWorld` | The unique writable global whose +0/+4/+8 dwords are each read and whose low bytes are stored into three consecutive bytes of one cl_entity_t (ent.curstate.rendercolor). |
 | [CL_CreateVisibleEntity](locators/CL_CreateVisibleEntity.md) | engine | func | `cl_enginefuncs` | Load cl_enginefuncs.{platform}.yaml, read gv_va, and compute entry = gv_va + 61 * 4 — SDK cl_enginefunc_t slot 61 is CL_CreateVisibleEntity. |
 | [CL_IsThirdPerson](locators/CL_IsThirdPerson.md) | client | func | — | Primary path: exactly one idautils.Entries() entry named CL_IsThirdPerson whose ida_funcs.get_func(ea).start_ea == ea. |
 | [CVideoMode_Common_PlayStartupSequence](locators/CVideoMode_Common_PlayStartupSequence.md) | engine | func | `VideoMode_Create` | A plain string xref cannot select this function: the -novid literal has two raw owners. The finder therefore walks the VideoMode vtables instead: |
@@ -154,10 +157,17 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [R_StudioRenderModel](locators/R_StudioRenderModel.md) | engine | func | `R_StudioCalcAttachments`, `R_StudioDrawModel`, `R_StudioDrawPlayer`, `R_StudioSetupBones`, `cl_sprite_shell`, `g_ChromeOrigin` | The func_xrefs entry declares xref_gvs: ["cl_sprite_shell", "g_ChromeOrigin"] and no strings/signatures/functions: the candidate is the function that intersects the… |
 | [V_StartPitchDrift](locators/V_StartPitchDrift.md) | client | func | — | _client_registration_common.REGISTRATION_QUERY is invoked with the label centerview. The helper collects strings whose NUL-terminated bytes end with the label |
 
-## 前驱产物复用（下游确定性恢复） (21)
+## 前驱产物复用（下游确定性恢复） (28)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
+| [cl_funcs](locators/cl_funcs.md) | engine | gv | `ClientDLL_Init` | find-ClientDLL_Init-cl_funcs (SvEngine Linux) takes the called pointer of cl_funcs.pInitFunc(&cl_enginefuncs, 7); pInitFunc is the first member, so that address is &cl_funcs. Windows keeps the find-ClientDLL_HudInit-decompiles path. |
+| [r_refdef](locators/r_refdef.md) | engine | gv | `CL_SetDevOverView`, `cl_funcs` | The pointer argument of the unique CL_SetDevOverView call. The caller is derived, not read from R_RenderScene, because svencoop-10257 Windows inlines it into R_RenderView. |
+| [ClientDLL_DrawNormalTriangles](locators/ClientDLL_DrawNormalTriangles.md) | engine | func | `CL_SetDevOverView`, `cl_funcs` | The unique direct callee of the scene renderer that references exactly one cl_funcs member and additionally dispatches through a non-member function pointer (tri.RenderMode). |
+| [ClientDLL_UpdateClientData](locators/ClientDLL_UpdateClientData.md) | engine | func | `cl_funcs` | pHudUpdateClientDataFunc is the one cl_funcs member shared by exactly two consumers; this is the partner that reads cl.viewangles before the call. |
+| [ClientDLL_DemoUpdateClientData](locators/ClientDLL_DemoUpdateClientData.md) | engine | func | `cl_funcs` | The member-pair partner that only writes cl.viewangles, receiving cdat from the demo reader instead of filling it from engine state. |
+| [cl_viewangles](locators/cl_viewangles.md) | engine | gv | `cl_funcs` | The unique {x, x+4, x+8} triple among the globals the client-data update pair share. |
+| [scr_fov_value](locators/scr_fov_value.md) | engine | gv | `cl_funcs` | The unique scalar among those same shared globals; the artifact carries the cvar_t value member address, not &scr_fov. |
 | [CL_FxBlend](locators/CL_FxBlend.md) | engine | func | — | Locate the unique function referencing 363.0, 20.0, and 16.0 through shared width-aware floating-point xrefs; no predecessor input. |
 | [CVideoMode_Common_DrawStartupGraphic](locators/CVideoMode_Common_DrawStartupGraphic.md) | engine | func | `CVideoMode_Common_Init`, `CVideoMode_Common_PlayStartupSequence` | This is an LLM_DECOMPILE finder (found_call) whose *reference* is branched by build family while the *target* is always the current build's predecessor: |
 | [ClientDLL_Shutdown](locators/ClientDLL_Shutdown.md) | engine | func | `ClientDLL_Init` | Load the ClientDLL_Init.{platform}.yaml artifact from the new binary dir and re-verify it in the live IDB with _inspect_function_via_mcp (function start plus… |

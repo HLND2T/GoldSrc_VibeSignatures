@@ -255,6 +255,30 @@ modules:
           - R_RenderView.{platform}.yaml
         expected_output:
           - R_RenderScene.{platform}.yaml
+      - name: find-CL_SetDevOverView
+        expected_output:
+          - CL_SetDevOverView.{platform}.yaml
+          - gDevOverview.{platform}.yaml
+      - name: find-r_refdef-ClientDLL_DrawNormalTriangles
+        expected_input:
+          - CL_SetDevOverView.{platform}.yaml
+          - cl_funcs.{platform}.yaml
+        expected_output:
+          - r_refdef.{platform}.yaml
+          - ClientDLL_DrawNormalTriangles.{platform}.yaml
+      - name: find-ClientDLL_UpdateClientData
+        expected_input:
+          - cl_funcs.{platform}.yaml
+        expected_output:
+          - ClientDLL_UpdateClientData.{platform}.yaml
+          - ClientDLL_DemoUpdateClientData.{platform}.yaml
+          - cl_viewangles.{platform}.yaml
+          - scr_fov_value.{platform}.yaml
+      - name: find-R_DrawWorld-gWaterColor
+        expected_input:
+          - R_DrawWorld.{platform}.yaml
+        expected_output:
+          - gWaterColor.{platform}.yaml
       - name: find-R_RenderScene-cshift-water
         expected_input:
           - R_RenderScene.{platform}.yaml
@@ -941,6 +965,24 @@ modules:
         category: func
       - name: V_FadeAlpha
         category: func
+      - name: CL_SetDevOverView
+        category: func
+      - name: r_refdef
+        category: gv
+      - name: gWaterColor
+        category: gv
+      - name: cl_viewangles
+        category: gv
+      - name: scr_fov_value
+        category: gv
+      - name: ClientDLL_DrawNormalTriangles
+        category: func
+      - name: ClientDLL_UpdateClientData
+        category: func
+      - name: ClientDLL_DemoUpdateClientData
+        category: func
+      - name: gDevOverview
+        category: gv
       - name: R_RenderScene
         category: func
       - name: R_SetupGL

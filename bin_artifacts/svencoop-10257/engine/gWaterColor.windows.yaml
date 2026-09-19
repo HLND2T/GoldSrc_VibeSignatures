@@ -1,0 +1,8 @@
+gv_name: gWaterColor
+gv_va: '0x8046b24'
+gv_rva: '0x6346b24'
+gv_sig: 81 EC BC 0B 00 00 A1 ?? ?? ?? ?? 33 C4 89 84 24 ?? ?? ?? ?? D9 05 ?? ?? ?? ?? D9 EE DA E9 DF E0 F6 C4 44 7B ??
+gv_sig_va: '0x1d57860'
+gv_inst_offset: '0x9e'
+gv_inst_length: '0x7'
+gv_inst_disp: '0x3'
