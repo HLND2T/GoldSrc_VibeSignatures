@@ -19,12 +19,16 @@ tags:
 
 ## Availability
 
-- Declared in 1 config: svencoop-10257 (client module only; no engine/config coverage).
+- Declared in 2 configs: svencoop-10257 and svencoop-8948 (client module only; no engine coverage).
 - Platforms: Windows + Linux (no `platform:` gate in the config, so both builds are attempted).
-- Inlined / absent: the function exists standalone on both builds. The MetaHookSv-era sibling
-  `DrawPortalSurface` does **not** exist as a separate function on 10257 — its GL block is inlined
-  into RenderPortals (no `glColorMask` anywhere), so no DrawPortalSurface artifact is emitted.
-  RenderPortals additionally inlines the `ClientPortal_CreateTexture` initializer on Windows only.
+- Inlined / absent: the function exists standalone on both builds. RenderPortals inlines the
+  `ClientPortal_CreateTexture` initializer on Windows only.
+- Corrected 2026-09-19 (issue #160): an earlier revision of this note claimed the MetaHookSv-era
+  sibling `DrawPortalSurface` was inlined into RenderPortals on 10257 and that the build had no
+  `glColorMask` at all. Both statements are wrong. `ClientPortalManager::DrawPortalSurface` and
+  `ClientPortalManager::GetOriginalSurfaceTexture` are standalone functions on all four validated
+  Sven builds; they are **not** reachable from RenderPortals but from the sibling pass
+  `ClientPortalManager::DrawPortals`. See [[ClientPortalManager_DrawPortalSurface]].
 
 ## Predecessors
 

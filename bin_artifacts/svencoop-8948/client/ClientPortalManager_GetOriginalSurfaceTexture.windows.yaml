@@ -1,0 +1,5 @@
+func_name: ClientPortalManager_GetOriginalSurfaceTexture
+func_va: '0x10096880'
+func_rva: '0x96880'
+func_size: '0x90'
+func_sig: 8B 54 24 ?? 83 EC 08 0F B6 C2 35 C5 9D 1C 81 56 57 8B 79 ?? 8D 71 ?? 69 C8 93 01 00 01

@@ -7,9 +7,13 @@ GL_ACTIVE_TEXTURE unit cannot be restored it reports
 portal draw. That diagnostic has exactly one function owner on the validated
 10257 client: a direct literal owner on Windows, and on Linux a single
 GOTOFF displacement site resolved through the SvEngine PIC fallback in
-_sven_client_pic_common (svencoop-10257 only; the MetaHookSv-era separate
-DrawPortalSurface function no longer exists there - its GL block is inlined
-into this function).
+_sven_client_pic_common (svencoop-10257 only).
+
+RenderPortals renders each portal's view into its texture. The sibling pass
+ClientPortalManager::DrawPortals, which draws the portal surfaces themselves,
+owns a different diagnostic ("Portals will not be drawn.") and is the
+predecessor of find-ClientPortalManager_DrawPortalSurface; neither
+DrawPortalSurface nor GetOriginalSurfaceTexture is reachable from here.
 """
 
 from ida_preprocessor_scripts._sven_client_pic_common import (
