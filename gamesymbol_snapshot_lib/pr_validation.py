@@ -217,14 +217,15 @@ def _artifact_owner_seeds(
             if contract is None or relative not in contract.formal_paths:
                 raise ImpactPlanningError(f"Changed artifact is outside the formal contract for {tag}: {path}")
             if old_path and relative not in merge_contract.formal_paths:
-                raise ImpactPlanningError(
-                    f"Deleted or renamed artifact is no longer declared by the merge contract for {tag}: {path}"
-                )
-            owners = set(contract.owners_by_path[relative])
-            missing_owners = owners - set(merge_contract.nodes)
-            if missing_owners:
-                raise ImpactPlanningError(f"Artifact owner was removed from the merge contract for {tag}: {path}")
-            seeds.update(owners)
+                if change.status not in {"D", "R"}:
+                    raise ImpactPlanningError(f"Artifact is no longer declared without being removed for {tag}: {path}")
+                if any(relative in node.inputs for node in merge_contract.nodes.values()):
+                    raise ImpactPlanningError(f"Retired artifact still has an analysis consumer for {tag}: {path}")
+                reasons.append(f"analysis artifact retired: {path}")
+                continue
+            # Validate old paths against base, but execute only the current owners.
+            # A producer may itself have been renamed or replaced in this PR.
+            seeds.update(merge_contract.owners_by_path[relative])
             reasons.append(f"analysis artifact changed: {path}")
     return seeds, reasons
 
@@ -324,8 +325,8 @@ def plan_tag_impact(
         if pair_nodes:
             reasons.append(f"binary changed: {module}/{platform}")
 
-    snapshot_rebuild = bool(seeds or config_changed or _snapshot_domain_changed(all_paths))
-    gamedata_rebuild = bool(seeds or config_changed or _gamedata_domain_changed(all_paths))
+    snapshot_rebuild = bool(seeds or artifact_reasons or config_changed or _snapshot_domain_changed(all_paths))
+    gamedata_rebuild = bool(seeds or artifact_reasons or config_changed or _gamedata_domain_changed(all_paths))
 
     if not seeds and not snapshot_rebuild and not gamedata_rebuild:
         return TagImpact(tag, (), (), False, False, ())

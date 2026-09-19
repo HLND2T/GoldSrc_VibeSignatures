@@ -70,3 +70,14 @@ selected-node execution，以及 full inventory/byte drift。
 
 - [[gamesymbol PR validation routing 任务分流]] — hosted / self-hosted / fork 门控与 planner 影响分类来源。
 - [[ci-cd-and-repository-contract]] — CI、submodule 与仓库契约总览。
+
+## Artifact retirement and producer replacement（PR #150 follow-up）
+
+- 触发信号：删除旧符号配置、finder 与 artifact 后，plan 报 `Deleted or renamed artifact is no longer declared by the merge contract`。PR #150 的 `NET_DrawRect` → `Draw_FillRGBABuf` 迁移触发此问题。
+- 根因：`_artifact_owner_seeds` 把 base 路径和旧 owner 必须继续存在于 merge 当成不变量，禁止了正常退役或 producer 更名。
+- 正确做法：旧路径先验证属于 base 正式契约；仅 D/R 的旧路径可从 merge 契约退役，且不得残留 required/optional analysis input。保留路径与新路径按 merge owner 调度并扩展下游闭包；退役触发 snapshot/gamedata 重建，不调度已移除节点。
+- 安全边界：`build_plan` 仍校验完整 merge inventory；删除 artifact 却保留声明、移除声明却遗留 artifact、未知旧路径、新路径未声明、M/C 冒充退役均不获豁免。整个 tag 消失或 merge 契约为空仍沿用原拒绝规则。
+- 验证方式：`tests/test_gamesymbol_pr_validation.py` 使用临时 Git 仓库覆盖删除、真实 R100、更名 finder、materialize/compare；纯 planner 测试覆盖残留输入与 producer 替换的下游闭包。修改可信 planner 后，必须另用目标 PR 的 base/head/merge 重放 `gamesymbol_pr_validation.py plan`；单元测试和 repository-contract 通过不能替代此检查。
+- 部署顺序：修复须先进入 base；再更新依赖 PR 的分支以触发新运行。仅修改 PR 内 planner 或重跑使用旧 base 的 run，不会启用新规则。
+
+- 实测（2026-09-19）：修复后的 planner 对 PR #150 原失败输入 `base=43180a6`、`head=54c613b`、`merge=f996be2` 重放成功（exit 0）；仅选择 Sven 8948/10257 的 W/L 四个 `find-Draw_FillRGBABuf` 节点和四个同名输出，两条旧 Windows artifact 标为 retired，两版本均要求 snapshot/gamedata 重建。该证据验证计划生成，不代表后续 self-hosted IDA job 已运行。
