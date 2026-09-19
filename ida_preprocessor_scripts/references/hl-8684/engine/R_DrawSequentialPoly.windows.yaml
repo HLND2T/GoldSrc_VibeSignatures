@@ -1,0 +1,696 @@
+func_name: "R_DrawSequentialPoly"
+func_va: "0x1d47900"
+disasm_code: |-
+  ; Issue 156: R_RenderDynamicLightmaps is a real call; lightmap_textures is bound by surface lightmap index.
+  ; lightmap_rectchange is the whole upload/reset rectangle array; lightmaps is the pixel-buffer base.
+  ; gDecalSurfs/gDecalSurfCount are the surface enqueue array and incremented count, not decal objects.
+  ; Existing consumer: GL_EnableMultitexture=sub_1D478D0; GL_DisableMultitexture=sub_1D478A0.
+  .text:01D47900                 push    ebp
+  .text:01D47901                 mov     ebp, esp
+  .text:01D47903                 push    ecx
+  .text:01D47904                 mov     eax, dword_2BC98FC
+  .text:01D47909                 push    ebx
+  .text:01D4790A                 push    esi
+  .text:01D4790B                 push    edi
+  .text:01D4790C                 cmp     dword ptr [eax+2F8h], 1
+  .text:01D47913                 jnz     short loc_1D47978
+  .text:01D47915                 call    sub_1D478A0
+  .text:01D4791A                 push    303h
+  .text:01D4791F                 push    302h
+  .text:01D47924                 call    dword_2791C18
+  .text:01D4792A                 push    0BE2h
+  .text:01D4792F                 call    dword_279173C
+  .text:01D47935                 mov     esi, [ebp+surface]
+  .text:01D47938                 push    esi
+  .text:01D47939                 call    R_TextureAnimation
+  .text:01D4793E                 mov     ecx, [eax+18h]
+  .text:01D47941                 push    ecx
+  .text:01D47942                 call    sub_1D3C0A0
+  .text:01D47947                 add     esp, 8
+  .text:01D4794A                 push    0DE1h
+  .text:01D4794F                 call    dword_2791FA4
+  .text:01D47955                 mov     edx, [esi+24h]
+  .text:01D47958                 push    edx
+  .text:01D47959                 call    sub_1D483C0
+  .text:01D4795E                 add     esp, 4
+  .text:01D47961                 push    0DE1h
+  .text:01D47966                 call    dword_279173C
+  .text:01D4796C                 call    sub_1D478D0
+  .text:01D47971                 pop     edi
+  .text:01D47972                 pop     esi
+  .text:01D47973                 pop     ebx
+  .text:01D47974                 mov     esp, ebp
+  .text:01D47976                 pop     ebp
+  .text:01D47977                 retn
+  .text:01D47978                 mov     ebx, [ebp+surface]
+  .text:01D4797B                 mov     eax, [ebx+8]
+  .text:01D4797E                 test    al, 94h
+  .text:01D47980                 jnz     loc_1D47ED3
+  .text:01D47986                 mov     eax, dword_2325CB0
+  .text:01D4798B                 test    eax, eax
+  .text:01D4798D                 jnz     short loc_1D47998
+  .text:01D4798F                 ; surface
+  .text:01D4798F                 push    ebx; surface
+  .text:01D47990                 call    R_RenderDynamicLightmaps
+  .text:01D47995                 add     esp, 4
+  .text:01D47998                 mov     eax, dword_2343444
+  .text:01D4799D                 test    eax, eax
+  .text:01D4799F                 jz      loc_1D47CEA
+  .text:01D479A5                 mov     eax, dword_2BC98FC
+  .text:01D479AA                 mov     eax, [eax+2F8h]
+  .text:01D479B0                 test    eax, eax
+  .text:01D479B2                 jz      short loc_1D479BD
+  .text:01D479B4                 cmp     eax, 4
+  .text:01D479B7                 jnz     loc_1D47CEA
+  .text:01D479BD                 mov     edi, [ebx+24h]
+  .text:01D479C0                 push    ebx
+  .text:01D479C1                 call    R_TextureAnimation
+  .text:01D479C6                 mov     ecx, dword_1E478E0
+  .text:01D479CC                 mov     esi, eax
+  .text:01D479CE                 push    ecx
+  .text:01D479CF                 mov     [ebp+surface], esi
+  .text:01D479D2                 call    sub_1D3C100
+  .text:01D479D7                 mov     edx, [esi+18h]
+  .text:01D479DA                 push    edx
+  .text:01D479DB                 call    sub_1D3C0A0
+  .text:01D479E0                 add     esp, 0Ch
+  .text:01D479E3                 push    46040000h
+  .text:01D479E8                 push    2200h
+  .text:01D479ED                 push    2300h
+  .text:01D479F2                 call    dword_2791690
+  .text:01D479F8                 mov     eax, dword_2BC98FC
+  .text:01D479FD                 cmp     dword ptr [eax+2F8h], 1
+  .text:01D47A04                 jnz     short loc_1D47A11
+  .text:01D47A06                 push    0DE1h
+  .text:01D47A0B                 call    dword_2791FA4
+  .text:01D47A11                 call    sub_1D478D0
+  .text:01D47A16                 mov     eax, dword_2325CB0
+  .text:01D47A1B                 test    eax, eax
+  .text:01D47A1D                 jz      short loc_1D47A28
+  .text:01D47A1F                 mov     ecx, dword_2322B48
+  .text:01D47A25                 push    ecx
+  .text:01D47A26                 jmp     short loc_1D47A33
+  .text:01D47A28                 mov     edx, [ebx+38h]
+  .text:01D47A2B                 mov     eax, lightmap_textures[edx*4]
+  .text:01D47A32                 push    eax
+  .text:01D47A33                 call    sub_1D3C0A0
+  .text:01D47A38                 mov     eax, [ebx+38h]
+  .text:01D47A3B                 add     esp, 4
+  .text:01D47A3E                 mov     ecx, dword_2BB95C0[eax*4]
+  .text:01D47A45                 test    ecx, ecx
+  .text:01D47A47                 jz      short loc_1D47AB4
+  .text:01D47A49                 mov     esi, eax
+  .text:01D47A4B                 mov     dword_2BB95C0[eax*4], 0
+  .text:01D47A56                 shl     esi, 4
+  .text:01D47A59                 add     esi, offset lightmap_rectchange
+  .text:01D47A5F                 mov     edx, dword_1E41538
+  .text:01D47A65                 shl     eax, 7
+  .text:01D47A68                 mov     ecx, [esi+4]
+  .text:01D47A6B                 add     eax, ecx
+  .text:01D47A6D                 imul    eax, dword_27B9088
+  .text:01D47A74                 shl     eax, 7
+  .text:01D47A77                 add     eax, offset lightmaps
+  .text:01D47A7C                 push    eax
+  .text:01D47A7D                 mov     eax, [esi+0Ch]
+  .text:01D47A80                 push    1401h
+  .text:01D47A85                 push    edx
+  .text:01D47A86                 push    eax
+  .text:01D47A87                 push    80h
+  .text:01D47A8C                 push    ecx
+  .text:01D47A8D                 push    0
+  .text:01D47A8F                 push    0
+  .text:01D47A91                 push    0DE1h
+  .text:01D47A96                 call    dword_2791C60
+  .text:01D47A9C                 xor     eax, eax
+  .text:01D47A9E                 mov     dword ptr [esi], 80h
+  .text:01D47AA4                 mov     dword ptr [esi+4], 80h
+  .text:01D47AAB                 mov     [esi+0Ch], eax
+  .text:01D47AAE                 mov     [esi+8], eax
+  .text:01D47AB1                 mov     esi, [ebp+surface]
+  .text:01D47AB4                 push    46040000h
+  .text:01D47AB9                 push    2200h
+  .text:01D47ABE                 push    2300h
+  .text:01D47AC3                 call    dword_2791690
+  .text:01D47AC9                 mov     ecx, [esi+18h]
+  .text:01D47ACC                 push    ecx
+  .text:01D47ACD                 call    sub_1D33CA0
+  .text:01D47AD2                 add     esp, 4
+  .text:01D47AD5                 mov     [ebp+face], eax
+  .text:01D47AD8                 push    9
+  .text:01D47ADA                 call    dword_2792038
+  .text:01D47AE0                 mov     al, [ebx+8]
+  .text:01D47AE3                 lea     esi, [edi+10h]
+  .text:01D47AE6                 test    al, 20h
+  .text:01D47AE8                 jz      loc_1D47B7A
+  .text:01D47AEE                 mov     edx, dword_2BC98FC
+  .text:01D47AF4                 push    edx
+  .text:01D47AF5                 push    ebx
+  .text:01D47AF6                 call    sub_1D482A0
+  .text:01D47AFB                 mov     eax, [edi+8]
+  .text:01D47AFE                 add     esp, 8
+  .text:01D47B01                 fstp    [ebp+var_4]
+  .text:01D47B04                 test    eax, eax
+  .text:01D47B06                 mov     [ebp+surface], 0
+  .text:01D47B0D                 jle     loc_1D47BE1
+  .text:01D47B13                 fld     [ebp+var_4]
+  .text:01D47B16                 mov     eax, [esi+10h]
+  .text:01D47B19                 fadd    dword ptr [esi+0Ch]
+  .text:01D47B1C                 push    eax
+  .text:01D47B1D                 push    ecx
+  .text:01D47B1E                 mov     ecx, dword_1E478E0
+  .text:01D47B24                 fstp    [esp+18h+var_18]
+  .text:01D47B27                 push    ecx
+  .text:01D47B28                 call    dword_2791E58
+  .text:01D47B2E                 mov     edx, [esi+18h]
+  .text:01D47B31                 mov     eax, [esi+14h]
+  .text:01D47B34                 mov     ecx, dword_1E478E4
+  .text:01D47B3A                 push    edx
+  .text:01D47B3B                 push    eax
+  .text:01D47B3C                 push    ecx
+  .text:01D47B3D                 call    dword_2791E58
+  .text:01D47B43                 mov     eax, [ebp+face]
+  .text:01D47B46                 test    eax, eax
+  .text:01D47B48                 jz      short loc_1D47B60
+  .text:01D47B4A                 fld     [ebp+var_4]
+  .text:01D47B4D                 mov     edx, [esi+10h]
+  .text:01D47B50                 fadd    dword ptr [esi+0Ch]
+  .text:01D47B53                 push    edx
+  .text:01D47B54                 push    ecx
+  .text:01D47B55                 fstp    [esp+18h+var_18]
+  .text:01D47B58                 call    sub_1D33E80
+  .text:01D47B5D                 add     esp, 8
+  .text:01D47B60                 push    esi
+  .text:01D47B61                 call    dword_2791B58
+  .text:01D47B67                 mov     eax, [ebp+surface]
+  .text:01D47B6A                 mov     ecx, [edi+8]
+  .text:01D47B6D                 inc     eax
+  .text:01D47B6E                 add     esi, 1Ch
+  .text:01D47B71                 cmp     eax, ecx
+  .text:01D47B73                 mov     [ebp+surface], eax
+  .text:01D47B76                 jl      short loc_1D47B13
+  .text:01D47B78                 jmp     short loc_1D47BE1
+  .text:01D47B7A                 mov     eax, [edi+8]
+  .text:01D47B7D                 mov     [ebp+surface], 0
+  .text:01D47B84                 test    eax, eax
+  .text:01D47B86                 jle     short loc_1D47BE1
+  .text:01D47B88                 mov     eax, [esi+10h]
+  .text:01D47B8B                 mov     ecx, [esi+0Ch]
+  .text:01D47B8E                 mov     edx, dword_1E478E0
+  .text:01D47B94                 push    eax
+  .text:01D47B95                 push    ecx
+  .text:01D47B96                 push    edx
+  .text:01D47B97                 call    dword_2791E58
+  .text:01D47B9D                 mov     eax, [esi+18h]
+  .text:01D47BA0                 mov     ecx, [esi+14h]
+  .text:01D47BA3                 mov     edx, dword_1E478E4
+  .text:01D47BA9                 push    eax
+  .text:01D47BAA                 push    ecx
+  .text:01D47BAB                 push    edx
+  .text:01D47BAC                 call    dword_2791E58
+  .text:01D47BB2                 mov     eax, [ebp+face]
+  .text:01D47BB5                 test    eax, eax
+  .text:01D47BB7                 jz      short loc_1D47BC9
+  .text:01D47BB9                 mov     eax, [esi+10h]
+  .text:01D47BBC                 mov     ecx, [esi+0Ch]
+  .text:01D47BBF                 push    eax
+  .text:01D47BC0                 push    ecx
+  .text:01D47BC1                 call    sub_1D33E80
+  .text:01D47BC6                 add     esp, 8
+  .text:01D47BC9                 push    esi
+  .text:01D47BCA                 call    dword_2791B58
+  .text:01D47BD0                 mov     eax, [ebp+surface]
+  .text:01D47BD3                 mov     ecx, [edi+8]
+  .text:01D47BD6                 inc     eax
+  .text:01D47BD7                 add     esi, 1Ch
+  .text:01D47BDA                 cmp     eax, ecx
+  .text:01D47BDC                 mov     [ebp+surface], eax
+  .text:01D47BDF                 jl      short loc_1D47B88
+  .text:01D47BE1                 call    dword_27917D4
+  .text:01D47BE7                 mov     eax, [ebp+face]
+  .text:01D47BEA                 test    eax, eax
+  .text:01D47BEC                 jz      short loc_1D47BF3
+  .text:01D47BEE                 call    sub_1D33EA0
+  .text:01D47BF3                 mov     eax, dword_1E471C0
+  .text:01D47BF8                 test    eax, eax
+  .text:01D47BFA                 jnz     short loc_1D47C43
+  .text:01D47BFC                 mov     eax, [ebx+58h]
+  .text:01D47BFF                 test    eax, eax
+  .text:01D47C01                 jz      short loc_1D47C43
+  .text:01D47C03                 mov     eax, gDecalSurfCount
+  .text:01D47C08                 mov     gDecalSurfs[eax*4], ebx
+  .text:01D47C0F                 inc     eax
+  .text:01D47C10                 cmp     eax, 1F4h
+  .text:01D47C15                 mov     gDecalSurfCount, eax
+  .text:01D47C1A                 jle     short loc_1D47C29
+  .text:01D47C1C                 push    offset aTooManyDecalSu; "Too many decal surfaces!\n"
+  .text:01D47C21                 call    Sys_Error
+  .text:01D47C26                 add     esp, 4
+  .text:01D47C29                 mov     edx, dword_2BC98FC
+  .text:01D47C2F                 mov     eax, [edx+2F8h]
+  .text:01D47C35                 test    eax, eax
+  .text:01D47C37                 jnz     short loc_1D47C43
+  .text:01D47C39                 push    1
+  .text:01D47C3B                 call    sub_1D4B890
+  .text:01D47C40                 add     esp, 4
+  .text:01D47C43                 fld     flt_1E471B8
+  .text:01D47C49                 fcomp   ds:flt_1E1D048
+  .text:01D47C4F                 fnstsw  ax
+  .text:01D47C51                 test    ah, 44h
+  .text:01D47C54                 jnp     loc_1D47EF8
+  .text:01D47C5A                 push    0DE1h
+  .text:01D47C5F                 call    dword_2791FA4
+  .text:01D47C65                 push    3F800000h
+  .text:01D47C6A                 push    3F800000h
+  .text:01D47C6F                 push    3F800000h
+  .text:01D47C74                 call    dword_279176C
+  .text:01D47C7A                 cmp     flt_1E471B8, 40000000h
+  .text:01D47C84                 jnz     short loc_1D47C91
+  .text:01D47C86                 push    0B71h
+  .text:01D47C8B                 call    dword_2791FA4
+  .text:01D47C91                 push    2
+  .text:01D47C93                 call    dword_2792038
+  .text:01D47C99                 mov     eax, [edi+8]
+  .text:01D47C9C                 xor     esi, esi
+  .text:01D47C9E                 test    eax, eax
+  .text:01D47CA0                 lea     ebx, [edi+10h]
+  .text:01D47CA3                 jle     short loc_1D47CB7
+  .text:01D47CA5                 push    ebx
+  .text:01D47CA6                 call    dword_2791B58
+  .text:01D47CAC                 mov     eax, [edi+8]
+  .text:01D47CAF                 inc     esi
+  .text:01D47CB0                 add     ebx, 1Ch
+  .text:01D47CB3                 cmp     esi, eax
+  .text:01D47CB5                 jl      short loc_1D47CA5
+  .text:01D47CB7                 call    dword_27917D4
+  .text:01D47CBD                 push    0DE1h
+  .text:01D47CC2                 call    dword_279173C
+  .text:01D47CC8                 cmp     flt_1E471B8, 40000000h
+  .text:01D47CD2                 jnz     loc_1D47EF8
+  .text:01D47CD8                 push    0B71h
+  .text:01D47CDD                 call    dword_279173C
+  .text:01D47CE3                 pop     edi
+  .text:01D47CE4                 pop     esi
+  .text:01D47CE5                 pop     ebx
+  .text:01D47CE6                 mov     esp, ebp
+  .text:01D47CE8                 pop     ebp
+  .text:01D47CE9                 retn
+  .text:01D47CEA                 mov     esi, [ebx+24h]
+  .text:01D47CED                 push    ebx
+  .text:01D47CEE                 call    R_TextureAnimation
+  .text:01D47CF3                 mov     edi, eax
+  .text:01D47CF5                 call    sub_1D478A0
+  .text:01D47CFA                 mov     eax, [edi+18h]
+  .text:01D47CFD                 push    eax
+  .text:01D47CFE                 call    sub_1D3C0A0
+  .text:01D47D03                 mov     al, [ebx+8]
+  .text:01D47D06                 add     esp, 8
+  .text:01D47D09                 test    al, 20h
+  .text:01D47D0B                 jz      short loc_1D47D1F
+  .text:01D47D0D                 mov     ecx, dword_2BC98FC
+  .text:01D47D13                 push    ecx
+  .text:01D47D14                 push    ebx
+  .text:01D47D15                 call    sub_1D48350
+  .text:01D47D1A                 add     esp, 8
+  .text:01D47D1D                 jmp     short loc_1D47D5C
+  .text:01D47D1F                 push    9
+  .text:01D47D21                 call    dword_2792038
+  .text:01D47D27                 mov     eax, [esi+8]
+  .text:01D47D2A                 xor     ebx, ebx
+  .text:01D47D2C                 test    eax, eax
+  .text:01D47D2E                 lea     edi, [esi+10h]
+  .text:01D47D31                 jle     short loc_1D47D53
+  .text:01D47D33                 mov     edx, [edi+10h]
+  .text:01D47D36                 mov     eax, [edi+0Ch]
+  .text:01D47D39                 push    edx
+  .text:01D47D3A                 push    eax
+  .text:01D47D3B                 call    dword_2792098
+  .text:01D47D41                 push    edi
+  .text:01D47D42                 call    dword_2791B58
+  .text:01D47D48                 mov     eax, [esi+8]
+  .text:01D47D4B                 inc     ebx
+  .text:01D47D4C                 add     edi, 1Ch
+  .text:01D47D4F                 cmp     ebx, eax
+  .text:01D47D51                 jl      short loc_1D47D33
+  .text:01D47D53                 call    dword_27917D4
+  .text:01D47D59                 mov     ebx, [ebp+surface]
+  .text:01D47D5C                 mov     eax, dword_1E471C0
+  .text:01D47D61                 test    eax, eax
+  .text:01D47D63                 jnz     short loc_1D47D9C
+  .text:01D47D65                 mov     eax, [ebx+58h]
+  .text:01D47D68                 test    eax, eax
+  .text:01D47D6A                 jz      short loc_1D47D9C
+  .text:01D47D6C                 mov     eax, gDecalSurfCount
+  .text:01D47D71                 mov     gDecalSurfs[eax*4], ebx
+  .text:01D47D78                 inc     eax
+  .text:01D47D79                 cmp     eax, 1F4h
+  .text:01D47D7E                 mov     gDecalSurfCount, eax
+  .text:01D47D83                 jle     short loc_1D47D92
+  .text:01D47D85                 push    offset aTooManyDecalSu_0; "Too many decal surfaces!\n"
+  .text:01D47D8A                 call    Sys_Error
+  .text:01D47D8F                 add     esp, 4
+  .text:01D47D92                 push    0
+  .text:01D47D94                 call    sub_1D4B890
+  .text:01D47D99                 add     esp, 4
+  .text:01D47D9C                 fld     flt_1E471B8
+  .text:01D47DA2                 fcomp   ds:flt_1E1D048
+  .text:01D47DA8                 fnstsw  ax
+  .text:01D47DAA                 test    ah, 44h
+  .text:01D47DAD                 jnp     loc_1D47E44
+  .text:01D47DB3                 push    0DE1h
+  .text:01D47DB8                 call    dword_2791FA4
+  .text:01D47DBE                 push    3F800000h
+  .text:01D47DC3                 push    3F800000h
+  .text:01D47DC8                 push    3F800000h
+  .text:01D47DCD                 call    dword_279176C
+  .text:01D47DD3                 cmp     flt_1E471B8, 40000000h
+  .text:01D47DDD                 jnz     short loc_1D47DEA
+  .text:01D47DDF                 push    0B71h
+  .text:01D47DE4                 call    dword_2791FA4
+  .text:01D47DEA                 push    2
+  .text:01D47DEC                 call    dword_2792038
+  .text:01D47DF2                 mov     eax, [esi+8]
+  .text:01D47DF5                 lea     ecx, [esi+10h]
+  .text:01D47DF8                 xor     edi, edi
+  .text:01D47DFA                 mov     [ebp+surface], ecx
+  .text:01D47DFD                 test    eax, eax
+  .text:01D47DFF                 jle     short loc_1D47E1C
+  .text:01D47E01                 mov     edx, [ebp+surface]
+  .text:01D47E04                 push    edx
+  .text:01D47E05                 call    dword_2791B58
+  .text:01D47E0B                 mov     ecx, [ebp+surface]
+  .text:01D47E0E                 mov     eax, [esi+8]
+  .text:01D47E11                 inc     edi
+  .text:01D47E12                 add     ecx, 1Ch
+  .text:01D47E15                 cmp     edi, eax
+  .text:01D47E17                 mov     [ebp+surface], ecx
+  .text:01D47E1A                 jl      short loc_1D47E01
+  .text:01D47E1C                 call    dword_27917D4
+  .text:01D47E22                 push    0DE1h
+  .text:01D47E27                 call    dword_279173C
+  .text:01D47E2D                 cmp     flt_1E471B8, 40000000h
+  .text:01D47E37                 jnz     short loc_1D47E44
+  .text:01D47E39                 push    0B71h
+  .text:01D47E3E                 call    dword_279173C
+  .text:01D47E44                 mov     eax, dword_2BC98FC
+  .text:01D47E49                 mov     ecx, [eax+2F8h]
+  .text:01D47E4F                 test    ecx, ecx
+  .text:01D47E51                 jnz     loc_1D47EF8
+  .text:01D47E57                 mov     eax, dword_2325CB0
+  .text:01D47E5C                 test    eax, eax
+  .text:01D47E5E                 jz      short loc_1D47E69
+  .text:01D47E60                 mov     ecx, dword_2322B48
+  .text:01D47E66                 push    ecx
+  .text:01D47E67                 jmp     short loc_1D47E74
+  .text:01D47E69                 mov     edx, [ebx+38h]
+  .text:01D47E6C                 mov     eax, lightmap_textures[edx*4]
+  .text:01D47E73                 push    eax
+  .text:01D47E74                 call    sub_1D3C0A0
+  .text:01D47E79                 add     esp, 4
+  .text:01D47E7C                 push    0BE2h
+  .text:01D47E81                 call    dword_279173C
+  .text:01D47E87                 push    9
+  .text:01D47E89                 call    dword_2792038
+  .text:01D47E8F                 mov     eax, [esi+8]
+  .text:01D47E92                 xor     ebx, ebx
+  .text:01D47E94                 test    eax, eax
+  .text:01D47E96                 lea     edi, [esi+10h]
+  .text:01D47E99                 jle     short loc_1D47EBB
+  .text:01D47E9B                 mov     ecx, [edi+18h]
+  .text:01D47E9E                 mov     edx, [edi+14h]
+  .text:01D47EA1                 push    ecx
+  .text:01D47EA2                 push    edx
+  .text:01D47EA3                 call    dword_2792098
+  .text:01D47EA9                 push    edi
+  .text:01D47EAA                 call    dword_2791B58
+  .text:01D47EB0                 mov     eax, [esi+8]
+  .text:01D47EB3                 inc     ebx
+  .text:01D47EB4                 add     edi, 1Ch
+  .text:01D47EB7                 cmp     ebx, eax
+  .text:01D47EB9                 jl      short loc_1D47E9B
+  .text:01D47EBB                 call    dword_27917D4
+  .text:01D47EC1                 push    0BE2h
+  .text:01D47EC6                 call    dword_2791FA4
+  .text:01D47ECC                 pop     edi
+  .text:01D47ECD                 pop     esi
+  .text:01D47ECE                 pop     ebx
+  .text:01D47ECF                 mov     esp, ebp
+  .text:01D47ED1                 pop     ebp
+  .text:01D47ED2                 retn
+  .text:01D47ED3                 test    al, 10h
+  .text:01D47ED5                 jz      short loc_1D47EF8
+  .text:01D47ED7                 call    sub_1D478A0
+  .text:01D47EDC                 mov     eax, [ebx+2Ch]
+  .text:01D47EDF                 mov     ecx, [eax+24h]
+  .text:01D47EE2                 mov     edx, [ecx+18h]
+  .text:01D47EE5                 push    edx
+  .text:01D47EE6                 call    sub_1D3C0A0
+  .text:01D47EEB                 mov     eax, [ebp+face]
+  .text:01D47EEE                 push    eax
+  .text:01D47EEF                 push    ebx
+  .text:01D47EF0                 call    sub_1D4F192
+  .text:01D47EF5                 add     esp, 0Ch
+  .text:01D47EF8                 pop     edi
+  .text:01D47EF9                 pop     esi
+  .text:01D47EFA                 pop     ebx
+  .text:01D47EFB                 mov     esp, ebp
+  .text:01D47EFD                 pop     ebp
+  .text:01D47EFE                 retn
+procedure: |-
+  // Recover whole lightmap_textures/lightmap_rectchange/lightmaps bases and gDecalSurfs/gDecalSurfCount queue storage.
+  // The real R_RenderDynamicLightmaps call is the dynamic-lightmap update under !filterMode (anonymous filter state here).
+  // Existing consumer: GL_EnableMultitexture=sub_1D478D0 selects texture unit 1, enables GL_TEXTURE_2D and sets enabled state.
+  // GL_DisableMultitexture=sub_1D478A0 disables that unit and returns to texture unit 0.
+  // Issue 156: classic two-argument surface renderer. R_RenderDynamicLightmaps remains a real call, unlike HL25 Linux. lightmap_textures binds by surface index; lightmap_rectchange is the whole dirty-rectangle array; lightmaps is the upload pixel buffer. gDecalSurfs/gDecalSurfCount form the overflow-checked surface queue.
+  void __cdecl R_DrawSequentialPoly(void *surface, int face)
+  {
+    int v2; // eax
+    _DWORD *v3; // ebx
+    int v4; // eax
+    int v5; // eax
+    int v6; // edi
+    int v7; // esi
+    int v8; // eax
+    int *v9; // esi
+    int *v10; // esi
+    int v11; // eax
+    int v12; // esi
+    int i; // ebx
+    int v14; // esi
+    int v15; // edi
+    int v16; // ebx
+    int j; // edi
+    int v18; // eax
+    int v19; // edi
+    int v20; // ebx
+    int k; // edi
+    float v22; // [esp+5Ch] [ebp-18h]
+    int v23; // [esp+5Ch] [ebp-18h]
+    float v24; // [esp+70h] [ebp-4h]
+    void *surfacea; // [esp+7Ch] [ebp+8h]
+    char *surfaceb; // [esp+7Ch] [ebp+8h]
+    char *surfacec; // [esp+7Ch] [ebp+8h]
+    char *surfaced; // [esp+7Ch] [ebp+8h]
+    int facea; // [esp+80h] [ebp+Ch]
+
+    if ( *(_DWORD *)(dword_2BC98FC + 760) == 1 )
+    {
+      sub_1D478A0();
+      dword_2791C18(770, 771);
+      dword_279173C(3042);
+      v2 = R_TextureAnimation((int)surface);
+      sub_1D3C0A0(*(_DWORD *)(v2 + 24));
+      dword_2791FA4(3553);
+      sub_1D483C0(*((_DWORD *)surface + 9));
+      dword_279173C(3553);
+      sub_1D478D0();
+    }
+    else
+    {
+      v3 = surface;
+      v4 = *((_DWORD *)surface + 2);
+      if ( (v4 & 0x94) != 0 )
+      {
+        if ( (v4 & 0x10) != 0 )
+        {
+          sub_1D478A0();
+          sub_1D3C0A0(*(_DWORD *)(*(_DWORD *)(*((_DWORD *)surface + 11) + 36) + 24));
+          sub_1D4F192(surface, face);
+        }
+      }
+      else
+      {
+        if ( !dword_2325CB0 )
+          R_RenderDynamicLightmaps(surface);
+        if ( dword_2343444 && ((v5 = *(_DWORD *)(dword_2BC98FC + 760)) == 0 || v5 == 4) )
+        {
+          v6 = *((_DWORD *)surface + 9);
+          v7 = R_TextureAnimation((int)surface);
+          surfacea = (void *)v7;
+          sub_1D3C100(dword_1E478E0);
+          sub_1D3C0A0(*(_DWORD *)(v7 + 24));
+          dword_2791690(8960, 8704, 1174667264);
+          if ( *(_DWORD *)(dword_2BC98FC + 760) == 1 )
+            dword_2791FA4(3553);
+          sub_1D478D0();
+          if ( dword_2325CB0 )
+            sub_1D3C0A0(dword_2322B48);
+          else
+            sub_1D3C0A0(lightmap_textures[v3[14]]);
+          v8 = v3[14];
+          if ( dword_2BB95C0[v8] )
+          {
+            dword_2BB95C0[v8] = 0;
+            v9 = lightmap_rectchange[v8];
+            dword_2791C60(
+              3553,
+              0,
+              0,
+              v9[1],
+              128,
+              v9[3],
+              dword_1E41538,
+              5121,
+              &lightmaps[128 * dword_27B9088 * (v9[1] + (v8 << 7))]);
+            *v9 = 128;
+            v9[1] = 128;
+            v9[3] = 0;
+            v9[2] = 0;
+            v7 = (int)surfacea;
+          }
+          dword_2791690(8960, 8704, 1174667264);
+          facea = sub_1D33CA0(*(_DWORD *)(v7 + 24));
+          dword_2792038(9);
+          v10 = (int *)(v6 + 16);
+          if ( (v3[2] & 0x20) != 0 )
+          {
+            v24 = sub_1D482A0(v3, dword_2BC98FC);
+            for ( surfaceb = nullptr; (int)surfaceb < *(_DWORD *)(v6 + 8); ++surfaceb )
+            {
+              v22 = v24 + *((float *)v10 + 3);
+              dword_2791E58(dword_1E478E0, LODWORD(v22), v10[4]);
+              dword_2791E58(dword_1E478E4, v10[5], v10[6]);
+              if ( facea )
+              {
+                *(float *)&v23 = v24 + *((float *)v10 + 3);
+                sub_1D33E80(v23, v10[4]);
+              }
+              dword_2791B58(v10);
+              v10 += 7;
+            }
+          }
+          else
+          {
+            for ( surfacec = nullptr; (int)surfacec < *(_DWORD *)(v6 + 8); ++surfacec )
+            {
+              dword_2791E58(dword_1E478E0, v10[3], v10[4]);
+              dword_2791E58(dword_1E478E4, v10[5], v10[6]);
+              if ( facea )
+                sub_1D33E80(v10[3], v10[4]);
+              dword_2791B58(v10);
+              v10 += 7;
+            }
+          }
+          dword_27917D4();
+          if ( facea )
+            sub_1D33EA0();
+          if ( !dword_1E471C0 && v3[22] )
+          {
+            v11 = gDecalSurfCount;
+            gDecalSurfs[gDecalSurfCount] = v3;
+            gDecalSurfCount = v11 + 1;
+            if ( v11 + 1 > 500 )
+              Sys_Error(aTooManyDecalSu);
+            if ( !*(_DWORD *)(dword_2BC98FC + 760) )
+              sub_1D4B890(1);
+          }
+          if ( flt_1E471B8 != 0.0 )
+          {
+            dword_2791FA4(3553);
+            dword_279176C(1065353216, 1065353216, 1065353216);
+            if ( LODWORD(flt_1E471B8) == 0x40000000 )
+              dword_2791FA4(2929);
+            dword_2792038(2);
+            v12 = 0;
+            for ( i = v6 + 16; v12 < *(_DWORD *)(v6 + 8); i += 28 )
+            {
+              dword_2791B58(i);
+              ++v12;
+            }
+            dword_27917D4();
+            dword_279173C(3553);
+            if ( LODWORD(flt_1E471B8) == 0x40000000 )
+              dword_279173C(2929);
+          }
+        }
+        else
+        {
+          v14 = *((_DWORD *)surface + 9);
+          v15 = R_TextureAnimation((int)surface);
+          sub_1D478A0();
+          sub_1D3C0A0(*(_DWORD *)(v15 + 24));
+          if ( (*((_BYTE *)surface + 8) & 0x20) != 0 )
+          {
+            sub_1D48350((int)surface, dword_2BC98FC);
+          }
+          else
+          {
+            dword_2792038(9);
+            v16 = 0;
+            for ( j = v14 + 16; v16 < *(_DWORD *)(v14 + 8); j += 28 )
+            {
+              dword_2792098(*(_DWORD *)(j + 12), *(_DWORD *)(j + 16));
+              dword_2791B58(j);
+              ++v16;
+            }
+            dword_27917D4();
+            v3 = surface;
+          }
+          if ( !dword_1E471C0 && v3[22] )
+          {
+            v18 = gDecalSurfCount;
+            gDecalSurfs[gDecalSurfCount] = v3;
+            gDecalSurfCount = v18 + 1;
+            if ( v18 + 1 > 500 )
+              Sys_Error(aTooManyDecalSu_0);
+            sub_1D4B890(0);
+          }
+          if ( flt_1E471B8 != 0.0 )
+          {
+            dword_2791FA4(3553);
+            dword_279176C(1065353216, 1065353216, 1065353216);
+            if ( LODWORD(flt_1E471B8) == 0x40000000 )
+              dword_2791FA4(2929);
+            dword_2792038(2);
+            v19 = 0;
+            for ( surfaced = (char *)(v14 + 16); v19 < *(_DWORD *)(v14 + 8); surfaced += 28 )
+            {
+              dword_2791B58(surfaced);
+              ++v19;
+            }
+            dword_27917D4();
+            dword_279173C(3553);
+            if ( LODWORD(flt_1E471B8) == 0x40000000 )
+              dword_279173C(2929);
+          }
+          if ( !*(_DWORD *)(dword_2BC98FC + 760) )
+          {
+            if ( dword_2325CB0 )
+              sub_1D3C0A0(dword_2322B48);
+            else
+              sub_1D3C0A0(lightmap_textures[v3[14]]);
+            dword_279173C(3042);
+            dword_2792038(9);
+            v20 = 0;
+            for ( k = v14 + 16; v20 < *(_DWORD *)(v14 + 8); k += 28 )
+            {
+              dword_2792098(*(_DWORD *)(k + 20), *(_DWORD *)(k + 24));
+              dword_2791B58(k);
+              ++v20;
+            }
+            dword_27917D4();
+            dword_2791FA4(3042);
+          }
+        }
+      }
+    }
+  }

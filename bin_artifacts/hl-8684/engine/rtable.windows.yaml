@@ -1,0 +1,9 @@
+gv_name: rtable
+gv_va: '0x2341cb8'
+gv_rva: '0x641cb8'
+gv_sig: 55 8B EC 8B 45 ?? 53 56 57 8B 48 ?? A1 ?? ?? ?? ?? 85 C0 8B 79 ?? 75 ?? BE ?? ?? ?? ?? BB 14 00 00 00 68 FF 7F 00
+  00
+gv_sig_va: '0x1d47750'
+gv_inst_offset: '0xc'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

@@ -1,0 +1,9 @@
+gv_name: lightmap_textures
+gv_va: '0x2c0fb40'
+gv_rva: '0xf0fb40'
+gv_sig: A1 ?? ?? ?? ?? 53 55 56 8B 88 ?? ?? ?? ?? BE 01 00 00 00 3B CE 57 75 ?? E8 ?? ?? ?? ?? 68 03 03 00 00 68 02 03 00
+  00
+gv_sig_va: '0x1d48500'
+gv_inst_offset: '0x129'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

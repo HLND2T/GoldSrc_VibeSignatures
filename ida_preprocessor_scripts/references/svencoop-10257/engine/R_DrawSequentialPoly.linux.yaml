@@ -1,6 +1,9 @@
 func_name: "R_DrawSequentialPoly"
 func_va: "0x152000"
 disasm_code: |-
+  ; Issue 156: lightmap_textures=dword_798BAC0; lightmap_rectchange=unk_797F680; lightmaps=byte_38FF680.
+  ; gDecalSurfs=dword_79A9860; gDecalSurfCount=dword_79A9840. Decode current PIC base plus displacement.
+  ; R_RenderDynamicLightmaps=sub_14CD10: real call under !filterMode, not the inlined decal drawing code.
   ; mtexenabled is the 0/1 enabled state written around GL_TEXTURE_2D, distinct from gl_mtexable capability. GL_EnableMultitexture may remain a direct call or be inlined.
   .text:00152000                 push    ebp
   .text:00152001                 push    edi
@@ -1089,6 +1092,10 @@ disasm_code: |-
   .text:00152FC0                 jg      loc_152A04
   .text:00152FC6                 jmp     loc_152D9B
 procedure: |-
+  // Issue 156: lightmap_textures=dword_798BAC0 (GL_Bind); lightmap_rectchange=unk_797F680 (dirty-rectangle upload/reset).
+  // lightmaps=byte_38FF680 (pixel-buffer base); gDecalSurfs=dword_79A9860; gDecalSurfCount=dword_79A9840.
+  // Recover whole array bases using current PIC operands, not rectangle members or interior pixel pointers.
+  // R_RenderDynamicLightmaps=sub_14CD10 is called under !filterMode and performs lightmap/style-cache updates.
   // mtexenabled is the 0/1 enabled state written around GL_TEXTURE_2D, distinct from gl_mtexable capability. GL_EnableMultitexture may remain a direct call or be inlined.
   // Multitexture helpers can be inlined: mtexenabled is the enabled state, gl_mtexable is capability. Preserve the current binary ABI; HL25 adds shader cleanup absent from older source.
   void __cdecl R_DrawSequentialPoly(void *surface, int face)

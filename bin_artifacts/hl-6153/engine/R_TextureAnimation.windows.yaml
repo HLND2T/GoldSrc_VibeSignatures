@@ -1,0 +1,6 @@
+func_name: R_TextureAnimation
+func_va: '0x1d465e0'
+func_rva: '0x465e0'
+func_size: '0x14a'
+func_sig: 55 8B EC 8B 45 ?? 53 56 57 8B 48 ?? A1 ?? ?? ?? ?? 85 C0 8B 79 ?? 75 ?? BE ?? ?? ?? ?? BB 14 00 00 00 68 FF 7F 00
+  00

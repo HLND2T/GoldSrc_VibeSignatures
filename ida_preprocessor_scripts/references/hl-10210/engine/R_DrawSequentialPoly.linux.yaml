@@ -1,6 +1,9 @@
 func_name: "R_DrawSequentialPoly"
 func_va: "0x185f10"
 disasm_code: |-
+  ; Issue 156: recover lightmap_textures from GL_Bind, lightmap_rectchange from dirty-rectangle upload/reset,
+  ; lightmaps from the upload pixel-buffer base, and gDecalSurfs/gDecalSurfCount from surface enqueue/increment.
+  ; R_RenderDynamicLightmaps is inlined here; do not report R_ReUploadLightmap as that function.
   ; mtexenabled is the 0/1 enabled state written around GL_TEXTURE_2D, distinct from gl_mtexable capability. GL_EnableMultitexture may remain a direct call or be inlined.
   .text:00185F10                 push    ebp
   .text:00185F11                 push    edi
@@ -1366,6 +1369,10 @@ disasm_code: |-
   .text:0018724B                 call    ds:qglPolygonOffset
   .text:00187251                 jmp     short loc_187223
 procedure: |-
+  // Issue 156: lightmap_textures is the texture array passed to GL_Bind by lightmap index.
+  // lightmap_rectchange is the whole dirty-rectangle array; lightmaps is the pixel-buffer base (not an interior row).
+  // gDecalSurfs/gDecalSurfCount are the surface queue and its incremented overflow-checked index.
+  // R_RenderDynamicLightmaps is inlined in this HL25 Linux body; R_ReUploadLightmap is a different function.
   // mtexenabled is the 0/1 enabled state written around GL_TEXTURE_2D, distinct from gl_mtexable capability. GL_EnableMultitexture may remain a direct call or be inlined.
   // Multitexture helpers can be inlined: mtexenabled is the enabled state, gl_mtexable is capability. Preserve the current binary ABI; HL25 adds shader cleanup absent from older source.
   void __cdecl R_DrawSequentialPoly(void *surface, int face, int cleanUpShaderState)

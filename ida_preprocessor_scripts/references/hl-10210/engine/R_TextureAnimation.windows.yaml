@@ -1,0 +1,203 @@
+func_name: "R_TextureAnimation"
+func_va: "0x1024c470"
+disasm_code: |-
+  ; rtable: whole function-local 20x20 int array. Select its first-element check or initialization base, never the end pointer.
+  ; The initialization calls RandomLong(0, 0x7FFF); later texture-dependent indexing reads the same array.
+  .text:1024C470                 push    ebp
+  .text:1024C471                 mov     ebp, esp
+  .text:1024C473                 cmp     rtable, 0
+  .text:1024C47A                 mov     edx, [ebp+surface]
+  .text:1024C47D                 push    ebx
+  .text:1024C47E                 push    esi
+  .text:1024C47F                 push    edi
+  .text:1024C480                 mov     eax, [edx+2Ch]
+  .text:1024C483                 mov     ebx, [eax+24h]
+  .text:1024C486                 jnz     short loc_1024C4C4
+  .text:1024C488                 mov     esi, offset rtable
+  .text:1024C48D                 nop     dword ptr [eax]
+  .text:1024C490                 mov     edi, 14h
+  .text:1024C495                 nop     word ptr [eax+eax+00000000h]
+  .text:1024C4A0                 ; high
+  .text:1024C4A0                 push    7FFFh; high
+  .text:1024C4A5                 ; low
+  .text:1024C4A5                 push    0; low
+  .text:1024C4A7                 call    RandomLong
+  .text:1024C4AC                 mov     [esi], eax
+  .text:1024C4AE                 add     esp, 8
+  .text:1024C4B1                 add     esi, 4
+  .text:1024C4B4                 sub     edi, 1
+  .text:1024C4B7                 jnz     short loc_1024C4A0
+  .text:1024C4B9                 cmp     esi, offset dword_1098A148
+  .text:1024C4BF                 jl      short loc_1024C490
+  .text:1024C4C1                 mov     edx, [ebp+surface]
+  .text:1024C4C4                 mov     eax, currententity
+  .text:1024C4C9                 movss   xmm0, dword ptr [eax+2E0h]
+  .text:1024C4D1                 ucomiss xmm0, ds:dword_102B3730
+  .text:1024C4D8                 lahf
+  .text:1024C4D9                 test    ah, 44h
+  .text:1024C4DC                 jnp     short loc_1024C4E6
+  .text:1024C4DE                 mov     ecx, [ebx+30h]
+  .text:1024C4E1                 test    ecx, ecx
+  .text:1024C4E3                 cmovnz  ebx, ecx
+  .text:1024C4E6                 mov     ecx, [ebx+20h]
+  .text:1024C4E9                 test    ecx, ecx
+  .text:1024C4EB                 jz      loc_1024C5E5
+  .text:1024C4F1                 cmp     byte ptr [ebx], 2Dh ; '-'
+  .text:1024C4F4                 jnz     loc_1024C597
+  .text:1024C4FA                 movsx   eax, word ptr [edx+14h]
+  .text:1024C4FE                 xor     edx, edx
+  .text:1024C500                 mov     ecx, [ebx+10h]
+  .text:1024C503                 shl     ecx, 10h
+  .text:1024C506                 add     eax, ecx
+  .text:1024C508                 mov     ecx, [ebx+14h]
+  .text:1024C50B                 div     dword ptr [ebx+10h]
+  .text:1024C50E                 shl     ecx, 10h
+  .text:1024C511                 xor     edx, edx
+  .text:1024C513                 mov     edi, eax
+  .text:1024C515                 mov     eax, [ebp+surface]
+  .text:1024C518                 movsx   eax, word ptr [eax+16h]
+  .text:1024C51C                 add     eax, ecx
+  .text:1024C51E                 div     dword ptr [ebx+14h]
+  .text:1024C521                 mov     esi, eax
+  .text:1024C523                 mov     eax, 66666667h
+  .text:1024C528                 imul    edi
+  .text:1024C52A                 mov     eax, 99999999h
+  .text:1024C52F                 sar     edx, 3
+  .text:1024C532                 mov     ecx, edx
+  .text:1024C534                 shr     ecx, 1Fh
+  .text:1024C537                 add     ecx, edx
+  .text:1024C539                 imul    esi
+  .text:1024C53B                 lea     ecx, [ecx+ecx*4]
+  .text:1024C53E                 sar     edx, 3
+  .text:1024C541                 mov     eax, edx
+  .text:1024C543                 shl     ecx, 2
+  .text:1024C546                 shr     eax, 1Fh
+  .text:1024C549                 add     eax, edx
+  .text:1024C54B                 sub     eax, ecx
+  .text:1024C54D                 add     eax, edi
+  .text:1024C54F                 lea     eax, [eax+eax*4]
+  .text:1024C552                 lea     eax, [esi+eax*4]
+  .text:1024C555                 mov     eax, rtable[eax*4]
+  .text:1024C55C                 cdq
+  .text:1024C55D                 idiv    dword ptr [ebx+20h]
+  .text:1024C560                 xor     esi, esi
+  .text:1024C562                 mov     edi, edx
+  .text:1024C564                 cmp     [ebx+24h], edi
+  .text:1024C567                 jg      short loc_1024C56E
+  .text:1024C569                 cmp     [ebx+28h], edi
+  .text:1024C56C                 jg      short loc_1024C5E5
+  .text:1024C56E                 mov     ebx, [ebx+2Ch]
+  .text:1024C571                 test    ebx, ebx
+  .text:1024C573                 jnz     short loc_1024C582
+  .text:1024C575                 push    offset aRTextureanimat; "R_TextureAnimation: broken cycle"
+  .text:1024C57A                 call    Sys_Error
+  .text:1024C57F                 add     esp, 4
+  .text:1024C582                 inc     esi
+  .text:1024C583                 cmp     esi, 64h ; 'd'
+  .text:1024C586                 jle     short loc_1024C564
+  .text:1024C588                 push    offset aRTextureanimat_0; "R_TextureAnimation: infinite cycle"
+  .text:1024C58D                 call    Sys_Error
+  .text:1024C592                 add     esp, 4
+  .text:1024C595                 jmp     short loc_1024C564
+  .text:1024C597                 movsd   xmm0, dbl_11282EF8
+  .text:1024C59F                 mulsd   xmm0, ds:qword_103066B8
+  .text:1024C5A7                 cvttsd2si eax, xmm0
+  .text:1024C5AB                 cdq
+  .text:1024C5AC                 idiv    ecx
+  .text:1024C5AE                 xor     esi, esi
+  .text:1024C5B0                 mov     edi, edx
+  .text:1024C5B2                 cmp     [ebx+24h], edi
+  .text:1024C5B5                 jg      short loc_1024C5BC
+  .text:1024C5B7                 cmp     [ebx+28h], edi
+  .text:1024C5BA                 jg      short loc_1024C5E5
+  .text:1024C5BC                 mov     ebx, [ebx+2Ch]
+  .text:1024C5BF                 test    ebx, ebx
+  .text:1024C5C1                 jnz     short loc_1024C5D0
+  .text:1024C5C3                 push    offset aRTextureanimat; "R_TextureAnimation: broken cycle"
+  .text:1024C5C8                 call    Sys_Error
+  .text:1024C5CD                 add     esp, 4
+  .text:1024C5D0                 inc     esi
+  .text:1024C5D1                 cmp     esi, 64h ; 'd'
+  .text:1024C5D4                 jle     short loc_1024C5B2
+  .text:1024C5D6                 push    offset aRTextureanimat_0; "R_TextureAnimation: infinite cycle"
+  .text:1024C5DB                 call    Sys_Error
+  .text:1024C5E0                 add     esp, 4
+  .text:1024C5E3                 jmp     short loc_1024C5B2
+  .text:1024C5E5                 pop     edi
+  .text:1024C5E6                 pop     esi
+  .text:1024C5E7                 mov     eax, ebx
+  .text:1024C5E9                 pop     ebx
+  .text:1024C5EA                 pop     ebp
+  .text:1024C5EB                 retn
+procedure: |-
+  // Issue 156: rtable is the function-local 20x20 random animation table. Recover its base from initialization/read, not the end pointer. Source is a semantic reference; preserve current binary ABI.
+  gsv_anim_texture_t *__cdecl R_TextureAnimation(gsv_anim_surface_t *surface)
+  {
+    gsv_anim_surface_t *v1; // edx
+    gsv_anim_texture_t *texture; // ebx
+    int *v3; // esi
+    int v4; // edi
+    int anim_total; // ecx
+    signed int v6; // eax
+    signed int v7; // esi
+    int v8; // et2
+    int v9; // esi
+    int v10; // edi
+    int v11; // esi
+    int v12; // edi
+
+    v1 = surface;
+    texture = surface->texinfo->texture;
+    if ( !rtable[0][0] )
+    {
+      v3 = rtable[0];
+      do
+      {
+        v4 = 20;
+        do
+        {
+          *v3++ = RandomLong(0, 0x7FFF);
+          --v4;
+        }
+        while ( v4 );
+      }
+      while ( (int)v3 < (int)dword_1098A148 );
+      v1 = surface;
+    }
+    if ( *(float *)currententity->before_renderfx != 0.0 && texture->alternate_anims )
+      texture = texture->alternate_anims;
+    anim_total = texture->anim_total;
+    if ( anim_total )
+    {
+      if ( texture->name[0] == 45 )
+      {
+        v6 = ((texture->width << 16) + v1->texturemins[0]) / texture->width;
+        v7 = ((texture->height << 16) + surface->texturemins[1]) / texture->height;
+        v8 = rtable[v6][20 * (v7 / -20 - 20 * (v6 / 20)) + v7] % texture->anim_total;
+        v9 = 0;
+        v10 = v8;
+        while ( texture->anim_min > v10 || texture->anim_max <= v10 )
+        {
+          texture = texture->anim_next;
+          if ( !texture )
+            Sys_Error("R_TextureAnimation: broken cycle");
+          if ( ++v9 > 100 )
+            Sys_Error("R_TextureAnimation: infinite cycle");
+        }
+      }
+      else
+      {
+        v11 = 0;
+        v12 = (int)(dbl_11282EF8 * 10.0) % anim_total;
+        while ( texture->anim_min > v12 || texture->anim_max <= v12 )
+        {
+          texture = texture->anim_next;
+          if ( !texture )
+            Sys_Error("R_TextureAnimation: broken cycle");
+          if ( ++v11 > 100 )
+            Sys_Error("R_TextureAnimation: infinite cycle");
+        }
+      }
+    }
+    return texture;
+  }
