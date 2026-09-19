@@ -6,6 +6,7 @@ import re
 import subprocess
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -537,6 +538,64 @@ class ImpactPlanningTests(unittest.TestCase):
                     merge_rules=(),
                 )
 
+    def test_retirement_rejects_remaining_inputs_and_non_removal_statuses(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            base = self._contract(Path(temporary))
+            consumer = base.nodes["engine:windows:consume"]
+            retired = replace(
+                base,
+                required_paths=frozenset({"engine/B.windows.yaml"}),
+                nodes={consumer.node_id: consumer},
+                owners_by_path={"engine/B.windows.yaml": frozenset({consumer.node_id})},
+            )
+            old_path = "bin_artifacts/game-1/engine/A.windows.yaml"
+            new_path = "bin_artifacts/game-1/engine/B.windows.yaml"
+            cases = [
+                (ChangedPath("D", old_path, None), "still has an analysis consumer"),
+                (ChangedPath("R", old_path, new_path), "still has an analysis consumer"),
+                (ChangedPath("C", old_path, new_path), "without being removed"),
+                (ChangedPath("M", old_path, old_path), "without being removed"),
+                (
+                    ChangedPath("D", "bin_artifacts/game-1/engine/Unknown.windows.yaml", None),
+                    "outside the formal contract",
+                ),
+            ]
+            for change, error in cases:
+                with self.subTest(change=change), self.assertRaisesRegex(ImpactPlanningError, error):
+                    plan_tag_impact(
+                        tag="game-1",
+                        base_contract=base,
+                        merge_contract=retired,
+                        changed_paths=(change,),
+                        base_sources=None,
+                        merge_sources=None,
+                        base_rules=(),
+                        merge_rules=(),
+                    )
+
+    def test_replaced_producer_of_existing_artifact_schedules_current_owner_and_downstream(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            base = self._contract(root)
+            config = root / "config-2.yaml"
+            document = yaml.safe_load(config.read_text(encoding="utf-8"))
+            document["modules"][0]["skills"][0]["name"] = "replacement"
+            config.write_text(yaml.safe_dump(document), encoding="utf-8")
+            merge = load_contract(config, "game-1", root / "bin", artifactdir=root / "bin_artifacts")
+            path = "bin_artifacts/game-1/engine/A.windows.yaml"
+            impact = plan_tag_impact(
+                tag="game-1",
+                base_contract=base,
+                merge_contract=merge,
+                changed_paths=(ChangedPath("M", path, path),),
+                base_sources=None,
+                merge_sources=None,
+                base_rules=(),
+                merge_rules=(),
+            )
+            self.assertEqual(("engine:windows:replacement", "engine:windows:consume"), impact.analysis_nodes)
+            self.assertEqual(("engine/A.windows.yaml", "engine/B.windows.yaml"), impact.invalidated_paths)
+
     def test_bound_plan_digest_binds_shas_actions_and_digests(self):
         action = TagImpact("game-1", (), (), True, True, ("snapshot",))
         plan = BoundImpactPlan(
@@ -756,6 +815,102 @@ class BoundPlanValidationTests(unittest.TestCase):
 
 
 class ArtifactRebuildComparisonTests(unittest.TestCase):
+    def _migration_repository(self, root, *, replacement=None, keep_declaration=False, keep_old=False):
+        repo = root / "repo"
+        repo.mkdir()
+        git = GitRepository(repo)
+        git._run("init", "-q")
+        git._run("config", "user.email", "test@example.com")
+        git._run("config", "user.name", "Test")
+        git._run("config", "core.autocrlf", "false")
+        (repo / "configs").mkdir()
+        (repo / "configs/config.yaml").write_text("gamevers: [game-1]\n", encoding="utf-8")
+        scripts = repo / "ida_preprocessor_scripts"
+        scripts.mkdir()
+        artifacts = repo / "bin_artifacts/game-1/engine"
+        artifacts.mkdir(parents=True)
+
+        def write_config(names):
+            module = {
+                "name": "engine",
+                "path_windows": "Game/hw.dll",
+                "module_windows": "hw.dll",
+                "skills": [
+                    {"name": f"find-{name}", "expected_output": [f"{name}.{{platform}}.yaml"]} for name in names
+                ],
+                "symbols": [{"name": name, "category": "func"} for name in names],
+            }
+            (repo / "configs/game-1.yaml").write_text(yaml.safe_dump({"modules": [module]}), encoding="utf-8")
+
+        write_config(["Old", "Unchanged"])
+        for name in ("Old", "Unchanged"):
+            (scripts / f"find-{name}.py").write_text("# synthetic finder\n", encoding="utf-8")
+            (artifacts / f"{name}.windows.yaml").write_bytes(
+                canonical_symbol_yaml_bytes({"func_name": name, "func_va": "0x10"})
+            )
+        git._run("add", ".")
+        git._run("commit", "-q", "-m", "base")
+        base = git.resolve("HEAD")
+        if not keep_declaration:
+            write_config([replacement, "Unchanged"] if replacement else ["Unchanged"])
+            (scripts / "find-Old.py").unlink()
+        if replacement:
+            (scripts / f"find-{replacement}.py").write_text("# synthetic finder\n", encoding="utf-8")
+            # Preserve bytes so Git detects an actual R100, independently of symbol naming.
+            (artifacts / f"{replacement}.windows.yaml").write_bytes((artifacts / "Old.windows.yaml").read_bytes())
+        if not keep_old:
+            (artifacts / "Old.windows.yaml").unlink()
+        git._run("add", ".")
+        git._run("commit", "-q", "-m", "migration")
+        return repo, git, base, git.resolve("HEAD")
+
+    def test_retired_artifact_and_finder_rebuild_snapshot_without_scheduling_removed_node(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, _git, base, merge = self._migration_repository(root)
+            plan = build_plan(repo_root=repo, base_ref=base, head_ref=merge, merge_ref=merge)
+            self.assertEqual(1, len(plan.tags))
+            self.assertEqual((), plan.tags[0].analysis_nodes)
+            self.assertEqual((), plan.tags[0].invalidated_paths)
+            self.assertTrue(plan.tags[0].snapshot_rebuild)
+            self.assertTrue(plan.tags[0].gamedata_rebuild)
+            plan_path = root / "plan.json"
+            plan_path.write_bytes(plan.canonical_bytes())
+            args = dict(
+                repo_root=repo,
+                plan_path=plan_path,
+                tag="game-1",
+                merge_ref=merge,
+                bindir=repo / "bin",
+                artifactdir=root / "rebuilt",
+            )
+            self.assertEqual(("engine/Unchanged.windows.yaml",), materialize_from_plan(**args))
+            self.assertEqual(("engine/Unchanged.windows.yaml",), compare_rebuilt_artifacts(**args))
+            self.assertFalse((root / "rebuilt/game-1/engine/Old.windows.yaml").exists())
+
+    def test_renamed_artifact_and_finder_schedule_new_owner(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, git, base, merge = self._migration_repository(root, replacement="New")
+            self.assertIn(
+                ChangedPath(
+                    "R", "bin_artifacts/game-1/engine/Old.windows.yaml", "bin_artifacts/game-1/engine/New.windows.yaml"
+                ),
+                git.changed_paths(base, merge),
+            )
+            plan = build_plan(repo_root=repo, base_ref=base, head_ref=merge, merge_ref=merge)
+            self.assertEqual(("engine:windows:find-New",), plan.tags[0].analysis_nodes)
+            self.assertEqual(("engine/New.windows.yaml",), plan.tags[0].invalidated_paths)
+            self.assertTrue(plan.tags[0].snapshot_rebuild)
+            self.assertTrue(plan.tags[0].gamedata_rebuild)
+
+    def test_deletion_without_contract_update_and_retired_leftover_fail_inventory(self):
+        for kwargs in ({"keep_declaration": True}, {"keep_old": True}):
+            with self.subTest(kwargs=kwargs), tempfile.TemporaryDirectory() as temporary:
+                repo, _git, base, merge = self._migration_repository(Path(temporary), **kwargs)
+                with self.assertRaisesRegex(ImpactPlanningError, "Artifact inventory mismatch"):
+                    build_plan(repo_root=repo, base_ref=base, head_ref=merge, merge_ref=merge)
+
     def test_artifact_only_plan_materializes_isolated_tree_and_compares_git_blob_bytes(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
