@@ -1,0 +1,710 @@
+func_name: "R_DrawSequentialPoly"
+func_va: "0x1d591e0"
+disasm_code: |-
+  ; mtexenabled is the 0/1 enabled state written around GL_TEXTURE_2D, distinct from gl_mtexable capability. GL_EnableMultitexture may remain a direct call or be inlined.
+  .text:01D591E0                 mov     eax, dword_3F94150
+  .text:01D591E5                 sub     esp, 8
+  .text:01D591E8                 cmp     dword ptr [eax+2F8h], 1
+  .text:01D591EF                 push    ebx
+  .text:01D591F0                 push    esi
+  .text:01D591F1                 push    edi
+  .text:01D591F2                 jnz     loc_1D592A2
+  .text:01D591F8                 cmp     mtexenabled, 0
+  .text:01D591FF                 mov     ebx, ds:glDisable
+  .text:01D59205                 jz      short loc_1D59225
+  .text:01D59207                 ; cap
+  .text:01D59207                 push    0DE1h; cap
+  .text:01D5920C                 call    ebx ; glDisable
+  .text:01D5920E                 push    84C0h
+  .text:01D59213                 call    GL_SelectTexture
+  .text:01D59218                 add     esp, 4
+  .text:01D5921B                 mov     mtexenabled, 0
+  .text:01D59225                 ; dfactor
+  .text:01D59225                 push    303h; dfactor
+  .text:01D5922A                 ; sfactor
+  .text:01D5922A                 push    302h; sfactor
+  .text:01D5922F                 call    ds:glBlendFunc
+  .text:01D59235                 mov     edi, ds:glEnable
+  .text:01D5923B                 ; cap
+  .text:01D5923B                 push    0BE2h; cap
+  .text:01D59240                 call    edi ; glEnable
+  .text:01D59242                 mov     esi, [esp+14h+surface]
+  .text:01D59246                 push    esi
+  .text:01D59247                 call    R_TextureAnimation
+  .text:01D5924C                 ; texture
+  .text:01D5924C                 push    dword ptr [eax+18h]; texture
+  .text:01D5924F                 call    GL_Bind
+  .text:01D59254                 add     esp, 8
+  .text:01D59257                 ; cap
+  .text:01D59257                 push    0DE1h; cap
+  .text:01D5925C                 call    ebx ; glDisable
+  .text:01D5925E                 push    dword ptr [esi+24h]
+  .text:01D59261                 call    sub_1D58090
+  .text:01D59266                 add     esp, 4
+  .text:01D59269                 ; cap
+  .text:01D59269                 push    0DE1h; cap
+  .text:01D5926E                 call    edi ; glEnable
+  .text:01D59270                 cmp     gl_mtexable, 0
+  .text:01D59277                 jz      loc_1D5955C
+  .text:01D5927D                 push    84C1h
+  .text:01D59282                 call    GL_SelectTexture
+  .text:01D59287                 add     esp, 4
+  .text:01D5928A                 ; cap
+  .text:01D5928A                 push    0DE1h; cap
+  .text:01D5928F                 call    edi ; glEnable
+  .text:01D59291                 pop     edi
+  .text:01D59292                 pop     esi
+  .text:01D59293                 mov     mtexenabled, 1
+  .text:01D5929D                 pop     ebx
+  .text:01D5929E                 add     esp, 8
+  .text:01D592A1                 retn
+  .text:01D592A2                 mov     edi, [esp+14h+surface]
+  .text:01D592A6                 mov     ecx, [edi+8]
+  .text:01D592A9                 test    cl, 94h
+  .text:01D592AC                 jnz     loc_1D5976C
+  .text:01D592B2                 cmp     filterMode, 0
+  .text:01D592B9                 jnz     short loc_1D592C9
+  .text:01D592BB                 push    edi
+  .text:01D592BC                 call    sub_1D58630
+  .text:01D592C1                 mov     eax, dword_3F94150
+  .text:01D592C6                 add     esp, 4
+  .text:01D592C9                 cmp     gl_mtexable, 0
+  .text:01D592D0                 ; ArgList
+  .text:01D592D0                 push    ebp; ArgList
+  .text:01D592D1                 jz      loc_1D595DD
+  .text:01D592D7                 mov     eax, [eax+2F8h]
+  .text:01D592DD                 test    eax, eax
+  .text:01D592DF                 jz      short loc_1D592EA
+  .text:01D592E1                 cmp     eax, 4
+  .text:01D592E4                 jnz     loc_1D595DD
+  .text:01D592EA                 mov     ebp, [edi+24h]
+  .text:01D592ED                 push    edi
+  .text:01D592EE                 call    R_TextureAnimation
+  .text:01D592F3                 push    84C0h
+  .text:01D592F8                 mov     esi, eax
+  .text:01D592FA                 call    GL_SelectTexture
+  .text:01D592FF                 fld     flt_1EE0320
+  .text:01D59305                 lea     ebx, [esi+18h]
+  .text:01D59308                 fldz
+  .text:01D5930A                 add     esp, 8
+  .text:01D5930D                 fucompp
+  .text:01D5930F                 fnstsw  ax
+  .text:01D59311                 test    ah, 44h
+  .text:01D59314                 jnp     short loc_1D59320
+  .text:01D59316                 mov     eax, dword_204D7C4
+  .text:01D5931B                 mov     eax, [eax+18h]
+  .text:01D5931E                 jmp     short loc_1D59322
+  .text:01D59320                 mov     eax, [ebx]
+  .text:01D59322                 ; texture
+  .text:01D59322                 push    eax; texture
+  .text:01D59323                 call    GL_Bind
+  .text:01D59328                 fld     ds:flt_1E6CA6C
+  .text:01D5932E                 ; param
+  .text:01D5932E                 fstp    [esp+1Ch+param]; param
+  .text:01D59331                 ; pname
+  .text:01D59331                 push    2200h; pname
+  .text:01D59336                 ; target
+  .text:01D59336                 push    2300h; target
+  .text:01D5933B                 call    ds:glTexEnvf
+  .text:01D59341                 mov     eax, dword_3F94150
+  .text:01D59346                 cmp     dword ptr [eax+2F8h], 1
+  .text:01D5934D                 jnz     short loc_1D5935A
+  .text:01D5934F                 ; cap
+  .text:01D5934F                 push    0DE1h; cap
+  .text:01D59354                 call    ds:glDisable
+  .text:01D5935A                 call    sub_1D57B90
+  .text:01D5935F                 fld     flt_1EE02E4
+  .text:01D59365                 fldz
+  .text:01D59367                 fucompp
+  .text:01D59369                 fnstsw  ax
+  .text:01D5936B                 test    ah, 44h
+  .text:01D5936E                 jnp     short loc_1D5937A
+  .text:01D59370                 mov     eax, dword_204D7C4
+  .text:01D59375                 push    dword ptr [eax+18h]
+  .text:01D59378                 jmp     short loc_1D5939D
+  .text:01D5937A                 cmp     filterMode, 0
+  .text:01D59381                 jz      short loc_1D59393
+  .text:01D59383                 ; texture
+  .text:01D59383                 push    texture; texture
+  .text:01D59389                 call    GL_Bind
+  .text:01D5938E                 lea     ebx, [esi+18h]
+  .text:01D59391                 jmp     short loc_1D593A2
+  .text:01D59393                 mov     eax, [edi+38h]
+  .text:01D59396                 ; texture
+  .text:01D59396                 push    dword_3F94658[eax*4]; texture
+  .text:01D5939D                 call    GL_Bind
+  .text:01D593A2                 mov     ecx, [edi+38h]
+  .text:01D593A5                 add     esp, 4
+  .text:01D593A8                 cmp     dword_3F9CA60[ecx*4], 0
+  .text:01D593B0                 jz      short loc_1D59417
+  .text:01D593B2                 mov     esi, ecx
+  .text:01D593B4                 mov     dword_3F9CA60[ecx*4], 0
+  .text:01D593BF                 shl     esi, 4
+  .text:01D593C2                 add     esi, offset unk_3F9DA60
+  .text:01D593C8                 shl     ecx, 7
+  .text:01D593CB                 mov     eax, [esi+4]
+  .text:01D593CE                 add     ecx, eax
+  .text:01D593D0                 shl     ecx, 9
+  .text:01D593D3                 add     ecx, offset byte_4021A60
+  .text:01D593D9                 ; pixels
+  .text:01D593D9                 push    ecx; pixels
+  .text:01D593DA                 ; type
+  .text:01D593DA                 push    1401h; type
+  .text:01D593DF                 ; format
+  .text:01D593DF                 push    1908h; format
+  .text:01D593E4                 ; height
+  .text:01D593E4                 push    dword ptr [esi+0Ch]; height
+  .text:01D593E7                 ; width
+  .text:01D593E7                 push    80h; width
+  .text:01D593EC                 ; yoffset
+  .text:01D593EC                 push    eax; yoffset
+  .text:01D593ED                 ; xoffset
+  .text:01D593ED                 push    0; xoffset
+  .text:01D593EF                 ; level
+  .text:01D593EF                 push    0; level
+  .text:01D593F1                 ; target
+  .text:01D593F1                 push    0DE1h; target
+  .text:01D593F6                 call    ds:glTexSubImage2D
+  .text:01D593FC                 mov     dword ptr [esi], 80h
+  .text:01D59402                 mov     dword ptr [esi+4], 80h
+  .text:01D59409                 mov     dword ptr [esi+0Ch], 0
+  .text:01D59410                 mov     dword ptr [esi+8], 0
+  .text:01D59417                 fld     ds:flt_1E6CA6C
+  .text:01D5941D                 push    ecx
+  .text:01D5941E                 ; param
+  .text:01D5941E                 fstp    [esp+1Ch+param]; param
+  .text:01D59421                 ; pname
+  .text:01D59421                 push    2200h; pname
+  .text:01D59426                 ; target
+  .text:01D59426                 push    2300h; target
+  .text:01D5942B                 call    ds:glTexEnvf
+  .text:01D59431                 push    dword ptr [ebx]
+  .text:01D59433                 call    sub_1D48400
+  .text:01D59438                 add     esp, 4
+  .text:01D5943B                 mov     [esp+18h+var_8], eax
+  .text:01D5943F                 ; mode
+  .text:01D5943F                 push    9; mode
+  .text:01D59441                 call    ds:glBegin
+  .text:01D59447                 test    byte ptr [edi+8], 20h
+  .text:01D5944B                 lea     esi, [ebp+10h]
+  .text:01D5944E                 jz      loc_1D59563
+  .text:01D59454                 push    dword_3F94150
+  .text:01D5945A                 push    edi
+  .text:01D5945B                 call    sub_1D582C0
+  .text:01D59460                 xor     ebx, ebx
+  .text:01D59462                 add     esp, 8
+  .text:01D59465                 fst     [esp+18h+var_4]
+  .text:01D59469                 cmp     [ebp+8], ebx
+  .text:01D5946C                 jle     short loc_1D594E0
+  .text:01D5946E                 mov     edi, [esp+18h+var_8]
+  .text:01D59472                 fld     dword ptr [esi+10h]
+  .text:01D59475                 sub     esp, 8
+  .text:01D59478                 fstp    [esp+20h+param]
+  .text:01D5947C                 fadd    dword ptr [esi+0Ch]
+  .text:01D5947F                 fstp    [esp+20h+s]
+  .text:01D59482                 push    84C0h
+  .text:01D59487                 call    __glewMultiTexCoord2fARB
+  .text:01D5948D                 fld     dword ptr [esi+18h]
+  .text:01D59490                 sub     esp, 8
+  .text:01D59493                 fstp    [esp+20h+param]
+  .text:01D59497                 fld     dword ptr [esi+14h]
+  .text:01D5949A                 fstp    [esp+20h+s]
+  .text:01D5949D                 push    84C1h
+  .text:01D594A2                 call    __glewMultiTexCoord2fARB
+  .text:01D594A8                 test    edi, edi
+  .text:01D594AA                 jz      short loc_1D594C8
+  .text:01D594AC                 fld     dword ptr [esi+10h]
+  .text:01D594AF                 sub     esp, 8
+  .text:01D594B2                 ; float
+  .text:01D594B2                 fstp    [esp+20h+param]; float
+  .text:01D594B6                 fld     [esp+20h+var_4]
+  .text:01D594BA                 fadd    dword ptr [esi+0Ch]
+  .text:01D594BD                 ; float
+  .text:01D594BD                 fstp    [esp+20h+s]; float
+  .text:01D594C0                 call    sub_1D48660
+  .text:01D594C5                 add     esp, 8
+  .text:01D594C8                 ; v
+  .text:01D594C8                 push    esi; v
+  .text:01D594C9                 call    ds:glVertex3fv
+  .text:01D594CF                 fld     [esp+18h+var_4]
+  .text:01D594D3                 inc     ebx
+  .text:01D594D4                 add     esi, 1Ch
+  .text:01D594D7                 cmp     ebx, [ebp+8]
+  .text:01D594DA                 jl      short loc_1D59472
+  .text:01D594DC                 mov     edi, [esp+18h+surface]
+  .text:01D594E0                 fstp    st
+  .text:01D594E2                 call    ds:__imp_glEnd
+  .text:01D594E8                 cmp     [esp+18h+var_8], 0
+  .text:01D594ED                 jz      short loc_1D594F4
+  .text:01D594EF                 call    sub_1D48680
+  .text:01D594F4                 cmp     dword_1EE04B4, 0
+  .text:01D594FB                 jnz     short loc_1D59541
+  .text:01D594FD                 cmp     dword ptr [edi+58h], 0
+  .text:01D59501                 jz      short loc_1D59541
+  .text:01D59503                 mov     eax, dword_8028E8C
+  .text:01D59508                 mov     dword_8028E90[eax*4], edi
+  .text:01D5950F                 inc     eax
+  .text:01D59510                 mov     dword_8028E8C, eax
+  .text:01D59515                 cmp     eax, 1F4h
+  .text:01D5951A                 jle     short loc_1D59529
+  .text:01D5951C                 push    offset aTooManyDecalSu; "Too many decal surfaces!\n"
+  .text:01D59521                 call    Sys_Error
+  .text:01D59526                 add     esp, 4
+  .text:01D59529                 mov     eax, dword_3F94150
+  .text:01D5952E                 cmp     dword ptr [eax+2F8h], 0
+  .text:01D59535                 jnz     short loc_1D59541
+  .text:01D59537                 push    1
+  .text:01D59539                 call    sub_1D57CD0
+  .text:01D5953E                 add     esp, 4
+  .text:01D59541                 fld     flt_1EE0498
+  .text:01D59547                 fldz
+  .text:01D59549                 fucompp
+  .text:01D5954B                 fnstsw  ax
+  .text:01D5954D                 test    ah, 44h
+  .text:01D59550                 jnp     short loc_1D5955B
+  .text:01D59552                 push    ebp
+  .text:01D59553                 call    sub_1D590C0
+  .text:01D59558                 add     esp, 4
+  .text:01D5955B                 pop     ebp
+  .text:01D5955C                 pop     edi
+  .text:01D5955D                 pop     esi
+  .text:01D5955E                 pop     ebx
+  .text:01D5955F                 add     esp, 8
+  .text:01D59562                 retn
+  .text:01D59563                 xor     ebx, ebx
+  .text:01D59565                 cmp     [ebp+8], ebx
+  .text:01D59568                 jle     loc_1D594E2
+  .text:01D5956E                 mov     edi, [esp+18h+var_8]
+  .text:01D59572                 fld     dword ptr [esi+10h]
+  .text:01D59575                 sub     esp, 8
+  .text:01D59578                 fstp    [esp+20h+param]
+  .text:01D5957C                 fld     dword ptr [esi+0Ch]
+  .text:01D5957F                 fstp    [esp+20h+s]
+  .text:01D59582                 push    84C0h
+  .text:01D59587                 call    __glewMultiTexCoord2fARB
+  .text:01D5958D                 fld     dword ptr [esi+18h]
+  .text:01D59590                 sub     esp, 8
+  .text:01D59593                 fstp    [esp+20h+param]
+  .text:01D59597                 fld     dword ptr [esi+14h]
+  .text:01D5959A                 fstp    [esp+20h+s]
+  .text:01D5959D                 push    84C1h
+  .text:01D595A2                 call    __glewMultiTexCoord2fARB
+  .text:01D595A8                 test    edi, edi
+  .text:01D595AA                 jz      short loc_1D595C4
+  .text:01D595AC                 fld     dword ptr [esi+10h]
+  .text:01D595AF                 sub     esp, 8
+  .text:01D595B2                 ; float
+  .text:01D595B2                 fstp    [esp+20h+param]; float
+  .text:01D595B6                 fld     dword ptr [esi+0Ch]
+  .text:01D595B9                 ; float
+  .text:01D595B9                 fstp    [esp+20h+s]; float
+  .text:01D595BC                 call    sub_1D48660
+  .text:01D595C1                 add     esp, 8
+  .text:01D595C4                 ; v
+  .text:01D595C4                 push    esi; v
+  .text:01D595C5                 call    ds:glVertex3fv
+  .text:01D595CB                 inc     ebx
+  .text:01D595CC                 add     esi, 1Ch
+  .text:01D595CF                 cmp     ebx, [ebp+8]
+  .text:01D595D2                 jl      short loc_1D59572
+  .text:01D595D4                 mov     edi, [esp+18h+surface]
+  .text:01D595D8                 jmp     loc_1D594E2
+  .text:01D595DD                 mov     ebx, [edi+24h]
+  .text:01D595E0                 push    edi
+  .text:01D595E1                 call    R_TextureAnimation
+  .text:01D595E6                 add     esp, 4
+  .text:01D595E9                 mov     esi, eax
+  .text:01D595EB                 cmp     mtexenabled, 0
+  .text:01D595F2                 jz      short loc_1D59616
+  .text:01D595F4                 ; cap
+  .text:01D595F4                 push    0DE1h; cap
+  .text:01D595F9                 call    ds:glDisable
+  .text:01D595FF                 push    84C0h
+  .text:01D59604                 call    GL_SelectTexture
+  .text:01D59609                 add     esp, 4
+  .text:01D5960C                 mov     mtexenabled, 0
+  .text:01D59616                 ; texture
+  .text:01D59616                 push    dword ptr [esi+18h]; texture
+  .text:01D59619                 call    GL_Bind
+  .text:01D5961E                 mov     esi, ds:glBegin
+  .text:01D59624                 add     esp, 4
+  .text:01D59627                 test    byte ptr [edi+8], 20h
+  .text:01D5962B                 mov     ebp, ds:glVertex3fv
+  .text:01D59631                 jz      short loc_1D59644
+  .text:01D59633                 push    dword_3F94150
+  .text:01D59639                 push    edi
+  .text:01D5963A                 call    sub_1D58250
+  .text:01D5963F                 add     esp, 8
+  .text:01D59642                 jmp     short loc_1D5968A
+  .text:01D59644                 ; mode
+  .text:01D59644                 push    9; mode
+  .text:01D59646                 call    esi ; glBegin
+  .text:01D59648                 xor     ebp, ebp
+  .text:01D5964A                 lea     esi, [ebx+10h]
+  .text:01D5964D                 cmp     [ebx+8], ebp
+  .text:01D59650                 jle     short loc_1D59678
+  .text:01D59652                 fld     dword ptr [esi+10h]
+  .text:01D59655                 sub     esp, 8
+  .text:01D59658                 ; t
+  .text:01D59658                 fstp    [esp+20h+param]; t
+  .text:01D5965C                 fld     dword ptr [esi+0Ch]
+  .text:01D5965F                 ; s
+  .text:01D5965F                 fstp    [esp+20h+s]; s
+  .text:01D59662                 call    ds:glTexCoord2f
+  .text:01D59668                 ; v
+  .text:01D59668                 push    esi; v
+  .text:01D59669                 call    ds:glVertex3fv
+  .text:01D5966F                 inc     ebp
+  .text:01D59670                 add     esi, 1Ch
+  .text:01D59673                 cmp     ebp, [ebx+8]
+  .text:01D59676                 jl      short loc_1D59652
+  .text:01D59678                 call    ds:__imp_glEnd
+  .text:01D5967E                 mov     ebp, ds:glVertex3fv
+  .text:01D59684                 mov     esi, ds:glBegin
+  .text:01D5968A                 cmp     dword_1EE04B4, 0
+  .text:01D59691                 jnz     short loc_1D596C9
+  .text:01D59693                 cmp     dword ptr [edi+58h], 0
+  .text:01D59697                 jz      short loc_1D596C9
+  .text:01D59699                 mov     eax, dword_8028E8C
+  .text:01D5969E                 mov     dword_8028E90[eax*4], edi
+  .text:01D596A5                 inc     eax
+  .text:01D596A6                 mov     dword_8028E8C, eax
+  .text:01D596AB                 cmp     eax, 1F4h
+  .text:01D596B0                 jle     short loc_1D596BF
+  .text:01D596B2                 push    offset aTooManyDecalSu; "Too many decal surfaces!\n"
+  .text:01D596B7                 call    Sys_Error
+  .text:01D596BC                 add     esp, 4
+  .text:01D596BF                 push    0
+  .text:01D596C1                 call    sub_1D57CD0
+  .text:01D596C6                 add     esp, 4
+  .text:01D596C9                 fld     flt_1EE0498
+  .text:01D596CF                 fldz
+  .text:01D596D1                 fucompp
+  .text:01D596D3                 fnstsw  ax
+  .text:01D596D5                 test    ah, 44h
+  .text:01D596D8                 jnp     short loc_1D596E3
+  .text:01D596DA                 push    ebx
+  .text:01D596DB                 call    sub_1D590C0
+  .text:01D596E0                 add     esp, 4
+  .text:01D596E3                 mov     eax, dword_3F94150
+  .text:01D596E8                 cmp     dword ptr [eax+2F8h], 0
+  .text:01D596EF                 jnz     loc_1D5955B
+  .text:01D596F5                 cmp     filterMode, 0
+  .text:01D596FC                 jz      short loc_1D59706
+  .text:01D596FE                 push    texture
+  .text:01D59704                 jmp     short loc_1D59710
+  .text:01D59706                 mov     eax, [edi+38h]
+  .text:01D59709                 ; texture
+  .text:01D59709                 push    dword_3F94658[eax*4]; texture
+  .text:01D59710                 call    GL_Bind
+  .text:01D59715                 add     esp, 4
+  .text:01D59718                 ; cap
+  .text:01D59718                 push    0BE2h; cap
+  .text:01D5971D                 call    ds:glEnable
+  .text:01D59723                 ; mode
+  .text:01D59723                 push    9; mode
+  .text:01D59725                 call    esi ; glBegin
+  .text:01D59727                 xor     edi, edi
+  .text:01D59729                 lea     esi, [ebx+10h]
+  .text:01D5972C                 cmp     [ebx+8], edi
+  .text:01D5972F                 jle     short loc_1D59753
+  .text:01D59731                 fld     dword ptr [esi+18h]
+  .text:01D59734                 sub     esp, 8
+  .text:01D59737                 ; t
+  .text:01D59737                 fstp    [esp+20h+param]; t
+  .text:01D5973B                 fld     dword ptr [esi+14h]
+  .text:01D5973E                 ; s
+  .text:01D5973E                 fstp    [esp+20h+s]; s
+  .text:01D59741                 call    ds:glTexCoord2f
+  .text:01D59747                 ; v
+  .text:01D59747                 push    esi; v
+  .text:01D59748                 call    ebp ; glVertex3fv
+  .text:01D5974A                 inc     edi
+  .text:01D5974B                 add     esi, 1Ch
+  .text:01D5974E                 cmp     edi, [ebx+8]
+  .text:01D59751                 jl      short loc_1D59731
+  .text:01D59753                 call    ds:__imp_glEnd
+  .text:01D59759                 ; cap
+  .text:01D59759                 push    0BE2h; cap
+  .text:01D5975E                 call    ds:glDisable
+  .text:01D59764                 pop     ebp
+  .text:01D59765                 pop     edi
+  .text:01D59766                 pop     esi
+  .text:01D59767                 pop     ebx
+  .text:01D59768                 add     esp, 8
+  .text:01D5976B                 retn
+  .text:01D5976C                 test    cl, 10h
+  .text:01D5976F                 jz      loc_1D5955C
+  .text:01D59775                 call    sub_1D57B60
+  .text:01D5977A                 mov     eax, [edi+2Ch]
+  .text:01D5977D                 mov     eax, [eax+24h]
+  .text:01D59780                 ; texture
+  .text:01D59780                 push    dword ptr [eax+18h]; texture
+  .text:01D59783                 call    GL_Bind
+  .text:01D59788                 push    [esp+18h+face]
+  .text:01D5978C                 push    edi
+  .text:01D5978D                 call    sub_1D60470
+  .text:01D59792                 add     esp, 0Ch
+  .text:01D59795                 pop     edi
+  .text:01D59796                 pop     esi
+  .text:01D59797                 pop     ebx
+  .text:01D59798                 add     esp, 8
+  .text:01D5979B                 retn
+procedure: |-
+  // mtexenabled is the 0/1 enabled state written around GL_TEXTURE_2D, distinct from gl_mtexable capability. GL_EnableMultitexture may remain a direct call or be inlined.
+  // Multitexture helpers can be inlined: mtexenabled is the enabled state, gl_mtexable is capability. Preserve the current binary ABI; HL25 adds shader cleanup absent from older source.
+  void __cdecl R_DrawSequentialPoly(void *surface, int face)
+  {
+    _DWORD *v2; // eax
+    int v3; // eax
+    _DWORD *v4; // edi
+    int v5; // ecx
+    int v6; // eax
+    int v7; // ebp
+    int v8; // esi
+    int *v9; // ebx
+    int v10; // eax
+    int v11; // ecx
+    _DWORD *v12; // esi
+    int v13; // esi
+    long double v14; // st7
+    int v15; // ebx
+    int v16; // eax
+    int v17; // ebx
+    int v18; // ebx
+    int v19; // esi
+    void (__stdcall *v20)(GLenum); // esi
+    void (__stdcall *v21)(const GLfloat *); // ebp
+    int v22; // ebp
+    int i; // esi
+    int v24; // eax
+    int v25; // edi
+    int j; // esi
+    GLfloat s; // [esp+18h] [ebp-20h]
+    float sa; // [esp+18h] [ebp-20h]
+    int v29; // [esp+30h] [ebp-8h]
+    float v30; // [esp+34h] [ebp-4h]
+
+    v2 = dword_3F94150;
+    if ( *((_DWORD *)dword_3F94150 + 190) == 1 )
+    {
+      if ( mtexenabled )
+      {
+        glDisable(0xDE1u);
+        GL_SelectTexture(0x84C0u);
+        mtexenabled = 0;
+      }
+      glBlendFunc(0x302u, 0x303u);
+      glEnable(0xBE2u);
+      v3 = R_TextureAnimation((int)surface);
+      GL_Bind(*(_DWORD *)(v3 + 24));
+      glDisable(0xDE1u);
+      sub_1D58090(*((_DWORD *)surface + 9));
+      glEnable(0xDE1u);
+      if ( gl_mtexable )
+      {
+        GL_SelectTexture(0x84C1u);
+        glEnable(0xDE1u);
+        mtexenabled = 1;
+      }
+    }
+    else
+    {
+      v4 = surface;
+      v5 = *((_DWORD *)surface + 2);
+      if ( (v5 & 0x94) != 0 )
+      {
+        if ( (v5 & 0x10) != 0 )
+        {
+          sub_1D57B60();
+          GL_Bind(*(_DWORD *)(*(_DWORD *)(*((_DWORD *)surface + 11) + 36) + 24));
+          sub_1D60470(surface, face);
+        }
+      }
+      else
+      {
+        if ( !filterMode )
+        {
+          sub_1D58630((int)surface);
+          v2 = dword_3F94150;
+        }
+        if ( gl_mtexable && ((v6 = v2[190]) == 0 || v6 == 4) )
+        {
+          v7 = *((_DWORD *)surface + 9);
+          v8 = R_TextureAnimation((int)surface);
+          GL_SelectTexture(0x84C0u);
+          v9 = (int *)(v8 + 24);
+          if ( 0.0 == flt_1EE0320 )
+            v10 = *v9;
+          else
+            v10 = *(_DWORD *)(dword_204D7C4 + 24);
+          GL_Bind(v10);
+          glTexEnvf(0x2300u, 0x2200u, 8448.0);
+          if ( *((_DWORD *)dword_3F94150 + 190) == 1 )
+            glDisable(0xDE1u);
+          sub_1D57B90();
+          if ( 0.0 == flt_1EE02E4 )
+          {
+            if ( filterMode )
+            {
+              GL_Bind(texture);
+              v9 = (int *)(v8 + 24);
+            }
+            else
+            {
+              GL_Bind(dword_3F94658[*((_DWORD *)surface + 14)]);
+            }
+          }
+          else
+          {
+            GL_Bind(*(_DWORD *)(dword_204D7C4 + 24));
+          }
+          v11 = *((_DWORD *)surface + 14);
+          if ( dword_3F9CA60[v11] )
+          {
+            dword_3F9CA60[v11] = 0;
+            v12 = (_DWORD *)((char *)&unk_3F9DA60 + 16 * v11);
+            glTexSubImage2D(
+              0xDE1u,
+              0,
+              0,
+              v12[1],
+              128,
+              v12[3],
+              0x1908u,
+              0x1401u,
+              &byte_4021A60[512 * (v12[1] + (v11 << 7))]);
+            *v12 = 128;
+            v12[1] = 128;
+            v12[3] = 0;
+            v12[2] = 0;
+          }
+          glTexEnvf(0x2300u, 0x2200u, 8448.0);
+          v29 = sub_1D48400(*v9);
+          glBegin(9u);
+          v13 = v7 + 16;
+          if ( (*((_BYTE *)surface + 8) & 0x20) != 0 )
+          {
+            v14 = sub_1D582C0((int)surface, dword_3F94150);
+            v15 = 0;
+            v30 = v14;
+            if ( *(int *)(v7 + 8) > 0 )
+            {
+              do
+              {
+                s = v14 + *(float *)(v13 + 12);
+                _glewMultiTexCoord2fARB(33984, LODWORD(s), *(float *)(v13 + 16));
+                _glewMultiTexCoord2fARB(33985, *(float *)(v13 + 20), *(float *)(v13 + 24));
+                if ( v29 )
+                {
+                  sa = v30 + *(float *)(v13 + 12);
+                  sub_1D48660(sa, *(float *)(v13 + 16));
+                }
+                glVertex3fv((const GLfloat *)v13);
+                v14 = v30;
+                ++v15;
+                v13 += 28;
+              }
+              while ( v15 < *(_DWORD *)(v7 + 8) );
+              v4 = surface;
+            }
+          }
+          else
+          {
+            v17 = 0;
+            if ( *(int *)(v7 + 8) > 0 )
+            {
+              do
+              {
+                _glewMultiTexCoord2fARB(33984, *(float *)(v13 + 12), *(float *)(v13 + 16));
+                _glewMultiTexCoord2fARB(33985, *(float *)(v13 + 20), *(float *)(v13 + 24));
+                if ( v29 )
+                  sub_1D48660(*(float *)(v13 + 12), *(float *)(v13 + 16));
+                glVertex3fv((const GLfloat *)v13);
+                ++v17;
+                v13 += 28;
+              }
+              while ( v17 < *(_DWORD *)(v7 + 8) );
+              v4 = surface;
+            }
+          }
+          glEnd();
+          if ( v29 )
+            sub_1D48680();
+          if ( !dword_1EE04B4 && v4[22] )
+          {
+            v16 = dword_8028E8C;
+            dword_8028E90[dword_8028E8C] = (int)v4;
+            dword_8028E8C = v16 + 1;
+            if ( v16 + 1 > 500 )
+              Sys_Error("Too many decal surfaces!\n");
+            if ( !*((_DWORD *)dword_3F94150 + 190) )
+              sub_1D57CD0(1);
+          }
+          if ( 0.0 != flt_1EE0498 )
+            sub_1D590C0(v7);
+        }
+        else
+        {
+          v18 = *((_DWORD *)surface + 9);
+          v19 = R_TextureAnimation((int)surface);
+          if ( mtexenabled )
+          {
+            glDisable(0xDE1u);
+            GL_SelectTexture(0x84C0u);
+            mtexenabled = 0;
+          }
+          GL_Bind(*(_DWORD *)(v19 + 24));
+          v20 = glBegin;
+          v21 = glVertex3fv;
+          if ( (*((_BYTE *)surface + 8) & 0x20) != 0 )
+          {
+            sub_1D58250((int)surface, dword_3F94150);
+          }
+          else
+          {
+            glBegin(9u);
+            v22 = 0;
+            for ( i = v18 + 16; v22 < *(_DWORD *)(v18 + 8); i += 28 )
+            {
+              glTexCoord2f(*(float *)(i + 12), *(float *)(i + 16));
+              glVertex3fv((const GLfloat *)i);
+              ++v22;
+            }
+            glEnd();
+            v21 = glVertex3fv;
+            v20 = glBegin;
+          }
+          if ( !dword_1EE04B4 && *((_DWORD *)surface + 22) )
+          {
+            v24 = dword_8028E8C;
+            dword_8028E90[dword_8028E8C] = (int)surface;
+            dword_8028E8C = v24 + 1;
+            if ( v24 + 1 > 500 )
+              Sys_Error("Too many decal surfaces!\n");
+            sub_1D57CD0(0);
+          }
+          if ( 0.0 != flt_1EE0498 )
+            sub_1D590C0(v18);
+          if ( !*((_DWORD *)dword_3F94150 + 190) )
+          {
+            if ( filterMode )
+              GL_Bind(texture);
+            else
+              GL_Bind(dword_3F94658[*((_DWORD *)surface + 14)]);
+            glEnable(0xBE2u);
+            v20(9u);
+            v25 = 0;
+            for ( j = v18 + 16; v25 < *(_DWORD *)(v18 + 8); j += 28 )
+            {
+              glTexCoord2f(*(float *)(j + 20), *(float *)(j + 24));
+              v21((const GLfloat *)j);
+              ++v25;
+            }
+            glEnd();
+            glDisable(0xBE2u);
+          }
+        }
+      }
+    }
+  }

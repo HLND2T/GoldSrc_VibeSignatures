@@ -1,0 +1,923 @@
+func_name: "R_DrawSequentialPoly"
+func_va: "0x1024a3f0"
+disasm_code: |-
+  ; mtexenabled is the 0/1 enabled state written around GL_TEXTURE_2D, distinct from gl_mtexable capability. GL_EnableMultitexture may remain a direct call or be inlined.
+  .text:1024A3F0                 push    ebp
+  .text:1024A3F1                 mov     ebp, esp
+  .text:1024A3F3                 sub     esp, 10h
+  .text:1024A3F6                 push    esi
+  .text:1024A3F7                 call    sub_1024B390
+  .text:1024A3FC                 mov     eax, currententity
+  .text:1024A401                 cmp     dword ptr [eax+2F8h], 1
+  .text:1024A408                 jnz     loc_1024A4E3
+  .text:1024A40E                 cmp     dword_109A68D8, 0
+  .text:1024A415                 jz      short loc_1024A432
+  .text:1024A417                 cmp     dword_109A68D4, 0
+  .text:1024A41E                 jz      short loc_1024A432
+  .text:1024A420                 push    0
+  .text:1024A422                 call    dword_109B326C
+  .text:1024A428                 mov     dword_109A68D4, 0
+  .text:1024A432                 cmp     mtexenabled, 0
+  .text:1024A439                 jz      short loc_1024A45E
+  .text:1024A43B                 ; unsigned int
+  .text:1024A43B                 push    0DE1h; unsigned int
+  .text:1024A440                 call    qglDisable
+  .text:1024A446                 ; target
+  .text:1024A446                 push    TEXTURE0_SGIS; target
+  .text:1024A44C                 call    GL_SelectTexture
+  .text:1024A451                 add     esp, 4
+  .text:1024A454                 mov     mtexenabled, 0
+  .text:1024A45E                 push    303h
+  .text:1024A463                 push    302h
+  .text:1024A468                 call    dword_109B3808
+  .text:1024A46E                 ; unsigned int
+  .text:1024A46E                 push    0BE2h; unsigned int
+  .text:1024A473                 call    qglEnable
+  .text:1024A479                 mov     esi, [ebp+surface]
+  .text:1024A47C                 push    esi
+  .text:1024A47D                 call    R_TextureAnimation
+  .text:1024A482                 push    dword ptr [eax+18h]
+  .text:1024A485                 call    GL_Bind
+  .text:1024A48A                 add     esp, 8
+  .text:1024A48D                 ; unsigned int
+  .text:1024A48D                 push    0DE1h; unsigned int
+  .text:1024A492                 call    qglDisable
+  .text:1024A498                 push    dword ptr [esi+24h]
+  .text:1024A49B                 call    sub_10246E10
+  .text:1024A4A0                 add     esp, 4
+  .text:1024A4A3                 ; unsigned int
+  .text:1024A4A3                 push    0DE1h; unsigned int
+  .text:1024A4A8                 call    qglEnable
+  .text:1024A4AE                 cmp     gl_mtexable, 0
+  .text:1024A4B5                 jz      loc_1024A953
+  .text:1024A4BB                 ; target
+  .text:1024A4BB                 push    TEXTURE1_SGIS; target
+  .text:1024A4C1                 call    GL_SelectTexture
+  .text:1024A4C6                 add     esp, 4
+  .text:1024A4C9                 ; unsigned int
+  .text:1024A4C9                 push    0DE1h; unsigned int
+  .text:1024A4CE                 call    qglEnable
+  .text:1024A4D4                 mov     mtexenabled, 1
+  .text:1024A4DE                 pop     esi
+  .text:1024A4DF                 mov     esp, ebp
+  .text:1024A4E1                 pop     ebp
+  .text:1024A4E2                 retn
+  .text:1024A4E3                 push    edi
+  .text:1024A4E4                 mov     edi, [ebp+surface]
+  .text:1024A4E7                 mov     ecx, [edi+8]
+  .text:1024A4EA                 test    cl, 94h
+  .text:1024A4ED                 jnz     loc_1024AC4C
+  .text:1024A4F3                 cmp     filterMode, 0
+  .text:1024A4FA                 jnz     short loc_1024A50A
+  .text:1024A4FC                 push    edi
+  .text:1024A4FD                 call    sub_1024BEF0
+  .text:1024A502                 mov     eax, currententity
+  .text:1024A507                 add     esp, 4
+  .text:1024A50A                 cmp     gl_mtexable, 0
+  .text:1024A511                 push    ebx
+  .text:1024A512                 jz      loc_1024A958
+  .text:1024A518                 mov     eax, [eax+2F8h]
+  .text:1024A51E                 test    eax, eax
+  .text:1024A520                 jz      short loc_1024A52B
+  .text:1024A522                 cmp     eax, 4
+  .text:1024A525                 jnz     loc_1024A958
+  .text:1024A52B                 mov     ebx, [edi+24h]
+  .text:1024A52E                 push    edi
+  .text:1024A52F                 mov     [ebp+var_8], ebx
+  .text:1024A532                 call    R_TextureAnimation
+  .text:1024A537                 ; target
+  .text:1024A537                 push    TEXTURE0_SGIS; target
+  .text:1024A53D                 mov     esi, eax
+  .text:1024A53F                 mov     [ebp+var_10], esi
+  .text:1024A542                 call    GL_SelectTexture
+  .text:1024A547                 push    dword ptr [esi+18h]
+  .text:1024A54A                 call    GL_Bind
+  .text:1024A54F                 add     esp, 8
+  .text:1024A552                 mov     esi, 1
+  .text:1024A557                 mov     [esp+20h+var_20], 46040000h
+  .text:1024A55E                 push    2200h
+  .text:1024A563                 push    2300h
+  .text:1024A568                 call    dword_109B339C
+  .text:1024A56E                 mov     eax, currententity
+  .text:1024A573                 cmp     [eax+2F8h], esi
+  .text:1024A579                 jnz     short loc_1024A588
+  .text:1024A57B                 ; unsigned int
+  .text:1024A57B                 push    0DE1h; unsigned int
+  .text:1024A580                 call    qglDisable
+  .text:1024A586                 xor     esi, esi
+  .text:1024A588                 call    GL_EnableMultitexture
+  .text:1024A58D                 or      esi, 2
+  .text:1024A590                 cmp     filterMode, 0
+  .text:1024A597                 mov     [ebp+var_C], esi
+  .text:1024A59A                 jz      short loc_1024A5A4
+  .text:1024A59C                 push    dword_1065A0C4
+  .text:1024A5A2                 jmp     short loc_1024A5AE
+  .text:1024A5A4                 mov     eax, [edi+38h]
+  .text:1024A5A7                 push    dword_10989220[eax*4]
+  .text:1024A5AE                 call    GL_Bind
+  .text:1024A5B3                 mov     ecx, [edi+38h]
+  .text:1024A5B6                 add     esp, 4
+  .text:1024A5B9                 cmp     dword_10DC3A40[ecx*4], 0
+  .text:1024A5C1                 jz      short loc_1024A633
+  .text:1024A5C3                 mov     esi, ecx
+  .text:1024A5C5                 mov     dword_10DC3A40[ecx*4], 0
+  .text:1024A5D0                 shl     esi, 4
+  .text:1024A5D3                 add     esi, offset dword_10DC3640
+  .text:1024A5D9                 shl     ecx, 7
+  .text:1024A5DC                 mov     eax, [esi+4]
+  .text:1024A5DF                 add     ecx, eax
+  .text:1024A5E1                 imul    ecx, dword_10DC5084
+  .text:1024A5E8                 shl     ecx, 7
+  .text:1024A5EB                 add     ecx, offset byte_109BB620
+  .text:1024A5F1                 push    ecx
+  .text:1024A5F2                 push    1401h
+  .text:1024A5F7                 push    dword_1031E3B0
+  .text:1024A5FD                 push    dword ptr [esi+0Ch]
+  .text:1024A600                 push    80h
+  .text:1024A605                 push    eax
+  .text:1024A606                 push    0
+  .text:1024A608                 push    0
+  .text:1024A60A                 push    0DE1h
+  .text:1024A60F                 call    dword_109B3358
+  .text:1024A615                 mov     dword ptr [esi], 80h
+  .text:1024A61B                 mov     dword ptr [esi+4], 80h
+  .text:1024A622                 mov     dword ptr [esi+0Ch], 0
+  .text:1024A629                 mov     dword ptr [esi+8], 0
+  .text:1024A630                 mov     esi, [ebp+var_C]
+  .text:1024A633                 push    ecx
+  .text:1024A634                 mov     [esp+20h+var_20], 46040000h
+  .text:1024A63B                 push    2200h
+  .text:1024A640                 push    2300h
+  .text:1024A645                 call    dword_109B339C
+  .text:1024A64B                 mov     eax, [ebp+var_10]
+  .text:1024A64E                 push    dword ptr [eax+18h]
+  .text:1024A651                 call    sub_101C3E50
+  .text:1024A656                 add     esp, 4
+  .text:1024A659                 mov     [ebp+var_10], eax
+  .text:1024A65C                 test    eax, eax
+  .text:1024A65E                 jz      short loc_1024A666
+  .text:1024A660                 or      esi, 4
+  .text:1024A663                 mov     [ebp+var_C], esi
+  .text:1024A666                 test    byte ptr [edi+8], 20h
+  .text:1024A66A                 xorps   xmm0, xmm0
+  .text:1024A66D                 movss   [ebp+var_4], xmm0
+  .text:1024A672                 jz      short loc_1024A690
+  .text:1024A674                 push    currententity
+  .text:1024A67A                 push    edi
+  .text:1024A67B                 call    sub_1024C970
+  .text:1024A680                 fstp    [ebp+var_4]
+  .text:1024A683                 movss   xmm0, [ebp+var_4]
+  .text:1024A688                 add     esp, 8
+  .text:1024A68B                 movss   [ebp+var_4], xmm0
+  .text:1024A690                 push    dword_109A6874[esi*4]
+  .text:1024A697                 call    sub_1024C5F0
+  .text:1024A69C                 mov     edx, [edi+5Ch]
+  .text:1024A69F                 add     esp, 4
+  .text:1024A6A2                 mov     ecx, edx
+  .text:1024A6A4                 test    edx, edx
+  .text:1024A6A6                 jz      short loc_1024A6E1
+  .text:1024A6A8                 mov     eax, currententity
+  .text:1024A6AD                 mov     eax, [eax+2F8h]
+  .text:1024A6B3                 cmp     eax, [edi+60h]
+  .text:1024A6B6                 jnz     short loc_1024A6CF
+  .text:1024A6B8                 movss   xmm0, [ebp+var_4]
+  .text:1024A6BD                 ucomiss xmm0, dword ptr [edi+64h]
+  .text:1024A6C1                 lahf
+  .text:1024A6C2                 test    ah, 44h
+  .text:1024A6C5                 jp      short loc_1024A6CF
+  .text:1024A6C7                 mov     eax, [ebp+var_10]
+  .text:1024A6CA                 cmp     eax, [edi+68h]
+  .text:1024A6CD                 jz      short loc_1024A6E1
+  .text:1024A6CF                 ; range
+  .text:1024A6CF                 push    1; range
+  .text:1024A6D1                 ; list
+  .text:1024A6D1                 push    edx; list
+  .text:1024A6D2                 call    ds:glDeleteLists
+  .text:1024A6D8                 mov     dword ptr [edi+5Ch], 0
+  .text:1024A6DF                 xor     ecx, ecx
+  .text:1024A6E1                 movss   xmm0, dword_10322F00
+  .text:1024A6E9                 ucomiss xmm0, ds:dword_102B3730
+  .text:1024A6F0                 lahf
+  .text:1024A6F1                 test    ah, 44h
+  .text:1024A6F4                 jnp     short loc_1024A73C
+  .text:1024A6F6                 test    ecx, ecx
+  .text:1024A6F8                 jz      short loc_1024A706
+  .text:1024A6FA                 ; list
+  .text:1024A6FA                 push    ecx; list
+  .text:1024A6FB                 call    ds:glCallList
+  .text:1024A701                 jmp     loc_1024A816
+  .text:1024A706                 ; range
+  .text:1024A706                 push    1; range
+  .text:1024A708                 call    ds:glGenLists
+  .text:1024A70E                 movss   xmm0, [ebp+var_4]
+  .text:1024A713                 mov     [edi+5Ch], eax
+  .text:1024A716                 mov     ecx, currententity
+  .text:1024A71C                 ; mode
+  .text:1024A71C                 push    1301h; mode
+  .text:1024A721                 ; list
+  .text:1024A721                 push    eax; list
+  .text:1024A722                 mov     ecx, [ecx+2F8h]
+  .text:1024A728                 mov     [edi+60h], ecx
+  .text:1024A72B                 mov     ecx, [ebp+var_10]
+  .text:1024A72E                 movss   dword ptr [edi+64h], xmm0
+  .text:1024A733                 mov     [edi+68h], ecx
+  .text:1024A736                 call    ds:glNewList
+  .text:1024A73C                 push    9
+  .text:1024A73E                 call    dword_109B3814
+  .text:1024A744                 mov     eax, [ebp+var_8]
+  .text:1024A747                 lea     esi, [ebx+10h]
+  .text:1024A74A                 xor     ebx, ebx
+  .text:1024A74C                 cmp     [eax+8], ebx
+  .text:1024A74F                 jle     loc_1024A7EF
+  .text:1024A755                 mov     edi, eax
+  .text:1024A757                 nop     word ptr [eax+eax+00000000h]
+  .text:1024A760                 movss   xmm0, dword ptr [esi+10h]
+  .text:1024A765                 sub     esp, 8
+  .text:1024A768                 movss   [esp+24h+var_20], xmm0
+  .text:1024A76E                 movss   xmm0, [ebp+var_4]
+  .text:1024A773                 addss   xmm0, dword ptr [esi+0Ch]
+  .text:1024A778                 movss   [esp+24h+var_24], xmm0
+  .text:1024A77D                 push    TEXTURE0_SGIS
+  .text:1024A783                 call    dword_109B32D0
+  .text:1024A789                 movss   xmm0, dword ptr [esi+18h]
+  .text:1024A78E                 sub     esp, 8
+  .text:1024A791                 movss   [esp+20h+var_1C], xmm0
+  .text:1024A797                 movss   xmm0, dword ptr [esi+14h]
+  .text:1024A79C                 movss   [esp+20h+var_20], xmm0
+  .text:1024A7A1                 push    TEXTURE1_SGIS
+  .text:1024A7A7                 call    dword_109B32D0
+  .text:1024A7AD                 cmp     [ebp+var_10], 0
+  .text:1024A7B1                 jz      short loc_1024A7D8
+  .text:1024A7B3                 movss   xmm0, dword ptr [esi+10h]
+  .text:1024A7B8                 sub     esp, 8
+  .text:1024A7BB                 movss   [esp+1Ch+var_18], xmm0
+  .text:1024A7C1                 movss   xmm0, [ebp+var_4]
+  .text:1024A7C6                 addss   xmm0, dword ptr [esi+0Ch]
+  .text:1024A7CB                 movss   [esp+1Ch+var_1C], xmm0
+  .text:1024A7D0                 call    sub_101C40E0
+  .text:1024A7D5                 add     esp, 8
+  .text:1024A7D8                 push    esi
+  .text:1024A7D9                 call    dword_109B3320
+  .text:1024A7DF                 inc     ebx
+  .text:1024A7E0                 add     esi, 1Ch
+  .text:1024A7E3                 cmp     ebx, [edi+8]
+  .text:1024A7E6                 jl      loc_1024A760
+  .text:1024A7EC                 mov     edi, [ebp+surface]
+  .text:1024A7EF                 call    dword_109B36FC
+  .text:1024A7F5                 movss   xmm0, dword_10322F00
+  .text:1024A7FD                 ucomiss xmm0, ds:dword_102B3730
+  .text:1024A804                 lahf
+  .text:1024A805                 test    ah, 44h
+  .text:1024A808                 jnp     short loc_1024A810
+  .text:1024A80A                 call    ds:glEndList
+  .text:1024A810                 mov     esi, [ebp+var_C]
+  .text:1024A813                 mov     ebx, [ebp+var_8]
+  .text:1024A816                 cmp     [ebp+var_10], 0
+  .text:1024A81A                 jz      short loc_1024A824
+  .text:1024A81C                 call    sub_101C3320
+  .text:1024A821                 and     esi, 0FFFFFFFBh
+  .text:1024A824                 push    dword_109A6874[esi*4]
+  .text:1024A82B                 call    sub_1024C5F0
+  .text:1024A830                 add     esp, 4
+  .text:1024A833                 cmp     dword_10322E30, 0
+  .text:1024A83A                 jnz     short loc_1024A880
+  .text:1024A83C                 cmp     dword ptr [edi+58h], 0
+  .text:1024A840                 jz      short loc_1024A880
+  .text:1024A842                 mov     eax, dword_10989B00
+  .text:1024A847                 mov     dword_10989330[eax*4], edi
+  .text:1024A84E                 inc     eax
+  .text:1024A84F                 mov     dword_10989B00, eax
+  .text:1024A854                 cmp     eax, 1F4h
+  .text:1024A859                 jle     short loc_1024A868
+  .text:1024A85B                 push    offset aTooManyDecalSu; "Too many decal surfaces!\n"
+  .text:1024A860                 call    Sys_Error
+  .text:1024A865                 add     esp, 4
+  .text:1024A868                 mov     eax, currententity
+  .text:1024A86D                 cmp     dword ptr [eax+2F8h], 0
+  .text:1024A874                 jnz     short loc_1024A880
+  .text:1024A876                 push    1
+  .text:1024A878                 call    sub_10249FE0
+  .text:1024A87D                 add     esp, 4
+  .text:1024A880                 cmp     [ebp+cleanUpShaderState], 0
+  .text:1024A884                 jz      short loc_1024A890
+  .text:1024A886                 push    0
+  .text:1024A888                 call    sub_1024C5F0
+  .text:1024A88D                 add     esp, 4
+  .text:1024A890                 movss   xmm0, dword_10322E28
+  .text:1024A898                 ucomiss xmm0, ds:dword_102B3730
+  .text:1024A89F                 lahf
+  .text:1024A8A0                 test    ah, 44h
+  .text:1024A8A3                 jnp     loc_1024A951
+  .text:1024A8A9                 push    0
+  .text:1024A8AB                 call    sub_1024C5F0
+  .text:1024A8B0                 add     esp, 4
+  .text:1024A8B3                 ; unsigned int
+  .text:1024A8B3                 push    0DE1h; unsigned int
+  .text:1024A8B8                 call    qglDisable
+  .text:1024A8BE                 sub     esp, 0Ch
+  .text:1024A8C1                 mov     [esp+28h+var_20], 3F800000h
+  .text:1024A8C9                 mov     [esp+28h+var_24], 3F800000h
+  .text:1024A8D1                 mov     [esp+28h+var_28], 3F800000h
+  .text:1024A8D8                 call    dword_109B37D0
+  .text:1024A8DE                 movss   xmm0, dword_10322E28
+  .text:1024A8E6                 ucomiss xmm0, ds:dword_10306610
+  .text:1024A8ED                 lahf
+  .text:1024A8EE                 test    ah, 44h
+  .text:1024A8F1                 jp      short loc_1024A8FE
+  .text:1024A8F3                 ; unsigned int
+  .text:1024A8F3                 push    0B71h; unsigned int
+  .text:1024A8F8                 call    qglDisable
+  .text:1024A8FE                 push    2
+  .text:1024A900                 call    dword_109B3814
+  .text:1024A906                 xor     edi, edi
+  .text:1024A908                 lea     esi, [ebx+10h]
+  .text:1024A90B                 cmp     [ebx+8], edi
+  .text:1024A90E                 jle     short loc_1024A920
+  .text:1024A910                 push    esi
+  .text:1024A911                 call    dword_109B3320
+  .text:1024A917                 inc     edi
+  .text:1024A918                 add     esi, 1Ch
+  .text:1024A91B                 cmp     edi, [ebx+8]
+  .text:1024A91E                 jl      short loc_1024A910
+  .text:1024A920                 call    dword_109B36FC
+  .text:1024A926                 ; unsigned int
+  .text:1024A926                 push    0DE1h; unsigned int
+  .text:1024A92B                 call    qglEnable
+  .text:1024A931                 movss   xmm0, dword_10322E28
+  .text:1024A939                 ucomiss xmm0, ds:dword_10306610
+  .text:1024A940                 lahf
+  .text:1024A941                 test    ah, 44h
+  .text:1024A944                 jp      short loc_1024A951
+  .text:1024A946                 ; unsigned int
+  .text:1024A946                 push    0B71h; unsigned int
+  .text:1024A94B                 call    qglEnable
+  .text:1024A951                 pop     ebx
+  .text:1024A952                 pop     edi
+  .text:1024A953                 pop     esi
+  .text:1024A954                 mov     esp, ebp
+  .text:1024A956                 pop     ebp
+  .text:1024A957                 retn
+  .text:1024A958                 mov     ebx, [edi+24h]
+  .text:1024A95B                 push    edi
+  .text:1024A95C                 call    R_TextureAnimation
+  .text:1024A961                 add     esp, 4
+  .text:1024A964                 mov     esi, eax
+  .text:1024A966                 cmp     mtexenabled, 0
+  .text:1024A96D                 jz      short loc_1024A992
+  .text:1024A96F                 ; unsigned int
+  .text:1024A96F                 push    0DE1h; unsigned int
+  .text:1024A974                 call    qglDisable
+  .text:1024A97A                 ; target
+  .text:1024A97A                 push    TEXTURE0_SGIS; target
+  .text:1024A980                 call    GL_SelectTexture
+  .text:1024A985                 add     esp, 4
+  .text:1024A988                 mov     mtexenabled, 0
+  .text:1024A992                 push    dword ptr [esi+18h]
+  .text:1024A995                 call    GL_Bind
+  .text:1024A99A                 push    dword_109A6878
+  .text:1024A9A0                 call    sub_1024C5F0
+  .text:1024A9A5                 add     esp, 8
+  .text:1024A9A8                 test    byte ptr [edi+8], 20h
+  .text:1024A9AC                 jz      short loc_1024A9BF
+  .text:1024A9AE                 push    currententity
+  .text:1024A9B4                 push    edi
+  .text:1024A9B5                 call    sub_10246DA0
+  .text:1024A9BA                 add     esp, 8
+  .text:1024A9BD                 jmp     short loc_1024AA09
+  .text:1024A9BF                 push    9
+  .text:1024A9C1                 call    dword_109B3814
+  .text:1024A9C7                 cmp     dword ptr [ebx+8], 0
+  .text:1024A9CB                 lea     esi, [ebx+10h]
+  .text:1024A9CE                 jle     short loc_1024AA03
+  .text:1024A9D0                 xor     edi, edi
+  .text:1024A9D2                 movss   xmm0, dword ptr [esi+10h]
+  .text:1024A9D7                 sub     esp, 8
+  .text:1024A9DA                 movss   [esp+24h+var_20], xmm0
+  .text:1024A9E0                 movss   xmm0, dword ptr [esi+0Ch]
+  .text:1024A9E5                 movss   [esp+24h+var_24], xmm0
+  .text:1024A9EA                 call    dword_109B33F8
+  .text:1024A9F0                 push    esi
+  .text:1024A9F1                 call    dword_109B3320
+  .text:1024A9F7                 inc     edi
+  .text:1024A9F8                 add     esi, 1Ch
+  .text:1024A9FB                 cmp     edi, [ebx+8]
+  .text:1024A9FE                 jl      short loc_1024A9D2
+  .text:1024AA00                 mov     edi, [ebp+surface]
+  .text:1024AA03                 call    dword_109B36FC
+  .text:1024AA09                 cmp     dword_10322E30, 0
+  .text:1024AA10                 jnz     short loc_1024AA48
+  .text:1024AA12                 cmp     dword ptr [edi+58h], 0
+  .text:1024AA16                 jz      short loc_1024AA48
+  .text:1024AA18                 mov     eax, dword_10989B00
+  .text:1024AA1D                 mov     dword_10989330[eax*4], edi
+  .text:1024AA24                 inc     eax
+  .text:1024AA25                 mov     dword_10989B00, eax
+  .text:1024AA2A                 cmp     eax, 1F4h
+  .text:1024AA2F                 jle     short loc_1024AA3E
+  .text:1024AA31                 push    offset aTooManyDecalSu; "Too many decal surfaces!\n"
+  .text:1024AA36                 call    Sys_Error
+  .text:1024AA3B                 add     esp, 4
+  .text:1024AA3E                 push    0
+  .text:1024AA40                 call    sub_10249FE0
+  .text:1024AA45                 add     esp, 4
+  .text:1024AA48                 cmp     [ebp+cleanUpShaderState], 0
+  .text:1024AA4C                 jz      short loc_1024AA58
+  .text:1024AA4E                 push    0
+  .text:1024AA50                 call    sub_1024C5F0
+  .text:1024AA55                 add     esp, 4
+  .text:1024AA58                 movss   xmm0, dword_10322E28
+  .text:1024AA60                 xorps   xmm1, xmm1
+  .text:1024AA63                 ucomiss xmm0, xmm1
+  .text:1024AA66                 lahf
+  .text:1024AA67                 test    ah, 44h
+  .text:1024AA6A                 jnp     loc_1024AB1F
+  .text:1024AA70                 push    0
+  .text:1024AA72                 call    sub_1024C5F0
+  .text:1024AA77                 add     esp, 4
+  .text:1024AA7A                 ; unsigned int
+  .text:1024AA7A                 push    0DE1h; unsigned int
+  .text:1024AA7F                 call    qglDisable
+  .text:1024AA85                 sub     esp, 0Ch
+  .text:1024AA88                 mov     [esp+28h+var_20], 3F800000h
+  .text:1024AA90                 mov     [esp+28h+var_24], 3F800000h
+  .text:1024AA98                 mov     [esp+28h+var_28], 3F800000h
+  .text:1024AA9F                 call    dword_109B37D0
+  .text:1024AAA5                 movss   xmm0, dword_10322E28
+  .text:1024AAAD                 ucomiss xmm0, ds:dword_10306610
+  .text:1024AAB4                 lahf
+  .text:1024AAB5                 test    ah, 44h
+  .text:1024AAB8                 jp      short loc_1024AAC5
+  .text:1024AABA                 ; unsigned int
+  .text:1024AABA                 push    0B71h; unsigned int
+  .text:1024AABF                 call    qglDisable
+  .text:1024AAC5                 push    2
+  .text:1024AAC7                 call    dword_109B3814
+  .text:1024AACD                 cmp     dword ptr [ebx+8], 0
+  .text:1024AAD1                 lea     esi, [ebx+10h]
+  .text:1024AAD4                 jle     short loc_1024AAEB
+  .text:1024AAD6                 xor     edi, edi
+  .text:1024AAD8                 push    esi
+  .text:1024AAD9                 call    dword_109B3320
+  .text:1024AADF                 inc     edi
+  .text:1024AAE0                 add     esi, 1Ch
+  .text:1024AAE3                 cmp     edi, [ebx+8]
+  .text:1024AAE6                 jl      short loc_1024AAD8
+  .text:1024AAE8                 mov     edi, [ebp+surface]
+  .text:1024AAEB                 call    dword_109B36FC
+  .text:1024AAF1                 ; unsigned int
+  .text:1024AAF1                 push    0DE1h; unsigned int
+  .text:1024AAF6                 call    qglEnable
+  .text:1024AAFC                 movss   xmm0, dword_10322E28
+  .text:1024AB04                 ucomiss xmm0, ds:dword_10306610
+  .text:1024AB0B                 lahf
+  .text:1024AB0C                 test    ah, 44h
+  .text:1024AB0F                 jp      short loc_1024AB1C
+  .text:1024AB11                 ; unsigned int
+  .text:1024AB11                 push    0B71h; unsigned int
+  .text:1024AB16                 call    qglEnable
+  .text:1024AB1C                 xorps   xmm1, xmm1
+  .text:1024AB1F                 mov     eax, currententity
+  .text:1024AB24                 cmp     dword ptr [eax+2F8h], 0
+  .text:1024AB2B                 jnz     loc_1024A951
+  .text:1024AB31                 cmp     dword_109A68D8, 0
+  .text:1024AB38                 jz      short loc_1024AB85
+  .text:1024AB3A                 movss   xmm0, dword_10322ED8
+  .text:1024AB42                 ucomiss xmm0, xmm1
+  .text:1024AB45                 lahf
+  .text:1024AB46                 test    ah, 44h
+  .text:1024AB49                 jnp     short loc_1024AB63
+  .text:1024AB4B                 movss   xmm0, dword_1031CD20
+  .text:1024AB53                 ucomiss xmm0, xmm1
+  .text:1024AB56                 lahf
+  .text:1024AB57                 test    ah, 44h
+  .text:1024AB5A                 jnp     short loc_1024AB63
+  .text:1024AB5C                 mov     eax, 1
+  .text:1024AB61                 jmp     short loc_1024AB65
+  .text:1024AB63                 xor     eax, eax
+  .text:1024AB65                 xor     esi, esi
+  .text:1024AB67                 test    eax, eax
+  .text:1024AB69                 cmovnz  esi, dword_109A6878
+  .text:1024AB70                 cmp     dword_109A68D4, esi
+  .text:1024AB76                 jz      short loc_1024AB85
+  .text:1024AB78                 push    esi
+  .text:1024AB79                 call    dword_109B326C
+  .text:1024AB7F                 mov     dword_109A68D4, esi
+  .text:1024AB85                 cmp     filterMode, 0
+  .text:1024AB8C                 jz      short loc_1024AB96
+  .text:1024AB8E                 push    dword_1065A0C4
+  .text:1024AB94                 jmp     short loc_1024ABA0
+  .text:1024AB96                 mov     eax, [edi+38h]
+  .text:1024AB99                 push    dword_10989220[eax*4]
+  .text:1024ABA0                 call    GL_Bind
+  .text:1024ABA5                 add     esp, 4
+  .text:1024ABA8                 ; unsigned int
+  .text:1024ABA8                 push    0BE2h; unsigned int
+  .text:1024ABAD                 call    qglEnable
+  .text:1024ABB3                 push    9
+  .text:1024ABB5                 call    dword_109B3814
+  .text:1024ABBB                 xor     edi, edi
+  .text:1024ABBD                 lea     esi, [ebx+10h]
+  .text:1024ABC0                 cmp     [ebx+8], edi
+  .text:1024ABC3                 jle     short loc_1024ABFE
+  .text:1024ABC5                 nop     word ptr [eax+eax+00000000h]
+  .text:1024ABD0                 movss   xmm0, dword ptr [esi+18h]
+  .text:1024ABD5                 sub     esp, 8
+  .text:1024ABD8                 movss   [esp+24h+var_20], xmm0
+  .text:1024ABDE                 movss   xmm0, dword ptr [esi+14h]
+  .text:1024ABE3                 movss   [esp+24h+var_24], xmm0
+  .text:1024ABE8                 call    dword_109B33F8
+  .text:1024ABEE                 push    esi
+  .text:1024ABEF                 call    dword_109B3320
+  .text:1024ABF5                 inc     edi
+  .text:1024ABF6                 add     esi, 1Ch
+  .text:1024ABF9                 cmp     edi, [ebx+8]
+  .text:1024ABFC                 jl      short loc_1024ABD0
+  .text:1024ABFE                 call    dword_109B36FC
+  .text:1024AC04                 ; unsigned int
+  .text:1024AC04                 push    0BE2h; unsigned int
+  .text:1024AC09                 call    qglDisable
+  .text:1024AC0F                 cmp     [ebp+cleanUpShaderState], 0
+  .text:1024AC13                 jz      loc_1024A951
+  .text:1024AC19                 cmp     dword_109A68D8, 0
+  .text:1024AC20                 jz      loc_1024A951
+  .text:1024AC26                 cmp     dword_109A68D4, 0
+  .text:1024AC2D                 jz      loc_1024A951
+  .text:1024AC33                 push    0
+  .text:1024AC35                 call    dword_109B326C
+  .text:1024AC3B                 pop     ebx
+  .text:1024AC3C                 pop     edi
+  .text:1024AC3D                 mov     dword_109A68D4, 0
+  .text:1024AC47                 pop     esi
+  .text:1024AC48                 mov     esp, ebp
+  .text:1024AC4A                 pop     ebp
+  .text:1024AC4B                 retn
+  .text:1024AC4C                 test    cl, 10h
+  .text:1024AC4F                 jz      loc_1024A952
+  .text:1024AC55                 push    0
+  .text:1024AC57                 call    sub_1024C5F0
+  .text:1024AC5C                 call    GL_DisableMultitexture
+  .text:1024AC61                 mov     eax, [edi+2Ch]
+  .text:1024AC64                 mov     eax, [eax+24h]
+  .text:1024AC67                 push    dword ptr [eax+18h]
+  .text:1024AC6A                 call    GL_Bind
+  .text:1024AC6F                 push    [ebp+face]
+  .text:1024AC72                 push    edi
+  .text:1024AC73                 call    sub_102505F0
+  .text:1024AC78                 add     esp, 10h
+  .text:1024AC7B                 pop     edi
+  .text:1024AC7C                 pop     esi
+  .text:1024AC7D                 mov     esp, ebp
+  .text:1024AC7F                 pop     ebp
+  .text:1024AC80                 retn
+procedure: |-
+  // mtexenabled is the 0/1 enabled state written around GL_TEXTURE_2D, distinct from gl_mtexable capability. GL_EnableMultitexture may remain a direct call or be inlined.
+  // Multitexture helpers can be inlined: mtexenabled is the enabled state, gl_mtexable is capability. Preserve the current binary ABI; HL25 adds shader cleanup absent from older source.
+  void __cdecl R_DrawSequentialPoly(void *surface, int face, int cleanUpShaderState)
+  {
+    int v3; // ebx
+    int v4; // edi
+    studio_merge_entity_partial *v5; // eax
+    int v6; // eax
+    _DWORD *v7; // edi
+    int v8; // ecx
+    int v9; // eax
+    int v10; // ebx
+    int v11; // esi
+    int v12; // esi
+    int v13; // ecx
+    int *v14; // esi
+    GLuint v15; // edx
+    GLuint v16; // ecx
+    GLuint v17; // eax
+    int v18; // esi
+    int v19; // ebx
+    int v20; // eax
+    int v21; // edi
+    int i; // esi
+    int v23; // ebx
+    int v24; // esi
+    int v25; // esi
+    int v26; // edi
+    int v27; // eax
+    int v28; // esi
+    int v29; // edi
+    BOOL v30; // eax
+    int v31; // esi
+    int v32; // edi
+    int j; // esi
+    int v34; // [esp+70h] [ebp-1Ch]
+    __int64 v35; // [esp+70h] [ebp-1Ch]
+    int v36; // [esp+74h] [ebp-18h]
+    int v37; // [esp+7Ch] [ebp-10h]
+    int v38; // [esp+7Ch] [ebp-10h]
+    int v39; // [esp+80h] [ebp-Ch]
+    int v40; // [esp+84h] [ebp-8h]
+    float v41; // [esp+88h] [ebp-4h]
+
+    sub_1024B390();
+    v5 = currententity;
+    if ( *(_DWORD *)&currententity->before_renderfx[24] == 1 )
+    {
+      if ( dword_109A68D8 && dword_109A68D4 )
+      {
+        dword_109B326C(0);
+        dword_109A68D4 = 0;
+      }
+      if ( mtexenabled )
+      {
+        qglDisable(0xDE1u);
+        GL_SelectTexture(TEXTURE0_SGIS);
+        mtexenabled = 0;
+      }
+      dword_109B3808(770, 771);
+      qglEnable(0xBE2u);
+      v6 = R_TextureAnimation((int)surface);
+      GL_Bind(*(_DWORD *)(v6 + 24));
+      qglDisable(0xDE1u);
+      sub_10246E10(*((_DWORD *)surface + 9));
+      qglEnable(0xDE1u);
+      if ( gl_mtexable )
+      {
+        GL_SelectTexture(TEXTURE1_SGIS);
+        qglEnable(0xDE1u);
+        mtexenabled = 1;
+      }
+      return;
+    }
+    v36 = v4;
+    v7 = surface;
+    v8 = *((_DWORD *)surface + 2);
+    if ( (v8 & 0x94) != 0 )
+    {
+      if ( (v8 & 0x10) != 0 )
+      {
+        sub_1024C5F0(0);
+        GL_DisableMultitexture();
+        GL_Bind(*(_DWORD *)(*(_DWORD *)(*((_DWORD *)surface + 11) + 36) + 24));
+        sub_102505F0(surface, face);
+      }
+    }
+    else
+    {
+      if ( !filterMode )
+      {
+        sub_1024BEF0((int)surface);
+        v5 = currententity;
+      }
+      v34 = v3;
+      if ( gl_mtexable )
+      {
+        v9 = *(_DWORD *)&v5->before_renderfx[24];
+        if ( !v9 || v9 == 4 )
+        {
+          v10 = *((_DWORD *)surface + 9);
+          v40 = v10;
+          v37 = R_TextureAnimation((int)surface);
+          GL_SelectTexture(TEXTURE0_SGIS);
+          GL_Bind(*(_DWORD *)(v37 + 24));
+          v11 = 1;
+          dword_109B339C(8960, 8704, 1174667264);
+          if ( *(_DWORD *)&currententity->before_renderfx[24] == 1 )
+          {
+            qglDisable(0xDE1u);
+            v11 = 0;
+          }
+          GL_EnableMultitexture();
+          v12 = v11 | 2;
+          v39 = v12;
+          if ( filterMode )
+            GL_Bind(dword_1065A0C4);
+          else
+            GL_Bind(dword_10989220[*((_DWORD *)surface + 14)]);
+          v13 = *((_DWORD *)surface + 14);
+          if ( dword_10DC3A40[v13] )
+          {
+            dword_10DC3A40[v13] = 0;
+            v14 = &dword_10DC3640[4 * v13];
+            dword_109B3358(
+              3553,
+              0,
+              0,
+              v14[1],
+              128,
+              v14[3],
+              dword_1031E3B0,
+              5121,
+              &byte_109BB620[128 * dword_10DC5084 * (v14[1] + (v13 << 7))]);
+            *v14 = 128;
+            v14[1] = 128;
+            v14[3] = 0;
+            v14[2] = 0;
+            v12 = v39;
+          }
+          dword_109B339C(8960, 8704, 1174667264);
+          v38 = sub_101C3E50(*(_DWORD *)(v37 + 24));
+          if ( v38 )
+          {
+            v12 |= 4u;
+            v39 = v12;
+          }
+          v41 = 0.0;
+          if ( (*((_BYTE *)surface + 8) & 0x20) != 0 )
+            v41 = sub_1024C970(surface, currententity);
+          sub_1024C5F0(dword_109A6874[v12]);
+          v15 = *((_DWORD *)surface + 23);
+          v16 = v15;
+          if ( v15
+            && (*(_DWORD *)&currententity->before_renderfx[24] != *((_DWORD *)surface + 24)
+             || v41 != *((float *)surface + 25)
+             || v38 != *((_DWORD *)surface + 26)) )
+          {
+            glDeleteLists(v15, 1);
+            *((_DWORD *)surface + 23) = 0;
+            v16 = 0;
+          }
+          if ( *(float *)&dword_10322F00 != 0.0 )
+          {
+            if ( v16 )
+            {
+              glCallList(v16);
+  LABEL_43:
+              if ( v38 )
+              {
+                sub_101C3320();
+                v12 &= ~4u;
+              }
+              sub_1024C5F0(dword_109A6874[v12]);
+              if ( !dword_10322E30 && v7[22] )
+              {
+                v20 = dword_10989B00;
+                dword_10989330[dword_10989B00] = (int)v7;
+                dword_10989B00 = v20 + 1;
+                if ( v20 + 1 > 500 )
+                  Sys_Error("Too many decal surfaces!\n");
+                if ( !*(_DWORD *)&currententity->before_renderfx[24] )
+                  sub_10249FE0(1);
+              }
+              if ( cleanUpShaderState )
+                sub_1024C5F0(0);
+              if ( *(float *)&dword_10322E28 != 0.0 )
+              {
+                sub_1024C5F0(0);
+                qglDisable(0xDE1u);
+                dword_109B37D0(1065353216, 1065353216, 1065353216);
+                if ( *(float *)&dword_10322E28 == 2.0 )
+                  qglDisable(0xB71u);
+                dword_109B3814(2);
+                v21 = 0;
+                for ( i = v10 + 16; v21 < *(_DWORD *)(v10 + 8); i += 28 )
+                {
+                  dword_109B3320(i);
+                  ++v21;
+                }
+                dword_109B36FC(v34);
+                qglEnable(0xDE1u);
+                if ( *(float *)&dword_10322E28 == 2.0 )
+                  qglEnable(0xB71u);
+              }
+              return;
+            }
+            v17 = glGenLists(1);
+            *((_DWORD *)surface + 23) = v17;
+            *((_DWORD *)surface + 24) = *(_DWORD *)&currententity->before_renderfx[24];
+            *((float *)surface + 25) = v41;
+            *((_DWORD *)surface + 26) = v38;
+            glNewList(v17, 0x1301u);
+          }
+          dword_109B3814(9);
+          v18 = v10 + 16;
+          v19 = 0;
+          if ( *(int *)(v40 + 8) > 0 )
+          {
+            do
+            {
+              dword_109B32D0(TEXTURE0_SGIS, v41 + *(float *)(v18 + 12), *(_DWORD *)(v18 + 16), v34);
+              dword_109B32D0(TEXTURE1_SGIS, *(_DWORD *)(v18 + 20), *(_DWORD *)(v18 + 24), v36);
+              if ( v38 )
+              {
+                HIDWORD(v35) = *(_DWORD *)(v18 + 16);
+                *(float *)&v35 = v41 + *(float *)(v18 + 12);
+                sub_101C40E0(v35);
+              }
+              dword_109B3320(v18);
+              ++v19;
+              v18 += 28;
+            }
+            while ( v19 < *(_DWORD *)(v40 + 8) );
+            v7 = surface;
+          }
+          ((void (__cdecl *)())dword_109B36FC)();
+          if ( *(float *)&dword_10322F00 != 0.0 )
+            glEndList();
+          v12 = v39;
+          v10 = v40;
+          goto LABEL_43;
+        }
+      }
+      v23 = *((_DWORD *)surface + 9);
+      v24 = R_TextureAnimation((int)surface);
+      if ( mtexenabled )
+      {
+        qglDisable(0xDE1u);
+        GL_SelectTexture(TEXTURE0_SGIS);
+        mtexenabled = 0;
+      }
+      GL_Bind(*(_DWORD *)(v24 + 24));
+      sub_1024C5F0(dword_109A6878);
+      if ( (*((_BYTE *)surface + 8) & 0x20) != 0 )
+      {
+        sub_10246DA0((int)surface, (int)currententity);
+      }
+      else
+      {
+        dword_109B3814(9);
+        v25 = v23 + 16;
+        if ( *(int *)(v23 + 8) > 0 )
+        {
+          v26 = 0;
+          do
+          {
+            dword_109B33F8(*(_DWORD *)(v25 + 12), *(_DWORD *)(v25 + 16));
+            dword_109B3320(v25);
+            ++v26;
+            v25 += 28;
+          }
+          while ( v26 < *(_DWORD *)(v23 + 8) );
+          v7 = surface;
+        }
+        dword_109B36FC(v34);
+      }
+      if ( !dword_10322E30 && v7[22] )
+      {
+        v27 = dword_10989B00;
+        dword_10989330[dword_10989B00] = (int)v7;
+        dword_10989B00 = v27 + 1;
+        if ( v27 + 1 > 500 )
+          Sys_Error("Too many decal surfaces!\n");
+        sub_10249FE0(0);
+      }
+      if ( cleanUpShaderState )
+        sub_1024C5F0(0);
+      if ( *(float *)&dword_10322E28 != 0.0 )
+      {
+        sub_1024C5F0(0);
+        qglDisable(0xDE1u);
+        dword_109B37D0(1065353216, 1065353216, 1065353216);
+        if ( *(float *)&dword_10322E28 == 2.0 )
+          qglDisable(0xB71u);
+        dword_109B3814(2);
+        v28 = v23 + 16;
+        if ( *(int *)(v23 + 8) > 0 )
+        {
+          v29 = 0;
+          do
+          {
+            dword_109B3320(v28);
+            ++v29;
+            v28 += 28;
+          }
+          while ( v29 < *(_DWORD *)(v23 + 8) );
+          v7 = surface;
+        }
+        dword_109B36FC(v34);
+        qglEnable(0xDE1u);
+        if ( *(float *)&dword_10322E28 == 2.0 )
+          qglEnable(0xB71u);
+      }
+      if ( !*(_DWORD *)&currententity->before_renderfx[24] )
+      {
+        if ( dword_109A68D8 )
+        {
+          v30 = *(float *)&dword_10322ED8 != 0.0 && *(float *)&dword_1031CD20 != 0.0;
+          v31 = 0;
+          if ( v30 )
+            v31 = dword_109A6878;
+          if ( dword_109A68D4 != v31 )
+          {
+            dword_109B326C(v31);
+            dword_109A68D4 = v31;
+          }
+        }
+        if ( filterMode )
+          GL_Bind(dword_1065A0C4);
+        else
+          GL_Bind(dword_10989220[v7[14]]);
+        qglEnable(0xBE2u);
+        dword_109B3814(9);
+        v32 = 0;
+        for ( j = v23 + 16; v32 < *(_DWORD *)(v23 + 8); j += 28 )
+        {
+          dword_109B33F8(*(_DWORD *)(j + 20), *(_DWORD *)(j + 24));
+          dword_109B3320(j);
+          ++v32;
+        }
+        dword_109B36FC(v34);
+        qglDisable(0xBE2u);
+        if ( cleanUpShaderState && dword_109A68D8 && dword_109A68D4 )
+        {
+          dword_109B326C(0);
+          dword_109A68D4 = 0;
+        }
+      }
+    }
+  }

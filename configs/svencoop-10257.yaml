@@ -238,6 +238,12 @@ modules:
           - cl_weaponsequence.{platform}.yaml
           - cl_light_level.{platform}.yaml
           - envmap.{platform}.yaml
+      - name: find-GL_SelectTexture-decompiles
+        expected_input:
+          - GL_SelectTexture.{platform}.yaml
+        expected_output:
+          - gl_mtexable.{platform}.yaml
+          - oldtarget.{platform}.yaml
       - name: find-GL_Bind-currenttexture
         expected_input:
           - GL_Bind.{platform}.yaml
@@ -290,6 +296,11 @@ modules:
           - R_DrawTEntitiesOnList.{platform}.yaml
         expected_output:
           - R_DrawBrushModel.{platform}.yaml
+      - name: find-R_DrawSequentialPoly-mtexenabled-decompiles
+        expected_input:
+          - R_DrawSequentialPoly.{platform}.yaml
+        expected_output:
+          - mtexenabled.{platform}.yaml
       - name: find-R_DrawSequentialPoly-decompiles
         expected_input:
           - R_DrawBrushModel.{platform}.yaml
@@ -774,6 +785,12 @@ modules:
       - name: Draw_FillRGBABlend
         category: func
       - name: currenttexture
+        category: gv
+      - name: gl_mtexable
+        category: gv
+      - name: oldtarget
+        category: gv
+      - name: mtexenabled
         category: gv
       - name: detTexSupported
         category: gv

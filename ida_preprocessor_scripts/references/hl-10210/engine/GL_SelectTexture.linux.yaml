@@ -1,0 +1,51 @@
+func_name: "GL_SelectTexture"
+func_va: "0x149320"
+disasm_code: |-
+  ; gl_mtexable gates texture-unit selection; oldtarget is the previous unit compared with target and updated after caching bindings.
+  .text:00149320                 push    ebx
+  .text:00149321                 sub     esp, 18h
+  .text:00149324                 mov     eax, ds:gl_mtexable
+  .text:00149329                 mov     ebx, [esp+1Ch+target]
+  .text:0014932D                 test    eax, eax
+  .text:0014932F                 jnz     short loc_149340
+  .text:00149331                 add     esp, 18h
+  .text:00149334                 pop     ebx
+  .text:00149335                 retn
+  .text:00149340                 ; GLenum
+  .text:00149340                 mov     [esp+1Ch+var_1C], ebx; GLenum
+  .text:00149343                 call    ds:qglSelectTextureSGIS
+  .text:00149349                 mov     eax, oldtarget
+  .text:0014934E                 cmp     ebx, eax
+  .text:00149350                 jz      short loc_149331
+  .text:00149352                 mov     edx, TEXTURE0_SGIS
+  .text:00149358                 mov     ecx, currenttexture
+  .text:0014935E                 mov     oldtarget, ebx
+  .text:00149364                 sub     eax, edx
+  .text:00149366                 mov     cnttextures[eax*4], ecx
+  .text:0014936D                 mov     eax, ebx
+  .text:0014936F                 sub     eax, edx
+  .text:00149371                 mov     eax, cnttextures[eax*4]
+  .text:00149378                 mov     currenttexture, eax
+  .text:0014937D                 add     esp, 18h
+  .text:00149380                 pop     ebx
+  .text:00149381                 retn
+procedure: |-
+  // gl_mtexable gates texture-unit selection; oldtarget is the previous unit compared with target and updated after caching bindings.
+  void __cdecl GL_SelectTexture(unsigned int target)
+  {
+    GLenum v1; // eax
+    GLenum v2; // edx
+
+    if ( gl_mtexable )
+    {
+      qglSelectTextureSGIS(target);
+      v1 = oldtarget;
+      if ( target != oldtarget )
+      {
+        v2 = TEXTURE0_SGIS;
+        oldtarget = target;
+        cnttextures[v1 - TEXTURE0_SGIS] = currenttexture;
+        currenttexture = cnttextures[target - v2];
+      }
+    }
+  }

@@ -1,0 +1,2096 @@
+func_name: "R_DrawSequentialPoly"
+func_va: "0x185f10"
+disasm_code: |-
+  ; mtexenabled is the 0/1 enabled state written around GL_TEXTURE_2D, distinct from gl_mtexable capability. GL_EnableMultitexture may remain a direct call or be inlined.
+  .text:00185F10                 push    ebp
+  .text:00185F11                 push    edi
+  .text:00185F12                 push    esi
+  .text:00185F13                 push    ebx
+  .text:00185F14                 sub     esp, 6Ch
+  .text:00185F17                 mov     ebx, [esp+7Ch+s]
+  .text:00185F1E                 call    R_UseLegacyRender
+  .text:00185F23                 test    eax, eax
+  .text:00185F25                 jnz     short loc_185F8B
+  .text:00185F27                 mov     eax, ds:qglCreateShader
+  .text:00185F2C                 test    eax, eax
+  .text:00185F2E                 jz      short loc_185F8B
+  .text:00185F30                 mov     eax, ds:qglDeleteShader
+  .text:00185F35                 test    eax, eax
+  .text:00185F37                 jz      short loc_185F8B
+  .text:00185F39                 mov     eax, ds:qglShaderSource
+  .text:00185F3E                 test    eax, eax
+  .text:00185F40                 jz      short loc_185F8B
+  .text:00185F42                 mov     ebp, ds:qglGetProgramiv
+  .text:00185F48                 test    ebp, ebp
+  .text:00185F4A                 jz      short loc_185F8B
+  .text:00185F4C                 mov     edi, ds:qglGetProgramInfoLog
+  .text:00185F52                 test    edi, edi
+  .text:00185F54                 jz      short loc_185F8B
+  .text:00185F56                 mov     esi, ds:qglAttachShader
+  .text:00185F5C                 test    esi, esi
+  .text:00185F5E                 jz      short loc_185F8B
+  .text:00185F60                 mov     ecx, ds:qglLinkProgram
+  .text:00185F66                 test    ecx, ecx
+  .text:00185F68                 jz      short loc_185F8B
+  .text:00185F6A                 mov     edx, ds:qglCreateProgram
+  .text:00185F70                 test    edx, edx
+  .text:00185F72                 jz      short loc_185F8B
+  .text:00185F74                 mov     eax, ds:qglDeleteProgram
+  .text:00185F79                 test    eax, eax
+  .text:00185F7B                 jz      short loc_185F8B
+  .text:00185F7D                 mov     eax, ds:qglUseProgram
+  .text:00185F82                 test    eax, eax
+  .text:00185F84                 jz      short loc_185F8B
+  .text:00185F86                 call    R_LoadShaders_0
+  .text:00185F8B                 mov     eax, ds:currententity
+  .text:00185F90                 cmp     dword ptr [eax+2F8h], 1
+  .text:00185F97                 jz      loc_186280
+  .text:00185F9D                 mov     eax, [ebx+8]
+  .text:00185FA0                 test    al, 94h
+  .text:00185FA2                 jnz     loc_1861A8
+  .text:00185FA8                 mov     edx, ds:filterMode
+  .text:00185FAE                 test    edx, edx
+  .text:00185FB0                 jz      loc_186350
+  .text:00185FB6                 mov     eax, ds:gl_mtexable
+  .text:00185FBB                 test    eax, eax
+  .text:00185FBD                 jz      short loc_185FD4
+  .text:00185FBF                 mov     eax, ds:currententity
+  .text:00185FC4                 test    dword ptr [eax+2F8h], 0FFFFFFFBh
+  .text:00185FCE                 jz      loc_186598
+  .text:00185FD4                 mov     edi, [ebx+24h]
+  .text:00185FD7                 ; s
+  .text:00185FD7                 mov     [esp+7Ch+psurface], ebx; s
+  .text:00185FDA                 call    R_TextureAnimation
+  .text:00185FDF                 mov     edx, ds:mtexenabled
+  .text:00185FE5                 test    edx, edx
+  .text:00185FE7                 jnz     loc_186460
+  .text:00185FED                 mov     eax, [eax+18h]
+  .text:00185FF0                 ; texnum
+  .text:00185FF0                 mov     [esp+7Ch+psurface], eax; texnum
+  .text:00185FF3                 call    GL_Bind
+  .text:00185FF8                 mov     edx, ds:g_bHasShaderFunctions
+  .text:00185FFE                 test    edx, edx
+  .text:00186000                 jnz     loc_186408
+  .text:00186006                 test    byte ptr [ebx+8], 20h
+  .text:0018600A                 jz      loc_1861B8
+  .text:00186010                 mov     eax, ds:currententity
+  .text:00186015                 ; bMultitexture
+  .text:00186015                 mov     [esp+7Ch+psurface], ebx; bMultitexture
+  .text:00186018                 ; pEntity
+  .text:00186018                 mov     [esp+7Ch+psurface+4], eax; pEntity
+  .text:0018601C                 call    DrawGLPolyScroll
+  .text:00186021                 mov     eax, gl_texsort
+  .text:00186026                 test    eax, eax
+  .text:00186028                 jnz     short loc_186053
+  .text:0018602A                 mov     ebp, [ebx+58h]
+  .text:0018602D                 test    ebp, ebp
+  .text:0018602F                 jz      short loc_186053
+  .text:00186031                 mov     eax, ds:gDecalSurfCount
+  .text:00186036                 mov     ds:gDecalSurfs[eax*4], ebx
+  .text:0018603D                 inc     eax
+  .text:0018603E                 cmp     eax, 1F4h
+  .text:00186043                 mov     ds:gDecalSurfCount, eax
+  .text:00186048                 jg      loc_186A50
+  .text:0018604E                 call    R_DrawDecals_0
+  .text:00186053                 mov     esi, [esp+7Ch+cleanUpShaderState]
+  .text:0018605A                 test    esi, esi
+  .text:0018605C                 jnz     loc_186490
+  .text:00186062                 fld     gl_wireframe.value
+  .text:00186068                 fldz
+  .text:0018606A                 fxch    st(1)
+  .text:0018606C                 fucomip st, st(1)
+  .text:0018606E                 fstp    st
+  .text:00186070                 jp      loc_186908
+  .text:00186076                 jnz     loc_186908
+  .text:0018607C                 mov     eax, ds:currententity
+  .text:00186081                 mov     eax, [eax+2F8h]
+  .text:00186087                 test    eax, eax
+  .text:00186089                 jnz     loc_1861AC
+  .text:0018608F                 mov     ebp, ds:g_bHasShaderFunctions
+  .text:00186095                 test    ebp, ebp
+  .text:00186097                 jz      short loc_1860E5
+  .text:00186099                 fld     gl_use_shaders.value
+  .text:0018609F                 fldz
+  .text:001860A1                 fxch    st(1)
+  .text:001860A3                 fucomip st, st(1)
+  .text:001860A5                 fstp    st
+  .text:001860A7                 jp      short loc_1860B0
+  .text:001860A9                 mov     esi, 0
+  .text:001860AE                 jz      short loc_1860CE
+  .text:001860B0                 fld     sv_allow_shaders.value
+  .text:001860B6                 fldz
+  .text:001860B8                 fxch    st(1)
+  .text:001860BA                 mov     esi, ds:g_fsWorldProgram+4
+  .text:001860C0                 fucomip st, st(1)
+  .text:001860C2                 fstp    st
+  .text:001860C4                 jp      short loc_1860CE
+  .text:001860C6                 mov     eax, 0
+  .text:001860CB                 cmovz   esi, eax
+  .text:001860CE                 cmp     ds:g_uCurrentProgram, esi
+  .text:001860D4                 jz      short loc_1860E5
+  .text:001860D6                 ; GLuint
+  .text:001860D6                 mov     [esp+7Ch+psurface], esi; GLuint
+  .text:001860D9                 call    ds:qglUseProgram
+  .text:001860DF                 mov     ds:g_uCurrentProgram, esi
+  .text:001860E5                 mov     esi, ds:filterMode
+  .text:001860EB                 test    esi, esi
+  .text:001860ED                 jz      loc_186940
+  .text:001860F3                 mov     eax, ds:gl_FilterTexture
+  .text:001860F8                 ; texnum
+  .text:001860F8                 mov     [esp+7Ch+psurface], eax; texnum
+  .text:001860FB                 call    GL_Bind
+  .text:00186100                 ; GLenum
+  .text:00186100                 mov     [esp+7Ch+psurface], 0BE2h; GLenum
+  .text:00186107                 xor     esi, esi
+  .text:00186109                 call    ds:qglEnable
+  .text:0018610F                 lea     ebx, [p_0+10h]
+  .text:00186112                 ; GLenum
+  .text:00186112                 mov     [esp+7Ch+psurface], 9; GLenum
+  .text:00186119                 call    ds:qglBegin
+  .text:0018611F                 mov     ecx, [p_0+8]
+  .text:00186122                 test    ecx, ecx
+  .text:00186124                 jle     short loc_18615D
+  .text:00186126                 lea     i, [i+0]
+  .text:00186129                 lea     p_0, [p_0+0]
+  .text:00186130                 movss   xmm2, dword ptr [v+18h]
+  .text:00186135                 inc     i
+  .text:00186136                 ; GLfloat
+  .text:00186136                 movss   [esp+7Ch+psurface+4], xmm2; GLfloat
+  .text:0018613C                 movss   xmm3, dword ptr [v+14h]
+  .text:00186141                 ; GLfloat
+  .text:00186141                 movss   [esp+7Ch+psurface], xmm3; GLfloat
+  .text:00186146                 call    ds:qglTexCoord2f
+  .text:0018614C                 ; GLfloat *
+  .text:0018614C                 mov     [esp+7Ch+psurface], v; GLfloat *
+  .text:0018614F                 add     v, 1Ch
+  .text:00186152                 call    ds:qglVertex3fv
+  .text:00186158                 cmp     [p_0+8], i
+  .text:0018615B                 jg      short loc_186130
+  .text:0018615D                 call    ds:qglEnd
+  .text:00186163                 ; GLenum
+  .text:00186163                 mov     [esp+7Ch+psurface], 0BE2h; GLenum
+  .text:0018616A                 call    ds:qglDisable
+  .text:00186170                 mov     edx, [esp+7Ch+cleanUpShaderState]
+  .text:00186177                 test    edx, edx
+  .text:00186179                 jz      short loc_1861AC
+  .text:0018617B                 mov     eax, ds:g_bHasShaderFunctions
+  .text:00186180                 test    eax, eax
+  .text:00186182                 jz      short loc_1861AC
+  .text:00186184                 mov     eax, ds:g_uCurrentProgram
+  .text:00186189                 test    eax, eax
+  .text:0018618B                 jz      short loc_1861AC
+  .text:0018618D                 ; GLuint
+  .text:0018618D                 mov     [esp+7Ch+psurface], 0; GLuint
+  .text:00186194                 call    ds:qglUseProgram
+  .text:0018619A                 xor     eax, eax
+  .text:0018619C                 mov     ds:g_uCurrentProgram, eax
+  .text:001861A1                 jmp     short loc_1861AC
+  .text:001861A8                 test    al, 10h
+  .text:001861AA                 jnz     short loc_186220
+  .text:001861AC                 add     esp, 6Ch
+  .text:001861AF                 pop     ebx
+  .text:001861B0                 pop     esi
+  .text:001861B1                 pop     edi
+  .text:001861B2                 pop     ebp
+  .text:001861B3                 retn
+  .text:001861B8                 ; GLenum
+  .text:001861B8                 mov     [esp+7Ch+psurface], 9; GLenum
+  .text:001861BF                 xor     ebp, ebp
+  .text:001861C1                 call    ds:qglBegin
+  .text:001861C7                 mov     eax, [p_0+8]
+  .text:001861CA                 lea     esi, [p_0+10h]
+  .text:001861CD                 test    eax, eax
+  .text:001861CF                 jle     short loc_18620D
+  .text:001861D1                 jmp     short loc_1861E0
+  .text:001861E0                 movss   xmm0, dword ptr [v+10h]
+  .text:001861E5                 inc     i
+  .text:001861E6                 ; GLfloat
+  .text:001861E6                 movss   [esp+7Ch+psurface+4], xmm0; GLfloat
+  .text:001861EC                 movss   xmm1, dword ptr [v+0Ch]
+  .text:001861F1                 ; GLfloat
+  .text:001861F1                 movss   [esp+7Ch+psurface], xmm1; GLfloat
+  .text:001861F6                 call    ds:qglTexCoord2f
+  .text:001861FC                 ; GLfloat *
+  .text:001861FC                 mov     [esp+7Ch+psurface], v; GLfloat *
+  .text:001861FF                 add     v, 1Ch
+  .text:00186202                 call    ds:qglVertex3fv
+  .text:00186208                 cmp     [p_0+8], i
+  .text:0018620B                 jg      short loc_1861E0
+  .text:0018620D                 call    ds:qglEnd
+  .text:00186213                 jmp     loc_186021
+  .text:00186220                 mov     eax, ds:g_bHasShaderFunctions
+  .text:00186225                 test    eax, eax
+  .text:00186227                 jz      short loc_186246
+  .text:00186229                 mov     eax, ds:g_uCurrentProgram
+  .text:0018622E                 test    eax, eax
+  .text:00186230                 jz      short loc_186246
+  .text:00186232                 ; GLuint
+  .text:00186232                 mov     [esp+7Ch+psurface], 0; GLuint
+  .text:00186239                 call    ds:qglUseProgram
+  .text:0018623F                 xor     eax, eax
+  .text:00186241                 mov     ds:g_uCurrentProgram, eax
+  .text:00186246                 mov     ebp, ds:mtexenabled
+  .text:0018624C                 test    ebp, ebp
+  .text:0018624E                 jnz     loc_186A28
+  .text:00186254                 mov     eax, [ebx+2Ch]
+  .text:00186257                 mov     eax, [eax+24h]
+  .text:0018625A                 mov     eax, [eax+18h]
+  .text:0018625D                 ; texnum
+  .text:0018625D                 mov     [esp+7Ch+psurface], eax; texnum
+  .text:00186260                 call    GL_Bind
+  .text:00186265                 mov     eax, [esp+7Ch+face]
+  .text:0018626C                 ; fa
+  .text:0018626C                 mov     [esp+7Ch+psurface], ebx; fa
+  .text:0018626F                 ; direction
+  .text:0018626F                 mov     [esp+7Ch+psurface+4], eax; direction
+  .text:00186273                 call    EmitWaterPolys
+  .text:00186278                 add     esp, 6Ch
+  .text:0018627B                 pop     ebx
+  .text:0018627C                 pop     esi
+  .text:0018627D                 pop     edi
+  .text:0018627E                 pop     ebp
+  .text:0018627F                 retn
+  .text:00186280                 mov     eax, ds:g_bHasShaderFunctions
+  .text:00186285                 test    eax, eax
+  .text:00186287                 jz      short loc_1862A6
+  .text:00186289                 mov     eax, ds:g_uCurrentProgram
+  .text:0018628E                 test    eax, eax
+  .text:00186290                 jz      short loc_1862A6
+  .text:00186292                 ; GLuint
+  .text:00186292                 mov     [esp+7Ch+psurface], 0; GLuint
+  .text:00186299                 call    ds:qglUseProgram
+  .text:0018629F                 xor     eax, eax
+  .text:001862A1                 mov     ds:g_uCurrentProgram, eax
+  .text:001862A6                 mov     eax, ds:mtexenabled
+  .text:001862AB                 test    eax, eax
+  .text:001862AD                 jnz     loc_186A68
+  .text:001862B3                 mov     esi, 303h
+  .text:001862B8                 ; GLenum
+  .text:001862B8                 mov     [esp+7Ch+psurface+4], esi; GLenum
+  .text:001862BC                 ; GLenum
+  .text:001862BC                 mov     [esp+7Ch+psurface], 302h; GLenum
+  .text:001862C3                 call    ds:qglBlendFunc
+  .text:001862C9                 ; GLenum
+  .text:001862C9                 mov     [esp+7Ch+psurface], 0BE2h; GLenum
+  .text:001862D0                 call    ds:qglEnable
+  .text:001862D6                 ; s
+  .text:001862D6                 mov     [esp+7Ch+psurface], ebx; s
+  .text:001862D9                 call    R_TextureAnimation
+  .text:001862DE                 mov     t_0, [t_0+18h]
+  .text:001862E1                 ; texnum
+  .text:001862E1                 mov     [esp+7Ch+psurface], eax; texnum
+  .text:001862E4                 call    GL_Bind
+  .text:001862E9                 ; GLenum
+  .text:001862E9                 mov     [esp+7Ch+psurface], 0DE1h; GLenum
+  .text:001862F0                 call    ds:qglDisable
+  .text:001862F6                 mov     eax, [ebx+24h]
+  .text:001862F9                 ; p
+  .text:001862F9                 mov     [esp+7Ch+psurface], eax; p
+  .text:001862FC                 call    DrawGLSolidPoly
+  .text:00186301                 ; GLenum
+  .text:00186301                 mov     [esp+7Ch+psurface], 0DE1h; GLenum
+  .text:00186308                 call    ds:qglEnable
+  .text:0018630E                 mov     edi, ds:gl_mtexable
+  .text:00186314                 test    edi, edi
+  .text:00186316                 jz      loc_1861AC
+  .text:0018631C                 mov     eax, TEXTURE1_SGIS
+  .text:00186321                 ; target
+  .text:00186321                 mov     [esp+7Ch+psurface], eax; target
+  .text:00186324                 call    GL_SelectTexture
+  .text:00186329                 ; GLenum
+  .text:00186329                 mov     [esp+7Ch+psurface], 0DE1h; GLenum
+  .text:00186330                 call    ds:qglEnable
+  .text:00186336                 mov     ecx, 1
+  .text:0018633B                 mov     ds:mtexenabled, ecx
+  .text:00186341                 jmp     loc_1861AC
+  .text:00186350                 inc     ds:c_brush_polys
+  .text:00186356                 test    al, 14h
+  .text:00186358                 jnz     loc_185FB6
+  .text:0018635E                 mov     edx, [ebx+38h]
+  .text:00186361                 mov     eax, [ebx+24h]
+  .text:00186364                 mov     edx, ds:lightmap_polys[edx*4]
+  .text:0018636B                 mov     [eax+4], edx
+  .text:0018636E                 mov     eax, [ebx+38h]
+  .text:00186371                 mov     edx, [ebx+24h]
+  .text:00186374                 mov     ds:lightmap_polys[eax*4], edx
+  .text:0018637B                 movzx   eax, byte ptr [ebx+3Ch]
+  .text:0018637F                 cmp     al, 0FFh
+  .text:00186381                 jz      short loc_1863CB
+  .text:00186383                 mov     edi, [ebx+40h]
+  .text:00186386                 cmp     ds:d_lightstylevalue[eax*4], edi
+  .text:0018638D                 jnz     short loc_1863E0
+  .text:0018638F                 movzx   eax, byte ptr [ebx+3Dh]
+  .text:00186393                 cmp     al, 0FFh
+  .text:00186395                 jz      short loc_1863CB
+  .text:00186397                 mov     eax, ds:d_lightstylevalue[eax*4]
+  .text:0018639E                 cmp     [ebx+44h], eax
+  .text:001863A1                 jnz     short loc_1863E0
+  .text:001863A3                 movzx   eax, byte ptr [ebx+3Eh]
+  .text:001863A7                 cmp     al, 0FFh
+  .text:001863A9                 jz      short loc_1863CB
+  .text:001863AB                 mov     eax, ds:d_lightstylevalue[eax*4]
+  .text:001863B2                 cmp     [ebx+48h], eax
+  .text:001863B5                 jnz     short loc_1863E0
+  .text:001863B7                 movzx   eax, byte ptr [ebx+3Fh]
+  .text:001863BB                 cmp     al, 0FFh
+  .text:001863BD                 jz      short loc_1863CB
+  .text:001863BF                 mov     edi, [ebx+4Ch]
+  .text:001863C2                 cmp     ds:d_lightstylevalue[eax*4], edi
+  .text:001863C9                 jnz     short loc_1863E0
+  .text:001863CB                 mov     eax, ds:r_framecount
+  .text:001863D0                 cmp     [ebx+30h], eax
+  .text:001863D3                 jz      short loc_1863E0
+  .text:001863D5                 mov     eax, [ebx+50h]
+  .text:001863D8                 test    eax, eax
+  .text:001863DA                 jz      loc_185FB6
+  .text:001863E0                 fld     r_dynamic.value
+  .text:001863E6                 fldz
+  .text:001863E8                 fxch    st(1)
+  .text:001863EA                 fucomip st, st(1)
+  .text:001863EC                 fstp    st
+  .text:001863EE                 jp      short loc_1863F6
+  .text:001863F0                 jz      loc_185FB6
+  .text:001863F6                 ; fa
+  .text:001863F6                 mov     [esp+7Ch+psurface], ebx; fa
+  .text:001863F9                 call    R_ReUploadLightmap
+  .text:001863FE                 xchg    ax, ax
+  .text:00186400                 jmp     loc_185FB6
+  .text:00186408                 fld     gl_use_shaders.value
+  .text:0018640E                 fldz
+  .text:00186410                 fxch    st(1)
+  .text:00186412                 fucomip st, st(1)
+  .text:00186414                 fstp    st
+  .text:00186416                 jp      short loc_18641F
+  .text:00186418                 mov     esi, 0
+  .text:0018641D                 jz      short loc_18643D
+  .text:0018641F                 fld     sv_allow_shaders.value
+  .text:00186425                 fldz
+  .text:00186427                 fxch    st(1)
+  .text:00186429                 mov     esi, ds:g_fsWorldProgram+4
+  .text:0018642F                 fucomip st, st(1)
+  .text:00186431                 fstp    st
+  .text:00186433                 jp      short loc_18643D
+  .text:00186435                 mov     eax, 0
+  .text:0018643A                 cmovz   esi, eax
+  .text:0018643D                 cmp     ds:g_uCurrentProgram, esi
+  .text:00186443                 jz      loc_186006
+  .text:00186449                 ; GLuint
+  .text:00186449                 mov     [esp+7Ch+psurface], esi; GLuint
+  .text:0018644C                 call    ds:qglUseProgram
+  .text:00186452                 mov     ds:g_uCurrentProgram, esi
+  .text:00186458                 jmp     loc_186006
+  .text:00186460                 ; GLenum
+  .text:00186460                 mov     [esp+7Ch+psurface], 0DE1h; GLenum
+  .text:00186467                 mov     [esp+7Ch+sOffset], t_0
+  .text:0018646B                 call    ds:qglDisable
+  .text:00186471                 mov     edx, TEXTURE0_SGIS
+  .text:00186477                 ; target
+  .text:00186477                 mov     [esp+7Ch+psurface], edx; target
+  .text:0018647A                 call    GL_SelectTexture
+  .text:0018647F                 xor     eax, eax
+  .text:00186481                 mov     ds:mtexenabled, eax
+  .text:00186486                 mov     eax, [esp+7Ch+sOffset]
+  .text:0018648A                 jmp     loc_185FED
+  .text:00186490                 mov     ecx, ds:g_bHasShaderFunctions
+  .text:00186496                 test    ecx, ecx
+  .text:00186498                 jz      short loc_1864C0
+  .text:0018649A                 mov     edx, ds:g_uCurrentProgram
+  .text:001864A0                 test    edx, edx
+  .text:001864A2                 jz      short loc_1864C0
+  .text:001864A4                 ; GLuint
+  .text:001864A4                 mov     [esp+7Ch+psurface], 0; GLuint
+  .text:001864AB                 call    ds:qglUseProgram
+  .text:001864B1                 xor     eax, eax
+  .text:001864B3                 mov     ds:g_uCurrentProgram, eax
+  .text:001864B8                 jmp     loc_186062
+  .text:001864C0                 fld     gl_wireframe.value
+  .text:001864C6                 fldz
+  .text:001864C8                 fxch    st(1)
+  .text:001864CA                 fucomip st, st(1)
+  .text:001864CC                 fstp    st
+  .text:001864CE                 jp      short loc_1864E0
+  .text:001864D0                 jz      loc_18607C
+  .text:001864D6                 lea     esi, [esi+0]
+  .text:001864D9                 lea     p_0, [p_0+0]
+  .text:001864E0                 ; GLenum
+  .text:001864E0                 mov     [esp+7Ch+psurface], 0DE1h; GLenum
+  .text:001864E7                 call    ds:qglDisable
+  .text:001864ED                 ; GLfloat
+  .text:001864ED                 mov     [esp+7Ch+var_74], 3F800000h; GLfloat
+  .text:001864F5                 ; GLfloat
+  .text:001864F5                 mov     [esp+7Ch+psurface+4], 3F800000h; GLfloat
+  .text:001864FD                 ; GLfloat
+  .text:001864FD                 mov     [esp+7Ch+psurface], 3F800000h; GLfloat
+  .text:00186504                 call    ds:qglColor3f
+  .text:0018650A                 fld     gl_wireframe.value
+  .text:00186510                 fld     ds:flt_24A974
+  .text:00186516                 fxch    st(1)
+  .text:00186518                 fucomip st, st(1)
+  .text:0018651A                 fstp    st
+  .text:0018651C                 jp      short loc_186524
+  .text:0018651E                 jz      loc_186AD6
+  .text:00186524                 ; GLenum
+  .text:00186524                 mov     [esp+7Ch+psurface], 2; GLenum
+  .text:0018652B                 xor     esi, esi
+  .text:0018652D                 call    ds:qglBegin
+  .text:00186533                 mov     eax, [p_0+8]
+  .text:00186536                 lea     ebp, [p_0+10h]
+  .text:00186539                 test    eax, eax
+  .text:0018653B                 jle     short loc_186552
+  .text:0018653D                 lea     i, [i+0]
+  .text:00186540                 ; GLfloat *
+  .text:00186540                 mov     [esp+7Ch+psurface], v; GLfloat *
+  .text:00186543                 inc     i
+  .text:00186544                 add     v, 1Ch
+  .text:00186547                 call    ds:qglVertex3fv
+  .text:0018654D                 cmp     [p_0+8], i
+  .text:00186550                 jg      short loc_186540
+  .text:00186552                 call    ds:qglEnd
+  .text:00186558                 ; GLenum
+  .text:00186558                 mov     [esp+7Ch+psurface], 0DE1h; GLenum
+  .text:0018655F                 call    ds:qglEnable
+  .text:00186565                 fld     gl_wireframe.value
+  .text:0018656B                 fld     ds:flt_24A974
+  .text:00186571                 fxch    st(1)
+  .text:00186573                 fucomip st, st(1)
+  .text:00186575                 fstp    st
+  .text:00186577                 jp      loc_18607C
+  .text:0018657D                 jnz     loc_18607C
+  .text:00186583                 ; GLenum
+  .text:00186583                 mov     [esp+7Ch+psurface], 0B71h; GLenum
+  .text:0018658A                 call    ds:qglEnable
+  .text:00186590                 jmp     loc_18607C
+  .text:00186598                 mov     ebp, [ebx+24h]
+  .text:0018659B                 ; s
+  .text:0018659B                 mov     [esp+7Ch+psurface], ebx; s
+  .text:0018659E                 call    R_TextureAnimation
+  .text:001865A3                 mov     edi, eax
+  .text:001865A5                 mov     t_0, TEXTURE0_SGIS
+  .text:001865AA                 ; target
+  .text:001865AA                 mov     [esp+7Ch+psurface], eax; target
+  .text:001865AD                 call    GL_SelectTexture
+  .text:001865B2                 mov     eax, [t_0+18h]
+  .text:001865B5                 ; texnum
+  .text:001865B5                 mov     [esp+7Ch+psurface], eax; texnum
+  .text:001865B8                 call    GL_Bind
+  .text:001865BD                 mov     eax, 2200h
+  .text:001865C2                 ; GLenum
+  .text:001865C2                 mov     [esp+7Ch+psurface+4], eax; GLenum
+  .text:001865C6                 ; GLfloat
+  .text:001865C6                 mov     [esp+7Ch+var_74], 46040000h; GLfloat
+  .text:001865CE                 ; GLenum
+  .text:001865CE                 mov     [esp+7Ch+psurface], 2300h; GLenum
+  .text:001865D5                 call    ds:qglTexEnvf
+  .text:001865DB                 mov     eax, 3
+  .text:001865E0                 mov     [esp+7Ch+textureMask], eax
+  .text:001865E4                 mov     eax, ds:currententity
+  .text:001865E9                 cmp     dword ptr [eax+2F8h], 1
+  .text:001865F0                 jz      loc_186D26
+  .text:001865F6                 mov     eax, ds:gl_mtexable
+  .text:001865FB                 test    eax, eax
+  .text:001865FD                 jnz     loc_186CC9
+  .text:00186603                 mov     ecx, ds:filterMode
+  .text:00186609                 test    ecx, ecx
+  .text:0018660B                 jnz     loc_186A10
+  .text:00186611                 mov     eax, [ebx+38h]
+  .text:00186614                 mov     eax, ds:lightmap_textures[eax*4]
+  .text:0018661B                 ; texnum
+  .text:0018661B                 mov     [esp+7Ch+psurface], eax; texnum
+  .text:0018661E                 call    GL_Bind
+  .text:00186623                 mov     eax, [ebx+38h]
+  .text:00186626                 mov     edx, ds:lightmap_modified[i*4]
+  .text:0018662D                 test    edx, edx
+  .text:0018662F                 jnz     loc_186C28
+  .text:00186635                 mov     eax, 2200h
+  .text:0018663A                 ; GLenum
+  .text:0018663A                 mov     [esp+7Ch+psurface+4], eax; GLenum
+  .text:0018663E                 ; GLfloat
+  .text:0018663E                 mov     [esp+7Ch+var_74], 46040000h; GLfloat
+  .text:00186646                 ; GLenum
+  .text:00186646                 mov     [esp+7Ch+psurface], 2300h; GLenum
+  .text:0018664D                 call    ds:qglTexEnvf
+  .text:00186653                 mov     eax, [t_0+18h]
+  .text:00186656                 ; diffuseId
+  .text:00186656                 mov     [esp+7Ch+psurface], eax; diffuseId
+  .text:00186659                 call    DT_SetRenderState
+  .text:0018665E                 mov     t_0, [esp+7Ch+textureMask]
+  .text:00186662                 mov     ecx, eax
+  .text:00186664                 mov     [esp+7Ch+renderDetailTexture], eax
+  .text:00186668                 mov     renderDetailTexture_0, edi
+  .text:0018666A                 or      eax, 4
+  .text:0018666D                 test    renderDetailTexture_0, renderDetailTexture_0
+  .text:0018666F                 cmovz   eax, edi
+  .text:00186672                 test    byte ptr [ebx+8], 20h
+  .text:00186676                 fldz
+  .text:00186678                 mov     [esp+7Ch+textureMask], eax
+  .text:0018667C                 fstp    [esp+7Ch+sOffset]
+  .text:00186680                 jnz     loc_186B9C
+  .text:00186686                 mov     esi, ds:g_bHasShaderFunctions
+  .text:0018668C                 test    esi, esi
+  .text:0018668E                 jnz     loc_186B42
+  .text:00186694                 mov     eax, [ebx+5Ch]
+  .text:00186697                 test    eax, eax
+  .text:00186699                 jz      short loc_1866E8
+  .text:0018669B                 mov     edx, ds:currententity
+  .text:001866A1                 mov     edi, [ebx+60h]
+  .text:001866A4                 cmp     [edx+2F8h], edi
+  .text:001866AA                 jnz     short loc_1866D0
+  .text:001866AC                 fld     dword ptr [ebx+64h]
+  .text:001866AF                 fld     [esp+7Ch+sOffset]
+  .text:001866B3                 fxch    st(1)
+  .text:001866B5                 fucomip st, st(1)
+  .text:001866B7                 fstp    st
+  .text:001866B9                 jp      short loc_1866D0
+  .text:001866BB                 jnz     short loc_1866D0
+  .text:001866BD                 mov     edi, [esp+7Ch+renderDetailTexture]
+  .text:001866C1                 cmp     edi, [ebx+68h]
+  .text:001866C4                 jz      loc_18719F
+  .text:001866CA                 lea     esi, [esi+0]
+  .text:001866D0                 mov     ecx, 1
+  .text:001866D5                 ; range
+  .text:001866D5                 mov     [esp+7Ch+psurface+4], ecx; range
+  .text:001866D9                 ; list
+  .text:001866D9                 mov     [esp+7Ch+psurface], eax; list
+  .text:001866DC                 call    glDeleteLists
+  .text:001866E1                 mov     dword ptr [ebx+5Ch], 0
+  .text:001866E8                 fld     gl_display_lists.value
+  .text:001866EE                 fldz
+  .text:001866F0                 fxch    st(1)
+  .text:001866F2                 fucomip st, st(1)
+  .text:001866F4                 fstp    st
+  .text:001866F6                 jp      loc_186A90
+  .text:001866FC                 jnz     loc_186A90
+  .text:00186702                 ; GLenum
+  .text:00186702                 mov     [esp+7Ch+psurface], 9; GLenum
+  .text:00186709                 lea     esi, [p_0+10h]
+  .text:0018670C                 call    ds:qglBegin
+  .text:00186712                 mov     eax, [p_0+8]
+  .text:00186715                 test    eax, eax
+  .text:00186717                 jle     loc_187132
+  .text:0018671D                 mov     eax, [esp+7Ch+renderDetailTexture]
+  .text:00186721                 xor     edi, edi
+  .text:00186723                 test    eax, eax
+  .text:00186725                 jnz     loc_186960
+  .text:0018672B                 nop
+  .text:0018672C                 lea     v, [v+0]
+  .text:00186730                 movss   xmm4, dword ptr [v+10h]
+  .text:00186735                 inc     i
+  .text:00186736                 fld     [esp+7Ch+sOffset]
+  .text:0018673A                 mov     eax, TEXTURE0_SGIS
+  .text:0018673F                 ; GLfloat
+  .text:0018673F                 movss   [esp+7Ch+var_74], xmm4; GLfloat
+  .text:00186745                 fadd    dword ptr [v+0Ch]
+  .text:00186748                 ; GLenum
+  .text:00186748                 mov     [esp+7Ch+psurface], eax; GLenum
+  .text:0018674B                 ; GLfloat
+  .text:0018674B                 fstp    [esp+7Ch+psurface+4]; GLfloat
+  .text:0018674F                 call    ds:qglMTexCoord2fSGIS
+  .text:00186755                 mov     eax, TEXTURE1_SGIS
+  .text:0018675A                 movss   xmm5, dword ptr [v+18h]
+  .text:0018675F                 ; GLfloat
+  .text:0018675F                 movss   [esp+7Ch+var_74], xmm5; GLfloat
+  .text:00186765                 movss   xmm6, dword ptr [v+14h]
+  .text:0018676A                 ; GLenum
+  .text:0018676A                 mov     [esp+7Ch+psurface], eax; GLenum
+  .text:0018676D                 ; GLfloat
+  .text:0018676D                 movss   [esp+7Ch+psurface+4], xmm6; GLfloat
+  .text:00186773                 call    ds:qglMTexCoord2fSGIS
+  .text:00186779                 ; GLfloat *
+  .text:00186779                 mov     [esp+7Ch+psurface], v; GLfloat *
+  .text:0018677C                 add     v, 1Ch
+  .text:0018677F                 call    ds:qglVertex3fv
+  .text:00186785                 cmp     i, [p_0+8]
+  .text:00186788                 jl      short loc_186730
+  .text:0018678A                 call    ds:qglEnd
+  .text:00186790                 fld     gl_display_lists.value
+  .text:00186796                 fldz
+  .text:00186798                 fxch    st(1)
+  .text:0018679A                 fucomip st, st(1)
+  .text:0018679C                 fstp    st
+  .text:0018679E                 jp      loc_1869EC
+  .text:001867A4                 jnz     loc_1869EC
+  .text:001867AA                 mov     ecx, ds:g_bHasShaderFunctions
+  .text:001867B0                 test    ecx, ecx
+  .text:001867B2                 jnz     loc_186AE8
+  .text:001867B8                 mov     eax, gl_texsort
+  .text:001867BD                 test    eax, eax
+  .text:001867BF                 jnz     short loc_1867F8
+  .text:001867C1                 mov     eax, [ebx+58h]
+  .text:001867C4                 test    eax, eax
+  .text:001867C6                 jz      short loc_1867F8
+  .text:001867C8                 mov     eax, ds:gDecalSurfCount
+  .text:001867CD                 mov     ds:gDecalSurfs[eax*4], ebx
+  .text:001867D4                 inc     eax
+  .text:001867D5                 cmp     eax, 1F4h
+  .text:001867DA                 mov     ds:gDecalSurfCount, eax
+  .text:001867DF                 jg      loc_1870F0
+  .text:001867E5                 mov     eax, ds:currententity
+  .text:001867EA                 mov     edi, [eax+2F8h]
+  .text:001867F0                 test    edi, edi
+  .text:001867F2                 jz      loc_186D41
+  .text:001867F8                 mov     eax, [esp+7Ch+cleanUpShaderState]
+  .text:001867FF                 test    eax, eax
+  .text:00186801                 jnz     loc_186CF3
+  .text:00186807                 fld     gl_wireframe.value
+  .text:0018680D                 fldz
+  .text:0018680F                 fxch    st(1)
+  .text:00186811                 fucomip st, st(1)
+  .text:00186813                 fstp    st
+  .text:00186815                 jp      short loc_18681D
+  .text:00186817                 jz      loc_1861AC
+  .text:0018681D                 mov     edi, ds:g_bHasShaderFunctions
+  .text:00186823                 test    edi, edi
+  .text:00186825                 jz      short loc_186846
+  .text:00186827                 mov     esi, ds:g_uCurrentProgram
+  .text:0018682D                 test    esi, esi
+  .text:0018682F                 jz      short loc_186846
+  .text:00186831                 ; GLuint
+  .text:00186831                 mov     [esp+7Ch+psurface], 0; GLuint
+  .text:00186838                 xor     ebx, ebx
+  .text:0018683A                 call    ds:qglUseProgram
+  .text:00186840                 mov     ds:g_uCurrentProgram, ebx
+  .text:00186846                 ; GLenum
+  .text:00186846                 mov     [esp+7Ch+psurface], 0DE1h; GLenum
+  .text:0018684D                 call    ds:qglDisable
+  .text:00186853                 ; GLfloat
+  .text:00186853                 mov     [esp+7Ch+var_74], 3F800000h; GLfloat
+  .text:0018685B                 ; GLfloat
+  .text:0018685B                 mov     [esp+7Ch+psurface+4], 3F800000h; GLfloat
+  .text:00186863                 ; GLfloat
+  .text:00186863                 mov     [esp+7Ch+psurface], 3F800000h; GLfloat
+  .text:0018686A                 call    ds:qglColor3f
+  .text:00186870                 fld     gl_wireframe.value
+  .text:00186876                 fld     ds:flt_24A974
+  .text:0018687C                 fxch    st(1)
+  .text:0018687E                 fucomip st, st(1)
+  .text:00186880                 fstp    st
+  .text:00186882                 jp      short loc_18688A
+  .text:00186884                 jz      loc_187101
+  .text:0018688A                 ; GLenum
+  .text:0018688A                 mov     [esp+7Ch+psurface], 2; GLenum
+  .text:00186891                 xor     ebx, ebx
+  .text:00186893                 call    ds:qglBegin
+  .text:00186899                 mov     ecx, [ebp+8]
+  .text:0018689C                 lea     esi, [ebp+10h]
+  .text:0018689F                 test    ecx, ecx
+  .text:001868A1                 jle     short loc_1868C2
+  .text:001868A3                 lea     v, [v+0]
+  .text:001868A9                 lea     edi, [edi+0]
+  .text:001868B0                 ; GLfloat *
+  .text:001868B0                 mov     [esp+7Ch+psurface], v; GLfloat *
+  .text:001868B3                 inc     i
+  .text:001868B4                 add     v, 1Ch
+  .text:001868B7                 call    ds:qglVertex3fv
+  .text:001868BD                 cmp     [ebp+8], i
+  .text:001868C0                 jg      short loc_1868B0
+  .text:001868C2                 call    ds:qglEnd
+  .text:001868C8                 ; GLenum
+  .text:001868C8                 mov     [esp+7Ch+psurface], 0DE1h; GLenum
+  .text:001868CF                 call    ds:qglEnable
+  .text:001868D5                 fld     gl_wireframe.value
+  .text:001868DB                 fld     ds:flt_24A974
+  .text:001868E1                 fxch    st(1)
+  .text:001868E3                 fucomip st, st(1)
+  .text:001868E5                 fstp    st
+  .text:001868E7                 jp      loc_1861AC
+  .text:001868ED                 jnz     loc_1861AC
+  .text:001868F3                 ; GLenum
+  .text:001868F3                 mov     [esp+7Ch+psurface], 0B71h; GLenum
+  .text:001868FA                 call    ds:qglEnable
+  .text:00186900                 jmp     loc_1861AC
+  .text:00186908                 mov     eax, ds:g_bHasShaderFunctions
+  .text:0018690D                 test    eax, eax
+  .text:0018690F                 jz      loc_1864E0
+  .text:00186915                 mov     eax, ds:g_uCurrentProgram
+  .text:0018691A                 test    eax, eax
+  .text:0018691C                 jz      loc_1864E0
+  .text:00186922                 ; GLuint
+  .text:00186922                 mov     [esp+7Ch+psurface], 0; GLuint
+  .text:00186929                 call    ds:qglUseProgram
+  .text:0018692F                 xor     eax, eax
+  .text:00186931                 mov     ds:g_uCurrentProgram, eax
+  .text:00186936                 jmp     loc_1864E0
+  .text:00186940                 mov     eax, [ebx+38h]
+  .text:00186943                 mov     eax, ds:lightmap_textures[eax*4]
+  .text:0018694A                 ; texnum
+  .text:0018694A                 mov     [esp+7Ch+psurface], eax; texnum
+  .text:0018694D                 call    GL_Bind
+  .text:00186952                 jmp     loc_186100
+  .text:00186960                 movss   xmm7, dword ptr [v+10h]
+  .text:00186965                 inc     i
+  .text:00186966                 fld     [esp+7Ch+sOffset]
+  .text:0018696A                 mov     eax, TEXTURE0_SGIS
+  .text:0018696F                 ; GLfloat
+  .text:0018696F                 movss   [esp+7Ch+var_74], xmm7; GLfloat
+  .text:00186975                 fadd    dword ptr [v+0Ch]
+  .text:00186978                 ; GLenum
+  .text:00186978                 mov     [esp+7Ch+psurface], eax; GLenum
+  .text:0018697B                 ; GLfloat
+  .text:0018697B                 fstp    [esp+7Ch+psurface+4]; GLfloat
+  .text:0018697F                 call    ds:qglMTexCoord2fSGIS
+  .text:00186985                 mov     eax, TEXTURE1_SGIS
+  .text:0018698A                 movss   xmm7, dword ptr [v+18h]
+  .text:0018698F                 ; GLfloat
+  .text:0018698F                 movss   [esp+7Ch+var_74], xmm7; GLfloat
+  .text:00186995                 movss   xmm7, dword ptr [v+14h]
+  .text:0018699A                 ; GLenum
+  .text:0018699A                 mov     [esp+7Ch+psurface], eax; GLenum
+  .text:0018699D                 ; GLfloat
+  .text:0018699D                 movss   [esp+7Ch+psurface+4], xmm7; GLfloat
+  .text:001869A3                 call    ds:qglMTexCoord2fSGIS
+  .text:001869A9                 movss   xmm4, dword ptr [v+10h]
+  .text:001869AE                 ; v
+  .text:001869AE                 movss   [esp+7Ch+psurface+4], xmm4; v
+  .text:001869B4                 fld     [esp+7Ch+sOffset]
+  .text:001869B8                 fadd    dword ptr [v+0Ch]
+  .text:001869BB                 ; u
+  .text:001869BB                 fstp    [esp+7Ch+psurface]; u
+  .text:001869BE                 call    DT_SetTextureCoordinates
+  .text:001869C3                 ; GLfloat *
+  .text:001869C3                 mov     [esp+7Ch+psurface], v; GLfloat *
+  .text:001869C6                 add     v, 1Ch
+  .text:001869C9                 call    ds:qglVertex3fv
+  .text:001869CF                 cmp     [p_0+8], i
+  .text:001869D2                 jg      short loc_186960
+  .text:001869D4                 call    ds:qglEnd
+  .text:001869DA                 fld     gl_display_lists.value
+  .text:001869E0                 fldz
+  .text:001869E2                 fxch    st(1)
+  .text:001869E4                 fucomip st, st(1)
+  .text:001869E6                 fstp    st
+  .text:001869E8                 jp      short loc_1869EC
+  .text:001869EA                 jz      short loc_1869FD
+  .text:001869EC                 call    glEndList
+  .text:001869F1                 mov     eax, [esp+7Ch+renderDetailTexture]
+  .text:001869F5                 test    eax, eax
+  .text:001869F7                 jz      loc_1867AA
+  .text:001869FD                 call    DT_ClearRenderState
+  .text:00186A02                 and     [esp+7Ch+textureMask], 0FFFFFFFBh
+  .text:00186A07                 jmp     loc_1867AA
+  .text:00186A10                 mov     eax, ds:gl_FilterTexture
+  .text:00186A15                 ; texnum
+  .text:00186A15                 mov     [esp+7Ch+psurface], eax; texnum
+  .text:00186A18                 call    GL_Bind
+  .text:00186A1D                 jmp     loc_186623
+  .text:00186A28                 ; GLenum
+  .text:00186A28                 mov     [esp+7Ch+psurface], 0DE1h; GLenum
+  .text:00186A2F                 xor     edi, edi
+  .text:00186A31                 call    ds:qglDisable
+  .text:00186A37                 mov     eax, TEXTURE0_SGIS
+  .text:00186A3C                 ; target
+  .text:00186A3C                 mov     [esp+7Ch+psurface], eax; target
+  .text:00186A3F                 call    GL_SelectTexture
+  .text:00186A44                 mov     ds:mtexenabled, edi
+  .text:00186A4A                 jmp     loc_186254
+  .text:00186A50                 mov     [esp+7Ch+psurface], offset aTooManyDecalSu; "Too many decal surfaces!\n"
+  .text:00186A57                 call    Sys_Error
+  .text:00186A5C                 jmp     loc_18604E
+  .text:00186A68                 ; GLenum
+  .text:00186A68                 mov     [esp+7Ch+psurface], 0DE1h; GLenum
+  .text:00186A6F                 xor     ebp, ebp
+  .text:00186A71                 call    ds:qglDisable
+  .text:00186A77                 mov     eax, TEXTURE0_SGIS
+  .text:00186A7C                 ; target
+  .text:00186A7C                 mov     [esp+7Ch+psurface], eax; target
+  .text:00186A7F                 call    GL_SelectTexture
+  .text:00186A84                 mov     ds:mtexenabled, ebp
+  .text:00186A8A                 jmp     loc_1862B3
+  .text:00186A90                 ; range
+  .text:00186A90                 mov     [esp+7Ch+psurface], 1; range
+  .text:00186A97                 call    glGenLists
+  .text:00186A9C                 mov     edx, ds:currententity
+  .text:00186AA2                 movss   xmm5, [esp+7Ch+sOffset]
+  .text:00186AA8                 mov     edi, [esp+7Ch+renderDetailTexture]
+  .text:00186AAC                 mov     [ebx+5Ch], eax
+  .text:00186AAF                 mov     edx, [edx+2F8h]
+  .text:00186AB5                 movss   dword ptr [ebx+64h], xmm5
+  .text:00186ABA                 mov     [ebx+68h], edi
+  .text:00186ABD                 mov     [ebx+60h], edx
+  .text:00186AC0                 mov     edx, 1301h
+  .text:00186AC5                 ; mode
+  .text:00186AC5                 mov     [esp+7Ch+psurface+4], edx; mode
+  .text:00186AC9                 ; list
+  .text:00186AC9                 mov     [esp+7Ch+psurface], eax; list
+  .text:00186ACC                 call    glNewList
+  .text:00186AD1                 jmp     loc_186702
+  .text:00186AD6                 ; GLenum
+  .text:00186AD6                 mov     [esp+7Ch+psurface], 0B71h; GLenum
+  .text:00186ADD                 call    ds:qglDisable
+  .text:00186AE3                 jmp     loc_186524
+  .text:00186AE8                 fld     gl_use_shaders.value
+  .text:00186AEE                 fldz
+  .text:00186AF0                 fxch    st(1)
+  .text:00186AF2                 fucomip st, st(1)
+  .text:00186AF4                 fstp    st
+  .text:00186AF6                 jp      short loc_186AFF
+  .text:00186AF8                 mov     edi, 0
+  .text:00186AFD                 jz      short loc_186B22
+  .text:00186AFF                 mov     eax, [esp+7Ch+textureMask]
+  .text:00186B03                 fld     sv_allow_shaders.value
+  .text:00186B09                 fldz
+  .text:00186B0B                 fxch    st(1)
+  .text:00186B0D                 fucomip st, st(1)
+  .text:00186B0F                 fstp    st
+  .text:00186B11                 mov     edi, ds:g_fsWorldProgram[eax*4]
+  .text:00186B18                 jp      short loc_186B22
+  .text:00186B1A                 mov     eax, 0
+  .text:00186B1F                 cmovz   edi, eax
+  .text:00186B22                 cmp     ds:g_uCurrentProgram, edi
+  .text:00186B28                 jz      loc_1867B8
+  .text:00186B2E                 ; GLuint
+  .text:00186B2E                 mov     [esp+7Ch+psurface], edi; GLuint
+  .text:00186B31                 call    ds:qglUseProgram
+  .text:00186B37                 mov     ds:g_uCurrentProgram, edi
+  .text:00186B3D                 jmp     loc_1867B8
+  .text:00186B42                 fld     gl_use_shaders.value
+  .text:00186B48                 fldz
+  .text:00186B4A                 fxch    st(1)
+  .text:00186B4C                 fucomip st, st(1)
+  .text:00186B4E                 fstp    st
+  .text:00186B50                 jp      short loc_186B59
+  .text:00186B52                 mov     esi, 0
+  .text:00186B57                 jz      short loc_186B7C
+  .text:00186B59                 mov     eax, [esp+7Ch+textureMask]
+  .text:00186B5D                 fld     sv_allow_shaders.value
+  .text:00186B63                 fldz
+  .text:00186B65                 fxch    st(1)
+  .text:00186B67                 fucomip st, st(1)
+  .text:00186B69                 fstp    st
+  .text:00186B6B                 mov     esi, ds:g_fsWorldProgram[eax*4]
+  .text:00186B72                 jp      short loc_186B7C
+  .text:00186B74                 mov     edx, 0
+  .text:00186B79                 cmovz   esi, edx
+  .text:00186B7C                 cmp     ds:g_uCurrentProgram, esi
+  .text:00186B82                 jz      loc_186694
+  .text:00186B88                 ; GLuint
+  .text:00186B88                 mov     [esp+7Ch+psurface], esi; GLuint
+  .text:00186B8B                 call    ds:qglUseProgram
+  .text:00186B91                 mov     ds:g_uCurrentProgram, esi
+  .text:00186B97                 jmp     loc_186694
+  .text:00186B9C                 mov     textureMask_0, ds:currententity
+  .text:00186BA1                 movzx   edx, byte ptr [eax+301h]
+  .text:00186BA8                 movzx   renderDetailTexture_0, byte ptr [eax+302h]
+  .text:00186BAF                 shl     edx, 8
+  .text:00186BB2                 lea     edi, [edx+ecx]
+  .text:00186BB5                 mov     [esp+7Ch+var_34], edi
+  .text:00186BB9                 fild    [esp+7Ch+var_34]
+  .text:00186BBD                 fmul    ds:flt_2517D0
+  .text:00186BC3                 fstp    [esp+7Ch+var_30]
+  .text:00186BC7                 cmp     byte ptr [eax+300h], 0
+  .text:00186BCE                 mov     eax, [ebx+2Ch]
+  .text:00186BD1                 fld     [esp+7Ch+var_30]
+  .text:00186BD5                 fld     st
+  .text:00186BD7                 fchs
+  .text:00186BD9                 mov     eax, [eax+24h]
+  .text:00186BDC                 fcmovne st, st(1)
+  .text:00186BDE                 fstp    st(1)
+  .text:00186BE0                 movd    xmm6, dword ptr [eax+10h]
+  .text:00186BE5                 movq    [esp+7Ch+var_3C], xmm6
+  .text:00186BEB                 fild    [esp+7Ch+var_3C]
+  .text:00186BEF                 fld1
+  .text:00186BF1                 fdivrp  st(1), st
+  .text:00186BF3                 fxch    st(1)
+  .text:00186BF5                 fmul    ds:nMax.time
+  .text:00186BFB                 fmulp   st(1), st
+  .text:00186BFD                 fstp    [esp+7Ch+var_30]
+  .text:00186C01                 fld     [esp+7Ch+var_30]
+  .text:00186C05                 fld     [esp+7Ch+sOffset]
+  .text:00186C09                 fucomip st, st(1)
+  .text:00186C0B                 ja      loc_18717F
+  .text:00186C11                 fld1
+  .text:00186C13                 ; y
+  .text:00186C13                 fstp    qword ptr [esp+7Ch+var_74]; y
+  .text:00186C17                 ; x
+  .text:00186C17                 fstp    qword ptr [esp+7Ch+psurface]; x
+  .text:00186C1A                 call    fmod
+  .text:00186C1F                 fstp    [esp+7Ch+sOffset]
+  .text:00186C23                 jmp     loc_186686
+  .text:00186C28                 mov     ecx, i
+  .text:00186C2A                 xor     edx, edx
+  .text:00186C2C                 shl     ecx, 4
+  .text:00186C2F                 mov     ds:lightmap_modified[i*4], edx
+  .text:00186C36                 mov     edx, ds:lightmap_rectchange.t[ecx]
+  .text:00186C3C                 shl     i, 7
+  .text:00186C3F                 lea     esi, lightmap_rectchange.l[ecx]
+  .text:00186C45                 mov     [esp+7Ch+sOffset], ecx
+  .text:00186C49                 ; GLenum
+  .text:00186C49                 mov     [esp+7Ch+psurface], 0DE1h; GLenum
+  .text:00186C50                 add     eax, edx
+  .text:00186C52                 shl     eax, 7
+  .text:00186C55                 imul    eax, ds:lightmap_bytes
+  .text:00186C5C                 ; GLint
+  .text:00186C5C                 mov     [esp+7Ch+var_74+4], edx; GLint
+  .text:00186C60                 add     eax, offset lightmaps
+  .text:00186C65                 ; GLvoid *
+  .text:00186C65                 mov     [esp+7Ch+var_5C], eax; GLvoid *
+  .text:00186C69                 mov     eax, 1401h
+  .text:00186C6E                 ; GLenum
+  .text:00186C6E                 mov     [esp+7Ch+var_60], eax; GLenum
+  .text:00186C72                 mov     eax, gl_lightmap_format
+  .text:00186C77                 ; GLenum
+  .text:00186C77                 mov     [esp+7Ch+var_64], eax; GLenum
+  .text:00186C7B                 mov     eax, ds:lightmap_rectchange.h[ecx]
+  .text:00186C81                 mov     ecx, 80h
+  .text:00186C86                 ; GLsizei
+  .text:00186C86                 mov     [esp+7Ch+var_6C], ecx; GLsizei
+  .text:00186C8A                 ; GLsizei
+  .text:00186C8A                 mov     [esp+7Ch+var_68], eax; GLsizei
+  .text:00186C8E                 xor     eax, eax
+  .text:00186C90                 ; GLint
+  .text:00186C90                 mov     [esp+7Ch+var_74], eax; GLint
+  .text:00186C94                 xor     eax, eax
+  .text:00186C96                 ; GLint
+  .text:00186C96                 mov     [esp+7Ch+psurface+4], eax; GLint
+  .text:00186C9A                 call    ds:qglTexSubImage2D
+  .text:00186CA0                 mov     ecx, [esp+7Ch+sOffset]
+  .text:00186CA4                 mov     eax, 80h
+  .text:00186CA9                 mov     dword ptr [theRect+4], 80h
+  .text:00186CB0                 mov     dword ptr [theRect+0Ch], 0
+  .text:00186CB7                 mov     dword ptr [theRect+8], 0
+  .text:00186CBE                 mov     dword ptr ds:lightmap_rectchange.l[ecx], eax
+  .text:00186CC4                 jmp     loc_186635
+  .text:00186CC9                 mov     eax, TEXTURE1_SGIS
+  .text:00186CCE                 mov     esi, 1
+  .text:00186CD3                 ; target
+  .text:00186CD3                 mov     [esp+7Ch+psurface], eax; target
+  .text:00186CD6                 call    GL_SelectTexture
+  .text:00186CDB                 ; GLenum
+  .text:00186CDB                 mov     [esp+7Ch+psurface], 0DE1h; GLenum
+  .text:00186CE2                 call    ds:qglEnable
+  .text:00186CE8                 mov     ds:mtexenabled, esi
+  .text:00186CEE                 jmp     loc_186603
+  .text:00186CF3                 mov     eax, ds:g_bHasShaderFunctions
+  .text:00186CF8                 test    eax, eax
+  .text:00186CFA                 jz      loc_187113
+  .text:00186D00                 mov     eax, ds:g_uCurrentProgram
+  .text:00186D05                 test    eax, eax
+  .text:00186D07                 jz      loc_187160
+  .text:00186D0D                 ; GLuint
+  .text:00186D0D                 mov     [esp+7Ch+psurface], 0; GLuint
+  .text:00186D14                 call    ds:qglUseProgram
+  .text:00186D1A                 xor     eax, eax
+  .text:00186D1C                 mov     ds:g_uCurrentProgram, eax
+  .text:00186D21                 jmp     loc_186807
+  .text:00186D26                 ; GLenum
+  .text:00186D26                 mov     [esp+7Ch+psurface], 0DE1h; GLenum
+  .text:00186D2D                 call    ds:qglDisable
+  .text:00186D33                 mov     eax, 2
+  .text:00186D38                 mov     [esp+7Ch+textureMask], eax
+  .text:00186D3C                 jmp     loc_1865F6
+  .text:00186D41                 mov     esi, ds:gDecalSurfCount
+  .text:00186D47                 test    esi, esi
+  .text:00186D49                 jz      loc_1867F8
+  .text:00186D4F                 ; GLenum
+  .text:00186D4F                 mov     [esp+7Ch+psurface], 0BE2h; GLenum
+  .text:00186D56                 mov     ebx, 303h
+  .text:00186D5B                 call    ds:qglEnable
+  .text:00186D61                 ; GLenum
+  .text:00186D61                 mov     [esp+7Ch+psurface], 0BC0h; GLenum
+  .text:00186D68                 call    ds:qglEnable
+  .text:00186D6E                 ; GLenum
+  .text:00186D6E                 mov     [esp+7Ch+psurface+4], ebx; GLenum
+  .text:00186D72                 ; GLenum
+  .text:00186D72                 mov     [esp+7Ch+psurface], 302h; GLenum
+  .text:00186D79                 call    ds:qglBlendFunc
+  .text:00186D7F                 ; GLboolean
+  .text:00186D7F                 mov     [esp+7Ch+psurface], 0; GLboolean
+  .text:00186D86                 call    ds:qglDepthMask
+  .text:00186D8C                 fld     gl_polyoffset.value
+  .text:00186D92                 fldz
+  .text:00186D94                 fxch    st(1)
+  .text:00186D96                 fucomip st, st(1)
+  .text:00186D98                 fstp    st
+  .text:00186D9A                 jp      loc_1871D7
+  .text:00186DA0                 jnz     loc_1871D7
+  .text:00186DA6                 mov     eax, ds:gDecalSurfCount
+  .text:00186DAB                 test    eax, eax
+  .text:00186DAD                 jle     loc_1870A4
+  .text:00186DB3                 xor     eax, eax
+  .text:00186DB5                 mov     [esp+7Ch+textureMask], p_0
+  .text:00186DB9                 mov     p_0, eax
+  .text:00186DBB                 nop
+  .text:00186DBC                 lea     esi, [esi+0]
+  .text:00186DC0                 mov     esi, ds:gDecalSurfs[ebp*4]
+  .text:00186DC7                 mov     ebx, [esi+58h]
+  .text:00186DCA                 test    ebx, ebx
+  .text:00186DCC                 jnz     loc_187013
+  .text:00186DD2                 jmp     loc_187079
+  .text:00186DE0                 mov     edx, ebx
+  .text:00186DE2                 sub     edx, offset gDecalPool
+  .text:00186DE8                 sar     edx, 2
+  .text:00186DEB                 imul    edx, 0B6DB6DB7h
+  .text:00186DF1                 movzx   ecx, dl
+  .text:00186DF4                 imul    ecx, 74h ; 't'
+  .text:00186DF7                 cmp     edx, dword ptr ds:gDecalCache.decalIndex[ecx]
+  .text:00186DFD                 lea     eax, gDecalCache.decalVert[ecx]
+  .text:00186E03                 jz      loc_186FEB
+  .text:00186E09                 mov     dword ptr ds:gDecalCache.decalIndex[ecx], edx
+  .text:00186E0F                 lea     ecx, [esp+7Ch+pvertCount]
+  .text:00186E13                 ; pvertCount
+  .text:00186E13                 mov     [esp+7Ch+var_6C], ecx; pvertCount
+  .text:00186E17                 ; ptexture
+  .text:00186E17                 mov     [esp+7Ch+var_74+4], edi; ptexture
+  .text:00186E1B                 ; psurf
+  .text:00186E1B                 mov     [esp+7Ch+var_74], esi; psurf
+  .text:00186E1F                 ; pdecal
+  .text:00186E1F                 mov     [esp+7Ch+psurface+4], ebx; pdecal
+  .text:00186E23                 ; poutVerts
+  .text:00186E23                 mov     [esp+7Ch+psurface], eax; poutVerts
+  .text:00186E26                 call    R_DecalVertsClip
+  .text:00186E2B                 mov     edx, [esi+2Ch]
+  .text:00186E2E                 mov     ecx, [esi+1Ch]
+  .text:00186E31                 shl     ecx, 4
+  .text:00186E34                 fld     dword ptr [eax]
+  .text:00186E36                 fmul    dword ptr [edx]
+  .text:00186E38                 mov     [esp+7Ch+sOffset], ecx
+  .text:00186E3C                 mov     ecx, [esi+20h]
+  .text:00186E3F                 fld     dword ptr [eax+4]
+  .text:00186E42                 shl     ecx, 4
+  .text:00186E45                 fmul    dword ptr [edx+4]
+  .text:00186E48                 faddp   st(1), st
+  .text:00186E4A                 fld     dword ptr [eax+8]
+  .text:00186E4D                 fmul    dword ptr [edx+8]
+  .text:00186E50                 faddp   st(1), st
+  .text:00186E52                 fadd    dword ptr [edx+0Ch]
+  .text:00186E55                 fild    word ptr [esi+14h]
+  .text:00186E58                 fsubp   st(1), st
+  .text:00186E5A                 fild    [esp+7Ch+sOffset]
+  .text:00186E5E                 mov     [esp+7Ch+sOffset], ecx
+  .text:00186E62                 faddp   st(1), st
+  .text:00186E64                 fld     ds:flt_246024
+  .text:00186E6A                 fadd    st(1), st
+  .text:00186E6C                 fld     dword ptr [eax]
+  .text:00186E6E                 fmul    dword ptr [edx+10h]
+  .text:00186E71                 fld     dword ptr [eax+4]
+  .text:00186E74                 fmul    dword ptr [edx+14h]
+  .text:00186E77                 faddp   st(1), st
+  .text:00186E79                 fld     dword ptr [eax+8]
+  .text:00186E7C                 fmul    dword ptr [edx+18h]
+  .text:00186E7F                 faddp   st(1), st
+  .text:00186E81                 fadd    dword ptr [edx+1Ch]
+  .text:00186E84                 fild    word ptr [esi+16h]
+  .text:00186E87                 fsubp   st(1), st
+  .text:00186E89                 fild    [esp+7Ch+sOffset]
+  .text:00186E8D                 faddp   st(1), st
+  .text:00186E8F                 fadd    st, st(1)
+  .text:00186E91                 fld     ds:flt_25D834
+  .text:00186E97                 fmul    st(3), st
+  .text:00186E99                 fxch    st(3)
+  .text:00186E9B                 fstp    dword ptr [eax+14h]
+  .text:00186E9E                 fmul    st, st(2)
+  .text:00186EA0                 fstp    dword ptr [eax+18h]
+  .text:00186EA3                 mov     edx, [esi+2Ch]
+  .text:00186EA6                 fld     dword ptr [eax+1Ch]
+  .text:00186EA9                 fmul    dword ptr [edx]
+  .text:00186EAB                 fld     dword ptr [eax+20h]
+  .text:00186EAE                 fmul    dword ptr [edx+4]
+  .text:00186EB1                 faddp   st(1), st
+  .text:00186EB3                 fld     dword ptr [eax+24h]
+  .text:00186EB6                 fmul    dword ptr [edx+8]
+  .text:00186EB9                 mov     ecx, [esi+1Ch]
+  .text:00186EBC                 shl     ecx, 4
+  .text:00186EBF                 faddp   st(1), st
+  .text:00186EC1                 mov     [esp+7Ch+sOffset], ecx
+  .text:00186EC5                 mov     ecx, [esi+20h]
+  .text:00186EC8                 fadd    dword ptr [edx+0Ch]
+  .text:00186ECB                 shl     ecx, 4
+  .text:00186ECE                 fild    word ptr [esi+14h]
+  .text:00186ED1                 fsubp   st(1), st
+  .text:00186ED3                 fild    [esp+7Ch+sOffset]
+  .text:00186ED7                 mov     [esp+7Ch+sOffset], ecx
+  .text:00186EDB                 faddp   st(1), st
+  .text:00186EDD                 fadd    st, st(1)
+  .text:00186EDF                 fld     dword ptr [eax+1Ch]
+  .text:00186EE2                 fmul    dword ptr [edx+10h]
+  .text:00186EE5                 fld     dword ptr [eax+20h]
+  .text:00186EE8                 fmul    dword ptr [edx+14h]
+  .text:00186EEB                 faddp   st(1), st
+  .text:00186EED                 fld     dword ptr [eax+24h]
+  .text:00186EF0                 fmul    dword ptr [edx+18h]
+  .text:00186EF3                 faddp   st(1), st
+  .text:00186EF5                 fadd    dword ptr [edx+1Ch]
+  .text:00186EF8                 fild    word ptr [esi+16h]
+  .text:00186EFB                 fsubp   st(1), st
+  .text:00186EFD                 fild    [esp+7Ch+sOffset]
+  .text:00186F01                 faddp   st(1), st
+  .text:00186F03                 fadd    st, st(2)
+  .text:00186F05                 fxch    st(1)
+  .text:00186F07                 fmul    st, st(3)
+  .text:00186F09                 fstp    dword ptr [eax+30h]
+  .text:00186F0C                 fmul    st, st(2)
+  .text:00186F0E                 fstp    dword ptr [eax+34h]
+  .text:00186F11                 mov     edx, [esi+2Ch]
+  .text:00186F14                 fld     dword ptr [eax+38h]
+  .text:00186F17                 mov     ecx, [esi+1Ch]
+  .text:00186F1A                 fmul    dword ptr [edx]
+  .text:00186F1C                 shl     ecx, 4
+  .text:00186F1F                 mov     [esp+7Ch+sOffset], ecx
+  .text:00186F23                 fld     dword ptr [eax+3Ch]
+  .text:00186F26                 fmul    dword ptr [edx+4]
+  .text:00186F29                 faddp   st(1), st
+  .text:00186F2B                 fld     dword ptr [eax+40h]
+  .text:00186F2E                 fmul    dword ptr [edx+8]
+  .text:00186F31                 faddp   st(1), st
+  .text:00186F33                 fadd    dword ptr [edx+0Ch]
+  .text:00186F36                 fild    word ptr [esi+14h]
+  .text:00186F39                 fsubp   st(1), st
+  .text:00186F3B                 fild    [esp+7Ch+sOffset]
+  .text:00186F3F                 faddp   st(1), st
+  .text:00186F41                 fadd    st, st(1)
+  .text:00186F43                 fld     dword ptr [eax+38h]
+  .text:00186F46                 fmul    dword ptr [edx+10h]
+  .text:00186F49                 mov     ecx, [esi+20h]
+  .text:00186F4C                 fld     dword ptr [eax+3Ch]
+  .text:00186F4F                 shl     ecx, 4
+  .text:00186F52                 fmul    dword ptr [edx+14h]
+  .text:00186F55                 mov     [esp+7Ch+sOffset], ecx
+  .text:00186F59                 faddp   st(1), st
+  .text:00186F5B                 fld     dword ptr [eax+40h]
+  .text:00186F5E                 fmul    dword ptr [edx+18h]
+  .text:00186F61                 faddp   st(1), st
+  .text:00186F63                 fadd    dword ptr [edx+1Ch]
+  .text:00186F66                 fild    word ptr [esi+16h]
+  .text:00186F69                 fsubp   st(1), st
+  .text:00186F6B                 fild    [esp+7Ch+sOffset]
+  .text:00186F6F                 faddp   st(1), st
+  .text:00186F71                 fadd    st, st(2)
+  .text:00186F73                 fxch    st(1)
+  .text:00186F75                 fmul    st, st(3)
+  .text:00186F77                 fstp    dword ptr [eax+4Ch]
+  .text:00186F7A                 fmul    st, st(2)
+  .text:00186F7C                 fstp    dword ptr [eax+50h]
+  .text:00186F7F                 mov     edx, [esi+2Ch]
+  .text:00186F82                 fld     dword ptr [eax+54h]
+  .text:00186F85                 mov     ecx, [esi+1Ch]
+  .text:00186F88                 fmul    dword ptr [edx]
+  .text:00186F8A                 shl     ecx, 4
+  .text:00186F8D                 mov     [esp+7Ch+sOffset], ecx
+  .text:00186F91                 fld     dword ptr [eax+58h]
+  .text:00186F94                 fmul    dword ptr [edx+4]
+  .text:00186F97                 faddp   st(1), st
+  .text:00186F99                 fld     dword ptr [eax+5Ch]
+  .text:00186F9C                 fmul    dword ptr [edx+8]
+  .text:00186F9F                 faddp   st(1), st
+  .text:00186FA1                 fadd    dword ptr [edx+0Ch]
+  .text:00186FA4                 fild    word ptr [esi+14h]
+  .text:00186FA7                 fsubp   st(1), st
+  .text:00186FA9                 fild    [esp+7Ch+sOffset]
+  .text:00186FAD                 faddp   st(1), st
+  .text:00186FAF                 fadd    st, st(1)
+  .text:00186FB1                 fld     dword ptr [eax+54h]
+  .text:00186FB4                 fmul    dword ptr [edx+10h]
+  .text:00186FB7                 fld     dword ptr [eax+58h]
+  .text:00186FBA                 fmul    dword ptr [edx+14h]
+  .text:00186FBD                 faddp   st(1), st
+  .text:00186FBF                 fld     dword ptr [eax+5Ch]
+  .text:00186FC2                 fmul    dword ptr [edx+18h]
+  .text:00186FC5                 faddp   st(1), st
+  .text:00186FC7                 fadd    dword ptr [edx+1Ch]
+  .text:00186FCA                 fild    word ptr [esi+16h]
+  .text:00186FCD                 mov     ecx, [esi+20h]
+  .text:00186FD0                 shl     ecx, 4
+  .text:00186FD3                 fsubp   st(1), st
+  .text:00186FD5                 mov     [esp+7Ch+sOffset], ecx
+  .text:00186FD9                 fild    [esp+7Ch+sOffset]
+  .text:00186FDD                 faddp   st(1), st
+  .text:00186FDF                 faddp   st(2), st
+  .text:00186FE1                 fmul    st, st(2)
+  .text:00186FE3                 fstp    dword ptr [eax+68h]
+  .text:00186FE6                 fmulp   st(1), st
+  .text:00186FE8                 fstp    dword ptr [eax+6Ch]
+  .text:00186FEB                 mov     edx, 4
+  .text:00186FF0                 mov     [esp+7Ch+poutVerts], edx
+  .text:00186FF4                 mov     edx, offset pIn
+  .text:00186FF9                 ; ptexture
+  .text:00186FF9                 mov     [esp+7Ch+var_74+4], edx; ptexture
+  .text:00186FFD                 ; psurf
+  .text:00186FFD                 mov     [esp+7Ch+var_74], esi; psurf
+  .text:00187001                 ; pdecal
+  .text:00187001                 mov     [esp+7Ch+psurface+4], edi; pdecal
+  .text:00187005                 ; v
+  .text:00187005                 mov     [esp+7Ch+psurface], eax; v
+  .text:00187008                 call    R_DecalMPoly
+  .text:0018700D                 mov     ebx, [ebx]
+  .text:0018700F                 test    ebx, ebx
+  .text:00187011                 jz      short loc_187079
+  .text:00187013                 movsx   eax, word ptr [ebx+14h]
+  .text:00187017                 ; index
+  .text:00187017                 mov     [esp+7Ch+psurface], eax; index
+  .text:0018701A                 call    Draw_DecalTexture
+  .text:0018701F                 test    byte ptr [ebx+16h], 40h
+  .text:00187023                 mov     edi, eax
+  .text:00187025                 jnz     loc_186DE0
+  .text:0018702B                 lea     eax, [esp+7Ch+poutVerts]
+  .text:0018702F                 mov     edx, esi
+  .text:00187031                 ; poutVerts
+  .text:00187031                 mov     [esp+7Ch+psurface], eax; poutVerts
+  .text:00187034                 mov     ecx, edi
+  .text:00187036                 mov     eax, ebx
+  .text:00187038                 call    R_DecalVertsClip_0
+  .text:0018703D                 mov     edx, [esp+7Ch+poutVerts]
+  .text:00187041                 test    edx, edx
+  .text:00187043                 jz      loc_1870E0
+  .text:00187049                 ; v
+  .text:00187049                 mov     [esp+7Ch+psurface], eax; v
+  .text:0018704C                 ; vertCount
+  .text:0018704C                 mov     [esp+7Ch+var_74], edx; vertCount
+  .text:00187050                 ; psurf
+  .text:00187050                 mov     [esp+7Ch+psurface+4], esi; psurf
+  .text:00187054                 mov     [esp+7Ch+sOffset], eax
+  .text:00187058                 call    R_DecalVertsLight
+  .text:0018705D                 mov     eax, [esp+7Ch+sOffset]
+  .text:00187061                 test    byte ptr [ebx+16h], 40h
+  .text:00187065                 jnz     loc_186DE0
+  .text:0018706B                 mov     edx, [esp+7Ch+poutVerts]
+  .text:0018706F                 test    edx, edx
+  .text:00187071                 jnz     short loc_186FF9
+  .text:00187073                 mov     ebx, [ebx]
+  .text:00187075                 test    ebx, ebx
+  .text:00187077                 jnz     short loc_187013
+  .text:00187079                 inc     ebp
+  .text:0018707A                 cmp     ebp, ds:gDecalSurfCount
+  .text:00187080                 jl      loc_186DC0
+  .text:00187086                 mov     ebp, [esp+7Ch+textureMask]
+  .text:0018708A                 fld     gl_polyoffset.value
+  .text:00187090                 fldz
+  .text:00187092                 fxch    st(1)
+  .text:00187094                 fucomip st, st(1)
+  .text:00187096                 fstp    st
+  .text:00187098                 jp      loc_1871C5
+  .text:0018709E                 jnz     loc_1871C5
+  .text:001870A4                 ; GLenum
+  .text:001870A4                 mov     [esp+7Ch+psurface], 0BC0h; GLenum
+  .text:001870AB                 call    ds:qglDisable
+  .text:001870B1                 ; GLenum
+  .text:001870B1                 mov     [esp+7Ch+psurface], 0BE2h; GLenum
+  .text:001870B8                 call    ds:qglDisable
+  .text:001870BE                 ; GLboolean
+  .text:001870BE                 mov     [esp+7Ch+psurface], 1; GLboolean
+  .text:001870C5                 call    ds:qglDepthMask
+  .text:001870CB                 xor     eax, eax
+  .text:001870CD                 mov     ds:gDecalSurfCount, eax
+  .text:001870D2                 jmp     loc_1867F8
+  .text:001870E0                 test    byte ptr [ebx+16h], 40h
+  .text:001870E4                 jz      loc_18700D
+  .text:001870EA                 jmp     loc_186DE0
+  .text:001870F0                 mov     [esp+7Ch+psurface], offset aTooManyDecalSu; "Too many decal surfaces!\n"
+  .text:001870F7                 call    Sys_Error
+  .text:001870FC                 jmp     loc_1867E5
+  .text:00187101                 ; GLenum
+  .text:00187101                 mov     [esp+7Ch+psurface], 0B71h; GLenum
+  .text:00187108                 call    ds:qglDisable
+  .text:0018710E                 jmp     loc_18688A
+  .text:00187113                 fld     gl_wireframe.value
+  .text:00187119                 fldz
+  .text:0018711B                 fxch    st(1)
+  .text:0018711D                 fucomip st, st(1)
+  .text:0018711F                 fstp    st
+  .text:00187121                 jp      loc_186846
+  .text:00187127                 jz      loc_1861AC
+  .text:0018712D                 jmp     loc_186846
+  .text:00187132                 call    ds:qglEnd
+  .text:00187138                 fld     gl_display_lists.value
+  .text:0018713E                 fldz
+  .text:00187140                 fxch    st(1)
+  .text:00187142                 fucomip st, st(1)
+  .text:00187144                 fstp    st
+  .text:00187146                 jp      loc_1869EC
+  .text:0018714C                 jnz     loc_1869EC
+  .text:00187152                 jmp     loc_1869F1
+  .text:00187160                 fld     gl_wireframe.value
+  .text:00187166                 fldz
+  .text:00187168                 fxch    st(1)
+  .text:0018716A                 fucomip st, st(1)
+  .text:0018716C                 fstp    st
+  .text:0018716E                 jp      loc_186846
+  .text:00187174                 jz      loc_1861AC
+  .text:0018717A                 jmp     loc_186846
+  .text:0018717F                 ; x
+  .text:0018717F                 fstp    qword ptr [esp+7Ch+psurface]; x
+  .text:00187182                 xor     esi, esi
+  .text:00187184                 mov     edi, 0BFF00000h
+  .text:00187189                 ; y
+  .text:00187189                 mov     [esp+7Ch+var_74], esi; y
+  .text:0018718D                 mov     [esp+7Ch+var_74+4], edi
+  .text:00187191                 call    fmod
+  .text:00187196                 fstp    [esp+7Ch+sOffset]
+  .text:0018719A                 jmp     loc_186686
+  .text:0018719F                 fld     gl_display_lists.value
+  .text:001871A5                 fldz
+  .text:001871A7                 fxch    st(1)
+  .text:001871A9                 fucomip st, st(1)
+  .text:001871AB                 fstp    st
+  .text:001871AD                 jp      short loc_1871B5
+  .text:001871AF                 jz      loc_186702
+  .text:001871B5                 ; list
+  .text:001871B5                 mov     [esp+7Ch+psurface], eax; list
+  .text:001871B8                 call    glCallList
+  .text:001871BD                 lea     esi, [esi+0]
+  .text:001871C0                 jmp     loc_1869F1
+  .text:001871C5                 ; GLenum
+  .text:001871C5                 mov     [esp+7Ch+psurface], 8037h; GLenum
+  .text:001871CC                 call    ds:qglDisable
+  .text:001871D2                 jmp     loc_1870A4
+  .text:001871D7                 ; GLenum
+  .text:001871D7                 mov     [esp+7Ch+psurface], 8037h; GLenum
+  .text:001871DE                 call    ds:qglEnable
+  .text:001871E4                 fld     gl_ztrick.value
+  .text:001871EA                 fldz
+  .text:001871EC                 fxch    st(1)
+  .text:001871EE                 fucomip st, st(1)
+  .text:001871F0                 fstp    st
+  .text:001871F2                 jp      short loc_1871F6
+  .text:001871F4                 jz      short loc_18720A
+  .text:001871F6                 fld     ds:flt_248810
+  .text:001871FC                 fld     ds:gldepthmin
+  .text:00187202                 fxch    st(1)
+  .text:00187204                 fucomip st, st(1)
+  .text:00187206                 fstp    st
+  .text:00187208                 jbe     short loc_187236
+  .text:0018720A                 fld     gl_polyoffset.value
+  .text:00187210                 fchs
+  .text:00187212                 ; GLfloat
+  .text:00187212                 mov     [esp+7Ch+psurface], 0BF800000h; GLfloat
+  .text:00187219                 ; GLfloat
+  .text:00187219                 fstp    [esp+7Ch+psurface+4]; GLfloat
+  .text:0018721D                 call    ds:qglPolygonOffset
+  .text:00187223                 mov     ecx, ds:gDecalSurfCount
+  .text:00187229                 test    ecx, ecx
+  .text:0018722B                 jg      loc_186DB3
+  .text:00187231                 jmp     loc_18708A
+  .text:00187236                 movss   xmm6, gl_polyoffset.value
+  .text:0018723E                 ; GLfloat
+  .text:0018723E                 mov     [esp+7Ch+psurface], 3F800000h; GLfloat
+  .text:00187245                 ; GLfloat
+  .text:00187245                 movss   [esp+7Ch+psurface+4], xmm6; GLfloat
+  .text:0018724B                 call    ds:qglPolygonOffset
+  .text:00187251                 jmp     short loc_187223
+procedure: |-
+  // mtexenabled is the 0/1 enabled state written around GL_TEXTURE_2D, distinct from gl_mtexable capability. GL_EnableMultitexture may remain a direct call or be inlined.
+  // Multitexture helpers can be inlined: mtexenabled is the enabled state, gl_mtexable is capability. Preserve the current binary ABI; HL25 adds shader cleanup absent from older source.
+  void __cdecl R_DrawSequentialPoly(void *surface, int face, int cleanUpShaderState)
+  {
+    int v3; // eax
+    int v4; // edi
+    texture_t *v5; // eax
+    int v6; // eax
+    GLuint v7; // esi
+    int v8; // esi
+    int v9; // ebx
+    int v10; // ebp
+    int v11; // esi
+    texture_t *v12; // eax
+    int v13; // eax
+    int v14; // eax
+    int v15; // eax
+    int v16; // eax
+    GLuint v17; // esi
+    int v18; // esi
+    const GLfloat *v19; // ebp
+    int v20; // ebp
+    texture_t *v21; // edi
+    int v22; // eax
+    int v23; // eax
+    GLuint v24; // eax
+    float *v25; // esi
+    int v26; // edi
+    int v27; // eax
+    int v28; // ebx
+    const GLfloat *v29; // esi
+    GLuint v30; // eax
+    cl_entity_t_1 *v31; // edx
+    int rendermode; // edx
+    GLuint v33; // edi
+    GLuint v34; // esi
+    long double v35; // fst6
+    glRect_t *v36; // esi
+    int v37; // ebp
+    msurface_t *v38; // esi
+    int firstedge; // ebx
+    int v40; // edx
+    int v41; // ecx
+    float *v42; // eax
+    float *v43; // edx
+    long double v44; // fst5
+    float *v45; // edx
+    long double v46; // fst5
+    float *v47; // edx
+    long double v48; // rt1
+    float *v49; // edx
+    long double v50; // fst6
+    const texture_t *v51; // edx
+    texture_t *v52; // edi
+    float *v53; // eax
+    qboolean_0 psurface; // [esp+0h] [ebp-7Ch]
+    const GLfloat *psurfacea; // [esp+0h] [ebp-7Ch]
+    const GLfloat *psurfaceb; // [esp+0h] [ebp-7Ch]
+    const GLfloat *psurfacec; // [esp+0h] [ebp-7Ch]
+    const GLfloat *psurfaced; // [esp+0h] [ebp-7Ch]
+    const GLfloat *psurfacee; // [esp+0h] [ebp-7Ch]
+    float psurfacef; // [esp+0h] [ebp-7Ch]
+    const GLfloat *psurfaceg; // [esp+0h] [ebp-7Ch]
+    GLfloat psurface_4a; // [esp+4h] [ebp-78h]
+    GLfloat psurface_4b; // [esp+4h] [ebp-78h]
+    decal_t *psurface_4; // [esp+4h] [ebp-78h]
+    GLfloat psurface_4c; // [esp+4h] [ebp-78h]
+    msurface_t *v66; // [esp+8h] [ebp-74h]
+    texture_t *v67; // [esp+Ch] [ebp-70h]
+    int *v68; // [esp+10h] [ebp-6Ch]
+    texture_t *sOffseta; // [esp+34h] [ebp-48h]
+    float sOffset; // [esp+34h] [ebp-48h]
+    int sOffsetb; // [esp+34h] [ebp-48h]
+    float *sOffsetc; // [esp+34h] [ebp-48h]
+    int textureMask; // [esp+38h] [ebp-44h]
+    int textureMaska; // [esp+38h] [ebp-44h]
+    int textureMaskb; // [esp+38h] [ebp-44h]
+    int renderDetailTexture; // [esp+3Ch] [ebp-40h]
+    float v77; // [esp+4Ch] [ebp-30h]
+    float v78; // [esp+4Ch] [ebp-30h]
+    const texture_t *poutVerts; // [esp+58h] [ebp-24h] BYREF
+    int pvertCount[8]; // [esp+5Ch] [ebp-20h] BYREF
+
+    if ( !R_UseLegacyRender()
+      && qglCreateShader
+      && qglDeleteShader
+      && qglShaderSource
+      && qglGetProgramiv
+      && qglGetProgramInfoLog
+      && qglAttachShader
+      && qglLinkProgram
+      && qglCreateProgram
+      && qglDeleteProgram
+      && qglUseProgram )
+    {
+      R_LoadShaders_0();
+    }
+    if ( currententity->curstate.rendermode == 1 )
+    {
+      if ( g_bHasShaderFunctions && g_uCurrentProgram )
+      {
+        qglUseProgram(0);
+        g_uCurrentProgram = 0;
+      }
+      if ( mtexenabled )
+      {
+        qglDisable(0xDE1u);
+        GL_SelectTexture(TEXTURE0_SGIS);
+        mtexenabled = false;
+      }
+      qglBlendFunc(0x302u, 0x303u);
+      qglEnable(0xBE2u);
+      v12 = R_TextureAnimation((msurface_t *)surface);
+      GL_Bind(v12->anim_total);
+      qglDisable(0xDE1u);
+      DrawGLSolidPoly(*((glpoly_t **)surface + 9));
+      qglEnable(0xDE1u);
+      if ( gl_mtexable )
+      {
+        GL_SelectTexture(TEXTURE1_SGIS);
+        qglEnable(0xDE1u);
+        mtexenabled = true;
+      }
+    }
+    else
+    {
+      v3 = *((_DWORD *)surface + 2);
+      if ( (v3 & 0x94) == 0 )
+      {
+        if ( !filterMode )
+        {
+          ++c_brush_polys;
+          if ( (v3 & 0x14) == 0 )
+          {
+            if ( (*(_DWORD *)(*((_DWORD *)surface + 9) + 4) = lightmap_polys[*((_DWORD *)surface + 14)],
+                  lightmap_polys[*((_DWORD *)surface + 14)] = *((glpoly_t **)surface + 9),
+                  v13 = *((unsigned __int8 *)surface + 60),
+                  (_BYTE)v13 != 0xFF)
+              && (d_lightstylevalue[v13] != *((_DWORD *)surface + 16)
+               || (v14 = *((unsigned __int8 *)surface + 61), (_BYTE)v14 != 0xFF)
+               && (*((_DWORD *)surface + 17) != d_lightstylevalue[v14]
+                || (v15 = *((unsigned __int8 *)surface + 62), (_BYTE)v15 != 0xFF)
+                && (*((_DWORD *)surface + 18) != d_lightstylevalue[v15]
+                 || (v16 = *((unsigned __int8 *)surface + 63), (_BYTE)v16 != 0xFF)
+                 && d_lightstylevalue[v16] != *((_DWORD *)surface + 19))))
+              || *((_DWORD *)surface + 12) == r_framecount
+              || *((_DWORD *)surface + 20) )
+            {
+              if ( r_dynamic.value != 0.0 )
+                R_ReUploadLightmap((msurface_t *)surface);
+            }
+          }
+        }
+        if ( !gl_mtexable || (currententity->curstate.rendermode & 0xFFFFFFFB) != 0 )
+        {
+          v4 = *((_DWORD *)surface + 9);
+          v5 = R_TextureAnimation((msurface_t *)surface);
+          if ( mtexenabled )
+          {
+            sOffseta = v5;
+            qglDisable(0xDE1u);
+            GL_SelectTexture(TEXTURE0_SGIS);
+            mtexenabled = false;
+            v5 = sOffseta;
+          }
+          GL_Bind(v5->anim_total);
+          if ( g_bHasShaderFunctions )
+          {
+            v17 = 0;
+            if ( gl_use_shaders.value != 0.0 )
+            {
+              v17 = g_fsWorldProgram[1];
+              if ( sv_allow_shaders.value == 0.0 )
+                v17 = 0;
+            }
+            if ( g_uCurrentProgram != v17 )
+            {
+              qglUseProgram(v17);
+              g_uCurrentProgram = v17;
+            }
+          }
+          if ( (*((_BYTE *)surface + 8) & 0x20) != 0 )
+          {
+            DrawGLPolyScroll((msurface_t *)surface, currententity);
+          }
+          else
+          {
+            v10 = 0;
+            qglBegin(9u);
+            v11 = v4 + 16;
+            if ( *(int *)(v4 + 8) > 0 )
+            {
+              do
+              {
+                ++v10;
+                qglTexCoord2f(*(GLfloat *)(v11 + 12), *(GLfloat *)(v11 + 16));
+                psurfaceb = (const GLfloat *)v11;
+                v11 += 28;
+                qglVertex3fv(psurfaceb);
+              }
+              while ( *(_DWORD *)(v4 + 8) > v10 );
+            }
+            qglEnd();
+          }
+          if ( gl_texsort == false && *((_DWORD *)surface + 22) )
+          {
+            v6 = gDecalSurfCount;
+            gDecalSurfs[gDecalSurfCount] = (msurface_t *)surface;
+            gDecalSurfCount = v6 + 1;
+            if ( v6 + 1 > 500 )
+              Sys_Error("Too many decal surfaces!\n");
+            R_DrawDecals_0(psurface);
+          }
+          if ( cleanUpShaderState )
+          {
+            if ( g_bHasShaderFunctions == false || !g_uCurrentProgram )
+            {
+              if ( gl_wireframe.value == 0.0 )
+              {
+  LABEL_29:
+                if ( !currententity->curstate.rendermode )
+                {
+                  if ( g_bHasShaderFunctions )
+                  {
+                    v7 = 0;
+                    if ( gl_use_shaders.value != 0.0 )
+                    {
+                      v7 = g_fsWorldProgram[1];
+                      if ( sv_allow_shaders.value == 0.0 )
+                        v7 = 0;
+                    }
+                    if ( g_uCurrentProgram != v7 )
+                    {
+                      qglUseProgram(v7);
+                      g_uCurrentProgram = v7;
+                    }
+                  }
+                  if ( filterMode )
+                    GL_Bind(gl_FilterTexture);
+                  else
+                    GL_Bind(lightmap_textures[*((_DWORD *)surface + 14)]);
+                  v8 = 0;
+                  qglEnable(0xBE2u);
+                  v9 = v4 + 16;
+                  qglBegin(9u);
+                  if ( *(int *)(v4 + 8) > 0 )
+                  {
+                    do
+                    {
+                      ++v8;
+                      qglTexCoord2f(*(GLfloat *)(v9 + 20), *(GLfloat *)(v9 + 24));
+                      psurfacea = (const GLfloat *)v9;
+                      v9 += 28;
+                      qglVertex3fv(psurfacea);
+                    }
+                    while ( *(_DWORD *)(v4 + 8) > v8 );
+                  }
+                  qglEnd();
+                  qglDisable(0xBE2u);
+                  if ( cleanUpShaderState && g_bHasShaderFunctions )
+                  {
+                    if ( g_uCurrentProgram )
+                    {
+                      qglUseProgram(0);
+                      g_uCurrentProgram = 0;
+                    }
+                  }
+                }
+                return;
+              }
+  LABEL_84:
+              qglDisable(0xDE1u);
+              qglColor3f(1.0, 1.0, 1.0);
+              if ( gl_wireframe.value == 2.0 )
+                qglDisable(0xB71u);
+              v18 = 0;
+              qglBegin(2u);
+              v19 = (const GLfloat *)(v4 + 16);
+              if ( *(int *)(v4 + 8) > 0 )
+              {
+                do
+                {
+                  psurfacec = v19;
+                  ++v18;
+                  v19 += 7;
+                  qglVertex3fv(psurfacec);
+                }
+                while ( *(_DWORD *)(v4 + 8) > v18 );
+              }
+              qglEnd();
+              qglEnable(0xDE1u);
+              if ( gl_wireframe.value == 2.0 )
+                qglEnable(0xB71u);
+              goto LABEL_29;
+            }
+            qglUseProgram(0);
+            g_uCurrentProgram = 0;
+          }
+          if ( gl_wireframe.value == 0.0 )
+            goto LABEL_29;
+          if ( g_bHasShaderFunctions && g_uCurrentProgram )
+          {
+            qglUseProgram(0);
+            g_uCurrentProgram = 0;
+          }
+          goto LABEL_84;
+        }
+        v20 = *((_DWORD *)surface + 9);
+        v21 = R_TextureAnimation((msurface_t *)surface);
+        GL_SelectTexture(TEXTURE0_SGIS);
+        GL_Bind(v21->anim_total);
+        qglTexEnvf(0x2300u, 0x2200u, 8448.0);
+        textureMask = 3;
+        if ( currententity->curstate.rendermode == 1 )
+        {
+          qglDisable(0xDE1u);
+          textureMask = 2;
+        }
+        if ( gl_mtexable )
+        {
+          GL_SelectTexture(TEXTURE1_SGIS);
+          qglEnable(0xDE1u);
+          mtexenabled = true;
+        }
+        if ( filterMode )
+          GL_Bind(gl_FilterTexture);
+        else
+          GL_Bind(lightmap_textures[*((_DWORD *)surface + 14)]);
+        v22 = *((_DWORD *)surface + 14);
+        if ( lightmap_modified[v22] )
+        {
+          lightmap_modified[v22] = false;
+          v36 = &lightmap_rectchange[v22];
+          sOffsetb = v22;
+          qglTexSubImage2D(
+            0xDE1u,
+            0,
+            0,
+            lightmap_rectchange[v22].t,
+            128,
+            lightmap_rectchange[v22].h,
+            gl_lightmap_format,
+            0x1401u,
+            &lightmaps[lightmap_bytes * ((lightmap_rectchange[v22].t + (v22 << 7)) << 7)]);
+          v36->t = 128;
+          v36->h = 0;
+          v36->w = 0;
+          lightmap_rectchange[sOffsetb].l = 128;
+        }
+        qglTexEnvf(0x2300u, 0x2200u, 8448.0);
+        renderDetailTexture = DT_SetRenderState(v21->anim_total);
+        v23 = textureMask | 4;
+        if ( !renderDetailTexture )
+          v23 = textureMask;
+        textureMaska = v23;
+        sOffset = 0.0;
+        if ( (*((_BYTE *)surface + 8) & 0x20) != 0 )
+        {
+          v77 = (long double)((currententity->curstate.rendercolor.g << 8) + currententity->curstate.rendercolor.b)
+              * 0.0625;
+          v35 = -v77;
+          if ( currententity->curstate.rendercolor.r )
+            v35 = v77;
+          v78 = 1.0
+              / (long double)_mm_cvtsi32_si128(*(_DWORD *)(*(_DWORD *)(*((_DWORD *)surface + 11) + 36) + 16)).m128i_i64[0]
+              * (v35
+               * nMax.time);
+          if ( sOffset > (long double)v78 )
+            sOffset = fmod(v78, -1.0);
+          else
+            sOffset = fmod(v78, 1.0);
+        }
+        if ( g_bHasShaderFunctions )
+        {
+          v34 = 0;
+          if ( gl_use_shaders.value != 0.0 )
+          {
+            v34 = g_fsWorldProgram[textureMaska];
+            if ( sv_allow_shaders.value == 0.0 )
+              v34 = 0;
+          }
+          if ( g_uCurrentProgram != v34 )
+          {
+            qglUseProgram(v34);
+            g_uCurrentProgram = v34;
+          }
+        }
+        v24 = *((_DWORD *)surface + 23);
+        if ( v24 )
+        {
+          if ( currententity->curstate.rendermode == *((_DWORD *)surface + 24)
+            && *((float *)surface + 25) == sOffset
+            && renderDetailTexture == *((_DWORD *)surface + 26) )
+          {
+            if ( gl_display_lists.value != 0.0 )
+            {
+              glCallList(*((_DWORD *)surface + 23));
+              goto LABEL_136;
+            }
+  LABEL_109:
+            v25 = (float *)(v20 + 16);
+            qglBegin(9u);
+            if ( *(int *)(v20 + 8) > 0 )
+            {
+              v26 = 0;
+              if ( renderDetailTexture )
+              {
+                do
+                {
+                  ++v26;
+                  psurface_4b = sOffset + v25[3];
+                  qglMTexCoord2fSGIS(TEXTURE0_SGIS, psurface_4b, v25[4]);
+                  qglMTexCoord2fSGIS(TEXTURE1_SGIS, v25[5], v25[6]);
+                  psurfacef = sOffset + v25[3];
+                  DT_SetTextureCoordinates(psurfacef, v25[4]);
+                  psurfaceg = v25;
+                  v25 += 7;
+                  qglVertex3fv(psurfaceg);
+                }
+                while ( *(_DWORD *)(v20 + 8) > v26 );
+                qglEnd();
+                if ( gl_display_lists.value == 0.0 )
+                  goto LABEL_137;
+              }
+              else
+              {
+                do
+                {
+                  ++v26;
+                  psurface_4a = sOffset + v25[3];
+                  qglMTexCoord2fSGIS(TEXTURE0_SGIS, psurface_4a, v25[4]);
+                  qglMTexCoord2fSGIS(TEXTURE1_SGIS, v25[5], v25[6]);
+                  psurfaced = v25;
+                  v25 += 7;
+                  qglVertex3fv(psurfaced);
+                }
+                while ( v26 < *(_DWORD *)(v20 + 8) );
+                qglEnd();
+                if ( gl_display_lists.value == 0.0 )
+                  goto LABEL_113;
+              }
+              goto LABEL_135;
+            }
+            qglEnd();
+            if ( gl_display_lists.value != 0.0 )
+  LABEL_135:
+              glEndList();
+  LABEL_136:
+            if ( !renderDetailTexture )
+            {
+  LABEL_113:
+              if ( g_bHasShaderFunctions )
+              {
+                v33 = 0;
+                if ( gl_use_shaders.value != 0.0 )
+                {
+                  v33 = g_fsWorldProgram[textureMaska];
+                  if ( sv_allow_shaders.value == 0.0 )
+                    v33 = 0;
+                }
+                if ( g_uCurrentProgram != v33 )
+                {
+                  qglUseProgram(v33);
+                  g_uCurrentProgram = v33;
+                }
+              }
+              if ( gl_texsort || !*((_DWORD *)surface + 22) )
+                goto LABEL_118;
+              v27 = gDecalSurfCount;
+              gDecalSurfs[gDecalSurfCount] = (msurface_t *)surface;
+              gDecalSurfCount = v27 + 1;
+              if ( v27 + 1 > 500 )
+                Sys_Error("Too many decal surfaces!\n");
+              if ( currententity->curstate.rendermode || !gDecalSurfCount )
+              {
+  LABEL_118:
+                if ( cleanUpShaderState )
+                {
+                  if ( g_bHasShaderFunctions == false )
+                  {
+                    if ( gl_wireframe.value == 0.0 )
+                      return;
+                    goto LABEL_123;
+                  }
+                  if ( !g_uCurrentProgram )
+                  {
+                    if ( gl_wireframe.value == 0.0 )
+                      return;
+                    goto LABEL_123;
+                  }
+                  qglUseProgram(0);
+                  g_uCurrentProgram = 0;
+                }
+                if ( gl_wireframe.value == 0.0 )
+                  return;
+                if ( g_bHasShaderFunctions && g_uCurrentProgram )
+                {
+                  qglUseProgram(0);
+                  g_uCurrentProgram = 0;
+                }
+  LABEL_123:
+                qglDisable(0xDE1u);
+                qglColor3f(1.0, 1.0, 1.0);
+                if ( gl_wireframe.value == 2.0 )
+                  qglDisable(0xB71u);
+                v28 = 0;
+                qglBegin(2u);
+                v29 = (const GLfloat *)(v20 + 16);
+                if ( *(int *)(v20 + 8) > 0 )
+                {
+                  do
+                  {
+                    psurfacee = v29;
+                    ++v28;
+                    v29 += 7;
+                    qglVertex3fv(psurfacee);
+                  }
+                  while ( *(_DWORD *)(v20 + 8) > v28 );
+                }
+                qglEnd();
+                qglEnable(0xDE1u);
+                if ( gl_wireframe.value == 2.0 )
+                  qglEnable(0xB71u);
+                return;
+              }
+              qglEnable(0xBE2u);
+              qglEnable(0xBC0u);
+              qglBlendFunc(0x302u, 0x303u);
+              qglDepthMask(0);
+              if ( gl_polyoffset.value == 0.0 )
+              {
+                if ( gDecalSurfCount <= 0 )
+                {
+  LABEL_177:
+                  qglDisable(0xBC0u);
+                  qglDisable(0xBE2u);
+                  qglDepthMask(1u);
+                  gDecalSurfCount = 0;
+                  goto LABEL_118;
+                }
+              }
+              else
+              {
+                qglEnable(0x8037u);
+                if ( gl_ztrick.value == 0.0 || gldepthmin < 0.5 )
+                {
+                  psurface_4c = -gl_polyoffset.value;
+                  qglPolygonOffset(-1.0, psurface_4c);
+                }
+                else
+                {
+                  qglPolygonOffset(1.0, gl_polyoffset.value);
+                }
+                if ( gDecalSurfCount <= 0 )
+                {
+  LABEL_175:
+                  if ( gl_polyoffset.value != 0.0 )
+                    qglDisable(0x8037u);
+                  goto LABEL_177;
+                }
+              }
+              textureMaskb = v20;
+              v37 = 0;
+              while ( 1 )
+              {
+                v38 = gDecalSurfs[v37];
+                firstedge = v38[1].firstedge;
+                if ( firstedge )
+                  break;
+  LABEL_173:
+                if ( ++v37 >= gDecalSurfCount )
+                {
+                  v20 = textureMaskb;
+                  goto LABEL_175;
+                }
+              }
+              while ( 1 )
+              {
+                v52 = Draw_DecalTexture(*(__int16 *)(firstedge + 20));
+                if ( (*(_BYTE *)(firstedge + 22) & 0x40) != 0 )
+                  goto LABEL_163;
+                v53 = R_DecalVertsClip_0((float *)&poutVerts, psurface_4, v66, v67, v68);
+                if ( !poutVerts )
+                  break;
+                sOffsetc = v53;
+                R_DecalVertsLight(v53, v38, (int)poutVerts);
+                v42 = sOffsetc;
+                if ( (*(_BYTE *)(firstedge + 22) & 0x40) != 0 )
+                  goto LABEL_163;
+                v51 = poutVerts;
+                if ( poutVerts )
+                {
+  LABEL_166:
+                  R_DecalMPoly(v42, v52, v38, (int)v51);
+  LABEL_167:
+                  firstedge = *(_DWORD *)firstedge;
+                  if ( !firstedge )
+                    goto LABEL_173;
+                }
+                else
+                {
+                  firstedge = *(_DWORD *)firstedge;
+                  if ( !firstedge )
+                    goto LABEL_173;
+                }
+              }
+              if ( (*(_BYTE *)(firstedge + 22) & 0x40) == 0 )
+                goto LABEL_167;
+  LABEL_163:
+              v40 = -1227133513 * ((firstedge - (int)gDecalPool) >> 2);
+              v41 = (unsigned __int8)v40;
+              v42 = gDecalCache[v41].decalVert[0];
+              if ( v40 != gDecalCache[v41].decalIndex )
+              {
+                gDecalCache[(unsigned __int8)v40].decalIndex = v40;
+                v42 = R_DecalVertsClip(v42, (decal_t *)firstedge, v38, v52, pvertCount);
+                v43 = *(float **)v38->texturemins;
+                v44 = *v42 * v43[4]
+                    + v42[1] * v43[5]
+                    + v42[2] * v43[6]
+                    + v43[7]
+                    - (long double)SHIWORD(v38->firstedge)
+                    + (long double)(16 * (int)v38->cachespots[1])
+                    + 8.0;
+                v42[5] = (*v42 * *v43
+                        + v42[1] * v43[1]
+                        + v42[2] * v43[2]
+                        + v43[3]
+                        - (long double)SLOWORD(v38->firstedge)
+                        + (long double)(16 * (int)v38->cachespots[0])
+                        + 8.0)
+                       * 0.00048828125;
+                v42[6] = v44 * 0.00048828125;
+                v45 = *(float **)v38->texturemins;
+                v46 = v42[7] * v45[4]
+                    + v42[8] * v45[5]
+                    + v42[9] * v45[6]
+                    + v45[7]
+                    - (long double)SHIWORD(v38->firstedge)
+                    + (long double)(16 * (int)v38->cachespots[1])
+                    + 8.0;
+                v42[12] = (v42[7] * *v45
+                         + v42[8] * v45[1]
+                         + v42[9] * v45[2]
+                         + v45[3]
+                         - (long double)SLOWORD(v38->firstedge)
+                         + (long double)(16 * (int)v38->cachespots[0])
+                         + 8.0)
+                        * 0.00048828125;
+                v42[13] = v46 * 0.00048828125;
+                v47 = *(float **)v38->texturemins;
+                v48 = v42[14] * v47[4]
+                    + v42[15] * v47[5]
+                    + v42[16] * v47[6]
+                    + v47[7]
+                    - (long double)SHIWORD(v38->firstedge)
+                    + (long double)(16 * (int)v38->cachespots[1])
+                    + 8.0;
+                v42[19] = (v42[14] * *v47
+                         + v42[15] * v47[1]
+                         + v42[16] * v47[2]
+                         + v47[3]
+                         - (long double)SLOWORD(v38->firstedge)
+                         + (long double)(16 * (int)v38->cachespots[0])
+                         + 8.0)
+                        * 0.00048828125;
+                v42[20] = v48 * 0.00048828125;
+                v49 = *(float **)v38->texturemins;
+                v50 = v42[21] * v49[4]
+                    + v42[22] * v49[5]
+                    + v42[23] * v49[6]
+                    + v49[7]
+                    - (long double)SHIWORD(v38->firstedge)
+                    + (long double)(16 * (int)v38->cachespots[1])
+                    + 8.0;
+                v42[26] = (v42[21] * *v49
+                         + v42[22] * v49[1]
+                         + v42[23] * v49[2]
+                         + v49[3]
+                         - (long double)SLOWORD(v38->firstedge)
+                         + (long double)(16 * (int)v38->cachespots[0])
+                         + 8.0)
+                        * 0.00048828125;
+                v42[27] = 0.00048828125 * v50;
+              }
+              poutVerts = &pIn;
+              v51 = &pIn;
+              goto LABEL_166;
+            }
+  LABEL_137:
+            DT_ClearRenderState();
+            textureMaska &= ~4u;
+            goto LABEL_113;
+          }
+          glDeleteLists(v24, 1);
+          *((_DWORD *)surface + 23) = 0;
+        }
+        if ( gl_display_lists.value != 0.0 )
+        {
+          v30 = glGenLists(1);
+          v31 = currententity;
+          *((_DWORD *)surface + 23) = v30;
+          rendermode = v31->curstate.rendermode;
+          *((float *)surface + 25) = sOffset;
+          *((_DWORD *)surface + 26) = renderDetailTexture;
+          *((_DWORD *)surface + 24) = rendermode;
+          glNewList(v30, 0x1301u);
+        }
+        goto LABEL_109;
+      }
+      if ( (v3 & 0x10) != 0 )
+      {
+        if ( g_bHasShaderFunctions && g_uCurrentProgram )
+        {
+          qglUseProgram(0);
+          g_uCurrentProgram = 0;
+        }
+        if ( mtexenabled )
+        {
+          qglDisable(0xDE1u);
+          GL_SelectTexture(TEXTURE0_SGIS);
+          mtexenabled = false;
+        }
+        GL_Bind(*(_DWORD *)(*(_DWORD *)(*((_DWORD *)surface + 11) + 36) + 24));
+        EmitWaterPolys((msurface_t *)surface, face);
+      }
+    }
+  }

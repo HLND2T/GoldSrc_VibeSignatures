@@ -1,0 +1,31 @@
+func_name: "GL_EnableMultitexture"
+func_va: "0x1809b0"
+disasm_code: |-
+  ; mtexenabled is the state set to 1 after selecting unit 1 and enabling GL_TEXTURE_2D.
+  .text:001809B0                 mov     edx, ds:gl_mtexable
+  .text:001809B6                 test    edx, edx
+  .text:001809B8                 jnz     short loc_1809C0
+  .text:001809BA                 retn
+  .text:001809C0                 sub     esp, 1Ch
+  .text:001809C3                 mov     eax, TEXTURE1_SGIS
+  .text:001809C8                 ; target
+  .text:001809C8                 mov     [esp+1Ch+target], eax; target
+  .text:001809CB                 call    GL_SelectTexture
+  .text:001809D0                 ; GLenum
+  .text:001809D0                 mov     [esp+1Ch+target], 0DE1h; GLenum
+  .text:001809D7                 call    ds:qglEnable
+  .text:001809DD                 mov     eax, 1
+  .text:001809E2                 mov     ds:mtexenabled, eax
+  .text:001809E7                 add     esp, 1Ch
+  .text:001809EA                 retn
+procedure: |-
+  // mtexenabled is the enabled state, not the capability condition gl_mtexable.
+  void GL_EnableMultitexture()
+  {
+    if ( gl_mtexable )
+    {
+      GL_SelectTexture(TEXTURE1_SGIS);
+      qglEnable(0xDE1u);
+      mtexenabled = true;
+    }
+  }
