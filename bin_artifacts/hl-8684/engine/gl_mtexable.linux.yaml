@@ -1,0 +1,8 @@
+gv_name: gl_mtexable
+gv_va: '0x81c600'
+gv_rva: '0x81c600'
+gv_sig: 53 83 EC ?? 8B 0D ?? ?? ?? ?? 8B 5C 24 ?? 85 C9 75 ?? 83 C4 ?? 5B C3
+gv_sig_va: '0x1a1120'
+gv_inst_offset: '0x4'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

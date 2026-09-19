@@ -1,0 +1,35 @@
+func_name: "GL_SelectTexture"
+func_va: "0x1d500b0"
+disasm_code: |-
+  ; gl_mtexable gates texture-unit selection; oldtarget is the previous unit compared with target and updated after caching bindings.
+  .text:01D500B0                 cmp     gl_mtexable, 0
+  .text:01D500B7                 jz      short locret_1D500EE
+  .text:01D500B9                 push    esi
+  .text:01D500BA                 mov     esi, [esp+4+target]
+  .text:01D500BE                 push    esi
+  .text:01D500BF                 call    __glewActiveTextureARB
+  .text:01D500C5                 mov     ecx, oldtarget
+  .text:01D500CB                 cmp     esi, ecx
+  .text:01D500CD                 jz      short loc_1D500ED
+  .text:01D500CF                 mov     eax, currenttexture
+  .text:01D500D4                 mov     dword ptr ds:aInsertelementa_14[ecx*4], eax; "?insertElementAt@?$Dar@PAVRepaintSignal"...
+  .text:01D500DB                 mov     eax, dword ptr ds:aInsertelementa_14[esi*4]; "?insertElementAt@?$Dar@PAVRepaintSignal"...
+  .text:01D500E2                 mov     currenttexture, eax
+  .text:01D500E7                 mov     oldtarget, esi
+  .text:01D500ED                 pop     esi
+  .text:01D500EE                 retn
+procedure: |-
+  // gl_mtexable gates texture-unit selection; oldtarget is the previous unit compared with target and updated after caching bindings.
+  void __cdecl GL_SelectTexture(unsigned int target)
+  {
+    if ( gl_mtexable )
+    {
+      _glewActiveTextureARB(target);
+      if ( target != oldtarget )
+      {
+        *(_DWORD *)&aInsertelementa_14[4 * oldtarget] = currenttexture;
+        currenttexture = *(_DWORD *)&aInsertelementa_14[4 * target];
+        oldtarget = target;
+      }
+    }
+  }

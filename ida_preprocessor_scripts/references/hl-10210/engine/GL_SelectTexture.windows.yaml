@@ -1,0 +1,45 @@
+func_name: "GL_SelectTexture"
+func_va: "0x1023cdc0"
+disasm_code: |-
+  ; gl_mtexable gates texture-unit selection; oldtarget is the previous unit compared with target and updated after caching bindings.
+  .text:1023CDC0                 push    ebp
+  .text:1023CDC1                 mov     ebp, esp
+  .text:1023CDC3                 cmp     gl_mtexable, 0
+  .text:1023CDCA                 jz      short loc_1023CE0E
+  .text:1023CDCC                 push    esi
+  .text:1023CDCD                 mov     esi, [ebp+target]
+  .text:1023CDD0                 ; unsigned int
+  .text:1023CDD0                 push    esi; unsigned int
+  .text:1023CDD1                 call    qglSelectTextureSGIS
+  .text:1023CDD7                 mov     edx, oldtarget
+  .text:1023CDDD                 cmp     esi, edx
+  .text:1023CDDF                 jz      short loc_1023CE0D
+  .text:1023CDE1                 sub     edx, TEXTURE0_SGIS
+  .text:1023CDE7                 mov     eax, currenttexture
+  .text:1023CDEC                 mov     oldtarget, esi
+  .text:1023CDF2                 mov     cnttextures[edx*4], eax
+  .text:1023CDF9                 mov     eax, esi
+  .text:1023CDFB                 sub     eax, TEXTURE0_SGIS
+  .text:1023CE01                 mov     eax, cnttextures[eax*4]
+  .text:1023CE08                 mov     currenttexture, eax
+  .text:1023CE0D                 pop     esi
+  .text:1023CE0E                 pop     ebp
+  .text:1023CE0F                 retn
+procedure: |-
+  // gl_mtexable gates texture-unit selection; oldtarget is the previous unit compared with target and updated after caching bindings.
+  void __cdecl GL_SelectTexture(unsigned int target)
+  {
+    unsigned int v1; // edx
+
+    if ( gl_mtexable )
+    {
+      qglSelectTextureSGIS(target);
+      if ( target != oldtarget )
+      {
+        v1 = oldtarget - TEXTURE0_SGIS;
+        oldtarget = target;
+        cnttextures[v1] = currenttexture;
+        currenttexture = cnttextures[target - TEXTURE0_SGIS];
+      }
+    }
+  }

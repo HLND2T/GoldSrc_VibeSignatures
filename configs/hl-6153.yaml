@@ -212,6 +212,12 @@ modules:
           - cl_weaponsequence.{platform}.yaml
           - cl_light_level.{platform}.yaml
           - envmap.{platform}.yaml
+      - name: find-GL_SelectTexture-decompiles
+        expected_input:
+          - GL_SelectTexture.{platform}.yaml
+        expected_output:
+          - gl_mtexable.{platform}.yaml
+          - oldtarget.{platform}.yaml
       - name: find-GL_Bind-currenttexture
         expected_input:
           - GL_Bind.{platform}.yaml
@@ -260,6 +266,18 @@ modules:
           - R_DrawTEntitiesOnList.{platform}.yaml
         expected_output:
           - R_DrawBrushModel.{platform}.yaml
+      - name: find-GL_EnableMultitexture
+        platform: windows
+        expected_input:
+          - R_DrawSequentialPoly.{platform}.yaml
+        expected_output:
+          - GL_EnableMultitexture.{platform}.yaml
+      - name: find-GL_EnableMultitexture-decompiles
+        platform: windows
+        expected_input:
+          - GL_EnableMultitexture.{platform}.yaml
+        expected_output:
+          - mtexenabled.{platform}.yaml
       - name: find-R_DrawSequentialPoly-decompiles
         expected_input:
           - R_DrawBrushModel.{platform}.yaml
@@ -707,6 +725,12 @@ modules:
     symbols:
       - name: currenttexture
         category: gv
+      - name: gl_mtexable
+        category: gv
+      - name: oldtarget
+        category: gv
+      - name: mtexenabled
+        category: gv
       - name: detTexSupported
         category: gv
       - name: envmap
@@ -1010,6 +1034,9 @@ modules:
         category: func
       - name: GL_Set2D
         category: func
+      - name: GL_EnableMultitexture
+        category: func
+        platform: windows
       - name: GL_SelectTexture
         category: func
       - name: GL_UnloadTextures

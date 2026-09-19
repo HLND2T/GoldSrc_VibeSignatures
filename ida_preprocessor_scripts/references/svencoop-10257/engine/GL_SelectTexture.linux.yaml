@@ -1,0 +1,56 @@
+func_name: "GL_SelectTexture"
+func_va: "0x126480"
+disasm_code: |-
+  ; gl_mtexable gates texture-unit selection; oldtarget is the previous unit compared with target and updated after caching bindings.
+  .text:00126480                 sub     esp, 1Ch
+  .text:00126483                 mov     [esp+1Ch+var_C], ebx
+  .text:00126487                 call    sub_56390
+  .text:0012648C                 add     ebx, (offset dbl_2EE000 - $)
+  .text:00126492                 mov     [esp+1Ch+var_8], esi
+  .text:00126496                 mov     esi, [esp+1Ch+target]
+  .text:0012649A                 mov     [esp+1Ch+var_4], edi
+  .text:0012649E                 lea     eax, (gl_mtexable - 2EE000h)[ebx]
+  .text:001264A4                 mov     eax, [eax]
+  .text:001264A6                 test    eax, eax
+  .text:001264A8                 jnz     short loc_1264C0
+  .text:001264AA                 mov     ebx, [esp+1Ch+var_C]
+  .text:001264AE                 mov     esi, [esp+1Ch+var_8]
+  .text:001264B2                 mov     edi, [esp+1Ch+var_4]
+  .text:001264B6                 add     esp, 1Ch
+  .text:001264B9                 retn
+  .text:001264C0                 mov     eax, ds:(__glewActiveTextureARB_ptr - 2EE000h)[ebx]
+  .text:001264C6                 mov     [esp+1Ch+var_1C], esi
+  .text:001264C9                 call    dword ptr [eax]
+  .text:001264CB                 mov     eax, (oldtarget - 2EE000h)[ebx]
+  .text:001264D1                 cmp     esi, eax
+  .text:001264D3                 jz      short loc_1264AA
+  .text:001264D5                 lea     edx, (currenttexture - 2EE000h)[ebx]
+  .text:001264DB                 lea     ecx, (cnttextures - 2EE000h)[ebx]
+  .text:001264E1                 mov     (oldtarget - 2EE000h)[ebx], esi
+  .text:001264E7                 mov     edi, [edx]
+  .text:001264E9                 mov     [ecx+eax*4-21300h], edi
+  .text:001264F0                 mov     eax, [ecx+esi*4-21300h]
+  .text:001264F7                 mov     [edx], eax
+  .text:001264F9                 mov     ebx, [esp+1Ch+var_C]
+  .text:001264FD                 mov     esi, [esp+1Ch+var_8]
+  .text:00126501                 mov     edi, [esp+1Ch+var_4]
+  .text:00126505                 add     esp, 1Ch
+  .text:00126508                 retn
+procedure: |-
+  // gl_mtexable gates texture-unit selection; oldtarget is the previous unit compared with target and updated after caching bindings.
+  void __cdecl GL_SelectTexture(unsigned int target)
+  {
+    unsigned int v1; // eax
+
+    if ( gl_mtexable )
+    {
+      ((void (__cdecl *)(unsigned int))_glewActiveTextureARB)(target);
+      v1 = oldtarget;
+      if ( target != oldtarget )
+      {
+        oldtarget = target;
+        cnttextures[v1 - 33984] = currenttexture;
+        currenttexture = cnttextures[target - 33984];
+      }
+    }
+  }
