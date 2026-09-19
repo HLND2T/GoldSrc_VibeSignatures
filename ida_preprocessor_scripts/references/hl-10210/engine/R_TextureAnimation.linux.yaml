@@ -1,0 +1,205 @@
+func_name: "R_TextureAnimation"
+func_va: "0x1807d0"
+disasm_code: |-
+  ; rtable: whole function-local 20x20 int array. Select its first-element check or initialization base, never the end pointer.
+  ; The initialization calls RandomLong(0, 0x7FFF); later texture-dependent indexing reads the same array.
+  .text:001807D0                 push    ebp
+  .text:001807D1                 push    edi
+  .text:001807D2                 push    esi
+  .text:001807D3                 push    tm2
+  .text:001807D4                 sub     esp, 2Ch
+  .text:001807D7                 mov     eax, [esp+3Ch+s]
+  .text:001807DB                 mov     edx, ds:rtable
+  .text:001807E1                 mov     eax, [eax+2Ch]
+  .text:001807E4                 test    edx, edx
+  .text:001807E6                 mov     tm2, [eax+24h]
+  .text:001807E9                 jnz     short loc_180833
+  .text:001807EB                 mov     esi, offset rtable
+  .text:001807F0                 mov     ebp, offset outvert
+  .text:001807F5                 lea     esi, [esi+0]
+  .text:001807F9                 lea     edi, [edi+0]
+  .text:00180800                 lea     edi, [esi+50h]
+  .text:00180803                 lea     esi, [esi+0]
+  .text:00180809                 lea     edi, [edi+0]
+  .text:00180810                 mov     eax, 7FFFh
+  .text:00180815                 add     esi, 4
+  .text:00180818                 ; lHigh
+  .text:00180818                 mov     [esp+3Ch+lHigh], eax; lHigh
+  .text:0018081C                 ; lLow
+  .text:0018081C                 mov     [esp+3Ch+lLow], 0; lLow
+  .text:00180823                 call    RandomLong
+  .text:00180828                 mov     [esi-4], eax
+  .text:0018082B                 cmp     esi, edi
+  .text:0018082D                 jnz     short loc_180810
+  .text:0018082F                 cmp     ebp, esi
+  .text:00180831                 jnz     short loc_180800
+  .text:00180833                 mov     eax, ds:currententity
+  .text:00180838                 fld     dword ptr [eax+2E0h]
+  .text:0018083E                 fldz
+  .text:00180840                 fxch    st(1)
+  .text:00180842                 fucomip st, st(1)
+  .text:00180844                 fstp    st
+  .text:00180846                 jp      short loc_18084A
+  .text:00180848                 jz      short loc_180852
+  .text:0018084A                 mov     eax, [tm2+30h]
+  .text:0018084D                 test    eax, eax
+  .text:0018084F                 cmovnz  tm2, eax
+  .text:00180852                 mov     ecx, [tm2+20h]
+  .text:00180855                 test    ecx, ecx
+  .text:00180857                 jz      short loc_1808A5
+  .text:00180859                 cmp     byte ptr [tm2], 2Dh ; '-'
+  .text:0018085C                 jz      short loc_1808BD
+  .text:0018085E                 fld     ds:flt_24600C
+  .text:00180864                 xor     esi, esi
+  .text:00180866                 fmul    ds:nMax.time
+  .text:0018086C                 fstp    [esp+3Ch+var_24]
+  .text:00180870                 cvttsd2si eax, [esp+3Ch+var_24]
+  .text:00180876                 cdq
+  .text:00180877                 idiv    ecx
+  .text:00180879                 mov     edi, edx
+  .text:0018087B                 nop
+  .text:0018087C                 lea     count, [count+0]
+  .text:00180880                 cmp     reletive, [tm2+24h]
+  .text:00180883                 jl      short loc_18088A
+  .text:00180885                 cmp     reletive, [tm2+28h]
+  .text:00180888                 jl      short loc_1808A5
+  .text:0018088A                 mov     tm2, [tm2+2Ch]
+  .text:0018088D                 test    tm2, tm2
+  .text:0018088F                 jz      short loc_1808AF
+  .text:00180891                 inc     count
+  .text:00180892                 cmp     count, 64h ; 'd'
+  .text:00180895                 jle     short loc_180880
+  .text:00180897                 mov     [esp+3Ch+lLow], offset aRTextureanimat; "R_TextureAnimation: infinite cycle"
+  .text:0018089E                 call    Sys_Error
+  .text:001808A3                 jmp     short loc_180880
+  .text:001808A5                 add     esp, 2Ch
+  .text:001808A8                 mov     eax, tm2
+  .text:001808AA                 pop     tm2
+  .text:001808AB                 pop     esi
+  .text:001808AC                 pop     edi
+  .text:001808AD                 pop     ebp
+  .text:001808AE                 retn
+  .text:001808AF                 mov     [esp+3Ch+lLow], offset aRTextureanimat_0; "R_TextureAnimation: broken cycle"
+  .text:001808B6                 call    Sys_Error
+  .text:001808BB                 jmp     short loc_180891
+  .text:001808BD                 mov     eax, [esp+3Ch+s]
+  .text:001808C1                 mov     ebp, [tm2+10h]
+  .text:001808C4                 movsx   edx, word ptr [eax+14h]
+  .text:001808C8                 mov     eax, ebp
+  .text:001808CA                 shl     eax, 10h
+  .text:001808CD                 add     eax, edx
+  .text:001808CF                 xor     edx, edx
+  .text:001808D1                 div     ebp
+  .text:001808D3                 mov     ebp, 66666667h
+  .text:001808D8                 mov     edi, eax
+  .text:001808DA                 imul    ebp
+  .text:001808DC                 mov     eax, edx
+  .text:001808DE                 mov     edx, edi
+  .text:001808E0                 sar     edx, 1Fh
+  .text:001808E3                 sar     eax, 3
+  .text:001808E6                 sub     eax, edx
+  .text:001808E8                 xor     edx, edx
+  .text:001808EA                 lea     eax, [eax+eax*4]
+  .text:001808ED                 shl     eax, 2
+  .text:001808F0                 sub     edi, eax
+  .text:001808F2                 mov     eax, [esp+3Ch+s]
+  .text:001808F6                 movsx   esi, word ptr [eax+16h]
+  .text:001808FA                 mov     eax, [tm2+14h]
+  .text:001808FD                 shl     eax, 10h
+  .text:00180900                 add     eax, esi
+  .text:00180902                 div     dword ptr [tm2+14h]
+  .text:00180905                 mov     esi, eax
+  .text:00180907                 mov     eax, ebp
+  .text:00180909                 imul    esi
+  .text:0018090B                 mov     eax, edx
+  .text:0018090D                 mov     edx, esi
+  .text:0018090F                 sar     edx, 1Fh
+  .text:00180912                 sar     eax, 3
+  .text:00180915                 sub     eax, edx
+  .text:00180917                 lea     eax, [eax+eax*4]
+  .text:0018091A                 shl     eax, 2
+  .text:0018091D                 sub     esi, eax
+  .text:0018091F                 lea     eax, [edi+edi*4]
+  .text:00180922                 lea     eax, [esi+eax*4]
+  .text:00180925                 xor     esi, esi
+  .text:00180927                 mov     eax, ds:rtable[eax*4]
+  .text:0018092E                 cdq
+  .text:0018092F                 idiv    ecx
+  .text:00180931                 mov     edi, edx
+  .text:00180933                 cmp     reletive, [tm2+24h]
+  .text:00180936                 jl      short loc_180941
+  .text:00180938                 cmp     reletive, [tm2+28h]
+  .text:0018093B                 jl      loc_1808A5
+  .text:00180941                 mov     tm2, [tm2+2Ch]
+  .text:00180944                 test    tm2, tm2
+  .text:00180946                 jz      short loc_18095C
+  .text:00180948                 inc     count
+  .text:00180949                 cmp     count, 64h ; 'd'
+  .text:0018094C                 jle     short loc_180933
+  .text:0018094E                 mov     [esp+3Ch+lLow], offset aRTextureanimat; "R_TextureAnimation: infinite cycle"
+  .text:00180955                 call    Sys_Error
+  .text:0018095A                 jmp     short loc_180933
+  .text:0018095C                 mov     [esp+3Ch+lLow], offset aRTextureanimat_0; "R_TextureAnimation: broken cycle"
+  .text:00180963                 call    Sys_Error
+procedure: |-
+  // Issue 156: rtable is the function-local 20x20 random animation table. Recover its base from initialization/read, not the end pointer. Source is a semantic reference; preserve current binary ABI.
+  gsv_anim_texture_t *__cdecl R_TextureAnimation(gsv_anim_surface_t *surface)
+  {
+    gsv_anim_texture_t *texture; // ebx
+    int *v2; // esi
+    int *v3; // edi
+    int anim_total; // ecx
+    int v5; // esi
+    int v6; // edi
+    int v8; // esi
+    int v9; // edi
+
+    texture = surface->texinfo->texture;
+    if ( !rtable[0][0] )
+    {
+      v2 = rtable[0];
+      do
+      {
+        v3 = v2 + 20;
+        do
+          *v2++ = RandomLong(0, 0x7FFF);
+        while ( v2 != v3 );
+      }
+      while ( outvert != (float (*)[7])v2 );
+    }
+    if ( currententity->curstate.frame != 0.0 && texture->alternate_anims )
+      texture = texture->alternate_anims;
+    anim_total = texture->anim_total;
+    if ( anim_total )
+    {
+      if ( texture->name[0] == 45 )
+      {
+        v8 = 0;
+        v9 = rtable[(int)((surface->texturemins[0] + (texture->width << 16)) / texture->width) % 20][(int)((surface->texturemins[1] + (texture->height << 16)) / texture->height)
+                                                                                                   % 20]
+           % anim_total;
+        while ( v9 < texture->anim_min || v9 >= texture->anim_max )
+        {
+          texture = texture->anim_next;
+          if ( !texture )
+            Sys_Error("R_TextureAnimation: broken cycle");
+          if ( ++v8 > 100 )
+            Sys_Error("R_TextureAnimation: infinite cycle");
+        }
+      }
+      else
+      {
+        v5 = 0;
+        v6 = (int)(double)(10.0 * nMax.time) % anim_total;
+        while ( v6 < texture->anim_min || v6 >= texture->anim_max )
+        {
+          texture = texture->anim_next;
+          if ( !texture )
+            Sys_Error("R_TextureAnimation: broken cycle");
+          if ( ++v5 > 100 )
+            Sys_Error("R_TextureAnimation: infinite cycle");
+        }
+      }
+    }
+    return texture;
+  }

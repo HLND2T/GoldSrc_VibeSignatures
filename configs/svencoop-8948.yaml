@@ -298,6 +298,28 @@ modules:
           - R_DrawSequentialPoly.{platform}.yaml
         expected_output:
           - mtexenabled.{platform}.yaml
+      - name: find-R_TextureAnimation
+        expected_output:
+          - R_TextureAnimation.{platform}.yaml
+      - name: find-R_TextureAnimation-decompiles
+        expected_input:
+          - R_TextureAnimation.{platform}.yaml
+        expected_output:
+          - rtable.{platform}.yaml
+      - name: find-R_DrawSequentialPoly-private-decompiles
+        expected_input:
+          - R_DrawSequentialPoly.{platform}.yaml
+        expected_output:
+          - lightmap_textures.{platform}.yaml
+          - lightmap_rectchange.{platform}.yaml
+          - lightmaps.{platform}.yaml
+          - gDecalSurfs.{platform}.yaml
+          - gDecalSurfCount.{platform}.yaml
+      - name: find-R_RenderDynamicLightmaps
+        expected_input:
+          - R_DrawSequentialPoly.{platform}.yaml
+        expected_output:
+          - R_RenderDynamicLightmaps.{platform}.yaml
       - name: find-R_DrawSequentialPoly-decompiles
         expected_input:
           - R_DrawBrushModel.{platform}.yaml
@@ -930,6 +952,22 @@ modules:
         category: func
       - name: R_DrawBrushModel
         category: func
+      - name: R_TextureAnimation
+        category: func
+      - name: R_RenderDynamicLightmaps
+        category: func
+      - name: rtable
+        category: gv
+      - name: lightmap_textures
+        category: gv
+      - name: lightmap_rectchange
+        category: gv
+      - name: lightmaps
+        category: gv
+      - name: gDecalSurfs
+        category: gv
+      - name: gDecalSurfCount
+        category: gv
       - name: R_DrawSequentialPoly
         category: func
       - name: R_DrawWorld

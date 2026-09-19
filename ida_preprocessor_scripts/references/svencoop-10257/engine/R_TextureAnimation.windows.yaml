@@ -1,0 +1,256 @@
+func_name: "R_TextureAnimation"
+func_va: "0x1d58d50"
+disasm_code: |-
+  ; rtable: whole function-local 20x20 int array. Select its first-element check or initialization base, never the end pointer.
+  ; The initialization calls RandomLong(0, 0x7FFF); later texture-dependent indexing reads the same array.
+  .text:01D58D50                 cmp     rtable, 0
+  .text:01D58D57                 mov     edx, [esp+surface]
+  .text:01D58D5B                 push    ebx
+  .text:01D58D5C                 push    esi
+  .text:01D58D5D                 push    edi
+  .text:01D58D5E                 mov     eax, [edx+2Ch]
+  .text:01D58D61                 mov     ebx, [eax+24h]
+  .text:01D58D64                 jnz     short loc_1D58DA5
+  .text:01D58D66                 mov     esi, offset rtable
+  .text:01D58D6B                 jmp     short loc_1D58D70
+  .text:01D58D70                 mov     edi, 14h
+  .text:01D58D75                 jmp     short loc_1D58D80
+  .text:01D58D80                 ; high
+  .text:01D58D80                 push    7FFFh; high
+  .text:01D58D85                 ; low
+  .text:01D58D85                 push    0; low
+  .text:01D58D87                 call    RandomLong
+  .text:01D58D8C                 mov     [esi], eax
+  .text:01D58D8E                 add     esp, 8
+  .text:01D58D91                 add     esi, 4
+  .text:01D58D94                 sub     edi, 1
+  .text:01D58D97                 jnz     short loc_1D58D80
+  .text:01D58D99                 cmp     esi, offset byte_80463C8
+  .text:01D58D9F                 jl      short loc_1D58D70
+  .text:01D58DA1                 mov     edx, [esp+0Ch+surface]
+  .text:01D58DA5                 mov     eax, dword_3F94150
+  .text:01D58DAA                 mov     ecx, [eax+2ECh]
+  .text:01D58DB0                 fld     dword ptr [eax+2E0h]
+  .text:01D58DB6                 test    ecx, 200h
+  .text:01D58DBC                 jz      short loc_1D58DF0
+  .text:01D58DBE                 fcom    ds:flt_1E61CF4
+  .text:01D58DC4                 fnstsw  ax
+  .text:01D58DC6                 xor     ecx, ecx
+  .text:01D58DC8                 test    ah, 41h
+  .text:01D58DCB                 jnz     short loc_1D58DE8
+  .text:01D58DCD                 mov     eax, [ebx+2Ch]
+  .text:01D58DD0                 test    eax, eax
+  .text:01D58DD2                 jz      short loc_1D58DD6
+  .text:01D58DD4                 mov     ebx, eax
+  .text:01D58DD6                 inc     ecx
+  .text:01D58DD7                 mov     [esp+0Ch+surface], ecx
+  .text:01D58DDB                 fild    [esp+0Ch+surface]
+  .text:01D58DDF                 fcomp   st(1)
+  .text:01D58DE1                 fnstsw  ax
+  .text:01D58DE3                 test    ah, 5
+  .text:01D58DE6                 jnp     short loc_1D58DCD
+  .text:01D58DE8                 pop     edi
+  .text:01D58DE9                 pop     esi
+  .text:01D58DEA                 mov     eax, ebx
+  .text:01D58DEC                 fstp    st
+  .text:01D58DEE                 pop     ebx
+  .text:01D58DEF                 retn
+  .text:01D58DF0                 fldz
+  .text:01D58DF2                 fucompp
+  .text:01D58DF4                 fnstsw  ax
+  .text:01D58DF6                 test    ah, 44h
+  .text:01D58DF9                 jnp     short loc_1D58E04
+  .text:01D58DFB                 mov     eax, [ebx+30h]
+  .text:01D58DFE                 test    eax, eax
+  .text:01D58E00                 jz      short loc_1D58E04
+  .text:01D58E02                 mov     ebx, eax
+  .text:01D58E04                 ; ArgList
+  .text:01D58E04                 push    ebp; ArgList
+  .text:01D58E05                 mov     ebp, [ebx+20h]
+  .text:01D58E08                 test    ebp, ebp
+  .text:01D58E0A                 jz      loc_1D58F13
+  .text:01D58E10                 cmp     byte ptr [ebx], 2Dh ; '-'
+  .text:01D58E13                 jnz     loc_1D58EBA
+  .text:01D58E19                 movsx   eax, word ptr [edx+14h]
+  .text:01D58E1D                 xor     edx, edx
+  .text:01D58E1F                 mov     ecx, [ebx+10h]
+  .text:01D58E22                 shl     ecx, 10h
+  .text:01D58E25                 add     eax, ecx
+  .text:01D58E27                 mov     ecx, [ebx+14h]
+  .text:01D58E2A                 div     dword ptr [ebx+10h]
+  .text:01D58E2D                 shl     ecx, 10h
+  .text:01D58E30                 xor     edx, edx
+  .text:01D58E32                 mov     edi, eax
+  .text:01D58E34                 mov     eax, [esp+10h+surface]
+  .text:01D58E38                 movsx   eax, word ptr [eax+16h]
+  .text:01D58E3C                 add     eax, ecx
+  .text:01D58E3E                 div     dword ptr [ebx+14h]
+  .text:01D58E41                 mov     esi, eax
+  .text:01D58E43                 mov     eax, 66666667h
+  .text:01D58E48                 imul    edi
+  .text:01D58E4A                 mov     eax, 99999999h
+  .text:01D58E4F                 sar     edx, 3
+  .text:01D58E52                 mov     ecx, edx
+  .text:01D58E54                 shr     ecx, 1Fh
+  .text:01D58E57                 add     ecx, edx
+  .text:01D58E59                 imul    esi
+  .text:01D58E5B                 lea     ecx, [ecx+ecx*4]
+  .text:01D58E5E                 sar     edx, 3
+  .text:01D58E61                 mov     eax, edx
+  .text:01D58E63                 shl     ecx, 2
+  .text:01D58E66                 shr     eax, 1Fh
+  .text:01D58E69                 add     eax, edx
+  .text:01D58E6B                 sub     eax, ecx
+  .text:01D58E6D                 add     eax, edi
+  .text:01D58E6F                 lea     eax, [eax+eax*4]
+  .text:01D58E72                 lea     eax, [esi+eax*4]
+  .text:01D58E75                 mov     eax, rtable[eax*4]
+  .text:01D58E7C                 cdq
+  .text:01D58E7D                 idiv    ebp
+  .text:01D58E7F                 xor     esi, esi
+  .text:01D58E81                 mov     edi, edx
+  .text:01D58E83                 cmp     [ebx+24h], edi
+  .text:01D58E86                 jg      short loc_1D58E91
+  .text:01D58E88                 cmp     [ebx+28h], edi
+  .text:01D58E8B                 jg      loc_1D58F13
+  .text:01D58E91                 mov     ebx, [ebx+2Ch]
+  .text:01D58E94                 test    ebx, ebx
+  .text:01D58E96                 jnz     short loc_1D58EA5
+  .text:01D58E98                 push    offset aRTextureanimat; "R_TextureAnimation: broken cycle"
+  .text:01D58E9D                 call    Sys_Error
+  .text:01D58EA2                 add     esp, 4
+  .text:01D58EA5                 inc     esi
+  .text:01D58EA6                 cmp     esi, 64h ; 'd'
+  .text:01D58EA9                 jle     short loc_1D58E83
+  .text:01D58EAB                 push    offset aRTextureanimat_0; "R_TextureAnimation: infinite cycle"
+  .text:01D58EB0                 call    Sys_Error
+  .text:01D58EB5                 add     esp, 4
+  .text:01D58EB8                 jmp     short loc_1D58E83
+  .text:01D58EBA                 test    ecx, 100h
+  .text:01D58EC0                 jnz     short loc_1D58F13
+  .text:01D58EC2                 fld     dbl_234BA68
+  .text:01D58EC8                 fmul    ds:dbl_1E62A00
+  .text:01D58ECE                 call    sub_1E2B450
+  .text:01D58ED3                 cdq
+  .text:01D58ED4                 idiv    ebp
+  .text:01D58ED6                 xor     esi, esi
+  .text:01D58ED8                 mov     edi, edx
+  .text:01D58EDA                 lea     ebx, [ebx+0]
+  .text:01D58EE0                 cmp     [ebx+24h], edi
+  .text:01D58EE3                 jg      short loc_1D58EEA
+  .text:01D58EE5                 cmp     [ebx+28h], edi
+  .text:01D58EE8                 jg      short loc_1D58F13
+  .text:01D58EEA                 mov     ebx, [ebx+2Ch]
+  .text:01D58EED                 test    ebx, ebx
+  .text:01D58EEF                 jnz     short loc_1D58EFE
+  .text:01D58EF1                 push    offset aRTextureanimat; "R_TextureAnimation: broken cycle"
+  .text:01D58EF6                 call    Sys_Error
+  .text:01D58EFB                 add     esp, 4
+  .text:01D58EFE                 inc     esi
+  .text:01D58EFF                 cmp     esi, 64h ; 'd'
+  .text:01D58F02                 jle     short loc_1D58EE0
+  .text:01D58F04                 push    offset aRTextureanimat_0; "R_TextureAnimation: infinite cycle"
+  .text:01D58F09                 call    Sys_Error
+  .text:01D58F0E                 add     esp, 4
+  .text:01D58F11                 jmp     short loc_1D58EE0
+  .text:01D58F13                 pop     ebp
+  .text:01D58F14                 pop     edi
+  .text:01D58F15                 pop     esi
+  .text:01D58F16                 mov     eax, ebx
+  .text:01D58F18                 pop     ebx
+  .text:01D58F19                 retn
+procedure: |-
+  // Issue 156: rtable is the function-local 20x20 random animation table. Recover its base from initialization/read, not the end pointer. Source is a semantic reference; preserve current binary ABI. SvEngine additionally handles entity effect 0x200 before ordinary animation.
+  gsv_anim_texture_t *__cdecl R_TextureAnimation(gsv_anim_surface_t *surface)
+  {
+    gsv_anim_surface_t *v1; // edx
+    gsv_anim_texture_t *texture; // ebx
+    int *v3; // esi
+    int v4; // edi
+    int v5; // ecx
+    double v6; // st7
+    int v7; // ecx
+    int anim_total; // ebp
+    signed int v10; // eax
+    signed int v11; // esi
+    int v12; // et2
+    int v13; // esi
+    int v14; // edi
+    int v15; // esi
+    int v16; // edi
+
+    v1 = surface;
+    texture = surface->texinfo->texture;
+    if ( !rtable[0][0] )
+    {
+      v3 = rtable[0];
+      do
+      {
+        v4 = 20;
+        do
+        {
+          *v3++ = RandomLong(0, 0x7FFF);
+          --v4;
+        }
+        while ( v4 );
+      }
+      while ( (int)v3 < (int)byte_80463C8 );
+      v1 = surface;
+    }
+    v5 = *((_DWORD *)dword_3F94150 + 187);
+    v6 = *((float *)dword_3F94150 + 184);
+    if ( (v5 & 0x200) != 0 )
+    {
+      v7 = 0;
+      if ( v6 > 0.0 )
+      {
+        do
+        {
+          if ( texture->anim_next )
+            texture = texture->anim_next;
+          ++v7;
+        }
+        while ( (double)v7 < v6 );
+      }
+      return texture;
+    }
+    else
+    {
+      if ( 0.0 != v6 && texture->alternate_anims )
+        texture = texture->alternate_anims;
+      anim_total = texture->anim_total;
+      if ( anim_total )
+      {
+        if ( texture->name[0] == 45 )
+        {
+          v10 = ((texture->width << 16) + v1->texturemins[0]) / texture->width;
+          v11 = ((texture->height << 16) + surface->texturemins[1]) / texture->height;
+          v12 = rtable[v10][20 * (v11 / -20 - 20 * (v10 / 20)) + v11] % anim_total;
+          v13 = 0;
+          v14 = v12;
+          while ( texture->anim_min > v14 || texture->anim_max <= v14 )
+          {
+            texture = texture->anim_next;
+            if ( !texture )
+              Sys_Error("R_TextureAnimation: broken cycle");
+            if ( ++v13 > 100 )
+              Sys_Error("R_TextureAnimation: infinite cycle");
+          }
+        }
+        else if ( (v5 & 0x100) == 0 )
+        {
+          v15 = 0;
+          v16 = sub_1E2B450(dbl_234BA68 * 10.0) % anim_total;
+          while ( texture->anim_min > v16 || texture->anim_max <= v16 )
+          {
+            texture = texture->anim_next;
+            if ( !texture )
+              Sys_Error("R_TextureAnimation: broken cycle");
+            if ( ++v15 > 100 )
+              Sys_Error("R_TextureAnimation: infinite cycle");
+          }
+        }
+      }
+      return texture;
+    }
+  }
