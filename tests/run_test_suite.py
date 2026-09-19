@@ -29,6 +29,7 @@ GROUP_FILES = {
         "test_pitch_store_predicate.py",
         "test_push_immediate_locator.py",
         "test_x86_forwarding.py",
+        "test_x86_call_arguments.py",
         "test_llm_diagnostics.py",
         "test_ida_skill_preprocessor.py",
         "test_cvar_hooks_preprocessor.py",
