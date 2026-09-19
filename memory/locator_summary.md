@@ -10,23 +10,23 @@ permalink: goldsrc-vibesignatures/locator-summary
 分类依据是每个 finder 的主要发现锚；部分符号实际会组合多种机制（例如先字符串锚定 owning function，再读表槽），
 此处归入其决定性的一步。**Summary** 列摘自各 locator 文件 `## How it is located` 的首段。
 
-共 **209** 个 locator；模块 engine 172，client 37。
+共 **212** 个 locator；模块 engine 175，client 37。
 
 | 定位机制 | 数量 |
 | --- | --- |
-| 字符串锚 | 62 |
+| 字符串锚 | 63 |
 | 浮点常量锚 | 3 |
 | 表 / 结构 / 数据段扫描 | 34 |
 | 确定性 xref 交集锚 | 5 |
 | 前驱产物复用（下游确定性恢复） | 21 |
-| LLM_DECOMPILE 定位 | 49 |
+| LLM_DECOMPILE 定位 | 51 |
 | vtable / vfunc 槽恢复 | 10 |
 | 数值 scalar 提取 | 9 |
 | 调用点 patch | 16 |
 
 ---
 
-## 字符串锚 (61)
+## 字符串锚 (63)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -79,6 +79,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [NLoadBlobFile](locators/NLoadBlobFile.md) | engine | func | `NLoadBlob` | FUNC_XREFS declares three sources handled by preprocess_common_skill: xref_funcs: ["NLoadBlob"] — resolved to a func_va through the predecessor artifact's |
 | [R_DrawTEntitiesOnList](locators/R_DrawTEntitiesOnList.md) | engine | func | — | FUNC_XREFS anchors on FULLMATCH:Non-sprite set to glow!\n — the diagnostic guarded by the glow render mode inside the transparent-entity loop. |
 | [R_GetSpriteFrame](locators/R_GetSpriteFrame.md) | engine | func | — | preprocess_common_skill with a single exact string xref: FULLMATCH:Sprite: no pSprite!!!\n — the engine/cl_tent.c diagnostic printed when the frame lookup is asked… |
+| [R_LoadSkyboxInt_SvEngine](locators/R_LoadSkyboxInt_SvEngine.md) | engine | func | — | preprocess_common_skill with a single exact string xref: FULLMATCH:SKY: (one trailing space, no newline) — the banner the SvEngine internal sky loader prints before loading the six faces. It has exactly one owning function on all four verified SvEngine binaries (10257 dll 0x1d5ffd0 / so 0x149650, 8948 dll 0x1d5fc10 / so 0x195660), and the two-space SKY:   literal owned by R_LoadSkys is… |
 | [R_LoadSkys](locators/R_LoadSkys.md) | engine | func | — | preprocess_common_skill with a single exact string xref: FULLMATCH:SKY: — the engine/gl_warp.c banner printed before the six sky faces are loaded. The needle has… |
 | [R_RenderView](locators/R_RenderView.md) | engine | func | — | xref_strings = ["R_RenderView: NULL worldmodel"] is the anchor: the candidate set is every function that references that literal (substring match over the IDB's… |
 | [R_StudioCalcAttachments](locators/R_StudioCalcAttachments.md) | engine | func | `R_StudioDrawModel` | The finder declares a single func_xrefs entry with xref_strings: ["FULLMATCH:Too many attachments on %s\n"] — the attachment-count |
@@ -150,7 +151,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [R_StudioRenderModel](locators/R_StudioRenderModel.md) | engine | func | `R_StudioCalcAttachments`, `R_StudioDrawModel`, `R_StudioDrawPlayer`, `R_StudioSetupBones`, `cl_sprite_shell`, `g_ChromeOrigin` | The func_xrefs entry declares xref_gvs: ["cl_sprite_shell", "g_ChromeOrigin"] and no strings/signatures/functions: the candidate is the function that intersects the… |
 | [V_StartPitchDrift](locators/V_StartPitchDrift.md) | client | func | — | _client_registration_common.REGISTRATION_QUERY is invoked with the label centerview. The helper collects strings whose NUL-terminated bytes end with the label |
 
-## 前驱产物复用（下游确定性恢复） (20)
+## 前驱产物复用（下游确定性恢复） (21)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -176,7 +177,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [g_PlayerExtraInfo](locators/g_PlayerExtraInfo.md) | client | gv | `ClientScoreInfoHandler` | The predecessor's annotated body is the reference; the dedicated prompt prompt/call_llm_scoreinfo.md is used (not the generic decompile prompt), with reference YAML… |
 | [g_PlayerExtraInfo_CZDS](locators/g_PlayerExtraInfo_CZDS.md) | client | gv | `ClientScoreInfoHandler` | The producer picks the symbol by output declaration: _output_for_symbol(expected_outputs, "g_PlayerExtraInfo_CZDS") selects the CZDS name and family =… |
 
-## LLM_DECOMPILE 定位 (49)
+## LLM_DECOMPILE 定位 (51)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -216,6 +217,8 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [cl_visedicts](locators/cl_visedicts.md) | engine | gv | `CL_CreateVisibleEntity` | Requires the current CL_CreateVisibleEntity.{platform}.yaml; returns False without it. LLM_DECOMPILE spec: symbol cl_visedicts, prompt prompt/call_llm_decompile.md… |
 | [cl_worldmodel](locators/cl_worldmodel.md) | engine | gv | `R_NewMap` | -decompiles (LLM) finder — no deterministic anchor of its own: Load the required predecessor R_NewMap.{platform}.yaml, export that function from the |
 | [gClientUserMsgs](locators/gClientUserMsgs.md) | engine | gv | `DispatchDirectUserMsg` | Requires the current DispatchDirectUserMsg.{platform}.yaml; returns False without it. LLM_DECOMPILE spec: symbol gClientUserMsgs, prompt… |
+| [gLoadSky](locators/gLoadSky.md) | engine | gv | `R_LoadSkys`, `R_LoadSkyBox_SvEngine` | Two -decompiles (LLM) producers split by engine family: find-R_LoadSkys-decompiles keys on the R_LoadSkys reference for hl/CoF/HL25, find-R_LoadSkyBox_SvEngine-decompiles on the SvEngine loader reference. Both use found_gv; the selected instruction is the loader's entry gate (cmp gLoadSky, 0) or its closing store, and the artifact name is the engine's real symbol… |
+| [gSkyTexNumber](locators/gSkyTexNumber.md) | engine | gv | `R_LoadSkys`, `R_LoadSkyBox_SvEngine` | Same two -decompiles (LLM) producers and predecessor references as gLoadSky, found_gv against the annotated loader body: the six-element array is the base of the clear loop and of the per-face fill stores. Do not derive it as gLoadSky+4 — cof-5936 and the BLOB builds keep the two slots far… |
 | [gTempEnts](locators/gTempEnts.md) | engine | gv | `CL_InitTEnts`, `CL_TempEntInit` | Both routes are LLM found_gv specs fed an annotated predecessor reference: find-CL_InitTEnts-decompiles: LLM_DECOMPILE symbol gTempEnts, prompt… |
 | [g_ViewEntityIndex_SCClient](locators/g_ViewEntityIndex_SCClient.md) | client | gv | `GameStudioRenderer_StudioDrawPlayer` | The producer calls preprocess_common_skill with gv_names = ["g_ViewEntityIndex_SCClient"], llm_decompile_specs pointing at the Sven |
 | [g_bRenderingPortals_SCClient](locators/g_bRenderingPortals_SCClient.md) | client | gv | `V_CalcRefdef` | preprocess_common_skill runs the generic LLM_DECOMPILE path with prompt/call_llm_decompile.md and reference YAML |
