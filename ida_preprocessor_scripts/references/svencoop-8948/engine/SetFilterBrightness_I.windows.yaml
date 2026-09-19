@@ -1,0 +1,11 @@
+func_name: "SetFilterBrightness_I"
+func_va: "0x1d1b140"
+disasm_code: |-
+  .text:01D1B140                 fld     [esp+brightness]
+  .text:01D1B144                 fstp    filterBrightness
+  .text:01D1B14A                 retn
+procedure: |-
+  void __cdecl SetFilterBrightness_I(float brightness)
+  {
+    filterBrightness = brightness;
+  }

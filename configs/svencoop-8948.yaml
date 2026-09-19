@@ -26,6 +26,35 @@ modules:
       - name: find-R_StudioCheckBBox
         expected_output:
           - R_StudioCheckBBox.{platform}.yaml
+      - name: find-engine-filter-callbacks
+        expected_input:
+          - cl_enginefuncs.{platform}.yaml
+        expected_output:
+          - SetFilterMode_I.{platform}.yaml
+          - SetFilterColor_I.{platform}.yaml
+          - SetFilterBrightness_I.{platform}.yaml
+      - name: find-SetFilterMode_I-decompiles
+        expected_input:
+          - SetFilterMode_I.{platform}.yaml
+        expected_output:
+          - filterMode.{platform}.yaml
+      - name: find-SetFilterColor_I-decompiles
+        expected_input:
+          - SetFilterColor_I.{platform}.yaml
+        expected_output:
+          - filterColorRed.{platform}.yaml
+          - filterColorGreen.{platform}.yaml
+          - filterColorBlue.{platform}.yaml
+      - name: find-SetFilterBrightness_I-decompiles
+        expected_input:
+          - SetFilterBrightness_I.{platform}.yaml
+        expected_output:
+          - filterBrightness.{platform}.yaml
+      - name: find-R_CullBox-decompiles
+        expected_input:
+          - R_CullBox.{platform}.yaml
+        expected_output:
+          - frustum.{platform}.yaml
       - name: find-R_StudioCheckBBox-decompiles
         expected_input:
           - R_StudioCheckBBox.{platform}.yaml
@@ -176,6 +205,7 @@ modules:
         expected_input:
           - R_NewMap.{platform}.yaml
         expected_output:
+          - d_lightstylevalue.{platform}.yaml
           - r_worldentity.{platform}.yaml
           - cl_worldmodel.{platform}.yaml
           - GL_UnloadTextures.{platform}.yaml
@@ -762,6 +792,26 @@ modules:
         category: func
       - name: R_CullBox
         category: func
+      - name: SetFilterMode_I
+        category: func
+      - name: SetFilterColor_I
+        category: func
+      - name: SetFilterBrightness_I
+        category: func
+      - name: d_lightstylevalue
+        category: gv
+      - name: frustum
+        category: gv
+      - name: filterMode
+        category: gv
+      - name: filterColorRed
+        category: gv
+      - name: filterColorGreen
+        category: gv
+      - name: filterColorBlue
+        category: gv
+      - name: filterBrightness
+        category: gv
       - name: cl_viewentity
         category: gv
       - name: cl_numvisedicts

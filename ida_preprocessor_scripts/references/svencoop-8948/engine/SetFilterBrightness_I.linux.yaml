@@ -1,0 +1,14 @@
+func_name: "SetFilterBrightness_I"
+func_va: "0x179600"
+disasm_code: |-
+  .text:00179600                 call    __x86_get_pc_thunk_ax
+  .text:00179605                 add     eax, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:0017960A                 movss   xmm0, [esp+brightness]
+  .text:00179610                 mov     eax, ds:(filterBrightness_ptr - 33A000h)[eax]
+  .text:00179616                 movss   dword ptr ds:(_GLOBAL_OFFSET_TABLE_ - 33A000h)[eax], xmm0
+  .text:0017961A                 retn
+procedure: |-
+  void __cdecl SetFilterBrightness_I(float brightness)
+  {
+    filterBrightness = brightness;
+  }

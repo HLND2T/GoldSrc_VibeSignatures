@@ -1,0 +1,28 @@
+func_name: "SetFilterColor"
+func_va: "0x126d40"
+disasm_code: |-
+  .text:00126D40                 sub     esp, 1Ch
+  .text:00126D43                 lea     eax, [esp+1Ch+b]
+  .text:00126D47                 mov     [esp+1Ch+b_0], eax
+  .text:00126D4B                 lea     eax, [esp+1Ch+g]
+  .text:00126D4F                 mov     [esp+1Ch+var_18], eax
+  .text:00126D53                 lea     eax, [esp+1Ch+r]
+  .text:00126D57                 mov     [esp+1Ch+var_1C], eax
+  .text:00126D5A                 ; Binary/source difference: API interception receives parameter addresses before the global stores.
+  .text:00126D5A                 call    g_engdstAddrs.pfnSetFilterColor; Binary/source difference: API interception receives parameter addresses before the global stores.
+  .text:00126D60                 movss   xmm0, [esp+1Ch+r]
+  .text:00126D66                 movss   xmm1, [esp+1Ch+g]
+  .text:00126D6C                 movss   xmm2, [esp+1Ch+b]
+  .text:00126D72                 movss   filterColorRed, xmm0
+  .text:00126D7A                 movss   filterColorGreen, xmm1
+  .text:00126D82                 movss   filterColorBlue, xmm2
+  .text:00126D8A                 add     esp, 1Ch
+  .text:00126D8D                 retn
+procedure: |-
+  void __cdecl SetFilterColor(float r, float g, float b)
+  {
+    g_engdstAddrs.pfnSetFilterColor(&r, &g, &b);
+    filterColorRed = r;
+    filterColorGreen = g;
+    filterColorBlue = b;
+  }

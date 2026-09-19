@@ -1,0 +1,11 @@
+func_name: "SetFilterMode_I"
+func_va: "0x1d1b110"
+disasm_code: |-
+  .text:01D1B110                 mov     eax, [esp+mode]
+  .text:01D1B114                 mov     filterMode, eax
+  .text:01D1B119                 retn
+procedure: |-
+  void __cdecl SetFilterMode_I(int mode)
+  {
+    filterMode = mode;
+  }

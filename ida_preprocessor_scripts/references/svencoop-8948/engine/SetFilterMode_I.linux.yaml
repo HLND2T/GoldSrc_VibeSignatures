@@ -1,0 +1,14 @@
+func_name: "SetFilterMode_I"
+func_va: "0x1795a0"
+disasm_code: |-
+  .text:001795A0                 call    __x86_get_pc_thunk_ax
+  .text:001795A5                 add     eax, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:001795AA                 mov     edx, [esp+mode]
+  .text:001795AE                 mov     eax, ds:(filterMode_ptr - 33A000h)[eax]
+  .text:001795B4                 mov     dword ptr ds:(_GLOBAL_OFFSET_TABLE_ - 33A000h)[eax], edx
+  .text:001795B6                 retn
+procedure: |-
+  void __cdecl SetFilterMode_I(int mode)
+  {
+    filterMode = mode;
+  }

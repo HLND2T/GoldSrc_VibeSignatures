@@ -1,0 +1,9 @@
+gv_name: filterBrightness
+gv_va: '0x2c4a40'
+gv_rva: '0x2c4a40'
+gv_sig: 83 EC ?? 8D 44 24 ?? 89 04 24 FF 15 ?? ?? ?? ?? F3 0F 10 44 24 ?? F3 0F 11 05 ?? ?? ?? ?? 83 C4 ?? C3
+gv_sig_va: '0x126d90'
+gv_inst_offset: '0x16'
+gv_inst_length: '0x8'
+gv_inst_disp: '0x4'
+gv_sig_allow_across_function_boundary: true

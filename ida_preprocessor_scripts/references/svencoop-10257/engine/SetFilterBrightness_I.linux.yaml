@@ -1,0 +1,14 @@
+func_name: "SetFilterBrightness_I"
+func_va: "0x12cb10"
+disasm_code: |-
+  .text:0012CB10                 call    sub_58CDC
+  .text:0012CB15                 add     eax, (offset dbl_2EE000 - $)
+  .text:0012CB1A                 movss   xmm0, [esp+brightness]
+  .text:0012CB20                 lea     eax, (filterBrightness - 2EE000h)[eax]
+  .text:0012CB26                 movss   dword ptr ds:(dbl_2EE000 - 2EE000h)[eax], xmm0
+  .text:0012CB2A                 retn
+procedure: |-
+  void __cdecl SetFilterBrightness_I(float brightness)
+  {
+    filterBrightness = brightness;
+  }

@@ -1,0 +1,49 @@
+func_name: "R_CullBox"
+func_va: "0x102424d0"
+disasm_code: |-
+  .text:102424D0                 push    ebp
+  .text:102424D1                 mov     ebp, esp
+  .text:102424D3                 push    ebx
+  .text:102424D4                 mov     ebx, [ebp+mins]
+  .text:102424D7                 push    esi
+  .text:102424D8                 push    edi
+  .text:102424D9                 mov     edi, [ebp+maxs]
+  .text:102424DC                 mov     esi, offset frustum
+  .text:102424E1                 ; plane
+  .text:102424E1                 push    esi; plane
+  .text:102424E2                 ; maxs
+  .text:102424E2                 push    edi; maxs
+  .text:102424E3                 ; mins
+  .text:102424E3                 push    ebx; mins
+  .text:102424E4                 call    BoxOnPlaneSide
+  .text:102424E9                 add     esp, 0Ch
+  .text:102424EC                 cmp     eax, 2
+  .text:102424EF                 jz      short loc_10242503
+  .text:102424F1                 add     esi, 14h
+  .text:102424F4                 cmp     esi, offset dword_10DC5610
+  .text:102424FA                 jl      short loc_102424E1
+  .text:102424FC                 pop     edi
+  .text:102424FD                 pop     esi
+  .text:102424FE                 xor     eax, eax
+  .text:10242500                 pop     ebx
+  .text:10242501                 pop     ebp
+  .text:10242502                 retn
+  .text:10242503                 pop     edi
+  .text:10242504                 pop     esi
+  .text:10242505                 mov     eax, 1
+  .text:1024250A                 pop     ebx
+  .text:1024250B                 pop     ebp
+  .text:1024250C                 retn
+procedure: |-
+  int __cdecl R_CullBox(float *mins, float *maxs)
+  {
+    issue152_plane_t *v2; // esi
+
+    v2 = frustum;
+    while ( BoxOnPlaneSide(mins, maxs, v2) != 2 )
+    {
+      if ( (int)++v2 >= (int)&dword_10DC5610 )
+        return 0;
+    }
+    return 1;
+  }
