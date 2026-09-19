@@ -2,8 +2,9 @@
 """Locate the Sven Co-op engine 2D draw helpers that carry no usable literal.
 
 SvEngine keeps engine/gl_draw.c Draw_Pic and engine/DetailTexture.cpp
-DT_Initialize but drops the HL ``Draw_TransPic: bad coordinates`` diagnostic and
-has a different ``cl_enginefuncs`` layout, so the HL/CoF anchors do not apply.
+DT_Initialize but drops the HL ``Draw_TransPic: bad coordinates`` diagnostic.
+The public fill slots point to forwarding entries; find-svengine-fill-rgba
+handles those separately from these screen-rendering anchors.
 
 * ``Draw_Pic`` - the ``SCR_UpdateScreen_RenderBody`` callee with two callers that
   a single-call, single-caller wrapper delegates to (engine/gl_draw.c

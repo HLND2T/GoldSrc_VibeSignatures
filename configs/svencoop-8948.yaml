@@ -5,6 +5,12 @@ modules:
     depot_windows: hw.dll
     depot_linux: hw.so
     skills:
+      - name: find-svengine-fill-rgba
+        expected_input:
+          - cl_enginefuncs.{platform}.yaml
+        expected_output:
+          - Draw_FillRGBA.{platform}.yaml
+          - Draw_FillRGBABlend.{platform}.yaml
       - name: find-ClientDLL_Init-pic-enginefuncs
         platform: linux
         expected_input:
@@ -722,6 +728,10 @@ modules:
         expected_output:
           - NET_DrawRect.{platform}.yaml
     symbols:
+      - name: Draw_FillRGBA
+        category: func
+      - name: Draw_FillRGBABlend
+        category: func
       - name: currenttexture
         category: gv
       - name: detTexSupported
