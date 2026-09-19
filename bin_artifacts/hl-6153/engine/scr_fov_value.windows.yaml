@@ -1,0 +1,8 @@
+gv_name: scr_fov_value
+gv_va: '0x1e44a8c'
+gv_rva: '0x144a8c'
+gv_sig: 55 8B EC 51 A1 ?? ?? ?? ?? 56 85 C0 74 ?? DD 05 ?? ?? ?? ?? 8B 75 ?? 51 D9 5D ?? D9 45 ?? D9 1C 24 56 FF D0
+gv_sig_va: '0x1d0bf40'
+gv_inst_offset: '0x51'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

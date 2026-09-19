@@ -1,0 +1,8 @@
+gv_name: r_refdef
+gv_va: '0x3f93420'
+gv_rva: '0x2293420'
+gv_sig: 83 EC 10 57 8B 7C 24 ?? 85 FF 75 ?? 89 3D ?? ?? ?? ?? 89 3D ?? ?? ?? ?? D9 05 ?? ?? ?? ?? D9 EE DD E1 DF E0 DD D9
+gv_sig_va: '0x1d537b0'
+gv_inst_offset: '0x377'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

@@ -15,17 +15,18 @@ tags:
 - **Name**: `cl_funcs`
 - **Category**: `gv`
 - **Module**: engine (`hw.dll` / `hw.so`)
-- **Producer**: `ida_preprocessor_scripts/find-ClientDLL_HudInit-decompiles.py` (deterministic
+- **Producers**: `ida_preprocessor_scripts/find-ClientDLL_HudInit-decompiles.py` (deterministic
   direct locator `_write_direct_globals`; a thin LLM step in the same finder produces the sibling
-  `g_phClientModule`)
+  `g_phClientModule`) and, Linux-only on the SvEngine tags,
+  `ida_preprocessor_scripts/find-ClientDLL_Init-cl_funcs.py`
 
 ## Availability
 
-- Declared in 10 configs: cof-5936, hl-10210, hl-3248, hl-3266, hl-3329, hl-3647, hl-4554,
-  hl-6153, hl-8684, svencoop-10257.
-- Platforms: Windows + Linux, but **svencoop-10257 declares `cl_funcs` as `platform: windows`**
-  and registers the finder Windows-only there, so Linux artifacts exist only for hl-10210 and
-  hl-8684. (`cl_enginefuncs` is the exception that SvEngine Linux does emit, via
+- Declared in all 11 engine configs: cof-5936, hl-3248, hl-3266, hl-3329, hl-3647, hl-4554,
+  hl-6153, hl-8684, hl-10210, svencoop-8948, svencoop-10257.
+- Platforms: every declared platform. Until issue #161 both SvEngine tags declared `cl_funcs` as
+  `platform: windows`, because their `ClientDLL_HudInit` path is not analysed; the Linux gap is now
+  closed by the second producer below. (`cl_enginefuncs` already had SvEngine Linux coverage via
   `find-ClientDLL_Init-pic-enginefuncs`.)
 - Inlined / absent: never inlined. It is a zero-initialised `cldll_func_t` in `.bss` (hl-10210
   Linux `0xF77F80`) or `.data` (hl-10210 Windows `0x1145EF40`).
@@ -56,6 +57,26 @@ tags:
    is copied from the owner artifact when set. On hl-10210 Windows the emitted instruction is the
    6-byte `call cl_funcs.pInitFunc` (`gv_inst_disp 0x2`).
 
+### SvEngine Linux path (`find-ClientDLL_Init-cl_funcs`, issue #161)
+
+The SvEngine Linux builds never reach the `ClientDLL_HudInit` locator above, so a second producer
+recovers the same global from the same source statement:
+
+```c
+cl_funcs.pInitFunc( &cl_enginefuncs, CLDLL_INTERFACE_VERSION );
+```
+
+It walks `ClientDLL_Init`'s basic blocks tracking registers, pushes and `[esp+N]` argument stores,
+and accepts the indirect call whose two arguments are the literal version `7` and a table whose
+first twelve dwords all point into executable memory — the validated table shape already used by
+`find-ClientDLL_Init-pic-enginefuncs`. The called pointer's own address is the emitted value.
+Exactly one such call must survive.
+
+Registered `platform: linux` only, so it never competes with the Windows producer for the same
+artifact. Validated: svencoop-10257 L `0x30f21e0` (`call ds:(dword_30F21E0 - 2EE000h)[ebx]`),
+svencoop-8948 L `0x30d2040` (`call ds:(cl_funcs - 33A000h)[ebx]`, name confirmed by that build's
+`.symtab`).
+
 ## Pitfalls
 
 - `cl_funcs` is emitted from inside the `call cl_funcs.pInitFunc` instruction, so a consumer that
@@ -72,3 +93,10 @@ tags:
   identical to HL's; the finder never reads a fixed slot index, only the encoded operand.
 - Blob engines (`hl-3248`, `hl-3266`, `hl-3329`, `hl-3647`) are analyzed from the decrypted
   `hw.decrypt.dll`; compare by artifact VAs, not IDA display names.
+- The two producers must stay platform-disjoint. Registering `find-ClientDLL_Init-cl_funcs` on
+  Windows too would make one artifact ambiguous between two skills.
+
+## Relations
+
+- relates_to [[ClientDLL_DrawNormalTriangles]]
+- relates_to [[ClientDLL_UpdateClientData]]
