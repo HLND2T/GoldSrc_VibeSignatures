@@ -99,19 +99,11 @@ result = json.dumps(main(VALUES))
 """
 
 
-async def write_unique_string_owner_artifact(
-    session,
-    expected_outputs,
-    func_name,
-    string_ea,
-    image_base,
-    debug=False,
-):
-    """Emit ``func_name`` from the unique owner of the exact string address.
+async def string_owner_ea(session, string_ea, label="string owner", debug=False):
+    """Return the unique function owner of the exact string address, else None.
 
-    Prefers the direct xref owners; falls back to the GOTOFF displacement
-    scan when IDA created no reference. Fails closed on zero or multiple
-    owners or an unusable signature.
+    Prefers the direct xref owners; falls back to the GOTOFF displacement scan
+    when IDA created no reference. Zero or multiple owners fail closed.
     """
     import json
 
@@ -121,19 +113,43 @@ async def write_unique_string_owner_artifact(
             await session.call_tool("py_eval", {"code": PIC_STRING_OWNERS_PY.replace("VALUES", values)})
         )
     except Exception:  # noqa: BLE001 - MCP failures fail closed.
-        return False
+        return None
     if not isinstance(payload, dict) or payload.get("error") or payload.get("pointer_size") != 4:
         if debug:
-            print(f"  {func_name}: PIC string owner scan failed {payload}")
-        return False
+            print(f"  {label}: PIC string owner scan failed {payload}")
+        return None
     owners = payload.get("owners") or []
     if len(owners) != 1:
         if debug:
-            print(f"  {func_name}: PIC string owners {owners} via {payload.get('via')}")
-        return False
+            print(f"  {label}: PIC string owners {owners} via {payload.get('via')}")
+        return None
     try:
-        owner_ea = int(owners[0], 0)
+        return int(owners[0], 0)
     except (TypeError, ValueError):
+        return None
+
+
+async def unique_string_owner_ea(session, literal, label="string owner", debug=False):
+    """Return the unique function owner of the exact literal, else None."""
+    string_ea = await exact_string_ea(session, literal)
+    if string_ea is None:
+        if debug:
+            print(f"  {label}: no unique exact string instance")
+        return None
+    return await string_owner_ea(session, string_ea, label=label, debug=debug)
+
+
+async def write_unique_string_owner_artifact(
+    session,
+    expected_outputs,
+    func_name,
+    string_ea,
+    image_base,
+    debug=False,
+):
+    """Emit ``func_name`` from the unique owner of the exact string address."""
+    owner_ea = await string_owner_ea(session, string_ea, label=func_name, debug=debug)
+    if owner_ea is None:
         return False
     output = _output_for_symbol(expected_outputs, func_name)
     if output is None:

@@ -1323,6 +1323,10 @@ modules:
           - ClientPortalManager_CreateInvisiblePortalTextures.{platform}.yaml
         expected_output:
           - ClientPortalManager_ResetAll.{platform}.yaml
+      - name: find-ClientPortalManager_DrawPortalSurface
+        expected_output:
+          - ClientPortalManager_DrawPortalSurface.{platform}.yaml
+          - ClientPortalManager_GetOriginalSurfaceTexture.{platform}.yaml
       - name: find-ClientPortal-offsets-decompiles
         expected_input:
           - ClientPortalManager_RenderPortals.{platform}.yaml
@@ -1387,6 +1391,10 @@ modules:
       - name: ClientPortalManager_CreateInvisiblePortalTextures
         category: func
       - name: ClientPortalManager_ResetAll
+        category: func
+      - name: ClientPortalManager_DrawPortalSurface
+        category: func
+      - name: ClientPortalManager_GetOriginalSurfaceTexture
         category: func
       - name: ClientPortalManager_vector_begin_offset
         category: scalar

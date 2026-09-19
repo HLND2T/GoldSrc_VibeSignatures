@@ -10,14 +10,14 @@ permalink: goldsrc-vibesignatures/locator-summary
 分类依据是每个 finder 的主要发现锚；部分符号实际会组合多种机制（例如先字符串锚定 owning function，再读表槽），
 此处归入其决定性的一步。**Summary** 列摘自各 locator 文件 `## How it is located` 的首段。
 
-共 **212** 个 locator；模块 engine 175，client 37。
+共 **214** 个 locator；模块 engine 175，client 39。
 
 | 定位机制 | 数量 |
 | --- | --- |
 | 字符串锚 | 63 |
 | 浮点常量锚 | 3 |
 | 表 / 结构 / 数据段扫描 | 34 |
-| 确定性 xref 交集锚 | 5 |
+| 确定性 xref 交集锚 | 7 |
 | 前驱产物复用（下游确定性恢复） | 21 |
 | LLM_DECOMPILE 定位 | 51 |
 | vtable / vfunc 槽恢复 | 10 |
@@ -141,11 +141,14 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [studioapi_StudioSetHeader](locators/studioapi_StudioSetHeader.md) | engine | func | — | Unique studio-interface diagnostic → owning function(s) → unique engine_studio_api table (validate_table_run; SvEngine 47/48 entries). |
 | [studioapi_StudioSetRenderamt](locators/studioapi_StudioSetRenderamt.md) | engine | func | — | Find the exact studio-interface diagnostic literal: HL_STUDIO_STRING ("Couldn't get client .dll studio model rendering interface. Version mismatch?\n") for… |
 
-## 确定性 xref 交集锚 (5)
+## 确定性 xref 交集锚 (7)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
 | [CL_Parse_SetView](locators/CL_Parse_SetView.md) | engine | func | `cl_parsefuncs` | Load cl_parsefuncs.{platform}.yaml and take TABLE_EA = gv_va. Return {} for 64-bit databases. Walk up to 80 entries of 12 bytes each (svc_func_t = {opcode, pszname… |
+| [ClientPortalManager_DrawPortalSurface](locators/ClientPortalManager_DrawPortalSurface.md) | client | func | — | Anchor literal "Invalid GL_ACTIVE_TEXTURE, unable to reset. Portals will not be drawn.
+" (plural wording) resolves to ClientPortalManager::DrawPortals; the target is the unique direct callee holding the overlay idiom call -> mov R,[eax+0x24] -> cmp byte ptr [R], 0x7Bh. |
+| [ClientPortalManager_GetOriginalSurfaceTexture](locators/ClientPortalManager_GetOriginalSurfaceTexture.md) | client | func | — | The direct call target of that same overlay site inside DrawPortalSurface, after resolve_elf_plt maps an ELF PLT stub back to its local definition. |
 | [Draw_FillRGBABuf](locators/Draw_FillRGBABuf.md) | engine | func | — | Sven 10257/8948 Windows/Linux: buffer-capacity check, validated GL array-call arguments, eight-int ABI and 24 float stores. Replaces retired NET_DrawRect without an alias (#148). |
 | [R_StudioDrawPlayerBody](locators/R_StudioDrawPlayerBody.md) | engine | func | `R_StudioDrawPlayer` | Load R_StudioDrawPlayer.{platform}.yaml; abort if absent. Start target = func_va of that entry. Walk the *unique external tail jump* chain. For the current target… |
 | [R_StudioRenderModel](locators/R_StudioRenderModel.md) | engine | func | `R_StudioCalcAttachments`, `R_StudioDrawModel`, `R_StudioDrawPlayer`, `R_StudioSetupBones`, `cl_sprite_shell`, `g_ChromeOrigin` | The func_xrefs entry declares xref_gvs: ["cl_sprite_shell", "g_ChromeOrigin"] and no strings/signatures/functions: the candidate is the function that intersects the… |

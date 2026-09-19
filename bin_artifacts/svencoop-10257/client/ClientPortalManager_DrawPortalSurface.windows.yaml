@@ -1,0 +1,5 @@
+func_name: ClientPortalManager_DrawPortalSurface
+func_va: '0x1004f360'
+func_rva: '0x4f360'
+func_size: '0x5f4'
+func_sig: 83 EC 24 56 8B 74 24 ?? 57 8B 7C 24 ?? 83 C6 24 89 4C 24 ?? 89 74 24 ?? 83 7F ?? ?? 0F 85 ?? ?? ?? ??
