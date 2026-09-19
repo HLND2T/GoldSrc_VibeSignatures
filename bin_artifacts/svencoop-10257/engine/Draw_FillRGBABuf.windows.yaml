@@ -1,0 +1,5 @@
+func_name: Draw_FillRGBABuf
+func_va: '0x1d51600'
+func_rva: '0x51600'
+func_size: '0x1f1'
+func_sig: 56 8B 35 ?? ?? ?? ?? 81 FE 00 04 00 00

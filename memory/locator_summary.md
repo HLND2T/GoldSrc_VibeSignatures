@@ -145,7 +145,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
 | [CL_Parse_SetView](locators/CL_Parse_SetView.md) | engine | func | `cl_parsefuncs` | Load cl_parsefuncs.{platform}.yaml and take TABLE_EA = gv_va. Return {} for 64-bit databases. Walk up to 80 entries of 12 bytes each (svc_func_t = {opcode, pszname… |
-| [NET_DrawRect](locators/NET_DrawRect.md) | engine | func | — | Pure disassembly walk over idautils.Functions(); no byte pattern is used anywhere (find-R124 style byte-pattern hints are explicitly not the anchor). |
+| [Draw_FillRGBABuf](locators/Draw_FillRGBABuf.md) | engine | func | — | Sven 10257/8948 Windows/Linux: buffer-capacity check, validated GL array-call arguments, eight-int ABI and 24 float stores. Replaces retired NET_DrawRect without an alias (#148). |
 | [R_StudioDrawPlayerBody](locators/R_StudioDrawPlayerBody.md) | engine | func | `R_StudioDrawPlayer` | Load R_StudioDrawPlayer.{platform}.yaml; abort if absent. Start target = func_va of that entry. Walk the *unique external tail jump* chain. For the current target… |
 | [R_StudioRenderModel](locators/R_StudioRenderModel.md) | engine | func | `R_StudioCalcAttachments`, `R_StudioDrawModel`, `R_StudioDrawPlayer`, `R_StudioSetupBones`, `cl_sprite_shell`, `g_ChromeOrigin` | The func_xrefs entry declares xref_gvs: ["cl_sprite_shell", "g_ChromeOrigin"] and no strings/signatures/functions: the candidate is the function that intersects the… |
 | [V_StartPitchDrift](locators/V_StartPitchDrift.md) | client | func | — | _client_registration_common.REGISTRATION_QUERY is invoked with the label centerview. The helper collects strings whose NUL-terminated bytes end with the label |

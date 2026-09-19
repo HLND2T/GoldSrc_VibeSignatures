@@ -735,10 +735,9 @@ modules:
           - CGame_AppActivate.{platform}.yaml
         expected_output:
           - host_initialized.{platform}.yaml
-      - name: find-NET_DrawRect
-        platform: windows
+      - name: find-Draw_FillRGBABuf
         expected_output:
-          - NET_DrawRect.{platform}.yaml
+          - Draw_FillRGBABuf.{platform}.yaml
     symbols:
       - name: Draw_FillRGBA
         category: func
@@ -1144,9 +1143,8 @@ modules:
         category: func
       - name: host_initialized
         category: gv
-      - name: NET_DrawRect
+      - name: Draw_FillRGBABuf
         category: func
-        platform: windows
   - name: client
     module_windows: client.dll
     module_linux: client.so
