@@ -8,7 +8,7 @@ disasm_code: |-
   .text:00177834                 call    sub_56390
   .text:00177839                 add     ebx, (offset dbl_2EE000 - $)
   .text:0017783F                 sub     esp, 2Ch
-  .text:00177842                 lea     esi, (dword_30F6920 - 2EE000h)[ebx]
+  .text:00177842                 lea     esi, (d_lightstylevalue - 2EE000h)[ebx]
   .text:00177848                 mov     eax, esi
   .text:0017784A                 shr     eax, 2
   .text:0017784D                 neg     eax
@@ -175,10 +175,10 @@ procedure: |-
     int v18; // [esp+18h] [ebp-24h]
     int v19; // [esp+1Ch] [ebp-20h]
   
-    v0 = -((unsigned int)dword_30F6920 >> 2) & 3;
+    v0 = -((unsigned int)d_lightstylevalue >> 2) & 3;
     if ( v0 )
     {
-      dword_30F6920[0] = 264;
+      d_lightstylevalue[0] = 264;
       if ( v0 == 1 )
       {
         v18 = 255;
@@ -186,7 +186,7 @@ procedure: |-
       }
       else
       {
-        dword_30F6920[1] = 264;
+        d_lightstylevalue[1] = 264;
         if ( v0 == 2 )
         {
           v1 = 2;
@@ -195,7 +195,7 @@ procedure: |-
         else
         {
           v1 = 3;
-          dword_30F6920[2] = 264;
+          d_lightstylevalue[2] = 264;
           v18 = 253;
         }
       }
@@ -211,7 +211,7 @@ procedure: |-
       v1 = 0;
       v18 = 256;
     }
-    v4 = (__m128i *)&dword_30F6920[v0];
+    v4 = (__m128i *)&d_lightstylevalue[v0];
     v5 = 0;
     si128 = _mm_load_si128((const __m128i *)&xmmword_2721D0);
     do
@@ -224,14 +224,14 @@ procedure: |-
     v8 = v18 - v2;
     if ( v19 != v2 )
     {
-      dword_30F6920[v7] = 264;
+      d_lightstylevalue[v7] = 264;
       v9 = v7 + 1;
       if ( v8 != 1 )
       {
         v10 = v7 + 2;
-        dword_30F6920[v9] = 264;
+        d_lightstylevalue[v9] = 264;
         if ( v8 != 2 )
-          dword_30F6920[v10] = 264;
+          d_lightstylevalue[v10] = 264;
       }
     }
     Q_memset(&r_worldentity, 0, 0xBB8u);

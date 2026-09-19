@@ -1,0 +1,5 @@
+func_name: SetFilterBrightness
+func_va: '0x1019d320'
+func_rva: '0x19d320'
+func_size: '0x1f'
+func_sig: 55 8B EC 8D 45 ?? 50 FF 15 ?? ?? ?? ?? F3 0F 10 45 ?? 83 C4 04 F3 0F 11 05 ?? ?? ?? ?? 5D C3

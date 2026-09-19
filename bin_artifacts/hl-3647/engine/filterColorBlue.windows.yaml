@@ -1,0 +1,9 @@
+gv_name: filterColorBlue
+gv_va: '0x1e987b8'
+gv_rva: '0x1987b8'
+gv_sig: 8D 44 24 ?? 8D 4C 24 ?? 50 8D 54 24 ?? 51 52 FF 15 ?? ?? ?? ?? 8B 44 24 ?? 8B 4C 24 ?? 8B 54 24 ?? 83 C4 0C
+gv_sig_va: '0x1d13bb0'
+gv_inst_offset: '0x2f'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
+gv_sig_allow_across_function_boundary: true

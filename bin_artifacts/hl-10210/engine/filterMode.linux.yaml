@@ -1,0 +1,9 @@
+gv_name: filterMode
+gv_va: '0x842b94'
+gv_rva: '0x842b94'
+gv_sig: 83 EC ?? 8D 44 24 ?? 89 04 24 FF 15 ?? ?? ?? ?? 8B 44 24 ?? A3 ?? ?? ?? ?? 83 C4 ?? C3
+gv_sig_va: '0x126d20'
+gv_inst_offset: '0x14'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'
+gv_sig_allow_across_function_boundary: true

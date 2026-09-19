@@ -1,0 +1,8 @@
+gv_name: frustum
+gv_va: '0xf7d7a0'
+gv_rva: '0xf7d7a0'
+gv_sig: 57 56 53 BB ?? ?? ?? ?? 83 EC ?? 8B 7C 24 ?? 8B 74 24 ?? 89 5C 24 ?? 89 74 24 ?? 89 3C 24 E8 ?? ?? ?? ?? 83 F8 ??
+gv_sig_va: '0x16c680'
+gv_inst_offset: '0x3'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

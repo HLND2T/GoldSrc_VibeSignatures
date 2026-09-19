@@ -12,7 +12,7 @@ disasm_code: |-
   .text:01D56DF6                 cmp     [ebp+var_4], 100h
   .text:01D56DFD                 jge     short loc_1D56E0F
   .text:01D56DFF                 mov     ecx, [ebp+var_4]
-  .text:01D56E02                 mov     dword_3F941F0[ecx*4], 108h
+  .text:01D56E02                 mov     d_lightstylevalue[ecx*4], 108h
   .text:01D56E0D                 jmp     short loc_1D56DED
   .text:01D56E0F                 ; count
   .text:01D56E0F                 push    0BB8h; count
@@ -97,7 +97,7 @@ procedure: |-
     int k; // [esp+0h] [ebp-4h]
   
     for ( i = 0; i < 256; ++i )
-      dword_3F941F0[i] = 264;
+      d_lightstylevalue[i] = 264;
     Q_memset(&r_worldentity, 0, 0xBB8u);
     dword_3F94114 = (int)cl_worldmodel;
     for ( j = 0; j < *((_DWORD *)cl_worldmodel + 34); ++j )

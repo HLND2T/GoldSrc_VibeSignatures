@@ -1,0 +1,17 @@
+func_name: "SetFilterColor_I"
+func_va: "0x1d1b010"
+disasm_code: |-
+  .text:01D1B010                 fld     [esp+r]
+  .text:01D1B014                 fstp    filterColorRed
+  .text:01D1B01A                 fld     [esp+g]
+  .text:01D1B01E                 fstp    filterColorGreen
+  .text:01D1B024                 fld     [esp+b]
+  .text:01D1B028                 fstp    filterColorBlue
+  .text:01D1B02E                 retn
+procedure: |-
+  void __cdecl SetFilterColor_I(float r, float g, float b)
+  {
+    filterColorRed = r;
+    filterColorGreen = g;
+    filterColorBlue = b;
+  }

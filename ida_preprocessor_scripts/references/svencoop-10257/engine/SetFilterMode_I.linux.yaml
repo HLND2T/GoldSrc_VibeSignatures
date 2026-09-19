@@ -1,0 +1,14 @@
+func_name: "SetFilterMode_I"
+func_va: "0x12cab0"
+disasm_code: |-
+  .text:0012CAB0                 call    sub_58CDC
+  .text:0012CAB5                 add     eax, (offset dbl_2EE000 - $)
+  .text:0012CABA                 mov     edx, [esp+mode]
+  .text:0012CABE                 lea     eax, (filterMode - 2EE000h)[eax]
+  .text:0012CAC4                 mov     dword ptr ds:(dbl_2EE000 - 2EE000h)[eax], edx
+  .text:0012CAC6                 retn
+procedure: |-
+  void __cdecl SetFilterMode_I(int mode)
+  {
+    filterMode = mode;
+  }

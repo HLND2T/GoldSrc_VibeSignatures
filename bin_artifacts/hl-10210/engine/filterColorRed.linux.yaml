@@ -1,0 +1,9 @@
+gv_name: filterColorRed
+gv_va: '0x2c4a4c'
+gv_rva: '0x2c4a4c'
+gv_sig: 83 EC ?? 8D 44 24 ?? 89 44 24 ?? 8D 44 24 ?? 89 44 24 ?? 8D 44 24 ?? 89 04 24 FF 15 ?? ?? ?? ?? F3 0F 10 44 24 ??
+gv_sig_va: '0x126d40'
+gv_inst_offset: '0x32'
+gv_inst_length: '0x8'
+gv_inst_disp: '0x4'
+gv_sig_allow_across_function_boundary: true

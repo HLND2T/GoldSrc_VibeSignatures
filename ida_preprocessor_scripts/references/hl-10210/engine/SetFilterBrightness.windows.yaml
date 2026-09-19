@@ -1,0 +1,20 @@
+func_name: "SetFilterBrightness"
+func_va: "0x1019d320"
+disasm_code: |-
+  .text:1019D320                 push    ebp
+  .text:1019D321                 mov     ebp, esp
+  .text:1019D323                 lea     eax, [ebp+brightness]
+  .text:1019D326                 push    eax
+  .text:1019D327                 ; Binary/source difference: API interception receives parameter addresses before the global stores.
+  .text:1019D327                 call    off_1031BB44; Binary/source difference: API interception receives parameter addresses before the global stores.
+  .text:1019D32D                 movss   xmm0, [ebp+brightness]
+  .text:1019D332                 add     esp, 4
+  .text:1019D335                 movss   filterBrightness, xmm0
+  .text:1019D33D                 pop     ebp
+  .text:1019D33E                 retn
+procedure: |-
+  void __cdecl SetFilterBrightness(float brightness)
+  {
+    off_1031BB44(&brightness);
+    filterBrightness = brightness;
+  }

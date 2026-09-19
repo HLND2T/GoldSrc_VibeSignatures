@@ -11,7 +11,7 @@ function entry.
 from ida_analyze_util import preprocess_common_skill
 
 TARGET_FUNCTION_NAMES = ["GL_UnloadTextures"]
-TARGET_GLOBAL_NAMES = ["r_worldentity", "cl_worldmodel"]
+TARGET_GLOBAL_NAMES = ["r_worldentity", "cl_worldmodel", "d_lightstylevalue"]
 LLM_DECOMPILE = [
     {
         "symbol_name": name,

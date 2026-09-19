@@ -1,0 +1,48 @@
+func_name: "R_CullBox"
+func_va: "0x16c680"
+disasm_code: |-
+  .text:0016C680                 push    edi
+  .text:0016C681                 push    esi
+  .text:0016C682                 push    ebx
+  .text:0016C683                 mov     ebx, offset frustum
+  .text:0016C688                 sub     esp, 10h
+  .text:0016C68B                 mov     edi, [esp+1Ch+mins]
+  .text:0016C68F                 mov     esi, [esp+1Ch+maxs]
+  .text:0016C693                 ; p
+  .text:0016C693                 mov     [esp+1Ch+p], ebx; p
+  .text:0016C697                 ; emaxs
+  .text:0016C697                 mov     [esp+1Ch+emaxs], esi; emaxs
+  .text:0016C69B                 ; emins
+  .text:0016C69B                 mov     [esp+1Ch+emins], edi; emins
+  .text:0016C69E                 call    BoxOnPlaneSide
+  .text:0016C6A3                 cmp     eax, 2
+  .text:0016C6A6                 jz      short loc_16C6C0
+  .text:0016C6A8                 add     ebx, 14h
+  .text:0016C6AB                 cmp     ebx, offset r_oldviewleaf
+  .text:0016C6B1                 jnz     short loc_16C693
+  .text:0016C6B3                 add     esp, 10h
+  .text:0016C6B6                 xor     eax, eax
+  .text:0016C6B8                 pop     ebx
+  .text:0016C6B9                 pop     esi
+  .text:0016C6BA                 pop     edi
+  .text:0016C6BB                 retn
+  .text:0016C6C0                 add     esp, 10h
+  .text:0016C6C3                 mov     eax, 1
+  .text:0016C6C8                 pop     ebx
+  .text:0016C6C9                 pop     esi
+  .text:0016C6CA                 pop     edi
+  .text:0016C6CB                 retn
+procedure: |-
+  int __cdecl R_CullBox(float *mins, float *maxs)
+  {
+    mleaf_t **p; // ebx
+
+    p = (mleaf_t **)frustum;
+    while ( BoxOnPlaneSide(mins, maxs, (issue152_plane_t *)p) != 2 )
+    {
+      p += 5;
+      if ( p == &r_oldviewleaf )
+        return 0;
+    }
+    return 1;
+  }

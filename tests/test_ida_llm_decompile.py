@@ -582,6 +582,49 @@ class InstructionRuleRetryTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(2, transport.call_count)
 
 
+class PicSetterInstructionSelectionTests(unittest.IsolatedAsyncioTestCase):
+    async def test_retries_indirect_stores_and_stack_loads_before_accepting_object_pointer(self):
+        from ida_preprocessor_scripts._engine_filter_globals_common import filter_global_specs
+
+        spec = filter_global_specs([{"symbol_name": "target_global"}], "linux")[0]
+        accepted = (
+            "mov eax, ds:(target_ptr - 300000h)[eax]",
+            "lea edx, (target_global - 300000h)[eax]",
+            "mov eax, [eax-5C4h]",
+        )
+        rejected = (
+            "mov dword ptr ds:(_GLOBAL_OFFSET_TABLE_ - 300000h)[eax], edx",
+            "movss dword ptr [edx], xmm0",
+            "mov eax, [esp+arg_0]",
+            "lea eax, [ebp+arg_0]",
+            "call __x86_get_pc_thunk_ax",
+            "mov eax, [eax]",
+            "lea edx, [ebx]",
+        )
+
+        def response(address, instruction):
+            return (
+                f"found_gv:\n  - insn_va: '{address}'\n    insn_disasm: '{instruction}'\n    gv_name: target_global\n"
+            )
+
+        for pointer in accepted:
+            for decoy in rejected:
+                with self.subTest(pointer=pointer, decoy=decoy):
+                    transport = AsyncMock(side_effect=[response("0x401020", decoy), response("0x401010", pointer)])
+                    result = await call_llm_decompile(
+                        model="test-model",
+                        symbol_name_list=["target_global"],
+                        expected_result_sections={"target_global": ["found_gv"]},
+                        instruction_validations={"target_global": {"instruction_rules": spec["instruction_rules"]}},
+                        target_disasm_codes=[f"0x401010: {pointer}\n0x401020: {decoy}"],
+                        prompt_template="Find {symbol_name_list}.",
+                        max_retries=2,
+                        call_llm_text_func=transport,
+                    )
+                    self.assertEqual("0x401010", result["found_gv"][0]["insn_va"])
+                    self.assertEqual(2, transport.call_count)
+
+
 class LlmDecompileParserTests(unittest.TestCase):
     def test_disassembly_comments_need_no_space_before_semicolon(self):
         from ida_llm_decompile import _build_target_disasm_index, render_llm_decompile_blocks

@@ -1,0 +1,20 @@
+func_name: "SetFilterMode"
+func_va: "0x1019d390"
+disasm_code: |-
+  .text:1019D390                 push    ebp
+  .text:1019D391                 mov     ebp, esp
+  .text:1019D393                 lea     eax, [ebp+mode]
+  .text:1019D396                 push    eax
+  .text:1019D397                 ; Binary/source difference: API interception receives parameter addresses before the global stores.
+  .text:1019D397                 call    off_1031BB3C; Binary/source difference: API interception receives parameter addresses before the global stores.
+  .text:1019D39D                 mov     eax, [ebp+mode]
+  .text:1019D3A0                 add     esp, 4
+  .text:1019D3A3                 mov     filterMode, eax
+  .text:1019D3A8                 pop     ebp
+  .text:1019D3A9                 retn
+procedure: |-
+  void __cdecl SetFilterMode(int mode)
+  {
+    off_1031BB3C(&mode);
+    filterMode = mode;
+  }

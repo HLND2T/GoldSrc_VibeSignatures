@@ -1,0 +1,42 @@
+func_name: "R_CullBox"
+func_va: "0x1d53020"
+disasm_code: |-
+  .text:01D53020                 push    ebx
+  .text:01D53021                 mov     ebx, [esp+4+mins]
+  .text:01D53025                 push    esi
+  .text:01D53026                 push    edi
+  .text:01D53027                 mov     edi, [esp+0Ch+maxs]
+  .text:01D5302B                 mov     esi, offset frustum
+  .text:01D53030                 push    esi
+  .text:01D53031                 push    edi
+  .text:01D53032                 push    ebx
+  .text:01D53033                 call    BoxOnPlaneSide
+  .text:01D53038                 add     esp, 0Ch
+  .text:01D5303B                 cmp     eax, 2
+  .text:01D5303E                 jz      short loc_1D53051
+  .text:01D53040                 add     esi, 14h
+  .text:01D53043                 cmp     esi, offset dword_3F941B0
+  .text:01D53049                 jl      short loc_1D53030
+  .text:01D5304B                 pop     edi
+  .text:01D5304C                 pop     esi
+  .text:01D5304D                 xor     eax, eax
+  .text:01D5304F                 pop     ebx
+  .text:01D53050                 retn
+  .text:01D53051                 pop     edi
+  .text:01D53052                 pop     esi
+  .text:01D53053                 mov     eax, 1
+  .text:01D53058                 pop     ebx
+  .text:01D53059                 retn
+procedure: |-
+  int __cdecl R_CullBox(float *mins, float *maxs)
+  {
+    issue152_plane_t *v2; // esi
+
+    v2 = frustum;
+    while ( BoxOnPlaneSide(mins, maxs, v2) != 2 )
+    {
+      if ( (int)++v2 >= (int)&dword_3F941B0 )
+        return 0;
+    }
+    return 1;
+  }

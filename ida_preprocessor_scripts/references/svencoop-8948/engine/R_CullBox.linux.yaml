@@ -1,0 +1,46 @@
+func_name: "R_CullBox"
+func_va: "0x1844e0"
+disasm_code: |-
+  .text:001844E0                 sub     esp, 2Ch
+  .text:001844E3                 mov     [esp+2Ch+var_10], ebx
+  .text:001844E7                 call    __x86_get_pc_thunk_bx
+  .text:001844EC                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:001844F2                 mov     [esp+2Ch+var_8], edi
+  .text:001844F6                 mov     edi, [esp+2Ch+mins]
+  .text:001844FA                 mov     [esp+2Ch+var_C], esi
+  .text:001844FE                 mov     [esp+2Ch+var_4], ebp
+  .text:00184502                 lea     esi, (frustum - 33A000h)[ebx]
+  .text:00184508                 lea     ebp, (r_framecount - 33A000h)[ebx]
+  .text:0018450E                 mov     eax, [esp+2Ch+maxs]
+  .text:00184512                 mov     [esp+2Ch+var_24], esi
+  .text:00184516                 mov     [esp+2Ch+var_2C], edi
+  .text:00184519                 mov     [esp+2Ch+var_28], eax
+  .text:0018451D                 call    __Z14BoxOnPlaneSidePfS_P8mplane_s; BoxOnPlaneSide(float *,float *,mplane_s *)
+  .text:00184522                 cmp     eax, 2
+  .text:00184525                 jz      short loc_184548
+  .text:00184527                 add     esi, 14h
+  .text:0018452A                 cmp     ebp, esi
+  .text:0018452C                 jnz     short loc_18450E
+  .text:0018452E                 xor     eax, eax
+  .text:00184530                 mov     ebx, [esp+2Ch+var_10]
+  .text:00184534                 mov     esi, [esp+2Ch+var_C]
+  .text:00184538                 mov     edi, [esp+2Ch+var_8]
+  .text:0018453C                 mov     ebp, [esp+2Ch+var_4]
+  .text:00184540                 add     esp, 2Ch
+  .text:00184543                 retn
+  .text:00184548                 mov     eax, 1
+  .text:0018454D                 jmp     short loc_184530
+procedure: |-
+  int __cdecl R_CullBox(float *mins, float *maxs)
+  {
+    int *v2; // esi
+
+    v2 = (int *)frustum;
+    while ( BoxOnPlaneSide(mins, maxs, (issue152_plane_t *)v2) != 2 )
+    {
+      v2 += 5;
+      if ( &r_framecount == v2 )
+        return 0;
+    }
+    return 1;
+  }

@@ -1,0 +1,5 @@
+func_name: SetFilterColor
+func_va: '0x1d1e440'
+func_rva: '0x1e440'
+func_size: '0x36'
+func_sig: 8D 44 24 ?? 8D 4C 24 ?? 50 8D 54 24 ?? 51 52 FF 15 ?? ?? ?? ?? 8B 44 24 ?? 8B 4C 24 ?? 8B 54 24 ?? 83 C4 0C

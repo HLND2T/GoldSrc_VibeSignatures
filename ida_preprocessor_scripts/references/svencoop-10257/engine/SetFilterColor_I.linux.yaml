@@ -1,0 +1,22 @@
+func_name: "SetFilterColor_I"
+func_va: "0x12cad0"
+disasm_code: |-
+  .text:0012CAD0                 call    sub_58CDC
+  .text:0012CAD5                 add     eax, (offset dbl_2EE000 - $)
+  .text:0012CADA                 movss   xmm0, [esp+r]
+  .text:0012CAE0                 movss   xmm1, [esp+g]
+  .text:0012CAE6                 movss   xmm2, [esp+b]
+  .text:0012CAEC                 lea     edx, (filterColorRed - 2EE000h)[eax]
+  .text:0012CAF2                 movss   dword ptr [edx], xmm0
+  .text:0012CAF6                 lea     edx, (filterColorGreen - 2EE000h)[eax]
+  .text:0012CAFC                 lea     eax, (filterColorBlue - 2EE000h)[eax]
+  .text:0012CB02                 movss   dword ptr [edx], xmm1
+  .text:0012CB06                 movss   dword ptr ds:(dbl_2EE000 - 2EE000h)[eax], xmm2
+  .text:0012CB0A                 retn
+procedure: |-
+  void __cdecl SetFilterColor_I(float r, float g, float b)
+  {
+    filterColorRed = r;
+    filterColorGreen = g;
+    filterColorBlue = b;
+  }

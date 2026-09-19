@@ -1,0 +1,30 @@
+func_name: "SetFilterColor"
+func_va: "0x1019d340"
+disasm_code: |-
+  .text:1019D340                 push    ebp
+  .text:1019D341                 mov     ebp, esp
+  .text:1019D343                 lea     eax, [ebp+b]
+  .text:1019D346                 push    eax
+  .text:1019D347                 lea     eax, [ebp+g]
+  .text:1019D34A                 push    eax
+  .text:1019D34B                 lea     eax, [ebp+r]
+  .text:1019D34E                 push    eax
+  .text:1019D34F                 ; Binary/source difference: API interception receives parameter addresses before the global stores.
+  .text:1019D34F                 call    off_1031BB40; Binary/source difference: API interception receives parameter addresses before the global stores.
+  .text:1019D355                 movss   xmm0, [ebp+r]
+  .text:1019D35A                 add     esp, 0Ch
+  .text:1019D35D                 movss   filterColorRed, xmm0
+  .text:1019D365                 movss   xmm0, [ebp+g]
+  .text:1019D36A                 movss   filterColorGreen, xmm0
+  .text:1019D372                 movss   xmm0, [ebp+b]
+  .text:1019D377                 movss   filterColorBlue, xmm0
+  .text:1019D37F                 pop     ebp
+  .text:1019D380                 retn
+procedure: |-
+  void __cdecl SetFilterColor(float r, float g, float b)
+  {
+    off_1031BB40(&r, &g, &b);
+    filterColorRed = r;
+    filterColorGreen = g;
+    filterColorBlue = b;
+  }
