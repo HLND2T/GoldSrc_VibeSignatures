@@ -80,10 +80,13 @@ def signature_owners():
 
     for label, signature in values["signatures"]:
         hits = all_matches(bytes.fromhex(signature))
+        if not hits:
+            continue
         owners = {owner_start(hit) for hit in hits}
-        owners.discard(None)
-        if len(owners) == 1:
-            return {"owner_ea": hex(owners.pop()), "signature": label, "match_count": len(hits)}
+        if None in owners or len(owners) != 1:
+            return {"error": "code signature does not resolve to exactly one owning function",
+                    "signature": label, "match_count": len(hits)}
+        return {"owner_ea": hex(owners.pop()), "signature": label, "match_count": len(hits)}
     return {"error": "no code signature resolves to a single decal-init function"}
 
 
@@ -127,8 +130,7 @@ def locate_globals(start):
     register_globals = {}
     register_refs = {}
     entries = []
-    cache = None
-    cache_ref = None
+    cache_stores = []
     for ea in idautils.FuncItems(int(start)):
         insn = idautils.DecodeInstruction(int(ea))
         if insn is None:
@@ -141,7 +143,7 @@ def locate_globals(start):
             "disasm": idc.generate_disasm_line(int(ea), 0) or '',
             "globals": named_globals(ea, insn, bases),
         }
-        if cache is None and len(insn.ops) > 1 and mnemonic in ('mov', 'and', 'or'):
+        if len(insn.ops) > 1 and mnemonic in ('mov', 'and', 'or'):
             destination = insn.ops[0]
             immediate_ones = {
                 int(op.value) & 0xFFFFFFFF for op in insn.ops if int(op.type) == int(idaapi.o_imm)
@@ -150,13 +152,11 @@ def locate_globals(start):
                     and 0xFFFFFFFF in immediate_ones and entry["disp"]):
                 base_register = reg4(destination)
                 if base_register in register_globals:
-                    cache = register_globals[base_register]
-                    cache_ref = register_refs[base_register]
+                    cache_stores.append((register_globals[base_register], register_refs[base_register]))
                 elif int(getattr(destination, 'addr', 0) or 0):
                     absolute = int(destination.addr) & 0xFFFFFFFF
                     if is_writable_data(absolute):
-                        cache = absolute
-                        cache_ref = entry
+                        cache_stores.append((absolute, entry))
         entries.append(entry)
 
         # Track the register that currently holds one address-loaded global.
@@ -179,8 +179,10 @@ def locate_globals(start):
                 register_globals[target] = next_global
                 register_refs[target] = next_ref
 
-    if cache is None or cache_ref is None:
-        return {"error": "gDecalCache store base not recovered"}
+    if len(cache_stores) != 1:
+        return {"error": "expected exactly one qualifying gDecalCache store",
+                "store_count": len(cache_stores)}
+    cache, cache_ref = cache_stores[0]
 
     memset_sites = []
     for callee, sites in direct_calls(int(start)).items():
