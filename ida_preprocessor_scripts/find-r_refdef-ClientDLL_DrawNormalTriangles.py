@@ -21,10 +21,12 @@ condition is required: ``ClientDLL_IsThirdPerson`` also touches exactly one
 member on SvEngine Windows, but has no trailing dispatch.
 """
 
+import inspect
 from pathlib import Path
 
 from ida_analyze_util import _load_yaml_mapping, _output_for_symbol, write_func_yaml
 from ida_preprocessor_scripts._direct_gv_common import write_located_globals
+from ida_preprocessor_scripts import x86_call_arguments
 from ida_preprocessor_scripts._engine_private_globals_common import (
     inspect_func,
     owner_context,
@@ -37,14 +39,68 @@ SETDEV_FUNC_NAME = "CL_SetDevOverView"
 CL_FUNCS_NAME = "cl_funcs"
 # cldll_func_t is 0x110 bytes through pClientFactory on the widest build.
 CL_FUNCS_SPAN = 0x120
-# CL_SetDevOverView takes one pointer, so its argument setup is close by.
-ARGUMENT_WINDOW = 12
+WALK = (
+    inspect.getsource(x86_call_arguments)
+    + r"""
+import ida_frame, ida_gdl
 
-WALK = r"""
 SETDEV = int(values['setdev'], 0)
 CL_FUNCS = int(values['cl_funcs'], 0)
 SPAN = int(values['span'])
-WINDOW = int(values['window'])
+
+
+def refdef_argument(renderer, entries, site):
+    owner = ida_funcs.get_func(renderer)
+    blocks = [block for block in ida_gdl.FlowChart(owner) if block.start_ea <= site < block.end_ea]
+    if len(blocks) != 1:
+        return None
+    block = blocks[0]
+    code = []
+    got_base, got_register = got_anchor(renderer)
+    for entry in entries:
+        if not block.start_ea <= entry['ea'] <= site:
+            continue
+        sp = int(ida_frame.get_spd(owner, entry['ea']))
+        operands = []
+        mnem = entry['mnem']
+        for index, op in enumerate(entry['insn'].ops):
+            kind = int(op.type)
+            if kind == int(idaapi.o_void):
+                break
+            operand = ('unknown', None)
+            if kind == int(idaapi.o_reg):
+                # Partial writes must invalidate the full register, not preserve it.
+                if index == 0 or ida_ua.get_dtype_size(op.dtype) == 4:
+                    operand = ('reg', reg4(op))
+            elif kind == int(idaapi.o_imm) and entry['disp'] and is_writable_data(int(op.value)):
+                operand = ('imm', access(entry, int(op.value)))
+            elif kind in (int(idaapi.o_displ), int(idaapi.o_phrase)):
+                text = (idc.print_operand(entry['ea'], index) or '').lower()
+                if '[esp' in text and not any(reg in text for reg in ('eax','ebx','ecx','edx','esi','edi','ebp')):
+                    displacement = signed32(op.addr) if kind == int(idaapi.o_displ) else 0
+                    # Do not infer a pointer through overlapping/partial stack writes.
+                    if ida_ua.get_dtype_size(op.dtype) != 4 or displacement % 4:
+                        return None
+                    operand = ('stack', sp + displacement)
+            operands.append(operand)
+        if mnem == 'lea' and len(operands) == 2 and entry['disp']:
+            source = entry['insn'].ops[1]
+            address = None
+            if int(source.type) == int(idaapi.o_mem):
+                address = int(source.addr)
+            elif (int(source.type) == int(idaapi.o_displ) and got_base is not None
+                  and reg4(source) == got_register):
+                address = (got_base + signed32(source.addr)) & 0xFFFFFFFF
+            if address is not None and is_writable_data(address) and entry['targets'] == {address}:
+                mnem = 'mov'
+                operands[1] = ('imm', access(entry, address))
+        if operands and operands[0][0] == 'reg' and ida_ua.get_dtype_size(entry['insn'].ops[0].dtype) != 4:
+            mnem = 'unknown_write'
+        code.append({'mnem': mnem, 'ops': operands, 'sp': sp})
+    if not code or code[-1]['mnem'] != 'call':
+        return None
+    argument = recover_call_arguments(code, len(code) - 1, 1)[0]
+    return argument if isinstance(argument, dict) else None
 
 calling = sorted({start for start, _ in callers(SETDEV)})
 if len(calling) != 1:
@@ -58,14 +114,9 @@ else:
         sites = sorted(site for start, site in callers(SETDEV) if start == renderer)
         chosen = []
         for site in sites:
-            window = [entry for entry in entries if entry['ea'] < site][-WINDOW:]
-            for entry in reversed(window):
-                if entry['mnem'] not in ('mov', 'push', 'lea'):
-                    continue
-                if len(entry['targets']) != 1 or not entry['disp']:
-                    continue
-                chosen.append(access(entry, next(iter(entry['targets']))))
-                break
+            argument = refdef_argument(renderer, entries, site)
+            if argument is not None:
+                chosen.append(argument)
         values_seen = {item['gv_ea'] for item in chosen}
         if len(chosen) != len(sites) or len(values_seen) != 1:
             result = {'error': 'r_refdef argument is not unique: %s' % sorted(values_seen)}
@@ -103,6 +154,7 @@ else:
                     'member_offset': hex(found[0][1]),
                 }
 """
+)
 
 
 async def preprocess_skill(
@@ -143,7 +195,6 @@ async def preprocess_skill(
             "setdev": hex(anchors[SETDEV_FUNC_NAME]),
             "cl_funcs": hex(anchors[CL_FUNCS_NAME]),
             "span": CL_FUNCS_SPAN,
-            "window": ARGUMENT_WINDOW,
         },
     )
     if located.get("error") or located.get("pointer_size") != 4:
