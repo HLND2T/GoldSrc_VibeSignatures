@@ -1423,6 +1423,7 @@ modules:
         expected_input:
           - V_CalcRefdef.{platform}.yaml
         expected_output:
+          - g_iWaterLevel.{platform}.yaml
           - g_bRenderingPortals_SCClient.{platform}.yaml
       - name: find-GameStudioRenderer_StudioDrawPlayer-decompiles
         expected_input:
@@ -1519,6 +1520,8 @@ modules:
       - name: ClientPortal_texture_height_offset
         category: scalar
       - name: g_pitchdrift
+        category: gv
+      - name: g_iWaterLevel
         category: gv
       - name: g_bRenderingPortals_SCClient
         category: gv

@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
-"""Recover Sven's portal-pass guard through the exported refdef callback."""
+"""Recover Sven's client globals through the exported refdef callback."""
 
 from ida_analyze_util import preprocess_common_skill
 
 LLM_DECOMPILE = [
+    {
+        "symbol_name": "g_iWaterLevel",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/client/V_CalcRefdef.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"V_CalcRefdef.{platform}.yaml": "required"},
+    },
     {
         "symbol_name": "g_bRenderingPortals_SCClient",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/client/V_CalcRefdef.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {"V_CalcRefdef.{platform}.yaml": "required"},
-    }
+    },
 ]
 GV_FIELDS = [
     "gv_name",
@@ -44,9 +51,12 @@ async def preprocess_skill(
         new_binary_dir=new_binary_dir,
         platform=platform,
         image_base=image_base,
-        gv_names=["g_bRenderingPortals_SCClient"],
+        gv_names=["g_iWaterLevel", "g_bRenderingPortals_SCClient"],
         llm_decompile_specs=LLM_DECOMPILE,
         llm_config=llm_config,
-        generate_yaml_desired_fields=[("g_bRenderingPortals_SCClient", GV_FIELDS)],
+        generate_yaml_desired_fields=[
+            ("g_iWaterLevel", GV_FIELDS),
+            ("g_bRenderingPortals_SCClient", GV_FIELDS),
+        ],
         debug=debug,
     )
