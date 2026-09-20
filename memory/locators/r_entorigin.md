@@ -15,7 +15,7 @@ tags:
 - **Name**: `r_entorigin`
 - **Category**: `gv`
 - **Module**: engine (`hw.dll` / `hw.so`)
-- **Producer**: `ida_preprocessor_scripts/find-R_DrawSpriteModel-globals.py`
+- **Producer**: `ida_preprocessor_scripts/find-R_DrawSpriteModel-decompiles.py`
 - **Source**: `engine/gl_rmain.c` — `vec3_t modelorg, r_entorigin;` — the origin of
   the entity currently being rendered, consumed by the sprite and glow paths.
 
@@ -42,7 +42,7 @@ this global on every family and platform.
   transparent list is walked. That copy only exists on the non-SvEngine families,
   so the symbol was declared in the two svencoop configs but had no producer
   there. The sprite renderer reads the global unconditionally, so the producer
-  moved to `find-R_DrawSpriteModel-globals` and the SvEngine gap closed. Expected
+  moved to `find-R_DrawSpriteModel-decompiles` and the SvEngine gap closed. Expected
   values were preserved exactly: hl-10210 Linux is still `0xf7d300`.
 - **Access form is not portable.** MSVC emits `push offset <gv>` (four times, the
   four `VectorMA` calls); GCC non-PIC emits `mov [esp+..], offset r_entorigin`;

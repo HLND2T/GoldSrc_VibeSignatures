@@ -821,7 +821,7 @@ modules:
       - name: find-R_DrawSpriteModel
         expected_output:
           - R_DrawSpriteModel.{platform}.yaml
-      - name: find-R_DrawSpriteModel-globals
+      - name: find-R_DrawSpriteModel-decompiles
         expected_input:
           - R_DrawSpriteModel.{platform}.yaml
         expected_output:

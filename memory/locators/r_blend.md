@@ -15,7 +15,7 @@ tags:
 - **Name**: `r_blend`
 - **Category**: `gv`
 - **Module**: engine (`hw.dll` / `hw.so`)
-- **Producer**: `ida_preprocessor_scripts/find-R_DrawSpriteModel-globals.py`
+- **Producer**: `ida_preprocessor_scripts/find-R_DrawSpriteModel-decompiles.py`
 - **Source**: `engine/gl_rmain.c` — `float r_blend;` — the alpha the
   transparent-entity and sprite paths feed to `R_SpriteColor`/`qglColor4ub`.
 
