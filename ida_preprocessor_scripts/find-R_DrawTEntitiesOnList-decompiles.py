@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Recover the parse counter and byte stride of the transparent player's frame ring."""
+"""Recover the parse counter, byte stride and entity origin of the transparent list.
+
+``r_entorigin`` arrives here as well: on every family except SvEngine the
+transparent-entity loader copies ``currententity->origin`` into it while walking
+the list, so the same predecessor reference serves all three targets. SvEngine
+does not touch it in that body at all and is therefore not covered.
+"""
 
 import json
 from pathlib import Path
@@ -7,6 +13,7 @@ from pathlib import Path
 from ida_analyze_util import (
     _export_llm_function,
     _load_yaml_mapping,
+    _output_for_symbol,
     _parse_int,
     parse_mcp_result,
     preprocess_common_skill,
@@ -27,6 +34,13 @@ LLM_DECOMPILE = [
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/R_DrawTEntitiesOnList.{platform}.yaml"],
         "expected_result_sections": ["found_scalar"],
+        "dependency_policy": {"R_DrawTEntitiesOnList.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "r_entorigin",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_DrawTEntitiesOnList.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
         "dependency_policy": {"R_DrawTEntitiesOnList.{platform}.yaml": "required"},
     },
 ]
@@ -84,7 +98,16 @@ async def preprocess_skill(
         return False
     print("size_of_frame evidence: " + json.dumps(evidence))
     scalar_spec = {**LLM_DECOMPILE[1], "expected_value": value}
-    spec = dict(LLM_DECOMPILE[0])
+    gv_names = ["cl_parsecount"]
+    gv_specs = [dict(LLM_DECOMPILE[0])]
+    desired_fields = [("cl_parsecount", GV_FIELDS)]
+    # SvEngine writes r_entorigin in its entity dispatcher instead, so the
+    # config that covers this skill without that output must not require it.
+    if _output_for_symbol(expected_outputs, "r_entorigin") is not None:
+        gv_names.append("r_entorigin")
+        gv_specs.append(dict(LLM_DECOMPILE[2]))
+        desired_fields.append(("r_entorigin", GV_FIELDS))
+    desired_fields.append(("size_of_frame", list(SCALAR_FIELDS)))
     return await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,
@@ -92,10 +115,10 @@ async def preprocess_skill(
         new_binary_dir=new_binary_dir,
         platform=platform,
         image_base=image_base,
-        gv_names=["cl_parsecount"],
+        gv_names=gv_names,
         scalar_names=["size_of_frame"],
-        llm_decompile_specs=[spec, scalar_spec],
+        llm_decompile_specs=[*gv_specs, scalar_spec],
         llm_config=llm_config,
-        generate_yaml_desired_fields=[("cl_parsecount", GV_FIELDS), ("size_of_frame", list(SCALAR_FIELDS))],
+        generate_yaml_desired_fields=desired_fields,
         debug=debug,
     )

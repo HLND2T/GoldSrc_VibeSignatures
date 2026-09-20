@@ -136,6 +136,7 @@ modules:
         expected_output:
           - cl_parsecount.{platform}.yaml
           - size_of_frame.{platform}.yaml
+          - r_entorigin.{platform}.yaml
       - name: find-R_DrawTEntitiesOnList
         expected_output:
           - R_DrawTEntitiesOnList.{platform}.yaml
@@ -806,7 +807,52 @@ modules:
           - CGame_AppActivate.{platform}.yaml
         expected_output:
           - host_initialized.{platform}.yaml
+      - name: find-Draw_TextureMode_f
+        expected_output:
+          - Draw_TextureMode_f.{platform}.yaml
+      - name: find-Draw_TextureMode_f-globals
+        expected_input:
+          - Draw_TextureMode_f.{platform}.yaml
+        expected_output:
+          - gl_filter_min.{platform}.yaml
+          - gl_filter_max.{platform}.yaml
+      - name: find-R_RecursiveWorldNode-globals
+        expected_input:
+          - R_RecursiveWorldNode.{platform}.yaml
+        expected_output:
+          - r_framecount.{platform}.yaml
+          - r_visframecount.{platform}.yaml
+      - name: find-ClientDLL_DrawTransparentTriangles
+        expected_input:
+          - R_DrawTEntitiesOnList.{platform}.yaml
+          - cl_funcs.{platform}.yaml
+        expected_output:
+          - ClientDLL_DrawTransparentTriangles.{platform}.yaml
+          - cl_funcs_pDrawTransparentTriangles.{platform}.yaml
+      - name: find-CL_IsDevOverviewMode
+        expected_input:
+          - CL_SetDevOverView.{platform}.yaml
+        expected_output:
+          - CL_IsDevOverviewMode.{platform}.yaml
     symbols:
+      - name: Draw_TextureMode_f
+        category: func
+      - name: gl_filter_min
+        category: gv
+      - name: gl_filter_max
+        category: gv
+      - name: r_framecount
+        category: gv
+      - name: r_visframecount
+        category: gv
+      - name: ClientDLL_DrawTransparentTriangles
+        category: func
+      - name: cl_funcs_pDrawTransparentTriangles
+        category: gv
+      - name: CL_IsDevOverviewMode
+        category: func
+      - name: r_entorigin
+        category: gv
       - name: currenttexture
         category: gv
       - name: gl_mtexable

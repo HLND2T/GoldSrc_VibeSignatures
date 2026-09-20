@@ -1,0 +1,298 @@
+func_name: "R_RecursiveWorldNode"
+func_va: "0x1024b9b0"
+disasm_code: |-
+  .text:1024B9B0                 push    ebp
+  .text:1024B9B1                 mov     ebp, esp
+  .text:1024B9B3                 sub     esp, 8
+  .text:1024B9B6                 push    ebx
+  .text:1024B9B7                 mov     ebx, [ebp+node]
+  .text:1024B9BA                 cmp     dword ptr [ebx], 0FFFFFFFEh
+  .text:1024B9BD                 jz      loc_1024BBEA
+  .text:1024B9C3                 push    esi
+  .text:1024B9C4                 push    edi
+  .text:1024B9C5                 nop     word ptr [eax+eax+00000000h]
+  .text:1024B9D0                 mov     eax, [ebx+4]
+  .text:1024B9D3                 cmp     eax, r_visframecount
+  .text:1024B9D9                 jnz     loc_1024BBE8
+  .text:1024B9DF                 lea     eax, [ebx+14h]
+  .text:1024B9E2                 ; maxs
+  .text:1024B9E2                 push    eax; maxs
+  .text:1024B9E3                 lea     eax, [ebx+8]
+  .text:1024B9E6                 ; mins
+  .text:1024B9E6                 push    eax; mins
+  .text:1024B9E7                 call    R_CullBox
+  .text:1024B9EC                 add     esp, 8
+  .text:1024B9EF                 test    eax, eax
+  .text:1024B9F1                 jnz     loc_1024BBE8
+  .text:1024B9F7                 cmp     [ebx], eax
+  .text:1024B9F9                 jl      loc_1024BBBC
+  .text:1024B9FF                 mov     eax, [ebx+24h]
+  .text:1024BA02                 movzx   ecx, byte ptr [eax+10h]
+  .text:1024BA06                 sub     ecx, 0
+  .text:1024BA09                 jz      short loc_1024BA59
+  .text:1024BA0B                 sub     ecx, 1
+  .text:1024BA0E                 jz      short loc_1024BA4F
+  .text:1024BA10                 sub     ecx, 1
+  .text:1024BA13                 jz      short loc_1024BA45
+  .text:1024BA15                 movss   xmm0, dword ptr [eax]
+  .text:1024BA19                 movss   xmm1, dword ptr [eax+4]
+  .text:1024BA1E                 mulss   xmm0, dword ptr qword_10DC5630
+  .text:1024BA26                 mulss   xmm1, dword ptr qword_10DC5630+4
+  .text:1024BA2E                 addss   xmm1, xmm0
+  .text:1024BA32                 movss   xmm0, dword ptr [eax+8]
+  .text:1024BA37                 mulss   xmm0, dword_10DC5638
+  .text:1024BA3F                 addss   xmm1, xmm0
+  .text:1024BA43                 jmp     short loc_1024BA61
+  .text:1024BA45                 movss   xmm1, dword_10DC5638
+  .text:1024BA4D                 jmp     short loc_1024BA61
+  .text:1024BA4F                 movss   xmm1, dword ptr qword_10DC5630+4
+  .text:1024BA57                 jmp     short loc_1024BA61
+  .text:1024BA59                 movss   xmm1, dword ptr qword_10DC5630
+  .text:1024BA61                 subss   xmm1, dword ptr [eax+0Ch]
+  .text:1024BA66                 ; cleanUpShaderState
+  .text:1024BA66                 push    [ebp+cleanUpShaderState]; cleanUpShaderState
+  .text:1024BA69                 xor     eax, eax
+  .text:1024BA6B                 cvtps2pd xmm0, xmm1
+  .text:1024BA6E                 comisd  xmm0, ds:qword_10306440
+  .text:1024BA76                 movsd   [ebp+var_8], xmm0
+  .text:1024BA7B                 setb    al
+  .text:1024BA7E                 mov     [ebp+node], eax
+  .text:1024BA81                 ; node
+  .text:1024BA81                 push    dword ptr [ebx+eax*4+28h]; node
+  .text:1024BA85                 call    R_RecursiveWorldNode
+  .text:1024BA8A                 movzx   edi, word ptr [ebx+32h]
+  .text:1024BA8E                 add     esp, 8
+  .text:1024BA91                 test    edi, edi
+  .text:1024BA93                 jz      loc_1024BB9A
+  .text:1024BA99                 movzx   eax, word ptr [ebx+30h]
+  .text:1024BA9D                 movsd   xmm0, [ebp+var_8]
+  .text:1024BAA2                 movsd   xmm1, ds:qword_102C1BE8
+  .text:1024BAAA                 imul    esi, eax, 6Ch ; 'l'
+  .text:1024BAAD                 mov     eax, cl_worldmodel
+  .text:1024BAB2                 add     esi, [eax+0B4h]
+  .text:1024BAB8                 comisd  xmm1, xmm0
+  .text:1024BABC                 jbe     short loc_1024BAC7
+  .text:1024BABE                 mov     [ebp+node], 2
+  .text:1024BAC5                 jmp     short loc_1024BAE0
+  .text:1024BAC7                 mov     eax, [ebp+node]
+  .text:1024BACA                 xor     ecx, ecx
+  .text:1024BACC                 comisd  xmm0, ds:qword_103064B0
+  .text:1024BAD4                 cmova   eax, ecx
+  .text:1024BAD7                 mov     [ebp+node], eax
+  .text:1024BADA                 nop     word ptr [eax+eax+00h]
+  .text:1024BAE0                 mov     eax, [esi]
+  .text:1024BAE2                 cmp     eax, r_framecount
+  .text:1024BAE8                 jnz     loc_1024BB8E
+  .text:1024BAEE                 mov     edx, [esi+8]
+  .text:1024BAF1                 test    dl, dl
+  .text:1024BAF3                 js      short loc_1024BB10
+  .text:1024BAF5                 xor     ecx, ecx
+  .text:1024BAF7                 xorps   xmm1, xmm1
+  .text:1024BAFA                 comisd  xmm1, xmm0
+  .text:1024BAFE                 mov     eax, edx
+  .text:1024BB00                 setnbe  cl
+  .text:1024BB03                 shr     eax, 1
+  .text:1024BB05                 and     eax, 1
+  .text:1024BB08                 cmp     eax, ecx
+  .text:1024BB0A                 jnz     loc_1024BB8E
+  .text:1024BB10                 cmp     dword_10322E30, 0
+  .text:1024BB17                 jz      short loc_1024BB51
+  .text:1024BB19                 cmp     dword_10DC50E4, 0
+  .text:1024BB20                 jz      short loc_1024BB3D
+  .text:1024BB22                 mov     eax, cl_worldmodel
+  .text:1024BB27                 mov     edx, [eax+174h]
+  .text:1024BB2D                 mov     eax, [esi+2Ch]
+  .text:1024BB30                 mov     ecx, [eax+24h]
+  .text:1024BB33                 mov     eax, dword_10DC50E8
+  .text:1024BB38                 cmp     ecx, [edx+eax*4]
+  .text:1024BB3B                 jz      short loc_1024BB8E
+  .text:1024BB3D                 mov     ecx, [esi+2Ch]
+  .text:1024BB40                 mov     eax, [ecx+24h]
+  .text:1024BB43                 mov     eax, [eax+1Ch]
+  .text:1024BB46                 mov     [esi+28h], eax
+  .text:1024BB49                 mov     eax, [ecx+24h]
+  .text:1024BB4C                 mov     [eax+1Ch], esi
+  .text:1024BB4F                 jmp     short loc_1024BB8E
+  .text:1024BB51                 test    dl, 4
+  .text:1024BB54                 jz      short loc_1024BB66
+  .text:1024BB56                 mov     eax, dword_10989320
+  .text:1024BB5B                 mov     [esi+28h], eax
+  .text:1024BB5E                 mov     dword_10989320, esi
+  .text:1024BB64                 jmp     short loc_1024BB8E
+  .text:1024BB66                 test    dl, 10h
+  .text:1024BB69                 jz      short loc_1024BB7B
+  .text:1024BB6B                 mov     eax, dword_10989324
+  .text:1024BB70                 mov     [esi+28h], eax
+  .text:1024BB73                 mov     dword_10989324, esi
+  .text:1024BB79                 jmp     short loc_1024BB8E
+  .text:1024BB7B                 ; cleanUpShaderState
+  .text:1024BB7B                 push    [ebp+cleanUpShaderState]; cleanUpShaderState
+  .text:1024BB7E                 ; face
+  .text:1024BB7E                 push    0; face
+  .text:1024BB80                 ; surface
+  .text:1024BB80                 push    esi; surface
+  .text:1024BB81                 call    R_DrawSequentialPoly; Multitexture helpers can be inlined: mtexenabled is the enabled state, gl_mtexable is capability. Preserve the current binary ABI; HL25 adds shader cleanup absent from older source.
+  .text:1024BB86                 movsd   xmm0, [ebp+var_8]
+  .text:1024BB8B                 add     esp, 0Ch
+  .text:1024BB8E                 add     esi, 6Ch ; 'l'
+  .text:1024BB91                 sub     edi, 1
+  .text:1024BB94                 jnz     loc_1024BAE0
+  .text:1024BB9A                 xor     eax, eax
+  .text:1024BB9C                 cmp     [ebp+node], eax
+  .text:1024BB9F                 setz    al
+  .text:1024BBA2                 lea     eax, ds:28h[eax*4]
+  .text:1024BBA9                 mov     ebx, [eax+ebx]
+  .text:1024BBAC                 cmp     dword ptr [ebx], 0FFFFFFFEh
+  .text:1024BBAF                 jnz     loc_1024B9D0
+  .text:1024BBB5                 pop     edi
+  .text:1024BBB6                 pop     esi
+  .text:1024BBB7                 pop     ebx
+  .text:1024BBB8                 mov     esp, ebp
+  .text:1024BBBA                 pop     ebp
+  .text:1024BBBB                 retn
+  .text:1024BBBC                 mov     esi, [ebx+30h]
+  .text:1024BBBF                 mov     edx, [ebx+2Ch]
+  .text:1024BBC2                 test    esi, esi
+  .text:1024BBC4                 jz      short loc_1024BBD7
+  .text:1024BBC6                 mov     ecx, [edx]
+  .text:1024BBC8                 lea     edx, [edx+4]
+  .text:1024BBCB                 mov     eax, r_framecount
+  .text:1024BBD0                 mov     [ecx], eax
+  .text:1024BBD2                 sub     esi, 1
+  .text:1024BBD5                 jnz     short loc_1024BBC6
+  .text:1024BBD7                 add     ebx, 28h ; '('
+  .text:1024BBDA                 cmp     dword ptr [ebx], 0
+  .text:1024BBDD                 jz      short loc_1024BBE8
+  .text:1024BBDF                 push    ebx
+  .text:1024BBE0                 call    sub_10241880
+  .text:1024BBE5                 add     esp, 4
+  .text:1024BBE8                 pop     edi
+  .text:1024BBE9                 pop     esi
+  .text:1024BBEA                 pop     ebx
+  .text:1024BBEB                 mov     esp, ebp
+  .text:1024BBED                 pop     ebp
+  .text:1024BBEE                 retn
+procedure: |-
+  void __cdecl R_RecursiveWorldNode(void *node, int cleanUpShaderState)
+  {
+    char *v2; // ebx
+    int v3; // eax
+    float v4; // xmm1_4
+    int v5; // edi
+    double v6; // xmm0_8
+    _DWORD *v7; // esi
+    BOOL v8; // eax
+    unsigned int v9; // edx
+    int v10; // ecx
+    int v11; // esi
+    _DWORD **i; // edx
+    _DWORD *v13; // ecx
+    _DWORD *v14; // ebx
+    double v15; // [esp+4h] [ebp-8h]
+    int nodea; // [esp+14h] [ebp+8h]
+  
+    v2 = (char *)node;
+    if ( *(_DWORD *)node != -2 )
+    {
+      while ( *((_DWORD *)v2 + 1) == r_visframecount && !R_CullBox((float *)v2 + 2, (float *)v2 + 5) )
+      {
+        if ( *(int *)v2 < 0 )
+        {
+          v11 = *((_DWORD *)v2 + 12);
+          for ( i = *((_DWORD ***)v2 + 11); v11; --v11 )
+          {
+            v13 = *i++;
+            *v13 = r_framecount;
+          }
+          v14 = v2 + 40;
+          if ( *v14 )
+            sub_10241880(v14);
+          return;
+        }
+        v3 = *((_DWORD *)v2 + 9);
+        if ( *(_BYTE *)(v3 + 16) )
+        {
+          if ( *(_BYTE *)(v3 + 16) == 1 )
+          {
+            v4 = *((float *)&qword_10DC5630 + 1);
+          }
+          else if ( *(_BYTE *)(v3 + 16) == 2 )
+          {
+            v4 = *(float *)&dword_10DC5638;
+          }
+          else
+          {
+            v4 = (float)((float)(*(float *)(v3 + 4) * *((float *)&qword_10DC5630 + 1))
+                       + (float)(*(float *)v3 * *(float *)&qword_10DC5630))
+               + (float)(*(float *)(v3 + 8) * *(float *)&dword_10DC5638);
+          }
+        }
+        else
+        {
+          v4 = *(float *)&qword_10DC5630;
+        }
+        v15 = (float)(v4 - *(float *)(v3 + 12));
+        nodea = v15 < 0.0;
+        R_RecursiveWorldNode(*(void **)&v2[4 * nodea + 40], cleanUpShaderState);
+        v5 = *((unsigned __int16 *)v2 + 25);
+        if ( *((_WORD *)v2 + 25) )
+        {
+          v6 = v15;
+          v7 = (_DWORD *)(*(_DWORD *)&cl_worldmodel->_pad_0048[108] + 108 * *((unsigned __int16 *)v2 + 24));
+          if ( v15 >= -0.01 )
+          {
+            v8 = v15 < 0.0;
+            if ( v15 > 0.01 )
+              v8 = 0;
+            nodea = v8;
+          }
+          else
+          {
+            nodea = 2;
+          }
+          do
+          {
+            if ( *v7 == r_framecount )
+            {
+              v9 = v7[2];
+              if ( (v9 & 0x80u) != 0 || ((v9 >> 1) & 1) == v6 < 0.0 )
+              {
+                if ( dword_10322E30 )
+                {
+                  if ( !dword_10DC50E4
+                    || *(_DWORD *)(v7[11] + 36) != *(_DWORD *)(*(_DWORD *)&cl_worldmodel->_pad_0048[300]
+                                                             + 4 * dword_10DC50E8) )
+                  {
+                    v10 = v7[11];
+                    v7[10] = *(_DWORD *)(*(_DWORD *)(v10 + 36) + 28);
+                    *(_DWORD *)(*(_DWORD *)(v10 + 36) + 28) = v7;
+                  }
+                }
+                else if ( (v9 & 4) != 0 )
+                {
+                  v7[10] = dword_10989320;
+                  dword_10989320 = (int)v7;
+                }
+                else if ( (v9 & 0x10) != 0 )
+                {
+                  v7[10] = dword_10989324;
+                  dword_10989324 = (int)v7;
+                }
+                else
+                {
+                  R_DrawSequentialPoly(v7, 0, cleanUpShaderState);
+                  v6 = v15;
+                }
+              }
+            }
+            v7 += 27;
+            --v5;
+          }
+          while ( v5 );
+        }
+        v2 = *(char **)&v2[4 * (nodea == 0) + 40];
+        if ( *(_DWORD *)v2 == -2 )
+          return;
+      }
+    }
+  }

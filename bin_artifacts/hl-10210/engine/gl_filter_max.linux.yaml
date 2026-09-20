@@ -1,0 +1,8 @@
+gv_name: gl_filter_max
+gv_va: '0x2be9e0'
+gv_rva: '0x2be9e0'
+gv_sig: 55 57 56 53 83 EC ?? 8B 44 24 ?? 85 C0 0F 84 ?? ?? ?? ?? 8B 78 ?? BE ?? ?? ?? ?? 31 DB 89 7C 24 ?? 8B 06 89 04 24
+gv_sig_va: '0x149070'
+gv_inst_offset: '0x6d'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

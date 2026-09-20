@@ -1,0 +1,5 @@
+func_name: Draw_TextureMode_f
+func_va: '0x1023aa70'
+func_rva: '0x23aa70'
+func_size: '0x1c1'
+func_sig: 55 8B EC 8B 45 ?? 85 C0 0F 84 ?? ?? ?? ?? 8B 40 ?? 56 57 33 FF 89 45 ?? 33 F6 66 0F 1F 44 00 ??

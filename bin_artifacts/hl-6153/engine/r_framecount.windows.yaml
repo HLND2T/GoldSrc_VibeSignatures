@@ -1,0 +1,9 @@
+gv_name: r_framecount
+gv_va: '0x2bc62ec'
+gv_rva: '0xec62ec'
+gv_sig: 55 8B EC 83 EC 08 53 56 57 8B 7D ?? 83 3F FE 0F 84 ?? ?? ?? ?? 8B 47 ?? 8B 0D ?? ?? ?? ?? 3B C1 0F 85 ?? ?? ?? ??
+gv_sig_va: '0x1d480b0'
+gv_inst_offset: '0x110'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'
+gv_sig_allow_across_function_boundary: true
