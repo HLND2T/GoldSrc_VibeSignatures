@@ -1,0 +1,340 @@
+func_name: "R_RecursiveWorldNode"
+func_va: "0x187260"
+disasm_code: |-
+  .text:00187260                 push    ebp
+  .text:00187261                 push    edi
+  .text:00187262                 push    esi
+  .text:00187263                 push    ebx
+  .text:00187264                 sub     esp, 2Ch
+  .text:00187267                 mov     eax, [esp+3Ch+cleanUpShaderState]
+  .text:0018726B                 mov     ebp, [esp+3Ch+node]
+  .text:0018726F                 mov     [esp+3Ch+var_20], eax
+  .text:00187273                 cmp     dword ptr [ebp+0], 0FFFFFFFEh
+  .text:00187277                 jnz     short loc_187296
+  .text:00187279                 jmp     loc_187407
+  .text:00187280                 fstp    st
+  .text:00187282                 movzx   edi, al
+  .text:00187285                 lea     eax, [edi+8]
+  .text:00187288                 mov     ebp, [ebp+eax*4+8]
+  .text:0018728C                 cmp     dword ptr [ebp+0], 0FFFFFFFEh
+  .text:00187290                 jz      loc_187407
+  .text:00187296                 mov     eax, ds:r_visframecount
+  .text:0018729B                 cmp     [ebp+4], eax
+  .text:0018729E                 jnz     loc_187407
+  .text:001872A4                 lea     eax, [ebp+14h]
+  .text:001872A7                 ; maxs
+  .text:001872A7                 mov     [esp+3Ch+maxs], eax; maxs
+  .text:001872AB                 lea     eax, [ebp+8]
+  .text:001872AE                 ; mins
+  .text:001872AE                 mov     [esp+3Ch+mins], eax; mins
+  .text:001872B1                 call    R_CullBox
+  .text:001872B6                 test    eax, eax
+  .text:001872B8                 jnz     loc_187407
+  .text:001872BE                 mov     eax, [ebp+0]
+  .text:001872C1                 test    eax, eax
+  .text:001872C3                 js      loc_1874D3
+  .text:001872C9                 mov     eax, [ebp+24h]
+  .text:001872CC                 movzx   edx, byte ptr [plane+10h]
+  .text:001872D0                 cmp     dl, 1
+  .text:001872D3                 jz      loc_187480
+  .text:001872D9                 jb      loc_187470
+  .text:001872DF                 cmp     dl, 2
+  .text:001872E2                 jnz     loc_187440
+  .text:001872E8                 fld     ds:modelorg+8
+  .text:001872EE                 fsub    dword ptr [plane+0Ch]
+  .text:001872F1                 fldz
+  .text:001872F3                 fxch    st(1)
+  .text:001872F5                 mov     edi, [esp+3Ch+var_20]
+  .text:001872F9                 fucomi  st, st(1)
+  .text:001872FB                 fstp    st(1)
+  .text:001872FD                 setnb   al
+  .text:00187300                 mov     dl, al
+  .text:00187302                 xor     dl, 1
+  .text:00187305                 movzx   edx, dl
+  .text:00187308                 ; cleanUpShaderState
+  .text:00187308                 mov     [esp+3Ch+maxs], edi; cleanUpShaderState
+  .text:0018730C                 add     edx, 8
+  .text:0018730F                 mov     edx, [ebp+edx*4+8]
+  .text:00187313                 fstp    [esp+3Ch+var_2C]
+  .text:00187317                 mov     byte ptr [esp+3Ch+var_24], al
+  .text:0018731B                 ; node
+  .text:0018731B                 mov     [esp+3Ch+mins], edx; node
+  .text:0018731E                 call    R_RecursiveWorldNode
+  .text:00187323                 movzx   esi, word ptr [ebp+32h]
+  .text:00187327                 movzx   eax, byte ptr [esp+3Ch+var_24]
+  .text:0018732C                 test    c, c
+  .text:0018732E                 fld     [esp+3Ch+var_2C]
+  .text:00187332                 jz      loc_187280
+  .text:00187338                 movzx   edx, word ptr [ebp+30h]
+  .text:0018733C                 xor     edi, edi
+  .text:0018733E                 fld     ds:dbl_24BC98
+  .text:00187344                 fucomip st, st(1)
+  .text:00187346                 lea     edx, [edx+edx*2]
+  .text:00187349                 lea     ecx, [edx+edx*8]
+  .text:0018734C                 mov     edx, ds:nMax.worldmodel
+  .text:00187352                 mov     edx, [edx+0B4h]
+  .text:00187358                 lea     ebx, [edx+ecx*4]
+  .text:0018735B                 ja      loc_187430
+  .text:00187361                 fld     ds:dbl_24BC90
+  .text:00187367                 fxch    st(1)
+  .text:00187369                 mov     edi, 1
+  .text:0018736E                 fucomi  st, st(1)
+  .text:00187370                 fstp    st(1)
+  .text:00187372                 cmovbe  edi, eax
+  .text:00187375                 mov     [esp+3Ch+var_24], edi
+  .text:00187379                 jmp     short loc_187386
+  .text:00187380                 add     surf, 6Ch ; 'l'
+  .text:00187383                 dec     esi
+  .text:00187384                 jz      short loc_1873F0
+  .text:00187386                 mov     eax, ds:r_framecount
+  .text:0018738B                 cmp     [surf], eax
+  .text:0018738D                 jnz     short loc_187380
+  .text:0018738F                 mov     ecx, [surf+8]
+  .text:00187392                 test    cl, 80h
+  .text:00187395                 jnz     short loc_1873A8
+  .text:00187397                 fldz
+  .text:00187399                 mov     eax, ecx
+  .text:0018739B                 fucomip st, st(1)
+  .text:0018739D                 setnbe  dl
+  .text:001873A0                 shr     eax, 1
+  .text:001873A2                 and     al, 1
+  .text:001873A4                 cmp     dl, al
+  .text:001873A6                 jnz     short loc_187380
+  .text:001873A8                 mov     edi, gl_texsort
+  .text:001873AE                 test    edi, edi
+  .text:001873B0                 jz      short loc_187410
+  .text:001873B2                 mov     edx, ds:mirror
+  .text:001873B8                 mov     ecx, [surf+2Ch]
+  .text:001873BB                 test    edx, edx
+  .text:001873BD                 mov     eax, [ecx+24h]
+  .text:001873C0                 jz      short loc_1873D9
+  .text:001873C2                 mov     edx, ds:nMax.worldmodel
+  .text:001873C8                 mov     edi, ds:mirrortexturenum
+  .text:001873CE                 mov     edx, [edx+174h]
+  .text:001873D4                 cmp     eax, [edx+edi*4]
+  .text:001873D7                 jz      short loc_187380
+  .text:001873D9                 mov     eax, [eax+1Ch]
+  .text:001873DC                 mov     [surf+28h], eax
+  .text:001873DF                 mov     eax, [ecx+24h]
+  .text:001873E2                 mov     [eax+1Ch], surf
+  .text:001873E5                 add     surf, 6Ch ; 'l'
+  .text:001873E8                 dec     esi
+  .text:001873E9                 jnz     short loc_187386
+  .text:001873EB                 fstp    st
+  .text:001873ED                 jmp     short loc_1873F2
+  .text:001873F0                 fstp    st
+  .text:001873F2                 mov     edi, [esp+3Ch+var_24]
+  .text:001873F6                 lea     eax, [edi+8]
+  .text:001873F9                 mov     ebp, [ebp+eax*4+8]
+  .text:001873FD                 cmp     dword ptr [ebp+0], 0FFFFFFFEh
+  .text:00187401                 jnz     loc_187296
+  .text:00187407                 add     esp, 2Ch
+  .text:0018740A                 pop     ebx
+  .text:0018740B                 pop     esi
+  .text:0018740C                 pop     edi
+  .text:0018740D                 pop     ebp
+  .text:0018740E                 retn
+  .text:00187410                 test    cl, 4
+  .text:00187413                 jz      short loc_187490
+  .text:00187415                 mov     eax, ds:skychain
+  .text:0018741A                 mov     [surf+28h], eax
+  .text:0018741D                 mov     ds:skychain, surf
+  .text:00187423                 jmp     loc_187380
+  .text:00187430                 mov     [esp+3Ch+var_24], edi
+  .text:00187434                 jmp     loc_187386
+  .text:00187440                 fld     ds:modelorg
+  .text:00187446                 fmul    dword ptr [plane]
+  .text:00187448                 fld     ds:modelorg+4
+  .text:0018744E                 fmul    dword ptr [plane+4]
+  .text:00187451                 faddp   st(1), st
+  .text:00187453                 fld     ds:modelorg+8
+  .text:00187459                 fmul    dword ptr [plane+8]
+  .text:0018745C                 faddp   st(1), st
+  .text:0018745E                 fsub    dword ptr [plane+0Ch]
+  .text:00187461                 jmp     loc_1872F1
+  .text:00187470                 fld     ds:modelorg
+  .text:00187476                 fsub    dword ptr [plane+0Ch]
+  .text:00187479                 jmp     loc_1872F1
+  .text:00187480                 fld     ds:modelorg+4
+  .text:00187486                 fsub    dword ptr [plane+0Ch]
+  .text:00187489                 jmp     loc_1872F1
+  .text:00187490                 test    cl, 10h
+  .text:00187493                 jz      short loc_1874B0
+  .text:00187495                 mov     eax, ds:waterchain
+  .text:0018749A                 mov     [surf+28h], eax
+  .text:0018749D                 mov     ds:waterchain, surf
+  .text:001874A3                 jmp     loc_187380
+  .text:001874B0                 mov     eax, [esp+3Ch+var_20]
+  .text:001874B4                 fstp    [esp+3Ch+var_2C]
+  .text:001874B8                 ; surface
+  .text:001874B8                 mov     [esp+3Ch+mins], surf; surface
+  .text:001874BB                 ; cleanUpShaderState
+  .text:001874BB                 mov     [esp+3Ch+var_34], eax; cleanUpShaderState
+  .text:001874BF                 xor     eax, eax
+  .text:001874C1                 ; face
+  .text:001874C1                 mov     [esp+3Ch+maxs], eax; face
+  .text:001874C5                 call    R_DrawSequentialPoly; Multitexture helpers can be inlined: mtexenabled is the enabled state, gl_mtexable is capability. Preserve the current binary ABI; HL25 adds shader cleanup absent from older source.
+  .text:001874CA                 fld     [esp+3Ch+var_2C]
+  .text:001874CE                 jmp     loc_187380
+  .text:001874D3                 mov     eax, [pleaf+30h]
+  .text:001874D6                 test    c, c
+  .text:001874D8                 jz      short loc_1874F0
+  .text:001874DA                 mov     edx, [pleaf+2Ch]
+  .text:001874DD                 lea     esi, [esi+0]
+  .text:001874E0                 mov     ecx, [mark]
+  .text:001874E2                 add     mark, 4
+  .text:001874E5                 dec     eax
+  .text:001874E6                 mov     ebx, ds:r_framecount
+  .text:001874EC                 mov     [ecx], ebx
+  .text:001874EE                 jnz     short loc_1874E0
+  .text:001874F0                 mov     c, [pleaf+28h]
+  .text:001874F3                 test    eax, eax
+  .text:001874F5                 jz      loc_187407
+  .text:001874FB                 add     pleaf, 28h ; '('
+  .text:001874FE                 ; ppefrag
+  .text:001874FE                 mov     [esp+3Ch+node], ebp; ppefrag
+  .text:00187502                 add     esp, 2Ch
+  .text:00187505                 pop     ebx
+  .text:00187506                 pop     esi
+  .text:00187507                 pop     edi
+  .text:00187508                 pop     ebp
+  .text:00187509                 jmp     R_StoreEfrags
+procedure: |-
+  void __cdecl R_RecursiveWorldNode(void *node, int cleanUpShaderState)
+  {
+    unsigned __int16 *v2; // ebp
+    int v3; // eax
+    char v4; // dl
+    long double v5; // fst7
+    int v6; // esi
+    bool v7; // al
+    long double v8; // fst7
+    msurface_t *v9; // ebx
+    int v10; // edi
+    int dlightbits; // ecx
+    int v12; // ecx
+    texture_t *v13; // eax
+    int v14; // eax
+    _DWORD **v15; // edx
+    _DWORD *v16; // ecx
+    bool v17; // [esp+18h] [ebp-24h]
+    int v18; // [esp+18h] [ebp-24h]
+  
+    v2 = (unsigned __int16 *)node;
+    if ( *(_DWORD *)node != -2 )
+    {
+      do
+      {
+        while ( 1 )
+        {
+          if ( *((_DWORD *)v2 + 1) != r_visframecount || R_CullBox((float *)v2 + 2, (float *)v2 + 5) )
+            return;
+          if ( *(int *)v2 < 0 )
+          {
+            v14 = *((_DWORD *)v2 + 12);
+            if ( v14 )
+            {
+              v15 = *((_DWORD ***)v2 + 11);
+              do
+              {
+                v16 = *v15++;
+                --v14;
+                *v16 = r_framecount;
+              }
+              while ( v14 );
+            }
+            if ( *((_DWORD *)v2 + 10) )
+              R_StoreEfrags((efrag_t **)v2 + 10);
+            return;
+          }
+          v3 = *((_DWORD *)v2 + 9);
+          v4 = *(_BYTE *)(v3 + 16);
+          if ( v4 == 1 )
+          {
+            v5 = modelorg[1] - *(float *)(v3 + 12);
+          }
+          else if ( v4 )
+          {
+            v5 = v4 == 2
+               ? modelorg[2] - *(float *)(v3 + 12)
+               : modelorg[0] * *(float *)v3
+               + modelorg[1] * *(float *)(v3 + 4)
+               + modelorg[2] * *(float *)(v3 + 8)
+               - *(float *)(v3 + 12);
+          }
+          else
+          {
+            v5 = modelorg[0] - *(float *)(v3 + 12);
+          }
+          v17 = v5 >= 0.0;
+          R_RecursiveWorldNode(*(void **)&v2[2 * (v5 < 0.0) + 20], cleanUpShaderState);
+          v6 = v2[25];
+          v7 = v5 >= 0.0;
+          v8 = (double)v5;
+          if ( v2[25] )
+            break;
+          v2 = *(unsigned __int16 **)&v2[2 * v7 + 20];
+          if ( *(_DWORD *)v2 == -2 )
+            return;
+        }
+        v9 = (msurface_t *)((char *)nMax.worldmodel->surfaces + 108 * v2[24]);
+        if ( v8 < -0.01 )
+        {
+          v18 = 0;
+        }
+        else
+        {
+          v10 = 1;
+          if ( v8 <= 0.01 )
+            v10 = v17;
+          v18 = v10;
+        }
+        do
+        {
+          while ( 1 )
+          {
+            if ( v9->visframe != r_framecount )
+              goto LABEL_16;
+            dlightbits = v9->dlightbits;
+            if ( (dlightbits & 0x80u) == 0 && v8 < 0.0 != ((v9->dlightbits & 2) != 0) )
+              goto LABEL_16;
+            if ( gl_texsort == false )
+            {
+              if ( (dlightbits & 4) != 0 )
+              {
+                v9->cachespots[3] = (surfcache_s *)skychain;
+                skychain = v9;
+              }
+              else if ( (dlightbits & 0x10) != 0 )
+              {
+                v9->cachespots[3] = (surfcache_s *)waterchain;
+                waterchain = v9;
+              }
+              else
+              {
+                R_DrawSequentialPoly(v9, 0, cleanUpShaderState);
+                v8 = (double)v8;
+              }
+              goto LABEL_16;
+            }
+            v12 = *(_DWORD *)v9->texturemins;
+            v13 = *(texture_t **)(v12 + 36);
+            if ( mirror == false || v13 != nMax.worldmodel->textures[mirrortexturenum] )
+              break;
+  LABEL_16:
+            v9 = (msurface_t *)((char *)v9 + 108);
+            if ( !--v6 )
+              goto LABEL_24;
+          }
+          v9->cachespots[3] = (surfcache_s *)v13->anim_min;
+          *(_DWORD *)(*(_DWORD *)(v12 + 36) + 28) = v9;
+          v9 = (msurface_t *)((char *)v9 + 108);
+          --v6;
+        }
+        while ( v6 );
+  LABEL_24:
+        v2 = *(unsigned __int16 **)&v2[2 * v18 + 20];
+      }
+      while ( *(_DWORD *)v2 != -2 );
+    }
+  }

@@ -1,0 +1,338 @@
+func_name: "R_RecursiveWorldNode"
+func_va: "0x152fd0"
+disasm_code: |-
+  .text:00152FD0                 push    ebp
+  .text:00152FD1                 push    edi
+  .text:00152FD2                 push    esi
+  .text:00152FD3                 push    ebx
+  .text:00152FD4                 sub     esp, 3Ch
+  .text:00152FD7                 mov     ecx, [esp+4Ch+node]
+  .text:00152FDB                 call    sub_6399A
+  .text:00152FE0                 add     edi, (offset dbl_2EE000 - $)
+  .text:00152FE6                 cmp     dword ptr [ecx], 0FFFFFFFEh
+  .text:00152FE9                 jz      loc_15318F
+  .text:00152FEF                 lea     eax, (r_visframecount - 2EE000h)[edi]
+  .text:00152FF5                 mov     esi, [ecx+4]
+  .text:00152FF8                 cmp     [eax], esi
+  .text:00152FFA                 mov     [esp+4Ch+var_24], eax
+  .text:00152FFE                 jnz     loc_15318F
+  .text:00153004                 lea     eax, (dword_2F3750 - 2EE000h)[edi]
+  .text:0015300A                 mov     esi, ecx
+  .text:0015300C                 mov     [esp+4Ch+var_20], eax
+  .text:00153010                 jmp     short loc_15303A
+  .text:00153018                 fstp    st
+  .text:0015301A                 mov     esi, [esi+eax*4+28h]
+  .text:0015301E                 mov     dword ptr [esp+4Ch+var_3C], eax
+  .text:00153022                 cmp     dword ptr [esi], 0FFFFFFFEh
+  .text:00153025                 jz      loc_15318F
+  .text:0015302B                 mov     eax, [esp+4Ch+var_24]
+  .text:0015302F                 mov     eax, [eax]
+  .text:00153031                 cmp     [esi+4], eax
+  .text:00153034                 jnz     loc_15318F
+  .text:0015303A                 lea     eax, [esi+14h]
+  .text:0015303D                 mov     ebx, edi
+  .text:0015303F                 ; maxs
+  .text:0015303F                 mov     [esp+4Ch+face], eax; maxs
+  .text:00153043                 lea     eax, [esi+8]
+  .text:00153046                 ; mins
+  .text:00153046                 mov     [esp+4Ch+surface], eax; mins
+  .text:00153049                 call    R_CullBox
+  .text:0015304E                 test    eax, eax
+  .text:00153050                 mov     dword ptr [esp+4Ch+var_3C], eax
+  .text:00153054                 jnz     loc_15318F
+  .text:0015305A                 mov     ebp, [esi]
+  .text:0015305C                 test    ebp, ebp
+  .text:0015305E                 js      loc_15324B
+  .text:00153064                 mov     eax, [esi+24h]
+  .text:00153067                 movzx   edx, byte ptr [eax+10h]
+  .text:0015306B                 cmp     dl, 1
+  .text:0015306E                 jz      loc_1531E8
+  .text:00153074                 jb      loc_153200
+  .text:0015307A                 cmp     dl, 2
+  .text:0015307D                 jnz     loc_1531C0
+  .text:00153083                 lea     edx, (unk_30F6F88 - 2EE000h)[edi]
+  .text:00153089                 fld     dword ptr [edx+8]
+  .text:0015308C                 fsub    dword ptr [eax+0Ch]
+  .text:0015308F                 fldz
+  .text:00153091                 fxch    st(1)
+  .text:00153093                 fucomi  st, st(1)
+  .text:00153095                 fstp    st(1)
+  .text:00153097                 setnb   al
+  .text:0015309A                 mov     dl, al
+  .text:0015309C                 xor     dl, 1
+  .text:0015309F                 movzx   edx, dl
+  .text:001530A2                 add     edx, 8
+  .text:001530A5                 mov     edx, [esi+edx*4+8]
+  .text:001530A9                 fstp    [esp+4Ch+var_2C]
+  .text:001530AD                 mov     byte ptr [esp+4Ch+var_34], al
+  .text:001530B1                 ; node
+  .text:001530B1                 mov     [esp+4Ch+surface], edx; node
+  .text:001530B4                 call    R_RecursiveWorldNode
+  .text:001530B9                 movzx   ebp, word ptr [esi+32h]
+  .text:001530BD                 movzx   eax, byte ptr [esp+4Ch+var_34]
+  .text:001530C2                 test    ebp, ebp
+  .text:001530C4                 fld     [esp+4Ch+var_2C]
+  .text:001530C8                 jz      loc_153018
+  .text:001530CE                 lea     edx, (dword_15D7D60 - 2EE000h)[edi]
+  .text:001530D4                 movzx   ebx, word ptr [esi+30h]
+  .text:001530D8                 fld     ds:(dbl_263618 - 2EE000h)[edi]
+  .text:001530DE                 mov     edx, ds:dword_601CEC[edx]
+  .text:001530E4                 fst     [esp+4Ch+var_34]
+  .text:001530E8                 imul    ebx, 5Ch ; '\'
+  .text:001530EB                 mov     ecx, [edx+0B4h]
+  .text:001530F1                 add     ebx, ecx
+  .text:001530F3                 fucomip st, st(1)
+  .text:001530F5                 ja      short loc_153113
+  .text:001530F7                 fld     ds:(dbl_263610 - 2EE000h)[edi]
+  .text:001530FD                 mov     edx, 1
+  .text:00153102                 fst     [esp+4Ch+var_3C]
+  .text:00153106                 fxch    st(1)
+  .text:00153108                 fucomi  st, st(1)
+  .text:0015310A                 fstp    st(1)
+  .text:0015310C                 cmova   eax, edx
+  .text:0015310F                 mov     dword ptr [esp+4Ch+var_3C], eax
+  .text:00153113                 lea     edx, (r_framecount - 2EE000h)[edi]
+  .text:00153119                 mov     [esp+4Ch+node], esi
+  .text:0015311D                 mov     esi, edx
+  .text:0015311F                 jmp     short loc_15312E
+  .text:00153128                 add     ebx, 5Ch ; '\'
+  .text:0015312B                 dec     ebp
+  .text:0015312C                 jz      short loc_153178
+  .text:0015312E                 mov     eax, [esi]
+  .text:00153130                 cmp     [ebx], eax
+  .text:00153132                 jnz     short loc_153128
+  .text:00153134                 mov     ecx, [ebx+8]
+  .text:00153137                 test    cl, 80h
+  .text:0015313A                 jnz     short loc_15314D
+  .text:0015313C                 fldz
+  .text:0015313E                 mov     eax, ecx
+  .text:00153140                 fucomip st, st(1)
+  .text:00153142                 setnbe  dl
+  .text:00153145                 shr     eax, 1
+  .text:00153147                 and     al, 1
+  .text:00153149                 cmp     dl, al
+  .text:0015314B                 jnz     short loc_153128
+  .text:0015314D                 mov     eax, [esp+4Ch+var_20]
+  .text:00153151                 mov     edx, [eax]
+  .text:00153153                 test    edx, edx
+  .text:00153155                 jz      short loc_1531A0
+  .text:00153157                 mov     eax, [ebx+2Ch]
+  .text:0015315A                 mov     edx, [eax+24h]
+  .text:0015315D                 mov     edx, [edx+1Ch]
+  .text:00153160                 mov     [ebx+28h], edx
+  .text:00153163                 mov     eax, [eax+24h]
+  .text:00153166                 mov     [eax+1Ch], ebx
+  .text:00153169                 add     ebx, 5Ch ; '\'
+  .text:0015316C                 dec     ebp
+  .text:0015316D                 jnz     short loc_15312E
+  .text:0015316F                 fstp    st
+  .text:00153171                 jmp     short loc_15317A
+  .text:00153178                 fstp    st
+  .text:0015317A                 mov     esi, [esp+4Ch+node]
+  .text:0015317E                 mov     eax, dword ptr [esp+4Ch+var_3C]
+  .text:00153182                 mov     esi, [esi+eax*4+28h]
+  .text:00153186                 cmp     dword ptr [esi], 0FFFFFFFEh
+  .text:00153189                 jnz     loc_15302B
+  .text:0015318F                 add     esp, 3Ch
+  .text:00153192                 pop     ebx
+  .text:00153193                 pop     esi
+  .text:00153194                 pop     edi
+  .text:00153195                 pop     ebp
+  .text:00153196                 retn
+  .text:001531A0                 test    cl, 4
+  .text:001531A3                 jz      short loc_153210
+  .text:001531A5                 mov     eax, ds:(dword_38FF668 - 2EE000h)[edi]
+  .text:001531AB                 mov     [ebx+28h], eax
+  .text:001531AE                 mov     ds:(dword_38FF668 - 2EE000h)[edi], ebx
+  .text:001531B4                 jmp     loc_153128
+  .text:001531C0                 lea     edx, (unk_30F6F88 - 2EE000h)[edi]
+  .text:001531C6                 fld     dword ptr [edx]
+  .text:001531C8                 fmul    dword ptr [eax]
+  .text:001531CA                 fld     dword ptr [edx+4]
+  .text:001531CD                 fmul    dword ptr [eax+4]
+  .text:001531D0                 faddp   st(1), st
+  .text:001531D2                 fld     dword ptr [edx+8]
+  .text:001531D5                 fmul    dword ptr [eax+8]
+  .text:001531D8                 faddp   st(1), st
+  .text:001531DA                 fsub    dword ptr [eax+0Ch]
+  .text:001531DD                 jmp     loc_15308F
+  .text:001531E8                 lea     edx, (unk_30F6F88 - 2EE000h)[edi]
+  .text:001531EE                 fld     dword ptr [edx+4]
+  .text:001531F1                 fsub    dword ptr [eax+0Ch]
+  .text:001531F4                 jmp     loc_15308F
+  .text:00153200                 lea     edx, (unk_30F6F88 - 2EE000h)[edi]
+  .text:00153206                 fld     dword ptr [edx]
+  .text:00153208                 fsub    dword ptr [eax+0Ch]
+  .text:0015320B                 jmp     loc_15308F
+  .text:00153210                 test    cl, 10h
+  .text:00153213                 jz      short loc_153230
+  .text:00153215                 mov     eax, ds:(dword_38FF664 - 2EE000h)[edi]
+  .text:0015321B                 mov     [ebx+28h], eax
+  .text:0015321E                 mov     ds:(dword_38FF664 - 2EE000h)[edi], ebx
+  .text:00153224                 jmp     loc_153128
+  .text:00153230                 xor     eax, eax
+  .text:00153232                 ; face
+  .text:00153232                 mov     [esp+4Ch+face], eax; face
+  .text:00153236                 fstp    [esp+4Ch+var_34]
+  .text:0015323A                 ; surface
+  .text:0015323A                 mov     [esp+4Ch+surface], ebx; surface
+  .text:0015323D                 call    R_DrawSequentialPoly; Multitexture helpers can be inlined: mtexenabled is the enabled state, gl_mtexable is capability. Preserve the current binary ABI; HL25 adds shader cleanup absent from older source.
+  .text:00153242                 fld     [esp+4Ch+var_34]
+  .text:00153246                 jmp     loc_153128
+  .text:0015324B                 mov     eax, [esi+30h]
+  .text:0015324E                 mov     ecx, esi
+  .text:00153250                 test    eax, eax
+  .text:00153252                 jz      short loc_15326C
+  .text:00153254                 mov     edx, [esi+2Ch]
+  .text:00153257                 lea     esi, (r_framecount - 2EE000h)[edi]
+  .text:0015325D                 lea     esi, [esi+0]
+  .text:00153260                 mov     ebx, [edx]
+  .text:00153262                 add     edx, 4
+  .text:00153265                 dec     eax
+  .text:00153266                 mov     ebp, [esi]
+  .text:00153268                 mov     [ebx], ebp
+  .text:0015326A                 jnz     short loc_153260
+  .text:0015326C                 mov     ebx, [ecx+28h]
+  .text:0015326F                 test    ebx, ebx
+  .text:00153271                 jz      loc_15318F
+  .text:00153277                 lea     eax, [ecx+28h]
+  .text:0015327A                 mov     ebx, edi
+  .text:0015327C                 mov     [esp+4Ch+surface], eax
+  .text:0015327F                 call    sub_15FC20
+  .text:00153284                 add     esp, 3Ch
+  .text:00153287                 pop     ebx
+  .text:00153288                 pop     esi
+  .text:00153289                 pop     edi
+  .text:0015328A                 pop     ebp
+  .text:0015328B                 retn
+procedure: |-
+  void __cdecl R_RecursiveWorldNode(void *node)
+  {
+    float *v1; // esi
+    int v2; // eax
+    char v3; // dl
+    long double v4; // fst7
+    int v5; // ebp
+    _BOOL4 v6; // eax
+    long double v7; // fst7
+    _DWORD *surface; // ebx
+    int v9; // ecx
+    int v10; // eax
+    int v11; // eax
+    _DWORD **v12; // edx
+    _DWORD *v13; // ebx
+    int v14; // [esp+10h] [ebp-3Ch]
+    bool v15; // [esp+18h] [ebp-34h]
+  
+    if ( *(_DWORD *)node == -2 || r_visframecount != *((_DWORD *)node + 1) )
+      return;
+    v1 = (float *)node;
+  LABEL_6:
+    v14 = R_CullBox(v1 + 2, v1 + 5);
+    if ( v14 )
+      return;
+    if ( *(int *)v1 >= 0 )
+    {
+      v2 = *((_DWORD *)v1 + 9);
+      v3 = *(_BYTE *)(v2 + 16);
+      if ( v3 == 1 )
+      {
+        v4 = unk_30F6F8C - *(float *)(v2 + 12);
+      }
+      else if ( v3 )
+      {
+        if ( v3 == 2 )
+          v4 = unk_30F6F90 - *(float *)(v2 + 12);
+        else
+          v4 = unk_30F6F88 * *(float *)v2
+             + unk_30F6F8C * *(float *)(v2 + 4)
+             + unk_30F6F90 * *(float *)(v2 + 8)
+             - *(float *)(v2 + 12);
+      }
+      else
+      {
+        v4 = unk_30F6F88 - *(float *)(v2 + 12);
+      }
+      v15 = v4 >= 0.0;
+      R_RecursiveWorldNode((void *)LODWORD(v1[(v4 < 0.0) + 10]));
+      v5 = *((unsigned __int16 *)v1 + 25);
+      v6 = v4 >= 0.0;
+      v7 = (double)v4;
+      if ( !*((_WORD *)v1 + 25) )
+      {
+        v1 = (float *)LODWORD(v1[v15 + 10]);
+        if ( *(_DWORD *)v1 == -2 )
+          return;
+        goto LABEL_5;
+      }
+      surface = (_DWORD *)(*(_DWORD *)(dword_1BD9A4C + 180) + 92 * *((unsigned __int16 *)v1 + 24));
+      if ( v7 >= -0.01 )
+      {
+        if ( v7 > 0.01 )
+          v6 = 1;
+        v14 = v6;
+      }
+      while ( 1 )
+      {
+        if ( *surface != r_framecount )
+          goto LABEL_18;
+        v9 = surface[2];
+        if ( (v9 & 0x80u) == 0 && v7 < 0.0 != ((surface[2] & 2) != 0) )
+          goto LABEL_18;
+        if ( dword_2F3750 )
+        {
+          v10 = surface[11];
+          surface[10] = *(_DWORD *)(*(_DWORD *)(v10 + 36) + 28);
+          *(_DWORD *)(*(_DWORD *)(v10 + 36) + 28) = surface;
+          surface += 23;
+          if ( !--v5 )
+          {
+  LABEL_24:
+            v1 = (float *)LODWORD(v1[v14 + 10]);
+            if ( *(_DWORD *)v1 == -2 )
+              return;
+  LABEL_5:
+            if ( *((_DWORD *)v1 + 1) != r_visframecount )
+              return;
+            goto LABEL_6;
+          }
+        }
+        else
+        {
+          if ( (v9 & 4) != 0 )
+          {
+            surface[10] = dword_38FF668;
+            dword_38FF668 = (int)surface;
+          }
+          else if ( (v9 & 0x10) != 0 )
+          {
+            surface[10] = dword_38FF664;
+            dword_38FF664 = (int)surface;
+          }
+          else
+          {
+            R_DrawSequentialPoly(surface, 0);
+            v7 = (double)v7;
+          }
+  LABEL_18:
+          surface += 23;
+          if ( !--v5 )
+            goto LABEL_24;
+        }
+      }
+    }
+    v11 = *((_DWORD *)v1 + 12);
+    if ( v11 )
+    {
+      v12 = *((_DWORD ***)v1 + 11);
+      do
+      {
+        v13 = *v12++;
+        --v11;
+        *v13 = r_framecount;
+      }
+      while ( v11 );
+    }
+    if ( *((_DWORD *)v1 + 10) )
+      sub_15FC20(v1 + 10);
+  }

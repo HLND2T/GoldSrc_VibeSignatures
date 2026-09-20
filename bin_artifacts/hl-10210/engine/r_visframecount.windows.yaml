@@ -1,0 +1,9 @@
+gv_name: r_visframecount
+gv_va: '0x10dc5614'
+gv_rva: '0xdc5614'
+gv_sig: 55 8B EC 83 EC 08 53 8B 5D ?? 83 3B FE 0F 84 ?? ?? ?? ?? 56 57 66 66 66 0F 1F 84 00 ?? ?? ?? ?? 8B 43 ??
+gv_sig_va: '0x1024b9b0'
+gv_inst_offset: '0x23'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
+gv_sig_allow_across_function_boundary: true

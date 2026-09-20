@@ -10,23 +10,23 @@ permalink: goldsrc-vibesignatures/locator-summary
 分类依据是每个 finder 的主要发现锚；部分符号实际会组合多种机制（例如先字符串锚定 owning function，再读表槽），
 此处归入其决定性的一步。**Summary** 列摘自各 locator 文件 `## How it is located` 的首段。
 
-共 **224** 个 locator；模块 engine 185，client 39。
+共 **233** 个 locator；模块 engine 194，client 39。
 
 | 定位机制 | 数量 |
 | --- | --- |
-| 字符串锚 | 64 |
+| 字符串锚 | 65 |
 | 浮点常量锚 | 3 |
-| 表 / 结构 / 数据段扫描 | 36 |
+| 表 / 结构 / 数据段扫描 | 38 |
 | 确定性 xref 交集锚 | 7 |
-| 前驱产物复用（下游确定性恢复） | 28 |
-| LLM_DECOMPILE 定位 | 51 |
+| 前驱产物复用（下游确定性恢复） | 31 |
+| LLM_DECOMPILE 定位 | 54 |
 | vtable / vfunc 槽恢复 | 10 |
 | 数值 scalar 提取 | 9 |
 | 调用点 patch | 16 |
 
 ---
 
-## 字符串锚 (64)
+## 字符串锚 (65)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -94,6 +94,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [Sys_InitMemory](locators/Sys_InitMemory.md) | engine | func | — | Both producers use the same Pattern A machinery (preprocess_common_skill → preprocess_func_xrefs_via_mcp): one FULLMATCH: string anchor, XrefsTo → owning function… |
 | [VideoMode_Create](locators/VideoMode_Create.md) | engine | func | — | Single positive anchor: xref_strings: ["FULLMATCH:-fullscreen"] — exact C-string match on the fullscreen command-line literal, then the owning functions of its… |
 | [g_pClientFactory](locators/g_pClientFactory.md) | engine | gv | `CBaseUI__Initialize` | Despite the -decompiles suffix this finder is not LLM-based: it runs one direct py_eval locator (LOCATE_PY) inside the owner function and fails closed on any… |
+| [Draw_TextureMode_f](locators/Draw_TextureMode_f.md) | engine | func | — | One exact literal, one string instance, one owning function. The classic family uses the two-space-free `bad filter name` diagnostic; SvEngine keeps only `Invalid filter name`. FULLMATCH: keeps the two apart. |
 
 ## 浮点常量锚 (3)
 
@@ -103,7 +104,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [R_DrawParticles](locators/R_DrawParticles.md) | engine | func | — | xref_floats = ["20.0", "0.004"] is the sole positive source; the candidate set is every function whose body references both constants. |
 | [GlowBlend](locators/GlowBlend.md) | engine | func | `R_DrawTEntitiesOnList` | xref_floats = ["19000.0", "0.005", "0.05"] is the sole positive source, combined with exclude_funcs = ["R_DrawTEntitiesOnList"]. |
 
-## 表 / 结构 / 数据段扫描 (36)
+## 表 / 结构 / 数据段扫描 (38)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -143,6 +144,8 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [studioapi_SetupPlayerModel](locators/studioapi_SetupPlayerModel.md) | engine | func | — | Find the exact ClientDLL_CheckStudioInterface interface-mismatch literal and require exactly one hit. GoldSrc/HL25/CoF wording is |
 | [studioapi_StudioSetHeader](locators/studioapi_StudioSetHeader.md) | engine | func | — | Unique studio-interface diagnostic → owning function(s) → unique engine_studio_api table (validate_table_run; SvEngine 47/48 entries). |
 | [studioapi_StudioSetRenderamt](locators/studioapi_StudioSetRenderamt.md) | engine | func | — | Find the exact studio-interface diagnostic literal: HL_STUDIO_STRING ("Couldn't get client .dll studio model rendering interface. Version mismatch?\n") for… |
+| [gl_filter_min](locators/gl_filter_min.md) | engine | gv | `Draw_TextureMode_f` | The handler writes both filter levels from one `modes` table. The walk takes the unique adjacent store pair whose source registers were loaded from one shared base with a four-byte displacement delta; the lower-offset load feeds `gl_filter_min`. |
+| [gl_filter_max](locators/gl_filter_max.md) | engine | gv | `Draw_TextureMode_f` | The higher-offset member of the same store pair. Never computed as `gl_filter_min ± 4`: the relation differs per build. |
 
 ## 确定性 xref 交集锚 (7)
 
@@ -157,7 +160,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [R_StudioRenderModel](locators/R_StudioRenderModel.md) | engine | func | `R_StudioCalcAttachments`, `R_StudioDrawModel`, `R_StudioDrawPlayer`, `R_StudioSetupBones`, `cl_sprite_shell`, `g_ChromeOrigin` | The func_xrefs entry declares xref_gvs: ["cl_sprite_shell", "g_ChromeOrigin"] and no strings/signatures/functions: the candidate is the function that intersects the… |
 | [V_StartPitchDrift](locators/V_StartPitchDrift.md) | client | func | — | _client_registration_common.REGISTRATION_QUERY is invoked with the label centerview. The helper collects strings whose NUL-terminated bytes end with the label |
 
-## 前驱产物复用（下游确定性恢复） (28)
+## 前驱产物复用（下游确定性恢复） (31)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -189,8 +192,11 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [cvar_hooks](locators/cvar_hooks.md) | engine | gv | `Cvar_DirectSet`, `Cvar_Set` | Load both predecessor artifacts from the new binary dir, resolve their func_va, and confirm Cvar_Set still verifies in the live IDB via _inspect_function_via_mcp… |
 | [g_PlayerExtraInfo](locators/g_PlayerExtraInfo.md) | client | gv | `ClientScoreInfoHandler` | The predecessor's annotated body is the reference; the dedicated prompt prompt/call_llm_scoreinfo.md is used (not the generic decompile prompt), with reference YAML… |
 | [g_PlayerExtraInfo_CZDS](locators/g_PlayerExtraInfo_CZDS.md) | client | gv | `ClientScoreInfoHandler` | The producer picks the symbol by output declaration: _output_for_symbol(expected_outputs, "g_PlayerExtraInfo_CZDS") selects the CZDS name and family =… |
+| [ClientDLL_DrawTransparentTriangles](locators/ClientDLL_DrawTransparentTriangles.md) | engine | func | `R_DrawTEntitiesOnList`, `cl_funcs` | The unique direct callee of the transparent-entity loader that is tiny and references exactly one `cl_funcs` member, `pDrawTransparentTriangles`. |
+| [cl_funcs_pDrawTransparentTriangles](locators/cl_funcs_pDrawTransparentTriangles.md) | engine | gv | `R_DrawTEntitiesOnList`, `cl_funcs` | That member's own address, read from the forwarder's single member access; never `cl_funcs` plus a hardcoded offset. |
+| [CL_IsDevOverviewMode](locators/CL_IsDevOverviewMode.md) | engine | func | `CL_SetDevOverView` | The nearest call before a `CL_SetDevOverView` call site, walking backwards across single-predecessor blocks. The renderer is derived as the unique caller of `CL_SetDevOverView`, never named. |
 
-## LLM_DECOMPILE 定位 (51)
+## LLM_DECOMPILE 定位 (54)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -245,6 +251,9 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [mod_numknown](locators/mod_numknown.md) | engine | gv | `Mod_FindName` | -decompiles (LLM) finder — no deterministic anchor of its own: Load the required predecessor Mod_FindName.{platform}.yaml, export that function from |
 | [r_worldentity](locators/r_worldentity.md) | engine | gv | `R_NewMap` | -decompiles (LLM) finder — no deterministic anchor of its own: Load the required predecessor R_NewMap.{platform}.yaml and export that function from the |
 | [videomode](locators/videomode.md) | engine | gv | `VideoMode_Create` | This is a real LLM_DECOMPILE finder (found_gv, with the annotated predecessor as reference): _prepare_llm_dependency_contract loads… |
+| [r_framecount](locators/r_framecount.md) | engine | gv | `R_RecursiveWorldNode` | `found_gv` against the annotated world-node-walk reference. In the walk the counter stamps surviving leaves and surfaces. |
+| [r_visframecount](locators/r_visframecount.md) | engine | gv | `R_RecursiveWorldNode` | `found_gv` against the same reference; in the walk it is the guard `if (node->visframe != r_visframecount) return;`. |
+| [r_entorigin](locators/r_entorigin.md) | engine | gv | `R_DrawTEntitiesOnList` | `found_gv` against the annotated loader reference. Declared in 11 configs but produced in 9; SvEngine writes it in the entity dispatcher, which no existing artifact reaches. |
 
 ## vtable / vfunc 槽恢复 (10)
 
