@@ -850,6 +850,15 @@ modules:
         expected_output:
           - ClientDLL_DrawTransparentTriangles.{platform}.yaml
           - cl_funcs_pDrawTransparentTriangles.{platform}.yaml
+      - name: find-R_DrawSpriteModel
+        expected_output:
+          - R_DrawSpriteModel.{platform}.yaml
+      - name: find-R_DrawSpriteModel-globals
+        expected_input:
+          - R_DrawSpriteModel.{platform}.yaml
+        expected_output:
+          - r_blend.{platform}.yaml
+          - r_entorigin.{platform}.yaml
       - name: find-CL_IsDevOverviewMode
         expected_input:
           - CL_SetDevOverView.{platform}.yaml
@@ -872,6 +881,12 @@ modules:
         category: gv
       - name: CL_IsDevOverviewMode
         category: func
+      - name: R_DrawSpriteModel
+        category: func
+      - name: r_blend
+        category: gv
+      - name: r_entorigin
+        category: gv
       - name: Draw_FillRGBA
         category: func
       - name: Draw_FillRGBABlend

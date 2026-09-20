@@ -1,0 +1,436 @@
+func_name: "R_DrawSpriteModel"
+func_va: "0x10242cb0"
+disasm_code: |-
+  ; Two engine globals are the targets. r_blend is the sprite alpha: it is assigned 1.0 for the normal render mode and multiplied by 255.0 for the alpha argument. r_entorigin is the vec3 the four sprite quad corners are offset from (the first VectorMA operand). Every other dword_/flt_ name in this body is a GL entry-point slot or a numeric constant.
+  .text:10242CB0                 push    ebp
+  .text:10242CB1                 mov     ebp, esp
+  .text:10242CB3                 sub     esp, 48h
+  .text:10242CB6                 mov     eax, ___security_cookie
+  .text:10242CBB                 xor     eax, ebp
+  .text:10242CBD                 mov     [ebp+var_4], eax
+  .text:10242CC0                 push    ebx
+  .text:10242CC1                 push    esi
+  .text:10242CC2                 mov     esi, [ebp+arg_0]
+  .text:10242CC5                 push    edi
+  .text:10242CC6                 mov     eax, [esi+0B94h]
+  .text:10242CCC                 mov     ebx, [eax+184h]
+  .text:10242CD2                 cvttss2si eax, dword ptr [esi+2E0h]
+  .text:10242CDA                 ; ArgList
+  .text:10242CDA                 push    eax; ArgList
+  .text:10242CDB                 ; int
+  .text:10242CDB                 push    ebx; int
+  .text:10242CDC                 call    R_GetSpriteFrame
+  .text:10242CE1                 mov     edi, eax
+  .text:10242CE3                 add     esp, 8
+  .text:10242CE6                 test    edi, edi
+  .text:10242CE8                 jnz     short loc_10242D0E
+  .text:10242CEA                 ; ArgList
+  .text:10242CEA                 push    dword ptr [esi+0B94h]; ArgList
+  .text:10242CF0                 push    offset aRDrawspritemod; "R_DrawSpriteModel:  couldn't get sprite"...
+  .text:10242CF5                 call    sub_102201E0
+  .text:10242CFA                 add     esp, 8
+  .text:10242CFD                 pop     edi
+  .text:10242CFE                 pop     esi
+  .text:10242CFF                 pop     ebx
+  .text:10242D00                 mov     ecx, [ebp+var_4]
+  .text:10242D03                 ; StackCookie
+  .text:10242D03                 xor     ecx, ebp; StackCookie
+  .text:10242D05                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10242D0A                 mov     esp, ebp
+  .text:10242D0C                 pop     ebp
+  .text:10242D0D                 retn
+  .text:10242D0E                 movss   xmm1, dword ptr [esi+2F0h]
+  .text:10242D16                 xorps   xmm0, xmm0
+  .text:10242D19                 comiss  xmm1, xmm0
+  .text:10242D1C                 movss   xmm0, ds:dword_103064A8
+  .text:10242D24                 movss   [ebp+var_48], xmm1
+  .text:10242D29                 ja      short loc_10242D30
+  .text:10242D2B                 movss   [ebp+var_48], xmm0
+  .text:10242D30                 cmp     dword ptr [esi+2F8h], 0
+  .text:10242D37                 jnz     short loc_10242D43
+  .text:10242D39                 movss   r_blend, xmm0
+  .text:10242D41                 jmp     short loc_10242D4B
+  .text:10242D43                 movss   xmm0, r_blend
+  .text:10242D4B                 mulss   xmm0, ds:dword_102B5B74
+  .text:10242D53                 cvttss2si eax, xmm0
+  .text:10242D57                 push    eax
+  .text:10242D58                 lea     eax, [ebp+var_44]
+  .text:10242D5B                 push    esi
+  .text:10242D5C                 push    eax
+  .text:10242D5D                 call    sub_101B3F50
+  .text:10242D62                 movss   xmm0, dword_10322D74
+  .text:10242D6A                 add     esp, 0Ch
+  .text:10242D6D                 xorps   xmm1, xmm1
+  .text:10242D70                 ucomiss xmm0, xmm1
+  .text:10242D73                 lahf
+  .text:10242D74                 test    ah, 44h
+  .text:10242D77                 jp      short loc_10242DBE
+  .text:10242D79                 cmp     dword ptr [esi+2F8h], 0
+  .text:10242D80                 jnz     short loc_10242DBE
+  .text:10242D82                 push    ecx
+  .text:10242D83                 mov     [esp+58h+var_58], 46040000h
+  .text:10242D8A                 push    2200h
+  .text:10242D8F                 push    2300h
+  .text:10242D94                 call    dword_109B339C
+  .text:10242D9A                 push    0FFh
+  .text:10242D9F                 push    [ebp+var_3C]
+  .text:10242DA2                 push    [ebp+var_40]
+  .text:10242DA5                 push    [ebp+var_44]
+  .text:10242DA8                 call    dword_109B3778
+  .text:10242DAE                 ; unsigned int
+  .text:10242DAE                 push    0BE2h; unsigned int
+  .text:10242DB3                 call    qglDisable
+  .text:10242DB9                 jmp     loc_10242EF6
+  .text:10242DBE                 mov     eax, [esi+2F8h]
+  .text:10242DC4                 cmp     eax, 1
+  .text:10242DC7                 jnz     short loc_10242DF3
+  .text:10242DC9                 push    303h
+  .text:10242DCE                 push    302h
+  .text:10242DD3                 call    dword_109B3808
+  .text:10242DD9                 push    1906h
+  .text:10242DDE                 push    2200h
+  .text:10242DE3                 push    2300h
+  .text:10242DE8                 call    dword_109B3394
+  .text:10242DEE                 jmp     loc_10242EC4
+  .text:10242DF3                 push    ecx
+  .text:10242DF4                 mov     [esp+58h+var_58], 46040000h
+  .text:10242DFB                 push    2200h
+  .text:10242E00                 push    2300h
+  .text:10242E05                 cmp     eax, 5
+  .text:10242E08                 jnz     short loc_10242E21
+  .text:10242E0A                 call    dword_109B339C
+  .text:10242E10                 push    1
+  .text:10242E12                 push    1
+  .text:10242E14                 call    dword_109B3808
+  .text:10242E1A                 push    0FFh
+  .text:10242E1F                 jmp     short loc_10242E95
+  .text:10242E21                 cmp     eax, 3
+  .text:10242E24                 jnz     short loc_10242E62
+  .text:10242E26                 call    dword_109B339C
+  .text:10242E2C                 push    1
+  .text:10242E2E                 push    1
+  .text:10242E30                 call    dword_109B3808
+  .text:10242E36                 push    0FFh
+  .text:10242E3B                 push    [ebp+var_3C]
+  .text:10242E3E                 push    [ebp+var_40]
+  .text:10242E41                 push    [ebp+var_44]
+  .text:10242E44                 call    dword_109B3778
+  .text:10242E4A                 ; unsigned int
+  .text:10242E4A                 push    0B71h; unsigned int
+  .text:10242E4F                 call    qglDisable
+  .text:10242E55                 push    0
+  .text:10242E57                 call    dword_109B3730
+  .text:10242E5D                 jmp     loc_10242EEB
+  .text:10242E62                 cmp     eax, 4
+  .text:10242E65                 jnz     short loc_10242EAE
+  .text:10242E67                 call    dword_109B339C
+  .text:10242E6D                 push    303h
+  .text:10242E72                 push    302h
+  .text:10242E77                 call    dword_109B3808
+  .text:10242E7D                 movss   xmm0, r_blend
+  .text:10242E85                 mulss   xmm0, ds:dword_102B5B74
+  .text:10242E8D                 cvttss2si eax, xmm0
+  .text:10242E91                 movzx   eax, al
+  .text:10242E94                 push    eax
+  .text:10242E95                 push    [ebp+var_3C]
+  .text:10242E98                 push    [ebp+var_40]
+  .text:10242E9B                 push    [ebp+var_44]
+  .text:10242E9E                 call    dword_109B3778
+  .text:10242EA4                 push    0
+  .text:10242EA6                 call    dword_109B3730
+  .text:10242EAC                 jmp     short loc_10242EEB
+  .text:10242EAE                 call    dword_109B339C
+  .text:10242EB4                 push    303h
+  .text:10242EB9                 push    302h
+  .text:10242EBE                 call    dword_109B3808
+  .text:10242EC4                 movss   xmm0, r_blend
+  .text:10242ECC                 mulss   xmm0, ds:dword_102B5B74
+  .text:10242ED4                 cvttss2si eax, xmm0
+  .text:10242ED8                 movzx   eax, al
+  .text:10242EDB                 push    eax
+  .text:10242EDC                 push    [ebp+var_3C]
+  .text:10242EDF                 push    [ebp+var_40]
+  .text:10242EE2                 push    [ebp+var_44]
+  .text:10242EE5                 call    dword_109B3778
+  .text:10242EEB                 ; unsigned int
+  .text:10242EEB                 push    0BE2h; unsigned int
+  .text:10242EF0                 call    qglEnable
+  .text:10242EF6                 lea     eax, [ebp+var_1C]
+  .text:10242EF9                 push    eax
+  .text:10242EFA                 lea     eax, [ebp+var_28]
+  .text:10242EFD                 push    eax
+  .text:10242EFE                 lea     eax, [ebp+var_34]
+  .text:10242F01                 push    eax
+  .text:10242F02                 movsx   eax, word ptr [ebx]
+  .text:10242F05                 push    eax
+  .text:10242F06                 push    esi
+  .text:10242F07                 call    sub_101B29A0
+  .text:10242F0C                 call    GL_DisableMultitexture
+  .text:10242F11                 push    dword ptr [edi+18h]
+  .text:10242F14                 call    GL_Bind
+  .text:10242F19                 add     esp, 18h
+  .text:10242F1C                 ; unsigned int
+  .text:10242F1C                 push    0BC0h; unsigned int
+  .text:10242F21                 call    qglEnable
+  .text:10242F27                 push    7
+  .text:10242F29                 call    dword_109B3814
+  .text:10242F2F                 sub     esp, 8
+  .text:10242F32                 mov     [esp+5Ch+var_58], 3F800000h
+  .text:10242F3A                 mov     [esp+5Ch+var_5C], 0
+  .text:10242F41                 call    dword_109B33F8
+  .text:10242F47                 movss   xmm0, [ebp+var_48]
+  .text:10242F4C                 lea     eax, [ebp+var_10]
+  .text:10242F4F                 mulss   xmm0, dword ptr [edi+0Ch]
+  .text:10242F54                 push    eax
+  .text:10242F55                 lea     eax, [ebp+var_1C]
+  .text:10242F58                 push    eax
+  .text:10242F59                 push    ecx
+  .text:10242F5A                 movss   [esp+60h+var_60], xmm0
+  .text:10242F5F                 push    offset r_entorigin
+  .text:10242F64                 call    sub_101D9F70
+  .text:10242F69                 movss   xmm0, [ebp+var_48]
+  .text:10242F6E                 lea     eax, [ebp+var_10]
+  .text:10242F71                 mulss   xmm0, dword ptr [edi+10h]
+  .text:10242F76                 add     esp, 10h
+  .text:10242F79                 push    eax
+  .text:10242F7A                 lea     eax, [ebp+var_28]
+  .text:10242F7D                 push    eax
+  .text:10242F7E                 push    ecx
+  .text:10242F7F                 lea     eax, [ebp+var_10]
+  .text:10242F82                 movss   [esp+60h+var_60], xmm0
+  .text:10242F87                 push    eax
+  .text:10242F88                 call    sub_101D9F70
+  .text:10242F8D                 add     esp, 10h
+  .text:10242F90                 lea     eax, [ebp+var_10]
+  .text:10242F93                 push    eax
+  .text:10242F94                 call    dword_109B3320
+  .text:10242F9A                 sub     esp, 8
+  .text:10242F9D                 mov     [esp+5Ch+var_58], 0
+  .text:10242FA5                 mov     [esp+5Ch+var_5C], 0
+  .text:10242FAC                 call    dword_109B33F8
+  .text:10242FB2                 movss   xmm0, [ebp+var_48]
+  .text:10242FB7                 lea     eax, [ebp+var_10]
+  .text:10242FBA                 mulss   xmm0, dword ptr [edi+8]
+  .text:10242FBF                 push    eax
+  .text:10242FC0                 lea     eax, [ebp+var_1C]
+  .text:10242FC3                 push    eax
+  .text:10242FC4                 push    ecx
+  .text:10242FC5                 movss   [esp+60h+var_60], xmm0
+  .text:10242FCA                 push    offset r_entorigin
+  .text:10242FCF                 call    sub_101D9F70
+  .text:10242FD4                 movss   xmm0, [ebp+var_48]
+  .text:10242FD9                 lea     eax, [ebp+var_10]
+  .text:10242FDC                 mulss   xmm0, dword ptr [edi+10h]
+  .text:10242FE1                 add     esp, 10h
+  .text:10242FE4                 push    eax
+  .text:10242FE5                 lea     eax, [ebp+var_28]
+  .text:10242FE8                 push    eax
+  .text:10242FE9                 push    ecx
+  .text:10242FEA                 lea     eax, [ebp+var_10]
+  .text:10242FED                 movss   [esp+60h+var_60], xmm0
+  .text:10242FF2                 push    eax
+  .text:10242FF3                 call    sub_101D9F70
+  .text:10242FF8                 add     esp, 10h
+  .text:10242FFB                 lea     eax, [ebp+var_10]
+  .text:10242FFE                 push    eax
+  .text:10242FFF                 call    dword_109B3320
+  .text:10243005                 sub     esp, 8
+  .text:10243008                 mov     [esp+5Ch+var_58], 0
+  .text:10243010                 mov     [esp+5Ch+var_5C], 3F800000h
+  .text:10243017                 call    dword_109B33F8
+  .text:1024301D                 movss   xmm0, [ebp+var_48]
+  .text:10243022                 lea     eax, [ebp+var_10]
+  .text:10243025                 mulss   xmm0, dword ptr [edi+8]
+  .text:1024302A                 push    eax
+  .text:1024302B                 lea     eax, [ebp+var_1C]
+  .text:1024302E                 push    eax
+  .text:1024302F                 push    ecx
+  .text:10243030                 movss   [esp+60h+var_60], xmm0
+  .text:10243035                 push    offset r_entorigin
+  .text:1024303A                 call    sub_101D9F70
+  .text:1024303F                 movss   xmm0, [ebp+var_48]
+  .text:10243044                 lea     eax, [ebp+var_10]
+  .text:10243047                 mulss   xmm0, dword ptr [edi+14h]
+  .text:1024304C                 add     esp, 10h
+  .text:1024304F                 push    eax
+  .text:10243050                 lea     eax, [ebp+var_28]
+  .text:10243053                 push    eax
+  .text:10243054                 push    ecx
+  .text:10243055                 lea     eax, [ebp+var_10]
+  .text:10243058                 movss   [esp+60h+var_60], xmm0
+  .text:1024305D                 push    eax
+  .text:1024305E                 call    sub_101D9F70
+  .text:10243063                 add     esp, 10h
+  .text:10243066                 lea     eax, [ebp+var_10]
+  .text:10243069                 push    eax
+  .text:1024306A                 call    dword_109B3320
+  .text:10243070                 sub     esp, 8
+  .text:10243073                 mov     [esp+5Ch+var_58], 3F800000h
+  .text:1024307B                 mov     [esp+5Ch+var_5C], 3F800000h
+  .text:10243082                 call    dword_109B33F8
+  .text:10243088                 movss   xmm0, [ebp+var_48]
+  .text:1024308D                 lea     eax, [ebp+var_10]
+  .text:10243090                 mulss   xmm0, dword ptr [edi+0Ch]
+  .text:10243095                 push    eax
+  .text:10243096                 lea     eax, [ebp+var_1C]
+  .text:10243099                 push    eax
+  .text:1024309A                 push    ecx
+  .text:1024309B                 movss   [esp+60h+var_60], xmm0
+  .text:102430A0                 push    offset r_entorigin
+  .text:102430A5                 call    sub_101D9F70
+  .text:102430AA                 movss   xmm0, [ebp+var_48]
+  .text:102430AF                 lea     eax, [ebp+var_10]
+  .text:102430B2                 mulss   xmm0, dword ptr [edi+14h]
+  .text:102430B7                 add     esp, 10h
+  .text:102430BA                 push    eax
+  .text:102430BB                 lea     eax, [ebp+var_28]
+  .text:102430BE                 push    eax
+  .text:102430BF                 push    ecx
+  .text:102430C0                 lea     eax, [ebp+var_10]
+  .text:102430C3                 movss   [esp+60h+var_60], xmm0
+  .text:102430C8                 push    eax
+  .text:102430C9                 call    sub_101D9F70
+  .text:102430CE                 add     esp, 10h
+  .text:102430D1                 lea     eax, [ebp+var_10]
+  .text:102430D4                 push    eax
+  .text:102430D5                 call    dword_109B3320
+  .text:102430DB                 call    dword_109B36FC
+  .text:102430E1                 ; unsigned int
+  .text:102430E1                 push    0BC0h; unsigned int
+  .text:102430E6                 call    qglDisable
+  .text:102430EC                 push    1
+  .text:102430EE                 call    dword_109B3730
+  .text:102430F4                 cmp     dword ptr [esi+2F8h], 0
+  .text:102430FB                 jnz     short loc_10243111
+  .text:102430FD                 movss   xmm0, dword_10322D74
+  .text:10243105                 xorps   xmm1, xmm1
+  .text:10243108                 ucomiss xmm0, xmm1
+  .text:1024310B                 lahf
+  .text:1024310C                 test    ah, 44h
+  .text:1024310F                 jnp     short loc_1024313F
+  .text:10243111                 push    ecx
+  .text:10243112                 mov     [esp+58h+var_58], 45F00800h
+  .text:10243119                 push    2200h
+  .text:1024311E                 push    2300h
+  .text:10243123                 call    dword_109B339C
+  .text:10243129                 ; unsigned int
+  .text:10243129                 push    0BE2h; unsigned int
+  .text:1024312E                 call    qglDisable
+  .text:10243134                 ; unsigned int
+  .text:10243134                 push    0B71h; unsigned int
+  .text:10243139                 call    qglEnable
+  .text:1024313F                 mov     ecx, [ebp+var_4]
+  .text:10243142                 pop     edi
+  .text:10243143                 pop     esi
+  .text:10243144                 ; StackCookie
+  .text:10243144                 xor     ecx, ebp; StackCookie
+  .text:10243146                 pop     ebx
+  .text:10243147                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1024314C                 mov     esp, ebp
+  .text:1024314E                 pop     ebp
+  .text:1024314F                 retn
+procedure: |-
+  void __cdecl R_DrawSpriteModel(int a1)
+  {
+    __int16 *v1; // ebx
+    int SpriteFrame; // edi
+    float v3; // xmm0_4
+    int v4; // eax
+    float v5; // [esp+78h] [ebp-48h]
+    int v6; // [esp+7Ch] [ebp-44h] BYREF
+    int v7; // [esp+80h] [ebp-40h]
+    int v8; // [esp+84h] [ebp-3Ch]
+    _BYTE v9[12]; // [esp+8Ch] [ebp-34h] BYREF
+    _BYTE v10[12]; // [esp+98h] [ebp-28h] BYREF
+    _BYTE v11[12]; // [esp+A4h] [ebp-1Ch] BYREF
+    _BYTE v12[12]; // [esp+B0h] [ebp-10h] BYREF
+  
+    v1 = *(__int16 **)(*(_DWORD *)(a1 + 2964) + 388);
+    SpriteFrame = R_GetSpriteFrame((int)v1, (int)*(float *)(a1 + 736));
+    if ( !SpriteFrame )
+    {
+      sub_102201E0("R_DrawSpriteModel:  couldn't get sprite frame for %s\n", *(_DWORD *)(a1 + 2964));
+      return;
+    }
+    v3 = 1.0;
+    v5 = *(float *)(a1 + 752);
+    if ( v5 <= 0.0 )
+      v5 = 1.0;
+    if ( *(_DWORD *)(a1 + 760) )
+      v3 = r_blend;
+    else
+      r_blend = 1.0;
+    sub_101B3F50(&v6, a1, (int)(float)(v3 * 255.0));
+    if ( *(float *)&dword_10322D74 != 0.0 || *(_DWORD *)(a1 + 760) )
+    {
+      v4 = *(_DWORD *)(a1 + 760);
+      switch ( v4 )
+      {
+        case 1:
+          dword_109B3808(770, 771);
+          dword_109B3394(8960, 8704, 6406);
+  LABEL_21:
+          dword_109B3778(v6, v7, v8, (unsigned __int8)(int)(float)(r_blend * 255.0));
+          goto LABEL_22;
+        case 5:
+          dword_109B339C(8960, 8704, 1174667264);
+          dword_109B3808(1, 1);
+          dword_109B3778(v6, v7, v8, 255);
+          break;
+        case 3:
+          dword_109B339C(8960, 8704, 1174667264);
+          dword_109B3808(1, 1);
+          dword_109B3778(v6, v7, v8, 255);
+          qglDisable(0xB71u);
+          dword_109B3730(0);
+  LABEL_22:
+          qglEnable(0xBE2u);
+          goto LABEL_23;
+        case 4:
+          dword_109B339C(8960, 8704, 1174667264);
+          dword_109B3808(770, 771);
+          dword_109B3778(v6, v7, v8, (unsigned __int8)(int)(float)(r_blend * 255.0));
+          break;
+        default:
+          dword_109B339C(8960, 8704, 1174667264);
+          dword_109B3808(770, 771);
+          goto LABEL_21;
+      }
+      dword_109B3730(0);
+      goto LABEL_22;
+    }
+    dword_109B339C(8960, 8704, 1174667264);
+    dword_109B3778(v6, v7, v8, 255);
+    qglDisable(0xBE2u);
+  LABEL_23:
+    sub_101B29A0(a1, *v1, v9, v10, v11);
+    GL_DisableMultitexture();
+    GL_Bind(*(_DWORD *)(SpriteFrame + 24));
+    qglEnable(0xBC0u);
+    dword_109B3814(7);
+    dword_109B33F8(0, 1065353216);
+    sub_101D9F70(&r_entorigin, v5 * *(float *)(SpriteFrame + 12), v11, v12);
+    sub_101D9F70(v12, v5 * *(float *)(SpriteFrame + 16), v10, v12);
+    dword_109B3320(v12);
+    dword_109B33F8(0, 0);
+    sub_101D9F70(&r_entorigin, v5 * *(float *)(SpriteFrame + 8), v11, v12);
+    sub_101D9F70(v12, v5 * *(float *)(SpriteFrame + 16), v10, v12);
+    dword_109B3320(v12);
+    dword_109B33F8(1065353216, 0);
+    sub_101D9F70(&r_entorigin, v5 * *(float *)(SpriteFrame + 8), v11, v12);
+    sub_101D9F70(v12, v5 * *(float *)(SpriteFrame + 20), v10, v12);
+    dword_109B3320(v12);
+    dword_109B33F8(1065353216, 1065353216);
+    sub_101D9F70(&r_entorigin, v5 * *(float *)(SpriteFrame + 12), v11, v12);
+    sub_101D9F70(v12, v5 * *(float *)(SpriteFrame + 20), v10, v12);
+    dword_109B3320(v12);
+    ((void (__cdecl *)())dword_109B36FC)();
+    qglDisable(0xBC0u);
+    dword_109B3730(1);
+    if ( *(_DWORD *)(a1 + 760) || *(float *)&dword_10322D74 != 0.0 )
+    {
+      dword_109B339C(8960, 8704, 1173358592);
+      qglDisable(0xBE2u);
+      qglEnable(0xB71u);
+    }
+  }

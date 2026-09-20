@@ -10,16 +10,16 @@ permalink: goldsrc-vibesignatures/locator-summary
 分类依据是每个 finder 的主要发现锚；部分符号实际会组合多种机制（例如先字符串锚定 owning function，再读表槽），
 此处归入其决定性的一步。**Summary** 列摘自各 locator 文件 `## How it is located` 的首段。
 
-共 **233** 个 locator；模块 engine 194，client 39。
+共 **235** 个 locator；模块 engine 196，client 39。
 
 | 定位机制 | 数量 |
 | --- | --- |
-| 字符串锚 | 65 |
+| 字符串锚 | 66 |
 | 浮点常量锚 | 3 |
 | 表 / 结构 / 数据段扫描 | 38 |
 | 确定性 xref 交集锚 | 7 |
 | 前驱产物复用（下游确定性恢复） | 31 |
-| LLM_DECOMPILE 定位 | 54 |
+| LLM_DECOMPILE 定位 | 55 |
 | vtable / vfunc 槽恢复 | 10 |
 | 数值 scalar 提取 | 9 |
 | 调用点 patch | 16 |
@@ -146,6 +146,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [studioapi_StudioSetRenderamt](locators/studioapi_StudioSetRenderamt.md) | engine | func | — | Find the exact studio-interface diagnostic literal: HL_STUDIO_STRING ("Couldn't get client .dll studio model rendering interface. Version mismatch?\n") for… |
 | [gl_filter_min](locators/gl_filter_min.md) | engine | gv | `Draw_TextureMode_f` | The handler writes both filter levels from one `modes` table. The walk takes the unique adjacent store pair whose source registers were loaded from one shared base with a four-byte displacement delta; the lower-offset load feeds `gl_filter_min`. |
 | [gl_filter_max](locators/gl_filter_max.md) | engine | gv | `Draw_TextureMode_f` | The higher-offset member of the same store pair. Never computed as `gl_filter_min ± 4`: the relation differs per build. |
+| [R_DrawSpriteModel](locators/R_DrawSpriteModel.md) | engine | func | — | `FULLMATCH:R_DrawSpriteModel:  couldn't get sprite frame for %s\n` — the Sys_Warning literal inside the function itself, byte-identical in all 15 (binary, platform) pairs including the BLOB `hw.decrypt.dll` builds. |
 
 ## 确定性 xref 交集锚 (7)
 
@@ -253,7 +254,8 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [videomode](locators/videomode.md) | engine | gv | `VideoMode_Create` | This is a real LLM_DECOMPILE finder (found_gv, with the annotated predecessor as reference): _prepare_llm_dependency_contract loads… |
 | [r_framecount](locators/r_framecount.md) | engine | gv | `R_RecursiveWorldNode` | `found_gv` against the annotated world-node-walk reference. In the walk the counter stamps surviving leaves and surfaces. |
 | [r_visframecount](locators/r_visframecount.md) | engine | gv | `R_RecursiveWorldNode` | `found_gv` against the same reference; in the walk it is the guard `if (node->visframe != r_visframecount) return;`. |
-| [r_entorigin](locators/r_entorigin.md) | engine | gv | `R_DrawTEntitiesOnList` | `found_gv` against the annotated loader reference. Declared in 11 configs but produced in 9; SvEngine writes it in the entity dispatcher, which no existing artifact reaches. |
+| [r_entorigin](locators/r_entorigin.md) | engine | gv | `R_DrawSpriteModel` | `found_gv` against the annotated sprite renderer, which reads it four times as the first `VectorMA` operand of the quad corners. Moved off `R_DrawTEntitiesOnList` so SvEngine is covered too; values unchanged. |
+| [r_blend](locators/r_blend.md) | engine | gv | `R_DrawSpriteModel` | `found_gv` against the same reference: the sprite alpha, assigned `1.0` for `kRenderNormal` and multiplied by `255.0`. SvEngine Linux only reaches it through a `.got` slot, which the shared `got_indirect_targets`/`gv_pic_addend` resolver folds. |
 
 ## vtable / vfunc 槽恢复 (10)
 
