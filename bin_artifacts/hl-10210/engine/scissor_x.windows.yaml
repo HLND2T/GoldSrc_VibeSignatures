@@ -1,0 +1,8 @@
+gv_name: scissor_x
+gv_va: '0x1065a0cc'
+gv_rva: '0x65a0cc'
+gv_sig: 55 8B EC 83 EC 20 F3 0F 10 0D ?? ?? ?? ?? 0F 57 C0 8B 45 ?? F3 0F 11 4D ?? F3 0F 11 4D ?? 66 0F 6E 4D ??
+gv_sig_va: '0x1023b1c0'
+gv_inst_offset: '0x7c'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

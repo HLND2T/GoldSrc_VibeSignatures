@@ -726,6 +726,15 @@ modules:
           - Draw_SpriteFrameAdditive.{platform}.yaml
           - Draw_SpriteFrameGeneric.{platform}.yaml
           - Draw_Frame.{platform}.yaml
+      - name: find-Draw_Frame-scissor-globals
+        expected_input:
+          - Draw_Frame.{platform}.yaml
+        expected_output:
+          - giScissorTest.{platform}.yaml
+          - scissor_x.{platform}.yaml
+          - scissor_y.{platform}.yaml
+          - scissor_width.{platform}.yaml
+          - scissor_height.{platform}.yaml
       - name: find-renderer-draw-helpers
         expected_input:
           - SCR_UpdateScreen_RenderBody.{platform}.yaml
@@ -1291,6 +1300,16 @@ modules:
         category: func
       - name: Draw_Frame
         category: func
+      - name: giScissorTest
+        category: gv
+      - name: scissor_x
+        category: gv
+      - name: scissor_y
+        category: gv
+      - name: scissor_width
+        category: gv
+      - name: scissor_height
+        category: gv
       - name: Draw_Pic
         category: func
       - name: D_FillRect

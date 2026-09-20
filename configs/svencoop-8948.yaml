@@ -737,12 +737,20 @@ modules:
         expected_output:
           - CL_FxBlend.{platform}.yaml
       - name: find-Draw_SpriteFrame-family-svencoop
-        platform: windows
         expected_output:
           - Draw_SpriteFrameHoles_SvEngine.{platform}.yaml
           - Draw_SpriteFrameAdditive_SvEngine.{platform}.yaml
           - Draw_SpriteFrameGeneric_SvEngine.{platform}.yaml
           - Draw_Frame.{platform}.yaml
+      - name: find-Draw_Frame-scissor-globals
+        expected_input:
+          - Draw_Frame.{platform}.yaml
+        expected_output:
+          - giScissorTest.{platform}.yaml
+          - scissor_x.{platform}.yaml
+          - scissor_y.{platform}.yaml
+          - scissor_width.{platform}.yaml
+          - scissor_height.{platform}.yaml
       - name: find-renderer-draw-helpers-svencoop
         platform: windows
         expected_input:
@@ -1293,16 +1301,22 @@ modules:
         category: gv
       - name: Draw_SpriteFrameHoles_SvEngine
         category: func
-        platform: windows
       - name: Draw_SpriteFrameAdditive_SvEngine
         category: func
-        platform: windows
       - name: Draw_SpriteFrameGeneric_SvEngine
         category: func
-        platform: windows
       - name: Draw_Frame
         category: func
-        platform: windows
+      - name: giScissorTest
+        category: gv
+      - name: scissor_x
+        category: gv
+      - name: scissor_y
+        category: gv
+      - name: scissor_width
+        category: gv
+      - name: scissor_height
+        category: gv
       - name: Draw_Pic
         category: func
         platform: windows
