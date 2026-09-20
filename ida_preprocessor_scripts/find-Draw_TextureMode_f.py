@@ -6,9 +6,9 @@ HL25 / CoF / BLOB engine. SvEngine replaced the whole textual set, so its
 handler is the only owner of "Invalid filter name" instead; the classic literal
 does not exist there and must never be used as a fallback.
 
-Only the anchor literal differs per family; output identity, platform gating and
-the discovery contract are identical, so both families are served by this one
-script. Discovery never consumes an old artifact signature.
+The config/file identity stays Draw_TextureMode_f; the payload records the
+family's actual source-level function name, including the cvar callback ABI on
+hl-8684/hl-10210. Discovery never consumes an old artifact signature.
 
 On SvEngine the handler has code xrefs but no owning function in the IDB, so its
 entry is recovered from the ``Cmd_AddCommand`` registration before the shared
@@ -17,8 +17,8 @@ string-owner walk runs. See ``_engine_texture_mode_common``.
 
 from pathlib import Path
 
-from ida_analyze_util import preprocess_common_skill
-from ida_preprocessor_scripts._engine_texture_mode_common import recover_registered_owner
+from ida_analyze_util import _load_yaml_mapping, _output_for_symbol, preprocess_common_skill, write_func_yaml
+from ida_preprocessor_scripts._engine_texture_mode_common import recover_registered_owner, texture_mode_name
 
 TARGET_FUNCTION_NAME = "Draw_TextureMode_f"
 CLASSIC_LITERAL = "bad filter name\n"
@@ -55,7 +55,7 @@ async def preprocess_skill(
             "xref_funcs": [],
         },
     ]
-    return await preprocess_common_skill(
+    success = await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,
         old_yaml_map=None,
@@ -67,3 +67,12 @@ async def preprocess_skill(
         generate_yaml_desired_fields=[(TARGET_FUNCTION_NAME, FUNC_FIELDS)],
         debug=debug,
     )
+    if not success:
+        return False
+    output = _output_for_symbol(expected_outputs, TARGET_FUNCTION_NAME)
+    artifact = _load_yaml_mapping(output) if output is not None else None
+    if not artifact:
+        return False
+    artifact["func_name"] = texture_mode_name(new_binary_dir)
+    write_func_yaml(output, artifact)
+    return True

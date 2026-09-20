@@ -1,4 +1,4 @@
-func_name: Draw_TextureMode_f
+func_name: GL_TextureMode_f
 func_va: '0x1d4fe40'
 func_rva: '0x4fe40'
 func_size: '0x149'

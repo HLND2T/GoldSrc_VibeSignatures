@@ -47,6 +47,10 @@ so the search walks backwards across single-predecessor blocks. The candidate
 must stay under `0x80` bytes and make at most one call, which excludes
 `CL_CalculateDevOverviewParameters`.
 
+Rejected candidates remain in diagnostics but never enter the final uniqueness
+set. A candidate rejected for size/call count must not become the only accepted
+target or make a valid target ambiguous. Synthetic execution tests cover both cases.
+
 ## Pitfalls
 
 - "The renderer's first call" is wrong: cof-5936 calls `Cvar_DirectSet` first and

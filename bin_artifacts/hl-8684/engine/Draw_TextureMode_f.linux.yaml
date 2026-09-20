@@ -1,4 +1,4 @@
-func_name: Draw_TextureMode_f
+func_name: gl_texturemode_hook_callback
 func_va: '0x1a0e20'
 func_rva: '0x1a0e20'
 func_size: '0x22b'

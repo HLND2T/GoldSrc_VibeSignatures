@@ -113,7 +113,7 @@ else:
                 'calls': len(calls),
                 'size': hex(size),
             })
-        chosen = {entry['callee'] for entry in candidates if entry.get('calls') is not None}
+        chosen = {entry['callee'] for entry in candidates if entry.get('calls') is not None and 'reason' not in entry}
         if len(chosen) != 1:
             result = {'error': 'CL_IsDevOverviewMode candidate is not unique',
                       'renderer': hex(renderer), 'candidates': candidates}

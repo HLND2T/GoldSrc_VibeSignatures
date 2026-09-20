@@ -40,6 +40,13 @@ from one shared base with a four-byte displacement delta; the lower-offset load
 feeds `gl_filter_min`. Store order follows table offset on every validated build
 (CoF MSVC, HL25 MSVC, SvEngine MSVC, HL25 GCC, SvEngine GCC).
 
+The walk decodes the load's x86 ModRM/SIB base, index, scale and displacement,
+and compares register definitions inside one basic block. CoF independently
+reloads and multiplies the same frame-local table index into two registers;
+that equivalence is proven from the stack read and IMUL, not register names.
+Intervening register clobbers, calls, potential frame writes and block changes
+invalidate the corresponding proof. Equal displacement deltas alone are insufficient.
+
 ## Pitfalls
 
 - **`gl_filter_min` and `gl_filter_max` are not interchangeable by offset.** They

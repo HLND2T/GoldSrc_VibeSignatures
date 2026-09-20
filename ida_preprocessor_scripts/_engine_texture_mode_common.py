@@ -13,10 +13,22 @@ definition has to be recreated inside each owned lifecycle.
 """
 
 import json
+from pathlib import Path
 
 from ida_analyze_util import parse_mcp_result
 
 RECOVERY_COMMAND = "gl_texturemode"
+
+
+def texture_mode_name(new_binary_dir):
+    """Return the source-level identity verified against each family's binary."""
+    gamever = Path(new_binary_dir).resolve().parent.name
+    if gamever.startswith("svencoop-"):
+        return "GL_TextureMode_f"
+    if gamever in ("hl-8684", "hl-10210"):
+        return "gl_texturemode_hook_callback"
+    return "Draw_TextureMode_f"
+
 
 RECOVER_PY = r"""
 import ida_bytes, ida_funcs, ida_nalt, idautils, idc, idaapi, json

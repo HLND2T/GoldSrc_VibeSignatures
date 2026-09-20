@@ -24,9 +24,10 @@ tags:
 
 - All 11 engine configs, every declared platform. BLOB tags analyse
   `hw.decrypt.dll`.
-- The artifact identity is `Draw_TextureMode_f` everywhere, including the two
-  families where the build's own symbol differs, because the config owns one
-  lookup identity (see Pitfalls).
+- The config identity and artifact filename stay `Draw_TextureMode_f` everywhere.
+  The payload's `func_name` preserves the source-level symbol: `gl_texturemode_hook_callback`
+  on hl-8684/hl-10210, `GL_TextureMode_f` on SvEngine, and `Draw_TextureMode_f`
+  on the classic builds. Downstream readers validate that family-specific identity.
 
 ## Predecessors
 
@@ -55,7 +56,8 @@ runs with `old_yaml_map=None`, so no prior artifact signature participates.
 - **The real symbol name is not stable.** hl-10210 / hl-8684 renamed the command
   callback into a cvar hook callback and changed its ABI to `void (cvar_t *)`;
   SvEngine calls it `GL_TextureMode_f`. The config symbol stays
-  `Draw_TextureMode_f` so one identity covers every build.
+  `Draw_TextureMode_f` so one lookup identity covers every build; this does not
+  override the payload's real function name or imply a shared callback ABI.
 - **SvEngine Windows leaves the handler outside every function** in both IDBs.
   The literal then has a code xref with no owning function and the shared walk
   finds zero candidates. `_engine_texture_mode_common.recover_registered_owner`
