@@ -1,0 +1,8 @@
+gv_name: scissor_width
+gv_va: '0x231f648'
+gv_rva: '0x61f648'
+gv_sig: 55 8B EC 83 EC 14 DB 45 ?? 53 56 8B 75 ?? 57 D9 5D ?? DB 45 ?? 8B 06 8B 4E ?? 33 FF BB 00 00 80 3F
+gv_sig_va: '0x1d3c340'
+gv_inst_offset: '0x62'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'
