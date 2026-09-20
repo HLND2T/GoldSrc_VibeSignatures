@@ -1,0 +1,8 @@
+gv_name: g_bFogSkybox
+gv_va: '0x2c4e6c'
+gv_rva: '0x2c4e6c'
+gv_sig: 8B 44 24 ?? F3 0F 10 44 24 ?? A3 ?? ?? ?? ?? F3 0F 11 05 ?? ?? ?? ?? C3
+gv_sig_va: '0x1b0060'
+gv_inst_offset: '0xa'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

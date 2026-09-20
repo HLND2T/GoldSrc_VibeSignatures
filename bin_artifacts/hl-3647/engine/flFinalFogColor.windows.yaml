@@ -1,0 +1,8 @@
+gv_name: flFinalFogColor
+gv_va: '0x2754590'
+gv_rva: '0xa54590'
+gv_sig: 8B 44 24 ?? 85 C0 74 ?? D9 05 ?? ?? ?? ?? D8 1D ?? ?? ?? ?? DF E0 25 00 41 00 00 75 ?? 8B 44 24 ?? 8B 4C 24 ??
+gv_sig_va: '0x1d93640'
+gv_inst_offset: '0x47'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

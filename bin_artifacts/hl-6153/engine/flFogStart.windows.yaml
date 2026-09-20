@@ -1,0 +1,8 @@
+gv_name: flFogStart
+gv_va: '0x272ef10'
+gv_rva: '0xa2ef10'
+gv_sig: 55 8B EC 8B 45 ?? 85 C0 74 ?? D9 05 ?? ?? ?? ?? D8 1D ?? ?? ?? ?? DF E0 25 00 41 00 00 75 ?? 8B 45 ?? 8B 4D ??
+gv_sig_va: '0x1d87580'
+gv_inst_offset: '0x68'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'
