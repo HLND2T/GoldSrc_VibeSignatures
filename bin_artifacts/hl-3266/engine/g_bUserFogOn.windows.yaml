@@ -1,0 +1,8 @@
+gv_name: g_bUserFogOn
+gv_va: '0x2788de4'
+gv_rva: '0xa88de4'
+gv_sig: 8B 44 24 ?? 85 C0 74 ?? D9 05 ?? ?? ?? ?? D8 1D ?? ?? ?? ?? DF E0 25 00 41 00 00 75 ?? 8B 44 24 ?? 8B 4C 24 ??
+gv_sig_va: '0x1d935f0'
+gv_inst_offset: '0x25'
+gv_inst_length: '0xa'
+gv_inst_disp: '0x2'

@@ -1,0 +1,8 @@
+gv_name: flFogDensity
+gv_va: '0x13cf7d8'
+gv_rva: '0x13cf7d8'
+gv_sig: 8B 44 24 ?? F3 0F 10 44 24 ?? A3 ?? ?? ?? ?? F3 0F 11 05 ?? ?? ?? ?? C3
+gv_sig_va: '0x1b0060'
+gv_inst_offset: '0xf'
+gv_inst_length: '0x8'
+gv_inst_disp: '0x4'

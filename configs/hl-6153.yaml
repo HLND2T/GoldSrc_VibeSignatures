@@ -275,6 +275,23 @@ modules:
           - R_RenderScene.{platform}.yaml
         expected_output:
           - cshift_water.{platform}.yaml
+      - name: find-R_RenderFog-R_FogParams-from-tri
+        expected_input:
+          - cl_enginefuncs.{platform}.yaml
+        expected_output:
+          - R_RenderFog.{platform}.yaml
+          - R_FogParams.{platform}.yaml
+      - name: find-R_RenderFog-fog-globals
+        expected_input:
+          - R_RenderFog.{platform}.yaml
+          - R_FogParams.{platform}.yaml
+        expected_output:
+          - flFinalFogColor.{platform}.yaml
+          - flFogStart.{platform}.yaml
+          - flFogEnd.{platform}.yaml
+          - g_bUserFogOn.{platform}.yaml
+          - flFogDensity.{platform}.yaml
+          - g_bFogSkybox.{platform}.yaml
       - name: find-R_RenderFinalFog-from-R_RenderScene-decompiles
         expected_input:
           - R_RenderScene.{platform}.yaml
@@ -1017,6 +1034,22 @@ modules:
         category: gv
       - name: R_RenderScene
         category: func
+      - name: R_RenderFog
+        category: func
+      - name: R_FogParams
+        category: func
+      - name: flFinalFogColor
+        category: gv
+      - name: flFogStart
+        category: gv
+      - name: flFogEnd
+        category: gv
+      - name: flFogDensity
+        category: gv
+      - name: g_bFogSkybox
+        category: gv
+      - name: g_bUserFogOn
+        category: gv
       - name: R_SetupGL
         category: func
       - name: R_RenderFinalFog
