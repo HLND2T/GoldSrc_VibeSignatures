@@ -156,17 +156,21 @@ YAML, then use `gv_names` together with an `LLM_DECOMPILE` spec whose
 current-binary function; normal x86 validation then decodes the selected address operand and emits
 the global-variable artifact.
 
-Do not discover a global through a byte signature, an old YAML artifact, `xref_signatures`, or a
-standalone `preprocess_gv_sig_via_mcp` / `gv_names` path. A generated `gv_sig` remains required as
-the output's unique runtime-resolution validator, but it must be generated *after* the LLM-selected
-instruction is validated; it is never a discovery anchor.
+Do not discover a global through an old YAML artifact, a standalone
+`preprocess_gv_sig_via_mcp` / `gv_names` path, or a byte signature that no owning function was
+verified for. A generated `gv_sig` remains required as the output's unique runtime-resolution
+validator, but it must be generated *after* the selected instruction is validated; it is never a
+discovery anchor.
 
 An exception is allowed only when a current-IDB, direct locator is demonstrably more robust across
 the requested game versions and platforms than the LLM predecessor path. It must identify the
 global's own access unambiguously, have source/behavior evidence for its ownership, and be
-validated on every requested platform and game family. Fixed addresses, source-order guesses,
-nearby-function matches, or a byte signature do not qualify. Record the direct locator and its
-cross-version evidence in the finder or its reference documentation.
+validated on every requested platform and game family. Fixed addresses, source-order guesses, or
+nearby-function matches do not qualify. A budgeted code signature (see the
+[find-anchor-to-goldsrc-symbol](../find-anchor-to-goldsrc-symbol/SKILL.md) coverage rule) may
+locate the owning function, but the global's own address must still come from a verified
+instruction operand in that function. Record the direct locator and its cross-version evidence in
+the finder or its reference documentation.
 
 Read the chosen reference before implementation:
 
@@ -208,6 +212,12 @@ Each entry uses `func_name` and any combination of:
 - Float filters are post-intersection filters. They may serve as the sole positive source only when the constant set
   is validated to select exactly one function on every requested platform and game family; the candidate set is then
   every function whose body references all required constants.
+- A `xref_signatures` entry may serve as the sole positive source only under the
+  [find-anchor-to-goldsrc-symbol](../find-anchor-to-goldsrc-symbol/SKILL.md) coverage budget: at most four
+  signatures must cover every configured game version and platform, the finder must select them in a declared
+  priority order with each candidate resolving to exactly one owning function, and the located body must be
+  independently verified. Intersecting several signatures is not a substitute for coverage — a platform that
+  matches only one of them yields an empty intersection and fails closed.
 - Symbolic GV/function references are loaded from current-version YAML; explicit `0x...` GV
   addresses are permitted.
 - `FULLMATCH:` requires exact string equality.
