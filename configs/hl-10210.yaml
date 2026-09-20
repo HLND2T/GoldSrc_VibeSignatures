@@ -139,7 +139,6 @@ modules:
         expected_output:
           - cl_parsecount.{platform}.yaml
           - size_of_frame.{platform}.yaml
-          - r_entorigin.{platform}.yaml
       - name: find-R_DrawTEntitiesOnList
         expected_output:
           - R_DrawTEntitiesOnList.{platform}.yaml
@@ -819,6 +818,15 @@ modules:
         expected_output:
           - ClientDLL_DrawTransparentTriangles.{platform}.yaml
           - cl_funcs_pDrawTransparentTriangles.{platform}.yaml
+      - name: find-R_DrawSpriteModel
+        expected_output:
+          - R_DrawSpriteModel.{platform}.yaml
+      - name: find-R_DrawSpriteModel-decompiles
+        expected_input:
+          - R_DrawSpriteModel.{platform}.yaml
+        expected_output:
+          - r_blend.{platform}.yaml
+          - r_entorigin.{platform}.yaml
       - name: find-CL_IsDevOverviewMode
         expected_input:
           - CL_SetDevOverView.{platform}.yaml
@@ -841,6 +849,10 @@ modules:
         category: gv
       - name: CL_IsDevOverviewMode
         category: func
+      - name: R_DrawSpriteModel
+        category: func
+      - name: r_blend
+        category: gv
       - name: r_entorigin
         category: gv
       - name: currenttexture

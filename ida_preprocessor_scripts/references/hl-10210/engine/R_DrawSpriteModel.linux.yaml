@@ -1,0 +1,533 @@
+func_name: "R_DrawSpriteModel"
+func_va: "0x16c950"
+disasm_code: |-
+  ; Two engine globals are the targets. r_blend is the sprite alpha: it is assigned 1.0 for the normal render mode and multiplied by 255.0 for the alpha argument. r_entorigin is the vec3 the four sprite quad corners are offset from (the first VectorMA operand). Every other dword_/flt_ name in this body is a GL entry-point slot or a numeric constant.
+  .text:0016C950                 push    ebp
+  .text:0016C951                 push    edi
+  .text:0016C952                 push    esi
+  .text:0016C953                 push    ebx
+  .text:0016C954                 sub     esp, 7Ch
+  .text:0016C957                 mov     edi, [esp+8Ch+e]
+  .text:0016C95E                 mov     eax, [edi+0B94h]
+  .text:0016C964                 mov     ebx, [eax+184h]
+  .text:0016C96A                 cvttss2si eax, dword ptr [edi+2E0h]
+  .text:0016C972                 ; pSprite
+  .text:0016C972                 mov     [esp+8Ch+var_8C], psprite; pSprite
+  .text:0016C975                 ; frame
+  .text:0016C975                 mov     [esp+8Ch+pEntity], eax; frame
+  .text:0016C979                 call    R_GetSpriteFrame
+  .text:0016C97E                 test    frame, frame
+  .text:0016C980                 jz      loc_16CEA0
+  .text:0016C986                 fld     dword ptr [edi+2F0h]
+  .text:0016C98C                 mov     esi, frame
+  .text:0016C98E                 fldz
+  .text:0016C990                 fxch    st(1)
+  .text:0016C992                 mov     frame, [edi+2F8h]
+  .text:0016C998                 fucomi  st, st(1)
+  .text:0016C99A                 fstp    st(1)
+  .text:0016C99C                 fld1
+  .text:0016C99E                 fcmovnbe st, st(1)
+  .text:0016C9A0                 fstp    st(1)
+  .text:0016C9A2                 test    eax, eax
+  .text:0016C9A4                 fstp    [esp+8Ch+scale]
+  .text:0016C9A8                 jz      loc_16CCE0
+  .text:0016C9AE                 fld     ds:flt_24B930
+  .text:0016C9B4                 fmul    ds:r_blend
+  .text:0016C9BA                 fstp    [esp+8Ch+var_60]
+  .text:0016C9BE                 cvttss2si eax, [esp+8Ch+var_60]
+  .text:0016C9C4                 ; alpha
+  .text:0016C9C4                 mov     [esp+8Ch+alpha], eax; alpha
+  .text:0016C9C8                 lea     eax, [esp+8Ch+color]
+  .text:0016C9CC                 ; pColor
+  .text:0016C9CC                 mov     [esp+8Ch+var_8C], eax; pColor
+  .text:0016C9CF                 ; pEntity
+  .text:0016C9CF                 mov     [esp+8Ch+pEntity], edi; pEntity
+  .text:0016C9D3                 call    R_SpriteColor
+  .text:0016C9D8                 mov     eax, [edi+2F8h]
+  .text:0016C9DE                 fld     gl_spriteblend.value
+  .text:0016C9E4                 fldz
+  .text:0016C9E6                 fxch    st(1)
+  .text:0016C9E8                 fucomip st, st(1)
+  .text:0016C9EA                 fstp    st
+  .text:0016C9EC                 jp      short loc_16C9F8
+  .text:0016C9EE                 jnz     short loc_16C9F8
+  .text:0016C9F0                 test    eax, eax
+  .text:0016C9F2                 jz      loc_16CD68
+  .text:0016C9F8                 cmp     eax, 1
+  .text:0016C9FB                 nop
+  .text:0016C9FC                 lea     frame, [frame+0]
+  .text:0016CA00                 jz      loc_16CDC8
+  .text:0016CA06                 mov     edx, 2200h
+  .text:0016CA0B                 cmp     eax, 5
+  .text:0016CA0E                 ; GLfloat
+  .text:0016CA0E                 mov     [esp+8Ch+alpha], 46040000h; GLfloat
+  .text:0016CA16                 ; GLenum
+  .text:0016CA16                 mov     [esp+8Ch+pEntity], edx; GLenum
+  .text:0016CA1A                 ; GLenum
+  .text:0016CA1A                 mov     [esp+8Ch+var_8C], 2300h; GLenum
+  .text:0016CA21                 jz      loc_16CE08
+  .text:0016CA27                 cmp     eax, 3
+  .text:0016CA2A                 jz      loc_16CE38
+  .text:0016CA30                 cmp     eax, 4
+  .text:0016CA33                 jz      loc_16CCF8
+  .text:0016CA39                 call    ds:qglTexEnvf
+  .text:0016CA3F                 mov     eax, 303h
+  .text:0016CA44                 ; GLenum
+  .text:0016CA44                 mov     [esp+8Ch+pEntity], eax; GLenum
+  .text:0016CA48                 ; GLenum
+  .text:0016CA48                 mov     [esp+8Ch+var_8C], 302h; GLenum
+  .text:0016CA4F                 call    ds:qglBlendFunc
+  .text:0016CA55                 fld     ds:flt_24B930
+  .text:0016CA5B                 fmul    ds:r_blend
+  .text:0016CA61                 fstp    [esp+8Ch+var_60]
+  .text:0016CA65                 cvttss2si eax, [esp+8Ch+var_60]
+  .text:0016CA6B                 movzx   eax, al
+  .text:0016CA6E                 ; GLubyte
+  .text:0016CA6E                 mov     dword ptr [esp+8Ch+var_80], eax; GLubyte
+  .text:0016CA72                 movzx   eax, byte ptr [esp+8Ch+color.b]
+  .text:0016CA77                 ; GLubyte
+  .text:0016CA77                 mov     [esp+8Ch+alpha], eax; GLubyte
+  .text:0016CA7B                 movzx   eax, byte ptr [esp+8Ch+color.g]
+  .text:0016CA80                 ; GLubyte
+  .text:0016CA80                 mov     [esp+8Ch+pEntity], eax; GLubyte
+  .text:0016CA84                 movzx   eax, byte ptr [esp+8Ch+color.r]
+  .text:0016CA89                 ; GLubyte
+  .text:0016CA89                 mov     [esp+8Ch+var_8C], eax; GLubyte
+  .text:0016CA8C                 call    ds:qglColor4ub
+  .text:0016CA92                 ; GLenum
+  .text:0016CA92                 mov     [esp+8Ch+var_8C], 0BE2h; GLenum
+  .text:0016CA99                 call    ds:qglEnable
+  .text:0016CA9F                 lea     eax, [esp+8Ch+right]
+  .text:0016CAA3                 lea     ebp, [esp+8Ch+up]
+  .text:0016CAA7                 ; right
+  .text:0016CAA7                 mov     dword ptr [esp+8Ch+var_80], eax; right
+  .text:0016CAAB                 lea     eax, [esp+8Ch+forward]
+  .text:0016CAAF                 ; up
+  .text:0016CAAF                 mov     [esp+8Ch+var_7C], ebp; up
+  .text:0016CAB3                 ; forward
+  .text:0016CAB3                 mov     [esp+8Ch+alpha], eax; forward
+  .text:0016CAB7                 movsx   eax, word ptr [psprite]
+  .text:0016CABA                 lea     psprite, [esp+8Ch+point]
+  .text:0016CABE                 ; pEntity
+  .text:0016CABE                 mov     [esp+8Ch+var_8C], edi; pEntity
+  .text:0016CAC1                 ; type
+  .text:0016CAC1                 mov     [esp+8Ch+pEntity], eax; type
+  .text:0016CAC5                 call    R_GetSpriteAxes
+  .text:0016CACA                 call    GL_DisableMultitexture
+  .text:0016CACF                 mov     eax, [frame+18h]
+  .text:0016CAD2                 ; texnum
+  .text:0016CAD2                 mov     [esp+8Ch+var_8C], eax; texnum
+  .text:0016CAD5                 call    GL_Bind
+  .text:0016CADA                 ; GLenum
+  .text:0016CADA                 mov     [esp+8Ch+var_8C], 0BC0h; GLenum
+  .text:0016CAE1                 call    ds:qglEnable
+  .text:0016CAE7                 ; GLenum
+  .text:0016CAE7                 mov     [esp+8Ch+var_8C], 7; GLenum
+  .text:0016CAEE                 call    ds:qglBegin
+  .text:0016CAF4                 ; GLfloat
+  .text:0016CAF4                 mov     [esp+8Ch+pEntity], 3F800000h; GLfloat
+  .text:0016CAFC                 ; GLfloat
+  .text:0016CAFC                 mov     [esp+8Ch+var_8C], 0; GLfloat
+  .text:0016CB03                 call    ds:qglTexCoord2f
+  .text:0016CB09                 ; vecc
+  .text:0016CB09                 mov     dword ptr [esp+8Ch+var_80], ebx; vecc
+  .text:0016CB0D                 ; vecb
+  .text:0016CB0D                 mov     [esp+8Ch+alpha], ebp; vecb
+  .text:0016CB11                 fld     [esp+8Ch+scale]
+  .text:0016CB15                 fmul    dword ptr [frame+0Ch]
+  .text:0016CB18                 ; veca
+  .text:0016CB18                 mov     [esp+8Ch+var_8C], offset r_entorigin; veca
+  .text:0016CB1F                 ; scale
+  .text:0016CB1F                 fstp    [esp+8Ch+pEntity]; scale
+  .text:0016CB23                 call    VectorMA
+  .text:0016CB28                 lea     eax, [esp+8Ch+right]
+  .text:0016CB2C                 ; vecb
+  .text:0016CB2C                 mov     [esp+8Ch+alpha], eax; vecb
+  .text:0016CB30                 ; vecc
+  .text:0016CB30                 mov     dword ptr [esp+8Ch+var_80], ebx; vecc
+  .text:0016CB34                 fld     [esp+8Ch+scale]
+  .text:0016CB38                 fmul    dword ptr [frame+10h]
+  .text:0016CB3B                 ; veca
+  .text:0016CB3B                 mov     [esp+8Ch+var_8C], ebx; veca
+  .text:0016CB3E                 ; scale
+  .text:0016CB3E                 fstp    [esp+8Ch+pEntity]; scale
+  .text:0016CB42                 call    VectorMA
+  .text:0016CB47                 ; GLfloat *
+  .text:0016CB47                 mov     [esp+8Ch+var_8C], ebx; GLfloat *
+  .text:0016CB4A                 call    ds:qglVertex3fv
+  .text:0016CB50                 ; GLfloat
+  .text:0016CB50                 mov     [esp+8Ch+pEntity], 0; GLfloat
+  .text:0016CB58                 ; GLfloat
+  .text:0016CB58                 mov     [esp+8Ch+var_8C], 0; GLfloat
+  .text:0016CB5F                 call    ds:qglTexCoord2f
+  .text:0016CB65                 ; vecc
+  .text:0016CB65                 mov     dword ptr [esp+8Ch+var_80], ebx; vecc
+  .text:0016CB69                 ; vecb
+  .text:0016CB69                 mov     [esp+8Ch+alpha], ebp; vecb
+  .text:0016CB6D                 fld     [esp+8Ch+scale]
+  .text:0016CB71                 fmul    dword ptr [frame+8]
+  .text:0016CB74                 ; veca
+  .text:0016CB74                 mov     [esp+8Ch+var_8C], offset r_entorigin; veca
+  .text:0016CB7B                 ; scale
+  .text:0016CB7B                 fstp    [esp+8Ch+pEntity]; scale
+  .text:0016CB7F                 call    VectorMA
+  .text:0016CB84                 lea     eax, [esp+8Ch+right]
+  .text:0016CB88                 ; vecb
+  .text:0016CB88                 mov     [esp+8Ch+alpha], eax; vecb
+  .text:0016CB8C                 ; vecc
+  .text:0016CB8C                 mov     dword ptr [esp+8Ch+var_80], ebx; vecc
+  .text:0016CB90                 fld     [esp+8Ch+scale]
+  .text:0016CB94                 fmul    dword ptr [frame+10h]
+  .text:0016CB97                 ; veca
+  .text:0016CB97                 mov     [esp+8Ch+var_8C], ebx; veca
+  .text:0016CB9A                 ; scale
+  .text:0016CB9A                 fstp    [esp+8Ch+pEntity]; scale
+  .text:0016CB9E                 call    VectorMA
+  .text:0016CBA3                 ; GLfloat *
+  .text:0016CBA3                 mov     [esp+8Ch+var_8C], ebx; GLfloat *
+  .text:0016CBA6                 call    ds:qglVertex3fv
+  .text:0016CBAC                 ; GLfloat
+  .text:0016CBAC                 mov     [esp+8Ch+pEntity], 0; GLfloat
+  .text:0016CBB4                 ; GLfloat
+  .text:0016CBB4                 mov     [esp+8Ch+var_8C], 3F800000h; GLfloat
+  .text:0016CBBB                 call    ds:qglTexCoord2f
+  .text:0016CBC1                 ; vecc
+  .text:0016CBC1                 mov     dword ptr [esp+8Ch+var_80], ebx; vecc
+  .text:0016CBC5                 ; vecb
+  .text:0016CBC5                 mov     [esp+8Ch+alpha], ebp; vecb
+  .text:0016CBC9                 fld     [esp+8Ch+scale]
+  .text:0016CBCD                 fmul    dword ptr [frame+8]
+  .text:0016CBD0                 ; veca
+  .text:0016CBD0                 mov     [esp+8Ch+var_8C], offset r_entorigin; veca
+  .text:0016CBD7                 ; scale
+  .text:0016CBD7                 fstp    [esp+8Ch+pEntity]; scale
+  .text:0016CBDB                 call    VectorMA
+  .text:0016CBE0                 lea     eax, [esp+8Ch+right]
+  .text:0016CBE4                 ; vecb
+  .text:0016CBE4                 mov     [esp+8Ch+alpha], eax; vecb
+  .text:0016CBE8                 ; vecc
+  .text:0016CBE8                 mov     dword ptr [esp+8Ch+var_80], ebx; vecc
+  .text:0016CBEC                 fld     [esp+8Ch+scale]
+  .text:0016CBF0                 fmul    dword ptr [frame+14h]
+  .text:0016CBF3                 ; veca
+  .text:0016CBF3                 mov     [esp+8Ch+var_8C], ebx; veca
+  .text:0016CBF6                 ; scale
+  .text:0016CBF6                 fstp    [esp+8Ch+pEntity]; scale
+  .text:0016CBFA                 call    VectorMA
+  .text:0016CBFF                 ; GLfloat *
+  .text:0016CBFF                 mov     [esp+8Ch+var_8C], ebx; GLfloat *
+  .text:0016CC02                 call    ds:qglVertex3fv
+  .text:0016CC08                 ; GLfloat
+  .text:0016CC08                 mov     [esp+8Ch+pEntity], 3F800000h; GLfloat
+  .text:0016CC10                 ; GLfloat
+  .text:0016CC10                 mov     [esp+8Ch+var_8C], 3F800000h; GLfloat
+  .text:0016CC17                 call    ds:qglTexCoord2f
+  .text:0016CC1D                 ; vecc
+  .text:0016CC1D                 mov     dword ptr [esp+8Ch+var_80], ebx; vecc
+  .text:0016CC21                 ; vecb
+  .text:0016CC21                 mov     [esp+8Ch+alpha], ebp; vecb
+  .text:0016CC25                 fld     [esp+8Ch+scale]
+  .text:0016CC29                 fmul    dword ptr [frame+0Ch]
+  .text:0016CC2C                 ; veca
+  .text:0016CC2C                 mov     [esp+8Ch+var_8C], offset r_entorigin; veca
+  .text:0016CC33                 ; scale
+  .text:0016CC33                 fstp    [esp+8Ch+pEntity]; scale
+  .text:0016CC37                 call    VectorMA
+  .text:0016CC3C                 lea     eax, [esp+8Ch+right]
+  .text:0016CC40                 ; vecb
+  .text:0016CC40                 mov     [esp+8Ch+alpha], eax; vecb
+  .text:0016CC44                 ; vecc
+  .text:0016CC44                 mov     dword ptr [esp+8Ch+var_80], ebx; vecc
+  .text:0016CC48                 fld     [esp+8Ch+scale]
+  .text:0016CC4C                 fmul    dword ptr [frame+14h]
+  .text:0016CC4F                 ; veca
+  .text:0016CC4F                 mov     [esp+8Ch+var_8C], ebx; veca
+  .text:0016CC52                 ; scale
+  .text:0016CC52                 fstp    [esp+8Ch+pEntity]; scale
+  .text:0016CC56                 call    VectorMA
+  .text:0016CC5B                 ; GLfloat *
+  .text:0016CC5B                 mov     [esp+8Ch+var_8C], ebx; GLfloat *
+  .text:0016CC5E                 call    ds:qglVertex3fv
+  .text:0016CC64                 call    ds:qglEnd
+  .text:0016CC6A                 ; GLenum
+  .text:0016CC6A                 mov     [esp+8Ch+var_8C], 0BC0h; GLenum
+  .text:0016CC71                 call    ds:qglDisable
+  .text:0016CC77                 ; GLboolean
+  .text:0016CC77                 mov     [esp+8Ch+var_8C], 1; GLboolean
+  .text:0016CC7E                 call    ds:qglDepthMask
+  .text:0016CC84                 mov     edx, [edi+2F8h]
+  .text:0016CC8A                 test    edx, edx
+  .text:0016CC8C                 jnz     short loc_16CCA0
+  .text:0016CC8E                 fld     gl_spriteblend.value
+  .text:0016CC94                 fldz
+  .text:0016CC96                 fxch    st(1)
+  .text:0016CC98                 fucomip st, st(1)
+  .text:0016CC9A                 fstp    st
+  .text:0016CC9C                 jp      short loc_16CCA0
+  .text:0016CC9E                 jz      short loc_16CCD8
+  .text:0016CCA0                 mov     eax, 2200h
+  .text:0016CCA5                 ; GLenum
+  .text:0016CCA5                 mov     [esp+8Ch+pEntity], eax; GLenum
+  .text:0016CCA9                 ; GLfloat
+  .text:0016CCA9                 mov     [esp+8Ch+alpha], 45F00800h; GLfloat
+  .text:0016CCB1                 ; GLenum
+  .text:0016CCB1                 mov     [esp+8Ch+var_8C], 2300h; GLenum
+  .text:0016CCB8                 call    ds:qglTexEnvf
+  .text:0016CCBE                 ; GLenum
+  .text:0016CCBE                 mov     [esp+8Ch+var_8C], 0BE2h; GLenum
+  .text:0016CCC5                 call    ds:qglDisable
+  .text:0016CCCB                 ; GLenum
+  .text:0016CCCB                 mov     [esp+8Ch+var_8C], 0B71h; GLenum
+  .text:0016CCD2                 call    ds:qglEnable
+  .text:0016CCD8                 add     esp, 7Ch
+  .text:0016CCDB                 pop     ebx
+  .text:0016CCDC                 pop     esi
+  .text:0016CCDD                 pop     edi
+  .text:0016CCDE                 pop     ebp
+  .text:0016CCDF                 retn
+  .text:0016CCE0                 mov     ds:r_blend, 3F800000h
+  .text:0016CCEA                 mov     eax, 0FFh
+  .text:0016CCEF                 jmp     loc_16C9C4
+  .text:0016CCF8                 call    ds:qglTexEnvf
+  .text:0016CCFE                 mov     eax, 303h
+  .text:0016CD03                 ; GLenum
+  .text:0016CD03                 mov     [esp+8Ch+pEntity], eax; GLenum
+  .text:0016CD07                 ; GLenum
+  .text:0016CD07                 mov     [esp+8Ch+var_8C], 302h; GLenum
+  .text:0016CD0E                 call    ds:qglBlendFunc
+  .text:0016CD14                 fld     ds:flt_24B930
+  .text:0016CD1A                 fmul    ds:r_blend
+  .text:0016CD20                 fstp    [esp+8Ch+var_60]
+  .text:0016CD24                 cvttss2si eax, [esp+8Ch+var_60]
+  .text:0016CD2A                 movzx   eax, al
+  .text:0016CD2D                 ; GLubyte
+  .text:0016CD2D                 mov     dword ptr [esp+8Ch+var_80], eax; GLubyte
+  .text:0016CD31                 movzx   eax, byte ptr [esp+8Ch+color.b]
+  .text:0016CD36                 ; GLubyte
+  .text:0016CD36                 mov     [esp+8Ch+alpha], eax; GLubyte
+  .text:0016CD3A                 movzx   eax, byte ptr [esp+8Ch+color.g]
+  .text:0016CD3F                 ; GLubyte
+  .text:0016CD3F                 mov     [esp+8Ch+pEntity], eax; GLubyte
+  .text:0016CD43                 movzx   eax, byte ptr [esp+8Ch+color.r]
+  .text:0016CD48                 ; GLubyte
+  .text:0016CD48                 mov     [esp+8Ch+var_8C], eax; GLubyte
+  .text:0016CD4B                 call    ds:qglColor4ub
+  .text:0016CD51                 ; GLboolean
+  .text:0016CD51                 mov     [esp+8Ch+var_8C], 0; GLboolean
+  .text:0016CD58                 call    ds:qglDepthMask
+  .text:0016CD5E                 jmp     loc_16CA92
+  .text:0016CD68                 mov     ecx, 2200h
+  .text:0016CD6D                 mov     ebp, 0FFh
+  .text:0016CD72                 ; GLenum
+  .text:0016CD72                 mov     [esp+8Ch+pEntity], ecx; GLenum
+  .text:0016CD76                 ; GLfloat
+  .text:0016CD76                 mov     [esp+8Ch+alpha], 46040000h; GLfloat
+  .text:0016CD7E                 ; GLenum
+  .text:0016CD7E                 mov     [esp+8Ch+var_8C], 2300h; GLenum
+  .text:0016CD85                 call    ds:qglTexEnvf
+  .text:0016CD8B                 movzx   eax, byte ptr [esp+8Ch+color.b]
+  .text:0016CD90                 ; GLubyte
+  .text:0016CD90                 mov     dword ptr [esp+8Ch+var_80], ebp; GLubyte
+  .text:0016CD94                 ; GLubyte
+  .text:0016CD94                 mov     [esp+8Ch+alpha], eax; GLubyte
+  .text:0016CD98                 movzx   eax, byte ptr [esp+8Ch+color.g]
+  .text:0016CD9D                 ; GLubyte
+  .text:0016CD9D                 mov     [esp+8Ch+pEntity], eax; GLubyte
+  .text:0016CDA1                 movzx   eax, byte ptr [esp+8Ch+color.r]
+  .text:0016CDA6                 ; GLubyte
+  .text:0016CDA6                 mov     [esp+8Ch+var_8C], eax; GLubyte
+  .text:0016CDA9                 call    ds:qglColor4ub
+  .text:0016CDAF                 ; GLenum
+  .text:0016CDAF                 mov     [esp+8Ch+var_8C], 0BE2h; GLenum
+  .text:0016CDB6                 call    ds:qglDisable
+  .text:0016CDBC                 jmp     loc_16CA9F
+  .text:0016CDC8                 mov     ecx, 303h
+  .text:0016CDCD                 mov     ebp, 1906h
+  .text:0016CDD2                 ; GLenum
+  .text:0016CDD2                 mov     [esp+8Ch+pEntity], ecx; GLenum
+  .text:0016CDD6                 ; GLenum
+  .text:0016CDD6                 mov     [esp+8Ch+var_8C], 302h; GLenum
+  .text:0016CDDD                 call    ds:qglBlendFunc
+  .text:0016CDE3                 mov     eax, 2200h
+  .text:0016CDE8                 ; GLint
+  .text:0016CDE8                 mov     [esp+8Ch+alpha], ebp; GLint
+  .text:0016CDEC                 ; GLenum
+  .text:0016CDEC                 mov     [esp+8Ch+pEntity], eax; GLenum
+  .text:0016CDF0                 ; GLenum
+  .text:0016CDF0                 mov     [esp+8Ch+var_8C], 2300h; GLenum
+  .text:0016CDF7                 call    ds:qglTexEnvi
+  .text:0016CDFD                 jmp     loc_16CA55
+  .text:0016CE08                 call    ds:qglTexEnvf
+  .text:0016CE0E                 mov     eax, 1
+  .text:0016CE13                 ; GLenum
+  .text:0016CE13                 mov     [esp+8Ch+pEntity], eax; GLenum
+  .text:0016CE17                 ; GLenum
+  .text:0016CE17                 mov     [esp+8Ch+var_8C], 1; GLenum
+  .text:0016CE1E                 call    ds:qglBlendFunc
+  .text:0016CE24                 mov     eax, 0FFh
+  .text:0016CE29                 mov     dword ptr [esp+8Ch+var_80], eax
+  .text:0016CE2D                 jmp     loc_16CD31
+  .text:0016CE38                 call    ds:qglTexEnvf
+  .text:0016CE3E                 mov     eax, 1
+  .text:0016CE43                 ; GLenum
+  .text:0016CE43                 mov     [esp+8Ch+pEntity], eax; GLenum
+  .text:0016CE47                 ; GLenum
+  .text:0016CE47                 mov     [esp+8Ch+var_8C], 1; GLenum
+  .text:0016CE4E                 call    ds:qglBlendFunc
+  .text:0016CE54                 mov     eax, 0FFh
+  .text:0016CE59                 ; GLubyte
+  .text:0016CE59                 mov     dword ptr [esp+8Ch+var_80], eax; GLubyte
+  .text:0016CE5D                 movzx   eax, byte ptr [esp+8Ch+color.b]
+  .text:0016CE62                 ; GLubyte
+  .text:0016CE62                 mov     [esp+8Ch+alpha], eax; GLubyte
+  .text:0016CE66                 movzx   eax, byte ptr [esp+8Ch+color.g]
+  .text:0016CE6B                 ; GLubyte
+  .text:0016CE6B                 mov     [esp+8Ch+pEntity], eax; GLubyte
+  .text:0016CE6F                 movzx   eax, byte ptr [esp+8Ch+color.r]
+  .text:0016CE74                 ; GLubyte
+  .text:0016CE74                 mov     [esp+8Ch+var_8C], eax; GLubyte
+  .text:0016CE77                 call    ds:qglColor4ub
+  .text:0016CE7D                 ; GLenum
+  .text:0016CE7D                 mov     [esp+8Ch+var_8C], 0B71h; GLenum
+  .text:0016CE84                 call    ds:qglDisable
+  .text:0016CE8A                 ; GLboolean
+  .text:0016CE8A                 mov     [esp+8Ch+var_8C], 0; GLboolean
+  .text:0016CE91                 call    ds:qglDepthMask
+  .text:0016CE97                 jmp     loc_16CA92
+  .text:0016CEA0                 mov     frame, [edi+0B94h]
+  .text:0016CEA6                 mov     [esp+8Ch+var_8C], offset pszWarning; "R_DrawSpriteModel:  couldn't get sprite"...
+  .text:0016CEAD                 mov     [esp+8Ch+pEntity], eax
+  .text:0016CEB1                 call    Sys_Warning
+  .text:0016CEB6                 jmp     loc_16CCD8
+procedure: |-
+  void __cdecl R_DrawSpriteModel(cl_entity_t_1 *e)
+  {
+    msprite_t *data; // ebx
+    mspriteframe_t *SpriteFrame; // eax
+    mspriteframe_t *v3; // esi
+    long double v4; // fst6
+    int alpha; // eax
+    int rendermode; // eax
+    float pEntity; // [esp+4h] [ebp-88h]
+    float pEntitya; // [esp+4h] [ebp-88h]
+    float pEntityb; // [esp+4h] [ebp-88h]
+    float pEntityc; // [esp+4h] [ebp-88h]
+    float pEntityd; // [esp+4h] [ebp-88h]
+    float pEntitye; // [esp+4h] [ebp-88h]
+    float pEntityf; // [esp+4h] [ebp-88h]
+    float pEntityg; // [esp+4h] [ebp-88h]
+    float scale; // [esp+28h] [ebp-64h]
+    float v16; // [esp+2Ch] [ebp-60h]
+    float v17; // [esp+2Ch] [ebp-60h]
+    float v18; // [esp+2Ch] [ebp-60h]
+    vec3_t point; // [esp+30h] [ebp-5Ch] BYREF
+    vec3_t forward; // [esp+3Ch] [ebp-50h] BYREF
+    vec3_t right; // [esp+48h] [ebp-44h] BYREF
+    vec3_t up; // [esp+54h] [ebp-38h] BYREF
+    colorVec color; // [esp+60h] [ebp-2Ch] BYREF
+  
+    data = (msprite_t *)e->model->cache.data;
+    SpriteFrame = R_GetSpriteFrame(data, (int)e->curstate.frame);
+    if ( !SpriteFrame )
+    {
+      Sys_Warning("R_DrawSpriteModel:  couldn't get sprite frame for %s\n", e->model->name);
+      return;
+    }
+    v3 = SpriteFrame;
+    v4 = 1.0;
+    if ( e->curstate.scale > 0.0 )
+      v4 = e->curstate.scale;
+    scale = v4;
+    if ( e->curstate.rendermode )
+    {
+      v16 = 255.0 * r_blend;
+      alpha = (int)v16;
+    }
+    else
+    {
+      r_blend = 1.0;
+      alpha = 255;
+    }
+    R_SpriteColor(&color, e, alpha);
+    rendermode = e->curstate.rendermode;
+    if ( gl_spriteblend.value == 0.0 && !rendermode )
+    {
+      qglTexEnvf(0x2300u, 0x2200u, 8448.0);
+      qglColor4ub(color.r, color.g, color.b, 0xFFu);
+      qglDisable(0xBE2u);
+      goto LABEL_15;
+    }
+    switch ( rendermode )
+    {
+      case 1:
+        qglBlendFunc(0x302u, 0x303u);
+        qglTexEnvi(0x2300u, 0x2200u, 6406);
+        goto LABEL_13;
+      case 5:
+        qglTexEnvf(0x2300u, 0x2200u, 8448.0);
+        qglBlendFunc(1u, 1u);
+        qglColor4ub(color.r, color.g, color.b, 0xFFu);
+        goto LABEL_21;
+      case 3:
+        qglTexEnvf(0x2300u, 0x2200u, 8448.0);
+        qglBlendFunc(1u, 1u);
+        qglColor4ub(color.r, color.g, color.b, 0xFFu);
+        qglDisable(0xB71u);
+        qglDepthMask(0);
+        goto LABEL_14;
+      case 4:
+        qglTexEnvf(0x2300u, 0x2200u, 8448.0);
+        qglBlendFunc(0x302u, 0x303u);
+        v18 = 255.0 * r_blend;
+        qglColor4ub(color.r, color.g, color.b, (int)v18);
+  LABEL_21:
+        qglDepthMask(0);
+        goto LABEL_14;
+    }
+    qglTexEnvf(0x2300u, 0x2200u, 8448.0);
+    qglBlendFunc(0x302u, 0x303u);
+  LABEL_13:
+    v17 = 255.0 * r_blend;
+    qglColor4ub(color.r, color.g, color.b, (int)v17);
+  LABEL_14:
+    qglEnable(0xBE2u);
+  LABEL_15:
+    R_GetSpriteAxes(e, data->type, forward, right, up);
+    GL_DisableMultitexture();
+    GL_Bind(v3->gl_texturenum);
+    qglEnable(0xBC0u);
+    qglBegin(7u);
+    qglTexCoord2f(0.0, 1.0);
+    pEntity = scale * v3->down;
+    VectorMA(r_entorigin, pEntity, up, point);
+    pEntitya = scale * v3->left;
+    VectorMA(point, pEntitya, right, point);
+    qglVertex3fv(point);
+    qglTexCoord2f(0.0, 0.0);
+    pEntityb = scale * v3->up;
+    VectorMA(r_entorigin, pEntityb, up, point);
+    pEntityc = scale * v3->left;
+    VectorMA(point, pEntityc, right, point);
+    qglVertex3fv(point);
+    qglTexCoord2f(1.0, 0.0);
+    pEntityd = scale * v3->up;
+    VectorMA(r_entorigin, pEntityd, up, point);
+    pEntitye = scale * v3->right;
+    VectorMA(point, pEntitye, right, point);
+    qglVertex3fv(point);
+    qglTexCoord2f(1.0, 1.0);
+    pEntityf = scale * v3->down;
+    VectorMA(r_entorigin, pEntityf, up, point);
+    pEntityg = scale * v3->right;
+    VectorMA(point, pEntityg, right, point);
+    qglVertex3fv(point);
+    qglEnd();
+    qglDisable(0xBC0u);
+    qglDepthMask(1u);
+    if ( e->curstate.rendermode || gl_spriteblend.value != 0.0 )
+    {
+      qglTexEnvf(0x2300u, 0x2200u, 7681.0);
+      qglDisable(0xBE2u);
+      qglEnable(0xB71u);
+    }
+  }
