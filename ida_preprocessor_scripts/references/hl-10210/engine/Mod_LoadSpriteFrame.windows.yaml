@@ -1,0 +1,218 @@
+func_name: "Mod_LoadSpriteFrame"
+func_va: "0x102408f0"
+disasm_code: |-
+  .text:102408F0                 ; engine/gl_model.c:1923-1987; binary-confirmed Mod_LoadSpriteFrame and gSpriteMipMap access
+  .text:102408F0                 push    ebp; engine/gl_model.c:1923-1987; binary-confirmed Mod_LoadSpriteFrame and gSpriteMipMap access
+  .text:102408F1                 mov     ebp, esp
+  .text:102408F3                 sub     esp, 410h
+  .text:102408F9                 mov     eax, ___security_cookie
+  .text:102408FE                 xor     eax, ebp
+  .text:10240900                 mov     [ebp+var_4], eax
+  .text:10240903                 push    ebx
+  .text:10240904                 mov     ebx, [ebp+pin]
+  .text:10240907                 lea     eax, [ebp+var_404]
+  .text:1024090D                 push    esi
+  .text:1024090E                 mov     esi, [ebp+ppframe]
+  .text:10240911                 push    edi
+  .text:10240912                 push    300h
+  .text:10240917                 push    pspritepal
+  .text:1024091D                 mov     [ebp+var_408], ebx
+  .text:10240923                 push    eax
+  .text:10240924                 call    Q_memcpy
+  .text:10240929                 ; value
+  .text:10240929                 push    dword ptr [ebx+8]; value
+  .text:1024092C                 call    LittleLong
+  .text:10240932                 ; value
+  .text:10240932                 push    dword ptr [ebx+0Ch]; value
+  .text:10240935                 mov     edi, eax
+  .text:10240937                 call    LittleLong
+  .text:1024093D                 mov     ebx, eax
+  .text:1024093F                 imul    eax, edi
+  .text:10240942                 push    offset loadname
+  .text:10240947                 push    1Ch
+  .text:10240949                 mov     [ebp+var_410], eax
+  .text:1024094F                 call    Hunk_AllocName
+  .text:10240954                 ; count
+  .text:10240954                 push    1Ch; count
+  .text:10240956                 mov     ecx, eax
+  .text:10240958                 ; fill
+  .text:10240958                 push    0; fill
+  .text:1024095A                 ; dest
+  .text:1024095A                 push    ecx; dest
+  .text:1024095B                 mov     [ebp+var_40C], ecx
+  .text:10240961                 call    Q_memset
+  .text:10240966                 mov     eax, [ebp+var_40C]
+  .text:1024096C                 mov     [esi], eax
+  .text:1024096E                 mov     [eax], edi
+  .text:10240970                 mov     [eax+4], ebx
+  .text:10240973                 mov     eax, [ebp+var_408]
+  .text:10240979                 ; value
+  .text:10240979                 push    dword ptr [eax]; value
+  .text:1024097B                 call    LittleLong
+  .text:10240981                 mov     esi, eax
+  .text:10240983                 mov     eax, [ebp+var_408]
+  .text:10240989                 ; value
+  .text:10240989                 push    dword ptr [eax+4]; value
+  .text:1024098C                 call    LittleLong
+  .text:10240992                 mov     ecx, [ebp+var_40C]
+  .text:10240998                 push    [ebp+framenum]
+  .text:1024099B                 movd    xmm0, eax
+  .text:1024099F                 sub     eax, ebx
+  .text:102409A1                 cvtdq2ps xmm0, xmm0
+  .text:102409A4                 movss   dword ptr [ecx+8], xmm0
+  .text:102409A9                 movd    xmm0, eax
+  .text:102409AD                 lea     eax, [esi+edi]
+  .text:102409B0                 cvtdq2ps xmm0, xmm0
+  .text:102409B3                 movss   dword ptr [ecx+0Ch], xmm0
+  .text:102409B8                 movd    xmm0, esi
+  .text:102409BC                 cvtdq2ps xmm0, xmm0
+  .text:102409BF                 movss   dword ptr [ecx+10h], xmm0
+  .text:102409C4                 movd    xmm0, eax
+  .text:102409C8                 lea     eax, [ebp+Buffer]
+  .text:102409CE                 cvtdq2ps xmm0, xmm0
+  .text:102409D1                 movss   dword ptr [ecx+14h], xmm0
+  .text:102409D6                 ; ArgList
+  .text:102409D6                 push    loadmodel; ArgList
+  .text:102409DC                 push    offset aSI_2; "%s_%i"
+  .text:102409E1                 ; BufferCount
+  .text:102409E1                 push    100h; BufferCount
+  .text:102409E6                 ; Buffer
+  .text:102409E6                 push    eax; Buffer
+  .text:102409E7                 call    Q_snprintf
+  .text:102409EC                 mov     esi, [ebp+var_408]
+  .text:102409F2                 add     esp, 44h
+  .text:102409F5                 mov     eax, gSpriteTextureFormat
+  .text:102409FA                 lea     edx, [esi+10h]
+  .text:102409FD                 ; switch 4 cases
+  .text:102409FD                 cmp     eax, 3; switch 4 cases
+  .text:10240A00                 ja      short def_10240A02; jumptable 10240A02 default case
+  .text:10240A02                 ; switch jump
+  .text:10240A02                 jmp     ds:jpt_10240A02[eax*4]; switch jump
+  .text:10240A09                 ; jumptable 10240A02 cases 0,1
+  .text:10240A09                 xor     eax, eax; jumptable 10240A02 cases 0,1
+  .text:10240A0B                 jmp     short loc_10240A21
+  .text:10240A0D                 ; jumptable 10240A02 case 2
+  .text:10240A0D                 mov     eax, 3; jumptable 10240A02 case 2
+  .text:10240A12                 jmp     short loc_10240A21
+  .text:10240A14                 ; jumptable 10240A02 case 3
+  .text:10240A14                 mov     eax, 1; jumptable 10240A02 case 3
+  .text:10240A19                 jmp     short loc_10240A21
+  .text:10240A1B                 ; jumptable 10240A02 default case
+  .text:10240A1B                 mov     eax, [ebp+var_410]; jumptable 10240A02 default case
+  .text:10240A21                 mov     ecx, gSpriteMipMap; gSpriteMipMap: select this direct global read for found_gv
+  .text:10240A27                 test    ecx, ecx
+  .text:10240A29                 jz      short loc_10240A4D
+  .text:10240A2B                 lea     esi, [ebp+var_404]
+  .text:10240A31                 ; byte *
+  .text:10240A31                 push    esi; byte *
+  .text:10240A32                 ; int
+  .text:10240A32                 push    eax; int
+  .text:10240A33                 ; qboolean
+  .text:10240A33                 push    ecx; qboolean
+  .text:10240A34                 ; byte *
+  .text:10240A34                 push    edx; byte *
+  .text:10240A35                 ; int
+  .text:10240A35                 push    ebx; int
+  .text:10240A36                 ; int
+  .text:10240A36                 push    edi; int
+  .text:10240A37                 lea     eax, [ebp+Buffer]
+  .text:10240A3D                 ; int
+  .text:10240A3D                 push    5; int
+  .text:10240A3F                 ; char *
+  .text:10240A3F                 push    eax; char *
+  .text:10240A40                 call    GL_LoadTexture
+  .text:10240A45                 mov     esi, [ebp+var_408]
+  .text:10240A4B                 jmp     short loc_10240A68
+  .text:10240A4D                 lea     ecx, [ebp+var_404]
+  .text:10240A53                 ; byte *
+  .text:10240A53                 push    ecx; byte *
+  .text:10240A54                 ; int
+  .text:10240A54                 push    eax; int
+  .text:10240A55                 ; qboolean
+  .text:10240A55                 push    0; qboolean
+  .text:10240A57                 ; byte *
+  .text:10240A57                 push    edx; byte *
+  .text:10240A58                 ; int
+  .text:10240A58                 push    ebx; int
+  .text:10240A59                 ; int
+  .text:10240A59                 push    edi; int
+  .text:10240A5A                 lea     eax, [ebp+Buffer]
+  .text:10240A60                 ; int
+  .text:10240A60                 push    2; int
+  .text:10240A62                 ; char *
+  .text:10240A62                 push    eax; char *
+  .text:10240A63                 call    GL_LoadTexture
+  .text:10240A68                 mov     ecx, [ebp+var_40C]
+  .text:10240A6E                 add     esp, 20h
+  .text:10240A71                 mov     [ecx+18h], eax
+  .text:10240A74                 mov     eax, [ebp+var_410]
+  .text:10240A7A                 mov     ecx, [ebp+var_4]
+  .text:10240A7D                 add     eax, 10h
+  .text:10240A80                 pop     edi
+  .text:10240A81                 add     eax, esi
+  .text:10240A83                 ; StackCookie
+  .text:10240A83                 xor     ecx, ebp; StackCookie
+  .text:10240A85                 pop     esi
+  .text:10240A86                 pop     ebx
+  .text:10240A87                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10240A8C                 mov     esp, ebp
+  .text:10240A8E                 pop     ebp
+  .text:10240A8F                 retn
+procedure: |-
+  void *__cdecl Mod_LoadSpriteFrame(void *pin, mspriteframe_t **ppframe, int framenum)
+  {
+    int width; // edi
+    int height; // ebx
+    int origin0; // esi
+    int origin1; // eax
+    char *pinframe; // esi
+    int textureType; // eax
+    int Texture; // eax
+    mspriteframe_t *pspriteframe; // [esp+10h] [ebp-40Ch]
+    byte bPal[768]; // [esp+18h] [ebp-404h] BYREF
+    char name[256]; // [esp+318h] [ebp-104h] BYREF
+
+    Q_memcpy(bPal, pspritepal, 768);
+    width = LittleLong(*((_DWORD *)pin + 2));
+    height = LittleLong(*((_DWORD *)pin + 3));
+    pspriteframe = (mspriteframe_t *)Hunk_AllocName(28, (int)loadname);
+    Q_memset(pspriteframe, 0, 28);
+    *ppframe = pspriteframe;
+    pspriteframe->width = width;
+    pspriteframe->height = height;
+    origin0 = LittleLong(*(_DWORD *)pin);
+    origin1 = LittleLong(*((_DWORD *)pin + 1));
+    pspriteframe->up = (float)origin1;
+    pspriteframe->down = (float)(origin1 - height);
+    pspriteframe->left = (float)origin0;
+    pspriteframe->right = (float)(origin0 + width);
+    Q_snprintf(name, 0x100u, "%s_%i", (char)loadmodel);
+    pinframe = (char *)pin;
+    switch ( gSpriteTextureFormat )
+    {
+      case 0:
+      case 1:
+        textureType = 0;
+        break;
+      case 2:
+        textureType = 3;
+        break;
+      case 3:
+        textureType = 1;
+        break;
+      default:
+        textureType = width * height;
+        break;
+    }
+    if ( gSpriteMipMap ) // gSpriteMipMap: select the condition's direct global read for found_gv
+    {
+      Texture = GL_LoadTexture(name, 5, width, height, (byte *)pin + 16, gSpriteMipMap, textureType, bPal);
+      pinframe = (char *)pin;
+    }
+    else
+    {
+      Texture = GL_LoadTexture(name, 2, width, height, (byte *)pin + 16, 0, textureType, bPal);
+    }
+    pspriteframe->gl_texturenum = Texture;
+    return &pinframe[width * height + 16];
+  }

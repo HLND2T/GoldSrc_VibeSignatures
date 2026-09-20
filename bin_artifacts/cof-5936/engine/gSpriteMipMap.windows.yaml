@@ -1,0 +1,8 @@
+gv_name: gSpriteMipMap
+gv_va: '0x1eac030'
+gv_rva: '0x1ac030'
+gv_sig: 55 8B EC 81 EC 34 04 00 00 68 00 03 00 00 A1 ?? ?? ?? ?? 50 8D 8D ?? ?? ?? ?? 51 E8 ?? ?? ?? ?? 83 C4 0C 8B 55 ??
+gv_sig_va: '0x1d65f6d'
+gv_inst_offset: '0x19a'
+gv_inst_length: '0x7'
+gv_inst_disp: '0x2'
