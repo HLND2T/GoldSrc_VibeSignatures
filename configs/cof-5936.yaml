@@ -334,7 +334,7 @@ modules:
         expected_output:
           - R_DrawWorld.{platform}.yaml
           - R_MarkLeaves.{platform}.yaml
-      - name: find-R_RecursiveWorldNode-decompiles
+      - name: find-R_DrawWorld-R_RecursiveWorldNode-decompiles
         expected_input:
           - R_DrawWorld.{platform}.yaml
         expected_output:
@@ -811,7 +811,7 @@ modules:
         expected_output:
           - gl_filter_min.{platform}.yaml
           - gl_filter_max.{platform}.yaml
-      - name: find-R_RecursiveWorldNode-globals
+      - name: find-R_RecursiveWorldNode-decompiles
         expected_input:
           - R_RecursiveWorldNode.{platform}.yaml
         expected_output:

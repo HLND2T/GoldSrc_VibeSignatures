@@ -15,7 +15,7 @@ tags:
 - **Name**: `g_ViewEntityIndex_SCClient`
 - **Category**: `gv`
 - **Module**: client (`client.dll` / `client.so`)
-- **Producer**: `ida_preprocessor_scripts/find-GameStudioRenderer_StudioDrawPlayer-globals.py`
+- **Producer**: `ida_preprocessor_scripts/find-GameStudioRenderer_StudioDrawPlayer-decompiles.py`
 
 ## Availability
 

@@ -15,7 +15,7 @@ tags:
 - **Name**: `r_visframecount`
 - **Category**: `gv`
 - **Module**: engine (`hw.dll` / `hw.so`)
-- **Producer**: `ida_preprocessor_scripts/find-R_RecursiveWorldNode-globals.py`
+- **Producer**: `ida_preprocessor_scripts/find-R_RecursiveWorldNode-decompiles.py`
 - **Source**: `engine/gl_rmain.c` — `int r_visframecount;` — bumped when entering a
   new PVS; the world node walk rejects nodes stamped with a stale value.
 
