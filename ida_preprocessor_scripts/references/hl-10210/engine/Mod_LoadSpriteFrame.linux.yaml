@@ -1,0 +1,229 @@
+func_name: "Mod_LoadSpriteFrame"
+func_va: "0x155f70"
+disasm_code: |-
+  .text:00155F70                 ; engine/gl_model.c:1923-1987; binary-confirmed Mod_LoadSpriteFrame and gSpriteMipMap access
+  .text:00155F70                 push    ebp; engine/gl_model.c:1923-1987; binary-confirmed Mod_LoadSpriteFrame and gSpriteMipMap access
+  .text:00155F71                 push    edi
+  .text:00155F72                 push    esi
+  .text:00155F73                 push    ebx
+  .text:00155F74                 mov     ebx, 300h
+  .text:00155F79                 sub     esp, 44Ch
+  .text:00155F7F                 mov     eax, large gs:14h
+  .text:00155F85                 mov     [esp+45Ch+var_20], eax
+  .text:00155F8C                 xor     eax, eax
+  .text:00155F8E                 mov     eax, ds:pspritepal
+  .text:00155F93                 mov     esi, [esp+45Ch+pinframe]
+  .text:00155F9A                 mov     edx, [esp+45Ch+ppframe]
+  .text:00155FA1                 ; count
+  .text:00155FA1                 mov     [esp+45Ch+count], ebx; count
+  .text:00155FA5                 ; src
+  .text:00155FA5                 mov     [esp+45Ch+src], eax; src
+  .text:00155FA9                 lea     eax, [esp+45Ch+bPal]
+  .text:00155FB0                 ; dest
+  .text:00155FB0                 mov     [esp+45Ch+dest], eax; dest
+  .text:00155FB3                 mov     [esp+45Ch+pdata], edx
+  .text:00155FB7                 call    Q_memcpy
+  .text:00155FBC                 mov     eax, [pinframe_0+8]
+  .text:00155FBF                 ; int32
+  .text:00155FBF                 mov     [esp+45Ch+dest], eax; int32
+  .text:00155FC2                 call    ds:LittleLong
+  .text:00155FC8                 mov     edi, eax
+  .text:00155FCA                 mov     width, [pinframe_0+0Ch]
+  .text:00155FCD                 ; int32
+  .text:00155FCD                 mov     [esp+45Ch+dest], eax; int32
+  .text:00155FD0                 call    ds:LittleLong
+  .text:00155FD6                 ; size
+  .text:00155FD6                 mov     [esp+45Ch+dest], 1Ch; size
+  .text:00155FDD                 mov     ebp, eax
+  .text:00155FDF                 mov     height, width
+  .text:00155FE1                 imul    eax, height
+  .text:00155FE4                 mov     [esp+45Ch+size], eax
+  .text:00155FE8                 mov     size_0, offset loadname
+  .text:00155FED                 ; name
+  .text:00155FED                 mov     [esp+45Ch+src], eax; name
+  .text:00155FF1                 call    Hunk_AllocName
+  .text:00155FF6                 xor     ecx, ecx
+  .text:00155FF8                 mov     edx, 1Ch
+  .text:00155FFD                 ; fill
+  .text:00155FFD                 mov     [esp+45Ch+src], ecx; fill
+  .text:00156001                 ; count
+  .text:00156001                 mov     [esp+45Ch+count], edx; count
+  .text:00156005                 ; dest
+  .text:00156005                 mov     [esp+45Ch+dest], eax; dest
+  .text:00156008                 mov     ebx, eax
+  .text:0015600A                 call    Q_memset
+  .text:0015600F                 mov     edx, [esp+45Ch+pdata]
+  .text:00156013                 mov     [edx], pspriteframe
+  .text:00156015                 mov     [pspriteframe], width
+  .text:00156017                 mov     [pspriteframe+4], height
+  .text:0015601A                 mov     eax, [pinframe_0]
+  .text:0015601C                 ; int32
+  .text:0015601C                 mov     [esp+45Ch+dest], eax; int32
+  .text:0015601F                 call    ds:LittleLong
+  .text:00156025                 mov     [esp+45Ch+pdata], eax
+  .text:00156029                 mov     eax, [pinframe_0+4]
+  .text:0015602C                 ; int32
+  .text:0015602C                 mov     [esp+45Ch+dest], eax; int32
+  .text:0015602F                 call    ds:LittleLong
+  .text:00156035                 mov     [esp+45Ch+var_430], origin_1
+  .text:00156039                 mov     ecx, origin_1
+  .text:0015603B                 mov     origin_1, [esp+45Ch+pdata]
+  .text:0015603F                 fild    [esp+45Ch+var_430]
+  .text:00156043                 sub     origin_1, height
+  .text:00156045                 mov     [esp+45Ch+var_430], ecx
+  .text:00156049                 add     eax, width
+  .text:0015604B                 fstp    dword ptr [pspriteframe+8]
+  .text:0015604E                 fild    [esp+45Ch+var_430]
+  .text:00156052                 fstp    dword ptr [pspriteframe+0Ch]
+  .text:00156055                 fild    [esp+45Ch+pdata]
+  .text:00156059                 mov     [esp+45Ch+pdata], eax
+  .text:0015605D                 mov     eax, [esp+45Ch+framenum]
+  .text:00156064                 fstp    dword ptr [pspriteframe+10h]
+  .text:00156067                 fild    [esp+45Ch+pdata]
+  .text:0015606B                 fstp    dword ptr [pspriteframe+14h]
+  .text:0015606E                 mov     [esp+45Ch+textureType], eax
+  .text:00156072                 mov     eax, ds:loadmodel
+  .text:00156077                 mov     [esp+45Ch+mipmap], eax
+  .text:0015607B                 mov     eax, offset aSI_0; "%s_%i"
+  .text:00156080                 mov     [esp+45Ch+data], eax
+  .text:00156084                 mov     eax, 100h
+  .text:00156089                 mov     [esp+45Ch+var_450], eax
+  .text:0015608D                 mov     eax, 1
+  .text:00156092                 mov     [esp+45Ch+count], eax
+  .text:00156096                 mov     eax, 100h
+  .text:0015609B                 mov     [esp+45Ch+src], eax
+  .text:0015609F                 lea     eax, [esp+45Ch+name]
+  .text:001560A3                 mov     [esp+45Ch+dest], eax
+  .text:001560A6                 call    __snprintf_chk
+  .text:001560AB                 lea     eax, [pinframe_0+10h]
+  .text:001560AE                 mov     [esp+45Ch+pdata], eax
+  .text:001560B2                 mov     pdata_0, ds:gSpriteTextureFormat
+  .text:001560B7                 cmp     eax, 2
+  .text:001560BA                 jz      loc_156190
+  .text:001560C0                 jg      short loc_156130
+  .text:001560C2                 xor     eax, eax
+  .text:001560C4                 mov     ecx, gSpriteMipMap; gSpriteMipMap: select this direct global read for found_gv
+  .text:001560CA                 test    ecx, ecx
+  .text:001560CC                 jnz     short loc_15614A
+  .text:001560CE                 ; iType
+  .text:001560CE                 mov     [esp+45Ch+textureType], textureType_0; iType
+  .text:001560D2                 xor     textureType_0, textureType_0
+  .text:001560D4                 mov     edx, 2
+  .text:001560D9                 ; mipmap
+  .text:001560D9                 mov     [esp+45Ch+mipmap], eax; mipmap
+  .text:001560DD                 lea     eax, [pinframe_0+10h]
+  .text:001560E0                 lea     ecx, [esp+45Ch+bPal]
+  .text:001560E7                 ; data
+  .text:001560E7                 mov     [esp+45Ch+data], eax; data
+  .text:001560EB                 lea     eax, [esp+45Ch+name]
+  .text:001560EF                 ; pPal
+  .text:001560EF                 mov     [esp+45Ch+pPal], ecx; pPal
+  .text:001560F3                 ; height
+  .text:001560F3                 mov     [esp+45Ch+var_450], height; height
+  .text:001560F7                 ; width
+  .text:001560F7                 mov     [esp+45Ch+count], width; width
+  .text:001560FB                 ; textureType
+  .text:001560FB                 mov     [esp+45Ch+src], edx; textureType
+  .text:001560FF                 ; identifier
+  .text:001560FF                 mov     [esp+45Ch+dest], eax; identifier
+  .text:00156102                 call    GL_LoadTexture
+  .text:00156107                 mov     [pspriteframe+18h], eax
+  .text:0015610A                 mov     width, [esp+45Ch+var_20]
+  .text:00156111                 xor     width, large gs:14h
+  .text:00156118                 mov     eax, [esp+45Ch+size]
+  .text:0015611C                 lea     eax, [pinframe_0+eax+10h]
+  .text:00156120                 jnz     short loc_15619A
+  .text:00156122                 add     esp, 44Ch
+  .text:00156128                 pop     pspriteframe
+  .text:00156129                 pop     pinframe_0
+  .text:0015612A                 pop     edi
+  .text:0015612B                 pop     height
+  .text:0015612C                 retn
+  .text:00156130                 cmp     eax, 3
+  .text:00156133                 mov     ecx, 1
+  .text:00156138                 mov     eax, 0
+  .text:0015613D                 cmovz   eax, ecx
+  .text:00156140                 mov     ecx, gSpriteMipMap
+  .text:00156146                 test    ecx, ecx
+  .text:00156148                 jz      short loc_1560CE
+  .text:0015614A                 ; iType
+  .text:0015614A                 mov     [esp+45Ch+textureType], textureType_0; iType
+  .text:0015614E                 lea     textureType_0, [pinframe_0+10h]
+  .text:00156151                 lea     edx, [esp+45Ch+bPal]
+  .text:00156158                 ; mipmap
+  .text:00156158                 mov     [esp+45Ch+mipmap], ecx; mipmap
+  .text:0015615C                 mov     ecx, 5
+  .text:00156161                 ; data
+  .text:00156161                 mov     [esp+45Ch+data], eax; data
+  .text:00156165                 lea     eax, [esp+45Ch+name]
+  .text:00156169                 ; pPal
+  .text:00156169                 mov     [esp+45Ch+pPal], edx; pPal
+  .text:0015616D                 ; height
+  .text:0015616D                 mov     [esp+45Ch+var_450], height; height
+  .text:00156171                 ; width
+  .text:00156171                 mov     [esp+45Ch+count], width; width
+  .text:00156175                 ; textureType
+  .text:00156175                 mov     [esp+45Ch+src], ecx; textureType
+  .text:00156179                 ; identifier
+  .text:00156179                 mov     [esp+45Ch+dest], eax; identifier
+  .text:0015617C                 call    GL_LoadTexture
+  .text:00156181                 mov     [pspriteframe+18h], eax
+  .text:00156184                 jmp     short loc_15610A
+  .text:00156190                 mov     eax, 3
+  .text:00156195                 jmp     loc_1560C4
+  .text:0015619A                 call    __stack_chk_fail
+procedure: |-
+  void *__cdecl Mod_LoadSpriteFrame(void *pin, mspriteframe_t **ppframe, int framenum)
+  {
+    int width; // edi
+    int height; // ebp
+    mspriteframe_t *pspriteframe; // ebx
+    int v6; // eax
+    int v7; // eax
+    qboolean mipmap; // ecx
+    byte *pdata; // [esp+28h] [ebp-434h]
+    char name[256]; // [esp+3Ch] [ebp-420h] BYREF
+    byte bPal[768]; // [esp+13Ch] [ebp-320h] BYREF
+    unsigned int v13; // [esp+43Ch] [ebp-20h]
+
+    v13 = __readgsdword(0x14u);
+    Q_memcpy(bPal, pspritepal, 768);
+    width = LittleLong(*((_DWORD *)pin + 2));
+    height = LittleLong(*((_DWORD *)pin + 3));
+    pspriteframe = (mspriteframe_t *)Hunk_AllocName(28, loadname);
+    Q_memset(pspriteframe, 0, 28);
+    *ppframe = pspriteframe;
+    pspriteframe->width = width;
+    pspriteframe->height = height;
+    pdata = (byte *)LittleLong(*(_DWORD *)pin);
+    v6 = LittleLong(*((_DWORD *)pin + 1));
+    pspriteframe->up = (float)v6;
+    pspriteframe->down = (float)(v6 - height);
+    pspriteframe->left = (float)(int)pdata;
+    pspriteframe->right = (float)(int)&pdata[width];
+    _snprintf_chk(name, 256, 1, 256, "%s_%i", loadmodel->name, framenum);
+    if ( gSpriteTextureFormat == 2 )
+    {
+      v7 = 3;
+    }
+    else
+    {
+      if ( gSpriteTextureFormat > 2 )
+      {
+        v7 = gSpriteTextureFormat == 3;
+        mipmap = gSpriteMipMap;
+        if ( !gSpriteMipMap )
+          goto LABEL_5;
+  LABEL_8:
+        pspriteframe->gl_texturenum = GL_LoadTexture(name, GLT_SPRITE, width, height, (byte *)pin + 16, mipmap, v7, bPal);
+        return (char *)pin + height * width + 16;
+      }
+      v7 = 0;
+    }
+    mipmap = gSpriteMipMap; // gSpriteMipMap: select this direct global read for found_gv
+    if ( gSpriteMipMap )
+      goto LABEL_8;
+  LABEL_5:
+    pspriteframe->gl_texturenum = GL_LoadTexture(name, GLT_HUDSPRITE, width, height, (byte *)pin + 16, 0, v7, bPal);
+    return (char *)pin + height * width + 16;
+  }

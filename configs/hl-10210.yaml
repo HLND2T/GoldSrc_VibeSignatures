@@ -624,6 +624,12 @@ modules:
         platform: linux
         expected_output:
           - CheckMultiTextureExtensions.{platform}.yaml
+      - name: find-Host_Changelevel_f
+        expected_output:
+          - Host_Changelevel_f.{platform}.yaml
+      - name: find-SCR_BeginLoadingPlaque
+        expected_output:
+          - SCR_BeginLoadingPlaque.{platform}.yaml
       - name: find-SCR_UpdateScreen_RenderBody
         expected_output:
           - SCR_UpdateScreen_RenderBody.{platform}.yaml
@@ -635,6 +641,7 @@ modules:
           - GL_EndRendering.{platform}.yaml
           - GL_Finish2D.{platform}.yaml
           - GL_Set2D.{platform}.yaml
+          - scr_drawloading.{platform}.yaml
       - name: find-CGame_DrawStartupVideo
         expected_output:
           - CGame_DrawStartupVideo.{platform}.yaml
@@ -719,6 +726,11 @@ modules:
           - Mod_LoadSpriteGroup.{platform}.yaml
         expected_output:
           - Mod_LoadSpriteFrame.{platform}.yaml
+      - name: find-Mod_LoadSpriteFrame-decompiles
+        expected_input:
+          - Mod_LoadSpriteFrame.{platform}.yaml
+        expected_output:
+          - gSpriteMipMap.{platform}.yaml
       - name: find-Mod_LoadSpriteModel
         expected_output:
           - Mod_LoadSpriteModel.{platform}.yaml
@@ -1248,8 +1260,14 @@ modules:
       - name: CheckMultiTextureExtensions
         category: func
         platform: linux
+      - name: Host_Changelevel_f
+        category: func
+      - name: SCR_BeginLoadingPlaque
+        category: func
       - name: SCR_UpdateScreen_RenderBody
         category: func
+      - name: scr_drawloading
+        category: gv
       - name: GL_BeginRendering
         category: func
       - name: GL_EndRendering
@@ -1306,6 +1324,8 @@ modules:
         platform: windows
       - name: Mod_LoadSpriteFrame
         category: func
+      - name: gSpriteMipMap
+        category: gv
       - name: Mod_LoadSpriteModel
         category: func
       - name: Mod_LoadStudioModel
