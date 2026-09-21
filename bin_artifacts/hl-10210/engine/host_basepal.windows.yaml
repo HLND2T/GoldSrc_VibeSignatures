@@ -1,0 +1,8 @@
+gv_name: host_basepal
+gv_va: '0x11249ea4'
+gv_rva: '0x1249ea4'
+gv_sig: 55 8B EC 81 EC 08 02 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 56 8B 75 ?? 6A 00 FF 15 ?? ?? ?? ?? 50 FF 15 ?? ?? ?? ??
+gv_sig_va: '0x101d2c10'
+gv_inst_offset: '0x2f7'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

@@ -1,0 +1,5 @@
+func_name: R_UploadEmptyTex
+func_va: '0x1d56f50'
+func_rva: '0x56f50'
+func_size: '0x6e'
+func_sig: 81 EC 04 03 00 00 A1 ?? ?? ?? ?? 33 C4 89 84 24 ?? ?? ?? ?? 68 00 03 00 00 8D 44 24 ?? 68 FF 00 00 00

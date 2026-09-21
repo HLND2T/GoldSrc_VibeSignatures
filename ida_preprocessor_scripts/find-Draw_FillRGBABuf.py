@@ -50,6 +50,7 @@ def call_name(ea):
 
 def operand(pc, index, op, sp):
     if op.type == idaapi.o_imm: return ('imm', int(op.value))
+    if op.type in (idaapi.o_near, idaapi.o_far): return ('imm', int(idc.get_operand_value(pc, index)))
     if op.type == idaapi.o_reg and ida_ua.get_dtype_size(op.dtype) == 4:
         return ('reg', ida_idp.get_reg_name(op.reg, 4))
     text = idc.print_operand(pc, index).lower()
@@ -72,6 +73,7 @@ def pic_thunk(target):
 def inspect_body(start):
     f = ida_funcs.get_func(start)
     items = list(idautils.FuncItems(start))
+    flow = decode_function_flow(f, items)
     capacity = any(idc.print_insn_mnem(pc) == 'cmp' and
                    idc.get_operand_type(pc, 1) == idaapi.o_imm and
                    idc.get_operand_value(pc, 1) in (1023, 1024) for pc in items[:24])
@@ -85,7 +87,7 @@ def inspect_body(start):
         sp = int(ida_frame.get_spd(f, pc))
         mnem = idc.print_insn_mnem(pc).lower()
         ops = [operand(pc, i, op, sp) for i, op in enumerate(insn.ops) if op.type != idaapi.o_void]
-        code.append({'mnem':mnem, 'ops':ops, 'sp':sp})
+        code.append({'mnem':mnem, 'ops':ops, 'sp':sp, 'ea':int(pc), 'successors':flow[pc]})
         if mnem.startswith('j'): imports.clear()
         if ops and ops[0][0] == 'reg' and mnem not in ('cmp','test','push','call'):
             imports.pop(ops[0][1], None)

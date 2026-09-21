@@ -1,0 +1,8 @@
+gv_name: r_notexture_mip
+gv_va: '0x2bc97c4'
+gv_rva: '0xec97c4'
+gv_sig: 55 8B EC 83 EC 0C 53 56 57 68 ?? ?? ?? ?? 68 9C 01 00 00 E8 ?? ?? ?? ?? 8B D0 B8 10 00 00 00 83 C4 08
+gv_sig_va: '0x1d465e0'
+gv_inst_offset: '0x2d'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

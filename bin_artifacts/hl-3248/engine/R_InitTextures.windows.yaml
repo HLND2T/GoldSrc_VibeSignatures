@@ -1,0 +1,5 @@
+func_name: R_InitTextures
+func_va: '0x1d47170'
+func_rva: '0x47170'
+func_size: '0xbc'
+func_sig: 83 EC 08 53 55 56 57 68 ?? ?? ?? ?? 68 9C 01 00 00 E8 ?? ?? ?? ?? 8B D0 B8 10 00 00 00 83 C4 08
