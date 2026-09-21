@@ -14,6 +14,12 @@ modules:
       - name: find-R_StudioCheckBBox
         expected_output:
           - R_StudioCheckBBox.{platform}.yaml
+      - name: find-R_StudioSetupLighting
+        expected_output:
+          - R_StudioSetupLighting.{platform}.yaml
+          - r_ambientlight.{platform}.yaml
+          - r_shadelight.{platform}.yaml
+          - r_colormix.{platform}.yaml
       - name: find-engine-filter-callbacks
         expected_input:
           - cl_enginefuncs.{platform}.yaml
@@ -549,6 +555,16 @@ modules:
           - studioapi_SetChromeOrigin.{platform}.yaml
           - r_origin.{platform}.yaml
           - g_ChromeOrigin.{platform}.yaml
+      - name: find-studioapi_SetupModel
+        expected_output:
+          - studioapi_SetupModel.{platform}.yaml
+          - pbodypart.{platform}.yaml
+          - psubmodel.{platform}.yaml
+      - name: find-R_StudioSetupModel
+        expected_input:
+          - studioapi_SetupModel.{platform}.yaml
+        expected_output:
+          - R_StudioSetupModel.{platform}.yaml
       - name: find-R_StudioDrawModel
         expected_input:
           - R_StudioDrawPlayer.{platform}.yaml
@@ -928,6 +944,14 @@ modules:
         category: func
       - name: R_StudioCheckBBox
         category: func
+      - name: R_StudioSetupLighting
+        category: func
+      - name: r_ambientlight
+        category: gv
+      - name: r_shadelight
+        category: gv
+      - name: r_colormix
+        category: gv
       - name: R_CullBox
         category: func
       - name: SetFilterMode
@@ -1218,6 +1242,14 @@ modules:
         category: gv
       - name: g_ChromeOrigin
         category: gv
+      - name: studioapi_SetupModel
+        category: func
+      - name: pbodypart
+        category: gv
+      - name: psubmodel
+        category: gv
+      - name: R_StudioSetupModel
+        category: func
       - name: R_StudioDrawModel
         category: func
       - name: R_StudioChangePlayerModel
