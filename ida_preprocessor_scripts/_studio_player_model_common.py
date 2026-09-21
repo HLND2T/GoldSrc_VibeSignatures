@@ -39,8 +39,9 @@ R_StudioDrawPlayer:
    and the remaining format-string owner must equal the verified
    studioapi_SetupPlayerModel artifact (DAG input).
 
-studioapi slot accessors (GetCurrentEntity 0x18, StudioSetHeader 0x8C,
-SetRenderModel 0x90, SetChromeOrigin 0x9C) and their engine globals:
+studioapi slot accessors (GetCurrentEntity 0x18, StudioSetRemapColors 0x78,
+StudioSetHeader 0x8C, SetRenderModel 0x90, SetChromeOrigin 0x9C) and their
+engine globals:
 
 1. The same diagnostic anchors the owner and the unique engine_studio_api
    table (>= 43 code-pointer dwords; SvEngine ships 47/48 ABI-compatible
@@ -52,9 +53,12 @@ SetRenderModel 0x90, SetChromeOrigin 0x9C) and their engine globals:
    loads ([reg] without disp32) and stack operands never pollute the shape.
    Observed shapes: GetCurrentEntity reads exactly one global
    (currententity), StudioSetHeader/SetRenderModel store exactly one global
-   (pstudiohdr/r_model), SetChromeOrigin reads one 12-byte cluster
-   (r_origin) and writes another (g_ChromeOrigin); SvEngine Linux accesses
-   the globals through an eax-anchored GOTOFF prologue. SvEngine Linux GV
+   (pstudiohdr/r_model), StudioSetRemapColors performs exactly two int
+   stores in source order (r_topcolor then r_bottomcolor; instruction
+   order, never clustered, VA-sorted, or unique-address collapsed),
+   SetChromeOrigin reads one 12-byte cluster (r_origin) and
+   writes another (g_ChromeOrigin); SvEngine Linux accesses the globals
+   through an eax-anchored GOTOFF prologue. SvEngine Linux GV
    artifacts additionally emit gv_pic_addend: register-relative disp32
    sites embed var-GOT (no relocation; e.g. r_model disp 0xA388D4 + GOT RVA
    0x2EE000 = declared 0xD268D4), so the runtime decoder must add the GOT
@@ -946,6 +950,12 @@ async def preprocess_studio_draw_player(
 SLOT_SHAPE_READ = "read"
 SLOT_SHAPE_WRITE = "write"
 SLOT_SHAPE_COPY12 = "copy12"
+# Exactly two writable-data stores, each a single target, to two different
+# addresses, in instruction order, with no global reads. Unique-address
+# collapse would accept a later rewrite of the first target. cluster_bases
+# (adjacent <=8 bytes) and VA-sorted write_bases both mis-identify
+# r_topcolor/r_bottomcolor when the ints are adjacent or laid out in reverse.
+SLOT_SHAPE_WRITE_PAIR = "write_pair"
 # Emits only the slot function artifact: the accessor's global accesses are
 # intentionally not recovered (the consumer only needs the function entry).
 SLOT_SHAPE_SKIP_GVS = "skip"
@@ -970,10 +980,31 @@ async def locate_studio_slot(session, studio_string, slot_offset):
         "raw_read_refs",
         "write_bases",
         "gv_refs",
+        "insns",
     )
     if any(field not in payload for field in required):
         return None
     return payload
+
+
+def _ordered_write_targets(located):
+    """Writable-data store targets in instruction order, including repeats."""
+    ordered = []
+    insns = located.get("insns")
+    if not isinstance(insns, list):
+        return None
+    for insn in insns:
+        if not isinstance(insn, dict) or insn.get("dir") != "write":
+            continue
+        targets = insn.get("targets")
+        if not isinstance(targets, list) or len(targets) != 1:
+            return None
+        try:
+            value = int(targets[0], 0) if isinstance(targets[0], str) else int(targets[0])
+        except (TypeError, ValueError):
+            return None
+        ordered.append(value)
+    return ordered
 
 
 def _shape_gv_bases(located, shape):
@@ -988,6 +1019,10 @@ def _shape_gv_bases(located, shape):
     elif shape == SLOT_SHAPE_WRITE:
         if len(writes) == 1 and not reads:
             return writes
+    elif shape == SLOT_SHAPE_WRITE_PAIR:
+        ordered = _ordered_write_targets(located)
+        if ordered is not None and len(ordered) == 2 and ordered[0] != ordered[1] and not reads:
+            return ordered
     elif shape == SLOT_SHAPE_COPY12:
         if len(reads) == 1 and len(writes) == 1 and reads[0] != writes[0]:
             return reads + writes
@@ -1114,7 +1149,8 @@ async def preprocess_studio_slot(
         if debug:
             print(
                 f"  {func_name}: shape gate failed reads={located.get('read_bases')} "
-                f"writes={located.get('write_bases')} shape={shape}"
+                f"writes={located.get('write_bases')} ordered={_ordered_write_targets(located)} "
+                f"shape={shape}"
             )
         return False
     gv_refs = located["gv_refs"]

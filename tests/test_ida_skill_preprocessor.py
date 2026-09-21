@@ -1240,6 +1240,104 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertIsNone(_get_times_gv_items(located))
 
+    def test_write_pair_keeps_instruction_order_when_va_reversed(self):
+        from ida_preprocessor_scripts._studio_player_model_common import (
+            SLOT_SHAPE_WRITE_PAIR,
+            _shape_gv_bases,
+        )
+
+        located = {
+            "read_bases": [],
+            "write_bases": ["0x242f94c", "0x248b59c"],
+            "insns": [
+                {"dir": "write", "targets": ["0x248b59c"]},
+                {"dir": "write", "targets": ["0x242f94c"]},
+            ],
+        }
+
+        self.assertEqual([0x248B59C, 0x242F94C], _shape_gv_bases(located, SLOT_SHAPE_WRITE_PAIR))
+
+    def test_write_pair_keeps_adjacent_int_stores_separate(self):
+        from ida_preprocessor_scripts._studio_player_model_common import (
+            SLOT_SHAPE_WRITE,
+            SLOT_SHAPE_WRITE_PAIR,
+            _shape_gv_bases,
+        )
+
+        located = {
+            "read_bases": [],
+            "write_bases": ["0x300d40"],
+            "insns": [
+                {"dir": "write", "targets": ["0x300d44"]},
+                {"dir": "write", "targets": ["0x300d40"]},
+            ],
+        }
+
+        self.assertEqual([0x300D40], _shape_gv_bases(located, SLOT_SHAPE_WRITE))
+        self.assertEqual([0x300D44, 0x300D40], _shape_gv_bases(located, SLOT_SHAPE_WRITE_PAIR))
+
+    def test_write_pair_rejects_reads_or_wrong_store_count(self):
+        from ida_preprocessor_scripts._studio_player_model_common import (
+            SLOT_SHAPE_WRITE_PAIR,
+            _shape_gv_bases,
+        )
+
+        with_read = {
+            "read_bases": ["0x10"],
+            "write_bases": ["0x20", "0x24"],
+            "insns": [
+                {"dir": "write", "targets": ["0x20"]},
+                {"dir": "write", "targets": ["0x24"]},
+            ],
+        }
+        one_store = {
+            "read_bases": [],
+            "write_bases": ["0x20"],
+            "insns": [{"dir": "write", "targets": ["0x20"]}],
+        }
+        three_stores = {
+            "read_bases": [],
+            "write_bases": ["0x20", "0x24", "0x28"],
+            "insns": [
+                {"dir": "write", "targets": ["0x20"]},
+                {"dir": "write", "targets": ["0x24"]},
+                {"dir": "write", "targets": ["0x28"]},
+            ],
+        }
+
+        self.assertIsNone(_shape_gv_bases(with_read, SLOT_SHAPE_WRITE_PAIR))
+        self.assertIsNone(_shape_gv_bases(one_store, SLOT_SHAPE_WRITE_PAIR))
+        self.assertIsNone(_shape_gv_bases(three_stores, SLOT_SHAPE_WRITE_PAIR))
+
+    def test_write_pair_rejects_repeated_store_target(self):
+        from ida_preprocessor_scripts._studio_player_model_common import (
+            SLOT_SHAPE_WRITE_PAIR,
+            _ordered_write_targets,
+            _shape_gv_bases,
+        )
+
+        rewritten_first = {
+            "read_bases": [],
+            "write_bases": ["0x20", "0x24"],
+            "insns": [
+                {"dir": "write", "targets": ["0x20"]},
+                {"dir": "write", "targets": ["0x24"]},
+                {"dir": "write", "targets": ["0x20"]},
+            ],
+        }
+        same_target_twice = {
+            "read_bases": [],
+            "write_bases": ["0x20"],
+            "insns": [
+                {"dir": "write", "targets": ["0x20"]},
+                {"dir": "write", "targets": ["0x20"]},
+            ],
+        }
+
+        self.assertEqual([0x20, 0x24, 0x20], _ordered_write_targets(rewritten_first))
+        self.assertIsNone(_shape_gv_bases(rewritten_first, SLOT_SHAPE_WRITE_PAIR))
+        self.assertIsNone(_shape_gv_bases(same_target_twice, SLOT_SHAPE_WRITE_PAIR))
+
     def test_global_targets_use_decoded_absolute_operand_over_offset_base_xref(self):
         detail = {
             "data_refs": ["0x2000"],

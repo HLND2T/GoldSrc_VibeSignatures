@@ -795,6 +795,11 @@ modules:
       - name: find-studioapi_StudioSetRenderamt
         expected_output:
           - studioapi_StudioSetRenderamt.{platform}.yaml
+      - name: find-studioapi_StudioSetRemapColors
+        expected_output:
+          - studioapi_StudioSetRemapColors.{platform}.yaml
+          - r_topcolor.{platform}.yaml
+          - r_bottomcolor.{platform}.yaml
       - name: find-CL_FxBlend
         expected_output:
           - CL_FxBlend.{platform}.yaml
@@ -980,6 +985,12 @@ modules:
         category: func
       - name: studioapi_StudioSetRenderamt
         category: func
+      - name: studioapi_StudioSetRemapColors
+        category: func
+      - name: r_topcolor
+        category: gv
+      - name: r_bottomcolor
+        category: gv
       - name: CL_FxBlend
         category: func
       - name: CL_Set_ServerExtraInfo
