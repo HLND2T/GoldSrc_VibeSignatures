@@ -1,0 +1,8 @@
+gv_name: lightgammatable
+gv_va: '0xf78e20'
+gv_rva: '0xf78e20'
+gv_sig: 56 53 83 EC ?? D9 44 24 ?? D9 EE D9 C9 DF E9 DD D8 7A ?? D9 05 ?? ?? ?? ?? D9 5C 24 ?? 74 ?? D9 E8
+gv_sig_va: '0x169060'
+gv_inst_offset: '0x118'
+gv_inst_length: '0x7'
+gv_inst_disp: '0x3'

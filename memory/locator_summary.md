@@ -96,21 +96,24 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [g_pClientFactory](locators/g_pClientFactory.md) | engine | gv | `CBaseUI__Initialize` | Despite the -decompiles suffix this finder is not LLM-based: it runs one direct py_eval locator (LOCATE_PY) inside the owner function and fails closed on any… |
 | [Draw_TextureMode_f](locators/Draw_TextureMode_f.md) | engine | func | — | One exact literal, one string instance, one owning function. The classic family uses the two-space-free `bad filter name` diagnostic; SvEngine keeps only `Invalid filter name`. FULLMATCH: keeps the two apart. |
 
-## 浮点常量锚 (3)
+## 浮点常量锚 (4)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
 | [BuildGammaTable](locators/BuildGammaTable.md) | engine | func | — | xref_floats = ["1023.0", "0.075", "0.875"] is the *sole* positive source (positive_sets stays empty, so the float set becomes the candidate set). |
+| [V_BuildGammaTable](locators/V_BuildGammaTable locator.md) | engine | func | — | Same float set as BuildGammaTable; SvEngine-only (Windows + Linux). Linux 8948 is `_Z17V_BuildGammaTablef`. |
 | [R_DrawParticles](locators/R_DrawParticles.md) | engine | func | — | xref_floats = ["20.0", "0.004"] is the sole positive source; the candidate set is every function whose body references both constants. |
 | [GlowBlend](locators/GlowBlend.md) | engine | func | `R_DrawTEntitiesOnList` | xref_floats = ["19000.0", "0.005", "0.05"] is the sole positive source, combined with exclude_funcs = ["R_DrawTEntitiesOnList"]. |
 
-## 表 / 结构 / 数据段扫描 (50)
+## 表 / 结构 / 数据段扫描 (52)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
 | [CGame_DrawStartupVideo](locators/CGame_DrawStartupVideo.md) | engine | func | — | Single positive anchor: xref_strings: ["FULLMATCH:WebMPlayer::PlayVideo %s\n"] — an exact C-string match on the diagnostic literal *including* the %s format… |
 | [gDevOverview](locators/gDevOverview.md) | engine | gv | `CL_SetDevOverView` | The overviewInfo_t shape is the anchor: inside CL_SetDevOverView exactly one writable address has all seven members +0 +4 +8 +0xc +0x10 +0x14 +0x18 separately referenced. |
 | [gWaterColor](locators/gWaterColor.md) | engine | gv | `R_DrawWorld` | The unique writable global whose +0/+4/+8 dwords are each read and whose low bytes are stored into three consecutive bytes of one cl_entity_t (ent.curstate.rendercolor). |
+| [particletexture](locators/particletexture locator.md) | engine | gv | `R_DrawParticles`, `GL_Bind` | Unique `GL_Bind` call in `R_DrawParticles` whose argument is the particle texture id, followed by `GL_ALPHA_TEST` (`0x0BC0`). |
+| [gamma tables](locators/gamma table globals locator.md) | engine | gv | `BuildGammaTable` / `V_BuildGammaTable` | First-write order of the 256-byte table then three 1024-int tables (indexed stores or a pointer-span `+0x1000` loop). |
 | [CL_CreateVisibleEntity](locators/CL_CreateVisibleEntity.md) | engine | func | `cl_enginefuncs` | Load cl_enginefuncs.{platform}.yaml, read gv_va, and compute entry = gv_va + 61 * 4 — SDK cl_enginefunc_t slot 61 is CL_CreateVisibleEntity. |
 | [CL_IsThirdPerson](locators/CL_IsThirdPerson.md) | client | func | — | Primary path: exactly one idautils.Entries() entry named CL_IsThirdPerson whose ida_funcs.get_func(ea).start_ea == ea. |
 | [CVideoMode_Common_PlayStartupSequence](locators/CVideoMode_Common_PlayStartupSequence.md) | engine | func | `VideoMode_Create` | A plain string xref cannot select this function: the -novid literal has two raw owners. The finder therefore walks the VideoMode vtables instead: |
