@@ -1,0 +1,8 @@
+gv_name: r_emptytexture
+gv_va: '0x204d7c4'
+gv_rva: '0x34d7c4'
+gv_sig: 81 EC 04 03 00 00 A1 ?? ?? ?? ?? 33 C4 89 84 24 ?? ?? ?? ?? 68 00 03 00 00 8D 44 24 ?? 68 FF 00 00 00
+gv_sig_va: '0x1d56f50'
+gv_inst_offset: '0x28'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

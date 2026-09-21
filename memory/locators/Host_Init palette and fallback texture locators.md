@@ -1,0 +1,50 @@
+---
+title: Host_Init palette and fallback texture locators
+type: note
+permalink: goldsrc-vibesignatures/locators/host-init-palette-and-fallback-texture-locators
+tags:
+- locator
+- engine
+- gv
+- func
+---
+
+# Host_Init palette and fallback textures
+
+## Symbols
+
+- `Host_Init` (`func`, engine `hw.dll`/`hw.so`)
+- `Host_LoadBasePalette` (`func`, SvEngine only)
+- `host_basepal` (`gv`, `word*`)
+- `R_InitTextures` (`func`)
+- `r_notexture_mip` (`gv`, GoldSrc/HL25/CoF)
+- `R_UploadEmptyTex` (`func`; HL25 Windows inlined into `R_Init`)
+- `r_emptytexture` (`gv`, SvEngine ELF name)
+- `R_UploadMissingTex` (`func`, SvEngine)
+- `r_missingtexture` (`gv`, SvEngine)
+
+Producer: `ida_preprocessor_scripts/find-Host_Init.py` and siblings; shared walks in `_host_palette_common.py`.
+
+## Anchors
+
+- GoldSrc/HL25/CoF `Host_Init`: `FULLMATCH:Host_Init: Couldn't load gfx/palette.lmp`
+- SvEngine `Host_Init`: `FULLMATCH:Heap size: %4.1f MB\n` (`Host_Init()` is owned by `Sys_InitGame`)
+- SvEngine `Host_LoadBasePalette`: `Could not load base palette from "%s".\n` excluding the heap banner (Windows Host_Init inlines the same body)
+- `host_basepal`: unique `Hunk_AllocName(0x800)` return store in that owner. Linux GoldSrc merges `"palette.lmp"` into `"gfx/palette.lmp"+4`.
+- `R_InitTextures`: previous direct call of the unique `custom` HPAK xref inside `Host_Init`
+- `r_notexture_mip`: unique writable store in GoldSrc `R_InitTextures` (`Hunk_AllocName(..., "notexture")`)
+- `R_UploadEmptyTex`: `**empty**` excluding `**missing**` and `gl_dump`
+- `r_emptytexture` / `r_missingtexture`: unique post-prologue writable global in the corresponding upload function
+
+## Availability
+
+- `Host_Init` / `host_basepal` / `R_InitTextures`: all 11 engine configs (15 Win/Linux pairs)
+- `R_UploadEmptyTex`: 14 pairs; missing on hl-10210 Windows (inlined)
+- `r_notexture_mip`: hl-* / cof-5936 only
+- `Host_LoadBasePalette`, `r_emptytexture`, `R_UploadMissingTex`, `r_missingtexture`: svencoop-8948 / 10257 only
+
+## Pitfalls
+
+- SvEngine empty-texture ELF name is `r_emptytexture`, not `r_notexture_mip`.
+- `-allgamever -skill` errors on gamevers that do not register the skill; filter `-modules engine` and run SvEngine-only skills with `-gamever svencoop-*`.
+- Walk helpers must parse hex owner EAs with `int(value, 0)`.

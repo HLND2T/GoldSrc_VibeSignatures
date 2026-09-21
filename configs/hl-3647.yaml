@@ -725,6 +725,21 @@ modules:
       - name: find-Host_ClearMemory
         expected_output:
           - Host_ClearMemory.{platform}.yaml
+      - name: find-Host_Init
+        expected_output:
+          - Host_Init.{platform}.yaml
+      - name: find-host_basepal
+        expected_output:
+          - host_basepal.{platform}.yaml
+      - name: find-R_InitTextures
+        expected_input:
+          - Host_Init.{platform}.yaml
+        expected_output:
+          - R_InitTextures.{platform}.yaml
+          - r_notexture_mip.{platform}.yaml
+      - name: find-R_UploadEmptyTex
+        expected_output:
+          - R_UploadEmptyTex.{platform}.yaml
       - name: find-Hunk_AllocName
         expected_output:
           - Hunk_AllocName.{platform}.yaml
@@ -1468,3 +1483,13 @@ modules:
         category: func
       - name: host_initialized
         category: gv
+      - name: Host_Init
+        category: func
+      - name: host_basepal
+        category: gv
+      - name: R_InitTextures
+        category: func
+      - name: r_notexture_mip
+        category: gv
+      - name: R_UploadEmptyTex
+        category: func

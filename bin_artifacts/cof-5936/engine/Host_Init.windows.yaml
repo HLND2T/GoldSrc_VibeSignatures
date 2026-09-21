@@ -1,0 +1,5 @@
+func_name: Host_Init
+func_va: '0x1d7f9c5'
+func_rva: '0x7f9c5'
+func_size: '0x434'
+func_sig: 55 8B EC 81 EC 0C 01 00 00 56 57 6A 00 E8 ?? ?? ?? ?? 83 C4 04 50 E8 ?? ?? ?? ?? 83 C4 04 8B 75 ??
