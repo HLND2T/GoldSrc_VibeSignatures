@@ -1,5 +1,6 @@
 """Behavioral regression fixtures for private-symbol instruction walks."""
 
+import json
 import runpy
 import sys
 import unittest
@@ -285,6 +286,110 @@ class DecalInitWalkTests(unittest.TestCase):
 
     def test_rejects_missing_cache_store(self):
         self.assertIn("error", self.locate(stores=()))
+
+
+class StudioLightingWalkTests(unittest.TestCase):
+    def locate(self, *, form="mov", offsets=(0, 4, 8), mutation=None, width=4, pointer_call=False):
+        from ida_preprocessor_scripts._studio_setup_common import RECOVER_LIGHTING_GVS_PY
+
+        entries = []
+
+        def op(kind=0, reg=0, addr=0, size=4):
+            return NS(type=kind, reg=reg, addr=addr, value=addr, dtype=size, offb=2 if kind == MEM else 0)
+
+        def add(mnem, dest=None, src=None):
+            writes = mnem in ("mov", "movss", "xor", "add", "mulss")
+            entries.append(
+                (mnem, NS(size=6, ops=[dest or op(), src or op(), op()], get_canon_feature=lambda: int(writes)))
+            )
+
+        add("mov", op(REG, 6), op(DISPL, 5, 8))
+        add("mov", op(REG, 0), op(PHRASE, 6))
+        add("mov", op(MEM, addr=0x5000), op(REG, 0))
+        add("fild", op(DISPL, 6, 4))
+        add("fstp", op(MEM, addr=0x6000))
+        if pointer_call:
+            add("mov", op(REG, 1), op(REG, 6))
+            add("call")
+        add("mov", op(REG, 3), op(DISPL, 1 if pointer_call else 6, 20))
+        for index, offset in enumerate(offsets):
+            reg = 16 if form == "movss" else 0
+            if form == "x87":
+                add("fld", op(DISPL, 3, offset))
+            else:
+                add(form, op(REG, reg), op(DISPL, 3, offset))
+            if mutation == "pointer":
+                add("add", op(REG, 3), op(5, addr=4))
+            elif mutation == "partial":
+                add("xor", op(REG, 8, size=1), op(REG, 8, size=1))
+            elif mutation:
+                add(mutation, op(REG, reg), op(REG, reg))
+            add("fstp" if form == "x87" else form, op(MEM, addr=0x7000 + index * 4, size=width), op(REG, reg))
+        add("and", op(REG, 0), op(5, addr=0xFF00))
+        for index in range(3):
+            add("mov", op(REG, 0), op(DISPL, 6, 8 + index * 4))
+            add("mov", op(MEM, addr=0x8000 + index * 4), op(REG, 0))
+        by_ea = {0x1000 + 6 * index: entry for index, entry in enumerate(entries)}
+        words = {ea + 2: insn.ops[0].addr for ea, (_, insn) in by_ea.items()}
+        modules = {
+            "idaapi": NS(
+                o_reg=REG, o_mem=MEM, o_phrase=PHRASE, o_displ=DISPL, o_imm=5, o_void=0, inf_is_64bit=lambda: False
+            ),
+            "ida_funcs": NS(get_func=lambda ea: NS(start_ea=0x1000)),
+            "ida_segment": NS(getseg=lambda ea: NS(perm=2), SEGPERM_EXEC=1, SEGPERM_WRITE=2),
+            "ida_bytes": NS(get_bytes=lambda ea, size: b"", get_dword=lambda ea: words[ea]),
+            "ida_ua": NS(get_dtype_size=lambda dtype: dtype),
+            "ida_idp": NS(
+                CF_CHG1=1,
+                CF_CHG2=2,
+                CF_CHG3=4,
+                get_reg_name=lambda reg, size: REGISTERS[reg] if reg < 8 else ("al" if reg == 8 else "xmm0"),
+            ),
+            "idautils": NS(
+                FuncItems=lambda ea: list(by_ea), DecodeInstruction=lambda ea: by_ea[ea][1], DataRefsFrom=lambda ea: []
+            ),
+            "idc": NS(print_insn_mnem=lambda ea: by_ea[ea][0], generate_disasm_line=lambda ea, flags: by_ea[ea][0]),
+        }
+        scope = {}
+        with patch.dict(sys.modules, modules):
+            exec(RECOVER_LIGHTING_GVS_PY.replace("SLOT_VA_PLACEHOLDER", "0x1000"), scope)
+        result = json.loads(scope["result"])
+        self.assertNotIn("trace", result, result)
+        return result
+
+    def test_accepts_component_copies(self):
+        for form in ("mov", "movss", "x87"):
+            with self.subTest(form=form):
+                self.assertEqual(0x7000, self.locate(form=form)["r_plightvec"]["gv_ea"])
+
+    def test_rejects_incorrect_component_mapping(self):
+        for offsets in ((0, 0, 0), (8, 4, 0), (4, 8, 12), (0, 4), (0, 4, 8, 0, 4, 8)):
+            with self.subTest(offsets=offsets):
+                self.assertIn("error", self.locate(offsets=offsets))
+
+    def test_rejects_non_dword_stores(self):
+        for width in (1, 2, 8, 16):
+            with self.subTest(width=width):
+                self.assertIn("error", self.locate(width=width))
+
+    def test_rejects_modified_sources(self):
+        for form, mutation in (
+            ("mov", "xor"),
+            ("mov", "partial"),
+            ("mov", "pointer"),
+            ("mov", "mul"),
+            ("movss", "mulss"),
+            ("movss", "cvtdq2ps"),
+            ("x87", "fmul"),
+            ("mov", "call"),
+            ("movss", "call"),
+            ("x87", "call"),
+        ):
+            with self.subTest(form=form, mutation=mutation):
+                self.assertIn("error", self.locate(form=form, mutation=mutation))
+
+    def test_rejects_call_clobbered_pointer(self):
+        self.assertIn("error", self.locate(pointer_call=True))
 
 
 class TextureIdentityTests(unittest.TestCase):

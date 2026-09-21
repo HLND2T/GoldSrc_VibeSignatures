@@ -1,0 +1,9 @@
+gv_name: r_plightvec
+gv_va: '0x10dc62e0'
+gv_rva: '0xdc62e0'
+gv_sig: 55 8B EC 56 8B 75 ?? 33 D2 57 8B 3D ?? ?? ?? ?? 8B 06 A3 ?? ?? ?? ?? 66 0F 6E 46 ?? 0F 5B C0 F3 0F 11 05 ?? ?? ??
+  ??
+gv_sig_va: '0x101f3470'
+gv_inst_offset: '0x2e'
+gv_inst_length: '0x8'
+gv_inst_disp: '0x4'

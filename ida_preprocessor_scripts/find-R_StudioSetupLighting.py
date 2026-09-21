@@ -7,8 +7,10 @@ common/r_studioint.h stores R_StudioSetupLighting at x86 slot 24. The
 finder tries both GoldSrc/HL25/CoF and SvEngine wordings and requires one
 slot VA. The body then yields r_ambientlight (int store of
 alight_t.ambientlight), r_shadelight (float store of converted
-alight_t.shadelight), and r_colormix (12-byte float VectorCopy of
-alight_t.color after the r_icolormix AND 0xFF00 packing).
+alight_t.shadelight), r_plightvec (three consecutive float stores loaded
+through the alight_t.plightvec pointer at offset 0x14), and r_colormix
+(12-byte float VectorCopy of alight_t.color after the r_icolormix
+AND 0xFF00 packing).
 """
 
 from ida_preprocessor_scripts._studio_setup_common import preprocess_studio_setup_lighting

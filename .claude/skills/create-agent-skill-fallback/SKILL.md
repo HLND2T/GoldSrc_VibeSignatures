@@ -217,7 +217,7 @@ the fallback validation updates them. Stop if the staged-path list contains anyt
 Commit only the staged task changes using the repository commit format:
 
 ```bash
-git commit -m "feat(skills): add find-XXXX fallback" -m "Co-Authored-By: Codex"
+git commit -m "feat(skills): add find-XXXX fallback"
 ```
 
 Do not push the branch, call `/create-pr`, or open a pull request unless the user separately requests it. Finish

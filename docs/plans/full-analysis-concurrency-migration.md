@@ -730,7 +730,7 @@ uv run python tests/run_test_suite.py all -b --durations 30
 | 5 | Release activation | Environment wiring、concurrency 1/2 runs | workflow parse + real runner evidence |
 | 6 | Operations/docs | runbook、双语docs、memory note | docs review + captured evidence |
 
-每个提交遵循`<type>(scope): <summary>`并追加`Co-Authored-By: Codex <codex@openai.com>`。
+每个提交遵循`<type>(scope): <summary>`。
 
 ## 19. 最终验收标准
 

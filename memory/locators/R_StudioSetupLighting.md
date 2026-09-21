@@ -13,7 +13,8 @@ tags:
 ## Symbol
 
 - **Name**: `R_StudioSetupLighting`
-- **Category**: `func` plus globals `r_ambientlight` (`gv`, int), `r_shadelight` (`gv`, float), `r_colormix` (`gv`, vec3)
+- **Category**: `func` plus globals `r_ambientlight` (`gv`, int), `r_shadelight` (`gv`, float),
+  `r_plightvec` (`gv`, vec3), `r_colormix` (`gv`, vec3)
 - **Module**: engine (`hw.dll` / `hw.so`)
 - **Producer**: `ida_preprocessor_scripts/find-R_StudioSetupLighting.py`
   (shared `ida_preprocessor_scripts._studio_setup_common.preprocess_studio_setup_lighting`)
@@ -36,21 +37,70 @@ tags:
    `locate_studio_slot(..., 24 * 4)` and require exactly one distinct `slot_va`.
 2. Materialize the function at that slot (`_inspect_function_via_mcp`, across-boundary
    fallback if the strict window is not unique).
-3. Recover the three globals from the slot body with a current-IDB operand walk:
+3. Recover the four globals from the slot body with a current-IDB operand walk:
    - `r_ambientlight`: unique int store of `plighting->ambientlight` (`alight_t+0`).
    - `r_shadelight`: unique float store of the int-to-float conversion of
      `plighting->shadelight` (`alight_t+4`, `fild` / `movd`+`cvtdq2ps`).
+   - `r_plightvec`: unique 12-byte consecutive float-store cluster whose sources are
+     `*(plighting->plightvec + i)` for `i = 0, 1, 2` — `alight_t.plightvec` is a `float *`, so the walker
+     tracks the second-level pointer load (`reg_origin` `('load', 0x14)` feeds
+     `('ptrload', 0x14, disp)`). Covers integer `mov`, x87 `fld`/`fst`, SSE
+     `movss`, and SvEngine GOTOFF forms.
    - `r_colormix`: unique 12-byte consecutive float-store cluster after the first
-     `AND …, 0xFF00` (`r_icolormix` packing). Integer `A3` stores of that AND are ignored.
+     `AND …, 0xFF00` (`r_icolormix` packing), sourced from the **inline**
+     `alight_t.color` (`+8/+0xC/+0x10`). Integer `A3` stores of that AND are ignored.
 4. `plighting` is the unique incoming pointer used both as a disp-0 dword load and as a
    disp-4 integer-to-float source, including reloads from the same `[ebp+8]` / `[esp+N]`
-   slot. `r_plightvec` / `r_blightvec` / `r_icolormix` are not emitted.
+   slot. `r_blightvec` / `r_icolormix` are not emitted.
 
 ## Pitfalls
 
 - Slot 24 is the real `R_StudioSetupLighting`, not a wrapper.
-- Do not pick `r_plightvec` (dword copies through `alight_t.plightvec` at +0x14) or
-  `r_icolormix` (int stores of `* 0xC0FF & 0xFF00`).
+- `r_plightvec` and `r_colormix` are both 12-byte float clusters. They are told apart by
+  their source: `r_plightvec` reads through the `alight_t+0x14` pointer, `r_colormix`
+  reads the inline `alight_t.color` at `+8/+0xC/+0x10` after the `AND 0xFF00` packing.
+  Do **not** identify either by store order or by a single operand.
+- `r_icolormix`'s int stores (`(int)(color[i] * 0xC0FF) & 0xFF00`) must not be collected.
+  On old MSVC builds they follow a `call __ftol` that returns in `eax`; without clearing
+  volatile load origins across `call`, a stale `('ptrload', …)` on `eax` misattributes
+  those stores to `r_plightvec` and produces two candidate clusters.
+- Origin invalidation covers both pointer and value maps, including cdecl calls,
+  explicit register writes (also partial-register aliases), implicit multiply/divide
+  results, and x87/SSE arithmetic. A value derived from a component is not proof of
+  an unchanged copy. Validate this with the executable mocked-IDA fixtures in
+  `tests/test_engine_private_walks.py::StudioLightingWalkTests`.
+- Destination adjacency alone is insufficient: each accepted four-byte store must
+  preserve the source byte displacement, with `0 -> b`, `4 -> b+4`, `8 -> b+8`.
+  Repeated, swapped, out-of-range components and non-dword stores must fail closed.
+  These rules apply to all three supported copy forms (integer, SSE, x87).
 - Do not sort globals by VA: `r_ambientlight` and `r_shadelight` are adjacent on some
   builds and far apart on others.
 - SvEngine Linux stores are GOTOFF (`gv_pic_addend`).
+
+## Cross-version evidence (`r_plightvec`)
+
+Verified with owned `IdaMcpLifecycle` (`restored_strict`) on the binaries the configs
+declare; SVN tags read their decrypted `hw.decrypt.dll`.
+
+| Tag | Platform | `R_StudioSetupLighting` | `r_plightvec` | Copy form |
+| --- | --- | --- | --- | --- |
+| hl-3248 | windows | `0x1d8e480` | `0x2c202f0` | integer `mov` |
+| hl-3266 | windows | `0x1d8e460` | `0x2c202f0` | integer `mov` |
+| hl-3329 | windows | `0x1d8e340` | `0x2becc10` | integer `mov` |
+| hl-3647 | windows | `0x1d8e4b0` | `0x2beba90` | integer `mov` |
+| hl-4554 | windows | `0x1d9a3f0` | `0x2b95890` | integer `mov` |
+| hl-6153 | windows | `0x1d83020` | `0x2bc64b0` | integer `mov` |
+| hl-8684 | windows | `0x1d84990` | `0x2bc99b0` | integer `mov` |
+| hl-8684 | linux | `0x12b190` | `0xf25954` | x87 `fld`/`fst` |
+| hl-10210 | windows | `0x101f3470` | `0x10dc62e0` | SSE `movss` |
+| hl-10210 | linux | `0xc80c0` | `0xf7d934` | x87 `fld`/`fst` |
+| cof-5936 | windows | `0x1dbe853` | `0x2c0e570` | integer `mov` |
+| svencoop-8948 | windows | `0x1d8f640` | `0x851eaec` | x87 `fld`/`fst` |
+| svencoop-8948 | linux | `0xf0bd0` | `0xd3325c` | GOTOFF x87 |
+| svencoop-10257 | windows | `0x1d90400` | `0x855ec74` | x87 `fld`/`fst` |
+| svencoop-10257 | linux | `0xa20e0` | `0xce5c9c` | GOTOFF x87 |
+
+Independent cross-check (hl-10210 windows): four functions read the candidate with
+`mulss xmm0, r_plightvec(+8)` (`DotProduct(normal, r_plightvec)`), and the IDBs for
+hl-10210 linux, hl-8684 linux, and svencoop-8948 linux already name the address
+`r_plightvec`. Addresses are regression evidence for their exact inputs, not locators.

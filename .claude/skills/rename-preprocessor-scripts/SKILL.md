@@ -264,8 +264,6 @@ explicitly requests a commit. If committing is requested, use:
 
 ```text
 refactor(preprocessor): rename OldName to NewName
-
-Co-Authored-By: Codex <codex@openai.com>
 ```
 
 Do not push or open a pull request unless separately requested.
