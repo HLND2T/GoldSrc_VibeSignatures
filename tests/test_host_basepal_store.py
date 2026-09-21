@@ -96,6 +96,7 @@ class HostBasepalStoreTests(unittest.TestCase):
             insn("mov", [("reg", "ecx"), ("reg", "edi")], sp=sp, ea=0x25),
             insn("mov", [("reg", "edx"), ("imm", 2)], sp=sp, ea=0x28),
             insn("mov", [("unknown", None), ("reg", "eax")], sp=sp, written=(GV,), ea=0x2E, disp=2),
+            insn("ret", sp=sp, ea=0x100),
         ]
         result = locate(code)
         self.assertEqual("0x4000", result["gv"]["gv_ea"])
@@ -122,6 +123,21 @@ class HostBasepalStoreTests(unittest.TestCase):
             insn("mov", [("mem", GV), ("reg", "eax")], sp=-8, written=(GV,), ea=0x22, disp=1),
         ]
         self.assertIn("error", locate(code))
+
+    def test_zeroing_scratch_register_preserves_only_other_return_copies(self):
+        for register, accepted in (("edx", True), ("eax", False)):
+            with self.subTest(register=register):
+                code = windows_alloc_store()
+                code.insert(4, insn("xor", [("reg", register), ("reg", register)], ea=0x21))
+                result = locate(code)
+                self.assertEqual(accepted, "error" not in result)
+
+    def test_address_calculation_invalidates_only_its_destination(self):
+        for register, accepted in (("ecx", True), ("eax", False)):
+            with self.subTest(register=register):
+                code = windows_alloc_store()
+                code.insert(4, insn("lea", [("reg", register), ("unknown", None)], ea=0x21))
+                self.assertEqual(accepted, "error" not in locate(code))
 
     def test_rejects_missing_palette_name_argument(self):
         code = [

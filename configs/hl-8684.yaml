@@ -730,6 +730,7 @@ modules:
       - name: find-host_basepal
         expected_input:
           - Hunk_AllocName.{platform}.yaml
+          - Sys_Error.{platform}.yaml
         expected_output:
           - host_basepal.{platform}.yaml
       - name: find-R_InitTextures

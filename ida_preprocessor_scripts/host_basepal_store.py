@@ -44,6 +44,14 @@ def locate_palette_hunk_store(
                 continue
             if mnem in ("cmp", "test", "push"):
                 continue
+            if mnem == "lea" and dest and dest[0] == "reg":
+                # LEA writes only the explicit destination, never implicit EAX.
+                live.discard(dest[1])
+                continue
+            if mnem == "xor" and dest and dest[0] == "reg" and src == dest:
+                # A full-width zero idiom writes only its explicit register.
+                live.discard(dest[1])
+                continue
             if mnem in ("add", "sub") and dest == ("reg", "esp") and src and src[0] == "imm":
                 continue
             if mnem != "mov" or not src or src[0] != "reg" or src[1] not in live:

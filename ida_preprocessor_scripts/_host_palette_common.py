@@ -11,6 +11,7 @@ from ida_preprocessor_scripts.host_basepal_store import locate_palette_hunk_stor
 HOST_INIT_NAME = "Host_Init"
 HOST_LOAD_BASE_PALETTE_NAME = "Host_LoadBasePalette"
 HUNK_ALLOC_NAME = "Hunk_AllocName"
+SYS_ERROR_NAME = "Sys_Error"
 HOST_BASEPAL_NAME = "host_basepal"
 PALETTE_LMP_NAME = "palette.lmp"
 PALETTE_LMP_PREFIX = "gfx/"
@@ -121,6 +122,7 @@ import ida_name
 import ida_ua
 
 HUNK = int(values['hunk_ea'], 0)
+SYS_ERROR = int(values['sys_error_ea'], 0)
 SIZE = int(values['size_imm'])
 NAME = values['name']
 PREFIX = values['name_prefix']
@@ -159,7 +161,7 @@ else:
                     name = name[5:]
                 return name
 
-            def pic_plt_callee(call_ea):
+            def pic_plt_callee(call_ea, expected_ea):
                 # SvEngine Linux PIC PLT: call stub; jmp [ebx+GOTOFF]. Lazy .got.plt
                 # still holds stub+6, so resolve_elf_plt's dword==target check fails.
                 if got_base is None or idc.get_operand_type(int(call_ea), 0) != int(idaapi.o_near):
@@ -198,22 +200,31 @@ else:
                         callee = ida_funcs.get_func(ref)
                         if callee is not None and int(callee.start_ea) == ref:
                             found.add(ref)
-                for xref in idautils.XrefsTo(HUNK, 0):
+                for xref in idautils.XrefsTo(expected_ea, 0):
                     if int(xref.frm) == slot:
-                        found.add(int(HUNK))
+                        found.add(int(expected_ea))
                 if len(found) == 1:
                     return next(iter(found))
-                hunk_name = normalize_thunk_name(ida_name.get_name(int(HUNK)))
-                if hunk_name and hunk_name in (
+                expected_name = normalize_thunk_name(ida_name.get_name(int(expected_ea)))
+                if expected_name and expected_name in (
                     normalize_thunk_name(ida_name.get_name(stub)),
                     normalize_thunk_name(ida_name.get_name(slot)),
                 ):
-                    return int(HUNK)
+                    return int(expected_ea)
                 return None
 
             def hunk_callee(call_ea):
-                return pic_plt_callee(call_ea) or local_call_target(call_ea)
+                return pic_plt_callee(call_ea, HUNK) or local_call_target(call_ea)
 
+            compiler_exits = compiler_noreturn_imports()
+            noreturn_calls = {
+                entry['ea'] for entry in entries if entry['mnem'] == 'call'
+                and (
+                    (pic_plt_callee(entry['ea'], SYS_ERROR) or local_call_target(entry['ea'])) == SYS_ERROR
+                    or local_call_target(entry['ea']) in compiler_exits
+                )
+            }
+            flow = decode_function_flow(func, [entry['ea'] for entry in entries], noreturn_calls=noreturn_calls)
             code = []
             for entry in entries:
                 sp = int(ida_frame.get_spd(func, entry['ea']))
@@ -264,6 +275,7 @@ else:
                         'written': set(entry['written']),
                         'call_target': hunk_callee(entry['ea']) if mnem == 'call' else None,
                         'ea': entry['ea'],
+                        'successors': flow[entry['ea']],
                         'disp': entry['disp'],
                         'len': entry['len'],
                         'disasm': entry['disasm'],
@@ -287,6 +299,8 @@ else:
                             'disasm': entry.get('disasm') or '',
                             'target': hex(int(entry['call_target'])) if entry.get('call_target') else None,
                             'args': [hex(arg) if isinstance(arg, int) else arg for arg in args],
+                            'return_path': [item['disasm'] for item in code[index + 1:index + 9]]
+                            if entry.get('call_target') == HUNK else [],
                         }
                     )
                 result['calls'] = calls
@@ -479,6 +493,11 @@ async def preprocess_host_basepal(session, expected_outputs, new_binary_dir, pla
         if debug:
             print(f"  {HOST_BASEPAL_NAME}: missing {HUNK_ALLOC_NAME} artifact")
         return False
+    sys_error = await inspect_owner_artifact(session, new_binary_dir, platform, image_base, SYS_ERROR_NAME)
+    if sys_error is None:
+        if debug:
+            print(f"  {HOST_BASEPAL_NAME}: missing {SYS_ERROR_NAME} artifact")
+        return False
     located = await run_walk(
         session,
         WALK_HOST_BASEPAL,
@@ -488,6 +507,7 @@ async def preprocess_host_basepal(session, expected_outputs, new_binary_dir, pla
             "goldsrc_literal": HOST_INIT_PALETTE_ERROR,
             "size_imm": HUNK_PALETTE_SIZE,
             "hunk_ea": hex(hunk["owner_ea"]),
+            "sys_error_ea": hex(sys_error["owner_ea"]),
             "name": PALETTE_LMP_NAME,
             "name_prefix": PALETTE_LMP_PREFIX,
         },

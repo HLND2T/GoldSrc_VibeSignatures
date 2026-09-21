@@ -5,7 +5,47 @@ from pathlib import Path
 from types import SimpleNamespace as NS
 from unittest.mock import patch
 
-from ida_preprocessor_scripts.x86_call_arguments import recover_call_arguments
+from ida_preprocessor_scripts.x86_call_arguments import (
+    compiler_noreturn_imports,
+    decode_function_flow,
+    recover_call_arguments,
+)
+
+
+class DecodedFlowTests(unittest.TestCase):
+    def test_only_exact_compiler_failure_import_is_a_known_exit(self):
+        def enumerate_imports(index, callback):
+            for ea, name in ((0x1000, "__stack_chk_fail@@GLIBC_2.4"), (0x2000, "__exit"), (0x3000, None)):
+                callback(ea, name, 0)
+
+        with patch.dict(
+            sys.modules, {"ida_nalt": NS(get_import_module_qty=lambda: 1, enum_import_names=enumerate_imports)}
+        ):
+            self.assertEqual({0x1000}, compiler_noreturn_imports())
+
+    def test_unresolved_block_exit_is_not_a_terminal(self):
+        block = NS(start_ea=0x10, end_ea=0x15, succs=lambda: [])
+        modules = {
+            "ida_gdl": NS(FlowChart=lambda _: [block]),
+            "ida_bytes": NS(get_item_size=lambda _: 5),
+            "idc": NS(print_insn_mnem=lambda _: "jmp"),
+        }
+        with patch.dict(sys.modules, modules):
+            self.assertEqual({0x10: None}, decode_function_flow(None, [0x10]))
+
+    def test_only_verified_noreturn_calls_cut_fallthrough(self):
+        blocks = [
+            NS(start_ea=0x10, end_ea=0x15, succs=lambda: []),
+            NS(start_ea=0x15, end_ea=0x20, succs=lambda: []),
+        ]
+        modules = {
+            "ida_gdl": NS(FlowChart=lambda _: blocks),
+            "ida_bytes": NS(get_item_size=lambda _: 5),
+            "idc": NS(print_insn_mnem=lambda ea: "call" if ea == 0x10 else "ret"),
+        }
+        with patch.dict(sys.modules, modules):
+            self.assertEqual({0x10: [0x15], 0x15: []}, decode_function_flow(None, [0x10, 0x15]))
+            self.assertEqual({0x10: [], 0x15: []}, decode_function_flow(None, [0x10, 0x15], noreturn_calls={0x10}))
 
 
 class RefdefArgumentTests(unittest.TestCase):
@@ -171,8 +211,68 @@ class CallArgumentsTests(unittest.TestCase):
             {"mnem": "mov", "sp": -16, "ops": [("stack", -12), ("reg", "ebp")], "ea": 0x18},
             {"mnem": "mov", "sp": -16, "ops": [("stack", -16), ("imm", 0x800)], "ea": 0x1C},
             {"mnem": "call", "sp": -16, "ops": [], "ea": 0x20},
+            {"mnem": "ret", "sp": -16, "ops": [], "ea": 0x40},
         ]
         self.assertEqual([0x800, 0x5000], recover_call_arguments(instructions, 5, 2))
+
+    def test_out_of_line_path_can_reenter_after_definition(self):
+        instructions = [
+            {"mnem": "mov", "sp": -16, "ops": [("reg", "ebp"), ("imm", 0x6000)], "ea": 0x10},
+            {"mnem": "jz", "sp": -16, "ops": [("imm", 0x80)], "ea": 0x14},
+            {"mnem": "mov", "sp": -16, "ops": [("reg", "ebp"), ("imm", 0x5000)], "ea": 0x18},
+            {"mnem": "mov", "sp": -16, "ops": [("stack", -16), ("reg", "ebp")], "ea": 0x20},
+            {"mnem": "call", "sp": -16, "ops": [], "ea": 0x24},
+            {"mnem": "ret", "sp": -16, "ops": [], "ea": 0x28},
+            {"mnem": "jmp", "sp": -16, "ops": [("imm", 0x20)], "ea": 0x80},
+        ]
+        self.assertEqual([None], recover_call_arguments(instructions, 4, 1))
+
+    def test_missing_error_block_does_not_prove_termination(self):
+        instructions = [
+            {"mnem": "mov", "sp": -4, "ops": [("reg", "ebp"), ("imm", 7)], "ea": 0x10},
+            {"mnem": "jz", "sp": -4, "ops": [("imm", 0x80)], "ea": 0x14},
+            {"mnem": "mov", "sp": -4, "ops": [("stack", -4), ("reg", "ebp")], "ea": 0x18},
+            {"mnem": "call", "sp": -4, "ops": [], "ea": 0x20},
+        ]
+        self.assertEqual([None], recover_call_arguments(instructions, 3, 1))
+
+    def test_guarded_local_argument_remains_provable(self):
+        instructions = [
+            {"mnem": "jl", "sp": 0, "ops": [("imm", 0x40)], "ea": 0x10},
+            {"mnem": "push", "sp": 0, "ops": [("imm", 0x8074)], "ea": 0x18},
+            {"mnem": "call", "sp": -4, "ops": [], "ea": 0x20},
+            {"mnem": "ret", "sp": 0, "ops": [], "ea": 0x40},
+        ]
+        self.assertEqual([0x8074], recover_call_arguments(instructions, 2, 1))
+
+    def test_unreachable_call_is_not_proven_by_vacuous_dominance(self):
+        instructions = [
+            {"mnem": "jmp", "sp": 0, "ops": [("imm", 0x40)], "ea": 0x10},
+            {"mnem": "push", "sp": 0, "ops": [("imm", 7)], "ea": 0x18},
+            {"mnem": "call", "sp": -4, "ops": [], "ea": 0x20},
+            {"mnem": "ret", "sp": 0, "ops": [], "ea": 0x40},
+        ]
+        self.assertEqual([None], recover_call_arguments(instructions, 2, 1))
+
+    def test_unknown_indirect_error_edge_remains_unknown(self):
+        instructions = [
+            {"mnem": "mov", "sp": -4, "ops": [("reg", "ebp"), ("imm", 7)], "ea": 0x10},
+            {"mnem": "jz", "sp": -4, "ops": [("imm", 0x80)], "ea": 0x14},
+            {"mnem": "mov", "sp": -4, "ops": [("stack", -4), ("reg", "ebp")], "ea": 0x18},
+            {"mnem": "call", "sp": -4, "ops": [], "ea": 0x20},
+            {"mnem": "jmp", "sp": -4, "ops": [("reg", "eax")], "ea": 0x80},
+        ]
+        self.assertEqual([None], recover_call_arguments(instructions, 3, 1))
+
+    def test_decoded_noreturn_call_terminates_error_path(self):
+        instructions = [
+            {"mnem": "mov", "sp": -4, "ops": [("reg", "ebp"), ("imm", 7)], "ea": 0x10},
+            {"mnem": "jz", "sp": -4, "ops": [("imm", 0x80)], "ea": 0x14},
+            {"mnem": "mov", "sp": -4, "ops": [("stack", -4), ("reg", "ebp")], "ea": 0x18},
+            {"mnem": "call", "sp": -4, "ops": [], "ea": 0x20},
+            {"mnem": "call", "sp": -4, "ops": [], "ea": 0x80, "successors": []},
+        ]
+        self.assertEqual([7], recover_call_arguments(instructions, 3, 1))
 
     def test_jcc_that_skips_assignment_does_not_prove_register(self):
         instructions = [
