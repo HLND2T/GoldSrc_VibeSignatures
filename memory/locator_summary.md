@@ -104,7 +104,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [R_DrawParticles](locators/R_DrawParticles.md) | engine | func | — | xref_floats = ["20.0", "0.004"] is the sole positive source; the candidate set is every function whose body references both constants. |
 | [GlowBlend](locators/GlowBlend.md) | engine | func | `R_DrawTEntitiesOnList` | xref_floats = ["19000.0", "0.005", "0.05"] is the sole positive source, combined with exclude_funcs = ["R_DrawTEntitiesOnList"]. |
 
-## 表 / 结构 / 数据段扫描 (38)
+## 表 / 结构 / 数据段扫描 (50)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -152,6 +152,9 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [studioapi_SetupPlayerModel](locators/studioapi_SetupPlayerModel.md) | engine | func | — | Find the exact ClientDLL_CheckStudioInterface interface-mismatch literal and require exactly one hit. GoldSrc/HL25/CoF wording is |
 | [studioapi_StudioSetHeader](locators/studioapi_StudioSetHeader.md) | engine | func | — | Unique studio-interface diagnostic → owning function(s) → unique engine_studio_api table (validate_table_run; SvEngine 47/48 entries). |
 | [studioapi_StudioSetRenderamt](locators/studioapi_StudioSetRenderamt.md) | engine | func | — | Find the exact studio-interface diagnostic literal: HL_STUDIO_STRING ("Couldn't get client .dll studio model rendering interface. Version mismatch?\n") for… |
+| [studioapi_StudioSetRemapColors](locators/studioapi_StudioSetRemapColors.md) | engine | func | — | Unique studio-interface diagnostic → engine_studio_api slot 30 (0x78). Recovers r_topcolor / r_bottomcolor from two int stores in instruction order. |
+| [r_topcolor](locators/studioapi_StudioSetRemapColors.md) | engine | gv | — | First int store of studioapi_StudioSetRemapColors (parameter top). |
+| [r_bottomcolor](locators/studioapi_StudioSetRemapColors.md) | engine | gv | — | Second int store of studioapi_StudioSetRemapColors (parameter bottom). Do not sort by VA. |
 | [gl_filter_min](locators/gl_filter_min.md) | engine | gv | `Draw_TextureMode_f` | The handler writes both filter levels from one `modes` table. The walk takes the unique adjacent store pair whose source registers were loaded from one shared base with a four-byte displacement delta; the lower-offset load feeds `gl_filter_min`. |
 | [gl_filter_max](locators/gl_filter_max.md) | engine | gv | `Draw_TextureMode_f` | The higher-offset member of the same store pair. Never computed as `gl_filter_min ± 4`: the relation differs per build. |
 | [R_DrawSpriteModel](locators/R_DrawSpriteModel.md) | engine | func | — | `FULLMATCH:R_DrawSpriteModel:  couldn't get sprite frame for %s\n` — the Sys_Warning literal inside the function itself, byte-identical in all 15 (binary, platform) pairs including the BLOB `hw.decrypt.dll` builds. |
