@@ -1,0 +1,9 @@
+gv_name: window_center_x
+gv_va: '0xf7da90'
+gv_rva: '0xf7da90'
+gv_sig: 83 EC ?? A1 ?? ?? ?? ?? 89 5C 24 ?? 8B 5C 24 ?? 89 74 24 ?? 89 7C 24 ?? 85 C0 0F 84 ?? ?? ?? ?? 8D 54 24 ?? 89 54
+  24 ??
+gv_sig_va: '0x1729b0'
+gv_inst_offset: '0x74'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

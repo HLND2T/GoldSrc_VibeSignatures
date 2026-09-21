@@ -1,0 +1,8 @@
+func_name: CVideoMode_Common_UpdateWindowPosition
+func_va: '0x1dbbc20'
+func_rva: '0xbbc20'
+func_size: '0x6f'
+vtable_name: CVideoMode_OpenGL
+vfunc_offset: '0x28'
+vfunc_index: 10
+vfunc_sig: 83 EC 20 8B 0D ?? ?? ?? ?? 56 8D 54 24 ?? 57 8B 01 52 8D 54 24 ?? 52 8D 54 24 ?? 52 8D 54 24 ??
