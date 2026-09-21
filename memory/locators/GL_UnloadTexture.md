@@ -52,5 +52,10 @@ tags:
   (`mov edx, [esp+var_…]`) before the unload call. Treating that load as
   “edx holds the address of the slot” misses the callee; follow the slot store
   back to the original `lea` of the name buffer.
+- Direct `push [esp/ebp+slot]` also reads the spilled pointer, not the slot's
+  address. Resolve it through the same store tracking; otherwise the unload
+  call can be skipped in favor of the later `GL_LoadTexture` call. Behavioral
+  fixtures in `StudioSetupSkinWalkTests` cover both stack bases, direct pushes,
+  register reloads, and rejection of an unresolved snprintf destination.
 - `GL_UnloadTextures` is adjacent in several images and is a different
   function (iterates `servercount`).

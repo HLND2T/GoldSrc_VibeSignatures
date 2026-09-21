@@ -18,6 +18,110 @@ def walk(name):
     return runpy.run_path(str(ROOT / "ida_preprocessor_scripts" / name))["WALK"]
 
 
+class StudioSetupSkinWalkTests(unittest.TestCase):
+    """Select the unload call, even when a later load call shares its buffer."""
+
+    def locate(self, base, *, reload=False, stored=True, direct_dest=False):
+        def op(kind, reg="", addr=0, value=0):
+            return NS(type=kind, reg=REGISTERS.index(reg) if reg else -1, addr=addr, value=value, dtype=4)
+
+        def reg(name):
+            return op(REG, reg=name)
+
+        # ESP operands are relative to the current stack pointer; EBP is fixed.
+        stack_sp = -0x200
+        buffer_disp = 0x80 if base == "esp" else -0x180
+        slot_disp = 0x20 if base == "esp" else -0x1E0
+        buffer = op(DISPL, reg=base, addr=buffer_disp)
+        slot = op(DISPL, reg=base, addr=slot_disp)
+        entries = []
+
+        def emit(mnem, *ops, sp=stack_sp):
+            ea = 0x1000 + len(entries) * 0x10
+            entries.append(NS(ea=ea, mnem=mnem, ops=ops, sp=sp))
+            return ea
+
+        emit("lea", reg("eax"), buffer)
+        if stored:
+            emit("mov", slot, reg("eax"))
+        format_use = emit("push", op(5, value=0x8000))
+        dest_slot = op(DISPL, reg=base, addr=slot_disp + (4 if base == "esp" else 0))
+        emit("push", dest_slot if direct_dest else reg("eax"), sp=stack_sp - 4)
+        snprintf_site = emit("call", op(7, value=0x2000), sp=stack_sp - 8)
+        emit("add", reg("esp"), op(5, value=8), sp=stack_sp - 8)
+        if reload:
+            emit("mov", reg("edx"), slot)
+        emit("push", reg("edx") if reload else slot)
+        unload_site = emit("call", op(7, value=0x3000), sp=stack_sp - 4)
+        emit("add", reg("esp"), op(5, value=4), sp=stack_sp - 4)
+        emit("lea", reg("eax"), buffer)
+        emit("push", reg("eax"))
+        load_site = emit("call", op(7, value=0x4000), sp=stack_sp - 4)
+        by_ea = {entry.ea: entry for entry in entries}
+
+        class FormatString:
+            ea = 0x8000
+
+            def __str__(self):
+                return "%s%d"
+
+        class Strings(list):
+            def setup(self, **kwargs):
+                pass
+
+        def decode(insn, ea):
+            insn.ops = by_ea[ea].ops
+            return 1
+
+        ns = {
+            "values": {"dm_base": "DM_Base.bmp", "name_format": "%s%d"},
+            "exact_string_owner": lambda literal: 0x1000,
+            "ida_funcs": NS(get_func=lambda ea: NS(start_ea=0x1000)),
+            "ida_nalt": NS(STRTYPE_C=0),
+            "idaapi": NS(o_void=0, o_imm=5, o_near=7, o_far=6, o_reg=REG, o_displ=DISPL, o_phrase=PHRASE),
+            "ida_idp": NS(get_reg_name=lambda index, size: REGISTERS[index]),
+            "idautils": NS(
+                Strings=lambda **kwargs: Strings([FormatString()]),
+                XrefsTo=lambda ea, flags: [NS(frm=format_use)],
+                FuncItems=lambda ea: list(by_ea),
+            ),
+            "idc": NS(
+                print_insn_mnem=lambda ea: by_ea[ea].mnem,
+                get_operand_value=lambda ea, index: by_ea[ea].ops[index].value,
+            ),
+            "reg4": lambda operand: REGISTERS[operand.reg],
+            "signed32": lambda value: value,
+            "local_call_target": {snprintf_site: 0x2000, unload_site: 0x3000, load_site: 0x4000}.get,
+        }
+        modules = {
+            "ida_frame": NS(get_spd=lambda function, ea: by_ea[ea].sp),
+            "ida_ua": NS(insn_t=NS, decode_insn=decode, get_dtype_size=lambda dtype: dtype),
+        }
+        with patch.dict(sys.modules, modules):
+            exec(walk("find-R_StudioSetupSkin.py"), ns)
+        return ns["result"]
+
+    def test_direct_spill_argument_selects_unload_before_load(self):
+        for base in ("esp", "ebp"):
+            with self.subTest(base=base):
+                self.assertEqual("0x3000", self.locate(base)["unload_ea"])
+
+    def test_register_reload_preserves_unload_selection(self):
+        for base in ("esp", "ebp"):
+            with self.subTest(base=base):
+                self.assertEqual("0x3000", self.locate(base, reload=True)["unload_ea"])
+
+    def test_snprintf_destination_can_be_loaded_directly_from_spill(self):
+        for base in ("esp", "ebp"):
+            with self.subTest(base=base):
+                self.assertEqual("0x3000", self.locate(base, direct_dest=True)["unload_ea"])
+
+    def test_unknown_snprintf_destination_is_rejected(self):
+        for base in ("esp", "ebp"):
+            with self.subTest(base=base):
+                self.assertIn("error", self.locate(base, stored=False, direct_dest=True))
+
+
 class OverviewWalkTests(unittest.TestCase):
     def locate(self, sizes, calls):
         sites = [0x1010 + i * 0x10 for i in range(len(sizes))]

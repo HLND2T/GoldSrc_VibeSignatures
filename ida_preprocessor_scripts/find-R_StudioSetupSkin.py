@@ -133,8 +133,11 @@ else:
             def eval_value(index, operand):
                 if operand is None:
                     return None
-                if operand[0] in ('imm', 'esp', 'ebp'):
+                if operand[0] == 'imm':
                     return operand
+                if operand[0] in ('esp', 'ebp'):
+                    # A memory operand reads the slot; only lea produces its address.
+                    return load_slot(index, operand)
                 if operand[0] == 'reg':
                     return eval_reg(index, operand[1])
                 return None
