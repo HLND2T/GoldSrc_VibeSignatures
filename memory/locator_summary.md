@@ -10,15 +10,15 @@ permalink: goldsrc-vibesignatures/locator-summary
 分类依据是每个 finder 的主要发现锚；部分符号实际会组合多种机制（例如先字符串锚定 owning function，再读表槽），
 此处归入其决定性的一步。**Summary** 列摘自各 locator 文件 `## How it is located` 的首段。
 
-共 **237** 个 locator；模块 engine 198，client 39。
+共 **240** 个 locator；模块 engine 201，client 39。
 
 | 定位机制 | 数量 |
 | --- | --- |
-| 字符串锚 | 67 |
+| 字符串锚 | 68 |
 | 浮点常量锚 | 3 |
 | 表 / 结构 / 数据段扫描 | 38 |
 | 确定性 xref 交集锚 | 7 |
-| 前驱产物复用（下游确定性恢复） | 32 |
+| 前驱产物复用（下游确定性恢复） | 34 |
 | LLM_DECOMPILE 定位 | 55 |
 | vtable / vfunc 槽恢复 | 10 |
 | 数值 scalar 提取 | 9 |
@@ -26,7 +26,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 
 ---
 
-## 字符串锚 (66)
+## 字符串锚 (68)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -90,6 +90,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [S_LoadSound](locators/S_LoadSound.md) | engine | func | — | preprocess_common_skill with a single exact string xref: FULLMATCH:S_LoadSound: Couldn't load %s\n — the Con_DPrintf that engine/snd_mem.c emits when the sound file… |
 | [SkyboxCommand](locators/SkyboxCommand.md) | engine | func | — | preprocess_common_skill with a single exact string xref: FULLMATCH:No skybox name specified\n — the usage message the SvEngine skybox console command prints when… |
 | [Sys_Error](locators/Sys_Error.md) | engine | func | — | xref_strings = ["FATAL ERROR (shutting down): %s"] — substring match (the note records the anchor with a trailing \n, the script does not require it). XrefsTo on… |
+| [Sys_InitGame](locators/Sys_InitGame.md) | engine | func | — | exact_string_owner("Sys_InitLauncherInterface()") — TRACEINIT stringifies that callee only inside Sys_InitGame. The matching shutdown literal is shared with Sys_ShutdownGame and is not a discovery anchor. The same finder then recovers pmainwindow/maindc from the unique GL_SetMode call. |
 | [Sys_ShutdownGame](locators/Sys_ShutdownGame.md) | engine | func | — | xref_strings: ["FULLMATCH:Sys_Shutdown()"] maps the stringified TRACESHUTDOWN argument to its owning function; the same literal is also owned by Sys_InitGame, which stringifies the TRACEINIT(Sys_Init(), Sys_Shutdown()) pair, so exclude_strings: ["FULLMATCH:Sys_Init()"] removes it. FULLMATCH: keeps "Sys_Shutdown()" from matching "Sys_ShutdownMemory()" and vice versa. Exactly one function must survive. |
 | [Sys_InitMemory](locators/Sys_InitMemory.md) | engine | func | — | Both producers use the same Pattern A machinery (preprocess_common_skill → preprocess_func_xrefs_via_mcp): one FULLMATCH: string anchor, XrefsTo → owning function… |
 | [VideoMode_Create](locators/VideoMode_Create.md) | engine | func | — | Single positive anchor: xref_strings: ["FULLMATCH:-fullscreen"] — exact C-string match on the fullscreen command-line literal, then the owning functions of its… |
@@ -177,11 +178,13 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [R_StudioRenderModel](locators/R_StudioRenderModel.md) | engine | func | `R_StudioCalcAttachments`, `R_StudioDrawModel`, `R_StudioDrawPlayer`, `R_StudioSetupBones`, `cl_sprite_shell`, `g_ChromeOrigin` | The func_xrefs entry declares xref_gvs: ["cl_sprite_shell", "g_ChromeOrigin"] and no strings/signatures/functions: the candidate is the function that intersects the… |
 | [V_StartPitchDrift](locators/V_StartPitchDrift.md) | client | func | — | _client_registration_common.REGISTRATION_QUERY is invoked with the label centerview. The helper collects strings whose NUL-terminated bytes end with the label |
 
-## 前驱产物复用（下游确定性恢复） (32)
+## 前驱产物复用（下游确定性恢复） (34)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
 | [GL_UnloadTexture](locators/GL_UnloadTexture.md) | engine | func | `R_StudioSetupSkin` | Same finder as R_StudioSetupSkin. After the unique "%s%d" snprintf of the remap name buffer, the first later local call whose arg0 is that buffer is GL_UnloadTexture(name). Distinct from GL_UnloadTextures. |
+| [pmainwindow](locators/pmainwindow.md) | engine | gv | `Sys_InitGame` | Unique GL_SetMode/GL_SetModeLegacy call in Sys_InitGame whose arg0 is a dereference of one writable global (`*pmainwindow`) and whose arg1/arg2 are addresses of two other writable globals. The load instruction names pmainwindow. |
+| [maindc](locators/maindc.md) | engine | gv | `Sys_InitGame` | Same call: arg1 is `&maindc`, arg2 is `&baseRC`. Pick by argument slot, not .bss adjacency. Linux SDL still has the 4-byte global. |
 | [cl_funcs](locators/cl_funcs.md) | engine | gv | `ClientDLL_Init` | find-ClientDLL_Init-cl_funcs (SvEngine Linux) takes the called pointer of cl_funcs.pInitFunc(&cl_enginefuncs, 7); pInitFunc is the first member, so that address is &cl_funcs. Windows keeps the find-ClientDLL_HudInit-decompiles path. |
 | [r_refdef](locators/r_refdef.md) | engine | gv | `CL_SetDevOverView`, `cl_funcs` | The pointer argument of the unique CL_SetDevOverView call. The caller is derived, not read from R_RenderScene, because svencoop-10257 Windows inlines it into R_RenderView. |
 | [ClientDLL_DrawNormalTriangles](locators/ClientDLL_DrawNormalTriangles.md) | engine | func | `CL_SetDevOverView`, `cl_funcs` | The unique direct callee of the scene renderer that references exactly one cl_funcs member and additionally dispatches through a non-member function pointer (tri.RenderMode). |
