@@ -215,6 +215,11 @@ modules:
           - r_worldentity.{platform}.yaml
           - cl_worldmodel.{platform}.yaml
           - GL_UnloadTextures.{platform}.yaml
+      - name: find-R_DecalInit
+        expected_output:
+          - R_DecalInit.{platform}.yaml
+          - gDecalPool.{platform}.yaml
+          - gDecalCache.{platform}.yaml
       - name: find-R_RenderView
         expected_output:
           - R_RenderView.{platform}.yaml
@@ -1027,6 +1032,12 @@ modules:
         category: func
       - name: R_NewMap
         category: func
+      - name: R_DecalInit
+        category: func
+      - name: gDecalPool
+        category: gv
+      - name: gDecalCache
+        category: gv
       - name: cl_max_edicts
         category: gv
       - name: cl_entities

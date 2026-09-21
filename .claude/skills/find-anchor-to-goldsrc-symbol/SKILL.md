@@ -37,10 +37,9 @@ For this pattern, anchor `ClientDLL_Init` through its `"ScreenShake"` registrati
 
 Use this order. Do not advance to a weaker method after a stronger method produced one validated candidate.
 
-Byte signatures are output validation only. Never put a byte pattern in `xref_signatures` or
-`exclude_signatures` to locate or disambiguate a target. A finder governed by this skill must pass
-`old_yaml_map=None` to `preprocess_common_skill` so a prior artifact's `func_sig` cannot bypass the
-required anchor discovery chain.
+A code signature is an accepted discovery anchor (step 3) only under the coverage budget below.
+A finder governed by this skill must pass `old_yaml_map=None` to `preprocess_common_skill` so a
+prior artifact's `func_sig` cannot bypass the required anchor discovery chain.
 
 ### 1. Direct `xref_strings` for the Owning Function
 
@@ -90,11 +89,36 @@ validate them on the actual Linux IDB. Missing xrefs, compiler transformations, 
 candidates require investigation, not guessed addresses or silent removal of constraints.
 Pass `old_yaml_map=None`; generated signatures remain output validation only.
 
-### 3. `LLM_DECOMPILE` from a Predecessor
+### 3. Code Signatures Within a Coverage Budget
 
-Use this only if no validated direct string or floating-point constant anchor can identify
-one target function. Locate the predecessor itself through a validated deterministic anchor;
-do not use a signature to locate it.
+A byte pattern may be the discovery anchor when no target-owned string or validated constant
+set exists, and when the pattern is not derivable from a stronger source. The repository
+budget is **at most four code signatures covering every configured game version and platform**
+for the target: a larger set means the pattern is not a viable anchor and an LLM predecessor
+(step 4) is preferred.
+
+- A signature must encode a source-level invariant of the target body, not a build identity:
+  state in the finder docstring which source statement each signature encodes and why the
+  encoding is stable. Layout constants that only happen to be equal today (sizes, offsets,
+  table lengths) are hints; verify them against the current binary before relying on them.
+- Signature selection must be deterministic and fail closed: try the signatures in a declared
+  priority order and require the first one that matches to resolve to exactly one owning
+  function across the whole image. Zero matches and multiple owning functions are failures,
+  never a fallback to a guessed address.
+- Because Windows and Linux compilers place the same source statement differently, one
+  signature usually covers only one compiler family. State the per-platform coverage of every
+  signature and keep the union complete; a signature that matches no configured build is dead
+  weight and must be removed.
+- Independently verify the located body (source role, referenced data, call structure) before
+  emitting an artifact. Uniqueness alone proves the instruction, not the identity.
+- A byte pattern in `exclude_signatures` is allowed only to reject a sibling function that a
+  positive signature also matches; record which sibling and why.
+
+### 4. `LLM_DECOMPILE` from a Predecessor
+
+Use this only if no validated direct string, floating-point constant, or budgeted code
+signature can identify one target function. Locate the predecessor itself through a validated
+deterministic anchor; do not use a signature to locate it.
 
 1. Deterministically locate a predecessor with its own stable string, validated constant set,
    or current artifact produced by such a locator.
@@ -134,7 +158,9 @@ Require every applicable check:
 1. The MCP session remains bound to the requested binary and reports 32-bit x86.
 2. For a string anchor, the exact string occurs once and its code xrefs resolve to one owning
    function start. For a floating-point anchor, actual scalar reads of all required values
-   identify exactly one owning function; duplicate constant-pool entries are allowed.
+   identify exactly one owning function; duplicate constant-pool entries are allowed. For a
+   code signature, the selected signature resolves to exactly one owning function and the
+   declared per-version/platform coverage union is complete.
 3. A function's RVA is `func_va - image_base`; a true global's RVA is `gv_va - image_base`. Persist RVA and a category-appropriate signature, never a process-load address alone.
 4. The generated `func_sig` or `gv_sig` is unique in the current binary and passes the repository artifact validator. A code-operand locator must separately validate its instruction form, operand offset, and decoded value.
 5. Cross-platform peers have the same source role and compatible ABI/control-flow evidence; do not require equal VAs, RVAs, sizes, or compiler output.
@@ -165,10 +191,11 @@ Treat these values only as regression evidence for their exact SHA-256 inputs, n
 
 - Implement deterministic discovery in `ida_preprocessor_scripts/find-<symbol>.py` through `preprocess_common_skill`, `func_xrefs`, and the target category's supported field set.
 - Direct target strings are the first locator, followed by validated target-owned floating-point
-  constant sets. If neither works, locate a predecessor deterministically, generate its reference
-  YAML, and use `LLM_DECOMPILE` to recover the direct call target. For a global, continue from
-  its verified owning function to recover the data reference.
-- Pass `old_yaml_map=None` for string/float/LLM discovery. The shared helper must validate the emitted category-appropriate signature after discovery, but must not use a prior artifact signature to locate the symbol.
+  constant sets, then the budgeted code signatures of step 3. If none works, locate a predecessor
+  deterministically, generate its reference YAML, and use `LLM_DECOMPILE` to recover the direct
+  call target. For a global, continue from its verified owning function to recover the data
+  reference.
+- Pass `old_yaml_map=None` for string/float/signature/LLM discovery. The shared helper must validate the emitted category-appropriate signature after discovery, but must not use a prior artifact signature to locate the symbol.
 - Add `LLM_DECOMPILE` only for the explicit predecessor fallback described above. Its result section must match the target: `found_call` for functions and `found_gv` for globals.
 - Use the repository's owned lifecycle described in [[idalib-mcp]] on `127.0.0.1:13337`. The installed `ida-pro-mcp` command is an IDA plugin configurator, not this repository's HTTP supervisor.
 - Add Windows and Linux expected outputs, category-correct config symbols, and tests whenever the finder is registered in a production config.

@@ -166,6 +166,127 @@ class TextureWalkTests(unittest.TestCase):
         ]
 
 
+class DecalInitWalkTests(unittest.TestCase):
+    """Run the complete decal locator against controlled signature and instruction inputs."""
+
+    def locate(self, hits=None, stores=(0x6000,), cache_form="absolute"):
+        finder = runpy.run_path(str(ROOT / "ida_preprocessor_scripts/find-R_DecalInit.py"))
+        signatures = finder["SIGNATURE_ORDER"]
+        hits = ([0x1020], [0x1000]) if hits is None else hits
+        matches = {bytes.fromhex(signature): addresses for (_, signature), addresses in zip(signatures, hits)}
+        self.searched = []
+
+        def find_bytes(pattern, start, end):
+            self.searched.append(pattern)
+            return next((ea for ea in matches[pattern] if start <= ea < end), 0xFFFFFFFF)
+
+        def get_func(ea):
+            for start in (0x1000, 0x2000, 0x3000):
+                if start <= ea < start + 0x100:
+                    return NS(start_ea=start, end_ea=start + 0x100)
+            return None
+
+        def op(kind, *, addr=0, value=0, reg=None):
+            return NS(type=kind, addr=addr, value=value, reg=reg)
+
+        entries = [
+            ("push", NS(ops=[op(5, value=0x5000)], size=5, displacement=1)),
+            ("call", NS(ops=[op(7, addr=0x3000)], size=5, displacement=1)),
+        ]
+        for address in stores:
+            if cache_form in ("register", "pic"):
+                source = (
+                    op(5, value=address) if cache_form == "register" else op(DISPL, reg="ebx", addr=address - 0x4000)
+                )
+                entries.append(
+                    (
+                        "mov" if cache_form == "register" else "lea",
+                        NS(ops=[op(REG, reg="eax"), source], size=6, displacement=2),
+                    )
+                )
+                destination = op(PHRASE, reg="eax")
+            elif cache_form == "indexed":
+                destination = op(DISPL, reg="ecx", addr=address)
+            else:
+                destination = op(MEM, addr=address)
+            entries.append(("mov", NS(ops=[destination, op(5, value=0xFFFFFFFF)], size=10, displacement=2)))
+        instructions = {0x1000 + index * 0x10: entry for index, entry in enumerate(entries)}
+        ns = {
+            "values": {"signatures": signatures, "pool_lookback": finder["POOL_LOOKBACK"]},
+            "idaapi": NS(
+                o_void=0,
+                o_reg=REG,
+                o_mem=MEM,
+                o_displ=DISPL,
+                o_phrase=PHRASE,
+                o_imm=5,
+                BADADDR=0xFFFFFFFF,
+                inf_get_min_ea=lambda: 0,
+                inf_get_max_ea=lambda: 0x10000,
+            ),
+            "ida_bytes": NS(find_bytes=find_bytes),
+            "ida_funcs": NS(get_func=get_func),
+            "idautils": NS(
+                FuncItems=lambda start: list(instructions), DecodeInstruction=lambda ea: instructions[ea][1]
+            ),
+            "idc": NS(
+                print_insn_mnem=lambda ea: instructions[ea][0],
+                generate_disasm_line=lambda ea, flags: instructions[ea][0],
+            ),
+            "got_anchor": lambda start: (0x4000, "ebx") if cache_form == "pic" else (None, None),
+            "is_writable_data": lambda ea: 0x5000 <= ea < 0x8000,
+            "is_got": lambda ea: False,
+            "reg4": lambda operand: operand.reg,
+            "signed32": lambda value: value,
+            "disp32_offset": lambda insn: insn.displacement,
+            "direct_calls": lambda start: {0x3000: [0x1010]},
+        }
+        exec(finder["LOCATE_BODY"], ns)
+        return ns["result"]
+
+    def test_accepts_unique_first_signature_and_supported_cache_operands(self):
+        for form in ("absolute", "indexed", "register", "pic"):
+            with self.subTest(form=form):
+                result = self.locate(cache_form=form)
+                self.assertNotIn("error", result)
+                self.assertEqual("loop_store", result["signature"])
+                self.assertEqual("0x5000", result["gDecalPool"]["gv_ea"])
+                self.assertEqual("0x6000", result["gDecalCache"]["gv_ea"])
+                self.assertEqual(1, len(set(self.searched)))
+
+    def test_falls_back_only_when_first_signature_has_no_hits(self):
+        result = self.locate(hits=([], [0x1000]))
+        self.assertNotIn("error", result)
+        self.assertEqual("pool_memset", result["signature"])
+
+    def test_rejects_ambiguous_first_signature_without_searching_fallback(self):
+        self.assertIn("error", self.locate(hits=([0x1020, 0x2020], [0x1000])))
+        self.assertEqual(1, len(set(self.searched)))
+
+    def test_rejects_ownerless_first_signature_without_searching_fallback(self):
+        self.assertIn("error", self.locate(hits=([0x9000], [0x1000])))
+        self.assertEqual(1, len(set(self.searched)))
+
+    def test_accepts_multiple_hits_in_one_owner(self):
+        self.assertNotIn("error", self.locate(hits=([0x1020, 0x1030], [])))
+
+    def test_rejects_absent_or_ambiguous_fallback(self):
+        for hits in (([], []), ([], [0x1000, 0x2000])):
+            with self.subTest(hits=hits):
+                self.assertIn("error", self.locate(hits=hits))
+
+    def test_rejects_multiple_qualifying_stores_even_for_the_same_global(self):
+        for form in ("absolute", "indexed", "register", "pic"):
+            for stores in ((0x6000, 0x7000), (0x6000, 0x6000)):
+                with self.subTest(form=form, stores=stores):
+                    result = self.locate(stores=stores, cache_form=form)
+                    self.assertIn("error", result)
+                    self.assertNotIn("gDecalCache", result)
+
+    def test_rejects_missing_cache_store(self):
+        self.assertIn("error", self.locate(stores=()))
+
+
 class TextureIdentityTests(unittest.TestCase):
     def test_family_names(self):
         from ida_preprocessor_scripts._engine_texture_mode_common import texture_mode_name
