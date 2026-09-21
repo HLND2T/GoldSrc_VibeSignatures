@@ -589,6 +589,10 @@ modules:
           - studioapi_SetupModel.{platform}.yaml
         expected_output:
           - R_StudioSetupModel.{platform}.yaml
+      - name: find-R_StudioSetupSkin
+        expected_output:
+          - R_StudioSetupSkin.{platform}.yaml
+          - GL_UnloadTexture.{platform}.yaml
       - name: find-R_StudioDrawModel-svencoop
         expected_input:
           - R_StudioDrawPlayer.{platform}.yaml
@@ -1070,6 +1074,8 @@ modules:
         category: gv
       - name: r_plightvec
         category: gv
+      - name: R_StudioSetupSkin
+        category: func
       - name: R_CullBox
         category: func
       - name: SetFilterMode_I
@@ -1426,6 +1432,8 @@ modules:
       - name: GL_SelectTexture
         category: func
       - name: GL_UnloadTextures
+        category: func
+      - name: GL_UnloadTexture
         category: func
       - name: GL_LoadTexture2
         category: func
