@@ -89,7 +89,7 @@ class HostBasepalStoreTests(unittest.TestCase):
         code = [
             insn("mov", [("reg", "ebp"), ("imm", NAME)], sp=sp, ea=0x10),
             insn("test", [("reg", "eax"), ("reg", "eax")], sp=sp, ea=0x14),
-            insn("jz", sp=sp, ea=0x16),
+            insn("jz", [("imm", 0x100)], sp=sp, ea=0x16),
             insn("mov", [("stack", sp + 4), ("reg", "ebp")], sp=sp, ea=0x18),
             insn("mov", [("stack", sp), ("imm", 0x800)], sp=sp, ea=0x19),
             insn("call", sp=sp, call_target=HUNK, ea=0x20),
@@ -100,6 +100,28 @@ class HostBasepalStoreTests(unittest.TestCase):
         result = locate(code)
         self.assertEqual("0x4000", result["gv"]["gv_ea"])
         self.assertEqual("0x2e", result["gv"]["insn_ea"])
+
+    def test_rejects_jcc_that_skips_palette_name_assignment(self):
+        sp = -0x103C
+        code = [
+            insn("jz", [("imm", 0x18)], sp=sp, ea=0x10),
+            insn("mov", [("reg", "ebp"), ("imm", NAME)], sp=sp, ea=0x14),
+            insn("mov", [("stack", sp + 4), ("reg", "ebp")], sp=sp, ea=0x18),
+            insn("mov", [("stack", sp), ("imm", 0x800)], sp=sp, ea=0x19),
+            insn("call", sp=sp, call_target=HUNK, ea=0x20),
+            insn("mov", [("unknown", None), ("reg", "eax")], sp=sp, written=(GV,), ea=0x2E, disp=2),
+        ]
+        self.assertIn("error", locate(code))
+
+    def test_rejects_implicit_eax_write_before_store(self):
+        code = [
+            insn("push", [("imm", NAME)], sp=0, ea=0x10),
+            insn("push", [("imm", 0x800)], sp=-4, ea=0x15),
+            insn("call", sp=-8, call_target=HUNK, ea=0x1A),
+            insn("mul", [("reg", "ecx")], sp=-8, ea=0x1F),
+            insn("mov", [("mem", GV), ("reg", "eax")], sp=-8, written=(GV,), ea=0x22, disp=1),
+        ]
+        self.assertIn("error", locate(code))
 
     def test_rejects_missing_palette_name_argument(self):
         code = [

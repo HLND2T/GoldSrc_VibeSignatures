@@ -50,4 +50,5 @@ Producer: `ida_preprocessor_scripts/find-Host_Init.py` and siblings; shared walk
 - Walk helpers must parse hex owner EAs with `int(value, 0)`.
 - A nearby `0x800` immediate plus the next global write is not `host_basepal`; the store must write the `Hunk_AllocName` return register.
 - `local_call_target` / `resolve_elf_plt` reject a PIC PLT stub when `.got.plt` still holds the lazy resolver; `host_basepal` must resolve that stub from the caller's GOT register before comparing with the `Hunk_AllocName` artifact.
-- SvEngine `Host_LoadBasePalette` loads `palette.lmp` into a callee-saved register, then `test`/`jz` on `COM_LoadHunkFile` before `mov [esp+4], ebp`. Stack recovery stays fail-closed across `jcc`; following `ebp` through that conditional jump is required.
+- SvEngine `Host_LoadBasePalette` loads `palette.lmp` into a callee-saved register, then `test`/`jz` on `COM_LoadHunkFile` before `mov [esp+4], ebp`. The `jz` taken target is the error path after the call, so the name assignment dominates the call. A `jcc` that can skip the assignment while still reaching the call leaves the name argument unknown.
+- After `Hunk_AllocName`, only proven keep-alive instructions may preserve the return register: `mov` copies, `cmp`/`test`/`push`, and `add`/`sub esp, imm`. Implicit EAX writes such as `mul` kill the live set.

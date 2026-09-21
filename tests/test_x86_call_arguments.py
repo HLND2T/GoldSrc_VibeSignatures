@@ -165,21 +165,42 @@ class CallArgumentsTests(unittest.TestCase):
 
     def test_callee_saved_register_survives_conditional_jump(self):
         instructions = [
-            {"mnem": "mov", "sp": -16, "ops": [("reg", "ebp"), ("imm", 0x5000)]},
-            {"mnem": "test", "sp": -16, "ops": [("reg", "eax"), ("reg", "eax")]},
-            {"mnem": "jz", "sp": -16, "ops": []},
-            {"mnem": "mov", "sp": -16, "ops": [("stack", -12), ("reg", "ebp")]},
-            {"mnem": "mov", "sp": -16, "ops": [("stack", -16), ("imm", 0x800)]},
-            {"mnem": "call", "sp": -16, "ops": []},
+            {"mnem": "mov", "sp": -16, "ops": [("reg", "ebp"), ("imm", 0x5000)], "ea": 0x10},
+            {"mnem": "test", "sp": -16, "ops": [("reg", "eax"), ("reg", "eax")], "ea": 0x14},
+            {"mnem": "jz", "sp": -16, "ops": [("imm", 0x40)], "ea": 0x16},
+            {"mnem": "mov", "sp": -16, "ops": [("stack", -12), ("reg", "ebp")], "ea": 0x18},
+            {"mnem": "mov", "sp": -16, "ops": [("stack", -16), ("imm", 0x800)], "ea": 0x1C},
+            {"mnem": "call", "sp": -16, "ops": [], "ea": 0x20},
         ]
         self.assertEqual([0x800, 0x5000], recover_call_arguments(instructions, 5, 2))
 
+    def test_jcc_that_skips_assignment_does_not_prove_register(self):
+        instructions = [
+            {"mnem": "jz", "sp": -16, "ops": [("imm", 0x18)], "ea": 0x10},
+            {"mnem": "mov", "sp": -16, "ops": [("reg", "ebp"), ("imm", 0x5000)], "ea": 0x14},
+            {"mnem": "mov", "sp": -16, "ops": [("stack", -12), ("reg", "ebp")], "ea": 0x18},
+            {"mnem": "mov", "sp": -16, "ops": [("stack", -16), ("imm", 0x800)], "ea": 0x1C},
+            {"mnem": "call", "sp": -16, "ops": [], "ea": 0x20},
+        ]
+        self.assertEqual([0x800, None], recover_call_arguments(instructions, 4, 2))
+
+    def test_jcc_with_conflicting_reaching_values_is_unknown(self):
+        instructions = [
+            {"mnem": "mov", "sp": -16, "ops": [("reg", "ebp"), ("imm", 0x6000)], "ea": 0x10},
+            {"mnem": "jz", "sp": -16, "ops": [("imm", 0x1C)], "ea": 0x14},
+            {"mnem": "mov", "sp": -16, "ops": [("reg", "ebp"), ("imm", 0x5000)], "ea": 0x18},
+            {"mnem": "mov", "sp": -16, "ops": [("stack", -12), ("reg", "ebp")], "ea": 0x1C},
+            {"mnem": "mov", "sp": -16, "ops": [("stack", -16), ("imm", 0x800)], "ea": 0x20},
+            {"mnem": "call", "sp": -16, "ops": [], "ea": 0x24},
+        ]
+        self.assertEqual([0x800, None], recover_call_arguments(instructions, 5, 2))
+
     def test_caller_saved_register_still_dies_at_conditional_jump(self):
         instructions = [
-            {"mnem": "mov", "sp": -16, "ops": [("reg", "eax"), ("imm", 0x5000)]},
-            {"mnem": "jz", "sp": -16, "ops": []},
-            {"mnem": "mov", "sp": -16, "ops": [("stack", -16), ("reg", "eax")]},
-            {"mnem": "call", "sp": -16, "ops": []},
+            {"mnem": "mov", "sp": -16, "ops": [("reg", "eax"), ("imm", 0x5000)], "ea": 0x10},
+            {"mnem": "jz", "sp": -16, "ops": [("imm", 0x40)], "ea": 0x14},
+            {"mnem": "mov", "sp": -16, "ops": [("stack", -16), ("reg", "eax")], "ea": 0x18},
+            {"mnem": "call", "sp": -16, "ops": [], "ea": 0x1C},
         ]
         self.assertEqual([None], recover_call_arguments(instructions, 3, 1))
 

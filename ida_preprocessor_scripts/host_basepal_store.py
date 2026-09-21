@@ -3,7 +3,8 @@
 ``engine/host.c`` assigns ``host_basepal = Hunk_AllocName(2048, "palette.lmp")``.
 The locator requires the call target, both C arguments, and EAX/return-register
 dataflow into the store. Nearby 0x800 immediates and unrelated global writes
-are not enough.
+are not enough. After the call, only proven keep-alive instructions may preserve
+the return register; implicit writers such as ``mul`` kill it.
 """
 
 from ida_preprocessor_scripts.x86_call_arguments import recover_call_arguments
@@ -41,13 +42,16 @@ def locate_palette_hunk_store(
                 elif dest_reg in live:
                     live.discard(dest_reg)
                 continue
-            if dest and dest[0] == "reg" and dest[1] in live and mnem not in ("cmp", "test", "push"):
-                live.discard(dest[1])
+            if mnem in ("cmp", "test", "push"):
+                continue
+            if mnem in ("add", "sub") and dest == ("reg", "esp") and src and src[0] == "imm":
                 continue
             if mnem != "mov" or not src or src[0] != "reg" or src[1] not in live:
+                live.clear()
                 continue
             written = later.get("written") or set()
             if len(written) != 1 or not later.get("disp"):
+                live.clear()
                 continue
             gv = next(iter(written))
             candidates.append(

@@ -229,6 +229,8 @@ else:
                             operand = ('reg', reg4(op))
                     elif kind == int(idaapi.o_imm):
                         operand = ('imm', int(op.value) & 0xFFFFFFFF)
+                    elif kind in (int(idaapi.o_near), int(idaapi.o_far)):
+                        operand = ('imm', int(idc.get_operand_value(entry['ea'], index)) & 0xFFFFFFFF)
                     elif kind in (int(idaapi.o_displ), int(idaapi.o_phrase)):
                         text = (idc.print_operand(entry['ea'], index) or '').lower()
                         if '[esp' in text and not any(
