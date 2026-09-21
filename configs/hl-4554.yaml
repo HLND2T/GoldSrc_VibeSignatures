@@ -706,6 +706,11 @@ modules:
       - name: find-GL_Shutdown
         expected_output:
           - GL_Shutdown.{platform}.yaml
+      - name: find-Sys_InitGame
+        expected_output:
+          - Sys_InitGame.{platform}.yaml
+          - pmainwindow.{platform}.yaml
+          - maindc.{platform}.yaml
       - name: find-Sys_ShutdownGame
         expected_output:
           - Sys_ShutdownGame.{platform}.yaml
@@ -1416,6 +1421,12 @@ modules:
         platform: windows
       - name: GL_Shutdown
         category: func
+      - name: Sys_InitGame
+        category: func
+      - name: pmainwindow
+        category: gv
+      - name: maindc
+        category: gv
       - name: Sys_ShutdownGame
         category: func
       - name: Sys_ShutdownGame_to_GL_Shutdown_callsite_0

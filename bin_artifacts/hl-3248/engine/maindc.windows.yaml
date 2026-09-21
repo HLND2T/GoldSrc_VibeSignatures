@@ -1,0 +1,8 @@
+gv_name: maindc
+gv_va: '0x24917c0'
+gv_rva: '0x7917c0'
+gv_sig: 8B 44 24 ?? 8B 4C 24 ?? 81 EC 08 02 00 00 A3 ?? ?? ?? ?? 33 C0 89 0D ?? ?? ?? ?? 57 B9 8F 00 00 00 BF ?? ?? ?? ??
+gv_sig_va: '0x1dbb070'
+gv_inst_offset: '0xa2'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

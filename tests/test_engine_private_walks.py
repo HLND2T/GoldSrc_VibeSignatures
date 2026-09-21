@@ -18,6 +18,130 @@ def walk(name):
     return runpy.run_path(str(ROOT / "ida_preprocessor_scripts" / name))["WALK"]
 
 
+class SysInitGameWalkTests(unittest.TestCase):
+    """Exercise the complete finder with decoded operands and real flow recovery."""
+
+    def locate(self, *, address="[eax]", displacement=0, width=4, load_width=4, branch=None, pic=False):
+        entries = []
+        sp = 0
+
+        def op(kind, *, reg="", addr=0, value=0, dtype=4, text=""):
+            return NS(type=kind, reg=reg, addr=addr, value=value, dtype=dtype, text=text)
+
+        def emit(mnem, *ops, targets=()):
+            nonlocal sp
+            ea = 0x1000 + len(entries) * 8
+            entries.append(
+                dict(
+                    ea=ea,
+                    mnem=mnem,
+                    insn=NS(ops=[*ops, op(0)]),
+                    targets=set(targets),
+                    written=set(),
+                    disp=1 if targets else 0,
+                    len=8,
+                    disasm=mnem,
+                    sp=sp,
+                )
+            )
+            if mnem == "push":
+                sp -= 4
+            return ea
+
+        if branch:
+            emit("jz", op(7))
+        emit(
+            "mov",
+            op(REG, reg="eax", dtype=load_width),
+            op(DISPL if pic else MEM, reg="ebx", addr=0x4000, dtype=load_width, text="[ebx+4000h]"),
+            targets=(0x4000,),
+        )
+        use = emit(
+            "mov",
+            op(REG, reg="eax"),
+            op(DISPL if displacement else PHRASE, reg="eax", addr=displacement, dtype=width, text=address),
+        )
+        for gv in (0x6000, 0x5000):
+            if pic:
+                emit("lea", op(REG, reg="edx"), op(DISPL, reg="ebx", addr=gv, text=f"[ebx+{gv:x}h]"), targets=(gv,))
+                emit("push", op(REG, reg="edx"))
+            else:
+                emit("push", op(5, value=gv), targets=(gv,))
+        emit("push", op(REG, reg="eax"))
+        emit("call", op(7, value=0x7000))
+        end = emit("ret")
+        by_ea = {e["ea"]: e for e in entries}
+        edges = {e["ea"]: [entries[i + 1]["ea"]] if i + 1 < len(entries) else [] for i, e in enumerate(entries)}
+        if branch:
+            target = {"bypass": use, "unknown": 0x9000, "guarded": end}[branch]
+            entries[0]["insn"].ops[0].value = target
+            edges[0x1000].append(target)
+        blocks = [
+            NS(start_ea=ea, end_ea=ea + 8, succs=lambda ea=ea: [NS(start_ea=t) for t in edges[ea]]) for ea in by_ea
+        ]
+        ns = dict(
+            values={"literal": "Sys_InitLauncherInterface()", "lookback": 12},
+            exact_string_owner=lambda _: 0x1000,
+            scan=lambda _: entries,
+            got_anchor=lambda _: (0, "ebx") if pic else (None, None),
+            local_call_target=lambda _: 0x7000,
+            reg4=lambda operand: operand.reg,
+            signed32=lambda value: value,
+            is_writable_data=lambda ea: ea in (0x4000, 0x5000, 0x6000),
+            access=lambda e, gv: {"gv_ea": hex(gv), "insn_ea": hex(e["ea"])},
+            idaapi=NS(o_void=0, o_reg=REG, o_mem=MEM, o_phrase=PHRASE, o_displ=DISPL, o_imm=5, o_far=6, o_near=7),
+            ida_funcs=NS(get_func=lambda _: NS(start_ea=0x1000)),
+            ida_ua=NS(get_dtype_size=lambda dtype: dtype),
+            idc=NS(
+                print_operand=lambda ea, i: by_ea[ea]["insn"].ops[i].text,
+                get_operand_value=lambda ea, i: by_ea[ea]["insn"].ops[i].value,
+                print_insn_mnem=lambda ea: by_ea[ea]["mnem"],
+            ),
+        )
+        modules = {
+            "ida_frame": NS(get_spd=lambda _, ea: by_ea[ea]["sp"]),
+            "ida_gdl": NS(FlowChart=lambda _: blocks),
+            "ida_bytes": NS(get_item_size=lambda _: 8),
+            "ida_nalt": NS(get_import_module_qty=lambda: 0),
+            "idc": ns["idc"],
+        }
+        with patch.dict(sys.modules, modules):
+            exec(walk("find-Sys_InitGame.py"), ns)
+        return ns["result"]
+
+    def test_plain_dereference_accepts_absolute_and_pic_globals(self):
+        for pic in (False, True):
+            with self.subTest(pic=pic):
+                result = self.locate(pic=pic)
+                self.assertEqual("0x4000", result["pmainwindow"]["gv_ea"])
+                self.assertEqual("0x5000", result["maindc"]["gv_ea"])
+
+    def test_nonzero_displacement_is_not_a_pointer_dereference(self):
+        for offset in (4, -4):
+            with self.subTest(offset=offset):
+                self.assertIn("error", self.locate(address=f"[eax{offset:+d}]", displacement=offset))
+
+    def test_indexed_address_is_not_a_pointer_dereference(self):
+        self.assertIn("error", self.locate(address="[eax+ecx*4]"))
+
+    def test_partial_width_dereference_is_rejected(self):
+        for width in (1, 2):
+            with self.subTest(width=width):
+                self.assertIn("error", self.locate(width=width))
+
+    def test_partial_pointer_load_is_rejected(self):
+        self.assertIn("error", self.locate(load_width=1))
+
+    def test_branch_bypassing_pointer_load_is_rejected(self):
+        self.assertIn("error", self.locate(branch="bypass"))
+
+    def test_unresolved_edge_cannot_prove_pointer_load(self):
+        self.assertIn("error", self.locate(branch="unknown"))
+
+    def test_guard_before_dominating_pointer_load_is_accepted(self):
+        self.assertEqual("0x4000", self.locate(branch="guarded")["pmainwindow"]["gv_ea"])
+
+
 class StudioSetupSkinWalkTests(unittest.TestCase):
     """Select the unload call, even when a later load call shares its buffer."""
 
