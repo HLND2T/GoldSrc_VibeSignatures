@@ -159,8 +159,42 @@ RECOVER_LIGHTING_GVS_PY = (
     _RECOVER_SHARED_PY
     + r"""
 SLOT_VA = SLOT_VA_PLACEHOLDER
+import ida_idp
+import ida_ua
+
 PLIGHTVEC_DISP = 0x14
+COMPONENT_SIZE = 4
+COMPONENT_OFFSETS = (0, 4, 8)
 FLOAT_STORE = ('fst', 'fstp', 'movss', 'movlps', 'movups', 'movaps')
+
+def written_regs(insn, mnem):
+    if mnem == 'call':
+        return set(CALL_CLOBBER)
+    regs = set()
+    for index, op in enumerate(insn.ops):
+        if int(op.type) == int(idaapi.o_void):
+            break
+        if int(op.type) != O_REG:
+            continue
+        if insn.get_canon_feature() & int(getattr(ida_idp, 'CF_CHG%d' % (index + 1))):
+            reg = int(op.reg)
+            name = ida_idp.get_reg_name(reg, ida_ua.get_dtype_size(op.dtype))
+            # Partial-register writes invalidate the containing x86 register.
+            for parent, aliases in enumerate((('eax', 'ax', 'al', 'ah'),
+                    ('ecx', 'cx', 'cl', 'ch'), ('edx', 'dx', 'dl', 'dh'),
+                    ('ebx', 'bx', 'bl', 'bh'), ('esp', 'sp'), ('ebp', 'bp'),
+                    ('esi', 'si'), ('edi', 'di'))):
+                if name in aliases:
+                    reg = parent
+                    break
+            regs.add(reg)
+    if mnem in ('mul', 'div', 'idiv', 'cdq', 'cwd') or (
+            mnem == 'imul' and int(insn.ops[1].type) == int(idaapi.o_void)):
+        regs.update((0, 2))
+    return regs
+
+def dword(op):
+    return ida_ua.get_dtype_size(op.dtype) == COMPONENT_SIZE
 
 def first_and_ff00(fn):
     for ea in idautils.FuncItems(int(fn.start_ea)):
@@ -207,6 +241,11 @@ def walk_ptr_map(fn, stop_ea):
             continue
         mnem = (idc.print_insn_mnem(int(ea)) or '').lower()
         op0, op1 = insn.ops[0], insn.ops[1]
+        if mnem != 'mov' or not dword(op0):
+            for reg in written_regs(insn, mnem):
+                ptr_of.pop(reg, None)
+        if mnem == 'mov' and not dword(op0):
+            continue
         if mnem == 'mov' and int(op0.type) == O_REG and int(op1.type) == O_REG:
             src, dest = int(op1.reg), int(op0.reg)
             if src in ptr_of:
@@ -214,7 +253,7 @@ def walk_ptr_map(fn, stop_ea):
             else:
                 ptr_of.pop(dest, None)
             continue
-        if mnem not in ('mov', 'movzx', 'movsx'):
+        if mnem != 'mov':
             if mnem in ('fild', 'movd'):
                 mem_op = first_mem_op(insn)
                 if mem_op is not None:
@@ -273,14 +312,20 @@ def main():
     def is_plighting(base):
         return ptr_of.get(base) == plighting_id
 
-    def mem_load_origin(base, disp):
-        if base is None or disp is None:
+    def mem_load_origin(base, disp, op):
+        if base is None or disp is None or not dword(op):
             return None
         if is_plighting(base):
             return ('f32', int(disp))
         if reg_origin.get(base) == ('load', PLIGHTVEC_DISP):
             return ('ptrload', PLIGHTVEC_DISP, int(disp))
         return None
+
+    def collect_plight(origin, gv, ea, insn, offb, dest):
+        if dword(dest) and origin[2] in COMPONENT_OFFSETS:
+            candidate = item(gv, ea, insn, offb)
+            candidate['source_disp'] = origin[2]
+            plight.append(candidate)
 
     for ea in idautils.FuncItems(int(fn.start_ea)):
         insn = idautils.DecodeInstruction(ea)
@@ -289,6 +334,16 @@ def main():
         mnem = (idc.print_insn_mnem(int(ea)) or '').lower()
         op0 = insn.ops[0]
         op1 = insn.ops[1]
+        handled = mnem in ('mov', 'movss', 'cvtdq2ps')
+        if not handled or (mnem == 'mov' and not dword(op0)):
+            for reg in written_regs(insn, mnem):
+                ptr_of.pop(reg, None)
+                reg_origin.pop(reg, None)
+                xmm_origin.pop(reg, None)
+        if mnem == 'mov' and not dword(op0):
+            continue
+        if mnem.startswith('f') and mnem not in ('fild', 'fld', 'fst', 'fstp'):
+            st0 = None
         if mnem == 'mov' and int(op0.type) == O_REG and int(op1.type) == O_REG:
             src = int(op1.reg)
             dest = int(op0.reg)
@@ -301,7 +356,7 @@ def main():
             else:
                 reg_origin.pop(dest, None)
             continue
-        if mnem in ('mov', 'movzx', 'movsx') and int(op0.type) == O_REG:
+        if mnem == 'mov' and int(op0.type) == O_REG:
             dest = int(op0.reg)
             base, disp = mem_base_disp(op1)
             if base == ESP or (base == EBP and EBP not in ptr_of):
@@ -317,9 +372,6 @@ def main():
                 ptr_of.pop(dest, None)
                 reg_origin.pop(dest, None)
         if mnem == 'call':
-            for reg in list(reg_origin):
-                if reg in CALL_CLOBBER:
-                    reg_origin.pop(reg, None)
             xmm_origin.clear()
             st0 = None
             continue
@@ -330,7 +382,7 @@ def main():
         elif mnem == 'fld':
             mem_op = first_mem_op(insn)
             base, disp = mem_base_disp(mem_op) if mem_op is not None else (None, None)
-            st0 = mem_load_origin(base, disp)
+            st0 = mem_load_origin(base, disp, mem_op) if mem_op is not None else None
         elif mnem in ('fst', 'fstp'):
             mem_op = first_mem_op(insn)
             gv, offb = resolved_mem_gv(ea, insn, mem_op if mem_op is not None else op0, pic_fn)
@@ -338,7 +390,7 @@ def main():
                 if st0 == ('i2f', 4):
                     shade.append(item(gv, ea, insn, offb))
                 elif st0 is not None and st0[0] == 'ptrload':
-                    plight.append(item(gv, ea, insn, offb))
+                    collect_plight(st0, gv, ea, insn, offb, mem_op)
                 elif int(ea) >= and_ea and mnem in FLOAT_STORE:
                     color.append(item(gv, ea, insn, offb))
             if mnem == 'fstp':
@@ -348,10 +400,11 @@ def main():
             xmm_origin[int(op0.reg)] = ('i2f', int(disp)) if is_plighting(base) else None
         elif mnem == 'cvtdq2ps' and int(op0.type) == O_REG:
             src = int(op1.reg) if int(op1.type) == O_REG else int(op0.reg)
-            xmm_origin[int(op0.reg)] = xmm_origin.get(src)
+            origin = xmm_origin.get(src)
+            xmm_origin[int(op0.reg)] = origin if origin == ('i2f', 4) else None
         elif mnem == 'movss' and int(op0.type) == O_REG:
             base, disp = mem_base_disp(op1)
-            xmm_origin[int(op0.reg)] = mem_load_origin(base, disp)
+            xmm_origin[int(op0.reg)] = mem_load_origin(base, disp, op1)
         if mnem in ('mov', 'movss', 'movlps', 'movups', 'movaps'):
             dest_is_mem = int(op0.type) in (O_MEM, O_DISPL, O_PHRASE)
             if dest_is_mem:
@@ -362,7 +415,7 @@ def main():
                         if origin == ('load', 0):
                             ambient.append(item(gv, ea, insn, offb))
                         elif origin is not None and origin[0] == 'ptrload':
-                            plight.append(item(gv, ea, insn, offb))
+                            collect_plight(origin, gv, ea, insn, offb, op0)
                         elif int(ea) >= and_ea and origin in (('load', 8), ('load', 12), ('load', 16)):
                             color.append(item(gv, ea, insn, offb))
                     if mnem in FLOAT_STORE and int(op1.type) == O_REG:
@@ -370,7 +423,7 @@ def main():
                         if origin == ('i2f', 4):
                             shade.append(item(gv, ea, insn, offb))
                         elif origin is not None and origin[0] == 'ptrload':
-                            plight.append(item(gv, ea, insn, offb))
+                            collect_plight(origin, gv, ea, insn, offb, op0)
                         elif int(ea) >= and_ea:
                             color.append(item(gv, ea, insn, offb))
     amb_gvs = sorted({x['gv_ea'] for x in ambient})
@@ -394,7 +447,9 @@ def main():
     if mix_item is None:
         return {'error': 'r_colormix base store missing'}
     plight_addrs = sorted({x['gv_ea'] for x in plight})
-    plight_bases = [a for a in plight_addrs if (a + 4) in plight_addrs and (a + 8) in plight_addrs]
+    plight_pairs = {(x['gv_ea'], x['source_disp']) for x in plight}
+    plight_bases = [a for a in plight_addrs
+                    if all((a + disp, disp) in plight_pairs for disp in COMPONENT_OFFSETS)]
     if len(plight_bases) != 1:
         return {'error': 'r_plightvec cluster not unique',
                 'plight': [hex(x) for x in plight_addrs],

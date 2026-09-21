@@ -42,7 +42,7 @@ tags:
    - `r_shadelight`: unique float store of the int-to-float conversion of
      `plighting->shadelight` (`alight_t+4`, `fild` / `movd`+`cvtdq2ps`).
    - `r_plightvec`: unique 12-byte consecutive float-store cluster whose sources are
-     `*(alight_t+0x14 + {0,4,8})` — `alight_t.plightvec` is a `float *`, so the walker
+     `*(plighting->plightvec + i)` for `i = 0, 1, 2` — `alight_t.plightvec` is a `float *`, so the walker
      tracks the second-level pointer load (`reg_origin` `('load', 0x14)` feeds
      `('ptrload', 0x14, disp)`). Covers integer `mov`, x87 `fld`/`fst`, SSE
      `movss`, and SvEngine GOTOFF forms.
@@ -64,6 +64,15 @@ tags:
   On old MSVC builds they follow a `call __ftol` that returns in `eax`; without clearing
   volatile load origins across `call`, a stale `('ptrload', …)` on `eax` misattributes
   those stores to `r_plightvec` and produces two candidate clusters.
+- Origin invalidation covers both pointer and value maps, including cdecl calls,
+  explicit register writes (also partial-register aliases), implicit multiply/divide
+  results, and x87/SSE arithmetic. A value derived from a component is not proof of
+  an unchanged copy. Validate this with the executable mocked-IDA fixtures in
+  `tests/test_engine_private_walks.py::StudioLightingWalkTests`.
+- Destination adjacency alone is insufficient: each accepted four-byte store must
+  preserve the source byte displacement, with `0 -> b`, `4 -> b+4`, `8 -> b+8`.
+  Repeated, swapped, out-of-range components and non-dword stores must fail closed.
+  These rules apply to all three supported copy forms (integer, SSE, x87).
 - Do not sort globals by VA: `r_ambientlight` and `r_shadelight` are adjacent on some
   builds and far apart on others.
 - SvEngine Linux stores are GOTOFF (`gv_pic_addend`).
