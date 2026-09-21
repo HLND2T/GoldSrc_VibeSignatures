@@ -11,9 +11,9 @@ Windows and Linux, cof-5936 Windows, and svencoop-10257 Windows). hl-10210
 hw.dll reaches the pools through SSE; every other build uses x87 memory
 floats, which the shared float filters also cover.
 
-SvEngine Linux compiles the builder PIC (GOT-relative float pools) and strips
-its symtab, so the constant set is not recoverable there; svencoop-10257
-registers this skill for Windows only.
+SvEngine Linux compiles the builder as V_BuildGammaTable; that body is
+recovered by find-V_BuildGammaTable. This skill stays on the GoldSrc/HL25/CoF
+name BuildGammaTable and remains Windows-only on svencoop.
 """
 
 from ida_analyze_util import preprocess_common_skill

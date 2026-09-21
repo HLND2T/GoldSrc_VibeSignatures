@@ -1,0 +1,8 @@
+gv_name: lineargammatable
+gv_va: '0x9680fb8'
+gv_rva: '0x7980fb8'
+gv_sig: 83 EC 14 6A 05 E8 ?? ?? ?? ?? D9 EE 83 C4 04 85 C0 74 ?? D9 05 ?? ?? ?? ?? DA E9 DF E0 F6 C4 44 7A ??
+gv_sig_va: '0x1dccba0'
+gv_inst_offset: '0x326'
+gv_inst_length: '0x7'
+gv_inst_disp: '0x3'

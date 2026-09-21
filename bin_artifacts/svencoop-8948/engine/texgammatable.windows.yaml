@@ -1,0 +1,8 @@
+gv_name: texgammatable
+gv_va: '0x967feb8'
+gv_rva: '0x797feb8'
+gv_sig: 83 EC 14 6A 05 E8 ?? ?? ?? ?? D9 EE 83 C4 04 85 C0 74 ?? D9 05 ?? ?? ?? ?? DA E9 DF E0 F6 C4 44 7A ??
+gv_sig_va: '0x1dccba0'
+gv_inst_offset: '0x1fc'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

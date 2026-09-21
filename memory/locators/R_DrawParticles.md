@@ -25,7 +25,7 @@ tags:
 
 ## Predecessors
 
-- None. It is the anchor for the `find-R_DrawParticles-calls` successor.
+- None. It is the anchor for `find-R_DrawParticles-calls`, `find-active_particles`, and `find-particletexture`.
 
 ## How it is located
 

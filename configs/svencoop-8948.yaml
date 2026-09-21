@@ -806,6 +806,17 @@ modules:
         platform: windows
         expected_output:
           - BuildGammaTable.{platform}.yaml
+      - name: find-V_BuildGammaTable
+        expected_output:
+          - V_BuildGammaTable.{platform}.yaml
+      - name: find-BuildGammaTable-globals
+        expected_input:
+          - V_BuildGammaTable.{platform}.yaml
+        expected_output:
+          - texgammatable.{platform}.yaml
+          - lightgammatable.{platform}.yaml
+          - lineargammatable.{platform}.yaml
+          - screengammatable.{platform}.yaml
       - name: find-studioapi_StudioSetRenderamt
         expected_output:
           - studioapi_StudioSetRenderamt.{platform}.yaml
@@ -872,6 +883,12 @@ modules:
           - R_DrawParticles.{platform}.yaml
         expected_output:
           - active_particles.{platform}.yaml
+      - name: find-particletexture
+        expected_input:
+          - R_DrawParticles.{platform}.yaml
+          - GL_Bind.{platform}.yaml
+        expected_output:
+          - particletexture.{platform}.yaml
       - name: find-R_DrawParticles-calls
         expected_input:
           - R_DrawParticles.{platform}.yaml
@@ -997,6 +1014,16 @@ modules:
       - name: BuildGammaTable
         platform: windows
         category: func
+      - name: V_BuildGammaTable
+        category: func
+      - name: texgammatable
+        category: gv
+      - name: lightgammatable
+        category: gv
+      - name: lineargammatable
+        category: gv
+      - name: screengammatable
+        category: gv
       - name: studioapi_StudioSetRenderamt
         category: func
       - name: studioapi_StudioSetRemapColors
@@ -1471,6 +1498,8 @@ modules:
       - name: R_DrawParticles
         category: func
       - name: active_particles
+        category: gv
+      - name: particletexture
         category: gv
       - name: R_FreeDeadParticles
         category: func
