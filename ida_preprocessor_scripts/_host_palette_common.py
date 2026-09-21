@@ -1,12 +1,19 @@
 """Direct locators for Host_Init palette/texture private symbols."""
 
+import inspect
+
 from ida_analyze_util import _output_for_symbol, preprocess_common_skill, write_func_yaml
+from ida_preprocessor_scripts import x86_call_arguments
 from ida_preprocessor_scripts._direct_gv_common import inspect_owner_artifact, write_located_globals
 from ida_preprocessor_scripts._engine_private_globals_common import inspect_func, owner_context, run_walk
+from ida_preprocessor_scripts.host_basepal_store import locate_palette_hunk_store
 
 HOST_INIT_NAME = "Host_Init"
 HOST_LOAD_BASE_PALETTE_NAME = "Host_LoadBasePalette"
+HUNK_ALLOC_NAME = "Hunk_AllocName"
 HOST_BASEPAL_NAME = "host_basepal"
+PALETTE_LMP_NAME = "palette.lmp"
+PALETTE_LMP_PREFIX = "gfx/"
 R_INIT_TEXTURES_NAME = "R_InitTextures"
 R_NOTEXTURE_MIP_NAME = "r_notexture_mip"
 R_UPLOAD_EMPTY_TEX_NAME = "R_UploadEmptyTex"
@@ -105,7 +112,18 @@ def exact_bytes(ea):
 
 WALK_HOST_BASEPAL = (
     WALK_HELPERS
+    + inspect.getsource(x86_call_arguments)
+    + "\n"
+    + inspect.getsource(locate_palette_hunk_store)
     + r"""
+import ida_frame
+import ida_name
+import ida_ua
+
+HUNK = int(values['hunk_ea'], 0)
+SIZE = int(values['size_imm'])
+NAME = values['name']
+PREFIX = values['name_prefix']
 owner = unique_remaining(values['sven_positive'], values['sven_exclude'])
 if owner is None:
     owner = exact_string_owner(values['goldsrc_literal'])
@@ -113,52 +131,165 @@ if owner is None:
     result = {'error': 'palette owner is not unique'}
 else:
     entries = scan(owner)
-    if entries is None:
+    func = ida_funcs.get_func(owner)
+    if entries is None or func is None:
         result = {'error': 'palette owner is not a function start'}
     else:
-        size_imm = int(values['size_imm'])
-        candidates = []
-        for index, entry in enumerate(entries):
-            if entry['mnem'] == 'cmp':
-                continue
-            has_size = False
-            for op in entry['insn'].ops:
-                if int(op.type) == int(idaapi.o_void):
-                    break
-                if int(op.type) == int(idaapi.o_imm) and (int(op.value) & 0xFFFFFFFF) == size_imm:
-                    has_size = True
-            if not has_size:
-                continue
-            call_index = None
-            for follow in range(index + 1, min(index + 6, len(entries))):
-                if entries[follow]['mnem'] == 'call':
-                    call_index = follow
-                    break
-            if call_index is None:
-                continue
-            for store in range(call_index + 1, min(call_index + 8, len(entries))):
-                if entries[store]['mnem'] == 'call':
-                    break
-                if len(entries[store]['written']) != 1:
-                    continue
-                gv = next(iter(entries[store]['written']))
-                located = access(entries[store] if entries[store]['disp'] else None, gv)
-                if located is None:
-                    located = access(first_addressable(entries, [store]), gv)
-                if located is not None:
-                    candidates.append((gv, located))
-                break
-        unique = {}
-        for gv, located in candidates:
-            unique[gv] = located
-        if len(unique) != 1:
-            result = {
-                'error': 'Hunk_AllocName(0x800) store is not unique: %s' % [hex(gv) for gv in unique],
-                'owner_ea': hex(owner),
-            }
+        name_addrs = set()
+        strings = idautils.Strings(default_setup=False)
+        strings.setup(strtypes=[ida_nalt.STRTYPE_C], minlen=4)
+        for item in strings:
+            text = str(item)
+            if text == NAME:
+                name_addrs.add(int(item.ea))
+            elif text == PREFIX + NAME:
+                name_addrs.add(int(item.ea) + len(PREFIX))
+        if not name_addrs:
+            result = {'error': 'palette.lmp string is missing', 'owner_ea': hex(owner)}
         else:
-            gv, located = next(iter(unique.items()))
-            result = {'pointer_size': 4, 'owner_ea': hex(owner), 'gv': located}
+            got_base, got_register = got_anchor(owner)
+
+            def normalize_thunk_name(name):
+                name = name or ''
+                if name.startswith('j_'):
+                    name = name[2:]
+                if name.startswith('.'):
+                    name = name[1:]
+                if name.startswith('_imp_'):
+                    name = name[5:]
+                return name
+
+            def pic_plt_callee(call_ea):
+                # SvEngine Linux PIC PLT: call stub; jmp [ebx+GOTOFF]. Lazy .got.plt
+                # still holds stub+6, so resolve_elf_plt's dword==target check fails.
+                if got_base is None or idc.get_operand_type(int(call_ea), 0) != int(idaapi.o_near):
+                    return None
+                stub = int(idc.get_operand_value(int(call_ea), 0))
+                if not is_plt(stub):
+                    return None
+                function = ida_funcs.get_func(stub)
+                if function is not None and int(function.start_ea) == stub:
+                    thunk_target, _slot = ida_funcs.calc_thunk_func_target(function)
+                    if thunk_target != idaapi.BADADDR and not is_plt(int(thunk_target)):
+                        callee = ida_funcs.get_func(int(thunk_target))
+                        if callee is not None and int(callee.start_ea) == int(thunk_target):
+                            return int(thunk_target)
+                insn = idautils.DecodeInstruction(int(stub))
+                if insn is None or (idc.print_insn_mnem(int(stub)) or '').lower() != 'jmp':
+                    return None
+                op = insn.ops[0]
+                kind = int(op.type)
+                slot = None
+                if kind == int(idaapi.o_mem) and is_got(int(op.addr)):
+                    slot = int(op.addr) & 0xFFFFFFFF
+                elif kind in (int(idaapi.o_displ), int(idaapi.o_phrase)) and reg4(op) == got_register:
+                    slot = (got_base + signed32(op.addr)) & 0xFFFFFFFF
+                if slot is None or not is_got(slot):
+                    return None
+                pointee = int(ida_bytes.get_dword(slot)) & 0xFFFFFFFF
+                if is_code_address(pointee) and not is_plt(pointee):
+                    callee = ida_funcs.get_func(pointee)
+                    if callee is not None and int(callee.start_ea) == pointee:
+                        return pointee
+                found = set()
+                for ref in idautils.DataRefsFrom(slot):
+                    ref = int(ref)
+                    if is_code_address(ref) and not is_plt(ref):
+                        callee = ida_funcs.get_func(ref)
+                        if callee is not None and int(callee.start_ea) == ref:
+                            found.add(ref)
+                for xref in idautils.XrefsTo(HUNK, 0):
+                    if int(xref.frm) == slot:
+                        found.add(int(HUNK))
+                if len(found) == 1:
+                    return next(iter(found))
+                hunk_name = normalize_thunk_name(ida_name.get_name(int(HUNK)))
+                if hunk_name and hunk_name in (
+                    normalize_thunk_name(ida_name.get_name(stub)),
+                    normalize_thunk_name(ida_name.get_name(slot)),
+                ):
+                    return int(HUNK)
+                return None
+
+            def hunk_callee(call_ea):
+                return pic_plt_callee(call_ea) or local_call_target(call_ea)
+
+            code = []
+            for entry in entries:
+                sp = int(ida_frame.get_spd(func, entry['ea']))
+                operands = []
+                mnem = entry['mnem']
+                for index, op in enumerate(entry['insn'].ops):
+                    kind = int(op.type)
+                    if kind == int(idaapi.o_void):
+                        break
+                    operand = ('unknown', None)
+                    if kind == int(idaapi.o_reg):
+                        if index == 0 or ida_ua.get_dtype_size(op.dtype) == 4:
+                            operand = ('reg', reg4(op))
+                    elif kind == int(idaapi.o_imm):
+                        operand = ('imm', int(op.value) & 0xFFFFFFFF)
+                    elif kind in (int(idaapi.o_displ), int(idaapi.o_phrase)):
+                        text = (idc.print_operand(entry['ea'], index) or '').lower()
+                        if '[esp' in text and not any(
+                            register in text for register in ('eax', 'ebx', 'ecx', 'edx', 'esi', 'edi', 'ebp')
+                        ):
+                            displacement = signed32(op.addr) if kind == int(idaapi.o_displ) else 0
+                            if ida_ua.get_dtype_size(op.dtype) == 4 and displacement % 4 == 0:
+                                operand = ('stack', sp + displacement)
+                    operands.append(operand)
+                if mnem == 'lea' and len(operands) == 2:
+                    source = entry['insn'].ops[1]
+                    address = None
+                    if int(source.type) == int(idaapi.o_mem):
+                        address = int(source.addr) & 0xFFFFFFFF
+                    elif (
+                        int(source.type) == int(idaapi.o_displ)
+                        and got_base is not None
+                        and reg4(source) == got_register
+                    ):
+                        address = (got_base + signed32(source.addr)) & 0xFFFFFFFF
+                    if address in name_addrs:
+                        mnem = 'mov'
+                        operands[1] = ('imm', address)
+                if operands and operands[0][0] == 'reg' and ida_ua.get_dtype_size(entry['insn'].ops[0].dtype) != 4:
+                    mnem = 'unknown_write'
+                code.append(
+                    {
+                        'mnem': mnem,
+                        'ops': operands,
+                        'sp': sp,
+                        'written': set(entry['written']),
+                        'call_target': hunk_callee(entry['ea']) if mnem == 'call' else None,
+                        'ea': entry['ea'],
+                        'disp': entry['disp'],
+                        'len': entry['len'],
+                        'disasm': entry['disasm'],
+                    }
+                )
+            located = locate_palette_hunk_store(code, HUNK, SIZE, name_addrs)
+            if located.get('error'):
+                result = dict(located)
+                result['owner_ea'] = hex(owner)
+                result['hunk_ea'] = hex(HUNK)
+                result['got'] = [hex(got_base) if got_base is not None else None, got_register]
+                result['name_addrs'] = [hex(addr) for addr in sorted(name_addrs)]
+                calls = []
+                for index, entry in enumerate(code):
+                    if entry['mnem'] != 'call':
+                        continue
+                    args = recover_call_arguments(code, index, 2)
+                    calls.append(
+                        {
+                            'ea': hex(int(entry['ea'])),
+                            'disasm': entry.get('disasm') or '',
+                            'target': hex(int(entry['call_target'])) if entry.get('call_target') else None,
+                            'args': [hex(arg) if isinstance(arg, int) else arg for arg in args],
+                        }
+                    )
+                result['calls'] = calls
+            else:
+                result = {'pointer_size': 4, 'owner_ea': hex(owner), 'gv': located['gv']}
 """
 )
 
@@ -341,7 +472,11 @@ async def preprocess_host_load_base_palette(
 
 
 async def preprocess_host_basepal(session, expected_outputs, new_binary_dir, platform, image_base, debug=False):
-    _ = new_binary_dir
+    hunk = await inspect_owner_artifact(session, new_binary_dir, platform, image_base, HUNK_ALLOC_NAME)
+    if hunk is None:
+        if debug:
+            print(f"  {HOST_BASEPAL_NAME}: missing {HUNK_ALLOC_NAME} artifact")
+        return False
     located = await run_walk(
         session,
         WALK_HOST_BASEPAL,
@@ -350,11 +485,14 @@ async def preprocess_host_basepal(session, expected_outputs, new_binary_dir, pla
             "sven_exclude": [HOST_INIT_HEAP_SIZE],
             "goldsrc_literal": HOST_INIT_PALETTE_ERROR,
             "size_imm": HUNK_PALETTE_SIZE,
+            "hunk_ea": hex(hunk["owner_ea"]),
+            "name": PALETTE_LMP_NAME,
+            "name_prefix": PALETTE_LMP_PREFIX,
         },
     )
     if located.get("error") or located.get("pointer_size") != 4:
         if debug:
-            print(f"  {HOST_BASEPAL_NAME}: {located.get('error') or located}")
+            print(f"  {HOST_BASEPAL_NAME}: {located}")
         return False
     owner_ea = int(located["owner_ea"], 0)
     owner = await owner_context(session, owner_ea, image_base, HOST_INIT_NAME)

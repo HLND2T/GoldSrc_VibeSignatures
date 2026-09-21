@@ -3,10 +3,13 @@
 
 engine/host.c assigns ``host_basepal = Hunk_AllocName(2048, "palette.lmp")``.
 GoldSrc keeps that store in Host_Init; SvEngine moved it to
-Host_LoadBasePalette. The locator takes the unique remaining owner of the
-SvEngine palette diagnostic (excluding Host_Init's heap banner) or Host_Init's
-palette Sys_Error literal, then the unique store of the 0x800 Hunk_AllocName
-return value.
+Host_LoadBasePalette. The locator requires the revalidated Hunk_AllocName
+callee, both C arguments (size 0x800 and a ``palette.lmp`` pointer, including
+the Linux ``gfx/palette.lmp`` suffix), and EAX/return-register dataflow into
+the unique writable-global store. SvEngine Linux may call through a PIC PLT
+stub (``jmp [ebx+GOTOFF]``) whose lazy ``.got.plt`` slot still holds stub+6;
+the walk resolves that stub with the owner's GOT base before matching
+``Hunk_AllocName``.
 """
 
 from ida_preprocessor_scripts._host_palette_common import preprocess_host_basepal
@@ -22,5 +25,5 @@ async def preprocess_skill(
     image_base,
     debug=False,
 ):
-    _ = skill_name, old_yaml_map, new_binary_dir
+    _ = skill_name, old_yaml_map
     return await preprocess_host_basepal(session, expected_outputs, new_binary_dir, platform, image_base, debug=debug)

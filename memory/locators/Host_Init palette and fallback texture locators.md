@@ -30,7 +30,7 @@ Producer: `ida_preprocessor_scripts/find-Host_Init.py` and siblings; shared walk
 - GoldSrc/HL25/CoF `Host_Init`: `FULLMATCH:Host_Init: Couldn't load gfx/palette.lmp`
 - SvEngine `Host_Init`: `FULLMATCH:Heap size: %4.1f MB\n` (`Host_Init()` is owned by `Sys_InitGame`)
 - SvEngine `Host_LoadBasePalette`: `Could not load base palette from "%s".\n` excluding the heap banner (Windows Host_Init inlines the same body)
-- `host_basepal`: unique `Hunk_AllocName(0x800)` return store in that owner. Linux GoldSrc merges `"palette.lmp"` into `"gfx/palette.lmp"+4`.
+- `host_basepal`: revalidated `Hunk_AllocName` callee, C arguments `0x800` and a `palette.lmp` pointer (including the Linux `gfx/palette.lmp` suffix), and EAX/return-register dataflow into the unique writable-global store. Linux GoldSrc merges `"palette.lmp"` into `"gfx/palette.lmp"+4`. SvEngine Linux 8948 reaches the allocator through a PIC PLT `jmp [ebx+GOTOFF]` whose lazy `.got.plt` dword is still `stub+6`; the walk proves the slot with the owner's GOT base.
 - `R_InitTextures`: previous direct call of the unique `custom` HPAK xref inside `Host_Init`
 - `r_notexture_mip`: unique writable store in GoldSrc `R_InitTextures` (`Hunk_AllocName(..., "notexture")`)
 - `R_UploadEmptyTex`: `**empty**` excluding `**missing**` and `gl_dump`
@@ -48,3 +48,6 @@ Producer: `ida_preprocessor_scripts/find-Host_Init.py` and siblings; shared walk
 - SvEngine empty-texture ELF name is `r_emptytexture`, not `r_notexture_mip`.
 - `-allgamever -skill` errors on gamevers that do not register the skill; filter `-modules engine` and run SvEngine-only skills with `-gamever svencoop-*`.
 - Walk helpers must parse hex owner EAs with `int(value, 0)`.
+- A nearby `0x800` immediate plus the next global write is not `host_basepal`; the store must write the `Hunk_AllocName` return register.
+- `local_call_target` / `resolve_elf_plt` reject a PIC PLT stub when `.got.plt` still holds the lazy resolver; `host_basepal` must resolve that stub from the caller's GOT register before comparing with the `Hunk_AllocName` artifact.
+- SvEngine `Host_LoadBasePalette` loads `palette.lmp` into a callee-saved register, then `test`/`jz` on `COM_LoadHunkFile` before `mov [esp+4], ebp`. Stack recovery stays fail-closed across `jcc`; following `ebp` through that conditional jump is required.

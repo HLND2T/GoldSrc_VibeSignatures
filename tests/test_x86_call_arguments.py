@@ -163,6 +163,26 @@ class CallArgumentsTests(unittest.TestCase):
         ]
         self.assertEqual([None], recover_call_arguments(instructions, 2, 1))
 
+    def test_callee_saved_register_survives_conditional_jump(self):
+        instructions = [
+            {"mnem": "mov", "sp": -16, "ops": [("reg", "ebp"), ("imm", 0x5000)]},
+            {"mnem": "test", "sp": -16, "ops": [("reg", "eax"), ("reg", "eax")]},
+            {"mnem": "jz", "sp": -16, "ops": []},
+            {"mnem": "mov", "sp": -16, "ops": [("stack", -12), ("reg", "ebp")]},
+            {"mnem": "mov", "sp": -16, "ops": [("stack", -16), ("imm", 0x800)]},
+            {"mnem": "call", "sp": -16, "ops": []},
+        ]
+        self.assertEqual([0x800, 0x5000], recover_call_arguments(instructions, 5, 2))
+
+    def test_caller_saved_register_still_dies_at_conditional_jump(self):
+        instructions = [
+            {"mnem": "mov", "sp": -16, "ops": [("reg", "eax"), ("imm", 0x5000)]},
+            {"mnem": "jz", "sp": -16, "ops": []},
+            {"mnem": "mov", "sp": -16, "ops": [("stack", -16), ("reg", "eax")]},
+            {"mnem": "call", "sp": -16, "ops": []},
+        ]
+        self.assertEqual([None], recover_call_arguments(instructions, 3, 1))
+
     def test_call_does_not_prove_reused_stack_contents(self):
         instructions = [
             {"mnem": "mov", "sp": -4, "ops": [("stack", -4), ("imm", 7)]},
