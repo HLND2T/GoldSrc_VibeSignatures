@@ -38,8 +38,10 @@ tags:
 1. For each diagnostic in `(HL_STUDIO_STRING, SVC_STUDIO_STRING)`, call
    `locate_studio_slot(..., 0x78)` and require a unique table plus a function-start
    slot pointer.
-2. Shape gate `SLOT_SHAPE_WRITE_PAIR`: zero global reads and exactly two distinct
-   writable-data int stores, recovered from `insns` in instruction order.
+2. Shape gate `SLOT_SHAPE_WRITE_PAIR`: zero global reads and exactly two
+   single-target writable-data int stores to two different addresses, recovered
+   from `insns` in instruction order. A later rewrite of the first target is
+   rejected; unique-address collapse is not a substitute for write count.
    - First store is `r_topcolor` (parameter `top`).
    - Second store is `r_bottomcolor` (parameter `bottom`).
 3. Windows / non-PIC Linux encode `mov ds:global, arg`. SvEngine Linux uses an

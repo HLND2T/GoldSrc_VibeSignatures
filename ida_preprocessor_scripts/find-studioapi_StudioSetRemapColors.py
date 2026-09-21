@@ -6,9 +6,10 @@ body passes &engine_studio_api to the client studio interface, and the table's
 fixed ABI slot 0x78 (common/r_studioint.h, immediately before
 studioapi_SetupPlayerModel at 0x7C) is studioapi_StudioSetRemapColors. The
 accessor stores the two int parameters in source order: r_topcolor = top,
-then r_bottomcolor = bottom. Those stores are recovered in instruction
-order; clustering or VA-sorting swaps or collapses them when the objects
-are adjacent or laid out in reverse. Validated 2026-09-21: hl-10210 hw.dll
+then r_bottomcolor = bottom. The shape requires exactly two single-target
+stores to two different addresses in instruction order; a later rewrite of
+the first target is rejected. Clustering or VA-sorting swaps or collapses
+them when the objects are adjacent or laid out in reverse. Validated 2026-09-21: hl-10210 hw.dll
 0x101F3CA0 -> 0x104F0EE4/0x1050F6E8, hw.so 0xC6370 -> 0x300D44/0x300D40
 (ELF names; VA reversed), hl-8684 hw.so 0x129D30 -> 0x322FF0/0x323000
 (16-byte gap), svencoop-10257 hw.dll 0x1D92C20 -> 0x8DFA97C/0x8E13D80,

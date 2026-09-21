@@ -1309,6 +1309,35 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(_shape_gv_bases(one_store, SLOT_SHAPE_WRITE_PAIR))
         self.assertIsNone(_shape_gv_bases(three_stores, SLOT_SHAPE_WRITE_PAIR))
 
+    def test_write_pair_rejects_repeated_store_target(self):
+        from ida_preprocessor_scripts._studio_player_model_common import (
+            SLOT_SHAPE_WRITE_PAIR,
+            _ordered_write_targets,
+            _shape_gv_bases,
+        )
+
+        rewritten_first = {
+            "read_bases": [],
+            "write_bases": ["0x20", "0x24"],
+            "insns": [
+                {"dir": "write", "targets": ["0x20"]},
+                {"dir": "write", "targets": ["0x24"]},
+                {"dir": "write", "targets": ["0x20"]},
+            ],
+        }
+        same_target_twice = {
+            "read_bases": [],
+            "write_bases": ["0x20"],
+            "insns": [
+                {"dir": "write", "targets": ["0x20"]},
+                {"dir": "write", "targets": ["0x20"]},
+            ],
+        }
+
+        self.assertEqual([0x20, 0x24, 0x20], _ordered_write_targets(rewritten_first))
+        self.assertIsNone(_shape_gv_bases(rewritten_first, SLOT_SHAPE_WRITE_PAIR))
+        self.assertIsNone(_shape_gv_bases(same_target_twice, SLOT_SHAPE_WRITE_PAIR))
+
     def test_global_targets_use_decoded_absolute_operand_over_offset_base_xref(self):
         detail = {
             "data_refs": ["0x2000"],

@@ -53,9 +53,10 @@ engine globals:
    loads ([reg] without disp32) and stack operands never pollute the shape.
    Observed shapes: GetCurrentEntity reads exactly one global
    (currententity), StudioSetHeader/SetRenderModel store exactly one global
-   (pstudiohdr/r_model), StudioSetRemapColors stores two ints in source
-   order (r_topcolor then r_bottomcolor; instruction order, never clustered
-   or VA-sorted), SetChromeOrigin reads one 12-byte cluster (r_origin) and
+   (pstudiohdr/r_model), StudioSetRemapColors performs exactly two int
+   stores in source order (r_topcolor then r_bottomcolor; instruction
+   order, never clustered, VA-sorted, or unique-address collapsed),
+   SetChromeOrigin reads one 12-byte cluster (r_origin) and
    writes another (g_ChromeOrigin); SvEngine Linux accesses the globals
    through an eax-anchored GOTOFF prologue. SvEngine Linux GV
    artifacts additionally emit gv_pic_addend: register-relative disp32
@@ -949,10 +950,11 @@ async def preprocess_studio_draw_player(
 SLOT_SHAPE_READ = "read"
 SLOT_SHAPE_WRITE = "write"
 SLOT_SHAPE_COPY12 = "copy12"
-# Two distinct writable-data stores in instruction order, with no global
-# reads. cluster_bases (adjacent <=8 bytes) and VA-sorted write_bases both
-# mis-identify r_topcolor/r_bottomcolor when the ints are adjacent or laid
-# out in reverse; recover them from insns instead.
+# Exactly two writable-data stores, each a single target, to two different
+# addresses, in instruction order, with no global reads. Unique-address
+# collapse would accept a later rewrite of the first target. cluster_bases
+# (adjacent <=8 bytes) and VA-sorted write_bases both mis-identify
+# r_topcolor/r_bottomcolor when the ints are adjacent or laid out in reverse.
 SLOT_SHAPE_WRITE_PAIR = "write_pair"
 # Emits only the slot function artifact: the accessor's global accesses are
 # intentionally not recovered (the consumer only needs the function entry).
@@ -986,8 +988,8 @@ async def locate_studio_slot(session, studio_string, slot_offset):
 
 
 def _ordered_write_targets(located):
-    """Unique writable-data store targets in instruction order, not VA order."""
-    seen = []
+    """Writable-data store targets in instruction order, including repeats."""
+    ordered = []
     insns = located.get("insns")
     if not isinstance(insns, list):
         return None
@@ -995,16 +997,14 @@ def _ordered_write_targets(located):
         if not isinstance(insn, dict) or insn.get("dir") != "write":
             continue
         targets = insn.get("targets")
-        if not isinstance(targets, list):
+        if not isinstance(targets, list) or len(targets) != 1:
             return None
-        for target in targets:
-            try:
-                value = int(target, 0) if isinstance(target, str) else int(target)
-            except (TypeError, ValueError):
-                return None
-            if value not in seen:
-                seen.append(value)
-    return seen
+        try:
+            value = int(targets[0], 0) if isinstance(targets[0], str) else int(targets[0])
+        except (TypeError, ValueError):
+            return None
+        ordered.append(value)
+    return ordered
 
 
 def _shape_gv_bases(located, shape):
