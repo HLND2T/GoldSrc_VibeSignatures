@@ -5,8 +5,10 @@ The diagnostic ``R_StudioSetupModel: no such bodypart %d\\n`` lives in
 R_StudioSetupModel (engine/r_studio.c). GoldSrc/HL25 Linux also inlines
 that body into engine_studio_api slot 20 (studioapi_SetupModel), so the
 finder loads that wrapper artifact and excludes it. Windows keeps a
-distinct callee; SvEngine Linux is inlined and then has no remaining
-owner (do not register this skill on that platform).
+distinct callee. SvEngine Linux also inlines the body into the wrapper,
+yet a standalone R_StudioSetupModel remains, so this skill is registered
+on that platform as well and the exclusion leaves that standalone
+function. Never emit this artifact at the wrapper VA.
 """
 
 from ida_analyze_util import preprocess_common_skill
