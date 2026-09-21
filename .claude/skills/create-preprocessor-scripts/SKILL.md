@@ -516,8 +516,6 @@ Commit format:
 
 ```text
 feat(preprocessor): add find-Target
-
-Co-Authored-By: Codex <codex@openai.com>
 ```
 
 Do not push or open a PR unless separately requested.

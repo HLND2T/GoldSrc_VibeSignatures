@@ -707,7 +707,7 @@ IDB warmup 修复只保证 analysis 拿到正确 neutral database。`find-build_
 | 6 | PR consumer | PR producer拆分、统一 authority、stable final gate | PR warm/cold/no-op/fork routes |
 | 7 | Production activation | governance、runbook、evidence | 第 13.7 节完整证据 |
 
-每个提交遵循 `<type>(scope): <summary>`，并追加 `Co-Authored-By: Codex <codex@openai.com>`。
+每个提交遵循 `<type>(scope): <summary>`。
 
 ## 19. 最终验收标准
 
