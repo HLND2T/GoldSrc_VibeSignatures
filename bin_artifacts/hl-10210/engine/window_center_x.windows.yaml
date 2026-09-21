@@ -1,0 +1,8 @@
+gv_name: window_center_x
+gv_va: '0x109b3cbc'
+gv_rva: '0x9b3cbc'
+gv_sig: 55 8B EC A1 ?? ?? ?? ?? 83 EC 10 85 C0 74 ?? 53 56 57 8D 4D ?? 51 8D 4D ?? 51 FF 30 E8 ?? ?? ?? ?? 8D 45 ??
+gv_sig_va: '0x1024f8e0'
+gv_inst_offset: '0x4d'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

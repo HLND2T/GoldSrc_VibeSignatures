@@ -1,0 +1,25 @@
+vtable_class: CVideoMode_OpenGL
+vtable_symbol: ??_7CVideoMode_OpenGL@@6B@
+vtable_va: '0x1e632dc'
+vtable_rva: '0x1632dc'
+vtable_size: '0x48'
+vtable_numvfunc: 18
+vtable_entries:
+  0: '0x1dbbef0'
+  1: '0x1dbb700'
+  2: '0x1dbaf90'
+  3: '0x1dbaa70'
+  4: '0x1dbab00'
+  5: '0x1dbaab0'
+  6: '0x1dbaae0'
+  7: '0x1dbaa60'
+  8: '0x1dbaa40'
+  9: '0x1dbaa50'
+  10: '0x1dbae10'
+  11: '0x1dbafd0'
+  12: '0x1dbb750'
+  13: '0x1dbb730'
+  14: '0x1dbbf00'
+  15: '0x1dbaaf0'
+  16: '0x1dbb7e0'
+  17: '0x1dbb810'

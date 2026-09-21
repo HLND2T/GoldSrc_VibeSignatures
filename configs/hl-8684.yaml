@@ -492,6 +492,22 @@ modules:
           - VideoMode_Create.{platform}.yaml
         expected_output:
           - videomode.{platform}.yaml
+      - name: find-CVideoMode_OpenGL
+        expected_output:
+          - CVideoMode_OpenGL_vtable.{platform}.yaml
+      - name: find-CVideoMode_Common_UpdateWindowPosition
+        expected_input:
+          - CVideoMode_OpenGL_vtable.{platform}.yaml
+        expected_output:
+          - CVideoMode_Common_UpdateWindowPosition.{platform}.yaml
+      - name: find-VID_UpdateWindowVars
+        expected_input:
+          - CVideoMode_Common_UpdateWindowPosition.{platform}.yaml
+        expected_output:
+          - VID_UpdateWindowVars.{platform}.yaml
+          - window_rect.{platform}.yaml
+          - window_center_x.{platform}.yaml
+          - window_center_y.{platform}.yaml
       - name: find-Cvar_DirectSet
         expected_output:
           - Cvar_DirectSet.{platform}.yaml
@@ -673,6 +689,11 @@ modules:
           - GL_Finish2D.{platform}.yaml
           - GL_Set2D.{platform}.yaml
           - scr_drawloading.{platform}.yaml
+      - name: find-VID_FlipScreen
+        expected_input:
+          - GL_EndRendering.{platform}.yaml
+        expected_output:
+          - VID_FlipScreen.{platform}.yaml
       - name: find-CVideoMode_Common_Init
         expected_output:
           - CVideoMode_Common_Init.{platform}.yaml
@@ -1288,6 +1309,18 @@ modules:
         category: func
       - name: videomode
         category: gv
+      - name: CVideoMode_OpenGL_vtable
+        category: vtable
+      - name: CVideoMode_Common_UpdateWindowPosition
+        category: vfunc
+      - name: VID_UpdateWindowVars
+        category: func
+      - name: window_rect
+        category: gv
+      - name: window_center_x
+        category: gv
+      - name: window_center_y
+        category: gv
       - name: Cvar_DirectSet
         category: func
       - name: Cvar_Set
@@ -1371,6 +1404,8 @@ modules:
         category: func
       - name: GL_EndRendering
         category: func
+      - name: VID_FlipScreen
+        category: gv
       - name: GL_Finish2D
         category: func
       - name: CVideoMode_Common_Init

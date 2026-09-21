@@ -1,0 +1,26 @@
+vtable_class: CVideoMode_OpenGL
+vtable_symbol: _ZTV17CVideoMode_OpenGL
+vtable_va: '0x285528'
+vtable_rva: '0x285528'
+vtable_size: '0x4c'
+vtable_numvfunc: 19
+vtable_entries:
+  0: '0x204070'
+  1: '0x204020'
+  2: '0x2023a0'
+  3: '0x2022e0'
+  4: '0x2021d0'
+  5: '0x202180'
+  6: '0x2021b0'
+  7: '0x202170'
+  8: '0x202150'
+  9: '0x202160'
+  10: '0x202250'
+  11: '0x202240'
+  12: '0x202860'
+  13: '0x202400'
+  14: '0x2040f0'
+  15: '0x204080'
+  16: '0x2021c0'
+  17: '0x2024e0'
+  18: '0x202430'
