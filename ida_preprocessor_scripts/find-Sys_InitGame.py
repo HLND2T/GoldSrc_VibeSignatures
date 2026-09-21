@@ -40,12 +40,13 @@ WALK = (
     inspect.getsource(x86_call_arguments)
     + r"""
 import ida_frame
+import re
 
 LITERAL = values['literal']
 LOOKBACK = int(values['lookback'])
 
 
-def last_value_load(entries, index, reg):
+def last_value_load(entries, index, reg, graph):
     for previous in range(index - 1, max(-1, index - LOOKBACK - 1), -1):
         entry = entries[previous]
         mnemonic = entry['mnem']
@@ -62,7 +63,13 @@ def last_value_load(entries, index, reg):
             and len(entry['targets']) == 1
             and not entry['written']
             and entry['disp']
+            and ida_ua.get_dtype_size(destination.dtype) == WORD
+            and ida_ua.get_dtype_size(insn.ops[1].dtype) == WORD
         ):
+            # A lexical predecessor may be bypassed by an incoming branch.
+            # Prove its provenance before collapsing the dereference to a tag.
+            if not _may_reach(graph, 0, index) or _may_reach(graph, 0, index, blocked=previous):
+                return None
             gv = next(iter(entry['targets']))
             if is_writable_data(gv):
                 return entry, gv
@@ -77,7 +84,7 @@ def tagged_imm(kind, gv, entry):
     return (kind, located)
 
 
-def encode_source(entries, index, op, op_index, stack_pointer):
+def encode_source(entries, index, op, op_index, stack_pointer, graph):
     entry = entries[index]
     kind = int(op.type)
     if kind == int(idaapi.o_imm):
@@ -101,7 +108,17 @@ def encode_source(entries, index, op, op_index, stack_pointer):
         if ida_ua.get_dtype_size(op.dtype) == 4 and displacement % 4 == 0:
             return ('stack', stack_pointer + displacement)
         return ('unknown', None)
-    loaded = last_value_load(entries, index, reg4(op))
+    reg = reg4(op)
+    # Only a full-width *pointer is evidence for arg0; fields, arrays, and
+    # segment-relative accesses must not lose their effective-address terms.
+    if (
+        not reg
+        or ida_ua.get_dtype_size(op.dtype) != WORD
+        or (kind == int(idaapi.o_displ) and signed32(op.addr) != 0)
+        or re.fullmatch(r'(?:dword ptr\s+)?(?:(?:ds|ss):)?\[' + re.escape(reg) + r'\]', text.strip()) is None
+    ):
+        return ('unknown', None)
+    loaded = last_value_load(entries, index, reg, graph)
     if loaded is None:
         return ('unknown', None)
     load_entry, gv = loaded
@@ -129,6 +146,10 @@ else:
             [entry['ea'] for entry in entries],
             noreturn_calls=noreturn_calls,
         )
+        graph = _control_flow([
+            {'mnem': entry['mnem'], 'ea': entry['ea'], 'successors': flow[entry['ea']]}
+            for entry in entries
+        ])
         code = []
         for index, entry in enumerate(entries):
             insn = entry['insn']
@@ -142,7 +163,7 @@ else:
                 if kind == int(idaapi.o_reg) and (op_index == 0 or ida_ua.get_dtype_size(op.dtype) == 4):
                     operands.append(('reg', reg4(op)))
                 else:
-                    operands.append(encode_source(entries, index, op, op_index, stack_pointer))
+                    operands.append(encode_source(entries, index, op, op_index, stack_pointer, graph))
             if mnemonic == 'lea' and len(operands) == 2 and entry['disp'] and len(entry['targets']) == 1:
                 source = insn.ops[1]
                 address = None

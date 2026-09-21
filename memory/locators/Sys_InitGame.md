@@ -54,3 +54,5 @@ tags:
 - Dropping `FULLMATCH:` would let `"Sys_InitLauncherInterface()"` collide with no sibling today, but the shutdown twin `"Sys_ShutdownLauncherInterface()"` *does* have two owners; keep exact match.
 - cof-5936 starts at an odd VA (`push ebp`). Treat it as a normal function start.
 - hl-10210 Windows: do not retarget `find-Sys_InitMemory`; that finder still locates the inlined body via its 15MB diagnostic.
+- The `pmainwindow` argument must be a full-width, zero-offset, unindexed dereference. A field or array access such as `[eax+4]` or `[eax+ecx*4]` is not evidence for `*pmainwindow`.
+- A lexical pointer load is insufficient: it must dominate the dereference in the decoded control-flow graph before its provenance is converted to an immediate tag. `SysInitGameWalkTests` in `tests/test_engine_private_walks.py` covers bypassing branches, operand shape/width, and valid absolute/PIC paths.
