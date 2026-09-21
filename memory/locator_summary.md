@@ -10,15 +10,15 @@ permalink: goldsrc-vibesignatures/locator-summary
 分类依据是每个 finder 的主要发现锚；部分符号实际会组合多种机制（例如先字符串锚定 owning function，再读表槽），
 此处归入其决定性的一步。**Summary** 列摘自各 locator 文件 `## How it is located` 的首段。
 
-共 **235** 个 locator；模块 engine 196，client 39。
+共 **237** 个 locator；模块 engine 198，client 39。
 
 | 定位机制 | 数量 |
 | --- | --- |
-| 字符串锚 | 66 |
+| 字符串锚 | 67 |
 | 浮点常量锚 | 3 |
 | 表 / 结构 / 数据段扫描 | 38 |
 | 确定性 xref 交集锚 | 7 |
-| 前驱产物复用（下游确定性恢复） | 31 |
+| 前驱产物复用（下游确定性恢复） | 32 |
 | LLM_DECOMPILE 定位 | 55 |
 | vtable / vfunc 槽恢复 | 10 |
 | 数值 scalar 提取 | 9 |
@@ -26,7 +26,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 
 ---
 
-## 字符串锚 (65)
+## 字符串锚 (66)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -128,6 +128,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [R_StudioCheckBBox](locators/R_StudioCheckBBox.md) | engine | func | — | For each diagnostic string in (HL_STUDIO_STRING, SVC_STUDIO_STRING) — the ClientDLL_CheckStudioInterface interface-mismatch wording, HL vs SvEngine — call the |
 | [R_StudioSetupLighting](locators/R_StudioSetupLighting.md) | engine | func | — | Same studio-interface diagnostic as R_StudioCheckBBox; engine_studio_api slot 24 (0x60) is R_StudioSetupLighting itself. Recovers r_ambientlight / r_shadelight / r_plightvec / r_colormix from that body. |
 | [R_StudioSetupModel](locators/R_StudioSetupModel.md) | engine | func | `studioapi_SetupModel` | FULLMATCH `R_StudioSetupModel: no such bodypart %d\n`, then exclude_funcs studioapi_SetupModel so GoldSrc/HL25 Linux inlined copies do not steal the unique owner. |
+| [R_StudioSetupSkin](locators/R_StudioSetupSkin.md) | engine | func | — | exact_string_owner("DM_Base.bmp") — unique studio texture name inside R_StudioSetupSkin. GCC Linux artifact VA is the outlined .part.N body (MetaHook ReverseSearch hit), not the 33/41-byte chrome-flag wrapper. |
 | [pbodypart](locators/studioapi_SetupModel.md) | engine | gv | — | engine_studio_api slot 20 wrapper; first `*pp = &global` out-param store. |
 | [psubmodel](locators/studioapi_SetupModel.md) | engine | gv | — | Same wrapper; second `*pp = &global` out-param store. Do not sort by VA. |
 | [r_ambientlight](locators/R_StudioSetupLighting.md) | engine | gv | — | Int store of alight_t.ambientlight inside R_StudioSetupLighting. |
@@ -176,10 +177,11 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [R_StudioRenderModel](locators/R_StudioRenderModel.md) | engine | func | `R_StudioCalcAttachments`, `R_StudioDrawModel`, `R_StudioDrawPlayer`, `R_StudioSetupBones`, `cl_sprite_shell`, `g_ChromeOrigin` | The func_xrefs entry declares xref_gvs: ["cl_sprite_shell", "g_ChromeOrigin"] and no strings/signatures/functions: the candidate is the function that intersects the… |
 | [V_StartPitchDrift](locators/V_StartPitchDrift.md) | client | func | — | _client_registration_common.REGISTRATION_QUERY is invoked with the label centerview. The helper collects strings whose NUL-terminated bytes end with the label |
 
-## 前驱产物复用（下游确定性恢复） (31)
+## 前驱产物复用（下游确定性恢复） (32)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
+| [GL_UnloadTexture](locators/GL_UnloadTexture.md) | engine | func | `R_StudioSetupSkin` | Same finder as R_StudioSetupSkin. After the unique "%s%d" snprintf of the remap name buffer, the first later local call whose arg0 is that buffer is GL_UnloadTexture(name). Distinct from GL_UnloadTextures. |
 | [cl_funcs](locators/cl_funcs.md) | engine | gv | `ClientDLL_Init` | find-ClientDLL_Init-cl_funcs (SvEngine Linux) takes the called pointer of cl_funcs.pInitFunc(&cl_enginefuncs, 7); pInitFunc is the first member, so that address is &cl_funcs. Windows keeps the find-ClientDLL_HudInit-decompiles path. |
 | [r_refdef](locators/r_refdef.md) | engine | gv | `CL_SetDevOverView`, `cl_funcs` | The pointer argument of the unique CL_SetDevOverView call. The caller is derived, not read from R_RenderScene, because svencoop-10257 Windows inlines it into R_RenderView. |
 | [ClientDLL_DrawNormalTriangles](locators/ClientDLL_DrawNormalTriangles.md) | engine | func | `CL_SetDevOverView`, `cl_funcs` | The unique direct callee of the scene renderer that references exactly one cl_funcs member and additionally dispatches through a non-member function pointer (tri.RenderMode). |
