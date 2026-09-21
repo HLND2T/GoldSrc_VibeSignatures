@@ -20,6 +20,7 @@ modules:
           - r_ambientlight.{platform}.yaml
           - r_shadelight.{platform}.yaml
           - r_colormix.{platform}.yaml
+          - r_plightvec.{platform}.yaml
       - name: find-engine-filter-callbacks
         expected_input:
           - cl_enginefuncs.{platform}.yaml
@@ -999,6 +1000,8 @@ modules:
       - name: r_shadelight
         category: gv
       - name: r_colormix
+        category: gv
+      - name: r_plightvec
         category: gv
       - name: R_CullBox
         category: func

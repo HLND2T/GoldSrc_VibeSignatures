@@ -6,9 +6,10 @@ engine_studio_api_t (common/r_studioint.h) stores:
   ``*ppbodypart = &pbodypart`` / ``*ppsubmodel = &psubmodel``.
 - R_StudioSetupLighting at slot 24 (offset 0x60). The body assigns
   r_ambientlight from alight_t.ambientlight, r_shadelight from the
-  int-to-float conversion of alight_t.shadelight, and r_colormix from
-  VectorCopy(alight_t.color) after the r_icolormix ``* 0xC0FF & 0xFF00``
-  packing.
+  int-to-float conversion of alight_t.shadelight, r_plightvec from
+  VectorCopy through the alight_t.plightvec pointer at offset 0x14, and
+  r_colormix from VectorCopy(alight_t.color) after the r_icolormix
+  ``* 0xC0FF & 0xFF00`` packing.
 
 Discovery reuses locate_studio_slot. GV addresses come from verified
 instruction operands in the slot function, never from a prior artifact
@@ -42,6 +43,9 @@ import json
 import traceback
 
 ESP, EBP = 4, 5
+# cdecl volatile integer registers: a call clobbers them, so tracked load
+# origins must not survive one (e.g. __ftol returns its result in eax).
+CALL_CLOBBER = (0, 1, 2)
 O_REG = int(idaapi.o_reg)
 O_MEM = int(idaapi.o_mem)
 O_PHRASE = int(idaapi.o_phrase)
@@ -155,6 +159,7 @@ RECOVER_LIGHTING_GVS_PY = (
     _RECOVER_SHARED_PY
     + r"""
 SLOT_VA = SLOT_VA_PLACEHOLDER
+PLIGHTVEC_DISP = 0x14
 FLOAT_STORE = ('fst', 'fstp', 'movss', 'movlps', 'movups', 'movaps')
 
 def first_and_ff00(fn):
@@ -256,6 +261,7 @@ def main():
     ambient = []
     shade = []
     color = []
+    plight = []
 
     def stack_id(frame, disp):
         key = (int(frame), int(disp))
@@ -266,6 +272,15 @@ def main():
 
     def is_plighting(base):
         return ptr_of.get(base) == plighting_id
+
+    def mem_load_origin(base, disp):
+        if base is None or disp is None:
+            return None
+        if is_plighting(base):
+            return ('f32', int(disp))
+        if reg_origin.get(base) == ('load', PLIGHTVEC_DISP):
+            return ('ptrload', PLIGHTVEC_DISP, int(disp))
+        return None
 
     for ea in idautils.FuncItems(int(fn.start_ea)):
         insn = idautils.DecodeInstruction(ea)
@@ -295,9 +310,19 @@ def main():
             elif is_plighting(base):
                 ptr_of.pop(dest, None)
                 reg_origin[dest] = ('load', int(disp))
+            elif reg_origin.get(base) == ('load', PLIGHTVEC_DISP):
+                ptr_of.pop(dest, None)
+                reg_origin[dest] = ('ptrload', PLIGHTVEC_DISP, int(disp))
             else:
                 ptr_of.pop(dest, None)
                 reg_origin.pop(dest, None)
+        if mnem == 'call':
+            for reg in list(reg_origin):
+                if reg in CALL_CLOBBER:
+                    reg_origin.pop(reg, None)
+            xmm_origin.clear()
+            st0 = None
+            continue
         if mnem == 'fild':
             mem_op = first_mem_op(insn)
             base, disp = mem_base_disp(mem_op) if mem_op is not None else (None, None)
@@ -305,13 +330,15 @@ def main():
         elif mnem == 'fld':
             mem_op = first_mem_op(insn)
             base, disp = mem_base_disp(mem_op) if mem_op is not None else (None, None)
-            st0 = ('f32', int(disp)) if is_plighting(base) else None
+            st0 = mem_load_origin(base, disp)
         elif mnem in ('fst', 'fstp'):
             mem_op = first_mem_op(insn)
             gv, offb = resolved_mem_gv(ea, insn, mem_op if mem_op is not None else op0, pic_fn)
             if gv is not None and offb:
                 if st0 == ('i2f', 4):
                     shade.append(item(gv, ea, insn, offb))
+                elif st0 is not None and st0[0] == 'ptrload':
+                    plight.append(item(gv, ea, insn, offb))
                 elif int(ea) >= and_ea and mnem in FLOAT_STORE:
                     color.append(item(gv, ea, insn, offb))
             if mnem == 'fstp':
@@ -324,7 +351,7 @@ def main():
             xmm_origin[int(op0.reg)] = xmm_origin.get(src)
         elif mnem == 'movss' and int(op0.type) == O_REG:
             base, disp = mem_base_disp(op1)
-            xmm_origin[int(op0.reg)] = ('f32', int(disp)) if is_plighting(base) else None
+            xmm_origin[int(op0.reg)] = mem_load_origin(base, disp)
         if mnem in ('mov', 'movss', 'movlps', 'movups', 'movaps'):
             dest_is_mem = int(op0.type) in (O_MEM, O_DISPL, O_PHRASE)
             if dest_is_mem:
@@ -334,12 +361,16 @@ def main():
                         origin = reg_origin.get(int(op1.reg))
                         if origin == ('load', 0):
                             ambient.append(item(gv, ea, insn, offb))
+                        elif origin is not None and origin[0] == 'ptrload':
+                            plight.append(item(gv, ea, insn, offb))
                         elif int(ea) >= and_ea and origin in (('load', 8), ('load', 12), ('load', 16)):
                             color.append(item(gv, ea, insn, offb))
                     if mnem in FLOAT_STORE and int(op1.type) == O_REG:
                         origin = xmm_origin.get(int(op1.reg))
                         if origin == ('i2f', 4):
                             shade.append(item(gv, ea, insn, offb))
+                        elif origin is not None and origin[0] == 'ptrload':
+                            plight.append(item(gv, ea, insn, offb))
                         elif int(ea) >= and_ea:
                             color.append(item(gv, ea, insn, offb))
     amb_gvs = sorted({x['gv_ea'] for x in ambient})
@@ -362,6 +393,20 @@ def main():
             break
     if mix_item is None:
         return {'error': 'r_colormix base store missing'}
+    plight_addrs = sorted({x['gv_ea'] for x in plight})
+    plight_bases = [a for a in plight_addrs if (a + 4) in plight_addrs and (a + 8) in plight_addrs]
+    if len(plight_bases) != 1:
+        return {'error': 'r_plightvec cluster not unique',
+                'plight': [hex(x) for x in plight_addrs],
+                'plight_bases': [hex(x) for x in plight_bases]}
+    plight_base = plight_bases[0]
+    plight_item = None
+    for cand in plight:
+        if cand['gv_ea'] == plight_base:
+            plight_item = cand
+            break
+    if plight_item is None:
+        return {'error': 'r_plightvec base store missing'}
     return {
         'pointer_size': 4,
         'slot_va': hex(int(SLOT_VA)),
@@ -369,6 +414,7 @@ def main():
         'plighting_id': int(plighting_id),
         'r_ambientlight': ambient[0],
         'r_shadelight': shade[0],
+        'r_plightvec': plight_item,
         'r_colormix': mix_item,
     }
 
@@ -578,7 +624,7 @@ async def preprocess_studio_setup_lighting(
         return False
     code = RECOVER_LIGHTING_GVS_PY.replace("SLOT_VA_PLACEHOLDER", hex(int(slot_ea)))
     located = await _recover_gvs(session, code, slot_ea)
-    names = ("r_ambientlight", "r_shadelight", "r_colormix")
+    names = ("r_ambientlight", "r_shadelight", "r_plightvec", "r_colormix")
     items = {name: _gv_item(located or {}, name) for name in names}
     if located is None or located.get("error") or any(item is None for item in items.values()):
         if debug:
