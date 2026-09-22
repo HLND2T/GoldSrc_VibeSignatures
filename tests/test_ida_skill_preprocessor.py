@@ -2803,16 +2803,43 @@ found_struct_offset: []
         graph[0]["writes"] = []
         self.assertIsNone(resolve(graph, 3, 1, 7))
 
-    def test_relative_store_ignores_x87_paths_that_cannot_define_the_base(self):
+    def test_relative_store_preserves_base_across_non_clobbering_instructions(self):
         # SvEngine Linux Mod_LoadModel shape: the GOT base is built in the entry
         # block, an x87 comparison sits between it and the store, and the store
         # block carries a self-loop. The comparison has no general purpose
         # register operand, so it must not invalidate EBX; `fnstsw ax` does.
+        # ADC and CVTTSS2SI must invalidate their destination, but preserve EBX
+        # when another register is written, as in the R_SetupGL viewport paths.
         ea, displacement, base, thunk = 0x1006, 0x2000, 0x8000, 0x2000
         void = SimpleNamespace(type=0)
-        for mnemonic, float_ops, expected in (
+        for mnemonic, intervening_ops, expected in (
             ("fld", [SimpleNamespace(type=4, addr=0, offb=2, dtype=2), void], "0xa000"),
             ("fnstsw", [SimpleNamespace(type=1, reg=0, dtype=2, offb=0), void], None),
+            (
+                "adc",
+                [SimpleNamespace(type=1, reg=2, dtype=2, offb=0), SimpleNamespace(type=5, value=-1), void],
+                "0xa000",
+            ),
+            (
+                "adc",
+                [SimpleNamespace(type=1, reg=3, dtype=2, offb=0), SimpleNamespace(type=5, value=0), void],
+                None,
+            ),
+            (
+                "adc",
+                [SimpleNamespace(type=1, reg=3, dtype=0, offb=0), SimpleNamespace(type=5, value=0), void],
+                None,
+            ),
+            (
+                "cvttss2si",
+                [SimpleNamespace(type=1, reg=6, dtype=2, offb=0), SimpleNamespace(type=1, reg=64), void],
+                "0xa000",
+            ),
+            (
+                "cvttss2si",
+                [SimpleNamespace(type=1, reg=3, dtype=2, offb=0), SimpleNamespace(type=1, reg=64), void],
+                None,
+            ),
         ):
             with self.subTest(mnemonic=mnemonic):
                 function = SimpleNamespace(start_ea=0x1000, end_ea=0x100C)
@@ -2831,7 +2858,7 @@ found_struct_offset: []
                     ],
                     size=2,
                 )
-                float_insn = SimpleNamespace(ops=float_ops, size=2)
+                intervening_insn = SimpleNamespace(ops=intervening_ops, size=2)
                 store = SimpleNamespace(
                     ops=[
                         SimpleNamespace(type=4, addr=displacement, offb=2, dtype=2),
@@ -2840,7 +2867,7 @@ found_struct_offset: []
                     ],
                     size=6,
                 )
-                instructions = {0x1000: call, 0x1002: add, 0x1004: float_insn, ea: store}
+                instructions = {0x1000: call, 0x1002: add, 0x1004: intervening_insn, ea: store}
                 mnemonics = {0x1000: "call", 0x1002: "add", 0x1004: mnemonic, ea: "mov"}
                 heads = {0x1000: [0x1000, 0x1002], 0x1004: [0x1004], ea: [ea]}
                 segment = SimpleNamespace(perm=6, end_ea=base + displacement + 6)

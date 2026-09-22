@@ -1,0 +1,528 @@
+func_name: R_SetupGL
+func_va: '0x13a880'
+disasm_code: |
+  ; Engine matrix globals: each target is the base of a float[16] object, not a pointer slot or an interior element.
+  ; gProjectionMatrix (gv): output buffer of GetFloatv(GL_PROJECTION_MATRIX = 0xBA7).
+  ; r_world_matrix (gv): output buffer of GetFloatv(GL_MODELVIEW_MATRIX = 0xBA6).
+  ; gWorldToScreen (gv): product of projection/modelview matrices; input to InvertMatrix.
+  ; gScreenToWorld (gv): output buffer of that same InvertMatrix call.
+  ; Source role: HLND2T_official/engine/gl_rmain.c R_SetupGL; current instructions and ABI take precedence over source layout.
+  ; gmodinfo_vertical_fov (gv): address of gmodinfo.vertical_fov, a four-byte boolean field, not an independent ELF symbol or FOV angle.
+  ; Select the field read that chooses the vertical/horizontal projection calculation, not gmodinfo or a GOT pointer to it.
+  ; The liblist.gam vertical_fov boolean write independently confirms this field. Derive its address from the current binary, never copy the reference offset.
+  ; SvEngine differs from the public GoldSrc body: FOV projection selection is inlined or delegated, and matrix multiplication may be vectorized.
+  ; PIC/GOT accesses require current-target address propagation and gv_pic_addend; the encoded displacement alone is not the global address.
+  .text:0013A880                 push    ebp
+  .text:0013A881                 push    edi
+  .text:0013A882                 push    esi
+  .text:0013A883                 push    ebx
+  .text:0013A884                 call    __x86_get_pc_thunk_bx
+  .text:0013A889                 add     ebx, (offset dbl_2EE000 - $)
+  .text:0013A88F                 sub     esp, 2Ch
+  .text:0013A892                 ; mode
+  .text:0013A892                 mov     [esp+3Ch+mode], 1701h; mode
+  .text:0013A899                 call    _glMatrixMode
+  .text:0013A89E                 call    _glLoadIdentity
+  .text:0013A8A3                 lea     ebp, (dword_30F68E0 - 2EE000h)[ebx]
+  .text:0013A8A9                 mov     edx, ds:(dword_30F6D44 - 2EE000h)[ebx]
+  .text:0013A8AF                 mov     ecx, ds:(dword_30F6D4C - 2EE000h)[ebx]
+  .text:0013A8B5                 mov     eax, ds:(dword_30F6D40 - 2EE000h)[ebx]
+  .text:0013A8BB                 mov     edi, [ebp+0]
+  .text:0013A8BE                 mov     esi, ds:(dword_30F6D48 - 2EE000h)[ebx]
+  .text:0013A8C4                 sub     edi, edx
+  .text:0013A8C6                 add     edx, ecx
+  .text:0013A8C8                 mov     ecx, [ebp+0]
+  .text:0013A8CB                 add     esi, eax
+  .text:0013A8CD                 sub     ecx, edx
+  .text:0013A8CF                 mov     edx, ecx
+  .text:0013A8D1                 xor     ecx, ecx
+  .text:0013A8D3                 test    eax, eax
+  .text:0013A8D5                 setnle  cl
+  .text:0013A8D8                 sub     eax, ecx
+  .text:0013A8DA                 lea     ecx, (dword_30F68E4 - 2EE000h)[ebx]
+  .text:0013A8E0                 cmp     esi, [ecx]
+  .text:0013A8E2                 mov     [esp+3Ch+x], ecx
+  .text:0013A8E6                 setl    cl
+  .text:0013A8E9                 movzx   ecx, cl
+  .text:0013A8EC                 add     esi, ecx
+  .text:0013A8EE                 cmp     edx, 80000000h
+  .text:0013A8F4                 adc     edx, 0FFFFFFFFh
+  .text:0013A8F7                 xor     ecx, ecx
+  .text:0013A8F9                 cmp     [ebp+0], edi
+  .text:0013A8FC                 setnle  cl
+  .text:0013A8FF                 add     edi, ecx
+  .text:0013A901                 mov     ecx, ds:(dword_30F6F14 - 2EE000h)[ebx]
+  .text:0013A907                 test    ecx, ecx
+  .text:0013A909                 jnz     loc_13AD28
+  .text:0013A90F                 sub     esi, eax
+  .text:0013A911                 sub     edi, edx
+  .text:0013A913                 lea     ecx, (dword_30F68E8 - 2EE000h)[ebx]
+  .text:0013A919                 ; height
+  .text:0013A919                 mov     [esp+3Ch+height], edi; height
+  .text:0013A91D                 ; width
+  .text:0013A91D                 mov     [esp+3Ch+width], esi; width
+  .text:0013A921                 mov     esi, [ecx]
+  .text:0013A923                 add     edx, esi
+  .text:0013A925                 ; y
+  .text:0013A925                 mov     [esp+3Ch+y], edx; y
+  .text:0013A929                 lea     edx, (dword_30F68EC - 2EE000h)[ebx]
+  .text:0013A92F                 mov     edi, [edx]
+  .text:0013A931                 add     eax, edi
+  .text:0013A933                 ; x
+  .text:0013A933                 mov     [esp+3Ch+mode], eax; x
+  .text:0013A936                 call    _glViewport
+  .text:0013A93B                 lea     eax, (dword_45F4C0 - 2EE000h)[ebx]
+  .text:0013A941                 mov     ebp, [eax+358Ch] ; gmodinfo_vertical_fov (gv): field read after recovering gmodinfo base
+  .text:0013A947                 test    ebp, ebp
+  .text:0013A949                 jz      loc_13AD10
+  .text:0013A94F                 ; vertical_fov
+  .text:0013A94F                 mov     [esp+3Ch+mode], 1; vertical_fov
+  .text:0013A956                 call    sub_139EC0
+  .text:0013A95B                 ; mode
+  .text:0013A95B                 mov     [esp+3Ch+mode], 404h; mode
+  .text:0013A962                 call    _glCullFace
+  .text:0013A967                 lea     eax, (gProjectionMatrix - 2EE000h)[ebx]
+  .text:0013A96D                 ; params
+  .text:0013A96D                 mov     [esp+3Ch+y], eax; params
+  .text:0013A971                 ; pname
+  .text:0013A971                 mov     [esp+3Ch+mode], 0BA7h; pname
+  .text:0013A978                 call    _glGetFloatv
+  .text:0013A97D                 ; mode
+  .text:0013A97D                 mov     [esp+3Ch+mode], 1700h; mode
+  .text:0013A984                 call    _glMatrixMode
+  .text:0013A989                 call    _glLoadIdentity
+  .text:0013A98E                 ; z
+  .text:0013A98E                 mov     [esp+3Ch+height], 0; z
+  .text:0013A996                 ; y
+  .text:0013A996                 mov     [esp+3Ch+width], 0; y
+  .text:0013A99E                 ; angle
+  .text:0013A99E                 mov     [esp+3Ch+mode], 0C2B40000h; angle
+  .text:0013A9A5                 fld1
+  .text:0013A9A7                 fstp    [esp+3Ch+x]
+  .text:0013A9AB                 movss   xmm2, [esp+3Ch+x]
+  .text:0013A9B1                 ; x
+  .text:0013A9B1                 movss   [esp+3Ch+y], xmm2; x
+  .text:0013A9B7                 call    _glRotatef
+  .text:0013A9BC                 movss   xmm2, [esp+3Ch+x]
+  .text:0013A9C2                 ; y
+  .text:0013A9C2                 mov     [esp+3Ch+width], 0; y
+  .text:0013A9CA                 ; x
+  .text:0013A9CA                 mov     [esp+3Ch+y], 0; x
+  .text:0013A9D2                 ; z
+  .text:0013A9D2                 movss   [esp+3Ch+height], xmm2; z
+  .text:0013A9D8                 ; angle
+  .text:0013A9D8                 mov     [esp+3Ch+mode], 42B40000h; angle
+  .text:0013A9DF                 call    _glRotatef
+  .text:0013A9E4                 movss   xmm2, [esp+3Ch+x]
+  .text:0013A9EA                 ; z
+  .text:0013A9EA                 mov     [esp+3Ch+height], 0; z
+  .text:0013A9F2                 ; y
+  .text:0013A9F2                 mov     [esp+3Ch+width], 0; y
+  .text:0013A9FA                 ; x
+  .text:0013A9FA                 movss   [esp+3Ch+y], xmm2; x
+  .text:0013AA00                 fld     ds:(flt_30F6D64 - 2EE000h)[ebx]
+  .text:0013AA06                 fst     [esp+3Ch+var_20]
+  .text:0013AA0A                 fchs
+  .text:0013AA0C                 ; angle
+  .text:0013AA0C                 fstp    [esp+3Ch+mode]; angle
+  .text:0013AA0F                 call    _glRotatef
+  .text:0013AA14                 movss   xmm2, [esp+3Ch+x]
+  .text:0013AA1A                 ; z
+  .text:0013AA1A                 mov     [esp+3Ch+height], 0; z
+  .text:0013AA22                 ; x
+  .text:0013AA22                 mov     [esp+3Ch+y], 0; x
+  .text:0013AA2A                 ; y
+  .text:0013AA2A                 movss   [esp+3Ch+width], xmm2; y
+  .text:0013AA30                 fld     ds:(flt_30F6D5C - 2EE000h)[ebx]
+  .text:0013AA36                 fst     [esp+3Ch+var_20]
+  .text:0013AA3A                 fchs
+  .text:0013AA3C                 ; angle
+  .text:0013AA3C                 fstp    [esp+3Ch+mode]; angle
+  .text:0013AA3F                 call    _glRotatef
+  .text:0013AA44                 movss   xmm2, [esp+3Ch+x]
+  .text:0013AA4A                 ; y
+  .text:0013AA4A                 mov     [esp+3Ch+width], 0; y
+  .text:0013AA52                 ; x
+  .text:0013AA52                 mov     [esp+3Ch+y], 0; x
+  .text:0013AA5A                 ; z
+  .text:0013AA5A                 movss   [esp+3Ch+height], xmm2; z
+  .text:0013AA60                 fld     ds:(flt_30F6D60 - 2EE000h)[ebx]
+  .text:0013AA66                 fst     [esp+3Ch+x]
+  .text:0013AA6A                 fchs
+  .text:0013AA6C                 ; angle
+  .text:0013AA6C                 fstp    [esp+3Ch+mode]; angle
+  .text:0013AA6F                 call    _glRotatef
+  .text:0013AA74                 fld     ds:(flt_30F6D58 - 2EE000h)[ebx]
+  .text:0013AA7A                 fchs
+  .text:0013AA7C                 ; z
+  .text:0013AA7C                 fstp    [esp+3Ch+width]; z
+  .text:0013AA80                 fld     ds:(flt_30F6D54 - 2EE000h)[ebx]
+  .text:0013AA86                 fchs
+  .text:0013AA88                 ; y
+  .text:0013AA88                 fstp    [esp+3Ch+y]; y
+  .text:0013AA8C                 fld     ds:(flt_30F6D50 - 2EE000h)[ebx]
+  .text:0013AA92                 fst     [esp+3Ch+x]
+  .text:0013AA96                 fchs
+  .text:0013AA98                 ; x
+  .text:0013AA98                 fstp    [esp+3Ch+mode]; x
+  .text:0013AA9B                 call    _glTranslatef
+  .text:0013AAA0                 lea     eax, (r_world_matrix - 2EE000h)[ebx]
+  .text:0013AAA6                 ; params
+  .text:0013AAA6                 mov     [esp+3Ch+y], eax; params
+  .text:0013AAAA                 ; pname
+  .text:0013AAAA                 mov     [esp+3Ch+mode], 0BA6h; pname
+  .text:0013AAB1                 call    _glGetFloatv
+  .text:0013AAB6                 lea     eax, (off_2F3844 - 2EE000h)[ebx]; "gl_cull"
+  .text:0013AABC                 fld     dword ptr [eax+0Ch]
+  .text:0013AABF                 fldz
+  .text:0013AAC1                 fxch    st(1)
+  .text:0013AAC3                 fucomip st, st(1)
+  .text:0013AAC5                 fstp    st
+  .text:0013AAC7                 ; cap
+  .text:0013AAC7                 mov     [esp+3Ch+mode], 0B44h; cap
+  .text:0013AACE                 jp      short loc_13AAD6
+  .text:0013AAD0                 jz      loc_13AD50
+  .text:0013AAD6                 call    _glEnable
+  .text:0013AADB                 ; cap
+  .text:0013AADB                 mov     [esp+3Ch+mode], 0BE2h; cap
+  .text:0013AAE2                 call    _glDisable
+  .text:0013AAE7                 ; cap
+  .text:0013AAE7                 mov     [esp+3Ch+mode], 0BC0h; cap
+  .text:0013AAEE                 call    _glDisable
+  .text:0013AAF3                 ; cap
+  .text:0013AAF3                 mov     [esp+3Ch+mode], 0B71h; cap
+  .text:0013AAFA                 call    _glEnable
+  .text:0013AAFF                 lea     eax, (gScreenToWorld - 2EE000h)[ebx]
+  .text:0013AB05                 movss   xmm0, ds:(gProjectionMatrix+8 - 2EE000h)[ebx]
+  .text:0013AB0D                 movss   xmm5, ds:(gProjectionMatrix - 2EE000h)[ebx]
+  .text:0013AB15                 movss   xmm4, ds:(gProjectionMatrix+10h - 2EE000h)[ebx]
+  .text:0013AB1D                 movss   xmm3, ds:(gProjectionMatrix+20h - 2EE000h)[ebx]
+  .text:0013AB25                 fld     ds:(gProjectionMatrix+0Ch - 2EE000h)[ebx]
+  .text:0013AB2B                 movss   xmm1, ds:(gProjectionMatrix+38h - 2EE000h)[ebx]
+  .text:0013AB33                 fstp    [esp+3Ch+x]
+  .text:0013AB37                 movss   xmm6, [esp+3Ch+x]
+  .text:0013AB3D                 fld     ds:(gProjectionMatrix+4 - 2EE000h)[ebx]
+  .text:0013AB43                 fstp    [esp+3Ch+x]
+  .text:0013AB47                 unpcklps xmm0, xmm6
+  .text:0013AB4A                 movss   xmm6, [esp+3Ch+x]
+  .text:0013AB50                 fld     ds:(gProjectionMatrix+1Ch - 2EE000h)[ebx]
+  .text:0013AB56                 unpcklps xmm5, xmm6
+  .text:0013AB59                 fstp    [esp+3Ch+x]
+  .text:0013AB5D                 movss   xmm6, [esp+3Ch+x]
+  .text:0013AB63                 movlhps xmm5, xmm0
+  .text:0013AB66                 fld     ds:(gProjectionMatrix+14h - 2EE000h)[ebx]
+  .text:0013AB6C                 movss   xmm0, ds:(gProjectionMatrix+18h - 2EE000h)[ebx]
+  .text:0013AB74                 fstp    [esp+3Ch+x]
+  .text:0013AB78                 fld     ds:(gProjectionMatrix+2Ch - 2EE000h)[ebx]
+  .text:0013AB7E                 unpcklps xmm0, xmm6
+  .text:0013AB81                 movss   xmm6, [esp+3Ch+x]
+  .text:0013AB87                 fstp    [esp+3Ch+x]
+  .text:0013AB8B                 fld     ds:(gProjectionMatrix+24h - 2EE000h)[ebx]
+  .text:0013AB91                 unpcklps xmm4, xmm6
+  .text:0013AB94                 movss   xmm6, [esp+3Ch+x]
+  .text:0013AB9A                 movlhps xmm4, xmm0
+  .text:0013AB9D                 movss   xmm0, ds:(gProjectionMatrix+28h - 2EE000h)[ebx]
+  .text:0013ABA5                 fstp    [esp+3Ch+x]
+  .text:0013ABA9                 fld     ds:(gProjectionMatrix+3Ch - 2EE000h)[ebx]
+  .text:0013ABAF                 unpcklps xmm0, xmm6
+  .text:0013ABB2                 movss   xmm6, [esp+3Ch+x]
+  .text:0013ABB8                 fstp    [esp+3Ch+x]
+  .text:0013ABBC                 fld     ds:(gProjectionMatrix+34h - 2EE000h)[ebx]
+  .text:0013ABC2                 unpcklps xmm3, xmm6
+  .text:0013ABC5                 movss   xmm6, [esp+3Ch+x]
+  .text:0013ABCB                 fstp    [esp+3Ch+x]
+  .text:0013ABCF                 movlhps xmm3, xmm0
+  .text:0013ABD2                 movss   xmm2, [esp+3Ch+x]
+  .text:0013ABD8                 movss   xmm0, ds:(gProjectionMatrix+30h - 2EE000h)[ebx]
+  .text:0013ABE0                 unpcklps xmm1, xmm6
+  .text:0013ABE3                 pxor    xmm6, xmm6
+  .text:0013ABE7                 unpcklps xmm0, xmm2
+  .text:0013ABEA                 movaps  xmm2, xmm0
+  .text:0013ABED                 movaps  xmm0, xmmword ptr ds:(r_world_matrix - 2EE000h)[ebx]
+  .text:0013ABF4                 movlhps xmm2, xmm1
+  .text:0013ABF7                 movaps  xmm1, xmm0
+  .text:0013ABFA                 shufps  xmm1, xmm0, 0
+  .text:0013ABFE                 movaps  xmm7, xmm0
+  .text:0013AC01                 shufps  xmm7, xmm0, 55h ; 'U'
+  .text:0013AC05                 mulps   xmm1, xmm5
+  .text:0013AC08                 ; inverse
+  .text:0013AC08                 mov     [esp+3Ch+y], eax; inverse
+  .text:0013AC0C                 mulps   xmm7, xmm4
+  .text:0013AC0F                 lea     eax, (gWorldToScreen - 2EE000h)[ebx]
+  .text:0013AC15                 addps   xmm1, xmm6
+  .text:0013AC18                 ; matrix
+  .text:0013AC18                 mov     [esp+3Ch+mode], eax; matrix
+  .text:0013AC1B                 addps   xmm1, xmm7
+  .text:0013AC1E                 movaps  xmm7, xmm0
+  .text:0013AC21                 shufps  xmm7, xmm0, 0AAh
+  .text:0013AC25                 shufps  xmm0, xmm0, 0FFh
+  .text:0013AC29                 mulps   xmm7, xmm3
+  .text:0013AC2C                 mulps   xmm0, xmm2
+  .text:0013AC2F                 addps   xmm1, xmm7
+  .text:0013AC32                 addps   xmm0, xmm1
+  .text:0013AC35                 movaps  xmmword ptr ds:(gWorldToScreen - 2EE000h)[ebx], xmm0
+  .text:0013AC3C                 movaps  xmm0, xmmword ptr ds:(r_world_matrix+10h - 2EE000h)[ebx]
+  .text:0013AC43                 movaps  xmm1, xmm0
+  .text:0013AC46                 shufps  xmm1, xmm0, 0
+  .text:0013AC4A                 movaps  xmm7, xmm0
+  .text:0013AC4D                 shufps  xmm7, xmm0, 55h ; 'U'
+  .text:0013AC51                 mulps   xmm1, xmm5
+  .text:0013AC54                 mulps   xmm7, xmm4
+  .text:0013AC57                 addps   xmm1, xmm6
+  .text:0013AC5A                 addps   xmm1, xmm7
+  .text:0013AC5D                 movaps  xmm7, xmm0
+  .text:0013AC60                 shufps  xmm7, xmm0, 0AAh
+  .text:0013AC64                 shufps  xmm0, xmm0, 0FFh
+  .text:0013AC68                 mulps   xmm7, xmm3
+  .text:0013AC6B                 mulps   xmm0, xmm2
+  .text:0013AC6E                 addps   xmm1, xmm7
+  .text:0013AC71                 addps   xmm0, xmm1
+  .text:0013AC74                 movaps  xmm1, xmmword ptr ds:(r_world_matrix+20h - 2EE000h)[ebx]
+  .text:0013AC7B                 movaps  xmmword ptr ds:(gWorldToScreen+10h - 2EE000h)[ebx], xmm0
+  .text:0013AC82                 movaps  xmm0, xmm1
+  .text:0013AC85                 shufps  xmm0, xmm1, 0
+  .text:0013AC89                 movaps  xmm7, xmm1
+  .text:0013AC8C                 shufps  xmm7, xmm1, 55h ; 'U'
+  .text:0013AC90                 mulps   xmm0, xmm5
+  .text:0013AC93                 mulps   xmm7, xmm4
+  .text:0013AC96                 addps   xmm0, xmm6
+  .text:0013AC99                 addps   xmm0, xmm7
+  .text:0013AC9C                 movaps  xmm7, xmm1
+  .text:0013AC9F                 shufps  xmm7, xmm1, 0AAh
+  .text:0013ACA3                 shufps  xmm1, xmm1, 0FFh
+  .text:0013ACA7                 mulps   xmm7, xmm3
+  .text:0013ACAA                 mulps   xmm1, xmm2
+  .text:0013ACAD                 addps   xmm0, xmm7
+  .text:0013ACB0                 addps   xmm1, xmm0
+  .text:0013ACB3                 movaps  xmm0, xmmword ptr ds:(r_world_matrix+30h - 2EE000h)[ebx]
+  .text:0013ACBA                 movaps  xmmword ptr ds:(gWorldToScreen+20h - 2EE000h)[ebx], xmm1
+  .text:0013ACC1                 movaps  xmm1, xmm0
+  .text:0013ACC4                 shufps  xmm1, xmm0, 0
+  .text:0013ACC8                 mulps   xmm5, xmm1
+  .text:0013ACCB                 movaps  xmm1, xmm0
+  .text:0013ACCE                 shufps  xmm1, xmm0, 55h ; 'U'
+  .text:0013ACD2                 mulps   xmm4, xmm1
+  .text:0013ACD5                 movaps  xmm1, xmm0
+  .text:0013ACD8                 shufps  xmm1, xmm0, 0AAh
+  .text:0013ACDC                 addps   xmm6, xmm5
+  .text:0013ACDF                 mulps   xmm3, xmm1
+  .text:0013ACE2                 shufps  xmm0, xmm0, 0FFh
+  .text:0013ACE6                 addps   xmm4, xmm6
+  .text:0013ACE9                 mulps   xmm0, xmm2
+  .text:0013ACEC                 addps   xmm3, xmm4
+  .text:0013ACEF                 addps   xmm0, xmm3
+  .text:0013ACF2                 movaps  xmmword ptr ds:(gWorldToScreen+30h - 2EE000h)[ebx], xmm0
+  .text:0013ACF9                 call    InvertMatrix
+  .text:0013ACFE                 add     esp, 2Ch
+  .text:0013AD01                 pop     ebx
+  .text:0013AD02                 pop     esi
+  .text:0013AD03                 pop     edi
+  .text:0013AD04                 pop     ebp
+  .text:0013AD05                 retn
+  .text:0013AD10                 ; vertical_fov
+  .text:0013AD10                 mov     [esp+3Ch+mode], 0; vertical_fov
+  .text:0013AD17                 call    sub_139EC0
+  .text:0013AD1C                 jmp     loc_13A95B
+  .text:0013AD28                 lea     eax, (off_2F3790 - 2EE000h)[ebx]; "gl_envmapsize"
+  .text:0013AD2E                 xor     edx, edx
+  .text:0013AD30                 cvttss2si esi, dword ptr [eax+0Ch]
+  .text:0013AD35                 mov     eax, [esp+3Ch+x]
+  .text:0013AD39                 mov     [ebp+0], esi
+  .text:0013AD3C                 mov     edi, esi
+  .text:0013AD3E                 mov     [eax], esi
+  .text:0013AD40                 xor     eax, eax
+  .text:0013AD42                 jmp     loc_13A913
+  .text:0013AD50                 call    _glDisable
+  .text:0013AD55                 jmp     loc_13AADB
+procedure: |-
+  // Engine matrix globals: each target is the base of a float[16] object, not a pointer slot or an interior element.
+  // gProjectionMatrix (gv): output buffer of GetFloatv(GL_PROJECTION_MATRIX = 0xBA7).
+  // r_world_matrix (gv): output buffer of GetFloatv(GL_MODELVIEW_MATRIX = 0xBA6).
+  // gWorldToScreen (gv): product of projection/modelview matrices; input to InvertMatrix.
+  // gScreenToWorld (gv): output buffer of that same InvertMatrix call.
+  // Source role: HLND2T_official/engine/gl_rmain.c R_SetupGL; current instructions and ABI take precedence over source layout.
+  // gmodinfo_vertical_fov (gv): address of gmodinfo.vertical_fov, a four-byte boolean field, not an independent ELF symbol or FOV angle.
+  // Select the field read that chooses the vertical/horizontal projection calculation, not gmodinfo or a GOT pointer to it.
+  // The liblist.gam vertical_fov boolean write independently confirms this field. Derive its address from the current binary, never copy the reference offset.
+  // SvEngine differs from the public GoldSrc body: FOV projection selection is inlined or delegated, and matrix multiplication may be vectorized.
+  // PIC/GOT accesses require current-target address propagation and gv_pic_addend; the encoded displacement alone is not the global address.
+  void __cdecl R_SetupGL()
+  {
+    int v0; // eax
+    int v1; // edx
+    GLsizei v2; // esi
+    GLsizei height; // edi
+    __m128 v4; // xmm5
+    __m128 v5; // xmm4
+    __m128 v6; // xmm3
+    __m128 v7; // xmm2
+    GLfloat mode; // [esp+0h] [ebp-3Ch]
+    GLfloat modea; // [esp+0h] [ebp-3Ch]
+    GLfloat modeb; // [esp+0h] [ebp-3Ch]
+    GLfloat modec; // [esp+0h] [ebp-3Ch]
+    GLfloat y; // [esp+4h] [ebp-38h]
+    GLfloat width; // [esp+8h] [ebp-34h]
+
+    glMatrixMode(0x1701u);
+    glLoadIdentity();
+    v0 = dword_30F6D40 - (dword_30F6D40 > 0);
+    v1 = ((unsigned int)(dword_30F68E0 - (dword_30F6D4C + dword_30F6D44)) < 0x80000000)
+       + dword_30F68E0
+       - (dword_30F6D4C
+        + dword_30F6D44)
+       - 1;
+    if ( dword_30F6F14 )
+    {
+      v1 = 0;
+      v2 = (int)*(float *)&dword_2F379C;
+      dword_30F68E0 = (int)*(float *)&dword_2F379C;
+      height = (int)*(float *)&dword_2F379C;
+      dword_30F68E4 = (int)*(float *)&dword_2F379C;
+      v0 = 0;
+    }
+    else
+    {
+      v2 = (dword_30F6D40 + dword_30F6D48 < dword_30F68E4) + dword_30F6D40 + dword_30F6D48 - v0;
+      height = (dword_30F68E0 > dword_30F68E0 - dword_30F6D44) + dword_30F68E0 - dword_30F6D44 - v1;
+    }
+    glViewport(dword_30F68EC + v0, dword_30F68E8 + v1, v2, height);
+    if ( gmodinfo_vertical_fov )
+      sub_139EC0(1);
+    else
+      sub_139EC0(0);
+    glCullFace(0x404u);
+    glGetFloatv(0xBA7u, gProjectionMatrix);
+    glMatrixMode(0x1700u);
+    glLoadIdentity();
+    glRotatef(-90.0, 1.0, 0.0, 0.0);
+    glRotatef(90.0, 0.0, 0.0, 1.0);
+    mode = -flt_30F6D64;
+    glRotatef(mode, 1.0, 0.0, 0.0);
+    modea = -flt_30F6D5C;
+    glRotatef(modea, 0.0, 1.0, 0.0);
+    modeb = -flt_30F6D60;
+    glRotatef(modeb, 0.0, 0.0, 1.0);
+    width = -flt_30F6D58;
+    y = -flt_30F6D54;
+    modec = -flt_30F6D50;
+    glTranslatef(modec, y, width);
+    glGetFloatv(0xBA6u, r_world_matrix);
+    if ( unk_2F3850 == 0.0 )
+      glDisable(0xB44u);
+    else
+      glEnable(0xB44u);
+    glDisable(0xBE2u);
+    glDisable(0xBC0u);
+    glEnable(0xB71u);
+    v4 = _mm_movelh_ps(
+           _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[0]), (__m128)LODWORD(gProjectionMatrix[1])),
+           _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[2]), (__m128)LODWORD(gProjectionMatrix[3])));
+    v5 = _mm_movelh_ps(
+           _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[4]), (__m128)LODWORD(gProjectionMatrix[5])),
+           _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[6]), (__m128)LODWORD(gProjectionMatrix[7])));
+    v6 = _mm_movelh_ps(
+           _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[8]), (__m128)LODWORD(gProjectionMatrix[9])),
+           _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[10]), (__m128)LODWORD(gProjectionMatrix[11])));
+    v7 = _mm_movelh_ps(
+           _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[12]), (__m128)LODWORD(gProjectionMatrix[13])),
+           _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[14]), (__m128)LODWORD(gProjectionMatrix[15])));
+    *(__m128 *)gWorldToScreen = _mm_add_ps(
+                                  _mm_mul_ps(
+                                    _mm_shuffle_ps(*(__m128 *)r_world_matrix, *(__m128 *)r_world_matrix, 255),
+                                    v7),
+                                  _mm_add_ps(
+                                    _mm_add_ps(
+                                      _mm_add_ps(
+                                        _mm_mul_ps(
+                                          _mm_shuffle_ps(*(__m128 *)r_world_matrix, *(__m128 *)r_world_matrix, 0),
+                                          v4),
+                                        (__m128)0LL),
+                                      _mm_mul_ps(
+                                        _mm_shuffle_ps(*(__m128 *)r_world_matrix, *(__m128 *)r_world_matrix, 85),
+                                        v5)),
+                                    _mm_mul_ps(
+                                      _mm_shuffle_ps(*(__m128 *)r_world_matrix, *(__m128 *)r_world_matrix, 170),
+                                      v6)));
+    *(__m128 *)&gWorldToScreen[4] = _mm_add_ps(
+                                      _mm_mul_ps(
+                                        _mm_shuffle_ps(*(__m128 *)&r_world_matrix[4], *(__m128 *)&r_world_matrix[4], 255),
+                                        v7),
+                                      _mm_add_ps(
+                                        _mm_add_ps(
+                                          _mm_add_ps(
+                                            _mm_mul_ps(
+                                              _mm_shuffle_ps(
+                                                *(__m128 *)&r_world_matrix[4],
+                                                *(__m128 *)&r_world_matrix[4],
+                                                0),
+                                              v4),
+                                            (__m128)0LL),
+                                          _mm_mul_ps(
+                                            _mm_shuffle_ps(
+                                              *(__m128 *)&r_world_matrix[4],
+                                              *(__m128 *)&r_world_matrix[4],
+                                              85),
+                                            v5)),
+                                        _mm_mul_ps(
+                                          _mm_shuffle_ps(
+                                            *(__m128 *)&r_world_matrix[4],
+                                            *(__m128 *)&r_world_matrix[4],
+                                            170),
+                                          v6)));
+    *(__m128 *)&gWorldToScreen[8] = _mm_add_ps(
+                                      _mm_mul_ps(
+                                        _mm_shuffle_ps(*(__m128 *)&r_world_matrix[8], *(__m128 *)&r_world_matrix[8], 255),
+                                        v7),
+                                      _mm_add_ps(
+                                        _mm_add_ps(
+                                          _mm_add_ps(
+                                            _mm_mul_ps(
+                                              _mm_shuffle_ps(
+                                                *(__m128 *)&r_world_matrix[8],
+                                                *(__m128 *)&r_world_matrix[8],
+                                                0),
+                                              v4),
+                                            (__m128)0LL),
+                                          _mm_mul_ps(
+                                            _mm_shuffle_ps(
+                                              *(__m128 *)&r_world_matrix[8],
+                                              *(__m128 *)&r_world_matrix[8],
+                                              85),
+                                            v5)),
+                                        _mm_mul_ps(
+                                          _mm_shuffle_ps(
+                                            *(__m128 *)&r_world_matrix[8],
+                                            *(__m128 *)&r_world_matrix[8],
+                                            170),
+                                          v6)));
+    *(__m128 *)&gWorldToScreen[12] = _mm_add_ps(
+                                       _mm_mul_ps(
+                                         _mm_shuffle_ps(
+                                           *(__m128 *)&r_world_matrix[12],
+                                           *(__m128 *)&r_world_matrix[12],
+                                           255),
+                                         v7),
+                                       _mm_add_ps(
+                                         _mm_mul_ps(
+                                           v6,
+                                           _mm_shuffle_ps(
+                                             *(__m128 *)&r_world_matrix[12],
+                                             *(__m128 *)&r_world_matrix[12],
+                                             170)),
+                                         _mm_add_ps(
+                                           _mm_mul_ps(
+                                             v5,
+                                             _mm_shuffle_ps(
+                                               *(__m128 *)&r_world_matrix[12],
+                                               *(__m128 *)&r_world_matrix[12],
+                                               85)),
+                                           _mm_add_ps(
+                                             (__m128)0LL,
+                                             _mm_mul_ps(
+                                               v4,
+                                               _mm_shuffle_ps(
+                                                 *(__m128 *)&r_world_matrix[12],
+                                                 *(__m128 *)&r_world_matrix[12],
+                                                 0))))));
+    InvertMatrix(gWorldToScreen, gScreenToWorld);
+  }

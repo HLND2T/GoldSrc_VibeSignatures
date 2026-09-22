@@ -1,0 +1,644 @@
+func_name: R_SetupGL
+func_va: '0x10245010'
+disasm_code: |-
+  ; Engine matrix globals: each target is the base of a float[16] object, not a pointer slot or an interior element.
+  ; gProjectionMatrix (gv): output buffer of GetFloatv(GL_PROJECTION_MATRIX = 0xBA7).
+  ; r_world_matrix (gv): output buffer of GetFloatv(GL_MODELVIEW_MATRIX = 0xBA6).
+  ; gWorldToScreen (gv): product of projection/modelview matrices; input to InvertMatrix.
+  ; gScreenToWorld (gv): output buffer of that same InvertMatrix call.
+  ; Source role: HLND2T_official/engine/gl_rmain.c R_SetupGL; current instructions and ABI take precedence over source layout.
+  ; HL25 differs from the older public source: widescreen FOV adjustment and compiler-inlined perspective math are retained; SSE temporaries are compiler artifacts.
+  .text:10245010                 push    ebp
+  .text:10245011                 mov     ebp, esp
+  .text:10245013                 sub     esp, 8
+  .text:10245016                 cmp     gl_mtexable, 0
+  .text:1024501D                 jz      short loc_1024506C
+  .text:1024501F                 ; mode
+  .text:1024501F                 push    1702h; mode
+  .text:10245024                 call    qglMatrixMode
+  .text:1024502A                 ; unsigned int
+  .text:1024502A                 push    TEXTURE0_SGIS; unsigned int
+  .text:10245030                 call    qglSelectTextureSGIS
+  .text:10245036                 call    qglLoadIdentity
+  .text:1024503C                 ; unsigned int
+  .text:1024503C                 push    TEXTURE1_SGIS; unsigned int
+  .text:10245042                 call    qglSelectTextureSGIS
+  .text:10245048                 call    qglLoadIdentity
+  .text:1024504E                 ; unsigned int
+  .text:1024504E                 push    dword_103230C8; unsigned int
+  .text:10245054                 call    qglSelectTextureSGIS
+  .text:1024505A                 call    qglLoadIdentity
+  .text:10245060                 ; unsigned int
+  .text:10245060                 push    TEXTURE0_SGIS; unsigned int
+  .text:10245066                 call    qglSelectTextureSGIS
+  .text:1024506C                 push    esi
+  .text:1024506D                 push    edi
+  .text:1024506E                 ; mode
+  .text:1024506E                 push    1701h; mode
+  .text:10245073                 call    qglMatrixMode
+  .text:10245079                 call    qglLoadIdentity
+  .text:1024507F                 mov     ecx, dword ptr xmmword_10DC6320
+  .text:10245085                 mov     edi, glheight
+  .text:1024508B                 mov     edx, edi
+  .text:1024508D                 sub     edi, dword ptr xmmword_10DC6320+0Ch
+  .text:10245093                 mov     esi, dword ptr xmmword_10DC6320+8
+  .text:10245099                 sub     edx, dword ptr xmmword_10DC6320+4
+  .text:1024509F                 lea     eax, [ecx-1]
+  .text:102450A2                 sub     edi, dword ptr xmmword_10DC6320+4
+  .text:102450A8                 add     esi, ecx
+  .text:102450AA                 test    ecx, ecx
+  .text:102450AC                 cmovle  eax, ecx
+  .text:102450AF                 cmp     esi, glwidth
+  .text:102450B5                 jge     short loc_102450B8
+  .text:102450B7                 inc     esi
+  .text:102450B8                 test    edi, edi
+  .text:102450BA                 lea     ecx, [edi-1]
+  .text:102450BD                 cmovns  ecx, edi
+  .text:102450C0                 cmp     edx, glheight
+  .text:102450C6                 jge     short loc_102450C9
+  .text:102450C8                 inc     edx
+  .text:102450C9                 sub     esi, eax
+  .text:102450CB                 sub     edx, ecx
+  .text:102450CD                 cmp     dword_10DC5144, 0
+  .text:102450D4                 jz      short loc_102450F2
+  .text:102450D6                 cvttss2si edx, dword_10322DEC
+  .text:102450DE                 xor     ecx, ecx
+  .text:102450E0                 xor     edi, edi
+  .text:102450E2                 mov     esi, edx
+  .text:102450E4                 mov     glheight, edx
+  .text:102450EA                 mov     glwidth, edx
+  .text:102450F0                 jmp     short loc_102450F4
+  .text:102450F2                 mov     edi, eax
+  .text:102450F4                 mov     eax, gly
+  .text:102450F9                 ; height
+  .text:102450F9                 push    edx; height
+  .text:102450FA                 add     eax, ecx
+  .text:102450FC                 ; width
+  .text:102450FC                 push    esi; width
+  .text:102450FD                 ; y
+  .text:102450FD                 push    eax; y
+  .text:102450FE                 mov     eax, glx
+  .text:10245103                 add     eax, edi
+  .text:10245105                 ; x
+  .text:10245105                 push    eax; x
+  .text:10245106                 call    qglViewport
+  .text:1024510C                 movd    xmm4, dword ptr xmmword_10DC6320+8
+  .text:10245114                 xorps   xmm1, xmm1
+  .text:10245117                 movd    xmm0, dword ptr xmmword_10DC6320+0Ch
+  .text:1024511F                 cvtdq2ps xmm0, xmm0
+  .text:10245122                 cvtdq2ps xmm3, xmm4
+  .text:10245125                 movss   xmm2, dword_10322F60
+  .text:1024512D                 divss   xmm3, xmm0
+  .text:10245131                 movss   xmm0, dword_10322F14
+  .text:10245139                 ucomiss xmm0, xmm1
+  .text:1024513C                 movss   [ebp+var_4], xmm3
+  .text:10245141                 lahf
+  .text:10245142                 test    ah, 44h
+  .text:10245145                 jnp     short loc_1024519B
+  .text:10245147                 comiss  xmm3, ds:dword_102B7358
+  .text:1024514E                 jbe     short loc_1024519B
+  .text:10245150                 cvtps2pd xmm0, xmm2
+  .text:10245153                 mulsd   xmm0, ds:qword_102CD4D8
+  .text:1024515B                 cvtpd2ps xmm0, xmm0
+  .text:1024515F                 cvtps2pd xmm0, xmm0
+  .text:10245162                 call    _libm_sse2_tan_precise
+  .text:10245167                 movss   xmm1, [ebp+var_4]
+  .text:1024516C                 mulss   xmm1, ds:dword_102CD4D0
+  .text:10245174                 cvtps2pd xmm1, xmm1
+  .text:10245177                 mulsd   xmm0, xmm1
+  .text:1024517B                 cvtsd2ss xmm0, xmm0
+  .text:1024517F                 cvtss2sd xmm0, xmm0
+  .text:10245183                 call    _libm_sse2_atan_precise
+  .text:10245188                 mulsd   xmm0, ds:qword_102CD4F0
+  .text:10245190                 xorps   xmm2, xmm2
+  .text:10245193                 cvtsd2ss xmm2, xmm0
+  .text:10245197                 addss   xmm2, xmm2
+  .text:1024519B                 movss   xmm0, ds:dword_103064A8
+  .text:102451A3                 comiss  xmm0, xmm2
+  .text:102451A6                 ja      short loc_102451B1
+  .text:102451A8                 comiss  xmm2, ds:dword_102CD500
+  .text:102451AF                 jbe     short loc_102451B9
+  .text:102451B1                 movss   xmm2, ds:dword_102B8C54
+  .text:102451B9                 divss   xmm2, ds:dword_102B55FC
+  .text:102451C1                 cvtps2pd xmm0, xmm2
+  .text:102451C4                 mulsd   xmm0, ds:qword_102B44B8
+  .text:102451CC                 call    _libm_sse2_tan_precise
+  .text:102451D1                 xorps   xmm2, xmm2
+  .text:102451D4                 cvtsi2ss xmm2, dword ptr xmmword_10DC6320+8
+  .text:102451DC                 cvtps2pd xmm1, xmm2
+  .text:102451DF                 divsd   xmm1, xmm0
+  .text:102451E3                 cvtpd2ps xmm0, xmm1
+  .text:102451E7                 xorps   xmm1, xmm1
+  .text:102451EA                 cvtsi2ss xmm1, dword ptr xmmword_10DC6320+0Ch
+  .text:102451F2                 divss   xmm1, xmm0
+  .text:102451F6                 cvtps2pd xmm0, xmm1
+  .text:102451F9                 call    _libm_sse2_atan_precise
+  .text:102451FE                 cmp     clientOnly, 0
+  .text:10245205                 xorps   xmm2, xmm2
+  .text:10245208                 movsd   xmm1, ds:qword_102B44B8
+  .text:10245210                 cvtsd2ss xmm0, xmm0
+  .text:10245214                 mulss   xmm0, ds:dword_102B55FC
+  .text:1024521C                 cvtss2sd xmm0, xmm0
+  .text:10245220                 divsd   xmm0, xmm1
+  .text:10245224                 cvtsd2ss xmm2, xmm0
+  .text:10245228                 movss   [ebp+var_8], xmm2
+  .text:1024522D                 jz      short loc_10245250
+  .text:1024522F                 cvtps2pd xmm0, xmm2
+  .text:10245232                 mulsd   xmm0, xmm1
+  .text:10245236                 divsd   xmm0, ds:qword_102B8BC0
+  .text:1024523E                 call    _libm_sse2_tan_precise
+  .text:10245243                 movsd   xmm1, ds:farval
+  .text:1024524B                 jmp     loc_10245324
+  .text:10245250                 call    sub_101AD020
+  .text:10245255                 test    eax, eax
+  .text:10245257                 jz      loc_102452FC
+  .text:1024525D                 movss   xmm2, ds:dword_102CAAE8
+  .text:10245265                 sub     esp, 30h
+  .text:10245268                 movaps  xmm0, xmm2
+  .text:1024526B                 movss   xmm1, ds:dword_102CD504
+  .text:10245273                 divss   xmm0, dword_1124E674
+  .text:1024527B                 cvttss2si ecx, xmm0
+  .text:1024527F                 movss   xmm0, [ebp+var_4]
+  .text:10245284                 mulss   xmm0, dword_1124E674
+  .text:1024528C                 divss   xmm2, xmm0
+  .text:10245290                 movaps  xmm0, xmm1
+  .text:10245293                 subss   xmm0, dword_1124E670
+  .text:1024529B                 subss   xmm1, dword_1124E66C
+  .text:102452A3                 cvttss2si eax, xmm2
+  .text:102452A7                 cvtps2pd xmm0, xmm0
+  .text:102452AA                 ; farval
+  .text:102452AA                 movsd   [esp+40h+farval], xmm0; farval
+  .text:102452B0                 cvtps2pd xmm0, xmm1
+  .text:102452B3                 ; nearval
+  .text:102452B3                 movsd   [esp+40h+nearval], xmm0; nearval
+  .text:102452B9                 movd    xmm0, eax
+  .text:102452BD                 neg     eax
+  .text:102452BF                 cvtdq2pd xmm0, xmm0
+  .text:102452C3                 ; top
+  .text:102452C3                 movsd   [esp+40h+top], xmm0; top
+  .text:102452C9                 movd    xmm0, eax
+  .text:102452CD                 cvtdq2pd xmm0, xmm0
+  .text:102452D1                 ; bottom
+  .text:102452D1                 movsd   [esp+40h+bottom], xmm0; bottom
+  .text:102452D7                 movd    xmm0, ecx
+  .text:102452DB                 neg     ecx
+  .text:102452DD                 cvtdq2pd xmm0, xmm0
+  .text:102452E1                 ; right
+  .text:102452E1                 movsd   [esp+40h+right], xmm0; right
+  .text:102452E7                 movd    xmm0, ecx
+  .text:102452EB                 cvtdq2pd xmm0, xmm0
+  .text:102452EF                 ; left
+  .text:102452EF                 movsd   [esp+40h+left], xmm0; left
+  .text:102452F4                 call    qglOrtho
+  .text:102452FA                 jmp     short loc_10245376
+  .text:102452FC                 movss   xmm0, [ebp+var_8]
+  .text:10245301                 cvtps2pd xmm0, xmm0
+  .text:10245304                 mulsd   xmm0, ds:qword_102B44B8
+  .text:1024530C                 divsd   xmm0, ds:qword_102B8BC0
+  .text:10245314                 call    _libm_sse2_tan_precise
+  .text:10245319                 movss   xmm1, dword_11224758
+  .text:10245321                 cvtps2pd xmm1, xmm1
+  .text:10245324                 movsd   xmm2, ds:dbl_10306658
+  .text:1024532C                 sub     esp, 30h
+  .text:1024532F                 mulsd   xmm0, xmm2
+  .text:10245333                 ; farval
+  .text:10245333                 movsd   [esp+40h+farval], xmm1; farval
+  .text:10245339                 ; nearval
+  .text:10245339                 movsd   [esp+40h+nearval], xmm2; nearval
+  .text:1024533F                 movss   xmm2, [ebp+var_4]
+  .text:10245344                 movaps  xmm3, xmm0
+  .text:10245347                 xorps   xmm3, ds:xmmword_10307640
+  .text:1024534E                 cvtps2pd xmm1, xmm2
+  .text:10245351                 ; top
+  .text:10245351                 movsd   [esp+40h+top], xmm0; top
+  .text:10245357                 ; bottom
+  .text:10245357                 movsd   [esp+40h+bottom], xmm3; bottom
+  .text:1024535D                 mulsd   xmm0, xmm1
+  .text:10245361                 mulsd   xmm3, xmm1
+  .text:10245365                 ; right
+  .text:10245365                 movsd   [esp+40h+right], xmm0; right
+  .text:1024536B                 ; left
+  .text:1024536B                 movsd   [esp+40h+left], xmm3; left
+  .text:10245370                 call    qglFrustum
+  .text:10245376                 cmp     mirror, 0
+  .text:1024537D                 jz      short loc_102453D8
+  .text:1024537F                 mov     eax, dword_10DC50E0
+  .text:10245384                 xorps   xmm1, xmm1
+  .text:10245387                 movss   xmm0, dword ptr [eax+8]
+  .text:1024538C                 ucomiss xmm0, xmm1
+  .text:1024538F                 lahf
+  .text:10245390                 sub     esp, 0Ch
+  .text:10245393                 ; z
+  .text:10245393                 mov     dword ptr [esp+1Ch+farval+4], 3F800000h; z
+  .text:1024539B                 test    ah, 44h
+  .text:1024539E                 jnp     short loc_102453BC
+  .text:102453A0                 ; y
+  .text:102453A0                 mov     dword ptr [esp+1Ch+farval], 0BF800000h; y
+  .text:102453A8                 ; x
+  .text:102453A8                 mov     dword ptr [esp+1Ch+nearval+4], 3F800000h; x
+  .text:102453AF                 call    qglScalef
+  .text:102453B5                 push    405h
+  .text:102453BA                 jmp     short loc_102453DD
+  .text:102453BC                 ; y
+  .text:102453BC                 mov     dword ptr [esp+1Ch+farval], 3F800000h; y
+  .text:102453C4                 ; x
+  .text:102453C4                 mov     dword ptr [esp+1Ch+nearval+4], 0BF800000h; x
+  .text:102453CB                 call    qglScalef
+  .text:102453D1                 push    405h
+  .text:102453D6                 jmp     short loc_102453DD
+  .text:102453D8                 ; mode
+  .text:102453D8                 push    404h; mode
+  .text:102453DD                 call    qglCullFace
+  .text:102453E3                 ; params
+  .text:102453E3                 push    offset gProjectionMatrix; params
+  .text:102453E8                 ; pname
+  .text:102453E8                 push    0BA7h; pname
+  .text:102453ED                 call    qglGetFloatv
+  .text:102453F3                 ; mode
+  .text:102453F3                 push    1700h; mode
+  .text:102453F8                 call    qglMatrixMode
+  .text:102453FE                 call    qglLoadIdentity
+  .text:10245404                 sub     esp, 10h
+  .text:10245407                 ; z
+  .text:10245407                 mov     dword ptr [esp+20h+farval+4], 0; z
+  .text:1024540F                 ; y
+  .text:1024540F                 mov     dword ptr [esp+20h+farval], 0; y
+  .text:10245417                 ; x
+  .text:10245417                 mov     dword ptr [esp+20h+nearval+4], 3F800000h; x
+  .text:1024541F                 ; angle
+  .text:1024541F                 mov     dword ptr [esp+20h+nearval], 0C2B40000h; angle
+  .text:10245426                 call    qglRotatef
+  .text:1024542C                 sub     esp, 10h
+  .text:1024542F                 ; z
+  .text:1024542F                 mov     dword ptr [esp+20h+farval+4], 3F800000h; z
+  .text:10245437                 ; y
+  .text:10245437                 mov     dword ptr [esp+20h+farval], 0; y
+  .text:1024543F                 ; x
+  .text:1024543F                 mov     dword ptr [esp+20h+nearval+4], 0; x
+  .text:10245447                 ; angle
+  .text:10245447                 mov     dword ptr [esp+20h+nearval], 42B40000h; angle
+  .text:1024544E                 call    qglRotatef
+  .text:10245454                 movss   xmm0, dword_10DC63A4
+  .text:1024545C                 sub     esp, 10h
+  .text:1024545F                 xorps   xmm0, ds:xmmword_10307650
+  .text:10245466                 ; z
+  .text:10245466                 mov     dword ptr [esp+20h+farval+4], 0; z
+  .text:1024546E                 ; y
+  .text:1024546E                 mov     dword ptr [esp+20h+farval], 0; y
+  .text:10245476                 ; x
+  .text:10245476                 mov     dword ptr [esp+20h+nearval+4], 3F800000h; x
+  .text:1024547E                 ; angle
+  .text:1024547E                 movss   dword ptr [esp+20h+nearval], xmm0; angle
+  .text:10245483                 call    qglRotatef
+  .text:10245489                 movss   xmm0, dword ptr xmmword_10DC6390+0Ch
+  .text:10245491                 sub     esp, 10h
+  .text:10245494                 xorps   xmm0, ds:xmmword_10307650
+  .text:1024549B                 ; z
+  .text:1024549B                 mov     dword ptr [esp+20h+farval+4], 0; z
+  .text:102454A3                 ; y
+  .text:102454A3                 mov     dword ptr [esp+20h+farval], 3F800000h; y
+  .text:102454AB                 ; x
+  .text:102454AB                 mov     dword ptr [esp+20h+nearval+4], 0; x
+  .text:102454B3                 ; angle
+  .text:102454B3                 movss   dword ptr [esp+20h+nearval], xmm0; angle
+  .text:102454B8                 call    qglRotatef
+  .text:102454BE                 movss   xmm0, dword_10DC63A0
+  .text:102454C6                 sub     esp, 10h
+  .text:102454C9                 xorps   xmm0, ds:xmmword_10307650
+  .text:102454D0                 ; z
+  .text:102454D0                 mov     dword ptr [esp+20h+farval+4], 3F800000h; z
+  .text:102454D8                 ; y
+  .text:102454D8                 mov     dword ptr [esp+20h+farval], 0; y
+  .text:102454E0                 ; x
+  .text:102454E0                 mov     dword ptr [esp+20h+nearval+4], 0; x
+  .text:102454E8                 ; angle
+  .text:102454E8                 movss   dword ptr [esp+20h+nearval], xmm0; angle
+  .text:102454ED                 call    qglRotatef
+  .text:102454F3                 movss   xmm1, dword ptr ds:xmmword_10307650
+  .text:102454FB                 sub     esp, 0Ch
+  .text:102454FE                 movss   xmm0, dword ptr xmmword_10DC6390+8
+  .text:10245506                 xorps   xmm0, xmm1
+  .text:10245509                 ; z
+  .text:10245509                 movss   dword ptr [esp+1Ch+farval+4], xmm0; z
+  .text:1024550F                 movss   xmm0, dword ptr xmmword_10DC6390+4
+  .text:10245517                 xorps   xmm0, xmm1
+  .text:1024551A                 ; y
+  .text:1024551A                 movss   dword ptr [esp+1Ch+farval], xmm0; y
+  .text:10245520                 movss   xmm0, dword ptr xmmword_10DC6390
+  .text:10245528                 xorps   xmm0, xmm1
+  .text:1024552B                 ; x
+  .text:1024552B                 movss   dword ptr [esp+1Ch+nearval+4], xmm0; x
+  .text:10245530                 call    qglTranslatef
+  .text:10245536                 ; params
+  .text:10245536                 push    offset r_world_matrix; params
+  .text:1024553B                 ; pname
+  .text:1024553B                 push    0BA6h; pname
+  .text:10245540                 call    qglGetFloatv
+  .text:10245546                 movss   xmm0, dword_10322D10
+  .text:1024554E                 xorps   xmm1, xmm1
+  .text:10245551                 ucomiss xmm0, xmm1
+  .text:10245554                 ; unsigned int
+  .text:10245554                 push    0B44h; unsigned int
+  .text:10245559                 lahf
+  .text:1024555A                 test    ah, 44h
+  .text:1024555D                 jnp     short loc_10245567
+  .text:1024555F                 call    qglEnable
+  .text:10245565                 jmp     short loc_1024556D
+  .text:10245567                 call    qglDisable
+  .text:1024556D                 ; unsigned int
+  .text:1024556D                 push    0BE2h; unsigned int
+  .text:10245572                 call    qglDisable
+  .text:10245578                 ; unsigned int
+  .text:10245578                 push    0BC0h; unsigned int
+  .text:1024557D                 call    qglDisable
+  .text:10245583                 ; unsigned int
+  .text:10245583                 push    0B71h; unsigned int
+  .text:10245588                 call    qglEnable
+  .text:1024558E                 movss   xmm0, dword_10322E00
+  .text:10245596                 xorps   xmm1, xmm1
+  .text:10245599                 ucomiss xmm0, xmm1
+  .text:1024559C                 lahf
+  .text:1024559D                 test    ah, 44h
+  .text:102455A0                 jnp     short loc_102455F5
+  .text:102455A2                 mov     esi, offset gWorldToScreen
+  .text:102455A7                 mov     edi, offset r_world_matrix
+  .text:102455AC                 nop     dword ptr [eax+00h]
+  .text:102455B0                 mov     eax, offset gProjectionMatrix
+  .text:102455B5                 mov     ecx, edi
+  .text:102455B7                 mov     edx, 4
+  .text:102455BC                 nop     dword ptr [eax+00h]
+  .text:102455C0                 movss   xmm0, dword ptr [eax]
+  .text:102455C4                 add     eax, 4
+  .text:102455C7                 mulss   xmm0, dword ptr [ecx]
+  .text:102455CB                 add     ecx, 10h
+  .text:102455CE                 addss   xmm1, xmm0
+  .text:102455D2                 sub     edx, 1
+  .text:102455D5                 jnz     short loc_102455C0
+  .text:102455D7                 movss   dword ptr [esi], xmm1
+  .text:102455DB                 add     esi, 4
+  .text:102455DE                 xorps   xmm1, xmm1
+  .text:102455E1                 cmp     eax, offset dword_10DC62E0
+  .text:102455E6                 jl      short loc_102455B5
+  .text:102455E8                 add     edi, 4
+  .text:102455EB                 cmp     edi, (offset r_world_matrix+10h)
+  .text:102455F1                 jl      short loc_102455B0
+  .text:102455F3                 jmp     short loc_1024565D
+  .text:102455F5                 xor     eax, eax
+  .text:102455F7                 mov     [ebp+var_4], eax
+  .text:102455FA                 nop     word ptr [eax+eax+00h]
+  .text:10245600                 lea     ecx, r_world_matrix[eax]
+  .text:10245606                 mov     esi, offset gProjectionMatrix
+  .text:1024560B                 mov     [ebp+var_8], ecx
+  .text:1024560E                 lea     edi, gWorldToScreen[eax]
+  .text:10245614                 mov     eax, ecx
+  .text:10245616                 mov     edx, 4
+  .text:1024561B                 mov     ecx, esi
+  .text:1024561D                 nop     dword ptr [eax]
+  .text:10245620                 movss   xmm0, dword ptr [eax]
+  .text:10245624                 add     eax, 4
+  .text:10245627                 mulss   xmm0, dword ptr [ecx]
+  .text:1024562B                 add     ecx, 10h
+  .text:1024562E                 addss   xmm1, xmm0
+  .text:10245632                 sub     edx, 1
+  .text:10245635                 jnz     short loc_10245620
+  .text:10245637                 mov     ecx, [ebp+var_8]
+  .text:1024563A                 add     esi, 4
+  .text:1024563D                 movss   dword ptr [edi], xmm1
+  .text:10245641                 add     edi, 4
+  .text:10245644                 xorps   xmm1, xmm1
+  .text:10245647                 cmp     esi, (offset gProjectionMatrix+10h)
+  .text:1024564D                 jl      short loc_10245614
+  .text:1024564F                 mov     eax, [ebp+var_4]
+  .text:10245652                 add     eax, 10h
+  .text:10245655                 mov     [ebp+var_4], eax
+  .text:10245658                 cmp     eax, 40h ; '@'
+  .text:1024565B                 jl      short loc_10245600
+  .text:1024565D                 ; inverse
+  .text:1024565D                 push    offset gScreenToWorld; inverse
+  .text:10245662                 ; matrix
+  .text:10245662                 push    offset gWorldToScreen; matrix
+  .text:10245667                 call    InvertMatrix
+  .text:1024566C                 add     esp, 8
+  .text:1024566F                 pop     edi
+  .text:10245670                 pop     esi
+  .text:10245671                 mov     esp, ebp
+  .text:10245673                 pop     ebp
+  .text:10245674                 retn
+procedure: |-
+  // Engine matrix globals: each target is the base of a float[16] object, not a pointer slot or an interior element.
+  // gProjectionMatrix (gv): output buffer of GetFloatv(GL_PROJECTION_MATRIX = 0xBA7).
+  // r_world_matrix (gv): output buffer of GetFloatv(GL_MODELVIEW_MATRIX = 0xBA6).
+  // gWorldToScreen (gv): product of projection/modelview matrices; input to InvertMatrix.
+  // gScreenToWorld (gv): output buffer of that same InvertMatrix call.
+  // Source role: HLND2T_official/engine/gl_rmain.c R_SetupGL; current instructions and ABI take precedence over source layout.
+  // HL25 differs from the older public source: widescreen FOV adjustment and compiler-inlined perspective math are retained; SSE temporaries are compiler artifacts.
+  void __cdecl R_SetupGL()
+  {
+    int v0; // edx
+    int v1; // eax
+    int v2; // edi
+    int v3; // esi
+    int v4; // ecx
+    int v5; // esi
+    int v6; // edx
+    int v7; // edi
+    float v8; // xmm0_4
+    float v9; // xmm2_4
+    double v10; // xmm0_8
+    double farval; // xmm1_8
+    float v12; // xmm1_4
+    float *v13; // esi
+    float *v14; // edi
+    float *v15; // eax
+    float *v16; // ecx
+    int v17; // edx
+    float v18; // xmm0_4
+    float v19; // xmm0_4
+    int v20; // eax
+    float *v21; // ecx
+    float *v22; // esi
+    float *v23; // edi
+    float *v24; // eax
+    int v25; // edx
+    float *v26; // ecx
+    float v27; // xmm0_4
+    float v28; // xmm0_4
+    float *v29; // [esp+CCh] [ebp-8h]
+    float v30; // [esp+D0h] [ebp-4h]
+    int v31; // [esp+D0h] [ebp-4h]
+
+    if ( gl_mtexable )
+    {
+      qglMatrixMode(0x1702u);
+      qglSelectTextureSGIS(TEXTURE0_SGIS);
+      qglLoadIdentity();
+      qglSelectTextureSGIS(TEXTURE1_SGIS);
+      qglLoadIdentity();
+      qglSelectTextureSGIS(dword_103230C8);
+      qglLoadIdentity();
+      qglSelectTextureSGIS(TEXTURE0_SGIS);
+    }
+    qglMatrixMode(0x1701u);
+    qglLoadIdentity();
+    v0 = glheight - DWORD1(xmmword_10DC6320);
+    v1 = xmmword_10DC6320 - 1;
+    v2 = glheight - HIDWORD(xmmword_10DC6320) - DWORD1(xmmword_10DC6320);
+    v3 = xmmword_10DC6320 + DWORD2(xmmword_10DC6320);
+    if ( (int)xmmword_10DC6320 <= 0 )
+      v1 = xmmword_10DC6320;
+    if ( v3 < SLODWORD(glwidth) )
+      ++v3;
+    v4 = v2 - 1;
+    if ( v2 >= 0 )
+      v4 = glheight - HIDWORD(xmmword_10DC6320) - DWORD1(xmmword_10DC6320);
+    if ( v0 < glheight )
+      ++v0;
+    v5 = v3 - v1;
+    v6 = v0 - v4;
+    if ( dword_10DC5144 )
+    {
+      v6 = (int)*(float *)&dword_10322DEC;
+      v4 = 0;
+      v7 = 0;
+      v5 = (int)*(float *)&dword_10322DEC;
+      glheight = (int)*(float *)&dword_10322DEC;
+      LODWORD(glwidth) = (int)*(float *)&dword_10322DEC;
+    }
+    else
+    {
+      v7 = v1;
+    }
+    qglViewport(v7 + glx, v4 + gly, v5, v6);
+    v30 = (float)SDWORD2(xmmword_10DC6320) / (float)SHIDWORD(xmmword_10DC6320);
+    if ( *(float *)&dword_10322F14 != 0.0
+      && (float)((float)SDWORD2(xmmword_10DC6320) / (float)SHIDWORD(xmmword_10DC6320)) > 1.5 )
+    {
+      libm_sse2_tan_precise();
+      libm_sse2_atan_precise();
+    }
+    libm_sse2_tan_precise();
+    v8 = *(double *)libm_sse2_atan_precise().m128_u64;
+    v9 = (float)(v8 * 360.0) / 3.141592653589793;
+    if ( clientOnly )
+    {
+      v10 = v9 * 3.141592653589793 / 360.0;
+      libm_sse2_tan_precise();
+      farval = 16000.0;
+    }
+    else
+    {
+      if ( sub_101AD020() )
+      {
+        qglOrtho(
+          (double)-(int)(float)(4096.0 / *(float *)&dword_1124E674),
+          (double)(int)(float)(4096.0 / *(float *)&dword_1124E674),
+          (double)-(int)(float)(4096.0 / (float)(v30 * *(float *)&dword_1124E674)),
+          (double)(int)(float)(4096.0 / (float)(v30 * *(float *)&dword_1124E674)),
+          (float)(16000.0 - *(float *)&dword_1124E66C),
+          (float)(16000.0 - *(float *)&dword_1124E670));
+        goto LABEL_23;
+      }
+      v10 = v9 * 3.141592653589793 / 360.0;
+      libm_sse2_tan_precise();
+      farval = *(float *)&dword_11224758;
+    }
+    qglFrustum(-(v10 * 4.0) * v30, v10 * 4.0 * v30, -(v10 * 4.0), v10 * 4.0, 4.0, farval);
+  LABEL_23:
+    if ( mirror )
+    {
+      if ( *(float *)(dword_10DC50E0 + 8) == 0.0 )
+        qglScalef(-1.0, 1.0, 1.0);
+      else
+        qglScalef(1.0, -1.0, 1.0);
+      qglCullFace(0x405u);
+    }
+    else
+    {
+      qglCullFace(0x404u);
+    }
+    qglGetFloatv(0xBA7u, gProjectionMatrix);
+    qglMatrixMode(0x1700u);
+    qglLoadIdentity();
+    qglRotatef(-90.0, 1.0, 0.0, 0.0);
+    qglRotatef(90.0, 0.0, 0.0, 1.0);
+    qglRotatef(-*(float *)&dword_10DC63A4, 1.0, 0.0, 0.0);
+    qglRotatef(-*((float *)&xmmword_10DC6390 + 3), 0.0, 1.0, 0.0);
+    qglRotatef(-*(float *)&dword_10DC63A0, 0.0, 0.0, 1.0);
+    qglTranslatef(
+      -*(float *)&xmmword_10DC6390,
+      COERCE_FLOAT(DWORD1(xmmword_10DC6390) ^ 0x80000000),
+      COERCE_FLOAT(DWORD2(xmmword_10DC6390) ^ 0x80000000));
+    qglGetFloatv(0xBA6u, r_world_matrix);
+    if ( *(float *)&dword_10322D10 == 0.0 )
+      qglDisable(0xB44u);
+    else
+      qglEnable(0xB44u);
+    qglDisable(0xBE2u);
+    qglDisable(0xBC0u);
+    qglEnable(0xB71u);
+    v12 = 0;
+    if ( *(float *)&dword_10322E00 == 0.0 )
+    {
+      v20 = 0;
+      v31 = 0;
+      do
+      {
+        v21 = (float *)((char *)r_world_matrix + v20);
+        v22 = gProjectionMatrix;
+        v29 = (float *)((char *)r_world_matrix + v20);
+        v23 = (float *)((char *)gWorldToScreen + v20);
+        do
+        {
+          v24 = v21;
+          v25 = 4;
+          v26 = v22;
+          do
+          {
+            v27 = *v24++;
+            v28 = v27 * *v26;
+            v26 += 4;
+            v12 = v12 + v28;
+            --v25;
+          }
+          while ( v25 );
+          v21 = v29;
+          ++v22;
+          *v23++ = v12;
+          v12 = 0;
+        }
+        while ( (int)v22 < (int)&gProjectionMatrix[4] );
+        v20 = v31 + 16;
+        v31 = v20;
+      }
+      while ( v20 < 64 );
+    }
+    else
+    {
+      v13 = gWorldToScreen;
+      v14 = r_world_matrix;
+      do
+      {
+        v15 = gProjectionMatrix;
+        do
+        {
+          v16 = v14;
+          v17 = 4;
+          do
+          {
+            v18 = *v15++;
+            v19 = v18 * *v16;
+            v16 += 4;
+            v12 = v12 + v19;
+            --v17;
+          }
+          while ( v17 );
+          *v13++ = v12;
+          v12 = 0;
+        }
+        while ( (int)v15 < (int)&dword_10DC62E0 );
+        ++v14;
+      }
+      while ( (int)v14 < (int)&r_world_matrix[4] );
+    }
+    InvertMatrix(gWorldToScreen, gScreenToWorld);
+  }

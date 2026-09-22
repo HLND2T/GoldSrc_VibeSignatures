@@ -1,0 +1,997 @@
+func_name: R_SetupGL
+func_va: '0x16ead0'
+disasm_code: |-
+  ; Engine matrix globals: each target is the base of a float[16] object, not a pointer slot or an interior element.
+  ; gProjectionMatrix (gv): output buffer of GetFloatv(GL_PROJECTION_MATRIX = 0xBA7).
+  ; r_world_matrix (gv): output buffer of GetFloatv(GL_MODELVIEW_MATRIX = 0xBA6).
+  ; gWorldToScreen (gv): product of projection/modelview matrices; input to InvertMatrix.
+  ; gScreenToWorld (gv): output buffer of that same InvertMatrix call.
+  ; Source role: HLND2T_official/engine/gl_rmain.c R_SetupGL; current instructions and ABI take precedence over source layout.
+  ; HL25 differs from the older public source: widescreen FOV adjustment and compiler-inlined perspective math are retained; SSE temporaries are compiler artifacts.
+  .text:0016EAD0                 push    edi
+  .text:0016EAD1                 push    esi
+  .text:0016EAD2                 push    ebx
+  .text:0016EAD3                 sub     esp, 50h
+  .text:0016EAD6                 mov     eax, ds:gl_mtexable
+  .text:0016EADB                 test    eax, eax
+  .text:0016EADD                 jnz     loc_16F470
+  .text:0016EAE3                 ; GLenum
+  .text:0016EAE3                 mov     [esp+5Ch+var_5C], 1701h; GLenum
+  .text:0016EAEA                 call    ds:qglMatrixMode
+  .text:0016EAF0                 call    ds:qglLoadIdentity
+  .text:0016EAF6                 mov     edi, ds:glheight
+  .text:0016EAFC                 mov     edx, ds:r_refdef.vrect.y
+  .text:0016EB02                 mov     ebx, ds:r_refdef.vrect.height
+  .text:0016EB08                 mov     eax, ds:r_refdef.vrect.x
+  .text:0016EB0D                 mov     ecx, ds:r_refdef.vrect.width
+  .text:0016EB13                 mov     esi, edi
+  .text:0016EB15                 sub     esi, edx
+  .text:0016EB17                 add     edx, ebx
+  .text:0016EB19                 mov     ebx, edi
+  .text:0016EB1B                 sub     ebx, edx
+  .text:0016EB1D                 add     ecx, x_0
+  .text:0016EB1F                 mov     edx, ebx
+  .text:0016EB21                 xor     ebx, ebx
+  .text:0016EB23                 test    x_0, x_0
+  .text:0016EB25                 setnle  bl
+  .text:0016EB28                 sub     x_0, ebx
+  .text:0016EB2A                 xor     ebx, ebx
+  .text:0016EB2C                 cmp     x2, ds:glwidth
+  .text:0016EB32                 setl    bl
+  .text:0016EB35                 add     x2, ebx
+  .text:0016EB37                 cmp     y2, 80000000h
+  .text:0016EB3D                 adc     y2, 0FFFFFFFFh
+  .text:0016EB40                 xor     ebx, ebx
+  .text:0016EB42                 cmp     edi, y_0
+  .text:0016EB44                 mov     edi, ds:envmap
+  .text:0016EB4A                 setnle  bl
+  .text:0016EB4D                 add     y_0, ebx
+  .text:0016EB4F                 test    edi, edi
+  .text:0016EB51                 jnz     loc_16F0C8
+  .text:0016EB57                 sub     x2, x_0
+  .text:0016EB59                 sub     y_0, y2
+  .text:0016EB5B                 ; GLsizei
+  .text:0016EB5B                 mov     dword ptr [esp+5Ch+w], w_0; GLsizei
+  .text:0016EB5F                 mov     ebx, ds:glx
+  .text:0016EB65                 mov     w_0, ds:gly
+  .text:0016EB6B                 ; GLsizei
+  .text:0016EB6B                 mov     dword ptr [esp+5Ch+w+4], h; GLsizei
+  .text:0016EB6F                 add     x_0, ebx
+  .text:0016EB71                 add     y2, ecx
+  .text:0016EB73                 ; GLint
+  .text:0016EB73                 mov     [esp+5Ch+var_5C+4], edx; GLint
+  .text:0016EB77                 ; GLint
+  .text:0016EB77                 mov     [esp+5Ch+var_5C], eax; GLint
+  .text:0016EB7A                 call    ds:qglViewport
+  .text:0016EB80                 fild    ds:r_refdef.vrect.width
+  .text:0016EB86                 fild    ds:r_refdef.vrect.height
+  .text:0016EB8C                 fld     st(1)
+  .text:0016EB8E                 fdiv    st, st(1)
+  .text:0016EB90                 fstp    dword ptr [esp+5Ch+y]
+  .text:0016EB94                 fld     scr_fov_value
+  .text:0016EB9A                 fld     gl_widescreen_yfov.value
+  .text:0016EBA0                 fldz
+  .text:0016EBA2                 fxch    st(1)
+  .text:0016EBA4                 fucomip st, st(1)
+  .text:0016EBA6                 fstp    st
+  .text:0016EBA8                 jp      loc_16F050
+  .text:0016EBAE                 jnz     loc_16F050
+  .text:0016EBB4                 fld1
+  .text:0016EBB6                 fucomip st, st(1)
+  .text:0016EBB8                 ja      short loc_16EBD0
+  .text:0016EBBA                 fld     ds:flt_25C09C
+  .text:0016EBC0                 fxch    st(1)
+  .text:0016EBC2                 fucomi  st, st(1)
+  .text:0016EBC4                 fstp    st(1)
+  .text:0016EBC6                 jbe     loc_16F1D0
+  .text:0016EBCC                 fstp    st
+  .text:0016EBCE                 jmp     short loc_16EBD2
+  .text:0016EBD0                 fstp    st
+  .text:0016EBD2                 fld     ds:dbl_25C0B8
+  .text:0016EBD8                 fdivp   st(2), st
+  .text:0016EBDA                 fxch    st(1)
+  .text:0016EBDC                 fstp    [esp+5Ch+var_10]
+  .text:0016EBE0                 fld     [esp+5Ch+var_10]
+  .text:0016EBE4                 fdivp   st(1), st
+  .text:0016EBE6                 ; x
+  .text:0016EBE6                 fstp    qword ptr [esp+5Ch+var_5C]; x
+  .text:0016EBE9                 call    atan
+  .text:0016EBEE                 mov     eax, ds:r_refdef.onlyClientDraws
+  .text:0016EBF3                 test    eax, eax
+  .text:0016EBF5                 fstp    [esp+5Ch+var_10]
+  .text:0016EBF9                 fld     [esp+5Ch+var_10]
+  .text:0016EBFD                 fmul    ds:flt_246014
+  .text:0016EC03                 fld     ds:dbl_249FC8
+  .text:0016EC09                 fdiv    st(1), st
+  .text:0016EC0B                 fxch    st(1)
+  .text:0016EC0D                 fstp    [esp+5Ch+var_18]
+  .text:0016EC11                 jz      loc_16F0F0
+  .text:0016EC17                 fld     dword ptr [esp+5Ch+y]
+  .text:0016EC1B                 xor     h, h
+  .text:0016EC1D                 mov     edi, 40CF4000h
+  .text:0016EC22                 fstp    qword ptr [esp+5Ch+y]
+  .text:0016EC26                 fmul    [esp+5Ch+var_18]
+  .text:0016EC2A                 fdiv    ds:flt_246014
+  .text:0016EC30                 ; x
+  .text:0016EC30                 fstp    qword ptr [esp+5Ch+var_5C]; x
+  .text:0016EC33                 call    tan
+  .text:0016EC38                 ; GLdouble
+  .text:0016EC38                 mov     dword ptr [esp+5Ch+var_34], esi; GLdouble
+  .text:0016EC3C                 mov     dword ptr [esp+5Ch+var_34+4], edi
+  .text:0016EC40                 fmul    ds:flt_24B938
+  .text:0016EC46                 fld     st
+  .text:0016EC48                 fchs
+  .text:0016EC4A                 fld     ds:flt_24B938
+  .text:0016EC50                 ; GLdouble
+  .text:0016EC50                 fstp    [esp+5Ch+var_3C]; GLdouble
+  .text:0016EC54                 fxch    st(1)
+  .text:0016EC56                 ; GLdouble
+  .text:0016EC56                 fst     [esp+5Ch+var_44]; GLdouble
+  .text:0016EC5A                 fxch    st(1)
+  .text:0016EC5C                 ; GLdouble
+  .text:0016EC5C                 fst     [esp+5Ch+var_4C]; GLdouble
+  .text:0016EC60                 fld     qword ptr [esp+5Ch+y]
+  .text:0016EC64                 fmul    st(2), st
+  .text:0016EC66                 fxch    st(2)
+  .text:0016EC68                 ; GLdouble
+  .text:0016EC68                 fstp    [esp+5Ch+w]; GLdouble
+  .text:0016EC6C                 fmulp   st(1), st
+  .text:0016EC6E                 ; GLdouble
+  .text:0016EC6E                 fstp    qword ptr [esp+5Ch+var_5C]; GLdouble
+  .text:0016EC71                 call    ds:qglFrustum
+  .text:0016EC77                 mov     ebx, ds:mirror
+  .text:0016EC7D                 test    ebx, ebx
+  .text:0016EC7F                 jz      loc_16F196
+  .text:0016EC85                 mov     eax, ds:mirror_plane
+  .text:0016EC8A                 fld     dword ptr [eax+8]
+  .text:0016EC8D                 fldz
+  .text:0016EC8F                 fxch    st(1)
+  .text:0016EC91                 fucomip st, st(1)
+  .text:0016EC93                 fstp    st
+  .text:0016EC95                 ; GLfloat
+  .text:0016EC95                 mov     dword ptr [esp+5Ch+w], 3F800000h; GLfloat
+  .text:0016EC9D                 jp      loc_16F1B0
+  .text:0016ECA3                 jnz     loc_16F1B0
+  .text:0016ECA9                 ; GLfloat
+  .text:0016ECA9                 mov     [esp+5Ch+var_5C+4], 3F800000h; GLfloat
+  .text:0016ECB1                 ; GLfloat
+  .text:0016ECB1                 mov     [esp+5Ch+var_5C], 0BF800000h; GLfloat
+  .text:0016ECB8                 call    ds:qglScalef
+  .text:0016ECBE                 ; GLenum
+  .text:0016ECBE                 mov     [esp+5Ch+var_5C], 405h; GLenum
+  .text:0016ECC5                 call    ds:qglCullFace
+  .text:0016ECCB                 mov     edx, offset gProjectionMatrix
+  .text:0016ECD0                 ; GLfloat *
+  .text:0016ECD0                 mov     [esp+5Ch+var_5C+4], edx; GLfloat *
+  .text:0016ECD4                 ; GLenum
+  .text:0016ECD4                 mov     [esp+5Ch+var_5C], 0BA7h; GLenum
+  .text:0016ECDB                 call    ds:qglGetFloatv
+  .text:0016ECE1                 ; GLenum
+  .text:0016ECE1                 mov     [esp+5Ch+var_5C], 1700h; GLenum
+  .text:0016ECE8                 call    ds:qglMatrixMode
+  .text:0016ECEE                 call    ds:qglLoadIdentity
+  .text:0016ECF4                 ; GLfloat
+  .text:0016ECF4                 mov     dword ptr [esp+5Ch+w+4], 0; GLfloat
+  .text:0016ECFC                 ; GLfloat
+  .text:0016ECFC                 mov     dword ptr [esp+5Ch+w], 0; GLfloat
+  .text:0016ED04                 ; GLfloat
+  .text:0016ED04                 mov     [esp+5Ch+var_5C+4], 3F800000h; GLfloat
+  .text:0016ED0C                 ; GLfloat
+  .text:0016ED0C                 mov     [esp+5Ch+var_5C], 0C2B40000h; GLfloat
+  .text:0016ED13                 call    ds:qglRotatef
+  .text:0016ED19                 ; GLfloat
+  .text:0016ED19                 mov     dword ptr [esp+5Ch+w+4], 3F800000h; GLfloat
+  .text:0016ED21                 ; GLfloat
+  .text:0016ED21                 mov     dword ptr [esp+5Ch+w], 0; GLfloat
+  .text:0016ED29                 ; GLfloat
+  .text:0016ED29                 mov     [esp+5Ch+var_5C+4], 0; GLfloat
+  .text:0016ED31                 ; GLfloat
+  .text:0016ED31                 mov     [esp+5Ch+var_5C], 42B40000h; GLfloat
+  .text:0016ED38                 call    ds:qglRotatef
+  .text:0016ED3E                 ; GLfloat
+  .text:0016ED3E                 mov     dword ptr [esp+5Ch+w+4], 0; GLfloat
+  .text:0016ED46                 ; GLfloat
+  .text:0016ED46                 mov     dword ptr [esp+5Ch+w], 0; GLfloat
+  .text:0016ED4E                 ; GLfloat
+  .text:0016ED4E                 mov     [esp+5Ch+var_5C+4], 3F800000h; GLfloat
+  .text:0016ED56                 fld     ds:r_refdef.viewangles+8
+  .text:0016ED5C                 fchs
+  .text:0016ED5E                 ; GLfloat
+  .text:0016ED5E                 fstp    [esp+5Ch+var_5C]; GLfloat
+  .text:0016ED61                 call    ds:qglRotatef
+  .text:0016ED67                 ; GLfloat
+  .text:0016ED67                 mov     dword ptr [esp+5Ch+w+4], 0; GLfloat
+  .text:0016ED6F                 ; GLfloat
+  .text:0016ED6F                 mov     dword ptr [esp+5Ch+w], 3F800000h; GLfloat
+  .text:0016ED77                 ; GLfloat
+  .text:0016ED77                 mov     [esp+5Ch+var_5C+4], 0; GLfloat
+  .text:0016ED7F                 fld     ds:r_refdef.viewangles
+  .text:0016ED85                 fchs
+  .text:0016ED87                 ; GLfloat
+  .text:0016ED87                 fstp    [esp+5Ch+var_5C]; GLfloat
+  .text:0016ED8A                 call    ds:qglRotatef
+  .text:0016ED90                 ; GLfloat
+  .text:0016ED90                 mov     dword ptr [esp+5Ch+w+4], 3F800000h; GLfloat
+  .text:0016ED98                 ; GLfloat
+  .text:0016ED98                 mov     dword ptr [esp+5Ch+w], 0; GLfloat
+  .text:0016EDA0                 ; GLfloat
+  .text:0016EDA0                 mov     [esp+5Ch+var_5C+4], 0; GLfloat
+  .text:0016EDA8                 fld     ds:r_refdef.viewangles+4
+  .text:0016EDAE                 fchs
+  .text:0016EDB0                 ; GLfloat
+  .text:0016EDB0                 fstp    [esp+5Ch+var_5C]; GLfloat
+  .text:0016EDB3                 call    ds:qglRotatef
+  .text:0016EDB9                 fld     ds:r_refdef.vieworg+8
+  .text:0016EDBF                 fchs
+  .text:0016EDC1                 ; GLfloat
+  .text:0016EDC1                 fstp    dword ptr [esp+5Ch+w]; GLfloat
+  .text:0016EDC5                 fld     ds:r_refdef.vieworg+4
+  .text:0016EDCB                 fchs
+  .text:0016EDCD                 ; GLfloat
+  .text:0016EDCD                 fstp    [esp+5Ch+var_5C+4]; GLfloat
+  .text:0016EDD1                 fld     ds:r_refdef.vieworg
+  .text:0016EDD7                 fchs
+  .text:0016EDD9                 ; GLfloat
+  .text:0016EDD9                 fstp    [esp+5Ch+var_5C]; GLfloat
+  .text:0016EDDC                 call    ds:qglTranslatef
+  .text:0016EDE2                 mov     ecx, offset r_world_matrix
+  .text:0016EDE7                 ; GLfloat *
+  .text:0016EDE7                 mov     [esp+5Ch+var_5C+4], ecx; GLfloat *
+  .text:0016EDEB                 ; GLenum
+  .text:0016EDEB                 mov     [esp+5Ch+var_5C], 0BA6h; GLenum
+  .text:0016EDF2                 call    ds:qglGetFloatv
+  .text:0016EDF8                 ; GLenum
+  .text:0016EDF8                 mov     [esp+5Ch+var_5C], 0B44h; GLenum
+  .text:0016EDFF                 fld     gl_cull.value
+  .text:0016EE05                 fldz
+  .text:0016EE07                 fxch    st(1)
+  .text:0016EE09                 fucomip st, st(1)
+  .text:0016EE0B                 fstp    st
+  .text:0016EE0D                 jp      short loc_16EE15
+  .text:0016EE0F                 jz      loc_16F460
+  .text:0016EE15                 call    ds:qglEnable
+  .text:0016EE1B                 ; GLenum
+  .text:0016EE1B                 mov     [esp+5Ch+var_5C], 0BE2h; GLenum
+  .text:0016EE22                 call    ds:qglDisable
+  .text:0016EE28                 ; GLenum
+  .text:0016EE28                 mov     [esp+5Ch+var_5C], 0BC0h; GLenum
+  .text:0016EE2F                 call    ds:qglDisable
+  .text:0016EE35                 ; GLenum
+  .text:0016EE35                 mov     [esp+5Ch+var_5C], 0B71h; GLenum
+  .text:0016EE3C                 call    ds:qglEnable
+  .text:0016EE42                 fld     gl_flipmatrix.value
+  .text:0016EE48                 fldz
+  .text:0016EE4A                 fxch    st(1)
+  .text:0016EE4C                 fucomip st, st(1)
+  .text:0016EE4E                 fstp    st
+  .text:0016EE50                 jp      short loc_16EE58
+  .text:0016EE52                 jz      loc_16F270
+  .text:0016EE58                 movss   xmm5, ds:gProjectionMatrix
+  .text:0016EE60                 pxor    xmm4, xmm4
+  .text:0016EE64                 movlps  xmm4, qword ptr ds:r_world_matrix
+  .text:0016EE6B                 movss   xmm1, ds:gProjectionMatrix+4
+  .text:0016EE73                 movhps  xmm4, qword ptr ds:r_world_matrix+8
+  .text:0016EE7A                 pxor    xmm3, xmm3
+  .text:0016EE7E                 movlps  xmm3, qword ptr ds:r_world_matrix+10h
+  .text:0016EE85                 movhps  xmm3, qword ptr ds:r_world_matrix+18h
+  .text:0016EE8C                 pxor    xmm6, xmm6
+  .text:0016EE90                 shufps  xmm5, xmm5, 0
+  .text:0016EE94                 pxor    xmm2, xmm2
+  .text:0016EE98                 movlps  xmm2, qword ptr ds:r_world_matrix+20h
+  .text:0016EE9F                 shufps  xmm1, xmm1, 0
+  .text:0016EEA3                 movhps  xmm2, qword ptr ds:r_world_matrix+28h
+  .text:0016EEAA                 pxor    xmm0, xmm0
+  .text:0016EEAE                 mulps   xmm5, xmm4
+  .text:0016EEB1                 movlps  xmm0, qword ptr ds:r_world_matrix+30h
+  .text:0016EEB8                 movhps  xmm0, qword ptr ds:r_world_matrix+38h
+  .text:0016EEBF                 movss   xmm7, ds:gProjectionMatrix+10h
+  .text:0016EEC7                 mulps   xmm1, xmm3
+  .text:0016EECA                 shufps  xmm7, xmm7, 0
+  .text:0016EECE                 addps   xmm5, xmm6
+  .text:0016EED1                 mulps   xmm7, xmm4
+  .text:0016EED4                 addps   xmm5, xmm1
+  .text:0016EED7                 movss   xmm1, ds:gProjectionMatrix+8
+  .text:0016EEDF                 addps   xmm7, xmm6
+  .text:0016EEE2                 shufps  xmm1, xmm1, 0
+  .text:0016EEE6                 mulps   xmm1, xmm2
+  .text:0016EEE9                 addps   xmm5, xmm1
+  .text:0016EEEC                 movss   xmm1, ds:gProjectionMatrix+0Ch
+  .text:0016EEF4                 shufps  xmm1, xmm1, 0
+  .text:0016EEF8                 mulps   xmm1, xmm0
+  .text:0016EEFB                 addps   xmm1, xmm5
+  .text:0016EEFE                 movss   xmm5, ds:gProjectionMatrix+14h
+  .text:0016EF06                 shufps  xmm5, xmm5, 0
+  .text:0016EF0A                 mulps   xmm5, xmm3
+  .text:0016EF0D                 addps   xmm7, xmm5
+  .text:0016EF10                 movss   xmm5, ds:gProjectionMatrix+18h
+  .text:0016EF18                 shufps  xmm5, xmm5, 0
+  .text:0016EF1C                 mulps   xmm5, xmm2
+  .text:0016EF1F                 addps   xmm5, xmm7
+  .text:0016EF22                 movss   xmm7, ds:gProjectionMatrix+1Ch
+  .text:0016EF2A                 shufps  xmm7, xmm7, 0
+  .text:0016EF2E                 mulps   xmm7, xmm0
+  .text:0016EF31                 addps   xmm5, xmm7
+  .text:0016EF34                 movss   xmm7, ds:gProjectionMatrix+20h
+  .text:0016EF3C                 movaps  [esp+5Ch+y], xmm5
+  .text:0016EF41                 shufps  xmm7, xmm7, 0
+  .text:0016EF45                 mulps   xmm7, xmm4
+  .text:0016EF48                 addps   xmm7, xmm6
+  .text:0016EF4B                 movaps  xmm5, xmm7
+  .text:0016EF4E                 movss   xmm7, ds:gProjectionMatrix+24h
+  .text:0016EF56                 shufps  xmm7, xmm7, 0
+  .text:0016EF5A                 mulps   xmm7, xmm3
+  .text:0016EF5D                 addps   xmm7, xmm5
+  .text:0016EF60                 movss   xmm5, ds:gProjectionMatrix+28h
+  .text:0016EF68                 shufps  xmm5, xmm5, 0
+  .text:0016EF6C                 mulps   xmm5, xmm2
+  .text:0016EF6F                 addps   xmm7, xmm5
+  .text:0016EF72                 movss   xmm5, ds:gProjectionMatrix+2Ch
+  .text:0016EF7A                 shufps  xmm5, xmm5, 0
+  .text:0016EF7E                 mulps   xmm5, xmm0
+  .text:0016EF81                 addps   xmm5, xmm7
+  .text:0016EF84                 movss   xmm7, ds:gProjectionMatrix+30h
+  .text:0016EF8C                 shufps  xmm7, xmm7, 0
+  .text:0016EF90                 mulps   xmm4, xmm7
+  .text:0016EF93                 addps   xmm6, xmm4
+  .text:0016EF96                 movss   xmm4, ds:gProjectionMatrix+34h
+  .text:0016EF9E                 shufps  xmm4, xmm4, 0
+  .text:0016EFA2                 mulps   xmm3, xmm4
+  .text:0016EFA5                 movss   xmm4, ds:gProjectionMatrix+38h
+  .text:0016EFAD                 shufps  xmm4, xmm4, 0
+  .text:0016EFB1                 addps   xmm3, xmm6
+  .text:0016EFB4                 mulps   xmm2, xmm4
+  .text:0016EFB7                 movaps  xmm4, [esp+5Ch+y]
+  .text:0016EFBC                 addps   xmm2, xmm3
+  .text:0016EFBF                 movss   xmm3, ds:gProjectionMatrix+3Ch
+  .text:0016EFC7                 shufps  xmm3, xmm3, 0
+  .text:0016EFCB                 mulps   xmm0, xmm3
+  .text:0016EFCE                 movaps  xmm3, xmm4
+  .text:0016EFD1                 addps   xmm0, xmm2
+  .text:0016EFD4                 movaps  xmm2, xmm1
+  .text:0016EFD7                 unpcklps xmm2, xmm5
+  .text:0016EFDA                 unpcklps xmm3, xmm0
+  .text:0016EFDD                 unpckhps xmm4, xmm0
+  .text:0016EFE0                 unpckhps xmm1, xmm5
+  .text:0016EFE3                 movaps  xmm0, xmm4
+  .text:0016EFE6                 movaps  xmm4, xmm2
+  .text:0016EFE9                 unpckhps xmm2, xmm3
+  .text:0016EFEC                 unpcklps xmm4, xmm3
+  .text:0016EFEF                 movlps  qword ptr ds:gWorldToScreen+10h, xmm2
+  .text:0016EFF6                 movhps  qword ptr ds:gWorldToScreen+18h, xmm2
+  .text:0016EFFD                 movaps  xmm2, xmm1
+  .text:0016F000                 unpcklps xmm2, xmm0
+  .text:0016F003                 movlps  qword ptr ds:gWorldToScreen, xmm4
+  .text:0016F00A                 movhps  qword ptr ds:gWorldToScreen+8, xmm4
+  .text:0016F011                 unpckhps xmm1, xmm0
+  .text:0016F014                 movlps  qword ptr ds:gWorldToScreen+20h, xmm2
+  .text:0016F01B                 movhps  qword ptr ds:gWorldToScreen+28h, xmm2
+  .text:0016F022                 movlps  qword ptr ds:gWorldToScreen+30h, xmm1
+  .text:0016F029                 movhps  qword ptr ds:gWorldToScreen+38h, xmm1
+  .text:0016F030                 mov     eax, offset gScreenToWorld
+  .text:0016F035                 ; out
+  .text:0016F035                 mov     [esp+5Ch+var_5C+4], eax; out
+  .text:0016F039                 ; m
+  .text:0016F039                 mov     [esp+5Ch+var_5C], offset gWorldToScreen; m
+  .text:0016F040                 call    InvertMatrix
+  .text:0016F045                 add     esp, 50h
+  .text:0016F048                 pop     ebx
+  .text:0016F049                 pop     esi
+  .text:0016F04A                 pop     edi
+  .text:0016F04B                 retn
+  .text:0016F050                 fld     dword ptr [esp+5Ch+y]
+  .text:0016F054                 fld     ds:flt_250584
+  .text:0016F05A                 fxch    st(1)
+  .text:0016F05C                 fucomip st, st(1)
+  .text:0016F05E                 fstp    st
+  .text:0016F060                 jbe     loc_16EBB4
+  .text:0016F066                 fxch    st(1)
+  .text:0016F068                 fstp    [esp+5Ch+var_14]
+  .text:0016F06C                 fxch    st(1)
+  .text:0016F06E                 fstp    [esp+5Ch+var_18]
+  .text:0016F072                 fld     ds:dbl_25C0C0
+  .text:0016F078                 fmulp   st(1), st
+  .text:0016F07A                 fstp    [esp+5Ch+var_10]
+  .text:0016F07E                 fld     [esp+5Ch+var_10]
+  .text:0016F082                 ; x
+  .text:0016F082                 fstp    qword ptr [esp+5Ch+var_5C]; x
+  .text:0016F085                 call    tan
+  .text:0016F08A                 fld     dword ptr [esp+5Ch+y]
+  .text:0016F08E                 fmul    ds:flt_24B93C
+  .text:0016F094                 fmulp   st(1), st
+  .text:0016F096                 fstp    [esp+5Ch+var_10]
+  .text:0016F09A                 fld     [esp+5Ch+var_10]
+  .text:0016F09E                 ; x
+  .text:0016F09E                 fstp    qword ptr [esp+5Ch+var_5C]; x
+  .text:0016F0A1                 call    atan
+  .text:0016F0A6                 fmul    ds:dbl_25C0C8
+  .text:0016F0AC                 fstp    [esp+5Ch+var_10]
+  .text:0016F0B0                 fld     [esp+5Ch+var_10]
+  .text:0016F0B4                 fadd    st, st
+  .text:0016F0B6                 fld     [esp+5Ch+var_14]
+  .text:0016F0BA                 fld     [esp+5Ch+var_18]
+  .text:0016F0BE                 fxch    st(2)
+  .text:0016F0C0                 jmp     loc_16EBB4
+  .text:0016F0C8                 cvttss2si x2, gl_envmapsize.value
+  .text:0016F0D0                 xor     edx, edx
+  .text:0016F0D2                 xor     eax, eax
+  .text:0016F0D4                 mov     ds:glheight, h
+  .text:0016F0DA                 mov     y_0, h
+  .text:0016F0DC                 mov     ds:glwidth, h
+  .text:0016F0E2                 jmp     loc_16EB5B
+  .text:0016F0F0                 fstp    st
+  .text:0016F0F2                 call    CL_IsDevOverviewMode
+  .text:0016F0F7                 test    eax, eax
+  .text:0016F0F9                 jz      loc_16F208
+  .text:0016F0FF                 fld     ds:flt_25C0A4
+  .text:0016F105                 fdiv    ds:gDevOverview.zoom
+  .text:0016F10B                 fstp    [esp+5Ch+var_18]
+  .text:0016F10F                 fld     dword ptr [esp+5Ch+y]
+  .text:0016F113                 fmul    ds:gDevOverview.zoom
+  .text:0016F119                 cvttss2si edx, [esp+5Ch+var_18]
+  .text:0016F11F                 fdivr   ds:flt_25C0A4
+  .text:0016F125                 fstp    dword ptr [esp+5Ch+y]
+  .text:0016F129                 fld     ds:flt_25C0A0
+  .text:0016F12F                 fsub    ds:gDevOverview.z_max
+  .text:0016F135                 cvttss2si eax, dword ptr [esp+5Ch+y]
+  .text:0016F13B                 ; GLdouble
+  .text:0016F13B                 fstp    [esp+5Ch+var_34]; GLdouble
+  .text:0016F13F                 fld     ds:flt_25C0A0
+  .text:0016F145                 fsub    ds:gDevOverview.z_min
+  .text:0016F14B                 mov     dword ptr [esp+5Ch+y], y_0
+  .text:0016F14F                 neg     y_0
+  .text:0016F151                 ; GLdouble
+  .text:0016F151                 fstp    [esp+5Ch+var_3C]; GLdouble
+  .text:0016F155                 fild    dword ptr [esp+5Ch+y]
+  .text:0016F159                 mov     dword ptr [esp+5Ch+y], eax
+  .text:0016F15D                 ; GLdouble
+  .text:0016F15D                 fstp    [esp+5Ch+var_44]; GLdouble
+  .text:0016F161                 fild    dword ptr [esp+5Ch+y]
+  .text:0016F165                 mov     dword ptr [esp+5Ch+y], x_0
+  .text:0016F169                 neg     x_0
+  .text:0016F16B                 ; GLdouble
+  .text:0016F16B                 fstp    [esp+5Ch+var_4C]; GLdouble
+  .text:0016F16F                 fild    dword ptr [esp+5Ch+y]
+  .text:0016F173                 mov     dword ptr [esp+5Ch+y], edx
+  .text:0016F177                 ; GLdouble
+  .text:0016F177                 fstp    [esp+5Ch+w]; GLdouble
+  .text:0016F17B                 fild    dword ptr [esp+5Ch+y]
+  .text:0016F17F                 ; GLdouble
+  .text:0016F17F                 fstp    qword ptr [esp+5Ch+var_5C]; GLdouble
+  .text:0016F182                 call    ds:qglOrtho
+  .text:0016F188                 mov     ebx, ds:mirror
+  .text:0016F18E                 test    ebx, ebx
+  .text:0016F190                 jnz     loc_16EC85
+  .text:0016F196                 ; GLenum
+  .text:0016F196                 mov     [esp+5Ch+var_5C], 404h; GLenum
+  .text:0016F19D                 call    ds:qglCullFace
+  .text:0016F1A3                 jmp     loc_16ECCB
+  .text:0016F1B0                 ; GLfloat
+  .text:0016F1B0                 mov     [esp+5Ch+var_5C+4], 0BF800000h; GLfloat
+  .text:0016F1B8                 ; GLfloat
+  .text:0016F1B8                 mov     [esp+5Ch+var_5C], 3F800000h; GLfloat
+  .text:0016F1BF                 call    ds:qglScalef
+  .text:0016F1C5                 jmp     loc_16ECBE
+  .text:0016F1D0                 fxch    st(1)
+  .text:0016F1D2                 fstp    [esp+5Ch+var_14]
+  .text:0016F1D6                 fxch    st(1)
+  .text:0016F1D8                 fstp    [esp+5Ch+var_18]
+  .text:0016F1DC                 fdiv    ds:flt_246014
+  .text:0016F1E2                 fld     ds:dbl_249FC8
+  .text:0016F1E8                 fmulp   st(1), st
+  .text:0016F1EA                 ; x
+  .text:0016F1EA                 fstp    qword ptr [esp+5Ch+var_5C]; x
+  .text:0016F1ED                 call    tan
+  .text:0016F1F2                 fld     [esp+5Ch+var_18]
+  .text:0016F1F6                 fld     [esp+5Ch+var_14]
+  .text:0016F1FA                 fxch    st(1)
+  .text:0016F1FC                 fxch    st(2)
+  .text:0016F1FE                 jmp     loc_16EBD8
+  .text:0016F208                 fld     dword ptr [esp+5Ch+y]
+  .text:0016F20C                 fstp    qword ptr [esp+5Ch+y]
+  .text:0016F210                 fld     ds:dbl_249FC8
+  .text:0016F216                 fmul    [esp+5Ch+var_18]
+  .text:0016F21A                 fdiv    ds:flt_246014
+  .text:0016F220                 ; x
+  .text:0016F220                 fstp    qword ptr [esp+5Ch+var_5C]; x
+  .text:0016F223                 call    tan
+  .text:0016F228                 fmul    ds:flt_24B938
+  .text:0016F22E                 fld     st
+  .text:0016F230                 fchs
+  .text:0016F232                 fld     ds:movevars.zmax
+  .text:0016F238                 ; GLdouble
+  .text:0016F238                 fstp    [esp+5Ch+var_34]; GLdouble
+  .text:0016F23C                 fld     ds:flt_24B938
+  .text:0016F242                 ; GLdouble
+  .text:0016F242                 fstp    [esp+5Ch+var_3C]; GLdouble
+  .text:0016F246                 fxch    st(1)
+  .text:0016F248                 ; GLdouble
+  .text:0016F248                 fst     [esp+5Ch+var_44]; GLdouble
+  .text:0016F24C                 fxch    st(1)
+  .text:0016F24E                 ; GLdouble
+  .text:0016F24E                 fst     [esp+5Ch+var_4C]; GLdouble
+  .text:0016F252                 fld     qword ptr [esp+5Ch+y]
+  .text:0016F256                 fmul    st(2), st
+  .text:0016F258                 fxch    st(2)
+  .text:0016F25A                 ; GLdouble
+  .text:0016F25A                 fstp    [esp+5Ch+w]; GLdouble
+  .text:0016F25E                 fmulp   st(1), st
+  .text:0016F260                 ; GLdouble
+  .text:0016F260                 fstp    qword ptr [esp+5Ch+var_5C]; GLdouble
+  .text:0016F263                 call    ds:qglFrustum
+  .text:0016F269                 jmp     loc_16EC77
+  .text:0016F270                 movss   xmm2, ds:gProjectionMatrix+0Ch
+  .text:0016F278                 pxor    xmm5, xmm5
+  .text:0016F27C                 movss   xmm0, ds:gProjectionMatrix+8
+  .text:0016F284                 movss   xmm4, ds:gProjectionMatrix
+  .text:0016F28C                 movss   xmm3, ds:gProjectionMatrix+1Ch
+  .text:0016F294                 unpcklps xmm0, xmm2
+  .text:0016F297                 movss   xmm2, ds:gProjectionMatrix+4
+  .text:0016F29F                 movss   xmm1, ds:gProjectionMatrix+24h
+  .text:0016F2A7                 movss   xmm6, ds:gProjectionMatrix+34h
+  .text:0016F2AF                 unpcklps xmm4, xmm2
+  .text:0016F2B2                 movss   xmm2, ds:gProjectionMatrix+14h
+  .text:0016F2BA                 movlhps xmm4, xmm0
+  .text:0016F2BD                 movss   xmm0, ds:gProjectionMatrix+18h
+  .text:0016F2C5                 unpcklps xmm0, xmm3
+  .text:0016F2C8                 movss   xmm3, ds:gProjectionMatrix+10h
+  .text:0016F2D0                 unpcklps xmm3, xmm2
+  .text:0016F2D3                 movss   xmm2, ds:gProjectionMatrix+2Ch
+  .text:0016F2DB                 movlhps xmm3, xmm0
+  .text:0016F2DE                 movss   xmm0, ds:gProjectionMatrix+28h
+  .text:0016F2E6                 unpcklps xmm0, xmm2
+  .text:0016F2E9                 movss   xmm2, ds:gProjectionMatrix+20h
+  .text:0016F2F1                 unpcklps xmm2, xmm1
+  .text:0016F2F4                 movss   xmm1, ds:gProjectionMatrix+3Ch
+  .text:0016F2FC                 movlhps xmm2, xmm0
+  .text:0016F2FF                 movss   xmm0, ds:gProjectionMatrix+38h
+  .text:0016F307                 unpcklps xmm0, xmm1
+  .text:0016F30A                 movss   xmm1, ds:gProjectionMatrix+30h
+  .text:0016F312                 unpcklps xmm1, xmm6
+  .text:0016F315                 movlhps xmm1, xmm0
+  .text:0016F318                 pxor    xmm0, xmm0
+  .text:0016F31C                 movlps  xmm0, qword ptr ds:r_world_matrix
+  .text:0016F323                 movhps  xmm0, qword ptr ds:r_world_matrix+8
+  .text:0016F32A                 movaps  xmm7, xmm0
+  .text:0016F32D                 shufps  xmm7, xmm0, 0
+  .text:0016F331                 movaps  xmm6, xmm0
+  .text:0016F334                 shufps  xmm6, xmm0, 55h ; 'U'
+  .text:0016F338                 mulps   xmm7, xmm4
+  .text:0016F33B                 mulps   xmm6, xmm3
+  .text:0016F33E                 addps   xmm7, xmm5
+  .text:0016F341                 addps   xmm7, xmm6
+  .text:0016F344                 movaps  xmm6, xmm0
+  .text:0016F347                 shufps  xmm6, xmm0, 0AAh
+  .text:0016F34B                 shufps  xmm0, xmm0, 0FFh
+  .text:0016F34F                 mulps   xmm6, xmm2
+  .text:0016F352                 mulps   xmm0, xmm1
+  .text:0016F355                 addps   xmm6, xmm7
+  .text:0016F358                 addps   xmm0, xmm6
+  .text:0016F35B                 movlps  qword ptr ds:gWorldToScreen, xmm0
+  .text:0016F362                 movhps  qword ptr ds:gWorldToScreen+8, xmm0
+  .text:0016F369                 movaps  xmm0, xmm5
+  .text:0016F36C                 movlps  xmm0, qword ptr ds:r_world_matrix+10h
+  .text:0016F373                 movhps  xmm0, qword ptr ds:r_world_matrix+18h
+  .text:0016F37A                 movaps  xmm7, xmm0
+  .text:0016F37D                 shufps  xmm7, xmm0, 0
+  .text:0016F381                 movaps  xmm6, xmm0
+  .text:0016F384                 shufps  xmm6, xmm0, 55h ; 'U'
+  .text:0016F388                 mulps   xmm7, xmm4
+  .text:0016F38B                 mulps   xmm6, xmm3
+  .text:0016F38E                 addps   xmm7, xmm5
+  .text:0016F391                 addps   xmm7, xmm6
+  .text:0016F394                 movaps  xmm6, xmm0
+  .text:0016F397                 shufps  xmm6, xmm0, 0AAh
+  .text:0016F39B                 shufps  xmm0, xmm0, 0FFh
+  .text:0016F39F                 mulps   xmm6, xmm2
+  .text:0016F3A2                 mulps   xmm0, xmm1
+  .text:0016F3A5                 addps   xmm6, xmm7
+  .text:0016F3A8                 addps   xmm0, xmm6
+  .text:0016F3AB                 movlps  qword ptr ds:gWorldToScreen+10h, xmm0
+  .text:0016F3B2                 movhps  qword ptr ds:gWorldToScreen+18h, xmm0
+  .text:0016F3B9                 movaps  xmm0, xmm5
+  .text:0016F3BC                 movlps  xmm0, qword ptr ds:r_world_matrix+20h
+  .text:0016F3C3                 movhps  xmm0, qword ptr ds:r_world_matrix+28h
+  .text:0016F3CA                 movaps  xmm7, xmm0
+  .text:0016F3CD                 shufps  xmm7, xmm0, 0
+  .text:0016F3D1                 movaps  xmm6, xmm0
+  .text:0016F3D4                 shufps  xmm6, xmm0, 55h ; 'U'
+  .text:0016F3D8                 mulps   xmm7, xmm4
+  .text:0016F3DB                 mulps   xmm6, xmm3
+  .text:0016F3DE                 addps   xmm7, xmm5
+  .text:0016F3E1                 addps   xmm7, xmm6
+  .text:0016F3E4                 movaps  xmm6, xmm0
+  .text:0016F3E7                 shufps  xmm6, xmm0, 0AAh
+  .text:0016F3EB                 shufps  xmm0, xmm0, 0FFh
+  .text:0016F3EF                 mulps   xmm6, xmm2
+  .text:0016F3F2                 mulps   xmm0, xmm1
+  .text:0016F3F5                 addps   xmm6, xmm7
+  .text:0016F3F8                 addps   xmm0, xmm6
+  .text:0016F3FB                 movlps  qword ptr ds:gWorldToScreen+20h, xmm0
+  .text:0016F402                 movhps  qword ptr ds:gWorldToScreen+28h, xmm0
+  .text:0016F409                 movaps  xmm0, xmm5
+  .text:0016F40C                 movlps  xmm0, qword ptr ds:r_world_matrix+30h
+  .text:0016F413                 movhps  xmm0, qword ptr ds:r_world_matrix+38h
+  .text:0016F41A                 movaps  xmm6, xmm0
+  .text:0016F41D                 shufps  xmm6, xmm0, 0
+  .text:0016F421                 mulps   xmm4, xmm6
+  .text:0016F424                 addps   xmm5, xmm4
+  .text:0016F427                 movaps  xmm4, xmm0
+  .text:0016F42A                 shufps  xmm4, xmm0, 55h ; 'U'
+  .text:0016F42E                 mulps   xmm3, xmm4
+  .text:0016F431                 addps   xmm5, xmm3
+  .text:0016F434                 movaps  xmm3, xmm0
+  .text:0016F437                 shufps  xmm3, xmm0, 0AAh
+  .text:0016F43B                 shufps  xmm0, xmm0, 0FFh
+  .text:0016F43F                 mulps   xmm2, xmm3
+  .text:0016F442                 mulps   xmm0, xmm1
+  .text:0016F445                 addps   xmm5, xmm2
+  .text:0016F448                 addps   xmm0, xmm5
+  .text:0016F44B                 movlps  qword ptr ds:gWorldToScreen+30h, xmm0
+  .text:0016F452                 movhps  qword ptr ds:gWorldToScreen+38h, xmm0
+  .text:0016F459                 jmp     loc_16F030
+  .text:0016F460                 call    ds:qglDisable
+  .text:0016F466                 jmp     loc_16EE1B
+  .text:0016F470                 ; GLenum
+  .text:0016F470                 mov     [esp+5Ch+var_5C], 1702h; GLenum
+  .text:0016F477                 call    ds:qglMatrixMode
+  .text:0016F47D                 mov     eax, TEXTURE0_SGIS
+  .text:0016F482                 ; GLenum
+  .text:0016F482                 mov     [esp+5Ch+var_5C], eax; GLenum
+  .text:0016F485                 call    ds:qglSelectTextureSGIS
+  .text:0016F48B                 call    ds:qglLoadIdentity
+  .text:0016F491                 mov     eax, TEXTURE1_SGIS
+  .text:0016F496                 ; GLenum
+  .text:0016F496                 mov     [esp+5Ch+var_5C], eax; GLenum
+  .text:0016F499                 call    ds:qglSelectTextureSGIS
+  .text:0016F49F                 call    ds:qglLoadIdentity
+  .text:0016F4A5                 mov     eax, TEXTURE2_SGIS
+  .text:0016F4AA                 ; GLenum
+  .text:0016F4AA                 mov     [esp+5Ch+var_5C], eax; GLenum
+  .text:0016F4AD                 call    ds:qglSelectTextureSGIS
+  .text:0016F4B3                 call    ds:qglLoadIdentity
+  .text:0016F4B9                 mov     eax, TEXTURE0_SGIS
+  .text:0016F4BE                 ; GLenum
+  .text:0016F4BE                 mov     [esp+5Ch+var_5C], eax; GLenum
+  .text:0016F4C1                 call    ds:qglSelectTextureSGIS
+  .text:0016F4C7                 jmp     loc_16EAE3
+procedure: |-
+  // Engine matrix globals: each target is the base of a float[16] object, not a pointer slot or an interior element.
+  // gProjectionMatrix (gv): output buffer of GetFloatv(GL_PROJECTION_MATRIX = 0xBA7).
+  // r_world_matrix (gv): output buffer of GetFloatv(GL_MODELVIEW_MATRIX = 0xBA6).
+  // gWorldToScreen (gv): product of projection/modelview matrices; input to InvertMatrix.
+  // gScreenToWorld (gv): output buffer of that same InvertMatrix call.
+  // Source role: HLND2T_official/engine/gl_rmain.c R_SetupGL; current instructions and ABI take precedence over source layout.
+  // HL25 differs from the older public source: widescreen FOV adjustment and compiler-inlined perspective math are retained; SSE temporaries are compiler artifacts.
+  void __cdecl R_SetupGL()
+  {
+    int v0; // eax
+    int v1; // edx
+    GLsizei value; // ecx
+    GLsizei v3; // esi
+    long double width; // fst7
+    long double height; // fst6
+    long double v6; // fst5
+    long double v7; // fst5
+    long double v8; // fst7
+    __m128 v9; // xmm4
+    __m128 v10; // xmm3
+    __m128 v11; // xmm2
+    __m128 v12; // xmm0
+    __m128 v13; // xmm1
+    __m128 v14; // xmm5
+    __m128 v15; // xmm0
+    __m128 v16; // xmm2
+    __m128 v17; // xmm3
+    __m128 v18; // xmm1
+    __m128 v19; // xmm0
+    __m128 v20; // xmm4
+    __m128 v21; // xmm2
+    __m128 v22; // xmm4
+    __m128 v23; // xmm2
+    __m128 v24; // xmm1
+    long double v25; // fst7
+    __m128 v26; // xmm4
+    __m128 v27; // xmm3
+    __m128 v28; // xmm2
+    __m128 v29; // xmm1
+    __m128 v30; // xmm0
+    __m128 v31; // xmm0
+    __m128 v32; // xmm0
+    __m128 v33; // xmm0
+    __m128 v34; // xmm0
+    __m128 v35; // xmm0
+    __m128 v36; // xmm0
+    __m128 v37; // xmm0
+    GLfloat v38; // [esp+0h] [ebp-5Ch]
+    GLfloat v39; // [esp+0h] [ebp-5Ch]
+    GLfloat v40; // [esp+0h] [ebp-5Ch]
+    GLfloat v41; // [esp+0h] [ebp-5Ch]
+    GLfloat v42; // [esp+4h] [ebp-58h]
+    GLfloat w; // [esp+8h] [ebp-54h]
+    float y; // [esp+30h] [ebp-2Ch]
+    __m128 ya; // [esp+30h] [ebp-2Ch]
+    float yb; // [esp+30h] [ebp-2Ch]
+    float v47; // [esp+44h] [ebp-18h]
+    float v48; // [esp+44h] [ebp-18h]
+    float v49; // [esp+44h] [ebp-18h]
+    float v50; // [esp+44h] [ebp-18h]
+    float v51; // [esp+48h] [ebp-14h]
+    float v52; // [esp+48h] [ebp-14h]
+    float v53; // [esp+4Ch] [ebp-10h]
+    float v54; // [esp+4Ch] [ebp-10h]
+    float v55; // [esp+4Ch] [ebp-10h]
+    float v56; // [esp+4Ch] [ebp-10h]
+    float v57; // [esp+4Ch] [ebp-10h]
+
+    if ( gl_mtexable )
+    {
+      qglMatrixMode(0x1702u);
+      qglSelectTextureSGIS(TEXTURE0_SGIS);
+      qglLoadIdentity();
+      qglSelectTextureSGIS(TEXTURE1_SGIS);
+      qglLoadIdentity();
+      qglSelectTextureSGIS(TEXTURE2_SGIS);
+      qglLoadIdentity();
+      qglSelectTextureSGIS(TEXTURE0_SGIS);
+    }
+    qglMatrixMode(0x1701u);
+    qglLoadIdentity();
+    v0 = r_refdef.vrect.x - (r_refdef.vrect.x > 0);
+    v1 = ((unsigned int)(glheight - (r_refdef.vrect.height + r_refdef.vrect.y)) < 0x80000000)
+       + glheight
+       - (r_refdef.vrect.height
+        + r_refdef.vrect.y)
+       - 1;
+    if ( envmap )
+    {
+      value = (int)gl_envmapsize.value;
+      v1 = 0;
+      v0 = 0;
+      glheight = (int)gl_envmapsize.value;
+      v3 = (int)gl_envmapsize.value;
+      glwidth = (int)gl_envmapsize.value;
+    }
+    else
+    {
+      value = (r_refdef.vrect.x + r_refdef.vrect.width < glwidth) + r_refdef.vrect.x + r_refdef.vrect.width - v0;
+      v3 = (glheight > glheight - r_refdef.vrect.y) + glheight - r_refdef.vrect.y - v1;
+    }
+    qglViewport(glx + v0, gly + v1, value, v3);
+    width = (long double)r_refdef.vrect.width;
+    height = (long double)r_refdef.vrect.height;
+    y = width / height;
+    v6 = scr_fov_value;
+    if ( gl_widescreen_yfov.value != 0.0 && y > 1.5 )
+    {
+      v51 = height;
+      v48 = width;
+      v55 = scr_fov_value * 0.008726646259971648;
+      v56 = tan(v55) * (y * 0.75);
+      v57 = atan(v56) * 57.29577951308232;
+      height = v51;
+      v6 = v57 + v57;
+      width = v48;
+    }
+    if ( v6 >= 1.0 && v6 <= 179.0 )
+    {
+      v52 = height;
+      v50 = width;
+      height = v52;
+      v7 = tan(v6 / 360.0 * 3.141592653589793);
+      width = v50;
+    }
+    else
+    {
+      v7 = 0.9999999999999999;
+    }
+    v53 = width / v7;
+    v54 = atan(height / v53);
+    v47 = v54 * 360.0 / 3.141592653589793;
+    if ( r_refdef.onlyClientDraws )
+    {
+      v8 = tan(3.141592653589793 * v47 / 360.0);
+      qglFrustum(y * -(v8 * 4.0), v8 * 4.0 * y, -(v8 * 4.0), v8 * 4.0, 4.0, 16000.0);
+    }
+    else
+    {
+      if ( CL_IsDevOverviewMode() )
+      {
+        v49 = 4096.0 / gDevOverview.zoom;
+        yb = 4096.0 / (y * gDevOverview.zoom);
+        qglOrtho(
+          (double)-(int)v49,
+          (double)(int)v49,
+          (double)-(int)yb,
+          (double)(int)yb,
+          16000.0 - gDevOverview.z_min,
+          16000.0 - gDevOverview.z_max);
+        if ( mirror )
+          goto LABEL_12;
+  LABEL_25:
+        qglCullFace(0x404u);
+        goto LABEL_15;
+      }
+      v25 = tan(3.141592653589793 * v47 / 360.0);
+      qglFrustum(y * -(v25 * 4.0), v25 * 4.0 * y, -(v25 * 4.0), v25 * 4.0, 4.0, movevars.zmax);
+    }
+    if ( mirror == false )
+      goto LABEL_25;
+  LABEL_12:
+    if ( mirror_plane->normal[2] == 0.0 )
+      qglScalef(-1.0, 1.0, 1.0);
+    else
+      qglScalef(1.0, -1.0, 1.0);
+    qglCullFace(0x405u);
+  LABEL_15:
+    qglGetFloatv(0xBA7u, gProjectionMatrix);
+    qglMatrixMode(0x1700u);
+    qglLoadIdentity();
+    qglRotatef(-90.0, 1.0, 0.0, 0.0);
+    qglRotatef(90.0, 0.0, 0.0, 1.0);
+    v38 = -r_refdef.viewangles[2];
+    qglRotatef(v38, 1.0, 0.0, 0.0);
+    v39 = -r_refdef.viewangles[0];
+    qglRotatef(v39, 0.0, 1.0, 0.0);
+    v40 = -r_refdef.viewangles[1];
+    qglRotatef(v40, 0.0, 0.0, 1.0);
+    w = -r_refdef.vieworg[2];
+    v42 = -r_refdef.vieworg[1];
+    v41 = -r_refdef.vieworg[0];
+    qglTranslatef(v41, v42, w);
+    qglGetFloatv(0xBA6u, r_world_matrix);
+    if ( gl_cull.value == 0.0 )
+      qglDisable(0xB44u);
+    else
+      qglEnable(0xB44u);
+    qglDisable(0xBE2u);
+    qglDisable(0xBC0u);
+    qglEnable(0xB71u);
+    if ( gl_flipmatrix.value == 0.0 )
+    {
+      v26 = _mm_movelh_ps(
+              _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[0]), (__m128)LODWORD(gProjectionMatrix[1])),
+              _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[2]), (__m128)LODWORD(gProjectionMatrix[3])));
+      v27 = _mm_movelh_ps(
+              _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[4]), (__m128)LODWORD(gProjectionMatrix[5])),
+              _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[6]), (__m128)LODWORD(gProjectionMatrix[7])));
+      v28 = _mm_movelh_ps(
+              _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[8]), (__m128)LODWORD(gProjectionMatrix[9])),
+              _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[10]), (__m128)LODWORD(gProjectionMatrix[11])));
+      v29 = _mm_movelh_ps(
+              _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[12]), (__m128)LODWORD(gProjectionMatrix[13])),
+              _mm_unpacklo_ps((__m128)LODWORD(gProjectionMatrix[14]), (__m128)LODWORD(gProjectionMatrix[15])));
+      v30 = _mm_loadh_ps((const double *)&r_world_matrix[2]);
+      v31 = _mm_add_ps(
+              _mm_mul_ps(_mm_shuffle_ps(v30, v30, 255), v29),
+              _mm_add_ps(
+                _mm_mul_ps(_mm_shuffle_ps(v30, v30, 170), v28),
+                _mm_add_ps(
+                  _mm_add_ps(_mm_mul_ps(_mm_shuffle_ps(v30, v30, 0), v26), (__m128)0LL),
+                  _mm_mul_ps(_mm_shuffle_ps(v30, v30, 85), v27))));
+      _mm_storel_ps((double *)gWorldToScreen, v31);
+      _mm_storeh_ps((double *)&gWorldToScreen[2], v31);
+      v32 = _mm_loadh_ps((const double *)&r_world_matrix[6]);
+      v33 = _mm_add_ps(
+              _mm_mul_ps(_mm_shuffle_ps(v32, v32, 255), v29),
+              _mm_add_ps(
+                _mm_mul_ps(_mm_shuffle_ps(v32, v32, 170), v28),
+                _mm_add_ps(
+                  _mm_add_ps(_mm_mul_ps(_mm_shuffle_ps(v32, v32, 0), v26), (__m128)0LL),
+                  _mm_mul_ps(_mm_shuffle_ps(v32, v32, 85), v27))));
+      _mm_storel_ps((double *)&gWorldToScreen[4], v33);
+      _mm_storeh_ps((double *)&gWorldToScreen[6], v33);
+      v34 = _mm_loadh_ps((const double *)&r_world_matrix[10]);
+      v35 = _mm_add_ps(
+              _mm_mul_ps(_mm_shuffle_ps(v34, v34, 255), v29),
+              _mm_add_ps(
+                _mm_mul_ps(_mm_shuffle_ps(v34, v34, 170), v28),
+                _mm_add_ps(
+                  _mm_add_ps(_mm_mul_ps(_mm_shuffle_ps(v34, v34, 0), v26), (__m128)0LL),
+                  _mm_mul_ps(_mm_shuffle_ps(v34, v34, 85), v27))));
+      _mm_storel_ps((double *)&gWorldToScreen[8], v35);
+      _mm_storeh_ps((double *)&gWorldToScreen[10], v35);
+      v36 = _mm_loadh_ps((const double *)&r_world_matrix[14]);
+      v37 = _mm_add_ps(
+              _mm_mul_ps(_mm_shuffle_ps(v36, v36, 255), v29),
+              _mm_add_ps(
+                _mm_add_ps(
+                  _mm_add_ps((__m128)0LL, _mm_mul_ps(v26, _mm_shuffle_ps(v36, v36, 0))),
+                  _mm_mul_ps(v27, _mm_shuffle_ps(v36, v36, 85))),
+                _mm_mul_ps(v28, _mm_shuffle_ps(v36, v36, 170))));
+      _mm_storel_ps((double *)&gWorldToScreen[12], v37);
+      _mm_storeh_ps((double *)&gWorldToScreen[14], v37);
+    }
+    else
+    {
+      v9 = _mm_loadh_ps((const double *)&r_world_matrix[2]);
+      v10 = _mm_loadh_ps((const double *)&r_world_matrix[6]);
+      v11 = _mm_loadh_ps((const double *)&r_world_matrix[10]);
+      v12 = _mm_loadh_ps((const double *)&r_world_matrix[14]);
+      v13 = _mm_add_ps(
+              _mm_mul_ps(
+                _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[3]), (__m128)LODWORD(gProjectionMatrix[3]), 0),
+                v12),
+              _mm_add_ps(
+                _mm_add_ps(
+                  _mm_add_ps(
+                    _mm_mul_ps(
+                      _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[0]), (__m128)LODWORD(gProjectionMatrix[0]), 0),
+                      v9),
+                    (__m128)0LL),
+                  _mm_mul_ps(
+                    _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[1]), (__m128)LODWORD(gProjectionMatrix[1]), 0),
+                    v10)),
+                _mm_mul_ps(
+                  _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[2]), (__m128)LODWORD(gProjectionMatrix[2]), 0),
+                  v11)));
+      ya = _mm_add_ps(
+             _mm_add_ps(
+               _mm_mul_ps(
+                 _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[6]), (__m128)LODWORD(gProjectionMatrix[6]), 0),
+                 v11),
+               _mm_add_ps(
+                 _mm_add_ps(
+                   _mm_mul_ps(
+                     _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[4]), (__m128)LODWORD(gProjectionMatrix[4]), 0),
+                     v9),
+                   (__m128)0LL),
+                 _mm_mul_ps(
+                   _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[5]), (__m128)LODWORD(gProjectionMatrix[5]), 0),
+                   v10))),
+             _mm_mul_ps(
+               _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[7]), (__m128)LODWORD(gProjectionMatrix[7]), 0),
+               v12));
+      v14 = _mm_add_ps(
+              _mm_mul_ps(
+                _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[11]), (__m128)LODWORD(gProjectionMatrix[11]), 0),
+                v12),
+              _mm_add_ps(
+                _mm_add_ps(
+                  _mm_mul_ps(
+                    _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[9]), (__m128)LODWORD(gProjectionMatrix[9]), 0),
+                    v10),
+                  _mm_add_ps(
+                    _mm_mul_ps(
+                      _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[8]), (__m128)LODWORD(gProjectionMatrix[8]), 0),
+                      v9),
+                    (__m128)0LL)),
+                _mm_mul_ps(
+                  _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[10]), (__m128)LODWORD(gProjectionMatrix[10]), 0),
+                  v11)));
+      v15 = _mm_add_ps(
+              _mm_mul_ps(
+                v12,
+                _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[15]), (__m128)LODWORD(gProjectionMatrix[15]), 0)),
+              _mm_add_ps(
+                _mm_mul_ps(
+                  v11,
+                  _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[14]), (__m128)LODWORD(gProjectionMatrix[14]), 0)),
+                _mm_add_ps(
+                  _mm_mul_ps(
+                    v10,
+                    _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[13]), (__m128)LODWORD(gProjectionMatrix[13]), 0)),
+                  _mm_add_ps(
+                    (__m128)0LL,
+                    _mm_mul_ps(
+                      v9,
+                      _mm_shuffle_ps((__m128)LODWORD(gProjectionMatrix[12]), (__m128)LODWORD(gProjectionMatrix[12]), 0))))));
+      v16 = _mm_unpacklo_ps(v13, v14);
+      v17 = _mm_unpacklo_ps(ya, v15);
+      v18 = _mm_unpackhi_ps(v13, v14);
+      v19 = _mm_unpackhi_ps(ya, v15);
+      v20 = v16;
+      v21 = _mm_unpackhi_ps(v16, v17);
+      v22 = _mm_unpacklo_ps(v20, v17);
+      _mm_storel_ps((double *)&gWorldToScreen[4], v21);
+      _mm_storeh_ps((double *)&gWorldToScreen[6], v21);
+      v23 = _mm_unpacklo_ps(v18, v19);
+      _mm_storel_ps((double *)gWorldToScreen, v22);
+      _mm_storeh_ps((double *)&gWorldToScreen[2], v22);
+      v24 = _mm_unpackhi_ps(v18, v19);
+      _mm_storel_ps((double *)&gWorldToScreen[8], v23);
+      _mm_storeh_ps((double *)&gWorldToScreen[10], v23);
+      _mm_storel_ps((double *)&gWorldToScreen[12], v24);
+      _mm_storeh_ps((double *)&gWorldToScreen[14], v24);
+    }
+    InvertMatrix(gWorldToScreen, gScreenToWorld);
+  }

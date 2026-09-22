@@ -3098,11 +3098,14 @@ if (func is not None and (store_operand is not None or (size == 6
                     dest = decoded.ops[0]
                     if dest.type == ida_ua.o_reg:
                         changed[address_write_register(dest.reg, True)] = None
-                elif mnemonic in ('mov', 'movzx', 'movsx', 'lea', 'pop', 'add', 'sub', 'xor', 'and', 'or', 'inc', 'dec', 'shl', 'shr', 'sar') or (mnemonic == 'imul' and decoded.ops[1].type != ida_ua.o_void):
+                elif mnemonic in ('mov', 'movzx', 'movsx', 'lea', 'pop', 'add', 'sub', 'adc', 'cvttss2si', 'xor', 'and', 'or', 'inc', 'dec', 'shl', 'shr', 'sar') or (mnemonic == 'imul' and decoded.ops[1].type != ida_ua.o_void):
                     dest, source = decoded.ops[0], decoded.ops[1]
                     if dest.type == ida_ua.o_reg:
                         destination = address_write_register(dest.reg, dest.dtype == ida_ua.dt_byte)
                         changed[destination] = None
+                        # ADC depends on carry and CVTTSS2SI on a floating-point
+                        # input. Keep their results unknown without discarding
+                        # unrelated address registers (for example the PIC base).
                         if dest.dtype != ida_ua.dt_dword:
                             pass
                         elif mnemonic == 'mov' and source.type == ida_ua.o_reg:
