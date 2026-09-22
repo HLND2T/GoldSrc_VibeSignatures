@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 REG, MEM, DISPL, PHRASE = 1, 2, 4, 3
+IMM = 5
 REGISTERS = ("eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi")
 
 
@@ -618,6 +619,138 @@ class StudioLightingWalkTests(unittest.TestCase):
 
     def test_rejects_call_clobbered_pointer(self):
         self.assertIn("error", self.locate(pointer_call=True))
+
+
+class PolyBlendScreenFadeWalkTests(unittest.TestCase):
+    """Exercise both FFADE_MODULATE encodings that identify cl.sf."""
+
+    def locate(self, entries):
+        for index, entry in enumerate(entries):
+            entry["ea"] = 0x1000 + index * 0x10
+        api = NS(o_void=0, o_reg=REG, o_mem=MEM, o_displ=DISPL, o_phrase=PHRASE, o_imm=IMM)
+        ns = {
+            "values": {"owner": "0x1000", "fade_flags_offset": 20},
+            "scan": lambda _ea: entries,
+            "reg4": lambda op: op.reg,
+            "changed_operand": lambda insn, index: index == 0,
+            "access": lambda entry, gv: {
+                "gv_ea": hex(gv),
+                "insn_ea": hex(entry["ea"]),
+                "insn_len": hex(entry["len"]),
+                "insn_disp": hex(entry["disp"]),
+            },
+        }
+        with patch.dict(sys.modules, {"idaapi": api}):
+            exec(walk("find-R_PolyBlend-cl_sf.py"), ns)
+        return ns["result"]
+
+    def op(self, kind, register="", addr=0, value=0):
+        return NS(type=kind, reg=register, addr=addr, value=value)
+
+    def entry(self, mnem, ops, targets=(), disp=0, length=7):
+        return {
+            "mnem": mnem,
+            "insn": NS(ops=ops),
+            "targets": set(targets),
+            "written": set(),
+            "disp": disp,
+            "len": length,
+            "disasm": mnem,
+        }
+
+    def test_accepts_direct_byte_test(self):
+        # ``test byte ptr ds:cl.sf.fadeFlags, 2`` (F6 05 <disp32> 02).
+        result = self.locate(
+            [self.entry("test", [self.op(MEM, addr=0x4000), self.op(IMM, value=2)], targets=(0x4000,), disp=2)]
+        )
+        self.assertEqual("0x3fec", result["gv_ea"])
+        self.assertEqual(hex(0x1000), result["insn_ea"])
+        self.assertEqual("0x2", result["insn_disp"])
+
+    def test_accepts_register_form_anchored_on_the_load(self):
+        # ``mov eax, dword ptr ds:cl.sf.fadeFlags`` + ``and eax, 2`` (CoF).
+        result = self.locate(
+            [
+                self.entry(
+                    "mov",
+                    [self.op(REG, register="eax"), self.op(MEM, addr=0x4000)],
+                    targets=(0x4000,),
+                    disp=1,
+                    length=5,
+                ),
+                self.entry("and", [self.op(REG, register="eax"), self.op(IMM, value=2)]),
+            ]
+        )
+        self.assertEqual("0x3fec", result["gv_ea"])
+        self.assertEqual(hex(0x1000), result["insn_ea"])
+
+    def test_rejects_both_encodings_in_one_function(self):
+        result = self.locate(
+            [
+                self.entry("test", [self.op(MEM, addr=0x4000), self.op(IMM, value=2)], targets=(0x4000,), disp=2),
+                self.entry(
+                    "mov",
+                    [self.op(REG, register="eax"), self.op(MEM, addr=0x5000)],
+                    targets=(0x5000,),
+                    disp=1,
+                    length=5,
+                ),
+                self.entry("and", [self.op(REG, register="eax"), self.op(IMM, value=2)]),
+            ]
+        )
+        self.assertIn("error", result)
+
+    def test_rejects_other_immediates(self):
+        for imm in (1, 4, 8):
+            with self.subTest(imm=imm):
+                result = self.locate(
+                    [
+                        self.entry(
+                            "test", [self.op(MEM, addr=0x4000), self.op(IMM, value=imm)], targets=(0x4000,), disp=2
+                        )
+                    ]
+                )
+                self.assertIn("error", result)
+
+    def test_rejects_register_only_test(self):
+        # ``test eax, eax`` has no immediate and names no global.
+        result = self.locate([self.entry("test", [self.op(REG, register="eax"), self.op(REG, register="eax")])])
+        self.assertIn("error", result)
+
+    def test_rejects_clobbered_load_register(self):
+        result = self.locate(
+            [
+                self.entry(
+                    "mov",
+                    [self.op(REG, register="eax"), self.op(MEM, addr=0x4000)],
+                    targets=(0x4000,),
+                    disp=1,
+                    length=5,
+                ),
+                self.entry("xor", [self.op(REG, register="eax"), self.op(REG, register="eax")]),
+                self.entry("and", [self.op(REG, register="eax"), self.op(IMM, value=2)]),
+            ]
+        )
+        self.assertIn("error", result)
+
+    def test_rejects_multi_target_load(self):
+        result = self.locate(
+            [
+                self.entry(
+                    "mov",
+                    [self.op(REG, register="eax"), self.op(MEM, addr=0x4000)],
+                    targets=(0x4000, 0x4004),
+                    disp=1,
+                    length=5,
+                ),
+                self.entry("and", [self.op(REG, register="eax"), self.op(IMM, value=2)]),
+            ]
+        )
+        self.assertIn("error", result)
+
+    def test_rejects_absent_test(self):
+        result = self.locate([self.entry("ret", [])])
+        self.assertIn("error", result)
 
 
 class TextureIdentityTests(unittest.TestCase):

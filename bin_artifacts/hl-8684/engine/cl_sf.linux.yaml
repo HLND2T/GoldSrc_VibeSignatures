@@ -1,0 +1,9 @@
+gv_name: cl_sf
+gv_va: '0xc6f688'
+gv_rva: '0xc6f688'
+gv_sig: 53 83 EC ?? E8 ?? ?? ?? ?? 85 C0 89 C3 75 ?? 83 C4 ?? 5B C3
+gv_sig_va: '0x1c43a0'
+gv_inst_offset: '0x51'
+gv_inst_length: '0x7'
+gv_inst_disp: '0x2'
+gv_address_offset: '0xffffffec'
