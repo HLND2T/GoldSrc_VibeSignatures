@@ -1,0 +1,385 @@
+func_name: "CVideoMode_Common_DrawStartupGraphic"
+func_va: "0x1dbca00"
+disasm_code: |-
+  .text:01DBCA00                 push    ebp
+  .text:01DBCA01                 mov     ebp, esp
+  .text:01DBCA03                 and     esp, 0FFFFFFF8h
+  .text:01DBCA06                 sub     esp, 2Ch
+  .text:01DBCA09                 push    ebx
+  .text:01DBCA0A                 push    esi
+  .text:01DBCA0B                 push    edi
+  .text:01DBCA0C                 mov     edi, ecx
+  .text:01DBCA0E                 mov     eax, [edi+1A8h]; (structmember, struct=CVideoMode_Common, member=m_ImageID.m_Size)
+  .text:01DBCA14                 test    eax, eax
+  .text:01DBCA16                 jz      loc_1DBCCB4
+  .text:01DBCA1C                 mov     eax, [ebp+hWnd]
+  .text:01DBCA1F                 ; hWnd
+  .text:01DBCA1F                 push    eax; hWnd
+  .text:01DBCA20                 call    ds:GetDC
+  .text:01DBCA26                 mov     edx, [edi]
+  .text:01DBCA28                 mov     ebx, eax
+  .text:01DBCA2A                 mov     ecx, edi
+  .text:01DBCA2C                 mov     [esp+38h+var_8], ebx
+  .text:01DBCA30                 call    dword ptr [edx+10h]
+  .text:01DBCA33                 mov     esi, eax
+  .text:01DBCA35                 ; hdc
+  .text:01DBCA35                 push    ebx; hdc
+  .text:01DBCA36                 mov     [esp+3Ch+var_C], esi
+  .text:01DBCA3A                 call    ds:CreateCompatibleDC
+  .text:01DBCA40                 mov     ecx, [esi]
+  .text:01DBCA42                 mov     [esp+38h+hdc], eax
+  .text:01DBCA46                 mov     eax, [esi+4]
+  .text:01DBCA49                 ; cy
+  .text:01DBCA49                 push    eax; cy
+  .text:01DBCA4A                 ; cx
+  .text:01DBCA4A                 push    ecx; cx
+  .text:01DBCA4B                 ; hdc
+  .text:01DBCA4B                 push    ebx; hdc
+  .text:01DBCA4C                 call    ds:CreateCompatibleBitmap
+  .text:01DBCA52                 mov     edx, [esp+38h+hdc]
+  .text:01DBCA56                 ; h
+  .text:01DBCA56                 push    eax; h
+  .text:01DBCA57                 ; hdc
+  .text:01DBCA57                 push    edx; hdc
+  .text:01DBCA58                 mov     [esp+40h+ho], eax
+  .text:01DBCA5C                 call    ds:SelectObject
+  .text:01DBCA62                 fild    dword ptr [esi]
+  .text:01DBCA64                 mov     ecx, [edi+1A8h]
+  .text:01DBCA6A                 xor     eax, eax
+  .text:01DBCA6C                 cmp     ecx, eax
+  .text:01DBCA6E                 fstp    [esp+38h+var_14]
+  .text:01DBCA72                 fild    dword ptr [edi+1B0h]; (structmember, struct=CVideoMode_Common, member=m_iBaseResX)
+  .text:01DBCA78                 fstp    [esp+38h+var_18]
+  .text:01DBCA7C                 fld     [esp+38h+var_14]
+  .text:01DBCA80                 fdiv    [esp+38h+var_18]
+  .text:01DBCA84                 fstp    [esp+38h+var_1C]
+  .text:01DBCA88                 fild    dword ptr [esi+4]
+  .text:01DBCA8B                 fstp    [esp+38h+var_14]
+  .text:01DBCA8F                 fild    dword ptr [edi+1B4h]; (structmember, struct=CVideoMode_Common, member=m_iBaseResY)
+  .text:01DBCA95                 fstp    [esp+38h+var_18]
+  .text:01DBCA99                 fld     [esp+38h+var_14]
+  .text:01DBCA9D                 fdiv    [esp+38h+var_18]
+  .text:01DBCAA1                 mov     [esp+38h+var_14], eax
+  .text:01DBCAA5                 fstp    [esp+38h+var_18]
+  .text:01DBCAA9                 jle     loc_1DBCBF9
+  .text:01DBCAAF                 mov     [esp+38h+var_20], eax
+  .text:01DBCAB3                 mov     esi, [edi+19Ch]; (structmember, struct=CVideoMode_Common, member=m_ImageID)
+  .text:01DBCAB9                 mov     edx, [esp+38h+var_20]
+  .text:01DBCABD                 add     esi, edx
+  .text:01DBCABF                 mov     eax, [esi+4]
+  .text:01DBCAC2                 test    eax, eax
+  .text:01DBCAC4                 mov     [esp+38h+var_24], eax
+  .text:01DBCAC8                 jz      short loc_1DBCAF3
+  .text:01DBCACA                 fild    [esp+38h+var_24]
+  .text:01DBCACE                 sub     esp, 8
+  .text:01DBCAD1                 fstp    [esp+40h+var_24]
+  .text:01DBCAD5                 fld     [esp+40h+var_24]
+  .text:01DBCAD9                 fmul    [esp+40h+var_1C]
+  .text:01DBCADD                 ; X
+  .text:01DBCADD                 fstp    [esp+40h+X]; X
+  .text:01DBCAE0                 call    _ceil
+  .text:01DBCAE5                 add     esp, 8
+  .text:01DBCAE8                 call    __ftol
+  .text:01DBCAED                 mov     [esp+38h+var_24], eax
+  .text:01DBCAF1                 jmp     short loc_1DBCAFB
+  .text:01DBCAF3                 mov     [esp+38h+var_24], 0
+  .text:01DBCAFB                 mov     eax, [esi+8]
+  .text:01DBCAFE                 test    eax, eax
+  .text:01DBCB00                 mov     [esp+38h+var_28], eax
+  .text:01DBCB04                 jz      short loc_1DBCB2F
+  .text:01DBCB06                 fild    [esp+38h+var_28]
+  .text:01DBCB0A                 sub     esp, 8
+  .text:01DBCB0D                 fstp    [esp+40h+var_28]
+  .text:01DBCB11                 fld     [esp+40h+var_28]
+  .text:01DBCB15                 fmul    [esp+40h+var_18]
+  .text:01DBCB19                 ; X
+  .text:01DBCB19                 fstp    [esp+40h+X]; X
+  .text:01DBCB1C                 call    _ceil
+  .text:01DBCB21                 add     esp, 8
+  .text:01DBCB24                 call    __ftol
+  .text:01DBCB29                 mov     [esp+38h+var_28], eax
+  .text:01DBCB2D                 jmp     short loc_1DBCB37
+  .text:01DBCB2F                 mov     [esp+38h+var_28], 0
+  .text:01DBCB37                 mov     al, [esi+14h]
+  .text:01DBCB3A                 test    al, al
+  .text:01DBCB3C                 jz      short loc_1DBCB9A
+  .text:01DBCB3E                 mov     eax, [esi+0Ch]
+  .text:01DBCB41                 mov     ecx, [esi+4]
+  .text:01DBCB44                 add     eax, ecx
+  .text:01DBCB46                 sub     esp, 8
+  .text:01DBCB49                 mov     [esp+40h+var_10], eax
+  .text:01DBCB4D                 fild    [esp+40h+var_10]
+  .text:01DBCB51                 fstp    [esp+40h+var_10]
+  .text:01DBCB55                 fld     [esp+40h+var_10]
+  .text:01DBCB59                 fmul    [esp+40h+var_1C]
+  .text:01DBCB5D                 ; X
+  .text:01DBCB5D                 fstp    [esp+40h+X]; X
+  .text:01DBCB60                 call    _ceil
+  .text:01DBCB65                 call    __ftol
+  .text:01DBCB6A                 mov     ecx, [esi+10h]
+  .text:01DBCB6D                 mov     edx, [esi+8]
+  .text:01DBCB70                 add     ecx, edx
+  .text:01DBCB72                 mov     ebx, eax
+  .text:01DBCB74                 mov     [esp+40h+var_10], ecx
+  .text:01DBCB78                 fild    [esp+40h+var_10]
+  .text:01DBCB7C                 fstp    [esp+40h+var_10]
+  .text:01DBCB80                 fld     [esp+40h+var_10]
+  .text:01DBCB84                 fmul    [esp+40h+var_18]
+  .text:01DBCB88                 ; X
+  .text:01DBCB88                 fstp    [esp+40h+X]; X
+  .text:01DBCB8B                 call    _ceil
+  .text:01DBCB90                 add     esp, 8
+  .text:01DBCB93                 call    __ftol
+  .text:01DBCB98                 jmp     short loc_1DBCBAC
+  .text:01DBCB9A                 mov     ebx, [esi+0Ch]
+  .text:01DBCB9D                 mov     edx, [esp+38h+var_24]
+  .text:01DBCBA1                 mov     eax, [esi+10h]
+  .text:01DBCBA4                 mov     ecx, [esp+38h+var_28]
+  .text:01DBCBA8                 add     ebx, edx
+  .text:01DBCBAA                 add     eax, ecx
+  .text:01DBCBAC                 mov     edx, [esp+38h+var_28]
+  .text:01DBCBB0                 mov     ecx, [esi+10h]
+  .text:01DBCBB3                 ; y
+  .text:01DBCBB3                 push    eax; y
+  .text:01DBCBB4                 mov     eax, [esp+3Ch+var_24]
+  .text:01DBCBB8                 ; int
+  .text:01DBCBB8                 push    ebx; int
+  .text:01DBCBB9                 ; int
+  .text:01DBCBB9                 push    edx; int
+  .text:01DBCBBA                 mov     edx, [esi+0Ch]
+  .text:01DBCBBD                 ; int
+  .text:01DBCBBD                 push    eax; int
+  .text:01DBCBBE                 mov     eax, [esi]
+  .text:01DBCBC0                 ; int
+  .text:01DBCBC0                 push    ecx; int
+  .text:01DBCBC1                 mov     ecx, [esp+4Ch+hdc]
+  .text:01DBCBC5                 ; int
+  .text:01DBCBC5                 push    edx; int
+  .text:01DBCBC6                 ; int
+  .text:01DBCBC6                 push    eax; int
+  .text:01DBCBC7                 ; hdc
+  .text:01DBCBC7                 push    ecx; hdc
+  .text:01DBCBC8                 mov     ecx, edi
+  .text:01DBCBCA                 call    sub_1DBCCC0
+  .text:01DBCBCF                 mov     eax, [esp+38h+var_14]
+  .text:01DBCBD3                 mov     edx, [esp+38h+var_20]
+  .text:01DBCBD7                 mov     ecx, [edi+1A8h]
+  .text:01DBCBDD                 inc     eax
+  .text:01DBCBDE                 add     edx, 18h
+  .text:01DBCBE1                 cmp     eax, ecx
+  .text:01DBCBE3                 mov     [esp+38h+var_14], eax
+  .text:01DBCBE7                 mov     [esp+38h+var_20], edx
+  .text:01DBCBEB                 jl      loc_1DBCAB3
+  .text:01DBCBF1                 mov     esi, [esp+38h+var_C]
+  .text:01DBCBF5                 mov     ebx, [esp+38h+var_8]
+  .text:01DBCBF9                 ; lppt
+  .text:01DBCBF9                 push    0; lppt
+  .text:01DBCBFB                 ; y
+  .text:01DBCBFB                 push    0; y
+  .text:01DBCBFD                 ; x
+  .text:01DBCBFD                 push    0; x
+  .text:01DBCBFF                 ; hdc
+  .text:01DBCBFF                 push    ebx; hdc
+  .text:01DBCC00                 call    ds:SetViewportOrgEx
+  .text:01DBCC06                 mov     edx, [esp+38h+hdc]
+  .text:01DBCC0A                 mov     eax, [esi+4]
+  .text:01DBCC0D                 mov     ecx, [esi]
+  .text:01DBCC0F                 ; rop
+  .text:01DBCC0F                 push    0CC0020h; rop
+  .text:01DBCC14                 ; y1
+  .text:01DBCC14                 push    0; y1
+  .text:01DBCC16                 ; x1
+  .text:01DBCC16                 push    0; x1
+  .text:01DBCC18                 ; hdcSrc
+  .text:01DBCC18                 push    edx; hdcSrc
+  .text:01DBCC19                 ; cy
+  .text:01DBCC19                 push    eax; cy
+  .text:01DBCC1A                 ; cx
+  .text:01DBCC1A                 push    ecx; cx
+  .text:01DBCC1B                 ; y
+  .text:01DBCC1B                 push    0; y
+  .text:01DBCC1D                 ; x
+  .text:01DBCC1D                 push    0; x
+  .text:01DBCC1F                 ; hdc
+  .text:01DBCC1F                 push    ebx; hdc
+  .text:01DBCC20                 call    ds:BitBlt
+  .text:01DBCC26                 mov     edx, [esp+38h+ho]
+  .text:01DBCC2A                 ; ho
+  .text:01DBCC2A                 push    edx; ho
+  .text:01DBCC2B                 call    ds:DeleteObject
+  .text:01DBCC31                 mov     eax, [esp+38h+hdc]
+  .text:01DBCC35                 ; hdc
+  .text:01DBCC35                 push    eax; hdc
+  .text:01DBCC36                 call    ds:DeleteDC
+  .text:01DBCC3C                 mov     ecx, [ebp+hWnd]
+  .text:01DBCC3F                 ; hDC
+  .text:01DBCC3F                 push    ebx; hDC
+  .text:01DBCC40                 ; hWnd
+  .text:01DBCC40                 push    ecx; hWnd
+  .text:01DBCC41                 call    ds:ReleaseDC
+  .text:01DBCC47                 mov     eax, [edi+1A8h]
+  .text:01DBCC4D                 xor     esi, esi
+  .text:01DBCC4F                 test    eax, eax
+  .text:01DBCC51                 jle     short loc_1DBCC79
+  .text:01DBCC53                 xor     ebx, ebx
+  .text:01DBCC55                 mov     edx, [edi+19Ch]
+  .text:01DBCC5B                 mov     eax, [ebx+edx]
+  .text:01DBCC5E                 test    eax, eax
+  .text:01DBCC60                 jz      short loc_1DBCC6B
+  .text:01DBCC62                 ; lpMem
+  .text:01DBCC62                 push    eax; lpMem
+  .text:01DBCC63                 call    sub_1E628CB
+  .text:01DBCC68                 add     esp, 4
+  .text:01DBCC6B                 mov     eax, [edi+1A8h]
+  .text:01DBCC71                 inc     esi
+  .text:01DBCC72                 add     ebx, 18h
+  .text:01DBCC75                 cmp     esi, eax
+  .text:01DBCC77                 jl      short loc_1DBCC55
+  .text:01DBCC79                 mov     eax, [edi+1A4h]
+  .text:01DBCC7F                 mov     dword ptr [edi+1A8h], 0
+  .text:01DBCC89                 test    eax, eax
+  .text:01DBCC8B                 jl      short loc_1DBCCB4
+  .text:01DBCC8D                 mov     eax, [edi+19Ch]
+  .text:01DBCC93                 test    eax, eax
+  .text:01DBCC95                 jz      short loc_1DBCCAA
+  .text:01DBCC97                 ; lpMem
+  .text:01DBCC97                 push    eax; lpMem
+  .text:01DBCC98                 call    sub_1E628CB
+  .text:01DBCC9D                 add     esp, 4
+  .text:01DBCCA0                 mov     dword ptr [edi+19Ch], 0
+  .text:01DBCCAA                 mov     dword ptr [edi+1A0h], 0
+  .text:01DBCCB4                 pop     edi
+  .text:01DBCCB5                 pop     esi
+  .text:01DBCCB6                 pop     ebx
+  .text:01DBCCB7                 mov     esp, ebp
+  .text:01DBCCB9                 pop     ebp
+  .text:01DBCCBA                 retn    4
+procedure: |-
+  int __thiscall sub_1DBCA00(void *this, HWND hWnd)
+  {
+    int result; // eax
+    HDC DC; // ebx
+    int *v5; // esi
+    double v6; // st7
+    int v7; // esi
+    int v8; // ebx
+    __int64 v9; // rax
+    bool v10; // cc
+    int v11; // esi
+    int v12; // ebx
+    int v13; // edx
+    HDC hdc; // [esp+14h] [ebp-2Ch]
+    float v15; // [esp+18h] [ebp-28h]
+    int v16; // [esp+18h] [ebp-28h]
+    float v17; // [esp+1Ch] [ebp-24h]
+    int v18; // [esp+1Ch] [ebp-24h]
+    int v19; // [esp+20h] [ebp-20h]
+    float v20; // [esp+24h] [ebp-1Ch]
+    float v21; // [esp+28h] [ebp-18h]
+    float v22; // [esp+28h] [ebp-18h]
+    float v23; // [esp+28h] [ebp-18h]
+    float v24; // [esp+2Ch] [ebp-14h]
+    float v25; // [esp+2Ch] [ebp-14h]
+    int v26; // [esp+2Ch] [ebp-14h]
+    float v27; // [esp+30h] [ebp-10h]
+    float v28; // [esp+30h] [ebp-10h]
+    int *v29; // [esp+34h] [ebp-Ch]
+    HDC v30; // [esp+38h] [ebp-8h]
+    HBITMAP ho; // [esp+3Ch] [ebp-4h]
+
+    result = *((_DWORD *)this + 106); // (structmember, struct=CVideoMode_Common, member=m_ImageID.m_Size)
+    if ( result )
+    {
+      DC = GetDC(hWnd);
+      v30 = DC;
+      v5 = (int *)(*(int (__thiscall **)(void *))(*(_DWORD *)this + 16))(this);
+      v29 = v5;
+      hdc = CreateCompatibleDC(DC);
+      ho = CreateCompatibleBitmap(DC, *v5, v5[1]);
+      SelectObject(hdc, ho);
+      v24 = (float)*v5;
+      v21 = (float)*((int *)this + 108); // (structmember, struct=CVideoMode_Common, member=m_iBaseResX)
+      v20 = v24 / v21;
+      v25 = (float)v5[1];
+      v22 = (float)*((int *)this + 109); // (structmember, struct=CVideoMode_Common, member=m_iBaseResY)
+      v6 = v25 / v22;
+      v26 = 0;
+      v23 = v6;
+      if ( *((int *)this + 106) > 0 )
+      {
+        v19 = 0;
+        do
+        {
+          v7 = v19 + *((_DWORD *)this + 103); // (structmember, struct=CVideoMode_Common, member=m_ImageID)
+          if ( *(_DWORD *)(v7 + 4) )
+          {
+            v17 = (float)*(int *)(v7 + 4);
+            v18 = (__int64)ceil(v17 * v20);
+          }
+          else
+          {
+            v18 = 0;
+          }
+          if ( *(_DWORD *)(v7 + 8) )
+          {
+            v15 = (float)*(int *)(v7 + 8);
+            v16 = (__int64)ceil(v15 * v23);
+          }
+          else
+          {
+            v16 = 0;
+          }
+          if ( *(_BYTE *)(v7 + 20) )
+          {
+            v27 = (float)(*(_DWORD *)(v7 + 4) + *(_DWORD *)(v7 + 12));
+            v8 = (__int64)ceil(v27 * v20);
+            v28 = (float)(*(_DWORD *)(v7 + 8) + *(_DWORD *)(v7 + 16));
+            v9 = (__int64)ceil(v28 * v23);
+          }
+          else
+          {
+            v8 = v18 + *(_DWORD *)(v7 + 12);
+            LODWORD(v9) = v16 + *(_DWORD *)(v7 + 16);
+          }
+          sub_1DBCCC0(hdc, *(_DWORD *)v7, *(_DWORD *)(v7 + 12), *(_DWORD *)(v7 + 16), v18, v16, v8, v9);
+          v10 = ++v26 < *((_DWORD *)this + 106);
+          v19 += 24;
+        }
+        while ( v10 );
+        v5 = v29;
+        DC = v30;
+      }
+      SetViewportOrgEx(DC, 0, 0, nullptr);
+      BitBlt(DC, 0, 0, *v5, v5[1], hdc, 0, 0, 0xCC0020u);
+      DeleteObject(ho);
+      DeleteDC(hdc);
+      ReleaseDC(hWnd, DC);
+      v11 = 0;
+      if ( *((int *)this + 106) > 0 )
+      {
+        v12 = 0;
+        do
+        {
+          v13 = *((_DWORD *)this + 103);
+          if ( *(_DWORD *)(v12 + v13) )
+            sub_1E628CB(*(LPVOID *)(v12 + v13));
+          ++v11;
+          v12 += 24;
+        }
+        while ( v11 < *((_DWORD *)this + 106) );
+      }
+      result = *((_DWORD *)this + 105);
+      *((_DWORD *)this + 106) = 0;
+      if ( result >= 0 )
+      {
+        result = *((_DWORD *)this + 103);
+        if ( result )
+        {
+          result = sub_1E628CB(*((LPVOID *)this + 103));
+          *((_DWORD *)this + 103) = 0;
+        }
+        *((_DWORD *)this + 104) = 0;
+      }
+    }
+    return result;
+  }

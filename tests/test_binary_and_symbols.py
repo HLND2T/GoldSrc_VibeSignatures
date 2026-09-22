@@ -83,6 +83,35 @@ class SignatureAndSymbolTests(unittest.TestCase):
                 self.assertNotIn("type", result)
                 self.assertNotIn("kind", result)
 
+    def test_struct_member_supports_immediate_reference_addend(self):
+        result = normalize_symbol_artifact(
+            {
+                "struct_name": "Container",
+                "member_name": "items.m_Size",
+                "offset": "0x1a8",
+                "offset_sig": "81 c1 ?? ?? ?? ??",
+                "offset_sig_disp": "0xc",
+                "offset_sig_ref_kind": "immediate",
+                "offset_sig_addend": "0xc",
+            },
+            category="structmember",
+        )
+
+        self.assertEqual("immediate", result["offset_sig_ref_kind"])
+        self.assertEqual("0xc", result["offset_sig_addend"])
+
+        with self.assertRaises(SymbolArtifactError):
+            normalize_symbol_artifact(
+                {
+                    "struct_name": "Container",
+                    "member_name": "items",
+                    "offset": "0x19c",
+                    "offset_sig": "81 c1 ?? ?? ?? ??",
+                    "offset_sig_ref_kind": "register",
+                },
+                category="structmember",
+            )
+
     def test_rejects_legacy_identity_and_category_fields(self):
         for payload in (
             {"name": "symbol", "func_name": "symbol"},

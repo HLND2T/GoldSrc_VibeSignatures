@@ -39,6 +39,11 @@ identity、允许的 section、指令对、可选指令 regex、vcall 或 struct
 func、vfunc、gv 与 structmember 结果仍由普通 x86 MCP helper 消费，它们校验 tail chunks、要求唯一
 target/anchor signature、跟随请求的直接调用 jump thunk，并强制 4 字节 vtable slot。
 
+structmember 工件通常通过 `offset_sig` 与 `offset_sig_disp` 回放被选中的 displacement。确定性 finder
+也可以设置 `offset_sig_ref_kind: immediate`，随后把可选的 `offset_sig_addend` 加到该当前二进制引用上。
+这个机制只用于经过验证的“基成员 + 嵌套成员 accessor”fallback，不能用来复制 reference build 的布局常量。
+两个可选字段都要求存在 `offset_sig`，且 reference kind 仅允许 `displacement` 或 `immediate`。
+
 `found_scalar` 条目仅包含 `scalar_name`、`scalar_value`，数值必须与 finder 独立核验当前二进制得到的
 `expected_value` 一致，不绑定指令地址或签名。消费端直接用数值；详见 [scalar 契约](snapshot-and-gamedata.md)。
 

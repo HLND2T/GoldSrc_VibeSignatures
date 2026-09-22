@@ -1,0 +1,994 @@
+func_name: "CVideoMode_Common_DrawStartupGraphic"
+func_va: "0x1dae0b0"
+disasm_code: |-
+  .text:01DAE0B0                 push    ebp
+  .text:01DAE0B1                 mov     ebp, esp
+  .text:01DAE0B3                 sub     esp, 78h
+  .text:01DAE0B6                 push    ebx
+  .text:01DAE0B7                 push    esi
+  .text:01DAE0B8                 mov     esi, ecx
+  .text:01DAE0BA                 xor     ebx, ebx
+  .text:01DAE0BC                 push    edi
+  .text:01DAE0BD                 mov     [ebp+var_20], esi
+  .text:01DAE0C0                 cmp     [esi+1A8h], ebx; (structmember, struct=CVideoMode_Common, member=m_ImageID.m_Size)
+  .text:01DAE0C6                 jz      loc_1DAE6D2
+  .text:01DAE0CC                 mov     edx, [ebp+arg_0]
+  .text:01DAE0CF                 lea     eax, [ebp+height]
+  .text:01DAE0D2                 lea     ecx, [ebp+width]
+  .text:01DAE0D5                 push    eax
+  .text:01DAE0D6                 push    ecx
+  .text:01DAE0D7                 push    edx
+  .text:01DAE0D8                 call    SDL_GetWindowSize
+  .text:01DAE0DD                 mov     ecx, [ebp+height]
+  .text:01DAE0E0                 mov     eax, [ebp+width]
+  .text:01DAE0E3                 add     esp, 0Ch
+  .text:01DAE0E6                 mov     [ebp+var_48], eax
+  .text:01DAE0E9                 mov     [ebp+y], ecx
+  .text:01DAE0EC                 mov     [ebp+lpMem], ebx
+  .text:01DAE0EF                 ; height
+  .text:01DAE0EF                 push    ecx; height
+  .text:01DAE0F0                 ; width
+  .text:01DAE0F0                 push    eax; width
+  .text:01DAE0F1                 ; y
+  .text:01DAE0F1                 push    ebx; y
+  .text:01DAE0F2                 ; x
+  .text:01DAE0F2                 push    ebx; x
+  .text:01DAE0F3                 mov     [ebp+var_74], ebx
+  .text:01DAE0F6                 mov     [ebp+var_70], ebx
+  .text:01DAE0F9                 mov     [ebp+var_6C], ebx
+  .text:01DAE0FC                 call    glViewport
+  .text:01DAE101                 ; cap
+  .text:01DAE101                 push    0B71h; cap
+  .text:01DAE106                 call    glDisable
+  .text:01DAE10B                 ; cap
+  .text:01DAE10B                 push    0DE1h; cap
+  .text:01DAE110                 call    glEnable
+  .text:01DAE115                 ; mode
+  .text:01DAE115                 push    1701h; mode
+  .text:01DAE11A                 call    glMatrixMode
+  .text:01DAE11F                 fild    [ebp+y]
+  .text:01DAE122                 push    3FF00000h
+  .text:01DAE127                 ; zFar
+  .text:01DAE127                 push    ebx; zFar
+  .text:01DAE128                 push    0BFF00000h
+  .text:01DAE12D                 ; zNear
+  .text:01DAE12D                 push    ebx; zNear
+  .text:01DAE12E                 fstp    [ebp+right]
+  .text:01DAE131                 fild    [ebp+var_48]
+  .text:01DAE134                 mov     eax, dword ptr [ebp+right+4]
+  .text:01DAE137                 mov     ecx, dword ptr [ebp+right]
+  .text:01DAE13A                 push    ebx
+  .text:01DAE13B                 ; top
+  .text:01DAE13B                 push    ebx; top
+  .text:01DAE13C                 fstp    [ebp+right]
+  .text:01DAE13F                 mov     edx, dword ptr [ebp+right+4]
+  .text:01DAE142                 push    eax
+  .text:01DAE143                 mov     eax, dword ptr [ebp+right]
+  .text:01DAE146                 ; bottom
+  .text:01DAE146                 push    ecx; bottom
+  .text:01DAE147                 push    edx
+  .text:01DAE148                 ; right
+  .text:01DAE148                 push    eax; right
+  .text:01DAE149                 push    ebx
+  .text:01DAE14A                 ; left
+  .text:01DAE14A                 push    ebx; left
+  .text:01DAE14B                 call    glOrtho
+  .text:01DAE150                 ; alpha
+  .text:01DAE150                 push    ebx; alpha
+  .text:01DAE151                 ; blue
+  .text:01DAE151                 push    ebx; blue
+  .text:01DAE152                 ; green
+  .text:01DAE152                 push    ebx; green
+  .text:01DAE153                 ; red
+  .text:01DAE153                 push    ebx; red
+  .text:01DAE154                 call    glClearColor
+  .text:01DAE159                 ; mask
+  .text:01DAE159                 push    4000h; mask
+  .text:01DAE15E                 call    glClear
+  .text:01DAE163                 lea     ecx, [ebp+var_5C]
+  .text:01DAE166                 push    ebx
+  .text:01DAE167                 lea     edx, [ebp+var_58]
+  .text:01DAE16A                 push    ecx
+  .text:01DAE16B                 push    edx
+  .text:01DAE16C                 mov     [ebp+var_10], ebx
+  .text:01DAE16F                 mov     [ebp+var_14], ebx
+  .text:01DAE172                 call    sub_1DAEDB0
+  .text:01DAE177                 fild    [ebp+var_58]
+  .text:01DAE17A                 push    offset aStretchaspect_0; "-stretchaspect"
+  .text:01DAE17F                 fstp    [ebp+var_54]
+  .text:01DAE182                 fild    [ebp+var_5C]
+  .text:01DAE185                 fstp    [ebp+x]
+  .text:01DAE188                 fld     [ebp+var_54]
+  .text:01DAE18B                 fdiv    [ebp+x]
+  .text:01DAE18E                 fstp    [ebp+pixels]
+  .text:01DAE191                 fild    [ebp+width]
+  .text:01DAE194                 fstp    [ebp+var_54]
+  .text:01DAE197                 fild    [ebp+height]
+  .text:01DAE19A                 fstp    [ebp+x]
+  .text:01DAE19D                 fld     [ebp+var_54]
+  .text:01DAE1A0                 fdiv    [ebp+x]
+  .text:01DAE1A3                 fstp    [ebp+var_1C]
+  .text:01DAE1A6                 call    sub_1D2B320
+  .text:01DAE1AB                 add     esp, 10h
+  .text:01DAE1AE                 test    eax, eax
+  .text:01DAE1B0                 setz    al
+  .text:01DAE1B3                 test    al, al
+  .text:01DAE1B5                 jz      short loc_1DAE217
+  .text:01DAE1B7                 fld     [ebp+var_1C]
+  .text:01DAE1BA                 fcomp   [ebp+pixels]
+  .text:01DAE1BD                 fnstsw  ax
+  .text:01DAE1BF                 and     eax, 4100h
+  .text:01DAE1C4                 jnz     short loc_1DAE1E6
+  .text:01DAE1C6                 fild    [ebp+height]
+  .text:01DAE1C9                 fstp    [ebp+var_54]
+  .text:01DAE1CC                 fld     [ebp+var_54]
+  .text:01DAE1CF                 fmul    [ebp+pixels]
+  .text:01DAE1D2                 fstp    [ebp+x]
+  .text:01DAE1D5                 fild    [ebp+width]
+  .text:01DAE1D8                 fstp    [ebp+var_54]
+  .text:01DAE1DB                 fld     [ebp+var_54]
+  .text:01DAE1DE                 fsub    [ebp+x]
+  .text:01DAE1E1                 fstp    [ebp+var_10]
+  .text:01DAE1E4                 jmp     short loc_1DAE217
+  .text:01DAE1E6                 fld     [ebp+var_1C]
+  .text:01DAE1E9                 fcomp   [ebp+pixels]
+  .text:01DAE1EC                 fnstsw  ax
+  .text:01DAE1EE                 test    ah, 5
+  .text:01DAE1F1                 jp      short loc_1DAE217
+  .text:01DAE1F3                 fld     [ebp+pixels]
+  .text:01DAE1F6                 fdivr   ds:dbl_1E1D040
+  .text:01DAE1FC                 fild    [ebp+width]
+  .text:01DAE1FF                 fstp    [ebp+right]
+  .text:01DAE202                 fmul    [ebp+right]
+  .text:01DAE205                 fstp    [ebp+x]
+  .text:01DAE208                 fild    [ebp+height]
+  .text:01DAE20B                 fstp    [ebp+var_54]
+  .text:01DAE20E                 fld     [ebp+var_54]
+  .text:01DAE211                 fsub    [ebp+x]
+  .text:01DAE214                 fstp    [ebp+var_14]
+  .text:01DAE217                 fild    [ebp+var_48]
+  .text:01DAE21A                 cmp     [esi+1A8h], ebx
+  .text:01DAE220                 fstp    [ebp+var_54]
+  .text:01DAE223                 fld     [ebp+var_54]
+  .text:01DAE226                 fsub    [ebp+var_10]
+  .text:01DAE229                 fild    dword ptr [esi+1B0h]; (structmember, struct=CVideoMode_Common, member=m_iBaseResX)
+  .text:01DAE22F                 fstp    [ebp+var_54]
+  .text:01DAE232                 fdiv    [ebp+var_54]
+  .text:01DAE235                 fstp    [ebp+var_24]
+  .text:01DAE238                 fild    [ebp+y]
+  .text:01DAE23B                 fstp    [ebp+var_54]
+  .text:01DAE23E                 fld     [ebp+var_54]
+  .text:01DAE241                 fsub    [ebp+var_14]
+  .text:01DAE244                 fild    dword ptr [esi+1B4h]; (structmember, struct=CVideoMode_Common, member=m_iBaseResY)
+  .text:01DAE24A                 fstp    [ebp+var_54]
+  .text:01DAE24D                 fdiv    [ebp+var_54]
+  .text:01DAE250                 mov     [ebp+var_54], ebx
+  .text:01DAE253                 fstp    [ebp+var_28]
+  .text:01DAE256                 jle     loc_1DAE606
+  .text:01DAE25C                 mov     [ebp+var_1C], ebx
+  .text:01DAE25F                 fld     [ebp+var_10]
+  .text:01DAE262                 fdiv    ds:dbl_1E1D240
+  .text:01DAE268                 mov     esi, [esi+19Ch]; (structmember, struct=CVideoMode_Common, member=m_ImageID)
+  .text:01DAE26E                 mov     edx, [ebp+var_1C]
+  .text:01DAE271                 add     esi, edx
+  .text:01DAE273                 mov     eax, [esi+4]
+  .text:01DAE276                 cmp     eax, ebx
+  .text:01DAE278                 mov     [ebp+x], eax
+  .text:01DAE27B                 fstp    qword ptr [ebp+y]
+  .text:01DAE27E                 jz      short loc_1DAE2AA
+  .text:01DAE280                 fild    [ebp+x]
+  .text:01DAE283                 sub     esp, 8
+  .text:01DAE286                 fstp    [ebp+x]
+  .text:01DAE289                 fld     [ebp+x]
+  .text:01DAE28C                 fmul    [ebp+var_24]
+  .text:01DAE28F                 fadd    qword ptr [ebp+y]
+  .text:01DAE292                 ; X
+  .text:01DAE292                 fstp    [esp+8Ch+X]; X
+  .text:01DAE295                 call    _ceil
+  .text:01DAE29A                 add     esp, 8
+  .text:01DAE29D                 call    __ftol
+  .text:01DAE2A2                 mov     [ebp+x], eax
+  .text:01DAE2A5                 fild    [ebp+x]
+  .text:01DAE2A8                 jmp     short loc_1DAE2BA
+  .text:01DAE2AA                 mov     eax, [ebp+y+4]
+  .text:01DAE2AD                 mov     ecx, [ebp+y]
+  .text:01DAE2B0                 push    eax
+  .text:01DAE2B1                 ; X
+  .text:01DAE2B1                 push    ecx; X
+  .text:01DAE2B2                 call    _ceil
+  .text:01DAE2B7                 add     esp, 8
+  .text:01DAE2BA                 fstp    [ebp+right]
+  .text:01DAE2BD                 fld     [ebp+right]
+  .text:01DAE2C0                 call    __ftol
+  .text:01DAE2C5                 fld     [ebp+var_14]
+  .text:01DAE2C8                 fdiv    ds:dbl_1E1D240
+  .text:01DAE2CE                 mov     edi, eax
+  .text:01DAE2D0                 mov     eax, [esi+8]
+  .text:01DAE2D3                 cmp     eax, ebx
+  .text:01DAE2D5                 mov     [ebp+x], edi
+  .text:01DAE2D8                 mov     [ebp+var_4C], eax
+  .text:01DAE2DB                 fstp    qword ptr [ebp+var_3C]
+  .text:01DAE2DE                 jz      short loc_1DAE30A
+  .text:01DAE2E0                 fild    [ebp+var_4C]
+  .text:01DAE2E3                 sub     esp, 8
+  .text:01DAE2E6                 fstp    [ebp+var_4C]
+  .text:01DAE2E9                 fld     [ebp+var_4C]
+  .text:01DAE2EC                 fmul    [ebp+var_28]
+  .text:01DAE2EF                 fadd    qword ptr [ebp+var_3C]
+  .text:01DAE2F2                 ; X
+  .text:01DAE2F2                 fstp    [esp+8Ch+X]; X
+  .text:01DAE2F5                 call    _ceil
+  .text:01DAE2FA                 add     esp, 8
+  .text:01DAE2FD                 call    __ftol
+  .text:01DAE302                 mov     [ebp+var_4C], eax
+  .text:01DAE305                 fild    [ebp+var_4C]
+  .text:01DAE308                 jmp     short loc_1DAE31A
+  .text:01DAE30A                 mov     edx, [ebp+var_3C+4]
+  .text:01DAE30D                 mov     eax, [ebp+var_3C]
+  .text:01DAE310                 push    edx
+  .text:01DAE311                 ; X
+  .text:01DAE311                 push    eax; X
+  .text:01DAE312                 call    _ceil
+  .text:01DAE317                 add     esp, 8
+  .text:01DAE31A                 fstp    [ebp+right]
+  .text:01DAE31D                 fld     [ebp+right]
+  .text:01DAE320                 call    __ftol
+  .text:01DAE325                 mov     cl, [esi+14h]
+  .text:01DAE328                 mov     dword ptr [ebp+right+4], eax
+  .text:01DAE32B                 test    cl, cl
+  .text:01DAE32D                 mov     ecx, [esi+0Ch]
+  .text:01DAE330                 jz      short loc_1DAE38B
+  .text:01DAE332                 mov     edx, [esi+4]
+  .text:01DAE335                 sub     esp, 8
+  .text:01DAE338                 add     ecx, edx
+  .text:01DAE33A                 mov     [ebp+var_4C], ecx
+  .text:01DAE33D                 fild    [ebp+var_4C]
+  .text:01DAE340                 fstp    [ebp+var_4C]
+  .text:01DAE343                 fld     [ebp+var_4C]
+  .text:01DAE346                 fmul    [ebp+var_24]
+  .text:01DAE349                 fadd    qword ptr [ebp+y]
+  .text:01DAE34C                 ; X
+  .text:01DAE34C                 fstp    [esp+8Ch+X]; X
+  .text:01DAE34F                 call    _ceil
+  .text:01DAE354                 call    __ftol
+  .text:01DAE359                 mov     edx, [esi+10h]
+  .text:01DAE35C                 mov     edi, [esi+8]
+  .text:01DAE35F                 add     edx, edi
+  .text:01DAE361                 mov     [ebp+var_4C], eax
+  .text:01DAE364                 mov     [ebp+y+4], edx
+  .text:01DAE367                 fild    [ebp+y+4]
+  .text:01DAE36A                 fstp    [ebp+y+4]
+  .text:01DAE36D                 fld     [ebp+y+4]
+  .text:01DAE370                 fmul    [ebp+var_28]
+  .text:01DAE373                 fadd    qword ptr [ebp+var_3C]
+  .text:01DAE376                 ; X
+  .text:01DAE376                 fstp    [esp+8Ch+X]; X
+  .text:01DAE379                 call    _ceil
+  .text:01DAE37E                 add     esp, 8
+  .text:01DAE381                 call    __ftol
+  .text:01DAE386                 mov     [ebp+y+4], eax
+  .text:01DAE389                 jmp     short loc_1DAE398
+  .text:01DAE38B                 add     ecx, edi
+  .text:01DAE38D                 mov     [ebp+var_4C], ecx
+  .text:01DAE390                 mov     ecx, [esi+10h]
+  .text:01DAE393                 add     ecx, eax
+  .text:01DAE395                 mov     [ebp+y+4], ecx
+  .text:01DAE398                 mov     eax, [ebp+var_6C]
+  .text:01DAE39B                 mov     ecx, [ebp+var_74]
+  .text:01DAE39E                 mov     edi, eax
+  .text:01DAE3A0                 lea     edx, [eax+1]
+  .text:01DAE3A3                 cmp     edx, ecx
+  .text:01DAE3A5                 jle     short loc_1DAE3B6
+  .text:01DAE3A7                 sub     eax, ecx
+  .text:01DAE3A9                 lea     ecx, [ebp+lpMem]
+  .text:01DAE3AC                 inc     eax
+  .text:01DAE3AD                 push    eax
+  .text:01DAE3AE                 call    sub_1DAF0A0
+  .text:01DAE3B3                 mov     eax, [ebp+var_6C]
+  .text:01DAE3B6                 inc     eax
+  .text:01DAE3B7                 push    1
+  .text:01DAE3B9                 push    edi
+  .text:01DAE3BA                 lea     ecx, [ebp+lpMem]
+  .text:01DAE3BD                 mov     [ebp+var_6C], eax
+  .text:01DAE3C0                 call    sub_1DAEFC0
+  .text:01DAE3C5                 mov     eax, [ebp+lpMem]
+  .text:01DAE3C8                 lea     edi, [eax+edi*4]
+  .text:01DAE3CB                 ; textures
+  .text:01DAE3CB                 push    edi; textures
+  .text:01DAE3CC                 ; n
+  .text:01DAE3CC                 push    1; n
+  .text:01DAE3CE                 call    glGenTextures
+  .text:01DAE3D3                 mov     ecx, [edi]
+  .text:01DAE3D5                 ; texture
+  .text:01DAE3D5                 push    ecx; texture
+  .text:01DAE3D6                 ; target
+  .text:01DAE3D6                 push    0DE1h; target
+  .text:01DAE3DB                 call    glBindTexture
+  .text:01DAE3E0                 ; param
+  .text:01DAE3E0                 push    2601h; param
+  .text:01DAE3E5                 ; pname
+  .text:01DAE3E5                 push    2800h; pname
+  .text:01DAE3EA                 ; target
+  .text:01DAE3EA                 push    0DE1h; target
+  .text:01DAE3EF                 call    glTexParameteri
+  .text:01DAE3F4                 ; param
+  .text:01DAE3F4                 push    2601h; param
+  .text:01DAE3F9                 ; pname
+  .text:01DAE3F9                 push    2801h; pname
+  .text:01DAE3FE                 ; target
+  .text:01DAE3FE                 push    0DE1h; target
+  .text:01DAE403                 call    glTexParameteri
+  .text:01DAE408                 ; param
+  .text:01DAE408                 push    812Fh; param
+  .text:01DAE40D                 ; pname
+  .text:01DAE40D                 push    2802h; pname
+  .text:01DAE412                 ; target
+  .text:01DAE412                 push    0DE1h; target
+  .text:01DAE417                 call    glTexParameteri
+  .text:01DAE41C                 ; param
+  .text:01DAE41C                 push    812Fh; param
+  .text:01DAE421                 ; pname
+  .text:01DAE421                 push    2803h; pname
+  .text:01DAE426                 ; target
+  .text:01DAE426                 push    0DE1h; target
+  .text:01DAE42B                 call    glTexParameteri
+  .text:01DAE430                 ; param
+  .text:01DAE430                 push    1; param
+  .text:01DAE432                 ; pname
+  .text:01DAE432                 push    0CF5h; pname
+  .text:01DAE437                 call    glPixelStorei
+  .text:01DAE43C                 mov     edx, [esi]
+  .text:01DAE43E                 mov     eax, [esi+0Ch]
+  .text:01DAE441                 mov     [ebp+pixels], ebx
+  .text:01DAE444                 mov     [ebp+var_30], edx
+  .text:01DAE447                 xor     ecx, ecx
+  .text:01DAE449                 mov     ebx, 1
+  .text:01DAE44E                 shl     ebx, cl
+  .text:01DAE450                 cmp     ebx, eax
+  .text:01DAE452                 mov     [ebp+var_34], ebx
+  .text:01DAE455                 jge     short loc_1DAE45D
+  .text:01DAE457                 inc     ecx
+  .text:01DAE458                 cmp     ecx, 20h ; ' '
+  .text:01DAE45B                 jl      short loc_1DAE449
+  .text:01DAE45D                 mov     edx, [esi+10h]
+  .text:01DAE460                 xor     ecx, ecx
+  .text:01DAE462                 mov     edi, 1
+  .text:01DAE467                 shl     edi, cl
+  .text:01DAE469                 cmp     edi, edx
+  .text:01DAE46B                 mov     [ebp+var_3C+4], edi
+  .text:01DAE46E                 jge     short loc_1DAE476
+  .text:01DAE470                 inc     ecx
+  .text:01DAE471                 cmp     ecx, 20h ; ' '
+  .text:01DAE474                 jl      short loc_1DAE462
+  .text:01DAE476                 cmp     ebx, eax
+  .text:01DAE478                 jnz     short loc_1DAE482
+  .text:01DAE47A                 cmp     edi, edx
+  .text:01DAE47C                 jz      loc_1DAE518
+  .text:01DAE482                 imul    edi, ebx
+  .text:01DAE485                 shl     edi, 2
+  .text:01DAE488                 ; unsigned int
+  .text:01DAE488                 push    edi; unsigned int
+  .text:01DAE489                 call    ??2@YAPAXI@Z; operator new(uint)
+  .text:01DAE48E                 mov     edx, eax
+  .text:01DAE490                 add     esp, 4
+  .text:01DAE493                 test    edx, edx
+  .text:01DAE495                 mov     [ebp+pixels], edx
+  .text:01DAE498                 jz      loc_1DAE6DB
+  .text:01DAE49E                 mov     ecx, edi
+  .text:01DAE4A0                 mov     edi, edx
+  .text:01DAE4A2                 mov     edx, ecx
+  .text:01DAE4A4                 xor     eax, eax
+  .text:01DAE4A6                 shr     ecx, 2
+  .text:01DAE4A9                 rep stosd
+  .text:01DAE4AB                 mov     ecx, edx
+  .text:01DAE4AD                 and     ecx, 3
+  .text:01DAE4B0                 rep stosb
+  .text:01DAE4B2                 mov     eax, [esi+10h]
+  .text:01DAE4B5                 test    eax, eax
+  .text:01DAE4B7                 jle     short loc_1DAE510
+  .text:01DAE4B9                 mov     ecx, [ebp+pixels]
+  .text:01DAE4BC                 mov     edi, [esi+0Ch]
+  .text:01DAE4BF                 mov     [ebp+var_18], 0
+  .text:01DAE4C6                 mov     [ebp+var_2C], ecx
+  .text:01DAE4C9                 mov     [ebp+var_30], eax
+  .text:01DAE4CC                 test    edi, edi
+  .text:01DAE4CE                 jle     short loc_1DAE4E9
+  .text:01DAE4D0                 mov     eax, [esi]
+  .text:01DAE4D2                 mov     edx, [ebp+var_18]
+  .text:01DAE4D5                 add     eax, edx
+  .text:01DAE4D7                 mov     edx, edi
+  .text:01DAE4D9                 mov     ebx, [eax]
+  .text:01DAE4DB                 add     eax, 4
+  .text:01DAE4DE                 mov     [ecx], ebx
+  .text:01DAE4E0                 add     ecx, 4
+  .text:01DAE4E3                 dec     edx
+  .text:01DAE4E4                 jnz     short loc_1DAE4D9
+  .text:01DAE4E6                 mov     ebx, [ebp+var_34]
+  .text:01DAE4E9                 mov     ecx, [ebp+var_2C]
+  .text:01DAE4EC                 mov     edx, [ebp+var_18]
+  .text:01DAE4EF                 lea     eax, ds:0[ebx*4]
+  .text:01DAE4F6                 add     ecx, eax
+  .text:01DAE4F8                 lea     eax, ds:0[edi*4]
+  .text:01DAE4FF                 add     edx, eax
+  .text:01DAE501                 mov     eax, [ebp+var_30]
+  .text:01DAE504                 dec     eax
+  .text:01DAE505                 mov     [ebp+var_2C], ecx
+  .text:01DAE508                 mov     [ebp+var_18], edx
+  .text:01DAE50B                 mov     [ebp+var_30], eax
+  .text:01DAE50E                 jnz     short loc_1DAE4CC
+  .text:01DAE510                 mov     eax, [ebp+pixels]
+  .text:01DAE513                 mov     edi, [ebp+var_3C+4]
+  .text:01DAE516                 jmp     short loc_1DAE51B
+  .text:01DAE518                 mov     eax, [ebp+var_30]
+  .text:01DAE51B                 ; pixels
+  .text:01DAE51B                 push    eax; pixels
+  .text:01DAE51C                 ; type
+  .text:01DAE51C                 push    1401h; type
+  .text:01DAE521                 ; format
+  .text:01DAE521                 push    1908h; format
+  .text:01DAE526                 ; border
+  .text:01DAE526                 push    0; border
+  .text:01DAE528                 ; height
+  .text:01DAE528                 push    edi; height
+  .text:01DAE529                 ; width
+  .text:01DAE529                 push    ebx; width
+  .text:01DAE52A                 ; internalformat
+  .text:01DAE52A                 push    1908h; internalformat
+  .text:01DAE52F                 ; level
+  .text:01DAE52F                 push    0; level
+  .text:01DAE531                 ; target
+  .text:01DAE531                 push    0DE1h; target
+  .text:01DAE536                 call    glTexImage2D
+  .text:01DAE53B                 mov     eax, [ebp+pixels]
+  .text:01DAE53E                 mov     edi, 3F800000h
+  .text:01DAE543                 test    eax, eax
+  .text:01DAE545                 mov     ebx, edi
+  .text:01DAE547                 jz      short loc_1DAE582
+  .text:01DAE549                 fild    dword ptr [esi+0Ch]
+  .text:01DAE54C                 push    eax
+  .text:01DAE54D                 fstp    [ebp+var_30]
+  .text:01DAE550                 fld     [ebp+var_30]
+  .text:01DAE553                 fild    [ebp+var_34]
+  .text:01DAE556                 fstp    [ebp+var_34]
+  .text:01DAE559                 fdiv    [ebp+var_34]
+  .text:01DAE55C                 fstp    [ebp+var_30]
+  .text:01DAE55F                 fild    dword ptr [esi+10h]
+  .text:01DAE562                 fstp    [ebp+var_34]
+  .text:01DAE565                 fld     [ebp+var_34]
+  .text:01DAE568                 fild    [ebp+var_3C+4]
+  .text:01DAE56B                 fstp    [ebp+var_3C+4]
+  .text:01DAE56E                 fdiv    [ebp+var_3C+4]
+  .text:01DAE571                 fstp    [ebp+var_3C+4]
+  .text:01DAE574                 call    sub_1E06982
+  .text:01DAE579                 mov     edi, [ebp+var_3C+4]
+  .text:01DAE57C                 mov     ebx, [ebp+var_30]
+  .text:01DAE57F                 add     esp, 4
+  .text:01DAE582                 ; mode
+  .text:01DAE582                 push    7; mode
+  .text:01DAE584                 call    glBegin
+  .text:01DAE589                 ; t
+  .text:01DAE589                 push    edi; t
+  .text:01DAE58A                 ; s
+  .text:01DAE58A                 push    0; s
+  .text:01DAE58C                 call    glTexCoord2f
+  .text:01DAE591                 mov     esi, [ebp+y+4]
+  .text:01DAE594                 mov     eax, [ebp+x]
+  .text:01DAE597                 ; z
+  .text:01DAE597                 push    0; z
+  .text:01DAE599                 ; y
+  .text:01DAE599                 push    esi; y
+  .text:01DAE59A                 ; x
+  .text:01DAE59A                 push    eax; x
+  .text:01DAE59B                 call    glVertex3i
+  .text:01DAE5A0                 ; t
+  .text:01DAE5A0                 push    edi; t
+  .text:01DAE5A1                 ; s
+  .text:01DAE5A1                 push    ebx; s
+  .text:01DAE5A2                 call    glTexCoord2f
+  .text:01DAE5A7                 mov     edi, [ebp+var_4C]
+  .text:01DAE5AA                 ; z
+  .text:01DAE5AA                 push    0; z
+  .text:01DAE5AC                 ; y
+  .text:01DAE5AC                 push    esi; y
+  .text:01DAE5AD                 ; x
+  .text:01DAE5AD                 push    edi; x
+  .text:01DAE5AE                 call    glVertex3i
+  .text:01DAE5B3                 ; t
+  .text:01DAE5B3                 push    0; t
+  .text:01DAE5B5                 ; s
+  .text:01DAE5B5                 push    ebx; s
+  .text:01DAE5B6                 call    glTexCoord2f
+  .text:01DAE5BB                 mov     esi, dword ptr [ebp+right+4]
+  .text:01DAE5BE                 ; z
+  .text:01DAE5BE                 push    0; z
+  .text:01DAE5C0                 ; y
+  .text:01DAE5C0                 push    esi; y
+  .text:01DAE5C1                 ; x
+  .text:01DAE5C1                 push    edi; x
+  .text:01DAE5C2                 call    glVertex3i
+  .text:01DAE5C7                 ; t
+  .text:01DAE5C7                 push    0; t
+  .text:01DAE5C9                 ; s
+  .text:01DAE5C9                 push    0; s
+  .text:01DAE5CB                 call    glTexCoord2f
+  .text:01DAE5D0                 mov     ecx, [ebp+x]
+  .text:01DAE5D3                 ; z
+  .text:01DAE5D3                 push    0; z
+  .text:01DAE5D5                 ; y
+  .text:01DAE5D5                 push    esi; y
+  .text:01DAE5D6                 ; x
+  .text:01DAE5D6                 push    ecx; x
+  .text:01DAE5D7                 call    glVertex3i
+  .text:01DAE5DC                 call    glEnd
+  .text:01DAE5E1                 mov     edx, [ebp+var_1C]
+  .text:01DAE5E4                 mov     eax, [ebp+var_54]
+  .text:01DAE5E7                 add     edx, 18h
+  .text:01DAE5EA                 inc     eax
+  .text:01DAE5EB                 mov     [ebp+var_1C], edx
+  .text:01DAE5EE                 mov     edx, [ebp+var_20]
+  .text:01DAE5F1                 xor     ebx, ebx
+  .text:01DAE5F3                 mov     [ebp+var_54], eax
+  .text:01DAE5F6                 mov     ecx, [edx+1A8h]
+  .text:01DAE5FC                 mov     esi, edx
+  .text:01DAE5FE                 cmp     eax, ecx
+  .text:01DAE600                 jl      loc_1DAE25F
+  .text:01DAE606                 mov     eax, [ebp+arg_0]
+  .text:01DAE609                 push    eax
+  .text:01DAE60A                 call    SDL_GL_SwapWindow
+  .text:01DAE60F                 mov     eax, [ebp+var_6C]
+  .text:01DAE612                 add     esp, 4
+  .text:01DAE615                 xor     edi, edi
+  .text:01DAE617                 cmp     eax, ebx
+  .text:01DAE619                 jle     short loc_1DAE631
+  .text:01DAE61B                 mov     ecx, [ebp+lpMem]
+  .text:01DAE61E                 lea     edx, [ecx+edi*4]
+  .text:01DAE621                 ; textures
+  .text:01DAE621                 push    edx; textures
+  .text:01DAE622                 ; n
+  .text:01DAE622                 push    1; n
+  .text:01DAE624                 call    glDeleteTextures
+  .text:01DAE629                 mov     eax, [ebp+var_6C]
+  .text:01DAE62C                 inc     edi
+  .text:01DAE62D                 cmp     edi, eax
+  .text:01DAE62F                 jl      short loc_1DAE61B
+  .text:01DAE631                 mov     eax, [esi+1A8h]
+  .text:01DAE637                 mov     [ebp+var_6C], ebx
+  .text:01DAE63A                 cmp     eax, ebx
+  .text:01DAE63C                 mov     [ebp+arg_0], ebx
+  .text:01DAE63F                 jle     short loc_1DAE66D
+  .text:01DAE641                 xor     edi, edi
+  .text:01DAE643                 mov     eax, [esi+19Ch]
+  .text:01DAE649                 mov     eax, [edi+eax]
+  .text:01DAE64C                 cmp     eax, ebx
+  .text:01DAE64E                 jz      short loc_1DAE659
+  .text:01DAE650                 ; lpMem
+  .text:01DAE650                 push    eax; lpMem
+  .text:01DAE651                 call    sub_1E0736D
+  .text:01DAE656                 add     esp, 4
+  .text:01DAE659                 mov     eax, [ebp+arg_0]
+  .text:01DAE65C                 mov     ecx, [esi+1A8h]
+  .text:01DAE662                 inc     eax
+  .text:01DAE663                 add     edi, 18h
+  .text:01DAE666                 cmp     eax, ecx
+  .text:01DAE668                 mov     [ebp+arg_0], eax
+  .text:01DAE66B                 jl      short loc_1DAE643
+  .text:01DAE66D                 mov     eax, [esi+1A4h]
+  .text:01DAE673                 mov     [esi+1A8h], ebx
+  .text:01DAE679                 cmp     eax, ebx
+  .text:01DAE67B                 jl      short loc_1DAE69C
+  .text:01DAE67D                 mov     eax, [esi+19Ch]
+  .text:01DAE683                 cmp     eax, ebx
+  .text:01DAE685                 jz      short loc_1DAE696
+  .text:01DAE687                 ; lpMem
+  .text:01DAE687                 push    eax; lpMem
+  .text:01DAE688                 call    sub_1E0736D
+  .text:01DAE68D                 add     esp, 4
+  .text:01DAE690                 mov     [esi+19Ch], ebx
+  .text:01DAE696                 mov     [esi+1A0h], ebx
+  .text:01DAE69C                 mov     eax, [ebp+var_70]
+  .text:01DAE69F                 mov     [ebp+var_6C], ebx
+  .text:01DAE6A2                 cmp     eax, ebx
+  .text:01DAE6A4                 jl      short loc_1DAE6D2
+  .text:01DAE6A6                 mov     eax, [ebp+lpMem]
+  .text:01DAE6A9                 cmp     eax, ebx
+  .text:01DAE6AB                 jz      short loc_1DAE6BB
+  .text:01DAE6AD                 ; lpMem
+  .text:01DAE6AD                 push    eax; lpMem
+  .text:01DAE6AE                 call    sub_1E0736D
+  .text:01DAE6B3                 add     esp, 4
+  .text:01DAE6B6                 xor     eax, eax
+  .text:01DAE6B8                 mov     [ebp+lpMem], eax
+  .text:01DAE6BB                 mov     ecx, [ebp+var_70]
+  .text:01DAE6BE                 mov     [ebp+var_74], ebx
+  .text:01DAE6C1                 cmp     ecx, ebx
+  .text:01DAE6C3                 jl      short loc_1DAE6D2
+  .text:01DAE6C5                 cmp     eax, ebx
+  .text:01DAE6C7                 jz      short loc_1DAE6D2
+  .text:01DAE6C9                 ; lpMem
+  .text:01DAE6C9                 push    eax; lpMem
+  .text:01DAE6CA                 call    sub_1E0736D
+  .text:01DAE6CF                 add     esp, 4
+  .text:01DAE6D2                 pop     edi
+  .text:01DAE6D3                 pop     esi
+  .text:01DAE6D4                 pop     ebx
+  .text:01DAE6D5                 mov     esp, ebp
+  .text:01DAE6D7                 pop     ebp
+  .text:01DAE6D8                 retn    4
+  .text:01DAE6DB                 lea     ecx, [ebp+lpMem]
+  .text:01DAE6DE                 mov     [ebp+var_6C], 0
+  .text:01DAE6E5                 call    sub_1DAF000
+  .text:01DAE6EA                 mov     eax, [ebp+var_70]
+  .text:01DAE6ED                 test    eax, eax
+  .text:01DAE6EF                 jl      short loc_1DAE6D2
+  .text:01DAE6F1                 mov     eax, [ebp+lpMem]
+  .text:01DAE6F4                 test    eax, eax
+  .text:01DAE6F6                 jmp     short loc_1DAE6C7
+procedure: |-
+  void __thiscall sub_1DAE0B0(_DWORD *this, int a2)
+  {
+    _DWORD *v2; // esi
+    unsigned int v3; // eax
+    unsigned int v4; // ecx
+    __int16 v5; // fps
+    bool v6; // c0
+    char v7; // c2
+    bool v8; // c3
+    bool v9; // cc
+    double v10; // st7
+    double v11; // st7
+    double v12; // st7
+    int v13; // esi
+    double v14; // st7
+    GLint v15; // edi
+    GLint v16; // eax
+    double v17; // st7
+    char v18; // cl
+    int v19; // ecx
+    __int64 v20; // rax
+    int v21; // eax
+    int v22; // edi
+    GLuint *v23; // edi
+    float v24; // edx
+    int v25; // eax
+    int i; // ecx
+    GLsizei v27; // ebx
+    int v28; // edx
+    int j; // ecx
+    GLsizei v30; // edi
+    unsigned int v31; // edi
+    float v32; // eax
+    int v33; // eax
+    char *v34; // ecx
+    int v35; // edi
+    int *v36; // eax
+    int v37; // edx
+    int v38; // ebx
+    float v39; // eax
+    GLfloat v40; // edi
+    GLfloat v41; // ebx
+    GLint v42; // esi
+    GLint v43; // edi
+    int k; // edi
+    int v45; // eax
+    int v46; // edi
+    int v47; // eax
+    void *v48; // eax
+    bool v49; // zf
+    LPVOID lpMem; // [esp+14h] [ebp-78h] BYREF
+    int v51; // [esp+18h] [ebp-74h]
+    int v52; // [esp+1Ch] [ebp-70h]
+    int v53; // [esp+20h] [ebp-6Ch]
+    GLdouble right; // [esp+28h] [ebp-64h]
+    int v55; // [esp+30h] [ebp-5Ch] BYREF
+    int v56; // [esp+34h] [ebp-58h] BYREF
+    float v57; // [esp+38h] [ebp-54h]
+    GLint x; // [esp+3Ch] [ebp-50h]
+    GLint v59; // [esp+40h] [ebp-4Ch]
+    GLsizei v60; // [esp+44h] [ebp-48h]
+    GLint y[2]; // [esp+48h] [ebp-44h]
+    GLsizei X[2]; // [esp+50h] [ebp-3Ch]
+    float v63; // [esp+58h] [ebp-34h]
+    float v64; // [esp+5Ch] [ebp-30h]
+    char *v65; // [esp+60h] [ebp-2Ch]
+    float v66; // [esp+64h] [ebp-28h]
+    float v67; // [esp+68h] [ebp-24h]
+    _DWORD *v68; // [esp+6Ch] [ebp-20h]
+    float v69; // [esp+70h] [ebp-1Ch]
+    int v70; // [esp+74h] [ebp-18h]
+    float v71; // [esp+78h] [ebp-14h]
+    float v72; // [esp+7Ch] [ebp-10h]
+    GLsizei height; // [esp+80h] [ebp-Ch] BYREF
+    GLsizei width; // [esp+84h] [ebp-8h] BYREF
+    GLvoid *pixels; // [esp+88h] [ebp-4h]
+    int v76; // [esp+94h] [ebp+8h]
+
+    v2 = this;
+    v68 = this;
+    if ( !*(this + 106) ) // (structmember, struct=CVideoMode_Common, member=m_ImageID.m_Size)
+      return;
+    SDL_GetWindowSize(a2, &width, &height);
+    v60 = width;
+    y[0] = height;
+    lpMem = nullptr;
+    v51 = 0;
+    v52 = 0;
+    v53 = 0;
+    glViewport(0, 0, width, height);
+    glDisable(0xB71u);
+    glEnable(0xDE1u);
+    glMatrixMode(0x1701u);
+    right = (double)y[0];
+    v3 = HIDWORD(right);
+    v4 = LODWORD(right);
+    right = (double)v60;
+    glOrtho(0.0, right, COERCE_GLDOUBLE(__PAIR64__(v3, v4)), 0.0, -1.0, 1.0);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(0x4000u);
+    v72 = 0.0;
+    v71 = 0.0;
+    sub_1DAEDB0(&v56, &v55, 0);
+    v57 = (float)v56;
+    *(float *)&x = (float)v55;
+    *(float *)&pixels = v57 / *(float *)&x;
+    v57 = (float)width;
+    *(float *)&x = (float)height;
+    v69 = v57 / *(float *)&x;
+    if ( !sub_1D2B320(aStretchaspect_0) )
+    {
+      v6 = v69 < (double)*(float *)&pixels;
+      v7 = 0;
+      v8 = v69 == *(float *)&pixels;
+      if ( (v5 & 0x4100) != 0 )
+      {
+        if ( v69 < (double)*(float *)&pixels )
+        {
+          right = (double)width;
+          *(float *)&x = 1.0 / *(float *)&pixels * right;
+          v57 = (float)height;
+          v71 = v57 - *(float *)&x;
+        }
+      }
+      else
+      {
+        v57 = (float)height;
+        *(float *)&x = v57 * *(float *)&pixels;
+        v57 = (float)width;
+        v72 = v57 - *(float *)&x;
+      }
+    }
+    v9 = v2[106] <= 0;
+    v57 = (float)v60;
+    v10 = v57 - v72;
+    v57 = (float)(int)v2[108]; // (structmember, struct=CVideoMode_Common, member=m_iBaseResX)
+    v67 = v10 / v57;
+    v57 = (float)y[0];
+    v11 = v57 - v71;
+    v57 = (float)(int)v2[109]; // (structmember, struct=CVideoMode_Common, member=m_iBaseResY)
+    v12 = v11 / v57;
+    v57 = 0.0;
+    v66 = v12;
+    if ( !v9 )
+    {
+      v69 = 0.0;
+      do
+      {
+        v13 = LODWORD(v69) + v2[103]; // (structmember, struct=CVideoMode_Common, member=m_ImageID)
+        x = *(GLint *)(v13 + 4);
+        *(double *)y = v72 / 2.0;
+        if ( *(float *)&x == 0.0 )
+        {
+          v14 = ceil(*(double *)y);
+        }
+        else
+        {
+          *(float *)&x = (float)x;
+          x = (__int64)ceil(*(float *)&x * v67 + *(double *)y);
+          v14 = (double)x;
+        }
+        right = v14;
+        v15 = (__int64)v14;
+        v16 = *(GLint *)(v13 + 8);
+        x = v15;
+        v59 = v16;
+        *(double *)X = v71 / 2.0;
+        if ( *(float *)&v16 == 0.0 )
+        {
+          v17 = ceil(*(double *)X);
+        }
+        else
+        {
+          *(float *)&v59 = (float)v59;
+          v59 = (__int64)ceil(*(float *)&v59 * v66 + *(double *)X);
+          v17 = (double)v59;
+        }
+        right = v17;
+        v18 = *(_BYTE *)(v13 + 20);
+        HIDWORD(right) = (__int64)v17;
+        v49 = v18 == 0;
+        v19 = *(_DWORD *)(v13 + 12);
+        if ( v49 )
+        {
+          v59 = v15 + v19;
+          y[1] = (__int64)v17 + *(_DWORD *)(v13 + 16);
+        }
+        else
+        {
+          *(float *)&v59 = (float)(*(_DWORD *)(v13 + 4) + v19);
+          v20 = (__int64)ceil(*(float *)&v59 * v67 + *(double *)y);
+          HIDWORD(v20) = *(_DWORD *)(v13 + 8) + *(_DWORD *)(v13 + 16);
+          v59 = v20;
+          *(float *)&y[1] = (float)SHIDWORD(v20);
+          y[1] = (__int64)ceil(*(float *)&y[1] * v66 + *(double *)X);
+        }
+        v21 = v53;
+        v22 = v53;
+        if ( v53 + 1 > v51 )
+        {
+          sub_1DAF0A0(v53 - v51 + 1);
+          v21 = v53;
+        }
+        v53 = v21 + 1;
+        sub_1DAEFC0(v22, 1);
+        v23 = (GLuint *)((char *)lpMem + 4 * v22);
+        glGenTextures(1, v23);
+        glBindTexture(0xDE1u, *v23);
+        glTexParameteri(0xDE1u, 0x2800u, 9729);
+        glTexParameteri(0xDE1u, 0x2801u, 9729);
+        glTexParameteri(0xDE1u, 0x2802u, 33071);
+        glTexParameteri(0xDE1u, 0x2803u, 33071);
+        glPixelStorei(0xCF5u, 1);
+        v24 = *(float *)v13;
+        v25 = *(_DWORD *)(v13 + 12);
+        *(float *)&pixels = 0.0;
+        v64 = v24;
+        for ( i = 0; i < 32; ++i )
+        {
+          v27 = 1 << i;
+          LODWORD(v63) = 1 << i;
+          if ( 1 << i >= v25 )
+            break;
+        }
+        v28 = *(_DWORD *)(v13 + 16);
+        for ( j = 0; j < 32; ++j )
+        {
+          v30 = 1 << j;
+          X[1] = 1 << j;
+          if ( 1 << j >= v28 )
+            break;
+        }
+        if ( v27 == v25 && v30 == v28 )
+        {
+          v39 = v64;
+        }
+        else
+        {
+          v31 = 4 * v27 * v30;
+          v32 = COERCE_FLOAT(operator new(v31));
+          *(float *)&pixels = v32;
+          if ( v32 == 0.0 )
+          {
+            v53 = 0;
+            sub_1DAF000(&lpMem);
+            if ( v52 >= 0 )
+            {
+              v48 = lpMem;
+              v49 = lpMem == nullptr;
+              goto LABEL_57;
+            }
+            return;
+          }
+          memset((void *)LODWORD(v32), 0, v31);
+          v33 = *(int *)(v13 + 16);
+          if ( v33 > 0 )
+          {
+            v34 = (char *)pixels;
+            v35 = *(_DWORD *)(v13 + 12);
+            v70 = 0;
+            v65 = (char *)pixels;
+            v64 = *(float *)&v33;
+            do
+            {
+              if ( v35 > 0 )
+              {
+                v36 = (int *)(v70 + *(_DWORD *)v13);
+                v37 = v35;
+                do
+                {
+                  v38 = *v36++;
+                  *(_DWORD *)v34 = v38;
+                  v34 += 4;
+                  --v37;
+                }
+                while ( v37 );
+                v27 = LODWORD(v63);
+              }
+              v34 = &v65[4 * v27];
+              v49 = LODWORD(v64) == 1;
+              v65 = v34;
+              v70 += 4 * v35;
+              --LODWORD(v64);
+            }
+            while ( !v49 );
+          }
+          v39 = *(float *)&pixels;
+          v30 = X[1];
+        }
+        glTexImage2D(0xDE1u, 0, 6408, v27, v30, 0, 0x1908u, 0x1401u, (const GLvoid *)LODWORD(v39));
+        v40 = 1.0;
+        v41 = 1.0;
+        if ( *(float *)&pixels != 0.0 )
+        {
+          v64 = (float)*(int *)(v13 + 12);
+          v63 = (float)SLODWORD(v63);
+          v64 = v64 / v63;
+          v63 = (float)*(int *)(v13 + 16);
+          *(float *)&X[1] = (float)X[1];
+          *(float *)&X[1] = v63 / *(float *)&X[1];
+          sub_1E06982(pixels);
+          v40 = *(float *)&X[1];
+          v41 = v64;
+        }
+        glBegin(7u);
+        glTexCoord2f(0.0, v40);
+        v42 = y[1];
+        glVertex3i(x, y[1], 0);
+        glTexCoord2f(v41, v40);
+        v43 = v59;
+        glVertex3i(v59, v42, 0);
+        glTexCoord2f(v41, 0.0);
+        glVertex3i(v43, SHIDWORD(right), 0);
+        glTexCoord2f(0.0, 0.0);
+        glVertex3i(x, SHIDWORD(right), 0);
+        glEnd();
+        LODWORD(v69) += 24;
+        ++LODWORD(v57);
+        v2 = v68;
+      }
+      while ( SLODWORD(v57) < v68[106] );
+    }
+    SDL_GL_SwapWindow(a2);
+    for ( k = 0; k < v53; ++k )
+      glDeleteTextures(1, (const GLuint *)lpMem + k);
+    v45 = v2[106];
+    v53 = 0;
+    v76 = 0;
+    if ( v45 > 0 )
+    {
+      v46 = 0;
+      do
+      {
+        if ( *(_DWORD *)(v46 + v2[103]) )
+          sub_1E0736D(*(LPVOID *)(v46 + v2[103]));
+        v46 += 24;
+        ++v76;
+      }
+      while ( v76 < v2[106] );
+    }
+    v47 = v2[105];
+    v2[106] = 0;
+    if ( v47 >= 0 )
+    {
+      if ( v2[103] )
+      {
+        sub_1E0736D((LPVOID)v2[103]);
+        v2[103] = 0;
+      }
+      v2[104] = 0;
+    }
+    v53 = 0;
+    if ( v52 >= 0 )
+    {
+      v48 = lpMem;
+      if ( lpMem )
+      {
+        sub_1E0736D(lpMem);
+        v48 = nullptr;
+        lpMem = nullptr;
+      }
+      v51 = 0;
+      v49 = v48 == nullptr;
+  LABEL_57:
+      if ( !v49 )
+        sub_1E0736D(v48);
+    }
+  }
