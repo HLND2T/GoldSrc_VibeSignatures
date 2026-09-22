@@ -1,0 +1,8 @@
+gv_name: vpn
+gv_va: '0xf7d76c'
+gv_rva: '0xf7d76c'
+gv_sig: 53 8B 5C 24 ?? F3 0F 10 05 ?? ?? ?? ?? 8B 4C 24 ?? 8B 54 24 ?? F3 0F 11 03 8B 44 24 ?? F3 0F 10 0D ?? ?? ?? ??
+gv_sig_va: '0xc6280'
+gv_inst_offset: '0x83'
+gv_inst_length: '0x8'
+gv_inst_disp: '0x4'
