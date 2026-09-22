@@ -67,6 +67,20 @@ cgroup is delegated — per-worker limits with reservation-based admission.
 - Production wiring must pass its **default probes explicitly** — an optional constructor parameter defaults to
   `None` and silently disables the check (`default_host_memory_probe()` now feeds the authority).
 
+## POSIX memory guard review lessons (PR #206)
+
+- Trigger: a worker's resident watchdog fires but IDA descendants remain alive, or unrelated process churn makes
+  the measured tree usage drop to zero.
+- Root cause: the watchdog runs inside the root it kills; ascending PID order can kill that root first, and PID
+  wrap means numeric order cannot encode ancestry. A single exception around the whole `/proc` scan also discards
+  valid samples when any unrelated process exits.
+- Correct approach: snapshot descendants before ancestors, signal the root last, and handle read/parse failures
+  per PID. Install degraded limits on direct analyzers as well as batch workers; reuse one watchdog for sequential
+  direct tags. Clear the worker VAS variable outside the degraded tier so inherited configuration cannot enable it.
+- Verification: `tests.test_posix_memory` includes PID-wrap ordering, partial `/proc` samples and a real Linux
+  self-watchdog child-exit test; analysis memory/batch tests cover direct entry and tier-specific worker environments.
+- Scope: Linux analysis/warmup resident watchdogs and analyzer memory-limit wiring.
+
 ## Verification
 
 `uv run python -m unittest tests.test_analysis_batch tests.test_analysis_memory tests.test_analysis_planner`

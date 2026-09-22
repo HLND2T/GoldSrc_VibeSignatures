@@ -102,6 +102,8 @@ def parse_analysis_worker_vas_limit_mib(raw: str | None = None) -> int:
 
 def enforce_worker_memory_limits(environ: dict | None = None) -> int | None:
     """Install this worker's degraded-tier limits; None when the aggregate tier owns the bound."""
+    if os.name == "nt":
+        return None
     source = os.environ if environ is None else environ
     raw = source.get(ANALYSIS_WORKER_VAS_LIMIT_ENV)
     if raw is None or not str(raw).strip():
@@ -300,6 +302,7 @@ class AnalysisMemoryAuthority:
         self._soft_limit_bytes = int(budget_bytes * soft_limit_ratio)
         self._initial_worker_reservation_bytes = initial_worker_reservation_bytes
         self._controller = controller_factory(budget_bytes)
+        self._direct_limits_installed = False
         baseline = self._controller.snapshot()
         if baseline.job_bytes + initial_worker_reservation_bytes > self._soft_limit_bytes:
             raise AnalysisMemoryConfigError(
@@ -335,6 +338,16 @@ class AnalysisMemoryAuthority:
     def capabilities(self) -> MemoryControllerCapabilities | None:
         """None when an injected controller declares no tier metadata."""
         return getattr(self._controller, "capabilities", None)
+
+    def enforce_direct_limits(self) -> None:
+        """Protect a direct analyzer once; batch workers install their own limits instead."""
+        capabilities = self.capabilities
+        if capabilities is None or capabilities.aggregate_hard_cap or self._direct_limits_installed:
+            return
+        environment = os.environ.copy()
+        environment[ANALYSIS_WORKER_VAS_LIMIT_ENV] = str(parse_analysis_worker_vas_limit_mib())
+        enforce_worker_memory_limits(environment)
+        self._direct_limits_installed = True
 
     @property
     def gate(self) -> AnalysisMemoryGate:

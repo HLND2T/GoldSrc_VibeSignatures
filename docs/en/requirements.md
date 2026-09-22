@@ -29,7 +29,7 @@ Copy `.env.example` to `.env` for a local template. The analyzer uses the GoldSr
 - `GSVIBE_ANALYSIS_MAX_CONCURRENCY` bounds concurrently admitted full-analysis worker processes (decimal `1..32`, default `1`, fail-closed). Values above `1` also require `GSVIBE_ANALYSIS_MAX_MEMORY_MIB`.
 - `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` sets the analyzer process tree's aggregate memory hard budget with an 85% soft admission gate; it also applies to direct single-tag and selected-node analysis. See [Analysis memory tiers](#analysis-memory-tiers) for what enforces it on each platform.
 - `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` overrides the analyzer's initial per-worker reservation floor (positive decimal integer MiB; unset or blank defaults to `2048`). It is read only when the memory guard is enabled; invalid values fail startup. Observed usage can still raise the reservation, and IDB warmup defaults are unaffected. Set it in the GitHub `win64` Environment Variables, for example to `1024`, to tune new release builds.
-- `GSVIBE_ANALYSIS_WORKER_VAS_LIMIT_MIB` sets the per-worker address-space cap used when no aggregate hard cap is available (positive decimal integer MiB of at least `256`; unset or blank defaults to `8192`); invalid values fail startup. Raise it if a degraded Linux worker is killed while legitimately analysing.
+- `GSVIBE_ANALYSIS_WORKER_VAS_LIMIT_MIB` sets the per-worker address-space cap used when no aggregate hard cap is available (positive decimal integer MiB of at least `256`; unset or blank defaults to `8192`); invalid values fail startup in that tier. It is ignored with Windows Jobs, cgroup v2, or a disabled memory guard. Raise it if a degraded Linux worker exhausts its address-space limit while legitimately analysing.
 - `DEPOTDOWNLOADER_STEAM_USERNAME` and `DEPOTDOWNLOADER_STEAM_PASSWORD` are read by `download_depot.py` when depot authentication is required.
 
 ## Analysis memory tiers
@@ -47,6 +47,9 @@ selected (`cap=<tier>` plus one detail line) at startup:
   run, so the worst case is that product and can exceed the budget when `C > R`. The watchdog enforces the reservation
   per worker, which is stricter than the aggregate gate: set `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` (and
   `IDB_WARMUP_INITIAL_WORKER_RESERVATION_MIB` for warming) from the measured per-worker peak before enabling this tier.
+
+Direct single-tag and selected-node analysis install the same degraded limits on the analyzer itself before analysis
+starts; the resident cap covers its entire process tree. Sequential tags in one process reuse that watchdog.
 
 Tier 1 on Linux needs a cgroup whose controller set is delegated to the runner. On a systemd unit that means
 `Delegate=yes`; check the effective state with `systemctl show -p Delegate,DelegateSubgroup <runner>.service` and the

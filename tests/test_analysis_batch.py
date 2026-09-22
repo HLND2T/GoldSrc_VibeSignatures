@@ -1145,6 +1145,30 @@ class MainRoutingTests(unittest.TestCase):
         legacy.assert_called_once()
 
 
+class DirectAnalysisRoutingTests(unittest.TestCase):
+    def test_single_tag_and_selected_node_activate_direct_memory_limits(self):
+        import ida_analyze_bin as analyzer
+
+        for nodes in (None, ["engine:linux:first"]):
+            authority = unittest.mock.Mock()
+            args = unittest.mock.Mock(node=nodes)
+            with (
+                self.subTest(nodes=nodes),
+                unittest.mock.patch.object(analyzer, "resolve_analysis_config", return_value="config.yaml"),
+                unittest.mock.patch.object(analyzer, "_print_main_configuration"),
+                unittest.mock.patch.object(analyzer, "_llm_config_from_args"),
+                unittest.mock.patch.object(analyzer, "create_process_reporter"),
+                unittest.mock.patch.object(
+                    analyzer, "analysis_memory_authority_from_environment", return_value=authority
+                ),
+                unittest.mock.patch.object(analyzer, "analyze") as analyze,
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                analyze.side_effect = lambda **kwargs: authority.enforce_direct_limits.assert_called_once_with()
+                self.assertEqual(0, analyzer._run_single_tag("hl-10210", args))
+            analyze.assert_called_once()
+
+
 class SelectedBatchCoordinatorTests(unittest.TestCase):
     def setUp(self):
         import ida_analyze_bin as analyzer
@@ -1242,6 +1266,38 @@ class SelectedBatchCoordinatorTests(unittest.TestCase):
         ):
             self.assertEqual(1, self.analyzer.main(self.arguments))
             launch.assert_not_called()
+
+    def test_worker_posix_limit_environment_follows_selected_tier(self):
+        from types import SimpleNamespace
+        from warmup_memory import MemoryControllerCapabilities
+
+        variable = "GSVIBE_ANALYSIS_WORKER_VAS_LIMIT_MIB"
+        for tier in (None, "windows-job", "cgroup-v2", "reservation-only"):
+            environment = {variable: "4096"}
+            authority = None
+            if tier is not None:
+                environment["GSVIBE_ANALYSIS_MAX_MEMORY_MIB"] = "8192"
+                authority = SimpleNamespace(
+                    capabilities=MemoryControllerCapabilities(tier, tier != "reservation-only", "test tier"),
+                    gate=unittest.mock.Mock(try_admit=unittest.mock.Mock(return_value=None)),
+                )
+            with (
+                self.subTest(tier=tier),
+                unittest.mock.patch.dict(os.environ, environment, clear=True),
+                unittest.mock.patch.object(
+                    self.analyzer, "analysis_memory_authority_from_environment", return_value=authority
+                ),
+                unittest.mock.patch.object(
+                    self.analyzer.subprocess, "Popen", side_effect=OSError("fixture launch failure")
+                ) as launch,
+            ):
+                self.assertEqual(1, self.analyzer.main(self.arguments))
+            launch.assert_called_once()
+            child_environment = launch.call_args.kwargs["env"]
+            if tier == "reservation-only":
+                self.assertEqual("4096", child_environment[variable])
+            else:
+                self.assertNotIn(variable, child_environment)
 
     def test_structural_planning_defers_only_file_checks(self):
         from analysis_planner import AnalysisPlanError, build_execution_plan

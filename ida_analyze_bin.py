@@ -2796,7 +2796,9 @@ def _run_single_tag(gamever: str, args, summary: AnalysisSummary | None = None) 
     try:
         args.configyaml = str(resolve_analysis_config(gamever, args.configyaml))
         _print_main_configuration(args)
-        analysis_memory_authority_from_environment()
+        authority = analysis_memory_authority_from_environment()
+        if authority is not None:
+            authority.enforce_direct_limits()
         reporter = create_process_reporter(args)
         analyze(
             gamever=gamever,
@@ -3250,6 +3252,8 @@ def _run_analysis_batch(args, diagnostics: BatchDiagnostics) -> int:
         environment[COORDINATED_CHILD_ENV] = "1"
         if worker_vas_limit_mib is not None:
             environment[ANALYSIS_WORKER_VAS_LIMIT_ENV] = str(worker_vas_limit_mib)
+        else:
+            environment.pop(ANALYSIS_WORKER_VAS_LIMIT_ENV, None)
         for env_name, attribute in _BATCH_WORKER_ENV_OPTIONS:
             value = getattr(args, attribute, None)
             if value is not None:

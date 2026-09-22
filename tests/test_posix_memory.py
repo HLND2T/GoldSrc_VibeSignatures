@@ -129,6 +129,33 @@ class ProcessTreeResidentMemoryProbeTests(unittest.TestCase):
         probe = ProcessTreeResidentMemoryProbe(proc_root="/definitely/missing", pid=os.getpid())
         self.assertEqual(0, probe.resident_bytes())
 
+    def test_unreadable_unrelated_pid_preserves_tree_sample(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._stat(root, 100, 1, 10)
+            self._stat(root, 101, 100, 5)
+            (root / "999").mkdir()  # A process exited after /proc was enumerated.
+            probe = ProcessTreeResidentMemoryProbe(proc_root=tmp, pid=100, page_size=PAGE_SIZE)
+            self.assertEqual(15 * PAGE_SIZE, probe.resident_bytes())
+
+    def test_malformed_unrelated_pid_preserves_tree_sample(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._stat(root, 100, 1, 10)
+            self._stat(root, 999, 1, 1)
+            write(root / "999" / "stat", "999 (unrelated) S invalid " + "0 " * 20)
+            probe = ProcessTreeResidentMemoryProbe(proc_root=tmp, pid=100, page_size=PAGE_SIZE)
+            self.assertEqual(10 * PAGE_SIZE, probe.resident_bytes())
+
+    def test_members_are_descendants_first_even_when_pids_wrap(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._stat(root, 100, 1, 10)
+            self._stat(root, 900, 100, 5)
+            self._stat(root, 50, 900, 1)
+            probe = ProcessTreeResidentMemoryProbe(proc_root=tmp, pid=100, page_size=PAGE_SIZE)
+            self.assertEqual(((50, 900, 100), 16 * PAGE_SIZE), probe.tree_pids_and_rss())
+
     def test_malformed_stat_returns_zero(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -312,6 +339,54 @@ class ApplyAddressSpaceLimitTests(unittest.TestCase):
 
 
 class ResidentMemoryWatchdogTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == "linux", "requires Linux /proc and SIGKILL")
+    def test_self_watchdog_kills_its_descendant_before_exiting(self):
+        import signal
+
+        script = """
+import subprocess, sys, time
+from posix_memory import start_process_tree_limits
+child = subprocess.Popen(
+    [sys.executable, '-c', 'import time; time.sleep(30)'],
+    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+)
+print(child.pid, flush=True)
+start_process_tree_limits(address_space_limit_mib=512, resident_cap_bytes=1)
+time.sleep(30)
+"""
+        worker = subprocess.Popen(
+            [sys.executable, "-c", script],
+            cwd=Path(__file__).resolve().parent.parent,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        child_pid = None
+        try:
+            output, error = worker.communicate(timeout=10)
+            child_pid = int(output.splitlines()[0])
+            self.assertEqual(-signal.SIGKILL, worker.returncode, error)
+
+            def descendant_exited():
+                try:
+                    stat = Path(f"/proc/{child_pid}/stat").read_text(encoding="ascii")
+                except FileNotFoundError:
+                    return True
+                return stat[stat.rfind(")") + 2 :].split()[0] == "Z"
+
+            self.assertTrue(self._wait_for(descendant_exited), "watchdog left its descendant alive")
+        finally:
+            if worker.poll() is None:
+                worker.kill()
+                output, _ = worker.communicate(timeout=5)
+                if output.splitlines():
+                    child_pid = int(output.splitlines()[0])
+            if child_pid is not None:
+                try:
+                    os.kill(child_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
     def _watchdog(self, probe, killed, cap_bytes):
         return ResidentMemoryWatchdog(
             cap_bytes,

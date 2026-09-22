@@ -85,14 +85,18 @@ class ProcessTreeResidentMemoryProbe:
         self._page_size = page_size
 
     def tree_pids_and_rss(self) -> tuple[tuple[int, ...], int]:
-        """Return the process tree members and their summed resident bytes."""
+        """Return descendants before ancestors, followed by their summed resident bytes."""
         try:
             page_size = self._page_size if self._page_size is not None else os.sysconf("SC_PAGE_SIZE")
-            parent_by_pid: dict[int, int] = {}
-            rss_by_pid: dict[int, int] = {}
-            for entry in os.listdir(self._proc_root):
-                if not entry.isdigit():
-                    continue
+            entries = os.listdir(self._proc_root)
+        except (AttributeError, OSError, ValueError):
+            return (), 0
+        children_by_pid: dict[int, list[int]] = {}
+        rss_by_pid: dict[int, int] = {}
+        for entry in entries:
+            if not entry.isdigit():
+                continue
+            try:
                 pid = int(entry)
                 stat = (_read_text(self._proc_root / entry / "stat")).strip()
                 closer = stat.rfind(")")
@@ -101,19 +105,26 @@ class ProcessTreeResidentMemoryProbe:
                 fields = stat[closer + 2 :].split()
                 if len(fields) <= _PROC_STAT_RSS_FIELD_INDEX:
                     continue
-                parent_by_pid[pid] = int(fields[_PROC_STAT_PPID_FIELD_INDEX])
-                rss_by_pid[pid] = int(fields[_PROC_STAT_RSS_FIELD_INDEX])
-        except (AttributeError, OSError, ValueError):
-            return (), 0
-        members = {self._pid}
-        changed = True
-        while changed:
-            changed = False
-            for pid, parent in parent_by_pid.items():
-                if pid not in members and parent in members:
-                    members.add(pid)
-                    changed = True
-        ordered = tuple(sorted(members))
+                parent = int(fields[_PROC_STAT_PPID_FIELD_INDEX])
+                rss = int(fields[_PROC_STAT_RSS_FIELD_INDEX])
+            except (OSError, ValueError):
+                # /proc is a live view: an unrelated process may exit or be unreadable.
+                continue
+            children_by_pid.setdefault(parent, []).append(pid)
+            rss_by_pid[pid] = rss
+        members: set[int] = set()
+        ancestors_first: list[int] = []
+        pending = [self._pid]
+        while pending:
+            pid = pending.pop()
+            if pid in members:
+                continue
+            members.add(pid)
+            ancestors_first.append(pid)
+            pending.extend(children_by_pid.get(pid, ()))
+        # The watchdog may run inside the root itself. It must signal every descendant
+        # before killing that root; PID ordering does not encode ancestry (PID wrap).
+        ordered = tuple(reversed(ancestors_first))
         return ordered, sum(rss_by_pid.get(pid, 0) for pid in ordered) * page_size
 
     def tree_pids(self) -> tuple[int, ...]:
@@ -275,6 +286,7 @@ def apply_address_space_limit(limit_mib: int) -> None:
 
 
 def kill_process_tree(pids: tuple[int, ...]) -> None:
+    """Signal the probe's descendants-first snapshot, with the root last."""
     import signal
 
     for pid in pids:

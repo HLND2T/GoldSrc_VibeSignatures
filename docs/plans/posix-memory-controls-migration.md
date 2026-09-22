@@ -181,3 +181,13 @@ GSVIBE_ANALYSIS_MAX_MEMORY_MIB=16384 uv run python ida_analyze_bin.py -gamever h
   超过 64 MiB 上限时以 SIGKILL 终止目标进程（exit 137）。
 - 未完成（需运维）：给 Linux runner unit 加 `Delegate=yes` 以启用 Tier 1；以及为 Linux 分析 runner 接入 workflow
   （本次范围内明确不做）。
+
+### PR #206 审查修正
+
+- 进程树采样逐 PID 容错，并按父子关系返回后代优先的击杀顺序，避免看门狗先终止自身而遗留 IDA 子进程。
+- 直接单 tag / selected-node 入口也安装降级限制；进程级 authority 确保连续多个 tag 只安装一次。
+- 非降级 batch worker 清除继承的 VAS 参数，Windows 限制入口保持 no-op。
+- 回归覆盖缺失 / 无效 stat、PID 回绕、Linux 自身看门狗的真实子进程退出、直接入口与分层环境传播。
+- 修正后验证：WSL2 `tests/run_test_suite.py all -b` 共 1080 项，`OK (skipped=8)`；包含 Redis 集成与 repository
+  contract。Windows 内存 / batch / warmup 定向测试 153 项，`OK (skipped=3)`；格式检查通过。
+- 本轮未执行真实 IDA 分析或真实 cgroup 限额验证；Linux 进程清理使用独立 Python 子进程验证。
