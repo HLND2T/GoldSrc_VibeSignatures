@@ -1,0 +1,12 @@
+func_name: realloc
+func_va: '0x1e359d2'
+func_rva: '0x1359d2'
+func_size: '0xb'
+func_sig: 8B FF 55 8B EC 5D E9 ?? ?? ?? ?? CC CC CC 8B 4C 24 ?? 57 85 C9 0F 84 ?? ?? ?? ?? 56 53 8B D9 8B 74 24 ?? F7 C6 03
+  00 00 00 8B 7C 24 ?? 75 ?? C1 E9 02 0F 85 ?? ?? ?? ?? EB ?? 8A 06 83 C6 01 88 07 83 C7 01 83 E9 01 74 ?? 84 C0 74 ?? F7
+  C6 03 00 00 00 75 ?? 8B D9 C1 E9 02 75 ?? 83 E3 03 74 ?? 8A 06 83 C6 01 88 07 83 C7 01 84 C0 74 ?? 83 EB 01 75 ?? 8B 44
+  24 ?? 5B 5E 5F C3 F7 C7 03 00 00 00 74 ?? 88 07 83 C7 01 83 E9 01 0F 84 ?? ?? ?? ?? F7 C7 03 00 00 00 75 ?? 8B D9 C1 E9
+  02 75 ?? 88 07 83 C7 01 83 EB 01 75 ?? 5B 5E 8B 44 24 ?? 5F C3 89 17 83 C7 04 83 E9 01 74 ?? BA FF FE FE 7E 8B 06 03 D0
+  83 F0 FF 33 C2 8B 16 83 C6 04 A9 00 01 01 81 74 ?? 84 D2 74 ?? 84 F6 74 ?? F7 C2 00 00 FF 00 74 ?? F7 C2 00 00 00 FF 75
+  ?? 89 17 EB ?? 81 E2 FF FF 00 00 89 17 EB ?? 81 E2 FF 00 00 00
+func_sig_allow_across_function_boundary: true

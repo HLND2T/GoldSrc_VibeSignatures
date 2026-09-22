@@ -1502,6 +1502,55 @@ class DagTests(unittest.TestCase):
             )
             call_tool.assert_awaited_once_with("py_eval", {"code": "shared recovery code"})
 
+    def test_function_artifact_accepts_only_verified_plt_entries(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            artifact = root / "import.yaml"
+            artifact.write_text("func_name: imported\nfunc_va: '0x1000'\nfunc_rva: '0x1000'\n", encoding="utf-8")
+            runtime = McpRuntime(
+                DEFAULT_HOST,
+                DEFAULT_PORT,
+                str(root / "hw.so"),
+                McpDatabaseBinding(True, "db", str(root / "hw.so"), "worker", True, True),
+            )
+            for segment, verified, start, accepted in (
+                (".plt", True, True, True),
+                (".plt", False, True, False),
+                (".data", True, True, False),
+                (".plt", True, False, False),
+            ):
+                with self.subTest(segment=segment, verified=verified, start=start):
+                    call_tool = AsyncMock(
+                        return_value=SimpleNamespace(
+                            structuredContent={
+                                "result": json.dumps(
+                                    {
+                                        "has_segment": True,
+                                        "segment_name": segment,
+                                        "image_base": "0x0",
+                                        "has_function": True,
+                                        "function_start": "0x1000",
+                                        "is_function_start": start,
+                                        "is_plt_entry": verified,
+                                    }
+                                )
+                            },
+                            content=[],
+                        )
+                    )
+                    with patch.object(
+                        ida_analyze_bin,
+                        "open_ida_mcp_session",
+                        side_effect=lambda *_args, **_kwargs: bound_session_context(runtime.binding, call_tool),
+                    ):
+                        issues = validate_runtime_artifacts(
+                            [artifact],
+                            module_dir=root,
+                            artifact_types={str(artifact.resolve()).lower(): "func"},
+                            mcp_runtime=runtime,
+                        )
+                    self.assertEqual(accepted, not issues)
+
     def test_function_artifact_validation_still_rejects_an_inside_function_address(self):
         with tempfile.TemporaryDirectory() as temporary:
             module_dir = Path(temporary) / "engine"

@@ -2139,6 +2139,23 @@ if request.get('require_function'):
         expected_signature=request.get('expected_signature'),
     )
 func = ida_funcs.get_func(ea)
+is_plt_entry = False
+if (seg is not None and ida_segment.get_segm_name(seg) == '.plt'
+        and seg.perm & ida_segment.SEGPERM_EXEC
+        and func is not None and int(func.start_ea) == ea
+        and not idaapi.inf_is_64bit()):
+    raw = ida_bytes.get_bytes(ea, 6) or b''
+    if raw[:2] in (b'\xff\x25', b'\xff\xa3'):
+        target, slot = ida_funcs.calc_thunk_func_target(func)
+        target_segment = ida_segment.getseg(target)
+        slot_segment = ida_segment.getseg(slot)
+        is_plt_entry = bool(
+            target != idaapi.BADADDR and slot != idaapi.BADADDR
+            and target_segment is not None and target_segment.type == ida_segment.SEG_XTRN
+            and slot_segment is not None
+            and ida_segment.get_segm_name(slot_segment) in ('.got', '.got.plt')
+            and ida_bytes.get_dword(slot) == target
+        )
 result = json.dumps({
     'has_segment': seg is not None,
     'segment_name': ida_segment.get_segm_name(seg) if seg is not None else '',
@@ -2146,6 +2163,7 @@ result = json.dumps({
     'has_function': func is not None,
     'function_start': hex(int(func.start_ea)) if func is not None else '',
     'is_function_start': bool(func is not None and int(func.start_ea) == ea),
+    'is_plt_entry': is_plt_entry,
     'recovered': bool(owner and owner.get('recovered')),
     'recovery_reason': '' if owner is None else str(owner.get('recovery_reason') or ''),
 })
@@ -3770,6 +3788,16 @@ async def _preprocess_llm_target(
                 function = await _inspect_function_via_mcp(
                     session, _parse_int(detail["func_start"], "func_start"), image_base, "__llm_anchor"
                 )
+                used_across_boundary_budget = False
+                if function is None and "offset_sig_allow_across_function_boundary" in desired_fields:
+                    function = await _inspect_function_via_mcp(
+                        session,
+                        _parse_int(detail["func_start"], "func_start"),
+                        image_base,
+                        "__llm_anchor",
+                        allow_across_function_boundary=True,
+                    )
+                    used_across_boundary_budget = function is not None
                 if not function or not function.get("func_sig"):
                     continue
                 insn_va = _parse_int(entry["insn_va"], "insn_va")
@@ -3782,6 +3810,8 @@ async def _preprocess_llm_target(
                 }
                 if entry.get("size") is not None:
                     payload["size"] = entry["size"]
+                if used_across_boundary_budget:
+                    payload["offset_sig_allow_across_function_boundary"] = True
                 return payload
     return None
 

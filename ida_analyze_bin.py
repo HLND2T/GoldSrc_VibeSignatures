@@ -1530,8 +1530,11 @@ async def _inspect_runtime_addresses(mcp_runtime: McpRuntime, inspections: list[
                     continue
                 if inspection["require_function"]:
                     segment_name = str(payload.get("segment_name", ""))
-                    if segment_name != ".text":
-                        issues.append(f"{label} resolves to segment {segment_name!r} instead of '.text'")
+                    is_plt_entry = segment_name == ".plt" and payload.get("is_plt_entry") is True
+                    if segment_name != ".text" and not is_plt_entry:
+                        issues.append(
+                            f"{label} resolves to segment {segment_name!r} instead of '.text' or a verified PLT entry"
+                        )
                     elif not payload.get("has_function"):
                         issues.append(f"{label} does not resolve to a function")
                     elif not payload.get("is_function_start"):

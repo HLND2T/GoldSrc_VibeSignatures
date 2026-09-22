@@ -1,0 +1,6 @@
+func_name: realloc
+func_va: '0xa3be0'
+func_rva: '0xa3be0'
+func_size: '0x6'
+func_sig: FF 25 ?? ?? ?? ?? 68 B0 35 00 00 E9 ?? ?? ?? ??
+func_sig_allow_across_function_boundary: true

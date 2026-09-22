@@ -740,6 +740,13 @@ modules:
         platform: linux
         expected_output:
           - Draw_MiptexTexture.{platform}.yaml
+      - name: find-GL_LoadTexture2-globals
+        expected_input:
+          - GL_LoadTexture2.{platform}.yaml
+        expected_output:
+          - gltextures.{platform}.yaml
+          - numgltextures.{platform}.yaml
+          - gHostSpawnCount.{platform}.yaml
       - name: find-GL_LoadTexture2
         platform: windows
         expected_output:
@@ -1478,6 +1485,12 @@ modules:
         category: func
       - name: GL_UnloadTexture
         category: func
+      - name: gltextures
+        category: gv
+      - name: numgltextures
+        category: gv
+      - name: gHostSpawnCount
+        category: gv
       - name: GL_LoadTexture2
         category: func
       - name: GL_SetMode

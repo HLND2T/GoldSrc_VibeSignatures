@@ -716,6 +716,36 @@ modules:
         platform: linux
         expected_output:
           - DT_LoadDetailTexture.{platform}.yaml
+      - name: find-GL_LoadTextureFilterMode-body
+        platform: linux
+        expected_input:
+          - GL_LoadTexture2.{platform}.yaml
+        expected_output:
+          - GL_LoadTextureFilterMode_part_14.{platform}.yaml
+      - name: find-GL_LoadTextureFilterMode-decompiles
+        expected_input_windows:
+          - GL_LoadTexture2.windows.yaml
+        expected_input_linux:
+          - GL_LoadTextureFilterMode_part_14.linux.yaml
+        expected_output:
+          - gltextures.{platform}.yaml
+          - peakgltextures.{platform}.yaml
+          - gHostSpawnCount.{platform}.yaml
+        expected_output_windows:
+          - realloc.windows.yaml
+          - gltextures.m_Size.windows.yaml
+          - gltextures.m_Memory.m_nAllocationCount.windows.yaml
+        expected_output_linux:
+          - CUtlVector_gltexture_t_InsertBefore.linux.yaml
+      - name: find-CUtlVector_gltexture_t_InsertBefore-decompiles
+        platform: linux
+        expected_input:
+          - CUtlVector_gltexture_t_InsertBefore.{platform}.yaml
+        expected_output:
+          - realloc.{platform}.yaml
+          - CUtlVector_gltexture_t_m_Memory_m_pMemory.{platform}.yaml
+          - CUtlVector_gltexture_t_m_Memory_m_nAllocationCount.{platform}.yaml
+          - CUtlVector_gltexture_t_m_Size.{platform}.yaml
       - name: find-GL_LoadTexture2
         platform: windows
         expected_output:
@@ -1492,6 +1522,44 @@ modules:
         category: func
       - name: GL_UnloadTexture
         category: func
+      - name: gltextures
+        category: gv
+      - name: peakgltextures
+        category: gv
+      - name: gHostSpawnCount
+        category: gv
+      - name: realloc
+        category: func
+      - name: gltextures.m_Size
+        category: gv
+        platform: windows
+      - name: gltextures.m_Memory.m_nAllocationCount
+        category: gv
+        platform: windows
+      - name: GL_LoadTextureFilterMode_part_14
+        category: func
+        platform: linux
+      - name: CUtlVector_gltexture_t_InsertBefore
+        category: func
+        platform: linux
+      - name: CUtlVector_gltexture_t
+        category: struct
+        platform: linux
+      - name: CUtlVector_gltexture_t_m_Memory_m_pMemory
+        category: structmember
+        struct: CUtlVector_gltexture_t
+        member: m_Memory.m_pMemory
+        platform: linux
+      - name: CUtlVector_gltexture_t_m_Memory_m_nAllocationCount
+        category: structmember
+        struct: CUtlVector_gltexture_t
+        member: m_Memory.m_nAllocationCount
+        platform: linux
+      - name: CUtlVector_gltexture_t_m_Size
+        category: structmember
+        struct: CUtlVector_gltexture_t
+        member: m_Size
+        platform: linux
       - name: GL_LoadTexture2
         category: func
       - name: GL_SetMode

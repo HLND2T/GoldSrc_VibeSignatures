@@ -1,0 +1,830 @@
+func_name: "GL_LoadTexture2"
+func_va: "0x14fe00"
+disasm_code: |-
+  .text:0014FE00                 push    ebp
+  .text:0014FE01                 push    edi
+  .text:0014FE02                 push    esi
+  .text:0014FE03                 push    ebx
+  .text:0014FE04                 xor     ebx, ebx
+  .text:0014FE06                 sub     esp, 437Ch
+  .text:0014FE0C                 mov     eax, [esp+438Ch+data]
+  .text:0014FE13                 mov     ebp, [esp+438Ch+identifier]
+  .text:0014FE1A                 mov     [esp+438Ch+var_434C], eax
+  .text:0014FE1E                 mov     eax, [esp+438Ch+pPal]
+  .text:0014FE25                 mov     [esp+438Ch+var_433C], eax
+  .text:0014FE29                 mov     eax, large gs:14h
+  .text:0014FE2F                 mov     [esp+438Ch+var_20], eax
+  .text:0014FE36                 xor     eax, eax
+  .text:0014FE38                 call    V_CheckGamma
+  .text:0014FE3D                 cmp     byte ptr [ebp+0], 0
+  .text:0014FE41                 jz      loc_1500ED
+  .text:0014FE47                 mov     eax, ds:numgltextures
+  .text:0014FE4C                 test    eax, eax
+  .text:0014FE4E                 jle     short loc_14FE97
+  .text:0014FE50                 mov     esi, offset gltextures
+  .text:0014FE55                 xor     edi, edi
+  .text:0014FE57                 jmp     short loc_14FE84
+  .text:0014FE60                 lea     eax, [glt_0+14h]
+  .text:0014FE63                 ; s2
+  .text:0014FE63                 mov     [esp+438Ch+s2], eax; s2
+  .text:0014FE67                 ; s1
+  .text:0014FE67                 mov     [esp+438Ch+s1], ebp; s1
+  .text:0014FE6A                 call    Q_strcmp
+  .text:0014FE6F                 test    eax, eax
+  .text:0014FE71                 jz      loc_1500D0
+  .text:0014FE77                 mov     eax, ds:numgltextures
+  .text:0014FE7C                 inc     i
+  .text:0014FE7D                 add     glt_0, 54h ; 'T'
+  .text:0014FE80                 cmp     i, eax
+  .text:0014FE82                 jge     short loc_14FE97
+  .text:0014FE84                 test    byte ptr [glt_0+5], 80h
+  .text:0014FE88                 jz      short loc_14FE60
+  .text:0014FE8A                 test    slot, slot
+  .text:0014FE8C                 cmovz   slot, glt_0
+  .text:0014FE8F                 inc     i
+  .text:0014FE90                 add     glt_0, 54h ; 'T'
+  .text:0014FE93                 cmp     i, eax
+  .text:0014FE95                 jl      short loc_14FE84
+  .text:0014FE97                 test    slot, slot
+  .text:0014FE99                 jz      loc_150440
+  .text:0014FE9F                 mov     eax, [glt_0]
+  .text:0014FEA1                 test    eax, eax
+  .text:0014FEA3                 jz      loc_150420
+  .text:0014FEA9                 lea     eax, [glt_0+14h]
+  .text:0014FEAC                 mov     edi, 3Fh ; '?'
+  .text:0014FEB1                 ; dest
+  .text:0014FEB1                 mov     [esp+438Ch+s1], eax; dest
+  .text:0014FEB4                 ; count
+  .text:0014FEB4                 mov     [esp+438Ch+count], edi; count
+  .text:0014FEB8                 ; src
+  .text:0014FEB8                 mov     [esp+438Ch+s2], ebp; src
+  .text:0014FEBC                 call    Q_strncpy
+  .text:0014FEC1                 mov     eax, [esp+438Ch+width]
+  .text:0014FEC8                 movsx   edx, word ptr ds:gHostSpawnCount
+  .text:0014FECF                 mov     byte ptr [glt_0+53h], 0
+  .text:0014FED3                 mov     word ptr [glt_0+6], 0FFFFh
+  .text:0014FED9                 mov     [glt_0+8], eax
+  .text:0014FEDC                 mov     eax, [esp+438Ch+height]
+  .text:0014FEE3                 mov     [glt_0+0Ch], eax
+  .text:0014FEE6                 mov     eax, [esp+438Ch+mipmap]
+  .text:0014FEED                 mov     [glt_0+10h], eax
+  .text:0014FEF0                 xor     eax, eax
+  .text:0014FEF2                 cmp     [esp+438Ch+textureType], 4
+  .text:0014FEFA                 cmovz   eax, edx
+  .text:0014FEFD                 mov     [glt_0+4], ax
+  .text:0014FF01                 mov     eax, [glt_0]
+  .text:0014FF03                 movzx   edx, ax
+  .text:0014FF06                 cmp     edx, currenttexture
+  .text:0014FF0C                 jz      short loc_14FF83
+  .text:0014FF0E                 sar     eax, 10h
+  .text:0014FF11                 lea     esi, [eax-1]
+  .text:0014FF14                 mov     currenttexture, edx
+  .text:0014FF1A                 ; GLuint
+  .text:0014FF1A                 mov     [esp+438Ch+s2], edx; GLuint
+  .text:0014FF1E                 ; GLenum
+  .text:0014FF1E                 mov     [esp+438Ch+s1], 0DE1h; GLenum
+  .text:0014FF25                 call    ds:qglBindTexture
+  .text:0014FF2B                 test    esi, esi
+  .text:0014FF2D                 js      short loc_14FF83
+  .text:0014FF2F                 cmp     esi, g_currentpalette
+  .text:0014FF35                 jz      short loc_14FF83
+  .text:0014FF37                 mov     edx, ds:qglColorTableEXT
+  .text:0014FF3D                 test    edx, edx
+  .text:0014FF3F                 jz      short loc_14FF83
+  .text:0014FF41                 imul    eax, esi, 308h
+  .text:0014FF47                 mov     ecx, 100h
+  .text:0014FF4C                 mov     g_currentpalette, esi
+  .text:0014FF52                 mov     esi, 1907h
+  .text:0014FF57                 ; int
+  .text:0014FF57                 mov     [esp+438Ch+count], ecx; int
+  .text:0014FF5B                 ; int
+  .text:0014FF5B                 mov     [esp+438Ch+s2], esi; int
+  .text:0014FF5F                 add     eax, offset gGLPalette.colors
+  .text:0014FF64                 ; void *
+  .text:0014FF64                 mov     [esp+438Ch+var_4378], eax; void *
+  .text:0014FF68                 mov     eax, 1401h
+  .text:0014FF6D                 ; int
+  .text:0014FF6D                 mov     [esp+438Ch+var_437C], eax; int
+  .text:0014FF71                 mov     eax, 1907h
+  .text:0014FF76                 ; int
+  .text:0014FF76                 mov     [esp+438Ch+var_4380], eax; int
+  .text:0014FF7A                 ; int
+  .text:0014FF7A                 mov     [esp+438Ch+s1], 81FBh; int
+  .text:0014FF81                 call    edx ; qglColorTableEXT
+  .text:0014FF83                 mov     eax, 0FFFFFFFFh
+  .text:0014FF88                 mov     currenttexture, eax
+  .text:0014FF8D                 mov     eax, ds:g_bSupportsNPOTTextures
+  .text:0014FF92                 test    eax, eax
+  .text:0014FF94                 jz      loc_150100
+  .text:0014FF9A                 mov     eax, [esp+438Ch+width]
+  .text:0014FFA1                 mov     [esp+438Ch+scaled_width], eax
+  .text:0014FFA5                 mov     eax, [esp+438Ch+height]
+  .text:0014FFAC                 mov     [esp+438Ch+scaled_height], eax
+  .text:0014FFB0                 mov     eax, [esp+438Ch+mipmap]
+  .text:0014FFB7                 test    eax, eax
+  .text:0014FFB9                 jnz     short loc_14FFD0
+  .text:0014FFBB                 mov     eax, [esp+438Ch+var_434C]
+  .text:0014FFBF                 jmp     loc_15023F
+  .text:0014FFC4                 mov     word ptr [ebx+6], 0FFFFh
+  .text:0014FFCA                 lea     esi, [esi+0]
+  .text:0014FFD0                 mov     eax, ds:g_modfuncs.m_pfnTextureLoad
+  .text:0014FFD5                 test    eax, eax
+  .text:0014FFD7                 jz      short loc_14FFFC
+  .text:0014FFD9                 mov     edi, [esp+438Ch+var_434C]
+  .text:0014FFDD                 mov     [esp+438Ch+s1], ebp
+  .text:0014FFE0                 mov     [esp+438Ch+var_4380], edi
+  .text:0014FFE4                 mov     edi, [esp+438Ch+height]
+  .text:0014FFEB                 mov     [esp+438Ch+count], edi
+  .text:0014FFEF                 mov     edi, [esp+438Ch+width]
+  .text:0014FFF6                 mov     [esp+438Ch+s2], edi
+  .text:0014FFFA                 call    eax
+  .text:0014FFFC                 cmp     [esp+438Ch+textureType], 5
+  .text:00150004                 mov     eax, [esp+438Ch+filter]
+  .text:0015000B                 jnz     short loc_150080
+  .text:0015000D                 cmp     [esp+438Ch+iType], 4
+  .text:00150015                 jnz     short loc_150080
+  .text:00150017                 ; filter
+  .text:00150017                 mov     [esp+438Ch+var_4378], eax; filter
+  .text:0015001B                 mov     eax, [esp+438Ch+mipmap]
+  .text:00150022                 mov     ecx, 4
+  .text:00150027                 ; iType
+  .text:00150027                 mov     [esp+438Ch+var_437C], ecx; iType
+  .text:0015002B                 ; mipmap
+  .text:0015002B                 mov     [esp+438Ch+var_4380], eax; mipmap
+  .text:0015002F                 mov     eax, [esp+438Ch+height]
+  .text:00150036                 ; height
+  .text:00150036                 mov     [esp+438Ch+count], eax; height
+  .text:0015003A                 mov     eax, [esp+438Ch+width]
+  .text:00150041                 ; width
+  .text:00150041                 mov     [esp+438Ch+s2], eax; width
+  .text:00150045                 mov     eax, [esp+438Ch+var_434C]
+  .text:00150049                 ; data
+  .text:00150049                 mov     [esp+438Ch+s1], eax; data
+  .text:0015004C                 call    GL_Upload32
+  .text:00150051                 movsx   eax, word ptr [ebx+6]
+  .text:00150055                 test    eax, eax
+  .text:00150057                 js      short loc_1500CC
+  .text:00150059                 mov     edx, [ebx]
+  .text:0015005B                 inc     eax
+  .text:0015005C                 shl     eax, 10h
+  .text:0015005F                 or      eax, edx
+  .text:00150061                 mov     ebx, [esp+438Ch+var_20]
+  .text:00150068                 xor     ebx, large gs:14h
+  .text:0015006F                 jnz     loc_150548
+  .text:00150075                 add     esp, 437Ch
+  .text:0015007B                 pop     ebx
+  .text:0015007C                 pop     esi
+  .text:0015007D                 pop     edi
+  .text:0015007E                 pop     ebp
+  .text:0015007F                 retn
+  .text:00150080                 ; filter
+  .text:00150080                 mov     [esp+438Ch+var_4374], eax; filter
+  .text:00150084                 mov     eax, [esp+438Ch+var_433C]
+  .text:00150088                 ; pPal
+  .text:00150088                 mov     [esp+438Ch+var_4378], eax; pPal
+  .text:0015008C                 mov     eax, [esp+438Ch+iType]
+  .text:00150093                 ; iType
+  .text:00150093                 mov     [esp+438Ch+var_437C], eax; iType
+  .text:00150097                 mov     eax, [esp+438Ch+mipmap]
+  .text:0015009E                 ; mipmap
+  .text:0015009E                 mov     [esp+438Ch+var_4380], eax; mipmap
+  .text:001500A2                 mov     eax, [esp+438Ch+height]
+  .text:001500A9                 ; height
+  .text:001500A9                 mov     [esp+438Ch+count], eax; height
+  .text:001500AD                 mov     eax, [esp+438Ch+width]
+  .text:001500B4                 ; width
+  .text:001500B4                 mov     [esp+438Ch+s2], eax; width
+  .text:001500B8                 mov     eax, [esp+438Ch+var_434C]
+  .text:001500BC                 ; data
+  .text:001500BC                 mov     [esp+438Ch+s1], eax; data
+  .text:001500BF                 call    GL_Upload16
+  .text:001500C4                 movsx   eax, word ptr [ebx+6]
+  .text:001500C8                 test    eax, eax
+  .text:001500CA                 jns     short loc_150059
+  .text:001500CC                 mov     eax, [ebx]
+  .text:001500CE                 jmp     short loc_150061
+  .text:001500D0                 mov     eax, [esp+438Ch+width]
+  .text:001500D7                 cmp     [glt_0+8], eax
+  .text:001500DA                 jz      loc_150474
+  .text:001500E0                 inc     byte ptr [ebp+3]
+  .text:001500E3                 cmp     byte ptr [ebp+0], 0
+  .text:001500E7                 jnz     loc_14FE47
+  .text:001500ED                 mov     [esp+438Ch+s1], offset aNullTexture; "NULL Texture\n"
+  .text:001500F4                 call    Con_DPrintf
+  .text:001500F9                 jmp     loc_14FE97
+  .text:00150100                 mov     eax, [esp+438Ch+height]
+  .text:00150107                 ; hscale
+  .text:00150107                 lea     edx, [esp+438Ch+scaled_height]; hscale
+  .text:0015010B                 ; width
+  .text:0015010B                 mov     ecx, [esp+438Ch+width]; width
+  .text:00150112                 ; height
+  .text:00150112                 mov     [esp+438Ch+s1], eax; height
+  .text:00150115                 ; wscale
+  .text:00150115                 lea     eax, [esp+438Ch+scaled_width]; wscale
+  .text:00150119                 call    ComputeScaledSize_0
+  .text:0015011E                 mov     eax, [esp+438Ch+scaled_width]
+  .text:00150122                 cmp     [esp+438Ch+width], eax
+  .text:00150129                 mov     ecx, eax
+  .text:0015012B                 jz      loc_15054D
+  .text:00150131                 mov     eax, [esp+438Ch+mipmap]
+  .text:00150138                 test    eax, eax
+  .text:0015013A                 jnz     loc_14FFD0
+  .text:00150140                 mov     eax, ecx
+  .text:00150142                 add     eax, 0FFFFFF80h
+  .text:00150145                 jg      loc_14FFD0
+  .text:0015014B                 mov     eax, [esp+438Ch+scaled_height]
+  .text:0015014F                 mov     [esp+438Ch+var_4348], eax
+  .text:00150153                 add     eax, 0FFFFFF80h
+  .text:00150156                 jg      loc_14FFD0
+  .text:0015015C                 fld     fs_perf_warnings.value
+  .text:00150162                 fldz
+  .text:00150164                 fxch    st(1)
+  .text:00150166                 fucomip st, st(1)
+  .text:00150168                 fstp    st
+  .text:0015016A                 jp      loc_1504B0
+  .text:00150170                 jnz     loc_1504B0
+  .text:00150176                 mov     eax, [esp+438Ch+width]
+  .text:0015017D                 mov     edi, [esp+438Ch+var_4348]
+  .text:00150181                 shl     eax, 10h
+  .text:00150184                 cdq
+  .text:00150185                 idiv    ecx
+  .text:00150187                 mov     esi, eax
+  .text:00150189                 mov     eax, [esp+438Ch+height]
+  .text:00150190                 shl     eax, 10h
+  .text:00150193                 cdq
+  .text:00150194                 idiv    edi
+  .text:00150196                 mov     [esp+438Ch+var_4344], eax
+  .text:0015019A                 shr     eax, 2
+  .text:0015019D                 test    edi, edi
+  .text:0015019F                 mov     [esp+438Ch+var_4350], eax
+  .text:001501A3                 jle     loc_1504E9
+  .text:001501A9                 mov     eax, esi
+  .text:001501AB                 mov     edi, [esp+438Ch+var_434C]
+  .text:001501AF                 shr     eax, 2
+  .text:001501B2                 mov     [esp+438Ch+var_4340], eax
+  .text:001501B6                 lea     eax, [esp+438Ch+scaled]
+  .text:001501BD                 mov     [esp+438Ch+var_4338], eax
+  .text:001501C1                 mov     edx, eax
+  .text:001501C3                 xor     eax, eax
+  .text:001501C5                 mov     [esp+438Ch+var_4330], ebp
+  .text:001501C9                 mov     ebp, ecx
+  .text:001501CB                 mov     [esp+438Ch+pTexture], eax
+  .text:001501CF                 mov     [esp+438Ch+glt], glt_0
+  .text:001501D3                 lea     esi, [esi+0]
+  .text:001501D9                 lea     edi, [edi+0]
+  .text:001501E0                 test    ebp, ebp
+  .text:001501E2                 jle     short loc_150203
+  .text:001501E4                 mov     eax, [esp+438Ch+var_4340]
+  .text:001501E8                 lea     ebx, [edx+ebp]
+  .text:001501EB                 nop
+  .text:001501EC                 lea     esi, [esi+0]
+  .text:001501F0                 mov     ecx, eax
+  .text:001501F2                 inc     edx
+  .text:001501F3                 shr     ecx, 10h
+  .text:001501F6                 add     eax, esi
+  .text:001501F8                 movzx   ecx, byte ptr [edi+ecx]
+  .text:001501FC                 mov     [edx-1], cl
+  .text:001501FF                 cmp     edx, ebx
+  .text:00150201                 jnz     short loc_1501F0
+  .text:00150203                 mov     ecx, [esp+438Ch+var_4350]
+  .text:00150207                 mov     ebx, [esp+438Ch+var_4344]
+  .text:0015020B                 inc     [esp+438Ch+pTexture]
+  .text:0015020F                 add     ecx, ebx
+  .text:00150211                 mov     ebx, [esp+438Ch+width]
+  .text:00150218                 mov     eax, ecx
+  .text:0015021A                 shr     eax, 10h
+  .text:0015021D                 imul    eax, ebx
+  .text:00150220                 add     edi, eax
+  .text:00150222                 movzx   eax, cx
+  .text:00150225                 mov     [esp+438Ch+var_4350], eax
+  .text:00150229                 mov     eax, [esp+438Ch+pTexture]
+  .text:0015022D                 cmp     eax, [esp+438Ch+var_4348]
+  .text:00150231                 jnz     short loc_1501E0
+  .text:00150233                 mov     ebx, [esp+438Ch+glt]
+  .text:00150237                 mov     ebp, [esp+438Ch+var_4330]
+  .text:0015023B                 mov     eax, [esp+438Ch+var_4338]
+  .text:0015023F                 mov     ecx, ds:qglColorTableEXT
+  .text:00150245                 mov     [esp+438Ch+pTexture], eax
+  .text:00150249                 test    ecx, ecx
+  .text:0015024B                 jz      loc_14FFD0
+  .text:00150251                 fld     gl_palette_tex.value
+  .text:00150257                 fldz
+  .text:00150259                 fxch    st(1)
+  .text:0015025B                 fucomip st, st(1)
+  .text:0015025D                 fstp    st
+  .text:0015025F                 jp      short loc_150267
+  .text:00150261                 jz      loc_14FFD0
+  .text:00150267                 mov     edx, [esp+438Ch+iType]
+  .text:0015026E                 test    edx, edx
+  .text:00150270                 jnz     loc_14FFD0
+  .text:00150276                 mov     ecx, [esp+438Ch+var_433C]
+  .text:0015027A                 xor     pTexture_0, pTexture_0
+  .text:0015027C                 lea     esi, [esi+0]
+  .text:00150280                 movzx   edx, byte ptr [ecx+eax]
+  .text:00150284                 movzx   edx, ds:texgammatable[edx]
+  .text:0015028B                 mov     [esp+eax+438Ch+src], dl
+  .text:0015028F                 inc     eax
+  .text:00150290                 cmp     eax, 300h
+  .text:00150295                 jnz     short loc_150280
+  .text:00150297                 movzx   ecx, [esp+438Ch+src]
+  .text:0015029C                 lea     edx, [esp+438Ch+var_431F]
+  .text:001502A0                 mov     esi, 1
+  .text:001502A5                 mov     eax, ecx
+  .text:001502A7                 mov     esi, esi
+  .text:001502A9                 lea     edi, [edi+0]
+  .text:001502B0                 movzx   edi, byte ptr [edx]
+  .text:001502B3                 add     esi, 2
+  .text:001502B6                 add     edx, 2
+  .text:001502B9                 add     eax, edi
+  .text:001502BB                 xor     eax, ecx
+  .text:001502BD                 movzx   ecx, byte ptr [edx-1]
+  .text:001502C1                 add     eax, ecx
+  .text:001502C3                 xor     eax, edi
+  .text:001502C5                 cmp     esi, 2FFh
+  .text:001502CB                 jnz     short loc_1502B0
+  .text:001502CD                 lea     edx, [esp+438Ch+var_4021]
+  .text:001502D4                 lea     ecx, [esp+438Ch+scaled]
+  .text:001502DB                 nop
+  .text:001502DC                 lea     esi, [esi+0]
+  .text:001502E0                 movzx   esi, byte ptr [edx]
+  .text:001502E3                 inc     edx
+  .text:001502E4                 add     eax, esi
+  .text:001502E6                 movzx   esi, byte ptr [edx-2]
+  .text:001502EA                 xor     eax, esi
+  .text:001502EC                 cmp     ecx, edx
+  .text:001502EE                 jnz     short loc_1502E0
+  .text:001502F0                 cdq
+  .text:001502F1                 xor     esi, esi
+  .text:001502F3                 xor     eax, edx
+  .text:001502F5                 mov     edi, eax
+  .text:001502F7                 sub     edi, edx
+  .text:001502F9                 xor     edx, edx
+  .text:001502FB                 jmp     short loc_150313
+  .text:00150300                 inc     esi
+  .text:00150301                 add     edx, 308h
+  .text:00150307                 cmp     esi, 158h
+  .text:0015030D                 jz      loc_14FFC4
+  .text:00150313                 mov     eax, dword ptr ds:gGLPalette.tag[edx]
+  .text:00150319                 test    eax, eax
+  .text:0015031B                 js      loc_1504F9
+  .text:00150321                 cmp     eax, edi
+  .text:00150323                 jnz     short loc_150300
+  .text:00150325                 xor     eax, eax
+  .text:00150327                 mov     esi, esi
+  .text:00150329                 lea     edi, [edi+0]
+  .text:00150330                 movzx   ecx, ds:gGLPalette.colors[edx+eax]
+  .text:00150338                 cmp     [esp+eax+438Ch+src], cl
+  .text:0015033C                 jnz     short loc_150300
+  .text:0015033E                 inc     eax
+  .text:0015033F                 cmp     eax, 300h
+  .text:00150344                 jnz     short loc_150330
+  .text:00150346                 imul    eax, esi, 308h
+  .text:0015034C                 movsx   esi, si
+  .text:0015034F                 inc     ds:gGLPalette.referenceCount[eax]
+  .text:00150355                 mov     eax, [esp+438Ch+pTexture]
+  .text:00150359                 xor     ebp, ebp
+  .text:0015035B                 mov     edi, 1900h
+  .text:00150360                 mov     [ebx+6], si
+  .text:00150364                 mov     esi, 1401h
+  .text:00150369                 ; GLenum
+  .text:00150369                 mov     [esp+438Ch+var_4370], esi; GLenum
+  .text:0015036D                 ; GLenum
+  .text:0015036D                 mov     [esp+438Ch+var_4374], edi; GLenum
+  .text:00150371                 ; GLvoid *
+  .text:00150371                 mov     [esp+438Ch+var_436C], eax; GLvoid *
+  .text:00150375                 mov     eax, [esp+438Ch+scaled_height]
+  .text:00150379                 ; GLint
+  .text:00150379                 mov     [esp+438Ch+var_4378], ebp; GLint
+  .text:0015037D                 ; GLenum
+  .text:0015037D                 mov     [esp+438Ch+s1], 0DE1h; GLenum
+  .text:00150384                 ; GLsizei
+  .text:00150384                 mov     [esp+438Ch+var_437C], eax; GLsizei
+  .text:00150388                 mov     eax, [esp+438Ch+scaled_width]
+  .text:0015038C                 ; GLsizei
+  .text:0015038C                 mov     [esp+438Ch+var_4380], eax; GLsizei
+  .text:00150390                 mov     eax, 80E5h
+  .text:00150395                 ; GLint
+  .text:00150395                 mov     [esp+438Ch+count], eax; GLint
+  .text:00150399                 xor     eax, eax
+  .text:0015039B                 ; GLint
+  .text:0015039B                 mov     [esp+438Ch+s2], eax; GLint
+  .text:0015039F                 call    ds:qglTexImage2D
+  .text:001503A5                 mov     eax, 2801h
+  .text:001503AA                 ; GLenum
+  .text:001503AA                 mov     [esp+438Ch+s2], eax; GLenum
+  .text:001503AE                 ; GLenum
+  .text:001503AE                 mov     [esp+438Ch+s1], 0DE1h; GLenum
+  .text:001503B5                 fild    [esp+438Ch+filter]
+  .text:001503BC                 ; GLfloat
+  .text:001503BC                 fst     [esp+438Ch+count]; GLfloat
+  .text:001503C0                 fstp    [esp+438Ch+pTexture]
+  .text:001503C4                 call    ds:qglTexParameterf
+  .text:001503CA                 mov     eax, 2800h
+  .text:001503CF                 ; GLenum
+  .text:001503CF                 mov     [esp+438Ch+s2], eax; GLenum
+  .text:001503D3                 ; GLenum
+  .text:001503D3                 mov     [esp+438Ch+s1], 0DE1h; GLenum
+  .text:001503DA                 fld     [esp+438Ch+pTexture]
+  .text:001503DE                 ; GLfloat
+  .text:001503DE                 fstp    [esp+438Ch+count]; GLfloat
+  .text:001503E2                 call    ds:qglTexParameterf
+  .text:001503E8                 mov     eax, 84FEh
+  .text:001503ED                 movss   xmm0, gl_ansio.value
+  .text:001503F5                 ; GLenum
+  .text:001503F5                 mov     [esp+438Ch+s2], eax; GLenum
+  .text:001503F9                 ; GLenum
+  .text:001503F9                 mov     [esp+438Ch+s1], 0DE1h; GLenum
+  .text:00150400                 ; GLfloat
+  .text:00150400                 movss   [esp+438Ch+count], xmm0; GLfloat
+  .text:00150406                 call    ds:qglTexParameterf
+  .text:0015040C                 movsx   eax, word ptr [ebx+6]
+  .text:00150410                 test    eax, eax
+  .text:00150412                 jns     loc_150059
+  .text:00150418                 mov     eax, [ebx]
+  .text:0015041A                 jmp     loc_150061
+  .text:00150420                 lea     eax, [esp+438Ch+scaled_height]
+  .text:00150424                 ; GLuint *
+  .text:00150424                 mov     [esp+438Ch+s2], eax; GLuint *
+  .text:00150428                 ; GLsizei
+  .text:00150428                 mov     [esp+438Ch+s1], 1; GLsizei
+  .text:0015042F                 call    ds:qglGenTextures
+  .text:00150435                 mov     eax, [esp+438Ch+scaled_height]
+  .text:00150439                 mov     [glt_0], eax
+  .text:0015043B                 jmp     loc_14FEA9
+  .text:00150440                 mov     eax, ds:numgltextures
+  .text:00150445                 lea     edx, [eax+eax*4]
+  .text:00150448                 lea     edx, [eax+edx*4]
+  .text:0015044B                 inc     eax
+  .text:0015044C                 cmp     eax, 270Fh
+  .text:00150451                 lea     ebx, gltextures.texnum[edx*4]
+  .text:00150458                 mov     ds:numgltextures, eax
+  .text:0015045D                 jle     loc_14FE9F
+  .text:00150463                 mov     [esp+438Ch+s1], offset aTextureOverflo; "Texture Overflow: MAX_GLTEXTURES"
+  .text:0015046A                 call    Sys_Error
+  .text:0015046F                 jmp     loc_14FE9F
+  .text:00150474                 mov     eax, [esp+438Ch+height]
+  .text:0015047B                 cmp     [glt_0+0Ch], eax
+  .text:0015047E                 jnz     loc_1500E0
+  .text:00150484                 cmp     word ptr [glt_0+4], 0
+  .text:00150489                 jle     short loc_150494
+  .text:0015048B                 mov     eax, ds:gHostSpawnCount
+  .text:00150490                 mov     [glt_0+4], ax
+  .text:00150494                 movsx   eax, word ptr [glt_0+6]
+  .text:00150498                 test    eax, eax
+  .text:0015049A                 js      loc_150541
+  .text:001504A0                 mov     edx, [glt_0]
+  .text:001504A2                 inc     eax
+  .text:001504A3                 shl     eax, 10h
+  .text:001504A6                 or      eax, edx
+  .text:001504A8                 jmp     loc_150061
+  .text:001504B0                 mov     eax, [esp+438Ch+height]
+  .text:001504B7                 mov     [esp+438Ch+s2], ebp
+  .text:001504BB                 mov     [esp+438Ch+s1], offset aFsPerfWarnings; "fs_perf_warnings: resampling non-power-"...
+  .text:001504C2                 mov     [esp+438Ch+var_4380], eax
+  .text:001504C6                 mov     eax, [esp+438Ch+width]
+  .text:001504CD                 mov     [esp+438Ch+count], eax
+  .text:001504D1                 call    Con_DPrintf
+  .text:001504D6                 mov     eax, [esp+438Ch+scaled_height]
+  .text:001504DA                 mov     [esp+438Ch+var_4348], eax
+  .text:001504DE                 mov     eax, [esp+438Ch+scaled_width]
+  .text:001504E2                 mov     ecx, eax
+  .text:001504E4                 jmp     loc_150176
+  .text:001504E9                 lea     eax, [esp+438Ch+scaled]
+  .text:001504F0                 mov     [esp+438Ch+var_4338], eax
+  .text:001504F4                 jmp     loc_15023F
+  .text:001504F9                 imul    edx, esi, 308h
+  .text:001504FF                 mov     eax, 300h
+  .text:00150504                 ; count
+  .text:00150504                 mov     [esp+438Ch+count], eax; count
+  .text:00150508                 lea     eax, [esp+438Ch+src]
+  .text:0015050C                 movsx   esi, si
+  .text:0015050F                 ; src
+  .text:0015050F                 mov     [esp+438Ch+s2], eax; src
+  .text:00150513                 lea     ecx, gGLPalette.colors[edx]
+  .text:00150519                 ; dest
+  .text:00150519                 mov     [esp+438Ch+s1], ecx; dest
+  .text:0015051C                 lea     ebp, gGLPalette.tag[edx]
+  .text:00150522                 mov     [esp+438Ch+var_4350], edx
+  .text:00150526                 call    Q_memcpy
+  .text:0015052B                 mov     edx, [esp+438Ch+var_4350]
+  .text:0015052F                 mov     dword ptr [ebp+4], 1
+  .text:00150536                 mov     dword ptr ds:gGLPalette.tag[edx], edi
+  .text:0015053C                 jmp     loc_150355
+  .text:00150541                 mov     eax, [glt_0]
+  .text:00150543                 jmp     loc_150061
+  .text:00150548                 call    __stack_chk_fail
+  .text:0015054D                 mov     eax, [esp+438Ch+scaled_height]
+  .text:00150551                 cmp     [esp+438Ch+height], eax
+  .text:00150558                 jz      loc_14FFB0
+  .text:0015055E                 mov     eax, [esp+438Ch+width]
+  .text:00150565                 mov     ecx, eax
+  .text:00150567                 jmp     loc_150131
+procedure: |-
+  // GoldSrc source engine/gl_draw.c; SvEngine uses CUtlVector storage and different texture kinds. Current binary instructions take precedence over source revision.
+  int __cdecl GL_LoadTexture2(
+          char *identifier,
+          unsigned int textureType,
+          int width,
+          int height,
+          unsigned __int8 *data,
+          int mipmap,
+          int iType,
+          unsigned __int8 *pPal,
+          int filter)
+  {
+    gltexture_reference_t *v9; // ebx
+    char *v10; // ebp
+    int v11; // eax
+    gltexture_reference_t *v12; // esi
+    int v13; // edi
+    __int16 v14; // dx
+    __int16 v15; // ax
+    GLuint texnum; // edx
+    int v17; // esi
+    unsigned __int8 *v18; // eax
+    int v19; // eax
+    int v21; // ecx
+    unsigned int v22; // esi
+    unsigned __int8 *v23; // edi
+    byte *v24; // edx
+    int v25; // ebp
+    unsigned int v26; // eax
+    byte *v27; // ebx
+    unsigned int v28; // ecx
+    int i; // eax
+    int v30; // ecx
+    char *v31; // edx
+    int v32; // esi
+    int v33; // eax
+    int v34; // edi
+    int v35; // eax
+    byte *v36; // edx
+    int v37; // esi
+    int v38; // esi
+    int v39; // edi
+    int v40; // edx
+    int tag; // eax
+    int v42; // eax
+    bool v43; // cc
+    int paletteIndex; // eax
+    GLfloat count; // [esp+8h] [ebp-4384h]
+    byte *pTexture; // [esp+38h] [ebp-4354h]
+    byte *pTexturea; // [esp+38h] [ebp-4354h]
+    GLfloat pTextureb; // [esp+38h] [ebp-4354h]
+    unsigned int v49; // [esp+3Ch] [ebp-4350h]
+    int v50; // [esp+44h] [ebp-4348h]
+    unsigned int v51; // [esp+48h] [ebp-4344h]
+    gltexture_t *glt; // [esp+58h] [ebp-4334h]
+    int scaled_width; // [esp+64h] [ebp-4328h] BYREF
+    int scaled_height; // [esp+68h] [ebp-4324h] BYREF
+    unsigned __int8 src; // [esp+6Ch] [ebp-4320h] BYREF
+    char v56; // [esp+6Dh] [ebp-431Fh] BYREF
+    char v57; // [esp+36Bh] [ebp-4021h] BYREF
+    byte scaled[16384]; // [esp+36Ch] [ebp-4020h] BYREF
+    unsigned int v59; // [esp+436Ch] [ebp-20h]
+
+    v9 = nullptr;
+    v10 = identifier;
+    v59 = __readgsdword(0x14u);
+    V_CheckGamma();
+    if ( *identifier )
+    {
+      while ( 1 )
+      {
+        v11 = numgltextures;
+        if ( numgltextures <= 0 )
+          break;
+        v12 = gltextures;
+        v13 = 0;
+        while ( 1 )
+        {
+          while ( v12->servercount < 0 )
+          {
+            if ( !v9 )
+              v9 = v12;
+            ++v13;
+            ++v12;
+            if ( v13 >= v11 )
+              goto LABEL_10;
+          }
+          if ( !Q_strcmp(identifier, v12->identifier) )
+            break;
+          v11 = numgltextures;
+          ++v13;
+          ++v12;
+          if ( v13 >= numgltextures )
+            goto LABEL_10;
+        }
+        if ( v12->width == width && v12->height == height )
+        {
+          if ( v12->servercount > 0 )
+            v12->servercount = gHostSpawnCount;
+          paletteIndex = v12->paletteIndex;
+          if ( paletteIndex < 0 )
+            return v12->texnum;
+          else
+            return v12->texnum | ((paletteIndex + 1) << 16);
+        }
+        ++identifier[3];
+        if ( !*identifier )
+          goto LABEL_35;
+      }
+    }
+    else
+    {
+  LABEL_35:
+      Con_DPrintf("NULL Texture\n");
+    }
+  LABEL_10:
+    if ( !v9 )
+    {
+      v43 = numgltextures + 1 <= 9999;
+      v9 = &gltextures[numgltextures++];
+      if ( !v43 )
+        Sys_Error("Texture Overflow: MAX_GLTEXTURES");
+    }
+    if ( !v9->texnum )
+    {
+      qglGenTextures(1, (GLuint *)&scaled_height);
+      v9->texnum = scaled_height;
+    }
+    Q_strncpy(v9->identifier, identifier, 63);
+    v14 = gHostSpawnCount;
+    v9->identifier[63] = 0;
+    v9->paletteIndex = -1;
+    v9->width = width;
+    v9->height = height;
+    v9->mipmap = mipmap;
+    v15 = 0;
+    if ( textureType == 4 )
+      v15 = v14;
+    v9->servercount = v15;
+    texnum = (unsigned __int16)v9->texnum;
+    if ( texnum != currenttexture )
+    {
+      v17 = ((int)v9->texnum >> 16) - 1;
+      currenttexture = (unsigned __int16)v9->texnum;
+      qglBindTexture(0xDE1u, texnum);
+      if ( v17 >= 0 && v17 != g_currentpalette && qglColorTableEXT )
+      {
+        g_currentpalette = v17;
+        qglColorTableEXT(33275, 6407, 256, 6407, 5121, gGLPalette[v17].colors);
+      }
+    }
+    currenttexture = -1;
+    if ( g_bSupportsNPOTTextures )
+    {
+      scaled_width = width;
+      scaled_height = height;
+  LABEL_22:
+      if ( mipmap )
+        goto LABEL_25;
+      v18 = data;
+      goto LABEL_49;
+    }
+    ComputeScaledSize_0(&scaled_width, &scaled_height, width, height);
+    v21 = scaled_width;
+    if ( width == scaled_width )
+    {
+      if ( height == scaled_height )
+        goto LABEL_22;
+      v21 = width;
+    }
+    if ( mipmap
+      || !((v21 - 128 < 0) ^ __OFADD__(-128, v21) | (v21 == 128))
+      || (v50 = scaled_height, !((scaled_height - 128 < 0) ^ __OFADD__(-128, scaled_height) | (scaled_height == 128))) )
+    {
+  LABEL_25:
+      if ( g_modfuncs.m_pfnTextureLoad )
+        g_modfuncs.m_pfnTextureLoad(v10, width, height, (char *)data);
+      if ( textureType == 5 && iType == 4 )
+      {
+        GL_Upload32((unsigned int *)data, width, height, (qboolean_0)mipmap, 4, filter);
+        v19 = v9->paletteIndex;
+        if ( v19 >= 0 )
+          return v9->texnum | ((v19 + 1) << 16);
+      }
+      else
+      {
+        GL_Upload16(data, width, height, (qboolean_0)mipmap, iType, pPal, filter);
+        v19 = v9->paletteIndex;
+        if ( v19 >= 0 )
+          return v9->texnum | ((v19 + 1) << 16);
+      }
+      return v9->texnum;
+    }
+    if ( fs_perf_warnings.value != 0.0 )
+    {
+      Con_DPrintf("fs_perf_warnings: resampling non-power-of-2 texture %s (%dx%d)\n", identifier, width, height);
+      v50 = scaled_height;
+      v21 = scaled_width;
+    }
+    v22 = (width << 16) / v21;
+    v51 = (height << 16) / v50;
+    v49 = v51 >> 2;
+    if ( v50 <= 0 )
+    {
+      v18 = scaled;
+    }
+    else
+    {
+      v23 = data;
+      v24 = scaled;
+      v25 = v21;
+      pTexture = nullptr;
+      glt = (gltexture_t *)v9;
+      do
+      {
+        if ( v25 > 0 )
+        {
+          v26 = v22 >> 2;
+          v27 = &v24[v25];
+          do
+          {
+            ++v24;
+            v28 = HIWORD(v26);
+            v26 += v22;
+            *(v24 - 1) = v23[v28];
+          }
+          while ( v24 != v27 );
+        }
+        ++pTexture;
+        v23 += width * ((v51 + v49) >> 16);
+        v49 = (unsigned __int16)(v51 + v49);
+      }
+      while ( pTexture != (byte *)v50 );
+      v9 = (gltexture_reference_t *)glt;
+      v10 = identifier;
+      v18 = scaled;
+    }
+  LABEL_49:
+    pTexturea = v18;
+    if ( !qglColorTableEXT || gl_palette_tex.value == 0.0 || iType )
+      goto LABEL_25;
+    for ( i = 0; i != 768; ++i )
+      *(&src + i) = texgammatable[pPal[i]];
+    v30 = src;
+    v31 = &v56;
+    v32 = 1;
+    v33 = src;
+    do
+    {
+      v34 = (unsigned __int8)*v31;
+      v32 += 2;
+      v31 += 2;
+      v35 = v30 ^ (v34 + v33);
+      v30 = (unsigned __int8)*(v31 - 1);
+      v33 = v34 ^ (v30 + v35);
+    }
+    while ( v32 != 767 );
+    v36 = (byte *)&v57;
+    do
+    {
+      v37 = *v36++;
+      v33 = *(v36 - 2) ^ (v37 + v33);
+    }
+    while ( scaled != v36 );
+    v38 = 0;
+    v39 = abs32(v33);
+    v40 = 0;
+    while ( 1 )
+    {
+      tag = gGLPalette[v40].tag;
+      if ( tag < 0 )
+        break;
+      if ( tag == v39 )
+      {
+        v42 = 0;
+        while ( *(&src + v42) == gGLPalette[v40].colors[v42] )
+        {
+          if ( ++v42 == 768 )
+          {
+            ++gGLPalette[v38].referenceCount;
+            goto LABEL_66;
+          }
+        }
+      }
+      ++v38;
+      ++v40;
+      if ( v38 == 344 )
+      {
+        v9->paletteIndex = -1;
+        goto LABEL_25;
+      }
+    }
+    Q_memcpy(gGLPalette[v38].colors, &src, 768);
+    gGLPalette[v38].referenceCount = 1;
+    gGLPalette[v38].tag = v39;
+  LABEL_66:
+    v9->paletteIndex = v38;
+    qglTexImage2D(0xDE1u, 0, 32997, scaled_width, scaled_height, 0, 0x1900u, 0x1401u, pTexturea);
+    count = (float)filter;
+    pTextureb = count;
+    qglTexParameterf(0xDE1u, 0x2801u, count);
+    qglTexParameterf(0xDE1u, 0x2800u, pTextureb);
+    qglTexParameterf(0xDE1u, 0x84FEu, gl_ansio.value);
+    v19 = v9->paletteIndex;
+    if ( v19 >= 0 )
+      return v9->texnum | ((v19 + 1) << 16);
+    return v9->texnum;
+  }
