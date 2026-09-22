@@ -1,0 +1,343 @@
+func_name: R_SetupGL
+func_va: '0x1d56280'
+disasm_code: |-
+  ; Engine matrix globals: each target is the base of a float[16] object, not a pointer slot or an interior element.
+  ; gProjectionMatrix (gv): output buffer of GetFloatv(GL_PROJECTION_MATRIX = 0xBA7).
+  ; r_world_matrix (gv): output buffer of GetFloatv(GL_MODELVIEW_MATRIX = 0xBA6).
+  ; gWorldToScreen (gv): product of projection/modelview matrices; input to InvertMatrix.
+  ; gScreenToWorld (gv): output buffer of that same InvertMatrix call.
+  ; Source role: HLND2T_official/engine/gl_rmain.c R_SetupGL; current instructions and ABI take precedence over source layout.
+  ; gmodinfo_vertical_fov (gv): address of gmodinfo.vertical_fov, a four-byte boolean field, not an independent ELF symbol or FOV angle.
+  ; Select the field read that chooses the vertical/horizontal projection calculation, not gmodinfo or a GOT pointer to it.
+  ; The liblist.gam vertical_fov boolean write independently confirms this field. Derive its address from the current binary, never copy the reference offset.
+  ; SvEngine differs from the public GoldSrc body: FOV projection selection is inlined or delegated, and matrix multiplication may be vectorized.
+  .text:01D56280                 push    ecx
+  .text:01D56281                 push    ebx
+  .text:01D56282                 push    esi
+  .text:01D56283                 push    edi
+  .text:01D56284                 ; mode
+  .text:01D56284                 push    1701h; mode
+  .text:01D56289                 call    ds:glMatrixMode
+  .text:01D5628F                 call    ds:glLoadIdentity
+  .text:01D56295                 mov     ebx, dword ptr qword_80467E4+4
+  .text:01D5629B                 mov     ecx, ebx
+  .text:01D5629D                 mov     edi, dword_3F93420
+  .text:01D562A3                 mov     esi, ebx
+  .text:01D562A5                 sub     esi, dword_3F9342C
+  .text:01D562AB                 mov     edx, dword_3F93428
+  .text:01D562B1                 sub     ecx, dword_3F93424
+  .text:01D562B7                 add     edx, edi
+  .text:01D562B9                 sub     esi, dword_3F93424
+  .text:01D562BF                 test    edi, edi
+  .text:01D562C1                 jle     short loc_1D562C4
+  .text:01D562C3                 dec     edi
+  .text:01D562C4                 cmp     edx, dword ptr qword_80467E4
+  .text:01D562CA                 jge     short loc_1D562CD
+  .text:01D562CC                 inc     edx
+  .text:01D562CD                 test    esi, esi
+  .text:01D562CF                 jns     short loc_1D562D2
+  .text:01D562D1                 dec     esi
+  .text:01D562D2                 cmp     ecx, ebx
+  .text:01D562D4                 jge     short loc_1D562D7
+  .text:01D562D6                 inc     ecx
+  .text:01D562D7                 sub     edx, edi
+  .text:01D562D9                 sub     ecx, esi
+  .text:01D562DB                 cmp     dword_3F941EC, 0
+  .text:01D562E2                 jz      short loc_1D56303
+  .text:01D562E4                 fld     flt_1EE0484
+  .text:01D562EA                 xor     esi, esi
+  .text:01D562EC                 xor     edi, edi
+  .text:01D562EE                 call    sub_1E2B450
+  .text:01D562F3                 mov     ecx, eax
+  .text:01D562F5                 mov     edx, ecx
+  .text:01D562F7                 mov     dword ptr qword_80467E4+4, ecx
+  .text:01D562FD                 mov     dword ptr qword_80467E4, ecx
+  .text:01D56303                 mov     eax, dword ptr qword_80467DC+4
+  .text:01D56308                 ; height
+  .text:01D56308                 push    ecx; height
+  .text:01D56309                 add     eax, esi
+  .text:01D5630B                 ; width
+  .text:01D5630B                 push    edx; width
+  .text:01D5630C                 ; y
+  .text:01D5630C                 push    eax; y
+  .text:01D5630D                 mov     eax, dword ptr qword_80467DC
+  .text:01D56312                 add     eax, edi
+  .text:01D56314                 ; x
+  .text:01D56314                 push    eax; x
+  .text:01D56315                 call    ds:glViewport
+  .text:01D5631B                 cmp     gmodinfo_vertical_fov, 0
+  .text:01D56322                 setnz   byte ptr [esp+10h+vertical_fov]
+  .text:01D56327                 ; vertical_fov
+  .text:01D56327                 push    [esp+10h+vertical_fov]; vertical_fov
+  .text:01D5632B                 call    sub_1D56000
+  .text:01D56330                 add     esp, 4
+  .text:01D56333                 ; mode
+  .text:01D56333                 push    404h; mode
+  .text:01D56338                 call    ds:glCullFace
+  .text:01D5633E                 mov     edi, ds:glGetFloatv
+  .text:01D56344                 ; params
+  .text:01D56344                 push    offset gProjectionMatrix; params
+  .text:01D56349                 ; pname
+  .text:01D56349                 push    0BA7h; pname
+  .text:01D5634E                 call    edi ; glGetFloatv
+  .text:01D56350                 ; mode
+  .text:01D56350                 push    1700h; mode
+  .text:01D56355                 call    ds:glMatrixMode
+  .text:01D5635B                 call    ds:glLoadIdentity
+  .text:01D56361                 fldz
+  .text:01D56363                 sub     esp, 10h
+  .text:01D56366                 mov     esi, ds:glRotatef
+  .text:01D5636C                 ; z
+  .text:01D5636C                 fst     [esp+20h+z]; z
+  .text:01D56370                 ; y
+  .text:01D56370                 fstp    [esp+20h+y]; y
+  .text:01D56374                 fld1
+  .text:01D56376                 ; x
+  .text:01D56376                 fstp    [esp+20h+x]; x
+  .text:01D5637A                 fld     ds:flt_1E6D660
+  .text:01D56380                 ; angle
+  .text:01D56380                 fstp    [esp+20h+angle]; angle
+  .text:01D56383                 call    esi ; glRotatef
+  .text:01D56385                 fld1
+  .text:01D56387                 sub     esp, 10h
+  .text:01D5638A                 ; z
+  .text:01D5638A                 fstp    [esp+20h+z]; z
+  .text:01D5638E                 fldz
+  .text:01D56390                 ; y
+  .text:01D56390                 fst     [esp+20h+y]; y
+  .text:01D56394                 ; x
+  .text:01D56394                 fstp    [esp+20h+x]; x
+  .text:01D56398                 fld     ds:flt_1E61D0C
+  .text:01D5639E                 ; angle
+  .text:01D5639E                 fstp    [esp+20h+angle]; angle
+  .text:01D563A1                 call    esi ; glRotatef
+  .text:01D563A3                 fldz
+  .text:01D563A5                 sub     esp, 10h
+  .text:01D563A8                 ; z
+  .text:01D563A8                 fst     [esp+20h+z]; z
+  .text:01D563AC                 ; y
+  .text:01D563AC                 fstp    [esp+20h+y]; y
+  .text:01D563B0                 fld1
+  .text:01D563B2                 ; x
+  .text:01D563B2                 fstp    [esp+20h+x]; x
+  .text:01D563B6                 fld     flt_3F93444
+  .text:01D563BC                 fchs
+  .text:01D563BE                 ; angle
+  .text:01D563BE                 fstp    [esp+20h+angle]; angle
+  .text:01D563C1                 call    esi ; glRotatef
+  .text:01D563C3                 fldz
+  .text:01D563C5                 sub     esp, 10h
+  .text:01D563C8                 ; z
+  .text:01D563C8                 fst     [esp+20h+z]; z
+  .text:01D563CC                 fld1
+  .text:01D563CE                 ; y
+  .text:01D563CE                 fstp    [esp+20h+y]; y
+  .text:01D563D2                 ; x
+  .text:01D563D2                 fstp    [esp+20h+x]; x
+  .text:01D563D6                 fld     flt_3F9343C
+  .text:01D563DC                 fchs
+  .text:01D563DE                 ; angle
+  .text:01D563DE                 fstp    [esp+20h+angle]; angle
+  .text:01D563E1                 call    esi ; glRotatef
+  .text:01D563E3                 fld1
+  .text:01D563E5                 sub     esp, 10h
+  .text:01D563E8                 ; z
+  .text:01D563E8                 fstp    [esp+20h+z]; z
+  .text:01D563EC                 fldz
+  .text:01D563EE                 ; y
+  .text:01D563EE                 fst     [esp+20h+y]; y
+  .text:01D563F2                 ; x
+  .text:01D563F2                 fstp    [esp+20h+x]; x
+  .text:01D563F6                 fld     flt_3F93440
+  .text:01D563FC                 fchs
+  .text:01D563FE                 ; angle
+  .text:01D563FE                 fstp    [esp+20h+angle]; angle
+  .text:01D56401                 call    esi ; glRotatef
+  .text:01D56403                 fld     flt_3F93438
+  .text:01D56409                 sub     esp, 0Ch
+  .text:01D5640C                 fchs
+  .text:01D5640E                 ; z
+  .text:01D5640E                 fstp    [esp+1Ch+z]; z
+  .text:01D56412                 fld     flt_3F93434
+  .text:01D56418                 fchs
+  .text:01D5641A                 ; y
+  .text:01D5641A                 fstp    [esp+1Ch+y]; y
+  .text:01D5641E                 fld     flt_3F93430
+  .text:01D56424                 fchs
+  .text:01D56426                 ; x
+  .text:01D56426                 fstp    [esp+1Ch+x]; x
+  .text:01D56429                 call    ds:glTranslatef
+  .text:01D5642F                 ; params
+  .text:01D5642F                 push    offset r_world_matrix; params
+  .text:01D56434                 ; pname
+  .text:01D56434                 push    0BA6h; pname
+  .text:01D56439                 call    edi ; glGetFloatv
+  .text:01D5643B                 fld     flt_1EE03E4
+  .text:01D56441                 fldz
+  .text:01D56443                 mov     esi, ds:glDisable
+  .text:01D56449                 fucompp
+  .text:01D5644B                 mov     edi, ds:glEnable
+  .text:01D56451                 fnstsw  ax
+  .text:01D56453                 ; cap
+  .text:01D56453                 push    0B44h; cap
+  .text:01D56458                 test    ah, 44h
+  .text:01D5645B                 jnp     short loc_1D56461
+  .text:01D5645D                 call    edi ; glEnable
+  .text:01D5645F                 jmp     short loc_1D56463
+  .text:01D56461                 call    esi ; glDisable
+  .text:01D56463                 ; cap
+  .text:01D56463                 push    0BE2h; cap
+  .text:01D56468                 call    esi ; glDisable
+  .text:01D5646A                 ; cap
+  .text:01D5646A                 push    0BC0h; cap
+  .text:01D5646F                 call    esi ; glDisable
+  .text:01D56471                 ; cap
+  .text:01D56471                 push    0B71h; cap
+  .text:01D56476                 call    edi ; glEnable
+  .text:01D56478                 pop     edi
+  .text:01D56479                 pop     esi
+  .text:01D5647A                 xor     edx, edx
+  .text:01D5647C                 pop     ebx
+  .text:01D5647D                 lea     ecx, [ecx+0]
+  .text:01D56480                 fld     r_world_matrix[edx]
+  .text:01D56486                 lea     ecx, gWorldToScreen[edx]
+  .text:01D5648C                 fld     (r_world_matrix+4)[edx]
+  .text:01D56492                 mov     eax, (offset gProjectionMatrix+10h)
+  .text:01D56497                 fld     (r_world_matrix+8)[edx]
+  .text:01D5649D                 fld     (r_world_matrix+0Ch)[edx]
+  .text:01D564A3                 fld     dword ptr [eax+20h]
+  .text:01D564A6                 fmul    st, st(1)
+  .text:01D564A8                 fld     dword ptr [eax+10h]
+  .text:01D564AB                 fmul    st, st(3)
+  .text:01D564AD                 faddp   st(1), st
+  .text:01D564AF                 fld     dword ptr [eax-10h]
+  .text:01D564B2                 fmul    st, st(5)
+  .text:01D564B4                 fld     st(4)
+  .text:01D564B6                 fmul    dword ptr [eax]
+  .text:01D564B8                 add     eax, 4
+  .text:01D564BB                 faddp   st(1), st
+  .text:01D564BD                 faddp   st(1), st
+  .text:01D564BF                 fstp    dword ptr [ecx]
+  .text:01D564C1                 add     ecx, 4
+  .text:01D564C4                 cmp     eax, (offset gProjectionMatrix+20h)
+  .text:01D564C9                 jl      short loc_1D564A3
+  .text:01D564CB                 fstp    st(3)
+  .text:01D564CD                 add     edx, 10h
+  .text:01D564D0                 fstp    st(1)
+  .text:01D564D2                 fstp    st
+  .text:01D564D4                 fstp    st
+  .text:01D564D6                 cmp     edx, 40h ; '@'
+  .text:01D564D9                 jl      short loc_1D56480
+  .text:01D564DB                 ; inverse
+  .text:01D564DB                 push    offset gScreenToWorld; inverse
+  .text:01D564E0                 ; matrix
+  .text:01D564E0                 push    offset gWorldToScreen; matrix
+  .text:01D564E5                 call    InvertMatrix
+  .text:01D564EA                 add     esp, 0Ch
+  .text:01D564ED                 retn
+procedure: |-
+  // Engine matrix globals: each target is the base of a float[16] object, not a pointer slot or an interior element.
+  // gProjectionMatrix (gv): output buffer of GetFloatv(GL_PROJECTION_MATRIX = 0xBA7).
+  // r_world_matrix (gv): output buffer of GetFloatv(GL_MODELVIEW_MATRIX = 0xBA6).
+  // gWorldToScreen (gv): product of projection/modelview matrices; input to InvertMatrix.
+  // gScreenToWorld (gv): output buffer of that same InvertMatrix call.
+  // Source role: HLND2T_official/engine/gl_rmain.c R_SetupGL; current instructions and ABI take precedence over source layout.
+  // gmodinfo_vertical_fov (gv): address of gmodinfo.vertical_fov, a four-byte boolean field, not an independent ELF symbol or FOV angle.
+  // Select the field read that chooses the vertical/horizontal projection calculation, not gmodinfo or a GOT pointer to it.
+  // The liblist.gam vertical_fov boolean write independently confirms this field. Derive its address from the current binary, never copy the reference offset.
+  // SvEngine differs from the public GoldSrc body: FOV projection selection is inlined or delegated, and matrix multiplication may be vectorized.
+  void __cdecl R_SetupGL()
+  {
+    int v0; // edi
+    int v1; // ecx
+    int v2; // edx
+    int v3; // esi
+    GLsizei v4; // edx
+    GLsizei v5; // ecx
+    int i; // edx
+    double v7; // st7
+    float *v8; // ecx
+    double v9; // st6
+    float *v10; // eax
+    double v11; // st5
+    double v12; // st4
+    double v13; // st3
+    double v14; // st2
+    double v15; // st1
+    GLfloat angle; // [esp+0h] [ebp-20h]
+    GLfloat anglea; // [esp+0h] [ebp-20h]
+    GLfloat angleb; // [esp+0h] [ebp-20h]
+    GLfloat x; // [esp+4h] [ebp-1Ch]
+    GLfloat y; // [esp+8h] [ebp-18h]
+    GLfloat z; // [esp+Ch] [ebp-14h]
+
+    glMatrixMode(0x1701u);
+    glLoadIdentity();
+    v0 = dword_3F93420;
+    v1 = *(&qword_80467E4 + 1) - dword_3F93424;
+    v2 = dword_3F93420 + dword_3F93428;
+    v3 = *(&qword_80467E4 + 1) - dword_3F9342C - dword_3F93424;
+    if ( dword_3F93420 > 0 )
+      v0 = dword_3F93420 - 1;
+    if ( v2 < qword_80467E4 )
+      ++v2;
+    if ( v3 < 0 )
+      --v3;
+    if ( v1 < *(&qword_80467E4 + 1) )
+      ++v1;
+    v4 = v2 - v0;
+    v5 = v1 - v3;
+    if ( dword_3F941EC )
+    {
+      v3 = 0;
+      v0 = 0;
+      v5 = sub_1E2B450(flt_1EE0484);
+      v4 = v5;
+      *(&qword_80467E4 + 1) = v5;
+      qword_80467E4 = v5;
+    }
+    glViewport(v0 + qword_80467DC, v3 + *(&qword_80467DC + 1), v4, v5);
+    sub_1D56000(gmodinfo_vertical_fov != 0);
+    glCullFace(0x404u);
+    glGetFloatv(0xBA7u, gProjectionMatrix);
+    glMatrixMode(0x1700u);
+    glLoadIdentity();
+    glRotatef(-90.0, 1.0, 0.0, 0.0);
+    glRotatef(90.0, 0.0, 0.0, 1.0);
+    angle = -flt_3F93444;
+    glRotatef(angle, 1.0, 0.0, 0.0);
+    anglea = -flt_3F9343C;
+    glRotatef(anglea, 0.0, 1.0, 0.0);
+    angleb = -flt_3F93440;
+    glRotatef(angleb, 0.0, 0.0, 1.0);
+    z = -flt_3F93438;
+    y = -flt_3F93434;
+    x = -flt_3F93430;
+    glTranslatef(x, y, z);
+    glGetFloatv(0xBA6u, r_world_matrix);
+    if ( 0.0 == flt_1EE03E4 )
+      glDisable(0xB44u);
+    else
+      glEnable(0xB44u);
+    glDisable(0xBE2u);
+    glDisable(0xBC0u);
+    glEnable(0xB71u);
+    for ( i = 0; i < 16; i += 4 )
+    {
+      v7 = r_world_matrix[i];
+      v8 = &gWorldToScreen[i];
+      v9 = r_world_matrix[i + 1];
+      v10 = &gProjectionMatrix[4];
+      v11 = r_world_matrix[i + 2];
+      v12 = r_world_matrix[i + 3];
+      do
+      {
+        v13 = v10[8] * v12 + v10[4] * v11;
+        v14 = *(v10 - 4) * v7;
+        v15 = v9 * *v10++;
+        *v8++ = v13 + v14 + v15;
+      }
+      while ( (int)v10 < (int)&gProjectionMatrix[8] );
+    }
+    InvertMatrix(gWorldToScreen, gScreenToWorld);
+  }

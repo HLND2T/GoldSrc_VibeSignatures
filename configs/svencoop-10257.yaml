@@ -5,6 +5,19 @@ modules:
     depot_windows: hw.dll
     depot_linux: hw.so
     skills:
+      - name: find-R_SetupGL-svengine-decompiles
+        expected_input:
+          - R_SetupGL.{platform}.yaml
+        expected_output:
+          - gmodinfo_vertical_fov.{platform}.yaml
+      - name: find-R_SetupGL-matrices-decompiles
+        expected_input:
+          - R_SetupGL.{platform}.yaml
+        expected_output:
+          - gWorldToScreen.{platform}.yaml
+          - gScreenToWorld.{platform}.yaml
+          - gProjectionMatrix.{platform}.yaml
+          - r_world_matrix.{platform}.yaml
       - name: find-svengine-fill-rgba
         expected_input:
           - cl_enginefuncs.{platform}.yaml
@@ -1319,6 +1332,16 @@ modules:
       - name: g_bFogSkybox
         category: gv
       - name: g_bUserFogOn
+        category: gv
+      - name: gmodinfo_vertical_fov
+        category: gv
+      - name: gWorldToScreen
+        category: gv
+      - name: gScreenToWorld
+        category: gv
+      - name: gProjectionMatrix
+        category: gv
+      - name: r_world_matrix
         category: gv
       - name: R_SetupGL
         category: func

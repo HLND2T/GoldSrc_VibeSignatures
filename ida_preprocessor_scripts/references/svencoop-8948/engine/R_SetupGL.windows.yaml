@@ -1,0 +1,662 @@
+func_name: R_SetupGL
+func_va: '0x1d55a10'
+disasm_code: |-
+  ; Engine matrix globals: each target is the base of a float[16] object, not a pointer slot or an interior element.
+  ; gProjectionMatrix (gv): output buffer of GetFloatv(GL_PROJECTION_MATRIX = 0xBA7).
+  ; r_world_matrix (gv): output buffer of GetFloatv(GL_MODELVIEW_MATRIX = 0xBA6).
+  ; gWorldToScreen (gv): product of projection/modelview matrices; input to InvertMatrix.
+  ; gScreenToWorld (gv): output buffer of that same InvertMatrix call.
+  ; Source role: HLND2T_official/engine/gl_rmain.c R_SetupGL; current instructions and ABI take precedence over source layout.
+  ; gmodinfo_vertical_fov (gv): address of gmodinfo.vertical_fov, a four-byte boolean field, not an independent ELF symbol or FOV angle.
+  ; Select the field read that chooses the vertical/horizontal projection calculation, not gmodinfo or a GOT pointer to it.
+  ; The liblist.gam vertical_fov boolean write independently confirms this field. Derive its address from the current binary, never copy the reference offset.
+  ; SvEngine differs from the public GoldSrc body: FOV projection selection is inlined or delegated, and matrix multiplication may be vectorized.
+  .text:01D55A10                 push    ebp
+  .text:01D55A11                 mov     ebp, esp
+  .text:01D55A13                 and     esp, 0FFFFFFC0h
+  .text:01D55A16                 sub     esp, 34h
+  .text:01D55A19                 push    ebx
+  .text:01D55A1A                 push    esi
+  .text:01D55A1B                 push    edi
+  .text:01D55A1C                 ; mode
+  .text:01D55A1C                 push    1701h; mode
+  .text:01D55A21                 call    ds:glMatrixMode
+  .text:01D55A27                 call    ds:glLoadIdentity
+  .text:01D55A2D                 mov     ebx, dword ptr qword_8006654+4
+  .text:01D55A33                 mov     ecx, ebx
+  .text:01D55A35                 mov     edi, dword_3F54468
+  .text:01D55A3B                 mov     esi, ebx
+  .text:01D55A3D                 sub     esi, dword_3F54474
+  .text:01D55A43                 mov     edx, dword_3F54470
+  .text:01D55A49                 sub     ecx, dword_3F5446C
+  .text:01D55A4F                 add     edx, edi
+  .text:01D55A51                 sub     esi, dword_3F5446C
+  .text:01D55A57                 test    edi, edi
+  .text:01D55A59                 jle     short loc_1D55A5C
+  .text:01D55A5B                 dec     edi
+  .text:01D55A5C                 cmp     edx, dword ptr qword_8006654
+  .text:01D55A62                 jge     short loc_1D55A65
+  .text:01D55A64                 inc     edx
+  .text:01D55A65                 test    esi, esi
+  .text:01D55A67                 jns     short loc_1D55A6A
+  .text:01D55A69                 dec     esi
+  .text:01D55A6A                 cmp     ecx, ebx
+  .text:01D55A6C                 jge     short loc_1D55A6F
+  .text:01D55A6E                 inc     ecx
+  .text:01D55A6F                 sub     edx, edi
+  .text:01D55A71                 sub     ecx, esi
+  .text:01D55A73                 cmp     dword_3F5401C, 0
+  .text:01D55A7A                 jz      short loc_1D55A9B
+  .text:01D55A7C                 fld     flt_1ED8474
+  .text:01D55A82                 xor     esi, esi
+  .text:01D55A84                 xor     edi, edi
+  .text:01D55A86                 call    sub_1E27990
+  .text:01D55A8B                 mov     ecx, eax
+  .text:01D55A8D                 mov     edx, ecx
+  .text:01D55A8F                 mov     dword ptr qword_8006654+4, ecx
+  .text:01D55A95                 mov     dword ptr qword_8006654, ecx
+  .text:01D55A9B                 mov     eax, dword ptr qword_800664C+4
+  .text:01D55AA0                 ; height
+  .text:01D55AA0                 push    ecx; height
+  .text:01D55AA1                 add     eax, esi
+  .text:01D55AA3                 ; width
+  .text:01D55AA3                 push    edx; width
+  .text:01D55AA4                 ; y
+  .text:01D55AA4                 push    eax; y
+  .text:01D55AA5                 mov     eax, dword ptr qword_800664C
+  .text:01D55AAA                 add     eax, edi
+  .text:01D55AAC                 ; x
+  .text:01D55AAC                 push    eax; x
+  .text:01D55AAD                 call    ds:glViewport
+  .text:01D55AB3                 cmp     gmodinfo_vertical_fov, 0
+  .text:01D55ABA                 jz      loc_1D55C4A
+  .text:01D55AC0                 fild    dword_3F54474
+  .text:01D55AC6                 fild    dword_3F54470
+  .text:01D55ACC                 fld     st(1)
+  .text:01D55ACE                 fdiv    st, st(1)
+  .text:01D55AD0                 fst     [esp+40h+var_10]
+  .text:01D55AD4                 fld     flt_1ED85A0
+  .text:01D55ADA                 fld1
+  .text:01D55ADC                 fcomp   st(1)
+  .text:01D55ADE                 fnstsw  ax
+  .text:01D55AE0                 fld     ds:flt_1E5ACEC
+  .text:01D55AE6                 test    ah, 41h
+  .text:01D55AE9                 jz      short loc_1D55AFA
+  .text:01D55AEB                 fld     ds:flt_1E66464
+  .text:01D55AF1                 fcomp   st(2)
+  .text:01D55AF3                 fnstsw  ax
+  .text:01D55AF5                 test    ah, 5
+  .text:01D55AF8                 jp      short loc_1D55AFE
+  .text:01D55AFA                 fstp    st(1)
+  .text:01D55AFC                 jmp     short loc_1D55B00
+  .text:01D55AFE                 fstp    st
+  .text:01D55B00                 cmp     dword_3F54494, 0
+  .text:01D55B07                 fmul    ds:flt_1E66428
+  .text:01D55B0D                 fmul    ds:dbl_1E66450
+  .text:01D55B13                 fptan
+  .text:01D55B15                 fstp    st
+  .text:01D55B17                 fdivp   st(3), st
+  .text:01D55B19                 fxch    st(1)
+  .text:01D55B1B                 fdivrp  st(2), st
+  .text:01D55B1D                 fld1
+  .text:01D55B1F                 fxch    st(1)
+  .text:01D55B21                 fxch    st(2)
+  .text:01D55B23                 fxch    st(1)
+  .text:01D55B25                 fpatan
+  .text:01D55B27                 fmul    ds:flt_1E5F73C
+  .text:01D55B2D                 fmul    ds:dbl_1E66440
+  .text:01D55B33                 fst     [esp+40h+var_8]
+  .text:01D55B37                 jz      short loc_1D55B86
+  .text:01D55B39                 fmul    ds:dbl_1E66430
+  .text:01D55B3F                 sub     esp, 30h
+  .text:01D55B42                 fptan
+  .text:01D55B44                 fstp    st
+  .text:01D55B46                 fld     ds:dbl_1E631E0
+  .text:01D55B4C                 fmul    st(1), st
+  .text:01D55B4E                 fld     st(1)
+  .text:01D55B50                 fchs
+  .text:01D55B52                 fld     ds:dbl_1E66458
+  .text:01D55B58                 ; zFar
+  .text:01D55B58                 fstp    qword ptr [esp+70h+zFar]; zFar
+  .text:01D55B5C                 fxch    st(1)
+  .text:01D55B5E                 ; zNear
+  .text:01D55B5E                 fstp    [esp+70h+zNear]; zNear
+  .text:01D55B62                 fld     st(1)
+  .text:01D55B64                 fmul    st, st(3)
+  .text:01D55B66                 ; top
+  .text:01D55B66                 fstp    [esp+70h+top]; top
+  .text:01D55B6A                 fld     st
+  .text:01D55B6C                 fmulp   st(3), st
+  .text:01D55B6E                 fxch    st(2)
+  .text:01D55B70                 ; bottom
+  .text:01D55B70                 fstp    [esp+70h+bottom]; bottom
+  .text:01D55B74                 ; right
+  .text:01D55B74                 fstp    [esp+70h+right]; right
+  .text:01D55B78                 ; left
+  .text:01D55B78                 fstp    [esp+70h+left]; left
+  .text:01D55B7B                 call    ds:glFrustum
+  .text:01D55B81                 jmp     loc_1D55DC9
+  .text:01D55B86                 fstp    st
+  .text:01D55B88                 fstp    st
+  .text:01D55B8A                 call    sub_1D038A0
+  .text:01D55B8F                 test    eax, eax
+  .text:01D55B91                 jz      loc_1D55C1A
+  .text:01D55B97                 fld     flt_1EE1044
+  .text:01D55B9D                 fld     st
+  .text:01D55B9F                 fmul    [esp+40h+var_10]
+  .text:01D55BA3                 fld     ds:flt_1E5E818
+  .text:01D55BA9                 fld     st
+  .text:01D55BAB                 fdivrp  st(2), st
+  .text:01D55BAD                 fxch    st(1)
+  .text:01D55BAF                 call    sub_1E27990
+  .text:01D55BB4                 fdivrp  st(1), st
+  .text:01D55BB6                 mov     esi, eax
+  .text:01D55BB8                 mov     [esp+40h+var_C], esi
+  .text:01D55BBC                 call    sub_1E27990
+  .text:01D55BC1                 fld     ds:flt_1E5ACF8
+  .text:01D55BC7                 sub     esp, 30h
+  .text:01D55BCA                 fld     flt_1EE1040
+  .text:01D55BD0                 neg     esi
+  .text:01D55BD2                 fsubr   st, st(1)
+  .text:01D55BD4                 mov     [esp+70h+var_10], eax
+  .text:01D55BD8                 neg     eax
+  .text:01D55BDA                 ; zFar
+  .text:01D55BDA                 fstp    qword ptr [esp+70h+zFar]; zFar
+  .text:01D55BDE                 fsub    flt_1EE103C
+  .text:01D55BE4                 ; zNear
+  .text:01D55BE4                 fstp    [esp+70h+zNear]; zNear
+  .text:01D55BE8                 fild    [esp+70h+var_10]
+  .text:01D55BEC                 mov     [esp+70h+var_10], eax
+  .text:01D55BF0                 ; top
+  .text:01D55BF0                 fstp    [esp+70h+top]; top
+  .text:01D55BF4                 fild    [esp+70h+var_10]
+  .text:01D55BF8                 ; bottom
+  .text:01D55BF8                 fstp    [esp+70h+bottom]; bottom
+  .text:01D55BFC                 fild    [esp+70h+var_C]
+  .text:01D55C00                 mov     [esp+70h+var_C], esi
+  .text:01D55C04                 ; right
+  .text:01D55C04                 fstp    [esp+70h+right]; right
+  .text:01D55C08                 fild    [esp+70h+var_C]
+  .text:01D55C0C                 ; left
+  .text:01D55C0C                 fstp    [esp+70h+left]; left
+  .text:01D55C0F                 call    ds:glOrtho
+  .text:01D55C15                 jmp     loc_1D55DC9
+  .text:01D55C1A                 fld     flt_851B378
+  .text:01D55C20                 sub     esp, 20h
+  .text:01D55C23                 ; double
+  .text:01D55C23                 fstp    qword ptr [esp+60h+zFar]; double
+  .text:01D55C27                 fld     ds:dbl_1E631E0
+  .text:01D55C2D                 ; double
+  .text:01D55C2D                 fstp    [esp+60h+zNear]; double
+  .text:01D55C31                 fld     [esp+60h+var_10]
+  .text:01D55C35                 ; double
+  .text:01D55C35                 fstp    [esp+60h+top]; double
+  .text:01D55C39                 fld     [esp+60h+var_8]
+  .text:01D55C3D                 ; double
+  .text:01D55C3D                 fstp    [esp+60h+bottom]; double
+  .text:01D55C40                 call    sub_1D55680
+  .text:01D55C45                 jmp     loc_1D55DC6
+  .text:01D55C4A                 fild    dword_3F54470
+  .text:01D55C50                 fild    dword_3F54474
+  .text:01D55C56                 fld     st(1)
+  .text:01D55C58                 fdiv    st, st(1)
+  .text:01D55C5A                 fst     [esp+40h+var_10]
+  .text:01D55C5E                 fld     flt_1ED85A0
+  .text:01D55C64                 fld1
+  .text:01D55C66                 fcomp   st(1)
+  .text:01D55C68                 fnstsw  ax
+  .text:01D55C6A                 fld     ds:flt_1E5ACEC
+  .text:01D55C70                 test    ah, 41h
+  .text:01D55C73                 jz      short loc_1D55C84
+  .text:01D55C75                 fld     ds:flt_1E66464
+  .text:01D55C7B                 fcomp   st(2)
+  .text:01D55C7D                 fnstsw  ax
+  .text:01D55C7F                 test    ah, 5
+  .text:01D55C82                 jp      short loc_1D55C88
+  .text:01D55C84                 fstp    st(1)
+  .text:01D55C86                 jmp     short loc_1D55C8A
+  .text:01D55C88                 fstp    st
+  .text:01D55C8A                 cmp     dword_3F54494, 0
+  .text:01D55C91                 fmul    ds:flt_1E66428
+  .text:01D55C97                 fmul    ds:dbl_1E66450
+  .text:01D55C9D                 fptan
+  .text:01D55C9F                 fstp    st
+  .text:01D55CA1                 fdivp   st(3), st
+  .text:01D55CA3                 fxch    st(1)
+  .text:01D55CA5                 fdivrp  st(2), st
+  .text:01D55CA7                 fld1
+  .text:01D55CA9                 fxch    st(1)
+  .text:01D55CAB                 fxch    st(2)
+  .text:01D55CAD                 fxch    st(1)
+  .text:01D55CAF                 fpatan
+  .text:01D55CB1                 fmul    ds:flt_1E5F73C
+  .text:01D55CB7                 fmul    ds:dbl_1E66440
+  .text:01D55CBD                 fst     [esp+40h+var_8]
+  .text:01D55CC1                 jz      short loc_1D55D10
+  .text:01D55CC3                 fmul    ds:dbl_1E66430
+  .text:01D55CC9                 sub     esp, 30h
+  .text:01D55CCC                 fptan
+  .text:01D55CCE                 fstp    st
+  .text:01D55CD0                 fld     ds:dbl_1E631E0
+  .text:01D55CD6                 fmul    st(1), st
+  .text:01D55CD8                 fld     st(1)
+  .text:01D55CDA                 fchs
+  .text:01D55CDC                 fld     ds:dbl_1E66458
+  .text:01D55CE2                 ; zFar
+  .text:01D55CE2                 fstp    qword ptr [esp+70h+zFar]; zFar
+  .text:01D55CE6                 fxch    st(1)
+  .text:01D55CE8                 ; zNear
+  .text:01D55CE8                 fstp    [esp+70h+zNear]; zNear
+  .text:01D55CEC                 fxch    st(1)
+  .text:01D55CEE                 ; top
+  .text:01D55CEE                 fst     [esp+70h+top]; top
+  .text:01D55CF2                 fxch    st(1)
+  .text:01D55CF4                 ; bottom
+  .text:01D55CF4                 fst     [esp+70h+bottom]; bottom
+  .text:01D55CF8                 fxch    st(1)
+  .text:01D55CFA                 fmul    st, st(2)
+  .text:01D55CFC                 ; right
+  .text:01D55CFC                 fstp    [esp+70h+right]; right
+  .text:01D55D00                 fmulp   st(1), st
+  .text:01D55D02                 ; left
+  .text:01D55D02                 fstp    [esp+70h+left]; left
+  .text:01D55D05                 call    ds:glFrustum
+  .text:01D55D0B                 jmp     loc_1D55DC9
+  .text:01D55D10                 fstp    st
+  .text:01D55D12                 fstp    st
+  .text:01D55D14                 call    sub_1D038A0
+  .text:01D55D19                 test    eax, eax
+  .text:01D55D1B                 jz      short loc_1D55D9B
+  .text:01D55D1D                 fld     ds:flt_1E5E818
+  .text:01D55D23                 fld     st
+  .text:01D55D25                 fld     flt_1EE1044
+  .text:01D55D2B                 fdiv    st(1), st
+  .text:01D55D2D                 fxch    st(1)
+  .text:01D55D2F                 call    sub_1E27990
+  .text:01D55D34                 fmul    [esp+40h+var_10]
+  .text:01D55D38                 mov     esi, eax
+  .text:01D55D3A                 mov     dword ptr [esp+40h+var_8], esi
+  .text:01D55D3E                 fdivp   st(1), st
+  .text:01D55D40                 call    sub_1E27990
+  .text:01D55D45                 fld     ds:flt_1E5ACF8
+  .text:01D55D4B                 sub     esp, 30h
+  .text:01D55D4E                 fld     flt_1EE1040
+  .text:01D55D54                 neg     esi
+  .text:01D55D56                 fsubr   st, st(1)
+  .text:01D55D58                 mov     [esp+70h+var_C], eax
+  .text:01D55D5C                 neg     eax
+  .text:01D55D5E                 ; zFar
+  .text:01D55D5E                 fstp    qword ptr [esp+70h+zFar]; zFar
+  .text:01D55D62                 fsub    flt_1EE103C
+  .text:01D55D68                 ; zNear
+  .text:01D55D68                 fstp    [esp+70h+zNear]; zNear
+  .text:01D55D6C                 fild    [esp+70h+var_C]
+  .text:01D55D70                 mov     [esp+70h+var_C], eax
+  .text:01D55D74                 ; top
+  .text:01D55D74                 fstp    [esp+70h+top]; top
+  .text:01D55D78                 fild    [esp+70h+var_C]
+  .text:01D55D7C                 ; bottom
+  .text:01D55D7C                 fstp    [esp+70h+bottom]; bottom
+  .text:01D55D80                 fild    dword ptr [esp+70h+var_8]
+  .text:01D55D84                 mov     dword ptr [esp+70h+var_8], esi
+  .text:01D55D88                 ; right
+  .text:01D55D88                 fstp    [esp+70h+right]; right
+  .text:01D55D8C                 fild    dword ptr [esp+70h+var_8]
+  .text:01D55D90                 ; left
+  .text:01D55D90                 fstp    [esp+70h+left]; left
+  .text:01D55D93                 call    ds:glOrtho
+  .text:01D55D99                 jmp     short loc_1D55DC9
+  .text:01D55D9B                 fld     flt_851B378
+  .text:01D55DA1                 sub     esp, 20h
+  .text:01D55DA4                 ; double
+  .text:01D55DA4                 fstp    qword ptr [esp+60h+zFar]; double
+  .text:01D55DA8                 fld     ds:dbl_1E631E0
+  .text:01D55DAE                 ; double
+  .text:01D55DAE                 fstp    [esp+60h+zNear]; double
+  .text:01D55DB2                 fld     [esp+60h+var_10]
+  .text:01D55DB6                 ; double
+  .text:01D55DB6                 fstp    [esp+60h+top]; double
+  .text:01D55DBA                 fld     [esp+60h+var_8]
+  .text:01D55DBE                 ; double
+  .text:01D55DBE                 fstp    [esp+60h+bottom]; double
+  .text:01D55DC1                 call    sub_1D55630
+  .text:01D55DC6                 add     esp, 20h
+  .text:01D55DC9                 ; mode
+  .text:01D55DC9                 push    404h; mode
+  .text:01D55DCE                 call    ds:glCullFace
+  .text:01D55DD4                 mov     edi, ds:glGetFloatv
+  .text:01D55DDA                 ; params
+  .text:01D55DDA                 push    offset gProjectionMatrix; params
+  .text:01D55DDF                 ; pname
+  .text:01D55DDF                 push    0BA7h; pname
+  .text:01D55DE4                 call    edi ; glGetFloatv
+  .text:01D55DE6                 ; mode
+  .text:01D55DE6                 push    1700h; mode
+  .text:01D55DEB                 call    ds:glMatrixMode
+  .text:01D55DF1                 call    ds:glLoadIdentity
+  .text:01D55DF7                 fldz
+  .text:01D55DF9                 sub     esp, 10h
+  .text:01D55DFC                 mov     esi, ds:glRotatef
+  .text:01D55E02                 ; z
+  .text:01D55E02                 fst     [esp+50h+zFar+4]; z
+  .text:01D55E06                 ; y
+  .text:01D55E06                 fstp    [esp+50h+zFar]; y
+  .text:01D55E0A                 fld1
+  .text:01D55E0C                 ; x
+  .text:01D55E0C                 fstp    dword ptr [esp+50h+zNear+4]; x
+  .text:01D55E10                 fld     ds:flt_1E6646C
+  .text:01D55E16                 ; angle
+  .text:01D55E16                 fstp    dword ptr [esp+50h+zNear]; angle
+  .text:01D55E19                 call    esi ; glRotatef
+  .text:01D55E1B                 fld1
+  .text:01D55E1D                 sub     esp, 10h
+  .text:01D55E20                 ; z
+  .text:01D55E20                 fstp    [esp+50h+zFar+4]; z
+  .text:01D55E24                 fldz
+  .text:01D55E26                 ; y
+  .text:01D55E26                 fst     [esp+50h+zFar]; y
+  .text:01D55E2A                 ; x
+  .text:01D55E2A                 fstp    dword ptr [esp+50h+zNear+4]; x
+  .text:01D55E2E                 fld     ds:flt_1E5ACEC
+  .text:01D55E34                 ; angle
+  .text:01D55E34                 fstp    dword ptr [esp+50h+zNear]; angle
+  .text:01D55E37                 call    esi ; glRotatef
+  .text:01D55E39                 fldz
+  .text:01D55E3B                 sub     esp, 10h
+  .text:01D55E3E                 ; z
+  .text:01D55E3E                 fst     [esp+50h+zFar+4]; z
+  .text:01D55E42                 ; y
+  .text:01D55E42                 fstp    [esp+50h+zFar]; y
+  .text:01D55E46                 fld1
+  .text:01D55E48                 ; x
+  .text:01D55E48                 fstp    dword ptr [esp+50h+zNear+4]; x
+  .text:01D55E4C                 fld     flt_3F5448C
+  .text:01D55E52                 fchs
+  .text:01D55E54                 ; angle
+  .text:01D55E54                 fstp    dword ptr [esp+50h+zNear]; angle
+  .text:01D55E57                 call    esi ; glRotatef
+  .text:01D55E59                 fldz
+  .text:01D55E5B                 sub     esp, 10h
+  .text:01D55E5E                 ; z
+  .text:01D55E5E                 fst     [esp+50h+zFar+4]; z
+  .text:01D55E62                 fld1
+  .text:01D55E64                 ; y
+  .text:01D55E64                 fstp    [esp+50h+zFar]; y
+  .text:01D55E68                 ; x
+  .text:01D55E68                 fstp    dword ptr [esp+50h+zNear+4]; x
+  .text:01D55E6C                 fld     flt_3F54484
+  .text:01D55E72                 fchs
+  .text:01D55E74                 ; angle
+  .text:01D55E74                 fstp    dword ptr [esp+50h+zNear]; angle
+  .text:01D55E77                 call    esi ; glRotatef
+  .text:01D55E79                 fld1
+  .text:01D55E7B                 sub     esp, 10h
+  .text:01D55E7E                 ; z
+  .text:01D55E7E                 fstp    [esp+50h+zFar+4]; z
+  .text:01D55E82                 fldz
+  .text:01D55E84                 ; y
+  .text:01D55E84                 fst     [esp+50h+zFar]; y
+  .text:01D55E88                 ; x
+  .text:01D55E88                 fstp    dword ptr [esp+50h+zNear+4]; x
+  .text:01D55E8C                 fld     flt_3F54488
+  .text:01D55E92                 fchs
+  .text:01D55E94                 ; angle
+  .text:01D55E94                 fstp    dword ptr [esp+50h+zNear]; angle
+  .text:01D55E97                 call    esi ; glRotatef
+  .text:01D55E99                 fld     flt_3F54480
+  .text:01D55E9F                 sub     esp, 0Ch
+  .text:01D55EA2                 fchs
+  .text:01D55EA4                 ; z
+  .text:01D55EA4                 fstp    [esp+4Ch+zFar+4]; z
+  .text:01D55EA8                 fld     flt_3F5447C
+  .text:01D55EAE                 fchs
+  .text:01D55EB0                 ; y
+  .text:01D55EB0                 fstp    [esp+4Ch+zFar]; y
+  .text:01D55EB4                 fld     flt_3F54478
+  .text:01D55EBA                 fchs
+  .text:01D55EBC                 ; x
+  .text:01D55EBC                 fstp    dword ptr [esp+4Ch+zNear+4]; x
+  .text:01D55EBF                 call    ds:glTranslatef
+  .text:01D55EC5                 ; params
+  .text:01D55EC5                 push    offset r_world_matrix; params
+  .text:01D55ECA                 ; pname
+  .text:01D55ECA                 push    0BA6h; pname
+  .text:01D55ECF                 call    edi ; glGetFloatv
+  .text:01D55ED1                 fld     flt_1ED83D4
+  .text:01D55ED7                 fldz
+  .text:01D55ED9                 mov     esi, ds:glDisable
+  .text:01D55EDF                 fucompp
+  .text:01D55EE1                 mov     edi, ds:glEnable
+  .text:01D55EE7                 fnstsw  ax
+  .text:01D55EE9                 ; cap
+  .text:01D55EE9                 push    0B44h; cap
+  .text:01D55EEE                 test    ah, 44h
+  .text:01D55EF1                 jnp     short loc_1D55EF7
+  .text:01D55EF3                 call    edi ; glEnable
+  .text:01D55EF5                 jmp     short loc_1D55EF9
+  .text:01D55EF7                 call    esi ; glDisable
+  .text:01D55EF9                 ; cap
+  .text:01D55EF9                 push    0BE2h; cap
+  .text:01D55EFE                 call    esi ; glDisable
+  .text:01D55F00                 ; cap
+  .text:01D55F00                 push    0BC0h; cap
+  .text:01D55F05                 call    esi ; glDisable
+  .text:01D55F07                 ; cap
+  .text:01D55F07                 push    0B71h; cap
+  .text:01D55F0C                 call    edi ; glEnable
+  .text:01D55F0E                 xor     edx, edx
+  .text:01D55F10                 fld     r_world_matrix[edx]
+  .text:01D55F16                 lea     ecx, gWorldToScreen[edx]
+  .text:01D55F1C                 fld     (r_world_matrix+4)[edx]
+  .text:01D55F22                 mov     eax, (offset gProjectionMatrix+10h)
+  .text:01D55F27                 fld     (r_world_matrix+8)[edx]
+  .text:01D55F2D                 fld     (r_world_matrix+0Ch)[edx]
+  .text:01D55F33                 fld     dword ptr [eax+10h]
+  .text:01D55F36                 fmul    st, st(2)
+  .text:01D55F38                 fld     dword ptr [eax+20h]
+  .text:01D55F3B                 fmul    st, st(2)
+  .text:01D55F3D                 faddp   st(1), st
+  .text:01D55F3F                 fld     dword ptr [eax-10h]
+  .text:01D55F42                 fmul    st, st(5)
+  .text:01D55F44                 fld     st(4)
+  .text:01D55F46                 fmul    dword ptr [eax]
+  .text:01D55F48                 add     eax, 4
+  .text:01D55F4B                 faddp   st(1), st
+  .text:01D55F4D                 faddp   st(1), st
+  .text:01D55F4F                 fstp    dword ptr [ecx]
+  .text:01D55F51                 add     ecx, 4
+  .text:01D55F54                 cmp     eax, (offset gProjectionMatrix+20h)
+  .text:01D55F59                 jl      short loc_1D55F33
+  .text:01D55F5B                 fstp    st(3)
+  .text:01D55F5D                 add     edx, 10h
+  .text:01D55F60                 fstp    st(1)
+  .text:01D55F62                 fstp    st
+  .text:01D55F64                 fstp    st
+  .text:01D55F66                 cmp     edx, 40h ; '@'
+  .text:01D55F69                 jl      short loc_1D55F10
+  .text:01D55F6B                 ; inverse
+  .text:01D55F6B                 push    offset gScreenToWorld; inverse
+  .text:01D55F70                 ; matrix
+  .text:01D55F70                 push    offset gWorldToScreen; matrix
+  .text:01D55F75                 call    InvertMatrix
+  .text:01D55F7A                 add     esp, 8
+  .text:01D55F7D                 pop     edi
+  .text:01D55F7E                 pop     esi
+  .text:01D55F7F                 pop     ebx
+  .text:01D55F80                 mov     esp, ebp
+  .text:01D55F82                 pop     ebp
+  .text:01D55F83                 retn
+procedure: |-
+  // Engine matrix globals: each target is the base of a float[16] object, not a pointer slot or an interior element.
+  // gProjectionMatrix (gv): output buffer of GetFloatv(GL_PROJECTION_MATRIX = 0xBA7).
+  // r_world_matrix (gv): output buffer of GetFloatv(GL_MODELVIEW_MATRIX = 0xBA6).
+  // gWorldToScreen (gv): product of projection/modelview matrices; input to InvertMatrix.
+  // gScreenToWorld (gv): output buffer of that same InvertMatrix call.
+  // Source role: HLND2T_official/engine/gl_rmain.c R_SetupGL; current instructions and ABI take precedence over source layout.
+  // gmodinfo_vertical_fov (gv): address of gmodinfo.vertical_fov, a four-byte boolean field, not an independent ELF symbol or FOV angle.
+  // Select the field read that chooses the vertical/horizontal projection calculation, not gmodinfo or a GOT pointer to it.
+  // The liblist.gam vertical_fov boolean write independently confirms this field. Derive its address from the current binary, never copy the reference offset.
+  // SvEngine differs from the public GoldSrc body: FOV projection selection is inlined or delegated, and matrix multiplication may be vectorized.
+  void __cdecl R_SetupGL()
+  {
+    int v0; // edi
+    int v1; // ecx
+    int v2; // edx
+    int v3; // esi
+    GLsizei v4; // edx
+    GLsizei v5; // ecx
+    double v6; // st7
+    double v7; // st6
+    double v8; // st4
+    long double v9; // st5
+    double v10; // st7
+    double v11; // st6
+    GLdouble right; // st6
+    int v13; // esi
+    int v14; // eax
+    double v15; // st7
+    double v16; // st6
+    double v17; // st4
+    long double v18; // st5
+    double v19; // st7
+    double v20; // st6
+    GLdouble top; // rt1
+    int i; // edx
+    double v23; // st7
+    float *v24; // ecx
+    double v25; // st6
+    float *v26; // eax
+    double v27; // st5
+    double v28; // st4
+    double v29; // st3
+    double v30; // st2
+    double v31; // st1
+    GLfloat zNear; // [esp+20h] [ebp-50h]
+    GLfloat zNeara; // [esp+20h] [ebp-50h]
+    GLfloat zNearb; // [esp+20h] [ebp-50h]
+    GLfloat zNear_4; // [esp+24h] [ebp-4Ch]
+    GLfloat zFar; // [esp+28h] [ebp-48h]
+    GLfloat zFar_4; // [esp+2Ch] [ebp-44h]
+    float v38; // [esp+60h] [ebp-10h]
+    float v39; // [esp+60h] [ebp-10h]
+
+    glMatrixMode(0x1701u);
+    glLoadIdentity();
+    v0 = dword_3F54468;
+    v1 = *(&qword_8006654 + 1) - dword_3F5446C;
+    v2 = dword_3F54468 + dword_3F54470;
+    v3 = *(&qword_8006654 + 1) - dword_3F54474 - dword_3F5446C;
+    if ( dword_3F54468 > 0 )
+      v0 = dword_3F54468 - 1;
+    if ( v2 < qword_8006654 )
+      ++v2;
+    if ( v3 < 0 )
+      --v3;
+    if ( v1 < *(&qword_8006654 + 1) )
+      ++v1;
+    v4 = v2 - v0;
+    v5 = v1 - v3;
+    if ( dword_3F5401C )
+    {
+      v3 = 0;
+      v0 = 0;
+      v5 = sub_1E27990();
+      v4 = v5;
+      *(&qword_8006654 + 1) = v5;
+      qword_8006654 = v5;
+    }
+    glViewport(v0 + qword_800664C, v3 + *(&qword_800664C + 1), v4, v5);
+    if ( gmodinfo_vertical_fov )
+    {
+      v6 = (double)dword_3F54474;
+      v7 = (double)dword_3F54470;
+      v38 = v6 / v7;
+      v8 = flt_1ED85A0;
+      if ( flt_1ED85A0 < 1.0 || v8 > 179.0 )
+        v8 = 90.0;
+      v9 = v7 / (v6 / tan(v8 * 0.0027777778 * 3.141592653589793));
+      v10 = v6 / v7;
+      v11 = atan2(v9, 1.0) * 360.0 * 0.3183098861837907;
+      if ( dword_3F54494 )
+      {
+        right = tan(v11 * 0.008726646259971648) * 4.0;
+        glFrustum(-right, right, v10 * -right, right * v10, 4.0, 16000.0);
+        goto LABEL_27;
+      }
+      if ( sub_1D038A0() )
+        goto LABEL_18;
+      sub_1D55680(v11, v38, 4.0, flt_851B378);
+    }
+    else
+    {
+      v15 = (double)dword_3F54470;
+      v16 = (double)dword_3F54474;
+      v39 = v15 / v16;
+      v17 = flt_1ED85A0;
+      if ( flt_1ED85A0 < 1.0 || v17 > 179.0 )
+        v17 = 90.0;
+      v18 = v16 / (v15 / tan(v17 * 0.0027777778 * 3.141592653589793));
+      v19 = v15 / v16;
+      v20 = atan2(v18, 1.0) * 360.0 * 0.3183098861837907;
+      if ( dword_3F54494 )
+      {
+        top = tan(v20 * 0.008726646259971648) * 4.0;
+        glFrustum(v19 * -top, top * v19, -top, top, 4.0, 16000.0);
+      }
+      else
+      {
+        if ( sub_1D038A0() )
+        {
+  LABEL_18:
+          v13 = sub_1E27990();
+          v14 = sub_1E27990();
+          glOrtho((double)-v13, (double)v13, (double)-v14, (double)v14, 16000.0 - flt_1EE103C, 16000.0 - flt_1EE1040);
+          goto LABEL_27;
+        }
+        sub_1D55630(v20, v39, 4.0, flt_851B378);
+      }
+    }
+  LABEL_27:
+    glCullFace(0x404u);
+    glGetFloatv(0xBA7u, gProjectionMatrix);
+    glMatrixMode(0x1700u);
+    glLoadIdentity();
+    glRotatef(-90.0, 1.0, 0.0, 0.0);
+    glRotatef(90.0, 0.0, 0.0, 1.0);
+    zNear = -flt_3F5448C;
+    glRotatef(zNear, 1.0, 0.0, 0.0);
+    zNeara = -flt_3F54484;
+    glRotatef(zNeara, 0.0, 1.0, 0.0);
+    zNearb = -flt_3F54488;
+    glRotatef(zNearb, 0.0, 0.0, 1.0);
+    zFar_4 = -flt_3F54480;
+    zFar = -flt_3F5447C;
+    zNear_4 = -flt_3F54478;
+    glTranslatef(zNear_4, zFar, zFar_4);
+    glGetFloatv(0xBA6u, r_world_matrix);
+    if ( 0.0 == flt_1ED83D4 )
+      glDisable(0xB44u);
+    else
+      glEnable(0xB44u);
+    glDisable(0xBE2u);
+    glDisable(0xBC0u);
+    glEnable(0xB71u);
+    for ( i = 0; i < 16; i += 4 )
+    {
+      v23 = r_world_matrix[i];
+      v24 = &gWorldToScreen[i];
+      v25 = r_world_matrix[i + 1];
+      v26 = &gProjectionMatrix[4];
+      v27 = r_world_matrix[i + 2];
+      v28 = r_world_matrix[i + 3];
+      do
+      {
+        v29 = v26[4] * v27 + v26[8] * v28;
+        v30 = *(v26 - 4) * v23;
+        v31 = v25 * *v26++;
+        *v24++ = v29 + v30 + v31;
+      }
+      while ( (int)v26 < (int)&gProjectionMatrix[8] );
+    }
+    InvertMatrix(gWorldToScreen, gScreenToWorld);
+  }
