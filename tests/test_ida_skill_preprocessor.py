@@ -2480,6 +2480,62 @@ found_struct_offset: []
             inspect_function.await_args_list,
         )
 
+    async def test_llm_struct_member_honors_explicit_signature_budget(self):
+        function = {"func_va": "0x401000", "func_sig": "55 8B EC 8B 40 ?? 5D C3"}
+        for allow_across, extended_result in ((False, function), (True, function), (True, None)):
+            with self.subTest(allow_across=allow_across, signature_found=extended_result is not None):
+                inspected = AsyncMock(side_effect=[None, extended_result])
+                with (
+                    patch("ida_analyze_util._inspect_function_via_mcp", new=inspected),
+                    patch(
+                        "ida_analyze_util._inspect_llm_instruction",
+                        new=AsyncMock(
+                            return_value={
+                                "func_start": "0x401000",
+                                "line": "mov eax, [ecx+4]",
+                                "displacements": ["0x4"],
+                            }
+                        ),
+                    ),
+                ):
+                    candidate = await _preprocess_llm_target(
+                        session=None,
+                        symbol_name="Container_count",
+                        category="structmember",
+                        spec={"expected_size": 4},
+                        llm_config={},
+                        new_binary_dir=Path("D:/game/engine"),
+                        platform="windows",
+                        image_base=0x400000,
+                        desired_fields=[
+                            "offset_sig",
+                            *(["offset_sig_allow_across_function_boundary"] if allow_across else []),
+                        ],
+                        target_ranges=[(0x401000, 0x401020)],
+                        llm_result={
+                            "found_struct_offset": [
+                                {
+                                    "struct_name": "Container",
+                                    "member_name": "count",
+                                    "offset": "0x4",
+                                    "size": 4,
+                                    "insn_va": "0x401010",
+                                    "insn_disasm": "mov eax, [ecx+4]",
+                                }
+                            ]
+                        },
+                    )
+                self.assertEqual(2 if allow_across else 1, inspected.await_count)
+                if allow_across and extended_result:
+                    self.assertEqual("0x4", candidate["offset"])
+                    self.assertEqual(4, candidate["size"])
+                    self.assertEqual(0x10, candidate["offset_sig_disp"])
+                    self.assertEqual(function["func_sig"], candidate["offset_sig"])
+                    self.assertTrue(candidate["offset_sig_allow_across_function_boundary"])
+                    self.assertEqual({"allow_across_function_boundary": True}, inspected.await_args.kwargs)
+                else:
+                    self.assertIsNone(candidate)
+
     def test_optional_global_across_boundary_marker_is_a_desired_output_field(self):
         desired = ida_analyze_util._desired_fields_map(
             [

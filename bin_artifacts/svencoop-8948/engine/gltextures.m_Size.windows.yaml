@@ -1,0 +1,8 @@
+gv_name: gltextures.m_Size
+gv_va: '0x30fc700'
+gv_rva: '0x13fc700'
+gv_sig: 51 83 3D ?? ?? ?? ?? ?? 74 ?? 33 C0 59 C3 53 55 8B 6C 24 ?? 56 57 80 7D ?? ?? 74 ?? 8D 64 24 ?? 33 F6 33 FF
+gv_sig_va: '0x1d4ecb0'
+gv_inst_offset: '0x24'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

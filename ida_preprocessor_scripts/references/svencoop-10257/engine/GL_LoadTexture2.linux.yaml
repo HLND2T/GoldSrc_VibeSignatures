@@ -1,0 +1,74 @@
+func_name: "GL_LoadTexture2"
+func_va: "0x12aa60"
+disasm_code: |-
+  .text:0012AA60                 sub     esp, 2Ch
+  .text:0012AA63                 mov     [esp+2Ch+var_4], ebp
+  .text:0012AA67                 mov     eax, [esp+2Ch+arg_0]
+  .text:0012AA6B                 call    sub_6399E
+  .text:0012AA70                 add     ebp, (offset dbl_2EE000 - $)
+  .text:0012AA76                 ; textureType
+  .text:0012AA76                 mov     edx, [esp+2Ch+arg_4]; textureType
+  .text:0012AA7A                 mov     [esp+2Ch+var_10], ebx
+  .text:0012AA7E                 mov     ebx, [esp+2Ch+height]
+  .text:0012AA82                 mov     [esp+2Ch+var_C], esi
+  .text:0012AA86                 mov     esi, [esp+2Ch+data]
+  .text:0012AA8A                 mov     [esp+2Ch+var_8], edi
+  .text:0012AA8E                 mov     edi, [esp+2Ch+mipmap]
+  .text:0012AA92                 ; width
+  .text:0012AA92                 mov     ecx, [esp+2Ch+width]; width
+  .text:0012AA96                 mov     [esp+2Ch+var_28], ebx
+  .text:0012AA9A                 mov     ebx, [esp+2Ch+iType]
+  .text:0012AA9E                 lea     ebp, unk_A51148[ebp]
+  .text:0012AAA4                 mov     [esp+2Ch+var_24], esi
+  .text:0012AAA8                 mov     esi, [esp+2Ch+pPal]
+  .text:0012AAAC                 mov     [esp+2Ch+var_20], edi
+  .text:0012AAB0                 mov     edi, [esp+2Ch+filter]
+  .text:0012AAB4                 mov     ebp, [ebp+0]
+  .text:0012AAB7                 test    ebp, ebp
+  .text:0012AAB9                 jnz     short loc_12AB00
+  .text:0012AABB                 ; filter
+  .text:0012AABB                 mov     [esp+2Ch+mipmap], edi; filter
+  .text:0012AABF                 mov     edi, [esp+2Ch+var_20]
+  .text:0012AAC3                 ; pPal
+  .text:0012AAC3                 mov     [esp+2Ch+data], esi; pPal
+  .text:0012AAC7                 mov     esi, [esp+2Ch+var_24]
+  .text:0012AACB                 ; iType
+  .text:0012AACB                 mov     [esp+2Ch+height], ebx; iType
+  .text:0012AACF                 mov     ebx, [esp+2Ch+var_28]
+  .text:0012AAD3                 mov     ebp, [esp+2Ch+var_4]
+  .text:0012AAD7                 ; mipmap
+  .text:0012AAD7                 mov     [esp+2Ch+width], edi; mipmap
+  .text:0012AADB                 mov     edi, [esp+2Ch+var_8]
+  .text:0012AADF                 ; data
+  .text:0012AADF                 mov     [esp+2Ch+arg_4], esi; data
+  .text:0012AAE3                 mov     esi, [esp+2Ch+var_C]
+  .text:0012AAE7                 ; height
+  .text:0012AAE7                 mov     [esp+2Ch+arg_0], ebx; height
+  .text:0012AAEB                 mov     ebx, [esp+2Ch+var_10]
+  .text:0012AAEF                 add     esp, 2Ch
+  .text:0012AAF2                 jmp     GL_LoadTextureFilterMode_part_14; SvEngine optimized register-ABI body of GL_LoadTextureFilterMode; no matching full SvEngine source is available. Names/layout follow 8948 ELF and current instructions.
+  .text:0012AB00                 xor     eax, eax
+  .text:0012AB02                 mov     ebx, [esp+2Ch+var_10]
+  .text:0012AB06                 mov     esi, [esp+2Ch+var_C]
+  .text:0012AB0A                 mov     edi, [esp+2Ch+var_8]
+  .text:0012AB0E                 mov     ebp, [esp+2Ch+var_4]
+  .text:0012AB12                 add     esp, 2Ch
+  .text:0012AB15                 retn
+procedure: |-
+  // GoldSrc source engine/gl_draw.c; SvEngine uses CUtlVector storage and different texture kinds. Current binary instructions take precedence over source revision.
+  int __cdecl GL_LoadTextureFilterMode(
+          char *identifier,
+          unsigned int textureType,
+          int width,
+          int height,
+          unsigned __int8 *data,
+          int mipmap,
+          int iType,
+          unsigned __int8 *pPal,
+          int filter)
+  {
+    if ( dword_D3F148 )
+      return 0;
+    else
+      return GL_LoadTextureFilterMode_part_14(identifier, textureType, width, height, data, mipmap, iType, pPal, filter);
+  }

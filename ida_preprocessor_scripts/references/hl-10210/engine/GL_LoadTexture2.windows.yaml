@@ -1,0 +1,838 @@
+func_name: "GL_LoadTexture2"
+func_va: "0x1023c0d0"
+disasm_code: |-
+  .text:1023C0D0                 push    ebp
+  .text:1023C0D1                 mov     ebp, esp
+  .text:1023C0D3                 mov     eax, 4334h
+  .text:1023C0D8                 call    __alloca_probe
+  .text:1023C0DD                 mov     eax, ___security_cookie
+  .text:1023C0E2                 xor     eax, ebp
+  .text:1023C0E4                 mov     [ebp+var_4], eax
+  .text:1023C0E7                 mov     eax, [ebp+identifier]
+  .text:1023C0EA                 push    ebx
+  .text:1023C0EB                 mov     dword ptr [ebp+ArgList], eax
+  .text:1023C0F1                 xor     ebx, ebx
+  .text:1023C0F3                 mov     eax, [ebp+data]
+  .text:1023C0F6                 push    esi
+  .text:1023C0F7                 mov     [ebp+var_4314], eax
+  .text:1023C0FD                 mov     eax, [ebp+pPal]
+  .text:1023C100                 ; ArgList
+  .text:1023C100                 push    edi; ArgList
+  .text:1023C101                 mov     [ebp+var_432C], eax
+  .text:1023C107                 mov     [ebp+var_4328], ebx
+  .text:1023C10D                 call    sub_10231470
+  .text:1023C112                 mov     edx, dword ptr [ebp+ArgList]
+  .text:1023C118                 cmp     [edx], bl
+  .text:1023C11A                 jz      short loc_1023C195
+  .text:1023C11C                 nop     dword ptr [eax+00h]
+  .text:1023C120                 mov     ecx, numgltextures
+  .text:1023C126                 xor     edi, edi
+  .text:1023C128                 mov     esi, offset gltextures
+  .text:1023C12D                 nop     dword ptr [eax]
+  .text:1023C130                 cmp     edi, ecx
+  .text:1023C132                 jge     short loc_1023C1A8
+  .text:1023C134                 cmp     word ptr [esi+4], 0
+  .text:1023C139                 jge     short loc_1023C150
+  .text:1023C13B                 test    ebx, ebx
+  .text:1023C13D                 mov     eax, esi
+  .text:1023C13F                 cmovnz  eax, ebx
+  .text:1023C142                 inc     edi
+  .text:1023C143                 mov     ebx, eax
+  .text:1023C145                 add     esi, 54h ; 'T'
+  .text:1023C148                 mov     [ebp+var_4328], ebx
+  .text:1023C14E                 jmp     short loc_1023C130
+  .text:1023C150                 lea     eax, [esi+14h]
+  .text:1023C153                 push    eax
+  .text:1023C154                 push    edx
+  .text:1023C155                 call    Q_strcmp
+  .text:1023C15A                 add     esp, 8
+  .text:1023C15D                 test    eax, eax
+  .text:1023C15F                 jz      short loc_1023C173
+  .text:1023C161                 mov     ecx, numgltextures
+  .text:1023C167                 inc     edi
+  .text:1023C168                 mov     edx, dword ptr [ebp+ArgList]
+  .text:1023C16E                 add     esi, 54h ; 'T'
+  .text:1023C171                 jmp     short loc_1023C130
+  .text:1023C173                 mov     eax, [ebp+width]
+  .text:1023C176                 cmp     eax, [esi+8]
+  .text:1023C179                 jnz     short loc_1023C187
+  .text:1023C17B                 mov     eax, [ebp+height]
+  .text:1023C17E                 cmp     eax, [esi+0Ch]
+  .text:1023C181                 jz      loc_1023C228
+  .text:1023C187                 mov     edx, dword ptr [ebp+ArgList]
+  .text:1023C18D                 inc     byte ptr [edx+3]
+  .text:1023C190                 cmp     byte ptr [edx], 0
+  .text:1023C193                 jnz     short loc_1023C120
+  .text:1023C195                 push    offset aNullTexture; "NULL Texture\n"
+  .text:1023C19A                 call    Con_DPrintf
+  .text:1023C19F                 mov     ecx, numgltextures
+  .text:1023C1A5                 add     esp, 4
+  .text:1023C1A8                 test    ebx, ebx
+  .text:1023C1AA                 jnz     short loc_1023C1D7
+  .text:1023C1AC                 imul    ebx, ecx, 54h ; 'T'
+  .text:1023C1AF                 inc     ecx
+  .text:1023C1B0                 mov     numgltextures, ecx
+  .text:1023C1B6                 add     ebx, offset gltextures
+  .text:1023C1BC                 mov     [ebp+var_4328], ebx
+  .text:1023C1C2                 cmp     ecx, 2710h
+  .text:1023C1C8                 jl      short loc_1023C1D7
+  .text:1023C1CA                 push    offset aTextureOverflo; "Texture Overflow: MAX_GLTEXTURES"
+  .text:1023C1CF                 call    Sys_Error
+  .text:1023C1D4                 add     esp, 4
+  .text:1023C1D7                 cmp     dword ptr [ebx], 0
+  .text:1023C1DA                 jnz     short loc_1023C1F3
+  .text:1023C1DC                 lea     eax, [ebp+var_430C]
+  .text:1023C1E2                 push    eax
+  .text:1023C1E3                 push    1
+  .text:1023C1E5                 call    dword_109B369C
+  .text:1023C1EB                 mov     eax, [ebp+var_430C]
+  .text:1023C1F1                 mov     [ebx], eax
+  .text:1023C1F3                 mov     edi, dword ptr [ebp+ArgList]
+  .text:1023C1F9                 lea     eax, [ebx+14h]
+  .text:1023C1FC                 push    3Fh ; '?'
+  .text:1023C1FE                 push    edi
+  .text:1023C1FF                 push    eax
+  .text:1023C200                 call    Q_strncpy
+  .text:1023C205                 mov     edx, [ebp+width]
+  .text:1023C208                 add     esp, 0Ch
+  .text:1023C20B                 cmp     [ebp+textureType], 4
+  .text:1023C20F                 mov     ecx, [ebp+height]
+  .text:1023C212                 mov     eax, [ebp+mipmap]
+  .text:1023C215                 mov     byte ptr [ebx+53h], 0
+  .text:1023C219                 mov     [ebx+8], edx
+  .text:1023C21C                 mov     [ebx+0Ch], ecx
+  .text:1023C21F                 mov     [ebx+10h], eax
+  .text:1023C222                 jz      short loc_1023C244
+  .text:1023C224                 xor     eax, eax
+  .text:1023C226                 jmp     short loc_1023C24B
+  .text:1023C228                 cmp     word ptr [esi+4], 0
+  .text:1023C22D                 jle     short loc_1023C239
+  .text:1023C22F                 mov     ax, word ptr gHostSpawnCount
+  .text:1023C235                 mov     [esi+4], ax
+  .text:1023C239                 movzx   eax, word ptr [esi+6]
+  .text:1023C23D                 mov     ecx, [esi]
+  .text:1023C23F                 jmp     loc_1023C76C
+  .text:1023C244                 movzx   eax, word ptr gHostSpawnCount
+  .text:1023C24B                 mov     [ebx+4], ax
+  .text:1023C24F                 or      eax, 0FFFFFFFFh
+  .text:1023C252                 mov     [ebx+6], ax
+  .text:1023C256                 mov     eax, [ebx]
+  .text:1023C258                 mov     esi, eax
+  .text:1023C25A                 sar     esi, 10h
+  .text:1023C25D                 movzx   eax, ax
+  .text:1023C260                 dec     esi
+  .text:1023C261                 cmp     currenttexture, eax
+  .text:1023C267                 jz      short loc_1023C2C3
+  .text:1023C269                 push    eax
+  .text:1023C26A                 push    0DE1h
+  .text:1023C26F                 mov     currenttexture, eax
+  .text:1023C274                 call    dword_109B3810
+  .text:1023C27A                 test    esi, esi
+  .text:1023C27C                 js      short loc_1023C2BD
+  .text:1023C27E                 cmp     dword_1031E3C8, esi
+  .text:1023C284                 jz      short loc_1023C2BD
+  .text:1023C286                 mov     ecx, qglColorTableEXT
+  .text:1023C28C                 test    ecx, ecx
+  .text:1023C28E                 jz      short loc_1023C2BD
+  .text:1023C290                 imul    eax, esi, 308h
+  .text:1023C296                 mov     dword_1031E3C8, esi
+  .text:1023C29C                 add     eax, offset unk_10F288C8
+  .text:1023C2A1                 push    eax
+  .text:1023C2A2                 push    1401h
+  .text:1023C2A7                 push    1907h
+  .text:1023C2AC                 push    100h
+  .text:1023C2B1                 push    1907h
+  .text:1023C2B6                 push    81FBh
+  .text:1023C2BB                 call    ecx ; qglColorTableEXT
+  .text:1023C2BD                 mov     ecx, [ebp+height]
+  .text:1023C2C0                 mov     edx, [ebp+width]
+  .text:1023C2C3                 cmp     dword_109A68E8, 0
+  .text:1023C2CA                 mov     currenttexture, 0FFFFFFFFh
+  .text:1023C2D4                 jz      short loc_1023C2E9
+  .text:1023C2D6                 mov     eax, edx
+  .text:1023C2D8                 mov     [ebp+var_4310], ecx
+  .text:1023C2DE                 mov     [ebp+var_431C], eax
+  .text:1023C2E4                 jmp     loc_1023C3BD
+  .text:1023C2E9                 movss   xmm0, dword_1031E3C0
+  .text:1023C2F1                 mov     esi, 1
+  .text:1023C2F6                 maxss   xmm0, ds:dword_102B5B70
+  .text:1023C2FE                 cmp     edx, esi
+  .text:1023C300                 jle     short loc_1023C308
+  .text:1023C302                 add     esi, esi
+  .text:1023C304                 cmp     esi, edx
+  .text:1023C306                 jl      short loc_1023C302
+  .text:1023C308                 cvttss2si ecx, dword_1031E2F8
+  .text:1023C310                 test    ecx, ecx
+  .text:1023C312                 jle     short loc_1023C331
+  .text:1023C314                 cmp     ecx, 20h ; ' '
+  .text:1023C317                 jnb     short loc_1023C331
+  .text:1023C319                 cmp     esi, edx
+  .text:1023C31B                 jle     short loc_1023C331
+  .text:1023C31D                 cmp     ecx, 1
+  .text:1023C320                 jz      short loc_1023C32F
+  .text:1023C322                 mov     edx, esi
+  .text:1023C324                 mov     eax, esi
+  .text:1023C326                 sub     eax, [ebp+width]
+  .text:1023C329                 sar     edx, cl
+  .text:1023C32B                 cmp     eax, edx
+  .text:1023C32D                 jle     short loc_1023C331
+  .text:1023C32F                 sar     esi, 1
+  .text:1023C331                 mov     eax, [ebp+height]
+  .text:1023C334                 mov     edi, 1
+  .text:1023C339                 cmp     eax, edi
+  .text:1023C33B                 jle     short loc_1023C346
+  .text:1023C33D                 nop     dword ptr [eax]
+  .text:1023C340                 add     edi, edi
+  .text:1023C342                 cmp     edi, eax
+  .text:1023C344                 jl      short loc_1023C340
+  .text:1023C346                 test    ecx, ecx
+  .text:1023C348                 jle     short loc_1023C367
+  .text:1023C34A                 cmp     ecx, 20h ; ' '
+  .text:1023C34D                 jnb     short loc_1023C367
+  .text:1023C34F                 cmp     edi, eax
+  .text:1023C351                 jle     short loc_1023C367
+  .text:1023C353                 cmp     ecx, 1
+  .text:1023C356                 jz      short loc_1023C365
+  .text:1023C358                 mov     edx, edi
+  .text:1023C35A                 mov     eax, edi
+  .text:1023C35C                 sub     eax, [ebp+height]
+  .text:1023C35F                 sar     edx, cl
+  .text:1023C361                 cmp     eax, edx
+  .text:1023C363                 jle     short loc_1023C367
+  .text:1023C365                 sar     edi, 1
+  .text:1023C367                 cvttss2si ecx, dword_1031E30C
+  .text:1023C36F                 test    ecx, ecx
+  .text:1023C371                 jle     short loc_1023C37C
+  .text:1023C373                 cmp     ecx, 20h ; ' '
+  .text:1023C376                 jnb     short loc_1023C37C
+  .text:1023C378                 sar     esi, cl
+  .text:1023C37A                 sar     edi, cl
+  .text:1023C37C                 mov     edx, [ebp+width]
+  .text:1023C37F                 cvttss2si ecx, xmm0
+  .text:1023C383                 cmp     esi, ecx
+  .text:1023C385                 mov     eax, ecx
+  .text:1023C387                 cmovle  eax, esi
+  .text:1023C38A                 cmp     edi, ecx
+  .text:1023C38C                 mov     [ebp+var_431C], eax
+  .text:1023C392                 cmovle  ecx, edi
+  .text:1023C395                 mov     [ebp+var_4310], ecx
+  .text:1023C39B                 mov     ecx, [ebp+height]
+  .text:1023C39E                 cmp     eax, edx
+  .text:1023C3A0                 jnz     short loc_1023C3AA
+  .text:1023C3A2                 cmp     [ebp+var_4310], ecx
+  .text:1023C3A8                 jz      short loc_1023C3B7
+  .text:1023C3AA                 mov     edi, dword ptr [ebp+ArgList]
+  .text:1023C3B0                 mov     esi, 1
+  .text:1023C3B5                 jmp     short loc_1023C3BF
+  .text:1023C3B7                 mov     edi, dword ptr [ebp+ArgList]
+  .text:1023C3BD                 xor     esi, esi
+  .text:1023C3BF                 cmp     [ebp+mipmap], 0
+  .text:1023C3C3                 jnz     loc_1023C61E
+  .text:1023C3C9                 xorps   xmm1, xmm1
+  .text:1023C3CC                 test    esi, esi
+  .text:1023C3CE                 jz      loc_1023C501
+  .text:1023C3D4                 cmp     eax, 80h
+  .text:1023C3D9                 jg      loc_1023C61E
+  .text:1023C3DF                 mov     esi, [ebp+var_4310]
+  .text:1023C3E5                 cmp     esi, 80h
+  .text:1023C3EB                 jg      loc_1023C61E
+  .text:1023C3F1                 movss   xmm0, dword_10319F38
+  .text:1023C3F9                 ucomiss xmm0, xmm1
+  .text:1023C3FC                 lahf
+  .text:1023C3FD                 test    ah, 44h
+  .text:1023C400                 jnp     short loc_1023C415
+  .text:1023C402                 push    ecx
+  .text:1023C403                 push    edx
+  .text:1023C404                 ; ArgList
+  .text:1023C404                 push    edi; ArgList
+  .text:1023C405                 push    offset aFsPerfWarnings; "fs_perf_warnings: resampling non-power-"...
+  .text:1023C40A                 call    Con_DPrintf
+  .text:1023C40F                 add     esp, 10h
+  .text:1023C412                 xorps   xmm1, xmm1
+  .text:1023C415                 mov     eax, [ebp+width]
+  .text:1023C418                 shl     eax, 10h
+  .text:1023C41B                 cdq
+  .text:1023C41C                 idiv    [ebp+var_431C]
+  .text:1023C422                 mov     [ebp+var_4318], eax
+  .text:1023C428                 mov     eax, [ebp+height]
+  .text:1023C42B                 shl     eax, 10h
+  .text:1023C42E                 cdq
+  .text:1023C42F                 idiv    esi
+  .text:1023C431                 mov     esi, [ebp+var_4314]
+  .text:1023C437                 lea     edx, [ebp+var_4304]
+  .text:1023C43D                 mov     ecx, eax
+  .text:1023C43F                 mov     [ebp+var_4330], eax
+  .text:1023C445                 shr     ecx, 2
+  .text:1023C448                 mov     [ebp+var_4324], ecx
+  .text:1023C44E                 mov     ecx, [ebp+var_4310]
+  .text:1023C454                 mov     [ebp+var_4320], esi
+  .text:1023C45A                 test    ecx, ecx
+  .text:1023C45C                 jle     loc_1023C4F9
+  .text:1023C462                 mov     eax, [ebp+var_4318]
+  .text:1023C468                 mov     ebx, [ebp+var_4324]
+  .text:1023C46E                 shr     eax, 2
+  .text:1023C471                 mov     [ebp+var_4334], eax
+  .text:1023C477                 mov     [ebp+var_430C], ecx
+  .text:1023C47D                 nop     dword ptr [eax]
+  .text:1023C480                 mov     ecx, eax
+  .text:1023C482                 mov     eax, [ebp+var_431C]
+  .text:1023C488                 test    eax, eax
+  .text:1023C48A                 jle     short loc_1023C4BE
+  .text:1023C48C                 mov     edi, [ebp+var_4320]
+  .text:1023C492                 mov     esi, eax
+  .text:1023C494                 mov     ebx, [ebp+var_4318]
+  .text:1023C49A                 nop     word ptr [eax+eax+00h]
+  .text:1023C4A0                 mov     eax, ecx
+  .text:1023C4A2                 add     ecx, ebx
+  .text:1023C4A4                 shr     eax, 10h
+  .text:1023C4A7                 mov     al, [eax+edi]
+  .text:1023C4AA                 mov     [edx], al
+  .text:1023C4AC                 inc     edx
+  .text:1023C4AD                 sub     esi, 1
+  .text:1023C4B0                 jnz     short loc_1023C4A0
+  .text:1023C4B2                 mov     esi, [ebp+var_4320]
+  .text:1023C4B8                 mov     ebx, [ebp+var_4324]
+  .text:1023C4BE                 add     ebx, [ebp+var_4330]
+  .text:1023C4C4                 mov     eax, ebx
+  .text:1023C4C6                 movzx   ebx, bx
+  .text:1023C4C9                 shr     eax, 10h
+  .text:1023C4CC                 imul    eax, [ebp+width]
+  .text:1023C4D0                 mov     [ebp+var_4324], ebx
+  .text:1023C4D6                 add     esi, eax
+  .text:1023C4D8                 sub     [ebp+var_430C], 1
+  .text:1023C4DF                 mov     eax, [ebp+var_4334]
+  .text:1023C4E5                 mov     [ebp+var_4320], esi
+  .text:1023C4EB                 jnz     short loc_1023C480
+  .text:1023C4ED                 mov     ebx, [ebp+var_4328]
+  .text:1023C4F3                 mov     edi, dword ptr [ebp+ArgList]
+  .text:1023C4F9                 lea     eax, [ebp+var_4304]
+  .text:1023C4FF                 jmp     short loc_1023C507
+  .text:1023C501                 mov     eax, [ebp+var_4314]
+  .text:1023C507                 cmp     qglColorTableEXT, 0
+  .text:1023C50E                 mov     [ebp+var_4318], eax
+  .text:1023C514                 jz      loc_1023C61E
+  .text:1023C51A                 movss   xmm0, gl_palette_tex_value
+  .text:1023C522                 ucomiss xmm0, xmm1
+  .text:1023C525                 lahf
+  .text:1023C526                 test    ah, 44h
+  .text:1023C529                 jnp     loc_1023C61E
+  .text:1023C52F                 cmp     [ebp+iType], 0
+  .text:1023C533                 jnz     loc_1023C61E
+  .text:1023C539                 mov     esi, [ebp+var_432C]
+  .text:1023C53F                 lea     eax, [ebp+var_304]
+  .text:1023C545                 xor     edx, edx
+  .text:1023C547                 sub     esi, eax
+  .text:1023C549                 nop     dword ptr [eax+00000000h]
+  .text:1023C550                 lea     ecx, [ebp+var_304]
+  .text:1023C556                 add     ecx, edx
+  .text:1023C558                 inc     edx
+  .text:1023C559                 movzx   eax, byte ptr [esi+ecx]
+  .text:1023C55D                 mov     al, texgammatable[eax]
+  .text:1023C563                 mov     [ecx], al
+  .text:1023C565                 cmp     edx, 300h
+  .text:1023C56B                 jl      short loc_1023C550
+  .text:1023C56D                 movzx   eax, [ebp+var_304]
+  .text:1023C574                 mov     edx, 1
+  .text:1023C579                 nop     dword ptr [eax+00000000h]
+  .text:1023C580                 movzx   ecx, [ebp+edx+var_304]
+  .text:1023C588                 add     ecx, eax
+  .text:1023C58A                 movzx   eax, [ebp+edx+var_305]
+  .text:1023C592                 inc     edx
+  .text:1023C593                 xor     eax, ecx
+  .text:1023C595                 cmp     edx, 300h
+  .text:1023C59B                 jl      short loc_1023C580
+  .text:1023C59D                 cdq
+  .text:1023C59E                 mov     esi, offset unk_10F288C8
+  .text:1023C5A3                 xor     eax, edx
+  .text:1023C5A5                 sub     eax, edx
+  .text:1023C5A7                 xor     ecx, ecx
+  .text:1023C5A9                 mov     [ebp+var_430C], eax
+  .text:1023C5AF                 mov     dword ptr [ebp+ArgList], ecx
+  .text:1023C5B5                 mov     eax, [esi-8]
+  .text:1023C5B8                 test    eax, eax
+  .text:1023C5BA                 js      loc_1023C66E
+  .text:1023C5C0                 cmp     [ebp+var_430C], eax
+  .text:1023C5C6                 jnz     short loc_1023C602
+  .text:1023C5C8                 xor     ecx, ecx
+  .text:1023C5CA                 mov     edx, esi
+  .text:1023C5CC                 nop     dword ptr [eax+00h]
+  .text:1023C5D0                 mov     al, [ebp+ecx+var_304]
+  .text:1023C5D7                 cmp     al, [edx]
+  .text:1023C5D9                 jnz     short loc_1023C5FC
+  .text:1023C5DB                 inc     ecx
+  .text:1023C5DC                 inc     edx
+  .text:1023C5DD                 cmp     ecx, 300h
+  .text:1023C5E3                 jl      short loc_1023C5D0
+  .text:1023C5E5                 mov     ecx, dword ptr [ebp+ArgList]
+  .text:1023C5EB                 imul    eax, ecx, 308h
+  .text:1023C5F1                 inc     dword_10F288C4[eax]
+  .text:1023C5F7                 jmp     loc_1023C6AB
+  .text:1023C5FC                 mov     ecx, dword ptr [ebp+ArgList]
+  .text:1023C602                 inc     ecx
+  .text:1023C603                 add     esi, 308h
+  .text:1023C609                 mov     dword ptr [ebp+ArgList], ecx
+  .text:1023C60F                 cmp     esi, offset dword_10F69B88
+  .text:1023C615                 jl      short loc_1023C5B5
+  .text:1023C617                 or      eax, 0FFFFFFFFh
+  .text:1023C61A                 mov     [ebx+6], ax
+  .text:1023C61E                 mov     eax, dword_104B9838
+  .text:1023C623                 mov     esi, [ebp+width]
+  .text:1023C626                 test    eax, eax
+  .text:1023C628                 jz      short loc_1023C63A
+  .text:1023C62A                 push    [ebp+var_4314]
+  .text:1023C630                 push    [ebp+height]
+  .text:1023C633                 push    esi
+  .text:1023C634                 push    edi
+  .text:1023C635                 call    eax ; dword_104B9838
+  .text:1023C637                 add     esp, 10h
+  .text:1023C63A                 cmp     [ebp+textureType], 5
+  .text:1023C63E                 mov     eax, [ebp+iType]
+  .text:1023C641                 jnz     loc_1023C747
+  .text:1023C647                 cmp     eax, 4
+  .text:1023C64A                 jnz     loc_1023C747
+  .text:1023C650                 push    [ebp+filter]
+  .text:1023C653                 push    eax
+  .text:1023C654                 push    [ebp+mipmap]
+  .text:1023C657                 push    [ebp+height]
+  .text:1023C65A                 push    esi
+  .text:1023C65B                 push    [ebp+var_4314]
+  .text:1023C661                 call    sub_1023D260
+  .text:1023C666                 add     esp, 18h
+  .text:1023C669                 jmp     loc_1023C766
+  .text:1023C66E                 imul    esi, ecx, 308h
+  .text:1023C674                 lea     eax, [ebp+var_304]
+  .text:1023C67A                 push    300h
+  .text:1023C67F                 push    eax
+  .text:1023C680                 lea     eax, unk_10F288C8[esi]
+  .text:1023C686                 push    eax
+  .text:1023C687                 call    Q_memcpy
+  .text:1023C68C                 mov     eax, [ebp+var_430C]
+  .text:1023C692                 add     esp, 0Ch
+  .text:1023C695                 mov     ecx, dword ptr [ebp+ArgList]
+  .text:1023C69B                 mov     dword_10F288C0[esi], eax
+  .text:1023C6A1                 mov     dword_10F288C4[esi], 1
+  .text:1023C6AB                 movzx   eax, cx
+  .text:1023C6AE                 mov     [ebx+6], ax
+  .text:1023C6B2                 test    ax, ax
+  .text:1023C6B5                 js      loc_1023C61E
+  .text:1023C6BB                 push    [ebp+var_4318]
+  .text:1023C6C1                 push    1401h
+  .text:1023C6C6                 push    1900h
+  .text:1023C6CB                 push    0
+  .text:1023C6CD                 push    [ebp+var_4310]
+  .text:1023C6D3                 push    [ebp+var_431C]
+  .text:1023C6D9                 push    80E5h
+  .text:1023C6DE                 push    0
+  .text:1023C6E0                 push    0DE1h
+  .text:1023C6E5                 call    qglTexImage2D
+  .text:1023C6EB                 movd    xmm0, [ebp+filter]
+  .text:1023C6F0                 cvtdq2ps xmm0, xmm0
+  .text:1023C6F3                 push    ecx
+  .text:1023C6F4                 movss   [esp+4344h+var_4344], xmm0
+  .text:1023C6F9                 push    2801h
+  .text:1023C6FE                 push    0DE1h
+  .text:1023C703                 call    qglTexParameterf
+  .text:1023C709                 movd    xmm0, [ebp+filter]
+  .text:1023C70E                 cvtdq2ps xmm0, xmm0
+  .text:1023C711                 push    ecx
+  .text:1023C712                 movss   [esp+4344h+var_4344], xmm0
+  .text:1023C717                 push    2800h
+  .text:1023C71C                 push    0DE1h
+  .text:1023C721                 call    qglTexParameterf
+  .text:1023C727                 movss   xmm0, dword_1031E350
+  .text:1023C72F                 push    ecx
+  .text:1023C730                 movss   [esp+4344h+var_4344], xmm0
+  .text:1023C735                 push    84FEh
+  .text:1023C73A                 push    0DE1h
+  .text:1023C73F                 call    qglTexParameterf
+  .text:1023C745                 jmp     short loc_1023C766
+  .text:1023C747                 push    [ebp+filter]
+  .text:1023C74A                 push    [ebp+var_432C]
+  .text:1023C750                 push    eax
+  .text:1023C751                 push    [ebp+mipmap]
+  .text:1023C754                 push    [ebp+height]
+  .text:1023C757                 push    esi
+  .text:1023C758                 push    [ebp+var_4314]
+  .text:1023C75E                 call    sub_1023CFA0
+  .text:1023C763                 add     esp, 1Ch
+  .text:1023C766                 mov     ecx, [ebx]
+  .text:1023C768                 movzx   eax, word ptr [ebx+6]
+  .text:1023C76C                 test    ax, ax
+  .text:1023C76F                 js      short loc_1023C789
+  .text:1023C771                 cwde
+  .text:1023C772                 inc     eax
+  .text:1023C773                 pop     edi
+  .text:1023C774                 shl     eax, 10h
+  .text:1023C777                 pop     esi
+  .text:1023C778                 or      eax, ecx
+  .text:1023C77A                 pop     ebx
+  .text:1023C77B                 mov     ecx, [ebp+var_4]
+  .text:1023C77E                 ; StackCookie
+  .text:1023C77E                 xor     ecx, ebp; StackCookie
+  .text:1023C780                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1023C785                 mov     esp, ebp
+  .text:1023C787                 pop     ebp
+  .text:1023C788                 retn
+  .text:1023C789                 mov     eax, ecx
+  .text:1023C78B                 mov     ecx, [ebp+var_4]
+  .text:1023C78E                 pop     edi
+  .text:1023C78F                 pop     esi
+  .text:1023C790                 ; StackCookie
+  .text:1023C790                 xor     ecx, ebp; StackCookie
+  .text:1023C792                 pop     ebx
+  .text:1023C793                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1023C798                 mov     esp, ebp
+  .text:1023C79A                 pop     ebp
+  .text:1023C79B                 retn
+procedure: |-
+  // GoldSrc source engine/gl_draw.c; SvEngine uses CUtlVector storage and different texture kinds. Current binary instructions take precedence over source revision.
+  int __cdecl GL_LoadTexture2(
+          char *identifier,
+          unsigned int textureType,
+          int width,
+          int height,
+          unsigned __int8 *data,
+          int mipmap,
+          int iType,
+          unsigned __int8 *pPal,
+          int filter)
+  {
+    gltexture_reference_t *v9; // ebx
+    char *v10; // edx
+    int v11; // ecx
+    int v12; // edi
+    gltexture_reference_t *v13; // esi
+    gltexture_reference_t *v14; // eax
+    const char *v15; // edi
+    int v16; // edx
+    int v17; // ecx
+    __int16 v18; // ax
+    __int16 paletteIndex; // ax
+    int texnum; // ecx
+    int v21; // esi
+    int v22; // eax
+    int v23; // esi
+    float i; // xmm0_4
+    int v25; // ecx
+    int j; // edi
+    unsigned int v27; // ecx
+    int v28; // ecx
+    int v29; // esi
+    unsigned __int8 *v30; // esi
+    _BYTE *v31; // edx
+    unsigned int v32; // ebx
+    unsigned int v33; // eax
+    unsigned int v34; // ecx
+    int v35; // esi
+    unsigned int v36; // eax
+    unsigned int v37; // eax
+    bool v38; // zf
+    unsigned __int8 *v39; // eax
+    int k; // edx
+    _BYTE *v41; // ecx
+    int v42; // eax
+    int v43; // edx
+    int v44; // ecx
+    int v45; // eax
+    _DWORD *v46; // esi
+    char *v47; // ecx
+    int v48; // eax
+    int v49; // ecx
+    _BYTE *v50; // edx
+    __int16 v51; // cx
+    int v52; // esi
+    unsigned int v54; // [esp+64h] [ebp-4344h]
+    unsigned int v55; // [esp+78h] [ebp-4330h]
+    gltexture_reference_t *v56; // [esp+80h] [ebp-4328h]
+    unsigned int v57; // [esp+84h] [ebp-4324h]
+    unsigned __int8 *v58; // [esp+88h] [ebp-4320h]
+    int v59; // [esp+8Ch] [ebp-431Ch]
+    unsigned int v60; // [esp+90h] [ebp-4318h]
+    unsigned __int8 *v61; // [esp+90h] [ebp-4318h]
+    int v62; // [esp+98h] [ebp-4310h]
+    unsigned int v63; // [esp+9Ch] [ebp-430Ch] BYREF
+    char ArgList[4]; // [esp+A0h] [ebp-4308h]
+    _BYTE v65[16384]; // [esp+A4h] [ebp-4304h] BYREF
+    _BYTE v66[768]; // [esp+40A4h] [ebp-304h] BYREF
+
+    *(_DWORD *)ArgList = identifier;
+    v9 = nullptr;
+    v56 = nullptr;
+    sub_10231470();
+    v10 = identifier;
+    if ( *identifier )
+    {
+  LABEL_2:
+      v11 = numgltextures;
+      v12 = 0;
+      v13 = gltextures;
+      while ( v12 < v11 )
+      {
+        if ( v13->servercount >= 0 )
+        {
+          if ( !Q_strcmp(v10, v13->identifier) )
+          {
+            if ( width == v13->width && height == v13->height )
+            {
+              if ( v13->servercount > 0 )
+                v13->servercount = gHostSpawnCount;
+              paletteIndex = v13->paletteIndex;
+              texnum = v13->texnum;
+              goto LABEL_104;
+            }
+            v10 = *(char **)ArgList;
+            ++*(_BYTE *)(*(_DWORD *)ArgList + 3);
+            if ( *v10 )
+              goto LABEL_2;
+            goto LABEL_13;
+          }
+          v11 = numgltextures;
+          ++v12;
+          v10 = *(char **)ArgList;
+          ++v13;
+        }
+        else
+        {
+          v14 = v13;
+          if ( v9 )
+            v14 = v9;
+          ++v12;
+          v9 = v14;
+          ++v13;
+          v56 = v14;
+        }
+      }
+    }
+    else
+    {
+  LABEL_13:
+      Con_DPrintf("NULL Texture\n");
+      v11 = numgltextures;
+    }
+    if ( !v9 )
+    {
+      numgltextures = v11 + 1;
+      v9 = &gltextures[v11];
+      v56 = v9;
+      if ( v11 + 1 >= 10000 )
+        Sys_Error("Texture Overflow: MAX_GLTEXTURES");
+    }
+    if ( !v9->texnum )
+    {
+      dword_109B369C(1, &v63);
+      v9->texnum = v63;
+    }
+    v15 = *(const char **)ArgList;
+    Q_strncpy(v9->identifier, *(_DWORD *)ArgList, 63);
+    v16 = width;
+    v17 = height;
+    v9->identifier[63] = 0;
+    v9->width = width;
+    v9->height = height;
+    v9->mipmap = mipmap;
+    if ( textureType == 4 )
+      v18 = gHostSpawnCount;
+    else
+      v18 = 0;
+    v9->servercount = v18;
+    v9->paletteIndex = -1;
+    v21 = ((int)v9->texnum >> 16) - 1;
+    if ( currenttexture != (unsigned __int16)v9->texnum )
+    {
+      v54 = (unsigned __int16)v9->texnum;
+      currenttexture = v54;
+      dword_109B3810(3553, v54);
+      if ( v21 >= 0 && dword_1031E3C8 != v21 && qglColorTableEXT )
+      {
+        dword_1031E3C8 = v21;
+        qglColorTableEXT(33275, 6407, 256, 6407, 5121, (char *)&unk_10F288C8 + 776 * v21);
+      }
+      v17 = height;
+      v16 = width;
+    }
+    currenttexture = -1;
+    if ( dword_109A68E8 )
+    {
+      v22 = v16;
+      v62 = v17;
+      v59 = v16;
+    }
+    else
+    {
+      v23 = 1;
+      for ( i = fmaxf(*(float *)&dword_1031E3C0, 128.0); v23 < v16; v23 *= 2 )
+        ;
+      v25 = (int)*(float *)&dword_1031E2F8;
+      if ( (int)*(float *)&dword_1031E2F8 > 0
+        && (unsigned int)v25 < 0x20
+        && v23 > v16
+        && (v25 == 1 || v23 - width > v23 >> v25) )
+      {
+        v23 >>= 1;
+      }
+      for ( j = 1; j < height; j *= 2 )
+        ;
+      if ( v25 > 0 && (unsigned int)v25 < 0x20 && j > height && (v25 == 1 || j - height > j >> v25) )
+        j >>= 1;
+      v27 = (int)*(float *)&dword_1031E30C;
+      if ( (int)*(float *)&dword_1031E30C > 0 && v27 < 0x20 )
+      {
+        v23 >>= v27;
+        j >>= v27;
+      }
+      v16 = width;
+      v28 = (int)i;
+      v22 = (int)i;
+      if ( v23 <= (int)i )
+        v22 = v23;
+      v59 = v22;
+      if ( j <= v28 )
+        v28 = j;
+      v62 = v28;
+      v17 = height;
+      if ( v22 != width || v62 != height )
+      {
+        v15 = *(const char **)ArgList;
+        v29 = 1;
+        goto LABEL_61;
+      }
+      v15 = *(const char **)ArgList;
+    }
+    v29 = 0;
+  LABEL_61:
+    if ( mipmap )
+      goto LABEL_94;
+    if ( v29 )
+    {
+      if ( v22 <= 128 && v62 <= 128 )
+      {
+        if ( *(float *)&dword_10319F38 != 0.0 )
+          Con_DPrintf("fs_perf_warnings: resampling non-power-of-2 texture %s (%dx%d)\n", v15, v16, v17);
+        v60 = (width << 16) / v59;
+        v30 = data;
+        v31 = v65;
+        v55 = (height << 16) / v62;
+        v57 = v55 >> 2;
+        v58 = data;
+        if ( v62 > 0 )
+        {
+          v32 = v55 >> 2;
+          v33 = v60 >> 2;
+          v63 = v62;
+          do
+          {
+            v34 = v33;
+            if ( v59 > 0 )
+            {
+              v35 = v59;
+              do
+              {
+                v36 = v34;
+                v34 += v60;
+                *v31++ = v58[HIWORD(v36)];
+                --v35;
+              }
+              while ( v35 );
+              v30 = v58;
+              v32 = v57;
+            }
+            v37 = v55 + v32;
+            v32 = (unsigned __int16)(v55 + v32);
+            v57 = v32;
+            v30 += width * HIWORD(v37);
+            v38 = v63-- == 1;
+            v33 = v60 >> 2;
+            v58 = v30;
+          }
+          while ( !v38 );
+          v9 = v56;
+          v15 = *(const char **)ArgList;
+        }
+        v39 = v65;
+        goto LABEL_77;
+      }
+  LABEL_94:
+      if ( dword_104B9838 )
+        dword_104B9838(v15, width, height, data);
+      if ( textureType == 5 && iType == 4 )
+        sub_1023D260(data, width, height, mipmap, 4, filter);
+      else
+        sub_1023CFA0(data, width, height, mipmap, iType, pPal, filter);
+      goto LABEL_103;
+    }
+    v39 = data;
+  LABEL_77:
+    v61 = v39;
+    if ( !qglColorTableEXT || *(float *)&gl_palette_tex_value == 0.0 || iType )
+      goto LABEL_94;
+    for ( k = 0; k < 768; ++k )
+    {
+      v41 = &v66[k];
+      *v41 = texgammatable[(unsigned __int8)v41[pPal - v66]];
+    }
+    v42 = v66[0];
+    v43 = 1;
+    do
+    {
+      v44 = v42 + (unsigned __int8)v66[v43];
+      v45 = (unsigned __int8)v65[v43++ + 0x3FFF];
+      v42 = v44 ^ v45;
+    }
+    while ( v43 < 768 );
+    v46 = &unk_10F288C8;
+    v47 = nullptr;
+    v63 = abs32(v42);
+    *(_DWORD *)ArgList = 0;
+    while ( 1 )
+    {
+      v48 = *(v46 - 2);
+      if ( v48 < 0 )
+        break;
+      if ( v63 == v48 )
+      {
+        v49 = 0;
+        v50 = v46;
+        while ( v66[v49] == *v50 )
+        {
+          ++v49;
+          ++v50;
+          if ( v49 >= 768 )
+          {
+            v51 = *(_WORD *)ArgList;
+            ++dword_10F288C4[194 * *(_DWORD *)ArgList];
+            goto LABEL_100;
+          }
+        }
+        v47 = *(char **)ArgList;
+      }
+      ++v47;
+      v46 += 194;
+      *(_DWORD *)ArgList = v47;
+      if ( (int)v46 >= (int)dword_10F69B88 )
+      {
+        v9->paletteIndex = -1;
+        goto LABEL_94;
+      }
+    }
+    v52 = 194 * (_DWORD)v47;
+    Q_memcpy((char *)&unk_10F288C8 + 776 * (_DWORD)v47, v66, 768);
+    v51 = *(_WORD *)ArgList;
+    dword_10F288C0[v52] = v63;
+    dword_10F288C4[v52] = 1;
+  LABEL_100:
+    v9->paletteIndex = v51;
+    if ( v51 < 0 )
+      goto LABEL_94;
+    qglTexImage2D(3553, 0, 32997, v59, v62, 0, 6400, 5121, v61);
+    ((void (__stdcall *)(_DWORD, _DWORD, _DWORD))qglTexParameterf)(3553, 10241, (float)filter);
+    ((void (__stdcall *)(_DWORD, _DWORD, _DWORD))qglTexParameterf)(3553, 10240, (float)filter);
+    qglTexParameterf(3553, 34046, dword_1031E350);
+  LABEL_103:
+    texnum = v9->texnum;
+    paletteIndex = v9->paletteIndex;
+  LABEL_104:
+    if ( paletteIndex < 0 )
+      return texnum;
+    else
+      return texnum | ((paletteIndex + 1) << 16);
+  }

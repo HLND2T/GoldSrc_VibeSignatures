@@ -1,0 +1,8 @@
+gv_name: gHostSpawnCount
+gv_va: '0x23cde68'
+gv_rva: '0x6cde68'
+gv_sig: B8 0C 40 00 00 E8 ?? ?? ?? ?? 53 8B 9C 24 ?? ?? ?? ?? 55 56 8A 03 33 F6 84 C0 57 89 74 24 ?? 74 ?? 33 ED
+gv_sig_va: '0x1d3f7c0'
+gv_inst_offset: '0x127'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

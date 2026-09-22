@@ -704,6 +704,13 @@ modules:
         expected_output:
           - GL_Bind.{platform}.yaml
           - GL_SelectTexture.{platform}.yaml
+      - name: find-GL_LoadTexture2-globals
+        expected_input:
+          - GL_LoadTexture2.{platform}.yaml
+        expected_output:
+          - gltextures.{platform}.yaml
+          - numgltextures.{platform}.yaml
+          - gHostSpawnCount.{platform}.yaml
       - name: find-GL_LoadTexture2
         expected_output:
           - GL_LoadTexture2.{platform}.yaml
@@ -1463,6 +1470,12 @@ modules:
         category: func
       - name: GL_UnloadTexture
         category: func
+      - name: gltextures
+        category: gv
+      - name: numgltextures
+        category: gv
+      - name: gHostSpawnCount
+        category: gv
       - name: GL_LoadTexture2
         category: func
       - name: texture_extension_number

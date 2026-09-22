@@ -1,0 +1,99 @@
+func_name: "CUtlVector_gltexture_t_InsertBefore"
+func_va: "0x12b8c0"
+disasm_code: |-
+  .text:0012B8C0                 sub     esp, 2Ch
+  .text:0012B8C3                 mov     [esp+2Ch+var_8], edi
+  .text:0012B8C7                 mov     edi, [esp+2Ch+textures]
+  .text:0012B8CB                 mov     [esp+2Ch+var_10], ebx
+  .text:0012B8CF                 mov     [esp+2Ch+var_C], esi
+  .text:0012B8D3                 mov     [esp+2Ch+var_4], ebp
+  .text:0012B8D7                 mov     ebp, [esp+2Ch+elem]
+  .text:0012B8DB                 mov     eax, [edi+0Ch]; (structmember, struct=CUtlVector_gltexture_t, member=m_Size)
+  .text:0012B8DE                 call    __x86_get_pc_thunk_bx
+  .text:0012B8E3                 add     ebx, (offset dbl_2EE000 - $)
+  .text:0012B8E9                 lea     esi, [eax+1]
+  .text:0012B8EC                 cmp     esi, [edi+4]; (structmember, struct=CUtlVector_gltexture_t, member=m_Memory.m_nAllocationCount)
+  .text:0012B8EF                 jg      short loc_12B940
+  .text:0012B8F1                 mov     [edi+0Ch], esi
+  .text:0012B8F4                 sub     esi, ebp
+  .text:0012B8F6                 dec     esi
+  .text:0012B8F7                 test    esi, esi
+  .text:0012B8F9                 jle     short loc_12B928
+  .text:0012B8FB                 mov     ecx, [edi]; (structmember, struct=CUtlVector_gltexture_t, member=m_Memory.m_pMemory)
+  .text:0012B8FD                 lea     eax, [ebp+ebp*4+0]
+  .text:0012B901                 lea     edx, [esi+esi*4]
+  .text:0012B904                 lea     eax, [ebp+eax*4+0]
+  .text:0012B908                 lea     edx, [esi+edx*4]
+  .text:0012B90B                 shl     eax, 2
+  .text:0012B90E                 shl     edx, 2
+  .text:0012B911                 ; n
+  .text:0012B911                 mov     [esp+2Ch+n], edx; n
+  .text:0012B915                 lea     edx, [ecx+eax]
+  .text:0012B918                 lea     eax, [ecx+eax+54h]
+  .text:0012B91C                 ; src
+  .text:0012B91C                 mov     [esp+2Ch+src], edx; src
+  .text:0012B920                 ; dest
+  .text:0012B920                 mov     [esp+2Ch+dest], eax; dest
+  .text:0012B923                 call    _memmove
+  .text:0012B928                 mov     eax, ebp
+  .text:0012B92A                 mov     ebx, [esp+2Ch+var_10]
+  .text:0012B92E                 mov     esi, [esp+2Ch+var_C]
+  .text:0012B932                 mov     edi, [esp+2Ch+var_8]
+  .text:0012B936                 mov     ebp, [esp+2Ch+var_4]
+  .text:0012B93A                 add     esp, 2Ch
+  .text:0012B93D                 retn
+  .text:0012B940                 mov     eax, [edi+8]
+  .text:0012B943                 test    eax, eax
+  .text:0012B945                 js      short loc_12B8F1
+  .text:0012B947                 mov     edx, [edi]
+  .text:0012B949                 mov     [edi+4], esi
+  .text:0012B94C                 test    edx, edx
+  .text:0012B94E                 jz      short loc_12B970
+  .text:0012B950                 lea     eax, [esi+esi*4]
+  .text:0012B953                 lea     eax, [esi+eax*4]
+  .text:0012B956                 shl     eax, 2
+  .text:0012B959                 ; size
+  .text:0012B959                 mov     [esp+2Ch+src], eax; size
+  .text:0012B95D                 ; ptr
+  .text:0012B95D                 mov     [esp+2Ch+dest], edx; ptr
+  .text:0012B960                 call    _realloc
+  .text:0012B965                 mov     [edi], eax
+  .text:0012B967                 mov     eax, [edi+0Ch]
+  .text:0012B96A                 lea     esi, [eax+1]
+  .text:0012B96D                 jmp     short loc_12B8F1
+  .text:0012B970                 lea     eax, [esi+esi*4]
+  .text:0012B973                 lea     eax, [esi+eax*4]
+  .text:0012B976                 shl     eax, 2
+  .text:0012B979                 ; size
+  .text:0012B979                 mov     [esp+2Ch+dest], eax; size
+  .text:0012B97C                 call    _malloc
+  .text:0012B981                 mov     [edi], eax
+  .text:0012B983                 jmp     loc_12B8F1
+procedure: |-
+  int __cdecl CUtlVector_gltexture_t_InsertBefore(CUtlVector_gltexture_t *textures, int elem)
+  {
+    int v2; // esi
+    int v3; // esi
+    gltexture_reference_t *m_pMemory; // edx
+
+    v2 = textures->m_Size + 1; // (structmember, struct=CUtlVector_gltexture_t, member=m_Size)
+    if ( v2 > textures->m_Memory.m_nAllocationCount && textures->m_Memory.m_nGrowSize >= 0 ) // (structmember, struct=CUtlVector_gltexture_t, member=m_Memory.m_nAllocationCount)
+    {
+      m_pMemory = textures->m_Memory.m_pMemory; // (structmember, struct=CUtlVector_gltexture_t, member=m_Memory.m_pMemory)
+      textures->m_Memory.m_nAllocationCount = v2;
+      if ( m_pMemory )
+      {
+        textures->m_Memory.m_pMemory = (gltexture_reference_t *)realloc(m_pMemory, 84 * v2);
+        v2 = textures->m_Size + 1;
+      }
+      else
+      {
+        textures->m_Memory.m_pMemory = (gltexture_reference_t *)malloc(84 * v2);
+      }
+    }
+    textures->m_Size = v2;
+    v3 = v2 - elem - 1;
+    if ( v3 > 0 )
+      memmove(&textures->m_Memory.m_pMemory[elem + 1], &textures->m_Memory.m_pMemory[elem], 84 * v3);
+    return elem;
+  }
