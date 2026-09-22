@@ -1,0 +1,169 @@
+func_name: "R_MarkLeaves"
+func_va: "0x14de30"
+disasm_code: |-
+  ; Targets: r_viewleaf is the current leaf pointer slot; r_oldviewleaf is the previous leaf pointer slot.
+  ; Distinguish them by the comparison, current-to-old assignment, and Mod_LeafPVS leaf argument.
+  .text:0014DE30                 push    ebp
+  .text:0014DE31                 push    edi
+  .text:0014DE32                 push    esi
+  .text:0014DE33                 push    ebx
+  .text:0014DE34                 call    __x86_get_pc_thunk_bx
+  .text:0014DE39                 add     ebx, (offset dbl_2EE000 - $)
+  .text:0014DE3F                 sub     esp, 102Ch
+  .text:0014DE45                 lea     eax, (r_viewleaf - 2EE000h)[ebx]
+  .text:0014DE4B                 lea     edx, (r_oldviewleaf - 2EE000h)[ebx]
+  .text:0014DE51                 mov     eax, [eax]
+  .text:0014DE53                 cmp     [edx], eax
+  .text:0014DE55                 jz      loc_14DF2A
+  .text:0014DE5B                 mov     [edx], eax
+  .text:0014DE5D                 lea     edx, (off_2F38A8 - 2EE000h)[ebx]; "r_novis"
+  .text:0014DE63                 lea     esi, (r_visframecount - 2EE000h)[ebx]
+  .text:0014DE69                 fld     dword ptr [edx+0Ch]
+  .text:0014DE6C                 fldz
+  .text:0014DE6E                 inc     dword ptr [esi]
+  .text:0014DE70                 fst     [esp+103Ch+var_1024]
+  .text:0014DE74                 fxch    st(1)
+  .text:0014DE76                 fucomip st, st(1)
+  .text:0014DE78                 fstp    st
+  .text:0014DE7A                 jp      loc_14DF4B
+  .text:0014DE80                 jnz     loc_14DF4B
+  .text:0014DE86                 lea     edi, (dword_15D7D60 - 2EE000h)[ebx]
+  .text:0014DE8C                 mov     edx, ds:dword_601CEC[edi]
+  .text:0014DE92                 ; leaf
+  .text:0014DE92                 mov     [esp+103Ch+dest], eax; leaf
+  .text:0014DE95                 mov     [esp+103Ch+var_1020], edi
+  .text:0014DE99                 ; model
+  .text:0014DE99                 mov     [esp+103Ch+c], edx; model
+  .text:0014DE9D                 call    Mod_LeafPVS
+  .text:0014DEA2                 mov     [esp+103Ch+var_1024], eax
+  .text:0014DEA6                 mov     eax, [esp+103Ch+var_1020]
+  .text:0014DEAA                 mov     edi, ds:dword_601CEC[eax]
+  .text:0014DEB0                 mov     ebp, [edi+88h]
+  .text:0014DEB6                 test    ebp, ebp
+  .text:0014DEB8                 jle     short loc_14DF1F
+  .text:0014DEBA                 mov     eax, [esi]
+  .text:0014DEBC                 xor     edx, edx
+  .text:0014DEBE                 mov     esi, 3Ch ; '<'
+  .text:0014DEC3                 lea     esi, [esi+0]
+  .text:0014DEC9                 lea     edi, [edi+0]
+  .text:0014DED0                 mov     ebx, [esp+103Ch+var_1024]
+  .text:0014DED4                 mov     ecx, edx
+  .text:0014DED6                 sar     ecx, 3
+  .text:0014DED9                 movzx   ebx, byte ptr ds:(dbl_2EE000 - 2EE000h)[ebx+ecx]
+  .text:0014DEDD                 mov     ecx, edx
+  .text:0014DEDF                 and     ecx, 7
+  .text:0014DEE2                 sar     ebx, cl
+  .text:0014DEE4                 test    bl, 1
+  .text:0014DEE7                 jz      short loc_14DF17
+  .text:0014DEE9                 mov     ecx, [edi+8Ch]
+  .text:0014DEEF                 add     ecx, esi
+  .text:0014DEF1                 jmp     short loc_14DF02
+  .text:0014DEF8                 mov     [ecx+4], eax
+  .text:0014DEFB                 mov     ecx, [ecx+20h]
+  .text:0014DEFE                 test    ecx, ecx
+  .text:0014DF00                 jz      short loc_14DF07
+  .text:0014DF02                 cmp     [ecx+4], eax
+  .text:0014DF05                 jnz     short loc_14DEF8
+  .text:0014DF07                 mov     edi, [esp+103Ch+var_1020]
+  .text:0014DF0B                 mov     edi, ds:dword_601CEC[edi]
+  .text:0014DF11                 mov     ebp, [edi+88h]
+  .text:0014DF17                 inc     edx
+  .text:0014DF18                 add     esi, 3Ch ; '<'
+  .text:0014DF1B                 cmp     edx, ebp
+  .text:0014DF1D                 jl      short loc_14DED0
+  .text:0014DF1F                 add     esp, 102Ch
+  .text:0014DF25                 pop     ebx
+  .text:0014DF26                 pop     esi
+  .text:0014DF27                 pop     edi
+  .text:0014DF28                 pop     ebp
+  .text:0014DF29                 retn
+  .text:0014DF2A                 lea     eax, (off_2F38A8 - 2EE000h)[ebx]; "r_novis"
+  .text:0014DF30                 fld     dword ptr [eax+0Ch]
+  .text:0014DF33                 fldz
+  .text:0014DF35                 fst     [esp+103Ch+var_1024]
+  .text:0014DF39                 fxch    st(1)
+  .text:0014DF3B                 fucomip st, st(1)
+  .text:0014DF3D                 fstp    st
+  .text:0014DF3F                 jp      short loc_14DF43
+  .text:0014DF41                 jz      short loc_14DF1F
+  .text:0014DF43                 lea     esi, (r_visframecount - 2EE000h)[ebx]
+  .text:0014DF49                 inc     dword ptr [esi]
+  .text:0014DF4B                 lea     eax, (dword_15D7D60 - 2EE000h)[ebx]
+  .text:0014DF51                 lea     edi, [esp+103Ch+var_101C]
+  .text:0014DF55                 mov     [esp+103Ch+var_1020], eax
+  .text:0014DF59                 mov     eax, ds:dword_601CEC[eax]
+  .text:0014DF5F                 mov     eax, [eax+88h]
+  .text:0014DF65                 ; dest
+  .text:0014DF65                 mov     [esp+103Ch+dest], edi; dest
+  .text:0014DF68                 add     eax, 7
+  .text:0014DF6B                 sar     eax, 3
+  .text:0014DF6E                 ; count
+  .text:0014DF6E                 mov     [esp+103Ch+count], eax; count
+  .text:0014DF72                 mov     eax, 0FFh
+  .text:0014DF77                 ; c
+  .text:0014DF77                 mov     [esp+103Ch+c], eax; c
+  .text:0014DF7B                 call    Q_memset
+  .text:0014DF80                 mov     [esp+103Ch+var_1024], edi
+  .text:0014DF84                 jmp     loc_14DEA6
+procedure: |-
+  // Targets are the two pointer globals themselves, not the pointed-to leaves or ELF GOT slots.
+  // Current-binary leaf/PVS marking. Source gl_rsurf.c is semantic evidence, not an exact build. SvEngine omits the GoldSrc mirror early return.
+  void __cdecl R_MarkLeaves()
+  {
+    _DWORD *worldmodel; // edi
+    int numleafs; // ebp
+    int visframe; // eax
+    int i; // edx
+    int leaf_byte_offset; // esi
+    int node; // ecx
+    unsigned __int8 *vis; // [esp+18h] [ebp-1024h]
+    _BYTE solid[4124]; // [esp+20h] [ebp-101Ch] BYREF
+
+    if ( r_oldviewleaf == r_viewleaf )
+    {
+      if ( r_novis_value == 0.0 )
+        return;
+      ++r_visframecount;
+    }
+    else
+    {
+      r_oldviewleaf = r_viewleaf;
+      ++r_visframecount;
+      if ( r_novis_value == 0.0 )
+      {
+        vis = Mod_LeafPVS(r_viewleaf, cl_worldmodel);
+        goto LABEL_4;
+      }
+    }
+    Q_memset(solid, 255, (*((_DWORD *)cl_worldmodel + 34) + 7) >> 3);
+    vis = solid;
+  LABEL_4:
+    worldmodel = cl_worldmodel;
+    numleafs = *((_DWORD *)cl_worldmodel + 34);
+    if ( numleafs > 0 )
+    {
+      visframe = r_visframecount;
+      i = 0;
+      leaf_byte_offset = 60;
+      do
+      {
+        if ( (((int)vis[i >> 3] >> (i & 7)) & 1) != 0 )
+        {
+          node = leaf_byte_offset + worldmodel[35];
+          do
+          {
+            if ( *(_DWORD *)(node + 4) == visframe )
+              break;
+            *(_DWORD *)(node + 4) = visframe;
+            node = *(_DWORD *)(node + 32);
+          }
+          while ( node );
+          worldmodel = cl_worldmodel;
+          numleafs = *((_DWORD *)cl_worldmodel + 34);
+        }
+        ++i;
+        leaf_byte_offset += 60;
+      }
+      while ( i < numleafs );
+    }
+  }

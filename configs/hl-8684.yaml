@@ -389,6 +389,12 @@ modules:
           - R_DrawBrushModel.{platform}.yaml
         expected_output:
           - R_DrawSequentialPoly.{platform}.yaml
+      - name: find-R_MarkLeaves-decompiles
+        expected_input:
+          - R_MarkLeaves.{platform}.yaml
+        expected_output:
+          - r_viewleaf.{platform}.yaml
+          - r_oldviewleaf.{platform}.yaml
       - name: find-R_DrawWorld-R_MarkLeaves-decompiles
         expected_input:
           - R_RenderScene.{platform}.yaml
@@ -1256,6 +1262,10 @@ modules:
         category: func
       - name: R_MarkLeaves
         category: func
+      - name: r_viewleaf
+        category: gv
+      - name: r_oldviewleaf
+        category: gv
       - name: R_RecursiveWorldNode
         category: func
       - name: modelorg

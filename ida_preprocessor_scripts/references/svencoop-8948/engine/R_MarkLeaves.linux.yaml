@@ -1,0 +1,168 @@
+func_name: "R_MarkLeaves"
+func_va: "0x199e10"
+disasm_code: |-
+  ; Targets: r_viewleaf is the current leaf pointer slot; r_oldviewleaf is the previous leaf pointer slot.
+  ; Distinguish them by the comparison, current-to-old assignment, and Mod_LeafPVS leaf argument.
+  .text:00199E10                 ; r_viewleaf is the current leaf passed to Mod_LeafPVS; r_oldviewleaf is the compared slot updated from it. Resolve pointer storage, not a leaf pointee or GOT slot.
+  .text:00199E10                 push    ebp; r_viewleaf is the current leaf passed to Mod_LeafPVS; r_oldviewleaf is the compared slot updated from it. Resolve pointer storage, not a leaf pointee or GOT slot.
+  .text:00199E11                 push    edi
+  .text:00199E12                 push    esi
+  .text:00199E13                 push    ebx
+  .text:00199E14                 call    __x86_get_pc_thunk_bx
+  .text:00199E19                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:00199E1F                 sub     esp, 102Ch
+  .text:00199E25                 mov     eax, ds:(r_viewleaf_ptr - 33A000h)[ebx]
+  .text:00199E2B                 mov     edx, ds:(r_oldviewleaf_ptr - 33A000h)[ebx]
+  .text:00199E31                 mov     eax, [eax]
+  .text:00199E33                 cmp     [edx], eax
+  .text:00199E35                 jz      loc_199F0A
+  .text:00199E3B                 mov     [edx], eax
+  .text:00199E3D                 mov     edx, ds:(r_novis_ptr - 33A000h)[ebx]
+  .text:00199E43                 mov     esi, ds:(r_visframecount_ptr - 33A000h)[ebx]
+  .text:00199E49                 fld     dword ptr [edx+0Ch]
+  .text:00199E4C                 fldz
+  .text:00199E4E                 inc     dword ptr [esi]
+  .text:00199E50                 fst     [esp+103Ch+var_1024]
+  .text:00199E54                 fxch    st(1)
+  .text:00199E56                 fucomip st, st(1)
+  .text:00199E58                 fstp    st
+  .text:00199E5A                 jp      loc_199F2B
+  .text:00199E60                 jnz     loc_199F2B
+  .text:00199E66                 mov     edi, ds:(off_339CE0 - 33A000h)[ebx]
+  .text:00199E6C                 mov     edx, ds:dword_600CEC[edi]
+  .text:00199E72                 mov     [esp+103Ch+var_103C], eax
+  .text:00199E75                 mov     [esp+103Ch+var_1020], edi
+  .text:00199E79                 mov     [esp+103Ch+var_1038], edx
+  .text:00199E7D                 call    __Z11Mod_LeafPVSP7mleaf_sP7model_s; Mod_LeafPVS(mleaf_s *,model_s *)
+  .text:00199E82                 mov     [esp+103Ch+var_1024], eax
+  .text:00199E86                 mov     eax, [esp+103Ch+var_1020]
+  .text:00199E8A                 mov     edi, ds:dword_600CEC[eax]
+  .text:00199E90                 mov     ebp, [edi+88h]
+  .text:00199E96                 test    ebp, ebp
+  .text:00199E98                 jle     short loc_199EFF
+  .text:00199E9A                 mov     eax, [esi]
+  .text:00199E9C                 xor     edx, edx
+  .text:00199E9E                 mov     esi, 3Ch ; '<'
+  .text:00199EA3                 lea     esi, [esi+0]
+  .text:00199EA9                 lea     edi, [edi+0]
+  .text:00199EB0                 mov     ebx, [esp+103Ch+var_1024]
+  .text:00199EB4                 mov     ecx, edx
+  .text:00199EB6                 sar     ecx, 3
+  .text:00199EB9                 movzx   ebx, byte ptr ds:(_GLOBAL_OFFSET_TABLE_ - 33A000h)[ebx+ecx]
+  .text:00199EBD                 mov     ecx, edx
+  .text:00199EBF                 and     ecx, 7
+  .text:00199EC2                 sar     ebx, cl
+  .text:00199EC4                 test    bl, 1
+  .text:00199EC7                 jz      short loc_199EF7
+  .text:00199EC9                 mov     ecx, [edi+8Ch]
+  .text:00199ECF                 add     ecx, esi
+  .text:00199ED1                 jmp     short loc_199EE2
+  .text:00199ED8                 mov     [ecx+4], eax
+  .text:00199EDB                 mov     ecx, [ecx+20h]
+  .text:00199EDE                 test    ecx, ecx
+  .text:00199EE0                 jz      short loc_199EE7
+  .text:00199EE2                 cmp     [ecx+4], eax
+  .text:00199EE5                 jnz     short loc_199ED8
+  .text:00199EE7                 mov     edi, [esp+103Ch+var_1020]
+  .text:00199EEB                 mov     edi, ds:dword_600CEC[edi]
+  .text:00199EF1                 mov     ebp, [edi+88h]
+  .text:00199EF7                 inc     edx
+  .text:00199EF8                 add     esi, 3Ch ; '<'
+  .text:00199EFB                 cmp     edx, ebp
+  .text:00199EFD                 jl      short loc_199EB0
+  .text:00199EFF                 add     esp, 102Ch
+  .text:00199F05                 pop     ebx
+  .text:00199F06                 pop     esi
+  .text:00199F07                 pop     edi
+  .text:00199F08                 pop     ebp
+  .text:00199F09                 retn
+  .text:00199F0A                 mov     eax, ds:(r_novis_ptr - 33A000h)[ebx]
+  .text:00199F10                 fld     dword ptr [eax+0Ch]
+  .text:00199F13                 fldz
+  .text:00199F15                 fst     [esp+103Ch+var_1024]
+  .text:00199F19                 fxch    st(1)
+  .text:00199F1B                 fucomip st, st(1)
+  .text:00199F1D                 fstp    st
+  .text:00199F1F                 jp      short loc_199F23
+  .text:00199F21                 jz      short loc_199EFF
+  .text:00199F23                 mov     esi, ds:(r_visframecount_ptr - 33A000h)[ebx]
+  .text:00199F29                 inc     dword ptr [esi]
+  .text:00199F2B                 mov     eax, ds:(off_339CE0 - 33A000h)[ebx]
+  .text:00199F31                 lea     edi, [esp+103Ch+var_101C]
+  .text:00199F35                 mov     [esp+103Ch+var_1020], eax
+  .text:00199F39                 mov     eax, ds:dword_600CEC[eax]
+  .text:00199F3F                 mov     eax, [eax+88h]
+  .text:00199F45                 ; void *
+  .text:00199F45                 mov     [esp+103Ch+var_103C], edi; void *
+  .text:00199F48                 add     eax, 7
+  .text:00199F4B                 sar     eax, 3
+  .text:00199F4E                 ; int
+  .text:00199F4E                 mov     [esp+103Ch+var_1034], eax; int
+  .text:00199F52                 mov     eax, 0FFh
+  .text:00199F57                 ; int
+  .text:00199F57                 mov     [esp+103Ch+var_1038], eax; int
+  .text:00199F5B                 call    __Z8Q_memsetPvii; Q_memset(void *,int,int)
+  .text:00199F60                 mov     [esp+103Ch+var_1024], edi
+  .text:00199F64                 jmp     loc_199E86
+procedure: |-
+  // Targets are the two pointer globals themselves, not the pointed-to leaves or ELF GOT slots.
+  // Current-binary leaf/PVS marking. Source gl_rsurf.c is semantic evidence, not an exact build. SvEngine omits the GoldSrc mirror early return.
+  void __cdecl R_MarkLeaves()
+  {
+    int worldmodel; // edi
+    int numleafs; // ebp
+    int visframe; // eax
+    int i; // edx
+    int leaf_byte_offset; // esi
+    int node; // ecx
+    _BYTE *vis; // [esp+18h] [ebp-1024h]
+    _BYTE solid[4124]; // [esp+20h] [ebp-101Ch] BYREF
+
+    if ( r_oldviewleaf == r_viewleaf )
+    {
+      if ( r_novis_value == 0.0 )
+        return;
+      ++r_visframecount;
+    }
+    else
+    {
+      r_oldviewleaf = r_viewleaf;
+      ++r_visframecount;
+      if ( r_novis_value == 0.0 )
+      {
+        vis = (_BYTE *)Mod_LeafPVS(r_viewleaf, cl_worldmodel);
+        goto LABEL_4;
+      }
+    }
+    Q_memset(solid, 255, (*(_DWORD *)(cl_worldmodel + 136) + 7) >> 3);
+    vis = solid;
+  LABEL_4:
+    worldmodel = cl_worldmodel;
+    numleafs = *(_DWORD *)(cl_worldmodel + 136);
+    if ( numleafs > 0 )
+    {
+      visframe = r_visframecount;
+      i = 0;
+      leaf_byte_offset = 60;
+      do
+      {
+        if ( (((int)(unsigned __int8)vis[i >> 3] >> (i & 7)) & 1) != 0 )
+        {
+          node = leaf_byte_offset + *(_DWORD *)(worldmodel + 140);
+          do
+          {
+            if ( *(_DWORD *)(node + 4) == visframe )
+              break;
+            *(_DWORD *)(node + 4) = visframe;
+            node = *(_DWORD *)(node + 32);
+          }
+          while ( node );
+          worldmodel = cl_worldmodel;
+          numleafs = *(_DWORD *)(cl_worldmodel + 136);
+        }
+        ++i;
+        leaf_byte_offset += 60;
+      }
+      while ( i < numleafs );
+    }
+  }
