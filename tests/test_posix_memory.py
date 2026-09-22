@@ -370,7 +370,8 @@ time.sleep(30)
             def descendant_exited():
                 try:
                     stat = Path(f"/proc/{child_pid}/stat").read_text(encoding="ascii")
-                except FileNotFoundError:
+                except (FileNotFoundError, ProcessLookupError):
+                    # A task reaped after open() can make procfs read() return ESRCH.
                     return True
                 return stat[stat.rfind(")") + 2 :].split()[0] == "Z"
 

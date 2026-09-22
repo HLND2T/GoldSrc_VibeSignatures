@@ -191,3 +191,5 @@ GSVIBE_ANALYSIS_MAX_MEMORY_MIB=16384 uv run python ida_analyze_bin.py -gamever h
 - 修正后验证：WSL2 `tests/run_test_suite.py all -b` 共 1080 项，`OK (skipped=8)`；包含 Redis 集成与 repository
   contract。Windows 内存 / batch / warmup 定向测试 153 项，`OK (skipped=3)`；格式检查通过。
 - 本轮未执行真实 IDA 分析或真实 cgroup 限额验证；Linux 进程清理使用独立 Python 子进程验证。
+- CI 续修：真实子进程回归测试读取 `/proc/<pid>/stat` 时，进程可能在 open 后被回收并返回 `ESRCH`。
+  将 `ProcessLookupError` 与 `FileNotFoundError` 一同视为已退出，保留其他读取错误的失败行为。
