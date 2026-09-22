@@ -62,6 +62,12 @@ modules:
           - CL_Parse_SetView.{platform}.yaml
         expected_output:
           - cl_viewentity.{platform}.yaml
+      - name: find-CL_ParseMovevars
+        expected_input:
+          - cl_parsefuncs.{platform}.yaml
+        expected_output:
+          - CL_ParseMovevars.{platform}.yaml
+          - movevars.{platform}.yaml
       - name: find-CL_CreateVisibleEntity
         expected_input:
           - cl_enginefuncs.{platform}.yaml
@@ -1040,6 +1046,10 @@ modules:
         category: func
       - name: CL_Parse_SetView
         category: func
+      - name: CL_ParseMovevars
+        category: func
+      - name: movevars
+        category: gv
       - name: R_StudioCheckBBox
         category: func
       - name: R_StudioSetupLighting
