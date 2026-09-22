@@ -98,8 +98,9 @@ producer（`scope: release-all`）和结构一致的 consumer，不存在 analys
 Actions concurrency group 串行化唯一官方 producer，persisted producer-only SMB lock 还会排除 direct producer。
 Miss 使用 canonical Python executable 探测 IDA version，再通过 bounded `ThreadPoolExecutor` 按每 binary 一个裸
 idalib process 并发执行，不使用 MCP port。Worker timeout 遵守 kill/wait 后清理；失败只影响其 owned database set，
-sibling 继续完成，任一失败都会禁止 group publication。可选聚合 memory admission 在跨 group 的单一进程级 Windows
-Job controller 上，为每组重新采样 baseline 并创建 gate。
+sibling 继续完成，任一失败都会禁止 group publication。可选聚合 memory admission 在跨 group 的单一进程级 controller
+上（Windows Job，或 Linux 上的 cgroup v2 子级上限，两者都不可用时降级为 per-worker 限额，见
+[tiers](requirements.md#analysis-memory-分层)），为每组重新采样 baseline 并创建 gate。
 
 ## Snapshot 边界
 

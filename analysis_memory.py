@@ -20,17 +20,23 @@ from warmup_memory import (
     DEFAULT_SOFT_LIMIT_RATIO,
     MIB,
     DEFAULT_INITIAL_WORKER_RESERVATION_BYTES,
+    MemoryController,
+    MemoryControllerCapabilities,
     MemoryLaunchGate,
     MemorySnapshot,
-    WindowsJobMemoryController,
+    capability_suffix,
+    default_memory_controller,
 )
 
 ANALYSIS_CONCURRENCY_ENV = "GSVIBE_ANALYSIS_MAX_CONCURRENCY"
 ANALYSIS_MEMORY_ENV = "GSVIBE_ANALYSIS_MAX_MEMORY_MIB"
 ANALYSIS_RESERVATION_ENV = "GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB"
+ANALYSIS_WORKER_VAS_LIMIT_ENV = "GSVIBE_ANALYSIS_WORKER_VAS_LIMIT_MIB"
 COORDINATED_CHILD_ENV = "GSVIBE_ANALYSIS_COORDINATED_CHILD"
 MAX_ANALYSIS_CONCURRENCY = 32
 DEFAULT_ANALYSIS_CONCURRENCY = 1
+DEFAULT_ANALYSIS_WORKER_VAS_LIMIT_MIB = 8192
+MINIMUM_ANALYSIS_WORKER_VAS_LIMIT_MIB = 256
 
 
 class AnalysisMemoryConfigError(ValueError):
@@ -78,6 +84,41 @@ def parse_analysis_worker_reservation_bytes(raw: str | None = None) -> int:
     if not text.isdecimal() or not text.isascii() or int(text, 10) < 1:
         raise AnalysisMemoryConfigError(f"{ANALYSIS_RESERVATION_ENV} must be a positive decimal integer MiB value")
     return int(text, 10) * MIB
+
+
+def parse_analysis_worker_vas_limit_mib(raw: str | None = None) -> int:
+    """Parse the degraded-tier per-worker address-space cap; blank keeps the 8192 MiB default."""
+    value = os.environ.get(ANALYSIS_WORKER_VAS_LIMIT_ENV) if raw is None else raw
+    if value is None or not str(value).strip():
+        return DEFAULT_ANALYSIS_WORKER_VAS_LIMIT_MIB
+    text = str(value).strip()
+    if not text.isdecimal() or not text.isascii() or int(text, 10) < MINIMUM_ANALYSIS_WORKER_VAS_LIMIT_MIB:
+        raise AnalysisMemoryConfigError(
+            f"{ANALYSIS_WORKER_VAS_LIMIT_ENV} must be a decimal integer MiB value of at least "
+            f"{MINIMUM_ANALYSIS_WORKER_VAS_LIMIT_MIB}"
+        )
+    return int(text, 10)
+
+
+def enforce_worker_memory_limits(environ: dict | None = None) -> int | None:
+    """Install this worker's degraded-tier limits; None when the aggregate tier owns the bound."""
+    source = os.environ if environ is None else environ
+    raw = source.get(ANALYSIS_WORKER_VAS_LIMIT_ENV)
+    if raw is None or not str(raw).strip():
+        return None
+    limit_mib = parse_analysis_worker_vas_limit_mib(raw)
+    reservation_bytes = parse_analysis_worker_reservation_bytes(source.get(ANALYSIS_RESERVATION_ENV))
+    from posix_memory import start_process_tree_limits
+
+    start_process_tree_limits(
+        address_space_limit_mib=limit_mib,
+        resident_cap_bytes=reservation_bytes,
+    )
+    print(
+        f"Analysis worker per-worker limits enabled: address space {limit_mib} MiB; "
+        f"resident cap {reservation_bytes // MIB} MiB (aggregate memory cap unavailable)"
+    )
+    return limit_mib
 
 
 @dataclass(frozen=True)
@@ -239,13 +280,13 @@ class AnalysisMemoryGate(MemoryLaunchGate):
 
 
 class AnalysisMemoryAuthority:
-    """Own the single Job controller and one launch gate across both analysis phases."""
+    """Own the single process-tree controller and one launch gate across both analysis phases."""
 
     def __init__(
         self,
         budget_bytes: int,
         *,
-        controller_factory: Callable[[int], WindowsJobMemoryController] = WindowsJobMemoryController,
+        controller_factory: Callable[[int], MemoryController] = default_memory_controller,
         host_probe: HostMemoryProbe | None = None,
         soft_limit_ratio: float = DEFAULT_SOFT_LIMIT_RATIO,
         initial_worker_reservation_bytes: int = DEFAULT_INITIAL_WORKER_RESERVATION_BYTES,
@@ -284,7 +325,16 @@ class AnalysisMemoryAuthority:
             f"budget={_format_mib(budget_bytes)}; baseline={_format_mib(baseline.job_bytes)}; "
             f"soft={_format_mib(self._soft_limit_bytes)}; "
             f"reservation={_format_mib(initial_worker_reservation_bytes)}"
+            f"{capability_suffix(self.capabilities)}"
         )
+        if self.capabilities is not None:
+            kind = "hard cap" if self.capabilities.aggregate_hard_cap else "unavailable"
+            print(f"Analysis memory aggregate {kind} ({self.capabilities.tier}): {self.capabilities.detail}")
+
+    @property
+    def capabilities(self) -> MemoryControllerCapabilities | None:
+        """None when an injected controller declares no tier metadata."""
+        return getattr(self._controller, "capabilities", None)
 
     @property
     def gate(self) -> AnalysisMemoryGate:

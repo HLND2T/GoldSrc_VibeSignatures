@@ -27,9 +27,32 @@ Copy `.env.example` to `.env` for a local template. The analyzer uses the GoldSr
 - `GSVIBE_API_HOST`, `GSVIBE_API_PORT`, `GSVIBE_API_CORS_ORIGINS`, `GSVIBE_API_ALLOW_PRIVATE_NETWORK`, `GSVIBE_SSE_BLOCK_MS`, and `GSVIBE_SSE_BATCH_SIZE` configure the read-only Process API.
 - `GSVIBE_REFERENCE_GAMEVER` (default `hl-10210`) selects the canonical reference game version for `LLM_DECOMPILE`.
 - `GSVIBE_ANALYSIS_MAX_CONCURRENCY` bounds concurrently admitted full-analysis worker processes (decimal `1..32`, default `1`, fail-closed). Values above `1` also require `GSVIBE_ANALYSIS_MAX_MEMORY_MIB`.
-- `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` sets the analyzer process tree's aggregate committed-memory hard budget (Windows Job Object) with an 85% soft admission gate; it also applies to direct single-tag and selected-node analysis.
+- `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` sets the analyzer process tree's aggregate memory hard budget with an 85% soft admission gate; it also applies to direct single-tag and selected-node analysis. See [Analysis memory tiers](#analysis-memory-tiers) for what enforces it on each platform.
 - `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` overrides the analyzer's initial per-worker reservation floor (positive decimal integer MiB; unset or blank defaults to `2048`). It is read only when the memory guard is enabled; invalid values fail startup. Observed usage can still raise the reservation, and IDB warmup defaults are unaffected. Set it in the GitHub `win64` Environment Variables, for example to `1024`, to tune new release builds.
+- `GSVIBE_ANALYSIS_WORKER_VAS_LIMIT_MIB` sets the per-worker address-space cap used when no aggregate hard cap is available (positive decimal integer MiB of at least `256`; unset or blank defaults to `8192`); invalid values fail startup. Raise it if a degraded Linux worker is killed while legitimately analysing.
 - `DEPOTDOWNLOADER_STEAM_USERNAME` and `DEPOTDOWNLOADER_STEAM_PASSWORD` are read by `download_depot.py` when depot authentication is required.
+
+## Analysis memory tiers
+
+The aggregate budget is enforced by the strongest mechanism the host allows, and the analyzer prints the tier it
+selected (`cap=<tier>` plus one detail line) at startup:
+
+- `windows-job` — Windows: one Job Object bound to the analyzer process, as before.
+- `cgroup-v2` — Linux with a usable delegated cgroup: one child cgroup holding the analyzer process, capped by
+  `memory.max` and killed as a group on violation. The analyzer only ever creates that child directory; it never writes
+  `cgroup.subtree_control`.
+- `reservation-only` — Linux without a usable cgroup: the aggregate cap is unavailable, so each worker is bounded by
+  `GSVIBE_ANALYSIS_WORKER_VAS_LIMIT_MIB` plus a resident-memory watchdog at the reservation. This is an admission
+  budget, not an aggregate cap: with reservation `R` and per-worker cap `C`, at most `floor(0.85 x budget / R)` workers
+  run, so the worst case is that product and can exceed the budget when `C > R`. The watchdog enforces the reservation
+  per worker, which is stricter than the aggregate gate: set `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` (and
+  `IDB_WARMUP_INITIAL_WORKER_RESERVATION_MIB` for warming) from the measured per-worker peak before enabling this tier.
+
+Tier 1 on Linux needs a cgroup whose controller set is delegated to the runner. On a systemd unit that means
+`Delegate=yes`; check the effective state with `systemctl show -p Delegate,DelegateSubgroup <runner>.service` and the
+`cap=` line of any run. Without it the guard degrades to `reservation-only` rather than failing. An empty
+`gsvibe-memory` directory surviving a run under the runner cgroup is expected: a process cannot remove the cgroup it
+lives in, and the next run reuses it.
 
 ## IDB cache host requirements
 
@@ -51,7 +74,9 @@ artifacts are evidence/selection transport and `READY.json` is a probe hint, nev
 Official analysis is unconditionally warm; `GSVIBE_IDB_CACHE_MODE` is not read. Do not enable or dispatch those workflows
 until the runner and storage evidence above is complete. No manually maintained IDA-version variable is required. Store
 the absolute persisted path as the Environment secret `PERSISTED_WORKSPACE`. `IDB_WARMUP_MAX_CONCURRENCY` bounds workers
-(default `2`), while optional `IDB_WARMUP_MAX_MEMORY_MIB` enables aggregate Windows Job admission. New cache identities
+(default `2`), while optional `IDB_WARMUP_MAX_MEMORY_MIB` enables aggregate memory admission and optional
+`IDB_WARMUP_INITIAL_WORKER_RESERVATION_MIB` overrides its per-worker reservation floor (blank defaults to `2048`); both
+use the same tiers as [Analysis memory tiers](#analysis-memory-tiers). New cache identities
 bind only the dynamically probed non-empty kernel version as `ida_runtime`; binary identity and the canonical worker
 contract remain independently bound. A producer re-probes the same executable before launching workers and fails closed
 on a mismatch.

@@ -30,7 +30,9 @@ concurrency group `idb-warmup-<owner>/<repo>`，且 `cancel-in-progress: false`�
 只有一个官方 producer。官方与 direct producer 还共同持有
 `<PERSISTED_WORKSPACE>/idb-cache/.locks/producer.lock`。Miss 先在短 tag lock 内 probe，再在锁外按每 binary 一个裸
 idalib process 并发 warm，最后重新取得 tag lock 做 re-probe/publish/verify/prune。
-`IDB_WARMUP_MAX_CONCURRENCY` 默认 `2`；可选 `IDB_WARMUP_MAX_MEMORY_MIB` 启用进程树 Job memory admission。
+`IDB_WARMUP_MAX_CONCURRENCY` 默认 `2`；可选 `IDB_WARMUP_MAX_MEMORY_MIB` 启用进程树 memory admission（Windows
+Job，或 Linux 上的 cgroup v2 上限；见 [requirements](requirements.md#analysis-memory-分层)），可选
+`IDB_WARMUP_INITIAL_WORKER_RESERVATION_MIB` 覆盖其 per-worker 预留下限。
 Consumer 只在 `verify -> restore` 持有 tag lock，因此可与另一 producer 的长 warm 并行，但不会与 publish/prune 竞争。
 
 Miss 会发布新的 immutable generation；hit 必须先验证 exact generation 再进入 selection。Hit 与 miss 产生逐字节相同

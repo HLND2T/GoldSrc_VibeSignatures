@@ -44,9 +44,12 @@ from analysis_config import (
     validated_tag,
 )
 from analysis_memory import (
+    ANALYSIS_WORKER_VAS_LIMIT_ENV,
     COORDINATED_CHILD_ENV,
     AnalysisMemoryConfigError,
     analysis_memory_authority_from_environment,
+    enforce_worker_memory_limits,
+    parse_analysis_worker_vas_limit_mib,
     resolve_analysis_limits,
     validate_limits_for_effective_concurrency,
 )
@@ -2957,6 +2960,7 @@ def _batch_worker_options(args) -> dict:
 
 def _batch_worker_main(request_path: str) -> int:
     """Execute one invocation-scoped work item exactly and emit the result contract."""
+    enforce_worker_memory_limits()
     request = json.loads(Path(request_path).read_text(encoding="utf-8"))
     options = request["options"]
     node_ids = tuple(request["node_ids"])
@@ -3187,11 +3191,16 @@ def _run_analysis_batch(args, diagnostics: BatchDiagnostics) -> int:
         f"{limits.max_concurrency}, effective {max(effective_concurrency, 1)}"
     )
     memory_gate = None
+    capabilities = None
     if limits.memory_guard_enabled:
         authority = analysis_memory_authority_from_environment()
         memory_gate = authority.gate if authority is not None else None
+        capabilities = authority.capabilities if authority is not None else None
     else:
         print("Full analysis batch: aggregate memory guard disabled (GSVIBE_ANALYSIS_MAX_MEMORY_MIB unset)")
+    worker_vas_limit_mib = None
+    if capabilities is not None and not capabilities.aggregate_hard_cap:
+        worker_vas_limit_mib = parse_analysis_worker_vas_limit_mib()
 
     batch_run_id = diagnostics.payload["run_id"]
     request_root = Path(tempfile.mkdtemp(prefix="gsvibe-analysis-batch-"))
@@ -3239,6 +3248,8 @@ def _run_analysis_batch(args, diagnostics: BatchDiagnostics) -> int:
         _atomic_write_json(request_path, request)
         environment = os.environ.copy()
         environment[COORDINATED_CHILD_ENV] = "1"
+        if worker_vas_limit_mib is not None:
+            environment[ANALYSIS_WORKER_VAS_LIMIT_ENV] = str(worker_vas_limit_mib)
         for env_name, attribute in _BATCH_WORKER_ENV_OPTIONS:
             value = getattr(args, attribute, None)
             if value is not None:

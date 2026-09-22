@@ -107,7 +107,8 @@ the one official producer, while a persisted producer-only SMB lock also exclude
 canonical Python executable probes its IDA version and starts one bare-idalib process per binary under a bounded
 `ThreadPoolExecutor`; no MCP port is used. Worker timeout follows kill/wait-before-cleanup, failures affect only the owned
 database set, siblings finish, and any failure prevents group publication. Optional aggregate memory admission uses one
-process-level Windows Job controller across groups and a fresh gate/baseline for each group.
+process-level controller across groups — a Windows Job, or a cgroup v2 child cap on Linux, degrading to per-worker limits
+where neither is available ([tiers](requirements.md#analysis-memory-tiers)) — and a fresh gate/baseline for each group.
 
 ## Snapshot boundary
 

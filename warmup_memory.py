@@ -1,4 +1,8 @@
-"""Process-level Windows Job memory controls for concurrent IDB warm workers."""
+"""Process-tree memory controls for concurrent IDB warm workers.
+
+Windows binds the producer to one aggregate Job; POSIX resolves a cgroup v2 hard cap or falls
+back to per-worker address-space limits (see ``posix_memory``).
+"""
 
 from __future__ import annotations
 
@@ -18,6 +22,7 @@ DEFAULT_POLL_INTERVAL_SECONDS = 2.0
 DEFAULT_LAUNCH_INTERVAL_SECONDS = 5.0
 DEFAULT_MEMORY_ADMISSION_TIMEOUT_SECONDS = 300.0
 MEMORY_BUDGET_ENV = "IDB_WARMUP_MAX_MEMORY_MIB"
+WARMUP_RESERVATION_ENV = "IDB_WARMUP_INITIAL_WORKER_RESERVATION_MIB"
 
 _JOB_OBJECT_EXTENDED_LIMIT_INFORMATION_CLASS = 9
 _JOB_OBJECT_LIMIT_VIOLATION_INFORMATION_CLASS = 13
@@ -182,6 +187,22 @@ class MemorySnapshot:
     job_bytes: int
 
 
+@dataclass(frozen=True)
+class MemoryControllerCapabilities:
+    """What a controller actually enforces, so callers can pick worker-level limits."""
+
+    tier: str
+    aggregate_hard_cap: bool
+    detail: str
+
+
+class MemoryController(Protocol):
+    budget_bytes: int
+    capabilities: MemoryControllerCapabilities
+
+    def snapshot(self) -> MemorySnapshot: ...
+
+
 class WindowsJobMemoryController:
     """Bind this producer process to one aggregate Job and retain its handle."""
 
@@ -201,9 +222,23 @@ class WindowsJobMemoryController:
             raise
         self._handle = handle
         self.budget_bytes = budget_bytes
+        self.capabilities = MemoryControllerCapabilities(
+            tier="windows-job",
+            aggregate_hard_cap=True,
+            detail="Windows Job aggregate hard cap",
+        )
 
     def snapshot(self) -> MemorySnapshot:
         return MemorySnapshot(job_bytes=self._api.query_job_memory(self._handle))
+
+
+def default_memory_controller(budget_bytes: int) -> MemoryController:
+    """Select the production controller: a Windows Job, or the POSIX cgroup/per-worker tiers."""
+    if os.name == "nt":
+        return WindowsJobMemoryController(budget_bytes)
+    from posix_memory import build_posix_memory_controller
+
+    return build_posix_memory_controller(budget_bytes)
 
 
 class MemoryLaunchGate:
@@ -308,13 +343,13 @@ class MemoryLaunchGate:
 
 
 class ProducerMemoryOwner:
-    """Own one process-level Job controller and create a fresh launch gate per miss group."""
+    """Own one process-level controller and create a fresh launch gate per miss group."""
 
     def __init__(
         self,
         budget_bytes: int | None,
         *,
-        controller_factory: Callable[[int], WindowsJobMemoryController] = WindowsJobMemoryController,
+        controller_factory: Callable[[int], MemoryController] = default_memory_controller,
         soft_limit_ratio: float = DEFAULT_SOFT_LIMIT_RATIO,
         initial_worker_reservation_bytes: int = DEFAULT_INITIAL_WORKER_RESERVATION_BYTES,
     ) -> None:
@@ -324,12 +359,21 @@ class ProducerMemoryOwner:
         self._controller_factory = controller_factory
         self._soft_limit_ratio = soft_limit_ratio
         self._initial_worker_reservation_bytes = initial_worker_reservation_bytes
-        self._controller: WindowsJobMemoryController | None = None
+        self._controller: MemoryController | None = None
         self._group_gate: MemoryLaunchGate | None = None
 
     @property
-    def controller(self) -> WindowsJobMemoryController | None:
+    def controller(self) -> MemoryController | None:
         return self._controller
+
+    @property
+    def capabilities(self) -> MemoryControllerCapabilities | None:
+        """None for an unstarted or injected controller that declares no tier metadata."""
+        return getattr(self._controller, "capabilities", None)
+
+    @property
+    def reservation_bytes(self) -> int:
+        return self._initial_worker_reservation_bytes
 
     def begin_group(self) -> MemoryLaunchGate | None:
         if self._group_gate is not None:
@@ -361,7 +405,10 @@ class ProducerMemoryOwner:
             "IDB warm memory controls enabled: "
             f"controller={'created' if created else 'reused'}; budget={_format_mib(self.budget_bytes)}; "
             f"baseline={_format_mib(baseline.job_bytes)}; soft={_format_mib(soft_limit_bytes)}"
+            f"{capability_suffix(self.capabilities)}"
         )
+        if self.capabilities is not None:
+            print(f"IDB warm memory aggregate cap ({self.capabilities.tier}): {self.capabilities.detail}")
         return gate
 
     def end_group(self, gate: MemoryLaunchGate | None) -> None:
@@ -393,13 +440,28 @@ def configured_memory_budget_bytes(raw: str | None = None) -> int | None:
     return memory_mib * MIB
 
 
+def parse_warmup_reservation_bytes(raw: str | None = None) -> int:
+    """Parse the per-worker reservation floor; blank retains the shared default."""
+    value = os.environ.get(WARMUP_RESERVATION_ENV) if raw is None else raw
+    if value is None or not str(value).strip():
+        return DEFAULT_INITIAL_WORKER_RESERVATION_BYTES
+    text = str(value).strip()
+    if not text.isdecimal() or not text.isascii() or int(text, 10) < 1:
+        raise ValueError(f"{WARMUP_RESERVATION_ENV} must be a positive decimal integer MiB value")
+    return int(text, 10) * MIB
+
+
 def producer_memory_owner_from_environment() -> ProducerMemoryOwner:
     """Return the sole configured owner for this PID; never close a bound Job handle."""
     budget_bytes = configured_memory_budget_bytes()
+    reservation_bytes = parse_warmup_reservation_bytes()
     global _PROCESS_OWNER
     with _OWNER_LOCK:
         if _PROCESS_OWNER is None:
-            _PROCESS_OWNER = ProducerMemoryOwner(budget_bytes)
+            _PROCESS_OWNER = ProducerMemoryOwner(
+                budget_bytes,
+                initial_worker_reservation_bytes=reservation_bytes,
+            )
         elif _PROCESS_OWNER.budget_bytes != budget_bytes:
             raise ValueError("IDB warm memory budget cannot change within one producer process")
         return _PROCESS_OWNER
@@ -407,3 +469,10 @@ def producer_memory_owner_from_environment() -> ProducerMemoryOwner:
 
 def _format_mib(value: int) -> str:
     return f"{value / MIB:.1f} MiB"
+
+
+def capability_suffix(capabilities: MemoryControllerCapabilities | None) -> str:
+    """Report the enforcement tier; injected test controllers may declare none."""
+    if capabilities is None:
+        return ""
+    return f"; cap={capabilities.tier}"

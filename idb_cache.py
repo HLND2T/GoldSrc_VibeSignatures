@@ -42,6 +42,7 @@ from release_workflow_lib.hashing import (
     sha256_file,
     write_canonical_json,
 )
+from posix_memory import ResidentMemoryWatchdog
 from warmup_memory import (
     DEFAULT_MEMORY_ADMISSION_TIMEOUT_SECONDS,
     MemoryLaunchGate,
@@ -837,10 +838,13 @@ def _run_one_worker(
     worker_timeout_seconds: float,
     memory_gate: MemoryLaunchGate | None,
     memory_admission_timeout_seconds: float,
+    worker_memory_limit_mib: int | None,
+    worker_resident_cap_bytes: int,
 ) -> float:
     gate_acquired = False
     process = None
     reaped = False
+    watchdog = None
     started = time.monotonic()
     workspace = workspace.resolve(strict=True)
     binary = binary.resolve(strict=True)
@@ -859,15 +863,18 @@ def _run_one_worker(
             gate_acquired = True
         _prepare_database_files_for_warm(workspace, binary)
         command = [str(ida_python_executable), str(worker_path), "run", "-binary", str(binary)]
-        if memory_gate is None:
-            command.extend(["-memory-limit-mib", str(DEFAULT_WORKER_MEMORY_LIMIT_MIB)])
-        else:
+        if worker_memory_limit_mib is None:
             command.append("--disable-memory-limit")
+        else:
+            command.extend(["-memory-limit-mib", str(worker_memory_limit_mib)])
         try:
             print(f"IDB warm worker start: binary={binary}; module={module}")
             process = subprocess.Popen(command)
         except (OSError, subprocess.SubprocessError) as exc:
             raise IdbCacheError(f"IDB warm worker could not start for {binary.name}: {exc}") from exc
+        if worker_resident_cap_bytes:
+            watchdog = ResidentMemoryWatchdog(worker_resident_cap_bytes)
+            watchdog.start(process.pid)
         try:
             return_code = process.wait(timeout=worker_timeout_seconds)
             reaped = True
@@ -914,6 +921,13 @@ def _run_one_worker(
             ) from error
         raise
     finally:
+        if watchdog is not None:
+            exceeded = watchdog.stop()
+            if exceeded:
+                print(
+                    f"IDB warm worker resident memory watchdog tripped: binary={binary}; "
+                    f"observed={exceeded // (1024 * 1024)} MiB"
+                )
         if gate_acquired and (process is None or reaped):
             memory_gate.worker_finished()
 
@@ -949,6 +963,11 @@ def warm_group(
     if owner.budget_bytes is None:
         print("IDB warm aggregate memory controls disabled; using per-worker memory limits")
     memory_gate = owner.begin_group()
+    capabilities = owner.capabilities
+    aggregate_enforced = capabilities is not None and capabilities.aggregate_hard_cap
+    degraded = capabilities is not None and not capabilities.aggregate_hard_cap
+    worker_memory_limit_mib = None if aggregate_enforced else DEFAULT_WORKER_MEMORY_LIMIT_MIB
+    worker_resident_cap_bytes = owner.reservation_bytes if degraded else 0
     failures = []
     warmed = 0
     try:
@@ -968,6 +987,8 @@ def warm_group(
                     worker_timeout_seconds=worker_timeout_seconds,
                     memory_gate=memory_gate,
                     memory_admission_timeout_seconds=memory_admission_timeout_seconds,
+                    worker_memory_limit_mib=worker_memory_limit_mib,
+                    worker_resident_cap_bytes=worker_resident_cap_bytes,
                 ): binary
                 for binary in binaries
             }

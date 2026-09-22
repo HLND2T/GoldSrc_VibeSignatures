@@ -53,7 +53,8 @@ reservation floor (default `2048` MiB); see requirements for configuration rules
 The full `-allgamever -force_all` analysis step runs the two-phase bounded coordinator. The protected `win64`
 Environment maps non-secret variables into the job: `GSVIBE_ANALYSIS_MAX_CONCURRENCY` (default `1`) and
 `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` (unset disables the aggregate memory guard, which also blocks concurrency above
-`1`). Activation is progressive: enable the memory budget first at concurrency `1` to record a real peak, then
+`1`; on a Linux runner the guard's selected tier and the `Delegate=yes` prerequisite are in
+[requirements](requirements.md#analysis-memory-tiers)). Activation is progressive: enable the memory budget first at concurrency `1` to record a real peak, then
 raise concurrency to `2` only after real-runner evidence supports it; rolling back only requires setting
 concurrency back to `1`. The runner-specific memory value is operational configuration and is never committed
 to the repository.

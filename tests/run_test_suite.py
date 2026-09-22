@@ -43,6 +43,7 @@ GROUP_FILES = {
         "test_analysis_planner.py",
         "test_analysis_batch.py",
         "test_analysis_memory.py",
+        "test_posix_memory.py",
         "test_bin_artifact_contract.py",
         "test_artifact_diagnostics.py",
         "test_migrate_bin_artifacts.py",

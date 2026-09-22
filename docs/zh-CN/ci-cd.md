@@ -47,7 +47,8 @@ PR 或独立 promotion workflow。Release 只发布 3 个资产：`gamesymbols-<
 
 full `-allgamever -force_all` 分析步骤运行两阶段有界 coordinator。受保护的 `win64` Environment 向 job 映射非
 secret 变量：`GSVIBE_ANALYSIS_MAX_CONCURRENCY`（默认 `1`）与 `GSVIBE_ANALYSIS_MAX_MEMORY_MIB`（未设置时关闭
-aggregate 内存门禁，同时阻止大于 `1` 的并发）。激活顺序渐进：先在 concurrency `1` 下配置内存预算并记录真实峰值，
+aggregate 内存门禁，同时阻止大于 `1` 的并发；Linux runner 上门禁选中的层与 `Delegate=yes` 前置条件见
+[requirements](requirements.md#analysis-memory-分层)）。激活顺序渐进：先在 concurrency `1` 下配置内存预算并记录真实峰值，
 再凭真实 runner 证据提升到 `2`；回滚只需把 concurrency 改回 `1`。runner 专属内存数值属于运维配置，不写入仓库。
 
 `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` 同样映射到 job，可调整每 worker 的初始预留下限，默认 `2048` MiB；配置规则见 requirements。
