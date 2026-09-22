@@ -259,6 +259,11 @@ modules:
           - R_PolyBlend.{platform}.yaml
         expected_output:
           - V_FadeAlpha.{platform}.yaml
+      - name: find-R_PolyBlend-cl_sf
+        expected_input:
+          - R_PolyBlend.{platform}.yaml
+        expected_output:
+          - cl_sf.{platform}.yaml
       - name: find-R_RenderScene-decompiles
         expected_input:
           - R_RenderView.{platform}.yaml
@@ -1181,6 +1186,8 @@ modules:
         category: func
       - name: V_FadeAlpha
         category: func
+      - name: cl_sf
+        category: gv
       - name: CL_SetDevOverView
         category: func
       - name: r_refdef
