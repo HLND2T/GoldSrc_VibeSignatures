@@ -1,0 +1,9 @@
+gv_name: vright
+gv_va: '0x10dc5580'
+gv_rva: '0xdc5580'
+gv_sig: 55 8B EC F3 0F 10 05 ?? ?? ?? ?? 8B 45 ?? F3 0F 11 00 F3 0F 10 05 ?? ?? ?? ?? F3 0F 11 40 ?? F3 0F 10 05 ?? ?? ??
+  ??
+gv_sig_va: '0x101f3ba0'
+gv_inst_offset: '0x55'
+gv_inst_length: '0x8'
+gv_inst_disp: '0x4'

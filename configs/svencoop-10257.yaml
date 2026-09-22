@@ -565,6 +565,17 @@ modules:
         expected_output:
           - studioapi_GetCurrentEntity.{platform}.yaml
           - currententity.{platform}.yaml
+      - name: find-studioapi_GetViewInfo
+        expected_output:
+          - studioapi_GetViewInfo.{platform}.yaml
+      - name: find-studioapi_GetViewInfo-globals
+        expected_input:
+          - studioapi_GetViewInfo.{platform}.yaml
+          - r_origin.{platform}.yaml
+        expected_output:
+          - vup.{platform}.yaml
+          - vright.{platform}.yaml
+          - vpn.{platform}.yaml
       - name: find-studioapi_GetTimes-svencoop
         expected_output:
           - studioapi_GetTimes.{platform}.yaml
@@ -1401,6 +1412,14 @@ modules:
       - name: studioapi_GetCurrentEntity
         category: func
       - name: currententity
+        category: gv
+      - name: studioapi_GetViewInfo
+        category: func
+      - name: vup
+        category: gv
+      - name: vright
+        category: gv
+      - name: vpn
         category: gv
       - name: studioapi_GetTimes
         category: func

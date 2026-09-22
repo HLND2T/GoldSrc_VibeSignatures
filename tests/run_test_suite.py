@@ -26,6 +26,7 @@ GROUP_FILES = {
         "test_client_blob_exports.py",
         "test_scoreinfo_constructor.py",
         "test_engine_private_walks.py",
+        "test_studio_view_info.py",
         "test_portal_layout.py",
         "test_renderer_elf_symbols.py",
         "test_pitch_store_predicate.py",
