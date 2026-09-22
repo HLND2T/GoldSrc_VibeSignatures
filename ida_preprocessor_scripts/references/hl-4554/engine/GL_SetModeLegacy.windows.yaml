@@ -1,0 +1,188 @@
+func_name: GL_SetModeLegacy
+func_va: '0x1d59290'
+disasm_code: |-
+  ; vid_d3d_value names the writable float value member of the cvar whose name is "vid_d3d" and initial string is "0". It is not the cvar_t object base.
+  ; The fD3D branch sets this float to 1.0f and selects QGL_D3DInit; distinguish the separate integer driver flag. Select the member STORE itself, not the cvar-registration argument.
+  ; This legacy Windows body predates the modern SDL/FBO source. Its six-argument GL_SetMode prototype and cvar layout are verified from this binary.
+  .text:01D59290                 mov     eax, [esp+fD3D]
+  .text:01D59294                 mov     dword_2783640, 0
+  .text:01D5929E                 test    eax, eax
+  .text:01D592A0                 jz      short loc_1D592B6
+  .text:01D592A2                 mov     fD3D, 1
+  .text:01D592AC                 mov     vid_d3d_value, 3F800000h
+  .text:01D592B6                 push    ebx
+  .text:01D592B7                 mov     ebx, [esp+4+pbaseRC]
+  .text:01D592BB                 push    ebp
+  .text:01D592BC                 push    esi
+  .text:01D592BD                 mov     esi, [esp+0Ch+pmaindc]
+  .text:01D592C1                 ; ArgList
+  .text:01D592C1                 push    edi; ArgList
+  .text:01D592C2                 mov     edi, [esp+10h+Str]
+  .text:01D592C6                 mov     dword ptr [ebx], 0
+  .text:01D592CC                 test    eax, eax
+  .text:01D592CE                 mov     dword ptr [esi], 0
+  .text:01D592D4                 jz      short loc_1D592E2
+  .text:01D592D6                 push    0
+  .text:01D592D8                 call    QGL_D3DInit
+  .text:01D592DD                 add     esp, 4
+  .text:01D592E0                 jmp     short loc_1D5930C
+  .text:01D592E2                 test    edi, edi
+  .text:01D592E4                 jz      short loc_1D592FE
+  .text:01D592E6                 push    offset aOpengl32; "opengl32"
+  .text:01D592EB                 ; Str
+  .text:01D592EB                 push    edi; Str
+  .text:01D592EC                 call    sub_1D36BF0
+  .text:01D592F1                 add     esp, 8
+  .text:01D592F4                 neg     eax
+  .text:01D592F6                 sbb     eax, eax
+  .text:01D592F8                 inc     eax
+  .text:01D592F9                 mov     dword_2783640, eax
+  .text:01D592FE                 mov     eax, [esp+10h+arg_14]
+  .text:01D59302                 ; Str
+  .text:01D59302                 push    eax; Str
+  .text:01D59303                 ; lpLibFileName
+  .text:01D59303                 push    edi; lpLibFileName
+  .text:01D59304                 call    sub_1D86B20
+  .text:01D59309                 add     esp, 8
+  .text:01D5930C                 mov     ebp, eax
+  .text:01D5930E                 test    ebp, ebp
+  .text:01D59310                 jnz     short loc_1D5933F
+  .text:01D59312                 test    edi, edi
+  .text:01D59314                 jnz     short loc_1D5932A
+  .text:01D59316                 push    offset aErrorInitializ; "Error initializing gl driver, check tha"...
+  .text:01D5931B                 call    Sys_Error
+  .text:01D59320                 add     esp, 4
+  .text:01D59323                 xor     eax, eax
+  .text:01D59325                 pop     edi
+  .text:01D59326                 pop     esi
+  .text:01D59327                 pop     ebp
+  .text:01D59328                 pop     ebx
+  .text:01D59329                 retn
+  .text:01D5932A                 ; ArgList
+  .text:01D5932A                 push    edi; ArgList
+  .text:01D5932B                 push    offset aErrorInitializ_0; "Error initializing gl driver, check tha"...
+  .text:01D59330                 call    Sys_Error
+  .text:01D59335                 add     esp, 8
+  .text:01D59338                 xor     eax, eax
+  .text:01D5933A                 pop     edi
+  .text:01D5933B                 pop     esi
+  .text:01D5933C                 pop     ebp
+  .text:01D5933D                 pop     ebx
+  .text:01D5933E                 retn
+  .text:01D5933F                 mov     edi, [esp+10h+hWnd]
+  .text:01D59343                 ; hWnd
+  .text:01D59343                 push    edi; hWnd
+  .text:01D59344                 call    ds:__imp_GetDC
+  .text:01D5934A                 ; hdc
+  .text:01D5934A                 push    eax; hdc
+  .text:01D5934B                 mov     [esi], eax
+  .text:01D5934D                 call    GL_SelectPixelFormat
+  .text:01D59352                 add     esp, 4
+  .text:01D59355                 test    eax, eax
+  .text:01D59357                 jz      short loc_1D59376
+  .text:01D59359                 mov     ecx, [esi]
+  .text:01D5935B                 push    ecx
+  .text:01D5935C                 call    qwglCreateContext
+  .text:01D59362                 test    eax, eax
+  .text:01D59364                 mov     [ebx], eax
+  .text:01D59366                 jz      short loc_1D59376
+  .text:01D59368                 mov     edx, [esi]
+  .text:01D5936A                 push    eax
+  .text:01D5936B                 push    edx
+  .text:01D5936C                 call    qwglMakeCurrent
+  .text:01D59372                 test    eax, eax
+  .text:01D59374                 jnz     short loc_1D593A9
+  .text:01D59376                 push    0
+  .text:01D59378                 push    0
+  .text:01D5937A                 call    qwglMakeCurrent
+  .text:01D59380                 mov     eax, [ebx]
+  .text:01D59382                 test    eax, eax
+  .text:01D59384                 jz      short loc_1D5938D
+  .text:01D59386                 push    eax
+  .text:01D59387                 call    qwglDeleteContext
+  .text:01D5938D                 mov     esi, [esi]
+  .text:01D5938F                 test    esi, esi
+  .text:01D59391                 jz      short loc_1D5939B
+  .text:01D59393                 ; hDC
+  .text:01D59393                 push    esi; hDC
+  .text:01D59394                 ; hWnd
+  .text:01D59394                 push    edi; hWnd
+  .text:01D59395                 call    ds:__imp_ReleaseDC
+  .text:01D5939B                 ; hLibModule
+  .text:01D5939B                 push    ebp; hLibModule
+  .text:01D5939C                 call    ds:__imp_FreeLibrary
+  .text:01D593A2                 pop     edi
+  .text:01D593A3                 pop     esi
+  .text:01D593A4                 pop     ebp
+  .text:01D593A5                 xor     eax, eax
+  .text:01D593A7                 pop     ebx
+  .text:01D593A8                 retn
+  .text:01D593A9                 pop     edi
+  .text:01D593AA                 pop     esi
+  .text:01D593AB                 pop     ebp
+  .text:01D593AC                 mov     eax, 1
+  .text:01D593B1                 pop     ebx
+  .text:01D593B2                 retn
+procedure: |-
+  // vid_d3d_value names the writable float value member of the cvar whose name is "vid_d3d" and initial string is "0". It is not the cvar_t object base.
+  // The fD3D branch sets this float to 1.0f and selects QGL_D3DInit; distinguish the separate integer driver flag. Select the member STORE itself, not the cvar-registration argument.
+  // This legacy Windows body predates the modern SDL/FBO source. Its six-argument GL_SetMode prototype and cvar layout are verified from this binary.
+  // Current binary is authoritative. HLND2T_official is a semantic reference, not this exact source revision. Preserve platform-specific SDL/WGL, AA mode and frame-pacing paths.
+  int __cdecl GL_SetMode(
+          void *mainwindow,
+          void **pmaindc,
+          void **pbaseRC,
+          int fD3D,
+          const char *pszDriver,
+          const char *pszCmdLine)
+  {
+    int v6; // eax
+    HMODULE v7; // ebp
+    HDC DC; // eax
+    void *Context; // eax
+
+    dword_2783640 = 0;
+    if ( fD3D )
+    {
+      ::fD3D = 1;
+      vid_d3d_value = 1.0;
+    }
+    *pbaseRC = nullptr;
+    *pmaindc = nullptr;
+    if ( fD3D )
+    {
+      v6 = QGL_D3DInit(0);
+    }
+    else
+    {
+      if ( pszDriver )
+        dword_2783640 = sub_1D36BF0((char *)pszDriver, aOpengl32) == 0;
+      v6 = sub_1D86B20(pszDriver, (char *)pszCmdLine);
+    }
+    v7 = (HMODULE)v6;
+    if ( !v6 )
+    {
+      if ( !pszDriver )
+        Sys_Error(aErrorInitializ);
+      Sys_Error("Error initializing gl driver, check that the file '%s' exists", pszDriver);
+    }
+    DC = GetDC((HWND)mainwindow);
+    *pmaindc = DC;
+    if ( GL_SelectPixelFormat(DC) )
+    {
+      Context = (void *)qwglCreateContext(*pmaindc);
+      *pbaseRC = Context;
+      if ( Context )
+      {
+        if ( qwglMakeCurrent(*pmaindc, Context) )
+          return 1;
+      }
+    }
+    qwglMakeCurrent(0, 0);
+    if ( *pbaseRC )
+      qwglDeleteContext(*pbaseRC);
+    if ( *pmaindc )
+      ReleaseDC((HWND)mainwindow, (HDC)*pmaindc);
+    FreeLibrary(v7);
+    return 0;
+  }

@@ -1,0 +1,8 @@
+gv_name: s_fYMouseAspectAdjustment
+gv_va: '0x1ee0604'
+gv_rva: '0x1e0604'
+gv_sig: 55 8B EC 83 E4 C0 83 EC 30 83 3D ?? ?? ?? ?? ?? 53 55 56 57 0F 84 ?? ?? ?? ?? 6A 00 8D 44 24 ?? 50 8D 44 24 ??
+gv_sig_va: '0x1d5dd90'
+gv_inst_offset: '0x10d'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

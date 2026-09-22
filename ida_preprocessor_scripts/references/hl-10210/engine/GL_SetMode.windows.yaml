@@ -1,0 +1,921 @@
+func_name: GL_SetMode
+func_va: '0x1024ebb0'
+disasm_code: |-
+  ; s_bEnforceAspect receives COM_CheckParm("-stretchaspect")==0; it is global, unlike the startup-screen local with the same source name.
+  ; bDoMSAAFBO is disabled by -nomsaa and guards multisample renderbuffer creation. AA mode count/index are separate globals.
+  ; bDoScaledFBO is disabled by -nofbo or missing FBO/rectangle-texture support and guards the scaled backbuffer.
+  ; s_bSupportsBlitTexturing is set by GL_EXT_framebuffer_multisample_blit_scaled support and overridden by -directblit / -nodirectblit.
+  ; s_MSAAFBO is the complete four-GLuint container whose framebuffer has MULTISAMPLE renderbuffer attachments. Select its base address passed to GenFramebuffersEXT.
+  ; s_BackBufferFBO is the complete four-GLuint container whose framebuffer has a RECTANGLE TEXTURE attachment. Select its base address passed to GenFramebuffersEXT.
+  ; The first field s_hBackBufferFBO is at the container base. CB, DB and Tex are interior members, not independent targets. Linux PIC/GOT operands must resolve to the object, not the GOT slot.
+  .text:1024EBB0                 push    ebp
+  .text:1024EBB1                 mov     ebp, esp
+  .text:1024EBB3                 sub     esp, 11Ch
+  .text:1024EBB9                 mov     eax, ___security_cookie
+  .text:1024EBBE                 xor     eax, ebp
+  .text:1024EBC0                 mov     [ebp+var_4], eax
+  .text:1024EBC3                 mov     eax, [ebp+mainwindow]
+  .text:1024EBC6                 push    ebx
+  .text:1024EBC7                 mov     ebx, [ebp+pszCmdLine]
+  .text:1024EBCA                 push    esi
+  .text:1024EBCB                 mov     esi, [ebp+pszDriver]
+  .text:1024EBCE                 mov     [ebp+var_F4], eax
+  .text:1024EBD4                 mov     eax, [ebp+pbaseRC]
+  .text:1024EBD7                 ; ArgList
+  .text:1024EBD7                 push    edi; ArgList
+  .text:1024EBD8                 mov     edi, [ebp+pmaindc]
+  .text:1024EBDB                 mov     dword_109B3D44, 0
+  .text:1024EBE5                 mov     dword ptr [eax], 0
+  .text:1024EBEB                 mov     [ebp+height], eax
+  .text:1024EBF1                 mov     dword ptr [edi], 0
+  .text:1024EBF7                 cmp     fD3D, 0
+  .text:1024EBFE                 jz      loc_1024ED64
+  .text:1024EC04                 push    0
+  .text:1024EC06                 call    sub_10183BB0
+  .text:1024EC0B                 lea     eax, [ebp+var_E8]
+  .text:1024EC11                 mov     [ebp+var_E8], 2
+  .text:1024EC1A                 push    eax
+  .text:1024EC1B                 push    [ebp+var_F4]
+  .text:1024EC21                 mov     [ebp+var_E6], 14h
+  .text:1024EC28                 call    SDL_GetWindowWMInfo
+  .text:1024EC2D                 add     esp, 0Ch
+  .text:1024EC30                 ; hWnd
+  .text:1024EC30                 push    [ebp+hWnd]; hWnd
+  .text:1024EC36                 call    ds:GetDC
+  .text:1024EC3C                 cmp     dword_109A6A20, 0
+  .text:1024EC43                 mov     [edi], eax
+  .text:1024EC45                 mov     s_BackBufferFBO.s_hBackBufferFBO, 0
+  .text:1024EC4F                 mov     esi, [edi]
+  .text:1024EC51                 jnz     loc_1024ED2D
+  .text:1024EC57                 cmp     dword_109B3D44, 0
+  .text:1024EC5E                 ; ppfd
+  .text:1024EC5E                 push    offset ppfd; ppfd
+  .text:1024EC63                 mov     dword_109A6A20, 1
+  .text:1024EC6D                 ; hdc
+  .text:1024EC6D                 push    esi; hdc
+  .text:1024EC6E                 jz      short loc_1024ECA1
+  .text:1024EC70                 call    qwglChoosePixelFormat
+  .text:1024EC76                 mov     ebx, eax
+  .text:1024EC78                 test    ebx, ebx
+  .text:1024EC7A                 jz      short loc_1024ECAD
+  .text:1024EC7C                 push    offset ppfd
+  .text:1024EC81                 push    ebx
+  .text:1024EC82                 push    esi
+  .text:1024EC83                 call    qwglSetPixelFormat
+  .text:1024EC89                 test    eax, eax
+  .text:1024EC8B                 jz      short loc_1024ECE5
+  .text:1024EC8D                 push    offset ppfd
+  .text:1024EC92                 push    28h ; '('
+  .text:1024EC94                 push    ebx
+  .text:1024EC95                 push    esi
+  .text:1024EC96                 call    dword_109B3874
+  .text:1024EC9C                 jmp     loc_1024ED2B
+  .text:1024ECA1                 call    ds:ChoosePixelFormat
+  .text:1024ECA7                 mov     ebx, eax
+  .text:1024ECA9                 test    ebx, ebx
+  .text:1024ECAB                 jnz     short loc_1024ECD4
+  .text:1024ECAD                 ; uType
+  .text:1024ECAD                 push    0; uType
+  .text:1024ECAF                 push    offset Caption; "Error"
+  .text:1024ECB4                 push    offset Text; "ChoosePixelFormat failed"
+  .text:1024ECB9                 ; hWnd
+  .text:1024ECB9                 push    0; hWnd
+  .text:1024ECBB                 call    ds:MessageBoxA
+  .text:1024ECC1                 pop     edi
+  .text:1024ECC2                 pop     esi
+  .text:1024ECC3                 xor     eax, eax
+  .text:1024ECC5                 pop     ebx
+  .text:1024ECC6                 mov     ecx, [ebp+var_4]
+  .text:1024ECC9                 ; StackCookie
+  .text:1024ECC9                 xor     ecx, ebp; StackCookie
+  .text:1024ECCB                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1024ECD0                 mov     esp, ebp
+  .text:1024ECD2                 pop     ebp
+  .text:1024ECD3                 retn
+  .text:1024ECD4                 ; ppfd
+  .text:1024ECD4                 push    offset ppfd; ppfd
+  .text:1024ECD9                 ; format
+  .text:1024ECD9                 push    ebx; format
+  .text:1024ECDA                 ; hdc
+  .text:1024ECDA                 push    esi; hdc
+  .text:1024ECDB                 call    ds:SetPixelFormat
+  .text:1024ECE1                 test    eax, eax
+  .text:1024ECE3                 jnz     short loc_1024ED0C
+  .text:1024ECE5                 ; uType
+  .text:1024ECE5                 push    0; uType
+  .text:1024ECE7                 push    offset Caption; "Error"
+  .text:1024ECEC                 push    offset aSetpixelformat; "SetPixelFormat failed"
+  .text:1024ECF1                 ; hWnd
+  .text:1024ECF1                 push    0; hWnd
+  .text:1024ECF3                 call    ds:MessageBoxA
+  .text:1024ECF9                 pop     edi
+  .text:1024ECFA                 pop     esi
+  .text:1024ECFB                 xor     eax, eax
+  .text:1024ECFD                 pop     ebx
+  .text:1024ECFE                 mov     ecx, [ebp+var_4]
+  .text:1024ED01                 ; StackCookie
+  .text:1024ED01                 xor     ecx, ebp; StackCookie
+  .text:1024ED03                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1024ED08                 mov     esp, ebp
+  .text:1024ED0A                 pop     ebp
+  .text:1024ED0B                 retn
+  .text:1024ED0C                 ; ppfd
+  .text:1024ED0C                 push    offset ppfd; ppfd
+  .text:1024ED11                 ; nBytes
+  .text:1024ED11                 push    28h ; '('; nBytes
+  .text:1024ED13                 ; iPixelFormat
+  .text:1024ED13                 push    ebx; iPixelFormat
+  .text:1024ED14                 ; hdc
+  .text:1024ED14                 push    esi; hdc
+  .text:1024ED15                 call    ds:DescribePixelFormat
+  .text:1024ED1B                 mov     eax, ppfd.dwFlags
+  .text:1024ED20                 test    al, 40h
+  .text:1024ED22                 jz      short loc_1024ED2B
+  .text:1024ED24                 test    eax, 1000h
+  .text:1024ED29                 jz      short loc_1024ED51
+  .text:1024ED2B                 mov     esi, [edi]
+  .text:1024ED2D                 push    esi
+  .text:1024ED2E                 call    qwglCreateContext
+  .text:1024ED34                 mov     ecx, [ebp+height]
+  .text:1024ED3A                 mov     [ecx], eax
+  .text:1024ED3C                 test    eax, eax
+  .text:1024ED3E                 jz      short loc_1024ED51
+  .text:1024ED40                 push    eax
+  .text:1024ED41                 push    dword ptr [edi]
+  .text:1024ED43                 call    qwglMakeCurrent
+  .text:1024ED49                 test    eax, eax
+  .text:1024ED4B                 jnz     loc_1024F42B
+  .text:1024ED51                 pop     edi
+  .text:1024ED52                 pop     esi
+  .text:1024ED53                 xor     eax, eax
+  .text:1024ED55                 pop     ebx
+  .text:1024ED56                 mov     ecx, [ebp+var_4]
+  .text:1024ED59                 ; StackCookie
+  .text:1024ED59                 xor     ecx, ebp; StackCookie
+  .text:1024ED5B                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1024ED60                 mov     esp, ebp
+  .text:1024ED62                 pop     ebp
+  .text:1024ED63                 retn
+  .text:1024ED64                 push    offset aStretchaspect; "-stretchaspect"
+  .text:1024ED69                 call    COM_CheckParm
+  .text:1024ED6E                 neg     eax
+  .text:1024ED70                 push    offset aNomsaa; "-nomsaa"
+  .text:1024ED75                 sbb     eax, eax
+  .text:1024ED77                 inc     eax
+  .text:1024ED78                 mov     s_bEnforceAspect, eax
+  .text:1024ED7D                 call    COM_CheckParm
+  .text:1024ED82                 mov     ecx, bDoMSAAFBO
+  .text:1024ED88                 xor     edx, edx
+  .text:1024ED8A                 test    eax, eax
+  .text:1024ED8C                 push    offset aNofbo; "-nofbo"
+  .text:1024ED91                 cmovnz  ecx, edx
+  .text:1024ED94                 mov     bDoMSAAFBO, ecx
+  .text:1024ED9A                 call    COM_CheckParm
+  .text:1024ED9F                 mov     ecx, bDoScaledFBO
+  .text:1024EDA5                 xor     edx, edx
+  .text:1024EDA7                 test    eax, eax
+  .text:1024EDA9                 push    offset aFreq; "-freq"
+  .text:1024EDAE                 cmovnz  ecx, edx
+  .text:1024EDB1                 mov     bDoScaledFBO, ecx
+  .text:1024EDB7                 call    COM_CheckParm
+  .text:1024EDBC                 mov     edi, eax
+  .text:1024EDBE                 add     esp, 10h
+  .text:1024EDC1                 test    edi, edi
+  .text:1024EDC3                 jz      loc_1024EE84
+  .text:1024EDC9                 cmp     bDoScaledFBO, 0
+  .text:1024EDD0                 jz      loc_1024EE84
+  .text:1024EDD6                 call    VideoMode_IsWindowed
+  .text:1024EDDB                 test    eax, eax
+  .text:1024EDDD                 jz      short loc_1024EDF1
+  .text:1024EDDF                 push    offset aSettingFrequen; "Setting frequency in windowed mode is u"...
+  .text:1024EDE4                 call    Con_DPrintf
+  .text:1024EDE9                 add     esp, 4
+  .text:1024EDEC                 jmp     loc_1024EE84
+  .text:1024EDF1                 ; Size
+  .text:1024EDF1                 push    9Ch; Size
+  .text:1024EDF6                 lea     eax, [ebp+DevMode]
+  .text:1024EDFC                 ; Val
+  .text:1024EDFC                 push    0; Val
+  .text:1024EDFE                 ; void *
+  .text:1024EDFE                 push    eax; void *
+  .text:1024EDFF                 call    memset
+  .text:1024EE04                 add     esp, 0Ch
+  .text:1024EE07                 mov     eax, 9Ch
+  .text:1024EE0C                 mov     [ebp+DevMode.dmSize], ax
+  .text:1024EE10                 lea     eax, [ebp+DevMode]
+  .text:1024EE16                 ; lpDevMode
+  .text:1024EE16                 push    eax; lpDevMode
+  .text:1024EE17                 ; iModeNum
+  .text:1024EE17                 push    0FFFFFFFFh; iModeNum
+  .text:1024EE19                 ; lpszDeviceName
+  .text:1024EE19                 push    0; lpszDeviceName
+  .text:1024EE1B                 call    ds:EnumDisplaySettingsA
+  .text:1024EE21                 mov     eax, dword_1124C164
+  .text:1024EE26                 ; String
+  .text:1024EE26                 push    dword ptr [eax+edi*4+4]; String
+  .text:1024EE2A                 call    ds:atoi
+  .text:1024EE30                 or      [ebp+DevMode.dmFields], 400000h
+  .text:1024EE37                 ; ArgList
+  .text:1024EE37                 push    eax; ArgList
+  .text:1024EE38                 push    offset aSettingMonitor; "Setting monitor frequency to %d\n"
+  .text:1024EE3D                 mov     [ebp+DevMode.dmDisplayFrequency], eax
+  .text:1024EE40                 call    Con_DPrintf
+  .text:1024EE45                 add     esp, 0Ch
+  .text:1024EE48                 lea     eax, [ebp+DevMode]
+  .text:1024EE4E                 ; lParam
+  .text:1024EE4E                 push    0; lParam
+  .text:1024EE50                 ; dwflags
+  .text:1024EE50                 push    4; dwflags
+  .text:1024EE52                 ; hwnd
+  .text:1024EE52                 push    0; hwnd
+  .text:1024EE54                 ; lpDevMode
+  .text:1024EE54                 push    eax; lpDevMode
+  .text:1024EE55                 ; lpszDeviceName
+  .text:1024EE55                 push    0; lpszDeviceName
+  .text:1024EE57                 call    ds:ChangeDisplaySettingsExA
+  .text:1024EE5D                 test    eax, eax
+  .text:1024EE5F                 jz      short loc_1024EE84
+  .text:1024EE61                 ; dwFlags
+  .text:1024EE61                 push    4; dwFlags
+  .text:1024EE63                 lea     eax, [ebp+DevMode]
+  .text:1024EE69                 ; lpDevMode
+  .text:1024EE69                 push    eax; lpDevMode
+  .text:1024EE6A                 call    ds:ChangeDisplaySettingsA
+  .text:1024EE70                 test    eax, eax
+  .text:1024EE72                 jz      short loc_1024EE84
+  .text:1024EE74                 ; ArgList
+  .text:1024EE74                 push    [ebp+DevMode.dmDisplayFrequency]; ArgList
+  .text:1024EE77                 push    offset aFrequencyDIsNo; "Frequency %d is not supported by your m"...
+  .text:1024EE7C                 call    Con_DPrintf
+  .text:1024EE81                 add     esp, 8
+  .text:1024EE84                 push    ebx
+  .text:1024EE85                 push    esi
+  .text:1024EE86                 call    SDL_InitGL
+  .text:1024EE8B                 add     esp, 8
+  .text:1024EE8E                 ; name
+  .text:1024EE8E                 push    1F03h; name
+  .text:1024EE93                 call    qglGetString
+  .text:1024EE99                 mov     gl_extensions, eax
+  .text:1024EE9E                 mov     s_bSupportsBlitTexturing, 0
+  .text:1024EEA8                 test    eax, eax
+  .text:1024EEAA                 jz      short loc_1024EED2
+  .text:1024EEAC                 push    offset aGlExtFramebuff; "GL_EXT_framebuffer_multisample_blit_sca"...
+  .text:1024EEB1                 push    eax
+  .text:1024EEB2                 call    sub_101BB3E0
+  .text:1024EEB7                 mov     ecx, s_bSupportsBlitTexturing
+  .text:1024EEBD                 add     esp, 8
+  .text:1024EEC0                 test    eax, eax
+  .text:1024EEC2                 mov     ebx, 1
+  .text:1024EEC7                 cmovnz  ecx, ebx
+  .text:1024EECA                 mov     s_bSupportsBlitTexturing, ecx
+  .text:1024EED0                 jmp     short loc_1024EED7
+  .text:1024EED2                 mov     ebx, 1
+  .text:1024EED7                 push    offset aDirectblit; "-directblit"
+  .text:1024EEDC                 call    COM_CheckParm
+  .text:1024EEE1                 mov     ecx, s_bSupportsBlitTexturing
+  .text:1024EEE7                 test    eax, eax
+  .text:1024EEE9                 push    offset aNodirectblit; "-nodirectblit"
+  .text:1024EEEE                 cmovnz  ecx, ebx
+  .text:1024EEF1                 mov     s_bSupportsBlitTexturing, ecx
+  .text:1024EEF7                 call    COM_CheckParm
+  .text:1024EEFC                 mov     ecx, s_bSupportsBlitTexturing
+  .text:1024EF02                 xor     edx, edx
+  .text:1024EF04                 add     esp, 8
+  .text:1024EF07                 test    eax, eax
+  .text:1024EF09                 cmovnz  ecx, edx
+  .text:1024EF0C                 mov     s_bSupportsBlitTexturing, ecx
+  .text:1024EF12                 cmp     dword_109B32A8, edx
+  .text:1024EF18                 jz      short loc_1024EF2A
+  .text:1024EF1A                 cmp     dword_109B32B0, edx
+  .text:1024EF20                 jz      short loc_1024EF2A
+  .text:1024EF22                 cmp     dword_109B3298, edx
+  .text:1024EF28                 jnz     short loc_1024EF30
+  .text:1024EF2A                 mov     bDoScaledFBO, edx
+  .text:1024EF30                 mov     eax, gl_extensions
+  .text:1024EF35                 test    eax, eax
+  .text:1024EF37                 jz      short loc_1024EF68
+  .text:1024EF39                 push    offset aGlArbTextureRe; "GL_ARB_texture_rectangle"
+  .text:1024EF3E                 push    eax
+  .text:1024EF3F                 call    sub_101BB3E0
+  .text:1024EF44                 add     esp, 8
+  .text:1024EF47                 test    eax, eax
+  .text:1024EF49                 jnz     short loc_1024EF68
+  .text:1024EF4B                 push    offset aGlNvTextureRec; "GL_NV_texture_rectangle"
+  .text:1024EF50                 push    gl_extensions
+  .text:1024EF56                 call    sub_101BB3E0
+  .text:1024EF5B                 add     esp, 8
+  .text:1024EF5E                 neg     eax
+  .text:1024EF60                 sbb     eax, eax
+  .text:1024EF62                 and     bDoScaledFBO, eax
+  .text:1024EF68                 call    VideoMode_IsWindowed
+  .text:1024EF6D                 test    eax, eax
+  .text:1024EF6F                 jnz     loc_1024F40E
+  .text:1024EF75                 ; bpp
+  .text:1024EF75                 push    eax; bpp
+  .text:1024EF76                 lea     eax, [ebp+height]
+  .text:1024EF7C                 xorps   xmm0, xmm0
+  .text:1024EF7F                 ; height
+  .text:1024EF7F                 push    eax; height
+  .text:1024EF80                 lea     eax, [ebp+width]
+  .text:1024EF86                 ; width
+  .text:1024EF86                 push    eax; width
+  .text:1024EF87                 movups  xmmword ptr s_MSAAFBO.s_hBackBufferFBO, xmm0
+  .text:1024EF8E                 movups  xmmword ptr s_BackBufferFBO.s_hBackBufferFBO, xmm0
+  .text:1024EF95                 call    VideoMode_GetCurrentVideoMode
+  .text:1024EF9A                 add     esp, 0Ch
+  .text:1024EF9D                 cmp     dword_109B3294, 0
+  .text:1024EFA4                 jz      loc_1024F14A
+  .text:1024EFAA                 cmp     bDoMSAAFBO, 0
+  .text:1024EFB1                 jle     loc_1024F14A
+  .text:1024EFB7                 mov     eax, gl_extensions
+  .text:1024EFBC                 test    eax, eax
+  .text:1024EFBE                 jz      loc_1024F14A
+  .text:1024EFC4                 push    offset aGlExtFramebuff_0; "GL_EXT_framebuffer_multisample"
+  .text:1024EFC9                 push    eax
+  .text:1024EFCA                 call    sub_101BB3E0
+  .text:1024EFCF                 add     esp, 8
+  .text:1024EFD2                 test    eax, eax
+  .text:1024EFD4                 jz      loc_1024F14A
+  .text:1024EFDA                 push    offset s_MSAAFBO
+  .text:1024EFDF                 push    1
+  .text:1024EFE1                 call    dword_109B32A8
+  .text:1024EFE7                 push    s_MSAAFBO.s_hBackBufferFBO
+  .text:1024EFED                 push    8D40h
+  .text:1024EFF2                 call    dword_109B32B0
+  .text:1024EFF8                 push    offset s_MSAAFBO.s_hBackBufferCB
+  .text:1024EFFD                 push    1
+  .text:1024EFFF                 call    dword_109B32BC
+  .text:1024F005                 push    s_MSAAFBO.s_hBackBufferCB
+  .text:1024F00B                 push    8D41h
+  .text:1024F010                 call    dword_109B32C4
+  .text:1024F016                 push    [ebp+height]
+  .text:1024F01C                 push    [ebp+width]
+  .text:1024F022                 push    8058h
+  .text:1024F027                 push    4
+  .text:1024F029                 push    8D41h
+  .text:1024F02E                 call    dword_109B3294
+  .text:1024F034                 push    s_MSAAFBO.s_hBackBufferCB
+  .text:1024F03A                 push    8D41h
+  .text:1024F03F                 push    8CE0h
+  .text:1024F044                 push    8D40h
+  .text:1024F049                 call    dword_109B329C
+  .text:1024F04F                 push    offset s_MSAAFBO.s_hBackBufferDB
+  .text:1024F054                 push    1
+  .text:1024F056                 call    dword_109B32BC
+  .text:1024F05C                 push    s_MSAAFBO.s_hBackBufferDB
+  .text:1024F062                 push    8D41h
+  .text:1024F067                 call    dword_109B32C4
+  .text:1024F06D                 push    [ebp+height]
+  .text:1024F073                 push    [ebp+width]
+  .text:1024F079                 push    81A6h
+  .text:1024F07E                 push    4
+  .text:1024F080                 push    8D41h
+  .text:1024F085                 call    dword_109B3294
+  .text:1024F08B                 push    s_MSAAFBO.s_hBackBufferDB
+  .text:1024F091                 push    8D41h
+  .text:1024F096                 push    8D00h
+  .text:1024F09B                 push    8D40h
+  .text:1024F0A0                 call    dword_109B329C
+  .text:1024F0A6                 push    8D40h
+  .text:1024F0AB                 call    dword_109B32A4
+  .text:1024F0B1                 cmp     eax, 8CD5h
+  .text:1024F0B6                 jz      loc_1024F143
+  .text:1024F0BC                 cmp     s_MSAAFBO.s_hBackBufferFBO, 0
+  .text:1024F0C3                 jz      short loc_1024F0D2
+  .text:1024F0C5                 push    offset s_MSAAFBO
+  .text:1024F0CA                 push    1
+  .text:1024F0CC                 call    dword_109B32AC
+  .text:1024F0D2                 cmp     s_MSAAFBO.s_hBackBufferCB, 0
+  .text:1024F0D9                 mov     s_MSAAFBO.s_hBackBufferFBO, 0
+  .text:1024F0E3                 jz      short loc_1024F0F2
+  .text:1024F0E5                 push    offset s_MSAAFBO.s_hBackBufferCB
+  .text:1024F0EA                 push    1
+  .text:1024F0EC                 call    dword_109B32C0
+  .text:1024F0F2                 cmp     s_MSAAFBO.s_hBackBufferDB, 0
+  .text:1024F0F9                 mov     s_MSAAFBO.s_hBackBufferCB, 0
+  .text:1024F103                 jz      short loc_1024F112
+  .text:1024F105                 push    offset s_MSAAFBO.s_hBackBufferDB
+  .text:1024F10A                 push    1
+  .text:1024F10C                 call    dword_109B32C0
+  .text:1024F112                 cmp     s_MSAAFBO.s_hBackBufferTex, 0
+  .text:1024F119                 mov     s_MSAAFBO.s_hBackBufferDB, 0
+  .text:1024F123                 jz      short loc_1024F132
+  .text:1024F125                 push    offset s_MSAAFBO.s_hBackBufferTex
+  .text:1024F12A                 push    1
+  .text:1024F12C                 call    qglDeleteTextures
+  .text:1024F132                 mov     s_MSAAFBO.s_hBackBufferTex, 0
+  .text:1024F13C                 push    offset aErrorInitializ; "Error initializing MSAA frame buffer\n"
+  .text:1024F141                 jmp     short loc_1024F14F
+  .text:1024F143                 mov     eax, s_MSAAFBO.s_hBackBufferFBO
+  .text:1024F148                 jmp     short loc_1024F15E
+  .text:1024F14A                 push    offset aMsaaBackbuffer; "MSAA backbuffer rendering disabled.\n"
+  .text:1024F14F                 call    Con_DPrintf
+  .text:1024F154                 add     esp, 4
+  .text:1024F157                 xor     eax, eax
+  .text:1024F159                 mov     s_MSAAFBO.s_hBackBufferFBO, eax
+  .text:1024F15E                 mov     ecx, bDoScaledFBO
+  .text:1024F164                 test    ecx, ecx
+  .text:1024F166                 jle     loc_1024F2E4
+  .text:1024F16C                 mov     esi, ds:glEnable
+  .text:1024F172                 test    eax, eax
+  .text:1024F174                 jz      short loc_1024F17D
+  .text:1024F176                 ; cap
+  .text:1024F176                 push    809Dh; cap
+  .text:1024F17B                 call    esi ; glEnable
+  .text:1024F17D                 ; cap
+  .text:1024F17D                 push    84F5h; cap
+  .text:1024F182                 call    esi ; glEnable
+  .text:1024F184                 push    offset s_BackBufferFBO
+  .text:1024F189                 push    1
+  .text:1024F18B                 call    dword_109B32A8
+  .text:1024F191                 push    s_BackBufferFBO.s_hBackBufferFBO
+  .text:1024F197                 push    8D40h
+  .text:1024F19C                 call    dword_109B32B0
+  .text:1024F1A2                 cmp     s_MSAAFBO.s_hBackBufferFBO, 0
+  .text:1024F1A9                 jnz     short loc_1024F200
+  .text:1024F1AB                 push    offset s_BackBufferFBO.s_hBackBufferDB
+  .text:1024F1B0                 push    1
+  .text:1024F1B2                 call    dword_109B32BC
+  .text:1024F1B8                 push    s_BackBufferFBO.s_hBackBufferDB
+  .text:1024F1BE                 push    8D41h
+  .text:1024F1C3                 call    dword_109B32C4
+  .text:1024F1C9                 push    [ebp+height]
+  .text:1024F1CF                 push    [ebp+width]
+  .text:1024F1D5                 push    81A6h
+  .text:1024F1DA                 push    8D41h
+  .text:1024F1DF                 call    dword_109B32B8
+  .text:1024F1E5                 push    s_BackBufferFBO.s_hBackBufferDB
+  .text:1024F1EB                 push    8D41h
+  .text:1024F1F0                 push    8D00h
+  .text:1024F1F5                 push    8D40h
+  .text:1024F1FA                 call    dword_109B329C
+  .text:1024F200                 ; textures
+  .text:1024F200                 push    offset s_BackBufferFBO.s_hBackBufferTex; textures
+  .text:1024F205                 ; n
+  .text:1024F205                 push    1; n
+  .text:1024F207                 call    ds:glGenTextures
+  .text:1024F20D                 ; texture
+  .text:1024F20D                 push    s_BackBufferFBO.s_hBackBufferTex; texture
+  .text:1024F213                 mov     edi, ds:glBindTexture
+  .text:1024F219                 ; target
+  .text:1024F219                 push    84F5h; target
+  .text:1024F21E                 call    edi ; glBindTexture
+  .text:1024F220                 mov     esi, ds:glTexParameteri
+  .text:1024F226                 ; param
+  .text:1024F226                 push    2601h; param
+  .text:1024F22B                 ; pname
+  .text:1024F22B                 push    2800h; pname
+  .text:1024F230                 ; target
+  .text:1024F230                 push    84F5h; target
+  .text:1024F235                 call    esi ; glTexParameteri
+  .text:1024F237                 ; param
+  .text:1024F237                 push    2601h; param
+  .text:1024F23C                 ; pname
+  .text:1024F23C                 push    2801h; pname
+  .text:1024F241                 ; target
+  .text:1024F241                 push    84F5h; target
+  .text:1024F246                 call    esi ; glTexParameteri
+  .text:1024F248                 ; param
+  .text:1024F248                 push    812Fh; param
+  .text:1024F24D                 ; pname
+  .text:1024F24D                 push    2802h; pname
+  .text:1024F252                 ; target
+  .text:1024F252                 push    84F5h; target
+  .text:1024F257                 call    esi ; glTexParameteri
+  .text:1024F259                 ; param
+  .text:1024F259                 push    812Fh; param
+  .text:1024F25E                 ; pname
+  .text:1024F25E                 push    2803h; pname
+  .text:1024F263                 ; target
+  .text:1024F263                 push    84F5h; target
+  .text:1024F268                 call    esi ; glTexParameteri
+  .text:1024F26A                 ; param
+  .text:1024F26A                 push    1E01h; param
+  .text:1024F26F                 ; pname
+  .text:1024F26F                 push    2200h; pname
+  .text:1024F274                 ; target
+  .text:1024F274                 push    2300h; target
+  .text:1024F279                 call    ds:glTexEnvi
+  .text:1024F27F                 ; pixels
+  .text:1024F27F                 push    0; pixels
+  .text:1024F281                 ; type
+  .text:1024F281                 push    1401h; type
+  .text:1024F286                 ; format
+  .text:1024F286                 push    1908h; format
+  .text:1024F28B                 ; border
+  .text:1024F28B                 push    0; border
+  .text:1024F28D                 ; height
+  .text:1024F28D                 push    [ebp+height]; height
+  .text:1024F293                 ; width
+  .text:1024F293                 push    [ebp+width]; width
+  .text:1024F299                 ; internalformat
+  .text:1024F299                 push    1908h; internalformat
+  .text:1024F29E                 ; level
+  .text:1024F29E                 push    0; level
+  .text:1024F2A0                 ; target
+  .text:1024F2A0                 push    84F5h; target
+  .text:1024F2A5                 call    ds:glTexImage2D
+  .text:1024F2AB                 push    0
+  .text:1024F2AD                 push    s_BackBufferFBO.s_hBackBufferTex
+  .text:1024F2B3                 push    84F5h
+  .text:1024F2B8                 push    8CE0h
+  .text:1024F2BD                 push    8D40h
+  .text:1024F2C2                 call    dword_109B32A0
+  .text:1024F2C8                 ; texture
+  .text:1024F2C8                 push    0; texture
+  .text:1024F2CA                 ; target
+  .text:1024F2CA                 push    84F5h; target
+  .text:1024F2CF                 call    edi ; glBindTexture
+  .text:1024F2D1                 ; cap
+  .text:1024F2D1                 push    84F5h; cap
+  .text:1024F2D6                 call    ds:glDisable
+  .text:1024F2DC                 mov     ecx, bDoScaledFBO
+  .text:1024F2E2                 test    ecx, ecx
+  .text:1024F2E4                 jz      short loc_1024F2FC
+  .text:1024F2E6                 push    8D40h
+  .text:1024F2EB                 call    dword_109B32A4
+  .text:1024F2F1                 cmp     eax, 8CD5h
+  .text:1024F2F6                 jz      loc_1024F3E5
+  .text:1024F2FC                 xor     esi, esi
+  .text:1024F2FE                 call    sub_1024D9C0
+  .text:1024F303                 push    offset aFreq; "-freq"
+  .text:1024F308                 call    COM_CheckParm
+  .text:1024F30D                 add     esp, 4
+  .text:1024F310                 test    eax, eax
+  .text:1024F312                 jz      short loc_1024F334
+  .text:1024F314                 mov     ecx, dword_1124C164
+  .text:1024F31A                 ; String
+  .text:1024F31A                 push    dword ptr [ecx+eax*4+4]; String
+  .text:1024F31E                 call    ds:atoi
+  .text:1024F324                 mov     esi, eax
+  .text:1024F326                 ; ArgList
+  .text:1024F326                 push    esi; ArgList
+  .text:1024F327                 push    offset aSettingRefresh; "Setting refresh rate to %dHz\n"
+  .text:1024F32C                 call    Con_DPrintf
+  .text:1024F331                 add     esp, 0Ch
+  .text:1024F334                 mov     ecx, [ebp+width]
+  .text:1024F33A                 lea     eax, [ebp+var_108]
+  .text:1024F340                 push    eax
+  .text:1024F341                 lea     eax, [ebp+var_11C]
+  .text:1024F347                 mov     [ebp+var_118], ecx
+  .text:1024F34D                 mov     ecx, [ebp+height]
+  .text:1024F353                 push    eax
+  .text:1024F354                 push    0
+  .text:1024F356                 mov     [ebp+var_114], ecx
+  .text:1024F35C                 mov     [ebp+var_110], esi
+  .text:1024F362                 mov     [ebp+var_11C], 0
+  .text:1024F36C                 call    SDL_GetClosestDisplayMode
+  .text:1024F371                 add     esp, 0Ch
+  .text:1024F374                 test    eax, eax
+  .text:1024F376                 jnz     short loc_1024F385
+  .text:1024F378                 push    offset aErrorInitializ_0; "Error initializing Main frame buffer\n"
+  .text:1024F37D                 call    Sys_Error
+  .text:1024F382                 add     esp, 4
+  .text:1024F385                 push    [ebp+var_108]
+  .text:1024F38B                 push    [ebp+var_FC]
+  .text:1024F391                 push    [ebp+var_100]
+  .text:1024F397                 ; ArgList
+  .text:1024F397                 push    dword ptr [ebp+ArgList]; ArgList
+  .text:1024F39D                 push    offset aSettingClosest; "Setting closest display mode: width:%d "...
+  .text:1024F3A2                 call    Con_DPrintf
+  .text:1024F3A7                 cmp     bDoScaledFBO, 0
+  .text:1024F3AE                 mov     ecx, offset aFboBackbufferR; "FBO backbuffer rendering disabled due t"...
+  .text:1024F3B3                 mov     eax, offset aFboBackbufferR_0; "FBO backbuffer rendering disabled.\n"
+  .text:1024F3B8                 cmovnz  eax, ecx
+  .text:1024F3BB                 ; fmt
+  .text:1024F3BB                 push    eax; fmt
+  .text:1024F3BC                 call    Con_DPrintf
+  .text:1024F3C1                 lea     eax, [ebp+var_108]
+  .text:1024F3C7                 push    eax
+  .text:1024F3C8                 push    [ebp+var_F4]
+  .text:1024F3CE                 call    SDL_SetWindowDisplayMode
+  .text:1024F3D3                 add     esp, 20h
+  .text:1024F3D6                 mov     dword_105394C4, 1
+  .text:1024F3E0                 call    sub_10222FD0
+  .text:1024F3E5                 cmp     bDoScaledFBO, 0
+  .text:1024F3EC                 jle     short loc_1024F430
+  .text:1024F3EE                 push    0
+  .text:1024F3F0                 push    8D40h
+  .text:1024F3F5                 call    dword_109B32B0
+  .text:1024F3FB                 pop     edi
+  .text:1024F3FC                 pop     esi
+  .text:1024F3FD                 mov     eax, ebx
+  .text:1024F3FF                 pop     ebx
+  .text:1024F400                 mov     ecx, [ebp+var_4]
+  .text:1024F403                 ; StackCookie
+  .text:1024F403                 xor     ecx, ebp; StackCookie
+  .text:1024F405                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1024F40A                 mov     esp, ebp
+  .text:1024F40C                 pop     ebp
+  .text:1024F40D                 retn
+  .text:1024F40E                 pop     edi
+  .text:1024F40F                 pop     esi
+  .text:1024F410                 mov     eax, ebx
+  .text:1024F412                 mov     s_MSAAFBO.s_hBackBufferFBO, 0
+  .text:1024F41C                 pop     ebx
+  .text:1024F41D                 mov     ecx, [ebp+var_4]
+  .text:1024F420                 ; StackCookie
+  .text:1024F420                 xor     ecx, ebp; StackCookie
+  .text:1024F422                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1024F427                 mov     esp, ebp
+  .text:1024F429                 pop     ebp
+  .text:1024F42A                 retn
+  .text:1024F42B                 mov     ebx, 1
+  .text:1024F430                 mov     ecx, [ebp+var_4]
+  .text:1024F433                 mov     eax, ebx
+  .text:1024F435                 pop     edi
+  .text:1024F436                 pop     esi
+  .text:1024F437                 ; StackCookie
+  .text:1024F437                 xor     ecx, ebp; StackCookie
+  .text:1024F439                 pop     ebx
+  .text:1024F43A                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1024F43F                 mov     esp, ebp
+  .text:1024F441                 pop     ebp
+  .text:1024F442                 retn
+procedure: |-
+  // s_bEnforceAspect receives COM_CheckParm("-stretchaspect")==0; it is global, unlike the startup-screen local with the same source name.
+  // bDoMSAAFBO is disabled by -nomsaa and guards multisample renderbuffer creation. AA mode count/index are separate globals.
+  // bDoScaledFBO is disabled by -nofbo or missing FBO/rectangle-texture support and guards the scaled backbuffer.
+  // s_bSupportsBlitTexturing is set by GL_EXT_framebuffer_multisample_blit_scaled support and overridden by -directblit / -nodirectblit.
+  // s_MSAAFBO is the complete four-GLuint container whose framebuffer has MULTISAMPLE renderbuffer attachments. Select its base address passed to GenFramebuffersEXT.
+  // s_BackBufferFBO is the complete four-GLuint container whose framebuffer has a RECTANGLE TEXTURE attachment. Select its base address passed to GenFramebuffersEXT.
+  // The first field s_hBackBufferFBO is at the container base. CB, DB and Tex are interior members, not independent targets. Linux PIC/GOT operands must resolve to the object, not the GOT slot.
+  // Current binary is authoritative. HLND2T_official is a semantic reference, not this exact source revision. Preserve platform-specific SDL/WGL, AA mode and frame-pacing paths.
+  int __cdecl GL_SetMode(
+          void *mainwindow,
+          void **pmaindc,
+          void **pbaseRC,
+          int fD3D,
+          const char *pszDriver,
+          const char *pszCmdLine)
+  {
+    HDC DC; // eax
+    HDC v7; // esi
+    int v8; // eax
+    int v9; // ebx
+    int v10; // eax
+    int v11; // ebx
+    int Context; // eax
+    int v14; // eax
+    int v15; // ecx
+    int v16; // eax
+    int v17; // ecx
+    int v18; // edi
+    DWORD v19; // eax
+    const unsigned __int8 *String; // eax
+    int v21; // eax
+    int v22; // ecx
+    int v23; // eax
+    int v24; // ecx
+    int v25; // eax
+    int v26; // ecx
+    unsigned int s_hBackBufferFBO; // eax
+    bool v28; // zf
+    int v29; // esi
+    int v30; // eax
+    const char *v31; // eax
+    _DWORD v32[5]; // [esp+Ch] [ebp-11Ch] BYREF
+    int v33; // [esp+20h] [ebp-108h] BYREF
+    char ArgList[4]; // [esp+24h] [ebp-104h]
+    int v35; // [esp+28h] [ebp-100h]
+    int v36; // [esp+2Ch] [ebp-FCh]
+    void *v37; // [esp+34h] [ebp-F4h]
+    GLsizei width; // [esp+38h] [ebp-F0h] BYREF
+    GLsizei height; // [esp+3Ch] [ebp-ECh] BYREF
+    __int16 v40; // [esp+40h] [ebp-E8h] BYREF
+    char v41; // [esp+42h] [ebp-E6h]
+    HWND hWnd; // [esp+48h] [ebp-E0h]
+    DEVMODEA DevMode; // [esp+88h] [ebp-A0h] BYREF
+
+    v37 = mainwindow;
+    dword_109B3D44 = 0;
+    *pbaseRC = nullptr;
+    height = (GLsizei)pbaseRC;
+    *pmaindc = nullptr;
+    if ( !::fD3D )
+    {
+      s_bEnforceAspect = COM_CheckParm("-stretchaspect") == 0;
+      v14 = COM_CheckParm("-nomsaa");
+      v15 = bDoMSAAFBO;
+      if ( v14 )
+        v15 = 0;
+      bDoMSAAFBO = v15;
+      v16 = COM_CheckParm("-nofbo");
+      v17 = bDoScaledFBO;
+      if ( v16 )
+        v17 = 0;
+      bDoScaledFBO = v17;
+      v18 = COM_CheckParm("-freq");
+      if ( v18 && bDoScaledFBO )
+      {
+        if ( VideoMode_IsWindowed() )
+        {
+          Con_DPrintf("Setting frequency in windowed mode is unsupported\n");
+        }
+        else
+        {
+          memset(&DevMode, 0, sizeof(DevMode));
+          DevMode.dmSize = 156;
+          EnumDisplaySettingsA(nullptr, 0xFFFFFFFF, &DevMode);
+          v19 = atoi(*(const char **)(dword_1124C164 + 4 * v18 + 4));
+          DevMode.dmFields |= 0x400000u;
+          DevMode.dmDisplayFrequency = v19;
+          Con_DPrintf("Setting monitor frequency to %d\n", v19);
+          if ( ChangeDisplaySettingsExA(nullptr, &DevMode, nullptr, 4u, nullptr) && ChangeDisplaySettingsA(&DevMode, 4u) )
+            Con_DPrintf("Frequency %d is not supported by your monitor\n", DevMode.dmDisplayFrequency);
+        }
+      }
+      SDL_InitGL();
+      String = qglGetString(0x1F03u);
+      gl_extensions = (const char *)String;
+      s_bSupportsBlitTexturing = 0;
+      if ( String )
+      {
+        v21 = sub_101BB3E0(String, "GL_EXT_framebuffer_multisample_blit_scaled");
+        v22 = s_bSupportsBlitTexturing;
+        if ( v21 )
+          v22 = 1;
+        s_bSupportsBlitTexturing = v22;
+      }
+      v23 = COM_CheckParm("-directblit");
+      v24 = s_bSupportsBlitTexturing;
+      if ( v23 )
+        v24 = 1;
+      s_bSupportsBlitTexturing = v24;
+      v25 = COM_CheckParm("-nodirectblit");
+      v26 = s_bSupportsBlitTexturing;
+      if ( v25 )
+        v26 = 0;
+      s_bSupportsBlitTexturing = v26;
+      if ( !dword_109B32A8 || !dword_109B32B0 || !dword_109B3298 )
+        bDoScaledFBO = 0;
+      if ( gl_extensions && !sub_101BB3E0(gl_extensions, "GL_ARB_texture_rectangle") )
+        bDoScaledFBO = sub_101BB3E0(gl_extensions, "GL_NV_texture_rectangle") != 0 ? bDoScaledFBO : 0;
+      if ( VideoMode_IsWindowed() )
+      {
+        s_MSAAFBO.s_hBackBufferFBO = 0;
+        return 1;
+      }
+      s_MSAAFBO = 0;
+      s_BackBufferFBO = 0;
+      VideoMode_GetCurrentVideoMode(&width, &height, nullptr);
+      if ( dword_109B3294
+        && bDoMSAAFBO > 0
+        && gl_extensions
+        && sub_101BB3E0(gl_extensions, "GL_EXT_framebuffer_multisample") )
+      {
+        dword_109B32A8(1, &s_MSAAFBO);
+        dword_109B32B0(36160, s_MSAAFBO.s_hBackBufferFBO);
+        dword_109B32BC(1, &s_MSAAFBO.s_hBackBufferCB);
+        dword_109B32C4(36161, s_MSAAFBO.s_hBackBufferCB);
+        dword_109B3294(36161, 4, 32856, width, height);
+        dword_109B329C(36160, 36064, 36161, s_MSAAFBO.s_hBackBufferCB);
+        dword_109B32BC(1, &s_MSAAFBO.s_hBackBufferDB);
+        dword_109B32C4(36161, s_MSAAFBO.s_hBackBufferDB);
+        dword_109B3294(36161, 4, 33190, width, height);
+        dword_109B329C(36160, 36096, 36161, s_MSAAFBO.s_hBackBufferDB);
+        if ( dword_109B32A4(36160) == 36053 )
+        {
+          s_hBackBufferFBO = s_MSAAFBO.s_hBackBufferFBO;
+          goto LABEL_61;
+        }
+        if ( s_MSAAFBO.s_hBackBufferFBO )
+          dword_109B32AC(1, &s_MSAAFBO);
+        s_MSAAFBO.s_hBackBufferFBO = 0;
+        if ( s_MSAAFBO.s_hBackBufferCB )
+          dword_109B32C0(1, &s_MSAAFBO.s_hBackBufferCB);
+        s_MSAAFBO.s_hBackBufferCB = 0;
+        if ( s_MSAAFBO.s_hBackBufferDB )
+          dword_109B32C0(1, &s_MSAAFBO.s_hBackBufferDB);
+        s_MSAAFBO.s_hBackBufferDB = 0;
+        if ( s_MSAAFBO.s_hBackBufferTex )
+          qglDeleteTextures(1, &s_MSAAFBO.s_hBackBufferTex);
+        s_MSAAFBO.s_hBackBufferTex = 0;
+        Con_DPrintf("Error initializing MSAA frame buffer\n");
+      }
+      else
+      {
+        Con_DPrintf("MSAA backbuffer rendering disabled.\n");
+      }
+      s_hBackBufferFBO = 0;
+      s_MSAAFBO.s_hBackBufferFBO = 0;
+  LABEL_61:
+      v28 = bDoScaledFBO == 0;
+      if ( bDoScaledFBO > 0 )
+      {
+        if ( s_hBackBufferFBO )
+          glEnable(0x809Du);
+        glEnable(0x84F5u);
+        dword_109B32A8(1, &s_BackBufferFBO);
+        dword_109B32B0(36160, s_BackBufferFBO.s_hBackBufferFBO);
+        if ( !s_MSAAFBO.s_hBackBufferFBO )
+        {
+          dword_109B32BC(1, &s_BackBufferFBO.s_hBackBufferDB);
+          dword_109B32C4(36161, s_BackBufferFBO.s_hBackBufferDB);
+          dword_109B32B8(36161, 33190, width, height);
+          dword_109B329C(36160, 36096, 36161, s_BackBufferFBO.s_hBackBufferDB);
+        }
+        glGenTextures(1, &s_BackBufferFBO.s_hBackBufferTex);
+        glBindTexture(0x84F5u, s_BackBufferFBO.s_hBackBufferTex);
+        glTexParameteri(0x84F5u, 0x2800u, 9729);
+        glTexParameteri(0x84F5u, 0x2801u, 9729);
+        glTexParameteri(0x84F5u, 0x2802u, 33071);
+        glTexParameteri(0x84F5u, 0x2803u, 33071);
+        glTexEnvi(0x2300u, 0x2200u, 7681);
+        glTexImage2D(0x84F5u, 0, 6408, width, height, 0, 0x1908u, 0x1401u, nullptr);
+        dword_109B32A0(36160, 36064, 34037, s_BackBufferFBO.s_hBackBufferTex, 0);
+        glBindTexture(0x84F5u, 0);
+        glDisable(0x84F5u);
+        v28 = bDoScaledFBO == 0;
+      }
+      if ( v28 || dword_109B32A4(36160) != 36053 )
+      {
+        v29 = 0;
+        sub_1024D9C0();
+        v30 = COM_CheckParm("-freq");
+        if ( v30 )
+        {
+          v29 = atoi(*(const char **)(dword_1124C164 + 4 * v30 + 4));
+          Con_DPrintf("Setting refresh rate to %dHz\n", v29);
+        }
+        v32[1] = width;
+        v32[2] = height;
+        v32[3] = v29;
+        v32[0] = 0;
+        if ( !SDL_GetClosestDisplayMode(0, v32, &v33) )
+          Sys_Error("Error initializing Main frame buffer\n");
+        Con_DPrintf(
+          "Setting closest display mode: width:%d height:%d freq:%d format:%u\n",
+          *(_DWORD *)ArgList,
+          v35,
+          v36,
+          v33);
+        v31 = "FBO backbuffer rendering disabled.\n";
+        if ( bDoScaledFBO )
+          v31 = "FBO backbuffer rendering disabled due to create error.\n";
+        Con_DPrintf(v31);
+        SDL_SetWindowDisplayMode(v37, &v33);
+        dword_105394C4 = 1;
+        sub_10222FD0();
+      }
+      if ( bDoScaledFBO > 0 )
+      {
+        dword_109B32B0(36160, 0);
+        return 1;
+      }
+      return 1;
+    }
+    sub_10183BB0(0);
+    v40 = 2;
+    v41 = 20;
+    SDL_GetWindowWMInfo(v37, &v40);
+    DC = GetDC(hWnd);
+    v28 = dword_109A6A20 == 0;
+    *pmaindc = DC;
+    s_BackBufferFBO.s_hBackBufferFBO = 0;
+    v7 = (HDC)*pmaindc;
+    if ( v28 )
+    {
+      dword_109A6A20 = 1;
+      if ( dword_109B3D44 )
+      {
+        v8 = qwglChoosePixelFormat(v7, &ppfd);
+        v9 = v8;
+        if ( v8 )
+        {
+          if ( qwglSetPixelFormat(v7, v8, &ppfd) )
+          {
+            dword_109B3874(v7, v9, 40, &ppfd);
+  LABEL_13:
+            v7 = (HDC)*pmaindc;
+            goto LABEL_14;
+          }
+          goto LABEL_10;
+        }
+      }
+      else
+      {
+        v10 = ChoosePixelFormat(v7, &ppfd);
+        v11 = v10;
+        if ( v10 )
+        {
+          if ( SetPixelFormat(v7, v10, &ppfd) )
+          {
+            DescribePixelFormat(v7, v11, 0x28u, &ppfd);
+            if ( (ppfd.dwFlags & 0x40) != 0 && (ppfd.dwFlags & 0x1000) == 0 )
+              return 0;
+            goto LABEL_13;
+          }
+  LABEL_10:
+          MessageBoxA(nullptr, "SetPixelFormat failed", "Error", 0);
+          return 0;
+        }
+      }
+      MessageBoxA(nullptr, "ChoosePixelFormat failed", "Error", 0);
+      return 0;
+    }
+  LABEL_14:
+    Context = qwglCreateContext(v7);
+    *(_DWORD *)height = Context;
+    return Context && qwglMakeCurrent(*pmaindc, Context);
+  }

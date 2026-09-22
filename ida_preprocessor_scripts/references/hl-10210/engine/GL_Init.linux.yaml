@@ -1,0 +1,313 @@
+func_name: GL_Init
+func_va: '0x170a40'
+disasm_code: |-
+  ; gl_extensions is the pointer STORAGE written with glGetString(GL_EXTENSIONS=0x1F03), then read for extension checks/reporting. Do not return the string pointee or qglGetString slot.
+  .text:00170A40                 sub     esp, 4Ch
+  .text:00170A43                 ; GLenum
+  .text:00170A43                 mov     [esp+4Ch+var_4C], 1F00h; GLenum
+  .text:00170A4A                 call    ds:qglGetString
+  .text:00170A50                 test    eax, eax
+  .text:00170A52                 mov     ds:gl_vendor, eax
+  .text:00170A57                 jz      loc_170E00
+  .text:00170A5D                 mov     [esp+4Ch+search], eax
+  .text:00170A61                 mov     [esp+4Ch+var_4C], offset aGlVendorS; "GL_VENDOR: %s\n"
+  .text:00170A68                 call    Con_DPrintf
+  .text:00170A6D                 ; GLenum
+  .text:00170A6D                 mov     [esp+4Ch+var_4C], 1F01h; GLenum
+  .text:00170A74                 call    ds:qglGetString
+  .text:00170A7A                 mov     [esp+4Ch+var_4C], offset aGlRendererS; "GL_RENDERER: %s\n"
+  .text:00170A81                 mov     [esp+4Ch+search], eax
+  .text:00170A85                 mov     ds:gl_renderer, eax
+  .text:00170A8A                 call    Con_DPrintf
+  .text:00170A8F                 ; GLenum
+  .text:00170A8F                 mov     [esp+4Ch+var_4C], 1F02h; GLenum
+  .text:00170A96                 call    ds:qglGetString
+  .text:00170A9C                 mov     [esp+4Ch+var_4C], offset aGlVersionS; "GL_VERSION: %s\n"
+  .text:00170AA3                 mov     [esp+4Ch+search], eax
+  .text:00170AA7                 mov     ds:gl_version, eax
+  .text:00170AAC                 call    Con_DPrintf
+  .text:00170AB1                 ; GLenum
+  .text:00170AB1                 mov     [esp+4Ch+var_4C], 1F03h; GLenum
+  .text:00170AB8                 call    ds:qglGetString
+  .text:00170ABE                 xor     ecx, ecx
+  .text:00170AC0                 mov     [esp+4Ch+var_4C], offset aGlext; "-glext"
+  .text:00170AC7                 mov     ds:g_bSupportsNPOTTextures, ecx
+  .text:00170ACD                 mov     ds:gl_extensions, eax
+  .text:00170AD2                 call    COM_CheckParm
+  .text:00170AD7                 test    iShowExtensions, iShowExtensions
+  .text:00170AD9                 jnz     loc_170D40
+  .text:00170ADF                 lea     eax, [esp+4Ch+r]
+  .text:00170AE3                 mov     [esp+4Ch+search], eax
+  .text:00170AE7                 mov     [esp+4Ch+var_4C], 0
+  .text:00170AEE                 call    SDL_GL_GetAttribute
+  .text:00170AF3                 test    eax, eax
+  .text:00170AF5                 jnz     loc_170DE0
+  .text:00170AFB                 lea     eax, [esp+4Ch+g]
+  .text:00170AFF                 mov     [esp+4Ch+search], eax
+  .text:00170B03                 mov     [esp+4Ch+var_4C], 1
+  .text:00170B0A                 call    SDL_GL_GetAttribute
+  .text:00170B0F                 test    eax, eax
+  .text:00170B11                 jnz     loc_170DC0
+  .text:00170B17                 lea     eax, [esp+4Ch+b]
+  .text:00170B1B                 mov     [esp+4Ch+search], eax
+  .text:00170B1F                 mov     [esp+4Ch+var_4C], 2
+  .text:00170B26                 call    SDL_GL_GetAttribute
+  .text:00170B2B                 test    eax, eax
+  .text:00170B2D                 jnz     loc_170DA0
+  .text:00170B33                 lea     eax, [esp+4Ch+a]
+  .text:00170B37                 mov     [esp+4Ch+search], eax
+  .text:00170B3B                 mov     [esp+4Ch+var_4C], 3
+  .text:00170B42                 call    SDL_GL_GetAttribute
+  .text:00170B47                 test    eax, eax
+  .text:00170B49                 jnz     loc_170D80
+  .text:00170B4F                 lea     eax, [esp+4Ch+depth]
+  .text:00170B53                 mov     [esp+4Ch+search], eax
+  .text:00170B57                 mov     [esp+4Ch+var_4C], 6
+  .text:00170B5E                 call    SDL_GL_GetAttribute
+  .text:00170B63                 test    eax, eax
+  .text:00170B65                 jnz     loc_170D60
+  .text:00170B6B                 mov     eax, [esp+4Ch+depth]
+  .text:00170B6F                 mov     [esp+4Ch+var_4C], offset aGlSizesRDGDBDA; "GL_SIZES:  r:%d g:%d b:%d a:%d depth:%d"...
+  .text:00170B76                 mov     [esp+4Ch+var_38], eax
+  .text:00170B7A                 mov     eax, [esp+4Ch+a]
+  .text:00170B7E                 mov     [esp+4Ch+var_3C], eax
+  .text:00170B82                 mov     eax, [esp+4Ch+b]
+  .text:00170B86                 mov     [esp+4Ch+var_40], eax
+  .text:00170B8A                 mov     eax, [esp+4Ch+g]
+  .text:00170B8E                 mov     [esp+4Ch+var_44], eax
+  .text:00170B92                 mov     eax, [esp+4Ch+r]
+  .text:00170B96                 mov     [esp+4Ch+search], eax
+  .text:00170B9A                 call    Con_DPrintf
+  .text:00170B9F                 call    CheckTextureExtensions
+  .text:00170BA4                 call    CheckMultiTextureExtensions
+  .text:00170BA9                 mov     eax, ds:gl_extensions
+  .text:00170BAE                 xor     ecx, ecx
+  .text:00170BB0                 mov     ds:atismoothing, ecx
+  .text:00170BB6                 test    eax, eax
+  .text:00170BB8                 jz      short loc_170BD9
+  .text:00170BBA                 mov     edx, offset aGlArbTextureNo; "GL_ARB_texture_non_power_of_two"
+  .text:00170BBF                 ; search
+  .text:00170BBF                 mov     [esp+4Ch+search], edx; search
+  .text:00170BC3                 ; s1
+  .text:00170BC3                 mov     [esp+4Ch+var_4C], eax; s1
+  .text:00170BC6                 call    Q_strstr
+  .text:00170BCB                 test    eax, eax
+  .text:00170BCD                 jz      short loc_170BD9
+  .text:00170BCF                 mov     eax, 1
+  .text:00170BD4                 mov     ds:g_bSupportsNPOTTextures, eax
+  .text:00170BD9                 ; GLclampf
+  .text:00170BD9                 mov     [esp+4Ch+var_40], 0; GLclampf
+  .text:00170BE1                 ; GLclampf
+  .text:00170BE1                 mov     [esp+4Ch+var_44], 0; GLclampf
+  .text:00170BE9                 ; GLclampf
+  .text:00170BE9                 mov     [esp+4Ch+search], 0; GLclampf
+  .text:00170BF1                 ; GLclampf
+  .text:00170BF1                 mov     [esp+4Ch+var_4C], 3F800000h; GLclampf
+  .text:00170BF8                 call    ds:qglClearColor
+  .text:00170BFE                 ; GLenum
+  .text:00170BFE                 mov     [esp+4Ch+var_4C], 404h; GLenum
+  .text:00170C05                 call    ds:qglCullFace
+  .text:00170C0B                 ; GLenum
+  .text:00170C0B                 mov     [esp+4Ch+var_4C], 0DE1h; GLenum
+  .text:00170C12                 call    ds:qglEnable
+  .text:00170C18                 ; GLenum
+  .text:00170C18                 mov     [esp+4Ch+var_4C], 0BC0h; GLenum
+  .text:00170C1F                 call    ds:qglEnable
+  .text:00170C25                 ; GLclampf
+  .text:00170C25                 mov     [esp+4Ch+search], 0; GLclampf
+  .text:00170C2D                 ; GLenum
+  .text:00170C2D                 mov     [esp+4Ch+var_4C], 205h; GLenum
+  .text:00170C34                 call    ds:qglAlphaFunc
+  .text:00170C3A                 mov     eax, 1B02h
+  .text:00170C3F                 ; GLenum
+  .text:00170C3F                 mov     [esp+4Ch+search], eax; GLenum
+  .text:00170C43                 ; GLenum
+  .text:00170C43                 mov     [esp+4Ch+var_4C], 408h; GLenum
+  .text:00170C4A                 call    ds:qglPolygonMode
+  .text:00170C50                 ; GLenum
+  .text:00170C50                 mov     [esp+4Ch+var_4C], 1D00h; GLenum
+  .text:00170C57                 call    ds:qglShadeModel
+  .text:00170C5D                 mov     edx, 2801h
+  .text:00170C62                 ; GLenum
+  .text:00170C62                 mov     [esp+4Ch+search], edx; GLenum
+  .text:00170C66                 ; GLfloat
+  .text:00170C66                 mov     [esp+4Ch+var_44], 46180000h; GLfloat
+  .text:00170C6E                 ; GLenum
+  .text:00170C6E                 mov     [esp+4Ch+var_4C], 0DE1h; GLenum
+  .text:00170C75                 call    ds:qglTexParameterf
+  .text:00170C7B                 mov     ecx, 2800h
+  .text:00170C80                 ; GLenum
+  .text:00170C80                 mov     [esp+4Ch+search], ecx; GLenum
+  .text:00170C84                 ; GLfloat
+  .text:00170C84                 mov     [esp+4Ch+var_44], 46180000h; GLfloat
+  .text:00170C8C                 ; GLenum
+  .text:00170C8C                 mov     [esp+4Ch+var_4C], 0DE1h; GLenum
+  .text:00170C93                 call    ds:qglTexParameterf
+  .text:00170C99                 mov     eax, 2802h
+  .text:00170C9E                 ; GLenum
+  .text:00170C9E                 mov     [esp+4Ch+search], eax; GLenum
+  .text:00170CA2                 ; GLfloat
+  .text:00170CA2                 mov     [esp+4Ch+var_44], 46240400h; GLfloat
+  .text:00170CAA                 ; GLenum
+  .text:00170CAA                 mov     [esp+4Ch+var_4C], 0DE1h; GLenum
+  .text:00170CB1                 call    ds:qglTexParameterf
+  .text:00170CB7                 mov     eax, 2803h
+  .text:00170CBC                 ; GLenum
+  .text:00170CBC                 mov     [esp+4Ch+search], eax; GLenum
+  .text:00170CC0                 ; GLfloat
+  .text:00170CC0                 mov     [esp+4Ch+var_44], 46240400h; GLfloat
+  .text:00170CC8                 ; GLenum
+  .text:00170CC8                 mov     [esp+4Ch+var_4C], 0DE1h; GLenum
+  .text:00170CCF                 call    ds:qglTexParameterf
+  .text:00170CD5                 mov     eax, 84FEh
+  .text:00170CDA                 movss   xmm0, gl_ansio.value
+  .text:00170CE2                 ; GLenum
+  .text:00170CE2                 mov     [esp+4Ch+search], eax; GLenum
+  .text:00170CE6                 ; GLenum
+  .text:00170CE6                 mov     [esp+4Ch+var_4C], 0DE1h; GLenum
+  .text:00170CED                 ; GLfloat
+  .text:00170CED                 movss   [esp+4Ch+var_44], xmm0; GLfloat
+  .text:00170CF3                 call    ds:qglTexParameterf
+  .text:00170CF9                 mov     eax, 303h
+  .text:00170CFE                 ; GLenum
+  .text:00170CFE                 mov     [esp+4Ch+search], eax; GLenum
+  .text:00170D02                 ; GLenum
+  .text:00170D02                 mov     [esp+4Ch+var_4C], 302h; GLenum
+  .text:00170D09                 call    ds:qglBlendFunc
+  .text:00170D0F                 mov     eax, 2200h
+  .text:00170D14                 ; GLenum
+  .text:00170D14                 mov     [esp+4Ch+search], eax; GLenum
+  .text:00170D18                 ; GLfloat
+  .text:00170D18                 mov     [esp+4Ch+var_44], 45F00800h; GLfloat
+  .text:00170D20                 ; GLenum
+  .text:00170D20                 mov     [esp+4Ch+var_4C], 2300h; GLenum
+  .text:00170D27                 call    ds:qglTexEnvf
+  .text:00170D2D                 call    GL_Config
+  .text:00170D32                 add     esp, 4Ch
+  .text:00170D35                 retn
+  .text:00170D40                 mov     iShowExtensions, ds:gl_extensions
+  .text:00170D45                 mov     [esp+4Ch+var_4C], offset aGlExtensionsS; "GL_EXTENSIONS: %s\n"
+  .text:00170D4C                 mov     [esp+4Ch+search], eax
+  .text:00170D50                 call    Con_DPrintf
+  .text:00170D55                 jmp     loc_170ADF
+  .text:00170D60                 call    SDL_GetError
+  .text:00170D65                 xor     edx, edx
+  .text:00170D67                 mov     [esp+4Ch+var_4C], offset aFailedToGetGlD; "Failed to get GL DEPTH size (%s)\n"
+  .text:00170D6E                 mov     [esp+4Ch+depth], edx
+  .text:00170D72                 mov     [esp+4Ch+search], pErr
+  .text:00170D76                 call    Con_DPrintf
+  .text:00170D7B                 jmp     loc_170B6B
+  .text:00170D80                 call    SDL_GetError
+  .text:00170D85                 xor     ecx, ecx
+  .text:00170D87                 mov     [esp+4Ch+var_4C], offset aFailedToGetGlA; "Failed to get GL ALPHA size (%s)\n"
+  .text:00170D8E                 mov     [esp+4Ch+a], ecx
+  .text:00170D92                 mov     [esp+4Ch+search], pErr
+  .text:00170D96                 call    Con_DPrintf
+  .text:00170D9B                 jmp     loc_170B4F
+  .text:00170DA0                 call    SDL_GetError
+  .text:00170DA5                 xor     edx, edx
+  .text:00170DA7                 mov     [esp+4Ch+var_4C], offset aFailedToGetGlB; "Failed to get GL BLUE size (%s)\n"
+  .text:00170DAE                 mov     [esp+4Ch+b], edx
+  .text:00170DB2                 mov     [esp+4Ch+search], pErr
+  .text:00170DB6                 call    Con_DPrintf
+  .text:00170DBB                 jmp     loc_170B33
+  .text:00170DC0                 call    SDL_GetError
+  .text:00170DC5                 xor     ecx, ecx
+  .text:00170DC7                 mov     [esp+4Ch+var_4C], offset aFailedToGetGlG; "Failed to get GL GREEN size (%s)\n"
+  .text:00170DCE                 mov     [esp+4Ch+g], ecx
+  .text:00170DD2                 mov     [esp+4Ch+search], pErr
+  .text:00170DD6                 call    Con_DPrintf
+  .text:00170DDB                 jmp     loc_170B17
+  .text:00170DE0                 call    SDL_GetError
+  .text:00170DE5                 xor     edx, edx
+  .text:00170DE7                 mov     [esp+4Ch+var_4C], offset aFailedToGetGlR; "Failed to get GL RED size (%s)\n"
+  .text:00170DEE                 mov     [esp+4Ch+r], edx
+  .text:00170DF2                 mov     [esp+4Ch+search], pErr
+  .text:00170DF6                 call    Con_DPrintf
+  .text:00170DFB                 jmp     loc_170AFB
+  .text:00170E00                 mov     [esp+4Ch+var_4C], offset aFailedToQueryG; "Failed to query gl vendor string"
+  .text:00170E07                 call    Sys_Error
+procedure: |-
+  // gl_extensions is the pointer STORAGE written with glGetString(GL_EXTENSIONS=0x1F03), then read for extension checks/reporting. Do not return the string pointee or qglGetString slot.
+  // Current binary is authoritative. HLND2T_official is a semantic reference, not this exact source revision. Preserve platform-specific SDL/WGL, AA mode and frame-pacing paths.
+  void __cdecl GL_Init()
+  {
+    const char *String; // eax
+    const char *v1; // eax
+    const char *v2; // eax
+    const char *v3; // eax
+    const char *v4; // eax
+    const char *v5; // eax
+    const char *Error; // eax
+    int r; // [esp+2Ch] [ebp-20h] BYREF
+    int g; // [esp+30h] [ebp-1Ch] BYREF
+    int b; // [esp+34h] [ebp-18h] BYREF
+    int a; // [esp+38h] [ebp-14h] BYREF
+    int depth[4]; // [esp+3Ch] [ebp-10h] BYREF
+
+    String = (const char *)qglGetString(0x1F00u);
+    gl_vendor = String;
+    if ( !String )
+      Sys_Error("Failed to query gl vendor string");
+    Con_DPrintf("GL_VENDOR: %s\n", String);
+    gl_renderer = (const char *)qglGetString(0x1F01u);
+    Con_DPrintf("GL_RENDERER: %s\n", gl_renderer);
+    gl_version = (const char *)qglGetString(0x1F02u);
+    Con_DPrintf("GL_VERSION: %s\n", gl_version);
+    v1 = (const char *)qglGetString(0x1F03u);
+    g_bSupportsNPOTTextures = false;
+    gl_extensions = v1;
+    if ( COM_CheckParm("-glext") )
+      Con_DPrintf("GL_EXTENSIONS: %s\n", gl_extensions);
+    if ( SDL_GL_GetAttribute(0, &r) )
+    {
+      Error = (const char *)SDL_GetError();
+      r = 0;
+      Con_DPrintf("Failed to get GL RED size (%s)\n", Error);
+    }
+    if ( SDL_GL_GetAttribute(1, &g) )
+    {
+      v5 = (const char *)SDL_GetError();
+      g = 0;
+      Con_DPrintf("Failed to get GL GREEN size (%s)\n", v5);
+    }
+    if ( SDL_GL_GetAttribute(2, &b) )
+    {
+      v4 = (const char *)SDL_GetError();
+      b = 0;
+      Con_DPrintf("Failed to get GL BLUE size (%s)\n", v4);
+    }
+    if ( SDL_GL_GetAttribute(3, &a) )
+    {
+      v3 = (const char *)SDL_GetError();
+      a = 0;
+      Con_DPrintf("Failed to get GL ALPHA size (%s)\n", v3);
+    }
+    if ( SDL_GL_GetAttribute(6, depth) )
+    {
+      v2 = (const char *)SDL_GetError();
+      depth[0] = 0;
+      Con_DPrintf("Failed to get GL DEPTH size (%s)\n", v2);
+    }
+    Con_DPrintf("GL_SIZES:  r:%d g:%d b:%d a:%d depth:%d\n", r, g, b, a, depth[0]);
+    CheckTextureExtensions();
+    CheckMultiTextureExtensions();
+    atismoothing = false;
+    if ( gl_extensions && Q_strstr(gl_extensions, "GL_ARB_texture_non_power_of_two") )
+      g_bSupportsNPOTTextures = true;
+    qglClearColor(1.0, 0.0, 0.0, 0.0);
+    qglCullFace(0x404u);
+    qglEnable(0xDE1u);
+    qglEnable(0xBC0u);
+    qglAlphaFunc(0x205u, 0.0);
+    qglPolygonMode(0x408u, 0x1B02u);
+    qglShadeModel(0x1D00u);
+    qglTexParameterf(0xDE1u, 0x2801u, 9728.0);
+    qglTexParameterf(0xDE1u, 0x2800u, 9728.0);
+    qglTexParameterf(0xDE1u, 0x2802u, 10497.0);
+    qglTexParameterf(0xDE1u, 0x2803u, 10497.0);
+    qglTexParameterf(0xDE1u, 0x84FEu, gl_ansio.value);
+    qglBlendFunc(0x302u, 0x303u);
+    qglTexEnvf(0x2300u, 0x2200u, 7681.0);
+    GL_Config();
+  }

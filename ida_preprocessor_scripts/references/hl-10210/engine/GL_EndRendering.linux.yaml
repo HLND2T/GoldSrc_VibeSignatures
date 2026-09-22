@@ -1,0 +1,855 @@
+func_name: GL_EndRendering
+func_va: '0x170ff0'
+disasm_code: |-
+  ; s_fXMouseAspectAdjustment is the float STORAGE reset to 1 and updated in the horizontal/pillarbox branch: destination aspect / source aspect, alongside X rectangle boundaries.
+  ; s_fYMouseAspectAdjustment is the float STORAGE reset to 1 and updated in the vertical/letterbox branch: source aspect / destination aspect, alongside Y rectangle boundaries.
+  ; Distinguish the ratios and corresponding screen axis. Initialization order, instruction count and adjacency are not locators.
+  .text:00170FF0                 push    ebp
+  .text:00170FF1                 push    edi
+  .text:00170FF2                 push    esi
+  .text:00170FF3                 push    ebx
+  .text:00170FF4                 sub     esp, 8Ch
+  .text:00170FFA                 mov     eax, ds:s_BackBufferFBO.s_hBackBufferFBO
+  .text:00170FFF                 test    eax, eax
+  .text:00171001                 jnz     loc_171238
+  .text:00171007                 call    Sys_FloatTime
+  .text:0017100C                 fmul    ds:flt_247788
+  .text:00171012                 fld     st
+  .text:00171014                 fstp    [esp+9Ch+nWindowHeight]
+  .text:00171018                 fld     ds:gGLLowLatencyPrevPostFlipTimeMs
+  .text:0017101E                 fxch    st(1)
+  .text:00171020                 fucomi  st, st(1)
+  .text:00171022                 jbe     loc_171190
+  .text:00171028                 fsubrp  st(1), st
+  .text:0017102A                 fstp    [esp+9Ch+dstY2]
+  .text:0017102E                 call    ds:VID_FlipScreen
+  .text:00171034                 call    Sys_FloatTime
+  .text:00171039                 fld     ds:flt_247788
+  .text:0017103F                 fmul    st(1), st
+  .text:00171041                 fstp    qword ptr [esp+9Ch+dPostFlipTimeMs]
+  .text:00171045                 fstp    [esp+9Ch+nWindowWidth]
+  .text:00171049                 fld     gl_lowlatency.value
+  .text:0017104F                 fldz
+  .text:00171051                 fxch    st(1)
+  .text:00171053                 fucomip st, st(1)
+  .text:00171055                 fstp    st
+  .text:00171057                 jbe     loc_17116E
+  .text:0017105D                 call    glFinish
+  .text:00171062                 lea     eax, [esp+9Ch+srcTall]
+  .text:00171066                 mov     [esp+9Ch+tall], eax
+  .text:0017106A                 mov     [esp+9Ch+fmt], 0
+  .text:00171071                 call    SDL_GetCurrentDisplayMode
+  .text:00171076                 test    eax, eax
+  .text:00171078                 jz      loc_1711A0
+  .text:0017107E                 fld     ds:dbl_25C980
+  .text:00171084                 fld     [esp+9Ch+nWindowHeight]
+  .text:00171088                 fsubr   [esp+9Ch+nWindowWidth]
+  .text:0017108C                 fld     [esp+9Ch+dstY2]
+  .text:00171090                 fsubr   st, st(2)
+  .text:00171092                 fldz
+  .text:00171094                 fucomi  st, st(1)
+  .text:00171096                 ja      loc_171408
+  .text:0017109C                 fxch    st(2)
+  .text:0017109E                 fucomi  st, st(1)
+  .text:001710A0                 jbe     loc_171220
+  .text:001710A6                 fstp    st
+  .text:001710A8                 fxch    st(1)
+  .text:001710AA                 fucomi  st, st(1)
+  .text:001710AC                 fcmovbe st, st(1)
+  .text:001710AE                 fstp    st(1)
+  .text:001710B0                 fld     gl_lowlatency_maxslop_ms.value
+  .text:001710B6                 fxch    st(1)
+  .text:001710B8                 fucomi  st, st(1)
+  .text:001710BA                 fstp    st(1)
+  .text:001710BC                 jbe     loc_171200
+  .text:001710C2                 fld     ds:dbl_24A958
+  .text:001710C8                 fadd    ds:gGLLowLatencyThrottleMs
+  .text:001710CE                 fld     gl_lowlatency_minslop_ms.value
+  .text:001710D4                 fsubr   st, st(3)
+  .text:001710D6                 fldz
+  .text:001710D8                 fucomi  st, st(1)
+  .text:001710DA                 ja      loc_1711D0
+  .text:001710E0                 fxch    st(2)
+  .text:001710E2                 fucomi  st, st(1)
+  .text:001710E4                 jbe     loc_1711E8
+  .text:001710EA                 fstp    st
+  .text:001710EC                 fxch    st(1)
+  .text:001710EE                 fucomi  st, st(1)
+  .text:001710F0                 fcmovbe st, st(1)
+  .text:001710F2                 fstp    st(1)
+  .text:001710F4                 jmp     short loc_171110
+  .text:00171100                 fstp    st
+  .text:00171102                 lea     esi, [esi+0]
+  .text:00171109                 lea     edi, [edi+0]
+  .text:00171110                 fst     ds:gGLLowLatencyThrottleMs
+  .text:00171116                 fld     gl_lowlatency_debugoutput.value
+  .text:0017111C                 fldz
+  .text:0017111E                 fxch    st(1)
+  .text:00171120                 fucomip st, st(1)
+  .text:00171122                 fstp    st
+  .text:00171124                 jbe     short loc_171158
+  .text:00171126                 fstp    qword ptr [esp+9Ch+var_80]
+  .text:0017112A                 movsd   xmm1, [esp+9Ch+dstY2]
+  .text:00171130                 movsd   qword ptr [esp+9Ch+alpha], xmm1
+  .text:00171136                 fstp    qword ptr [esp+9Ch+var_88]
+  .text:0017113A                 fstp    qword ptr [esp+9Ch+tall]
+  .text:0017113E                 mov     [esp+9Ch+fmt], offset aGlLowlatencyVb; "gl_lowlatency: VBlank Interval: %.2f Fr"...
+  .text:00171145                 call    Con_Printf
+  .text:0017114A                 fld     ds:gGLLowLatencyThrottleMs
+  .text:00171150                 jmp     short loc_17115C
+  .text:00171158                 fstp    st(1)
+  .text:0017115A                 fstp    st(1)
+  .text:0017115C                 fstp    [esp+9Ch+dstY2]
+  .text:00171160                 cvttsd2si eax, [esp+9Ch+dstY2]
+  .text:00171166                 ; msec
+  .text:00171166                 mov     [esp+9Ch+fmt], eax; msec
+  .text:00171169                 call    Sys_Sleep
+  .text:0017116E                 movsd   xmm0, [esp+9Ch+nWindowWidth]
+  .text:00171174                 movsd   ds:gGLLowLatencyPrevPostFlipTimeMs, xmm0
+  .text:0017117C                 add     esp, 8Ch
+  .text:00171182                 pop     ebx
+  .text:00171183                 pop     esi
+  .text:00171184                 pop     edi
+  .text:00171185                 pop     ebp
+  .text:00171186                 retn
+  .text:00171190                 fstp    st
+  .text:00171192                 fstp    st
+  .text:00171194                 fldz
+  .text:00171196                 fstp    [esp+9Ch+dstY2]
+  .text:0017119A                 jmp     loc_17102E
+  .text:001711A0                 mov     eax, [esp+9Ch+var_24]
+  .text:001711A4                 cmp     eax, 1
+  .text:001711A7                 jle     loc_17107E
+  .text:001711AD                 mov     [esp+9Ch+var_48], eax
+  .text:001711B1                 fild    [esp+9Ch+var_48]
+  .text:001711B5                 fdivr   ds:flt_248808
+  .text:001711BB                 fld     qword ptr [esp+9Ch+dPostFlipTimeMs]
+  .text:001711BF                 fmulp   st(1), st
+  .text:001711C1                 jmp     loc_171084
+  .text:001711D0                 fstp    st
+  .text:001711D2                 fstp    st
+  .text:001711D4                 fldz
+  .text:001711D6                 fxch    st(1)
+  .text:001711D8                 fucomi  st, st(1)
+  .text:001711DA                 ja      loc_171100
+  .text:001711E0                 fstp    st(1)
+  .text:001711E2                 jmp     short loc_1711EC
+  .text:001711E8                 fstp    st(2)
+  .text:001711EA                 fstp    st
+  .text:001711EC                 fldz
+  .text:001711EE                 fucomi  st, st(1)
+  .text:001711F0                 fcmovbe st, st(1)
+  .text:001711F2                 fstp    st(1)
+  .text:001711F4                 jmp     loc_171110
+  .text:00171200                 fld     gl_lowlatency_minslop_ms.value
+  .text:00171206                 fucomi  st, st(1)
+  .text:00171208                 jbe     loc_171390
+  .text:0017120E                 fld1
+  .text:00171210                 fsubr   ds:gGLLowLatencyThrottleMs
+  .text:00171216                 fxch    st(1)
+  .text:00171218                 jmp     loc_1710D4
+  .text:00171220                 fstp    st(2)
+  .text:00171222                 fstp    st
+  .text:00171224                 fldz
+  .text:00171226                 fucomi  st, st(1)
+  .text:00171228                 fcmovbe st, st(1)
+  .text:0017122A                 fstp    st(1)
+  .text:0017122C                 jmp     loc_1710B0
+  .text:00171238                 xor     eax, eax
+  .text:0017123A                 ; bpp
+  .text:0017123A                 mov     [esp+9Ch+tall+4], eax; bpp
+  .text:0017123E                 lea     eax, [esp+9Ch+srcTall]
+  .text:00171242                 ; tall
+  .text:00171242                 mov     [esp+9Ch+tall], eax; tall
+  .text:00171246                 lea     eax, [esp+9Ch+srcWide]
+  .text:0017124A                 ; wide
+  .text:0017124A                 mov     [esp+9Ch+fmt], eax; wide
+  .text:0017124D                 call    VideoMode_GetCurrentVideoMode
+  .text:00171252                 mov     eax, ds:s_MSAAFBO.s_hBackBufferFBO
+  .text:00171257                 test    eax, eax
+  .text:00171259                 jnz     loc_171770
+  .text:0017125F                 xor     ebx, ebx
+  .text:00171261                 ; GLuint
+  .text:00171261                 mov     [esp+9Ch+tall], ebx; GLuint
+  .text:00171265                 ; GLenum
+  .text:00171265                 mov     [esp+9Ch+fmt], 8CA9h; GLenum
+  .text:0017126C                 call    ds:qglBindFramebufferEXT
+  .text:00171272                 mov     eax, ds:s_BackBufferFBO.s_hBackBufferFBO
+  .text:00171277                 ; GLenum
+  .text:00171277                 mov     [esp+9Ch+fmt], 8CA8h; GLenum
+  .text:0017127E                 ; GLuint
+  .text:0017127E                 mov     [esp+9Ch+tall], eax; GLuint
+  .text:00171282                 call    ds:qglBindFramebufferEXT
+  .text:00171288                 ; alpha
+  .text:00171288                 mov     [esp+9Ch+alpha], 0; alpha
+  .text:00171290                 ; blue
+  .text:00171290                 mov     [esp+9Ch+tall+4], 0; blue
+  .text:00171298                 ; green
+  .text:00171298                 mov     [esp+9Ch+tall], 0; green
+  .text:001712A0                 ; red
+  .text:001712A0                 mov     [esp+9Ch+fmt], 0; red
+  .text:001712A7                 call    glClearColor
+  .text:001712AC                 ; mask
+  .text:001712AC                 mov     [esp+9Ch+fmt], 4100h; mask
+  .text:001712B3                 call    glClear
+  .text:001712B8                 mov     esi, ds:window_rect.left
+  .text:001712BE                 mov     eax, ds:window_rect.right
+  .text:001712C3                 mov     edx, [esp+9Ch+srcTall]
+  .text:001712C7                 mov     edi, ds:window_rect.top
+  .text:001712CD                 mov     ebp, s_bEnforceAspect
+  .text:001712D3                 sub     eax, esi
+  .text:001712D5                 mov     esi, ds:window_rect.bottom
+  .text:001712DB                 mov     dword ptr [esp+9Ch+nWindowWidth], eax
+  .text:001712DF                 mov     dstX2_0, [esp+9Ch+srcWide]
+  .text:001712E3                 sub     esi, edi
+  .text:001712E5                 test    ebp, ebp
+  .text:001712E7                 mov     dword ptr [esp+9Ch+dstY2], eax
+  .text:001712EB                 fild    dword ptr [esp+9Ch+dstY2]
+  .text:001712EF                 mov     dword ptr [esp+9Ch+dstY2], edx
+  .text:001712F3                 fild    dword ptr [esp+9Ch+dstY2]
+  .text:001712F7                 fld1
+  .text:001712F9                 fst     s_fYMouseAspectAdjustment
+  .text:001712FF                 fst     s_fXMouseAspectAdjustment
+  .text:00171305                 jnz     loc_1713A0
+  .text:0017130B                 fstp    st
+  .text:0017130D                 jmp     short loc_171318
+  .text:00171310                 fstp    st
+  .text:00171312                 fstp    st
+  .text:00171314                 fstp    st
+  .text:00171316                 fstp    st
+  .text:00171318                 mov     edi, dword ptr [esp+9Ch+nWindowWidth]
+  .text:0017131C                 xor     ebx, ebx
+  .text:0017131E                 xor     ebp, ebp
+  .text:00171320                 mov     dword ptr [esp+9Ch+dstY2], dstY2_0
+  .text:00171324                 mov     ecx, ds:s_bSupportsBlitTexturing
+  .text:0017132A                 test    ecx, ecx
+  .text:0017132C                 jz      loc_171420
+  .text:00171332                 fstp    st
+  .text:00171334                 fstp    st
+  .text:00171336                 mov     ecx, 2601h
+  .text:0017133B                 mov     esi, 4000h
+  .text:00171340                 ; GLenum
+  .text:00171340                 mov     [esp+9Ch+var_78], ecx; GLenum
+  .text:00171344                 mov     ecx, dword ptr [esp+9Ch+dstY2]
+  .text:00171348                 ; GLint
+  .text:00171348                 mov     [esp+9Ch+var_88+4], dstX2_0; GLint
+  .text:0017134C                 xor     dstX2_0, dstX2_0
+  .text:0017134E                 ; GLbitfield
+  .text:0017134E                 mov     [esp+9Ch+var_80+4], esi; GLbitfield
+  .text:00171352                 ; GLint
+  .text:00171352                 mov     [esp+9Ch+var_88], dstY1; GLint
+  .text:00171356                 ; GLint
+  .text:00171356                 mov     [esp+9Ch+var_80], ecx; GLint
+  .text:0017135A                 ; GLint
+  .text:0017135A                 mov     [esp+9Ch+alpha+4], dstX1; GLint
+  .text:0017135E                 ; GLint
+  .text:0017135E                 mov     [esp+9Ch+alpha], edx; GLint
+  .text:00171362                 ; GLint
+  .text:00171362                 mov     [esp+9Ch+tall+4], eax; GLint
+  .text:00171366                 ; GLint
+  .text:00171366                 mov     [esp+9Ch+tall], edi; GLint
+  .text:0017136A                 ; GLint
+  .text:0017136A                 mov     [esp+9Ch+fmt], 0; GLint
+  .text:00171371                 call    ds:qglBlitFramebufferEXT
+  .text:00171377                 xor     eax, eax
+  .text:00171379                 ; GLuint
+  .text:00171379                 mov     [esp+9Ch+tall], eax; GLuint
+  .text:0017137D                 ; GLenum
+  .text:0017137D                 mov     [esp+9Ch+fmt], 8CA8h; GLenum
+  .text:00171384                 call    ds:qglBindFramebufferEXT
+  .text:0017138A                 jmp     loc_171007
+  .text:00171390                 fld     ds:gGLLowLatencyThrottleMs
+  .text:00171396                 fxch    st(1)
+  .text:00171398                 jmp     loc_1710D4
+  .text:001713A0                 fld     st(2)
+  .text:001713A2                 fdiv    st, st(2)
+  .text:001713A4                 mov     dword ptr [esp+9Ch+dstY2], dstY2_0
+  .text:001713A8                 fild    dword ptr [esp+9Ch+nWindowWidth]
+  .text:001713AC                 fild    dword ptr [esp+9Ch+dstY2]
+  .text:001713B0                 fld     st(1)
+  .text:001713B2                 fdiv    st, st(1)
+  .text:001713B4                 fucomi  st, st(3)
+  .text:001713B6                 jbe     loc_171700
+  .text:001713BC                 fstp    st(4)
+  .text:001713BE                 fxch    st(1)
+  .text:001713C0                 fxch    st(2)
+  .text:001713C2                 fxch    st(3)
+  .text:001713C4                 fxch    st(1)
+  .text:001713C6                 fmul    st, st(3)
+  .text:001713C8                 xor     ebx, ebx
+  .text:001713CA                 fsubp   st(2), st
+  .text:001713CC                 fxch    st(1)
+  .text:001713CE                 fmul    ds:flt_248810
+  .text:001713D4                 fldz
+  .text:001713D6                 fadd    st, st(1)
+  .text:001713D8                 fstp    [esp+9Ch+dstY2]
+  .text:001713DC                 fild    dword ptr [esp+9Ch+nWindowWidth]
+  .text:001713E0                 cvttsd2si ebp, [esp+9Ch+dstY2]
+  .text:001713E6                 fsubrp  st(1), st
+  .text:001713E8                 fstp    [esp+9Ch+dstY2]
+  .text:001713EC                 fdivrp  st(1), st
+  .text:001713EE                 cvttsd2si edi, [esp+9Ch+dstY2]
+  .text:001713F4                 mov     dword ptr [esp+9Ch+dstY2], dstY2_0
+  .text:001713F8                 fstp    s_fXMouseAspectAdjustment
+  .text:001713FE                 jmp     loc_171324
+  .text:00171408                 fstp    st(1)
+  .text:0017140A                 fxch    st(1)
+  .text:0017140C                 fucomi  st, st(1)
+  .text:0017140E                 fstp    st(1)
+  .text:00171410                 jbe     loc_171224
+  .text:00171416                 fstp    st
+  .text:00171418                 fldz
+  .text:0017141A                 jmp     loc_1710B0
+  .text:00171420                 fstp    [esp+9Ch+dPostFlipTimeMs]
+  .text:00171424                 ; cap
+  .text:00171424                 mov     [esp+9Ch+fmt], 0BE2h; cap
+  .text:0017142B                 fstp    [esp+9Ch+var_44]
+  .text:0017142F                 call    glDisable
+  .text:00171434                 ; cap
+  .text:00171434                 mov     [esp+9Ch+fmt], 0B50h; cap
+  .text:0017143B                 call    glDisable
+  .text:00171440                 ; cap
+  .text:00171440                 mov     [esp+9Ch+fmt], 0B71h; cap
+  .text:00171447                 call    glDisable
+  .text:0017144C                 ; cap
+  .text:0017144C                 mov     [esp+9Ch+fmt], 0BC0h; cap
+  .text:00171453                 call    glDisable
+  .text:00171458                 ; cap
+  .text:00171458                 mov     [esp+9Ch+fmt], 0B44h; cap
+  .text:0017145F                 call    glDisable
+  .text:00171464                 ; GLenum
+  .text:00171464                 mov     [esp+9Ch+fmt], 1701h; GLenum
+  .text:0017146B                 call    ds:qglMatrixMode
+  .text:00171471                 call    ds:qglPushMatrix
+  .text:00171477                 call    glLoadIdentity
+  .text:0017147C                 xor     eax, eax
+  .text:0017147E                 xor     edx, edx
+  .text:00171480                 mov     dword ptr [esp+9Ch+nWindowHeight], nWindowHeight_0
+  .text:00171484                 mov     ecx, 3FF00000h
+  .text:00171489                 ; near_val
+  .text:00171489                 mov     [esp+9Ch+var_80+4], eax; near_val
+  .text:0017148D                 mov     eax, 0BFF00000h
+  .text:00171492                 mov     [esp+9Ch+var_78], eax
+  .text:00171496                 xor     eax, eax
+  .text:00171498                 ; top
+  .text:00171498                 mov     [esp+9Ch+var_88+4], eax; top
+  .text:0017149C                 xor     eax, eax
+  .text:0017149E                 fild    dword ptr [esp+9Ch+nWindowHeight]
+  .text:001714A2                 mov     [esp+9Ch+var_80], eax
+  .text:001714A6                 xor     eax, eax
+  .text:001714A8                 ; far_val
+  .text:001714A8                 mov     dword ptr [esp+9Ch+far_val], edx; far_val
+  .text:001714AC                 mov     dword ptr [esp+9Ch+far_val+4], ecx
+  .text:001714B0                 mov     [esp+9Ch+tall], eax
+  .text:001714B4                 ; left
+  .text:001714B4                 mov     [esp+9Ch+fmt], 0; left
+  .text:001714BB                 ; bottom
+  .text:001714BB                 fstp    qword ptr [esp+9Ch+alpha+4]; bottom
+  .text:001714BF                 fild    dword ptr [esp+9Ch+nWindowWidth]
+  .text:001714C3                 ; right
+  .text:001714C3                 fstp    qword ptr [esp+9Ch+tall+4]; right
+  .text:001714C7                 call    glOrtho
+  .text:001714CC                 ; GLenum
+  .text:001714CC                 mov     [esp+9Ch+fmt], 1700h; GLenum
+  .text:001714D3                 call    ds:qglMatrixMode
+  .text:001714D9                 call    ds:qglPushMatrix
+  .text:001714DF                 call    glLoadIdentity
+  .text:001714E4                 mov     eax, dword ptr [esp+9Ch+nWindowWidth]
+  .text:001714E8                 ; GLsizei
+  .text:001714E8                 mov     [esp+9Ch+alpha], nWindowHeight_0; GLsizei
+  .text:001714EC                 mov     nWindowHeight_0, 2601h
+  .text:001714F1                 ; GLint
+  .text:001714F1                 mov     [esp+9Ch+fmt], 0; GLint
+  .text:001714F8                 ; GLsizei
+  .text:001714F8                 mov     [esp+9Ch+tall+4], eax; GLsizei
+  .text:001714FC                 xor     eax, eax
+  .text:001714FE                 ; GLint
+  .text:001714FE                 mov     [esp+9Ch+tall], eax; GLint
+  .text:00171502                 call    ds:qglViewport
+  .text:00171508                 mov     edx, 2601h
+  .text:0017150D                 mov     ecx, 2800h
+  .text:00171512                 ; param
+  .text:00171512                 mov     [esp+9Ch+tall+4], edx; param
+  .text:00171516                 ; pname
+  .text:00171516                 mov     [esp+9Ch+tall], ecx; pname
+  .text:0017151A                 ; target
+  .text:0017151A                 mov     [esp+9Ch+fmt], 84F5h; target
+  .text:00171521                 call    glTexParameteri
+  .text:00171526                 mov     eax, 2801h
+  .text:0017152B                 ; pname
+  .text:0017152B                 mov     [esp+9Ch+tall], eax; pname
+  .text:0017152F                 ; param
+  .text:0017152F                 mov     [esp+9Ch+tall+4], esi; param
+  .text:00171533                 ; target
+  .text:00171533                 mov     [esp+9Ch+fmt], 84F5h; target
+  .text:0017153A                 call    glTexParameteri
+  .text:0017153F                 mov     eax, 812Fh
+  .text:00171544                 ; param
+  .text:00171544                 mov     [esp+9Ch+tall+4], eax; param
+  .text:00171548                 mov     eax, 2802h
+  .text:0017154D                 ; pname
+  .text:0017154D                 mov     [esp+9Ch+tall], eax; pname
+  .text:00171551                 ; target
+  .text:00171551                 mov     [esp+9Ch+fmt], 84F5h; target
+  .text:00171558                 call    glTexParameteri
+  .text:0017155D                 mov     eax, 812Fh
+  .text:00171562                 ; param
+  .text:00171562                 mov     [esp+9Ch+tall+4], eax; param
+  .text:00171566                 mov     eax, 2803h
+  .text:0017156B                 ; pname
+  .text:0017156B                 mov     [esp+9Ch+tall], eax; pname
+  .text:0017156F                 ; target
+  .text:0017156F                 mov     [esp+9Ch+fmt], 84F5h; target
+  .text:00171576                 call    glTexParameteri
+  .text:0017157B                 ; GLfloat
+  .text:0017157B                 mov     [esp+9Ch+alpha], 3F800000h; GLfloat
+  .text:00171583                 ; GLfloat
+  .text:00171583                 mov     [esp+9Ch+tall+4], 3F800000h; GLfloat
+  .text:0017158B                 ; GLfloat
+  .text:0017158B                 mov     [esp+9Ch+tall], 3F800000h; GLfloat
+  .text:00171593                 ; GLfloat
+  .text:00171593                 mov     [esp+9Ch+fmt], 3F800000h; GLfloat
+  .text:0017159A                 call    ds:qglColor4f
+  .text:001715A0                 ; cap
+  .text:001715A0                 mov     [esp+9Ch+fmt], 84F5h; cap
+  .text:001715A7                 call    glEnable
+  .text:001715AC                 mov     eax, ds:s_BackBufferFBO.s_hBackBufferTex
+  .text:001715B1                 ; target
+  .text:001715B1                 mov     [esp+9Ch+fmt], 84F5h; target
+  .text:001715B8                 ; texture
+  .text:001715B8                 mov     [esp+9Ch+tall], eax; texture
+  .text:001715BC                 call    glBindTexture
+  .text:001715C1                 ; mode
+  .text:001715C1                 mov     [esp+9Ch+fmt], 7; mode
+  .text:001715C8                 call    glBegin
+  .text:001715CD                 ; s
+  .text:001715CD                 mov     [esp+9Ch+fmt], 0; s
+  .text:001715D4                 fld     [esp+9Ch+dPostFlipTimeMs]
+  .text:001715D8                 ; t
+  .text:001715D8                 fstp    [esp+9Ch+tall]; t
+  .text:001715DC                 call    glTexCoord2f
+  .text:001715E1                 mov     dword ptr [esp+9Ch+nWindowWidth], dstY1
+  .text:001715E5                 ; z
+  .text:001715E5                 mov     [esp+9Ch+tall+4], 0; z
+  .text:001715ED                 fild    dword ptr [esp+9Ch+nWindowWidth]
+  .text:001715F1                 mov     dword ptr [esp+9Ch+nWindowWidth], dstX1
+  .text:001715F5                 fild    dword ptr [esp+9Ch+nWindowWidth]
+  .text:001715F9                 fxch    st(1)
+  .text:001715FB                 ; y
+  .text:001715FB                 fst     [esp+9Ch+tall]; y
+  .text:001715FF                 fstp    dword ptr [esp+9Ch+nWindowHeight]
+  .text:00171603                 ; x
+  .text:00171603                 fst     [esp+9Ch+fmt]; x
+  .text:00171606                 fstp    [esp+9Ch+var_48]
+  .text:0017160A                 call    glVertex3f
+  .text:0017160F                 fld     [esp+9Ch+dPostFlipTimeMs]
+  .text:00171613                 ; t
+  .text:00171613                 fstp    [esp+9Ch+tall]; t
+  .text:00171617                 fld     [esp+9Ch+var_44]
+  .text:0017161B                 ; s
+  .text:0017161B                 fst     [esp+9Ch+fmt]; s
+  .text:0017161E                 fstp    [esp+9Ch+dPostFlipTimeMs]
+  .text:00171622                 call    glTexCoord2f
+  .text:00171627                 mov     dword ptr [esp+9Ch+nWindowWidth], dstX2_0
+  .text:0017162B                 ; z
+  .text:0017162B                 mov     [esp+9Ch+tall+4], 0; z
+  .text:00171633                 fild    dword ptr [esp+9Ch+nWindowWidth]
+  .text:00171637                 fld     dword ptr [esp+9Ch+nWindowHeight]
+  .text:0017163B                 ; y
+  .text:0017163B                 fstp    [esp+9Ch+tall]; y
+  .text:0017163F                 ; x
+  .text:0017163F                 fst     [esp+9Ch+fmt]; x
+  .text:00171642                 fstp    dword ptr [esp+9Ch+nWindowHeight]
+  .text:00171646                 call    glVertex3f
+  .text:0017164B                 ; t
+  .text:0017164B                 mov     [esp+9Ch+tall], 0; t
+  .text:00171653                 fld     [esp+9Ch+dPostFlipTimeMs]
+  .text:00171657                 ; s
+  .text:00171657                 fstp    [esp+9Ch+fmt]; s
+  .text:0017165A                 call    glTexCoord2f
+  .text:0017165F                 ; z
+  .text:0017165F                 mov     [esp+9Ch+tall+4], 0; z
+  .text:00171667                 fild    dword ptr [esp+9Ch+dstY2]
+  .text:0017166B                 ; y
+  .text:0017166B                 fst     [esp+9Ch+tall]; y
+  .text:0017166F                 fstp    dword ptr [esp+9Ch+nWindowWidth]
+  .text:00171673                 fld     dword ptr [esp+9Ch+nWindowHeight]
+  .text:00171677                 ; x
+  .text:00171677                 fstp    [esp+9Ch+fmt]; x
+  .text:0017167A                 call    glVertex3f
+  .text:0017167F                 ; t
+  .text:0017167F                 mov     [esp+9Ch+tall], 0; t
+  .text:00171687                 ; s
+  .text:00171687                 mov     [esp+9Ch+fmt], 0; s
+  .text:0017168E                 call    glTexCoord2f
+  .text:00171693                 ; z
+  .text:00171693                 mov     [esp+9Ch+tall+4], 0; z
+  .text:0017169B                 fld     dword ptr [esp+9Ch+nWindowWidth]
+  .text:0017169F                 ; y
+  .text:0017169F                 fstp    [esp+9Ch+tall]; y
+  .text:001716A3                 fld     [esp+9Ch+var_48]
+  .text:001716A7                 ; x
+  .text:001716A7                 fstp    [esp+9Ch+fmt]; x
+  .text:001716AA                 call    glVertex3f
+  .text:001716AF                 call    glEnd
+  .text:001716B4                 xor     eax, eax
+  .text:001716B6                 ; texture
+  .text:001716B6                 mov     [esp+9Ch+tall], eax; texture
+  .text:001716BA                 ; target
+  .text:001716BA                 mov     [esp+9Ch+fmt], 84F5h; target
+  .text:001716C1                 call    glBindTexture
+  .text:001716C6                 ; GLenum
+  .text:001716C6                 mov     [esp+9Ch+fmt], 1701h; GLenum
+  .text:001716CD                 call    ds:qglMatrixMode
+  .text:001716D3                 call    ds:qglPopMatrix
+  .text:001716D9                 ; GLenum
+  .text:001716D9                 mov     [esp+9Ch+fmt], 1700h; GLenum
+  .text:001716E0                 call    ds:qglMatrixMode
+  .text:001716E6                 call    ds:qglPopMatrix
+  .text:001716EC                 ; cap
+  .text:001716EC                 mov     [esp+9Ch+fmt], 84F5h; cap
+  .text:001716F3                 call    glDisable
+  .text:001716F8                 jmp     loc_171377
+  .text:00171700                 fstp    st(2)
+  .text:00171702                 fxch    st(1)
+  .text:00171704                 fxch    st(2)
+  .text:00171706                 fucomi  st, st(2)
+  .text:00171708                 jbe     loc_171310
+  .text:0017170E                 fdivr   st(2), st
+  .text:00171710                 fxch    st(2)
+  .text:00171712                 mov     edi, dword ptr [esp+9Ch+nWindowWidth]
+  .text:00171716                 xor     ebp, ebp
+  .text:00171718                 mov     dword ptr [esp+9Ch+dstY2], edi
+  .text:0017171C                 fstp    s_fYMouseAspectAdjustment
+  .text:00171722                 fxch    st(2)
+  .text:00171724                 fdivrp  st(1), st
+  .text:00171726                 fild    dword ptr [esp+9Ch+dstY2]
+  .text:0017172A                 fmulp   st(1), st
+  .text:0017172C                 fstp    [esp+9Ch+var_40]
+  .text:00171730                 fld     [esp+9Ch+var_40]
+  .text:00171734                 fsubp   st(1), st
+  .text:00171736                 fmul    ds:flt_248810
+  .text:0017173C                 fldz
+  .text:0017173E                 fadd    st, st(1)
+  .text:00171740                 fstp    [esp+9Ch+dstY2]
+  .text:00171744                 cvttsd2si ebx, [esp+9Ch+dstY2]
+  .text:0017174A                 mov     dword ptr [esp+9Ch+dstY2], dstY2_0
+  .text:0017174E                 fild    dword ptr [esp+9Ch+dstY2]
+  .text:00171752                 fsubrp  st(1), st
+  .text:00171754                 fstp    [esp+9Ch+dstY2]
+  .text:00171758                 cvttsd2si ecx, [esp+9Ch+dstY2]
+  .text:0017175E                 mov     dword ptr [esp+9Ch+dstY2], ecx
+  .text:00171762                 jmp     loc_171324
+  .text:00171770                 mov     eax, ds:s_BackBufferFBO.s_hBackBufferFBO
+  .text:00171775                 mov     ebx, 4000h
+  .text:0017177A                 xor     esi, esi
+  .text:0017177C                 ; GLenum
+  .text:0017177C                 mov     [esp+9Ch+fmt], 8CA9h; GLenum
+  .text:00171783                 xor     edi, edi
+  .text:00171785                 xor     ebp, ebp
+  .text:00171787                 ; GLuint
+  .text:00171787                 mov     [esp+9Ch+tall], eax; GLuint
+  .text:0017178B                 call    ds:qglBindFramebufferEXT
+  .text:00171791                 mov     eax, ds:s_MSAAFBO.s_hBackBufferFBO
+  .text:00171796                 ; GLenum
+  .text:00171796                 mov     [esp+9Ch+fmt], 8CA8h; GLenum
+  .text:0017179D                 ; GLuint
+  .text:0017179D                 mov     [esp+9Ch+tall], eax; GLuint
+  .text:001717A1                 call    ds:qglBindFramebufferEXT
+  .text:001717A7                 mov     edx, [esp+9Ch+srcTall]
+  .text:001717AB                 mov     ecx, 2601h
+  .text:001717B0                 mov     eax, [esp+9Ch+srcWide]
+  .text:001717B4                 ; GLenum
+  .text:001717B4                 mov     [esp+9Ch+var_78], ecx; GLenum
+  .text:001717B8                 ; GLbitfield
+  .text:001717B8                 mov     [esp+9Ch+var_80+4], ebx; GLbitfield
+  .text:001717BC                 ; GLint
+  .text:001717BC                 mov     [esp+9Ch+var_80], edx; GLint
+  .text:001717C0                 ; GLint
+  .text:001717C0                 mov     [esp+9Ch+var_88+4], eax; GLint
+  .text:001717C4                 ; GLint
+  .text:001717C4                 mov     [esp+9Ch+var_88], esi; GLint
+  .text:001717C8                 ; GLint
+  .text:001717C8                 mov     [esp+9Ch+alpha+4], edi; GLint
+  .text:001717CC                 ; GLint
+  .text:001717CC                 mov     [esp+9Ch+alpha], edx; GLint
+  .text:001717D0                 ; GLint
+  .text:001717D0                 mov     [esp+9Ch+tall+4], eax; GLint
+  .text:001717D4                 ; GLint
+  .text:001717D4                 mov     [esp+9Ch+tall], ebp; GLint
+  .text:001717D8                 ; GLint
+  .text:001717D8                 mov     [esp+9Ch+fmt], 0; GLint
+  .text:001717DF                 call    ds:qglBlitFramebufferEXT
+  .text:001717E5                 jmp     loc_17125F
+procedure: |-
+  // s_fXMouseAspectAdjustment is the float STORAGE reset to 1 and updated in the horizontal/pillarbox branch: destination aspect / source aspect, alongside X rectangle boundaries.
+  // s_fYMouseAspectAdjustment is the float STORAGE reset to 1 and updated in the vertical/letterbox branch: source aspect / destination aspect, alongside Y rectangle boundaries.
+  // Distinguish the ratios and corresponding screen axis. Initialization order, instruction count and adjacency are not locators.
+  // Current binary is authoritative. HLND2T_official is a semantic reference, not this exact source revision. Preserve platform-specific SDL/WGL, AA mode and frame-pacing paths.
+  void __cdecl GL_EndRendering()
+  {
+    long double v0; // fst7
+    long double v1; // fst7
+    long double v2; // fst6
+    long double v3; // fst5
+    long double v4; // rtt
+    long double v5; // fst5
+    long double v6; // fst6
+    long double v7; // fst6
+    long double v8; // fst5
+    long double value; // fst4
+    long double v10; // fst4
+    long double v11; // rt2
+    long double v12; // fst4
+    long double v13; // fst5
+    long double v14; // fst5
+    long double v15; // fst7
+    long double v16; // fst4
+    long double v17; // fst4
+    long double v18; // fst5
+    GLsizei v19; // esi
+    long double v20; // fst7
+    long double v21; // fst6
+    GLint v22; // edi
+    GLint v23; // ebx
+    GLint v24; // ebp
+    long double v25; // fst4
+    long double v26; // fst3
+    long double v27; // fst2
+    long double v28; // fst1
+    long double v29; // fst3
+    long double v30; // fst5
+    GLfloat fmt; // [esp+0h] [ebp-9Ch]
+    GLfloat fmta; // [esp+0h] [ebp-9Ch]
+    GLfloat tall; // [esp+4h] [ebp-98h]
+    GLfloat talla; // [esp+4h] [ebp-98h]
+    GLfloat tallb; // [esp+4h] [ebp-98h]
+    double nWindowWidth; // [esp+30h] [ebp-6Ch]
+    GLsizei nWindowWidtha; // [esp+30h] [ebp-6Ch]
+    GLfloat nWindowWidthb; // [esp+30h] [ebp-6Ch]
+    double dstY2; // [esp+38h] [ebp-64h]
+    GLint dstY2a; // [esp+38h] [ebp-64h]
+    double nWindowHeight; // [esp+40h] [ebp-5Ch]
+    GLfloat nWindowHeighta; // [esp+40h] [ebp-5Ch]
+    GLfloat nWindowHeightb; // [esp+40h] [ebp-5Ch]
+    GLfloat dPostFlipTimeMs; // [esp+48h] [ebp-54h]
+    GLfloat v45; // [esp+54h] [ebp-48h]
+    GLfloat v46; // [esp+58h] [ebp-44h]
+    float v47; // [esp+5Ch] [ebp-40h]
+    int srcWide; // [esp+68h] [ebp-34h] BYREF
+    int srcTall[3]; // [esp+6Ch] [ebp-30h] BYREF
+    int v50; // [esp+78h] [ebp-24h]
+
+    if ( !s_BackBufferFBO.s_hBackBufferFBO )
+      goto LABEL_2;
+    VideoMode_GetCurrentVideoMode(&srcWide, srcTall, nullptr);
+    if ( s_MSAAFBO.s_hBackBufferFBO )
+    {
+      qglBindFramebufferEXT(0x8CA9u, s_BackBufferFBO.s_hBackBufferFBO);
+      qglBindFramebufferEXT(0x8CA8u, s_MSAAFBO.s_hBackBufferFBO);
+      qglBlitFramebufferEXT(0, 0, srcWide, srcTall[0], 0, 0, srcWide, srcTall[0], 0x4000u, 0x2601u);
+    }
+    qglBindFramebufferEXT(0x8CA9u, 0);
+    qglBindFramebufferEXT(0x8CA8u, s_BackBufferFBO.s_hBackBufferFBO);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(0x4100u);
+    nWindowWidtha = window_rect.right - window_rect.left;
+    v19 = window_rect.bottom - window_rect.top;
+    v20 = (long double)srcWide;
+    v21 = (long double)srcTall[0];
+    s_fYMouseAspectAdjustment = 1.0;
+    s_fXMouseAspectAdjustment = 1.0;
+    if ( s_bEnforceAspect )
+    {
+      v25 = v20 / v21;
+      v26 = (long double)nWindowWidtha;
+      v27 = (long double)v19;
+      v28 = v26 / v27;
+      if ( v26 / v27 > v20 / v21 )
+      {
+        v23 = 0;
+        v29 = (v26 - v27 * v25) * 0.5;
+        v24 = (int)(double)(v29 + 0.0);
+        v22 = (int)(double)((long double)nWindowWidtha - v29);
+        dstY2a = window_rect.bottom - window_rect.top;
+        s_fXMouseAspectAdjustment = v28 / v25;
+        goto LABEL_41;
+      }
+      if ( v25 > v28 )
+      {
+        v22 = window_rect.right - window_rect.left;
+        v24 = 0;
+        s_fYMouseAspectAdjustment = v25 / v28;
+        v47 = 1.0 / v25 * (long double)nWindowWidtha;
+        v30 = (v27 - v47) * 0.5;
+        v23 = (int)(double)(v30 + 0.0);
+        dstY2a = (int)(double)((long double)v19 - v30);
+        goto LABEL_41;
+      }
+    }
+    v22 = window_rect.right - window_rect.left;
+    v23 = 0;
+    v24 = 0;
+    dstY2a = window_rect.bottom - window_rect.top;
+  LABEL_41:
+    if ( s_bSupportsBlitTexturing )
+    {
+      qglBlitFramebufferEXT(0, 0, srcWide, srcTall[0], v24, v23, v22, dstY2a, 0x4000u, 0x2601u);
+    }
+    else
+    {
+      dPostFlipTimeMs = v21;
+      v46 = v20;
+      glDisable(0xBE2u);
+      glDisable(0xB50u);
+      glDisable(0xB71u);
+      glDisable(0xBC0u);
+      glDisable(0xB44u);
+      qglMatrixMode(0x1701u);
+      qglPushMatrix();
+      glLoadIdentity();
+      glOrtho(0.0, (double)nWindowWidtha, (double)v19, 0.0, -1.0, 1.0);
+      qglMatrixMode(0x1700u);
+      qglPushMatrix();
+      glLoadIdentity();
+      qglViewport(0, 0, nWindowWidtha, v19);
+      glTexParameteri(0x84F5u, 0x2800u, 9729);
+      glTexParameteri(0x84F5u, 0x2801u, 9729);
+      glTexParameteri(0x84F5u, 0x2802u, 33071);
+      glTexParameteri(0x84F5u, 0x2803u, 33071);
+      qglColor4f(1.0, 1.0, 1.0, 1.0);
+      glEnable(0x84F5u);
+      glBindTexture(0x84F5u, s_BackBufferFBO.s_hBackBufferTex);
+      glBegin(7u);
+      glTexCoord2f(0.0, dPostFlipTimeMs);
+      tall = (float)v23;
+      nWindowHeighta = tall;
+      fmt = (float)v24;
+      v45 = fmt;
+      glVertex3f(fmt, tall, 0.0);
+      glTexCoord2f(v46, dPostFlipTimeMs);
+      talla = nWindowHeighta;
+      fmta = (float)v22;
+      nWindowHeightb = fmta;
+      glVertex3f(fmta, talla, 0.0);
+      glTexCoord2f(v46, 0.0);
+      tallb = (float)dstY2a;
+      nWindowWidthb = tallb;
+      glVertex3f(nWindowHeightb, tallb, 0.0);
+      glTexCoord2f(0.0, 0.0);
+      glVertex3f(v45, nWindowWidthb, 0.0);
+      glEnd();
+      glBindTexture(0x84F5u, 0);
+      qglMatrixMode(0x1701u);
+      qglPopMatrix();
+      qglMatrixMode(0x1700u);
+      qglPopMatrix();
+      glDisable(0x84F5u);
+    }
+    qglBindFramebufferEXT(0x8CA8u, 0);
+  LABEL_2:
+    v0 = Sys_FloatTime() * 1000.0;
+    nWindowHeight = v0;
+    if ( v0 <= gGLLowLatencyPrevPostFlipTimeMs )
+      dstY2 = 0.0;
+    else
+      dstY2 = v0 - gGLLowLatencyPrevPostFlipTimeMs;
+    VID_FlipScreen();
+    nWindowWidth = Sys_FloatTime() * 1000.0;
+    if ( gl_lowlatency.value > 0.0 )
+    {
+      glFinish();
+      if ( SDL_GetCurrentDisplayMode(0, srcTall) || v50 <= 1 )
+        v1 = 16.66666666666667;
+      else
+        v1 = 1.0 / (long double)v50 * (double)1000.0;
+      v2 = nWindowWidth - nWindowHeight;
+      v3 = v1 - dstY2;
+      if ( v3 < 0.0 )
+      {
+        if ( v2 > 0.0 )
+        {
+          v7 = 0.0;
+          goto LABEL_12;
+        }
+      }
+      else if ( v2 > v3 )
+      {
+        v4 = v3;
+        v5 = 0.0;
+        v6 = v4;
+        if ( v4 >= 0.0 )
+          v5 = v6;
+        v7 = v5;
+        goto LABEL_12;
+      }
+      v18 = 0.0;
+      if ( v2 >= 0.0 )
+        v18 = v2;
+      v7 = v18;
+  LABEL_12:
+      if ( v7 <= gl_lowlatency_maxslop_ms.value )
+      {
+        if ( gl_lowlatency_minslop_ms.value <= v7 )
+        {
+          value = gl_lowlatency_minslop_ms.value;
+          v8 = gGLLowLatencyThrottleMs;
+        }
+        else
+        {
+          value = gl_lowlatency_minslop_ms.value;
+          v8 = gGLLowLatencyThrottleMs - 1.0;
+        }
+      }
+      else
+      {
+        v8 = gGLLowLatencyThrottleMs + 0.1;
+        value = gl_lowlatency_minslop_ms.value;
+      }
+      v10 = v1 - value;
+      if ( v10 < 0.0 )
+      {
+        v16 = v8;
+        v14 = 0.0;
+        if ( v16 > 0.0 )
+        {
+  LABEL_19:
+          gGLLowLatencyThrottleMs = v14;
+          if ( gl_lowlatency_debugoutput.value <= 0.0 )
+          {
+            v15 = v14;
+          }
+          else
+          {
+            Con_Printf(
+              "gl_lowlatency: VBlank Interval: %.2f Frame Time: %.2f, Slop: %.2f Throttle:%.2f\n",
+              (double)v1,
+              dstY2,
+              (double)v7,
+              (double)v14);
+            v15 = gGLLowLatencyThrottleMs;
+          }
+          Sys_Sleep((int)(double)v15);
+          goto LABEL_23;
+        }
+        v8 = v16;
+      }
+      else if ( v8 > v10 )
+      {
+        v11 = v10;
+        v12 = 0.0;
+        v13 = v11;
+        if ( v11 >= 0.0 )
+          v12 = v13;
+        v14 = v12;
+        goto LABEL_19;
+      }
+      v17 = 0.0;
+      if ( v8 >= 0.0 )
+        v17 = v8;
+      v14 = v17;
+      goto LABEL_19;
+    }
+  LABEL_23:
+    gGLLowLatencyPrevPostFlipTimeMs = nWindowWidth;
+  }

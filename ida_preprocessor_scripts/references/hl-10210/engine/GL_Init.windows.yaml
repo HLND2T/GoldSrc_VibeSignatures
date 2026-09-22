@@ -1,0 +1,493 @@
+func_name: GL_Init
+func_va: '0x1024e680'
+disasm_code: |-
+  ; gl_extensions is the pointer STORAGE written with glGetString(GL_EXTENSIONS=0x1F03), then read for extension checks/reporting. Do not return the string pointee or qglGetString slot.
+  .text:1024E680                 push    ebp
+  .text:1024E681                 mov     ebp, esp
+  .text:1024E683                 sub     esp, 18h
+  .text:1024E686                 ; name
+  .text:1024E686                 push    1F00h; name
+  .text:1024E68B                 call    qglGetString
+  .text:1024E691                 mov     dword_109B3CCC, eax
+  .text:1024E696                 test    eax, eax
+  .text:1024E698                 jnz     short loc_1024E6AB
+  .text:1024E69A                 push    offset aFailedToQueryG; "Failed to query gl vendor string"
+  .text:1024E69F                 call    Sys_Error
+  .text:1024E6A4                 add     esp, 4
+  .text:1024E6A7                 mov     esp, ebp
+  .text:1024E6A9                 pop     ebp
+  .text:1024E6AA                 retn
+  .text:1024E6AB                 ; ArgList
+  .text:1024E6AB                 push    eax; ArgList
+  .text:1024E6AC                 push    offset aGlVendorS; "GL_VENDOR: %s\n"
+  .text:1024E6B1                 call    Con_DPrintf
+  .text:1024E6B6                 add     esp, 8
+  .text:1024E6B9                 ; name
+  .text:1024E6B9                 push    1F01h; name
+  .text:1024E6BE                 call    qglGetString
+  .text:1024E6C4                 ; ArgList
+  .text:1024E6C4                 push    eax; ArgList
+  .text:1024E6C5                 push    offset aGlRendererS; "GL_RENDERER: %s\n"
+  .text:1024E6CA                 mov     dword_109B3CC8, eax
+  .text:1024E6CF                 call    Con_DPrintf
+  .text:1024E6D4                 add     esp, 8
+  .text:1024E6D7                 ; name
+  .text:1024E6D7                 push    1F02h; name
+  .text:1024E6DC                 call    qglGetString
+  .text:1024E6E2                 ; ArgList
+  .text:1024E6E2                 push    eax; ArgList
+  .text:1024E6E3                 push    offset aGlVersionS; "GL_VERSION: %s\n"
+  .text:1024E6E8                 mov     dword_109B3CC4, eax
+  .text:1024E6ED                 call    Con_DPrintf
+  .text:1024E6F2                 add     esp, 8
+  .text:1024E6F5                 ; name
+  .text:1024E6F5                 push    1F03h; name
+  .text:1024E6FA                 call    qglGetString
+  .text:1024E700                 push    offset aGlext; "-glext"
+  .text:1024E705                 mov     gl_extensions, eax
+  .text:1024E70A                 mov     dword_109A68E8, 0
+  .text:1024E714                 call    COM_CheckParm
+  .text:1024E719                 add     esp, 4
+  .text:1024E71C                 test    eax, eax
+  .text:1024E71E                 jz      short loc_1024E733
+  .text:1024E720                 ; ArgList
+  .text:1024E720                 push    gl_extensions; ArgList
+  .text:1024E726                 push    offset aGlExtensionsS; "GL_EXTENSIONS: %s\n"
+  .text:1024E72B                 call    Con_DPrintf
+  .text:1024E730                 add     esp, 8
+  .text:1024E733                 lea     eax, [ebp+ArgList]
+  .text:1024E736                 push    eax
+  .text:1024E737                 push    0
+  .text:1024E739                 call    SDL_GL_GetAttribute
+  .text:1024E73E                 add     esp, 8
+  .text:1024E741                 test    eax, eax
+  .text:1024E743                 jz      short loc_1024E75F
+  .text:1024E745                 call    SDL_GetError
+  .text:1024E74A                 ; ArgList
+  .text:1024E74A                 push    eax; ArgList
+  .text:1024E74B                 push    offset aFailedToGetGlR; "Failed to get GL RED size (%s)\n"
+  .text:1024E750                 mov     dword ptr [ebp+ArgList], 0
+  .text:1024E757                 call    Con_DPrintf
+  .text:1024E75C                 add     esp, 8
+  .text:1024E75F                 lea     eax, [ebp+var_10]
+  .text:1024E762                 push    eax
+  .text:1024E763                 push    1
+  .text:1024E765                 call    SDL_GL_GetAttribute
+  .text:1024E76A                 add     esp, 8
+  .text:1024E76D                 test    eax, eax
+  .text:1024E76F                 jz      short loc_1024E78B
+  .text:1024E771                 call    SDL_GetError
+  .text:1024E776                 ; ArgList
+  .text:1024E776                 push    eax; ArgList
+  .text:1024E777                 push    offset aFailedToGetGlG; "Failed to get GL GREEN size (%s)\n"
+  .text:1024E77C                 mov     [ebp+var_10], 0
+  .text:1024E783                 call    Con_DPrintf
+  .text:1024E788                 add     esp, 8
+  .text:1024E78B                 lea     eax, [ebp+var_C]
+  .text:1024E78E                 push    eax
+  .text:1024E78F                 push    2
+  .text:1024E791                 call    SDL_GL_GetAttribute
+  .text:1024E796                 add     esp, 8
+  .text:1024E799                 test    eax, eax
+  .text:1024E79B                 jz      short loc_1024E7B7
+  .text:1024E79D                 call    SDL_GetError
+  .text:1024E7A2                 ; ArgList
+  .text:1024E7A2                 push    eax; ArgList
+  .text:1024E7A3                 push    offset aFailedToGetGlB; "Failed to get GL BLUE size (%s)\n"
+  .text:1024E7A8                 mov     [ebp+var_C], 0
+  .text:1024E7AF                 call    Con_DPrintf
+  .text:1024E7B4                 add     esp, 8
+  .text:1024E7B7                 lea     eax, [ebp+var_8]
+  .text:1024E7BA                 push    eax
+  .text:1024E7BB                 push    3
+  .text:1024E7BD                 call    SDL_GL_GetAttribute
+  .text:1024E7C2                 add     esp, 8
+  .text:1024E7C5                 test    eax, eax
+  .text:1024E7C7                 jz      short loc_1024E7E3
+  .text:1024E7C9                 call    SDL_GetError
+  .text:1024E7CE                 ; ArgList
+  .text:1024E7CE                 push    eax; ArgList
+  .text:1024E7CF                 push    offset aFailedToGetGlA; "Failed to get GL ALPHA size (%s)\n"
+  .text:1024E7D4                 mov     [ebp+var_8], 0
+  .text:1024E7DB                 call    Con_DPrintf
+  .text:1024E7E0                 add     esp, 8
+  .text:1024E7E3                 lea     eax, [ebp+var_4]
+  .text:1024E7E6                 push    eax
+  .text:1024E7E7                 push    6
+  .text:1024E7E9                 call    SDL_GL_GetAttribute
+  .text:1024E7EE                 add     esp, 8
+  .text:1024E7F1                 test    eax, eax
+  .text:1024E7F3                 jz      short loc_1024E80F
+  .text:1024E7F5                 call    SDL_GetError
+  .text:1024E7FA                 ; ArgList
+  .text:1024E7FA                 push    eax; ArgList
+  .text:1024E7FB                 push    offset aFailedToGetGlD; "Failed to get GL DEPTH size (%s)\n"
+  .text:1024E800                 mov     [ebp+var_4], 0
+  .text:1024E807                 call    Con_DPrintf
+  .text:1024E80C                 add     esp, 8
+  .text:1024E80F                 push    [ebp+var_4]
+  .text:1024E812                 push    [ebp+var_8]
+  .text:1024E815                 push    [ebp+var_C]
+  .text:1024E818                 push    [ebp+var_10]
+  .text:1024E81B                 ; ArgList
+  .text:1024E81B                 push    dword ptr [ebp+ArgList]; ArgList
+  .text:1024E81E                 push    offset aGlSizesRDGDBDA; "GL_SIZES:  r:%d g:%d b:%d a:%d depth:%d"...
+  .text:1024E823                 call    Con_DPrintf
+  .text:1024E828                 mov     eax, gl_extensions
+  .text:1024E82D                 add     esp, 18h
+  .text:1024E830                 test    eax, eax
+  .text:1024E832                 jz      short loc_1024E885
+  .text:1024E834                 push    offset aGlExtPalettedT; "GL_EXT_paletted_texture"
+  .text:1024E839                 push    eax
+  .text:1024E83A                 call    sub_101BB3E0
+  .text:1024E83F                 add     esp, 8
+  .text:1024E842                 test    eax, eax
+  .text:1024E844                 jz      short loc_1024E880
+  .text:1024E846                 push    offset aGlExtSharedTex; "GL_EXT_shared_texture_palette"
+  .text:1024E84B                 push    gl_extensions
+  .text:1024E851                 call    sub_101BB3E0
+  .text:1024E856                 add     esp, 8
+  .text:1024E859                 test    eax, eax
+  .text:1024E85B                 jz      short loc_1024E880
+  .text:1024E85D                 push    offset aGlcolortableex; "glColorTableEXT"
+  .text:1024E862                 call    SDL_GL_GetProcAddress
+  .text:1024E867                 push    offset aFoundPalettedT; "Found paletted texture extension.\n"
+  .text:1024E86C                 mov     qglColorTableEXT, eax
+  .text:1024E871                 call    Con_DPrintf
+  .text:1024E876                 mov     eax, gl_extensions
+  .text:1024E87B                 add     esp, 8
+  .text:1024E87E                 jmp     short loc_1024E88F
+  .text:1024E880                 mov     eax, gl_extensions
+  .text:1024E885                 mov     qglColorTableEXT, 0
+  .text:1024E88F                 test    eax, eax
+  .text:1024E891                 jz      loc_1024EA44
+  .text:1024E897                 push    offset aGlExtTextureOb; "GL_EXT_texture_object "
+  .text:1024E89C                 push    eax
+  .text:1024E89D                 call    sub_101BB3E0
+  .text:1024E8A2                 add     esp, 8
+  .text:1024E8A5                 test    eax, eax
+  .text:1024E8A7                 jz      short loc_1024E8CC
+  .text:1024E8A9                 push    offset aGlbindtexturee; "glBindTextureEXT"
+  .text:1024E8AE                 call    SDL_GL_GetProcAddress
+  .text:1024E8B3                 add     esp, 4
+  .text:1024E8B6                 mov     dword_109B3810, eax
+  .text:1024E8BB                 test    eax, eax
+  .text:1024E8BD                 jnz     short loc_1024E8CC
+  .text:1024E8BF                 push    offset aGetprocaddress; "GetProcAddress for BindTextureEXT faile"...
+  .text:1024E8C4                 call    Sys_Error
+  .text:1024E8C9                 add     esp, 4
+  .text:1024E8CC                 mov     eax, gl_extensions
+  .text:1024E8D1                 test    eax, eax
+  .text:1024E8D3                 jz      loc_1024EA44
+  .text:1024E8D9                 push    offset aGlArbMultitext; "GL_ARB_multitexture "
+  .text:1024E8DE                 push    eax
+  .text:1024E8DF                 call    sub_101BB3E0
+  .text:1024E8E4                 add     esp, 8
+  .text:1024E8E7                 test    eax, eax
+  .text:1024E8E9                 jz      loc_1024E9C0
+  .text:1024E8EF                 push    offset aArbMultitextur; "ARB Multitexture extensions found.\n"
+  .text:1024E8F4                 call    Con_DPrintf
+  .text:1024E8F9                 push    offset aGlmultitexcoor; "glMultiTexCoord2fARB"
+  .text:1024E8FE                 call    SDL_GL_GetProcAddress
+  .text:1024E903                 push    offset aGlactivetextur; "glActiveTextureARB"
+  .text:1024E908                 mov     dword_109B32D0, eax
+  .text:1024E90D                 call    SDL_GL_GetProcAddress
+  .text:1024E912                 ; target
+  .text:1024E912                 push    84C0h; target
+  .text:1024E917                 mov     qglSelectTextureSGIS, eax
+  .text:1024E91C                 mov     TEXTURE0_SGIS, 84C0h
+  .text:1024E926                 mov     TEXTURE1_SGIS, 84C1h
+  .text:1024E930                 mov     dword_103230C8, 84C2h
+  .text:1024E93A                 mov     oldtarget, 84C0h
+  .text:1024E944                 call    GL_SelectTexture
+  .text:1024E949                 push    offset aGlArbTextureEn; "GL_ARB_texture_env_combine "
+  .text:1024E94E                 push    gl_extensions
+  .text:1024E954                 mov     gl_mtexable, 2
+  .text:1024E95E                 call    sub_101BB3E0
+  .text:1024E963                 add     esp, 18h
+  .text:1024E966                 test    eax, eax
+  .text:1024E968                 jnz     short loc_1024E985
+  .text:1024E96A                 push    offset aGlExtTextureEn; "GL_EXT_texture_env_combine "
+  .text:1024E96F                 push    gl_extensions
+  .text:1024E975                 call    sub_101BB3E0
+  .text:1024E97A                 add     esp, 8
+  .text:1024E97D                 test    eax, eax
+  .text:1024E97F                 jz      loc_1024EA51
+  .text:1024E985                 lea     eax, [ebp+var_18]
+  .text:1024E988                 push    eax
+  .text:1024E989                 push    84E2h
+  .text:1024E98E                 call    dword_109B3684
+  .text:1024E994                 mov     eax, dword ptr [ebp+var_18]
+  .text:1024E997                 cmp     eax, 2
+  .text:1024E99A                 jle     loc_1024EA51
+  .text:1024E9A0                 ; ArgList
+  .text:1024E9A0                 push    eax; ArgList
+  .text:1024E9A1                 push    offset aDTextureUnitsD; "%d texture units.  Detail texture suppo"...
+  .text:1024E9A6                 call    Con_DPrintf
+  .text:1024E9AB                 mov     eax, dword ptr [ebp+var_18]
+  .text:1024E9AE                 add     esp, 8
+  .text:1024E9B1                 mov     gl_mtexable, eax
+  .text:1024E9B6                 call    sub_101C3350
+  .text:1024E9BB                 jmp     loc_1024EA51
+  .text:1024E9C0                 mov     eax, gl_extensions
+  .text:1024E9C5                 test    eax, eax
+  .text:1024E9C7                 jz      short loc_1024EA44
+  .text:1024E9C9                 push    offset aGlSgisMultitex; "GL_SGIS_multitexture "
+  .text:1024E9CE                 push    eax
+  .text:1024E9CF                 call    sub_101BB3E0
+  .text:1024E9D4                 add     esp, 8
+  .text:1024E9D7                 test    eax, eax
+  .text:1024E9D9                 jz      short loc_1024EA44
+  .text:1024E9DB                 push    offset aMultitextureEx; "Multitexture extensions found.\n"
+  .text:1024E9E0                 call    Con_DPrintf
+  .text:1024E9E5                 push    offset aGlmtexcoord2fs; "glMTexCoord2fSGIS"
+  .text:1024E9EA                 call    SDL_GL_GetProcAddress
+  .text:1024E9EF                 push    offset aGlselecttextur; "glSelectTextureSGIS"
+  .text:1024E9F4                 mov     dword_109B32D0, eax
+  .text:1024E9F9                 call    SDL_GL_GetProcAddress
+  .text:1024E9FE                 ; target
+  .text:1024E9FE                 push    835Eh; target
+  .text:1024EA03                 mov     qglSelectTextureSGIS, eax
+  .text:1024EA08                 mov     TEXTURE0_SGIS, 835Eh
+  .text:1024EA12                 mov     TEXTURE1_SGIS, 835Fh
+  .text:1024EA1C                 mov     dword_103230C8, 8360h
+  .text:1024EA26                 mov     oldtarget, 835Eh
+  .text:1024EA30                 mov     gl_mtexable, 2
+  .text:1024EA3A                 call    GL_SelectTexture
+  .text:1024EA3F                 add     esp, 10h
+  .text:1024EA42                 jmp     short loc_1024EA51
+  .text:1024EA44                 push    offset aNoMultitexture; "NO Multitexture extensions found.\n"
+  .text:1024EA49                 call    Con_DPrintf
+  .text:1024EA4E                 add     esp, 4
+  .text:1024EA51                 mov     eax, gl_extensions
+  .text:1024EA56                 mov     dword_10989208, 0
+  .text:1024EA60                 test    eax, eax
+  .text:1024EA62                 jz      short loc_1024EA88
+  .text:1024EA64                 push    offset aGlArbTextureNo; "GL_ARB_texture_non_power_of_two"
+  .text:1024EA69                 push    eax
+  .text:1024EA6A                 call    sub_101BB3E0
+  .text:1024EA6F                 mov     ecx, dword_109A68E8
+  .text:1024EA75                 add     esp, 8
+  .text:1024EA78                 test    eax, eax
+  .text:1024EA7A                 mov     edx, 1
+  .text:1024EA7F                 cmovnz  ecx, edx
+  .text:1024EA82                 mov     dword_109A68E8, ecx
+  .text:1024EA88                 sub     esp, 10h
+  .text:1024EA8B                 mov     [esp+28h+var_1C], 0
+  .text:1024EA93                 mov     [esp+28h+var_20], 0
+  .text:1024EA9B                 mov     [esp+28h+var_24], 0
+  .text:1024EAA3                 mov     [esp+28h+var_28], 3F800000h
+  .text:1024EAAA                 call    dword_109B37F4
+  .text:1024EAB0                 ; mode
+  .text:1024EAB0                 push    404h; mode
+  .text:1024EAB5                 call    qglCullFace
+  .text:1024EABB                 ; unsigned int
+  .text:1024EABB                 push    0DE1h; unsigned int
+  .text:1024EAC0                 call    qglEnable
+  .text:1024EAC6                 ; unsigned int
+  .text:1024EAC6                 push    0BC0h; unsigned int
+  .text:1024EACB                 call    qglEnable
+  .text:1024EAD1                 push    ecx
+  .text:1024EAD2                 mov     [esp+1Ch+var_1C], 0
+  .text:1024EAD9                 push    205h
+  .text:1024EADE                 call    dword_109B3820
+  .text:1024EAE4                 push    1B02h
+  .text:1024EAE9                 push    408h
+  .text:1024EAEE                 call    dword_109B3504
+  .text:1024EAF4                 push    1D00h
+  .text:1024EAF9                 call    dword_109B3430
+  .text:1024EAFF                 push    ecx
+  .text:1024EB00                 mov     [esp+1Ch+var_1C], 46180000h
+  .text:1024EB07                 push    2801h
+  .text:1024EB0C                 push    0DE1h
+  .text:1024EB11                 call    qglTexParameterf
+  .text:1024EB17                 push    ecx
+  .text:1024EB18                 mov     [esp+1Ch+var_1C], 46180000h
+  .text:1024EB1F                 push    2800h
+  .text:1024EB24                 push    0DE1h
+  .text:1024EB29                 call    qglTexParameterf
+  .text:1024EB2F                 push    ecx
+  .text:1024EB30                 mov     [esp+1Ch+var_1C], 46240400h
+  .text:1024EB37                 push    2802h
+  .text:1024EB3C                 push    0DE1h
+  .text:1024EB41                 call    qglTexParameterf
+  .text:1024EB47                 push    ecx
+  .text:1024EB48                 mov     [esp+1Ch+var_1C], 46240400h
+  .text:1024EB4F                 push    2803h
+  .text:1024EB54                 push    0DE1h
+  .text:1024EB59                 call    qglTexParameterf
+  .text:1024EB5F                 movss   xmm0, dword_1031E350
+  .text:1024EB67                 push    ecx
+  .text:1024EB68                 movss   [esp+1Ch+var_1C], xmm0
+  .text:1024EB6D                 push    84FEh
+  .text:1024EB72                 push    0DE1h
+  .text:1024EB77                 call    qglTexParameterf
+  .text:1024EB7D                 push    303h
+  .text:1024EB82                 push    302h
+  .text:1024EB87                 call    dword_109B3808
+  .text:1024EB8D                 push    ecx
+  .text:1024EB8E                 mov     [esp+1Ch+var_1C], 45F00800h
+  .text:1024EB95                 push    2200h
+  .text:1024EB9A                 push    2300h
+  .text:1024EB9F                 call    dword_109B339C
+  .text:1024EBA5                 call    sub_1024DC10
+  .text:1024EBAA                 mov     esp, ebp
+  .text:1024EBAC                 pop     ebp
+  .text:1024EBAD                 retn
+procedure: |-
+  // gl_extensions is the pointer STORAGE written with glGetString(GL_EXTENSIONS=0x1F03), then read for extension checks/reporting. Do not return the string pointee or qglGetString slot.
+  // Current binary is authoritative. HLND2T_official is a semantic reference, not this exact source revision. Preserve platform-specific SDL/WGL, AA mode and frame-pacing paths.
+  void __cdecl GL_Init()
+  {
+    const unsigned __int8 *String; // eax
+    const char *Error; // eax
+    const char *v2; // eax
+    const char *v3; // eax
+    const char *v4; // eax
+    const char *v5; // eax
+    const char *v6; // eax
+    int v7; // eax
+    int v8; // ecx
+    char v9[4]; // [esp+88h] [ebp-18h] BYREF
+    char ArgList[4]; // [esp+8Ch] [ebp-14h] BYREF
+    int v11; // [esp+90h] [ebp-10h] BYREF
+    int v12; // [esp+94h] [ebp-Ch] BYREF
+    int v13; // [esp+98h] [ebp-8h] BYREF
+    int v14; // [esp+9Ch] [ebp-4h] BYREF
+
+    String = qglGetString(0x1F00u);
+    *(_DWORD *)dword_109B3CCC = String;
+    if ( !String )
+      Sys_Error("Failed to query gl vendor string");
+    Con_DPrintf("GL_VENDOR: %s\n", (const char *)String);
+    dword_109B3CC8 = (char *)qglGetString(0x1F01u);
+    Con_DPrintf("GL_RENDERER: %s\n", dword_109B3CC8);
+    *(_DWORD *)dword_109B3CC4 = qglGetString(0x1F02u);
+    Con_DPrintf("GL_VERSION: %s\n", *(const char **)dword_109B3CC4);
+    gl_extensions = (const char *)qglGetString(0x1F03u);
+    dword_109A68E8 = 0;
+    if ( COM_CheckParm("-glext") )
+      Con_DPrintf("GL_EXTENSIONS: %s\n", gl_extensions);
+    if ( SDL_GL_GetAttribute(0, ArgList) )
+    {
+      Error = (const char *)SDL_GetError();
+      *(_DWORD *)ArgList = 0;
+      Con_DPrintf("Failed to get GL RED size (%s)\n", Error);
+    }
+    if ( SDL_GL_GetAttribute(1, &v11) )
+    {
+      v2 = (const char *)SDL_GetError();
+      v11 = 0;
+      Con_DPrintf("Failed to get GL GREEN size (%s)\n", v2);
+    }
+    if ( SDL_GL_GetAttribute(2, &v12) )
+    {
+      v3 = (const char *)SDL_GetError();
+      v12 = 0;
+      Con_DPrintf("Failed to get GL BLUE size (%s)\n", v3);
+    }
+    if ( SDL_GL_GetAttribute(3, &v13) )
+    {
+      v4 = (const char *)SDL_GetError();
+      v13 = 0;
+      Con_DPrintf("Failed to get GL ALPHA size (%s)\n", v4);
+    }
+    if ( SDL_GL_GetAttribute(6, &v14) )
+    {
+      v5 = (const char *)SDL_GetError();
+      v14 = 0;
+      Con_DPrintf("Failed to get GL DEPTH size (%s)\n", v5);
+    }
+    Con_DPrintf("GL_SIZES:  r:%d g:%d b:%d a:%d depth:%d\n", *(_DWORD *)ArgList, v11, v12, v13, v14);
+    v6 = gl_extensions;
+    if ( !gl_extensions )
+      goto LABEL_20;
+    if ( !sub_101BB3E0(gl_extensions, "GL_EXT_paletted_texture")
+      || !sub_101BB3E0(gl_extensions, "GL_EXT_shared_texture_palette") )
+    {
+      v6 = gl_extensions;
+  LABEL_20:
+      qglColorTableEXT = nullptr;
+      goto LABEL_21;
+    }
+    qglColorTableEXT = (int (__stdcall *)(_DWORD, _DWORD, _DWORD, _DWORD, _DWORD, _DWORD))SDL_GL_GetProcAddress("glColorTableEXT");
+    Con_DPrintf("Found paletted texture extension.\n");
+    v6 = gl_extensions;
+  LABEL_21:
+    if ( !v6 )
+      goto LABEL_34;
+    if ( sub_101BB3E0(v6, "GL_EXT_texture_object ") )
+    {
+      dword_109B3810 = (int (__stdcall *)(_DWORD, _DWORD))SDL_GL_GetProcAddress("glBindTextureEXT");
+      if ( !dword_109B3810 )
+        Sys_Error("GetProcAddress for BindTextureEXT failed");
+    }
+    if ( !gl_extensions )
+    {
+  LABEL_34:
+      Con_DPrintf("NO Multitexture extensions found.\n");
+      goto LABEL_35;
+    }
+    if ( !sub_101BB3E0(gl_extensions, "GL_ARB_multitexture ") )
+    {
+      if ( gl_extensions && sub_101BB3E0(gl_extensions, "GL_SGIS_multitexture ") )
+      {
+        Con_DPrintf("Multitexture extensions found.\n");
+        dword_109B32D0 = (int (__stdcall *)(_DWORD, _DWORD, _DWORD, _DWORD))SDL_GL_GetProcAddress("glMTexCoord2fSGIS");
+        qglSelectTextureSGIS = (void (__stdcall *)(unsigned int))SDL_GL_GetProcAddress("glSelectTextureSGIS");
+        TEXTURE0_SGIS = 33630;
+        TEXTURE1_SGIS = 33631;
+        dword_103230C8 = 33632;
+        oldtarget = 33630;
+        gl_mtexable = 2;
+        GL_SelectTexture(0x835Eu);
+        goto LABEL_35;
+      }
+      goto LABEL_34;
+    }
+    Con_DPrintf("ARB Multitexture extensions found.\n");
+    dword_109B32D0 = (int (__stdcall *)(_DWORD, _DWORD, _DWORD, _DWORD))SDL_GL_GetProcAddress("glMultiTexCoord2fARB");
+    qglSelectTextureSGIS = (void (__stdcall *)(unsigned int))SDL_GL_GetProcAddress("glActiveTextureARB");
+    TEXTURE0_SGIS = 33984;
+    TEXTURE1_SGIS = 33985;
+    dword_103230C8 = 33986;
+    oldtarget = 33984;
+    GL_SelectTexture(0x84C0u);
+    gl_mtexable = 2;
+    if ( sub_101BB3E0(gl_extensions, "GL_ARB_texture_env_combine ")
+      || sub_101BB3E0(gl_extensions, "GL_EXT_texture_env_combine ") )
+    {
+      dword_109B3684(34018, v9);
+      if ( *(int *)v9 > 2 )
+      {
+        Con_DPrintf("%d texture units.  Detail texture supported.\n", *(_DWORD *)v9);
+        gl_mtexable = *(_DWORD *)v9;
+        sub_101C3350();
+      }
+    }
+  LABEL_35:
+    dword_10989208 = 0;
+    if ( gl_extensions )
+    {
+      v7 = sub_101BB3E0(gl_extensions, "GL_ARB_texture_non_power_of_two");
+      v8 = dword_109A68E8;
+      if ( v7 )
+        v8 = 1;
+      dword_109A68E8 = v8;
+    }
+    dword_109B37F4(1065353216, 0, 0, 0);
+    qglCullFace(0x404u);
+    qglEnable(0xDE1u);
+    qglEnable(0xBC0u);
+    dword_109B3820(517, 0);
+    dword_109B3504(1032, 6914);
+    dword_109B3430(7424);
+    qglTexParameterf(3553, 10241, 1175977984);
+    qglTexParameterf(3553, 10240, 1175977984);
+    qglTexParameterf(3553, 10242, 1176765440);
+    qglTexParameterf(3553, 10243, 1176765440);
+    qglTexParameterf(3553, 34046, dword_1031E350);
+    dword_109B3808(770, 771);
+    dword_109B339C(8960, 8704, 1173358592);
+    sub_1024DC10();
+  }

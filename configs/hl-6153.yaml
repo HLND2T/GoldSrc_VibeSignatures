@@ -670,6 +670,11 @@ modules:
       - name: find-GL_Init
         expected_output:
           - GL_Init.{platform}.yaml
+      - name: find-GL_Init-decompiles
+        expected_input:
+          - GL_Init.{platform}.yaml
+        expected_output:
+          - gl_extensions.{platform}.yaml
       - name: find-CheckMultiTextureExtensions
         expected_output:
           - CheckMultiTextureExtensions.{platform}.yaml
@@ -736,6 +741,22 @@ modules:
       - name: find-GL_SetMode
         expected_output:
           - GL_SetMode.{platform}.yaml
+      - name: find-GL_SetMode-decompiles
+        expected_input:
+          - GL_SetMode.{platform}.yaml
+        expected_output:
+          - s_bEnforceAspect.{platform}.yaml
+          - bDoMSAAFBO.{platform}.yaml
+          - bDoScaledFBO.{platform}.yaml
+          - s_bSupportsBlitTexturing.{platform}.yaml
+          - s_MSAAFBO.{platform}.yaml
+          - s_BackBufferFBO.{platform}.yaml
+      - name: find-GL_EndRendering-decompiles
+        expected_input:
+          - GL_EndRendering.{platform}.yaml
+        expected_output:
+          - s_fXMouseAspectAdjustment.{platform}.yaml
+          - s_fYMouseAspectAdjustment.{platform}.yaml
       - name: find-GL_SelectPixelFormat
         platform: windows
         expected_output:
@@ -1430,6 +1451,8 @@ modules:
         category: func
       - name: GL_Init
         category: func
+      - name: gl_extensions
+        category: gv
       - name: CheckMultiTextureExtensions
         category: func
       - name: Host_Changelevel_f
@@ -1495,6 +1518,22 @@ modules:
         category: func
       - name: GL_SetMode
         category: func
+      - name: s_bEnforceAspect
+        category: gv
+      - name: bDoMSAAFBO
+        category: gv
+      - name: bDoScaledFBO
+        category: gv
+      - name: s_bSupportsBlitTexturing
+        category: gv
+      - name: s_MSAAFBO
+        category: gv
+      - name: s_BackBufferFBO
+        category: gv
+      - name: s_fXMouseAspectAdjustment
+        category: gv
+      - name: s_fYMouseAspectAdjustment
+        category: gv
       - name: GL_SelectPixelFormat
         category: func
         platform: windows
