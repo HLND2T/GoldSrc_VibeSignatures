@@ -153,7 +153,9 @@ the same command after an interrupted rename or partial deletion; it resumes onl
 ## Full-analysis concurrency runbook
 
 The release build job reads `GSVIBE_ANALYSIS_MAX_CONCURRENCY` and `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` from the
-protected `win64` Environment. Safe activation order:
+protected `win64` Environment. On a Linux runner, first confirm from a run's `cap=` line that the guard reached the
+`cgroup-v2` tier (`Delegate=yes` on the runner unit); otherwise runs degrade to per-worker limits and the budget is only
+an admission bound. Safe activation order:
 
 1. Merge with concurrency unset (`1`): production stays serial through the two-phase coordinator.
 2. Ensure 85% of `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` can accommodate the measured coordinator baseline plus one worker

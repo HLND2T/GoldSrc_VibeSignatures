@@ -35,9 +35,15 @@ probed. Key operational variables (details in `docs/en/requirements.md`):
 - `GSVIBE_REFERENCE_GAMEVER` (default `hl-10210`) — canonical reference game version for `LLM_DECOMPILE` (see
   [[reference_yaml_generation]]).
 - `GSVIBE_ANALYSIS_MAX_CONCURRENCY` (decimal `1..32`, default `1`, fail-closed), `GSVIBE_ANALYSIS_MAX_MEMORY_MIB`,
-  `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` (default `2048` MiB) — full-analysis admission (see
+  `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` (default `2048` MiB),
+  `GSVIBE_ANALYSIS_WORKER_VAS_LIMIT_MIB` (default `8192` MiB, degraded tier only) — full-analysis admission (see
   [[full-analysis-concurrency]]). Malformed values fail closed before any worker launches; concurrency above `1`
-  requires an explicit memory budget.
+  requires an explicit memory budget. The warm producer mirrors the budget and reservation as
+  `IDB_WARMUP_MAX_MEMORY_MIB` / `IDB_WARMUP_INITIAL_WORKER_RESERVATION_MIB`.
+- The aggregate budget is enforced by a tier the analyzer prints as `cap=<tier>`: `windows-job` (Windows Job Object),
+  `cgroup-v2` (Linux child cgroup with `memory.max` and `memory.oom.group=1`), or `reservation-only` (Linux without a
+  delegated cgroup: per-worker `RLIMIT_AS` plus a resident-memory watchdog, an admission budget rather than a hard
+  aggregate cap). Tier 1 on Linux requires the runner unit to be delegated (`Delegate=yes`).
 - `DEPOTDOWNLOADER_STEAM_USERNAME` / `DEPOTDOWNLOADER_STEAM_PASSWORD` — depot authentication when required.
 
 ## Persisted cache root governance
@@ -79,3 +85,23 @@ of `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` can accommodate the measured coordinator bas
 verified MCP endpoints, memory below budget, and byte-identical artifacts (`bin_artifact_contract.py`); roll back by
 setting concurrency back to `1` (cache generations, selection, and release schema are unaffected). A hard memory-limit
 violation fails the run with a structured reason and is not retried at lower concurrency within the same run.
+
+## Linux cgroup v2 delegation lessons
+
+Measured on Ubuntu 24.04 (kernel 7.0, systemd 255, unified hierarchy) while adding the POSIX backend:
+
+- A cgroup whose own `cgroup.subtree_control` lists a controller **cannot accept processes**. Writing `+memory` to a
+  cgroup that still holds processes fails `EBUSY`; host-wide, every non-root cgroup with controllers in
+  `subtree_control` had zero processes, and the only cgroup with both was the root. Never write `subtree_control` on a
+  cgroup the runner might reuse — the runner's next step process would be rejected.
+- Creating a child directory under a parent that **already** has `memory` in its `subtree_control` immediately
+  materialises a real `memory.max`, with no delegation write anywhere. That is the whole trick: pick an already-enabled
+  parent, `mkdir` a child, cap the child. `memory.oom.group=1` then kills the group on violation.
+- `Delegate=yes` on a systemd unit produces this shape for `user@.service` (`subtree_control=[cpu memory pids]`,
+  `cgroup.procs` empty, processes in `init.scope`/slices), but **not** for every service: `systemd-udevd.service` is
+  `Delegate=yes` with an empty `subtree_control` and its processes in a `udev/` subgroup. Verify with
+  `systemctl show -p Delegate,DelegateSubgroup <unit>` and the tier the analyzer prints, not by assumption.
+- A capped cgroup directory survives process exit as an empty directory (a process cannot `rmdir` the cgroup it lives
+  in). The backend reuses a fixed child name for exactly this reason; do not treat the leftover as a leak.
+- `RLIMIT_AS` bounds address space, not resident memory, and IDA maps large databases — so it is only a loose safety
+  net. The precise degraded-tier bound is the resident-memory watchdog reading `/proc/<pid>/stat`.

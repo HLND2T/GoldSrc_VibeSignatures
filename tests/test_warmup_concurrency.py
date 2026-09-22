@@ -18,9 +18,11 @@ from idb_warm_worker import warm_binary
 from tests.test_support import write_pe32
 from warmup_memory import (
     DEFAULT_INITIAL_WORKER_RESERVATION_BYTES,
+    MemoryControllerCapabilities,
     MemorySnapshot,
     ProducerMemoryOwner,
     WindowsJobMemoryController,
+    parse_warmup_reservation_bytes,
 )
 
 
@@ -389,6 +391,8 @@ class WarmFailureCleanupTests(unittest.TestCase):
                     worker_timeout_seconds=1,
                     memory_gate=gate,
                     memory_admission_timeout_seconds=1,
+                    worker_memory_limit_mib=None,
+                    worker_resident_cap_bytes=0,
                 )
             prepare.assert_not_called()
             popen.assert_not_called()
@@ -412,6 +416,8 @@ class WarmFailureCleanupTests(unittest.TestCase):
                     worker_timeout_seconds=1,
                     memory_gate=None,
                     memory_admission_timeout_seconds=1,
+                    worker_memory_limit_mib=idb_cache.DEFAULT_WORKER_MEMORY_LIMIT_MIB,
+                    worker_resident_cap_bytes=0,
                 )
             popen.assert_not_called()
             self.assertEqual(b"possibly-active", lock.read_bytes())
@@ -433,6 +439,8 @@ class WarmFailureCleanupTests(unittest.TestCase):
                     worker_timeout_seconds=1,
                     memory_gate=gate,
                     memory_admission_timeout_seconds=1,
+                    worker_memory_limit_mib=None,
+                    worker_resident_cap_bytes=0,
                 )
             gate.worker_finished.assert_called_once_with()
             invalidate.assert_not_called()
@@ -483,6 +491,8 @@ class WarmFailureCleanupTests(unittest.TestCase):
                     worker_timeout_seconds=1,
                     memory_gate=None,
                     memory_admission_timeout_seconds=1,
+                    worker_memory_limit_mib=idb_cache.DEFAULT_WORKER_MEMORY_LIMIT_MIB,
+                    worker_resident_cap_bytes=0,
                 )
             self.assertEqual(["popen", "wait-timeout", "kill", "wait-reaped", "cleanup"], events)
             self.assertFalse(Path(f"{binary}.i64").exists())
@@ -511,6 +521,8 @@ class WarmFailureCleanupTests(unittest.TestCase):
                     worker_timeout_seconds=1,
                     memory_gate=gate,
                     memory_admission_timeout_seconds=1,
+                    worker_memory_limit_mib=None,
+                    worker_resident_cap_bytes=0,
                 )
             prepare.assert_not_called()
             popen.assert_not_called()
@@ -543,6 +555,80 @@ class WarmFailureCleanupTests(unittest.TestCase):
             self.assertEqual([], failures)
             self.assertFalse(target.exists())
             self.assertEqual(2, sleep.call_count)
+
+
+class WarmWorkerMemoryTierTests(unittest.TestCase):
+    """The per-worker flag must follow the tier the controller actually enforces."""
+
+    def _run_group(self, capabilities, commands):
+        controller = SimpleNamespace(
+            snapshot=Mock(return_value=MemorySnapshot(job_bytes=0)),
+            budget_bytes=None,
+            capabilities=capabilities,
+        )
+        owner = ProducerMemoryOwner(
+            64 * idb_cache.DEFAULT_WORKER_MEMORY_LIMIT_MIB,
+            controller_factory=Mock(return_value=controller),
+            initial_worker_reservation_bytes=4 * idb_cache.DEFAULT_WORKER_MEMORY_LIMIT_MIB,
+        )
+
+        class FakeProcess:
+            pid = 0
+
+            def wait(self, timeout=None):
+                return 0
+
+            def kill(self):
+                raise AssertionError("a successful warm worker must not be killed")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace, _binaries, identity = warm_group_fixture(Path(temporary))
+
+            def fake_popen(command):
+                commands.append(command)
+                binary = Path(command[command.index("-binary") + 1])
+                Path(f"{binary}.i64").write_bytes(b"complete")
+                return FakeProcess()
+
+            with (
+                patch("idb_cache.probe_ida_kernel_version", return_value="9.3"),
+                patch("idb_cache.subprocess.Popen", side_effect=fake_popen),
+            ):
+                warm_group(
+                    identity=identity,
+                    workspace_root=workspace,
+                    ida_python_executable=sys.executable,
+                    max_concurrency=1,
+                    worker_timeout_seconds=1,
+                    producer_memory=owner,
+                )
+        return commands[-1]
+
+    def test_aggregate_tier_disables_the_per_worker_limit(self):
+        command = self._run_group(MemoryControllerCapabilities("cgroup-v2", True, "cgroup cap"), [])
+        self.assertIn("--disable-memory-limit", command)
+
+    def test_degraded_tier_keeps_the_per_worker_limit(self):
+        command = self._run_group(MemoryControllerCapabilities("reservation-only", False, "no cgroup"), [])
+        self.assertEqual("8192", command[command.index("-memory-limit-mib") + 1])
+
+    def test_controller_without_tier_metadata_keeps_todays_behaviour(self):
+        command = self._run_group(None, [])
+        self.assertEqual("8192", command[command.index("-memory-limit-mib") + 1])
+
+
+class ParseWarmupReservationTests(unittest.TestCase):
+    def test_blank_keeps_the_default(self):
+        self.assertEqual(DEFAULT_INITIAL_WORKER_RESERVATION_BYTES, parse_warmup_reservation_bytes(None))
+        self.assertEqual(DEFAULT_INITIAL_WORKER_RESERVATION_BYTES, parse_warmup_reservation_bytes("   "))
+
+    def test_valid_value(self):
+        self.assertEqual(512 * 1024 * 1024, parse_warmup_reservation_bytes("512"))
+
+    def test_malformed_values_fail_closed(self):
+        for raw in ("0", "-1", "abc", "1.5"):
+            with self.assertRaises(ValueError):
+                parse_warmup_reservation_bytes(raw)
 
 
 if __name__ == "__main__":

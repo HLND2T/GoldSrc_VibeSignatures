@@ -12,15 +12,19 @@ from analysis_memory import (
     ANALYSIS_CONCURRENCY_ENV,
     ANALYSIS_MEMORY_ENV,
     ANALYSIS_RESERVATION_ENV,
+    ANALYSIS_WORKER_VAS_LIMIT_ENV,
     AnalysisMemoryAuthority,
     AnalysisMemoryConfigError,
     AnalysisMemoryGate,
     AnalysisMemoryLimits,
     COORDINATED_CHILD_ENV,
+    DEFAULT_ANALYSIS_WORKER_VAS_LIMIT_MIB,
+    enforce_worker_memory_limits,
     is_coordinated_child,
     parse_analysis_concurrency,
     parse_analysis_memory_budget_bytes,
     parse_analysis_worker_reservation_bytes,
+    parse_analysis_worker_vas_limit_mib,
     resolve_analysis_limits,
     validate_limits_for_effective_concurrency,
 )
@@ -290,6 +294,107 @@ class EnvironmentAuthorityWiringTests(unittest.TestCase):
             with self.assertRaises(AnalysisMemoryConfigError):
                 am.analysis_memory_authority_from_environment()
         constructor.assert_not_called()
+
+
+class ParseWorkerVasLimitTests(unittest.TestCase):
+    def test_blank_keeps_the_default(self):
+        self.assertEqual(DEFAULT_ANALYSIS_WORKER_VAS_LIMIT_MIB, parse_analysis_worker_vas_limit_mib(None))
+        self.assertEqual(DEFAULT_ANALYSIS_WORKER_VAS_LIMIT_MIB, parse_analysis_worker_vas_limit_mib("   "))
+
+    def test_valid_value(self):
+        self.assertEqual(1024, parse_analysis_worker_vas_limit_mib("1024"))
+
+    def test_malformed_or_below_floor_fail_closed(self):
+        for raw in ("0", "-1", "1.5", "0x100", "１２８", "255", "abc", "8192x"):
+            with self.assertRaises(AnalysisMemoryConfigError):
+                parse_analysis_worker_vas_limit_mib(raw)
+
+
+class EnforceWorkerMemoryLimitsTests(unittest.TestCase):
+    def setUp(self):
+        platform = unittest.mock.patch("analysis_memory.os.name", "posix")
+        platform.start()
+        self.addCleanup(platform.stop)
+
+    def test_windows_ignores_configured_posix_limit(self):
+        with (
+            unittest.mock.patch("analysis_memory.os.name", "nt"),
+            unittest.mock.patch("posix_memory.start_process_tree_limits") as start,
+        ):
+            self.assertIsNone(enforce_worker_memory_limits({ANALYSIS_WORKER_VAS_LIMIT_ENV: "8192"}))
+        start.assert_not_called()
+
+    def test_absent_variable_is_a_no_op(self):
+        with unittest.mock.patch("posix_memory.start_process_tree_limits") as start:
+            self.assertIsNone(enforce_worker_memory_limits({}))
+        start.assert_not_called()
+
+    def test_blank_variable_is_a_no_op(self):
+        with unittest.mock.patch("posix_memory.start_process_tree_limits") as start:
+            self.assertIsNone(enforce_worker_memory_limits({ANALYSIS_WORKER_VAS_LIMIT_ENV: "  "}))
+        start.assert_not_called()
+
+    def test_installs_both_limits_when_configured(self):
+        with unittest.mock.patch("posix_memory.start_process_tree_limits") as start:
+            result = enforce_worker_memory_limits(
+                {ANALYSIS_WORKER_VAS_LIMIT_ENV: "512", ANALYSIS_RESERVATION_ENV: "256"}
+            )
+        self.assertEqual(512, result)
+        start.assert_called_once_with(address_space_limit_mib=512, resident_cap_bytes=256 * MIB)
+
+    def test_malformed_limit_fails_closed(self):
+        with unittest.mock.patch("posix_memory.start_process_tree_limits") as start:
+            with self.assertRaises(AnalysisMemoryConfigError):
+                enforce_worker_memory_limits({ANALYSIS_WORKER_VAS_LIMIT_ENV: "12"})
+        start.assert_not_called()
+
+
+class DirectAnalysisMemoryLimitsTests(unittest.TestCase):
+    def _authority(self, hard_cap):
+        from warmup_memory import MemoryControllerCapabilities
+
+        controller = SimpleNamespace(
+            snapshot=lambda: MemorySnapshot(job_bytes=0),
+            capabilities=MemoryControllerCapabilities("test", hard_cap, "test controller"),
+        )
+        return AnalysisMemoryAuthority(4096 * MIB, controller_factory=lambda _: controller)
+
+    def test_degraded_direct_limits_are_installed_once_with_defaults(self):
+        authority = self._authority(False)
+        with (
+            unittest.mock.patch.dict(os.environ, {}, clear=True),
+            unittest.mock.patch("analysis_memory.enforce_worker_memory_limits", return_value=8192) as enforce,
+        ):
+            authority.enforce_direct_limits()
+            authority.enforce_direct_limits()
+        self.assertEqual(1, enforce.call_count)
+        self.assertEqual("8192", enforce.call_args.args[0][ANALYSIS_WORKER_VAS_LIMIT_ENV])
+
+    def test_direct_limits_preserve_explicit_configuration_and_retry_failed_install(self):
+        authority = self._authority(False)
+        with (
+            unittest.mock.patch.dict(
+                os.environ, {ANALYSIS_WORKER_VAS_LIMIT_ENV: "4096", ANALYSIS_RESERVATION_ENV: "1024"}, clear=True
+            ),
+            unittest.mock.patch(
+                "analysis_memory.enforce_worker_memory_limits", side_effect=[OSError("limit failed"), 4096]
+            ) as enforce,
+        ):
+            with self.assertRaisesRegex(OSError, "limit failed"):
+                authority.enforce_direct_limits()
+            authority.enforce_direct_limits()
+        self.assertEqual(2, enforce.call_count)
+        self.assertEqual("4096", enforce.call_args.args[0][ANALYSIS_WORKER_VAS_LIMIT_ENV])
+        self.assertEqual("1024", enforce.call_args.args[0][ANALYSIS_RESERVATION_ENV])
+
+    def test_aggregate_direct_limits_ignore_posix_configuration(self):
+        authority = self._authority(True)
+        with (
+            unittest.mock.patch.dict(os.environ, {ANALYSIS_WORKER_VAS_LIMIT_ENV: "invalid"}),
+            unittest.mock.patch("analysis_memory.enforce_worker_memory_limits") as enforce,
+        ):
+            authority.enforce_direct_limits()
+        enforce.assert_not_called()
 
 
 if __name__ == "__main__":

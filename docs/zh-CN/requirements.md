@@ -31,10 +31,24 @@ CLI 参数、环境变量、程序默认值。关键变量：
   `GSVIBE_SSE_BLOCK_MS`、`GSVIBE_SSE_BATCH_SIZE` 配置只读 Process API。
 - `GSVIBE_REFERENCE_GAMEVER`（默认 `hl-10210`）选择 `LLM_DECOMPILE` 的 canonical reference 游戏版本。
 - `GSVIBE_ANALYSIS_MAX_CONCURRENCY` 限制 full analysis 同时准入的 worker 进程数（十进制 `1..32`，默认 `1`，fail closed）；大于 `1` 时必须同时设置 `GSVIBE_ANALYSIS_MAX_MEMORY_MIB`。
-- `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` 设置 analyzer 进程树的 aggregate committed-memory 硬预算（Windows Job Object），含 85% soft admission gate；同样适用于直接单 tag 与 selected-node 分析。
+- `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` 设置 analyzer 进程树的 aggregate 内存硬预算，含 85% soft admission gate；同样适用于直接单 tag 与 selected-node 分析。各平台由什么机制执行见 [Analysis memory 分层](#analysis-memory-分层)。
 - `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` 覆盖 analyzer 每个 worker 的初始内存预留下限（正十进制整数，单位 MiB；未设置或空白默认 `2048`）。仅在内存门禁启用时读取，非法值启动失败；运行时仍可按观测占用上调，不影响 IDB warmup 的默认值。在 GitHub `win64` Environment 的 Variables 中设置，例如 `1024`，即可对新的 release build 调整预留量。
+- `GSVIBE_ANALYSIS_WORKER_VAS_LIMIT_MIB` 设置拿不到 aggregate 硬上限时每个 worker 的地址空间上限（至少 `256` 的正十进制整数，单位 MiB；未设置或空白默认 `8192`），该层中的非法值使启动失败。Windows Job、cgroup v2 或未启用内存门禁时忽略此配置。若降级模式下有 worker 在正常分析时耗尽地址空间上限，请上调该值。
 - `DEPOTDOWNLOADER_STEAM_USERNAME` 与 `DEPOTDOWNLOADER_STEAM_PASSWORD` 在需要 depot 认证时由
   `download_depot.py` 读取。
+
+## Analysis memory 分层
+
+Aggregate 预算由宿主允许的最强机制执行，analyzer 启动时会打印它选中的层（`cap=<tier>` 加一行细节）：
+
+- `windows-job` —— Windows：与以往一样，一个绑定到 analyzer 进程的 Job Object。
+- `cgroup-v2` —— Linux 且有可用的已委派 cgroup：一个持有 analyzer 进程的子 cgroup，由 `memory.max` 限制，超限时整组被杀。analyzer 只创建这个子目录，**永不写 `cgroup.subtree_control`**。
+- `reservation-only` —— Linux 但拿不到可用 cgroup：aggregate 上限不可用，因此每个 worker 由 `GSVIBE_ANALYSIS_WORKER_VAS_LIMIT_MIB` 加上按预留量触发的常驻内存看门狗约束。这是**准入预算而非聚合上限**：预留 `R`、每 worker 上限 `C` 时最多跑 `floor(0.85 x budget / R)` 个 worker，所以最坏情况是该乘积，当 `C > R` 时可能超过预算。看门狗按预留量逐 worker 强制，比 aggregate 门禁更严格：启用该层前，请按实测的每 worker 峰值设置 `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB`（warm 侧为 `IDB_WARMUP_INITIAL_WORKER_RESERVATION_MIB`）。
+
+直接单 tag 与 selected-node 分析会在开始分析前，为 analyzer 自身安装同一套降级限制；常驻内存上限覆盖其整棵进程树。同一进程连续分析多个 tag 时复用同一个看门狗。
+
+Linux 上的 Tier 1 需要把 controller 委派给 runner 的 cgroup。systemd unit 上即 `Delegate=yes`；可用
+`systemctl show -p Delegate,DelegateSubgroup <runner>.service` 与任意一次运行的 `cap=` 行确认实际状态。没有委派时门禁降级为 `reservation-only`，而不是失败。运行结束后在 runner cgroup 下残留一个空的 `gsvibe-memory` 目录是预期行为：进程无法删除自己所在的 cgroup，下次运行会复用该目录。
 
 ## IDB cache host 要求
 
@@ -56,9 +70,10 @@ restore，而每 binary 一个裸 idalib worker 的 warm 在 tag lock 外执行�
 官方 analysis 无条件使用 warm cache，不再读取 `GSVIBE_IDB_CACHE_MODE`。真实 runner 与 storage evidence 完成前，
 不要启用或触发这些 workflow。不再需要人工维护 IDA version variable。Absolute persisted path 作为 Environment
 secret `PERSISTED_WORKSPACE` 保存。`IDB_WARMUP_MAX_CONCURRENCY` 限制 worker（默认 `2`），可选
-`IDB_WARMUP_MAX_MEMORY_MIB` 启用聚合 Windows Job admission。新 identity 的 `ida_runtime` 只绑定动态探测到的非空
-kernel version；binary identity 与 canonical worker contract 仍独立绑定。Producer 启动 worker 前会用同一 executable
-再次探测版本，不匹配即 fail closed。
+`IDB_WARMUP_MAX_MEMORY_MIB` 启用聚合内存 admission，可选 `IDB_WARMUP_INITIAL_WORKER_RESERVATION_MIB` 覆盖其
+per-worker 预留下限（空白默认 `2048`）；两者使用与 [Analysis memory 分层](#analysis-memory-分层) 相同的层。新 identity 的
+`ida_runtime` 只绑定动态探测到的非空 kernel version；binary identity 与 canonical worker contract 仍独立绑定。
+Producer 启动 worker 前会用同一 executable 再次核对版本，不匹配即 fail closed。
 
 ## Release runner 与 GitHub governance 要求
 

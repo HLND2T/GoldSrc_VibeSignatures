@@ -138,7 +138,8 @@ deletion 中断后，使用同一参数重跑；命令只会从 canonical matchi
 ## Full analysis 并发 runbook
 
 release build job 从受保护的 `win64` Environment 读取 `GSVIBE_ANALYSIS_MAX_CONCURRENCY` 与
-`GSVIBE_ANALYSIS_MAX_MEMORY_MIB`。安全激活顺序：
+`GSVIBE_ANALYSIS_MAX_MEMORY_MIB`。在 Linux runner 上，先用一次运行的 `cap=` 行确认门禁到达 `cgroup-v2` 层
+（runner unit 需 `Delegate=yes`）；否则运行会降级为 per-worker 限额，预算只是准入上限。安全激活顺序：
 
 1. 未配置（即 `1`）时合入：production 经两阶段 coordinator 保持串行。
 2. 确保 `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` 的 85% soft limit 能容纳实测 coordinator baseline 加一个 worker reservation（默认 2048 MiB，可通过 `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` 调整），

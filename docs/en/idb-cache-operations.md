@@ -33,8 +33,10 @@ the single job-level concurrency group `idb-warmup-<owner>/<repo>` with `cancel-
 allows one official producer per repository at a time. Official and direct producers also hold the shared
 `<PERSISTED_WORKSPACE>/idb-cache/.locks/producer.lock`. Each miss is probed under a short tag lock, warmed outside that
 lock by one bare-idalib process per binary, and then re-probed/published/verified/pruned after reacquiring the tag lock.
-`IDB_WARMUP_MAX_CONCURRENCY` defaults to `2`; optional `IDB_WARMUP_MAX_MEMORY_MIB` enables process-tree Job memory
-admission. Consumers hold only the tag lock across `verify -> restore`, so they can restore while another producer warms
+`IDB_WARMUP_MAX_CONCURRENCY` defaults to `2`; optional `IDB_WARMUP_MAX_MEMORY_MIB` enables process-tree memory
+admission (a Windows Job, or a cgroup v2 cap on Linux; see
+[requirements](requirements.md#analysis-memory-tiers)) and optional `IDB_WARMUP_INITIAL_WORKER_RESERVATION_MIB`
+overrides its per-worker reservation floor. Consumers hold only the tag lock across `verify -> restore`, so they can restore while another producer warms
 but cannot race its publish/prune. A lock is held by an open handle, never by the lock file existing.
 
 A miss publishes a new immutable generation; a hit verifies the exact generation before selection. Hit and miss produce
