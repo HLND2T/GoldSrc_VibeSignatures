@@ -671,6 +671,11 @@ modules:
       - name: find-GL_Init
         expected_output:
           - GL_Init.{platform}.yaml
+      - name: find-GL_Init-decompiles
+        expected_input:
+          - GL_Init.{platform}.yaml
+        expected_output:
+          - gl_extensions.{platform}.yaml
       - name: find-CheckMultiTextureExtensions
         expected_output:
           - CheckMultiTextureExtensions.{platform}.yaml
@@ -771,6 +776,12 @@ modules:
       - name: find-GL_SetModeLegacy
         expected_output:
           - GL_SetModeLegacy.{platform}.yaml
+      - name: find-GL_SetModeLegacy-decompiles
+        platform: windows
+        expected_input:
+          - GL_SetModeLegacy.{platform}.yaml
+        expected_output:
+          - vid_d3d_value.{platform}.yaml
       - name: find-GL_SelectPixelFormat
         platform: windows
         expected_output:
@@ -1464,6 +1475,8 @@ modules:
         category: func
       - name: GL_Init
         category: func
+      - name: gl_extensions
+        category: gv
       - name: CheckMultiTextureExtensions
         category: func
       - name: Host_Changelevel_f
@@ -1551,6 +1564,9 @@ modules:
         category: patch
       - name: GL_SetModeLegacy
         category: func
+      - name: vid_d3d_value
+        category: gv
+        platform: windows
       - name: GL_SelectPixelFormat
         category: func
         platform: windows

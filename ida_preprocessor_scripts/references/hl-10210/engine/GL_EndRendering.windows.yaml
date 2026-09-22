@@ -1,0 +1,656 @@
+func_name: GL_EndRendering
+func_va: '0x1024e020'
+disasm_code: |-
+  ; s_fXMouseAspectAdjustment is the float STORAGE reset to 1 and updated in the horizontal/pillarbox branch: destination aspect / source aspect, alongside X rectangle boundaries.
+  ; s_fYMouseAspectAdjustment is the float STORAGE reset to 1 and updated in the vertical/letterbox branch: source aspect / destination aspect, alongside Y rectangle boundaries.
+  ; Distinguish the ratios and corresponding screen axis. Initialization order, instruction count and adjacency are not locators.
+  .text:1024E020                 push    ebp
+  .text:1024E021                 mov     ebp, esp
+  .text:1024E023                 sub     esp, 44h
+  .text:1024E026                 cmp     s_BackBufferFBO.s_hBackBufferFBO, 0
+  .text:1024E02D                 jz      loc_1024E4DE
+  .text:1024E033                 ; bpp
+  .text:1024E033                 push    0; bpp
+  .text:1024E035                 lea     eax, [ebp+height]
+  .text:1024E038                 ; height
+  .text:1024E038                 push    eax; height
+  .text:1024E039                 lea     eax, [ebp+width]
+  .text:1024E03C                 ; width
+  .text:1024E03C                 push    eax; width
+  .text:1024E03D                 call    VideoMode_GetCurrentVideoMode
+  .text:1024E042                 add     esp, 0Ch
+  .text:1024E045                 cmp     s_MSAAFBO.s_hBackBufferFBO, 0
+  .text:1024E04C                 jz      short loc_1024E092
+  .text:1024E04E                 push    s_BackBufferFBO.s_hBackBufferFBO
+  .text:1024E054                 push    8CA9h
+  .text:1024E059                 call    dword_109B32B0
+  .text:1024E05F                 push    s_MSAAFBO.s_hBackBufferFBO
+  .text:1024E065                 push    8CA8h
+  .text:1024E06A                 call    dword_109B32B0
+  .text:1024E070                 mov     ecx, [ebp+height]
+  .text:1024E073                 mov     eax, [ebp+width]
+  .text:1024E076                 push    2601h
+  .text:1024E07B                 push    4000h
+  .text:1024E080                 push    ecx
+  .text:1024E081                 push    eax
+  .text:1024E082                 push    0
+  .text:1024E084                 push    0
+  .text:1024E086                 push    ecx
+  .text:1024E087                 push    eax
+  .text:1024E088                 push    0
+  .text:1024E08A                 push    0
+  .text:1024E08C                 call    dword_109B3298
+  .text:1024E092                 push    ebx
+  .text:1024E093                 push    esi
+  .text:1024E094                 push    edi
+  .text:1024E095                 push    0
+  .text:1024E097                 push    8CA9h
+  .text:1024E09C                 call    dword_109B32B0
+  .text:1024E0A2                 push    s_BackBufferFBO.s_hBackBufferFBO
+  .text:1024E0A8                 push    8CA8h
+  .text:1024E0AD                 call    dword_109B32B0
+  .text:1024E0B3                 sub     esp, 10h
+  .text:1024E0B6                 ; alpha
+  .text:1024E0B6                 mov     dword ptr [esp+60h+red], 0; alpha
+  .text:1024E0BE                 ; zFar
+  .text:1024E0BE                 mov     [esp+60h+blue], 0; zFar
+  .text:1024E0C6                 ; green
+  .text:1024E0C6                 mov     dword ptr [esp+60h+top+4], 0; green
+  .text:1024E0CE                 ; red
+  .text:1024E0CE                 mov     dword ptr [esp+60h+top], 0; red
+  .text:1024E0D5                 call    ds:glClearColor
+  .text:1024E0DB                 ; mask
+  .text:1024E0DB                 push    4100h; mask
+  .text:1024E0E0                 call    ds:glClear
+  .text:1024E0E6                 mov     edx, [ebp+width]
+  .text:1024E0E9                 xor     ebx, ebx
+  .text:1024E0EB                 mov     edi, dword ptr xmmword_109B3D30+8
+  .text:1024E0F1                 xor     esi, esi
+  .text:1024E0F3                 sub     edi, dword ptr xmmword_109B3D30
+  .text:1024E0F9                 mov     eax, dword ptr xmmword_109B3D30+0Ch
+  .text:1024E0FE                 mov     ecx, edi
+  .text:1024E100                 sub     eax, dword ptr xmmword_109B3D30+4
+  .text:1024E106                 movd    xmm3, edx
+  .text:1024E10A                 mov     [ebp+var_C], edx
+  .text:1024E10D                 mov     edx, [ebp+height]
+  .text:1024E110                 movd    xmm1, edi
+  .text:1024E114                 cvtdq2ps xmm1, xmm1
+  .text:1024E117                 mov     [ebp+var_4], edx
+  .text:1024E11A                 mov     [ebp+var_18], ebx
+  .text:1024E11D                 mov     [ebp+var_10], ecx
+  .text:1024E120                 mov     [ebp+var_8], esi
+  .text:1024E123                 movd    xmm0, edx
+  .text:1024E127                 mov     edx, eax
+  .text:1024E129                 movaps  xmm2, xmm1
+  .text:1024E12C                 movd    xmm4, eax
+  .text:1024E130                 cvtdq2ps xmm3, xmm3
+  .text:1024E133                 mov     [ebp+var_2C], eax
+  .text:1024E136                 mov     [ebp+var_14], eax
+  .text:1024E139                 mov     s_fYMouseAspectAdjustment, 3F800000h
+  .text:1024E143                 mov     s_fXMouseAspectAdjustment, 3F800000h
+  .text:1024E14D                 cvtdq2ps xmm0, xmm0
+  .text:1024E150                 cvtdq2ps xmm4, xmm4
+  .text:1024E153                 divss   xmm3, xmm0
+  .text:1024E157                 divss   xmm2, xmm4
+  .text:1024E15B                 cmp     s_bEnforceAspect, ebx
+  .text:1024E161                 jz      loc_1024E217
+  .text:1024E167                 comiss  xmm2, xmm3
+  .text:1024E16A                 jbe     short loc_1024E1B2
+  .text:1024E16C                 mulss   xmm4, xmm3
+  .text:1024E170                 divss   xmm2, xmm3
+  .text:1024E174                 subss   xmm1, xmm4
+  .text:1024E178                 movss   s_fXMouseAspectAdjustment, xmm2
+  .text:1024E180                 cvtps2pd xmm1, xmm1
+  .text:1024E183                 mulsd   xmm1, ds:qword_10306550
+  .text:1024E18B                 movaps  xmm0, xmm1
+  .text:1024E18E                 addsd   xmm0, ds:qword_10306440
+  .text:1024E196                 cvttsd2si ebx, xmm0
+  .text:1024E19A                 movd    xmm0, ecx
+  .text:1024E19E                 cvtdq2pd xmm0, xmm0
+  .text:1024E1A2                 mov     [ebp+var_18], ebx
+  .text:1024E1A5                 subsd   xmm0, xmm1
+  .text:1024E1A9                 cvttsd2si ecx, xmm0
+  .text:1024E1AD                 mov     [ebp+var_10], ecx
+  .text:1024E1B0                 jmp     short loc_1024E217
+  .text:1024E1B2                 comiss  xmm3, xmm2
+  .text:1024E1B5                 jbe     short loc_1024E217
+  .text:1024E1B7                 movaps  xmm0, xmm3
+  .text:1024E1BA                 movsd   xmm1, ds:qword_103065C0
+  .text:1024E1C2                 divss   xmm0, xmm2
+  .text:1024E1C6                 movss   s_fYMouseAspectAdjustment, xmm0
+  .text:1024E1CE                 cvtps2pd xmm0, xmm3
+  .text:1024E1D1                 divsd   xmm1, xmm0
+  .text:1024E1D5                 xorps   xmm0, xmm0
+  .text:1024E1D8                 cvtsi2sd xmm0, edi
+  .text:1024E1DC                 mulsd   xmm1, xmm0
+  .text:1024E1E0                 cvtpd2ps xmm0, xmm1
+  .text:1024E1E4                 subss   xmm4, xmm0
+  .text:1024E1E8                 cvtps2pd xmm1, xmm4
+  .text:1024E1EB                 mulsd   xmm1, ds:qword_10306550
+  .text:1024E1F3                 movaps  xmm0, xmm1
+  .text:1024E1F6                 addsd   xmm0, ds:qword_10306440
+  .text:1024E1FE                 cvttsd2si esi, xmm0
+  .text:1024E202                 xorps   xmm0, xmm0
+  .text:1024E205                 cvtsi2sd xmm0, edx
+  .text:1024E209                 mov     [ebp+var_8], esi
+  .text:1024E20C                 subsd   xmm0, xmm1
+  .text:1024E210                 cvttsd2si edx, xmm0
+  .text:1024E214                 mov     [ebp+var_14], edx
+  .text:1024E217                 cmp     s_bSupportsBlitTexturing, 0
+  .text:1024E21E                 jz      short loc_1024E243
+  .text:1024E220                 push    2601h
+  .text:1024E225                 push    4000h
+  .text:1024E22A                 push    edx
+  .text:1024E22B                 push    ecx
+  .text:1024E22C                 push    esi
+  .text:1024E22D                 push    ebx
+  .text:1024E22E                 push    [ebp+var_4]
+  .text:1024E231                 push    [ebp+var_C]
+  .text:1024E234                 push    0
+  .text:1024E236                 push    0
+  .text:1024E238                 call    dword_109B3298
+  .text:1024E23E                 jmp     loc_1024E4CE
+  .text:1024E243                 mov     ebx, ds:glDisable
+  .text:1024E249                 ; cap
+  .text:1024E249                 push    0BE2h; cap
+  .text:1024E24E                 call    ebx ; glDisable
+  .text:1024E250                 ; cap
+  .text:1024E250                 push    0B50h; cap
+  .text:1024E255                 call    ebx ; glDisable
+  .text:1024E257                 ; cap
+  .text:1024E257                 push    0B71h; cap
+  .text:1024E25C                 call    ebx ; glDisable
+  .text:1024E25E                 ; cap
+  .text:1024E25E                 push    0BC0h; cap
+  .text:1024E263                 call    ebx ; glDisable
+  .text:1024E265                 ; cap
+  .text:1024E265                 push    0B44h; cap
+  .text:1024E26A                 call    ebx ; glDisable
+  .text:1024E26C                 ; mode
+  .text:1024E26C                 push    1701h; mode
+  .text:1024E271                 call    qglMatrixMode
+  .text:1024E277                 call    dword_109B34DC
+  .text:1024E27D                 mov     esi, ds:glLoadIdentity
+  .text:1024E283                 call    esi ; glLoadIdentity
+  .text:1024E285                 movaps  xmm0, ds:zNear
+  .text:1024E28C                 sub     esp, 30h
+  .text:1024E28F                 mov     ebx, [ebp+var_2C]
+  .text:1024E292                 xorps   xmm1, xmm1
+  .text:1024E295                 ; zNear
+  .text:1024E295                 movups  xmmword ptr [esp+80h+top], xmm0; zNear
+  .text:1024E29A                 movd    xmm0, ebx
+  .text:1024E29E                 cvtdq2pd xmm0, xmm0
+  .text:1024E2A2                 ; top
+  .text:1024E2A2                 movsd   [esp+80h+bottom], xmm1; top
+  .text:1024E2A8                 ; bottom
+  .text:1024E2A8                 movsd   [esp+80h+right], xmm0; bottom
+  .text:1024E2AE                 movd    xmm0, edi
+  .text:1024E2B2                 cvtdq2pd xmm0, xmm0
+  .text:1024E2B6                 ; right
+  .text:1024E2B6                 movsd   [esp+80h+left], xmm0; right
+  .text:1024E2BC                 ; left
+  .text:1024E2BC                 movsd   [esp+80h+var_80], xmm1; left
+  .text:1024E2C1                 call    ds:glOrtho
+  .text:1024E2C7                 ; mode
+  .text:1024E2C7                 push    1700h; mode
+  .text:1024E2CC                 call    qglMatrixMode
+  .text:1024E2D2                 call    dword_109B34DC
+  .text:1024E2D8                 call    esi ; glLoadIdentity
+  .text:1024E2DA                 ; height
+  .text:1024E2DA                 push    ebx; height
+  .text:1024E2DB                 ; width
+  .text:1024E2DB                 push    edi; width
+  .text:1024E2DC                 ; y
+  .text:1024E2DC                 push    0; y
+  .text:1024E2DE                 ; x
+  .text:1024E2DE                 push    0; x
+  .text:1024E2E0                 call    qglViewport
+  .text:1024E2E6                 mov     esi, ds:glTexParameteri
+  .text:1024E2EC                 ; param
+  .text:1024E2EC                 push    2601h; param
+  .text:1024E2F1                 ; pname
+  .text:1024E2F1                 push    2800h; pname
+  .text:1024E2F6                 ; target
+  .text:1024E2F6                 push    84F5h; target
+  .text:1024E2FB                 call    esi ; glTexParameteri
+  .text:1024E2FD                 ; param
+  .text:1024E2FD                 push    2601h; param
+  .text:1024E302                 ; pname
+  .text:1024E302                 push    2801h; pname
+  .text:1024E307                 ; target
+  .text:1024E307                 push    84F5h; target
+  .text:1024E30C                 call    esi ; glTexParameteri
+  .text:1024E30E                 ; param
+  .text:1024E30E                 push    812Fh; param
+  .text:1024E313                 ; pname
+  .text:1024E313                 push    2802h; pname
+  .text:1024E318                 ; target
+  .text:1024E318                 push    84F5h; target
+  .text:1024E31D                 call    esi ; glTexParameteri
+  .text:1024E31F                 ; param
+  .text:1024E31F                 push    812Fh; param
+  .text:1024E324                 ; pname
+  .text:1024E324                 push    2803h; pname
+  .text:1024E329                 ; target
+  .text:1024E329                 push    84F5h; target
+  .text:1024E32E                 call    esi ; glTexParameteri
+  .text:1024E330                 sub     esp, 10h
+  .text:1024E333                 mov     dword ptr [esp+60h+red], 3F800000h
+  .text:1024E33B                 mov     [esp+60h+blue], 3F800000h
+  .text:1024E343                 mov     dword ptr [esp+60h+top+4], 3F800000h
+  .text:1024E34B                 mov     dword ptr [esp+60h+top], 3F800000h
+  .text:1024E352                 call    dword_109B3790
+  .text:1024E358                 ; cap
+  .text:1024E358                 push    84F5h; cap
+  .text:1024E35D                 call    ds:glEnable
+  .text:1024E363                 ; texture
+  .text:1024E363                 push    s_BackBufferFBO.s_hBackBufferTex; texture
+  .text:1024E369                 mov     ebx, ds:glBindTexture
+  .text:1024E36F                 ; target
+  .text:1024E36F                 push    84F5h; target
+  .text:1024E374                 call    ebx ; glBindTexture
+  .text:1024E376                 ; mode
+  .text:1024E376                 push    7; mode
+  .text:1024E378                 call    ds:glBegin
+  .text:1024E37E                 movd    xmm0, [ebp+var_4]
+  .text:1024E383                 sub     esp, 8
+  .text:1024E386                 mov     edi, ds:glTexCoord2f
+  .text:1024E38C                 cvtdq2ps xmm0, xmm0
+  .text:1024E38F                 ; t
+  .text:1024E38F                 movss   dword ptr [esp+58h+red], xmm0; t
+  .text:1024E395                 ; s
+  .text:1024E395                 mov     [esp+58h+blue], 0; s
+  .text:1024E39C                 call    edi ; glTexCoord2f
+  .text:1024E39E                 movd    xmm0, [ebp+var_8]
+  .text:1024E3A3                 movd    xmm1, [ebp+var_18]
+  .text:1024E3A8                 cvtdq2ps xmm0, xmm0
+  .text:1024E3AB                 cvtdq2ps xmm1, xmm1
+  .text:1024E3AE                 mov     esi, ds:glVertex3f
+  .text:1024E3B4                 sub     esp, 0Ch
+  .text:1024E3B7                 ; z
+  .text:1024E3B7                 mov     dword ptr [esp+5Ch+red], 0; z
+  .text:1024E3BF                 ; y
+  .text:1024E3BF                 movss   [esp+5Ch+blue], xmm0; y
+  .text:1024E3C5                 ; x
+  .text:1024E3C5                 movss   dword ptr [esp+5Ch+top+4], xmm1; x
+  .text:1024E3CA                 call    esi ; glVertex3f
+  .text:1024E3CC                 movd    xmm1, [ebp+var_4]
+  .text:1024E3D1                 sub     esp, 8
+  .text:1024E3D4                 movd    xmm0, [ebp+var_C]
+  .text:1024E3D9                 cvtdq2ps xmm1, xmm1
+  .text:1024E3DC                 cvtdq2ps xmm0, xmm0
+  .text:1024E3DF                 ; t
+  .text:1024E3DF                 movss   dword ptr [esp+58h+red], xmm1; t
+  .text:1024E3E5                 ; s
+  .text:1024E3E5                 movss   [esp+58h+blue], xmm0; s
+  .text:1024E3EA                 call    edi ; glTexCoord2f
+  .text:1024E3EC                 movd    xmm1, [ebp+var_8]
+  .text:1024E3F1                 sub     esp, 0Ch
+  .text:1024E3F4                 movd    xmm0, [ebp+var_10]
+  .text:1024E3F9                 cvtdq2ps xmm1, xmm1
+  .text:1024E3FC                 ; z
+  .text:1024E3FC                 mov     dword ptr [esp+5Ch+red], 0; z
+  .text:1024E404                 cvtdq2ps xmm0, xmm0
+  .text:1024E407                 ; y
+  .text:1024E407                 movss   [esp+5Ch+blue], xmm1; y
+  .text:1024E40D                 ; x
+  .text:1024E40D                 movss   dword ptr [esp+5Ch+top+4], xmm0; x
+  .text:1024E412                 call    esi ; glVertex3f
+  .text:1024E414                 movd    xmm0, [ebp+var_C]
+  .text:1024E419                 sub     esp, 8
+  .text:1024E41C                 cvtdq2ps xmm0, xmm0
+  .text:1024E41F                 ; t
+  .text:1024E41F                 mov     dword ptr [esp+58h+red], 0; t
+  .text:1024E427                 ; s
+  .text:1024E427                 movss   [esp+58h+blue], xmm0; s
+  .text:1024E42C                 call    edi ; glTexCoord2f
+  .text:1024E42E                 movd    xmm0, [ebp+var_14]
+  .text:1024E433                 sub     esp, 0Ch
+  .text:1024E436                 cvtdq2ps xmm0, xmm0
+  .text:1024E439                 ; z
+  .text:1024E439                 mov     dword ptr [esp+5Ch+red], 0; z
+  .text:1024E441                 ; y
+  .text:1024E441                 movss   [esp+5Ch+blue], xmm0; y
+  .text:1024E447                 movd    xmm0, [ebp+var_10]
+  .text:1024E44C                 cvtdq2ps xmm0, xmm0
+  .text:1024E44F                 ; x
+  .text:1024E44F                 movss   dword ptr [esp+5Ch+top+4], xmm0; x
+  .text:1024E454                 call    esi ; glVertex3f
+  .text:1024E456                 sub     esp, 8
+  .text:1024E459                 ; t
+  .text:1024E459                 mov     dword ptr [esp+58h+red], 0; t
+  .text:1024E461                 ; s
+  .text:1024E461                 mov     [esp+58h+blue], 0; s
+  .text:1024E468                 call    edi ; glTexCoord2f
+  .text:1024E46A                 movd    xmm0, [ebp+var_14]
+  .text:1024E46F                 sub     esp, 0Ch
+  .text:1024E472                 cvtdq2ps xmm0, xmm0
+  .text:1024E475                 ; z
+  .text:1024E475                 mov     dword ptr [esp+5Ch+red], 0; z
+  .text:1024E47D                 ; y
+  .text:1024E47D                 movss   [esp+5Ch+blue], xmm0; y
+  .text:1024E483                 movd    xmm0, [ebp+var_18]
+  .text:1024E488                 cvtdq2ps xmm0, xmm0
+  .text:1024E48B                 ; x
+  .text:1024E48B                 movss   dword ptr [esp+5Ch+top+4], xmm0; x
+  .text:1024E490                 call    esi ; glVertex3f
+  .text:1024E492                 call    ds:glEnd
+  .text:1024E498                 ; texture
+  .text:1024E498                 push    0; texture
+  .text:1024E49A                 ; target
+  .text:1024E49A                 push    84F5h; target
+  .text:1024E49F                 call    ebx ; glBindTexture
+  .text:1024E4A1                 ; mode
+  .text:1024E4A1                 push    1701h; mode
+  .text:1024E4A6                 call    qglMatrixMode
+  .text:1024E4AC                 call    dword_109B34F0
+  .text:1024E4B2                 ; mode
+  .text:1024E4B2                 push    1700h; mode
+  .text:1024E4B7                 call    qglMatrixMode
+  .text:1024E4BD                 call    dword_109B34F0
+  .text:1024E4C3                 ; cap
+  .text:1024E4C3                 push    84F5h; cap
+  .text:1024E4C8                 call    ds:glDisable
+  .text:1024E4CE                 push    0
+  .text:1024E4D0                 push    8CA8h
+  .text:1024E4D5                 call    dword_109B32B0
+  .text:1024E4DB                 pop     edi
+  .text:1024E4DC                 pop     esi
+  .text:1024E4DD                 pop     ebx
+  .text:1024E4DE                 call    sub_1021FE20
+  .text:1024E4E3                 fmul    ds:qword_103067C8
+  .text:1024E4E9                 xorps   xmm0, xmm0
+  .text:1024E4EC                 movsd   xmm1, qword_109A68F8
+  .text:1024E4F4                 movsd   qword ptr [ebp-20h], xmm0
+  .text:1024E4F9                 fstp    qword ptr [ebp-28h]
+  .text:1024E4FC                 movsd   xmm0, qword ptr [ebp-28h]
+  .text:1024E501                 comisd  xmm0, xmm1
+  .text:1024E505                 jbe     short loc_1024E510
+  .text:1024E507                 subsd   xmm0, xmm1
+  .text:1024E50B                 movsd   qword ptr [ebp-20h], xmm0
+  .text:1024E510                 call    dword_10F77448
+  .text:1024E516                 call    sub_1021FE20
+  .text:1024E51B                 fmul    ds:qword_103067C8
+  .text:1024E521                 xorps   xmm1, xmm1
+  .text:1024E524                 movss   xmm0, dword_10323050
+  .text:1024E52C                 comiss  xmm0, xmm1
+  .text:1024E52F                 fstp    qword ptr [ebp-30h]
+  .text:1024E532                 jbe     loc_1024E662
+  .text:1024E538                 call    ds:glFinish
+  .text:1024E53E                 lea     eax, [ebp+var_44]
+  .text:1024E541                 push    eax
+  .text:1024E542                 push    0
+  .text:1024E544                 call    SDL_GetCurrentDisplayMode
+  .text:1024E549                 add     esp, 8
+  .text:1024E54C                 test    eax, eax
+  .text:1024E54E                 jnz     short loc_1024E558
+  .text:1024E550                 mov     eax, [ebp+var_38]
+  .text:1024E553                 cmp     eax, 1
+  .text:1024E556                 jg      short loc_1024E55D
+  .text:1024E558                 mov     eax, 3Ch ; '<'
+  .text:1024E55D                 movsd   xmm7, ds:qword_103065C0
+  .text:1024E565                 xorps   xmm3, xmm3
+  .text:1024E568                 movd    xmm0, eax
+  .text:1024E56C                 movaps  xmm5, xmm7
+  .text:1024E56F                 cvtdq2pd xmm0, xmm0
+  .text:1024E573                 movsd   xmm6, qword ptr [ebp-20h]
+  .text:1024E578                 xorps   xmm4, xmm4
+  .text:1024E57B                 divsd   xmm5, xmm0
+  .text:1024E57F                 movsd   xmm1, qword ptr [ebp-30h]
+  .text:1024E584                 mulsd   xmm5, ds:qword_103067C8
+  .text:1024E58C                 subsd   xmm1, qword ptr [ebp-28h]
+  .text:1024E591                 movaps  xmm0, xmm5
+  .text:1024E594                 subsd   xmm0, xmm6
+  .text:1024E598                 maxsd   xmm3, xmm0
+  .text:1024E59C                 comisd  xmm1, xmm3
+  .text:1024E5A0                 ja      short loc_1024E5A9
+  .text:1024E5A2                 xorps   xmm3, xmm3
+  .text:1024E5A5                 maxsd   xmm3, xmm1
+  .text:1024E5A9                 movss   xmm0, dword_10323078
+  .text:1024E5B1                 movss   xmm1, dword_10323064
+  .text:1024E5B9                 movsd   xmm2, qword_109A68F0
+  .text:1024E5C1                 cvtps2pd xmm0, xmm0
+  .text:1024E5C4                 comisd  xmm3, xmm0
+  .text:1024E5C8                 jbe     short loc_1024E5D4
+  .text:1024E5CA                 addsd   xmm2, ds:qword_10306508
+  .text:1024E5D2                 jmp     short loc_1024E5E1
+  .text:1024E5D4                 cvtps2pd xmm0, xmm1
+  .text:1024E5D7                 comisd  xmm0, xmm3
+  .text:1024E5DB                 jbe     short loc_1024E5E9
+  .text:1024E5DD                 subsd   xmm2, xmm7
+  .text:1024E5E1                 movsd   qword_109A68F0, xmm2
+  .text:1024E5E9                 cvtps2pd xmm0, xmm1
+  .text:1024E5EC                 movaps  xmm1, xmm5
+  .text:1024E5EF                 subsd   xmm1, xmm0
+  .text:1024E5F3                 xorps   xmm0, xmm0
+  .text:1024E5F6                 maxsd   xmm0, xmm1
+  .text:1024E5FA                 comisd  xmm2, xmm0
+  .text:1024E5FE                 jbe     short loc_1024E605
+  .text:1024E600                 movaps  xmm2, xmm0
+  .text:1024E603                 jmp     short loc_1024E60E
+  .text:1024E605                 comisd  xmm4, xmm2
+  .text:1024E609                 jbe     short loc_1024E616
+  .text:1024E60B                 xorps   xmm2, xmm2
+  .text:1024E60E                 movsd   qword_109A68F0, xmm2
+  .text:1024E616                 movss   xmm0, dword_1032308C
+  .text:1024E61E                 xorps   xmm1, xmm1
+  .text:1024E621                 comiss  xmm0, xmm1
+  .text:1024E624                 jbe     short loc_1024E655
+  .text:1024E626                 sub     esp, 20h
+  .text:1024E629                 movsd   qword ptr [esp+64h+red+8], xmm2
+  .text:1024E62F                 movsd   qword ptr [esp+64h+red], xmm3
+  .text:1024E635                 movsd   [esp+64h+top+4], xmm6
+  .text:1024E63B                 ; ArgList
+  .text:1024E63B                 movsd   [esp+64h+bottom+4], xmm5; ArgList
+  .text:1024E640                 push    offset aGlLowlatencyVb; "gl_lowlatency: VBlank Interval: %.2f Fr"...
+  .text:1024E645                 call    Con_Printf
+  .text:1024E64A                 movsd   xmm2, qword_109A68F0
+  .text:1024E652                 add     esp, 24h
+  .text:1024E655                 cvttsd2si eax, xmm2
+  .text:1024E659                 ; dwMilliseconds
+  .text:1024E659                 push    eax; dwMilliseconds
+  .text:1024E65A                 call    sub_102201D0
+  .text:1024E65F                 add     esp, 4
+  .text:1024E662                 movsd   xmm0, qword ptr [ebp-30h]
+  .text:1024E667                 movsd   qword_109A68F8, xmm0
+  .text:1024E66F                 mov     esp, ebp
+  .text:1024E671                 pop     ebp
+  .text:1024E672                 retn
+procedure: |-
+  // s_fXMouseAspectAdjustment is the float STORAGE reset to 1 and updated in the horizontal/pillarbox branch: destination aspect / source aspect, alongside X rectangle boundaries.
+  // s_fYMouseAspectAdjustment is the float STORAGE reset to 1 and updated in the vertical/letterbox branch: source aspect / destination aspect, alongside Y rectangle boundaries.
+  // Distinguish the ratios and corresponding screen axis. Initialization order, instruction count and adjacency are not locators.
+  // Current binary is authoritative. HLND2T_official is a semantic reference, not this exact source revision. Preserve platform-specific SDL/WGL, AA mode and frame-pacing paths.
+  void __cdecl GL_EndRendering()
+  {
+    int v0; // ebx
+    int v1; // esi
+    int v2; // edi
+    int v3; // ecx
+    float v4; // xmm1_4
+    int v5; // edx
+    float v6; // xmm4_4
+    float v7; // xmm3_4
+    float v8; // xmm2_4
+    double v9; // xmm1_8
+    float v10; // xmm0_4
+    double v11; // xmm1_8
+    double v12; // st7
+    int v13; // eax
+    double v14; // xmm5_8
+    double v15; // xmm3_8
+    double v16; // xmm2_8
+    double v17; // xmm0_8
+    _BYTE v18[12]; // [esp+A0h] [ebp-44h] BYREF
+    int v19; // [esp+ACh] [ebp-38h]
+    double v20; // [esp+B4h] [ebp-30h]
+    double v21; // [esp+BCh] [ebp-28h] BYREF
+    double v22; // [esp+C4h] [ebp-20h] BYREF
+    int v23; // [esp+CCh] [ebp-18h]
+    int v24; // [esp+D0h] [ebp-14h]
+    int v25; // [esp+D4h] [ebp-10h]
+    int v26; // [esp+D8h] [ebp-Ch]
+    int v27; // [esp+DCh] [ebp-8h]
+    int v28; // [esp+E0h] [ebp-4h]
+
+    if ( s_BackBufferFBO.s_hBackBufferFBO )
+    {
+      VideoMode_GetCurrentVideoMode((int *)&v22 + 1, (int *)&v21 + 1, nullptr);
+      if ( s_MSAAFBO.s_hBackBufferFBO )
+      {
+        dword_109B32B0(36009, s_BackBufferFBO.s_hBackBufferFBO);
+        dword_109B32B0(36008, s_MSAAFBO.s_hBackBufferFBO);
+        dword_109B3298(0, 0, HIDWORD(v22), HIDWORD(v21), 0, 0, HIDWORD(v22), HIDWORD(v21), 0x4000, 9729);
+      }
+      dword_109B32B0(36009, 0);
+      dword_109B32B0(36008, s_BackBufferFBO.s_hBackBufferFBO);
+      glClearColor(0.0, 0.0, 0.0, 0.0);
+      glClear(0x4100u);
+      v0 = 0;
+      v1 = 0;
+      v2 = DWORD2(xmmword_109B3D30) - xmmword_109B3D30;
+      v3 = DWORD2(xmmword_109B3D30) - xmmword_109B3D30;
+      v26 = HIDWORD(v22);
+      v4 = (float)(DWORD2(xmmword_109B3D30) - xmmword_109B3D30);
+      v28 = HIDWORD(v21);
+      v23 = 0;
+      v25 = DWORD2(xmmword_109B3D30) - xmmword_109B3D30;
+      v27 = 0;
+      v5 = HIDWORD(xmmword_109B3D30) - DWORD1(xmmword_109B3D30);
+      HIDWORD(v20) = HIDWORD(xmmword_109B3D30) - DWORD1(xmmword_109B3D30);
+      v24 = HIDWORD(xmmword_109B3D30) - DWORD1(xmmword_109B3D30);
+      s_fYMouseAspectAdjustment = 1.0;
+      s_fXMouseAspectAdjustment = 1.0;
+      v6 = (float)(HIDWORD(xmmword_109B3D30) - DWORD1(xmmword_109B3D30));
+      v7 = (float)SHIDWORD(v22) / (float)SHIDWORD(v21);
+      v8 = v4 / v6;
+      if ( s_bEnforceAspect )
+      {
+        if ( v8 <= v7 )
+        {
+          if ( v7 > v8 )
+          {
+            s_fYMouseAspectAdjustment = v7 / v8;
+            v10 = 1.0 / v7 * (double)v2;
+            v11 = (float)(v6 - v10) * 0.5;
+            v1 = (int)(v11 + 0.0);
+            v27 = v1;
+            v5 = (int)((double)v5 - v11);
+            v24 = v5;
+          }
+        }
+        else
+        {
+          s_fXMouseAspectAdjustment = v8 / v7;
+          v9 = (float)(v4 - (float)(v6 * v7)) * 0.5;
+          v0 = (int)(v9 + 0.0);
+          v23 = v0;
+          v3 = (int)((double)v3 - v9);
+          v25 = v3;
+        }
+      }
+      if ( s_bSupportsBlitTexturing )
+      {
+        dword_109B3298(0, 0, v26, v28, v0, v1, v3, v5, 0x4000, 9729);
+      }
+      else
+      {
+        glDisable(0xBE2u);
+        glDisable(0xB50u);
+        glDisable(0xB71u);
+        glDisable(0xBC0u);
+        glDisable(0xB44u);
+        qglMatrixMode(0x1701u);
+        dword_109B34DC();
+        glLoadIdentity();
+        glOrtho(0.0, (double)v2, (double)SHIDWORD(v20), 0.0, -1.0, 1.0);
+        qglMatrixMode(0x1700u);
+        dword_109B34DC();
+        glLoadIdentity();
+        qglViewport(0, 0, v2, SHIDWORD(v20));
+        glTexParameteri(0x84F5u, 0x2800u, 9729);
+        glTexParameteri(0x84F5u, 0x2801u, 9729);
+        glTexParameteri(0x84F5u, 0x2802u, 33071);
+        glTexParameteri(0x84F5u, 0x2803u, 33071);
+        dword_109B3790(1065353216, 1065353216, 1065353216, 1065353216);
+        glEnable(0x84F5u);
+        glBindTexture(0x84F5u, s_BackBufferFBO.s_hBackBufferTex);
+        glBegin(7u);
+        glTexCoord2f(0.0, (float)v28);
+        glVertex3f((float)v23, (float)v27, 0.0);
+        glTexCoord2f((float)v26, (float)v28);
+        glVertex3f((float)v25, (float)v27, 0.0);
+        glTexCoord2f((float)v26, 0.0);
+        glVertex3f((float)v25, (float)v24, 0.0);
+        glTexCoord2f(0.0, 0.0);
+        glVertex3f((float)v23, (float)v24, 0.0);
+        glEnd();
+        glBindTexture(0x84F5u, 0);
+        qglMatrixMode(0x1701u);
+        dword_109B34F0();
+        qglMatrixMode(0x1700u);
+        dword_109B34F0();
+        glDisable(0x84F5u);
+      }
+      dword_109B32B0(36008, 0);
+    }
+    v12 = sub_1021FE20();
+    v22 = 0.0;
+    v21 = v12 * 1000.0;
+    if ( v21 > *(double *)&qword_109A68F8 )
+      v22 = v21 - *(double *)&qword_109A68F8;
+    dword_10F77448();
+    v20 = sub_1021FE20() * 1000.0;
+    if ( *(float *)&dword_10323050 > 0.0 )
+    {
+      glFinish();
+      if ( SDL_GetCurrentDisplayMode(0, v18) || (v13 = v19, v19 <= 1) )
+        v13 = 60;
+      v14 = 1.0 / (double)v13 * 1000.0;
+      v15 = fmax(0.0, v14 - v22);
+      if ( v20 - v21 <= v15 )
+        v15 = fmax(0.0, v20 - v21);
+      v16 = *(double *)&qword_109A68F0;
+      if ( v15 <= *(float *)&dword_10323078 )
+      {
+        if ( *(float *)&dword_10323064 <= v15 )
+          goto LABEL_26;
+        v16 = *(double *)&qword_109A68F0 - 1.0;
+      }
+      else
+      {
+        v16 = *(double *)&qword_109A68F0 + 0.1;
+      }
+      qword_109A68F0 = *(_QWORD *)&v16;
+  LABEL_26:
+      v17 = fmax(0.0, v14 - *(float *)&dword_10323064);
+      if ( v16 <= v17 )
+      {
+        if ( v16 >= 0.0 )
+        {
+  LABEL_31:
+          if ( *(float *)&dword_1032308C > 0.0 )
+          {
+            Con_Printf(
+              "gl_lowlatency: VBlank Interval: %.2f Frame Time: %.2f, Slop: %.2f Throttle:%.2f\n",
+              v14,
+              v22,
+              v15,
+              v16);
+            v16 = *(double *)&qword_109A68F0;
+          }
+          sub_102201D0((int)v16);
+          goto LABEL_34;
+        }
+        v16 = 0;
+      }
+      else
+      {
+        v16 = v17;
+      }
+      qword_109A68F0 = *(_QWORD *)&v16;
+      goto LABEL_31;
+    }
+  LABEL_34:
+    qword_109A68F8 = *(_QWORD *)&v20;
+  }

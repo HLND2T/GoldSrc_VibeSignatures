@@ -1,0 +1,530 @@
+func_name: GL_Init
+func_va: '0x13cb10'
+disasm_code: |-
+  ; gl_extensions is the pointer STORAGE written with glGetString(GL_EXTENSIONS=0x1F03), then read for extension checks/reporting. Do not return the string pointee or qglGetString slot.
+  .text:0013CB10                 push    ebp
+  .text:0013CB11                 push    edi
+  .text:0013CB12                 push    esi
+  .text:0013CB13                 push    ebx
+  .text:0013CB14                 call    __x86_get_pc_thunk_bx
+  .text:0013CB19                 add     ebx, (offset dbl_2EE000 - $)
+  .text:0013CB1F                 sub     esp, 13Ch
+  .text:0013CB25                 ; name
+  .text:0013CB25                 mov     [esp+14Ch+name], 1F00h; name
+  .text:0013CB2C                 call    _glGetString
+  .text:0013CB31                 test    eax, eax
+  .text:0013CB33                 mov     ds:(dword_30F7C84 - 2EE000h)[ebx], eax
+  .text:0013CB39                 jz      loc_13D000
+  .text:0013CB3F                 ; name
+  .text:0013CB3F                 mov     [esp+14Ch+name], 1F01h; name
+  .text:0013CB46                 call    _glGetString
+  .text:0013CB4B                 ; name
+  .text:0013CB4B                 mov     [esp+14Ch+name], 1F02h; name
+  .text:0013CB52                 mov     ds:(dword_30F7C80 - 2EE000h)[ebx], eax
+  .text:0013CB58                 call    _glGetString
+  .text:0013CB5D                 ; name
+  .text:0013CB5D                 mov     [esp+14Ch+name], 1F03h; name
+  .text:0013CB64                 mov     ds:(dword_30F7C7C - 2EE000h)[ebx], eax
+  .text:0013CB6A                 call    _glGetString
+  .text:0013CB6F                 mov     ds:(gl_extensions - 2EE000h)[ebx], eax
+  .text:0013CB75                 lea     eax, (aGlext - 2EE000h)[ebx]; "-glext"
+  .text:0013CB7B                 ; parm
+  .text:0013CB7B                 mov     [esp+14Ch+name], eax; parm
+  .text:0013CB7E                 call    COM_CheckParm
+  .text:0013CB83                 mov     esi, eax
+  .text:0013CB85                 mov     eax, ds:(dword_30F7C84 - 2EE000h)[ebx]
+  .text:0013CB8B                 test    eax, eax
+  .text:0013CB8D                 jz      short loc_13CBA1
+  .text:0013CB8F                 mov     [esp+14Ch+src], eax
+  .text:0013CB93                 lea     eax, (aGlVendorS - 2EE000h)[ebx]; "GL Vendor: %s\n"
+  .text:0013CB99                 ; fmt
+  .text:0013CB99                 mov     [esp+14Ch+name], eax; fmt
+  .text:0013CB9C                 call    Con_DPrintf
+  .text:0013CBA1                 mov     eax, ds:(dword_30F7C80 - 2EE000h)[ebx]
+  .text:0013CBA7                 test    eax, eax
+  .text:0013CBA9                 jz      short loc_13CBBD
+  .text:0013CBAB                 mov     [esp+14Ch+src], eax
+  .text:0013CBAF                 lea     eax, (aGlRendererS - 2EE000h)[ebx]; "GL Renderer: %s\n"
+  .text:0013CBB5                 ; fmt
+  .text:0013CBB5                 mov     [esp+14Ch+name], eax; fmt
+  .text:0013CBB8                 call    Con_DPrintf
+  .text:0013CBBD                 mov     eax, ds:(dword_30F7C7C - 2EE000h)[ebx]
+  .text:0013CBC3                 test    eax, eax
+  .text:0013CBC5                 jz      short loc_13CBD9
+  .text:0013CBC7                 ; char
+  .text:0013CBC7                 mov     [esp+14Ch+src], eax; char
+  .text:0013CBCB                 lea     eax, (aGlVersionS - 2EE000h)[ebx]; "GL Version: %s\n"
+  .text:0013CBD1                 ; fmt
+  .text:0013CBD1                 mov     [esp+14Ch+name], eax; fmt
+  .text:0013CBD4                 call    Con_DPrintf
+  .text:0013CBD9                 mov     eax, ds:(gl_extensions - 2EE000h)[ebx]
+  .text:0013CBDF                 test    eax, eax
+  .text:0013CBE1                 jz      loc_13CCA0
+  .text:0013CBE7                 test    esi, esi
+  .text:0013CBE9                 jz      loc_13CCA0
+  .text:0013CBEF                 lea     eax, (aGlExtensions - 2EE000h)[ebx]; "GL Extensions:\n"
+  .text:0013CBF5                 ; fmt
+  .text:0013CBF5                 mov     [esp+14Ch+name], eax; fmt
+  .text:0013CBF8                 lea     ebp, [esp+14Ch+dest]
+  .text:0013CBFC                 call    Con_Printf
+  .text:0013CC01                 mov     edx, ds:(gl_extensions - 2EE000h)[ebx]
+  .text:0013CC07                 lea     eax, (aS_1+1 - 2EE000h)[ebx]; "%s\n"
+  .text:0013CC0D                 mov     [esp+14Ch+fmt], eax
+  .text:0013CC11                 mov     esi, edx
+  .text:0013CC13                 movsx   eax, byte ptr [esi]
+  .text:0013CC16                 lea     edi, [edx+1]
+  .text:0013CC19                 test    al, al
+  .text:0013CC1B                 jz      short loc_13CC43
+  .text:0013CC1D                 lea     esi, [esi+0]
+  .text:0013CC20                 ; int
+  .text:0013CC20                 mov     [esp+14Ch+name], eax; int
+  .text:0013CC23                 mov     [esp+14Ch+ref], edx
+  .text:0013CC27                 call    _isspace
+  .text:0013CC2C                 mov     edx, [esp+14Ch+ref]
+  .text:0013CC30                 test    eax, eax
+  .text:0013CC32                 jz      short loc_13CC3A
+  .text:0013CC34                 cmp     esi, edx
+  .text:0013CC36                 ja      short loc_13CC47
+  .text:0013CC38                 mov     edx, edi
+  .text:0013CC3A                 inc     esi
+  .text:0013CC3B                 movsx   eax, byte ptr [esi]
+  .text:0013CC3E                 inc     edi
+  .text:0013CC3F                 test    al, al
+  .text:0013CC41                 jnz     short loc_13CC20
+  .text:0013CC43                 cmp     esi, edx
+  .text:0013CC45                 jbe     short loc_13CCA0
+  .text:0013CC47                 mov     ecx, esi
+  .text:0013CC49                 sub     ecx, edx
+  .text:0013CC4B                 cmp     ecx, 0FEh
+  .text:0013CC51                 mov     eax, ecx
+  .text:0013CC53                 jle     short loc_13CC5F
+  .text:0013CC55                 mov     eax, 0FFh
+  .text:0013CC5A                 mov     ecx, 0FFh
+  .text:0013CC5F                 ; src
+  .text:0013CC5F                 mov     [esp+14Ch+src], edx; src
+  .text:0013CC63                 ; n
+  .text:0013CC63                 mov     [esp+14Ch+n], eax; n
+  .text:0013CC67                 ; dest
+  .text:0013CC67                 mov     [esp+14Ch+name], ebp; dest
+  .text:0013CC6A                 mov     [esp+14Ch+ref], ecx
+  .text:0013CC6E                 call    _strncpy
+  .text:0013CC73                 mov     ecx, [esp+14Ch+ref]
+  .text:0013CC77                 mov     eax, [esp+14Ch+fmt]
+  .text:0013CC7B                 mov     [esp+ecx+14Ch+dest], 0
+  .text:0013CC80                 mov     [esp+14Ch+src], ebp
+  .text:0013CC84                 ; fmt
+  .text:0013CC84                 mov     [esp+14Ch+name], eax; fmt
+  .text:0013CC87                 call    Con_DPrintf
+  .text:0013CC8C                 cmp     byte ptr [esi], 0
+  .text:0013CC8F                 jnz     short loc_13CC38
+  .text:0013CC91                 jmp     short loc_13CCA0
+  .text:0013CCA0                 xor     eax, eax
+  .text:0013CCA2                 xor     ecx, ecx
+  .text:0013CCA4                 mov     [esp+14Ch+src], eax
+  .text:0013CCA8                 lea     eax, (Con_DPrintf - 2EE000h)[ebx]
+  .text:0013CCAE                 xor     esi, esi
+  .text:0013CCB0                 xor     edi, edi
+  .text:0013CCB2                 xor     ebp, ebp
+  .text:0013CCB4                 mov     [esp+14Ch+var_138], ecx
+  .text:0013CCB8                 mov     [esp+14Ch+var_13C], esi
+  .text:0013CCBC                 mov     [esp+14Ch+name], eax
+  .text:0013CCBF                 mov     [esp+14Ch+alpha], edi
+  .text:0013CCC3                 mov     [esp+14Ch+n], ebp
+  .text:0013CCC7                 call    sub_13C7E0
+  .text:0013CCCC                 lea     eax, (aGlArbTextureNo - 2EE000h)[ebx]; "GL_ARB_texture_non_power_of_two"
+  .text:0013CCD2                 mov     [esp+14Ch+name], eax
+  .text:0013CCD5                 call    _SDL_GL_ExtensionSupported
+  .text:0013CCDA                 test    eax, eax
+  .text:0013CCDC                 jnz     loc_13CF88
+  .text:0013CCE2                 lea     eax, (off_2F16DC - 2EE000h)[ebx]; "gl_npot"
+  .text:0013CCE8                 mov     dword ptr [eax+0Ch], 0
+  .text:0013CCEF                 mov     eax, ds:(dword_30F7C74 - 2EE000h)[ebx]
+  .text:0013CCF5                 test    eax, eax
+  .text:0013CCF7                 jnz     loc_13D068
+  .text:0013CCFD                 lea     eax, (aNotSupported - 2EE000h)[ebx]; "not supported"
+  .text:0013CD03                 mov     [esp+14Ch+src], eax
+  .text:0013CD07                 lea     eax, (aNpotTexturesS - 2EE000h)[ebx]; "NPOT textures %s\n"
+  .text:0013CD0D                 ; fmt
+  .text:0013CD0D                 mov     [esp+14Ch+name], eax; fmt
+  .text:0013CD10                 call    Con_DPrintf
+  .text:0013CD15                 lea     eax, (aGlSgisGenerate - 2EE000h)[ebx]; "GL_SGIS_generate_mipmap"
+  .text:0013CD1B                 mov     [esp+14Ch+name], eax
+  .text:0013CD1E                 call    _SDL_GL_ExtensionSupported
+  .text:0013CD23                 test    eax, eax
+  .text:0013CD25                 jz      loc_13CFA0
+  .text:0013CD2B                 mov     eax, 1
+  .text:0013CD30                 mov     ds:(dword_30F7C70 - 2EE000h)[ebx], eax
+  .text:0013CD36                 lea     eax, (aNotSupported+4 - 2EE000h)[ebx]; "supported"
+  .text:0013CD3C                 mov     [esp+14Ch+src], eax
+  .text:0013CD40                 lea     eax, (aMipmapGenerati - 2EE000h)[ebx]; "Mipmap generation %s\n"
+  .text:0013CD46                 ; fmt
+  .text:0013CD46                 mov     [esp+14Ch+name], eax; fmt
+  .text:0013CD49                 call    Con_DPrintf
+  .text:0013CD4E                 call    InitMultitexturing
+  .text:0013CD53                 call    sub_144C50
+  .text:0013CD58                 lea     edx, (aDisabled - 2EE000h)[ebx]; "disabled"
+  .text:0013CD5E                 test    eax, eax
+  .text:0013CD60                 lea     eax, (aSpeakEnabled+6 - 2EE000h)[ebx]; "enabled"
+  .text:0013CD66                 cmovz   eax, edx
+  .text:0013CD69                 mov     [esp+14Ch+src], eax
+  .text:0013CD6D                 lea     eax, (aDetailTextures - 2EE000h)[ebx]; "Detail textures %s\n"
+  .text:0013CD73                 ; fmt
+  .text:0013CD73                 mov     [esp+14Ch+name], eax; fmt
+  .text:0013CD76                 call    Con_DPrintf
+  .text:0013CD7B                 mov     eax, (dword_2F1B80 - 2EE000h)[ebx]
+  .text:0013CD81                 test    eax, eax
+  .text:0013CD83                 js      loc_13CFC0
+  .text:0013CD89                 cmp     eax, ds:(dword_30F7B60 - 2EE000h)[ebx]
+  .text:0013CD8F                 lea     esi, (byte_30F7DE0 - 2EE000h)[ebx]
+  .text:0013CD95                 mov     ds:(byte_30F7DE0 - 2EE000h)[ebx], 0
+  .text:0013CD9C                 jge     short loc_13CDF1
+  .text:0013CD9E                 lea     eax, [eax+eax*2]
+  .text:0013CDA1                 shl     eax, 2
+  .text:0013CDA4                 lea     edx, (dword_30F7B80 - 2EE000h)[ebx+eax]
+  .text:0013CDAB                 cmp     dword ptr [edx+8], 1
+  .text:0013CDAF                 jz      loc_13CFD8
+  .text:0013CDB5                 mov     eax, [edx+4]
+  .text:0013CDB8                 lea     ecx, (aMsaa - 2EE000h)[ebx]; "MSAA"
+  .text:0013CDBE                 lea     edx, (asc_272EA1+1 - 2EE000h)[ebx]; ""
+  .text:0013CDC4                 mov     [esp+14Ch+alpha], eax
+  .text:0013CDC8                 lea     eax, (aDxSS - 2EE000h)[ebx]; "%dx%s %s"
+  .text:0013CDCE                 ; format
+  .text:0013CDCE                 mov     [esp+14Ch+n], eax; format
+  .text:0013CDD2                 lea     esi, (byte_30F7DE0 - 2EE000h)[ebx]
+  .text:0013CDD8                 mov     eax, 40h ; '@'
+  .text:0013CDDD                 mov     [esp+14Ch+var_138], ecx
+  .text:0013CDE1                 mov     [esp+14Ch+var_13C], edx
+  .text:0013CDE5                 ; maxlen
+  .text:0013CDE5                 mov     [esp+14Ch+src], eax; maxlen
+  .text:0013CDE9                 ; s
+  .text:0013CDE9                 mov     [esp+14Ch+name], esi; s
+  .text:0013CDEC                 call    _snprintf
+  .text:0013CDF1                 lea     eax, (aAntiAliasingEn - 2EE000h)[ebx]; "Anti-aliasing enabled (%s)\n"
+  .text:0013CDF7                 mov     [esp+14Ch+src], esi
+  .text:0013CDFB                 ; fmt
+  .text:0013CDFB                 mov     [esp+14Ch+name], eax; fmt
+  .text:0013CDFE                 call    Con_DPrintf
+  .text:0013CE03                 pxor    xmm0, xmm0
+  .text:0013CE07                 ; alpha
+  .text:0013CE07                 movss   [esp+14Ch+alpha], xmm0; alpha
+  .text:0013CE0D                 mov     esi, 2802h
+  .text:0013CE12                 ; blue
+  .text:0013CE12                 movss   [esp+14Ch+n], xmm0; blue
+  .text:0013CE18                 mov     edi, 2803h
+  .text:0013CE1D                 mov     ebp, 84FEh
+  .text:0013CE22                 ; green
+  .text:0013CE22                 movss   [esp+14Ch+src], xmm0; green
+  .text:0013CE28                 ; red
+  .text:0013CE28                 movss   [esp+14Ch+name], xmm0; red
+  .text:0013CE2D                 movss   [esp+14Ch+ref], xmm0
+  .text:0013CE33                 call    _glClearColor
+  .text:0013CE38                 ; mode
+  .text:0013CE38                 mov     [esp+14Ch+name], 404h; mode
+  .text:0013CE3F                 call    _glCullFace
+  .text:0013CE44                 ; cap
+  .text:0013CE44                 mov     [esp+14Ch+name], 0DE1h; cap
+  .text:0013CE4B                 call    _glEnable
+  .text:0013CE50                 ; cap
+  .text:0013CE50                 mov     [esp+14Ch+name], 0BC0h; cap
+  .text:0013CE57                 call    _glEnable
+  .text:0013CE5C                 movss   xmm0, [esp+14Ch+ref]
+  .text:0013CE62                 ; func
+  .text:0013CE62                 mov     [esp+14Ch+name], 205h; func
+  .text:0013CE69                 ; ref
+  .text:0013CE69                 movss   [esp+14Ch+src], xmm0; ref
+  .text:0013CE6F                 call    _glAlphaFunc
+  .text:0013CE74                 mov     eax, 1B02h
+  .text:0013CE79                 ; mode
+  .text:0013CE79                 mov     [esp+14Ch+src], eax; mode
+  .text:0013CE7D                 ; face
+  .text:0013CE7D                 mov     [esp+14Ch+name], 408h; face
+  .text:0013CE84                 call    _glPolygonMode
+  .text:0013CE89                 ; mode
+  .text:0013CE89                 mov     [esp+14Ch+name], 1D00h; mode
+  .text:0013CE90                 call    _glShadeModel
+  .text:0013CE95                 mov     edx, 2801h
+  .text:0013CE9A                 ; pname
+  .text:0013CE9A                 mov     [esp+14Ch+src], edx; pname
+  .text:0013CE9E                 ; target
+  .text:0013CE9E                 mov     [esp+14Ch+name], 0DE1h; target
+  .text:0013CEA5                 fld     ds:(flt_26F2D4 - 2EE000h)[ebx]
+  .text:0013CEAB                 fstp    [esp+14Ch+ref]
+  .text:0013CEAF                 movss   xmm1, [esp+14Ch+ref]
+  .text:0013CEB5                 ; param
+  .text:0013CEB5                 movss   [esp+14Ch+n], xmm1; param
+  .text:0013CEBB                 call    _glTexParameterf
+  .text:0013CEC0                 mov     ecx, 2800h
+  .text:0013CEC5                 movss   xmm1, [esp+14Ch+ref]
+  .text:0013CECB                 ; pname
+  .text:0013CECB                 mov     [esp+14Ch+src], ecx; pname
+  .text:0013CECF                 ; target
+  .text:0013CECF                 mov     [esp+14Ch+name], 0DE1h; target
+  .text:0013CED6                 ; param
+  .text:0013CED6                 movss   [esp+14Ch+n], xmm1; param
+  .text:0013CEDC                 call    _glTexParameterf
+  .text:0013CEE1                 ; pname
+  .text:0013CEE1                 mov     [esp+14Ch+src], esi; pname
+  .text:0013CEE5                 ; target
+  .text:0013CEE5                 mov     [esp+14Ch+name], 0DE1h; target
+  .text:0013CEEC                 fld     ds:(flt_26FC14 - 2EE000h)[ebx]
+  .text:0013CEF2                 fstp    [esp+14Ch+ref]
+  .text:0013CEF6                 movss   xmm2, [esp+14Ch+ref]
+  .text:0013CEFC                 ; param
+  .text:0013CEFC                 movss   [esp+14Ch+n], xmm2; param
+  .text:0013CF02                 call    _glTexParameterf
+  .text:0013CF07                 movss   xmm2, [esp+14Ch+ref]
+  .text:0013CF0D                 ; pname
+  .text:0013CF0D                 mov     [esp+14Ch+src], edi; pname
+  .text:0013CF11                 ; target
+  .text:0013CF11                 mov     [esp+14Ch+name], 0DE1h; target
+  .text:0013CF18                 ; param
+  .text:0013CF18                 movss   [esp+14Ch+n], xmm2; param
+  .text:0013CF1E                 call    _glTexParameterf
+  .text:0013CF23                 lea     eax, (off_2F16C8 - 2EE000h)[ebx]; "gl_ansio"
+  .text:0013CF29                 movss   xmm3, dword ptr [eax+0Ch]
+  .text:0013CF2E                 ; pname
+  .text:0013CF2E                 mov     [esp+14Ch+src], ebp; pname
+  .text:0013CF32                 ; target
+  .text:0013CF32                 mov     [esp+14Ch+name], 0DE1h; target
+  .text:0013CF39                 ; param
+  .text:0013CF39                 movss   [esp+14Ch+n], xmm3; param
+  .text:0013CF3F                 call    _glTexParameterf
+  .text:0013CF44                 mov     eax, 303h
+  .text:0013CF49                 ; dfactor
+  .text:0013CF49                 mov     [esp+14Ch+src], eax; dfactor
+  .text:0013CF4D                 ; sfactor
+  .text:0013CF4D                 mov     [esp+14Ch+name], 302h; sfactor
+  .text:0013CF54                 call    _glBlendFunc
+  .text:0013CF59                 mov     eax, 2200h
+  .text:0013CF5E                 ; param
+  .text:0013CF5E                 mov     [esp+14Ch+n], 45F00800h; param
+  .text:0013CF66                 ; pname
+  .text:0013CF66                 mov     [esp+14Ch+src], eax; pname
+  .text:0013CF6A                 ; target
+  .text:0013CF6A                 mov     [esp+14Ch+name], 2300h; target
+  .text:0013CF71                 call    _glTexEnvf
+  .text:0013CF76                 add     esp, 13Ch
+  .text:0013CF7C                 pop     ebx
+  .text:0013CF7D                 pop     esi
+  .text:0013CF7E                 pop     edi
+  .text:0013CF7F                 pop     ebp
+  .text:0013CF80                 retn
+  .text:0013CF88                 mov     edx, 1
+  .text:0013CF8D                 mov     ds:(dword_30F7C74 - 2EE000h)[ebx], edx
+  .text:0013CF93                 lea     eax, (aNotSupported+4 - 2EE000h)[ebx]; "supported"
+  .text:0013CF99                 jmp     loc_13CD03
+  .text:0013CFA0                 mov     eax, ds:(dword_30F7C70 - 2EE000h)[ebx]
+  .text:0013CFA6                 test    eax, eax
+  .text:0013CFA8                 jnz     loc_13D05D
+  .text:0013CFAE                 lea     eax, (aNotSupported - 2EE000h)[ebx]; "not supported"
+  .text:0013CFB4                 jmp     loc_13CD3C
+  .text:0013CFC0                 lea     eax, (aAntiAliasingDi - 2EE000h)[ebx]; "Anti-aliasing disabled\n"
+  .text:0013CFC6                 ; fmt
+  .text:0013CFC6                 mov     [esp+14Ch+name], eax; fmt
+  .text:0013CFC9                 call    Con_DPrintf
+  .text:0013CFCE                 jmp     loc_13CE03
+  .text:0013CFD8                 mov     ecx, ds:(dword_30F7B80 - 2EE000h)[ebx+eax]
+  .text:0013CFDF                 mov     eax, [edx+4]
+  .text:0013CFE2                 cmp     ecx, 4
+  .text:0013CFE5                 jg      short loc_13D020
+  .text:0013CFE7                 lea     ecx, (aCsaa - 2EE000h)[ebx]; "CSAA"
+  .text:0013CFED                 lea     edx, (asc_272EA1+1 - 2EE000h)[ebx]; ""
+  .text:0013CFF3                 jmp     loc_13CDC4
+  .text:0013D000                 lea     eax, (aFailedToQueryG - 2EE000h)[ebx]; "Failed to query GL vendor string"
+  .text:0013D006                 ; fmt
+  .text:0013D006                 mov     [esp+14Ch+name], eax; fmt
+  .text:0013D009                 call    Sys_Error
+  .text:0013D00E                 add     esp, 13Ch
+  .text:0013D014                 pop     ebx
+  .text:0013D015                 pop     esi
+  .text:0013D016                 pop     edi
+  .text:0013D017                 pop     ebp
+  .text:0013D018                 retn
+  .text:0013D020                 mov     [esp+14Ch+ref], eax
+  .text:0013D024                 lea     edx, (asc_272EA1+1 - 2EE000h)[ebx]; ""
+  .text:0013D02A                 fild    [esp+14Ch+ref]
+  .text:0013D02E                 mov     [esp+14Ch+ref], ecx
+  .text:0013D032                 lea     ecx, (aCsaa - 2EE000h)[ebx]; "CSAA"
+  .text:0013D038                 fild    [esp+14Ch+ref]
+  .text:0013D03C                 fdivp   st(1), st
+  .text:0013D03E                 fld     ds:(flt_2617C0 - 2EE000h)[ebx]
+  .text:0013D044                 fst     [esp+14Ch+ref]
+  .text:0013D048                 fucomip st, st(1)
+  .text:0013D04A                 fstp    st
+  .text:0013D04C                 jb      loc_13CDC4
+  .text:0013D052                 lea     edx, (aQ - 2EE000h)[ebx]; "Q"
+  .text:0013D058                 jmp     loc_13CDC4
+  .text:0013D05D                 lea     eax, (aNotSupported+4 - 2EE000h)[ebx]; "supported"
+  .text:0013D063                 jmp     loc_13CD3C
+  .text:0013D068                 lea     eax, (aNotSupported+4 - 2EE000h)[ebx]; "supported"
+  .text:0013D06E                 jmp     loc_13CD03
+procedure: |-
+  // gl_extensions is the pointer STORAGE written with glGetString(GL_EXTENSIONS=0x1F03), then read for extension checks/reporting. Do not return the string pointee or qglGetString slot.
+  // Current binary is authoritative. HLND2T_official is a semantic reference, not this exact source revision. Preserve platform-specific SDL/WGL, AA mode and frame-pacing paths.
+  void __cdecl GL_Init()
+  {
+    int v0; // esi
+    const char *src; // edx
+    const char *v2; // esi
+    int v3; // eax
+    const char *v4; // edi
+    int v5; // eax
+    int v6; // ecx
+    size_t n; // eax
+    char *v8; // eax
+    char *v9; // eax
+    bool v10; // zf
+    char *v11; // eax
+    int *v12; // edx
+    int v13; // eax
+    const char *v14; // ecx
+    char *v15; // edx
+    const char *ref; // [esp+28h] [ebp-124h]
+    int refa; // [esp+28h] [ebp-124h]
+    char dest[284]; // [esp+30h] [ebp-11Ch] BYREF
+
+    dword_30F7C84 = (int)glGetString(0x1F00u);
+    if ( !dword_30F7C84 )
+      Sys_Error("Failed to query GL vendor string");
+    dword_30F7C80 = (int)glGetString(0x1F01u);
+    dword_30F7C7C = (int)glGetString(0x1F02u);
+    gl_extensions = (const char *)glGetString(0x1F03u);
+    v0 = COM_CheckParm("-glext");
+    if ( dword_30F7C84 )
+      Con_DPrintf("GL Vendor: %s\n", dword_30F7C84);
+    if ( dword_30F7C80 )
+      Con_DPrintf("GL Renderer: %s\n", dword_30F7C80);
+    if ( dword_30F7C7C )
+      Con_DPrintf("GL Version: %s\n", dword_30F7C7C);
+    if ( gl_extensions && v0 )
+    {
+      Con_Printf("GL Extensions:\n");
+      src = gl_extensions;
+      v2 = gl_extensions;
+      v3 = *gl_extensions;
+      v4 = gl_extensions + 1;
+      if ( !(_BYTE)v3 )
+        goto LABEL_15;
+      while ( 1 )
+      {
+        ref = src;
+        v5 = isspace(v3);
+        src = ref;
+        if ( v5 )
+        {
+          if ( v2 > ref )
+          {
+  LABEL_16:
+            v6 = v2 - src;
+            n = v2 - src;
+            if ( v2 - src > 254 )
+            {
+              n = 255;
+              v6 = 255;
+            }
+            refa = v6;
+            strncpy(dest, src, n);
+            dest[refa] = 0;
+            Con_DPrintf("%s\n", dest);
+            if ( !*v2 )
+              break;
+          }
+          src = v4;
+        }
+        v3 = *++v2;
+        ++v4;
+        if ( !(_BYTE)v3 )
+        {
+  LABEL_15:
+          if ( v2 <= src )
+            break;
+          goto LABEL_16;
+        }
+      }
+    }
+    sub_13C7E0(Con_DPrintf, 0, 0, 0, 0, 0);
+    if ( SDL_GL_ExtensionSupported("GL_ARB_texture_non_power_of_two") )
+    {
+      dword_30F7C74 = 1;
+      v8 = "supported";
+    }
+    else
+    {
+      flt_2F16E8 = 0.0;
+      if ( dword_30F7C74 )
+        v8 = "supported";
+      else
+        v8 = "not supported";
+    }
+    Con_DPrintf("NPOT textures %s\n", v8);
+    if ( SDL_GL_ExtensionSupported("GL_SGIS_generate_mipmap") )
+    {
+      dword_30F7C70 = 1;
+      v9 = "supported";
+    }
+    else if ( dword_30F7C70 )
+    {
+      v9 = "supported";
+    }
+    else
+    {
+      v9 = "not supported";
+    }
+    Con_DPrintf("Mipmap generation %s\n", v9);
+    InitMultitexturing();
+    v10 = sub_144C50() == 0;
+    v11 = "enabled";
+    if ( v10 )
+      v11 = "disabled";
+    Con_DPrintf("Detail textures %s\n", v11);
+    if ( dword_2F1B80 < 0 )
+    {
+      Con_DPrintf("Anti-aliasing disabled\n");
+    }
+    else
+    {
+      byte_30F7DE0 = 0;
+      if ( dword_2F1B80 < dword_30F7B60 )
+      {
+        v12 = &dword_30F7B80[3 * dword_2F1B80];
+        if ( v12[2] == 1 )
+        {
+          v13 = v12[1];
+          if ( dword_30F7B80[3 * dword_2F1B80] > 4 )
+          {
+            v15 = "";
+            v14 = "CSAA";
+            if ( (long double)v13 / (long double)dword_30F7B80[3 * dword_2F1B80] <= 2.0 )
+              v15 = "Q";
+          }
+          else
+          {
+            v14 = "CSAA";
+            v15 = "";
+          }
+        }
+        else
+        {
+          v13 = v12[1];
+          v14 = "MSAA";
+          v15 = "";
+        }
+        snprintf(&byte_30F7DE0, 0x40u, "%dx%s %s", v13, v15, v14);
+      }
+      Con_DPrintf("Anti-aliasing enabled (%s)\n", &byte_30F7DE0);
+    }
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glCullFace(0x404u);
+    glEnable(0xDE1u);
+    glEnable(0xBC0u);
+    glAlphaFunc(0x205u, 0.0);
+    glPolygonMode(0x408u, 0x1B02u);
+    glShadeModel(0x1D00u);
+    glTexParameterf(0xDE1u, 0x2801u, 9728.0);
+    glTexParameterf(0xDE1u, 0x2800u, 9728.0);
+    glTexParameterf(0xDE1u, 0x2802u, 10497.0);
+    glTexParameterf(0xDE1u, 0x2803u, 10497.0);
+    glTexParameterf(0xDE1u, 0x84FEu, flt_2F16D4);
+    glBlendFunc(0x302u, 0x303u);
+    glTexEnvf(0x2300u, 0x2200u, 7681.0);
+  }

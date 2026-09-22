@@ -1,0 +1,8 @@
+gv_name: s_bSupportsBlitTexturing
+gv_va: '0x233fe10'
+gv_rva: '0x63fe10'
+gv_sig: 55 8B EC 81 EC 50 01 00 00 53 56 8B 75 ?? 33 DB 3B F3 57 89 1D ?? ?? ?? ?? 74 ?? 89 1E 8B 7D ??
+gv_sig_va: '0x1d4c8a0'
+gv_inst_offset: '0x20b'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

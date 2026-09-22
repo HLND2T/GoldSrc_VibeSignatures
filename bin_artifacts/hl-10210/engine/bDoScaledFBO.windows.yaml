@@ -1,0 +1,8 @@
+gv_name: bDoScaledFBO
+gv_va: '0x10323018'
+gv_rva: '0x323018'
+gv_sig: 55 8B EC 81 EC 1C 01 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 8B 45 ?? 53 8B 5D ?? 56 8B 75 ?? 89 85 ?? ?? ?? ??
+gv_sig_va: '0x1024ebb0'
+gv_inst_offset: '0x1ef'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

@@ -1,0 +1,867 @@
+func_name: GL_SetMode
+func_va: '0x13dc80'
+disasm_code: |-
+  ; s_bEnforceAspect receives COM_CheckParm("-stretchaspect")==0; it is global, unlike the startup-screen local with the same source name.
+  ; bDoMSAAFBO is disabled by -nomsaa and guards multisample renderbuffer creation. AA mode count/index are separate globals.
+  ; bDoScaledFBO is disabled by -nofbo or missing FBO/rectangle-texture support and guards the scaled backbuffer.
+  ; s_bSupportsBlitTexturing is set by GL_EXT_framebuffer_multisample_blit_scaled support and overridden by -directblit / -nodirectblit.
+  ; s_MSAAFBO is the complete four-GLuint container whose framebuffer has MULTISAMPLE renderbuffer attachments. Select its base address passed to GenFramebuffersEXT.
+  ; s_BackBufferFBO is the complete four-GLuint container whose framebuffer has a RECTANGLE TEXTURE attachment. Select its base address passed to GenFramebuffersEXT.
+  ; The first field s_hBackBufferFBO is at the container base. CB, DB and Tex are interior members, not independent targets. Linux PIC/GOT operands must resolve to the object, not the GOT slot.
+  .text:0013DC80                 push    ebp
+  .text:0013DC81                 push    edi
+  .text:0013DC82                 push    esi
+  .text:0013DC83                 push    ebx
+  .text:0013DC84                 call    __x86_get_pc_thunk_bx
+  .text:0013DC89                 add     ebx, (offset dbl_2EE000 - $)
+  .text:0013DC8F                 sub     esp, 8Ch
+  .text:0013DC95                 call    _glewInit
+  .text:0013DC9A                 ; char
+  .text:0013DC9A                 mov     [esp+9Ch+endptr], eax; char
+  .text:0013DC9E                 lea     eax, (aGlSetmodeGlewi - 2EE000h)[ebx]; "GL_SetMode::glewInit() err = %i\n"
+  .text:0013DCA4                 ; fmt
+  .text:0013DCA4                 mov     [esp+9Ch+name], eax; fmt
+  .text:0013DCA7                 call    Con_Printf
+  .text:0013DCAC                 mov     eax, [esp+9Ch+pbaseRC]
+  .text:0013DCB3                 mov     dword ptr [eax], 0
+  .text:0013DCB9                 mov     eax, [esp+9Ch+pmaindc]
+  .text:0013DCC0                 mov     dword ptr [eax], 0
+  .text:0013DCC6                 lea     eax, (aStretchaspect - 2EE000h)[ebx]; "-stretchaspect"
+  .text:0013DCCC                 ; parm
+  .text:0013DCCC                 mov     [esp+9Ch+name], eax; parm
+  .text:0013DCCF                 call    COM_CheckParm
+  .text:0013DCD4                 test    eax, eax
+  .text:0013DCD6                 setz    al
+  .text:0013DCD9                 movzx   eax, al
+  .text:0013DCDC                 mov     (s_bEnforceAspect - 2EE000h)[ebx], eax
+  .text:0013DCE2                 lea     eax, (aNomsaa - 2EE000h)[ebx]; "-nomsaa"
+  .text:0013DCE8                 ; parm
+  .text:0013DCE8                 mov     [esp+9Ch+name], eax; parm
+  .text:0013DCEB                 call    COM_CheckParm
+  .text:0013DCF0                 test    eax, eax
+  .text:0013DCF2                 jz      short loc_13DCFC
+  .text:0013DCF4                 xor     edi, edi
+  .text:0013DCF6                 mov     (bDoMSAAFBO - 2EE000h)[ebx], edi
+  .text:0013DCFC                 lea     eax, (aNofbo - 2EE000h)[ebx]; "-nofbo"
+  .text:0013DD02                 ; parm
+  .text:0013DD02                 mov     [esp+9Ch+name], eax; parm
+  .text:0013DD05                 call    COM_CheckParm
+  .text:0013DD0A                 test    eax, eax
+  .text:0013DD0C                 jz      short loc_13DD16
+  .text:0013DD0E                 xor     esi, esi
+  .text:0013DD10                 mov     (bDoScaledFBO - 2EE000h)[ebx], esi
+  .text:0013DD16                 call    sub_70980
+  .text:0013DD1B                 test    eax, eax
+  .text:0013DD1D                 jle     short loc_13DD3B
+  .text:0013DD1F                 lea     eax, (dword_2F1664 - 2EE000h)[ebx]
+  .text:0013DD25                 xor     edx, edx
+  .text:0013DD27                 xor     ecx, ecx
+  .text:0013DD29                 mov     (bDoScaledFBO - 2EE000h)[ebx], edx
+  .text:0013DD2F                 mov     (bDoMSAAFBO - 2EE000h)[ebx], ecx
+  .text:0013DD35                 mov     dword ptr [eax], 2701h
+  .text:0013DD3B                 ; name
+  .text:0013DD3B                 mov     [esp+9Ch+name], 1F03h; name
+  .text:0013DD42                 call    _glGetString
+  .text:0013DD47                 mov     ds:(gl_extensions - 2EE000h)[ebx], eax
+  .text:0013DD4D                 xor     eax, eax
+  .text:0013DD4F                 mov     ds:(s_bSupportsBlitTexturing - 2EE000h)[ebx], eax
+  .text:0013DD55                 lea     eax, (aGlExtFramebuff_0 - 2EE000h)[ebx]; "GL_EXT_framebuffer_multisample_blit_sca"...
+  .text:0013DD5B                 mov     [esp+9Ch+name], eax
+  .text:0013DD5E                 call    _SDL_GL_ExtensionSupported
+  .text:0013DD63                 test    eax, eax
+  .text:0013DD65                 jz      short loc_13DD72
+  .text:0013DD67                 mov     eax, 1
+  .text:0013DD6C                 mov     ds:(s_bSupportsBlitTexturing - 2EE000h)[ebx], eax
+  .text:0013DD72                 lea     eax, (aDirectblit - 2EE000h)[ebx]; "-directblit"
+  .text:0013DD78                 ; parm
+  .text:0013DD78                 mov     [esp+9Ch+name], eax; parm
+  .text:0013DD7B                 call    COM_CheckParm
+  .text:0013DD80                 test    eax, eax
+  .text:0013DD82                 jz      short loc_13DD8F
+  .text:0013DD84                 mov     eax, 1
+  .text:0013DD89                 mov     ds:(s_bSupportsBlitTexturing - 2EE000h)[ebx], eax
+  .text:0013DD8F                 lea     eax, (aNodirectblit - 2EE000h)[ebx]; "-nodirectblit"
+  .text:0013DD95                 ; parm
+  .text:0013DD95                 mov     [esp+9Ch+name], eax; parm
+  .text:0013DD98                 call    COM_CheckParm
+  .text:0013DD9D                 test    eax, eax
+  .text:0013DD9F                 jz      short loc_13DDA9
+  .text:0013DDA1                 xor     eax, eax
+  .text:0013DDA3                 mov     ds:(s_bSupportsBlitTexturing - 2EE000h)[ebx], eax
+  .text:0013DDA9                 call    sub_13C1A0
+  .text:0013DDAE                 mov     eax, ds:(__glewGenFramebuffersEXT_ptr - 2EE000h)[ebx]
+  .text:0013DDB4                 mov     [esp+9Ch+var_6C], eax
+  .text:0013DDB8                 mov     eax, [eax]
+  .text:0013DDBA                 test    eax, eax
+  .text:0013DDBC                 jz      short loc_13DE28
+  .text:0013DDBE                 mov     ebp, ds:(__glewBindFramebufferEXT_ptr - 2EE000h)[ebx]
+  .text:0013DDC4                 mov     eax, [ebp+0]
+  .text:0013DDC7                 test    eax, eax
+  .text:0013DDC9                 jz      short loc_13DE28
+  .text:0013DDCB                 mov     eax, ds:(__glewBlitFramebufferEXT_ptr - 2EE000h)[ebx]
+  .text:0013DDD1                 mov     ebp, [eax]
+  .text:0013DDD3                 test    ebp, ebp
+  .text:0013DDD5                 jz      short loc_13DE28
+  .text:0013DDD7                 lea     eax, (aGlArbTextureRe - 2EE000h)[ebx]; "GL_ARB_texture_rectangle"
+  .text:0013DDDD                 mov     [esp+9Ch+name], eax
+  .text:0013DDE0                 call    _SDL_GL_ExtensionSupported
+  .text:0013DDE5                 test    eax, eax
+  .text:0013DDE7                 jz      loc_13DED0
+  .text:0013DDED                 mov     esi, ds:(dword_30F7B60 - 2EE000h)[ebx]
+  .text:0013DDF3                 test    esi, esi
+  .text:0013DDF5                 jnz     short loc_13DDFF
+  .text:0013DDF7                 xor     ecx, ecx
+  .text:0013DDF9                 mov     (bDoMSAAFBO - 2EE000h)[ebx], ecx
+  .text:0013DDFF                 call    sub_182E40
+  .text:0013DE04                 xor     edx, edx
+  .text:0013DE06                 mov     dword ptr ds:(s_MSAAFBO.s_hBackBufferFBO - 2EE000h)[ebx], edx
+  .text:0013DE0C                 test    eax, eax
+  .text:0013DE0E                 mov     esi, eax
+  .text:0013DE10                 jz      short loc_13DE38
+  .text:0013DE12                 add     esp, 8Ch
+  .text:0013DE18                 mov     eax, 1
+  .text:0013DE1D                 pop     ebx
+  .text:0013DE1E                 pop     esi
+  .text:0013DE1F                 pop     edi
+  .text:0013DE20                 pop     ebp
+  .text:0013DE21                 retn
+  .text:0013DE28                 xor     edi, edi
+  .text:0013DE2A                 mov     (bDoScaledFBO - 2EE000h)[ebx], edi
+  .text:0013DE30                 jmp     short loc_13DDD7
+  .text:0013DE38                 xor     eax, eax
+  .text:0013DE3A                 xor     edi, edi
+  .text:0013DE3C                 mov     ds:(s_MSAAFBO.s_hBackBufferTex - 2EE000h)[ebx], eax
+  .text:0013DE42                 xor     eax, eax
+  .text:0013DE44                 xor     ebp, ebp
+  .text:0013DE46                 mov     dword ptr ds:(s_BackBufferFBO.s_hBackBufferFBO - 2EE000h)[ebx], eax
+  .text:0013DE4C                 xor     eax, eax
+  .text:0013DE4E                 mov     ds:(s_BackBufferFBO.s_hBackBufferCB - 2EE000h)[ebx], eax
+  .text:0013DE54                 xor     eax, eax
+  .text:0013DE56                 mov     ds:(s_BackBufferFBO.s_hBackBufferDB - 2EE000h)[ebx], eax
+  .text:0013DE5C                 xor     eax, eax
+  .text:0013DE5E                 mov     ds:(s_BackBufferFBO.s_hBackBufferTex - 2EE000h)[ebx], eax
+  .text:0013DE64                 xor     eax, eax
+  .text:0013DE66                 mov     [esp+9Ch+base], eax
+  .text:0013DE6A                 lea     eax, [esp+9Ch+var_48]
+  .text:0013DE6E                 ; char
+  .text:0013DE6E                 mov     [esp+9Ch+endptr], eax; char
+  .text:0013DE72                 lea     eax, [esp+9Ch+var_4C]
+  .text:0013DE76                 mov     [esp+9Ch+name], eax
+  .text:0013DE79                 mov     ds:(s_MSAAFBO.s_hBackBufferCB - 2EE000h)[ebx], edi
+  .text:0013DE7F                 mov     ds:(s_MSAAFBO.s_hBackBufferDB - 2EE000h)[ebx], ebp
+  .text:0013DE85                 call    sub_182C00
+  .text:0013DE8A                 mov     edx, ds:(dword_30F7B60 - 2EE000h)[ebx]
+  .text:0013DE90                 test    edx, edx
+  .text:0013DE92                 jle     loc_13E410
+  .text:0013DE98                 lea     edi, (dword_30F7B80 - 2EE000h)[ebx]
+  .text:0013DE9E                 mov     eax, edi
+  .text:0013DEA0                 jmp     short loc_13DEB0
+  .text:0013DEA8                 inc     esi
+  .text:0013DEA9                 add     eax, 0Ch
+  .text:0013DEAC                 cmp     edx, esi
+  .text:0013DEAE                 jz      short loc_13DEF8
+  .text:0013DEB0                 cmp     dword ptr [eax+4], 4
+  .text:0013DEB4                 jnz     short loc_13DEA8
+  .text:0013DEB6                 cmp     dword ptr [eax], 4
+  .text:0013DEB9                 jnz     short loc_13DEA8
+  .text:0013DEBB                 lea     eax, (aAamode - 2EE000h)[ebx]; "-aamode"
+  .text:0013DEC1                 ; parm
+  .text:0013DEC1                 mov     [esp+9Ch+name], eax; parm
+  .text:0013DEC4                 call    COM_CheckParm
+  .text:0013DEC9                 test    eax, eax
+  .text:0013DECB                 jz      short loc_13DF3B
+  .text:0013DECD                 jmp     short loc_13DF0E
+  .text:0013DED0                 lea     eax, (aGlNvTextureRec - 2EE000h)[ebx]; "GL_NV_texture_rectangle"
+  .text:0013DED6                 mov     [esp+9Ch+name], eax
+  .text:0013DED9                 call    _SDL_GL_ExtensionSupported
+  .text:0013DEDE                 test    eax, eax
+  .text:0013DEE0                 jnz     loc_13DDED
+  .text:0013DEE6                 xor     ecx, ecx
+  .text:0013DEE8                 mov     (bDoScaledFBO - 2EE000h)[ebx], ecx
+  .text:0013DEEE                 jmp     loc_13DDED
+  .text:0013DEF8                 lea     eax, (aAamode - 2EE000h)[ebx]; "-aamode"
+  .text:0013DEFE                 ; parm
+  .text:0013DEFE                 mov     [esp+9Ch+name], eax; parm
+  .text:0013DF01                 call    COM_CheckParm
+  .text:0013DF06                 test    eax, eax
+  .text:0013DF08                 jz      loc_13E410
+  .text:0013DF0E                 mov     edx, 0Ah
+  .text:0013DF13                 xor     ecx, ecx
+  .text:0013DF15                 ; base
+  .text:0013DF15                 mov     [esp+9Ch+base], edx; base
+  .text:0013DF19                 lea     edx, (dword_2F91C0 - 2EE000h)[ebx]
+  .text:0013DF1F                 ; endptr
+  .text:0013DF1F                 mov     [esp+9Ch+endptr], ecx; endptr
+  .text:0013DF23                 mov     edx, [edx]
+  .text:0013DF25                 mov     eax, [edx+eax*4+4]
+  .text:0013DF29                 ; nptr
+  .text:0013DF29                 mov     [esp+9Ch+name], eax; nptr
+  .text:0013DF2C                 call    _strtol
+  .text:0013DF31                 test    eax, eax
+  .text:0013DF33                 mov     esi, eax
+  .text:0013DF35                 js      loc_13E410
+  .text:0013DF3B                 cmp     ds:(dword_30F7B60 - 2EE000h)[ebx], esi
+  .text:0013DF41                 jle     loc_13E410
+  .text:0013DF47                 mov     eax, ds:(__glewRenderbufferStorageMultisampleEXT_ptr - 2EE000h)[ebx]
+  .text:0013DF4D                 mov     ebp, [eax]
+  .text:0013DF4F                 mov     [esp+9Ch+var_5C], eax
+  .text:0013DF53                 test    ebp, ebp
+  .text:0013DF55                 jz      loc_13E410
+  .text:0013DF5B                 mov     ecx, (bDoMSAAFBO - 2EE000h)[ebx]
+  .text:0013DF61                 test    ecx, ecx
+  .text:0013DF63                 jle     loc_13E410
+  .text:0013DF69                 lea     eax, (s_MSAAFBO.s_hBackBufferFBO - 2EE000h)[ebx]
+  .text:0013DF6F                 mov     [esp+9Ch+var_58], eax
+  .text:0013DF73                 mov     [esp+9Ch+endptr], eax
+  .text:0013DF77                 mov     eax, [esp+9Ch+var_6C]
+  .text:0013DF7B                 mov     (dword_2F1B80 - 2EE000h)[ebx], esi
+  .text:0013DF81                 mov     [esp+9Ch+name], 1
+  .text:0013DF88                 call    dword ptr [eax]
+  .text:0013DF8A                 mov     eax, dword ptr ds:(s_MSAAFBO.s_hBackBufferFBO - 2EE000h)[ebx]
+  .text:0013DF90                 mov     ebp, ds:(__glewBindFramebufferEXT_ptr - 2EE000h)[ebx]
+  .text:0013DF96                 mov     [esp+9Ch+name], 8D40h
+  .text:0013DF9D                 mov     [esp+9Ch+endptr], eax
+  .text:0013DFA1                 call    dword ptr [ebp+0]
+  .text:0013DFA4                 mov     eax, ds:(__glewGenRenderbuffersEXT_ptr - 2EE000h)[ebx]
+  .text:0013DFAA                 lea     ecx, (s_MSAAFBO.s_hBackBufferCB - 2EE000h)[ebx]
+  .text:0013DFB0                 mov     [esp+9Ch+endptr], ecx
+  .text:0013DFB4                 mov     [esp+9Ch+name], 1
+  .text:0013DFBB                 mov     [esp+9Ch+var_54], ecx
+  .text:0013DFBF                 mov     [esp+9Ch+var_68], eax
+  .text:0013DFC3                 call    dword ptr [eax]
+  .text:0013DFC5                 mov     eax, ds:(__glewBindRenderbufferEXT_ptr - 2EE000h)[ebx]
+  .text:0013DFCB                 mov     [esp+9Ch+name], 8D41h
+  .text:0013DFD2                 mov     ecx, eax
+  .text:0013DFD4                 mov     [esp+9Ch+var_60], eax
+  .text:0013DFD8                 mov     eax, ds:(s_MSAAFBO.s_hBackBufferCB - 2EE000h)[ebx]
+  .text:0013DFDE                 mov     [esp+9Ch+endptr], eax
+  .text:0013DFE2                 call    dword ptr [ecx]
+  .text:0013DFE4                 lea     eax, [esi+esi*2]
+  .text:0013DFE7                 shl     eax, 2
+  .text:0013DFEA                 lea     ecx, (dword_30F7B80 - 2EE000h)[ebx+eax]
+  .text:0013DFF1                 cmp     dword ptr [ecx+8], 1
+  .text:0013DFF5                 jz      loc_13E588
+  .text:0013DFFB                 mov     ecx, [esp+9Ch+var_48]
+  .text:0013DFFF                 mov     edx, 8058h
+  .text:0013E004                 mov     [esp+9Ch+base], edx
+  .text:0013E008                 mov     [esp+9Ch+height], ecx
+  .text:0013E00C                 mov     ecx, [esp+9Ch+var_4C]
+  .text:0013E010                 mov     [esp+9Ch+width], ecx
+  .text:0013E014                 mov     eax, [edi+eax]
+  .text:0013E017                 mov     [esp+9Ch+name], 8D41h
+  .text:0013E01E                 mov     [esp+9Ch+endptr], eax
+  .text:0013E022                 mov     eax, [esp+9Ch+var_5C]
+  .text:0013E026                 call    dword ptr [eax]
+  .text:0013E028                 mov     eax, ds:(__glewFramebufferRenderbufferEXT_ptr - 2EE000h)[ebx]
+  .text:0013E02E                 mov     [esp+9Ch+name], 8D40h
+  .text:0013E035                 mov     ecx, eax
+  .text:0013E037                 mov     [esp+9Ch+var_64], eax
+  .text:0013E03B                 mov     eax, ds:(s_MSAAFBO.s_hBackBufferCB - 2EE000h)[ebx]
+  .text:0013E041                 mov     [esp+9Ch+width], eax
+  .text:0013E045                 mov     eax, 8D41h
+  .text:0013E04A                 mov     [esp+9Ch+base], eax
+  .text:0013E04E                 mov     eax, 8CE0h
+  .text:0013E053                 mov     [esp+9Ch+endptr], eax
+  .text:0013E057                 call    dword ptr [ecx]
+  .text:0013E059                 lea     eax, (s_MSAAFBO.s_hBackBufferDB - 2EE000h)[ebx]
+  .text:0013E05F                 mov     [esp+9Ch+var_50], eax
+  .text:0013E063                 mov     [esp+9Ch+endptr], eax
+  .text:0013E067                 mov     eax, [esp+9Ch+var_68]
+  .text:0013E06B                 mov     [esp+9Ch+name], 1
+  .text:0013E072                 call    dword ptr [eax]
+  .text:0013E074                 mov     eax, ds:(s_MSAAFBO.s_hBackBufferDB - 2EE000h)[ebx]
+  .text:0013E07A                 mov     [esp+9Ch+name], 8D41h
+  .text:0013E081                 mov     [esp+9Ch+endptr], eax
+  .text:0013E085                 mov     eax, [esp+9Ch+var_60]
+  .text:0013E089                 call    dword ptr [eax]
+  .text:0013E08B                 lea     eax, [esi+esi*2]
+  .text:0013E08E                 shl     eax, 2
+  .text:0013E091                 lea     ecx, (dword_30F7B80 - 2EE000h)[ebx+eax]
+  .text:0013E098                 cmp     dword ptr [ecx+8], 1
+  .text:0013E09C                 jz      loc_13E548
+  .text:0013E0A2                 mov     ecx, [esp+9Ch+var_48]
+  .text:0013E0A6                 mov     edx, 84F9h
+  .text:0013E0AB                 mov     [esp+9Ch+base], edx
+  .text:0013E0AF                 mov     [esp+9Ch+height], ecx
+  .text:0013E0B3                 mov     ecx, [esp+9Ch+var_4C]
+  .text:0013E0B7                 mov     [esp+9Ch+width], ecx
+  .text:0013E0BB                 mov     eax, [edi+eax]
+  .text:0013E0BE                 mov     [esp+9Ch+name], 8D41h
+  .text:0013E0C5                 mov     [esp+9Ch+endptr], eax
+  .text:0013E0C9                 mov     eax, [esp+9Ch+var_5C]
+  .text:0013E0CD                 call    dword ptr [eax]
+  .text:0013E0CF                 mov     eax, ds:(s_MSAAFBO.s_hBackBufferDB - 2EE000h)[ebx]
+  .text:0013E0D5                 mov     edi, [esp+9Ch+var_64]
+  .text:0013E0D9                 mov     [esp+9Ch+name], 8D40h
+  .text:0013E0E0                 mov     [esp+9Ch+width], eax
+  .text:0013E0E4                 mov     eax, 8D41h
+  .text:0013E0E9                 mov     [esp+9Ch+base], eax
+  .text:0013E0ED                 mov     eax, 8D00h
+  .text:0013E0F2                 mov     [esp+9Ch+endptr], eax
+  .text:0013E0F6                 call    dword ptr [edi]
+  .text:0013E0F8                 mov     eax, ds:(s_MSAAFBO.s_hBackBufferDB - 2EE000h)[ebx]
+  .text:0013E0FE                 mov     [esp+9Ch+name], 8D40h
+  .text:0013E105                 mov     [esp+9Ch+width], eax
+  .text:0013E109                 mov     eax, 8D41h
+  .text:0013E10E                 mov     [esp+9Ch+base], eax
+  .text:0013E112                 mov     eax, 8D20h
+  .text:0013E117                 ; char
+  .text:0013E117                 mov     [esp+9Ch+endptr], eax; char
+  .text:0013E11B                 call    dword ptr [edi]
+  .text:0013E11D                 mov     eax, ds:(__glewCheckFramebufferStatusEXT_ptr - 2EE000h)[ebx]
+  .text:0013E123                 mov     [esp+9Ch+name], 8D40h
+  .text:0013E12A                 call    dword ptr [eax]
+  .text:0013E12C                 cmp     eax, 8CD5h
+  .text:0013E131                 jz      loc_13E518
+  .text:0013E137                 mov     ebp, dword ptr ds:(s_MSAAFBO.s_hBackBufferFBO - 2EE000h)[ebx]
+  .text:0013E13D                 test    ebp, ebp
+  .text:0013E13F                 jnz     loc_13E5C3
+  .text:0013E145                 mov     edi, ds:(s_MSAAFBO.s_hBackBufferCB - 2EE000h)[ebx]
+  .text:0013E14B                 test    edi, edi
+  .text:0013E14D                 jnz     loc_13E616
+  .text:0013E153                 mov     esi, ds:(s_MSAAFBO.s_hBackBufferDB - 2EE000h)[ebx]
+  .text:0013E159                 test    esi, esi
+  .text:0013E15B                 jnz     loc_13E5FA
+  .text:0013E161                 mov     ecx, ds:(s_MSAAFBO.s_hBackBufferTex - 2EE000h)[ebx]
+  .text:0013E167                 test    ecx, ecx
+  .text:0013E169                 jnz     loc_13E5DF
+  .text:0013E16F                 lea     eax, (aErrorInitializ - 2EE000h)[ebx]; "Error initializing MSAA frame buffer\n"
+  .text:0013E175                 pxor    xmm0, xmm0
+  .text:0013E179                 movdqa  xmmword ptr ds:(s_MSAAFBO.s_hBackBufferFBO - 2EE000h)[ebx], xmm0
+  .text:0013E181                 ; fmt
+  .text:0013E181                 mov     [esp+9Ch+name], eax; fmt
+  .text:0013E184                 call    Con_Printf
+  .text:0013E189                 xor     edx, edx
+  .text:0013E18B                 mov     dword ptr ds:(s_MSAAFBO.s_hBackBufferFBO - 2EE000h)[ebx], edx
+  .text:0013E191                 mov     eax, (bDoScaledFBO - 2EE000h)[ebx]
+  .text:0013E197                 test    eax, eax
+  .text:0013E199                 jle     loc_13E34A
+  .text:0013E19F                 mov     ebp, ds:(__glewBindFramebufferEXT_ptr - 2EE000h)[ebx]
+  .text:0013E1A5                 ; cap
+  .text:0013E1A5                 mov     [esp+9Ch+name], 84F5h; cap
+  .text:0013E1AC                 call    _glEnable
+  .text:0013E1B1                 lea     eax, (s_BackBufferFBO.s_hBackBufferFBO - 2EE000h)[ebx]
+  .text:0013E1B7                 mov     [esp+9Ch+endptr], eax
+  .text:0013E1BB                 mov     eax, [esp+9Ch+var_6C]
+  .text:0013E1BF                 mov     [esp+9Ch+name], 1
+  .text:0013E1C6                 call    dword ptr [eax]
+  .text:0013E1C8                 mov     eax, dword ptr ds:(s_BackBufferFBO.s_hBackBufferFBO - 2EE000h)[ebx]
+  .text:0013E1CE                 mov     [esp+9Ch+name], 8D40h
+  .text:0013E1D5                 mov     [esp+9Ch+endptr], eax
+  .text:0013E1D9                 call    dword ptr [ebp+0]
+  .text:0013E1DC                 mov     eax, dword ptr ds:(s_MSAAFBO.s_hBackBufferFBO - 2EE000h)[ebx]
+  .text:0013E1E2                 test    eax, eax
+  .text:0013E1E4                 jz      loc_13E450
+  .text:0013E1EA                 lea     eax, (s_BackBufferFBO.s_hBackBufferTex - 2EE000h)[ebx]
+  .text:0013E1F0                 mov     esi, 1E01h
+  .text:0013E1F5                 ; textures
+  .text:0013E1F5                 mov     [esp+9Ch+endptr], eax; textures
+  .text:0013E1F9                 mov     edi, 2200h
+  .text:0013E1FE                 xor     ebp, ebp
+  .text:0013E200                 ; n
+  .text:0013E200                 mov     [esp+9Ch+name], 1; n
+  .text:0013E207                 call    _glGenTextures
+  .text:0013E20C                 mov     eax, ds:(s_BackBufferFBO.s_hBackBufferTex - 2EE000h)[ebx]
+  .text:0013E212                 ; target
+  .text:0013E212                 mov     [esp+9Ch+name], 84F5h; target
+  .text:0013E219                 ; texture
+  .text:0013E219                 mov     [esp+9Ch+endptr], eax; texture
+  .text:0013E21D                 call    _glBindTexture
+  .text:0013E222                 mov     eax, 2601h
+  .text:0013E227                 ; param
+  .text:0013E227                 mov     [esp+9Ch+base], eax; param
+  .text:0013E22B                 mov     eax, 2800h
+  .text:0013E230                 ; pname
+  .text:0013E230                 mov     [esp+9Ch+endptr], eax; pname
+  .text:0013E234                 ; target
+  .text:0013E234                 mov     [esp+9Ch+name], 84F5h; target
+  .text:0013E23B                 call    _glTexParameteri
+  .text:0013E240                 mov     eax, 2601h
+  .text:0013E245                 ; param
+  .text:0013E245                 mov     [esp+9Ch+base], eax; param
+  .text:0013E249                 mov     eax, 2801h
+  .text:0013E24E                 ; pname
+  .text:0013E24E                 mov     [esp+9Ch+endptr], eax; pname
+  .text:0013E252                 ; target
+  .text:0013E252                 mov     [esp+9Ch+name], 84F5h; target
+  .text:0013E259                 call    _glTexParameteri
+  .text:0013E25E                 mov     eax, 812Fh
+  .text:0013E263                 ; param
+  .text:0013E263                 mov     [esp+9Ch+base], eax; param
+  .text:0013E267                 mov     eax, 2802h
+  .text:0013E26C                 ; pname
+  .text:0013E26C                 mov     [esp+9Ch+endptr], eax; pname
+  .text:0013E270                 ; target
+  .text:0013E270                 mov     [esp+9Ch+name], 84F5h; target
+  .text:0013E277                 call    _glTexParameteri
+  .text:0013E27C                 mov     edx, 812Fh
+  .text:0013E281                 mov     ecx, 2803h
+  .text:0013E286                 ; param
+  .text:0013E286                 mov     [esp+9Ch+base], edx; param
+  .text:0013E28A                 ; pname
+  .text:0013E28A                 mov     [esp+9Ch+endptr], ecx; pname
+  .text:0013E28E                 ; target
+  .text:0013E28E                 mov     [esp+9Ch+name], 84F5h; target
+  .text:0013E295                 call    _glTexParameteri
+  .text:0013E29A                 ; param
+  .text:0013E29A                 mov     [esp+9Ch+base], esi; param
+  .text:0013E29E                 xor     esi, esi
+  .text:0013E2A0                 ; pname
+  .text:0013E2A0                 mov     [esp+9Ch+endptr], edi; pname
+  .text:0013E2A4                 ; target
+  .text:0013E2A4                 mov     [esp+9Ch+name], 2300h; target
+  .text:0013E2AB                 call    _glTexEnvi
+  .text:0013E2B0                 mov     eax, 1401h
+  .text:0013E2B5                 ; type
+  .text:0013E2B5                 mov     [esp+9Ch+type], eax; type
+  .text:0013E2B9                 mov     eax, 1908h
+  .text:0013E2BE                 ; format
+  .text:0013E2BE                 mov     [esp+9Ch+format], eax; format
+  .text:0013E2C2                 xor     eax, eax
+  .text:0013E2C4                 ; border
+  .text:0013E2C4                 mov     [esp+9Ch+border], eax; border
+  .text:0013E2C8                 mov     eax, [esp+9Ch+var_48]
+  .text:0013E2CC                 ; pixels
+  .text:0013E2CC                 mov     [esp+9Ch+pixels], ebp; pixels
+  .text:0013E2D0                 ; target
+  .text:0013E2D0                 mov     [esp+9Ch+name], 84F5h; target
+  .text:0013E2D7                 ; height
+  .text:0013E2D7                 mov     [esp+9Ch+height], eax; height
+  .text:0013E2DB                 mov     eax, [esp+9Ch+var_4C]
+  .text:0013E2DF                 ; width
+  .text:0013E2DF                 mov     [esp+9Ch+width], eax; width
+  .text:0013E2E3                 mov     eax, 1908h
+  .text:0013E2E8                 ; internalFormat
+  .text:0013E2E8                 mov     [esp+9Ch+base], eax; internalFormat
+  .text:0013E2EC                 xor     eax, eax
+  .text:0013E2EE                 ; level
+  .text:0013E2EE                 mov     [esp+9Ch+endptr], eax; level
+  .text:0013E2F2                 call    _glTexImage2D
+  .text:0013E2F7                 xor     eax, eax
+  .text:0013E2F9                 mov     edx, 84F5h
+  .text:0013E2FE                 mov     [esp+9Ch+height], eax
+  .text:0013E302                 mov     eax, ds:(s_BackBufferFBO.s_hBackBufferTex - 2EE000h)[ebx]
+  .text:0013E308                 mov     ecx, 8CE0h
+  .text:0013E30D                 mov     [esp+9Ch+base], edx
+  .text:0013E311                 mov     [esp+9Ch+endptr], ecx
+  .text:0013E315                 mov     [esp+9Ch+name], 8D40h
+  .text:0013E31C                 mov     [esp+9Ch+width], eax
+  .text:0013E320                 mov     eax, ds:(__glewFramebufferTexture2DEXT_ptr - 2EE000h)[ebx]
+  .text:0013E326                 call    dword ptr [eax]
+  .text:0013E328                 ; texture
+  .text:0013E328                 mov     [esp+9Ch+endptr], esi; texture
+  .text:0013E32C                 ; target
+  .text:0013E32C                 mov     [esp+9Ch+name], 84F5h; target
+  .text:0013E333                 call    _glBindTexture
+  .text:0013E338                 ; cap
+  .text:0013E338                 mov     [esp+9Ch+name], 84F5h; cap
+  .text:0013E33F                 call    _glDisable
+  .text:0013E344                 mov     eax, (bDoScaledFBO - 2EE000h)[ebx]
+  .text:0013E34A                 test    eax, eax
+  .text:0013E34C                 jnz     loc_13E430
+  .text:0013E352                 call    sub_13DAF0
+  .text:0013E357                 mov     eax, [esp+9Ch+var_4C]
+  .text:0013E35B                 lea     esi, [esp+9Ch+var_30]
+  .text:0013E35F                 xor     edx, edx
+  .text:0013E361                 mov     [esp+9Ch+base], esi
+  .text:0013E365                 mov     [esp+9Ch+name], 0
+  .text:0013E36C                 mov     [esp+9Ch+var_40], eax
+  .text:0013E370                 mov     eax, [esp+9Ch+var_48]
+  .text:0013E374                 mov     dword ptr [esp+9Ch+var_44], edx
+  .text:0013E378                 mov     [esp+9Ch+var_3C], eax
+  .text:0013E37C                 xor     eax, eax
+  .text:0013E37E                 mov     [esp+9Ch+var_38], eax
+  .text:0013E382                 lea     eax, [esp+9Ch+var_44]
+  .text:0013E386                 ; char
+  .text:0013E386                 mov     [esp+9Ch+endptr], eax; char
+  .text:0013E38A                 call    _SDL_GetClosestDisplayMode
+  .text:0013E38F                 test    eax, eax
+  .text:0013E391                 jz      loc_13E632
+  .text:0013E397                 mov     ebp, (bDoScaledFBO - 2EE000h)[ebx]
+  .text:0013E39D                 test    ebp, ebp
+  .text:0013E39F                 jz      loc_13E500
+  .text:0013E3A5                 lea     eax, (aFboBackbufferR - 2EE000h)[ebx]; "FBO backbuffer rendering disabled due t"...
+  .text:0013E3AB                 ; fmt
+  .text:0013E3AB                 mov     [esp+9Ch+name], eax; fmt
+  .text:0013E3AE                 call    Con_Printf
+  .text:0013E3B3                 mov     eax, [esp+9Ch+mainwindow]
+  .text:0013E3BA                 mov     [esp+9Ch+endptr], esi
+  .text:0013E3BE                 mov     [esp+9Ch+name], eax
+  .text:0013E3C1                 call    _SDL_SetWindowDisplayMode
+  .text:0013E3C6                 lea     eax, (dword_7AE14A4 - 2EE000h)[ebx]
+  .text:0013E3CC                 mov     dword ptr [eax], 1
+  .text:0013E3D2                 call    sub_182E90
+  .text:0013E3D7                 mov     edi, (bDoScaledFBO - 2EE000h)[ebx]
+  .text:0013E3DD                 test    edi, edi
+  .text:0013E3DF                 jle     loc_13DE12
+  .text:0013E3E5                 mov     eax, ds:(__glewBindFramebufferEXT_ptr - 2EE000h)[ebx]
+  .text:0013E3EB                 xor     esi, esi
+  .text:0013E3ED                 mov     [esp+9Ch+endptr], esi
+  .text:0013E3F1                 mov     [esp+9Ch+name], 8D40h
+  .text:0013E3F8                 call    dword ptr [eax]
+  .text:0013E3FA                 add     esp, 8Ch
+  .text:0013E400                 mov     eax, 1
+  .text:0013E405                 pop     ebx
+  .text:0013E406                 pop     esi
+  .text:0013E407                 pop     edi
+  .text:0013E408                 pop     ebp
+  .text:0013E409                 retn
+  .text:0013E410                 lea     eax, (aMsaaBackbuffer - 2EE000h)[ebx]; "MSAA backbuffer rendering disabled.\n"
+  .text:0013E416                 ; fmt
+  .text:0013E416                 mov     [esp+9Ch+name], eax; fmt
+  .text:0013E419                 call    Con_Printf
+  .text:0013E41E                 xor     eax, eax
+  .text:0013E420                 mov     dword ptr ds:(s_MSAAFBO.s_hBackBufferFBO - 2EE000h)[ebx], eax
+  .text:0013E426                 jmp     loc_13E191
+  .text:0013E430                 mov     eax, ds:(__glewCheckFramebufferStatusEXT_ptr - 2EE000h)[ebx]
+  .text:0013E436                 mov     [esp+9Ch+name], 8D40h
+  .text:0013E43D                 call    dword ptr [eax]
+  .text:0013E43F                 cmp     eax, 8CD5h
+  .text:0013E444                 jnz     loc_13E352
+  .text:0013E44A                 jmp     short loc_13E3D7
+  .text:0013E450                 lea     eax, (s_BackBufferFBO.s_hBackBufferDB - 2EE000h)[ebx]
+  .text:0013E456                 mov     edi, 84F9h
+  .text:0013E45B                 mov     [esp+9Ch+endptr], eax
+  .text:0013E45F                 mov     eax, ds:(__glewGenRenderbuffersEXT_ptr - 2EE000h)[ebx]
+  .text:0013E465                 mov     ebp, 8D41h
+  .text:0013E46A                 mov     [esp+9Ch+name], 1
+  .text:0013E471                 call    dword ptr [eax]
+  .text:0013E473                 mov     eax, ds:(s_BackBufferFBO.s_hBackBufferDB - 2EE000h)[ebx]
+  .text:0013E479                 mov     [esp+9Ch+name], 8D41h
+  .text:0013E480                 mov     [esp+9Ch+endptr], eax
+  .text:0013E484                 mov     eax, ds:(__glewBindRenderbufferEXT_ptr - 2EE000h)[ebx]
+  .text:0013E48A                 call    dword ptr [eax]
+  .text:0013E48C                 mov     eax, [esp+9Ch+var_48]
+  .text:0013E490                 mov     [esp+9Ch+endptr], edi
+  .text:0013E494                 mov     [esp+9Ch+name], 8D41h
+  .text:0013E49B                 mov     [esp+9Ch+width], eax
+  .text:0013E49F                 mov     eax, [esp+9Ch+var_4C]
+  .text:0013E4A3                 mov     [esp+9Ch+base], eax
+  .text:0013E4A7                 mov     eax, ds:(__glewRenderbufferStorageEXT_ptr - 2EE000h)[ebx]
+  .text:0013E4AD                 call    dword ptr [eax]
+  .text:0013E4AF                 mov     eax, ds:(s_BackBufferFBO.s_hBackBufferDB - 2EE000h)[ebx]
+  .text:0013E4B5                 mov     esi, ds:(__glewFramebufferRenderbufferEXT_ptr - 2EE000h)[ebx]
+  .text:0013E4BB                 mov     [esp+9Ch+base], ebp
+  .text:0013E4BF                 mov     [esp+9Ch+name], 8D40h
+  .text:0013E4C6                 mov     [esp+9Ch+width], eax
+  .text:0013E4CA                 mov     eax, 8D00h
+  .text:0013E4CF                 mov     [esp+9Ch+endptr], eax
+  .text:0013E4D3                 call    dword ptr [esi]
+  .text:0013E4D5                 mov     eax, ds:(s_BackBufferFBO.s_hBackBufferDB - 2EE000h)[ebx]
+  .text:0013E4DB                 mov     [esp+9Ch+name], 8D40h
+  .text:0013E4E2                 mov     [esp+9Ch+width], eax
+  .text:0013E4E6                 mov     eax, 8D41h
+  .text:0013E4EB                 mov     [esp+9Ch+base], eax
+  .text:0013E4EF                 mov     eax, 8D20h
+  .text:0013E4F4                 mov     [esp+9Ch+endptr], eax
+  .text:0013E4F8                 call    dword ptr [esi]
+  .text:0013E4FA                 jmp     loc_13E1EA
+  .text:0013E500                 lea     eax, (aFboBackbufferR_0 - 2EE000h)[ebx]; "FBO backbuffer rendering disabled.\n"
+  .text:0013E506                 ; fmt
+  .text:0013E506                 mov     [esp+9Ch+name], eax; fmt
+  .text:0013E509                 call    Con_Printf
+  .text:0013E50E                 jmp     loc_13E3B3
+  .text:0013E518                 mov     eax, (bDoScaledFBO - 2EE000h)[ebx]
+  .text:0013E51E                 test    eax, eax
+  .text:0013E520                 jle     loc_13E34A
+  .text:0013E526                 mov     eax, dword ptr ds:(s_MSAAFBO.s_hBackBufferFBO - 2EE000h)[ebx]
+  .text:0013E52C                 test    eax, eax
+  .text:0013E52E                 jz      loc_13E1A5
+  .text:0013E534                 ; cap
+  .text:0013E534                 mov     [esp+9Ch+name], 809Dh; cap
+  .text:0013E53B                 call    _glEnable
+  .text:0013E540                 jmp     loc_13E1A5
+  .text:0013E548                 mov     esi, [esp+9Ch+var_48]
+  .text:0013E54C                 mov     [esp+9Ch+border], esi
+  .text:0013E550                 mov     esi, [esp+9Ch+var_4C]
+  .text:0013E554                 mov     [esp+9Ch+height], esi
+  .text:0013E558                 mov     esi, 84F9h
+  .text:0013E55D                 mov     [esp+9Ch+width], esi
+  .text:0013E561                 mov     eax, [edi+eax]
+  .text:0013E564                 mov     [esp+9Ch+base], eax
+  .text:0013E568                 mov     eax, [ecx+4]
+  .text:0013E56B                 mov     [esp+9Ch+name], 8D41h
+  .text:0013E572                 mov     [esp+9Ch+endptr], eax
+  .text:0013E576                 mov     eax, ds:(__glewRenderbufferStorageMultisampleCoverageNV_ptr - 2EE000h)[ebx]
+  .text:0013E57C                 call    dword ptr [eax]
+  .text:0013E57E                 jmp     loc_13E0CF
+  .text:0013E588                 mov     edx, [esp+9Ch+var_48]
+  .text:0013E58C                 mov     [esp+9Ch+border], edx
+  .text:0013E590                 mov     edx, [esp+9Ch+var_4C]
+  .text:0013E594                 mov     [esp+9Ch+height], edx
+  .text:0013E598                 mov     edx, 8058h
+  .text:0013E59D                 mov     [esp+9Ch+width], edx
+  .text:0013E5A1                 mov     eax, [edi+eax]
+  .text:0013E5A4                 mov     [esp+9Ch+base], eax
+  .text:0013E5A8                 mov     eax, [ecx+4]
+  .text:0013E5AB                 mov     [esp+9Ch+name], 8D41h
+  .text:0013E5B2                 mov     [esp+9Ch+endptr], eax
+  .text:0013E5B6                 mov     eax, ds:(__glewRenderbufferStorageMultisampleCoverageNV_ptr - 2EE000h)[ebx]
+  .text:0013E5BC                 call    dword ptr [eax]
+  .text:0013E5BE                 jmp     loc_13E028
+  .text:0013E5C3                 mov     eax, [esp+9Ch+var_58]
+  .text:0013E5C7                 mov     [esp+9Ch+name], 1
+  .text:0013E5CE                 mov     [esp+9Ch+endptr], eax
+  .text:0013E5D2                 mov     eax, ds:(__glewDeleteFramebuffersEXT_ptr - 2EE000h)[ebx]
+  .text:0013E5D8                 call    dword ptr [eax]
+  .text:0013E5DA                 jmp     loc_13E145
+  .text:0013E5DF                 lea     eax, (s_MSAAFBO.s_hBackBufferTex - 2EE000h)[ebx]
+  .text:0013E5E5                 ; textures
+  .text:0013E5E5                 mov     [esp+9Ch+endptr], eax; textures
+  .text:0013E5E9                 ; n
+  .text:0013E5E9                 mov     [esp+9Ch+name], 1; n
+  .text:0013E5F0                 call    _glDeleteTextures
+  .text:0013E5F5                 jmp     loc_13E16F
+  .text:0013E5FA                 mov     eax, [esp+9Ch+var_50]
+  .text:0013E5FE                 mov     [esp+9Ch+name], 1
+  .text:0013E605                 mov     [esp+9Ch+endptr], eax
+  .text:0013E609                 mov     eax, ds:(__glewDeleteRenderbuffersEXT_ptr - 2EE000h)[ebx]
+  .text:0013E60F                 call    dword ptr [eax]
+  .text:0013E611                 jmp     loc_13E161
+  .text:0013E616                 mov     eax, [esp+9Ch+var_54]
+  .text:0013E61A                 mov     [esp+9Ch+name], 1
+  .text:0013E621                 mov     [esp+9Ch+endptr], eax
+  .text:0013E625                 mov     eax, ds:(__glewDeleteRenderbuffersEXT_ptr - 2EE000h)[ebx]
+  .text:0013E62B                 call    dword ptr [eax]
+  .text:0013E62D                 jmp     loc_13E153
+  .text:0013E632                 lea     eax, (aErrorInitializ_0 - 2EE000h)[ebx]; "Error initializing Main frame buffer\n"
+  .text:0013E638                 ; fmt
+  .text:0013E638                 mov     [esp+9Ch+name], eax; fmt
+  .text:0013E63B                 call    Sys_Error
+  .text:0013E640                 jmp     loc_13E397
+procedure: |-
+  // s_bEnforceAspect receives COM_CheckParm("-stretchaspect")==0; it is global, unlike the startup-screen local with the same source name.
+  // bDoMSAAFBO is disabled by -nomsaa and guards multisample renderbuffer creation. AA mode count/index are separate globals.
+  // bDoScaledFBO is disabled by -nofbo or missing FBO/rectangle-texture support and guards the scaled backbuffer.
+  // s_bSupportsBlitTexturing is set by GL_EXT_framebuffer_multisample_blit_scaled support and overridden by -directblit / -nodirectblit.
+  // s_MSAAFBO is the complete four-GLuint container whose framebuffer has MULTISAMPLE renderbuffer attachments. Select its base address passed to GenFramebuffersEXT.
+  // s_BackBufferFBO is the complete four-GLuint container whose framebuffer has a RECTANGLE TEXTURE attachment. Select its base address passed to GenFramebuffersEXT.
+  // The first field s_hBackBufferFBO is at the container base. CB, DB and Tex are interior members, not independent targets. Linux PIC/GOT operands must resolve to the object, not the GOT slot.
+  // Current binary is authoritative. HLND2T_official is a semantic reference, not this exact source revision. Preserve platform-specific SDL/WGL, AA mode and frame-pacing paths.
+  int __cdecl GL_SetMode(void *mainwindow, void **pmaindc, void **pbaseRC)
+  {
+    int v3; // eax
+    int v4; // eax
+    int v5; // esi
+    int *v7; // eax
+    int v8; // eax
+    int *v9; // ecx
+    int *v10; // ecx
+    int v11; // eax
+    GLsizei width; // [esp+50h] [ebp-4Ch] BYREF
+    GLsizei height; // [esp+54h] [ebp-48h] BYREF
+    char v14[4]; // [esp+58h] [ebp-44h] BYREF
+    GLsizei v15; // [esp+5Ch] [ebp-40h]
+    GLsizei v16; // [esp+60h] [ebp-3Ch]
+    int v17; // [esp+64h] [ebp-38h]
+    _BYTE v18[48]; // [esp+6Ch] [ebp-30h] BYREF
+
+    v3 = glewInit();
+    Con_Printf("GL_SetMode::glewInit() err = %i\n", v3);
+    *pbaseRC = nullptr;
+    *pmaindc = nullptr;
+    s_bEnforceAspect = COM_CheckParm("-stretchaspect") == 0;
+    if ( COM_CheckParm("-nomsaa") )
+      bDoMSAAFBO = 0;
+    if ( COM_CheckParm("-nofbo") )
+      bDoScaledFBO = 0;
+    if ( sub_70980() > 0 )
+    {
+      bDoScaledFBO = 0;
+      bDoMSAAFBO = 0;
+      dword_2F1664 = 9985;
+    }
+    gl_extensions = (const char *)glGetString(0x1F03u);
+    s_bSupportsBlitTexturing = SDL_GL_ExtensionSupported("GL_EXT_framebuffer_multisample_blit_scaled") != 0;
+    if ( COM_CheckParm("-directblit") )
+      s_bSupportsBlitTexturing = 1;
+    if ( COM_CheckParm("-nodirectblit") )
+      s_bSupportsBlitTexturing = 0;
+    sub_13C1A0();
+    if ( !_glewGenFramebuffersEXT || !_glewBindFramebufferEXT || !_glewBlitFramebufferEXT )
+      bDoScaledFBO = 0;
+    if ( !SDL_GL_ExtensionSupported("GL_ARB_texture_rectangle") && !SDL_GL_ExtensionSupported("GL_NV_texture_rectangle") )
+      bDoScaledFBO = 0;
+    if ( !dword_30F7B60 )
+      bDoMSAAFBO = 0;
+    v4 = sub_182E40();
+    s_MSAAFBO.s_hBackBufferFBO = 0;
+    v5 = v4;
+    if ( v4 )
+      return 1;
+    s_MSAAFBO.s_hBackBufferTex = 0;
+    s_BackBufferFBO.s_hBackBufferFBO = 0;
+    s_BackBufferFBO.s_hBackBufferCB = 0;
+    s_BackBufferFBO.s_hBackBufferDB = 0;
+    s_BackBufferFBO.s_hBackBufferTex = 0;
+    s_MSAAFBO.s_hBackBufferCB = 0;
+    s_MSAAFBO.s_hBackBufferDB = 0;
+    sub_182C00(&width, &height, 0);
+    if ( dword_30F7B60 <= 0 )
+      goto LABEL_59;
+    v7 = dword_30F7B80;
+    while ( v7[1] != 4 || *v7 != 4 )
+    {
+      ++v5;
+      v7 += 3;
+      if ( dword_30F7B60 == v5 )
+      {
+        v8 = COM_CheckParm("-aamode");
+        if ( !v8 )
+          goto LABEL_59;
+        goto LABEL_30;
+      }
+    }
+    v8 = COM_CheckParm("-aamode");
+    if ( !v8 )
+      goto LABEL_31;
+  LABEL_30:
+    v5 = strtol(*(const char **)(dword_2F91C0 + 4 * v8 + 4), nullptr, 10);
+    if ( v5 < 0 )
+      goto LABEL_59;
+  LABEL_31:
+    if ( dword_30F7B60 <= v5 || !_glewRenderbufferStorageMultisampleEXT || bDoMSAAFBO <= 0 )
+    {
+  LABEL_59:
+      Con_Printf("MSAA backbuffer rendering disabled.\n");
+      s_MSAAFBO.s_hBackBufferFBO = 0;
+      goto LABEL_48;
+    }
+    dword_2F1B80 = v5;
+    ((void (__cdecl *)(int, FBO_Container_t *))_glewGenFramebuffersEXT)(1, &s_MSAAFBO);
+    ((void (__cdecl *)(int, unsigned int))_glewBindFramebufferEXT)(36160, s_MSAAFBO.s_hBackBufferFBO);
+    ((void (__cdecl *)(int, unsigned int *))_glewGenRenderbuffersEXT)(1, &s_MSAAFBO.s_hBackBufferCB);
+    ((void (__cdecl *)(int, unsigned int))_glewBindRenderbufferEXT)(36161, s_MSAAFBO.s_hBackBufferCB);
+    v9 = &dword_30F7B80[3 * v5];
+    if ( v9[2] == 1 )
+      ((void (__cdecl *)(int, int, int, int, GLsizei, GLsizei))_glewRenderbufferStorageMultisampleCoverageNV)(
+        36161,
+        v9[1],
+        dword_30F7B80[3 * v5],
+        32856,
+        width,
+        height);
+    else
+      ((void (__cdecl *)(int, int, int, GLsizei, GLsizei))_glewRenderbufferStorageMultisampleEXT)(
+        36161,
+        dword_30F7B80[3 * v5],
+        32856,
+        width,
+        height);
+    ((void (__cdecl *)(int, int, int, unsigned int))_glewFramebufferRenderbufferEXT)(
+      36160,
+      36064,
+      36161,
+      s_MSAAFBO.s_hBackBufferCB);
+    ((void (__cdecl *)(int, unsigned int *))_glewGenRenderbuffersEXT)(1, &s_MSAAFBO.s_hBackBufferDB);
+    ((void (__cdecl *)(int, unsigned int))_glewBindRenderbufferEXT)(36161, s_MSAAFBO.s_hBackBufferDB);
+    v10 = &dword_30F7B80[3 * v5];
+    if ( v10[2] == 1 )
+      ((void (__cdecl *)(int, int, int, int, GLsizei, GLsizei))_glewRenderbufferStorageMultisampleCoverageNV)(
+        36161,
+        v10[1],
+        dword_30F7B80[3 * v5],
+        34041,
+        width,
+        height);
+    else
+      ((void (__cdecl *)(int, int, int, GLsizei, GLsizei))_glewRenderbufferStorageMultisampleEXT)(
+        36161,
+        dword_30F7B80[3 * v5],
+        34041,
+        width,
+        height);
+    ((void (__cdecl *)(int, int, int, unsigned int))_glewFramebufferRenderbufferEXT)(
+      36160,
+      36096,
+      36161,
+      s_MSAAFBO.s_hBackBufferDB);
+    ((void (__cdecl *)(int, int, int, unsigned int))_glewFramebufferRenderbufferEXT)(
+      36160,
+      36128,
+      36161,
+      s_MSAAFBO.s_hBackBufferDB);
+    if ( ((int (__cdecl *)(int))_glewCheckFramebufferStatusEXT)(36160) != 36053 )
+    {
+      if ( s_MSAAFBO.s_hBackBufferFBO )
+        ((void (__cdecl *)(int, FBO_Container_t *))_glewDeleteFramebuffersEXT)(1, &s_MSAAFBO);
+      if ( s_MSAAFBO.s_hBackBufferCB )
+        ((void (__cdecl *)(int, unsigned int *))_glewDeleteRenderbuffersEXT)(1, &s_MSAAFBO.s_hBackBufferCB);
+      if ( s_MSAAFBO.s_hBackBufferDB )
+        ((void (__cdecl *)(int, unsigned int *))_glewDeleteRenderbuffersEXT)(1, &s_MSAAFBO.s_hBackBufferDB);
+      if ( s_MSAAFBO.s_hBackBufferTex )
+        glDeleteTextures(1, &s_MSAAFBO.s_hBackBufferTex);
+      s_MSAAFBO = 0;
+      Con_Printf("Error initializing MSAA frame buffer\n");
+      s_MSAAFBO.s_hBackBufferFBO = 0;
+  LABEL_48:
+      v11 = bDoScaledFBO;
+      if ( bDoScaledFBO <= 0 )
+        goto LABEL_52;
+      goto LABEL_49;
+    }
+    v11 = bDoScaledFBO;
+    if ( bDoScaledFBO <= 0 )
+      goto LABEL_52;
+    if ( s_MSAAFBO.s_hBackBufferFBO )
+      glEnable(0x809Du);
+  LABEL_49:
+    glEnable(0x84F5u);
+    ((void (__cdecl *)(int, FBO_Container_t *))_glewGenFramebuffersEXT)(1, &s_BackBufferFBO);
+    ((void (__cdecl *)(int, unsigned int))_glewBindFramebufferEXT)(36160, s_BackBufferFBO.s_hBackBufferFBO);
+    if ( !s_MSAAFBO.s_hBackBufferFBO )
+    {
+      ((void (__cdecl *)(int, unsigned int *))_glewGenRenderbuffersEXT)(1, &s_BackBufferFBO.s_hBackBufferDB);
+      ((void (__cdecl *)(int, unsigned int))_glewBindRenderbufferEXT)(36161, s_BackBufferFBO.s_hBackBufferDB);
+      ((void (__cdecl *)(int, int, GLsizei, GLsizei))_glewRenderbufferStorageEXT)(36161, 34041, width, height);
+      ((void (__cdecl *)(int, int, int, unsigned int))_glewFramebufferRenderbufferEXT)(
+        36160,
+        36096,
+        36161,
+        s_BackBufferFBO.s_hBackBufferDB);
+      ((void (__cdecl *)(int, int, int, unsigned int))_glewFramebufferRenderbufferEXT)(
+        36160,
+        36128,
+        36161,
+        s_BackBufferFBO.s_hBackBufferDB);
+    }
+    glGenTextures(1, &s_BackBufferFBO.s_hBackBufferTex);
+    glBindTexture(0x84F5u, s_BackBufferFBO.s_hBackBufferTex);
+    glTexParameteri(0x84F5u, 0x2800u, 9729);
+    glTexParameteri(0x84F5u, 0x2801u, 9729);
+    glTexParameteri(0x84F5u, 0x2802u, 33071);
+    glTexParameteri(0x84F5u, 0x2803u, 33071);
+    glTexEnvi(0x2300u, 0x2200u, 7681);
+    glTexImage2D(0x84F5u, 0, 6408, width, height, 0, 0x1908u, 0x1401u, nullptr);
+    ((void (__cdecl *)(int, int, int, unsigned int, _DWORD))_glewFramebufferTexture2DEXT)(
+      36160,
+      36064,
+      34037,
+      s_BackBufferFBO.s_hBackBufferTex,
+      0);
+    glBindTexture(0x84F5u, 0);
+    glDisable(0x84F5u);
+    v11 = bDoScaledFBO;
+  LABEL_52:
+    if ( !v11 || ((int (__cdecl *)(int))_glewCheckFramebufferStatusEXT)(36160) != 36053 )
+    {
+      sub_13DAF0();
+      v15 = width;
+      *(_DWORD *)v14 = 0;
+      v16 = height;
+      v17 = 0;
+      if ( !SDL_GetClosestDisplayMode(0, v14, v18) )
+        Sys_Error("Error initializing Main frame buffer\n");
+      if ( bDoScaledFBO )
+        Con_Printf("FBO backbuffer rendering disabled due to create error.\n");
+      else
+        Con_Printf("FBO backbuffer rendering disabled.\n");
+      SDL_SetWindowDisplayMode(mainwindow, v18);
+      dword_7AE14A4 = 1;
+      sub_182E90();
+    }
+    if ( bDoScaledFBO <= 0 )
+      return 1;
+    ((void (__cdecl *)(int, _DWORD))_glewBindFramebufferEXT)(36160, 0);
+    return 1;
+  }

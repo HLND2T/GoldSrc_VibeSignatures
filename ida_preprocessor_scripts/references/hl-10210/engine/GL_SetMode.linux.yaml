@@ -1,0 +1,745 @@
+func_name: GL_SetMode
+func_va: '0x171990'
+disasm_code: |-
+  ; s_bEnforceAspect receives COM_CheckParm("-stretchaspect")==0; it is global, unlike the startup-screen local with the same source name.
+  ; bDoMSAAFBO is disabled by -nomsaa and guards multisample renderbuffer creation. AA mode count/index are separate globals.
+  ; bDoScaledFBO is disabled by -nofbo or missing FBO/rectangle-texture support and guards the scaled backbuffer.
+  ; s_bSupportsBlitTexturing is set by GL_EXT_framebuffer_multisample_blit_scaled support and overridden by -directblit / -nodirectblit.
+  ; s_MSAAFBO is the complete four-GLuint container whose framebuffer has MULTISAMPLE renderbuffer attachments. Select its base address passed to GenFramebuffersEXT.
+  ; s_BackBufferFBO is the complete four-GLuint container whose framebuffer has a RECTANGLE TEXTURE attachment. Select its base address passed to GenFramebuffersEXT.
+  ; The first field s_hBackBufferFBO is at the container base. CB, DB and Tex are interior members, not independent targets. Linux PIC/GOT operands must resolve to the object, not the GOT slot.
+  .text:00171990                 push    ebx
+  .text:00171991                 xor     eax, eax
+  .text:00171993                 sub     esp, 68h
+  .text:00171996                 mov     ds:gfMiniDriver, eax
+  .text:0017199B                 mov     eax, [esp+6Ch+pbaseRC]
+  .text:0017199F                 mov     dword ptr [eax], 0
+  .text:001719A5                 mov     eax, [esp+6Ch+pmaindc]
+  .text:001719A9                 mov     dword ptr [eax], 0
+  .text:001719AF                 mov     [esp+6Ch+parm], offset aStretchaspect; "-stretchaspect"
+  .text:001719B6                 call    COM_CheckParm
+  .text:001719BB                 mov     [esp+6Ch+parm], offset aNomsaa; "-nomsaa"
+  .text:001719C2                 test    eax, eax
+  .text:001719C4                 setz    al
+  .text:001719C7                 movzx   eax, al
+  .text:001719CA                 mov     s_bEnforceAspect, eax
+  .text:001719CF                 call    COM_CheckParm
+  .text:001719D4                 test    iVidCmd, iVidCmd
+  .text:001719D6                 jz      short loc_1719DF
+  .text:001719D8                 xor     iVidCmd, iVidCmd
+  .text:001719DA                 mov     bDoMSAAFBO, eax
+  .text:001719DF                 mov     [esp+6Ch+parm], offset aNofbo; "-nofbo"
+  .text:001719E6                 call    COM_CheckParm
+  .text:001719EB                 test    iVidCmd, iVidCmd
+  .text:001719ED                 jz      short loc_1719F7
+  .text:001719EF                 xor     ebx, ebx
+  .text:001719F1                 mov     bDoScaledFBO, ebx
+  .text:001719F7                 mov     iVidCmd, [esp+6Ch+pszCmdLine]
+  .text:001719FE                 ; pszCmdLine
+  .text:001719FE                 mov     [esp+6Ch+search], eax; pszCmdLine
+  .text:00171A02                 mov     eax, [esp+6Ch+pszDriver]
+  .text:00171A09                 ; pdllname
+  .text:00171A09                 mov     [esp+6Ch+parm], eax; pdllname
+  .text:00171A0C                 call    SDL_InitGL
+  .text:00171A11                 ; GLenum
+  .text:00171A11                 mov     [esp+6Ch+parm], 1F03h; GLenum
+  .text:00171A18                 call    ds:qglGetString
+  .text:00171A1E                 xor     ecx, ecx
+  .text:00171A20                 mov     ds:s_bSupportsBlitTexturing, ecx
+  .text:00171A26                 test    eax, eax
+  .text:00171A28                 mov     ds:gl_extensions, eax
+  .text:00171A2D                 jz      short loc_171A4E
+  .text:00171A2F                 mov     edx, offset aGlExtFramebuff; "GL_EXT_framebuffer_multisample_blit_sca"...
+  .text:00171A34                 ; search
+  .text:00171A34                 mov     [esp+6Ch+search], edx; search
+  .text:00171A38                 ; s1
+  .text:00171A38                 mov     [esp+6Ch+parm], eax; s1
+  .text:00171A3B                 call    Q_strstr
+  .text:00171A40                 test    eax, eax
+  .text:00171A42                 jz      short loc_171A4E
+  .text:00171A44                 mov     eax, 1
+  .text:00171A49                 mov     ds:s_bSupportsBlitTexturing, eax
+  .text:00171A4E                 mov     [esp+6Ch+parm], offset aDirectblit; "-directblit"
+  .text:00171A55                 call    COM_CheckParm
+  .text:00171A5A                 test    iVidCmd, iVidCmd
+  .text:00171A5C                 jz      short loc_171A68
+  .text:00171A5E                 mov     iVidCmd, 1
+  .text:00171A63                 mov     ds:s_bSupportsBlitTexturing, eax
+  .text:00171A68                 mov     [esp+6Ch+parm], offset aNodirectblit; "-nodirectblit"
+  .text:00171A6F                 call    COM_CheckParm
+  .text:00171A74                 test    iVidCmd, iVidCmd
+  .text:00171A76                 jz      short loc_171A7F
+  .text:00171A78                 xor     iVidCmd, iVidCmd
+  .text:00171A7A                 mov     ds:s_bSupportsBlitTexturing, eax
+  .text:00171A7F                 mov     eax, ds:qglGenFramebuffersEXT
+  .text:00171A84                 test    eax, eax
+  .text:00171A86                 jz      short loc_171AE0
+  .text:00171A88                 mov     eax, ds:qglBindFramebufferEXT
+  .text:00171A8D                 test    eax, eax
+  .text:00171A8F                 jz      short loc_171AE0
+  .text:00171A91                 mov     ebx, ds:qglBlitFramebufferEXT
+  .text:00171A97                 test    ebx, ebx
+  .text:00171A99                 jz      short loc_171AE0
+  .text:00171A9B                 mov     eax, ds:gl_extensions
+  .text:00171AA0                 test    eax, eax
+  .text:00171AA2                 jz      short loc_171ABD
+  .text:00171AA4                 mov     edx, offset aGlArbTextureRe; "GL_ARB_texture_rectangle"
+  .text:00171AA9                 ; search
+  .text:00171AA9                 mov     [esp+6Ch+search], edx; search
+  .text:00171AAD                 ; s1
+  .text:00171AAD                 mov     [esp+6Ch+parm], eax; s1
+  .text:00171AB0                 call    Q_strstr
+  .text:00171AB5                 test    eax, eax
+  .text:00171AB7                 jz      loc_172150
+  .text:00171ABD                 call    VideoMode_IsWindowed
+  .text:00171AC2                 xor     edx, edx
+  .text:00171AC4                 mov     ds:s_MSAAFBO.s_hBackBufferFBO, edx
+  .text:00171ACA                 test    eax, eax
+  .text:00171ACC                 jz      short loc_171AF0
+  .text:00171ACE                 add     esp, 68h
+  .text:00171AD1                 mov     eax, 1
+  .text:00171AD6                 pop     ebx
+  .text:00171AD7                 retn
+  .text:00171AE0                 xor     ecx, ecx
+  .text:00171AE2                 mov     bDoScaledFBO, ecx
+  .text:00171AE8                 jmp     short loc_171A9B
+  .text:00171AF0                 xor     eax, eax
+  .text:00171AF2                 xor     ecx, ecx
+  .text:00171AF4                 mov     ds:s_MSAAFBO.s_hBackBufferCB, eax
+  .text:00171AF9                 xor     eax, eax
+  .text:00171AFB                 xor     edx, edx
+  .text:00171AFD                 mov     ds:s_MSAAFBO.s_hBackBufferDB, eax
+  .text:00171B02                 xor     eax, eax
+  .text:00171B04                 mov     ds:s_MSAAFBO.s_hBackBufferTex, eax
+  .text:00171B09                 xor     eax, eax
+  .text:00171B0B                 mov     ds:s_BackBufferFBO.s_hBackBufferFBO, eax
+  .text:00171B10                 xor     eax, eax
+  .text:00171B12                 mov     ds:s_BackBufferFBO.s_hBackBufferCB, eax
+  .text:00171B17                 xor     eax, eax
+  .text:00171B19                 mov     ds:s_BackBufferFBO.s_hBackBufferDB, eax
+  .text:00171B1E                 lea     eax, [esp+6Ch+tall]
+  .text:00171B22                 ; tall
+  .text:00171B22                 mov     [esp+6Ch+search], eax; tall
+  .text:00171B26                 lea     eax, [esp+6Ch+wide]
+  .text:00171B2A                 ; bpp
+  .text:00171B2A                 mov     [esp+6Ch+bpp], ecx; bpp
+  .text:00171B2E                 ; wide
+  .text:00171B2E                 mov     [esp+6Ch+parm], eax; wide
+  .text:00171B31                 mov     ds:s_BackBufferFBO.s_hBackBufferTex, edx
+  .text:00171B37                 call    VideoMode_GetCurrentVideoMode
+  .text:00171B3C                 mov     ebx, ds:qglRenderbufferStorageMultisampleEXT
+  .text:00171B42                 test    ebx, ebx
+  .text:00171B44                 jz      loc_171D30
+  .text:00171B4A                 mov     ebx, bDoMSAAFBO
+  .text:00171B50                 test    ebx, ebx
+  .text:00171B52                 jle     loc_171D30
+  .text:00171B58                 mov     eax, ds:gl_extensions
+  .text:00171B5D                 test    eax, eax
+  .text:00171B5F                 jz      loc_171D30
+  .text:00171B65                 mov     ecx, offset aGlExtFramebuff_0; "GL_EXT_framebuffer_multisample"
+  .text:00171B6A                 ; search
+  .text:00171B6A                 mov     [esp+6Ch+search], ecx; search
+  .text:00171B6E                 ; s1
+  .text:00171B6E                 mov     [esp+6Ch+parm], eax; s1
+  .text:00171B71                 call    Q_strstr
+  .text:00171B76                 test    eax, eax
+  .text:00171B78                 jz      loc_171D30
+  .text:00171B7E                 mov     eax, offset s_MSAAFBO
+  .text:00171B83                 mov     ebx, 4
+  .text:00171B88                 ; GLuint *
+  .text:00171B88                 mov     [esp+6Ch+search], eax; GLuint *
+  .text:00171B8C                 ; GLsizei
+  .text:00171B8C                 mov     [esp+6Ch+parm], 1; GLsizei
+  .text:00171B93                 call    ds:qglGenFramebuffersEXT
+  .text:00171B99                 mov     eax, ds:s_MSAAFBO.s_hBackBufferFBO
+  .text:00171B9E                 ; GLenum
+  .text:00171B9E                 mov     [esp+6Ch+parm], 8D40h; GLenum
+  .text:00171BA5                 ; GLuint
+  .text:00171BA5                 mov     [esp+6Ch+search], eax; GLuint
+  .text:00171BA9                 call    ds:qglBindFramebufferEXT
+  .text:00171BAF                 mov     edx, offset s_MSAAFBO.s_hBackBufferCB
+  .text:00171BB4                 ; GLuint *
+  .text:00171BB4                 mov     [esp+6Ch+search], edx; GLuint *
+  .text:00171BB8                 ; GLsizei
+  .text:00171BB8                 mov     [esp+6Ch+parm], 1; GLsizei
+  .text:00171BBF                 call    ds:qglGenRenderbuffersEXT
+  .text:00171BC5                 mov     eax, ds:s_MSAAFBO.s_hBackBufferCB
+  .text:00171BCA                 ; GLenum
+  .text:00171BCA                 mov     [esp+6Ch+parm], 8D41h; GLenum
+  .text:00171BD1                 ; GLuint
+  .text:00171BD1                 mov     [esp+6Ch+search], eax; GLuint
+  .text:00171BD5                 call    ds:qglBindRenderbufferEXT
+  .text:00171BDB                 mov     eax, [esp+6Ch+tall]
+  .text:00171BDF                 mov     ecx, 8058h
+  .text:00171BE4                 ; GLenum
+  .text:00171BE4                 mov     [esp+6Ch+bpp], ecx; GLenum
+  .text:00171BE8                 ; GLsizei
+  .text:00171BE8                 mov     [esp+6Ch+search], ebx; GLsizei
+  .text:00171BEC                 ; GLenum
+  .text:00171BEC                 mov     [esp+6Ch+parm], 8D41h; GLenum
+  .text:00171BF3                 ; GLsizei
+  .text:00171BF3                 mov     [esp+6Ch+height], eax; GLsizei
+  .text:00171BF7                 mov     eax, [esp+6Ch+wide]
+  .text:00171BFB                 ; GLsizei
+  .text:00171BFB                 mov     [esp+6Ch+width], eax; GLsizei
+  .text:00171BFF                 call    ds:qglRenderbufferStorageMultisampleEXT
+  .text:00171C05                 mov     eax, ds:s_MSAAFBO.s_hBackBufferCB
+  .text:00171C0A                 ; GLenum
+  .text:00171C0A                 mov     [esp+6Ch+parm], 8D40h; GLenum
+  .text:00171C11                 ; GLuint
+  .text:00171C11                 mov     [esp+6Ch+width], eax; GLuint
+  .text:00171C15                 mov     eax, 8D41h
+  .text:00171C1A                 ; GLenum
+  .text:00171C1A                 mov     [esp+6Ch+bpp], eax; GLenum
+  .text:00171C1E                 mov     eax, 8CE0h
+  .text:00171C23                 ; GLenum
+  .text:00171C23                 mov     [esp+6Ch+search], eax; GLenum
+  .text:00171C27                 call    ds:qglFramebufferRenderbufferEXT
+  .text:00171C2D                 mov     eax, offset s_MSAAFBO.s_hBackBufferDB
+  .text:00171C32                 ; GLuint *
+  .text:00171C32                 mov     [esp+6Ch+search], eax; GLuint *
+  .text:00171C36                 ; GLsizei
+  .text:00171C36                 mov     [esp+6Ch+parm], 1; GLsizei
+  .text:00171C3D                 call    ds:qglGenRenderbuffersEXT
+  .text:00171C43                 mov     eax, ds:s_MSAAFBO.s_hBackBufferDB
+  .text:00171C48                 ; GLenum
+  .text:00171C48                 mov     [esp+6Ch+parm], 8D41h; GLenum
+  .text:00171C4F                 ; GLuint
+  .text:00171C4F                 mov     [esp+6Ch+search], eax; GLuint
+  .text:00171C53                 call    ds:qglBindRenderbufferEXT
+  .text:00171C59                 mov     eax, [esp+6Ch+tall]
+  .text:00171C5D                 ; GLenum
+  .text:00171C5D                 mov     [esp+6Ch+parm], 8D41h; GLenum
+  .text:00171C64                 ; GLsizei
+  .text:00171C64                 mov     [esp+6Ch+height], eax; GLsizei
+  .text:00171C68                 mov     eax, [esp+6Ch+wide]
+  .text:00171C6C                 ; GLsizei
+  .text:00171C6C                 mov     [esp+6Ch+width], eax; GLsizei
+  .text:00171C70                 mov     eax, 81A6h
+  .text:00171C75                 ; GLenum
+  .text:00171C75                 mov     [esp+6Ch+bpp], eax; GLenum
+  .text:00171C79                 mov     eax, 4
+  .text:00171C7E                 ; GLsizei
+  .text:00171C7E                 mov     [esp+6Ch+search], eax; GLsizei
+  .text:00171C82                 call    ds:qglRenderbufferStorageMultisampleEXT
+  .text:00171C88                 mov     eax, ds:s_MSAAFBO.s_hBackBufferDB
+  .text:00171C8D                 mov     edx, 8D00h
+  .text:00171C92                 ; GLenum
+  .text:00171C92                 mov     [esp+6Ch+search], edx; GLenum
+  .text:00171C96                 ; GLenum
+  .text:00171C96                 mov     [esp+6Ch+parm], 8D40h; GLenum
+  .text:00171C9D                 ; GLuint
+  .text:00171C9D                 mov     [esp+6Ch+width], eax; GLuint
+  .text:00171CA1                 mov     eax, 8D41h
+  .text:00171CA6                 ; GLenum
+  .text:00171CA6                 mov     [esp+6Ch+bpp], eax; GLenum
+  .text:00171CAA                 call    ds:qglFramebufferRenderbufferEXT
+  .text:00171CB0                 ; GLenum
+  .text:00171CB0                 mov     [esp+6Ch+parm], 8D40h; GLenum
+  .text:00171CB7                 call    ds:qglCheckFramebufferStatusEXT
+  .text:00171CBD                 cmp     eax, 8CD5h
+  .text:00171CC2                 jz      loc_172180
+  .text:00171CC8                 mov     eax, ds:s_MSAAFBO.s_hBackBufferFBO
+  .text:00171CCD                 test    eax, eax
+  .text:00171CCF                 jnz     loc_172130
+  .text:00171CD5                 xor     eax, eax
+  .text:00171CD7                 mov     ds:s_MSAAFBO.s_hBackBufferFBO, eax
+  .text:00171CDC                 mov     eax, ds:s_MSAAFBO.s_hBackBufferCB
+  .text:00171CE1                 test    eax, eax
+  .text:00171CE3                 jnz     loc_172110
+  .text:00171CE9                 mov     ebx, ds:s_MSAAFBO.s_hBackBufferDB
+  .text:00171CEF                 xor     ecx, ecx
+  .text:00171CF1                 mov     ds:s_MSAAFBO.s_hBackBufferCB, ecx
+  .text:00171CF7                 test    ebx, ebx
+  .text:00171CF9                 jnz     loc_1720F0
+  .text:00171CFF                 xor     eax, eax
+  .text:00171D01                 mov     ds:s_MSAAFBO.s_hBackBufferDB, eax
+  .text:00171D06                 mov     eax, ds:s_MSAAFBO.s_hBackBufferTex
+  .text:00171D0B                 test    eax, eax
+  .text:00171D0D                 jnz     loc_1720D0
+  .text:00171D13                 xor     eax, eax
+  .text:00171D15                 mov     [esp+6Ch+parm], offset aErrorInitializ; "Error initializing MSAA frame buffer\n"
+  .text:00171D1C                 mov     ds:s_MSAAFBO.s_hBackBufferTex, eax
+  .text:00171D21                 call    Con_DPrintf
+  .text:00171D26                 xor     eax, eax
+  .text:00171D28                 mov     ds:s_MSAAFBO.s_hBackBufferFBO, eax
+  .text:00171D2D                 jmp     short loc_171D43
+  .text:00171D30                 mov     [esp+6Ch+parm], offset aMsaaBackbuffer; "MSAA backbuffer rendering disabled.\n"
+  .text:00171D37                 call    Con_DPrintf
+  .text:00171D3C                 xor     eax, eax
+  .text:00171D3E                 mov     ds:s_MSAAFBO.s_hBackBufferFBO, eax
+  .text:00171D43                 mov     eax, bDoScaledFBO
+  .text:00171D48                 test    eax, eax
+  .text:00171D4A                 jle     loc_171EF0
+  .text:00171D50                 ; cap
+  .text:00171D50                 mov     [esp+6Ch+parm], 84F5h; cap
+  .text:00171D57                 call    glEnable
+  .text:00171D5C                 mov     edx, offset s_BackBufferFBO
+  .text:00171D61                 ; GLuint *
+  .text:00171D61                 mov     [esp+6Ch+search], edx; GLuint *
+  .text:00171D65                 ; GLsizei
+  .text:00171D65                 mov     [esp+6Ch+parm], 1; GLsizei
+  .text:00171D6C                 call    ds:qglGenFramebuffersEXT
+  .text:00171D72                 mov     eax, ds:s_BackBufferFBO.s_hBackBufferFBO
+  .text:00171D77                 ; GLenum
+  .text:00171D77                 mov     [esp+6Ch+parm], 8D40h; GLenum
+  .text:00171D7E                 ; GLuint
+  .text:00171D7E                 mov     [esp+6Ch+search], eax; GLuint
+  .text:00171D82                 call    ds:qglBindFramebufferEXT
+  .text:00171D88                 mov     ecx, ds:s_MSAAFBO.s_hBackBufferFBO
+  .text:00171D8E                 test    ecx, ecx
+  .text:00171D90                 jz      loc_172050
+  .text:00171D96                 mov     ebx, offset s_BackBufferFBO.s_hBackBufferTex
+  .text:00171D9B                 ; textures
+  .text:00171D9B                 mov     [esp+6Ch+search], ebx; textures
+  .text:00171D9F                 mov     ebx, 1E01h
+  .text:00171DA4                 ; n
+  .text:00171DA4                 mov     [esp+6Ch+parm], 1; n
+  .text:00171DAB                 call    glGenTextures
+  .text:00171DB0                 mov     eax, ds:s_BackBufferFBO.s_hBackBufferTex
+  .text:00171DB5                 ; target
+  .text:00171DB5                 mov     [esp+6Ch+parm], 84F5h; target
+  .text:00171DBC                 ; texture
+  .text:00171DBC                 mov     [esp+6Ch+search], eax; texture
+  .text:00171DC0                 call    glBindTexture
+  .text:00171DC5                 mov     eax, 2601h
+  .text:00171DCA                 ; param
+  .text:00171DCA                 mov     [esp+6Ch+bpp], eax; param
+  .text:00171DCE                 mov     eax, 2800h
+  .text:00171DD3                 ; pname
+  .text:00171DD3                 mov     [esp+6Ch+search], eax; pname
+  .text:00171DD7                 ; target
+  .text:00171DD7                 mov     [esp+6Ch+parm], 84F5h; target
+  .text:00171DDE                 call    glTexParameteri
+  .text:00171DE3                 mov     eax, 2601h
+  .text:00171DE8                 ; param
+  .text:00171DE8                 mov     [esp+6Ch+bpp], eax; param
+  .text:00171DEC                 mov     eax, 2801h
+  .text:00171DF1                 ; pname
+  .text:00171DF1                 mov     [esp+6Ch+search], eax; pname
+  .text:00171DF5                 ; target
+  .text:00171DF5                 mov     [esp+6Ch+parm], 84F5h; target
+  .text:00171DFC                 call    glTexParameteri
+  .text:00171E01                 mov     eax, 812Fh
+  .text:00171E06                 ; param
+  .text:00171E06                 mov     [esp+6Ch+bpp], eax; param
+  .text:00171E0A                 mov     eax, 2802h
+  .text:00171E0F                 ; pname
+  .text:00171E0F                 mov     [esp+6Ch+search], eax; pname
+  .text:00171E13                 ; target
+  .text:00171E13                 mov     [esp+6Ch+parm], 84F5h; target
+  .text:00171E1A                 call    glTexParameteri
+  .text:00171E1F                 mov     ecx, 2803h
+  .text:00171E24                 mov     edx, 812Fh
+  .text:00171E29                 ; pname
+  .text:00171E29                 mov     [esp+6Ch+search], ecx; pname
+  .text:00171E2D                 ; param
+  .text:00171E2D                 mov     [esp+6Ch+bpp], edx; param
+  .text:00171E31                 ; target
+  .text:00171E31                 mov     [esp+6Ch+parm], 84F5h; target
+  .text:00171E38                 call    glTexParameteri
+  .text:00171E3D                 mov     eax, 2200h
+  .text:00171E42                 ; param
+  .text:00171E42                 mov     [esp+6Ch+bpp], ebx; param
+  .text:00171E46                 mov     ebx, 84F5h
+  .text:00171E4B                 ; pname
+  .text:00171E4B                 mov     [esp+6Ch+search], eax; pname
+  .text:00171E4F                 ; target
+  .text:00171E4F                 mov     [esp+6Ch+parm], 2300h; target
+  .text:00171E56                 call    glTexEnvi
+  .text:00171E5B                 xor     eax, eax
+  .text:00171E5D                 xor     edx, edx
+  .text:00171E5F                 ; pixels
+  .text:00171E5F                 mov     [esp+6Ch+pixels], eax; pixels
+  .text:00171E63                 mov     eax, 1401h
+  .text:00171E68                 ; type
+  .text:00171E68                 mov     [esp+6Ch+type], eax; type
+  .text:00171E6C                 mov     eax, 1908h
+  .text:00171E71                 ; format
+  .text:00171E71                 mov     [esp+6Ch+format], eax; format
+  .text:00171E75                 xor     eax, eax
+  .text:00171E77                 ; border
+  .text:00171E77                 mov     [esp+6Ch+border], eax; border
+  .text:00171E7B                 mov     eax, [esp+6Ch+tall]
+  .text:00171E7F                 ; level
+  .text:00171E7F                 mov     [esp+6Ch+search], edx; level
+  .text:00171E83                 ; target
+  .text:00171E83                 mov     [esp+6Ch+parm], 84F5h; target
+  .text:00171E8A                 ; height
+  .text:00171E8A                 mov     [esp+6Ch+height], eax; height
+  .text:00171E8E                 mov     eax, [esp+6Ch+wide]
+  .text:00171E92                 ; width
+  .text:00171E92                 mov     [esp+6Ch+width], eax; width
+  .text:00171E96                 mov     eax, 1908h
+  .text:00171E9B                 ; internalFormat
+  .text:00171E9B                 mov     [esp+6Ch+bpp], eax; internalFormat
+  .text:00171E9F                 call    glTexImage2D
+  .text:00171EA4                 mov     eax, ds:s_BackBufferFBO.s_hBackBufferTex
+  .text:00171EA9                 xor     ecx, ecx
+  .text:00171EAB                 ; GLint
+  .text:00171EAB                 mov     [esp+6Ch+height], ecx; GLint
+  .text:00171EAF                 ; GLenum
+  .text:00171EAF                 mov     [esp+6Ch+bpp], ebx; GLenum
+  .text:00171EB3                 ; GLenum
+  .text:00171EB3                 mov     [esp+6Ch+parm], 8D40h; GLenum
+  .text:00171EBA                 ; GLuint
+  .text:00171EBA                 mov     [esp+6Ch+width], eax; GLuint
+  .text:00171EBE                 mov     eax, 8CE0h
+  .text:00171EC3                 ; GLenum
+  .text:00171EC3                 mov     [esp+6Ch+search], eax; GLenum
+  .text:00171EC7                 call    ds:qglFramebufferTexture2DEXT
+  .text:00171ECD                 xor     eax, eax
+  .text:00171ECF                 ; texture
+  .text:00171ECF                 mov     [esp+6Ch+search], eax; texture
+  .text:00171ED3                 ; target
+  .text:00171ED3                 mov     [esp+6Ch+parm], 84F5h; target
+  .text:00171EDA                 call    glBindTexture
+  .text:00171EDF                 ; cap
+  .text:00171EDF                 mov     [esp+6Ch+parm], 84F5h; cap
+  .text:00171EE6                 call    glDisable
+  .text:00171EEB                 mov     eax, bDoScaledFBO
+  .text:00171EF0                 test    eax, eax
+  .text:00171EF2                 jz      short loc_171F0C
+  .text:00171EF4                 ; GLenum
+  .text:00171EF4                 mov     [esp+6Ch+parm], 8D40h; GLenum
+  .text:00171EFB                 call    ds:qglCheckFramebufferStatusEXT
+  .text:00171F01                 cmp     eax, 8CD5h
+  .text:00171F06                 jz      loc_171FC6
+  .text:00171F0C                 call    FreeFBOObjects
+  .text:00171F11                 mov     [esp+6Ch+parm], offset aFreq; "-freq"
+  .text:00171F18                 call    COM_CheckParm
+  .text:00171F1D                 test    iFreq, iFreq
+  .text:00171F1F                 jnz     loc_172010
+  .text:00171F25                 xor     ebx, ebx
+  .text:00171F27                 mov     eax, [esp+6Ch+wide]
+  .text:00171F2B                 mov     [esp+6Ch+refresh], refresh_0
+  .text:00171F2F                 lea     refresh_0, [esp+6Ch+mode]
+  .text:00171F33                 mov     [esp+6Ch+bpp], ebx
+  .text:00171F37                 mov     [esp+6Ch+parm], 0
+  .text:00171F3E                 mov     [esp+6Ch+var_30], eax
+  .text:00171F42                 mov     eax, [esp+6Ch+tall]
+  .text:00171F46                 mov     [esp+6Ch+var_2C], eax
+  .text:00171F4A                 xor     eax, eax
+  .text:00171F4C                 mov     [esp+6Ch+var_34], eax
+  .text:00171F50                 lea     eax, [esp+6Ch+var_34]
+  .text:00171F54                 mov     [esp+6Ch+search], eax
+  .text:00171F58                 call    SDL_GetClosestDisplayMode
+  .text:00171F5D                 test    eax, eax
+  .text:00171F5F                 jz      loc_1721B0
+  .text:00171F65                 mov     eax, [esp+6Ch+mode.format]
+  .text:00171F69                 mov     [esp+6Ch+parm], offset aSettingClosest; "Setting closest display mode: width:%d "...
+  .text:00171F70                 mov     [esp+6Ch+height], eax
+  .text:00171F74                 mov     eax, [esp+6Ch+mode.refresh_rate]
+  .text:00171F78                 mov     [esp+6Ch+width], eax
+  .text:00171F7C                 mov     eax, [esp+6Ch+mode.h]
+  .text:00171F80                 mov     [esp+6Ch+bpp], eax
+  .text:00171F84                 mov     eax, [esp+6Ch+mode.w]
+  .text:00171F88                 mov     [esp+6Ch+search], eax
+  .text:00171F8C                 call    Con_DPrintf
+  .text:00171F91                 mov     eax, bDoScaledFBO
+  .text:00171F96                 test    eax, eax
+  .text:00171F98                 jnz     short loc_171FF8
+  .text:00171F9A                 mov     [esp+6Ch+parm], offset aFboBackbufferR; "FBO backbuffer rendering disabled.\n"
+  .text:00171FA1                 call    Con_DPrintf
+  .text:00171FA6                 mov     eax, [esp+6Ch+mainwindow]
+  .text:00171FAA                 mov     [esp+6Ch+search], ebx
+  .text:00171FAE                 mov     [esp+6Ch+parm], eax
+  .text:00171FB1                 call    SDL_SetWindowDisplayMode
+  .text:00171FB6                 mov     ecx, 1
+  .text:00171FBB                 mov     ds:bNeedsFullScreenModeSwitch, ecx
+  .text:00171FC1                 call    VideoMode_RestoreVideo
+  .text:00171FC6                 mov     edx, bDoScaledFBO
+  .text:00171FCC                 test    edx, edx
+  .text:00171FCE                 jle     loc_171ACE
+  .text:00171FD4                 xor     eax, eax
+  .text:00171FD6                 ; GLuint
+  .text:00171FD6                 mov     [esp+6Ch+search], eax; GLuint
+  .text:00171FDA                 ; GLenum
+  .text:00171FDA                 mov     [esp+6Ch+parm], 8D40h; GLenum
+  .text:00171FE1                 call    ds:qglBindFramebufferEXT
+  .text:00171FE7                 add     esp, 68h
+  .text:00171FEA                 mov     eax, 1
+  .text:00171FEF                 pop     ebx
+  .text:00171FF0                 retn
+  .text:00171FF8                 mov     [esp+6Ch+parm], offset aFboBackbufferR_0; "FBO backbuffer rendering disabled due t"...
+  .text:00171FFF                 call    Con_DPrintf
+  .text:00172004                 jmp     short loc_171FA6
+  .text:00172010                 mov     edx, 0Ah
+  .text:00172015                 xor     ecx, ecx
+  .text:00172017                 ; base
+  .text:00172017                 mov     [esp+6Ch+bpp], edx; base
+  .text:0017201B                 mov     edx, ds:com_argv
+  .text:00172021                 ; endptr
+  .text:00172021                 mov     [esp+6Ch+search], ecx; endptr
+  .text:00172025                 mov     iFreq, [edx+iFreq*4+4]
+  .text:00172029                 ; nptr
+  .text:00172029                 mov     [esp+6Ch+parm], eax; nptr
+  .text:0017202C                 call    strtol
+  .text:00172031                 mov     [esp+6Ch+parm], offset aSettingRefresh; "Setting refresh rate to %dHz\n"
+  .text:00172038                 mov     [esp+6Ch+search], eax
+  .text:0017203C                 mov     ebx, eax
+  .text:0017203E                 call    Con_DPrintf
+  .text:00172043                 jmp     loc_171F27
+  .text:00172050                 mov     eax, offset s_BackBufferFBO.s_hBackBufferDB
+  .text:00172055                 ; GLuint *
+  .text:00172055                 mov     [esp+6Ch+search], eax; GLuint *
+  .text:00172059                 ; GLsizei
+  .text:00172059                 mov     [esp+6Ch+parm], 1; GLsizei
+  .text:00172060                 call    ds:qglGenRenderbuffersEXT
+  .text:00172066                 mov     eax, ds:s_BackBufferFBO.s_hBackBufferDB
+  .text:0017206B                 ; GLenum
+  .text:0017206B                 mov     [esp+6Ch+parm], 8D41h; GLenum
+  .text:00172072                 ; GLuint
+  .text:00172072                 mov     [esp+6Ch+search], eax; GLuint
+  .text:00172076                 call    ds:qglBindRenderbufferEXT
+  .text:0017207C                 mov     eax, [esp+6Ch+tall]
+  .text:00172080                 ; GLenum
+  .text:00172080                 mov     [esp+6Ch+parm], 8D41h; GLenum
+  .text:00172087                 ; GLsizei
+  .text:00172087                 mov     [esp+6Ch+width], eax; GLsizei
+  .text:0017208B                 mov     eax, [esp+6Ch+wide]
+  .text:0017208F                 ; GLsizei
+  .text:0017208F                 mov     [esp+6Ch+bpp], eax; GLsizei
+  .text:00172093                 mov     eax, 81A6h
+  .text:00172098                 ; GLenum
+  .text:00172098                 mov     [esp+6Ch+search], eax; GLenum
+  .text:0017209C                 call    ds:qglRenderbufferStorageEXT
+  .text:001720A2                 mov     eax, ds:s_BackBufferFBO.s_hBackBufferDB
+  .text:001720A7                 ; GLenum
+  .text:001720A7                 mov     [esp+6Ch+parm], 8D40h; GLenum
+  .text:001720AE                 ; GLuint
+  .text:001720AE                 mov     [esp+6Ch+width], eax; GLuint
+  .text:001720B2                 mov     eax, 8D41h
+  .text:001720B7                 ; GLenum
+  .text:001720B7                 mov     [esp+6Ch+bpp], eax; GLenum
+  .text:001720BB                 mov     eax, 8D00h
+  .text:001720C0                 ; GLenum
+  .text:001720C0                 mov     [esp+6Ch+search], eax; GLenum
+  .text:001720C4                 call    ds:qglFramebufferRenderbufferEXT
+  .text:001720CA                 jmp     loc_171D96
+  .text:001720D0                 mov     eax, offset s_MSAAFBO.s_hBackBufferTex
+  .text:001720D5                 ; GLuint *
+  .text:001720D5                 mov     [esp+6Ch+search], eax; GLuint *
+  .text:001720D9                 ; GLsizei
+  .text:001720D9                 mov     [esp+6Ch+parm], 1; GLsizei
+  .text:001720E0                 call    ds:qglDeleteTextures
+  .text:001720E6                 jmp     loc_171D13
+  .text:001720F0                 mov     edx, offset s_MSAAFBO.s_hBackBufferDB
+  .text:001720F5                 ; GLuint *
+  .text:001720F5                 mov     [esp+6Ch+search], edx; GLuint *
+  .text:001720F9                 ; GLsizei
+  .text:001720F9                 mov     [esp+6Ch+parm], 1; GLsizei
+  .text:00172100                 call    ds:qglDeleteRenderbuffersEXT
+  .text:00172106                 jmp     loc_171CFF
+  .text:00172110                 mov     eax, offset s_MSAAFBO.s_hBackBufferCB
+  .text:00172115                 ; GLuint *
+  .text:00172115                 mov     [esp+6Ch+search], eax; GLuint *
+  .text:00172119                 ; GLsizei
+  .text:00172119                 mov     [esp+6Ch+parm], 1; GLsizei
+  .text:00172120                 call    ds:qglDeleteRenderbuffersEXT
+  .text:00172126                 jmp     loc_171CE9
+  .text:00172130                 mov     eax, offset s_MSAAFBO
+  .text:00172135                 ; GLuint *
+  .text:00172135                 mov     [esp+6Ch+search], eax; GLuint *
+  .text:00172139                 ; GLsizei
+  .text:00172139                 mov     [esp+6Ch+parm], 1; GLsizei
+  .text:00172140                 call    ds:qglDeleteFramebuffersEXT
+  .text:00172146                 jmp     loc_171CD5
+  .text:00172150                 mov     eax, ds:gl_extensions
+  .text:00172155                 mov     ebx, offset aGlNvTextureRec; "GL_NV_texture_rectangle"
+  .text:0017215A                 ; search
+  .text:0017215A                 mov     [esp+6Ch+search], ebx; search
+  .text:0017215E                 ; s1
+  .text:0017215E                 mov     [esp+6Ch+parm], eax; s1
+  .text:00172161                 call    Q_strstr
+  .text:00172166                 test    eax, eax
+  .text:00172168                 jnz     loc_171ABD
+  .text:0017216E                 xor     ecx, ecx
+  .text:00172170                 mov     bDoScaledFBO, ecx
+  .text:00172176                 jmp     loc_171ABD
+  .text:00172180                 mov     eax, bDoScaledFBO
+  .text:00172185                 test    eax, eax
+  .text:00172187                 jle     loc_171EF0
+  .text:0017218D                 mov     ebx, ds:s_MSAAFBO.s_hBackBufferFBO
+  .text:00172193                 test    ebx, ebx
+  .text:00172195                 jz      loc_171D50
+  .text:0017219B                 ; cap
+  .text:0017219B                 mov     [esp+6Ch+parm], 809Dh; cap
+  .text:001721A2                 call    glEnable
+  .text:001721A7                 jmp     loc_171D50
+  .text:001721B0                 mov     [esp+6Ch+parm], offset aErrorInitializ_0; "Error initializing Main frame buffer\n"
+  .text:001721B7                 call    Sys_Error
+procedure: |-
+  // s_bEnforceAspect receives COM_CheckParm("-stretchaspect")==0; it is global, unlike the startup-screen local with the same source name.
+  // bDoMSAAFBO is disabled by -nomsaa and guards multisample renderbuffer creation. AA mode count/index are separate globals.
+  // bDoScaledFBO is disabled by -nofbo or missing FBO/rectangle-texture support and guards the scaled backbuffer.
+  // s_bSupportsBlitTexturing is set by GL_EXT_framebuffer_multisample_blit_scaled support and overridden by -directblit / -nodirectblit.
+  // s_MSAAFBO is the complete four-GLuint container whose framebuffer has MULTISAMPLE renderbuffer attachments. Select its base address passed to GenFramebuffersEXT.
+  // s_BackBufferFBO is the complete four-GLuint container whose framebuffer has a RECTANGLE TEXTURE attachment. Select its base address passed to GenFramebuffersEXT.
+  // The first field s_hBackBufferFBO is at the container base. CB, DB and Tex are interior members, not independent targets. Linux PIC/GOT operands must resolve to the object, not the GOT slot.
+  // Current binary is authoritative. HLND2T_official is a semantic reference, not this exact source revision. Preserve platform-specific SDL/WGL, AA mode and frame-pacing paths.
+  int __cdecl GL_SetMode(
+          void *mainwindow,
+          void **pmaindc,
+          void **pbaseRC,
+          int fD3D,
+          const char *pszDriver,
+          const char *pszCmdLine)
+  {
+    const char *String; // eax
+    int IsWindowed; // eax
+    int v9; // eax
+    int v10; // eax
+    int v11; // ebx
+    int wide; // [esp+30h] [ebp-3Ch] BYREF
+    int tall; // [esp+34h] [ebp-38h] BYREF
+    _DWORD v14[3]; // [esp+38h] [ebp-34h] BYREF
+    int refresh; // [esp+44h] [ebp-28h]
+    SDL_DisplayMode mode; // [esp+4Ch] [ebp-20h] BYREF
+
+    gfMiniDriver = 0;
+    *pbaseRC = nullptr;
+    *pmaindc = nullptr;
+    s_bEnforceAspect = COM_CheckParm("-stretchaspect") == 0;
+    if ( COM_CheckParm("-nomsaa") )
+      bDoMSAAFBO = 0;
+    if ( COM_CheckParm("-nofbo") )
+      bDoScaledFBO = 0;
+    SDL_InitGL(pszDriver, pszCmdLine);
+    String = (const char *)qglGetString(0x1F03u);
+    s_bSupportsBlitTexturing = 0;
+    gl_extensions = String;
+    if ( String )
+      s_bSupportsBlitTexturing = Q_strstr(String, "GL_EXT_framebuffer_multisample_blit_scaled") != nullptr;
+    if ( COM_CheckParm("-directblit") )
+      s_bSupportsBlitTexturing = 1;
+    if ( COM_CheckParm("-nodirectblit") )
+      s_bSupportsBlitTexturing = 0;
+    if ( !qglGenFramebuffersEXT || !qglBindFramebufferEXT || !qglBlitFramebufferEXT )
+      bDoScaledFBO = 0;
+    if ( gl_extensions
+      && !Q_strstr(gl_extensions, "GL_ARB_texture_rectangle")
+      && !Q_strstr(gl_extensions, "GL_NV_texture_rectangle") )
+    {
+      bDoScaledFBO = 0;
+    }
+    IsWindowed = VideoMode_IsWindowed();
+    s_MSAAFBO.s_hBackBufferFBO = 0;
+    if ( IsWindowed )
+      return 1;
+    s_MSAAFBO.s_hBackBufferCB = 0;
+    s_MSAAFBO.s_hBackBufferDB = 0;
+    s_MSAAFBO.s_hBackBufferTex = 0;
+    s_BackBufferFBO.s_hBackBufferFBO = 0;
+    s_BackBufferFBO.s_hBackBufferCB = 0;
+    s_BackBufferFBO.s_hBackBufferDB = 0;
+    s_BackBufferFBO.s_hBackBufferTex = 0;
+    VideoMode_GetCurrentVideoMode(&wide, &tall, nullptr);
+    if ( !qglRenderbufferStorageMultisampleEXT
+      || bDoMSAAFBO <= 0
+      || !gl_extensions
+      || !Q_strstr(gl_extensions, "GL_EXT_framebuffer_multisample") )
+    {
+      Con_DPrintf("MSAA backbuffer rendering disabled.\n");
+      s_MSAAFBO.s_hBackBufferFBO = 0;
+      goto LABEL_34;
+    }
+    qglGenFramebuffersEXT(1, &s_MSAAFBO.s_hBackBufferFBO);
+    qglBindFramebufferEXT(0x8D40u, s_MSAAFBO.s_hBackBufferFBO);
+    qglGenRenderbuffersEXT(1, &s_MSAAFBO.s_hBackBufferCB);
+    qglBindRenderbufferEXT(0x8D41u, s_MSAAFBO.s_hBackBufferCB);
+    qglRenderbufferStorageMultisampleEXT(0x8D41u, 4, 0x8058u, wide, tall);
+    qglFramebufferRenderbufferEXT(0x8D40u, 0x8CE0u, 0x8D41u, s_MSAAFBO.s_hBackBufferCB);
+    qglGenRenderbuffersEXT(1, &s_MSAAFBO.s_hBackBufferDB);
+    qglBindRenderbufferEXT(0x8D41u, s_MSAAFBO.s_hBackBufferDB);
+    qglRenderbufferStorageMultisampleEXT(0x8D41u, 4, 0x81A6u, wide, tall);
+    qglFramebufferRenderbufferEXT(0x8D40u, 0x8D00u, 0x8D41u, s_MSAAFBO.s_hBackBufferDB);
+    if ( qglCheckFramebufferStatusEXT(0x8D40u) != 36053 )
+    {
+      if ( s_MSAAFBO.s_hBackBufferFBO )
+        qglDeleteFramebuffersEXT(1, &s_MSAAFBO.s_hBackBufferFBO);
+      s_MSAAFBO.s_hBackBufferFBO = 0;
+      if ( s_MSAAFBO.s_hBackBufferCB )
+        qglDeleteRenderbuffersEXT(1, &s_MSAAFBO.s_hBackBufferCB);
+      s_MSAAFBO.s_hBackBufferCB = 0;
+      if ( s_MSAAFBO.s_hBackBufferDB )
+        qglDeleteRenderbuffersEXT(1, &s_MSAAFBO.s_hBackBufferDB);
+      s_MSAAFBO.s_hBackBufferDB = 0;
+      if ( s_MSAAFBO.s_hBackBufferTex )
+        qglDeleteTextures(1, &s_MSAAFBO.s_hBackBufferTex);
+      s_MSAAFBO.s_hBackBufferTex = 0;
+      Con_DPrintf("Error initializing MSAA frame buffer\n");
+      s_MSAAFBO.s_hBackBufferFBO = 0;
+  LABEL_34:
+      v9 = bDoScaledFBO;
+      if ( bDoScaledFBO <= 0 )
+        goto LABEL_38;
+      goto LABEL_35;
+    }
+    v9 = bDoScaledFBO;
+    if ( bDoScaledFBO <= 0 )
+      goto LABEL_38;
+    if ( s_MSAAFBO.s_hBackBufferFBO )
+      glEnable(0x809Du);
+  LABEL_35:
+    glEnable(0x84F5u);
+    qglGenFramebuffersEXT(1, &s_BackBufferFBO.s_hBackBufferFBO);
+    qglBindFramebufferEXT(0x8D40u, s_BackBufferFBO.s_hBackBufferFBO);
+    if ( !s_MSAAFBO.s_hBackBufferFBO )
+    {
+      qglGenRenderbuffersEXT(1, &s_BackBufferFBO.s_hBackBufferDB);
+      qglBindRenderbufferEXT(0x8D41u, s_BackBufferFBO.s_hBackBufferDB);
+      qglRenderbufferStorageEXT(0x8D41u, 0x81A6u, wide, tall);
+      qglFramebufferRenderbufferEXT(0x8D40u, 0x8D00u, 0x8D41u, s_BackBufferFBO.s_hBackBufferDB);
+    }
+    glGenTextures(1, &s_BackBufferFBO.s_hBackBufferTex);
+    glBindTexture(0x84F5u, s_BackBufferFBO.s_hBackBufferTex);
+    glTexParameteri(0x84F5u, 0x2800u, 9729);
+    glTexParameteri(0x84F5u, 0x2801u, 9729);
+    glTexParameteri(0x84F5u, 0x2802u, 33071);
+    glTexParameteri(0x84F5u, 0x2803u, 33071);
+    glTexEnvi(0x2300u, 0x2200u, 7681);
+    glTexImage2D(0x84F5u, 0, 6408, wide, tall, 0, 0x1908u, 0x1401u, nullptr);
+    qglFramebufferTexture2DEXT(0x8D40u, 0x8CE0u, 0x84F5u, s_BackBufferFBO.s_hBackBufferTex, 0);
+    glBindTexture(0x84F5u, 0);
+    glDisable(0x84F5u);
+    v9 = bDoScaledFBO;
+  LABEL_38:
+    if ( !v9 || qglCheckFramebufferStatusEXT(0x8D40u) != 36053 )
+    {
+      FreeFBOObjects();
+      v10 = COM_CheckParm("-freq");
+      if ( v10 )
+      {
+        v11 = strtol(com_argv[v10 + 1], nullptr, 10);
+        Con_DPrintf("Setting refresh rate to %dHz\n", v11);
+      }
+      else
+      {
+        v11 = 0;
+      }
+      refresh = v11;
+      v14[1] = wide;
+      v14[2] = tall;
+      v14[0] = 0;
+      if ( !SDL_GetClosestDisplayMode(0, v14, &mode) )
+        Sys_Error("Error initializing Main frame buffer\n");
+      Con_DPrintf(
+        "Setting closest display mode: width:%d height:%d freq:%d format:%u\n",
+        mode.w,
+        mode.h,
+        mode.refresh_rate,
+        mode.format);
+      if ( bDoScaledFBO )
+        Con_DPrintf("FBO backbuffer rendering disabled due to create error.\n");
+      else
+        Con_DPrintf("FBO backbuffer rendering disabled.\n");
+      SDL_SetWindowDisplayMode(mainwindow, &mode);
+      bNeedsFullScreenModeSwitch = 1;
+      VideoMode_RestoreVideo();
+    }
+    if ( bDoScaledFBO <= 0 )
+      return 1;
+    qglBindFramebufferEXT(0x8D40u, 0);
+    return 1;
+  }
