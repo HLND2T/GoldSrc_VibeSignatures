@@ -73,14 +73,21 @@ def _write_text(path: Path, value: str) -> None:
 class ProcessTreeResidentMemoryProbe:
     """Sum the resident set of this process tree from ``/proc`` without ever raising."""
 
-    def __init__(self, *, proc_root: str = DEFAULT_PROC_ROOT, pid: int | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        proc_root: str = DEFAULT_PROC_ROOT,
+        pid: int | None = None,
+        page_size: int | None = None,
+    ) -> None:
         self._proc_root = Path(proc_root)
         self._pid = os.getpid() if pid is None else pid
+        self._page_size = page_size
 
     def tree_pids_and_rss(self) -> tuple[tuple[int, ...], int]:
         """Return the process tree members and their summed resident bytes."""
         try:
-            page_size = os.sysconf("SC_PAGE_SIZE")
+            page_size = self._page_size if self._page_size is not None else os.sysconf("SC_PAGE_SIZE")
             parent_by_pid: dict[int, int] = {}
             rss_by_pid: dict[int, int] = {}
             for entry in os.listdir(self._proc_root):
@@ -96,7 +103,7 @@ class ProcessTreeResidentMemoryProbe:
                     continue
                 parent_by_pid[pid] = int(fields[_PROC_STAT_PPID_FIELD_INDEX])
                 rss_by_pid[pid] = int(fields[_PROC_STAT_RSS_FIELD_INDEX])
-        except (OSError, ValueError):
+        except (AttributeError, OSError, ValueError):
             return (), 0
         members = {self._pid}
         changed = True

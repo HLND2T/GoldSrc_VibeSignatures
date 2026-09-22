@@ -30,7 +30,9 @@ from warmup_memory import MIB, MemorySnapshot
 
 UNIT_CGROUP = "/unit.service"
 INIT_SCOPE = f"{UNIT_CGROUP}/init.scope"
-PAGE_SIZE = os.sysconf("SC_PAGE_SIZE")
+# Injected into the probe so the fabricated /proc tree can be asserted on any host; the probe
+# would otherwise read the real page size via os.sysconf, which does not exist on Windows.
+PAGE_SIZE = 4096
 
 
 def write(path: Path, value: str) -> Path:
@@ -120,7 +122,7 @@ class ProcessTreeResidentMemoryProbeTests(unittest.TestCase):
             self._stat(root, 101, 100, 5)
             self._stat(root, 102, 101, 1)
             self._stat(root, 900, 1, 999)
-            probe = ProcessTreeResidentMemoryProbe(proc_root=str(root), pid=100)
+            probe = ProcessTreeResidentMemoryProbe(proc_root=str(root), pid=100, page_size=PAGE_SIZE)
             self.assertEqual((10 + 5 + 1) * PAGE_SIZE, probe.resident_bytes())
 
     def test_unreadable_root_returns_zero(self):
