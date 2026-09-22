@@ -1,0 +1,1020 @@
+func_name: "CVideoMode_Common_DrawStartupGraphic"
+func_va: "0x1dbe550"
+disasm_code: |-
+  .text:01DBE550                 push    ebp
+  .text:01DBE551                 mov     ebp, esp
+  .text:01DBE553                 push    0FFFFFFFFh
+  .text:01DBE555                 push    offset SEH_1DBE550
+  .text:01DBE55A                 mov     eax, large fs:0
+  .text:01DBE560                 push    eax
+  .text:01DBE561                 sub     esp, 7Ch
+  .text:01DBE564                 push    ebx
+  .text:01DBE565                 push    esi
+  .text:01DBE566                 push    edi
+  .text:01DBE567                 mov     eax, ___security_cookie
+  .text:01DBE56C                 xor     eax, ebp
+  .text:01DBE56E                 push    eax
+  .text:01DBE56F                 lea     eax, [ebp+var_C]
+  .text:01DBE572                 mov     large fs:0, eax
+  .text:01DBE578                 mov     esi, ecx
+  .text:01DBE57A                 mov     [ebp+var_68], esi
+  .text:01DBE57D                 cmp     dword ptr [esi+328h], 0; (structmember, struct=CVideoMode_Common, member=m_ImageID.m_Size)
+  .text:01DBE584                 mov     eax, [ebp+arg_0]
+  .text:01DBE587                 mov     [ebp+var_78], eax
+  .text:01DBE58A                 jz      loc_1DBEBDB
+  .text:01DBE590                 lea     ecx, [ebp+height]
+  .text:01DBE593                 push    ecx
+  .text:01DBE594                 lea     ecx, [ebp+width]
+  .text:01DBE597                 push    ecx
+  .text:01DBE598                 push    eax
+  .text:01DBE599                 call    SDL_GetWindowSize
+  .text:01DBE59E                 mov     ecx, [ebp+width]
+  .text:01DBE5A1                 xor     edi, edi
+  .text:01DBE5A3                 mov     eax, [ebp+height]
+  .text:01DBE5A6                 add     esp, 0Ch
+  .text:01DBE5A9                 mov     [ebp+Block], edi
+  .text:01DBE5AC                 mov     [ebp+var_50], edi
+  .text:01DBE5AF                 mov     [ebp+var_40], ecx
+  .text:01DBE5B2                 mov     [ebp+var_18], ecx
+  .text:01DBE5B5                 mov     [ebp+var_10], eax
+  .text:01DBE5B8                 mov     [ebp+var_1C], eax
+  .text:01DBE5BB                 mov     [ebp+var_4C], edi
+  .text:01DBE5BE                 mov     [ebp+var_4], edi
+  .text:01DBE5C1                 xor     ebx, ebx
+  .text:01DBE5C3                 mov     [ebp+var_28], ebx
+  .text:01DBE5C6                 mov     [ebp+var_48], ebx
+  .text:01DBE5C9                 mov     [ebp+var_4], 1
+  .text:01DBE5D0                 ; height
+  .text:01DBE5D0                 push    eax; height
+  .text:01DBE5D1                 ; width
+  .text:01DBE5D1                 push    ecx; width
+  .text:01DBE5D2                 ; y
+  .text:01DBE5D2                 push    ebx; y
+  .text:01DBE5D3                 ; x
+  .text:01DBE5D3                 push    ebx; x
+  .text:01DBE5D4                 call    ds:glViewport
+  .text:01DBE5DA                 ; cap
+  .text:01DBE5DA                 push    0B71h; cap
+  .text:01DBE5DF                 call    ds:glDisable
+  .text:01DBE5E5                 ; cap
+  .text:01DBE5E5                 push    0DE1h; cap
+  .text:01DBE5EA                 call    ds:glEnable
+  .text:01DBE5F0                 ; mode
+  .text:01DBE5F0                 push    1701h; mode
+  .text:01DBE5F5                 call    ds:glMatrixMode
+  .text:01DBE5FB                 fld1
+  .text:01DBE5FD                 sub     esp, 30h
+  .text:01DBE600                 ; zFar
+  .text:01DBE600                 fstp    [esp+0C8h+zFar]; zFar
+  .text:01DBE604                 fld     ds:dbl_1E62A20
+  .text:01DBE60A                 ; zNear
+  .text:01DBE60A                 fstp    [esp+0C8h+zNear]; zNear
+  .text:01DBE60E                 fldz
+  .text:01DBE610                 ; top
+  .text:01DBE610                 fst     [esp+0C8h+top]; top
+  .text:01DBE614                 fild    [ebp+var_1C]
+  .text:01DBE617                 ; bottom
+  .text:01DBE617                 fstp    [esp+0C8h+bottom]; bottom
+  .text:01DBE61B                 fild    [ebp+var_18]
+  .text:01DBE61E                 ; right
+  .text:01DBE61E                 fstp    [esp+0C8h+right]; right
+  .text:01DBE622                 ; left
+  .text:01DBE622                 fstp    [esp+0C8h+left]; left
+  .text:01DBE625                 call    ds:glOrtho
+  .text:01DBE62B                 fldz
+  .text:01DBE62D                 sub     esp, 10h
+  .text:01DBE630                 ; alpha
+  .text:01DBE630                 fst     dword ptr [esp+0A8h+zFar+4]; alpha
+  .text:01DBE634                 ; blue
+  .text:01DBE634                 fst     dword ptr [esp+0A8h+zFar]; blue
+  .text:01DBE638                 ; green
+  .text:01DBE638                 fst     dword ptr [esp+0A8h+zNear+4]; green
+  .text:01DBE63C                 ; red
+  .text:01DBE63C                 fstp    dword ptr [esp+0A8h+zNear]; red
+  .text:01DBE63F                 call    ds:glClearColor
+  .text:01DBE645                 ; mask
+  .text:01DBE645                 push    4000h; mask
+  .text:01DBE64A                 call    ds:glClear
+  .text:01DBE650                 mov     ecx, dword_95D30E0
+  .text:01DBE656                 fldz
+  .text:01DBE658                 fst     [ebp+var_20]
+  .text:01DBE65B                 fstp    [ebp+var_24]
+  .text:01DBE65E                 mov     eax, [ecx]
+  .text:01DBE660                 call    dword ptr [eax+10h]
+  .text:01DBE663                 mov     ecx, eax
+  .text:01DBE665                 test    ecx, ecx
+  .text:01DBE667                 jz      short loc_1DBE674
+  .text:01DBE669                 mov     eax, [ecx]
+  .text:01DBE66B                 mov     [ebp+var_6C], eax
+  .text:01DBE66E                 mov     eax, [ecx+4]
+  .text:01DBE671                 mov     [ebp+var_70], eax
+  .text:01DBE674                 fild    [ebp+var_6C]
+  .text:01DBE677                 push    offset aStretchaspect; "-stretchaspect"
+  .text:01DBE67C                 fidiv   [ebp+var_70]
+  .text:01DBE67F                 fstp    [ebp+var_1C]
+  .text:01DBE682                 fild    [ebp+width]
+  .text:01DBE685                 fidiv   [ebp+height]
+  .text:01DBE688                 fstp    [ebp+var_18]
+  .text:01DBE68B                 call    COM_CheckParm
+  .text:01DBE690                 add     esp, 4
+  .text:01DBE693                 test    eax, eax
+  .text:01DBE695                 jnz     loc_1DBE735
+  .text:01DBE69B                 fld     [ebp+var_1C]
+  .text:01DBE69E                 fld     [ebp+var_18]
+  .text:01DBE6A1                 fcom    st(1)
+  .text:01DBE6A3                 fnstsw  ax
+  .text:01DBE6A5                 test    ah, 41h
+  .text:01DBE6A8                 jnz     short loc_1DBE6B7
+  .text:01DBE6AA                 fstp    st
+  .text:01DBE6AC                 fimul   [ebp+height]
+  .text:01DBE6AF                 fisubr  [ebp+width]
+  .text:01DBE6B2                 fld     [ebp+var_24]
+  .text:01DBE6B5                 jmp     short loc_1DBE6CB
+  .text:01DBE6B7                 fcomp   st(1)
+  .text:01DBE6B9                 fnstsw  ax
+  .text:01DBE6BB                 test    ah, 5
+  .text:01DBE6BE                 jp      short loc_1DBE733
+  .text:01DBE6C0                 fidivr  [ebp+width]
+  .text:01DBE6C3                 fisubr  [ebp+height]
+  .text:01DBE6C6                 fld     [ebp+var_20]
+  .text:01DBE6C9                 fxch    st(1)
+  .text:01DBE6CB                 cmp     dword ptr [esi+328h], 0
+  .text:01DBE6D2                 fild    [ebp+var_40]
+  .text:01DBE6D5                 mov     [ebp+var_40], 0
+  .text:01DBE6DC                 fsub    st, st(2)
+  .text:01DBE6DE                 fidiv   dword ptr [esi+330h]; (structmember, struct=CVideoMode_Common, member=m_iBaseResX)
+  .text:01DBE6E4                 fst     [ebp+var_1C]
+  .text:01DBE6E7                 fild    [ebp+var_10]
+  .text:01DBE6EA                 fsub    st, st(2)
+  .text:01DBE6EC                 fidiv   dword ptr [esi+334h]; (structmember, struct=CVideoMode_Common, member=m_iBaseResY)
+  .text:01DBE6F2                 fstp    [ebp+var_5C]
+  .text:01DBE6F5                 jle     loc_1DBEAF2
+  .text:01DBE6FB                 fld     st(2)
+  .text:01DBE6FD                 xor     ecx, ecx
+  .text:01DBE6FF                 fld     ds:dbl_1E629E0
+  .text:01DBE705                 fmul    st(1), st
+  .text:01DBE707                 fxch    st(1)
+  .text:01DBE709                 mov     [ebp+var_18], ecx
+  .text:01DBE70C                 fst     [ebp+var_88]
+  .text:01DBE712                 fld     st(3)
+  .text:01DBE714                 fmulp   st(2), st
+  .text:01DBE716                 fxch    st(1)
+  .text:01DBE718                 fstp    [ebp+var_80]
+  .text:01DBE71B                 fld     ds:flt_1E61D00
+  .text:01DBE721                 fmul    st(4), st
+  .text:01DBE723                 fxch    st(4)
+  .text:01DBE725                 fstp    [ebp+var_20]
+  .text:01DBE728                 fxch    st(2)
+  .text:01DBE72A                 fmulp   st(3), st
+  .text:01DBE72C                 fxch    st(2)
+  .text:01DBE72E                 fstp    [ebp+var_24]
+  .text:01DBE731                 jmp     short loc_1DBE73F
+  .text:01DBE733                 fstp    st
+  .text:01DBE735                 fld     [ebp+var_20]
+  .text:01DBE738                 fld     [ebp+var_24]
+  .text:01DBE73B                 jmp     short loc_1DBE6CB
+  .text:01DBE73D                 fxch    st(1)
+  .text:01DBE73F                 mov     edi, [esi+31Ch]; (structmember, struct=CVideoMode_Common, member=m_ImageID)
+  .text:01DBE745                 sub     esp, 8
+  .text:01DBE748                 mov     esi, [edi+ecx+4]
+  .text:01DBE74C                 add     edi, ecx
+  .text:01DBE74E                 mov     [ebp+var_10], esi
+  .text:01DBE751                 test    esi, esi
+  .text:01DBE753                 jz      short loc_1DBE774
+  .text:01DBE755                 fild    [ebp+var_10]
+  .text:01DBE758                 fmulp   st(2), st
+  .text:01DBE75A                 faddp   st(1), st
+  .text:01DBE75C                 ; X
+  .text:01DBE75C                 fstp    [esp+0A0h+zFar]; X
+  .text:01DBE75F                 call    _ceil
+  .text:01DBE764                 add     esp, 8
+  .text:01DBE767                 call    sub_1E2B450
+  .text:01DBE76C                 mov     [ebp+var_10], eax
+  .text:01DBE76F                 fild    [ebp+var_10]
+  .text:01DBE772                 jmp     short loc_1DBE781
+  .text:01DBE774                 fstp    st(1)
+  .text:01DBE776                 ; X
+  .text:01DBE776                 fstp    [esp+0A0h+zFar]; X
+  .text:01DBE779                 call    _ceil
+  .text:01DBE77E                 add     esp, 8
+  .text:01DBE781                 call    sub_1E2B450
+  .text:01DBE786                 mov     ebx, [edi+8]
+  .text:01DBE789                 sub     esp, 8
+  .text:01DBE78C                 mov     [ebp+x], eax
+  .text:01DBE78F                 mov     [ebp+var_10], ebx
+  .text:01DBE792                 test    ebx, ebx
+  .text:01DBE794                 jz      short loc_1DBE7B7
+  .text:01DBE796                 fild    [ebp+var_10]
+  .text:01DBE799                 fmul    [ebp+var_5C]
+  .text:01DBE79C                 fadd    [ebp+var_80]
+  .text:01DBE79F                 ; X
+  .text:01DBE79F                 fstp    [esp+0A0h+zFar]; X
+  .text:01DBE7A2                 call    _ceil
+  .text:01DBE7A7                 add     esp, 8
+  .text:01DBE7AA                 call    sub_1E2B450
+  .text:01DBE7AF                 mov     [ebp+var_10], eax
+  .text:01DBE7B2                 fild    [ebp+var_10]
+  .text:01DBE7B5                 jmp     short loc_1DBE7C5
+  .text:01DBE7B7                 fld     [ebp+var_80]
+  .text:01DBE7BA                 ; X
+  .text:01DBE7BA                 fstp    [esp+0A0h+zFar]; X
+  .text:01DBE7BD                 call    _ceil
+  .text:01DBE7C2                 add     esp, 8
+  .text:01DBE7C5                 call    sub_1E2B450
+  .text:01DBE7CA                 cmp     byte ptr [edi+14h], 0
+  .text:01DBE7CE                 mov     edx, eax
+  .text:01DBE7D0                 mov     eax, [edi+0Ch]
+  .text:01DBE7D3                 mov     ecx, [edi+10h]
+  .text:01DBE7D6                 mov     [ebp+var_74], edx
+  .text:01DBE7D9                 jz      short loc_1DBE81F
+  .text:01DBE7DB                 add     eax, esi
+  .text:01DBE7DD                 sub     esp, 8
+  .text:01DBE7E0                 mov     [ebp+var_10], eax
+  .text:01DBE7E3                 fild    [ebp+var_10]
+  .text:01DBE7E6                 fmul    [ebp+var_1C]
+  .text:01DBE7E9                 fadd    [ebp+var_20]
+  .text:01DBE7EC                 ; X
+  .text:01DBE7EC                 fstp    [esp+0A0h+zFar]; X
+  .text:01DBE7EF                 call    _ceil
+  .text:01DBE7F4                 call    sub_1E2B450
+  .text:01DBE7F9                 mov     [ebp+var_10], eax
+  .text:01DBE7FC                 mov     eax, [edi+10h]
+  .text:01DBE7FF                 add     eax, ebx
+  .text:01DBE801                 mov     [ebp+y], eax
+  .text:01DBE804                 fild    [ebp+y]
+  .text:01DBE807                 fmul    [ebp+var_5C]
+  .text:01DBE80A                 fadd    [ebp+var_24]
+  .text:01DBE80D                 ; X
+  .text:01DBE80D                 fstp    [esp+0A0h+zFar]; X
+  .text:01DBE810                 call    _ceil
+  .text:01DBE815                 add     esp, 8
+  .text:01DBE818                 call    sub_1E2B450
+  .text:01DBE81D                 jmp     short loc_1DBE828
+  .text:01DBE81F                 add     eax, [ebp+x]
+  .text:01DBE822                 mov     [ebp+var_10], eax
+  .text:01DBE825                 lea     eax, [ecx+edx]
+  .text:01DBE828                 mov     esi, [ebp+var_28]
+  .text:01DBE82B                 mov     ecx, [ebp+var_50]
+  .text:01DBE82E                 mov     [ebp+y], eax
+  .text:01DBE831                 lea     ebx, [esi+1]
+  .text:01DBE834                 mov     [ebp+var_28], ebx
+  .text:01DBE837                 cmp     ebx, ecx
+  .text:01DBE839                 jle     short loc_1DBE884
+  .text:01DBE83B                 mov     eax, esi
+  .text:01DBE83D                 sub     eax, ecx
+  .text:01DBE83F                 inc     eax
+  .text:01DBE840                 test    eax, eax
+  .text:01DBE842                 jg      short loc_1DBE84F
+  .text:01DBE844                 mov     eax, ecx
+  .text:01DBE846                 test    ecx, ecx
+  .text:01DBE848                 jnz     short loc_1DBE84F
+  .text:01DBE84A                 mov     eax, 1
+  .text:01DBE84F                 add     ecx, eax
+  .text:01DBE851                 mov     [ebp+var_50], ecx
+  .text:01DBE854                 mov     edx, [ebp+Block]
+  .text:01DBE857                 lea     eax, ds:0[ecx*4]
+  .text:01DBE85E                 ; Size
+  .text:01DBE85E                 push    eax; Size
+  .text:01DBE85F                 test    edx, edx
+  .text:01DBE861                 jz      short loc_1DBE874
+  .text:01DBE863                 ; Block
+  .text:01DBE863                 push    edx; Block
+  .text:01DBE864                 call    _realloc
+  .text:01DBE869                 mov     [ebp+Block], eax
+  .text:01DBE86C                 add     esp, 8
+  .text:01DBE86F                 mov     [ebp+var_48], ebx
+  .text:01DBE872                 jmp     short loc_1DBE88D
+  .text:01DBE874                 call    _malloc
+  .text:01DBE879                 mov     [ebp+Block], eax
+  .text:01DBE87C                 add     esp, 4
+  .text:01DBE87F                 mov     [ebp+var_48], ebx
+  .text:01DBE882                 jmp     short loc_1DBE88A
+  .text:01DBE884                 mov     [ebp+var_48], ebx
+  .text:01DBE887                 mov     eax, [ebp+Block]
+  .text:01DBE88A                 mov     [ebp+var_28], ebx
+  .text:01DBE88D                 lea     esi, [eax+esi*4]
+  .text:01DBE890                 ; textures
+  .text:01DBE890                 push    esi; textures
+  .text:01DBE891                 ; n
+  .text:01DBE891                 push    1; n
+  .text:01DBE893                 call    ds:glGenTextures
+  .text:01DBE899                 ; texture
+  .text:01DBE899                 push    dword ptr [esi]; texture
+  .text:01DBE89B                 ; target
+  .text:01DBE89B                 push    0DE1h; target
+  .text:01DBE8A0                 call    ds:glBindTexture
+  .text:01DBE8A6                 mov     ebx, ds:glTexParameteri
+  .text:01DBE8AC                 ; param
+  .text:01DBE8AC                 push    2601h; param
+  .text:01DBE8B1                 ; pname
+  .text:01DBE8B1                 push    2800h; pname
+  .text:01DBE8B6                 ; target
+  .text:01DBE8B6                 push    0DE1h; target
+  .text:01DBE8BB                 call    ebx ; glTexParameteri
+  .text:01DBE8BD                 ; param
+  .text:01DBE8BD                 push    2601h; param
+  .text:01DBE8C2                 ; pname
+  .text:01DBE8C2                 push    2801h; pname
+  .text:01DBE8C7                 ; target
+  .text:01DBE8C7                 push    0DE1h; target
+  .text:01DBE8CC                 call    ebx ; glTexParameteri
+  .text:01DBE8CE                 ; param
+  .text:01DBE8CE                 push    812Fh; param
+  .text:01DBE8D3                 ; pname
+  .text:01DBE8D3                 push    2802h; pname
+  .text:01DBE8D8                 ; target
+  .text:01DBE8D8                 push    0DE1h; target
+  .text:01DBE8DD                 call    ebx ; glTexParameteri
+  .text:01DBE8DF                 ; param
+  .text:01DBE8DF                 push    812Fh; param
+  .text:01DBE8E4                 ; pname
+  .text:01DBE8E4                 push    2803h; pname
+  .text:01DBE8E9                 ; target
+  .text:01DBE8E9                 push    0DE1h; target
+  .text:01DBE8EE                 call    ebx ; glTexParameteri
+  .text:01DBE8F0                 ; param
+  .text:01DBE8F0                 push    1; param
+  .text:01DBE8F2                 ; pname
+  .text:01DBE8F2                 push    0CF5h; pname
+  .text:01DBE8F7                 call    ds:glPixelStorei
+  .text:01DBE8FD                 mov     eax, [edi]
+  .text:01DBE8FF                 xor     ecx, ecx
+  .text:01DBE901                 mov     edx, [edi+0Ch]
+  .text:01DBE904                 mov     ebx, [edi+10h]
+  .text:01DBE907                 mov     [ebp+var_38], 0
+  .text:01DBE90E                 mov     [ebp+pixels], eax
+  .text:01DBE911                 mov     eax, 1
+  .text:01DBE916                 shl     eax, cl
+  .text:01DBE918                 mov     [ebp+var_58], eax
+  .text:01DBE91B                 cmp     eax, edx
+  .text:01DBE91D                 jge     short loc_1DBE925
+  .text:01DBE91F                 inc     ecx
+  .text:01DBE920                 cmp     ecx, 20h ; ' '
+  .text:01DBE923                 jl      short loc_1DBE911
+  .text:01DBE925                 xor     ecx, ecx
+  .text:01DBE927                 jmp     short loc_1DBE930
+  .text:01DBE930                 mov     esi, 1
+  .text:01DBE935                 shl     esi, cl
+  .text:01DBE937                 mov     [ebp+var_60], esi
+  .text:01DBE93A                 cmp     esi, ebx
+  .text:01DBE93C                 jge     short loc_1DBE944
+  .text:01DBE93E                 inc     ecx
+  .text:01DBE93F                 cmp     ecx, 20h ; ' '
+  .text:01DBE942                 jl      short loc_1DBE930
+  .text:01DBE944                 cmp     eax, edx
+  .text:01DBE946                 jnz     short loc_1DBE950
+  .text:01DBE948                 cmp     esi, ebx
+  .text:01DBE94A                 jz      loc_1DBE9E3
+  .text:01DBE950                 mov     ebx, esi
+  .text:01DBE952                 xor     ecx, ecx
+  .text:01DBE954                 imul    ebx, eax
+  .text:01DBE957                 mov     edx, 4
+  .text:01DBE95C                 mov     eax, ebx
+  .text:01DBE95E                 mul     edx
+  .text:01DBE960                 seto    cl
+  .text:01DBE963                 neg     ecx
+  .text:01DBE965                 or      ecx, eax
+  .text:01DBE967                 push    ecx
+  .text:01DBE968                 call    sub_1E2B7F6
+  .text:01DBE96D                 add     esp, 4
+  .text:01DBE970                 mov     [ebp+var_38], eax
+  .text:01DBE973                 test    eax, eax
+  .text:01DBE975                 jz      loc_1DBEB8F
+  .text:01DBE97B                 lea     ecx, ds:0[ebx*4]
+  .text:01DBE982                 ; Size
+  .text:01DBE982                 push    ecx; Size
+  .text:01DBE983                 ; Val
+  .text:01DBE983                 push    0; Val
+  .text:01DBE985                 ; void *
+  .text:01DBE985                 push    eax; void *
+  .text:01DBE986                 call    _memset
+  .text:01DBE98B                 xor     ebx, ebx
+  .text:01DBE98D                 add     esp, 0Ch
+  .text:01DBE990                 cmp     [edi+10h], ebx
+  .text:01DBE993                 jle     short loc_1DBE9DA
+  .text:01DBE995                 mov     eax, [ebp+var_58]
+  .text:01DBE998                 mov     ecx, [edi+0Ch]
+  .text:01DBE99B                 shl     eax, 2
+  .text:01DBE99E                 mov     [ebp+var_2C], eax
+  .text:01DBE9A1                 mov     eax, [ebp+var_38]
+  .text:01DBE9A4                 mov     [ebp+pixels], eax
+  .text:01DBE9A7                 xor     edx, edx
+  .text:01DBE9A9                 test    ecx, ecx
+  .text:01DBE9AB                 jle     short loc_1DBE9CB
+  .text:01DBE9AD                 mov     esi, eax
+  .text:01DBE9AF                 nop
+  .text:01DBE9B0                 mov     eax, [edi]
+  .text:01DBE9B2                 lea     esi, [esi+4]
+  .text:01DBE9B5                 imul    ecx, ebx
+  .text:01DBE9B8                 add     ecx, edx
+  .text:01DBE9BA                 inc     edx
+  .text:01DBE9BB                 mov     eax, [eax+ecx*4]
+  .text:01DBE9BE                 mov     [esi-4], eax
+  .text:01DBE9C1                 mov     ecx, [edi+0Ch]
+  .text:01DBE9C4                 cmp     edx, ecx
+  .text:01DBE9C6                 jl      short loc_1DBE9B0
+  .text:01DBE9C8                 mov     eax, [ebp+pixels]
+  .text:01DBE9CB                 add     eax, [ebp+var_2C]
+  .text:01DBE9CE                 inc     ebx
+  .text:01DBE9CF                 mov     [ebp+pixels], eax
+  .text:01DBE9D2                 cmp     ebx, [edi+10h]
+  .text:01DBE9D5                 jl      short loc_1DBE9A7
+  .text:01DBE9D7                 mov     esi, [ebp+var_60]
+  .text:01DBE9DA                 mov     eax, [ebp+var_38]
+  .text:01DBE9DD                 mov     [ebp+pixels], eax
+  .text:01DBE9E0                 mov     eax, [ebp+var_58]
+  .text:01DBE9E3                 ; pixels
+  .text:01DBE9E3                 push    [ebp+pixels]; pixels
+  .text:01DBE9E6                 ; type
+  .text:01DBE9E6                 push    1401h; type
+  .text:01DBE9EB                 ; format
+  .text:01DBE9EB                 push    1908h; format
+  .text:01DBE9F0                 ; border
+  .text:01DBE9F0                 push    0; border
+  .text:01DBE9F2                 ; height
+  .text:01DBE9F2                 push    esi; height
+  .text:01DBE9F3                 ; width
+  .text:01DBE9F3                 push    eax; width
+  .text:01DBE9F4                 ; internalformat
+  .text:01DBE9F4                 push    1908h; internalformat
+  .text:01DBE9F9                 ; level
+  .text:01DBE9F9                 push    0; level
+  .text:01DBE9FB                 ; target
+  .text:01DBE9FB                 push    0DE1h; target
+  .text:01DBEA00                 call    ds:glTexImage2D
+  .text:01DBEA06                 fld1
+  .text:01DBEA08                 mov     eax, [ebp+var_38]
+  .text:01DBEA0B                 fst     [ebp+var_2C]
+  .text:01DBEA0E                 fstp    [ebp+pixels]
+  .text:01DBEA11                 test    eax, eax
+  .text:01DBEA13                 jz      short loc_1DBEA30
+  .text:01DBEA15                 fild    dword ptr [edi+0Ch]
+  .text:01DBEA18                 ; Block
+  .text:01DBEA18                 push    eax; Block
+  .text:01DBEA19                 fidiv   [ebp+var_58]
+  .text:01DBEA1C                 fstp    [ebp+pixels]
+  .text:01DBEA1F                 fild    dword ptr [edi+10h]
+  .text:01DBEA22                 fidiv   [ebp+var_60]
+  .text:01DBEA25                 fstp    [ebp+var_2C]
+  .text:01DBEA28                 call    sub_1E2B7FF
+  .text:01DBEA2D                 add     esp, 4
+  .text:01DBEA30                 ; mode
+  .text:01DBEA30                 push    7; mode
+  .text:01DBEA32                 call    ds:glBegin
+  .text:01DBEA38                 fld     [ebp+var_2C]
+  .text:01DBEA3B                 sub     esp, 8
+  .text:01DBEA3E                 mov     edi, ds:glTexCoord2f
+  .text:01DBEA44                 ; t
+  .text:01DBEA44                 fstp    dword ptr [esp+0A0h+zFar+4]; t
+  .text:01DBEA48                 fldz
+  .text:01DBEA4A                 ; s
+  .text:01DBEA4A                 fstp    dword ptr [esp+0A0h+zFar]; s
+  .text:01DBEA4D                 call    edi ; glTexCoord2f
+  .text:01DBEA4F                 mov     esi, [ebp+y]
+  .text:01DBEA52                 mov     ebx, [ebp+x]
+  .text:01DBEA55                 ; z
+  .text:01DBEA55                 push    0; z
+  .text:01DBEA57                 ; y
+  .text:01DBEA57                 push    esi; y
+  .text:01DBEA58                 ; x
+  .text:01DBEA58                 push    ebx; x
+  .text:01DBEA59                 call    ds:glVertex3i
+  .text:01DBEA5F                 fld     [ebp+var_2C]
+  .text:01DBEA62                 sub     esp, 8
+  .text:01DBEA65                 ; t
+  .text:01DBEA65                 fstp    dword ptr [esp+0A0h+zFar+4]; t
+  .text:01DBEA69                 fld     [ebp+pixels]
+  .text:01DBEA6C                 ; s
+  .text:01DBEA6C                 fstp    dword ptr [esp+0A0h+zFar]; s
+  .text:01DBEA6F                 call    edi ; glTexCoord2f
+  .text:01DBEA71                 mov     edi, [ebp+var_10]
+  .text:01DBEA74                 ; z
+  .text:01DBEA74                 push    0; z
+  .text:01DBEA76                 ; y
+  .text:01DBEA76                 push    esi; y
+  .text:01DBEA77                 ; x
+  .text:01DBEA77                 push    edi; x
+  .text:01DBEA78                 call    ds:glVertex3i
+  .text:01DBEA7E                 fldz
+  .text:01DBEA80                 sub     esp, 8
+  .text:01DBEA83                 ; t
+  .text:01DBEA83                 fstp    dword ptr [esp+0A0h+zFar+4]; t
+  .text:01DBEA87                 fld     [ebp+pixels]
+  .text:01DBEA8A                 ; s
+  .text:01DBEA8A                 fstp    dword ptr [esp+0A0h+zFar]; s
+  .text:01DBEA8D                 call    ds:glTexCoord2f
+  .text:01DBEA93                 mov     esi, [ebp+var_74]
+  .text:01DBEA96                 ; z
+  .text:01DBEA96                 push    0; z
+  .text:01DBEA98                 ; y
+  .text:01DBEA98                 push    esi; y
+  .text:01DBEA99                 ; x
+  .text:01DBEA99                 push    edi; x
+  .text:01DBEA9A                 mov     edi, ds:glVertex3i
+  .text:01DBEAA0                 call    edi ; glVertex3i
+  .text:01DBEAA2                 fldz
+  .text:01DBEAA4                 sub     esp, 8
+  .text:01DBEAA7                 ; t
+  .text:01DBEAA7                 fst     dword ptr [esp+0A0h+zFar+4]; t
+  .text:01DBEAAB                 ; s
+  .text:01DBEAAB                 fstp    dword ptr [esp+0A0h+zFar]; s
+  .text:01DBEAAE                 call    ds:glTexCoord2f
+  .text:01DBEAB4                 ; z
+  .text:01DBEAB4                 push    0; z
+  .text:01DBEAB6                 ; y
+  .text:01DBEAB6                 push    esi; y
+  .text:01DBEAB7                 ; x
+  .text:01DBEAB7                 push    ebx; x
+  .text:01DBEAB8                 call    edi ; glVertex3i
+  .text:01DBEABA                 call    ds:__imp_glEnd
+  .text:01DBEAC0                 mov     edx, [ebp+var_40]
+  .text:01DBEAC3                 mov     esi, [ebp+var_68]
+  .text:01DBEAC6                 inc     edx
+  .text:01DBEAC7                 mov     ecx, [ebp+var_18]
+  .text:01DBEACA                 fld     [ebp+var_88]
+  .text:01DBEAD0                 add     ecx, 18h
+  .text:01DBEAD3                 fld     [ebp+var_1C]
+  .text:01DBEAD6                 mov     [ebp+var_40], edx
+  .text:01DBEAD9                 mov     [ebp+var_18], ecx
+  .text:01DBEADC                 cmp     edx, [esi+328h]
+  .text:01DBEAE2                 jl      loc_1DBE73D
+  .text:01DBEAE8                 mov     ebx, [ebp+var_28]
+  .text:01DBEAEB                 fstp    st(1)
+  .text:01DBEAED                 mov     edi, [ebp+Block]
+  .text:01DBEAF0                 jmp     short loc_1DBEAF6
+  .text:01DBEAF2                 fstp    st(2)
+  .text:01DBEAF4                 fstp    st
+  .text:01DBEAF6                 push    [ebp+var_78]
+  .text:01DBEAF9                 fstp    st
+  .text:01DBEAFB                 call    SDL_GL_SwapWindow
+  .text:01DBEB00                 add     esp, 4
+  .text:01DBEB03                 test    ebx, ebx
+  .text:01DBEB05                 jle     short loc_1DBEB1D
+  .text:01DBEB07                 mov     esi, edi
+  .text:01DBEB09                 mov     edi, ds:glDeleteTextures
+  .text:01DBEB0F                 nop
+  .text:01DBEB10                 ; textures
+  .text:01DBEB10                 push    esi; textures
+  .text:01DBEB11                 ; n
+  .text:01DBEB11                 push    1; n
+  .text:01DBEB13                 call    edi ; glDeleteTextures
+  .text:01DBEB15                 add     esi, 4
+  .text:01DBEB18                 sub     ebx, 1
+  .text:01DBEB1B                 jnz     short loc_1DBEB10
+  .text:01DBEB1D                 mov     ebx, [ebp+var_68]
+  .text:01DBEB20                 xor     esi, esi
+  .text:01DBEB22                 mov     [ebp+var_48], 0
+  .text:01DBEB29                 cmp     [ebx+328h], esi
+  .text:01DBEB2F                 jle     short loc_1DBEB55
+  .text:01DBEB31                 xor     edi, edi
+  .text:01DBEB33                 mov     eax, [ebx+31Ch]
+  .text:01DBEB39                 mov     eax, [edi+eax]
+  .text:01DBEB3C                 test    eax, eax
+  .text:01DBEB3E                 jz      short loc_1DBEB49
+  .text:01DBEB40                 ; Block
+  .text:01DBEB40                 push    eax; Block
+  .text:01DBEB41                 call    _free
+  .text:01DBEB46                 add     esp, 4
+  .text:01DBEB49                 inc     esi
+  .text:01DBEB4A                 add     edi, 18h
+  .text:01DBEB4D                 cmp     esi, [ebx+328h]
+  .text:01DBEB53                 jl      short loc_1DBEB33
+  .text:01DBEB55                 cmp     dword ptr [ebx+324h], 0
+  .text:01DBEB5C                 mov     dword ptr [ebx+328h], 0
+  .text:01DBEB66                 jl      short loc_1DBEB8F
+  .text:01DBEB68                 mov     eax, [ebx+31Ch]
+  .text:01DBEB6E                 test    eax, eax
+  .text:01DBEB70                 jz      short loc_1DBEB85
+  .text:01DBEB72                 ; Block
+  .text:01DBEB72                 push    eax; Block
+  .text:01DBEB73                 call    _free
+  .text:01DBEB78                 add     esp, 4
+  .text:01DBEB7B                 mov     dword ptr [ebx+31Ch], 0
+  .text:01DBEB85                 mov     dword ptr [ebx+320h], 0
+  .text:01DBEB8F                 mov     [ebp+var_4], 3
+  .text:01DBEB96                 mov     eax, [ebp+Block]
+  .text:01DBEB99                 mov     [ebp+var_48], 0
+  .text:01DBEBA0                 test    eax, eax
+  .text:01DBEBA2                 jz      short loc_1DBEBB2
+  .text:01DBEBA4                 ; Block
+  .text:01DBEBA4                 push    eax; Block
+  .text:01DBEBA5                 call    _free
+  .text:01DBEBAA                 add     esp, 4
+  .text:01DBEBAD                 xor     eax, eax
+  .text:01DBEBAF                 mov     [ebp+Block], eax
+  .text:01DBEBB2                 mov     [ebp+var_50], 0
+  .text:01DBEBB9                 mov     [ebp+var_4], 0FFFFFFFFh
+  .text:01DBEBC0                 test    eax, eax
+  .text:01DBEBC2                 jz      short loc_1DBEBD4
+  .text:01DBEBC4                 ; Block
+  .text:01DBEBC4                 push    eax; Block
+  .text:01DBEBC5                 call    _free
+  .text:01DBEBCA                 add     esp, 4
+  .text:01DBEBCD                 mov     [ebp+Block], 0
+  .text:01DBEBD4                 mov     [ebp+var_50], 0
+  .text:01DBEBDB                 mov     ecx, [ebp+var_C]
+  .text:01DBEBDE                 mov     large fs:0, ecx
+  .text:01DBEBE5                 pop     ecx
+  .text:01DBEBE6                 pop     edi
+  .text:01DBEBE7                 pop     esi
+  .text:01DBEBE8                 pop     ebx
+  .text:01DBEBE9                 mov     esp, ebp
+  .text:01DBEBEB                 pop     ebp
+  .text:01DBEBEC                 retn    4
+  .text:01E5BDAA                 lea     ecx, [ebp+Block]
+  .text:01E5BDAD                 jmp     sub_1DBF630
+  .text:01E5BDB2                 lea     ecx, [ebp+Block]
+  .text:01E5BDB5                 jmp     sub_1DBF6F0
+  .text:01E5BDBA                 lea     ecx, [ebp+Block]
+  .text:01E5BDBD                 jmp     sub_1DBF630
+  .text:01E5BDC7                 nop
+  .text:01E5BDC8                 nop
+  .text:01E5BDC9                 mov     edx, [esp-4+arg_4]
+  .text:01E5BDCD                 lea     eax, [edx+0Ch]
+  .text:01E5BDD0                 mov     ecx, [edx-8Ch]
+  .text:01E5BDD6                 ; StackCookie
+  .text:01E5BDD6                 xor     ecx, eax; StackCookie
+  .text:01E5BDD8                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:01E5BDDD                 mov     eax, offset stru_1EAEC7C
+  .text:01E5BDE2                 jmp     ___CxxFrameHandler3
+procedure: |-
+  void __thiscall sub_1DBE550(int this, int a2)
+  {
+    _DWORD *v2; // esi
+    const GLuint *v3; // edi
+    int v4; // ebx
+    int *v5; // eax
+    double v6; // st7
+    double v7; // st7
+    double v8; // st6
+    bool v9; // cc
+    double v10; // st5
+    double v11; // st5
+    int v12; // ecx
+    double v13; // st4
+    double v14; // st6
+    double v15; // st7
+    int v16; // edi
+    GLint v17; // esi
+    int v18; // edi
+    double v19; // st7
+    double v20; // st7
+    int v21; // eax
+    GLint v22; // ebx
+    double v23; // st7
+    double v24; // st7
+    int v25; // edx
+    int v26; // eax
+    int v27; // ecx
+    double v28; // st7
+    double v29; // st7
+    int v30; // eax
+    int v31; // esi
+    int v32; // ebx
+    int v33; // eax
+    char *v34; // eax
+    GLuint *v35; // esi
+    int v36; // ecx
+    int v37; // edx
+    int v38; // ebx
+    GLsizei v39; // eax
+    int i; // ecx
+    GLsizei v41; // esi
+    int v42; // ebx
+    char *v43; // eax
+    int v44; // ebx
+    int v45; // ecx
+    char *v46; // eax
+    int v47; // edx
+    char *v48; // esi
+    int v49; // ecx
+    GLint v50; // edi
+    const GLuint *v51; // esi
+    int v52; // esi
+    int v53; // edi
+    bool v54; // sf
+    void *v55; // eax
+    size_t zFar_4; // [esp+2Ch] [ebp-9Ch]
+    int v57; // [esp+30h] [ebp-98h]
+    double v58; // [esp+40h] [ebp-88h]
+    double v59; // [esp+48h] [ebp-80h]
+    GLint v60; // [esp+54h] [ebp-74h]
+    int v61; // [esp+58h] [ebp-70h]
+    int v62; // [esp+5Ch] [ebp-6Ch]
+    GLint x; // [esp+64h] [ebp-64h]
+    int v65; // [esp+68h] [ebp-60h]
+    float v66; // [esp+6Ch] [ebp-5Ch]
+    int v67; // [esp+70h] [ebp-58h]
+    char *Block; // [esp+74h] [ebp-54h]
+    int v69; // [esp+78h] [ebp-50h]
+    GLsizei v70; // [esp+88h] [ebp-40h]
+    int v71; // [esp+88h] [ebp-40h]
+    GLint y; // [esp+8Ch] [ebp-3Ch]
+    char *v73; // [esp+90h] [ebp-38h]
+    GLsizei height; // [esp+94h] [ebp-34h] BYREF
+    GLsizei width; // [esp+98h] [ebp-30h] BYREF
+    float v76; // [esp+9Ch] [ebp-2Ch]
+    int v77; // [esp+A0h] [ebp-28h]
+    float v78; // [esp+A4h] [ebp-24h]
+    float v79; // [esp+A8h] [ebp-20h]
+    GLsizei v80; // [esp+ACh] [ebp-1Ch]
+    float v81; // [esp+B0h] [ebp-18h]
+    GLvoid *pixels; // [esp+B4h] [ebp-14h]
+    GLint v83; // [esp+B8h] [ebp-10h]
+    int v84; // [esp+C4h] [ebp-4h]
+
+    v2 = (_DWORD *)this;
+    if ( !*(_DWORD *)(this + 808) ) // (structmember, struct=CVideoMode_Common, member=m_ImageID.m_Size)
+      return;
+    SDL_GetWindowSize(a2, &width, &height);
+    v3 = nullptr;
+    Block = nullptr;
+    v69 = 0;
+    v70 = width;
+    v81 = *(float *)&width;
+    v83 = height;
+    v80 = height;
+    v4 = 0;
+    v77 = 0;
+    v84 = 1;
+    glViewport(0, 0, width, height);
+    glDisable(0xB71u);
+    glEnable(0xDE1u);
+    glMatrixMode(0x1701u);
+    glOrtho(0.0, (double)SLODWORD(v81), (double)v80, 0.0, -1.0, 1.0);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(0x4000u);
+    v79 = 0.0;
+    v78 = 0.0;
+    v5 = (int *)(*(int (__thiscall **)(int))(*(_DWORD *)dword_95D30E0 + 16))(dword_95D30E0);
+    if ( v5 )
+    {
+      v62 = *v5;
+      v61 = v5[1];
+    }
+    *(float *)&v80 = (double)v62 / (double)v61;
+    v81 = (double)width / (double)height;
+    if ( COM_CheckParm("-stretchaspect") )
+      goto LABEL_11;
+    v6 = *(float *)&v80;
+    if ( v81 <= (double)*(float *)&v80 )
+    {
+      if ( v81 < v6 )
+      {
+        v8 = (double)height - (double)width / v6;
+        v7 = v79;
+        goto LABEL_9;
+      }
+  LABEL_11:
+      v7 = v79;
+      v8 = v78;
+      goto LABEL_9;
+    }
+    v7 = (double)width - v6 * (double)height;
+    v8 = v78;
+  LABEL_9:
+    v9 = v2[202] <= 0;
+    v10 = (double)v70;
+    v71 = 0;
+    v11 = (v10 - v7) / (double)(int)v2[204]; // (structmember, struct=CVideoMode_Common, member=m_iBaseResX)
+    *(float *)&v80 = v11;
+    v66 = ((double)v83 - v8) / (double)(int)v2[205]; // (structmember, struct=CVideoMode_Common, member=m_iBaseResY)
+    if ( !v9 )
+    {
+      v12 = 0;
+      v81 = 0.0;
+      v58 = v7 * 0.5;
+      v59 = 0.5 * v8;
+      v79 = v58;
+      v13 = v8;
+      v14 = v58;
+      v15 = v11;
+      v78 = 0.5 * v13;
+      while ( 1 )
+      {
+        v16 = v2[199]; // (structmember, struct=CVideoMode_Common, member=m_ImageID)
+        v17 = *(_DWORD *)(v16 + v12 + 4);
+        v18 = v12 + v16;
+        v83 = v17;
+        if ( v17 )
+        {
+          v19 = ceil(v15 * (double)v83 + v14);
+          v83 = sub_1E2B450(v19);
+          v20 = (double)v83;
+        }
+        else
+        {
+          v20 = ceil(v14);
+        }
+        v21 = sub_1E2B450(v20);
+        v22 = *(_DWORD *)(v18 + 8);
+        x = v21;
+        v83 = v22;
+        if ( v22 )
+        {
+          v23 = ceil((double)v83 * v66 + v59);
+          v83 = sub_1E2B450(v23);
+          v24 = (double)v83;
+        }
+        else
+        {
+          v24 = ceil(v59);
+        }
+        v25 = sub_1E2B450(v24);
+        v26 = *(_DWORD *)(v18 + 12);
+        v27 = *(_DWORD *)(v18 + 16);
+        v60 = v25;
+        if ( *(_BYTE *)(v18 + 20) )
+        {
+          v83 = v17 + v26;
+          v28 = ceil((double)(v17 + v26) * *(float *)&v80 + v79);
+          v83 = sub_1E2B450(v28);
+          v29 = ceil((double)(v22 + *(_DWORD *)(v18 + 16)) * v66 + v78);
+          v30 = sub_1E2B450(v29);
+        }
+        else
+        {
+          v83 = x + v26;
+          v30 = v27 + v25;
+        }
+        v31 = v77;
+        y = v30;
+        v32 = v77 + 1;
+        v77 = v32;
+        if ( v32 <= v69 )
+          break;
+        v33 = v31 - v69 + 1;
+        if ( v33 <= 0 )
+        {
+          v33 = v69;
+          if ( !v69 )
+            v33 = 1;
+        }
+        v69 += v33;
+        zFar_4 = 4 * v69;
+        if ( !Block )
+        {
+          v34 = (char *)malloc(zFar_4);
+          Block = v34;
+  LABEL_30:
+          v77 = v32;
+          goto LABEL_31;
+        }
+        v34 = (char *)realloc(Block, zFar_4);
+        Block = v34;
+  LABEL_31:
+        v35 = (GLuint *)&v34[4 * v31];
+        glGenTextures(1, v35);
+        glBindTexture(0xDE1u, *v35);
+        glTexParameteri(0xDE1u, 0x2800u, 9729);
+        glTexParameteri(0xDE1u, 0x2801u, 9729);
+        glTexParameteri(0xDE1u, 0x2802u, 33071);
+        glTexParameteri(0xDE1u, 0x2803u, 33071);
+        glPixelStorei(0xCF5u, 1);
+        v36 = 0;
+        v37 = *(_DWORD *)(v18 + 12);
+        v38 = *(_DWORD *)(v18 + 16);
+        v73 = nullptr;
+        pixels = *(GLvoid **)v18;
+        do
+        {
+          v39 = 1 << v36;
+          v67 = 1 << v36;
+          if ( 1 << v36 >= v37 )
+            break;
+          ++v36;
+        }
+        while ( v36 < 32 );
+        for ( i = 0; i < 32; ++i )
+        {
+          v41 = 1 << i;
+          v65 = 1 << i;
+          if ( 1 << i >= v38 )
+            break;
+        }
+        if ( v39 != v37 || v41 != v38 )
+        {
+          v42 = v39 * v41;
+          v43 = (char *)sub_1E2B7F6((unsigned __int64)(unsigned int)(v39 * v41) >> 30 != 0 ? -1 : 4 * v39 * v41);
+          v73 = v43;
+          if ( !v43 )
+            goto LABEL_65;
+          memset(v43, 0, 4 * v42);
+          v44 = 0;
+          if ( *(int *)(v18 + 16) > 0 )
+          {
+            v45 = *(_DWORD *)(v18 + 12);
+            LODWORD(v76) = 4 * v67;
+            v46 = v73;
+            pixels = v73;
+            do
+            {
+              v47 = 0;
+              if ( v45 > 0 )
+              {
+                v48 = v46;
+                do
+                {
+                  v48 += 4;
+                  v49 = v47 + v44 * v45;
+                  ++v47;
+                  *((_DWORD *)v48 - 1) = *(_DWORD *)(*(_DWORD *)v18 + 4 * v49);
+                  v45 = *(_DWORD *)(v18 + 12);
+                }
+                while ( v47 < v45 );
+                v46 = (char *)pixels;
+              }
+              v46 += LODWORD(v76);
+              ++v44;
+              pixels = v46;
+            }
+            while ( v44 < *(_DWORD *)(v18 + 16) );
+            v41 = v65;
+          }
+          pixels = v73;
+          v39 = v67;
+        }
+        glTexImage2D(0xDE1u, 0, 6408, v39, v41, 0, 0x1908u, 0x1401u, pixels);
+        v76 = 1.0;
+        *(float *)&pixels = 1.0;
+        if ( v73 )
+        {
+          *(float *)&pixels = (double)*(int *)(v18 + 12) / (double)v67;
+          v76 = (double)*(int *)(v18 + 16) / (double)v65;
+          sub_1E2B7FF(v73, v57);
+        }
+        glBegin(7u);
+        glTexCoord2f(0.0, v76);
+        glVertex3i(x, y, 0);
+        glTexCoord2f(*(GLfloat *)&pixels, v76);
+        v50 = v83;
+        glVertex3i(v83, y, 0);
+        glTexCoord2f(*(GLfloat *)&pixels, 0.0);
+        glVertex3i(v50, v60, 0);
+        glTexCoord2f(0.0, 0.0);
+        glVertex3i(x, v60, 0);
+        glEnd();
+        v2 = (_DWORD *)this;
+        v12 = LODWORD(v81) + 24;
+        ++v71;
+        LODWORD(v81) += 24;
+        if ( v71 >= *(_DWORD *)(this + 808) )
+        {
+          v4 = v77;
+          v3 = (const GLuint *)Block;
+          goto LABEL_53;
+        }
+        v14 = v58;
+        v15 = *(float *)&v80;
+      }
+      v34 = Block;
+      goto LABEL_30;
+    }
+  LABEL_53:
+    SDL_GL_SwapWindow(a2);
+    if ( v4 > 0 )
+    {
+      v51 = v3;
+      do
+      {
+        glDeleteTextures(1, v51++);
+        --v4;
+      }
+      while ( v4 );
+    }
+    v52 = 0;
+    if ( *(int *)(this + 808) > 0 )
+    {
+      v53 = 0;
+      do
+      {
+        if ( *(_DWORD *)(v53 + *(_DWORD *)(this + 796)) )
+          free(*(void **)(v53 + *(_DWORD *)(this + 796)));
+        ++v52;
+        v53 += 24;
+      }
+      while ( v52 < *(_DWORD *)(this + 808) );
+    }
+    v54 = *(int *)(this + 804) < 0;
+    *(_DWORD *)(this + 808) = 0;
+    if ( !v54 )
+    {
+      if ( *(_DWORD *)(this + 796) )
+      {
+        free(*(void **)(this + 796));
+        *(_DWORD *)(this + 796) = 0;
+      }
+      *(_DWORD *)(this + 800) = 0;
+    }
+  LABEL_65:
+    v84 = 3;
+    v55 = Block;
+    if ( Block )
+    {
+      free(Block);
+      v55 = nullptr;
+    }
+    v84 = -1;
+    if ( v55 )
+      free(v55);
+  }

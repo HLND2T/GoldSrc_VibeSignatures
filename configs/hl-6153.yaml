@@ -704,6 +704,14 @@ modules:
           - CVideoMode_Common_Init.{platform}.yaml
         expected_output:
           - CVideoMode_Common_DrawStartupGraphic.{platform}.yaml
+      - name: find-CVideoMode_Common_DrawStartupGraphic-structmembers
+        expected_input:
+          - CVideoMode_Common_DrawStartupGraphic.{platform}.yaml
+        expected_output:
+          - CVideoMode_Common_m_ImageID.{platform}.yaml
+          - CVideoMode_Common_m_ImageID_m_Size.{platform}.yaml
+          - CVideoMode_Common_m_iBaseResX.{platform}.yaml
+          - CVideoMode_Common_m_iBaseResY.{platform}.yaml
       - name: find-GL_BuildLightmaps
         expected_input:
           - R_NewMap.{platform}.yaml
@@ -1444,6 +1452,24 @@ modules:
         category: func
       - name: CVideoMode_Common_DrawStartupGraphic
         category: func
+      - name: CVideoMode_Common
+        category: struct
+      - name: CVideoMode_Common_m_ImageID
+        category: structmember
+        struct: CVideoMode_Common
+        member: m_ImageID
+      - name: CVideoMode_Common_m_ImageID_m_Size
+        category: structmember
+        struct: CVideoMode_Common
+        member: m_ImageID.m_Size
+      - name: CVideoMode_Common_m_iBaseResX
+        category: structmember
+        struct: CVideoMode_Common
+        member: m_iBaseResX
+      - name: CVideoMode_Common_m_iBaseResY
+        category: structmember
+        struct: CVideoMode_Common
+        member: m_iBaseResY
       - name: GL_BuildLightmaps
         category: func
       - name: GL_Bind

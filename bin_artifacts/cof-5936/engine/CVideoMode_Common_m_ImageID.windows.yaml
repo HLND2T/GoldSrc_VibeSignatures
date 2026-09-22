@@ -1,0 +1,6 @@
+struct_name: CVideoMode_Common
+member_name: m_ImageID
+offset: '0x19c'
+offset_sig: 55 8B EC 83 EC 48 89 4D ?? 8B 4D ?? 81 C1 9C 01 00 00 E8 ?? ?? ?? ?? 85 C0 75 ?? E9 ?? ?? ?? ?? 8B 45 ?? 8B 10
+offset_sig_disp: '0xc'
+offset_sig_ref_kind: immediate

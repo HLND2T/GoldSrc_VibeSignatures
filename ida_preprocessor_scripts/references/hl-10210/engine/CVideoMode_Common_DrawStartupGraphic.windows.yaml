@@ -1,0 +1,1357 @@
+func_name: "CVideoMode_Common_DrawStartupGraphic"
+func_va: "0x102216c0"
+disasm_code: |-
+  .text:102216C0                 push    ebp
+  .text:102216C1                 mov     ebp, esp
+  .text:102216C3                 push    0FFFFFFFFh
+  .text:102216C5                 push    offset SEH_102216C0
+  .text:102216CA                 mov     eax, large fs:0
+  .text:102216D0                 push    eax
+  .text:102216D1                 sub     esp, 70h
+  .text:102216D4                 push    ebx
+  .text:102216D5                 push    esi
+  .text:102216D6                 push    edi
+  .text:102216D7                 mov     eax, ___security_cookie
+  .text:102216DC                 xor     eax, ebp
+  .text:102216DE                 push    eax
+  .text:102216DF                 lea     eax, [ebp+var_C]
+  .text:102216E2                 mov     large fs:0, eax
+  .text:102216E8                 mov     ebx, ecx
+  .text:102216EA                 mov     [ebp+var_24], ebx
+  .text:102216ED                 cmp     dword ptr [ebx+1A8h], 0; (structmember, struct=CVideoMode_Common, member=m_ImageID.m_Size)
+  .text:102216F4                 mov     eax, [ebp+arg_0]
+  .text:102216F7                 mov     [ebp+var_7C], eax
+  .text:102216FA                 jz      loc_10222145
+  .text:10221700                 lea     ecx, [ebp+width+4]
+  .text:10221703                 push    ecx
+  .text:10221704                 lea     ecx, [ebp+width]
+  .text:10221707                 push    ecx
+  .text:10221708                 push    eax
+  .text:10221709                 call    SDL_GetWindowSize
+  .text:1022170E                 xor     eax, eax
+  .text:10221710                 add     esp, 0Ch
+  .text:10221713                 mov     [ebp+Block], eax
+  .text:10221716                 mov     [ebp+var_4C], eax
+  .text:10221719                 mov     [ebp+var_48], eax
+  .text:1022171C                 mov     [ebp+var_44], eax
+  .text:1022171F                 mov     [ebp+var_18], eax
+  .text:10221722                 mov     [ebp+var_40], eax
+  .text:10221725                 mov     esi, dword ptr [ebp+width+4]
+  .text:10221728                 mov     edi, dword ptr [ebp+width]
+  .text:1022172B                 ; height
+  .text:1022172B                 push    esi; height
+  .text:1022172C                 ; zFar
+  .text:1022172C                 push    edi; zFar
+  .text:1022172D                 ; y
+  .text:1022172D                 push    eax; y
+  .text:1022172E                 ; x
+  .text:1022172E                 push    eax; x
+  .text:1022172F                 mov     [ebp+var_4], eax
+  .text:10221732                 call    ds:glViewport
+  .text:10221738                 ; cap
+  .text:10221738                 push    0B71h; cap
+  .text:1022173D                 call    ds:glDisable
+  .text:10221743                 ; cap
+  .text:10221743                 push    0DE1h; cap
+  .text:10221748                 call    ds:glEnable
+  .text:1022174E                 ; mode
+  .text:1022174E                 push    1701h; mode
+  .text:10221753                 call    ds:glMatrixMode
+  .text:10221759                 movaps  xmm0, ds:zNear
+  .text:10221760                 sub     esp, 30h
+  .text:10221763                 xorps   xmm1, xmm1
+  .text:10221766                 ; zNear
+  .text:10221766                 movups  xmmword ptr [esp+0BCh+zNear], xmm0; zNear
+  .text:1022176B                 movd    xmm0, esi
+  .text:1022176F                 cvtdq2pd xmm0, xmm0
+  .text:10221773                 ; top
+  .text:10221773                 movsd   [esp+0BCh+top], xmm1; top
+  .text:10221779                 ; bottom
+  .text:10221779                 movsd   [esp+0BCh+bottom], xmm0; bottom
+  .text:1022177F                 movd    xmm0, edi
+  .text:10221783                 cvtdq2pd xmm0, xmm0
+  .text:10221787                 ; right
+  .text:10221787                 movsd   [esp+0BCh+right], xmm0; right
+  .text:1022178D                 ; left
+  .text:1022178D                 movsd   [esp+0BCh+left], xmm1; left
+  .text:10221792                 call    ds:glOrtho
+  .text:10221798                 sub     esp, 10h
+  .text:1022179B                 ; alpha
+  .text:1022179B                 mov     dword ptr [esp+9Ch+zNear+0Ch], 0; alpha
+  .text:102217A3                 ; blue
+  .text:102217A3                 mov     dword ptr [esp+9Ch+zNear+8], 0; blue
+  .text:102217AB                 ; green
+  .text:102217AB                 mov     dword ptr [esp+9Ch+zNear+4], 0; green
+  .text:102217B3                 ; red
+  .text:102217B3                 mov     dword ptr [esp+9Ch+zNear], 0; red
+  .text:102217BA                 call    ds:glClearColor
+  .text:102217C0                 ; mask
+  .text:102217C0                 push    4000h; mask
+  .text:102217C5                 call    ds:glClear
+  .text:102217CB                 movd    xmm4, dword ptr [ebx+1B4h]; (structmember, struct=CVideoMode_Common, member=m_iBaseResY)
+  .text:102217D3                 movd    xmm3, dword ptr [ebx+1B0h]; (structmember, struct=CVideoMode_Common, member=m_iBaseResX)
+  .text:102217DB                 movd    xmm6, esi
+  .text:102217DF                 cvtdq2ps xmm4, xmm4
+  .text:102217E2                 cvtdq2ps xmm6, xmm6
+  .text:102217E5                 movd    xmm0, edi
+  .text:102217E9                 movaps  xmm2, xmm4
+  .text:102217EC                 cvtdq2ps xmm0, xmm0
+  .text:102217EF                 divss   xmm6, xmm4
+  .text:102217F3                 cvtdq2ps xmm3, xmm3
+  .text:102217F6                 movaps  xmm5, xmm0
+  .text:102217F9                 movss   [ebp+var_60], xmm6
+  .text:102217FE                 divss   xmm5, xmm3
+  .text:10221802                 movaps  xmm1, xmm3
+  .text:10221805                 movss   [ebp+var_30], xmm6
+  .text:1022180A                 mulss   xmm1, xmm6
+  .text:1022180E                 movss   [ebp+var_5C], xmm5
+  .text:10221813                 mulss   xmm2, xmm6
+  .text:10221817                 comiss  xmm0, xmm1
+  .text:1022181A                 jbe     short loc_1022182F
+  .text:1022181C                 movaps  xmm1, xmm3
+  .text:1022181F                 movss   [ebp+var_30], xmm5
+  .text:10221824                 movaps  xmm2, xmm4
+  .text:10221827                 mulss   xmm1, xmm5
+  .text:1022182B                 mulss   xmm2, xmm5
+  .text:1022182F                 mulss   xmm1, ds:dword_10306478
+  .text:10221837                 mov     eax, edi
+  .text:10221839                 xor     edi, edi
+  .text:1022183B                 mov     ebx, ds:_wassert
+  .text:10221841                 mulss   xmm2, ds:dword_10306478
+  .text:10221849                 cdq
+  .text:1022184A                 sub     eax, edx
+  .text:1022184C                 mov     [ebp+var_64], edi
+  .text:1022184F                 cvttss2si ecx, xmm1
+  .text:10221853                 sar     eax, 1
+  .text:10221855                 sub     eax, ecx
+  .text:10221857                 mov     [ebp+var_70], eax
+  .text:1022185A                 mov     eax, esi
+  .text:1022185C                 mov     esi, [ebp+var_24]
+  .text:1022185F                 cvttss2si ecx, xmm2
+  .text:10221863                 cdq
+  .text:10221864                 sub     eax, edx
+  .text:10221866                 sar     eax, 1
+  .text:10221868                 sub     eax, ecx
+  .text:1022186A                 mov     [ebp+var_74], eax
+  .text:1022186D                 cmp     [esi+1A8h], edi
+  .text:10221873                 jle     loc_10221FCA
+  .text:10221879                 nop     dword ptr [eax+00000000h]
+  .text:10221880                 test    edi, edi
+  .text:10221882                 js      short loc_1022188C
+  .text:10221884                 cmp     edi, [esi+1A8h]
+  .text:1022188A                 jl      short loc_102218A4
+  .text:1022188C                 ; Line
+  .text:1022188C                 push    0B8h; Line
+  .text:10221891                 push    offset aCBuildslaveGol_9; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10221896                 push    offset aIsvalidindexI; "IsValidIndex(i)"
+  .text:1022189B                 call    ebx ; _wassert
+  .text:1022189D                 add     esp, 0Ch
+  .text:102218A0                 test    edi, edi
+  .text:102218A2                 js      short loc_102218AC
+  .text:102218A4                 cmp     edi, [esi+1A0h]
+  .text:102218AA                 jl      short loc_102218C0
+  .text:102218AC                 ; Line
+  .text:102218AC                 push    9Bh; Line
+  .text:102218B1                 push    offset aCBuildslaveGol_16; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:102218B6                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:102218BB                 call    ebx ; _wassert
+  .text:102218BD                 add     esp, 0Ch
+  .text:102218C0                 mov     ebx, [esi+19Ch]; (structmember, struct=CVideoMode_Common, member=m_ImageID)
+  .text:102218C6                 lea     edi, [edi+edi*2]
+  .text:102218C9                 cmp     byte ptr [ebx+edi*8+14h], 0
+  .text:102218CE                 mov     eax, [ebx+edi*8+4]
+  .text:102218D2                 jz      loc_102219C3
+  .text:102218D8                 test    eax, eax
+  .text:102218DA                 jz      short loc_1022190E
+  .text:102218DC                 movd    xmm0, eax
+  .text:102218E0                 sub     esp, 8
+  .text:102218E3                 cvtdq2ps xmm0, xmm0
+  .text:102218E6                 mulss   xmm0, [ebp+var_5C]
+  .text:102218EB                 cvtps2pd xmm0, xmm0
+  .text:102218EE                 movsd   [ebp+var_14], xmm0
+  .text:102218F3                 fld     [ebp+var_14]
+  .text:102218F6                 ; X
+  .text:102218F6                 fstp    [esp+94h+zNear+8]; X
+  .text:102218F9                 call    ceil
+  .text:102218FE                 fstp    [ebp+var_14]
+  .text:10221901                 cvttsd2si eax, [ebp+var_14]
+  .text:10221906                 add     esp, 8
+  .text:10221909                 mov     [ebp+x], eax
+  .text:1022190C                 jmp     short loc_10221915
+  .text:1022190E                 mov     [ebp+x], 0
+  .text:10221915                 mov     esi, [ebx+edi*8+8]
+  .text:10221919                 test    esi, esi
+  .text:1022191B                 jz      short loc_1022194F
+  .text:1022191D                 movd    xmm0, esi
+  .text:10221921                 sub     esp, 8
+  .text:10221924                 cvtdq2ps xmm0, xmm0
+  .text:10221927                 mulss   xmm0, [ebp+var_60]
+  .text:1022192C                 cvtps2pd xmm0, xmm0
+  .text:1022192F                 movsd   [ebp+var_14], xmm0
+  .text:10221934                 fld     [ebp+var_14]
+  .text:10221937                 ; X
+  .text:10221937                 fstp    [esp+94h+zNear+8]; X
+  .text:1022193A                 call    ceil
+  .text:1022193F                 fstp    [ebp+var_14]
+  .text:10221942                 cvttsd2si eax, [ebp+var_14]
+  .text:10221947                 add     esp, 8
+  .text:1022194A                 mov     [ebp+var_2C], eax
+  .text:1022194D                 jmp     short loc_10221956
+  .text:1022194F                 mov     [ebp+var_2C], 0
+  .text:10221956                 mov     eax, [ebx+edi*8+0Ch]
+  .text:1022195A                 xorps   xmm0, xmm0
+  .text:1022195D                 add     eax, [ebx+edi*8+4]
+  .text:10221961                 sub     esp, 8
+  .text:10221964                 cvtsi2ss xmm0, eax
+  .text:10221968                 mulss   xmm0, [ebp+var_5C]
+  .text:1022196D                 cvtps2pd xmm0, xmm0
+  .text:10221970                 movsd   [ebp+var_14], xmm0
+  .text:10221975                 fld     [ebp+var_14]
+  .text:10221978                 ; X
+  .text:10221978                 fstp    [esp+94h+zNear+8]; X
+  .text:1022197B                 call    ceil
+  .text:10221980                 fstp    [ebp+var_14]
+  .text:10221983                 cvttsd2si eax, [ebp+var_14]
+  .text:10221988                 xorps   xmm0, xmm0
+  .text:1022198B                 mov     [ebp+var_58], eax
+  .text:1022198E                 mov     eax, [ebx+edi*8+10h]
+  .text:10221992                 add     eax, esi
+  .text:10221994                 cvtsi2ss xmm0, eax
+  .text:10221998                 mulss   xmm0, [ebp+var_60]
+  .text:1022199D                 cvtps2pd xmm0, xmm0
+  .text:102219A0                 movsd   [ebp+var_14], xmm0
+  .text:102219A5                 fld     [ebp+var_14]
+  .text:102219A8                 ; X
+  .text:102219A8                 fstp    [esp+94h+zNear+8]; X
+  .text:102219AB                 call    ceil
+  .text:102219B0                 fstp    [ebp+var_14]
+  .text:102219B3                 cvttsd2si eax, [ebp+var_14]
+  .text:102219B8                 add     esp, 8
+  .text:102219BB                 mov     [ebp+y], eax
+  .text:102219BE                 jmp     loc_10221B24
+  .text:102219C3                 cmp     byte ptr [ebx+edi*8+15h], 0
+  .text:102219C8                 jz      loc_10221AAC
+  .text:102219CE                 test    eax, eax
+  .text:102219D0                 jz      short loc_10221A01
+  .text:102219D2                 movd    xmm0, eax
+  .text:102219D6                 sub     esp, 8
+  .text:102219D9                 cvtdq2ps xmm0, xmm0
+  .text:102219DC                 mulss   xmm0, [ebp+var_30]
+  .text:102219E1                 cvtps2pd xmm0, xmm0
+  .text:102219E4                 movsd   [ebp+var_14], xmm0
+  .text:102219E9                 fld     [ebp+var_14]
+  .text:102219EC                 ; X
+  .text:102219EC                 fstp    [esp+94h+zNear+8]; X
+  .text:102219EF                 call    ceil
+  .text:102219F4                 fstp    [ebp+var_14]
+  .text:102219F7                 cvttsd2si eax, [ebp+var_14]
+  .text:102219FC                 add     esp, 8
+  .text:102219FF                 jmp     short loc_10221A03
+  .text:10221A01                 xor     eax, eax
+  .text:10221A03                 mov     esi, [ebp+var_70]
+  .text:10221A06                 add     esi, eax
+  .text:10221A08                 mov     eax, [ebx+edi*8+8]
+  .text:10221A0C                 mov     [ebp+x], esi
+  .text:10221A0F                 test    eax, eax
+  .text:10221A11                 jz      short loc_10221A42
+  .text:10221A13                 movd    xmm0, eax
+  .text:10221A17                 sub     esp, 8
+  .text:10221A1A                 cvtdq2ps xmm0, xmm0
+  .text:10221A1D                 mulss   xmm0, [ebp+var_30]
+  .text:10221A22                 cvtps2pd xmm0, xmm0
+  .text:10221A25                 movsd   [ebp+var_14], xmm0
+  .text:10221A2A                 fld     [ebp+var_14]
+  .text:10221A2D                 ; X
+  .text:10221A2D                 fstp    [esp+94h+zNear+8]; X
+  .text:10221A30                 call    ceil
+  .text:10221A35                 fstp    [ebp+var_14]
+  .text:10221A38                 cvttsd2si eax, [ebp+var_14]
+  .text:10221A3D                 add     esp, 8
+  .text:10221A40                 jmp     short loc_10221A44
+  .text:10221A42                 xor     eax, eax
+  .text:10221A44                 movd    xmm0, dword ptr [ebx+edi*8+0Ch]
+  .text:10221A4A                 sub     esp, 8
+  .text:10221A4D                 add     eax, [ebp+var_74]
+  .text:10221A50                 cvtdq2ps xmm0, xmm0
+  .text:10221A53                 mov     [ebp+var_2C], eax
+  .text:10221A56                 mulss   xmm0, [ebp+var_30]
+  .text:10221A5B                 cvtps2pd xmm0, xmm0
+  .text:10221A5E                 movsd   [ebp+var_14], xmm0
+  .text:10221A63                 fld     [ebp+var_14]
+  .text:10221A66                 ; X
+  .text:10221A66                 fstp    [esp+94h+zNear+8]; X
+  .text:10221A69                 call    ceil
+  .text:10221A6E                 movd    xmm0, dword ptr [ebx+edi*8+10h]
+  .text:10221A74                 cvtdq2ps xmm0, xmm0
+  .text:10221A77                 fstp    [ebp+var_14]
+  .text:10221A7A                 mulss   xmm0, [ebp+var_30]
+  .text:10221A7F                 cvttsd2si eax, [ebp+var_14]
+  .text:10221A84                 cvtps2pd xmm0, xmm0
+  .text:10221A87                 add     eax, esi
+  .text:10221A89                 mov     [ebp+var_58], eax
+  .text:10221A8C                 movsd   [ebp+var_14], xmm0
+  .text:10221A91                 fld     [ebp+var_14]
+  .text:10221A94                 ; X
+  .text:10221A94                 fstp    [esp+94h+zNear+8]; X
+  .text:10221A97                 call    ceil
+  .text:10221A9C                 fstp    [ebp+var_14]
+  .text:10221A9F                 cvttsd2si ecx, [ebp+var_14]
+  .text:10221AA4                 add     esp, 8
+  .text:10221AA7                 add     ecx, [ebp+var_2C]
+  .text:10221AAA                 jmp     short loc_10221B21
+  .text:10221AAC                 test    eax, eax
+  .text:10221AAE                 jz      short loc_10221AD8
+  .text:10221AB0                 movd    xmm0, eax
+  .text:10221AB4                 sub     esp, 8
+  .text:10221AB7                 cvtdq2pd xmm0, xmm0
+  .text:10221ABB                 movsd   [ebp+var_14], xmm0
+  .text:10221AC0                 fld     [ebp+var_14]
+  .text:10221AC3                 ; X
+  .text:10221AC3                 fstp    [esp+94h+zNear+8]; X
+  .text:10221AC6                 call    ceil
+  .text:10221ACB                 fstp    [ebp+var_14]
+  .text:10221ACE                 cvttsd2si esi, [ebp+var_14]
+  .text:10221AD3                 add     esp, 8
+  .text:10221AD6                 jmp     short loc_10221ADA
+  .text:10221AD8                 xor     esi, esi
+  .text:10221ADA                 mov     eax, [ebx+edi*8+8]
+  .text:10221ADE                 mov     [ebp+x], esi
+  .text:10221AE1                 test    eax, eax
+  .text:10221AE3                 jz      short loc_10221B0D
+  .text:10221AE5                 movd    xmm0, eax
+  .text:10221AE9                 sub     esp, 8
+  .text:10221AEC                 cvtdq2pd xmm0, xmm0
+  .text:10221AF0                 movsd   [ebp+var_14], xmm0
+  .text:10221AF5                 fld     [ebp+var_14]
+  .text:10221AF8                 ; X
+  .text:10221AF8                 fstp    [esp+94h+zNear+8]; X
+  .text:10221AFB                 call    ceil
+  .text:10221B00                 fstp    [ebp+var_14]
+  .text:10221B03                 cvttsd2si eax, [ebp+var_14]
+  .text:10221B08                 add     esp, 8
+  .text:10221B0B                 jmp     short loc_10221B0F
+  .text:10221B0D                 xor     eax, eax
+  .text:10221B0F                 mov     ecx, [ebx+edi*8+0Ch]
+  .text:10221B13                 add     ecx, esi
+  .text:10221B15                 mov     [ebp+var_2C], eax
+  .text:10221B18                 mov     [ebp+var_58], ecx
+  .text:10221B1B                 mov     ecx, [ebx+edi*8+10h]
+  .text:10221B1F                 add     ecx, eax
+  .text:10221B21                 mov     [ebp+y], ecx
+  .text:10221B24                 mov     ecx, [ebp+var_18]
+  .text:10221B27                 mov     esi, ecx
+  .text:10221B29                 mov     edx, [ebp+var_48]
+  .text:10221B2C                 inc     ecx
+  .text:10221B2D                 mov     [ebp+var_18], ecx
+  .text:10221B30                 cmp     ecx, edx
+  .text:10221B32                 jle     short loc_10221BA3
+  .text:10221B34                 mov     eax, esi
+  .text:10221B36                 xor     ecx, ecx
+  .text:10221B38                 sub     eax, edx
+  .text:10221B3A                 add     eax, 1
+  .text:10221B3D                 cmovns  ecx, eax
+  .text:10221B40                 test    ecx, ecx
+  .text:10221B42                 jle     short loc_10221B48
+  .text:10221B44                 add     edx, ecx
+  .text:10221B46                 jmp     short loc_10221B54
+  .text:10221B48                 test    edx, edx
+  .text:10221B4A                 mov     eax, 1
+  .text:10221B4F                 cmovnz  eax, edx
+  .text:10221B52                 add     edx, eax
+  .text:10221B54                 mov     ecx, [ebp+Block]
+  .text:10221B57                 lea     eax, ds:0[edx*4]
+  .text:10221B5E                 mov     [ebp+var_48], edx
+  .text:10221B61                 ; Size
+  .text:10221B61                 push    eax; Size
+  .text:10221B62                 test    ecx, ecx
+  .text:10221B64                 jz      short loc_10221B72
+  .text:10221B66                 ; Block
+  .text:10221B66                 push    ecx; Block
+  .text:10221B67                 call    ds:__imp_realloc
+  .text:10221B6D                 add     esp, 8
+  .text:10221B70                 jmp     short loc_10221B7B
+  .text:10221B72                 call    ds:__imp_malloc
+  .text:10221B78                 add     esp, 4
+  .text:10221B7B                 mov     [ebp+var_4C], eax
+  .text:10221B7E                 mov     [ebp+Block], eax
+  .text:10221B81                 test    eax, eax
+  .text:10221B83                 jnz     short loc_10221B9D
+  .text:10221B85                 ; Line
+  .text:10221B85                 push    0F9h; Line
+  .text:10221B8A                 push    offset aCBuildslaveGol_16; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10221B8F                 push    offset aMPmemory; "m_pMemory"
+  .text:10221B94                 call    ds:_wassert
+  .text:10221B9A                 add     esp, 0Ch
+  .text:10221B9D                 mov     edx, [ebp+var_48]
+  .text:10221BA0                 mov     ecx, [ebp+var_18]
+  .text:10221BA3                 mov     [ebp+var_40], ecx
+  .text:10221BA6                 cmp     ecx, edx
+  .text:10221BA8                 jle     short loc_10221BC5
+  .text:10221BAA                 ; Line
+  .text:10221BAA                 push    10Eh; Line
+  .text:10221BAF                 push    offset aCBuildslaveGol_9; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10221BB4                 push    offset aMSizeMMemoryNu; "m_Size <= m_Memory.NumAllocated()"
+  .text:10221BB9                 call    ds:_wassert
+  .text:10221BBF                 mov     ecx, [ebp+var_18]
+  .text:10221BC2                 add     esp, 0Ch
+  .text:10221BC5                 test    esi, esi
+  .text:10221BC7                 js      short loc_10221BCD
+  .text:10221BC9                 cmp     esi, ecx
+  .text:10221BCB                 jl      short loc_10221BEC
+  .text:10221BCD                 test    ecx, ecx
+  .text:10221BCF                 jz      short loc_10221BEC
+  .text:10221BD1                 ; Line
+  .text:10221BD1                 push    125h; Line
+  .text:10221BD6                 push    offset aCBuildslaveGol_9; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10221BDB                 push    offset aIsvalidindexEl; "IsValidIndex(elem) || ( m_Size == 0 ) |"...
+  .text:10221BE0                 call    ds:_wassert
+  .text:10221BE6                 mov     ecx, [ebp+var_18]
+  .text:10221BE9                 add     esp, 0Ch
+  .text:10221BEC                 mov     eax, ecx
+  .text:10221BEE                 sub     eax, esi
+  .text:10221BF0                 dec     eax
+  .text:10221BF1                 mov     [ebp+pixels], eax
+  .text:10221BF4                 test    eax, eax
+  .text:10221BF6                 jle     loc_10221C99
+  .text:10221BFC                 test    esi, esi
+  .text:10221BFE                 js      short loc_10221C04
+  .text:10221C00                 cmp     esi, ecx
+  .text:10221C02                 jl      short loc_10221C1C
+  .text:10221C04                 ; Line
+  .text:10221C04                 push    0C6h; Line
+  .text:10221C09                 push    offset aCBuildslaveGol_9; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10221C0E                 push    offset aIsvalidindexI; "IsValidIndex(i)"
+  .text:10221C13                 call    ds:_wassert
+  .text:10221C19                 add     esp, 0Ch
+  .text:10221C1C                 test    esi, esi
+  .text:10221C1E                 js      short loc_10221C25
+  .text:10221C20                 cmp     esi, [ebp+var_48]
+  .text:10221C23                 jl      short loc_10221C3D
+  .text:10221C25                 ; Line
+  .text:10221C25                 push    9Bh; Line
+  .text:10221C2A                 push    offset aCBuildslaveGol_16; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10221C2F                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:10221C34                 call    ds:_wassert
+  .text:10221C3A                 add     esp, 0Ch
+  .text:10221C3D                 ; Line
+  .text:10221C3D                 push    0C6h; Line
+  .text:10221C42                 push    offset aCBuildslaveGol_9; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10221C47                 push    offset aIsvalidindexI; "IsValidIndex(i)"
+  .text:10221C4C                 call    ds:_wassert
+  .text:10221C52                 mov     eax, [ebp+var_18]
+  .text:10221C55                 add     esp, 0Ch
+  .text:10221C58                 test    eax, eax
+  .text:10221C5A                 js      short loc_10221C61
+  .text:10221C5C                 cmp     eax, [ebp+var_48]
+  .text:10221C5F                 jl      short loc_10221C79
+  .text:10221C61                 ; Line
+  .text:10221C61                 push    9Bh; Line
+  .text:10221C66                 push    offset aCBuildslaveGol_16; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10221C6B                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:10221C70                 call    ds:_wassert
+  .text:10221C76                 add     esp, 0Ch
+  .text:10221C79                 mov     ecx, [ebp+Block]
+  .text:10221C7C                 mov     eax, [ebp+pixels]
+  .text:10221C7F                 shl     eax, 2
+  .text:10221C82                 ; Size
+  .text:10221C82                 push    eax; Size
+  .text:10221C83                 lea     eax, [ecx+esi*4]
+  .text:10221C86                 ; Src
+  .text:10221C86                 push    eax; Src
+  .text:10221C87                 mov     eax, [ebp+var_18]
+  .text:10221C8A                 lea     eax, [ecx+eax*4]
+  .text:10221C8D                 ; void *
+  .text:10221C8D                 push    eax; void *
+  .text:10221C8E                 call    memmove
+  .text:10221C93                 mov     ecx, [ebp+var_18]
+  .text:10221C96                 add     esp, 0Ch
+  .text:10221C99                 test    esi, esi
+  .text:10221C9B                 js      short loc_10221CA1
+  .text:10221C9D                 cmp     esi, ecx
+  .text:10221C9F                 jl      short loc_10221CB9
+  .text:10221CA1                 ; Line
+  .text:10221CA1                 push    0C6h; Line
+  .text:10221CA6                 push    offset aCBuildslaveGol_9; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10221CAB                 push    offset aIsvalidindexI; "IsValidIndex(i)"
+  .text:10221CB0                 call    ds:_wassert
+  .text:10221CB6                 add     esp, 0Ch
+  .text:10221CB9                 test    esi, esi
+  .text:10221CBB                 js      short loc_10221CC2
+  .text:10221CBD                 cmp     esi, [ebp+var_48]
+  .text:10221CC0                 jl      short loc_10221CDA
+  .text:10221CC2                 ; Line
+  .text:10221CC2                 push    9Bh; Line
+  .text:10221CC7                 push    offset aCBuildslaveGol_16; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10221CCC                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:10221CD1                 call    ds:_wassert
+  .text:10221CD7                 add     esp, 0Ch
+  .text:10221CDA                 test    esi, esi
+  .text:10221CDC                 js      short loc_10221CE3
+  .text:10221CDE                 cmp     esi, [ebp+var_18]
+  .text:10221CE1                 jl      short loc_10221CFB
+  .text:10221CE3                 ; Line
+  .text:10221CE3                 push    0B8h; Line
+  .text:10221CE8                 push    offset aCBuildslaveGol_9; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10221CED                 push    offset aIsvalidindexI; "IsValidIndex(i)"
+  .text:10221CF2                 call    ds:_wassert
+  .text:10221CF8                 add     esp, 0Ch
+  .text:10221CFB                 test    esi, esi
+  .text:10221CFD                 js      short loc_10221D04
+  .text:10221CFF                 cmp     esi, [ebp+var_48]
+  .text:10221D02                 jl      short loc_10221D1C
+  .text:10221D04                 ; Line
+  .text:10221D04                 push    9Bh; Line
+  .text:10221D09                 push    offset aCBuildslaveGol_16; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10221D0E                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:10221D13                 call    ds:_wassert
+  .text:10221D19                 add     esp, 0Ch
+  .text:10221D1C                 mov     eax, [ebp+Block]
+  .text:10221D1F                 lea     esi, [eax+esi*4]
+  .text:10221D22                 ; textures
+  .text:10221D22                 push    esi; textures
+  .text:10221D23                 ; n
+  .text:10221D23                 push    1; n
+  .text:10221D25                 call    ds:glGenTextures
+  .text:10221D2B                 ; texture
+  .text:10221D2B                 push    dword ptr [esi]; texture
+  .text:10221D2D                 ; target
+  .text:10221D2D                 push    0DE1h; target
+  .text:10221D32                 call    ds:glBindTexture
+  .text:10221D38                 mov     esi, ds:glTexParameteri
+  .text:10221D3E                 ; param
+  .text:10221D3E                 push    2601h; param
+  .text:10221D43                 ; pname
+  .text:10221D43                 push    2800h; pname
+  .text:10221D48                 ; target
+  .text:10221D48                 push    0DE1h; target
+  .text:10221D4D                 call    esi ; glTexParameteri
+  .text:10221D4F                 ; param
+  .text:10221D4F                 push    2601h; param
+  .text:10221D54                 ; pname
+  .text:10221D54                 push    2801h; pname
+  .text:10221D59                 ; target
+  .text:10221D59                 push    0DE1h; target
+  .text:10221D5E                 call    esi ; glTexParameteri
+  .text:10221D60                 ; param
+  .text:10221D60                 push    812Fh; param
+  .text:10221D65                 ; pname
+  .text:10221D65                 push    2802h; pname
+  .text:10221D6A                 ; target
+  .text:10221D6A                 push    0DE1h; target
+  .text:10221D6F                 call    esi ; glTexParameteri
+  .text:10221D71                 ; param
+  .text:10221D71                 push    812Fh; param
+  .text:10221D76                 ; pname
+  .text:10221D76                 push    2803h; pname
+  .text:10221D7B                 ; target
+  .text:10221D7B                 push    0DE1h; target
+  .text:10221D80                 call    esi ; glTexParameteri
+  .text:10221D82                 ; param
+  .text:10221D82                 push    1; param
+  .text:10221D84                 ; pname
+  .text:10221D84                 push    0CF5h; pname
+  .text:10221D89                 call    ds:glPixelStorei
+  .text:10221D8F                 mov     eax, [ebx+edi*8]
+  .text:10221D92                 xor     ecx, ecx
+  .text:10221D94                 mov     edx, [ebx+edi*8+0Ch]
+  .text:10221D98                 mov     [ebp+var_38], 0
+  .text:10221D9F                 mov     [ebp+pixels], eax
+  .text:10221DA2                 mov     eax, 1
+  .text:10221DA7                 shl     eax, cl
+  .text:10221DA9                 mov     [ebp+var_50], eax
+  .text:10221DAC                 cmp     eax, edx
+  .text:10221DAE                 jge     short loc_10221DB6
+  .text:10221DB0                 inc     ecx
+  .text:10221DB1                 cmp     ecx, 20h ; ' '
+  .text:10221DB4                 jl      short loc_10221DA2
+  .text:10221DB6                 xor     ecx, ecx
+  .text:10221DB8                 nop     dword ptr [eax+eax+00000000h]
+  .text:10221DC0                 mov     esi, 1
+  .text:10221DC5                 shl     esi, cl
+  .text:10221DC7                 mov     dword ptr [ebp+var_14+4], esi
+  .text:10221DCA                 cmp     esi, [ebx+edi*8+10h]
+  .text:10221DCE                 jge     short loc_10221DD6
+  .text:10221DD0                 inc     ecx
+  .text:10221DD1                 cmp     ecx, 20h ; ' '
+  .text:10221DD4                 jl      short loc_10221DC0
+  .text:10221DD6                 cmp     eax, edx
+  .text:10221DD8                 jnz     short loc_10221DE4
+  .text:10221DDA                 cmp     esi, [ebx+edi*8+10h]
+  .text:10221DDE                 jz      loc_10221E8C
+  .text:10221DE4                 mov     edx, esi
+  .text:10221DE6                 xor     ecx, ecx
+  .text:10221DE8                 imul    edx, eax
+  .text:10221DEB                 mov     [ebp+pixels], edx
+  .text:10221DEE                 mov     eax, edx
+  .text:10221DF0                 mov     edx, 4
+  .text:10221DF5                 mul     edx
+  .text:10221DF7                 seto    cl
+  .text:10221DFA                 neg     ecx
+  .text:10221DFC                 or      ecx, eax
+  .text:10221DFE                 push    ecx
+  .text:10221DFF                 call    unknown_libname_10; Microsoft VisualC 14/net runtime
+  .text:10221E04                 add     esp, 4
+  .text:10221E07                 mov     [ebp+var_38], eax
+  .text:10221E0A                 test    eax, eax
+  .text:10221E0C                 jz      loc_10222118
+  .text:10221E12                 mov     ecx, [ebp+pixels]
+  .text:10221E15                 shl     ecx, 2
+  .text:10221E18                 ; Size
+  .text:10221E18                 push    ecx; Size
+  .text:10221E19                 ; Val
+  .text:10221E19                 push    0; Val
+  .text:10221E1B                 ; void *
+  .text:10221E1B                 push    eax; void *
+  .text:10221E1C                 call    memset
+  .text:10221E21                 xor     eax, eax
+  .text:10221E23                 add     esp, 0Ch
+  .text:10221E26                 mov     [ebp+t], eax
+  .text:10221E29                 cmp     [ebx+edi*8+10h], eax
+  .text:10221E2D                 jle     short loc_10221E83
+  .text:10221E2F                 mov     edx, [ebp+var_50]
+  .text:10221E32                 mov     esi, [ebp+var_38]
+  .text:10221E35                 mov     ecx, [ebx+edi*8+0Ch]
+  .text:10221E39                 shl     edx, 2
+  .text:10221E3C                 mov     [ebp+var_78], edx
+  .text:10221E3F                 mov     [ebp+pixels], esi
+  .text:10221E42                 xor     edx, edx
+  .text:10221E44                 test    ecx, ecx
+  .text:10221E46                 jle     short loc_10221E70
+  .text:10221E48                 nop     dword ptr [eax+eax+00000000h]
+  .text:10221E50                 imul    ecx, eax
+  .text:10221E53                 lea     esi, [esi+4]
+  .text:10221E56                 mov     eax, [ebx+edi*8]
+  .text:10221E59                 add     ecx, edx
+  .text:10221E5B                 inc     edx
+  .text:10221E5C                 mov     eax, [eax+ecx*4]
+  .text:10221E5F                 mov     [esi-4], eax
+  .text:10221E62                 mov     ecx, [ebx+edi*8+0Ch]
+  .text:10221E66                 mov     eax, [ebp+t]
+  .text:10221E69                 cmp     edx, ecx
+  .text:10221E6B                 jl      short loc_10221E50
+  .text:10221E6D                 mov     esi, [ebp+pixels]
+  .text:10221E70                 add     esi, [ebp+var_78]
+  .text:10221E73                 inc     eax
+  .text:10221E74                 mov     [ebp+t], eax
+  .text:10221E77                 mov     [ebp+pixels], esi
+  .text:10221E7A                 cmp     eax, [ebx+edi*8+10h]
+  .text:10221E7E                 jl      short loc_10221E42
+  .text:10221E80                 mov     esi, dword ptr [ebp+var_14+4]
+  .text:10221E83                 mov     eax, [ebp+var_38]
+  .text:10221E86                 mov     [ebp+pixels], eax
+  .text:10221E89                 mov     eax, [ebp+var_50]
+  .text:10221E8C                 ; pixels
+  .text:10221E8C                 push    [ebp+pixels]; pixels
+  .text:10221E8F                 ; type
+  .text:10221E8F                 push    1401h; type
+  .text:10221E94                 ; format
+  .text:10221E94                 push    1908h; format
+  .text:10221E99                 ; border
+  .text:10221E99                 push    0; border
+  .text:10221E9B                 ; height
+  .text:10221E9B                 push    esi; height
+  .text:10221E9C                 ; width
+  .text:10221E9C                 push    eax; width
+  .text:10221E9D                 ; internalformat
+  .text:10221E9D                 push    1908h; internalformat
+  .text:10221EA2                 ; level
+  .text:10221EA2                 push    0; level
+  .text:10221EA4                 ; target
+  .text:10221EA4                 push    0DE1h; target
+  .text:10221EA9                 call    ds:glTexImage2D
+  .text:10221EAF                 movss   xmm0, ds:dword_103064A8
+  .text:10221EB7                 mov     eax, [ebp+var_38]
+  .text:10221EBA                 movss   [ebp+t], xmm0
+  .text:10221EBF                 movss   [ebp+pixels], xmm0
+  .text:10221EC4                 test    eax, eax
+  .text:10221EC6                 jz      short loc_10221F04
+  .text:10221EC8                 movd    xmm1, dword ptr [ebx+edi*8+0Ch]
+  .text:10221ECE                 movd    xmm0, [ebp+var_50]
+  .text:10221ED3                 cvtdq2ps xmm1, xmm1
+  .text:10221ED6                 ; Block
+  .text:10221ED6                 push    eax; Block
+  .text:10221ED7                 cvtdq2ps xmm0, xmm0
+  .text:10221EDA                 divss   xmm1, xmm0
+  .text:10221EDE                 movd    xmm0, esi
+  .text:10221EE2                 movss   [ebp+pixels], xmm1
+  .text:10221EE7                 movd    xmm1, dword ptr [ebx+edi*8+10h]
+  .text:10221EED                 cvtdq2ps xmm1, xmm1
+  .text:10221EF0                 cvtdq2ps xmm0, xmm0
+  .text:10221EF3                 divss   xmm1, xmm0
+  .text:10221EF7                 movss   [ebp+t], xmm1
+  .text:10221EFC                 call    j_j_free_0
+  .text:10221F01                 add     esp, 4
+  .text:10221F04                 ; mode
+  .text:10221F04                 push    7; mode
+  .text:10221F06                 call    ds:glBegin
+  .text:10221F0C                 movss   xmm0, [ebp+t]
+  .text:10221F11                 sub     esp, 8
+  .text:10221F14                 mov     ebx, ds:glTexCoord2f
+  .text:10221F1A                 ; t
+  .text:10221F1A                 movss   dword ptr [esp+94h+zNear+0Ch], xmm0; t
+  .text:10221F20                 ; s
+  .text:10221F20                 mov     dword ptr [esp+94h+zNear+8], 0; s
+  .text:10221F27                 call    ebx ; glTexCoord2f
+  .text:10221F29                 mov     esi, [ebp+y]
+  .text:10221F2C                 mov     edi, [ebp+x]
+  .text:10221F2F                 ; z
+  .text:10221F2F                 push    0; z
+  .text:10221F31                 ; y
+  .text:10221F31                 push    esi; y
+  .text:10221F32                 ; x
+  .text:10221F32                 push    edi; x
+  .text:10221F33                 call    ds:glVertex3i
+  .text:10221F39                 movss   xmm0, [ebp+t]
+  .text:10221F3E                 sub     esp, 8
+  .text:10221F41                 ; t
+  .text:10221F41                 movss   dword ptr [esp+94h+zNear+0Ch], xmm0; t
+  .text:10221F47                 movss   xmm0, [ebp+pixels]
+  .text:10221F4C                 ; s
+  .text:10221F4C                 movss   dword ptr [esp+94h+zNear+8], xmm0; s
+  .text:10221F51                 call    ebx ; glTexCoord2f
+  .text:10221F53                 mov     ebx, [ebp+var_58]
+  .text:10221F56                 ; z
+  .text:10221F56                 push    0; z
+  .text:10221F58                 ; y
+  .text:10221F58                 push    esi; y
+  .text:10221F59                 ; x
+  .text:10221F59                 push    ebx; x
+  .text:10221F5A                 call    ds:glVertex3i
+  .text:10221F60                 movss   xmm0, [ebp+pixels]
+  .text:10221F65                 sub     esp, 8
+  .text:10221F68                 ; t
+  .text:10221F68                 mov     dword ptr [esp+94h+zNear+0Ch], 0; t
+  .text:10221F70                 ; s
+  .text:10221F70                 movss   dword ptr [esp+94h+zNear+8], xmm0; s
+  .text:10221F75                 call    ds:glTexCoord2f
+  .text:10221F7B                 mov     esi, [ebp+var_2C]
+  .text:10221F7E                 ; z
+  .text:10221F7E                 push    0; z
+  .text:10221F80                 ; y
+  .text:10221F80                 push    esi; y
+  .text:10221F81                 ; x
+  .text:10221F81                 push    ebx; x
+  .text:10221F82                 mov     ebx, ds:glVertex3i
+  .text:10221F88                 call    ebx ; glVertex3i
+  .text:10221F8A                 sub     esp, 8
+  .text:10221F8D                 ; t
+  .text:10221F8D                 mov     dword ptr [esp+94h+zNear+0Ch], 0; t
+  .text:10221F95                 ; s
+  .text:10221F95                 mov     dword ptr [esp+94h+zNear+8], 0; s
+  .text:10221F9C                 call    ds:glTexCoord2f
+  .text:10221FA2                 ; z
+  .text:10221FA2                 push    0; z
+  .text:10221FA4                 ; y
+  .text:10221FA4                 push    esi; y
+  .text:10221FA5                 ; x
+  .text:10221FA5                 push    edi; x
+  .text:10221FA6                 call    ebx ; glVertex3i
+  .text:10221FA8                 call    ds:glEnd
+  .text:10221FAE                 mov     edi, [ebp+var_64]
+  .text:10221FB1                 mov     esi, [ebp+var_24]
+  .text:10221FB4                 inc     edi
+  .text:10221FB5                 mov     ebx, ds:_wassert
+  .text:10221FBB                 mov     [ebp+var_64], edi
+  .text:10221FBE                 cmp     edi, [esi+1A8h]
+  .text:10221FC4                 jl      loc_10221880
+  .text:10221FCA                 push    [ebp+var_7C]
+  .text:10221FCD                 call    SDL_GL_SwapWindow
+  .text:10221FD2                 mov     eax, [ebp+var_18]
+  .text:10221FD5                 add     esp, 4
+  .text:10221FD8                 xor     esi, esi
+  .text:10221FDA                 test    eax, eax
+  .text:10221FDC                 jle     short loc_10222030
+  .text:10221FDE                 mov     edi, ds:glDeleteTextures
+  .text:10221FE4                 test    esi, esi
+  .text:10221FE6                 js      short loc_10221FEC
+  .text:10221FE8                 cmp     esi, eax
+  .text:10221FEA                 jl      short loc_10222004
+  .text:10221FEC                 ; Line
+  .text:10221FEC                 push    0B8h; Line
+  .text:10221FF1                 push    offset aCBuildslaveGol_9; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10221FF6                 push    offset aIsvalidindexI; "IsValidIndex(i)"
+  .text:10221FFB                 call    ebx ; _wassert
+  .text:10221FFD                 add     esp, 0Ch
+  .text:10222000                 test    esi, esi
+  .text:10222002                 js      short loc_10222009
+  .text:10222004                 cmp     esi, [ebp+var_48]
+  .text:10222007                 jl      short loc_1022201D
+  .text:10222009                 ; Line
+  .text:10222009                 push    9Bh; Line
+  .text:1022200E                 push    offset aCBuildslaveGol_16; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10222013                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:10222018                 call    ebx ; _wassert
+  .text:1022201A                 add     esp, 0Ch
+  .text:1022201D                 ; textures
+  .text:1022201D                 push    [ebp+Block]; textures
+  .text:10222020                 ; n
+  .text:10222020                 push    1; n
+  .text:10222022                 call    edi ; glDeleteTextures
+  .text:10222024                 add     [ebp+Block], 4
+  .text:10222028                 inc     esi
+  .text:10222029                 mov     eax, [ebp+var_18]
+  .text:1022202C                 cmp     esi, eax
+  .text:1022202E                 jl      short loc_10221FE4
+  .text:10222030                 lea     ecx, [ebp+var_4C]
+  .text:10222033                 call    sub_101C5BD0
+  .text:10222038                 mov     ecx, [ebp+var_24]
+  .text:1022203B                 xor     esi, esi
+  .text:1022203D                 cmp     [ecx+1A8h], esi
+  .text:10222043                 jle     loc_1022210D
+  .text:10222049                 xor     edi, edi
+  .text:1022204B                 nop     dword ptr [eax+eax+00h]
+  .text:10222050                 test    esi, esi
+  .text:10222052                 js      short loc_1022205C
+  .text:10222054                 cmp     esi, [ecx+1A8h]
+  .text:1022205A                 jl      short loc_10222077
+  .text:1022205C                 ; Line
+  .text:1022205C                 push    0B8h; Line
+  .text:10222061                 push    offset aCBuildslaveGol_9; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10222066                 push    offset aIsvalidindexI; "IsValidIndex(i)"
+  .text:1022206B                 call    ebx ; _wassert
+  .text:1022206D                 add     esp, 0Ch
+  .text:10222070                 test    esi, esi
+  .text:10222072                 js      short loc_1022207F
+  .text:10222074                 mov     ecx, [ebp+var_24]
+  .text:10222077                 cmp     esi, [ecx+1A0h]
+  .text:1022207D                 jl      short loc_10222096
+  .text:1022207F                 ; Line
+  .text:1022207F                 push    9Bh; Line
+  .text:10222084                 push    offset aCBuildslaveGol_16; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10222089                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:1022208E                 call    ebx ; _wassert
+  .text:10222090                 mov     ecx, [ebp+var_24]
+  .text:10222093                 add     esp, 0Ch
+  .text:10222096                 mov     eax, [ecx+19Ch]
+  .text:1022209C                 cmp     dword ptr [edi+eax], 0
+  .text:102220A0                 jz      short loc_102220FD
+  .text:102220A2                 test    esi, esi
+  .text:102220A4                 js      short loc_102220AE
+  .text:102220A6                 cmp     esi, [ecx+1A8h]
+  .text:102220AC                 jl      short loc_102220C9
+  .text:102220AE                 ; Line
+  .text:102220AE                 push    0B8h; Line
+  .text:102220B3                 push    offset aCBuildslaveGol_9; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:102220B8                 push    offset aIsvalidindexI; "IsValidIndex(i)"
+  .text:102220BD                 call    ebx ; _wassert
+  .text:102220BF                 add     esp, 0Ch
+  .text:102220C2                 test    esi, esi
+  .text:102220C4                 js      short loc_102220D1
+  .text:102220C6                 mov     ecx, [ebp+var_24]
+  .text:102220C9                 cmp     esi, [ecx+1A0h]
+  .text:102220CF                 jl      short loc_102220E8
+  .text:102220D1                 ; Line
+  .text:102220D1                 push    9Bh; Line
+  .text:102220D6                 push    offset aCBuildslaveGol_16; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:102220DB                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:102220E0                 call    ebx ; _wassert
+  .text:102220E2                 mov     ecx, [ebp+var_24]
+  .text:102220E5                 add     esp, 0Ch
+  .text:102220E8                 mov     eax, [ecx+19Ch]
+  .text:102220EE                 ; Block
+  .text:102220EE                 push    dword ptr [edi+eax]; Block
+  .text:102220F1                 call    ds:__imp_free
+  .text:102220F7                 mov     ecx, [ebp+var_24]
+  .text:102220FA                 add     esp, 4
+  .text:102220FD                 inc     esi
+  .text:102220FE                 add     edi, 18h
+  .text:10222101                 cmp     esi, [ecx+1A8h]
+  .text:10222107                 jl      loc_10222050
+  .text:1022210D                 add     ecx, 19Ch
+  .text:10222113                 call    sub_10222AE0
+  .text:10222118                 lea     ecx, [ebp+var_4C]
+  .text:1022211B                 call    sub_101C5BD0
+  .text:10222120                 cmp     [ebp+var_44], 0
+  .text:10222124                 jl      short loc_10222145
+  .text:10222126                 mov     eax, [ebp+var_4C]
+  .text:10222129                 mov     ebx, ds:__imp_free
+  .text:1022212F                 test    eax, eax
+  .text:10222131                 jz      short loc_10222145
+  .text:10222133                 ; Block
+  .text:10222133                 push    eax; Block
+  .text:10222134                 call    ebx ; __imp_free
+  .text:10222136                 xor     eax, eax
+  .text:10222138                 add     esp, 4
+  .text:1022213B                 test    eax, eax
+  .text:1022213D                 jz      short loc_10222145
+  .text:1022213F                 ; Block
+  .text:1022213F                 push    eax; Block
+  .text:10222140                 call    ebx ; __imp_free
+  .text:10222142                 add     esp, 4
+  .text:10222145                 mov     ecx, [ebp+var_C]
+  .text:10222148                 mov     large fs:0, ecx
+  .text:1022214F                 pop     ecx
+  .text:10222150                 pop     edi
+  .text:10222151                 pop     esi
+  .text:10222152                 pop     ebx
+  .text:10222153                 mov     esp, ebp
+  .text:10222155                 pop     ebp
+  .text:10222156                 retn    4
+  .text:102AE4E0                 ; void *
+  .text:102AE4E0                 lea     ecx, [ebp+var_4C]; void *
+  .text:102AE4E3                 jmp     sub_102213C0
+  .text:102AE4ED                 nop
+  .text:102AE4EE                 nop
+  .text:102AE4EF                 mov     edx, [esp-4+arg_4]
+  .text:102AE4F3                 lea     eax, [edx+0Ch]
+  .text:102AE4F6                 mov     ecx, [edx-80h]
+  .text:102AE4F9                 ; StackCookie
+  .text:102AE4F9                 xor     ecx, eax; StackCookie
+  .text:102AE4FB                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:102AE500                 mov     eax, offset stru_1030BE70
+  .text:102AE505                 jmp     __CxxFrameHandler3
+procedure: |-
+  void *__thiscall sub_102216C0(_DWORD *this, void *a2)
+  {
+    void *result; // eax
+    __int64 v4; // rdi
+    float v5; // xmm4_4
+    float v6; // xmm3_4
+    float v7; // xmm5_4
+    float v8; // xmm1_4
+    float v9; // xmm2_4
+    int v10; // eax
+    int v11; // edi
+    void (__cdecl *v12)(const wchar_t *, const wchar_t *, unsigned int); // ebx
+    int v13; // eax
+    _DWORD *v14; // esi
+    int v15; // ebx
+    int v16; // edi
+    int v17; // eax
+    int v18; // esi
+    int v19; // eax
+    GLint v20; // esi
+    int v21; // eax
+    int v22; // eax
+    float v23; // xmm0_4
+    double v24; // st7
+    float v25; // xmm0_4
+    GLint v26; // ecx
+    GLint v27; // esi
+    int v28; // eax
+    GLint v29; // eax
+    GLint v30; // ecx
+    int v31; // esi
+    int v32; // edx
+    int v33; // ecx
+    int v34; // ecx
+    int v35; // edx
+    int v36; // eax
+    void *v37; // eax
+    GLuint *v38; // esi
+    GLvoid *v39; // eax
+    int v40; // ecx
+    int v41; // edx
+    GLsizei v42; // eax
+    int i; // ecx
+    GLsizei v44; // esi
+    void *v45; // eax
+    float v46; // eax
+    char *v47; // esi
+    int v48; // ecx
+    int v49; // edx
+    int v50; // ecx
+    GLint v51; // esi
+    GLint v52; // edi
+    GLint v53; // ebx
+    GLint v54; // esi
+    int v55; // eax
+    int j; // esi
+    _DWORD *v57; // ecx
+    int v58; // esi
+    int v59; // edi
+    size_t zNear_12; // [esp+2Ch] [ebp-90h]
+    int v61; // [esp+44h] [ebp-78h]
+    int v62; // [esp+48h] [ebp-74h]
+    int v63; // [esp+4Ch] [ebp-70h]
+    __int64 width; // [esp+50h] [ebp-6Ch] BYREF
+    int v65; // [esp+58h] [ebp-64h]
+    float v66; // [esp+5Ch] [ebp-60h]
+    float v67; // [esp+60h] [ebp-5Ch]
+    GLint v68; // [esp+64h] [ebp-58h]
+    GLint y; // [esp+68h] [ebp-54h]
+    int v70; // [esp+6Ch] [ebp-50h]
+    void *v71; // [esp+70h] [ebp-4Ch] BYREF
+    int v72; // [esp+74h] [ebp-48h]
+    int v73; // [esp+78h] [ebp-44h]
+    int v74; // [esp+7Ch] [ebp-40h]
+    void *v75; // [esp+84h] [ebp-38h]
+    GLint x; // [esp+88h] [ebp-34h]
+    float v77; // [esp+8Ch] [ebp-30h]
+    GLint v78; // [esp+90h] [ebp-2Ch]
+    GLfloat t; // [esp+94h] [ebp-28h]
+    _DWORD *v80; // [esp+98h] [ebp-24h]
+    void *Block; // [esp+9Ch] [ebp-20h]
+    GLvoid *pixels; // [esp+A0h] [ebp-1Ch]
+    int v83; // [esp+A4h] [ebp-18h]
+    double v84; // [esp+A8h] [ebp-14h]
+    int v85; // [esp+B8h] [ebp-4h]
+
+    v80 = this;
+    result = a2;
+    if ( *(this + 106) ) // (structmember, struct=CVideoMode_Common, member=m_ImageID.m_Size)
+    {
+      SDL_GetWindowSize(a2, &width, (char *)&width + 4);
+      Block = nullptr;
+      v71 = nullptr;
+      v72 = 0;
+      v73 = 0;
+      v83 = 0;
+      v74 = 0;
+      v4 = width;
+      v85 = 0;
+      glViewport(0, 0, width, SHIDWORD(width));
+      glDisable(0xB71u);
+      glEnable(0xDE1u);
+      glMatrixMode(0x1701u);
+      glOrtho(0.0, (double)(int)v4, (double)SHIDWORD(v4), 0.0, -1.0, 1.0);
+      glClearColor(0.0, 0.0, 0.0, 0.0);
+      glClear(0x4000u);
+      v5 = (float)(int)*(this + 109); // (structmember, struct=CVideoMode_Common, member=m_iBaseResY)
+      v6 = (float)(int)*(this + 108); // (structmember, struct=CVideoMode_Common, member=m_iBaseResX)
+      v66 = (float)SHIDWORD(v4) / v5;
+      v7 = (float)(int)v4 / v6;
+      v77 = v66;
+      v8 = v6 * v66;
+      v67 = v7;
+      v9 = v5 * v66;
+      if ( (float)(int)v4 > (float)(v6 * v66) )
+      {
+        v77 = (float)(int)v4 / v6;
+        v8 = v6 * v7;
+        v9 = v5 * v7;
+      }
+      v10 = v4;
+      LODWORD(v4) = 0;
+      v12 = wassert;
+      v65 = 0;
+      v63 = v10 / 2 - (int)(float)(v8 * 0.5);
+      v13 = HIDWORD(v4);
+      v14 = v80;
+      v62 = v13 / 2 - (int)(float)(v9 * 0.5);
+      if ( (int)v80[106] > 0 )
+      {
+        do
+        {
+          if ( v11 < 0 || v11 >= v14[106] )
+            v12(L"IsValidIndex(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlVector.h", 0xB8u);
+          if ( v11 >= v14[104] )
+            v12(L"IsIdxValid(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0x9Bu);
+          v15 = v14[103]; // (structmember, struct=CVideoMode_Common, member=m_ImageID)
+          v16 = 3 * v11;
+          v17 = *(_DWORD *)(v15 + 8 * v16 + 4);
+          if ( *(_BYTE *)(v15 + 8 * v16 + 20) )
+          {
+            if ( v17 )
+            {
+              v84 = (float)((float)v17 * v67);
+              v84 = ceil(v84);
+              x = (int)v84;
+            }
+            else
+            {
+              x = 0;
+            }
+            v18 = *(_DWORD *)(v15 + 8 * v16 + 8);
+            if ( v18 )
+            {
+              v84 = (float)((float)v18 * v66);
+              v84 = ceil(v84);
+              v78 = (int)v84;
+            }
+            else
+            {
+              v78 = 0;
+            }
+            v84 = (float)((float)(*(_DWORD *)(v15 + 8 * v16 + 4) + *(_DWORD *)(v15 + 8 * v16 + 12)) * v67);
+            v84 = ceil(v84);
+            v68 = (int)v84;
+            v84 = (float)((float)(v18 + *(_DWORD *)(v15 + 8 * v16 + 16)) * v66);
+            v84 = ceil(v84);
+            y = (int)v84;
+          }
+          else
+          {
+            if ( *(_BYTE *)(v15 + 8 * v16 + 21) )
+            {
+              if ( v17 )
+              {
+                v84 = (float)((float)v17 * v77);
+                v84 = ceil(v84);
+                v19 = (int)v84;
+              }
+              else
+              {
+                v19 = 0;
+              }
+              v20 = v19 + v63;
+              v21 = *(_DWORD *)(v15 + 8 * v16 + 8);
+              x = v20;
+              if ( v21 )
+              {
+                v84 = (float)((float)v21 * v77);
+                v84 = ceil(v84);
+                v22 = (int)v84;
+              }
+              else
+              {
+                v22 = 0;
+              }
+              v23 = (float)*(int *)(v15 + 8 * v16 + 12);
+              v78 = v62 + v22;
+              v84 = (float)(v23 * v77);
+              v24 = ceil(v84);
+              v25 = (float)*(int *)(v15 + 8 * v16 + 16);
+              v68 = v20 + (int)v24;
+              v84 = (float)(v25 * v77);
+              v84 = ceil(v84);
+              v26 = v78 + (int)v84;
+            }
+            else
+            {
+              if ( v17 )
+              {
+                v84 = (double)v17;
+                v84 = ceil((double)v17);
+                v27 = (int)v84;
+              }
+              else
+              {
+                v27 = 0;
+              }
+              v28 = *(_DWORD *)(v15 + 8 * v16 + 8);
+              x = v27;
+              if ( v28 )
+              {
+                v84 = (double)v28;
+                v84 = ceil((double)v28);
+                v29 = (int)v84;
+              }
+              else
+              {
+                v29 = 0;
+              }
+              v30 = v27 + *(_DWORD *)(v15 + 8 * v16 + 12);
+              v78 = v29;
+              v68 = v30;
+              v26 = v29 + *(_DWORD *)(v15 + 8 * v16 + 16);
+            }
+            y = v26;
+          }
+          v31 = v83;
+          v32 = v72;
+          v33 = v83 + 1;
+          v83 = v33;
+          if ( v33 > v72 )
+          {
+            v34 = 0;
+            if ( v31 - v72 + 1 >= 0 )
+              v34 = v31 - v72 + 1;
+            if ( v34 <= 0 )
+            {
+              v36 = 1;
+              if ( v72 )
+                v36 = v72;
+              v35 = v36 + v72;
+            }
+            else
+            {
+              v35 = v34 + v72;
+            }
+            v72 = v35;
+            zNear_12 = 4 * v35;
+            if ( Block )
+              v37 = realloc(Block, zNear_12);
+            else
+              v37 = malloc(zNear_12);
+            v71 = v37;
+            Block = v37;
+            if ( !v37 )
+              wassert(L"m_pMemory", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0xF9u);
+            v32 = v72;
+            v33 = v83;
+          }
+          v74 = v33;
+          if ( v33 > v32 )
+            wassert(
+              L"m_Size <= m_Memory.NumAllocated()",
+              L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlVector.h",
+              0x10Eu);
+          if ( (v31 < 0 || v31 >= v33) && v33 )
+            wassert(
+              L"IsValidIndex(elem) || ( m_Size == 0 ) || ( num == 0 )",
+              L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlVector.h",
+              0x125u);
+          pixels = (GLvoid *)(v33 - v31 - 1);
+          if ( (int)pixels > 0 )
+          {
+            if ( v31 < 0 || v31 >= v33 )
+              wassert(L"IsValidIndex(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlVector.h", 0xC6u);
+            if ( v31 >= v72 )
+              wassert(L"IsIdxValid(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0x9Bu);
+            wassert(L"IsValidIndex(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlVector.h", 0xC6u);
+          }
+          if ( v31 < 0 || v31 >= v33 )
+            wassert(L"IsValidIndex(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlVector.h", 0xC6u);
+          if ( v31 >= v72 )
+            wassert(L"IsIdxValid(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0x9Bu);
+          if ( v31 >= v83 )
+            wassert(L"IsValidIndex(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlVector.h", 0xB8u);
+          if ( v31 >= v72 )
+            wassert(L"IsIdxValid(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0x9Bu);
+          v38 = (GLuint *)((char *)Block + 4 * v31);
+          glGenTextures(1, v38);
+          glBindTexture(0xDE1u, *v38);
+          glTexParameteri(0xDE1u, 0x2800u, 9729);
+          glTexParameteri(0xDE1u, 0x2801u, 9729);
+          glTexParameteri(0xDE1u, 0x2802u, 33071);
+          glTexParameteri(0xDE1u, 0x2803u, 33071);
+          glPixelStorei(0xCF5u, 1);
+          v39 = *(GLvoid **)(v15 + 8 * v16);
+          v40 = 0;
+          v41 = *(_DWORD *)(v15 + 8 * v16 + 12);
+          *(float *)&v75 = 0.0;
+          pixels = v39;
+          do
+          {
+            v42 = 1 << v40;
+            v70 = 1 << v40;
+            if ( 1 << v40 >= v41 )
+              break;
+            ++v40;
+          }
+          while ( v40 < 32 );
+          for ( i = 0; i < 32; ++i )
+          {
+            v44 = 1 << i;
+            HIDWORD(v84) = 1 << i;
+            if ( 1 << i >= *(_DWORD *)(v15 + 8 * v16 + 16) )
+              break;
+          }
+          if ( v42 != v41 || v44 != *(_DWORD *)(v15 + 8 * v16 + 16) )
+          {
+            pixels = (GLvoid *)(v42 * v44);
+            v45 = (void *)unknown_libname_10((unsigned __int64)(unsigned int)(v42 * v44) >> 30 != 0 ? -1 : 4 * v42 * v44);
+            v75 = v45;
+            if ( !v45 )
+              goto LABEL_112;
+            memset(v45, 0, 4 * (_DWORD)pixels);
+            v46 = 0.0;
+            t = 0.0;
+            if ( *(int *)(v15 + 8 * v16 + 16) > 0 )
+            {
+              v47 = (char *)v75;
+              v48 = *(_DWORD *)(v15 + 8 * v16 + 12);
+              v61 = 4 * v70;
+              pixels = v75;
+              do
+              {
+                v49 = 0;
+                if ( v48 > 0 )
+                {
+                  do
+                  {
+                    v47 += 4;
+                    v50 = v49 + LODWORD(v46) * v48;
+                    ++v49;
+                    *((_DWORD *)v47 - 1) = *(_DWORD *)(*(_DWORD *)(v15 + 8 * v16) + 4 * v50);
+                    v48 = *(_DWORD *)(v15 + 8 * v16 + 12);
+                    v46 = t;
+                  }
+                  while ( v49 < v48 );
+                  v47 = (char *)pixels;
+                }
+                v47 += v61;
+                ++LODWORD(v46);
+                t = v46;
+                pixels = v47;
+              }
+              while ( SLODWORD(v46) < *(_DWORD *)(v15 + 8 * v16 + 16) );
+              v44 = HIDWORD(v84);
+            }
+            pixels = v75;
+            v42 = v70;
+          }
+          glTexImage2D(0xDE1u, 0, 6408, v42, v44, 0, 0x1908u, 0x1401u, pixels);
+          t = 1.0;
+          *(float *)&pixels = 1.0;
+          if ( *(float *)&v75 != 0.0 )
+          {
+            *(float *)&pixels = (float)*(int *)(v15 + 8 * v16 + 12) / (float)v70;
+            t = (float)*(int *)(v15 + 8 * v16 + 16) / (float)v44;
+            j_j_free_0(v75);
+          }
+          glBegin(7u);
+          glTexCoord2f(0.0, t);
+          v51 = y;
+          v52 = x;
+          glVertex3i(x, y, 0);
+          glTexCoord2f(*(GLfloat *)&pixels, t);
+          v53 = v68;
+          glVertex3i(v68, v51, 0);
+          glTexCoord2f(*(GLfloat *)&pixels, 0.0);
+          v54 = v78;
+          glVertex3i(v53, v78, 0);
+          glTexCoord2f(0.0, 0.0);
+          glVertex3i(v52, v54, 0);
+          glEnd();
+          v14 = v80;
+          v11 = v65 + 1;
+          v12 = wassert;
+          v65 = v11;
+        }
+        while ( v11 < v80[106] );
+      }
+      SDL_GL_SwapWindow(a2);
+      v55 = v83;
+      for ( j = 0; j < v83; v55 = v83 )
+      {
+        if ( j < 0 || j >= v55 )
+          v12(L"IsValidIndex(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlVector.h", 0xB8u);
+        if ( j >= v72 )
+          v12(L"IsIdxValid(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0x9Bu);
+        glDeleteTextures(1, (const GLuint *)Block);
+        Block = (char *)Block + 4;
+        ++j;
+      }
+      sub_101C5BD0(&v71);
+      v57 = v80;
+      v58 = 0;
+      if ( (int)v80[106] > 0 )
+      {
+        v59 = 0;
+        do
+        {
+          if ( v58 < 0 || v58 >= v57[106] )
+            v12(L"IsValidIndex(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlVector.h", 0xB8u);
+          if ( v58 >= v57[104] )
+            v12(L"IsIdxValid(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0x9Bu);
+          if ( *(_DWORD *)(v59 + v57[103]) )
+          {
+            if ( v58 >= v57[106] )
+              v12(L"IsValidIndex(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlVector.h", 0xB8u);
+            if ( v58 >= v57[104] )
+              v12(L"IsIdxValid(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0x9Bu);
+            free(*(void **)(v59 + v57[103]));
+            v57 = v80;
+          }
+          ++v58;
+          v59 += 24;
+        }
+        while ( v58 < v57[106] );
+      }
+      sub_10222AE0(v57 + 103);
+  LABEL_112:
+      result = (void *)sub_101C5BD0(&v71);
+      if ( v73 >= 0 )
+      {
+        result = v71;
+        if ( v71 )
+        {
+          free(v71);
+          return nullptr;
+        }
+      }
+    }
+    return result;
+  }

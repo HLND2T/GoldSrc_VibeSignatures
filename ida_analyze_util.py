@@ -83,6 +83,8 @@ STRUCT_MEMBER_YAML_ORDER = [
     "size",
     "offset_sig",
     "offset_sig_disp",
+    "offset_sig_ref_kind",
+    "offset_sig_addend",
     "offset_sig_max_match",
     "offset_sig_allow_across_function_boundary",
 ]
@@ -290,6 +292,14 @@ def normalize_symbol_artifact(payload: Mapping[str, object], *, category: str | 
                 raise SymbolArtifactError("GoldSrc x86 vfunc_offset must be 4-byte aligned")
             if "vfunc_index" in normalized and _parse_int(normalized["vfunc_index"], "vfunc_index") != offset // 4:
                 raise SymbolArtifactError("vfunc_index does not match vfunc_offset / 4")
+    if category == "structmember":
+        ref_kind = normalized.get("offset_sig_ref_kind", "displacement")
+        if ref_kind not in {"displacement", "immediate"}:
+            raise SymbolArtifactError("offset_sig_ref_kind must be displacement or immediate")
+        if (
+            "offset_sig_ref_kind" in normalized or "offset_sig_addend" in normalized
+        ) and "offset_sig" not in normalized:
+            raise SymbolArtifactError("offset_sig_ref_kind and offset_sig_addend require offset_sig")
     return normalized
 
 
@@ -2389,6 +2399,7 @@ async def preprocess_gv_sig_via_mcp(session, new_path, old_path, image_base, new
 _RESOLVE_STRUCT_OFFSET_PY_EVAL = r"""
 import ida_ua, idaapi, json
 ea = EA_PLACEHOLDER
+ref_kind = REF_KIND_PLACEHOLDER
 pointer_size = 8 if idaapi.inf_is_64bit() else 4
 insn = ida_ua.insn_t()
 size = ida_ua.decode_insn(insn, ea)
@@ -2397,9 +2408,11 @@ if size and pointer_size == 4:
     for op in insn.ops:
         if op.type == ida_ua.o_void:
             break
-        if op.type == ida_ua.o_displ:
+        if ref_kind == 'displacement' and op.type == ida_ua.o_displ:
             values.append(int(op.addr) & 0xFFFFFFFF)
-result = json.dumps({'pointer_size': pointer_size, 'offsets': values})
+        elif ref_kind == 'immediate' and op.type == ida_ua.o_imm:
+            values.append(int(op.value) & 0xFFFFFFFF)
+result = json.dumps({'pointer_size': pointer_size, 'values': values})
 """
 
 
@@ -2414,18 +2427,31 @@ async def preprocess_struct_offset_sig_via_mcp(
     if sig_addr is None:
         return None
     sig_disp = _parse_int(old_data.get("offset_sig_disp", 0), "offset_sig_disp")
-    code = _RESOLVE_STRUCT_OFFSET_PY_EVAL.replace("EA_PLACEHOLDER", str(sig_addr + sig_disp))
+    ref_kind = old_data.get("offset_sig_ref_kind", "displacement")
+    if ref_kind not in {"displacement", "immediate"}:
+        return None
+    addend = _parse_int(old_data.get("offset_sig_addend", 0), "offset_sig_addend")
+    code = _RESOLVE_STRUCT_OFFSET_PY_EVAL.replace("EA_PLACEHOLDER", str(sig_addr + sig_disp)).replace(
+        "REF_KIND_PLACEHOLDER", repr(ref_kind)
+    )
     try:
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
     except Exception:  # noqa: BLE001 - MCP tool failures must fail closed.
         return None
-    offsets = payload.get("offsets") if isinstance(payload, Mapping) and payload.get("pointer_size") == 4 else None
-    if not isinstance(offsets, list) or len(set(offsets)) != 1:
+    values = payload.get("values") if isinstance(payload, Mapping) and payload.get("pointer_size") == 4 else None
+    if not isinstance(values, list):
         return None
+    try:
+        values = {_parse_int(value, "offset reference") for value in values}
+    except SymbolArtifactError:
+        return None
+    if len(values) != 1:
+        return None
+    offset = (values.pop() + addend) & 0xFFFFFFFF
     result = {
         "struct_name": old_data.get("struct_name"),
         "member_name": old_data.get("member_name"),
-        "offset": hex(int(offsets[0])),
+        "offset": hex(offset),
         "offset_sig": normalize_signature(old_data["offset_sig"]),
         "offset_sig_disp": sig_disp,
     }
@@ -2434,6 +2460,10 @@ async def preprocess_struct_offset_sig_via_mcp(
     for field in ("size", "offset_sig_max_match", "offset_sig_allow_across_function_boundary"):
         if field in old_data:
             result[field] = old_data[field]
+    if ref_kind != "displacement" or "offset_sig_ref_kind" in old_data:
+        result["offset_sig_ref_kind"] = ref_kind
+    if addend or "offset_sig_addend" in old_data:
+        result["offset_sig_addend"] = hex(addend)
     return result
 
 

@@ -1,0 +1,7 @@
+struct_name: CVideoMode_Common
+member_name: m_ImageID.m_Size
+offset: '0x1a8'
+size: '4'
+offset_sig: 55 8B EC 83 E4 F8 83 EC 2C 53 56 57 8B F9 8B 87 ?? ?? ?? ?? 85 C0 0F 84 ?? ?? ?? ?? 8B 45 ?? 50 FF 15 ?? ?? ??
+  ??
+offset_sig_disp: '0xe'

@@ -2536,6 +2536,58 @@ found_struct_offset: []
                 else:
                     self.assertIsNone(candidate)
 
+    async def test_struct_member_fast_path_applies_immediate_addend(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            old_output = root / "old.yaml"
+            new_output = root / "new.yaml"
+            old_output.write_text(
+                "\n".join(
+                    [
+                        "struct_name: CVideoMode_Common",
+                        "member_name: m_ImageID.m_Size",
+                        "offset: '0x1a8'",
+                        "size: '0x4'",
+                        "offset_sig: 55 8B EC",
+                        "offset_sig_disp: '0xc'",
+                        "offset_sig_ref_kind: immediate",
+                        "offset_sig_addend: '0xc'",
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            session = SimpleNamespace(
+                call_tool=AsyncMock(
+                    return_value=SimpleNamespace(
+                        structuredContent={
+                            "result": {
+                                "pointer_size": 4,
+                                "values": ["0x19c"],
+                            }
+                        },
+                        content=[],
+                        isError=False,
+                    )
+                )
+            )
+
+            with patch("ida_analyze_util._find_unique_bytes", new=AsyncMock(return_value=0x401000)):
+                candidate = await ida_analyze_util.preprocess_struct_offset_sig_via_mcp(
+                    session,
+                    new_output,
+                    old_output,
+                    0x400000,
+                    root,
+                    "windows",
+                )
+
+        self.assertEqual("0x1a8", candidate["offset"])
+        self.assertEqual("immediate", candidate["offset_sig_ref_kind"])
+        self.assertEqual("0xc", candidate["offset_sig_addend"])
+        code = session.call_tool.await_args.args[1]["code"]
+        self.assertIn("ref_kind = 'immediate'", code)
+
     def test_optional_global_across_boundary_marker_is_a_desired_output_field(self):
         desired = ida_analyze_util._desired_fields_map(
             [

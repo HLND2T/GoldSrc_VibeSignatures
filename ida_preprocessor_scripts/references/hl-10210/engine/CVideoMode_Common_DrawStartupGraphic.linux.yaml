@@ -1,0 +1,1081 @@
+func_name: "CVideoMode_Common_DrawStartupGraphic"
+func_va: "0x1b3990"
+disasm_code: |-
+  .text:001B3990                 push    ebp
+  .text:001B3991                 push    edi
+  .text:001B3992                 push    esi
+  .text:001B3993                 push    ebx
+  .text:001B3994                 sub     esp, 9Ch
+  .text:001B399A                 mov     eax, [esp+0ACh+this]
+  .text:001B39A1                 mov     esi, [esp+0ACh+window]
+  .text:001B39A8                 mov     edx, [eax+1A8h]; (structmember, struct=CVideoMode_Common, member=m_ImageID.m_Size)
+  .text:001B39AE                 mov     [esp+0ACh+var_60], eax
+  .text:001B39B2                 mov     [esp+0ACh+var_30], esi
+  .text:001B39B6                 test    edx, edx
+  .text:001B39B8                 jnz     short loc_1B39C5
+  .text:001B39BA                 add     esp, 9Ch
+  .text:001B39C0                 pop     ebx
+  .text:001B39C1                 pop     esi
+  .text:001B39C2                 pop     edi
+  .text:001B39C3                 pop     ebp
+  .text:001B39C4                 retn
+  .text:001B39C5                 lea     eax, [esp+0ACh+height]
+  .text:001B39CC                 mov     [esp+0ACh+param], eax
+  .text:001B39D0                 lea     eax, [esp+0ACh+width]
+  .text:001B39D7                 mov     [esp+0ACh+n+4], eax
+  .text:001B39DB                 mov     [esp+0ACh+n], esi
+  .text:001B39DE                 call    SDL_GetWindowSize
+  .text:001B39E3                 mov     esi, [esp+0ACh+width]
+  .text:001B39EA                 xor     eax, eax
+  .text:001B39EC                 mov     ebx, [esp+0ACh+height]
+  .text:001B39F3                 ; y
+  .text:001B39F3                 mov     [esp+0ACh+n+4], eax; y
+  .text:001B39F7                 ; x
+  .text:001B39F7                 mov     [esp+0ACh+n], 0; x
+  .text:001B39FE                 ; width
+  .text:001B39FE                 mov     [esp+0ACh+param], localMode_width; width
+  .text:001B3A02                 ; height
+  .text:001B3A02                 mov     [esp+0ACh+param+4], localMode_height; height
+  .text:001B3A06                 call    glViewport
+  .text:001B3A0B                 ; cap
+  .text:001B3A0B                 mov     [esp+0ACh+n], 0B71h; cap
+  .text:001B3A12                 call    glDisable
+  .text:001B3A17                 ; cap
+  .text:001B3A17                 mov     [esp+0ACh+n], 0DE1h; cap
+  .text:001B3A1E                 call    glEnable
+  .text:001B3A23                 ; mode
+  .text:001B3A23                 mov     [esp+0ACh+n], 1701h; mode
+  .text:001B3A2A                 call    glMatrixMode
+  .text:001B3A2F                 mov     dword ptr [esp+0ACh+topu], localMode_height
+  .text:001B3A33                 xor     eax, eax
+  .text:001B3A35                 xor     edi, edi
+  .text:001B3A37                 fild    dword ptr [esp+0ACh+topu]
+  .text:001B3A3B                 mov     ebp, 3FF00000h
+  .text:001B3A40                 mov     dword ptr [esp+0ACh+topu], localMode_width
+  .text:001B3A44                 ; near_val
+  .text:001B3A44                 mov     [esp+0ACh+pToUse], eax; near_val
+  .text:001B3A48                 mov     eax, 0BFF00000h
+  .text:001B3A4D                 mov     [esp+0ACh+var_88], eax
+  .text:001B3A51                 xor     eax, eax
+  .text:001B3A53                 ; top
+  .text:001B3A53                 mov     dword ptr [esp+0ACh+top], eax; top
+  .text:001B3A57                 xor     eax, eax
+  .text:001B3A59                 mov     dword ptr [esp+0ACh+top+4], eax
+  .text:001B3A5D                 xor     eax, eax
+  .text:001B3A5F                 ; far_val
+  .text:001B3A5F                 mov     dword ptr [esp+0ACh+far_val], edi; far_val
+  .text:001B3A63                 ; bottom
+  .text:001B3A63                 fstp    [esp+0ACh+bottom]; bottom
+  .text:001B3A67                 fild    dword ptr [esp+0ACh+topu]
+  .text:001B3A6B                 mov     dword ptr [esp+0ACh+far_val+4], ebp
+  .text:001B3A6F                 ; left
+  .text:001B3A6F                 mov     [esp+0ACh+n], 0; left
+  .text:001B3A76                 mov     [esp+0ACh+n+4], eax
+  .text:001B3A7A                 ; right
+  .text:001B3A7A                 fstp    qword ptr [esp+0ACh+param]; right
+  .text:001B3A7E                 call    glOrtho
+  .text:001B3A83                 ; alpha
+  .text:001B3A83                 mov     [esp+0ACh+param+4], 0; alpha
+  .text:001B3A8B                 ; blue
+  .text:001B3A8B                 mov     [esp+0ACh+param], 0; blue
+  .text:001B3A93                 ; green
+  .text:001B3A93                 mov     [esp+0ACh+n+4], 0; green
+  .text:001B3A9B                 ; red
+  .text:001B3A9B                 mov     [esp+0ACh+n], 0; red
+  .text:001B3AA2                 call    glClearColor
+  .text:001B3AA7                 ; mask
+  .text:001B3AA7                 mov     [esp+0ACh+n], 4000h; mask
+  .text:001B3AAE                 call    glClear
+  .text:001B3AB3                 mov     eax, [esp+0ACh+var_60]
+  .text:001B3AB7                 mov     dword ptr [esp+0ACh+topu], localMode_width
+  .text:001B3ABB                 fild    dword ptr [eax+1B0h]; (structmember, struct=CVideoMode_Common, member=m_iBaseResX)
+  .text:001B3AC1                 fild    dword ptr [esp+0ACh+topu]
+  .text:001B3AC5                 mov     dword ptr [esp+0ACh+topu], localMode_height
+  .text:001B3AC9                 fld     st
+  .text:001B3ACB                 fdiv    st, st(2)
+  .text:001B3ACD                 fstp    [esp+0ACh+xScale]
+  .text:001B3AD1                 fild    dword ptr [eax+1B4h]; (structmember, struct=CVideoMode_Common, member=m_iBaseResY)
+  .text:001B3AD7                 fild    dword ptr [esp+0ACh+topu]
+  .text:001B3ADB                 fdiv    st, st(1)
+  .text:001B3ADD                 fld     st
+  .text:001B3ADF                 fst     [esp+0ACh+fitScale]
+  .text:001B3AE3                 fmul    st, st(4)
+  .text:001B3AE5                 fxch    st(3)
+  .text:001B3AE7                 fucomip st, st(3)
+  .text:001B3AE9                 ja      loc_1B4241
+  .text:001B3AEF                 fstp    st(3)
+  .text:001B3AF1                 fxch    st(1)
+  .text:001B3AF3                 fxch    st(2)
+  .text:001B3AF5                 movss   xmm4, [esp+0ACh+fitScale]
+  .text:001B3AFB                 fmulp   st(1), st
+  .text:001B3AFD                 fxch    st(1)
+  .text:001B3AFF                 movss   [esp+0ACh+var_40], xmm4
+  .text:001B3B05                 fmul    fitAdjHeight:flt_248810
+  .text:001B3B0B                 mov     eax, localMode_width
+  .text:001B3B0D                 mov     ecx, 0
+  .text:001B3B12                 shr     eax, 1Fh
+  .text:001B3B15                 add     eax, localMode_width
+  .text:001B3B17                 sar     eax, 1
+  .text:001B3B19                 mov     [esp+0ACh+x], ecx
+  .text:001B3B1D                 fstp    dword ptr [esp+0ACh+topu]
+  .text:001B3B21                 fld     fitAdjHeight:flt_248810
+  .text:001B3B27                 fmulp   st(1), st
+  .text:001B3B29                 cvttss2si edx, dword ptr [esp+0ACh+topu]
+  .text:001B3B2F                 sub     eax, edx
+  .text:001B3B31                 fstp    dword ptr [esp+0ACh+topu]
+  .text:001B3B35                 cvttss2si edx, dword ptr [esp+0ACh+topu]
+  .text:001B3B3B                 mov     [esp+0ACh+fitOffsetX], eax
+  .text:001B3B3F                 mov     fitOffsetX_0, localMode_height
+  .text:001B3B41                 shr     eax, 1Fh
+  .text:001B3B44                 add     eax, localMode_height
+  .text:001B3B46                 sar     eax, 1
+  .text:001B3B48                 sub     eax, edx
+  .text:001B3B4A                 mov     [esp+0ACh+fitOffsetY], eax
+  .text:001B3B4E                 mov     fitOffsetY_0, [esp+0ACh+var_60]
+  .text:001B3B52                 mov     edx, [eax+1A8h]
+  .text:001B3B58                 test    edx, edx
+  .text:001B3B5A                 jle     loc_1B4285
+  .text:001B3B60                 xor     eax, eax
+  .text:001B3B62                 mov     [esp+0ACh+var_48], eax
+  .text:001B3B66                 xor     eax, eax
+  .text:001B3B68                 mov     [esp+0ACh+vecGLTex_m_pMemory], eax
+  .text:001B3B6C                 lea     esi, [esi+0]
+  .text:001B3B70                 mov     esi, [esp+0ACh+var_60]
+  .text:001B3B74                 mov     eax, [esp+0ACh+x]
+  .text:001B3B78                 mov     edx, [esi+19Ch]; (structmember, struct=CVideoMode_Common, member=m_ImageID)
+  .text:001B3B7E                 lea     eax, [eax+eax*2]
+  .text:001B3B81                 lea     ebx, [edx+eax*8]
+  .text:001B3B84                 cmp     byte ptr [bimage+14h], 0
+  .text:001B3B88                 jz      loc_1B3D78
+  .text:001B3B8E                 mov     edi, [bimage+4]
+  .text:001B3B91                 xor     eax, eax
+  .text:001B3B93                 mov     [esp+0ACh+dx_0], eax
+  .text:001B3B97                 test    edi, edi
+  .text:001B3B99                 jz      short loc_1B3BBD
+  .text:001B3B9B                 mov     dword ptr [esp+0ACh+topu], edi
+  .text:001B3B9F                 fild    dword ptr [esp+0ACh+topu]
+  .text:001B3BA3                 fmul    [esp+0ACh+xScale]
+  .text:001B3BA7                 ; x
+  .text:001B3BA7                 fstp    [esp+0ACh+n]; x
+  .text:001B3BAA                 call    ceilf
+  .text:001B3BAF                 fstp    dword ptr [esp+0ACh+topu]
+  .text:001B3BB3                 cvttss2si eax, dword ptr [esp+0ACh+topu]
+  .text:001B3BB9                 mov     [esp+0ACh+dx_0], eax
+  .text:001B3BBD                 mov     esi, [bimage+8]
+  .text:001B3BC0                 xor     eax, eax
+  .text:001B3BC2                 mov     [esp+0ACh+dy], eax
+  .text:001B3BC6                 test    esi, esi
+  .text:001B3BC8                 jz      short loc_1B3BEC
+  .text:001B3BCA                 mov     dword ptr [esp+0ACh+topu], esi
+  .text:001B3BCE                 fild    dword ptr [esp+0ACh+topu]
+  .text:001B3BD2                 fmul    [esp+0ACh+fitScale]
+  .text:001B3BD6                 ; x
+  .text:001B3BD6                 fstp    [esp+0ACh+n]; x
+  .text:001B3BD9                 call    ceilf
+  .text:001B3BDE                 fstp    dword ptr [esp+0ACh+topu]
+  .text:001B3BE2                 cvttss2si eax, dword ptr [esp+0ACh+topu]
+  .text:001B3BE8                 mov     [esp+0ACh+dy], eax
+  .text:001B3BEC                 mov     eax, [bimage+0Ch]
+  .text:001B3BEF                 add     edi, eax
+  .text:001B3BF1                 mov     dword ptr [esp+0ACh+topu], edi
+  .text:001B3BF5                 fild    dword ptr [esp+0ACh+topu]
+  .text:001B3BF9                 fmul    [esp+0ACh+xScale]
+  .text:001B3BFD                 ; x
+  .text:001B3BFD                 fstp    [esp+0ACh+n]; x
+  .text:001B3C00                 call    ceilf
+  .text:001B3C05                 fstp    dword ptr [esp+0ACh+topu]
+  .text:001B3C09                 cvttss2si eax, dword ptr [esp+0ACh+topu]
+  .text:001B3C0F                 mov     [esp+0ACh+dw], eax
+  .text:001B3C13                 mov     dw_0, [bimage+10h]
+  .text:001B3C16                 add     esi, eax
+  .text:001B3C18                 mov     dword ptr [esp+0ACh+topu], esi
+  .text:001B3C1C                 fild    dword ptr [esp+0ACh+topu]
+  .text:001B3C20                 fmul    [esp+0ACh+fitScale]
+  .text:001B3C24                 ; x
+  .text:001B3C24                 fstp    [esp+0ACh+n]; x
+  .text:001B3C27                 call    ceilf
+  .text:001B3C2C                 fstp    dword ptr [esp+0ACh+topu]
+  .text:001B3C30                 cvttss2si eax, dword ptr [esp+0ACh+topu]
+  .text:001B3C36                 mov     [esp+0ACh+dt], eax
+  .text:001B3C3A                 inc     [esp+0ACh+x]
+  .text:001B3C3E                 mov     eax, [esp+0ACh+x]
+  .text:001B3C42                 cmp     [esp+0ACh+var_48], eax
+  .text:001B3C46                 jl      loc_1B3E36
+  .text:001B3C4C                 mov     eax, [esp+0ACh+vecGLTex_m_pMemory]
+  .text:001B3C50                 mov     esi, [esp+0ACh+x]
+  .text:001B3C54                 ; n
+  .text:001B3C54                 mov     [esp+0ACh+n], 1; n
+  .text:001B3C5B                 lea     esi, [eax+esi*4-4]
+  .text:001B3C5F                 ; textures
+  .text:001B3C5F                 mov     [esp+0ACh+n+4], tex; textures
+  .text:001B3C63                 call    glGenTextures
+  .text:001B3C68                 mov     eax, [tex]
+  .text:001B3C6A                 ; target
+  .text:001B3C6A                 mov     [esp+0ACh+n], 0DE1h; target
+  .text:001B3C71                 ; texture
+  .text:001B3C71                 mov     [esp+0ACh+n+4], eax; texture
+  .text:001B3C75                 call    glBindTexture
+  .text:001B3C7A                 mov     edx, 2601h
+  .text:001B3C7F                 mov     ecx, 2800h
+  .text:001B3C84                 ; param
+  .text:001B3C84                 mov     [esp+0ACh+param], edx; param
+  .text:001B3C88                 ; pname
+  .text:001B3C88                 mov     [esp+0ACh+n+4], ecx; pname
+  .text:001B3C8C                 ; target
+  .text:001B3C8C                 mov     [esp+0ACh+n], 0DE1h; target
+  .text:001B3C93                 call    glTexParameteri
+  .text:001B3C98                 mov     eax, 2601h
+  .text:001B3C9D                 ; param
+  .text:001B3C9D                 mov     [esp+0ACh+param], eax; param
+  .text:001B3CA1                 mov     eax, 2801h
+  .text:001B3CA6                 ; pname
+  .text:001B3CA6                 mov     [esp+0ACh+n+4], eax; pname
+  .text:001B3CAA                 ; target
+  .text:001B3CAA                 mov     [esp+0ACh+n], 0DE1h; target
+  .text:001B3CB1                 call    glTexParameteri
+  .text:001B3CB6                 mov     eax, 812Fh
+  .text:001B3CBB                 ; param
+  .text:001B3CBB                 mov     [esp+0ACh+param], eax; param
+  .text:001B3CBF                 mov     eax, 2802h
+  .text:001B3CC4                 ; pname
+  .text:001B3CC4                 mov     [esp+0ACh+n+4], eax; pname
+  .text:001B3CC8                 ; target
+  .text:001B3CC8                 mov     [esp+0ACh+n], 0DE1h; target
+  .text:001B3CCF                 call    glTexParameteri
+  .text:001B3CD4                 mov     eax, 812Fh
+  .text:001B3CD9                 ; param
+  .text:001B3CD9                 mov     [esp+0ACh+param], eax; param
+  .text:001B3CDD                 mov     eax, 2803h
+  .text:001B3CE2                 ; pname
+  .text:001B3CE2                 mov     [esp+0ACh+n+4], eax; pname
+  .text:001B3CE6                 ; target
+  .text:001B3CE6                 mov     [esp+0ACh+n], 0DE1h; target
+  .text:001B3CED                 call    glTexParameteri
+  .text:001B3CF2                 mov     ebp, 1
+  .text:001B3CF7                 ; param
+  .text:001B3CF7                 mov     [esp+0ACh+n+4], ebp; param
+  .text:001B3CFB                 ; pname
+  .text:001B3CFB                 mov     [esp+0ACh+n], 0CF5h; pname
+  .text:001B3D02                 call    glPixelStorei
+  .text:001B3D07                 mov     eax, [bimage+0Ch]
+  .text:001B3D0A                 xor     ecx, ecx
+  .text:001B3D0C                 mov     edx, 1
+  .text:001B3D11                 mov     tex, [bimage+10h]
+  .text:001B3D14                 jmp     short loc_1B3D26
+  .text:001B3D20                 inc     i
+  .text:001B3D21                 cmp     i, 20h ; ' '
+  .text:001B3D24                 jz      short loc_1B3D2E
+  .text:001B3D26                 mov     ebp, edx
+  .text:001B3D28                 shl     ebp, cl
+  .text:001B3D2A                 cmp     eax, wide2_0
+  .text:001B3D2C                 jg      short loc_1B3D20
+  .text:001B3D2E                 xor     i, i
+  .text:001B3D30                 mov     edx, 1
+  .text:001B3D35                 jmp     short loc_1B3D4A
+  .text:001B3D40                 inc     i
+  .text:001B3D41                 cmp     i, 20h ; ' '
+  .text:001B3D44                 jz      loc_1B3E64
+  .text:001B3D4A                 mov     edi, edx
+  .text:001B3D4C                 shl     edi, cl
+  .text:001B3D4E                 cmp     esi, tall2_0
+  .text:001B3D50                 jg      short loc_1B3D40
+  .text:001B3D52                 mov     [esp+0ACh+tall2], tall2_0
+  .text:001B3D56                 jnz     loc_1B3E68
+  .text:001B3D5C                 cmp     eax, wide2_0
+  .text:001B3D5E                 jnz     loc_1B3E68
+  .text:001B3D64                 xor     i, i
+  .text:001B3D66                 mov     eax, [bimage]
+  .text:001B3D68                 mov     dword ptr [esp+0ACh+topu], ecx
+  .text:001B3D6C                 jmp     loc_1B3F1B
+  .text:001B3D78                 cmp     byte ptr [bimage+15h], 0
+  .text:001B3D7C                 mov     eax, [bimage+4]
+  .text:001B3D7F                 jz      loc_1B4171
+  .text:001B3D85                 test    eax, eax
+  .text:001B3D87                 jz      short loc_1B3DA7
+  .text:001B3D89                 mov     dword ptr [esp+0ACh+topu], eax
+  .text:001B3D8D                 fild    dword ptr [esp+0ACh+topu]
+  .text:001B3D91                 fmul    [esp+0ACh+var_40]
+  .text:001B3D95                 ; x
+  .text:001B3D95                 fstp    [esp+0ACh+n]; x
+  .text:001B3D98                 call    ceilf
+  .text:001B3D9D                 fstp    dword ptr [esp+0ACh+topu]
+  .text:001B3DA1                 cvttss2si eax, dword ptr [esp+0ACh+topu]
+  .text:001B3DA7                 mov     ebp, [esp+0ACh+fitOffsetX]
+  .text:001B3DAB                 add     eax, ebp
+  .text:001B3DAD                 mov     [esp+0ACh+dx_0], eax
+  .text:001B3DB1                 mov     dx_0_0, [bimage+8]
+  .text:001B3DB4                 test    eax, eax
+  .text:001B3DB6                 jz      short loc_1B3DD6
+  .text:001B3DB8                 mov     dword ptr [esp+0ACh+topu], eax
+  .text:001B3DBC                 fild    dword ptr [esp+0ACh+topu]
+  .text:001B3DC0                 fmul    [esp+0ACh+var_40]
+  .text:001B3DC4                 ; x
+  .text:001B3DC4                 fstp    [esp+0ACh+n]; x
+  .text:001B3DC7                 call    ceilf
+  .text:001B3DCC                 fstp    dword ptr [esp+0ACh+topu]
+  .text:001B3DD0                 cvttss2si eax, dword ptr [esp+0ACh+topu]
+  .text:001B3DD6                 fild    dword ptr [bimage+0Ch]
+  .text:001B3DD9                 fmul    [esp+0ACh+var_40]
+  .text:001B3DDD                 mov     ecx, [esp+0ACh+fitOffsetY]
+  .text:001B3DE1                 add     eax, ecx
+  .text:001B3DE3                 mov     esi, eax
+  .text:001B3DE5                 ; x
+  .text:001B3DE5                 fstp    [esp+0ACh+n]; x
+  .text:001B3DE8                 mov     [esp+0ACh+dy], eax
+  .text:001B3DEC                 call    ceilf
+  .text:001B3DF1                 mov     edi, [esp+0ACh+dx_0]
+  .text:001B3DF5                 fstp    dword ptr [esp+0ACh+topu]
+  .text:001B3DF9                 fild    dword ptr [bimage+10h]
+  .text:001B3DFC                 fmul    [esp+0ACh+var_40]
+  .text:001B3E00                 cvttss2si eax, dword ptr [esp+0ACh+topu]
+  .text:001B3E06                 add     eax, edi
+  .text:001B3E08                 mov     [esp+0ACh+dw], eax
+  .text:001B3E0C                 ; x
+  .text:001B3E0C                 fstp    [esp+0ACh+n]; x
+  .text:001B3E0F                 call    ceilf
+  .text:001B3E14                 inc     [esp+0ACh+x]
+  .text:001B3E18                 fstp    dword ptr [esp+0ACh+topu]
+  .text:001B3E1C                 cvttss2si eax, dword ptr [esp+0ACh+topu]
+  .text:001B3E22                 add     eax, dy_0
+  .text:001B3E24                 mov     [esp+0ACh+dt], eax
+  .text:001B3E28                 mov     dt_0, [esp+0ACh+x]
+  .text:001B3E2C                 cmp     [esp+0ACh+var_48], eax
+  .text:001B3E30                 jge     loc_1B3C4C
+  .text:001B3E36                 mov     edx, [esp+0ACh+vecGLTex_m_pMemory]
+  .text:001B3E3A                 test    edx, edx
+  .text:001B3E3C                 jz      loc_1B41FA
+  .text:001B3E42                 mov     esi, eax
+  .text:001B3E44                 shl     eax, 2
+  .text:001B3E47                 ; size
+  .text:001B3E47                 mov     [esp+0ACh+n+4], eax; size
+  .text:001B3E4B                 mov     eax, [esp+0ACh+vecGLTex_m_pMemory]
+  .text:001B3E4F                 ; ptr
+  .text:001B3E4F                 mov     [esp+0ACh+n], eax; ptr
+  .text:001B3E52                 call    realloc
+  .text:001B3E57                 mov     [esp+0ACh+var_48], esi
+  .text:001B3E5B                 mov     [esp+0ACh+vecGLTex_m_pMemory], eax
+  .text:001B3E5F                 jmp     loc_1B3C4C
+  .text:001B3E64                 mov     [esp+0ACh+tall2], tall2_0
+  .text:001B3E68                 mov     eax, [esp+0ACh+tall2]
+  .text:001B3E6C                 imul    eax, wide2_0
+  .text:001B3E6F                 cmp     eax, 1FC00000h
+  .text:001B3E74                 ja      loc_1B4280
+  .text:001B3E7A                 lea     esi, ds:0[eax*4]
+  .text:001B3E81                 ; unsigned int
+  .text:001B3E81                 mov     [esp+0ACh+n], esi; unsigned int
+  .text:001B3E84                 call    _Znaj; operator new[](uint)
+  .text:001B3E89                 test    eax, eax
+  .text:001B3E8B                 mov     dword ptr [esp+0ACh+topu], eax
+  .text:001B3E8F                 jz      loc_1B4116
+  .text:001B3E95                 cmp     esi, 8
+  .text:001B3E98                 mov     edx, esi
+  .text:001B3E9A                 mov     edi, pExpanded_0
+  .text:001B3E9C                 jnb     loc_1B4140
+  .text:001B3EA2                 test    dl, 4
+  .text:001B3EA5                 jz      short loc_1B3EB0
+  .text:001B3EA7                 mov     dword ptr [edi], 0
+  .text:001B3EAD                 add     edi, 4
+  .text:001B3EB0                 test    dl, 2
+  .text:001B3EB3                 jz      short loc_1B3EBD
+  .text:001B3EB5                 mov     word ptr [edi], 0
+  .text:001B3EBA                 add     edi, 2
+  .text:001B3EBD                 test    dl, 1
+  .text:001B3EC0                 jz      short loc_1B3EC5
+  .text:001B3EC2                 mov     byte ptr [edi], 0
+  .text:001B3EC5                 mov     edx, [bimage+10h]
+  .text:001B3EC8                 test    edx, edx
+  .text:001B3ECA                 jle     short loc_1B3F17
+  .text:001B3ECC                 mov     eax, [bimage+0Ch]
+  .text:001B3ECF                 xor     edi, edi
+  .text:001B3ED1                 xor     esi, esi
+  .text:001B3ED3                 mov     [esp+0ACh+topv], wide2_0
+  .text:001B3ED7                 mov     wide2_0, edi
+  .text:001B3ED9                 lea     y, [y+0]
+  .text:001B3EE0                 test    eax, eax
+  .text:001B3EE2                 jle     short loc_1B3F08
+  .text:001B3EE4                 mov     edi, dword ptr [esp+0ACh+topu]
+  .text:001B3EE8                 xor     edx, edx
+  .text:001B3EEA                 lea     edi, [edi+ebp*4]
+  .text:001B3EED                 lea     y, [y+0]
+  .text:001B3EF0                 imul    eax, y
+  .text:001B3EF3                 mov     ecx, [bimage]
+  .text:001B3EF5                 add     eax, edx
+  .text:001B3EF7                 mov     eax, [ecx+eax*4]
+  .text:001B3EFA                 mov     [edi+edx*4], eax
+  .text:001B3EFD                 inc     edx
+  .text:001B3EFE                 mov     eax, [bimage+0Ch]
+  .text:001B3F01                 cmp     eax, edx
+  .text:001B3F03                 jg      short loc_1B3EF0
+  .text:001B3F05                 mov     edx, [bimage+10h]
+  .text:001B3F08                 mov     edi, [esp+0ACh+topv]
+  .text:001B3F0C                 inc     y
+  .text:001B3F0D                 add     ebp, edi
+  .text:001B3F0F                 cmp     y, edx
+  .text:001B3F11                 jl      short loc_1B3EE0
+  .text:001B3F13                 mov     ebp, [esp+0ACh+topv]
+  .text:001B3F17                 mov     eax, dword ptr [esp+0ACh+topu]
+  .text:001B3F1B                 ; pixels
+  .text:001B3F1B                 mov     [esp+0ACh+pToUse], pToUse_0; pixels
+  .text:001B3F1F                 mov     pToUse_0, 1401h
+  .text:001B3F24                 xor     edx, edx
+  .text:001B3F26                 ; type
+  .text:001B3F26                 mov     dword ptr [esp+0ACh+top+4], eax; type
+  .text:001B3F2A                 mov     eax, 1908h
+  .text:001B3F2F                 ; format
+  .text:001B3F2F                 mov     dword ptr [esp+0ACh+top], eax; format
+  .text:001B3F33                 xor     eax, eax
+  .text:001B3F35                 ; border
+  .text:001B3F35                 mov     dword ptr [esp+0ACh+bottom+4], eax; border
+  .text:001B3F39                 mov     eax, [esp+0ACh+tall2]
+  .text:001B3F3D                 ; width
+  .text:001B3F3D                 mov     [esp+0ACh+param+4], ebp; width
+  .text:001B3F41                 ; level
+  .text:001B3F41                 mov     [esp+0ACh+n+4], edx; level
+  .text:001B3F45                 ; target
+  .text:001B3F45                 mov     [esp+0ACh+n], 0DE1h; target
+  .text:001B3F4C                 ; height
+  .text:001B3F4C                 mov     dword ptr [esp+0ACh+bottom], eax; height
+  .text:001B3F50                 mov     eax, 1908h
+  .text:001B3F55                 ; internalFormat
+  .text:001B3F55                 mov     [esp+0ACh+param], eax; internalFormat
+  .text:001B3F59                 call    glTexImage2D
+  .text:001B3F5E                 mov     eax, dword ptr [esp+0ACh+topu]
+  .text:001B3F62                 test    eax, eax
+  .text:001B3F64                 jz      loc_1B41E3
+  .text:001B3F6A                 fild    dword ptr [bimage+0Ch]
+  .text:001B3F6D                 mov     dword ptr [esp+0ACh+topu], ebp
+  .text:001B3F71                 fild    dword ptr [esp+0ACh+topu]
+  .text:001B3F75                 fdivp   st(1), st
+  .text:001B3F77                 fstp    dword ptr [esp+0ACh+topu]
+  .text:001B3F7B                 fild    dword ptr [bimage+10h]
+  .text:001B3F7E                 fild    [esp+0ACh+tall2]
+  .text:001B3F82                 ; void *
+  .text:001B3F82                 mov     [esp+0ACh+n], eax; void *
+  .text:001B3F85                 fdivp   st(1), st
+  .text:001B3F87                 fstp    [esp+0ACh+topv]
+  .text:001B3F8B                 call    _ZdaPv; operator delete[](void *)
+  .text:001B3F90                 ; mode
+  .text:001B3F90                 mov     [esp+0ACh+n], 7; mode
+  .text:001B3F97                 call    glBegin
+  .text:001B3F9C                 movss   xmm0, [esp+0ACh+topv]
+  .text:001B3FA2                 ; s
+  .text:001B3FA2                 mov     [esp+0ACh+n], 0; s
+  .text:001B3FA9                 ; t
+  .text:001B3FA9                 movss   [esp+0ACh+n+4], xmm0; t
+  .text:001B3FAF                 call    glTexCoord2f
+  .text:001B3FB4                 mov     esi, [esp+0ACh+dt]
+  .text:001B3FB8                 xor     eax, eax
+  .text:001B3FBA                 mov     edi, [esp+0ACh+dx_0]
+  .text:001B3FBE                 ; z
+  .text:001B3FBE                 mov     [esp+0ACh+param], eax; z
+  .text:001B3FC2                 ; y
+  .text:001B3FC2                 mov     [esp+0ACh+n+4], esi; y
+  .text:001B3FC6                 ; x
+  .text:001B3FC6                 mov     [esp+0ACh+n], edi; x
+  .text:001B3FC9                 call    glVertex3i
+  .text:001B3FCE                 movss   xmm1, [esp+0ACh+topv]
+  .text:001B3FD4                 movss   xmm2, dword ptr [esp+0ACh+topu]
+  .text:001B3FDA                 ; t
+  .text:001B3FDA                 movss   [esp+0ACh+n+4], xmm1; t
+  .text:001B3FE0                 ; s
+  .text:001B3FE0                 movss   [esp+0ACh+n], xmm2; s
+  .text:001B3FE5                 call    glTexCoord2f
+  .text:001B3FEA                 ; y
+  .text:001B3FEA                 mov     [esp+0ACh+n+4], esi; y
+  .text:001B3FEE                 mov     esi, [esp+0ACh+dw]
+  .text:001B3FF2                 xor     eax, eax
+  .text:001B3FF4                 ; z
+  .text:001B3FF4                 mov     [esp+0ACh+param], eax; z
+  .text:001B3FF8                 ; x
+  .text:001B3FF8                 mov     [esp+0ACh+n], esi; x
+  .text:001B3FFB                 call    glVertex3i
+  .text:001B4000                 movss   xmm3, dword ptr [esp+0ACh+topu]
+  .text:001B4006                 ; t
+  .text:001B4006                 mov     [esp+0ACh+n+4], 0; t
+  .text:001B400E                 ; s
+  .text:001B400E                 movss   [esp+0ACh+n], xmm3; s
+  .text:001B4013                 call    glTexCoord2f
+  .text:001B4018                 mov     bimage, [esp+0ACh+dy]
+  .text:001B401C                 xor     ebp, ebp
+  .text:001B401E                 ; z
+  .text:001B401E                 mov     [esp+0ACh+param], ebp; z
+  .text:001B4022                 ; x
+  .text:001B4022                 mov     [esp+0ACh+n], esi; x
+  .text:001B4025                 ; y
+  .text:001B4025                 mov     [esp+0ACh+n+4], ebx; y
+  .text:001B4029                 call    glVertex3i
+  .text:001B402E                 ; t
+  .text:001B402E                 mov     [esp+0ACh+n+4], 0; t
+  .text:001B4036                 ; s
+  .text:001B4036                 mov     [esp+0ACh+n], 0; s
+  .text:001B403D                 call    glTexCoord2f
+  .text:001B4042                 xor     esi, esi
+  .text:001B4044                 ; z
+  .text:001B4044                 mov     [esp+0ACh+param], esi; z
+  .text:001B4048                 ; y
+  .text:001B4048                 mov     [esp+0ACh+n+4], ebx; y
+  .text:001B404C                 ; x
+  .text:001B404C                 mov     [esp+0ACh+n], edi; x
+  .text:001B404F                 call    glVertex3i
+  .text:001B4054                 call    glEnd
+  .text:001B4059                 mov     eax, [esp+0ACh+var_60]
+  .text:001B405D                 mov     esi, [esp+0ACh+x]
+  .text:001B4061                 cmp     [eax+1A8h], esi
+  .text:001B4067                 jg      loc_1B3B70
+  .text:001B406D                 mov     eax, [esp+0ACh+var_30]
+  .text:001B4071                 mov     [esp+0ACh+n], eax
+  .text:001B4074                 call    SDL_GL_SwapWindow
+  .text:001B4079                 mov     ecx, [esp+0ACh+x]
+  .text:001B407D                 xor     ebx, ebx
+  .text:001B407F                 mov     esi, [esp+0ACh+vecGLTex_m_pMemory]
+  .text:001B4083                 test    ecx, ecx
+  .text:001B4085                 jle     short loc_1B40A1
+  .text:001B4087                 ; textures
+  .text:001B4087                 mov     [esp+0ACh+n+4], esi; textures
+  .text:001B408B                 ; n
+  .text:001B408B                 mov     [esp+0ACh+n], 1; n
+  .text:001B4092                 call    glDeleteTextures
+  .text:001B4097                 inc     i
+  .text:001B4098                 add     esi, 4
+  .text:001B409B                 cmp     [esp+0ACh+x], i
+  .text:001B409F                 jnz     short loc_1B4087
+  .text:001B40A1                 mov     eax, [esp+0ACh+var_60]
+  .text:001B40A5                 xor     ebx, ebx
+  .text:001B40A7                 mov     edx, [eax+1A8h]
+  .text:001B40AD                 mov     esi, eax
+  .text:001B40AF                 test    edx, edx
+  .text:001B40B1                 jle     short loc_1B40DC
+  .text:001B40B3                 mov     edi, [esi+19Ch]
+  .text:001B40B9                 lea     eax, [i+i*2]
+  .text:001B40BC                 lea     eax, [edi+eax*8]
+  .text:001B40BF                 mov     eax, [eax]
+  .text:001B40C1                 test    eax, eax
+  .text:001B40C3                 jz      short loc_1B40D3
+  .text:001B40C5                 ; ptr
+  .text:001B40C5                 mov     [esp+0ACh+n], eax; ptr
+  .text:001B40C8                 call    free
+  .text:001B40CD                 mov     edx, [esi+1A8h]
+  .text:001B40D3                 inc     i
+  .text:001B40D4                 cmp     i, edx
+  .text:001B40D6                 jl      short loc_1B40B3
+  .text:001B40D8                 mov     eax, [esp+0ACh+var_60]
+  .text:001B40DC                 mov     edx, [eax+1A4h]
+  .text:001B40E2                 xor     ebp, ebp
+  .text:001B40E4                 mov     [eax+1A8h], ebp
+  .text:001B40EA                 test    edx, edx
+  .text:001B40EC                 js      short loc_1B4116
+  .text:001B40EE                 mov     esi, eax
+  .text:001B40F0                 mov     eax, [eax+19Ch]
+  .text:001B40F6                 test    eax, eax
+  .text:001B40F8                 jz      short loc_1B410A
+  .text:001B40FA                 ; ptr
+  .text:001B40FA                 mov     [esp+0ACh+n], eax; ptr
+  .text:001B40FD                 xor     ebx, ebx
+  .text:001B40FF                 call    free
+  .text:001B4104                 mov     [esi+19Ch], ebx
+  .text:001B410A                 mov     eax, [esp+0ACh+var_60]
+  .text:001B410E                 xor     ecx, ecx
+  .text:001B4110                 mov     [eax+1A0h], ecx
+  .text:001B4116                 mov     eax, [esp+0ACh+vecGLTex_m_pMemory]
+  .text:001B411A                 test    eax, eax
+  .text:001B411C                 jz      loc_1B39BA
+  .text:001B4122                 mov     [esp+0ACh+this], eax
+  .text:001B4129                 add     esp, 9Ch
+  .text:001B412F                 pop     ebx
+  .text:001B4130                 pop     esi
+  .text:001B4131                 pop     edi
+  .text:001B4132                 pop     ebp
+  .text:001B4133                 jmp     free
+  .text:001B4140                 test    al, 1
+  .text:001B4142                 jnz     loc_1B4235
+  .text:001B4148                 test    edi, 2
+  .text:001B414E                 jnz     loc_1B4225
+  .text:001B4154                 test    edi, 4
+  .text:001B415A                 jnz     loc_1B4214
+  .text:001B4160                 mov     ecx, edx
+  .text:001B4162                 xor     pExpanded_0, pExpanded_0
+  .text:001B4164                 shr     ecx, 2
+  .text:001B4167                 and     edx, 3
+  .text:001B416A                 rep stosd
+  .text:001B416C                 jmp     loc_1B3EA2
+  .text:001B4171                 xor     edx, edx
+  .text:001B4173                 test    eax, eax
+  .text:001B4175                 mov     [esp+0ACh+dx_0], edx
+  .text:001B4179                 jz      short loc_1B4199
+  .text:001B417B                 mov     dword ptr [esp+0ACh+topu], eax
+  .text:001B417F                 fild    dword ptr [esp+0ACh+topu]
+  .text:001B4183                 ; x
+  .text:001B4183                 fstp    qword ptr [esp+0ACh+n]; x
+  .text:001B4186                 call    ceil
+  .text:001B418B                 fstp    [esp+0ACh+topu]
+  .text:001B418F                 cvttsd2si eax, [esp+0ACh+topu]
+  .text:001B4195                 mov     [esp+0ACh+dx_0], eax
+  .text:001B4199                 mov     eax, [bimage+8]
+  .text:001B419C                 xor     ebp, ebp
+  .text:001B419E                 mov     [esp+0ACh+dy], ebp
+  .text:001B41A2                 test    eax, eax
+  .text:001B41A4                 jz      short loc_1B41C4
+  .text:001B41A6                 mov     dword ptr [esp+0ACh+topu], eax
+  .text:001B41AA                 fild    dword ptr [esp+0ACh+topu]
+  .text:001B41AE                 ; x
+  .text:001B41AE                 fstp    qword ptr [esp+0ACh+n]; x
+  .text:001B41B1                 call    ceil
+  .text:001B41B6                 fstp    [esp+0ACh+topu]
+  .text:001B41BA                 cvttsd2si eax, [esp+0ACh+topu]
+  .text:001B41C0                 mov     [esp+0ACh+dy], eax
+  .text:001B41C4                 mov     eax, [esp+0ACh+dx_0]
+  .text:001B41C8                 mov     esi, [bimage+0Ch]
+  .text:001B41CB                 mov     edi, [bimage+10h]
+  .text:001B41CE                 add     eax, esi
+  .text:001B41D0                 mov     [esp+0ACh+dw], eax
+  .text:001B41D4                 mov     dw_0, [esp+0ACh+dy]
+  .text:001B41D8                 add     eax, edi
+  .text:001B41DA                 mov     [esp+0ACh+dt], eax
+  .text:001B41DE                 jmp     loc_1B3C3A
+  .text:001B41E3                 fld1
+  .text:001B41E5                 fstp    dword ptr [esp+0ACh+topu]
+  .text:001B41E9                 movss   xmm6, dword ptr [esp+0ACh+topu]
+  .text:001B41EF                 movss   [esp+0ACh+topv], xmm6
+  .text:001B41F5                 jmp     loc_1B3F90
+  .text:001B41FA                 mov     esi, eax
+  .text:001B41FC                 shl     eax, 2
+  .text:001B41FF                 ; size
+  .text:001B41FF                 mov     [esp+0ACh+n], eax; size
+  .text:001B4202                 call    malloc
+  .text:001B4207                 mov     [esp+0ACh+var_48], esi
+  .text:001B420B                 mov     [esp+0ACh+vecGLTex_m_pMemory], eax
+  .text:001B420F                 jmp     loc_1B3C4C
+  .text:001B4214                 mov     dword ptr [edi], 0
+  .text:001B421A                 sub     edx, 4
+  .text:001B421D                 add     edi, 4
+  .text:001B4220                 jmp     loc_1B4160
+  .text:001B4225                 mov     word ptr [edi], 0
+  .text:001B422A                 sub     edx, 2
+  .text:001B422D                 add     edi, 2
+  .text:001B4230                 jmp     loc_1B4154
+  .text:001B4235                 mov     byte ptr [pExpanded_0], 0
+  .text:001B4238                 lea     edi, [pExpanded_0+1]
+  .text:001B423B                 dec     edx
+  .text:001B423C                 jmp     loc_1B4148
+  .text:001B4241                 fstp    st
+  .text:001B4243                 fstp    st(1)
+  .text:001B4245                 fld     [esp+0ACh+xScale]
+  .text:001B4249                 fmul    st(2), st
+  .text:001B424B                 movss   xmm5, [esp+0ACh+xScale]
+  .text:001B4251                 movss   [esp+0ACh+var_40], xmm5
+  .text:001B4257                 fmulp   st(1), st
+  .text:001B4259                 fxch    st(1)
+  .text:001B425B                 jmp     loc_1B3B05
+  .text:001B4260                 mov     esi, [esp+0ACh+vecGLTex_m_pMemory]
+  .text:001B4264                 test    esi, esi
+  .text:001B4266                 jz      short loc_1B4278
+  .text:001B4268                 ; ptr
+  .text:001B4268                 mov     [esp+0ACh+n], esi; ptr
+  .text:001B426B                 mov     dword ptr [esp+0ACh+topu], eax
+  .text:001B426F                 call    free
+  .text:001B4274                 mov     eax, dword ptr [esp+0ACh+topu]
+  .text:001B4278                 mov     [esp+0ACh+n], eax
+  .text:001B427B                 call    _Unwind_Resume
+  .text:001B4280                 call    __cxa_throw_bad_array_new_length
+  .text:001B4285                 xor     localMode_height, localMode_height
+  .text:001B4287                 mov     [esp+0ACh+vecGLTex_m_pMemory], ebx
+  .text:001B428B                 jmp     loc_1B406D
+  .text:001B4290                 jmp     short loc_1B4278
+procedure: |-
+  void __cdecl CVideoMode_Common::DrawStartupGraphic(CVideoMode_Common *const this, HWND window)
+  {
+    int v2; // esi
+    int v3; // ebx
+    long double m_iBaseResX; // fst7
+    long double v5; // fst6
+    long double m_iBaseResY; // fst5
+    long double v7; // fst4
+    long double v8; // fst3
+    long double v9; // fst6
+    long double v10; // fst7
+    int v11; // eax
+    CVideoMode_Common::bimage_t *v12; // ebx
+    int v13; // edi
+    int y; // esi
+    int v15; // eax
+    int v16; // eax
+    int v17; // ecx
+    int v18; // esi
+    GLsizei v19; // ebp
+    int v20; // ecx
+    int v21; // edi
+    byte *buffer; // eax
+    int v23; // eax
+    int v24; // eax
+    int v25; // esi
+    int v26; // eax
+    unsigned int v27; // esi
+    _BYTE *v28; // eax
+    unsigned int v29; // edx
+    _WORD *v30; // edi
+    int v31; // edx
+    int v32; // eax
+    int v33; // esi
+    int v34; // ebp
+    int i; // edx
+    byte *v36; // eax
+    int v37; // ebx
+    const GLuint *v38; // esi
+    CVideoMode_Common *v39; // eax
+    int v40; // ebx
+    int m_Size; // edx
+    CVideoMode_Common::bimage_t *m_pMemory; // edi
+    int m_GrowSize; // edx
+    CVideoMode_Common *v44; // esi
+    CVideoMode_Common::bimage_t *v45; // eax
+    unsigned int v46; // ecx
+    int v47; // eax
+    float n; // [esp+0h] [ebp-ACh]
+    float na; // [esp+0h] [ebp-ACh]
+    float nb; // [esp+0h] [ebp-ACh]
+    float nc; // [esp+0h] [ebp-ACh]
+    float nd; // [esp+0h] [ebp-ACh]
+    float ne; // [esp+0h] [ebp-ACh]
+    float nf; // [esp+0h] [ebp-ACh]
+    float ng; // [esp+0h] [ebp-ACh]
+    float topub; // [esp+38h] [ebp-74h]
+    float topuc; // [esp+38h] [ebp-74h]
+    float topud; // [esp+38h] [ebp-74h]
+    float topue; // [esp+38h] [ebp-74h]
+    float topuf; // [esp+38h] [ebp-74h]
+    float topug; // [esp+38h] [ebp-74h]
+    byte *topu; // [esp+38h] [ebp-74h]
+    float topuh; // [esp+38h] [ebp-74h]
+    float topui; // [esp+38h] [ebp-74h]
+    float topuj; // [esp+38h] [ebp-74h]
+    float topuk; // [esp+38h] [ebp-74h]
+    float topua; // [esp+38h] [ebp-74h]
+    GLsizei topv; // [esp+40h] [ebp-6Ch]
+    float topva; // [esp+40h] [ebp-6Ch]
+    int x; // [esp+44h] [ebp-68h]
+    GLsizei tall2; // [esp+48h] [ebp-64h]
+    GLint dx_0; // [esp+50h] [ebp-5Ch]
+    unsigned int *vecGLTex_m_pMemory; // [esp+54h] [ebp-58h]
+    GLint dy; // [esp+58h] [ebp-54h]
+    GLint dt; // [esp+5Ch] [ebp-50h]
+    GLint dw; // [esp+60h] [ebp-4Ch]
+    int v77; // [esp+64h] [ebp-48h]
+    float xScale; // [esp+68h] [ebp-44h]
+    float v79; // [esp+6Ch] [ebp-40h]
+    float fitScale; // [esp+70h] [ebp-3Ch]
+    int fitOffsetX; // [esp+74h] [ebp-38h]
+    int fitOffsetY; // [esp+78h] [ebp-34h]
+    int width; // [esp+88h] [ebp-24h] BYREF
+    int height[8]; // [esp+8Ch] [ebp-20h] BYREF
+
+    if ( !this->m_ImageID.m_Size ) // (structmember, struct=CVideoMode_Common, member=m_ImageID.m_Size)
+      return;
+    SDL_GetWindowSize(window, &width, height);
+    v2 = width;
+    v3 = height[0];
+    glViewport(0, 0, width, height[0]);
+    glDisable(0xB71u);
+    glEnable(0xDE1u);
+    glMatrixMode(0x1701u);
+    glOrtho(0.0, (double)v2, (double)v3, 0.0, -1.0, 1.0);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(0x4000u);
+    m_iBaseResX = (long double)this->m_iBaseResX; // (structmember, struct=CVideoMode_Common, member=m_iBaseResX)
+    v5 = (long double)v2;
+    xScale = v5 / m_iBaseResX;
+    m_iBaseResY = (long double)this->m_iBaseResY; // (structmember, struct=CVideoMode_Common, member=m_iBaseResY)
+    v7 = (long double)v3 / m_iBaseResY;
+    fitScale = v7;
+    v8 = v5;
+    v9 = v7 * m_iBaseResX;
+    if ( v8 > v9 )
+    {
+      v79 = xScale;
+      v9 = m_iBaseResX * xScale;
+      v10 = m_iBaseResY * xScale;
+    }
+    else
+    {
+      v10 = m_iBaseResY * v7;
+      v79 = v7;
+    }
+    x = 0;
+    topub = v9 * 0.5;
+    v11 = v2 / 2 - (int)topub;
+    topuc = v10 * 0.5;
+    fitOffsetX = v11;
+    fitOffsetY = v3 / 2 - (int)topuc;
+    if ( this->m_ImageID.m_Size > 0 )
+    {
+      v77 = 0;
+      vecGLTex_m_pMemory = nullptr;
+      while ( 2 )
+      {
+        v12 = &this->m_ImageID.m_Memory.m_pMemory[x]; // (structmember, struct=CVideoMode_Common, member=m_ImageID)
+        if ( v12->scaled )
+        {
+          v13 = v12->x;
+          dx_0 = 0;
+          if ( v13 )
+          {
+            n = (long double)v13 * xScale;
+            topud = ceilf(n);
+            dx_0 = (int)topud;
+          }
+          y = v12->y;
+          dy = 0;
+          if ( y )
+          {
+            na = (long double)y * fitScale;
+            topue = ceilf(na);
+            dy = (int)topue;
+          }
+          nb = (long double)(v12->width + v13) * xScale;
+          topuf = ceilf(nb);
+          dw = (int)topuf;
+          nc = (long double)(v12->height + y) * fitScale;
+          topug = ceilf(nc);
+          dt = (int)topug;
+        }
+        else
+        {
+          v23 = v12->x;
+          if ( v12->fit )
+          {
+            if ( v23 )
+            {
+              nd = (long double)v23 * v79;
+              topuh = ceilf(nd);
+              v23 = (int)topuh;
+            }
+            dx_0 = fitOffsetX + v23;
+            v24 = v12->y;
+            if ( v24 )
+            {
+              ne = (long double)v24 * v79;
+              topui = ceilf(ne);
+              v24 = (int)topui;
+            }
+            v25 = fitOffsetY + v24;
+            nf = (long double)v12->width * v79;
+            dy = fitOffsetY + v24;
+            topuj = ceilf(nf);
+            dw = dx_0 + (int)topuj;
+            ng = (long double)v12->height * v79;
+            ++x;
+            topuk = ceilf(ng);
+            dt = v25 + (int)topuk;
+            v15 = x;
+            if ( v77 >= x )
+            {
+  LABEL_14:
+              glGenTextures(1, &vecGLTex_m_pMemory[x - 1]);
+              glBindTexture(0xDE1u, vecGLTex_m_pMemory[x - 1]);
+              glTexParameteri(0xDE1u, 0x2800u, 9729);
+              glTexParameteri(0xDE1u, 0x2801u, 9729);
+              glTexParameteri(0xDE1u, 0x2802u, 33071);
+              glTexParameteri(0xDE1u, 0x2803u, 33071);
+              glPixelStorei(0xCF5u, 1);
+              v16 = v12->width;
+              v17 = 0;
+              v18 = v12->height;
+              do
+              {
+                v19 = 1 << v17;
+                if ( v16 <= 1 << v17 )
+                  break;
+                ++v17;
+              }
+              while ( v17 != 32 );
+              v20 = 0;
+              while ( 1 )
+              {
+                v21 = 1 << v20;
+                if ( v18 <= 1 << v20 )
+                  break;
+                if ( ++v20 == 32 )
+                {
+                  tall2 = v21;
+                  goto LABEL_32;
+                }
+              }
+              tall2 = 1 << v20;
+              if ( v18 == 1 << v20 && v16 == v19 )
+              {
+                buffer = v12->buffer;
+                topu = nullptr;
+                goto LABEL_50;
+              }
+  LABEL_32:
+              v26 = v19 * tall2;
+              if ( (unsigned int)(v19 * tall2) > 0x1FC00000 )
+                _cxa_throw_bad_array_new_length();
+              v27 = 4 * v26;
+              v28 = (_BYTE *)operator new[](4 * v26);
+              topu = v28;
+              if ( !v28 )
+                goto LABEL_64;
+              v29 = v27;
+              v30 = v28;
+              if ( v27 >= 8 )
+              {
+                if ( ((unsigned __int8)v28 & 1) != 0 )
+                {
+                  *v28 = 0;
+                  v30 = v28 + 1;
+                  v29 = v27 - 1;
+                }
+                if ( ((unsigned __int8)v30 & 2) != 0 )
+                {
+                  *v30 = 0;
+                  v29 -= 2;
+                  ++v30;
+                }
+                if ( ((unsigned __int8)v30 & 4) != 0 )
+                {
+                  *(_DWORD *)v30 = 0;
+                  v29 -= 4;
+                  v30 += 2;
+                }
+                v46 = v29 >> 2;
+                LOBYTE(v29) = v29 & 3;
+                memset(v30, 0, 4 * v46);
+                v30 += 2 * v46;
+              }
+              if ( (v29 & 4) != 0 )
+              {
+                *(_DWORD *)v30 = 0;
+                v30 += 2;
+              }
+              if ( (v29 & 2) != 0 )
+                *v30++ = 0;
+              if ( (v29 & 1) != 0 )
+                *(_BYTE *)v30 = 0;
+              v31 = v12->height;
+              if ( v31 > 0 )
+              {
+                v32 = v12->width;
+                v33 = 0;
+                topv = v19;
+                v34 = 0;
+                do
+                {
+                  if ( v32 > 0 )
+                  {
+                    for ( i = 0; i < v32; ++i )
+                    {
+                      *(_DWORD *)&topu[4 * v34 + 4 * i] = *(_DWORD *)&v12->buffer[4 * i + 4 * v33 * v32];
+                      v32 = v12->width;
+                    }
+                    v31 = v12->height;
+                  }
+                  ++v33;
+                  v34 += topv;
+                }
+                while ( v33 < v31 );
+                v19 = topv;
+              }
+              buffer = topu;
+  LABEL_50:
+              glTexImage2D(0xDE1u, 0, 6408, v19, tall2, 0, 0x1908u, 0x1401u, buffer);
+              v36 = topu;
+              if ( topu )
+              {
+                topua = (long double)v12->width / (long double)v19;
+                topva = (long double)v12->height / (long double)tall2;
+                operator delete[](v36);
+              }
+              else
+              {
+                topua = 1.0;
+                topva = 1.0;
+              }
+              glBegin(7u);
+              glTexCoord2f(0.0, topva);
+              glVertex3i(dx_0, dt, 0);
+              glTexCoord2f(topua, topva);
+              glVertex3i(dw, dt, 0);
+              glTexCoord2f(topua, 0.0);
+              glVertex3i(dw, dy, 0);
+              glTexCoord2f(0.0, 0.0);
+              glVertex3i(dx_0, dy, 0);
+              glEnd();
+              if ( this->m_ImageID.m_Size > x )
+                continue;
+              goto LABEL_53;
+            }
+  LABEL_29:
+            v77 = v15;
+            if ( vecGLTex_m_pMemory )
+              vecGLTex_m_pMemory = (unsigned int *)realloc(vecGLTex_m_pMemory, 4 * v15);
+            else
+              vecGLTex_m_pMemory = (unsigned int *)malloc(4 * v15);
+            goto LABEL_14;
+          }
+          dx_0 = 0;
+          if ( v23 )
+            dx_0 = (int)ceil((double)v23);
+          v47 = v12->y;
+          dy = 0;
+          if ( v47 )
+            dy = (int)ceil((double)v47);
+          dw = v12->width + dx_0;
+          dt = v12->height + dy;
+        }
+        break;
+      }
+      v15 = ++x;
+      if ( v77 >= x )
+        goto LABEL_14;
+      goto LABEL_29;
+    }
+    vecGLTex_m_pMemory = nullptr;
+  LABEL_53:
+    SDL_GL_SwapWindow(window);
+    v37 = 0;
+    v38 = vecGLTex_m_pMemory;
+    if ( x > 0 )
+    {
+      do
+      {
+        glDeleteTextures(1, v38);
+        ++v37;
+        ++v38;
+      }
+      while ( x != v37 );
+    }
+    v39 = this;
+    v40 = 0;
+    m_Size = this->m_ImageID.m_Size;
+    if ( m_Size > 0 )
+    {
+      do
+      {
+        m_pMemory = this->m_ImageID.m_Memory.m_pMemory;
+        if ( m_pMemory[v40].buffer )
+        {
+          free(m_pMemory[v40].buffer);
+          m_Size = this->m_ImageID.m_Size;
+        }
+        ++v40;
+      }
+      while ( v40 < m_Size );
+      v39 = this;
+    }
+    m_GrowSize = v39->m_ImageID.m_Memory.m_GrowSize;
+    v39->m_ImageID.m_Size = 0;
+    if ( m_GrowSize >= 0 )
+    {
+      v44 = v39;
+      v45 = v39->m_ImageID.m_Memory.m_pMemory;
+      if ( v45 )
+      {
+        free(v45);
+        v44->m_ImageID.m_Memory.m_pMemory = nullptr;
+      }
+      this->m_ImageID.m_Memory.m_NumAllocated = 0;
+    }
+  LABEL_64:
+    if ( vecGLTex_m_pMemory )
+      free(vecGLTex_m_pMemory);
+  }

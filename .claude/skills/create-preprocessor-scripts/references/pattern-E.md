@@ -34,7 +34,13 @@ Rules:
 
 - Include `size` for a real memory read/write with a natural width.
 - Omit/mark `size?` for `lea`, which computes an address but does not establish member size.
-- The returned offset must be present in the decoded x86 displacement operand.
+- Normally the returned offset must be present in the decoded x86 displacement operand.
+- If an approved deterministic fallback proves that a nested member is only exposed through an out-of-line
+  accessor, it may replay an immediate base-member reference with `offset_sig_ref_kind: immediate` and add
+  the current binary's independently verified nested-member displacement via `offset_sig_addend`. Do not
+  copy either value from a reference build or use an old output artifact as discovery evidence.
+- `offset_sig_ref_kind` accepts only `displacement` (the default) or `immediate`; both it and
+  `offset_sig_addend` require `offset_sig`.
 - Optional `expected_size` must equal the LLM result and is only valid for struct members.
 - Config declares the parent `category: struct` and the member `category: structmember` with
   `struct` and `member` fields.

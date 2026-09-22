@@ -29,6 +29,13 @@ Each non-empty instruction-based entry must include an exact `insn_va` / `insn_d
 
 Requests sharing `(model, prompt path, reference paths, temperature)` are batched after every deterministic fast path has failed or returned an incomplete candidate. Dependency policy and config input classification are validated before fast paths; a missing optional predecessor skips only its reference/target pair. Function, virtual-function, global-variable, and struct-member results are still consumed by the normal x86 MCP helpers, which validate tail chunks, require unique target/anchor signatures, follow requested direct-call jump thunks, and enforce four-byte vtable slots.
 
+Struct-member artifacts normally replay the decoded displacement selected by `offset_sig` and
+`offset_sig_disp`. A deterministic finder may instead set `offset_sig_ref_kind: immediate`; an optional
+`offset_sig_addend` is then applied to that current-binary reference. This is intended for a validated
+base-member plus nested-member-accessor fallback, not for copying layout constants from a reference build.
+Both optional fields require `offset_sig`, and the reference kind is limited to `displacement` or
+`immediate`.
+
 `found_scalar` entries contain `scalar_name` and `scalar_value`. Their values must agree with independently
 verified current-binary evidence, supplied as the scalar spec's `expected_value`; no instruction address
 is required. Values are numeric scalars, not addresses. See the scalar contract in
