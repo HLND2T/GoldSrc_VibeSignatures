@@ -12,6 +12,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 REG, MEM, DISPL, PHRASE = 1, 2, 4, 3
 IMM = 5
+NEAR = 7
 REGISTERS = ("eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi")
 
 
@@ -732,6 +733,42 @@ class PolyBlendScreenFadeWalkTests(unittest.TestCase):
             ]
         )
         self.assertIn("error", result)
+
+    def test_rejects_load_across_call(self):
+        for register in ("eax", "ecx", "edx"):
+            for target in (self.op(NEAR, addr=0x2000), self.op(MEM, addr=0x6000), self.op(REG, register="edi")):
+                with self.subTest(register=register, call_target=target.type):
+                    result = self.locate(
+                        [
+                            self.entry(
+                                "mov",
+                                [self.op(REG, register=register), self.op(MEM, addr=0x4000)],
+                                targets=(0x4000,),
+                                disp=1,
+                                length=5,
+                            ),
+                            self.entry("call", [target]),
+                            self.entry("and", [self.op(REG, register=register), self.op(IMM, value=2)]),
+                        ]
+                    )
+                    self.assertIn("error", result)
+
+    def test_accepts_fresh_load_after_call(self):
+        result = self.locate(
+            [
+                self.entry("call", [self.op(NEAR, addr=0x2000)]),
+                self.entry(
+                    "mov",
+                    [self.op(REG, register="eax"), self.op(MEM, addr=0x4000)],
+                    targets=(0x4000,),
+                    disp=1,
+                    length=5,
+                ),
+                self.entry("and", [self.op(REG, register="eax"), self.op(IMM, value=2)]),
+            ]
+        )
+        self.assertEqual("0x3fec", result["gv_ea"])
+        self.assertEqual("0x1010", result["insn_ea"])
 
     def test_rejects_multi_target_load(self):
         result = self.locate(

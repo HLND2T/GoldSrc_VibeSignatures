@@ -65,6 +65,11 @@ else:
     indirect = []
     loaded_globals = {}
     for entry in entries:
+        if entry['mnem'] == 'call':
+            # Calls can overwrite registers without an explicit destination operand.
+            # Conservatively require a fresh load after any call.
+            loaded_globals.clear()
+            continue
         ops = operands(entry)
         if len(ops) == 2 and int(ops[1].type) == int(idaapi.o_imm) and int(ops[1].value) == 2:
             if entry['mnem'] == 'test' and len(entry['targets']) == 1:

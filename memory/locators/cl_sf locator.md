@@ -62,6 +62,8 @@ located `cl_light_level` by exactly `0x34` and with `cl_waterlevel` by exactly
 
 - `and <reg>, 2` carries no displacement; anchoring the artifact there fails
   address recovery. Anchor on the preceding load.
+- Calls invalidate tracked register loads. Require a fresh load after a call so
+  a return value or clobbered register cannot reuse a stale global address.
 - SvEngine Linux reaches the member as `[esi+24275Ch]` where `esi = &cl` comes
   from a GOT slot. The raw displacement/addend is not the object; GOT-base
   resolution is required.
