@@ -57,17 +57,24 @@ selected-node execution，以及 full inventory/byte drift。
 - 基线：PR expected 始终读取 bound merge_sha Git blobs；release 保留 tracked checkout bytes 的原有语义并明确标识，不能称作函数内读取的 exact Git blobs。
 - 边界：原始 YAML 安全枚举拒绝链接/reparse point、非平坦路径与大小写碰撞；非 UTF-8 或仅换行漂移保留字节事实。PR workflow 使用 trusted base validator，新诊断须进入 base 后才用于后续 PR 的该校验。
 - 验证方式：`tests.test_artifact_diagnostics`、`tests.test_gamesymbol_pr_validation`、`tests.test_bin_artifact_contract` 覆盖真实 canonical 字段漂移、混合 missing/extra/changed、非规范字节、checkout 改写、截断及诊断失败。真实 release dry run / IDA 结果须单独报告。
-- 适用范围：只增强上述两条失败诊断路径，不修改 artifact schema、成功条件或 workflow 信任边界。（release gate 的成功条件后续已在「Release gate 的 anchor drift 容忍」中放宽；PR 路径不变。）
+- 适用范围：只增强上述两条失败诊断路径，不修改 artifact schema、成功条件或 workflow 信任边界。（该边界后续已在「Anchor drift 容忍：release gate 与按类别扩展」中一并放宽：release gate 与 PR 路径共用同一类别化判定。）
 
-## Release gate 的 anchor drift 容忍（PR #217 follow-up）
+## Anchor drift 容忍：release gate 与按类别扩展（PR #217 follow-up）
 
 - 触发信号：`gamesymbol-pr-validation.yml` 已容忍 anchor-only drift，但 `release-build.yml` 的 artifacts validation 仍会在 LLM_DECOMPILE 重跑选中另一条 rule-conformant reference instruction 时失败在 `bin_artifact_contract.py --actual-root`。
 - 根因：容忍只接在 PR 路径（`gamesymbol_snapshot_lib/pr_cli.py::_accepted_anchor_drift`）；release 走 `bin_artifact_contract.py::compare_repository_artifact_root`，按 `(path, size, sha256)` 逐字节比较，从不引用 `anchor_drift`。
-- 正确做法：把 inventory 级判定上提为 `gamesymbol_snapshot_lib/anchor_drift.py::accepted_anchor_drift`，PR 与 release 共用。release gate 仅在「payload key 集合一致、`gv_name` 不变、`gv_va`/`gv_rva` 不变、`anchor_is_coherent(actual)` 成立」时放行并打印 accepted drift，其余一律 fail closed。
+- 正确做法：把 inventory 级判定上提为 `gamesymbol_snapshot_lib/anchor_drift.py::accepted_anchor_drift`，PR 与 release 共用；字段级策略改为按类别声明的 `AnchorSpec`（`select_keys` 选中类别、`fixed_keys` 必须逐字节一致、`anchor_fields` 是唯一可漂移集合、可选 `coherent` 补 normalization 未覆盖的跨字段不变量）。放行时打印 accepted drift，其余一律 fail closed。
+- 各类别 anchor 组（均只含 `*_sig`/`*_sig_disp`/`*_addend`/`*_ref_kind`/`gv_inst_*`/`gv_pic_addend`/`gv_address_offset` 这些纯取值字段）：
+  - `gv`：select `gv_name`；fixed `gv_va`/`gv_rva`；coherent 要求 `gv_inst_offset`/`gv_inst_length` 可解析且 `gv_inst_disp < gv_inst_length`。
+  - `structmember`：select `struct_name`+`member_name`；fixed `offset`/`size`。
+  - `vfunc`（含带 vtable 槽位的 func）：select `func_name`+`vfunc_offset`；fixed `func_va`/`func_rva`/`vfunc_offset`/`vfunc_index`。
+  - `func`（无 `vfunc_offset`）、`patch`、`vtable`、`scalar` 没有 spec，保持完全逐字节。
+- 策略开关边界（**故意不放行**）：`*_max_match`、`*_allow_across_function_boundary` 不在任何 anchor 组里，漂移视为「换了搜索规则」而非等价采样，仍被拒绝。`func_sig`、`patch_sig`、`vtable_*` 同理保持 pinned。
+- 已知限制：比较的是规范化后的 payload，但字段的**有无**仍须一致（`set(expected) == set(actual)`）。同一默认值以显式/省略两种形式出现时按 drift 处理并拒绝，不会当成等价。
 - 发布物来源：snapshot 内嵌每个符号 YAML 的完整 payload（`codec.py::build_snapshot_document` 的 `files`），anchor 字段会进 snapshot。一旦放行 drift，rebuild root 与 tracked 不再逐字节相等，因此 `RELEASE_ARTIFACT_ROOT` 在 rebuild 模式也指向 tracked `bin_artifacts`：rebuild 只作可重建性证据，发布的 snapshot/JSON 始终派生自已提交的 Git truth，manifest 的 `artifact_inventory_sha256` 与 snapshot 来源保持一致。
 - 为何不会在别处再失败：`check_snapshot_contract` 把 snapshot 自己的 files 写入临时目录再 round-trip，`validate_snapshot_contract` 只比对文件路径与 config digest，都不读取磁盘上 tracked artifact 的内容，故 snapshot 的 anchor 漂移不会在 bundle build/verify 阶段额外触发失败。
-- 验证方式：`tests.test_bin_artifact_contract` 覆盖 anchor-only 放行并打印、address drift 仍拒绝、非 anchor/不连贯 payload fail closed；`tests.test_gamesymbol_pr_validation` 覆盖共用判定后的 PR 路径。真实 release dry run 与 IDA 结果须单独报告。
-- 边界：不改变 PR 路径的成功条件，不改 artifact schema；release gate 仍拒绝缺失、额外、非规范字节与 address drift。
+- 验证方式：`tests/test_anchor_drift.py` 逐类别覆盖 anchor 放行、identity/resolved/policy 拒绝、不连贯与字段增减 fail closed；`tests.test_bin_artifact_contract` 覆盖 release gate 的 gv 与 structmember 端到端放行/拒绝并打印；`tests.test_gamesymbol_pr_validation` 覆盖共用判定后的 PR 路径。真实 release dry run 与 IDA 结果须单独报告。
+- 边界：不改 artifact schema；仍拒绝缺失、额外、非规范字节、identity/resolved 变化与策略开关漂移。放宽 PR 路径的成功条件须先让改动进入 base（PR 校验使用 base 的 trusted validator），否则只能在 release gate 生效。
 
 ## PR validation failure artifacts
 

@@ -37,8 +37,9 @@ preflight -> [warmup-idb] -> build-release-bundle -> verify-release-bundle -> pu
 `source_artifact_mode=tracked` 时跳过 `warmup-idb`：它绑定已提交 artifact 而非重建，因此不消费 warm IDB；其余 job
 在两种模式下都执行。
 
-self-hosted read-only build 在 fresh root 强制重建全部分析 artifact，并与 Git truth 比较：只允许 global 的 instruction
-anchor 字段漂移，其 resolved address 必须完全一致。snapshot/metadata 与浏览器 JSON dataset 改为从已提交的
+self-hosted read-only build 在 fresh root 强制重建全部分析 artifact，并与 Git truth 比较：只允许各类别声明为 anchor
+group 的 reference instruction 字段（global、struct member、vtable slot）漂移，symbol identity 与 resolved address/offset
+必须完全一致。snapshot/metadata 与浏览器 JSON dataset 改为从已提交的
 `bin_artifacts` 派生，`mark -step json` 后发布，再派生唯一 all-in-one `gamesymbols-<version>.7z` 并组装完整 release
 bundle，上传唯一 transport Artifact。GitHub-hosted verifier 校验 source ancestry、bin gitlink、artifact inventory、payload
 contract、**独立再派生 JSON 并与 bundle 逐字节对比**、7z 内容、allowlist、canonical manifest 与 checksums。受保护

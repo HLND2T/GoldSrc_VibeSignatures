@@ -39,7 +39,8 @@ preflight -> [warmup-idb] -> build-release-bundle -> verify-release-bundle -> pu
 therefore never consumes a warm IDB; every other job runs in both modes.
 
 The self-hosted read-only build force-rebuilds all analysis artifacts in a fresh root and compares them with Git truth,
-tolerating drift only in a global's instruction-anchor fields while its resolved address stays identical. Snapshots,
+tolerating drift only in the reference-instruction fields a category declares as its anchor group (globals, struct members,
+vtable slots) while the symbol identity and its resolved address or offset stay identical. Snapshots,
 metadata and the browser JSON datasets are derived from the committed `bin_artifacts` rather than the rebuilt root, marked
 `json`, published, then used to derive the single all-in-one `gamesymbols-<version>.7z` and assemble the full release
 bundle, uploading one transport Artifact. The GitHub-hosted

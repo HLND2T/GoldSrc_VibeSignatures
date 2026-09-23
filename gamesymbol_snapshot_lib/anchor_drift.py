@@ -1,34 +1,38 @@
 """Accept anchor-only drift between a rebuilt artifact and the committed blob.
 
-An LLM_DECOMPILE finder may report any of several rule-conformant reference
-instructions for one global, so its anchor fields legitimately vary between
-runs. The resolved address stays authoritative: a payload may differ only in
-its anchor group, and only while the symbol identity and its address are
-unchanged.
+A finder may report any of several rule-conformant reference instructions for one
+symbol, so the fields that describe *how* it was located legitimately vary
+between runs. The resolved facts stay authoritative: a payload may differ only
+inside its anchor group, and only while the symbol identity, the resolved
+address/offset and the anchor shape are unchanged.
+
+Search-policy switches (``*_max_match``, ``*_allow_across_function_boundary``)
+belong to no anchor group on purpose: tolerating them would accept a different
+search rather than an equivalent sampling of the same one.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 
 import yaml
 
-# Fields describing which instruction anchors a global. The pipeline may pick a
-# different reference instruction, or a reference in another function, for the
-# same address; the address itself is compared separately and may never drift.
-GLOBAL_ANCHOR_FIELDS = frozenset(
-    {
-        "gv_sig_va",
-        "gv_sig",
-        "gv_inst_offset",
-        "gv_inst_length",
-        "gv_inst_disp",
-        "gv_pic_addend",
-    }
-)
 
-IDENTITY_KEY = "gv_name"
-ADDRESS_KEYS = ("gv_va", "gv_rva")
+@dataclass(frozen=True)
+class AnchorSpec:
+    """How one artifact category describes the symbol it locates.
+
+    ``select_keys`` must all be present for the spec to apply, ``fixed_keys``
+    are the resolved facts a rebuilt payload has to reproduce byte-exactly, and
+    ``anchor_fields`` is the only set allowed to drift. ``coherent`` carries the
+    cross-field invariants that symbol normalization does not already enforce.
+    """
+
+    select_keys: tuple[str, ...]
+    fixed_keys: tuple[str, ...]
+    anchor_fields: frozenset[str]
+    coherent: Callable[[dict], bool] | None = None
 
 
 def _payload(raw: bytes) -> dict | None:
@@ -52,7 +56,7 @@ def _parse_offset(value) -> int | None:
 
 
 def anchor_is_coherent(payload: dict) -> bool:
-    """Check that one payload still describes a well-formed anchored instruction.
+    """Check that one payload still describes a well-formed anchored global.
 
     ``gv_inst_offset`` is measured from ``gv_sig_va``, while ``gv_sig`` only
     holds a function prefix, so the offset is deliberately not bounded by the
@@ -74,20 +78,67 @@ def anchor_is_coherent(payload: dict) -> bool:
     return disp is not None and disp < length
 
 
+# Every other field a spec does not list keeps the byte-exact gate, which is how
+# the policy switches and each category's primary signature stay pinned.
+ANCHOR_SPECS: tuple[AnchorSpec, ...] = (
+    AnchorSpec(
+        select_keys=("gv_name",),
+        fixed_keys=("gv_va", "gv_rva"),
+        anchor_fields=frozenset(
+            {
+                "gv_sig",
+                "gv_sig_va",
+                "gv_inst_offset",
+                "gv_inst_length",
+                "gv_inst_disp",
+                "gv_pic_addend",
+                "gv_address_offset",
+            }
+        ),
+        coherent=anchor_is_coherent,
+    ),
+    AnchorSpec(
+        select_keys=("struct_name", "member_name"),
+        fixed_keys=("offset", "size"),
+        anchor_fields=frozenset(
+            {
+                "offset_sig",
+                "offset_sig_disp",
+                "offset_sig_addend",
+                "offset_sig_ref_kind",
+            }
+        ),
+    ),
+    AnchorSpec(
+        select_keys=("func_name", "vfunc_offset"),
+        fixed_keys=("func_va", "func_rva", "vfunc_offset", "vfunc_index"),
+        anchor_fields=frozenset({"vfunc_sig", "vfunc_sig_disp"}),
+    ),
+)
+
+
+def _spec_for(payload: dict) -> AnchorSpec | None:
+    for spec in ANCHOR_SPECS:
+        if all(key in payload for key in spec.select_keys):
+            return spec
+    return None
+
+
 def anchor_only_drift(expected_raw: bytes, actual_raw: bytes) -> dict | None:
     """Return the changed anchor fields when two payloads differ only there."""
     expected = _payload(expected_raw)
     actual = _payload(actual_raw)
     if expected is None or actual is None or set(expected) != set(actual):
         return None
-    if IDENTITY_KEY not in expected:
+    spec = _spec_for(expected)
+    if spec is None:
         return None
     changed = {key for key in expected if expected[key] != actual[key]}
-    if not changed or not changed <= GLOBAL_ANCHOR_FIELDS:
+    if not changed or not changed <= spec.anchor_fields:
         return None
-    if any(expected.get(key) != actual.get(key) for key in ADDRESS_KEYS):
+    if any(expected.get(key) != actual.get(key) for key in spec.fixed_keys):
         return None
-    if not anchor_is_coherent(actual):
+    if spec.coherent is not None and not spec.coherent(actual):
         return None
     return {key: (expected[key], actual[key]) for key in sorted(changed)}
 

@@ -151,35 +151,33 @@ class BinArtifactContractTests(unittest.TestCase):
                     self.assertIn("actual (isolated rebuild): size=", str(raised.exception))
 
 
-class RepositoryRootAnchorDriftTests(unittest.TestCase):
-    COMMITTED_PAYLOAD = {
-        "gv_name": "gWorldToScreen",
-        "gv_va": "0x2c20100",
-        "gv_rva": "0xf20100",
-        "gv_sig": "55 8B EC 83 E4 F8 83 EC 10 53 55 56 57 68 01 17 00 00",
-        "gv_sig_va": "0x1d46430",
-        "gv_inst_offset": "0x8",
-        "gv_inst_length": "0x5",
-        "gv_inst_disp": "0x1",
-    }
+class AnchorDriftRepositoryFixture:
+    """Track a checkout of one anchored artifact plus an isolated rebuild of it."""
+
+    PAYLOAD: dict
+    SYMBOL_NAME: str
+    CATEGORY: str
+    FILENAME: str
+
+    def symbol_declarations(self) -> list[dict]:
+        return [{"name": self.SYMBOL_NAME, "category": self.CATEGORY}]
 
     def fixture(self, root: Path) -> Path:
-        """Build a tracked checkout plus a byte-identical isolated rebuild."""
         repo = root / "repo"
         repo.mkdir()
         config = write_config(
             repo / "config.yaml",
-            skill={"name": "find", "expected_output": ["gWorldToScreen.{platform}.yaml"]},
-            symbols=[{"name": "gWorldToScreen", "category": "gv"}],
+            skill={"name": "find", "expected_output": [f"{self.SYMBOL_NAME}.{{platform}}.yaml"]},
+            symbols=self.symbol_declarations(),
             both_platforms=False,
         )
         configs = repo / "configs"
         configs.mkdir()
         config.replace(configs / "game-1.yaml")
         (configs / "config.yaml").write_text("gamevers:\n  - game-1\n", encoding="utf-8")
-        artifact = repo / "bin_artifacts" / "game-1" / "engine" / "gWorldToScreen.windows.yaml"
+        artifact = repo / "bin_artifacts" / "game-1" / "engine" / self.FILENAME
         artifact.parent.mkdir(parents=True)
-        artifact.write_bytes(canonical_symbol_yaml_bytes(self.COMMITTED_PAYLOAD))
+        artifact.write_bytes(canonical_symbol_yaml_bytes(self.PAYLOAD))
         subprocess.run(["git", "init", "-q", str(repo)], check=True)
         subprocess.run(["git", "-C", str(repo), "add", "configs", "bin_artifacts"], check=True)
 
@@ -190,21 +188,38 @@ class RepositoryRootAnchorDriftTests(unittest.TestCase):
         return rebuilt
 
     def rebuilt_artifact(self, rebuilt: Path) -> Path:
-        return rebuilt / "game-1" / "engine" / "gWorldToScreen.windows.yaml"
+        return rebuilt / "game-1" / "engine" / self.FILENAME
+
+    def compare(self, root: Path, rebuilt: Path):
+        return compare_repository_artifact_root(root / "repo", rebuilt)
+
+
+class GlobalAnchorDriftTests(AnchorDriftRepositoryFixture, unittest.TestCase):
+    PAYLOAD = {
+        "gv_name": "gWorldToScreen",
+        "gv_va": "0x2c20100",
+        "gv_rva": "0xf20100",
+        "gv_sig": "55 8B EC 83 E4 F8 83 EC 10 53 55 56 57 68 01 17 00 00",
+        "gv_sig_va": "0x1d46430",
+        "gv_inst_offset": "0x8",
+        "gv_inst_length": "0x5",
+        "gv_inst_disp": "0x1",
+    }
+    SYMBOL_NAME = "gWorldToScreen"
+    CATEGORY = "gv"
+    FILENAME = "gWorldToScreen.windows.yaml"
 
     def test_anchor_only_drift_is_accepted_and_reported(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             rebuilt = self.fixture(root)
             self.rebuilt_artifact(rebuilt).write_bytes(
-                canonical_symbol_yaml_bytes(
-                    {**self.COMMITTED_PAYLOAD, "gv_inst_offset": "0xc", "gv_sig_va": "0x1d46470"}
-                )
+                canonical_symbol_yaml_bytes({**self.PAYLOAD, "gv_inst_offset": "0xc", "gv_sig_va": "0x1d46470"})
             )
 
             stdout = io.StringIO()
             with redirect_stdout(stdout):
-                inventory = compare_repository_artifact_root(root / "repo", rebuilt)
+                inventory = self.compare(root, rebuilt)
 
             self.assertEqual(1, len(inventory.paths))
             self.assertIn("Anchor drift accepted", stdout.getvalue())
@@ -216,7 +231,7 @@ class RepositoryRootAnchorDriftTests(unittest.TestCase):
             rebuilt = self.fixture(root)
             self.rebuilt_artifact(rebuilt).write_bytes(
                 canonical_symbol_yaml_bytes(
-                    {**self.COMMITTED_PAYLOAD, "gv_inst_offset": "0xc", "gv_va": "0x2c20104", "gv_rva": "0xf20104"}
+                    {**self.PAYLOAD, "gv_inst_offset": "0xc", "gv_va": "0x2c20104", "gv_rva": "0xf20104"}
                 )
             )
 
@@ -224,7 +239,7 @@ class RepositoryRootAnchorDriftTests(unittest.TestCase):
                 BinArtifactContractError,
                 r"changed=\['engine/gWorldToScreen\.windows\.yaml'\]",
             ) as raised:
-                compare_repository_artifact_root(root / "repo", rebuilt)
+                self.compare(root, rebuilt)
             self.assertIn("-gv_va: '0x2c20100'", str(raised.exception))
 
     def test_non_anchor_drift_fails_closed(self):
@@ -238,7 +253,7 @@ class RepositoryRootAnchorDriftTests(unittest.TestCase):
             with self.subTest(reason=reason), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
                 rebuilt = self.fixture(root)
-                payload = dict(self.COMMITTED_PAYLOAD)
+                payload = dict(self.PAYLOAD)
                 if overrides is None:
                     payload.pop("gv_inst_disp")
                     payload["gv_inst_offset"] = "0xc"
@@ -247,7 +262,63 @@ class RepositoryRootAnchorDriftTests(unittest.TestCase):
                 self.rebuilt_artifact(rebuilt).write_bytes(canonical_symbol_yaml_bytes(payload))
 
                 with self.assertRaises(BinArtifactContractError):
-                    compare_repository_artifact_root(root / "repo", rebuilt)
+                    self.compare(root, rebuilt)
+
+
+class StructMemberAnchorDriftTests(AnchorDriftRepositoryFixture, unittest.TestCase):
+    PAYLOAD = {
+        "struct_name": "CVideoMode_Common",
+        "member_name": "m_ImageID",
+        "offset": "0x19c",
+        "offset_sig": "55 8B EC 83 EC 48 89 4D ?? 8B 4D ?? 81 C1 9C 01 00 00 E8 ?? ?? ?? ?? 85 C0 75 ??",
+        "offset_sig_disp": "0xc",
+        "offset_sig_ref_kind": "immediate",
+    }
+    SYMBOL_NAME = "CVideoMode_Common_m_ImageID"
+    CATEGORY = "structmember"
+    FILENAME = "CVideoMode_Common_m_ImageID.windows.yaml"
+
+    def symbol_declarations(self) -> list[dict]:
+        return [
+            {"name": "CVideoMode_Common", "category": "struct"},
+            {
+                "name": self.SYMBOL_NAME,
+                "category": self.CATEGORY,
+                "struct": "CVideoMode_Common",
+                "member": "m_ImageID",
+            },
+        ]
+
+    def test_anchor_only_drift_is_accepted_and_reported(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            rebuilt = self.fixture(root)
+            self.rebuilt_artifact(rebuilt).write_bytes(
+                canonical_symbol_yaml_bytes({**self.PAYLOAD, "offset_sig_disp": "0x10"})
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                inventory = self.compare(root, rebuilt)
+
+            self.assertEqual(1, len(inventory.paths))
+            self.assertIn("Anchor drift accepted", stdout.getvalue())
+            self.assertIn("offset_sig_disp", stdout.getvalue())
+
+    def test_member_offset_drift_still_fails_the_byte_gate(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            rebuilt = self.fixture(root)
+            self.rebuilt_artifact(rebuilt).write_bytes(
+                canonical_symbol_yaml_bytes({**self.PAYLOAD, "offset_sig_disp": "0x10", "offset": "0x1a0"})
+            )
+
+            with self.assertRaisesRegex(
+                BinArtifactContractError,
+                r"changed=\['engine/CVideoMode_Common_m_ImageID\.windows\.yaml'\]",
+            ) as raised:
+                self.compare(root, rebuilt)
+            self.assertIn("-offset: '0x19c'", str(raised.exception))
 
 
 if __name__ == "__main__":
