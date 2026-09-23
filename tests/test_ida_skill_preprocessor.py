@@ -2884,6 +2884,69 @@ found_struct_offset: []
                 self.assertEqual(len(encoded), result["gv_inst_length"])
                 self.assertNotIn("gv_address_offset", result)
 
+    async def test_register_comparison_immediate_feeds_operand_targets(self):
+        # The memory-comparison scalar case is covered by
+        # test_compare_inspection_resolves_memory_not_mapped_immediate.
+        for raw, mnemonic, immediate, first_type, mapped, expected in (
+            # cmp reg, offset func: the dispatch-virtual function pointer anchor.
+            ("3D A0 2E 03 01", "cmp", 0x10032EA0, 1, (0x10032EA0,), ["0x10032ea0"]),
+            # cmp reg, offset global: a relocated address, admitted as before.
+            ("3D 40 FB C0 02", "cmp", 0x2C0FB60, 1, (0x2C0FB60,), ["0x2c0fb60"]),
+            # cmp reg, scalar: 5 is not a mapped address.
+            ("83 F8 05", "cmp", 5, 1, (0x10032EA0,), []),
+            # an unmapped immediate stays out.
+            ("3D A0 2E 03 01", "cmp", 0x10032EA0, 1, (), []),
+        ):
+            with self.subTest(raw=raw, immediate=hex(immediate), mapped=mapped):
+                ea, encoded = 0x1010, bytes.fromhex(raw)
+                instruction = SimpleNamespace(
+                    ops=[
+                        SimpleNamespace(type=first_type, offb=0),
+                        SimpleNamespace(type=5, offb=len(encoded) - 4, value=immediate),
+                        SimpleNamespace(type=0),
+                    ]
+                )
+                function = SimpleNamespace(start_ea=0x1000, end_ea=0x1100)
+                modules = {
+                    "ida_bytes": SimpleNamespace(get_dword=lambda address: immediate, get_bytes=lambda *args: encoded),
+                    "ida_fixup": SimpleNamespace(fixup_data_t=lambda: None, get_fixup=lambda *args: False),
+                    "ida_funcs": SimpleNamespace(get_func=lambda address: function),
+                    "ida_lines": SimpleNamespace(tag_remove=lambda text: text),
+                    "ida_segment": SimpleNamespace(
+                        getseg=lambda address: (
+                            SimpleNamespace(perm=6, end_ea=address + 0x100) if address in mapped else None
+                        ),
+                        SEGPERM_EXEC=1,
+                    ),
+                    "idaapi": SimpleNamespace(inf_is_64bit=lambda: False, BADADDR=0xFFFFFFFF),
+                    "ida_ua": SimpleNamespace(
+                        o_void=0,
+                        o_reg=1,
+                        o_mem=2,
+                        o_phrase=3,
+                        o_displ=4,
+                        o_imm=5,
+                        o_near=6,
+                        o_far=7,
+                        insn_t=lambda: instruction,
+                        decode_insn=lambda *args: len(encoded),
+                    ),
+                    "idautils": SimpleNamespace(DataRefsFrom=lambda address: [], CodeRefsFrom=lambda *args: []),
+                    "idc": SimpleNamespace(
+                        generate_disasm_line=lambda *args: f"{mnemonic} eax, {hex(immediate)}",
+                        print_insn_mnem=lambda address: mnemonic,
+                    ),
+                }
+                namespace = {}
+                with patch.dict("sys.modules", modules):
+                    exec(
+                        ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)),
+                        {},
+                        namespace,
+                    )
+                detail = json.loads(namespace["result"])
+                self.assertEqual(expected, detail["operand_targets"])
+
     def test_compare_inspection_resolves_memory_not_mapped_immediate(self):
         for displacement, raw, scalar in (
             (0, "83 38 05", 5),

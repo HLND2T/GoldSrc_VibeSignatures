@@ -3072,9 +3072,16 @@ if size:
         offb = int(op.offb or 0)
         operand_offsets.append(offb)
         immediate_is_address = False
+        immediate_is_scalar = False
         if op.type == ida_ua.o_imm:
             mnemonic = (idc.print_insn_mnem(ea) or '').lower()
             immediate_is_address = mnemonic in ('mov', 'push')
+            # A memory comparison carries a scalar immediate (cmp [mem], imm).
+            # Its address operand is the memory reference, so the immediate
+            # must not become an operand target. A register comparison against
+            # an immediate is an address comparison (cmp reg, offset symbol),
+            # the anchor of dispatch virtuals and of relocated globals.
+            immediate_is_scalar = mnemonic in ('cmp', 'test') and insn.ops[0].type != ida_ua.o_reg
             # Array addressing can materialize its relocated global base with
             # ADD reg, offset object. Unlike a scalar/PIC-base adjustment, the
             # complete imm32 must itself have an IDA xref to mapped data.
@@ -3090,7 +3097,8 @@ if size:
                 address_operand_offsets.append(offb)
         if op.type in (ida_ua.o_mem, ida_ua.o_far, ida_ua.o_near):
             operand_targets.append(int(op.addr))
-        elif (immediate_is_address
+        elif (op.type == ida_ua.o_imm
+              and not immediate_is_scalar
               and ida_segment.getseg(int(op.value)) is not None):
             operand_targets.append(int(op.value))
         elif op.type == ida_ua.o_displ:
