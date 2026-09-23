@@ -1202,6 +1202,8 @@ modules:
         category: func
       - name: R_AllocTransObjects
         category: func
+        alias:
+          - R_AllocObjects
       - name: transObjects
         category: gv
       - name: maxTransObjs

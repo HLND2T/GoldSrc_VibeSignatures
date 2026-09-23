@@ -31,6 +31,11 @@ tags:
 2. **函数真实名跨 family 不同。** Linux `hw.so` 保留符号表：GoldSrc(hl-*) 是 `R_AllocObjects`，
    SvEngine(svencoop-*) 是 `_Z19R_AllocTransObjectsi`（`R_AllocTransObjects`）。三个 globals 名一致。
    Windows 无符号，只能取源级名。
+   定名决定（2026-09-23，issue #210）：config/artifact 主名统一 `R_AllocTransObjects`
+   （等同 SvEngine 真实符号、也是 issue/MetaHookSv 用名）；在 8 个 `hl-*` config 的该 symbol 上加
+   `alias: [R_AllocObjects]` 记录 GoldSrc 家族名（`cof-5936` / `svencoop-*` 不加）。
+   注意 `alias`（symbol 级、替代名，进 gamesymbol metadata/JSON 的 `aliases`）与
+   `source_alias`（artifact 文件名别名）语义不同，不要混用。
 3. **老 tag 的 `hw.dll` 是加密 blob**，直接字符串扫描静默返回 0 命中；必须扫 `hw.<...>.decrypt.dll`
    （见 [[goldsrc-vibesignatures/notes/old-tag-blob-binaries-need-hw.decrypt.dll-for-byte-level-checks]]）。
    四个 WON 老 tag 其实都有 `"Transparent objects reallocate\n"`。
