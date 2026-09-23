@@ -13,6 +13,7 @@ from pathlib import Path, PurePosixPath
 import yaml
 
 from artifact_diagnostics import append_artifact_diagnostics
+from gamesymbol_snapshot_lib.anchor_drift import accepted_anchor_drift
 from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.errors import SnapshotError
 from gamesymbol_snapshot_lib.operations import collect_actual_files
@@ -252,6 +253,34 @@ def validate_repository_artifact_contract(
     return repository
 
 
+def _accepted_anchor_drift(
+    expected_inventory: GameArtifactInventory,
+    actual_inventory: GameArtifactInventory,
+    expected_artifact_root: Path,
+    actual_artifact_root: Path,
+) -> dict[str, dict] | None:
+    """Map every drifting artifact to its changed anchor fields, or fail closed.
+
+    A rebuilt payload may differ from tracked truth only in its global anchor
+    group, and only while the symbol identity and its resolved address match.
+    """
+    expected_game_root = expected_artifact_root / expected_inventory.game_version
+    actual_game_root = actual_artifact_root / actual_inventory.game_version
+
+    def read(game_root: Path, key: str) -> bytes | None:
+        try:
+            return path_from_key(game_root, key).read_bytes()
+        except OSError:
+            return None
+
+    return accepted_anchor_drift(
+        {entry.path: (entry.size, entry.sha256) for entry in expected_inventory.entries},
+        {entry.path: (entry.size, entry.sha256) for entry in actual_inventory.entries},
+        read_expected=lambda key: read(expected_game_root, key),
+        read_actual=lambda key: read(actual_game_root, key),
+    )
+
+
 def compare_repository_artifact_root(
     repo_root: str | Path,
     actual_root: str | Path,
@@ -292,14 +321,21 @@ def compare_repository_artifact_root(
             )
         except BinArtifactContractError as exc:
             raise BinArtifactContractError(diagnostic(str(exc), inventory)) from exc
+    expected_artifact_root = repo_root / "bin_artifacts"
     for expected_inventory, actual_inventory in zip(expected.gamevers, actual, strict=True):
-        if expected_inventory.entries != actual_inventory.entries:
+        if expected_inventory.entries == actual_inventory.entries:
+            continue
+        drift = _accepted_anchor_drift(expected_inventory, actual_inventory, expected_artifact_root, actual_root)
+        if drift is None:
             raise BinArtifactContractError(
                 diagnostic(
                     f"Rebuilt artifact inventory differs from tracked checkout for {expected_inventory.game_version}:",
                     expected_inventory,
                 )
             )
+        for relative in sorted(drift):
+            changes = ", ".join(f"{field} {before} -> {after}" for field, (before, after) in drift[relative].items())
+            print(f"Anchor drift accepted for bin_artifacts/{expected_inventory.game_version}/{relative}: {changes}")
     expected_directories = {inventory.game_version for inventory in actual if inventory.entries}
     actual_directories = (
         {path.name for path in actual_root.iterdir() if path.is_dir()} if actual_root.is_dir() else set()

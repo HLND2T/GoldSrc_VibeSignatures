@@ -21,6 +21,9 @@ uv run python .claude/skills/trigger-release-build/scripts/trigger_release_build
 常规完整分析使用 `rebuild`，脚本默认值也为 `rebuild`，兼容已有调用。两种模式共用同一 workflow 和版本互斥。
 脚本检查 immutable source、权限、版本及重复运行，完整 artifact 绑定由 CI 检查。本地未提交产物不会用于发布。
 
+`rebuild` 会把 fresh 分析产物与 Git truth 比对，只允许 global 的 instruction anchor 字段漂移，且其 resolved
+address 必须完全一致；发布的 snapshot 与 JSON dataset 仍然取自已提交的 `bin_artifacts`。
+
 `release_bundle.py bind-tracked --repo-root <checkout> --source-sha <SHA> --output <binding.json>` 校验 HEAD、
 配置及 artifact 清单、暂存区 identity、Git blob 原始字节，以及 artifact 规范和链接约束。
 Bundle `build --source-artifact-mode tracked --tracked-binding <binding.json>` 将 canonical binding 证据写入包内。

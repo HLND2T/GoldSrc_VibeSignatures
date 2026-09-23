@@ -23,6 +23,10 @@ Use `rebuild` for normal full analysis; the script defaults to it for existing c
 workflow and version concurrency guard. The script checks immutable source/auth/version/run identity; CI performs
 the artifact binding checks. Local uncommitted artifacts are never release inputs.
 
+A rebuild compares its fresh analysis artifacts with Git truth and tolerates drift only in a global's instruction-anchor
+fields while its resolved address stays identical; the published snapshots and JSON datasets still come from the committed
+`bin_artifacts`.
+
 `release_bundle.py bind-tracked --repo-root <checkout> --source-sha <SHA> --output <binding.json>` checks HEAD,
 configuration and artifact inventory, index identity, exact Git blob bytes, and canonical artifact/link contracts.
 Bundle `build --source-artifact-mode tracked --tracked-binding <binding.json>` embeds canonical binding evidence.

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import io
+import subprocess
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 
 from bin_artifact_contract import (
@@ -102,7 +105,6 @@ class BinArtifactContractTests(unittest.TestCase):
             configs.mkdir()
             config.replace(configs / f"{game_version}.yaml")
             (configs / "config.yaml").write_text("gamevers:\n  - game-1\n", encoding="utf-8")
-            import subprocess
 
             subprocess.run(["git", "init", "-q", str(repo)], check=True)
             subprocess.run(["git", "-C", str(repo), "add", "configs", "bin_artifacts"], check=True)
@@ -147,6 +149,105 @@ class BinArtifactContractTests(unittest.TestCase):
                         compare_repository_artifact_root(repo, rebuilt)
                     self.assertIn(reason, str(raised.exception))
                     self.assertIn("actual (isolated rebuild): size=", str(raised.exception))
+
+
+class RepositoryRootAnchorDriftTests(unittest.TestCase):
+    COMMITTED_PAYLOAD = {
+        "gv_name": "gWorldToScreen",
+        "gv_va": "0x2c20100",
+        "gv_rva": "0xf20100",
+        "gv_sig": "55 8B EC 83 E4 F8 83 EC 10 53 55 56 57 68 01 17 00 00",
+        "gv_sig_va": "0x1d46430",
+        "gv_inst_offset": "0x8",
+        "gv_inst_length": "0x5",
+        "gv_inst_disp": "0x1",
+    }
+
+    def fixture(self, root: Path) -> Path:
+        """Build a tracked checkout plus a byte-identical isolated rebuild."""
+        repo = root / "repo"
+        repo.mkdir()
+        config = write_config(
+            repo / "config.yaml",
+            skill={"name": "find", "expected_output": ["gWorldToScreen.{platform}.yaml"]},
+            symbols=[{"name": "gWorldToScreen", "category": "gv"}],
+            both_platforms=False,
+        )
+        configs = repo / "configs"
+        configs.mkdir()
+        config.replace(configs / "game-1.yaml")
+        (configs / "config.yaml").write_text("gamevers:\n  - game-1\n", encoding="utf-8")
+        artifact = repo / "bin_artifacts" / "game-1" / "engine" / "gWorldToScreen.windows.yaml"
+        artifact.parent.mkdir(parents=True)
+        artifact.write_bytes(canonical_symbol_yaml_bytes(self.COMMITTED_PAYLOAD))
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        subprocess.run(["git", "-C", str(repo), "add", "configs", "bin_artifacts"], check=True)
+
+        rebuilt = root / "rebuilt"
+        target = rebuilt / "game-1" / "engine"
+        target.mkdir(parents=True)
+        (target / artifact.name).write_bytes(artifact.read_bytes())
+        return rebuilt
+
+    def rebuilt_artifact(self, rebuilt: Path) -> Path:
+        return rebuilt / "game-1" / "engine" / "gWorldToScreen.windows.yaml"
+
+    def test_anchor_only_drift_is_accepted_and_reported(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            rebuilt = self.fixture(root)
+            self.rebuilt_artifact(rebuilt).write_bytes(
+                canonical_symbol_yaml_bytes(
+                    {**self.COMMITTED_PAYLOAD, "gv_inst_offset": "0xc", "gv_sig_va": "0x1d46470"}
+                )
+            )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                inventory = compare_repository_artifact_root(root / "repo", rebuilt)
+
+            self.assertEqual(1, len(inventory.paths))
+            self.assertIn("Anchor drift accepted", stdout.getvalue())
+            self.assertIn("gv_inst_offset", stdout.getvalue())
+
+    def test_address_drift_still_fails_the_byte_gate(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            rebuilt = self.fixture(root)
+            self.rebuilt_artifact(rebuilt).write_bytes(
+                canonical_symbol_yaml_bytes(
+                    {**self.COMMITTED_PAYLOAD, "gv_inst_offset": "0xc", "gv_va": "0x2c20104", "gv_rva": "0xf20104"}
+                )
+            )
+
+            with self.assertRaisesRegex(
+                BinArtifactContractError,
+                r"changed=\['engine/gWorldToScreen\.windows\.yaml'\]",
+            ) as raised:
+                compare_repository_artifact_root(root / "repo", rebuilt)
+            self.assertIn("-gv_va: '0x2c20100'", str(raised.exception))
+
+    def test_non_anchor_drift_fails_closed(self):
+        mutations = {
+            "incoherent displacement": {"gv_inst_offset": "0xc", "gv_inst_disp": "0x7"},
+            "renamed symbol": {"gv_name": "gOtherToScreen"},
+            "missing anchor field": None,
+            "unrelated field": {"gv_va": "0x2c20100", "gv_effective_va": "0x2c20100"},
+        }
+        for reason, overrides in mutations.items():
+            with self.subTest(reason=reason), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                rebuilt = self.fixture(root)
+                payload = dict(self.COMMITTED_PAYLOAD)
+                if overrides is None:
+                    payload.pop("gv_inst_disp")
+                    payload["gv_inst_offset"] = "0xc"
+                else:
+                    payload.update(overrides)
+                self.rebuilt_artifact(rebuilt).write_bytes(canonical_symbol_yaml_bytes(payload))
+
+                with self.assertRaises(BinArtifactContractError):
+                    compare_repository_artifact_root(root / "repo", rebuilt)
 
 
 if __name__ == "__main__":

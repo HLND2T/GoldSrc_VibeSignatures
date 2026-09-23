@@ -22,7 +22,7 @@ from gamesymbol_snapshot_lib.analysis_sources import (
     is_reference_source_path,
     validate_reference_consumers,
 )
-from gamesymbol_snapshot_lib.anchor_drift import anchor_only_drift
+from gamesymbol_snapshot_lib.anchor_drift import accepted_anchor_drift
 from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.impact_registry import parse_impact_registry
 from gamesymbol_snapshot_lib.operations import _atomic_write
@@ -608,27 +608,19 @@ def _accepted_anchor_drift(
     a payload that differs solely in its global anchor group is tolerated, and
     only while the resolved address is untouched.
     """
-    expected_by_path = {entry["path"]: entry for entry in expected}
-    actual_by_path = {entry["path"]: entry for entry in actual}
-    if expected_by_path.keys() != actual_by_path.keys():
-        return None
-    drift: dict[str, dict] = {}
-    for relative, expected_entry in expected_by_path.items():
-        actual_entry = actual_by_path[relative]
-        if (expected_entry["size"], expected_entry["sha256"]) == (actual_entry["size"], actual_entry["sha256"]):
-            continue
-        expected_raw = read_expected(relative)
-        if expected_raw is None:
-            return None
+
+    def read_actual(relative: str) -> bytes | None:
         try:
-            actual_raw = path_from_key(artifact_game_root, relative).read_bytes()
+            return path_from_key(artifact_game_root, relative).read_bytes()
         except OSError:
             return None
-        changed = anchor_only_drift(expected_raw, actual_raw)
-        if changed is None:
-            return None
-        drift[relative] = changed
-    return drift or None
+
+    return accepted_anchor_drift(
+        {entry["path"]: (entry["size"], entry["sha256"]) for entry in expected},
+        {entry["path"]: (entry["size"], entry["sha256"]) for entry in actual},
+        read_expected=read_expected,
+        read_actual=read_actual,
+    )
 
 
 def _parser() -> argparse.ArgumentParser:

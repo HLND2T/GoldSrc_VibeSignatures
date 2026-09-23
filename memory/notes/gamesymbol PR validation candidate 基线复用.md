@@ -57,7 +57,17 @@ selected-node execution，以及 full inventory/byte drift。
 - 基线：PR expected 始终读取 bound merge_sha Git blobs；release 保留 tracked checkout bytes 的原有语义并明确标识，不能称作函数内读取的 exact Git blobs。
 - 边界：原始 YAML 安全枚举拒绝链接/reparse point、非平坦路径与大小写碰撞；非 UTF-8 或仅换行漂移保留字节事实。PR workflow 使用 trusted base validator，新诊断须进入 base 后才用于后续 PR 的该校验。
 - 验证方式：`tests.test_artifact_diagnostics`、`tests.test_gamesymbol_pr_validation`、`tests.test_bin_artifact_contract` 覆盖真实 canonical 字段漂移、混合 missing/extra/changed、非规范字节、checkout 改写、截断及诊断失败。真实 release dry run / IDA 结果须单独报告。
-- 适用范围：只增强上述两条失败诊断路径，不修改 artifact schema、成功条件或 workflow 信任边界。
+- 适用范围：只增强上述两条失败诊断路径，不修改 artifact schema、成功条件或 workflow 信任边界。（release gate 的成功条件后续已在「Release gate 的 anchor drift 容忍」中放宽；PR 路径不变。）
+
+## Release gate 的 anchor drift 容忍（PR #217 follow-up）
+
+- 触发信号：`gamesymbol-pr-validation.yml` 已容忍 anchor-only drift，但 `release-build.yml` 的 artifacts validation 仍会在 LLM_DECOMPILE 重跑选中另一条 rule-conformant reference instruction 时失败在 `bin_artifact_contract.py --actual-root`。
+- 根因：容忍只接在 PR 路径（`gamesymbol_snapshot_lib/pr_cli.py::_accepted_anchor_drift`）；release 走 `bin_artifact_contract.py::compare_repository_artifact_root`，按 `(path, size, sha256)` 逐字节比较，从不引用 `anchor_drift`。
+- 正确做法：把 inventory 级判定上提为 `gamesymbol_snapshot_lib/anchor_drift.py::accepted_anchor_drift`，PR 与 release 共用。release gate 仅在「payload key 集合一致、`gv_name` 不变、`gv_va`/`gv_rva` 不变、`anchor_is_coherent(actual)` 成立」时放行并打印 accepted drift，其余一律 fail closed。
+- 发布物来源：snapshot 内嵌每个符号 YAML 的完整 payload（`codec.py::build_snapshot_document` 的 `files`），anchor 字段会进 snapshot。一旦放行 drift，rebuild root 与 tracked 不再逐字节相等，因此 `RELEASE_ARTIFACT_ROOT` 在 rebuild 模式也指向 tracked `bin_artifacts`：rebuild 只作可重建性证据，发布的 snapshot/JSON 始终派生自已提交的 Git truth，manifest 的 `artifact_inventory_sha256` 与 snapshot 来源保持一致。
+- 为何不会在别处再失败：`check_snapshot_contract` 把 snapshot 自己的 files 写入临时目录再 round-trip，`validate_snapshot_contract` 只比对文件路径与 config digest，都不读取磁盘上 tracked artifact 的内容，故 snapshot 的 anchor 漂移不会在 bundle build/verify 阶段额外触发失败。
+- 验证方式：`tests.test_bin_artifact_contract` 覆盖 anchor-only 放行并打印、address drift 仍拒绝、非 anchor/不连贯 payload fail closed；`tests.test_gamesymbol_pr_validation` 覆盖共用判定后的 PR 路径。真实 release dry run 与 IDA 结果须单独报告。
+- 边界：不改变 PR 路径的成功条件，不改 artifact schema；release gate 仍拒绝缺失、额外、非规范字节与 address drift。
 
 ## PR validation failure artifacts
 

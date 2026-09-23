@@ -9,6 +9,8 @@ unchanged.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
+
 import yaml
 
 # Fields describing which instruction anchors a global. The pipeline may pick a
@@ -88,3 +90,33 @@ def anchor_only_drift(expected_raw: bytes, actual_raw: bytes) -> dict | None:
     if not anchor_is_coherent(actual):
         return None
     return {key: (expected[key], actual[key]) for key in sorted(changed)}
+
+
+def accepted_anchor_drift(
+    expected: Mapping[str, tuple[int, str]],
+    actual: Mapping[str, tuple[int, str]],
+    *,
+    read_expected: Callable[[str], bytes | None],
+    read_actual: Callable[[str], bytes | None],
+) -> dict[str, dict] | None:
+    """Map every drifting artifact to its changed anchor fields, or fail closed.
+
+    ``expected`` and ``actual`` map an artifact key to its ``(size, sha256)``
+    fingerprint. Missing, extra and non-anchor payload changes keep the
+    byte-exact gate: any of them makes the whole comparison return ``None``.
+    """
+    if expected.keys() != actual.keys():
+        return None
+    drift: dict[str, dict] = {}
+    for key, expected_fingerprint in expected.items():
+        if expected_fingerprint == actual[key]:
+            continue
+        expected_raw = read_expected(key)
+        actual_raw = read_actual(key)
+        if expected_raw is None or actual_raw is None:
+            return None
+        changed = anchor_only_drift(expected_raw, actual_raw)
+        if changed is None:
+            return None
+        drift[key] = changed
+    return drift or None
