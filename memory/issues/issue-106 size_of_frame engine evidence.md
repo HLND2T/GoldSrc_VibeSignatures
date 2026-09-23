@@ -1,3 +1,21 @@
+---
+title: issue-106 size_of_frame engine evidence
+type: note
+permalink: goldsrc-vibesignatures/issues/issue-106-size-of-frame-engine-evidence
+---
+
+---
+title: issue-106 size_of_frame engine evidence
+type: note
+permalink: goldsrc-vibesignatures/issues/issue-106-size-of-frame-engine-evidence
+tags:
+- issue-106
+- scalar
+- size-of-frame
+- engine
+- evidence
+---
+
 # size_of_frame engine evidence (issue #106)
 
 ## Quality checks

@@ -44,3 +44,7 @@ Current values (evidence for those binaries only, never cross-build fallbacks): 
 - Pseudocode "typed-element" coefficients need byte-unit validation against the actual arithmetic — Hex-Rays may scale an index by an element size while the real operand is already a byte count.
 - `SCALAR_FIELDS` is a strict two-field set: adding any extra key (e.g. a signature) fails `validate_scalar_artifact`, and legacy snapshots cannot contain scalar fields (they must be rebuilt through the current pipeline; index stays 4).
 - The same trace also feeds `cl_parsecount`; a `ValueError("no unique masked frame-ring stride reaches StudioDrawPlayer")` aborts both outputs, so the two symbols always appear together.
+
+## Evidence
+
+- Raw per-binary evidence (SHA-256 hashes, instruction traces, snapshot/Pages quality checks, existing-output comparison): [[issue-106 size_of_frame engine evidence]].
