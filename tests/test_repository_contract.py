@@ -289,8 +289,14 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertNotIn("uv run", aggregate["run"])
         self_hosted = jobs["analyze-self-hosted"]
         self.assertEqual(["self-hosted", "windows", "x64"], self_hosted["runs-on"])
-        self.assertEqual("${{ github.repository }}-gamesymbol-self-hosted-ida", self_hosted["concurrency"]["group"])
-        self.assertEqual("false", self_hosted["concurrency"]["cancel-in-progress"])
+        # Analysis concurrency is bounded only by runner capacity: the consumer must
+        # not serialize self-hosted analysis across PRs through a job-level group.
+        self.assertNotIn("concurrency", self_hosted)
+        self.assertEqual(
+            "${{ github.repository }}-gamesymbol-pr-${{ github.event.pull_request.number }}",
+            workflow["concurrency"]["group"],
+        )
+        self.assertEqual("true", workflow["concurrency"]["cancel-in-progress"])
         # The consumer must not warm or publish; that authority belongs to the reusable producer.
         self.assertNotIn("idb_cache_workflow.py prepare", workflow_text)
         producer = jobs["warmup-idb"]
