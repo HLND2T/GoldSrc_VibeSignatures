@@ -38,9 +38,12 @@ preflight -> [warmup-idb] -> build-release-bundle -> verify-release-bundle -> pu
 `warmup-idb` is skipped for `source_artifact_mode=tracked`, which binds committed artifacts instead of rebuilding and
 therefore never consumes a warm IDB; every other job runs in both modes.
 
-The self-hosted read-only build force-rebuilds all analysis artifacts in a fresh root, compares them with Git truth,
-derives snapshots/metadata and the browser JSON datasets, marks `json`, publishes them, then derives the single all-in-one
-`gamesymbols-<version>.7z` and assembles the full release bundle, uploading one transport Artifact. The GitHub-hosted
+The self-hosted read-only build force-rebuilds all analysis artifacts in a fresh root and compares them with Git truth,
+tolerating drift only in the reference-instruction fields a category declares as its anchor group (globals, struct members,
+vtable slots) while the symbol identity and its resolved address or offset stay identical. Snapshots,
+metadata and the browser JSON datasets are derived from the committed `bin_artifacts` rather than the rebuilt root, marked
+`json`, published, then used to derive the single all-in-one `gamesymbols-<version>.7z` and assemble the full release
+bundle, uploading one transport Artifact. The GitHub-hosted
 verifier checks source ancestry, bin gitlink, artifact inventory, payload contracts, **independently re-derives the JSON
 and compares it byte-for-byte with the bundle**, 7z contents, allowlist, canonical manifest, and checksums. The protected
 publisher is the release workflow's only contents writer and implements immutable tag/draft/asset semantics. There is no

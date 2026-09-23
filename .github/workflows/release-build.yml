@@ -209,7 +209,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'rebuilt artifacts differ from Git truth' }
           git diff --exit-code -- bin_artifacts
           if ($LASTEXITCODE -ne 0) { throw 'tracked bin_artifacts changed during release rebuild' }
-          "RELEASE_ARTIFACT_ROOT=$artifactRoot" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          # The rebuild only proves reproducibility; the committed artifacts stay the published truth so the
+          # bundle can never carry a payload the checkout does not own. Anchor drift is tolerated above, so the
+          # rebuilt root and the tracked truth are no longer guaranteed byte-identical.
+          "RELEASE_ARTIFACT_ROOT=$(Join-Path $env:GITHUB_WORKSPACE 'bin_artifacts')" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Bind tracked source-owned artifacts without rebuilding
         if: inputs.source_artifact_mode == 'tracked'
         shell: pwsh
