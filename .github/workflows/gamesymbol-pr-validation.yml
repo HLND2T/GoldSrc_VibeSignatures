@@ -301,6 +301,18 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          function Invoke-ValidationStage([string]$Label, [scriptblock]$Action) {
+            $timer = [Diagnostics.Stopwatch]::StartNew()
+            $status = 'failed'
+            Write-Host "[$([DateTime]::UtcNow.ToString('o'))] START $Label"
+            try {
+              & $Action
+              $status = 'succeeded'
+            } finally {
+              $timer.Stop()
+              Write-Host "[$([DateTime]::UtcNow.ToString('o'))] END $Label status=$status elapsed=$($timer.Elapsed.TotalSeconds.ToString('F3', [Globalization.CultureInfo]::InvariantCulture))s"
+            }
+          }
           $planPath = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\plan.json'
           $trustedRoot = Join-Path $env:GITHUB_WORKSPACE '.trusted-validator'
           $plannerCli = Join-Path $trustedRoot 'gamesymbol_pr_validation.py'
@@ -313,51 +325,73 @@ jobs:
             @{ tag = $_.tag; node_ids = @($_.analysis_nodes) }
           })
           @{ schema_version = 1; selections = $selections } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $selectionPath -Encoding utf8
-          uv run python ida_analyze_bin.py -batch_selection $selectionPath -validate_selection_only `
-            -artifactdir $artifactRoot -batch_diagnostics $diagnosticsRoot
-          if ($LASTEXITCODE -ne 0) { throw 'batch selection validation failed' }
-          foreach ($action in $plan.tags) {
-            if ($action.analysis_nodes.Count -eq 0) { continue }
-            $tag = $action.tag
-            uv run --project $trustedRoot python $plannerCli materialize -repo-root $env:GITHUB_WORKSPACE `
-              -plan $planPath -tag $tag -merge-ref HEAD -bindir bin -artifactdir $artifactRoot
-            if ($LASTEXITCODE -ne 0) { throw "materialization failed for $tag" }
+          Invoke-ValidationStage 'batch/validate-selection' {
+            uv run python -u ida_analyze_bin.py -batch_selection $selectionPath -validate_selection_only `
+              -artifactdir $artifactRoot -batch_diagnostics $diagnosticsRoot
+            if ($LASTEXITCODE -ne 0) { throw 'batch selection validation failed' }
           }
-          uv run python ida_analyze_bin.py -batch_selection $selectionPath -bindir bin `
-            -artifactdir $artifactRoot -batch_diagnostics $diagnosticsRoot -debug -process_reporter console
-          if ($LASTEXITCODE -ne 0) { throw 'selected-node batch analysis failed' }
           foreach ($action in $plan.tags) {
             if ($action.analysis_nodes.Count -eq 0) { continue }
             $tag = $action.tag
-            uv run --project $trustedRoot python $plannerCli compare -repo-root $env:GITHUB_WORKSPACE `
-              -plan $planPath -tag $tag -merge-ref HEAD -bindir bin -artifactdir $artifactRoot
-            if ($LASTEXITCODE -ne 0) { throw "artifact byte comparison failed for $tag" }
+            Invoke-ValidationStage "$tag/materialize" {
+              uv run --project $trustedRoot python $plannerCli materialize -repo-root $env:GITHUB_WORKSPACE `
+                -plan $planPath -tag $tag -merge-ref HEAD -bindir bin -artifactdir $artifactRoot
+              if ($LASTEXITCODE -ne 0) { throw "materialization failed for $tag" }
+            }
+          }
+          Invoke-ValidationStage 'batch/analyze' {
+            uv run python -u ida_analyze_bin.py -batch_selection $selectionPath -bindir bin `
+              -artifactdir $artifactRoot -batch_diagnostics $diagnosticsRoot -debug -process_reporter console
+            if ($LASTEXITCODE -ne 0) { throw 'selected-node batch analysis failed' }
+          }
+          foreach ($action in $plan.tags) {
+            if ($action.analysis_nodes.Count -eq 0) { continue }
+            $tag = $action.tag
+            Invoke-ValidationStage "$tag/compare" {
+              uv run --project $trustedRoot python $plannerCli compare -repo-root $env:GITHUB_WORKSPACE `
+                -plan $planPath -tag $tag -merge-ref HEAD -bindir bin -artifactdir $artifactRoot
+              if ($LASTEXITCODE -ne 0) { throw "artifact byte comparison failed for $tag" }
+            }
             $stage = Join-Path $env:RUNNER_TEMP ("gamesymbol-$tag-" + [guid]::NewGuid().ToString('N'))
             New-Item -ItemType Directory -Path $stage | Out-Null
             try {
               $candidate = Join-Path $stage "$tag.yaml"
               $symbolSession = Join-Path $stage 'symbol-session.json'
               $gamedataSession = Join-Path $stage 'gamedata-session.json'
-              uv run --project $trustedRoot python $candidateCli build -gamever $tag -bindir bin `
-                -artifactdir $artifactRoot -configyaml "configs/$tag.yaml" -output $candidate -session $symbolSession `
-                -snapshot-schema-version 8
-              if ($LASTEXITCODE -ne 0) { throw "candidate build failed for $tag" }
-              uv run python gamesymbol_candidate.py guard -candidate $candidate -session $symbolSession
-              if ($LASTEXITCODE -ne 0) { throw "candidate guard failed for $tag" }
-              uv run python gamedata_candidate.py build -gamever $tag -build-id "pr-${{ github.run_id }}" -snapshot $candidate `
-                -configyaml "configs/$tag.yaml" -modulesdir gamedata-generators -candidate-root (Join-Path $stage 'gamedata') `
-                -session $gamedataSession
-              if ($LASTEXITCODE -ne 0) { throw "gamedata build failed for $tag" }
-              uv run python gamedata_candidate.py guard -session $gamedataSession
-              if ($LASTEXITCODE -ne 0) { throw "gamedata guard failed for $tag" }
-              uv run python gamesymbol_candidate.py mark -candidate $candidate -session $symbolSession -step gamedata -gamedata-session $gamedataSession
-              if ($LASTEXITCODE -ne 0) { throw "candidate self-consistency check failed for $tag" }
+              Invoke-ValidationStage "$tag/symbol-build" {
+                uv run --project $trustedRoot python $candidateCli build -gamever $tag -bindir bin `
+                  -artifactdir $artifactRoot -configyaml "configs/$tag.yaml" -output $candidate -session $symbolSession `
+                  -snapshot-schema-version 8
+                if ($LASTEXITCODE -ne 0) { throw "candidate build failed for $tag" }
+              }
+              Invoke-ValidationStage "$tag/symbol-guard" {
+                uv run python gamesymbol_candidate.py guard -candidate $candidate -session $symbolSession
+                if ($LASTEXITCODE -ne 0) { throw "candidate guard failed for $tag" }
+              }
+              Invoke-ValidationStage "$tag/gamedata-build" {
+                uv run python gamedata_candidate.py build -gamever $tag -build-id "pr-${{ github.run_id }}" -snapshot $candidate `
+                  -configyaml "configs/$tag.yaml" -modulesdir gamedata-generators -candidate-root (Join-Path $stage 'gamedata') `
+                  -session $gamedataSession
+                if ($LASTEXITCODE -ne 0) { throw "gamedata build failed for $tag" }
+              }
+              Invoke-ValidationStage "$tag/gamedata-guard" {
+                uv run python gamedata_candidate.py guard -session $gamedataSession
+                if ($LASTEXITCODE -ne 0) { throw "gamedata guard failed for $tag" }
+              }
+              Invoke-ValidationStage "$tag/self-consistency" {
+                uv run python gamesymbol_candidate.py mark -candidate $candidate -session $symbolSession -step gamedata -gamedata-session $gamedataSession
+                if ($LASTEXITCODE -ne 0) { throw "candidate self-consistency check failed for $tag" }
+              }
             } finally {
-              if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
+              Invoke-ValidationStage "$tag/cleanup" {
+                if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
+              }
             }
           }
-          git diff --exit-code -- bin_artifacts
-          if ($LASTEXITCODE -ne 0) { throw 'tracked bin_artifacts changed during isolated rebuild' }
+          Invoke-ValidationStage 'batch/check-tracked-artifacts' {
+            git diff --exit-code -- bin_artifacts
+            if ($LASTEXITCODE -ne 0) { throw 'tracked bin_artifacts changed during isolated rebuild' }
+          }
       - name: Upload rebuilt artifacts on validation failure
         if: failure() && steps.validate-artifacts.outcome == 'failure'
         uses: actions/upload-artifact@v7
