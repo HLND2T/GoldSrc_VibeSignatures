@@ -492,11 +492,11 @@ def materialize_from_plan(
         for path in list(iter_yaml_paths(game_root)):
             path.unlink()
         selected = []
-        for entry in entries:
-            relative = entry["path"]
-            if relative in invalidated:
-                continue
-            raw = repo.read(document["merge_sha"], f"bin_artifacts/{tag}/{relative}")
+        retained = tuple(entry["path"] for entry in entries if entry["path"] not in invalidated)
+        prefix = f"bin_artifacts/{tag}/"
+        blobs = repo.read_many(document["merge_sha"], (prefix + relative for relative in retained))
+        for relative in retained:
+            raw = blobs[prefix + relative]
             if raw is None:
                 raise PrCliError(f"Merge artifact disappeared during materialization: {relative}")
             target = path_from_key(game_root, relative)
@@ -538,7 +538,12 @@ def compare_rebuilt_artifacts(
             require_complete=True,
         )
 
+        expected_bytes: dict[str, bytes] | None = None
+
         def load_expected_bytes() -> dict[str, bytes]:
+            nonlocal expected_bytes
+            if expected_bytes is not None:
+                return expected_bytes
             prefix = f"bin_artifacts/{tag}/"
             blobs = repo.read_many(document["merge_sha"], (prefix + entry["path"] for entry in expected))
             result = {}
@@ -547,6 +552,7 @@ def compare_rebuilt_artifacts(
                 if raw is None:
                     raise PrCliError(f"Expected Git blob is missing: {prefix}{entry['path']}")
                 result[entry["path"]] = raw
+            expected_bytes = result
             return result
 
         def diagnostic(message: str) -> str:
@@ -569,12 +575,12 @@ def compare_rebuilt_artifacts(
             expected=expected,
             actual=actual,
             artifact_game_root=contract.artifact_game_root,
-            read_expected=lambda relative: repo.read(document["merge_sha"], f"bin_artifacts/{tag}/{relative}"),
+            read_expected=lambda relative: load_expected_bytes()[relative],
         )
         if actual != expected and drift is None:
             raise PrCliError(diagnostic(f"Rebuilt artifact inventory differs from merge Git blobs for {tag}"))
         for entry in expected:
-            expected_raw = repo.read(document["merge_sha"], f"bin_artifacts/{tag}/{entry['path']}")
+            expected_raw = load_expected_bytes()[entry["path"]]
             actual_raw = path_from_key(contract.artifact_game_root, entry["path"]).read_bytes()
             if expected_raw != actual_raw and (drift is None or entry["path"] not in drift):
                 message = f"Rebuilt artifact bytes differ from merge Git blob: {tag}/{entry['path']}"

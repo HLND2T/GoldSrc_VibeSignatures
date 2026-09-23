@@ -817,6 +817,44 @@ class BoundPlanValidationTests(unittest.TestCase):
 
 
 class ArtifactRebuildComparisonTests(unittest.TestCase):
+    def test_materialize_and_compare_batch_artifacts_preserving_invalidation_and_bytes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, git, base, merge = self._migration_repository(root, replacement="New")
+            plan = build_plan(repo_root=repo, base_ref=base, head_ref=merge, merge_ref=merge)
+            plan_path = root / "plan.json"
+            plan_path.write_bytes(plan.canonical_bytes())
+            args = {
+                "repo_root": repo,
+                "plan_path": plan_path,
+                "tag": "game-1",
+                "merge_ref": merge,
+                "bindir": repo / "bin",
+                "artifactdir": root / "rebuilt",
+            }
+            prefix = "bin_artifacts/game-1/"
+            expected = git.read_many(
+                merge, (prefix + "engine/New.windows.yaml", prefix + "engine/Unchanged.windows.yaml")
+            )
+            original_read = GitRepository.read
+
+            def reject_individual_artifact_read(repository, ref, path):
+                self.assertFalse(path.startswith("bin_artifacts/"), "Artifact reads must be batched")
+                return original_read(repository, ref, path)
+
+            with patch.object(GitRepository, "read", reject_individual_artifact_read):
+                self.assertEqual(("engine/Unchanged.windows.yaml",), materialize_from_plan(**args))
+                rebuilt = root / "rebuilt/game-1/engine"
+                self.assertFalse((rebuilt / "New.windows.yaml").exists())
+                self.assertEqual(
+                    expected[prefix + "engine/Unchanged.windows.yaml"],
+                    (rebuilt / "Unchanged.windows.yaml").read_bytes(),
+                )
+                (rebuilt / "New.windows.yaml").write_bytes(expected[prefix + "engine/New.windows.yaml"])
+                self.assertEqual(
+                    ("engine/New.windows.yaml", "engine/Unchanged.windows.yaml"), compare_rebuilt_artifacts(**args)
+                )
+
     def _migration_repository(self, root, *, replacement=None, keep_declaration=False, keep_old=False):
         repo = root / "repo"
         repo.mkdir()
