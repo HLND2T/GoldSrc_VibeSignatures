@@ -168,6 +168,17 @@ modules:
       - name: find-R_DrawTEntitiesOnList
         expected_output:
           - R_DrawTEntitiesOnList.{platform}.yaml
+      - name: find-R_AllocTransObjects
+        expected_output:
+          - R_AllocTransObjects.{platform}.yaml
+      - name: find-R_AllocTransObjects-globals
+        expected_input:
+          - R_AllocTransObjects.{platform}.yaml
+          - R_DrawTEntitiesOnList.{platform}.yaml
+        expected_output:
+          - transObjects.{platform}.yaml
+          - maxTransObjs.{platform}.yaml
+          - numTransObjs.{platform}.yaml
       - name: find-R_StudioSetupBones
         expected_output:
           - R_StudioSetupBones.{platform}.yaml
@@ -1168,6 +1179,14 @@ modules:
         category: scalar
       - name: R_DrawTEntitiesOnList
         category: func
+      - name: R_AllocTransObjects
+        category: func
+      - name: transObjects
+        category: gv
+      - name: maxTransObjs
+        category: gv
+      - name: numTransObjs
+        category: gv
       - name: R_StudioSetupBones
         category: func
       - name: R_StudioCalcAttachments

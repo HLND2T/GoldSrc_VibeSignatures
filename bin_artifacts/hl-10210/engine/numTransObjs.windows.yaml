@@ -1,0 +1,8 @@
+gv_name: numTransObjs
+gv_va: '0x10530c78'
+gv_rva: '0x530c78'
+gv_sig: 55 8B EC 81 EC E0 00 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? F3 0F 10 05 ?? ?? ?? ?? 0F 2E 05 ?? ?? ?? ?? 9F F6 C4 44
+gv_sig_va: '0x101fa870'
+gv_inst_offset: '0x45f'
+gv_inst_length: '0xa'
+gv_inst_disp: '0x2'

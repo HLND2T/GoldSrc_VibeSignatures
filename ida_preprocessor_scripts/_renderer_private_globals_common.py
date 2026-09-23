@@ -1619,3 +1619,254 @@ async def preprocess_currenttexture(
         owner,
         {"currenttexture": located},
     )
+
+
+LOCATE_TRANS_OBJECT_ALLOC_GLOBALS_PY = r"""
+import ida_funcs
+import ida_segment
+import ida_ua
+import idautils
+import idc
+import idaapi
+import json
+import traceback
+
+OWNER_EA = OWNER_EA_PLACEHOLDER
+
+WRITE_MNEMONICS = frozenset((
+    'mov', 'add', 'sub', 'and', 'or', 'xor', 'inc', 'dec', 'shl', 'shr', 'sar', 'neg', 'not', 'imul',
+))
+
+
+def is_writable_data(ea):
+    seg = ida_segment.getseg(int(ea))
+    if seg is None or int(ea) == 0:
+        return False
+    perms = int(getattr(seg, 'perm', 0))
+    return bool(perms & int(getattr(ida_segment, 'SEGPERM_WRITE', 2))) and not bool(
+        perms & int(getattr(ida_segment, 'SEGPERM_EXEC', 4)))
+
+
+def absolute_target(op):
+    if int(op.type) == int(idaapi.o_mem):
+        return int(op.addr) & 0xFFFFFFFF
+    if int(op.type) == int(idaapi.o_displ) and int(getattr(op, 'addr', 0) or 0):
+        return int(op.addr) & 0xFFFFFFFF
+    return 0
+
+
+try:
+    function = ida_funcs.get_func(OWNER_EA)
+    if function is None or int(function.start_ea) != int(OWNER_EA):
+        raise ValueError('owner function not found')
+    stores = []
+    for ea in idautils.FuncItems(int(OWNER_EA)):
+        insn = ida_ua.insn_t()
+        if ida_ua.decode_insn(insn, ea) == 0:
+            raise ValueError('undecodable instruction at 0x%X' % int(ea))
+        if insn.get_canon_mnem() not in WRITE_MNEMONICS:
+            continue
+        target = absolute_target(insn.ops[0])
+        if not target or not is_writable_data(target):
+            continue
+        offb = int(getattr(insn.ops[0], 'offb', 0) or 0)
+        if offb <= 0 or offb + 4 > int(insn.size):
+            continue
+        stores.append({
+            'gv_ea': target,
+            'insn_ea': int(ea),
+            'insn_len': int(insn.size),
+            'insn_disp': offb,
+            'insn_disasm': idc.GetDisasm(int(ea)),
+        })
+    if len(stores) != 2:
+        result = json.dumps({'error': 'expected exactly two absolute writable stores', 'stores': stores})
+    elif stores[0]['gv_ea'] == stores[1]['gv_ea']:
+        result = json.dumps({'error': 'both stores target the same global', 'stores': stores})
+    else:
+        result = json.dumps({
+            'pointer_size': 4,
+            'owner_ea': hex(int(function.start_ea)),
+            'transObjects': stores[0],
+            'maxTransObjs': stores[1],
+        })
+except Exception as exc:
+    result = json.dumps({'error': str(exc), 'trace': traceback.format_exc()})
+"""
+
+
+LOCATE_TRANS_OBJECT_COUNTER_PY = r"""
+import ida_funcs
+import ida_idp
+import ida_segment
+import ida_ua
+import idautils
+import idc
+import idaapi
+import json
+import traceback
+
+OWNER_EA = OWNER_EA_PLACEHOLDER
+
+REGISTER_WRITES = frozenset((
+    'mov', 'lea', 'pop', 'add', 'sub', 'and', 'or', 'xor', 'imul', 'shl', 'shr', 'sar',
+    'inc', 'dec', 'neg', 'not', 'movzx', 'movsx',
+))
+
+
+def is_writable_data(ea):
+    seg = ida_segment.getseg(int(ea))
+    if seg is None or int(ea) == 0:
+        return False
+    perms = int(getattr(seg, 'perm', 0))
+    return bool(perms & int(getattr(ida_segment, 'SEGPERM_WRITE', 2))) and not bool(
+        perms & int(getattr(ida_segment, 'SEGPERM_EXEC', 4)))
+
+
+def absolute_target(op):
+    if int(op.type) == int(idaapi.o_mem):
+        return int(op.addr) & 0xFFFFFFFF
+    if int(op.type) == int(idaapi.o_displ) and int(getattr(op, 'addr', 0) or 0):
+        return int(op.addr) & 0xFFFFFFFF
+    return 0
+
+
+def reg_name(op):
+    try:
+        index = int(getattr(op, 'reg', -1))
+        return (ida_idp.get_reg_name(index, 4) or '').lower() if index >= 0 else ''
+    except Exception:
+        return ''
+
+
+try:
+    function = ida_funcs.get_func(OWNER_EA)
+    if function is None or int(function.start_ea) != int(OWNER_EA):
+        raise ValueError('owner function not found')
+    references = {}
+    candidates = []
+    zero_regs = set()
+    for ea in idautils.FuncItems(int(OWNER_EA)):
+        insn = ida_ua.insn_t()
+        if ida_ua.decode_insn(insn, ea) == 0:
+            raise ValueError('undecodable instruction at 0x%X' % int(ea))
+        mnem = insn.get_canon_mnem()
+        op0 = insn.ops[0]
+        op1 = insn.ops[1]
+
+        for op in (op0, op1):
+            target = absolute_target(op)
+            if target and is_writable_data(target):
+                references.setdefault(target, []).append(int(ea))
+
+        destination = absolute_target(op0)
+        if mnem in REGISTER_WRITES and destination and is_writable_data(destination):
+            offb = int(getattr(op0, 'offb', 0) or 0)
+            stored_zero = (
+                int(op1.type) == int(idaapi.o_imm)
+                and (int(op1.value) & 0xFFFFFFFF) == 0
+            )
+            if not stored_zero and int(op1.type) == int(idaapi.o_reg):
+                name = reg_name(op1)
+                stored_zero = bool(name) and name in zero_regs
+            if stored_zero and offb > 0 and offb + 4 <= int(insn.size):
+                candidates.append({
+                    'gv_ea': destination,
+                    'insn_ea': int(ea),
+                    'insn_len': int(insn.size),
+                    'insn_disp': offb,
+                    'insn_disasm': idc.GetDisasm(int(ea)),
+                })
+
+        dst = reg_name(op0)
+        if mnem in ('xor', 'sub') and dst and dst == reg_name(op1):
+            zero_regs.add(dst)
+        elif mnem == 'mov' and dst and int(op1.type) == int(idaapi.o_imm) and (int(op1.value) & 0xFFFFFFFF) == 0:
+            zero_regs.add(dst)
+        elif mnem == 'call':
+            zero_regs.clear()
+        elif mnem in REGISTER_WRITES and dst:
+            zero_regs.discard(dst)
+
+    unique = {}
+    for candidate in candidates:
+        unique.setdefault(candidate['gv_ea'], candidate)
+    if len(unique) != 1:
+        result = json.dumps({
+            'error': 'counter global is not unique',
+            'candidate_count': len(unique),
+            'candidates': [
+                {**item, 'gv_ea': hex(item['gv_ea']), 'insn_ea': hex(item['insn_ea'])}
+                for item in unique.values()
+            ],
+        })
+    else:
+        item = next(iter(unique.values()))
+        if len(references.get(item['gv_ea'], ())) < 2:
+            result = json.dumps({'error': 'counter global is never read in the owner body'})
+        else:
+            result = json.dumps({
+                'pointer_size': 4,
+                'owner_ea': hex(int(function.start_ea)),
+                **{key: (hex(value) if key in ('gv_ea', 'insn_ea') else value) for key, value in item.items()},
+            })
+except Exception as exc:
+    result = json.dumps({'error': str(exc), 'trace': traceback.format_exc()})
+"""
+
+
+async def _locate_trans_object_globals(session, owner, code, debug, label):
+    if owner is None:
+        return None
+    locator = code.replace("OWNER_EA_PLACEHOLDER", str(owner["owner_ea"]))
+    try:
+        payload = parse_mcp_result(await session.call_tool("py_eval", {"code": locator}))
+    except Exception:  # noqa: BLE001 - MCP failures fail closed.
+        return None
+    if not isinstance(payload, dict) or payload.get("error") or payload.get("pointer_size") != 4:
+        if debug:
+            print(f"  {label}: locator failed {payload}")
+        return None
+    return payload
+
+
+async def preprocess_trans_object_globals(
+    session,
+    expected_outputs,
+    new_binary_dir,
+    platform,
+    image_base,
+    *,
+    owner_name="R_AllocTransObjects",
+    counter_owner_name="R_DrawTEntitiesOnList",
+    debug=False,
+):
+    if platform not in {"windows", "linux"}:
+        return False
+    owner = await inspect_owner_artifact(session, new_binary_dir, platform, image_base, owner_name)
+    counter_owner = await inspect_owner_artifact(session, new_binary_dir, platform, image_base, counter_owner_name)
+    if owner is None or counter_owner is None:
+        if debug:
+            print(f"  trans objects: missing or invalid {owner_name}/{counter_owner_name} artifact")
+        return False
+    allocated = await _locate_trans_object_globals(
+        session, owner, LOCATE_TRANS_OBJECT_ALLOC_GLOBALS_PY, debug, "trans objects"
+    )
+    if allocated is None:
+        return False
+    if debug:
+        for name in ("transObjects", "maxTransObjs"):
+            print(f"  trans objects: {name}={allocated[name]['gv_ea']} {allocated[name]['insn_disasm']}")
+    located = {name: allocated[name] for name in ("transObjects", "maxTransObjs")}
+    if not await write_located_globals(session, expected_outputs, platform, image_base, owner, located):
+        return False
+    counter = await _locate_trans_object_globals(
+        session, counter_owner, LOCATE_TRANS_OBJECT_COUNTER_PY, debug, "trans objects counter"
+    )
+    if counter is None:
+        return False
+    if debug:
+        print(f"  trans objects: numTransObjs={counter['gv_ea']} {counter['insn_disasm']}")
+    return await write_located_globals(
+        session, expected_outputs, platform, image_base, counter_owner, {"numTransObjs": counter}
+    )
