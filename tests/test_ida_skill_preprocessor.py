@@ -2794,6 +2794,95 @@ found_struct_offset: []
     def test_global_operand_requires_a_complete_encoded_dword(self):
         self.assertIsNone(ida_analyze_util._gv_operand_displacement({"size": 3, "operand_offsets": [0, 2]}))
         self.assertEqual(2, ida_analyze_util._gv_operand_displacement({"size": 7, "operand_offsets": [2, 6]}))
+        self.assertIsNone(
+            ida_analyze_util._gv_operand_displacement(
+                {"size": 6, "operand_offsets": [0, 2], "address_operand_offsets": []}
+            )
+        )
+
+    async def test_add_global_address_immediates_survive_inspection_and_emission(self):
+        for raw, mnemonic, immediate, offset, xrefs, permission, expected in (
+            ("81 C6 60 FB C0 02", "add", 0x2C0FB60, 2, [0x2C0FB60], 6, 2),
+            ("05 40 FB 80 02", "add", 0x280FB40, 1, [0x280FB40], 6, 1),
+            ("05 40 FB 80 02", "add", 0x280FB40, 1, [], 6, None),
+            ("05 40 FB 80 02", "add", 0x280FB40, 1, [0x280FB40], 5, None),
+            ("81 FE 60 FB C0 02", "cmp", 0x2C0FB60, 2, [0x2C0FB60], 6, None),
+            ("83 C6 05", "add", 5, 2, [5], 6, None),
+        ):
+            with self.subTest(raw=raw, mnemonic=mnemonic, xrefs=xrefs, permission=permission):
+                ea, encoded = 0x1010, bytes.fromhex(raw)
+                instruction = SimpleNamespace(
+                    ops=[
+                        SimpleNamespace(type=1, offb=0),
+                        SimpleNamespace(type=5, offb=offset, value=immediate),
+                        SimpleNamespace(type=0),
+                    ]
+                )
+                function = SimpleNamespace(start_ea=0x1000, end_ea=0x1100)
+                segment = SimpleNamespace(perm=permission, end_ea=immediate + 0x100)
+                modules = {
+                    "ida_bytes": SimpleNamespace(get_dword=lambda address: immediate, get_bytes=lambda *args: encoded),
+                    "ida_fixup": SimpleNamespace(fixup_data_t=lambda: None, get_fixup=lambda *args: False),
+                    "ida_funcs": SimpleNamespace(get_func=lambda address: function),
+                    "ida_lines": SimpleNamespace(tag_remove=lambda text: text),
+                    "ida_segment": SimpleNamespace(getseg=lambda address: segment, SEGPERM_EXEC=1),
+                    "idaapi": SimpleNamespace(inf_is_64bit=lambda: False, BADADDR=0xFFFFFFFF),
+                    "ida_ua": SimpleNamespace(
+                        o_void=0,
+                        o_reg=1,
+                        o_mem=2,
+                        o_phrase=3,
+                        o_displ=4,
+                        o_imm=5,
+                        o_near=6,
+                        o_far=7,
+                        insn_t=lambda: instruction,
+                        decode_insn=lambda *args: len(encoded),
+                    ),
+                    "idautils": SimpleNamespace(DataRefsFrom=lambda address: xrefs, CodeRefsFrom=lambda *args: []),
+                    "idc": SimpleNamespace(
+                        generate_disasm_line=lambda *args: f"{mnemonic} eax, {hex(immediate)}",
+                        print_insn_mnem=lambda address: mnemonic,
+                    ),
+                }
+                namespace = {}
+                with patch.dict("sys.modules", modules):
+                    exec(
+                        ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)),
+                        {},
+                        namespace,
+                    )
+                detail = json.loads(namespace["result"])
+                self.assertIn("address_operand_offsets", detail)
+                self.assertEqual(expected, ida_analyze_util._gv_operand_displacement(detail))
+                with (
+                    patch("ida_analyze_util._inspect_llm_instruction", new=AsyncMock(return_value=detail)),
+                    patch(
+                        "ida_analyze_util._inspect_function_via_mcp",
+                        new=AsyncMock(return_value={"func_va": "0x1000", "func_sig": "55 8B EC"}),
+                    ),
+                ):
+                    result = await _preprocess_llm_target(
+                        session=SimpleNamespace(),
+                        symbol_name="g_Target",
+                        category="gv",
+                        spec={},
+                        llm_config=None,
+                        new_binary_dir=Path("D:/game/engine"),
+                        platform="windows",
+                        image_base=0,
+                        desired_fields=[],
+                        target_ranges=[(0x1000, 0x1100)],
+                        llm_result={"found_gv": [{"gv_name": "g_Target", "insn_va": hex(ea)}]},
+                    )
+                if expected is None:
+                    self.assertIsNone(result)
+                    continue
+                self.assertIsNotNone(result)
+                self.assertEqual(hex(immediate), result["gv_va"])
+                self.assertEqual(expected, result["gv_inst_disp"])
+                self.assertEqual(len(encoded), result["gv_inst_length"])
+                self.assertNotIn("gv_address_offset", result)
 
     def test_compare_inspection_resolves_memory_not_mapped_immediate(self):
         for displacement, raw, scalar in (

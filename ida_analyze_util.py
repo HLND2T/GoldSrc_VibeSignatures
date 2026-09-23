@@ -3071,14 +3071,26 @@ if size:
             break
         offb = int(op.offb or 0)
         operand_offsets.append(offb)
+        immediate_is_address = False
+        if op.type == ida_ua.o_imm:
+            mnemonic = (idc.print_insn_mnem(ea) or '').lower()
+            immediate_is_address = mnemonic in ('mov', 'push')
+            # Array addressing can materialize its relocated global base with
+            # ADD reg, offset object. Unlike a scalar/PIC-base adjustment, the
+            # complete imm32 must itself have an IDA xref to mapped data.
+            if mnemonic == 'add' and insn.ops[0].type == ida_ua.o_reg and offb and offb + 4 <= size:
+                segment = ida_segment.getseg(int(op.value))
+                immediate_is_address = (segment is not None
+                    and not (segment.perm & ida_segment.SEGPERM_EXEC)
+                    and int(op.value) + 4 <= segment.end_ea
+                    and int(op.value) in idautils.DataRefsFrom(ea))
         if (op.type in (ida_ua.o_mem, ida_ua.o_displ)
-                or (op.type == ida_ua.o_imm and (idc.print_insn_mnem(ea) or '').lower() in ('mov', 'push'))):
+                or immediate_is_address):
             if offb and offb + 4 <= size:
                 address_operand_offsets.append(offb)
         if op.type in (ida_ua.o_mem, ida_ua.o_far, ida_ua.o_near):
             operand_targets.append(int(op.addr))
-        elif (op.type == ida_ua.o_imm
-              and (idc.print_insn_mnem(ea) or '').lower() in ('mov', 'push')
+        elif (immediate_is_address
               and ida_segment.getseg(int(op.value)) is not None):
             operand_targets.append(int(op.value))
         elif op.type == ida_ua.o_displ:
