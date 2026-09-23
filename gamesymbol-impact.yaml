@@ -28,6 +28,7 @@ rules:
       - .opencode/skill_runner.config.json
       - ida_preprocessor_scripts/prompt/call_llm_decompile.md
       - gamesymbol_snapshot_lib/analysis_sources.py
+      - gamesymbol_snapshot_lib/anchor_drift.py
       - gamesymbol_snapshot_lib/impact_registry.py
       - gamesymbol_snapshot_lib/materialize.py
       - gamesymbol_snapshot_lib/pr_cli.py
