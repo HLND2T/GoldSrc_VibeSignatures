@@ -1903,6 +1903,14 @@ modules:
         expected_output:
           - g_iWaterLevel.{platform}.yaml
           - g_bRenderingPortals_SCClient.{platform}.yaml
+      - name: find-V_CalcNormalRefdef-fog-globals
+        expected_input:
+          - V_CalcRefdef.{platform}.yaml
+        expected_output:
+          - V_CalcNormalRefdef.{platform}.yaml
+          - g_iFogColor.{platform}.yaml
+          - g_iStartDist.{platform}.yaml
+          - g_iEndDist.{platform}.yaml
       - name: find-GameStudioRenderer_StudioDrawPlayer-decompiles
         expected_input:
           - GameStudioRenderer_StudioDrawPlayer.{platform}.yaml
@@ -2009,6 +2017,14 @@ modules:
         category: func
       - name: V_CalcRefdef
         category: func
+      - name: V_CalcNormalRefdef
+        category: func
+      - name: g_iFogColor
+        category: gv
+      - name: g_iStartDist
+        category: gv
+      - name: g_iEndDist
+        category: gv
       - name: UpdatePlayerPitch
         category: func
       - name: GameStudioRenderer_StudioSetupBones
