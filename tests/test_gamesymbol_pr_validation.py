@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import re
 import subprocess
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
@@ -1048,6 +1050,124 @@ class ArtifactRebuildComparisonTests(unittest.TestCase):
                         )
                     self.assertIn("Rebuilt artifact contract failed", str(raised.exception))
                     self.assertIn(hashlib.sha256(raw).hexdigest(), str(raised.exception))
+
+
+class AnchorDriftComparisonTests(unittest.TestCase):
+    COMMITTED_PAYLOAD = {
+        "gv_name": "gWorldToScreen",
+        "gv_va": "0x2c20100",
+        "gv_rva": "0xf20100",
+        "gv_sig": "55 8B EC 83 E4 F8 83 EC 10 53 55 56 57 68 01 17 00 00",
+        "gv_sig_va": "0x1d46430",
+        "gv_inst_offset": "0x8",
+        "gv_inst_length": "0x5",
+        "gv_inst_disp": "0x1",
+    }
+
+    def _rebuilt_repository(self, root):
+        repo = root / "repo"
+        rebuilt = root / "rebuilt"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.com"], check=True)
+        subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True)
+        subprocess.run(["git", "-C", str(repo), "config", "core.autocrlf", "false"], check=True)
+        (repo / "configs").mkdir()
+        (repo / "configs" / "config.yaml").write_text("gamevers:\n  - game-1\n", encoding="utf-8")
+        (repo / "configs" / "game-1.yaml").write_text(
+            yaml.safe_dump(
+                {
+                    "modules": [
+                        {
+                            "name": "engine",
+                            "path_windows": "Game/hw.dll",
+                            "module_windows": "hw.dll",
+                            "skills": [
+                                {"name": "find", "expected_output": ["gWorldToScreen.{platform}.yaml"]},
+                            ],
+                            "symbols": [{"name": "gWorldToScreen", "category": "gv"}],
+                        }
+                    ]
+                },
+                sort_keys=False,
+            ),
+            encoding="utf-8",
+        )
+        artifact = repo / "bin_artifacts" / "game-1" / "engine" / "gWorldToScreen.windows.yaml"
+        artifact.parent.mkdir(parents=True)
+        artifact.write_bytes(canonical_symbol_yaml_bytes(self.COMMITTED_PAYLOAD))
+        subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+        subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "base"], check=True)
+        base_sha = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+        artifact.write_bytes(canonical_symbol_yaml_bytes({**self.COMMITTED_PAYLOAD, "gv_inst_offset": "0xa"}))
+        subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+        subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "merge"], check=True)
+        merge_sha = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
+        committed_bytes = artifact.read_bytes()
+
+        plan = build_plan(repo_root=repo, base_ref=base_sha, head_ref=merge_sha, merge_ref=merge_sha)
+        plan_path = root / "plan.json"
+        plan_path.write_bytes(plan.canonical_bytes())
+        args = dict(
+            repo_root=repo,
+            plan_path=plan_path,
+            tag="game-1",
+            merge_ref=merge_sha,
+            bindir=repo / "bin",
+            artifactdir=rebuilt,
+        )
+        materialize_from_plan(**args)
+        rebuilt_artifact = rebuilt / "game-1/engine/gWorldToScreen.windows.yaml"
+        rebuilt_artifact.parent.mkdir(parents=True, exist_ok=True)
+        rebuilt_artifact.write_bytes(committed_bytes)
+        return repo, rebuilt_artifact, committed_bytes, args
+
+    def test_anchor_only_drift_is_accepted_and_reported(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            _repo, rebuilt_artifact, committed_bytes, args = self._rebuilt_repository(Path(temporary))
+            rebuilt_artifact.write_bytes(
+                canonical_symbol_yaml_bytes(
+                    {**self.COMMITTED_PAYLOAD, "gv_inst_offset": "0xc", "gv_sig_va": "0x1d46470"}
+                )
+            )
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                compared = compare_rebuilt_artifacts(**args)
+            self.assertEqual(("engine/gWorldToScreen.windows.yaml",), compared)
+            self.assertNotEqual(committed_bytes, rebuilt_artifact.read_bytes())
+            self.assertIn("Anchor drift accepted", stdout.getvalue())
+            self.assertIn("gv_inst_offset", stdout.getvalue())
+
+    def test_address_drift_still_fails_the_byte_gate(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            _repo, rebuilt_artifact, _committed, args = self._rebuilt_repository(Path(temporary))
+            rebuilt_artifact.write_bytes(
+                canonical_symbol_yaml_bytes(
+                    {**self.COMMITTED_PAYLOAD, "gv_inst_offset": "0xc", "gv_va": "0x2c20104", "gv_rva": "0xf20104"}
+                )
+            )
+            with self.assertRaisesRegex(PrCliError, "inventory differs") as raised:
+                compare_rebuilt_artifacts(**args)
+            self.assertIn("-gv_va: '0x2c20100'", str(raised.exception))
+
+    def test_incoherent_anchor_drift_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            _repo, rebuilt_artifact, _committed, args = self._rebuilt_repository(Path(temporary))
+            # The displacement operand must stay inside the anchored instruction.
+            rebuilt_artifact.write_bytes(
+                canonical_symbol_yaml_bytes({**self.COMMITTED_PAYLOAD, "gv_inst_offset": "0xc", "gv_inst_disp": "0x7"})
+            )
+            with self.assertRaisesRegex(PrCliError, "inventory differs"):
+                compare_rebuilt_artifacts(**args)
+
+    def test_resized_payload_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            _repo, rebuilt_artifact, _committed, args = self._rebuilt_repository(Path(temporary))
+            payload = dict(self.COMMITTED_PAYLOAD)
+            payload.pop("gv_inst_disp")
+            rebuilt_artifact.write_bytes(canonical_symbol_yaml_bytes({**payload, "gv_inst_offset": "0xc"}))
+            with self.assertRaisesRegex(PrCliError, "inventory differs"):
+                compare_rebuilt_artifacts(**args)
 
 
 class GitBatchReadTests(unittest.TestCase):

@@ -235,7 +235,7 @@ def _snapshot_domain_changed(paths: set[str]) -> bool:
         path in SNAPSHOT_DOMAIN_PATHS
         or path.startswith("gamesymbol_snapshot_lib/")
         and path.rsplit("/", 1)[-1]
-        not in {"analysis_sources.py", "impact_registry.py", "pr_cli.py", "pr_validation.py"}
+        not in {"analysis_sources.py", "anchor_drift.py", "impact_registry.py", "pr_cli.py", "pr_validation.py"}
         for path in paths
     )
 
