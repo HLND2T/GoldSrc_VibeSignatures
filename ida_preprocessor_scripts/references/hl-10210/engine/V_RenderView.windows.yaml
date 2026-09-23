@@ -1,0 +1,652 @@
+func_name: "V_RenderView"
+func_va: "0x102318a0"
+disasm_code: |-
+  ; Vector targets mean the FIRST float only: r_soundOrigin[0] and r_playerViewportAngles[0].
+  ; Do NOT report instructions accessing component +4 or +8 for either target. They identify a different address.
+  .text:102318A0                 push    ebp
+  .text:102318A1                 mov     ebp, esp
+  .text:102318A3                 sub     esp, 0ECh
+  .text:102318A9                 mov     eax, ___security_cookie
+  .text:102318AE                 xor     eax, ebp
+  .text:102318B0                 mov     [ebp+var_4], eax
+  .text:102318B3                 push    esi
+  .text:102318B4                 xor     esi, esi
+  .text:102318B6                 mov     r_soundOrigin+8, esi
+  .text:102318BC                 mov     r_soundOrigin+4, esi
+  .text:102318C2                 ; r_soundOrigin: listener origin; receives r_origin under !rp.onlyClientDraw.
+  .text:102318C2                 mov     r_soundOrigin, esi; r_soundOrigin: listener origin; receives r_origin under !rp.onlyClientDraw.
+  .text:102318C8                 mov     r_playerViewportAngles+8, esi
+  .text:102318CE                 mov     r_playerViewportAngles+4, esi
+  .text:102318D4                 ; r_playerViewportAngles: listener orientation; receives rp.viewangles under !rp.onlyClientDraw.
+  .text:102318D4                 mov     r_playerViewportAngles, esi; r_playerViewportAngles: listener orientation; receives rp.viewangles under !rp.onlyClientDraw.
+  .text:102318DA                 cmp     dword_1124BF14, esi
+  .text:102318E0                 jnz     loc_1023214A
+  .text:102318E6                 ; cls_state: address of cls.state, the ca_active rendering gate; not a separate ELF object.
+  .text:102318E6                 cmp     cls.state, 5; cls_state: address of cls.state, the ca_active rendering gate; not a separate ELF object.
+  .text:102318ED                 jnz     loc_1023214A
+  .text:102318F3                 ; cls_signon: address of cls.signon, the SIGNONS rendering gate; not a separate ELF object.
+  .text:102318F3                 cmp     dword_1140DA6C, 2; cls_signon: address of cls.signon, the SIGNONS rendering gate; not a separate ELF object.
+  .text:102318FA                 jnz     loc_1023214A
+  .text:10231900                 ; index
+  .text:10231900                 push    index; index
+  .text:10231906                 call    CL_GetModelByIndex
+  .text:1023190B                 mov     dword_113FD7F4, eax
+  .text:10231910                 mov     eax, index
+  .text:10231915                 mov     dword_113FCF38, eax
+  .text:1023191A                 mov     eax, dword_113F540C
+  .text:1023191F                 inc     eax
+  .text:10231920                 mov     dword_113FCF40, esi
+  .text:10231926                 ; count
+  .text:10231926                 push    0E8h; count
+  .text:1023192B                 mov     dword_113FCC60, eax
+  .text:10231930                 lea     eax, [ebp+dest]
+  .text:10231936                 ; fill
+  .text:10231936                 push    esi; fill
+  .text:10231937                 ; dest
+  .text:10231937                 push    eax; dest
+  .text:10231938                 mov     dword_113FCF44, esi
+  .text:1023193E                 call    Q_memset
+  .text:10231943                 movups  xmm0, xmmword_10DC6390
+  .text:1023194A                 xor     eax, eax
+  .text:1023194C                 add     esp, 10h
+  .text:1023194F                 cmp     cl_intermission, eax
+  .text:10231955                 movups  [ebp+dest], xmm0
+  .text:1023195C                 setnz   al
+  .text:1023195F                 movss   xmm0, dword_10DC63A0
+  .text:10231967                 movss   [ebp+var_DC], xmm0
+  .text:1023196F                 movss   xmm0, dword_10DC63A4
+  .text:10231977                 movss   [ebp+var_D8], xmm0
+  .text:1023197F                 movss   xmm0, dword_1063EBB0
+  .text:10231987                 movss   [ebp+var_D4], xmm0
+  .text:1023198F                 movss   xmm0, dword_1063EBB4
+  .text:10231997                 movss   [ebp+var_D0], xmm0
+  .text:1023199F                 movss   xmm0, dword_1063EBB8
+  .text:102319A7                 movss   [ebp+var_CC], xmm0
+  .text:102319AF                 movss   xmm0, dword_1063EBBC
+  .text:102319B7                 movss   [ebp+var_C8], xmm0
+  .text:102319BF                 movss   xmm0, dword_1063EBC0
+  .text:102319C7                 movss   [ebp+var_C4], xmm0
+  .text:102319CF                 movss   xmm0, dword_1063EBC4
+  .text:102319D7                 movss   [ebp+var_C0], xmm0
+  .text:102319DF                 movss   xmm0, dword_1063EBC8
+  .text:102319E7                 movss   [ebp+var_BC], xmm0
+  .text:102319EF                 movss   xmm0, dword_1063EBCC
+  .text:102319F7                 movss   [ebp+var_B8], xmm0
+  .text:102319FF                 movss   xmm0, dword_1063EBD0
+  .text:10231A07                 movss   [ebp+var_B4], xmm0
+  .text:10231A0F                 movsd   xmm0, dbl_11282EF8
+  .text:10231A17                 cvtpd2ps xmm0, xmm0
+  .text:10231A1B                 mov     [ebp+var_A8], eax
+  .text:10231A21                 xor     eax, eax
+  .text:10231A23                 cmp     dword_11282EC0, eax
+  .text:10231A29                 setnz   al
+  .text:10231A2C                 mov     [ebp+var_A4], eax
+  .text:10231A32                 xor     eax, eax
+  .text:10231A34                 cmp     dword_1140E9F4, eax
+  .text:10231A3A                 movss   [ebp+var_AC], xmm0
+  .text:10231A42                 movsd   xmm0, qword_11249EA8
+  .text:10231A4A                 setnz   al
+  .text:10231A4D                 cvtpd2ps xmm0, xmm0
+  .text:10231A51                 mov     [ebp+var_A0], eax
+  .text:10231A57                 xor     eax, eax
+  .text:10231A59                 cmp     dword_11282EC4, 0FFFFFFFFh
+  .text:10231A60                 setnz   al
+  .text:10231A63                 mov     [ebp+var_9C], eax
+  .text:10231A69                 mov     eax, dword_11282ECC
+  .text:10231A6E                 movss   [ebp+var_B0], xmm0
+  .text:10231A76                 movss   xmm0, dword_11282B74
+  .text:10231A7E                 movss   [ebp+var_94], xmm0
+  .text:10231A86                 movss   xmm0, dword_11282B78
+  .text:10231A8E                 movss   [ebp+var_90], xmm0
+  .text:10231A96                 movss   xmm0, dword_11282B7C
+  .text:10231A9E                 movss   [ebp+var_8C], xmm0
+  .text:10231AA6                 movss   xmm0, dword_11282B68
+  .text:10231AAE                 movss   [ebp+var_88], xmm0
+  .text:10231AB6                 movss   xmm0, dword_11282B6C
+  .text:10231ABE                 movss   [ebp+var_84], xmm0
+  .text:10231AC6                 movss   xmm0, dword_11282B70
+  .text:10231ACE                 movss   [ebp+var_80], xmm0
+  .text:10231AD3                 movss   xmm0, dword_11282E9C
+  .text:10231ADB                 movss   [ebp+var_7C], xmm0
+  .text:10231AE0                 movss   xmm0, dword_11282EA0
+  .text:10231AE8                 movss   [ebp+var_78], xmm0
+  .text:10231AED                 movss   xmm0, dword_11282EA4
+  .text:10231AF5                 mov     [ebp+var_98], eax
+  .text:10231AFB                 mov     eax, dword_11282A8C
+  .text:10231B00                 movss   [ebp+var_74], xmm0
+  .text:10231B05                 movss   xmm0, dword_11282E98
+  .text:10231B0D                 movss   [ebp+var_70], xmm0
+  .text:10231B12                 movss   xmm0, dword_11282B44
+  .text:10231B1A                 movss   [ebp+var_6C], xmm0
+  .text:10231B1F                 movss   xmm0, dword_11282B48
+  .text:10231B27                 movss   [ebp+var_68], xmm0
+  .text:10231B2C                 movss   xmm0, dword_11282B4C
+  .text:10231B34                 movss   [ebp+var_64], xmm0
+  .text:10231B39                 movss   xmm0, dword_11282B5C
+  .text:10231B41                 mov     [ebp+var_60], eax
+  .text:10231B44                 mov     eax, nMaxClients
+  .text:10231B49                 movss   [ebp+var_5C], xmm0
+  .text:10231B4E                 movss   xmm0, dword_11282B60
+  .text:10231B56                 mov     [ebp+var_40], eax
+  .text:10231B59                 mov     eax, cl_viewentity
+  .text:10231B5E                 movss   [ebp+var_58], xmm0
+  .text:10231B63                 movss   xmm0, dword_11282B64
+  .text:10231B6B                 mov     [ebp+var_3C], eax
+  .text:10231B6E                 mov     eax, dword_113F540C
+  .text:10231B73                 movss   [ebp+var_54], xmm0
+  .text:10231B78                 movss   xmm0, dword_10323010
+  .text:10231B80                 mov     [ebp+var_38], eax
+  .text:10231B83                 mov     eax, cl_max_edicts
+  .text:10231B88                 movss   [ebp+var_50], xmm0
+  .text:10231B8D                 movss   xmm0, dword_11282B50
+  .text:10231B95                 mov     [ebp+var_34], eax
+  .text:10231B98                 mov     eax, dword_1140E6C4
+  .text:10231B9D                 mov     [ebp+var_30], eax
+  .text:10231BA0                 mov     eax, dword_11282ED8
+  .text:10231BA5                 movss   [ebp+var_4C], xmm0
+  .text:10231BAA                 movss   xmm0, dword_11282B54
+  .text:10231BB2                 mov     [ebp+var_28], eax
+  .text:10231BB5                 mov     eax, dword ptr qword_109B3CFC
+  .text:10231BBA                 movss   [ebp+var_48], xmm0
+  .text:10231BBF                 movss   xmm0, dword_11282B58
+  .text:10231BC7                 mov     dword ptr [ebp+var_14], eax
+  .text:10231BCA                 mov     eax, dword ptr qword_109B3CFC+4
+  .text:10231BCF                 movss   [ebp+var_44], xmm0
+  .text:10231BD4                 mov     [ebp+var_24], offset xmmword_11282B10
+  .text:10231BDB                 mov     [ebp+var_20], offset dword_11224720
+  .text:10231BE2                 mov     [ebp+var_2C], 1
+  .text:10231BE9                 mov     dword ptr [ebp+var_1C], esi
+  .text:10231BEC                 mov     dword ptr [ebp+var_1C+4], esi
+  .text:10231BEF                 mov     dword ptr [ebp+var_14+4], eax
+  .text:10231BF2                 mov     [ebp+var_C], esi
+  .text:10231BF5                 mov     [ebp+var_8], esi
+  .text:10231BF8                 nop     dword ptr [eax+eax+00000000h]
+  .text:10231C00                 lea     eax, [ebp+dest]
+  .text:10231C06                 push    eax
+  .text:10231C07                 call    ___castguard_check_failure_os_handled_wrapper
+  .text:10231C0C                 add     esp, 4
+  .text:10231C0F                 test    esi, esi
+  .text:10231C11                 jnz     loc_10231CE3
+  .text:10231C17                 cmp     dword_1140E6C4, esi
+  .text:10231C1D                 jnz     short loc_10231C45
+  .text:10231C1F                 push    index
+  .text:10231C25                 lea     eax, [ebp+dest]
+  .text:10231C2B                 push    offset unk_113FD7A8
+  .text:10231C30                 push    eax
+  .text:10231C31                 call    sub_1019B9E0
+  .text:10231C36                 add     esp, 0Ch
+  .text:10231C39                 cmp     dword_1140E6C4, esi
+  .text:10231C3F                 jz      loc_10231CE3
+  .text:10231C45                 cmp     dword_1140E9F4, 0
+  .text:10231C4C                 jnz     loc_10231CE3
+  .text:10231C52                 push    offset index
+  .text:10231C57                 lea     eax, [ebp+dest]
+  .text:10231C5D                 push    offset unk_113FD7A8
+  .text:10231C62                 push    eax
+  .text:10231C63                 call    sub_10198E90
+  .text:10231C68                 movss   xmm3, dword ptr [ebp+dest+0Ch]
+  .text:10231C70                 add     esp, 0Ch
+  .text:10231C73                 movss   xmm1, [ebp+var_DC]
+  .text:10231C7B                 movss   xmm2, [ebp+var_D8]
+  .text:10231C83                 cvtps2pd xmm0, xmm3
+  .text:10231C86                 mov     [ebp+var_C], 0
+  .text:10231C8D                 movss   dword_113FD7B8, xmm1
+  .text:10231C95                 mulsd   xmm0, ds:qword_10306860
+  .text:10231C9D                 movss   dword_113FD7BC, xmm2
+  .text:10231CA5                 movss   dword_113FCF30, xmm1
+  .text:10231CAD                 movss   dword_113FCF34, xmm2
+  .text:10231CB5                 cvtpd2ps xmm0, xmm0
+  .text:10231CB9                 movss   dword_113FD78C, xmm1
+  .text:10231CC1                 movss   dword_113FD7B4, xmm0
+  .text:10231CC9                 movss   dword_113FCF2C, xmm0
+  .text:10231CD1                 movss   dword_113FD788, xmm0
+  .text:10231CD9                 movss   dword_113FD790, xmm2
+  .text:10231CE1                 jmp     short loc_10231CFB
+  .text:10231CE3                 movss   xmm2, [ebp+var_D8]
+  .text:10231CEB                 movss   xmm1, [ebp+var_DC]
+  .text:10231CF3                 movss   xmm3, dword ptr [ebp+dest+0Ch]
+  .text:10231CFB                 cmp     [ebp+var_A8], 0
+  .text:10231D02                 movss   xmm0, dword ptr [ebp+dest]
+  .text:10231D0A                 movss   dword ptr xmmword_10DC6390, xmm0
+  .text:10231D12                 movss   xmm0, dword ptr [ebp+dest+4]
+  .text:10231D1A                 movss   dword ptr xmmword_10DC6390+4, xmm0
+  .text:10231D22                 movss   xmm0, dword ptr [ebp+dest+8]
+  .text:10231D2A                 movss   dword ptr xmmword_10DC6390+8, xmm0
+  .text:10231D32                 movss   xmm0, [ebp+var_D4]
+  .text:10231D3A                 movss   dword_1063EBB0, xmm0
+  .text:10231D42                 movss   xmm0, [ebp+var_D0]
+  .text:10231D4A                 movss   dword_1063EBB4, xmm0
+  .text:10231D52                 movss   xmm0, [ebp+var_CC]
+  .text:10231D5A                 movss   dword_1063EBB8, xmm0
+  .text:10231D62                 movss   xmm0, [ebp+var_C8]
+  .text:10231D6A                 movss   dword_1063EBBC, xmm0
+  .text:10231D72                 movss   xmm0, [ebp+var_C4]
+  .text:10231D7A                 movss   dword_1063EBC0, xmm0
+  .text:10231D82                 movss   xmm0, [ebp+var_C0]
+  .text:10231D8A                 movss   dword_1063EBC4, xmm0
+  .text:10231D92                 movss   xmm0, [ebp+var_BC]
+  .text:10231D9A                 movss   dword_1063EBC8, xmm0
+  .text:10231DA2                 movss   xmm0, [ebp+var_B8]
+  .text:10231DAA                 movss   dword_1063EBCC, xmm0
+  .text:10231DB2                 movss   xmm0, [ebp+var_B4]
+  .text:10231DBA                 movss   dword_1063EBD0, xmm0
+  .text:10231DC2                 movss   xmm0, [ebp+var_94]
+  .text:10231DCA                 movss   dword_11282B74, xmm0
+  .text:10231DD2                 movss   xmm0, [ebp+var_90]
+  .text:10231DDA                 movss   dword_11282B78, xmm0
+  .text:10231DE2                 movss   xmm0, [ebp+var_8C]
+  .text:10231DEA                 movss   dword_11282B7C, xmm0
+  .text:10231DF2                 movss   xmm0, [ebp+var_88]
+  .text:10231DFA                 movss   dword_11282B68, xmm0
+  .text:10231E02                 movss   xmm0, [ebp+var_84]
+  .text:10231E0A                 movss   dword_11282B6C, xmm0
+  .text:10231E12                 movss   xmm0, [ebp+var_80]
+  .text:10231E17                 movss   dword_11282B70, xmm0
+  .text:10231E1F                 movss   xmm0, [ebp+var_6C]
+  .text:10231E24                 movss   dword_11282B44, xmm0
+  .text:10231E2C                 movss   xmm0, [ebp+var_68]
+  .text:10231E31                 mov     eax, dword ptr [ebp+var_1C]
+  .text:10231E34                 movss   dword_11282B48, xmm0
+  .text:10231E3C                 movss   xmm0, [ebp+var_64]
+  .text:10231E41                 movss   dword_11282B4C, xmm0
+  .text:10231E49                 movss   xmm0, [ebp+var_5C]
+  .text:10231E4E                 movss   dword_11282B5C, xmm0
+  .text:10231E56                 movss   xmm0, [ebp+var_58]
+  .text:10231E5B                 movss   dword_11282B60, xmm0
+  .text:10231E63                 movss   xmm0, [ebp+var_54]
+  .text:10231E68                 movss   dword_11282B64, xmm0
+  .text:10231E70                 movss   xmm0, [ebp+var_4C]
+  .text:10231E75                 movss   dword_11282B50, xmm0
+  .text:10231E7D                 movss   xmm0, [ebp+var_48]
+  .text:10231E82                 movss   dword_11282B54, xmm0
+  .text:10231E8A                 movss   xmm0, [ebp+var_44]
+  .text:10231E8F                 movss   dword_11282B58, xmm0
+  .text:10231E97                 movss   xmm0, [ebp+var_7C]
+  .text:10231E9C                 mov     dword ptr xmmword_10DC6320, eax
+  .text:10231EA1                 mov     eax, dword ptr [ebp+var_1C+4]
+  .text:10231EA4                 mov     dword ptr xmmword_10DC6320+4, eax
+  .text:10231EA9                 mov     eax, dword ptr [ebp+var_14]
+  .text:10231EAC                 movss   dword_11282E9C, xmm0
+  .text:10231EB4                 movss   xmm0, [ebp+var_78]
+  .text:10231EB9                 mov     dword ptr xmmword_10DC6320+8, eax
+  .text:10231EBE                 mov     eax, dword ptr [ebp+var_14+4]
+  .text:10231EC1                 movss   dword_11282EA0, xmm0
+  .text:10231EC9                 movss   xmm0, [ebp+var_74]
+  .text:10231ECE                 mov     dword ptr xmmword_10DC6320+0Ch, eax
+  .text:10231ED3                 mov     eax, [ebp+var_8]
+  .text:10231ED6                 movss   dword ptr xmmword_10DC6390+0Ch, xmm3
+  .text:10231EDE                 movss   dword_10DC63A0, xmm1
+  .text:10231EE6                 movss   dword_10DC63A4, xmm2
+  .text:10231EEE                 movss   dword_11282EA4, xmm0
+  .text:10231EF6                 mov     clientOnly, eax
+  .text:10231EFB                 jz      short loc_10231F09
+  .text:10231EFD                 mov     dword_113FD7F4, 0
+  .text:10231F07                 jmp     short loc_10231F2B
+  .text:10231F09                 cmp     [ebp+var_A4], 0
+  .text:10231F10                 jnz     short loc_10231F2B
+  .text:10231F12                 movss   xmm0, dword_10319E18
+  .text:10231F1A                 xorps   xmm1, xmm1
+  .text:10231F1D                 ucomiss xmm0, xmm1
+  .text:10231F20                 lahf
+  .text:10231F21                 test    ah, 44h
+  .text:10231F24                 jnp     short loc_10231F2B
+  .text:10231F26                 call    sub_10197B90
+  .text:10231F2B                 call    sub_10241CD0
+  .text:10231F30                 test    esi, esi
+  .text:10231F32                 jnz     short loc_10231F5F
+  .text:10231F34                 cmp     clientOnly, esi
+  .text:10231F3A                 jz      short loc_10231F5F
+  .text:10231F3C                 sub     esp, 10h
+  .text:10231F3F                 mov     [esp+100h+var_F4], esi
+  .text:10231F43                 mov     [esp+100h+var_F8], esi
+  .text:10231F47                 mov     [esp+100h+var_FC], esi
+  .text:10231F4B                 mov     [esp+100h+var_100], esi
+  .text:10231F4E                 call    dword_109B37F4
+  .text:10231F54                 push    4000h
+  .text:10231F59                 call    dword_109B37FC
+  .text:10231F5F                 movss   xmm2, dword_1031E1A8
+  .text:10231F67                 xorps   xmm0, xmm0
+  .text:10231F6A                 ucomiss xmm2, xmm0
+  .text:10231F6D                 lahf
+  .text:10231F6E                 test    ah, 44h
+  .text:10231F71                 jnp     loc_102320EA
+  .text:10231F77                 movss   xmm0, dword_109B3D04
+  .text:10231F7F                 cvtps2pd xmm0, xmm0
+  .text:10231F82                 shl     dword_109B3CF8, 1
+  .text:10231F88                 movss   xmm1, [ebp+var_C8]
+  .text:10231F90                 mulsd   xmm0, ds:qword_10306550
+  .text:10231F98                 mulss   xmm1, xmm2
+  .text:10231F9C                 cvtpd2ps xmm0, xmm0
+  .text:10231FA0                 movss   dword_109B3D04, xmm0
+  .text:10231FA8                 movss   xmm0, dword_10DC63A0
+  .text:10231FB0                 subss   xmm0, dword_1031E0F4
+  .text:10231FB8                 movss   dword_10DC63A0, xmm0
+  .text:10231FC0                 movss   xmm0, dword ptr xmmword_10DC6390
+  .text:10231FC8                 subss   xmm0, xmm1
+  .text:10231FCC                 movss   xmm1, [ebp+var_C4]
+  .text:10231FD4                 mulss   xmm1, xmm2
+  .text:10231FD8                 movss   dword ptr xmmword_10DC6390, xmm0
+  .text:10231FE0                 movss   xmm0, dword ptr xmmword_10DC6390+4
+  .text:10231FE8                 subss   xmm0, xmm1
+  .text:10231FEC                 movss   xmm1, [ebp+var_C0]
+  .text:10231FF4                 mulss   xmm1, xmm2
+  .text:10231FF8                 movss   dword ptr xmmword_10DC6390+4, xmm0
+  .text:10232000                 movss   xmm0, dword ptr xmmword_10DC6390+8
+  .text:10232008                 subss   xmm0, xmm1
+  .text:1023200C                 movss   dword ptr xmmword_10DC6390+8, xmm0
+  .text:10232014                 call    R_RenderView
+  .text:10232019                 mov     eax, dword_109B3CF8
+  .text:1023201E                 shr     eax, 1
+  .text:10232020                 add     dword_109B3CE0, eax
+  .text:10232026                 call    sub_10241CD0
+  .text:1023202B                 movss   xmm0, dword_1031E0F4
+  .text:10232033                 mulss   xmm0, ds:dword_10306610
+  .text:1023203B                 movss   xmm1, dword_1031E1A8
+  .text:10232043                 addss   xmm0, dword_10DC63A0
+  .text:1023204B                 movss   dword_10DC63A0, xmm0
+  .text:10232053                 movss   xmm0, [ebp+var_C8]
+  .text:1023205B                 addss   xmm0, xmm0
+  .text:1023205F                 mulss   xmm0, xmm1
+  .text:10232063                 addss   xmm0, dword ptr xmmword_10DC6390
+  .text:1023206B                 movss   dword ptr xmmword_10DC6390, xmm0
+  .text:10232073                 movss   xmm0, [ebp+var_C4]
+  .text:1023207B                 addss   xmm0, xmm0
+  .text:1023207F                 mulss   xmm0, xmm1
+  .text:10232083                 addss   xmm0, dword ptr xmmword_10DC6390+4
+  .text:1023208B                 movss   dword ptr xmmword_10DC6390+4, xmm0
+  .text:10232093                 movss   xmm0, [ebp+var_C0]
+  .text:1023209B                 addss   xmm0, xmm0
+  .text:1023209F                 mulss   xmm0, xmm1
+  .text:102320A3                 addss   xmm0, dword ptr xmmword_10DC6390+8
+  .text:102320AB                 movss   dword ptr xmmword_10DC6390+8, xmm0
+  .text:102320B3                 call    R_RenderView
+  .text:102320B8                 movss   xmm0, dword_109B3D04
+  .text:102320C0                 mov     eax, dword_109B3CF8
+  .text:102320C5                 mulss   xmm0, ds:dword_10306610
+  .text:102320CD                 shr     eax, 1
+  .text:102320CF                 sub     dword_109B3CE0, eax
+  .text:102320D5                 shl     dword ptr xmmword_10DC6320+0Ch, 1
+  .text:102320DB                 mov     dword_109B3CF8, eax
+  .text:102320E0                 movss   dword_109B3D04, xmm0
+  .text:102320E8                 jmp     short loc_102320EF
+  .text:102320EA                 call    R_RenderView
+  .text:102320EF                 cmp     [ebp+var_8], 0
+  .text:102320F3                 jnz     short loc_1023213F
+  .text:102320F5                 movq    xmm0, qword ptr r_origin
+  .text:102320FD                 mov     eax, r_origin+8
+  .text:10232102                 ; r_soundOrigin: listener origin; receives r_origin under !rp.onlyClientDraw.
+  .text:10232102                 movq    qword ptr r_soundOrigin, xmm0; r_soundOrigin: listener origin; receives r_origin under !rp.onlyClientDraw.
+  .text:1023210A                 movss   xmm0, dword ptr [ebp+dest+0Ch]
+  .text:10232112                 ; r_playerViewportAngles: listener orientation; receives rp.viewangles under !rp.onlyClientDraw.
+  .text:10232112                 movss   r_playerViewportAngles, xmm0; r_playerViewportAngles: listener orientation; receives rp.viewangles under !rp.onlyClientDraw.
+  .text:1023211A                 movss   xmm0, [ebp+var_DC]
+  .text:10232122                 movss   r_playerViewportAngles+4, xmm0
+  .text:1023212A                 movss   xmm0, [ebp+var_D8]
+  .text:10232132                 mov     r_soundOrigin+8, eax
+  .text:10232137                 movss   r_playerViewportAngles+8, xmm0
+  .text:1023213F                 inc     esi
+  .text:10232140                 cmp     [ebp+var_C], 0
+  .text:10232144                 jnz     loc_10231C00
+  .text:1023214A                 mov     ecx, [ebp+var_4]
+  .text:1023214D                 ; StackCookie
+  .text:1023214D                 xor     ecx, ebp; StackCookie
+  .text:1023214F                 pop     esi
+  .text:10232150                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10232155                 mov     esp, ebp
+  .text:10232157                 pop     ebp
+  .text:10232158                 retn
+procedure: |-
+  // Only element [0] accesses identify the requested vector base. Exclude [1], [2], +4 and +8 accesses from found_gv.
+  // Source role: engine/view.c V_RenderView. Current binary is authoritative: ref-params helpers may be inlined; SvEngine omits con_forcedup and uses R_RenderView(viewnum). cls_state / cls_signon denote member addresses, never GOT slots.
+  void __cdecl V_RenderView()
+  {
+    int v0; // esi
+    float v1; // xmm0_4
+    float v2; // xmm0_4
+    int v3; // xmm3_4
+    int v4; // xmm1_4
+    int v5; // xmm2_4
+    int v6; // xmm0_4
+    __int128 dest; // [esp+14h] [ebp-ECh] BYREF
+    int v8; // [esp+24h] [ebp-DCh]
+    int v9; // [esp+28h] [ebp-D8h]
+    int v10; // [esp+2Ch] [ebp-D4h]
+    int v11; // [esp+30h] [ebp-D0h]
+    int v12; // [esp+34h] [ebp-CCh]
+    int v13; // [esp+38h] [ebp-C8h]
+    int v14; // [esp+3Ch] [ebp-C4h]
+    int v15; // [esp+40h] [ebp-C0h]
+    int v16; // [esp+44h] [ebp-BCh]
+    int v17; // [esp+48h] [ebp-B8h]
+    int v18; // [esp+4Ch] [ebp-B4h]
+    float v19; // [esp+50h] [ebp-B0h]
+    float v20; // [esp+54h] [ebp-ACh]
+    BOOL v21; // [esp+58h] [ebp-A8h]
+    BOOL v22; // [esp+5Ch] [ebp-A4h]
+    BOOL v23; // [esp+60h] [ebp-A0h]
+    BOOL v24; // [esp+64h] [ebp-9Ch]
+    int v25; // [esp+68h] [ebp-98h]
+    int v26; // [esp+6Ch] [ebp-94h]
+    int v27; // [esp+70h] [ebp-90h]
+    int v28; // [esp+74h] [ebp-8Ch]
+    int v29; // [esp+78h] [ebp-88h]
+    int v30; // [esp+7Ch] [ebp-84h]
+    int v31; // [esp+80h] [ebp-80h]
+    int v32; // [esp+84h] [ebp-7Ch]
+    int v33; // [esp+88h] [ebp-78h]
+    int v34; // [esp+8Ch] [ebp-74h]
+    int v35; // [esp+90h] [ebp-70h]
+    int v36; // [esp+94h] [ebp-6Ch]
+    int v37; // [esp+98h] [ebp-68h]
+    int v38; // [esp+9Ch] [ebp-64h]
+    int v39; // [esp+A0h] [ebp-60h]
+    int v40; // [esp+A4h] [ebp-5Ch]
+    int v41; // [esp+A8h] [ebp-58h]
+    int v42; // [esp+ACh] [ebp-54h]
+    int v43; // [esp+B0h] [ebp-50h]
+    int v44; // [esp+B4h] [ebp-4Ch]
+    int v45; // [esp+B8h] [ebp-48h]
+    int v46; // [esp+BCh] [ebp-44h]
+    int v47; // [esp+C0h] [ebp-40h]
+    int v48; // [esp+C4h] [ebp-3Ch]
+    int v49; // [esp+C8h] [ebp-38h]
+    int v50; // [esp+CCh] [ebp-34h]
+    int v51; // [esp+D0h] [ebp-30h]
+    int v52; // [esp+D4h] [ebp-2Ch]
+    int v53; // [esp+D8h] [ebp-28h]
+    __int128 *v54; // [esp+DCh] [ebp-24h]
+    int *v55; // [esp+E0h] [ebp-20h]
+    __int128 v56; // [esp+E4h] [ebp-1Ch]
+    int v57; // [esp+F4h] [ebp-Ch]
+    int v58; // [esp+F8h] [ebp-8h]
+
+    v0 = 0;
+    r_soundOrigin[2] = 0.0;
+    r_soundOrigin[1] = 0.0;
+    r_soundOrigin[0] = 0.0;
+    r_playerViewportAngles[2] = 0.0;
+    r_playerViewportAngles[1] = 0.0;
+    r_playerViewportAngles[0] = 0.0;
+    // cls_state is &cls.state; cls_signon is the int at 0x1140DA6C.
+    // The pointer cast on the signon expression is an IDB type artifact: CMP reads the int directly.
+    if ( !dword_1124BF14 && cls.state == ca_active && *(_DWORD *)dword_1140DA6C == 2 )
+    {
+      dword_113FD7F4 = (int)CL_GetModelByIndex(index);
+      dword_113FCF38 = index;
+      dword_113FCF40 = 0;
+      dword_113FCC60 = dword_113F540C + 1;
+      dword_113FCF44 = 0;
+      Q_memset(&dest, 0, 232);
+      dest = xmmword_10DC6390;
+      v8 = dword_10DC63A0;
+      v9 = dword_10DC63A4;
+      v10 = dword_1063EBB0;
+      v11 = dword_1063EBB4;
+      v12 = dword_1063EBB8;
+      v13 = dword_1063EBBC;
+      v14 = dword_1063EBC0;
+      v15 = dword_1063EBC4;
+      v16 = dword_1063EBC8;
+      v17 = dword_1063EBCC;
+      v18 = dword_1063EBD0;
+      v1 = dbl_11282EF8;
+      v21 = cl_intermission != 0;
+      v22 = dword_11282EC0 != 0;
+      v20 = v1;
+      v2 = *(double *)&qword_11249EA8;
+      v23 = dword_1140E9F4 != 0;
+      v24 = dword_11282EC4 != -1;
+      v19 = v2;
+      v26 = dword_11282B74;
+      v27 = dword_11282B78;
+      v28 = dword_11282B7C;
+      v29 = dword_11282B68;
+      v30 = dword_11282B6C;
+      v31 = dword_11282B70;
+      v32 = dword_11282E9C;
+      v33 = dword_11282EA0;
+      v25 = dword_11282ECC;
+      v34 = dword_11282EA4;
+      v35 = dword_11282E98;
+      v36 = dword_11282B44;
+      v37 = dword_11282B48;
+      v38 = dword_11282B4C;
+      v39 = dword_11282A8C;
+      v40 = dword_11282B5C;
+      v47 = *(_DWORD *)nMaxClients;
+      v41 = dword_11282B60;
+      v48 = cl_viewentity;
+      v42 = dword_11282B64;
+      v49 = dword_113F540C;
+      v43 = dword_10323010;
+      v50 = cl_max_edicts;
+      v51 = dword_1140E6C4;
+      v44 = dword_11282B50;
+      v53 = dword_11282ED8;
+      v45 = dword_11282B54;
+      *((_QWORD *)&v56 + 1) = qword_109B3CFC;
+      v46 = dword_11282B58;
+      v54 = &xmmword_11282B10;
+      v55 = &dword_11224720;
+      v52 = 1;
+      *(_QWORD *)&v56 = 0;
+      v57 = 0;
+      v58 = 0;
+      do
+      {
+        __castguard_check_failure_os_handled_wrapper(&dest);
+        if ( v0 || !dword_1140E6C4 && (sub_1019B9E0(&dest, &unk_113FD7A8, index), !dword_1140E6C4) || dword_1140E9F4 )
+        {
+          v5 = v9;
+          v4 = v8;
+          v3 = HIDWORD(dest);
+        }
+        else
+        {
+          sub_10198E90(&dest, &unk_113FD7A8, &index);
+          v3 = HIDWORD(dest);
+          v4 = v8;
+          v5 = v9;
+          v57 = 0;
+          dword_113FD7B8 = v8;
+          dword_113FD7BC = v9;
+          dword_113FCF30 = v8;
+          dword_113FCF34 = v9;
+          dword_113FD78C = v8;
+          *(float *)&dword_113FD7B4 = *((float *)&dest + 3) * -1.0;
+          dword_113FCF2C = dword_113FD7B4;
+          dword_113FD788 = dword_113FD7B4;
+          dword_113FD790 = v9;
+        }
+        *(_QWORD *)&xmmword_10DC6390 = dest;
+        DWORD2(xmmword_10DC6390) = DWORD2(dest);
+        dword_1063EBB0 = v10;
+        dword_1063EBB4 = v11;
+        dword_1063EBB8 = v12;
+        dword_1063EBBC = v13;
+        dword_1063EBC0 = v14;
+        dword_1063EBC4 = v15;
+        dword_1063EBC8 = v16;
+        dword_1063EBCC = v17;
+        dword_1063EBD0 = v18;
+        dword_11282B74 = v26;
+        dword_11282B78 = v27;
+        dword_11282B7C = v28;
+        dword_11282B68 = v29;
+        dword_11282B6C = v30;
+        dword_11282B70 = v31;
+        dword_11282B44 = v36;
+        dword_11282B48 = v37;
+        dword_11282B4C = v38;
+        dword_11282B5C = v40;
+        dword_11282B60 = v41;
+        dword_11282B64 = v42;
+        dword_11282B50 = v44;
+        dword_11282B54 = v45;
+        dword_11282B58 = v46;
+        xmmword_10DC6320 = v56;
+        dword_11282E9C = v32;
+        dword_11282EA0 = v33;
+        HIDWORD(xmmword_10DC6390) = v3;
+        dword_10DC63A0 = v4;
+        dword_10DC63A4 = v5;
+        dword_11282EA4 = v34;
+        clientOnly = v58;
+        if ( v21 )
+        {
+          dword_113FD7F4 = 0;
+        }
+        else if ( !v22 && *(float *)&dword_10319E18 != 0.0 )
+        {
+          sub_10197B90();
+        }
+        sub_10241CD0();
+        if ( !v0 && clientOnly )
+        {
+          dword_109B37F4(0, 0, 0, 0);
+          dword_109B37FC(0x4000);
+        }
+        if ( *(float *)&dword_1031E1A8 == 0.0 )
+        {
+          R_RenderView();
+        }
+        else
+        {
+          dword_109B3CF8 *= 2;
+          *(float *)&v6 = *(float *)&dword_109B3D04 * 0.5;
+          dword_109B3D04 = v6;
+          *(float *)&dword_10DC63A0 = *(float *)&dword_10DC63A0 - *(float *)&dword_1031E0F4;
+          *(float *)&xmmword_10DC6390 = *(float *)&xmmword_10DC6390 - (float)(*(float *)&v13 * *(float *)&dword_1031E1A8);
+          *((float *)&xmmword_10DC6390 + 1) = *((float *)&xmmword_10DC6390 + 1)
+                                            - (float)(*(float *)&v14 * *(float *)&dword_1031E1A8);
+          *((float *)&xmmword_10DC6390 + 2) = *((float *)&xmmword_10DC6390 + 2)
+                                            - (float)(*(float *)&v15 * *(float *)&dword_1031E1A8);
+          R_RenderView();
+          dword_109B3CE0 += (unsigned int)dword_109B3CF8 >> 1;
+          sub_10241CD0();
+          *(float *)&dword_10DC63A0 = (float)(*(float *)&dword_1031E0F4 * 2.0) + *(float *)&dword_10DC63A0;
+          *(float *)&xmmword_10DC6390 = (float)((float)(*(float *)&v13 + *(float *)&v13) * *(float *)&dword_1031E1A8)
+                                      + *(float *)&xmmword_10DC6390;
+          *((float *)&xmmword_10DC6390 + 1) = (float)((float)(*(float *)&v14 + *(float *)&v14) * *(float *)&dword_1031E1A8)
+                                            + *((float *)&xmmword_10DC6390 + 1);
+          *((float *)&xmmword_10DC6390 + 2) = (float)((float)(*(float *)&v15 + *(float *)&v15) * *(float *)&dword_1031E1A8)
+                                            + *((float *)&xmmword_10DC6390 + 2);
+          R_RenderView();
+          dword_109B3CE0 -= (unsigned int)dword_109B3CF8 >> 1;
+          HIDWORD(xmmword_10DC6320) *= 2;
+          dword_109B3CF8 = (unsigned int)dword_109B3CF8 >> 1;
+          *(float *)&dword_109B3D04 = *(float *)&dword_109B3D04 * 2.0;
+        }
+        if ( !v58 )
+        {
+          *(_QWORD *)r_soundOrigin = *(_QWORD *)r_origin;
+          r_playerViewportAngles[0] = *((float *)&dest + 3);
+          LODWORD(r_playerViewportAngles[1]) = v8;
+          r_soundOrigin[2] = r_origin[2];
+          LODWORD(r_playerViewportAngles[2]) = v9;
+        }
+        ++v0;
+      }
+      while ( v57 );
+    }
+  }
