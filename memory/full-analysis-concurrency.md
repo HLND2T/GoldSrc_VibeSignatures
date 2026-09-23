@@ -86,8 +86,7 @@ cgroup is delegated — per-worker limits with reservation-based admission.
 `uv run python -m unittest tests.test_analysis_batch tests.test_analysis_memory tests.test_analysis_planner`
 covers classification/closure/segmentation, the result contract, scheduler gating/barrier/stop-admission/timeout,
 memory parsing/host-headroom, and the locked dynamic-port retry. Real-runner concurrency/memory/cancel/license
-evidence is still required before raising the production Environment concurrency above 1 (see
-`docs/plans/full-analysis-concurrency-migration.md` §15).
+evidence is still required before raising the production Environment concurrency above 1.
 
 ## Selected-node batches (issue #81)
 

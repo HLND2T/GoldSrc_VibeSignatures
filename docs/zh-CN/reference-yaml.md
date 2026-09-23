@@ -45,7 +45,8 @@ structmember 工件通常通过 `offset_sig` 与 `offset_sig_disp` 回放被选�
 两个可选字段都要求存在 `offset_sig`，且 reference kind 仅允许 `displacement` 或 `immediate`。
 
 `found_scalar` 条目仅包含 `scalar_name`、`scalar_value`，数值必须与 finder 独立核验当前二进制得到的
-`expected_value` 一致，不绑定指令地址或签名。消费端直接用数值；详见 [scalar 契约](snapshot-and-gamedata.md)。
+`expected_value` 一致，不绑定指令地址或签名。数值是 uint32 标量而非地址，消费端直接使用，不做 rebasing
+或指针解引用。
 
 ## Canonical reference 游戏版本
 

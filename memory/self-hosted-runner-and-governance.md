@@ -25,7 +25,7 @@ The workflow internals built on top of it live in [[Immutable warm IDB cache gen
 The analyzer uses the GoldSrc-specific `GSVIBE_*` namespace. Precedence is explicit CLI values > environment values >
 program defaults. IDB cache mode is not a CLI option and is not read from the environment: official analysis is
 unconditionally warm. No manually maintained IDA-version variable is required — the kernel version is dynamically
-probed. Key operational variables (details in `docs/en/requirements.md`):
+probed. Key operational variables:
 
 - `GSVIBE_AGENT` / `GSVIBE_AGENT_MODEL` — Agent CLI and model.
 - `GSVIBE_LLM_*` (`MODEL`, `APIKEY`, `BASEURL`, `TEMPERATURE`, `FAKE_AS`, `EFFORT`) — LLM-backed workflows.

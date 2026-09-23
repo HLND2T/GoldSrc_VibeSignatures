@@ -50,18 +50,6 @@ uv run python ida_analyze_bin.py -gamever <GAMEVER> -modules <MODULE> -skill <EX
 - `-process_reporter=console` emits typed `ProcessEvent` JSONL; `redis` is best-effort and writes the `gsvibe:analysis:v1` Redis protocol. `-redis_url` and `-redis_prefix` configure the Redis backend; `-run_id` sets the run identity.
 - `-debug` enables debug output.
 
-### Local IDB cache core
-
-`idb_cache.py` exposes `probe`, `warm`, `publish`, `restore`, `verify`, and `prune`.
-
-Warm production is split across jobs: the reusable `warmup-idb` producer writes the canonical `cache-selection.json`
-and its SHA-256 evidence, and the consumer (`idb_cache_release.py restore` / `idb_cache_workflow.py restore`) verifies
-that selection, restores the exact generations, and then runs the Analyzer with
-`database_policy=restored_strict` and `save_on_success=false`. A miss, corrupt generation, or runtime mismatch fails the
-run; no analysis consumer can fall back to rebuilding. The consumer never re-probes `READY.json`; it restores exactly
-what its own producer published. Local callers must likewise restore a verified exact generation before invoking the
-Analyzer. A `tracked` release is not an analysis consumer: it restores no generation and runs no `warmup-idb` job.
-
 ### Batch analysis with `-allgamever`
 
 `ida_analyze_bin.py -allgamever` batches every game-version tag declared in `configs/config.yaml`. That index is the single authority for batch membership and order; a tag only runs when explicitly listed, and a declared tag whose `configs/<tag>.yaml` is missing is a fatal configuration error rather than a silent skip. Without `configs/config.yaml` the legacy order is used for compatibility: the `download.yaml` manifest declaration order, then remaining `configs/*.yaml` tags in lexical order.

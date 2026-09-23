@@ -25,11 +25,7 @@ uv run ida_analyze_bin.py -allgamever -debug
 - [二进制获取与符号分析](docs/zh-CN/analysis.md)
 - [进度上报、调度与看板](docs/zh-CN/process-monitoring.md)
 - [`LLM_DECOMPILE` reference YAML](docs/zh-CN/reference-yaml.md)
-- [Snapshot、gamedata 与发布](docs/zh-CN/snapshot-and-gamedata.md)
 - [创建符号分析 skill](docs/zh-CN/creating-skills.md)
-- [CI/CD 参考](docs/zh-CN/ci-cd.md)
-- [架构](docs/zh-CN/architecture.md)
-- [Gamedata generator 合约](docs/zh-CN/generator-contract.md)
 
 ## License
 

@@ -34,7 +34,7 @@ Start the API locally:
 uv run uvicorn process_api:app --host 127.0.0.1 --port 8000
 ```
 
-The service exposes `/healthz`, `/readyz`, run list/detail, execution graph, snapshot, task, event-page, and SSE stream routes below `/api/v1`. SSE supports `Last-Event-ID` and emits a reset event when the retained Redis cursor is too old, including when trimming overtakes a live connection; the default live cursor is anchored to a concrete Stream ID before blocking.
+The service exposes `/healthz`, `/readyz`, run list/detail, execution graph, snapshot, task, event-page, and SSE stream routes below `/api/v1`. SSE supports `Last-Event-ID` and asks the client to reset when its cursor is too old.
 
 The service binds to localhost by default and has no built-in authentication. Put external deployments behind an authenticated reverse proxy. Configure browser origins with `GSVIBE_API_CORS_ORIGINS`, tune SSE through `GSVIBE_SSE_BLOCK_MS` and `GSVIBE_SSE_BATCH_SIZE`, and use `/healthz` and `/readyz` for liveness and Redis readiness.
 
@@ -50,4 +50,4 @@ npm run build
 
 GitHub Pages publishes only the static `pages/dist` artifact; it does not host the API/SSE process — the browser connects to the Process API on the machine that runs it. For a public Pages origin that connects to FastAPI on the same browser machine, add the exact origin to `GSVIBE_API_CORS_ORIGINS` and set `GSVIBE_API_ALLOW_PRIVATE_NETWORK=true`.
 
-The `pages-snapshots` branch is append-only and stores every content-addressed `<family-build>.<sha256>.json` snapshot. `npm run verify:gamesymbols` and the deployment job verify exact response bytes and digests.
+The `pages-snapshots` branch is append-only and stores every content-addressed `<family-build>.<sha256>.json` snapshot.

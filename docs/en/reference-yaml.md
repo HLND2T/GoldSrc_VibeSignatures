@@ -38,8 +38,8 @@ Both optional fields require `offset_sig`, and the reference kind is limited to 
 
 `found_scalar` entries contain `scalar_name` and `scalar_value`. Their values must agree with independently
 verified current-binary evidence, supplied as the scalar spec's `expected_value`; no instruction address
-is required. Values are numeric scalars, not addresses. See the scalar contract in
-[Snapshots and gamedata](snapshot-and-gamedata.md).
+is required. Values are uint32 numeric scalars, not addresses, and consumers use them directly without
+rebasing or pointer dereference.
 
 ## Canonical reference game version
 

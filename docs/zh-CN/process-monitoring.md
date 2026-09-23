@@ -36,8 +36,7 @@ uv run uvicorn process_api:app --host 127.0.0.1 --port 8000
 ```
 
 服务在 `/api/v1` 下提供 `/healthz`、`/readyz`、run list/detail、execution graph、snapshot、task、event page 与
-SSE stream。SSE 支持 `Last-Event-ID`，当保留的 Redis 游标过旧（包括连接期间被 trim 越过）时发出 reset event；
-默认 live 游标在阻塞前固定为具体 Stream ID。
+SSE stream。SSE 支持 `Last-Event-ID`，游标过旧时会要求客户端 reset。
 
 服务默认绑定 localhost 且无内置认证。外部部署应放在带认证的反向代理之后。用 `GSVIBE_API_CORS_ORIGINS` 配置
 浏览器 origin，通过 `GSVIBE_SSE_BLOCK_MS` 与 `GSVIBE_SSE_BATCH_SIZE` 调节 SSE，用 `/healthz` 与 `/readyz`
@@ -58,4 +57,3 @@ GitHub Pages 只部署静态 `pages/dist`，不托管 API/SSE 进程——浏览
 `GSVIBE_API_ALLOW_PRIVATE_NETWORK=true`。
 
 `pages-snapshots` 分支只允许追加，存储每个 content-addressed `<family-build>.<sha256>.json` snapshot。
-`npm run verify:gamesymbols` 与部署 job 会校验精确响应字节与 digest。

@@ -44,6 +44,22 @@ protected draft upload/remote verification -> published GitHub Release`.
 The Release manifest and checksums are assets inside that publication boundary. Actions Artifacts are transport, while a
 draft Release is the recoverable staging layer and a published Release is the public immutable truth.
 
+## Workflow inputs and immutable version state
+
+- `release-build.yml` inputs: an immutable `version`; optional `source_sha`, `publish_release` (default `true`),
+  `cleanup_legacy_yaml` (default `false`), and `source_artifact_mode` (`rebuild` default, or `tracked`). A production source
+  must be reachable from the default branch. `publish_release=false` is a non-publishing verification mode and requires the
+  source to equal the dispatch commit; it still runs the full build/verification pipeline, which is how real runner and
+  release-endpoint acceptance is performed.
+- Immutable version state: with no tag/Release, create a tag pointing directly at the source SHA and then a draft Release.
+  A matching tag and draft resume the original build identity, and existing assets must match exact size/hash. A published
+  Release whose assets are exact is an idempotent success; missing or different assets fail. Multiple Releases for one tag,
+  tag mismatch, a Release without a tag, a different draft identity, or an overwrite request all fail closed. Changed content
+  requires a new version — `--clobber`, tag moves, and content-style republish are forbidden. Keep mode and source unchanged
+  when resuming a draft; switching modes must not overwrite existing assets.
+- Rebuild vs tracked: a rebuild still requires the configured runner, warm-IDB infrastructure, and the notes endpoint;
+  tracked acceptance requires the runner and the notes endpoint only.
+
 ## Binary-only accepted cache
 
 `PERSISTED_WORKSPACE/bin/<gamever>` is a rebuildable binary/side-file cache used before release warmup. Materialization
@@ -84,7 +100,7 @@ source inventory. A verified `.incoming` backup and a partial deletion are resum
 - Constraint: API protocols must support streaming plus tool calls (Anthropic for Claude, Responses for Codex); base URL is a secret with no variable fallback. Both notes and publisher use release Environment protections; pre-generation approval is not review of generated text.
 - Correct action: fix configuration/endpoint, rerun failed jobs within artifact retention; rerun all jobs with the same version/source after expiration. Drafts recover original build identity. Do not manually edit/publish a draft during the workflow because GitHub has no atomic compare-and-publish transaction.
 - Verification: deterministic release tests cover evidence, retries, read-only queries, no mutation before valid notes, Draft recovery, remote drift and immutable published bodies. Opt-in Linux `RELEASE_CLI_SMOKE=1` tests use the latest real CLIs with a fake API/key to check evidence exchange and denied write tools. Hosted-runner/real-endpoint acceptance remains a separate `publish_release=false` run with administrator-provided Environment settings.
-- Scope: AI-generated GitHub Release body only; no bundle schema/asset change, no historical published-body rewrite. See `docs/en/release-operations.md` and `docs/zh-CN/release-operations.md`.
+- Scope: AI-generated GitHub Release body only; no bundle schema/asset change, no historical published-body rewrite.
 
 ## Build-free tracked artifact binding
 

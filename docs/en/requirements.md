@@ -27,75 +27,31 @@ Copy `.env.example` to `.env` for a local template. The analyzer uses the GoldSr
 - `GSVIBE_API_HOST`, `GSVIBE_API_PORT`, `GSVIBE_API_CORS_ORIGINS`, `GSVIBE_API_ALLOW_PRIVATE_NETWORK`, `GSVIBE_SSE_BLOCK_MS`, and `GSVIBE_SSE_BATCH_SIZE` configure the read-only Process API.
 - `GSVIBE_REFERENCE_GAMEVER` (default `hl-10210`) selects the canonical reference game version for `LLM_DECOMPILE`.
 - `GSVIBE_ANALYSIS_MAX_CONCURRENCY` bounds concurrently admitted full-analysis worker processes (decimal `1..32`, default `1`, fail-closed). Values above `1` also require `GSVIBE_ANALYSIS_MAX_MEMORY_MIB`.
-- `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` sets the analyzer process tree's aggregate memory hard budget with an 85% soft admission gate; it also applies to direct single-tag and selected-node analysis. See [Analysis memory tiers](#analysis-memory-tiers) for what enforces it on each platform.
-- `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` overrides the analyzer's initial per-worker reservation floor (positive decimal integer MiB; unset or blank defaults to `2048`). It is read only when the memory guard is enabled; invalid values fail startup. Observed usage can still raise the reservation, and IDB warmup defaults are unaffected. Set it in the GitHub `win64` Environment Variables, for example to `1024`, to tune new release builds.
-- `GSVIBE_ANALYSIS_WORKER_VAS_LIMIT_MIB` sets the per-worker address-space cap used when no aggregate hard cap is available (positive decimal integer MiB of at least `256`; unset or blank defaults to `8192`); invalid values fail startup in that tier. It is ignored with Windows Jobs, cgroup v2, or a disabled memory guard. Raise it if a degraded Linux worker exhausts its address-space limit while legitimately analysing.
+- `GSVIBE_ANALYSIS_MAX_MEMORY_MIB` sets the analyzer process tree's aggregate memory hard budget with an 85% soft admission gate; it also applies to direct single-tag and selected-node analysis.
 - `DEPOTDOWNLOADER_STEAM_USERNAME` and `DEPOTDOWNLOADER_STEAM_PASSWORD` are read by `download_depot.py` when depot authentication is required.
 
-## Analysis memory tiers
+## Initializing the game binaries
 
-The aggregate budget is enforced by the strongest mechanism the host allows, and the analyzer prints the tier it
-selected (`cap=<tier>` plus one detail line) at startup:
+Use the `/init-gamebin` slash command: first download every depot declared in `download.yaml` with `download_depot.py -all`, then copy the configured binaries into `bin/<tag>/<module>` with `copy_depot_bin.py`. Steam credentials are read from `.env`; when they are missing, DepotDownloader prompts interactively.
 
-- `windows-job` — Windows: one Job Object bound to the analyzer process, as before.
-- `cgroup-v2` — Linux with a usable delegated cgroup: one child cgroup holding the analyzer process, capped by
-  `memory.max` and killed as a group on violation. The analyzer only ever creates that child directory; it never writes
-  `cgroup.subtree_control`.
-- `reservation-only` — Linux without a usable cgroup: the aggregate cap is unavailable, so each worker is bounded by
-  `GSVIBE_ANALYSIS_WORKER_VAS_LIMIT_MIB` plus a resident-memory watchdog at the reservation. This is an admission
-  budget, not an aggregate cap: with reservation `R` and per-worker cap `C`, at most `floor(0.85 x budget / R)` workers
-  run, so the worst case is that product and can exceed the budget when `C > R`. The watchdog enforces the reservation
-  per worker, which is stricter than the aggregate gate: set `GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB` (and
-  `IDB_WARMUP_INITIAL_WORKER_RESERVATION_MIB` for warming) from the measured per-worker peak before enabling this tier.
+## Agent skill-runner policy
 
-Direct single-tag and selected-node analysis install the same degraded limits on the analyzer itself before analysis
-starts; the resident cap covers its entire process tree. Sequential tags in one process reuse that watchdog.
+Claude and OpenCode load the repository's skill-runner policy directly. Before using Codex, copy `.codex/skill_runner.config.toml` to `$CODEX_HOME/skill_runner.config.toml`; the runner selects that configuration through `--profile skill_runner`.
 
-Tier 1 on Linux needs a cgroup whose controller set is delegated to the runner. On a systemd unit that means
-`Delegate=yes`; check the effective state with `systemctl show -p Delegate,DelegateSubgroup <runner>.service` and the
-`cap=` line of any run. Without it the guard degrades to `reservation-only` rather than failing. An empty
-`gsvibe-memory` directory surviving a run under the runner cgroup is expected: a process cannot remove the cgroup it
-lives in, and the next run reuses it.
+## Troubleshooting
 
-## IDB cache host requirements
+### `error: could not create 'ida.egg-info': access denied`
 
-Warm production requires one canonical Python executable with `idapro` on the dedicated runner. CI invokes the canonical
-`idb_warm_worker.py --print-ida-version` with that executable and uses it for every bare-idalib worker. Consumer analysis
-still requires `idalib-mcp` and `IDADIR`, but neither the MCP executable nor the IDA installation path participates in the
-new cache identity. The cache CLI receives an explicit persisted root; CI later exposes it as
-`PERSISTED_WORKSPACE` only inside the protected dedicated Windows runner job. That root must be outside the checkout
-and `bin/`, must not traverse a reparse point, and must reside on storage that supports atomic same-filesystem rename.
+Run `python py-activate-idalib.py` with administrator privileges in this directory:
 
-The runner account needs exclusive write access to its cache root. Cache warming is single-concurrency at the scheduler
-layer through a repository-wide `idb-warmup-*` concurrency group. All official and direct producers also share
-`<PERSISTED_WORKSPACE>/idb-cache/.locks/producer.lock`; short tag locks serialize persisted probe/publish/prune and exact
-restore while per-binary bare-idalib workers run outside the tag lock. The byte-range locks must be mutually exclusive
-across two independent runner processes, not just threads in one process. A shared cache is valid only when all consumers
-use the same controlled storage and ACL authority; Actions
-artifacts are evidence/selection transport and `READY.json` is a probe hint, never a cache transport or truth source.
+```text
+C:\Program Files\IDA Professional 9.0\idalib\python
+```
 
-Official analysis is unconditionally warm; `GSVIBE_IDB_CACHE_MODE` is not read. Do not enable or dispatch those workflows
-until the runner and storage evidence above is complete. No manually maintained IDA-version variable is required. Store
-the absolute persisted path as the Environment secret `PERSISTED_WORKSPACE`. `IDB_WARMUP_MAX_CONCURRENCY` bounds workers
-(default `2`), while optional `IDB_WARMUP_MAX_MEMORY_MIB` enables aggregate memory admission and optional
-`IDB_WARMUP_INITIAL_WORKER_RESERVATION_MIB` overrides its per-worker reservation floor (blank defaults to `2048`); both
-use the same tiers as [Analysis memory tiers](#analysis-memory-tiers). New cache identities
-bind only the dynamically probed non-empty kernel version as `ida_runtime`; binary identity and the canonical worker
-contract remain independently bound. A producer re-probes the same executable before launching workers and fails closed
-on a mismatch.
+### `Could not find idalib64.dll in .........`
 
-## Release runner and GitHub governance requirements
+Set `IDADIR` for the current shell, or add it to the system environment variables:
 
-The release build runs on the same `[self-hosted, windows, x64]` runner as source analysis. Its protected `win64`
-Environment supplies only analysis/runtime secrets and the checkout-external `PERSISTED_WORKSPACE`; the `idb-cache` and
-binary-only accepted-cache subtrees require runner-account ACLs and same-filesystem atomic rename support. The build has
-read-only repository permission and no PAT, push, tag, or Release authority. PR routing must keep untrusted/fork analysis
-off this runner.
-
-Production release dispatch is restricted to `HLND2T/GoldSrc_VibeSignatures` and per-version concurrency. Configure a
-separate protected `release` Environment for the GitHub-hosted `publish-release` job; it is the only release-build job
-granted `contents: write`. The separate Pages archive job may write only its append-only, non-authoritative mirror branch.
-Branch protection requires the unique Actions-owned `pr-validate`, no direct/admin-bypass pushes to
-`main`, protected release tags, and the required approval policy for that Environment. No GitHub App token,
-`HLND2T_GH_TOKEN`, generated-output branch, or merge-time promotion is part of the release authority. Repository tests
-cannot activate or prove these external controls.
+```batch
+set IDADIR=C:\Program Files\IDA Professional 9.0
+```

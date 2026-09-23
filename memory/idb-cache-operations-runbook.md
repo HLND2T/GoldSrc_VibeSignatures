@@ -51,6 +51,30 @@ restore while another producer warms but cannot race its publish/prune. A lock i
 lock file existing. Hit/miss selection semantics, `cache-selection.json` transport role, and strict no-save consumer
 analysis are documented in [[Immutable warm IDB cache generations]].
 
+## Prepare performance
+
+PR and release selection producers first probe/verify/prune different tags in a bounded thread pool. The limit reuses
+`--max-concurrency` / `IDB_WARMUP_MAX_CONCURRENCY` (default `2`, `1` for serial probes); platforms within one tag retain
+input order and share the existing tag lock. After every probe task finishes successfully, miss groups warm and publish
+one group at a time, retaining per-binary worker concurrency and the single process memory owner. A probe-task failure
+waits for the pool to finish and aborts preparation before warming or writing a selection.
+
+Each Prepare keeps a separate in-memory set of selected generation names per tag. Verified probe hits and verified miss
+selections join that set before pruning, so later prunes in the same Prepare cannot delete earlier selections. Protection
+does not skip manifest/payload verification or replace normal retention; it ends with the call, and no persistent pin is
+written. Generations not yet selected and selections from earlier calls remain subject to normal pruning.
+
+Both READY and fallback hits still hash the complete generation inside the probe's tag lock; only the immediate second hit
+verification is removed. Prune also hashes historical generations, and final selection validation before and after writing
+still performs full verification. Entries remain canonically sorted regardless of thread completion order.
+
+Flushed `prepare_*` stage logs separate binding/binary identities, parallel probe wall time, per-group probe/verify, prune,
+warm, publish/re-probe/verification, selection validation, and writing. Lock acquisition logs report wait time. Per-group
+hit/miss durations exclude time queued behind other groups, so concurrent durations must not be summed as total wall time.
+Compare repeated runs on the same runner with the same selection and comparable cold/warm storage state; record manifest
+`files[].size` totals per group and distinguish prune's historical payload reads from the selected payload. Disk
+throughput determines the benefit — local unit tests do not establish production speedup.
+
 ## Accepted-bin and legacy-YAML maintenance
 
 Run these only under the same runner authority (full contract in [[Release bundle publication and recovery]]):
