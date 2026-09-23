@@ -2681,6 +2681,51 @@ found_struct_offset: []
         # Absolute form: the embedded dword already is the address.
         self.assertNotIn("gv_pic_addend", absolute_candidate)
 
+    async def test_register_compare_uses_verified_definition_for_runtime_operand(self):
+        comparison = {
+            "func_start": "0x1000",
+            "line": "cmp [eax], 5",
+            "size": 3,
+            "operand_offsets": [0, 2],
+            "address_operand_offsets": [],
+            "relative_store_address": {"target": "0x8000"},
+            "address_operand_source": "0x1010",
+        }
+        definition = {
+            "func_start": "0x1000",
+            "line": "mov eax, [ebx-100h]",
+            "size": 6,
+            "operand_offsets": [0, 2],
+            "address_operand_offsets": [2],
+            "operand_pic": [False, True],
+            "operand_dwords": [None, "0xffffff00"],
+        }
+        with (
+            patch("ida_analyze_util._inspect_llm_instruction", new=AsyncMock(side_effect=[comparison, definition])),
+            patch(
+                "ida_analyze_util._inspect_function_via_mcp",
+                new=AsyncMock(return_value={"func_va": "0x1000", "func_sig": "55 8B EC"}),
+            ),
+        ):
+            result = await _preprocess_llm_target(
+                session=SimpleNamespace(),
+                symbol_name="g_Target",
+                category="gv",
+                spec={},
+                llm_config=None,
+                new_binary_dir=Path("D:/game/engine"),
+                platform="linux",
+                image_base=0,
+                desired_fields=[],
+                llm_result={"found_gv": [{"gv_name": "g_Target", "insn_va": "0x1030"}]},
+                target_ranges=[(0x1000, 0x1100)],
+            )
+        self.assertEqual("0x8000", result["gv_va"])
+        self.assertEqual(0x10, result["gv_inst_offset"])
+        self.assertEqual(6, result["gv_inst_length"])
+        self.assertEqual(2, result["gv_inst_disp"])
+        self.assertEqual(0x8000, (0xFFFFFF00 + int(result["gv_pic_addend"], 0)) & 0xFFFFFFFF)
+
     def test_gv_resolution_rebases_pic_and_adjusts_absolute_members(self):
         # MSVC indexed absolute operands may also decode as o_displ.
         self.assertEqual(
@@ -2726,6 +2771,103 @@ found_struct_offset: []
             "8B 05 24 23 24 00",
         ):
             self.assertIsNone(decode(bytes.fromhex(unsupported)))
+
+    def test_compare_address_decoder_ignores_the_compared_scalar(self):
+        namespace = {}
+        exec(ida_analyze_util._ADDRESS_FLOW_RESOLVER, namespace)
+        decode = namespace["decode_address_compare"]
+        self.assertEqual((0, 0), decode(bytes.fromhex("83 38 05")))
+        self.assertEqual((0, 0x30490), decode(bytes.fromhex("83 B8 90 04 03 00 02")))
+        self.assertEqual((2, 0xFFFFFFFC), decode(bytes.fromhex("81 BA FC FF FF FF 00 01 00 00")))
+        for raw in ("83 F8 05", "83 3D 00 40 00 00 05", "83 78 04 05", "83 3C 24 05", "83 38"):
+            self.assertIsNone(decode(bytes.fromhex(raw)))
+
+    def test_local_address_definition_rejects_unknown_writes_and_follows_copies(self):
+        namespace = {}
+        exec(ida_analyze_util._ADDRESS_FLOW_RESOLVER, namespace)
+        find = namespace["local_address_definition"]
+        writes = [{0: ("constant", 0x9000)}, {}, {2: ("register", 0)}, {}]
+        self.assertEqual(0, find(writes, 4, 2))
+        self.assertIsNone(find(writes + [{0: None}], 5, 0))
+        self.assertIsNone(find(writes, 4, 3))
+
+    def test_global_operand_requires_a_complete_encoded_dword(self):
+        self.assertIsNone(ida_analyze_util._gv_operand_displacement({"size": 3, "operand_offsets": [0, 2]}))
+        self.assertEqual(2, ida_analyze_util._gv_operand_displacement({"size": 7, "operand_offsets": [2, 6]}))
+
+    def test_compare_inspection_resolves_memory_not_mapped_immediate(self):
+        for displacement, raw, scalar in (
+            (0, "83 38 05", 5),
+            (0x120, "83 B8 20 01 00 00 02", 2),
+            (0, "81 38 00 01 00 00", 0x100),
+        ):
+            with self.subTest(displacement=displacement):
+                base, ea = 0x8000, 0x1010
+                encoded = bytes.fromhex(raw)
+                void = SimpleNamespace(type=0)
+                memory = SimpleNamespace(
+                    type=4 if displacement else 3, addr=displacement, offb=2 if displacement else 0
+                )
+                immediate_width = 1 if encoded[0] == 0x83 else 4
+                immediate = SimpleNamespace(type=5, value=scalar, offb=len(encoded) - immediate_width)
+                compare = SimpleNamespace(ops=[memory, immediate, void], size=len(encoded))
+                definition = SimpleNamespace(
+                    ops=[SimpleNamespace(type=1, reg=0, dtype=2), SimpleNamespace(type=5, value=base), void], size=5
+                )
+                block = SimpleNamespace(id=0, start_ea=0x1000, end_ea=0x1020, preds=lambda: [])
+                # The mapped ELF header includes both compared scalar values.
+                segment = SimpleNamespace(perm=6, end_ea=0x10000)
+                modules = {
+                    "ida_bytes": SimpleNamespace(
+                        get_dword=lambda address: displacement,
+                        get_bytes=lambda address, size: (
+                            bytes.fromhex("B8 00 80 00 00") if address == 0x1000 else encoded
+                        ),
+                    ),
+                    "ida_fixup": SimpleNamespace(fixup_data_t=lambda: None, get_fixup=lambda *args: False),
+                    "ida_funcs": SimpleNamespace(get_func=lambda address: block),
+                    "ida_lines": SimpleNamespace(tag_remove=lambda text: text),
+                    "ida_segment": SimpleNamespace(getseg=lambda address: segment, SEGPERM_EXEC=1),
+                    "idaapi": SimpleNamespace(inf_is_64bit=lambda: False, BADADDR=0xFFFFFFFF),
+                    "ida_ua": SimpleNamespace(
+                        o_void=0,
+                        o_reg=1,
+                        o_mem=2,
+                        o_phrase=3,
+                        o_displ=4,
+                        o_imm=5,
+                        o_near=6,
+                        o_far=7,
+                        dt_byte=0,
+                        dt_dword=2,
+                        insn_t=lambda: compare,
+                        decode_insn=lambda *args: len(encoded),
+                    ),
+                    "ida_gdl": SimpleNamespace(FlowChart=lambda func: [block]),
+                    "idautils": SimpleNamespace(
+                        DataRefsFrom=lambda address: [],
+                        CodeRefsFrom=lambda *args: [],
+                        Heads=lambda *args: [0x1000, ea],
+                        DecodeInstruction=lambda address: definition if address == 0x1000 else compare,
+                    ),
+                    "idc": SimpleNamespace(
+                        generate_disasm_line=lambda *args: "cmp [eax], 5",
+                        print_insn_mnem=lambda address: "mov" if address == 0x1000 else "cmp",
+                    ),
+                }
+                # MCP executes with separate global/local dictionaries.
+                local = {}
+                with patch.dict("sys.modules", modules):
+                    exec(
+                        ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)), {}, local
+                    )
+                detail = json.loads(local["result"])
+                self.assertEqual([hex(base + displacement)], ida_analyze_util._llm_global_targets(detail))
+                self.assertNotIn(hex(scalar), detail["operand_targets"])
+                self.assertEqual(None if displacement else "0x1000", detail["address_operand_source"])
+                self.assertEqual(2 if displacement else None, ida_analyze_util._gv_operand_displacement(detail))
+                if immediate_width == 1:
+                    self.assertIsNone(detail["operand_dwords"][1])
 
     def test_relative_store_resolution_overrides_mapped_displacement(self):
         detail = {

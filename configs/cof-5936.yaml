@@ -92,6 +92,14 @@ modules:
           - VGui_ViewportPaintBackground.{platform}.yaml
         expected_output:
           - V_RenderView.{platform}.yaml
+      - name: find-V_RenderView-decompiles
+        expected_input:
+          - V_RenderView.{platform}.yaml
+        expected_output:
+          - cls_state.{platform}.yaml
+          - cls_signon.{platform}.yaml
+          - r_soundOrigin.{platform}.yaml
+          - r_playerViewportAngles.{platform}.yaml
       - name: find-V_RenderView-ref-params-globals
         expected_input:
           - V_RenderView.{platform}.yaml
@@ -1146,6 +1154,14 @@ modules:
         category: gv
       - name: V_RenderView
         category: func
+      - name: cls_state
+        category: gv
+      - name: cls_signon
+        category: gv
+      - name: r_soundOrigin
+        category: gv
+      - name: r_playerViewportAngles
+        category: gv
       - name: CL_ReallocateDynamicData
         category: func
       - name: cl_sprite_shell

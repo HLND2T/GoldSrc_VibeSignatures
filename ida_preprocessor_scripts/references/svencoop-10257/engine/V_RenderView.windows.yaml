@@ -1,0 +1,259 @@
+func_name: "V_RenderView"
+func_va: "0x1dcdf60"
+disasm_code: |-
+  ; Vector targets mean the FIRST float only: r_soundOrigin[0] and r_playerViewportAngles[0].
+  ; Do NOT report instructions accessing component +4 or +8 for either target. They identify a different address.
+  .text:01DCDF60                 sub     esp, 1F4h
+  .text:01DCDF66                 mov     eax, ___security_cookie
+  .text:01DCDF6B                 xor     eax, esp
+  .text:01DCDF6D                 mov     [esp+1F4h+var_4], eax
+  .text:01DCDF74                 fldz
+  .text:01DCDF76                 ; r_soundOrigin: listener origin; receives r_origin under !rp.onlyClientDraw.
+  .text:01DCDF76                 fst     r_soundOrigin; r_soundOrigin: listener origin; receives r_origin under !rp.onlyClientDraw.
+  .text:01DCDF7C                 fst     r_soundOrigin+4
+  .text:01DCDF82                 fst     r_soundOrigin+8
+  .text:01DCDF88                 ; r_playerViewportAngles: listener orientation; receives rp.viewangles under !rp.onlyClientDraw.
+  .text:01DCDF88                 fst     r_playerViewportAngles; r_playerViewportAngles: listener orientation; receives rp.viewangles under !rp.onlyClientDraw.
+  .text:01DCDF8E                 push    esi
+  .text:01DCDF8F                 fst     r_playerViewportAngles+4
+  .text:01DCDF95                 xor     esi, esi
+  .text:01DCDF97                 ; cls_state: address of cls.state, the ca_active rendering gate; not a separate ELF object.
+  .text:01DCDF97                 cmp     dword_20D7D70, 5; cls_state: address of cls.state, the ca_active rendering gate; not a separate ELF object.
+  .text:01DCDF9E                 fstp    r_playerViewportAngles+8
+  .text:01DCDFA4                 jnz     loc_1DCE1B8
+  .text:01DCDFAA                 ; cls_signon: address of cls.signon, the SIGNONS rendering gate; not a separate ELF object.
+  .text:01DCDFAA                 cmp     dword_2108314, 2; cls_signon: address of cls.signon, the SIGNONS rendering gate; not a separate ELF object.
+  .text:01DCDFB1                 jnz     loc_1DCE1B8
+  .text:01DCDFB7                 lea     eax, [esp+1F8h+var_1F4]
+  .text:01DCDFBB                 ; void *
+  .text:01DCDFBB                 push    eax; void *
+  .text:01DCDFBC                 call    sub_1DCE720
+  .text:01DCDFC1                 add     esp, 4
+  .text:01DCDFC4                 cmp     dword_204E528, esi
+  .text:01DCDFCA                 jz      short loc_1DCDFEF
+  .text:01DCDFCC                 lea     eax, [esp+1F8h+var_FC]
+  .text:01DCDFD3                 ; void *
+  .text:01DCDFD3                 push    eax; void *
+  .text:01DCDFD4                 call    sub_1DCE720
+  .text:01DCDFD9                 mov     ecx, dword_204E528
+  .text:01DCDFDF                 lea     edx, [esp+1FCh+var_FC]
+  .text:01DCDFE6                 add     esp, 4
+  .text:01DCDFE9                 mov     eax, [ecx]
+  .text:01DCDFEB                 push    edx
+  .text:01DCDFEC                 call    dword ptr [eax+0Ch]
+  .text:01DCDFEF                 push    ebx
+  .text:01DCDFF0                 push    edi
+  .text:01DCDFF1                 push    dword_234B604
+  .text:01DCDFF7                 call    sub_1D27EC0
+  .text:01DCDFFC                 fldz
+  .text:01DCDFFE                 add     esp, 4
+  .text:01DCE001                 mov     edi, ds:glClearColor
+  .text:01DCE007                 mov     ebx, ds:glClear
+  .text:01DCE00D                 mov     dword_270BB64, eax
+  .text:01DCE012                 mov     eax, dword_234B604
+  .text:01DCE017                 mov     dword_270B2A8, eax
+  .text:01DCE01C                 mov     eax, dword_26CDF7C
+  .text:01DCE021                 inc     eax
+  .text:01DCE022                 mov     dword_270B2B4, esi
+  .text:01DCE028                 fstp    flt_270B2B0
+  .text:01DCE02E                 mov     dword_270AFD0, eax
+  .text:01DCE033                 lea     eax, [esp+200h+var_1F4]
+  .text:01DCE037                 push    eax
+  .text:01DCE038                 call    sub_1D1A310
+  .text:01DCE03D                 add     esp, 4
+  .text:01DCE040                 test    esi, esi
+  .text:01DCE042                 jnz     loc_1DCE0D8
+  .text:01DCE048                 cmp     dword_2108F6C, esi
+  .text:01DCE04E                 jnz     short loc_1DCE070
+  .text:01DCE050                 push    dword_234B604
+  .text:01DCE056                 lea     eax, [esp+204h+var_1F4]
+  .text:01DCE05A                 push    offset unk_270BB18
+  .text:01DCE05F                 push    eax
+  .text:01DCE060                 call    sub_1D1F810
+  .text:01DCE065                 add     esp, 0Ch
+  .text:01DCE068                 cmp     dword_2108F6C, esi
+  .text:01DCE06E                 jz      short loc_1DCE0D8
+  .text:01DCE070                 push    offset dword_234B604
+  .text:01DCE075                 lea     eax, [esp+204h+var_1F4]
+  .text:01DCE079                 push    offset unk_270BB18
+  .text:01DCE07E                 push    eax
+  .text:01DCE07F                 call    sub_1D1FE70
+  .text:01DCE084                 fld     [esp+20Ch+var_1E8]
+  .text:01DCE088                 add     esp, 0Ch
+  .text:01DCE08B                 fchs
+  .text:01DCE08D                 mov     [esp+200h+var_114], 0
+  .text:01DCE098                 fst     flt_270BB24
+  .text:01DCE09E                 fld     [esp+200h+var_1E4]
+  .text:01DCE0A2                 fst     flt_270BB28
+  .text:01DCE0A8                 fld     [esp+200h+var_1E0]
+  .text:01DCE0AC                 fst     flt_270BB2C
+  .text:01DCE0B2                 fst     flt_270B2A4
+  .text:01DCE0B8                 fstp    flt_270BB00
+  .text:01DCE0BE                 fxch    st(1)
+  .text:01DCE0C0                 fst     flt_270B29C
+  .text:01DCE0C6                 fstp    flt_270BAF8
+  .text:01DCE0CC                 fst     flt_270B2A0
+  .text:01DCE0D2                 fstp    flt_270BAFC
+  .text:01DCE0D8                 lea     eax, [esp+200h+var_1F4]
+  .text:01DCE0DC                 push    eax
+  .text:01DCE0DD                 call    sub_1DCE990
+  .text:01DCE0E2                 add     esp, 4
+  .text:01DCE0E5                 cmp     [esp+200h+var_1B0], 0
+  .text:01DCE0EA                 jz      short loc_1DCE0F8
+  .text:01DCE0EC                 mov     dword_270BB64, 0
+  .text:01DCE0F6                 jmp     short loc_1DCE115
+  .text:01DCE0F8                 cmp     [esp+200h+var_1AC], 0
+  .text:01DCE0FD                 jnz     short loc_1DCE115
+  .text:01DCE0FF                 fld     flt_1EDEE94
+  .text:01DCE105                 fldz
+  .text:01DCE107                 fucompp
+  .text:01DCE109                 fnstsw  ax
+  .text:01DCE10B                 test    ah, 44h
+  .text:01DCE10E                 jnp     short loc_1DCE115
+  .text:01DCE110                 call    sub_1D1BB20
+  .text:01DCE115                 call    sub_1D52790
+  .text:01DCE11A                 test    esi, esi
+  .text:01DCE11C                 jnz     short loc_1DCE143
+  .text:01DCE11E                 cmp     dword_3F9344C, esi
+  .text:01DCE124                 jz      short loc_1DCE143
+  .text:01DCE126                 fldz
+  .text:01DCE128                 sub     esp, 10h
+  .text:01DCE12B                 ; alpha
+  .text:01DCE12B                 fst     [esp+210h+alpha]; alpha
+  .text:01DCE12F                 ; blue
+  .text:01DCE12F                 fst     [esp+210h+blue]; blue
+  .text:01DCE133                 ; green
+  .text:01DCE133                 fst     [esp+210h+green]; green
+  .text:01DCE137                 ; red
+  .text:01DCE137                 fstp    [esp+210h+red]; red
+  .text:01DCE13A                 call    edi ; glClearColor
+  .text:01DCE13C                 ; mask
+  .text:01DCE13C                 push    4000h; mask
+  .text:01DCE141                 call    ebx ; glClear
+  .text:01DCE143                 ; viewIdx
+  .text:01DCE143                 push    esi; viewIdx
+  .text:01DCE144                 call    R_RenderView
+  .text:01DCE149                 add     esp, 4
+  .text:01DCE14C                 cmp     [esp+200h+var_110], 0
+  .text:01DCE154                 jnz     short loc_1DCE198
+  .text:01DCE156                 fld     flt_3F941D8
+  .text:01DCE15C                 ; r_soundOrigin: listener origin; receives r_origin under !rp.onlyClientDraw.
+  .text:01DCE15C                 fstp    r_soundOrigin; r_soundOrigin: listener origin; receives r_origin under !rp.onlyClientDraw.
+  .text:01DCE162                 fld     flt_3F941DC
+  .text:01DCE168                 fstp    r_soundOrigin+4
+  .text:01DCE16E                 fld     flt_3F941E0
+  .text:01DCE174                 fstp    r_soundOrigin+8
+  .text:01DCE17A                 fld     [esp+200h+var_1E8]
+  .text:01DCE17E                 ; r_playerViewportAngles: listener orientation; receives rp.viewangles under !rp.onlyClientDraw.
+  .text:01DCE17E                 fstp    r_playerViewportAngles; r_playerViewportAngles: listener orientation; receives rp.viewangles under !rp.onlyClientDraw.
+  .text:01DCE184                 fld     [esp+200h+var_1E4]
+  .text:01DCE188                 fstp    r_playerViewportAngles+4
+  .text:01DCE18E                 fld     [esp+200h+var_1E0]
+  .text:01DCE192                 fstp    r_playerViewportAngles+8
+  .text:01DCE198                 inc     esi
+  .text:01DCE199                 cmp     [esp+200h+var_114], 0
+  .text:01DCE1A1                 jnz     loc_1DCE033
+  .text:01DCE1A7                 mov     ecx, dword_204E528
+  .text:01DCE1AD                 pop     edi
+  .text:01DCE1AE                 pop     ebx
+  .text:01DCE1AF                 test    ecx, ecx
+  .text:01DCE1B1                 jz      short loc_1DCE1B8
+  .text:01DCE1B3                 mov     eax, [ecx]
+  .text:01DCE1B5                 call    dword ptr [eax+10h]
+  .text:01DCE1B8                 mov     ecx, [esp+1F8h+var_4]
+  .text:01DCE1BF                 pop     esi
+  .text:01DCE1C0                 ; StackCookie
+  .text:01DCE1C0                 xor     ecx, esp; StackCookie
+  .text:01DCE1C2                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:01DCE1C7                 add     esp, 1F4h
+  .text:01DCE1CD                 retn
+procedure: |-
+  // Only element [0] accesses identify the requested vector base. Exclude [1], [2], +4 and +8 accesses from found_gv.
+  // Source role: engine/view.c V_RenderView. Current binary is authoritative: ref-params helpers may be inlined; SvEngine omits con_forcedup and uses R_RenderView(viewnum). cls_state / cls_signon denote member addresses, never GOT slots.
+  void __cdecl V_RenderView()
+  {
+    int v0; // esi
+    _BYTE v1[12]; // [esp+20h] [ebp-1F4h] BYREF
+    float v2; // [esp+2Ch] [ebp-1E8h]
+    float v3; // [esp+30h] [ebp-1E4h]
+    float v4; // [esp+34h] [ebp-1E0h]
+    int v5; // [esp+64h] [ebp-1B0h]
+    int v6; // [esp+68h] [ebp-1ACh]
+    int v7; // [esp+100h] [ebp-114h]
+    int v8; // [esp+104h] [ebp-110h]
+    _BYTE v9[248]; // [esp+118h] [ebp-FCh] BYREF
+
+    r_soundOrigin[0] = 0.0;
+    r_soundOrigin[1] = 0.0;
+    r_soundOrigin[2] = 0.0;
+    r_playerViewportAngles[0] = 0.0;
+    r_playerViewportAngles[1] = 0.0;
+    v0 = 0;
+    r_playerViewportAngles[2] = 0.0;
+    // cls_state is &cls.state at 0x20D7D70; cls_signon is &cls.signon at 0x2108314.
+    // The signon pointer cast is an IDB type artifact: CMP reads the int directly.
+    if ( dword_20D7D70 == 5 && *(_DWORD *)dword_2108314 == 2 )
+    {
+      sub_1DCE720(v1);
+      if ( dword_204E528 )
+      {
+        sub_1DCE720(v9);
+        (*(void (__thiscall **)(int, _BYTE *))(*(_DWORD *)dword_204E528 + 12))(dword_204E528, v9);
+      }
+      dword_270BB64 = sub_1D27EC0(dword_234B604);
+      dword_270B2A8 = dword_234B604;
+      dword_270B2B4 = 0;
+      flt_270B2B0 = 0.0;
+      dword_270AFD0 = dword_26CDF7C + 1;
+      do
+      {
+        sub_1D1A310(v1);
+        if ( !v0 )
+        {
+          if ( dword_2108F6C || (sub_1D1F810(v1, &unk_270BB18, dword_234B604), dword_2108F6C) )
+          {
+            sub_1D1FE70(v1, &unk_270BB18, &dword_234B604);
+            v7 = 0;
+            flt_270BB24 = -v2;
+            flt_270BB28 = v3;
+            flt_270BB2C = v4;
+            flt_270B2A4 = v4;
+            flt_270BB00 = v4;
+            flt_270B29C = flt_270BB24;
+            flt_270BAF8 = flt_270BB24;
+            flt_270B2A0 = v3;
+            flt_270BAFC = v3;
+          }
+        }
+        sub_1DCE990(v1);
+        if ( v5 )
+        {
+          dword_270BB64 = 0;
+        }
+        else if ( !v6 && 0.0 != flt_1EDEE94 )
+        {
+          sub_1D1BB20();
+        }
+        sub_1D52790();
+        if ( !v0 && dword_3F9344C )
+        {
+          glClearColor(0.0, 0.0, 0.0, 0.0);
+          glClear(0x4000u);
+        }
+        R_RenderView(v0);
+        if ( !v8 )
+        {
+          r_soundOrigin[0] = flt_3F941D8;
+          r_soundOrigin[1] = flt_3F941DC;
+          r_soundOrigin[2] = flt_3F941E0;
+          r_playerViewportAngles[0] = v2;
+          r_playerViewportAngles[1] = v3;
+          r_playerViewportAngles[2] = v4;
+        }
+        ++v0;
+      }
+      while ( v7 );
+      if ( dword_204E528 )
+        (*(void (__thiscall **)(int))(*(_DWORD *)dword_204E528 + 16))(dword_204E528);
+    }
+  }

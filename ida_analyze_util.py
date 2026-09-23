@@ -2944,6 +2944,34 @@ def decode_address_load(raw):
         return None
     return modrm & 7, int.from_bytes(raw[2:], 'little')
 
+def decode_address_compare(raw):
+    if raw is None or len(raw) < 3 or raw[0] not in (0x81, 0x83):
+        return None
+    modrm = raw[1]
+    mode, register = modrm >> 6, modrm & 7
+    immediate_size = 1 if raw[0] == 0x83 else 4
+    if (modrm >> 3) & 7 != 7 or register == 4:
+        return None
+    if mode == 0 and register != 5 and len(raw) == 2 + immediate_size:
+        return register, 0
+    if mode == 2 and len(raw) == 6 + immediate_size:
+        return register, int.from_bytes(raw[2:6], 'little')
+    return None
+
+def local_address_definition(writes, stop, register):
+    for index in range(stop - 1, -1, -1):
+        if register not in writes[index]:
+            continue
+        definition = writes[index][register]
+        if definition is None:
+            return None
+        kind, value = definition
+        if kind == 'register':
+            register = value
+            continue
+        return index if kind in ('constant', 'address', 'got_load') else None
+    return None
+
 def reachable_address_graph(graph, entry):
     reachable = {entry} if entry in graph else set()
     while True:
@@ -3034,6 +3062,7 @@ func = ida_funcs.get_func(ea)
 operand_targets = []
 displacements = []
 operand_offsets = []
+address_operand_offsets = []
 operand_pic = []
 operand_dwords = []
 if size:
@@ -3042,9 +3071,15 @@ if size:
             break
         offb = int(op.offb or 0)
         operand_offsets.append(offb)
+        if (op.type in (ida_ua.o_mem, ida_ua.o_displ)
+                or (op.type == ida_ua.o_imm and (idc.print_insn_mnem(ea) or '').lower() in ('mov', 'push'))):
+            if offb and offb + 4 <= size:
+                address_operand_offsets.append(offb)
         if op.type in (ida_ua.o_mem, ida_ua.o_far, ida_ua.o_near):
             operand_targets.append(int(op.addr))
-        elif op.type == ida_ua.o_imm and ida_segment.getseg(int(op.value)) is not None:
+        elif (op.type == ida_ua.o_imm
+              and (idc.print_insn_mnem(ea) or '').lower() in ('mov', 'push')
+              and ida_segment.getseg(int(op.value)) is not None):
             operand_targets.append(int(op.value))
         elif op.type == ida_ua.o_displ:
             displacements.append(int(op.addr) & 0xFFFFFFFF)
@@ -3055,7 +3090,7 @@ if size:
         is_pic = (op.type == ida_ua.o_displ and offb
                   and not ida_fixup.get_fixup(ida_fixup.fixup_data_t(), int(ea) + offb))
         operand_pic.append(is_pic)
-        if offb and pointer_size == 4:
+        if offb and pointer_size == 4 and offb + 4 <= size:
             dword = ida_bytes.get_dword(int(ea) + offb)
             operand_dwords.append(None if dword == idaapi.BADADDR else hex(int(dword)))
         else:
@@ -3073,6 +3108,8 @@ if pointer_size == 4 and (idc.print_insn_mnem(ea) or '').lower() == 'mov' and in
                 got_indirect_targets.append(hex(pointee))
                 got_symbol_names.append(idc.get_name(pointee) or '')
 relative_store_address = None
+address_operand_source = None
+compare_operand = decode_address_compare(ida_bytes.get_bytes(ea, size)) if pointer_size == 4 else None
 # A MOV store's IDA xref can name only its displacement, even when that
 # displacement happens to be mapped. Resolve the effective address instead.
 store_operand = None
@@ -3081,30 +3118,34 @@ if (pointer_size == 4 and size == 6 and insn.ops[0].type == ida_ua.o_displ
     raw = ida_bytes.get_bytes(ea, size)
     if raw and raw[0] == 0x89:
         store_operand = decode_address_load(raw)
-if store_operand is not None:
-    register_name = ('eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi')[store_operand[0]]
+relative_operand = store_operand or compare_operand
+if relative_operand is not None:
+    register_name = ('eax', 'ecx', 'edx', 'ebx', 'esp', 'ebp', 'esi', 'edi')[relative_operand[0]]
     relative_store_address = {
         'target': None,
-        'issue': f'Cannot determine {register_name.upper()} base for [{register_name}+{hex(store_operand[1])}]. '
+        'issue': f'Cannot determine {register_name.upper()} base for [{register_name}+{hex(relative_operand[1])}]. '
                  'The displacement is not a complete global address, even if IDA gives it a mapped data label.'
     }
 # An ELF compiler may reuse an address register for LEA or a memory load.
 # Resolve only an unindexed 32-bit address whose reaching definition is
 # identical along every CFG predecessor. Unknown writes and cycles fail closed.
-if (func is not None and (store_operand is not None or (size == 6
+if (func is not None and (relative_operand is not None or (size == 6
         and insn.ops[1].type == ida_ua.o_displ and insn.ops[1].offb == 2
         and not list(idautils.DataRefsFrom(ea))))):
     import ida_gdl
-    address_load = decode_address_load(ida_bytes.get_bytes(ea, size))
+    address_load = relative_operand or decode_address_load(ida_bytes.get_bytes(ea, size))
     if address_load is not None:
         graph = {}
+        instruction_addresses = {}
         selected = None
         entry_block = None
         for block in ida_gdl.FlowChart(func):
             if block.start_ea == func.start_ea:
                 entry_block = block.id
             writes = []
+            instruction_addresses[block.id] = []
             for address in idautils.Heads(block.start_ea, block.end_ea):
+                instruction_addresses[block.id].append(address)
                 if address == ea:
                     selected = (block.id, len(writes))
                 decoded = idautils.DecodeInstruction(address)
@@ -3158,7 +3199,7 @@ if (func is not None and (store_operand is not None or (size == 6
                         elif mnemonic in ('add', 'sub') and source.type == ida_ua.o_imm:
                             changed[destination] = ('offset', int(source.value) * (1 if mnemonic == 'add' else -1))
                         elif mnemonic == 'lea':
-                            if store_operand is not None:
+                            if relative_operand is not None:
                                 operand = decode_address_load(ida_bytes.get_bytes(address, decoded.size))
                                 if operand is not None:
                                     changed[destination] = ('address', operand)
@@ -3192,6 +3233,17 @@ if (func is not None and (store_operand is not None or (size == 6
                     if (segment is not None and not (segment.perm & ida_segment.SEGPERM_EXEC)
                             and target + 4 <= segment.end_ea):
                         relative_store_address = {'target': hex(target)}
+                        # CMP [reg], imm8 has no encoded address displacement.
+                        # Its proven local reaching definition supplies the runtime
+                        # operand; retain the comparison as the semantic access.
+                        has_encoded_address = False
+                        for offset in address_operand_offsets:
+                            if offset and offset + 4 <= size:
+                                has_encoded_address = True
+                        if compare_operand is not None and not has_encoded_address:
+                            index = local_address_definition(graph[selected[0]]['writes'], selected[1], address_load[0])
+                            if index is not None:
+                                address_operand_source = hex(instruction_addresses[selected[0]][index])
                     else:
                         relative_store_address['issue'] = (
                             f'Effective store address {hex(base)} + {hex(address_load[1])} = {hex(target)} '
@@ -3214,14 +3266,21 @@ result = json.dumps({
     'operand_targets': [hex(value) for value in operand_targets] + computed_targets,
     'displacements': [hex(value) for value in displacements],
     'operand_offsets': operand_offsets,
+    'address_operand_offsets': address_operand_offsets,
     'operand_pic': operand_pic,
     'operand_dwords': operand_dwords,
     'relative_store_address': relative_store_address,
+    'address_operand_source': address_operand_source,
     'got_indirect_targets': got_indirect_targets,
     'got_symbol_names': got_symbol_names,
 })
 """
 )
+
+
+def _gv_operand_displacement(detail):
+    offsets = detail.get("address_operand_offsets", detail.get("operand_offsets", ()))
+    return next((offset for offset in offsets if offset and offset + 4 <= detail["size"]), None)
 
 
 def _gv_resolution_fields(detail, gv_va, image_base, displacement=None, *, platform="linux"):
@@ -3776,6 +3835,17 @@ async def _preprocess_llm_target(
                     continue
                 gv_va = _parse_int(targets[0], "gv target")
                 insn_va = _parse_int(entry["insn_va"], "insn_va")
+                if detail.get("address_operand_source"):
+                    source_va = _parse_int(detail["address_operand_source"], "address_operand_source")
+                    source_detail = await _inspect_llm_instruction(session, source_va)
+                    if source_detail is None or not _llm_entry_instruction_is_valid(
+                        {"insn_va": source_va}, source_detail, target_ranges, ()
+                    ):
+                        continue
+                    detail, insn_va = source_detail, source_va
+                displacement = _gv_operand_displacement(detail)
+                if displacement is None:
+                    continue
                 candidate = {
                     "gv_name": symbol_name,
                     "gv_va": hex(gv_va),
@@ -3784,9 +3854,9 @@ async def _preprocess_llm_target(
                     "gv_sig_va": function["func_va"],
                     "gv_inst_offset": insn_va - _parse_int(function["func_va"], "func_va"),
                     "gv_inst_length": detail["size"],
-                    "gv_inst_disp": next((value for value in detail.get("operand_offsets") or () if value), 0),
+                    "gv_inst_disp": displacement,
                 }
-                candidate.update(_gv_resolution_fields(detail, gv_va, image_base, platform=platform))
+                candidate.update(_gv_resolution_fields(detail, gv_va, image_base, displacement, platform=platform))
                 if used_across_boundary_budget:
                     candidate["gv_sig_allow_across_function_boundary"] = True
                 return candidate
