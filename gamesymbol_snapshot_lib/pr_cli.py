@@ -22,6 +22,7 @@ from gamesymbol_snapshot_lib.analysis_sources import (
     is_reference_source_path,
     validate_reference_consumers,
 )
+from gamesymbol_snapshot_lib.anchor_drift import anchor_only_drift
 from gamesymbol_snapshot_lib.config import load_contract
 from gamesymbol_snapshot_lib.impact_registry import parse_impact_registry
 from gamesymbol_snapshot_lib.operations import _atomic_write
@@ -564,12 +565,18 @@ def compare_rebuilt_artifacts(
         actual = tuple(
             {"path": entry.path, "size": entry.size, "sha256": entry.sha256} for entry in actual_inventory.entries
         )
-        if actual != expected:
+        drift = _accepted_anchor_drift(
+            expected=expected,
+            actual=actual,
+            artifact_game_root=contract.artifact_game_root,
+            read_expected=lambda relative: repo.read(document["merge_sha"], f"bin_artifacts/{tag}/{relative}"),
+        )
+        if actual != expected and drift is None:
             raise PrCliError(diagnostic(f"Rebuilt artifact inventory differs from merge Git blobs for {tag}"))
         for entry in expected:
             expected_raw = repo.read(document["merge_sha"], f"bin_artifacts/{tag}/{entry['path']}")
             actual_raw = path_from_key(contract.artifact_game_root, entry["path"]).read_bytes()
-            if expected_raw != actual_raw:
+            if expected_raw != actual_raw and (drift is None or entry["path"] not in drift):
                 message = f"Rebuilt artifact bytes differ from merge Git blob: {tag}/{entry['path']}"
                 if expected_raw is not None:
                     try:
@@ -582,7 +589,46 @@ def compare_rebuilt_artifacts(
                     except Exception as exc:
                         message += f"\n  artifact diagnostics unavailable: {exc}"
                 raise PrCliError(message)
+        for relative in sorted(drift or ()):
+            changes = ", ".join(f"{field} {before} -> {after}" for field, (before, after) in drift[relative].items())
+            print(f"Anchor drift accepted for bin_artifacts/{tag}/{relative}: {changes}")
         return tuple(entry["path"] for entry in expected)
+
+
+def _accepted_anchor_drift(
+    *,
+    expected: tuple[dict, ...],
+    actual: tuple[dict, ...],
+    artifact_game_root: Path,
+    read_expected,
+) -> dict[str, dict] | None:
+    """Map every drifting artifact to its changed anchor fields, or fail closed.
+
+    Missing, extra and non-anchor payload changes keep the byte-exact gate. Only
+    a payload that differs solely in its global anchor group is tolerated, and
+    only while the resolved address is untouched.
+    """
+    expected_by_path = {entry["path"]: entry for entry in expected}
+    actual_by_path = {entry["path"]: entry for entry in actual}
+    if expected_by_path.keys() != actual_by_path.keys():
+        return None
+    drift: dict[str, dict] = {}
+    for relative, expected_entry in expected_by_path.items():
+        actual_entry = actual_by_path[relative]
+        if (expected_entry["size"], expected_entry["sha256"]) == (actual_entry["size"], actual_entry["sha256"]):
+            continue
+        expected_raw = read_expected(relative)
+        if expected_raw is None:
+            return None
+        try:
+            actual_raw = path_from_key(artifact_game_root, relative).read_bytes()
+        except OSError:
+            return None
+        changed = anchor_only_drift(expected_raw, actual_raw)
+        if changed is None:
+            return None
+        drift[relative] = changed
+    return drift or None
 
 
 def _parser() -> argparse.ArgumentParser:
