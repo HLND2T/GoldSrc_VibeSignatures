@@ -14,6 +14,7 @@ from bin_artifact_contract import (
 )
 from gamesymbol_snapshot_lib.config import load_contract
 from ida_analyze_util import canonical_symbol_yaml_bytes
+from tests.test_anchor_drift import VFUNC_PAYLOAD
 from tests.test_support import write_config
 
 
@@ -158,6 +159,16 @@ class AnchorDriftRepositoryFixture:
     SYMBOL_NAME: str
     CATEGORY: str
     FILENAME: str
+    NUMERIC_ANCHOR_FIELDS: tuple[str, ...]
+
+    def test_null_numeric_anchor_fails_closed(self):
+        for field in self.NUMERIC_ANCHOR_FIELDS:
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                rebuilt = self.fixture(root)
+                self.rebuilt_artifact(rebuilt).write_bytes(canonical_symbol_yaml_bytes({**self.PAYLOAD, field: None}))
+                with self.assertRaisesRegex(BinArtifactContractError, "inventory differs"):
+                    self.compare(root, rebuilt)
 
     def symbol_declarations(self) -> list[dict]:
         return [{"name": self.SYMBOL_NAME, "category": self.CATEGORY}]
@@ -208,6 +219,7 @@ class GlobalAnchorDriftTests(AnchorDriftRepositoryFixture, unittest.TestCase):
     SYMBOL_NAME = "gWorldToScreen"
     CATEGORY = "gv"
     FILENAME = "gWorldToScreen.windows.yaml"
+    NUMERIC_ANCHOR_FIELDS = ("gv_inst_disp",)
 
     def test_anchor_only_drift_is_accepted_and_reported(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -273,10 +285,12 @@ class StructMemberAnchorDriftTests(AnchorDriftRepositoryFixture, unittest.TestCa
         "offset_sig": "55 8B EC 83 EC 48 89 4D ?? 8B 4D ?? 81 C1 9C 01 00 00 E8 ?? ?? ?? ?? 85 C0 75 ??",
         "offset_sig_disp": "0xc",
         "offset_sig_ref_kind": "immediate",
+        "offset_sig_addend": "0x0",
     }
     SYMBOL_NAME = "CVideoMode_Common_m_ImageID"
     CATEGORY = "structmember"
     FILENAME = "CVideoMode_Common_m_ImageID.windows.yaml"
+    NUMERIC_ANCHOR_FIELDS = ("offset_sig_disp", "offset_sig_addend")
 
     def symbol_declarations(self) -> list[dict]:
         return [
@@ -319,6 +333,25 @@ class StructMemberAnchorDriftTests(AnchorDriftRepositoryFixture, unittest.TestCa
             ) as raised:
                 self.compare(root, rebuilt)
             self.assertIn("-offset: '0x19c'", str(raised.exception))
+
+
+class VfuncAnchorDriftTests(AnchorDriftRepositoryFixture, unittest.TestCase):
+    PAYLOAD = VFUNC_PAYLOAD
+    SYMBOL_NAME = VFUNC_PAYLOAD["func_name"]
+    CATEGORY = "vfunc"
+    FILENAME = SYMBOL_NAME + ".windows.yaml"
+    NUMERIC_ANCHOR_FIELDS = ("vfunc_sig_disp",)
+
+    def test_valid_anchor_drift_is_accepted(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            rebuilt = self.fixture(root)
+            self.rebuilt_artifact(rebuilt).write_bytes(
+                canonical_symbol_yaml_bytes({**self.PAYLOAD, "vfunc_sig_disp": "0x20"})
+            )
+            with redirect_stdout(io.StringIO()):
+                inventory = self.compare(root, rebuilt)
+            self.assertEqual(1, len(inventory.paths))
 
 
 if __name__ == "__main__":

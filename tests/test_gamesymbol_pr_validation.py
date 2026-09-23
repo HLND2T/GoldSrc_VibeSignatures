@@ -1064,7 +1064,12 @@ class AnchorDriftComparisonTests(unittest.TestCase):
         "gv_inst_disp": "0x1",
     }
 
-    def _rebuilt_repository(self, root):
+    def _rebuilt_repository(
+        self, root, *, payload=None, symbol_name="gWorldToScreen", symbols=None, merge_overrides=None
+    ):
+        payload = self.COMMITTED_PAYLOAD if payload is None else payload
+        symbols = [{"name": symbol_name, "category": "gv"}] if symbols is None else symbols
+        merge_overrides = {"gv_inst_offset": "0xa"} if merge_overrides is None else merge_overrides
         repo = root / "repo"
         rebuilt = root / "rebuilt"
         repo.mkdir()
@@ -1083,9 +1088,9 @@ class AnchorDriftComparisonTests(unittest.TestCase):
                             "path_windows": "Game/hw.dll",
                             "module_windows": "hw.dll",
                             "skills": [
-                                {"name": "find", "expected_output": ["gWorldToScreen.{platform}.yaml"]},
+                                {"name": "find", "expected_output": [symbol_name + ".{platform}.yaml"]},
                             ],
-                            "symbols": [{"name": "gWorldToScreen", "category": "gv"}],
+                            "symbols": symbols,
                         }
                     ]
                 },
@@ -1093,13 +1098,13 @@ class AnchorDriftComparisonTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        artifact = repo / "bin_artifacts" / "game-1" / "engine" / "gWorldToScreen.windows.yaml"
+        artifact = repo / "bin_artifacts" / "game-1" / "engine" / f"{symbol_name}.windows.yaml"
         artifact.parent.mkdir(parents=True)
-        artifact.write_bytes(canonical_symbol_yaml_bytes(self.COMMITTED_PAYLOAD))
+        artifact.write_bytes(canonical_symbol_yaml_bytes(payload))
         subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
         subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "base"], check=True)
         base_sha = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
-        artifact.write_bytes(canonical_symbol_yaml_bytes({**self.COMMITTED_PAYLOAD, "gv_inst_offset": "0xa"}))
+        artifact.write_bytes(canonical_symbol_yaml_bytes({**payload, **merge_overrides}))
         subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
         subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", "merge"], check=True)
         merge_sha = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
@@ -1117,10 +1122,37 @@ class AnchorDriftComparisonTests(unittest.TestCase):
             artifactdir=rebuilt,
         )
         materialize_from_plan(**args)
-        rebuilt_artifact = rebuilt / "game-1/engine/gWorldToScreen.windows.yaml"
+        rebuilt_artifact = rebuilt / "game-1" / "engine" / f"{symbol_name}.windows.yaml"
         rebuilt_artifact.parent.mkdir(parents=True, exist_ok=True)
         rebuilt_artifact.write_bytes(committed_bytes)
         return repo, rebuilt_artifact, committed_bytes, args
+
+    def test_null_numeric_anchors_fail_closed_for_each_category(self):
+        from tests.test_bin_artifact_contract import (
+            GlobalAnchorDriftTests,
+            StructMemberAnchorDriftTests,
+            VfuncAnchorDriftTests,
+        )
+
+        for fixture in (GlobalAnchorDriftTests(), StructMemberAnchorDriftTests(), VfuncAnchorDriftTests()):
+            with self.subTest(category=fixture.CATEGORY), tempfile.TemporaryDirectory() as temporary:
+                field = fixture.NUMERIC_ANCHOR_FIELDS[0]
+                _repo, artifact, committed, args = self._rebuilt_repository(
+                    Path(temporary),
+                    payload=fixture.PAYLOAD,
+                    symbol_name=fixture.SYMBOL_NAME,
+                    symbols=fixture.symbol_declarations(),
+                    merge_overrides={field: "0x0"},
+                )
+                payload = yaml.safe_load(committed)
+                artifact.write_bytes(canonical_symbol_yaml_bytes({**payload, field: "0x1"}))
+                with redirect_stdout(io.StringIO()):
+                    self.assertEqual((f"engine/{fixture.FILENAME}",), compare_rebuilt_artifacts(**args))
+                for nullable_field in fixture.NUMERIC_ANCHOR_FIELDS:
+                    with self.subTest(field=nullable_field):
+                        artifact.write_bytes(canonical_symbol_yaml_bytes({**payload, nullable_field: None}))
+                        with self.assertRaisesRegex(PrCliError, "inventory differs"):
+                            compare_rebuilt_artifacts(**args)
 
     def test_anchor_only_drift_is_accepted_and_reported(self):
         with tempfile.TemporaryDirectory() as temporary:

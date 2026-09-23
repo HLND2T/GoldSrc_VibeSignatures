@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import unittest
 
+import yaml
+
 from gamesymbol_snapshot_lib.anchor_drift import anchor_only_drift
 from ida_analyze_util import canonical_symbol_yaml_bytes
 
@@ -69,6 +71,53 @@ def canonical(payload: dict) -> bytes:
 
 
 class AnchorOnlyDriftTests(unittest.TestCase):
+    NUMERIC_ANCHOR_CASES = (
+        (
+            GV_PAYLOAD,
+            ("gv_sig_va", "gv_inst_offset", "gv_inst_length", "gv_inst_disp", "gv_pic_addend", "gv_address_offset"),
+        ),
+        (STRUCT_PAYLOAD, ("offset_sig_disp", "offset_sig_addend")),
+        (VFUNC_PAYLOAD, ("vfunc_sig_disp",)),
+    )
+
+    def test_invalid_numeric_anchor_fails_closed(self):
+        for payload, fields in self.NUMERIC_ANCHOR_CASES:
+            expected = canonical(payload)
+            for field in fields:
+                for value in (None, True, -1, "", "not-an-offset", "-0x1"):
+                    with self.subTest(field=field, value=value):
+                        actual = yaml.safe_dump({**payload, field: value}).encode("utf-8")
+                        self.assertIsNone(anchor_only_drift(expected, actual))
+                        self.assertIsNone(anchor_only_drift(actual, expected))
+
+    def test_unchanged_null_numeric_anchor_with_signature_drift_fails_closed(self):
+        for payload, fields in self.NUMERIC_ANCHOR_CASES:
+            signature = next(key for key in payload if key in {"gv_sig", "offset_sig", "vfunc_sig"})
+            for field in fields:
+                with self.subTest(field=field):
+                    self.assert_drift({**payload, field: None}, {signature: "90 90"}, accepted=False)
+
+    def test_optional_numeric_anchor_fields_can_be_omitted(self):
+        for payload, fields, signature in (
+            (GV_PAYLOAD, ("gv_inst_disp", "gv_pic_addend", "gv_address_offset"), "gv_sig"),
+            (STRUCT_PAYLOAD, ("offset_sig_disp", "offset_sig_addend"), "offset_sig"),
+            (VFUNC_PAYLOAD, ("vfunc_sig_disp",), "vfunc_sig"),
+        ):
+            with self.subTest(signature=signature):
+                self.assert_drift(
+                    {key: value for key, value in payload.items() if key not in fields},
+                    {signature: "90 90"},
+                    accepted=True,
+                )
+
+    def test_zero_numeric_anchor_fields_are_valid(self):
+        for payload, fields in self.NUMERIC_ANCHOR_CASES:
+            for field in fields:
+                if field == "gv_inst_length":
+                    continue
+                with self.subTest(field=field):
+                    self.assert_drift(payload, {field: "0x0"}, accepted=True)
+
     def assert_drift(self, payload: dict, overrides: dict, accepted: bool) -> None:
         expected = canonical(payload)
         actual = canonical({**payload, **overrides})

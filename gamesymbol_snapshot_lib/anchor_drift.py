@@ -25,13 +25,16 @@ class AnchorSpec:
 
     ``select_keys`` must all be present for the spec to apply, ``fixed_keys``
     are the resolved facts a rebuilt payload has to reproduce byte-exactly, and
-    ``anchor_fields`` is the only set allowed to drift. ``coherent`` carries the
-    cross-field invariants that symbol normalization does not already enforce.
+    ``anchor_fields`` is the only set allowed to drift. ``numeric_fields`` must
+    contain valid normalized offsets when present; normalization alone permits
+    null values. ``coherent`` carries the cross-field invariants that symbol
+    normalization does not already enforce.
     """
 
     select_keys: tuple[str, ...]
     fixed_keys: tuple[str, ...]
     anchor_fields: frozenset[str]
+    numeric_fields: tuple[str, ...] = ()
     coherent: Callable[[dict], bool] | None = None
 
 
@@ -95,6 +98,14 @@ ANCHOR_SPECS: tuple[AnchorSpec, ...] = (
                 "gv_address_offset",
             }
         ),
+        numeric_fields=(
+            "gv_sig_va",
+            "gv_inst_offset",
+            "gv_inst_length",
+            "gv_inst_disp",
+            "gv_pic_addend",
+            "gv_address_offset",
+        ),
         coherent=anchor_is_coherent,
     ),
     AnchorSpec(
@@ -108,11 +119,13 @@ ANCHOR_SPECS: tuple[AnchorSpec, ...] = (
                 "offset_sig_ref_kind",
             }
         ),
+        numeric_fields=("offset_sig_disp", "offset_sig_addend"),
     ),
     AnchorSpec(
         select_keys=("func_name", "vfunc_offset"),
         fixed_keys=("func_va", "func_rva", "vfunc_offset", "vfunc_index"),
         anchor_fields=frozenset({"vfunc_sig", "vfunc_sig_disp"}),
+        numeric_fields=("vfunc_sig_disp",),
     ),
 )
 
@@ -137,6 +150,14 @@ def anchor_only_drift(expected_raw: bytes, actual_raw: bytes) -> dict | None:
     if not changed or not changed <= spec.anchor_fields:
         return None
     if any(expected.get(key) != actual.get(key) for key in spec.fixed_keys):
+        return None
+    # An omitted optional field may use a default; an explicit null is not a
+    # usable offset. Check unchanged fields and both sides of the comparison too.
+    if any(
+        key in payload and _parse_offset(payload[key]) is None
+        for payload in (expected, actual)
+        for key in spec.numeric_fields
+    ):
         return None
     if spec.coherent is not None and not spec.coherent(actual):
         return None
