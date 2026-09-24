@@ -131,6 +131,31 @@ modules:
           - cl_parsefuncs.{platform}.yaml
         expected_output:
           - CL_Parse_SetView.{platform}.yaml
+      - name: find-CL_Parse_Disconnect
+        expected_input:
+          - cl_parsefuncs.{platform}.yaml
+        expected_output:
+          - CL_Parse_Disconnect.{platform}.yaml
+      - name: find-COM_DisconnectionFunctions
+        expected_input:
+          - CL_Parse_Disconnect.{platform}.yaml
+        expected_output:
+          - COM_ExplainDisconnection.{platform}.yaml
+          - COM_ExtendedExplainDisconnection.{platform}.yaml
+      - name: find-COM_ExplainDisconnection-globals
+        expected_input:
+          - COM_ExplainDisconnection.{platform}.yaml
+        expected_output:
+          - gszDisconnectReason.{platform}.yaml
+          - gfExtendedError.{platform}.yaml
+      - name: find-COM_ExtendedExplainDisconnection-globals
+        expected_input:
+          - COM_ExtendedExplainDisconnection.{platform}.yaml
+        expected_output:
+          - gszExtendedDisconnectReason.{platform}.yaml
+      - name: find-Host_EndGame
+        expected_output:
+          - Host_EndGame.{platform}.yaml
       - name: find-CL_Parse_SetView-decompiles
         expected_input:
           - CL_Parse_SetView.{platform}.yaml
@@ -1276,6 +1301,20 @@ modules:
       - name: CL_CreateVisibleEntity
         category: func
       - name: CL_Parse_SetView
+        category: func
+      - name: CL_Parse_Disconnect
+        category: func
+      - name: COM_ExplainDisconnection
+        category: func
+      - name: COM_ExtendedExplainDisconnection
+        category: func
+      - name: gszDisconnectReason
+        category: gv
+      - name: gszExtendedDisconnectReason
+        category: gv
+      - name: gfExtendedError
+        category: gv
+      - name: Host_EndGame
         category: func
       - name: CL_ParseMovevars
         category: func
