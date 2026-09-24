@@ -17,8 +17,9 @@ HOST = "Host_Init"
 
 WALK = r"""
 client = int(values['client'], 0)
+client_end = int(values['client_end'], 0)
 host = int(values['host'], 0)
-client_entries = scan(client)
+client_entries = scan(client, client_end if values['client_raw_span'] else None)
 host_entries = scan(host)
 if client_entries is None or host_entries is None:
     result = {'error': 'predecessor is not a function start'}
@@ -28,8 +29,7 @@ else:
         if str(item) != 'ScreenShake':
             continue
         for ref in idautils.DataRefsTo(int(item.ea)):
-            function = ida_funcs.get_func(int(ref))
-            if function is not None and int(function.start_ea) == client:
+            if client <= int(ref) < client_end:
                 screen_sources.append(int(ref))
     client_globals = single_globals(client_entries)
     host_globals = single_globals(host_entries)
@@ -60,18 +60,28 @@ async def preprocess_skill(
     debug=False,
 ):
     _ = old_yaml_map
-    client = await inspect_owner_artifact(session, new_binary_dir, platform, image_base, CLIENT)
+    client = await inspect_owner_artifact(session, new_binary_dir, platform, image_base, CLIENT, allow_raw_span=True)
     host = await inspect_owner_artifact(session, new_binary_dir, platform, image_base, HOST)
     if client is None or host is None:
         if debug:
             invalid = [name for name, owner in ((CLIENT, client), (HOST, host)) if owner is None]
             print(f"{skill_name}: missing or invalid {', '.join(invalid)} artifact")
         return False
-    located = await run_walk(session, WALK, {"client": hex(client["owner_ea"]), "host": hex(host["owner_ea"])})
+    located = await run_walk(
+        session,
+        WALK,
+        {
+            "client": hex(client["owner_ea"]),
+            "client_end": hex(client["owner_end"]),
+            "client_raw_span": client.get("raw_span", False),
+            "host": hex(host["owner_ea"]),
+        },
+    )
     if located.get("error") or not located.get("gv"):
         if debug:
             print(f"{skill_name}: {located}")
         return False
     if debug:
-        print(f"{skill_name}: {located['gv']['gv_ea']} via {located['gv']['insn_disasm']}")
+        span = " (raw ClientDLL_Init span)" if client.get("raw_span") else ""
+        print(f"{skill_name}: {located['gv']['gv_ea']} via {located['gv']['insn_disasm']}{span}")
     return await write_located_globals(session, expected_outputs, platform, image_base, client, {NAME: located["gv"]})
