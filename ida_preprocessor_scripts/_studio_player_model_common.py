@@ -624,10 +624,9 @@ def main():
     ref_insns = {}
     insns = []
     known_bases = {}
-    # Targets synthesized as tracked_base + displacement and the bases they were
-    # synthesized from.  Such a target is a structure field reached through a
-    # pointer, not a global address of its own, so shapes that must name a real
-    # global have to be able to tell the two apart.
+    # Store targets synthesized as tracked_base + displacement and their bases.
+    # Keep reads out of this metadata: only derived stores may authorize the
+    # indirect-store fallback, and only their bases may be excluded from reads.
     derived_targets = set()
     derived_bases = set()
     for ea in func_items(slot_va):
@@ -673,8 +672,9 @@ def main():
                     computed_bases.add(base_value)
         if computed:
             targets = sorted(set(computed))
-            derived_targets.update(computed)
-            derived_bases.update(computed_bases)
+            if direction == 'write':
+                derived_targets.update(computed)
+                derived_bases.update(computed_bases)
         insns.append({'ea': hex(int(ea)), 'offb': offb, 'dir': direction,
                       'targets': [hex(x) for x in targets],
                       'disasm': disasm(ea)})
@@ -1083,9 +1083,9 @@ def _shape_gv_bases(located, shape):
         direct_writes = [value for value in writes if value not in derived_targets]
         if len(direct_writes) == 1:
             return direct_writes
-        if derived_targets:
-            # The store is real but its target was synthesized, so fall back to
-            # the one read that is not the synthesized base.
+        if writes and not direct_writes:
+            # Fall back only when stores exist and all their targets were
+            # synthesized. Multiple direct stores must remain ambiguous.
             remaining = [value for value in reads if value not in derived_bases]
             if len(remaining) == 1:
                 return remaining

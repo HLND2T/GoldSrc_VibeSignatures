@@ -1441,6 +1441,87 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(_shape_gv_bases(read_only, SLOT_SHAPE_WRITE_ALLOW_READS))
         self.assertIsNone(_shape_gv_bases(two_stores, SLOT_SHAPE_WRITE_ALLOW_READS))
 
+    def test_write_allow_reads_rejects_derived_reads_without_stores(self):
+        from ida_preprocessor_scripts._studio_player_model_common import SLOT_SHAPE_WRITE_ALLOW_READS, _shape_gv_bases
+
+        located = {
+            "read_bases": ["0x1000", "0x12fc"],
+            "write_bases": [],
+            "derived_targets": ["0x12fc"],
+            "derived_bases": ["0x1000"],
+        }
+        self.assertIsNone(_shape_gv_bases(located, SLOT_SHAPE_WRITE_ALLOW_READS))
+
+    def test_write_allow_reads_rejects_multiple_direct_stores_with_derived_store(self):
+        from ida_preprocessor_scripts._studio_player_model_common import SLOT_SHAPE_WRITE_ALLOW_READS, _shape_gv_bases
+
+        located = {
+            "read_bases": ["0x1000", "0x5000"],
+            "write_bases": ["0x12fc", "0x3000", "0x4000"],
+            "derived_targets": ["0x12fc"],
+            "derived_bases": ["0x1000"],
+        }
+        self.assertIsNone(_shape_gv_bases(located, SLOT_SHAPE_WRITE_ALLOW_READS))
+
+    def test_studio_slot_derived_metadata_only_tracks_writes(self):
+        from ida_preprocessor_scripts._studio_player_model_common import LOCATE_STUDIO_SLOT_PY
+
+        # Execute the actual collector with decoded instructions: address-take
+        # two bases, read a field through one, and store through the other.
+        def operand(kind, reg=-1, addr=0):
+            return SimpleNamespace(type=kind, reg=reg, addr=addr, offb=2)
+
+        void, reg, displ, mem = 0, 1, 2, 3
+        instructions = {
+            0x200: ("lea", "read", [operand(reg, 0), operand(displ, 9)], [0x1000]),
+            0x206: ("lea", "read", [operand(reg, 1), operand(displ, 9)], [0x3000]),
+            0x20C: ("fld", "read", [operand(displ, 0, 0x2FC)], []),
+            0x212: ("fstp", "write", [operand(displ, 1, 0x2FC)], []),
+        }
+        decoded = {
+            ea: SimpleNamespace(ops=ops + [operand(void)], size=6) for ea, (_, _, ops, _) in instructions.items()
+        }
+        function = SimpleNamespace(start_ea=0x200, end_ea=0x218)
+        namespace = {
+            "STUDIO_STR": "studio",
+            "SLOT_OFF": 0xAC,
+            "find_exact_strings": lambda _: [0x80],
+            "functions_for_string": lambda _: [0x90],
+            "func_items": lambda ea: [0x90] if ea == 0x90 else list(instructions),
+            "absolute_data_operands": lambda _: [(2, 0x100)],
+            "validate_table_run": lambda _: 46,
+            "pic_anchor": lambda _: None,
+            "got_anchor": lambda _: None,
+            "disp32_operand_offset": lambda _: 2,
+            "insn_direction": lambda ea, _: instructions[ea][1],
+            "writable_refs": lambda ea: instructions[ea][3],
+            "is_writable_data": lambda ea: 0x1000 <= ea < 0x4000,
+            "seg_name": lambda _: ".data",
+            "reg_relative_disp32": lambda *_: False,
+            "disasm": lambda ea: instructions[ea][0],
+            "idaapi": SimpleNamespace(o_void=void, o_reg=reg, o_displ=displ, o_mem=mem),
+            "ida_bytes": SimpleNamespace(get_dword=lambda _: 0x200),
+            "ida_funcs": SimpleNamespace(get_func=lambda _: function),
+            "idautils": SimpleNamespace(DecodeInstruction=decoded.get, DataRefsTo=lambda _: []),
+            "idc": SimpleNamespace(print_insn_mnem=lambda ea: instructions[ea][0]),
+        }
+        tree = ast.parse(LOCATE_STUDIO_SLOT_PY)
+        collector = ast.Module(
+            body=[
+                node
+                for node in tree.body
+                if isinstance(node, ast.FunctionDef) and node.name in {"main", "cluster_bases"}
+            ],
+            type_ignores=[],
+        )
+        exec(compile(collector, "<studio-slot-collector>", "exec"), namespace)
+        located = namespace["main"]()
+
+        self.assertEqual(["0x1000", "0x12fc", "0x3000"], located["read_bases"])
+        self.assertEqual(["0x32fc"], located["write_bases"])
+        self.assertEqual(["0x32fc"], located["derived_targets"])
+        self.assertEqual(["0x3000"], located["derived_bases"])
+
     def test_global_targets_use_decoded_absolute_operand_over_offset_base_xref(self):
         detail = {
             "data_refs": ["0x2000"],

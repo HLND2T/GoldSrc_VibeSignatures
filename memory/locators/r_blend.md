@@ -76,8 +76,12 @@ not a global reference; the only absolute writable-data store left is `r_blend`.
   and the one recorded store target is the `renderamt` field synthesized as
   `currententity + 0x2FC` from a base register whose tracked value is stale (the
   intervening `mov eax,[eax]` has no disp32 operand and is skipped). The shape
-  drops synthesized targets and falls back to the sole read that is not a
-  synthesized base. The artifact then carries `gv_inst_offset: 0x2D`,
+  drops synthesized store targets and falls back only when at least one store
+  exists and no direct store remains. Multiple direct stores are rejected.
+  `derived_targets` / `derived_bases` contain only synthesized stores and their
+  bases; derived reads must not authorize fallback or remove read candidates.
+  The fallback selects the sole read that is not a synthesized store's base.
+  The artifact then carries `gv_inst_offset: 0x2D`,
   `gv_inst_length: 0x6`, `gv_inst_disp: 0x2`, `gv_pic_addend: 0x2ee000`.
 - svencoop-10257 `hw.so` has **no** `.symtab` name for either `r_blend` or
   `currententity` (unlike hl-10210, hl-8684 and svencoop-8948, whose `.so`s
