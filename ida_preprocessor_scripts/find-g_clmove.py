@@ -64,7 +64,8 @@ async def preprocess_skill(
     host = await inspect_owner_artifact(session, new_binary_dir, platform, image_base, HOST)
     if client is None or host is None:
         if debug:
-            print(f"{skill_name}: missing or invalid {CLIENT}/{HOST} artifact")
+            invalid = [name for name, owner in ((CLIENT, client), (HOST, host)) if owner is None]
+            print(f"{skill_name}: missing or invalid {', '.join(invalid)} artifact")
         return False
     located = await run_walk(session, WALK, {"client": hex(client["owner_ea"]), "host": hex(host["owner_ea"])})
     if located.get("error") or not located.get("gv"):
