@@ -24,6 +24,20 @@ uv run python copy_depot_bin.py -gamever cstrike-10210 -platform windows -checko
 
 使用 `/init-gamebin` 为 `download.yaml` 中的每个 tag 初始化 `depots/` 与 `bin/` 目录树。
 
+### 预热 IDA 数据库
+
+分析在 strict restored-database 策略下打开每个二进制，因此其旁必须已存在预热好的数据库。`/init-gamebin`
+将该预热作为可选阶段提供，也可以直接运行：
+
+```powershell
+uv run python warmup_idb.py -gamever cstrike-10210 -python "<带 idalib 的解释器>"
+```
+
+`warmup_idb.py` 解析 `configs/<gamever>.yaml`，按分析相同的方式准备每个声明的二进制（blob 源会先解密为
+同目录的 `<stem>.decrypt<ext>`），再用各自独立的 bare-idalib worker 进程逐一预热，并跳过数据库已通过校验的
+二进制。`-platform` 可收窄范围，`-force` 使全部数据库失效并重新预热，`-max-concurrency` 覆盖
+`IDB_WARMUP_MAX_CONCURRENCY`，`IDB_WARMUP_MAX_MEMORY_MIB` 启用 aggregate 内存准入。
+
 ### Blob 游戏二进制
 
 部分旧 GoldSrc 版本携带非 PE 的 Metahook "blob" 二进制。分析前请使用 `/decrypt-blob-gamebin` 斜杠命令（或

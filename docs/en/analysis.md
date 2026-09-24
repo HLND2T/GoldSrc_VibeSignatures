@@ -20,6 +20,16 @@ uv run python copy_depot_bin.py -gamever cstrike-10210 -platform windows -checko
 
 Use `/init-gamebin` to bootstrap the `depots/` and `bin/` trees for every tag in `download.yaml`.
 
+### Warming the IDA databases
+
+Analysis opens each binary under the strict restored-database policy, so a warm database must already sit beside it. `/init-gamebin` offers that warmup as an optional stage; it can also be run directly:
+
+```powershell
+uv run python warmup_idb.py -gamever cstrike-10210 -python "<interpreter with idalib>"
+```
+
+`warmup_idb.py` resolves `configs/<gamever>.yaml`, prepares every declared binary the way analysis does (a blob source is decrypted to its sibling `<stem>.decrypt<ext>` first), warms each one with a separate bare-idalib worker process, and skips a binary whose database already validates. `-platform` narrows the run, `-force` invalidates and re-warms everything, `-max-concurrency` overrides `IDB_WARMUP_MAX_CONCURRENCY`, and `IDB_WARMUP_MAX_MEMORY_MIB` enables aggregate memory admission.
+
 ### Blob game binaries
 
 Some old GoldSrc builds ship non-PE Metahook "blob" binaries. Use the `/decrypt-blob-gamebin` slash command (or `decrypt_blob.py`) to convert every non-PE blob under `bin/` into a regular PE32 DLL before analysis. Valid PE/ELF binaries, IDA databases, and YAML artifacts are skipped.

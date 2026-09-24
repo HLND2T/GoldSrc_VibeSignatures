@@ -34,6 +34,8 @@ Copy `.env.example` to `.env` for a local template. The analyzer uses the GoldSr
 
 Use the `/init-gamebin` slash command: first download every depot declared in `download.yaml` with `download_depot.py -all`, then copy the configured binaries into `bin/<tag>/<module>` with `copy_depot_bin.py`. Steam credentials are read from `.env`; when they are missing, DepotDownloader prompts interactively.
 
+The command then offers an optional IDB warmup stage. Once approved, it runs `warmup_idb.py -gamever <tag> -python <interpreter with idalib>` per tag and leaves a warmed IDA database beside each configured binary, so later analysis restores it instead of running full auto-analysis. `IDB_WARMUP_MAX_CONCURRENCY` bounds concurrent warm workers (default `2`) and `IDB_WARMUP_MAX_MEMORY_MIB` enables aggregate memory admission.
+
 ## Agent skill-runner policy
 
 Claude and OpenCode load the repository's skill-runner policy directly. Before using Codex, copy `.codex/skill_runner.config.toml` to `$CODEX_HOME/skill_runner.config.toml`; the runner selects that configuration through `--profile skill_runner`.
