@@ -10,11 +10,11 @@ permalink: goldsrc-vibesignatures/locator-summary
 分类依据是每个 finder 的主要发现锚；部分符号实际会组合多种机制（例如先字符串锚定 owning function，再读表槽），
 此处归入其决定性的一步。**Summary** 列摘自各 locator 文件 `## How it is located` 的首段。
 
-共 **240** 个 locator；模块 engine 201，client 39。
+共 **243** 个 locator；模块 engine 204，client 39。
 
 | 定位机制 | 数量 |
 | --- | --- |
-| 字符串锚 | 68 |
+| 字符串锚 | 71 |
 | 浮点常量锚 | 3 |
 | 表 / 结构 / 数据段扫描 | 38 |
 | 确定性 xref 交集锚 | 7 |
@@ -26,7 +26,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 
 ---
 
-## 字符串锚 (68)
+## 字符串锚 (71)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -146,13 +146,16 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [currententity](locators/currententity.md) | engine | gv | — | The engine_studio_api table is recovered first (see studioapi_GetCurrentEntity), then fixed slot 0x18 names the accessor. |
 | [engine](locators/engine.md) | engine | gv | — | Find the exact literal "Sys_InitArgv( OrigCmd )" (owned by RunListenServer, engine/sys_dll2.cpp) and require exactly one function owner. |
 | [g_ChromeOrigin](locators/g_ChromeOrigin.md) | engine | gv | — | Recover the engine_studio_api table and fixed slot 0x9C. cluster_bases folds the accessor's writable refs into clusters; VectorCopy(r_origin, |
+| [g_ForcedFaceFlags](locators/studioapi_GetForceFaceFlags.md) | engine | gv | — | Recover the engine_studio_api table and fixed slot 0x84. The sibling slot-0x88 accessor stores the same address, which is the independent role cross-check. |
 | [g_pGameStudioRenderer](locators/g_pGameStudioRenderer.md) | client | gv | `HUD_GetStudioModelInterface` | Same root as the renderer vtable: the exported HUD_GetStudioModelInterface body yields the returned r_studio_interface_t (version == 1), whose [studio+4, studio+8]… |
 | [g_ppStudioInterfaceCall](locators/g_ppStudioInterfaceCall.md) | engine | gv | — | Recommended chain (source engine/cdll_int.c; cl_funcs.pStudioInterface(STUDIO_INTERFACE_VERSION, &pStudioAPI, &engine_studio_api)): |
 | [pstudiohdr](locators/pstudiohdr.md) | engine | gv | — | Recover the engine_studio_api table (see studioapi_StudioSetHeader) and fixed slot 0x8C. The accessor must write exactly one writable global and read none; that… |
 | [r_model](locators/r_model.md) | engine | gv | — | Recover the engine_studio_api table and fixed slot 0x90. The accessor must write exactly one writable global and read none; that store target is |
 | [r_origin](locators/r_origin.md) | engine | gv | — | Recover the engine_studio_api table and fixed slot 0x9C. In the accessor body, group writable-data refs into clusters (cluster_bases, values |
 | [studioapi_GetCurrentEntity](locators/studioapi_GetCurrentEntity.md) | engine | func | — | Same root as studioapi_SetupPlayerModel: the unique studio-interface diagnostic (client .dll wording for GoldSrc/HL25/CoF, client library for SvEngine) → owning |
+| [studioapi_GetForceFaceFlags](locators/studioapi_GetForceFaceFlags.md) | engine | func | — | Unique studio-interface diagnostic → owning function(s) → unique engine_studio_api table. Read ABI slot SLOT_OFF = 0x84; it must be a function start whose body reads exactly one global (g_ForcedFaceFlags). |
 | [studioapi_SetChromeOrigin](locators/studioapi_SetChromeOrigin.md) | engine | func | — | Unique studio-interface diagnostic → owning function(s) → unique engine_studio_api table. Read ABI slot SLOT_OFF = 0x9C; must be a function start. |
+| [studioapi_SetForceFaceFlags](locators/studioapi_SetForceFaceFlags.md) | engine | func | — | Unique studio-interface diagnostic → owning function(s) → unique engine_studio_api table. Read ABI slot SLOT_OFF = 0x88; the body must store exactly one global and read none (write_only shape, no GV output). |
 | [studioapi_SetRenderModel](locators/studioapi_SetRenderModel.md) | engine | func | — | Unique studio-interface diagnostic → owning function(s) → unique engine_studio_api table. Read ABI slot SLOT_OFF = 0x90; must be a function start. |
 | [studioapi_SetupModel](locators/studioapi_SetupModel.md) | engine | func | — | Unique studio-interface diagnostic → engine_studio_api slot 20 (0x50). Recovers pbodypart / psubmodel from the two `&global` out-param stores. |
 | [studioapi_SetupPlayerModel](locators/studioapi_SetupPlayerModel.md) | engine | func | — | Find the exact ClientDLL_CheckStudioInterface interface-mismatch literal and require exactly one hit. GoldSrc/HL25/CoF wording is |

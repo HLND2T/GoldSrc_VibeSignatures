@@ -40,8 +40,8 @@ R_StudioDrawPlayer:
    studioapi_SetupPlayerModel artifact (DAG input).
 
 studioapi slot accessors (GetCurrentEntity 0x18, StudioSetRemapColors 0x78,
-StudioSetHeader 0x8C, SetRenderModel 0x90, SetChromeOrigin 0x9C) and their
-engine globals:
+GetForceFaceFlags 0x84, SetForceFaceFlags 0x88, StudioSetHeader 0x8C,
+SetRenderModel 0x90, SetChromeOrigin 0x9C) and their engine globals:
 
 1. The same diagnostic anchors the owner and the unique engine_studio_api
    table (>= 43 code-pointer dwords; SvEngine ships 47/48 ABI-compatible
@@ -52,7 +52,9 @@ engine globals:
    a real 4-byte displacement operand contribute refs, so pointer-chasing
    loads ([reg] without disp32) and stack operands never pollute the shape.
    Observed shapes: GetCurrentEntity reads exactly one global
-   (currententity), StudioSetHeader/SetRenderModel store exactly one global
+   (currententity), GetForceFaceFlags reads exactly one global
+   (g_ForcedFaceFlags) while its sibling SetForceFaceFlags stores that same
+   one, StudioSetHeader/SetRenderModel store exactly one global
    (pstudiohdr/r_model), StudioSetRemapColors performs exactly two int
    stores in source order (r_topcolor then r_bottomcolor; instruction
    order, never clustered, VA-sorted, or unique-address collapsed),
@@ -949,6 +951,10 @@ async def preprocess_studio_draw_player(
 
 SLOT_SHAPE_READ = "read"
 SLOT_SHAPE_WRITE = "write"
+# Single-store shape with no GV output: the sibling accessor owns the global,
+# so the two finders never write the same artifact.  Weaker shapes (skip) are
+# avoided because the store still has to be the slot's only global access.
+SLOT_SHAPE_WRITE_NO_GV = "write_no_gv"
 SLOT_SHAPE_COPY12 = "copy12"
 # Exactly two writable-data stores, each a single target, to two different
 # addresses, in instruction order, with no global reads. Unique-address
@@ -1019,6 +1025,9 @@ def _shape_gv_bases(located, shape):
     elif shape == SLOT_SHAPE_WRITE:
         if len(writes) == 1 and not reads:
             return writes
+    elif shape == SLOT_SHAPE_WRITE_NO_GV:
+        if len(writes) == 1 and not reads:
+            return []
     elif shape == SLOT_SHAPE_WRITE_PAIR:
         ordered = _ordered_write_targets(located)
         if ordered is not None and len(ordered) == 2 and ordered[0] != ordered[1] and not reads:
