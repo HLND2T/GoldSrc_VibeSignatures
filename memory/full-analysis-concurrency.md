@@ -97,3 +97,11 @@ evidence is still required before raising the production Environment concurrency
 - Verification: `tests.test_analysis_batch` covers exact selection, deferred/external inputs, CLI conflicts, real lightweight subprocess diagnostic capture on success/failure, and existing scheduler timeout/cancellation/cleanup contracts. Real IDA behavior is distinct from these fixtures.
 - Scope: selected PR analysis and the shared full-analysis coordinator. Single-tag public selection behavior remains on its existing path.
 - Activation decision (2026-09-08): user explicitly requested immediate use of existing concurrency and waived the concurrency-1/2 comparison. Do not claim measured speedup or substitute this authorization for real-IDA evidence. Rollback keeps the batch entry and sets concurrency to 1.
+
+## Windows worker Job teardown (2026-09-24)
+
+- Trigger: batch worker timeout or cancellation previously invoked `taskkill /F /T` from `analysis_batch.py`.
+- Root cause / constraint: the existing aggregate memory Job contains the coordinator itself, so terminating it would kill the coordinator and sibling workers. A PID tree walk can also lose descendants after the root exits.
+- Correct approach: each Windows batch worker gets a nested Job with `KILL_ON_JOB_CLOSE`. The worker waits for a coordinator-created start marker before analysis begins; the coordinator assigns its process to the Job before creating that marker. Timeout/cancellation calls `TerminateJobObject` and waits for the Job's active-process count to reach zero before releasing the memory slot. Normal root exit closes the Job handle, which terminates any remaining descendants. An unassigned Windows batch worker fails closed. The external idalib-mcp launcher has a separate tree-stop path and still uses `taskkill`.
+- Verification: `tests.test_analysis_batch` checks Job teardown, failure handling, missing-Job behavior, and a real Windows worker/descendant pair with a surviving sibling. Run with `uv run python -m unittest tests.test_analysis_batch tests.test_analysis_memory tests.test_warmup_concurrency tests.test_analysis_planner`.
+- Scope: Windows analysis batch process ownership; the aggregate memory Job and POSIX tree cleanup remain as before.

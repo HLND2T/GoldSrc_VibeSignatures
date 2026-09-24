@@ -25,6 +25,7 @@ MEMORY_BUDGET_ENV = "IDB_WARMUP_MAX_MEMORY_MIB"
 WARMUP_RESERVATION_ENV = "IDB_WARMUP_INITIAL_WORKER_RESERVATION_MIB"
 
 _JOB_OBJECT_EXTENDED_LIMIT_INFORMATION_CLASS = 9
+_JOB_OBJECT_BASIC_ACCOUNTING_INFORMATION_CLASS = 1
 _JOB_OBJECT_LIMIT_VIOLATION_INFORMATION_CLASS = 13
 _JOB_OBJECT_LIMIT_JOB_MEMORY = 0x00000200
 _JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x00002000
@@ -91,6 +92,19 @@ class _JobObjectLimitViolationInformation(ctypes.Structure):
     ]
 
 
+class _JobObjectBasicAccountingInformation(ctypes.Structure):
+    _fields_ = [
+        ("TotalUserTime", ctypes.c_longlong),
+        ("TotalKernelTime", ctypes.c_longlong),
+        ("ThisPeriodTotalUserTime", ctypes.c_longlong),
+        ("ThisPeriodTotalKernelTime", ctypes.c_longlong),
+        ("TotalPageFaultCount", wintypes.DWORD),
+        ("TotalProcesses", wintypes.DWORD),
+        ("ActiveProcesses", wintypes.DWORD),
+        ("TotalTerminatedProcesses", wintypes.DWORD),
+    ]
+
+
 class _WindowsJobApi(Protocol):
     def create_job(self): ...
 
@@ -122,6 +136,8 @@ class _Kernel32JobApi:
         self._kernel32.SetInformationJobObject.restype = wintypes.BOOL
         self._kernel32.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
         self._kernel32.AssignProcessToJobObject.restype = wintypes.BOOL
+        self._kernel32.TerminateJobObject.argtypes = [wintypes.HANDLE, wintypes.UINT]
+        self._kernel32.TerminateJobObject.restype = wintypes.BOOL
         self._kernel32.QueryInformationJobObject.argtypes = [
             wintypes.HANDLE,
             ctypes.c_int,
@@ -159,6 +175,37 @@ class _Kernel32JobApi:
             ctypes.sizeof(limits),
         ):
             self._raise_last_error()
+
+    def set_kill_on_close(self, handle) -> None:
+        limits = _JobObjectExtendedLimitInformation()
+        limits.BasicLimitInformation.LimitFlags = _JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        if not self._kernel32.SetInformationJobObject(
+            handle,
+            _JOB_OBJECT_EXTENDED_LIMIT_INFORMATION_CLASS,
+            ctypes.byref(limits),
+            ctypes.sizeof(limits),
+        ):
+            self._raise_last_error()
+
+    def assign_process(self, handle, process_handle) -> None:
+        if not self._kernel32.AssignProcessToJobObject(handle, process_handle):
+            self._raise_last_error()
+
+    def terminate_job(self, handle) -> None:
+        if not self._kernel32.TerminateJobObject(handle, 1):
+            self._raise_last_error()
+
+    def active_processes(self, handle) -> int:
+        accounting = _JobObjectBasicAccountingInformation()
+        if not self._kernel32.QueryInformationJobObject(
+            handle,
+            _JOB_OBJECT_BASIC_ACCOUNTING_INFORMATION_CLASS,
+            ctypes.byref(accounting),
+            ctypes.sizeof(accounting),
+            None,
+        ):
+            self._raise_last_error()
+        return int(accounting.ActiveProcesses)
 
     def assign_current_process(self, handle) -> None:
         if not self._kernel32.AssignProcessToJobObject(handle, self._kernel32.GetCurrentProcess()):
@@ -230,6 +277,38 @@ class WindowsJobMemoryController:
 
     def snapshot(self) -> MemorySnapshot:
         return MemorySnapshot(job_bytes=self._api.query_job_memory(self._handle))
+
+
+class WindowsWorkerJob:
+    """Own one worker subtree within the coordinator's aggregate Windows Job."""
+
+    def __init__(self, *, api=None) -> None:
+        self._api = api or _Kernel32JobApi()
+        handle = self._api.create_job()
+        try:
+            self._api.set_kill_on_close(handle)
+        except BaseException:
+            self._api.close_handle(handle)
+            raise
+        self._handle = handle
+
+    def assign(self, process) -> None:
+        # Popen retains the process handle until wait() closes it. Assigning the
+        # already-created process nests this Job below the inherited memory Job.
+        self._api.assign_process(self._handle, process._handle)
+
+    def terminate_and_wait(self, *, timeout_seconds: float = 15.0) -> None:
+        self._api.terminate_job(self._handle)
+        deadline = time.monotonic() + timeout_seconds
+        while self._api.active_processes(self._handle):
+            if time.monotonic() >= deadline:
+                raise TimeoutError("Windows worker Job still contains active processes after termination")
+            time.sleep(0.05)
+
+    def close(self) -> None:
+        if self._handle is not None:
+            self._api.close_handle(self._handle)
+            self._handle = None
 
 
 def default_memory_controller(budget_bytes: int) -> MemoryController:
