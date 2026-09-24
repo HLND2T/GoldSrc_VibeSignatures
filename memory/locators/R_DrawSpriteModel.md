@@ -27,7 +27,8 @@ tags:
 
 ## Predecessors
 
-- None. It is the predecessor of [[r_blend]] and [[r_entorigin]].
+- None. It is the predecessor of [[r_entorigin]] (it used to also carry
+  [[r_blend]], which now comes from [[studioapi_StudioSetRenderamt]]).
 
 ## How it is located
 

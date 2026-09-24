@@ -32,8 +32,9 @@ tags:
 `LLM_DECOMPILE` with `expected_result_sections: ["found_gv"]` against the
 annotated [[R_DrawSpriteModel]] reference. In that body `r_entorigin` is the vec3
 every sprite quad corner is offset from: it is the first `VectorMA` operand in
-the four-corner emission, so the same function that owns [[r_blend]] also names
-this global on every family and platform.
+the four-corner emission, so the sprite renderer names this global on every
+family and platform. It is now the finder's only target; [[r_blend]] moved to
+[[studioapi_StudioSetRenderamt]], which owns it as a structural store.
 
 ## Pitfalls
 

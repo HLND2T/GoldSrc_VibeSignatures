@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
-"""Recover the sprite renderer's blend factor and entity origin.
+"""Recover the sprite renderer's entity origin.
 
-``r_blend`` and ``r_entorigin`` (``engine/gl_rmain.c``) are the two engine
-globals ``R_DrawSpriteModel`` depends on: the first carries the alpha handed to
-``R_SpriteColor``/``qglColor4ub``, the second is the origin each sprite quad
-corner is offset from.
-
-``R_DrawSpriteModel`` owns ``r_blend``'s normal-render assignment
-(``if (rendermode == kRenderNormal) r_blend = 1.0f``) and reads
-``r_entorigin`` four times in the quad emission
+``r_entorigin`` (``engine/gl_rmain.c``) is the origin each sprite quad corner is
+offset from; ``R_DrawSpriteModel`` reads it four times in the quad emission
 (``VectorMA(r_entorigin, scale * frame->..., ...)``), so the sprite renderer is
-the least ambiguous predecessor for both. The write and read forms are not
-portable: MSVC emits ``movss``/``mov imm32``/``push offset``, GCC non-PIC uses
-``mov [esp], offset``, and the SvEngine Linux PIC builds only reach the objects
-through a ``.got`` slot (``mov edi, ds:(r_blend_ptr - GOT)[ebx]``,
-``lea eax, (r_entorigin - GOT)[ebx]``). The shared LLM global resolver already
+the least ambiguous predecessor. The read form is not portable: MSVC emits
+``push offset``, GCC non-PIC uses ``mov [esp], offset``, and the SvEngine Linux
+PIC builds only reach the object through a ``.got`` slot
+(``lea eax, (r_entorigin - GOT)[ebx]``). The shared LLM global resolver already
 models all of them, including the GOT-indirect form used by the sibling
 ``r_visframecount`` locator, so no operand form is hardcoded here.
+
+The sibling ``r_blend`` is no longer recovered here: it is the sole
+writable-data store target of ``studioapi_StudioSetRenderamt``, so
+find-studioapi_StudioSetRenderamt emits it structurally instead.
 """
 
 from pathlib import Path
@@ -24,13 +21,6 @@ from pathlib import Path
 from ida_analyze_util import _load_yaml_mapping, preprocess_common_skill
 
 LLM_DECOMPILE = [
-    {
-        "symbol_name": "r_blend",
-        "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": ["references/{gamever}/engine/R_DrawSpriteModel.{platform}.yaml"],
-        "expected_result_sections": ["found_gv"],
-        "dependency_policy": {"R_DrawSpriteModel.{platform}.yaml": "required"},
-    },
     {
         "symbol_name": "r_entorigin",
         "prompt_path": "prompt/call_llm_decompile.md",
@@ -50,7 +40,7 @@ GV_FIELDS = [
     "gv_inst_disp",
     "gv_sig_allow_across_function_boundary:true",
 ]
-TARGET_GLOBAL_NAMES = ["r_blend", "r_entorigin"]
+TARGET_GLOBAL_NAMES = ["r_entorigin"]
 
 
 async def preprocess_skill(

@@ -481,6 +481,9 @@ except Exception as exc:
 LOCATE_STUDIO_SLOT_PY = (
     _LOCATE_SHARED_PY
     + r"""
+import ida_idp
+import ida_ua
+
 STUDIO_STR = STUDIO_STR_PLACEHOLDER
 SLOT_OFF = SLOT_OFF_PLACEHOLDER
 TABLE_DWORDS = 45
@@ -584,6 +587,31 @@ def cluster_bases(refs):
             out.append([value])
     return [group[0] for group in out]
 
+def slot_written_regs(insn, mnem):
+    # All instructions participate in tracking, including register copies,
+    # dereferences, partial writes and calls that have no disp32 operand.
+    if mnem == 'call':
+        return {0, 1, 2}  # eax, ecx, edx: x86 caller-saved registers.
+    aliases = (('eax', 'ax', 'al', 'ah'), ('ecx', 'cx', 'cl', 'ch'),
+               ('edx', 'dx', 'dl', 'dh'), ('ebx', 'bx', 'bl', 'bh'),
+               ('esp', 'sp'), ('ebp', 'bp'), ('esi', 'si'), ('edi', 'di'))
+    changed = set()
+    for index, op in enumerate(insn.ops):
+        if int(op.type) == int(idaapi.o_void):
+            break
+        if int(op.type) != int(idaapi.o_reg):
+            continue
+        if insn.get_canon_feature() & int(getattr(ida_idp, 'CF_CHG%d' % (index + 1))):
+            name = ida_idp.get_reg_name(int(op.reg), ida_ua.get_dtype_size(op.dtype))
+            for parent, names in enumerate(aliases):
+                if name in names:
+                    changed.add(parent)
+                    break
+    if mnem in ('mul', 'div', 'idiv', 'cdq', 'cwd') or (
+            mnem == 'imul' and int(insn.ops[1].type) == int(idaapi.o_void)):
+        changed.update((0, 2))
+    return changed
+
 def main():
     strs = find_exact_strings(STUDIO_STR)
     if len(strs) != 1:
@@ -624,15 +652,17 @@ def main():
     ref_insns = {}
     insns = []
     known_bases = {}
+    # Store targets synthesized as tracked_base + displacement and their bases.
+    # These remain separate from accesses through an address-taken global.
+    derived_targets = set()
+    derived_bases = set()
     for ea in func_items(slot_va):
         insn = idautils.DecodeInstruction(ea)
         if not insn:
             continue
         offb = disp32_operand_offset(insn)
-        if not offb:
-            continue
         direction = insn_direction(ea, insn)
-        targets = [x for x in writable_refs(ea) if anchor is None or x != anchor]
+        targets = [x for x in writable_refs(ea) if anchor is None or x != anchor] if offb else []
         # IDA can fold an absolute reference to a structure member onto the
         # structure base (observed for hl-8684's m1.oldtime).  The runtime GV
         # decoder consumes the embedded absolute dword, so prefer that exact
@@ -641,7 +671,7 @@ def main():
         for op in insn.ops:
             if int(op.type) == int(idaapi.o_void):
                 break
-            if (int(op.type) == int(idaapi.o_mem)
+            if (offb and int(op.type) == int(idaapi.o_mem)
                     and int(getattr(op, 'offb', 0) or 0) == int(offb)):
                 value = int(ida_bytes.get_dword(int(ea) + int(offb)))
                 if is_writable_data(value):
@@ -652,39 +682,58 @@ def main():
         # address fields through that register. IDA may label only
         # GOT+member; recover the real member target from the tracked pointee.
         computed = []
+        computed_bases = set()
+        indirect = []
         for op in insn.ops:
             if int(op.type) == int(idaapi.o_void):
                 break
-            if int(op.type) != int(idaapi.o_displ):
+            # SIB operands may include an untracked index; do not turn those
+            # into exact global addresses from the base alone.
+            if int(getattr(op, 'specflag1', 0)):
                 continue
             base_reg = int(getattr(op, 'reg', -1))
+            if int(op.type) == int(idaapi.o_phrase) and base_reg in known_bases:
+                indirect.append(int(known_bases[base_reg]))
+            if not offb or int(op.type) != int(idaapi.o_displ):
+                continue
             if base_reg in known_bases:
-                value = (int(known_bases[base_reg]) + int(op.addr)) & 0xFFFFFFFF
+                base_value = int(known_bases[base_reg])
+                value = (base_value + int(op.addr)) & 0xFFFFFFFF
                 if is_writable_data(value):
                     computed.append(value)
+                    computed_bases.add(base_value)
         if computed:
             targets = sorted(set(computed))
-        insns.append({'ea': hex(int(ea)), 'offb': offb, 'dir': direction,
-                      'targets': [hex(x) for x in targets],
-                      'disasm': disasm(ea)})
+            if direction == 'write':
+                derived_targets.update(computed)
+                derived_bases.update(computed_bases)
+        if indirect:
+            targets = sorted(set(targets + indirect))
+        if offb or targets:
+            insns.append({'ea': hex(int(ea)), 'offb': offb, 'dir': direction,
+                          'targets': [hex(x) for x in targets],
+                          'disasm': disasm(ea)})
         for target in targets:
             if seg_name(target) in ('.got', '.got.plt') and (idc.print_insn_mnem(ea) or '').lower() == 'mov':
                 pointee = int(ida_bytes.get_dword(target))
                 if not is_writable_data(pointee):
                     continue
                 target = pointee
-            addend = (gotoff_addend(ea, offb, target)
-                      if reg_relative_disp32(insn, offb, anchor) else 0)
-            ref_insns.setdefault(target, []).append(
-                {'ea': int(ea), 'len': int(insn.size), 'offb': offb, 'addend': addend})
+            if offb:
+                addend = (gotoff_addend(ea, offb, target)
+                          if reg_relative_disp32(insn, offb, anchor) else 0)
+                ref_insns.setdefault(target, []).append(
+                    {'ea': int(ea), 'len': int(insn.size), 'offb': offb, 'addend': addend})
             if direction == 'read':
                 reads.append(target)
             elif direction == 'write':
                 writes.append(target)
         mnem = (idc.print_insn_mnem(ea) or '').lower()
-        if int(insn.ops[0].type) == int(idaapi.o_reg):
+        next_base = None
+        destination = None
+        if (int(insn.ops[0].type) == int(idaapi.o_reg)
+                and ida_ua.get_dtype_size(insn.ops[0].dtype) == 4):
             destination = int(insn.ops[0].reg)
-            next_base = None
             if mnem == 'mov' and int(insn.ops[1].type) == int(idaapi.o_reg):
                 next_base = known_bases.get(int(insn.ops[1].reg))
             elif mnem == 'mov' and int(insn.ops[1].type) == int(idaapi.o_displ):
@@ -698,10 +747,10 @@ def main():
                         break
             elif mnem == 'lea' and len(targets) == 1:
                 next_base = int(targets[0])
-            if next_base is None:
-                known_bases.pop(destination, None)
-            else:
-                known_bases[destination] = int(next_base)
+        for changed in slot_written_regs(insn, mnem):
+            known_bases.pop(changed, None)
+        if destination is not None and next_base is not None:
+            known_bases[destination] = int(next_base)
     read_bases = cluster_bases(reads)
     write_bases = cluster_bases(writes)
     gv_refs = {}
@@ -724,6 +773,8 @@ def main():
         'read_bases': [hex(x) for x in read_bases],
         'raw_read_refs': [hex(x) for x in sorted(set(reads))],
         'write_bases': [hex(x) for x in write_bases],
+        'derived_targets': [hex(x) for x in sorted(derived_targets)],
+        'derived_bases': [hex(x) for x in sorted(derived_bases)],
         'ref_counts': {hex(t): len({int(f.start_ea) for f in
                                     (ida_funcs.get_func(int(x)) for x in idautils.DataRefsTo(t))
                                     if f is not None})
@@ -956,6 +1007,17 @@ SLOT_SHAPE_WRITE = "write"
 # avoided because the store still has to be the slot's only global access.
 SLOT_SHAPE_WRITE_NO_GV = "write_no_gv"
 SLOT_SHAPE_COPY12 = "copy12"
+# Exactly one writable-data store target, reads unrestricted.  The
+# StudioSetRenderamt family reads the current-entity pointer before its call,
+# and the x87 builds additionally reload the store target itself
+# (fild/fstp/fld/fmul/fstp), so every read-free write shape above rejects
+# them.  Only the write side is gated: renderamt lands in a pointer-relative
+# field, so r_blend stays the function's sole writable-data target.
+#
+# PIC stores through a register are resolved from their tracked global address
+# (lea eax,(r_blend-GOT)[ebx], then fstp [eax]). The LEA remains the encodable
+# disp32 reference; an address-taken read without a proven store is rejected.
+SLOT_SHAPE_WRITE_ALLOW_READS = "write_allow_reads"
 # Exactly two writable-data stores, each a single target, to two different
 # addresses, in instruction order, with no global reads. Unique-address
 # collapse would accept a later rewrite of the first target. cluster_bases
@@ -1013,6 +1075,19 @@ def _ordered_write_targets(located):
     return ordered
 
 
+def _hex_int_set(values):
+    """Hex-string address list as ints; absent means empty, malformed fails closed."""
+    out = set()
+    if values is None:
+        return out
+    try:
+        for value in values:
+            out.add(int(value, 0))
+    except (TypeError, ValueError):
+        return None
+    return out
+
+
 def _shape_gv_bases(located, shape):
     try:
         reads = [int(x, 0) for x in located["read_bases"]]
@@ -1035,6 +1110,14 @@ def _shape_gv_bases(located, shape):
     elif shape == SLOT_SHAPE_COPY12:
         if len(reads) == 1 and len(writes) == 1 and reads[0] != writes[0]:
             return reads + writes
+    elif shape == SLOT_SHAPE_WRITE_ALLOW_READS:
+        derived_targets = _hex_int_set(located.get("derived_targets"))
+        if derived_targets is None:
+            return None
+        direct_writes = [value for value in writes if value not in derived_targets]
+        if len(direct_writes) == 1:
+            return direct_writes
+        return None
     elif shape == SLOT_SHAPE_SKIP_GVS:
         return []
     return None

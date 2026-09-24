@@ -160,7 +160,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [studioapi_SetupModel](locators/studioapi_SetupModel.md) | engine | func | — | Unique studio-interface diagnostic → engine_studio_api slot 20 (0x50). Recovers pbodypart / psubmodel from the two `&global` out-param stores. |
 | [studioapi_SetupPlayerModel](locators/studioapi_SetupPlayerModel.md) | engine | func | — | Find the exact ClientDLL_CheckStudioInterface interface-mismatch literal and require exactly one hit. GoldSrc/HL25/CoF wording is |
 | [studioapi_StudioSetHeader](locators/studioapi_StudioSetHeader.md) | engine | func | — | Unique studio-interface diagnostic → owning function(s) → unique engine_studio_api table (validate_table_run; SvEngine 47/48 entries). |
-| [studioapi_StudioSetRenderamt](locators/studioapi_StudioSetRenderamt.md) | engine | func | — | Find the exact studio-interface diagnostic literal: HL_STUDIO_STRING ("Couldn't get client .dll studio model rendering interface. Version mismatch?\n") for… |
+| [studioapi_StudioSetRenderamt](locators/studioapi_StudioSetRenderamt.md) | engine | func | — | Find the exact studio-interface diagnostic literal: HL_STUDIO_STRING ("Couldn't get client .dll studio model rendering interface. Version mismatch?\n") for… Also emits `r_blend` from the accessor body. |
 | [studioapi_StudioSetRemapColors](locators/studioapi_StudioSetRemapColors.md) | engine | func | — | Unique studio-interface diagnostic → engine_studio_api slot 30 (0x78). Recovers r_topcolor / r_bottomcolor from two int stores in instruction order. |
 | [r_topcolor](locators/studioapi_StudioSetRemapColors.md) | engine | gv | — | First int store of studioapi_StudioSetRemapColors (parameter top). |
 | [r_bottomcolor](locators/studioapi_StudioSetRemapColors.md) | engine | gv | — | Second int store of studioapi_StudioSetRemapColors (parameter bottom). Do not sort by VA. |
@@ -278,7 +278,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [r_framecount](locators/r_framecount.md) | engine | gv | `R_RecursiveWorldNode` | `found_gv` against the annotated world-node-walk reference. In the walk the counter stamps surviving leaves and surfaces. |
 | [r_visframecount](locators/r_visframecount.md) | engine | gv | `R_RecursiveWorldNode` | `found_gv` against the same reference; in the walk it is the guard `if (node->visframe != r_visframecount) return;`. |
 | [r_entorigin](locators/r_entorigin.md) | engine | gv | `R_DrawSpriteModel` | `found_gv` against the annotated sprite renderer, which reads it four times as the first `VectorMA` operand of the quad corners. Moved off `R_DrawTEntitiesOnList` so SvEngine is covered too; values unchanged. |
-| [r_blend](locators/r_blend.md) | engine | gv | `R_DrawSpriteModel` | `found_gv` against the same reference: the sprite alpha, assigned `1.0` for `kRenderNormal` and multiplied by `255.0`. SvEngine Linux only reaches it through a `.got` slot, which the shared `got_indirect_targets`/`gv_pic_addend` resolver folds. |
+| [r_blend](locators/r_blend.md) | engine | gv | `studioapi_StudioSetRenderamt` | The accessor's sole writable-data store target (`SLOT_SHAPE_WRITE_ALLOW_READS`): it stores the render amount into a pointer-relative field, then writes `CL_FxBlend(currententity)/255.0` into `r_blend`. Reads are unrestricted because the same body reads `currententity` (and, on x87 builds, `r_blend` itself). |
 
 ## vtable / vfunc 槽恢复 (10)
 
