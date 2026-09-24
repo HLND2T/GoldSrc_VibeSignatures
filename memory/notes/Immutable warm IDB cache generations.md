@@ -22,7 +22,11 @@ Warm IDB cache is a rebuildable performance layer for neutral databases created 
 - Publish immutable generations through verified `.incoming-*` directories and atomic rename.
 - Record the complete allowed `.i64`/`.idb` primary and side-file inventory; never publish active lock files.
 - Restore only an exact generation selected by cache key and manifest SHA-256.
-- Retain READY plus the newest three generations, with minimum-age protection for other generations.
+- Retain READY plus the newest three generations, with minimum-age protection and persistent cross-job selection leases.
+- Store payloads/READY/leases in `idb-cache-v2/<tag>/`, isolated from legacy pruning. Keep shared producer/tag locks in `idb-cache/.locks/`.
+- Bind schema-2 PR/release selections to unique repository/run/attempt lease descriptors. Pin each verified entry before unlocking or pruning, then seal every tag's pin to the complete selection digest before publishing evidence.
+- Require live sealed leases for consumer validation/restore. Release this selection's pins only after every entry copies successfully; read-only verify and partial restore retain them.
+- Reclaim abandoned pins after the 36-day lifetime plus one hour of pruning clock grace. Malformed/unreadable metadata aborts pruning before any deletion; late retries need a fresh producer selection.
 
 ## Involved Files & Symbols
 
@@ -30,7 +34,8 @@ Warm IDB cache is a rebuildable performance layer for neutral databases created 
 - `idb_cache.py` — `warm_group()`, `_run_one_worker()`, `publish_generation()`
 - `ida_database_paths.py` — `database_cleanup_paths()`
 - `idb_cache_locks.py` — `producer_lock()`, `tag_lock()`, `exclusive_file_lock()`
-- `idb_cache_selection.py` — `prepare_selection_entries()`, `restore_selection_entries()`
+- `idb_cache_selection.py` — `prepare_selection_entries()`, `seal_selection_leases()`, `restore_selection_entries()`
+- `idb_cache_leases.py` — atomically persisted preparing/sealed pins, exact owner/digest/reference binding, bounded reclamation
 - `warmup_memory.py` — `ProducerMemoryOwner`, `MemoryLaunchGate`, `WindowsJobMemoryController`
 - `idb_cache_release.py` / `idb_cache_workflow.py` — release-all and bound-plan producers/consumers
 - `.github/workflows/warmup-idb.yml` — canonical IDA Python binding and producer configuration

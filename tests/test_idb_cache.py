@@ -37,6 +37,7 @@ from idb_cache import (
 )
 import idb_cache
 import idb_cache_selection
+from idb_cache_leases import new_lease, pin_generation, lease_reference
 from idb_cache_locks import IdbCacheError as IdbCacheLockError
 from idb_cache_locks import exclusive_file_lock, lock_root, producer_lock_path, tag_lock
 from idb_cache_release import (
@@ -124,7 +125,44 @@ def cache_fixture(root: Path):
     return workspace, persisted, binary, identity
 
 
+def pin_document(persisted: Path, document: dict) -> str:
+    for entry in document["entries"]:
+        with tag_lock(persisted, entry["tag"]):
+            pin_generation(
+                tag_root=idb_cache._tag_root(persisted, entry["tag"]),
+                lease=document["lease"],
+                reference=lease_reference(entry),
+            )
+    idb_cache_selection.seal_selection_leases(document=document, persisted_root=persisted)
+    return hashlib.sha256(canonical_json_bytes(document)).hexdigest()
+
+
 class PrepareSelectionConcurrencyTests(unittest.TestCase):
+    def test_selection_survives_another_prepare_pruning_the_same_tag(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace, persisted, _binary, identity = cache_fixture(Path(temporary))
+            variants = [identity] + [
+                {**identity, "ida_runtime": {"kernel_version": version}} for version in ("9.4", "9.5", "9.6")
+            ]
+            for index, variant in enumerate(variants, start=1):
+                publish_generation(
+                    persisted_root=persisted,
+                    identity=variant,
+                    workspace_root=workspace,
+                    run_id=f"historical-{index}",
+                    attempt=1,
+                    published_at=f"2026-01-0{index}T00:00:00Z",
+                )
+            group = SelectedBinaryGroup("game-1", "windows", workspace, tuple(identity["binaries"]))
+            fixed_now = datetime(2026, 2, 1, tzinfo=timezone.utc)
+            with patch.object(
+                idb_cache_selection, "prune_tag", side_effect=lambda **kw: prune_tag(now=fixed_now, **kw)
+            ):
+                entries = self._prepare(persisted, (group,), {("game-1", "windows"): identity})
+                self._prepare(persisted, (group,), {("game-1", "windows"): variants[-1]})
+            # A different invocation must retain A's exact generation, without re-probing READY.
+            verify_selection(persisted_root=persisted, selection=generation_selection(entries[0]))
+
     def test_prepared_generations_survive_later_prunes(self):
         fixed_now = datetime(2026, 2, 1, tzinfo=timezone.utc)
         for concurrency in (1, 2):
@@ -192,11 +230,9 @@ class PrepareSelectionConcurrencyTests(unittest.TestCase):
                         ),
                     ):
                         entries = self._prepare(persisted, groups, identities, concurrency)
-                    idb_cache_selection.validate_selection_entries(
-                        entries=entries,
-                        identities=identities,
-                        persisted_root=persisted,
-                    )
+                    for entry in entries:
+                        manifest = verify_selection(persisted_root=persisted, selection=generation_selection(entry))
+                        self.assertEqual(identities[(entry["tag"], entry["platform"])], manifest["identity"])
                     self.assertEqual(
                         [platform for platform in ("linux", "windows") if platform not in hits],
                         [call.kwargs["identity"]["binaries"][0]["platform"] for call in warm.call_args_list],
@@ -204,7 +240,7 @@ class PrepareSelectionConcurrencyTests(unittest.TestCase):
                     for entry in entries:
                         if entry["platform"] in selected:
                             self.assertEqual(selected[entry["platform"]], generation_selection(entry))
-                    generations = persisted / "idb-cache" / "game-1" / "generations"
+                    generations = persisted / idb_cache.CACHE_DIRECTORY_NAME / "game-1" / "generations"
                     if len(hits) < 2:
                         self.assertFalse((generations / historical[0]["generation"]).exists())
 
@@ -215,6 +251,7 @@ class PrepareSelectionConcurrencyTests(unittest.TestCase):
             persisted_root=persisted,
             run_id="run-2",
             attempt=1,
+            lease=new_lease(repository="local", run_id="run-2", attempt=1),
             ida_python_executable=sys.executable,
             max_concurrency=concurrency,
             worker_timeout_seconds=1,
@@ -392,7 +429,7 @@ class PrepareSelectionConcurrencyTests(unittest.TestCase):
             )
             group = SelectedBinaryGroup("game-1", "windows", workspace, tuple(identity["binaries"]))
             identities = {("game-1", "windows"): identity}
-            ready = persisted / "idb-cache" / "game-1" / "READY.json"
+            ready = persisted / idb_cache.CACHE_DIRECTORY_NAME / "game-1" / "READY.json"
             for fallback in (False, True):
                 with self.subTest(fallback=fallback):
                     if fallback:
@@ -409,7 +446,14 @@ class PrepareSelectionConcurrencyTests(unittest.TestCase):
                     self.assertGreaterEqual(verify.call_count, 1)
                     redundant_verify.assert_not_called()
                     warm.assert_not_called()
-            payload = persisted / "idb-cache" / "game-1" / "generations" / selection["generation"] / "payload"
+            payload = (
+                persisted
+                / idb_cache.CACHE_DIRECTORY_NAME
+                / "game-1"
+                / "generations"
+                / selection["generation"]
+                / "payload"
+            )
             next(payload.rglob("*.i64")).write_bytes(b"corrupt-idb")
             with patch.object(idb_cache_selection, "warm_group", side_effect=IdbCacheError("rebuild required")):
                 with self.assertRaisesRegex(IdbCacheError, "rebuild required"):
@@ -541,7 +585,7 @@ class IdbCacheGenerationTests(unittest.TestCase):
                 for index in range(5)
             ]
             protected = selections[0]["generation"]
-            generations = persisted / "idb-cache" / "game-1" / "generations"
+            generations = persisted / idb_cache.CACHE_DIRECTORY_NAME / "game-1" / "generations"
             kwargs = dict(persisted_root=persisted, tag="game-1", now=datetime(2026, 2, 1, tzinfo=timezone.utc))
             removed = prune_tag(**kwargs, protected_generations={protected})
             self.assertEqual([selections[1]["generation"]], removed)
@@ -568,7 +612,7 @@ class IdbCacheGenerationTests(unittest.TestCase):
                     run_id="old",
                     attempt=1,
                 )
-                incoming = persisted / "idb-cache" / "game-1" / "generations" / ".incoming-stale"
+                incoming = persisted / idb_cache.CACHE_DIRECTORY_NAME / "game-1" / "generations" / ".incoming-stale"
                 incoming.mkdir()
                 os.utime(incoming, (0, 0))
                 with self.assertRaises(IdbCacheError):
@@ -676,7 +720,9 @@ class IdbCacheGenerationTests(unittest.TestCase):
                     run_id="run-1",
                     attempt=1,
                 )
-                generation = persisted / "idb-cache" / "game-1" / "generations" / selection["generation"]
+                generation = (
+                    persisted / idb_cache.CACHE_DIRECTORY_NAME / "game-1" / "generations" / selection["generation"]
+                )
                 if mutation == "database":
                     path = generation / "payload" / "databases" / "engine" / "hw.dll.i64"
                     path.write_bytes(b"tampered")
@@ -709,7 +755,7 @@ class IdbCacheGenerationTests(unittest.TestCase):
                 run_id="run-1",
                 attempt=1,
             )
-            generation = persisted / "idb-cache" / "game-1" / "generations" / selection["generation"]
+            generation = persisted / idb_cache.CACHE_DIRECTORY_NAME / "game-1" / "generations" / selection["generation"]
             database = generation / "payload" / "databases" / "engine" / "hw.dll.i64"
             target = root / "outside.idb"
             target.write_bytes(database.read_bytes())
@@ -737,7 +783,7 @@ class IdbCacheGenerationTests(unittest.TestCase):
                         published_at=f"2026-01-0{index + 1}T00:00:00Z",
                     )
                 )
-            generations = persisted / "idb-cache" / "game-1" / "generations"
+            generations = persisted / idb_cache.CACHE_DIRECTORY_NAME / "game-1" / "generations"
             incoming = generations / ".incoming-stale"
             incoming.mkdir()
             os.utime(incoming, (0, 0))
@@ -880,6 +926,7 @@ class IdbCacheWorkflowTests(unittest.TestCase):
             group = SelectedBinaryGroup("game-1", "windows", workspace, tuple(identity["binaries"]))
             document = {
                 "schema_version": CACHE_SELECTION_SCHEMA_VERSION,
+                "lease": new_lease(repository="local", run_id="run-2", attempt=1),
                 "cache_mode": "warm",
                 "plan_sha256": plan["plan_sha256"],
                 "merge_sha": plan["merge_sha"],
@@ -895,6 +942,7 @@ class IdbCacheWorkflowTests(unittest.TestCase):
                     }
                 ],
             }
+            pin_document(persisted, document)
             self.assertEqual(
                 document,
                 validate_cache_selection(
@@ -981,10 +1029,10 @@ class IdbCacheWorkflowTests(unittest.TestCase):
                 bindir="bin",
                 persisted_root=persisted,
                 kernel_version="9.3",
-                selection_path=selection_path,
-                selection_sha256_path=selection_sha,
+                selection_path=root / "selection-2.json",
+                selection_sha256_path=root / "selection-2.sha256",
             )
-            self.assertEqual(first, verified)
+            self.assertEqual(second, verified)
 
     def test_direct_restore_rejects_invalid_inputs_before_copying(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1020,7 +1068,7 @@ class IdbCacheWorkflowTests(unittest.TestCase):
             generation = document["entries"][0]["generation"]
             payload = (
                 persisted
-                / "idb-cache"
+                / idb_cache.CACHE_DIRECTORY_NAME
                 / "game-1"
                 / "generations"
                 / generation
@@ -1075,7 +1123,7 @@ class IdbCacheReadyWriteTests(unittest.TestCase):
                 attempt=1,
                 published_at="2026-01-01T00:00:00Z",
             )
-            ready = persisted / "idb-cache" / "game-1" / "READY.json"
+            ready = persisted / idb_cache.CACHE_DIRECTORY_NAME / "game-1" / "READY.json"
             self.assertEqual(canonical_json_bytes(first), ready.read_bytes())
             written = []
             original = idb_cache.write_canonical_json
@@ -1271,15 +1319,47 @@ class IdbCacheLockTests(unittest.TestCase):
                 observed.append(lock_is_held_by_another_process(lock_path))
                 return original(**kwargs)
 
+            document = {"entries": [entry], "lease": new_lease(repository="local", run_id="run-2", attempt=1)}
+            digest = pin_document(persisted, document)
             Path(f"{binary}.i64").write_bytes(b"finder modification")
             with patch.object(idb_cache_selection, "restore_generation", side_effect=spy):
-                restore_selection_entries(entries=[entry], groups=(group,), persisted_root=persisted)
+                restore_selection_entries(
+                    entries=[entry],
+                    groups=(group,),
+                    persisted_root=persisted,
+                    lease=document["lease"],
+                    selection_sha256=digest,
+                )
             self.assertEqual([True], observed)
             self.assertEqual(b"primary-idb", Path(f"{binary}.i64").read_bytes())
             self.assertFalse(lock_is_held_by_another_process(lock_path))
 
 
 class IdbCacheReleaseTests(unittest.TestCase):
+    def test_failed_lease_sealing_never_publishes_selection_files(self):
+        import idb_cache_leases
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, ida_root = self._release_repository(root)
+            persisted = root / "persisted"
+            persisted.mkdir()
+            atomic_write = idb_cache_leases.write_canonical_json
+
+            def fail_seal(path, document):
+                if document["selection_sha256"] is not None:
+                    raise OSError("seal write failed")
+                return atomic_write(path, document)
+
+            with patch.object(idb_cache_leases, "write_canonical_json", side_effect=fail_seal):
+                with self.assertRaisesRegex(OSError, "seal write failed"):
+                    self._prepare(repo, persisted, ida_root, root)
+            self.assertFalse((root / "selection.json").exists())
+            self.assertFalse((root / "selection.sha256").exists())
+            pins = list((persisted / idb_cache.CACHE_DIRECTORY_NAME / "game-1" / "leases").glob("*.json"))
+            self.assertEqual(1, len(pins))
+            self.assertIsNone(json.loads(pins[0].read_bytes())["selection_sha256"])
+
     CONFIG = (
         b"modules:\n"
         b"  - name: engine\n"
@@ -1420,7 +1500,8 @@ class IdbCacheReleaseTests(unittest.TestCase):
                     producer_memory=ProducerMemoryOwner(None),
                 )
             self.assertEqual(["game-1"], warm_calls)
-            self.assertEqual(first, second)
+            self.assertEqual(first["entries"], second["entries"])
+            self.assertNotEqual(first["lease"]["lease_id"], second["lease"]["lease_id"])
 
     def test_consumer_restores_the_bound_generation_after_ready_advances(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1444,7 +1525,7 @@ class IdbCacheReleaseTests(unittest.TestCase):
             self.assertNotEqual(entry["generation"], advanced["generation"])
             self.assertEqual(
                 advanced,
-                json.loads((persisted / "idb-cache" / "game-1" / "READY.json").read_bytes()),
+                json.loads((persisted / idb_cache.CACHE_DIRECTORY_NAME / "game-1" / "READY.json").read_bytes()),
             )
             restore_release_selection(
                 **self._common(repo, persisted, ida_root),

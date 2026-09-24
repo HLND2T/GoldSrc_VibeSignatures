@@ -59,10 +59,31 @@ input order and share the existing tag lock. After every probe task finishes suc
 one group at a time, retaining per-binary worker concurrency and the single process memory owner. A probe-task failure
 waits for the pool to finish and aborts preparation before warming or writing a selection.
 
-Each Prepare keeps a separate in-memory set of selected generation names per tag. Verified probe hits and verified miss
-selections join that set before pruning, so later prunes in the same Prepare cannot delete earlier selections. Protection
-does not skip manifest/payload verification or replace normal retention; it ends with the call, and no persistent pin is
-written. Generations not yet selected and selections from earlier calls remain subject to normal pruning.
+Each Prepare creates a unique schema-2 selection lease owned by repository/run/attempt. Verified hits and miss
+publications are pinned under their tag lock before pruning or releasing the lock. Preparing pins protect early entries
+while other groups warm; after all entries exist, every tag's lease is sealed to the canonical selection SHA-256 before
+any selection/evidence files are written. Persistent protection covers other producers and the downstream job queue.
+It does not bypass manifest/payload validation or ordinary retention for unleased generations.
+
+The lease lasts 36 days from creation (the 35-day GitHub whole-workflow limit plus one day), and pruning adds one hour
+of clock-skew grace. The consumer rejects expired, missing, unsealed, or mismatched leases before copying. All entries
+must restore successfully before any of this selection's pins are released; partial failure keeps all pins. Independent
+verify never releases or renews pins. A cancelled producer, failed artifact upload, or killed consumer leaves pins for
+bounded expiry reclamation. Prune validates the complete lease inventory before any deletion; malformed, unreadable,
+unknown-version, or reparse-point metadata aborts pruning for that tag. Logs include pin/seal/release/expiry and every
+pruned generation and reason.
+
+Payloads, READY, and leases now live under `PERSISTED_WORKSPACE/idb-cache-v2/<tag>/`. The old
+`idb-cache/.locks/` remains the shared producer/tag coordination namespace so old and new producers cannot warm
+concurrently. Old source revisions only prune their original payload directory and cannot delete v2 pins or generations.
+Initial v2 use rebuilds the cache; there is no automatic import or deletion of legacy payloads. Do not move or delete
+the old `.locks` directory during legacy-data maintenance.
+
+A successful full restore consumes its selection's lease. Retrying only a later failed consumer job is not guaranteed
+once that lease is released or expired: re-run the full workflow including its producer for a new selection and lease.
+Generation names identify historical creators; lease ownership identifies the current consumer's producer, including
+cache hits and different attempts. Archived release evidence accepts legacy schema 1 and leased schema 2 descriptors
+without consulting live pins, so releases remain verifiable after restore or expiry.
 
 Both READY and fallback hits still hash the complete generation inside the probe's tag lock; only the immediate second hit
 verification is removed. Prune also hashes historical generations, and final selection validation before and after writing
@@ -115,3 +136,18 @@ retention window expires.
 
 Coverage for these procedures is exercised by the warm-cache test surface plus the real-runner acceptance described in
 [[Immutable warm IDB cache generations]] and the release runner evidence gates in [[self-hosted-runner-and-governance]].
+
+## Issue #239: cross-job selection lifetime and recovery
+
+- Trigger: an old cache hit verifies during Prepare, then another run selects a different identity and prunes before the first consumer starts; restore reports `Generation is not a plain directory`.
+- Root cause: producer serialization and tag locks protect operations, while the old in-memory protected set ended with one Prepare. Neither protected the handoff/queue between jobs.
+- Correct approach: persist and seal pins before publishing exact selections, consult all pins before pruning, release only after complete restore, and isolate v2 payloads from old source revisions' pruning.
+- Verification: the deterministic A-Prepare/B-Prepare/A-restore regression failed before the fix; local tests cover cross-process prune/restore into another workspace, hit/miss pins, multi-platform and multi-tag partial failure, independent owners/attempts, expiry/clock grace, malformed metadata, symlinks, publication failure, and legacy namespace isolation. Real Windows/SMB multi-runner acceptance remains a separate rollout gate; Linux process-lock tests do not establish SMB behavior.
+- Scope: shared PR/release IDB cache handoff. IDB identity, manifest, neutral payloads, and strict no-rebuild analysis remain intact. Archived release evidence validates schema 1 or schema 2 descriptors independently of live lease state or today's retention policy.
+
+Corrupt lease recovery is deliberately manual: stop new work for the affected tag, identify and drain/cancel all possibly
+referencing producer/consumer runs, preserve the exact lease bytes and generation inventory for diagnosis, then under
+the existing tag lock quarantine the damaged metadata outside `leases/`. Do not remove a pin merely because its JSON
+cannot be parsed; its owner cannot be determined safely. Resume with a full workflow including warmup. Future-dated
+pins beyond the one-hour clock allowance also block pruning: correct runner clocks and establish owner status first.
+The original `idb-cache/.locks/` remains live coordination data and is never retired with legacy payloads.

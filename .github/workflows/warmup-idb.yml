@@ -172,14 +172,14 @@ jobs:
               -kernel-version $env:IDA_KERNEL_VERSION --ida-python $env:IDA_PYTHON_EXE `
               --max-concurrency $env:IDB_WARMUP_MAX_CONCURRENCY --worker-timeout-seconds 1800 `
               -source-sha $env:SOURCE_SHA `
-              -run-id "${{ github.run_id }}" -attempt "${{ github.run_attempt }}" `
+              --repository "${{ github.repository }}" -run-id "${{ github.run_id }}" -attempt "${{ github.run_attempt }}" `
               -output $selection -output-sha256 $selectionSha
           } else {
             uv run python idb_cache_workflow.py prepare `
               -repo-root $env:GITHUB_WORKSPACE -plan (Join-Path $env:CACHE_BUNDLE 'plan.json') -merge-ref HEAD -bindir bin `
               -persisted-root $env:PERSISTED_WORKSPACE -kernel-version $env:IDA_KERNEL_VERSION `
               --ida-python $env:IDA_PYTHON_EXE --max-concurrency $env:IDB_WARMUP_MAX_CONCURRENCY `
-              --worker-timeout-seconds 1800 -run-id "${{ github.run_id }}" `
+              --worker-timeout-seconds 1800 --repository "${{ github.repository }}" -run-id "${{ github.run_id }}" `
               -attempt "${{ github.run_attempt }}" -output $selection -output-sha256 $selectionSha
           }
           if ($LASTEXITCODE -ne 0) { throw 'warm IDB cache preparation failed' }

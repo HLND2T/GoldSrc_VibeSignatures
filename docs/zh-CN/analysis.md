@@ -38,6 +38,15 @@ uv run python warmup_idb.py -gamever cstrike-10210 -python "<带 idalib 的解�
 二进制。`-platform` 可收窄范围，`-force` 使全部数据库失效并重新预热，`-max-concurrency` 覆盖
 `IDB_WARMUP_MAX_CONCURRENCY`，`IDB_WARMUP_MAX_MEMORY_MIB` 启用 aggregate 内存准入。
 
+CI 的跨 job 预热使用 schema-2 exact selection 和持久化租约。缓存 payload、READY 和租约位于
+`PERSISTED_WORKSPACE/idb-cache-v2/<tag>/`，与旧版本清理程序隔离；首次使用会重新预热。
+`idb-cache/.locks/` 仍用于新旧 producer 的共同互斥，不应随旧缓存删除。
+
+租约从 Prepare 创建起保留 36 天，清理另加 1 小时时钟容差；整个 selection 恢复成功后立即释放。
+部分恢复失败会保留全部保护。遇到租约缺失、已释放或过期，应重跑包含 warmup 的完整 workflow；
+仅重跑下游 job 不保证旧 selection 仍可用。更多维护和真实多 runner 验收要求见
+[IDB cache 运维手册](../../memory/idb-cache-operations-runbook.md)。
+
 ### Blob 游戏二进制
 
 部分旧 GoldSrc 版本携带非 PE 的 Metahook "blob" 二进制。分析前请使用 `/decrypt-blob-gamebin` 斜杠命令（或
