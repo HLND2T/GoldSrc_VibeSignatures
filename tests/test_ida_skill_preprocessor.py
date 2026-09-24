@@ -1402,15 +1402,13 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual([0x111C50B4], _shape_gv_bases(located, SLOT_SHAPE_WRITE_ALLOW_READS))
 
-    def test_write_allow_reads_falls_back_to_address_taken_read_on_pic(self):
+    def test_write_allow_reads_rejects_read_with_only_derived_store(self):
         from ida_preprocessor_scripts._studio_player_model_common import (
             SLOT_SHAPE_WRITE_ALLOW_READS,
             _shape_gv_bases,
         )
 
-        # SvEngine Linux: r_blend is only address-taken (lea) and stored through
-        # the register, so the one recorded store target is the renderamt field
-        # synthesized as currententity+0x2FC from a stale base register.
+        # Old stale-base metadata must no longer authorize a read-only fallback.
         located = {
             "read_bases": ["0x30f6f78", "0x7ae12cc"],
             "write_bases": ["0x30f7274"],
@@ -1419,7 +1417,7 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
             "insns": [],
         }
 
-        self.assertEqual([0x7AE12CC], _shape_gv_bases(located, SLOT_SHAPE_WRITE_ALLOW_READS))
+        self.assertIsNone(_shape_gv_bases(located, SLOT_SHAPE_WRITE_ALLOW_READS))
 
     def test_write_allow_reads_rejects_zero_or_multiple_stores(self):
         from ida_preprocessor_scripts._studio_player_model_common import (
@@ -1463,25 +1461,24 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
         }
         self.assertIsNone(_shape_gv_bases(located, SLOT_SHAPE_WRITE_ALLOW_READS))
 
-    def test_studio_slot_derived_metadata_only_tracks_writes(self):
+    def _collect_studio_slot(self, operations):
         from ida_preprocessor_scripts._studio_player_model_common import LOCATE_STUDIO_SLOT_PY
 
-        # Execute the actual collector with decoded instructions: address-take
-        # two bases, read a field through one, and store through the other.
-        def operand(kind, reg=-1, addr=0):
-            return SimpleNamespace(type=kind, reg=reg, addr=addr, offb=2)
+        def operand(kind, reg=-1, addr=0, offb=0, dtype=4):
+            return SimpleNamespace(type=kind, reg=reg, addr=addr, offb=offb, dtype=dtype, specflag1=0)
 
-        void, reg, displ, mem = 0, 1, 2, 3
-        instructions = {
-            0x200: ("lea", "read", [operand(reg, 0), operand(displ, 9)], [0x1000]),
-            0x206: ("lea", "read", [operand(reg, 1), operand(displ, 9)], [0x3000]),
-            0x20C: ("fld", "read", [operand(displ, 0, 0x2FC)], []),
-            0x212: ("fstp", "write", [operand(displ, 1, 0x2FC)], []),
-        }
-        decoded = {
-            ea: SimpleNamespace(ops=ops + [operand(void)], size=6) for ea, (_, _, ops, _) in instructions.items()
-        }
-        function = SimpleNamespace(start_ea=0x200, end_ea=0x218)
+        void, reg, displ, mem, phrase, imm = range(6)
+        instructions = {}
+        decoded = {}
+        for index, (mnem, ops, refs, changed) in enumerate(operations):
+            ea = 0x200 + index * 6
+            instructions[ea] = (mnem, refs)
+            decoded[ea] = SimpleNamespace(
+                ops=[operand(*op) for op in ops] + [operand(void)],
+                size=6,
+                get_canon_feature=lambda changed=changed: changed,
+            )
+        function = SimpleNamespace(start_ea=0x200, end_ea=0x200 + len(operations) * 6)
         namespace = {
             "STUDIO_STR": "studio",
             "SLOT_OFF": 0xAC,
@@ -1492,14 +1489,20 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
             "validate_table_run": lambda _: 46,
             "pic_anchor": lambda _: None,
             "got_anchor": lambda _: None,
-            "disp32_operand_offset": lambda _: 2,
-            "insn_direction": lambda ea, _: instructions[ea][1],
-            "writable_refs": lambda ea: instructions[ea][3],
+            "writable_refs": lambda ea: instructions[ea][1],
             "is_writable_data": lambda ea: 0x1000 <= ea < 0x4000,
             "seg_name": lambda _: ".data",
             "reg_relative_disp32": lambda *_: False,
             "disasm": lambda ea: instructions[ea][0],
-            "idaapi": SimpleNamespace(o_void=void, o_reg=reg, o_displ=displ, o_mem=mem),
+            "idaapi": SimpleNamespace(o_void=void, o_reg=reg, o_displ=displ, o_mem=mem, o_phrase=phrase, o_imm=imm),
+            "ida_idp": SimpleNamespace(
+                CF_CHG1=1,
+                CF_CHG2=2,
+                get_reg_name=lambda reg, size: (
+                    "al" if size == 1 else ("eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi")[reg]
+                ),
+            ),
+            "ida_ua": SimpleNamespace(get_dtype_size=lambda dtype: dtype),
             "ida_bytes": SimpleNamespace(get_dword=lambda _: 0x200),
             "ida_funcs": SimpleNamespace(get_func=lambda _: function),
             "idautils": SimpleNamespace(DecodeInstruction=decoded.get, DataRefsTo=lambda _: []),
@@ -1510,17 +1513,93 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
             body=[
                 node
                 for node in tree.body
-                if isinstance(node, ast.FunctionDef) and node.name in {"main", "cluster_bases"}
+                if isinstance(node, ast.FunctionDef)
+                and node.name
+                in {"main", "cluster_bases", "disp32_operand_offset", "insn_direction", "slot_written_regs"}
             ],
             type_ignores=[],
         )
         exec(compile(collector, "<studio-slot-collector>", "exec"), namespace)
-        located = namespace["main"]()
+        return namespace["main"]()
+
+    def test_studio_slot_derived_metadata_only_tracks_writes(self):
+        # Two address-taken globals, followed by a derived read and write.
+        located = self._collect_studio_slot(
+            [
+                ("lea", [(1, 0), (2, 9, 0, 2)], [0x1000], 1),
+                ("lea", [(1, 1), (2, 9, 0, 2)], [0x3000], 1),
+                ("fld", [(2, 0, 0x2FC, 2)], [], 0),
+                ("fstp", [(2, 1, 0x2FC, 2)], [], 1),
+            ]
+        )
 
         self.assertEqual(["0x1000", "0x12fc", "0x3000"], located["read_bases"])
         self.assertEqual(["0x32fc"], located["write_bases"])
         self.assertEqual(["0x32fc"], located["derived_targets"])
         self.assertEqual(["0x3000"], located["derived_bases"])
+
+    def test_studio_slot_dereference_invalidates_base_without_disp32(self):
+        located = self._collect_studio_slot(
+            [
+                ("lea", [(1, 0), (2, 9, 0, 2)], [0x1000], 1),
+                ("mov", [(1, 0), (4, 0)], [], 1),
+                ("mov", [(2, 0, 0x2FC, 2), (1, 2)], [], 1),
+            ]
+        )
+        self.assertEqual([], located["write_bases"])
+        self.assertEqual([], located["derived_targets"])
+
+    def test_studio_slot_register_copy_preserves_get_times_member_base(self):
+        located = self._collect_studio_slot(
+            [
+                ("lea", [(1, 0), (2, 9, 0, 2)], [0x1000], 1),
+                ("mov", [(1, 1), (1, 0)], [], 1),
+                ("fld", [(2, 1, 0x100, 2)], [], 0),
+                ("fld", [(2, 1, 0x108, 2)], [], 0),
+            ]
+        )
+        self.assertEqual(["0x1000", "0x1100", "0x1108"], located["raw_read_refs"])
+
+    def test_studio_slot_clobbers_without_disp32_do_not_leave_globals(self):
+        for mnem, ops in [("xor", [(1, 0), (1, 0)]), ("pop", [(1, 0)]), ("mov", [(1, 0, 0, 0, 1), (5, -1, 0)])]:
+            with self.subTest(mnem=mnem, ops=ops):
+                located = self._collect_studio_slot(
+                    [
+                        ("lea", [(1, 0), (2, 9, 0, 2)], [0x1000], 1),
+                        (mnem, ops, [], 1),
+                        ("mov", [(2, 0, 0x2FC, 2), (1, 2)], [], 1),
+                    ]
+                )
+                self.assertEqual([], located["write_bases"])
+
+    def test_studio_slot_indirect_store_uses_address_reference_after_read_only_instructions(self):
+        from ida_preprocessor_scripts._studio_player_model_common import SLOT_SHAPE_WRITE_ALLOW_READS, _shape_gv_bases
+
+        located = self._collect_studio_slot(
+            [
+                ("lea", [(1, 0), (2, 9, 0, 2)], [0x3000], 1),
+                ("mov", [(1, 1), (1, 0)], [], 1),
+                ("test", [(1, 1), (1, 1)], [], 0),
+                ("push", [(1, 1)], [], 0),
+                ("fstp", [(4, 1)], [], 1),
+            ]
+        )
+        self.assertEqual(["0x3000"], located["write_bases"])
+        self.assertEqual([0x3000], _shape_gv_bases(located, SLOT_SHAPE_WRITE_ALLOW_READS))
+        self.assertEqual("0x200", located["gv_refs"]["0x3000"]["ea"])
+        self.assertEqual(2, located["gv_refs"]["0x3000"]["offb"])
+
+    def test_studio_slot_call_invalidates_volatile_bases_only(self):
+        located = self._collect_studio_slot(
+            [
+                ("lea", [(1, 0), (2, 9, 0, 2)], [0x1000], 1),
+                ("lea", [(1, 3), (2, 9, 0, 2)], [0x3000], 1),
+                ("call", [(5, -1, 0x800)], [], 0),
+                ("fstp", [(4, 0)], [], 1),
+                ("fstp", [(4, 3)], [], 1),
+            ]
+        )
+        self.assertEqual(["0x3000"], located["write_bases"])
 
     def test_global_targets_use_decoded_absolute_operand_over_offset_base_xref(self):
         detail = {

@@ -68,21 +68,22 @@ not a global reference; the only absolute writable-data store left is `r_blend`.
   (`0x10242D39` on hl-10210 W) and remains one of six writers alongside
   `R_DrawTEntitiesOnList` and `R_RenderScene`, but the sprite renderer now only
   carries [[r_entorigin]].
-- **SvEngine Linux inverts the roles, so the shape needs its second tier.** On
+- **SvEngine Linux stores through an address-taken register.** On
   svencoop-8948/10257 `hw.so` the store is indirect: `lea eax,
   (r_blend - GOT)[ebx]` (`0xA0A4D` on 10257, offset `+0x2D`) then
-  `fstp dword ptr [eax]` (`0xA0A63`, `o_phrase` — IDA records no data xref, so
-  the write is invisible). `r_blend` therefore shows up only as a `lea` **read**,
-  and the one recorded store target is the `renderamt` field synthesized as
-  `currententity + 0x2FC` from a base register whose tracked value is stale (the
-  intervening `mov eax,[eax]` has no disp32 operand and is skipped). The shape
-  drops synthesized store targets and falls back only when at least one store
-  exists and no direct store remains. Multiple direct stores are rejected.
-  `derived_targets` / `derived_bases` contain only synthesized stores and their
-  bases; derived reads must not authorize fallback or remove read candidates.
-  The fallback selects the sole read that is not a synthesized store's base.
-  The artifact then carries `gv_inst_offset: 0x2D`,
+  `fstp dword ptr [eax]` (`0xA0A63`, `o_phrase`, no IDA data xref). The shared
+  collector tracks the LEA's global address through register copies and
+  recognizes the real indirect store. The artifact retains the LEA as its
+  encodable disp32 reference and carries `gv_inst_offset: 0x2D`,
   `gv_inst_length: 0x6`, `gv_inst_disp: 0x2`, `gv_pic_addend: 0x2ee000`.
+- **Update register state even without a disp32 operand.** The old early
+  `continue` skipped `mov eax,[eax]`, leaving the address of `currententity`
+  tracked as though it were the pointer's runtime value. The following
+  `mov [eax+2FCh],edx` then synthesized a false writable global. Every decoded
+  instruction now participates in state updates; dereferences, register
+  overwrites (including partial registers) and call-clobbered registers lose
+  their tracked base. Read-only instructions preserve it. The shape requires
+  a real non-derived write; the former read-target fallback has been removed.
 - svencoop-10257 `hw.so` has **no** `.symtab` name for either `r_blend` or
   `currententity` (unlike hl-10210, hl-8684 and svencoop-8948, whose `.so`s
   export both), so that binary can only be validated structurally.
@@ -90,6 +91,14 @@ not a global reference; the only absolute writable-data store left is `r_blend`.
   hl-10210 L `0x13cf808` (`.symtab`), hl-8684 L `0x1367260` (`.symtab`),
   svencoop-8948 L `0x7ac112c` (`.symtab`), svencoop-10257 W `0x8e36310`,
   svencoop-10257 L `0x7ae12cc`.
+- Shared-tracking regression validation (2026-09-24): fresh isolated IDA runs
+  covered 225 studio-related finder nodes across all 11 configs / 15 binaries.
+  All succeeded. Of 495 YAML outputs, 480 matched the baseline mappings
+  (including GetTimes globals); all 15 `r_blend` VAs matched, with only the
+  planned sprite-to-studio signature-anchor migration differing. Unit coverage
+  exercises no-disp32 dereferences, register copies, partial writes, volatile
+  call clobbers and indirect stores retaining the original LEA reference.
+  The full source test suite ran 1141 tests, `OK (skipped=9)`.
 
 ## Relations
 
