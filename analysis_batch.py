@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
 import time
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -41,7 +40,7 @@ NODE_TERMINAL_STATUSES = frozenset({"succeeded", "failed", "skipped", "aborted"}
 WORKER_STATUSES = frozenset({WORKER_STATUS_SUCCEEDED, WORKER_STATUS_FAILED})
 DEFAULT_WORKER_TIMEOUT_SECONDS = 4 * 3600.0
 DEFAULT_ADMISSION_TIMEOUT_SECONDS = 300.0
-TREE_KILL_COMMAND_TIMEOUT_SECONDS = 15.0
+TREE_TERMINATION_TIMEOUT_SECONDS = 15.0
 SERIAL_REASON_MEMORY_LIMIT_EXCEEDED = "memory_limit_exceeded"
 
 
@@ -495,37 +494,25 @@ class _ActiveWorker:
 def terminate_process_tree(process: WorkerProcess) -> None:
     """Hard-kill one owned worker process together with its whole descendant tree.
 
-    Must run while the root process is still alive: descendants are attributed
-    to the worker through the root (the ``taskkill /T`` walk, the /proc PPid
-    chain), and once the root exits they are reparented and can no longer be
-    identified, so a root exit alone never proves the tree exited. The child
-    pid stays reserved until ``wait()`` reaps it, so this cannot hit an
-    unrelated process. Callers stay bounded: after this they still wait on the
-    root process to confirm exit.
+    Windows batch workers own a dedicated nested Job, which retains descendants
+    even after their root exits. Other processes use a tree walk, which must run
+    while their root is alive. The child pid stays reserved until ``wait()``
+    reaps it, so the tree walk cannot hit an unrelated process.
     """
+    job = getattr(process, "_gsvibe_job", None)
+    if job is not None:
+        job.terminate_and_wait(timeout_seconds=TREE_TERMINATION_TIMEOUT_SECONDS)
+        job.close()
+        process._gsvibe_job = None
+        return
     pid = getattr(process, "pid", None)
     if pid is None:
         process.kill()
         return
     if os.name == "nt":
-        _kill_windows_process_tree(int(pid))
+        raise RuntimeError("Windows batch worker has no assigned Job")
     else:
         _kill_posix_process_tree(int(pid))
-
-
-def _kill_windows_process_tree(pid: int) -> None:
-    result = subprocess.run(
-        ["taskkill", "/F", "/T", "/PID", str(pid)],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-        timeout=TREE_KILL_COMMAND_TIMEOUT_SECONDS,
-    )
-    if result.returncode != 0:
-        # A non-zero taskkill (kill denied, or the pid already gone and the
-        # tree no longer attributable) means the owned tree's exit cannot be
-        # established; callers must keep treating the worker as uncleaned.
-        raise RuntimeError(f"taskkill /F /T /PID {pid} failed with exit code {result.returncode}")
 
 
 def _kill_posix_process_tree(pid: int) -> None:
@@ -682,6 +669,12 @@ def run_batch(
         item_summaries.append((result.work_item.work_item_id, result.status))
 
     def finish_worker(worker: _ActiveWorker, *, exit_code: int) -> WorkerResult | None:
+        job = getattr(worker.process, "_gsvibe_job", None)
+        if job is not None:
+            # KILL_ON_JOB_CLOSE also reaps descendants when a root exits before
+            # its children. Keep the handle until the root's exit was observed.
+            job.close()
+            worker.process._gsvibe_job = None
         if memory_gate is not None:
             memory_gate.worker_finished()
         try:

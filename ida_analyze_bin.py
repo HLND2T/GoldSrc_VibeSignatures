@@ -27,6 +27,7 @@ from dotenv import load_dotenv
 import agent_runner
 from analysis_batch import (
     RESULT_SCHEMA_VERSION,
+    TREE_TERMINATION_TIMEOUT_SECONDS,
     BatchDiagnostics,
     BatchPlanError,
     BatchSchedule,
@@ -121,6 +122,7 @@ from process_reporter import (
 )
 from process_reporter_factory import DEFAULT_REDIS_PREFIX, DEFAULT_REDIS_URL, create_process_reporter
 from trusted_yaml import load_yaml_file
+from warmup_memory import WindowsWorkerJob
 
 load_dotenv()
 
@@ -764,6 +766,26 @@ def wait_for_mcp_ready(process, host, port, timeout=MCP_STARTUP_TIMEOUT, retry_i
         time.sleep(max(0.0, retry_interval))
 
 
+def _terminate_mcp_process_tree(process) -> None:
+    """Stop the external MCP launcher and its children on platforms without an MCP Job."""
+    if os.name != "nt":
+        terminate_process_tree(process)
+        return
+    pid = getattr(process, "pid", None)
+    if pid is None:
+        process.kill()
+        return
+    result = subprocess.run(
+        ["taskkill", "/F", "/T", "/PID", str(pid)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+        timeout=TREE_TERMINATION_TIMEOUT_SECONDS,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"taskkill /F /T /PID {pid} failed with exit code {result.returncode}")
+
+
 def stop_idalib_mcp_process(process, debug=False):
     if process is None or process.poll() is not None:
         return
@@ -773,7 +795,7 @@ def stop_idalib_mcp_process(process, debug=False):
         # The spawned idalib-mcp launcher detaches worker processes that can
         # outlive it and keep holding the IDB lock; terminate() only reaches
         # the launcher itself, so kill the whole descendant tree first.
-        terminate_process_tree(process)
+        _terminate_mcp_process_tree(process)
     except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
         if debug:
             print(f"  Process-tree stop unavailable: {exc}")
@@ -2874,6 +2896,8 @@ def run_all(args) -> int:
 
 
 _BATCH_WORKER_FLAG = "--internal-batch-worker"
+_BATCH_JOB_START_FILE_ENV = "GSVIBE_ANALYSIS_JOB_START_FILE"
+_BATCH_JOB_START_TIMEOUT_SECONDS = 30.0
 _BATCH_TERMINAL_STATUSES = frozenset({"succeeded", "failed", "skipped", "aborted"})
 _BATCH_WORKER_ENV_OPTIONS = (
     ("GSVIBE_AGENT", "agent"),
@@ -3071,6 +3095,18 @@ def _batch_worker_main(request_path: str) -> int:
     return exit_code
 
 
+def _wait_for_batch_job_assignment() -> None:
+    """Keep a Windows worker idle until the coordinator assigns its nested Job."""
+    start_file = os.environ.get(_BATCH_JOB_START_FILE_ENV)
+    if not start_file:
+        return
+    deadline = time.monotonic() + _BATCH_JOB_START_TIMEOUT_SECONDS
+    while not Path(start_file).is_file():
+        if time.monotonic() >= deadline:
+            raise TimeoutError("batch worker was not assigned to its Windows Job")
+        time.sleep(0.05)
+
+
 def _batch_binary_relative_paths(tag: str, modules, platforms) -> dict[tuple[str, str], str]:
     paths: dict[tuple[str, str], str] = {}
     for module in modules:
@@ -3215,6 +3251,7 @@ def _run_analysis_batch(args, diagnostics: BatchDiagnostics) -> int:
     def launch_worker(item):
         request_path = request_root / f"{item.work_item_id}.request.json"
         result_path = request_root / f"{item.work_item_id}.result.json"
+        start_path = request_root / f"{item.work_item_id}.job-ready"
         request = {
             "run_id": work_item_run_id(batch_run_id, item.work_item_id),
             "work_item_id": item.work_item_id,
@@ -3253,6 +3290,10 @@ def _run_analysis_batch(args, diagnostics: BatchDiagnostics) -> int:
         _atomic_write_json(request_path, request)
         environment = os.environ.copy()
         environment[COORDINATED_CHILD_ENV] = "1"
+        if os.name == "nt":
+            environment[_BATCH_JOB_START_FILE_ENV] = str(start_path)
+        else:
+            environment.pop(_BATCH_JOB_START_FILE_ENV, None)
         if worker_vas_limit_mib is not None:
             environment[ANALYSIS_WORKER_VAS_LIMIT_ENV] = str(worker_vas_limit_mib)
         else:
@@ -3262,12 +3303,35 @@ def _run_analysis_batch(args, diagnostics: BatchDiagnostics) -> int:
             if value is not None:
                 environment[env_name] = str(value)
         command = [sys.executable, os.fspath(Path(__file__).resolve()), _BATCH_WORKER_FLAG, str(request_path)]
-        process = subprocess.Popen(
-            command,
-            env=environment,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
+        job = WindowsWorkerJob() if os.name == "nt" else None
+        process = None
+        try:
+            process = subprocess.Popen(
+                command,
+                env=environment,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+            if job is not None:
+                job.assign(process)
+                process._gsvibe_job = job
+                start_path.touch()
+        except BaseException as launch_error:
+            if job is not None:
+                try:
+                    job.close()
+                except OSError as cleanup_error:
+                    launch_error.add_note(f"Additionally failed to close the worker Job: {cleanup_error}")
+            if process is not None:
+                try:
+                    process.kill()
+                    process.wait(timeout=5)
+                except (OSError, subprocess.TimeoutExpired) as cleanup_error:
+                    launch_error.add_note(f"Additionally failed to reap the unstarted worker: {cleanup_error}")
+                finally:
+                    if process.stdout is not None:
+                        process.stdout.close()
+            raise
 
         def drain(prefix: str) -> None:
             assert process.stdout is not None
@@ -3312,6 +3376,8 @@ def _run_analysis_batch(args, diagnostics: BatchDiagnostics) -> int:
         try:
             for path in request_root.glob("*.json"):
                 path.unlink()
+            for path in request_root.glob("*.job-ready"):
+                path.unlink()
             request_root.rmdir()
         except OSError as cleanup_error:
             print(f"Warning: batch request cleanup failed: {cleanup_error}")
@@ -3344,6 +3410,7 @@ def main(argv=None) -> int:
         if len(raw_argv) != 2:
             print(f"Error: {_BATCH_WORKER_FLAG} requires exactly one request file path")
             return 2
+        _wait_for_batch_job_assignment()
         return _batch_worker_main(raw_argv[1])
     args = parse_args(argv)
     if args.batch_selection or (args.allgamever and args.force_all):

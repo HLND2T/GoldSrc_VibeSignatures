@@ -821,7 +821,7 @@ class SchedulerTests(unittest.TestCase):
 
         def kill_tree(target):
             kill_attempts.append(target)
-            raise RuntimeError("taskkill unavailable")
+            raise RuntimeError("Job termination unavailable")
 
         gate = FakeGate(capacity=4)
         # skip_error must not re-arm admission behind an unconfirmed worker.
@@ -878,7 +878,7 @@ class SchedulerTests(unittest.TestCase):
 
         def kill_tree(target):
             kill_attempts.append(target)
-            raise RuntimeError("taskkill unavailable")
+            raise RuntimeError("Job termination unavailable")
 
         gate = FakeGate(capacity=4)
         outcome = self._run_with_cleanup_failure(
@@ -912,7 +912,7 @@ class SchedulerTests(unittest.TestCase):
         serial_process = FakeProcess(polls_until_exit=None, stubborn=True)
 
         def kill_tree(target):
-            raise RuntimeError("taskkill unavailable")
+            raise RuntimeError("Job termination unavailable")
 
         def launch(item):
             if item.phase == PHASE_PARALLEL:
@@ -1299,6 +1299,21 @@ class SelectedBatchCoordinatorTests(unittest.TestCase):
             else:
                 self.assertNotIn(variable, child_environment)
 
+    @unittest.skipUnless(os.name == "nt", "Windows Job assignment requires Windows")
+    def test_job_assignment_failure_kills_unstarted_batch_worker(self):
+        job = unittest.mock.Mock()
+        job.assign.side_effect = OSError("Job assignment denied")
+        process = unittest.mock.Mock()
+        process.pid = 4242
+        with (
+            unittest.mock.patch.object(self.analyzer, "WindowsWorkerJob", return_value=job),
+            unittest.mock.patch.object(self.analyzer.subprocess, "Popen", return_value=process),
+        ):
+            self.assertEqual(1, self.analyzer.main(self.arguments))
+        job.close.assert_called_once_with()
+        process.kill.assert_called_once_with()
+        process.wait.assert_called_once_with(timeout=5)
+
     def test_structural_planning_defers_only_file_checks(self):
         from analysis_planner import AnalysisPlanError, build_execution_plan
         from tests.test_analysis_planner import module, skill
@@ -1323,7 +1338,10 @@ class SelectedBatchCoordinatorTests(unittest.TestCase):
         original_popen = subprocess.Popen
         original_run = run_batch
         fixture = """
-import json, pathlib, sys
+import json, os, pathlib, sys, time
+ready = os.environ.get('GSVIBE_ANALYSIS_JOB_START_FILE')
+while ready and not pathlib.Path(ready).is_file():
+    time.sleep(0.01)
 request = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding='utf-8'))
 failed = sys.argv[2] == 'failed'
 status = 'failed' if failed else 'succeeded'
@@ -1433,31 +1451,74 @@ class BatchDiagnosticTests(unittest.TestCase):
 
 
 class ProcessTreeKillHelperTests(unittest.TestCase):
-    def test_windows_tree_kill_invokes_taskkill_with_tree_flag(self):
+    @unittest.skipUnless(os.name == "nt", "Windows Job Objects require Windows")
+    def test_windows_worker_job_kills_descendants_without_killing_sibling_worker(self):
+        from warmup_memory import WindowsWorkerJob
+
+        script = (
+            "import pathlib, subprocess, sys, time; "
+            "ready = pathlib.Path(sys.argv[1]); "
+            "\nwhile not ready.is_file(): time.sleep(0.01)\n"
+            "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)']); "
+            "print('started', flush=True); time.sleep(30)"
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            jobs = [WindowsWorkerJob(), WindowsWorkerJob()]
+            processes = []
+            try:
+                for index, job in enumerate(jobs):
+                    ready = Path(directory) / f"worker-{index}.ready"
+                    process = subprocess.Popen(
+                        [sys.executable, "-c", script, str(ready)],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                    )
+                    processes.append(process)
+                    job.assign(process)
+                    ready.touch()
+                    self.assertEqual(b"started", process.stdout.readline().strip())
+                    self.assertGreaterEqual(job._api.active_processes(job._handle), 2)
+                jobs[0].terminate_and_wait(timeout_seconds=5)
+                self.assertIsNotNone(processes[0].wait(timeout=5))
+                self.assertIsNone(processes[1].poll())
+                self.assertGreaterEqual(jobs[1]._api.active_processes(jobs[1]._handle), 2)
+            finally:
+                for job in jobs:
+                    job.close()
+                for process in processes:
+                    if process.poll() is None:
+                        process.kill()
+                    process.wait(timeout=5)
+                    process.stdout.close()
+                    process.stderr.close()
+
+    def test_worker_job_termination_waits_for_tree_and_closes_handle(self):
         import analysis_batch as ab
 
-        calls = []
+        job = unittest.mock.Mock()
+        process = SimpleNamespace(pid=4242, _gsvibe_job=job)
+        ab.terminate_process_tree(process)
+        job.terminate_and_wait.assert_called_once_with(timeout_seconds=ab.TREE_TERMINATION_TIMEOUT_SECONDS)
+        job.close.assert_called_once_with()
+        self.assertIsNone(process._gsvibe_job)
 
-        def record_run(*args, **kwargs):
-            calls.append((args, kwargs))
-            return SimpleNamespace(returncode=0)
-
-        with unittest.mock.patch.object(ab.subprocess, "run", side_effect=record_run):
-            ab._kill_windows_process_tree(4242)
-        self.assertEqual(len(calls), 1)
-        args, kwargs = calls[0]
-        self.assertEqual(args[0], ["taskkill", "/F", "/T", "/PID", "4242"])
-        self.assertFalse(kwargs.get("check", True))
-        # The tree-kill command itself must be bounded, not just the exit wait.
-        self.assertGreater(kwargs.get("timeout", 0), 0)
-        self.assertEqual(kwargs["timeout"], ab.TREE_KILL_COMMAND_TIMEOUT_SECONDS)
-
-    def test_windows_tree_kill_raises_on_nonzero_taskkill_exit(self):
+    def test_worker_job_termination_failure_keeps_handle_for_cleanup(self):
         import analysis_batch as ab
 
-        with unittest.mock.patch.object(ab.subprocess, "run", return_value=SimpleNamespace(returncode=1)):
-            with self.assertRaises(RuntimeError):
-                ab._kill_windows_process_tree(4242)
+        job = unittest.mock.Mock()
+        job.terminate_and_wait.side_effect = OSError("termination denied")
+        process = SimpleNamespace(pid=4242, _gsvibe_job=job)
+        with self.assertRaises(OSError):
+            ab.terminate_process_tree(process)
+        job.close.assert_not_called()
+        self.assertIs(process._gsvibe_job, job)
+
+    @unittest.skipUnless(os.name == "nt", "Windows batch Job requirement applies on Windows")
+    def test_windows_batch_worker_without_job_fails_closed(self):
+        import analysis_batch as ab
+
+        with self.assertRaisesRegex(RuntimeError, "no assigned Job"):
+            ab.terminate_process_tree(SimpleNamespace(pid=4242))
 
     def test_posix_tree_kill_reports_root_kill_failure(self):
         import analysis_batch as ab

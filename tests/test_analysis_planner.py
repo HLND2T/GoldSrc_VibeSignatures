@@ -3015,10 +3015,17 @@ class McpLifecycleTests(unittest.TestCase):
 
 
 class StopIdalibMcpProcessTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == "nt", "external MCP launcher uses taskkill on Windows")
+    def test_external_mcp_launcher_keeps_bounded_tree_kill(self):
+        with patch.object(ida_analyze_bin.subprocess, "run", return_value=SimpleNamespace(returncode=0)) as run:
+            ida_analyze_bin._terminate_mcp_process_tree(SimpleNamespace(pid=4242))
+        self.assertEqual(["taskkill", "/F", "/T", "/PID", "4242"], run.call_args.args[0])
+        self.assertGreater(run.call_args.kwargs["timeout"], 0)
+
     def test_kills_process_tree_before_reaping_the_launcher(self):
         process = MagicMock()
         process.poll.return_value = None
-        with patch("ida_analyze_bin.terminate_process_tree") as terminate_tree:
+        with patch("ida_analyze_bin._terminate_mcp_process_tree") as terminate_tree:
             stop_idalib_mcp_process(process, debug=False)
         terminate_tree.assert_called_once_with(process)
         process.wait.assert_called_once_with(timeout=MCP_SHUTDOWN_TIMEOUT)
@@ -3028,7 +3035,7 @@ class StopIdalibMcpProcessTests(unittest.TestCase):
         process = MagicMock()
         process.poll.return_value = None
         process.wait.side_effect = subprocess.TimeoutExpired(cmd="idalib-mcp", timeout=1.0)
-        with patch("ida_analyze_bin.terminate_process_tree", side_effect=RuntimeError("taskkill failed")):
+        with patch("ida_analyze_bin._terminate_mcp_process_tree", side_effect=RuntimeError("tree kill failed")):
             stop_idalib_mcp_process(process, debug=False)
         self.assertEqual(3, process.wait.call_count)
         process.terminate.assert_called_once_with()
