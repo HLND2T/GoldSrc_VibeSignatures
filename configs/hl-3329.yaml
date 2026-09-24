@@ -952,6 +952,7 @@ modules:
       - name: find-studioapi_StudioSetRenderamt
         expected_output:
           - studioapi_StudioSetRenderamt.{platform}.yaml
+          - r_blend.{platform}.yaml
       - name: find-studioapi_StudioSetRemapColors
         expected_output:
           - studioapi_StudioSetRemapColors.{platform}.yaml
@@ -1089,7 +1090,6 @@ modules:
         expected_input:
           - R_DrawSpriteModel.{platform}.yaml
         expected_output:
-          - r_blend.{platform}.yaml
           - r_entorigin.{platform}.yaml
       - name: find-CL_IsDevOverviewMode
         expected_input:

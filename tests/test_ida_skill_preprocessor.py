@@ -1370,6 +1370,77 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(_shape_gv_bases(rewritten_first, SLOT_SHAPE_WRITE_PAIR))
         self.assertIsNone(_shape_gv_bases(same_target_twice, SLOT_SHAPE_WRITE_PAIR))
 
+    def test_write_allow_reads_takes_sole_store_despite_reads(self):
+        from ida_preprocessor_scripts._studio_player_model_common import (
+            SLOT_SHAPE_WRITE_ALLOW_READS,
+            _shape_gv_bases,
+        )
+
+        # studioapi_StudioSetRenderamt on hl-10210 hw.dll: currententity is read
+        # twice before the call, r_blend is the only writable-data store.
+        located = {
+            "read_bases": ["0x10dc5618"],
+            "write_bases": ["0x111c50b4"],
+            "insns": [],
+        }
+
+        self.assertEqual([0x111C50B4], _shape_gv_bases(located, SLOT_SHAPE_WRITE_ALLOW_READS))
+
+    def test_write_allow_reads_takes_sole_store_when_target_is_also_read(self):
+        from ida_preprocessor_scripts._studio_player_model_common import (
+            SLOT_SHAPE_WRITE_ALLOW_READS,
+            _shape_gv_bases,
+        )
+
+        # The x87 builds round the float through memory, so r_blend is read back
+        # between its two stores; the deduplicated write list still holds one base.
+        located = {
+            "read_bases": ["0x10dc5618", "0x111c50b4"],
+            "write_bases": ["0x111c50b4"],
+            "insns": [],
+        }
+
+        self.assertEqual([0x111C50B4], _shape_gv_bases(located, SLOT_SHAPE_WRITE_ALLOW_READS))
+
+    def test_write_allow_reads_falls_back_to_address_taken_read_on_pic(self):
+        from ida_preprocessor_scripts._studio_player_model_common import (
+            SLOT_SHAPE_WRITE_ALLOW_READS,
+            _shape_gv_bases,
+        )
+
+        # SvEngine Linux: r_blend is only address-taken (lea) and stored through
+        # the register, so the one recorded store target is the renderamt field
+        # synthesized as currententity+0x2FC from a stale base register.
+        located = {
+            "read_bases": ["0x30f6f78", "0x7ae12cc"],
+            "write_bases": ["0x30f7274"],
+            "derived_targets": ["0x30f7274"],
+            "derived_bases": ["0x30f6f78"],
+            "insns": [],
+        }
+
+        self.assertEqual([0x7AE12CC], _shape_gv_bases(located, SLOT_SHAPE_WRITE_ALLOW_READS))
+
+    def test_write_allow_reads_rejects_zero_or_multiple_stores(self):
+        from ida_preprocessor_scripts._studio_player_model_common import (
+            SLOT_SHAPE_WRITE_ALLOW_READS,
+            _shape_gv_bases,
+        )
+
+        read_only = {
+            "read_bases": ["0x111c50b4"],
+            "write_bases": [],
+            "insns": [],
+        }
+        two_stores = {
+            "read_bases": ["0x10dc5618"],
+            "write_bases": ["0x111c50b4", "0x11200000"],
+            "insns": [],
+        }
+
+        self.assertIsNone(_shape_gv_bases(read_only, SLOT_SHAPE_WRITE_ALLOW_READS))
+        self.assertIsNone(_shape_gv_bases(two_stores, SLOT_SHAPE_WRITE_ALLOW_READS))
+
     def test_global_targets_use_decoded_absolute_operand_over_offset_base_xref(self):
         detail = {
             "data_refs": ["0x2000"],

@@ -624,6 +624,12 @@ def main():
     ref_insns = {}
     insns = []
     known_bases = {}
+    # Targets synthesized as tracked_base + displacement and the bases they were
+    # synthesized from.  Such a target is a structure field reached through a
+    # pointer, not a global address of its own, so shapes that must name a real
+    # global have to be able to tell the two apart.
+    derived_targets = set()
+    derived_bases = set()
     for ea in func_items(slot_va):
         insn = idautils.DecodeInstruction(ea)
         if not insn:
@@ -652,6 +658,7 @@ def main():
         # address fields through that register. IDA may label only
         # GOT+member; recover the real member target from the tracked pointee.
         computed = []
+        computed_bases = set()
         for op in insn.ops:
             if int(op.type) == int(idaapi.o_void):
                 break
@@ -659,11 +666,15 @@ def main():
                 continue
             base_reg = int(getattr(op, 'reg', -1))
             if base_reg in known_bases:
-                value = (int(known_bases[base_reg]) + int(op.addr)) & 0xFFFFFFFF
+                base_value = int(known_bases[base_reg])
+                value = (base_value + int(op.addr)) & 0xFFFFFFFF
                 if is_writable_data(value):
                     computed.append(value)
+                    computed_bases.add(base_value)
         if computed:
             targets = sorted(set(computed))
+            derived_targets.update(computed)
+            derived_bases.update(computed_bases)
         insns.append({'ea': hex(int(ea)), 'offb': offb, 'dir': direction,
                       'targets': [hex(x) for x in targets],
                       'disasm': disasm(ea)})
@@ -724,6 +735,8 @@ def main():
         'read_bases': [hex(x) for x in read_bases],
         'raw_read_refs': [hex(x) for x in sorted(set(reads))],
         'write_bases': [hex(x) for x in write_bases],
+        'derived_targets': [hex(x) for x in sorted(derived_targets)],
+        'derived_bases': [hex(x) for x in sorted(derived_bases)],
         'ref_counts': {hex(t): len({int(f.start_ea) for f in
                                     (ida_funcs.get_func(int(x)) for x in idautils.DataRefsTo(t))
                                     if f is not None})
@@ -956,6 +969,20 @@ SLOT_SHAPE_WRITE = "write"
 # avoided because the store still has to be the slot's only global access.
 SLOT_SHAPE_WRITE_NO_GV = "write_no_gv"
 SLOT_SHAPE_COPY12 = "copy12"
+# Exactly one writable-data store target, reads unrestricted.  The
+# StudioSetRenderamt family reads the current-entity pointer before its call,
+# and the x87 builds additionally reload the store target itself
+# (fild/fstp/fld/fmul/fstp), so every read-free write shape above rejects
+# them.  Only the write side is gated: renderamt lands in a pointer-relative
+# field, so r_blend stays the function's sole writable-data target.
+#
+# The PIC builds invert the roles: r_blend is only address-taken there
+# (lea eax,(r_blend-GOT)[ebx], then fstp [eax]), while the one recorded store
+# target is renderamt synthesized as currententity+0x2FC through a stale base
+# register.  So the shape first takes the sole non-derived store target, and
+# falls back to the sole read target that is not itself the base of a derived
+# store.
+SLOT_SHAPE_WRITE_ALLOW_READS = "write_allow_reads"
 # Exactly two writable-data stores, each a single target, to two different
 # addresses, in instruction order, with no global reads. Unique-address
 # collapse would accept a later rewrite of the first target. cluster_bases
@@ -1013,6 +1040,19 @@ def _ordered_write_targets(located):
     return ordered
 
 
+def _hex_int_set(values):
+    """Hex-string address list as ints; absent means empty, malformed fails closed."""
+    out = set()
+    if values is None:
+        return out
+    try:
+        for value in values:
+            out.add(int(value, 0))
+    except (TypeError, ValueError):
+        return None
+    return out
+
+
 def _shape_gv_bases(located, shape):
     try:
         reads = [int(x, 0) for x in located["read_bases"]]
@@ -1035,6 +1075,21 @@ def _shape_gv_bases(located, shape):
     elif shape == SLOT_SHAPE_COPY12:
         if len(reads) == 1 and len(writes) == 1 and reads[0] != writes[0]:
             return reads + writes
+    elif shape == SLOT_SHAPE_WRITE_ALLOW_READS:
+        derived_targets = _hex_int_set(located.get("derived_targets"))
+        derived_bases = _hex_int_set(located.get("derived_bases"))
+        if derived_targets is None or derived_bases is None:
+            return None
+        direct_writes = [value for value in writes if value not in derived_targets]
+        if len(direct_writes) == 1:
+            return direct_writes
+        if derived_targets:
+            # The store is real but its target was synthesized, so fall back to
+            # the one read that is not the synthesized base.
+            remaining = [value for value in reads if value not in derived_bases]
+            if len(remaining) == 1:
+                return remaining
+        return None
     elif shape == SLOT_SHAPE_SKIP_GVS:
         return []
     return None
