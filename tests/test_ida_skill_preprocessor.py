@@ -1212,6 +1212,38 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(result)
             inspected.assert_not_awaited()
 
+    async def test_function_signature_can_disambiguate_with_relative_call_displacement(self):
+        from ida_analyze_util import _inspect_function_via_mcp
+
+        target = 0x401000
+        signature = "57 56 53 E8 ?? ?? ?? ?? 81 C3 ?? ?? ?? ??"
+
+        async def evaluate(tool, args):
+            if tool == "py_eval":
+                if "calls = []" in args["code"]:
+                    return {"calls": [[3, [0x18, 0xC7, 0xFF, 0xFF]]]}
+                return {
+                    "pointer_size": 4,
+                    "function": {
+                        "func_va": hex(target),
+                        "func_rva": "0x1000",
+                        "func_size": "0x100",
+                        "func_sig": signature,
+                    },
+                }
+            matched = "18 C7 FF FF" in args["patterns"][0]
+            return [{"matches": [hex(target)] if matched else [hex(target), "0x402000"], "n": 1 if matched else 2}]
+
+        result = await _inspect_function_via_mcp(
+            SimpleNamespace(call_tool=evaluate),
+            target,
+            0x400000,
+            "Target",
+            allow_relative_call_discriminator=True,
+        )
+        self.assertEqual(target, int(result["func_va"], 0))
+        self.assertIn("E8 18 C7 FF FF", result["func_sig"])
+
     def test_get_times_globals_keep_adjacent_double_fields_separate(self):
         from ida_preprocessor_scripts._studio_player_model_common import _get_times_gv_items
 
@@ -4467,6 +4499,35 @@ found_struct_offset: []
             )
             self.assertEqual(5, result["vfunc_index"])
             self.assertEqual("0x14", result["vfunc_offset"])
+
+    async def test_inherited_concrete_vfunc_can_record_bounds_without_signature(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "Base_Run.linux.yaml").write_text(
+                "func_name: Base_Run\nvtable_name: Base\nvfunc_offset: '0x14'\nvfunc_index: 5\n",
+                encoding="utf-8",
+            )
+            (root / "Derived_vtable.linux.yaml").write_text(
+                "vtable_entries:\n  5: '0x401000'\n",
+                encoding="utf-8",
+            )
+            session = SimpleNamespace(call_tool=AsyncMock(return_value={"pointer_size": 4, "size": 0x10}))
+            result = await preprocess_index_based_vfunc_via_mcp(
+                session=session,
+                target_func_name="Derived_Run",
+                target_output=root / "Derived_Run.linux.yaml",
+                old_yaml_map=None,
+                new_binary_dir=root,
+                platform="linux",
+                image_base=0x400000,
+                base_vfunc_name="Base_Run",
+                inherit_vtable_class="Derived",
+                generate_func_sig=False,
+            )
+            self.assertEqual("0x401000", result["func_va"])
+            self.assertEqual("0x10", result["func_size"])
+            self.assertEqual(5, result["vfunc_index"])
+            self.assertNotIn("func_sig", result)
 
     async def test_indirect_vcall_helper_merges_pattern_i_and_l_on_x86(self):
         with tempfile.TemporaryDirectory() as temporary:

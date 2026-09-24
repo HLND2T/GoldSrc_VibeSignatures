@@ -1,0 +1,4 @@
+func_name: vgui2::ISurface::DrawUnicodeChar
+vtable_name: vgui2::ISurface
+vfunc_offset: '0x4c'
+vfunc_index: 19

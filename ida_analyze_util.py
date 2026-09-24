@@ -2199,7 +2199,14 @@ def build_runtime_address_inspection_py_eval(
     ).replace("FUNCTION_OWNER_RECOVERY_PLACEHOLDER", _FUNCTION_OWNER_RECOVERY_PY_EVAL)
 
 
-async def _inspect_function_via_mcp(session, ea, image_base, func_name, allow_across_function_boundary=False):
+async def _inspect_function_via_mcp(
+    session,
+    ea,
+    image_base,
+    func_name,
+    allow_across_function_boundary=False,
+    allow_relative_call_discriminator=False,
+):
     code = (
         _INSPECT_FUNCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(int(ea)))
         .replace("IMAGE_BASE_PLACEHOLDER", str(int(image_base)))
@@ -2223,7 +2230,43 @@ async def _inspect_function_via_mcp(session, ea, image_base, func_name, allow_ac
     except SymbolArtifactError:
         return None
     if await _find_unique_bytes(session, signature) != func_va:
-        return None
+        if not allow_relative_call_discriminator:
+            return None
+        # A compiler may emit byte-identical bodies at two entries. Relative
+        # call displacements remain stable when the module is rebased, and can
+        # distinguish those entries without including absolute relocations.
+        call_code = f"""
+import ida_bytes, ida_funcs, idaapi, idautils, idc, json
+target = {func_va}
+limit = {len(signature.split())}
+fn = ida_funcs.get_func(target)
+calls = []
+if fn is not None and int(fn.start_ea) == target:
+    for cursor in idautils.FuncItems(target):
+        offset = int(cursor) - target
+        if offset < 0 or offset + 5 > limit:
+            continue
+        if (idc.print_insn_mnem(int(cursor)) or '').lower() != 'call':
+            continue
+        raw = ida_bytes.get_bytes(int(cursor), 5)
+        if raw is not None and len(raw) == 5 and raw[0] == 0xE8:
+            calls.append([offset, list(raw[1:])])
+result = json.dumps({{'calls': calls}})
+"""
+        candidates = parse_mcp_result(await session.call_tool("py_eval", {"code": call_code}))
+        tokens = signature.split()
+        for offset, displacement in (candidates or {}).get("calls", []):
+            first = int(offset) + 1
+            if len(displacement) != 4 or tokens[first : first + 4] != ["??"] * 4:
+                continue
+            discriminated = tokens.copy()
+            discriminated[first : first + 4] = [f"{int(byte):02X}" for byte in displacement]
+            candidate_signature = " ".join(discriminated)
+            if await _find_unique_bytes(session, candidate_signature) == func_va:
+                result["func_sig"] = candidate_signature
+                break
+        else:
+            return None
     return result
 
 
@@ -2477,11 +2520,13 @@ vtable = None
 symbol = ''
 all_names = [(int(ea), str(name)) for ea, name in idautils.Names()]
 candidates = list(aliases)
-candidates.extend(['??_7' + class_name + '@@6B@'])
+candidates.extend(['??_7' + class_name + '@@6B@', '_ZTV' + str(len(class_name)) + class_name])
 for candidate in candidates:
     ea = ida_name.get_name_ea(idaapi.BADADDR, candidate)
     if ea != idaapi.BADADDR:
         vtable, symbol = int(ea), candidate
+        if candidate.startswith('_ZTV'):
+            vtable += pointer_size * 2
         break
 if vtable is None:
     for ea, name in all_names:
@@ -2645,11 +2690,32 @@ async def preprocess_index_based_vfunc_via_mcp(
         target_va = int(raw_target, 0) if isinstance(raw_target, str) else int(raw_target)
     except (TypeError, ValueError):
         return None
-    function = await _inspect_function_via_mcp(session, target_va, image_base, target_func_name)
-    if function is None:
-        return None
-    if not generate_func_sig:
-        function.pop("func_sig", None)
+    if generate_func_sig:
+        function = await _inspect_function_via_mcp(session, target_va, image_base, target_func_name)
+        if function is None:
+            return None
+    else:
+        code = (
+            "import ida_funcs, ida_segment, idaapi, json\n"
+            f"target = {target_va}\n"
+            "fn = ida_funcs.get_func(target)\n"
+            "seg = ida_segment.getseg(target)\n"
+            "valid = (not idaapi.inf_is_64bit() and fn is not None and fn.start_ea == target "
+            "and seg is not None and seg.perm & ida_segment.SEGPERM_EXEC)\n"
+            "result = json.dumps({'pointer_size': 4, 'size': fn.end_ea - target} if valid else {})\n"
+        )
+        payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
+        if not isinstance(payload, Mapping) or payload.get("pointer_size") != 4:
+            return None
+        size = int(payload["size"])
+        if size <= 0:
+            return None
+        function = {
+            "func_name": target_func_name,
+            "func_va": hex(target_va),
+            "func_rva": hex(target_va - int(image_base)),
+            "func_size": hex(size),
+        }
     function.update(slot_data)
     return function
 

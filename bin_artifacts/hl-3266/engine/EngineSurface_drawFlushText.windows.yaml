@@ -1,0 +1,9 @@
+func_name: EngineSurface::drawFlushText()
+func_va: '0x1dc4660'
+func_rva: '0xc4660'
+func_size: '0xcc'
+func_sig: A1 ?? ?? ?? ?? 56 83 F8 01 8B F1 0F 8C ?? ?? ?? ?? 68 74 80 00 00 FF 15 ?? ?? ?? ?? 68 78 80 00 00 FF 15 ?? ?? ??
+  ?? 68 E1 0D 00 00
+vtable_name: EngineSurface
+vfunc_offset: '0x58'
+vfunc_index: 22

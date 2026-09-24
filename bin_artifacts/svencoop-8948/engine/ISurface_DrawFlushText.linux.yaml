@@ -1,0 +1,4 @@
+func_name: vgui2::ISurface::DrawFlushText
+vtable_name: vgui2::ISurface
+vfunc_offset: '0x58'
+vfunc_index: 22

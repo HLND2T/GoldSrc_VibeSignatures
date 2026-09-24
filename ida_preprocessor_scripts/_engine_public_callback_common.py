@@ -3,6 +3,7 @@
 
 from pathlib import Path
 
+from ida_elf import ELF_RESOLVER_PY
 from ida_analyze_util import (
     _inspect_function_via_mcp,
     _load_yaml_mapping,
@@ -22,12 +23,17 @@ async def preprocess_engine_callback(
     name,
     slot,
     indirect_table_offset=None,
+    candidate_validator=None,
+    artifact_func_name=None,
+    allow_relative_call_discriminator=False,
 ):
     table = _load_yaml_mapping(Path(new_binary_dir) / f"cl_enginefuncs.{platform}.yaml")
     if not table:
         return False
     table_ea = int(table["gv_va"], 0)
-    code = f"""
+    code = (
+        ELF_RESOLVER_PY
+        + f"""
 import ida_bytes, ida_funcs, ida_segment, ida_ua, idaapi, idautils, idc, json
 table_ea = {table_ea}
 indirect_table_offset = {indirect_table_offset!r}
@@ -40,7 +46,7 @@ entry = int(callback_table or 0) + slot * 4
 target = ida_bytes.get_dword(entry)
 def unwrap(start):
     items=list(idautils.FuncItems(start))
-    if not items or len(items)>16:
+    if not items or len(items)>32:
         return start
     calls=[]
     for ea in items:
@@ -50,7 +56,7 @@ def unwrap(start):
             return int(insn.ops[0].addr)
         if mnemonic=='call':
             if insn.ops[0].type!=ida_ua.o_near: return start
-            callee=int(insn.ops[0].addr)
+            callee=resolve_elf_plt(int(insn.ops[0].addr))
             body=list(idautils.FuncItems(callee))
             pc_thunk=(len(body)==2 and idc.print_insn_mnem(body[0])=='mov' and idc.print_operand(body[0],1) in ('[esp]','[esp+0]') and idc.print_insn_mnem(body[1])=='retn')
             if not pc_thunk: calls.append(callee)
@@ -85,19 +91,30 @@ valid = (not cycle and not idaapi.inf_is_64bit()
 result = json.dumps({{'target': int(target), 'callback_table': int(callback_table),
                       'entry': int(entry)}} if valid else {{}})
 """
+    )
     located = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
     if not isinstance(located, dict) or "target" not in located:
         return False
+    if candidate_validator is not None and not await candidate_validator(session, located["target"]):
+        return False
     output = _output_for_symbol(expected_outputs, name)
-    function = await _inspect_function_via_mcp(session, located["target"], image_base, name)
+    function_name = artifact_func_name or name
+    function = await _inspect_function_via_mcp(
+        session,
+        located["target"],
+        image_base,
+        function_name,
+        allow_relative_call_discriminator=allow_relative_call_discriminator,
+    )
     allow_across = function is None
     if allow_across:
         function = await _inspect_function_via_mcp(
             session,
             located["target"],
             image_base,
-            name,
+            function_name,
             allow_across_function_boundary=True,
+            allow_relative_call_discriminator=allow_relative_call_discriminator,
         )
     if not output or not function:
         return False

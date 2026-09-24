@@ -1,0 +1,7 @@
+func_name: BaseUISurface::DrawFlushText()
+func_va: '0x1d03020'
+func_rva: '0x3020'
+func_size: '0x8'
+vtable_name: BaseUISurface
+vfunc_offset: '0x54'
+vfunc_index: 21
