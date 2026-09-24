@@ -41,6 +41,11 @@ CLI 参数、环境变量、程序默认值。关键变量：
 `copy_depot_bin.py` 把配置的二进制复制到 `bin/<tag>/<module>`。Steam 凭据从 `.env` 读取；缺失时
 DepotDownloader 会交互式提示。
 
+该命令随后会询问是否执行可选的 IDB 预热。获得同意后，它对每个 tag 运行
+`warmup_idb.py -gamever <tag> -python <带 idalib 的解释器>`，在每个配置的二进制旁留下已预热的 IDA 数据库，
+后续分析直接还原该数据库而无需重新执行完整 auto-analysis。`IDB_WARMUP_MAX_CONCURRENCY` 限制并发预热
+worker 数（默认 `2`），`IDB_WARMUP_MAX_MEMORY_MIB` 启用 aggregate 内存准入。
+
 ## Agent skill-runner 策略
 
 Claude 与 OpenCode 会直接加载仓库内的 skill-runner policy。使用 Codex 前需把
