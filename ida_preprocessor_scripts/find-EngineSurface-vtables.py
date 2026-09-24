@@ -14,7 +14,6 @@ VERIFY_FACTORY = r"""
 LITERALS = values['literals']
 found = set()
 strings = idautils.Strings(default_setup=False)
-strings.setup(strtypes=[ida_nalt.STRTYPE_C], minlen=8)
 for item in strings:
     text = str(item)
     if text in LITERALS:
