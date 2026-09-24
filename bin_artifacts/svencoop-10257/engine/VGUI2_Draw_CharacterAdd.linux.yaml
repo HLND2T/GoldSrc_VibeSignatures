@@ -1,0 +1,6 @@
+func_name: VGUI2_Draw_CharacterAdd(int, int, int, int, int, int, unsigned int)
+func_va: '0x1bcbf0'
+func_rva: '0x1bcbf0'
+func_size: '0x10c'
+func_sig: 57 56 53 E8 98 97 E9 FF 81 C3 ?? ?? ?? ?? 83 EC ?? 8B 7C 24 ?? 8B 74 24 ?? 8D 83 ?? ?? ?? ?? 8B 40 ?? 8B 10 89 04
+  24 FF 52 ??

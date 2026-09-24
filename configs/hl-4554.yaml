@@ -2,6 +2,46 @@ modules:
   - name: engine
     module_windows: hw.dll
     skills:
+      - name: find-EngineSurface-vtables
+        expected_output:
+          - EngineSurface_vtable.{platform}.yaml
+          - BaseUISurface_vtable.{platform}.yaml
+      - name: find-VGUI2_Draw_Characters
+        expected_input:
+          - cl_enginefuncs.{platform}.yaml
+        expected_output:
+          - VGUI2_Draw_Character.{platform}.yaml
+          - VGUI2_Draw_CharacterAdd.{platform}.yaml
+      - name: find-ISurface-text-vfuncs
+        expected_input:
+          - VGUI2_Draw_Character.{platform}.yaml
+          - VGUI2_Draw_CharacterAdd.{platform}.yaml
+          - BaseUISurface_vtable.{platform}.yaml
+        expected_output:
+          - ISurface_DrawFlushText.{platform}.yaml
+          - ISurface_DrawSetTextFont.{platform}.yaml
+          - ISurface_DrawSetTextPos.{platform}.yaml
+          - ISurface_DrawSetTextColor.{platform}.yaml
+          - ISurface_DrawUnicodeChar.{platform}.yaml
+          - ISurface_DrawUnicodeCharAdd.{platform}.yaml
+          - ISurface_GetCharABCwide.{platform}.yaml
+      - name: find-BaseUISurface_DrawFlushText
+        expected_input:
+          - ISurface_DrawFlushText.{platform}.yaml
+          - BaseUISurface_vtable.{platform}.yaml
+        expected_output:
+          - BaseUISurface_DrawFlushText.{platform}.yaml
+      - name: find-IEngineSurface_drawFlushText
+        expected_input:
+          - BaseUISurface_DrawFlushText.{platform}.yaml
+        expected_output:
+          - IEngineSurface_drawFlushText.{platform}.yaml
+      - name: find-EngineSurface_drawFlushText
+        expected_input:
+          - IEngineSurface_drawFlushText.{platform}.yaml
+          - EngineSurface_vtable.{platform}.yaml
+        expected_output:
+          - EngineSurface_drawFlushText.{platform}.yaml
       - name: find-R_SetupGL-matrices-decompiles
         expected_input:
           - R_SetupGL.{platform}.yaml
@@ -1051,6 +1091,34 @@ modules:
         expected_output:
           - CL_IsDevOverviewMode.{platform}.yaml
     symbols:
+      - name: EngineSurface_vtable
+        category: vtable
+      - name: BaseUISurface_vtable
+        category: vtable
+      - name: VGUI2_Draw_Character
+        category: func
+      - name: VGUI2_Draw_CharacterAdd
+        category: func
+      - name: ISurface_DrawFlushText
+        category: vfunc
+      - name: ISurface_DrawSetTextFont
+        category: vfunc
+      - name: ISurface_DrawSetTextPos
+        category: vfunc
+      - name: ISurface_DrawSetTextColor
+        category: vfunc
+      - name: ISurface_DrawUnicodeChar
+        category: vfunc
+      - name: ISurface_DrawUnicodeCharAdd
+        category: vfunc
+      - name: ISurface_GetCharABCwide
+        category: vfunc
+      - name: BaseUISurface_DrawFlushText
+        category: vfunc
+      - name: IEngineSurface_drawFlushText
+        category: vfunc
+      - name: EngineSurface_drawFlushText
+        category: vfunc
       - name: Draw_TextureMode_f
         category: func
       - name: gl_filter_min

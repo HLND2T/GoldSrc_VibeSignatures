@@ -1,0 +1,5 @@
+func_name: VGUI2_Draw_Character
+func_va: '0x1d06a70'
+func_rva: '0x6a70'
+func_size: '0xa3'
+func_sig: 55 8B EC 83 EC 0C 8B 0D ?? ?? ?? ?? 56 57 8B 01 FF 50 ?? E8 ?? ?? ?? ?? 8B 7D ?? 8B 10 57 8B C8 FF 52 ??

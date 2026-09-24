@@ -1,0 +1,4 @@
+func_name: IEngineSurface::drawFlushText
+vtable_name: IEngineSurface
+vfunc_offset: '0x60'
+vfunc_index: 24
