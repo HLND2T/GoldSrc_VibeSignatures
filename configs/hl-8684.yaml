@@ -133,6 +133,18 @@ modules:
       - name: find-Host_EndGame
         expected_output:
           - Host_EndGame.{platform}.yaml
+      - name: find-VOX_LoadSound
+        expected_output:
+          - VOX_LoadSound.{platform}.yaml
+      - name: find-VOX_LoadSound-sentence-symbols
+        expected_input:
+          - VOX_LoadSound.{platform}.yaml
+        expected_output:
+          - SequenceGetSentenceByIndex.{platform}.yaml
+          - cszrawsentences.{platform}.yaml
+          - rgpszrawsentence.{platform}.yaml
+        expected_output_windows:
+          - VOX_LookupString.{platform}.yaml
       - name: find-CL_Parse_SetView-decompiles
         expected_input:
           - CL_Parse_SetView.{platform}.yaml
@@ -1248,6 +1260,17 @@ modules:
         category: gv
       - name: Host_EndGame
         category: func
+      - name: VOX_LoadSound
+        category: func
+      - name: SequenceGetSentenceByIndex
+        category: func
+      - name: VOX_LookupString
+        category: func
+        platform: windows
+      - name: cszrawsentences
+        category: gv
+      - name: rgpszrawsentence
+        category: gv
       - name: CL_ParseMovevars
         category: func
       - name: movevars

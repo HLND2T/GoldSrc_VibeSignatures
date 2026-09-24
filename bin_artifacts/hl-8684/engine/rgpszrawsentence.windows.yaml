@@ -1,0 +1,8 @@
+gv_name: rgpszrawsentence
+gv_va: '0x2723400'
+gv_rva: '0xa23400'
+gv_sig: 55 8B EC 56 57 8B 7D ?? 80 3F 23 75 ?? 8D 47 ?? 50 E8 ?? ?? ?? ?? 50 E8 ?? ?? ?? ?? 83 C4 08 85 C0 74 ?? 8B 00
+gv_sig_va: '0x1d90ed0'
+gv_inst_offset: '0x34'
+gv_inst_length: '0x7'
+gv_inst_disp: '0x3'

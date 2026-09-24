@@ -1,0 +1,5 @@
+func_name: VOX_LookupString
+func_va: '0x1dd0b67'
+func_rva: '0xd0b67'
+func_size: '0xea'
+func_sig: 55 8B EC 83 EC 10 C7 45 ?? ?? ?? ?? ?? 8B 45 ?? 0F BE 08 83 F9 23 75 ?? 8B 55 ?? 83 C2 01 89 55 ??

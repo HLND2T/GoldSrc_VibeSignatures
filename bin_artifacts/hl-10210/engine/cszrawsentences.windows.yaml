@@ -1,0 +1,8 @@
+gv_name: cszrawsentences
+gv_va: '0x10530cbc'
+gv_rva: '0x530cbc'
+gv_sig: 55 8B EC 81 EC EC 06 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 8B 45 ?? 53 8B 5D ?? 89 85 ?? ?? ?? ?? 56 57 85 DB
+gv_sig_va: '0x102023a0'
+gv_inst_offset: '0xee'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
