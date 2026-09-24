@@ -627,6 +627,13 @@ modules:
           - studioapi_SetChromeOrigin.{platform}.yaml
           - r_origin.{platform}.yaml
           - g_ChromeOrigin.{platform}.yaml
+      - name: find-studioapi_GetForceFaceFlags
+        expected_output:
+          - studioapi_GetForceFaceFlags.{platform}.yaml
+          - g_ForcedFaceFlags.{platform}.yaml
+      - name: find-studioapi_SetForceFaceFlags
+        expected_output:
+          - studioapi_SetForceFaceFlags.{platform}.yaml
       - name: find-studioapi_SetupModel
         expected_output:
           - studioapi_SetupModel.{platform}.yaml
@@ -1476,6 +1483,12 @@ modules:
         category: gv
       - name: g_ChromeOrigin
         category: gv
+      - name: studioapi_GetForceFaceFlags
+        category: func
+      - name: g_ForcedFaceFlags
+        category: gv
+      - name: studioapi_SetForceFaceFlags
+        category: func
       - name: studioapi_SetupModel
         category: func
       - name: pbodypart
