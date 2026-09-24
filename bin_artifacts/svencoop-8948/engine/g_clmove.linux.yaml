@@ -1,0 +1,10 @@
+gv_name: g_clmove
+gv_va: '0x1c2cc80'
+gv_rva: '0x1c2cc80'
+gv_sig: 57 BA 63 6C 5F 64 56 B9 6C 6C 73 2F 53 BE 63 6C 69 65 E8 ?? ?? ?? ?? 81 C3 ?? ?? ?? ?? 81 EC ?? ?? ?? ?? BF 6E 74
+  2E 73
+gv_sig_va: '0x17b780'
+gv_inst_offset: '0x138'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
+gv_pic_addend: '0x1c2d1c0'

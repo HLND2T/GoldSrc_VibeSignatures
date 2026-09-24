@@ -3,41 +3,96 @@
 from pathlib import Path
 
 from ida_analyze_util import (
+    _find_unique_bytes,
     _inspect_function_via_mcp,
     _load_yaml_mapping,
     _output_for_symbol,
+    build_runtime_address_inspection_py_eval,
     gv_resolution_fields_via_mcp,
+    parse_mcp_result,
     write_gv_yaml,
 )
 
 
-async def inspect_owner_artifact(session, new_binary_dir, platform, image_base, owner_name):
+async def inspect_owner_artifact(
+    session,
+    new_binary_dir,
+    platform,
+    image_base,
+    owner_name,
+    *,
+    allow_relative_call_discriminator=False,
+    allow_raw_span=False,
+):
     """Reload and revalidate one predecessor function artifact in the active IDB."""
     artifact = _load_yaml_mapping(Path(new_binary_dir) / f"{owner_name}.{platform}.yaml")
     if not artifact or artifact.get("func_name") != owner_name:
         return None
     try:
         owner_ea = int(artifact["func_va"], 0)
+        owner_size = int(artifact["func_size"], 0) if artifact.get("func_size") is not None else None
     except (KeyError, TypeError, ValueError):
         return None
-    if owner_ea < int(image_base):
+    signature = artifact.get("func_sig")
+    if owner_ea < int(image_base) or (owner_size is not None and owner_size <= 0):
         return None
     allow_across = bool(artifact.get("func_sig_allow_across_function_boundary"))
+
+    async def raw_owner():
+        if not allow_raw_span or owner_size is None or not isinstance(signature, str) or not signature.strip():
+            return None
+        try:
+            if int(artifact["func_rva"], 0) != owner_ea - int(image_base):
+                return None
+        except (KeyError, TypeError, ValueError):
+            return None
+        if await _find_unique_bytes(session, signature) != owner_ea:
+            return None
+        return {
+            "artifact": artifact,
+            "function": artifact,
+            "owner_ea": owner_ea,
+            "owner_end": owner_ea + owner_size,
+            "allow_across": allow_across,
+            "raw_span": True,
+        }
+
+    # A materialized predecessor can be valid even when this IDB has not yet
+    # defined its entry. Recover it against the artifact's exact body and bytes.
+    if owner_size is not None and isinstance(signature, str) and signature.strip():
+        code = build_runtime_address_inspection_py_eval(
+            owner_ea, require_function=True, expected_size=owner_size, expected_signature=signature
+        )
+        try:
+            inspected = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
+        except Exception:  # noqa: BLE001 - MCP tool failures must fail closed.
+            return await raw_owner()
+        if not isinstance(inspected, dict) or not inspected.get("is_function_start"):
+            return await raw_owner()
+        try:
+            if int(inspected["image_base"], 0) != int(image_base):
+                return None
+        except (KeyError, TypeError, ValueError):
+            return None
     function = await _inspect_function_via_mcp(
         session,
         owner_ea,
         image_base,
         owner_name,
         allow_across_function_boundary=allow_across,
+        allow_relative_call_discriminator=allow_relative_call_discriminator,
     )
     if not function or not function.get("func_sig"):
-        return None
+        return await raw_owner()
     try:
         if int(function["func_va"], 0) != owner_ea:
-            return None
-        owner_end = owner_ea + int(function["func_size"], 0)
+            return await raw_owner()
+        function_size = int(function["func_size"], 0)
+        if owner_size is not None and function_size != owner_size:
+            return await raw_owner()
+        owner_end = owner_ea + function_size
     except (KeyError, TypeError, ValueError):
-        return None
+        return await raw_owner()
     return {
         "artifact": artifact,
         "function": function,

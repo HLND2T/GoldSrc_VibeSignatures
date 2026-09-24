@@ -152,20 +152,42 @@ def operand_globals(ea, insn, bases):
     return found
 
 
-# Decode one function into annotated entries, or None when not a function start.
-def scan(start):
-    owner = ida_funcs.get_func(int(start))
-    if owner is None or int(owner.start_ea) != int(start):
-        return None
+# Decode one function, or a signature-verified byte span when IDA has not
+# established the artifact's function boundary.
+def scan(start, end=None):
+    if end is None:
+        owner = ida_funcs.get_func(int(start))
+        if owner is None or int(owner.start_ea) != int(start):
+            return None
+        items = idautils.FuncItems(int(start))
+    else:
+        start, end = int(start), int(end)
+        first_segment = ida_segment.getseg(start)
+        last_segment = ida_segment.getseg(end - 1) if end > start else None
+        if (first_segment is None or last_segment is None
+                or int(first_segment.start_ea) != int(last_segment.start_ea)
+                or not is_code_address(start) or not is_code_address(end - 1)):
+            return None
+        items = []
+        cursor = start
+        while cursor < end:
+            insn = ida_ua.insn_t()
+            size = ida_ua.decode_insn(insn, cursor)
+            if not size or cursor + int(size) > end:
+                return None
+            items.append(cursor)
+            cursor += int(size)
     bases = {}
     provenance = {}
     entries = []
-    got_base, got_register = got_anchor(start)
+    got_base, got_register = got_anchor(start) if end is None else (None, None)
     if got_base is not None:
         bases[got_register] = got_base
-    for ea in idautils.FuncItems(int(start)):
+    for ea in items:
         insn = idautils.DecodeInstruction(int(ea))
         if not insn:
+            if end is not None:
+                return None
             continue
         mnemonic = (idc.print_insn_mnem(int(ea)) or '').lower()
         targets = operand_globals(int(ea), insn, bases)
