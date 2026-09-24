@@ -1,0 +1,5 @@
+func_name: VOX_LoadSound
+func_va: '0x1da8690'
+func_rva: '0xa8690'
+func_size: '0x1f3'
+func_sig: 81 EC E0 06 00 00 53 56 8B B4 24 ?? ?? ?? ?? 57 85 F6 75 ?? 5F 5E 33 C0 5B 81 C4 E0 06 00 00

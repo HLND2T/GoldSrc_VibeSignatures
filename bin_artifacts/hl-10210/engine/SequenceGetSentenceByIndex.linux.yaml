@@ -1,0 +1,5 @@
+func_name: SequenceGetSentenceByIndex
+func_va: '0x176cf0'
+func_rva: '0x176cf0'
+func_size: '0x5e'
+func_sig: A1 ?? ?? ?? ?? 53 8B 5C 24 ?? 85 C0 74 ?? 8B 50 ?? 39 D3 73 ?? EB ??
