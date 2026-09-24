@@ -1,0 +1,494 @@
+func_name: "R_LoadSkys"
+func_va: "0x1d4f8f2"
+disasm_code: |-
+  .text:01D4F8F2                 sub     esp, 6Ch
+  .text:01D4F8F5                 mov     eax, gLoadSky
+  .text:01D4F8FA                 ; ArgList
+  .text:01D4F8FA                 push    esi; ArgList
+  .text:01D4F8FB                 test    eax, eax
+  .text:01D4F8FD                 mov     [esp+70h+var_64], 0
+  .text:01D4F905                 jnz     short loc_1D4F92B
+  .text:01D4F907                 xor     esi, esi
+  .text:01D4F909                 lea     ecx, [esp+70h+textures]
+  .text:01D4F90D                 lea     eax, [esi+16A8h]
+  .text:01D4F913                 ; textures
+  .text:01D4F913                 push    ecx; textures
+  .text:01D4F914                 ; count
+  .text:01D4F914                 push    1; count
+  .text:01D4F916                 mov     [esp+78h+textures], eax
+  .text:01D4F91A                 call    qglDeleteTextures
+  .text:01D4F920                 inc     esi
+  .text:01D4F921                 cmp     esi, 6
+  .text:01D4F924                 jl      short loc_1D4F909
+  .text:01D4F926                 pop     esi
+  .text:01D4F927                 add     esp, 6Ch
+  .text:01D4F92A                 retn
+  .text:01D4F92B                 mov     eax, qglColorTableEXT
+  .text:01D4F930                 test    eax, eax
+  .text:01D4F932                 jz      short loc_1D4F956
+  .text:01D4F934                 fld     gl_palette_tex_value
+  .text:01D4F93A                 fcomp   ds:flt_1E8708C
+  .text:01D4F940                 fnstsw  ax
+  .text:01D4F942                 test    ah, 44h
+  .text:01D4F945                 jnp     short loc_1D4F956
+  .text:01D4F947                 mov     [esp+70h+var_68], 0
+  .text:01D4F94F                 call    GL_PaletteClearSky
+  .text:01D4F954                 jmp     short loc_1D4F95E
+  .text:01D4F956                 mov     [esp+70h+var_68], 1
+  .text:01D4F95E                 ; Size
+  .text:01D4F95E                 push    40000h; Size
+  .text:01D4F963                 call    j__malloc
+  .text:01D4F968                 add     esp, 4
+  .text:01D4F96B                 mov     esi, eax
+  .text:01D4F96D                 push    ebx
+  .text:01D4F96E                 push    ebp
+  .text:01D4F96F                 ; ArgList
+  .text:01D4F96F                 push    edi; ArgList
+  .text:01D4F970                 xor     ebp, ebp
+  .text:01D4F972                 cmp     ebp, 6
+  .text:01D4F975                 jge     loc_1D4FCA5
+  .text:01D4F97B                 mov     edx, suf[ebp*4]
+  .text:01D4F982                 lea     eax, [esp+7Ch+Buffer]
+  .text:01D4F986                 push    edx
+  .text:01D4F987                 push    offset movevars_skyName
+  .text:01D4F98C                 push    offset aGfxEnvSSBmp; "gfx/env/%s%s.bmp"
+  .text:01D4F991                 ; BufferCount
+  .text:01D4F991                 push    40h ; '@'; BufferCount
+  .text:01D4F993                 ; Buffer
+  .text:01D4F993                 push    eax; Buffer
+  .text:01D4F994                 xor     ebx, ebx
+  .text:01D4F996                 call    __snprintf
+  .text:01D4F99B                 mov     eax, [esp+90h+var_68]
+  .text:01D4F99F                 add     esp, 14h
+  .text:01D4F9A2                 test    eax, eax
+  .text:01D4F9A4                 jnz     loc_1D4FA7C
+  .text:01D4F9AA                 lea     ecx, [esp+7Ch+Buffer]
+  .text:01D4F9AE                 push    offset aRb_6; "rb"
+  .text:01D4F9B3                 ; filename
+  .text:01D4F9B3                 push    ecx; filename
+  .text:01D4F9B4                 call    FS_Open
+  .text:01D4F9B9                 add     esp, 8
+  .text:01D4F9BC                 test    eax, eax
+  .text:01D4F9BE                 jz      loc_1D4FA7C
+  .text:01D4F9C4                 lea     edx, [esp+7Ch+height]
+  .text:01D4F9C8                 lea     ecx, [esp+7Ch+width]
+  .text:01D4F9CC                 ; height
+  .text:01D4F9CC                 push    edx; height
+  .text:01D4F9CD                 lea     edx, [esp+80h+lpMem]
+  .text:01D4F9D1                 ; width
+  .text:01D4F9D1                 push    ecx; width
+  .text:01D4F9D2                 ; image
+  .text:01D4F9D2                 push    edx; image
+  .text:01D4F9D3                 lea     ecx, [esp+88h+var_4C]
+  .text:01D4F9D7                 lea     edx, [esp+88h+palette]
+  .text:01D4F9DB                 ; paletteCount
+  .text:01D4F9DB                 push    ecx; paletteCount
+  .text:01D4F9DC                 ; palette
+  .text:01D4F9DC                 push    edx; palette
+  .text:01D4F9DD                 ; file
+  .text:01D4F9DD                 push    eax; file
+  .text:01D4F9DE                 call    LoadBMP8
+  .text:01D4F9E3                 mov     eax, [esp+94h+width]
+  .text:01D4F9E7                 add     esp, 18h
+  .text:01D4F9EA                 imul    eax, [esp+7Ch+height]
+  .text:01D4F9EF                 test    eax, eax
+  .text:01D4F9F1                 jle     loc_1D4FA7C
+  .text:01D4F9F7                 mov     ecx, [esp+7Ch+palette]
+  .text:01D4F9FB                 ; isSky
+  .text:01D4F9FB                 push    1; isSky
+  .text:01D4F9FD                 ; palette
+  .text:01D4F9FD                 push    ecx; palette
+  .text:01D4F9FE                 call    GL_PaletteAdd
+  .text:01D4FA03                 movsx   edi, ax
+  .text:01D4FA06                 add     esp, 8
+  .text:01D4FA09                 test    edi, edi
+  .text:01D4FA0B                 jl      short loc_1D4FA5D
+  .text:01D4FA0D                 lea     edx, [ebp+16A8h]
+  .text:01D4FA13                 ; texture
+  .text:01D4FA13                 push    edx; texture
+  .text:01D4FA14                 call    GL_Bind
+  .text:01D4FA19                 mov     eax, [esp+80h+lpMem]
+  .text:01D4FA1D                 add     esp, 4
+  .text:01D4FA20                 ; pixels
+  .text:01D4FA20                 push    eax; pixels
+  .text:01D4FA21                 ; type
+  .text:01D4FA21                 push    1401h; type
+  .text:01D4FA26                 ; format
+  .text:01D4FA26                 push    1900h; format
+  .text:01D4FA2B                 ; border
+  .text:01D4FA2B                 push    ebx; border
+  .text:01D4FA2C                 ; height
+  .text:01D4FA2C                 push    100h; height
+  .text:01D4FA31                 ; width
+  .text:01D4FA31                 push    100h; width
+  .text:01D4FA36                 ; internalformat
+  .text:01D4FA36                 push    80E5h; internalformat
+  .text:01D4FA3B                 ; level
+  .text:01D4FA3B                 push    ebx; level
+  .text:01D4FA3C                 ; target
+  .text:01D4FA3C                 push    0DE1h; target
+  .text:01D4FA41                 call    qglTexImage2D
+  .text:01D4FA47                 shl     edi, 10h
+  .text:01D4FA4A                 mov     ebx, 1
+  .text:01D4FA4F                 lea     ecx, [edi+ebp+116A8h]
+  .text:01D4FA56                 ; gSkyTexNumber[i] = ((paletteIndex + 1) << 16) | (0x16A8 + i); fixed texture ID plus palette tag.
+  .text:01D4FA56                 mov     gSkyTexNumber[ebp*4], ecx; gSkyTexNumber[i] = ((paletteIndex + 1) << 16) | (0x16A8 + i); fixed texture ID plus palette tag.
+  .text:01D4FA5D                 mov     edx, [esp+7Ch+lpMem]
+  .text:01D4FA61                 ; ptr
+  .text:01D4FA61                 push    edx; ptr
+  .text:01D4FA62                 call    Mem_Free
+  .text:01D4FA67                 mov     eax, [esp+80h+palette]
+  .text:01D4FA6B                 ; ptr
+  .text:01D4FA6B                 push    eax; ptr
+  .text:01D4FA6C                 call    Mem_Free
+  .text:01D4FA71                 add     esp, 8
+  .text:01D4FA74                 test    ebx, ebx
+  .text:01D4FA76                 jnz     loc_1D4FC1A
+  .text:01D4FA7C                 mov     ecx, suf[ebp*4]
+  .text:01D4FA83                 lea     edx, [esp+7Ch+Buffer]
+  .text:01D4FA87                 push    ecx
+  .text:01D4FA88                 push    offset movevars_skyName
+  .text:01D4FA8D                 push    offset aGfxEnvSSTga; "gfx/env/%s%s.tga"
+  .text:01D4FA92                 ; BufferCount
+  .text:01D4FA92                 push    40h ; '@'; BufferCount
+  .text:01D4FA94                 ; Buffer
+  .text:01D4FA94                 push    edx; Buffer
+  .text:01D4FA95                 mov     [esp+90h+var_68], 1
+  .text:01D4FA9D                 call    __snprintf
+  .text:01D4FAA2                 ; height
+  .text:01D4FAA2                 push    0; height
+  .text:01D4FAA4                 ; width
+  .text:01D4FAA4                 push    0; width
+  .text:01D4FAA6                 ; bufferSize
+  .text:01D4FAA6                 push    40000h; bufferSize
+  .text:01D4FAAB                 lea     eax, [esp+9Ch+Buffer]
+  .text:01D4FAAF                 ; buffer
+  .text:01D4FAAF                 push    esi; buffer
+  .text:01D4FAB0                 ; filename
+  .text:01D4FAB0                 push    eax; filename
+  .text:01D4FAB1                 call    LoadTGA
+  .text:01D4FAB6                 add     esp, 28h
+  .text:01D4FAB9                 test    eax, eax
+  .text:01D4FABB                 jnz     short loc_1D4FB08
+  .text:01D4FABD                 lea     ecx, [esp+7Ch+Buffer]
+  .text:01D4FAC1                 ; ArgList
+  .text:01D4FAC1                 push    ecx; ArgList
+  .text:01D4FAC2                 push    offset aRLoadskysCould; "R_LoadSkys: Couldn't load %s\n"
+  .text:01D4FAC7                 call    Con_Printf
+  .text:01D4FACC                 add     esp, 8
+  .text:01D4FACF                 test    ebp, ebp
+  .text:01D4FAD1                 jnz     loc_1D4FC9F
+  .text:01D4FAD7                 push    offset aDesert; "desert"
+  .text:01D4FADC                 ; a
+  .text:01D4FADC                 push    offset movevars_skyName; a
+  .text:01D4FAE1                 call    Q_strcmp
+  .text:01D4FAE6                 add     esp, 8
+  .text:01D4FAE9                 test    eax, eax
+  .text:01D4FAEB                 jz      loc_1D4FC9F
+  .text:01D4FAF1                 push    offset aDesert_0; "desert"
+  .text:01D4FAF6                 ; dest
+  .text:01D4FAF6                 push    offset movevars_skyName; dest
+  .text:01D4FAFB                 call    Q_strcpy
+  .text:01D4FB00                 add     esp, 8
+  .text:01D4FB03                 jmp     loc_1D4F970
+  .text:01D4FB08                 fld     gl_dither_value
+  .text:01D4FB0E                 fcomp   ds:flt_1E8708C
+  .text:01D4FB14                 fnstsw  ax
+  .text:01D4FB16                 test    ah, 44h
+  .text:01D4FB19                 jnp     loc_1D4FBB7
+  .text:01D4FB1F                 xor     eax, eax
+  .text:01D4FB21                 mov     [esp+7Ch+textures], eax
+  .text:01D4FB25                 mov     cl, [esi+eax]
+  .text:01D4FB28                 cmp     cl, 0FCh
+  .text:01D4FB2B                 jnb     short loc_1D4FB4D
+  .text:01D4FB2D                 mov     dl, cl
+  .text:01D4FB2F                 shr     dl, 6
+  .text:01D4FB32                 or      dl, cl
+  .text:01D4FB34                 xor     ecx, ecx
+  .text:01D4FB36                 mov     [esi+eax], dl
+  .text:01D4FB39                 mov     eax, [esp+7Ch+textures]
+  .text:01D4FB3D                 mov     cl, [esi+eax]
+  .text:01D4FB40                 mov     dl, texgammatable[ecx]
+  .text:01D4FB46                 mov     [esi+eax], dl
+  .text:01D4FB49                 mov     eax, [esp+7Ch+textures]
+  .text:01D4FB4D                 mov     cl, [esi+eax+1]
+  .text:01D4FB51                 cmp     cl, 0FCh
+  .text:01D4FB54                 jnb     short loc_1D4FB79
+  .text:01D4FB56                 mov     dl, cl
+  .text:01D4FB58                 shr     dl, 6
+  .text:01D4FB5B                 or      dl, cl
+  .text:01D4FB5D                 xor     ecx, ecx
+  .text:01D4FB5F                 mov     [esi+eax+1], dl
+  .text:01D4FB63                 mov     eax, [esp+7Ch+textures]
+  .text:01D4FB67                 mov     cl, [esi+eax+1]
+  .text:01D4FB6B                 mov     dl, texgammatable[ecx]
+  .text:01D4FB71                 mov     [esi+eax+1], dl
+  .text:01D4FB75                 mov     eax, [esp+7Ch+textures]
+  .text:01D4FB79                 mov     cl, [esi+eax+2]
+  .text:01D4FB7D                 cmp     cl, 0FCh
+  .text:01D4FB80                 jnb     short loc_1D4FBA5
+  .text:01D4FB82                 mov     dl, cl
+  .text:01D4FB84                 shr     dl, 6
+  .text:01D4FB87                 or      dl, cl
+  .text:01D4FB89                 xor     ecx, ecx
+  .text:01D4FB8B                 mov     [esi+eax+2], dl
+  .text:01D4FB8F                 mov     eax, [esp+7Ch+textures]
+  .text:01D4FB93                 mov     cl, [esi+eax+2]
+  .text:01D4FB97                 mov     dl, texgammatable[ecx]
+  .text:01D4FB9D                 mov     [esi+eax+2], dl
+  .text:01D4FBA1                 mov     eax, [esp+7Ch+textures]
+  .text:01D4FBA5                 add     eax, 4
+  .text:01D4FBA8                 cmp     eax, 40000h
+  .text:01D4FBAD                 mov     [esp+7Ch+textures], eax
+  .text:01D4FBB1                 jl      loc_1D4FB25
+  .text:01D4FBB7                 lea     edi, [ebp+16A8h]
+  .text:01D4FBBD                 ; texture
+  .text:01D4FBBD                 push    edi; texture
+  .text:01D4FBBE                 call    GL_Bind
+  .text:01D4FBC3                 lea     eax, [esp+80h+bpp]
+  .text:01D4FBC7                 lea     ecx, [esp+80h+var_48]
+  .text:01D4FBCB                 ; bpp
+  .text:01D4FBCB                 push    eax; bpp
+  .text:01D4FBCC                 lea     edx, [esp+84h+var_44]
+  .text:01D4FBD0                 ; height
+  .text:01D4FBD0                 push    ecx; height
+  .text:01D4FBD1                 ; width
+  .text:01D4FBD1                 push    edx; width
+  .text:01D4FBD2                 call    VideoMode_GetCurrentVideoMode
+  .text:01D4FBD7                 mov     eax, [esp+8Ch+bpp]
+  .text:01D4FBDB                 add     esp, 10h
+  .text:01D4FBDE                 cmp     eax, 20h ; ' '
+  .text:01D4FBE1                 ; pixels
+  .text:01D4FBE1                 push    esi; pixels
+  .text:01D4FBE2                 ; type
+  .text:01D4FBE2                 push    1401h; type
+  .text:01D4FBE7                 ; format
+  .text:01D4FBE7                 push    1908h; format
+  .text:01D4FBEC                 ; border
+  .text:01D4FBEC                 push    0; border
+  .text:01D4FBEE                 ; height
+  .text:01D4FBEE                 push    100h; height
+  .text:01D4FBF3                 ; width
+  .text:01D4FBF3                 push    100h; width
+  .text:01D4FBF8                 jnz     short loc_1D4FC01
+  .text:01D4FBFA                 push    8058h
+  .text:01D4FBFF                 jmp     short loc_1D4FC06
+  .text:01D4FC01                 ; internalformat
+  .text:01D4FC01                 push    8057h; internalformat
+  .text:01D4FC06                 ; level
+  .text:01D4FC06                 push    0; level
+  .text:01D4FC08                 ; target
+  .text:01D4FC08                 push    0DE1h; target
+  .text:01D4FC0D                 call    qglTexImage2D
+  .text:01D4FC13                 ; gSkyTexNumber[i] = 0x16A8 + i; non-paletted TGA texture ID.
+  .text:01D4FC13                 mov     gSkyTexNumber[ebp*4], edi; gSkyTexNumber[i] = 0x16A8 + i; non-paletted TGA texture ID.
+  .text:01D4FC1A                 ; param
+  .text:01D4FC1A                 push    46180400h; param
+  .text:01D4FC1F                 ; pname
+  .text:01D4FC1F                 push    2801h; pname
+  .text:01D4FC24                 ; target
+  .text:01D4FC24                 push    0DE1h; target
+  .text:01D4FC29                 call    qglTexParameterf
+  .text:01D4FC2F                 ; param
+  .text:01D4FC2F                 push    46180400h; param
+  .text:01D4FC34                 ; pname
+  .text:01D4FC34                 push    2800h; pname
+  .text:01D4FC39                 ; target
+  .text:01D4FC39                 push    0DE1h; target
+  .text:01D4FC3E                 call    qglTexParameterf
+  .text:01D4FC44                 mov     eax, [esp+7Ch+var_64]
+  .text:01D4FC48                 test    eax, eax
+  .text:01D4FC4A                 jnz     short loc_1D4FC61
+  .text:01D4FC4C                 push    offset aSky_2; "SKY:  "
+  .text:01D4FC51                 mov     [esp+80h+var_64], 1
+  .text:01D4FC59                 call    Con_DPrintf
+  .text:01D4FC5E                 add     esp, 4
+  .text:01D4FC61                 test    ebx, ebx
+  .text:01D4FC63                 jz      short loc_1D4FC85
+  .text:01D4FC65                 mov     eax, suf[ebp*4]
+  .text:01D4FC6C                 push    eax
+  .text:01D4FC6D                 ; ArgList
+  .text:01D4FC6D                 push    offset movevars_skyName; ArgList
+  .text:01D4FC72                 push    offset aSSPaletted; "%s%s - paletted, "
+  .text:01D4FC77                 call    Con_DPrintf
+  .text:01D4FC7C                 add     esp, 0Ch
+  .text:01D4FC7F                 inc     ebp
+  .text:01D4FC80                 jmp     loc_1D4F972
+  .text:01D4FC85                 mov     ecx, suf[ebp*4]
+  .text:01D4FC8C                 push    ecx
+  .text:01D4FC8D                 ; ArgList
+  .text:01D4FC8D                 push    offset movevars_skyName; ArgList
+  .text:01D4FC92                 push    offset aSS; "%s%s, "
+  .text:01D4FC97                 call    Con_DPrintf
+  .text:01D4FC9C                 add     esp, 0Ch
+  .text:01D4FC9F                 inc     ebp
+  .text:01D4FCA0                 jmp     loc_1D4F972
+  .text:01D4FCA5                 mov     eax, [esp+7Ch+var_64]
+  .text:01D4FCA9                 pop     edi
+  .text:01D4FCAA                 pop     ebp
+  .text:01D4FCAB                 pop     ebx
+  .text:01D4FCAC                 test    eax, eax
+  .text:01D4FCAE                 jz      short loc_1D4FCBD
+  .text:01D4FCB0                 push    offset aDone; "done\n"
+  .text:01D4FCB5                 call    Con_DPrintf
+  .text:01D4FCBA                 add     esp, 4
+  .text:01D4FCBD                 ; ptr
+  .text:01D4FCBD                 push    esi; ptr
+  .text:01D4FCBE                 call    Mem_Free
+  .text:01D4FCC3                 add     esp, 4
+  .text:01D4FCC6                 mov     gLoadSky, 0
+  .text:01D4FCD0                 pop     esi
+  .text:01D4FCD1                 add     esp, 6Ch
+  .text:01D4FCD4                 retn
+procedure: |-
+  // BLOB build 3248: unlike the available gl_warp.c source revision, bind/delete use fixed texture IDs 0x16A8+i. gSkyTexNumber[6] stores those IDs, with paletteIndex+1 in the high 16 bits on the BMP path. No GL_GenTexture call or array-driven delete/clear loop exists here.
+  void __cdecl R_LoadSkys()
+  {
+    int i; // esi
+    _BYTE *buffer; // esi
+    int faceIndex; // ebp
+    int loadedBMP; // ebx
+    void *hFile; // eax
+    int paletteIndex; // edi
+    int pixelOffset; // eax
+    unsigned __int8 red; // cl
+    unsigned __int8 green; // cl
+    unsigned __int8 blue; // cl
+    const char *faceSuffix; // [esp+44h] [ebp-80h]
+    unsigned int textures; // [esp+58h] [ebp-6Ch] BYREF
+    int skipBMP; // [esp+5Ch] [ebp-68h]
+    int printed; // [esp+60h] [ebp-64h]
+    LPVOID pImage; // [esp+64h] [ebp-60h] BYREF
+    unsigned __int8 *palette; // [esp+68h] [ebp-5Ch] BYREF
+    int width; // [esp+6Ch] [ebp-58h] BYREF
+    int height; // [esp+70h] [ebp-54h] BYREF
+    int bpp; // [esp+74h] [ebp-50h] BYREF
+    char palCount[4]; // [esp+78h] [ebp-4Ch] BYREF
+    char v20[4]; // [esp+7Ch] [ebp-48h] BYREF
+    char v21[4]; // [esp+80h] [ebp-44h] BYREF
+    char name[64]; // [esp+84h] [ebp-40h] BYREF
+    printed = 0;
+    if ( !gLoadSky )
+    {
+      for ( i = 0; i < 6; ++i )
+      {
+        textures = i + 5800;
+        qglDeleteTextures(1, &textures);
+      }
+      return;
+    }
+    if ( !qglColorTableEXT || gl_palette_tex_value == 0.0 )
+    {
+      skipBMP = 1;
+    }
+    else
+    {
+      skipBMP = 0;
+      GL_PaletteClearSky();
+    }
+    buffer = j__malloc(0x40000u);
+  LABEL_10:
+    faceIndex = 0;
+    while ( faceIndex < 6 )
+    {
+      loadedBMP = 0;
+      _snprintf(name, 0x40u, "gfx/env/%s%s.bmp", movevars_skyName, suf[faceIndex]);
+      if ( skipBMP )
+        goto LABEL_18;
+      hFile = FS_Open(name, aRb_6);
+      if ( !hFile )
+        goto LABEL_18;
+      LoadBMP8(hFile, &palette, (int *)palCount, (unsigned __int8 **)&pImage, &width, &height);
+      if ( height * width <= 0 )
+        goto LABEL_18;
+      paletteIndex = GL_PaletteAdd(palette, 1);
+      if ( paletteIndex >= 0 )
+      {
+        GL_Bind(faceIndex + 5800);
+        qglTexImage2D(0xDE1u, 0, 32997, 256, 256, 0, 0x1900u, 0x1401u, pImage);
+        loadedBMP = 1;
+        gSkyTexNumber[faceIndex] = (paletteIndex << 16) + faceIndex + 71336;
+      }
+      Mem_Free(pImage);
+      Mem_Free(palette);
+      if ( loadedBMP )
+      {
+  LABEL_35:
+        qglTexParameterf(0xDE1u, 0x2801u, 9729.0);
+        qglTexParameterf(0xDE1u, 0x2800u, 9729.0);
+        if ( !printed )
+        {
+          printed = 1;
+          Con_DPrintf(aSky_2);
+        }
+        if ( !loadedBMP )
+        {
+          Con_DPrintf("%s%s, ", movevars_skyName, suf[faceIndex]);
+          goto LABEL_40;
+        }
+        Con_DPrintf("%s%s - paletted, ", movevars_skyName, suf[faceIndex++]);
+      }
+      else
+      {
+  LABEL_18:
+        faceSuffix = suf[faceIndex];
+        skipBMP = 1;
+        _snprintf(name, 0x40u, "gfx/env/%s%s.tga", movevars_skyName, faceSuffix);
+        if ( LoadTGA(name, buffer, 0x40000, nullptr, nullptr) )
+        {
+          if ( gl_dither_value != 0.0 )
+          {
+            pixelOffset = 0;
+            textures = 0;
+            do
+            {
+              red = buffer[pixelOffset];
+              if ( red < 0xFCu )
+              {
+                buffer[pixelOffset] = red | (red >> 6);
+                buffer[textures] = texgammatable[(unsigned __int8)buffer[textures]];
+                pixelOffset = textures;
+              }
+              green = buffer[pixelOffset + 1];
+              if ( green < 0xFCu )
+              {
+                buffer[pixelOffset + 1] = green | (green >> 6);
+                buffer[textures + 1] = texgammatable[(unsigned __int8)buffer[textures + 1]];
+                pixelOffset = textures;
+              }
+              blue = buffer[pixelOffset + 2];
+              if ( blue < 0xFCu )
+              {
+                buffer[pixelOffset + 2] = blue | (blue >> 6);
+                buffer[textures + 2] = texgammatable[(unsigned __int8)buffer[textures + 2]];
+                pixelOffset = textures;
+              }
+              pixelOffset += 4;
+              textures = pixelOffset;
+            }
+            while ( pixelOffset < 0x40000 );
+          }
+          GL_Bind(faceIndex + 5800);
+          VideoMode_GetCurrentVideoMode((int *)v21, (int *)v20, &bpp);
+          if ( bpp == 32 )
+            qglTexImage2D(0xDE1u, 0, 32856, 256, 256, 0, 0x1908u, 0x1401u, buffer);
+          else
+            qglTexImage2D(0xDE1u, 0, 32855, 256, 256, 0, 0x1908u, 0x1401u, buffer);
+          gSkyTexNumber[faceIndex] = faceIndex + 5800;
+          goto LABEL_35;
+        }
+        Con_Printf("R_LoadSkys: Couldn't load %s\n", name);
+        if ( !faceIndex && Q_strcmp(movevars_skyName, aDesert) )
+        {
+          Q_strcpy(movevars_skyName, aDesert_0);
+          goto LABEL_10;
+        }
+  LABEL_40:
+        ++faceIndex;
+      }
+    }
+    if ( printed )
+      Con_DPrintf(aDone);
+    Mem_Free(buffer);
+    gLoadSky = 0;
+  }
