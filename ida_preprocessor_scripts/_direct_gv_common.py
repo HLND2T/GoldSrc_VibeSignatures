@@ -11,7 +11,9 @@ from ida_analyze_util import (
 )
 
 
-async def inspect_owner_artifact(session, new_binary_dir, platform, image_base, owner_name):
+async def inspect_owner_artifact(
+    session, new_binary_dir, platform, image_base, owner_name, *, allow_relative_call_discriminator=False
+):
     """Reload and revalidate one predecessor function artifact in the active IDB."""
     artifact = _load_yaml_mapping(Path(new_binary_dir) / f"{owner_name}.{platform}.yaml")
     if not artifact or artifact.get("func_name") != owner_name:
@@ -29,6 +31,7 @@ async def inspect_owner_artifact(session, new_binary_dir, platform, image_base, 
         image_base,
         owner_name,
         allow_across_function_boundary=allow_across,
+        allow_relative_call_discriminator=allow_relative_call_discriminator,
     )
     if not function or not function.get("func_sig"):
         return None

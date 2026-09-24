@@ -501,6 +501,26 @@ modules:
           - FS_Open.{platform}.yaml
         expected_output:
           - Mod_LoadModel_to_FS_Open_callsite_0.{platform}.yaml
+      - name: find-SV_Init
+        expected_output:
+          - SV_Init.{platform}.yaml
+      - name: find-Host_InitializeGameDLL
+        expected_output:
+          - Host_InitializeGameDLL.{platform}.yaml
+      - name: find-g_clmove
+        expected_input:
+          - ClientDLL_Init.{platform}.yaml
+          - Host_Init.{platform}.yaml
+        expected_output:
+          - g_clmove.{platform}.yaml
+      - name: find-g_svmove
+        expected_input:
+          - g_clmove.{platform}.yaml
+          - SV_Init.{platform}.yaml
+          - Host_Init.{platform}.yaml
+          - Host_InitializeGameDLL.{platform}.yaml
+        expected_output:
+          - g_svmove.{platform}.yaml
       - name: find-ClientDLL_Init
         expected_output:
           - ClientDLL_Init.{platform}.yaml
@@ -1469,6 +1489,14 @@ modules:
         category: patch
       - name: Mod_LoadModel_to_FS_Open_callsite_0
         category: patch
+      - name: SV_Init
+        category: func
+      - name: Host_InitializeGameDLL
+        category: func
+      - name: g_clmove
+        category: gv
+      - name: g_svmove
+        category: gv
       - name: ClientDLL_Init
         category: func
       - name: ClientDLL_HudInit
