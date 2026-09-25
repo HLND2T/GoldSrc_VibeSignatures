@@ -42,3 +42,11 @@ Concrete anchor shapes from current artifacts (evidence only): hl-10210 Windows 
 - A proven effective address overrides the displacement xref; failure must never fall back to the displacement xref. Unknown/clobbered/ambiguous bases stay unresolved and the finder fails closed.
 - Do not confuse this global with the viewmodel entity: the reference wording exists specifically to prevent that.
 - `gv_sig_allow_across_function_boundary:true` is always set (the anchor lives in the tiny stub, whose signature must cross into the following bytes).
+
+## Semantic store selection (issue #248)
+
+- Trigger: multiple `found_gv` entries contain both the PIC/GOT base load and the subsequent field store; accepting the first decodable address emits the containing object's address.
+- Root cause: address resolution alone does not establish the requested access semantics, and candidate order is supplied by the LLM.
+- Correct approach: the finder requires a memory `mov` of the `MSG_ReadShort()` EAX result. The existing instruction rule is enforced both during LLM validation/retry and during local candidate selection; the shared resolver computes the store's full effective address.
+- Verification: `GlobalSemanticAnchorTests` exercises both candidate orders, relocated synthetic addresses, varied field offsets, and a base-load-only rejection. Real isolated svencoop-8948 Linux analysis rebuilt the store at `0x15043a`: GOT base `0x15ee8a0` plus displacement `0x600ce8` gives `0x1bef588`; the artifact is byte-identical to the committed Git blob.
+- Scope: CL_Parse_SetView's x86 EAX-return store; no absolute address or fixed instruction offset is used by the finder.

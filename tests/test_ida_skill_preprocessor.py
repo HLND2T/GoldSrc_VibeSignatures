@@ -6,6 +6,7 @@ import io
 import json
 import math
 import os
+import runpy
 import struct
 import tempfile
 import unittest
@@ -5004,6 +5005,95 @@ class PreprocessFuncSigViaMcpTests(unittest.IsolatedAsyncioTestCase):
             result = await self._preprocess(session, None, direct_func_va=self.FUNC_VA)
             self.assertNotIn("func_sig_allow_across_function_boundary", result)
             self.assertIn("allow_across_function_boundary = False", session.py_eval_codes[0])
+
+
+class GlobalSemanticAnchorTests(unittest.IsolatedAsyncioTestCase):
+    async def _finder_spec(self, finder, symbol):
+        namespace = runpy.run_path(str(Path(__file__).resolve().parents[1] / "ida_preprocessor_scripts" / finder))
+        common = AsyncMock(return_value=True)
+        with patch.dict(namespace["preprocess_skill"].__globals__, preprocess_common_skill=common):
+            await namespace["preprocess_skill"](None, "test", [], None, Path("engine"), "linux", 0)
+        return next(spec for spec in common.call_args.kwargs["llm_decompile_specs"] if spec["symbol_name"] == symbol)
+
+    async def _select(self, spec, symbol, entries, details, start):
+        with (
+            patch(
+                "ida_analyze_util._inspect_llm_instruction", new=AsyncMock(side_effect=lambda session, ea: details[ea])
+            ),
+            patch(
+                "ida_analyze_util._inspect_function_via_mcp",
+                new=AsyncMock(return_value={"func_va": hex(start), "func_sig": "55 8B EC"}),
+            ),
+        ):
+            return await _preprocess_llm_target(
+                session=None,
+                symbol_name=symbol,
+                category="gv",
+                spec=spec,
+                llm_config=None,
+                new_binary_dir=Path("engine"),
+                platform="linux",
+                image_base=0,
+                desired_fields=[],
+                llm_result={"found_gv": entries},
+                target_ranges=[(start, start + 0x200)],
+            )
+
+    async def test_viewentity_rejects_base_load_and_uses_effective_store_in_either_order(self):
+        spec = await self._finder_spec("find-CL_Parse_SetView-decompiles.py", "cl_viewentity")
+        for start, base, displacement in ((0x1000, 0x9000, 0x24), (0x4000, 0x18000, 0x58)):
+            load, store = hex(start + 0x30), hex(start + 0x36)
+            details = {
+                load: {
+                    "func_start": hex(start),
+                    "line": "mov edx, [ebx+1234h]",
+                    "size": 6,
+                    "operand_offsets": [0, 2],
+                    "got_indirect_targets": [hex(base)],
+                },
+                store: {
+                    "func_start": hex(start),
+                    "line": f"mov [edx+{displacement:X}h], eax",
+                    "size": 6,
+                    "operand_offsets": [2, 0],
+                    "operand_pic": [True, False],
+                    "operand_dwords": [hex(displacement), None],
+                    "data_refs": [hex(displacement)],
+                    "relative_store_address": {"target": hex(base + displacement)},
+                },
+            }
+            entries = [{"gv_name": "cl_viewentity", "insn_va": ea} for ea in (load, store)]
+            for order in (entries, entries[::-1]):
+                with self.subTest(start=start, order=order):
+                    result = await self._select(spec, "cl_viewentity", order, details, start)
+                    self.assertEqual(hex(base + displacement), result["gv_va"])
+                    self.assertEqual(int(store, 0) - start, result["gv_inst_offset"])
+                    self.assertEqual(hex(base), result["gv_pic_addend"])
+            self.assertIsNone(await self._select(spec, "cl_viewentity", entries[:1], details, start))
+
+    async def test_gltextures_uses_object_address_not_heap_pointer_load_in_either_order(self):
+        spec = await self._finder_spec("find-GL_LoadTextureFilterMode-decompiles.py", "gltextures")
+        for start, target, anchor_offset in ((0x2000, 0xA000, 0x70), (0x6000, 0x24000, 0xC0)):
+            load, address = hex(start + 0x28), hex(start + anchor_offset)
+            details = {
+                ea: {
+                    "func_start": hex(start),
+                    "line": line,
+                    "size": 6,
+                    "operand_offsets": [0, 2],
+                    "operand_pic": [False, True],
+                    "operand_dwords": [None, hex(target - 0x1000)],
+                    "data_refs": [hex(target)],
+                }
+                for ea, line in ((load, "mov ebp, dword ptr [ebx+1234h]"), (address, "lea eax, [ebx+1234h]"))
+            }
+            entries = [{"gv_name": "gltextures", "insn_va": ea} for ea in (load, address)]
+            for order in (entries, entries[::-1]):
+                with self.subTest(start=start, order=order):
+                    result = await self._select(spec, "gltextures", order, details, start)
+                    self.assertEqual(hex(target), result["gv_va"])
+                    self.assertEqual(anchor_offset, result["gv_inst_offset"])
+            self.assertIsNone(await self._select(spec, "gltextures", entries[:1], details, start))
 
 
 if __name__ == "__main__":
