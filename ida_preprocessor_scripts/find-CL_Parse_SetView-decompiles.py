@@ -9,6 +9,22 @@ LLM_DECOMPILE = [
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/CL_Parse_SetView.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
+        "instruction_rules": [
+            {
+                # IDA may omit DS for absolute memory symbols on Windows.
+                # A bare register remains a copy, not the required field store.
+                "regex": (
+                    r"(?i)mov\s+(?:dword ptr\s+)?(?:ds:[^,]+|[^,]*\[[^\]]+\]|"
+                    r"(?!e(?:ax|bx|cx|dx|si|di|bp|sp)\b)[a-z_?$@][\w?$@.]*),\s*eax"
+                ),
+                "text": (
+                    "Select the memory store of MSG_ReadShort()'s EAX result to cl.viewentity. "
+                    "Reject register loads of the containing client-state/PIC/GOT base. "
+                    "For a base-relative store, preserve the actual displacement; the effective "
+                    "field address is resolved from the current instructions."
+                ),
+            }
+        ],
         "dependency_policy": {"CL_Parse_SetView.{platform}.yaml": "required"},
     }
 ]

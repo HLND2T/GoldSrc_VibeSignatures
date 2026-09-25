@@ -50,6 +50,20 @@ async def preprocess_skill(
         }
         for name in [*gv_names, function]
     ]
+    if platform == "linux":
+        # The vector's first member shares its address, but loading that member
+        # reads the heap pointer. Anchor the object address passed to InsertBefore.
+        next(spec for spec in specs if spec["symbol_name"] == "gltextures")["instruction_rules"] = [
+            {
+                "regex": r"(?i)lea\s+e(?:ax|bx|cx|dx|si|di|bp),\s*.+",
+                "text": (
+                    "Select the LEA that materializes the gltextures CUtlVector object base "
+                    "passed as this to CUtlVector_gltexture_t_InsertBefore. "
+                    "Do not select MOV loads of m_pMemory, interior count/capacity fields, "
+                    "or other references to the same storage."
+                ),
+            }
+        ]
     return await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,

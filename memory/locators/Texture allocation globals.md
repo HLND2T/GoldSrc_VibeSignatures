@@ -65,3 +65,11 @@ MetaHook allocated_textures is texture_extension_number: HL 3248/3266/3329/3647/
 ## Callers
 
 - Production engine entries in configs/hl-*.yaml, configs/cof-5936.yaml and configs/svencoop-*.yaml.
+
+### Stable Linux vector-object anchor (issue #248)
+
+- Trigger: several `found_gv` candidates reference gltextures at the same address but produce different `gv_inst_offset` values.
+- Root cause: the vector object and its first member share storage; a MOV loading the heap pointer is address-valid but is not the canonical object-address anchor.
+- Correct approach: the Linux finder requires the LEA materializing the vector object's `this` argument for InsertBefore, using the existing instruction-rule validation and retry path. Other globals and Windows selection remain unchanged.
+- Verification: `GlobalSemanticAnchorTests` covers reversed candidate order, relocated addresses, varied anchor offsets, and rejection when only the pointer load is returned. Real svencoop-8948 Linux IDB inspection confirms the LEA at `0x177384`, followed by the argument store and InsertBefore call; retained `_ZL10gltextures` names `0x2a81d64`. Isolated analysis reproduced all five outputs of the two affected nodes byte-for-byte against Git blobs, without rebaselining.
+- Scope: SvEngine Linux GL_LoadTextureFilterMode_part_14; no binary address or instruction offset is hard-coded in selection.
