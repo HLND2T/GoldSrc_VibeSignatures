@@ -151,3 +151,11 @@ the existing tag lock quarantine the damaged metadata outside `leases/`. Do not 
 cannot be parsed; its owner cannot be determined safely. Resume with a full workflow including warmup. Future-dated
 pins beyond the one-hour clock allowance also block pruning: correct runner clocks and establish owner status first.
 The original `idb-cache/.locks/` remains live coordination data and is never retired with legacy payloads.
+
+## Cross-platform lease failure-injection paths
+
+- Trigger: Windows CI reports `IdbCacheError not raised` in the unreadable-lease test while Linux passes.
+- Root cause/constraint: the fixture retains the temporary path spelling while `_tag_root()` resolves it. Lexical `Path` equality does not identify the same file across equivalent spellings, including Windows short/long names; the permission-error injector can silently miss its target.
+- Correct approach: match the existing target with `Path.samefile()` when injecting a file-specific read failure. Exercise a noncanonical `persisted/../persisted` root on all platforms so the regression does not depend on Windows being available.
+- Verification: adding that alias reproduces the CI assertion on Linux before the matcher fix; after the fix all 15 lease tests pass, retaining assertions that unreadable metadata raises and prevents deletion.
+- Scope: test fault injection only; production lease validation and pruning are unchanged. The new Windows CI run must confirm the original platform failure is resolved.

@@ -312,6 +312,9 @@ restore_selection_entries(entries=document['entries'], groups=(group,), persiste
         self.assertTrue(self.lease_path(document).exists())
 
     def test_malformed_or_unreadable_lease_blocks_every_prune_deletion(self):
+        # Exercise equivalent spellings even without Windows temporary-directory
+        # short names: cache paths are resolved before the read failure is injected.
+        self.persisted = self.persisted / ".." / self.persisted.name
         document = self.prepare()
         self.make_old_selection_collectible()
         tag_root = self.lease_path(document).parent.parent
@@ -339,7 +342,7 @@ restore_selection_entries(entries=document['entries'], groups=(group,), persiste
         real_read = Path.read_bytes
 
         def denied(path):
-            if path == lease_path:
+            if path.samefile(lease_path):
                 raise PermissionError("injected denied")
             return real_read(path)
 
