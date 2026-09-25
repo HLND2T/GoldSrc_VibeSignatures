@@ -2122,6 +2122,23 @@ modules:
         expected_output:
           - ClientPortalManager_DrawPortalSurface.{platform}.yaml
           - ClientPortalManager_GetOriginalSurfaceTexture.{platform}.yaml
+      - name: find-ClientPortalManager_DrawPortals
+        expected_output:
+          - ClientPortalManager_DrawPortals.{platform}.yaml
+      - name: find-ClientPortalManager-shader-chain
+        expected_input:
+          - ClientPortalManager_DrawPortals.{platform}.yaml
+        expected_output:
+          - ClientPortalManager_InitShader.{platform}.yaml
+        expected_output_linux:
+          - ClientPortalManager_EnableShader.linux.yaml
+      - name: find-IEngineClient-view-slots
+        expected_input:
+          - ClientPortalManager_RenderPortals.{platform}.yaml
+          - ClientPortalManager_DrawPortals.{platform}.yaml
+        expected_output:
+          - IEngineClient_PushView.{platform}.yaml
+          - IEngineClient_PopView.{platform}.yaml
       - name: find-ClientPortal-offsets-decompiles
         expected_input:
           - ClientPortalManager_RenderPortals.{platform}.yaml
@@ -2184,6 +2201,17 @@ modules:
         category: func
       - name: ClientPortalManager_DrawPortalSurface
         category: func
+      - name: ClientPortalManager_DrawPortals
+        category: func
+      - name: ClientPortalManager_InitShader
+        category: func
+      - name: ClientPortalManager_EnableShader
+        category: func
+        platform: linux
+      - name: IEngineClient_PushView
+        category: vfunc
+      - name: IEngineClient_PopView
+        category: vfunc
       - name: ClientPortalManager_GetOriginalSurfaceTexture
         category: func
       - name: ClientPortalManager_vector_begin_offset

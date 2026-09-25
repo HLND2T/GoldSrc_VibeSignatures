@@ -10,23 +10,23 @@ permalink: goldsrc-vibesignatures/locator-summary
 分类依据是每个 finder 的主要发现锚；部分符号实际会组合多种机制（例如先字符串锚定 owning function，再读表槽），
 此处归入其决定性的一步。**Summary** 列摘自各 locator 文件 `## How it is located` 的首段。
 
-共 **243** 个 locator；模块 engine 204，client 39。
+共 **249** 个 locator；模块 engine 204，client 45。
 
 | 定位机制 | 数量 |
 | --- | --- |
-| 字符串锚 | 72 |
+| 字符串锚 | 73 |
 | 浮点常量锚 | 3 |
 | 表 / 结构 / 数据段扫描 | 38 |
 | 确定性 xref 交集锚 | 7 |
-| 前驱产物复用（下游确定性恢复） | 34 |
+| 前驱产物复用（下游确定性恢复） | 37 |
 | LLM_DECOMPILE 定位 | 55 |
-| vtable / vfunc 槽恢复 | 10 |
+| vtable / vfunc 槽恢复 | 12 |
 | 数值 scalar 提取 | 9 |
 | 调用点 patch | 16 |
 
 ---
 
-## 字符串锚 (72)
+## 字符串锚 (73)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -97,6 +97,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [g_pClientFactory](locators/g_pClientFactory.md) | engine | gv | `CBaseUI__Initialize` | Despite the -decompiles suffix this finder is not LLM-based: it runs one direct py_eval locator (LOCATE_PY) inside the owner function and fails closed on any… |
 | [Draw_TextureMode_f](locators/Draw_TextureMode_f.md) | engine | func | — | One exact literal, one string instance, one owning function. The classic family uses the two-space-free `bad filter name` diagnostic; SvEngine keeps only `Invalid filter name`. FULLMATCH: keeps the two apart. |
 | [CClient_SoundEngine_LoadSoundList](locators/CClient_SoundEngine_LoadSoundList.md) | client | func | — | `_sven_client_pic_common.preprocess_string_owner_skill_with_pic_fallback` with the exact literal `SENTENCELIST {`: the shared Pattern A `FULLMATCH:` string path runs first, and on the image-base-0 Linux ELFs the PIC fallback resolves the GOTOFF displacement site when IDA records no xref. Exactly one owning function must remain; the Sven client keeps one identity (Windows a full `__thiscall` body, Linux a `.part.N` body at `0x11E894`/`0xAF726` whose public `LoadSoundList()` symbol is only a guard wrapper). |
+| [ClientPortalManager_DrawPortals](locators/ClientPortalManager_DrawPortals.md) | client | func | — | Exact literal "Invalid GL_ACTIVE_TEXTURE, unable to reset. Portals will not be drawn.\n" — the plural member of the portal diagnostic family, one instance and one owning function per build (GOTOFF fallback on 10257 Linux). |
 
 ## 浮点常量锚 (4)
 
@@ -182,7 +183,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [R_StudioRenderModel](locators/R_StudioRenderModel.md) | engine | func | `R_StudioCalcAttachments`, `R_StudioDrawModel`, `R_StudioDrawPlayer`, `R_StudioSetupBones`, `cl_sprite_shell`, `g_ChromeOrigin` | The func_xrefs entry declares xref_gvs: ["cl_sprite_shell", "g_ChromeOrigin"] and no strings/signatures/functions: the candidate is the function that intersects the… |
 | [V_StartPitchDrift](locators/V_StartPitchDrift.md) | client | func | — | _client_registration_common.REGISTRATION_QUERY is invoked with the label centerview. The helper collects strings whose NUL-terminated bytes end with the label |
 
-## 前驱产物复用（下游确定性恢复） (34)
+## 前驱产物复用（下游确定性恢复） (37)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -220,6 +221,9 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [ClientDLL_DrawTransparentTriangles](locators/ClientDLL_DrawTransparentTriangles.md) | engine | func | `R_DrawTEntitiesOnList`, `cl_funcs` | The unique direct callee of the transparent-entity loader that is tiny and references exactly one `cl_funcs` member, `pDrawTransparentTriangles`. |
 | [cl_funcs_pDrawTransparentTriangles](locators/cl_funcs_pDrawTransparentTriangles.md) | engine | gv | `R_DrawTEntitiesOnList`, `cl_funcs` | That member's own address, read from the forwarder's single member access; never `cl_funcs` plus a hardcoded offset. |
 | [CL_IsDevOverviewMode](locators/CL_IsDevOverviewMode.md) | engine | func | `CL_SetDevOverView` | The nearest call before a `CL_SetDevOverView` call site, walking backwards across single-predecessor blocks. The renderer is derived as the unique caller of `CL_SetDevOverView`, never named. |
+| [ClientPortalManager_InitShader](locators/ClientPortalManager%20shader%20chain-%20InitShader%2C%20EnableShader%2C%20DisableShader.md) | client | func | `ClientPortalManager_DrawPortals` | The predecessor is the unique function reachable within two call levels of DrawPortals whose body materialises both `GL_VERTEX_SHADER` (`0x8B31`) and `GL_FRAGMENT_SHADER` (`0x8B30`). |
+| [ClientPortalManager_EnableShader](locators/ClientPortalManager%20shader%20chain-%20InitShader%2C%20EnableShader%2C%20DisableShader.md) | client | func | `ClientPortalManager_DrawPortals` | Calls InitShader first, compares the shader-available byte member under a zero guard, and ends in one indirect branch whose final argument reloads the program member through the same entry argument. Linux only; MSVC inlines it. |
+| [ClientPortalManager_DisableShader](locators/ClientPortalManager%20shader%20chain-%20InitShader%2C%20EnableShader%2C%20DisableShader.md) | client | func | `ClientPortalManager_DrawPortals` | The same wrapper shape as EnableShader but its final argument is the immediate 0. svencoop-8948 Linux only; 10257 inlines it into DrawPortals. |
 
 ## LLM_DECOMPILE 定位 (55)
 
@@ -281,7 +285,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [r_entorigin](locators/r_entorigin.md) | engine | gv | `R_DrawSpriteModel` | `found_gv` against the annotated sprite renderer, which reads it four times as the first `VectorMA` operand of the quad corners. Moved off `R_DrawTEntitiesOnList` so SvEngine is covered too; values unchanged. |
 | [r_blend](locators/r_blend.md) | engine | gv | `studioapi_StudioSetRenderamt` | The accessor's sole writable-data store target (`SLOT_SHAPE_WRITE_ALLOW_READS`): it stores the render amount into a pointer-relative field, then writes `CL_FxBlend(currententity)/255.0` into `r_blend`. Reads are unrestricted because the same body reads `currententity` (and, on x87 builds, `r_blend` itself). |
 
-## vtable / vfunc 槽恢复 (10)
+## vtable / vfunc 槽恢复 (12)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -296,6 +300,8 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [GameStudioRenderer__StudioDrawPlayer](locators/GameStudioRenderer__StudioDrawPlayer.md) | client | vfunc | `GameStudioRenderer_StudioDrawPlayer`, `GameStudioRenderer_vtable` | Load the outer wrapper's func_va from the GameStudioRenderer_StudioDrawPlayer artifact and the entry map from GameStudioRenderer_vtable. |
 | [GameStudioRenderer_vtable](locators/GameStudioRenderer_vtable.md) | client | vtable | `HUD_GetStudioModelInterface` | The finder first proves the renderer object: from the exported HUD_GetStudioModelInterface body it locates the returned r_studio_interface_t (version == 1, +4/+8… |
 | [CClient_SoundEngine_m_iSentenceCount](locators/CClient_SoundEngine_m_iSentenceCount.md) | client | structmember | `CClient_SoundEngine_LoadSoundList` | The owner artifact is revalidated through `inspect_owner_artifact` plus a unique `func_sig` match, then a deterministic `py_eval` scan requires exactly one `cmp dword ptr [reg+disp], imm` capacity guard (imm `0x800` MSVC / `0x7FF` GCC) whose next instruction is the matching signed branch. `LLM_DECOMPILE` with `expected_size: 4` and an `instruction_rules` pin recovers the member; the emitted offset, size and `offset_sig_disp` are re-checked against that guard, and a mismatch deletes the output. |
+| [IEngineClient_PushView](locators/IEngineClient%20view%20slots-%20PushView%2C%20PopView.md) | client | vfunc | `ClientPortalManager_RenderPortals`, `ClientPortalManager_DrawPortals` | DrawPortals carries exactly one C++ virtual call (`call [V+disp]`, `V` from a zero-displacement `mov`) — the trailing PopView — and RenderPortals must carry exactly three at `P-4`/`P`/`P+4`. PushView is the first. |
+| [IEngineClient_PopView](locators/IEngineClient%20view%20slots-%20PushView%2C%20PopView.md) | client | vfunc | `ClientPortalManager_RenderPortals`, `ClientPortalManager_DrawPortals` | The offset of DrawPortals' unique engine dispatch, cross-checked against the three consecutive RenderPortals dispatches and against the engine `CEngineClient` vtable located through RTTI. |
 
 ## 数值 scalar 提取 (9)
 
