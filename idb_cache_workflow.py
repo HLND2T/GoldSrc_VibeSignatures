@@ -21,6 +21,7 @@ from idb_cache import (
     build_binary_identity,
     build_cache_identity,
 )
+from idb_cache_leases import new_lease, validate_lease
 from idb_cache_locks import producer_lock
 from idb_cache_selection import (
     SELECTION_ENTRY_KEYS,
@@ -29,15 +30,16 @@ from idb_cache_selection import (
     prepare_selection_entries,
     read_selection_with_evidence,
     restore_selection_entries,
+    seal_selection_leases,
     timed_stage as _timed_stage,
     validate_persisted_workspace,
     validate_selection_entries,
     write_selection_with_evidence,
 )
-from release_workflow_lib.hashing import canonical_json_bytes
+from release_workflow_lib.hashing import canonical_json_bytes, sha256_bytes
 from warmup_memory import ProducerMemoryOwner, producer_memory_owner_from_environment
 
-CACHE_SELECTION_SCHEMA_VERSION = 1
+CACHE_SELECTION_SCHEMA_VERSION = 2
 CACHE_SELECTION_KEYS = {
     "schema_version",
     "cache_mode",
@@ -45,6 +47,7 @@ CACHE_SELECTION_KEYS = {
     "merge_sha",
     "merge_bin_commit",
     "entries",
+    "lease",
 }
 CACHE_SELECTION_ENTRY_KEYS = SELECTION_ENTRY_KEYS
 
@@ -143,7 +146,7 @@ def _expected_identities(
     return identities
 
 
-def _selection_document(plan: dict, entries: list[dict]) -> dict:
+def _selection_document(plan: dict, entries: list[dict], lease: dict) -> dict:
     return {
         "schema_version": CACHE_SELECTION_SCHEMA_VERSION,
         "cache_mode": CACHE_MODE_WARM,
@@ -151,6 +154,7 @@ def _selection_document(plan: dict, entries: list[dict]) -> dict:
         "merge_sha": plan["merge_sha"],
         "merge_bin_commit": plan.get("merge_bin_commit"),
         "entries": sorted(entries, key=entry_sort_key),
+        "lease": lease,
     }
 
 
@@ -166,6 +170,7 @@ def validate_cache_selection(
     if (
         not isinstance(document, dict)
         or set(document) != CACHE_SELECTION_KEYS
+        or type(document["schema_version"]) is not int
         or document["schema_version"] != CACHE_SELECTION_SCHEMA_VERSION
         or document["cache_mode"] != CACHE_MODE_WARM
     ):
@@ -180,6 +185,8 @@ def validate_cache_selection(
         entries=document["entries"],
         identities=identities,
         persisted_root=persisted_root,
+        lease=validate_lease(document["lease"]),
+        selection_sha256=sha256_bytes(canonical_json_bytes(document)),
     )
     if raw is not None and canonical_json_bytes(document) != raw:
         raise IdbCacheWorkflowError("Cache selection is not canonical JSON")
@@ -202,6 +209,7 @@ def prepare_cache_selection(
     output_path: str | Path,
     output_sha256_path: str | Path,
     producer_memory: ProducerMemoryOwner | None = None,
+    repository: str = "local",
 ) -> dict:
     root = Path(repo_root).resolve()
     persisted = validate_persisted_workspace(persisted_root, root)
@@ -218,6 +226,7 @@ def prepare_cache_selection(
             if not groups:
                 raise IdbCacheWorkflowError("Warm plan selected no binary groups")
             identities = _expected_identities(groups=groups, kernel_version=kernel_version)
+        lease = new_lease(repository=repository, run_id=run_id, attempt=attempt)
         entries = prepare_selection_entries(
             groups=groups,
             identities=identities,
@@ -228,8 +237,10 @@ def prepare_cache_selection(
             max_concurrency=max_concurrency,
             worker_timeout_seconds=worker_timeout_seconds,
             producer_memory=producer_memory or producer_memory_owner_from_environment(),
+            lease=lease,
         )
-        document = _selection_document(plan, entries)
+        document = _selection_document(plan, entries, lease)
+        seal_selection_leases(document=document, persisted_root=persisted)
         with _timed_stage("prepare_selection_validation"):
             validate_cache_selection(
                 document=document,
@@ -298,6 +309,8 @@ def restore_cache_selection(**kwargs) -> dict:
             entries=document["entries"],
             groups=groups,
             persisted_root=kwargs["persisted_root"],
+            lease=document["lease"],
+            selection_sha256=sha256_bytes(canonical_json_bytes(document)),
         )
     return document
 
@@ -323,6 +336,7 @@ def _parser() -> argparse.ArgumentParser:
         type=float,
         default=DEFAULT_WORKER_TIMEOUT_SECONDS,
     )
+    prepare.add_argument("--repository", default="local")
     prepare.add_argument("-run-id", required=True)
     prepare.add_argument("-attempt", type=int, required=True)
     prepare.add_argument("-output", required=True)
@@ -360,6 +374,7 @@ def main(argv: list[str] | None = None) -> int:
                 persisted_root=args.persisted_root,
                 kernel_version=args.kernel_version,
                 ida_python_executable=args.ida_python,
+                repository=args.repository,
                 run_id=args.run_id,
                 attempt=args.attempt,
                 max_concurrency=args.max_concurrency,

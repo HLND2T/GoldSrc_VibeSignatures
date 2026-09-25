@@ -9,6 +9,7 @@ from pathlib import Path
 from gamesymbol_snapshot_lib.metadata import write_metadata
 from gamesymbol_snapshot_lib.operations import pack_snapshot
 from gamesymbols_json import encode_dataset
+from idb_cache_leases import new_lease
 from ida_analyze_util import canonical_symbol_yaml_bytes
 import release_bundle
 from release_bundle import ReleaseBundleError, build_release_bundle, verify_release_bundle
@@ -162,6 +163,28 @@ class ReleaseBundleTests(unittest.TestCase):
             **selection,
             **kwargs,
         )
+
+    def test_leased_selection_evidence_remains_verifiable_after_lease_expiry(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, generated, source_sha = self.fixture(root)
+            selection_path = generated / "evidence/cache-selection.json"
+            selection = json.loads(selection_path.read_bytes())
+            lease = new_lease(repository="owner/repo", run_id="run-1", attempt=1)
+            lease.update(created_at="2020-01-01T00:00:00Z", expires_at="2020-02-06T00:00:00Z")
+            selection.update(schema_version=2, lease=lease)
+            selection_path.write_bytes(canonical_json_bytes(selection))
+            bundle = root / "bundle"
+            self._build(repo, generated, bundle, source_sha)
+            verify_release_bundle(bundle_root=bundle, **self._verification_arguments(repo, generated, source_sha))
+            selection["lease"]["attempt"] = True
+            selection_path.write_bytes(canonical_json_bytes(selection))
+            invalid_bundle = root / "invalid-bundle"
+            self._build(repo, generated, invalid_bundle, source_sha)
+            with self.assertRaisesRegex(ReleaseBundleError, "lease"):
+                verify_release_bundle(
+                    bundle_root=invalid_bundle, **self._verification_arguments(repo, generated, source_sha)
+                )
 
     def test_tracked_bundle_and_independent_binding_verification(self):
         with tempfile.TemporaryDirectory() as temporary:

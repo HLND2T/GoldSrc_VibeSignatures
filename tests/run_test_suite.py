@@ -19,6 +19,7 @@ GROUP_FILES = {
         "test_ida_mcp_keepalive.py",
         "test_ida_runtime_probe.py",
         "test_idb_cache.py",
+        "test_idb_cache_leases.py",
         "test_warmup_concurrency.py",
         "test_warmup_idb.py",
         "test_generate_reference_yaml.py",

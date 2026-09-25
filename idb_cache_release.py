@@ -35,6 +35,7 @@ from idb_cache import (
     build_binary_identity,
     build_cache_identity,
 )
+from idb_cache_leases import new_lease, validate_lease
 from idb_cache_locks import producer_lock
 from idb_cache_selection import (
     IdbCacheSelectionError,
@@ -42,16 +43,17 @@ from idb_cache_selection import (
     prepare_selection_entries,
     read_selection_with_evidence,
     restore_selection_entries,
+    seal_selection_leases,
     timed_stage,
     validate_persisted_workspace,
     validate_selection_entries,
     write_selection_with_evidence,
 )
-from release_workflow_lib.hashing import canonical_json_bytes
+from release_workflow_lib.hashing import canonical_json_bytes, sha256_bytes
 from warmup_memory import ProducerMemoryOwner, producer_memory_owner_from_environment
 
-RELEASE_SELECTION_SCHEMA_VERSION = 1
-RELEASE_SELECTION_KEYS = {"schema_version", "cache_mode", "source_sha", "bin_commit", "entries"}
+RELEASE_SELECTION_SCHEMA_VERSION = 2
+RELEASE_SELECTION_KEYS = {"schema_version", "cache_mode", "source_sha", "bin_commit", "entries", "lease"}
 COMMIT_SHA_RE = re.compile(r"^[0-9a-f]{40}$", re.ASCII)
 GITLINK_MODE = "160000"
 
@@ -212,13 +214,14 @@ def _release_context(
     )
 
 
-def _selection_document(context: ReleaseCacheContext, entries: list[dict]) -> dict:
+def _selection_document(context: ReleaseCacheContext, entries: list[dict], lease: dict) -> dict:
     return {
         "schema_version": RELEASE_SELECTION_SCHEMA_VERSION,
         "cache_mode": CACHE_MODE_WARM,
         "source_sha": context.source_sha,
         "bin_commit": context.bin_commit,
         "entries": sorted(entries, key=entry_sort_key),
+        "lease": lease,
     }
 
 
@@ -226,6 +229,7 @@ def validate_release_selection(*, document: object, context: ReleaseCacheContext
     if (
         not isinstance(document, dict)
         or set(document) != RELEASE_SELECTION_KEYS
+        or type(document["schema_version"]) is not int
         or document["schema_version"] != RELEASE_SELECTION_SCHEMA_VERSION
         or document["cache_mode"] != CACHE_MODE_WARM
     ):
@@ -238,6 +242,8 @@ def validate_release_selection(*, document: object, context: ReleaseCacheContext
         entries=document["entries"],
         identities=context.identities,
         persisted_root=context.persisted_root,
+        lease=validate_lease(document["lease"]),
+        selection_sha256=sha256_bytes(canonical_json_bytes(document)),
     )
     if raw is not None and canonical_json_bytes(document) != raw:
         raise IdbCacheReleaseError("Release cache selection is not canonical JSON")
@@ -259,6 +265,7 @@ def prepare_release_selection(
     output_path: str | Path,
     output_sha256_path: str | Path,
     producer_memory: ProducerMemoryOwner | None = None,
+    repository: str = "local",
 ) -> dict:
     root = Path(repo_root).resolve()
     persisted = validate_persisted_workspace(persisted_root, root)
@@ -281,6 +288,7 @@ def prepare_release_selection(
             f"bin_commit={context.bin_commit}; groups={len(context.groups)}",
             flush=True,
         )
+        lease = new_lease(repository=repository, run_id=run_id, attempt=attempt)
         entries = prepare_selection_entries(
             groups=context.groups,
             identities=context.identities,
@@ -291,8 +299,10 @@ def prepare_release_selection(
             max_concurrency=max_concurrency,
             worker_timeout_seconds=worker_timeout_seconds,
             producer_memory=producer_memory or producer_memory_owner_from_environment(),
+            lease=lease,
         )
-        document = _selection_document(context, entries)
+        document = _selection_document(context, entries, lease)
+        seal_selection_leases(document=document, persisted_root=persisted)
         with timed_stage("prepare_selection_validation"):
             validate_release_selection(document=document, context=context)
         with timed_stage("prepare_selection_write"):
@@ -342,6 +352,8 @@ def restore_release_selection(**kwargs) -> dict:
         entries=document["entries"],
         groups=context.groups,
         persisted_root=context.persisted_root,
+        lease=document["lease"],
+        selection_sha256=sha256_bytes(canonical_json_bytes(document)),
     )
     return document
 
@@ -366,6 +378,7 @@ def _parser() -> argparse.ArgumentParser:
         type=float,
         default=DEFAULT_WORKER_TIMEOUT_SECONDS,
     )
+    prepare.add_argument("--repository", default="local")
     prepare.add_argument("-run-id", required=True)
     prepare.add_argument("-attempt", type=int, required=True)
     prepare.add_argument("-output", required=True)
@@ -401,6 +414,7 @@ def main(argv: list[str] | None = None) -> int:
                 kernel_version=args.kernel_version,
                 ida_python_executable=args.ida_python,
                 source_sha=args.source_sha,
+                repository=args.repository,
                 run_id=args.run_id,
                 attempt=args.attempt,
                 max_concurrency=args.max_concurrency,

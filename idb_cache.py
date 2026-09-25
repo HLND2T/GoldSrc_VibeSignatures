@@ -31,6 +31,7 @@ from idb_cache_locks import (
     producer_lock,
     tag_lock,
 )
+from idb_cache_leases import CACHE_DIRECTORY_NAME, protected_generations as leased_generations
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.hashing import (
     canonical_json_bytes,
@@ -324,7 +325,7 @@ def warm_worker_contract_sha256(warm_worker_path: str | Path) -> str:
 
 def _tag_root(persisted_root: str | Path, tag: str, *, create: bool = False) -> Path:
     root = _plain_root(persisted_root, create=create)
-    cache_root = root / "idb-cache"
+    cache_root = root / CACHE_DIRECTORY_NAME
     if cache_root.exists() and (not cache_root.is_dir() or is_reparse_point(cache_root)):
         raise IdbCacheError(f"IDB cache root must be a plain directory: {cache_root}")
     if create:
@@ -1019,7 +1020,7 @@ def prune_tag(
     incoming_age: timedelta = timedelta(hours=24),
     protected_generations: Iterable[str] = (),
 ) -> list[str]:
-    """Retain verified generations selected by this Prepare in addition to normal retention."""
+    """Prune under the tag lock, honoring every persisted selection's live lease."""
     if isinstance(protected_generations, (str, bytes)):
         raise IdbCacheError("protected_generations must be a collection of generation names")
     protected = {_component(name, "protected generation") for name in protected_generations}
@@ -1027,6 +1028,9 @@ def prune_tag(
     if not tag_root.is_dir():
         return []
     now = datetime.now(timezone.utc) if now is None else now.astimezone(timezone.utc)
+    # Validate leases before deleting even incoming payloads. An unreadable pin must
+    # never silently turn into permission to delete another run's selected generation.
+    protected.update(leased_generations(tag_root=tag_root, now=now))
     ready_generation = None
     ready_path = tag_root / "READY.json"
     if ready_path.is_file():
@@ -1045,6 +1049,7 @@ def prune_tag(
             if age >= incoming_age and path.is_dir() and not is_reparse_point(path):
                 shutil.rmtree(path)
                 removed.append(path.name)
+                print(f"IDB cache pruned: tag={tag}; generation={path.name}; reason=stale-incoming", flush=True)
             continue
         if not path.is_dir() or is_reparse_point(path):
             continue
@@ -1063,6 +1068,7 @@ def prune_tag(
         if path.name not in keep and now - published >= minimum_age:
             shutil.rmtree(path)
             removed.append(path.name)
+            print(f"IDB cache pruned: tag={tag}; generation={path.name}; reason=unleased-retention", flush=True)
     return removed
 
 

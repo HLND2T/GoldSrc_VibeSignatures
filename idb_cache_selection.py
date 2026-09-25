@@ -23,6 +23,7 @@ from pathlib import Path
 from ida_database_paths import is_reparse_point
 from idb_cache import (
     CACHE_SCHEMA_VERSION,
+    _tag_root,
     _resolved_max_concurrency,
     publish_generation,
     probe_generation,
@@ -31,8 +32,17 @@ from idb_cache import (
     verify_selection,
     warm_group,
 )
+from idb_cache_leases import (
+    lease_reference,
+    pin_generation,
+    release_lease,
+    require_lease,
+    seal_lease,
+    validate_lease,
+)
 from idb_cache_locks import tag_lock
 from release_workflow_lib.hashing import (
+    canonical_json_bytes,
     normalized_sha256,
     sha256_bytes,
     write_canonical_json,
@@ -117,20 +127,28 @@ def validate_selection_entries(
     entries: object,
     identities: dict[tuple[str, str], dict],
     persisted_root: str | Path,
+    lease: dict,
+    selection_sha256: str,
 ) -> None:
     """Assert the entries cover exactly the expected groups and bind exact generations.
 
     ``identities`` is rebuilt from the current workspace binaries and the pinned IDA runtime,
     so matching it proves the consumer sees the same inputs the producer cached.
     """
-    if not isinstance(entries, list) or entries != sorted(entries, key=entry_sort_key):
+    if not isinstance(entries, list) or any(
+        not isinstance(entry, dict)
+        or set(entry) != SELECTION_ENTRY_KEYS
+        or not isinstance(entry["tag"], str)
+        or not isinstance(entry["platform"], str)
+        for entry in entries
+    ):
+        raise IdbCacheSelectionError("Cache selection entry has unexpected fields")
+    if entries != sorted(entries, key=entry_sort_key):
         raise IdbCacheSelectionError("Cache selection entries must use canonical order")
     if len(entries) != len(identities):
         raise IdbCacheSelectionError("Cache selection does not cover every expected binary group")
     seen = set()
     for entry in entries:
-        if not isinstance(entry, dict) or set(entry) != SELECTION_ENTRY_KEYS:
-            raise IdbCacheSelectionError("Cache selection entry has unexpected fields")
         pair = (entry["tag"], entry["platform"])
         if pair in seen or pair not in identities:
             raise IdbCacheSelectionError("Cache selection contains an unexpected or duplicate tag/platform group")
@@ -138,7 +156,14 @@ def validate_selection_entries(
         identity = identities[pair]
         if entry["binaries"] != identity["binaries"]:
             raise IdbCacheSelectionError("Cache selection binary identities do not match the expected workspace")
-        manifest = verify_selection(persisted_root=persisted_root, selection=generation_selection(entry))
+        with tag_lock(persisted_root, entry["tag"], timeout_seconds=None):
+            require_lease(
+                tag_root=_tag_root(persisted_root, entry["tag"]),
+                lease=lease,
+                selection_sha256=selection_sha256,
+                reference=lease_reference(entry),
+            )
+            manifest = verify_selection(persisted_root=persisted_root, selection=generation_selection(entry))
         if manifest["identity"] != identity:
             raise IdbCacheSelectionError("Cache generation identity does not match the pinned runtime and binaries")
 
@@ -154,6 +179,7 @@ def prepare_selection_entries(
     max_concurrency: int | None,
     worker_timeout_seconds: float,
     producer_memory: ProducerMemoryOwner,
+    lease: dict,
 ) -> list[dict]:
     """Probe tags concurrently, then warm misses serially outside their publication locks.
 
@@ -163,6 +189,9 @@ def prepare_selection_entries(
     """
     persisted = Path(persisted_root)
     concurrency = _resolved_max_concurrency(max_concurrency)
+    validate_lease(lease)
+    if lease["run_id"] != run_id or lease["attempt"] != attempt:
+        raise IdbCacheSelectionError("Preparing lease must belong to the current producer run/attempt")
     groups = tuple(groups)
     by_tag = {}
     for group in groups:
@@ -192,6 +221,11 @@ def prepare_selection_entries(
                     selection = probe_generation(persisted_root=persisted, identity=identities[pair])
                 if selection is not None:
                     # READY and fallback hits have already fully verified under this same lock.
+                    pin_generation(
+                        tag_root=_tag_root(persisted, group.tag, create=True),
+                        lease=lease,
+                        reference=lease_reference({**selection, "platform": group.platform}),
+                    )
                     protected.add(selection["generation"])
                     with timed_stage(f"prepare_prune; {label}"):
                         prune_tag(persisted_root=persisted, tag=group.tag, protected_generations=protected)
@@ -250,6 +284,11 @@ def prepare_selection_entries(
                 with timed_stage(f"prepare_published_verify; {label}"):
                     verify_selection(persisted_root=persisted, selection=selection)
                 protected_by_tag[group.tag].add(selection["generation"])
+                pin_generation(
+                    tag_root=_tag_root(persisted, group.tag, create=True),
+                    lease=lease,
+                    reference=lease_reference({**selection, "platform": group.platform}),
+                )
                 with timed_stage(f"prepare_prune; {label}"):
                     prune_tag(
                         persisted_root=persisted, tag=group.tag, protected_generations=protected_by_tag[group.tag]
@@ -271,6 +310,8 @@ def restore_selection_entries(
     entries: list[dict],
     groups,
     persisted_root: str | Path,
+    lease: dict,
+    selection_sha256: str,
 ) -> None:
     """Restore each exact generation into its workspace while holding that tag's lock.
 
@@ -285,6 +326,12 @@ def restore_selection_entries(
         selection = generation_selection(entry)
         started = time.monotonic()
         with tag_lock(persisted_root, entry["tag"], timeout_seconds=None):
+            require_lease(
+                tag_root=_tag_root(persisted_root, entry["tag"]),
+                lease=lease,
+                selection_sha256=selection_sha256,
+                reference=lease_reference(entry),
+            )
             verify_selection(persisted_root=persisted_root, selection=selection)
             restore_generation(
                 persisted_root=persisted_root,
@@ -296,6 +343,25 @@ def restore_selection_entries(
             f"wall_seconds={time.monotonic() - started:.3f}",
             flush=True,
         )
+    # A partial restore keeps every pin, including those already copied, for retry.
+    # Do not release from a finally block or after an individual platform succeeds.
+    for tag in sorted({entry["tag"] for entry in entries}):
+        with tag_lock(persisted_root, tag, timeout_seconds=None):
+            release_lease(tag_root=_tag_root(persisted_root, tag), lease=lease, selection_sha256=selection_sha256)
+
+
+def seal_selection_leases(*, document: dict, persisted_root: str | Path) -> None:
+    """Bind every preparing pin before publishing any selection/evidence files."""
+    digest = sha256_bytes(canonical_json_bytes(document))
+    for tag in sorted({entry["tag"] for entry in document["entries"]}):
+        references = [lease_reference(entry) for entry in document["entries"] if entry["tag"] == tag]
+        with tag_lock(persisted_root, tag, timeout_seconds=None):
+            seal_lease(
+                tag_root=_tag_root(persisted_root, tag),
+                lease=document["lease"],
+                selection_sha256=digest,
+                references=references,
+            )
 
 
 def write_selection_with_evidence(

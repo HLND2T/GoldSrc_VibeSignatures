@@ -30,6 +30,16 @@ uv run python warmup_idb.py -gamever cstrike-10210 -python "<interpreter with id
 
 `warmup_idb.py` resolves `configs/<gamever>.yaml`, prepares every declared binary the way analysis does (a blob source is decrypted to its sibling `<stem>.decrypt<ext>` first), warms each one with a separate bare-idalib worker process, and skips a binary whose database already validates. `-platform` narrows the run, `-force` invalidates and re-warms everything, `-max-concurrency` overrides `IDB_WARMUP_MAX_CONCURRENCY`, and `IDB_WARMUP_MAX_MEMORY_MIB` enables aggregate memory admission.
 
+CI warmup across jobs uses schema-2 exact selections with persistent leases. Payloads, READY, and leases live in
+`PERSISTED_WORKSPACE/idb-cache-v2/<tag>/`, isolated from legacy pruners; first use rebuilds the cache.
+`idb-cache/.locks/` still coordinates old and new producers and must not be deleted with legacy payloads.
+
+Leases last 36 days from Prepare, with an additional one-hour pruning clock allowance, and are released immediately
+after the complete selection restores successfully. Partial restore failure retains every pin. If a lease is missing,
+released, or expired, re-run the full workflow including warmup; retrying only the consumer cannot guarantee that its
+old selection remains available. See the [IDB cache operations runbook](../../memory/idb-cache-operations-runbook.md)
+for maintenance and real multi-runner acceptance requirements.
+
 ### Blob game binaries
 
 Some old GoldSrc builds ship non-PE Metahook "blob" binaries. Use the `/decrypt-blob-gamebin` slash command (or `decrypt_blob.py`) to convert every non-PE blob under `bin/` into a regular PE32 DLL before analysis. Valid PE/ELF binaries, IDA databases, and YAML artifacts are skipped.

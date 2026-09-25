@@ -178,6 +178,8 @@ def exclusive_file_lock(
 
 
 def lock_root(persisted_root: str | Path) -> Path:
+    # Retain this coordination namespace across payload versions. Legacy producers
+    # must not warm concurrently with v2 producers on the same runner resources.
     root = Path(persisted_root) / "idb-cache" / ".locks"
     try:
         root.mkdir(parents=True, exist_ok=True)

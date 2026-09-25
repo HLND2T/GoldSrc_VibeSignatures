@@ -30,6 +30,8 @@ from gamesymbol_snapshot_lib.errors import SnapshotError
 from gamesymbol_snapshot_lib.metadata import MetadataContractError, verify_metadata
 from gamesymbol_snapshot_lib.operations import check_snapshot_contract
 from gamesymbols_json import encode_dataset, encode_index
+from idb_cache_leases import validate_lease_descriptor
+from idb_cache_locks import IdbCacheError
 from release_workflow_lib.errors import ReleaseWorkflowError
 from release_workflow_lib.hashing import (
     canonical_json_bytes,
@@ -593,9 +595,12 @@ def _validate_evidence(
     except ReleaseWorkflowError as exc:
         raise ReleaseBundleError(str(exc)) from exc
     selection = _load_canonical_json(selection_path, "warm IDB selection evidence")
+    selection_schema = selection.get("schema_version")
+    selection_keys = CACHE_SELECTION_KEYS | ({"lease"} if selection_schema == 2 else set())
     if (
-        set(selection) != CACHE_SELECTION_KEYS
-        or selection.get("schema_version") != 1
+        set(selection) != selection_keys
+        or type(selection_schema) is not int
+        or selection_schema not in (1, 2)
         or selection.get("cache_mode") != "warm"
         or selection.get("source_sha") != source_sha
         or selection.get("bin_commit") != bin_gitlink_sha
@@ -603,6 +608,13 @@ def _validate_evidence(
         or not selection["entries"]
     ):
         raise ReleaseBundleError("Warm IDB selection evidence has an unexpected schema or identity")
+    if selection_schema == 2:
+        # Archived evidence outlives the live restore lease. Validate its immutable
+        # descriptor, without consulting persisted storage or requiring a live pin.
+        try:
+            validate_lease_descriptor(selection["lease"])
+        except IdbCacheError as exc:
+            raise ReleaseBundleError(f"Invalid warm IDB selection lease evidence: {exc}") from exc
     entries = selection["entries"]
     pairs: list[tuple[str, str]] = []
     for entry in entries:
