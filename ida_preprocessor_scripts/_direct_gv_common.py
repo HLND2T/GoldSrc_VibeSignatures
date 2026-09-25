@@ -21,12 +21,19 @@ async def inspect_owner_artifact(
     image_base,
     owner_name,
     *,
+    func_name=None,
     allow_relative_call_discriminator=False,
     allow_raw_span=False,
 ):
-    """Reload and revalidate one predecessor function artifact in the active IDB."""
+    """Reload and revalidate one predecessor function artifact in the active IDB.
+
+    ``owner_name`` is the artifact filename stem. ``func_name`` overrides the
+    value compared against the artifact's own identity for producers that store
+    a source-qualified name, such as ``vgui2::ISurface::DrawUnicodeChar``.
+    """
+    expected_name = func_name or owner_name
     artifact = _load_yaml_mapping(Path(new_binary_dir) / f"{owner_name}.{platform}.yaml")
-    if not artifact or artifact.get("func_name") != owner_name:
+    if not artifact or artifact.get("func_name") != expected_name:
         return None
     try:
         owner_ea = int(artifact["func_va"], 0)
@@ -78,7 +85,7 @@ async def inspect_owner_artifact(
         session,
         owner_ea,
         image_base,
-        owner_name,
+        expected_name,
         allow_across_function_boundary=allow_across,
         allow_relative_call_discriminator=allow_relative_call_discriminator,
     )
