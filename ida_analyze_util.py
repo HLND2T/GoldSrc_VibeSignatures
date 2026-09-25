@@ -2066,6 +2066,9 @@ def _signature(start, end):
     fixed = 0
     max_fixed = 256 if allow_across_function_boundary else 24
     max_tokens = 256 if allow_across_function_boundary else 64
+    requested_limit = globals().get('signature_byte_limit')
+    if requested_limit is not None:
+        max_fixed = max_tokens = int(requested_limit)
     segment = ida_segment.getseg(start)
     segment_start = int(segment.start_ea) if segment is not None else idaapi.BADADDR
     limit_end = start + max_tokens if allow_across_function_boundary else end
@@ -2206,12 +2209,20 @@ async def _inspect_function_via_mcp(
     func_name,
     allow_across_function_boundary=False,
     allow_relative_call_discriminator=False,
+    signature_byte_limit=None,
 ):
+    if signature_byte_limit is not None and (
+        isinstance(signature_byte_limit, bool)
+        or not isinstance(signature_byte_limit, int)
+        or not 1 <= signature_byte_limit <= 4096
+    ):
+        raise ValueError("signature_byte_limit must be between 1 and 4096")
     code = (
         _INSPECT_FUNCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(int(ea)))
         .replace("IMAGE_BASE_PLACEHOLDER", str(int(image_base)))
         .replace("ALLOW_ACROSS_FUNCTION_BOUNDARY_PLACEHOLDER", "True" if allow_across_function_boundary else "False")
     )
+    code = f"signature_byte_limit = {signature_byte_limit!r}\n" + code
     try:
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
     except Exception:  # noqa: BLE001 - MCP tool failures must fail closed.

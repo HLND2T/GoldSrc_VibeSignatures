@@ -1,0 +1,7 @@
+func_name: vgui2::VPanel::Client()
+func_va: '0x16c50'
+func_rva: '0x16c50'
+func_size: '0x8'
+vtable_name: vgui2::VPanel
+vfunc_offset: '0x9c'
+vfunc_index: 39

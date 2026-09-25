@@ -1,0 +1,8 @@
+func_name: vgui2::Panel::PaintTraverse(bool, bool)
+func_va: '0x1e28ec3'
+func_rva: '0x128ec3'
+func_size: '0x463'
+func_sig: 55 8B EC 83 EC 7C 89 4D ?? 8B 45 ?? 8B 10 8B 4D ?? FF 52 ?? 25 FF 00 00 00 85 C0 75 ??
+vtable_name: vgui2::Panel
+vfunc_offset: '0xc'
+vfunc_index: 3

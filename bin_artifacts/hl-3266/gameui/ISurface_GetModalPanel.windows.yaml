@@ -1,0 +1,4 @@
+func_name: vgui2::ISurface::GetModalPanel
+vtable_name: vgui2::ISurface
+vfunc_offset: '0xd4'
+vfunc_index: 53

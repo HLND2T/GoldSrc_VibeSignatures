@@ -1,0 +1,8 @@
+func_name: BaseUISurface::PaintTraverse(unsigned int)
+func_va: '0x1d11b00'
+func_rva: '0x11b00'
+func_size: '0x11c'
+func_sig: 53 56 8B F1 E8 ?? ?? ?? ?? 8B 5C 24 ?? 8B C8 53 8B 10 8B 52 ?? FF D2 84 C0 0F 84 ?? ?? ?? ?? 8B 06 8B CE
+vtable_name: BaseUISurface
+vfunc_offset: '0x138'
+vfunc_index: 78
