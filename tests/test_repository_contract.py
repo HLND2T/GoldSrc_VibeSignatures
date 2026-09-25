@@ -351,6 +351,7 @@ class RepositoryContractTests(unittest.TestCase):
             "engine/hw.dll",
             "gameui/GameUI.dll",
             "server/server.dll",
+            "vgui2/vgui2.dll",
         }
         existing = {path.relative_to(root).as_posix() for path in root.glob("*/*.dll")} if root.is_dir() else set()
         if not existing:

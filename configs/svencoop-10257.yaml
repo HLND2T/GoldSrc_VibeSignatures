@@ -2254,6 +2254,13 @@ modules:
         category: structmember
         struct: CClient_SoundEngine
         member: m_iSentenceCount
+  - name: vgui2
+    module_windows: vgui2.dll
+    module_linux: vgui2.so
+    depot_windows: vgui2.dll
+    depot_linux: vgui2.so
+    skills: []
+    symbols: []
   - name: gameui
     module_windows: GameUI.dll
     module_linux: gameui.so

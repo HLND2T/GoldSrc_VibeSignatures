@@ -1888,6 +1888,11 @@ modules:
         category: gv
       - name: R_UploadEmptyTex
         category: func
+  - name: vgui2
+    module_windows: vgui2.dll
+    depot_windows: vgui2.dll
+    skills: []
+    symbols: []
   - name: gameui
     module_windows: GameUI.dll
     depot_windows: valve/cl_dlls/GameUI.dll
