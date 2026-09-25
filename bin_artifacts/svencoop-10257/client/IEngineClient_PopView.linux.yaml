@@ -1,0 +1,4 @@
+func_name: IEngineClient::PopView
+vtable_name: IEngineClient
+vfunc_offset: '0x34'
+vfunc_index: 13

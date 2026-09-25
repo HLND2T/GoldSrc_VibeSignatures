@@ -47,6 +47,14 @@ false positive that all looked like wrong anchors rather than decoding bugs:
    `mov al, byte_X` / `cmp byte_X, 0` are byte operands (`op.dtype == dt_byte`),
    while the 4-byte `mov eax, ___security_cookie` prologue load is `dt_dword`.
    Filtering on operand size is what separates them.
+6. **`CF_CHG1` is `0x80`, not `0x10`.** The `CF_USE5`/`CF_USE6` extension shifted the
+   operand-change bits, so a hardcoded `insn.get_canon_feature() & 0x10` silently
+   matches `CF_USE4` and reports *reads* as writes. `#245`'s shader-chain walk hit
+   this twice: `member_writes` returned an empty list for a body that clearly stores
+   two members, and the register-definition scan stopped at `push esi` (which is not
+   a write to `esi`). Same failure mode as pitfall 2 — a plausible-looking rule that
+   quietly discards every real candidate. Read the bit through the SDK
+   (`getattr(ida_idp, 'CF_CHG%d' % (i + 1))`), never as a literal.
 
 ## Correct approach
 
@@ -59,6 +67,10 @@ false positive that all looked like wrong anchors rather than decoding bugs:
   and the PIC form `mov reg, [.got/.got.plt slot]` (whose pointee is the data
   object). Do **not** track a plain `mov reg, [abs]` value load as a base.
 - Use `int(getattr(ida_segment, 'SEGPERM_EXEC', 1))` with the correct default.
+- Ask whether an instruction *changes* an operand with
+  `insn.get_canon_feature() & getattr(ida_idp, 'CF_CHG%d' % (index + 1))`; a
+  register written by `push reg` is unchanged, and only a written register
+  counts as a definition when walking backwards for the value of an operand.
 - Prefer plain loops over genexpr/lambda in `py_eval` payloads, or re-run
   `globals().update(locals())` after the last assignment the expression needs.
 
