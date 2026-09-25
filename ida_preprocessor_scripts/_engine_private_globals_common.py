@@ -331,7 +331,7 @@ async def run_walk(session, body, values=None):
     wrapper = (
         'def main():\n import traceback, json\n ns = {"values": ' + repr(values or {}) + "}\n"
         " try:\n  exec(" + json.dumps(source) + ',ns)\n  return json.dumps(ns["result"])\n'
-        ' except Exception:\n  return json.dumps({"error": traceback.format_exc()[-1500:]})\nmain()'
+        ' except Exception:\n  return json.dumps({"error": traceback.format_exc()[-1500:]})\nresult = main()'
     )
     payload = parse_mcp_result(await session.call_tool("py_eval", {"code": wrapper}))
     if not isinstance(payload, dict):

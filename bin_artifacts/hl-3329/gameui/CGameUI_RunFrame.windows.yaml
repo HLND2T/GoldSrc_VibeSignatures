@@ -1,0 +1,8 @@
+func_name: CGameUI::RunFrame()
+func_va: '0x10022e00'
+func_rva: '0x22e00'
+func_size: '0x24d'
+func_sig: 83 EC 10 56 57 8B F9 E8 ?? ?? ?? ?? 8B 10 8D 4C 24 ?? 51 8D 4C 24 ?? 51 8B C8 FF 92 ?? ?? ?? ?? 8B 54 24 ??
+vtable_name: CGameUI
+vfunc_offset: '0x1c'
+vfunc_index: 7

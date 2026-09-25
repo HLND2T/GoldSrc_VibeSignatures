@@ -1,0 +1,4 @@
+func_name: vgui2::IPanel::Render_SetPopupVisible
+vtable_name: vgui2::IPanel
+vfunc_offset: '0x6c'
+vfunc_index: 27

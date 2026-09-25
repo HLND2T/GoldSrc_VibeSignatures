@@ -2,6 +2,37 @@ modules:
   - name: engine
     module_windows: hw.dll
     skills:
+      - name: find-BaseUISurface_PaintTraverse
+        expected_input:
+          - ../gameui/ISurface_PaintTraverse.{platform}.yaml
+          - BaseUISurface_vtable.{platform}.yaml
+        expected_output:
+          - BaseUISurface_PaintTraverse.{platform}.yaml
+      - name: find-BaseUISurface_PaintTraverse-vfuncs
+        expected_input:
+          - BaseUISurface_PaintTraverse.{platform}.yaml
+        expected_output:
+          - vgui2_IPanel_IsVisible.{platform}.yaml
+          - vgui2_IPanel_Render_SetPopupVisible.{platform}.yaml
+          - vgui2_IPanel_PaintTraverse.{platform}.yaml
+      - name: find-vgui2_EditablePanel_CreateControlByName
+        expected_output:
+          - vgui2_EditablePanel_CreateControlByName.{platform}.yaml
+      - name: find-vgui2_Panel_vtable
+        expected_output:
+          - vgui2_Panel_vtable.{platform}.yaml
+      - name: find-vgui2_Panel_ctor
+        expected_input:
+          - vgui2_EditablePanel_CreateControlByName.{platform}.yaml
+          - vgui2_Panel_vtable.{platform}.yaml
+        expected_output:
+          - vgui2_Panel_ctor.{platform}.yaml
+      - name: find-vgui2_Panel_PaintTraverse
+        expected_input:
+          - ../vgui2/vgui2_IClientPanel_PaintTraverse.{platform}.yaml
+          - vgui2_Panel_vtable.{platform}.yaml
+        expected_output:
+          - vgui2_Panel_PaintTraverse.{platform}.yaml
       - name: find-EngineSurface-vtables
         expected_output:
           - EngineSurface_vtable.{platform}.yaml
@@ -1161,6 +1192,22 @@ modules:
         expected_output:
           - CL_IsDevOverviewMode.{platform}.yaml
     symbols:
+      - name: BaseUISurface_PaintTraverse
+        category: vfunc
+      - name: vgui2_IPanel_IsVisible
+        category: vfunc
+      - name: vgui2_IPanel_Render_SetPopupVisible
+        category: vfunc
+      - name: vgui2_IPanel_PaintTraverse
+        category: vfunc
+      - name: vgui2_EditablePanel_CreateControlByName
+        category: func
+      - name: vgui2_Panel_ctor
+        category: func
+      - name: vgui2_Panel_vtable
+        category: vtable
+      - name: vgui2_Panel_PaintTraverse
+        category: vfunc
       - name: EngineSurface_vtable
         category: vtable
       - name: BaseUISurface_vtable
@@ -1923,10 +1970,48 @@ modules:
   - name: vgui2
     module_windows: vgui2.dll
     depot_windows: vgui2.dll
-    skills: []
-    symbols: []
+    skills:
+      - name: find-vgui2_VPanel-vtables
+        expected_output:
+          - vgui2_VPanelWrapper_vtable.{platform}.yaml
+          - vgui2_VPanel_vtable.{platform}.yaml
+      - name: find-vgui2_VPanelWrapper_PaintTraverse
+        expected_input:
+          - ../engine/vgui2_IPanel_PaintTraverse.{platform}.yaml
+          - vgui2_VPanelWrapper_vtable.{platform}.yaml
+          - vgui2_VPanel_vtable.{platform}.yaml
+        expected_output:
+          - vgui2_VPanelWrapper_PaintTraverse.{platform}.yaml
+          - vgui2_VPanel_Client.{platform}.yaml
+          - vgui2_IClientPanel_PaintTraverse.{platform}.yaml
+    symbols:
+      - name: vgui2_VPanelWrapper_vtable
+        category: vtable
+      - name: vgui2_VPanel_vtable
+        category: vtable
+      - name: vgui2_VPanelWrapper_PaintTraverse
+        category: vfunc
+      - name: vgui2_VPanel_Client
+        category: vfunc
+      - name: vgui2_IClientPanel_PaintTraverse
+        category: vfunc
   - name: gameui
     module_windows: GameUI.dll
     depot_windows: valve/cl_dlls/GameUI.dll
-    skills: []
-    symbols: []
+    skills:
+      - name: find-CGameUI_RunFrame
+        expected_output:
+          - CGameUI_RunFrame.{platform}.yaml
+      - name: find-CGameUI_RunFrame-vfuncs
+        expected_input:
+          - CGameUI_RunFrame.{platform}.yaml
+        expected_output:
+          - ISurface_GetModalPanel.{platform}.yaml
+          - ISurface_PaintTraverse.{platform}.yaml
+    symbols:
+      - name: CGameUI_RunFrame
+        category: vfunc
+      - name: ISurface_GetModalPanel
+        category: vfunc
+      - name: ISurface_PaintTraverse
+        category: vfunc
