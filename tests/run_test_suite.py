@@ -41,6 +41,7 @@ GROUP_FILES = {
         "test_ida_skill_preprocessor.py",
         "test_cvar_hooks_preprocessor.py",
         "test_cgame_appactivate_preprocessor.py",
+        "test_gl_buildlightmaps_preprocessor.py",
         "test_startup_graphic_structmembers.py",
         "test_direct_gv_common.py",
         "test_cvar_set_callsites_preprocessor.py",
