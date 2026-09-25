@@ -2137,6 +2137,14 @@ modules:
           - ClientPortal_texture_id_offset.{platform}.yaml
           - ClientPortal_texture_width_offset.{platform}.yaml
           - ClientPortal_texture_height_offset.{platform}.yaml
+      - name: find-CClient_SoundEngine_LoadSoundList
+        expected_output:
+          - CClient_SoundEngine_LoadSoundList.{platform}.yaml
+      - name: find-CClient_SoundEngine_LoadSoundList-decompiles
+        expected_input:
+          - CClient_SoundEngine_LoadSoundList.{platform}.yaml
+        expected_output:
+          - CClient_SoundEngine_m_iSentenceCount.{platform}.yaml
     symbols:
       - name: ClientPortal_Constructor
         category: func
@@ -2221,6 +2229,14 @@ modules:
         category: func
       - name: CL_IsThirdPerson
         category: func
+      - name: CClient_SoundEngine_LoadSoundList
+        category: func
+      - name: CClient_SoundEngine
+        category: struct
+      - name: CClient_SoundEngine_m_iSentenceCount
+        category: structmember
+        struct: CClient_SoundEngine
+        member: m_iSentenceCount
   - name: gameui
     module_windows: GameUI.dll
     module_linux: gameui.so

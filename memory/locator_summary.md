@@ -14,7 +14,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 
 | 定位机制 | 数量 |
 | --- | --- |
-| 字符串锚 | 71 |
+| 字符串锚 | 72 |
 | 浮点常量锚 | 3 |
 | 表 / 结构 / 数据段扫描 | 38 |
 | 确定性 xref 交集锚 | 7 |
@@ -26,7 +26,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 
 ---
 
-## 字符串锚 (71)
+## 字符串锚 (72)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -96,6 +96,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [VideoMode_Create](locators/VideoMode_Create.md) | engine | func | — | Single positive anchor: xref_strings: ["FULLMATCH:-fullscreen"] — exact C-string match on the fullscreen command-line literal, then the owning functions of its… |
 | [g_pClientFactory](locators/g_pClientFactory.md) | engine | gv | `CBaseUI__Initialize` | Despite the -decompiles suffix this finder is not LLM-based: it runs one direct py_eval locator (LOCATE_PY) inside the owner function and fails closed on any… |
 | [Draw_TextureMode_f](locators/Draw_TextureMode_f.md) | engine | func | — | One exact literal, one string instance, one owning function. The classic family uses the two-space-free `bad filter name` diagnostic; SvEngine keeps only `Invalid filter name`. FULLMATCH: keeps the two apart. |
+| [CClient_SoundEngine_LoadSoundList](locators/CClient_SoundEngine_LoadSoundList.md) | client | func | — | `_sven_client_pic_common.preprocess_string_owner_skill_with_pic_fallback` with the exact literal `SENTENCELIST {`: the shared Pattern A `FULLMATCH:` string path runs first, and on the image-base-0 Linux ELFs the PIC fallback resolves the GOTOFF displacement site when IDA records no xref. Exactly one owning function must remain; the Sven client keeps one identity (Windows a full `__thiscall` body, Linux a `.part.N` body at `0x11E894`/`0xAF726` whose public `LoadSoundList()` symbol is only a guard wrapper). |
 
 ## 浮点常量锚 (4)
 
@@ -220,7 +221,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [cl_funcs_pDrawTransparentTriangles](locators/cl_funcs_pDrawTransparentTriangles.md) | engine | gv | `R_DrawTEntitiesOnList`, `cl_funcs` | That member's own address, read from the forwarder's single member access; never `cl_funcs` plus a hardcoded offset. |
 | [CL_IsDevOverviewMode](locators/CL_IsDevOverviewMode.md) | engine | func | `CL_SetDevOverView` | The nearest call before a `CL_SetDevOverView` call site, walking backwards across single-predecessor blocks. The renderer is derived as the unique caller of `CL_SetDevOverView`, never named. |
 
-## LLM_DECOMPILE 定位 (54)
+## LLM_DECOMPILE 定位 (55)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
@@ -294,6 +295,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [GameStudioRenderer_StudioSetupBones](locators/GameStudioRenderer_StudioSetupBones.md) | client | vfunc | `GameStudioRenderer_StudioDrawModel`, `GameStudioRenderer_vtable` | preprocess_common_skill with this name in func_names and func_vtable_relations = ("GameStudioRenderer_StudioSetupBones", "GameStudioRenderer"). |
 | [GameStudioRenderer__StudioDrawPlayer](locators/GameStudioRenderer__StudioDrawPlayer.md) | client | vfunc | `GameStudioRenderer_StudioDrawPlayer`, `GameStudioRenderer_vtable` | Load the outer wrapper's func_va from the GameStudioRenderer_StudioDrawPlayer artifact and the entry map from GameStudioRenderer_vtable. |
 | [GameStudioRenderer_vtable](locators/GameStudioRenderer_vtable.md) | client | vtable | `HUD_GetStudioModelInterface` | The finder first proves the renderer object: from the exported HUD_GetStudioModelInterface body it locates the returned r_studio_interface_t (version == 1, +4/+8… |
+| [CClient_SoundEngine_m_iSentenceCount](locators/CClient_SoundEngine_m_iSentenceCount.md) | client | structmember | `CClient_SoundEngine_LoadSoundList` | The owner artifact is revalidated through `inspect_owner_artifact` plus a unique `func_sig` match, then a deterministic `py_eval` scan requires exactly one `cmp dword ptr [reg+disp], imm` capacity guard (imm `0x800` MSVC / `0x7FF` GCC) whose next instruction is the matching signed branch. `LLM_DECOMPILE` with `expected_size: 4` and an `instruction_rules` pin recovers the member; the emitted offset, size and `offset_sig_disp` are re-checked against that guard, and a mismatch deletes the output. |
 
 ## 数值 scalar 提取 (9)
 

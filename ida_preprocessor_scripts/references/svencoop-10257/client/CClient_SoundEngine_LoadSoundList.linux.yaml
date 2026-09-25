@@ -1,0 +1,1180 @@
+func_name: "CClient_SoundEngine_LoadSoundList"
+func_va: "0xaf726"
+disasm_code: |-
+  .text:000AF726                 push    ebp
+  .text:000AF727                 push    edi
+  .text:000AF728                 push    esi
+  .text:000AF729                 push    ebx
+  .text:000AF72A                 sub     esp, 8FCh
+  .text:000AF730                 call    sub_9E590
+  .text:000AF735                 add     ebx, (offset qword_61E000 - $)
+  .text:000AF73B                 mov     [esp+90Ch+var_8E0], eax
+  .text:000AF73F                 mov     [esp+90Ch+s], eax
+  .text:000AF742                 call    sub_AABCE
+  .text:000AF747                 lea     eax, (unk_A57FA0 - 61E000h)[ebx]
+  .text:000AF74D                 mov     esi, eax
+  .text:000AF74F                 call    dword ptr [eax+128h]
+  .text:000AF755                 lea     edi, [esp+90Ch+var_8B2]
+  .text:000AF759                 ; char *
+  .text:000AF759                 mov     [esp+90Ch+format], edi; char *
+  .text:000AF75D                 ; src
+  .text:000AF75D                 mov     [esp+90Ch+s], eax; src
+  .text:000AF760                 call    sub_108DDE
+  .text:000AF765                 mov     [esp+90Ch+var_8D4], esi
+  .text:000AF769                 call    dword ptr [esi+11Ch]
+  .text:000AF76F                 lea     esi, (aMapsSoundcache - 61E000h)[ebx]; "maps/soundcache"
+  .text:000AF775                 mov     [esp+90Ch+var_900], esi
+  .text:000AF779                 mov     [esp+90Ch+var_904], eax
+  .text:000AF77D                 lea     edx, (aSoundSS+6 - 61E000h)[ebx]; "%s/%s"
+  .text:000AF783                 ; char *
+  .text:000AF783                 mov     [esp+90Ch+format], edx; char *
+  .text:000AF787                 lea     ecx, [esp+90Ch+var_340]
+  .text:000AF78E                 ; char *
+  .text:000AF78E                 mov     [esp+90Ch+s], ecx; char *
+  .text:000AF791                 call    sub_B06E0
+  .text:000AF796                 mov     [esp+90Ch+var_900], edi
+  .text:000AF79A                 mov     [esp+90Ch+var_904], esi
+  .text:000AF79E                 lea     ebp, (aSpritesSSTxt+8 - 61E000h)[ebx]; "%s/%s.txt"
+  .text:000AF7A4                 ; char *
+  .text:000AF7A4                 mov     [esp+90Ch+format], ebp; char *
+  .text:000AF7A8                 lea     eax, [esp+90Ch+var_6B2]
+  .text:000AF7AF                 mov     edi, eax
+  .text:000AF7B1                 mov     [esp+90Ch+var_8CC], eax
+  .text:000AF7B5                 ; char *
+  .text:000AF7B5                 mov     [esp+90Ch+s], eax; char *
+  .text:000AF7B8                 call    sub_B07B0
+  .text:000AF7BD                 mov     [esp+90Ch+var_904], edi
+  .text:000AF7C1                 lea     edx, (aDlfileS - 61E000h)[ebx]; "dlfile %s\n"
+  .text:000AF7C7                 ; char *
+  .text:000AF7C7                 mov     [esp+90Ch+format], edx; char *
+  .text:000AF7CB                 lea     ecx, [esp+90Ch+var_612]
+  .text:000AF7D2                 mov     [esp+90Ch+var_8D0], ecx
+  .text:000AF7D6                 ; char *
+  .text:000AF7D6                 mov     [esp+90Ch+s], ecx; char *
+  .text:000AF7D9                 call    sub_B0880
+  .text:000AF7DE                 lea     ebp, (dword_AA5A04 - 61E000h)[ebx]
+  .text:000AF7E4                 mov     eax, [ebp+0]
+  .text:000AF7E7                 mov     edx, [eax]
+  .text:000AF7E9                 lea     ecx, (aGameDefaultgam+0Ch - 61E000h)[ebx]; "GAME"
+  .text:000AF7EF                 mov     [esp+90Ch+var_904], ecx
+  .text:000AF7F3                 mov     [esp+90Ch+format], esi
+  .text:000AF7F7                 mov     [esp+90Ch+s], eax
+  .text:000AF7FA                 call    dword ptr [edx+20h]
+  .text:000AF7FD                 mov     esi, [esp+90Ch+var_8D0]
+  .text:000AF801                 mov     [esp+90Ch+s], esi
+  .text:000AF804                 mov     eax, [esp+90Ch+var_8D4]
+  .text:000AF808                 call    dword ptr [eax+50h]
+  .text:000AF80B                 mov     esi, [ebp+0]
+  .text:000AF80E                 mov     edx, [esi]
+  .text:000AF810                 mov     [esp+90Ch+var_900], 0
+  .text:000AF818                 lea     ecx, (aRb - 61E000h)[ebx]; "rb"
+  .text:000AF81E                 mov     [esp+90Ch+var_904], ecx
+  .text:000AF822                 mov     [esp+90Ch+format], edi
+  .text:000AF826                 mov     [esp+90Ch+s], esi
+  .text:000AF829                 call    dword ptr [edx+2Ch]
+  .text:000AF82C                 mov     [esp+90Ch+var_8E8], eax
+  .text:000AF830                 test    eax, eax
+  .text:000AF832                 jz      loc_B023E
+  .text:000AF838                 mov     eax, [ebp+0]
+  .text:000AF83B                 mov     esi, [eax]
+  .text:000AF83D                 mov     [esp+90Ch+var_900], 1A4h
+  .text:000AF845                 lea     edx, [esp+90Ch+var_1C0]
+  .text:000AF84C                 mov     [esp+90Ch+filename], edx
+  .text:000AF850                 mov     [esp+90Ch+var_904], edx
+  .text:000AF854                 mov     [esp+90Ch+format], edi
+  .text:000AF858                 mov     [esp+90Ch+s], eax
+  .text:000AF85B                 call    dword ptr [esi+84h]
+  .text:000AF861                 lea     edi, [esp+90Ch+var_548]
+  .text:000AF868                 mov     [esp+90Ch+var_8E4], edi
+  .text:000AF86C                 mov     ecx, 41h ; 'A'
+  .text:000AF871                 xor     eax, eax
+  .text:000AF873                 rep stosd
+  .text:000AF875                 lea     edi, [esp+90Ch+var_832]
+  .text:000AF87C                 mov     [esp+90Ch+src], edi
+  .text:000AF880                 mov     esi, edi
+  .text:000AF882                 mov     edx, 80h
+  .text:000AF887                 xor     eax, eax
+  .text:000AF889                 test    edi, 2
+  .text:000AF88F                 jnz     loc_B0251
+  .text:000AF895                 mov     ecx, edx
+  .text:000AF897                 shr     ecx, 2
+  .text:000AF89A                 mov     edi, esi
+  .text:000AF89C                 rep stosd
+  .text:000AF89E                 and     edx, 2
+  .text:000AF8A1                 jnz     loc_B007E
+  .text:000AF8A7                 mov     eax, [esp+90Ch+var_8D4]
+  .text:000AF8AB                 call    dword ptr [eax+128h]
+  .text:000AF8B1                 mov     esi, [esp+90Ch+src]
+  .text:000AF8B5                 ; char *
+  .text:000AF8B5                 mov     [esp+90Ch+format], esi; char *
+  .text:000AF8B9                 ; src
+  .text:000AF8B9                 mov     [esp+90Ch+s], eax; src
+  .text:000AF8BC                 call    sub_108DDE
+  .text:000AF8C1                 mov     [esp+90Ch+var_7B3], 0
+  .text:000AF8C9                 lea     esi, [esp+90Ch+var_7B2]
+  .text:000AF8D0                 mov     edi, esi
+  .text:000AF8D2                 mov     edx, 80h
+  .text:000AF8D7                 xor     eax, eax
+  .text:000AF8D9                 test    esi, 2
+  .text:000AF8DF                 jnz     loc_B025F
+  .text:000AF8E5                 mov     ecx, edx
+  .text:000AF8E7                 shr     ecx, 2
+  .text:000AF8EA                 rep stosd
+  .text:000AF8EC                 and     edx, 2
+  .text:000AF8EF                 jnz     loc_B0076
+  .text:000AF8F5                 mov     eax, [ebp+0]
+  .text:000AF8F8                 mov     edx, [eax]
+  .text:000AF8FA                 mov     edi, [esp+90Ch+var_8E8]
+  .text:000AF8FE                 mov     [esp+90Ch+var_900], edi
+  .text:000AF902                 mov     [esp+90Ch+var_904], 80h
+  .text:000AF90A                 mov     [esp+90Ch+format], esi
+  .text:000AF90E                 mov     [esp+90Ch+s], eax
+  .text:000AF911                 call    dword ptr [edx+60h]
+  .text:000AF914                 mov     [esp+90Ch+var_904], esi
+  .text:000AF918                 lea     ecx, (aFmodErrorDS+11h - 61E000h)[ebx]; "%s\n"
+  .text:000AF91E                 mov     [esp+90Ch+var_8C8], ecx
+  .text:000AF922                 ; format
+  .text:000AF922                 mov     [esp+90Ch+format], ecx; format
+  .text:000AF926                 ; s
+  .text:000AF926                 mov     [esp+90Ch+s], esi; s
+  .text:000AF929                 call    _sscanf
+  .text:000AF92E                 mov     eax, [esp+90Ch+src]
+  .text:000AF932                 mov     [esp+90Ch+format], eax
+  .text:000AF936                 mov     [esp+90Ch+s], esi
+  .text:000AF939                 call    sub_9AA40
+  .text:000AF93E                 mov     [esp+90Ch+var_8D8], eax
+  .text:000AF942                 test    eax, eax
+  .text:000AF944                 jnz     loc_B00E6
+  .text:000AF94A                 ; size_t
+  .text:000AF94A                 mov     [esp+90Ch+var_904], 80h; size_t
+  .text:000AF952                 mov     esi, [esp+90Ch+src]
+  .text:000AF956                 ; src
+  .text:000AF956                 mov     [esp+90Ch+format], esi; src
+  .text:000AF95A                 mov     edx, [esp+90Ch+var_8E0]
+  .text:000AF95E                 add     edx, 11B01Ch
+  .text:000AF964                 ; dest
+  .text:000AF964                 mov     [esp+90Ch+s], edx; dest
+  .text:000AF967                 call    sub_144680
+  .text:000AF96C                 call    sub_13AD5A
+  .text:000AF971                 mov     [esp+90Ch+src], eax
+  .text:000AF975                 lea     esi, [esp+90Ch+var_732]
+  .text:000AF97C                 mov     edi, esi
+  .text:000AF97E                 mov     edx, 80h
+  .text:000AF983                 test    esi, 2
+  .text:000AF989                 jnz     loc_B01D0
+  .text:000AF98F                 mov     ecx, edx
+  .text:000AF991                 shr     ecx, 2
+  .text:000AF994                 xor     eax, eax
+  .text:000AF996                 rep stosd
+  .text:000AF998                 and     edx, 2
+  .text:000AF99B                 jnz     loc_B0086
+  .text:000AF9A1                 mov     ecx, [ebp+0]
+  .text:000AF9A4                 mov     edx, [ecx]
+  .text:000AF9A6                 mov     edi, [esp+90Ch+var_8E8]
+  .text:000AF9AA                 mov     [esp+90Ch+var_900], edi
+  .text:000AF9AE                 mov     [esp+90Ch+var_904], 80h
+  .text:000AF9B6                 mov     [esp+90Ch+format], esi
+  .text:000AF9BA                 mov     [esp+90Ch+s], ecx
+  .text:000AF9BD                 call    dword ptr [edx+60h]
+  .text:000AF9C0                 mov     [esp+90Ch+var_904], esi
+  .text:000AF9C4                 mov     eax, [esp+90Ch+var_8C8]
+  .text:000AF9C8                 ; format
+  .text:000AF9C8                 mov     [esp+90Ch+format], eax; format
+  .text:000AF9CC                 ; s
+  .text:000AF9CC                 mov     [esp+90Ch+s], esi; s
+  .text:000AF9CF                 call    _sscanf
+  .text:000AF9D4                 mov     [esp+90Ch+format], esi
+  .text:000AF9D8                 mov     esi, [esp+90Ch+src]
+  .text:000AF9DC                 mov     [esp+90Ch+s], esi
+  .text:000AF9DF                 call    sub_9AA58
+  .text:000AF9E4                 mov     [esp+90Ch+var_8C8], eax
+  .text:000AF9E8                 lea     ecx, (aSoundlist - 61E000h)[ebx]; "SOUNDLIST {"
+  .text:000AF9EE                 mov     [esp+90Ch+src], ecx
+  .text:000AF9F2                 jmp     short loc_AFA05
+  .text:000AF9F4                 mov     ecx, 0Bh
+  .text:000AF9F9                 mov     esi, [esp+90Ch+var_8E4]
+  .text:000AF9FD                 mov     edi, [esp+90Ch+src]
+  .text:000AFA01                 repe cmpsb
+  .text:000AFA03                 jz      short loc_AFA2C
+  .text:000AFA05                 mov     eax, [ebp+0]
+  .text:000AFA08                 mov     edx, [eax]
+  .text:000AFA0A                 mov     edi, [esp+90Ch+var_8E8]
+  .text:000AFA0E                 mov     [esp+90Ch+var_900], edi
+  .text:000AFA12                 mov     [esp+90Ch+var_904], 104h
+  .text:000AFA1A                 mov     esi, [esp+90Ch+var_8E4]
+  .text:000AFA1E                 mov     [esp+90Ch+format], esi
+  .text:000AFA22                 mov     [esp+90Ch+s], eax
+  .text:000AFA25                 call    dword ptr [edx+60h]
+  .text:000AFA28                 test    eax, eax
+  .text:000AFA2A                 jnz     short loc_AF9F4
+  .text:000AFA2C                 mov     esi, [esp+90Ch+var_8E0]
+  .text:000AFA30                 add     esi, 1700Ch
+  .text:000AFA36                 mov     [esp+90Ch+var_8D0], esi
+  .text:000AFA3A                 mov     [esp+90Ch+var_8D4], 0
+  .text:000AFA42                 mov     edi, [esp+90Ch+var_8E8]
+  .text:000AFA46                 mov     [esp+90Ch+dest], esi
+  .text:000AFA4A                 mov     esi, [esp+90Ch+var_8E4]
+  .text:000AFA4E                 cmp     [esp+90Ch+var_8D4], 0FFFh
+  .text:000AFA56                 setle   byte ptr [esp+90Ch+src]
+  .text:000AFA5B                 jmp     short loc_AFA7F
+  .text:000AFA5E                 cmp     byte ptr [esp+90Ch+src], 0
+  .text:000AFA63                 jz      short loc_AFA9E
+  .text:000AFA65                 cmp     [esp+90Ch+var_548], 7Dh ; '}'
+  .text:000AFA6D                 jz      short loc_AFA9E
+  .text:000AFA6F                 ; char *
+  .text:000AFA6F                 mov     [esp+90Ch+s], esi; char *
+  .text:000AFA72                 call    sub_AAECE
+  .text:000AFA77                 test    eax, eax
+  .text:000AFA79                 jnz     loc_B01A6
+  .text:000AFA7F                 mov     ecx, [ebp+0]
+  .text:000AFA82                 mov     edx, [ecx]
+  .text:000AFA84                 mov     [esp+90Ch+var_900], edi
+  .text:000AFA88                 mov     [esp+90Ch+var_904], 104h
+  .text:000AFA90                 mov     [esp+90Ch+format], esi
+  .text:000AFA94                 mov     [esp+90Ch+s], ecx
+  .text:000AFA97                 call    dword ptr [edx+60h]
+  .text:000AFA9A                 test    eax, eax
+  .text:000AFA9C                 jnz     short loc_AFA5E
+  .text:000AFA9E                 lea     ecx, (aSentencelist - 61E000h)[ebx]; "SENTENCELIST {"
+  .text:000AFAA4                 mov     [esp+90Ch+src], ecx
+  .text:000AFAA8                 jmp     short loc_AFAB7
+  .text:000AFAAA                 mov     ecx, 0Eh
+  .text:000AFAAF                 mov     edi, [esp+90Ch+src]
+  .text:000AFAB3                 repe cmpsb
+  .text:000AFAB5                 jz      short loc_AFADE
+  .text:000AFAB7                 mov     eax, [ebp+0]
+  .text:000AFABA                 mov     edx, [eax]
+  .text:000AFABC                 mov     esi, [esp+90Ch+var_8E8]
+  .text:000AFAC0                 mov     [esp+90Ch+var_900], esi
+  .text:000AFAC4                 mov     [esp+90Ch+var_904], 104h
+  .text:000AFACC                 mov     esi, [esp+90Ch+var_8E4]
+  .text:000AFAD0                 mov     [esp+90Ch+format], esi
+  .text:000AFAD4                 mov     [esp+90Ch+s], eax
+  .text:000AFAD7                 call    dword ptr [edx+60h]
+  .text:000AFADA                 test    eax, eax
+  .text:000AFADC                 jnz     short loc_AFAAA
+  .text:000AFADE                 mov     esi, [esp+90Ch+var_8E4]
+  .text:000AFAE2                 mov     eax, [ebp+0]
+  .text:000AFAE5                 mov     edx, [eax]
+  .text:000AFAE7                 mov     ecx, [esp+90Ch+var_8E8]
+  .text:000AFAEB                 mov     [esp+90Ch+var_900], ecx
+  .text:000AFAEF                 mov     [esp+90Ch+var_904], 104h
+  .text:000AFAF7                 mov     [esp+90Ch+format], esi
+  .text:000AFAFB                 mov     [esp+90Ch+s], eax
+  .text:000AFAFE                 call    dword ptr [edx+60h]
+  .text:000AFB01                 test    eax, eax
+  .text:000AFB03                 jz      short loc_AFB19
+  .text:000AFB05                 mov     edi, [esp+90Ch+var_8E0]
+  .text:000AFB09                 cmp     dword ptr ds:loc_11B09C[edi], 7FFh; (structmember, struct=CClient_SoundEngine, member=m_iSentenceCount) edi = this; [this+11B09Ch] <= 2047 keeps reading SENTENCELIST (capacity 2048)
+  .text:000AFB13                 jle     loc_AFF86
+  .text:000AFB19                 mov     [esp+90Ch+var_8E4], esi
+  .text:000AFB1D                 lea     esi, (aCustommaterial - 61E000h)[ebx]; "CUSTOMMATERIALS {"
+  .text:000AFB23                 mov     [esp+90Ch+src], esi
+  .text:000AFB27                 jmp     short loc_AFB37
+  .text:000AFB2A                 mov     ecx, 0Fh
+  .text:000AFB2F                 mov     edi, [esp+90Ch+src]
+  .text:000AFB33                 repe cmpsb
+  .text:000AFB35                 jz      short loc_AFB5E
+  .text:000AFB37                 mov     ecx, [ebp+0]
+  .text:000AFB3A                 mov     eax, [ecx]
+  .text:000AFB3C                 mov     edi, [esp+90Ch+var_8E8]
+  .text:000AFB40                 mov     [esp+90Ch+var_900], edi
+  .text:000AFB44                 mov     [esp+90Ch+var_904], 104h
+  .text:000AFB4C                 mov     esi, [esp+90Ch+var_8E4]
+  .text:000AFB50                 mov     [esp+90Ch+format], esi
+  .text:000AFB54                 mov     [esp+90Ch+s], ecx
+  .text:000AFB57                 call    dword ptr [eax+60h]
+  .text:000AFB5A                 test    eax, eax
+  .text:000AFB5C                 jnz     short loc_AFB2A
+  .text:000AFB5E                 lea     edx, [esp+90Ch+var_444]
+  .text:000AFB65                 mov     ecx, 41h ; 'A'
+  .text:000AFB6A                 xor     eax, eax
+  .text:000AFB6C                 mov     edi, edx
+  .text:000AFB6E                 rep stosd
+  .text:000AFB70                 mov     [esp+90Ch+src], edx
+  .text:000AFB74                 mov     esi, [esp+90Ch+var_8E4]
+  .text:000AFB78                 mov     eax, [ebp+0]
+  .text:000AFB7B                 mov     edx, [eax]
+  .text:000AFB7D                 mov     ecx, [esp+90Ch+var_8E8]
+  .text:000AFB81                 mov     [esp+90Ch+var_900], ecx
+  .text:000AFB85                 mov     [esp+90Ch+var_904], 104h
+  .text:000AFB8D                 mov     [esp+90Ch+format], esi
+  .text:000AFB91                 mov     [esp+90Ch+s], eax
+  .text:000AFB94                 call    dword ptr [edx+60h]
+  .text:000AFB97                 test    eax, eax
+  .text:000AFB99                 jz      short loc_AFBAF
+  .text:000AFB9B                 mov     edi, [esp+90Ch+var_8E0]
+  .text:000AFB9F                 cmp     dword ptr [edi+11B0A0h], 0FFFh
+  .text:000AFBA9                 jle     loc_AFFE8
+  .text:000AFBAF                 mov     esi, [esp+90Ch+src]
+  .text:000AFBB3                 mov     ecx, 41h ; 'A'
+  .text:000AFBB8                 xor     eax, eax
+  .text:000AFBBA                 mov     edi, [esp+90Ch+var_8E4]
+  .text:000AFBBE                 rep stosd
+  .text:000AFBC0                 mov     ebp, [ebp+0]
+  .text:000AFBC3                 mov     edx, [ebp+0]
+  .text:000AFBC6                 mov     ecx, [esp+90Ch+var_8E8]
+  .text:000AFBCA                 mov     [esp+90Ch+format], ecx
+  .text:000AFBCE                 mov     [esp+90Ch+s], ebp
+  .text:000AFBD1                 call    dword ptr [edx+30h]
+  .text:000AFBD4                 mov     [esp+90Ch+format], esi
+  .text:000AFBD8                 mov     esi, [esp+90Ch+var_8E0]
+  .text:000AFBDC                 add     esi, 2008h
+  .text:000AFBE2                 mov     [esp+90Ch+s], esi
+  .text:000AFBE5                 call    sub_1350CA
+  .text:000AFBEA                 mov     eax, [esp+90Ch+var_8C8]
+  .text:000AFBEE                 test    eax, eax
+  .text:000AFBF0                 jnz     loc_B01E2
+  .text:000AFBF6                 mov     ecx, [esp+90Ch+var_8D4]
+  .text:000AFBFA                 mov     [esp+90Ch+var_8E4], 0
+  .text:000AFC02                 test    ecx, ecx
+  .text:000AFC04                 jz      loc_B008D
+  .text:000AFC0A                 lea     ebp, [ecx-1]
+  .text:000AFC0D                 and     ebp, 3
+  .text:000AFC10                 ; int
+  .text:000AFC10                 mov     [esp+90Ch+var_904], 0; int
+  .text:000AFC18                 mov     esi, [esp+90Ch+var_8D0]
+  .text:000AFC1C                 ; char *
+  .text:000AFC1C                 mov     [esp+90Ch+format], esi; char *
+  .text:000AFC20                 mov     eax, [esp+90Ch+var_8E0]
+  .text:000AFC24                 ; int
+  .text:000AFC24                 mov     [esp+90Ch+s], eax; int
+  .text:000AFC27                 call    sub_ABF8A
+  .text:000AFC2C                 mov     esi, eax
+  .text:000AFC2E                 test    eax, eax
+  .text:000AFC30                 jz      loc_B0212
+  .text:000AFC36                 mov     [esp+90Ch+var_8D8], 1
+  .text:000AFC3E                 ; unsigned int
+  .text:000AFC3E                 mov     [esp+90Ch+s], 108h; unsigned int
+  .text:000AFC45                 call    __Znwj; operator new(uint)
+  .text:000AFC4A                 mov     edi, [esp+90Ch+var_8E0]
+  .text:000AFC4E                 mov     [edi+1300Ch], eax
+  .text:000AFC54                 mov     [eax+104h], esi
+  .text:000AFC5A                 ; size_t
+  .text:000AFC5A                 mov     [esp+90Ch+var_904], 104h; size_t
+  .text:000AFC62                 mov     edx, [esp+90Ch+var_8D0]
+  .text:000AFC66                 ; src
+  .text:000AFC66                 mov     [esp+90Ch+format], edx; src
+  .text:000AFC6A                 ; dest
+  .text:000AFC6A                 mov     [esp+90Ch+s], eax; dest
+  .text:000AFC6D                 call    sub_144680
+  .text:000AFC72                 mov     edi, 1
+  .text:000AFC77                 mov     esi, [esp+90Ch+var_8D0]
+  .text:000AFC7B                 add     esi, 104h
+  .text:000AFC81                 cmp     edi, [esp+90Ch+var_8D4]
+  .text:000AFC85                 jz      loc_B0095
+  .text:000AFC8B                 test    ebp, ebp
+  .text:000AFC8D                 jz      loc_AFDCF
+  .text:000AFC93                 cmp     ebp, 1
+  .text:000AFC96                 jz      loc_AFD64
+  .text:000AFC9C                 cmp     ebp, 2
+  .text:000AFC9F                 nop
+  .text:000AFCA0                 jz      short loc_AFD03
+  .text:000AFCA2                 ; int
+  .text:000AFCA2                 mov     [esp+90Ch+var_904], 0; int
+  .text:000AFCAA                 ; char *
+  .text:000AFCAA                 mov     [esp+90Ch+format], esi; char *
+  .text:000AFCAE                 mov     ecx, [esp+90Ch+var_8E0]
+  .text:000AFCB2                 ; int
+  .text:000AFCB2                 mov     [esp+90Ch+s], ecx; int
+  .text:000AFCB5                 call    sub_ABF8A
+  .text:000AFCBA                 mov     ebp, eax
+  .text:000AFCBC                 test    eax, eax
+  .text:000AFCBE                 jz      loc_B0220
+  .text:000AFCC4                 add     [esp+90Ch+var_8D8], 1
+  .text:000AFCC9                 ; unsigned int
+  .text:000AFCC9                 mov     [esp+90Ch+s], 108h; unsigned int
+  .text:000AFCD0                 call    __Znwj; operator new(uint)
+  .text:000AFCD5                 mov     edx, [esp+90Ch+var_8E0]
+  .text:000AFCD9                 mov     [edx+edi*4+1300Ch], eax
+  .text:000AFCE0                 mov     [eax+104h], ebp
+  .text:000AFCE6                 ; size_t
+  .text:000AFCE6                 mov     [esp+90Ch+var_904], 104h; size_t
+  .text:000AFCEE                 ; src
+  .text:000AFCEE                 mov     [esp+90Ch+format], esi; src
+  .text:000AFCF2                 ; dest
+  .text:000AFCF2                 mov     [esp+90Ch+s], eax; dest
+  .text:000AFCF5                 call    sub_144680
+  .text:000AFCFA                 add     edi, 1
+  .text:000AFCFD                 add     esi, 104h
+  .text:000AFD03                 ; int
+  .text:000AFD03                 mov     [esp+90Ch+var_904], 0; int
+  .text:000AFD0B                 ; char *
+  .text:000AFD0B                 mov     [esp+90Ch+format], esi; char *
+  .text:000AFD0F                 mov     eax, [esp+90Ch+var_8E0]
+  .text:000AFD13                 ; int
+  .text:000AFD13                 mov     [esp+90Ch+s], eax; int
+  .text:000AFD16                 call    sub_ABF8A
+  .text:000AFD1B                 mov     ebp, eax
+  .text:000AFD1D                 test    eax, eax
+  .text:000AFD1F                 jz      loc_B0234
+  .text:000AFD25                 add     [esp+90Ch+var_8D8], 1
+  .text:000AFD2A                 ; unsigned int
+  .text:000AFD2A                 mov     [esp+90Ch+s], 108h; unsigned int
+  .text:000AFD31                 call    __Znwj; operator new(uint)
+  .text:000AFD36                 mov     ecx, [esp+90Ch+var_8E0]
+  .text:000AFD3A                 mov     [ecx+edi*4+1300Ch], eax
+  .text:000AFD41                 mov     [eax+104h], ebp
+  .text:000AFD47                 ; size_t
+  .text:000AFD47                 mov     [esp+90Ch+var_904], 104h; size_t
+  .text:000AFD4F                 ; src
+  .text:000AFD4F                 mov     [esp+90Ch+format], esi; src
+  .text:000AFD53                 ; dest
+  .text:000AFD53                 mov     [esp+90Ch+s], eax; dest
+  .text:000AFD56                 call    sub_144680
+  .text:000AFD5B                 add     edi, 1
+  .text:000AFD5E                 add     esi, 104h
+  .text:000AFD64                 ; int
+  .text:000AFD64                 mov     [esp+90Ch+var_904], 0; int
+  .text:000AFD6C                 ; char *
+  .text:000AFD6C                 mov     [esp+90Ch+format], esi; char *
+  .text:000AFD70                 mov     edx, [esp+90Ch+var_8E0]
+  .text:000AFD74                 ; int
+  .text:000AFD74                 mov     [esp+90Ch+s], edx; int
+  .text:000AFD77                 call    sub_ABF8A
+  .text:000AFD7C                 mov     ebp, eax
+  .text:000AFD7E                 test    eax, eax
+  .text:000AFD80                 jz      loc_B022A
+  .text:000AFD86                 add     [esp+90Ch+var_8D8], 1
+  .text:000AFD8B                 ; unsigned int
+  .text:000AFD8B                 mov     [esp+90Ch+s], 108h; unsigned int
+  .text:000AFD92                 call    __Znwj; operator new(uint)
+  .text:000AFD97                 mov     ecx, [esp+90Ch+var_8E0]
+  .text:000AFD9B                 mov     [ecx+edi*4+1300Ch], eax
+  .text:000AFDA2                 mov     [eax+104h], ebp
+  .text:000AFDA8                 ; size_t
+  .text:000AFDA8                 mov     [esp+90Ch+var_904], 104h; size_t
+  .text:000AFDB0                 ; src
+  .text:000AFDB0                 mov     [esp+90Ch+format], esi; src
+  .text:000AFDB4                 ; dest
+  .text:000AFDB4                 mov     [esp+90Ch+s], eax; dest
+  .text:000AFDB7                 call    sub_144680
+  .text:000AFDBC                 add     edi, 1
+  .text:000AFDBF                 add     esi, 104h
+  .text:000AFDC5                 cmp     edi, [esp+90Ch+var_8D4]
+  .text:000AFDC9                 jz      loc_B0095
+  .text:000AFDCF                 mov     ebp, [esp+90Ch+var_8E0]
+  .text:000AFDD3                 jmp     loc_AFF5C
+  .text:000AFDD8                 add     [esp+90Ch+var_8D8], 1
+  .text:000AFDDD                 ; unsigned int
+  .text:000AFDDD                 mov     [esp+90Ch+s], 108h; unsigned int
+  .text:000AFDE4                 call    __Znwj; operator new(uint)
+  .text:000AFDE9                 mov     [ebp+edi*4+1300Ch], eax
+  .text:000AFDF0                 mov     edx, [esp+90Ch+var_8E8]
+  .text:000AFDF4                 mov     [eax+104h], edx
+  .text:000AFDFA                 ; size_t
+  .text:000AFDFA                 mov     [esp+90Ch+var_904], 104h; size_t
+  .text:000AFE02                 ; src
+  .text:000AFE02                 mov     [esp+90Ch+format], esi; src
+  .text:000AFE06                 ; dest
+  .text:000AFE06                 mov     [esp+90Ch+s], eax; dest
+  .text:000AFE09                 call    sub_144680
+  .text:000AFE0E                 lea     edi, [edi+1]
+  .text:000AFE11                 mov     [esp+90Ch+var_8E8], edi
+  .text:000AFE15                 add     esi, 104h
+  .text:000AFE1B                 ; int
+  .text:000AFE1B                 mov     [esp+90Ch+var_904], 0; int
+  .text:000AFE23                 ; char *
+  .text:000AFE23                 mov     [esp+90Ch+format], esi; char *
+  .text:000AFE27                 ; int
+  .text:000AFE27                 mov     [esp+90Ch+s], ebp; int
+  .text:000AFE2A                 call    sub_ABF8A
+  .text:000AFE2F                 mov     edi, eax
+  .text:000AFE31                 test    eax, eax
+  .text:000AFE33                 jz      loc_B0188
+  .text:000AFE39                 add     [esp+90Ch+var_8D8], 1
+  .text:000AFE3E                 ; unsigned int
+  .text:000AFE3E                 mov     [esp+90Ch+s], 108h; unsigned int
+  .text:000AFE45                 call    __Znwj; operator new(uint)
+  .text:000AFE4A                 mov     ecx, [esp+90Ch+var_8E8]
+  .text:000AFE4E                 mov     [ebp+ecx*4+1300Ch], eax
+  .text:000AFE55                 mov     [eax+104h], edi
+  .text:000AFE5B                 ; size_t
+  .text:000AFE5B                 mov     [esp+90Ch+var_904], 104h; size_t
+  .text:000AFE63                 ; src
+  .text:000AFE63                 mov     [esp+90Ch+format], esi; src
+  .text:000AFE67                 ; dest
+  .text:000AFE67                 mov     [esp+90Ch+s], eax; dest
+  .text:000AFE6A                 call    sub_144680
+  .text:000AFE6F                 mov     eax, [esp+90Ch+var_8E8]
+  .text:000AFE73                 add     eax, 1
+  .text:000AFE76                 mov     [esp+90Ch+src], eax
+  .text:000AFE7A                 lea     edi, [esi+104h]
+  .text:000AFE80                 ; int
+  .text:000AFE80                 mov     [esp+90Ch+var_904], 0; int
+  .text:000AFE88                 ; char *
+  .text:000AFE88                 mov     [esp+90Ch+format], edi; char *
+  .text:000AFE8C                 ; int
+  .text:000AFE8C                 mov     [esp+90Ch+s], ebp; int
+  .text:000AFE8F                 call    sub_ABF8A
+  .text:000AFE94                 test    eax, eax
+  .text:000AFE96                 jz      loc_B019C
+  .text:000AFE9C                 mov     [esp+90Ch+var_8D0], eax
+  .text:000AFEA0                 add     [esp+90Ch+var_8D8], 1
+  .text:000AFEA5                 ; unsigned int
+  .text:000AFEA5                 mov     [esp+90Ch+s], 108h; unsigned int
+  .text:000AFEAC                 call    __Znwj; operator new(uint)
+  .text:000AFEB1                 mov     ecx, [esp+90Ch+src]
+  .text:000AFEB5                 mov     [ebp+ecx*4+1300Ch], eax
+  .text:000AFEBC                 mov     edx, [esp+90Ch+var_8D0]
+  .text:000AFEC0                 mov     [eax+104h], edx
+  .text:000AFEC6                 ; size_t
+  .text:000AFEC6                 mov     [esp+90Ch+var_904], 104h; size_t
+  .text:000AFECE                 ; src
+  .text:000AFECE                 mov     [esp+90Ch+format], edi; src
+  .text:000AFED2                 ; dest
+  .text:000AFED2                 mov     [esp+90Ch+s], eax; dest
+  .text:000AFED5                 call    sub_144680
+  .text:000AFEDA                 mov     eax, [esp+90Ch+var_8E8]
+  .text:000AFEDE                 add     eax, 2
+  .text:000AFEE1                 mov     [esp+90Ch+src], eax
+  .text:000AFEE5                 lea     edi, [esi+208h]
+  .text:000AFEEB                 ; int
+  .text:000AFEEB                 mov     [esp+90Ch+var_904], 0; int
+  .text:000AFEF3                 ; char *
+  .text:000AFEF3                 mov     [esp+90Ch+format], edi; char *
+  .text:000AFEF7                 ; int
+  .text:000AFEF7                 mov     [esp+90Ch+s], ebp; int
+  .text:000AFEFA                 call    sub_ABF8A
+  .text:000AFEFF                 test    eax, eax
+  .text:000AFF01                 jz      loc_B0192
+  .text:000AFF07                 mov     [esp+90Ch+var_8D0], eax
+  .text:000AFF0B                 add     [esp+90Ch+var_8D8], 1
+  .text:000AFF10                 ; unsigned int
+  .text:000AFF10                 mov     [esp+90Ch+s], 108h; unsigned int
+  .text:000AFF17                 call    __Znwj; operator new(uint)
+  .text:000AFF1C                 mov     edx, [esp+90Ch+src]
+  .text:000AFF20                 mov     [ebp+edx*4+1300Ch], eax
+  .text:000AFF27                 mov     ecx, [esp+90Ch+var_8D0]
+  .text:000AFF2B                 mov     [eax+104h], ecx
+  .text:000AFF31                 ; size_t
+  .text:000AFF31                 mov     [esp+90Ch+var_904], 104h; size_t
+  .text:000AFF39                 ; src
+  .text:000AFF39                 mov     [esp+90Ch+format], edi; src
+  .text:000AFF3D                 ; dest
+  .text:000AFF3D                 mov     [esp+90Ch+s], eax; dest
+  .text:000AFF40                 call    sub_144680
+  .text:000AFF45                 mov     edi, [esp+90Ch+var_8E8]
+  .text:000AFF49                 add     edi, 3
+  .text:000AFF4C                 add     esi, 30Ch
+  .text:000AFF52                 cmp     edi, [esp+90Ch+var_8D4]
+  .text:000AFF56                 jz      loc_B0095
+  .text:000AFF5C                 ; int
+  .text:000AFF5C                 mov     [esp+90Ch+var_904], 0; int
+  .text:000AFF64                 ; char *
+  .text:000AFF64                 mov     [esp+90Ch+format], esi; char *
+  .text:000AFF68                 ; int
+  .text:000AFF68                 mov     [esp+90Ch+s], ebp; int
+  .text:000AFF6B                 call    sub_ABF8A
+  .text:000AFF70                 test    eax, eax
+  .text:000AFF72                 mov     [esp+90Ch+var_8E8], eax
+  .text:000AFF76                 jnz     loc_AFDD8
+  .text:000AFF7C                 add     [esp+90Ch+var_8E4], 1
+  .text:000AFF81                 jmp     loc_AFE0E
+  .text:000AFF86                 cmp     [esp+90Ch+var_548], 7Dh ; '}'
+  .text:000AFF8E                 jz      loc_AFB19
+  .text:000AFF94                 mov     edx, esi
+  .text:000AFF96                 mov     ecx, [edx]
+  .text:000AFF98                 add     edx, 4
+  .text:000AFF9B                 lea     eax, [ecx-1010101h]
+  .text:000AFFA1                 not     ecx
+  .text:000AFFA3                 and     eax, ecx
+  .text:000AFFA5                 mov     edi, eax
+  .text:000AFFA7                 and     edi, 80808080h
+  .text:000AFFAD                 jz      short loc_AFF96
+  .text:000AFFAF                 mov     ecx, edi
+  .text:000AFFB1                 shr     ecx, 10h
+  .text:000AFFB4                 test    eax, 8080h
+  .text:000AFFB9                 cmovnz  ecx, edi
+  .text:000AFFBC                 lea     eax, [edx+2]
+  .text:000AFFBF                 cmovz   edx, eax
+  .text:000AFFC2                 mov     eax, ecx
+  .text:000AFFC4                 add     al, cl
+  .text:000AFFC6                 sbb     edx, 3
+  .text:000AFFC9                 sub     edx, esi
+  .text:000AFFCB                 mov     [esp+edx+90Ch+var_549], 0
+  .text:000AFFD3                 mov     [esp+90Ch+format], esi
+  .text:000AFFD7                 mov     edx, [esp+90Ch+var_8E0]
+  .text:000AFFDB                 mov     [esp+90Ch+s], edx
+  .text:000AFFDE                 call    sub_AE7FE; CClient_SoundEngine::ParseSentenceLine(this, line)
+  .text:000AFFE3                 jmp     loc_AFAE2
+  .text:000AFFE8                 cmp     [esp+90Ch+var_548], 7Dh ; '}'
+  .text:000AFFF0                 jz      loc_AFBAF
+  .text:000AFFF6                 mov     edx, esi
+  .text:000AFFF8                 mov     ecx, [edx]
+  .text:000AFFFA                 add     edx, 4
+  .text:000AFFFD                 lea     eax, [ecx-1010101h]
+  .text:000B0003                 not     ecx
+  .text:000B0005                 and     eax, ecx
+  .text:000B0007                 mov     edi, eax
+  .text:000B0009                 and     edi, 80808080h
+  .text:000B000F                 jz      short loc_AFFF8
+  .text:000B0011                 mov     ecx, edi
+  .text:000B0013                 shr     ecx, 10h
+  .text:000B0016                 test    eax, 8080h
+  .text:000B001B                 cmovnz  ecx, edi
+  .text:000B001E                 lea     eax, [edx+2]
+  .text:000B0021                 cmovz   edx, eax
+  .text:000B0024                 mov     eax, ecx
+  .text:000B0026                 add     al, cl
+  .text:000B0028                 sbb     edx, 3
+  .text:000B002B                 sub     edx, esi
+  .text:000B002D                 jz      short loc_B0045
+  .text:000B002F                 lea     eax, [edx-1]
+  .text:000B0032                 movzx   ecx, [esp+eax+90Ch+var_548]
+  .text:000B003A                 cmp     cl, 0Ah
+  .text:000B003D                 jz      short loc_B006A
+  .text:000B003F                 cmp     cl, 0Dh
+  .text:000B0042                 cmovz   edx, eax
+  .text:000B0045                 mov     [esp+edx+90Ch+var_548], 0
+  .text:000B004D                 ; size_t
+  .text:000B004D                 mov     [esp+90Ch+var_904], 104h; size_t
+  .text:000B0055                 ; src
+  .text:000B0055                 mov     [esp+90Ch+format], esi; src
+  .text:000B0059                 mov     edx, [esp+90Ch+src]
+  .text:000B005D                 ; dest
+  .text:000B005D                 mov     [esp+90Ch+s], edx; dest
+  .text:000B0060                 call    sub_144680
+  .text:000B0065                 jmp     loc_AFB78
+  .text:000B006A                 test    eax, eax
+  .text:000B006C                 jnz     loc_B026B
+  .text:000B0072                 xor     edx, edx
+  .text:000B0074                 jmp     short loc_B0045
+  .text:000B0076                 stosw
+  .text:000B0078                 jmp     loc_AF8F5
+  .text:000B007E                 stosw
+  .text:000B0080                 jmp     loc_AF8A7
+  .text:000B0086                 stosw
+  .text:000B0088                 jmp     loc_AF9A1
+  .text:000B008D                 mov     [esp+90Ch+var_8D8], 0
+  .text:000B0095                 mov     esi, [esp+90Ch+var_8E4]
+  .text:000B0099                 mov     [esp+90Ch+var_900], esi
+  .text:000B009D                 mov     ebp, [esp+90Ch+var_8D8]
+  .text:000B00A1                 mov     [esp+90Ch+var_904], ebp
+  .text:000B00A5                 lea     eax, (aSoundEngineFin - 61E000h)[ebx]; "[Sound Engine] Finished loading sound l"...
+  .text:000B00AB                 ; y
+  .text:000B00AB                 mov     [esp+90Ch+format], eax; y
+  .text:000B00AF                 ; int
+  .text:000B00AF                 mov     [esp+90Ch+s], 1; int
+  .text:000B00B6                 call    sub_CD350
+  .text:000B00BB                 mov     ebx, [esp+90Ch+var_8E0]
+  .text:000B00BF                 mov     ds:(byte_739011 - 61E000h)[ebx], 1
+  .text:000B00C6                 mov     [esp+90Ch+format], 0
+  .text:000B00CE                 mov     [esp+90Ch+s], ebx
+  .text:000B00D1                 call    sub_AEAC4
+  .text:000B00D6                 mov     eax, 1
+  .text:000B00DB                 add     esp, 8FCh
+  .text:000B00E1                 pop     ebx
+  .text:000B00E2                 pop     esi
+  .text:000B00E3                 pop     edi
+  .text:000B00E4                 pop     ebp
+  .text:000B00E5                 retn
+  .text:000B00E6                 mov     ecx, [ebp+0]
+  .text:000B00E9                 mov     edx, [ecx]
+  .text:000B00EB                 mov     edi, [esp+90Ch+var_8E8]
+  .text:000B00EF                 mov     [esp+90Ch+format], edi
+  .text:000B00F3                 mov     [esp+90Ch+s], ecx
+  .text:000B00F6                 call    dword ptr [edx+30h]
+  .text:000B00F9                 mov     ebp, [esp+90Ch+src]
+  .text:000B00FD                 mov     [esp+90Ch+var_8FC], ebp
+  .text:000B0101                 mov     [esp+90Ch+var_900], esi
+  .text:000B0105                 mov     esi, [esp+90Ch+var_8CC]
+  .text:000B0109                 mov     [esp+90Ch+var_904], esi
+  .text:000B010D                 lea     ecx, (aDeletingOutdat - 61E000h)[ebx]; "Deleting outdated sound list file '%s'."...
+  .text:000B0113                 ; y
+  .text:000B0113                 mov     [esp+90Ch+format], ecx; y
+  .text:000B0117                 ; int
+  .text:000B0117                 mov     [esp+90Ch+s], 1; int
+  .text:000B011E                 call    sub_CD350
+  .text:000B0123                 mov     edx, [esp+90Ch+filename]
+  .text:000B0127                 ; filename
+  .text:000B0127                 mov     [esp+90Ch+s], edx; filename
+  .text:000B012A                 call    _remove
+  .text:000B012F                 mov     [esp+90Ch+var_904], esi
+  .text:000B0133                 lea     edi, (aReconnectingTo - 61E000h)[ebx]; "Reconnecting to server..."
+  .text:000B0139                 ; y
+  .text:000B0139                 mov     [esp+90Ch+format], edi; y
+  .text:000B013D                 ; int
+  .text:000B013D                 mov     [esp+90Ch+s], 1; int
+  .text:000B0144                 call    sub_CD350
+  .text:000B0149                 mov     ebp, [esp+90Ch+var_8D0]
+  .text:000B014D                 mov     [esp+90Ch+s], ebp
+  .text:000B0150                 mov     esi, [esp+90Ch+var_8D4]
+  .text:000B0154                 mov     eax, esi
+  .text:000B0156                 call    dword ptr [eax+50h]
+  .text:000B0159                 lea     ecx, (aRetry - 61E000h)[ebx]; "retry"
+  .text:000B015F                 mov     [esp+90Ch+s], ecx
+  .text:000B0162                 call    dword ptr [esi+50h]
+  .text:000B0165                 call    dword ptr [esi+0D8h]
+  .text:000B016B                 fadd    ds:(flt_4A91E0 - 61E000h)[ebx]
+  .text:000B0171                 mov     ebx, [esp+90Ch+var_8E0]
+  .text:000B0175                 fstp    ds:(flt_739014 - 61E000h)[ebx]
+  .text:000B017B                 xor     eax, eax
+  .text:000B017D                 add     esp, 8FCh
+  .text:000B0183                 pop     ebx
+  .text:000B0184                 pop     esi
+  .text:000B0185                 pop     edi
+  .text:000B0186                 pop     ebp
+  .text:000B0187                 retn
+  .text:000B0188                 add     [esp+90Ch+var_8E4], 1
+  .text:000B018D                 jmp     loc_AFE6F
+  .text:000B0192                 add     [esp+90Ch+var_8E4], 1
+  .text:000B0197                 jmp     loc_AFF45
+  .text:000B019C                 add     [esp+90Ch+var_8E4], 1
+  .text:000B01A1                 jmp     loc_AFEDA
+  .text:000B01A6                 ; size_t
+  .text:000B01A6                 mov     [esp+90Ch+var_904], 104h; size_t
+  .text:000B01AE                 ; src
+  .text:000B01AE                 mov     [esp+90Ch+format], eax; src
+  .text:000B01B2                 mov     eax, [esp+90Ch+dest]
+  .text:000B01B6                 ; dest
+  .text:000B01B6                 mov     [esp+90Ch+s], eax; dest
+  .text:000B01B9                 call    sub_144680
+  .text:000B01BE                 add     [esp+90Ch+var_8D4], 1
+  .text:000B01C3                 add     [esp+90Ch+dest], 104h
+  .text:000B01CB                 jmp     loc_AFA4E
+  .text:000B01D0                 movzx   eax, word ptr [esp+90Ch+var_8D8]
+  .text:000B01D5                 stosw
+  .text:000B01D7                 mov     edx, 7Eh ; '~'
+  .text:000B01DC                 jmp     loc_AF98F
+  .text:000B01E2                 mov     edi, [esp+90Ch+var_8CC]
+  .text:000B01E6                 mov     [esp+90Ch+var_904], edi
+  .text:000B01EA                 lea     ebp, (aDeletingRedund - 61E000h)[ebx]; "Deleting redundant sound list file '%s'"...
+  .text:000B01F0                 ; y
+  .text:000B01F0                 mov     [esp+90Ch+format], ebp; y
+  .text:000B01F4                 ; int
+  .text:000B01F4                 mov     [esp+90Ch+s], 2; int
+  .text:000B01FB                 call    sub_CD350
+  .text:000B0200                 mov     edx, [esp+90Ch+filename]
+  .text:000B0204                 ; filename
+  .text:000B0204                 mov     [esp+90Ch+s], edx; filename
+  .text:000B0207                 call    _remove
+  .text:000B020C                 jmp     loc_AFBF6
+  .text:000B0212                 mov     [esp+90Ch+var_8E4], 1
+  .text:000B021A                 jmp     loc_AFC72
+  .text:000B0220                 add     [esp+90Ch+var_8E4], 1
+  .text:000B0225                 jmp     loc_AFCFA
+  .text:000B022A                 add     [esp+90Ch+var_8E4], 1
+  .text:000B022F                 jmp     loc_AFDBC
+  .text:000B0234                 add     [esp+90Ch+var_8E4], 1
+  .text:000B0239                 jmp     loc_AFD5B
+  .text:000B023E                 mov     ebp, [esp+90Ch+var_8CC]
+  .text:000B0242                 mov     [esp+90Ch+var_904], ebp
+  .text:000B0246                 lea     edi, (aSoundListFileA - 61E000h)[ebx]; "Sound list file at '%s' not found.\n"
+  .text:000B024C                 jmp     loc_B0139
+  .text:000B0251                 stosw
+  .text:000B0253                 mov     esi, edi
+  .text:000B0255                 mov     edx, 7Eh ; '~'
+  .text:000B025A                 jmp     loc_AF895
+  .text:000B025F                 stosw
+  .text:000B0261                 mov     edx, 7Eh ; '~'
+  .text:000B0266                 jmp     loc_AF8E5
+  .text:000B026B                 lea     edi, [edx-2]
+  .text:000B026E                 movzx   ecx, [esp+edx+90Ch+var_54A]
+  .text:000B0276                 mov     edx, eax
+  .text:000B0278                 mov     eax, edi
+  .text:000B027A                 jmp     loc_B003F
+procedure: |-
+  int __usercall CClient_SoundEngine_LoadSoundList@<eax>(int a1@<eax>)
+  {
+    char *v1; // eax
+    int v2; // eax
+    __int16 *v3; // esi
+    unsigned int v4; // edx
+    char *v5; // eax
+    __int16 *p_s; // edi
+    unsigned int v7; // edx
+    __int16 *v8; // edi
+    __int16 *v9; // edi
+    unsigned int v10; // edx
+    __int16 *v11; // edi
+    char *v12; // eax
+    int v13; // ebp
+    int v14; // esi
+    int v15; // eax
+    int v16; // edi
+    char *v17; // esi
+    int v18; // ebp
+    int v19; // eax
+    int v20; // ebp
+    int v21; // eax
+    int v22; // ebp
+    int v23; // eax
+    int v24; // eax
+    char *v25; // esi
+    int v26; // edi
+    int v27; // eax
+    int v28; // eax
+    int v29; // eax
+    int v30; // eax
+    int v31; // eax
+    char *v32; // edx
+    int v33; // ecx
+    int v34; // eax
+    unsigned int v35; // ecx
+    char *v36; // edx
+    int v37; // ecx
+    int v38; // eax
+    unsigned int v39; // ecx
+    int v40; // edx
+    int v41; // eax
+    char v42; // cl
+    int v44; // edi
+    int v45; // [esp+24h] [ebp-8E8h]
+    int v46; // [esp+24h] [ebp-8E8h]
+    int v47; // [esp+24h] [ebp-8E8h]
+    char *v48; // [esp+28h] [ebp-8E4h]
+    char *src; // [esp+30h] [ebp-8DCh]
+    int v51; // [esp+34h] [ebp-8D8h]
+    int v52; // [esp+38h] [ebp-8D4h]
+    char *v53; // [esp+3Ch] [ebp-8D0h]
+    char *v54; // [esp+3Ch] [ebp-8D0h]
+    char *v55; // [esp+3Ch] [ebp-8D0h]
+    char *v56; // [esp+44h] [ebp-8C8h]
+    char *dest; // [esp+4Ch] [ebp-8C0h]
+    char v58[128]; // [esp+5Ah] [ebp-8B2h] BYREF
+    __int16 v59; // [esp+DAh] [ebp-832h] BYREF
+    _BYTE v60[126]; // [esp+DCh] [ebp-830h] BYREF
+    __int16 s; // [esp+15Ah] [ebp-7B2h] BYREF
+    int v62; // [esp+15Ch] [ebp-7B0h] BYREF
+    __int16 v63; // [esp+1DAh] [ebp-732h] BYREF
+    int v64; // [esp+1DCh] [ebp-730h] BYREF
+    char v65[160]; // [esp+25Ah] [ebp-6B2h] BYREF
+    char v66[202]; // [esp+2FAh] [ebp-612h] BYREF
+    char v67[260]; // [esp+3C4h] [ebp-548h] BYREF
+    char v68[260]; // [esp+4C8h] [ebp-444h] BYREF
+    char v69[384]; // [esp+5CCh] [ebp-340h] BYREF
+    char v70[448]; // [esp+74Ch] [ebp-1C0h] BYREF
+  
+    sub_AABCE(a1);
+    v1 = (char *)unk_A580C8();
+    sub_108DDE(v1, v58);
+    v2 = unk_A580BC();
+    sub_B06E0(v69, "%s/%s", v2, "maps/soundcache");
+    sub_B07B0(v65, "%s/%s.txt", "maps/soundcache", v58);
+    sub_B0880(v66, "dlfile %s\n", v65);
+    (*(void (__cdecl **)(int, const char *, char *))(*(_DWORD *)dword_AA5A04 + 32))(
+      dword_AA5A04,
+      "maps/soundcache",
+      "GAME");
+    unk_A57FF0(v66);
+    v45 = (*(int (__cdecl **)(int, char *, const char *, _DWORD))(*(_DWORD *)dword_AA5A04 + 44))(
+            dword_AA5A04,
+            v65,
+            "rb",
+            0);
+    if ( !v45 )
+    {
+      sub_CD350(1, COERCE_GLFLOAT("Sound list file at '%s' not found.\n"), v65);
+      goto LABEL_87;
+    }
+    (*(void (__cdecl **)(int, char *, char *, int))(*(_DWORD *)dword_AA5A04 + 132))(dword_AA5A04, v65, v70, 420);
+    memset(v67, 0, sizeof(v67));
+    v3 = &v59;
+    v4 = 128;
+    if ( ((unsigned int)&v59 & 2) != 0 )
+    {
+      v59 = 0;
+      v3 = (__int16 *)v60;
+      v4 = 126;
+    }
+    memset(v3, 0, 4 * (v4 >> 2));
+    if ( (v4 & 2) != 0 )
+      v3[2 * (v4 >> 2)] = 0;
+    v5 = (char *)unk_A580C8();
+    sub_108DDE(v5, (char *)&v59);
+    v60[125] = 0;
+    p_s = &s;
+    v7 = 128;
+    if ( ((unsigned int)&s & 2) != 0 )
+    {
+      s = 0;
+      p_s = (__int16 *)&v62;
+      v7 = 126;
+    }
+    memset(p_s, 0, 4 * (v7 >> 2));
+    v8 = &p_s[2 * (v7 >> 2)];
+    if ( (v7 & 2) != 0 )
+      *v8 = 0;
+    (*(void (__cdecl **)(int, __int16 *, int, int))(*(_DWORD *)dword_AA5A04 + 96))(dword_AA5A04, &s, 128, v45);
+    sscanf((const char *)&s, "%s\n", &s);
+    v51 = sub_9AA40(&s, &v59);
+    if ( v51 )
+    {
+      (*(void (__cdecl **)(int, int))(*(_DWORD *)dword_AA5A04 + 48))(dword_AA5A04, v45);
+      sub_CD350(
+        1,
+        COERCE_GLFLOAT("Deleting outdated sound list file '%s'. Scanned map name '%s' does not match current map '%s'.\n"),
+        v65,
+        &s,
+        &v59);
+      remove(v70);
+      sub_CD350(1, COERCE_GLFLOAT("Reconnecting to server..."), v65);
+  LABEL_87:
+      unk_A57FF0(v66);
+      unk_A57FF0("retry");
+      *(float *)((char *)&flt_739014 + a1 - 6414336) = ((long double (*)(void))gEngfuncs_GetClientTime)() + 3.0;
+      return 0;
+    }
+    sub_144680((char *)(a1 + 1159196), (char *)&v59, 0x80u);
+    src = (char *)sub_13AD5A();
+    v9 = &v63;
+    v10 = 128;
+    if ( ((unsigned int)&v63 & 2) != 0 )
+    {
+      v63 = 0;
+      v9 = (__int16 *)&v64;
+      v10 = 126;
+    }
+    memset(v9, 0, 4 * (v10 >> 2));
+    v11 = &v9[2 * (v10 >> 2)];
+    if ( (v10 & 2) != 0 )
+      *v11 = 0;
+    (*(void (__cdecl **)(int, __int16 *, int, int))(*(_DWORD *)dword_AA5A04 + 96))(dword_AA5A04, &v63, 128, v45);
+    sscanf((const char *)&v63, "%s\n", &v63);
+    v56 = (char *)sub_9AA58(src, &v63);
+    while ( (*(int (__cdecl **)(int, char *, int, int))(*(_DWORD *)dword_AA5A04 + 96))(dword_AA5A04, v67, 260, v45)
+         && memcmp(v67, "SOUNDLIST {", 0xBu) )
+      ;
+    v53 = (char *)(a1 + 94220);
+    v52 = 0;
+    dest = (char *)(a1 + 94220);
+    while ( (*(int (__cdecl **)(int, char *, int, int))(*(_DWORD *)dword_AA5A04 + 96))(dword_AA5A04, v67, 260, v45)
+         && v52 <= 4095
+         && v67[0] != 125 )
+    {
+      v12 = (char *)sub_AAECE(v67);
+      if ( v12 )
+      {
+        sub_144680(dest, v12, 0x104u);
+        ++v52;
+        dest += 260;
+      }
+    }
+    while ( (*(int (__cdecl **)(int, char *, int, int))(*(_DWORD *)dword_AA5A04 + 96))(dword_AA5A04, v67, 260, v45)
+         && memcmp(v67, "SENTENCELIST {", 0xEu) )
+      ;
+    // (structmember, struct=CClient_SoundEngine, member=m_iSentenceCount) (char *)&loc_11B09C + a1 == this + 0x11B09C
+    while ( (*(int (__cdecl **)(int, char *, int, int))(*(_DWORD *)dword_AA5A04 + 96))(dword_AA5A04, v67, 260, v45)
+         && *(int *)((char *)&loc_11B09C + a1) <= 2047
+         && v67[0] != 125 )
+    {
+      v32 = v67;
+      do
+      {
+        v33 = *(_DWORD *)v32;
+        v32 += 4;
+        v34 = ~v33 & (v33 - 16843009);
+      }
+      while ( (v34 & 0x80808080) == 0 );
+      v35 = (v34 & 0x80808080) >> 16;
+      if ( (v34 & 0x8080) != 0 )
+        LOBYTE(v35) = v34 & 0x80;
+      else
+        v32 += 2;
+      v66[&v32[-__CFADD__((_BYTE)v35, (_BYTE)v35) - 3] - v67 + 201] = 0;
+      sub_AE7FE(a1, v67); // CClient_SoundEngine::ParseSentenceLine(this, line)
+    }
+    while ( (*(int (__cdecl **)(int, char *, int, int))(*(_DWORD *)dword_AA5A04 + 96))(dword_AA5A04, v67, 260, v45)
+         && memcmp(v67, "CUSTOMMATERIALS {", 0xFu) )
+      ;
+    memset(v68, 0, sizeof(v68));
+    while ( (*(int (__cdecl **)(int, char *, int, int))(*(_DWORD *)dword_AA5A04 + 96))(dword_AA5A04, v67, 260, v45)
+         && *(int *)(a1 + 1159328) <= 4095
+         && v67[0] != 125 )
+    {
+      v36 = v67;
+      do
+      {
+        v37 = *(_DWORD *)v36;
+        v36 += 4;
+        v38 = ~v37 & (v37 - 16843009);
+      }
+      while ( (v38 & 0x80808080) == 0 );
+      v39 = (v38 & 0x80808080) >> 16;
+      if ( (v38 & 0x8080) != 0 )
+        LOBYTE(v39) = v38 & 0x80;
+      else
+        v36 += 2;
+      v40 = &v36[-__CFADD__((_BYTE)v39, (_BYTE)v39) - 3] - v67;
+      if ( v40 )
+      {
+        v41 = v40 - 1;
+        v42 = v67[v40 - 1];
+        if ( v42 == 10 )
+        {
+          if ( v40 == 1 )
+          {
+            v40 = 0;
+            goto LABEL_81;
+          }
+          v44 = v40 - 2;
+          v42 = v66[v40-- + 200];
+          v41 = v44;
+        }
+        if ( v42 == 13 )
+          v40 = v41;
+      }
+  LABEL_81:
+      v67[v40] = 0;
+      sub_144680(v68, v67, 0x104u);
+    }
+    memset(v67, 0, sizeof(v67));
+    (*(void (__cdecl **)(int, int))(*(_DWORD *)dword_AA5A04 + 48))(dword_AA5A04, v45);
+    sub_1350CA(a1 + 8200, v68);
+    if ( v56 )
+    {
+      sub_CD350(2, COERCE_GLFLOAT("Deleting redundant sound list file '%s'.\n"), v65);
+      remove(v70);
+    }
+    v48 = nullptr;
+    if ( v52 )
+    {
+      v13 = ((_BYTE)v52 - 1) & 3;
+      v14 = sub_ABF8A(a1, v53, 0);
+      if ( v14 )
+      {
+        v51 = 1;
+        v15 = operator new(0x108u);
+        *(_DWORD *)(a1 + 77836) = v15;
+        *(_DWORD *)(v15 + 260) = v14;
+        sub_144680((char *)v15, v53, 0x104u);
+      }
+      else
+      {
+        v48 = (_BYTE *)(&dword_0 + 1);
+      }
+      v16 = 1;
+      v17 = (char *)(a1 + 94480);
+      if ( v52 != 1 )
+      {
+        if ( (((_BYTE)v52 - 1) & 3) == 0 )
+          goto LABEL_99;
+        if ( v13 != 1 )
+        {
+          if ( v13 != 2 )
+          {
+            v18 = sub_ABF8A(a1, (char *)(a1 + 94480), 0);
+            if ( v18 )
+            {
+              ++v51;
+              v19 = operator new(0x108u);
+              *(_DWORD *)(a1 + 77840) = v19;
+              *(_DWORD *)(v19 + 260) = v18;
+              sub_144680((char *)v19, v17, 0x104u);
+            }
+            else
+            {
+              ++v48;
+            }
+            v16 = 2;
+            v17 = (char *)(a1 + 94740);
+          }
+          v20 = sub_ABF8A(a1, v17, 0);
+          if ( v20 )
+          {
+            ++v51;
+            v21 = operator new(0x108u);
+            *(_DWORD *)(a1 + 4 * v16 + 77836) = v21;
+            *(_DWORD *)(v21 + 260) = v20;
+            sub_144680((char *)v21, v17, 0x104u);
+          }
+          else
+          {
+            ++v48;
+          }
+          ++v16;
+          v17 += 260;
+        }
+        v22 = sub_ABF8A(a1, v17, 0);
+        if ( v22 )
+        {
+          ++v51;
+          v23 = operator new(0x108u);
+          *(_DWORD *)(a1 + 4 * v16 + 77836) = v23;
+          *(_DWORD *)(v23 + 260) = v22;
+          sub_144680((char *)v23, v17, 0x104u);
+        }
+        else
+        {
+          ++v48;
+        }
+        ++v16;
+        v17 += 260;
+        if ( v16 != v52 )
+        {
+  LABEL_99:
+          do
+          {
+            v47 = sub_ABF8A(a1, v17, 0);
+            if ( v47 )
+            {
+              ++v51;
+              v24 = operator new(0x108u);
+              *(_DWORD *)(a1 + 4 * v16 + 77836) = v24;
+              *(_DWORD *)(v24 + 260) = v47;
+              sub_144680((char *)v24, v17, 0x104u);
+            }
+            else
+            {
+              ++v48;
+            }
+            v46 = v16 + 1;
+            v25 = v17 + 260;
+            v26 = sub_ABF8A(a1, v25, 0);
+            if ( v26 )
+            {
+              ++v51;
+              v27 = operator new(0x108u);
+              *(_DWORD *)(a1 + 4 * v46 + 77836) = v27;
+              *(_DWORD *)(v27 + 260) = v26;
+              sub_144680((char *)v27, v25, 0x104u);
+            }
+            else
+            {
+              ++v48;
+            }
+            v28 = sub_ABF8A(a1, v25 + 260, 0);
+            if ( v28 )
+            {
+              v54 = (char *)v28;
+              ++v51;
+              v29 = operator new(0x108u);
+              *(_DWORD *)(a1 + 4 * (v46 + 1) + 77836) = v29;
+              *(_DWORD *)(v29 + 260) = v54;
+              sub_144680((char *)v29, v25 + 260, 0x104u);
+            }
+            else
+            {
+              ++v48;
+            }
+            v30 = sub_ABF8A(a1, v25 + 520, 0);
+            if ( v30 )
+            {
+              v55 = (char *)v30;
+              ++v51;
+              v31 = operator new(0x108u);
+              *(_DWORD *)(a1 + 4 * (v46 + 2) + 77836) = v31;
+              *(_DWORD *)(v31 + 260) = v55;
+              sub_144680((char *)v31, v25 + 520, 0x104u);
+            }
+            else
+            {
+              ++v48;
+            }
+            v16 = v46 + 3;
+            v17 = v25 + 780;
+          }
+          while ( v46 + 3 != v52 );
+        }
+      }
+    }
+    else
+    {
+      v51 = 0;
+    }
+    sub_CD350(1, COERCE_GLFLOAT("[Sound Engine] Finished loading sound list: %d loaded, %d failed.\n"), v51, v48);
+    byte_739011[a1 - 6414336] = 1;
+    sub_AEAC4(a1, 0);
+    return 1;
+  }

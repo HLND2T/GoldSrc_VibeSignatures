@@ -1,0 +1,900 @@
+func_name: "CClient_SoundEngine_LoadSoundList"
+func_va: "0x1000ecf0"
+disasm_code: |-
+  .text:1000ECF0                 sub     esp, 8A8h
+  .text:1000ECF6                 mov     eax, ___security_cookie
+  .text:1000ECFB                 xor     eax, esp
+  .text:1000ECFD                 mov     [esp+8A8h+var_4], eax
+  .text:1000ED04                 push    ebx
+  .text:1000ED05                 mov     ebx, ecx
+  .text:1000ED07                 cmp     byte ptr [ebx+11B012h], 0
+  .text:1000ED0E                 jz      loc_1000F437
+  .text:1000ED14                 call    gEngfuncs_GetClientTime
+  .text:1000ED1A                 movss   xmm0, dword ptr [ebx+11B014h]
+  .text:1000ED22                 fstp    [esp+8ACh+var_8A8]
+  .text:1000ED26                 comiss  xmm0, [esp+8ACh+var_8A8]
+  .text:1000ED2B                 ja      loc_1000F437
+  .text:1000ED31                 push    ebp
+  .text:1000ED32                 ; Destination
+  .text:1000ED32                 push    edi; Destination
+  .text:1000ED33                 mov     ecx, ebx
+  .text:1000ED35                 call    sub_1000CDE0
+  .text:1000ED3A                 lea     eax, [esp+8B4h+var_4AC]
+  .text:1000ED41                 xor     ebp, ebp
+  .text:1000ED43                 push    eax
+  .text:1000ED44                 call    dword_101F8AC0
+  .text:1000ED4A                 ; Source
+  .text:1000ED4A                 push    eax; Source
+  .text:1000ED4B                 call    sub_1005CD30
+  .text:1000ED50                 call    dword_101F8AB4
+  .text:1000ED56                 push    offset aMapsSoundcache; "maps/soundcache"
+  .text:1000ED5B                 ; ArgList
+  .text:1000ED5B                 push    eax; ArgList
+  .text:1000ED5C                 lea     eax, [esp+8BCh+var_17C]
+  .text:1000ED63                 push    offset aSS; "%s/%s"
+  .text:1000ED68                 ; Buffer
+  .text:1000ED68                 push    eax; Buffer
+  .text:1000ED69                 call    sub_10010800
+  .text:1000ED6E                 lea     eax, [esp+8C4h+var_4A4]
+  .text:1000ED75                 push    eax
+  .text:1000ED76                 push    offset aMapsSoundcache; "maps/soundcache"
+  .text:1000ED7B                 lea     eax, [esp+8CCh+var_790]
+  .text:1000ED82                 push    offset aSSTxt; "%s/%s.txt"
+  .text:1000ED87                 ; Buffer
+  .text:1000ED87                 push    eax; Buffer
+  .text:1000ED88                 call    sub_10010920
+  .text:1000ED8D                 lea     eax, [esp+8D4h+var_790]
+  .text:1000ED94                 ; ArgList
+  .text:1000ED94                 push    eax; ArgList
+  .text:1000ED95                 lea     eax, [esp+8D8h+var_570]
+  .text:1000ED9C                 push    offset aDlfileS; "dlfile %s\n"
+  .text:1000EDA1                 ; Buffer
+  .text:1000EDA1                 push    eax; Buffer
+  .text:1000EDA2                 call    sub_10010980
+  .text:1000EDA7                 mov     ecx, dword_10647588
+  .text:1000EDAD                 add     esp, 34h
+  .text:1000EDB0                 mov     eax, [ecx]
+  .text:1000EDB2                 push    offset aGame; "GAME"
+  .text:1000EDB7                 push    offset aMapsSoundcache; "maps/soundcache"
+  .text:1000EDBC                 call    dword ptr [eax+1Ch]
+  .text:1000EDBF                 lea     eax, [esp+8B4h+var_578]
+  .text:1000EDC6                 push    eax
+  .text:1000EDC7                 call    dword_101F89E8
+  .text:1000EDCD                 mov     ecx, dword_10647588
+  .text:1000EDD3                 lea     edx, [esp+8B8h+ArgList]
+  .text:1000EDDA                 add     esp, 4
+  .text:1000EDDD                 mov     eax, [ecx]
+  .text:1000EDDF                 push    ebp
+  .text:1000EDE0                 push    offset Mode; "rb"
+  .text:1000EDE5                 push    edx
+  .text:1000EDE6                 call    dword ptr [eax+28h]
+  .text:1000EDE9                 mov     edi, eax
+  .text:1000EDEB                 test    edi, edi
+  .text:1000EDED                 jz      loc_1000F3DB
+  .text:1000EDF3                 mov     ecx, dword_10647588
+  .text:1000EDF9                 lea     edx, [esp+8B4h+FileName]
+  .text:1000EE00                 push    1A4h
+  .text:1000EE05                 push    edx
+  .text:1000EE06                 lea     edx, [esp+8BCh+ArgList]
+  .text:1000EE0D                 mov     eax, [ecx]
+  .text:1000EE0F                 push    edx
+  .text:1000EE10                 call    dword ptr [eax+80h]
+  .text:1000EE16                 ; Size
+  .text:1000EE16                 push    104h; Size
+  .text:1000EE1B                 lea     eax, [esp+8B4h+var_898]
+  .text:1000EE1F                 ; Val
+  .text:1000EE1F                 push    ebp; Val
+  .text:1000EE20                 ; void *
+  .text:1000EE20                 push    eax; void *
+  .text:1000EE21                 call    _memset
+  .text:1000EE26                 ; Size
+  .text:1000EE26                 push    80h; Size
+  .text:1000EE2B                 lea     eax, [esp+8C0h+Source]
+  .text:1000EE32                 ; Val
+  .text:1000EE32                 push    ebp; Val
+  .text:1000EE33                 ; void *
+  .text:1000EE33                 push    eax; void *
+  .text:1000EE34                 call    _memset
+  .text:1000EE39                 add     esp, 18h
+  .text:1000EE3C                 lea     eax, [esp+8B0h+Source]
+  .text:1000EE43                 ; Destination
+  .text:1000EE43                 push    eax; Destination
+  .text:1000EE44                 call    dword_101F8AC0
+  .text:1000EE4A                 ; Source
+  .text:1000EE4A                 push    eax; Source
+  .text:1000EE4B                 call    sub_1005CD30
+  .text:1000EE50                 ; Size
+  .text:1000EE50                 push    80h; Size
+  .text:1000EE55                 lea     eax, [esp+8BCh+Buffer]
+  .text:1000EE5C                 mov     [esp+8BCh+var_5F5], 0
+  .text:1000EE64                 ; Val
+  .text:1000EE64                 push    ebp; Val
+  .text:1000EE65                 ; void *
+  .text:1000EE65                 push    eax; void *
+  .text:1000EE66                 call    _memset
+  .text:1000EE6B                 mov     ecx, dword_10647588
+  .text:1000EE71                 lea     edx, [esp+8C4h+Buffer]
+  .text:1000EE78                 add     esp, 14h
+  .text:1000EE7B                 mov     eax, [ecx]
+  .text:1000EE7D                 push    edi
+  .text:1000EE7E                 push    80h
+  .text:1000EE83                 push    edx
+  .text:1000EE84                 call    dword ptr [eax+5Ch]
+  .text:1000EE87                 lea     eax, [esp+8B0h+Buffer]
+  .text:1000EE8E                 ; ArgList
+  .text:1000EE8E                 push    eax; ArgList
+  .text:1000EE8F                 push    offset aS; "%s\n"
+  .text:1000EE94                 ; Buffer
+  .text:1000EE94                 push    eax; Buffer
+  .text:1000EE95                 call    sub_10010E10
+  .text:1000EE9A                 add     esp, 0Ch
+  .text:1000EE9D                 lea     ecx, [esp+8B0h+Source]
+  .text:1000EEA4                 lea     eax, [esp+8B0h+Buffer]
+  .text:1000EEAB                 nop     dword ptr [eax+eax+00h]
+  .text:1000EEB0                 mov     dl, [eax]
+  .text:1000EEB2                 cmp     dl, [ecx]
+  .text:1000EEB4                 jnz     short loc_1000EED0
+  .text:1000EEB6                 test    dl, dl
+  .text:1000EEB8                 jz      short loc_1000EECC
+  .text:1000EEBA                 mov     dl, [eax+1]
+  .text:1000EEBD                 cmp     dl, [ecx+1]
+  .text:1000EEC0                 jnz     short loc_1000EED0
+  .text:1000EEC2                 add     eax, 2
+  .text:1000EEC5                 add     ecx, 2
+  .text:1000EEC8                 test    dl, dl
+  .text:1000EECA                 jnz     short loc_1000EEB0
+  .text:1000EECC                 xor     eax, eax
+  .text:1000EECE                 jmp     short loc_1000EED5
+  .text:1000EED0                 sbb     eax, eax
+  .text:1000EED2                 or      eax, 1
+  .text:1000EED5                 test    eax, eax
+  .text:1000EED7                 jz      loc_1000EF76
+  .text:1000EEDD                 mov     ecx, dword_10647588
+  .text:1000EEE3                 push    edi
+  .text:1000EEE4                 mov     eax, [ecx]
+  .text:1000EEE6                 call    dword ptr [eax+2Ch]
+  .text:1000EEE9                 lea     eax, [esp+8B4h+var_678]
+  .text:1000EEF0                 push    eax
+  .text:1000EEF1                 lea     eax, [esp+8B8h+var_6F8]
+  .text:1000EEF8                 push    eax
+  .text:1000EEF9                 lea     eax, [esp+8BCh+ArgList]
+  .text:1000EF00                 ; ArgList
+  .text:1000EF00                 push    eax; ArgList
+  .text:1000EF01                 push    offset aDeletingOutdat; "Deleting outdated sound list file '%s'."...
+  .text:1000EF06                 ; int
+  .text:1000EF06                 push    1; int
+  .text:1000EF08                 call    sub_1002ACB0
+  .text:1000EF0D                 lea     eax, [esp+8C8h+FileName]
+  .text:1000EF14                 ; FileName
+  .text:1000EF14                 push    eax; FileName
+  .text:1000EF15                 call    _remove
+  .text:1000EF1A                 lea     eax, [esp+8CCh+ArgList]
+  .text:1000EF21                 ; ArgList
+  .text:1000EF21                 push    eax; ArgList
+  .text:1000EF22                 push    offset aReconnectingTo; "Reconnecting to server..."
+  .text:1000EF27                 ; int
+  .text:1000EF27                 push    1; int
+  .text:1000EF29                 call    sub_1002ACB0
+  .text:1000EF2E                 lea     eax, [esp+8D8h+var_578]
+  .text:1000EF35                 push    eax
+  .text:1000EF36                 call    dword_101F89E8
+  .text:1000EF3C                 push    offset aRetry; "retry"
+  .text:1000EF41                 call    dword_101F89E8
+  .text:1000EF47                 add     esp, 2Ch
+  .text:1000EF4A                 call    gEngfuncs_GetClientTime
+  .text:1000EF50                 fadd    ds:dword_10120CB8
+  .text:1000EF56                 pop     edi
+  .text:1000EF57                 pop     ebp
+  .text:1000EF58                 xor     al, al
+  .text:1000EF5A                 fstp    dword ptr [ebx+11B014h]
+  .text:1000EF60                 pop     ebx
+  .text:1000EF61                 mov     ecx, [esp+8A8h+var_4]
+  .text:1000EF68                 ; StackCookie
+  .text:1000EF68                 xor     ecx, esp; StackCookie
+  .text:1000EF6A                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1000EF6F                 add     esp, 8A8h
+  .text:1000EF75                 retn
+  .text:1000EF76                 push    esi
+  .text:1000EF77                 ; Size
+  .text:1000EF77                 push    80h; Size
+  .text:1000EF7C                 lea     eax, [esp+8B8h+Source]
+  .text:1000EF83                 ; Source
+  .text:1000EF83                 push    eax; Source
+  .text:1000EF84                 lea     eax, [ebx+11B01Ch]
+  .text:1000EF8A                 ; Destination
+  .text:1000EF8A                 push    eax; Destination
+  .text:1000EF8B                 call    sub_10084C20
+  .text:1000EF90                 call    sub_1007FAA0
+  .text:1000EF95                 ; Size
+  .text:1000EF95                 push    80h; Size
+  .text:1000EF9A                 mov     esi, eax
+  .text:1000EF9C                 lea     eax, [esp+8C4h+var_5F4]
+  .text:1000EFA3                 ; Val
+  .text:1000EFA3                 push    0; Val
+  .text:1000EFA5                 ; void *
+  .text:1000EFA5                 push    eax; void *
+  .text:1000EFA6                 call    _memset
+  .text:1000EFAB                 mov     ecx, dword_10647588
+  .text:1000EFB1                 lea     eax, [esp+8CCh+var_5F4]
+  .text:1000EFB8                 add     esp, 18h
+  .text:1000EFBB                 mov     edx, [ecx]
+  .text:1000EFBD                 push    edi
+  .text:1000EFBE                 push    80h
+  .text:1000EFC3                 push    eax
+  .text:1000EFC4                 call    dword ptr [edx+5Ch]
+  .text:1000EFC7                 lea     eax, [esp+8ACh+String2]
+  .text:1000EFCE                 ; ArgList
+  .text:1000EFCE                 push    eax; ArgList
+  .text:1000EFCF                 push    offset aS; "%s\n"
+  .text:1000EFD4                 ; Buffer
+  .text:1000EFD4                 push    eax; Buffer
+  .text:1000EFD5                 call    sub_10010E10
+  .text:1000EFDA                 lea     eax, [esp+8B8h+String2]
+  .text:1000EFE1                 ; String2
+  .text:1000EFE1                 push    eax; String2
+  .text:1000EFE2                 ; String1
+  .text:1000EFE2                 push    esi; String1
+  .text:1000EFE3                 call    __stricmp
+  .text:1000EFE8                 mov     esi, dword_10647588
+  .text:1000EFEE                 add     esp, 14h
+  .text:1000EFF1                 mov     [esp+8ACh+var_89C], eax
+  .text:1000EFF5                 lea     eax, [esp+8ACh+Str1]
+  .text:1000EFF9                 mov     ecx, [esi]
+  .text:1000EFFB                 push    edi
+  .text:1000EFFC                 push    104h
+  .text:1000F001                 push    eax
+  .text:1000F002                 mov     edx, [ecx+5Ch]
+  .text:1000F005                 mov     ecx, esi
+  .text:1000F007                 call    edx
+  .text:1000F009                 test    eax, eax
+  .text:1000F00B                 jz      short loc_1000F042
+  .text:1000F00D                 nop     dword ptr [eax]
+  .text:1000F010                 ; MaxCount
+  .text:1000F010                 push    0Bh; MaxCount
+  .text:1000F012                 lea     eax, [esp+8B0h+Str1]
+  .text:1000F016                 push    offset Str2; "SOUNDLIST {"
+  .text:1000F01B                 ; Str1
+  .text:1000F01B                 push    eax; Str1
+  .text:1000F01C                 call    _strncmp
+  .text:1000F021                 add     esp, 0Ch
+  .text:1000F024                 test    eax, eax
+  .text:1000F026                 jz      short loc_1000F042
+  .text:1000F028                 mov     ecx, dword_10647588
+  .text:1000F02E                 lea     edx, [esp+8ACh+Str1]
+  .text:1000F032                 push    edi
+  .text:1000F033                 push    104h
+  .text:1000F038                 push    edx
+  .text:1000F039                 mov     eax, [ecx]
+  .text:1000F03B                 call    dword ptr [eax+5Ch]
+  .text:1000F03E                 test    eax, eax
+  .text:1000F040                 jnz     short loc_1000F010
+  .text:1000F042                 mov     ecx, dword_10647588
+  .text:1000F048                 lea     edx, [esp+8ACh+Str1]
+  .text:1000F04C                 push    edi
+  .text:1000F04D                 push    104h
+  .text:1000F052                 push    edx
+  .text:1000F053                 mov     eax, [ecx]
+  .text:1000F055                 call    dword ptr [eax+5Ch]
+  .text:1000F058                 test    eax, eax
+  .text:1000F05A                 jz      short loc_1000F0C3
+  .text:1000F05C                 lea     esi, [ebx+1700Ch]
+  .text:1000F062                 cmp     ebp, 1000h
+  .text:1000F068                 jge     short loc_1000F0C3
+  .text:1000F06A                 ; MaxCount
+  .text:1000F06A                 push    1; MaxCount
+  .text:1000F06C                 lea     eax, [esp+8B0h+Str1]
+  .text:1000F070                 push    offset asc_101208E0; "}"
+  .text:1000F075                 ; Str1
+  .text:1000F075                 push    eax; Str1
+  .text:1000F076                 call    _strncmp
+  .text:1000F07B                 add     esp, 0Ch
+  .text:1000F07E                 test    eax, eax
+  .text:1000F080                 jz      short loc_1000F0C3
+  .text:1000F082                 lea     eax, [esp+8ACh+Str1]
+  .text:1000F086                 push    eax
+  .text:1000F087                 call    sub_10010730
+  .text:1000F08C                 add     esp, 4
+  .text:1000F08F                 test    eax, eax
+  .text:1000F091                 jz      short loc_1000F0A9
+  .text:1000F093                 ; Size
+  .text:1000F093                 push    104h; Size
+  .text:1000F098                 ; Source
+  .text:1000F098                 push    eax; Source
+  .text:1000F099                 ; Destination
+  .text:1000F099                 push    esi; Destination
+  .text:1000F09A                 call    sub_10084C20
+  .text:1000F09F                 add     esp, 0Ch
+  .text:1000F0A2                 inc     ebp
+  .text:1000F0A3                 add     esi, 104h
+  .text:1000F0A9                 mov     ecx, dword_10647588
+  .text:1000F0AF                 lea     edx, [esp+8ACh+Str1]
+  .text:1000F0B3                 push    edi
+  .text:1000F0B4                 push    104h
+  .text:1000F0B9                 push    edx
+  .text:1000F0BA                 mov     eax, [ecx]
+  .text:1000F0BC                 call    dword ptr [eax+5Ch]
+  .text:1000F0BF                 test    eax, eax
+  .text:1000F0C1                 jnz     short loc_1000F062
+  .text:1000F0C3                 mov     ecx, dword_10647588
+  .text:1000F0C9                 lea     edx, [esp+8ACh+Str1]
+  .text:1000F0CD                 push    edi
+  .text:1000F0CE                 push    104h
+  .text:1000F0D3                 push    edx
+  .text:1000F0D4                 mov     eax, [ecx]
+  .text:1000F0D6                 call    dword ptr [eax+5Ch]
+  .text:1000F0D9                 test    eax, eax
+  .text:1000F0DB                 jz      short loc_1000F112
+  .text:1000F0DD                 nop     dword ptr [eax]
+  .text:1000F0E0                 ; MaxCount
+  .text:1000F0E0                 push    0Eh; MaxCount
+  .text:1000F0E2                 lea     eax, [esp+8B0h+Str1]
+  .text:1000F0E6                 push    offset aSentencelist; "SENTENCELIST {"
+  .text:1000F0EB                 ; Str1
+  .text:1000F0EB                 push    eax; Str1
+  .text:1000F0EC                 call    _strncmp
+  .text:1000F0F1                 add     esp, 0Ch
+  .text:1000F0F4                 test    eax, eax
+  .text:1000F0F6                 jz      short loc_1000F112
+  .text:1000F0F8                 mov     ecx, dword_10647588
+  .text:1000F0FE                 lea     edx, [esp+8ACh+Str1]
+  .text:1000F102                 push    edi
+  .text:1000F103                 push    104h
+  .text:1000F108                 push    edx
+  .text:1000F109                 mov     eax, [ecx]
+  .text:1000F10B                 call    dword ptr [eax+5Ch]
+  .text:1000F10E                 test    eax, eax
+  .text:1000F110                 jnz     short loc_1000F0E0
+  .text:1000F112                 mov     ecx, dword_10647588
+  .text:1000F118                 lea     edx, [esp+8ACh+Str1]
+  .text:1000F11C                 push    edi
+  .text:1000F11D                 push    104h
+  .text:1000F122                 push    edx
+  .text:1000F123                 mov     eax, [ecx]
+  .text:1000F125                 call    dword ptr [eax+5Ch]
+  .text:1000F128                 test    eax, eax
+  .text:1000F12A                 jz      short loc_1000F1A0
+  .text:1000F12C                 nop     dword ptr [eax+00h]
+  .text:1000F130                 cmp     dword ptr [ebx+11B09Ch], 800h; (structmember, struct=CClient_SoundEngine, member=m_iSentenceCount) sentence-table capacity guard: stop reading SENTENCELIST once 2048 sentences are loaded
+  .text:1000F13A                 jge     short loc_1000F1A0
+  .text:1000F13C                 ; MaxCount
+  .text:1000F13C                 push    1; MaxCount
+  .text:1000F13E                 lea     eax, [esp+8B8h+var_898]
+  .text:1000F142                 push    offset asc_101208E0; "}"
+  .text:1000F147                 ; Str1
+  .text:1000F147                 push    eax; Str1
+  .text:1000F148                 call    _strncmp
+  .text:1000F14D                 add     esp, 0Ch
+  .text:1000F150                 test    eax, eax
+  .text:1000F152                 jz      short loc_1000F1A0
+  .text:1000F154                 lea     ecx, [esp+8B4h+var_898]
+  .text:1000F158                 lea     edx, [ecx+1]
+  .text:1000F15B                 nop     dword ptr [eax+eax+00h]
+  .text:1000F160                 mov     al, [ecx]
+  .text:1000F162                 inc     ecx
+  .text:1000F163                 test    al, al
+  .text:1000F165                 jnz     short loc_1000F160
+  .text:1000F167                 sub     ecx, edx
+  .text:1000F169                 dec     ecx
+  .text:1000F16A                 cmp     ecx, 104h
+  .text:1000F170                 jnb     loc_1000F44F
+  .text:1000F176                 mov     [esp+ecx+8B4h+var_898], al
+  .text:1000F17A                 lea     eax, [esp+8B4h+var_898]
+  .text:1000F17E                 push    eax
+  .text:1000F17F                 mov     ecx, ebx
+  .text:1000F181                 call    sub_1000D1C0; CClient_SoundEngine::ParseSentenceLine(this, line)
+  .text:1000F186                 mov     ecx, dword_10647588
+  .text:1000F18C                 lea     edx, [esp+8B4h+var_898]
+  .text:1000F190                 push    edi
+  .text:1000F191                 push    104h
+  .text:1000F196                 push    edx
+  .text:1000F197                 mov     eax, [ecx]
+  .text:1000F199                 call    dword ptr [eax+5Ch]
+  .text:1000F19C                 test    eax, eax
+  .text:1000F19E                 jnz     short loc_1000F130
+  .text:1000F1A0                 mov     ecx, dword_10647588
+  .text:1000F1A6                 lea     edx, [esp+8B4h+var_898]
+  .text:1000F1AA                 push    edi
+  .text:1000F1AB                 push    104h
+  .text:1000F1B0                 push    edx
+  .text:1000F1B1                 mov     eax, [ecx]
+  .text:1000F1B3                 call    dword ptr [eax+5Ch]
+  .text:1000F1B6                 test    eax, eax
+  .text:1000F1B8                 jz      short loc_1000F1F2
+  .text:1000F1BA                 nop     word ptr [eax+eax+00h]
+  .text:1000F1C0                 ; MaxCount
+  .text:1000F1C0                 push    0Fh; MaxCount
+  .text:1000F1C2                 lea     eax, [esp+8B0h+Str1]
+  .text:1000F1C6                 push    offset aCustommaterial; "CUSTOMMATERIALS {"
+  .text:1000F1CB                 ; Str1
+  .text:1000F1CB                 push    eax; Str1
+  .text:1000F1CC                 call    _strncmp
+  .text:1000F1D1                 add     esp, 0Ch
+  .text:1000F1D4                 test    eax, eax
+  .text:1000F1D6                 jz      short loc_1000F1F2
+  .text:1000F1D8                 mov     ecx, dword_10647588
+  .text:1000F1DE                 lea     edx, [esp+8ACh+Str1]
+  .text:1000F1E2                 push    edi
+  .text:1000F1E3                 push    104h
+  .text:1000F1E8                 push    edx
+  .text:1000F1E9                 mov     eax, [ecx]
+  .text:1000F1EB                 call    dword ptr [eax+5Ch]
+  .text:1000F1EE                 test    eax, eax
+  .text:1000F1F0                 jnz     short loc_1000F1C0
+  .text:1000F1F2                 ; Size
+  .text:1000F1F2                 push    104h; Size
+  .text:1000F1F7                 lea     eax, [esp+8B0h+var_420]
+  .text:1000F1FE                 ; Val
+  .text:1000F1FE                 push    0; Val
+  .text:1000F200                 ; void *
+  .text:1000F200                 push    eax; void *
+  .text:1000F201                 call    _memset
+  .text:1000F206                 mov     ecx, dword_10647588
+  .text:1000F20C                 lea     edx, [esp+8B8h+Str1]
+  .text:1000F210                 add     esp, 0Ch
+  .text:1000F213                 mov     eax, [ecx]
+  .text:1000F215                 push    edi
+  .text:1000F216                 push    104h
+  .text:1000F21B                 push    edx
+  .text:1000F21C                 call    dword ptr [eax+5Ch]
+  .text:1000F21F                 test    eax, eax
+  .text:1000F221                 jz      loc_1000F2C8
+  .text:1000F227                 nop     word ptr [eax+eax+00000000h]
+  .text:1000F230                 cmp     dword ptr [ebx+11B0A0h], 1000h
+  .text:1000F23A                 jge     loc_1000F2C8
+  .text:1000F240                 ; MaxCount
+  .text:1000F240                 push    1; MaxCount
+  .text:1000F242                 lea     eax, [esp+8B8h+var_898]
+  .text:1000F246                 push    offset asc_101208E0; "}"
+  .text:1000F24B                 ; Str1
+  .text:1000F24B                 push    eax; Str1
+  .text:1000F24C                 call    _strncmp
+  .text:1000F251                 add     esp, 0Ch
+  .text:1000F254                 test    eax, eax
+  .text:1000F256                 jz      short loc_1000F2C8
+  .text:1000F258                 lea     ecx, [esp+8B4h+var_898]
+  .text:1000F25C                 lea     edx, [ecx+1]
+  .text:1000F25F                 nop
+  .text:1000F260                 mov     al, [ecx]
+  .text:1000F262                 inc     ecx
+  .text:1000F263                 test    al, al
+  .text:1000F265                 jnz     short loc_1000F260
+  .text:1000F267                 sub     ecx, edx
+  .text:1000F269                 jz      short loc_1000F27F
+  .text:1000F26B                 cmp     byte ptr [esp+ecx+8B4h+var_89C+3], 0Ah
+  .text:1000F270                 jnz     short loc_1000F277
+  .text:1000F272                 sub     ecx, 1
+  .text:1000F275                 jz      short loc_1000F27F
+  .text:1000F277                 cmp     byte ptr [esp+ecx+8B4h+var_89C+3], 0Dh
+  .text:1000F27C                 jnz     short loc_1000F27F
+  .text:1000F27E                 dec     ecx
+  .text:1000F27F                 cmp     ecx, 104h
+  .text:1000F285                 jnb     loc_1000F44F
+  .text:1000F28B                 ; Size
+  .text:1000F28B                 push    104h; Size
+  .text:1000F290                 lea     eax, [esp+8B8h+var_898]
+  .text:1000F294                 mov     [esp+ecx+8B8h+var_898], 0
+  .text:1000F299                 ; Source
+  .text:1000F299                 push    eax; Source
+  .text:1000F29A                 lea     eax, [esp+8BCh+Destination]
+  .text:1000F2A1                 ; Destination
+  .text:1000F2A1                 push    eax; Destination
+  .text:1000F2A2                 call    sub_10084C20
+  .text:1000F2A7                 mov     ecx, dword_10647588
+  .text:1000F2AD                 lea     edx, [esp+8C0h+var_898]
+  .text:1000F2B1                 add     esp, 0Ch
+  .text:1000F2B4                 mov     eax, [ecx]
+  .text:1000F2B6                 push    edi
+  .text:1000F2B7                 push    104h
+  .text:1000F2BC                 push    edx
+  .text:1000F2BD                 call    dword ptr [eax+5Ch]
+  .text:1000F2C0                 test    eax, eax
+  .text:1000F2C2                 jnz     loc_1000F230
+  .text:1000F2C8                 ; Size
+  .text:1000F2C8                 push    104h; Size
+  .text:1000F2CD                 lea     eax, [esp+8B8h+var_898]
+  .text:1000F2D1                 ; Val
+  .text:1000F2D1                 push    0; Val
+  .text:1000F2D3                 ; void *
+  .text:1000F2D3                 push    eax; void *
+  .text:1000F2D4                 call    _memset
+  .text:1000F2D9                 mov     ecx, dword_10647588
+  .text:1000F2DF                 add     esp, 0Ch
+  .text:1000F2E2                 mov     eax, [ecx]
+  .text:1000F2E4                 push    edi
+  .text:1000F2E5                 call    dword ptr [eax+2Ch]
+  .text:1000F2E8                 lea     eax, [esp+8B8h+var_42C]
+  .text:1000F2EF                 ; int
+  .text:1000F2EF                 push    eax; int
+  .text:1000F2F0                 ; String2
+  .text:1000F2F0                 lea     ecx, [ebx+2008h]; String2
+  .text:1000F2F6                 call    sub_1007A1D0
+  .text:1000F2FB                 cmp     [esp+8B8h+var_8A8], 0
+  .text:1000F300                 jz      short loc_1000F326
+  .text:1000F302                 lea     eax, [esp+8B8h+ArgList]
+  .text:1000F309                 ; ArgList
+  .text:1000F309                 push    eax; ArgList
+  .text:1000F30A                 push    offset aDeletingRedund; "Deleting redundant sound list file '%s'"...
+  .text:1000F30F                 ; int
+  .text:1000F30F                 push    2; int
+  .text:1000F311                 call    sub_1002ACB0
+  .text:1000F316                 lea     eax, [esp+8C4h+FileName]
+  .text:1000F31D                 ; FileName
+  .text:1000F31D                 push    eax; FileName
+  .text:1000F31E                 call    _remove
+  .text:1000F323                 add     esp, 10h
+  .text:1000F326                 xor     ecx, ecx
+  .text:1000F328                 xor     eax, eax
+  .text:1000F32A                 mov     [esp+8B8h+var_8A8], ecx
+  .text:1000F32E                 mov     [esp+8B8h+var_8A4], eax
+  .text:1000F332                 test    ebp, ebp
+  .text:1000F334                 jle     short loc_1000F39F
+  .text:1000F336                 lea     edi, [ebx+1300Ch]
+  .text:1000F33C                 lea     esi, [ebx+1700Ch]
+  .text:1000F342                 push    0
+  .text:1000F344                 push    esi
+  .text:1000F345                 mov     ecx, ebx
+  .text:1000F347                 call    sub_100101A0
+  .text:1000F34C                 mov     [esp+8B8h+var_8A0], eax
+  .text:1000F350                 test    eax, eax
+  .text:1000F352                 jz      short loc_1000F384
+  .text:1000F354                 inc     [esp+8B8h+var_8A8]
+  .text:1000F358                 ; Size
+  .text:1000F358                 push    108h; Size
+  .text:1000F35D                 call    ??2@YAPAXI@Z; operator new(uint)
+  .text:1000F362                 mov     ecx, [esp+8BCh+var_8A0]
+  .text:1000F366                 ; Size
+  .text:1000F366                 push    104h; Size
+  .text:1000F36B                 mov     [edi], eax
+  .text:1000F36D                 mov     [eax+104h], ecx
+  .text:1000F373                 ; Source
+  .text:1000F373                 push    esi; Source
+  .text:1000F374                 ; Destination
+  .text:1000F374                 push    dword ptr [edi]; Destination
+  .text:1000F376                 call    sub_10084C20
+  .text:1000F37B                 mov     eax, [esp+8C8h+var_8A4]
+  .text:1000F37F                 add     esp, 10h
+  .text:1000F382                 jmp     short loc_1000F38D
+  .text:1000F384                 mov     eax, [esp+8B8h+var_8A4]
+  .text:1000F388                 inc     eax
+  .text:1000F389                 mov     [esp+8B8h+var_8A4], eax
+  .text:1000F38D                 add     edi, 4
+  .text:1000F390                 add     esi, 104h
+  .text:1000F396                 sub     ebp, 1
+  .text:1000F399                 jnz     short loc_1000F342
+  .text:1000F39B                 mov     ecx, [esp+8B8h+var_8A8]
+  .text:1000F39F                 push    eax
+  .text:1000F3A0                 ; ArgList
+  .text:1000F3A0                 push    ecx; ArgList
+  .text:1000F3A1                 push    offset aSoundEngineFin; "[Sound Engine] Finished loading sound l"...
+  .text:1000F3A6                 ; int
+  .text:1000F3A6                 push    1; int
+  .text:1000F3A8                 call    sub_1002ACB0
+  .text:1000F3AD                 add     esp, 10h
+  .text:1000F3B0                 mov     byte ptr [ebx+11B011h], 1
+  .text:1000F3B7                 mov     ecx, ebx
+  .text:1000F3B9                 push    0
+  .text:1000F3BB                 call    sub_1000CA80
+  .text:1000F3C0                 pop     esi
+  .text:1000F3C1                 pop     edi
+  .text:1000F3C2                 pop     ebp
+  .text:1000F3C3                 mov     al, 1
+  .text:1000F3C5                 pop     ebx
+  .text:1000F3C6                 mov     ecx, [esp+8A8h+var_4]
+  .text:1000F3CD                 ; StackCookie
+  .text:1000F3CD                 xor     ecx, esp; StackCookie
+  .text:1000F3CF                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1000F3D4                 add     esp, 8A8h
+  .text:1000F3DA                 retn
+  .text:1000F3DB                 lea     eax, [esp+8B4h+ArgList]
+  .text:1000F3E2                 ; ArgList
+  .text:1000F3E2                 push    eax; ArgList
+  .text:1000F3E3                 push    offset aSoundListFileA; "Sound list file at '%s' not found.\n"
+  .text:1000F3E8                 ; int
+  .text:1000F3E8                 push    1; int
+  .text:1000F3EA                 call    sub_1002ACB0
+  .text:1000F3EF                 lea     eax, [esp+8C0h+var_578]
+  .text:1000F3F6                 push    eax
+  .text:1000F3F7                 call    dword_101F89E8
+  .text:1000F3FD                 push    offset aRetry; "retry"
+  .text:1000F402                 call    dword_101F89E8
+  .text:1000F408                 add     esp, 14h
+  .text:1000F40B                 call    gEngfuncs_GetClientTime
+  .text:1000F411                 fadd    ds:dword_10120CB8
+  .text:1000F417                 pop     edi
+  .text:1000F418                 pop     ebp
+  .text:1000F419                 xor     al, al
+  .text:1000F41B                 fstp    dword ptr [ebx+11B014h]
+  .text:1000F421                 pop     ebx
+  .text:1000F422                 mov     ecx, [esp+8A8h+var_4]
+  .text:1000F429                 ; StackCookie
+  .text:1000F429                 xor     ecx, esp; StackCookie
+  .text:1000F42B                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1000F430                 add     esp, 8A8h
+  .text:1000F436                 retn
+  .text:1000F437                 mov     ecx, [esp+8ACh+var_4]
+  .text:1000F43E                 xor     al, al
+  .text:1000F440                 pop     ebx
+  .text:1000F441                 ; StackCookie
+  .text:1000F441                 xor     ecx, esp; StackCookie
+  .text:1000F443                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1000F448                 add     esp, 8A8h
+  .text:1000F44E                 retn
+  .text:1000F44F                 call    ___report_rangecheckfailure
+procedure: |-
+  char __usercall CClient_SoundEngine_LoadSoundList@<al>(int a1@<ecx>, char *a2@<edi>, int a3@<esi>)
+  {
+    int v4; // ebp
+    char *v5; // eax
+    char v6; // al
+    int v7; // edi
+    char *v8; // eax
+    int v9; // eax
+    const char *v11; // esi
+    char *v12; // esi
+    char *v13; // eax
+    char v14; // al
+    unsigned int v15; // ecx
+    unsigned int v16; // kr00_4
+    unsigned int v17; // ecx
+    char v18; // cl
+    char **v19; // edi
+    char *v20; // esi
+    char *v21; // eax
+    int v22; // [esp+C0h] [ebp-8B8h]
+    int v23; // [esp+C4h] [ebp-8B4h]
+    char *v24; // [esp+C4h] [ebp-8B4h]
+    int v26; // [esp+C8h] [ebp-8B0h]
+    float ClientTime; // [esp+D0h] [ebp-8A8h]
+    char v28; // [esp+D0h] [ebp-8A8h]
+    int v29; // [esp+D4h] [ebp-8A4h]
+    int v30; // [esp+D8h] [ebp-8A0h]
+    int v31; // [esp+DCh] [ebp-89Ch]
+    char v32[264]; // [esp+E0h] [ebp-898h] BYREF
+    char v33[152]; // [esp+1E8h] [ebp-790h] BYREF
+    char Buffer[128]; // [esp+284h] [ebp-6F4h] BYREF
+    char Source[128]; // [esp+304h] [ebp-674h] BYREF
+    char v36[132]; // [esp+384h] [ebp-5F4h] BYREF
+    char v37[196]; // [esp+408h] [ebp-570h] BYREF
+    _BYTE v38[8]; // [esp+4CCh] [ebp-4ACh] BYREF
+    int v39; // [esp+54Ch] [ebp-42Ch] BYREF
+    char Destination[684]; // [esp+550h] [ebp-428h] BYREF
+    char v41[376]; // [esp+7FCh] [ebp-17Ch] BYREF
+  
+    if ( !*(_BYTE *)(a1 + 1159186) )
+      return 0;
+    ClientTime = gEngfuncs_GetClientTime();
+    if ( *(float *)(a1 + 1159188) > ClientTime )
+      return 0;
+    sub_1000CDE0(a1);
+    v4 = 0;
+    v5 = (char *)dword_101F8AC0(v38);
+    sub_1005CD30(v5, a2);
+    v6 = dword_101F8AB4(v22);
+    sub_10010800(v41, "%s/%s", v6);
+    sub_10010920(v33, "%s/%s.txt", (char)"maps/soundcache");
+    sub_10010980(v37, "dlfile %s\n", (char)v33);
+    (*(void (__thiscall **)(int, const char *, const char *))(*(_DWORD *)dword_10647588 + 28))(
+      dword_10647588,
+      "maps/soundcache",
+      "GAME");
+    dword_101F89E8(&v36[124]);
+    v7 = (*(int (__thiscall **)(int, char *, const char *, _DWORD))(*(_DWORD *)dword_10647588 + 40))(
+           dword_10647588,
+           &v32[256],
+           "rb",
+           0);
+    if ( v7 )
+    {
+      (*(void (__thiscall **)(int, char *, char *, int, int))(*(_DWORD *)dword_10647588 + 128))(
+        dword_10647588,
+        &v32[256],
+        &Destination[256],
+        420,
+        v23);
+      memset(v32, 0, 0x104u);
+      memset(Source, 0, sizeof(Source));
+      v8 = (char *)dword_101F8AC0(Source);
+      sub_1005CD30(v8, v24);
+      Source[127] = 0;
+      memset(Buffer, 0, sizeof(Buffer));
+      (*(void (__thiscall **)(int, char *, int, int))(*(_DWORD *)dword_10647588 + 92))(dword_10647588, Buffer, 128, v7);
+      sub_10010E10(Buffer, "%s\n", (char)Buffer);
+      v9 = strcmp(Buffer, Source);
+      if ( v9 )
+        v9 = v9 < 0 ? -1 : 1;
+      if ( v9 )
+      {
+        (*(void (__thiscall **)(int))(*(_DWORD *)dword_10647588 + 44))(dword_10647588);
+        sub_1002ACB0(
+          1,
+          "Deleting outdated sound list file '%s'. Scanned map name '%s' does not match current map '%s'.\n",
+          (char)&v32[256]);
+        remove(&Destination[256]);
+        sub_1002ACB0(1, "Reconnecting to server...", (char)&v32[256]);
+        dword_101F89E8(&v36[124]);
+        dword_101F89E8("retry");
+        *(float *)(a1 + 1159188) = gEngfuncs_GetClientTime() + 3.0;
+        return 0;
+      }
+      else
+      {
+        sub_10084C20((char *)(a1 + 1159196), Source, 0x80u);
+        v11 = (const char *)sub_1007FAA0();
+        memset(v36, 0, 0x80u);
+        (*(void (__thiscall **)(int, char *, int, int, int, int))(*(_DWORD *)dword_10647588 + 92))(
+          dword_10647588,
+          v36,
+          128,
+          v7,
+          a3,
+          v26);
+        sub_10010E10(&v36[8], "%s\n", (char)&v36[8]);
+        HIWORD(v31) = (unsigned int)_stricmp(v11, &v36[8]) >> 16;
+        if ( (*(int (__thiscall **)(int, char *, int, int))(*(_DWORD *)dword_10647588 + 92))(
+               dword_10647588,
+               &v32[8],
+               260,
+               v7) )
+        {
+          while ( strncmp(&v32[8], "SOUNDLIST {", 0xBu)
+               && (*(int (__thiscall **)(int, char *, int, int))(*(_DWORD *)dword_10647588 + 92))(
+                    dword_10647588,
+                    &v32[8],
+                    260,
+                    v7) )
+            ;
+        }
+        if ( (*(int (__thiscall **)(int, char *, int, int))(*(_DWORD *)dword_10647588 + 92))(
+               dword_10647588,
+               &v32[8],
+               260,
+               v7) )
+        {
+          v12 = (char *)(a1 + 94220);
+          do
+          {
+            if ( v4 >= 4096 || !strncmp(&v32[8], "}", 1u) )
+              break;
+            v13 = (char *)sub_10010730(&v32[8]);
+            if ( v13 )
+            {
+              sub_10084C20(v12, v13, 0x104u);
+              ++v4;
+              v12 += 260;
+            }
+          }
+          while ( (*(int (__thiscall **)(int, char *, int, int))(*(_DWORD *)dword_10647588 + 92))(
+                    dword_10647588,
+                    &v32[8],
+                    260,
+                    v7) );
+        }
+        if ( (*(int (__thiscall **)(int, char *, int, int))(*(_DWORD *)dword_10647588 + 92))(
+               dword_10647588,
+               &v32[8],
+               260,
+               v7) )
+        {
+          while ( strncmp(&v32[8], "SENTENCELIST {", 0xEu)
+               && (*(int (__thiscall **)(int, char *, int, int))(*(_DWORD *)dword_10647588 + 92))(
+                    dword_10647588,
+                    &v32[8],
+                    260,
+                    v7) )
+            ;
+        }
+        if ( (*(int (__thiscall **)(int, char *))(*(_DWORD *)dword_10647588 + 92))(dword_10647588, &v32[8]) )
+        {
+          do
+          {
+            // (structmember, struct=CClient_SoundEngine, member=m_iSentenceCount) a1 + 1159324 == this + 0x11B09C
+            if ( *(int *)(a1 + 1159324) >= 2048 || !strncmp(v32, "}", 1u) )
+              break;
+            v15 = &v32[strlen(v32)] - &v32[1];
+            if ( v15 >= 0x104 )
+  LABEL_51:
+              __report_rangecheckfailure();
+            v32[v15] = v14;
+            sub_1000D1C0(v32); // CClient_SoundEngine::ParseSentenceLine(this, line)
+          }
+          while ( (*(int (__thiscall **)(int, char *, int, int))(*(_DWORD *)dword_10647588 + 92))(
+                    dword_10647588,
+                    v32,
+                    260,
+                    v7) );
+        }
+        if ( (*(int (__thiscall **)(int, char *, int, int, int, int))(*(_DWORD *)dword_10647588 + 92))(
+               dword_10647588,
+               v32,
+               260,
+               v7,
+               260,
+               v7) )
+        {
+          while ( strncmp(&v32[8], "CUSTOMMATERIALS {", 0xFu)
+               && (*(int (__thiscall **)(int, char *, int, int))(*(_DWORD *)dword_10647588 + 92))(
+                    dword_10647588,
+                    &v32[8],
+                    260,
+                    v7) )
+            ;
+        }
+        memset(&Destination[8], 0, 0x104u);
+        if ( (*(int (__thiscall **)(int, char *))(*(_DWORD *)dword_10647588 + 92))(dword_10647588, &v32[8]) )
+        {
+          while ( *(int *)(a1 + 1159328) < 4096 && strncmp(v32, "}", 1u) )
+          {
+            v16 = strlen(v32);
+            v17 = v16;
+            if ( v16 )
+            {
+              if ( v32[v16 - 1] != 10 || (v17 = v16 - 1, v16 != 1) )
+              {
+                if ( v32[v17 - 1] == 13 )
+                  --v17;
+              }
+            }
+            if ( v17 >= 0x104 )
+              goto LABEL_51;
+            v32[v17] = 0;
+            sub_10084C20(Destination, v32, 0x104u);
+            if ( !(*(int (__thiscall **)(int, char *, int, int))(*(_DWORD *)dword_10647588 + 92))(
+                    dword_10647588,
+                    v32,
+                    260,
+                    v7) )
+              break;
+          }
+        }
+        memset(v32, 0, 0x104u);
+        (*(void (__thiscall **)(int, int))(*(_DWORD *)dword_10647588 + 44))(dword_10647588, v7);
+        sub_1007A1D0((char *)(a1 + 8200), (int)&v39);
+        if ( ClientTime != 0.0 )
+        {
+          sub_1002ACB0(2, "Deleting redundant sound list file '%s'.\n", (char)&v32[256]);
+          remove(&Destination[256]);
+        }
+        v18 = 0;
+        v28 = 0;
+        v29 = 0;
+        if ( v4 > 0 )
+        {
+          v19 = (char **)(a1 + 77836);
+          v20 = (char *)(a1 + 94220);
+          do
+          {
+            v30 = sub_100101A0(a1, v20, 0);
+            if ( v30 )
+            {
+              ++v28;
+              v21 = (char *)operator new(0x108u);
+              *v19 = v21;
+              *((_DWORD *)v21 + 65) = v30;
+              sub_10084C20(*v19, v20, 0x104u);
+            }
+            else
+            {
+              ++v29;
+            }
+            ++v19;
+            v20 += 260;
+            --v4;
+          }
+          while ( v4 );
+          v18 = v28;
+        }
+        sub_1002ACB0(1, "[Sound Engine] Finished loading sound list: %d loaded, %d failed.\n", v18);
+        *(_BYTE *)(a1 + 1159185) = 1;
+        sub_1000CA80(a1, 0);
+        return 1;
+      }
+    }
+    else
+    {
+      sub_1002ACB0(1, "Sound list file at '%s' not found.\n", (char)&v32[256]);
+      dword_101F89E8(&v36[124]);
+      dword_101F89E8("retry");
+      *(float *)(a1 + 1159188) = gEngfuncs_GetClientTime() + 3.0;
+      return 0;
+    }
+  }
