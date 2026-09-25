@@ -2,11 +2,12 @@
 
 from pathlib import Path
 
+import ida_preprocessor_scripts._x86_vcall_flow as x86_vcall_flow
 from ida_analyze_util import _inspect_function_via_mcp, _load_yaml_mapping, _output_for_symbol, write_func_yaml
 from ida_preprocessor_scripts._engine_private_globals_common import run_walk
 
 
-FLOW_SOURCE = Path(__file__).with_name("_x86_vcall_flow.py").read_text(encoding="utf-8")
+FLOW_SOURCE = Path(x86_vcall_flow.__file__).read_text(encoding="utf-8")
 
 IDA_FLOW = r"""
 import ida_frame, ida_gdl
