@@ -45,6 +45,13 @@ modules:
           - EngineSurface_vtable.{platform}.yaml
         expected_output:
           - EngineSurface_drawFlushText.{platform}.yaml
+      - name: find-EngineSurface_drawFlushText-private-globals
+        expected_input:
+          - EngineSurface_drawFlushText.{platform}.yaml
+        expected_output:
+          - g_iVertexBufferEntriesUsed.{platform}.yaml
+          - g_VertexBuffer.{platform}.yaml
+          - EngineSurface__drawTextColor.{platform}.yaml
       - name: find-R_SetupGL-svengine-decompiles
         expected_input:
           - R_SetupGL.{platform}.yaml
@@ -1245,6 +1252,16 @@ modules:
         category: vfunc
       - name: EngineSurface_drawFlushText
         category: vfunc
+      - name: g_iVertexBufferEntriesUsed
+        category: gv
+      - name: g_VertexBuffer
+        category: gv
+      - name: EngineSurface
+        category: struct
+      - name: EngineSurface__drawTextColor
+        category: structmember
+        struct: EngineSurface
+        member: _drawTextColor
       - name: Draw_TextureMode_f
         category: func
       - name: gl_filter_min
