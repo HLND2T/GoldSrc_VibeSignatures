@@ -5008,14 +5008,14 @@ class PreprocessFuncSigViaMcpTests(unittest.IsolatedAsyncioTestCase):
 
 
 class GlobalSemanticAnchorTests(unittest.IsolatedAsyncioTestCase):
-    async def _finder_spec(self, finder, symbol):
+    async def _finder_spec(self, finder, symbol, platform="linux"):
         namespace = runpy.run_path(str(Path(__file__).resolve().parents[1] / "ida_preprocessor_scripts" / finder))
         common = AsyncMock(return_value=True)
         with patch.dict(namespace["preprocess_skill"].__globals__, preprocess_common_skill=common):
-            await namespace["preprocess_skill"](None, "test", [], None, Path("engine"), "linux", 0)
+            await namespace["preprocess_skill"](None, "test", [], None, Path("engine"), platform, 0)
         return next(spec for spec in common.call_args.kwargs["llm_decompile_specs"] if spec["symbol_name"] == symbol)
 
-    async def _select(self, spec, symbol, entries, details, start):
+    async def _select(self, spec, symbol, entries, details, start, platform="linux"):
         with (
             patch(
                 "ida_analyze_util._inspect_llm_instruction", new=AsyncMock(side_effect=lambda session, ea: details[ea])
@@ -5032,11 +5032,45 @@ class GlobalSemanticAnchorTests(unittest.IsolatedAsyncioTestCase):
                 spec=spec,
                 llm_config=None,
                 new_binary_dir=Path("engine"),
-                platform="linux",
+                platform=platform,
                 image_base=0,
                 desired_fields=[],
                 llm_result={"found_gv": entries},
                 target_ranges=[(start, start + 0x200)],
+            )
+
+    async def test_viewentity_accepts_absolute_symbol_stores_but_rejects_register_copies(self):
+        spec = await self._finder_spec("find-CL_Parse_SetView-decompiles.py", "cl_viewentity", "windows")
+        for destination in ("dword_9000", "cl_viewentity", "ds:dword_9000", "dword ptr [9000h]"):
+            with self.subTest(destination=destination):
+                detail = {
+                    "func_start": "0x1000",
+                    "line": f"mov {destination}, eax",
+                    "size": 5,
+                    "operand_offsets": [1, 0],
+                    "operand_targets": ["0x9000"],
+                    "operand_pic": [False, False],
+                    "operand_dwords": ["0x9000", None],
+                }
+                result = await self._select(
+                    spec,
+                    "cl_viewentity",
+                    [{"gv_name": "cl_viewentity", "insn_va": "0x1005"}],
+                    {"0x1005": detail},
+                    0x1000,
+                    "windows",
+                )
+                self.assertIsNotNone(result)
+                self.assertEqual("0x9000", result["gv_va"])
+                self.assertEqual(5, result["gv_inst_offset"])
+        for register in ("eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"):
+            self.assertFalse(
+                _llm_entry_instruction_is_valid(
+                    {"insn_va": "0x1005"},
+                    {"func_start": "0x1000", "line": f"mov {register}, eax"},
+                    [(0x1000, 0x1100)],
+                    spec["instruction_rules"],
+                )
             )
 
     async def test_viewentity_rejects_base_load_and_uses_effective_store_in_either_order(self):

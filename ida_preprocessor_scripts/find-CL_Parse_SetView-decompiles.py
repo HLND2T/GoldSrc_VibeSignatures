@@ -11,7 +11,12 @@ LLM_DECOMPILE = [
         "expected_result_sections": ["found_gv"],
         "instruction_rules": [
             {
-                "regex": r"(?i)mov\s+(?:dword ptr\s+)?(?:ds:[^,]+|[^,]*\[[^\]]+\]),\s*eax",
+                # IDA may omit DS for absolute memory symbols on Windows.
+                # A bare register remains a copy, not the required field store.
+                "regex": (
+                    r"(?i)mov\s+(?:dword ptr\s+)?(?:ds:[^,]+|[^,]*\[[^\]]+\]|"
+                    r"(?!e(?:ax|bx|cx|dx|si|di|bp|sp)\b)[a-z_?$@][\w?$@.]*),\s*eax"
+                ),
                 "text": (
                     "Select the memory store of MSG_ReadShort()'s EAX result to cl.viewentity. "
                     "Reject register loads of the containing client-state/PIC/GOT base. "

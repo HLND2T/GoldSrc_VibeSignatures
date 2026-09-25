@@ -50,3 +50,11 @@ Concrete anchor shapes from current artifacts (evidence only): hl-10210 Windows 
 - Correct approach: the finder requires a memory `mov` of the `MSG_ReadShort()` EAX result. The existing instruction rule is enforced both during LLM validation/retry and during local candidate selection; the shared resolver computes the store's full effective address.
 - Verification: `GlobalSemanticAnchorTests` exercises both candidate orders, relocated synthetic addresses, varied field offsets, and a base-load-only rejection. Real isolated svencoop-8948 Linux analysis rebuilt the store at `0x15043a`: GOT base `0x15ee8a0` plus displacement `0x600ce8` gives `0x1bef588`; the artifact is byte-identical to the committed Git blob.
 - Scope: CL_Parse_SetView's x86 EAX-return store; no absolute address or fixed instruction offset is used by the finder.
+
+### Absolute memory spelling in IDA (PR #249 follow-up)
+
+- Trigger: legacy HL Windows emits `mov dword_<address>, eax` without `ds:` or brackets; a correct LLM candidate fails `instruction_rule_mismatch` on every retry.
+- Root cause: the store rule originally equated memory operands with explicit segment/bracket syntax. CI failed in preprocessing before artifact comparison; missing fallback skill was a downstream symptom.
+- Correct approach: accept bare IDA symbol operands as well as explicit memory forms, while excluding bare x86 general-purpose registers and retaining the EAX-source requirement and decoded global-address validation.
+- Verification: regression exercises named/unnamed absolute symbols, explicit DS, brackets, and rejection of all eight register-copy destinations, alongside the Linux multi-candidate tests.
+- Scope: x86 CL_Parse_SetView store selection on Windows and Linux; no absolute symbol name or binary address is required by the rule.
