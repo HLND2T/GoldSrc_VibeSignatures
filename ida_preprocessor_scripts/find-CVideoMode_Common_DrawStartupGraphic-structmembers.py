@@ -20,6 +20,7 @@ from ida_analyze_util import (
     _find_unique_bytes,
     _load_yaml_mapping,
     _output_for_symbol,
+    _resolve_struct_member_entry_names,
     parse_mcp_result,
     preprocess_common_skill,
     write_struct_offset_yaml,
@@ -257,6 +258,27 @@ def _remove_outputs(expected_outputs, new_binary_dir):
             path.unlink()
 
 
+def _normalize_output_identities(expected_outputs):
+    updates = []
+    for symbol_name, member_name in MEMBER_BY_SYMBOL.items():
+        output = _output_for_symbol(expected_outputs, symbol_name)
+        payload = _load_yaml_mapping(output)
+        if not payload:
+            return False
+        resolved = _resolve_struct_member_entry_names(
+            STRUCT, member_name, payload.get("struct_name"), payload.get("member_name")
+        )
+        if resolved is None:
+            return False
+        if payload["member_name"] != member_name:
+            # Symbol IDs flatten nested member dots; artifacts retain the member path.
+            payload["member_name"] = member_name
+            updates.append((output, payload))
+    for output, payload in updates:
+        write_struct_offset_yaml(output, payload)
+    return True
+
+
 def _validate_outputs(expected_outputs, debug=False):
     payloads = {}
     for symbol_name, member_name in MEMBER_BY_SYMBOL.items():
@@ -360,7 +382,7 @@ async def preprocess_skill(
             },
         )
 
-    if not _validate_outputs(expected_outputs, debug=debug):
+    if not _normalize_output_identities(expected_outputs) or not _validate_outputs(expected_outputs, debug=debug):
         _remove_outputs(expected_outputs, new_binary_dir)
         return False
     return True
