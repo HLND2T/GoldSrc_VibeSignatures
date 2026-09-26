@@ -28,7 +28,7 @@ tags:
 ## Predecessors
 
 - `ClientPortalManager_RenderPortals` (produced by `find-ClientPortalManager_RenderPortals`)
-- `ClientPortalManager_EnableClipPlane` (produced by `find-ClientPortalManager_EnableClipPlane`)
+- `ClientPortal_CalculateClipPlane` (produced by `find-ClientPortal_CalculateClipPlane`)
 - `ClientPortal_Constructor` (produced by `find-ClientPortal_Constructor`)
 
 The clip-plane YAML supplies the `call` site; the RenderPortals YAML supplies the caller body.
@@ -65,7 +65,7 @@ The clip-plane YAML supplies the `call` site; the RenderPortals YAML supplies th
 - On Linux the observed displacement is 72, but it is **node-relative**: the retained register holds
   a list node and `Source* = node + 8` (link header). The source-relative mode offset remains 64.
   Neither the node offset nor the link-header size may be emitted as the scalar value.
-- The `ClientPortal` passed to EnableClipPlane is a *different* object from the `ClientPortalSource`
+- The `ClientPortal` passed to ClientPortal_CalculateClipPlane is a *different* object from the `ClientPortalSource`
   whose mode is read; the argument-slot pairing (mode vs. origin) is what keeps the two apart.
 - Everything depends on locating the `call clip_ea` site inside RenderPortals. If the clip-plane
   artifact is wrong, this walk either finds no call site or pairs the wrong arguments and fails

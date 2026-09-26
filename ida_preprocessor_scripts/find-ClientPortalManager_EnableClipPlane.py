@@ -1,22 +1,15 @@
 #!/usr/bin/env python3
-"""Locate the Sven Co-op client ClientPortalManager::EnableClipPlane.
+"""Recover GL clip setup from RenderPortals, through SetupRendering on Linux.
 
-The clip-plane accumulator gates each portal surface behind up to six clip
-planes and reports "Error: Too many clip planes on portal! Maximum: 6 (Too
-many surfaces on brush?)" when the per-portal budget is exhausted. The
-diagnostic belongs to the clip-plane function only on the validated 10257
-client: a direct literal owner on Windows and a single GOTOFF displacement
-site on Linux via the SvEngine PIC fallback. Its sole caller is RenderPortals,
-matching MetaHookSv's EnableClipPlane role.
+Require index/viewangles/view/plane arguments plus LoadIdentity, ClipPlane and
+Enable behavior. The diagnostic-string owner is a separate calculation finder.
 """
 
-from ida_preprocessor_scripts._sven_client_pic_common import (
-    preprocess_string_owner_skill_with_pic_fallback,
-)
-from ida_analyze_util import _output_for_symbol
+from pathlib import Path
+import ida_analyze_util as u
+from ida_preprocessor_scripts._portal_render_state_ida import run_render_state_walk
 
-TARGET_FUNCTION_NAMES = ["ClientPortalManager_EnableClipPlane"]
-LITERAL = "Error: Too many clip planes on portal! Maximum: 6 (Too many surfaces on brush?)\n"
+TARGET = "ClientPortalManager_EnableClipPlane"
 
 
 async def preprocess_skill(
@@ -29,16 +22,25 @@ async def preprocess_skill(
     image_base,
     debug=False,
 ):
-    _ = skill_name, old_yaml_map
-    return await preprocess_string_owner_skill_with_pic_fallback(
-        session,
-        expected_outputs=expected_outputs,
-        new_binary_dir=new_binary_dir,
-        platform=platform,
-        image_base=image_base,
-        func_name="PortalSource_CalculateClipPlane"
-        if _output_for_symbol(expected_outputs, "PortalSource_CalculateClipPlane")
-        else TARGET_FUNCTION_NAMES[0],
-        literal=LITERAL,
-        debug=debug,
+    output = u._output_for_symbol(expected_outputs, TARGET)
+    name = "ClientPortalManager_RenderPortals"
+    predecessor = u._load_yaml_mapping(Path(new_binary_dir) / f"{name}.{platform}.yaml")
+    if not output or not predecessor or predecessor.get("func_name") != name:
+        return False
+    try:
+        located = await run_render_state_walk(
+            session, {"mode": "clip", "platform": platform, "render": u._parse_int(predecessor["func_va"], "func_va")}
+        )
+    except ValueError as exc:
+        if debug:
+            print(f"{skill_name}: {exc}")
+        return False
+    payload = await u._inspect_function_via_mcp(session, located["function"], image_base, TARGET)
+    if not payload:
+        return False
+    u.write_func_yaml(
+        output, {key: payload[key] for key in ("func_name", "func_va", "func_rva", "func_size", "func_sig")}
     )
+    if debug:
+        print(f"{skill_name}: {payload['func_va']}")
+    return True

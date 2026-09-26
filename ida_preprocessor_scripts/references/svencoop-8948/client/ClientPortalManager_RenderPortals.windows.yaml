@@ -658,7 +658,7 @@ disasm_code: |-
   .text:10097216                 mov     ecx, ebx
   .text:10097218                 push    eax
   .text:10097219                 push    esi
-  .text:1009721A                 call    sub_10097EA0
+  .text:1009721A                 call    ClientPortalManager_EnableClipPlane
   .text:1009721F                 mov     ecx, [ebp+var_24]
   .text:10097222                 inc     esi
   .text:10097223                 add     edi, 10h
@@ -1476,7 +1476,7 @@ procedure: |-
               v50 = v46 + 10;
               do
               {
-                sub_10097EA0(v48, v49 + 12, v49, v50);
+                ClientPortalManager_EnableClipPlane(v48, v49 + 12, v49, v50);
                 v49 = v94;
                 ++v48;
                 v50 += 4;

@@ -35,7 +35,7 @@ additionally registers the Windows artifact under `find-ClientPortal-offsets-dec
 
 ## Predecessors
 
-- Windows path: `ClientPortalManager_RenderPortals`, `ClientPortalManager_EnableClipPlane`,
+- Windows path: `ClientPortalManager_RenderPortals`, `ClientPortal_CalculateClipPlane`,
   `ClientPortal_Constructor` (`find-ClientPortal-offsets-decompiles` inputs).
 - Linux path: `ClientPortal_CreateTexture` (`find-ClientPortal-texture-decompiles` input).
 

@@ -1,0 +1,4 @@
+struct_name: ClientPortalManager
+member_name: m_bShadersAvailable
+offset: '0x1e0'
+size: 1
