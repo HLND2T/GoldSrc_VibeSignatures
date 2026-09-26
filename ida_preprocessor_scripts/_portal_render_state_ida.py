@@ -2,7 +2,7 @@
 
 import inspect
 
-from ida_preprocessor_scripts import _portal_render_state
+import ida_preprocessor_scripts._portal_render_state as _portal_render_state
 from ida_preprocessor_scripts._portal_layout_ida import run_layout_walk
 
 BODY = r"""
