@@ -1,0 +1,5 @@
+func_name: S_StartStaticSound
+func_va: '0x101fe780'
+func_rva: '0x1fe780'
+func_size: '0x269'
+func_sig: 55 8B EC 83 EC 50 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 57 8B 7D ?? 85 FF 0F 84 ?? ?? ?? ?? 80 3F 2A B8 05 00 00 00

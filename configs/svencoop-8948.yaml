@@ -244,6 +244,34 @@ modules:
           - SequenceGetSentenceByIndex.{platform}.yaml
           - cszrawsentences.{platform}.yaml
           - rgpszrawsentence.{platform}.yaml
+      - name: find-S_Init
+        expected_output:
+          - S_Init.{platform}.yaml
+      - name: find-S_Update
+        expected_output:
+          - S_Update.{platform}.yaml
+      - name: find-listener_origin
+        expected_input:
+          - S_Update.{platform}.yaml
+        expected_output:
+          - listener_origin.{platform}.yaml
+      - name: find-S_Say_Reliable
+        expected_output:
+          - S_Say_Reliable.{platform}.yaml
+      - name: find-S_FindName
+        expected_input:
+          - VOX_LoadSound.{platform}.yaml
+        expected_output:
+          - S_FindName.{platform}.yaml
+      - name: find-S_StartDynamicSound
+        expected_output:
+          - S_StartDynamicSound.{platform}.yaml
+      - name: find-S_StartStaticSound
+        expected_output:
+          - S_StartStaticSound.{platform}.yaml
+      - name: find-TextMessageParse
+        expected_output:
+          - TextMessageParse.{platform}.yaml
       - name: find-CL_Parse_SetView-decompiles
         expected_input:
           - CL_Parse_SetView.{platform}.yaml
@@ -1473,6 +1501,22 @@ modules:
       - name: Host_EndGame
         category: func
       - name: VOX_LoadSound
+        category: func
+      - name: S_Init
+        category: func
+      - name: S_Update
+        category: func
+      - name: listener_origin
+        category: gv
+      - name: S_Say_Reliable
+        category: func
+      - name: S_FindName
+        category: func
+      - name: S_StartDynamicSound
+        category: func
+      - name: S_StartStaticSound
+        category: func
+      - name: TextMessageParse
         category: func
       - name: SequenceGetSentenceByIndex
         category: func
