@@ -2151,6 +2151,17 @@ modules:
           - V_StartPitchDrift.{platform}.yaml
         expected_output:
           - g_pitchdrift.{platform}.yaml
+      - name: find-HUD_DrawTransparentTriangles
+        expected_output:
+          - HUD_DrawTransparentTriangles.{platform}.yaml
+      - name: find-CParticleEngine_EngineThink
+        expected_input:
+          - HUD_DrawTransparentTriangles.{platform}.yaml
+        expected_output:
+          - CParticleEngine_EngineThink.{platform}.yaml
+      - name: find-CParticleSystem_ParticleDraw
+        expected_output:
+          - CParticleSystem_ParticleDraw.{platform}.yaml
       - name: find-ClientPortalManager_RenderPortals
         expected_output:
           - ClientPortalManager_RenderPortals.{platform}.yaml
@@ -2238,6 +2249,12 @@ modules:
         category: scalar
       - name: ClientPortalSource_mode_offset
         category: scalar
+      - name: HUD_DrawTransparentTriangles
+        category: func
+      - name: CParticleEngine_EngineThink
+        category: func
+      - name: CParticleSystem_ParticleDraw
+        category: func
       - name: ClientPortalManager_RenderPortals
         category: func
       - name: ClientPortalManager_EnableClipPlane
