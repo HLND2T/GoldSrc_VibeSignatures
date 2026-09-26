@@ -1,0 +1,240 @@
+func_name: "EngineSurface_pushMakeCurrent"
+func_va: "0x133bf0"
+disasm_code: |-
+  .text:00133BF0                 push    edi
+  .text:00133BF1                 push    esi
+  .text:00133BF2                 push    ebx
+  .text:00133BF3                 sub     esp, 60h
+  .text:00133BF6                 call    __x86_get_pc_thunk_bx
+  .text:00133BFB                 add     ebx, (offset dbl_2EE000 - $)
+  .text:00133C01                 mov     esi, [esp+6Ch+insets]
+  .text:00133C05                 cmp     [esp+6Ch+translateToScreenSpace], 0
+  .text:00133C0D                 mov     edi, [esp+6Ch+absExtents]
+  .text:00133C11                 jnz     loc_133DF0
+  .text:00133C17                 xor     eax, eax
+  .text:00133C19                 xor     edx, edx
+  .text:00133C1B                 mov     [esp+6Ch+var_18], eax
+  .text:00133C1F                 mov     [esp+6Ch+var_1C], edx
+  .text:00133C23                 call    VideoMode_IsWindowed
+  .text:00133C28                 test    eax, eax
+  .text:00133C2A                 jnz     loc_133DC8
+  .text:00133C30                 xor     eax, eax
+  .text:00133C32                 mov     dword ptr [esp+6Ch+right], eax
+  .text:00133C36                 lea     eax, [esp+6Ch+var_10]
+  .text:00133C3A                 mov     [esp+6Ch+mode+4], eax
+  .text:00133C3E                 lea     eax, [esp+6Ch+var_14]
+  .text:00133C42                 mov     [esp+6Ch+mode], eax
+  .text:00133C45                 call    VideoMode_GetCurrentVideoMode
+  .text:00133C4A                 mov     eax, [esp+6Ch+var_1C]
+  .text:00133C4E                 mov     [esp+6Ch+var_34], eax
+  .text:00133C52                 mov     eax, [esp+6Ch+var_18]
+  .text:00133C56                 mov     [esp+6Ch+var_30], eax
+  .text:00133C5A                 mov     eax, [esp+6Ch+var_14]
+  .text:00133C5E                 mov     [esp+6Ch+var_2C], eax
+  .text:00133C62                 mov     eax, [esp+6Ch+var_10]
+  .text:00133C66                 mov     [esp+6Ch+var_28], eax
+  .text:00133C6A                 call    _glPushMatrix
+  .text:00133C6F                 ; mode
+  .text:00133C6F                 mov     [esp+6Ch+mode], 1701h; mode
+  .text:00133C76                 call    _glMatrixMode
+  .text:00133C7B                 call    _glLoadIdentity
+  .text:00133C80                 fld1
+  .text:00133C82                 ; far_val
+  .text:00133C82                 fstp    [esp+6Ch+far_val]; far_val
+  .text:00133C86                 fld1
+  .text:00133C88                 fchs
+  .text:00133C8A                 ; near_val
+  .text:00133C8A                 fstp    [esp+6Ch+near_val]; near_val
+  .text:00133C8E                 fldz
+  .text:00133C90                 ; top
+  .text:00133C90                 fst     [esp+6Ch+top]; top
+  .text:00133C94                 fild    [esp+6Ch+var_28]
+  .text:00133C98                 ; bottom
+  .text:00133C98                 fstp    [esp+6Ch+bottom]; bottom
+  .text:00133C9C                 fild    [esp+6Ch+var_2C]
+  .text:00133CA0                 ; right
+  .text:00133CA0                 fstp    [esp+6Ch+right]; right
+  .text:00133CA4                 ; left
+  .text:00133CA4                 fstp    qword ptr [esp+6Ch+mode]; left
+  .text:00133CA7                 call    _glOrtho
+  .text:00133CAC                 ; mode
+  .text:00133CAC                 mov     [esp+6Ch+mode], 1700h; mode
+  .text:00133CB3                 call    _glMatrixMode
+  .text:00133CB8                 call    _glPushMatrix
+  .text:00133CBD                 call    _glLoadIdentity
+  .text:00133CC2                 ; z
+  .text:00133CC2                 mov     dword ptr [esp+6Ch+right], 0; z
+  .text:00133CCA                 fild    dword ptr [esi+4]
+  .text:00133CCD                 ; y
+  .text:00133CCD                 fstp    [esp+6Ch+mode+4]; y
+  .text:00133CD1                 fild    dword ptr [esi]
+  .text:00133CD3                 ; x
+  .text:00133CD3                 fstp    [esp+6Ch+mode]; x
+  .text:00133CD6                 call    _glTranslatef
+  .text:00133CDB                 mov     eax, [esi]
+  .text:00133CDD                 mov     edx, [edi]
+  .text:00133CDF                 mov     ecx, [esp+6Ch+var_34]
+  .text:00133CE3                 mov     [esp+6Ch+var_24], eax
+  .text:00133CE7                 mov     eax, [esi+4]
+  .text:00133CEA                 mov     esi, [esp+6Ch+var_30]
+  .text:00133CEE                 sub     edx, ecx
+  .text:00133CF0                 mov     [esp+6Ch+var_2C], edx
+  .text:00133CF4                 mov     [esp+6Ch+var_20], eax
+  .text:00133CF8                 mov     eax, [edi+4]
+  .text:00133CFB                 mov     edi, 303h
+  .text:00133D00                 ; z
+  .text:00133D00                 mov     dword ptr [esp+6Ch+right], 0; z
+  .text:00133D08                 sub     eax, esi
+  .text:00133D0A                 mov     [esp+6Ch+var_28], eax
+  .text:00133D0E                 fild    [esp+6Ch+var_28]
+  .text:00133D12                 ; y
+  .text:00133D12                 fstp    [esp+6Ch+mode+4]; y
+  .text:00133D16                 fild    [esp+6Ch+var_2C]
+  .text:00133D1A                 ; x
+  .text:00133D1A                 fstp    [esp+6Ch+mode]; x
+  .text:00133D1D                 call    _glTranslatef
+  .text:00133D22                 mov     eax, [esp+6Ch+clipRect]
+  .text:00133D26                 movd    xmm2, [esp+6Ch+var_30]
+  .text:00133D2C                 movd    xmm1, [esp+6Ch+var_34]
+  .text:00133D32                 punpckldq xmm2, xmm2
+  .text:00133D36                 punpckldq xmm1, xmm1
+  .text:00133D3A                 punpcklqdq xmm1, xmm2
+  .text:00133D3E                 movd    xmm4, [esp+6Ch+var_20]
+  .text:00133D44                 movd    xmm5, [esp+6Ch+var_24]
+  .text:00133D4A                 movd    xmm2, [esp+6Ch+var_28]
+  .text:00133D50                 movdqa  xmm3, xmm4
+  .text:00133D54                 punpckldq xmm2, xmm2
+  .text:00133D58                 movdqu  xmm0, xmmword ptr [eax]
+  .text:00133D5C                 pshufd  xmm0, xmm0, 0D8h
+  .text:00133D61                 psubd   xmm0, xmm1
+  .text:00133D65                 punpckldq xmm3, xmm4
+  .text:00133D69                 movdqa  xmm1, xmm0
+  .text:00133D6D                 movd    xmm0, [esp+6Ch+var_2C]
+  .text:00133D73                 punpckldq xmm0, xmm0
+  .text:00133D77                 punpcklqdq xmm0, xmm2
+  .text:00133D7B                 movdqa  xmm2, xmm5
+  .text:00133D7F                 punpckldq xmm2, xmm5
+  .text:00133D83                 punpcklqdq xmm2, xmm3
+  .text:00133D87                 paddd   xmm0, xmm2
+  .text:00133D8B                 psubd   xmm1, xmm0
+  .text:00133D8F                 ; cap
+  .text:00133D8F                 mov     [esp+6Ch+mode], 0BE2h; cap
+  .text:00133D96                 movdqa  ds:(g_ScissorRect - 2EE000h)[ebx], xmm1 ; target global: recover this object base from the current instruction; preserve ELF PIC when present
+  .text:00133D9E                 mov     ds:(g_bScissor - 2EE000h)[ebx], 1 ; target global: recover this object base from the current instruction; preserve ELF PIC when present
+  .text:00133DA5                 call    _glEnable
+  .text:00133DAA                 ; dfactor
+  .text:00133DAA                 mov     [esp+6Ch+mode+4], edi; dfactor
+  .text:00133DAE                 ; sfactor
+  .text:00133DAE                 mov     [esp+6Ch+mode], 302h; sfactor
+  .text:00133DB5                 call    _glBlendFunc
+  .text:00133DBA                 add     esp, 60h
+  .text:00133DBD                 pop     ebx
+  .text:00133DBE                 pop     esi
+  .text:00133DBF                 pop     edi
+  .text:00133DC0                 retn
+  .text:00133DC8                 lea     eax, [esp+6Ch+var_10]
+  .text:00133DCC                 mov     dword ptr [esp+6Ch+right], eax
+  .text:00133DD0                 lea     eax, [esp+6Ch+var_14]
+  .text:00133DD4                 mov     [esp+6Ch+mode+4], eax
+  .text:00133DD8                 lea     eax, (dword_D3FBD0 - 2EE000h)[ebx]
+  .text:00133DDE                 mov     eax, [eax]
+  .text:00133DE0                 mov     eax, [eax]
+  .text:00133DE2                 mov     [esp+6Ch+mode], eax
+  .text:00133DE5                 call    _SDL_GetWindowSize
+  .text:00133DEA                 jmp     loc_133C4A
+  .text:00133DF0                 call    VideoMode_IsWindowed
+  .text:00133DF5                 test    eax, eax
+  .text:00133DF7                 jz      loc_133C17
+  .text:00133DFD                 lea     eax, [esp+6Ch+var_1C]
+  .text:00133E01                 mov     [esp+6Ch+mode+4], eax
+  .text:00133E05                 lea     eax, (dword_D3FBD0 - 2EE000h)[ebx]
+  .text:00133E0B                 lea     edx, [esp+6Ch+var_18]
+  .text:00133E0F                 mov     dword ptr [esp+6Ch+right], edx
+  .text:00133E13                 mov     eax, [eax]
+  .text:00133E15                 mov     eax, [eax]
+  .text:00133E17                 mov     [esp+6Ch+mode], eax
+  .text:00133E1A                 call    _SDL_GetWindowPosition
+  .text:00133E1F                 jmp     loc_133C23
+procedure: |-
+  // Sven Linux uses ELF PIC and a 16-byte SIMD store. The pshufd 0xD8 reorders clipRect into left/right/top/bottom lanes; preserve the vectorized calculation rather than imposing Windows RECT layout.
+  void __cdecl EngineSurface::pushMakeCurrent(
+          void *this_,
+          int *insets,
+          int *absExtents,
+          int *clipRect,
+          bool translateToScreenSpace)
+  {
+    __m128i v5; // xmm2
+    __m128i v6; // xmm1
+    __m128i v7; // xmm1
+    __m128i v8; // xmm4
+    __m128i v9; // xmm5
+    __m128i v10; // xmm2
+    __m128i v11; // xmm0
+    GLfloat mode; // [esp+0h] [ebp-6Ch]
+    GLfloat modea; // [esp+0h] [ebp-6Ch]
+    GLfloat mode_4; // [esp+4h] [ebp-68h]
+    GLfloat mode_4a; // [esp+4h] [ebp-68h]
+    unsigned int v16; // [esp+38h] [ebp-34h]
+    unsigned int v17; // [esp+3Ch] [ebp-30h]
+    int v18; // [esp+40h] [ebp-2Ch]
+    signed int v19; // [esp+40h] [ebp-2Ch]
+    int v20; // [esp+44h] [ebp-28h]
+    signed int v21; // [esp+44h] [ebp-28h]
+    unsigned int v22; // [esp+48h] [ebp-24h]
+    unsigned int v23; // [esp+4Ch] [ebp-20h]
+    unsigned int v24; // [esp+50h] [ebp-1Ch] BYREF
+    unsigned int v25; // [esp+54h] [ebp-18h] BYREF
+    int v26; // [esp+58h] [ebp-14h] BYREF
+    int v27[4]; // [esp+5Ch] [ebp-10h] BYREF
+
+    if ( translateToScreenSpace && VideoMode_IsWindowed() )
+    {
+      SDL_GetWindowPosition(*(_DWORD *)dword_D3FBD0, &v24, &v25);
+    }
+    else
+    {
+      v25 = 0;
+      v24 = 0;
+    }
+    if ( VideoMode_IsWindowed() )
+      SDL_GetWindowSize(*(_DWORD *)dword_D3FBD0, &v26, v27);
+    else
+      VideoMode_GetCurrentVideoMode(&v26, v27, nullptr);
+    v16 = v24;
+    v17 = v25;
+    v18 = v26;
+    v20 = v27[0];
+    glPushMatrix();
+    glMatrixMode(0x1701u);
+    glLoadIdentity();
+    glOrtho(0.0, (double)v18, (double)v20, 0.0, -1.0, 1.0);
+    glMatrixMode(0x1700u);
+    glPushMatrix();
+    glLoadIdentity();
+    mode_4 = (float)insets[1];
+    mode = (float)*insets;
+    glTranslatef(mode, mode_4, 0.0);
+    v22 = *insets;
+    v19 = *absExtents - v16;
+    v23 = insets[1];
+    v21 = absExtents[1] - v17;
+    mode_4a = (float)v21;
+    modea = (float)v19;
+    glTranslatef(modea, mode_4a, 0.0);
+    v5 = _mm_cvtsi32_si128(v17);
+    v6 = _mm_cvtsi32_si128(v16);
+    v7 = _mm_unpacklo_epi64(_mm_unpacklo_epi32(v6, v6), _mm_unpacklo_epi32(v5, v5));
+    v8 = _mm_cvtsi32_si128(v23);
+    v9 = _mm_cvtsi32_si128(v22);
+    v10 = _mm_cvtsi32_si128(v21);
+    v11 = _mm_cvtsi32_si128(v19);
+    *(__m128i *)g_ScissorRect = _mm_sub_epi32( // target global: flag or whole clipRect-derived rectangle, not an interior member
+                                  _mm_sub_epi32(_mm_shuffle_epi32(_mm_loadu_si128((const __m128i *)clipRect), 216), v7),
+                                  _mm_add_epi32(
+                                    _mm_unpacklo_epi64(_mm_unpacklo_epi32(v11, v11), _mm_unpacklo_epi32(v10, v10)),
+                                    _mm_unpacklo_epi64(_mm_unpacklo_epi32(v9, v9), _mm_unpacklo_epi32(v8, v8))));
+    g_bScissor = 1; // target global: flag or whole clipRect-derived rectangle, not an interior member
+    glEnable(0xBE2u);
+    glBlendFunc(0x302u, 0x303u);
+  }

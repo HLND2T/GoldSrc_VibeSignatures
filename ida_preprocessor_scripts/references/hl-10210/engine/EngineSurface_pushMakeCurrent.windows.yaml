@@ -1,0 +1,228 @@
+func_name: "EngineSurface_pushMakeCurrent"
+func_va: "0x1025cc30"
+disasm_code: |-
+  .text:1025CC30                 push    ebp
+  .text:1025CC31                 mov     ebp, esp
+  .text:1025CC33                 sub     esp, 2Ch
+  .text:1025CC36                 mov     eax, ___security_cookie
+  .text:1025CC3B                 xor     eax, ebp
+  .text:1025CC3D                 mov     [ebp+var_4], eax
+  .text:1025CC40                 cmp     [ebp+translateToScreenSpace], 0
+  .text:1025CC44                 mov     eax, [ebp+absExtents]
+  .text:1025CC47                 push    ebx
+  .text:1025CC48                 mov     ebx, [ebp+insets]
+  .text:1025CC4B                 push    esi
+  .text:1025CC4C                 push    edi
+  .text:1025CC4D                 mov     [ebp+var_1C], ebx
+  .text:1025CC50                 mov     [ebp+var_2C], eax
+  .text:1025CC53                 mov     [ebp+var_28], 0
+  .text:1025CC5A                 mov     [ebp+var_24], 0
+  .text:1025CC61                 jz      short loc_1025CC83
+  .text:1025CC63                 call    VideoMode_IsWindowed
+  .text:1025CC68                 test    eax, eax
+  .text:1025CC6A                 jz      short loc_1025CC83
+  .text:1025CC6C                 lea     eax, [ebp+var_24]
+  .text:1025CC6F                 push    eax
+  .text:1025CC70                 lea     eax, [ebp+var_28]
+  .text:1025CC73                 push    eax
+  .text:1025CC74                 mov     eax, pmainwindow
+  .text:1025CC79                 push    dword ptr [eax]
+  .text:1025CC7B                 call    SDL_GetWindowPosition
+  .text:1025CC80                 add     esp, 0Ch
+  .text:1025CC83                 mov     [ebp+var_14], 0
+  .text:1025CC8A                 mov     [ebp+var_10], 0
+  .text:1025CC91                 call    VideoMode_IsWindowed
+  .text:1025CC96                 test    eax, eax
+  .text:1025CC98                 lea     eax, [ebp+height]
+  .text:1025CC9B                 jz      short loc_1025CCB0
+  .text:1025CC9D                 push    eax
+  .text:1025CC9E                 lea     eax, [ebp+width]
+  .text:1025CCA1                 push    eax
+  .text:1025CCA2                 mov     eax, pmainwindow
+  .text:1025CCA7                 push    dword ptr [eax]
+  .text:1025CCA9                 call    SDL_GetWindowSize
+  .text:1025CCAE                 jmp     short loc_1025CCBC
+  .text:1025CCB0                 ; bpp
+  .text:1025CCB0                 push    0; bpp
+  .text:1025CCB2                 ; farval
+  .text:1025CCB2                 push    eax; farval
+  .text:1025CCB3                 lea     eax, [ebp+width]
+  .text:1025CCB6                 ; width
+  .text:1025CCB6                 push    eax; width
+  .text:1025CCB7                 call    VideoMode_GetCurrentVideoMode
+  .text:1025CCBC                 mov     edi, [ebp+width]
+  .text:1025CCBF                 add     esp, 0Ch
+  .text:1025CCC2                 mov     esi, [ebp+height]
+  .text:1025CCC5                 mov     eax, [ebp+var_28]
+  .text:1025CCC8                 add     edi, [ebp+var_14]
+  .text:1025CCCB                 add     esi, [ebp+var_10]
+  .text:1025CCCE                 mov     [ebp+var_18], eax
+  .text:1025CCD1                 mov     eax, [ebp+var_24]
+  .text:1025CCD4                 mov     [ebp+width], edi
+  .text:1025CCD7                 mov     [ebp+height], esi
+  .text:1025CCDA                 mov     [ebp+var_20], eax
+  .text:1025CCDD                 call    qglPushMatrix
+  .text:1025CCE3                 ; mode
+  .text:1025CCE3                 push    1701h; mode
+  .text:1025CCE8                 call    qglMatrixMode
+  .text:1025CCEE                 call    qglLoadIdentity
+  .text:1025CCF4                 movaps  xmm0, ds:zNear
+  .text:1025CCFB                 sub     esp, 30h
+  .text:1025CCFE                 xorps   xmm1, xmm1
+  .text:1025CD01                 ; nearval
+  .text:1025CD01                 movups  xmmword ptr [esp+68h+nearval+4], xmm0; nearval
+  .text:1025CD06                 movd    xmm0, esi
+  .text:1025CD0A                 cvtdq2pd xmm0, xmm0
+  .text:1025CD0E                 ; top
+  .text:1025CD0E                 movsd   [esp+68h+top+4], xmm1; top
+  .text:1025CD14                 ; bottom
+  .text:1025CD14                 movsd   [esp+68h+bottom+4], xmm0; bottom
+  .text:1025CD1A                 movd    xmm0, edi
+  .text:1025CD1E                 cvtdq2pd xmm0, xmm0
+  .text:1025CD22                 ; right
+  .text:1025CD22                 movsd   [esp+68h+right+4], xmm0; right
+  .text:1025CD28                 ; left
+  .text:1025CD28                 movsd   [esp+68h+left+4], xmm1; left
+  .text:1025CD2D                 call    qglOrtho
+  .text:1025CD33                 ; mode
+  .text:1025CD33                 push    1700h; mode
+  .text:1025CD38                 call    qglMatrixMode
+  .text:1025CD3E                 call    qglPushMatrix
+  .text:1025CD44                 call    qglLoadIdentity
+  .text:1025CD4A                 movd    xmm0, dword ptr [ebx+4]
+  .text:1025CD4F                 sub     esp, 0Ch
+  .text:1025CD52                 cvtdq2ps xmm0, xmm0
+  .text:1025CD55                 ; z
+  .text:1025CD55                 mov     [esp+44h+z], 0; z
+  .text:1025CD5D                 ; y
+  .text:1025CD5D                 movss   dword ptr [esp+44h+nearval+0Ch], xmm0; y
+  .text:1025CD63                 movd    xmm0, dword ptr [ebx]
+  .text:1025CD67                 cvtdq2ps xmm0, xmm0
+  .text:1025CD6A                 ; x
+  .text:1025CD6A                 movss   dword ptr [esp+44h+nearval+8], xmm0; x
+  .text:1025CD6F                 call    qglTranslatef
+  .text:1025CD75                 mov     eax, [ebp+var_1C]
+  .text:1025CD78                 sub     esp, 0Ch
+  .text:1025CD7B                 mov     ebx, [ebx]
+  .text:1025CD7D                 mov     eax, [eax+4]
+  .text:1025CD80                 mov     [ebp+var_1C], eax
+  .text:1025CD83                 mov     eax, [ebp+var_2C]
+  .text:1025CD86                 ; z
+  .text:1025CD86                 mov     [esp+44h+z], 0; z
+  .text:1025CD8E                 mov     esi, [eax+4]
+  .text:1025CD91                 sub     esi, [ebp+var_20]
+  .text:1025CD94                 mov     edi, [eax]
+  .text:1025CD96                 sub     edi, [ebp+var_18]
+  .text:1025CD99                 movd    xmm0, esi
+  .text:1025CD9D                 cvtdq2ps xmm0, xmm0
+  .text:1025CDA0                 ; y
+  .text:1025CDA0                 movss   dword ptr [esp+44h+nearval+0Ch], xmm0; y
+  .text:1025CDA6                 movd    xmm0, edi
+  .text:1025CDAA                 cvtdq2ps xmm0, xmm0
+  .text:1025CDAD                 ; x
+  .text:1025CDAD                 movss   dword ptr [esp+44h+nearval+8], xmm0; x
+  .text:1025CDB2                 call    qglTranslatef
+  .text:1025CDB8                 mov     eax, [ebp+clipRect]
+  .text:1025CDBB                 add     edi, ebx
+  .text:1025CDBD                 mov     ebx, [ebp+var_1C]
+  .text:1025CDC0                 add     ebx, esi
+  .text:1025CDC2                 ; unsigned int
+  .text:1025CDC2                 push    0BE2h; unsigned int
+  .text:1025CDC7                 mov     ecx, [eax]
+  .text:1025CDC9                 mov     edx, [eax+4]
+  .text:1025CDCC                 sub     ecx, edi
+  .text:1025CDCE                 mov     esi, [eax+8]
+  .text:1025CDD1                 sub     edx, ebx
+  .text:1025CDD3                 mov     eax, [eax+0Ch]
+  .text:1025CDD6                 sub     esi, edi
+  .text:1025CDD8                 sub     ecx, [ebp+var_18]
+  .text:1025CDDB                 sub     eax, ebx
+  .text:1025CDDD                 sub     edx, [ebp+var_20]
+  .text:1025CDE0                 sub     esi, [ebp+var_18]
+  .text:1025CDE3                 sub     eax, [ebp+var_20]
+  .text:1025CDE6                 mov     g_bScissor, 1 ; target global: recover this object base from the current instruction; preserve ELF PIC when present
+  .text:1025CDED                 mov     g_ScissorRect.left, ecx ; target global: recover this object base from the current instruction; preserve ELF PIC when present
+  .text:1025CDF3                 mov     g_ScissorRect.top, edx
+  .text:1025CDF9                 mov     g_ScissorRect.right, esi
+  .text:1025CDFF                 mov     g_ScissorRect.bottom, eax
+  .text:1025CE04                 call    qglEnable
+  .text:1025CE0A                 push    303h
+  .text:1025CE0F                 push    302h
+  .text:1025CE14                 call    qglBlendFunc
+  .text:1025CE1A                 mov     ecx, [ebp+var_4]
+  .text:1025CE1D                 pop     edi
+  .text:1025CE1E                 pop     esi
+  .text:1025CE1F                 ; StackCookie
+  .text:1025CE1F                 xor     ecx, ebp; StackCookie
+  .text:1025CE21                 pop     ebx
+  .text:1025CE22                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1025CE27                 mov     esp, ebp
+  .text:1025CE29                 pop     ebp
+  .text:1025CE2A                 retn    10h
+procedure: |-
+  // EngineSurface::pushMakeCurrent: ECX carries the unused this receiver; the optimized body reads only the four stack arguments. Official source is semantic guidance; platform video queries differ.
+  void __stdcall EngineSurface::pushMakeCurrent(int *insets, int *absExtents, int *clipRect, bool translateToScreenSpace)
+  {
+    int v4; // edi
+    int v5; // esi
+    int v6; // ebx
+    int v7; // esi
+    int v8; // edi
+    int v9; // edi
+    LONG v10; // ecx
+    int v11; // eax
+    LONG v12; // edx
+    LONG v13; // esi
+    int v14; // [esp+60h] [ebp-28h] BYREF
+    int v15; // [esp+64h] [ebp-24h] BYREF
+    int v16; // [esp+68h] [ebp-20h]
+    int *v17; // [esp+6Ch] [ebp-1Ch]
+    int v18; // [esp+70h] [ebp-18h]
+    int v19; // [esp+74h] [ebp-14h]
+    int v20; // [esp+78h] [ebp-10h]
+    int width; // [esp+7Ch] [ebp-Ch] BYREF
+    int height; // [esp+80h] [ebp-8h] BYREF
+
+    v17 = insets;
+    v14 = 0;
+    v15 = 0;
+    if ( translateToScreenSpace && VideoMode_IsWindowed() )
+      SDL_GetWindowPosition(*pmainwindow, &v14, &v15);
+    v19 = 0;
+    v20 = 0;
+    if ( VideoMode_IsWindowed() )
+      SDL_GetWindowSize(*pmainwindow, &width, &height);
+    else
+      VideoMode_GetCurrentVideoMode(&width, &height, nullptr);
+    v18 = v14;
+    width += v19;
+    v4 = width;
+    height += v20;
+    v5 = height;
+    v16 = v15;
+    qglPushMatrix();
+    qglMatrixMode(0x1701u);
+    qglLoadIdentity();
+    qglOrtho(0.0, (double)v4, (double)v5, 0.0, -1.0, 1.0);
+    qglMatrixMode(0x1700u);
+    qglPushMatrix();
+    qglLoadIdentity();
+    qglTranslatef((float)*insets, (float)insets[1], 0.0);
+    v6 = *insets;
+    v17 = (int *)v17[1];
+    v7 = absExtents[1] - v16;
+    v8 = *absExtents - v18;
+    qglTranslatef((float)v8, (float)v7, 0.0);
+    v9 = v6 + v8;
+    v10 = *clipRect - v9 - v18;
+    v11 = clipRect[3] - ((_DWORD)v17 + v7);
+    v12 = clipRect[1] - ((_DWORD)v17 + v7) - v16;
+    v13 = clipRect[2] - v9 - v18;
+    g_bScissor = 1; // target global: flag or whole clipRect-derived rectangle, not an interior member
+    g_ScissorRect.left = v10; // target global: flag or whole clipRect-derived rectangle, not an interior member
+    g_ScissorRect.top = v12;
+    g_ScissorRect.right = v13;
+    g_ScissorRect.bottom = v11 - v16;
+    qglEnable(0xBE2u);
+    qglBlendFunc(0x302u, 0x303u);
+  }

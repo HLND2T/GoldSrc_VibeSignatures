@@ -41,7 +41,7 @@ def decoded_operand(op):
         return ('mem', base, signed32(op.addr) if kind == idaapi.o_displ else 0, index, scale, ida_ua.get_dtype_size(op.dtype))
     return ('unknown',)
 
-def flow_at(start, platform, call_purges=None):
+def flow_at(start, platform, call_purges=None, entry_state=None):
     function = ida_funcs.get_func(int(start))
     if function is None or function.start_ea != int(start) or idaapi.inf_is_64bit():
         raise ValueError('not an x86 function entry')
@@ -84,7 +84,7 @@ def flow_at(start, platform, call_purges=None):
         if is_got(segment_start):
             segment = ida_segment.getseg(segment_start)
             static_loads.update({ea:int(ida_bytes.get_dword(ea)) for ea in range(segment.start_ea,segment.end_ea,4)})
-    traced = trace_function(blocks, int(start), platform, static_loads)
+    traced = trace_function(blocks, int(start), platform, static_loads, entry_state=entry_state)
     traced['blocks'] = {b['start']:b['succs'] for b in blocks}
     return traced
 

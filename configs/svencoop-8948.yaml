@@ -36,6 +36,46 @@ modules:
           - vgui2_Panel_vtable.{platform}.yaml
         expected_output:
           - vgui2_Panel_PaintTraverse.{platform}.yaml
+      - name: find-vgui2_Panel_PaintTraverse-context
+        expected_input:
+          - vgui2_Panel_PaintTraverse.{platform}.yaml
+          - vgui2_Panel_vtable.{platform}.yaml
+        expected_output:
+          - vgui2_Panel__buildGroup.{platform}.yaml
+          - vgui2_BuildGroup_DrawRulers.{platform}.yaml
+          - ISurface_PushMakeCurrent.{platform}.yaml
+          - ISurface_PopMakeCurrent.{platform}.yaml
+      - name: find-BaseUISurface-context
+        expected_input:
+          - BaseUISurface_vtable.{platform}.yaml
+          - ISurface_PushMakeCurrent.{platform}.yaml
+          - ISurface_PopMakeCurrent.{platform}.yaml
+        expected_output:
+          - BaseUISurface_PushMakeCurrent.{platform}.yaml
+          - BaseUISurface_PopMakeCurrent.{platform}.yaml
+      - name: find-BaseUISurface-context-dependencies
+        expected_input:
+          - BaseUISurface_PushMakeCurrent.{platform}.yaml
+          - BaseUISurface_PopMakeCurrent.{platform}.yaml
+        expected_output:
+          - BaseUISurface_m_iCurrentTexture.{platform}.yaml
+          - IEngineSurface_pushMakeCurrent.{platform}.yaml
+          - IEngineSurface_popMakeCurrent.{platform}.yaml
+      - name: find-EngineSurface-context
+        expected_input:
+          - EngineSurface_vtable.{platform}.yaml
+          - IEngineSurface_pushMakeCurrent.{platform}.yaml
+          - IEngineSurface_popMakeCurrent.{platform}.yaml
+        expected_output:
+          - EngineSurface_pushMakeCurrent.{platform}.yaml
+          - EngineSurface_popMakeCurrent.{platform}.yaml
+      - name: find-EngineSurface-context-globals
+        expected_input:
+          - EngineSurface_pushMakeCurrent.{platform}.yaml
+          - EngineSurface_popMakeCurrent.{platform}.yaml
+        expected_output:
+          - g_bScissor.{platform}.yaml
+          - g_ScissorRect.{platform}.yaml
       - name: find-EngineSurface-vtables
         expected_output:
           - EngineSurface_vtable.{platform}.yaml
@@ -1271,6 +1311,40 @@ modules:
         category: vtable
       - name: vgui2_Panel_PaintTraverse
         category: vfunc
+      - name: vgui2::Panel
+        category: struct
+      - name: vgui2_Panel__buildGroup
+        category: structmember
+        struct: vgui2::Panel
+        member: _buildGroup
+      - name: vgui2_BuildGroup_DrawRulers
+        category: vfunc
+      - name: ISurface_PushMakeCurrent
+        category: vfunc
+      - name: ISurface_PopMakeCurrent
+        category: vfunc
+      - name: BaseUISurface_PushMakeCurrent
+        category: vfunc
+      - name: BaseUISurface_PopMakeCurrent
+        category: vfunc
+      - name: BaseUISurface
+        category: struct
+      - name: BaseUISurface_m_iCurrentTexture
+        category: structmember
+        struct: BaseUISurface
+        member: m_iCurrentTexture
+      - name: IEngineSurface_pushMakeCurrent
+        category: vfunc
+      - name: IEngineSurface_popMakeCurrent
+        category: vfunc
+      - name: EngineSurface_pushMakeCurrent
+        category: vfunc
+      - name: EngineSurface_popMakeCurrent
+        category: vfunc
+      - name: g_bScissor
+        category: gv
+      - name: g_ScissorRect
+        category: gv
       - name: EngineSurface_vtable
         category: vtable
       - name: BaseUISurface_vtable

@@ -1,0 +1,8 @@
+gv_name: g_bScissor
+gv_va: '0x23c92a8'
+gv_rva: '0x6c92a8'
+gv_sig: 55 8B EC 83 EC 28 8A 45 ?? 53 56 33 F6 84 C0 57 89 75 ?? 89 75 ?? 74 ?? E8 ?? ?? ?? ?? 85 C0 74 ??
+gv_sig_va: '0x1db70a0'
+gv_inst_offset: '0x18c'
+gv_inst_length: '0x7'
+gv_inst_disp: '0x2'

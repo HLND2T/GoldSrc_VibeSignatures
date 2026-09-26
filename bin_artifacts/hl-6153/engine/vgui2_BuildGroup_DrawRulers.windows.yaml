@@ -1,0 +1,4 @@
+func_name: vgui2::BuildGroup::DrawRulers
+vtable_name: vgui2::BuildGroup
+vfunc_offset: '0x48'
+vfunc_index: 18

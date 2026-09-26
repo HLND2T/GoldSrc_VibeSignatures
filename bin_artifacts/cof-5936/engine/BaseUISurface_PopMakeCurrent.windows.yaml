@@ -1,0 +1,15 @@
+func_name: BaseUISurface::PopMakeCurrent(unsigned int)
+func_va: '0x1d04092'
+func_rva: '0x4092'
+func_size: '0x1e'
+func_sig: 55 8B EC 51 89 4D ?? 8B 45 ?? 8B 48 ?? 8B 55 ?? 8B 42 ?? 8B 10 FF 52 ?? 8B E5 5D C2 04 00 55 8B EC 51 89 4D ?? 8B
+  E5 5D C2 04 00 55 8B EC 51 89 4D ?? 8B E5 5D C2 04 00 55 8B EC 51 89 4D ?? 8B E5 5D C3 55 8B EC 51 89 4D ?? 8B 45 ?? 50
+  8B 4D ?? 51 8B 55 ?? 52 8B 45 ?? 50 8B 4D ?? 8B 49 ?? 8B 55 ?? 8B 42 ?? 8B 10 FF 52 ?? 8B E5 5D C2 10 00 55 8B EC 51 89
+  4D ?? 8B 45 ?? 50 8B 4D ?? 51 8B 55 ?? 52 8B 45 ?? 50 8B 4D ?? 8B 49 ?? 8B 55 ?? 8B 42 ?? 8B 10 FF 52 ?? 8B E5 5D C2 10
+  00 55 8B EC 51 89 4D ?? 8B 45 ?? 50 8B 4D ?? 51 8B 55 ?? 52 8B 45 ?? 50 8B 4D ?? 8B 49 ?? 8B 55 ?? 8B 42 ?? 8B 10 FF 52
+  ?? 8B E5 5D C2 10 00 55 8B EC 51 89 4D ?? 8B 45 ?? 50 8B 4D ?? 51 8B 55 ?? 52 8B 45 ?? 8B 48 ?? 8B 55 ?? 8B 42 ?? 8B 10
+  FF 52 ?? 8B E5 5D C2 0C 00 55 8B EC 51 89 4D ?? 8B 45 ??
+func_sig_allow_across_function_boundary: true
+vtable_name: BaseUISurface
+vfunc_offset: '0x18'
+vfunc_index: 6

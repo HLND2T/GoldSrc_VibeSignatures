@@ -1,0 +1,239 @@
+func_name: "EngineSurface_pushMakeCurrent"
+func_va: "0x1dc4340"
+disasm_code: |-
+  .text:01DC4340                 push    ebp
+  .text:01DC4341                 mov     ebp, esp
+  .text:01DC4343                 and     esp, 0FFFFFFC0h
+  .text:01DC4346                 sub     esp, 34h
+  .text:01DC4349                 mov     eax, ___security_cookie
+  .text:01DC434E                 xor     eax, esp
+  .text:01DC4350                 mov     [esp+34h+var_4], eax
+  .text:01DC4354                 cmp     [ebp+translateToScreenSpace], 0
+  .text:01DC4358                 mov     eax, [ebp+insets]
+  .text:01DC435B                 push    ebx
+  .text:01DC435C                 push    esi
+  .text:01DC435D                 mov     [esp+3Ch+var_1C], eax
+  .text:01DC4361                 mov     eax, [ebp+absExtents]
+  .text:01DC4364                 push    edi
+  .text:01DC4365                 mov     [esp+40h+var_18], eax
+  .text:01DC4369                 jz      short loc_1DC438F
+  .text:01DC436B                 call    VideoMode_IsWindowed
+  .text:01DC4370                 test    eax, eax
+  .text:01DC4372                 jz      short loc_1DC438F
+  .text:01DC4374                 lea     eax, [esp+40h+var_10]
+  .text:01DC4378                 push    eax
+  .text:01DC4379                 lea     eax, [esp+44h+var_14]
+  .text:01DC437D                 push    eax
+  .text:01DC437E                 mov     eax, pmainwindow
+  .text:01DC4383                 push    dword ptr [eax]
+  .text:01DC4385                 call    SDL_GetWindowPosition
+  .text:01DC438A                 add     esp, 0Ch
+  .text:01DC438D                 jmp     short loc_1DC439F
+  .text:01DC438F                 mov     [esp+40h+var_10], 0
+  .text:01DC4397                 mov     [esp+40h+var_14], 0
+  .text:01DC439F                 call    VideoMode_IsWindowed
+  .text:01DC43A4                 test    eax, eax
+  .text:01DC43A6                 lea     eax, [esp+40h+var_8]
+  .text:01DC43AA                 jz      short loc_1DC43C0
+  .text:01DC43AC                 push    eax
+  .text:01DC43AD                 lea     eax, [esp+44h+var_C]
+  .text:01DC43B1                 push    eax
+  .text:01DC43B2                 mov     eax, pmainwindow
+  .text:01DC43B7                 push    dword ptr [eax]
+  .text:01DC43B9                 call    SDL_GetWindowSize
+  .text:01DC43BE                 jmp     short loc_1DC43CD
+  .text:01DC43C0                 push    0
+  .text:01DC43C2                 push    eax
+  .text:01DC43C3                 lea     eax, [esp+48h+var_C]
+  .text:01DC43C7                 push    eax
+  .text:01DC43C8                 call    VideoMode_GetCurrentVideoMode
+  .text:01DC43CD                 mov     ecx, [esp+4Ch+var_14]
+  .text:01DC43D1                 add     esp, 0Ch
+  .text:01DC43D4                 mov     edx, [esp+40h+var_10]
+  .text:01DC43D8                 mov     edi, [esp+40h+var_C]
+  .text:01DC43DC                 mov     esi, [esp+40h+var_8]
+  .text:01DC43E0                 add     edi, ecx
+  .text:01DC43E2                 mov     [esp+40h+var_20], ecx
+  .text:01DC43E6                 add     esi, edx
+  .text:01DC43E8                 mov     [esp+40h+var_24], edx
+  .text:01DC43EC                 call    ds:glPushMatrix
+  .text:01DC43F2                 mov     ebx, ds:glMatrixMode
+  .text:01DC43F8                 ; mode
+  .text:01DC43F8                 push    1701h; mode
+  .text:01DC43FD                 call    ebx ; glMatrixMode
+  .text:01DC43FF                 call    ds:glLoadIdentity
+  .text:01DC4405                 fld1
+  .text:01DC4407                 sub     esp, 30h
+  .text:01DC440A                 sub     esi, [esp+70h+var_24]
+  .text:01DC440E                 sub     edi, [esp+70h+var_20]
+  .text:01DC4412                 mov     [esp+70h+var_28], esi
+  .text:01DC4416                 ; zFar
+  .text:01DC4416                 fstp    qword ptr [esp+70h+zFar]; zFar
+  .text:01DC441A                 fld     ds:dbl_1E62A20
+  .text:01DC4420                 ; zNear
+  .text:01DC4420                 fstp    [esp+70h+zNear]; zNear
+  .text:01DC4424                 fldz
+  .text:01DC4426                 ; top
+  .text:01DC4426                 fst     [esp+70h+top]; top
+  .text:01DC442A                 fild    [esp+70h+var_28]
+  .text:01DC442E                 mov     [esp+70h+var_28], edi
+  .text:01DC4432                 ; bottom
+  .text:01DC4432                 fstp    [esp+70h+bottom]; bottom
+  .text:01DC4436                 fild    [esp+70h+var_28]
+  .text:01DC443A                 ; right
+  .text:01DC443A                 fstp    [esp+70h+right]; right
+  .text:01DC443E                 ; left
+  .text:01DC443E                 fstp    [esp+70h+left]; left
+  .text:01DC4441                 call    ds:glOrtho
+  .text:01DC4447                 ; mode
+  .text:01DC4447                 push    1700h; mode
+  .text:01DC444C                 call    ebx ; glMatrixMode
+  .text:01DC444E                 call    ds:glPushMatrix
+  .text:01DC4454                 call    ds:glLoadIdentity
+  .text:01DC445A                 mov     edi, [esp+40h+var_1C]
+  .text:01DC445E                 sub     esp, 0Ch
+  .text:01DC4461                 fldz
+  .text:01DC4463                 ; z
+  .text:01DC4463                 fstp    [esp+4Ch+zFar+4]; z
+  .text:01DC4467                 fild    dword ptr [edi+4]
+  .text:01DC446A                 ; y
+  .text:01DC446A                 fstp    [esp+4Ch+zFar]; y
+  .text:01DC446E                 fild    dword ptr [edi]
+  .text:01DC4470                 ; x
+  .text:01DC4470                 fstp    dword ptr [esp+4Ch+zNear+4]; x
+  .text:01DC4473                 call    ds:glTranslatef
+  .text:01DC4479                 mov     eax, [edi+4]
+  .text:01DC447C                 sub     esp, 0Ch
+  .text:01DC447F                 fldz
+  .text:01DC4481                 mov     ebx, [edi]
+  .text:01DC4483                 mov     [esp+4Ch+var_28], eax
+  .text:01DC4487                 mov     eax, [esp+4Ch+var_18]
+  .text:01DC448B                 ; z
+  .text:01DC448B                 fstp    [esp+4Ch+zFar+4]; z
+  .text:01DC448F                 mov     esi, [eax+4]
+  .text:01DC4492                 sub     esi, [esp+4Ch+var_24]
+  .text:01DC4496                 mov     edi, [eax]
+  .text:01DC4498                 sub     edi, [esp+4Ch+var_20]
+  .text:01DC449C                 mov     [esp+4Ch+var_18], esi
+  .text:01DC44A0                 fild    [esp+4Ch+var_18]
+  .text:01DC44A4                 mov     [esp+4Ch+var_1C], edi
+  .text:01DC44A8                 ; y
+  .text:01DC44A8                 fstp    [esp+4Ch+zFar]; y
+  .text:01DC44AC                 fild    [esp+4Ch+var_1C]
+  .text:01DC44B0                 ; x
+  .text:01DC44B0                 fstp    dword ptr [esp+4Ch+zNear+4]; x
+  .text:01DC44B3                 call    ds:glTranslatef
+  .text:01DC44B9                 mov     eax, [ebp+clipRect]
+  .text:01DC44BC                 add     edi, ebx
+  .text:01DC44BE                 mov     ebx, [esp+40h+var_28]
+  .text:01DC44C2                 add     ebx, esi
+  .text:01DC44C4                 mov     ecx, [eax]
+  .text:01DC44C6                 mov     edx, [eax+4]
+  .text:01DC44C9                 sub     ecx, edi
+  .text:01DC44CB                 mov     esi, [eax+8]
+  .text:01DC44CE                 sub     edx, ebx
+  .text:01DC44D0                 mov     eax, [eax+0Ch]
+  .text:01DC44D3                 sub     esi, edi
+  .text:01DC44D5                 sub     ecx, [esp+40h+var_20]
+  .text:01DC44D9                 sub     edx, [esp+40h+var_24]
+  .text:01DC44DD                 sub     esi, [esp+40h+var_20]
+  .text:01DC44E1                 sub     eax, ebx
+  .text:01DC44E3                 mov     g_bScissor, 1 ; target global: recover this object base from the current instruction; preserve ELF PIC when present
+  .text:01DC44EA                 mov     g_ScissorRect.left, ecx ; target global: recover this object base from the current instruction; preserve ELF PIC when present
+  .text:01DC44F0                 mov     g_ScissorRect.top, edx
+  .text:01DC44F6                 mov     g_ScissorRect.right, esi
+  .text:01DC44FC                 sub     eax, [esp+40h+var_24]
+  .text:01DC4500                 ; cap
+  .text:01DC4500                 push    0BE2h; cap
+  .text:01DC4505                 mov     g_ScissorRect.bottom, eax
+  .text:01DC450A                 call    ds:glEnable
+  .text:01DC4510                 ; dfactor
+  .text:01DC4510                 push    303h; dfactor
+  .text:01DC4515                 ; sfactor
+  .text:01DC4515                 push    302h; sfactor
+  .text:01DC451A                 call    ds:glBlendFunc
+  .text:01DC4520                 mov     ecx, [esp+40h+var_4]
+  .text:01DC4524                 pop     edi
+  .text:01DC4525                 pop     esi
+  .text:01DC4526                 pop     ebx
+  .text:01DC4527                 ; StackCookie
+  .text:01DC4527                 xor     ecx, esp; StackCookie
+  .text:01DC4529                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:01DC452E                 mov     esp, ebp
+  .text:01DC4530                 pop     ebp
+  .text:01DC4531                 retn    10h
+procedure: |-
+  // EngineSurface::pushMakeCurrent: ECX carries the unused this receiver; the optimized body reads only the four stack arguments. Official source is semantic guidance; platform video queries differ.
+  void __stdcall EngineSurface::pushMakeCurrent(int *insets, int *absExtents, int *clipRect, bool translateToScreenSpace)
+  {
+    int v4; // edi
+    int v5; // esi
+    int v6; // ebx
+    int v7; // esi
+    int v8; // edi
+    int v9; // ebx
+    LONG v10; // ecx
+    LONG v11; // edx
+    LONG v12; // esi
+    int v13; // eax
+    GLfloat zNear_4; // [esp+24h] [ebp-4Ch]
+    GLfloat zNear_4a; // [esp+24h] [ebp-4Ch]
+    GLfloat zFar; // [esp+28h] [ebp-48h]
+    GLfloat zFara; // [esp+28h] [ebp-48h]
+    int v18; // [esp+48h] [ebp-28h]
+    int v19; // [esp+4Ch] [ebp-24h]
+    int v20; // [esp+50h] [ebp-20h]
+    int v21; // [esp+54h] [ebp-1Ch]
+    int v22; // [esp+5Ch] [ebp-14h] BYREF
+    int v23; // [esp+60h] [ebp-10h] BYREF
+    int v24; // [esp+64h] [ebp-Ch] BYREF
+    int v25; // [esp+68h] [ebp-8h] BYREF
+
+    if ( translateToScreenSpace && VideoMode_IsWindowed() )
+    {
+      SDL_GetWindowPosition(*(_DWORD *)pmainwindow, &v22, &v23);
+    }
+    else
+    {
+      v23 = 0;
+      v22 = 0;
+    }
+    if ( VideoMode_IsWindowed() )
+      SDL_GetWindowSize(*(_DWORD *)pmainwindow, &v24, &v25);
+    else
+      VideoMode_GetCurrentVideoMode(&v24, &v25, nullptr);
+    v4 = v22 + v24;
+    v20 = v22;
+    v5 = v23 + v25;
+    v19 = v23;
+    glPushMatrix();
+    glMatrixMode(0x1701u);
+    glLoadIdentity();
+    glOrtho(0.0, (double)(v4 - v20), (double)(v5 - v19), 0.0, -1.0, 1.0);
+    glMatrixMode(0x1700u);
+    glPushMatrix();
+    glLoadIdentity();
+    zFar = (float)insets[1];
+    zNear_4 = (float)*insets;
+    glTranslatef(zNear_4, zFar, 0.0);
+    v6 = *insets;
+    v18 = insets[1];
+    v7 = absExtents[1] - v19;
+    v21 = *absExtents - v20;
+    zFara = (float)v7;
+    zNear_4a = (float)v21;
+    glTranslatef(zNear_4a, zFara, 0.0);
+    v8 = v6 + v21;
+    v9 = v7 + v18;
+    v10 = *clipRect - v8 - v20;
+    v11 = clipRect[1] - (v7 + v18) - v19;
+    v12 = clipRect[2] - v8 - v20;
+    v13 = clipRect[3] - v9;
+    g_bScissor = 1; // target global: flag or whole clipRect-derived rectangle, not an interior member
+    g_ScissorRect.left = v10; // target global: flag or whole clipRect-derived rectangle, not an interior member
+    g_ScissorRect.top = v11;
+    g_ScissorRect.right = v12;
+    g_ScissorRect.bottom = v13 - v19;
+    glEnable(0xBE2u);
+    glBlendFunc(0x302u, 0x303u);
+  }

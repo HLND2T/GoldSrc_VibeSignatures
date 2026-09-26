@@ -1,0 +1,6 @@
+struct_name: vgui2::Panel
+member_name: _buildGroup
+offset: '0x34'
+size: '4'
+offset_sig: 83 EC 14 56 8B F1 8B 06 FF 50 ?? 84 C0 0F 84 ?? ?? ?? ?? 8A 46 ?? 84 C0 8A 44 24 ?? 74 ?? 84 C0
+offset_sig_disp: '0x203'
