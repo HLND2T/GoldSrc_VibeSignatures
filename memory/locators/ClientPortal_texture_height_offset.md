@@ -33,7 +33,7 @@ Windows YAML.
 
 ## Predecessors
 
-- Windows: `ClientPortalManager_RenderPortals`, `ClientPortalManager_EnableClipPlane`,
+- Windows: `ClientPortalManager_RenderPortals`, `ClientPortal_CalculateClipPlane`,
   `ClientPortal_Constructor`.
 - Linux: `ClientPortal_CreateTexture`.
 

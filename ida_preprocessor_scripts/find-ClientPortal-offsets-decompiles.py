@@ -13,7 +13,7 @@ width/height arguments. Each value is verified against the current IDB by the
 walk below before the LLM agreement pass; ambiguous provenance (Linux texture
 fields) use their separate initializer finder. Constructor copies prove
 origin/angles, including an address with zero displacement. The mode belongs
-to ClientPortalSource, independently rooted in EnableClipPlane's arguments.
+to ClientPortalSource, independently rooted in CalculateClipPlane's arguments.
 """
 
 import inspect
@@ -174,7 +174,7 @@ async def preprocess_skill(
         anchors = {}
         inputs = [("constructor", f"{source_name}_Constructor")]
         if source_name == "ClientPortal":
-            inputs.append(("clip", "ClientPortalManager_EnableClipPlane"))
+            inputs.append(("clip", "ClientPortal_CalculateClipPlane"))
         for key, name in inputs:
             payload = _load_yaml_mapping(Path(new_binary_dir) / f"{name}.{platform}.yaml")
             if not payload or payload.get("func_name") != name:

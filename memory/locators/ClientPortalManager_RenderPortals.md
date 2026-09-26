@@ -69,7 +69,8 @@ tags:
   reports zero owners rather than a wrong one.
 - Stored research addresses (W 0x1004E4F0 / L 0xfc2b4) are validation evidence only; the finder
   never consumes them.
-- RenderPortals is the root of the portal family: `EnableClipPlane` (sole callee) and
+- RenderPortals is the root of the portal family: `EnableClipPlane` (direct on Windows,
+  through SetupRendering on Linux) and
   `ClientPortal_Constructor` (two call edges below, through the portal factory) are both located
   relative to this artifact, and `find-ClientPortal-offsets-decompiles` decodes this function's body
   to prove the manager vector and Windows texture offsets.

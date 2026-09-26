@@ -29,7 +29,7 @@ tags:
 ## Predecessors
 
 - `ClientPortalManager_RenderPortals` (produced by `find-ClientPortalManager_RenderPortals`)
-- `ClientPortalManager_EnableClipPlane` (produced by `find-ClientPortalManager_EnableClipPlane`)
+- `ClientPortal_CalculateClipPlane` (produced by `find-ClientPortal_CalculateClipPlane`)
 - `ClientPortal_Constructor` (produced by `find-ClientPortal_Constructor`)
 
 All three are `expected_input` artifacts; the walk itself consumes RenderPortals (and the other two

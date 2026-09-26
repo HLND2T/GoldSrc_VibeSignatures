@@ -45,7 +45,7 @@ tags:
 
 ## Pitfalls
 
-- Unlike RenderPortals / EnableClipPlane / CreateTexture, this finder has **no** PIC fallback and
+- Unlike RenderPortals / CalculateClipPlane / CreateTexture, this finder has **no** PIC fallback and
   imports no `_sven_client_pic_common` helper. That is deliberate: on the validated 10257 client.so
   this diagnostic keeps a resolvable literal reference, so the plain xref path suffices. If a future
   SvEngine rebuild makes this site GOTOFF-only, the primary path would report zero owners and the

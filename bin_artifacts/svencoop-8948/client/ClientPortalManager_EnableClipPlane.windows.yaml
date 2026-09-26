@@ -1,5 +1,5 @@
 func_name: ClientPortalManager_EnableClipPlane
-func_va: '0x1004f960'
-func_rva: '0x4f960'
+func_va: '0x10097ea0'
+func_rva: '0x97ea0'
 func_size: '0x306'
 func_sig: 83 EC 58 A1 ?? ?? ?? ?? 33 C4 89 44 24 ?? 8B 4C 24 ?? 8D 54 24 ?? 8B 44 24 ?? F3 0F 10 0D ?? ?? ?? ?? 89 54 24 ??

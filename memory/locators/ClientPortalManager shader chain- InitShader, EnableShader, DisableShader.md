@@ -71,5 +71,10 @@ and no LLM step participates.
 
 ## Relations
 
+- Issue 254 adds the downstream `find-ClientPortalManager_m_bShadersAvailable` producer.
+  It reuses InitShader and DrawPortals and verifies both live toggles plus this-owned stores
+  on every binary, including Windows inline reads. It publishes a 1-byte struct member:
+  Windows `0x1e0`, Linux `0x1d4` on both builds. See [[ClientPortalManager_m_bShadersAvailable locator]].
+
 - relates_to [[ClientPortalManager_DrawPortals]]
 - relates_to [[ClientPortalManager_RenderPortals]]

@@ -2240,8 +2240,13 @@ modules:
         expected_output:
           - ClientPortalManager_RenderPortals.{platform}.yaml
       - name: find-ClientPortalManager_EnableClipPlane
+        expected_input:
+          - ClientPortalManager_RenderPortals.{platform}.yaml
         expected_output:
           - ClientPortalManager_EnableClipPlane.{platform}.yaml
+      - name: find-ClientPortal_CalculateClipPlane
+        expected_output:
+          - ClientPortal_CalculateClipPlane.{platform}.yaml
       - name: find-ClientPortalManager_CreateInvisiblePortalTextures
         expected_output:
           - ClientPortalManager_CreateInvisiblePortalTextures.{platform}.yaml
@@ -2264,6 +2269,12 @@ modules:
           - ClientPortalManager_InitShader.{platform}.yaml
         expected_output_linux:
           - ClientPortalManager_EnableShader.linux.yaml
+      - name: find-ClientPortalManager_m_bShadersAvailable
+        expected_input:
+          - ClientPortalManager_InitShader.{platform}.yaml
+          - ClientPortalManager_DrawPortals.{platform}.yaml
+        expected_output:
+          - ClientPortalManager_m_bShadersAvailable.{platform}.yaml
       - name: find-IEngineClient-view-slots
         expected_input:
           - ClientPortalManager_RenderPortals.{platform}.yaml
@@ -2274,7 +2285,7 @@ modules:
       - name: find-ClientPortal-offsets-decompiles
         expected_input:
           - ClientPortalManager_RenderPortals.{platform}.yaml
-          - ClientPortalManager_EnableClipPlane.{platform}.yaml
+          - ClientPortal_CalculateClipPlane.{platform}.yaml
           - ClientPortal_Constructor.{platform}.yaml
         expected_output:
           - ClientPortalManager_vector_begin_offset.{platform}.yaml
@@ -2333,6 +2344,14 @@ modules:
         category: func
       - name: ClientPortalManager_EnableClipPlane
         category: func
+      - name: ClientPortal_CalculateClipPlane
+        category: func
+      - name: ClientPortalManager
+        category: struct
+      - name: ClientPortalManager_m_bShadersAvailable
+        category: structmember
+        struct: ClientPortalManager
+        member: m_bShadersAvailable
       - name: ClientPortalManager_CreateInvisiblePortalTextures
         category: func
       - name: ClientPortalManager_ResetAll

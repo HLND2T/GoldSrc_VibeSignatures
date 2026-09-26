@@ -2,6 +2,7 @@ import copy
 import unittest
 
 from ida_preprocessor_scripts._portal_layout import constructor_offsets, linux_texture_offsets, source_mode_offset
+from ida_preprocessor_scripts._portal_render_state import recover_shader_member, clip_setup, clip_call_arguments
 
 
 def reg(name, size=4):
@@ -61,6 +62,129 @@ def texture(offset=196):
 
 
 class PortalLayoutTests(unittest.TestCase):
+    def shader_fixture(self, flag=36, program=40):
+        init, draw = 100, 200
+        body = [
+            ins("mov", reg("esi"), reg("ecx")),
+            ins("mov", mem("esi", flag, 1), imm(1)),
+            ins("mov", mem("esi", flag, 1), imm(0)),
+            ins("mov", mem("esi", program), imm(0)),
+            ins("ret"),
+        ]
+        toggles = []
+        for argument in [mem("ebx", program), imm(0)]:
+            start = len(toggles)
+            toggles += [
+                ins("mov", reg("ecx"), reg("ebx")),
+                ins("call", {"kind": "func", "size": 4, "value": init}),
+                ins("cmp", mem("ebx", flag, 1), imm(0)),
+                ins("jz"),
+                ins("mov", reg("eax"), {"kind": "global", "size": 4, "value": 900}),
+                ins("push", argument),
+                ins("call", reg("eax")),
+                ins("nop"),
+            ]
+            toggles[start + 3]["successors"] = [start + 4, start + 7]
+        toggles.append(ins("ret"))
+        for code in [body, toggles]:
+            for i, item in enumerate(code):
+                item["ea"] = i
+        return init, draw, {init: body, draw: toggles}
+
+    def test_shader_byte_agrees_with_both_live_toggles(self):
+        for flag, program in [(36, 40), (80, 100)]:
+            init, draw, functions = self.shader_fixture(flag, program)
+            result = recover_shader_member(init, draw, functions, "windows")
+            self.assertEqual((flag, 1, program), (result["offset"], result["size"], result["program"]))
+
+    def test_linux_shader_wrappers_allow_cdecl_cleanup_and_split_reset(self):
+        for split in (False, True):
+            init, draw, functions = self.shader_fixture()
+            functions[init][0] = ins("mov", reg("esi"), mem("esp", 4))
+            functions[draw] = [
+                ins("call", {"kind": "func", "size": 4, "value": 300}),
+                ins("call", {"kind": "func", "size": 4, "value": 400}),
+                ins("ret"),
+            ]
+            for owner, argument in [(300, mem("ebx", 40)), (400, imm(0))]:
+                functions[owner] = [
+                    ins("mov", reg("ebx"), mem("esp", 4)),
+                    ins("push", reg("ebx")),
+                    ins("call", {"kind": "func", "size": 4, "value": init}),
+                    ins("add", reg("esp"), imm(4)),
+                    ins("cmp", mem("ebx", 36, 1), imm(0)),
+                    ins("jz"),
+                    ins("mov", reg("eax"), {"kind": "global", "size": 4, "value": 900}),
+                    ins("push", argument),
+                    ins("call", reg("eax")),
+                    ins("ret"),
+                ]
+                functions[owner][5]["successors"] = [6, 9]
+            if split:
+                functions[400][6:] = [ins("call", {"kind": "func", "size": 4, "value": 500}), ins("ret")]
+                functions[400][5]["successors"] = [6, 7]
+                functions[500] = [
+                    ins("mov", reg("eax"), {"kind": "global", "size": 4, "value": 900}),
+                    ins("push", imm(0)),
+                    ins("call", reg("eax")),
+                    ins("ret"),
+                ]
+            for code in functions.values():
+                for i, item in enumerate(code):
+                    item["ea"] = i
+            result = recover_shader_member(init, draw, functions, "linux")
+            self.assertEqual((36, 1), (result["offset"], result["size"]))
+
+    def test_shader_rejects_wrong_width_local_flag_and_disagreeing_reads(self):
+        for mutation in ["width", "stack", "other_flag", "program", "slot", "missing_enable_write"]:
+            init, draw, functions = self.shader_fixture()
+            if mutation == "width":
+                functions[init][1]["operands"][0]["size"] = 4
+            elif mutation == "stack":
+                functions[init][1]["operands"][0]["base"] = "esp"
+            elif mutation == "other_flag":
+                functions[draw][10]["operands"][0]["disp"] = 37
+            elif mutation == "program":
+                functions[draw][5]["operands"][0]["disp"] = 36
+            elif mutation == "slot":
+                functions[draw][12]["operands"][1]["value"] = 901
+            else:
+                functions[init][1]["operands"][1] = imm(0)
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                recover_shader_member(init, draw, functions, "windows")
+
+    def test_clip_setup_distinguishes_diagnostic_owner_and_wrong_gl_cap(self):
+        code = [
+            api("glLoadIdentity"),
+            ins("lea", reg("esi"), mem("edi", 0x3000)),
+            ins("lea", reg("eax"), mem("esp", 32)),
+            ins("mov", mem("esp", 4), reg("eax")),
+            ins("mov", mem("esp"), reg("esi")),
+            api("glClipPlane"),
+            ins("mov", mem("esp"), reg("esi")),
+            api("glEnable"),
+        ]
+        for i, item in enumerate(code):
+            item["ea"] = i
+        self.assertTrue(clip_setup(code, "linux"))
+        self.assertFalse(clip_setup([api("printf")], "linux"))
+        code[1]["operands"][1]["disp"] = 0xDE1
+        self.assertFalse(clip_setup(code, "linux"))
+
+    def test_clip_caller_requires_related_view_vectors(self):
+        code = [
+            ins("lea", reg("eax"), mem("esi", 12)),
+            ins("push", reg("edi")),
+            ins("push", reg("esi")),
+            ins("push", reg("eax")),
+            ins("push", imm(0)),
+            ins("mov", reg("ecx"), reg("ebx")),
+            ins("call", {"kind": "func", "size": 4, "value": 100}),
+        ]
+        self.assertTrue(clip_call_arguments(code, 100, "windows"))
+        code[0]["operands"][1]["disp"] = 16
+        self.assertFalse(clip_call_arguments(code, 100, "windows"))
+
     def test_getter_tracks_pointer_arithmetic_after_entity_load(self):
         from ida_preprocessor_scripts._portal_layout import getter_return
 
