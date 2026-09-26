@@ -1,0 +1,5 @@
+func_name: S_StartDynamicSound
+func_va: '0x1d96330'
+func_rva: '0x96330'
+func_size: '0x3aa'
+func_sig: 83 EC 58 A1 ?? ?? ?? ?? 33 C4 89 44 24 ?? 8B 44 24 ?? 55 8B 6C 24 ?? 89 44 24 ?? 33 C0 57 8B 7C 24 ??
