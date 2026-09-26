@@ -169,7 +169,7 @@ def _join(states):
 
 def _transfer(block, incoming, platform, static_loads, collect=False):
     state = incoming.copy()
-    events = dict(calls=[], comparisons=[], branches=[], returns=[], stores=[])
+    events = dict(calls=[], comparisons=[], branches=[], returns=[], stores=[], loads=[])
     condition = None
 
     def write(operand, value, ea):
@@ -193,7 +193,9 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
             elif address is not None:
                 state[("modified", address)] = ("const", 1)
             if collect:
-                events["stores"].append(dict(ea=ea, address=address, value=value))
+                events["stores"].append(
+                    dict(ea=ea, address=address, value=value, width=operand[5] if len(operand) > 5 else WORD_SIZE)
+                )
 
     for insn in block["insns"]:
         ea, mnemonic, operands = insn["ea"], insn["mnem"], insn["ops"]
@@ -203,6 +205,15 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
             "mov",
             "movzx",
             "movsx",
+            "movd",
+            "movq",
+            "movdqa",
+            "movdqu",
+            "movaps",
+            "movups",
+            "pxor",
+            "xorps",
+            "xorpd",
             "lea",
             "push",
             "pop",
@@ -222,6 +233,15 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
         state["esp"] = ("stack", sp)
         read = lambda operand: operand_value(operand, state, static_loads)
         if mnemonic in ("mov", "movzx", "movsx") and len(operands) == 2:
+            if collect and operands[1][0] == "mem":
+                events["loads"].append(
+                    dict(
+                        ea=ea,
+                        address=memory_address(operands[1], state),
+                        value=read(operands[1]),
+                        width=operands[1][5] if len(operands[1]) > 5 else WORD_SIZE,
+                    )
+                )
             write(operands[0], read(operands[1]), ea)
             if operands[0][:2] == ("reg", "esp"):
                 restored = state.get("esp")
@@ -285,6 +305,7 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
                         args=[boolean_origin(v) for v in args],
                         stack_args=[boolean_origin(v) for v in stack_args],
                         this=state.get("ecx"),
+                        registers={name: state.get(name) for name in ("eax", "ecx", "edx", "ebx", "esi", "edi")},
                         tail=tail,
                     )
                 )
@@ -312,7 +333,22 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
     return state, events
 
 
-def trace_function(blocks, entry, platform, static_loads=None):
+def entry_state_from_call(call):
+    """Transfer proven values into a split body without aliasing either stack."""
+
+    def rebase(value):
+        if not isinstance(value, tuple):
+            return value
+        if value[0] == "stack":
+            return ("caller_stack", call["ea"], value[1])
+        return tuple(rebase(part) for part in value)
+
+    state = {name: rebase(value) for name, value in call["registers"].items()}
+    state.update({("stack", WORD_SIZE * (i + 1)): rebase(value) for i, value in enumerate(call["stack_args"])})
+    return state
+
+
+def trace_function(blocks, entry, platform, static_loads=None, *, entry_state=None):
     """Compute bounded reaching values and collect dispatch/branch observations."""
     graph = {block["start"]: block for block in blocks}
     if entry not in graph or platform not in ("windows", "linux"):
@@ -321,9 +357,11 @@ def trace_function(blocks, entry, platform, static_loads=None):
     initial = {
         ("stack", WORD_SIZE * (index + 1)): ("arg", index + (platform == "windows")) for index in range(MAX_ARGUMENTS)
     }
-    initial["stack_correction"] = ("const", 0)
     if platform == "windows":
         initial["ecx"] = ("arg", 0)
+    if entry_state is not None:
+        initial = entry_state.copy()
+    initial["stack_correction"] = ("const", 0)
     predecessors = {address: [] for address in graph}
     for block in blocks:
         for successor in block["succs"]:
@@ -348,7 +386,7 @@ def trace_function(blocks, entry, platform, static_loads=None):
         if updates > MAX_BLOCK_UPDATES:
             raise ValueError("interface dataflow did not converge")
         work.extend(successor for successor in graph[address]["succs"] if successor in graph)
-    result = dict(calls=[], comparisons=[], branches=[], returns=[], stores=[])
+    result = dict(calls=[], comparisons=[], branches=[], returns=[], stores=[], loads=[])
     for address in sorted(inputs):
         _, events = _transfer(graph[address], inputs[address], platform, static_loads, collect=True)
         for key in result:

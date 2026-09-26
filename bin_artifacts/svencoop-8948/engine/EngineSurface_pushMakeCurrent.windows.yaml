@@ -1,0 +1,9 @@
+func_name: EngineSurface::pushMakeCurrent(int *, int *, int *, bool)
+func_va: '0x1dc2b40'
+func_rva: '0xc2b40'
+func_size: '0x1f4'
+func_sig: 55 8B EC 83 E4 C0 83 EC 34 A1 ?? ?? ?? ?? 33 C4 89 44 24 ?? 80 7D ?? ?? 8B 45 ?? 53 56 89 44 24 ??
+func_sig_allow_across_function_boundary: true
+vtable_name: EngineSurface
+vfunc_offset: '0x4'
+vfunc_index: 1

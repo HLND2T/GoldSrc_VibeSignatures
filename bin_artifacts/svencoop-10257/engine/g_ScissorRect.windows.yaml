@@ -1,0 +1,8 @@
+gv_name: g_ScissorRect
+gv_va: '0x95f43a8'
+gv_rva: '0x78f43a8'
+gv_sig: 55 8B EC 83 E4 C0 83 EC 34 A1 ?? ?? ?? ?? 33 C4 89 44 24 ?? 80 7D ?? ?? 8B 45 ?? 53 56 89 44 24 ??
+gv_sig_va: '0x1dc4340'
+gv_inst_offset: '0x1aa'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'

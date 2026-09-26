@@ -27,6 +27,84 @@ def mem(base, offset=0):
 
 
 class VcallFlowTests(unittest.TestCase):
+    def test_reassigning_getter_cleanup_to_consumer_preserves_loop_stack(self):
+        blocks = [
+            dict(start=1, succs=[10], insns=[instruction(1, "mov", reg("esi"), reg("ecx"))]),
+            dict(
+                start=10,
+                succs=[10, 20],
+                insns=[
+                    instruction(10, "push", imm(1)),
+                    instruction(11, "mov", reg("ecx"), reg("esi"), sp=-4),
+                    instruction(12, "mov", reg("eax"), mem("esi"), sp=-4),
+                    instruction(13, "call", mem("eax"), sp=-4, after=0, purge=0),
+                    instruction(14, "push", reg("eax")),
+                    instruction(15, "call", imm(500), sp=-4, after=0, purge=8, direct=500),
+                ],
+            ),
+            dict(start=20, succs=[], insns=[instruction(20, "ret")]),
+        ]
+        flow = trace_function(blocks, 1, "windows")
+        consumer = next(c for c in flow["calls"] if c["ea"] == 15)
+        self.assertEqual([("result", 13), ("const", 1)], consumer["stack_args"][:2])
+
+    def test_simd_zero_initialization_preserves_integer_guard_flags(self):
+        blocks = [
+            dict(
+                start=1,
+                succs=[10, 20],
+                insns=[
+                    instruction(1, "cmp", (*mem("esp", 8), 1), imm(0)),
+                    instruction(2, "pxor", reg("xmm0"), reg("xmm0"), writes=["xmm0"]),
+                    instruction(
+                        3, "movdqu", (*mem("esp", -16), 16), reg("xmm0"), memory_writes=[(*mem("esp", -16), 16)]
+                    ),
+                    instruction(4, "jz", imm(20), branch=20),
+                ],
+            ),
+            dict(start=10, succs=[], insns=[]),
+            dict(start=20, succs=[], insns=[]),
+        ]
+        result = trace_function(blocks, 1, "windows")
+        self.assertEqual(("arg", 2), result["branches"][0]["condition"])
+
+    def test_split_body_preserves_verified_register_arguments(self):
+        from ida_preprocessor_scripts._x86_vcall_flow import entry_state_from_call
+
+        caller = [
+            instruction(1, "mov", reg("eax"), mem("esp", 4)),
+            instruction(2, "movzx", reg("edx"), (*mem("esp", 8), 1)),
+            instruction(3, "call", imm(100), direct=100),
+        ]
+        call = trace_function([dict(start=1, succs=[], insns=caller)], 1, "linux")["calls"][0]
+        body = [
+            instruction(100, "mov", reg("esi"), reg("eax")),
+            instruction(101, "mov", reg("ecx"), mem("esi", 44)),
+            instruction(102, "mov", reg("eax"), mem("ecx")),
+            instruction(103, "call", mem("eax", 60)),
+        ]
+        flow = trace_function(
+            [dict(start=100, succs=[], insns=body)], 100, "linux", entry_state=entry_state_from_call(call)
+        )
+        self.assertEqual([(("load", ("arg", 0), 44), 60)], virtual_targets(flow["calls"][0]["target"]))
+        self.assertEqual(("address", ("arg", 0), 44), flow["loads"][0]["address"])
+
+    def test_split_body_cannot_invent_default_arguments_or_alias_caller_stack(self):
+        from ida_preprocessor_scripts._x86_vcall_flow import entry_state_from_call
+
+        call = {"ea": 10, "registers": {"eax": None}, "stack_args": [("stack", 4), None]}
+        body = [
+            instruction(100, "mov", reg("ecx"), mem("esp", 4)),
+            instruction(101, "mov", reg("eax"), mem("ecx")),
+            instruction(102, "mov", reg("edx"), mem("esp", 8)),
+            instruction(103, "ret"),
+        ]
+        flow = trace_function(
+            [dict(start=100, succs=[], insns=body)], 100, "linux", entry_state=entry_state_from_call(call)
+        )
+        self.assertEqual(("load", ("caller_stack", 10, 4), 0), flow["returns"][0]["value"])
+        self.assertIsNone(flow["loads"][2]["value"])
+
     def test_verified_callee_cleanup_preserves_prepushed_byte_arguments(self):
         code = [
             instruction(1, "mov", reg("esi"), reg("ecx")),

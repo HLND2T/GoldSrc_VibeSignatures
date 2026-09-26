@@ -1,0 +1,9 @@
+func_name: BaseUISurface::PushMakeCurrent(unsigned int, bool)
+func_va: '0x1d03470'
+func_rva: '0x3470'
+func_size: '0xd6'
+func_sig: 83 EC 30 8A 44 24 ?? 53 56 8B 74 24 ?? 57 8B F9 33 DB 3A C3 89 5F ?? 89 5C 24 ?? 89 5C 24 ??
+func_sig_allow_across_function_boundary: true
+vtable_name: BaseUISurface
+vfunc_offset: '0x14'
+vfunc_index: 5

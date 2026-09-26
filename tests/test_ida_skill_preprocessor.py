@@ -3285,6 +3285,49 @@ found_struct_offset: []
                 if immediate_width == 1:
                     self.assertIsNone(detail["operand_dwords"][1])
 
+    def test_pic_byte_store_ignores_scalar_in_mapped_elf_header(self):
+        ea = 0x1010
+        encoded = bytes.fromhex("C6 83 00 05 00 00 01")
+        instruction = SimpleNamespace(
+            ops=[
+                SimpleNamespace(type=4, offb=2, addr=0x500),
+                SimpleNamespace(type=5, offb=6, value=1),
+                SimpleNamespace(type=0),
+            ]
+        )
+        modules = {
+            "ida_bytes": SimpleNamespace(get_dword=lambda address: 0x500, get_bytes=lambda *args: encoded),
+            "ida_fixup": SimpleNamespace(fixup_data_t=lambda: None, get_fixup=lambda *args: False),
+            "ida_funcs": SimpleNamespace(get_func=lambda address: SimpleNamespace(start_ea=0x1000, end_ea=0x1100)),
+            "ida_lines": SimpleNamespace(tag_remove=lambda text: text),
+            "ida_segment": SimpleNamespace(
+                getseg=lambda address: SimpleNamespace(perm=6, end_ea=0x10000), SEGPERM_EXEC=1
+            ),
+            "idaapi": SimpleNamespace(inf_is_64bit=lambda: False, BADADDR=0xFFFFFFFF),
+            "ida_ua": SimpleNamespace(
+                o_void=0,
+                o_reg=1,
+                o_mem=2,
+                o_phrase=3,
+                o_displ=4,
+                o_imm=5,
+                o_near=6,
+                o_far=7,
+                insn_t=lambda: instruction,
+                decode_insn=lambda *args: len(encoded),
+            ),
+            "idautils": SimpleNamespace(DataRefsFrom=lambda address: [0x8500], CodeRefsFrom=lambda *args: []),
+            "idc": SimpleNamespace(
+                generate_disasm_line=lambda *args: "mov byte ptr [ebx+500h], 1", print_insn_mnem=lambda address: "mov"
+            ),
+        }
+        namespace = {}
+        with patch.dict("sys.modules", modules):
+            exec(ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)), {}, namespace)
+        detail = json.loads(namespace["result"])
+        self.assertEqual(["0x8500"], ida_analyze_util._llm_global_targets(detail, platform="linux"))
+        self.assertEqual(2, ida_analyze_util._gv_operand_displacement(detail))
+
     def test_relative_store_resolution_overrides_mapped_displacement(self):
         detail = {
             "data_refs": ["0x6020"],
@@ -4731,6 +4774,36 @@ found_struct_offset: []
             )
             self.assertEqual(5, result["vfunc_index"])
             self.assertEqual("0x14", result["vfunc_offset"])
+
+    async def test_inherited_short_vfunc_requires_explicit_signature_boundary_permission(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "Base_Run.windows.yaml").write_text("func_name: Base_Run\nvfunc_index: 1\nvfunc_offset: '0x4'\n")
+            (root / "Derived_vtable.windows.yaml").write_text("vtable_entries:\n  1: '0x401000'\n")
+            for allowed in (False, True):
+                with patch("ida_analyze_util._inspect_function_via_mcp", new_callable=AsyncMock) as inspect:
+                    inspect.side_effect = [
+                        None,
+                        {"func_name": "Derived_Run", "func_va": "0x401000", "func_sig": "C3 90"},
+                    ]
+                    result = await preprocess_index_based_vfunc_via_mcp(
+                        session=object(),
+                        target_func_name="Derived_Run",
+                        target_output=root / "output.yaml",
+                        old_yaml_map=None,
+                        new_binary_dir=root,
+                        platform="windows",
+                        image_base=0x400000,
+                        base_vfunc_name="Base_Run",
+                        inherit_vtable_class="Derived",
+                        allow_func_sig_across_function_boundary=allowed,
+                    )
+                    if allowed:
+                        self.assertTrue(result["func_sig_allow_across_function_boundary"])
+                        self.assertEqual(True, inspect.call_args.kwargs["allow_across_function_boundary"])
+                    else:
+                        self.assertIsNone(result)
+                        self.assertEqual(1, inspect.await_count)
 
     async def test_inherited_concrete_vfunc_can_record_bounds_without_signature(self):
         with tempfile.TemporaryDirectory() as temporary:

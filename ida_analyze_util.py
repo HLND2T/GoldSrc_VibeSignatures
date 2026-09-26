@@ -2669,7 +2669,7 @@ async def preprocess_index_based_vfunc_via_mcp(
     allow_func_sig_across_function_boundary=False,
     debug=False,
 ):
-    del old_yaml_map, allow_func_sig_across_function_boundary, debug
+    del old_yaml_map, debug
     base_path = _resolve_artifact_stem_path(new_binary_dir, base_vfunc_name, platform)
     base = _load_yaml_mapping(base_path)
     if not base:
@@ -2703,6 +2703,12 @@ async def preprocess_index_based_vfunc_via_mcp(
         return None
     if generate_func_sig:
         function = await _inspect_function_via_mcp(session, target_va, image_base, target_func_name)
+        if function is None and allow_func_sig_across_function_boundary:
+            function = await _inspect_function_via_mcp(
+                session, target_va, image_base, target_func_name, allow_across_function_boundary=True
+            )
+            if function is not None:
+                function["func_sig_allow_across_function_boundary"] = True
         if function is None:
             return None
     else:
@@ -3159,6 +3165,10 @@ if size:
             # an immediate is an address comparison (cmp reg, offset symbol),
             # the anchor of dispatch virtuals and of relocated globals.
             immediate_is_scalar = mnemonic in ('cmp', 'test') and insn.ops[0].type != ida_ua.o_reg
+            # A narrow encoded immediate cannot hold the native-width address
+            # consumed by the runtime resolver. In an ELF with a zero-based
+            # LOAD segment, even the scalar 1 may otherwise look mapped.
+            immediate_is_scalar = immediate_is_scalar or bool(offb and offb + pointer_size > size)
             # Array addressing can materialize its relocated global base with
             # ADD reg, offset object. Unlike a scalar/PIC-base adjustment, the
             # complete imm32 must itself have an IDA xref to mapped data.

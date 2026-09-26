@@ -1,0 +1,9 @@
+func_name: EngineSurface::popMakeCurrent()
+func_va: '0x1dc4540'
+func_rva: '0xc4540'
+func_size: '0x43'
+func_sig: 8B 01 56 FF 50 ?? 8B 35 ?? ?? ?? ?? 68 01 17 00 00 FF D6 68 00 17 00 00 FF D6 8B 35 ?? ?? ?? ?? FF D6
+func_sig_allow_across_function_boundary: true
+vtable_name: EngineSurface
+vfunc_offset: '0x8'
+vfunc_index: 2

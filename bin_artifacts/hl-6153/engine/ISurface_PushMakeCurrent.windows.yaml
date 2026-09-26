@@ -1,0 +1,4 @@
+func_name: vgui2::ISurface::PushMakeCurrent
+vtable_name: vgui2::ISurface
+vfunc_offset: '0x14'
+vfunc_index: 5

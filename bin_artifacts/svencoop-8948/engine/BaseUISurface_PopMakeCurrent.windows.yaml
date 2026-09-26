@@ -1,0 +1,11 @@
+func_name: BaseUISurface::PopMakeCurrent(unsigned int)
+func_va: '0x1d11ff0'
+func_rva: '0x11ff0'
+func_size: '0xb'
+func_sig: 8B 49 ?? 8B 01 FF 50 ?? C2 04 00 CC CC CC CC CC C6 41 ?? ?? 32 C0 C2 0C 00 CC CC CC CC CC CC CC C6 41 ?? ?? C3 CC
+  CC CC CC CC CC CC CC CC CC CC C2 04 00 CC CC CC CC CC CC CC CC CC CC CC CC CC C2 04 00 CC CC CC CC CC CC CC CC CC CC CC
+  CC CC 8B 44 24 ?? 48 83 F8 05 77 ?? FF 24 85 ?? ?? ?? ?? B0 01 C2 04 00 32 C0 C2 04 00 90
+func_sig_allow_across_function_boundary: true
+vtable_name: BaseUISurface
+vfunc_offset: '0x18'
+vfunc_index: 6

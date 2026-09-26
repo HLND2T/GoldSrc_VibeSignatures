@@ -1,0 +1,269 @@
+func_name: "EngineSurface_pushMakeCurrent"
+func_va: "0x168600"
+disasm_code: |-
+  .text:00168600                 push    ebp
+  .text:00168601                 xor     ebp, ebp
+  .text:00168603                 push    edi
+  .text:00168604                 push    esi
+  .text:00168605                 push    ebx
+  .text:00168606                 xor     ebx, ebx
+  .text:00168608                 sub     esp, 6Ch
+  .text:0016860B                 cmp     [esp+7Ch+translateToScreenSpace], 0
+  .text:00168613                 mov     edi, [esp+7Ch+insets]
+  .text:0016861A                 mov     esi, [esp+7Ch+clipRect]
+  .text:00168621                 mov     [esp+7Ch+pnt.x], ebx
+  .text:00168625                 mov     [esp+7Ch+pnt.y], ebp
+  .text:00168629                 jnz     loc_168818
+  .text:0016862F                 xor     eax, eax
+  .text:00168631                 mov     [esp+7Ch+wide], eax
+  .text:00168635                 xor     eax, eax
+  .text:00168637                 mov     [esp+7Ch+var_24], eax
+  .text:0016863B                 call    VideoMode_IsWindowed
+  .text:00168640                 test    eax, eax
+  .text:00168642                 jnz     loc_1687F0
+  .text:00168648                 xor     eax, eax
+  .text:0016864A                 ; bpp
+  .text:0016864A                 mov     [esp+7Ch+bpp], eax; bpp
+  .text:0016864E                 lea     eax, [esp+7Ch+var_20]
+  .text:00168652                 ; tall
+  .text:00168652                 mov     [esp+7Ch+tall], eax; tall
+  .text:00168656                 lea     eax, [esp+7Ch+var_28]
+  .text:0016865A                 ; wide
+  .text:0016865A                 mov     [esp+7Ch+var_7C], eax; wide
+  .text:0016865D                 call    VideoMode_GetCurrentVideoMode
+  .text:00168662                 mov     edx, [esp+7Ch+var_28]
+  .text:00168666                 mov     eax, [esp+7Ch+wide]
+  .text:0016866A                 mov     ecx, [esp+7Ch+var_20]
+  .text:0016866E                 mov     ebx, [esp+7Ch+var_24]
+  .text:00168672                 mov     ebp, [esp+7Ch+pnt.x]
+  .text:00168676                 add     eax, edx
+  .text:00168678                 mov     [esp+7Ch+x0], eax
+  .text:0016867C                 mov     [esp+7Ch+var_28], eax
+  .text:00168680                 mov     eax, [esp+7Ch+pnt.y]
+  .text:00168684                 add     ebx, ecx
+  .text:00168686                 mov     [esp+7Ch+var_20], tall_0
+  .text:0016868A                 mov     [esp+7Ch+surfaceAbsExtents_1], eax
+  .text:0016868E                 call    ds:qglPushMatrix
+  .text:00168694                 ; GLenum
+  .text:00168694                 mov     [esp+7Ch+var_7C], 1701h; GLenum
+  .text:0016869B                 call    ds:qglMatrixMode
+  .text:001686A1                 call    ds:qglLoadIdentity
+  .text:001686A7                 xor     eax, eax
+  .text:001686A9                 xor     edx, edx
+  .text:001686AB                 mov     [esp+7Ch+y0], tall_0
+  .text:001686AF                 ; GLdouble
+  .text:001686AF                 mov     dword ptr [esp+7Ch+var_54], eax; GLdouble
+  .text:001686B3                 mov     eax, 3FF00000h
+  .text:001686B8                 mov     dword ptr [esp+7Ch+var_54+4], eax
+  .text:001686BC                 xor     eax, eax
+  .text:001686BE                 ; GLdouble
+  .text:001686BE                 mov     dword ptr [esp+7Ch+var_5C], eax; GLdouble
+  .text:001686C2                 mov     eax, 0BFF00000h
+  .text:001686C7                 fild    [esp+7Ch+y0]
+  .text:001686CB                 mov     dword ptr [esp+7Ch+var_5C+4], eax
+  .text:001686CF                 xor     eax, eax
+  .text:001686D1                 ; GLdouble
+  .text:001686D1                 mov     dword ptr [esp+7Ch+var_64], eax; GLdouble
+  .text:001686D5                 xor     eax, eax
+  .text:001686D7                 mov     dword ptr [esp+7Ch+var_64+4], eax
+  .text:001686DB                 mov     [esp+7Ch+tall], edx
+  .text:001686DF                 ; GLdouble
+  .text:001686DF                 mov     [esp+7Ch+var_7C], 0; GLdouble
+  .text:001686E6                 ; GLdouble
+  .text:001686E6                 fstp    [esp+7Ch+var_6C]; GLdouble
+  .text:001686EA                 fild    [esp+7Ch+x0]
+  .text:001686EE                 ; GLdouble
+  .text:001686EE                 fstp    qword ptr [esp+7Ch+bpp]; GLdouble
+  .text:001686F2                 call    ds:qglOrtho
+  .text:001686F8                 ; GLenum
+  .text:001686F8                 mov     [esp+7Ch+var_7C], 1700h; GLenum
+  .text:001686FF                 call    ds:qglMatrixMode
+  .text:00168705                 call    ds:qglPushMatrix
+  .text:0016870B                 call    ds:qglLoadIdentity
+  .text:00168711                 ; GLfloat
+  .text:00168711                 mov     [esp+7Ch+bpp], 0; GLfloat
+  .text:00168719                 fild    dword ptr [edi+4]
+  .text:0016871C                 ; GLfloat
+  .text:0016871C                 fstp    [esp+7Ch+tall]; GLfloat
+  .text:00168720                 fild    dword ptr [edi]
+  .text:00168722                 ; GLfloat
+  .text:00168722                 fstp    [esp+7Ch+var_7C]; GLfloat
+  .text:00168725                 call    ds:qglTranslatef
+  .text:0016872B                 mov     ecx, [esp+7Ch+absExtents]
+  .text:00168732                 mov     edx, [esp+7Ch+absExtents]
+  .text:00168739                 mov     tall_0, [edi]
+  .text:0016873B                 mov     edi, [edi+4]
+  .text:0016873E                 mov     eax, [ecx+4]
+  .text:00168741                 mov     ecx, [esp+7Ch+surfaceAbsExtents_1]
+  .text:00168745                 mov     edx, [edx]
+  .text:00168747                 ; GLfloat
+  .text:00168747                 mov     [esp+7Ch+bpp], 0; GLfloat
+  .text:0016874F                 sub     y0_0, ecx
+  .text:00168751                 mov     [esp+7Ch+y0], eax
+  .text:00168755                 sub     x0_0, surfaceAbsExtents
+  .text:00168757                 fild    [esp+7Ch+y0]
+  .text:0016875B                 mov     [esp+7Ch+x0], x0_0
+  .text:0016875F                 ; GLfloat
+  .text:0016875F                 fstp    [esp+7Ch+tall]; GLfloat
+  .text:00168763                 fild    [esp+7Ch+x0]
+  .text:00168767                 ; GLfloat
+  .text:00168767                 fstp    [esp+7Ch+var_7C]; GLfloat
+  .text:0016876A                 call    ds:qglTranslatef
+  .text:00168770                 mov     eax, [esp+7Ch+x0]
+  .text:00168774                 mov     ecx, [esi+8]
+  .text:00168777                 mov     edx, [esi]
+  .text:00168779                 mov     ds:g_bScissor, 1 ; target global: recover this object base from the current instruction; preserve ELF PIC when present
+  .text:00168780                 add     xTranslate, eax
+  .text:00168782                 mov     eax, [esp+7Ch+y0]
+  .text:00168786                 mov     [esp+7Ch+x0], ecx
+  .text:0016878A                 mov     ecx, [esi+0Ch]
+  .text:0016878D                 sub     edx, surfaceAbsExtents
+  .text:0016878F                 sub     edx, xTranslate
+  .text:00168791                 add     yTranslate, eax
+  .text:00168793                 mov     eax, [esi+4]
+  .text:00168796                 mov     esi, [esp+7Ch+surfaceAbsExtents_1]
+  .text:0016879A                 mov     ds:g_ScissorRect.left, edx ; target global: recover this object base from the current instruction; preserve ELF PIC when present
+  .text:001687A0                 ; GLenum
+  .text:001687A0                 mov     [esp+7Ch+var_7C], 0BE2h; GLenum
+  .text:001687A7                 sub     eax, esi
+  .text:001687A9                 sub     ecx, esi
+  .text:001687AB                 sub     y0_0, yTranslate
+  .text:001687AD                 sub     y1, yTranslate
+  .text:001687AF                 mov     ds:g_ScissorRect.top, eax
+  .text:001687B4                 mov     eax, [esp+7Ch+x0]
+  .text:001687B8                 mov     ds:g_ScissorRect.bottom, ecx
+  .text:001687BE                 sub     eax, surfaceAbsExtents
+  .text:001687C0                 mov     surfaceAbsExtents, x1
+  .text:001687C2                 sub     ebp, xTranslate
+  .text:001687C4                 mov     ds:g_ScissorRect.right, ebp
+  .text:001687CA                 call    ds:qglEnable
+  .text:001687D0                 mov     eax, 303h
+  .text:001687D5                 ; GLenum
+  .text:001687D5                 mov     [esp+7Ch+tall], eax; GLenum
+  .text:001687D9                 ; GLenum
+  .text:001687D9                 mov     [esp+7Ch+var_7C], 302h; GLenum
+  .text:001687E0                 call    ds:qglBlendFunc
+  .text:001687E6                 add     esp, 6Ch
+  .text:001687E9                 pop     xTranslate
+  .text:001687EA                 pop     esi
+  .text:001687EB                 pop     yTranslate
+  .text:001687EC                 pop     ebp
+  .text:001687ED                 retn
+  .text:001687F0                 lea     eax, [esp+7Ch+var_20]
+  .text:001687F4                 mov     [esp+7Ch+bpp], eax
+  .text:001687F8                 lea     eax, [esp+7Ch+var_28]
+  .text:001687FC                 mov     [esp+7Ch+tall], eax
+  .text:00168800                 mov     eax, ds:pmainwindow
+  .text:00168805                 mov     eax, [eax]
+  .text:00168807                 mov     [esp+7Ch+var_7C], eax
+  .text:0016880A                 call    SDL_GetWindowSize
+  .text:0016880F                 jmp     loc_168662
+  .text:00168818                 call    VideoMode_IsWindowed
+  .text:0016881D                 test    eax, eax
+  .text:0016881F                 nop
+  .text:00168820                 jnz     short loc_168838
+  .text:00168822                 xor     edx, edx
+  .text:00168824                 xor     ecx, ecx
+  .text:00168826                 mov     [esp+7Ch+pnt.y], edx
+  .text:0016882A                 mov     [esp+7Ch+pnt.x], ecx
+  .text:0016882E                 jmp     loc_16862F
+  .text:00168838                 lea     eax, [esp+7Ch+pnt]
+  .text:0016883C                 mov     [esp+7Ch+tall], eax
+  .text:00168840                 mov     eax, ds:pmainwindow
+  .text:00168845                 lea     edx, [esp+7Ch+pnt.y]
+  .text:00168849                 mov     [esp+7Ch+bpp], edx
+  .text:0016884D                 mov     eax, [eax]
+  .text:0016884F                 mov     [esp+7Ch+var_7C], eax
+  .text:00168852                 call    SDL_GetWindowPosition
+  .text:00168857                 jmp     loc_16862F
+procedure: |-
+  void __cdecl EngineSurface::pushMakeCurrent(
+          EngineSurface *const this,
+          int *insets,
+          int *absExtents,
+          int *clipRect,
+          bool translateToScreenSpace)
+  {
+    int x; // ebp
+    int v6; // ebx
+    int v7; // ebx
+    int v8; // edi
+    int v9; // ecx
+    int v10; // edx
+    int v11; // ebx
+    int v12; // ecx
+    int v13; // edi
+    int v14; // eax
+    GLfloat v15; // [esp+0h] [ebp-7Ch]
+    GLfloat v16; // [esp+0h] [ebp-7Ch]
+    GLfloat tall; // [esp+4h] [ebp-78h]
+    GLfloat talla; // [esp+4h] [ebp-78h]
+    int surfaceAbsExtents_1; // [esp+34h] [ebp-48h]
+    int x0; // [esp+38h] [ebp-44h]
+    int x0a; // [esp+38h] [ebp-44h]
+    int x0b; // [esp+38h] [ebp-44h]
+    int y0; // [esp+3Ch] [ebp-40h]
+    POINT pnt; // [esp+48h] [ebp-34h] BYREF
+    int wide; // [esp+50h] [ebp-2Ch]
+    int v26; // [esp+54h] [ebp-28h] BYREF
+    int v27; // [esp+58h] [ebp-24h]
+    int v28[8]; // [esp+5Ch] [ebp-20h] BYREF
+
+    pnt.x = 0;
+    pnt.y = 0;
+    if ( translateToScreenSpace )
+    {
+      if ( VideoMode_IsWindowed() )
+      {
+        SDL_GetWindowPosition(*pmainwindow, &pnt, &pnt.y);
+      }
+      else
+      {
+        pnt.y = 0;
+        pnt.x = 0;
+      }
+    }
+    wide = 0;
+    v27 = 0;
+    if ( VideoMode_IsWindowed() )
+      SDL_GetWindowSize(*pmainwindow, &v26, v28);
+    else
+      VideoMode_GetCurrentVideoMode(&v26, v28, nullptr);
+    x = pnt.x;
+    v26 += wide;
+    x0 = v26;
+    v28[0] += v27;
+    v6 = v28[0];
+    surfaceAbsExtents_1 = pnt.y;
+    qglPushMatrix();
+    qglMatrixMode(0x1701u);
+    qglLoadIdentity();
+    qglOrtho(0.0, (double)x0, (double)v6, 0.0, -1.0, 1.0);
+    qglMatrixMode(0x1700u);
+    qglPushMatrix();
+    qglLoadIdentity();
+    tall = (float)insets[1];
+    v15 = (float)*insets;
+    qglTranslatef(v15, tall, 0.0);
+    v7 = *insets;
+    v8 = insets[1];
+    y0 = absExtents[1] - surfaceAbsExtents_1;
+    x0a = *absExtents - x;
+    talla = (float)y0;
+    v16 = (float)x0a;
+    qglTranslatef(v16, talla, 0.0);
+    v9 = clipRect[2];
+    v10 = *clipRect;
+    g_bScissor = 1; // target global: flag or whole clipRect-derived rectangle, not an interior member
+    v11 = x0a + v7;
+    x0b = v9;
+    v12 = clipRect[3];
+    v13 = y0 + v8;
+    v14 = clipRect[1];
+    g_ScissorRect.left = v10 - x - v11; // target global: flag or whole clipRect-derived rectangle, not an interior member
+    g_ScissorRect.top = v14 - surfaceAbsExtents_1 - v13;
+    g_ScissorRect.bottom = v12 - surfaceAbsExtents_1 - v13;
+    g_ScissorRect.right = x0b - x - v11;
+    qglEnable(0xBE2u);
+    qglBlendFunc(0x302u, 0x303u);
+  }

@@ -1,0 +1,6 @@
+struct_name: BaseUISurface
+member_name: m_iCurrentTexture
+offset: '0x20'
+size: '4'
+offset_sig: 83 EC 30 8A 44 24 ?? 53 56 8B 74 24 ?? 57 8B F9 33 DB 3A C3 89 5F ?? 89 5C 24 ?? 89 5C 24 ??
+offset_sig_disp: '0x14'
