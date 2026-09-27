@@ -10,7 +10,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 分类依据是每个 finder 的主要发现锚；部分符号实际会组合多种机制（例如先字符串锚定 owning function，再读表槽），
 此处归入其决定性的一步。**Summary** 列摘自各 locator 文件 `## How it is located` 的首段。
 
-共 **249** 个 locator；模块 engine 204，client 45。
+共 **250** 个 locator；模块 engine 204，client 46。
 
 | 定位机制 | 数量 |
 | --- | --- |
@@ -22,7 +22,7 @@ permalink: goldsrc-vibesignatures/locator-summary
 | LLM_DECOMPILE 定位 | 55 |
 | vtable / vfunc 槽恢复 | 12 |
 | 数值 scalar 提取 | 9 |
-| 调用点 patch | 16 |
+| 调用点 patch | 17 |
 
 ---
 
@@ -318,13 +318,14 @@ permalink: goldsrc-vibesignatures/locator-summary
 | [ClientPortal_texture_width_offset](locators/ClientPortal_texture_width_offset.md) | client | scalar | `ClientPortal_CreateTexture` | *Windows (_client_portal_offsets._texture_candidates, driven from recover_portal_offsets): the member proven as the texture guard (cmp [portal+disp], 0 followed by |
 | [size_of_frame](locators/size_of_frame.md) | engine | scalar | `R_DrawTEntitiesOnList` | Same predecessor export and ESP-displacement probe as cl_parsecount (see that file, steps 1-2). recover_masked_index_stride traces the masked-index coefficient… |
 
-## 调用点 patch (16)
+## 调用点 patch (17)
 
 | Symbol | Module | Category | Predecessors | Summary |
 | --- | --- | --- | --- | --- |
 | [CL_LinkPacketEntities_to_R_ResetLatched_callsite_0](locators/CL_LinkPacketEntities_to_R_ResetLatched_callsite_0.md) | engine | patch | `CL_LinkPacketEntities` | Require exactly two direct branches to the verified reset callee; this is the first in address order. |
 | [CL_LinkPacketEntities_to_R_ResetLatched_callsite_1](locators/CL_LinkPacketEntities_to_R_ResetLatched_callsite_1.md) | engine | patch | `CL_LinkPacketEntities` | Require exactly two direct branches to the verified reset callee; this is the second in address order. |
 | [CL_LinkPacketEntities_to_R_ResetLatched_callsite_2](locators/CL_LinkPacketEntities_to_R_ResetLatched_callsite_2.md) | engine | retired patch | — | Historical record: the former hl-8684 Linux target was an interpolation call, so this artifact was removed. |
+| [ClientPortalManager_RenderPortals_to_AngleVectors_callsite_0](locators/ClientPortalManager_RenderPortals_to_AngleVectors_callsite_0.md) | client | patch | `ClientPortalManager_RenderPortals` | Consumes the host artifact, then searches the host body plus its direct rel32 callees with `.plt` stubs resolved; the unique call whose argument setup loads the ref_params_t |
 | [Cvar_Set_to_Cvar_DirectSet_callsite_0](locators/Cvar_Set_to_Cvar_DirectSet_callsite_0.md) | engine | patch | `Cvar_DirectSet`, `Cvar_Set` | _expected_callsite_outputs reads the finder's expected_outputs. Every stem must match Cvar_Set_to_Cvar_DirectSet_callsite_<digit>, indexes must be unique and form a… |
 | [GL_SetMode_call_qwglCreateContext](locators/GL_SetMode_call_qwglCreateContext.md) | engine | patch | `GL_SelectPixelFormat`, `GL_SetMode`, `GL_SetModeLegacy` | The consumer redirects the indirect call that creates the GL context inside GL_SetMode / GL_SetModeLegacy (mov reg,[reg2]; push reg; call dword ptr… |
 | [Mod_LoadModel_to_FS_Open_callsite_0](locators/Mod_LoadModel_to_FS_Open_callsite_0.md) | engine | patch | `FS_Open`, `Mod_LoadModel` | Reuses the shared PR #78 owner→callee callsite pattern. Discovery is entirely address-based; no byte signature participates in discovery (the signature is generated… |

@@ -1,0 +1,5 @@
+patch_name: ClientPortalManager_RenderPortals_to_AngleVectors_callsite_0
+patch_va: '0x1004ec64'
+patch_rva: '0x4ec64'
+patch_sig: E8 ?? ?? ?? ?? 8B CB 83 C4 ??
+patch_sig_disp: '0x0'

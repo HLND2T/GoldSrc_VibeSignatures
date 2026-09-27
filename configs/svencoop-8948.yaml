@@ -2383,6 +2383,11 @@ modules:
       - name: find-ClientPortalManager_RenderPortals
         expected_output:
           - ClientPortalManager_RenderPortals.{platform}.yaml
+      - name: find-ClientPortalManager_RenderPortals_to_AngleVectors_callsite_0
+        expected_input:
+          - ClientPortalManager_RenderPortals.{platform}.yaml
+        expected_output:
+          - ClientPortalManager_RenderPortals_to_AngleVectors_callsite_0.{platform}.yaml
       - name: find-ClientPortalManager_EnableClipPlane
         expected_input:
           - ClientPortalManager_RenderPortals.{platform}.yaml
@@ -2542,6 +2547,8 @@ modules:
         category: func
       - name: ClientPortalManager_RenderPortals
         category: func
+      - name: ClientPortalManager_RenderPortals_to_AngleVectors_callsite_0
+        category: patch
       - name: PortalSource_CalculateClipPlane
         category: func
       - name: ClientPortalManager_EnableClipPlane
