@@ -2,12 +2,13 @@
 """Locate R_ResetLatched and its CL_LinkPacketEntities call sites.
 
 engine/cl_ents.c CL_LinkPacketEntities owns the unique diagnostic literal
-``Tried to link edict %i without model`` and calls R_ResetLatched twice
+``Tried to link edict %i without model`` and calls R_ResetLatched exactly twice
 (full reset then EF_NOINTERP reset), while no other doubly-called helper in
 that body matches the latched-state reset role: candidates must stay within
 the size window of the reset body, be called from at least one further
 entity-linking function (CL_ResetLatchedState / CL_LinkPlayers), and remain
-unique. Every direct CL_LinkPacketEntities -> R_ResetLatched call site is
+unique. Reuse the verified CL_LinkPacketEntities artifact. Exactly two direct
+CL_LinkPacketEntities -> R_ResetLatched call sites are
 emitted as a numbered patch artifact through the shared func-to-func callsite
 helper. No byte signature participates in discovery.
 """
@@ -18,11 +19,12 @@ from pathlib import Path
 
 import ida_analyze_util as u
 from ida_elf import ELF_RESOLVER_PY
+from ida_preprocessor_scripts._direct_gv_common import inspect_owner_artifact
+from ida_preprocessor_scripts._engine_entity_interpolation_common import function_identity
 from ida_preprocessor_scripts._func_to_func_callsites_common import locate_callsites
 
 TARGET = "R_ResetLatched"
 CALLSITE_PREFIX = "CL_LinkPacketEntities_to_R_ResetLatched_callsite_"
-DIAGNOSTIC = "Tried to link edict %i without model\n"
 MARKER = "__R124_RESETLATCHED__"
 MIN_SIZE = 100
 MAX_SIZE = 1200
@@ -35,7 +37,7 @@ WALK = (
 import idautils, ida_funcs, idc, ida_segment, ida_bytes, json
 
 MARKER = @@MARKER@@
-NEEDLE = @@NEEDLE@@
+OWNER = @@OWNER@@
 MIN_SIZE = @@MIN_SIZE@@
 MAX_SIZE = @@MAX_SIZE@@
 MIN_EXTRA = @@MIN_EXTRA@@
@@ -67,49 +69,24 @@ def internal_calls(o):
 def callers(o):
     return sorted({fn(x) for x in elf_code_refs_to(o) if fn(x)})
 
-def find_cstr(s):
-    hits = []
-    for si in range(ida_segment.get_segm_qty()):
-        seg = ida_segment.getnseg(si)
-        if not seg:
-            continue
-        nm = ida_segment.get_segm_name(seg) or ""
-        if not nm or nm.startswith(".text") or nm.startswith(".plt"):
-            continue
-        data = ida_bytes.get_bytes(int(seg.start_ea), int(seg.end_ea) - int(seg.start_ea))
-        if not data:
-            continue
-        i = data.find(s)
-        while i != -1:
-            hits.append(int(seg.start_ea) + i)
-            i = data.find(s, i + 1)
-    return hits
-
-res = {}
-owners = set()
-for ea in find_cstr(NEEDLE):
-    for x in idautils.DataRefsTo(ea):
-        f = fn(x)
-        if f is not None:
-            owners.add(f)
-res["owners"] = [hex(o) for o in sorted(owners)]
-if len(owners) != 1:
-    res["error"] = "diagnostic literal owner is not unique"
+res = {"CL_LinkPacketEntities": hex(OWNER)}
+if fn(OWNER) != OWNER:
+    res["error"] = "CL_LinkPacketEntities artifact is not a function start"
     emit(res)
 else:
-    owner = next(iter(owners))
-    res["CL_LinkPacketEntities"] = hex(owner)
     counts = {}
-    for _, t in internal_calls(owner):
+    for _, t in internal_calls(OWNER):
         counts[t] = counts.get(t, 0) + 1
     cands = []
     for t, n in sorted(counts.items()):
-        if n < 2:
+        # The source has one full reset and one EF_NOINTERP reset. A third
+        # caller is the split CL_InterpolateModel core on hl-8684 Linux.
+        if n != 2:
             continue
         if not (MIN_SIZE <= fsize(t) <= MAX_SIZE):
             continue
         cl = callers(t)
-        if owner not in cl or not (MIN_EXTRA <= len(cl) - 1 <= MAX_EXTRA):
+        if OWNER not in cl or not (MIN_EXTRA <= len(cl) - 1 <= MAX_EXTRA):
             continue
         cands.append({"va": hex(t), "size": fsize(t), "calls": n,
                       "callers": [hex(c) for c in cl]})
@@ -174,9 +151,19 @@ async def preprocess_skill(
             print(f"{skill_name}: callsite indexes are not contiguous")
         return False
 
+    owner = await inspect_owner_artifact(
+        session,
+        new_binary_dir,
+        platform,
+        image_base,
+        "CL_LinkPacketEntities",
+        func_name=function_identity(new_binary_dir, platform, "CL_LinkPacketEntities"),
+    )
+    if owner is None:
+        return False
     code = (
         WALK.replace("@@MARKER@@", repr(MARKER))
-        .replace("@@NEEDLE@@", repr(DIAGNOSTIC.encode("latin-1") + b"\x00"))
+        .replace("@@OWNER@@", str(owner["owner_ea"]))
         .replace("@@MIN_SIZE@@", str(MIN_SIZE))
         .replace("@@MAX_SIZE@@", str(MAX_SIZE))
         .replace("@@MIN_EXTRA@@", str(MIN_EXTRA_CALLERS))

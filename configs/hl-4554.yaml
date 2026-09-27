@@ -1233,7 +1233,30 @@ modules:
           - R_DrawTEntitiesOnList.{platform}.yaml
         expected_output:
           - GlowBlend.{platform}.yaml
+      - name: find-CL_LinkPacketEntities
+        expected_output:
+          - CL_LinkPacketEntities.{platform}.yaml
+      - name: find-CL_InterpolateModel
+        expected_input:
+          - CL_LinkPacketEntities.{platform}.yaml
+        expected_output:
+          - CL_InterpolateModel.{platform}.yaml
+      - name: find-CL_FindInterpolationUpdates
+        expected_input:
+          - CL_InterpolateModel.{platform}.yaml
+        expected_output:
+          - CL_FindInterpolationUpdates.{platform}.yaml
+      - name: find-CL_InterpolateModel-globals
+        expected_input:
+          - CL_InterpolateModel.{platform}.yaml
+          - cl_waterlevel.{platform}.yaml
+        expected_output:
+          - cls_timedemo.{platform}.yaml
+          - cl_moving.{platform}.yaml
+          - cl_onground.{platform}.yaml
       - name: find-R_ResetLatched
+        expected_input:
+          - CL_LinkPacketEntities.{platform}.yaml
         expected_output:
           - R_ResetLatched.{platform}.yaml
           - CL_LinkPacketEntities_to_R_ResetLatched_callsite_0.{platform}.yaml
@@ -2112,6 +2135,18 @@ modules:
         category: func
       - name: GlowBlend
         category: func
+      - name: CL_LinkPacketEntities
+        category: func
+      - name: CL_InterpolateModel
+        category: func
+      - name: CL_FindInterpolationUpdates
+        category: func
+      - name: cls_timedemo
+        category: gv
+      - name: cl_moving
+        category: gv
+      - name: cl_onground
+        category: gv
       - name: R_ResetLatched
         category: func
       - name: CL_LinkPacketEntities_to_R_ResetLatched_callsite_0

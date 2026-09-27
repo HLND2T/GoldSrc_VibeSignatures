@@ -1,0 +1,5 @@
+func_name: CL_FindInterpolationUpdates
+func_va: '0x1d21d40'
+func_rva: '0x21d40'
+func_size: '0xee'
+func_sig: 83 EC 08 53 8B 5C 24 ?? D9 44 24 ?? 8B 8B ?? ?? ?? ?? 55 8B D1 56 83 E2 3F 8D 71 ?? 57 8B FE

@@ -1,0 +1,5 @@
+func_name: CL_LinkPacketEntities
+func_va: '0x1d20900'
+func_rva: '0x20900'
+func_size: '0x4e1'
+func_sig: 83 EC 0C 8B 0D ?? ?? ?? ?? 53 33 DB 55 8D 04 C9 56 C1 E0 03 2B C1 57 89 5C 24 ?? 8D 04 40
