@@ -200,9 +200,45 @@ Exact patch-validation inputs (SHA-256):
 | svencoop-10257 | Linux | `8cead76a51204a4ba1036c85cc2099b7c3542950d924846a9aa2ccf619df7dfd` |
 
 ## Not covered
+## Follow-up completed (PR #267)
 
-`host_parms` (the `gv_name` half of `Engine_FillAddress_Sys_InitializeGameDLL`)
-was not delivered. Its `basedir` member is written through different instructions
-per family — a direct operand on MSVC builds, SvEngine registers it through an
-indirection, and GCC copies a module-indexed array — so a single robust locator
-could only resolve uniquely on 9 of 15 builds. It is left as a follow-up.
+`host_parms` (the `gv` half of `Engine_FillAddress_Sys_InitializeGameDLL`) was
+delivered in PR #267 after the anchor was reworked. The LoadEntityDLLs call
+argument is the invariant: `LoadEntityDLLs` owns the exact literal
+`"GetNewDLLFunctions"` and resolves to exactly one function on every engine
+build; the single argument of the direct call from the revalidated
+`Host_InitializeGameDLL` is `host_parms.basedir` (= `&host_parms`, first
+`quakeparms_t` member). Six encodings are supported and cross-verified:
+
+| Build | Platform | gv_va | Encoding |
+| --- | --- | --- | --- |
+| hl-10210 | W / L | `0x11249ec0` / `0x94d684` | push abs / `mov eax, ds:host_parms.basedir` |
+| hl-8684 | W / L | `0x27b7580` / `0x963984` | `mov ecx, dword_…` / GCC separated-tail-body `mov` |
+| hl-3248…4554, 6153 | W | per-build `dword_…` | `mov ecx, dword_…` |
+| cof-5936 | W | `0x27fc160` | `mov ecx, dword_…` |
+| svencoop-10257 | W / L | `0x8446c60` / `0x30a4c4` | push abs / GOTOFF `lea` |
+| svencoop-8948 | W / L | `0x8406ad0` / `0x357a84` | push abs / GOT-slot pointer load |
+
+Pitfalls fixed along the way:
+
+- **Stack-operand text may embed a register name.** hl-8684 Linux's
+  `mov [esp+2Ch+szBaseDir], eax` decodes `op.type == o_phrase` with the base in
+  the SIB byte, while the disassembly text contains `edi` inside `szBaseDir`.
+  A text regex (`'[esp' in text and no register in text`) misclassifies it. Use
+  the structural SIB test (`op.specflag1` set, `specflag2` low byte: base==4 and
+  index==4). The encoded displacement is 0 (`op.addr`); `ida_frame.get_spd` at
+  the call site already accounts for the frame, so `stack = spd + encoded_disp`.
+- **GCC tail split.** On hl-8684 Linux the LoadEntityDLLs call (and the
+  `host_parms` reference) live in `Host_InitializeGameDLL_0`, reached by an
+  unconditional `jmp` from the diagnostic body. Follow the tail `jmp` target and
+  anchor the artifact to whichever body actually contains the reference
+  instruction via `owner_context`.
+- **GOT-slot pointer load still emits a normal gv artifact.** svencoop-8948
+  Linux loads `host_parms` through `mov eax, (host_parms_ptr-GOT)[ebx]`; the
+  shared `_gv_resolution_fields` writes `gv_pic_addend` from the raw addend and
+  the resolver treats the decoded value as the object address. Cross-check
+  `gv_va` against `FileSystem_Init`/`Sys_InitArgv` `basedir = s_pBaseDir`
+  writes and `Sys_InitGame`'s `push offset &host_parms`.
+- **String anchor must not rebuild the shared string list.** Use the
+  `anchor_string_owners` segment scan (readable perm + NUL-delimited literal +
+  `DataRefsTo`), never `idautils.Strings().setup()`.
