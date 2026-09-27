@@ -1,0 +1,5 @@
+func_name: ClientVGUI_LoadControlSettings
+func_va: '0x1974bb0'
+func_rva: '0x74bb0'
+func_size: '0x35'
+func_sig: 8B 44 24 ?? 56 8B F1 50 8B 4C 24 ?? 51 8B CE E8 ?? ?? ?? ?? 8B 16 8B CE FF 92 ?? ?? ?? ?? 8B 10 8B C8

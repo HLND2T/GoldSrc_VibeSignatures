@@ -1,0 +1,8 @@
+func_name: ClientVGUI_KeyValues_LoadFromFile
+func_va: '0x19d350'
+func_rva: '0x19d350'
+func_size: '0x112'
+vtable_name: ClientVGUI_KeyValues_vftable
+vfunc_offset: '0x8'
+vfunc_index: 2
+vfunc_sig: 83 EC ?? 89 74 24 ?? 8B 54 24 ?? 8B 74 24 ?? 89 5C 24 ?? 31 DB 89 7C 24 ?? BF ?? ?? ?? ?? 89 6C 24 ?? 8B 06

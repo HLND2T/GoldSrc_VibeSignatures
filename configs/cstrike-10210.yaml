@@ -71,6 +71,18 @@ modules:
         expected_output:
           - HUD_GetStudioModelInterface.{platform}.yaml
           - CL_IsThirdPerson.{platform}.yaml
+      - name: find-client-vgui-panel-init
+        expected_output:
+          - ClientVGUI_Panel_Init.{platform}.yaml
+      - name: find-client-vgui-keyvalues
+        expected_output:
+          - ClientVGUI_KeyValues_vftable.{platform}.yaml
+          - ClientVGUI_KeyValues_LoadFromFile.{platform}.yaml
+      - name: find-client-vgui-teammenu
+        expected_output:
+          - ClientVGUI_LoadControlSettings.{platform}.yaml
+          - ClientVGUI_RichText_SetTextA.{platform}.yaml
+          - ClientVGUI_RichText_SetTextW.{platform}.yaml
     symbols:
       - name: GetTextColor
         category: func
@@ -115,6 +127,18 @@ modules:
       - name: HUD_GetStudioModelInterface
         category: func
       - name: CL_IsThirdPerson
+        category: func
+      - name: ClientVGUI_Panel_Init
+        category: func
+      - name: ClientVGUI_KeyValues_vftable
+        category: vtable
+      - name: ClientVGUI_KeyValues_LoadFromFile
+        category: vfunc
+      - name: ClientVGUI_LoadControlSettings
+        category: func
+      - name: ClientVGUI_RichText_SetTextA
+        category: func
+      - name: ClientVGUI_RichText_SetTextW
         category: func
   - name: server
     module_windows: mp.dll
