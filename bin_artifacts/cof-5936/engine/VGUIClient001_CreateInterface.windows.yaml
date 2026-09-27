@@ -1,0 +1,5 @@
+patch_name: VGUIClient001_CreateInterface
+patch_va: '0x1d012ed'
+patch_rva: '0x12ed'
+patch_sig: FF 95 E8 FD FF FF
+patch_sig_disp: '0x0'

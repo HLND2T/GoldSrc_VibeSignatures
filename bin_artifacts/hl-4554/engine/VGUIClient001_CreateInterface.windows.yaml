@@ -1,0 +1,5 @@
+patch_name: VGUIClient001_CreateInterface
+patch_va: '0x1d0120a'
+patch_rva: '0x120a'
+patch_sig: FF D0 83 C4 ?? A3 ?? ?? ?? ?? EB ??
+patch_sig_disp: '0x0'

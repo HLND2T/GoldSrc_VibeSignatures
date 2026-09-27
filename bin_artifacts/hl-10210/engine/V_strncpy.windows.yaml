@@ -1,0 +1,5 @@
+patch_name: V_strncpy
+patch_va: '0x101c8b63'
+patch_rva: '0x1c8b63'
+patch_sig: FF 15 20 25 2B 10 8D 8D ?? ?? ?? ?? 83 C4 ??
+patch_sig_disp: '0x0'
