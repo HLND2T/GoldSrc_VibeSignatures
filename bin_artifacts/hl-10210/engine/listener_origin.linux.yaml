@@ -1,0 +1,9 @@
+gv_name: listener_origin
+gv_va: '0x13bb090'
+gv_rva: '0x13bb090'
+gv_sig: 55 57 56 53 83 EC ?? 8B 3D ?? ?? ?? ?? 8B 5C 24 ?? 8B 4C 24 ?? 8B 54 24 ?? 85 FF 8B 44 24 ?? 74 ?? 8B 35 ?? ?? ??
+  ??
+gv_sig_va: '0x199350'
+gv_inst_offset: '0x42'
+gv_inst_length: '0x8'
+gv_inst_disp: '0x4'

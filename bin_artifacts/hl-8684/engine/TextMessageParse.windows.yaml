@@ -1,0 +1,5 @@
+func_name: TextMessageParse
+func_va: '0x1db36a0'
+func_rva: '0xb36a0'
+func_size: '0x32d'
+func_sig: 55 8B EC B8 F8 F1 00 00 E8 ?? ?? ?? ?? 8B 55 ?? 53 56 8B 75 ?? 57 8D 85 ?? ?? ?? ?? 68 00 02 00 00 8D 4D ??
