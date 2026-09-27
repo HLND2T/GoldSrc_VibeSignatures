@@ -1,0 +1,325 @@
+func_name: "SayTextLine_Colorize"
+func_va: "0x10063640"
+disasm_code: |-
+  ; Target gv g_LocationColor: select the immediate data address for text color 4 in the inlined selector. Do not select cached team-color members or GetClientColor calls.
+  .text:10063640                 push    ebp
+  .text:10063641                 mov     ebp, esp
+  .text:10063643                 sub     esp, 11Ch
+  .text:10063649                 mov     eax, ___security_cookie
+  .text:1006364E                 xor     eax, ebp
+  .text:10063650                 mov     [ebp+var_4], eax
+  .text:10063653                 push    ebx
+  .text:10063654                 push    esi
+  .text:10063655                 mov     esi, ecx
+  .text:10063657                 push    edi
+  .text:10063658                 lea     ebx, [esi+200h]
+  .text:1006365E                 mov     ecx, ebx
+  .text:10063660                 mov     [ebp+var_114], ebx
+  .text:10063666                 call    sub_100642E0
+  .text:1006366B                 mov     edx, esi
+  .text:1006366D                 mov     ecx, esi
+  .text:1006366F                 mov     [ebp+var_118], ecx
+  .text:10063675                 lea     edi, [edx+2]
+  .text:10063678                 nop     dword ptr [eax+eax+00000000h]
+  .text:10063680                 mov     ax, [edx]
+  .text:10063683                 add     edx, 2
+  .text:10063686                 test    ax, ax
+  .text:10063689                 jnz     short loc_10063680
+  .text:1006368B                 movzx   eax, word ptr [esi]
+  .text:1006368E                 sub     edx, edi
+  .text:10063690                 sar     edx, 1
+  .text:10063692                 mov     [ebp+var_11C], edx
+  .text:10063698                 cmp     eax, 3
+  .text:1006369B                 jz      loc_100637B0
+  .text:100636A1                 cmp     eax, 4
+  .text:100636A4                 jz      loc_100637B0
+  .text:100636AA                 cmp     eax, 1
+  .text:100636AD                 jz      loc_100637B0
+  .text:100636B3                 cmp     eax, 2
+  .text:100636B6                 jnz     loc_100638C2
+  .text:100636BC                 mov     eax, [esi+214h]
+  .text:100636C2                 shl     eax, 5
+  .text:100636C5                 mov     edi, dword_10124FB8[eax]
+  .text:100636CB                 call    sub_10078300
+  .text:100636D0                 push    100h
+  .text:100636D5                 lea     ecx, [ebp+SubStr]
+  .text:100636DB                 push    ecx
+  .text:100636DC                 mov     edx, [eax]
+  .text:100636DE                 mov     ecx, eax
+  .text:100636E0                 push    edi
+  .text:100636E1                 call    dword ptr [edx+10h]
+  .text:100636E4                 test    edi, edi
+  .text:100636E6                 jz      loc_100638C2
+  .text:100636EC                 lea     eax, [ebp+SubStr]
+  .text:100636F2                 ; SubStr
+  .text:100636F2                 push    eax; SubStr
+  .text:100636F3                 ; Str
+  .text:100636F3                 push    esi; Str
+  .text:100636F4                 call    wcsstr
+  .text:100636F9                 mov     edi, eax
+  .text:100636FB                 add     esp, 8
+  .text:100636FE                 test    edi, edi
+  .text:10063700                 jz      loc_100638C2
+  .text:10063706                 lea     ecx, [ebp+SubStr]
+  .text:1006370C                 mov     [ebp+var_110], 1
+  .text:10063716                 lea     edx, [ecx+2]
+  .text:10063719                 nop     dword ptr [eax+00000000h]
+  .text:10063720                 mov     ax, [ecx]
+  .text:10063723                 add     ecx, 2
+  .text:10063726                 test    ax, ax
+  .text:10063729                 jnz     short loc_10063720
+  .text:1006372B                 push    dword ptr [esi+214h]
+  .text:10063731                 sub     ecx, edx
+  .text:10063733                 sub     edi, esi
+  .text:10063735                 sar     ecx, 1
+  .text:10063737                 sar     edi, 1
+  .text:10063739                 add     edi, ecx
+  .text:1006373B                 mov     [ebp+var_10C], edi
+  .text:10063741                 call    _Z14GetClientColori; GetClientColor(int)
+  .text:10063746                 add     esp, 4
+  .text:10063749                 mov     [ebp+var_108], eax
+  .text:1006374F                 lea     eax, [ebp+var_110]
+  .text:10063755                 mov     ecx, ebx
+  .text:10063757                 push    eax
+  .text:10063758                 push    dword ptr [ebx+0Ch]
+  .text:1006375B                 call    sub_10063F30
+  .text:10063760                 mov     ecx, esi
+  .text:10063762                 mov     [ebp+var_110], edi
+  .text:10063768                 lea     edx, [ecx+2]
+  .text:1006376B                 nop     dword ptr [eax+eax+00h]
+  .text:10063770                 mov     ax, [ecx]
+  .text:10063773                 add     ecx, 2
+  .text:10063776                 test    ax, ax
+  .text:10063779                 jnz     short loc_10063770
+  .text:1006377B                 sub     ecx, edx
+  .text:1006377D                 mov     [ebp+var_108], 0
+  .text:10063787                 lea     eax, [ebp+var_110]
+  .text:1006378D                 sar     ecx, 1
+  .text:1006378F                 push    eax
+  .text:10063790                 push    dword ptr [ebx+0Ch]
+  .text:10063793                 mov     [ebp+var_10C], ecx
+  .text:10063799                 mov     ecx, ebx
+  .text:1006379B                 call    sub_10063F30
+  .text:100637A0                 jmp     loc_100638C2
+  .text:100637B0                 movzx   edi, word ptr [ecx]
+  .text:100637B3                 test    di, di
+  .text:100637B6                 jz      loc_100638C2
+  .text:100637BC                 mov     ecx, edi
+  .text:100637BE                 mov     eax, edi
+  .text:100637C0                 sub     eax, 1
+  .text:100637C3                 jz      short loc_100637D3
+  .text:100637C5                 sub     eax, 2
+  .text:100637C8                 jz      short loc_100637D3
+  .text:100637CA                 sub     eax, 1
+  .text:100637CD                 jnz     loc_100638AD
+  .text:100637D3                 mov     ebx, [ebp+var_118]
+  .text:100637D9                 sub     ebx, esi
+  .text:100637DB                 sar     ebx, 1
+  .text:100637DD                 lea     eax, [ebx+1]
+  .text:100637E0                 mov     [ebp+var_110], eax
+  .text:100637E6                 cmp     edi, 3
+  .text:100637E9                 jnz     short loc_100637F3
+  .text:100637EB                 mov     eax, [esi+218h]
+  .text:100637F1                 jmp     short loc_1006381C
+  .text:100637F3                 sub     ecx, 3
+  .text:100637F6                 jz      short loc_10063808
+  .text:100637F8                 sub     ecx, 1
+  .text:100637FB                 jz      short loc_10063801
+  .text:100637FD                 xor     eax, eax
+  .text:100637FF                 jmp     short loc_1006381C
+  .text:10063801                 mov     eax, offset g_LocationColor
+  .text:10063806                 jmp     short loc_1006381C
+  .text:10063808                 push    dword ptr [esi+214h]
+  .text:1006380E                 call    _Z14GetClientColori; GetClientColor(int)
+  .text:10063813                 mov     edx, [ebp+var_11C]
+  .text:10063819                 add     esp, 4
+  .text:1006381C                 mov     edi, [esi+20Ch]
+  .text:10063822                 mov     [ebp+var_108], eax
+  .text:10063828                 mov     [ebp+var_10C], edx
+  .text:1006382E                 test    edi, edi
+  .text:10063830                 jz      short loc_10063890
+  .text:10063832                 add     edi, 0FFFFFFFFh
+  .text:10063835                 js      short loc_10063842
+  .text:10063837                 mov     eax, [ebp+var_114]
+  .text:1006383D                 cmp     edi, [eax+0Ch]
+  .text:10063840                 jl      short loc_10063860
+  .text:10063842                 ; Line
+  .text:10063842                 push    0B8h; Line
+  .text:10063847                 push    offset aCBuildslaveGol; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:1006384C                 push    offset aIsvalidindexI; "IsValidIndex(i)"
+  .text:10063851                 call    ds:_wassert
+  .text:10063857                 mov     eax, [ebp+var_114]
+  .text:1006385D                 add     esp, 0Ch
+  .text:10063860                 test    edi, edi
+  .text:10063862                 js      short loc_10063869
+  .text:10063864                 cmp     edi, [eax+4]
+  .text:10063867                 jl      short loc_10063887
+  .text:10063869                 ; Line
+  .text:10063869                 push    9Bh; Line
+  .text:1006386E                 push    offset aCBuildslaveGol_0; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10063873                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:10063878                 call    ds:_wassert
+  .text:1006387E                 mov     eax, [ebp+var_114]
+  .text:10063884                 add     esp, 0Ch
+  .text:10063887                 mov     eax, [eax]
+  .text:10063889                 lea     ecx, [edi+edi*2]
+  .text:1006388C                 mov     [eax+ecx*4+4], ebx
+  .text:10063890                 mov     ebx, [ebp+var_114]
+  .text:10063896                 lea     eax, [ebp+var_110]
+  .text:1006389C                 push    eax
+  .text:1006389D                 mov     ecx, ebx
+  .text:1006389F                 push    dword ptr [ebx+0Ch]
+  .text:100638A2                 call    sub_10063F30
+  .text:100638A7                 mov     edx, [ebp+var_11C]
+  .text:100638AD                 mov     ecx, [ebp+var_118]
+  .text:100638B3                 add     ecx, 2
+  .text:100638B6                 mov     [ebp+var_118], ecx
+  .text:100638BC                 jnz     loc_100637B0
+  .text:100638C2                 cmp     dword ptr [esi+20Ch], 0
+  .text:100638C9                 jnz     short loc_10063910
+  .text:100638CB                 mov     [ebp+var_110], 0
+  .text:100638D5                 lea     ecx, [esi+2]
+  .text:100638D8                 nop     dword ptr [eax+eax+00000000h]
+  .text:100638E0                 mov     ax, [esi]
+  .text:100638E3                 add     esi, 2
+  .text:100638E6                 test    ax, ax
+  .text:100638E9                 jnz     short loc_100638E0
+  .text:100638EB                 lea     eax, [ebp+var_110]
+  .text:100638F1                 mov     [ebp+var_108], 0
+  .text:100638FB                 sub     esi, ecx
+  .text:100638FD                 mov     ecx, ebx
+  .text:100638FF                 push    eax
+  .text:10063900                 push    dword ptr [ebx+0Ch]
+  .text:10063903                 sar     esi, 1
+  .text:10063905                 mov     [ebp+var_10C], esi
+  .text:1006390B                 call    sub_10063F30
+  .text:10063910                 mov     ecx, [ebp+var_4]
+  .text:10063913                 pop     edi
+  .text:10063914                 pop     esi
+  .text:10063915                 ; StackCookie
+  .text:10063915                 xor     ecx, ebp; StackCookie
+  .text:10063917                 pop     ebx
+  .text:10063918                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1006391D                 mov     esp, ebp
+  .text:1006391F                 pop     ebp
+  .text:10063920                 retn
+procedure: |-
+  // Issue 259: actual CS client body, corroborated by ELF names and cl_dll/saytext.cpp. Target gv g_LocationColor is the float[3] array selected by text color 4; color 3 is the player team color and must not be selected. Unknown private layouts remain neutral.
+  void __thiscall SayTextLine::Colorize(void *self)
+  {
+    unsigned __int16 *v1; // esi
+    char *v2; // ebx
+    unsigned __int16 *v3; // ecx
+    unsigned int v4; // edx
+    int v5; // eax
+    int v6; // edi
+    int v7; // eax
+    wchar_t *v8; // edi
+    unsigned int v9; // edi
+    int v10; // edi
+    int v11; // ebx
+    float *v12; // eax
+    int v13; // edi
+    int v14; // edi
+    bool v15; // zf
+    unsigned __int16 *v16; // ecx
+    int v18; // [esp-8h] [ebp-130h]
+    int v19; // [esp-8h] [ebp-130h]
+    int v20; // [esp-4h] [ebp-12Ch]
+    unsigned int v21; // [esp+Ch] [ebp-11Ch]
+    unsigned __int16 *v22; // [esp+10h] [ebp-118h]
+    char *v23; // [esp+14h] [ebp-114h]
+    int v24; // [esp+18h] [ebp-110h] BYREF
+    int v25; // [esp+1Ch] [ebp-10Ch]
+    float *ClientColor; // [esp+20h] [ebp-108h]
+    wchar_t SubStr[128]; // [esp+24h] [ebp-104h] BYREF
+
+    v1 = (unsigned __int16 *)self;
+    v2 = (char *)self + 512;
+    v23 = (char *)self + 512;
+    sub_100642E0((char *)self + 512);
+    v3 = v1;
+    v22 = v1;
+    v4 = wcslen(v1);
+    v5 = *v1;
+    v21 = v4;
+    if ( v5 == 3 || v5 == 4 || v5 == 1 )
+    {
+      do
+      {
+        v10 = *v3;
+        if ( !(_WORD)v10 )
+          break;
+        if ( v10 == 1 || v10 == 3 || v10 == 4 )
+        {
+          v11 = v22 - v1;
+          v24 = v11 + 1;
+          if ( v10 == 3 )
+          {
+            v12 = *((float **)v1 + 134);
+          }
+          else if ( v10 == 4 )
+          {
+            v12 = g_LocationColor;
+          }
+          else
+          {
+            v12 = nullptr;
+          }
+          v13 = *((_DWORD *)v1 + 131);
+          ClientColor = v12;
+          v25 = v4;
+          if ( v13 )
+          {
+            v14 = v13 - 1;
+            if ( v14 < 0 || v14 >= *((_DWORD *)v23 + 3) )
+              wassert(L"IsValidIndex(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlVector.h", 0xB8u);
+            if ( v14 >= *((_DWORD *)v23 + 1) )
+              wassert(L"IsIdxValid(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0x9Bu);
+            *(_DWORD *)(*(_DWORD *)v23 + 12 * v14 + 4) = v11;
+          }
+          v2 = v23;
+          sub_10063F30(*((_DWORD *)v23 + 3), &v24);
+          v4 = v21;
+        }
+        v15 = v22 + 1 == nullptr;
+        v3 = ++v22;
+      }
+      while ( !v15 );
+    }
+    else if ( v5 == 2 )
+    {
+      v6 = dword_10124FB8[8 * *((_DWORD *)v1 + 133)];
+      v7 = sub_10078300();
+      (*(void (__thiscall **)(int, int, wchar_t *, int))(*(_DWORD *)v7 + 16))(v7, v6, SubStr, 256);
+      if ( v6 )
+      {
+        v8 = wcsstr(v1, SubStr);
+        if ( v8 )
+        {
+          v24 = 1;
+          v20 = *((_DWORD *)v1 + 133);
+          v9 = wcslen(SubStr) + v8 - v1;
+          v25 = v9;
+          ClientColor = GetClientColor(v20);
+          sub_10063F30(*((_DWORD *)v2 + 3), &v24);
+          v24 = v9;
+          ClientColor = nullptr;
+          v18 = *((_DWORD *)v2 + 3);
+          v25 = wcslen(v1);
+          sub_10063F30(v18, &v24);
+        }
+      }
+    }
+    if ( !*((_DWORD *)v1 + 131) )
+    {
+      v24 = 0;
+      v16 = v1 + 1;
+      while ( *v1++ )
+        ;
+      ClientColor = nullptr;
+      v19 = *((_DWORD *)v2 + 3);
+      v25 = v1 - v16;
+      sub_10063F30(v19, &v24);
+    }
+  }

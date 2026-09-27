@@ -1,0 +1,8 @@
+gv_name: g_LocationColor
+gv_va: '0x10106398'
+gv_rva: '0x106398'
+gv_sig: 55 8B EC 81 EC 1C 01 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 8B F1 57 8D 9E ?? ?? ?? ?? 8B CB 89 9D ?? ?? ?? ??
+gv_sig_va: '0x10063640'
+gv_inst_offset: '0x1c1'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

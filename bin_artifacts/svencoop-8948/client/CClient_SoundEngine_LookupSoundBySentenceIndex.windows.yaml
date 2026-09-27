@@ -1,0 +1,5 @@
+func_name: CClient_SoundEngine_LookupSoundBySentenceIndex
+func_va: '0x1005a4c0'
+func_rva: '0x5a4c0'
+func_size: '0x41'
+func_sig: 8B 54 24 ?? 81 FA FF 0F 00 00 77 ?? 83 3C 91 00 74 ?? 0F AE E8 8B 04 91 83 78 ?? ?? 74 ??

@@ -2358,6 +2358,48 @@ modules:
           - ClientPortal_texture_id_offset.{platform}.yaml
           - ClientPortal_texture_width_offset.{platform}.yaml
           - ClientPortal_texture_height_offset.{platform}.yaml
+      - name: find-Sven-client-global-predecessors
+        expected_input:
+          - TeamFortressViewport_AllowedToPrintText.{platform}.yaml
+        expected_output:
+          - HUD_Init.{platform}.yaml
+          - CHudBaseTextBlock_Print.{platform}.yaml
+          - CHudSayText_PrintText.{platform}.yaml
+      - name: find-CHudBaseTextBlock_Print-decompiles
+        expected_input:
+          - CHudBaseTextBlock_Print.{platform}.yaml
+        expected_output:
+          - gViewPort.{platform}.yaml
+          - CClient_SoundEngine_m_pSoundEngine.{platform}.yaml
+      - name: find-HUD_Init-decompiles
+        expected_input:
+          - HUD_Init.{platform}.yaml
+        expected_output:
+          - gHUD.{platform}.yaml
+      - name: find-CHudSayText_PrintText-decompiles
+        expected_input:
+          - CHudSayText_PrintText.{platform}.yaml
+        expected_output:
+          - GetClientColor.{platform}.yaml
+      - name: find-Sven-client-predicates
+        expected_output:
+          - TeamFortressViewport_AllowedToPrintText.{platform}.yaml
+          - CHud_GetBorderSize.{platform}.yaml
+          - TeamFortressViewport_IsScoreBoardVisible.{platform}.yaml
+      - name: find-CClient_SoundEngine_LookupSoundBySentenceIndex
+        expected_input:
+          - CClient_SoundEngine_PlayFMODSound.{platform}.yaml
+        expected_output:
+          - CClient_SoundEngine_LookupSoundBySentenceIndex.{platform}.yaml
+      - name: find-CClient_SoundEngine_LookupSoundBySample
+        expected_output:
+          - CClient_SoundEngine_LookupSoundBySample.{platform}.yaml
+      - name: find-CClient_SoundEngine_PlayFMODSound
+        expected_output:
+          - CClient_SoundEngine_PlayFMODSound.{platform}.yaml
+      - name: find-WeaponsResource_SelectSlot
+        expected_output:
+          - WeaponsResource_SelectSlot.{platform}.yaml
       - name: find-CClient_SoundEngine_LoadSoundList
         expected_output:
           - CClient_SoundEngine_LoadSoundList.{platform}.yaml
@@ -2474,6 +2516,34 @@ modules:
       - name: HUD_GetStudioModelInterface
         category: func
       - name: CL_IsThirdPerson
+        category: func
+      - name: HUD_Init
+        category: func
+      - name: CHudBaseTextBlock_Print
+        category: func
+      - name: CHudSayText_PrintText
+        category: func
+      - name: gViewPort
+        category: gv
+      - name: gHUD
+        category: gv
+      - name: CClient_SoundEngine_m_pSoundEngine
+        category: gv
+      - name: GetClientColor
+        category: func
+      - name: TeamFortressViewport_AllowedToPrintText
+        category: func
+      - name: CHud_GetBorderSize
+        category: func
+      - name: TeamFortressViewport_IsScoreBoardVisible
+        category: func
+      - name: CClient_SoundEngine_LookupSoundBySentenceIndex
+        category: func
+      - name: CClient_SoundEngine_LookupSoundBySample
+        category: func
+      - name: CClient_SoundEngine_PlayFMODSound
+        category: func
+      - name: WeaponsResource_SelectSlot
         category: func
       - name: CClient_SoundEngine_LoadSoundList
         category: func

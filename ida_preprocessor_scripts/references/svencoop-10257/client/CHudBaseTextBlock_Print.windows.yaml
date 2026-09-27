@@ -1,0 +1,270 @@
+func_name: "CHudBaseTextBlock_Print"
+func_va: "0x10055d70"
+disasm_code: |-
+  ; Targets gv gViewPort and gv CClient_SoundEngine_m_pSoundEngine: select their storage-address operands, not the pointed-to objects.
+  .text:10055D70                 push    ebp
+  .text:10055D71                 mov     ebp, esp
+  .text:10055D73                 push    0FFFFFFFFh
+  .text:10055D75                 push    offset SEH_10055D70
+  .text:10055D7A                 mov     eax, large fs:0
+  .text:10055D80                 push    eax
+  .text:10055D81                 push    ebx
+  .text:10055D82                 push    esi
+  .text:10055D83                 push    edi
+  .text:10055D84                 mov     eax, ___security_cookie
+  .text:10055D89                 xor     eax, ebp
+  .text:10055D8B                 push    eax
+  .text:10055D8C                 lea     eax, [ebp+var_C]
+  .text:10055D8F                 mov     large fs:0, eax
+  .text:10055D95                 mov     ebx, ecx
+  .text:10055D97                 ; self
+  .text:10055D97                 mov     ecx, gViewPort; self
+  .text:10055D9D                 test    ecx, ecx
+  .text:10055D9F                 jz      short loc_10055DAE
+  .text:10055DA1                 call    _ZN20TeamFortressViewport18AllowedToPrintTextEv; TeamFortressViewport::AllowedToPrintText(void)
+  .text:10055DA6                 test    al, al
+  .text:10055DA8                 jz      loc_10055F36
+  .text:10055DAE                 call    dword_101F8AC0
+  .text:10055DB4                 mov     esi, eax
+  .text:10055DB6                 call    gEngfuncs_GetLocalPlayer
+  .text:10055DBC                 cmp     byte ptr [ebx+14h], 0
+  .text:10055DC0                 jz      short loc_10055DED
+  .text:10055DC2                 test    esi, esi
+  .text:10055DC4                 jz      short loc_10055DED
+  .text:10055DC6                 cmp     byte ptr [esi], 0
+  .text:10055DC9                 mov     esi, [ebp+Block]
+  .text:10055DCC                 jz      short loc_10055DF0
+  .text:10055DCE                 test    eax, eax
+  .text:10055DD0                 jz      short loc_10055DF0
+  .text:10055DD2                 cmp     [eax], esi
+  .text:10055DD4                 jz      short loc_10055DF0
+  .text:10055DD6                 call    sub_1009F350
+  .text:10055DDB                 push    esi
+  .text:10055DDC                 mov     ecx, eax
+  .text:10055DDE                 call    sub_1009E970
+  .text:10055DE3                 test    al, al
+  .text:10055DE5                 jnz     loc_10055F36
+  .text:10055DEB                 jmp     short loc_10055DF0
+  .text:10055DED                 mov     esi, [ebp+Block]
+  .text:10055DF0                 mov     ecx, [ebx+0D8Ch]
+  .text:10055DF6                 xor     edi, edi
+  .text:10055DF8                 test    ecx, ecx
+  .text:10055DFA                 jle     short loc_10055E0F
+  .text:10055DFC                 lea     eax, [ebx+15h]
+  .text:10055DFF                 nop
+  .text:10055E00                 cmp     byte ptr [eax], 0
+  .text:10055E03                 jz      short loc_10055E0F
+  .text:10055E05                 inc     edi
+  .text:10055E06                 add     eax, 100h
+  .text:10055E0B                 cmp     edi, ecx
+  .text:10055E0D                 jl      short loc_10055E00
+  .text:10055E0F                 cmp     edi, ecx
+  .text:10055E11                 jnz     short loc_10055E21
+  .text:10055E13                 mov     ecx, ebx
+  .text:10055E15                 call    sub_10056160
+  .text:10055E1A                 mov     edi, [ebx+0D8Ch]
+  .text:10055E20                 dec     edi
+  .text:10055E21                 mov     eax, [ebx]
+  .text:10055E23                 mov     ecx, ebx
+  .text:10055E25                 push    esi
+  .text:10055E26                 push    [ebp+length]
+  .text:10055E29                 mov     esi, [ebp+text]
+  .text:10055E2C                 push    esi
+  .text:10055E2D                 push    edi
+  .text:10055E2E                 call    dword ptr [eax+24h]
+  .text:10055E31                 push    esi
+  .text:10055E32                 call    dword_101F8A10
+  .text:10055E38                 add     esp, 4
+  .text:10055E3B                 mov     ecx, ebx
+  .text:10055E3D                 push    edi
+  .text:10055E3E                 call    sub_10055F50
+  .text:10055E43                 test    edi, edi
+  .text:10055E45                 jnz     short loc_10055E70
+  .text:10055E47                 mov     eax, [ebx]
+  .text:10055E49                 mov     ecx, ebx
+  .text:10055E4B                 mov     eax, [eax+20h]
+  .text:10055E4E                 call    eax
+  .text:10055E50                 fstp    [ebp+Block]
+  .text:10055E53                 movss   xmm0, [ebp+Block]
+  .text:10055E58                 movss   dword ptr [ebx+0D94h], xmm0
+  .text:10055E60                 addss   xmm0, dword_105F8C3C
+  .text:10055E68                 movss   dword ptr [ebx+0D80h], xmm0
+  .text:10055E70                 or      dword ptr [ebx+10h], 1
+  .text:10055E74                 mov     esi, _ZN19CClient_SoundEngine14m_pSoundEngineE; CClient_SoundEngine::m_pSoundEngine
+  .text:10055E7A                 test    esi, esi
+  .text:10055E7C                 jnz     loc_10055F22
+  .text:10055E82                 ; Size
+  .text:10055E82                 push    11B0D4h; Size
+  .text:10055E87                 call    ??2@YAPAXI@Z; operator new(uint)
+  .text:10055E8C                 mov     esi, eax
+  .text:10055E8E                 add     esp, 4
+  .text:10055E91                 mov     [ebp+Block], esi
+  .text:10055E94                 mov     [ebp+var_4], 0
+  .text:10055E9B                 test    esi, esi
+  .text:10055E9D                 jz      short loc_10055F13
+  .text:10055E9F                 ; void *
+  .text:10055E9F                 lea     ecx, [esi+2008h]; void *
+  .text:10055EA5                 call    sub_1007A030
+  .text:10055EAA                 ; Size
+  .text:10055EAA                 push    4000h; Size
+  .text:10055EAF                 lea     eax, [esi+1300Ch]
+  .text:10055EB5                 mov     byte ptr [ebp+var_4], 1
+  .text:10055EB9                 ; Val
+  .text:10055EB9                 push    0; Val
+  .text:10055EBB                 ; void *
+  .text:10055EBB                 push    eax; void *
+  .text:10055EBC                 mov     dword ptr [esi+11B0D0h], 0
+  .text:10055EC6                 call    _memset
+  .text:10055ECB                 ; Size
+  .text:10055ECB                 push    2000h; Size
+  .text:10055ED0                 ; Val
+  .text:10055ED0                 push    0; Val
+  .text:10055ED2                 ; void *
+  .text:10055ED2                 push    esi; void *
+  .text:10055ED3                 call    _memset
+  .text:10055ED8                 add     esp, 18h
+  .text:10055EDB                 mov     dword ptr [esi+11B0A4h], 0
+  .text:10055EE5                 mov     ecx, esi
+  .text:10055EE7                 mov     dword ptr [esi+11B00Ch], 0
+  .text:10055EF1                 mov     byte ptr [esi+11B012h], 0
+  .text:10055EF8                 mov     dword ptr [esi+11B0ACh], 0
+  .text:10055F02                 mov     dword ptr [esi+11B0B0h], 0
+  .text:10055F0C                 call    sub_1000CDE0
+  .text:10055F11                 jmp     short loc_10055F15
+  .text:10055F13                 xor     esi, esi
+  .text:10055F15                 mov     [ebp+var_4], 0FFFFFFFFh
+  .text:10055F1C                 mov     _ZN19CClient_SoundEngine14m_pSoundEngineE, esi; CClient_SoundEngine::m_pSoundEngine
+  .text:10055F22                 push    ecx
+  .text:10055F23                 mov     [esp+20h+var_20], 3F800000h
+  .text:10055F2A                 mov     ecx, esi
+  .text:10055F2C                 push    offset aMiscTalkWav; "misc/talk.wav"
+  .text:10055F31                 call    sub_1000E7C0
+  .text:10055F36                 mov     ecx, [ebp+var_C]
+  .text:10055F39                 mov     large fs:0, ecx
+  .text:10055F40                 pop     ecx
+  .text:10055F41                 pop     edi
+  .text:10055F42                 pop     esi
+  .text:10055F43                 pop     ebx
+  .text:10055F44                 mov     esp, ebp
+  .text:10055F46                 pop     ebp
+  .text:10055F47                 retn    0Ch
+  .text:10114ED0                 push    11B0D4h
+  .text:10114ED5                 mov     eax, [ebp+Block]
+  .text:10114ED8                 ; Block
+  .text:10114ED8                 push    eax; Block
+  .text:10114ED9                 call    sub_100E8485
+  .text:10114EDE                 add     esp, 8
+  .text:10114EE1                 retn
+  .text:10114EE2                 mov     ecx, [ebp+Block]
+  .text:10114EE5                 add     ecx, 2008h
+  .text:10114EEB                 jmp     nullsub_92
+  .text:10114EF5                 nop
+  .text:10114EF6                 nop
+  .text:10114EF7                 mov     edx, [esp-4+length]
+  .text:10114EFB                 lea     eax, [edx+0Ch]
+  .text:10114EFE                 mov     ecx, [edx-10h]
+  .text:10114F01                 ; StackCookie
+  .text:10114F01                 xor     ecx, eax; StackCookie
+  .text:10114F03                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10114F08                 mov     eax, offset stru_1016C0CC
+  .text:10114F0D                 jmp     ___CxxFrameHandler3
+procedure: |-
+  // Targets (gv): gViewPort is the nullable viewport passed to AllowedToPrintText. CClient_SoundEngine_m_pSoundEngine is CClient_SoundEngine::m_pSoundEngine, the singleton pointer storage read and assigned around inline creation; it is not a getter.
+  // Issue 259 reference: target is Sven 10257; names/roles corroborated by Sven 8948 ELF symbols and current instructions. Public HL source is not the matching private Sven implementation. Unknown private layouts/callees retain neutral types. Sound singleton creation remains inline where compiled inline.
+  int __thiscall CHudBaseTextBlock::Print(void *self, const char *text, int length, int playerIndex)
+  {
+    int result; // eax
+    _BYTE *v6; // esi
+    view_entity_partial *LocalPlayer; // eax
+    bool v8; // zf
+    int v9; // esi
+    int v10; // ecx
+    int v11; // edi
+    _BYTE *v12; // eax
+    char *v13; // eax
+    _DWORD *v14; // esi
+    int v15; // [esp+14h] [ebp-1Ch]
+    float Block; // [esp+40h] [ebp+10h]
+
+    if ( !gViewPort || (LOBYTE(result) = TeamFortressViewport::AllowedToPrintText(gViewPort), (_BYTE)result) )
+    {
+      v6 = (_BYTE *)dword_101F8AC0(v15);
+      LocalPlayer = gEngfuncs_GetLocalPlayer();
+      if ( *((_BYTE *)self + 20) && v6 )
+      {
+        v8 = *v6 == 0;
+        v9 = playerIndex;
+        if ( !v8 )
+        {
+          if ( LocalPlayer )
+          {
+            if ( LocalPlayer->index != playerIndex )
+            {
+              sub_1009F350();
+              result = sub_1009E970(playerIndex);
+              if ( (_BYTE)result )
+                return result;
+            }
+          }
+        }
+      }
+      else
+      {
+        v9 = playerIndex;
+      }
+      v10 = *((_DWORD *)self + 867);
+      v11 = 0;
+      if ( v10 > 0 )
+      {
+        v12 = (char *)self + 21;
+        do
+        {
+          if ( !*v12 )
+            break;
+          ++v11;
+          v12 += 256;
+        }
+        while ( v11 < v10 );
+      }
+      if ( v11 == v10 )
+      {
+        sub_10056160(self);
+        v11 = *((_DWORD *)self + 867) - 1;
+      }
+      (*(void (__thiscall **)(void *, int, const char *, int, int))(*(_DWORD *)self + 36))(self, v11, text, length, v9);
+      dword_101F8A10(text);
+      sub_10055F50(self, v11);
+      if ( !v11 )
+      {
+        Block = ((double (__thiscall *)(void *))*(_DWORD *)(*(_DWORD *)self + 32))(self);
+        *((float *)self + 869) = Block;
+        *((float *)self + 864) = Block + *(float *)&dword_105F8C3C;
+      }
+      *((_DWORD *)self + 4) |= 1u;
+      if ( !CClient_SoundEngine::m_pSoundEngine )
+      {
+        v13 = (char *)operator new(0x11B0D4u);
+        v14 = v13;
+        if ( v13 )
+        {
+          sub_1007A030(v13 + 8200);
+          v14[289844] = 0;
+          memset(v14 + 19459, 0, 0x4000u);
+          memset(v14, 0, 0x2000u);
+          v14[289833] = 0;
+          v14[289795] = 0;
+          *((_BYTE *)v14 + 1159186) = 0;
+          v14[289835] = 0;
+          v14[289836] = 0;
+          sub_1000CDE0(v14);
+        }
+        else
+        {
+          v14 = nullptr;
+        }
+        CClient_SoundEngine::m_pSoundEngine = v14;
+      }
+      return sub_1000E7C0("misc/talk.wav", 1065353216);
+    }
+    return result;
+  }

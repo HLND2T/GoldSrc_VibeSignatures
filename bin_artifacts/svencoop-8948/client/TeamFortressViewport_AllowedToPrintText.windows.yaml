@@ -1,0 +1,5 @@
+func_name: TeamFortressViewport_AllowedToPrintText
+func_va: '0x100b4690'
+func_rva: '0xb4690'
+func_size: '0x20'
+func_sig: 8B 81 ?? ?? ?? ?? 85 C0 74 ?? 8B 80 ?? ?? ?? ?? 83 F8 02 74 ?? 83 F8 05 75 ?? 32 C0 C3 B0 01 C3

@@ -1,0 +1,625 @@
+func_name: "CHudBaseTextBlock_Print"
+func_va: "0xffbb4"
+disasm_code: |-
+  ; Targets gv gViewPort and gv CClient_SoundEngine_m_pSoundEngine: select their storage-address operands, not the pointed-to objects.
+  .text:000FFBB4                 push    ebp
+  .text:000FFBB5                 push    edi
+  .text:000FFBB6                 push    esi
+  .text:000FFBB7                 push    ebx
+  .text:000FFBB8                 sub     esp, 3Ch
+  .text:000FFBBB                 call    sub_A343F
+  .text:000FFBC0                 add     esi, (offset qword_61E000 - $)
+  .text:000FFBC6                 mov     ebp, [esp+4Ch+self]
+  .text:000FFBCA                 lea     eax, (gViewPort - 61E000h)[esi]
+  .text:000FFBD0                 mov     edx, [eax]
+  .text:000FFBD2                 test    edx, edx
+  .text:000FFBD4                 jz      short loc_FFBE8
+  .text:000FFBD6                 mov     [esp+4Ch+var_4C], edx
+  .text:000FFBD9                 mov     ebx, esi
+  .text:000FFBDB                 call    _ZN20TeamFortressViewport18AllowedToPrintTextEv; TeamFortressViewport::AllowedToPrintText(void)
+  .text:000FFBE0                 test    al, al
+  .text:000FFBE2                 jz      loc_FFDD4
+  .text:000FFBE8                 lea     edi, (unk_A57FA0 - 61E000h)[esi]
+  .text:000FFBEE                 call    dword ptr [edi+128h]
+  .text:000FFBF4                 mov     ebx, eax
+  .text:000FFBF6                 call    dword ptr [edi+0CCh]
+  .text:000FFBFC                 cmp     byte ptr [ebp+14h], 0
+  .text:000FFC00                 jz      short loc_FFC3A
+  .text:000FFC02                 test    ebx, ebx
+  .text:000FFC04                 jz      short loc_FFC3A
+  .text:000FFC06                 cmp     byte ptr [ebx], 0
+  .text:000FFC09                 jz      short loc_FFC3A
+  .text:000FFC0B                 test    eax, eax
+  .text:000FFC0D                 lea     esi, [esi+0]
+  .text:000FFC10                 jz      short loc_FFC3A
+  .text:000FFC12                 mov     ecx, [eax]
+  .text:000FFC14                 cmp     [esp+4Ch+playerIndex], ecx
+  .text:000FFC18                 jz      short loc_FFC3A
+  .text:000FFC1A                 mov     ebx, esi
+  .text:000FFC1C                 call    sub_16397A
+  .text:000FFC21                 mov     edx, [esp+4Ch+playerIndex]
+  .text:000FFC25                 mov     [esp+4Ch+var_48], edx
+  .text:000FFC29                 mov     [esp+4Ch+var_4C], eax
+  .text:000FFC2C                 call    sub_165514
+  .text:000FFC31                 test    al, al
+  .text:000FFC33                 jnz     loc_FFDD4
+  .text:000FFC39                 nop
+  .text:000FFC3A                 mov     eax, [ebp+0D8Ch]
+  .text:000FFC40                 cmp     eax, 0
+  .text:000FFC43                 jle     loc_FFF2E
+  .text:000FFC49                 cmp     byte ptr [ebp+15h], 0
+  .text:000FFC4D                 jz      loc_FFF7C
+  .text:000FFC53                 cmp     eax, 1
+  .text:000FFC56                 jz      loc_FFDDC
+  .text:000FFC5C                 cmp     byte ptr [ebp+115h], 0
+  .text:000FFC63                 jz      loc_100036
+  .text:000FFC69                 cmp     eax, 2
+  .text:000FFC6C                 jz      loc_FFFCC
+  .text:000FFC72                 cmp     byte ptr [ebp+215h], 0
+  .text:000FFC79                 jz      loc_10003E
+  .text:000FFC7F                 cmp     eax, 3
+  .text:000FFC82                 jz      loc_FFF9A
+  .text:000FFC88                 cmp     byte ptr [ebp+315h], 0
+  .text:000FFC8F                 jz      loc_100046
+  .text:000FFC95                 cmp     eax, 4
+  .text:000FFC98                 jz      loc_FFFD6
+  .text:000FFC9E                 cmp     byte ptr [ebp+415h], 0
+  .text:000FFCA5                 jz      loc_10002E
+  .text:000FFCAB                 cmp     eax, 5
+  .text:000FFCAE                 jz      loc_FFFE0
+  .text:000FFCB4                 cmp     byte ptr [ebp+515h], 0
+  .text:000FFCBB                 jz      loc_10001E
+  .text:000FFCC1                 cmp     eax, 6
+  .text:000FFCC4                 jz      loc_FFFEA
+  .text:000FFCCA                 cmp     byte ptr [ebp+615h], 0
+  .text:000FFCD1                 jz      loc_10006E
+  .text:000FFCD7                 cmp     eax, 7
+  .text:000FFCDA                 jz      loc_FFFF4
+  .text:000FFCE0                 cmp     byte ptr [ebp+715h], 0
+  .text:000FFCE7                 jz      loc_100026
+  .text:000FFCED                 cmp     eax, 8
+  .text:000FFCF0                 jz      loc_FFFFE
+  .text:000FFCF6                 cmp     byte ptr [ebp+815h], 0
+  .text:000FFCFD                 jz      loc_10005E
+  .text:000FFD03                 cmp     eax, 9
+  .text:000FFD06                 jz      loc_FFFAE
+  .text:000FFD0C                 cmp     byte ptr [ebp+915h], 0
+  .text:000FFD13                 jz      loc_100066
+  .text:000FFD19                 cmp     eax, 0Ah
+  .text:000FFD1C                 jz      loc_FFFB8
+  .text:000FFD22                 cmp     byte ptr [ebp+0A15h], 0
+  .text:000FFD29                 jz      loc_10004E
+  .text:000FFD2F                 cmp     eax, 0Bh
+  .text:000FFD32                 jz      loc_FFFC2
+  .text:000FFD38                 cmp     byte ptr [ebp+0B15h], 0
+  .text:000FFD3F                 jz      loc_100056
+  .text:000FFD45                 cmp     eax, 0Ch
+  .text:000FFD48                 jz      loc_FFFA4
+  .text:000FFD4E                 cmp     byte ptr [ebp+0C15h], 0
+  .text:000FFD55                 jz      loc_100008
+  .text:000FFD5B                 mov     ebx, 0Dh
+  .text:000FFD60                 cmp     eax, ebx
+  .text:000FFD62                 jz      short loc_FFDDC
+  .text:000FFD64                 mov     eax, [ebp+0]
+  .text:000FFD67                 mov     ecx, [esp+4Ch+playerIndex]
+  .text:000FFD6B                 mov     [esp+4Ch+var_3C], ecx
+  .text:000FFD6F                 mov     ecx, [esp+4Ch+length]
+  .text:000FFD73                 mov     [esp+4Ch+var_40], ecx
+  .text:000FFD77                 mov     edx, [esp+4Ch+text]
+  .text:000FFD7B                 mov     [esp+4Ch+var_44], edx
+  .text:000FFD7F                 mov     [esp+4Ch+var_48], ebx
+  .text:000FFD83                 mov     [esp+4Ch+var_4C], ebp
+  .text:000FFD86                 call    dword ptr [eax+28h]
+  .text:000FFD89                 mov     eax, [esp+4Ch+text]
+  .text:000FFD8D                 mov     [esp+4Ch+var_4C], eax
+  .text:000FFD90                 call    dword ptr [edi+78h]
+  .text:000FFD93                 mov     [esp+4Ch+var_48], ebx
+  .text:000FFD97                 mov     [esp+4Ch+var_4C], ebp
+  .text:000FFD9A                 call    sub_FF71E
+  .text:000FFD9F                 or      dword ptr [ebp+10h], 1
+  .text:000FFDA3                 lea     ebp, (_ZN19CClient_SoundEngine14m_pSoundEngineE - 61E000h)[esi]; CClient_SoundEngine::m_pSoundEngine
+  .text:000FFDA9                 mov     [esp+4Ch+var_24], ebp
+  .text:000FFDAD                 mov     ebp, [ebp+0]
+  .text:000FFDB0                 test    ebp, ebp
+  .text:000FFDB2                 jz      loc_FFE54
+  .text:000FFDB8                 mov     [esp+4Ch+var_44], 3F800000h
+  .text:000FFDC0                 lea     edx, (aMiscTalkWav - 61E000h)[esi]; "misc/talk.wav"
+  .text:000FFDC6                 mov     [esp+4Ch+var_48], edx
+  .text:000FFDCA                 mov     [esp+4Ch+var_4C], ebp
+  .text:000FFDCD                 mov     ebx, esi
+  .text:000FFDCF                 call    sub_AD6CC
+  .text:000FFDD4                 add     esp, 3Ch
+  .text:000FFDD7                 pop     ebx
+  .text:000FFDD8                 pop     esi
+  .text:000FFDD9                 pop     edi
+  .text:000FFDDA                 pop     ebp
+  .text:000FFDDB                 retn
+  .text:000FFDDC                 mov     [esp+4Ch+var_4C], ebp
+  .text:000FFDDF                 call    sub_FF272
+  .text:000FFDE4                 mov     ecx, [ebp+0D8Ch]
+  .text:000FFDEA                 lea     ebx, [ecx-1]
+  .text:000FFDED                 mov     eax, [ebp+0]
+  .text:000FFDF0                 mov     edx, [esp+4Ch+playerIndex]
+  .text:000FFDF4                 mov     [esp+4Ch+var_3C], edx
+  .text:000FFDF8                 mov     ecx, [esp+4Ch+length]
+  .text:000FFDFC                 mov     [esp+4Ch+var_40], ecx
+  .text:000FFE00                 mov     edx, [esp+4Ch+text]
+  .text:000FFE04                 mov     [esp+4Ch+var_44], edx
+  .text:000FFE08                 mov     [esp+4Ch+var_48], ebx
+  .text:000FFE0C                 mov     [esp+4Ch+var_4C], ebp
+  .text:000FFE0F                 call    dword ptr [eax+28h]
+  .text:000FFE12                 mov     eax, [esp+4Ch+text]
+  .text:000FFE16                 mov     [esp+4Ch+var_4C], eax
+  .text:000FFE19                 call    dword ptr [edi+78h]
+  .text:000FFE1C                 mov     [esp+4Ch+var_48], ebx
+  .text:000FFE20                 mov     [esp+4Ch+var_4C], ebp
+  .text:000FFE23                 call    sub_FF71E
+  .text:000FFE28                 test    ebx, ebx
+  .text:000FFE2A                 jnz     loc_FFD9F
+  .text:000FFE30                 mov     edi, [ebp+0]
+  .text:000FFE33                 mov     [esp+4Ch+var_4C], ebp
+  .text:000FFE36                 call    dword ptr [edi+24h]
+  .text:000FFE39                 fst     dword ptr [ebp+0D94h]
+  .text:000FFE3F                 lea     ebx, (gHUD - 61E000h)[esi]
+  .text:000FFE45                 fadd    dword ptr [ebx+5Ch]
+  .text:000FFE48                 fstp    dword ptr [ebp+0D80h]
+  .text:000FFE4E                 jmp     loc_FFD9F
+  .text:000FFE54                 ; unsigned int
+  .text:000FFE54                 mov     [esp+4Ch+var_4C], 11B0D4h; unsigned int
+  .text:000FFE5B                 mov     ebx, esi
+  .text:000FFE5D                 call    __Znwj; operator new(uint)
+  .text:000FFE62                 mov     ebp, eax
+  .text:000FFE64                 lea     ecx, [eax+2008h]
+  .text:000FFE6A                 mov     [esp+4Ch+var_20], ecx
+  .text:000FFE6E                 ; void *
+  .text:000FFE6E                 mov     [esp+4Ch+var_4C], ecx; void *
+  .text:000FFE71                 call    sub_134870
+  .text:000FFE76                 mov     dword ptr ss:loc_11B0D0[ebp], 0
+  .text:000FFE80                 lea     edx, [ebp+1300Ch]
+  .text:000FFE86                 mov     ebx, 4000h
+  .text:000FFE8B                 xor     eax, eax
+  .text:000FFE8D                 test    dl, 1
+  .text:000FFE90                 jnz     loc_1000A0
+  .text:000FFE96                 test    dl, 2
+  .text:000FFE99                 jnz     loc_100092
+  .text:000FFE9F                 mov     ecx, ebx
+  .text:000FFEA1                 shr     ecx, 2
+  .text:000FFEA4                 mov     edi, edx
+  .text:000FFEA6                 rep stosd
+  .text:000FFEA8                 test    bl, 2
+  .text:000FFEAB                 jz      short loc_FFEAF
+  .text:000FFEAD                 stosw
+  .text:000FFEAF                 and     ebx, 1
+  .text:000FFEB2                 jz      short loc_FFEB5
+  .text:000FFEB4                 stosb
+  .text:000FFEB5                 mov     ebx, ebp
+  .text:000FFEB7                 mov     edx, 2000h
+  .text:000FFEBC                 xor     eax, eax
+  .text:000FFEBE                 test    ebp, 1
+  .text:000FFEC4                 jnz     loc_100083
+  .text:000FFECA                 test    bl, 2
+  .text:000FFECD                 jnz     loc_100075
+  .text:000FFED3                 mov     ecx, edx
+  .text:000FFED5                 shr     ecx, 2
+  .text:000FFED8                 mov     edi, ebx
+  .text:000FFEDA                 rep stosd
+  .text:000FFEDC                 test    dl, 2
+  .text:000FFEDF                 jz      short loc_FFEE3
+  .text:000FFEE1                 stosw
+  .text:000FFEE3                 and     edx, 1
+  .text:000FFEE6                 jz      short loc_FFEE9
+  .text:000FFEE8                 stosb
+  .text:000FFEE9                 mov     dword ptr [ebp+11B0A4h], 0
+  .text:000FFEF3                 mov     dword ptr [ebp+11B00Ch], 0
+  .text:000FFEFD                 mov     byte ptr ss:loc_11B012[ebp], 0
+  .text:000FFF04                 mov     dword ptr [ebp+11B0ACh], 0
+  .text:000FFF0E                 mov     dword ptr [ebp+11B0B0h], 0
+  .text:000FFF18                 mov     [esp+4Ch+var_4C], ebp
+  .text:000FFF1B                 mov     ebx, esi
+  .text:000FFF1D                 call    sub_AABCE
+  .text:000FFF22                 mov     eax, [esp+4Ch+var_24]
+  .text:000FFF26                 mov     [eax], ebp
+  .text:000FFF28                 jmp     loc_FFDB8
+  .text:000FFF2E                 jz      loc_FFDDC
+  .text:000FFF34                 mov     ebx, [ebp+0]
+  .text:000FFF37                 mov     ecx, [esp+4Ch+playerIndex]
+  .text:000FFF3B                 mov     [esp+4Ch+var_3C], ecx
+  .text:000FFF3F                 mov     edx, [esp+4Ch+length]
+  .text:000FFF43                 mov     [esp+4Ch+var_40], edx
+  .text:000FFF47                 mov     eax, [esp+4Ch+text]
+  .text:000FFF4B                 mov     [esp+4Ch+var_44], eax
+  .text:000FFF4F                 mov     [esp+4Ch+var_48], 0
+  .text:000FFF57                 mov     [esp+4Ch+var_4C], ebp
+  .text:000FFF5A                 call    dword ptr [ebx+28h]
+  .text:000FFF5D                 mov     ebx, [esp+4Ch+text]
+  .text:000FFF61                 mov     [esp+4Ch+var_4C], ebx
+  .text:000FFF64                 call    dword ptr [edi+78h]
+  .text:000FFF67                 mov     [esp+4Ch+var_48], 0
+  .text:000FFF6F                 mov     [esp+4Ch+var_4C], ebp
+  .text:000FFF72                 call    sub_FF71E
+  .text:000FFF77                 jmp     loc_FFE30
+  .text:000FFF7C                 mov     ebx, [ebp+0]
+  .text:000FFF7F                 mov     ecx, [esp+4Ch+playerIndex]
+  .text:000FFF83                 mov     [esp+4Ch+var_3C], ecx
+  .text:000FFF87                 mov     edx, [esp+4Ch+length]
+  .text:000FFF8B                 mov     [esp+4Ch+var_40], edx
+  .text:000FFF8F                 mov     eax, [esp+4Ch+text]
+  .text:000FFF93                 mov     [esp+4Ch+var_44], eax
+  .text:000FFF97                 jmp     short loc_FFF4F
+  .text:000FFF9A                 mov     ebx, 3
+  .text:000FFF9F                 jmp     loc_FFD60
+  .text:000FFFA4                 mov     ebx, 0Ch
+  .text:000FFFA9                 jmp     loc_FFD60
+  .text:000FFFAE                 mov     ebx, 9
+  .text:000FFFB3                 jmp     loc_FFD60
+  .text:000FFFB8                 mov     ebx, 0Ah
+  .text:000FFFBD                 jmp     loc_FFD60
+  .text:000FFFC2                 mov     ebx, 0Bh
+  .text:000FFFC7                 jmp     loc_FFD60
+  .text:000FFFCC                 mov     ebx, 2
+  .text:000FFFD1                 jmp     loc_FFD60
+  .text:000FFFD6                 mov     ebx, 4
+  .text:000FFFDB                 jmp     loc_FFD60
+  .text:000FFFE0                 mov     ebx, 5
+  .text:000FFFE5                 jmp     loc_FFD60
+  .text:000FFFEA                 mov     ebx, 6
+  .text:000FFFEF                 jmp     loc_FFD60
+  .text:000FFFF4                 mov     ebx, 7
+  .text:000FFFF9                 jmp     loc_FFD60
+  .text:000FFFFE                 mov     ebx, 8
+  .text:00100003                 jmp     loc_FFD60
+  .text:00100008                 mov     ebx, 0Ch
+  .text:0010000D                 nop
+  .text:0010000E                 mov     eax, [ebp+0]
+  .text:00100011                 mov     edx, [esp+4Ch+playerIndex]
+  .text:00100015                 mov     [esp+4Ch+var_3C], edx
+  .text:00100019                 jmp     loc_FFD6F
+  .text:0010001E                 mov     ebx, 5
+  .text:00100023                 jmp     short loc_10000E
+  .text:00100026                 mov     ebx, 7
+  .text:0010002B                 jmp     short loc_10000E
+  .text:0010002E                 mov     ebx, 4
+  .text:00100033                 jmp     short loc_10000E
+  .text:00100036                 mov     ebx, 1
+  .text:0010003B                 jmp     short loc_10000E
+  .text:0010003E                 mov     ebx, 2
+  .text:00100043                 jmp     short loc_10000E
+  .text:00100046                 mov     ebx, 3
+  .text:0010004B                 jmp     short loc_10000E
+  .text:0010004E                 mov     ebx, 0Ah
+  .text:00100053                 jmp     short loc_10000E
+  .text:00100056                 mov     ebx, 0Bh
+  .text:0010005B                 jmp     short loc_10000E
+  .text:0010005E                 mov     ebx, 8
+  .text:00100063                 jmp     short loc_10000E
+  .text:00100066                 mov     ebx, 9
+  .text:0010006B                 jmp     short loc_10000E
+  .text:0010006E                 mov     ebx, 6
+  .text:00100073                 jmp     short loc_10000E
+  .text:00100075                 mov     edi, ebx
+  .text:00100077                 stosw
+  .text:00100079                 mov     ebx, edi
+  .text:0010007B                 sub     edx, 2
+  .text:0010007E                 jmp     loc_FFED3
+  .text:00100083                 mov     edi, ebp
+  .text:00100085                 stosb
+  .text:00100086                 mov     ebx, edi
+  .text:00100088                 mov     edx, 1FFFh
+  .text:0010008D                 jmp     loc_FFECA
+  .text:00100092                 mov     edi, edx
+  .text:00100094                 stosw
+  .text:00100096                 mov     edx, edi
+  .text:00100098                 sub     ebx, 2
+  .text:0010009B                 jmp     loc_FFE9F
+  .text:001000A0                 mov     edi, edx
+  .text:001000A2                 stosb
+  .text:001000A3                 mov     edx, edi
+  .text:001000A5                 mov     ebx, 3FFFh
+  .text:001000AA                 jmp     loc_FFE96
+  .text:001000AF                 mov     edi, eax
+  .text:001000B1                 ; void *
+  .text:001000B1                 mov     [esp+4Ch+var_4C], ebp; void *
+  .text:001000B4                 mov     ebx, esi
+  .text:001000B6                 call    __ZdlPv; operator delete(void *)
+  .text:001000BB                 mov     [esp+4Ch+var_4C], edi
+  .text:001000BE                 call    __Unwind_Resume
+  .text:001000C3                 mov     edi, eax
+  .text:001000C5                 mov     ebx, [esp+4Ch+var_20]
+  .text:001000C9                 mov     [esp+4Ch+var_4C], ebx
+  .text:001000CC                 mov     ebx, esi
+  .text:001000CE                 call    nullsub_358
+  .text:001000D3                 jmp     short loc_1000B1
+procedure: |-
+  // Targets (gv): gViewPort is the nullable viewport passed to AllowedToPrintText. CClient_SoundEngine_m_pSoundEngine is CClient_SoundEngine::m_pSoundEngine, the singleton pointer storage read and assigned around inline creation; it is not a getter.
+  // Issue 259 reference: target is Sven 10257; names/roles corroborated by Sven 8948 ELF symbols and current instructions. Public HL source is not the matching private Sven implementation. Unknown private layouts/callees retain neutral types. Sound singleton creation remains inline where compiled inline.
+  int __cdecl CHudBaseTextBlock::Print(void *self, const char *text, int length, int playerIndex)
+  {
+    int result; // eax
+    _BYTE *v5; // ebx
+    view_entity_partial *LocalPlayer; // eax
+    int v7; // eax
+    int v8; // eax
+    int v9; // ebx
+    int v10; // eax
+    char *v11; // ebp
+    int v12; // ebx
+    long double v13; // fst7
+    _BYTE *v14; // edx
+    unsigned int v15; // ebx
+    _WORD *v16; // edi
+    _WORD *v17; // ebx
+    unsigned int v18; // edx
+    _WORD *v19; // edi
+    int v20; // [esp+10h] [ebp-3Ch]
+
+    if ( gViewPort )
+    {
+      LOBYTE(result) = TeamFortressViewport::AllowedToPrintText(gViewPort);
+      if ( !(_BYTE)result )
+        return result;
+    }
+    v5 = (_BYTE *)unk_A580C8();
+    LocalPlayer = gEngfuncs_GetLocalPlayer();
+    if ( *((_BYTE *)self + 20) )
+    {
+      if ( v5 )
+      {
+        if ( *v5 )
+        {
+          if ( LocalPlayer )
+          {
+            if ( playerIndex != LocalPlayer->index )
+            {
+              v7 = sub_16397A();
+              result = sub_165514(v7, playerIndex);
+              if ( (_BYTE)result )
+                return result;
+            }
+          }
+        }
+      }
+    }
+    v8 = *((_DWORD *)self + 867);
+    if ( v8 <= 0 )
+    {
+      if ( !v8 )
+      {
+  LABEL_42:
+        sub_FF272(self);
+        v12 = *((_DWORD *)self + 867) - 1;
+        (*(void (__cdecl **)(void *, int, const char *, int, int))(*(_DWORD *)self + 40))(
+          self,
+          v12,
+          text,
+          length,
+          playerIndex);
+        unk_A58018(text);
+        sub_FF71E((int)self, v12);
+        if ( v12 )
+          goto LABEL_39;
+  LABEL_43:
+        v13 = ((long double (__cdecl *)(void *))*(_DWORD *)(*(_DWORD *)self + 36))(self);
+        *((float *)self + 869) = v13;
+        *((float *)self + 864) = v13 + unk_A559DC;
+        goto LABEL_39;
+      }
+  LABEL_62:
+      (*(void (__cdecl **)(void *, _DWORD, const char *, int, int))(*(_DWORD *)self + 40))(
+        self,
+        0,
+        text,
+        length,
+        playerIndex);
+      unk_A58018(text);
+      sub_FF71E((int)self, 0);
+      goto LABEL_43;
+    }
+    if ( !*((_BYTE *)self + 21) )
+      goto LABEL_62;
+    if ( v8 == 1 )
+      goto LABEL_42;
+    if ( !*((_BYTE *)self + 277) )
+    {
+      v9 = 1;
+      goto LABEL_76;
+    }
+    if ( v8 == 2 )
+    {
+      v9 = 2;
+    }
+    else
+    {
+      if ( !*((_BYTE *)self + 533) )
+      {
+        v9 = 2;
+        goto LABEL_76;
+      }
+      if ( v8 == 3 )
+      {
+        v9 = 3;
+      }
+      else
+      {
+        if ( !*((_BYTE *)self + 789) )
+        {
+          v9 = 3;
+          goto LABEL_76;
+        }
+        if ( v8 == 4 )
+        {
+          v9 = 4;
+        }
+        else
+        {
+          if ( !*((_BYTE *)self + 1045) )
+          {
+            v9 = 4;
+            goto LABEL_76;
+          }
+          if ( v8 == 5 )
+          {
+            v9 = 5;
+          }
+          else
+          {
+            if ( !*((_BYTE *)self + 1301) )
+            {
+              v9 = 5;
+              goto LABEL_76;
+            }
+            if ( v8 == 6 )
+            {
+              v9 = 6;
+            }
+            else
+            {
+              if ( !*((_BYTE *)self + 1557) )
+              {
+                v9 = 6;
+                goto LABEL_76;
+              }
+              if ( v8 == 7 )
+              {
+                v9 = 7;
+              }
+              else
+              {
+                if ( !*((_BYTE *)self + 1813) )
+                {
+                  v9 = 7;
+                  goto LABEL_76;
+                }
+                if ( v8 == 8 )
+                {
+                  v9 = 8;
+                }
+                else
+                {
+                  if ( !*((_BYTE *)self + 2069) )
+                  {
+                    v9 = 8;
+                    goto LABEL_76;
+                  }
+                  if ( v8 == 9 )
+                  {
+                    v9 = 9;
+                  }
+                  else
+                  {
+                    if ( !*((_BYTE *)self + 2325) )
+                    {
+                      v9 = 9;
+                      goto LABEL_76;
+                    }
+                    if ( v8 == 10 )
+                    {
+                      v9 = 10;
+                    }
+                    else
+                    {
+                      if ( !*((_BYTE *)self + 2581) )
+                      {
+                        v9 = 10;
+                        goto LABEL_76;
+                      }
+                      if ( v8 == 11 )
+                      {
+                        v9 = 11;
+                      }
+                      else
+                      {
+                        if ( !*((_BYTE *)self + 2837) )
+                        {
+                          v9 = 11;
+                          goto LABEL_76;
+                        }
+                        if ( v8 != 12 )
+                        {
+                          if ( *((_BYTE *)self + 3093) )
+                          {
+                            v9 = 13;
+                            goto LABEL_36;
+                          }
+                          v9 = 12;
+  LABEL_76:
+                          v10 = *(_DWORD *)self;
+                          v20 = playerIndex;
+                          goto LABEL_38;
+                        }
+                        v9 = 12;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  LABEL_36:
+    if ( v8 == v9 )
+      goto LABEL_42;
+    v10 = *(_DWORD *)self;
+    v20 = playerIndex;
+  LABEL_38:
+    (*(void (__cdecl **)(void *, int, const char *, int, int))(v10 + 40))(self, v9, text, length, v20);
+    unk_A58018(text);
+    sub_FF71E((int)self, v9);
+  LABEL_39:
+    *((_DWORD *)self + 4) |= 1u;
+    v11 = (char *)CClient_SoundEngine::m_pSoundEngine;
+    if ( !CClient_SoundEngine::m_pSoundEngine )
+    {
+      v11 = (char *)operator new(0x11B0D4u);
+      sub_134870(v11 + 8200);
+      *(_DWORD *)((char *)&loc_11B0D0 + (_DWORD)v11) = 0;
+      v14 = v11 + 77836;
+      v15 = 0x4000;
+      if ( (((_BYTE)v11 + 12) & 1) != 0 )
+      {
+        *v14 = 0;
+        v14 = v11 + 77837;
+        v15 = 0x3FFF;
+      }
+      if ( ((unsigned __int8)v14 & 2) != 0 )
+      {
+        *(_WORD *)v14 = 0;
+        v14 += 2;
+        v15 -= 2;
+      }
+      memset(v14, 0, 4 * (v15 >> 2));
+      v16 = &v14[4 * (v15 >> 2)];
+      if ( (v15 & 2) != 0 )
+        *v16++ = 0;
+      if ( (v15 & 1) != 0 )
+        *(_BYTE *)v16 = 0;
+      v17 = v11;
+      v18 = 0x2000;
+      if ( ((unsigned __int8)v11 & 1) != 0 )
+      {
+        *v11 = 0;
+        v17 = v11 + 1;
+        v18 = 0x1FFF;
+      }
+      if ( ((unsigned __int8)v17 & 2) != 0 )
+      {
+        *v17++ = 0;
+        v18 -= 2;
+      }
+      memset(v17, 0, 4 * (v18 >> 2));
+      v19 = &v17[2 * (v18 >> 2)];
+      if ( (v18 & 2) != 0 )
+        *v19++ = 0;
+      if ( (v18 & 1) != 0 )
+        *(_BYTE *)v19 = 0;
+      *((_DWORD *)v11 + 289833) = 0;
+      *((_DWORD *)v11 + 289795) = 0;
+      *((_BYTE *)&loc_11B012 + (_DWORD)v11) = 0;
+      *((_DWORD *)v11 + 289835) = 0;
+      *((_DWORD *)v11 + 289836) = 0;
+      sub_AABCE(v11);
+      CClient_SoundEngine::m_pSoundEngine = v11;
+    }
+    return sub_AD6CC(v11, "misc/talk.wav", 1065353216);
+  }

@@ -1,0 +1,10 @@
+gv_name: gViewPort
+gv_va: '0x655920'
+gv_rva: '0x655920'
+gv_sig: 55 57 56 53 83 EC ?? E8 ?? ?? ?? ?? 81 C6 ?? ?? ?? ?? 8B 6C 24 ?? 8D 86 ?? ?? ?? ?? 8B 10 85 D2 74 ?? 89 14 24 89
+  F3
+gv_sig_va: '0xffbb4'
+gv_inst_offset: '0x16'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
+gv_pic_addend: '0x61e000'

@@ -1,0 +1,28 @@
+func_name: "GetTextColor"
+func_va: "0x116650"
+disasm_code: |-
+  ; Target gv g_LocationColor: the float[3] address conditionally selected for colorNum == 4; the tail call for 3 is GetClientColor.
+  .text:00116650                 mov     edx, [esp+colorNum]
+  .text:00116654                 mov     eax, [esp+clientIndex]
+  .text:00116658                 cmp     edx, 3
+  .text:0011665B                 jz      short loc_116670
+  .text:0011665D                 xor     eax, eax
+  .text:0011665F                 cmp     edx, 4
+  .text:00116662                 mov     edx, offset g_LocationColor
+  .text:00116667                 cmovz   eax, edx
+  .text:0011666A                 retn
+  .text:00116670                 mov     [esp+colorNum], eax
+  .text:00116674                 jmp     _Z14GetClientColori; GetClientColor(int)
+procedure: |-
+  // Issue 259: actual CS client body, corroborated by ELF names and cl_dll/saytext.cpp. Target gv g_LocationColor is the float[3] array selected by text color 4; color 3 is the player team color and must not be selected. Unknown private layouts remain neutral.
+  float *__cdecl GetTextColor(int colorNum, int clientIndex)
+  {
+    float *result; // eax
+
+    if ( colorNum == 3 )
+      return GetClientColor(clientIndex);
+    result = nullptr;
+    if ( colorNum == 4 )
+      return g_LocationColor;
+    return result;
+  }

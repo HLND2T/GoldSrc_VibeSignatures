@@ -1,0 +1,5 @@
+func_name: GetTextColor
+func_va: '0x1165a0'
+func_rva: '0x1165a0'
+func_size: '0x29'
+func_sig: 8B 54 24 ?? 8B 44 24 ?? 83 FA ?? 74 ?? 31 C0 83 FA ?? BA ?? ?? ?? ?? 0F 44 C2 C3

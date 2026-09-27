@@ -1,0 +1,6 @@
+func_name: GetClientColor
+func_va: '0xd44c8'
+func_rva: '0xd44c8'
+func_size: '0x7b'
+func_sig: E8 ?? ?? ?? ?? 81 C2 ?? ?? ?? ?? 8B 4C 24 ?? 83 F9 ?? 7E ?? 8D 04 09 01 C8 01 C0 01 C0 01 C0 29 C8 01 C0
+func_sig_resolve_jmp_thunk: true

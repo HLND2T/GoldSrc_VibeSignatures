@@ -1,0 +1,5 @@
+func_name: CHud_GetBorderSize
+func_va: '0x13f032'
+func_rva: '0x13f032'
+func_size: '0x44'
+func_sig: 83 EC ?? 8B 44 24 ?? 8B 50 ?? D9 42 ?? D9 7C 24 ?? 66 8B 4C 24 ?? B5 ?? 66 89 4C 24 ?? D9 6C 24 ??
