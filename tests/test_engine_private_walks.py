@@ -805,5 +805,106 @@ class TextureIdentityTests(unittest.TestCase):
                 self.assertEqual(expected, texture_mode_name(ROOT / "bin_artifacts" / game / "engine"))
 
 
+class PatchSignatureRelocationTests(unittest.TestCase):
+    def candidates(self, raw, kind, offset, width):
+        from ida_preprocessor_scripts._patch_signature_common import CANDIDATE_PY
+
+        api = NS(o_void=0, o_reg=REG, o_mem=MEM, o_displ=DISPL, o_imm=IMM, o_near=NEAR, o_far=6)
+        ua = NS(get_dtype_size=lambda dtype: dtype)
+        insn = NS(size=len(raw), ops=[NS(type=kind, offb=offset, dtype=width)])
+        modules = {
+            "idaapi": api,
+            "ida_ua": ua,
+            "ida_bytes": NS(get_bytes=lambda ea, size: raw),
+            "idautils": NS(DecodeInstruction=lambda ea: insn if ea == 0x1000 else None),
+        }
+        ns = {"idaapi": api, "ida_ua": ua, "json": json}
+        with patch.dict(sys.modules, modules):
+            exec(CANDIDATE_PY.replace("TARGET_EA_PLACEHOLDER", "4096"), ns)
+            return ns["candidates"](0x1000)
+
+    def test_first_direct_call_displacement_is_relocation_independent(self):
+        expected = ["E8 ?? ?? ?? ??"]
+        for raw in (bytes.fromhex("E8 FC FF FF FF"), bytes.fromhex("E8 16 0D 33 01")):
+            self.assertEqual(expected, self.candidates(raw, NEAR, 1, 4))
+
+    def test_first_indirect_call_absolute_address_is_wildcarded(self):
+        self.assertEqual(["FF 15 ?? ?? ?? ??"], self.candidates(bytes.fromhex("FF 15 20 25 2B 10"), MEM, 2, 4))
+
+    def test_byte_load_absolute_address_masks_all_four_address_bytes(self):
+        self.assertEqual(["A0 ?? ?? ?? ??"], self.candidates(bytes.fromhex("A0 12 34 56 78"), MEM, 1, 1))
+
+
+class EnginePatchDataflowTests(unittest.TestCase):
+    def call_path(self, code, anchor):
+        from ida_preprocessor_scripts._engine_patch_common import CALL_FLOW_PY
+
+        modules = {
+            "ida_frame": NS(),
+            "ida_gdl": NS(FlowChart=lambda _: [NS(start_ea=0x100, end_ea=0x120)]),
+        }
+        ns = {"ida_funcs": NS(get_func=lambda _: object())}
+        with patch.dict(sys.modules, modules):
+            exec(CALL_FLOW_PY, ns)
+            return ns["anchored_call_path"](0x100, code, anchor)
+
+    def test_default_argument_path_follows_backward_shared_copy_tail(self):
+        from ida_preprocessor_scripts.x86_call_arguments import recover_call_arguments
+
+        buffer = ("local_address", "frame", -128)
+        code = [
+            {"ea": 0x80, "mnem": "push", "ops": [("reg", "eax")], "sp": -4},
+            {"ea": 0x81, "mnem": "push", "ops": [("imm", buffer)], "sp": -8},
+            {"ea": 0x82, "mnem": "call", "ops": [("imm", 0x9000)], "sp": -12},
+            {"ea": 0x100, "mnem": "push", "ops": [("imm", 128)], "sp": 0},
+            {"ea": 0x105, "mnem": "mov", "ops": [("reg", "eax"), ("imm", 0x5000)], "sp": -4},
+            {"ea": 0x110, "mnem": "jmp", "ops": [("imm", 0x80)], "sp": -4},
+        ]
+        path = self.call_path(code, 0x105)
+        self.assertEqual(0x82, path[-1]["ea"])
+        self.assertEqual([buffer, 0x5000, 128], recover_call_arguments(path, len(path) - 1, 3))
+
+    def test_argument_path_rejects_conditional_and_cyclic_tails(self):
+        for mnem, target in (("jz", 0x110), ("jmp", 0x100), ("jmp", 0x9000)):
+            code = [
+                {"ea": 0x100, "mnem": "mov", "ops": [("reg", "eax"), ("imm", 0x5000)], "sp": 0},
+                {"ea": 0x110, "mnem": mnem, "ops": [("imm", target)], "sp": 0},
+            ]
+            self.assertIsNone(self.call_path(code, 0x100))
+
+    def test_language_abi_and_owner_classification(self):
+        from ida_preprocessor_scripts._engine_patch_common import language_role
+
+        buffer = ("local_address", "frame", -128)
+        strings = {"GAME", "%s/%s_%s"}
+        self.assertEqual("V_strncpy", language_role([buffer, 0x5000, 128], strings | {"DEFAULTGAME"}, {0x5000}))
+        self.assertEqual("V_strncpy_FallbackGameDir", language_role([buffer, 0x5000, 128], strings, {0x5000}))
+        for arguments in ([buffer, 0x5000, None], [buffer, 0x5000, 32], [buffer, 0x6000, 128], [None, 0x5000, 128]):
+            self.assertIsNone(language_role(arguments, strings, {0x5000}))
+        self.assertIsNone(language_role([buffer, 0x5000, 128], {"GAME"}, {0x5000}))
+
+    def test_factory_query_traces_return_value_through_spill(self):
+        from ida_preprocessor_scripts._engine_patch_common import factory_origin
+
+        code = [
+            {"ea": 0x10, "mnem": "call", "ops": [("imm", 0x9000)]},
+            {"ea": 0x15, "mnem": "mov", "ops": [("frame", -4), ("reg", "eax")]},
+            {"ea": 0x18, "mnem": "call", "ops": [("frame", -4)]},
+        ]
+        self.assertEqual(0, factory_origin(code, 2))
+        code.insert(0, {"ea": 0x8, "mnem": "jz", "ops": [("imm", 0x18)]})
+        self.assertIsNone(factory_origin(code, 3))
+
+    def test_factory_query_rejects_overwritten_return_register(self):
+        from ida_preprocessor_scripts._engine_patch_common import factory_origin
+
+        code = [
+            {"ea": 0x10, "mnem": "call", "ops": [("imm", 0x9000)]},
+            {"ea": 0x15, "mnem": "xor", "ops": [("reg", "eax"), ("reg", "eax")]},
+            {"ea": 0x18, "mnem": "call", "ops": [("reg", "eax")]},
+        ]
+        self.assertIsNone(factory_origin(code, 2))
+
+
 if __name__ == "__main__":
     unittest.main()

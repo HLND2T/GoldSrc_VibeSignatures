@@ -657,11 +657,6 @@ modules:
       - name: find-staticEngineSurface
         expected_output:
           - staticEngineSurface.{platform}.yaml
-      - name: find-VGUIClient001_CreateInterface
-        expected_input:
-          - CBaseUI__Initialize.{platform}.yaml
-        expected_output:
-          - VGUIClient001_CreateInterface.{platform}.yaml
       - name: find-g_clmove
         expected_input:
           - ClientDLL_Init.{platform}.yaml
@@ -1752,8 +1747,6 @@ modules:
         category: gv
       - name: staticEngineSurface
         category: gv
-      - name: VGUIClient001_CreateInterface
-        category: patch
       - name: g_clmove
         category: gv
       - name: g_svmove

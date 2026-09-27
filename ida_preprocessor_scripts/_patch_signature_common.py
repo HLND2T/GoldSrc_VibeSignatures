@@ -12,7 +12,7 @@ import json
 from ida_analyze_util import _find_unique_bytes, parse_mcp_result
 
 CANDIDATE_PY = r"""
-import ida_bytes, idautils
+import ida_bytes, idaapi, idautils, json
 
 TARGET_EA = TARGET_EA_PLACEHOLDER
 MAX_SIG_BYTES = 96
@@ -21,6 +21,9 @@ MAX_INSTRUCTIONS = 64
 
 def wildcard_instruction(insn, raw_bytes):
     wild = set()
+    offsets = sorted({int(getattr(op, 'offb', 0)) for op in insn.ops
+                      if int(op.type) != int(idaapi.o_void) and int(getattr(op, 'offb', 0)) > 0}
+                     | {int(insn.size)})
     for op in insn.ops:
         ot = int(op.type)
         if ot == int(idaapi.o_void):
@@ -28,10 +31,10 @@ def wildcard_instruction(insn, raw_bytes):
         if ot in (int(idaapi.o_imm), int(idaapi.o_near), int(idaapi.o_far), int(idaapi.o_mem), int(idaapi.o_displ)):
             offb = int(getattr(op, 'offb', 0))
             if offb > 0 and offb < insn.size:
-                dsz = ida_ua.get_dtype_size(getattr(op, 'dtype', getattr(op, 'dtyp', 0)))
-                if dsz <= 0:
-                    dsz = insn.size - offb
-                for index in range(offb, min(insn.size, offb + dsz)):
+                # dtype describes the data, not the encoded address/immediate.
+                # Bound the field by the next operand or the instruction end.
+                end = next(offset for offset in offsets if offset > offb)
+                for index in range(offb, end):
                     wild.add(index)
     b0 = raw_bytes[0]
     if b0 in (0xE8, 0xE9, 0xEB):
@@ -57,14 +60,9 @@ def candidates(target):
         raw = ida_bytes.get_bytes(cursor, insn.size)
         if not raw:
             break
-        if cursor == int(target):
-            for byte in raw:
-                if len(tokens) < MAX_SIG_BYTES:
-                    tokens.append('%02X' % byte)
-        else:
-            for token in wildcard_instruction(insn, raw):
-                if len(tokens) < MAX_SIG_BYTES:
-                    tokens.append(token)
+        for token in wildcard_instruction(insn, raw):
+            if len(tokens) < MAX_SIG_BYTES:
+                tokens.append(token)
         boundaries.append(len(tokens))
         cursor += insn.size
         count += 1

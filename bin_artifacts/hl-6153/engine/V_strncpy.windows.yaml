@@ -1,5 +1,5 @@
 patch_name: V_strncpy
 patch_va: '0x1d3a29f'
 patch_rva: '0x3a29f'
-patch_sig: E8 3C AA 0C 00
+patch_sig: E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 8B 75 ??
 patch_sig_disp: '0x0'

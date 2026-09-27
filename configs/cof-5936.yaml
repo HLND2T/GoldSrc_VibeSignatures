@@ -658,14 +658,10 @@ modules:
       - name: find-staticEngineSurface
         expected_output:
           - staticEngineSurface.{platform}.yaml
-      - name: find-VGUIClient001_CreateInterface
-        expected_input:
-          - CBaseUI__Initialize.{platform}.yaml
-        expected_output:
-          - VGUIClient001_CreateInterface.{platform}.yaml
       - name: find-V_strncpy
         expected_output:
           - V_strncpy.{platform}.yaml
+          - V_strncpy_FallbackGameDir.{platform}.yaml
       - name: find-g_clmove
         expected_input:
           - ClientDLL_Init.{platform}.yaml
@@ -1752,9 +1748,9 @@ modules:
         category: gv
       - name: staticEngineSurface
         category: gv
-      - name: VGUIClient001_CreateInterface
-        category: patch
       - name: V_strncpy
+        category: patch
+      - name: V_strncpy_FallbackGameDir
         category: patch
       - name: g_clmove
         category: gv

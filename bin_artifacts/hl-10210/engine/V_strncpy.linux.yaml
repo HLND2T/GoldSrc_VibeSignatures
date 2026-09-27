@@ -1,5 +1,5 @@
 patch_name: V_strncpy
-patch_va: '0x9f099'
-patch_rva: '0x9f099'
-patch_sig: E8 16 0D 33 01
+patch_va: '0x9fd79'
+patch_rva: '0x9fd79'
+patch_sig: E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 85 C0 0F 85 ?? ?? ?? ?? 89 34 24
 patch_sig_disp: '0x0'
