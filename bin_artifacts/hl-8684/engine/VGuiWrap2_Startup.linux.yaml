@@ -1,0 +1,5 @@
+func_name: VGuiWrap2_Startup
+func_va: '0x1e35a0'
+func_rva: '0x1e35a0'
+func_size: '0x10a'
+func_sig: 53 83 EC ?? 8B 0D ?? ?? ?? ?? 85 C9 74 ?? 83 C4 ?? 5B C3

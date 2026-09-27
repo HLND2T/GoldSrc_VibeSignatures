@@ -1,0 +1,8 @@
+gv_name: staticGameConsole
+gv_va: '0x94534c'
+gv_rva: '0x94534c'
+gv_sig: 55 57 56 53 89 C3 81 EC ?? ?? ?? ?? 65 A1 ?? ?? ?? ?? 89 84 24 ?? ?? ?? ?? 31 C0 31 C0 8B 2A 8B 7A ?? 89 44 24 ??
+gv_sig_va: '0x1c1cf0'
+gv_inst_offset: '0xec'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'
