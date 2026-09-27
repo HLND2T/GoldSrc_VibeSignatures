@@ -906,5 +906,131 @@ class EnginePatchDataflowTests(unittest.TestCase):
         self.assertIsNone(factory_origin(code, 2))
 
 
+class HostParmsWalkTests(unittest.TestCase):
+    """Exercise find-host_parms through decoded operands and real flow recovery.
+
+    The finder locates ``host_parms`` as the single argument of the direct
+    ``LoadEntityDLLs`` call inside the revalidated Host_InitializeGameDLL body.
+    """
+
+    def locate(self, argument):
+        api = NS(o_void=0, o_reg=REG, o_mem=MEM, o_phrase=PHRASE, o_displ=DISPL, o_imm=IMM, o_near=NEAR)
+        entries = []
+        sp = 0
+
+        def op(kind, *, reg="", addr=0, value=0, dtype=4, sf1=0, sf2=0, text=""):
+            return NS(
+                type=kind,
+                reg=reg,
+                addr=addr,
+                value=value,
+                dtype=dtype,
+                specflag1=sf1,
+                specflag2=sf2,
+                text=text,
+            )
+
+        def emit(mnem, *ops, targets=(), written=(), disp=0):
+            nonlocal sp
+            ea = 0x1000 + len(entries) * 8
+            entries.append(
+                dict(
+                    ea=ea,
+                    mnem=mnem,
+                    insn=NS(ops=[*ops, op(0)]),
+                    targets=set(targets),
+                    written=set(written),
+                    disp=disp,
+                    len=6,
+                    disasm=mnem,
+                    sp=sp,
+                )
+            )
+            if mnem == "push":
+                sp -= 4
+            return ea
+
+        emit("push", op(REG, reg="ebx"))
+        emit("mov", op(REG, reg="ebx"), op(IMM, value=1))
+        emit("sub", op(REG, reg="esp"), op(IMM, value=0x20))
+        # The ESP store's text operand embeds a variable name that itself
+        # contains a register name ("szBaseDir" -> "edi"); only the structural
+        # SIB base=esp test may classify it as a stack slot.
+        if argument["form"] == "push-abs":
+            emit("push", op(MEM, addr=0x4000, text="dword ptr ds:[4000h]"), targets=(0x4000,), disp=2)
+            emit("call", op(NEAR, value=0x7000))
+        else:
+            emit(
+                "mov",
+                op(REG, reg="eax"),
+                op(MEM, addr=0x4000, text="ds:[4000h]"),
+                targets=(0x4000,),
+                disp=1,
+            )
+            emit("mov", op(DISPL, reg="esp", addr=0, sf1=1, sf2=36, text="[esp+2Ch+szBaseDir]"), op(REG, reg="eax"))
+            emit("call", op(NEAR, value=0x7000))
+        by_ea = {e["ea"]: e for e in entries}
+        edges = {e["ea"]: [entries[i + 1]["ea"]] if i + 1 < len(entries) else [] for i, e in enumerate(entries)}
+        blocks = [
+            NS(start_ea=ea, end_ea=ea + 8, succs=lambda ea=ea: [NS(start_ea=t) for t in edges[ea]]) for ea in by_ea
+        ]
+        idc = NS(
+            print_operand=lambda ea, i: by_ea[ea]["insn"].ops[i].text,
+            print_insn_mnem=lambda ea: by_ea[ea]["mnem"],
+            get_operand_type=lambda ea, i: by_ea[ea]["insn"].ops[i].type,
+            get_operand_value=lambda ea, i: by_ea[ea]["insn"].ops[i].value,
+        )
+        ida_bytes = NS(get_item_size=lambda _: 8, get_bytes=lambda *a: b"GetNewDLLFunctions\x00")
+        ns = dict(
+            values={"loadent_anchor": "GetNewDLLFunctions", "owner": "0x1000", "lookback": 12},
+            scan=lambda _: entries,
+            got_anchor=lambda _: (None, None),
+            local_call_target=lambda _: 0x7000,
+            reg4=lambda operand: operand.reg,
+            signed32=lambda value: value,
+            is_writable_data=lambda ea: ea in (0x4000,),
+            is_got=lambda _: False,
+            changed_operand=lambda insn, index: True,
+            access=lambda e, gv: {
+                "gv_ea": hex(gv),
+                "insn_ea": hex(e["ea"]),
+                "insn_len": "0x6",
+                "insn_disp": hex(e["disp"]),
+                "insn_disasm": e["disasm"],
+            },
+            idaapi=api,
+            ida_funcs=NS(get_func=lambda ea: NS(start_ea=ea)),
+            ida_ua=NS(get_dtype_size=lambda dtype: dtype),
+            idc=idc,
+            idautils=NS(
+                Segments=lambda: [0],
+                DataRefsTo=lambda ea: [0x7000] if ea == 0 else [],
+                DataRefsFrom=lambda _: [],
+                FuncItems=lambda _: [],
+            ),
+            ida_segment=NS(getseg=lambda ea: NS(perm=4, end_ea=0x1000)),
+            ida_bytes=ida_bytes,
+        )
+        modules = {
+            "ida_frame": NS(get_spd=lambda _, ea: by_ea[ea]["sp"]),
+            "ida_gdl": NS(FlowChart=lambda _: blocks),
+            "ida_nalt": NS(get_import_module_qty=lambda: 0),
+            "ida_bytes": ida_bytes,
+            "idc": idc,
+            "ida_name": NS(get_name=lambda _: "sub"),
+        }
+        with patch.dict(sys.modules, modules):
+            exec(walk("find-host_parms.py"), ns)
+        return ns["result"]
+
+    def test_push_absolute_argument_is_accepted(self):
+        result = self.locate({"form": "push-abs"})
+        self.assertEqual("0x4000", result["gv"]["gv_ea"])
+
+    def test_esp_slot_structural_decode_defeats_embedded_register_name(self):
+        result = self.locate({"form": "mov-spill"})
+        self.assertEqual("0x4000", result["gv"]["gv_ea"])
+
+
 if __name__ == "__main__":
     unittest.main()
