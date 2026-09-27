@@ -1,0 +1,8 @@
+gv_name: gEngfuncs
+gv_va: '0x101f8998'
+gv_rva: '0x1f8998'
+gv_sig: 83 7C 24 ?? ?? B9 86 00 00 00 8B 44 24 ?? 56 57 8B F0 BF ?? ?? ?? ?? F3 A5 75 ?? 8B F0 B9 86 00 00 00
+gv_sig_va: '0x10008c90'
+gv_inst_offset: '0x12'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

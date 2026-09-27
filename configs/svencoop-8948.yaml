@@ -2336,6 +2336,9 @@ modules:
           - HUD_GetStudioModelInterface.{platform}.yaml
           - CL_IsThirdPerson.{platform}.yaml
           - V_CalcRefdef.{platform}.yaml
+      - name: find-gEngfuncs
+        expected_output:
+          - gEngfuncs.{platform}.yaml
       - name: find-V_StartPitchDrift
         expected_output:
           - V_StartPitchDrift.{platform}.yaml
@@ -2353,6 +2356,14 @@ modules:
           - g_iFogColor.{platform}.yaml
           - g_iStartDist.{platform}.yaml
           - g_iEndDist.{platform}.yaml
+      - name: find-V_CalcNormalRefdef-private-globals
+        expected_input:
+          - V_CalcNormalRefdef.{platform}.yaml
+          - g_iWaterLevel.{platform}.yaml
+        expected_output:
+          - v_origin.{platform}.yaml
+          - iIsSpectator.{platform}.yaml
+          - g_vVecViewangles.{platform}.yaml
       - name: find-V_StartPitchDrift-decompiles
         expected_input:
           - V_StartPitchDrift.{platform}.yaml
@@ -2577,6 +2588,8 @@ modules:
         category: gv
       - name: g_iWaterLevel
         category: gv
+      - name: gEngfuncs
+        category: gv
       - name: g_bRenderingPortals_SCClient
         category: gv
       - name: V_StartPitchDrift
@@ -2585,6 +2598,12 @@ modules:
         category: func
       - name: V_CalcNormalRefdef
         category: func
+      - name: v_origin
+        category: gv
+      - name: iIsSpectator
+        category: gv
+      - name: g_vVecViewangles
+        category: gv
       - name: g_iFogColor
         category: gv
       - name: g_iStartDist
