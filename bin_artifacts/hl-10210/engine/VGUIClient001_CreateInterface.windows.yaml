@@ -1,0 +1,5 @@
+patch_name: VGUIClient001_CreateInterface
+patch_va: '0x1022c264'
+patch_rva: '0x22c264'
+patch_sig: E8 ?? ?? ?? ?? 83 C4 ?? 85 C0 74 ?? 8B 4B ??
+patch_sig_disp: '0x0'

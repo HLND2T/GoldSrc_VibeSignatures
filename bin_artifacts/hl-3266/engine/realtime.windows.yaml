@@ -1,0 +1,8 @@
+gv_name: realtime
+gv_va: '0x280dfa0'
+gv_rva: '0xb0dfa0'
+gv_sig: 81 EC 08 01 00 00 53 55 56 33 ED 57 55 68 ?? ?? ?? ?? FF 15 ?? ?? ?? ?? 8B 9C 24 ?? ?? ?? ?? B9 06 00 00 00
+gv_sig_va: '0x1d58a40'
+gv_inst_offset: '0x46'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
