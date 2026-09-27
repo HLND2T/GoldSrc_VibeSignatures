@@ -5,6 +5,17 @@ modules:
     depot_windows: cstrike/cl_dlls/client.dll
     depot_linux: cstrike/cl_dlls/client.so
     skills:
+      - name: find-GetTextColor-CS
+        expected_output:
+          - GetTextColor.{platform}.yaml
+      - name: find-g_LocationColor
+        expected_input:
+          - GetTextColor.{platform}.yaml
+        expected_output:
+          - g_LocationColor.{platform}.yaml
+      - name: find-GetClientColor-CS
+        expected_output:
+          - GetClientColor.{platform}.yaml
       - name: find-CL_IsThirdPerson-decompiles
         expected_input:
           - CL_IsThirdPerson.{platform}.yaml
@@ -54,6 +65,12 @@ modules:
           - HUD_GetStudioModelInterface.{platform}.yaml
           - CL_IsThirdPerson.{platform}.yaml
     symbols:
+      - name: GetTextColor
+        category: func
+      - name: g_LocationColor
+        category: gv
+      - name: GetClientColor
+        category: func
       - name: g_PlayerExtraInfo
         category: gv
       - name: ClientScoreInfoHandler

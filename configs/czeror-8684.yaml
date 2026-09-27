@@ -3,6 +3,9 @@ modules:
     module_windows: client.dll
     depot_windows: czeror/cl_dlls/client.dll
     skills:
+      - name: find-GetClientColor-CS
+        expected_output:
+          - GetClientColor.{platform}.yaml
       - name: find-CL_IsThirdPerson-decompiles
         expected_input:
           - CL_IsThirdPerson.{platform}.yaml
@@ -46,6 +49,8 @@ modules:
           - HUD_GetStudioModelInterface.{platform}.yaml
           - CL_IsThirdPerson.{platform}.yaml
     symbols:
+      - name: GetClientColor
+        category: func
       - name: g_PlayerExtraInfo_CZDS
         category: gv
       - name: ClientScoreInfoHandler

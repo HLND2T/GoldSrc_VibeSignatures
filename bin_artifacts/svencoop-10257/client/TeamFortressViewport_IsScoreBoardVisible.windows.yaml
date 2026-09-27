@@ -1,0 +1,5 @@
+func_name: TeamFortressViewport_IsScoreBoardVisible
+func_va: '0x1006cd00'
+func_rva: '0x6cd00'
+func_size: '0x14'
+func_sig: 8B 89 ?? ?? ?? ?? 85 C9 74 ?? 8B 01 8B 40 ?? FF E0 32 C0 C3

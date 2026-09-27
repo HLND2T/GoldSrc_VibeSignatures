@@ -1,0 +1,279 @@
+func_name: "CHudSayText_PrintText"
+func_va: "0x100563e0"
+disasm_code: |-
+  ; Target func GetClientColor: the selector called with -1 (default), 0 (server), or playerIndex; recover its callable body.
+  .text:100563E0                 sub     esp, 0Ch
+  .text:100563E3                 push    ebx
+  .text:100563E4                 push    ebp
+  .text:100563E5                 push    esi
+  .text:100563E6                 push    edi
+  .text:100563E7                 mov     edi, [esp+1Ch+Str]
+  .text:100563EB                 mov     ebx, ecx
+  .text:100563ED                 mov     [esp+1Ch+var_4], ebx
+  .text:100563F1                 mov     al, [edi]
+  .text:100563F3                 mov     [esp+1Ch+var_9], al
+  .text:100563F7                 cmp     al, 1
+  .text:100563F9                 jnz     short loc_10056433
+  .text:100563FB                 cmp     [esp+1Ch+playerIndex], 0
+  .text:10056400                 jnz     short loc_10056433
+  .text:10056402                 push    offset asc_101293A4; "<"
+  .text:10056407                 ; Str
+  .text:10056407                 push    edi; Str
+  .text:10056408                 call    _strstr
+  .text:1005640D                 push    offset asc_101293A8; "> "
+  .text:10056412                 ; Str
+  .text:10056412                 push    edi; Str
+  .text:10056413                 mov     esi, eax
+  .text:10056415                 call    _strstr
+  .text:1005641A                 mov     ecx, dword_101A2AB0
+  .text:10056420                 sub     eax, esi
+  .text:10056422                 add     esp, 10h
+  .text:10056425                 cmp     eax, ecx
+  .text:10056427                 jnb     short loc_10056433
+  .text:10056429                 mov     ebp, [esp+1Ch+length]
+  .text:1005642D                 sub     ecx, eax
+  .text:1005642F                 add     ebp, ecx
+  .text:10056431                 jmp     short loc_10056437
+  .text:10056433                 mov     ebp, [esp+1Ch+length]
+  .text:10056437                 mov     eax, [esp+1Ch+lineIndex]
+  .text:1005643B                 ; clientIndex
+  .text:1005643B                 push    0FFFFFFFFh; clientIndex
+  .text:1005643D                 lea     ecx, [eax+353h]
+  .text:10056443                 lea     ecx, [ebx+ecx*4]
+  .text:10056446                 lea     ebx, [ebx+eax*4]
+  .text:10056449                 mov     dword ptr [ecx], 0
+  .text:1005644F                 add     ebx, 0D18h
+  .text:10056455                 mov     [esp+20h+length], ecx
+  .text:10056459                 mov     [esp+20h+var_8], ebx
+  .text:1005645D                 call    _Z14GetClientColori; GetClientColor(int)
+  .text:10056462                 push    ebp
+  .text:10056463                 mov     [ebx], eax
+  .text:10056465                 call    unknown_libname_6; Microsoft VisualC 14/net runtime
+  .text:1005646A                 ; Size
+  .text:1005646A                 push    ebp; Size
+  .text:1005646B                 mov     ebx, eax
+  .text:1005646D                 ; Source
+  .text:1005646D                 push    edi; Source
+  .text:1005646E                 ; Destination
+  .text:1005646E                 push    ebx; Destination
+  .text:1005646F                 call    sub_10084C20
+  .text:10056474                 mov     al, [esp+30h+var_9]
+  .text:10056478                 add     esp, 14h
+  .text:1005647B                 cmp     al, 1
+  .text:1005647D                 jz      short loc_1005648B
+  .text:1005647F                 cmp     al, 2
+  .text:10056481                 jz      short loc_1005648B
+  .text:10056483                 cmp     al, 3
+  .text:10056485                 jnz     loc_10056585
+  .text:1005648B                 mov     ecx, [esp+1Ch+playerIndex]
+  .text:1005648F                 test    ecx, ecx
+  .text:10056491                 jnz     loc_1005652D
+  .text:10056497                 push    offset asc_101293A4; "<"
+  .text:1005649C                 ; Str
+  .text:1005649C                 push    edi; Str
+  .text:1005649D                 call    _strstr
+  .text:100564A2                 push    offset asc_101293A8; "> "
+  .text:100564A7                 ; Str
+  .text:100564A7                 push    edi; Str
+  .text:100564A8                 mov     esi, eax
+  .text:100564AA                 call    _strstr
+  .text:100564AF                 ; Size
+  .text:100564AF                 push    ebp; Size
+  .text:100564B0                 ; Val
+  .text:100564B0                 push    0; Val
+  .text:100564B2                 ; void *
+  .text:100564B2                 push    ebx; void *
+  .text:100564B3                 mov     edi, eax
+  .text:100564B5                 call    _memset
+  .text:100564BA                 mov     eax, [esp+38h+Str]
+  .text:100564BE                 sub     esi, eax
+  .text:100564C0                 ; int
+  .text:100564C0                 push    esi; int
+  .text:100564C1                 ; Source
+  .text:100564C1                 push    eax; Source
+  .text:100564C2                 ; Destination
+  .text:100564C2                 push    ebx; Destination
+  .text:100564C3                 call    sub_10084C90
+  .text:100564C8                 ; int
+  .text:100564C8                 push    ebp; int
+  .text:100564C9                 push    offset aServerConsole; "Server Console"
+  .text:100564CE                 ; Destination
+  .text:100564CE                 push    ebx; Destination
+  .text:100564CF                 call    sub_10084C90
+  .text:100564D4                 ; int
+  .text:100564D4                 push    ebp; int
+  .text:100564D5                 push    offset asc_101292A4; ": "
+  .text:100564DA                 ; Destination
+  .text:100564DA                 push    ebx; Destination
+  .text:100564DB                 call    sub_10084C90
+  .text:100564E0                 add     esp, 40h
+  .text:100564E3                 lea     eax, [edi+2]
+  .text:100564E6                 ; int
+  .text:100564E6                 push    ebp; int
+  .text:100564E7                 ; Source
+  .text:100564E7                 push    eax; Source
+  .text:100564E8                 ; Destination
+  .text:100564E8                 push    ebx; Destination
+  .text:100564E9                 call    sub_10084C90
+  .text:100564EE                 lea     eax, [ebp-2]
+  .text:100564F1                 ; Size
+  .text:100564F1                 push    eax; Size
+  .text:100564F2                 lea     eax, [ebx+1]
+  .text:100564F5                 ; Src
+  .text:100564F5                 push    ebx; Src
+  .text:100564F6                 ; void *
+  .text:100564F6                 push    eax; void *
+  .text:100564F7                 call    _memmove
+  .text:100564FC                 mov     al, [esp+34h+var_9]
+  .text:10056500                 push    offset aServerConsole; "Server Console"
+  .text:10056505                 mov     byte ptr [ebx+ebp-1], 0
+  .text:1005650A                 ; Str
+  .text:1005650A                 push    ebx; Str
+  .text:1005650B                 mov     [ebx], al
+  .text:1005650D                 call    _strstr
+  .text:10056512                 add     esp, 20h
+  .text:10056515                 test    eax, eax
+  .text:10056517                 jz      short loc_10056585
+  .text:10056519                 mov     ecx, dword_101A2AB0
+  .text:1005651F                 sub     ecx, ebx
+  .text:10056521                 add     ecx, eax
+  .text:10056523                 mov     eax, [esp+1Ch+length]
+  .text:10056527                 push    0
+  .text:10056529                 mov     [eax], ecx
+  .text:1005652B                 jmp     short loc_10056577
+  .text:1005652D                 mov     eax, ecx
+  .text:1005652F                 shl     eax, 5
+  .text:10056532                 lea     esi, dword_106444F8[eax]
+  .text:10056538                 push    esi
+  .text:10056539                 push    ecx
+  .text:1005653A                 call    dword_101F89EC
+  .text:10056540                 mov     esi, [esi]
+  .text:10056542                 add     esp, 8
+  .text:10056545                 test    esi, esi
+  .text:10056547                 jz      short loc_10056585
+  .text:10056549                 ; SubStr
+  .text:10056549                 push    esi; SubStr
+  .text:1005654A                 ; Str
+  .text:1005654A                 push    ebx; Str
+  .text:1005654B                 call    _strstr
+  .text:10056550                 mov     ecx, eax
+  .text:10056552                 add     esp, 8
+  .text:10056555                 test    ecx, ecx
+  .text:10056557                 jz      short loc_10056585
+  .text:10056559                 lea     edx, [esi+1]
+  .text:1005655C                 nop     dword ptr [eax+00h]
+  .text:10056560                 mov     al, [esi]
+  .text:10056562                 inc     esi
+  .text:10056563                 test    al, al
+  .text:10056565                 jnz     short loc_10056560
+  .text:10056567                 mov     eax, [esp+1Ch+length]
+  .text:1005656B                 sub     esi, edx
+  .text:1005656D                 ; clientIndex
+  .text:1005656D                 push    [esp+1Ch+playerIndex]; clientIndex
+  .text:10056571                 sub     esi, ebx
+  .text:10056573                 add     esi, ecx
+  .text:10056575                 mov     [eax], esi
+  .text:10056577                 call    _Z14GetClientColori; GetClientColor(int)
+  .text:1005657C                 mov     ecx, [esp+20h+var_8]
+  .text:10056580                 add     esp, 4
+  .text:10056583                 mov     [ecx], eax
+  .text:10056585                 mov     eax, [esp+1Ch+lineIndex]
+  .text:10056589                 mov     ecx, [esp+1Ch+var_4]
+  .text:1005658D                 ; Size
+  .text:1005658D                 push    100h; Size
+  .text:10056592                 shl     eax, 8
+  .text:10056595                 add     ecx, 15h
+  .text:10056598                 add     eax, ecx
+  .text:1005659A                 ; Source
+  .text:1005659A                 push    ebx; Source
+  .text:1005659B                 ; Destination
+  .text:1005659B                 push    eax; Destination
+  .text:1005659C                 call    sub_10084C20
+  .text:100565A1                 ; Block
+  .text:100565A1                 push    ebx; Block
+  .text:100565A2                 call    j_j__free
+  .text:100565A7                 add     esp, 10h
+  .text:100565AA                 pop     edi
+  .text:100565AB                 pop     esi
+  .text:100565AC                 pop     ebp
+  .text:100565AD                 pop     ebx
+  .text:100565AE                 add     esp, 0Ch
+  .text:100565B1                 retn    10h
+procedure: |-
+  // Target GetClientColor (func): all annotated name-color calls select the same function. Preserve default/server/player argument roles and resolve any ELF PLT thunk.
+  // Issue 259 reference: target is Sven 10257; names/roles corroborated by Sven 8948 ELF symbols and current instructions. Public HL source is not the matching private Sven implementation. Unknown private layouts/callees retain neutral types. Sound singleton creation remains inline where compiled inline.
+  void __thiscall CHudSayText::PrintText(void *self, int lineIndex, const char *text, int length, int playerIndex)
+  {
+    char *v6; // esi
+    char *v7; // eax
+    int v8; // ebp
+    char *v9; // ebx
+    char *v10; // esi
+    char *v11; // edi
+    char *v12; // eax
+    float *ClientColor; // eax
+    const char *v14; // esi
+    char *v15; // ecx
+    char v16; // [esp+13h] [ebp-9h]
+    float **v17; // [esp+14h] [ebp-8h]
+    _DWORD *lengtha; // [esp+28h] [ebp+Ch]
+
+    v16 = *text;
+    if ( *text != 1
+      || playerIndex
+      || (v6 = strstr(text, "<"), v7 = (char *)(strstr(text, "> ") - v6), (unsigned int)v7 >= dword_101A2AB0) )
+    {
+      v8 = length;
+    }
+    else
+    {
+      v8 = dword_101A2AB0 - (_DWORD)v7 + length;
+    }
+    *((_DWORD *)self + lineIndex + 851) = 0;
+    lengtha = (char *)self + 4 * lineIndex + 3404;
+    v17 = (float **)((char *)self + 4 * lineIndex + 3352);
+    *v17 = GetClientColor(-1);
+    v9 = (char *)unknown_libname_6(v8);
+    sub_10084C20(v9, (char *)text, v8);
+    if ( v16 == 1 || v16 == 2 || v16 == 3 )
+    {
+      if ( playerIndex )
+      {
+        dword_101F89EC(playerIndex, &dword_106444F8[8 * playerIndex]);
+        v14 = (const char *)dword_106444F8[8 * playerIndex];
+        if ( v14 )
+        {
+          v15 = strstr(v9, v14);
+          if ( v15 )
+          {
+            *lengtha = &v15[strlen(v14) - (_DWORD)v9];
+            ClientColor = GetClientColor(playerIndex);
+            goto LABEL_15;
+          }
+        }
+      }
+      else
+      {
+        v10 = strstr(text, "<");
+        v11 = strstr(text, "> ");
+        memset(v9, 0, v8);
+        sub_10084C90(v9, (char *)text, v10 - text);
+        sub_10084C90(v9, "Server Console", v8);
+        sub_10084C90(v9, ": ", v8);
+        sub_10084C90(v9, v11 + 2, v8);
+        memmove(v9 + 1, v9, v8 - 2);
+        v9[v8 - 1] = 0;
+        *v9 = v16;
+        v12 = strstr(v9, "Server Console");
+        if ( v12 )
+        {
+          *lengtha = &v12[dword_101A2AB0 - (_DWORD)v9];
+          ClientColor = GetClientColor(0);
+  LABEL_15:
+          *v17 = ClientColor;
+        }
+      }
+    }
+    sub_10084C20((char *)self + 256 * lineIndex + 21, v9, 0x100u);
+    j_j__free(v9);
+  }

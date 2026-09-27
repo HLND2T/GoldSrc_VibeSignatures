@@ -1,0 +1,275 @@
+func_name: "CHudSayText_PrintText"
+func_va: "0xfef8e"
+disasm_code: |-
+  ; Target func GetClientColor: the selector called with -1 (default), 0 (server), or playerIndex; recover its callable body.
+  .text:000FEF8E                 push    ebp
+  .text:000FEF8F                 push    edi
+  .text:000FEF90                 push    esi
+  .text:000FEF91                 push    ebx
+  .text:000FEF92                 sub     esp, 2Ch
+  .text:000FEF95                 call    sub_9E590
+  .text:000FEF9A                 add     ebx, (offset qword_61E000 - $)
+  .text:000FEFA0                 mov     ebp, [esp+3Ch+haystack]
+  .text:000FEFA4                 mov     esi, [esp+3Ch+arg_C]
+  .text:000FEFA8                 movzx   eax, byte ptr [ebp+0]
+  .text:000FEFAC                 mov     [esp+3Ch+var_29], al
+  .text:000FEFB0                 cmp     al, 1
+  .text:000FEFB2                 jnz     short loc_FEFEF
+  .text:000FEFB4                 mov     edx, [esp+3Ch+playerIndex]
+  .text:000FEFB8                 test    edx, edx
+  .text:000FEFBA                 jnz     short loc_FEFEF
+  .text:000FEFBC                 ; c
+  .text:000FEFBC                 mov     [esp+3Ch+c], 3Ch ; '<'; c
+  .text:000FEFC4                 ; s
+  .text:000FEFC4                 mov     [esp+3Ch+s], ebp; s
+  .text:000FEFC7                 call    _strchr
+  .text:000FEFCC                 mov     edi, eax
+  .text:000FEFCE                 lea     ecx, (asc_4AC95A - 61E000h)[ebx]; "> "
+  .text:000FEFD4                 ; needle
+  .text:000FEFD4                 mov     [esp+3Ch+c], ecx; needle
+  .text:000FEFD8                 ; haystack
+  .text:000FEFD8                 mov     [esp+3Ch+s], ebp; haystack
+  .text:000FEFDB                 call    _strstr
+  .text:000FEFE0                 sub     eax, edi
+  .text:000FEFE2                 mov     edx, esi
+  .text:000FEFE4                 add     esi, 0Eh
+  .text:000FEFE7                 sub     esi, eax
+  .text:000FEFE9                 cmp     eax, 0Dh
+  .text:000FEFEC                 cmova   esi, edx
+  .text:000FEFEF                 mov     eax, [esp+3Ch+lineIndex]
+  .text:000FEFF3                 add     eax, eax
+  .text:000FEFF5                 add     eax, eax
+  .text:000FEFF7                 add     eax, [esp+3Ch+self]
+  .text:000FEFFB                 mov     edi, eax
+  .text:000FEFFD                 mov     dword ptr [eax+0D4Ch], 0
+  .text:000FF007                 mov     [esp+3Ch+s], 0FFFFFFFFh
+  .text:000FF00E                 call    _Z14GetClientColori; GetClientColor(int)
+  .text:000FF013                 mov     [esp+3Ch+var_28], edi
+  .text:000FF017                 mov     [edi+0D18h], eax
+  .text:000FF01D                 ; unsigned int
+  .text:000FF01D                 mov     [esp+3Ch+s], esi; unsigned int
+  .text:000FF020                 call    __Znaj; operator new[](uint)
+  .text:000FF025                 mov     edi, eax
+  .text:000FF027                 ; size_t
+  .text:000FF027                 mov     [esp+3Ch+n], esi; size_t
+  .text:000FF02B                 ; src
+  .text:000FF02B                 mov     [esp+3Ch+c], ebp; src
+  .text:000FF02F                 ; dest
+  .text:000FF02F                 mov     [esp+3Ch+s], eax; dest
+  .text:000FF032                 call    sub_144680
+  .text:000FF037                 movzx   ecx, [esp+3Ch+var_29]
+  .text:000FF03C                 sub     ecx, 1
+  .text:000FF03F                 cmp     cl, 2
+  .text:000FF042                 ja      short loc_FF0BD
+  .text:000FF044                 mov     edx, [esp+3Ch+playerIndex]
+  .text:000FF048                 test    edx, edx
+  .text:000FF04A                 jz      loc_FF0F0
+  .text:000FF050                 mov     ebp, [esp+3Ch+playerIndex]
+  .text:000FF054                 add     ebp, ebp
+  .text:000FF056                 add     ebp, ebp
+  .text:000FF058                 add     ebp, ebp
+  .text:000FF05A                 sub     ebp, [esp+3Ch+playerIndex]
+  .text:000FF05E                 add     ebp, ebp
+  .text:000FF060                 add     ebp, ebp
+  .text:000FF062                 add     ebp, ds:(off_61C2E0 - 61E000h)[ebx]
+  .text:000FF068                 mov     [esp+3Ch+c], ebp
+  .text:000FF06C                 mov     esi, [esp+3Ch+playerIndex]
+  .text:000FF070                 mov     [esp+3Ch+s], esi
+  .text:000FF073                 lea     eax, (unk_A57FA0 - 61E000h)[ebx]
+  .text:000FF079                 call    dword ptr [eax+54h]
+  .text:000FF07C                 mov     ebp, [ebp+0]
+  .text:000FF07F                 test    ebp, ebp
+  .text:000FF081                 jz      short loc_FF0BD
+  .text:000FF083                 ; needle
+  .text:000FF083                 mov     [esp+3Ch+c], ebp; needle
+  .text:000FF087                 ; haystack
+  .text:000FF087                 mov     [esp+3Ch+s], edi; haystack
+  .text:000FF08A                 call    _strstr
+  .text:000FF08F                 mov     esi, eax
+  .text:000FF091                 test    eax, eax
+  .text:000FF093                 jz      short loc_FF0BD
+  .text:000FF095                 ; s
+  .text:000FF095                 mov     [esp+3Ch+s], ebp; s
+  .text:000FF098                 call    _strlen
+  .text:000FF09D                 sub     esi, edi
+  .text:000FF09F                 add     eax, esi
+  .text:000FF0A1                 mov     ebp, [esp+3Ch+var_28]
+  .text:000FF0A5                 mov     [ebp+0D4Ch], eax
+  .text:000FF0AB                 mov     edx, [esp+3Ch+playerIndex]
+  .text:000FF0AF                 mov     [esp+3Ch+s], edx
+  .text:000FF0B2                 call    _Z14GetClientColori; GetClientColor(int)
+  .text:000FF0B7                 mov     [ebp+0D18h], eax
+  .text:000FF0BD                 ; size_t
+  .text:000FF0BD                 mov     [esp+3Ch+n], 100h; size_t
+  .text:000FF0C5                 ; src
+  .text:000FF0C5                 mov     [esp+3Ch+c], edi; src
+  .text:000FF0C9                 mov     edx, [esp+3Ch+lineIndex]
+  .text:000FF0CD                 shl     edx, 8
+  .text:000FF0D0                 add     edx, 15h
+  .text:000FF0D3                 add     edx, [esp+3Ch+self]
+  .text:000FF0D7                 ; dest
+  .text:000FF0D7                 mov     [esp+3Ch+s], edx; dest
+  .text:000FF0DA                 call    sub_144680
+  .text:000FF0DF                 ; void *
+  .text:000FF0DF                 mov     [esp+3Ch+s], edi; void *
+  .text:000FF0E2                 call    __ZdaPv; operator delete[](void *)
+  .text:000FF0E7                 add     esp, 2Ch
+  .text:000FF0EA                 pop     ebx
+  .text:000FF0EB                 pop     esi
+  .text:000FF0EC                 pop     edi
+  .text:000FF0ED                 pop     ebp
+  .text:000FF0EE                 retn
+  .text:000FF0F0                 ; c
+  .text:000FF0F0                 mov     [esp+3Ch+c], 3Ch ; '<'; c
+  .text:000FF0F8                 ; s
+  .text:000FF0F8                 mov     [esp+3Ch+s], ebp; s
+  .text:000FF0FB                 call    _strchr
+  .text:000FF100                 mov     [esp+3Ch+var_20], eax
+  .text:000FF104                 lea     eax, (asc_4AC95A - 61E000h)[ebx]; "> "
+  .text:000FF10A                 ; needle
+  .text:000FF10A                 mov     [esp+3Ch+c], eax; needle
+  .text:000FF10E                 ; haystack
+  .text:000FF10E                 mov     [esp+3Ch+s], ebp; haystack
+  .text:000FF111                 call    _strstr
+  .text:000FF116                 mov     [esp+3Ch+var_24], eax
+  .text:000FF11A                 ; n
+  .text:000FF11A                 mov     [esp+3Ch+n], esi; n
+  .text:000FF11E                 ; c
+  .text:000FF11E                 mov     [esp+3Ch+c], 0; c
+  .text:000FF126                 ; s
+  .text:000FF126                 mov     [esp+3Ch+s], edi; s
+  .text:000FF129                 call    _memset
+  .text:000FF12E                 mov     eax, [esp+3Ch+var_20]
+  .text:000FF132                 sub     eax, ebp
+  .text:000FF134                 ; int
+  .text:000FF134                 mov     [esp+3Ch+n], eax; int
+  .text:000FF138                 ; src
+  .text:000FF138                 mov     [esp+3Ch+c], ebp; src
+  .text:000FF13C                 ; dest
+  .text:000FF13C                 mov     [esp+3Ch+s], edi; dest
+  .text:000FF13F                 call    sub_144700
+  .text:000FF144                 ; int
+  .text:000FF144                 mov     [esp+3Ch+n], esi; int
+  .text:000FF148                 lea     ebp, (aServerConsole - 61E000h)[ebx]; "Server Console"
+  .text:000FF14E                 ; src
+  .text:000FF14E                 mov     [esp+3Ch+c], ebp; src
+  .text:000FF152                 ; dest
+  .text:000FF152                 mov     [esp+3Ch+s], edi; dest
+  .text:000FF155                 call    sub_144700
+  .text:000FF15A                 ; int
+  .text:000FF15A                 mov     [esp+3Ch+n], esi; int
+  .text:000FF15E                 lea     edx, (aRdseed+6 - 61E000h)[ebx]; ": "
+  .text:000FF164                 ; src
+  .text:000FF164                 mov     [esp+3Ch+c], edx; src
+  .text:000FF168                 ; dest
+  .text:000FF168                 mov     [esp+3Ch+s], edi; dest
+  .text:000FF16B                 call    sub_144700
+  .text:000FF170                 ; int
+  .text:000FF170                 mov     [esp+3Ch+n], esi; int
+  .text:000FF174                 mov     eax, [esp+3Ch+var_24]
+  .text:000FF178                 add     eax, 2
+  .text:000FF17B                 ; src
+  .text:000FF17B                 mov     [esp+3Ch+c], eax; src
+  .text:000FF17F                 ; dest
+  .text:000FF17F                 mov     [esp+3Ch+s], edi; dest
+  .text:000FF182                 call    sub_144700
+  .text:000FF187                 lea     edx, [esi-2]
+  .text:000FF18A                 ; n
+  .text:000FF18A                 mov     [esp+3Ch+n], edx; n
+  .text:000FF18E                 ; src
+  .text:000FF18E                 mov     [esp+3Ch+c], edi; src
+  .text:000FF192                 lea     eax, [edi+1]
+  .text:000FF195                 ; dest
+  .text:000FF195                 mov     [esp+3Ch+s], eax; dest
+  .text:000FF198                 call    _memmove
+  .text:000FF19D                 mov     byte ptr [edi+esi-1], 0
+  .text:000FF1A2                 movzx   ecx, [esp+3Ch+var_29]
+  .text:000FF1A7                 mov     [edi], cl
+  .text:000FF1A9                 ; needle
+  .text:000FF1A9                 mov     [esp+3Ch+c], ebp; needle
+  .text:000FF1AD                 ; haystack
+  .text:000FF1AD                 mov     [esp+3Ch+s], edi; haystack
+  .text:000FF1B0                 call    _strstr
+  .text:000FF1B5                 test    eax, eax
+  .text:000FF1B7                 jz      loc_FF0BD
+  .text:000FF1BD                 sub     eax, edi
+  .text:000FF1BF                 add     eax, 0Eh
+  .text:000FF1C2                 mov     esi, [esp+3Ch+var_28]
+  .text:000FF1C6                 mov     [esi+0D4Ch], eax
+  .text:000FF1CC                 mov     [esp+3Ch+s], 0
+  .text:000FF1D3                 call    _Z14GetClientColori; GetClientColor(int)
+  .text:000FF1D8                 mov     [esi+0D18h], eax
+  .text:000FF1DE                 jmp     loc_FF0BD
+procedure: |-
+  // Target GetClientColor (func): all annotated name-color calls select the same function. Preserve default/server/player argument roles and resolve any ELF PLT thunk.
+  // Issue 259 reference: target is Sven 10257; names/roles corroborated by Sven 8948 ELF symbols and current instructions. Public HL source is not the matching private Sven implementation. Unknown private layouts/callees retain neutral types. Sound singleton creation remains inline where compiled inline.
+  void __cdecl CHudSayText::PrintText(void *self, int lineIndex, const char *text, int length, int playerIndex)
+  {
+    int n; // esi
+    char *v6; // edi
+    char *v7; // eax
+    char *v8; // edi
+    char *v9; // edi
+    const char *s; // ebp
+    char *v11; // esi
+    char *v12; // eax
+    char v13; // [esp+13h] [ebp-29h]
+    char *v14; // [esp+14h] [ebp-28h]
+    char *v15; // [esp+18h] [ebp-24h]
+    char *v16; // [esp+1Ch] [ebp-20h]
+
+    n = length;
+    v13 = *text;
+    if ( *text == 1 && !playerIndex )
+    {
+      v6 = strchr(text, 60);
+      v7 = (char *)(strstr(text, "> ") - v6);
+      n = length + 14 - (_DWORD)v7;
+      if ( (unsigned int)v7 > 0xD )
+        n = length;
+    }
+    v8 = (char *)self + 4 * lineIndex;
+    *((_DWORD *)v8 + 851) = 0;
+    v14 = v8;
+    *((_DWORD *)v8 + 838) = GetClientColor(-1);
+    v9 = (char *)operator new[](n);
+    sub_144680(v9, (char *)text, n);
+    if ( (unsigned __int8)(v13 - 1) <= 2u )
+    {
+      if ( playerIndex )
+      {
+        unk_A57FF4(playerIndex, &dword_AA36C0[7 * playerIndex]);
+        s = (const char *)dword_AA36C0[7 * playerIndex];
+        if ( s )
+        {
+          v11 = strstr(v9, s);
+          if ( v11 )
+          {
+            *((_DWORD *)v14 + 851) = v11 - v9 + strlen(s);
+            *((_DWORD *)v14 + 838) = GetClientColor(playerIndex);
+          }
+        }
+      }
+      else
+      {
+        v16 = strchr(text, 60);
+        v15 = strstr(text, "> ");
+        memset(v9, 0, n);
+        sub_144700(v9, (char *)text, v16 - text);
+        sub_144700(v9, "Server Console", n);
+        sub_144700(v9, ": ", n);
+        sub_144700(v9, v15 + 2, n);
+        memmove(v9 + 1, v9, n - 2);
+        v9[n - 1] = 0;
+        *v9 = v13;
+        v12 = strstr(v9, "Server Console");
+        if ( v12 )
+        {
+          *((_DWORD *)v14 + 851) = v12 - v9 + 14;
+          *((_DWORD *)v14 + 838) = GetClientColor(0);
+        }
+      }
+    }
+    sub_144680((char *)self + 256 * lineIndex + 21, v9, 0x100u);
+    operator delete[](v9);
+  }

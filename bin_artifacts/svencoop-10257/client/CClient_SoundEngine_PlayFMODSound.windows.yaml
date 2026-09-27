@@ -1,0 +1,5 @@
+func_name: CClient_SoundEngine_PlayFMODSound
+func_va: '0x1000d9f0'
+func_rva: '0xd9f0'
+func_size: '0xd40'
+func_sig: 55 8B EC 83 E4 F8 81 EC 98 00 00 00 A1 ?? ?? ?? ?? 33 C4 89 84 24 ?? ?? ?? ?? 8B 45 ?? 8B D1 8B 4D ??

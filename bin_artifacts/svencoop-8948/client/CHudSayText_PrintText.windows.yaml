@@ -1,0 +1,5 @@
+func_name: CHudSayText_PrintText
+func_va: '0x1009e590'
+func_rva: '0x9e590'
+func_size: '0x1d4'
+func_sig: 83 EC 0C 53 55 56 57 8B 7C 24 ?? 8B D9 89 5C 24 ?? 8A 07 88 44 24 ?? 3C 01 75 ?? 83 7C 24 ?? ??

@@ -1,0 +1,8 @@
+gv_name: g_LocationColor
+gv_va: '0x19e8930'
+gv_rva: '0xe8930'
+gv_sig: 8B 44 24 ?? 83 E8 03 74 ?? 48 74 ?? 33 C0 C3 B8 ?? ?? ?? ?? C3 8B 44 24 ?? 50 E8 ?? ?? ?? ?? 83 C4 04 C3
+gv_sig_va: '0x1962030'
+gv_inst_offset: '0xf'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

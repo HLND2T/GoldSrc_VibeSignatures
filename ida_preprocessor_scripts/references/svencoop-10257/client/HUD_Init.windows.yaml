@@ -1,0 +1,27 @@
+func_name: "HUD_Init"
+func_va: "0x10008d50"
+disasm_code: |-
+  ; Target gv gHUD: the CHud object address passed as self to CHud::Init, not a pointer stored in the object.
+  .text:10008D50                 ; ; Exported entry 594. HUD_Init
+  .text:10008D50                 call    _Z9InitInputv; InitInput(void)
+  .text:10008D55                 ; self
+  .text:10008D55                 mov     ecx, offset gHUD; self
+  .text:10008D5A                 call    _ZN4CHud4InitEv; CHud::Init(void)
+  .text:10008D5F                 jmp     loc_10065E80
+  .text:10065E80                 mov     eax, dword_101F89D0
+  .text:10065E85                 push    0
+  .text:10065E87                 push    offset a1_0; "1"
+  .text:10065E8C                 push    offset aBitmapfonts; "bitmapfonts"
+  .text:10065E91                 call    eax ; dword_101F89D0
+  .text:10065E93                 add     esp, 0Ch
+  .text:10065E96                 mov     dword_106425E0, eax
+  .text:10065E9B                 retn
+procedure: |-
+  // Target gHUD (gv): recover the object base passed to CHud::Init; do not select the bitmapfonts cvar.
+  // Issue 259 reference: target is Sven 10257; names/roles corroborated by Sven 8948 ELF symbols and current instructions. Public HL source is not the matching private Sven implementation. Unknown private layouts/callees retain neutral types. Sound singleton creation remains inline where compiled inline.
+  void __cdecl HUD_Init()
+  {
+    InitInput();
+    CHud::Init(gHUD);
+    dword_106425E0 = dword_101F89D0("bitmapfonts", "1", 0);
+  }
