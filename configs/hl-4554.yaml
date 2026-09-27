@@ -649,6 +649,11 @@ modules:
       - name: find-Host_InitializeGameDLL
         expected_output:
           - Host_InitializeGameDLL.{platform}.yaml
+      - name: find-host_parms
+        expected_input:
+          - Host_InitializeGameDLL.{platform}.yaml
+        expected_output:
+          - host_parms.{platform}.yaml
       - name: find-realtime
         expected_input:
           - Host_Init.{platform}.yaml
@@ -1743,6 +1748,8 @@ modules:
         category: func
       - name: Host_InitializeGameDLL
         category: func
+      - name: host_parms
+        category: gv
       - name: realtime
         category: gv
       - name: staticEngineSurface
