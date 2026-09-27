@@ -18,26 +18,18 @@ tags:
 - **Producer**: `ida_preprocessor_scripts/find-R_ResetLatched.py`
 
 ## Availability
-
-- Declared in 10 engine configs: cof-5936, hl-10210, hl-3248, hl-3266, hl-3329, hl-3647, hl-4554, hl-6153, hl-8684, svencoop-10257.
-- Platforms: Windows + Linux where `hw.so` ships (hl-8684, hl-10210, svencoop-10257); the remaining seven configs are Windows binaries only.
-- Inlined / absent: never inlined; `engine/cl_ents.c` keeps it standalone. Its *call-site count* is platform-dependent — see the callsite symbols.
-
+- Declared in 11 engine configs: cof-5936; hl-3248/3266/3329/3647/4554/6153/8684/10210; svencoop-8948/10257.
+- Platforms: Windows for all 11 and Linux for hl-8684, hl-10210, svencoop-8948, svencoop-10257.
+- The function remains standalone in `engine/r_studio.c:4696`. Exactly two direct `CL_LinkPacketEntities` call sites exist in every configured target.
 ## Predecessors
-
-- None. `CL_LinkPacketEntities` is recovered inside this same finder from the diagnostic literal and is not a separate artifact.
-
+- `CL_LinkPacketEntities.{platform}.yaml` is required. Its independent finder resolves the unique missing-model diagnostic string and supplies a signature-verified current-binary owner.
 ## How it is located
-
-1. Find the unique NUL-terminated C string `"Tried to link edict %i without model\n"` in non-executable segments, then collect the owners of every data reference to it. Require exactly one owner — `CL_LinkPacketEntities`.
-2. Enumerate `CL_LinkPacketEntities`'s internal direct calls (exact function starts, size `> 16`).
-3. Keep candidates that are called `>= 2` times from that body (the full reset and the `EF_NOINTERP` reset), with `MIN_SIZE = 100 <= size <= MAX_SIZE = 1200`, having `CL_LinkPacketEntities` among their callers plus `MIN_EXTRA_CALLERS = 1 .. MAX_EXTRA_CALLERS = 4` further callers (the other `cl_ents` link helpers such as `CL_ResetLatchedState` / `CL_LinkPlayers`).
-4. `R_ResetLatched`'s callers are exactly the `cl_ents` link helpers, so the surviving candidate with the **fewest total callers** wins; a tie fails closed.
-5. Emit the function artifact (retrying with `allow_across_function_boundary` when needed); the call sites are emitted by the shared callsite helper.
-
+1. Revalidate the `CL_LinkPacketEntities` artifact against the current IDB; do not relocate the diagnostic string inside this finder.
+2. Enumerate its direct calls and keep candidates called **exactly twice**, matching the full reset and `EF_NOINTERP` reset in `engine/cl_ents.c:1359,1415`.
+3. Keep a candidate only if its current body is 100–1200 bytes and it has 1–4 additional callers among the entity-linking helpers. Choose the unique candidate with the fewest total callers; ties fail closed.
+4. Inspect and emit the function artifact, then emit exactly two unique direct callsite patches in address order. The expected-output count must agree.
 ## Pitfalls
-
-- The "fewest callers wins, ties fail" tie-break is the semantic selection, not a heuristic; other doubly-called helpers in the body are pushed out by it.
-- The diagnostic literal must be unique. If a second owner appears the finder aborts rather than guessing.
-- The size window `100..1200` bytes and the `1..4` extra-caller window are load-bearing.
-- `R_ResetLatched` is the callee of the numbered callsite patches; the callsite count is derived from the expected outputs and must be contiguous from 0.
+- The old `>= 2` call-count test misidentified `CL_InterpolateModel.part.1` as `R_ResetLatched` on hl-8684 Linux. That interpolator core has three calls from `CL_LinkPacketEntities`; the true `R_ResetLatched` has two. The old three patch sites and `callsite_2` declaration were wrong.
+- On hl-8684 Linux, the verified `R_ResetLatched` RVA is `0x1367b0`, with reset call sites `0x17deb9` and `0x17e187`; these addresses are regression evidence for that binary only, never discovery anchors.
+- The 100–1200-byte and 1–4-extra-caller bounds remain secondary filters. A source-role check is essential; uniqueness of the emitted byte signature does not establish function identity.
+- The predecessor artifact and every selected function/callsite signature are revalidated in the current IDB. See [[Engine entity interpolation locators (issue 266)]].
