@@ -692,6 +692,30 @@ modules:
       - name: find-ClientDLL_HudInit
         expected_output:
           - ClientDLL_HudInit.{platform}.yaml
+      - name: find-VGuiWrap2_Startup
+        expected_output:
+          - VGuiWrap2_Startup.{platform}.yaml
+      - name: find-VGuiWrap2_Startup-dependents
+        expected_input:
+          - VGuiWrap2_Startup.{platform}.yaml
+        expected_output:
+          - staticUIFuncs.{platform}.yaml
+          - IBaseUI_Initialize.{platform}.yaml
+          - IBaseUI_Start.{platform}.yaml
+      - name: find-staticGameConsole
+        expected_output:
+          - staticGameConsole.{platform}.yaml
+      - name: find-VGuiWrap2_ConPrintf
+        expected_input:
+          - VGuiWrap2_Startup.{platform}.yaml
+          - staticGameConsole.{platform}.yaml
+        expected_output:
+          - VGuiWrap2_ConPrintf.{platform}.yaml
+      - name: find-IGameConsole_Printf
+        expected_input:
+          - VGuiWrap2_ConPrintf.{platform}.yaml
+        expected_output:
+          - IGameConsole_Printf.{platform}.yaml
       - name: find-CBaseUI__Initialize
         expected_output:
           - CBaseUI__Initialize.{platform}.yaml
@@ -1759,6 +1783,20 @@ modules:
         category: func
       - name: ClientDLL_HudInit
         category: func
+      - name: VGuiWrap2_Startup
+        category: func
+      - name: staticUIFuncs
+        category: gv
+      - name: IBaseUI_Initialize
+        category: vfunc
+      - name: IBaseUI_Start
+        category: vfunc
+      - name: staticGameConsole
+        category: gv
+      - name: VGuiWrap2_ConPrintf
+        category: func
+      - name: IGameConsole_Printf
+        category: vfunc
       - name: CBaseUI__Initialize
         category: func
       - name: CL_PrecacheResources
