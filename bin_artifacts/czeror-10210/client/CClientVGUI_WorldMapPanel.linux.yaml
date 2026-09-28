@@ -1,0 +1,4 @@
+struct_name: CZEROViewPort
+member_name: m_pWorldMapPanel
+offset: '0x7ac'
+size: 4

@@ -1,0 +1,9 @@
+func_name: CWorldMap::PaintBackground()
+func_va: '0x927c0'
+func_rva: '0x927c0'
+func_size: '0x20b'
+vtable_name: CWorldMap
+vfunc_offset: '0x1ac'
+vfunc_index: 107
+vfunc_sig: 55 57 56 31 F6 53 83 EC ?? 8B 9C 24 ?? ?? ?? ?? 89 1C 24 E8 38 65 06 00 8D 44 24 ?? 89 44 24 ?? 8D 44 24 ?? 89
+  44 24 ?? 89 1C 24 E8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8D 4C 24 ?? 8B 10 89 4C 24 ?? 8D
