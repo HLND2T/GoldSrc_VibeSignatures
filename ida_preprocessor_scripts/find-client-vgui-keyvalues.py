@@ -26,6 +26,8 @@ from ida_preprocessor_scripts._client_vgui_private_common import (
 
 VTABLE_SYMBOL = "ClientVGUI_KeyValues_vftable"
 VFUNC_SYMBOL = "ClientVGUI_KeyValues_LoadFromFile"
+VTABLE_CLASS = "KeyValues"
+FUNCTION_NAME = "KeyValues::LoadFromFile(IFileSystem*, char const*, char const*)"
 ANCHOR_LITERAL = "CursorEnteredMenuButton"
 
 # The constructor installs its primary vptr into the ABI this object before any
@@ -146,8 +148,8 @@ async def preprocess_skill(
         return False
     vtable_va = int(result["vtable"], 0)
     vtable = {
-        "vtable_class": VTABLE_SYMBOL,
-        "vtable_symbol": VTABLE_SYMBOL,
+        "vtable_class": VTABLE_CLASS,
+        "vtable_symbol": "??_7KeyValues@@6B@" if platform == "windows" else "_ZTV9KeyValues + 0x8",
         "vtable_va": hex(vtable_va),
         "vtable_rva": hex(vtable_va - int(image_base)),
         "vtable_size": hex(len(entries) * 4),
@@ -155,11 +157,11 @@ async def preprocess_skill(
         "vtable_entries": entries,
     }
     load_target = int(raw_slot, 0)
-    function = await _inspect_function_via_mcp(session, load_target, image_base, VFUNC_SYMBOL)
+    function = await _inspect_function_via_mcp(session, load_target, image_base, FUNCTION_NAME)
     allow_across = function is None or not function.get("func_sig")
     if allow_across:
         function = await _inspect_function_via_mcp(
-            session, load_target, image_base, VFUNC_SYMBOL, allow_across_function_boundary=True
+            session, load_target, image_base, FUNCTION_NAME, allow_across_function_boundary=True
         )
     if not function or not function.get("func_sig"):
         if debug:
@@ -167,7 +169,7 @@ async def preprocess_skill(
         return False
     vfunc = {key: function[key] for key in ("func_name", "func_va", "func_rva", "func_size")}
     vfunc.update(
-        vtable_name=VTABLE_SYMBOL,
+        vtable_name=VTABLE_CLASS,
         vfunc_index=LOADFROMFILE_SLOT_INDEX,
         vfunc_offset=hex(LOADFROMFILE_SLOT_INDEX * 4),
         vfunc_sig=function["func_sig"],

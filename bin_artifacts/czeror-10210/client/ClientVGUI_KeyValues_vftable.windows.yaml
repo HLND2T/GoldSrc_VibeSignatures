@@ -1,5 +1,5 @@
-vtable_class: ClientVGUI_KeyValues_vftable
-vtable_symbol: ClientVGUI_KeyValues_vftable
+vtable_class: KeyValues
+vtable_symbol: ??_7KeyValues@@6B@
 vtable_va: '0x100b6cd0'
 vtable_rva: '0xb6cd0'
 vtable_size: '0x64'

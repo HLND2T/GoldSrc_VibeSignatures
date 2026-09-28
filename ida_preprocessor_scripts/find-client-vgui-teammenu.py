@@ -203,16 +203,16 @@ async def preprocess_skill(
         return False
     result = located
     targets = {
-        LOADCS_SYMBOL: ("load_control_settings", None),
-        SETTEXTA_SYMBOL: ("settext_a", None),
-        SETTEXTW_SYMBOL: ("settext_w", None),
+        LOADCS_SYMBOL: ("load_control_settings", "vgui2::Frame::LoadControlSettings(char const*, char const*)"),
+        SETTEXTA_SYMBOL: ("settext_a", "vgui2::RichText::SetText(char const*)"),
+        SETTEXTW_SYMBOL: ("settext_w", "vgui2::RichText::SetText(wchar_t const*)"),
     }
     outputs = {name: _output_for_symbol(expected_outputs, name) for name in targets}
     if not all(outputs.values()):
         return False
     payloads = {}
-    for name, (key, _) in targets.items():
-        function = await _emit_function(session, name, result[key], image_base, debug)
+    for name, (key, function_name) in targets.items():
+        function = await _emit_function(session, function_name, result[key], image_base, debug)
         if function is None:
             return False
         payloads[name] = {

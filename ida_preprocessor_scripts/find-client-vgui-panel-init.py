@@ -14,9 +14,10 @@ offsets and (b) contain at least two ``call getter; mov reg, [eax]; call [reg+di
 interface-dispatch idioms in their head — rejecting the sibling
 ``CAvatarImagePanel::SetPlayer`` and TextEntry-like layout functions that share
 the single store. Optimized Linux builds keep both the exported full-body
-``Panel::Init`` and a constprop clone that the constructors actually call; the
-candidate with internal direct callers wins there, matching the entry that
-executes at runtime.
+``Panel::Init`` and a constprop clone that the constructors actually call. The
+clone takes this in eax and specializes the four dimensions, so it is not ABI
+compatible with the ordinary entry. Require all five incoming cdecl stack
+arguments on Linux, independently of symbol names or internal caller counts.
 """
 
 from ida_analyze_util import (
@@ -27,8 +28,11 @@ from ida_analyze_util import (
 from ida_preprocessor_scripts._client_vgui_private_common import PANEL_INIT_STORE_OFFSETS, run_walk
 
 SYMBOL = "ClientVGUI_Panel_Init"
+FUNCTION_NAME = "vgui2::Panel::Init(int, int, int, int)"
 
 WALK = r"""
+import ida_frame
+
 def indirect_call_disp(ea):
     insn = idautils.DecodeInstruction(ea)
     if insn is None or idautils.DecodeInstruction(ea).get_canon_mnem() != 'call':
@@ -69,9 +73,26 @@ def interface_dispatch_idioms(items):
     return idioms
 
 
-def internal_callers(function_ea):
-    return [int(ref) for ref in idautils.CodeRefsTo(int(function_ea), 0)
-            if ida_funcs.get_func(int(ref)) is None or int(ida_funcs.get_func(int(ref)).start_ea) != int(function_ea)]
+def has_cdecl_arguments(function_ea, items):
+    # Normalize esp-relative reads to entry esp using IDA's stack deltas.
+    # The supported GCC bodies read this, x, y, w, h from those five slots;
+    # constprop clones instead take this in eax and hardcode the dimensions.
+    function = ida_funcs.get_func(function_ea)
+    arguments = set()
+    for ea in items:
+        insn = idautils.DecodeInstruction(ea)
+        if insn is None or insn.get_canon_mnem() != 'mov':
+            continue
+        dest, source = insn.ops[0], insn.ops[1]
+        if (dest.type != ida_ua.o_reg or source.type != ida_ua.o_displ
+                or source.dtype != ida_ua.dt_dword):
+            continue
+        # ESP base, no SIB index. Do not mistake an indexed object read for
+        # an incoming argument merely because the printed operand contains esp.
+        if not source.specflag1 or int(source.specflag2) & 0x3F != 0x24:
+            continue
+        arguments.add(int(source.addr) + int(ida_frame.get_spd(function, ea)))
+    return set(values['cdecl_argument_offsets']).issubset(arguments)
 
 
 candidates = set()
@@ -105,16 +126,14 @@ for candidate in sorted(candidates):
     if len(neighborhood & store_offsets) < values['neighbor_minimum']:
         continue
     items = function_body(candidate)
+    if values['platform'] == 'linux' and not has_cdecl_arguments(candidate, items):
+        continue
     if interface_dispatch_idioms(items[:values['head_span']]) < values['idiom_minimum']:
         continue
     matches.append(candidate)
 
 if not matches:
     raise ValueError('no candidate satisfies the Panel::Init layout and dispatch filters')
-if len(matches) > 1:
-    with_callers = [candidate for candidate in matches if internal_callers(candidate)]
-    if len(with_callers) == 1:
-        matches = with_callers
 if len(matches) != 1:
     raise ValueError('Panel::Init candidate is not unique: ' + repr([hex(match) for match in matches]))
 result = {'panel_init': matches[0]}
@@ -136,6 +155,8 @@ async def preprocess_skill(
         session,
         WALK,
         {
+            "platform": platform,
+            "cdecl_argument_offsets": [4, 8, 12, 16, 20],
             "proportional_offset": 0x24,
             "proportional_value": 2,
             "neighborhood": sorted(set(PANEL_INIT_STORE_OFFSETS) - {0x24}),
@@ -149,11 +170,11 @@ async def preprocess_skill(
             print(f"  {SYMBOL}: locator failed: {located.get('error', located)}")
         return False
     target = int(located["panel_init"])
-    function = await _inspect_function_via_mcp(session, target, image_base, SYMBOL)
+    function = await _inspect_function_via_mcp(session, target, image_base, FUNCTION_NAME)
     allow_across = function is None or not function.get("func_sig")
     if allow_across:
         function = await _inspect_function_via_mcp(
-            session, target, image_base, SYMBOL, allow_across_function_boundary=True
+            session, target, image_base, FUNCTION_NAME, allow_across_function_boundary=True
         )
         if function is not None:
             function["func_sig_allow_across_function_boundary"] = True

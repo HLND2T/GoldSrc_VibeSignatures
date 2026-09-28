@@ -1,4 +1,4 @@
-func_name: ClientVGUI_RichText_SetTextW
+func_name: vgui2::RichText::SetText(wchar_t const*)
 func_va: '0x187b90'
 func_rva: '0x187b90'
 func_size: '0x188'

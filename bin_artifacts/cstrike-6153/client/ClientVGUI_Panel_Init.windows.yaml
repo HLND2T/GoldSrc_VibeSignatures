@@ -1,4 +1,4 @@
-func_name: ClientVGUI_Panel_Init
+func_name: vgui2::Panel::Init(int, int, int, int)
 func_va: '0x1975890'
 func_rva: '0x75890'
 func_size: '0x92'

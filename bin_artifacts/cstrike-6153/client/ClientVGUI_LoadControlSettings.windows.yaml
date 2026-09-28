@@ -1,4 +1,4 @@
-func_name: ClientVGUI_LoadControlSettings
+func_name: vgui2::Frame::LoadControlSettings(char const*, char const*)
 func_va: '0x1972a60'
 func_rva: '0x72a60'
 func_size: '0x35'

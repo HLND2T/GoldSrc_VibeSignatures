@@ -1,4 +1,4 @@
-func_name: ClientVGUI_RichText_SetTextA
+func_name: vgui2::RichText::SetText(char const*)
 func_va: '0x1998530'
 func_rva: '0x98530'
 func_size: '0x71'
