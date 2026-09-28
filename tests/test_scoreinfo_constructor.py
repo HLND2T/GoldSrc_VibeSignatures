@@ -19,7 +19,7 @@ def instruction(mnemonic, *operands):
     return NS(mnemonic=mnemonic, ops=[*operands, *[operand() for _ in range(2 - len(operands))]], size=1)
 
 
-def run_locator(*, alternative=None, loop=False, unknown_pointer=False):
+def run_locator(*, alternative=None, loop=False, unknown_pointer=False, deferred=False):
     code = {
         CALLBACK: instruction("mov", operand(REG, reg=0), operand(MEM, addr=POINTER)),
         CALLBACK + 1: instruction("mov", operand(REG, reg=1), operand(PHRASE, reg=0)),
@@ -45,6 +45,17 @@ def run_locator(*, alternative=None, loop=False, unknown_pointer=False):
         code[CONSTRUCTOR + 8] = instruction("jmp", operand(NEAR, addr=CONSTRUCTOR + 7))
     if unknown_pointer:
         code[CONSTRUCTOR + 7] = instruction("mov", operand(MEM, addr=POINTER), operand(REG, reg=7))
+    if deferred:
+        # Publish the interface before either branch installs its vptr.
+        code[CONSTRUCTOR + 2] = instruction("mov", operand(MEM, addr=POINTER), operand(REG, reg=0))
+        code[CONSTRUCTOR + 5] = instruction("mov", operand(PHRASE, reg=0), operand(IMM, value=TABLE))
+        code[CONSTRUCTOR + 7] = (
+            instruction("mov", operand(PHRASE, reg=0), operand(IMM, value=alternative))
+            if alternative is not None
+            else instruction("retn")
+        )
+        code[CONSTRUCTOR + 8] = instruction("jmp", operand(NEAR, addr=CONSTRUCTOR + 9))
+    pointer_refs = [CONSTRUCTOR + 2] if deferred else [CONSTRUCTOR + 5, CONSTRUCTOR + 7]
 
     def function(ea):
         for start, length in ((CALLBACK, 4), (CONSTRUCTOR, 10), (HANDLER, 1), (OTHER_HANDLER, 1)):
@@ -67,7 +78,7 @@ def run_locator(*, alternative=None, loop=False, unknown_pointer=False):
         "idautils": NS(
             FuncItems=items,
             DecodeInstruction=lambda ea: code.get(ea),
-            DataRefsTo=lambda ea: [CONSTRUCTOR + 5, CONSTRUCTOR + 7] if ea == POINTER else [],
+            DataRefsTo=lambda ea: pointer_refs if ea == POINTER else [],
             DataRefsFrom=lambda ea: [],
         ),
         "idc": NS(print_insn_mnem=lambda ea: code[ea].mnemonic, print_operand=lambda ea, index: ""),
@@ -97,3 +108,12 @@ class ScoreInfoConstructorTests(unittest.TestCase):
 
     def test_unproven_nonnull_branch_fails_closed(self):
         self.assertNotIn("target", run_locator(unknown_pointer=True))
+
+    def test_deferred_agreeing_branch_tables_keep_one_target(self):
+        self.assertEqual(HANDLER, run_locator(deferred=True, alternative=TABLE).get("target"))
+
+    def test_deferred_conflicting_branch_tables_fail_closed(self):
+        self.assertNotIn("target", run_locator(deferred=True, alternative=OTHER_TABLE))
+
+    def test_deferred_unproven_branch_fails_closed(self):
+        self.assertNotIn("target", run_locator(deferred=True))

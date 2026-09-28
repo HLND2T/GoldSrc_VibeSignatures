@@ -74,7 +74,7 @@ def main(registered_callbacks):
         return (expr[0],(expr[1]+offset)&0xffffffff) if expr[0]=='constant' else (expr[0],expr[1],expr[2]+offset)
     max_constructor_instructions=8192
     for writer in writers:
-        pending=[(writer,{reg:('register',reg,0) for reg in range(8)},{},set())]
+        pending=[(writer,{reg:('register',reg,0) for reg in range(8)},{},set(),set())]
         instruction_budget=max_constructor_instructions
         def address(op):
             if op.type==ida_ua.o_mem: return ('constant',int(op.addr))
@@ -84,8 +84,7 @@ def main(registered_callbacks):
                 return plus(registers.get(op.phrase),offset)
             return None
         while pending:
-            cursor,registers,memory,seen=pending.pop()
-            interface_values=set()
+            cursor,registers,memory,seen,interface_values=pending.pop()
             while True:
                 instruction_budget-=1
                 if instruction_budget<0 or cursor in seen:
@@ -103,8 +102,9 @@ def main(registered_callbacks):
                         cursor=int(dest.addr); continue
                     # Null-guarded subobject conversions still carry the same
                     # vptr evidence on the non-null path. Keep branch states
-                    # separate and require one concrete handler across them.
-                    pending.append((int(dest.addr),dict(registers),dict(memory),set(seen)))
+                    # separate, including deferred assignments, and require
+                    # one concrete handler across them.
+                    pending.append((int(dest.addr),dict(registers),dict(memory),set(seen),set(interface_values)))
                     cursor+=insn.size
                     continue
                 if mnemonic.startswith('loop'):
