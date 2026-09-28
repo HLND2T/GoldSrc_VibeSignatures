@@ -1,0 +1,5 @@
+func_name: CTeamMenu::LoadMapPage(char const*)
+func_va: '0x19a74c0'
+func_rva: '0xa74c0'
+func_size: '0x13d'
+func_sig: 8B 44 24 ?? 81 EC 08 01 00 00 55 8B E9 50 68 ?? ?? ?? ?? 8D 4C 24 ?? 68 04 01 00 00 51 E8 ?? ?? ?? ??
