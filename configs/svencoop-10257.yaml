@@ -2311,6 +2311,18 @@ modules:
     depot_windows: svencoop/cl_dlls/client.dll
     depot_linux: svencoop/cl_dlls/client.so
     skills:
+      - name: find-IN_MouseEvent
+        expected_output:
+          - IN_MouseEvent.{platform}.yaml
+      - name: find-IN_Accumulate
+        expected_output:
+          - IN_Accumulate.{platform}.yaml
+      - name: find-g_iVisibleMouse
+        expected_input:
+          - IN_MouseEvent.{platform}.yaml
+          - IN_Accumulate.{platform}.yaml
+        expected_output:
+          - g_iVisibleMouse.{platform}.yaml
       - name: find-CL_IsThirdPerson-decompiles
         expected_input:
           - CL_IsThirdPerson.{platform}.yaml
@@ -2654,6 +2666,12 @@ modules:
         category: func
       - name: HUD_Init
         category: func
+      - name: IN_MouseEvent
+        category: func
+      - name: IN_Accumulate
+        category: func
+      - name: g_iVisibleMouse
+        category: gv
       - name: CHudBaseTextBlock_Print
         category: func
       - name: CHudSayText_PrintText
