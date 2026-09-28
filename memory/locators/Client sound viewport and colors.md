@@ -83,7 +83,7 @@ For the Sven clients in the tables above, Windows base is 0x10000000 and Linux b
 
 ### CS family: client module
 
-GetClientColor uses four patterns (legacy MSVC CS, HL25 MSVC CS, CZDS, GCC). They verify team-number selection, not a build address. GetTextColor uses three patterns encoding color 3 -> player color, color 4 -> location array, other -> NULL. Both targets are func. The floats are returned through pointers, so these bodies do not offer scalar xref_floats anchors.
+GetClientColor is discovered without a code-body pattern: Linux clients use the retained `_Z14GetClientColori` symbol, and Windows clients intersect code owners referring to all five known RGB float[3] arrays, excluding callers with direct calls to reject inlined UI copies. The arrays are searched independently, so their storage order can vary. The resulting function still receives a generated unique `func_sig` for the artifact contract. GetTextColor uses three patterns encoding color 3 -> player color, color 4 -> location array, other -> NULL. Both targets are func. The floats are returned through pointers, so these bodies do not offer scalar xref_floats anchors.
 
 | Configuration | GetClientColor Win/Linux RVA | GetTextColor Win/Linux RVA | g_LocationColor Win/Linux VA |
 |---|---|---|---|
@@ -125,6 +125,10 @@ Trigger: a unique body pattern points at a callable entry but the warm IDB has n
 ### Experience: compiler and source differences
 
 Trigger: MetaHook's constants or public source appear to imply one layout/return mapping. Constraint: player-info stride is 0x68 or 0x74 in CS and 0x1c in CZDS. CS's observed default/team 0 returns Grey despite the public source's Yellow case. CZDS maps 0/3 Yellow, 1 Blue, 2 Red, 4 Green, default Grey. Correct approach: compare actual field reads, switch tables and float arrays on every target; wildcard layout addresses and retain verified semantic bounds. Validate the emitted callee rather than a PLT stub. No new consumer ABI/schema was introduced.
+
+### Experience: color data as a function anchor
+
+Trigger: a new CS/CZ/CZDS client build changes the GetClientColor instruction sequence. Constraint: the MSVC selector can be copied into larger UI functions, and Linux color arrays are not laid out like Windows arrays. Correct approach: use the exact ELF `_Z14GetClientColori` symbol on Linux; on Windows, locate each of the five RGB float[3] arrays independently, intersect their IDA code-reference owners, exclude functions containing direct calls to reject inlined UI copies, then require one function and generate its unique runtime signature. Verification: all 17 registered CS-family GetClientColor node/platform combinations were rerun with `-node` and `-oldgamever none`; their artifacts remained unchanged. Scope: supported CS, CZ, and CZDS clients with retained ELF symbols or unchanged RGB values. A stripped ELF or changed colors requires new semantic evidence.
 
 ### Verification evidence
 
