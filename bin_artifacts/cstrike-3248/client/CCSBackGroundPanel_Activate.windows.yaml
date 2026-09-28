@@ -1,0 +1,8 @@
+func_name: CounterStrikeViewport::CCSBackGroundPanel::Activate()
+func_va: '0x191e4d0'
+func_rva: '0x1e4d0'
+func_size: '0x46d'
+vtable_name: CounterStrikeViewport::CCSBackGroundPanel
+vfunc_offset: '0x27c'
+vfunc_index: 159
+vfunc_sig: 55 8B EC 83 E4 F8 6A FF 68 ?? ?? ?? ?? 64 A1 ?? ?? ?? ?? 50 64 89 25 ?? ?? ?? ?? 83 EC 6C 53 55 56 57 33 FF

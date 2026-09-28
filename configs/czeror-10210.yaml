@@ -61,6 +61,7 @@ modules:
           - ClientVGUI_RichText_SetTextA.{platform}.yaml
           - ClientVGUI_RichText_SetTextW.{platform}.yaml
           - TeamMenu_LoadMapPage.{platform}.yaml
+          - ClientVGUI_Frame_Activate.{platform}.yaml
     symbols:
       - name: GetClientColor
         category: func
@@ -110,6 +111,8 @@ modules:
         category: func
       - name: TeamMenu_LoadMapPage
         category: func
+      - name: ClientVGUI_Frame_Activate
+        category: vfunc
   - name: server
     module_windows: cz.dll
     depot_windows: czeror/dlls/cz.dll

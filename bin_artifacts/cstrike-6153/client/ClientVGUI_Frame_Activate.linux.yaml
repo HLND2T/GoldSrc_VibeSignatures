@@ -1,0 +1,8 @@
+func_name: vgui2::Frame::Activate()
+func_va: '0x166e60'
+func_rva: '0x166e60'
+func_size: '0x86'
+vtable_name: vgui2::Frame
+vfunc_offset: '0x284'
+vfunc_index: 161
+vfunc_sig: 83 EC ?? 89 5C 24 ?? 8B 5C 24 ?? 89 74 24 ?? 31 F6 89 7C 24 ?? BF ?? ?? ?? ?? 8B 03 89 1C 24 FF 90 ?? ?? ?? ??
