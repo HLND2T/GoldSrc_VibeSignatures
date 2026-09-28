@@ -93,6 +93,9 @@ modules:
           - CClientVGUI_m_pCSBackGroundPanel.{platform}.yaml
           - CCSBackGroundPanel.{platform}.yaml
           - CCSBackGroundPanel_Activate.{platform}.yaml
+          - CCSBackGroundPanel_XOffset.{platform}.yaml
+          - CCSBackGroundPanel_YOffset.{platform}.yaml
+          - ISurface_GetScreenSize.{platform}.yaml
     symbols:
       - name: GetTextColor
         category: func
@@ -165,6 +168,18 @@ modules:
       - name: CCSBackGroundPanel
         category: vtable
       - name: CCSBackGroundPanel_Activate
+        category: vfunc
+      - name: CounterStrikeViewport::CCSBackGroundPanel
+        category: struct
+      - name: CCSBackGroundPanel_XOffset
+        category: structmember
+        struct: CounterStrikeViewport::CCSBackGroundPanel
+        member: m_offsetX
+      - name: CCSBackGroundPanel_YOffset
+        category: structmember
+        struct: CounterStrikeViewport::CCSBackGroundPanel
+        member: m_offsetY
+      - name: ISurface_GetScreenSize
         category: vfunc
   - name: server
     module_windows: mp.dll

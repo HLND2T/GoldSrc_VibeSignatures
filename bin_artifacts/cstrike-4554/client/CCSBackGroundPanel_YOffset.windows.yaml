@@ -1,0 +1,4 @@
+struct_name: CounterStrikeViewport::CCSBackGroundPanel
+member_name: m_offsetY
+offset: '0x138'
+size: 4
