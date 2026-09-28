@@ -1,7 +1,9 @@
 modules:
   - name: client
     module_windows: client.dll
+    module_linux: client.so
     depot_windows: czeror/cl_dlls/client.dll
+    depot_linux: czeror/cl_dlls/client.so
     skills:
       - name: find-GetClientColor-CS
         expected_output:
@@ -139,6 +141,8 @@ modules:
         category: vfunc
   - name: server
     module_windows: cz.dll
+    module_linux: cz.so
     depot_windows: czeror/dlls/cz.dll
+    depot_linux: czeror/dlls/cz.so
     skills: []
     symbols: []

@@ -6,6 +6,12 @@ CZDS assigns gViewPortMsgs in the viewport constructor. Match the explicit
 pointer/vptr stores for that same subobject; neither interface slot nor object
 layout is copied across builds. Public registration and current constructor
 dataflow establish the handler before its private globals are recovered.
+
+MSVC builds store the interface pointer as a constant subobject address, while
+GCC builds compute it as a register-relative subobject (`lea` from a cdecl
+`this`) whose vptr store lands later in the same path. Interface assignments are
+therefore resolved once that path ends, so an assignment that precedes its
+vptr store is still proven non-null before its handler slot is read.
 """
 
 from ida_analyze_util import _inspect_function_via_mcp, _output_for_symbol, parse_mcp_result, write_func_yaml
@@ -79,6 +85,7 @@ def main(registered_callbacks):
             return None
         while pending:
             cursor,registers,memory,seen=pending.pop()
+            interface_values=set()
             while True:
                 instruction_budget-=1
                 if instruction_budget<0 or cursor in seen:
@@ -129,9 +136,10 @@ def main(registered_callbacks):
                             memory[destination]=value
                             if destination==('constant',pointer) and value!=('constant',0):
                                 table=memory.get(value)
-                                if not table or table[0]!='constant' or not data(table[1]):
-                                    return {'error':'ScoreInfo constructor has an unproven non-null interface assignment'}
-                                tables.add(table[1])
+                                if table and table[0]=='constant' and data(table[1]):
+                                    tables.add(table[1])
+                                else:
+                                    interface_values.add(value)
                 elif mnemonic=='xor' and dest.type==ida_ua.o_reg and source.type==ida_ua.o_reg and dest.reg==source.reg:
                     registers[dest.reg]=('constant',0)
                 elif mnemonic in ('add','sub') and dest.type==ida_ua.o_reg and source.type==ida_ua.o_imm:
@@ -141,6 +149,11 @@ def main(registered_callbacks):
                 elif dest.type==ida_ua.o_reg and mnemonic not in ('push','cmp','test'):
                     registers.pop(dest.reg,None)
                 cursor+=insn.size
+            for value in interface_values:
+                table=memory.get(value)
+                if not table or table[0]!='constant' or not data(table[1]):
+                    return {'error':'ScoreInfo constructor has an unproven non-null interface assignment'}
+                tables.add(table[1])
     targets=set()
     for table in tables:
         target=ida_bytes.get_dword(table+slot)

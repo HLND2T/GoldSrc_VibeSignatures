@@ -1,0 +1,4 @@
+struct_name: CounterStrikeViewport
+member_name: m_pCSBackGround
+offset: '0x730'
+size: 4

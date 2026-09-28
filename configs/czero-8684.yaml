@@ -1,7 +1,9 @@
 modules:
   - name: client
     module_windows: client.dll
+    module_linux: client.so
     depot_windows: czero/cl_dlls/client.dll
+    depot_linux: czero/cl_dlls/client.so
     skills:
       - name: find-GetTextColor-CS
         expected_output:
@@ -170,6 +172,8 @@ modules:
         category: vfunc
   - name: server
     module_windows: mp.dll
+    module_linux: cs.so
     depot_windows: czero/dlls/mp.dll
+    depot_linux: czero/dlls/cs.so
     skills: []
     symbols: []

@@ -12,11 +12,26 @@ def registered_callbacks(label):
             if ida_bytes.is_code(flags) or ida_bytes.is_unknown(flags): ida_funcs.add_func(value)
             owner=ida_funcs.get_func(value)
         return owner is not None and owner.start_ea==value
-    # GCC may pool "centerview" into "force_centerview". The registration
-    # operand still points at the exact NUL-terminated label, not its prefix.
-    strings={int(s.ea)+len(str(s).encode('utf-8'))-len(label.encode('utf-8'))
-             for s in idautils.Strings() if str(s).endswith(label)}
-    strings={ea for ea in strings if ida_bytes.get_bytes(ea,len(label)+1)==label.encode('ascii')+b'\0'}
+    # Scan raw non-executable segment bytes for the exact NUL-terminated label.
+    # IDA's string list can omit analyzed .rodata regions in some warmed
+    # databases, so relying on idautils.Strings() silently yields no
+    # registration candidates there. GCC may pool "centerview" into
+    # "force_centerview"; the registration operand still points at the exact
+    # NUL-terminated label, not its prefix, so a suffix occurrence inside a
+    # longer string remains a valid anchor.
+    needle=label.encode('ascii')+b'\0'
+    strings=set()
+    for seg_ea in idautils.Segments():
+        segment=ida_segment.getseg(seg_ea)
+        if segment.perm & ida_segment.SEGPERM_EXEC: continue
+        base=int(segment.start_ea)
+        data=ida_bytes.get_bytes(base,int(segment.end_ea)-base) or b''
+        start=0
+        while True:
+            index=data.find(needle,start)
+            if index<0: break
+            strings.add(base+index)
+            start=index+1
     owners={ida_funcs.get_func(x).start_ea for s in strings for x in idautils.DataRefsTo(s) if ida_funcs.get_func(x)}
     callbacks=set()
     for owner in owners:

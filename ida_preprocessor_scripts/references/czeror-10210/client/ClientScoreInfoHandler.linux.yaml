@@ -1,0 +1,155 @@
+func_name: "ClientScoreInfoHandler"
+func_va: "0x8e240"
+disasm_code: |-
+  .text:0008E240                 sub     esp, 4Ch
+  .text:0008E243                 mov     eax, [esp+4Ch+iSize]
+  .text:0008E247                 mov     [esp+4Ch+var_10], ebx
+  .text:0008E24B                 mov     [esp+4Ch+var_C], esi
+  .text:0008E24F                 mov     esi, [esp+4Ch+this]
+  .text:0008E253                 mov     [esp+4Ch+var_8], edi
+  .text:0008E257                 ; size
+  .text:0008E257                 mov     [esp+4Ch+size], eax; size
+  .text:0008E25B                 mov     eax, [esp+4Ch+pbuf]
+  .text:0008E25F                 mov     [esp+4Ch+var_4], ebp
+  .text:0008E263                 ; buf
+  .text:0008E263                 mov     [esp+4Ch+buf], eax; buf
+  .text:0008E266                 call    _Z10BEGIN_READPvi; BEGIN_READ(void *,int)
+  .text:0008E26B                 call    _Z9READ_BYTEv; READ_BYTE(void)
+  .text:0008E270                 mov     ebx, eax
+  .text:0008E272                 call    _Z10READ_SHORTv; READ_SHORT(void)
+  .text:0008E277                 mov     ebp, eax
+  .text:0008E279                 call    _Z10READ_SHORTv; READ_SHORT(void)
+  .text:0008E27E                 mov     edi, eax
+  .text:0008E280                 call    _Z10READ_SHORTv; READ_SHORT(void)
+  .text:0008E285                 mov     [esp+4Ch+playerclass], eax
+  .text:0008E289                 call    _Z10READ_SHORTv; READ_SHORT(void)
+  .text:0008E28E                 lea     ecx, [cl_0-1]
+  .text:0008E291                 cmp     cx, 3Fh ; '?'
+  .text:0008E295                 ja      loc_8E371
+  .text:0008E29B                 movsx   cl_0, bx
+  .text:0008E29E                 mov     edx, [esp+4Ch+playerclass]
+  .text:0008E2A2                 cwde
+  .text:0008E2A3                 lea     ecx, ds:0[cl_0*4]
+  .text:0008E2AA                 shl     cl_0, 5
+  .text:0008E2AD                 sub     ebx, ecx
+  .text:0008E2AF                 test    teamnumber, teamnumber
+  .text:0008E2B1                 lea     ecx, g_PlayerExtraInfo.frags[ebx]
+  .text:0008E2B7                 ; g_PlayerExtraInfo_CZDS: return ONLY the corresponding frags store in found_gv. Its member offset is zero and its value comes from the FIRST READ_SHORT. Reject deaths/frags+2, playerclass, teamnumber, and interior-address arithmetic even if they resolve the same array. Map target data flow; do not copy this address or register.
+  .text:0008E2B7                 mov     word ptr ds:g_PlayerExtraInfo.frags[ebx], bp ; SELECT: zero-offset frags store resolves the array base without address correction
+  .text:0008E2BE                 mov     [ecx+2], di
+  .text:0008E2C2                 mov     [ecx+4], dx
+  .text:0008E2C6                 js      loc_8E390
+  .text:0008E2CC                 mov     [ecx+0Ah], ax
+  .text:0008E2D0                 mov     ecx, [esi+0B8h]
+  .text:0008E2D6                 test    ecx, ecx
+  .text:0008E2D8                 jz      short loc_8E30E
+  .text:0008E2DA                 mov     teamnumber, [esi+12Ch]
+  .text:0008E2E0                 ; numTeams
+  .text:0008E2E0                 mov     [esp+4Ch+numTeams], eax; numTeams
+  .text:0008E2E4                 lea     eax, [esi+0Ch]
+  .text:0008E2E7                 ; teamNames
+  .text:0008E2E7                 mov     [esp+4Ch+teamNames], eax; teamNames
+  .text:0008E2EB                 xor     eax, eax
+  .text:0008E2ED                 mov     ebx, [esi+734h]
+  .text:0008E2F3                 ; this
+  .text:0008E2F3                 mov     [esp+4Ch+buf], ecx; this
+  .text:0008E2F6                 test    ebx, ebx
+  .text:0008E2F8                 setnz   al
+  .text:0008E2FB                 ; allowSpectators
+  .text:0008E2FB                 mov     dword ptr [esp+4Ch+allowSpectators], eax; allowSpectators
+  .text:0008E2FF                 lea     eax, [esi+738h]
+  .text:0008E305                 ; mapName
+  .text:0008E305                 mov     [esp+4Ch+size], eax; mapName
+  .text:0008E309                 call    _ZN9CTeamMenu6UpdateEPKcbPA32_S0_i; CTeamMenu::Update(char const*,bool,char const(*)[32],int)
+  .text:0008E30E                 mov     eax, [esi]
+  .text:0008E310                 mov     eax, [eax+8]
+  .text:0008E313                 cmp     eax, offset _ZN20TeamFortressViewport16ActivateClientUIEv; TeamFortressViewport::ActivateClientUI(void)
+  .text:0008E318                 jnz     loc_8E3A0
+  .text:0008E31E                 mov     eax, [esi+0B4h]
+  .text:0008E324                 mov     eax, [eax]
+  .text:0008E326                 mov     ebx, [eax]
+  .text:0008E328                 mov     eax, [esi+0B0h]
+  .text:0008E32E                 mov     ecx, [eax]
+  .text:0008E330                 mov     [esp+4Ch+buf], eax
+  .text:0008E333                 call    dword ptr [ecx+30h]
+  .text:0008E336                 mov     edx, ds:gHUD.m_Teamplay
+  .text:0008E33C                 mov     ecx, [esi+0B4h]
+  .text:0008E342                 mov     [esp+4Ch+buf], ecx
+  .text:0008E345                 movzx   eax, al
+  .text:0008E348                 mov     [esp+4Ch+teamNames], eax
+  .text:0008E34C                 xor     eax, eax
+  .text:0008E34E                 test    edx, edx
+  .text:0008E350                 setnz   al
+  .text:0008E353                 mov     dword ptr [esp+4Ch+allowSpectators], eax
+  .text:0008E357                 lea     eax, [esi+10Ch]
+  .text:0008E35D                 mov     [esp+4Ch+size], eax
+  .text:0008E361                 call    ebx
+  .text:0008E363                 mov     eax, [esi+0B0h]
+  .text:0008E369                 mov     edx, [eax]
+  .text:0008E36B                 mov     [esp+4Ch+buf], eax
+  .text:0008E36E                 call    dword ptr [edx+24h]
+  .text:0008E371                 mov     eax, 1
+  .text:0008E376                 mov     ebx, [esp+4Ch+var_10]
+  .text:0008E37A                 mov     esi, [esp+4Ch+var_C]
+  .text:0008E37E                 mov     deaths, [esp+4Ch+var_8]
+  .text:0008E382                 mov     frags, [esp+4Ch+var_4]
+  .text:0008E386                 add     esp, 4Ch
+  .text:0008E389                 retn
+  .text:0008E390                 mov     word ptr [ecx+0Ah], 0
+  .text:0008E396                 jmp     loc_8E2D0
+  .text:0008E3A0                 mov     [esp+4Ch+buf], esi
+  .text:0008E3A3                 call    eax
+  .text:0008E3A5                 jmp     loc_8E31E
+procedure: |-
+  // Source: vgui2/game_controls/vgui_TeamFortressViewport_msgs.cpp:238-268 (same legacy body as the Windows sibling; the reference source comments it out, but CZDS retains it). Current Linux build keeps stride 0x1c and a register-relative frags store. Recover the array base from the frags store (member offset zero), not deaths/playerclass/teamnumber member addresses.
+  int __cdecl TeamFortressViewport::MsgFunc_ScoreInfo(
+          TeamFortressViewport *const this,
+          const char *pszName,
+          int iSize,
+          void *pbuf)
+  {
+    __int16 v4; // bx
+    __int16 v5; // bp
+    __int16 v6; // di
+    __int16 v7; // ax
+    extra_player_info_t *v8; // ecx
+    CTeamMenu *m_pTeamMenu; // ecx
+    void (__cdecl *v10)(TeamFortressViewport *const); // eax
+    int (*v11)(...); // ebx
+    unsigned __int8 v12; // al
+    __int16 playerclass; // [esp+2Ch] [ebp-20h]
+  
+    BEGIN_READ(pbuf, iSize);
+    v4 = READ_BYTE();
+    v5 = READ_SHORT();
+    v6 = READ_SHORT();
+    playerclass = READ_SHORT();
+    v7 = READ_SHORT();
+    if ( (unsigned __int16)(v4 - 1) <= 0x3Fu )
+    {
+      v8 = &g_PlayerExtraInfo[v4];
+      v8->frags = v5;
+      v8->deaths = v6;
+      v8->playerclass = playerclass;
+      if ( v7 < 0 )
+        v8->teamnumber = 0;
+      else
+        v8->teamnumber = v7;
+      m_pTeamMenu = this->m_pTeamMenu;
+      if ( m_pTeamMenu )
+        CTeamMenu::Update(
+          m_pTeamMenu,
+          this->m_sMapName,
+          this->m_iAllowSpectators != 0,
+          this->m_sTeamNames,
+          this->m_iNumTeams);
+      v10 = *((void (__cdecl **)(TeamFortressViewport *const))this->_vptr_IViewPort + 2);
+      if ( v10 != TeamFortressViewport::ActivateClientUI )
+        v10(this);
+      v11 = *this->m_pClientScoreBoard->_vptr_IScoreBoardInterface;
+      v12 = (*((int (__cdecl **)(ISpectatorInterface *))this->m_pSpectatorGUI->_vptr_ISpectatorInterface + 12))(this->m_pSpectatorGUI);
+      v11(this->m_pClientScoreBoard, this->m_szServerName, gHUD.m_Teamplay != 0, v12);
+      (*((void (__cdecl **)(ISpectatorInterface *))this->m_pSpectatorGUI->_vptr_ISpectatorInterface + 9))(this->m_pSpectatorGUI);
+    }
+    return 1;
+  }
