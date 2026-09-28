@@ -1,0 +1,9 @@
+func_name: CWorldMapMissionSelect::PaintBackground()
+func_va: '0x27038a10'
+func_rva: '0x38a10'
+func_size: '0x1ad'
+vtable_name: CWorldMapMissionSelect
+vfunc_offset: '0x1a8'
+vfunc_index: 106
+vfunc_sig: 55 8B EC 83 E4 F8 83 EC 40 53 55 56 8B F1 57 89 74 24 ?? E8 D8 8B 02 00 8D 44 24 ?? 8D 4C 24 ?? 50 51 8B CE E8
+  ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 10 8D 4C 24 ?? 51 8D 4C 24 ?? 51 8B C8 FF 92 ?? ??

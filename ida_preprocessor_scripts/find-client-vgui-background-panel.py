@@ -35,6 +35,9 @@ START_SYMBOL = "CounterStrikeViewport_Start"
 MEMBER_SYMBOL = "CClientVGUI_m_pCSBackGroundPanel"
 VTABLE_SYMBOL = "CCSBackGroundPanel"
 ACTIVATE_SYMBOL = "CCSBackGroundPanel_Activate"
+X_OFFSET_SYMBOL = "CCSBackGroundPanel_XOffset"
+Y_OFFSET_SYMBOL = "CCSBackGroundPanel_YOffset"
+SCREEN_SIZE_SYMBOL = "ISurface_GetScreenSize"
 FRAME_SYMBOL = "ClientVGUI_Frame_Activate"
 VIEWPORT_CLASS = "CounterStrikeViewport"
 BACKGROUND_CLASS = "CounterStrikeViewport::CCSBackGroundPanel"
@@ -109,6 +112,57 @@ direct_calls = [target for target in direct_calls if target is not None]
 if len(direct_calls) < 2 or direct_calls[1] != values['frame_activate']:
     raise ValueError('background Activate does not call Frame::Activate after SetPos')
 
+activate_items = function_body(activate)
+member_stores = []
+for ea in activate_items:
+    insn = idautils.DecodeInstruction(ea)
+    if insn is None or insn.get_canon_mnem() != 'mov':
+        continue
+    dest, source = insn.ops[0], insn.ops[1]
+    if (dest.type == ida_ua.o_displ and dest.dtype == ida_ua.dt_dword
+            and source.type == ida_ua.o_reg and int(dest.reg) not in (4, 5)
+            and 0 < int(dest.addr) < 0x10000):
+        member_stores.append((int(ea), int(dest.addr), int(dest.reg)))
+if (len(member_stores) != 2 or member_stores[0][2] != member_stores[1][2]
+        or member_stores[1][1] != member_stores[0][1] + 4):
+    raise ValueError('Activate does not have one consecutive X/Y member-store pair: '
+                     + repr(member_stores))
+
+# The source's first surface()->GetScreenSize follows Frame::Activate and
+# IsProportional. Recover the virtual slot from the actual two-output call.
+frame_calls = [ea for ea in activate_items if direct_call_target(ea) == values['frame_activate']]
+if len(frame_calls) != 1:
+    raise ValueError('Frame::Activate call is not unique')
+after_frame = activate_items[activate_items.index(frame_calls[0]) + 1:]
+getters = [ea for ea in after_frame if direct_call_target(ea) is not None]
+if not getters:
+    raise ValueError('surface getter after Frame::Activate is absent')
+getter_site = getters[0]
+screen_calls = []
+for position, ea in enumerate(activate_items):
+    if ea <= getter_site:
+        continue
+    if direct_call_target(ea) is not None:
+        break
+    insn = idautils.DecodeInstruction(ea)
+    if insn is None or insn.get_canon_mnem() != 'call':
+        continue
+    operand = insn.ops[0]
+    if operand.type != ida_ua.o_displ or not 0 < int(operand.addr) < 0x10000:
+        continue
+    previous = activate_items[max(0, position - 10):position]
+    output_addresses = 0
+    for prior in previous:
+        decoded = idautils.DecodeInstruction(prior)
+        if (decoded is not None and decoded.get_canon_mnem() == 'lea'
+                and decoded.ops[1].type == ida_ua.o_displ
+                and int(decoded.ops[1].reg) in (4, 5)):
+            output_addresses += 1
+    if output_addresses >= 2:
+        screen_calls.append((int(ea), int(operand.addr)))
+if len(screen_calls) != 1 or screen_calls[0][1] % 4:
+    raise ValueError('GetScreenSize dispatch is not unique: ' + repr(screen_calls))
+
 result = {
     'ctor': ctor,
     'start': start,
@@ -118,6 +172,9 @@ result = {
     'base_offset': base_store[1],
     'vptr_store': vptr_sites[0],
     'activate': activate,
+    'x_offset': member_stores[0][1],
+    'y_offset': member_stores[1][1],
+    'screen_slot': screen_calls[0][1],
 }
 """
 
@@ -150,7 +207,15 @@ async def preprocess_skill(
     _ = skill_name, old_yaml_map
     outputs = {
         name: _output_for_symbol(expected_outputs, name)
-        for name in (START_SYMBOL, MEMBER_SYMBOL, VTABLE_SYMBOL, ACTIVATE_SYMBOL)
+        for name in (
+            START_SYMBOL,
+            MEMBER_SYMBOL,
+            VTABLE_SYMBOL,
+            ACTIVATE_SYMBOL,
+            X_OFFSET_SYMBOL,
+            Y_OFFSET_SYMBOL,
+            SCREEN_SIZE_SYMBOL,
+        )
     }
     if not all(outputs.values()):
         return False
@@ -191,7 +256,9 @@ async def preprocess_skill(
             "frame_activate": frame_va,
         },
     )
-    if located.get("error") or "member_offset" not in located:
+    if located.get("error") or not all(
+        name in located for name in ("member_offset", "x_offset", "y_offset", "screen_slot")
+    ):
         if debug:
             print(f"  {VTABLE_SYMBOL}: locator failed: {located.get('error', located)}")
         return False
@@ -226,8 +293,31 @@ async def preprocess_skill(
     if activate.get("func_sig_allow_across_function_boundary"):
         activate_payload["vfunc_sig_allow_across_function_boundary"] = True
 
+    x_payload = {
+        "struct_name": BACKGROUND_CLASS,
+        "member_name": "m_offsetX",
+        "offset": hex(located["x_offset"]),
+        "size": 4,
+    }
+    y_payload = {
+        "struct_name": BACKGROUND_CLASS,
+        "member_name": "m_offsetY",
+        "offset": hex(located["y_offset"]),
+        "size": 4,
+    }
+    screen_slot = located["screen_slot"]
+    screen_payload = {
+        "func_name": "vgui2::ISurface::GetScreenSize",
+        "vtable_name": "vgui2::ISurface",
+        "vfunc_index": screen_slot // 4,
+        "vfunc_offset": hex(screen_slot),
+    }
+
     write_func_yaml(outputs[START_SYMBOL], start_payload)
     write_struct_offset_yaml(outputs[MEMBER_SYMBOL], member_payload)
     write_vtable_yaml(outputs[VTABLE_SYMBOL], vtable_payload)
     write_func_yaml(outputs[ACTIVATE_SYMBOL], activate_payload)
+    write_struct_offset_yaml(outputs[X_OFFSET_SYMBOL], x_payload)
+    write_struct_offset_yaml(outputs[Y_OFFSET_SYMBOL], y_payload)
+    write_func_yaml(outputs[SCREEN_SIZE_SYMBOL], screen_payload)
     return True

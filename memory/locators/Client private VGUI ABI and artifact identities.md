@@ -52,3 +52,26 @@ Adding CounterStrikeViewport::Start, its m_pCSBackGround member offset, the CCSB
 ### Verification and scope
 
 2026-09-28: strict/no-save owned IDA batch forced 24 selected nodes over 13 client binaries (10 Windows, 3 Linux): 24 succeeded, 0 failed, 0 skipped. All 57 new YAML artifacts were cross-checked for names, member offsets, vtable entries, and slot/address relationships. This note applies to cstrike-3248/3647/4554/6153/8684/10210, czero-8684/10210, and czeror-8684/10210 where the target exists.
+
+## Issue #280: CZDS WorldMap and CS background offsets
+
+### Trigger
+
+Adding `CClientVGUI_WorldMapPanel`, two CZDS WorldMap vtables and PaintBackground overrides, `CCSBackGroundPanel_XOffset`/`YOffset`, and slot-only `ISurface_GetScreenSize` to the CS-family client artifacts.
+
+### Root cause and constraints
+
+- The issue's `hw.dll`/`hw.so` hint is wrong for these targets. The objects live in `client.dll`/`client.so`. The WorldMap holder is `CZEROViewPort`, not the common `CClientVGUI`; czeror has only Windows client binaries in this repository. The requested `m_pWorldMapPanel` field name is semantic because no czeror ELF/source declaration is available.
+- czeror-8684's restored IDB merges the virtual-only `CWorldMap::PaintBackground` body into an earlier function. The WorldMap and MissionSelect paint bodies are identical after normal relocation wildcards, so an ordinary normalized signature does not uniquely identify either entry.
+- `CCSBackGroundPanel` X/Y offsets vary by client layout: 0x130/0x134 in CS 3248/3647, 0x134/0x138 in CS 4554/6153/8684 and CZ 8684, and 0x13c/0x140 in CS/CZ 10210. `ISurface::GetScreenSize` is slot 0x80 on these Windows clients and 0x84 on Linux CS clients.
+
+### Correct approach
+
+- Locate the unique WorldMap resource strings and confirm constructor-owned installs of the exact `CWorldMap` and `CWorldMapMissionSelect` RTTI vtables. Follow the unique `CWorldMap` constructor call into `CZEROViewPort::Start` and the return-value store to recover the viewport member.
+- Compare both derived vtables with `vgui2::Panel` and select the unique common overridden slot whose bodies call the same surface getter, dispatch screen size through two output pointers, and call `ceil` while painting map tiles. This yields PaintBackground slot 106 (0x1a8) in both czeror builds, with no slot constant in the locator.
+- Decode the paint bodies directly from their vtable entries. For the 8684 merged-IDB entry, redefine only the verified method boundary in the analyzer's owned no-save worker before runtime validation. Use a current-binary relative CALL displacement only when the normal wildcarded output signature is ambiguous; it is an output validator, never a discovery anchor.
+- Extend the existing background finder: its verified `Activate` override has exactly one adjacent pair of non-stack dword member stores; the first surface getter's two-output virtual call supplies `ISurface_GetScreenSize`. Emit actual class/member identities and slot-only interface artifacts.
+
+### Verification and scope
+
+2026-09-28: owned strict/no-save IDA analyzer succeeded on 11 CS/CZ background binaries (8 Windows, 3 Linux) and 2 czeror Windows map binaries. Independent artifact relation checks confirmed all 45 new YAML outputs, including paint vtable entries, offsets, and slot arithmetic. Unit suite: 1214 tests OK (9 skipped); repository-contract suite: 14 tests OK; format check passed. Applies to the 10 cstrike/czero/czeror client configs and only their available platforms.

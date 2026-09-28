@@ -62,6 +62,14 @@ modules:
           - ClientVGUI_RichText_SetTextW.{platform}.yaml
           - TeamMenu_LoadMapPage.{platform}.yaml
           - ClientVGUI_Frame_Activate.{platform}.yaml
+      - name: find-client-vgui-worldmap
+        expected_output:
+          - CClientVGUI_WorldMapPanel.{platform}.yaml
+          - CWorldMap.{platform}.yaml
+          - CWorldMap_PaintBackground.{platform}.yaml
+          - CWorldMapMissionSelect.{platform}.yaml
+          - CWorldMapMissionSelect_PaintBackground.{platform}.yaml
+          - ISurface_GetScreenSize.{platform}.yaml
     symbols:
       - name: GetClientColor
         category: func
@@ -112,6 +120,22 @@ modules:
       - name: TeamMenu_LoadMapPage
         category: func
       - name: ClientVGUI_Frame_Activate
+        category: vfunc
+      - name: CZEROViewPort
+        category: struct
+      - name: CClientVGUI_WorldMapPanel
+        category: structmember
+        struct: CZEROViewPort
+        member: m_pWorldMapPanel
+      - name: CWorldMap
+        category: vtable
+      - name: CWorldMap_PaintBackground
+        category: vfunc
+      - name: CWorldMapMissionSelect
+        category: vtable
+      - name: CWorldMapMissionSelect_PaintBackground
+        category: vfunc
+      - name: ISurface_GetScreenSize
         category: vfunc
   - name: server
     module_windows: cz.dll
