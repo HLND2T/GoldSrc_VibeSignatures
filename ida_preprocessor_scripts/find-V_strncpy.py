@@ -11,8 +11,9 @@ The owners also reference the localized search-path format ``%s/%s_%s`` and
 ``GAME``. ``DEFAULTGAME`` distinguishes FileSystem_SetGameDirectory (V_strncpy)
 from FileSystem_AddFallbackGameDir (V_strncpy_FallbackGameDir). Both must be
 unique and present; address order and IDA-inferred callee names are irrelevant.
-Consumers redirect both sites. Older BLOB tags inline the copy and are not
-registered. Unexpected absence in a registered build is a failure.
+Consumers redirect both sites. Older registry-based tags have no default-English
+copy and use find-Sys_GetRegKeyValueUnderRoot instead. Unexpected absence in a
+registered build is a failure.
 """
 
 import inspect

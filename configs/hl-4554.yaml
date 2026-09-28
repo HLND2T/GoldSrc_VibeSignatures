@@ -607,6 +607,10 @@ modules:
       - name: find-Sys_Error
         expected_output:
           - Sys_Error.{platform}.yaml
+      - name: find-Sys_GetRegKeyValueUnderRoot
+        platform: windows
+        expected_output:
+          - Sys_GetRegKeyValueUnderRoot.{platform}.yaml
       - name: find-Sys_InitMemory
         expected_output:
           - Sys_InitMemory.{platform}.yaml
@@ -1767,6 +1771,9 @@ modules:
         category: func
       - name: Sys_Error
         category: func
+      - name: Sys_GetRegKeyValueUnderRoot
+        category: func
+        platform: windows
       - name: Sys_InitMemory
         category: func
       - name: Sys_InitMemory_HeapLimitPatches_0
