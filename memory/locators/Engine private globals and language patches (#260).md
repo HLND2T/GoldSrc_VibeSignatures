@@ -60,11 +60,14 @@ accepted only when `find_bytes` resolves it to exactly one address equal to `ea`
   `cof-5936`, `hl-6153`, `hl-8684` (Windows + Linux), `hl-10210`,
   `svencoop-8948`, `svencoop-10257` (Windows + Linux).
   **hl-3248 / hl-3266 / hl-3329 / hl-3647 / hl-4554 are intentionally not
-  registered**: their `hw.dll` is a Metahook blob and the decrypted
-  `hw.decrypt.dll` references the `english` literal only through `__strcmpi`,
-  with `Q_strncpy` inlined as a length-prechecked byte loop — there is no copy
-  call to anchor on. A registered build must yield exactly one copy for each
-  filesystem owner; unexpected absence or ambiguity fails closed.
+  registered**: both filesystem owners read `Software\\Valve\\Steam` / `Language`
+  into a local 128-byte buffer through `Sys_GetRegKeyValueUnderRoot`, with an
+  empty default. Their `english` references are comparison operands only; no
+  default-English copy exists in either owner. The earlier claim that this copy
+  was inlined was incorrect (see the 2026-09-28 audit below). The first four tags
+  use `hw.decrypt.dll`; hl-4554 uses ordinary PE `hw.dll`. A registered build must
+  yield exactly one copy for each filesystem owner; unexpected absence or
+  ambiguity fails closed.
 
 ## How `realtime` is located
 
@@ -135,9 +138,11 @@ jump to the copy. Address order does not define either role.
 - **Verifying older tags against `hw.dll` is wrong.** hl-3248…hl-3647 ship a
   Metahook blob; byte-level checks must use `hw.decrypt.dll`. Checking the raw blob
   makes it look as if the string and function set is missing entirely.
-- **Blob-backed tags still have `english`.** The absence of the copy call on those
-  tags is a real inlining fact, not a decryption artefact — verify on
-  `hw.decrypt.dll`, not the blob.
+- **Old tags still have `english`, but only as a comparison baseline in these
+  filesystem owners.** Absence of a language-copy CALL is not proof of inlining.
+  Trace the buffer producer: all five old tags obtain it through the registry
+  helper. Its successful read invokes an out-of-line `Q_strncpy` on registry data.
+  Inspect `hw.decrypt.dll` for hl-3248/3266/3329/3647 and `hw.dll` for hl-4554.
 - **`-allgamever -skill` abort.** `-allgamever -skill find-V_strncpy` aborts at the
   first tag that does not register the skill (hl-3248). Validate partially
   registered skills per registered gamever; see
@@ -242,3 +247,169 @@ Pitfalls fixed along the way:
 - **String anchor must not rebuild the shared string list.** Use the
   `anchor_string_owners` segment scan (readable perm + NUL-delimited literal +
   `DataRefsTo`), never `idautils.Strings().setup()`.
+
+## Legacy filesystem language dataflow audit (2026-09-28)
+
+### Trigger and corrected conclusion
+
+The proposed replacement was to export the instruction taking the address of
+`"english"` in both filesystem owners, then substitute a plugin language buffer.
+Actual analysis of all ten owners disproved the earlier inlining explanation:
+none has a default-English copy. Each reads the Steam registry language with an
+empty default, then uses `"english"` solely as the case-insensitive comparison
+baseline. Replacing that baseline does not replace the language buffer.
+
+### Scope and evidence
+
+Inspected existing PE32/I386 IDBs using owned `IdaMcpLifecycle` sessions,
+`restored_strict`, `save_on_success=False`, health checks before/after queries,
+and port-release checks after exit. The first four targets use
+`bin/<tag>/engine/hw.decrypt.dll`; hl-4554 uses `bin/hl-4554/engine/hw.dll`
+(an ordinary PE, not a BLOB).
+
+Function roles are inferred from machine-code behavior: registry Language input,
+localized `%s/%s_%s` formatting, GAME/DEFAULTGAME search-path calls, and the
+short fallback owner's unconditional base GAME addition. Existing IDA names
+remain `sub_*`; guessed Hex-Rays extra register parameters are not ABI evidence.
+The later source in `D:/HLND2T_official/engine/filesystem.cpp:349-513`
+contains additional language/default paths and is only a role reference, not
+matching source for these old builds.
+
+Addresses below are preferred-image VAs (image base `0x01D00000`), not runtime
+addresses and not validated unique patch signatures.
+
+| Build | SetGameDirectory entry | Its language-read CALL | AddFallbackGameDir entry | Its language-read CALL |
+| --- | --- | --- | --- | --- |
+| hl-3248 | 0x01D3BB50 | 0x01D3BBFF | 0x01D3C100 | 0x01D3C126 |
+| hl-3266 | 0x01D3BB30 | 0x01D3BBDF | 0x01D3C0E0 | 0x01D3C106 |
+| hl-3329 | 0x01D3B830 | 0x01D3B8DF | 0x01D3BDE0 | 0x01D3BE06 |
+| hl-3647 | 0x01D3B960 | 0x01D3BA0F | 0x01D3BF10 | 0x01D3BF36 |
+| hl-4554 | 0x01D468F0 | 0x01D4699F | 0x01D46EB0 | 0x01D46ED6 |
+
+| Build | Registry helper | Q_strncpy helper | Set english PUSH (comparison only) | Fallback english PUSH (comparison only) |
+| --- | --- | --- | --- | --- |
+| hl-3248 | 0x01DB9980 | 0x01D2C490 | 0x01D3BC50 | 0x01D3C149 |
+| hl-3266 | 0x01DB9980 | 0x01D2C470 | 0x01D3BC30 | 0x01D3C129 |
+| hl-3329 | 0x01DB9040 | 0x01D2C120 | 0x01D3B930 | 0x01D3BE29 |
+| hl-3647 | 0x01DB8220 | 0x01D2C240 | 0x01D3BA60 | 0x01D3BF59 |
+| hl-4554 | 0x01DC3D50 | 0x01D36720 | 0x01D469F0 | 0x01D46EF9 |
+
+### Complete relevant dataflow
+
+1. Both owners allocate `char language[128]`, zero its first byte, and call the
+   five-argument registry helper with subkey `Software\\Valve\\Steam`, value
+   `Language`, destination `language`, capacity 128, and an empty default.
+   All ten default pointers are in the PE .data zero-fill region.
+2. The registry helper first does `sprintf(destination, "%s", defaultValue)`.
+   For these callers the default is empty. It accepts a capacity at most 1024
+   and queries into its own 1024-byte stack buffer, passing 128 as the query
+   size for language.
+3. On a successful REG_SZ query it calls an out-of-line
+   `Q_strncpy(destination, registryBuffer, capacity)`, then explicitly writes
+   `destination[capacity - 1] = 0`. If a key is newly created or the query fails,
+   it writes the default value to the registry; other failure/type paths retain
+   the initially copied default.
+4. Q_strncpy obtains source/destination/count from stack arguments, checks source
+   and current character, decrements the runtime count, and copies one byte at
+   a time. It terminates on NUL or exhausted count and appends NUL when the
+   remaining signed count is positive. No fixed 7/8-byte copy optimization exists
+   in these five copy helpers. At capacity 128, the registry caller's final
+   store guarantees byte 127 is NUL.
+5. Back in each owner, `repne scasb; not ecx; dec ecx` computes language length.
+   Empty language bypasses localization. Nonempty language is passed to
+   `__strcmpi(language, "english")`; zero result also bypasses localization.
+6. SetGameDirectory retains this boolean and formats localized GAME (when the
+   game differs from the default) and DEFAULTGAME paths using the local language
+   buffer. Its helper for liblist fallback paths also receives this boolean and
+   buffer. Subscription gating may return before path construction.
+   AddFallbackGameDir formats `base/game_language`, adds it under GAME when
+   localized, and always adds the original game directory under GAME.
+   Neither inspected owner has a SteamApps-language or default-English copy
+   branch.
+
+For example, hl-3248 fallback: registry CALL `0x01D3C126`; strlen scan
+`0x01D3C137`; English operand PUSH `0x01D3C149`; strcmpi CALL
+`0x01D3C14F`; local language address `0x01D3C15B`; localized format PUSH
+`0x01D3C16E`; sprintf CALL `0x01D3C174`; localized AddSearchPath
+`0x01D3C191`; unconditional base-path AddSearchPath `0x01D3C1A2`.
+
+### Correct consumer direction and constraints
+The user selected a function-level InlineHook on the five-argument registry
+reader, filtered by the complete implicit-HKCU subkey `Software\\Valve\\Steam`
+and the exact value name `Language`, both case-insensitive. This supersedes the
+earlier recommendation to export two filesystem call-site patches. Other values,
+keys and roots pass through unchanged. All engine callers of that same language
+item intentionally share the override.
+
+The hook invokes the original trampoline with unchanged arguments/default first,
+then applies nonempty `-forcelang` to the output buffer with capacity enforcement
+and NUL termination. Without a forced value, the old engines' existing registry
+language is retained (they already read Steam language, regardless of
+`-steamlang`). The effective output, including truncation, is copied to
+`m_szCurrentGameLanguage`.
+
+These old readers recognize an HKLM prefix but do not strip an explicit HKCU
+prefix, so only the unprefixed complete Steam key is matched. Do not conflate
+this five-argument engine ABI with VGUI2Extension's existing six-argument
+`Sys_GetRegKeyValueUnderRoot(HKEY, ...)` helper. Changing the default-value pointer
+would not force a language and could persist it through missing-value writes;
+the implemented override changes only the output after the original read.
+### Verification and reproducibility
+
+The temporary audit is in `.candidates/language-inline-audit/`: `probe.py`,
+five `<tag>.json/.txt` IDA exports, `verify_raw.py`, five `<tag>-copy.txt`
+raw Capstone helper dumps, `summary.txt`, and `raw-verification.json`.
+All 2,779 exported instructions (ten filesystem owners plus five registry
+helpers) matched bytes independently read from PE section mappings:
+556 each for hl-3248/3266/3329/3647 and 555 for hl-4554, zero mismatches.
+Copy helpers were separately decoded directly from PE bytes.
+These are static checks; no game launch or runtime patch test was performed.
+
+| Analysis binary | SHA-256 |
+| --- | --- |
+| hl-3248 hw.decrypt.dll | 7311ec923c5644a4c81fb1c887d1062f7732c3b7152ad0469ff367bc0094feb0 |
+| hl-3266 hw.decrypt.dll | d00aed229438f2b3dbe0c77f37657b903e6c35893ee1d39e4695afbfffefee21 |
+| hl-3329 hw.decrypt.dll | 4b42b89992cda6ef5b84c1bb56556f5b15b1e0c2a3a7b9f04fe053dcf24c4480 |
+| hl-3647 hw.decrypt.dll | 7d4bee5d199c40d738c0bc2ed668c0fd8830278e2fed1f320b07832fda993110 |
+| hl-4554 hw.dll | 482871315f4a713a8aa72c5e2a73092d261bacb618890a4523630e9e168eb2a3 |
+
+## Registry reader finder and consumer implementation (2026-09-28)
+
+- Producer: `ida_preprocessor_scripts/find-Sys_GetRegKeyValueUnderRoot.py`;
+  Pattern A through `preprocess_common_skill`, intersecting exact
+  `HKEY_LOCAL_MACHINE` and `String` string owners. Exactly one owner and a unique
+  generated function signature are required. Old YAML is not used as a discovery
+  shortcut. The short `%s` string is not a locator input because normal IDA string
+  lists can omit it.
+- Registered as a Windows `func` in hl-3248/3266/3329/3647/4554 only. All five
+  artifacts match the audited VAs above, have function size 0x132, and contain
+  a 46-byte signature. Raw PE section scans independently require exactly one
+  match at the expected VA/RVA and wildcard every overlapping HIGHLOW relocation.
+- Consumer: `D:/MetaHookSv/Plugins/VGUI2Extension/LanguageRegistry.h` contains
+  tested filtering, original-call sequencing, bounded override and effective
+  language capture. `exportfuncs.cpp` supplies command-line policy.
+  `privatefuncs.cpp` resolves the optional function through the real engine
+  module identity, installs/removes the InlineHook in Engine_InstallHooks /
+  Engine_UninstallHooks, and skips the old language-call scan when this reader
+  is present. Other engine identities retain the prior V_strncpy path.
+- MetaHook's catalog gate requires this FUNCTION on those five engine snapshots
+  and validates its kind/module when present elsewhere; client-only snapshots
+  do not acquire an engine requirement.
+- Validation: all five exact finder nodes ran (5 succeeded, 0 failed, no skips);
+  all five raw signatures matched uniquely at the audited addresses;
+  `format_repo_files.py --check` passed;
+  `tests/run_test_suite.py all -b --durations 10` ran 1232 tests, OK (9 skipped,
+  including unavailable local Redis integration and opt-in IDA integration).
+  The real IDA finder runs above are independent of the skipped integration test.
+- MetaHook validation: isolated Win32 C++ tests first failed without the override
+  and then passed; they cover original/default preservation, exact key/value/root
+  filtering, case handling, empty/absent overrides, truncation, capacity 1/0/-1,
+  null buffers, and bounded capture of a nonterminated source. Script tests:
+  153 passed, 2 skipped, 635 subtests passed. VGUI2Extension Release and Debug
+  Win32 builds succeeded.
+- Local catalog: generated five guarded snapshots/JSON datasets from current
+  artifacts, retaining the other 16 existing datasets. Offline integrity and
+  all consumer gates passed for the resulting 21-snapshot catalog, then for
+  `D:/MetaHookSv/Build/svencoop/metahook/gamedata`. Original local catalog is
+  retained in `intermediate/language-registry/original-gamedata`.
+  No online release/push was performed and no in-game execution was tested.
