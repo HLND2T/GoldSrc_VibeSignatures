@@ -11,6 +11,14 @@ screen dimensions through ISurface, then use ceil while painting map tiles.
 Those semantics identify the slot without copying MetaHook's slot numbers.
 The two 8684 bodies are byte-equivalent after normal relocation wildcards,
 so a verified relative CALL displacement distinguishes their output signatures.
+
+The vtable installs are resolved per compiler family: MSVC ``??_7`` symbols and
+Itanium ``_ZTV`` symbols both name the vtable header, and the shared vtable
+helper advances ``_ZTV`` by two pointer slots to the address point the
+constructor actually stores. ``CZEROViewPort::Start`` is ``__thiscall`` on
+Windows and cdecl on Linux, so the viewport member store is located from the
+register that carried the constructor argument on each platform instead of
+assuming the MSVC ``ecx``/``eax`` pairing.
 """
 
 from ida_analyze_util import (
@@ -42,10 +50,19 @@ MISSION_RESOURCE = "resource/UI/WorldMapMissionSelect.res"
 WORLD_CLASS = "CWorldMap"
 MISSION_CLASS = "CWorldMapMissionSelect"
 PANEL_CLASS = "vgui2::Panel"
-ALIASES = {
-    WORLD_CLASS: ["??_7CWorldMap@@6B@"],
-    MISSION_CLASS: ["??_7CWorldMapMissionSelect@@6B@"],
-    PANEL_CLASS: ["??_7Panel@vgui2@@6B@"],
+VTABLE_ALIASES = {
+    WORLD_CLASS: {
+        "windows": ["??_7CWorldMap@@6B@"],
+        "linux": ["_ZTV9CWorldMap"],
+    },
+    MISSION_CLASS: {
+        "windows": ["??_7CWorldMapMissionSelect@@6B@"],
+        "linux": ["_ZTV22CWorldMapMissionSelect"],
+    },
+    PANEL_CLASS: {
+        "windows": ["??_7Panel@vgui2@@6B@"],
+        "linux": ["_ZTVN5vgui25PanelE"],
+    },
 }
 
 WALK = r"""
@@ -56,14 +73,32 @@ MAX_INSTRUCTIONS = 2048
 
 
 def exact_code_ref(literal):
-    strings = exact_string_eas(literal)
-    if len(strings) != 1:
-        raise ValueError('literal is not unique: ' + literal + ' ' + repr(strings))
-    sites = [int(ref.frm) for ref in idautils.XrefsTo(strings[0], 0)
-             if ida_bytes.is_code(ida_bytes.get_flags(int(ref.frm)))]
+    # Scan raw non-executable bytes for every NUL-terminated occurrence instead
+    # of relying on IDA's string list. GCC pools 'CWorldMap' / 'WorldMap' into
+    # one literal and the constructors reference the suffix (IDA renders it
+    # 'aCworldmap+1'), so no standalone string item exists for the short names,
+    # and some warmed databases omit analyzed .rodata from the string list
+    # entirely. The code reference itself stays unique.
+    needle = literal.encode('ascii') + b'\0'
+    sites = set()
+    for seg_ea in idautils.Segments():
+        segment = ida_segment.getseg(seg_ea)
+        if segment.perm & ida_segment.SEGPERM_EXEC:
+            continue
+        base = int(segment.start_ea)
+        data = ida_bytes.get_bytes(base, int(segment.end_ea) - base) or b''
+        start = 0
+        while True:
+            index = data.find(needle, start)
+            if index < 0:
+                break
+            for ref in idautils.XrefsTo(base + index, 0):
+                if ida_bytes.is_code(ida_bytes.get_flags(int(ref.frm))):
+                    sites.add(int(ref.frm))
+            start = index + 1
     if len(sites) != 1:
-        raise ValueError('literal code reference is not unique: ' + literal + ' ' + repr(sites))
-    return sites[0]
+        raise ValueError('literal code reference is not unique: ' + literal + ' ' + repr(sorted(sites)))
+    return sites.pop()
 
 
 def linear_body(entry):
@@ -146,8 +181,18 @@ def constructor_entry(vptr_site, resource_ref):
 
 def installed_vptr_site(table, resource_ref):
     candidates = []
-    for ref in idautils.XrefsTo(int(table), 0):
-        site = int(ref.frm)
+    # IDA records the store against whichever address it named: the address
+    # point itself, or the Itanium vtable header two pointer slots earlier when
+    # the store renders as `_ZTV<Class>+8`. Accept both, then let the operand
+    # value check below reject anything that does not store the address point.
+    sources = [int(table)]
+    if values.get('platform') == 'linux':
+        sources.append(int(table) - 8)
+    sites = set()
+    for source in sources:
+        for ref in idautils.XrefsTo(source, 0):
+            sites.add(int(ref.frm))
+    for site in sorted(sites):
         if site >= resource_ref:
             continue
         insn = idautils.DecodeInstruction(site)
@@ -158,12 +203,41 @@ def installed_vptr_site(table, resource_ref):
                 or int(dest.addr) != 0 or source.type != ida_ua.o_imm
                 or imm_value(source) != table):
             continue
-        body, end = linear_body(site)
+        try:
+            body, end = linear_body(site)
+        except ValueError:
+            # GCC emits destructor thunks that reinstall the same vtable and
+            # tail-jump to the base destructor, so not every install site is a
+            # constructible body. Only a body that owns the resource reference
+            # can be the constructor.
+            continue
         if resource_ref in body and resource_ref < end:
             candidates.append(site)
     if len(candidates) != 1:
         raise ValueError('resource constructor vptr is not unique: ' + repr(candidates))
     return candidates[0]
+
+
+def inline_ceil_sites(items):
+    # GCC inlines ceil in some builds as an x87 round-toward-+infinity: the
+    # control word is OR'd with 0x800 before frndint rounds the scaled value.
+    # The out-of-line form calls a symbol named ceil instead.
+    sites = []
+    for ea in items:
+        insn = idautils.DecodeInstruction(ea)
+        if insn is None or insn.get_canon_mnem() != 'frndint':
+            continue
+        cursor = ea
+        for _ in range(6):
+            cursor = idc.prev_head(cursor, items[0])
+            prior = idautils.DecodeInstruction(cursor)
+            if prior is None:
+                break
+            if (prior.get_canon_mnem() == 'or' and prior.ops[1].type == ida_ua.o_imm
+                    and imm_value(prior.ops[1]) == 0x800):
+                sites.append(ea)
+                break
+    return sites
 
 
 def paint_features(entry):
@@ -174,6 +248,7 @@ def paint_features(entry):
     direct = [(ea, direct_call_target(ea)) for ea in items]
     direct = [(ea, target) for ea, target in direct if target is not None]
     ceil_calls = [ea for ea, target in direct if 'ceil' in ida_name.get_name(target).lower()]
+    ceil_calls.extend(inline_ceil_sites(items))
     if len(ceil_calls) < 2:
         return None
     screen_calls = []
@@ -259,28 +334,60 @@ start = int(start_fn.start_ea)
 start_items = function_body(start)
 if start_call not in start_items:
     raise ValueError('constructor call lies outside Start')
-this_registers = set()
-for ea in start_items[:start_items.index(start_call)]:
-    insn = idautils.DecodeInstruction(ea)
-    if (insn and insn.get_canon_mnem() == 'mov' and insn.ops[0].type == ida_ua.o_reg
-            and insn.ops[1].type == ida_ua.o_reg and int(insn.ops[1].reg) == 1):
-        this_registers.add(int(insn.ops[0].reg))
+call_position = start_items.index(start_call)
 stores = []
-for ea in start_items[start_items.index(start_call) + 1:]:
-    insn = idautils.DecodeInstruction(ea)
-    if insn is None:
-        continue
-    if insn.get_canon_mnem().startswith('ret'):
-        break
-    if direct_call_target(ea) is not None:
-        break
-    if insn.get_canon_mnem() != 'mov':
-        continue
-    dest, source = insn.ops[0], insn.ops[1]
-    if (dest.type == ida_ua.o_displ and int(dest.reg) in this_registers
-            and source.type == ida_ua.o_reg and int(source.reg) == 0
-            and 0 < int(dest.addr) < 0x10000):
-        stores.append((ea, int(dest.addr)))
+if values.get('platform') == 'linux':
+    # cdecl hands the constructed object to the constructor through the stack,
+    # so no msvc `mov reg, ecx` chain exists. The caller keeps the object in
+    # whichever register took the pre-call eax result (the allocation and the
+    # constructor both return through eax) and stores that register into the
+    # viewport member. Argument store order differs between GCC builds, so the
+    # register is identified from its eax data flow, not from a stack slot.
+    object_registers = set()
+    for ea in start_items[:call_position]:
+        insn = idautils.DecodeInstruction(ea)
+        if (insn and insn.get_canon_mnem() == 'mov' and insn.ops[0].type == ida_ua.o_reg
+                and insn.ops[1].type == ida_ua.o_reg and int(insn.ops[1].reg) == 0
+                and int(insn.ops[0].reg) != 0):
+            object_registers.add(int(insn.ops[0].reg))
+    for ea in start_items[call_position + 1:]:
+        insn = idautils.DecodeInstruction(ea)
+        if insn is None:
+            continue
+        if insn.get_canon_mnem().startswith('ret'):
+            break
+        if direct_call_target(ea) is not None:
+            break
+        if insn.get_canon_mnem() != 'mov':
+            continue
+        dest, source = insn.ops[0], insn.ops[1]
+        if (dest.type == ida_ua.o_displ and source.type == ida_ua.o_reg
+                and int(source.reg) in object_registers
+                and int(dest.reg) not in object_registers
+                and 0 < int(dest.addr) < 0x10000):
+            stores.append((ea, int(dest.addr)))
+else:
+    this_registers = set()
+    for ea in start_items[:call_position]:
+        insn = idautils.DecodeInstruction(ea)
+        if (insn and insn.get_canon_mnem() == 'mov' and insn.ops[0].type == ida_ua.o_reg
+                and insn.ops[1].type == ida_ua.o_reg and int(insn.ops[1].reg) == 1):
+            this_registers.add(int(insn.ops[0].reg))
+    for ea in start_items[call_position + 1:]:
+        insn = idautils.DecodeInstruction(ea)
+        if insn is None:
+            continue
+        if insn.get_canon_mnem().startswith('ret'):
+            break
+        if direct_call_target(ea) is not None:
+            break
+        if insn.get_canon_mnem() != 'mov':
+            continue
+        dest, source = insn.ops[0], insn.ops[1]
+        if (dest.type == ida_ua.o_displ and int(dest.reg) in this_registers
+                and source.type == ida_ua.o_reg and int(source.reg) == 0
+                and 0 < int(dest.addr) < 0x10000):
+            stores.append((ea, int(dest.addr)))
 if len(stores) != 1:
     raise ValueError('WorldMap return-value member store is not unique: ' + repr(stores))
 
@@ -361,14 +468,16 @@ async def preprocess_skill(
     session, skill_name, expected_outputs, old_yaml_map, new_binary_dir, platform, image_base, debug=False
 ):
     _ = skill_name, old_yaml_map, new_binary_dir
-    if platform != "windows":
+    if platform not in VTABLE_ALIASES[WORLD_CLASS]:
         return False
     outputs = {name: _output_for_symbol(expected_outputs, name) for name in TARGETS}
     if not all(outputs.values()):
         return False
     tables = {}
     for cls in (WORLD_CLASS, MISSION_CLASS, PANEL_CLASS):
-        tables[cls] = await preprocess_vtable_via_mcp(session, cls, image_base, platform, symbol_aliases=ALIASES[cls])
+        tables[cls] = await preprocess_vtable_via_mcp(
+            session, cls, image_base, platform, symbol_aliases=VTABLE_ALIASES[cls][platform]
+        )
     if not all(tables.values()):
         return False
     found = await run_walk(
@@ -377,6 +486,7 @@ async def preprocess_skill(
         {
             "world_resource": WORLD_RESOURCE,
             "mission_resource": MISSION_RESOURCE,
+            "platform": platform,
             "world_table": int(tables[WORLD_CLASS]["vtable_va"], 0),
             "mission_table": int(tables[MISSION_CLASS]["vtable_va"], 0),
             "panel_table": int(tables[PANEL_CLASS]["vtable_va"], 0),

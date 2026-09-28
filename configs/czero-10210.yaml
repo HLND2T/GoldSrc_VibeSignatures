@@ -1,14 +1,23 @@
 modules:
   - name: client
     module_windows: client.dll
+    module_linux: client.so
     depot_windows: czero/cl_dlls/client.dll
+    depot_linux: czero/cl_dlls/client.so
     skills:
+      - name: find-GetTextColor-CS
+        platform: linux
+        expected_output:
+          - GetTextColor.{platform}.yaml
       - name: find-SayTextLine_Colorize
+        platform: windows
         expected_output:
           - SayTextLine_Colorize.{platform}.yaml
       - name: find-g_LocationColor
-        expected_input:
-          - SayTextLine_Colorize.{platform}.yaml
+        expected_input_windows:
+          - SayTextLine_Colorize.windows.yaml
+        expected_input_linux:
+          - GetTextColor.linux.yaml
         expected_output:
           - g_LocationColor.{platform}.yaml
       - name: find-GetClientColor-CS
@@ -88,8 +97,12 @@ modules:
           - CCSBackGroundPanel_YOffset.{platform}.yaml
           - ISurface_GetScreenSize.{platform}.yaml
     symbols:
+      - name: GetTextColor
+        category: func
+        platform: linux
       - name: SayTextLine_Colorize
         category: func
+        platform: windows
       - name: g_LocationColor
         category: gv
       - name: GetClientColor
@@ -170,6 +183,8 @@ modules:
         category: vfunc
   - name: server
     module_windows: mp.dll
+    module_linux: cs.so
     depot_windows: czero/dlls/mp.dll
+    depot_linux: czero/dlls/cs.so
     skills: []
     symbols: []

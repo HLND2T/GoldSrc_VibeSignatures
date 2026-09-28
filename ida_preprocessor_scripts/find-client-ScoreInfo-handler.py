@@ -6,6 +6,12 @@ CZDS assigns gViewPortMsgs in the viewport constructor. Match the explicit
 pointer/vptr stores for that same subobject; neither interface slot nor object
 layout is copied across builds. Public registration and current constructor
 dataflow establish the handler before its private globals are recovered.
+
+MSVC builds store the interface pointer as a constant subobject address, while
+GCC builds compute it as a register-relative subobject (`lea` from a cdecl
+`this`) whose vptr store lands later in the same path. Interface assignments are
+therefore resolved once that path ends, so an assignment that precedes its
+vptr store is still proven non-null before its handler slot is read.
 """
 
 from ida_analyze_util import _inspect_function_via_mcp, _output_for_symbol, parse_mcp_result, write_func_yaml
@@ -68,7 +74,7 @@ def main(registered_callbacks):
         return (expr[0],(expr[1]+offset)&0xffffffff) if expr[0]=='constant' else (expr[0],expr[1],expr[2]+offset)
     max_constructor_instructions=8192
     for writer in writers:
-        pending=[(writer,{reg:('register',reg,0) for reg in range(8)},{},set())]
+        pending=[(writer,{reg:('register',reg,0) for reg in range(8)},{},set(),set())]
         instruction_budget=max_constructor_instructions
         def address(op):
             if op.type==ida_ua.o_mem: return ('constant',int(op.addr))
@@ -78,7 +84,7 @@ def main(registered_callbacks):
                 return plus(registers.get(op.phrase),offset)
             return None
         while pending:
-            cursor,registers,memory,seen=pending.pop()
+            cursor,registers,memory,seen,interface_values=pending.pop()
             while True:
                 instruction_budget-=1
                 if instruction_budget<0 or cursor in seen:
@@ -96,8 +102,9 @@ def main(registered_callbacks):
                         cursor=int(dest.addr); continue
                     # Null-guarded subobject conversions still carry the same
                     # vptr evidence on the non-null path. Keep branch states
-                    # separate and require one concrete handler across them.
-                    pending.append((int(dest.addr),dict(registers),dict(memory),set(seen)))
+                    # separate, including deferred assignments, and require
+                    # one concrete handler across them.
+                    pending.append((int(dest.addr),dict(registers),dict(memory),set(seen),set(interface_values)))
                     cursor+=insn.size
                     continue
                 if mnemonic.startswith('loop'):
@@ -129,9 +136,10 @@ def main(registered_callbacks):
                             memory[destination]=value
                             if destination==('constant',pointer) and value!=('constant',0):
                                 table=memory.get(value)
-                                if not table or table[0]!='constant' or not data(table[1]):
-                                    return {'error':'ScoreInfo constructor has an unproven non-null interface assignment'}
-                                tables.add(table[1])
+                                if table and table[0]=='constant' and data(table[1]):
+                                    tables.add(table[1])
+                                else:
+                                    interface_values.add(value)
                 elif mnemonic=='xor' and dest.type==ida_ua.o_reg and source.type==ida_ua.o_reg and dest.reg==source.reg:
                     registers[dest.reg]=('constant',0)
                 elif mnemonic in ('add','sub') and dest.type==ida_ua.o_reg and source.type==ida_ua.o_imm:
@@ -141,6 +149,11 @@ def main(registered_callbacks):
                 elif dest.type==ida_ua.o_reg and mnemonic not in ('push','cmp','test'):
                     registers.pop(dest.reg,None)
                 cursor+=insn.size
+            for value in interface_values:
+                table=memory.get(value)
+                if not table or table[0]!='constant' or not data(table[1]):
+                    return {'error':'ScoreInfo constructor has an unproven non-null interface assignment'}
+                tables.add(table[1])
     targets=set()
     for table in tables:
         target=ida_bytes.get_dword(table+slot)
