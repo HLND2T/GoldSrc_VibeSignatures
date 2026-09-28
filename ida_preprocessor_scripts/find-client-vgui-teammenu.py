@@ -19,18 +19,36 @@ window — avoids picking up the trailing ``GotoTextStart`` call.
 """
 
 from ida_analyze_util import (
-    _inspect_function_via_mcp,
     _output_for_symbol,
+    preprocess_vtable_via_mcp,
     write_func_yaml,
 )
-from ida_preprocessor_scripts._client_vgui_private_common import RICHTEXT_BOM, run_walk
+from ida_preprocessor_scripts._client_vgui_private_common import (
+    FRAME_CLASS,
+    FRAME_VTABLE_ALIASES,
+    RICHTEXT_BOM,
+    inspect_unique_function,
+    run_walk,
+)
 
 LOADCS_SYMBOL = "ClientVGUI_LoadControlSettings"
 SETTEXTA_SYMBOL = "ClientVGUI_RichText_SetTextA"
 SETTEXTW_SYMBOL = "ClientVGUI_RichText_SetTextW"
 LOADMAP_SYMBOL = "TeamMenu_LoadMapPage"
+FRAME_ACTIVATE_SYMBOL = "ClientVGUI_Frame_Activate"
 TEAMMENU_LITERAL = "Resource/UI/TeamMenu.res"
 MAPS_LITERAL = "maps/%s.txt"
+FRAME_ACTIVATE_NAME = "vgui2::Frame::Activate()"
+# Source: Frame::Activate calls MoveToFront, RequestFocus, SetVisible(true),
+# SetEnabled(true), then surface()->SetMinimized(..., false). The Panel and
+# surface interface slots differ by one entry between the MSVC and GCC ABIs.
+# GCC loads SetMinimized into a register before calling it, so only the four
+# Panel dispatches appear as indirect memory-call operands on that platform.
+FRAME_ACTIVATE_DISPATCHES = {
+    "windows": (0xC8, 0x30, 0x74, 0xBC),
+    "linux": (0xCC, 0x30, 0x78, 0xC0),
+}
+FRAME_SET_MINIMIZED_DISPATCH = {"windows": 0x94, "linux": 0x98}
 
 # Walk forward from the TeamMenu.res immediate site to the direct call whose
 # arguments carry that string: MSVC pushes it as thiscall arg #1 right before the
@@ -170,20 +188,68 @@ assert branch['cmp'] in function_body(loadmap_owner), 'BOM compare left the maps
 """
 
 
-async def _emit_function(session, name, target, image_base, debug):
-    function = await _inspect_function_via_mcp(session, target, image_base, name)
-    allow_across = function is None or not function.get("func_sig")
-    if allow_across:
-        function = await _inspect_function_via_mcp(
-            session, target, image_base, name, allow_across_function_boundary=True
-        )
-        if function is not None:
-            function["func_sig_allow_across_function_boundary"] = True
-    if not function or not function.get("func_sig"):
-        if debug:
-            print(f"  {name}: no unique signature at {hex(target)}")
-        return None
-    return function
+FRAME_WALK = r"""
+def has_set_minimized_dispatch(items, after, displacement):
+    tail = [ea for ea in items if ea > after]
+    getter_calls = [ea for ea in tail if direct_call_target(ea) is not None]
+    if not getter_calls:
+        return False
+    # The surface getter precedes the final virtual dispatch. GCC may load
+    # that slot into a register and call through the register later.
+    after_getter = [ea for ea in tail if ea > getter_calls[0]]
+    for position, ea in enumerate(after_getter):
+        insn = idautils.DecodeInstruction(ea)
+        if insn is None:
+            continue
+        if insn.get_canon_mnem() == 'call':
+            operand = insn.ops[0]
+            if operand.type == ida_ua.o_displ and int(operand.addr) == displacement:
+                return True
+        if insn.get_canon_mnem() != 'mov':
+            continue
+        dest, source = insn.ops[0], insn.ops[1]
+        if not (dest.type == ida_ua.o_reg and source.type == ida_ua.o_displ
+                and int(source.addr) == displacement):
+            continue
+        for follower in after_getter[position + 1:]:
+            next_insn = idautils.DecodeInstruction(follower)
+            if next_insn is None:
+                continue
+            if (next_insn.get_canon_mnem() == 'call' and next_insn.ops[0].type == ida_ua.o_reg
+                    and int(next_insn.ops[0].reg) == int(dest.reg)):
+                return True
+            if (next_insn.get_canon_mnem() == 'mov' and next_insn.ops[0].type == ida_ua.o_reg
+                    and int(next_insn.ops[0].reg) == int(dest.reg)):
+                break
+    return False
+
+
+pattern = tuple(values['dispatches'])
+matches = []
+for index, raw_target in values['entries'].items():
+    target = int(raw_target, 0)
+    if not executable_target(target):
+        continue
+    indirect_calls = []
+    items = function_body(target)
+    for ea in items:
+        insn = idautils.DecodeInstruction(ea)
+        if insn is None or insn.get_canon_mnem() != 'call':
+            continue
+        operand = insn.ops[0]
+        if operand.type == ida_ua.o_displ and int(operand.addr) > 0:
+            indirect_calls.append((int(operand.addr), int(ea)))
+    for start in range(len(indirect_calls) - len(pattern) + 1):
+        window = indirect_calls[start:start + len(pattern)]
+        if tuple(disp for disp, _ in window) != pattern:
+            continue
+        if not has_set_minimized_dispatch(items, window[-1][1], values['set_minimized_dispatch']):
+            continue
+        matches.append((int(index), target))
+if len(matches) != 1:
+    raise ValueError('Frame::Activate vtable candidate is not unique: ' + repr(matches))
+result = {'frame_activate': matches[0][1], 'frame_index': matches[0][0]}
+"""
 
 
 async def preprocess_skill(
@@ -213,12 +279,12 @@ async def preprocess_skill(
         SETTEXTW_SYMBOL: ("settext_w", "vgui2::RichText::SetText(wchar_t const*)"),
         LOADMAP_SYMBOL: ("loadmap_owner", "CTeamMenu::LoadMapPage(char const*)"),
     }
-    outputs = {name: _output_for_symbol(expected_outputs, name) for name in targets}
+    outputs = {name: _output_for_symbol(expected_outputs, name) for name in (*targets, FRAME_ACTIVATE_SYMBOL)}
     if not all(outputs.values()):
         return False
     payloads = {}
     for name, (key, function_name) in targets.items():
-        function = await _emit_function(session, function_name, result[key], image_base, debug)
+        function = await inspect_unique_function(session, function_name, result[key], image_base, debug)
         if function is None:
             return False
         payloads[name] = {
@@ -226,6 +292,45 @@ async def preprocess_skill(
         }
         if function.get("func_sig_allow_across_function_boundary"):
             payloads[name]["func_sig_allow_across_function_boundary"] = True
+    vtable = await preprocess_vtable_via_mcp(
+        session,
+        FRAME_CLASS,
+        image_base,
+        platform,
+        symbol_aliases=FRAME_VTABLE_ALIASES[platform],
+    )
+    if vtable is None:
+        if debug:
+            print(f"  {FRAME_ACTIVATE_SYMBOL}: Frame vtable not found")
+        return False
+    frame = await run_walk(
+        session,
+        FRAME_WALK,
+        {
+            "entries": vtable["vtable_entries"],
+            "dispatches": FRAME_ACTIVATE_DISPATCHES[platform],
+            "set_minimized_dispatch": FRAME_SET_MINIMIZED_DISPATCH[platform],
+        },
+    )
+    if frame.get("error") or "frame_activate" not in frame:
+        if debug:
+            print(f"  {FRAME_ACTIVATE_SYMBOL}: locator failed: {frame.get('error', frame)}")
+        return False
+    function = await inspect_unique_function(session, FRAME_ACTIVATE_NAME, frame["frame_activate"], image_base, debug)
+    if function is None:
+        return False
+    frame_index = int(frame["frame_index"])
+    payloads[FRAME_ACTIVATE_SYMBOL] = {
+        field: function[field] for field in ("func_name", "func_va", "func_rva", "func_size")
+    }
+    payloads[FRAME_ACTIVATE_SYMBOL].update(
+        vtable_name=FRAME_CLASS,
+        vfunc_index=frame_index,
+        vfunc_offset=hex(frame_index * 4),
+        vfunc_sig=function["func_sig"],
+    )
+    if function.get("func_sig_allow_across_function_boundary"):
+        payloads[FRAME_ACTIVATE_SYMBOL]["vfunc_sig_allow_across_function_boundary"] = True
     for name, payload in payloads.items():
         write_func_yaml(outputs[name], payload)
     return True

@@ -84,6 +84,15 @@ modules:
           - ClientVGUI_RichText_SetTextA.{platform}.yaml
           - ClientVGUI_RichText_SetTextW.{platform}.yaml
           - TeamMenu_LoadMapPage.{platform}.yaml
+          - ClientVGUI_Frame_Activate.{platform}.yaml
+      - name: find-client-vgui-background-panel
+        expected_input:
+          - ClientVGUI_Frame_Activate.{platform}.yaml
+        expected_output:
+          - CounterStrikeViewport_Start.{platform}.yaml
+          - CClientVGUI_m_pCSBackGroundPanel.{platform}.yaml
+          - CCSBackGroundPanel.{platform}.yaml
+          - CCSBackGroundPanel_Activate.{platform}.yaml
     symbols:
       - name: GetTextColor
         category: func
@@ -143,6 +152,20 @@ modules:
         category: func
       - name: TeamMenu_LoadMapPage
         category: func
+      - name: ClientVGUI_Frame_Activate
+        category: vfunc
+      - name: CounterStrikeViewport
+        category: struct
+      - name: CounterStrikeViewport_Start
+        category: func
+      - name: CClientVGUI_m_pCSBackGroundPanel
+        category: structmember
+        struct: CounterStrikeViewport
+        member: m_pCSBackGround
+      - name: CCSBackGroundPanel
+        category: vtable
+      - name: CCSBackGroundPanel_Activate
+        category: vfunc
   - name: server
     module_windows: mp.dll
     module_linux: cs.so

@@ -6,7 +6,7 @@ so only candidate addresses and verdicts cross MCP. Host-side callers stay thin.
 
 import json
 
-from ida_analyze_util import parse_mcp_result
+from ida_analyze_util import _inspect_function_via_mcp, parse_mcp_result
 from ida_elf import ELF_RESOLVER_PY
 
 # KeyValues::LoadFromFile occupies slot 2 of the KeyValues primary vtable on every
@@ -22,6 +22,12 @@ RICHTEXT_BOM = 0xFEFF
 # / _autoResize(+0x28) / _drawBorder(+0x4a), dword zeroing of the cursor and
 # paint bounds (+0x60/+0x5c), and _proportional (+0x24) set to 2.
 PANEL_INIT_STORE_OFFSETS = (0x30, 0x28, 0x4A, 0x60, 0x5C, 0x24)
+
+FRAME_CLASS = "vgui2::Frame"
+FRAME_VTABLE_ALIASES = {
+    "windows": ["??_7Frame@vgui2@@6B@"],
+    "linux": ["_ZTVN5vgui25FrameE"],
+}
 
 DECODER = (
     ELF_RESOLVER_PY
@@ -150,3 +156,20 @@ async def run_walk(session, body, values=None):
     if not isinstance(payload, dict):
         return {"error": f"unexpected walk payload: {payload!r}"}
     return payload
+
+
+async def inspect_unique_function(session, name, target, image_base, debug=False):
+    """Inspect one already located function and require a unique x86 signature."""
+    function = await _inspect_function_via_mcp(session, target, image_base, name)
+    allow_across = function is None or not function.get("func_sig")
+    if allow_across:
+        function = await _inspect_function_via_mcp(
+            session, target, image_base, name, allow_across_function_boundary=True
+        )
+        if function is not None:
+            function["func_sig_allow_across_function_boundary"] = True
+    if not function or not function.get("func_sig"):
+        if debug:
+            print(f"  {name}: no unique signature at {hex(target)}")
+        return None
+    return function
