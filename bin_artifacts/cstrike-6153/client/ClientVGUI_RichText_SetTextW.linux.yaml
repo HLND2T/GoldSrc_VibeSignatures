@@ -1,0 +1,5 @@
+func_name: vgui2::RichText::SetText(wchar_t const*)
+func_va: '0x187b90'
+func_rva: '0x187b90'
+func_size: '0x188'
+func_sig: 55 31 ED 57 56 31 F6 53 83 EC ?? 8B 5C 24 ?? 8D 54 24 ?? C6 44 24 ?? ?? 8B 7C 24 ?? C6 44 24 ?? ??

@@ -1,0 +1,5 @@
+func_name: vgui2::Frame::LoadControlSettings(char const*, char const*)
+func_va: '0x1006c500'
+func_rva: '0x6c500'
+func_size: '0x33'
+func_sig: 55 8B EC 56 FF 75 ?? 8B F1 FF 75 ?? E8 ?? ?? ?? ?? 8B 06 8B CE FF 90 ?? ?? ?? ?? 8B C8 8B 10 FF 12 5E
