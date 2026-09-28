@@ -76,6 +76,7 @@ modules:
           - ClientVGUI_LoadControlSettings.{platform}.yaml
           - ClientVGUI_RichText_SetTextA.{platform}.yaml
           - ClientVGUI_RichText_SetTextW.{platform}.yaml
+          - TeamMenu_LoadMapPage.{platform}.yaml
     symbols:
       - name: GetTextColor
         category: func
@@ -128,4 +129,6 @@ modules:
       - name: ClientVGUI_RichText_SetTextA
         category: func
       - name: ClientVGUI_RichText_SetTextW
+        category: func
+      - name: TeamMenu_LoadMapPage
         category: func

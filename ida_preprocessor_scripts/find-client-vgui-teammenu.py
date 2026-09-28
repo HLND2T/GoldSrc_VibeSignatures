@@ -8,7 +8,9 @@ argument is the LoadControlSettings entry — the thiscall ``push imm32`` form o
 MSVC and the cdecl ``mov [esp+4], reg`` store on GCC (whose earlier calls belong
 to the team-button CUtlVector and must be skipped).
 
-``CTeamMenu::LoadMapPage`` owns the single ``maps/%s.txt`` format string. Its
+``CTeamMenu::LoadMapPage`` owns the single ``maps/%s.txt`` format string, so that
+literal's unique code reference already identifies the function entry — the same
+owner MetaHookSv reached by disassembling forward from the string push. The body's
 byte-order-mark check ``memBlock[0] != 0xFEFF`` (vgui2/game_controls/teammenu.cpp)
 branches between ``RichText::SetText(const char*)`` on fall-through and
 ``RichText::SetText(const wchar_t*)`` at the conditional-branch target. Locating
@@ -26,6 +28,7 @@ from ida_preprocessor_scripts._client_vgui_private_common import RICHTEXT_BOM, r
 LOADCS_SYMBOL = "ClientVGUI_LoadControlSettings"
 SETTEXTA_SYMBOL = "ClientVGUI_RichText_SetTextA"
 SETTEXTW_SYMBOL = "ClientVGUI_RichText_SetTextW"
+LOADMAP_SYMBOL = "TeamMenu_LoadMapPage"
 TEAMMENU_LITERAL = "Resource/UI/TeamMenu.res"
 MAPS_LITERAL = "maps/%s.txt"
 
@@ -162,6 +165,8 @@ result = {
     'loadmap_owner': loadmap_owner,
     **{key: int(value) for key, value in branch.items()},
 }
+
+assert branch['cmp'] in function_body(loadmap_owner), 'BOM compare left the maps owner'
 """
 
 
@@ -206,6 +211,7 @@ async def preprocess_skill(
         LOADCS_SYMBOL: ("load_control_settings", "vgui2::Frame::LoadControlSettings(char const*, char const*)"),
         SETTEXTA_SYMBOL: ("settext_a", "vgui2::RichText::SetText(char const*)"),
         SETTEXTW_SYMBOL: ("settext_w", "vgui2::RichText::SetText(wchar_t const*)"),
+        LOADMAP_SYMBOL: ("loadmap_owner", "CTeamMenu::LoadMapPage(char const*)"),
     }
     outputs = {name: _output_for_symbol(expected_outputs, name) for name in targets}
     if not all(outputs.values()):
