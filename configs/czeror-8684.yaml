@@ -5,6 +5,14 @@ modules:
     depot_windows: czeror/cl_dlls/client.dll
     depot_linux: czeror/cl_dlls/client.so
     skills:
+      - name: find-IN_Accumulate
+        expected_output:
+          - IN_Accumulate.{platform}.yaml
+      - name: find-client-mouse-guards
+        expected_input:
+          - IN_Accumulate.{platform}.yaml
+        expected_output:
+          - iMouseInUse.{platform}.yaml
       - name: find-GetClientColor-CS
         expected_output:
           - GetClientColor.{platform}.yaml
@@ -73,6 +81,10 @@ modules:
           - CWorldMapMissionSelect_PaintBackground.{platform}.yaml
           - ISurface_GetScreenSize.{platform}.yaml
     symbols:
+      - name: IN_Accumulate
+        category: func
+      - name: iMouseInUse
+        category: gv
       - name: GetClientColor
         category: func
       - name: g_PlayerExtraInfo_CZDS

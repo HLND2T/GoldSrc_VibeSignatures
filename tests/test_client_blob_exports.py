@@ -104,6 +104,7 @@ class ClientBlobIdentityTests(unittest.IsolatedAsyncioTestCase):
             (b"different-pe", 0x400000, None, None, False),
             (b"matching-pe", 0x500000, None, None, False),
             (b"matching-pe", 0x400000, 42, None, True),
+            (b"matching-pe", 0x400000, 13, None, False),
             (b"matching-pe", 0x400000, 15, None, False),
             (b"matching-pe", 0x400000, 19, None, False),
             (b"matching-pe", 0x400000, 39, None, False),
@@ -140,6 +141,7 @@ class ClientBlobIdentityTests(unittest.IsolatedAsyncioTestCase):
                     if accepted:
                         self.assertEqual(
                             {
+                                "IN_Accumulate": [functions[13]],
                                 "CL_IsThirdPerson": [functions[15]],
                                 "V_CalcRefdef": [functions[19]],
                                 "HUD_GetStudioModelInterface": [functions[39]],
