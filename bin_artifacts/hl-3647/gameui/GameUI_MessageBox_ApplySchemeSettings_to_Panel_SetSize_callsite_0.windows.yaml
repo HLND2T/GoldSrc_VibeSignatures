@@ -1,0 +1,5 @@
+patch_name: vgui2::MessageBox::ApplySchemeSettings to vgui2::Panel::SetSize callsite
+patch_va: '0x10057787'
+patch_rva: '0x57787'
+patch_sig: E8 44 B9 FE FF 8B 8E ?? ?? ?? ??
+patch_sig_disp: '0x0'

@@ -1,0 +1,6 @@
+func_name: vgui2::PropertySheet::PropertySheet(vgui2::Panel*, char const*)
+func_va: '0x100a9160'
+func_rva: '0xa9160'
+func_size: '0xef'
+func_sig: 55 8B EC 51 89 4D ?? 8B 45 ?? 50 8B 4D ?? 51 8B 4D ?? E8 E3 48 FB FF 8B 4D ?? 83 C1 70 E8 ?? ?? ?? ?? 8B 4D ?? 83
+  C1 71

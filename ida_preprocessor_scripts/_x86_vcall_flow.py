@@ -263,9 +263,12 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
             write(operands[0], result, ea)
         elif mnemonic == "xor" and len(operands) == 2 and operands[0] == operands[1]:
             write(operands[0], ("const", 0), ea)
-        elif mnemonic == "and" and len(operands) == 2 and read(operands[1]) == ("const", 255):
-            # Compilers mask an ABI boolean return before testing it.
-            write(operands[0], narrow(read(operands[0]), 1), ea)
+        elif mnemonic == "and" and len(operands) == 2 and read(operands[1]) in (("const", 0xFF), ("const", 0xFFFF)):
+            # ABI booleans and wchar_t arguments may be truncated with AND
+            # rather than a byte/word load. Keep the narrowed scalar identity;
+            # virtual_targets still rejects it as a pointer.
+            width = 1 if read(operands[1]) == ("const", 0xFF) else 2
+            write(operands[0], narrow(read(operands[0]), width), ea)
         elif mnemonic in ("cmp", "test") and len(operands) == 2:
             left, right = read(operands[0]), read(operands[1])
             condition = (
