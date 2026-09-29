@@ -958,6 +958,29 @@ modules:
           - studioapi_SetupPlayerModel.{platform}.yaml
         expected_output:
           - cl_players_model.{platform}.yaml
+      - name: find-RunListenServer-slots
+        expected_input:
+          - RunListenServer.{platform}.yaml
+          - eng.{platform}.yaml
+          - videomode.{platform}.yaml
+          - CEngine_vtable.{platform}.yaml
+          - CGame_vtable.{platform}.yaml
+          - CVideoMode_OpenGL_vtable.{platform}.yaml
+        expected_output:
+          - IGame_Init.{platform}.yaml
+          - IEngine_Load.{platform}.yaml
+          - IVideoMode_Init.{platform}.yaml
+          - IEngine_Frame.{platform}.yaml
+          - IEngine_SetQuitting.{platform}.yaml
+          - IEngine_GetQuitting.{platform}.yaml
+          - IGame_Shutdown.{platform}.yaml
+          - IVideoMode_Shutdown.{platform}.yaml
+      - name: find-CEngine_Frame
+        expected_input:
+          - IEngine_Frame.{platform}.yaml
+          - CEngine_vtable.{platform}.yaml
+        expected_output:
+          - CEngine_Frame.{platform}.yaml
       - name: find-engine-runtime-vtables
         expected_output:
           - CEngine_vtable.{platform}.yaml
@@ -1984,6 +2007,24 @@ modules:
         category: func
       - name: cl_players_model
         category: gv
+      - name: IGame_Init
+        category: vfunc
+      - name: IEngine_Load
+        category: vfunc
+      - name: IVideoMode_Init
+        category: vfunc
+      - name: IEngine_Frame
+        category: vfunc
+      - name: IEngine_SetQuitting
+        category: vfunc
+      - name: IEngine_GetQuitting
+        category: vfunc
+      - name: IGame_Shutdown
+        category: vfunc
+      - name: IVideoMode_Shutdown
+        category: vfunc
+      - name: CEngine_Frame
+        category: vfunc
       - name: CEngine_vtable
         category: vtable
       - name: CGame_vtable

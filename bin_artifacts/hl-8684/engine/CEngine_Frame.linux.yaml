@@ -1,0 +1,8 @@
+func_name: CEngine::Frame
+func_va: '0x13ca60'
+func_rva: '0x13ca60'
+func_size: '0xf6'
+func_sig: 56 53 83 EC ?? A1 ?? ?? ?? ?? 8B 5C 24 ?? 8B 10 89 04 24 FF 52 ?? A1 ?? ?? ?? ?? 8B 10 89 04 24 FF 52 ?? 84 C0
+vtable_name: CEngine
+vfunc_offset: '0x20'
+vfunc_index: 8

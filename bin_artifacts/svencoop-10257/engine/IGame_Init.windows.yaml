@@ -1,0 +1,4 @@
+func_name: IGame::Init
+vtable_name: IGame
+vfunc_offset: '0x4'
+vfunc_index: 1

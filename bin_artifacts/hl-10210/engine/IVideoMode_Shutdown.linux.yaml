@@ -1,0 +1,4 @@
+func_name: IVideoMode::Shutdown
+vtable_name: IVideoMode
+vfunc_offset: '0xc'
+vfunc_index: 3

@@ -402,3 +402,104 @@ class WalkTransportTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(common, "DECODER", ""):
             result = await common.run_walk(Session(), "result={'payload': 'x'*4096}")
         self.assertEqual({"payload": "x" * 4096}, result)
+
+
+class RuntimeSlotRoleTests(unittest.TestCase):
+    def fixture(self, platform="windows"):
+        eng = ["load", ["const", 0x9000], 0]
+        video = ["load", ["const", 0xA000], 0]
+        game = ["load", ["const", 0xB000], 0]
+        shift = int(platform == "windows")
+
+        def call(ea, block, receiver, offset, *args):
+            return dict(ea=ea, block=block, virtuals=[[receiver, offset]], args=[receiver, *args])
+
+        def branch(call_ea, zero, nonzero):
+            return dict(condition=["result", call_ea], zero=zero, nonzero=nonzero)
+
+        return dict(
+            blocks={
+                100: [200],
+                200: [300, 800],
+                300: [400, 710],
+                400: [500, 700],
+                500: [510, 600],
+                510: [500],
+                600: [800],
+                700: [705],
+                705: [800],
+                710: [800],
+                800: [],
+            },
+            calls=[
+                call(101, 100, eng, 84, ["const", 0]),
+                call(201, 200, video, 8, ["arg", shift]),
+                call(301, 300, game, 20, ["arg", shift]),
+                call(401, 400, eng, 12, ["const", 0], ["arg", shift + 1], ["arg", shift + 2]),
+                call(501, 500, eng, 80),
+                call(511, 510, eng, 44),
+                call(601, 600, game, 24),
+                call(602, 600, video, 16),
+                call(701, 700, game, 24),
+                call(706, 705, game, 24),
+                call(707, 705, video, 16),
+                call(711, 710, video, 16),
+            ],
+            branches=[branch(201, 800, 300), branch(301, 710, 400), branch(401, 700, 500), branch(501, 510, 600)],
+        )
+
+    def select(self, flow, platform="windows"):
+        from ida_preprocessor_scripts._engine_runtime_slots import select_runlistenserver_slots
+
+        return select_runlistenserver_slots(flow, 100, 0x9000, 0xA000, platform)
+
+    def test_roles_follow_control_flow_and_arguments_with_unrelated_slot_numbers(self):
+        for platform in ("windows", "linux"):
+            with self.subTest(platform=platform):
+                result = self.select(self.fixture(platform), platform)
+                self.assertEqual(
+                    {
+                        "IVideoMode_Init": 8,
+                        "IGame_Init": 20,
+                        "IEngine_Load": 12,
+                        "IEngine_SetQuitting": 84,
+                        "IEngine_GetQuitting": 80,
+                        "IEngine_Frame": 44,
+                        "IGame_Shutdown": 24,
+                        "IVideoMode_Shutdown": 16,
+                    },
+                    {name: value["offset"] for name, value in result.items()},
+                )
+                self.assertEqual([701, 706], result["IGame_Shutdown"]["sites"])
+
+    def test_conflicting_cleanup_slots_fail_closed(self):
+        flow = self.fixture()
+        next(c for c in flow["calls"] if c["ea"] == 706)["virtuals"][0][1] = 28
+        with self.assertRaises(ValueError):
+            self.select(flow)
+
+    def test_quitting_initialization_must_dominate_video_initialization(self):
+        flow = self.fixture()
+        flow["blocks"][100] = [150, 200]
+        flow["blocks"][150] = [200]
+        flow["calls"][0].update(ea=151, block=150)
+        with self.assertRaises(ValueError):
+            self.select(flow)
+
+    def test_ambiguous_virtual_receiver_fails_closed(self):
+        flow = self.fixture()
+        flow["calls"][5]["virtuals"].append([["load", ["const", 0xC000], 0], 44])
+        with self.assertRaises(ValueError):
+            self.select(flow)
+
+    def test_receiver_argument_must_agree_with_dispatch_object(self):
+        flow = self.fixture()
+        flow["calls"][5]["args"][0] = ["const", 0xC000]
+        with self.assertRaises(ValueError):
+            self.select(flow)
+
+    def test_unaligned_virtual_slot_fails_closed(self):
+        flow = self.fixture()
+        flow["calls"][5]["virtuals"][0][1] = 45
+        with self.assertRaises(ValueError):
+            self.select(flow)
