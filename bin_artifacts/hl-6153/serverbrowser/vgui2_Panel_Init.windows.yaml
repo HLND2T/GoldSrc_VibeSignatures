@@ -1,0 +1,5 @@
+func_name: vgui2::Panel::Init(int, int, int, int)
+func_va: '0x1001d470'
+func_rva: '0x1d470'
+func_size: '0x96'
+func_sig: 53 56 8B F1 E8 ?? ?? ?? ?? 8B 10 8B C8 8B 42 ?? FF D0 89 46 ?? E8 ?? ?? ?? ?? 8B 4E ?? 8B 10 8B 52 ?? 56 51

@@ -2328,5 +2328,10 @@ modules:
     module_linux: serverbrowser_linux.so
     depot_windows: platform/servers/ServerBrowser.dll
     depot_linux: platform/servers/serverbrowser_linux.so
-    skills: []
-    symbols: []
+    skills:
+      - name: find-vgui2_Panel_Init
+        expected_output:
+          - vgui2_Panel_Init.{platform}.yaml
+    symbols:
+      - name: vgui2_Panel_Init
+        category: func

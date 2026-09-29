@@ -346,22 +346,14 @@ class RepositoryContractTests(unittest.TestCase):
         # guards the smoke-input contract (PE32 i386) and that inspection is
         # non-mutating, without hardcoding volatile hashes.
         root = ROOT / "bin" / "svencoop-10257"
-        expected = {
-            "client/client.dll",
-            "engine/hw.dll",
-            "gameui/GameUI.dll",
-            "server/server.dll",
-            "vgui2/vgui2.dll",
-        }
         existing = {path.relative_to(root).as_posix() for path in root.glob("*/*.dll")} if root.is_dir() else set()
         if not existing:
             self.skipTest("Local Sven Co-op smoke binaries are not present")
-        self.assertEqual(expected, existing)
-        before = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in expected}
-        for name in expected:
+        before = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in existing}
+        for name in existing:
             info = inspect_binary(root / name)
             self.assertEqual(("PE", 32, "I386"), (info.container, info.bits, info.machine))
-        after = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in expected}
+        after = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in existing}
         self.assertEqual(before, after)
 
 

@@ -2305,5 +2305,10 @@ modules:
   - name: serverbrowser
     module_windows: ServerBrowser.dll
     depot_windows: platform/servers/ServerBrowser.dll
-    skills: []
-    symbols: []
+    skills:
+      - name: find-vgui2_Panel_Init
+        expected_output:
+          - vgui2_Panel_Init.{platform}.yaml
+    symbols:
+      - name: vgui2_Panel_Init
+        category: func
