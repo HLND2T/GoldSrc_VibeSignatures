@@ -40,6 +40,10 @@ probed. Key operational variables:
   [[full-analysis-concurrency]]). Malformed values fail closed before any worker launches; concurrency above `1`
   requires an explicit memory budget. The warm producer mirrors the budget and reservation as
   `IDB_WARMUP_MAX_MEMORY_MIB` / `IDB_WARMUP_INITIAL_WORKER_RESERVATION_MIB`.
+- `GSVIBE_TAIL_MAX_CONCURRENCY` (decimal `1..32`, default `2`, fail-closed) — bounds how many affected game
+  versions run their PR-validation materialize and downstream snapshot/gamedata pipeline concurrently on the
+  `win64` Environment (see [[gamesymbol PR validation candidate 基线复用]]). It is independent of the analysis
+  admission budget above: the tail stages run after `batch/analyze`, use no IDA, and are bounded only by this value.
 - The aggregate budget is enforced by a tier the analyzer prints as `cap=<tier>`: `windows-job` (Windows Job Object),
   `cgroup-v2` (Linux child cgroup with `memory.max` and `memory.oom.group=1`), or `reservation-only` (Linux without a
   delegated cgroup: per-worker `RLIMIT_AS` plus a resident-memory watchdog, an admission budget rather than a hard
