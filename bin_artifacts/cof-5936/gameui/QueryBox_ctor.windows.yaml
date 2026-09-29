@@ -1,0 +1,5 @@
+func_name: vgui2::QueryBox::QueryBox(char const*, char const*, vgui2::Panel*)
+func_va: '0x10094a70'
+func_rva: '0x94a70'
+func_size: '0x111'
+func_sig: 55 8B EC 83 EC 0C 89 4D ?? 8B 45 ?? 50 8B 4D ?? 51 8B 55 ?? 52 8B 4D ?? E8 23 5B FE FF 8B 4D ?? 81 C1 24 01 00 00
