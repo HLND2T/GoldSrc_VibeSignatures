@@ -1,0 +1,5 @@
+func_name: IN_Accumulate
+func_va: '0x827f0'
+func_rva: '0x827f0'
+func_size: '0x5c'
+func_sig: 8B 15 ?? ?? ?? ?? 85 D2 74 ?? C3

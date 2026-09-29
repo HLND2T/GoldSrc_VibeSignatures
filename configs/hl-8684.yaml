@@ -2215,6 +2215,15 @@ modules:
     depot_windows: valve/cl_dlls/client.dll
     depot_linux: valve/cl_dlls/client.so
     skills:
+      - name: find-IN_Accumulate
+        expected_output:
+          - IN_Accumulate.{platform}.yaml
+      - name: find-client-mouse-guards
+        expected_input:
+          - IN_Accumulate.{platform}.yaml
+        expected_output:
+          - iMouseInUse.{platform}.yaml
+          - g_iVisibleMouse.{platform}.yaml
       - name: find-CL_IsThirdPerson-decompiles
         expected_input:
           - CL_IsThirdPerson.{platform}.yaml
@@ -2250,6 +2259,12 @@ modules:
           - HUD_GetStudioModelInterface.{platform}.yaml
           - CL_IsThirdPerson.{platform}.yaml
     symbols:
+      - name: IN_Accumulate
+        category: func
+      - name: iMouseInUse
+        category: gv
+      - name: g_iVisibleMouse
+        category: gv
       - name: GameStudioRenderer_StudioSetupBones
         category: vfunc
       - name: GameStudioRenderer_StudioSaveBones

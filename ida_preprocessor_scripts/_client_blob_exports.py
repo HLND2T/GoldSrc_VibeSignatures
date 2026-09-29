@@ -6,7 +6,12 @@ from decrypt_blob import BlobFormatError, build_pe, parse_blob
 
 # HLSDK engine/APIProxy.h cldll_func_t; LoadBlob.cpp invokes export_point(pv).
 CLIENT_EXPORT_COUNT = 43
-CLIENT_EXPORT_SLOTS = {"CL_IsThirdPerson": 15, "V_CalcRefdef": 19, "HUD_GetStudioModelInterface": 39}
+CLIENT_EXPORT_SLOTS = {
+    "IN_Accumulate": 13,
+    "CL_IsThirdPerson": 15,
+    "V_CalcRefdef": 19,
+    "HUD_GetStudioModelInterface": 39,
+}
 POINTER_SIZE = 4
 
 

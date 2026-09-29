@@ -1,0 +1,8 @@
+gv_name: iMouseInUse
+gv_va: '0x1fb93c'
+gv_rva: '0x1fb93c'
+gv_sig: 8B 15 ?? ?? ?? ?? 85 D2 74 ?? C3
+gv_sig_va: '0x8ff30'
+gv_inst_offset: '0x0'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
