@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Locate engine, the engine module's IEngine* slot (sys_engine.cpp `eng`).
+"""Locate RunListenServer and eng, the engine module's IEngine* slot.
 
 RunListenServer owns the unique TRACEINIT literal "Sys_InitArgv( OrigCmd )"
 (official source engine/sys_dll2.cpp). Right after the TraceInit call it
 runs eng->SetQuitting(IEngine::QUIT_NOTQUITTING): the first post-TraceInit
 load of a writable-data slot whose static value points at the static CEngine
 object, followed by a dereference of the loaded pointer, is the `eng` slot
-on every validated build (hl-3248..hl-10210 via hw.decrypt.dll, cof-5936,
-svencoop-10257; Windows absolute and Linux absolute/PIC encodings alike).
+on every validated build (hl-3248..hl-10210, cof-5936, svencoop-8948 and
+svencoop-10257; the four BLOB builds use hw.decrypt.dll). Windows absolute
+and Linux absolute/PIC encodings are supported.
 SvEngine Linux is PIC, so the load may be lea reg, [ebx + disp32] with the
 ebx GOT anchor recovered from the call-thunk/add-ebx prologue; the emitted
 gv_inst_disp then follows the repository's PIC gv convention.
@@ -16,7 +17,9 @@ Inlined Sys_InitArgv (hl-10210 hw.so) loads com_argc/com_argv before eng;
 those slots hold zero in the static image, so the non-zero-static-pointer
 requirement rejects them. Discovery never uses a byte signature or an old
 artifact signature; the gv_sig prologue signature is generated only after
-the locator validates the current-binary instruction.
+the locator validates the current-binary instruction. The same inspected
+function is also emitted as RunListenServer, without a second discovery pass.
+ELF/DWARF names establish the identities RunListenServer and eng.
 """
 
 from ida_analyze_util import (
@@ -24,10 +27,12 @@ from ida_analyze_util import (
     _inspect_function_via_mcp,
     _output_for_symbol,
     parse_mcp_result,
+    write_func_yaml,
     write_gv_yaml,
 )
 
-TARGET_GV_NAME = "engine"
+TARGET_FUNC_NAME = "RunListenServer"
+TARGET_GV_NAME = "eng"
 ARGV_STRING = "Sys_InitArgv( OrigCmd )"
 TRACEINIT_WINDOW = 6
 SCAN_WINDOW = 60
@@ -292,7 +297,7 @@ def main():
             'slot_value_seg': seg_name(value),
             'insn_disasm': disasm(ea),
         }
-    return {'error': 'no engine slot load accepted after TraceInit'}
+    return {'error': 'no eng slot load accepted after TraceInit'}
 
 globals().update(locals())
 try:
@@ -305,7 +310,7 @@ except Exception as exc:
 """
 
 
-async def _locate_engine(session):
+async def _locate_eng(session):
     try:
         payload = parse_mcp_result(await session.call_tool("py_eval", {"code": LOCATE_PY}))
     except Exception:  # noqa: BLE001 - MCP failures fail closed.
@@ -334,9 +339,10 @@ async def preprocess_skill(
     if platform not in {"windows", "linux"}:
         return False
     output = _output_for_symbol(expected_outputs, TARGET_GV_NAME)
-    if output is None:
+    function_output = _output_for_symbol(expected_outputs, TARGET_FUNC_NAME)
+    if output is None or function_output is None:
         return False
-    located = await _locate_engine(session)
+    located = await _locate_eng(session)
     if located is None or located.get("error") or located.get("pointer_size") != 4:
         if debug:
             print(f"  find-{TARGET_GV_NAME}: locator failed {located}")
@@ -351,7 +357,7 @@ async def preprocess_skill(
         return False
     if gv_ea < int(image_base) or insn_ea < owner_ea:
         return False
-    function = await _inspect_function_via_mcp(session, owner_ea, image_base, "RunListenServer")
+    function = await _inspect_function_via_mcp(session, owner_ea, image_base, TARGET_FUNC_NAME)
     if not function or not function.get("func_sig"):
         if debug:
             print(f"  find-{TARGET_GV_NAME}: failed to inspect RunListenServer {located['owner']}")
@@ -371,6 +377,7 @@ async def preprocess_skill(
     resolution = await gv_resolution_fields_via_mcp(session, insn_ea, insn_disp, gv_ea, image_base, platform)
     if resolution is None:
         return False
+    write_func_yaml(function_output, function)
     write_gv_yaml(
         output,
         {

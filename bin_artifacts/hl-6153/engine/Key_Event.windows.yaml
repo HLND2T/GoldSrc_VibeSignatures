@@ -1,0 +1,5 @@
+func_name: Key_Event
+func_va: '0x1d5fe90'
+func_rva: '0x5fe90'
+func_size: '0x3ac'
+func_sig: 55 8B EC 81 EC 00 04 00 00 8B 45 ?? 56 3D 00 01 00 00 57 0F 8D ?? ?? ?? ?? 8D 45 ?? 8D 4D ??

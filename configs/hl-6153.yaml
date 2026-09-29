@@ -923,9 +923,13 @@ modules:
           - studioapi_SetupPlayerModel.{platform}.yaml
         expected_output:
           - cl_players_model.{platform}.yaml
-      - name: find-engine
+      - name: find-RunListenServer
         expected_output:
-          - engine.{platform}.yaml
+          - RunListenServer.{platform}.yaml
+          - eng.{platform}.yaml
+      - name: find-Key_Event
+        expected_output:
+          - Key_Event.{platform}.yaml
       - name: find-studioapi_SetupPlayerModel_to_R_StudioChangePlayerModel_CallSites
         platform: windows
         expected_input:
@@ -1928,7 +1932,11 @@ modules:
         category: func
       - name: cl_players_model
         category: gv
-      - name: engine
+      - name: RunListenServer
+        category: func
+      - name: Key_Event
+        category: func
+      - name: eng
         category: gv
       - name: studioapi_SetupPlayerModel_to_R_StudioChangePlayerModel_callsite_0
         category: patch

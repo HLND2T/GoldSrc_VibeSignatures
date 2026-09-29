@@ -8,19 +8,23 @@ tags:
   - gv
 ---
 
-# engine
+# eng
 
 ## Symbol
 
-- **Name**: `engine` (the engine module's `IEngine*` slot, `sys_engine.cpp` `eng`)
+- **Name**: `eng` (the engine module's `IEngine*` slot; exact ELF/DWARF identity)
+- **Former artifact identity**: `engine` (renamed in issue #303; the module remains `engine`)
 - **Category**: `gv`
 - **Module**: engine (`hw.dll` / `hw.so`)
-- **Producer**: `ida_preprocessor_scripts/find-engine.py`
+- **Producer**: `ida_preprocessor_scripts/find-RunListenServer.py`
+- **Outputs**: `RunListenServer.{platform}.yaml` (`func`) and `eng.{platform}.yaml` (`gv`), sharing the same discovery and inspected function.
 
 ## Availability
 
-- Declared in 10 engine configs: hl-3248, hl-3266, hl-3329, hl-3647, hl-4554, hl-6153,
-  hl-8684, hl-10210, cof-5936, svencoop-10257.
+- Declared in 11 engine configs: hl-3248, hl-3266, hl-3329, hl-3647, hl-4554, hl-6153,
+  hl-8684, hl-10210, cof-5936, svencoop-8948, svencoop-10257.
+- The 15 configured platform pairs comprise 11 Windows binaries and Linux for hl-8684,
+  hl-10210, svencoop-8948 and svencoop-10257. The four old BLOB versions use hw.decrypt.dll.
 - Platforms: Windows + Linux.
 - Inlined / absent: the slot itself always exists. Note it is *not* an inline case but a
   data slot whose neighbours get inlined away — see the `Sys_InitArgv` pitfall.
@@ -58,3 +62,11 @@ tags:
   Linux.
 - Discovery never uses a byte signature or a prior artifact signature; the `gv_sig` prologue
   signature is generated only after the locator validates the current-binary instruction.
+
+## Issue #303 consolidation
+
+- Trigger: `engine` was a MetaHook-side field name; the ELF/DWARF global is `eng`.
+- Constraint: module identity remains `engine`; only the symbol/artifact identity changes.
+- Approach: merge the old global finder into `find-RunListenServer.py`, discover the owner once, and emit both the function and the global using the same validated signature.
+- Verification: the 2026-09-29 all-gamever finder run reported zero failed skills. All 15 new `eng` payloads matched the old `engine` payloads exactly after excluding `gv_name`. `hl-3266` was generated through the user-owned IDA session at port 13337 and then skipped as already present by the batch; that session was neither saved nor closed.
+- Scope: all 11 engine configurations / 15 platform pairs; no compatibility alias for the old global name. Existing note permalink is retained for incoming memory links.
