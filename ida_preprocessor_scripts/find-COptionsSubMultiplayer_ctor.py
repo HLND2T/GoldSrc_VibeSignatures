@@ -4,7 +4,7 @@
 SpraypaintList belongs to the constructor in every target. CoF's IDA database
 marks the reference as code but leaves its large enclosing routine without a
 function owner. Recover that routine from return boundaries, then verify its
-COptionsSubMultiplayer RTTI vptr store before creating the IDA function.
+COptionsSubMultiplayer RTTI vptr store before creating or reusing the IDA function.
 """
 
 from pathlib import Path
@@ -81,8 +81,6 @@ site = sites[0]
 segment = ida_segment.getseg(site)
 if segment is None or not segment.perm & ida_segment.SEGPERM_EXEC:
     raise ValueError('SpraypaintList reference is outside executable code')
-if ida_funcs.get_func(site) is not None:
-    raise ValueError('CoF function owner was already analyzed; direct xref path is required')
 cursor = site
 while cursor > segment.start_ea:
     cursor = int(ida_bytes.prev_head(cursor, segment.start_ea))
@@ -116,11 +114,13 @@ if (instruction is None or instruction.get_canon_mnem() != 'mov'
         or instruction.ops[1].type != ida_ua.o_imm
         or imm_value(instruction.ops[1]) != table):
     raise ValueError('RTTI reference is not a constructor vptr store')
-if not ida_funcs.add_func(entry, end):
-    raise ValueError('unable to restore CoF constructor function')
 function = ida_funcs.get_func(site)
+if function is None:
+    if not ida_funcs.add_func(entry, end):
+        raise ValueError('unable to restore CoF constructor function')
+    function = ida_funcs.get_func(site)
 if function is None or int(function.start_ea) != entry or int(function.end_ea) != end:
-    raise ValueError('restored CoF function does not contain the literal and return')
+    raise ValueError('CoF function does not match the validated constructor boundaries')
 result = {'target': entry, 'vtable': table, 'literal_site': site, 'vptr_site': stores[0], 'end': end}
 """,
         {},
