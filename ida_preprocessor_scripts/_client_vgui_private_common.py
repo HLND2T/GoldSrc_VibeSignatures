@@ -1,4 +1,4 @@
-"""IDA-side helpers shared by the cstrike/czero/czeror client VGUI private finders.
+"""IDA-side helpers for CS-family VGUI finders and cross-module Panel::Init.
 
 The locator bodies run inside the owned worker's ``py_eval`` through ``run_walk``
 so only candidate addresses and verdicts cross MCP. Host-side callers stay thin.

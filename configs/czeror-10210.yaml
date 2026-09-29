@@ -50,7 +50,7 @@ modules:
         expected_output:
           - HUD_GetStudioModelInterface.{platform}.yaml
           - CL_IsThirdPerson.{platform}.yaml
-      - name: find-client-vgui-panel-init
+      - name: find-vgui2_Panel_Init
         expected_output:
           - ClientVGUI_Panel_Init.{platform}.yaml
       - name: find-client-vgui-keyvalues

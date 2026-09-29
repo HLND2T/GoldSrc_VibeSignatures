@@ -21,6 +21,9 @@ modules:
       - name: find-vgui2_EditablePanel_CreateControlByName
         expected_output:
           - vgui2_EditablePanel_CreateControlByName.{platform}.yaml
+      - name: find-vgui2_Panel_Init
+        expected_output:
+          - vgui2_Panel_Init.{platform}.yaml
       - name: find-vgui2_Panel_vtable
         expected_output:
           - vgui2_Panel_vtable.{platform}.yaml
@@ -1339,6 +1342,8 @@ modules:
         category: vfunc
       - name: vgui2_EditablePanel_CreateControlByName
         category: func
+      - name: vgui2_Panel_Init
+        category: func
       - name: vgui2_Panel_ctor
         category: func
       - name: vgui2_Panel_vtable
@@ -2290,6 +2295,9 @@ modules:
     depot_windows: valve/cl_dlls/GameUI.dll
     depot_linux: valve/cl_dlls/gameui.so
     skills:
+      - name: find-vgui2_Panel_Init
+        expected_output:
+          - vgui2_Panel_Init.{platform}.yaml
       - name: find-CGameUI_RunFrame
         expected_output:
           - CGameUI_RunFrame.{platform}.yaml
@@ -2300,6 +2308,8 @@ modules:
           - ISurface_GetModalPanel.{platform}.yaml
           - ISurface_PaintTraverse.{platform}.yaml
     symbols:
+      - name: vgui2_Panel_Init
+        category: func
       - name: CGameUI_RunFrame
         category: vfunc
       - name: ISurface_GetModalPanel
@@ -2318,5 +2328,10 @@ modules:
     module_linux: serverbrowser_linux.so
     depot_windows: platform/servers/ServerBrowser.dll
     depot_linux: platform/servers/serverbrowser_linux.so
-    skills: []
-    symbols: []
+    skills:
+      - name: find-vgui2_Panel_Init
+        expected_output:
+          - vgui2_Panel_Init.{platform}.yaml
+    symbols:
+      - name: vgui2_Panel_Init
+        category: func

@@ -29,7 +29,7 @@ Only two addresses changed: 6153 Panel::Init `0x1770f0` -> `0x179ce0`; 8684 `0x1
 
 ## Scope
 
-`find-client-vgui-panel-init.py`, `find-client-vgui-keyvalues.py`, `find-client-vgui-teammenu.py`; all ten cstrike/czero/czeror client configs. Revalidate the complete binary matrix when compiler/ABI support changes.
+`find-vgui2_Panel_Init.py`, `find-client-vgui-keyvalues.py`, `find-client-vgui-teammenu.py`; all ten cstrike/czero/czeror client configs. Revalidate the complete binary matrix when compiler/ABI support changes.
 
 ## Issue #277: CS background panel and Frame::Activate
 
@@ -75,3 +75,27 @@ Adding `CClientVGUI_WorldMapPanel`, two CZDS WorldMap vtables and PaintBackgroun
 ### Verification and scope
 
 2026-09-28: owned strict/no-save IDA analyzer succeeded on 11 CS/CZ background binaries (8 Windows, 3 Linux) and 2 czeror Windows map binaries. Independent artifact relation checks confirmed all 45 new YAML outputs, including paint vtable entries, offsets, and slot arithmetic. Unit suite: 1214 tests OK (9 skipped); repository-contract suite: 14 tests OK; format check passed. Applies to the 10 cstrike/czero/czeror client configs and only their available platforms.
+
+## Cross-module Panel::Init locator
+
+2026-09-29: `find-vgui2_Panel_Init.py` reuses the structural Panel layout, interface-dispatch, and Linux cdecl-argument checks in the 11 configured HL/Sven/CoF engine (`hw`) and gameui modules. Their output is `vgui2_Panel_Init`; the ten CS/CZ client configs retain the existing `ClientVGUI_Panel_Init` artifact identity. The latter is a MetaHook lookup name rather than the payload's function name.
+
+HL/Sven/CoF client binaries do not embed this Panel implementation: their Linux symbol tables and available client binaries lack the Panel RTTI and `_proportional` layout-store evidence that is present in the engine/gameui binaries. Do not register this finder on a client module without first proving that the implementation exists there.
+
+Verification: strict/no-save IDA analysis produced all 30 configured engine/gameui artifacts (26 newly executed, four HL-10210 pilot artifacts), with zero failures. A forced 17-node batch rebuilt the existing CS/CZ client outputs with zero failures. The analyzer validated each emitted function signature against its current binary.
+
+## ServerBrowser Panel::Init coverage
+
+### Trigger and constraints
+
+The 11 HL/Sven/CoF `serverbrowser` modules contain 15 PE32/ELF32 binaries (11 Windows, 4 Linux). CS/CZ gamevers have no separate `serverbrowser` binary in the repository or available depots. Six early HL Windows DLLs (3248, 3266, 3329, 3647, 4554, 6153) were initially untracked in the `bin` submodule and must be pinned there for a fresh checkout to rebuild their artifacts.
+
+### Root cause and correct approach
+
+`find-vgui2_Panel_Init.py` recognized `call [vtable+slot]` after interface getters but missed Windows builds that load a slot into a register before `call reg`. Tie both forms to the same decoded vtable register. CoF spills a getter result to a stack local before loading its vtable, so accept a zero-displacement vtable load from a non-stack register rather than requiring `[eax]`. Keep the proportional/layout filters and Linux five-argument cdecl check to reject optimized clones.
+
+IDA auto-analysis merges many adjacent functions in the identical HL-3248/3266/3329 ServerBrowser DLLs. Their true Panel::Init entry lies after a return and alignment inside a larger IDA function. For each proportional-store site, isolate the code region after that boundary and through its next return, validate the region, then restore only the selected function boundary in the owned no-save worker before signature generation. Reject ambiguous candidates and unbounded aligned regions.
+
+### Verification and scope
+
+2026-09-29: an exact 62-node strict/no-save batch forced all 47 previously configured engine/gameui/client Panel::Init nodes plus all 15 new serverbrowser nodes; 62 succeeded, zero failed/skipped. The new artifacts are `bin_artifacts/<tag>/serverbrowser/vgui2_Panel_Init.<platform>.yaml`. Unit suite: 1217 tests OK (5 skipped); repository-contract suite: 14 tests OK after its Sven PE32 smoke check was made inventory-independent; formatting passed. Six legacy HL DLLs were added to the `bin` submodule's local dev branch with IDA databases excluded.
