@@ -27,6 +27,27 @@ def mem(base, offset=0):
 
 
 class VcallFlowTests(unittest.TestCase):
+    def test_word_mask_preserves_character_argument_without_preserving_pointer(self):
+        code = [
+            instruction(1, "mov", reg("eax"), mem("esp", 4)),
+            instruction(2, "and", reg("eax"), imm(0xFFFF), writes=["eax"]),
+            instruction(3, "cmp", reg("eax"), imm(13)),
+            instruction(4, "mov", reg("ecx"), mem("eax")),
+            instruction(5, "call", mem("ecx", 20)),
+        ]
+        flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows")
+        self.assertEqual([("narrow", ("arg", 1), 2), ("const", 13)], flow["comparisons"][0]["values"])
+        self.assertEqual([], virtual_targets(flow["calls"][0]["target"]))
+
+    def test_noncontiguous_mask_does_not_become_a_character_argument(self):
+        code = [
+            instruction(1, "mov", reg("eax"), mem("esp", 4)),
+            instruction(2, "and", reg("eax"), imm(0xFF00), writes=["eax"]),
+            instruction(3, "cmp", reg("eax"), imm(13)),
+        ]
+        flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows")
+        self.assertIsNone(flow["comparisons"][0]["values"][0])
+
     def test_reassigning_getter_cleanup_to_consumer_preserves_loop_stack(self):
         blocks = [
             dict(start=1, succs=[10], insns=[instruction(1, "mov", reg("esi"), reg("ecx"))]),

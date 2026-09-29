@@ -37,6 +37,7 @@ GROUP_FILES = {
         "test_x86_forwarding.py",
         "test_x86_call_arguments.py",
         "test_x86_vcall_flow.py",
+        "test_vgui_private_method_identity.py",
         "test_host_basepal_store.py",
         "test_llm_diagnostics.py",
         "test_ida_skill_preprocessor.py",

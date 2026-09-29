@@ -1,0 +1,8 @@
+func_name: vgui2::MessageBox::ApplySchemeSettings(vgui2::IScheme*)
+func_va: '0x1007a80b'
+func_rva: '0x7a80b'
+func_size: '0x113'
+func_sig: 55 8B EC 83 EC 28 89 4D ?? 8B 45 ?? 50 8B 4D ?? E8 ?? ?? ?? ?? 8D 4D ?? 51 8D 55 ?? 52 8B 45 ?? 8B 88 ?? ?? ?? ??
+vtable_name: vgui2::MessageBox
+vfunc_offset: '0x13c'
+vfunc_index: 79

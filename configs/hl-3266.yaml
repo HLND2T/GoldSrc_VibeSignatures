@@ -2260,6 +2260,25 @@ modules:
           - CGameConsoleDialog_DumpConsoleTextToFile.{platform}.yaml
         expected_output:
           - CGameConsoleDialog_Print.{platform}.yaml
+      - name: find-GameUI-private-symbols
+        expected_input:
+          - CGameConsoleDialog_ctor.{platform}.yaml
+        expected_output:
+          - GameUI_TabCatchingTextEntry_vtable.{platform}.yaml
+          - GameUI_TabCatchingTextEntry_OnKeyCodeTyped.{platform}.yaml
+          - GameUI_TextEntry_InsertChar.{platform}.yaml
+          - GameUI_TextEntry_LayoutVerticalScrollBarSlider.{platform}.yaml
+          - GameUI_TextEntry_GetStartDrawIndex.{platform}.yaml
+          - GameUI_PropertySheet_ctor.{platform}.yaml
+          - GameUI_PropertySheet_vtable.{platform}.yaml
+          - GameUI_PropertyDialog__propertySheet.{platform}.yaml
+          - GameUI_PropertySheet_HasHotkey.{platform}.yaml
+          - GameUI_PropertySheet_PerformLayout.{platform}.yaml
+          - GameUI_MessageBox_ctor.{platform}.yaml
+          - GameUI_MessageBox_vtable.{platform}.yaml
+          - GameUI_MessageBox_ApplySchemeSettings.{platform}.yaml
+          - GameUI_Panel_SetSize.{platform}.yaml
+          - GameUI_MessageBox_ApplySchemeSettings_to_Panel_SetSize_callsite_0.{platform}.yaml
       - name: find-CTaskbar_QuitConfirmationOwner
         expected_output:
           - CTaskbar_QuitConfirmationOwner.{platform}.yaml
@@ -2284,6 +2303,40 @@ modules:
         category: vfunc
       - name: CGameConsoleDialog_ctor
         category: func
+      - name: GameUI_TabCatchingTextEntry_vtable
+        category: vtable
+      - name: GameUI_TabCatchingTextEntry_OnKeyCodeTyped
+        category: vfunc
+      - name: GameUI_TextEntry_InsertChar
+        category: vfunc
+      - name: GameUI_TextEntry_LayoutVerticalScrollBarSlider
+        category: vfunc
+      - name: GameUI_TextEntry_GetStartDrawIndex
+        category: vfunc
+      - name: GameUI_PropertySheet_ctor
+        category: func
+      - name: GameUI_PropertySheet_vtable
+        category: vtable
+      - name: vgui2::PropertyDialog
+        category: struct
+      - name: GameUI_PropertyDialog__propertySheet
+        category: structmember
+        struct: vgui2::PropertyDialog
+        member: _propertySheet
+      - name: GameUI_PropertySheet_HasHotkey
+        category: vfunc
+      - name: GameUI_PropertySheet_PerformLayout
+        category: vfunc
+      - name: GameUI_MessageBox_ctor
+        category: func
+      - name: GameUI_MessageBox_vtable
+        category: vtable
+      - name: GameUI_MessageBox_ApplySchemeSettings
+        category: vfunc
+      - name: GameUI_Panel_SetSize
+        category: func
+      - name: GameUI_MessageBox_ApplySchemeSettings_to_Panel_SetSize_callsite_0
+        category: patch
       - name: CCreateMultiplayerGameDialog_ctor
         category: func
       - name: COptionsDialog_ctor

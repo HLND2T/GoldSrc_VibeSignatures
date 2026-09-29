@@ -1,0 +1,8 @@
+func_name: vgui2::TextEntry::InsertChar(wchar_t)
+func_va: '0x122470'
+func_rva: '0x122470'
+func_size: '0x83b'
+func_sig: 55 57 56 53 83 EC ?? 83 7C 24 ?? ?? 8B 5C 24 ?? 74 ?? 83 7C 24 ?? ?? 0F B6 8B ?? ?? ?? ?? 0F 94 C0 38 C1
+vtable_name: TabCatchingTextEntry
+vfunc_offset: '0x254'
+vfunc_index: 149
