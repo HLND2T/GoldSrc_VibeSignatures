@@ -1,4 +1,4 @@
-patch_name: V_strncpy_FallbackGameDir
+patch_name: FileSystem_AddFallbackGameDir_V_strncpy_callsite_0
 patch_va: '0x101c8b63'
 patch_rva: '0x1c8b63'
 patch_sig: FF 15 ?? ?? ?? ?? 8D 8D ?? ?? ?? ?? 83 C4 ??

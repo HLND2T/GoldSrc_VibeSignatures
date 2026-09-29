@@ -877,8 +877,14 @@ class EnginePatchDataflowTests(unittest.TestCase):
 
         buffer = ("local_address", "frame", -128)
         strings = {"GAME", "%s/%s_%s"}
-        self.assertEqual("V_strncpy", language_role([buffer, 0x5000, 128], strings | {"DEFAULTGAME"}, {0x5000}))
-        self.assertEqual("V_strncpy_FallbackGameDir", language_role([buffer, 0x5000, 128], strings, {0x5000}))
+        self.assertEqual(
+            "FileSystem_SetGameDirectory_V_strncpy_callsite_0",
+            language_role([buffer, 0x5000, 128], strings | {"DEFAULTGAME"}, {0x5000}),
+        )
+        self.assertEqual(
+            "FileSystem_AddFallbackGameDir_V_strncpy_callsite_0",
+            language_role([buffer, 0x5000, 128], strings, {0x5000}),
+        )
         for arguments in ([buffer, 0x5000, None], [buffer, 0x5000, 32], [buffer, 0x6000, 128], [None, 0x5000, 128]):
             self.assertIsNone(language_role(arguments, strings, {0x5000}))
         self.assertIsNone(language_role([buffer, 0x5000, 128], {"GAME"}, {0x5000}))

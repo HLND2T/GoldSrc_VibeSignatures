@@ -670,10 +670,10 @@ modules:
           - CBaseUI__Initialize.{platform}.yaml
         expected_output:
           - VGUIClient001_CreateInterface.{platform}.yaml
-      - name: find-V_strncpy
+      - name: find-FileSystem_SetGameDirectory_V_strncpy_callsite_0
         expected_output:
-          - V_strncpy.{platform}.yaml
-          - V_strncpy_FallbackGameDir.{platform}.yaml
+          - FileSystem_SetGameDirectory_V_strncpy_callsite_0.{platform}.yaml
+          - FileSystem_AddFallbackGameDir_V_strncpy_callsite_0.{platform}.yaml
       - name: find-g_clmove
         expected_input:
           - ClientDLL_Init.{platform}.yaml
@@ -1795,9 +1795,9 @@ modules:
         category: gv
       - name: VGUIClient001_CreateInterface
         category: patch
-      - name: V_strncpy
+      - name: FileSystem_SetGameDirectory_V_strncpy_callsite_0
         category: patch
-      - name: V_strncpy_FallbackGameDir
+      - name: FileSystem_AddFallbackGameDir_V_strncpy_callsite_0
         category: patch
       - name: g_clmove
         category: gv

@@ -25,8 +25,8 @@ the language patches by filesystem owner.
 | `realtime` | gv | engine | `find-realtime.py` | `Host_Init` |
 | `staticEngineSurface` | gv | engine | `find-staticEngineSurface.py` | — |
 | `VGUIClient001_CreateInterface` | patch | engine | `find-VGUIClient001_CreateInterface.py` | `CBaseUI__Initialize` |
-| `V_strncpy` | patch | engine | `find-V_strncpy.py` | — |
-| `V_strncpy_FallbackGameDir` | patch | engine | `find-V_strncpy.py` | — |
+| `FileSystem_SetGameDirectory_V_strncpy_callsite_0` | patch | engine | `find-FileSystem_SetGameDirectory_V_strncpy_callsite_0.py` | — |
+| `FileSystem_AddFallbackGameDir_V_strncpy_callsite_0` | patch | engine | `find-FileSystem_SetGameDirectory_V_strncpy_callsite_0.py` | — |
 
 A shared helper `_patch_signature_common.run_signature(session, ea)` generates the
 `patch_sig` for both patch finders: the worker emits progressively longer
@@ -56,7 +56,7 @@ accepted only when `find_bytes` resolves it to exactly one address equal to `ea`
   `svencoop-8948` / `svencoop-10257`
   pin the finder and symbol to `platform: windows`, inheriting the Windows-only gate
   of their `find-CBaseUI__Initialize`.
-- `V_strncpy` and `V_strncpy_FallbackGameDir`: 20 artifacts together, in six engine configs only —
+- `FileSystem_SetGameDirectory_V_strncpy_callsite_0` and `FileSystem_AddFallbackGameDir_V_strncpy_callsite_0`: 20 artifacts together, in six engine configs only —
   `cof-5936`, `hl-6153`, `hl-8684` (Windows + Linux), `hl-10210`,
   `svencoop-8948`, `svencoop-10257` (Windows + Linux).
   **hl-3248 / hl-3266 / hl-3329 / hl-3647 / hl-4554 are intentionally not
@@ -104,14 +104,14 @@ body referencing the exact export name `CreateInterface`. The interface query
 itself has the wrong ABI and is never the patch site. Callback engines reuse
 the existing global slot instead.
 
-## How `V_strncpy` is located
+## How `FileSystem_SetGameDirectory_V_strncpy_callsite_0` is located
 
 Follow every exact `english` reference along its basic block and direct jumps
 to the first call. Decode arguments as `(local buffer, english, 128)`; reject
 two-argument copies and unrelated object-field writes without consulting IDA
 callee names. Owners must reference `GAME` and `%s/%s_%s`; `DEFAULTGAME`
-identifies `FileSystem_SetGameDirectory` (`V_strncpy`), while its absence
-identifies `FileSystem_AddFallbackGameDir` (`V_strncpy_FallbackGameDir`).
+identifies `FileSystem_SetGameDirectory` (`FileSystem_SetGameDirectory_V_strncpy_callsite_0`), while its absence
+identifies `FileSystem_AddFallbackGameDir` (`FileSystem_AddFallbackGameDir_V_strncpy_callsite_0`).
 Require one site for each role. Consumers redirect both sites. Compiler-shared
 Steam/default-language call tails are followed, including Sven Linux's backward
 jump to the copy. Address order does not define either role.
@@ -143,7 +143,7 @@ jump to the copy. Address order does not define either role.
   Trace the buffer producer: all five old tags obtain it through the registry
   helper. Its successful read invokes an out-of-line `Q_strncpy` on registry data.
   Inspect `hw.decrypt.dll` for hl-3248/3266/3329/3647 and `hw.dll` for hl-4554.
-- **`-allgamever -skill` abort.** `-allgamever -skill find-V_strncpy` aborts at the
+- **`-allgamever -skill` abort.** `-allgamever -skill find-FileSystem_SetGameDirectory_V_strncpy_callsite_0` aborts at the
   first tag that does not register the skill (hl-3248). Validate partially
   registered skills per registered gamever; see
   `memory/notes/allgamever skill-filter abort trap.md`.
@@ -162,8 +162,8 @@ tables otherwise.
 | `realtime` | W `0x11249e98`, L `0x94d678` | W `0x27b7600`, L `0x963970` | W `0x8406ac8`, L `0x357a70` |
 | `staticEngineSurface` | W `0x1063dc30`, L `0x824aac` | W `0x24c9564`, L `0x83a4c0` | L `0x798b34c` |
 | `VGUIClient001_CreateInterface` | W `0x1022c264`, L `0x1c1e17` | W `0x1d011fa`, L `0x20cf25` | W `0x1d0fbdb` |
-| `V_strncpy` | W `0x101c8d35`, L `0x9fd79` | W `0x1d3b23f`, L `0x108cfc` | W `0x1d4db98`, L `0xc0270` |
-| `V_strncpy_FallbackGameDir` | W `0x101c8b63`, L `0x9f099` | W `0x1d3b861`, L `0x109204` | W `0x1d4e32d`, L `0xbf9ca` |
+| `FileSystem_SetGameDirectory_V_strncpy_callsite_0` | W `0x101c8d35`, L `0x9fd79` | W `0x1d3b23f`, L `0x108cfc` | W `0x1d4db98`, L `0xc0270` |
+| `FileSystem_AddFallbackGameDir_V_strncpy_callsite_0` | W `0x101c8b63`, L `0x9f099` | W `0x1d3b861`, L `0x109204` | W `0x1d4e32d`, L `0xbf9ca` |
 
 Review-fix verification (2026-09-27):
 
@@ -391,7 +391,7 @@ These are static checks; no game launch or runtime patch test was performed.
   `privatefuncs.cpp` resolves the optional function through the real engine
   module identity, installs/removes the InlineHook in Engine_InstallHooks /
   Engine_UninstallHooks, and skips the old language-call scan when this reader
-  is present. Other engine identities retain the prior V_strncpy path.
+  is present. Other engine identities retain the prior FileSystem_SetGameDirectory_V_strncpy_callsite_0 path.
 - MetaHook's catalog gate requires this FUNCTION on those five engine snapshots
   and validates its kind/module when present elsewhere; client-only snapshots
   do not acquire an engine requirement.

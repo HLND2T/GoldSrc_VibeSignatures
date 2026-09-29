@@ -1,4 +1,4 @@
-patch_name: V_strncpy
+patch_name: FileSystem_SetGameDirectory_V_strncpy_callsite_0
 patch_va: '0x1d3b23f'
 patch_rva: '0x3b23f'
 patch_sig: E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 8B 75 ??
