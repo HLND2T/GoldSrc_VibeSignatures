@@ -1,0 +1,120 @@
+func_name: "CTaskbar_QuitConfirmationOwner"
+func_va: "0xdae30"
+disasm_code: |-
+  .text:000DAE30                 push    edi
+  .text:000DAE31                 push    esi
+  .text:000DAE32                 push    ebx
+  .text:000DAE33                 sub     esp, 10h
+  .text:000DAE36                 mov     esi, [esp+1Ch+this]
+  .text:000DAE3A                 ; unsigned int
+  .text:000DAE3A                 mov     [esp+1Ch+iAllocSize], 134h; unsigned int
+  .text:000DAE41                 call    _Znwj; operator new(uint)
+  .text:000DAE46                 ; parent
+  .text:000DAE46                 mov     [esp+1Ch+parent], esi; parent
+  .text:000DAE4A                 mov     ebx, eax
+  .text:000DAE4C                 mov     eax, offset aGameuiQuitconf; "#GameUI_QuitConfirmationText"
+  .text:000DAE51                 ; queryText
+  .text:000DAE51                 mov     [esp+1Ch+queryText], eax; queryText
+  .text:000DAE55                 mov     eax, offset aGameuiQuitconf_0; "#GameUI_QuitConfirmationTitle"
+  .text:000DAE5A                 ; title
+  .text:000DAE5A                 mov     [esp+1Ch+title], eax; title
+  .text:000DAE5E                 ; this
+  .text:000DAE5E                 mov     [esp+1Ch+iAllocSize], ebx; this
+  .text:000DAE61                 call    _ZN5vgui28QueryBoxC2EPKcS2_PNS_5PanelE; QueryBox_ctor: vgui2::QueryBox::QueryBox(char const*,char const*,vgui2::Panel *)
+  .text:000DAE66                 mov     eax, [box]
+  .text:000DAE68                 mov     edx, offset aGameuiQuit; "#GameUI_Quit"
+  .text:000DAE6D                 mov     [esp+1Ch+title], edx
+  .text:000DAE71                 mov     [esp+1Ch+iAllocSize], box
+  .text:000DAE74                 call    dword ptr [eax+310h]
+  .text:000DAE7A                 ; iAllocSize
+  .text:000DAE7A                 mov     [esp+1Ch+iAllocSize], 18h; iAllocSize
+  .text:000DAE81                 call    _ZN9KeyValuesnwEj; KeyValues::operator new(uint)
+  .text:000DAE86                 mov     ecx, offset aQuitnoconfirm; "QuitNoConfirm"
+  .text:000DAE8B                 ; firstValue
+  .text:000DAE8B                 mov     [esp+1Ch+parent], ecx; firstValue
+  .text:000DAE8F                 mov     edi, eax
+  .text:000DAE91                 mov     eax, offset firstKey; "command"
+  .text:000DAE96                 ; firstKey
+  .text:000DAE96                 mov     [esp+1Ch+queryText], eax; firstKey
+  .text:000DAE9A                 mov     eax, (offset aCompletioncomm+0Ah); "Command"
+  .text:000DAE9F                 ; SetName
+  .text:000DAE9F                 mov     [esp+1Ch+title], eax; SetName
+  .text:000DAEA3                 ; this
+  .text:000DAEA3                 mov     [esp+1Ch+iAllocSize], edi; this
+  .text:000DAEA6                 call    _ZN9KeyValuesC2EPKcS1_S1_; KeyValues::KeyValues(char const*,char const*,char const*)
+  .text:000DAEAB                 ; keyValues
+  .text:000DAEAB                 mov     [esp+1Ch+title], edi; keyValues
+  .text:000DAEAF                 ; this
+  .text:000DAEAF                 mov     [esp+1Ch+iAllocSize], box; this
+  .text:000DAEB2                 call    _ZN5vgui28QueryBox12SetOKCommandEP9KeyValues; vgui2::QueryBox::SetOKCommand(KeyValues *)
+  .text:000DAEB7                 ; iAllocSize
+  .text:000DAEB7                 mov     [esp+1Ch+iAllocSize], 18h; iAllocSize
+  .text:000DAEBE                 call    _ZN9KeyValuesnwEj; KeyValues::operator new(uint)
+  .text:000DAEC3                 mov     edi, eax
+  .text:000DAEC5                 mov     eax, offset aReleasemodalwi; "ReleaseModalWindow"
+  .text:000DAECA                 ; firstValue
+  .text:000DAECA                 mov     [esp+1Ch+parent], eax; firstValue
+  .text:000DAECE                 mov     eax, offset firstKey; "command"
+  .text:000DAED3                 ; firstKey
+  .text:000DAED3                 mov     [esp+1Ch+queryText], eax; firstKey
+  .text:000DAED7                 mov     eax, (offset aCompletioncomm+0Ah); "Command"
+  .text:000DAEDC                 ; SetName
+  .text:000DAEDC                 mov     [esp+1Ch+title], eax; SetName
+  .text:000DAEE0                 ; this
+  .text:000DAEE0                 mov     [esp+1Ch+iAllocSize], edi; this
+  .text:000DAEE3                 call    _ZN9KeyValuesC2EPKcS1_S1_; KeyValues::KeyValues(char const*,char const*,char const*)
+  .text:000DAEE8                 ; keyValues
+  .text:000DAEE8                 mov     [esp+1Ch+title], edi; keyValues
+  .text:000DAEEC                 ; this
+  .text:000DAEEC                 mov     [esp+1Ch+iAllocSize], box; this
+  .text:000DAEEF                 call    _ZN5vgui28QueryBox16SetCancelCommandEP9KeyValues; vgui2::QueryBox::SetCancelCommand(KeyValues *)
+  .text:000DAEF4                 mov     eax, [box]
+  .text:000DAEF6                 mov     [esp+1Ch+title], esi
+  .text:000DAEFA                 mov     [esp+1Ch+iAllocSize], box
+  .text:000DAEFD                 call    dword ptr [eax+0A0h]
+  .text:000DAF03                 mov     eax, [box]
+  .text:000DAF05                 xor     edx, edx
+  .text:000DAF07                 mov     [esp+1Ch+title], edx
+  .text:000DAF0B                 mov     [esp+1Ch+iAllocSize], box
+  .text:000DAF0E                 call    dword ptr [eax+2FCh]
+  .text:000DAF14                 call    _ZN5vgui27surfaceEv; vgui2::surface(void)
+  .text:000DAF19                 mov     esi, eax
+  .text:000DAF1B                 mov     eax, [eax]
+  .text:000DAF1D                 mov     edi, [eax+0D0h]
+  .text:000DAF23                 mov     eax, [box]
+  .text:000DAF25                 mov     [esp+1Ch+iAllocSize], box
+  .text:000DAF28                 call    dword ptr [eax]
+  .text:000DAF2A                 mov     [esp+1Ch+iAllocSize], esi
+  .text:000DAF2D                 mov     [esp+1Ch+title], eax
+  .text:000DAF31                 call    edi
+  .text:000DAF33                 add     esp, 10h
+  .text:000DAF36                 pop     box
+  .text:000DAF37                 pop     esi
+  .text:000DAF38                 pop     edi
+  .text:000DAF39                 retn
+procedure: |-
+  void __cdecl CTaskbar_QuitConfirmationOwner(CTaskbar *const this)
+  {
+    vgui2::QueryBox *v1; // ebx
+    KeyValues *v2; // edi
+    KeyValues *v3; // edi
+    vgui2::ISurface *v4; // esi
+    void (__cdecl *v5)(vgui2::ISurface *, int); // edi
+    int v6; // eax
+
+    v1 = (vgui2::QueryBox *)operator new(0x134u);
+    vgui2::QueryBox::QueryBox(v1, "#GameUI_QuitConfirmationTitle", "#GameUI_QuitConfirmationText", this); // QueryBox_ctor, narrow-string overload
+    (*((void (__cdecl **)(vgui2::QueryBox *, const char *))v1->_vptr_IClientPanel + 196))(v1, "#GameUI_Quit");
+    v2 = (KeyValues *)KeyValues::operator new(0x18u);
+    KeyValues::KeyValues(v2, "Command", "command", "QuitNoConfirm");
+    vgui2::QueryBox::SetOKCommand(v1, v2);
+    v3 = (KeyValues *)KeyValues::operator new(0x18u);
+    KeyValues::KeyValues(v3, "Command", "command", "ReleaseModalWindow");
+    vgui2::QueryBox::SetCancelCommand(v1, v3);
+    (*((void (__cdecl **)(vgui2::QueryBox *, CTaskbar *const))v1->_vptr_IClientPanel + 40))(v1, this);
+    (*((void (__cdecl **)(vgui2::QueryBox *, _DWORD))v1->_vptr_IClientPanel + 191))(v1, 0);
+    v4 = vgui2::surface();
+    v5 = *(void (__cdecl **)(vgui2::ISurface *, int))(*(_DWORD *)v4 + 208);
+    v6 = (*v1->_vptr_IClientPanel)(v1);
+    v5(v4, v6);
+  }

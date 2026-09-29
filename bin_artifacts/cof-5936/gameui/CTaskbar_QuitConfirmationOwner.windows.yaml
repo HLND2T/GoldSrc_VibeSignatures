@@ -1,0 +1,5 @@
+func_name: CTaskbar_QuitConfirmationOwner
+func_va: '0x1003e5f3'
+func_rva: '0x3e5f3'
+func_size: '0x125'
+func_sig: 55 8B EC 83 EC 24 89 4D ?? 68 34 01 00 00 E8 ?? ?? ?? ?? 83 C4 04 89 45 ?? 83 7D ?? ?? 74 ?? 8B 45 ??

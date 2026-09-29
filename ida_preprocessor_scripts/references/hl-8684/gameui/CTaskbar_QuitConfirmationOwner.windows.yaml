@@ -1,0 +1,108 @@
+func_name: "CTaskbar_QuitConfirmationOwner"
+func_va: "0x1002c740"
+disasm_code: |-
+  .text:1002C740                 push    ebx
+  .text:1002C741                 push    esi
+  .text:1002C742                 push    edi
+  .text:1002C743                 ; unsigned int
+  .text:1002C743                 push    134h; unsigned int
+  .text:1002C748                 mov     edi, ecx
+  .text:1002C74A                 call    ??2@YAPAXI@Z; operator new(uint)
+  .text:1002C74F                 add     esp, 4
+  .text:1002C752                 test    eax, eax
+  .text:1002C754                 jz      short loc_1002C76C
+  .text:1002C756                 push    edi
+  .text:1002C757                 push    offset aGameuiQuitconf; "#GameUI_QuitConfirmationText"
+  .text:1002C75C                 push    offset aGameuiQuitconf_0; "#GameUI_QuitConfirmationTitle"
+  .text:1002C761                 mov     ecx, eax
+  .text:1002C763                 call    sub_10069C90; QueryBox_ctor: vgui2::QueryBox::QueryBox(char const*, char const*, vgui2::Panel*)
+  .text:1002C768                 mov     esi, eax
+  .text:1002C76A                 jmp     short loc_1002C76E
+  .text:1002C76C                 xor     esi, esi
+  .text:1002C76E                 mov     eax, [esi]
+  .text:1002C770                 push    offset aGameuiQuit; "#GameUI_Quit"
+  .text:1002C775                 mov     ecx, esi
+  .text:1002C777                 call    dword ptr [eax+310h]
+  .text:1002C77D                 push    18h
+  .text:1002C77F                 call    sub_10053BC0
+  .text:1002C784                 add     esp, 4
+  .text:1002C787                 test    eax, eax
+  .text:1002C789                 jz      short loc_1002C7A3
+  .text:1002C78B                 push    offset aQuitnoconfirm; "QuitNoConfirm"
+  .text:1002C790                 push    offset aCommand_0; "command"
+  .text:1002C795                 push    offset aCommand; "Command"
+  .text:1002C79A                 mov     ecx, eax
+  .text:1002C79C                 call    sub_10052510
+  .text:1002C7A1                 jmp     short loc_1002C7A5
+  .text:1002C7A3                 xor     eax, eax
+  .text:1002C7A5                 push    eax
+  .text:1002C7A6                 mov     ecx, esi
+  .text:1002C7A8                 call    sub_1006A0D0
+  .text:1002C7AD                 push    18h
+  .text:1002C7AF                 call    sub_10053BC0
+  .text:1002C7B4                 add     esp, 4
+  .text:1002C7B7                 test    eax, eax
+  .text:1002C7B9                 jz      short loc_1002C7D3
+  .text:1002C7BB                 push    offset aReleasemodalwi; "ReleaseModalWindow"
+  .text:1002C7C0                 push    offset aCommand_0; "command"
+  .text:1002C7C5                 push    offset aCommand; "Command"
+  .text:1002C7CA                 mov     ecx, eax
+  .text:1002C7CC                 call    sub_10052510
+  .text:1002C7D1                 jmp     short loc_1002C7D5
+  .text:1002C7D3                 xor     eax, eax
+  .text:1002C7D5                 push    eax
+  .text:1002C7D6                 mov     ecx, esi
+  .text:1002C7D8                 call    sub_1006A140
+  .text:1002C7DD                 mov     edx, [esi]
+  .text:1002C7DF                 push    edi
+  .text:1002C7E0                 mov     ecx, esi
+  .text:1002C7E2                 call    dword ptr [edx+0A4h]
+  .text:1002C7E8                 mov     eax, [esi]
+  .text:1002C7EA                 push    0
+  .text:1002C7EC                 mov     ecx, esi
+  .text:1002C7EE                 call    dword ptr [eax+2F8h]
+  .text:1002C7F4                 call    sub_1003F040
+  .text:1002C7F9                 mov     edx, [esi]
+  .text:1002C7FB                 mov     edi, eax
+  .text:1002C7FD                 mov     ecx, esi
+  .text:1002C7FF                 mov     ebx, [edi]
+  .text:1002C801                 call    dword ptr [edx]
+  .text:1002C803                 push    eax
+  .text:1002C804                 mov     ecx, edi
+  .text:1002C806                 call    dword ptr [ebx+0CCh]
+  .text:1002C80C                 pop     edi
+  .text:1002C80D                 pop     esi
+  .text:1002C80E                 pop     ebx
+  .text:1002C80F                 retn
+procedure: |-
+  int __thiscall CTaskbar_QuitConfirmationOwner(void *this)
+  {
+    int v2; // esi
+    int v3; // eax
+    int v4; // eax
+    int *v5; // edi
+    int v6; // ebx
+    int v7; // eax
+
+    if ( operator new(0x134u) )
+      v2 = vgui2::QueryBox::QueryBox(aGameuiQuitconf_0, aGameuiQuitconf, this); // QueryBox_ctor, narrow-string overload
+    else
+      v2 = 0;
+    (*(void (__thiscall **)(int, char *))(*(_DWORD *)v2 + 784))(v2, aGameuiQuit);
+    if ( sub_10053BC0(24) )
+      v3 = sub_10052510(aCommand, aCommand_0, aQuitnoconfirm);
+    else
+      v3 = 0;
+    sub_1006A0D0(v3);
+    if ( sub_10053BC0(24) )
+      v4 = sub_10052510(aCommand, aCommand_0, aReleasemodalwi);
+    else
+      v4 = 0;
+    sub_1006A140(v4);
+    (*(void (__thiscall **)(int, void *))(*(_DWORD *)v2 + 164))(v2, this);
+    (*(void (__thiscall **)(int, _DWORD))(*(_DWORD *)v2 + 760))(v2, 0);
+    v5 = (int *)sub_1003F040();
+    v6 = *v5;
+    v7 = (**(int (__thiscall ***)(int))v2)(v2);
+    return (*(int (__thiscall **)(int *, int))(v6 + 204))(v5, v7);
+  }

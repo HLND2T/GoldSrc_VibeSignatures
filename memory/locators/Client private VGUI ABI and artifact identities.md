@@ -99,3 +99,26 @@ IDA auto-analysis merges many adjacent functions in the identical HL-3248/3266/3
 ### Verification and scope
 
 2026-09-29: an exact 62-node strict/no-save batch forced all 47 previously configured engine/gameui/client Panel::Init nodes plus all 15 new serverbrowser nodes; 62 succeeded, zero failed/skipped. The new artifacts are `bin_artifacts/<tag>/serverbrowser/vgui2_Panel_Init.<platform>.yaml`. Unit suite: 1217 tests OK (5 skipped); repository-contract suite: 14 tests OK after its Sven PE32 smoke check was made inventory-independent; formatting passed. Six legacy HL DLLs were added to the `bin` submodule's local dev branch with IDA databases excluded.
+
+## GameUI dialog constructors and QueryBox (#290)
+
+### Trigger
+
+Adding MetaHookSv's four private GameUI constructor lookups to the 11 HL/Sven/CoF gameui configs (15 Windows/Linux binaries). The issue's `hw.dll/hw.so` label is misleading: all four call targets live in `GameUI.dll/gameui.so`.
+
+### Root cause and constraints
+
+- `#GameUI_Console` and `#GameUI_Options` move into specialized `SetTitle` helpers in optimized Linux builds; their xrefs do not reliably own the requested constructor.
+- `#QueryBox_Cancel` belongs to both the `char` and `wchar_t` QueryBox constructors. HL25/SvEngine Windows inline the quit-dialog creator into a larger `CTaskbar::OnCommand` body, which can call the same narrow constructor several times. A fixed call number or a requirement for one call in the whole owner is wrong.
+- IDA's existing string list may omit a referenced literal. Rebuild the C-string index before exact `FULLMATCH` xrefs; raw mapped-byte scans were used to audit actual literals.
+- The two QueryBox overloads share a long wildcarded instruction prefix. The unique current-binary output signature may need a validated relative `call` displacement to the corresponding `MessageBox` overload; this is not a discovery anchor.
+
+### Correct approach
+
+- Find `CGameConsoleDialog::CGameConsoleDialog()` through its own `ConsoleSubmit`, `CCreateMultiplayerGameDialog::CCreateMultiplayerGameDialog(vgui2::Panel*)` through `CSBotConfig`, and `COptionsDialog::COptionsDialog(vgui2::Panel*)` through `#GameUI_Keyboard`.
+- Find the current containing Taskbar body through `#GameUI_QuitConfirmationTitle`. Pattern D selects direct `QueryBox_ctor` calls from the generated `hl-8684` Windows/Linux reference. Require every reported call to resolve to one callee, and require one reported call in the control-flow block containing both quit title and text xrefs. The callee must itself reference `#QueryBox_Cancel`; emit the narrow-string `vgui2::QueryBox::QueryBox(char const*, char const*, vgui2::Panel*)` identity.
+- Keep the predecessor artifact named `CTaskbar_QuitConfirmationOwner` because the containing source function changes under inlining. No VA/RVA, call order, frame size, or vtable offset is used as a locator.
+
+### Verification and scope
+
+2026-09-29: owned IDA sessions bound each exact GameUI binary; an exact 45-node bounded batch forced the three new finder skills on all 15 configured GameUI binaries, with 45 successes, no failures or skips. All 75 function artifacts passed current-binary signature validation; the four requested VAs were also matched to independent string/call evidence. Unit suite: 1217 OK (9 skipped); repository-contract: 14 OK; formatter check passed. Old HL and CoF Linux builds, CS/CZ gamevers, `hw`, and the wchar_t QueryBox overload have no applicable requested GameUI target here.

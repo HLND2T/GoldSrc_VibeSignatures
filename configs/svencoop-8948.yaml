@@ -2754,6 +2754,19 @@ modules:
         expected_output:
           - ISurface_GetModalPanel.{platform}.yaml
           - ISurface_PaintTraverse.{platform}.yaml
+      - name: find-GameUI-dialog-constructors
+        expected_output:
+          - CGameConsoleDialog_ctor.{platform}.yaml
+          - CCreateMultiplayerGameDialog_ctor.{platform}.yaml
+          - COptionsDialog_ctor.{platform}.yaml
+      - name: find-CTaskbar_QuitConfirmationOwner
+        expected_output:
+          - CTaskbar_QuitConfirmationOwner.{platform}.yaml
+      - name: find-QueryBox_ctor
+        expected_input:
+          - CTaskbar_QuitConfirmationOwner.{platform}.yaml
+        expected_output:
+          - QueryBox_ctor.{platform}.yaml
     symbols:
       - name: vgui2_Panel_Init
         category: func
@@ -2763,6 +2776,16 @@ modules:
         category: vfunc
       - name: ISurface_PaintTraverse
         category: vfunc
+      - name: CGameConsoleDialog_ctor
+        category: func
+      - name: CCreateMultiplayerGameDialog_ctor
+        category: func
+      - name: COptionsDialog_ctor
+        category: func
+      - name: CTaskbar_QuitConfirmationOwner
+        category: func
+      - name: QueryBox_ctor
+        category: func
   - name: server
     module_windows: server.dll
     module_linux: server.so
