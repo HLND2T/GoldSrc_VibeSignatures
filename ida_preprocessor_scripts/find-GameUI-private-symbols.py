@@ -7,11 +7,10 @@ then checked against their arguments and vptr stores; PropertyDialog's member
 comes from the constructed-pointer store. The MessageBox size patch is the
 SetSize call whose receiver is the box itself, after its label's SetSize call.
 
-The TextEntry and PropertySheet virtual positions are ABI layout checks, not
-search signatures: each is read from a verified current-binary class table and
-checked against the related base table. Linux's extra destructor slot is
-accounted for explicitly. No VA, RVA, object size, or member displacement is
-copied from a reference build.
+TextEntry and PropertySheet methods are selected by their source behavior and
+receiver/argument dataflow, then mapped back into their current class tables.
+Inheritance is only an additional check. No virtual slot, VA, RVA, object size,
+or member displacement is copied from a reference build.
 """
 
 from pathlib import Path
@@ -28,6 +27,7 @@ from ida_analyze_util import (
     write_vtable_yaml,
 )
 from ida_preprocessor_scripts._vgui_paint_common import walk
+from ida_preprocessor_scripts import _vgui_private_method_identity as method_identity
 
 
 CLASSES = {
@@ -61,14 +61,9 @@ FUNCTIONS = {
 MEMBER = "GameUI_PropertyDialog__propertySheet"
 PATCH = "GameUI_MessageBox_ApplySchemeSettings_to_Panel_SetSize_callsite_0"
 
-# Verified on every configured gameui PE32/ELF32 binary. These navigate the
-# class tables; the IDA locator below validates the related method behavior.
-SLOTS = {
-    "windows": {"insert": 148, "layout": 176, "draw": 190, "hotkey": 73, "perform": 111},
-    "linux": {"insert": 149, "layout": 177, "draw": 191, "hotkey": 74, "perform": 112},
-}
-
-LOCATE = r"""
+LOCATE = (
+    Path(method_identity.__file__).read_text(encoding="utf-8")
+    + r"""
 import ida_gdl
 
 def literal_reference(text):
@@ -207,6 +202,55 @@ def message_size_method(table, count, frame_table, frame_count, platform):
         raise ValueError('MessageBox size method is ambiguous: %r' % matches)
     return matches[0]
 
+def warning_addresses():
+    # InsertChar may reference the warning sound twice, and other controls
+    # use it too. PIC references may have no IDA xref, so follow the pointer
+    # into a call argument below instead of depending on IDA's string index.
+    needle = b'Resource\\warning.wav\0'
+    addresses = set()
+    for segment_ea in idautils.Segments():
+        segment = ida_segment.getseg(segment_ea)
+        if segment is None or segment.perm & ida_segment.SEGPERM_EXEC:
+            continue
+        data = ida_bytes.get_bytes(segment.start_ea, segment.end_ea - segment.start_ea) or b''
+        offset = data.find(needle)
+        while offset >= 0:
+            addresses.add(int(segment.start_ea + offset))
+            offset = data.find(needle, offset + 1)
+    return addresses
+
+def method_candidates(table_key, base_key, warnings):
+    candidates = []
+    for index in range(min(values[table_key + '_count'], values[base_key + '_count'])):
+        address = int(ida_bytes.get_dword(values[table_key + '_table'] + index * 4))
+        base = int(ida_bytes.get_dword(values[base_key + '_table'] + index * 4))
+        inherited = table_key == 'tab'
+        if not is_code_address(address) or (address == base) != inherited:
+            continue
+        immediates, divides = set(), False
+        for ea in idautils.FuncItems(address):
+            instruction = idautils.DecodeInstruction(ea)
+            if instruction is None:
+                continue
+            mnemonic = instruction.get_canon_mnem()
+            divides |= mnemonic in ('idiv', 'div')
+            for operand in instruction.ops:
+                if operand.type == idaapi.o_imm:
+                    immediates.add(int(operand.value))
+        if inherited:
+            if not CHARACTER_FILTER_CODES <= immediates and not divides:
+                continue
+        # Examine every override: a virtual dispatch can load its slot into
+        # a register before CALL, as Sven 10257 does in HasHotkey.
+        flow = flow_at(address, values['platform'])
+        warning = any(arg == ('const', literal)
+                      for call in flow['calls'] for arg in call['args'] for literal in warnings)
+        candidates.append(dict(index=index, address=address, base=base,
+                               warning=warning, comparisons=flow['comparisons'],
+                               immediates=immediates, divides=divides,
+                               calls=flow['calls'], stores=flow['stores']))
+    return candidates
+
 console_literal, console_site, console_owner = literal_reference('ConsoleEntry')
 sheet_literal, sheet_site, sheet_owner = literal_reference('Sheet')
 message_literal, message_site, message_owner = literal_reference('MessageBoxText')
@@ -259,6 +303,11 @@ if len(key_matches) != 1:
 size_index, apply_ea, setsize_ea, patch_ea = message_size_method(
     values['msg_table'], values['msg_count'], values['frame_table'], values['frame_count'], values['platform']
 )
+methods = recover_private_methods(
+    method_candidates('tab', 'text', warning_addresses()),
+    method_candidates('sheet', 'panel', set()),
+    setsize_ea,
+)
 
 result = {
     'sheet_ctor': sheet_call['direct'],
@@ -273,8 +322,10 @@ result = {
     'apply_ea': apply_ea,
     'setsize_ea': setsize_ea,
     'patch_ea': patch_ea,
+    'methods': {name: {'ea': method['address'], 'index': method['index']} for name, method in methods.items()},
 }
 """
+)
 
 
 PATCH_SIGNATURE = r"""
@@ -345,12 +396,6 @@ if 'result' not in globals():
 """
 
 
-def _entry(table, index):
-    entries = table["vtable_entries"]
-    value = entries.get(index, entries.get(str(index)))
-    return int(value, 0) if isinstance(value, str) else int(value)
-
-
 async def _function_payload(session, ea, image_base, name, *, table=None, index=None):
     candidate = None
     across = False
@@ -402,24 +447,14 @@ async def preprocess_skill(
         if found.get("error"):
             raise ValueError(found["error"])
 
-        slots = SLOTS[platform]
-        # The derived console class inherits these exact TextEntry entries.
-        for slot_name in ("insert", "layout", "draw"):
-            index = slots[slot_name]
-            if _entry(tables["tab"], index) != _entry(tables["text"], index):
-                raise ValueError(f"TextEntry inheritance differs at {slot_name}")
-        for slot_name in ("hotkey", "perform"):
-            index = slots[slot_name]
-            if _entry(tables["sheet"], index) == _entry(tables["panel"], index):
-                raise ValueError(f"PropertySheet does not override {slot_name}")
-
+        methods = found["methods"]
         addresses = {
             "GameUI_TabCatchingTextEntry_OnKeyCodeTyped": (found["key_ea"], found["key_index"]),
-            "GameUI_TextEntry_InsertChar": (_entry(tables["tab"], slots["insert"]), slots["insert"]),
-            "GameUI_TextEntry_LayoutVerticalScrollBarSlider": (_entry(tables["tab"], slots["layout"]), slots["layout"]),
-            "GameUI_TextEntry_GetStartDrawIndex": (_entry(tables["tab"], slots["draw"]), slots["draw"]),
-            "GameUI_PropertySheet_HasHotkey": (_entry(tables["sheet"], slots["hotkey"]), slots["hotkey"]),
-            "GameUI_PropertySheet_PerformLayout": (_entry(tables["sheet"], slots["perform"]), slots["perform"]),
+            "GameUI_TextEntry_InsertChar": (methods["insert"]["ea"], methods["insert"]["index"]),
+            "GameUI_TextEntry_LayoutVerticalScrollBarSlider": (methods["layout"]["ea"], methods["layout"]["index"]),
+            "GameUI_TextEntry_GetStartDrawIndex": (methods["draw"]["ea"], methods["draw"]["index"]),
+            "GameUI_PropertySheet_HasHotkey": (methods["hotkey"]["ea"], methods["hotkey"]["index"]),
+            "GameUI_PropertySheet_PerformLayout": (methods["perform"]["ea"], methods["perform"]["index"]),
             "GameUI_MessageBox_ApplySchemeSettings": (found["apply_ea"], found["apply_index"]),
             "GameUI_PropertySheet_ctor": (found["sheet_ctor"], None),
             "GameUI_MessageBox_ctor": (found["message_ctor"], None),
