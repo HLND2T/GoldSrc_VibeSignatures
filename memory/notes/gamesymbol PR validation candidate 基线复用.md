@@ -98,3 +98,24 @@ selected-node execution，以及 full inventory/byte drift。
 - 部署顺序：修复须先进入 base；再更新依赖 PR 的分支以触发新运行。仅修改 PR 内 planner 或重跑使用旧 base 的 run，不会启用新规则。
 
 - 实测（2026-09-19）：修复后的 planner 对 PR #150 原失败输入 `base=43180a6`、`head=54c613b`、`merge=f996be2` 重放成功（exit 0）；仅选择 Sven 8948/10257 的 W/L 四个 `find-Draw_FillRGBABuf` 节点和四个同名输出，两条旧 Windows artifact 标为 retired，两版本均要求 snapshot/gamedata 重建。该证据验证计划生成，不代表后续 self-hosted IDA job 已运行。
+
+## Per-tag bounded-parallel tail（2026-09-29）
+
+- 触发信号：单个 PR 影响多个 game version 时，`analyze-self-hosted` 的 `batch/analyze` 之后仍逐 tag 串行跑
+  `compare` / `symbol-build` / `symbol-guard` / `gamedata-build` / `gamedata-guard` / `self-consistency`，每 tag
+  仅数秒，但 tag 多时线性累加。
+- 正确做法：`materialize` 循环与这条 6 阶段下游链改为 `ForEach-Object -Parallel -ThrottleLimit $tailConcurrency`，
+  由 `win64` Environment 的 `GSVIBE_TAIL_MAX_CONCURRENCY`（十进制 `1..32`，默认 `2`，fail closed）控制。
+  `batch/validate-selection`、`batch/analyze`、`batch/check-tracked-artifacts` 仍是全局串行阶段。
+- 为何可以并行：每个 tag 的 6 个阶段只共享**只读**输入（external rebuild root、`bin/`、config、generators、plan），
+  输出全部落在该 tag 独有的 GUID staging 目录；不存在跨 tag 的可变状态或锁。tag 内部仍是严格依赖链，只做 tag 间并行。
+- 失败语义变更（**故意**，已确认）：原为 fail-fast——第一个 tag 失败即中断，后续 tag 不跑；现改为跑完所有 tag 再聚合，
+  逐条打 `::error::` 后统一 `throw`，以便 failure artifact 上传拿到所有 tag 的部分重建证据。materialize 失败仍在
+  `batch/analyze` 之前 fail closed。
+- 代价：日志跨 tag 交错（每行仍带 tag 前缀）；并行 runspace 注入有三个必须遵守的约束，见
+  [[ForEach-Object -Parallel constrains runspace injection]]。
+- 收益边界：主成本 `batch/analyze` 不受影响，这只压缩尾巴；受影响 tag 数 k=1 时零收益，k 大（共享 finder、
+  `configs/config.yaml`、impact registry 变更）时才明显。**并发收益未在真实 self-hosted 运行上测量。**
+- 验证方式：YAML 解析并保留契约字面量、`Parser::ParseFile` 语法检查、抽出 `run` 块后以 stub `uv`/`git` 端到端跑
+  成功 / 失败 / 无受影响 tag 三条路径、并发变量 fail-closed 边界、`tests/test_repository_contract.py` 新增断言、
+  `format_repo_files.py --check`。真实 IDA 结果须单独报告。

@@ -317,6 +317,23 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn("$plannerCli compare", analyzer["run"])
         self.assertIn("-artifactdir $artifactRoot", analyzer["run"])
         self.assertIn("git diff --exit-code -- bin_artifacts", analyzer["run"])
+        # Per-tag materialization and downstream validation run bounded-parallel, with the
+        # cap owned by the win64 environment. A failed tag must not abort its siblings, so
+        # each tag collects its failure and the step rethrows after every tag has run.
+        self.assertEqual(
+            "${{ vars.GSVIBE_TAIL_MAX_CONCURRENCY || '2' }}",
+            self_hosted["env"]["GSVIBE_TAIL_MAX_CONCURRENCY"],
+        )
+        self.assertNotIn("foreach ($action in $plan.tags)", analyzer["run"])
+        self.assertEqual(2, analyzer["run"].count("ForEach-Object -ThrottleLimit $tailConcurrency -Parallel"))
+        for marker in (
+            "GSVIBE_TAIL_MAX_CONCURRENCY must be a decimal integer in 1..32",
+            "$materializeFailures = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()",
+            "$tailFailures = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()",
+            'throw "$($materializeFailures.Count) tag materialization(s) failed"',
+            'throw "$($tailFailures.Count) tag validation pipeline(s) failed"',
+        ):
+            self.assertIn(marker, analyzer["run"])
         for forbidden in (
             "LLM_FAKE_AS",
             "gamesymbol_candidate.py publish",

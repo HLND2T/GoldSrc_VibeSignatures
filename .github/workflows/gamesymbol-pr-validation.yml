@@ -199,6 +199,7 @@ jobs:
       GSVIBE_ANALYSIS_MAX_CONCURRENCY: ${{ vars.GSVIBE_ANALYSIS_MAX_CONCURRENCY || '1' }}
       GSVIBE_ANALYSIS_MAX_MEMORY_MIB: ${{ vars.GSVIBE_ANALYSIS_MAX_MEMORY_MIB }}
       GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB: ${{ vars.GSVIBE_ANALYSIS_INITIAL_WORKER_RESERVATION_MIB }}
+      GSVIBE_TAIL_MAX_CONCURRENCY: ${{ vars.GSVIBE_TAIL_MAX_CONCURRENCY || '2' }}
     steps:
       - name: Checkout PR merge commit and exact binaries
         uses: actions/checkout@v5
@@ -301,6 +302,9 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          # ForEach-Object -Parallel refuses scriptblock variables through $using:, so the
+          # stage timer ships as text and is rebuilt from this single definition per runspace.
+          $stageHelper = @'
           function Invoke-ValidationStage([string]$Label, [scriptblock]$Action) {
             $timer = [Diagnostics.Stopwatch]::StartNew()
             $status = 'failed'
@@ -313,6 +317,12 @@ jobs:
               Write-Host "[$([DateTime]::UtcNow.ToString('o'))] END $Label status=$status elapsed=$($timer.Elapsed.TotalSeconds.ToString('F3', [Globalization.CultureInfo]::InvariantCulture))s"
             }
           }
+          '@
+          . ([scriptblock]::Create($stageHelper))
+          $tailConcurrency = 0
+          if (-not [int]::TryParse($env:GSVIBE_TAIL_MAX_CONCURRENCY, [ref]$tailConcurrency) -or $tailConcurrency -lt 1 -or $tailConcurrency -gt 32) {
+            throw "GSVIBE_TAIL_MAX_CONCURRENCY must be a decimal integer in 1..32, got '$env:GSVIBE_TAIL_MAX_CONCURRENCY'"
+          }
           $planPath = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\plan.json'
           $trustedRoot = Join-Path $env:GITHUB_WORKSPACE '.trusted-validator'
           $plannerCli = Join-Path $trustedRoot 'gamesymbol_pr_validation.py'
@@ -321,7 +331,8 @@ jobs:
           $plan = Get-Content -Raw -LiteralPath $planPath | ConvertFrom-Json
           $selectionPath = Join-Path $env:RUNNER_TEMP 'gamesymbol-validation\analysis-selection.json'
           $diagnosticsRoot = Join-Path $env:RUNNER_TEMP 'gamesymbol-analysis-${{ github.run_id }}-${{ github.run_attempt }}'
-          $selections = @($plan.tags | Where-Object { $_.analysis_nodes.Count -gt 0 } | ForEach-Object {
+          $analyzed = @($plan.tags | Where-Object { $_.analysis_nodes.Count -gt 0 })
+          $selections = @($analyzed | ForEach-Object {
             @{ tag = $_.tag; node_ids = @($_.analysis_nodes) }
           })
           @{ schema_version = 1; selections = $selections } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $selectionPath -Encoding utf8
@@ -330,34 +341,57 @@ jobs:
               -artifactdir $artifactRoot -batch_diagnostics $diagnosticsRoot
             if ($LASTEXITCODE -ne 0) { throw 'batch selection validation failed' }
           }
-          foreach ($action in $plan.tags) {
-            if ($action.analysis_nodes.Count -eq 0) { continue }
-            $tag = $action.tag
-            Invoke-ValidationStage "$tag/materialize" {
-              uv run --project $trustedRoot python $plannerCli materialize -repo-root $env:GITHUB_WORKSPACE `
-                -plan $planPath -tag $tag -merge-ref HEAD -bindir bin -artifactdir $artifactRoot
-              if ($LASTEXITCODE -ne 0) { throw "materialization failed for $tag" }
+          $materializeFailures = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()
+          $analyzed | ForEach-Object -ThrottleLimit $tailConcurrency -Parallel {
+            $ErrorActionPreference = 'Stop'
+            . ([scriptblock]::Create($using:stageHelper))
+            $planPath = $using:planPath
+            $trustedRoot = $using:trustedRoot
+            $plannerCli = $using:plannerCli
+            $artifactRoot = $using:artifactRoot
+            $failures = $using:materializeFailures
+            $tag = $_.tag
+            try {
+              Invoke-ValidationStage "$tag/materialize" {
+                uv run --project $trustedRoot python $plannerCli materialize -repo-root $env:GITHUB_WORKSPACE `
+                  -plan $planPath -tag $tag -merge-ref HEAD -bindir bin -artifactdir $artifactRoot
+                if ($LASTEXITCODE -ne 0) { throw "materialization failed for $tag" }
+              }
+            } catch {
+              $failures.Enqueue("$tag`: $($_.Exception.Message)")
             }
+          }
+          if ($materializeFailures.Count -gt 0) {
+            foreach ($failure in $materializeFailures) { Write-Host "::error::$failure" }
+            throw "$($materializeFailures.Count) tag materialization(s) failed"
           }
           Invoke-ValidationStage 'batch/analyze' {
             uv run python -u ida_analyze_bin.py -batch_selection $selectionPath -bindir bin `
               -artifactdir $artifactRoot -batch_diagnostics $diagnosticsRoot -debug -process_reporter console
             if ($LASTEXITCODE -ne 0) { throw 'selected-node batch analysis failed' }
           }
-          foreach ($action in $plan.tags) {
-            if ($action.analysis_nodes.Count -eq 0) { continue }
-            $tag = $action.tag
-            Invoke-ValidationStage "$tag/compare" {
-              uv run --project $trustedRoot python $plannerCli compare -repo-root $env:GITHUB_WORKSPACE `
-                -plan $planPath -tag $tag -merge-ref HEAD -bindir bin -artifactdir $artifactRoot
-              if ($LASTEXITCODE -ne 0) { throw "artifact byte comparison failed for $tag" }
-            }
+          $tailFailures = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()
+          $analyzed | ForEach-Object -ThrottleLimit $tailConcurrency -Parallel {
+            $ErrorActionPreference = 'Stop'
+            . ([scriptblock]::Create($using:stageHelper))
+            $planPath = $using:planPath
+            $trustedRoot = $using:trustedRoot
+            $plannerCli = $using:plannerCli
+            $candidateCli = $using:candidateCli
+            $artifactRoot = $using:artifactRoot
+            $failures = $using:tailFailures
+            $tag = $_.tag
             $stage = Join-Path $env:RUNNER_TEMP ("gamesymbol-$tag-" + [guid]::NewGuid().ToString('N'))
             New-Item -ItemType Directory -Path $stage | Out-Null
             try {
               $candidate = Join-Path $stage "$tag.yaml"
               $symbolSession = Join-Path $stage 'symbol-session.json'
               $gamedataSession = Join-Path $stage 'gamedata-session.json'
+              Invoke-ValidationStage "$tag/compare" {
+                uv run --project $trustedRoot python $plannerCli compare -repo-root $env:GITHUB_WORKSPACE `
+                  -plan $planPath -tag $tag -merge-ref HEAD -bindir bin -artifactdir $artifactRoot
+                if ($LASTEXITCODE -ne 0) { throw "artifact byte comparison failed for $tag" }
+              }
               Invoke-ValidationStage "$tag/symbol-build" {
                 uv run --project $trustedRoot python $candidateCli build -gamever $tag -bindir bin `
                   -artifactdir $artifactRoot -configyaml "configs/$tag.yaml" -output $candidate -session $symbolSession `
@@ -382,11 +416,17 @@ jobs:
                 uv run python gamesymbol_candidate.py mark -candidate $candidate -session $symbolSession -step gamedata -gamedata-session $gamedataSession
                 if ($LASTEXITCODE -ne 0) { throw "candidate self-consistency check failed for $tag" }
               }
+            } catch {
+              $failures.Enqueue("$tag`: $($_.Exception.Message)")
             } finally {
               Invoke-ValidationStage "$tag/cleanup" {
                 if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
               }
             }
+          }
+          if ($tailFailures.Count -gt 0) {
+            foreach ($failure in $tailFailures) { Write-Host "::error::$failure" }
+            throw "$($tailFailures.Count) tag validation pipeline(s) failed"
           }
           Invoke-ValidationStage 'batch/check-tracked-artifacts' {
             git diff --exit-code -- bin_artifacts

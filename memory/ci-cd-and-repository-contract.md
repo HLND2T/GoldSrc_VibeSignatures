@@ -39,7 +39,10 @@ only reachable on the runner host's private network.
 (artifact A/M/D/R/C ownership and downstream closure); rebuilds write only to an external temporary artifact root, force
 selected nodes to execute, then compare the complete inventory and bytes with merge Git blobs. `pr-validate` is the
 aggregate required check; the gamedata consistency gate (`mark -step gamedata`) is enforced by PR validation and
-`update_gamedata.py`. Forks that need self-hosted analysis fail closed. The route gate (four booleans -> four lanes) and
+`update_gamedata.py`. Forks that need self-hosted analysis fail closed. Per-tag materialization and the downstream
+snapshot/gamedata pipeline run bounded-parallel under `GSVIBE_TAIL_MAX_CONCURRENCY` (decimal `1..32`, default `2`,
+fail-closed, owned by the `win64` Environment); a failed tag no longer aborts its siblings, because failures are
+aggregated after every affected tag has run. The route gate (four booleans -> four lanes) and
 the planner's seed/classification sources are in [[gamesymbol PR validation routing 任务分流]]. See
 [[gamesymbol PR validation candidate 基线复用]] for the materialize/compare mechanics.
 
