@@ -1,0 +1,5 @@
+func_name: CCareerBotFrame::CCareerBotFrame(vgui2::Panel*)
+func_va: '0x10004120'
+func_rva: '0x4120'
+func_size: '0x82b'
+func_sig: 81 EC 98 01 00 00 8B 84 24 ?? ?? ?? ?? 53 55 56 33 F6 57 56 8B E9 68 ?? ?? ?? ?? 50 89 6C 24 ?? E8 ?? ?? ?? ??

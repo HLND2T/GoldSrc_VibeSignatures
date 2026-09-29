@@ -1,0 +1,5 @@
+func_name: CCareerProfileFrame::CCareerProfileFrame(vgui2::Panel*)
+func_va: '0x1001bf28'
+func_rva: '0x1bf28'
+func_size: '0x4f3'
+func_sig: 55 8B EC 83 EC 78 89 4D ?? 6A 00 68 ?? ?? ?? ?? 8B 45 ?? 50 8B 4D ?? E8 ?? ?? ?? ?? 8B 4D ?? 81 C1 D0 01 00 00

@@ -122,3 +122,49 @@ Adding MetaHookSv's four private GameUI constructor lookups to the 11 HL/Sven/Co
 ### Verification and scope
 
 2026-09-29: owned IDA sessions bound each exact GameUI binary; an exact 45-node bounded batch forced the three new finder skills on all 15 configured GameUI binaries, with 45 successes, no failures or skips. All 75 function artifacts passed current-binary signature validation; the four requested VAs were also matched to independent string/call evidence. Unit suite: 1217 OK (9 skipped); repository-contract: 14 OK; formatter check passed. Old HL and CoF Linux builds, CS/CZ gamevers, `hw`, and the wchar_t QueryBox overload have no applicable requested GameUI target here.
+
+## GameUI career-frame constructors (#291)
+
+### Trigger
+
+Adding MetaHookSv's three private career-frame constructor lookups (`CCareerProfileFrame_ctor`,
+`CCareerMapFrame_ctor`, `CCareerBotFrame_ctor`) to the nine gameui configs whose GameUI ships these
+classes (11 Windows/Linux binaries). The issue's `hw.dll/hw.so` module hint is wrong again: all three
+constructors live in `GameUI.dll`/`gameui.so`.
+
+### Root cause and constraints
+
+- MetaHookSv anchors the Windows-only `68 ?? 68 <literal>` two-push form and then backtracks with
+  `ReverseSearchFunctionBegin(..., 0x150)`. GCC emits `mov reg, offset literal` / stack spills instead,
+  and the window is a heuristic, so neither is portable.
+- hl-10210 and hl-8684 `gameui.so` expose only C1/C2 constructor symbols; the literal reference resolves
+  to the same body that `nm -C` reports for `_ZN..C1E` and `_ZN..C2E` (identical address).
+- hl-8684 `gameui.so` carries DWARF, and IDA types `0x167919..0x167dcd` as a single
+  `const CCareerProfileData save` item. `ProfileSelectionBackground` is therefore rendered as
+  `save.tutorData+56h` and is absent from IDA's string list even after a full rebuild, so the shared
+  `xref_strings: FULLMATCH:` locator cannot see it.
+- The literal is target-owned, not caller-owned: the constructor calls
+  `CDottedBgLabel::CDottedBgLabel(this, "<literal>", ...)` and stores the result in the matching `m_p*`
+  member (confirmed in the hl-10210 Linux decompilation).
+
+### Correct approach
+
+- Scan non-executable segment bytes for `literal\0` (repo precedent: `find-client-vgui-worldmap.py`
+  `exact_code_ref`, the shared raw-byte lesson), collect code xrefs, and require exactly one owning
+  function for each literal.
+- Independently require that this owner installs its own RTTI vtable address point
+  (`??_7<Class>@@6B@` on Windows, `_ZTV<n><Class> + 8` on Linux) through `mov [reg+0], imm` before the
+  literal reference, and that the address point is a validated ≥4-slot executable table.
+- No VA/RVA, call order, byte pattern, or backtrack window is a locator; the artifact signature still
+  comes from the standard `_inspect_function_via_mcp` path (`inspect_unique_function`).
+
+### Verification and scope
+
+2026-09-29: an owned strict/no-save bounded batch (`-batch_selection`, 9 tags) forced all 11 configured
+gameui nodes — 11 succeeded, 0 failed, 0 skipped. All 33 artifacts were cross-checked against an
+independent lifecycle probe (single literal owner, vtable store before the literal, 1-3 direct callers)
+and against `nm -C` constructor symbols on both Linux `gameui.so` files; every emitted `func_sig`
+validated unique in its current binary. Unit suite: 1217 OK (9 skipped); repository-contract: 14 OK after
+staging the new artifacts; formatter clean. Sven's GameUI contains no career-frame classes, and the
+CS/CZ configs declare no gameui module (CZ loads valve's GameUI, already covered by the hl-\* artifacts),
+so the finder is registered only on the nine configs above.
