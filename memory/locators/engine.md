@@ -70,3 +70,11 @@ tags:
 - Approach: merge the old global finder into `find-RunListenServer.py`, discover the owner once, and emit both the function and the global using the same validated signature.
 - Verification: the 2026-09-29 all-gamever finder run reported zero failed skills. All 15 new `eng` payloads matched the old `engine` payloads exactly after excluding `gv_name`. `hl-3266` was generated through the user-owned IDA session at port 13337 and then skipped as already present by the batch; that session was neither saved nor closed.
 - Scope: all 11 engine configurations / 15 platform pairs; no compatibility alias for the old global name. Existing note permalink is retained for incoming memory links.
+
+## Runtime interface anchors (#303, A3–A5)
+
+- `find-engine-runtime-vtables.py` produces `CEngine_vtable` and `CGame_vtable` for all 15 engine/platform pairs. Exact MSVC TypeDescriptor/primary COL ownership or exact Itanium symbols plus typeinfo establish class identity. Entry scanning rejects null pointers and never copies a reference build's length.
+- HL25 Windows keeps raw RTTI but its restored IDB does not name these tables: raw RTTI resolves `CEngine` at `0x102c83a4` and `CGame` at `0x102c86d8`. Substring lookup for `CEngine` can incorrectly select `CEnginePanel`; do not use it.
+- `eng`'s static object vptr is not a universal derived-table validator. Old BLOB objects are uninitialized; Sven's static object initially carries the IEngine base table. Constructors establish the derived vptr at runtime.
+- `find-IVideoMode_UpdateWindowPosition.py` uses Pattern F slot-only inheritance from the existing `CVideoMode_Common_UpdateWindowPosition` artifact. It emits `func_name: IVideoMode::UpdateWindowPosition`, `vtable_name`, index and offset only. HL25's inserted slot is inherited from its own producer, not hardcoded again.
+- Verification on 2026-09-30: both all-gamever finder runs exited successfully; 30 generated vtables matched the independently recorded current-IDB entries, and all 15 interface slot artifacts matched their current concrete producers. No new body locator or shared-helper contract was introduced.

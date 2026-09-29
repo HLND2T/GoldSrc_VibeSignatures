@@ -1,0 +1,24 @@
+vtable_class: CEngine
+vtable_symbol: ??_7CEngine@@6B@
+vtable_va: '0x1e4a514'
+vtable_rva: '0x14a514'
+vtable_size: '0x44'
+vtable_numvfunc: 17
+vtable_entries:
+  0: '0x1dc6670'
+  1: '0x1dc6390'
+  2: '0x1dc6370'
+  3: '0x1dc6510'
+  4: '0x1dc6530'
+  5: '0x1dc64f0'
+  6: '0x1dc6540'
+  7: '0x1dc6400'
+  8: '0x1dc6550'
+  9: '0x1dc6560'
+  10: '0x1dc6570'
+  11: '0x1dc65b0'
+  12: '0x1dc65f0'
+  13: '0x1dc6600'
+  14: '0x1dc6610'
+  15: '0x1dc6660'
+  16: '0x1dc6650'

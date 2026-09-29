@@ -1,0 +1,22 @@
+vtable_class: CGame
+vtable_symbol: ??_7CGame@@6B@
+vtable_va: '0x1e1c174'
+vtable_rva: '0x11c174'
+vtable_size: '0x3c'
+vtable_numvfunc: 15
+vtable_entries:
+  0: '0x1daef20'
+  1: '0x1daed60'
+  2: '0x1daed70'
+  3: '0x1dae960'
+  4: '0x1dadd10'
+  5: '0x1daed90'
+  6: '0x1daeda0'
+  7: '0x1daedb0'
+  8: '0x1daedd0'
+  9: '0x1daee50'
+  10: '0x1daee90'
+  11: '0x1daeeb0'
+  12: '0x1daef00'
+  13: '0x1daef10'
+  14: '0x1daeec0'

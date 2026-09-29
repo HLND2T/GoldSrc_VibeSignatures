@@ -953,6 +953,15 @@ modules:
           - studioapi_SetupPlayerModel.{platform}.yaml
         expected_output:
           - cl_players_model.{platform}.yaml
+      - name: find-engine-runtime-vtables
+        expected_output:
+          - CEngine_vtable.{platform}.yaml
+          - CGame_vtable.{platform}.yaml
+      - name: find-IVideoMode_UpdateWindowPosition
+        expected_input:
+          - CVideoMode_Common_UpdateWindowPosition.{platform}.yaml
+        expected_output:
+          - IVideoMode_UpdateWindowPosition.{platform}.yaml
       - name: find-RunListenServer
         expected_output:
           - RunListenServer.{platform}.yaml
@@ -2038,6 +2047,12 @@ modules:
         category: func
       - name: cl_players_model
         category: gv
+      - name: CEngine_vtable
+        category: vtable
+      - name: CGame_vtable
+        category: vtable
+      - name: IVideoMode_UpdateWindowPosition
+        category: vfunc
       - name: RunListenServer
         category: func
       - name: Key_Event

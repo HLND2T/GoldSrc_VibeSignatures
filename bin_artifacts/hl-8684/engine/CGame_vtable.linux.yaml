@@ -1,0 +1,23 @@
+vtable_class: CGame
+vtable_symbol: _ZTV5CGame
+vtable_va: '0x285948'
+vtable_rva: '0x285948'
+vtable_size: '0x40'
+vtable_numvfunc: 16
+vtable_entries:
+  0: '0x204270'
+  1: '0x2043f0'
+  2: '0x204280'
+  3: '0x2043c0'
+  4: '0x204440'
+  5: '0x205050'
+  6: '0x204290'
+  7: '0x2042a0'
+  8: '0x2042b0'
+  9: '0x204350'
+  10: '0x2042d0'
+  11: '0x204330'
+  12: '0x204340'
+  13: '0x205960'
+  14: '0x205970'
+  15: '0x204400'

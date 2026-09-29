@@ -1,0 +1,25 @@
+vtable_class: CEngine
+vtable_symbol: _ZTV7CEngine
+vtable_va: '0x24d1f8'
+vtable_rva: '0x24d1f8'
+vtable_size: '0x48'
+vtable_numvfunc: 18
+vtable_entries:
+  0: '0xda180'
+  1: '0xda220'
+  2: '0xda4e0'
+  3: '0xda230'
+  4: '0xda270'
+  5: '0xda190'
+  6: '0xda250'
+  7: '0xda1a0'
+  8: '0xda370'
+  9: '0xda1b0'
+  10: '0xda1c0'
+  11: '0xda290'
+  12: '0xda2f0'
+  13: '0xda1d0'
+  14: '0xda1f0'
+  15: '0xda340'
+  16: '0xda210'
+  17: '0xda200'
