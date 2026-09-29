@@ -1,0 +1,5 @@
+func_name: vgui2::Panel::SetSize(int, int)
+func_va: '0x12dc50'
+func_rva: '0x12dc50'
+func_size: '0x4f'
+func_sig: 83 EC ?? 89 5C 24 ?? 89 74 24 ?? 8B 74 24 ?? 89 7C 24 ?? E8 D8 E3 FD FF 89 C3 8B 00 8B 78 ?? 8B 06 89 34 24

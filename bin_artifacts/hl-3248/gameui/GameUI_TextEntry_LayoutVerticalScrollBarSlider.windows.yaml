@@ -1,0 +1,8 @@
+func_name: vgui2::TextEntry::LayoutVerticalScrollBarSlider()
+func_va: '0x1005b060'
+func_rva: '0x5b060'
+func_size: '0x1d7'
+func_sig: 83 EC 18 55 56 8B F1 57 8B 86 ?? ?? ?? ?? 85 C0 0F 84 ?? ?? ?? ?? 8D 44 24 ?? 8D 4C 24 ?? 50 51 8B CE
+vtable_name: TabCatchingTextEntry
+vfunc_offset: '0x2c0'
+vfunc_index: 176

@@ -1,0 +1,9 @@
+func_name: vgui2::TextEntry::GetStartDrawIndex(int&)
+func_va: '0x1008241d'
+func_rva: '0x8241d'
+func_size: '0x2ce'
+func_sig: 55 8B EC 83 EC 2C 56 89 4D ?? C7 45 ?? ?? ?? ?? ?? 8B 4D ?? 81 C1 A0 00 00 00 E8 ?? ?? ?? ?? 89 45 ?? C7 45 ?? ??
+  ?? ?? ??
+vtable_name: TabCatchingTextEntry
+vfunc_offset: '0x2f8'
+vfunc_index: 190

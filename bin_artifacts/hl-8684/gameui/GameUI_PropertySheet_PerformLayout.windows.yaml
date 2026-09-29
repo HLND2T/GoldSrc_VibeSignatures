@@ -1,0 +1,9 @@
+func_name: vgui2::PropertySheet::PerformLayout()
+func_va: '0x10078370'
+func_rva: '0x78370'
+func_size: '0x1ce'
+func_sig: 83 EC 18 57 8B F9 E8 ?? ?? ?? ?? 8B 87 ?? ?? ?? ?? 85 C0 75 ?? 8B 07 6A 00 8B CF FF 90 ?? ?? ?? ?? 8B 8F ?? ?? ??
+  ?? 85 C9
+vtable_name: vgui2::PropertySheet
+vfunc_offset: '0x1bc'
+vfunc_index: 111

@@ -1,0 +1,8 @@
+func_name: vgui2::PropertySheet::HasHotkey(wchar_t)
+func_va: '0x138fd0'
+func_rva: '0x138fd0'
+func_size: '0x61'
+func_sig: 57 56 53 83 EC ?? 8B 74 24 ?? 8B 7C 24 ?? 8B 86 ?? ?? ?? ?? 85 C0 74 ?? 31 DB EB ??
+vtable_name: vgui2::PropertySheet
+vfunc_offset: '0x128'
+vfunc_index: 74

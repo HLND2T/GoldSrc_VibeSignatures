@@ -1,0 +1,5 @@
+func_name: vgui2::MessageBox::MessageBox(char const*, char const*, vgui2::Panel*)
+func_va: '0xa9bd0'
+func_rva: '0xa9bd0'
+func_size: '0x2ac'
+func_sig: 55 31 C0 57 56 53 83 EC ?? E8 B2 18 F8 FF 81 C3 ?? ?? ?? ?? 8B 74 24 ?? 89 44 24 ?? 31 C0 89 44 24 ?? 8B 44 24 ??

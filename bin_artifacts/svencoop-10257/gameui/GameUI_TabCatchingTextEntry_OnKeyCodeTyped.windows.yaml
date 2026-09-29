@@ -1,0 +1,8 @@
+func_name: TabCatchingTextEntry::OnKeyCodeTyped(vgui2::KeyCode)
+func_va: '0x100130e0'
+func_rva: '0x130e0'
+func_size: '0x44'
+func_sig: 55 8B EC 83 7D ?? ?? 56 BE 40 00 00 00 0F 45 75 ?? 57 8B F9 83 FE 58 74 ?? 83 FE 5A
+vtable_name: TabCatchingTextEntry
+vfunc_offset: '0x194'
+vfunc_index: 101

@@ -168,3 +168,19 @@ validated unique in its current binary. Unit suite: 1217 OK (9 skipped); reposit
 staging the new artifacts; formatter clean. Sven's GameUI contains no career-frame classes, and the
 CS/CZ configs declare no gameui module (CZ loads valve's GameUI, already covered by the hl-\* artifacts),
 so the finder is registered only on the nine configs above.
+
+## Issue #299: GameUI TextEntry, PropertySheet, and MessageBox private symbols
+
+### Trigger and constraints
+
+- MetaHookSv's `ConsoleEntry`, `Sheet`, and `MessageBoxText` literals belong to callers, respectively `CGameConsoleDialog`, `PropertyDialog`, and `EditablePanel::CreateControlByName`. `Sheet\0` also appears inside `PropertySheet\0` without a code xref in several PE builds. Treat the one referenced literal as the owner anchor, and verify the called constructor through its current RTTI vptr store.
+- `TabCatchingTextEntry::OnKeyCodeTyped` overrides `TextEntry`, while `InsertChar`, `LayoutVerticalScrollBarSlider`, and `GetStartDrawIndex` are inherited entries in the derived table. Windows and Linux slots differ by one because of ABI destructor layout. Early Windows forwards through a tail `jmp`; later Windows and Linux can use a virtual `call` followed by a direct base call or tail `jmp`.
+- `MessageBox::ApplySchemeSettings` and `MessageBox::PerformLayout` both call `Panel::SetSize` twice and use 100 in sizing. Identify ApplySchemeSettings by its earlier direct call to the matching `Frame::ApplySchemeSettings` table entry; PerformLayout calls its Frame base method after sizing. The patch site is the second SetSize call, whose receiver is `this`; the first receiver is the message label.
+
+### Correct approach
+
+`find-GameUI-private-symbols.py` uses exact current-binary RTTI tables and raw literal xrefs, then verifies constructor vptr stores and follows the constructed pointer into `PropertyDialog::_propertySheet`. It reads methods from the verified tables, checks TextEntry inheritance and PropertySheet overrides, and derives the MessageBox method/Panel::SetSize/callsite from receiver dataflow. The member displacement and patch instruction are extracted from the current IDB. Generated function/offset/patch signatures are output validators only. HL25 (`hl-10210`) produces the functions and tables but no SetSize patch; its size adjustment uses proportional scaling.
+
+### Verification and scope
+
+2026-09-29: all 15 configured gameui binaries across 11 HL/Sven/CoF gamevers were analyzed successfully (13 fresh selected nodes plus 2 `hl-10210` pilot nodes). The 223 new YAML artifacts were checked for real C++ payload names, current vtable entry/address agreement, slot arithmetic, member offsets, and the 13 non-HL25 patch locations. `nm -C` independently matched all 10 function VAs on each unstripped `hl-8684`, `hl-10210`, and `svencoop-8948` Linux gameui.so; `svencoop-10257` Linux is stripped but retains class RTTI. `_propertySheet` is 0x10c on HL 3248/3266/3329/3647 Windows, 0x110 on HL 4554/6153/8684, Sven, and CoF targets, and 0x118 on HL 10210. Formatter passed; unit suite: 1217 OK (5 skipped); repository-contract: 14 OK after staging generated artifacts. CS/CZ configs have no separate gameui binary in this repository.

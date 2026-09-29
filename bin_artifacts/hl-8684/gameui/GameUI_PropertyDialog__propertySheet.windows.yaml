@@ -1,0 +1,6 @@
+struct_name: vgui2::PropertyDialog
+member_name: _propertySheet
+offset: '0x110'
+size: '0x4'
+offset_sig: 55 8B EC 83 E4 F0 83 EC 68 8B 45 ?? 56 57 8B F1 8B 4D ?? 6A 01 50 51 8B CE 89 74 24 ??
+offset_sig_disp: '0x165'
