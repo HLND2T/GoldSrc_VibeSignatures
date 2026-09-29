@@ -2246,6 +2246,11 @@ modules:
           - CTaskbar_QuitConfirmationOwner.{platform}.yaml
         expected_output:
           - QueryBox_ctor.{platform}.yaml
+      - name: find-GameUI-career-frame-constructors
+        expected_output:
+          - CCareerProfileFrame_ctor.{platform}.yaml
+          - CCareerMapFrame_ctor.{platform}.yaml
+          - CCareerBotFrame_ctor.{platform}.yaml
     symbols:
       - name: vgui2_Panel_Init
         category: func
@@ -2264,6 +2269,12 @@ modules:
       - name: CTaskbar_QuitConfirmationOwner
         category: func
       - name: QueryBox_ctor
+        category: func
+      - name: CCareerProfileFrame_ctor
+        category: func
+      - name: CCareerMapFrame_ctor
+        category: func
+      - name: CCareerBotFrame_ctor
         category: func
   - name: serverbrowser
     module_windows: ServerBrowser.dll
