@@ -2292,3 +2292,8 @@ modules:
     depot_windows: cryoffear/cl_dlls/hl.dll
     skills: []
     symbols: []
+  - name: serverbrowser
+    module_windows: ServerBrowser.dll
+    depot_windows: platform/servers/ServerBrowser.dll
+    skills: []
+    symbols: []
