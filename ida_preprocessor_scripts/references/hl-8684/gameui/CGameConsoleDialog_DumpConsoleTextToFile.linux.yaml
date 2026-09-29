@@ -1,0 +1,319 @@
+func_name: "CGameConsoleDialog_DumpConsoleTextToFile"
+func_va: "0xe5a30"
+disasm_code: |-
+  .text:000E5A30                 push    ebp
+  .text:000E5A31                 push    edi
+  .text:000E5A32                 push    esi
+  .text:000E5A33                 push    ebx
+  .text:000E5A34                 xor     ebx, ebx
+  .text:000E5A36                 sub     esp, 0C3Ch
+  .text:000E5A3C                 jmp     short loc_E5A4D
+  .text:000E5A40                 inc     ebx
+  .text:000E5A41                 cmp     i, 3E8h
+  .text:000E5A47                 jz      loc_E5CAD
+  .text:000E5A4D                 lea     eax, [esp+0C4Ch+szfile]
+  .text:000E5A54                 mov     esi, offset aCondump03dTxt; "condump%03d.txt"
+  .text:000E5A59                 mov     edi, 200h
+  .text:000E5A5E                 mov     [esp+0C4Ch+bufLenInBytes], ebx
+  .text:000E5A62                 ; format
+  .text:000E5A62                 mov     [esp+0C4Ch+format], esi; format
+  .text:000E5A66                 ; maxlen
+  .text:000E5A66                 mov     [esp+0C4Ch+maxlen], edi; maxlen
+  .text:000E5A6A                 ; s
+  .text:000E5A6A                 mov     [esp+0C4Ch+s], eax; s
+  .text:000E5A6D                 call    snprintf
+  .text:000E5A72                 call    _ZN5vgui210filesystemEv; vgui2::filesystem(void)
+  .text:000E5A77                 lea     ecx, [esp+0C4Ch+szfile]
+  .text:000E5A7E                 mov     edx, [eax]
+  .text:000E5A80                 mov     [esp+0C4Ch+maxlen], ecx
+  .text:000E5A84                 mov     [esp+0C4Ch+s], eax
+  .text:000E5A87                 call    dword ptr [edx+24h]
+  .text:000E5A8A                 test    al, al
+  .text:000E5A8C                 jnz     short loc_E5A40
+  .text:000E5A8E                 call    _ZN5vgui210filesystemEv; vgui2::filesystem(void)
+  .text:000E5A93                 xor     ecx, ecx
+  .text:000E5A95                 mov     ebx, offset save.difficulty
+  .text:000E5A9A                 mov     edx, [eax]
+  .text:000E5A9C                 mov     [esp+0C4Ch+bufLenInBytes], ecx
+  .text:000E5AA0                 lea     ecx, [esp+0C4Ch+szfile]
+  .text:000E5AA7                 mov     [esp+0C4Ch+format], ebx
+  .text:000E5AAB                 mov     [esp+0C4Ch+maxlen], ecx
+  .text:000E5AAF                 mov     [esp+0C4Ch+s], eax
+  .text:000E5AB2                 call    dword ptr [edx+2Ch]
+  .text:000E5AB5                 test    eax, eax
+  .text:000E5AB7                 mov     edi, eax
+  .text:000E5AB9                 jz      loc_E5CF5
+  .text:000E5ABF                 xor     handle, handle
+  .text:000E5AC1                 mov     [esp+0C4Ch+pos], eax
+  .text:000E5AC5                 lea     esi, [esp+0C4Ch+ansi]
+  .text:000E5ACC                 lea     esi, [esi+0]
+  .text:000E5AD0                 mov     edx, [esp+0C4Ch+pos]
+  .text:000E5AD4                 lea     eax, [esp+0C4Ch+buf]
+  .text:000E5AD8                 mov     ebp, 800h
+  .text:000E5ADD                 mov     ecx, [esp+0C4Ch+this]
+  .text:000E5AE4                 ; bufLenInBytes
+  .text:000E5AE4                 mov     [esp+0C4Ch+bufLenInBytes], ebp; bufLenInBytes
+  .text:000E5AE8                 ; buf
+  .text:000E5AE8                 mov     [esp+0C4Ch+format], eax; buf
+  .text:000E5AEC                 ; offset
+  .text:000E5AEC                 mov     [esp+0C4Ch+maxlen], edx; offset
+  .text:000E5AF0                 mov     eax, [ecx+114h]
+  .text:000E5AF6                 ; this
+  .text:000E5AF6                 mov     [esp+0C4Ch+s], eax; this
+  .text:000E5AF9                 call    _ZN5vgui28RichText7GetTextEiPwi; vgui2::RichText::GetText(int,wchar_t *,int)
+  .text:000E5AFE                 mov     eax, [esp+0C4Ch+buf]
+  .text:000E5B02                 add     [esp+0C4Ch+pos], 200h
+  .text:000E5B0A                 test    eax, eax
+  .text:000E5B0C                 jz      loc_E5BD8
+  .text:000E5B12                 call    _ZN5vgui28localizeEv; vgui2::localize(void)
+  .text:000E5B17                 mov     ebx, 200h
+  .text:000E5B1C                 mov     ebp, esi
+  .text:000E5B1E                 lea     ecx, [esp+0C4Ch+buf]
+  .text:000E5B22                 mov     edx, [eax]
+  .text:000E5B24                 mov     [esp+0C4Ch+bufLenInBytes], ebx
+  .text:000E5B28                 mov     [esp+0C4Ch+format], esi
+  .text:000E5B2C                 mov     [esp+0C4Ch+maxlen], ecx
+  .text:000E5B30                 mov     [esp+0C4Ch+s], eax
+  .text:000E5B33                 call    dword ptr [edx+18h]
+  .text:000E5B36                 mov     edx, [ebp+0]
+  .text:000E5B39                 add     ebp, 4
+  .text:000E5B3C                 lea     eax, [edx-1010101h]
+  .text:000E5B42                 not     edx
+  .text:000E5B44                 and     eax, edx
+  .text:000E5B46                 and     eax, 80808080h
+  .text:000E5B4B                 jz      short loc_E5B36
+  .text:000E5B4D                 mov     edx, eax
+  .text:000E5B4F                 shr     edx, 10h
+  .text:000E5B52                 test    eax, 8080h
+  .text:000E5B57                 cmovz   eax, edx
+  .text:000E5B5A                 lea     edx, [ebp+2]
+  .text:000E5B5D                 cmovz   ebp, edx
+  .text:000E5B60                 add     al, al
+  .text:000E5B62                 sbb     ebp, 3
+  .text:000E5B65                 sub     ebp, esi
+  .text:000E5B67                 test    len, len
+  .text:000E5B69                 jle     loc_E5AD0
+  .text:000E5B6F                 xor     ebx, ebx
+  .text:000E5B71                 jmp     short loc_E5BA2
+  .text:000E5B78                 call    _ZN5vgui210filesystemEv; vgui2::filesystem(void)
+  .text:000E5B7D                 mov     ecx, 1
+  .text:000E5B82                 mov     edx, [eax]
+  .text:000E5B84                 mov     [esp+0C4Ch+format], ecx
+  .text:000E5B88                 lea     ecx, [esi+ebx]
+  .text:000E5B8B                 inc     ebx
+  .text:000E5B8C                 mov     [esp+0C4Ch+bufLenInBytes], handle
+  .text:000E5B90                 mov     [esp+0C4Ch+maxlen], ecx
+  .text:000E5B94                 mov     [esp+0C4Ch+s], eax
+  .text:000E5B97                 call    dword ptr [edx+5Ch]
+  .text:000E5B9A                 cmp     len, i
+  .text:000E5B9C                 jz      loc_E5AD0
+  .text:000E5BA2                 cmp     byte ptr [esi+ebx], 0Ah
+  .text:000E5BA6                 jnz     short loc_E5B78
+  .text:000E5BA8                 mov     al, 0Dh
+  .text:000E5BAA                 mov     [esp+0C4Ch+ret], al
+  .text:000E5BB1                 call    _ZN5vgui210filesystemEv; vgui2::filesystem(void)
+  .text:000E5BB6                 mov     ecx, 1
+  .text:000E5BBB                 mov     edx, [eax]
+  .text:000E5BBD                 mov     [esp+0C4Ch+format], ecx
+  .text:000E5BC1                 lea     ecx, [esp+0C4Ch+ret]
+  .text:000E5BC8                 mov     [esp+0C4Ch+bufLenInBytes], handle
+  .text:000E5BCC                 mov     [esp+0C4Ch+maxlen], ecx
+  .text:000E5BD0                 mov     [esp+0C4Ch+s], eax
+  .text:000E5BD3                 call    dword ptr [edx+5Ch]
+  .text:000E5BD6                 jmp     short loc_E5B78
+  .text:000E5BD8                 call    _ZN5vgui210filesystemEv; vgui2::filesystem(void)
+  .text:000E5BDD                 mov     ebx, offset aConsoleDumpedT; "console dumped to "
+  .text:000E5BE2                 mov     edx, [eax]
+  .text:000E5BE4                 mov     [esp+0C4Ch+s], eax
+  .text:000E5BE7                 mov     [esp+0C4Ch+maxlen], handle
+  .text:000E5BEB                 call    dword ptr [edx+30h]
+  .text:000E5BEE                 mov     edx, [esp+0C4Ch+this]
+  .text:000E5BF5                 mov     eax, [edx+124h]
+  .text:000E5BFB                 ; col
+  .text:000E5BFB                 mov     [esp+0C4Ch+maxlen], eax; col
+  .text:000E5BFF                 mov     eax, [edx+114h]
+  .text:000E5C05                 ; this
+  .text:000E5C05                 mov     [esp+0C4Ch+s], eax; this
+  .text:000E5C08                 call    _ZN5vgui28RichText17InsertColorChangeE5Color; vgui2::RichText::InsertColorChange(Color)
+  .text:000E5C0D                 mov     ecx, [esp+0C4Ch+this]
+  .text:000E5C14                 ; text
+  .text:000E5C14                 mov     [esp+0C4Ch+maxlen], ebx; text
+  .text:000E5C18                 mov     eax, [ecx+114h]
+  .text:000E5C1E                 ; this
+  .text:000E5C1E                 mov     [esp+0C4Ch+s], eax; this
+  .text:000E5C21                 call    _ZN5vgui28RichText12InsertStringEPKc; vgui2::RichText::InsertString(char const*)
+  .text:000E5C26                 mov     edx, [esp+0C4Ch+this]
+  .text:000E5C2D                 mov     eax, [edx+124h]
+  .text:000E5C33                 ; col
+  .text:000E5C33                 mov     [esp+0C4Ch+maxlen], eax; col
+  .text:000E5C37                 mov     eax, [edx+114h]
+  .text:000E5C3D                 ; this
+  .text:000E5C3D                 mov     [esp+0C4Ch+s], eax; this
+  .text:000E5C40                 call    _ZN5vgui28RichText17InsertColorChangeE5Color; vgui2::RichText::InsertColorChange(Color)
+  .text:000E5C45                 lea     ecx, [esp+0C4Ch+szfile]
+  .text:000E5C4C                 ; text
+  .text:000E5C4C                 mov     [esp+0C4Ch+maxlen], ecx; text
+  .text:000E5C50                 mov     edx, [esp+0C4Ch+this]
+  .text:000E5C57                 mov     eax, [edx+114h]
+  .text:000E5C5D                 ; this
+  .text:000E5C5D                 mov     [esp+0C4Ch+s], eax; this
+  .text:000E5C60                 call    _ZN5vgui28RichText12InsertStringEPKc; vgui2::RichText::InsertString(char const*)
+  .text:000E5C65                 mov     ecx, [esp+0C4Ch+this]
+  .text:000E5C6C                 mov     eax, [ecx+124h]
+  .text:000E5C72                 ; col
+  .text:000E5C72                 mov     [esp+0C4Ch+maxlen], eax; col
+  .text:000E5C76                 mov     eax, [ecx+114h]
+  .text:000E5C7C                 ; this
+  .text:000E5C7C                 mov     [esp+0C4Ch+s], eax; this
+  .text:000E5C7F                 call    _ZN5vgui28RichText17InsertColorChangeE5Color; vgui2::RichText::InsertColorChange(Color)
+  .text:000E5C84                 mov     edx, (offset aVersion1f+0Fh); "\n"
+  .text:000E5C89                 ; text
+  .text:000E5C89                 mov     [esp+0C4Ch+maxlen], edx; text
+  .text:000E5C8D                 mov     edx, [esp+0C4Ch+this]
+  .text:000E5C94                 mov     eax, [edx+114h]
+  .text:000E5C9A                 ; this
+  .text:000E5C9A                 mov     [esp+0C4Ch+s], eax; this
+  .text:000E5C9D                 call    _ZN5vgui28RichText12InsertStringEPKc; vgui2::RichText::InsertString(char const*)
+  .text:000E5CA2                 add     esp, 0C3Ch
+  .text:000E5CA8                 pop     ebx
+  .text:000E5CA9                 pop     esi
+  .text:000E5CAA                 pop     handle
+  .text:000E5CAB                 pop     ebp
+  .text:000E5CAC                 retn
+  .text:000E5CAD                 mov     ecx, [esp+0C4Ch+this]
+  .text:000E5CB4                 mov     eax, [ecx+124h]
+  .text:000E5CBA                 ; col
+  .text:000E5CBA                 mov     [esp+0C4Ch+maxlen], eax; col
+  .text:000E5CBE                 mov     eax, [ecx+114h]
+  .text:000E5CC4                 ; this
+  .text:000E5CC4                 mov     [esp+0C4Ch+s], eax; this
+  .text:000E5CC7                 call    _ZN5vgui28RichText17InsertColorChangeE5Color; vgui2::RichText::InsertColorChange(Color)
+  .text:000E5CCC                 mov     edx, [esp+0C4Ch+this]
+  .text:000E5CD3                 mov     eax, offset aCanTCondumpToo; "Can't condump! Too many existing condum"...
+  .text:000E5CD8                 ; text
+  .text:000E5CD8                 mov     [esp+0C4Ch+maxlen], eax; text
+  .text:000E5CDC                 mov     eax, [edx+114h]
+  .text:000E5CE2                 ; this
+  .text:000E5CE2                 mov     [esp+0C4Ch+s], eax; this
+  .text:000E5CE5                 call    _ZN5vgui28RichText12InsertStringEPKc; vgui2::RichText::InsertString(char const*)
+  .text:000E5CEA                 add     esp, 0C3Ch
+  .text:000E5CF0                 pop     i
+  .text:000E5CF1                 pop     esi
+  .text:000E5CF2                 pop     edi
+  .text:000E5CF3                 pop     ebp
+  .text:000E5CF4                 retn
+  .text:000E5CF5                 mov     ecx, [esp+0C4Ch+this]
+  .text:000E5CFC                 mov     handle, [ecx+124h]
+  .text:000E5D02                 ; col
+  .text:000E5D02                 mov     [esp+0C4Ch+maxlen], eax; col
+  .text:000E5D06                 mov     eax, [ecx+114h]
+  .text:000E5D0C                 ; this
+  .text:000E5D0C                 mov     [esp+0C4Ch+s], eax; this
+  .text:000E5D0F                 call    _ZN5vgui28RichText17InsertColorChangeE5Color; vgui2::RichText::InsertColorChange(Color)
+  .text:000E5D14                 mov     edx, [esp+0C4Ch+this]
+  .text:000E5D1B                 mov     ecx, offset aUnableToCondum; "Unable to condump to "
+  .text:000E5D20                 ; text
+  .text:000E5D20                 mov     [esp+0C4Ch+maxlen], ecx; text
+  .text:000E5D24                 mov     eax, [edx+114h]
+  .text:000E5D2A                 ; this
+  .text:000E5D2A                 mov     [esp+0C4Ch+s], eax; this
+  .text:000E5D2D                 call    _ZN5vgui28RichText12InsertStringEPKc; GameUI_RichText_InsertStringA: vgui2::RichText::InsertString(char const*) for condump failure text
+  .text:000E5D32                 mov     ecx, [esp+0C4Ch+this]
+  .text:000E5D39                 mov     eax, [ecx+124h]
+  .text:000E5D3F                 ; col
+  .text:000E5D3F                 mov     [esp+0C4Ch+maxlen], eax; col
+  .text:000E5D43                 mov     eax, [ecx+114h]
+  .text:000E5D49                 ; this
+  .text:000E5D49                 mov     [esp+0C4Ch+s], eax; this
+  .text:000E5D4C                 call    _ZN5vgui28RichText17InsertColorChangeE5Color; vgui2::RichText::InsertColorChange(Color)
+  .text:000E5D51                 lea     eax, [esp+0C4Ch+szfile]
+  .text:000E5D58                 mov     [esp+0C4Ch+maxlen], eax
+  .text:000E5D5C                 jmp     loc_E5C50
+procedure: |-
+  void __cdecl CGameConsoleDialog_DumpConsoleTextToFile(CGameConsoleDialog *const this)
+  {
+    int v1; // ebx
+    IFileSystem *v2; // eax
+    IFileSystem *v3; // eax
+    int v4; // edi
+    vgui2::ILocalize *v5; // eax
+    char *v6; // kr00_4
+    int v7; // ebx
+    IFileSystem *v8; // eax
+    char *v9; // ecx
+    IFileSystem *v10; // eax
+    IFileSystem *v11; // eax
+    int pos; // [esp+1Ch] [ebp-C30h]
+    wchar_t buf[512]; // [esp+20h] [ebp-C2Ch] BYREF
+    char ansi[527]; // [esp+820h] [ebp-42Ch] BYREF
+    char szfile[512]; // [esp+A2Fh] [ebp-21Dh] BYREF
+    char ret[29]; // [esp+C2Fh] [ebp-1Dh] BYREF
+
+    v1 = 0;
+    while ( 1 )
+    {
+      snprintf(szfile, 0x200u, "condump%03d.txt", v1);
+      v2 = vgui2::filesystem();
+      if ( !(*(unsigned __int8 (__cdecl **)(IFileSystem *, char *))(*(_DWORD *)v2 + 36))(v2, szfile) )
+        break;
+      if ( ++v1 == 1000 )
+      {
+        vgui2::RichText::InsertColorChange(this->m_pHistory, this->m_PrintColor);
+        vgui2::RichText::InsertString(
+          this->m_pHistory,
+          "Can't condump! Too many existing condump output files in the gamedir!\n");
+        return;
+      }
+    }
+    v3 = vgui2::filesystem();
+    v4 = (*(int (__cdecl **)(IFileSystem *, char *, CCareerProfileDifficultyData *, _DWORD))(*(_DWORD *)v3 + 44))(
+           v3,
+           szfile,
+           save.difficulty,
+           0);
+    if ( v4 )
+    {
+      pos = 0;
+      while ( 1 )
+      {
+        vgui2::RichText::GetText(this->m_pHistory, pos, buf, 2048);
+        pos += 512;
+        if ( !buf[0] )
+          break;
+        v5 = vgui2::localize();
+        (*(void (__cdecl **)(vgui2::ILocalize *, wchar_t *, char *, int))(*(_DWORD *)v5 + 24))(v5, buf, ansi, 512);
+        v6 = &ansi[strlen(ansi)];
+        if ( v6 - ansi > 0 )
+        {
+          v7 = 0;
+          do
+          {
+            if ( ansi[v7] == 10 )
+            {
+              ret[0] = 13;
+              v10 = vgui2::filesystem();
+              (*(void (__cdecl **)(IFileSystem *, char *, int, int))(*(_DWORD *)v10 + 92))(v10, ret, 1, v4);
+            }
+            v8 = vgui2::filesystem();
+            v9 = &ansi[v7++];
+            (*(void (__cdecl **)(IFileSystem *, char *, int, int))(*(_DWORD *)v8 + 92))(v8, v9, 1, v4);
+          }
+          while ( v6 - ansi != v7 );
+        }
+      }
+      v11 = vgui2::filesystem();
+      (*(void (__cdecl **)(IFileSystem *, int))(*(_DWORD *)v11 + 48))(v11, v4);
+      vgui2::RichText::InsertColorChange(this->m_pHistory, this->m_PrintColor);
+      vgui2::RichText::InsertString(this->m_pHistory, "console dumped to ");
+      vgui2::RichText::InsertColorChange(this->m_pHistory, this->m_PrintColor);
+    }
+    else
+    {
+      vgui2::RichText::InsertColorChange(this->m_pHistory, this->m_PrintColor);
+      vgui2::RichText::InsertString(this->m_pHistory, "Unable to condump to "); // GameUI_RichText_InsertStringA; Print is inlined
+      vgui2::RichText::InsertColorChange(this->m_pHistory, this->m_PrintColor);
+    }
+    vgui2::RichText::InsertString(this->m_pHistory, szfile);
+    vgui2::RichText::InsertColorChange(this->m_pHistory, this->m_PrintColor);
+    vgui2::RichText::InsertString(this->m_pHistory, "\n");
+  }

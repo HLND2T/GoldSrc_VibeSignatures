@@ -1,0 +1,239 @@
+func_name: "CGameConsoleDialog_DumpConsoleTextToFile"
+func_va: "0x100344f0"
+disasm_code: |-
+  .text:100344F0                 sub     esp, 80Ch
+  .text:100344F6                 push    ebx
+  .text:100344F7                 push    esi
+  .text:100344F8                 push    edi
+  .text:100344F9                 mov     edi, ecx
+  .text:100344FB                 mov     [esp+818h+var_808], edi
+  .text:100344FF                 xor     esi, esi
+  .text:10034501                 push    esi
+  .text:10034502                 push    offset aCondump03dTxt; "condump%03d.txt"
+  .text:10034507                 lea     eax, [esp+820h+Buffer]
+  .text:1003450B                 ; BufferCount
+  .text:1003450B                 push    200h; BufferCount
+  .text:10034510                 ; Buffer
+  .text:10034510                 push    eax; Buffer
+  .text:10034511                 call    __snprintf
+  .text:10034516                 add     esp, 10h
+  .text:10034519                 call    vgui2_filesystem
+  .text:1003451E                 mov     edx, [eax]
+  .text:10034520                 lea     ecx, [esp+818h+Buffer]
+  .text:10034524                 push    ecx
+  .text:10034525                 mov     ecx, eax
+  .text:10034527                 call    dword ptr [edx+20h]
+  .text:1003452A                 test    al, al
+  .text:1003452C                 jz      short loc_1003454D
+  .text:1003452E                 inc     esi
+  .text:1003452F                 cmp     esi, 3E8h
+  .text:10034535                 jl      short loc_10034501
+  .text:10034537                 push    offset aCanTCondumpToo; "Can't condump! Too many existing condum"...
+  .text:1003453C                 ; this
+  .text:1003453C                 mov     ecx, edi; this
+  .text:1003453E                 call    CGameConsoleDialog_Print
+  .text:10034543                 pop     edi
+  .text:10034544                 pop     esi
+  .text:10034545                 pop     ebx
+  .text:10034546                 add     esp, 80Ch
+  .text:1003454C                 retn
+  .text:1003454D                 call    vgui2_filesystem
+  .text:10034552                 mov     edx, [eax]
+  .text:10034554                 push    0
+  .text:10034556                 lea     ecx, [esp+81Ch+Buffer]
+  .text:1003455A                 push    offset aWb; "wb"
+  .text:1003455F                 push    ecx
+  .text:10034560                 mov     ecx, eax
+  .text:10034562                 call    dword ptr [edx+28h]
+  .text:10034565                 mov     ebx, eax
+  .text:10034567                 test    ebx, ebx
+  .text:10034569                 jz      loc_1003466B
+  .text:1003456F                 push    ebp
+  .text:10034570                 mov     [esp+81Ch+pos], 0
+  .text:10034578                 jmp     short loc_1003457E
+  .text:1003457A                 mov     edi, [esp+81Ch+var_808]
+  .text:1003457E                 mov     esi, [esp+81Ch+pos]
+  .text:10034582                 ; this
+  .text:10034582                 mov     ecx, [edi+118h]; this
+  .text:10034588                 lea     edx, [esp+81Ch+text]
+  .text:1003458F                 ; text_buffer_bytes
+  .text:1003458F                 push    400h; text_buffer_bytes
+  .text:10034594                 ; text
+  .text:10034594                 push    edx; text
+  .text:10034595                 ; pos
+  .text:10034595                 push    esi; pos
+  .text:10034596                 call    vgui2_RichText_GetText
+  .text:1003459B                 add     esi, 200h
+  .text:100345A1                 cmp     [esp+81Ch+text], 0
+  .text:100345AA                 mov     [esp+81Ch+pos], esi
+  .text:100345AE                 jz      short loc_1003462F
+  .text:100345B0                 call    vgui2_localize
+  .text:100345B5                 mov     edx, [eax]
+  .text:100345B7                 lea     ecx, [esp+81Ch+var_600]
+  .text:100345BE                 push    200h
+  .text:100345C3                 push    ecx
+  .text:100345C4                 lea     ecx, [esp+824h+text]
+  .text:100345CB                 push    ecx
+  .text:100345CC                 mov     ecx, eax
+  .text:100345CE                 call    dword ptr [edx+14h]
+  .text:100345D1                 lea     edi, [esp+81Ch+var_600]
+  .text:100345D8                 or      ecx, 0FFFFFFFFh
+  .text:100345DB                 xor     eax, eax
+  .text:100345DD                 xor     esi, esi
+  .text:100345DF                 repne scasb
+  .text:100345E1                 not     ecx
+  .text:100345E3                 dec     ecx
+  .text:100345E4                 mov     ebp, ecx
+  .text:100345E6                 test    ebp, ebp
+  .text:100345E8                 jle     short loc_1003457A
+  .text:100345EA                 mov     al, [esp+esi+81Ch+var_600]
+  .text:100345F1                 lea     edi, [esp+esi+81Ch+var_600]
+  .text:100345F8                 cmp     al, 0Ah
+  .text:100345FA                 jnz     short loc_10034615
+  .text:100345FC                 mov     [esp+81Ch+var_809], 0Dh
+  .text:10034601                 call    vgui2_filesystem
+  .text:10034606                 mov     edx, [eax]
+  .text:10034608                 push    ebx
+  .text:10034609                 lea     ecx, [esp+820h+var_809]
+  .text:1003460D                 push    1
+  .text:1003460F                 push    ecx
+  .text:10034610                 mov     ecx, eax
+  .text:10034612                 call    dword ptr [edx+58h]
+  .text:10034615                 call    vgui2_filesystem
+  .text:1003461A                 mov     edx, [eax]
+  .text:1003461C                 push    ebx
+  .text:1003461D                 push    1
+  .text:1003461F                 push    edi
+  .text:10034620                 mov     ecx, eax
+  .text:10034622                 call    dword ptr [edx+58h]
+  .text:10034625                 inc     esi
+  .text:10034626                 cmp     esi, ebp
+  .text:10034628                 jl      short loc_100345EA
+  .text:1003462A                 jmp     loc_1003457A
+  .text:1003462F                 call    vgui2_filesystem
+  .text:10034634                 mov     edx, [eax]
+  .text:10034636                 push    ebx
+  .text:10034637                 mov     ecx, eax
+  .text:10034639                 call    dword ptr [edx+2Ch]
+  .text:1003463C                 push    offset aConsoleDumpedT; "console dumped to "
+  .text:10034641                 ; this
+  .text:10034641                 mov     ecx, edi; this
+  .text:10034643                 call    CGameConsoleDialog_Print
+  .text:10034648                 lea     eax, [esp+81Ch+Buffer]
+  .text:1003464C                 ; this
+  .text:1003464C                 mov     ecx, edi; this
+  .text:1003464E                 ; msg
+  .text:1003464E                 push    eax; msg
+  .text:1003464F                 call    CGameConsoleDialog_Print
+  .text:10034654                 push    offset asc_100B0AE8; "\n"
+  .text:10034659                 ; this
+  .text:10034659                 mov     ecx, edi; this
+  .text:1003465B                 call    CGameConsoleDialog_Print
+  .text:10034660                 pop     ebp
+  .text:10034661                 pop     edi
+  .text:10034662                 pop     esi
+  .text:10034663                 pop     ebx
+  .text:10034664                 add     esp, 80Ch
+  .text:1003466A                 retn
+  .text:1003466B                 push    offset aUnableToCondum; "Unable to condump to "
+  .text:10034670                 ; this
+  .text:10034670                 mov     ecx, edi; this
+  .text:10034672                 call    CGameConsoleDialog_Print; CGameConsoleDialog_Print: CGameConsoleDialog::Print(char const*) for condump failure text
+  .text:10034677                 lea     ecx, [esp+818h+Buffer]
+  .text:1003467B                 ; msg
+  .text:1003467B                 push    ecx; msg
+  .text:1003467C                 ; this
+  .text:1003467C                 mov     ecx, edi; this
+  .text:1003467E                 call    CGameConsoleDialog_Print
+  .text:10034683                 push    offset asc_100B0AE8; "\n"
+  .text:10034688                 ; this
+  .text:10034688                 mov     ecx, edi; this
+  .text:1003468A                 call    CGameConsoleDialog_Print
+  .text:1003468F                 pop     edi
+  .text:10034690                 pop     esi
+  .text:10034691                 pop     ebx
+  .text:10034692                 add     esp, 80Ch
+  .text:10034698                 retn
+procedure: |-
+  void __thiscall CGameConsoleDialog_DumpConsoleTextToFile(CGameConsoleDialog *this)
+  {
+    CGameConsoleDialog *v1; // edi
+    int v2; // esi
+    void *v3; // eax
+    void *v4; // eax
+    int v5; // ebx
+    int v6; // esi
+    void *v7; // eax
+    signed int v8; // esi
+    unsigned int v9; // kr04_4
+    void *v10; // eax
+    void *v11; // eax
+    void *v12; // eax
+    char v13; // [esp+1Dh] [ebp-809h] BYREF
+    CGameConsoleDialog *v14; // [esp+1Eh] [ebp-808h]
+    int pos; // [esp+22h] [ebp-804h]
+    char Buffer[512]; // [esp+26h] [ebp-800h] BYREF
+    char v17[512]; // [esp+226h] [ebp-600h] BYREF
+    wchar_t text[512]; // [esp+426h] [ebp-400h] BYREF
+
+    v1 = this;
+    v14 = this;
+    v2 = 0;
+    while ( 1 )
+    {
+      _snprintf(Buffer, 0x200u, "condump%03d.txt", v2);
+      v3 = vgui2_filesystem();
+      if ( !(*(unsigned __int8 (__thiscall **)(void *, char *))(*(_DWORD *)v3 + 32))(v3, Buffer) )
+        break;
+      if ( ++v2 >= 1000 )
+      {
+        CGameConsoleDialog_Print(v1, aCanTCondumpToo);
+        return;
+      }
+    }
+    v4 = vgui2_filesystem();
+    v5 = (*(int (__thiscall **)(void *, char *, char *, _DWORD))(*(_DWORD *)v4 + 40))(v4, Buffer, aWb, 0);
+    if ( v5 )
+    {
+      pos = 0;
+      while ( 1 )
+      {
+        v6 = pos;
+        vgui2_RichText_GetText(v1->m_pHistory, pos, text, 1024);
+        pos = v6 + 512;
+        if ( !text[0] )
+          break;
+        v7 = vgui2_localize();
+        (*(void (__thiscall **)(void *, wchar_t *, char *, int))(*(_DWORD *)v7 + 20))(v7, text, v17, 512);
+        v8 = 0;
+        v9 = strlen(v17) + 1;
+        if ( (int)(v9 - 1) > 0 )
+        {
+          do
+          {
+            if ( v17[v8] == 10 )
+            {
+              v13 = 13;
+              v10 = vgui2_filesystem();
+              (*(void (__thiscall **)(void *, char *, int, int))(*(_DWORD *)v10 + 88))(v10, &v13, 1, v5);
+            }
+            v11 = vgui2_filesystem();
+            (*(void (__thiscall **)(void *, char *, int, int))(*(_DWORD *)v11 + 88))(v11, &v17[v8++], 1, v5);
+          }
+          while ( v8 < (int)(v9 - 1) );
+        }
+        v1 = v14;
+      }
+      v12 = vgui2_filesystem();
+      (*(void (__thiscall **)(void *, int))(*(_DWORD *)v12 + 44))(v12, v5);
+      CGameConsoleDialog_Print(v1, aConsoleDumpedT);
+      CGameConsoleDialog_Print(v1, Buffer);
+      CGameConsoleDialog_Print(v1, asc_100B0AE8);
+    }
+    else
+    {
+      CGameConsoleDialog_Print(v1, aUnableToCondum); // CGameConsoleDialog_Print; aUnableToCondum is "Unable to condump to "
+      CGameConsoleDialog_Print(v1, Buffer);
+      CGameConsoleDialog_Print(v1, asc_100B0AE8);
+    }
+  }

@@ -2346,6 +2346,33 @@ modules:
           - CGameConsoleDialog_ctor.{platform}.yaml
           - CCreateMultiplayerGameDialog_ctor.{platform}.yaml
           - COptionsDialog_ctor.{platform}.yaml
+      - name: find-GameUI-options-sub-constructors
+        expected_output:
+          - COptionsSubAudio_ctor.{platform}.yaml
+          - COptionsSubVideo_ctor.{platform}.yaml
+      - name: find-COptionsSubMultiplayer_ctor
+        expected_output:
+          - COptionsSubMultiplayer_ctor.{platform}.yaml
+      - name: find-COptionsSubVideo-ApplyVidSettings
+        expected_input:
+          - COptionsSubVideo_ctor.{platform}.yaml
+        expected_output:
+          - COptionsSubVideo_ApplyVidSettings.{platform}.yaml
+      - name: find-GameUI_RichText_OnThink
+        expected_input:
+          - CGameConsoleDialog_ctor.{platform}.yaml
+        expected_output:
+          - GameUI_RichText_OnThink.{platform}.yaml
+      - name: find-CGameConsoleDialog_DumpConsoleTextToFile
+        expected_output:
+          - CGameConsoleDialog_DumpConsoleTextToFile.{platform}.yaml
+      - name: find-GameUI-condump-print-target
+        expected_input:
+          - CGameConsoleDialog_DumpConsoleTextToFile.{platform}.yaml
+        expected_output_windows:
+          - CGameConsoleDialog_Print.{platform}.yaml
+        expected_output_linux:
+          - GameUI_RichText_InsertStringA.{platform}.yaml
       - name: find-GameUI-private-symbols
         expected_input:
           - CGameConsoleDialog_ctor.{platform}.yaml
@@ -2427,6 +2454,24 @@ modules:
         category: func
       - name: COptionsDialog_ctor
         category: func
+      - name: COptionsSubAudio_ctor
+        category: func
+      - name: COptionsSubVideo_ctor
+        category: func
+      - name: COptionsSubMultiplayer_ctor
+        category: func
+      - name: COptionsSubVideo_ApplyVidSettings
+        category: func
+      - name: GameUI_RichText_OnThink
+        category: vfunc
+      - name: CGameConsoleDialog_DumpConsoleTextToFile
+        category: func
+      - name: CGameConsoleDialog_Print
+        category: func
+        platform: windows
+      - name: GameUI_RichText_InsertStringA
+        category: func
+        platform: linux
       - name: CTaskbar_QuitConfirmationOwner
         category: func
       - name: QueryBox_ctor

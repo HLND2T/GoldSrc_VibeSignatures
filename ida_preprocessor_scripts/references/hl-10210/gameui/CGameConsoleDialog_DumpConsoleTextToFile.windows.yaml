@@ -1,0 +1,281 @@
+func_name: "CGameConsoleDialog_DumpConsoleTextToFile"
+func_va: "0x10028c40"
+disasm_code: |-
+  .text:10028C40                 push    ebp
+  .text:10028C41                 mov     ebp, esp
+  .text:10028C43                 sub     esp, 814h
+  .text:10028C49                 mov     eax, ___security_cookie
+  .text:10028C4E                 xor     eax, ebp
+  .text:10028C50                 mov     [ebp+var_4], eax
+  .text:10028C53                 push    esi
+  .text:10028C54                 push    edi
+  .text:10028C55                 mov     edi, ecx
+  .text:10028C57                 xor     esi, esi
+  .text:10028C59                 mov     [ebp+var_814], edi
+  .text:10028C5F                 nop
+  .text:10028C60                 ; ArgList
+  .text:10028C60                 push    esi; ArgList
+  .text:10028C61                 push    offset aCondump03dTxt; "condump%03d.txt"
+  .text:10028C66                 lea     eax, [ebp+Buffer]
+  .text:10028C6C                 ; BufferCount
+  .text:10028C6C                 push    200h; BufferCount
+  .text:10028C71                 ; Buffer
+  .text:10028C71                 push    eax; Buffer
+  .text:10028C72                 call    sub_10003620
+  .text:10028C77                 add     esp, 10h
+  .text:10028C7A                 call    vgui2_filesystem
+  .text:10028C7F                 lea     ecx, [ebp+Buffer]
+  .text:10028C85                 push    ecx
+  .text:10028C86                 mov     ecx, eax
+  .text:10028C88                 mov     edx, [eax]
+  .text:10028C8A                 mov     eax, [edx+20h]
+  .text:10028C8D                 call    eax
+  .text:10028C8F                 test    al, al
+  .text:10028C91                 jz      short loc_10028CB7
+  .text:10028C93                 inc     esi
+  .text:10028C94                 cmp     esi, 3E8h
+  .text:10028C9A                 jl      short loc_10028C60
+  .text:10028C9C                 ; color
+  .text:10028C9C                 push    dword ptr [edi+130h]; color
+  .text:10028CA2                 ; this
+  .text:10028CA2                 mov     ecx, [edi+120h]; this
+  .text:10028CA8                 call    vgui2_RichText_InsertColorChange
+  .text:10028CAD                 mov     eax, offset aCanTCondumpToo; "Can't condump! Too many existing condum"...
+  .text:10028CB2                 jmp     loc_10028E57
+  .text:10028CB7                 push    ebx
+  .text:10028CB8                 call    vgui2_filesystem
+  .text:10028CBD                 push    0
+  .text:10028CBF                 push    offset aWb; "wb"
+  .text:10028CC4                 lea     ecx, [ebp+Buffer]
+  .text:10028CCA                 mov     edx, [eax]
+  .text:10028CCC                 push    ecx
+  .text:10028CCD                 mov     ecx, eax
+  .text:10028CCF                 call    dword ptr [edx+28h]
+  .text:10028CD2                 ; this
+  .text:10028CD2                 mov     ecx, [edi+120h]; this
+  .text:10028CD8                 mov     ebx, eax
+  .text:10028CDA                 mov     [ebp+var_80C], ebx
+  .text:10028CE0                 test    ebx, ebx
+  .text:10028CE2                 jz      loc_10028E02
+  .text:10028CE8                 ; text_buffer_bytes
+  .text:10028CE8                 push    400h; text_buffer_bytes
+  .text:10028CED                 lea     eax, [ebp+text]
+  .text:10028CF3                 ; text
+  .text:10028CF3                 push    eax; text
+  .text:10028CF4                 ; pos
+  .text:10028CF4                 push    0; pos
+  .text:10028CF6                 call    vgui2_RichText_GetText
+  .text:10028CFB                 cmp     [ebp+text], 0
+  .text:10028D03                 mov     [ebp+var_810], 200h
+  .text:10028D0D                 jz      loc_10028DDD
+  .text:10028D13                 mov     ebx, 200h
+  .text:10028D18                 call    vgui2_localize
+  .text:10028D1D                 push    200h
+  .text:10028D22                 lea     ecx, [ebp+var_404]
+  .text:10028D28                 push    ecx
+  .text:10028D29                 mov     edx, [eax]
+  .text:10028D2B                 lea     ecx, [ebp+text]
+  .text:10028D31                 push    ecx
+  .text:10028D32                 mov     ecx, eax
+  .text:10028D34                 call    dword ptr [edx+14h]
+  .text:10028D37                 lea     esi, [ebp+var_404]
+  .text:10028D3D                 lea     ecx, [esi+1]
+  .text:10028D40                 mov     al, [esi]
+  .text:10028D42                 inc     esi
+  .text:10028D43                 test    al, al
+  .text:10028D45                 jnz     short loc_10028D40
+  .text:10028D47                 sub     esi, ecx
+  .text:10028D49                 xor     edi, edi
+  .text:10028D4B                 test    esi, esi
+  .text:10028D4D                 jle     short loc_10028D9F
+  .text:10028D4F                 nop
+  .text:10028D50                 lea     ebx, [ebp+var_404]
+  .text:10028D56                 add     ebx, edi
+  .text:10028D58                 cmp     byte ptr [ebx], 0Ah
+  .text:10028D5B                 jnz     short loc_10028D7F
+  .text:10028D5D                 mov     [ebp+var_805], 0Dh
+  .text:10028D64                 call    vgui2_filesystem
+  .text:10028D69                 push    [ebp+var_80C]
+  .text:10028D6F                 lea     ecx, [ebp+var_805]
+  .text:10028D75                 push    1
+  .text:10028D77                 mov     edx, [eax]
+  .text:10028D79                 push    ecx
+  .text:10028D7A                 mov     ecx, eax
+  .text:10028D7C                 call    dword ptr [edx+58h]
+  .text:10028D7F                 call    vgui2_filesystem
+  .text:10028D84                 push    [ebp+var_80C]
+  .text:10028D8A                 mov     ecx, eax
+  .text:10028D8C                 push    1
+  .text:10028D8E                 mov     edx, [eax]
+  .text:10028D90                 push    ebx
+  .text:10028D91                 call    dword ptr [edx+58h]
+  .text:10028D94                 inc     edi
+  .text:10028D95                 cmp     edi, esi
+  .text:10028D97                 jl      short loc_10028D50
+  .text:10028D99                 mov     ebx, [ebp+var_810]
+  .text:10028D9F                 mov     edi, [ebp+var_814]
+  .text:10028DA5                 lea     eax, [ebp+text]
+  .text:10028DAB                 ; text_buffer_bytes
+  .text:10028DAB                 push    400h; text_buffer_bytes
+  .text:10028DB0                 ; text
+  .text:10028DB0                 push    eax; text
+  .text:10028DB1                 ; pos
+  .text:10028DB1                 push    ebx; pos
+  .text:10028DB2                 ; this
+  .text:10028DB2                 mov     ecx, [edi+120h]; this
+  .text:10028DB8                 call    vgui2_RichText_GetText
+  .text:10028DBD                 add     ebx, 200h
+  .text:10028DC3                 cmp     [ebp+text], 0
+  .text:10028DCB                 mov     [ebp+var_810], ebx
+  .text:10028DD1                 jnz     loc_10028D18
+  .text:10028DD7                 mov     ebx, [ebp+var_80C]
+  .text:10028DDD                 call    vgui2_filesystem
+  .text:10028DE2                 push    ebx
+  .text:10028DE3                 mov     ecx, eax
+  .text:10028DE5                 mov     edx, [eax]
+  .text:10028DE7                 call    dword ptr [edx+2Ch]
+  .text:10028DEA                 ; color
+  .text:10028DEA                 push    dword ptr [edi+130h]; color
+  .text:10028DF0                 ; this
+  .text:10028DF0                 mov     ecx, [edi+120h]; this
+  .text:10028DF6                 call    vgui2_RichText_InsertColorChange
+  .text:10028DFB                 push    offset aConsoleDumpedT; "console dumped to "
+  .text:10028E00                 jmp     short loc_10028E12
+  .text:10028E02                 ; color
+  .text:10028E02                 push    dword ptr [edi+130h]; color
+  .text:10028E08                 call    vgui2_RichText_InsertColorChange
+  .text:10028E0D                 push    offset aUnableToCondum; "Unable to condump to "
+  .text:10028E12                 ; this
+  .text:10028E12                 mov     ecx, [edi+120h]; this
+  .text:10028E18                 call    vgui2_RichText_InsertStringA; GameUI_RichText_InsertStringA: vgui2::RichText::InsertString(char const*) for condump failure text
+  .text:10028E1D                 ; color
+  .text:10028E1D                 push    dword ptr [edi+130h]; color
+  .text:10028E23                 ; this
+  .text:10028E23                 mov     ecx, [edi+120h]; this
+  .text:10028E29                 call    vgui2_RichText_InsertColorChange
+  .text:10028E2E                 ; this
+  .text:10028E2E                 mov     ecx, [edi+120h]; this
+  .text:10028E34                 lea     eax, [ebp+Buffer]
+  .text:10028E3A                 ; text
+  .text:10028E3A                 push    eax; text
+  .text:10028E3B                 call    vgui2_RichText_InsertStringA
+  .text:10028E40                 ; color
+  .text:10028E40                 push    dword ptr [edi+130h]; color
+  .text:10028E46                 ; this
+  .text:10028E46                 mov     ecx, [edi+120h]; this
+  .text:10028E4C                 call    vgui2_RichText_InsertColorChange
+  .text:10028E51                 mov     eax, offset asc_10096E48; "\n"
+  .text:10028E56                 pop     ebx
+  .text:10028E57                 ; this
+  .text:10028E57                 mov     ecx, [edi+120h]; this
+  .text:10028E5D                 ; text
+  .text:10028E5D                 push    eax; text
+  .text:10028E5E                 call    vgui2_RichText_InsertStringA
+  .text:10028E63                 mov     ecx, [ebp+var_4]
+  .text:10028E66                 pop     edi
+  .text:10028E67                 ; StackCookie
+  .text:10028E67                 xor     ecx, ebp; StackCookie
+  .text:10028E69                 pop     esi
+  .text:10028E6A                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10028E6F                 mov     esp, ebp
+  .text:10028E71                 pop     ebp
+  .text:10028E72                 retn
+procedure: |-
+  void __thiscall CGameConsoleDialog_DumpConsoleTextToFile(CGameConsoleDialog *this)
+  {
+    CGameConsoleDialog *v1; // edi
+    int v2; // esi
+    void *v3; // eax
+    const char *v4; // eax
+    void *v5; // eax
+    int v6; // eax
+    void *m_pHistory; // ecx
+    int v8; // ebx
+    int v9; // ebx
+    void *v10; // eax
+    int v11; // kr00_4
+    int v12; // edi
+    void *v13; // eax
+    void *v14; // eax
+    void *v15; // eax
+    int v17; // [esp+Ch] [ebp-810h]
+    int v18; // [esp+10h] [ebp-80Ch]
+    char v19; // [esp+17h] [ebp-805h] BYREF
+    wchar_t text[512]; // [esp+18h] [ebp-804h] BYREF
+    char v21[512]; // [esp+418h] [ebp-404h] BYREF
+    char Buffer[512]; // [esp+618h] [ebp-204h] BYREF
+
+    v1 = this;
+    v2 = 0;
+    while ( 1 )
+    {
+      sub_10003620(Buffer, 0x200u, "condump%03d.txt", v2);
+      v3 = vgui2_filesystem();
+      if ( !(*(unsigned __int8 (__thiscall **)(void *, char *))(*(_DWORD *)v3 + 32))(v3, Buffer) )
+        break;
+      if ( ++v2 >= 1000 )
+      {
+        vgui2_RichText_InsertColorChange(v1->m_pHistory, v1->m_PrintColor);
+        v4 = "Can't condump! Too many existing condump output files in the gamedir!\n";
+        goto LABEL_18;
+      }
+    }
+    v5 = vgui2_filesystem();
+    v6 = (*(int (__thiscall **)(void *, char *, const char *, _DWORD))(*(_DWORD *)v5 + 40))(v5, Buffer, "wb", 0);
+    m_pHistory = v1->m_pHistory;
+    v8 = v6;
+    v18 = v6;
+    if ( v6 )
+    {
+      vgui2_RichText_GetText(m_pHistory, 0, text, 1024);
+      v17 = 512;
+      if ( text[0] )
+      {
+        v9 = 512;
+        do
+        {
+          v10 = vgui2_localize();
+          (*(void (__thiscall **)(void *, wchar_t *, char *, int))(*(_DWORD *)v10 + 20))(v10, text, v21, 512);
+          v11 = strlen(v21);
+          v12 = 0;
+          if ( v11 > 0 )
+          {
+            do
+            {
+              if ( v21[v12] == 10 )
+              {
+                v19 = 13;
+                v13 = vgui2_filesystem();
+                (*(void (__thiscall **)(void *, char *, int, int))(*(_DWORD *)v13 + 88))(v13, &v19, 1, v18);
+              }
+              v14 = vgui2_filesystem();
+              (*(void (__thiscall **)(void *, char *, int, int))(*(_DWORD *)v14 + 88))(v14, &v21[v12++], 1, v18);
+            }
+            while ( v12 < v11 );
+            v9 = v17;
+          }
+          v1 = this;
+          vgui2_RichText_GetText(this->m_pHistory, v9, text, 1024);
+          v9 += 512;
+          v17 = v9;
+        }
+        while ( text[0] );
+        v8 = v18;
+      }
+      v15 = vgui2_filesystem();
+      (*(void (__thiscall **)(void *, int))(*(_DWORD *)v15 + 44))(v15, v8);
+      vgui2_RichText_InsertColorChange(v1->m_pHistory, v1->m_PrintColor);
+      vgui2_RichText_InsertStringA(v1->m_pHistory, "console dumped to ");
+    }
+    else
+    {
+      vgui2_RichText_InsertColorChange(m_pHistory, v1->m_PrintColor);
+      vgui2_RichText_InsertStringA(v1->m_pHistory, "Unable to condump to "); // GameUI_RichText_InsertStringA; CGameConsoleDialog::Print is inlined here
+    }
+    vgui2_RichText_InsertColorChange(v1->m_pHistory, v1->m_PrintColor);
+    vgui2_RichText_InsertStringA(v1->m_pHistory, Buffer);
+    vgui2_RichText_InsertColorChange(v1->m_pHistory, v1->m_PrintColor);
+    v4 = "\n";
+  LABEL_18:
+    vgui2_RichText_InsertStringA(v1->m_pHistory, v4);
+  }
