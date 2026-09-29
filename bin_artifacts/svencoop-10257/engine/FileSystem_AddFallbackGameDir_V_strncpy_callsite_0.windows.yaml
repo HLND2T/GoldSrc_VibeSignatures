@@ -1,5 +1,5 @@
-patch_name: V_strncpy_FallbackGameDir
-patch_va: '0x1d4e32d'
-patch_rva: '0x4e32d'
+patch_name: FileSystem_AddFallbackGameDir_V_strncpy_callsite_0
+patch_va: '0x1d4e5dd'
+patch_rva: '0x4e5dd'
 patch_sig: E8 ?? ?? ?? ?? 8D 4C 24 ?? 83 C4 ?? 8D 51 ?? 8D 64 24 ?? 8A 01 41 84 C0 75 ?? 2B CA
 patch_sig_disp: '0x0'

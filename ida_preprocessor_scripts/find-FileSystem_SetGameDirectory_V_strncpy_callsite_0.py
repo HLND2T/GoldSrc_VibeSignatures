@@ -8,8 +8,8 @@ the copy, including a shared Steam/default-language call tail. Decode all three
 arguments; a comparison, two-argument strcpy, or unrelated object field fails.
 
 The owners also reference the localized search-path format ``%s/%s_%s`` and
-``GAME``. ``DEFAULTGAME`` distinguishes FileSystem_SetGameDirectory (V_strncpy)
-from FileSystem_AddFallbackGameDir (V_strncpy_FallbackGameDir). Both must be
+``GAME``. ``DEFAULTGAME`` distinguishes FileSystem_SetGameDirectory (FileSystem_SetGameDirectory_V_strncpy_callsite_0)
+from FileSystem_AddFallbackGameDir (FileSystem_AddFallbackGameDir_V_strncpy_callsite_0). Both must be
 unique and present; address order and IDA-inferred callee names are irrelevant.
 Consumers redirect both sites. Older registry-based tags have no default-English
 copy and use find-Sys_GetRegKeyValueUnderRoot instead. Unexpected absence in a
@@ -24,7 +24,7 @@ from ida_preprocessor_scripts._engine_private_globals_common import run_walk
 from ida_preprocessor_scripts._patch_signature_common import run_signature
 
 LITERAL = "english"
-PATCH_NAMES = ("V_strncpy", "V_strncpy_FallbackGameDir")
+PATCH_NAMES = ("FileSystem_SetGameDirectory_V_strncpy_callsite_0", "FileSystem_AddFallbackGameDir_V_strncpy_callsite_0")
 
 WALK = (
     CALL_FLOW_PY

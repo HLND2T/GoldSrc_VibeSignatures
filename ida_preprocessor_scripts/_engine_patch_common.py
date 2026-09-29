@@ -133,7 +133,11 @@ def language_role(arguments, strings, literal_eas):
         return None
     if "%s/%s_%s" not in strings or "GAME" not in strings:
         return None
-    return "V_strncpy" if "DEFAULTGAME" in strings else "V_strncpy_FallbackGameDir"
+    return (
+        "FileSystem_SetGameDirectory_V_strncpy_callsite_0"
+        if "DEFAULTGAME" in strings
+        else "FileSystem_AddFallbackGameDir_V_strncpy_callsite_0"
+    )
 
 
 def factory_origin(code, query_index):
