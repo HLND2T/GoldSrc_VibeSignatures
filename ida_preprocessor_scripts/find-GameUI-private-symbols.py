@@ -27,7 +27,7 @@ from ida_analyze_util import (
     write_vtable_yaml,
 )
 from ida_preprocessor_scripts._vgui_paint_common import walk
-from ida_preprocessor_scripts import _vgui_private_method_identity as method_identity
+import ida_preprocessor_scripts._vgui_private_method_identity as method_identity
 
 
 CLASSES = {
