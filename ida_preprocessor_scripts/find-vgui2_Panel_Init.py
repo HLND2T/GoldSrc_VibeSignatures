@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Locate the client-side vgui2::Panel::Init through its layout-default stores.
+"""Locate vgui2::Panel::Init in a module through its layout-default stores.
 
 ``vgui2::Panel::Init`` writes its member defaults around the ``_proportional``
 store ``mov dword ptr [reg+0x24], 2`` and begins by resolving the ``ivgui()`` /
@@ -27,8 +27,8 @@ from ida_analyze_util import (
 )
 from ida_preprocessor_scripts._client_vgui_private_common import PANEL_INIT_STORE_OFFSETS, run_walk
 
-SYMBOL = "ClientVGUI_Panel_Init"
 FUNCTION_NAME = "vgui2::Panel::Init(int, int, int, int)"
+OUTPUT_SYMBOLS = ("vgui2_Panel_Init", "ClientVGUI_Panel_Init")
 
 WALK = r"""
 import ida_frame
@@ -151,6 +151,12 @@ async def preprocess_skill(
     debug=False,
 ):
     _ = skill_name, old_yaml_map, new_binary_dir
+    outputs = [_output_for_symbol(expected_outputs, symbol) for symbol in OUTPUT_SYMBOLS]
+    outputs = [output for output in outputs if output is not None]
+    if len(outputs) != 1:
+        if debug:
+            print(f"  {FUNCTION_NAME}: expected exactly one Panel::Init output, got {outputs}")
+        return False
     located = await run_walk(
         session,
         WALK,
@@ -167,7 +173,7 @@ async def preprocess_skill(
     )
     if located.get("error") or "panel_init" not in located:
         if debug:
-            print(f"  {SYMBOL}: locator failed: {located.get('error', located)}")
+            print(f"  {FUNCTION_NAME}: locator failed: {located.get('error', located)}")
         return False
     target = int(located["panel_init"])
     function = await _inspect_function_via_mcp(session, target, image_base, FUNCTION_NAME)
@@ -180,11 +186,9 @@ async def preprocess_skill(
             function["func_sig_allow_across_function_boundary"] = True
     if not function or not function.get("func_sig"):
         if debug:
-            print(f"  {SYMBOL}: no unique signature at {hex(target)}")
+            print(f"  {FUNCTION_NAME}: no unique signature at {hex(target)}")
         return False
-    output = _output_for_symbol(expected_outputs, SYMBOL)
-    if not output:
-        return False
+    output = outputs[0]
     payload = {field: function[field] for field in ("func_name", "func_va", "func_rva", "func_size", "func_sig")}
     if function.get("func_sig_allow_across_function_boundary"):
         payload["func_sig_allow_across_function_boundary"] = True

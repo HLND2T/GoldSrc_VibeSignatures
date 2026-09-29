@@ -29,7 +29,7 @@ Only two addresses changed: 6153 Panel::Init `0x1770f0` -> `0x179ce0`; 8684 `0x1
 
 ## Scope
 
-`find-client-vgui-panel-init.py`, `find-client-vgui-keyvalues.py`, `find-client-vgui-teammenu.py`; all ten cstrike/czero/czeror client configs. Revalidate the complete binary matrix when compiler/ABI support changes.
+`find-vgui2_Panel_Init.py`, `find-client-vgui-keyvalues.py`, `find-client-vgui-teammenu.py`; all ten cstrike/czero/czeror client configs. Revalidate the complete binary matrix when compiler/ABI support changes.
 
 ## Issue #277: CS background panel and Frame::Activate
 
@@ -75,3 +75,11 @@ Adding `CClientVGUI_WorldMapPanel`, two CZDS WorldMap vtables and PaintBackgroun
 ### Verification and scope
 
 2026-09-28: owned strict/no-save IDA analyzer succeeded on 11 CS/CZ background binaries (8 Windows, 3 Linux) and 2 czeror Windows map binaries. Independent artifact relation checks confirmed all 45 new YAML outputs, including paint vtable entries, offsets, and slot arithmetic. Unit suite: 1214 tests OK (9 skipped); repository-contract suite: 14 tests OK; format check passed. Applies to the 10 cstrike/czero/czeror client configs and only their available platforms.
+
+## Cross-module Panel::Init locator
+
+2026-09-29: `find-vgui2_Panel_Init.py` reuses the structural Panel layout, interface-dispatch, and Linux cdecl-argument checks in the 11 configured HL/Sven/CoF engine (`hw`) and gameui modules. Their output is `vgui2_Panel_Init`; the ten CS/CZ client configs retain the existing `ClientVGUI_Panel_Init` artifact identity. The latter is a MetaHook lookup name rather than the payload's function name.
+
+HL/Sven/CoF client binaries do not embed this Panel implementation: their Linux symbol tables and available client binaries lack the Panel RTTI and `_proportional` layout-store evidence that is present in the engine/gameui binaries. Do not register this finder on a client module without first proving that the implementation exists there.
+
+Verification: strict/no-save IDA analysis produced all 30 configured engine/gameui artifacts (26 newly executed, four HL-10210 pilot artifacts), with zero failures. A forced 17-node batch rebuilt the existing CS/CZ client outputs with zero failures. The analyzer validated each emitted function signature against its current binary.

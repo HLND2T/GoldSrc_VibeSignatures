@@ -19,6 +19,9 @@ modules:
       - name: find-vgui2_EditablePanel_CreateControlByName
         expected_output:
           - vgui2_EditablePanel_CreateControlByName.{platform}.yaml
+      - name: find-vgui2_Panel_Init
+        expected_output:
+          - vgui2_Panel_Init.{platform}.yaml
       - name: find-vgui2_Panel_vtable
         expected_output:
           - vgui2_Panel_vtable.{platform}.yaml
@@ -1330,6 +1333,8 @@ modules:
         category: vfunc
       - name: vgui2_EditablePanel_CreateControlByName
         category: func
+      - name: vgui2_Panel_Init
+        category: func
       - name: vgui2_Panel_ctor
         category: func
       - name: vgui2_Panel_vtable
@@ -2271,6 +2276,9 @@ modules:
     module_windows: GameUI.dll
     depot_windows: cryoffear/cl_dlls/GameUI.dll
     skills:
+      - name: find-vgui2_Panel_Init
+        expected_output:
+          - vgui2_Panel_Init.{platform}.yaml
       - name: find-CGameUI_RunFrame
         expected_output:
           - CGameUI_RunFrame.{platform}.yaml
@@ -2281,6 +2289,8 @@ modules:
           - ISurface_GetModalPanel.{platform}.yaml
           - ISurface_PaintTraverse.{platform}.yaml
     symbols:
+      - name: vgui2_Panel_Init
+        category: func
       - name: CGameUI_RunFrame
         category: vfunc
       - name: ISurface_GetModalPanel
