@@ -1,0 +1,7 @@
+func_name: vgui2::RichText::InsertColorChange(Color)
+func_va: '0x10054120'
+func_rva: '0x54120'
+func_size: '0x137'
+func_sig: 83 EC 14 8B 54 24 ?? 55 56 8B F1 57 8B 86 ?? ?? ?? ?? 8B 8E ?? ?? ?? ?? C1 E0 04 8D 44 08 ?? 39 10 0F 84 ?? ?? ??
+  ??
+_pointer_size: '0x4'
