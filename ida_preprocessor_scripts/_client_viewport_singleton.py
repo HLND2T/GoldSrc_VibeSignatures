@@ -4,6 +4,73 @@ UINT32_MASK = 0xFFFFFFFF
 X86_POINTER_BYTES = 4
 
 
+def bounded_body(start, decode, limit, *, tail_target=None):
+    """Decode a return-delimited body independently of IDA function ownership.
+
+    A tail jump is allowed only to the independently proved constructor entry.
+    The decoder must reject addresses outside the starting executable segment.
+    """
+    result = []
+    cursor = start
+    for _ in range(limit):
+        item = decode(cursor)
+        if item is None or item["ea"] != cursor or item["next_ea"] <= cursor:
+            return None
+        result.append(item)
+        mnemonic = item["mnem"]
+        if mnemonic in ("ret", "retn"):
+            return result
+        if mnemonic == "jmp" and tail_target is not None and item.get("direct") == tail_target:
+            return result if not start <= tail_target < item["next_ea"] else None
+        if mnemonic.startswith(("j", "loop", "int", "ret")) or mnemonic in ("ud2", "hlt"):
+            return None
+        cursor = item["next_ea"]
+    return None
+
+
+def linear_stack(instructions):
+    """Assign local x86 stack depths; never borrow a merged owner's IDA SPD."""
+    if not instructions:
+        return None
+    result, depth = [], 0
+    for instruction in instructions:
+        item = dict(instruction, sp=depth)
+        mnemonic, operands = item["mnem"], item["ops"]
+        destination = operands[0] if operands else ()
+        if mnemonic in ("push", "pop"):
+            width = item.get("stack_width", X86_POINTER_BYTES)
+            if len(destination) > 2 and destination[0] == "reg":
+                width = destination[2]
+            elif len(destination) > 5 and destination[0] == "mem":
+                width = destination[5]
+            if not destination or width != X86_POINTER_BYTES:
+                return None
+            if mnemonic == "pop" and destination[:2] == ("reg", "esp"):
+                return None
+            depth += -X86_POINTER_BYTES if mnemonic == "push" else X86_POINTER_BYTES
+        elif mnemonic in ("add", "sub") and destination[:2] == ("reg", "esp"):
+            if len(destination) > 2 and destination[2] != X86_POINTER_BYTES:
+                return None
+            if len(operands) != 2 or operands[1][0] != "imm" or not isinstance(operands[1][1], int):
+                return None
+            depth += operands[1][1] * (-1 if mnemonic == "sub" else 1)
+        elif mnemonic == "call":
+            purge = item.get("purge")
+            if not isinstance(purge, int) or purge < 0 or purge % X86_POINTER_BYTES:
+                return None
+            depth += purge
+        elif (
+            (destination[:2] == ("reg", "esp") and mnemonic not in ("cmp", "test"))
+            or "esp" in item.get("writes", [])
+            or mnemonic in ("enter", "leave")
+            or mnemonic.startswith(("push", "pop"))
+        ):
+            return None
+        item["after"] = depth
+        result.append(item)
+    return result
+
+
 def constant_factory_return(instructions):
     """Evaluate a bounded straight-line factory, including MSVC's null conversion.
 
@@ -15,7 +82,7 @@ def constant_factory_return(instructions):
     carry = None
 
     def read(operand):
-        kind, value = operand
+        kind, value = operand[:2]
         return value if kind == "imm" and isinstance(value, int) else registers.get(value) if kind == "reg" else None
 
     for item in instructions:
@@ -25,6 +92,8 @@ def constant_factory_return(instructions):
         if mnemonic == "nop":
             continue
         if not operands or operands[0][0] != "reg":
+            return None
+        if any(op[0] == "reg" and len(op) > 2 and op[2] != X86_POINTER_BYTES for op in operands):
             return None
         destination = operands[0][1]
         value = None

@@ -36,7 +36,7 @@ The unique `VClientVGUI001` literal leads to decoded `InterfaceReg` constructor 
 ## Dependencies
 
 - Shared x86 data flow, decoded call arguments, RTTI lookup, `inspect_unique_function` and `write_located_globals`.
-- Owned no-save IDA workers and the exact configured client binary/platform. Old CZDS 8684 databases may lack callable boundaries and xrefs; bounded decoded operand and return/tail-call evidence repairs worker metadata without persisting IDBs.
+- Owned no-save IDA workers and the exact configured client binary/platform. Old CZDS 8684 databases may lack or merge callable boundaries and xrefs; bounded decoded operand and return/tail-call evidence recovers logical bodies without changing IDA function ownership.
 - Downstream `VGUI2Extension::ClientVGUI_InstallHooks` selects the CS/CZ or CZDS GLOBAL symbol.
 
 ## Notes
@@ -59,6 +59,15 @@ The unique `VClientVGUI001` literal leads to decoded `InterfaceReg` constructor 
 ### Delivery boundaries
 
 New viewport records pass canonical snapshot/JSON export and the downstream viewport consumer gate. Full downstream snapshot validation also reports an existing `vgui2::ISurface::GetScreenSize` contract mismatch in all ten versions: upstream publishes a slot-only virtual record while the validator requires function address/size/signature. Publishing and game startup require separate verification; local artifacts alone do not update the hosted catalog.
+
+### Merged warm-IDB callable boundaries (issue #306)
+
+- Trigger: `VClientVGUI001 registered factory is absent or ambiguous` on CZDS 8684 Windows, despite identical input bytes passing in a saved IDB with separate functions.
+- Root cause: the warm IDB merges registration, factory, initializer and constructor chunks under an unrelated entry. Shared argument recovery correctly rejects unreachable definitions; function-start checks also discard direct targets. Fixing registration and factory alone still fails constructor proof.
+- Correct approach: keep shared dominance semantics. Decode bounded Windows registration/factory bodies, derive local stack depth, and recover constructor/caller bodies from decoded boundaries and incoming code references. Accept a tail jump only to the separately selected constructor body, then transfer its proven receiver into the existing vptr/RTTI proof. Reject unsupported branches, stack effects and partial pointer writes. For an embedded or absent signature owner, generate a unique signature at the verified object operand instead of splitting IDA functions.
+- Evidence: the supplied `bin/czero-8684/client/ci-self-runner.client.dll.i64` identifies `czeror-8684/client/client.dll` with SHA-256 `e28ef031c1810a913227fbdf8075a367a60165d209b8071a94020a448ff76286`. Registration at `0x27036b10` recovers factory `0x27036b30`, returning interface `0x2712acdc`. Initializer `0x27036ad0` passes `0x2712acd8` in ECX through a tail jump to constructor `0x270368a0`; paired stores and secondary RTTI establish the offset of four.
+- Verification: the full finder and YAML writer pass the supplied warm IDB, an additional probe hiding callable ownership and rejecting `add_func`, and all 17 configured CS/CZ/CZDS clients (including CZDS 10210 Windows/Linux). Each generated signature is unique and each object RVA agrees with its existing artifact. Tests cover bounded entry/termination, stack effects, tail receiver transfer, ambiguity and signature emission. IDB checks run in disposable fixtures with owned no-save workers.
+- Scope: viewport finder and its pure proof helpers; no shared call-argument contract, configuration, or IDB repair changes.
 
 ## Callers
 
