@@ -1,5 +1,5 @@
-vtable_class: KeyValues
-vtable_symbol: ??_7KeyValues@@6B@
+vtable_class: vgui2::KeyValues
+vtable_symbol: ??_7KeyValues@vgui2@@6B@
 vtable_va: '0x19ca18c'
 vtable_rva: '0xca18c'
 vtable_size: '0x64'

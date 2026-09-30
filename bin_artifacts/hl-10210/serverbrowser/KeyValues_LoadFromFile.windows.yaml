@@ -1,0 +1,9 @@
+func_name: KeyValues::LoadFromFile(IFileSystem*, char const*, char const*)
+func_va: '0x1000e3c0'
+func_rva: '0xe3c0'
+func_size: '0x122'
+vtable_name: KeyValues
+vfunc_offset: '0x8'
+vfunc_index: 2
+vfunc_sig: 55 8B EC 53 56 8B 75 ?? 8B D9 57 8B 3D ?? ?? ?? ?? 85 F6 75 ?? 68 1B 01 00 00 68 ?? ?? ?? ?? 68 ?? ?? ?? ?? FF
+  D7

@@ -192,3 +192,28 @@ so the finder is registered only on the nine configs above.
 - Compiler constraints: CoF truncates wchar_t using AND 0xFFFF; `_x86_vcall_flow.py` now retains the word-sized scalar provenance, while rejecting narrowed values as virtual-call pointers. Sven Linux computes warning-sound pointers through PIC without reliable IDA xrefs; verify actual call arguments. Sven 10257 Windows loads the HasHotkey slot into a register before CALL; do not filter candidates only by `call [reg+slot]`.
 - Verification: owned strict/no-save batch `analysis-batch-20260929T215233-9703f8ad07c047d9a806182cf1522548` forced all 15 GameUI nodes over 11 tags, with Agent fallback unavailable: 15 succeeded, zero failed/skipped. All 223 artifacts are unchanged from PR #300 HEAD. Nine method-identity tests cover moved slots, an inlined InsertString impostor, absent/ambiguous identities and receiver/output mismatches. The word-mask regression failed before the tracer fix and passed afterwards; a noncontiguous mask remains unknown. Unit suite: 1228 OK (5 skipped); repository-contract: 14 OK; formatting passed.
 - Scope: the GameUI private finder and its new pure identity helper; the shared x86 tracer's byte-mask support is extended only to the equivalent 16-bit mask. No production config or artifact schema changes.
+
+
+## Cross-module KeyValues coverage
+
+### Trigger
+
+Extending `find-client-vgui-keyvalues.py` from CS-family clients to the configured GameUI and ServerBrowser modules, following the shared Panel::Init finder model.
+
+### Root cause and constraints
+
+- The original finder hardcoded the `ClientVGUI_KeyValues_*` output pair and tracked `this` only through register copies and a simple GCC prologue. HL-3266 GameUI is a debug MSVC build: it saves ECX across stack initialization, restores it with POP, then spills and reloads `this` through an EBP-relative local before installing the vptr.
+- Sven Linux also references `CursorEnteredMenuButton` from MenuBar message-map registration. The literal has one address but multiple owning functions; requiring a unique owner rejects the actual MenuButton constructor call.
+- HL-3248/3266/3329 GameUI and ServerBrowser, plus cstrike-3248/3647 clients, embed `vgui2::KeyValues`. Their current MSVC RTTI is `.?AVKeyValues@vgui2@@`; assigning modern global `KeyValues` payload identities is incorrect. These namespace corrections do not change addresses, signatures, or the LoadFromFile slot.
+
+### Correct approach
+
+- Keep one script. Require exactly one complete output pair: module-local `KeyValues_vftable` / `KeyValues_LoadFromFile`, or the existing client lookup pair `ClientVGUI_KeyValues_vftable` / `ClientVGUI_KeyValues_LoadFromFile`.
+- Reuse `_vgui_paint_common.walk` and the shared x86 tracer. Identify direct calls passing the exact literal as the constructor name argument (Windows first stack argument; Linux second stack argument), then require one constructor with a proven dword store to ABI `this`, a validated executable primary vtable, and recognized current-binary KeyValues RTTI. Multiple literal owners are allowed; ambiguous constructors or vptr stores fail closed. This also covers GCC PIC vptr calculations.
+- Derive `vtable_class`, `vtable_symbol`, `vtable_name`, and the qualified LoadFromFile payload name from the recovered RTTI. Preserve config/file lookup identities. LoadFromFile remains slot 2, byte offset 8; HL-3266 slot 2 was independently decompiled and verified to open/read/parse/close a filesystem file.
+
+### Verification and scope
+
+2026-09-30: strict/no-save exact batch `analysis-batch-20260930T155837-58ef71c1f6924ebfbe1ff035e8ade804` forced all 47 configured KeyValues nodes across 21 gamevers, with Agent fallback unavailable: 47 succeeded, zero failed/skipped. The matrix includes 30 new GameUI/ServerBrowser nodes (11 versions, 22 PE32 and 8 ELF32 binaries) and 17 existing client nodes. All 94 artifacts passed pair/slot/address consistency checks; every new table entry matched independently read binary bytes with ELF relocations applied. Six unstripped ELF binaries also matched their function and vtable symbols; two Sven-10257 binaries lack those symbols. Sixty new YAML artifacts were produced; four existing early-client artifacts changed payload identities only.
+
+Unit suite: 1277 tests OK (5 skipped). Repository-contract suite: 14 tests OK, using a temporary Git index that includes the new artifacts. Format and `git diff --check` passed. Redis integration groups were skipped because the local Redis service was unavailable; the default opt-in IDA environment test was skipped, while the real binary matrix above executed successfully. No shared helper, public artifact schema, or repository test was changed.
