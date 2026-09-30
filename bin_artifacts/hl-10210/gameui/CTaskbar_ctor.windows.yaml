@@ -1,0 +1,4 @@
+func_name: CTaskbar::CTaskbar(vgui2::Panel*, char const*)
+func_va: '0x1003da20'
+func_rva: '0x3da20'
+func_size: '0x394'

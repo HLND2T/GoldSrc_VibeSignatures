@@ -2446,6 +2446,14 @@ modules:
     depot_windows: valve/cl_dlls/GameUI.dll
     depot_linux: valve/cl_dlls/gameui.so
     skills:
+      - name: find-GameUI-base-taskbar
+        expected_input:
+          - CTaskbar_QuitConfirmationOwner.{platform}.yaml
+        expected_output:
+          - CBasePanel_ctor.{platform}.yaml
+          - CTaskbar_ctor.{platform}.yaml
+          - CTaskbar_vtable.{platform}.yaml
+          - CTaskbar_OnCommand.{platform}.yaml
       - name: find-vgui2_Panel_Init
         expected_output:
           - vgui2_Panel_Init.{platform}.yaml
@@ -2453,6 +2461,7 @@ modules:
         expected_output:
           - KeyValues_vtable.{platform}.yaml
           - KeyValues_LoadFromFile.{platform}.yaml
+          - KeyValues_ctor.{platform}.yaml
       - name: find-CGameUI_RunFrame
         expected_output:
           - CGameUI_RunFrame.{platform}.yaml
@@ -2527,6 +2536,16 @@ modules:
           - CCareerMapFrame_ctor.{platform}.yaml
           - CCareerBotFrame_ctor.{platform}.yaml
     symbols:
+      - name: CBasePanel_ctor
+        category: func
+      - name: CTaskbar_ctor
+        category: func
+      - name: CTaskbar_vtable
+        category: vtable
+      - name: CTaskbar_OnCommand
+        category: vfunc
+      - name: KeyValues_ctor
+        category: func
       - name: vgui2_Panel_Init
         category: func
       - name: KeyValues_vtable
