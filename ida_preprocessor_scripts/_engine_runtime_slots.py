@@ -7,6 +7,77 @@ The selector contains no game-version slot numbers or instruction addresses.
 import json
 
 
+# Executed after the shared exact-entry recovery helpers inside the IDA worker.
+DATA_REFERENCED_ENTRY_RECOVERY_PY = r"""
+def _entry_reaches_any(start, end, targets):
+    # Follow intra-function execution, never CALL targets. Unknown indirect
+    # jumps/undecodable paths cannot prove that an entry is disconnected.
+    pending, visited = [start], set()
+    while pending:
+        ea = pending.pop()
+        if ea in targets:
+            return True
+        if ea in visited:
+            continue
+        if not start <= ea < end:
+            return None
+        visited.add(ea)
+        insn = ida_ua.insn_t()
+        size = ida_ua.decode_insn(insn, ea)
+        if not size or ea + size > end:
+            return None
+        mnemonic = (idc.print_insn_mnem(ea) or '').lower()
+        successors = list(idautils.CodeRefsFrom(ea, True))
+        if mnemonic == 'call':
+            successors = [target for target in successors if target == ea + size]
+        if not successors and mnemonic not in ('ret', 'retn', 'retf'):
+            return None
+        pending.extend(successors)
+    return False
+
+def _recover_data_referenced_entries(entries):
+    # Opt-in repair for independently referenced entries swallowed by an
+    # oversized auto-analysis function. Never split reachable interior code.
+    entries = sorted(set(int(entry) for entry in entries))
+    if not entries:
+        return False
+    groups = {}
+    for entry in entries:
+        owner = ida_funcs.get_func(entry)
+        if owner is None or int(owner.start_ea) == entry:
+            continue
+        start, end = int(owner.start_ea), int(owner.end_ea)
+        if not start < entry < end or end - start > FUNCTION_RECOVERY_MAX_SPAN:
+            return False
+        if not _has_data_entry_reference(entry):
+            return False
+        groups.setdefault((start, end), []).append(entry)
+    # Check every group before mutating any function definition.
+    for (start, end), targets in groups.items():
+        if _entry_reaches_any(start, end, set(targets)) is not False:
+            return False
+    for (start, _end), targets in groups.items():
+        if not ida_funcs.del_func(start):
+            return False
+        # Define the independently proven entries first. Reanalyzing the old
+        # start then recovers its real extent and the other disconnected bodies.
+        for entry in targets + [start]:
+            if not ida_funcs.add_func(entry):
+                return False
+        ida_auto.auto_wait()
+        for entry in targets + [start]:
+            owner = ida_funcs.get_func(entry)
+            if owner is None or int(owner.start_ea) != entry:
+                return False
+    for entry in entries:
+        owner = _ensure_function_owner(entry, expected_entry=entry)
+        if owner is None or owner['function_start'] != entry:
+            return False
+    return True
+
+"""
+
+
 WORD_SIZE = 4
 
 

@@ -16,16 +16,15 @@ from ida_analyze_util import (
     write_func_yaml,
 )
 from ida_preprocessor_scripts._engine_private_globals_common import run_walk
+from ida_preprocessor_scripts._engine_runtime_slots import DATA_REFERENCED_ENTRY_RECOVERY_PY
 from ida_preprocessor_scripts._vgui_paint_common import artifact, walk
 
 RECOVER = (
     "import ida_auto, ida_bytes, ida_funcs, ida_segment, ida_ua, idaapi, idautils, idc, json\n"
     + _FUNCTION_OWNER_RECOVERY_PY_EVAL
+    + DATA_REFERENCED_ENTRY_RECOVERY_PY
     + r"""
-for entry in values['entries']:
-    if ida_funcs.get_func(entry) is None:
-        _ensure_function_owner(entry, expected_entry=entry)
-result = dict(checked=True)
+result = dict(checked=_recover_data_referenced_entries(values['entries']))
 """
 )
 CHECK_WINDOW = r"""
@@ -69,6 +68,8 @@ async def preprocess_skill(
         return False
     recovered = await run_walk(session, RECOVER, {"entries": list(entries.values())})
     if not recovered.get("checked"):
+        if debug:
+            print(f"{skill_name}: exact vtable entry recovery failed: {recovered}")
         return False
     results = {}
     for name, strings, signatures, vtable in (

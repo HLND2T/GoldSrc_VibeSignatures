@@ -159,3 +159,36 @@ All rows below are in module engine. Universal coverage means the 11 Windows tar
 The issue's IEngine_Init spelling was corrected to IGame::Init. Frame/SetQuitting/GetQuitting belong to IEngine, and the concrete Frame belongs to CEngine, not CGame. Interface outputs contain only identity/table/offset/index; internal inferred member values are not extra artifacts. The issue-wide artifact audit covers 270 interface slots, 72 concrete functions (66 signatures and six native waits intentionally lacking func_sig), 30 primary tables and 15 renamed eng globals.
 
 Final verification on 2026-09-30: all configured finder targets completed their real-binary checks, including 15/15 for the final event-slot finder and 6/6 native-window targets. The final artifact audit matched all 90 new event slots to separately captured role evidence and checked the issue-wide identities, interface field contracts, inherited addresses, table bounds, signature-presence policy and platform exclusions. Full suite: 1272 tests in 133.067s, OK (9 environment/opt-in skips); formatter and staged diff checks passed. New synthetic tests cover PLT resolution, reciprocal stores, getter ambiguity/side effects, receiver agreement and cyclic SDL branch exclusivity.
+
+## Native window recovery from oversized fresh IDB functions (PR #304)
+
+- Trigger: PR validation run 36658874025 failed on hl-3248/3266/3329 in
+  find-CGame-native-window. The xref result lacked func_sig and fallback reported
+  skill_file_missing. A fresh hl-3248 IDB reproduced the underlying ownership error:
+  the function at 0x1dbe000 extended to 0x1dbe87a, swallowing WindowProc at 0x1dbe300,
+  the wait method at 0x1dbe6d0, and CreateGameWindow at 0x1dbe6f0. These addresses are
+  diagnostic evidence only, never locator constants.
+- Root cause: checking only get_func(entry) is None skips entries contained in an
+  incorrect existing function. The generic exact-entry helper intentionally refuses
+  to split overlapping owners, and the finder previously reported checked=True
+  without verifying recovery. A missing fallback skill is the secondary failure.
+- Correct approach: the engine helper explicitly repairs data-referenced entries
+  only when current control-flow evidence proves them disconnected from the old
+  owner entry. Calls are excluded from reachability; unresolved/undecodable/outside
+  paths fail closed. Preflight all groups before removing an oversized definition,
+  define the independently referenced entries, then reanalyze the old start and
+  verify every exact entry. Existing generic recovery behavior is unchanged.
+- Verification: behavioral regression fixtures cover multiple swallowed entries,
+  idempotence, reachable/unproven entries, uncertain control flow, and failed
+  rebuilds. Run the native finder on temporary fresh IDBs for all six configured
+  native Windows versions and compare both outputs byte-for-byte with tracked YAML.
+  Keep signature uniqueness, string ownership, table membership, and WindowProc
+  instruction/receiver checks enabled. Never validate only an already repaired IDB.
+- Scope: native Windows CGame finder and its engine helper; no signature exceptions,
+  fixed-address discovery, cache purge, or fallback skill is required.
+- Result on 2026-09-30: final code reproduced/repaired fresh HL IDBs and passed all
+  five native HL versions; CoF passed using a temporary copy of its analyzed IDB
+  after fresh-IDB startup timed out before finder execution. All 12 emitted files
+  were byte-identical to tracked artifacts. Final complete suite: 1276 tests, OK
+  with 13 environment/opt-in skips; format and diff checks passed. CoF cold-start
+  analysis itself remains unverified locally; PR CI supplies the restored-IDB gate.
