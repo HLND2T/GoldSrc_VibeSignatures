@@ -31,6 +31,9 @@ execution plan.
   `patch_name`, `vtable_class`, or `struct_name`/`member_name`. Payload identity is deliberately not compared with the
   config symbol name (CS2 loader contract).
 - x86 virtual-function slots are four bytes; a `structmember` also requires its parent `category: struct`.
+- A `vtable` symbol and its artifact stem are `<vtable_class>_vtable` — period, never the abbreviated
+  `vftable`; secondary tables append an ordinal (`<vtable_class>_vtable2`). Authoritative rule:
+  `.claude/skills/create-preprocessor-scripts/references/vtable-naming.md`.
 - Fatal: unsafe paths, cycles, duplicate or case-colliding names, missing required inputs, wrong architecture, and
   binary mutation. Wrong-architecture and binary-mutation checks happen before and during work.
 - `-allgamever` batch membership and order come from `configs/config.yaml` (single authority). A declared tag whose

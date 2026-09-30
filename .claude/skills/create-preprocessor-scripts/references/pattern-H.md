@@ -43,3 +43,5 @@ Rules:
 - Linux uses the Itanium address point and a verified negative offset-to-top.
 - All entries and table sizes use 4-byte pointers.
 - Config category is `vtable`; artifact identity is `vtable_class`.
+- Name the symbol and artifact stem `<vtable_class>_vtable<N>` per the
+  [vtable naming convention](vtable-naming.md); never abbreviate `vtable` to `vftable`.

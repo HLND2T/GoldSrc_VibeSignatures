@@ -58,6 +58,9 @@ The payload identity is not required to equal the config symbol `name`. This del
 the CS2 loader behavior: config owns lookup/registration identity, while the category-specific
 payload field describes the producer result.
 
+A `vtable` symbol and its artifact stem are `<vtable_class>_vtable` — never the abbreviated
+`vftable`. See [vtable naming](references/vtable-naming.md).
+
 ### Artifact paths and DAG
 
 - Outputs, `optional_output`, `skip_if_exists`, and explicit symbol artifact paths are module-local
@@ -145,7 +148,8 @@ new, explicitly GoldSrc protocol.
 Unnumbered general targets are supported directly:
 
 - Patches via `patch_names` and `preprocess_patch_via_mcp`.
-- Primary vtables via `vtable_class_names` and `preprocess_vtable_via_mcp`.
+- Primary vtables via `vtable_class_names` and `preprocess_vtable_via_mcp`. Name them per the
+  [vtable naming convention](references/vtable-naming.md).
 
 ### Global-variable finder policy
 
@@ -184,6 +188,7 @@ Read the chosen reference before implementation:
 - [Pattern I compatibility entry](references/pattern-I.md)
 - [Pattern L](references/pattern-L.md)
 - [Pattern M](references/pattern-M.md)
+- [Vtable naming convention](references/vtable-naming.md)
 
 ## `func_xrefs` contract
 
