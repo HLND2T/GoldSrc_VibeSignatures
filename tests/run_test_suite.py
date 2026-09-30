@@ -27,6 +27,7 @@ GROUP_FILES = {
         "test_ida_llm_decompile.py",
         "test_client_blob_exports.py",
         "test_client_body_patterns.py",
+        "test_client_viewport_singleton.py",
         "test_scoreinfo_constructor.py",
         "test_engine_private_walks.py",
         "test_studio_view_info.py",
