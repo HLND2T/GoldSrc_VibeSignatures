@@ -1,0 +1,4 @@
+func_name: IEngine::IsTrapping
+vtable_name: IEngine
+vfunc_offset: '0x38'
+vfunc_index: 14

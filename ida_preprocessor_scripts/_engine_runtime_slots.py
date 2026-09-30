@@ -17,11 +17,11 @@ def _control_flow(flow, entry):
     if entry not in graph or any(target not in graph for targets in graph.values() for target in targets):
         raise ValueError("incomplete function control-flow graph")
 
-    def reachable(start):
+    def reachable(start, stop=None):
         pending, visited = [start], set()
         while pending:
             node = pending.pop()
-            if node not in visited:
+            if node not in visited and node != stop:
                 visited.add(node)
                 pending.extend(graph[node])
         return visited
@@ -234,3 +234,124 @@ def select_frame_slots(flow, entry):
             ("ICDAudio_Frame", audio),
         )
     }
+
+
+def _one(values, label):
+    if len(values) != 1:
+        raise ValueError(f"{label}: expected one candidate, got {len(values)}")
+    return values[0]
+
+
+def _this_stores(flow):
+    return [store for store in flow["stores"] if store["address"] and store["address"][:2] == ["address", ["arg", 0]]]
+
+
+def _getter(flow, value):
+    return (
+        not flow["calls"]
+        and all(store["address"] and store["address"][0] == "stack" for store in flow["stores"])
+        and bool(flow["returns"])
+        and all(ret["value"] == value for ret in flow["returns"])
+    )
+
+
+def select_event_slots(engine, event, frame_index, key_address, eng_address, video_address, update_offset, *, sdl):
+    """Recover trapping/state getters and event-window dispatches from current bodies."""
+    if any(isinstance(index, bool) for index in engine):
+        raise ValueError("boolean table index")
+    engine = {int(index): method for index, method in engine.items()}
+    if any(isinstance(index, bool) or index < 0 or method["flow"].get("error") for index, method in engine.items()):
+        raise ValueError("invalid current engine table flow")
+    if frame_index not in engine or event.get("error"):
+        raise ValueError("missing frame or event flow")
+    key_index = _one(
+        [
+            index
+            for index, method in engine.items()
+            if any(call.get("direct") == key_address for call in method["flow"]["calls"])
+        ],
+        "Key_Event caller",
+    )
+    key = engine[key_index]["flow"]
+    stores = _this_stores(key)
+    key_field = _one(
+        [store["address"] for store in stores if store["width"] == WORD_SIZE and store["value"] == ["arg", 1]],
+        "trap key field",
+    )
+    buttons_field = _one(
+        [store["address"] for store in stores if store["width"] == WORD_SIZE and store["value"] == ["const", 0]],
+        "trap buttons field",
+    )
+    trap = _one(
+        [
+            branch["condition"]
+            for branch in key["branches"]
+            if len(branch["condition"]) == 3
+            and branch["condition"][0] == "narrow"
+            and branch["condition"][2] == 1
+            and branch["condition"][1][:2] == ["load", ["arg", 0]]
+        ],
+        "trap flag",
+    )
+    mouse_index = _one(
+        [
+            index
+            for index, method in engine.items()
+            if any(branch["condition"] == trap for branch in method["flow"]["branches"])
+            and any(
+                store["address"] == key_field and store["value"] == ["const", 0] and store["width"] == WORD_SIZE
+                for store in _this_stores(method["flow"])
+            )
+            and any(
+                store["address"] == buttons_field and store["value"] == ["arg", 1] and store["width"] == WORD_SIZE
+                for store in _this_stores(method["flow"])
+            )
+        ],
+        "reciprocal mouse stores",
+    )
+    trap_index = _one([index for index, method in engine.items() if _getter(method["flow"], trap)], "trap getter")
+    frame = engine[frame_index]["flow"]
+    state = _one(
+        [branch["condition"] for branch in frame["branches"] if branch["condition"][:2] == ["load", ["arg", 0]]],
+        "Frame DLL state",
+    )
+    state_index = _one([index for index, method in engine.items() if _getter(method["flow"], state)], "state getter")
+    indices = {
+        "IEngine_TrapKey_Event": key_index,
+        "IEngine_TrapMouse_Event": mouse_index,
+        "IEngine_IsTrapping": trap_index,
+        "IEngine_GetState": state_index,
+    }
+    if len(set(indices.values())) != len(indices):
+        raise ValueError("engine method roles overlap")
+    found = {name: dict(offset=index * WORD_SIZE, method=engine[index]["address"]) for name, index in indices.items()}
+
+    virtuals = [call for call in event["calls"] if call["virtuals"]]
+    if any(len(call["virtuals"]) != 1 for call in virtuals):
+        raise ValueError("ambiguous event dispatch")
+    eng = ["load", ["const", eng_address], 0]
+    video = ["load", ["const", video_address], 0]
+    if not any(_receiver(call) == eng and _offset(call) == state_index * WORD_SIZE for call in virtuals):
+        raise ValueError("event owner does not dispatch the inferred GetState slot")
+    video_calls = [call for call in virtuals if _receiver(call) == video and _offset(call) != update_offset]
+    found["IVideoMode_IsWindowedMode"] = _choose_slot("IVideoMode_IsWindowedMode", video_calls)
+    activity = select_frame_slots(frame, engine[frame_index]["address"])["IGame_IsActiveApp"]["sites"]
+    game = _receiver(_one([call for call in frame["calls"] if call["ea"] == activity[0]], "game receiver"))
+    game_calls = [call for call in virtuals if _receiver(call) == game]
+    if sdl:
+        _, _, reachable, _ = _control_flow(event, event["entry"])
+        activity_sites = {call["ea"] for call in video_calls}
+        branch = _one(
+            [
+                branch
+                for branch in event["branches"]
+                if branch["condition"][0] == "result" and branch["condition"][1] in activity_sites
+            ],
+            "windowed branch",
+        )
+        # Cut re-entry to the condition; otherwise the SDL event loop makes
+        # both branches reach every later iteration and erases exclusivity.
+        windowed_region = reachable(branch["nonzero"], branch["block"]) - reachable(branch["zero"], branch["block"])
+        game_calls = [call for call in game_calls if call["block"] in windowed_region]
+    found["IGame_SetWindowXY"] = _choose_slot("IGame_SetWindowXY", game_calls)
+    return found

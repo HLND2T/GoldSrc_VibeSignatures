@@ -1,0 +1,4 @@
+func_name: IVideoMode::IsWindowedMode
+vtable_name: IVideoMode
+vfunc_offset: '0x1c'
+vfunc_index: 7

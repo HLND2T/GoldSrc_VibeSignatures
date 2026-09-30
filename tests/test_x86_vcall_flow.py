@@ -576,3 +576,138 @@ class FrameSlotRoleTests(unittest.TestCase):
         flow["calls"][2]["virtuals"][0][1] = 29
         with self.assertRaises(ValueError):
             self.select(flow)
+
+
+class EventSlotRoleTests(unittest.TestCase):
+    def fixture(self):
+        state = ["load", ["arg", 0], 0x54]
+        trapped = ["narrow", ["load", ["arg", 0], 0x24], 1]
+        key_field = ["address", ["arg", 0], 0x34]
+        buttons_field = ["address", ["arg", 0], 0x40]
+        frame = FrameSlotRoleTests().fixture()
+        frame["blocks"].update({300: [400, 500], 400: [500], 500: []})
+        frame["branches"].append(dict(condition=state, zero=500, nonzero=400, block=300))
+
+        def body(calls=(), returns=(), stores=(), conditions=()):
+            return dict(
+                calls=list(calls),
+                returns=[dict(value=v) for v in returns],
+                stores=list(stores),
+                branches=[dict(condition=v) for v in conditions],
+            )
+
+        def store(address, value):
+            return dict(address=address, value=value, width=4)
+
+        engine = {
+            2: dict(address=100, flow=frame),
+            4: dict(
+                address=600,
+                flow=body(
+                    calls=[dict(direct=0xF000, target=["const", 0xF100])],
+                    stores=[store(key_field, ["arg", 1]), store(buttons_field, ["const", 0])],
+                    conditions=[trapped],
+                ),
+            ),
+            7: dict(
+                address=700,
+                flow=body(
+                    stores=[store(key_field, ["const", 0]), store(buttons_field, ["arg", 1])], conditions=[trapped]
+                ),
+            ),
+            9: dict(address=800, flow=body(returns=[trapped])),
+            3: dict(address=900, flow=body(returns=[state])),
+        }
+        game = ["load", ["const", 0x9000], 0]
+        video = ["load", ["const", 0xD000], 0]
+        eng = ["load", ["const", 0xE000], 0]
+
+        def call(ea, block, receiver, offset):
+            return dict(ea=ea, block=block, virtuals=[[receiver, offset]], args=[receiver])
+
+        event = dict(
+            entry=1000,
+            blocks={
+                1000: [1100, 1400, 1500],
+                1100: [1200, 1300],
+                1200: [1300],
+                1300: [1000],
+                1400: [1300],
+                1500: [1300],
+            },
+            branches=[dict(condition=["result", 1101], block=1100, zero=1300, nonzero=1200)],
+            calls=[
+                call(1101, 1100, video, 8),
+                call(1201, 1200, game, 52),
+                call(1202, 1200, video, 48),
+                call(1401, 1400, game, 56),
+                call(1501, 1500, eng, 12),
+            ],
+        )
+        return engine, event
+
+    def select(self, engine, event, sdl=True):
+        from ida_preprocessor_scripts._engine_runtime_slots import select_event_slots
+
+        return select_event_slots(engine, event, 2, 0xF000, 0xE000, 0xD000, 48, sdl=sdl)
+
+    def test_mirrored_fields_and_cyclic_sdl_branch_select_unrelated_slots(self):
+        result = self.select(*self.fixture())
+        self.assertEqual(
+            {
+                "IEngine_TrapKey_Event": 16,
+                "IEngine_TrapMouse_Event": 28,
+                "IEngine_IsTrapping": 36,
+                "IEngine_GetState": 12,
+                "IVideoMode_IsWindowedMode": 8,
+                "IGame_SetWindowXY": 52,
+            },
+            {name: role["offset"] for name, role in result.items()},
+        )
+
+    def test_native_path_requires_one_game_dispatch(self):
+        engine, event = self.fixture()
+        event["calls"] = [c for c in event["calls"] if c["ea"] != 1401]
+        self.assertEqual(52, self.select(engine, event, sdl=False)["IGame_SetWindowXY"]["offset"])
+
+    def test_raw_plt_address_cannot_replace_resolved_callee(self):
+        engine, event = self.fixture()
+        engine[4]["flow"]["calls"][0]["direct"] = 0xF100
+        with self.assertRaises(ValueError):
+            self.select(engine, event)
+
+    def test_mouse_method_must_write_the_reciprocal_fields(self):
+        engine, event = self.fixture()
+        engine[7]["flow"]["stores"][1]["address"] = ["address", ["arg", 0], 0x44]
+        with self.assertRaises(ValueError):
+            self.select(engine, event)
+
+    def test_ambiguous_state_getter_is_rejected(self):
+        engine, event = self.fixture()
+        engine[10] = engine[3]
+        with self.assertRaises(ValueError):
+            self.select(engine, event)
+
+    def test_event_receiver_argument_must_agree(self):
+        engine, event = self.fixture()
+        event["calls"][1]["args"] = [["arg", 0]]
+        with self.assertRaises(ValueError):
+            self.select(engine, event)
+
+    def test_window_position_requires_true_branch(self):
+        engine, event = self.fixture()
+        event["branches"][0].update(zero=1200, nonzero=1300)
+        with self.assertRaises(ValueError):
+            self.select(engine, event)
+
+    def test_state_slot_must_be_observed_in_event_owner(self):
+        engine, event = self.fixture()
+        event["calls"] = [c for c in event["calls"] if c["ea"] != 1501]
+        with self.assertRaises(ValueError):
+            self.select(engine, event)
+
+    def test_getter_with_global_write_is_rejected(self):
+        engine, event = self.fixture()
+        engine[3]["flow"]["stores"] = [dict(address=["const", 0xF800], value=["const", 1], width=4)]
+        with self.assertRaises(ValueError):
+            self.select(engine, event)

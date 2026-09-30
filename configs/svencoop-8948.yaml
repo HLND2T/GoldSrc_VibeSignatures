@@ -959,6 +959,25 @@ modules:
           - IEngine_GetQuitting.{platform}.yaml
           - IGame_Shutdown.{platform}.yaml
           - IVideoMode_Shutdown.{platform}.yaml
+      - name: find-engine-event-slots
+        expected_input:
+          - CEngine_vtable.{platform}.yaml
+          - CEngine_Frame.{platform}.yaml
+          - IEngine_Frame.{platform}.yaml
+          - Key_Event.{platform}.yaml
+          - eng.{platform}.yaml
+          - videomode.{platform}.yaml
+          - IVideoMode_UpdateWindowPosition.{platform}.yaml
+          - CGame_vtable.{platform}.yaml
+          - CVideoMode_OpenGL_vtable.{platform}.yaml
+          - CGame_SleepUntilInput.{platform}.yaml
+        expected_output:
+          - IEngine_TrapKey_Event.{platform}.yaml
+          - IEngine_TrapMouse_Event.{platform}.yaml
+          - IEngine_IsTrapping.{platform}.yaml
+          - IEngine_GetState.{platform}.yaml
+          - IVideoMode_IsWindowedMode.{platform}.yaml
+          - IGame_SetWindowXY.{platform}.yaml
       - name: find-CEngine_Frame-slots
         expected_input:
           - CEngine_Frame.{platform}.yaml
@@ -2095,6 +2114,18 @@ modules:
       - name: IGame_SleepUntilInput
         category: vfunc
       - name: ICDAudio_Frame
+        category: vfunc
+      - name: IEngine_TrapKey_Event
+        category: vfunc
+      - name: IEngine_TrapMouse_Event
+        category: vfunc
+      - name: IEngine_IsTrapping
+        category: vfunc
+      - name: IEngine_GetState
+        category: vfunc
+      - name: IVideoMode_IsWindowedMode
+        category: vfunc
+      - name: IGame_SetWindowXY
         category: vfunc
       - name: CGame_SleepUntilInput
         category: vfunc

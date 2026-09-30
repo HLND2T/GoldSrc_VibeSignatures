@@ -102,3 +102,60 @@ tags:
 - CGame::WindowProc uses two source-owned instruction constants, SC_CLOSE (0xF060) and SC_SCREENSAVE (0xF140), via the shared signature-xref locator (Pattern A). Both must also be decoded cmp immediates in the chosen body; a current eng/IEngine_GetQuitting dispatch verifies receiver and method identity before either output is written.
 - Constraint: do not require bytes 00 00 CB 84 for CreateGameWindow. Five HL builds encode that style directly, while CoF computes it with OR/AND; both target-owned strings plus table membership are unique on all six builds. Generated function signatures only validate the located outputs and never participate in discovery.
 - Verification on 2026-09-30: all six applicable engine binaries produced both artifacts; twelve addresses and sizes match the independent current-IDB evidence, and signatures are unique. The all-gamever invocation successfully processed five HL targets then stopped when it reached an SDL config where the finder is intentionally absent; CoF was run separately and succeeded. Full suite: 1263 tests, OK with 9 environment/opt-in skips; formatting and staged diff checks passed. No new shared algorithm was introduced, so real-binary checks and existing regression tests provide the meaningful coverage instead of finder-source inventory tests.
+
+## Event-interface slots (#303, A12)
+
+- Module/category: engine, six slot-only interface vfuncs. Producer: find-engine-event-slots.py, using the pure select_event_slots role selector and existing x86 dataflow/exact-entry recovery.
+- IEngine::TrapKey_Event: the unique current CEngine table method whose resolved direct callee is current Key_Event. Use the decoder's resolved direct identity: svencoop-8948 Linux encodes a PLT call, not the Key_Event body address.
+- IEngine::TrapMouse_Event: the unique method guarding the same trapping byte and reciprocally writing the button argument/key-zero fields inferred from TrapKey_Event's key-argument/button-zero stores. No member offsets are fixed; svencoop-8948 Linux uses a different trapping-field layout.
+- IEngine::IsTrapping: the unique getter returning that trapping-byte load without calls or non-stack writes. SDL event processing does not call it directly, but the getter exists in every current CEngine table.
+- IEngine::GetState: the unique getter returning Frame's zero-tested DLL-state dword, cross-checked against an eng dispatch in the event owner. A cmp-return-to-1 anchor is not universal after Linux optimization/devirtualization.
+- IVideoMode::IsWindowedMode: the unique event-owner videomode slot after excluding the already verified IVideoMode::UpdateWindowPosition; validate receiver/argument agreement and current table bounds.
+- IGame::SetWindowXY: establish game from the existing Frame activity/wait relationship. Native WindowProc has one game dispatch; SDL position/size setters are distinguished by the IsWindowedMode true-only region. Stop traversal on re-entry to the condition block, otherwise the event loop makes both branches reach subsequent iterations.
+- Verification: all 15 engine/platform pairs ran successfully with zero failed skills and produced 90 artifacts matching independent current-IDB role evidence. All slots fit their current class tables. Exported production flow payloads are approximately 14–19 KB, avoiding the large research response truncation seen when exporting unused decoder state.
+
+## HandleSDLEvent inline coverage (#303, A13)
+
+- Trigger/constraint: the requested helper may be inline; its source name must not be assigned to the entire SleepUntilInput caller.
+- On all nine configured SDL targets, the common owner of SDL_DestroyWindow, SDL_GetRelativeMouseState and SDL_WarpMouseInWindow is CGame::SleepUntilInput. Excluding SDL_WaitEventTimeout leaves no standalone candidate. Current IDB/ELF names contain no separate HandleSDLEvent or SDLEventWatcher, and the event cases are visible in the Sleep body.
+- Approved handling: record the inline status and reuse CGame_SleepUntilInput for the event slots. Do not emit a fabricated CGame_HandleSDLEvent function alias or an unvalidated standalone fallback. Native Windows engines have no SDL path, so this helper is not applicable there.
+
+| SDL target | Platform | Verified inline owner VA |
+| --- | --- | --- |
+| hl-6153 | Windows | 0x1dadd10 |
+| hl-8684 | Windows | 0x1daff40 |
+| hl-8684 | Linux | 0x205050 |
+| hl-10210 | Windows | 0x102241d0 |
+| hl-10210 | Linux | 0x1b5c60 |
+| svencoop-8948 | Windows | 0x1dbe6b0 |
+| svencoop-8948 | Linux | 0x1d05a0 |
+| svencoop-10257 | Windows | 0x1dbfcc0 |
+| svencoop-10257 | Linux | 0x184690 |
+
+These addresses are evidence for these binaries, never finder constants.
+
+## Issue #303 delivered identities and support
+
+All rows below are in module engine. Universal coverage means the 11 Windows targets and four Linux targets listed under Availability; native coverage means Windows hl-3248/3266/3329/3647/4554 and cof-5936. Unconfigured Linux engine versions are not claimed as tested.
+
+| Results | Category | Support / evidence |
+| --- | --- | --- |
+| RunListenServer, Key_Event | func | Universal; exact target-owned literals and unique signatures |
+| eng (formerly engine) | gv | Universal; shared RunListenServer discovery; prior global payload preserved apart from identity |
+| CEngine, CGame | primary vtable | Universal; exact class RTTI/ELF ownership and current entries |
+| IGame::Init, IEngine::Load, IVideoMode::Init | slot-only vfunc | Universal; launcher arguments and initialization branches |
+| IEngine::Frame, IEngine::SetQuitting, IEngine::GetQuitting | slot-only vfunc | Universal; launcher CFG/call roles |
+| IGame::Shutdown, IVideoMode::Shutdown | slot-only vfunc | Universal; Load-failure cleanup with consistent slots |
+| CEngine::Frame | concrete vfunc | Universal; inherited current interface slot/table and unique signature |
+| IGame::IsActiveApp, IGame::SleepUntilInput, ICDAudio::Frame | slot-only vfunc | Universal; Frame receiver/control-flow roles |
+| CGame::SleepUntilInput | concrete vfunc | Universal; current CGame inheritance; six native short functions intentionally omit func_sig, nine SDL functions retain it |
+| CGame::CreateGameWindow | concrete vfunc | Native only; exact strings and CGame table membership |
+| CGame::WindowProc | func | Native only; decoded SC_* constants and eng quitting dispatch |
+| IEngine::TrapKey_Event, IEngine::TrapMouse_Event, IEngine::IsTrapping, IEngine::GetState | slot-only vfunc | Universal; current CEngine method semantics and event cross-check |
+| IVideoMode::IsWindowedMode, IGame::SetWindowXY | slot-only vfunc | Universal; event receiver/branch roles |
+| IVideoMode::UpdateWindowPosition | slot-only vfunc | Universal; inherits existing CVideoMode_Common_UpdateWindowPosition instead of duplicating its locator |
+| CGame::HandleSDLEvent | inline helper, no separate artifact | Nine SDL targets inline it; non-SDL targets are not applicable |
+
+The issue's IEngine_Init spelling was corrected to IGame::Init. Frame/SetQuitting/GetQuitting belong to IEngine, and the concrete Frame belongs to CEngine, not CGame. Interface outputs contain only identity/table/offset/index; internal inferred member values are not extra artifacts. The issue-wide artifact audit covers 270 interface slots, 72 concrete functions (66 signatures and six native waits intentionally lacking func_sig), 30 primary tables and 15 renamed eng globals.
+
+Final verification on 2026-09-30: all configured finder targets completed their real-binary checks, including 15/15 for the final event-slot finder and 6/6 native-window targets. The final artifact audit matched all 90 new event slots to separately captured role evidence and checked the issue-wide identities, interface field contracts, inherited addresses, table bounds, signature-presence policy and platform exclusions. Full suite: 1272 tests in 133.067s, OK (9 environment/opt-in skips); formatter and staged diff checks passed. New synthetic tests cover PLT resolution, reciprocal stores, getter ambiguity/side effects, receiver agreement and cyclic SDL branch exclusivity.
