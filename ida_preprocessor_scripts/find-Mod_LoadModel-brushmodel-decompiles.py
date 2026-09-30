@@ -15,14 +15,12 @@ TARGET_FUNC_NAME = "Mod_LoadBrushModel"
 REFERENCE = "Mod_LoadModel"
 LLM_DECOMPILE = [
     {
-        "symbol_name": TARGET_FUNC_NAME,
+        "symbol_name": "Mod_LoadBrushModel",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [
-            f"references/{{gamever}}/engine/{REFERENCE}.{{platform}}.yaml",
-        ],
+        "reference_yaml_paths": ["references/{gamever}/engine/Mod_LoadModel.{platform}.yaml"],
         "expected_result_sections": ["found_call"],
-        "dependency_policy": {f"{REFERENCE}.{{platform}}.yaml": "required"},
-    },
+        "dependency_policy": {"Mod_LoadModel.{platform}.yaml": "required"},
+    }
 ]
 FUNC_FIELDS = ["func_name", "func_sig", "func_va", "func_rva", "func_size"]
 

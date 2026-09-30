@@ -26,13 +26,26 @@ GV_FIELDS = [
 ]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "gltextures",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/GL_LoadTexture2.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {"GL_LoadTexture2.{platform}.yaml": "required"},
-    }
-    for name in GV_NAMES
+    },
+    {
+        "symbol_name": "numgltextures",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/GL_LoadTexture2.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"GL_LoadTexture2.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "gHostSpawnCount",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/GL_LoadTexture2.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"GL_LoadTexture2.{platform}.yaml": "required"},
+    },
 ]
 
 

@@ -6,13 +6,12 @@ from ida_analyze_util import preprocess_common_skill
 TARGET_GLOBAL_NAMES = ["gHUD"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "gHUD",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/client/HUD_Init.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {"HUD_Init.{platform}.yaml": "required"},
     }
-    for name in TARGET_GLOBAL_NAMES
 ]
 FIELDS = ["gv_name", "gv_va", "gv_rva", "gv_sig", "gv_sig_va", "gv_inst_offset", "gv_inst_length", "gv_inst_disp"]
 GENERATE_YAML_DESIRED_FIELDS = [(name, FIELDS) for name in TARGET_GLOBAL_NAMES]

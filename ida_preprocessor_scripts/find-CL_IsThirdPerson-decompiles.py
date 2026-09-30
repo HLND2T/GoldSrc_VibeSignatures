@@ -6,13 +6,19 @@ from ida_analyze_util import preprocess_common_skill
 TARGET_GLOBAL_NAMES = ["g_iUser1", "g_iUser2"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "g_iUser1",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/client/CL_IsThirdPerson.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {"CL_IsThirdPerson.{platform}.yaml": "required"},
-    }
-    for name in TARGET_GLOBAL_NAMES
+    },
+    {
+        "symbol_name": "g_iUser2",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/client/CL_IsThirdPerson.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"CL_IsThirdPerson.{platform}.yaml": "required"},
+    },
 ]
 GV_FIELDS = [
     "gv_name",

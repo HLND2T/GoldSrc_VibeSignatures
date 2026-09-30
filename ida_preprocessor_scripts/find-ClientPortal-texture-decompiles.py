@@ -1,13 +1,59 @@
 """Linux texture scalars from the outlined portal GL initializer."""
 
+from llm_spec import select_llm_specs
 from pathlib import Path
 from ida_analyze_util import _load_yaml_mapping, _parse_int, preprocess_common_skill
 from ida_preprocessor_scripts._portal_layout_ida import run_layout_walk
 from scalar_artifact import SCALAR_FIELDS
 
-TEXTURE_REFERENCES = {
-    "ClientPortal": "references/{gamever}/client/ClientPortal_CreateTexture.{platform}.yaml",
-    "PortalSource": "references/{gamever}/client/PortalSource_CreateTexture.{platform}.yaml",
+
+LLM_DECOMPILE = {
+    "ClientPortal": [
+        {
+            "symbol_name": "ClientPortal_texture_id_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortal_CreateTexture.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortal_CreateTexture.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "ClientPortal_texture_width_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortal_CreateTexture.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortal_CreateTexture.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "ClientPortal_texture_height_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortal_CreateTexture.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortal_CreateTexture.{platform}.yaml": "required"},
+        },
+    ],
+    "PortalSource": [
+        {
+            "symbol_name": "PortalSource_texture_id_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/PortalSource_CreateTexture.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"PortalSource_CreateTexture.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "PortalSource_texture_width_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/PortalSource_CreateTexture.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"PortalSource_CreateTexture.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "PortalSource_texture_height_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/PortalSource_CreateTexture.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"PortalSource_CreateTexture.{platform}.yaml": "required"},
+        },
+    ],
 }
 
 
@@ -44,17 +90,7 @@ async def preprocess_skill(
             print(exc)
         return False
     verified = {f"{source_name}_{key}_offset": value for key, value in values.items()}
-    specs = [
-        {
-            "symbol_name": name,
-            "prompt_path": "prompt/call_llm_decompile.md",
-            "reference_yaml_paths": [TEXTURE_REFERENCES[source_name]],
-            "expected_result_sections": ["found_scalar"],
-            "dependency_policy": {f"{source_name}_CreateTexture.{{platform}}.yaml": "required"},
-            "expected_value": value,
-        }
-        for name, value in verified.items()
-    ]
+    specs = select_llm_specs(LLM_DECOMPILE, branch=source_name, symbols=list(verified), expected_values=verified)
     if debug:
         print("Portal Linux texture offsets verified:", verified)
     return await preprocess_common_skill(

@@ -14,15 +14,33 @@ TARGET_FUNCTION_NAMES = ["GL_UnloadTextures"]
 TARGET_GLOBAL_NAMES = ["r_worldentity", "cl_worldmodel", "d_lightstylevalue"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "GL_UnloadTextures",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [
-            "references/{gamever}/engine/R_NewMap.{platform}.yaml",
-        ],
-        "expected_result_sections": ["found_call" if name in TARGET_FUNCTION_NAMES else "found_gv"],
+        "reference_yaml_paths": ["references/{gamever}/engine/R_NewMap.{platform}.yaml"],
+        "expected_result_sections": ["found_call"],
         "dependency_policy": {"R_NewMap.{platform}.yaml": "required"},
-    }
-    for name in TARGET_FUNCTION_NAMES + TARGET_GLOBAL_NAMES
+    },
+    {
+        "symbol_name": "r_worldentity",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_NewMap.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_NewMap.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "cl_worldmodel",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_NewMap.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_NewMap.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "d_lightstylevalue",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_NewMap.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_NewMap.{platform}.yaml": "required"},
+    },
 ]
 FUNC_FIELDS = ["func_name", "func_sig", "func_va", "func_rva", "func_size"]
 # GL_UnloadTextures is a chain of small texture-slot loops whose in-function

@@ -108,21 +108,15 @@ async def recover_callee(
     image_base,
     owner_name,
     target_name,
-    reference,
     llm_config,
     debug,
+    *,
+    llm_decompile_specs,
 ):
     owner = _load_yaml_mapping(Path(new_binary_dir) / f"{owner_name}.{platform}.yaml")
     output = _output_for_symbol(expected_outputs, target_name)
     if owner is None or output is None:
         return False
-    spec = dict(
-        symbol_name=target_name,
-        prompt_path="prompt/call_llm_decompile.md",
-        reference_yaml_paths=[reference],
-        expected_result_sections=["found_call"],
-        dependency_policy={f"{owner_name}.{{platform}}.yaml": "required"},
-    )
     accepted = False
     try:
         found = await preprocess_common_skill(
@@ -133,7 +127,7 @@ async def recover_callee(
             platform=platform,
             image_base=image_base,
             func_names=[target_name],
-            llm_decompile_specs=[spec],
+            llm_decompile_specs=llm_decompile_specs,
             llm_config=llm_config,
             # The helper's default 24 fixed bytes cover only a shared debug
             # prologue on 3266/3329. Enable its larger inspection budget, then

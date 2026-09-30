@@ -31,13 +31,47 @@ FUNC_XREFS = [
 ]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "GameStudioRenderer_StudioDrawPlayer",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/client/GameStudioRenderer_StudioDrawModel.{platform}.yaml"],
         "expected_result_sections": ["found_vcall", "found_funcptr"],
         "dependency_policy": {"GameStudioRenderer_StudioDrawModel.{platform}.yaml": "required"},
-    }
-    for name in TARGET_FUNCTION_NAMES
+    },
+    {
+        "symbol_name": "GameStudioRenderer_StudioSaveBones",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/client/GameStudioRenderer_StudioDrawModel.{platform}.yaml"],
+        "expected_result_sections": ["found_vcall", "found_funcptr"],
+        "dependency_policy": {"GameStudioRenderer_StudioDrawModel.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "GameStudioRenderer_StudioMergeBones",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/client/GameStudioRenderer_StudioDrawModel.{platform}.yaml"],
+        "expected_result_sections": ["found_vcall", "found_funcptr"],
+        "dependency_policy": {"GameStudioRenderer_StudioDrawModel.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "GameStudioRenderer_StudioRenderModel",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/client/GameStudioRenderer_StudioDrawModel.{platform}.yaml"],
+        "expected_result_sections": ["found_vcall", "found_funcptr"],
+        "dependency_policy": {"GameStudioRenderer_StudioDrawModel.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "GameStudioRenderer_StudioCalcAttachments",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/client/GameStudioRenderer_StudioDrawModel.{platform}.yaml"],
+        "expected_result_sections": ["found_vcall", "found_funcptr"],
+        "dependency_policy": {"GameStudioRenderer_StudioDrawModel.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "GameStudioRenderer_StudioSetupBones",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/client/GameStudioRenderer_StudioDrawModel.{platform}.yaml"],
+        "expected_result_sections": ["found_vcall", "found_funcptr"],
+        "dependency_policy": {"GameStudioRenderer_StudioDrawModel.{platform}.yaml": "required"},
+    },
 ]
 VFUNC_FIELDS = [
     "func_name",

@@ -90,7 +90,18 @@ class CalleePublicationTests(unittest.IsolatedAsyncioTestCase):
             (directory / "Owner.windows.yaml").write_text("func_va: '0x1000'\n", encoding="utf-8")
             output = directory / f"{common.WIDE}.windows.yaml"
 
+            specs = [
+                {
+                    "symbol_name": common.WIDE,
+                    "prompt_path": "prompt/call_llm_decompile.md",
+                    "reference_yaml_paths": ["references/{gamever}/gameui/Owner.{platform}.yaml"],
+                    "expected_result_sections": ["found_call"],
+                    "dependency_policy": {"Owner.{platform}.yaml": "required"},
+                }
+            ]
+
             async def generate(**kwargs):
+                self.assertIs(specs, kwargs["llm_decompile_specs"])
                 output.write_text("func_va: '0x2000'\n", encoding="utf-8")
                 return True
 
@@ -99,7 +110,16 @@ class CalleePublicationTests(unittest.IsolatedAsyncioTestCase):
                 patch.object(common, "walk", new=AsyncMock(side_effect=ConnectionError("worker disconnected"))),
             ):
                 found = await common.recover_callee(
-                    None, [output], directory, "windows", 0, "Owner", common.WIDE, "reference.yaml", None, False
+                    None,
+                    [output],
+                    directory,
+                    "windows",
+                    0,
+                    "Owner",
+                    common.WIDE,
+                    None,
+                    False,
+                    llm_decompile_specs=specs,
                 )
             self.assertFalse(found)
             self.assertFalse(output.exists())

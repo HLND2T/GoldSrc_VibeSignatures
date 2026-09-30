@@ -10,13 +10,12 @@ TARGET_NAMES = ["mtexenabled"]
 PREDECESSOR = "GL_EnableMultitexture"
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "mtexenabled",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [f"references/{{gamever}}/engine/{PREDECESSOR}.{{platform}}.yaml"],
+        "reference_yaml_paths": ["references/{gamever}/engine/GL_EnableMultitexture.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
-        "dependency_policy": {f"{PREDECESSOR}.{{platform}}.yaml": "required"},
+        "dependency_policy": {"GL_EnableMultitexture.{platform}.yaml": "required"},
     }
-    for name in TARGET_NAMES
 ]
 DESIRED_FIELDS = [
     "gv_name",

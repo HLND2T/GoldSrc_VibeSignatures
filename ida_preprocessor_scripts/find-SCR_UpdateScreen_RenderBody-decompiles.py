@@ -20,26 +20,40 @@ TARGET_GLOBAL_NAMES = ["scr_drawloading"]
 REFERENCE = "SCR_UpdateScreen_RenderBody"
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "GL_BeginRendering",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [
-            f"references/{{gamever}}/engine/{REFERENCE}.{{platform}}.yaml",
-        ],
+        "reference_yaml_paths": ["references/{gamever}/engine/SCR_UpdateScreen_RenderBody.{platform}.yaml"],
         "expected_result_sections": ["found_call"],
-        "dependency_policy": {f"{REFERENCE}.{{platform}}.yaml": "required"},
-    }
-    for name in TARGET_FUNCTION_NAMES
-] + [
+        "dependency_policy": {"SCR_UpdateScreen_RenderBody.{platform}.yaml": "required"},
+    },
     {
-        "symbol_name": name,
+        "symbol_name": "GL_EndRendering",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [
-            f"references/{{gamever}}/engine/{REFERENCE}.{{platform}}.yaml",
-        ],
+        "reference_yaml_paths": ["references/{gamever}/engine/SCR_UpdateScreen_RenderBody.{platform}.yaml"],
+        "expected_result_sections": ["found_call"],
+        "dependency_policy": {"SCR_UpdateScreen_RenderBody.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "GL_Finish2D",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/SCR_UpdateScreen_RenderBody.{platform}.yaml"],
+        "expected_result_sections": ["found_call"],
+        "dependency_policy": {"SCR_UpdateScreen_RenderBody.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "GL_Set2D",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/SCR_UpdateScreen_RenderBody.{platform}.yaml"],
+        "expected_result_sections": ["found_call"],
+        "dependency_policy": {"SCR_UpdateScreen_RenderBody.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "scr_drawloading",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/SCR_UpdateScreen_RenderBody.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
-        "dependency_policy": {f"{REFERENCE}.{{platform}}.yaml": "required"},
-    }
-    for name in TARGET_GLOBAL_NAMES
+        "dependency_policy": {"SCR_UpdateScreen_RenderBody.{platform}.yaml": "required"},
+    },
 ]
 FUNC_FIELDS = ["func_name", "func_sig", "func_va", "func_rva", "func_size"]
 # Legacy GL_EndRendering entries are 6-11 byte VID_FlipScreen forwarding

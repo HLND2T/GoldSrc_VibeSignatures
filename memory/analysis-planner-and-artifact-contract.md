@@ -79,3 +79,11 @@ Planner/snapshot-contract reuse, cross-module edges, identity/category rules, ba
 are covered by `tests.test_analysis_planner` and the repository-contract suite. See [[full-analysis-concurrency]] for
 batch scheduling, [[preprocess_func_xrefs_via_mcp]] for deterministic finder mechanics, and
 [[gamesymbol PR validation candidate 基线复用]] for how PR validation reuses these artifacts.
+
+## Static LLM dependency declarations
+
+- Trigger: PR planning reports an unmapped helper, or misses references constructed with f-strings/helper arguments.
+- Root cause / constraint: the trusted-base planner reads Git trees without executing preprocessors; `ImportFrom.module` alone omits `from package import helper` children. Executing scripts would depend on IDA/artifacts and change the trust boundary.
+- Correct practice: declare each LLM entry's complete specs in one literal module-level `LLM_DECOMPILE` list, or named branches (`dict[str, list[dict]]`). Dependency fields cannot be constructed or mutated at runtime. `llm_spec.select_llm_specs` copies a branch/subset and permits only `expected_value` and `instruction_rules` overlays. Forwarding helpers take keyword-only `llm_decompile_specs`; actual artifact reads stay in runtime analysis.
+- Verification: `llm_declarations.validate_declarations` audits all preprocessor Python sources in the existing repository-contract suite. Unit tests cover declaration grammar, scoped aliases/kwargs, package imports and legacy resource changes. The source index unions branch dependencies, resolves only Git-tree modules/package initializers and retains reference fallback order.
+- Scope / rollout: current trees must pass strict audit. Historical unsupported declarations retain source ownership and conservatively seed their consumers for any reference/prompt change, with explicit diagnostics. CI continues using base tooling; rerunning an old job does not load the new scanner. Static tests are not evidence of commercial IDA analysis.

@@ -28,16 +28,45 @@ REAL_NAMES = {
 }
 
 
+LLM_DECOMPILE = {
+    "hl-8684-print": [
+        {
+            "symbol_name": "CGameConsoleDialog_Print",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": [
+                "references/hl-8684/gameui/CGameConsoleDialog_DumpConsoleTextToFile.{platform}.yaml"
+            ],
+            "expected_result_sections": ["found_call"],
+            "dependency_policy": {"CGameConsoleDialog_DumpConsoleTextToFile.{platform}.yaml": "required"},
+        }
+    ],
+    "hl-8684-insert": [
+        {
+            "symbol_name": "GameUI_RichText_InsertStringA",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": [
+                "references/hl-8684/gameui/CGameConsoleDialog_DumpConsoleTextToFile.{platform}.yaml"
+            ],
+            "expected_result_sections": ["found_call"],
+            "dependency_policy": {"CGameConsoleDialog_DumpConsoleTextToFile.{platform}.yaml": "required"},
+        }
+    ],
+    "hl-10210-insert": [
+        {
+            "symbol_name": "GameUI_RichText_InsertStringA",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": [
+                "references/hl-10210/gameui/CGameConsoleDialog_DumpConsoleTextToFile.{platform}.yaml"
+            ],
+            "expected_result_sections": ["found_call"],
+            "dependency_policy": {"CGameConsoleDialog_DumpConsoleTextToFile.{platform}.yaml": "required"},
+        }
+    ],
+}
+
+
 def _gamever(new_binary_dir):
     return Path(new_binary_dir).parent.name
-
-
-def _reference(gamever, platform):
-    # Both reference revisions are source-restored and annotated at the
-    # condump failure branch. The older Linux reference retains its distinct
-    # failure call; the newer one records the shared success/failure block.
-    era = "hl-8684" if (gamever in OLD_WINDOWS or gamever == "hl-8684") else "hl-10210"
-    return f"references/{era}/gameui/{OWNER}.{platform}.yaml"
 
 
 def _body_validation_code(owner_va, target_va, target):
@@ -101,13 +130,8 @@ async def preprocess_skill(
     output = _output_for_symbol(expected_outputs, target)
     if owner is None or output is None:
         return False
-    spec = {
-        "symbol_name": target,
-        "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [_reference(gamever, platform)],
-        "expected_result_sections": ["found_call"],
-        "dependency_policy": {f"{OWNER}.{{platform}}.yaml": "required"},
-    }
+    era = "hl-8684" if gamever in OLD_WINDOWS else "hl-10210"
+    specs = LLM_DECOMPILE[era + ("-print" if target == PRINT else "-insert")]
     found = await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,
@@ -116,7 +140,7 @@ async def preprocess_skill(
         platform=platform,
         image_base=image_base,
         func_names=[target],
-        llm_decompile_specs=[spec],
+        llm_decompile_specs=specs,
         llm_config=llm_config,
         generate_yaml_desired_fields=[
             (

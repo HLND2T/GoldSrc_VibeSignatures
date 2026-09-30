@@ -31,6 +31,16 @@ def _config_tags() -> set[str]:
 
 
 class RepositoryContractTests(unittest.TestCase):
+    def test_preprocessor_llm_declarations(self):
+        from llm_declarations import validate_declarations
+
+        validate_declarations(
+            {
+                path.relative_to(ROOT).as_posix(): path.read_text(encoding="utf-8")
+                for path in (ROOT / "ida_preprocessor_scripts").rglob("*.py")
+            }
+        )
+
     def test_tracked_bin_artifacts_match_the_formal_repository_contract(self):
         inventory = validate_repository_artifact_contract(ROOT)
         self.assertEqual(_config_tags(), {item.game_version for item in inventory.gamevers})

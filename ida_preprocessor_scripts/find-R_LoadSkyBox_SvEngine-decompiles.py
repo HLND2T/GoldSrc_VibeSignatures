@@ -19,22 +19,22 @@ from ida_analyze_util import preprocess_common_skill
 
 TARGET_GLOBAL_NAMES = ["gLoadSky", "gSkyTexNumber"]
 
-REFERENCE_YAML_PATHS = [
-    "references/{gamever}/engine/R_LoadSkyBox_SvEngine.{platform}.yaml",
-]
-DEPENDENCY_POLICY = {
-    "R_LoadSkyBox_SvEngine.{platform}.yaml": "required",
-}
 
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "gLoadSky",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": REFERENCE_YAML_PATHS,
+        "reference_yaml_paths": ["references/{gamever}/engine/R_LoadSkyBox_SvEngine.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
-        "dependency_policy": DEPENDENCY_POLICY,
-    }
-    for name in TARGET_GLOBAL_NAMES
+        "dependency_policy": {"R_LoadSkyBox_SvEngine.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "gSkyTexNumber",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_LoadSkyBox_SvEngine.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_LoadSkyBox_SvEngine.{platform}.yaml": "required"},
+    },
 ]
 
 GV_FIELDS = [

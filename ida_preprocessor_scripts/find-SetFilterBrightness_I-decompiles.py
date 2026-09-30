@@ -6,19 +6,19 @@ The Linux operand may identify an address through PIC/GOT; shared x86
 validation must resolve the object, not publish the GOT slot as the global.
 """
 
+from llm_spec import select_llm_specs
 from ida_analyze_util import preprocess_common_skill
-from ida_preprocessor_scripts._engine_filter_globals_common import filter_global_specs
+from ida_preprocessor_scripts._engine_filter_globals_common import filter_global_rules
 
 TARGET_GLOBAL_NAMES = ["filterBrightness"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "filterBrightness",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/SetFilterBrightness_I.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {"SetFilterBrightness_I.{platform}.yaml": "required"},
     }
-    for name in TARGET_GLOBAL_NAMES
 ]
 GV_FIELDS = [
     "gv_name",
@@ -53,7 +53,9 @@ async def preprocess_skill(
         platform=platform,
         image_base=image_base,
         gv_names=TARGET_GLOBAL_NAMES,
-        llm_decompile_specs=filter_global_specs(LLM_DECOMPILE, platform),
+        llm_decompile_specs=select_llm_specs(
+            LLM_DECOMPILE, instruction_rules=filter_global_rules(TARGET_GLOBAL_NAMES, platform)
+        ),
         llm_config=llm_config,
         generate_yaml_desired_fields=[(name, GV_FIELDS) for name in TARGET_GLOBAL_NAMES],
         debug=debug,

@@ -16,6 +16,7 @@ origin/angles, including an address with zero displacement. The mode belongs
 to ClientPortalSource, independently rooted in CalculateClipPlane's arguments.
 """
 
+from llm_spec import select_llm_specs
 import inspect
 import json
 from pathlib import Path
@@ -32,10 +33,6 @@ from ida_preprocessor_scripts._portal_layout_ida import run_layout_walk
 
 PREDECESSOR = "ClientPortalManager_RenderPortals"
 REFERENCE = "references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"
-CONSTRUCTOR_REFERENCES = {
-    "ClientPortal": "references/{gamever}/client/ClientPortal_Constructor.{platform}.yaml",
-    "PortalSource": "references/{gamever}/client/PortalSource_Constructor.{platform}.yaml",
-}
 
 VECTOR_BEGIN = "ClientPortalManager_vector_begin_offset"
 VECTOR_END = "ClientPortalManager_vector_end_offset"
@@ -104,17 +101,117 @@ result = json.dumps(main(VALUES))
 """
 
 
-def _llm_spec(symbol_name, expected_value, source_name="ClientPortal"):
-    constructor = symbol_name in {f"{source_name}_origin_offset", f"{source_name}_angles_offset"}
-    predecessor = f"{source_name}_Constructor" if constructor else PREDECESSOR
-    return {
-        "symbol_name": symbol_name,
-        "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [CONSTRUCTOR_REFERENCES[source_name]] if constructor else [REFERENCE],
-        "expected_result_sections": ["found_scalar"],
-        "dependency_policy": {f"{predecessor}.{{platform}}.yaml": "required"},
-        "expected_value": expected_value,
-    }
+LLM_DECOMPILE = {
+    "ClientPortal": [
+        {
+            "symbol_name": "ClientPortal_origin_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortal_Constructor.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortal_Constructor.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "ClientPortal_angles_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortal_Constructor.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortal_Constructor.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "ClientPortalManager_vector_begin_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "ClientPortalManager_vector_end_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "ClientPortal_texture_id_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "ClientPortal_texture_width_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "ClientPortal_texture_height_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "ClientPortalSource_mode_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+        },
+    ],
+    "PortalSource": [
+        {
+            "symbol_name": "PortalSource_origin_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/PortalSource_Constructor.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"PortalSource_Constructor.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "PortalSource_angles_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/PortalSource_Constructor.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"PortalSource_Constructor.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "ClientPortalManager_vector_begin_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "ClientPortalManager_vector_end_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "PortalSource_texture_id_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "PortalSource_texture_width_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "PortalSource_texture_height_offset",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+            "expected_result_sections": ["found_scalar"],
+            "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+        },
+    ],
+}
 
 
 async def preprocess_skill(
@@ -207,7 +304,7 @@ if 'clip' in values:
     scalar_names = [name for name, value in verified.items() if isinstance(value, int)]
     if not scalar_names:
         return False
-    specs = [_llm_spec(name, verified[name], source_name) for name in scalar_names]
+    specs = select_llm_specs(LLM_DECOMPILE, branch=source_name, symbols=scalar_names, expected_values=verified)
     if debug:
         print("ClientPortal verified offsets:", {name: verified[name] for name in scalar_names})
     return await preprocess_common_skill(

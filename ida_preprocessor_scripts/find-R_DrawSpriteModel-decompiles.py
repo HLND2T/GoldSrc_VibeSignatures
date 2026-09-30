@@ -16,6 +16,7 @@ writable-data store target of ``studioapi_StudioSetRenderamt``, so
 find-studioapi_StudioSetRenderamt emits it structurally instead.
 """
 
+from llm_spec import select_llm_specs
 from pathlib import Path
 
 from ida_analyze_util import _load_yaml_mapping, preprocess_common_skill
@@ -66,7 +67,7 @@ async def preprocess_skill(
         platform=platform,
         image_base=image_base,
         gv_names=list(TARGET_GLOBAL_NAMES),
-        llm_decompile_specs=[dict(spec) for spec in LLM_DECOMPILE],
+        llm_decompile_specs=select_llm_specs(LLM_DECOMPILE),
         llm_config=llm_config,
         generate_yaml_desired_fields=[(name, GV_FIELDS) for name in TARGET_GLOBAL_NAMES],
         debug=debug,

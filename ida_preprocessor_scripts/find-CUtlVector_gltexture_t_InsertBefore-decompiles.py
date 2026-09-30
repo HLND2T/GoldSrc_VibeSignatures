@@ -27,14 +27,29 @@ STRUCT = "CUtlVector_gltexture_t"
 MEMBER_NAMES = [f"{STRUCT}_{member}".replace(".", "_") for member in MEMBERS]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "CUtlVector_gltexture_t_m_Memory_m_pMemory",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [f"references/{{gamever}}/engine/{OWNER}.{{platform}}.yaml"],
+        "reference_yaml_paths": ["references/{gamever}/engine/CUtlVector_gltexture_t_InsertBefore.{platform}.yaml"],
         "expected_result_sections": ["found_struct_offset"],
-        "dependency_policy": {f"{OWNER}.{{platform}}.yaml": "required"},
+        "dependency_policy": {"CUtlVector_gltexture_t_InsertBefore.{platform}.yaml": "required"},
         "expected_size": 4,
-    }
-    for name in MEMBER_NAMES
+    },
+    {
+        "symbol_name": "CUtlVector_gltexture_t_m_Memory_m_nAllocationCount",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/CUtlVector_gltexture_t_InsertBefore.{platform}.yaml"],
+        "expected_result_sections": ["found_struct_offset"],
+        "dependency_policy": {"CUtlVector_gltexture_t_InsertBefore.{platform}.yaml": "required"},
+        "expected_size": 4,
+    },
+    {
+        "symbol_name": "CUtlVector_gltexture_t_m_Size",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/CUtlVector_gltexture_t_InsertBefore.{platform}.yaml"],
+        "expected_result_sections": ["found_struct_offset"],
+        "dependency_policy": {"CUtlVector_gltexture_t_InsertBefore.{platform}.yaml": "required"},
+        "expected_size": 4,
+    },
 ]
 
 PLT_QUERY = r"""

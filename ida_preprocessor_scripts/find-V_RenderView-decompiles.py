@@ -31,13 +31,33 @@ GV_FIELDS = [
 ]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "cls_state",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/V_RenderView.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {"V_RenderView.{platform}.yaml": "required"},
-    }
-    for name in GV_NAMES
+    },
+    {
+        "symbol_name": "cls_signon",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/V_RenderView.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"V_RenderView.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "r_soundOrigin",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/V_RenderView.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"V_RenderView.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "r_playerViewportAngles",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/V_RenderView.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"V_RenderView.{platform}.yaml": "required"},
+    },
 ]
 
 

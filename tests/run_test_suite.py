@@ -25,6 +25,7 @@ GROUP_FILES = {
         "test_generate_reference_yaml.py",
         "test_format_repo_files.py",
         "test_ida_llm_decompile.py",
+        "test_llm_declarations.py",
         "test_client_blob_exports.py",
         "test_client_body_patterns.py",
         "test_client_viewport_singleton.py",

@@ -29,6 +29,7 @@ used as the loop bound when looking up a sentence by name).  The member is a
 count, not a capacity: the capacity is the 0x800 immediate above.
 """
 
+from llm_spec import select_llm_specs
 import json
 import re
 from pathlib import Path
@@ -99,6 +100,18 @@ def main(owner_start, owner_end, capacity_branches):
     return {'pointer_size': 4, 'candidates': candidates, 'normalized_operand': normalized}
 result = json.dumps(main(OWNER_START, OWNER_END, CAPACITY_BRANCHES))
 """
+
+
+LLM_DECOMPILE = [
+    {
+        "symbol_name": "CClient_SoundEngine_m_iSentenceCount",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/client/CClient_SoundEngine_LoadSoundList.{platform}.yaml"],
+        "expected_result_sections": ["found_struct_offset"],
+        "dependency_policy": {"CClient_SoundEngine_LoadSoundList.{platform}.yaml": "required"},
+        "expected_size": 4,
+    }
+]
 
 
 def _instruction_rule(line):
@@ -196,15 +209,7 @@ async def preprocess_skill(
             print(f"{SYMBOL}: no unique sentence-table capacity guard in {OWNER}")
         return False
 
-    spec = {
-        "symbol_name": SYMBOL,
-        "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [f"references/{{gamever}}/client/{OWNER}.{{platform}}.yaml"],
-        "expected_result_sections": ["found_struct_offset"],
-        "dependency_policy": {f"{OWNER}.{{platform}}.yaml": "required"},
-        "expected_size": MEMBER_SIZE,
-        "instruction_rules": [_instruction_rule(guard["line"])],
-    }
+    specs = select_llm_specs(LLM_DECOMPILE, instruction_rules={SYMBOL: [_instruction_rule(guard["line"])]})
     if not await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,
@@ -213,7 +218,7 @@ async def preprocess_skill(
         platform=platform,
         image_base=image_base,
         struct_member_names=[SYMBOL],
-        llm_decompile_specs=[spec],
+        llm_decompile_specs=specs,
         llm_config=llm_config,
         generate_yaml_desired_fields=[
             (SYMBOL, ["struct_name", "member_name", "offset", "size", "offset_sig", "offset_sig_disp"]),

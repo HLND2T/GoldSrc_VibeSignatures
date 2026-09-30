@@ -12,14 +12,20 @@ from ida_preprocessor_scripts._vgui_paint_common import artifact, function_addre
 TARGETS = ["g_bScissor", "g_ScissorRect"]
 OWNER = "EngineSurface_pushMakeCurrent"
 LLM_DECOMPILE = [
-    dict(
-        symbol_name=name,
-        prompt_path="prompt/call_llm_decompile.md",
-        reference_yaml_paths=[f"references/{{gamever}}/engine/{OWNER}.{{platform}}.yaml"],
-        expected_result_sections=["found_gv"],
-        dependency_policy={f"{OWNER}.{{platform}}.yaml": "required"},
-    )
-    for name in TARGETS
+    {
+        "symbol_name": "g_bScissor",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/EngineSurface_pushMakeCurrent.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"EngineSurface_pushMakeCurrent.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "g_ScissorRect",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/EngineSurface_pushMakeCurrent.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"EngineSurface_pushMakeCurrent.{platform}.yaml": "required"},
+    },
 ]
 FIELDS = [
     "gv_name",

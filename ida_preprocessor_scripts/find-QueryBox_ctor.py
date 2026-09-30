@@ -32,7 +32,7 @@ REAL_NAME = "vgui2::QueryBox::QueryBox(char const*, char const*, vgui2::Panel*)"
 SIGNATURE_BYTE_LIMITS = (None, 128, 256, 512)
 LLM_DECOMPILE = [
     {
-        "symbol_name": TARGET,
+        "symbol_name": "QueryBox_ctor",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/hl-8684/gameui/CTaskbar_QuitConfirmationOwner.{platform}.yaml"],
         "expected_result_sections": ["found_call"],

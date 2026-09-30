@@ -25,7 +25,7 @@ GV_FIELDS = [
 ]
 LLM_DECOMPILE = [
     {
-        "symbol_name": TARGET_GLOBAL_NAME,
+        "symbol_name": "gmodinfo_vertical_fov",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/R_SetupGL.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],

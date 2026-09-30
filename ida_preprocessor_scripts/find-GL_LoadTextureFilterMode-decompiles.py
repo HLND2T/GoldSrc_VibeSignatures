@@ -26,6 +26,94 @@ GV_FIELDS = [
 ]
 
 
+LLM_DECOMPILE = {
+    "windows": [
+        {
+            "symbol_name": "gltextures",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/engine/GL_LoadTexture2.{platform}.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"GL_LoadTexture2.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "peakgltextures",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/engine/GL_LoadTexture2.{platform}.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"GL_LoadTexture2.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "gHostSpawnCount",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/engine/GL_LoadTexture2.{platform}.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"GL_LoadTexture2.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "gltextures.m_Size",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/engine/GL_LoadTexture2.{platform}.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"GL_LoadTexture2.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "gltextures.m_Memory.m_nAllocationCount",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/engine/GL_LoadTexture2.{platform}.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"GL_LoadTexture2.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "realloc",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/engine/GL_LoadTexture2.{platform}.yaml"],
+            "expected_result_sections": ["found_call"],
+            "dependency_policy": {"GL_LoadTexture2.{platform}.yaml": "required"},
+        },
+    ],
+    "linux": [
+        {
+            "symbol_name": "gltextures",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/engine/GL_LoadTextureFilterMode_part_14.{platform}.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"GL_LoadTextureFilterMode_part_14.{platform}.yaml": "required"},
+            "instruction_rules": [
+                {
+                    "regex": "(?i)lea\\s+e(?:ax|bx|cx|dx|si|di|bp),\\s*.+",
+                    "text": "Select the LEA that materializes the gltextures CUtlVector "
+                    "object base passed as this to "
+                    "CUtlVector_gltexture_t_InsertBefore. Do not select MOV loads of "
+                    "m_pMemory, interior count/capacity fields, or other references "
+                    "to the same storage.",
+                }
+            ],
+        },
+        {
+            "symbol_name": "peakgltextures",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/engine/GL_LoadTextureFilterMode_part_14.{platform}.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"GL_LoadTextureFilterMode_part_14.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "gHostSpawnCount",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/engine/GL_LoadTextureFilterMode_part_14.{platform}.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"GL_LoadTextureFilterMode_part_14.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "CUtlVector_gltexture_t_InsertBefore",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/engine/GL_LoadTextureFilterMode_part_14.{platform}.yaml"],
+            "expected_result_sections": ["found_call"],
+            "dependency_policy": {"GL_LoadTextureFilterMode_part_14.{platform}.yaml": "required"},
+        },
+    ],
+}
+
+
 async def preprocess_skill(
     session,
     skill_name,
@@ -37,33 +125,9 @@ async def preprocess_skill(
     llm_config=None,
     debug=False,
 ):
-    owner = "GL_LoadTexture2" if platform == "windows" else "GL_LoadTextureFilterMode_part_14"
     function = "realloc" if platform == "windows" else "CUtlVector_gltexture_t_InsertBefore"
     gv_names = GV_NAMES + (WINDOWS_MEMBER_GVS if platform == "windows" else [])
-    specs = [
-        {
-            "symbol_name": name,
-            "prompt_path": "prompt/call_llm_decompile.md",
-            "reference_yaml_paths": [f"references/{{gamever}}/engine/{owner}.{{platform}}.yaml"],
-            "expected_result_sections": ["found_gv" if name in gv_names else "found_call"],
-            "dependency_policy": {f"{owner}.{{platform}}.yaml": "required"},
-        }
-        for name in [*gv_names, function]
-    ]
-    if platform == "linux":
-        # The vector's first member shares its address, but loading that member
-        # reads the heap pointer. Anchor the object address passed to InsertBefore.
-        next(spec for spec in specs if spec["symbol_name"] == "gltextures")["instruction_rules"] = [
-            {
-                "regex": r"(?i)lea\s+e(?:ax|bx|cx|dx|si|di|bp),\s*.+",
-                "text": (
-                    "Select the LEA that materializes the gltextures CUtlVector object base "
-                    "passed as this to CUtlVector_gltexture_t_InsertBefore. "
-                    "Do not select MOV loads of m_pMemory, interior count/capacity fields, "
-                    "or other references to the same storage."
-                ),
-            }
-        ]
+    specs = LLM_DECOMPILE[platform]
     return await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,

@@ -22,35 +22,91 @@ GV_FIELDS = [
     "gv_inst_length",
     "gv_inst_disp",
 ]
-MATRIX_ARGUMENT_RULES = [
-    {
-        "regex": (
-            r"(?i)(?:push\s+(?:offset\s+)?\w+"
-            r"|mov\s+(?:dword ptr\s+)?\[esp[^\]]*\],\s+(?:offset\s+)?\w+"
-            r"|mov\s+\w+,\s+offset\s+\w+"
-            r"|lea\s+\w+,\s+(?:ds:)?"
-            r"(?:\([^,+\[\]]+\s-\s[^,\[\]]+\)\[ebx\]|\[ebx[+-][^,\[\]]+\]))"
-        ),
-        "text": (
-            "Select only the instruction preparing this complete matrix's address as a call argument: "
-            "the output pointer of GetFloatv for gProjectionMatrix/r_world_matrix, or the input/output "
-            "pointer of InvertMatrix for gWorldToScreen/gScreenToWorld. On PIC targets, select the "
-            "object-address LEA feeding that argument. Do not return matrix-element/vector loads or "
-            "stores, indexed loop addresses, or interior rows: their operands can encode base+16 instead "
-            "of the array base. Trace the argument role, never a fixed call ordinal."
-        ),
-    }
-]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "gWorldToScreen",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/R_SetupGL.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {"R_SetupGL.{platform}.yaml": "required"},
-        "instruction_rules": MATRIX_ARGUMENT_RULES,
-    }
-    for name in TARGET_GLOBAL_NAMES
+        "instruction_rules": [
+            {
+                "regex": "(?i)(?:push\\s+(?:offset\\s+)?\\w+|mov\\s+(?:dword "
+                "ptr\\s+)?\\[esp[^\\]]*\\],\\s+(?:offset\\s+)?\\w+|mov\\s+\\w+,\\s+offset\\s+\\w+|lea\\s+\\w+,\\s+(?:ds:)?(?:\\([^,+\\[\\]]+\\s-\\s[^,\\[\\]]+\\)\\[ebx\\]|\\[ebx[+-][^,\\[\\]]+\\]))",
+                "text": "Select only the instruction preparing this complete matrix's address as a "
+                "call argument: the output pointer of GetFloatv for "
+                "gProjectionMatrix/r_world_matrix, or the input/output pointer of "
+                "InvertMatrix for gWorldToScreen/gScreenToWorld. On PIC targets, select the "
+                "object-address LEA feeding that argument. Do not return "
+                "matrix-element/vector loads or stores, indexed loop addresses, or interior "
+                "rows: their operands can encode base+16 instead of the array base. Trace "
+                "the argument role, never a fixed call ordinal.",
+            }
+        ],
+    },
+    {
+        "symbol_name": "gScreenToWorld",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_SetupGL.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_SetupGL.{platform}.yaml": "required"},
+        "instruction_rules": [
+            {
+                "regex": "(?i)(?:push\\s+(?:offset\\s+)?\\w+|mov\\s+(?:dword "
+                "ptr\\s+)?\\[esp[^\\]]*\\],\\s+(?:offset\\s+)?\\w+|mov\\s+\\w+,\\s+offset\\s+\\w+|lea\\s+\\w+,\\s+(?:ds:)?(?:\\([^,+\\[\\]]+\\s-\\s[^,\\[\\]]+\\)\\[ebx\\]|\\[ebx[+-][^,\\[\\]]+\\]))",
+                "text": "Select only the instruction preparing this complete matrix's address as a "
+                "call argument: the output pointer of GetFloatv for "
+                "gProjectionMatrix/r_world_matrix, or the input/output pointer of "
+                "InvertMatrix for gWorldToScreen/gScreenToWorld. On PIC targets, select the "
+                "object-address LEA feeding that argument. Do not return "
+                "matrix-element/vector loads or stores, indexed loop addresses, or interior "
+                "rows: their operands can encode base+16 instead of the array base. Trace "
+                "the argument role, never a fixed call ordinal.",
+            }
+        ],
+    },
+    {
+        "symbol_name": "gProjectionMatrix",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_SetupGL.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_SetupGL.{platform}.yaml": "required"},
+        "instruction_rules": [
+            {
+                "regex": "(?i)(?:push\\s+(?:offset\\s+)?\\w+|mov\\s+(?:dword "
+                "ptr\\s+)?\\[esp[^\\]]*\\],\\s+(?:offset\\s+)?\\w+|mov\\s+\\w+,\\s+offset\\s+\\w+|lea\\s+\\w+,\\s+(?:ds:)?(?:\\([^,+\\[\\]]+\\s-\\s[^,\\[\\]]+\\)\\[ebx\\]|\\[ebx[+-][^,\\[\\]]+\\]))",
+                "text": "Select only the instruction preparing this complete matrix's address as a "
+                "call argument: the output pointer of GetFloatv for "
+                "gProjectionMatrix/r_world_matrix, or the input/output pointer of "
+                "InvertMatrix for gWorldToScreen/gScreenToWorld. On PIC targets, select the "
+                "object-address LEA feeding that argument. Do not return "
+                "matrix-element/vector loads or stores, indexed loop addresses, or interior "
+                "rows: their operands can encode base+16 instead of the array base. Trace "
+                "the argument role, never a fixed call ordinal.",
+            }
+        ],
+    },
+    {
+        "symbol_name": "r_world_matrix",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_SetupGL.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_SetupGL.{platform}.yaml": "required"},
+        "instruction_rules": [
+            {
+                "regex": "(?i)(?:push\\s+(?:offset\\s+)?\\w+|mov\\s+(?:dword "
+                "ptr\\s+)?\\[esp[^\\]]*\\],\\s+(?:offset\\s+)?\\w+|mov\\s+\\w+,\\s+offset\\s+\\w+|lea\\s+\\w+,\\s+(?:ds:)?(?:\\([^,+\\[\\]]+\\s-\\s[^,\\[\\]]+\\)\\[ebx\\]|\\[ebx[+-][^,\\[\\]]+\\]))",
+                "text": "Select only the instruction preparing this complete matrix's address as a "
+                "call argument: the output pointer of GetFloatv for "
+                "gProjectionMatrix/r_world_matrix, or the input/output pointer of "
+                "InvertMatrix for gWorldToScreen/gScreenToWorld. On PIC targets, select the "
+                "object-address LEA feeding that argument. Do not return "
+                "matrix-element/vector loads or stores, indexed loop addresses, or interior "
+                "rows: their operands can encode base+16 instead of the array base. Trace "
+                "the argument role, never a fixed call ordinal.",
+            }
+        ],
+    },
 ]
 
 

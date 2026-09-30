@@ -28,3 +28,13 @@ def filter_global_specs(specs, platform):
         }
         for spec in specs
     ]
+
+
+def filter_global_rules(names, platform):
+    """Return only runtime instruction rules; dependency declarations stay in callers."""
+    if platform != "linux":
+        return None
+    return {
+        spec["symbol_name"]: spec["instruction_rules"]
+        for spec in filter_global_specs([{"symbol_name": name} for name in names], platform)
+    }

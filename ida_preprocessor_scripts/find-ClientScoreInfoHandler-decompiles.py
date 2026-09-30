@@ -6,6 +6,7 @@ TeamFortressViewport body and layout. Neither exists in canonical Half-Life,
 so each body has one explicit reference family, shared across its builds.
 """
 
+from llm_spec import select_llm_specs
 from ida_analyze_util import _export_llm_function, _output_for_symbol, _prepare_llm_context, preprocess_common_skill
 from ida_preprocessor_scripts._scoreinfo_dataflow import (
     CS_PLAYER_STRIDES,
@@ -26,6 +27,28 @@ GV_FIELDS = [
 ]
 
 
+LLM_DECOMPILE = {
+    "cstrike-10210": [
+        {
+            "symbol_name": "g_PlayerExtraInfo",
+            "prompt_path": "prompt/call_llm_scoreinfo.md",
+            "reference_yaml_paths": ["references/cstrike-10210/client/ClientScoreInfoHandler.{platform}.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"ClientScoreInfoHandler.{platform}.yaml": "required"},
+        }
+    ],
+    "czeror-10210": [
+        {
+            "symbol_name": "g_PlayerExtraInfo_CZDS",
+            "prompt_path": "prompt/call_llm_scoreinfo.md",
+            "reference_yaml_paths": ["references/czeror-10210/client/ClientScoreInfoHandler.{platform}.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"ClientScoreInfoHandler.{platform}.yaml": "required"},
+        }
+    ],
+}
+
+
 async def preprocess_skill(
     session,
     skill_name,
@@ -41,18 +64,11 @@ async def preprocess_skill(
     czds = _output_for_symbol(expected_outputs, "g_PlayerExtraInfo_CZDS") is not None
     name = "g_PlayerExtraInfo_CZDS" if czds else "g_PlayerExtraInfo"
     family = "czeror-10210" if czds else "cstrike-10210"
-    specs = [
-        {
-            "symbol_name": name,
-            "prompt_path": "prompt/call_llm_scoreinfo.md",
-            "reference_yaml_paths": [f"references/{family}/client/ClientScoreInfoHandler.{{platform}}.yaml"],
-            "expected_result_sections": ["found_gv"],
-            "dependency_policy": {"ClientScoreInfoHandler.{platform}.yaml": "required"},
-        }
-    ]
+    specs = LLM_DECOMPILE[family]
+    rules = None
     if platform == "linux":
         # Linux retains member names, so a text rule proves the zero member.
-        specs[0]["instruction_rules"] = [
+        rules = [
             {
                 "regex": (
                     r"(?i)mov\s+(?:word ptr\s+)?(?:ds:)?"
@@ -84,7 +100,6 @@ async def preprocess_skill(
         if len(rules) != 1:
             print(f"ScoreInfo: cannot prove one zero-offset frags store for {name}")
             return False
-        specs[0]["instruction_rules"] = rules
     return await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,
@@ -93,7 +108,7 @@ async def preprocess_skill(
         platform=platform,
         image_base=image_base,
         gv_names=[name],
-        llm_decompile_specs=specs,
+        llm_decompile_specs=select_llm_specs(LLM_DECOMPILE, branch=family, instruction_rules={name: rules}),
         llm_config=llm_config,
         generate_yaml_desired_fields=[(name, GV_FIELDS)],
         debug=debug,

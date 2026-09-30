@@ -23,13 +23,19 @@ GV_FIELDS = [
 ]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "r_viewleaf",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/R_MarkLeaves.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {"R_MarkLeaves.{platform}.yaml": "required"},
-    }
-    for name in TARGET_GLOBAL_NAMES
+    },
+    {
+        "symbol_name": "r_oldviewleaf",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_MarkLeaves.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_MarkLeaves.{platform}.yaml": "required"},
+    },
 ]
 
 
