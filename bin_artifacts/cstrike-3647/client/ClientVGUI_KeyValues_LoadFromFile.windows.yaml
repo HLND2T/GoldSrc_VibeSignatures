@@ -1,8 +1,8 @@
-func_name: KeyValues::LoadFromFile(IFileSystem*, char const*, char const*)
+func_name: vgui2::KeyValues::LoadFromFile(IFileSystem*, char const*, char const*)
 func_va: '0x1980980'
 func_rva: '0x80980'
 func_size: '0xe4'
-vtable_name: KeyValues
+vtable_name: vgui2::KeyValues
 vfunc_offset: '0x8'
 vfunc_index: 2
 vfunc_sig: 51 8B 54 24 ?? 53 55 56 8B 74 24 ?? 89 4C 24 ?? 8B 4C 24 ?? 57 8B 06 51 68 ?? ?? ?? ?? 52 8B CE

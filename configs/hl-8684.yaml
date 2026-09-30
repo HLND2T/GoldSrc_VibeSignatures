@@ -2449,6 +2449,10 @@ modules:
       - name: find-vgui2_Panel_Init
         expected_output:
           - vgui2_Panel_Init.{platform}.yaml
+      - name: find-client-vgui-keyvalues
+        expected_output:
+          - KeyValues_vftable.{platform}.yaml
+          - KeyValues_LoadFromFile.{platform}.yaml
       - name: find-CGameUI_RunFrame
         expected_output:
           - CGameUI_RunFrame.{platform}.yaml
@@ -2525,6 +2529,10 @@ modules:
     symbols:
       - name: vgui2_Panel_Init
         category: func
+      - name: KeyValues_vftable
+        category: vtable
+      - name: KeyValues_LoadFromFile
+        category: vfunc
       - name: CGameUI_RunFrame
         category: vfunc
       - name: ISurface_GetModalPanel
@@ -2615,6 +2623,14 @@ modules:
       - name: find-vgui2_Panel_Init
         expected_output:
           - vgui2_Panel_Init.{platform}.yaml
+      - name: find-client-vgui-keyvalues
+        expected_output:
+          - KeyValues_vftable.{platform}.yaml
+          - KeyValues_LoadFromFile.{platform}.yaml
     symbols:
       - name: vgui2_Panel_Init
         category: func
+      - name: KeyValues_vftable
+        category: vtable
+      - name: KeyValues_LoadFromFile
+        category: vfunc
