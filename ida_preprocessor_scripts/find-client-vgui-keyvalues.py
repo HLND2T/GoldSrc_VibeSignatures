@@ -29,8 +29,8 @@ from ida_preprocessor_scripts._client_vgui_private_common import (
 from ida_preprocessor_scripts._vgui_paint_common import walk
 
 OUTPUT_SYMBOL_PAIRS = (
-    ("KeyValues_vftable", "KeyValues_LoadFromFile"),
-    ("ClientVGUI_KeyValues_vftable", "ClientVGUI_KeyValues_LoadFromFile"),
+    ("KeyValues_vtable", "KeyValues_LoadFromFile"),
+    ("ClientVGUI_KeyValues_vtable", "ClientVGUI_KeyValues_LoadFromFile"),
 )
 VTABLE_CLASS = "KeyValues"
 ANCHOR_LITERAL = "CursorEnteredMenuButton"

@@ -208,7 +208,7 @@ Extending `find-client-vgui-keyvalues.py` from CS-family clients to the configur
 
 ### Correct approach
 
-- Keep one script. Require exactly one complete output pair: module-local `KeyValues_vftable` / `KeyValues_LoadFromFile`, or the existing client lookup pair `ClientVGUI_KeyValues_vftable` / `ClientVGUI_KeyValues_LoadFromFile`.
+- Keep one script. Require exactly one complete output pair: module-local `KeyValues_vtable` / `KeyValues_LoadFromFile`, or the existing client lookup pair `ClientVGUI_KeyValues_vtable` / `ClientVGUI_KeyValues_LoadFromFile`.
 - Reuse `_vgui_paint_common.walk` and the shared x86 tracer. Identify direct calls passing the exact literal as the constructor name argument (Windows first stack argument; Linux second stack argument), then require one constructor with a proven dword store to ABI `this`, a validated executable primary vtable, and recognized current-binary KeyValues RTTI. Multiple literal owners are allowed; ambiguous constructors or vptr stores fail closed. This also covers GCC PIC vptr calculations.
 - Derive `vtable_class`, `vtable_symbol`, `vtable_name`, and the qualified LoadFromFile payload name from the recovered RTTI. Preserve config/file lookup identities. LoadFromFile remains slot 2, byte offset 8; HL-3266 slot 2 was independently decompiled and verified to open/read/parse/close a filesystem file.
 
