@@ -944,6 +944,14 @@ modules:
           - IGame_IsActiveApp.{platform}.yaml
           - IGame_SleepUntilInput.{platform}.yaml
           - ICDAudio_Frame.{platform}.yaml
+      - name: find-CGame-native-window
+        expected_input:
+          - CGame_vtable.{platform}.yaml
+          - eng.{platform}.yaml
+          - IEngine_GetQuitting.{platform}.yaml
+        expected_output:
+          - CGame_CreateGameWindow.{platform}.yaml
+          - CGame_WindowProc.{platform}.yaml
       - name: find-CGame_SleepUntilInput
         expected_input:
           - IGame_SleepUntilInput.{platform}.yaml
@@ -2016,6 +2024,10 @@ modules:
         category: vfunc
       - name: CGame_SleepUntilInput
         category: vfunc
+      - name: CGame_CreateGameWindow
+        category: vfunc
+      - name: CGame_WindowProc
+        category: func
       - name: CEngine_vtable
         category: vtable
       - name: CGame_vtable

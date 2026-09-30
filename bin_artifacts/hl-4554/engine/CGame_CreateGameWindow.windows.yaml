@@ -1,0 +1,8 @@
+func_name: CGame::CreateGameWindow
+func_va: '0x1dc8e30'
+func_rva: '0xc8e30'
+func_size: '0x170'
+func_sig: 81 EC 34 03 00 00 53 55 56 57 8B F1 68 ?? ?? ?? ?? 89 74 24 ?? FF 15 ?? ?? ?? ?? 89 46 ?? B9 0A 00 00 00
+vtable_name: CGame
+vfunc_offset: '0xc'
+vfunc_index: 3
