@@ -30,7 +30,7 @@ async def preprocess_skill(
         image_base,
         WIDE,
         CHAR,
-        f"references/hl-8684/gameui/{WIDE}.{platform}.yaml",
+        "references/hl-8684/gameui/GameUI_RichText_InsertStringW.{platform}.yaml".replace("{platform}", platform),
         llm_config,
         debug,
     )

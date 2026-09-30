@@ -9,7 +9,7 @@ from ida_analyze_util import (
     preprocess_common_skill,
     write_func_yaml,
 )
-from ida_preprocessor_scripts import _richtext_identity
+import ida_preprocessor_scripts._richtext_identity as _richtext_identity
 from ida_preprocessor_scripts._vgui_paint_common import walk
 
 ANSI = "GameUI_RichText_InsertStringA"

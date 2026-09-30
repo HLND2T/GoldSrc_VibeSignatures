@@ -29,7 +29,7 @@ async def preprocess_skill(
         image_base,
         ANSI,
         WIDE,
-        f"references/{{gamever}}/gameui/{ANSI}.{platform}.yaml",
+        "references/{gamever}/gameui/GameUI_RichText_InsertStringA.{platform}.yaml".replace("{platform}", platform),
         llm_config,
         debug,
     )

@@ -58,3 +58,11 @@ The Unicode function also traverses a wide-character stream using the current AB
 - `CGameConsoleDialog::Print(char const*)` -> `vgui2::RichText::InsertString(char const*)`.
 - ANSI insertion forwards localization results or the converted Unicode buffer to `vgui2::RichText::InsertString(wchar_t const*)`.
 - Only the non-inline Windows loops call `vgui2::RichText::InsertChar(wchar_t)`.
+
+## PR planner visibility (PR #313)
+
+- Trigger: run `36709099260` failed before IDA with `Changed analysis source has no mapped consumer: ida_preprocessor_scripts/_richtext_identity.py`.
+- Root constraint: the trusted base scanner in `gamesymbol_snapshot_lib/analysis_sources.py` follows `ast.Import` module names and only `ast.ImportFrom.module`; it does not resolve imported submodules from `from package import submodule`. It also extracts reference templates from complete string constants, not dynamically assembled f-strings.
+- Correct approach: use `import ida_preprocessor_scripts._richtext_identity as _richtext_identity`, and complete literal reference templates with platform substitution at runtime. This exposes the same runtime dependency graph to the existing trusted planner without changing planner/CI policy.
+- Verification: compare scanner metadata before/after with the exact CI base tooling, check identical finder arguments on Windows/Linux, then replay the full bound plan against Git snapshots. Ordinary unit and tracked-artifact checks alone do not exercise this PR-specific import ownership gate.
+- Scope: analysis-source imports and reference declarations consumed by the static PR impact index. Other pre-existing orphan-reference warnings are diagnostic and are distinct from the fatal unmapped-source error.
