@@ -1,0 +1,5 @@
+patch_name: vgui2::RichText carriage-return filter branch
+patch_va: '0xc80d5'
+patch_rva: '0xc80d5'
+patch_sig: 74 ?? 8B 86 ?? ?? ?? ?? 8B 8E ?? ?? ?? ??
+patch_sig_disp: '0x0'

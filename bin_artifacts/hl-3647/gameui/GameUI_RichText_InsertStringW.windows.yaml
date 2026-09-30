@@ -1,0 +1,7 @@
+func_name: vgui2::RichText::InsertString(wchar_t const*)
+func_va: '0x100559b0'
+func_rva: '0x559b0'
+func_size: '0x45'
+func_sig: 56 8B 74 24 ?? 57 8B F9 66 8B 06 66 85 C0 74 ?? 50 8B CF E8 ?? ?? ?? ?? 66 8B 46 ?? 83 C6 02 66 85 C0 75 ?? 8B 07
+  6A 00 6A 00 8B CF FF 90 ?? ?? ?? ?? 8B 17 8B CF C6 87 ?? ?? ?? ?? ?? FF 52 ?? 5F 5E C2 04 00
+_pointer_size: '0x4'

@@ -1,0 +1,50 @@
+func_name: "GameUI_RichText_InsertStringW"
+func_va: "0x10056900"
+disasm_code: |-
+  .text:10056900                 push    esi
+  .text:10056901                 mov     esi, [esp+4+wszText]
+  .text:10056905                 push    edi
+  .text:10056906                 mov     edi, ecx
+  .text:10056908                 mov     ax, [esi]
+  .text:1005690B                 test    ax, ax
+  .text:1005690E                 jz      short loc_10056924
+  .text:10056910                 ; wch
+  .text:10056910                 push    eax; wch
+  .text:10056911                 ; self
+  .text:10056911                 mov     ecx, edi; self
+  .text:10056913                 ; RichText::InsertChar(*ch); current wide character, same RichText object.
+  .text:10056913                 call    GameUI_RichText_InsertChar ; vgui2::RichText::InsertChar(wchar_t); *ch, same object
+  .text:10056918                 mov     ax, [esi+2]
+  .text:1005691C                 add     esi, 2
+  .text:1005691F                 test    ax, ax
+  .text:10056922                 jnz     short loc_10056910
+  .text:10056924                 mov     eax, [edi]
+  .text:10056926                 push    0
+  .text:10056928                 push    0
+  .text:1005692A                 mov     ecx, edi
+  .text:1005692C                 call    dword ptr [eax+0E8h] ; InvalidateLayout(false, false); this binary's slot only
+  .text:10056932                 mov     edx, [edi]
+  .text:10056934                 mov     ecx, edi
+  .text:10056936                 mov     byte ptr [edi+0B4h], 1 ; m_bRecalcLineBreaks; this binary's member offset only
+  .text:1005693D                 call    dword ptr [edx+10h] ; Repaint()
+  .text:10056940                 pop     edi
+  .text:10056941                 pop     esi
+  .text:10056942                 retn    4
+procedure: |-
+  void __thiscall vgui2_RichText_InsertString_Unicode(RichTextReference *self, const unsigned __int16 *wszText)
+  {
+    const unsigned __int16 *ch; // esi
+    unsigned __int16 wch; // ax
+    RichTextReferenceVtable *vptr; // edx
+
+    ch = wszText;
+    for ( wch = *wszText; wch; ++ch )
+    {
+      GameUI_RichText_InsertChar(self, wch); // vgui2::RichText::InsertChar(wchar_t), not the string overload
+      wch = ch[1];
+    }
+    self->vptr->InvalidateLayout(self, 0, 0);
+    vptr = self->vptr;
+    self->m_bRecalcLineBreaks = 1;
+    vptr->Repaint(self);
+  }

@@ -20,7 +20,8 @@ the remaining callee of the ordered pair on the same history object.
 from pathlib import Path
 
 from ida_analyze_util import _load_yaml_mapping, _output_for_symbol, write_func_yaml
-from ida_preprocessor_scripts._client_vgui_private_common import inspect_unique_function, run_walk
+from ida_preprocessor_scripts._client_vgui_private_common import inspect_unique_function
+from ida_preprocessor_scripts._vgui_paint_common import walk
 
 
 OWNER = "CGameConsoleDialog_Print"
@@ -34,10 +35,6 @@ REAL_NAMES = {
 # The '#' that opens a RichText markup tag (colors, links) inside the text.
 MARKUP_IMMEDIATE = 0x23
 
-# Bounded backward scan for the ecx load that supplies the this pointer.
-THIS_SCAN_LIMIT = 12
-
-
 LOCATE = r"""
 print_va = int(values['print_va'])
 function = ida_funcs.get_func(print_va)
@@ -45,41 +42,22 @@ if function is None or int(function.start_ea) != print_va:
     raise ValueError('CGameConsoleDialog_Print is not a function start')
 
 def has_markup_compare(ea):
-    for item in function_body(ea):
+    for item in idautils.FuncItems(ea):
         insn = idautils.DecodeInstruction(item)
         if insn is None or insn.get_canon_mnem() != 'cmp':
             continue
         for operand in insn.ops:
-            if operand.type == ida_ua.o_imm and (imm_value(operand) & 0xFFFFFFFF) == values['markup']:
+            if operand.type == ida_ua.o_imm and (int(operand.value) & 0xFFFFFFFF) == values['markup']:
                 return True
     return False
 
-def this_register(site):
-    # Walk back to the instruction that last wrote ecx (the __thiscall object).
-    cursor = int(site)
-    for _ in range(values['this_scan']):
-        cursor = idc.prev_head(cursor)
-        if cursor == idaapi.BADADDR:
-            return None
-        insn = idautils.DecodeInstruction(cursor)
-        if insn is None:
-            continue
-        if insn.get_canon_mnem() == 'call':
-            return None
-        if insn.get_canon_mnem() != 'mov' or len(insn.ops) < 2:
-            continue
-        destination, source = insn.ops[0], insn.ops[1]
-        if destination.type != ida_ua.o_reg or destination.reg != 1:  # ecx
-            continue
-        if source.type == ida_ua.o_displ:
-            return int(source.reg)
-        return None
-    return None
-
 sites = {}
-for item in function_body(print_va):
-    target = direct_call_target(item)
-    if target is None or not executable_target(target):
+for item in idautils.FuncItems(print_va):
+    if idc.print_insn_mnem(item) != 'call':
+        continue
+    target = local_call_target(item)
+    callee = ida_funcs.get_func(target) if target is not None else None
+    if callee is None or int(callee.start_ea) != target or not is_code_address(target):
         continue
     sites.setdefault(target, []).append(int(item))
 
@@ -97,13 +75,18 @@ color_site = min(sites[color])
 if color_site >= insert_site:
     raise ValueError('InsertColorChange does not precede InsertString: ' + repr((hex(color_site), hex(insert_site))))
 
-insert_this = this_register(insert_site)
-color_this = this_register(color_site)
-if insert_this is None or insert_this != color_this:
-    raise ValueError('callees do not share the history object register: ' + repr((insert_this, color_this)))
+flow = flow_at(print_va, values['platform'])
+receivers = {call['ea']:call['args'][0] for call in flow['calls'] if call['args']}
+insert_this, color_this = receivers.get(insert_site), receivers.get(color_site)
+# CoF loads the same m_pHistory member through different scratch registers.
+# Require the member's provenance, not equality of physical register numbers.
+if (not isinstance(insert_this, tuple) or len(insert_this) != 3
+        or insert_this[:2] != ('load', ('arg', 0)) or insert_this[2] <= 0
+        or insert_this != color_this):
+    raise ValueError('callees do not share the history object: ' + repr((insert_this, color_this)))
 
 result = {'insert': insert, 'color': color, 'insert_site': insert_site, 'color_site': color_site,
-          'this_register': insert_this}
+          'history_object': insert_this}
 """
 
 
@@ -116,16 +99,18 @@ async def preprocess_skill(
         INSERT: _output_for_symbol(expected_outputs, INSERT),
         COLOR: _output_for_symbol(expected_outputs, COLOR),
     }
-    if owner is None or any(path is None for path in outputs.values()):
+    # Some consumers need only the ANSI predecessor. Keep the same two-callee
+    # identity checks without publishing an unrelated color method for them.
+    if owner is None or outputs[INSERT] is None:
         return False
     try:
         print_va = int(str(owner["func_va"]), 0)
     except (KeyError, TypeError, ValueError):
         return False
-    found = await run_walk(
+    found = await walk(
         session,
         LOCATE,
-        {"print_va": print_va, "markup": MARKUP_IMMEDIATE, "this_scan": THIS_SCAN_LIMIT},
+        {"print_va": print_va, "markup": MARKUP_IMMEDIATE, "platform": platform},
     )
     if found.get("error") or not isinstance(found.get("insert"), int) or not isinstance(found.get("color"), int):
         if debug:
@@ -133,6 +118,8 @@ async def preprocess_skill(
         return False
     written = True
     for symbol, va in ((INSERT, found["insert"]), (COLOR, found["color"])):
+        if outputs[symbol] is None:
+            continue
         inspected = await inspect_unique_function(session, REAL_NAMES[symbol], va, image_base, debug)
         if inspected is None:
             written = False

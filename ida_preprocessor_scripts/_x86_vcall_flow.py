@@ -351,6 +351,34 @@ def entry_state_from_call(call):
     return state
 
 
+def first_pass_blocks(blocks, entry):
+    """Cut DFS backedges for first-iteration evidence without changing the input.
+
+    This is a restricted trace, not a proof about subsequent iterations. Callers
+    must validate loop recurrence separately before accepting a loop identity.
+    Address order cannot define backedges: a compiler can place the initial
+    condition after the loop body and jump forward to it on entry.
+    """
+    graph = {block["start"]: block for block in blocks}
+    if entry not in graph:
+        raise ValueError("missing first-pass entry")
+    active, finished, removed = {entry}, set(), set()
+    pending = [(entry, iter(graph[entry]["succs"]))]
+    while pending:
+        address, successors = pending[-1]
+        successor = next(successors, None)
+        if successor is None:
+            active.remove(address)
+            finished.add(address)
+            pending.pop()
+        elif successor in active:
+            removed.add((address, successor))
+        elif successor in graph and successor not in finished:
+            active.add(successor)
+            pending.append((successor, iter(graph[successor]["succs"])))
+    return [dict(block, succs=[s for s in block["succs"] if (block["start"], s) not in removed]) for block in blocks]
+
+
 def trace_function(blocks, entry, platform, static_loads=None, *, entry_state=None):
     """Compute bounded reaching values and collect dispatch/branch observations."""
     graph = {block["start"]: block for block in blocks}
