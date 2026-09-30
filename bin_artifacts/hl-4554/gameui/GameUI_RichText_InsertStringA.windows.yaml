@@ -1,0 +1,6 @@
+func_name: vgui2::RichText::InsertString(char const*)
+func_va: '0x10057450'
+func_rva: '0x57450'
+func_size: '0x7c'
+func_sig: 55 8B EC 51 53 8B 5D ?? 56 8B F1 8A 03 57 3C 23 89 75 ?? 75 ?? E8 ?? ?? ?? ?? 8B 10 53 8B C8
+_pointer_size: '0x4'

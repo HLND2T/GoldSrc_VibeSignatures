@@ -2393,6 +2393,12 @@ modules:
           - CGameConsoleDialog_DumpConsoleTextToFile.{platform}.yaml
         expected_output:
           - CGameConsoleDialog_Print.{platform}.yaml
+      - name: find-GameUI-RichText-print-callees
+        expected_input:
+          - CGameConsoleDialog_Print.{platform}.yaml
+        expected_output_windows:
+          - GameUI_RichText_InsertStringA.windows.yaml
+          - GameUI_RichText_InsertColorChange.windows.yaml
       - name: find-GameUI-private-symbols
         expected_input:
           - CGameConsoleDialog_ctor.{platform}.yaml
@@ -2492,6 +2498,12 @@ modules:
         category: func
       - name: CGameConsoleDialog_Print
         category: func
+      - name: GameUI_RichText_InsertStringA
+        category: func
+        platform: windows
+      - name: GameUI_RichText_InsertColorChange
+        category: func
+        platform: windows
       - name: CTaskbar_QuitConfirmationOwner
         category: func
       - name: QueryBox_ctor
