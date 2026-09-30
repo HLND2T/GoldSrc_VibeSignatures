@@ -15,7 +15,7 @@ TARGET = "R_RenderDynamicLightmaps"
 FIELDS = ["func_name", "func_va", "func_rva", "func_size", "func_sig"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": TARGET,
+        "symbol_name": "R_RenderDynamicLightmaps",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/R_DrawSequentialPoly.{platform}.yaml"],
         "expected_result_sections": ["found_call"],

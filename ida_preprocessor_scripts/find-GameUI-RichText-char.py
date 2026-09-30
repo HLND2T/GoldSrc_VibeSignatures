@@ -9,6 +9,17 @@ reference preserves the older non-inlined source body, unlike hl-10210.
 from ida_preprocessor_scripts._gameui_richtext_common import CHAR, WIDE, recover_callee
 
 
+LLM_DECOMPILE = [
+    {
+        "symbol_name": "GameUI_RichText_InsertChar",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/hl-8684/gameui/GameUI_RichText_InsertStringW.{platform}.yaml"],
+        "expected_result_sections": ["found_call"],
+        "dependency_policy": {"GameUI_RichText_InsertStringW.{platform}.yaml": "required"},
+    }
+]
+
+
 async def preprocess_skill(
     session,
     skill_name,
@@ -30,7 +41,7 @@ async def preprocess_skill(
         image_base,
         WIDE,
         CHAR,
-        "references/hl-8684/gameui/GameUI_RichText_InsertStringW.{platform}.yaml".replace("{platform}", platform),
         llm_config,
         debug,
+        llm_decompile_specs=LLM_DECOMPILE,
     )

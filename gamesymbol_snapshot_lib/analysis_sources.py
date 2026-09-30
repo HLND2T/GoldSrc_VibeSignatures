@@ -10,6 +10,7 @@ from pathlib import PurePosixPath
 
 from analysis_config import FAMILY_REFERENCE_GAMEVERS
 from gamesymbol_snapshot_lib.model import SnapshotContract
+from llm_declarations import DeclarationError, declaration_specs, parse_declaration
 
 PREPROCESSOR_ROOT = "ida_preprocessor_scripts"
 REFERENCE_ROOT = f"{PREPROCESSOR_ROOT}/references"
@@ -26,9 +27,13 @@ class AnalysisSourceError(ValueError):
 class SourceIndex:
     owners_by_path: dict[str, frozenset[str]]
     analysis_paths: frozenset[str]
+    conservative_resource_owners: frozenset[str] = frozenset()
 
     def owners(self, path: str) -> frozenset[str]:
-        return self.owners_by_path.get(path, frozenset())
+        owners = self.owners_by_path.get(path, frozenset())
+        if is_reference_source_path(path) or path.startswith(f"{PROMPT_ROOT}/"):
+            owners |= self.conservative_resource_owners
+        return owners
 
 
 def is_analysis_source_path(path: str) -> bool:
@@ -52,21 +57,25 @@ def _repo_module_path(module: str, source_path: str, tree: Mapping[str, bytes | 
     if level:
         parent = PurePosixPath(source_path).parent
         for _ in range(level - 1):
+            if parent == PurePosixPath("."):
+                return None
             parent = parent.parent
-        candidate = parent / PurePosixPath(*module.split(".")) if module else parent
-    elif module in {"ida_analyze_util", "ida_elf", "analysis_config"}:
-        candidate = PurePosixPath(f"{module}.py")
-    elif module.startswith("ida_preprocessor_scripts"):
-        candidate = PurePosixPath(*module.split(".")).with_suffix(".py")
-    elif "/" not in module and source_path.startswith(f"{PREPROCESSOR_ROOT}/"):
-        candidate = PurePosixPath(source_path).parent / f"{module}.py"
+        if parent == PurePosixPath("."):
+            return None
+        candidate = parent.joinpath(*module.split(".")) if module else parent
     else:
-        return None
-    value = candidate.as_posix()
-    return value if value in tree else None
+        candidate = PurePosixPath(*module.split("."))
+        if not any(p in tree for p in (f"{candidate}.py", f"{candidate}/__init__.py")):
+            candidate = PurePosixPath(source_path).parent / candidate
+    for value in (f"{candidate}/__init__.py", f"{candidate}.py"):
+        if value in tree:
+            return value
+    return None
 
 
-def _source_metadata(path: str, tree: Mapping[str, bytes | str]) -> tuple[set[str], set[str], set[str]]:
+def _source_metadata(
+    path: str, tree: Mapping[str, bytes | str], *, unresolved: set[str] | None = None
+) -> tuple[set[str], set[str], set[str]]:
     try:
         parsed = ast.parse(_decode(path, tree[path]), filename=path)
     except SyntaxError as exc:
@@ -74,6 +83,18 @@ def _source_metadata(path: str, tree: Mapping[str, bytes | str]) -> tuple[set[st
     dependencies: set[str] = set()
     references: set[str] = set()
     prompts: set[str] = set()
+    declaration = None
+    if path.startswith(f"{PREPROCESSOR_ROOT}/"):
+        try:
+            declaration = parse_declaration(_decode(path, tree[path]), path)
+        except DeclarationError:
+            # Historical trees predate the strict repository gate. Keep their
+            # source graph usable but never claim precise resource ownership.
+            if unresolved is not None:
+                unresolved.add(path)
+        for spec in declaration_specs(declaration):
+            references.update(spec["reference_yaml_paths"])
+            prompts.add(spec["prompt_path"])
     for node in ast.walk(parsed):
         if isinstance(node, ast.Import):
             for alias in node.names:
@@ -84,12 +105,25 @@ def _source_metadata(path: str, tree: Mapping[str, bytes | str]) -> tuple[set[st
             dependency = _repo_module_path(node.module or "", path, tree, node.level)
             if dependency:
                 dependencies.add(dependency)
+            for alias in node.names:
+                if alias.name == "*":
+                    continue
+                module = ".".join(filter(None, (node.module, alias.name)))
+                child = _repo_module_path(module, path, tree, node.level)
+                if child:
+                    dependencies.add(child)
         elif isinstance(node, ast.Constant) and isinstance(node.value, str):
             value = node.value.replace("\\", "/")
             if value.endswith(".yaml") and (value.startswith("references/") or "/references/" in value):
                 references.add(value[value.index("references/") :])
             if value.endswith(".md") and (value.startswith("prompt/") or "/prompt/" in value):
                 prompts.add(value.removeprefix(f"{PREPROCESSOR_ROOT}/"))
+    # Importing a dotted module executes every real package initializer too.
+    for dependency in tuple(dependencies):
+        for parent in PurePosixPath(dependency).parents:
+            initializer = (parent / "__init__.py").as_posix()
+            if parent != PurePosixPath(".") and initializer in tree:
+                dependencies.add(initializer)
     return dependencies, references, prompts
 
 
@@ -141,6 +175,8 @@ def build_source_index(
 ) -> SourceIndex:
     owners: dict[str, set[str]] = {}
     metadata_cache: dict[str, tuple[set[str], set[str], set[str]]] = {}
+    unresolved: set[str] = set()
+    conservative_owners: set[str] = set()
 
     def add(path: str, node_id: str) -> None:
         owners.setdefault(path, set()).add(node_id)
@@ -150,7 +186,11 @@ def build_source_index(
             return set(), set()
         seen.add(path)
         add(path, node_id)
-        dependencies, references, prompts = metadata_cache.setdefault(path, _source_metadata(path, tree))
+        if path not in metadata_cache:
+            metadata_cache[path] = _source_metadata(path, tree, unresolved=unresolved)
+        dependencies, references, prompts = metadata_cache[path]
+        if path in unresolved:
+            conservative_owners.add(node_id)
         all_references = set(references)
         all_prompts = set(prompts)
         for dependency in dependencies:
@@ -180,7 +220,18 @@ def build_source_index(
                 add(resolved, node.node_id)
 
     analysis_paths = frozenset(path for path in tree if is_analysis_source_path(path))
-    index = SourceIndex({path: frozenset(node_ids) for path, node_ids in owners.items()}, analysis_paths)
+    index = SourceIndex(
+        {path: frozenset(node_ids) for path, node_ids in owners.items()},
+        analysis_paths,
+        frozenset(conservative_owners),
+    )
+    if unresolved:
+        logger.warning(
+            "Legacy/unresolved LLM declarations for %s: any reference/prompt change conservatively affects %d nodes; sources: %s",
+            contract.game_version,
+            len(conservative_owners),
+            ", ".join(sorted(unresolved)),
+        )
     # Retain the legacy keyword for callers; orphan references are diagnostic only.
     if reject_orphan_references:
         validate_reference_consumers(tree, [index])

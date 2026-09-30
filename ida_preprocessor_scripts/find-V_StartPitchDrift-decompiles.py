@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Recover Sven's pitch-drift object from the zero-offset pitchvel access."""
 
+from llm_spec import select_llm_specs
 import re
 
 from ida_analyze_util import _export_llm_function, _prepare_llm_context, preprocess_common_skill
@@ -54,7 +55,7 @@ async def preprocess_skill(
     debug=False,
 ):
     _ = skill_name, old_yaml_map
-    spec = dict(LLM_DECOMPILE[0])
+    spec = LLM_DECOMPILE[0]
     context = _prepare_llm_context(spec, llm_config, new_binary_dir, platform)
     if context is None or len(context["targets"]) != 1:
         return False
@@ -69,7 +70,7 @@ async def preprocess_skill(
     if len(stores) != 1:
         print("PitchDrift: expected one scalar-float global store in V_StartPitchDrift")
         return False
-    spec["instruction_rules"] = [
+    rules = [
         {
             "regex": r"(?i)" + r"\s+".join(re.escape(part) for part in stores[0].split()),
             "text": (
@@ -87,7 +88,7 @@ async def preprocess_skill(
         platform=platform,
         image_base=image_base,
         gv_names=["g_pitchdrift"],
-        llm_decompile_specs=[spec],
+        llm_decompile_specs=select_llm_specs(LLM_DECOMPILE, instruction_rules={"g_pitchdrift": rules}),
         llm_config=llm_config,
         generate_yaml_desired_fields=[("g_pitchdrift", GV_FIELDS)],
         debug=debug,

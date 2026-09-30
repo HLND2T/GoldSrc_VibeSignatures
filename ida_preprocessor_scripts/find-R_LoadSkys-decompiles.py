@@ -16,6 +16,7 @@ loader, so it is covered by ``find-R_LoadSkyBox_SvEngine-decompiles`` instead of
 this script.
 """
 
+from llm_spec import select_llm_specs
 from pathlib import Path
 
 from ida_analyze_util import preprocess_common_skill
@@ -23,37 +24,48 @@ from ida_analyze_util import preprocess_common_skill
 
 TARGET_GLOBAL_NAMES = ["gLoadSky", "gSkyTexNumber"]
 
-REFERENCE_YAML_PATHS = [
-    "references/{gamever}/engine/R_LoadSkys.{platform}.yaml",
-]
 BLOB_WINDOWS_GAMEVERS = frozenset({"hl-3248", "hl-3266", "hl-3329", "hl-3647"})
-BLOB_REFERENCE_YAML_PATH = "references/hl-3248/engine/R_LoadSkys.windows.yaml"
-DEPENDENCY_POLICY = {
-    "R_LoadSkys.{platform}.yaml": "required",
+
+LLM_DECOMPILE = {
+    "default": [
+        {
+            "symbol_name": "gLoadSky",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/engine/R_LoadSkys.{platform}.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"R_LoadSkys.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "gSkyTexNumber",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/{gamever}/engine/R_LoadSkys.{platform}.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"R_LoadSkys.{platform}.yaml": "required"},
+        },
+    ],
+    "blob": [
+        {
+            "symbol_name": "gLoadSky",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-3248/engine/R_LoadSkys.windows.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"R_LoadSkys.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "gSkyTexNumber",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-3248/engine/R_LoadSkys.windows.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"R_LoadSkys.{platform}.yaml": "required"},
+        },
+    ],
 }
 
-LLM_DECOMPILE = [
-    {
-        "symbol_name": name,
-        "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": REFERENCE_YAML_PATHS,
-        "expected_result_sections": ["found_gv"],
-        "dependency_policy": DEPENDENCY_POLICY,
-    }
-    for name in TARGET_GLOBAL_NAMES
-]
 
-
-def _llm_specs(new_binary_dir, platform):
+def _llm_branch(new_binary_dir, platform):
     gamever = Path(new_binary_dir).resolve().parent.name
-    # BLOB binds/deletes fixed texture IDs; the array also stores palette bits.
-    # Keep this implementation-specific reference override local to this finder.
-    reference_paths = (
-        [BLOB_REFERENCE_YAML_PATH]
-        if platform == "windows" and gamever in BLOB_WINDOWS_GAMEVERS
-        else REFERENCE_YAML_PATHS
-    )
-    return [{**spec, "reference_yaml_paths": list(reference_paths)} for spec in LLM_DECOMPILE]
+    branch = "blob" if platform == "windows" and gamever in BLOB_WINDOWS_GAMEVERS else "default"
+    return branch
 
 
 GV_FIELDS = [
@@ -90,7 +102,7 @@ async def preprocess_skill(
         platform=platform,
         image_base=image_base,
         gv_names=TARGET_GLOBAL_NAMES,
-        llm_decompile_specs=_llm_specs(new_binary_dir, platform),
+        llm_decompile_specs=select_llm_specs(LLM_DECOMPILE, branch=_llm_branch(new_binary_dir, platform)),
         llm_config=llm_config,
         generate_yaml_desired_fields=GENERATE_YAML_DESIRED_FIELDS,
         debug=debug,

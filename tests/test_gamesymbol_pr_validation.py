@@ -176,7 +176,9 @@ class AnalysisSourceIndexTests(unittest.TestCase):
             root = Path(temporary)
             script = (
                 "from ida_analyze_util import preprocess_common_skill\n"
-                "LLM_DECOMPILE = [{'prompt_path': 'prompt/call_llm_decompile.md', "
+                "LLM_DECOMPILE = [{'symbol_name': 'Target', 'expected_result_sections': ['found_call'], "
+                "'dependency_policy': {'Demo.{platform}.yaml': 'required'}, "
+                "'prompt_path': 'prompt/call_llm_decompile.md', "
                 "'reference_yaml_paths': ['references/{gamever}/{module_name}/Demo.{platform}.yaml']}]\n"
             )
             common_tree = {
@@ -304,6 +306,52 @@ class ImpactPlanningTests(unittest.TestCase):
             self.assertEqual(("engine/A.windows.yaml", "engine/B.windows.yaml"), impact.invalidated_paths)
             self.assertTrue(impact.snapshot_rebuild)
             self.assertTrue(impact.gamedata_rebuild)
+
+    def test_legacy_resources_and_deleted_helper_keep_downstream_impact(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            contract = self._contract(Path(temporary))
+            root = "ida_preprocessor_scripts/"
+            old = root + "references/game-1/engine/Old.windows.yaml"
+            new = root + "references/game-1/engine/New.windows.yaml"
+            helper = root + "helper.py"
+            base_tree = {
+                root + "produce.py": "from ida_preprocessor_scripts import helper\n",
+                helper: "async def helper():\n    await run(llm_decompile_specs=build_specs())\n",
+                old: "reference",
+            }
+            with self.assertLogs("gamesymbol_snapshot_lib.analysis_sources", level="WARNING"):
+                base = build_source_index(contract, base_tree)
+            declaration = [
+                {
+                    "symbol_name": "A",
+                    "prompt_path": "prompt/call_llm_decompile.md",
+                    "reference_yaml_paths": ["references/game-1/engine/New.windows.yaml"],
+                    "dependency_policy": {"New.windows.yaml": "required"},
+                    "expected_result_sections": ["found_call"],
+                }
+            ]
+            merge = build_source_index(
+                contract, {root + "produce.py": "LLM_DECOMPILE = " + repr(declaration), new: "reference"}
+            )
+            self.assertFalse(merge.conservative_resource_owners)
+            for change in (
+                ChangedPath("A", None, new),
+                ChangedPath("D", old, None),
+                ChangedPath("R", old, new),
+                ChangedPath("D", helper, None),
+            ):
+                with self.subTest(change=change):
+                    impact = plan_tag_impact(
+                        tag="game-1",
+                        base_contract=contract,
+                        merge_contract=contract,
+                        changed_paths=(change,),
+                        base_sources=base,
+                        merge_sources=merge,
+                        base_rules=(),
+                        merge_rules=(),
+                    )
+                    self.assertEqual(("engine:windows:produce", "engine:windows:consume"), impact.analysis_nodes)
 
     def test_operational_config_change_is_snapshot_only_and_unmapped_analysis_fails_closed(self):
         with tempfile.TemporaryDirectory() as temporary:

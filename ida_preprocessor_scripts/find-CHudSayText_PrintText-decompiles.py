@@ -10,13 +10,12 @@ from ida_analyze_util import preprocess_common_skill
 TARGET_FUNCTION_NAMES = ["GetClientColor"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "GetClientColor",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/client/CHudSayText_PrintText.{platform}.yaml"],
         "expected_result_sections": ["found_call"],
         "dependency_policy": {"CHudSayText_PrintText.{platform}.yaml": "required"},
     }
-    for name in TARGET_FUNCTION_NAMES
 ]
 FIELDS = ["func_name", "func_va", "func_rva", "func_size", "func_sig", "func_sig_resolve_jmp_thunk:true"]
 GENERATE_YAML_DESIRED_FIELDS = [(name, FIELDS) for name in TARGET_FUNCTION_NAMES]

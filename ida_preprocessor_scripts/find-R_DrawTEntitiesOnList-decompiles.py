@@ -7,6 +7,7 @@ recovered here: the sprite renderer is its producer, because it reads the
 global on every family and platform while this body does not.
 """
 
+from llm_spec import select_llm_specs
 import json
 from pathlib import Path
 
@@ -89,7 +90,6 @@ async def preprocess_skill(
             print(exported["disasm_code"])
         return False
     print("size_of_frame evidence: " + json.dumps(evidence))
-    scalar_spec = {**LLM_DECOMPILE[1], "expected_value": value}
     return await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,
@@ -99,7 +99,7 @@ async def preprocess_skill(
         image_base=image_base,
         gv_names=["cl_parsecount"],
         scalar_names=["size_of_frame"],
-        llm_decompile_specs=[dict(LLM_DECOMPILE[0]), scalar_spec],
+        llm_decompile_specs=select_llm_specs(LLM_DECOMPILE, expected_values={"size_of_frame": value}),
         llm_config=llm_config,
         generate_yaml_desired_fields=[
             ("cl_parsecount", GV_FIELDS),

@@ -14,6 +14,7 @@ m_Size as ``m_ImageID + current-binary CUtlVector::m_Size``.  No layout value is
 copied from another build, and an old offset artifact is never a discovery path.
 """
 
+from llm_spec import select_llm_specs
 from pathlib import Path
 
 from ida_analyze_util import (
@@ -46,6 +47,150 @@ GDI_GAMEVERS = frozenset({"cof-5936", "hl-3248", "hl-3266", "hl-3329", "hl-3647"
 SVENGINE_REFERENCE = "svencoop-10257"
 
 
+LLM_DECOMPILE = {
+    "hl-10210": [
+        {
+            "symbol_name": "CVideoMode_Common_m_ImageID",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-10210/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "CVideoMode_Common_m_ImageID_m_Size",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-10210/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+            "expected_size": 4,
+        },
+        {
+            "symbol_name": "CVideoMode_Common_m_iBaseResX",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-10210/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+            "expected_size": 4,
+        },
+        {
+            "symbol_name": "CVideoMode_Common_m_iBaseResY",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-10210/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+            "expected_size": 4,
+        },
+    ],
+    "hl-3248": [
+        {
+            "symbol_name": "CVideoMode_Common_m_ImageID",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-3248/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "CVideoMode_Common_m_ImageID_m_Size",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-3248/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+            "expected_size": 4,
+        },
+        {
+            "symbol_name": "CVideoMode_Common_m_iBaseResX",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-3248/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+            "expected_size": 4,
+        },
+        {
+            "symbol_name": "CVideoMode_Common_m_iBaseResY",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-3248/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+            "expected_size": 4,
+        },
+    ],
+    "svencoop-10257": [
+        {
+            "symbol_name": "CVideoMode_Common_m_ImageID",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": [
+                "references/svencoop-10257/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"
+            ],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "CVideoMode_Common_m_ImageID_m_Size",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": [
+                "references/svencoop-10257/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"
+            ],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+            "expected_size": 4,
+        },
+        {
+            "symbol_name": "CVideoMode_Common_m_iBaseResX",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": [
+                "references/svencoop-10257/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"
+            ],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+            "expected_size": 4,
+        },
+        {
+            "symbol_name": "CVideoMode_Common_m_iBaseResY",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": [
+                "references/svencoop-10257/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"
+            ],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+            "expected_size": 4,
+        },
+    ],
+    "hl-8684": [
+        {
+            "symbol_name": "CVideoMode_Common_m_ImageID",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-8684/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+        },
+        {
+            "symbol_name": "CVideoMode_Common_m_ImageID_m_Size",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-8684/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+            "expected_size": 4,
+        },
+        {
+            "symbol_name": "CVideoMode_Common_m_iBaseResX",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-8684/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+            "expected_size": 4,
+        },
+        {
+            "symbol_name": "CVideoMode_Common_m_iBaseResY",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-8684/engine/CVideoMode_Common_DrawStartupGraphic.{platform}.yaml"],
+            "expected_result_sections": ["found_struct_offset"],
+            "dependency_policy": {"CVideoMode_Common_DrawStartupGraphic.{platform}.yaml": "required"},
+            "expected_size": 4,
+        },
+    ],
+}
+
+
 def _reference_gamever(gamever):
     if gamever == HL25_GAMEVER:
         return HL25_GAMEVER
@@ -54,23 +199,6 @@ def _reference_gamever(gamever):
     if gamever.startswith("svencoop-"):
         return SVENGINE_REFERENCE
     return "hl-8684"
-
-
-def _llm_specs(symbol_names, reference_gamever):
-    reference = f"references/{reference_gamever}/engine/{OWNER}.{{platform}}.yaml"
-    specs = []
-    for name in symbol_names:
-        spec = {
-            "symbol_name": name,
-            "prompt_path": "prompt/call_llm_decompile.md",
-            "reference_yaml_paths": [reference],
-            "expected_result_sections": ["found_struct_offset"],
-            "dependency_policy": {f"{OWNER}.{{platform}}.yaml": "required"},
-        }
-        if name != IMAGE_SYMBOL:
-            spec["expected_size"] = 4
-        specs.append(spec)
-    return specs
 
 
 def _desired_fields(symbol_names):
@@ -341,7 +469,7 @@ async def preprocess_skill(
         platform=platform,
         image_base=image_base,
         struct_member_names=llm_targets,
-        llm_decompile_specs=_llm_specs(llm_targets, _reference_gamever(gamever)),
+        llm_decompile_specs=select_llm_specs(LLM_DECOMPILE, branch=_reference_gamever(gamever), symbols=llm_targets),
         llm_config=llm_config,
         generate_yaml_desired_fields=_desired_fields(llm_targets),
         debug=debug,

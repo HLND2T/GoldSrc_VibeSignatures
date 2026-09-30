@@ -67,16 +67,14 @@ ASCII_FUNC_XREFS = [
         "xref_funcs": [],
     },
 ]
-R_NEWMAP_LLM_DECOMPILE = [
+LLM_DECOMPILE = [
     {
-        "symbol_name": TARGET_FUNC_NAME,
+        "symbol_name": "GL_BuildLightmaps",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [
-            "references/{gamever}/engine/R_NewMap.{platform}.yaml",
-        ],
+        "reference_yaml_paths": ["references/{gamever}/engine/R_NewMap.{platform}.yaml"],
         "expected_result_sections": ["found_call"],
         "dependency_policy": {"R_NewMap.{platform}.yaml": "required"},
-    },
+    }
 ]
 
 BODY_GUARD_PY = r"""
@@ -202,11 +200,14 @@ async def preprocess_skill(
     gamever = Path(new_binary_dir).resolve().parent.name if new_binary_dir else ""
     branch = (gamever, platform)
     if branch == UNICODE_BRANCH:
-        func_xrefs, llm_specs = UNICODE_FUNC_XREFS, None
+        func_xrefs = UNICODE_FUNC_XREFS
+        llm_specs = None
     elif branch == ASCII_BRANCH:
-        func_xrefs, llm_specs = ASCII_FUNC_XREFS, None
+        func_xrefs = ASCII_FUNC_XREFS
+        llm_specs = None
     else:
-        func_xrefs, llm_specs = None, R_NEWMAP_LLM_DECOMPILE
+        func_xrefs = None
+        llm_specs = LLM_DECOMPILE
     success = await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,

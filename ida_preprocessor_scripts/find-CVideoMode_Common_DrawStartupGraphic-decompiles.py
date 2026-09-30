@@ -32,6 +32,39 @@ GL_FAMILY = "hl-8684"
 FUNC_FIELDS = ["func_name", "func_sig", "func_va", "func_rva", "func_size"]
 
 
+LLM_DECOMPILE = {
+    "hl-10210": [
+        {
+            "symbol_name": "CVideoMode_Common_DrawStartupGraphic",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": [
+                "references/hl-10210/engine/CVideoMode_Common_PlayStartupSequence.{platform}.yaml"
+            ],
+            "expected_result_sections": ["found_call"],
+            "dependency_policy": {"CVideoMode_Common_PlayStartupSequence.{platform}.yaml": "required"},
+        }
+    ],
+    "hl-3248": [
+        {
+            "symbol_name": "CVideoMode_Common_DrawStartupGraphic",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-3248/engine/CVideoMode_Common_Init.{platform}.yaml"],
+            "expected_result_sections": ["found_call"],
+            "dependency_policy": {"CVideoMode_Common_Init.{platform}.yaml": "required"},
+        }
+    ],
+    "hl-8684": [
+        {
+            "symbol_name": "CVideoMode_Common_DrawStartupGraphic",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/hl-8684/engine/CVideoMode_Common_Init.{platform}.yaml"],
+            "expected_result_sections": ["found_call"],
+            "dependency_policy": {"CVideoMode_Common_Init.{platform}.yaml": "required"},
+        }
+    ],
+}
+
+
 def _predecessor_reference(gamever):
     if gamever == HL25_GAMEVER:
         return HL25_PREDECESSOR, HL25_FAMILY
@@ -54,17 +87,7 @@ async def preprocess_skill(
     _ = skill_name, old_yaml_map
     gamever = Path(new_binary_dir).resolve().parent.name if new_binary_dir else ""
     predecessor, family = _predecessor_reference(gamever)
-    llm_decompile = [
-        {
-            "symbol_name": TARGET_FUNC_NAME,
-            "prompt_path": "prompt/call_llm_decompile.md",
-            "reference_yaml_paths": [
-                f"references/{family}/engine/{predecessor}.{{platform}}.yaml",
-            ],
-            "expected_result_sections": ["found_call"],
-            "dependency_policy": {f"{predecessor}.{{platform}}.yaml": "required"},
-        },
-    ]
+    llm_decompile = LLM_DECOMPILE[family]
     return await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,

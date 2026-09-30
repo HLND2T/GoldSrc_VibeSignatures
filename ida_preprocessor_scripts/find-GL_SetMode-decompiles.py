@@ -31,35 +31,73 @@ GV_FIELDS = [
     "gv_inst_disp",
 ]
 
-FBO_ADDRESS_RULES = [
-    {
-        "regex": (
-            r"(?i)(?:push\s+(?:offset\s+)?\w+"
-            r"|mov\s+(?:dword ptr\s+)?\[esp[^\]]*\],\s+(?:offset\s+)?\w+"
-            r"|mov\s+\w+,\s+offset\s+\w+"
-            r"|lea\s+\w+,\s+(?:ds:)?"
-            r"(?:\([^,+\[\]]+\s-\s[^,\[\]]+\)\[ebx\]|\[ebx[+-][^,\[\]]+\]))"
-        ),
-        "text": (
-            "Select the instruction preparing the complete FBO container's address "
-            "as the output argument to GenFramebuffersEXT. Corroborate its identity "
-            "by multisample renderbuffer attachments for s_MSAAFBO, or the rectangle "
-            "texture attachment for s_BackBufferFBO. On PIC select the object-address "
-            "LEA. Do not return a framebuffer handle value, an attachment member, "
-            "a GOT slot, or an address inferred from the other container."
-        ),
-    }
-]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "s_bEnforceAspect",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/GL_SetMode.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {"GL_SetMode.{platform}.yaml": "required"},
-        **({"instruction_rules": FBO_ADDRESS_RULES} if name in {"s_MSAAFBO", "s_BackBufferFBO"} else {}),
-    }
-    for name in TARGET_GLOBAL_NAMES
+    },
+    {
+        "symbol_name": "bDoMSAAFBO",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/GL_SetMode.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"GL_SetMode.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "bDoScaledFBO",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/GL_SetMode.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"GL_SetMode.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "s_bSupportsBlitTexturing",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/GL_SetMode.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"GL_SetMode.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "s_MSAAFBO",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/GL_SetMode.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"GL_SetMode.{platform}.yaml": "required"},
+        "instruction_rules": [
+            {
+                "regex": "(?i)(?:push\\s+(?:offset\\s+)?\\w+|mov\\s+(?:dword "
+                "ptr\\s+)?\\[esp[^\\]]*\\],\\s+(?:offset\\s+)?\\w+|mov\\s+\\w+,\\s+offset\\s+\\w+|lea\\s+\\w+,\\s+(?:ds:)?(?:\\([^,+\\[\\]]+\\s-\\s[^,\\[\\]]+\\)\\[ebx\\]|\\[ebx[+-][^,\\[\\]]+\\]))",
+                "text": "Select the instruction preparing the complete FBO container's address as "
+                "the output argument to GenFramebuffersEXT. Corroborate its identity by "
+                "multisample renderbuffer attachments for s_MSAAFBO, or the rectangle "
+                "texture attachment for s_BackBufferFBO. On PIC select the object-address "
+                "LEA. Do not return a framebuffer handle value, an attachment member, a GOT "
+                "slot, or an address inferred from the other container.",
+            }
+        ],
+    },
+    {
+        "symbol_name": "s_BackBufferFBO",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/GL_SetMode.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"GL_SetMode.{platform}.yaml": "required"},
+        "instruction_rules": [
+            {
+                "regex": "(?i)(?:push\\s+(?:offset\\s+)?\\w+|mov\\s+(?:dword "
+                "ptr\\s+)?\\[esp[^\\]]*\\],\\s+(?:offset\\s+)?\\w+|mov\\s+\\w+,\\s+offset\\s+\\w+|lea\\s+\\w+,\\s+(?:ds:)?(?:\\([^,+\\[\\]]+\\s-\\s[^,\\[\\]]+\\)\\[ebx\\]|\\[ebx[+-][^,\\[\\]]+\\]))",
+                "text": "Select the instruction preparing the complete FBO container's address as "
+                "the output argument to GenFramebuffersEXT. Corroborate its identity by "
+                "multisample renderbuffer attachments for s_MSAAFBO, or the rectangle "
+                "texture attachment for s_BackBufferFBO. On PIC select the object-address "
+                "LEA. Do not return a framebuffer handle value, an attachment member, a GOT "
+                "slot, or an address inferred from the other container.",
+            }
+        ],
+    },
 ]
 
 

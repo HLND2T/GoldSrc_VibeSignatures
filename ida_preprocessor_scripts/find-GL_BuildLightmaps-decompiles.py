@@ -15,15 +15,19 @@ TARGET_FUNCTION_NAMES = ["GL_Bind", "GL_SelectTexture"]
 REFERENCE = "GL_BuildLightmaps"
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "GL_Bind",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [
-            f"references/{{gamever}}/engine/{REFERENCE}.{{platform}}.yaml",
-        ],
+        "reference_yaml_paths": ["references/{gamever}/engine/GL_BuildLightmaps.{platform}.yaml"],
         "expected_result_sections": ["found_call"],
-        "dependency_policy": {f"{REFERENCE}.{{platform}}.yaml": "required"},
-    }
-    for name in TARGET_FUNCTION_NAMES
+        "dependency_policy": {"GL_BuildLightmaps.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "GL_SelectTexture",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/GL_BuildLightmaps.{platform}.yaml"],
+        "expected_result_sections": ["found_call"],
+        "dependency_policy": {"GL_BuildLightmaps.{platform}.yaml": "required"},
+    },
 ]
 FUNC_FIELDS = ["func_name", "func_sig", "func_va", "func_rva", "func_size"]
 

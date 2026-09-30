@@ -12,13 +12,12 @@ from ida_analyze_util import preprocess_common_skill
 TARGET_GLOBAL_NAMES = ["detTexSupported"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "detTexSupported",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/DT_LoadDetailMapFile.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {"DT_LoadDetailMapFile.{platform}.yaml": "required"},
     }
-    for name in TARGET_GLOBAL_NAMES
 ]
 GV_FIELDS = [
     "gv_name",

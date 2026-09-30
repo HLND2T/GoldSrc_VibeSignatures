@@ -1,10 +1,43 @@
 """Recover legacy ClientPortal's entity indirection at CalculateClipPlane."""
 
+from llm_spec import select_llm_specs
 from pathlib import Path
 
 from ida_analyze_util import _load_yaml_mapping, _parse_int, preprocess_common_skill
 from ida_preprocessor_scripts._portal_layout_ida import run_layout_walk
 from scalar_artifact import SCALAR_FIELDS
+
+
+LLM_DECOMPILE = [
+    {
+        "symbol_name": "ClientPortal_mode_offset",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+        "expected_result_sections": ["found_scalar"],
+        "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "ClientPortal_entity_offset",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+        "expected_result_sections": ["found_scalar"],
+        "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "cl_entity_origin_offset",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+        "expected_result_sections": ["found_scalar"],
+        "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "cl_entity_angles_offset",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
+        "expected_result_sections": ["found_scalar"],
+        "dependency_policy": {"ClientPortalManager_RenderPortals.{platform}.yaml": "required"},
+    },
+]
 
 
 async def preprocess_skill(
@@ -47,17 +80,7 @@ result = client_transform_offsets(decode_function(values['render']), values['pla
     }
     if debug:
         print("ClientPortal verified entity layout:", verified)
-    specs = [
-        {
-            "symbol_name": name,
-            "prompt_path": "prompt/call_llm_decompile.md",
-            "reference_yaml_paths": ["references/{gamever}/client/ClientPortalManager_RenderPortals.{platform}.yaml"],
-            "dependency_policy": {f"{render_name}.{{platform}}.yaml": "required"},
-            "expected_result_sections": ["found_scalar"],
-            "expected_value": value,
-        }
-        for name, value in verified.items()
-    ]
+    specs = select_llm_specs(LLM_DECOMPILE, symbols=list(verified), expected_values=verified)
     return await preprocess_common_skill(
         session=session,
         expected_outputs=expected_outputs,

@@ -245,7 +245,7 @@ def _tree(repo: GitRepository, ref: str) -> dict[str, bytes]:
     paths = [
         path
         for path in repo.list_files(ref)
-        if path == "ida_analyze_util.py" or path.startswith("ida_preprocessor_scripts/")
+        if ("/" not in path and path.endswith(".py")) or path.startswith("ida_preprocessor_scripts/")
     ]
     return {path: value for path in paths if (value := repo.read(ref, path)) is not None}
 

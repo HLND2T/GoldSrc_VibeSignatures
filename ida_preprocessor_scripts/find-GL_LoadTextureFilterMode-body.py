@@ -13,13 +13,13 @@ from ida_analyze_util import preprocess_common_skill
 TARGET = "GL_LoadTextureFilterMode_part_14"
 LLM_DECOMPILE = [
     {
-        "symbol_name": TARGET,
+        "symbol_name": "GL_LoadTextureFilterMode_part_14",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/GL_LoadTexture2.{platform}.yaml"],
         "expected_result_sections": ["found_call"],
         "dependency_policy": {"GL_LoadTexture2.{platform}.yaml": "required"},
         "instruction_rules": [
-            {"regex": r"jmp\s+.+", "text": "Select the enabled path's direct tail jump to the texture-loading body."}
+            {"regex": "jmp\\s+.+", "text": "Select the enabled path's direct tail jump to the texture-loading body."}
         ],
     }
 ]

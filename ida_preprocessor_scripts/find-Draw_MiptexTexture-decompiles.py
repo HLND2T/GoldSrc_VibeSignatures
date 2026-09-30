@@ -15,14 +15,12 @@ TARGET_FUNC_NAME = "GL_LoadTexture2"
 REFERENCE = "Draw_MiptexTexture"
 LLM_DECOMPILE = [
     {
-        "symbol_name": TARGET_FUNC_NAME,
+        "symbol_name": "GL_LoadTexture2",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [
-            f"references/{{gamever}}/engine/{REFERENCE}.{{platform}}.yaml",
-        ],
+        "reference_yaml_paths": ["references/{gamever}/engine/Draw_MiptexTexture.{platform}.yaml"],
         "expected_result_sections": ["found_call"],
-        "dependency_policy": {f"{REFERENCE}.{{platform}}.yaml": "required"},
-    },
+        "dependency_policy": {"Draw_MiptexTexture.{platform}.yaml": "required"},
+    }
 ]
 FUNC_FIELDS = ["func_name", "func_sig", "func_va", "func_rva", "func_size"]
 

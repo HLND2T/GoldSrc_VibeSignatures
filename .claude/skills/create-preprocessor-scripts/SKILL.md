@@ -273,6 +273,17 @@ LLM_DECOMPILE = [
 ]
 ```
 
+Declare exactly one unconditional module-level `LLM_DECOMPILE` using only literal values. Do not build it
+with names, f-strings, comprehensions, calls or dictionary unpacking, and do not mutate it. For mutually
+exclusive references/policies use a literal `dict[str, list[dict]]`; select one branch at runtime. The
+planner conservatively indexes the union of all branches without executing the script.
+
+Use `llm_spec.select_llm_specs` to copy a branch/subset and supply independently verified
+`expected_value` or `instruction_rules`. Dependency fields must stay in the static declaration.
+Forwarding helpers accept keyword-only `llm_decompile_specs` and may read artifacts during execution.
+The repository-contract suite audits the supported AST grammar; see
+[static LLM declarations](../../../docs/en/development.md#static-llm-declarations).
+
 Allowed result sections are `found_scalar`, `found_vcall`, `found_call`, `found_funcptr`, `found_gv`, and
 `found_struct_offset`.
 

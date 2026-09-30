@@ -27,13 +27,19 @@ GV_FIELDS = [
 ]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "r_framecount",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [f"references/{{gamever}}/engine/{PREDECESSOR}.{{platform}}.yaml"],
+        "reference_yaml_paths": ["references/{gamever}/engine/R_RecursiveWorldNode.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
-        "dependency_policy": {f"{PREDECESSOR}.{{platform}}.yaml": "required"},
-    }
-    for name in TARGET_GLOBAL_NAMES
+        "dependency_policy": {"R_RecursiveWorldNode.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "r_visframecount",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_RecursiveWorldNode.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_RecursiveWorldNode.{platform}.yaml": "required"},
+    },
 ]
 
 

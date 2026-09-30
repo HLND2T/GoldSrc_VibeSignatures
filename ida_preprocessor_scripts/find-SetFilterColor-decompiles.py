@@ -11,13 +11,26 @@ from ida_analyze_util import preprocess_common_skill
 TARGET_GLOBAL_NAMES = ["filterColorRed", "filterColorGreen", "filterColorBlue"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "filterColorRed",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/SetFilterColor.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {"SetFilterColor.{platform}.yaml": "required"},
-    }
-    for name in TARGET_GLOBAL_NAMES
+    },
+    {
+        "symbol_name": "filterColorGreen",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/SetFilterColor.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"SetFilterColor.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "filterColorBlue",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/SetFilterColor.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"SetFilterColor.{platform}.yaml": "required"},
+    },
 ]
 GV_FIELDS = [
     "gv_name",

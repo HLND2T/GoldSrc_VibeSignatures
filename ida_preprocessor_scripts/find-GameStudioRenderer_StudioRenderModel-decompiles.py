@@ -6,13 +6,12 @@ from ida_analyze_util import preprocess_common_skill
 TARGET_FUNCTION_NAMES = ["GameStudioRenderer_StudioRenderFinal"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "GameStudioRenderer_StudioRenderFinal",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/client/GameStudioRenderer_StudioRenderModel.{platform}.yaml"],
         "expected_result_sections": ["found_vcall", "found_funcptr"],
         "dependency_policy": {"GameStudioRenderer_StudioRenderModel.{platform}.yaml": "required"},
     }
-    for name in TARGET_FUNCTION_NAMES
 ]
 VFUNC_FIELDS = [
     "func_name",

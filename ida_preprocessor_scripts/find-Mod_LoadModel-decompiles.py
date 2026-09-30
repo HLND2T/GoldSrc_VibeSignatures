@@ -15,30 +15,29 @@ from ida_analyze_util import preprocess_common_skill
 TARGET_FUNCTION_NAMES = ["FS_Open"]
 TARGET_GLOBAL_NAMES = ["loadname", "loadmodel"]
 
-REFERENCE_YAML_PATHS = [
-    "references/{gamever}/engine/Mod_LoadModel.{platform}.yaml",
-]
-DEPENDENCY_POLICY = {
-    "Mod_LoadModel.{platform}.yaml": "required",
-}
 
 LLM_DECOMPILE = [
     {
         "symbol_name": "FS_Open",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": REFERENCE_YAML_PATHS,
+        "reference_yaml_paths": ["references/{gamever}/engine/Mod_LoadModel.{platform}.yaml"],
         "expected_result_sections": ["found_call"],
-        "dependency_policy": DEPENDENCY_POLICY,
+        "dependency_policy": {"Mod_LoadModel.{platform}.yaml": "required"},
     },
-] + [
     {
-        "symbol_name": name,
+        "symbol_name": "loadname",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": REFERENCE_YAML_PATHS,
+        "reference_yaml_paths": ["references/{gamever}/engine/Mod_LoadModel.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
-        "dependency_policy": DEPENDENCY_POLICY,
-    }
-    for name in TARGET_GLOBAL_NAMES
+        "dependency_policy": {"Mod_LoadModel.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "loadmodel",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/Mod_LoadModel.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"Mod_LoadModel.{platform}.yaml": "required"},
+    },
 ]
 
 FUNC_FIELDS = ["func_name", "func_sig", "func_va", "func_rva", "func_size"]

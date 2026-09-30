@@ -9,11 +9,11 @@ PREDECESSOR = "R_RenderScene"
 FUNC_FIELDS = ["func_name", "func_sig", "func_va", "func_rva", "func_size"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": TARGET_FUNC_NAME,
+        "symbol_name": "R_SetupGL",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [f"references/{{gamever}}/engine/{PREDECESSOR}.{{platform}}.yaml"],
+        "reference_yaml_paths": ["references/{gamever}/engine/R_RenderScene.{platform}.yaml"],
         "expected_result_sections": ["found_call"],
-        "dependency_policy": {f"{PREDECESSOR}.{{platform}}.yaml": "required"},
+        "dependency_policy": {"R_RenderScene.{platform}.yaml": "required"},
     }
 ]
 

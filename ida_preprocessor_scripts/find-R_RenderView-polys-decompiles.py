@@ -5,8 +5,6 @@ from ida_analyze_util import preprocess_common_skill
 
 PREDECESSOR = "R_RenderView"
 TARGET_GLOBAL_NAMES = ["c_alias_polys", "c_brush_polys"]
-REFERENCE_YAML_PATHS = [f"references/{{gamever}}/engine/{PREDECESSOR}.{{platform}}.yaml"]
-DEPENDENCY_POLICY = {f"{PREDECESSOR}.{{platform}}.yaml": "required"}
 GV_FIELDS = [
     "gv_name",
     "gv_va",
@@ -19,13 +17,19 @@ GV_FIELDS = [
 ]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "c_alias_polys",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": REFERENCE_YAML_PATHS,
+        "reference_yaml_paths": ["references/{gamever}/engine/R_RenderView.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
-        "dependency_policy": DEPENDENCY_POLICY,
-    }
-    for name in TARGET_GLOBAL_NAMES
+        "dependency_policy": {"R_RenderView.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "c_brush_polys",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_RenderView.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_RenderView.{platform}.yaml": "required"},
+    },
 ]
 
 

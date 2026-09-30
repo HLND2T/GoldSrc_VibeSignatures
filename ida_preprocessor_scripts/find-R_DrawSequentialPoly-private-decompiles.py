@@ -14,31 +14,57 @@ TARGET_NAMES = ["lightmap_textures", "lightmap_rectchange", "lightmaps", "gDecal
 FIELDS = ["gv_name", "gv_va", "gv_rva", "gv_sig", "gv_sig_va", "gv_inst_offset", "gv_inst_length", "gv_inst_disp"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "lightmap_textures",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/R_DrawSequentialPoly.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {"R_DrawSequentialPoly.{platform}.yaml": "required"},
-    }
-    for name in TARGET_NAMES
+    },
+    {
+        "symbol_name": "lightmap_rectchange",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_DrawSequentialPoly.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_DrawSequentialPoly.{platform}.yaml": "required"},
+        "instruction_rules": [
+            {
+                "regex": "(?i)^\\s*(?:lea|add)\\s+.+$",
+                "text": "Select the LEA/ADD forming the whole lightmap_rectchange array base for "
+                "upload/reset. Do not return MOV reads of rectangle t/h members, which "
+                "embed base+4/base+12.",
+            }
+        ],
+    },
+    {
+        "symbol_name": "lightmaps",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_DrawSequentialPoly.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_DrawSequentialPoly.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "gDecalSurfs",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_DrawSequentialPoly.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_DrawSequentialPoly.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "gDecalSurfCount",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_DrawSequentialPoly.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_DrawSequentialPoly.{platform}.yaml": "required"},
+        "instruction_rules": [
+            {
+                "regex": "(?i)^\\s*mov\\s+(?:eax|ebx|ecx|edx|esi|edi|ebp),\\s*.+$",
+                "text": "Select the MOV loading the decal count into a register before enqueueing "
+                "the surface. Do not return count stores: their PIC base can be unavailable "
+                "after control-flow joins.",
+            }
+        ],
+    },
 ]
-for spec in LLM_DECOMPILE:
-    if spec["symbol_name"] == "lightmap_rectchange":
-        spec["instruction_rules"] = [
-            {
-                "regex": r"(?i)^\s*(?:lea|add)\s+.+$",
-                "text": "Select the LEA/ADD forming the whole lightmap_rectchange array base for upload/reset. "
-                "Do not return MOV reads of rectangle t/h members, which embed base+4/base+12.",
-            }
-        ]
-    elif spec["symbol_name"] == "gDecalSurfCount":
-        spec["instruction_rules"] = [
-            {
-                "regex": r"(?i)^\s*mov\s+(?:eax|ebx|ecx|edx|esi|edi|ebp),\s*.+$",
-                "text": "Select the MOV loading the decal count into a register before enqueueing the surface. "
-                "Do not return count stores: their PIC base can be unavailable after control-flow joins.",
-            }
-        ]
 
 
 async def preprocess_skill(

@@ -10,6 +10,17 @@ layout invalidation and repaint. Never use old artifact signatures to discover.
 from ida_preprocessor_scripts._gameui_richtext_common import ANSI, WIDE, recover_callee
 
 
+LLM_DECOMPILE = [
+    {
+        "symbol_name": "GameUI_RichText_InsertStringW",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/gameui/GameUI_RichText_InsertStringA.{platform}.yaml"],
+        "expected_result_sections": ["found_call"],
+        "dependency_policy": {"GameUI_RichText_InsertStringA.{platform}.yaml": "required"},
+    }
+]
+
+
 async def preprocess_skill(
     session,
     skill_name,
@@ -29,7 +40,7 @@ async def preprocess_skill(
         image_base,
         ANSI,
         WIDE,
-        "references/{gamever}/gameui/GameUI_RichText_InsertStringA.{platform}.yaml".replace("{platform}", platform),
         llm_config,
         debug,
+        llm_decompile_specs=LLM_DECOMPILE,
     )

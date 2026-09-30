@@ -30,6 +30,28 @@ result = json.dumps({'valid': data == struct.pack('<fff', 0.0, 0.8, 0.0)})
 """
 
 
+LLM_DECOMPILE = {
+    "inline": [
+        {
+            "symbol_name": "g_LocationColor",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/czero-10210/client/SayTextLine_Colorize.{platform}.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"SayTextLine_Colorize.{platform}.yaml": "required"},
+        }
+    ],
+    "standalone": [
+        {
+            "symbol_name": "g_LocationColor",
+            "prompt_path": "prompt/call_llm_decompile.md",
+            "reference_yaml_paths": ["references/cstrike-8684/client/GetTextColor.{platform}.yaml"],
+            "expected_result_sections": ["found_gv"],
+            "dependency_policy": {"GetTextColor.{platform}.yaml": "required"},
+        }
+    ],
+}
+
+
 async def preprocess_skill(
     session,
     skill_name,
@@ -43,17 +65,7 @@ async def preprocess_skill(
 ):
     _ = skill_name, old_yaml_map
     inline = platform == "windows" and Path(new_binary_dir).parent.name in {"cstrike-10210", "czero-10210"}
-    owner = "SayTextLine_Colorize" if inline else "GetTextColor"
-    reference_gamever = "czero-10210" if inline else "cstrike-8684"
-    specs = [
-        {
-            "symbol_name": "g_LocationColor",
-            "prompt_path": "prompt/call_llm_decompile.md",
-            "reference_yaml_paths": [f"references/{reference_gamever}/client/{owner}.{{platform}}.yaml"],
-            "expected_result_sections": ["found_gv"],
-            "dependency_policy": {f"{owner}.{{platform}}.yaml": "required"},
-        }
-    ]
+    specs = LLM_DECOMPILE["inline" if inline else "standalone"]
     with TemporaryDirectory(prefix="gsvibe-location-color-") as temporary:
         temporary_outputs = [Path(temporary) / Path(output).name for output in expected_outputs]
         if not await preprocess_common_skill(

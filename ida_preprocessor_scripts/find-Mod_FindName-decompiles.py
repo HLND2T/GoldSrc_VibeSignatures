@@ -6,13 +6,19 @@ from ida_analyze_util import preprocess_common_skill
 TARGET_GLOBAL_NAMES = ["mod_known", "mod_numknown"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "mod_known",
         "prompt_path": "prompt/call_llm_decompile.md",
         "reference_yaml_paths": ["references/{gamever}/engine/Mod_FindName.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
         "dependency_policy": {"Mod_FindName.{platform}.yaml": "required"},
-    }
-    for name in TARGET_GLOBAL_NAMES
+    },
+    {
+        "symbol_name": "mod_numknown",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/Mod_FindName.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"Mod_FindName.{platform}.yaml": "required"},
+    },
 ]
 GV_FIELDS = [
     "gv_name",

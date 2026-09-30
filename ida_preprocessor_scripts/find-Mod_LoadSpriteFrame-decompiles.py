@@ -16,12 +16,10 @@ LLM_DECOMPILE = [
     {
         "symbol_name": "gSpriteMipMap",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [
-            f"references/{{gamever}}/engine/{REFERENCE}.{{platform}}.yaml",
-        ],
+        "reference_yaml_paths": ["references/{gamever}/engine/Mod_LoadSpriteFrame.{platform}.yaml"],
         "expected_result_sections": ["found_gv"],
-        "dependency_policy": {f"{REFERENCE}.{{platform}}.yaml": "required"},
-    },
+        "dependency_policy": {"Mod_LoadSpriteFrame.{platform}.yaml": "required"},
+    }
 ]
 GV_FIELDS = [
     "gv_name",

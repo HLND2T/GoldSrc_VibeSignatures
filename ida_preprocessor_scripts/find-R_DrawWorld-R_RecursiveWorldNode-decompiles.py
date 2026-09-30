@@ -21,13 +21,19 @@ GV_FIELDS = [
 ]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "R_RecursiveWorldNode",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [f"references/{{gamever}}/engine/{PREDECESSOR}.{{platform}}.yaml"],
-        "expected_result_sections": ["found_call" if name in TARGET_FUNC_NAMES else "found_gv"],
-        "dependency_policy": {f"{PREDECESSOR}.{{platform}}.yaml": "required"},
-    }
-    for name in TARGET_FUNC_NAMES + TARGET_GLOBAL_NAMES
+        "reference_yaml_paths": ["references/{gamever}/engine/R_DrawWorld.{platform}.yaml"],
+        "expected_result_sections": ["found_call"],
+        "dependency_policy": {"R_DrawWorld.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "modelorg",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/R_DrawWorld.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"R_DrawWorld.{platform}.yaml": "required"},
+    },
 ]
 GENERATE_YAML_DESIRED_FIELDS = [
     *((name, FUNC_FIELDS) for name in TARGET_FUNC_NAMES),

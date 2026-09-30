@@ -11,15 +11,26 @@ TARGET_FUNCTION_NAMES = []
 TARGET_GLOBAL_NAMES = ["cl_max_edicts", "cl_entities", "cl_frames"]
 LLM_DECOMPILE = [
     {
-        "symbol_name": name,
+        "symbol_name": "cl_max_edicts",
         "prompt_path": "prompt/call_llm_decompile.md",
-        "reference_yaml_paths": [
-            "references/{gamever}/engine/CL_ReallocateDynamicData.{platform}.yaml",
-        ],
-        "expected_result_sections": ["found_call" if name in TARGET_FUNCTION_NAMES else "found_gv"],
+        "reference_yaml_paths": ["references/{gamever}/engine/CL_ReallocateDynamicData.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
         "dependency_policy": {"CL_ReallocateDynamicData.{platform}.yaml": "required"},
-    }
-    for name in TARGET_FUNCTION_NAMES + TARGET_GLOBAL_NAMES
+    },
+    {
+        "symbol_name": "cl_entities",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/CL_ReallocateDynamicData.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"CL_ReallocateDynamicData.{platform}.yaml": "required"},
+    },
+    {
+        "symbol_name": "cl_frames",
+        "prompt_path": "prompt/call_llm_decompile.md",
+        "reference_yaml_paths": ["references/{gamever}/engine/CL_ReallocateDynamicData.{platform}.yaml"],
+        "expected_result_sections": ["found_gv"],
+        "dependency_policy": {"CL_ReallocateDynamicData.{platform}.yaml": "required"},
+    },
 ]
 FUNC_FIELDS = ["func_name", "func_sig", "func_va", "func_rva", "func_size"]
 GV_FIELDS = [
