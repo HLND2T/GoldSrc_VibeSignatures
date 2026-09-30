@@ -14,6 +14,8 @@ ambiguous.
 
 GameUI and ServerBrowser use the module-local ``KeyValues_*`` output identities;
 CS-family clients retain their ``ClientVGUI_KeyValues_*`` lookup identities.
+GameUI also requests ``KeyValues_ctor``. Emit the constructor already located
+by this same walk, retaining the current RTTI namespace and overload identity.
 """
 
 from ida_analyze_util import (
@@ -25,6 +27,7 @@ from ida_analyze_util import (
 from ida_preprocessor_scripts._client_vgui_private_common import (
     DECODER,
     LOADFROMFILE_SLOT_INDEX,
+    inspect_unique_function,
 )
 from ida_preprocessor_scripts._vgui_paint_common import walk
 
@@ -179,6 +182,25 @@ async def preprocess_skill(
     )
     if allow_across:
         vfunc["vfunc_sig_allow_across_function_boundary"] = True
+    ctor_output = _output_for_symbol(expected_outputs, "KeyValues_ctor")
+    constructor = None
+    if ctor_output is not None:
+        constructor_name = f"{class_name}::KeyValues(char const*)"
+        constructor = await inspect_unique_function(
+            session, constructor_name, int(result["ctor"], 0), image_base, debug
+        )
+        if constructor is None:
+            return False
     write_vtable_yaml(vtable_output, vtable)
     write_func_yaml(vfunc_output, vfunc)
+    if constructor is not None:
+        fields = (
+            "func_name",
+            "func_va",
+            "func_rva",
+            "func_size",
+            "func_sig",
+            "func_sig_allow_across_function_boundary",
+        )
+        write_func_yaml(ctor_output, {field: constructor[field] for field in fields if field in constructor})
     return True
