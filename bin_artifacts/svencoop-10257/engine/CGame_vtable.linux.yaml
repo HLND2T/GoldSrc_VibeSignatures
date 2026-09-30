@@ -1,0 +1,24 @@
+vtable_class: CGame
+vtable_symbol: _ZTV5CGame
+vtable_va: '0x2dfb48'
+vtable_rva: '0x2dfb48'
+vtable_size: '0x44'
+vtable_numvfunc: 17
+vtable_entries:
+  0: '0x183a80'
+  1: '0x183b70'
+  2: '0x183a90'
+  3: '0x183ba0'
+  4: '0x183df0'
+  5: '0x184690'
+  6: '0x183aa0'
+  7: '0x183ab0'
+  8: '0x183ac0'
+  9: '0x183be0'
+  10: '0x183ae0'
+  11: '0x183b40'
+  12: '0x183b50'
+  13: '0x183b60'
+  14: '0x183d90'
+  15: '0x183d60'
+  16: '0x183c70'

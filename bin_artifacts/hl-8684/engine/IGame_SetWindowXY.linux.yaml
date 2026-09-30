@@ -1,0 +1,4 @@
+func_name: IGame::SetWindowXY
+vtable_name: IGame
+vfunc_offset: '0x20'
+vfunc_index: 8

@@ -40,6 +40,7 @@ from ida_analyze_util import (
     preprocess_func_xrefs_via_mcp,
     preprocess_index_based_vfunc_via_mcp,
 )
+from ida_preprocessor_scripts._engine_runtime_slots import DATA_REFERENCED_ENTRY_RECOVERY_PY
 from ida_preprocessor_scripts._indirect_vcall_target_common import preprocess_indirect_vcall_target_skill
 from ida_preprocessor_scripts._client_portal_offsets import recover_portal_offsets
 from ida_preprocessor_scripts._ordinal_vtable_common import preprocess_ordinal_vtable_via_mcp
@@ -762,6 +763,91 @@ class PreprocessStatusTests(unittest.TestCase):
 
         self.assertIsNone(result)
         self.assertEqual([(entry_ea,)], add_func_calls)
+
+    def _overlapping_entry_recovery(self, *, reachable=False, referenced=True, add_succeeds=True):
+        tree = ast.parse(DATA_REFERENCED_ENTRY_RECOVERY_PY)
+        node = next(
+            node
+            for node in tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == "_recover_data_referenced_entries"
+        )
+        start, entry, end = 0x1000, 0x1100, 0x1200
+        functions = {start: SimpleNamespace(start_ea=start, end_ea=end)}
+        mutations = []
+
+        def owner(ea):
+            return next((f for f in functions.values() if f.start_ea <= ea < f.end_ea), None)
+
+        def delete(ea):
+            mutations.append(("delete", ea))
+            del functions[ea]
+            return True
+
+        def add(ea):
+            mutations.append(("add", ea))
+            if add_succeeds:
+                functions[ea] = SimpleNamespace(start_ea=ea, end_ea=ea + 0x10)
+            return add_succeeds
+
+        namespace = {
+            "FUNCTION_RECOVERY_MAX_SPAN": 0x4000,
+            "ida_funcs": SimpleNamespace(get_func=owner, del_func=delete, add_func=add),
+            "ida_auto": SimpleNamespace(auto_wait=lambda: None),
+            "_has_data_entry_reference": lambda _ea: referenced,
+            "_entry_reaches_any": lambda *_args: reachable,
+            "_ensure_function_owner": lambda ea, **_kwargs: (
+                {"function_start": ea} if owner(ea) and owner(ea).start_ea == ea else None
+            ),
+        }
+        exec(compile(ast.Module(body=[node], type_ignores=[]), "<entry-recovery>", "exec"), namespace)
+        return namespace["_recover_data_referenced_entries"], functions, mutations, start, entry
+
+    def test_data_referenced_entry_rebuilds_disconnected_oversized_owner(self):
+        recover, functions, mutations, start, entry = self._overlapping_entry_recovery()
+        self.assertTrue(recover([entry + 0x20, entry, entry]))
+        self.assertEqual({start, entry, entry + 0x20}, set(functions))
+        self.assertEqual([("delete", start), ("add", entry), ("add", entry + 0x20), ("add", start)], mutations)
+        self.assertTrue(recover([entry]))
+        self.assertEqual(4, len(mutations))
+
+    def test_data_referenced_entry_preserves_reachable_or_unproven_owner(self):
+        for options in ({"reachable": True}, {"reachable": None}, {"referenced": False}):
+            with self.subTest(options=options):
+                recover, functions, mutations, start, entry = self._overlapping_entry_recovery(**options)
+                self.assertFalse(recover([entry]))
+                self.assertEqual({start}, set(functions))
+                self.assertEqual([], mutations)
+
+    def test_data_referenced_entry_reports_failed_rebuild(self):
+        recover, _functions, _mutations, _start, entry = self._overlapping_entry_recovery(add_succeeds=False)
+        self.assertFalse(recover([entry]))
+
+    def test_entry_reachability_ignores_calls_but_keeps_fallthrough_and_branches(self):
+        tree = ast.parse(DATA_REFERENCED_ENTRY_RECOVERY_PY)
+        node = next(
+            node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "_entry_reaches_any"
+        )
+        instructions = {0x1000: ("call", 5), 0x1005: ("jmp", 2), 0x1010: ("ret", 1)}
+        references = {0x1000: [0x1005, 0x1100], 0x1005: [0x1010], 0x1010: []}
+
+        def decode(insn, ea):
+            if ea not in instructions:
+                return 0
+            insn.size = instructions[ea][1]
+            return insn.size
+
+        namespace = {
+            "ida_ua": SimpleNamespace(insn_t=SimpleNamespace, decode_insn=decode),
+            "idautils": SimpleNamespace(CodeRefsFrom=lambda ea, _flow: references[ea]),
+            "idc": SimpleNamespace(print_insn_mnem=lambda ea: instructions[ea][0]),
+        }
+        exec(compile(ast.Module(body=[node], type_ignores=[]), "<entry-reachability>", "exec"), namespace)
+        reaches = namespace["_entry_reaches_any"]
+        self.assertFalse(reaches(0x1000, 0x1200, {0x1100}))
+        self.assertTrue(reaches(0x1000, 0x1200, {0x1010}))
+        for successors in ([0x1020], [0x2000], []):
+            references[0x1005] = successors
+            self.assertIsNone(reaches(0x1000, 0x1200, {0x1100}))
 
     def test_func_xref_float_filters_require_every_xref_and_exclude_any_hit(self):
         code = _build_func_xref_py_eval({"func_name": "Target"}, 0x400000)

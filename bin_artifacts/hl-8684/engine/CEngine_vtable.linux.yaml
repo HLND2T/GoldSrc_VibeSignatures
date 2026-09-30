@@ -1,0 +1,25 @@
+vtable_class: CEngine
+vtable_symbol: _ZTV7CEngine
+vtable_va: '0x273588'
+vtable_rva: '0x273588'
+vtable_size: '0x48'
+vtable_numvfunc: 18
+vtable_entries:
+  0: '0x13c8f0'
+  1: '0x13cbe0'
+  2: '0x13cb60'
+  3: '0x13cbc0'
+  4: '0x13ca20'
+  5: '0x13c900'
+  6: '0x13ca40'
+  7: '0x13c910'
+  8: '0x13ca60'
+  9: '0x13c920'
+  10: '0x13c930'
+  11: '0x13c9d0'
+  12: '0x13c990'
+  13: '0x13c940'
+  14: '0x13c960'
+  15: '0x13cbf0'
+  16: '0x13c980'
+  17: '0x13c970'

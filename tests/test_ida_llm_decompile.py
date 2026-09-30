@@ -71,7 +71,7 @@ class JumpThunkResolutionTests(unittest.TestCase):
 
 class StudioPicArgumentTests(unittest.TestCase):
     def test_global_locators_resolve_got_loads_but_preserve_lea(self):
-        for name in ("find-DM_PlayerState.py", "find-engine.py"):
+        for name in ("find-DM_PlayerState.py", "find-RunListenServer.py"):
             source = runpy.run_path(str(Path(__file__).resolve().parents[1] / "ida_preprocessor_scripts" / name))[
                 "LOCATE_PY"
             ]
