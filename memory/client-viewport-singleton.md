@@ -69,6 +69,14 @@ New viewport records pass canonical snapshot/JSON export and the downstream view
 - Verification: the full finder and YAML writer pass the supplied warm IDB, an additional probe hiding callable ownership and rejecting `add_func`, and all 17 configured CS/CZ/CZDS clients (including CZDS 10210 Windows/Linux). Each generated signature is unique and each object RVA agrees with its existing artifact. Tests cover bounded entry/termination, stack effects, tail receiver transfer, ambiguity and signature emission. IDB checks run in disposable fixtures with owned no-save workers.
 - Scope: viewport finder and its pure proof helpers; no shared call-argument contract, configuration, or IDB repair changes.
 
+### Preserve full module imports for trusted impact planning
+
+- Trigger: PR validation fails in `plan` with `Changed analysis source has no mapped consumer: ida_preprocessor_scripts/_client_viewport_singleton.py`, before IDA analysis starts.
+- Root cause: the trusted planner extracts `ast.ImportFrom.module` but not imported alias names. `from ida_preprocessor_scripts import _client_viewport_singleton` loses the helper edge. A lint cleanup in `27a319f` unintentionally reverted the earlier `a3b8e3a` compatibility fix.
+- Correct approach: retain `import ida_preprocessor_scripts._client_viewport_singleton as _client_viewport_singleton`, with a local `noqa: PLR0402` and an explanatory comment. Do not change the trusted planner or suppress unmapped-source errors to fix this finder.
+- Verification: the production source index reports zero helper consumers before the correction and all 17 configured viewport nodes afterward; run planner and viewport behavior tests as well as formatting checks. Existing reference-YAML orphan warnings are diagnostic and are not this fatal error.
+- Scope: Python module imports consumed by the base-revision PR impact planner.
+
 ## Callers
 
 - `ida_analyze_bin.py` invokes the registered preprocessor from each target client skill graph.

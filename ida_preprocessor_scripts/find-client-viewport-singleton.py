@@ -16,8 +16,9 @@ CS/CZ/CZDS client platform. Old artifacts are never discovery inputs.
 
 import inspect
 
+# The trusted PR planner needs the full module path to map this dependency.
+import ida_preprocessor_scripts._client_viewport_singleton as _client_viewport_singleton  # noqa: PLR0402
 from ida_analyze_util import _output_for_symbol
-from ida_preprocessor_scripts import _client_viewport_singleton
 from ida_preprocessor_scripts._client_vgui_private_common import inspect_unique_function
 from ida_preprocessor_scripts._direct_gv_common import write_located_globals
 from ida_preprocessor_scripts._engine_patch_common import CALL_FLOW_PY
