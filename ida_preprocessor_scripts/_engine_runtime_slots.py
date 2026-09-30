@@ -10,9 +10,9 @@ import json
 WORD_SIZE = 4
 
 
-def select_runlistenserver_slots(flow, entry, eng_address, video_address, platform):
-    if platform not in {"windows", "linux"} or flow.get("error"):
-        raise ValueError("unsupported platform or invalid call flow")
+def _control_flow(flow, entry):
+    if flow.get("error"):
+        raise ValueError("invalid call flow")
     graph = {int(key): successors for key, successors in flow["blocks"].items()}
     if entry not in graph or any(target not in graph for targets in graph.values() for target in targets):
         raise ValueError("incomplete function control-flow graph")
@@ -38,6 +38,51 @@ def select_runlistenserver_slots(flow, entry, eng_address, video_address, platfo
             if value != dominators[node]:
                 dominators[node] = value
                 changed = True
+    return graph, nodes, reachable, dominators
+
+
+def _receiver(call):
+    return call["virtuals"][0][0]
+
+
+def _offset(call):
+    return call["virtuals"][0][1]
+
+
+def _global_pointer(value):
+    return (
+        isinstance(value, list)
+        and len(value) == 3
+        and value[0] == "load"
+        and value[2] == 0
+        and isinstance(value[1], list)
+        and len(value[1]) == 2
+        and value[1][0] == "const"
+        and isinstance(value[1][1], int)
+        and not isinstance(value[1][1], bool)
+        and value[1][1] > 0
+    )
+
+
+def _choose_slot(name, matches):
+    if any(len(call["virtuals"]) != 1 for call in matches):
+        raise ValueError(f"{name}: ambiguous virtual receiver or slot")
+    slots = {_offset(call) for call in matches}
+    receivers = {json.dumps(_receiver(call)) for call in matches}
+    if len(slots) != 1 or len(receivers) != 1:
+        raise ValueError(f"{name}: expected one receiver/slot, got {len(receivers)}/{len(slots)}")
+    slot = next(iter(slots))
+    if isinstance(slot, bool) or not isinstance(slot, int) or slot < 0 or slot % WORD_SIZE:
+        raise ValueError(f"{name}: invalid x86 slot displacement")
+    if any(call["args"][:1] != [_receiver(call)] for call in matches):
+        raise ValueError(f"{name}: this argument disagrees with vtable receiver")
+    return {"offset": slot, "sites": [call["ea"] for call in matches]}
+
+
+def select_runlistenserver_slots(flow, entry, eng_address, video_address, platform):
+    if platform not in {"windows", "linux"}:
+        raise ValueError("unsupported platform")
+    graph, nodes, reachable, dominators = _control_flow(flow, entry)
     cyclic = {node for node in nodes if any(node in reachable(child) for child in graph[node])}
     branches = {}
     for branch in flow["branches"]:
@@ -59,24 +104,10 @@ def select_runlistenserver_slots(flow, entry, eng_address, video_address, platfo
     instance = ["arg", argument_shift]
     found = {}
 
-    def receiver(call):
-        return call["virtuals"][0][0]
-
-    def offset(call):
-        return call["virtuals"][0][1]
+    receiver, offset = _receiver, _offset
 
     def choose(name, matches):
-        slots = {offset(call) for call in matches}
-        receivers = {json.dumps(receiver(call)) for call in matches}
-        if len(slots) != 1 or len(receivers) != 1:
-            raise ValueError(f"{name}: expected one receiver/slot, got {len(receivers)}/{len(slots)}")
-        slot = next(iter(slots))
-        if isinstance(slot, bool) or not isinstance(slot, int) or slot < 0 or slot % WORD_SIZE:
-            raise ValueError(f"{name}: invalid x86 slot displacement")
-        for call in matches:
-            if call["args"][:1] != [receiver(call)]:
-                raise ValueError(f"{name}: this argument disagrees with vtable receiver")
-        found[name] = {"offset": slot, "sites": [call["ea"] for call in matches]}
+        found[name] = _choose_slot(name, matches)
         return matches[0]
 
     video_init = choose(
@@ -96,17 +127,7 @@ def select_runlistenserver_slots(flow, entry, eng_address, video_address, platfo
         ],
     )
     game = receiver(game_init)
-    if not (
-        isinstance(game, list)
-        and len(game) == 3
-        and game[0] == "load"
-        and game[2] == 0
-        and isinstance(game[1], list)
-        and len(game[1]) == 2
-        and game[1][0] == "const"
-        and isinstance(game[1][1], int)
-        and game[1][1] > 0
-    ):
+    if not _global_pointer(game):
         raise ValueError("game receiver is not a proven global pointer load")
     load = choose(
         "IEngine_Load",
@@ -170,3 +191,46 @@ def select_runlistenserver_slots(flow, entry, eng_address, video_address, platfo
         ],
     )
     return found
+
+
+def select_frame_slots(flow, entry):
+    """Identify the activity test, inactive wait and dominating audio dispatch."""
+    _, _, reachable, dominators = _control_flow(flow, entry)
+    virtuals = [call for call in flow["calls"] if call["virtuals"]]
+    if any(len(call["virtuals"]) != 1 for call in virtuals):
+        raise ValueError("ambiguous virtual receiver or slot")
+    calls = [call for call in virtuals if _global_pointer(_receiver(call))]
+    pairs = []
+    for branch in flow["branches"]:
+        if branch["condition"][0] != "result":
+            continue
+        getters = [call for call in calls if call["ea"] == branch["condition"][1]]
+        if len(getters) != 1:
+            continue
+        getter = getters[0]
+        inactive = reachable(branch["zero"]) - reachable(branch["nonzero"])
+        waits = [
+            call
+            for call in calls
+            if call["block"] in inactive and _receiver(call) == _receiver(getter) and _offset(call) != _offset(getter)
+        ]
+        if waits:
+            pairs.append((getter, waits))
+    if len(pairs) != 1:
+        raise ValueError("expected one activity-test/inactive-wait pair")
+    getter, waits = pairs[0]
+    audio = [
+        call
+        for call in calls
+        if _receiver(call) != _receiver(getter)
+        and call["block"] in dominators[getter["block"]]
+        and (call["block"] != getter["block"] or call["ea"] < getter["ea"])
+    ]
+    return {
+        name: _choose_slot(name, candidates)
+        for name, candidates in (
+            ("IGame_IsActiveApp", [getter]),
+            ("IGame_SleepUntilInput", waits),
+            ("ICDAudio_Frame", audio),
+        )
+    }

@@ -959,6 +959,20 @@ modules:
           - IEngine_GetQuitting.{platform}.yaml
           - IGame_Shutdown.{platform}.yaml
           - IVideoMode_Shutdown.{platform}.yaml
+      - name: find-CEngine_Frame-slots
+        expected_input:
+          - CEngine_Frame.{platform}.yaml
+          - CGame_vtable.{platform}.yaml
+        expected_output:
+          - IGame_IsActiveApp.{platform}.yaml
+          - IGame_SleepUntilInput.{platform}.yaml
+          - ICDAudio_Frame.{platform}.yaml
+      - name: find-CGame_SleepUntilInput
+        expected_input:
+          - IGame_SleepUntilInput.{platform}.yaml
+          - CGame_vtable.{platform}.yaml
+        expected_output:
+          - CGame_SleepUntilInput.{platform}.yaml
       - name: find-CEngine_Frame
         expected_input:
           - IEngine_Frame.{platform}.yaml
@@ -2075,6 +2089,14 @@ modules:
       - name: IVideoMode_Shutdown
         category: vfunc
       - name: CEngine_Frame
+        category: vfunc
+      - name: IGame_IsActiveApp
+        category: vfunc
+      - name: IGame_SleepUntilInput
+        category: vfunc
+      - name: ICDAudio_Frame
+        category: vfunc
+      - name: CGame_SleepUntilInput
         category: vfunc
       - name: CEngine_vtable
         category: vtable

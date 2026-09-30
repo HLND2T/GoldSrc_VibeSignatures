@@ -1,0 +1,7 @@
+func_name: CGame::SleepUntilInput
+func_va: '0x1dbe6d0'
+func_rva: '0xbe6d0'
+func_size: '0x18'
+vtable_name: CGame
+vfunc_offset: '0x10'
+vfunc_index: 4

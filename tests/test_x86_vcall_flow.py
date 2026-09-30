@@ -503,3 +503,76 @@ class RuntimeSlotRoleTests(unittest.TestCase):
         flow["calls"][5]["virtuals"][0][1] = 45
         with self.assertRaises(ValueError):
             self.select(flow)
+
+
+class FrameSlotRoleTests(unittest.TestCase):
+    def fixture(self):
+        game = ["load", ["const", 0x9000], 0]
+        audio = ["load", ["const", 0xA000], 0]
+
+        def call(ea, block, receiver, offset):
+            return dict(ea=ea, block=block, virtuals=[[receiver, offset]], args=[receiver])
+
+        return dict(
+            blocks={100: [200, 300], 200: [300], 300: []},
+            branches=[dict(condition=["result", 102], zero=200, nonzero=300)],
+            calls=[
+                call(101, 100, audio, 12),
+                call(102, 100, game, 48),
+                call(201, 200, game, 28),
+                call(301, 300, ["arg", 0], 4),
+            ],
+        )
+
+    def select(self, flow):
+        from ida_preprocessor_scripts._engine_runtime_slots import select_frame_slots
+
+        return select_frame_slots(flow, 100)
+
+    def test_slots_follow_receiver_and_inactive_branch_not_slot_numbers(self):
+        result = self.select(self.fixture())
+        self.assertEqual(
+            {"IGame_IsActiveApp": 48, "IGame_SleepUntilInput": 28, "ICDAudio_Frame": 12},
+            {name: role["offset"] for name, role in result.items()},
+        )
+
+    def test_sleep_on_active_branch_is_rejected(self):
+        flow = self.fixture()
+        flow["branches"][0].update(zero=300, nonzero=200)
+        with self.assertRaises(ValueError):
+            self.select(flow)
+
+    def test_sleep_must_use_the_tested_object(self):
+        flow = self.fixture()
+        flow["calls"][2]["virtuals"][0][0] = ["load", ["const", 0xB000], 0]
+        with self.assertRaises(ValueError):
+            self.select(flow)
+
+    def test_actual_receiver_must_match_dispatch(self):
+        flow = self.fixture()
+        flow["calls"][2]["args"][0] = ["arg", 0]
+        with self.assertRaises(ValueError):
+            self.select(flow)
+
+    def test_ambiguous_audio_dispatch_is_rejected(self):
+        flow = self.fixture()
+        flow["calls"].insert(
+            0,
+            dict(
+                ea=100, block=100, virtuals=[[["load", ["const", 0xB000], 0], 8]], args=[["load", ["const", 0xB000], 0]]
+            ),
+        )
+        with self.assertRaises(ValueError):
+            self.select(flow)
+
+    def test_audio_must_dominate_the_activity_test(self):
+        flow = self.fixture()
+        flow["calls"][0].update(ea=202, block=200)
+        with self.assertRaises(ValueError):
+            self.select(flow)
+
+    def test_unaligned_slot_is_rejected(self):
+        flow = self.fixture()
+        flow["calls"][2]["virtuals"][0][1] = 29
+        with self.assertRaises(ValueError):
+            self.select(flow)
