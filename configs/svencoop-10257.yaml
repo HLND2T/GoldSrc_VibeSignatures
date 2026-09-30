@@ -2919,6 +2919,24 @@ modules:
           - CGameConsoleDialog_DumpConsoleTextToFile.{platform}.yaml
         expected_output:
           - GameUI_RichText_InsertStringA.{platform}.yaml
+      - name: find-GameUI-RichText-wide
+        expected_input:
+          - GameUI_RichText_InsertStringA.{platform}.yaml
+        expected_output:
+          - GameUI_RichText_InsertStringW.{platform}.yaml
+      - name: find-GameUI-RichText-char
+        platform: windows
+        expected_input:
+          - GameUI_RichText_InsertStringW.{platform}.yaml
+        expected_output:
+          - GameUI_RichText_InsertChar.{platform}.yaml
+      - name: find-GameUI-RichText-cr-branch
+        expected_input_windows:
+          - GameUI_RichText_InsertChar.{platform}.yaml
+        expected_input_linux:
+          - GameUI_RichText_InsertStringW.{platform}.yaml
+        expected_output:
+          - GameUI_RichText_CarriageReturn_branch.{platform}.yaml
       - name: find-GameUI-private-symbols
         expected_input:
           - CGameConsoleDialog_ctor.{platform}.yaml
@@ -3019,6 +3037,13 @@ modules:
         category: func
       - name: GameUI_RichText_OnThink
         category: vfunc
+      - name: GameUI_RichText_InsertStringW
+        category: func
+      - name: GameUI_RichText_InsertChar
+        category: func
+        platform: windows
+      - name: GameUI_RichText_CarriageReturn_branch
+        category: patch
       - name: CGameConsoleDialog_DumpConsoleTextToFile
         category: func
       - name: GameUI_RichText_InsertStringA

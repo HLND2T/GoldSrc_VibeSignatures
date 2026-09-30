@@ -1,0 +1,98 @@
+func_name: "GameUI_RichText_InsertStringA"
+func_va: "0x10b3c0"
+disasm_code: |-
+  .text:0010B3C0                 push    ebp
+  .text:0010B3C1                 mov     ebp, esp
+  .text:0010B3C3                 sub     esp, 48h
+  .text:0010B3C6                 mov     [ebp+var_8], esi
+  .text:0010B3C9                 mov     esi, [ebp+text]
+  .text:0010B3CC                 mov     [ebp+var_4], edi
+  .text:0010B3CF                 mov     edi, [ebp+this]
+  .text:0010B3D2                 mov     [ebp+var_C], ebx
+  .text:0010B3D5                 mov     eax, large gs:14h
+  .text:0010B3DB                 mov     [ebp+var_1C], eax
+  .text:0010B3DE                 xor     eax, eax
+  .text:0010B3E0                 cmp     byte ptr [esi], 23h ; '#'
+  .text:0010B3E3                 jz      short loc_10B450
+  .text:0010B3E5                 ; s
+  .text:0010B3E5                 mov     [esp], esi; s
+  .text:0010B3E8                 call    strlen
+  .text:0010B3ED                 lea     edx, ds:4[len*4]
+  .text:0010B3F4                 lea     len, [edx+1Eh]
+  .text:0010B3F7                 and     eax, 0FFFFFFF0h
+  .text:0010B3FA                 sub     esp, eax
+  .text:0010B3FC                 mov     [ebp+var_2C], edx
+  .text:0010B3FF                 lea     ebx, [esp+1Fh]
+  .text:0010B403                 call    _ZN5vgui28localizeEv; vgui2::localize(void)
+  .text:0010B408                 mov     edx, [ebp+var_2C]
+  .text:0010B40B                 and     ebx, 0FFFFFFF0h
+  .text:0010B40E                 mov     ecx, [eax]
+  .text:0010B410                 mov     [esp+0Ch], edx
+  .text:0010B414                 mov     [esp+8], unicode
+  .text:0010B418                 mov     [esp+4], esi
+  .text:0010B41C                 mov     [esp], eax
+  .text:0010B41F                 call    dword ptr [ecx+14h] ; ConvertANSIToUnicode; Linux wchar_t is 4 bytes
+  .text:0010B422                 ; wszText
+  .text:0010B422                 mov     [esp+4], unicode; wszText
+  .text:0010B426                 ; self
+  .text:0010B426                 mov     [esp], edi; self
+  .text:0010B429                 call    GameUI_RichText_InsertStringW ; _ZN5vgui28RichText12InsertStringEPKw
+  .text:0010B42E                 mov     eax, [ebp+var_1C]
+  .text:0010B431                 xor     eax, large gs:14h
+  .text:0010B438                 jnz     short loc_10B473
+  .text:0010B43A                 mov     ebx, [ebp+var_C]
+  .text:0010B43D                 mov     esi, [ebp+var_8]
+  .text:0010B440                 mov     edi, [ebp+var_4]
+  .text:0010B443                 mov     esp, ebp
+  .text:0010B445                 pop     ebp
+  .text:0010B446                 retn
+  .text:0010B450                 call    _ZN5vgui28localizeEv; vgui2::localize(void)
+  .text:0010B455                 mov     edx, [eax]
+  .text:0010B457                 mov     [esp+4], esi
+  .text:0010B45B                 mov     [esp], eax
+  .text:0010B45E                 call    dword ptr [edx+10h] ; localize()->Find(text)
+  .text:0010B461                 test    wsz, wsz
+  .text:0010B463                 jz      short loc_10B3E5
+  .text:0010B465                 ; wszText
+  .text:0010B465                 mov     [esp+4], wsz; wszText
+  .text:0010B469                 ; self
+  .text:0010B469                 mov     [esp], edi; self
+  .text:0010B46C                 call    GameUI_RichText_InsertStringW ; same wide overload for localized text
+  .text:0010B471                 jmp     short loc_10B42E
+  .text:0010B473                 call    __stack_chk_fail
+procedure: |-
+  void __cdecl vgui2::RichText::InsertString(vgui2::RichText *self, const char *text)
+  {
+    size_t textLength; // eax
+    void *unicodeAllocation; // esp
+    vgui2::ILocalize *converter; // eax
+    vgui2::ILocalize *localizer; // eax
+    const wchar_t *localizedText; // eax
+    wchar_t unicode[3]; // [esp+10h] [ebp-38h] BYREF
+    int unicodeBytes; // [esp+1Ch] [ebp-2Ch]
+    unsigned int stackCanary; // [esp+2Ch] [ebp-1Ch]
+
+    stackCanary = __readgsdword(0x14u);
+    if ( *text == 35
+      && (localizer = vgui2::localize(),
+          (localizedText = (const wchar_t *)(*(int (__cdecl **)(vgui2::ILocalize *, const char *))(*(_DWORD *)localizer
+                                                                                                 + 16))(
+                                              localizer,
+                                              text)) != nullptr) )
+    {
+      GameUI_RichText_InsertStringW(self, localizedText); // vgui2::RichText::InsertString(wchar_t const*)
+    }
+    else
+    {
+      textLength = strlen(text);
+      unicodeAllocation = alloca(4 * textLength + 19);
+      unicodeBytes = 4 * textLength + 4;
+      converter = vgui2::localize();
+      (*(void (__cdecl **)(vgui2::ILocalize *, const char *, wchar_t *, int))(*(_DWORD *)converter + 20))(
+        converter,
+        text,
+        unicode,
+        unicodeBytes);
+      GameUI_RichText_InsertStringW(self, unicode); // same wide overload after ANSI conversion
+    }
+  }

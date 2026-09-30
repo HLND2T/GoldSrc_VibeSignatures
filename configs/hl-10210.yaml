@@ -2497,6 +2497,16 @@ modules:
           - CCareerProfileFrame_ctor.{platform}.yaml
           - CCareerMapFrame_ctor.{platform}.yaml
           - CCareerBotFrame_ctor.{platform}.yaml
+      - name: find-GameUI-RichText-wide
+        expected_input:
+          - GameUI_RichText_InsertStringA.{platform}.yaml
+        expected_output:
+          - GameUI_RichText_InsertStringW.{platform}.yaml
+      - name: find-GameUI-RichText-cr-branch
+        expected_input:
+          - GameUI_RichText_InsertStringW.{platform}.yaml
+        expected_output:
+          - GameUI_RichText_CarriageReturn_branch.{platform}.yaml
       - name: find-GameUI-private-symbols
         expected_input:
           - CGameConsoleDialog_ctor.{platform}.yaml
@@ -2558,6 +2568,10 @@ modules:
         platform: windows
       - name: GameUI_RichText_OnThink
         category: vfunc
+      - name: GameUI_RichText_InsertStringW
+        category: func
+      - name: GameUI_RichText_CarriageReturn_branch
+        category: patch
       - name: CGameConsoleDialog_DumpConsoleTextToFile
         category: func
       - name: GameUI_RichText_InsertStringA

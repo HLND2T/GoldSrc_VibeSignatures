@@ -1,0 +1,98 @@
+func_name: "GameUI_RichText_InsertStringW"
+func_va: "0x141270"
+disasm_code: |-
+  .text:00141270                 push    ebp
+  .text:00141271                 push    edi
+  .text:00141272                 push    esi
+  .text:00141273                 push    ebx
+  .text:00141274                 sub     esp, 2Ch
+  .text:00141277                 mov     esi, [esp+3Ch+ch_0]
+  .text:0014127B                 mov     ebx, [esp+3Ch+this]
+  .text:0014127F                 mov     eax, [esi]
+  .text:00141281                 test    eax, eax
+  .text:00141283                 jz      short loc_1412EA
+  .text:00141285                 lea     ebp, [esp+3Ch+var_2C]
+  .text:00141289                 lea     edi, [ebx+78h]
+  .text:0014128C                 lea     ch_0_0, [ch_0_0+0]
+  .text:00141290                 cmp     al, 0Dh ; inlined RichText::InsertChar: CR filter, not an out-of-line call
+  .text:00141292                 mov     [esp+3Ch+var_2C], eax
+  .text:00141296                 jz      short loc_1412E1 ; skip insertion and advance to the next wchar_t
+  .text:00141298                 mov     edx, [ebx+0D4h]
+  .text:0014129E                 mov     eax, [ebx+84h]
+  .text:001412A4                 test    edx, edx
+  .text:001412A6                 jle     short loc_1412BA
+  .text:001412A8                 cmp     edx, eax
+  .text:001412AA                 jge     short loc_1412BA
+  .text:001412AC                 ; this
+  .text:001412AC                 mov     [esp+3Ch+var_3C], ebx; this
+  .text:001412AF                 call    _ZN5vgui28RichText18TruncateTextStreamEv; vgui2::RichText::TruncateTextStream(void)
+  .text:001412B4                 mov     eax, [ebx+84h]
+  .text:001412BA                 ; src
+  .text:001412BA                 mov     [esp+3Ch+src], ebp; src
+  .text:001412BE                 ; elem
+  .text:001412BE                 mov     [esp+3Ch+elem], eax; elem
+  .text:001412C2                 ; this
+  .text:001412C2                 mov     [esp+3Ch+var_3C], edi; this
+  .text:001412C5                 call    _ZN10CUtlVectorIwE12InsertBeforeEiRKw; CUtlVector<wchar_t>::InsertBefore(int,wchar_t const&)
+  .text:001412CA                 mov     eax, [ebx+98h]
+  .text:001412D0                 sub     eax, 2
+  .text:001412D3                 mov     [ebx+0B8h], eax ; _recalculateBreaksIndex = m_LineBreaks.Count() - 2
+  .text:001412D9                 mov     eax, [ebx]
+  .text:001412DB                 mov     [esp+3Ch+var_3C], ebx
+  .text:001412DE                 call    dword ptr [eax+10h]
+  .text:001412E1                 add     ch_0_0, 4
+  .text:001412E4                 mov     eax, [ch_0_0]
+  .text:001412E6                 test    eax, eax
+  .text:001412E8                 jnz     short loc_141290
+  .text:001412EA                 mov     eax, [ebx]
+  .text:001412EC                 xor     edi, edi
+  .text:001412EE                 xor     ebp, ebp
+  .text:001412F0                 mov     [esp+3Ch+src], edi
+  .text:001412F4                 mov     [esp+3Ch+elem], ebp
+  .text:001412F8                 mov     [esp+3Ch+var_3C], ebx
+  .text:001412FB                 call    dword ptr [eax+0ECh] ; InvalidateLayout(false, false)
+  .text:00141301                 mov     eax, [ebx]
+  .text:00141303                 mov     byte ptr [ebx+0B4h], 1
+  .text:0014130A                 mov     [esp+3Ch+var_3C], ebx
+  .text:0014130D                 call    dword ptr [eax+10h]
+  .text:00141310                 add     esp, 2Ch
+  .text:00141313                 pop     ebx
+  .text:00141314                 pop     ch_0_0
+  .text:00141315                 pop     edi
+  .text:00141316                 pop     ebp
+  .text:00141317                 retn
+procedure: |-
+  // InsertChar is inlined in this string loop. ELF wchar_t is 4 bytes. Source intent: RichText.cpp InsertString(const wchar_t*).
+  void __cdecl vgui2::RichText::InsertString(vgui2::RichText *self, const wchar_t *wszText)
+  {
+    const wchar_t *ch; // esi
+    wchar_t wch; // eax
+    int maxCharCount; // edx
+    int elem; // eax
+    int (**vptr_IClientPanel)(...); // eax
+    wchar_t characterCopy[11]; // [esp+10h] [ebp-2Ch] BYREF
+
+    ch = wszText;
+    for ( wch = *wszText; *ch; wch = *ch )
+    {
+      characterCopy[0] = wch;
+      if ( (_BYTE)wch != 13 ) // inlined RichText::InsertChar; no found_call target in this loop
+      {
+        maxCharCount = self->_maxCharCount;
+        elem = self->m_TextStream.m_Size;
+        if ( maxCharCount > 0 && maxCharCount < elem )
+        {
+          vgui2::RichText::TruncateTextStream(self);
+          elem = self->m_TextStream.m_Size;
+        }
+        CUtlVector<wchar_t>::InsertBefore(&self->m_TextStream, elem, characterCopy);
+        self->_recalculateBreaksIndex = self->m_LineBreaks.m_Size - 2;
+        (*((void (__cdecl **)(vgui2::RichText *))self->_vptr_IClientPanel + 4))(self);
+      }
+      ++ch;
+    }
+    (*((void (__cdecl **)(vgui2::RichText *, _DWORD, _DWORD))self->_vptr_IClientPanel + 59))(self, 0, 0);
+    vptr_IClientPanel = self->_vptr_IClientPanel;
+    self->m_bRecalcLineBreaks = 1;
+    vptr_IClientPanel[4](self);
+  }
