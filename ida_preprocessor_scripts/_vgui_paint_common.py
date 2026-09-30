@@ -132,6 +132,8 @@ def table_for(class_name):
         'VPanelWrapper': ('_ZTV13VPanelWrapper', '??_7VPanelWrapper@@6B@', '.?AVVPanelWrapper@@'),
         'vgui2::VPanel': ('_ZTVN5vgui26VPanelE', '??_7VPanel@vgui2@@6B@', '.?AVVPanel@vgui2@@'),
         'vgui2::Panel': ('_ZTVN5vgui25PanelE', '??_7Panel@vgui2@@6B@', '.?AVPanel@vgui2@@'),
+        'CounterStrikeViewport': ('_ZTV21CounterStrikeViewport', '??_7CounterStrikeViewport@@6B@', '.?AVCounterStrikeViewport@@'),
+        'CZEROViewPort': ('_ZTV13CZEROViewPort', '??_7CZEROViewPort@@6B@', '.?AVCZEROViewPort@@'),
     }
     elf_name, pe_name, descriptor_name = mangled[class_name]
     candidates = {}

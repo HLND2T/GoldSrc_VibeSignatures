@@ -5,6 +5,9 @@ modules:
     depot_windows: czero/cl_dlls/client.dll
     depot_linux: czero/cl_dlls/client.so
     skills:
+      - name: find-client-viewport-singleton
+        expected_output:
+          - __g_CounterStrikeViewport_singleton.{platform}.yaml
       - name: find-IN_Accumulate
         expected_output:
           - IN_Accumulate.{platform}.yaml
@@ -105,6 +108,9 @@ modules:
           - CCSBackGroundPanel_YOffset.{platform}.yaml
           - ISurface_GetScreenSize.{platform}.yaml
     symbols:
+      - name: __g_CounterStrikeViewport_singleton
+        category: gv
+        artifact: __g_CounterStrikeViewport_singleton.{platform}.yaml
       - name: IN_Accumulate
         category: func
       - name: iMouseInUse
