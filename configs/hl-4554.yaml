@@ -2443,6 +2443,19 @@ modules:
           - GameUI_RichText_InsertStringW.{platform}.yaml
         expected_output:
           - GameUI_RichText_CarriageReturn_branch.{platform}.yaml
+      - name: find-GameUI-Menu
+        expected_input:
+          - GameUI_PropertySheet_PerformLayout.{platform}.yaml
+        expected_output:
+          - vgui2_Menu_vtable.{platform}.yaml
+          - vgui2_Menu_PerformLayout.{platform}.yaml
+      - name: find-GameUI-Menu-PerformLayout-decompiles
+        expected_input:
+          - vgui2_Menu_vtable.{platform}.yaml
+          - vgui2_Menu_PerformLayout.{platform}.yaml
+        expected_output:
+          - vgui2_Menu_MakeItemsVisibleInScrollRange.{platform}.yaml
+          - vgui2_Menu_m_pScroller.{platform}.yaml
       - name: find-GameUI-private-symbols
         expected_input:
           - CGameConsoleDialog_ctor.{platform}.yaml
@@ -2511,6 +2524,18 @@ modules:
     symbols:
       - name: CBasePanel_ctor
         category: func
+      - name: vgui2_Menu_vtable
+        category: vtable
+      - name: vgui2_Menu_PerformLayout
+        category: vfunc
+      - name: vgui2_Menu_MakeItemsVisibleInScrollRange
+        category: vfunc
+      - name: vgui2::Menu
+        category: struct
+      - name: vgui2_Menu_m_pScroller
+        category: structmember
+        struct: vgui2::Menu
+        member: m_pScroller
       - name: CTaskbar_ctor
         category: func
       - name: CTaskbar_vtable

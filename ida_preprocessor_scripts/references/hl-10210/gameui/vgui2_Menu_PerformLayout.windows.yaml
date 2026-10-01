@@ -1,0 +1,730 @@
+func_name: "vgui2_Menu_PerformLayout"
+func_va: "0x10076a40"
+disasm_code: |-
+  ; Finder result identities: func_name=vgui2_Menu_MakeItemsVisibleInScrollRange; struct_name=vgui2_Menu, member_name=m_pScroller.
+  .text:10076A40                 push    ebp
+  .text:10076A41                 mov     ebp, esp
+  .text:10076A43                 sub     esp, 44h
+  .text:10076A46                 push    ebx
+  .text:10076A47                 push    esi
+  .text:10076A48                 mov     esi, ecx
+  .text:10076A4A                 push    edi
+  .text:10076A4B                 mov     [ebp+var_18], esi
+  .text:10076A4E                 mov     eax, [esi+0C4h]
+  .text:10076A54                 mov     edx, [esi]
+  .text:10076A56                 cmp     eax, [esi+88h]
+  .text:10076A5C                 jle     short loc_10076A70
+  .text:10076A5E                 call    dword ptr [edx+2C4h]
+  .text:10076A64                 mov     eax, [esi]
+  .text:10076A66                 mov     ecx, esi
+  .text:10076A68                 call    dword ptr [eax+2D4h] ; vgui2_Menu_MakeItemsVisibleInScrollRange: vgui2::Menu::MakeItemsVisibleInScrollRange(), this=Menu
+  .text:10076A6E                 jmp     short loc_10076A76
+  .text:10076A70                 call    dword ptr [edx+2C8h]
+  .text:10076A76                 mov     eax, [esi]
+  .text:10076A78                 mov     ecx, esi
+  .text:10076A7A                 call    dword ptr [eax+2D0h]
+  .text:10076A80                 mov     eax, [esi]
+  .text:10076A82                 lea     ecx, [ebp+var_24]
+  .text:10076A85                 push    ecx
+  .text:10076A86                 lea     ecx, [ebp+var_20]
+  .text:10076A89                 push    ecx
+  .text:10076A8A                 lea     ecx, [ebp+var_30]
+  .text:10076A8D                 push    ecx
+  .text:10076A8E                 lea     ecx, [ebp+var_34]
+  .text:10076A91                 push    ecx
+  .text:10076A92                 mov     ecx, esi
+  .text:10076A94                 call    dword ptr [eax+18h]
+  .text:10076A97                 mov     eax, [esi+7Ch]
+  .text:10076A9A                 mov     ecx, esi
+  .text:10076A9C                 mov     [ebp+var_8], eax
+  .text:10076A9F                 mov     eax, [esi]
+  .text:10076AA1                 mov     eax, [eax+54h]
+  .text:10076AA4                 call    eax
+  .text:10076AA6                 test    al, al
+  .text:10076AA8                 jz      short loc_10076AB7
+  .text:10076AAA                 push    dword ptr [esi+7Ch]
+  .text:10076AAD                 mov     ecx, esi
+  .text:10076AAF                 call    sub_100483F0
+  .text:10076AB4                 mov     [ebp+var_8], eax
+  .text:10076AB7                 mov     ebx, ds:_wassert
+  .text:10076ABD                 xor     edi, edi
+  .text:10076ABF                 mov     [ebp+y], 0
+  .text:10076AC6                 mov     [ebp+var_C], edi
+  .text:10076AC9                 cmp     [esi+0C4h], edi
+  .text:10076ACF                 jle     loc_10076BC9
+  .text:10076AD5                 test    edi, edi
+  .text:10076AD7                 js      short loc_10076AE1
+  .text:10076AD9                 cmp     edi, [esi+0C4h]
+  .text:10076ADF                 jl      short loc_10076AF9
+  .text:10076AE1                 ; Line
+  .text:10076AE1                 push    0B8h; Line
+  .text:10076AE6                 push    offset aCBuildslaveGol_1; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10076AEB                 push    offset aIsvalidindexI; "IsValidIndex(i)"
+  .text:10076AF0                 call    ebx ; _wassert
+  .text:10076AF2                 add     esp, 0Ch
+  .text:10076AF5                 test    edi, edi
+  .text:10076AF7                 js      short loc_10076B01
+  .text:10076AF9                 cmp     edi, [esi+0BCh]
+  .text:10076AFF                 jl      short loc_10076B15
+  .text:10076B01                 ; Line
+  .text:10076B01                 push    9Bh; Line
+  .text:10076B06                 push    offset aCBuildslaveGol_13; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10076B0B                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:10076B10                 call    ebx ; _wassert
+  .text:10076B12                 add     esp, 0Ch
+  .text:10076B15                 mov     eax, [esi+0B8h]
+  .text:10076B1B                 mov     edi, [eax+edi*4]
+  .text:10076B1E                 test    edi, edi
+  .text:10076B20                 js      short loc_10076B2A
+  .text:10076B22                 cmp     edi, [esi+98h]
+  .text:10076B28                 jl      short loc_10076B3E
+  .text:10076B2A                 ; Line
+  .text:10076B2A                 push    9Bh; Line
+  .text:10076B2F                 push    offset aCBuildslaveGol_13; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10076B34                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:10076B39                 call    ebx ; _wassert
+  .text:10076B3B                 add     esp, 0Ch
+  .text:10076B3E                 mov     eax, [esi+94h]
+  .text:10076B44                 lea     ecx, [edi+edi*2]
+  .text:10076B47                 mov     edi, [eax+ecx*4]
+  .text:10076B4A                 test    edi, edi
+  .text:10076B4C                 jz      short loc_10076BB6
+  .text:10076B4E                 mov     eax, [edi]
+  .text:10076B50                 mov     ecx, edi
+  .text:10076B52                 mov     eax, [eax+78h]
+  .text:10076B55                 call    eax
+  .text:10076B57                 test    al, al
+  .text:10076B59                 jz      short loc_10076BB6
+  .text:10076B5B                 mov     ecx, [ebp+y]
+  .text:10076B5E                 ; y
+  .text:10076B5E                 push    ecx; y
+  .text:10076B5F                 ; x
+  .text:10076B5F                 push    0; x
+  .text:10076B61                 ; this
+  .text:10076B61                 mov     ecx, edi; this
+  .text:10076B63                 call    vgui2__Panel__SetPos
+  .text:10076B68                 mov     ecx, [esi+0ECh]
+  .text:10076B6E                 test    ecx, ecx
+  .text:10076B70                 jz      short loc_10076B7D
+  .text:10076B72                 mov     eax, [edi]
+  .text:10076B74                 push    ecx
+  .text:10076B75                 mov     ecx, edi
+  .text:10076B77                 call    dword ptr [eax+248h]
+  .text:10076B7D                 mov     eax, [ebp+var_8]
+  .text:10076B80                 mov     ecx, edi
+  .text:10076B82                 add     [ebp+y], eax
+  .text:10076B85                 call    sub_1007A390
+  .text:10076B8A                 test    al, al
+  .text:10076B8C                 jnz     short loc_10076B9D
+  .text:10076B8E                 mov     ecx, [esi+0DCh]
+  .text:10076B94                 test    ecx, ecx
+  .text:10076B96                 jle     short loc_10076B9D
+  .text:10076B98                 push    0
+  .text:10076B9A                 push    ecx
+  .text:10076B9B                 jmp     short loc_10076BAC
+  .text:10076B9D                 mov     ecx, edi
+  .text:10076B9F                 call    sub_1007A390
+  .text:10076BA4                 test    al, al
+  .text:10076BA6                 jz      short loc_10076BB6
+  .text:10076BA8                 push    0
+  .text:10076BAA                 push    0
+  .text:10076BAC                 mov     eax, [edi]
+  .text:10076BAE                 mov     ecx, edi
+  .text:10076BB0                 call    dword ptr [eax+230h]
+  .text:10076BB6                 mov     edi, [ebp+var_C]
+  .text:10076BB9                 inc     edi
+  .text:10076BBA                 mov     [ebp+var_C], edi
+  .text:10076BBD                 cmp     edi, [esi+0C4h]
+  .text:10076BC3                 jl      loc_10076AD5
+  .text:10076BC9                 mov     eax, [esi+80h]
+  .text:10076BCF                 test    eax, eax
+  .text:10076BD1                 jnz     short loc_10076BDC
+  .text:10076BD3                 ; this
+  .text:10076BD3                 mov     ecx, esi; this
+  .text:10076BD5                 call    vgui2__Menu__CalculateWidth
+  .text:10076BDA                 jmp     short loc_10076BF7
+  .text:10076BDC                 test    byte ptr [esi+0CCh], 1
+  .text:10076BE3                 mov     [esi+0D0h], eax
+  .text:10076BE9                 jz      short loc_10076BF7
+  .text:10076BEB                 sub     eax, [esi+0E0h]
+  .text:10076BF1                 mov     [esi+0D0h], eax
+  .text:10076BF7                 mov     eax, [esi]
+  .text:10076BF9                 lea     ecx, [ebp+var_2C]
+  .text:10076BFC                 push    ecx
+  .text:10076BFD                 lea     ecx, [ebp+var_28]
+  .text:10076C00                 push    ecx
+  .text:10076C01                 lea     ecx, [ebp+var_10]
+  .text:10076C04                 push    ecx
+  .text:10076C05                 lea     ecx, [ebp+var_14]
+  .text:10076C08                 push    ecx
+  .text:10076C09                 mov     ecx, esi
+  .text:10076C0B                 call    dword ptr [eax+18h]
+  .text:10076C0E                 push    dword ptr [esi+7Ch]
+  .text:10076C11                 mov     ecx, esi
+  .text:10076C13                 call    sub_100483F0
+  .text:10076C18                 push    dword ptr [esi+8Ch]
+  .text:10076C1E                 mov     ecx, esi
+  .text:10076C20                 mov     [ebp+var_1C], eax
+  .text:10076C23                 call    sub_100483F0
+  .text:10076C28                 mov     edi, [esi+0A0h]
+  .text:10076C2E                 mov     edx, eax
+  .text:10076C30                 sub     edx, [ebp+var_14]
+  .text:10076C33                 sub     edx, [ebp+var_10]
+  .text:10076C36                 add     edx, [esi+0D0h]
+  .text:10076C3C                 mov     [ebp+var_C], edx
+  .text:10076C3F                 cmp     edi, 0FFFFFFFFh
+  .text:10076C42                 jz      loc_10076CE0
+  .text:10076C48                 lea     eax, [esi+94h]
+  .text:10076C4E                 mov     esi, eax
+  .text:10076C50                 test    edi, edi
+  .text:10076C52                 js      short loc_10076C59
+  .text:10076C54                 cmp     edi, [esi+4]
+  .text:10076C57                 jl      short loc_10076C70
+  .text:10076C59                 ; Line
+  .text:10076C59                 push    9Bh; Line
+  .text:10076C5E                 push    offset aCBuildslaveGol_13; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10076C63                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:10076C68                 call    ebx ; _wassert
+  .text:10076C6A                 mov     edx, [ebp+var_C]
+  .text:10076C6D                 add     esp, 0Ch
+  .text:10076C70                 mov     eax, [esi]
+  .text:10076C72                 lea     ecx, [edi+edi*2]
+  .text:10076C75                 shl     ecx, 2
+  .text:10076C78                 mov     [ebp+var_8], ecx
+  .text:10076C7B                 ; this
+  .text:10076C7B                 mov     ecx, [ecx+eax]; this
+  .text:10076C7E                 test    ecx, ecx
+  .text:10076C80                 jz      short loc_10076C8B
+  .text:10076C82                 ; y
+  .text:10076C82                 push    [ebp+var_1C]; y
+  .text:10076C85                 ; x
+  .text:10076C85                 push    edx; x
+  .text:10076C86                 call    vgui2__Panel__SetSize
+  .text:10076C8B                 push    edi
+  .text:10076C8C                 mov     ecx, esi
+  .text:10076C8E                 call    sub_1006C190
+  .text:10076C93                 test    al, al
+  .text:10076C95                 jnz     short loc_10076CAB
+  .text:10076C97                 ; Line
+  .text:10076C97                 push    0FDh; Line
+  .text:10076C9C                 push    offset aCBuildslaveGol_19; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10076CA1                 push    offset aIsvalidindexI; "IsValidIndex(i)"
+  .text:10076CA6                 call    ebx ; _wassert
+  .text:10076CA8                 add     esp, 0Ch
+  .text:10076CAB                 test    edi, edi
+  .text:10076CAD                 js      short loc_10076CB4
+  .text:10076CAF                 cmp     edi, [esi+4]
+  .text:10076CB2                 jl      short loc_10076CC8
+  .text:10076CB4                 ; Line
+  .text:10076CB4                 push    0A2h; Line
+  .text:10076CB9                 push    offset aCBuildslaveGol_13; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10076CBE                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:10076CC3                 call    ebx ; _wassert
+  .text:10076CC5                 add     esp, 0Ch
+  .text:10076CC8                 mov     eax, [esi]
+  .text:10076CCA                 mov     edi, [ebp+var_8]
+  .text:10076CCD                 mov     edx, [ebp+var_C]
+  .text:10076CD0                 mov     edi, [edi+eax+8]
+  .text:10076CD4                 cmp     edi, 0FFFFFFFFh
+  .text:10076CD7                 jnz     loc_10076C50
+  .text:10076CDD                 mov     esi, [ebp+var_18]
+  .text:10076CE0                 xor     edi, edi
+  .text:10076CE2                 test    byte ptr [esi+0CCh], 1
+  .text:10076CE9                 jz      short loc_10076CF1
+  .text:10076CEB                 mov     edi, [esi+0E0h]
+  .text:10076CF1                 mov     eax, [ebp+var_20]
+  .text:10076CF4                 mov     ecx, esi
+  .text:10076CF6                 add     eax, [ebp+y]
+  .text:10076CF9                 add     eax, [ebp+var_24]
+  .text:10076CFC                 ; y
+  .text:10076CFC                 push    eax; y
+  .text:10076CFD                 push    5
+  .text:10076CFF                 call    sub_100483F0
+  .text:10076D04                 add     eax, edi
+  .text:10076D06                 ; this
+  .text:10076D06                 mov     ecx, esi; this
+  .text:10076D08                 add     eax, [esi+0D0h]
+  .text:10076D0E                 ; x
+  .text:10076D0E                 push    eax; x
+  .text:10076D0F                 call    vgui2__Panel__SetSize
+  .text:10076D14                 mov     eax, [esi]
+  .text:10076D16                 mov     ecx, esi
+  .text:10076D18                 push    0
+  .text:10076D1A                 push    offset ??_R0?AVMenuItem@vgui2@@@8; vgui2::MenuItem `RTTI Type Descriptor'
+  .text:10076D1F                 push    offset ??_R0?AVPanel@vgui2@@@8; vgui2::Panel `RTTI Type Descriptor'
+  .text:10076D24                 push    0
+  .text:10076D26                 call    dword ptr [eax+88h]
+  .text:10076D2C                 push    eax
+  .text:10076D2D                 call    __RTDynamicCast
+  .text:10076D32                 add     esp, 14h
+  .text:10076D35                 test    eax, eax
+  .text:10076D37                 jz      loc_10076E41
+  .text:10076D3D                 mov     eax, [esi]
+  .text:10076D3F                 mov     ecx, esi
+  .text:10076D41                 call    dword ptr [eax+8Ch]
+  .text:10076D47                 test    eax, eax
+  .text:10076D49                 jnz     short loc_10076D5F
+  .text:10076D4B                 ; Line
+  .text:10076D4B                 push    2A1h; Line
+  .text:10076D50                 push    offset aCBuildslaveGol_21; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10076D55                 push    offset aGetvparent; "GetVParent()"
+  .text:10076D5A                 call    ebx ; _wassert
+  .text:10076D5C                 add     esp, 0Ch
+  .text:10076D5F                 call    sub_10050BB0
+  .text:10076D64                 mov     edx, [esi]
+  .text:10076D66                 mov     edi, eax
+  .text:10076D68                 lea     eax, [ebp+var_38]
+  .text:10076D6B                 mov     ecx, esi
+  .text:10076D6D                 push    eax
+  .text:10076D6E                 lea     eax, [ebp+var_C]
+  .text:10076D71                 mov     ebx, [edi]
+  .text:10076D73                 push    eax
+  .text:10076D74                 call    dword ptr [edx+8Ch]
+  .text:10076D7A                 push    eax
+  .text:10076D7B                 mov     ecx, edi
+  .text:10076D7D                 call    dword ptr [ebx+14h]
+  .text:10076D80                 call    sub_10050BB0
+  .text:10076D85                 mov     edx, [esi]
+  .text:10076D87                 mov     edi, eax
+  .text:10076D89                 lea     eax, [ebp+var_8]
+  .text:10076D8C                 mov     ecx, esi
+  .text:10076D8E                 push    eax
+  .text:10076D8F                 lea     eax, [ebp+y]
+  .text:10076D92                 mov     ebx, [edi]
+  .text:10076D94                 push    eax
+  .text:10076D95                 call    dword ptr [edx+8Ch]
+  .text:10076D9B                 push    eax
+  .text:10076D9C                 mov     ecx, edi
+  .text:10076D9E                 call    dword ptr [ebx+0Ch]
+  .text:10076DA1                 mov     eax, [ebp+var_C]
+  .text:10076DA4                 mov     ecx, esi
+  .text:10076DA6                 add     [ebp+y], eax
+  .text:10076DA9                 lea     eax, [ebp+var_8]
+  .text:10076DAC                 push    eax
+  .text:10076DAD                 lea     eax, [ebp+y]
+  .text:10076DB0                 mov     [ebp+var_8], 0
+  .text:10076DB7                 push    eax
+  .text:10076DB8                 call    sub_1004BAB0
+  .text:10076DBD                 ; y
+  .text:10076DBD                 push    [ebp+var_8]; y
+  .text:10076DC0                 ; this
+  .text:10076DC0                 mov     ecx, esi; this
+  .text:10076DC2                 ; x
+  .text:10076DC2                 push    [ebp+y]; x
+  .text:10076DC5                 call    vgui2__Panel__SetPos
+  .text:10076DCA                 lea     eax, [ebp+var_3C]
+  .text:10076DCD                 mov     ecx, esi
+  .text:10076DCF                 push    eax
+  .text:10076DD0                 lea     eax, [ebp+var_2C]
+  .text:10076DD3                 push    eax
+  .text:10076DD4                 lea     eax, [ebp+var_14]
+  .text:10076DD7                 push    eax
+  .text:10076DD8                 lea     eax, [ebp+var_10]
+  .text:10076DDB                 push    eax
+  .text:10076DDC                 call    sub_10047F80
+  .text:10076DE1                 call    sub_10050C00
+  .text:10076DE6                 lea     ecx, [ebp+var_40]
+  .text:10076DE9                 push    ecx
+  .text:10076DEA                 lea     ecx, [ebp+var_1C]
+  .text:10076DED                 mov     edx, [eax]
+  .text:10076DEF                 push    ecx
+  .text:10076DF0                 lea     ecx, [ebp+var_44]
+  .text:10076DF3                 push    ecx
+  .text:10076DF4                 lea     ecx, [ebp+var_28]
+  .text:10076DF7                 push    ecx
+  .text:10076DF8                 mov     ecx, eax
+  .text:10076DFA                 call    dword ptr [edx+140h]
+  .text:10076E00                 mov     edx, [ebp+var_10]
+  .text:10076E03                 mov     edi, [ebp+var_2C]
+  .text:10076E06                 mov     ecx, [ebp+var_1C]
+  .text:10076E09                 add     ecx, [ebp+var_28]
+  .text:10076E0C                 lea     eax, [edx+edi]
+  .text:10076E0F                 cmp     eax, ecx
+  .text:10076E11                 jle     short loc_10076E1D
+  .text:10076E13                 sub     edx, edi
+  .text:10076E15                 sub     edx, [ebp+var_C]
+  .text:10076E18                 sub     edx, 2
+  .text:10076E1B                 jmp     short loc_10076E1E
+  .text:10076E1D                 inc     edx
+  .text:10076E1E                 mov     eax, [ebp+var_14]
+  .text:10076E21                 ; this
+  .text:10076E21                 mov     ecx, esi; this
+  .text:10076E23                 dec     eax
+  .text:10076E24                 mov     [ebp+var_10], edx
+  .text:10076E27                 ; y
+  .text:10076E27                 push    eax; y
+  .text:10076E28                 ; x
+  .text:10076E28                 push    edx; x
+  .text:10076E29                 mov     [ebp+var_14], eax
+  .text:10076E2C                 call    vgui2__Panel__SetPos
+  .text:10076E31                 mov     eax, [esi]
+  .text:10076E33                 mov     ecx, esi
+  .text:10076E35                 call    dword ptr [eax+0C8h]
+  .text:10076E3B                 mov     ebx, ds:_wassert
+  .text:10076E41                 mov     ecx, [esi+90h] // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+  .text:10076E47                 mov     eax, [ecx]
+  .text:10076E49                 mov     eax, [eax+78h]
+  .text:10076E4C                 call    eax
+  .text:10076E4E                 test    al, al
+  .text:10076E50                 jz      loc_10076EFE
+  .text:10076E56                 mov     ecx, [esi+90h] // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+  .text:10076E5C                 push    0
+  .text:10076E5E                 mov     eax, [ecx]
+  .text:10076E60                 call    dword ptr [eax+0BCh]
+  .text:10076E66                 mov     ecx, [esi+90h] // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+  .text:10076E6C                 push    dword ptr [esi+88h]
+  .text:10076E72                 mov     eax, [ecx]
+  .text:10076E74                 call    dword ptr [eax+228h]
+  .text:10076E7A                 mov     ecx, [esi+90h] // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+  .text:10076E80                 push    dword ptr [esi+0ACh]
+  .text:10076E86                 push    0
+  .text:10076E88                 mov     eax, [ecx]
+  .text:10076E8A                 call    dword ptr [eax+220h]
+  .text:10076E90                 mov     ecx, [esi+90h] // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+  .text:10076E96                 push    1
+  .text:10076E98                 mov     eax, [ecx]
+  .text:10076E9A                 call    dword ptr [eax+248h]
+  .text:10076EA0                 lea     eax, [ebp+var_28]
+  .text:10076EA3                 mov     ecx, esi
+  .text:10076EA5                 push    eax
+  .text:10076EA6                 lea     eax, [ebp+var_14]
+  .text:10076EA9                 push    eax
+  .text:10076EAA                 call    sub_100487A0
+  .text:10076EAF                 mov     eax, [esi]
+  .text:10076EB1                 lea     ecx, [ebp+var_10]
+  .text:10076EB4                 push    ecx
+  .text:10076EB5                 lea     ecx, [ebp+var_1C]
+  .text:10076EB8                 push    ecx
+  .text:10076EB9                 lea     ecx, [ebp+var_2C]
+  .text:10076EBC                 push    ecx
+  .text:10076EBD                 lea     ecx, [ebp+var_44]
+  .text:10076EC0                 push    ecx
+  .text:10076EC1                 mov     ecx, esi
+  .text:10076EC3                 call    dword ptr [eax+18h]
+  .text:10076EC6                 mov     eax, [ebp+var_14]
+  .text:10076EC9                 sub     eax, [ebp+var_2C]
+  .text:10076ECC                 ; this
+  .text:10076ECC                 mov     ecx, [esi+90h]; this // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+  .text:10076ED2                 mov     [ebp+var_14], eax
+  .text:10076ED5                 sub     eax, [esi+0E0h]
+  .text:10076EDB                 ; y
+  .text:10076EDB                 push    1; y
+  .text:10076EDD                 ; x
+  .text:10076EDD                 push    eax; x
+  .text:10076EDE                 call    vgui2__Panel__SetPos
+  .text:10076EE3                 mov     eax, [ebp+var_28]
+  .text:10076EE6                 sub     eax, [ebp+var_1C]
+  .text:10076EE9                 sub     eax, [ebp+var_10]
+  .text:10076EEC                 ; this
+  .text:10076EEC                 mov     ecx, [esi+90h]; this // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+  .text:10076EF2                 ; y
+  .text:10076EF2                 push    eax; y
+  .text:10076EF3                 ; x
+  .text:10076EF3                 push    dword ptr [esi+0E0h]; x
+  .text:10076EF9                 call    vgui2__Panel__SetSize
+  .text:10076EFE                 mov     edi, [esi+0A0h]
+  .text:10076F04                 cmp     edi, 0FFFFFFFFh
+  .text:10076F07                 jz      loc_10076FA1
+  .text:10076F0D                 lea     eax, [esi+94h]
+  .text:10076F13                 mov     [ebp+var_2C], eax
+  .text:10076F16                 mov     esi, eax
+  .text:10076F18                 test    edi, edi
+  .text:10076F1A                 js      short loc_10076F21
+  .text:10076F1C                 cmp     edi, [esi+4]
+  .text:10076F1F                 jl      short loc_10076F35
+  .text:10076F21                 ; Line
+  .text:10076F21                 push    9Bh; Line
+  .text:10076F26                 push    offset aCBuildslaveGol_13; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10076F2B                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:10076F30                 call    ebx ; _wassert
+  .text:10076F32                 add     esp, 0Ch
+  .text:10076F35                 mov     eax, [esi]
+  .text:10076F37                 lea     ecx, [edi+edi*2]
+  .text:10076F3A                 shl     ecx, 2
+  .text:10076F3D                 mov     [ebp+var_2C], ecx
+  .text:10076F40                 push    0
+  .text:10076F42                 push    0
+  .text:10076F44                 mov     ecx, [ecx+eax]
+  .text:10076F47                 mov     eax, [ecx]
+  .text:10076F49                 call    dword ptr [eax+0E8h]
+  .text:10076F4F                 push    edi
+  .text:10076F50                 mov     ecx, esi
+  .text:10076F52                 call    sub_1006C190
+  .text:10076F57                 test    al, al
+  .text:10076F59                 jnz     short loc_10076F6F
+  .text:10076F5B                 ; Line
+  .text:10076F5B                 push    0FDh; Line
+  .text:10076F60                 push    offset aCBuildslaveGol_19; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10076F65                 push    offset aIsvalidindexI; "IsValidIndex(i)"
+  .text:10076F6A                 call    ebx ; _wassert
+  .text:10076F6C                 add     esp, 0Ch
+  .text:10076F6F                 test    edi, edi
+  .text:10076F71                 js      short loc_10076F78
+  .text:10076F73                 cmp     edi, [esi+4]
+  .text:10076F76                 jl      short loc_10076F8C
+  .text:10076F78                 ; Line
+  .text:10076F78                 push    0A2h; Line
+  .text:10076F7D                 push    offset aCBuildslaveGol_13; "c:\\buildslave\\goldsrc_win32\\build\\G"...
+  .text:10076F82                 push    offset aIsidxvalidI; "IsIdxValid(i)"
+  .text:10076F87                 call    ebx ; _wassert
+  .text:10076F89                 add     esp, 0Ch
+  .text:10076F8C                 mov     eax, [esi]
+  .text:10076F8E                 mov     edi, [ebp+var_2C]
+  .text:10076F91                 mov     edi, [edi+eax+8]
+  .text:10076F95                 cmp     edi, 0FFFFFFFFh
+  .text:10076F98                 jnz     loc_10076F18
+  .text:10076F9E                 mov     esi, [ebp+var_18]
+  .text:10076FA1                 mov     eax, [esi]
+  .text:10076FA3                 mov     ecx, esi
+  .text:10076FA5                 call    dword ptr [eax+10h]
+  .text:10076FA8                 pop     edi
+  .text:10076FA9                 pop     esi
+  .text:10076FAA                 pop     ebx
+  .text:10076FAB                 mov     esp, ebp
+  .text:10076FAD                 pop     ebp
+  .text:10076FAE                 retn
+procedure: |-
+  // Finder result identities: func_name=vgui2_Menu_MakeItemsVisibleInScrollRange; struct_name=vgui2_Menu, member_name=m_pScroller.
+  // GoldSrc Menu::PerformLayout. Newer MetaHook SDK has a two-argument MakeItemsVisibleInScrollRange; this binary and the official GoldSrc source use no explicit arguments. Only verified fields are modeled; other fields remain unmodeled.
+  void __thiscall vgui2::Menu::PerformLayout(MenuReference *this)
+  {
+    MenuReference *v1; // esi
+    MenuReferenceVtable *vtable; // edx
+    void (__cdecl *v3)(const wchar_t *, const wchar_t *, unsigned int); // ebx
+    int v4; // edi
+    int v5; // edi
+    _BYTE *v6; // edi
+    int v7; // ecx
+    int m_iFixedWidth; // eax
+    bool v9; // zf
+    int v10; // eax
+    int v11; // eax
+    int v12; // edi
+    int v13; // edx
+    unsigned int *unmodeledMenu; // esi
+    unsigned int v15; // eax
+    void *v16; // ecx
+    unsigned int v17; // edi
+    int v18; // eax
+    int v19; // eax
+    int *v20; // edi
+    int v21; // ebx
+    int v22; // eax
+    int *v23; // edi
+    int v24; // ebx
+    int v25; // eax
+    int v26; // eax
+    int v27; // edx
+    ScrollBarReference *m_pScroller; // ecx
+    int v29; // edi
+    unsigned int *v30; // esi
+    unsigned int v31; // eax
+    int unmodeled140; // [esp-4h] [ebp-54h]
+    int v33; // [esp-4h] [ebp-54h]
+    _BYTE v34[4]; // [esp+Ch] [ebp-44h] BYREF
+    _BYTE v35[4]; // [esp+10h] [ebp-40h] BYREF
+    _BYTE v36[4]; // [esp+14h] [ebp-3Ch] BYREF
+    _BYTE v37[4]; // [esp+18h] [ebp-38h] BYREF
+    _BYTE v38[4]; // [esp+1Ch] [ebp-34h] BYREF
+    _BYTE v39[4]; // [esp+20h] [ebp-30h] BYREF
+    int v40; // [esp+24h] [ebp-2Ch] BYREF
+    int v41; // [esp+28h] [ebp-28h] BYREF
+    int v42; // [esp+2Ch] [ebp-24h] BYREF
+    int v43; // [esp+30h] [ebp-20h] BYREF
+    int v44; // [esp+34h] [ebp-1Ch] BYREF
+    MenuReference *v45; // [esp+38h] [ebp-18h]
+    int v46; // [esp+3Ch] [ebp-14h] BYREF
+    int v47; // [esp+40h] [ebp-10h] BYREF
+    int i; // [esp+44h] [ebp-Ch] BYREF
+    int m_iMenuItemHeight; // [esp+48h] [ebp-8h] BYREF
+    int y; // [esp+4Ch] [ebp-4h] BYREF
+
+    v1 = this;
+    v45 = this;
+    vtable = this->vtable;
+    if ( (signed int)this->unmodeledMenu[12] <= this->m_iNumVisibleLines )
+    {
+      ((void (*)(void))vtable->RemoveScrollBar)();
+    }
+    else
+    {
+      ((void (*)(void))vtable->AddScrollBar)();
+      v1->vtable->MakeItemsVisibleInScrollRange(v1); // vgui2_Menu_MakeItemsVisibleInScrollRange: virtual byte offset 0x2D4 in this reference only
+    }
+    v1->vtable->LayoutMenuBorder(v1);
+    ((void (__thiscall *)(MenuReference *, _BYTE *, _BYTE *, int *, int *))v1->vtable->unmodeled[6])(
+      v1,
+      v38,
+      v39,
+      &v43,
+      &v42);
+    m_iMenuItemHeight = v1->m_iMenuItemHeight;
+    if ( ((unsigned __int8 (__thiscall *)(MenuReference *))v1->vtable->unmodeled[21])(v1) )
+      m_iMenuItemHeight = sub_100483F0(v1, v1->m_iMenuItemHeight);
+    v3 = wassert;
+    v4 = 0;
+    y = 0;
+    for ( i = 0; v4 < (signed int)v1->unmodeledMenu[12]; i = v4 )
+    {
+      if ( v4 < 0 || v4 >= (signed int)v1->unmodeledMenu[12] )
+        wassert(L"IsValidIndex(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlVector.h", 0xB8u);
+      if ( v4 >= (signed int)v1->unmodeledMenu[10] )
+        wassert(L"IsIdxValid(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0x9Bu);
+      v5 = *(_DWORD *)(v1->unmodeledMenu[9] + 4 * v4);
+      if ( v5 < 0 || v5 >= (signed int)v1->unmodeledMenu[1] )
+        wassert(L"IsIdxValid(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0x9Bu);
+      v6 = *(_BYTE **)(v1->unmodeledMenu[0] + 12 * v5);
+      if ( v6 && (*(unsigned __int8 (__thiscall **)(_BYTE *))(*(_DWORD *)v6 + 120))(v6) )
+      {
+        vgui2::Panel::SetPos(v6, 0, y);
+        if ( v1->unmodeledMenu[22] )
+          (*(void (__thiscall **)(_BYTE *, unsigned int))(*(_DWORD *)v6 + 584))(v6, v1->unmodeledMenu[22]);
+        y += m_iMenuItemHeight;
+        if ( sub_1007A390(v6) || (v7 = v1->unmodeledMenu[18], v7 <= 0) )
+        {
+          if ( sub_1007A390(v6) )
+            (*(void (__thiscall **)(_BYTE *, _DWORD, _DWORD))(*(_DWORD *)v6 + 560))(v6, 0, 0);
+        }
+        else
+        {
+          (*(void (__thiscall **)(_BYTE *, int, _DWORD))(*(_DWORD *)v6 + 560))(v6, v7, 0);
+        }
+      }
+      v4 = i + 1;
+    }
+    m_iFixedWidth = v1->m_iFixedWidth;
+    if ( m_iFixedWidth )
+    {
+      v9 = (v1->unmodeledMenu[14] & 1) == 0;
+      v1->unmodeledMenu[15] = m_iFixedWidth;
+      if ( !v9 )
+        v1->unmodeledMenu[15] = m_iFixedWidth - v1->unmodeledMenu[19];
+    }
+    else
+    {
+      vgui2::Menu::CalculateWidth(v1);
+    }
+    ((void (__thiscall *)(MenuReference *, int *, int *, int *, int *))v1->vtable->unmodeled[6])(
+      v1,
+      &v46,
+      &v47,
+      &v41,
+      &v40);
+    v10 = sub_100483F0(v1, v1->m_iMenuItemHeight);
+    unmodeled140 = v1->unmodeled140;
+    v44 = v10;
+    v11 = sub_100483F0(v1, unmodeled140);
+    v12 = v1->unmodeledMenu[3];
+    v13 = v1->unmodeledMenu[15] + v11 - v46 - v47;
+    i = v13;
+    if ( v12 != -1 )
+    {
+      unmodeledMenu = v1->unmodeledMenu;
+      do
+      {
+        if ( v12 < 0 || v12 >= (int)unmodeledMenu[1] )
+          wassert(L"IsIdxValid(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0x9Bu);
+        v15 = *unmodeledMenu;
+        m_iMenuItemHeight = 12 * v12;
+        v16 = *(void **)(12 * v12 + v15);
+        if ( v16 )
+          vgui2::Panel::SetSize(v16, v13, v44);
+        if ( !sub_1006C190(unmodeledMenu, v12) )
+          wassert(L"IsValidIndex(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\utllinkedlist.h", 0xFDu);
+        if ( v12 >= (int)unmodeledMenu[1] )
+          wassert(L"IsIdxValid(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0xA2u);
+        v13 = i;
+        v12 = *(_DWORD *)(m_iMenuItemHeight + *unmodeledMenu + 8);
+      }
+      while ( v12 != -1 );
+      v1 = v45;
+    }
+    v17 = 0;
+    if ( (v1->unmodeledMenu[14] & 1) != 0 )
+      v17 = v1->unmodeledMenu[19];
+    v33 = v42 + y + v43;
+    v18 = sub_100483F0(v1, 5);
+    vgui2::Panel::SetSize(v1, v1->unmodeledMenu[15] + v17 + v18, v33);
+    v19 = ((int (__thiscall *)(MenuReference *))v1->vtable->unmodeled[34])(v1);
+    if ( _RTDynamicCast(
+           v19,
+           0,
+           (int)&vgui2::Panel `RTTI Type Descriptor',
+           (int)&vgui2::MenuItem `RTTI Type Descriptor',
+           0) )
+    {
+      if ( !((int (__thiscall *)(MenuReference *))v1->vtable->unmodeled[35])(v1) )
+        wassert(L"GetVParent()", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\vgui2\\controls\\Menu.cpp", 0x2A1u);
+      v20 = (int *)sub_10050BB0();
+      v21 = *v20;
+      v22 = ((int (__thiscall *)(MenuReference *, int *, _BYTE *))v1->vtable->unmodeled[35])(v1, &i, v37);
+      (*(void (__thiscall **)(int *, int))(v21 + 20))(v20, v22);
+      v23 = (int *)sub_10050BB0();
+      v24 = *v23;
+      v25 = ((int (__thiscall *)(MenuReference *, int *, int *))v1->vtable->unmodeled[35])(v1, &y, &m_iMenuItemHeight);
+      (*(void (__thiscall **)(int *, int))(v24 + 12))(v23, v25);
+      y += i;
+      m_iMenuItemHeight = 0;
+      sub_1004BAB0(v1, &y, &m_iMenuItemHeight);
+      vgui2::Panel::SetPos(v1, y, m_iMenuItemHeight);
+      sub_10047F80((int (__thiscall ***)(void *, int, int))v1, (int)&v47, (int)&v46, (int)&v40, (int)v36);
+      v26 = sub_10050C00();
+      (*(void (__thiscall **)(int, int *, _BYTE *, int *, _BYTE *))(*(_DWORD *)v26 + 320))(v26, &v41, v34, &v44, v35);
+      if ( v47 + v40 <= v41 + v44 )
+        v27 = v47 + 1;
+      else
+        v27 = v47 - v40 - i - 2;
+      v47 = v27;
+      vgui2::Panel::SetPos(v1, v27, --v46);
+      ((void (__thiscall *)(MenuReference *))v1->vtable->unmodeled[50])(v1);
+      v3 = wassert;
+    }
+    if ( (*((unsigned __int8 (__thiscall **)(ScrollBarReference *))v1->m_pScroller->vtable + 30))(v1->m_pScroller) ) // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+    {
+      (*((void (__thiscall **)(ScrollBarReference *, _DWORD))v1->m_pScroller->vtable + 47))(v1->m_pScroller, 0); // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+      (*((void (__thiscall **)(ScrollBarReference *, int))v1->m_pScroller->vtable + 138))( // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+        v1->m_pScroller, // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+        v1->m_iNumVisibleLines);
+      (*((void (__thiscall **)(ScrollBarReference *, _DWORD, unsigned int))v1->m_pScroller->vtable + 136))( // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+        v1->m_pScroller, // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+        0,
+        v1->unmodeledMenu[6]);
+      (*((void (__thiscall **)(ScrollBarReference *, int))v1->m_pScroller->vtable + 146))(v1->m_pScroller, 1); // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+      sub_100487A0((int (__thiscall ***)(void *, int, int))v1, (int)&v46, (int)&v41);
+      ((void (__thiscall *)(MenuReference *, _BYTE *, int *, int *, int *))v1->vtable->unmodeled[6])(
+        v1,
+        v34,
+        &v40,
+        &v44,
+        &v47);
+      m_pScroller = v1->m_pScroller; // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+      v46 -= v40;
+      vgui2::Panel::SetPos(m_pScroller, v46 - v1->unmodeledMenu[19], 1);
+      vgui2::Panel::SetSize(v1->m_pScroller, v1->unmodeledMenu[19], v41 - v44 - v47); // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+    }
+    v29 = v1->unmodeledMenu[3];
+    if ( v29 != -1 )
+    {
+      v40 = (int)v1->unmodeledMenu;
+      v30 = v1->unmodeledMenu;
+      do
+      {
+        if ( v29 < 0 || v29 >= (int)v30[1] )
+          v3(L"IsIdxValid(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0x9Bu);
+        v31 = *v30;
+        v40 = 12 * v29;
+        (*(void (__thiscall **)(_DWORD, _DWORD, _DWORD))(**(_DWORD **)(12 * v29 + v31) + 232))(
+          *(_DWORD *)(12 * v29 + v31),
+          0,
+          0);
+        if ( !sub_1006C190(v30, v29) )
+          v3(L"IsValidIndex(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\utllinkedlist.h", 0xFDu);
+        if ( v29 >= (int)v30[1] )
+          v3(L"IsIdxValid(i)", L"c:\\buildslave\\goldsrc_win32\\build\\GoldSrc\\public\\UtlMemory.h", 0xA2u);
+        v29 = *(_DWORD *)(v40 + *v30 + 8);
+      }
+      while ( v29 != -1 );
+      v1 = v45;
+    }
+    ((void (__thiscall *)(MenuReference *))v1->vtable->unmodeled[4])(v1);
+  }

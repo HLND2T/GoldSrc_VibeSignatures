@@ -1,0 +1,651 @@
+func_name: "vgui2_Menu_PerformLayout"
+func_va: "0xeeb80"
+disasm_code: |-
+  ; Finder result identities: func_name=vgui2_Menu_MakeItemsVisibleInScrollRange; struct_name=vgui2_Menu, member_name=m_pScroller.
+  .text:000EEB80                 push    ebp
+  .text:000EEB81                 push    edi
+  .text:000EEB82                 push    esi
+  .text:000EEB83                 push    ebx
+  .text:000EEB84                 sub     esp, 5Ch
+  .text:000EEB87                 mov     ebx, [esp+6Ch+this]
+  .text:000EEB8B                 mov     eax, [ebx+0C4h]
+  .text:000EEB91                 cmp     [ebx+88h], eax
+  .text:000EEB97                 mov     eax, [ebx]
+  .text:000EEB99                 jge     short loc_EEBF0
+  .text:000EEB9B                 mov     eax, [eax+2C8h]
+  .text:000EEBA1                 cmp     eax, offset _ZN5vgui24Menu12AddScrollBarEv; vgui2::Menu::AddScrollBar(void)
+  .text:000EEBA6                 jnz     loc_EF063
+  .text:000EEBAC                 mov     eax, [ebx+90h] // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+  .text:000EEBB2                 mov     ebp, 1
+  .text:000EEBB7                 mov     edx, [eax]
+  .text:000EEBB9                 mov     [esp+6Ch+border], ebp
+  .text:000EEBBD                 mov     [esp+6Ch+var_6C], eax
+  .text:000EEBC0                 call    dword ptr [edx+78h]
+  .text:000EEBC3                 or      byte ptr [ebx+0CCh], 1
+  .text:000EEBCA                 mov     eax, [ebx]
+  .text:000EEBCC                 mov     [esp+6Ch+var_6C], ebx
+  .text:000EEBCF                 call    dword ptr [eax+2D8h] ; vgui2_Menu_MakeItemsVisibleInScrollRange: vgui2::Menu::MakeItemsVisibleInScrollRange(), this=Menu
+  .text:000EEBD5                 mov     eax, [ebx]
+  .text:000EEBD7                 mov     eax, [eax+2D4h]
+  .text:000EEBDD                 cmp     eax, offset _ZN5vgui24Menu16LayoutMenuBorderEv; vgui2::Menu::LayoutMenuBorder(void)
+  .text:000EEBE2                 jz      short loc_EEC2B
+  .text:000EEBE4                 mov     [esp+6Ch+var_6C], ebx
+  .text:000EEBE7                 call    eax
+  .text:000EEBE9                 jmp     loc_EEC7D
+  .text:000EEBF0                 mov     eax, [eax+2CCh]
+  .text:000EEBF6                 cmp     eax, offset _ZN5vgui24Menu15RemoveScrollBarEv; vgui2::Menu::RemoveScrollBar(void)
+  .text:000EEBFB                 jnz     loc_EF06D
+  .text:000EEC01                 mov     eax, [ebx+90h] // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+  .text:000EEC07                 xor     edi, edi
+  .text:000EEC09                 mov     edx, [eax]
+  .text:000EEC0B                 mov     [esp+6Ch+border], edi
+  .text:000EEC0F                 mov     [esp+6Ch+var_6C], eax
+  .text:000EEC12                 call    dword ptr [edx+78h]
+  .text:000EEC15                 and     byte ptr [ebx+0CCh], 0FEh
+  .text:000EEC1C                 mov     eax, [ebx]
+  .text:000EEC1E                 mov     eax, [eax+2D4h]
+  .text:000EEC24                 cmp     eax, offset _ZN5vgui24Menu16LayoutMenuBorderEv; vgui2::Menu::LayoutMenuBorder(void)
+  .text:000EEC29                 jnz     short loc_EEBE4
+  .text:000EEC2B                 call    _ZN5vgui26schemeEv; vgui2::scheme(void)
+  .text:000EEC30                 mov     esi, eax
+  .text:000EEC32                 mov     eax, [eax]
+  .text:000EEC34                 mov     edi, [eax+20h]
+  .text:000EEC37                 mov     eax, [ebx]
+  .text:000EEC39                 mov     [esp+6Ch+var_6C], ebx
+  .text:000EEC3C                 call    dword ptr [eax+50h]
+  .text:000EEC3F                 mov     [esp+6Ch+var_6C], esi
+  .text:000EEC42                 mov     esi, offset aMenuborder; "MenuBorder"
+  .text:000EEC47                 mov     [esp+6Ch+border], eax
+  .text:000EEC4B                 call    edi
+  .text:000EEC4D                 mov     edx, [eax]
+  .text:000EEC4F                 mov     [esp+6Ch+border], esi
+  .text:000EEC53                 mov     [esp+6Ch+var_6C], eax
+  .text:000EEC56                 call    dword ptr [edx+0Ch]
+  .text:000EEC59                 test    eax, eax
+  .text:000EEC5B                 jz      short loc_EEC7D
+  .text:000EEC5D                 mov     edx, [ebx]
+  .text:000EEC5F                 mov     edx, [edx+0F4h]
+  .text:000EEC65                 ; border
+  .text:000EEC65                 mov     [esp+6Ch+border], eax; border
+  .text:000EEC69                 ; this
+  .text:000EEC69                 mov     [esp+6Ch+var_6C], ebx; this
+  .text:000EEC6C                 cmp     edx, offset _ZN5vgui24Menu9SetBorderEPNS_7IBorderE; vgui2::Menu::SetBorder(vgui2::IBorder *)
+  .text:000EEC72                 jnz     loc_EF080
+  .text:000EEC78                 call    _ZN5vgui25Panel9SetBorderEPNS_7IBorderE; vgui2::Panel::SetBorder(vgui2::IBorder *)
+  .text:000EEC7D                 lea     edx, [esp+6Ch+ibottom]
+  .text:000EEC81                 mov     eax, [ebx]
+  .text:000EEC83                 mov     [esp+6Ch+var_5C], edx
+  .text:000EEC87                 lea     edx, [esp+6Ch+itop]
+  .text:000EEC8B                 mov     [esp+6Ch+s2d], edx
+  .text:000EEC8F                 lea     edx, [esp+6Ch+iright]
+  .text:000EEC93                 mov     [esp+6Ch+y], edx
+  .text:000EEC97                 lea     edx, [esp+6Ch+ileft]
+  .text:000EEC9B                 mov     [esp+6Ch+border], edx
+  .text:000EEC9F                 mov     [esp+6Ch+var_6C], ebx
+  .text:000EECA2                 call    dword ptr [eax+18h]
+  .text:000EECA5                 mov     eax, [ebx]
+  .text:000EECA7                 mov     esi, [ebx+7Ch]
+  .text:000EECAA                 mov     [esp+6Ch+var_6C], ebx
+  .text:000EECAD                 call    dword ptr [eax+54h]
+  .text:000EECB0                 test    al, al
+  .text:000EECB2                 jnz     loc_EF038
+  .text:000EECB8                 mov     edx, [ebx+0C4h]
+  .text:000EECBE                 test    edx, edx
+  .text:000EECC0                 jle     loc_EF087
+  .text:000EECC6                 xor     edi, edi
+  .text:000EECC8                 xor     ebp, ebp
+  .text:000EECCA                 mov     [esp+6Ch+itemHeight], itemHeight_0
+  .text:000EECCE                 jmp     short loc_EED34
+  .text:000EECD0                 xor     eax, eax
+  .text:000EECD2                 ; x
+  .text:000EECD2                 mov     [esp+6Ch+border], eax; x
+  .text:000EECD6                 ; y
+  .text:000EECD6                 mov     [esp+6Ch+y], menuTall; y
+  .text:000EECDA                 ; this
+  .text:000EECDA                 mov     [esp+6Ch+var_6C], child; this
+  .text:000EECDD                 call    _ZN5vgui25Panel6SetPosEii; vgui2::Panel::SetPos(int,int)
+  .text:000EECE2                 mov     eax, [ebx+0ECh]
+  .text:000EECE8                 test    eax, eax
+  .text:000EECEA                 jnz     loc_EEF68
+  .text:000EECF0                 mov     eax, [esp+6Ch+itemHeight]
+  .text:000EECF4                 ; this
+  .text:000EECF4                 mov     [esp+6Ch+var_6C], child; this
+  .text:000EECF7                 add     menuTall, eax
+  .text:000EECF9                 call    _ZN5vgui28MenuItem11IsCheckableEv; vgui2::MenuItem::IsCheckable(void)
+  .text:000EECFE                 test    al, al
+  .text:000EED00                 jnz     loc_EEF30
+  .text:000EED06                 mov     eax, [ebx+0DCh]
+  .text:000EED0C                 test    eax, eax
+  .text:000EED0E                 jle     loc_EEF30
+  .text:000EED14                 mov     edx, [child]
+  .text:000EED16                 xor     ecx, ecx
+  .text:000EED18                 mov     [esp+6Ch+y], ecx
+  .text:000EED1C                 mov     [esp+6Ch+border], eax
+  .text:000EED20                 mov     [esp+6Ch+var_6C], child
+  .text:000EED23                 call    dword ptr [edx+234h]
+  .text:000EED29                 mov     edx, [ebx+0C4h]
+  .text:000EED2F                 inc     i
+  .text:000EED30                 cmp     i, edx
+  .text:000EED32                 jge     short loc_EED6A
+  .text:000EED34                 mov     eax, [ebx+0B8h]
+  .text:000EED3A                 mov     ecx, [ebx+94h]
+  .text:000EED40                 mov     eax, [eax+i*4]
+  .text:000EED43                 lea     eax, [eax+eax*2]
+  .text:000EED46                 lea     eax, [ecx+eax*4]
+  .text:000EED49                 mov     esi, [eax]
+  .text:000EED4B                 test    child, child
+  .text:000EED4D                 jz      short loc_EED2F
+  .text:000EED4F                 mov     eax, [child]
+  .text:000EED51                 mov     [esp+6Ch+var_6C], child
+  .text:000EED54                 call    dword ptr [eax+7Ch]
+  .text:000EED57                 test    al, al
+  .text:000EED59                 jnz     loc_EECD0
+  .text:000EED5F                 mov     edx, [ebx+0C4h]
+  .text:000EED65                 inc     i
+  .text:000EED66                 cmp     i, edx
+  .text:000EED68                 jl      short loc_EED34
+  .text:000EED6A                 mov     [esp+6Ch+itemHeight], menuTall
+  .text:000EED6E                 mov     eax, [ebx+80h]
+  .text:000EED74                 test    eax, eax
+  .text:000EED76                 jz      loc_EEF80
+  .text:000EED7C                 test    byte ptr [ebx+0CCh], 1
+  .text:000EED83                 mov     [ebx+0D0h], eax
+  .text:000EED89                 jnz     loc_EF050
+  .text:000EED8F                 lea     edi, [esp+6Ch+var_20]
+  .text:000EED93                 lea     ebp, [esp+6Ch+var_24]
+  .text:000EED97                 mov     eax, [ebx]
+  .text:000EED99                 lea     edx, [esp+6Ch+var_28]
+  .text:000EED9D                 mov     [esp+6Ch+y], edx
+  .text:000EEDA1                 lea     edx, [esp+6Ch+var_2C]
+  .text:000EEDA5                 mov     [esp+6Ch+border], edx
+  .text:000EEDA9                 mov     [esp+6Ch+var_5C], edi
+  .text:000EEDAD                 mov     [esp+6Ch+s2d], ebp
+  .text:000EEDB1                 mov     [esp+6Ch+var_6C], ebx
+  .text:000EEDB4                 call    dword ptr [eax+18h]
+  .text:000EEDB7                 mov     eax, [ebx+7Ch]
+  .text:000EEDBA                 ; this
+  .text:000EEDBA                 mov     [esp+6Ch+var_6C], ebx; this
+  .text:000EEDBD                 ; value
+  .text:000EEDBD                 mov     [esp+6Ch+border], eax; value
+  .text:000EEDC1                 call    _ZN5vgui25Panel26GetProportionalScaledValueEi; vgui2::Panel::GetProportionalScaledValue(int)
+  .text:000EEDC6                 mov     ebp, eax
+  .text:000EEDC8                 mov     eax, [ebx+8Ch]
+  .text:000EEDCE                 ; this
+  .text:000EEDCE                 mov     [esp+6Ch+var_6C], ebx; this
+  .text:000EEDD1                 ; value
+  .text:000EEDD1                 mov     [esp+6Ch+border], eax; value
+  .text:000EEDD5                 call    _ZN5vgui25Panel26GetProportionalScaledValueEi; vgui2::Panel::GetProportionalScaledValue(int)
+  .text:000EEDDA                 mov     edx, [ebx+0D0h]
+  .text:000EEDE0                 mov     ecx, [esp+6Ch+var_2C]
+  .text:000EEDE4                 mov     esi, [esp+6Ch+var_28]
+  .text:000EEDE8                 mov     edi, edx
+  .text:000EEDEA                 sub     edi, ecx
+  .text:000EEDEC                 sub     edi, esi
+  .text:000EEDEE                 add     edi, eax
+  .text:000EEDF0                 mov     eax, [ebx+0A0h]
+  .text:000EEDF6                 cmp     eax, 0FFFFFFFFh
+  .text:000EEDF9                 jz      short loc_EEE46
+  .text:000EEDFB                 mov     ecx, [ebx+94h]
+  .text:000EEE01                 jmp     short loc_EEE10
+  .text:000EEE10                 lea     esi, [eax+eax*2]
+  .text:000EEE13                 shl     esi, 2
+  .text:000EEE16                 lea     eax, [ecx+esi]
+  .text:000EEE19                 mov     edx, [eax]
+  .text:000EEE1B                 test    edx, edx
+  .text:000EEE1D                 jz      short loc_EEE38
+  .text:000EEE1F                 ; tall
+  .text:000EEE1F                 mov     [esp+6Ch+y], ebp; tall
+  .text:000EEE23                 ; wide
+  .text:000EEE23                 mov     [esp+6Ch+border], edi; wide
+  .text:000EEE27                 ; this
+  .text:000EEE27                 mov     [esp+6Ch+var_6C], edx; this
+  .text:000EEE2A                 call    _ZN5vgui25Panel7SetSizeEii; vgui2::Panel::SetSize(int,int)
+  .text:000EEE2F                 mov     ecx, [ebx+94h]
+  .text:000EEE35                 lea     eax, [ecx+esi]
+  .text:000EEE38                 mov     eax, [eax+8]
+  .text:000EEE3B                 cmp     eax, 0FFFFFFFFh
+  .text:000EEE3E                 jnz     short loc_EEE10
+  .text:000EEE40                 mov     edx, [ebx+0D0h]
+  .text:000EEE46                 xor     edi, edi
+  .text:000EEE48                 test    byte ptr [ebx+0CCh], 1
+  .text:000EEE4F                 jz      short loc_EEE57
+  .text:000EEE51                 mov     edi, [ebx+0E0h]
+  .text:000EEE57                 mov     esi, [esp+6Ch+itemHeight]
+  .text:000EEE5B                 add     extraWidth, edx
+  .text:000EEE5D                 mov     ebp, [esp+6Ch+itop]
+  .text:000EEE61                 mov     eax, [esp+6Ch+ibottom]
+  .text:000EEE65                 ; this
+  .text:000EEE65                 mov     [esp+6Ch+var_6C], ebx; this
+  .text:000EEE68                 add     esi, ebp
+  .text:000EEE6A                 add     esi, eax
+  .text:000EEE6C                 mov     eax, 5
+  .text:000EEE71                 ; value
+  .text:000EEE71                 mov     [esp+6Ch+border], eax; value
+  .text:000EEE75                 call    _ZN5vgui25Panel26GetProportionalScaledValueEi; vgui2::Panel::GetProportionalScaledValue(int)
+  .text:000EEE7A                 ; tall
+  .text:000EEE7A                 mov     [esp+6Ch+y], esi; tall
+  .text:000EEE7E                 ; this
+  .text:000EEE7E                 mov     [esp+6Ch+var_6C], ebx; this
+  .text:000EEE81                 lea     edx, [edi+eax]
+  .text:000EEE84                 ; wide
+  .text:000EEE84                 mov     [esp+6Ch+border], edx; wide
+  .text:000EEE88                 call    _ZN5vgui25Panel7SetSizeEii; vgui2::Panel::SetSize(int,int)
+  .text:000EEE8D                 mov     eax, [ebx]
+  .text:000EEE8F                 mov     [esp+6Ch+var_6C], ebx
+  .text:000EEE92                 call    dword ptr [eax+88h]
+  .text:000EEE98                 test    eax, eax
+  .text:000EEE9A                 jz      short loc_EEEC8
+  .text:000EEE9C                 xor     ebp, ebp
+  .text:000EEE9E                 mov     edx, offset _ZTIN5vgui28MenuItemE; `typeinfo for'vgui2::MenuItem
+  .text:000EEEA3                 mov     ecx, offset _ZTIN5vgui25PanelE; `typeinfo for'vgui2::Panel
+  .text:000EEEA8                 ; s2d
+  .text:000EEEA8                 mov     [esp+6Ch+s2d], ebp; s2d
+  .text:000EEEAC                 ; lpdtype
+  .text:000EEEAC                 mov     [esp+6Ch+y], edx; lpdtype
+  .text:000EEEB0                 ; lpstype
+  .text:000EEEB0                 mov     [esp+6Ch+border], ecx; lpstype
+  .text:000EEEB4                 ; lpsrc
+  .text:000EEEB4                 mov     [esp+6Ch+var_6C], eax; lpsrc
+  .text:000EEEB7                 call    __dynamic_cast
+  .text:000EEEBC                 test    eax, eax
+  .text:000EEEBE                 jz      short loc_EEEC8
+  .text:000EEEC0                 ; this
+  .text:000EEEC0                 mov     [esp+6Ch+var_6C], ebx; this
+  .text:000EEEC3                 call    _ZN5vgui24Menu21PositionCascadingMenuEv; vgui2::Menu::PositionCascadingMenu(void)
+  .text:000EEEC8                 mov     eax, [ebx+90h] // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+  .text:000EEECE                 mov     edx, [eax]
+  .text:000EEED0                 mov     [esp+6Ch+var_6C], eax
+  .text:000EEED3                 call    dword ptr [edx+7Ch]
+  .text:000EEED6                 test    al, al
+  .text:000EEED8                 jnz     loc_EF028
+  .text:000EEEDE                 mov     eax, [ebx+0A0h]
+  .text:000EEEE4                 cmp     j, 0FFFFFFFFh
+  .text:000EEEE7                 jz      short loc_EEF1F
+  .text:000EEEE9                 mov     edx, [ebx+94h]
+  .text:000EEEEF                 nop
+  .text:000EEEF0                 lea     esi, [j+j*2]
+  .text:000EEEF3                 xor     ecx, ecx
+  .text:000EEEF5                 shl     esi, 2
+  .text:000EEEF8                 xor     edi, edi
+  .text:000EEEFA                 mov     j, [edx+esi]
+  .text:000EEEFD                 mov     edx, [eax]
+  .text:000EEEFF                 mov     [esp+6Ch+var_6C], eax
+  .text:000EEF02                 mov     [esp+6Ch+y], ecx
+  .text:000EEF06                 mov     [esp+6Ch+border], edi
+  .text:000EEF0A                 call    dword ptr [edx+0ECh]
+  .text:000EEF10                 mov     edx, [ebx+94h]
+  .text:000EEF16                 mov     eax, [edx+esi+8]
+  .text:000EEF1A                 cmp     eax, 0FFFFFFFFh
+  .text:000EEF1D                 jnz     short loc_EEEF0
+  .text:000EEF1F                 mov     j, [ebx]
+  .text:000EEF21                 mov     [esp+6Ch+var_6C], ebx
+  .text:000EEF24                 call    dword ptr [eax+10h]
+  .text:000EEF27                 add     esp, 5Ch
+  .text:000EEF2A                 pop     ebx
+  .text:000EEF2B                 pop     esi
+  .text:000EEF2C                 pop     edi
+  .text:000EEF2D                 pop     ebp
+  .text:000EEF2E                 retn
+  .text:000EEF30                 ; this
+  .text:000EEF30                 mov     [esp+6Ch+var_6C], child; this
+  .text:000EEF33                 call    _ZN5vgui28MenuItem11IsCheckableEv; vgui2::MenuItem::IsCheckable(void)
+  .text:000EEF38                 test    al, al
+  .text:000EEF3A                 jz      loc_EED5F
+  .text:000EEF40                 mov     eax, [child]
+  .text:000EEF42                 xor     edx, edx
+  .text:000EEF44                 xor     ecx, ecx
+  .text:000EEF46                 mov     [esp+6Ch+y], edx
+  .text:000EEF4A                 mov     [esp+6Ch+border], ecx
+  .text:000EEF4E                 mov     [esp+6Ch+var_6C], child
+  .text:000EEF51                 call    dword ptr [eax+234h]
+  .text:000EEF57                 mov     edx, [ebx+0C4h]
+  .text:000EEF5D                 jmp     loc_EED65
+  .text:000EEF68                 mov     edx, [child]
+  .text:000EEF6A                 mov     [esp+6Ch+border], eax
+  .text:000EEF6E                 mov     [esp+6Ch+var_6C], child
+  .text:000EEF71                 call    dword ptr [edx+24Ch]
+  .text:000EEF77                 jmp     loc_EECF0
+  .text:000EEF80                 test    byte ptr [ebx+0CCh], 4
+  .text:000EEF87                 jz      loc_EED8F
+  .text:000EEF8D                 mov     ecx, [ebx+0A0h]
+  .text:000EEF93                 xor     ebp, ebp
+  .text:000EEF95                 mov     [ebx+0D0h], ebp
+  .text:000EEF9B                 lea     edi, [esp+6Ch+var_20]
+  .text:000EEF9F                 lea     ebp, [esp+6Ch+var_24]
+  .text:000EEFA3                 cmp     ecx, 0FFFFFFFFh
+  .text:000EEFA6                 jz      short loc_EF005
+  .text:000EEFA8                 mov     edx, [ebx+94h]
+  .text:000EEFAE                 lea     edi, [esp+6Ch+var_20]
+  .text:000EEFB2                 lea     ebp, [esp+6Ch+var_24]
+  .text:000EEFB6                 lea     esi, [esi+0]
+  .text:000EEFB9                 lea     edi, [edi+0]
+  .text:000EEFC0                 lea     esi, [ecx+ecx*2]
+  .text:000EEFC3                 shl     esi, 2
+  .text:000EEFC6                 mov     eax, [edx+esi]
+  .text:000EEFC9                 mov     edx, [eax]
+  .text:000EEFCB                 mov     [esp+6Ch+var_6C], eax
+  .text:000EEFCE                 mov     [esp+6Ch+y], edi
+  .text:000EEFD2                 mov     [esp+6Ch+border], ebp
+  .text:000EEFD6                 call    dword ptr [edx+22Ch]
+  .text:000EEFDC                 mov     eax, [ebx+0D0h]
+  .text:000EEFE2                 mov     edx, [esp+6Ch+var_24]
+  .text:000EEFE6                 lea     ecx, [eax-7]
+  .text:000EEFE9                 cmp     ecx, edx
+  .text:000EEFEB                 jg      short loc_EEFF6
+  .text:000EEFED                 lea     eax, [edx+8]
+  .text:000EEFF0                 mov     [ebx+0D0h], eax
+  .text:000EEFF6                 mov     edx, [ebx+94h]
+  .text:000EEFFC                 mov     ecx, [edx+esi+8]
+  .text:000EF000                 cmp     ecx, 0FFFFFFFFh
+  .text:000EF003                 jnz     short loc_EEFC0
+  .text:000EF005                 mov     edx, [ebx+84h]
+  .text:000EF00B                 cmp     edx, eax
+  .text:000EF00D                 jle     short loc_EF015
+  .text:000EF00F                 mov     [ebx+0D0h], edx
+  .text:000EF015                 and     byte ptr [ebx+0CCh], 0FBh
+  .text:000EF01C                 jmp     loc_EED97
+  .text:000EF028                 ; this
+  .text:000EF028                 mov     [esp+6Ch+var_6C], ebx; this
+  .text:000EF02B                 call    _ZN5vgui24Menu15LayoutScrollBarEv; vgui2::Menu::LayoutScrollBar(void)
+  .text:000EF030                 jmp     loc_EEEDE
+  .text:000EF038                 mov     eax, [ebx+7Ch]
+  .text:000EF03B                 ; this
+  .text:000EF03B                 mov     [esp+6Ch+var_6C], ebx; this
+  .text:000EF03E                 ; value
+  .text:000EF03E                 mov     [esp+6Ch+border], eax; value
+  .text:000EF042                 call    _ZN5vgui25Panel26GetProportionalScaledValueEi; vgui2::Panel::GetProportionalScaledValue(int)
+  .text:000EF047                 mov     itemHeight_0, eax
+  .text:000EF049                 jmp     loc_EECB8
+  .text:000EF050                 mov     edi, [ebx+0E0h]
+  .text:000EF056                 sub     eax, edi
+  .text:000EF058                 mov     [ebx+0D0h], eax
+  .text:000EF05E                 jmp     loc_EED8F
+  .text:000EF063                 mov     [esp+6Ch+var_6C], ebx
+  .text:000EF066                 call    eax
+  .text:000EF068                 jmp     loc_EEBCA
+  .text:000EF06D                 mov     [esp+6Ch+var_6C], ebx
+  .text:000EF070                 call    eax
+  .text:000EF072                 jmp     loc_EEC1C
+  .text:000EF080                 call    edx
+  .text:000EF082                 jmp     loc_EEC7D
+  .text:000EF087                 xor     eax, eax
+  .text:000EF089                 mov     [esp+6Ch+itemHeight], eax
+  .text:000EF08D                 lea     itemHeight_0, [itemHeight_0+0]
+  .text:000EF090                 jmp     loc_EED6E
+procedure: |-
+  // Finder result identities: func_name=vgui2_Menu_MakeItemsVisibleInScrollRange; struct_name=vgui2_Menu, member_name=m_pScroller.
+  // GoldSrc Menu::PerformLayout. MakeItemsVisibleInScrollRange() is the virtual scrolling-branch call. Add/RemoveScrollBar and LayoutMenuBorder include guarded devirtualization; preserve both paths.
+  void __cdecl vgui2::Menu::PerformLayout(vgui2::Menu *const this)
+  {
+    int (**vptr_IClientPanel)(...); // eax
+    void (__cdecl *v2)(vgui2::Menu *const); // eax
+    void (__cdecl *v3)(vgui2::Menu *const); // eax
+    void (__cdecl *v4)(vgui2::Menu *const); // eax
+    vgui2::ISchemeManager *v5; // esi
+    int (__cdecl *v6)(vgui2::ISchemeManager *, int); // edi
+    int v7; // eax
+    int v8; // eax
+    vgui2::IBorder *border; // eax
+    void (__cdecl *v10)(vgui2::Menu *const, vgui2::IBorder *); // edx
+    int m_iMenuItemHeight; // esi
+    int m_Size; // edx
+    int v13; // edi
+    int y; // ebp
+    int m_iCheckImageWidth; // eax
+    vgui2::MenuItem *m_Element; // esi
+    int m_iFixedWidth; // eax
+    bool v18; // zf
+    int ProportionalScaledValue; // ebp
+    int v20; // eax
+    int menuWide; // edx
+    int v22; // edi
+    int m_Next; // eax
+    CUtlLinkedList<vgui2::MenuItem*,int>::ListElem_t *v24; // ecx
+    int v25; // esi
+    CUtlLinkedList<vgui2::MenuItem*,int>::ListElem_t *v26; // eax
+    int m_iProportionalScrollBarSize; // edi
+    int v28; // edi
+    int v29; // esi
+    int v30; // eax
+    const void *v31; // eax
+    int v32; // eax
+    CUtlLinkedList<vgui2::MenuItem*,int>::ListElem_t *v33; // edx
+    int v34; // esi
+    int m_Head; // ecx
+    CUtlLinkedList<vgui2::MenuItem*,int>::ListElem_t *m_pMemory; // edx
+    int v37; // esi
+    int m_iMinimumWidth; // edx
+    int itemHeight; // [esp+2Ch] [ebp-40h]
+    int itemHeighta; // [esp+2Ch] [ebp-40h]
+    int ileft; // [esp+30h] [ebp-3Ch] BYREF
+    int iright; // [esp+34h] [ebp-38h] BYREF
+    int itop; // [esp+38h] [ebp-34h] BYREF
+    int ibottom; // [esp+3Ch] [ebp-30h] BYREF
+    int v45; // [esp+40h] [ebp-2Ch] BYREF
+    int v46; // [esp+44h] [ebp-28h] BYREF
+    int v47; // [esp+48h] [ebp-24h] BYREF
+    _BYTE v48[32]; // [esp+4Ch] [ebp-20h] BYREF
+
+    vptr_IClientPanel = this->_vptr_IClientPanel;
+    if ( this->m_iNumVisibleLines >= this->m_SortedItems.m_Size )
+    {
+      v4 = (void (__cdecl *)(vgui2::Menu *const))vptr_IClientPanel[179];
+      if ( v4 == vgui2::Menu::RemoveScrollBar )
+      {
+        (*((void (__cdecl **)(vgui2::ScrollBar *, _DWORD))this->m_pScroller->_vptr_IClientPanel + 30))( // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+          this->m_pScroller, // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+          0);
+        *((_BYTE *)this + 204) &= ~1u;
+      }
+      else
+      {
+        v4(this);
+      }
+      v3 = *((void (__cdecl **)(vgui2::Menu *const))this->_vptr_IClientPanel + 181);
+      if ( v3 != vgui2::Menu::LayoutMenuBorder )
+        goto LABEL_5;
+    }
+    else
+    {
+      v2 = (void (__cdecl *)(vgui2::Menu *const))vptr_IClientPanel[178];
+      if ( v2 == vgui2::Menu::AddScrollBar )
+      {
+        (*((void (__cdecl **)(vgui2::ScrollBar *, int))this->m_pScroller->_vptr_IClientPanel + 30))(this->m_pScroller, 1); // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+        *((_BYTE *)this + 204) |= 1u;
+      }
+      else
+      {
+        v2(this);
+      }
+      (*((void (__cdecl **)(vgui2::Menu *const))this->_vptr_IClientPanel + 182))(this); // vgui2_Menu_MakeItemsVisibleInScrollRange: virtual byte offset 0x2D8 in this reference only
+      v3 = *((void (__cdecl **)(vgui2::Menu *const))this->_vptr_IClientPanel + 181);
+      if ( v3 != vgui2::Menu::LayoutMenuBorder )
+      {
+  LABEL_5:
+        v3(this);
+        goto LABEL_12;
+      }
+    }
+    v5 = vgui2::scheme();
+    v6 = *(int (__cdecl **)(vgui2::ISchemeManager *, int))(*(_DWORD *)v5 + 32);
+    v7 = (*((int (__cdecl **)(vgui2::Menu *const))this->_vptr_IClientPanel + 20))(this);
+    v8 = v6(v5, v7);
+    border = (vgui2::IBorder *)(*(int (__cdecl **)(int, const char *))(*(_DWORD *)v8 + 12))(v8, "MenuBorder");
+    if ( border )
+    {
+      v10 = *((void (__cdecl **)(vgui2::Menu *const, vgui2::IBorder *))this->_vptr_IClientPanel + 61);
+      if ( v10 == vgui2::Menu::SetBorder )
+        vgui2::Panel::SetBorder(this, border);
+      else
+        v10(this, border);
+    }
+  LABEL_12:
+    (*((void (__cdecl **)(vgui2::Menu *const, int *, int *, int *, int *))this->_vptr_IClientPanel + 6))(
+      this,
+      &ileft,
+      &iright,
+      &itop,
+      &ibottom);
+    m_iMenuItemHeight = this->m_iMenuItemHeight;
+    if ( (*((unsigned __int8 (__cdecl **)(vgui2::Menu *const))this->_vptr_IClientPanel + 21))(this) )
+      m_iMenuItemHeight = vgui2::Panel::GetProportionalScaledValue(this, this->m_iMenuItemHeight);
+    m_Size = this->m_SortedItems.m_Size;
+    if ( m_Size > 0 )
+    {
+      v13 = 0;
+      y = 0;
+      itemHeight = m_iMenuItemHeight;
+      while ( 1 )
+      {
+        m_Element = this->m_MenuItems.m_Memory.m_pMemory[this->m_SortedItems.m_Memory.m_pMemory[v13]].m_Element;
+        if ( !m_Element )
+          goto LABEL_21;
+        if ( !(*((unsigned __int8 (__cdecl **)(vgui2::MenuItem *))m_Element->_vptr_IClientPanel + 31))(m_Element) )
+          goto LABEL_24;
+        vgui2::Panel::SetPos(m_Element, 0, y);
+        if ( this->m_hItemFont )
+          (*((void (__cdecl **)(vgui2::MenuItem *, vgui2::HFont))m_Element->_vptr_IClientPanel + 147))(
+            m_Element,
+            this->m_hItemFont);
+        y += itemHeight;
+        if ( vgui2::MenuItem::IsCheckable(m_Element)
+          || (m_iCheckImageWidth = this->m_iCheckImageWidth, m_iCheckImageWidth <= 0) )
+        {
+          if ( vgui2::MenuItem::IsCheckable(m_Element) )
+          {
+            (*((void (__cdecl **)(vgui2::MenuItem *, _DWORD, _DWORD))m_Element->_vptr_IClientPanel + 141))(
+              m_Element,
+              0,
+              0);
+            m_Size = this->m_SortedItems.m_Size;
+            goto LABEL_25;
+          }
+  LABEL_24:
+          m_Size = this->m_SortedItems.m_Size;
+  LABEL_25:
+          if ( ++v13 >= m_Size )
+          {
+  LABEL_26:
+            itemHeighta = y;
+            goto LABEL_27;
+          }
+        }
+        else
+        {
+          (*((void (__cdecl **)(vgui2::MenuItem *, int, _DWORD))m_Element->_vptr_IClientPanel + 141))(
+            m_Element,
+            m_iCheckImageWidth,
+            0);
+          m_Size = this->m_SortedItems.m_Size;
+  LABEL_21:
+          if ( ++v13 >= m_Size )
+            goto LABEL_26;
+        }
+      }
+    }
+    itemHeighta = 0;
+  LABEL_27:
+    m_iFixedWidth = this->m_iFixedWidth;
+    if ( m_iFixedWidth )
+    {
+      v18 = (*((_BYTE *)this + 204) & 1) == 0;
+      this->_menuWide = m_iFixedWidth;
+      if ( !v18 )
+        this->_menuWide = m_iFixedWidth - this->m_iProportionalScrollBarSize;
+    }
+    else if ( (*((_BYTE *)this + 204) & 4) != 0 )
+    {
+      m_Head = this->m_MenuItems.m_Head;
+      this->_menuWide = 0;
+      if ( m_Head != -1 )
+      {
+        m_pMemory = this->m_MenuItems.m_Memory.m_pMemory;
+        do
+        {
+          v37 = m_Head;
+          (*((void (__cdecl **)(vgui2::MenuItem *, int *, _BYTE *))m_pMemory[m_Head].m_Element->_vptr_IClientPanel + 139))(
+            m_pMemory[m_Head].m_Element,
+            &v47,
+            v48);
+          m_iFixedWidth = this->_menuWide;
+          if ( m_iFixedWidth - 7 <= v47 )
+          {
+            m_iFixedWidth = v47 + 8;
+            this->_menuWide = v47 + 8;
+          }
+          m_pMemory = this->m_MenuItems.m_Memory.m_pMemory;
+          m_Head = m_pMemory[v37].m_Next;
+        }
+        while ( m_Head != -1 );
+      }
+      m_iMinimumWidth = this->m_iMinimumWidth;
+      if ( m_iMinimumWidth > m_iFixedWidth )
+        this->_menuWide = m_iMinimumWidth;
+      *((_BYTE *)this + 204) &= ~4u;
+    }
+    (*((void (__cdecl **)(vgui2::Menu *const, int *, int *, int *, _BYTE *))this->_vptr_IClientPanel + 6))(
+      this,
+      &v45,
+      &v46,
+      &v47,
+      v48);
+    ProportionalScaledValue = vgui2::Panel::GetProportionalScaledValue(this, this->m_iMenuItemHeight);
+    v20 = vgui2::Panel::GetProportionalScaledValue(this, this->m_iMenuItemBlurOffset);
+    menuWide = this->_menuWide;
+    v22 = v20 + menuWide - v45 - v46;
+    m_Next = this->m_MenuItems.m_Head;
+    if ( m_Next != -1 )
+    {
+      v24 = this->m_MenuItems.m_Memory.m_pMemory;
+      do
+      {
+        v25 = m_Next;
+        v26 = &v24[m_Next];
+        if ( v26->m_Element )
+        {
+          vgui2::Panel::SetSize(v26->m_Element, v22, ProportionalScaledValue);
+          v24 = this->m_MenuItems.m_Memory.m_pMemory;
+          v26 = &v24[v25];
+        }
+        m_Next = v26->m_Next;
+      }
+      while ( m_Next != -1 );
+      menuWide = this->_menuWide;
+    }
+    m_iProportionalScrollBarSize = 0;
+    if ( (*((_BYTE *)this + 204) & 1) != 0 )
+      m_iProportionalScrollBarSize = this->m_iProportionalScrollBarSize;
+    v28 = menuWide + m_iProportionalScrollBarSize;
+    v29 = ibottom + itop + itemHeighta;
+    v30 = vgui2::Panel::GetProportionalScaledValue(this, 5);
+    vgui2::Panel::SetSize(this, v28 + v30, v29);
+    v31 = (const void *)(*((int (__cdecl **)(vgui2::Menu *const))this->_vptr_IClientPanel + 34))(this);
+    if ( v31
+      && _dynamic_cast(
+           v31,
+           (const struct __class_type_info *)&`typeinfo for'vgui2::Panel,
+           (const struct __class_type_info *)&`typeinfo for'vgui2::MenuItem,
+           0) )
+    {
+      vgui2::Menu::PositionCascadingMenu(this);
+    }
+    if ( (*((unsigned __int8 (__cdecl **)(vgui2::ScrollBar *))this->m_pScroller->_vptr_IClientPanel + 31))(this->m_pScroller) ) // vgui2_Menu_m_pScroller (structmember, struct=vgui2_Menu, member=m_pScroller)
+      vgui2::Menu::LayoutScrollBar(this);
+    v32 = this->m_MenuItems.m_Head;
+    if ( v32 != -1 )
+    {
+      v33 = this->m_MenuItems.m_Memory.m_pMemory;
+      do
+      {
+        v34 = v32;
+        (*((void (__cdecl **)(vgui2::MenuItem *, _DWORD, _DWORD))v33[v32].m_Element->_vptr_IClientPanel + 59))(
+          v33[v32].m_Element,
+          0,
+          0);
+        v33 = this->m_MenuItems.m_Memory.m_pMemory;
+        v32 = v33[v34].m_Next;
+      }
+      while ( v32 != -1 );
+    }
+    (*((void (__cdecl **)(vgui2::Menu *const))this->_vptr_IClientPanel + 4))(this);
+  }

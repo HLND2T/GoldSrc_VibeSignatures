@@ -1,0 +1,9 @@
+func_name: vgui2::Menu::MakeItemsVisibleInScrollRange()
+func_va: '0x1003f1a0'
+func_rva: '0x3f1a0'
+func_size: '0xf9'
+vtable_name: vgui2::Menu
+vfunc_offset: '0x2d0'
+vfunc_index: 180
+vfunc_sig: 55 8B EC 83 EC 08 53 56 8B F1 33 DB 57 89 5D ?? 8B 8E ?? ?? ?? ?? 8B 01 FF 90 ?? ?? ?? ?? 8B D0 89 55 ??
+vfunc_sig_allow_across_function_boundary: true
