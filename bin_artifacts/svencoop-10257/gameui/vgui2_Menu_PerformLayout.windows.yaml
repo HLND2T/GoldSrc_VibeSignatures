@@ -1,0 +1,10 @@
+func_name: vgui2::Menu::PerformLayout()
+func_va: '0x10040440'
+func_rva: '0x40440'
+func_size: '0x1d0'
+func_sig: 55 8B EC 83 EC 14 56 8B F1 57 8B 86 ?? ?? ?? ?? 8B 16 3B 86 ?? ?? ?? ?? 7E ?? FF 92 ?? ?? ?? ?? 8B 06 8B CE FF 90
+  ?? ?? ?? ??
+func_sig_allow_across_function_boundary: true
+vtable_name: vgui2::Menu
+vfunc_offset: '0x1bc'
+vfunc_index: 111
