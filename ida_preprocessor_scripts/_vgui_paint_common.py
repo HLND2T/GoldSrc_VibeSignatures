@@ -41,7 +41,8 @@ def decoded_operand(op):
         return ('mem', base, signed32(op.addr) if kind == idaapi.o_displ else 0, index, scale, ida_ua.get_dtype_size(op.dtype))
     return ('unknown',)
 
-def flow_at(start, platform, call_purges=None, entry_state=None, first_pass=False):
+def flow_at(start, platform, call_purges=None, entry_state=None, first_pass=False,
+            preserved_calls=(), symbolic_indices=False):
     function = ida_funcs.get_func(int(start))
     if function is None or function.start_ea != int(start) or idaapi.inf_is_64bit():
         raise ValueError('not an x86 function entry')
@@ -65,6 +66,8 @@ def flow_at(start, platform, call_purges=None, entry_state=None, first_pass=Fals
                 if call_purges and ea in call_purges:
                     item['purge'] = call_purges[ea]
                 item['direct'] = local_call_target(ea)
+                if item['direct'] in preserved_calls:
+                    item['preserves_registers'] = True
                 target = item['direct']
                 callee = ida_funcs.get_func(target) if target else None
                 item['tail'] = mnemonic == 'jmp' and (int(insn.ops[0].type) != idaapi.o_near or
@@ -85,7 +88,8 @@ def flow_at(start, platform, call_purges=None, entry_state=None, first_pass=Fals
             segment = ida_segment.getseg(segment_start)
             static_loads.update({ea:int(ida_bytes.get_dword(ea)) for ea in range(segment.start_ea,segment.end_ea,4)})
     trace_blocks = first_pass_blocks(blocks, int(start)) if first_pass else blocks
-    traced = trace_function(trace_blocks, int(start), platform, static_loads, entry_state=entry_state)
+    traced = trace_function(trace_blocks, int(start), platform, static_loads, entry_state=entry_state,
+                            symbolic_indices=symbolic_indices)
     # Preserve the full CFG even for a restricted first-pass trace. Consumers
     # must not infer later-iteration values from first-pass events; the full
     # graph remains useful to check which side effects a guard can bypass.

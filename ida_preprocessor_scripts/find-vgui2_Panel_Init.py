@@ -27,6 +27,7 @@ from ida_analyze_util import (
     write_func_yaml,
 )
 from ida_preprocessor_scripts._client_vgui_private_common import PANEL_INIT_STORE_OFFSETS, run_walk
+from ida_preprocessor_scripts._vgui_private_symbols_common import emit_private_payloads, private_payloads
 
 FUNCTION_NAME = "vgui2::Panel::Init(int, int, int, int)"
 OUTPUT_SYMBOLS = ("vgui2_Panel_Init", "ClientVGUI_Panel_Init")
@@ -210,7 +211,7 @@ async def preprocess_skill(
     image_base,
     debug=False,
 ):
-    _ = skill_name, old_yaml_map, new_binary_dir
+    _ = skill_name, old_yaml_map
     outputs = [_output_for_symbol(expected_outputs, symbol) for symbol in OUTPUT_SYMBOLS]
     outputs = [output for output in outputs if output is not None]
     if len(outputs) != 1:
@@ -252,5 +253,17 @@ async def preprocess_skill(
     payload = {field: function[field] for field in ("func_name", "func_va", "func_rva", "func_size", "func_sig")}
     if function.get("func_sig_allow_across_function_boundary"):
         payload["func_sig_allow_across_function_boundary"] = True
+    additional = {}
+    if any(
+        _output_for_symbol(expected_outputs, name)
+        for name in ("vgui2_Panel_SetProportional", "ClientVGUI_Panel_SetProportional")
+    ):
+        try:
+            additional = await private_payloads(session, expected_outputs, new_binary_dir, platform, image_base)
+        except (KeyError, TypeError, ValueError) as exc:
+            if debug:
+                print("Panel private symbols failed:", exc)
+            return False
     write_func_yaml(output, payload)
+    emit_private_payloads(expected_outputs, additional)
     return True

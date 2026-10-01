@@ -17,7 +17,6 @@ from pathlib import Path
 
 from ida_analyze_util import (
     _find_unique_bytes,
-    _inspect_function_via_mcp,
     _load_yaml_mapping,
     _output_for_symbol,
     preprocess_vtable_via_mcp,
@@ -27,6 +26,11 @@ from ida_analyze_util import (
     write_vtable_yaml,
 )
 from ida_preprocessor_scripts._vgui_paint_common import walk
+from ida_preprocessor_scripts._vgui_private_symbols_common import (
+    emit_private_payloads,
+    function_payload as _function_payload,
+    private_payloads,
+)
 import ida_preprocessor_scripts._vgui_private_method_identity as method_identity
 
 
@@ -322,6 +326,7 @@ result = {
     'apply_ea': apply_ea,
     'setsize_ea': setsize_ea,
     'patch_ea': patch_ea,
+    'active_page': methods['hotkey']['page'][2],
     'methods': {name: {'ea': method['address'], 'index': method['index']} for name, method in methods.items()},
 }
 """
@@ -394,28 +399,6 @@ else:
 if 'result' not in globals():
     raise ValueError('patch signature did not become unique')
 """
-
-
-async def _function_payload(session, ea, image_base, name, *, table=None, index=None):
-    candidate = None
-    across = False
-    for limit in (None, 128, 256, 512, 1024, 2048, 4096):
-        candidate = await _inspect_function_via_mcp(
-            session, ea, image_base, name, signature_byte_limit=limit, allow_relative_call_discriminator=True
-        )
-        if candidate:
-            break
-    if not candidate:
-        candidate = await _inspect_function_via_mcp(session, ea, image_base, name, allow_across_function_boundary=True)
-        across = bool(candidate)
-    if not candidate:
-        return None
-    payload = {field: candidate[field] for field in ("func_name", "func_va", "func_rva", "func_size", "func_sig")}
-    if across or len(payload["func_sig"].split()) > int(payload["func_size"], 0):
-        payload["func_sig_allow_across_function_boundary"] = True
-    if table is not None:
-        payload.update(vtable_name=table, vfunc_index=index, vfunc_offset=hex(index * 4))
-    return payload
 
 
 async def preprocess_skill(
@@ -504,6 +487,17 @@ async def preprocess_skill(
                 patch_sig_disp=hex(0),
             )
 
+        additional = await private_payloads(
+            session,
+            expected_outputs,
+            new_binary_dir,
+            platform,
+            image_base,
+            gameui=True,
+            tables={CLASSES[key][0]: table for key, table in tables.items()},
+            existing=found,
+        )
+
         # Emit only after every anchor and generated signature has been checked.
         for key, symbol in TABLE_OUTPUTS.items():
             write_vtable_yaml(_output_for_symbol(expected_outputs, symbol), tables[key])
@@ -512,6 +506,7 @@ async def preprocess_skill(
         write_struct_offset_yaml(_output_for_symbol(expected_outputs, MEMBER), member)
         if patch is not None:
             write_patch_yaml(patch_output, patch)
+        emit_private_payloads(expected_outputs, additional)
         if debug:
             print("GameUI private symbols:", found)
         return True

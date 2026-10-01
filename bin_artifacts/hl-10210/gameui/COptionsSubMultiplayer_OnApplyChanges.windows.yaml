@@ -1,0 +1,9 @@
+func_name: COptionsSubMultiplayer::OnApplyChanges()
+func_va: '0x10036f00'
+func_rva: '0x36f00'
+func_size: '0x271'
+func_sig: 55 8B EC 81 EC 20 04 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 ?? 53 56 8B F1 57 8B 8E ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 8E ??
+  ?? ?? ??
+vtable_name: COptionsSubMultiplayer
+vfunc_offset: '0x27c'
+vfunc_index: 159

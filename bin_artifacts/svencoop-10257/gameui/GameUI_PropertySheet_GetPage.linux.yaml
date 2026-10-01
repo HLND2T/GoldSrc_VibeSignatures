@@ -1,0 +1,8 @@
+func_name: vgui2::PropertySheet::GetPage(int)
+func_va: '0xbcd70'
+func_rva: '0xbcd70'
+func_size: '0x23'
+func_sig: 8B 44 24 ?? 8B 54 24 ?? 85 C0 78 ?? 3B 42 ?? 7D ?? 8B 92 ?? ?? ?? ?? 8B 04 82 C3
+vtable_name: vgui2::PropertySheet
+vfunc_offset: '0x234'
+vfunc_index: 141

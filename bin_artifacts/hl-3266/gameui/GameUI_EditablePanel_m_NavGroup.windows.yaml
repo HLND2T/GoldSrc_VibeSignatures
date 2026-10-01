@@ -1,0 +1,7 @@
+struct_name: vgui2::EditablePanel
+member_name: m_NavGroup
+offset: '0x78'
+offset_sig: 55 8B EC 83 EC 44 53 56 57 51 8D 7D ?? B9 11 00 00 00 B8 CC CC CC CC F3 AB 59 89 4D ?? 8B 45 ?? 83 C0 78 5F 5E
+  5B 8B E5 5D C3
+offset_sig_disp: '0x20'
+offset_sig_ref_kind: immediate

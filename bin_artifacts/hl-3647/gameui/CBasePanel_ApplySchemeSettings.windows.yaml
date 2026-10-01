@@ -1,0 +1,8 @@
+func_name: CBasePanel::ApplySchemeSettings(vgui2::IScheme*)
+func_va: '0x10016b40'
+func_rva: '0x16b40'
+func_size: '0x29d'
+func_sig: 55 8B EC 81 EC 04 02 00 00 8B 45 ?? 53 56 57 50 89 4D ?? E8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 10 6A 00 68 ?? ?? ?? ??
+vtable_name: CBasePanel
+vfunc_offset: '0x13c'
+vfunc_index: 79

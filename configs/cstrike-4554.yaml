@@ -76,6 +76,11 @@ modules:
       - name: find-vgui2_Panel_Init
         expected_output:
           - ClientVGUI_Panel_Init.{platform}.yaml
+          - ClientVGUI_Panel_SetProportional.{platform}.yaml
+          - ClientVGUI_EditablePanel_m_NavGroup.{platform}.yaml
+          - ISurface_SupportsFeature.{platform}.yaml
+          - IInput_GetAppModalSurface.{platform}.yaml
+          - ISchemeManager_ReloadSchemes.{platform}.yaml
       - name: find-client-vgui-keyvalues
         expected_output:
           - ClientVGUI_KeyValues_vtable.{platform}.yaml
@@ -185,4 +190,18 @@ modules:
         struct: CounterStrikeViewport::CCSBackGroundPanel
         member: m_offsetY
       - name: ISurface_GetScreenSize
+        category: vfunc
+      - name: vgui2::EditablePanel
+        category: struct
+      - name: ClientVGUI_Panel_SetProportional
+        category: vfunc
+      - name: ClientVGUI_EditablePanel_m_NavGroup
+        category: structmember
+        struct: vgui2::EditablePanel
+        member: m_NavGroup
+      - name: ISurface_SupportsFeature
+        category: vfunc
+      - name: IInput_GetAppModalSurface
+        category: vfunc
+      - name: ISchemeManager_ReloadSchemes
         category: vfunc

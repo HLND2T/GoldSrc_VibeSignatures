@@ -217,3 +217,37 @@ Extending `find-client-vgui-keyvalues.py` from CS-family clients to the configur
 2026-09-30: strict/no-save exact batch `analysis-batch-20260930T155837-58ef71c1f6924ebfbe1ff035e8ade804` forced all 47 configured KeyValues nodes across 21 gamevers, with Agent fallback unavailable: 47 succeeded, zero failed/skipped. The matrix includes 30 new GameUI/ServerBrowser nodes (11 versions, 22 PE32 and 8 ELF32 binaries) and 17 existing client nodes. All 94 artifacts passed pair/slot/address consistency checks; every new table entry matched independently read binary bytes with ELF relocations applied. Six unstripped ELF binaries also matched their function and vtable symbols; two Sven-10257 binaries lack those symbols. Sixty new YAML artifacts were produced; four existing early-client artifacts changed payload identities only.
 
 Unit suite: 1277 tests OK (5 skipped). Repository-contract suite: 14 tests OK, using a temporary Git index that includes the new artifacts. Format and `git diff --check` passed. Redis integration groups were skipped because the local Redis service was unavailable; the default opt-in IDA environment test was skipped, while the real binary matrix above executed successfully. No shared helper, public artifact schema, or repository test was changed.
+
+
+## Issue #312: current factory, Frame and SetFocus chains
+
+### Trigger and scope
+
+2026-10-01: replace GameUI private vtable slots/member offsets after the user approved all anchors in root `anchor.md`. The scope includes 15 GameUI, 15 engine, 15 serverbrowser and 17 CS/CZ/CZDS client binaries (62 total), and the added Stage1–3 chains. Concrete implementations remain module-local. ISurface/IInput/ISchemeManager are shared abstract interfaces for the same engine build and platform.
+
+### Root cause and constraints
+
+- Modern MetaHookSv PropertySheet declarations are not the target ABI: the inspected binaries inherit Panel and implement `vgui2::PropertySheet::AddPage(vgui2::Panel*, char const*)` with two explicit parameters. SDK declaration order cannot identify their slots.
+- Factory strings are shared by RequestInfo and inlined code. Only the PanelPtr result used as the new Panel receiver, actual x/y arguments, and the two SetParent overloads establish the required parent/state chain. The real proportional getter is IsProportional.
+- Linux SetFocus registration may carry an Itanium virtual member pointer rather than an executable thunk. Its odd pfn encodes byte offset plus one and its adjacent this adjustment must be checked; Windows uses the current callback thunk.
+- Debug stack-check calls can obscure EAX business results. The observed helper has an immediate normal return and a balanced register-save/int3/restore error path, sometimes including EBP. Global calling-convention/purge guesses broke unrelated KeyValues/FocusNavGroup traces and were removed.
+- CCvarSlider::ApplyChanges stores GetValue as its starting value and invokes the named engine cvar API. It does not clear a modified flag. Audio constructor member stores can contain a constructor return value or a null/result join; the constructor's current vptr store and named control ownership prove the receiver.
+- Some ELF RX LOAD headers were marked as code, yielding a spurious low vtable target without a function. Only current Linux .text code heads may be materialized; unrelated entries without supported flow cannot participate in method identity.
+- RTTI vtable entry keys can be integers in live preprocessing but strings after JSON transport. Normalize keys before embedding data into the identity walk.
+
+### Correct approach
+
+- Extend the existing GameUI private and Panel Init finders; share pure identity helpers and current-binary collection/emission. Follow exact factory literals, Frame literals/provider provenance, and current SetFocus registration before selecting current class-table entries.
+- Identify all 16 PropertySheet methods through their own messages, parameter roles, page/tab members and actual container operations. Expand only side-effect-free leaf getters by their real call arguments. Reject absent, ambiguous or overlapping identities.
+- Keep symbolic indexed-address tracing opt-in. Mark a stack-check call transparent only after decoding and verifying its current helper instructions. Default shared flow behavior remains conservative.
+- Recover m_NavGroup as an embedded object and omit a guessed size. Recover _currentFocus as a four-byte VPanelHandle, not Panel*. Generate member signatures from the actual referencing instruction and verify its encoded immediate/displacement.
+- Emit abstract interface records with exactly four fields: func_name, vtable_name, vfunc_index and vfunc_offset. GameUI owns the shared records in applicable tags; engine/serverbrowser consume declared same-tag/platform inputs and compare their own recovered slots. CS-only tags use client as producer. Do not export interface implementation addresses.
+- Reuse the existing HL25 Windows Video OnApplyChanges and the existing #299/Taskbar records. Use declared constructors and Video predecessor artifacts; do not search other tags or historical artifact directories as discovery inputs.
+
+### Verification
+
+Final owned strict restored/no-save batch `analysis-batch-20261001T141923-add05655fcaa47748f130eab39664f09` forced all 62 selected nodes: 62 succeeded, zero failures, zero skips, with analyzer artifact validation. Added 579 YAML files: gameui 434, engine 30, serverbrowser 30, client 85 (original issue 421 + embedded m_NavGroup 62 + abstract interfaces 96). Existing tracked artifacts were unchanged.
+
+Independent comparison against the approved Task1 facts checked 580 records including the reused HL25 Windows Video entry: no RVA, slot, member-offset, interface-field or same-build ABI disagreements. All 21 config contracts/DAGs passed an independent registration review. Unit gate: 1319 tests, OK with five skips. Repository-contract gate: 15 tests, OK. Formatter check: exit 0. Moved-slot, wrong-receiver, PMF, message-record, transparent-call, leaf-helper and actual field-reference behavior has synthetic coverage.
+
+The independent identity-review agent failed at its runtime compaction and supplied no verdict; the primary agent reviewed the critical logic. Full diagnostic logs and temporary comparison scripts remain outside the repository. Early unsupported platform/module combinations remain excluded according to current configs; no forced matches or cross-version slot/offset constants were introduced. MetaHookSv consumer changes are downstream work.

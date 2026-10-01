@@ -1,0 +1,8 @@
+func_name: vgui2::PropertySheet::GetNumPages()
+func_va: '0x100a96c0'
+func_rva: '0xa96c0'
+func_size: '0x16'
+func_sig: 55 8B EC 51 89 4D ?? 8B 4D ?? 83 C1 78 E8 5E 1C 00 00 8B E5 5D C3
+vtable_name: vgui2::PropertySheet
+vfunc_offset: '0x248'
+vfunc_index: 146

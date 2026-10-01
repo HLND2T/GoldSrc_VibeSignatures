@@ -27,6 +27,46 @@ def mem(base, offset=0):
 
 
 class VcallFlowTests(unittest.TestCase):
+    def test_verified_preserving_call_keeps_business_result_and_stack(self):
+        code = [
+            instruction(1, "call", imm(100), direct=100),
+            instruction(2, "push", reg("eax")),
+            instruction(3, "call", imm(200), sp=-4, direct=200, preserves_registers=True),
+            instruction(4, "push", reg("eax"), sp=-4),
+            instruction(5, "call", imm(300), sp=-8, after=0, direct=300),
+        ]
+        blocks = [dict(start=1, succs=[], insns=code)]
+        flow = trace_function(blocks, 1, "windows")
+        self.assertEqual([1, 5], [c["ea"] for c in flow["calls"]])
+        self.assertEqual([("result", 1), ("result", 1)], flow["calls"][-1]["stack_args"][:2])
+        code[2].pop("preserves_registers")
+        flow = trace_function(blocks, 1, "windows")
+        self.assertEqual([("result", 3), ("result", 1)], flow["calls"][-1]["stack_args"][:2])
+
+    def test_symbolic_container_index_is_opt_in_and_retains_base_and_argument(self):
+        code = [
+            instruction(1, "mov", reg("eax"), mem("ecx", 0x180)),
+            instruction(2, "mov", reg("edx"), mem("esp", 4)),
+            instruction(3, "mov", reg("eax"), ("mem", "eax", 0, "edx", 4, 4)),
+            instruction(4, "ret"),
+        ]
+        blocks = [dict(start=1, succs=[], insns=code)]
+        self.assertIsNone(trace_function(blocks, 1, "windows")["returns"][0]["value"])
+        expected = ("load", ("indexed", ("load", ("arg", 0), 0x180), ("arg", 1), 4), 0)
+        self.assertEqual(expected, trace_function(blocks, 1, "windows", symbolic_indices=True)["returns"][0]["value"])
+
+    def test_member_reference_records_lea_and_add_operand_kind(self):
+        code = [
+            instruction(1, "mov", reg("eax"), reg("ecx")),
+            instruction(2, "add", reg("eax"), imm(0x2A0)),
+            instruction(3, "lea", reg("edx"), mem("ecx", 0x2A0)),
+        ]
+        flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows")
+        self.assertEqual(
+            [("immediate", ("address", ("arg", 0), 0x2A0)), ("displacement", ("address", ("arg", 0), 0x2A0))],
+            [(r["ref_kind"], r["value"]) for r in flow["addresses"]],
+        )
+
     def test_word_mask_preserves_character_argument_without_preserving_pointer(self):
         code = [
             instruction(1, "mov", reg("eax"), mem("esp", 4)),

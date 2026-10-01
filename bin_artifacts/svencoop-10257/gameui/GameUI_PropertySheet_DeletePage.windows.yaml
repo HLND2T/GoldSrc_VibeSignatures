@@ -1,0 +1,8 @@
+func_name: vgui2::PropertySheet::DeletePage(vgui2::Panel*)
+func_va: '0x100533c0'
+func_rva: '0x533c0'
+func_size: '0x190'
+func_sig: 55 8B EC 83 EC 08 33 C0 53 57 8B F9 8B 5F ?? 85 DB 0F 8E ?? ?? ?? ?? 8B 8F ?? ?? ?? ?? 8B 55 ?? 39 11
+vtable_name: vgui2::PropertySheet
+vfunc_offset: '0x234'
+vfunc_index: 141

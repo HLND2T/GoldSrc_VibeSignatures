@@ -80,6 +80,8 @@ def memory_address(operand, state):
     if index:
         index_value = state.get(index)
         if index_value is None or index_value[0] != "const":
+            if state.get("symbolic_indices") == ("const", 1) and address is not None:
+                return ("indexed", add_value(address, displacement), index_value, scale)
             return None
         displacement += index_value[1] * scale
     return add_value(address, displacement)
@@ -169,7 +171,7 @@ def _join(states):
 
 def _transfer(block, incoming, platform, static_loads, collect=False):
     state = incoming.copy()
-    events = dict(calls=[], comparisons=[], branches=[], returns=[], stores=[], loads=[])
+    events = dict(calls=[], comparisons=[], branches=[], returns=[], stores=[], loads=[], addresses=[])
     condition = None
 
     def write(operand, value, ea):
@@ -194,7 +196,13 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
                 state[("modified", address)] = ("const", 1)
             if collect:
                 events["stores"].append(
-                    dict(ea=ea, address=address, value=value, width=operand[5] if len(operand) > 5 else WORD_SIZE)
+                    dict(
+                        ea=ea,
+                        block=block["start"],
+                        address=address,
+                        value=value,
+                        width=operand[5] if len(operand) > 5 else WORD_SIZE,
+                    )
                 )
 
     for insn in block["insns"]:
@@ -248,7 +256,10 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
                 if restored and restored[0] == "stack":
                     state["stack_correction"] = ("const", restored[1] - insn["after"])
         elif mnemonic == "lea" and len(operands) == 2 and operands[1][0] == "mem":
-            write(operands[0], memory_address(operands[1], state), ea)
+            address = memory_address(operands[1], state)
+            if collect:
+                events["addresses"].append(dict(ea=ea, value=address, ref_kind="displacement"))
+            write(operands[0], address, ea)
         elif mnemonic == "push":
             state[("stack", sp - WORD_SIZE)] = read(operands[0])
         elif mnemonic == "pop":
@@ -260,6 +271,8 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
                 if value and value[0] == "const"
                 else None
             )
+            if collect and result is not None:
+                events["addresses"].append(dict(ea=ea, value=result, ref_kind="immediate"))
             write(operands[0], result, ea)
         elif mnemonic == "xor" and len(operands) == 2 and operands[0] == operands[1]:
             write(operands[0], ("const", 0), ea)
@@ -285,6 +298,10 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
                     dict(ea=ea, block=block["start"], condition=condition, zero=zero, nonzero=nonzero)
                 )
         elif mnemonic == "call" or (mnemonic == "jmp" and insn.get("tail")):
+            # Only the adapter may mark a call after proving its normal return
+            # preserves registers and stack. It has no business return value.
+            if insn.get("preserves_registers"):
+                continue
             if insn.get("pc_reg"):
                 state[insn["pc_reg"]] = ("const", insn["next_ea"])
                 continue
@@ -379,7 +396,7 @@ def first_pass_blocks(blocks, entry):
     return [dict(block, succs=[s for s in block["succs"] if (block["start"], s) not in removed]) for block in blocks]
 
 
-def trace_function(blocks, entry, platform, static_loads=None, *, entry_state=None):
+def trace_function(blocks, entry, platform, static_loads=None, *, entry_state=None, symbolic_indices=False):
     """Compute bounded reaching values and collect dispatch/branch observations."""
     graph = {block["start"]: block for block in blocks}
     if entry not in graph or platform not in ("windows", "linux"):
@@ -393,6 +410,8 @@ def trace_function(blocks, entry, platform, static_loads=None, *, entry_state=No
     if entry_state is not None:
         initial = entry_state.copy()
     initial["stack_correction"] = ("const", 0)
+    if symbolic_indices:
+        initial["symbolic_indices"] = ("const", 1)
     predecessors = {address: [] for address in graph}
     for block in blocks:
         for successor in block["succs"]:
@@ -417,7 +436,7 @@ def trace_function(blocks, entry, platform, static_loads=None, *, entry_state=No
         if updates > MAX_BLOCK_UPDATES:
             raise ValueError("interface dataflow did not converge")
         work.extend(successor for successor in graph[address]["succs"] if successor in graph)
-    result = dict(calls=[], comparisons=[], branches=[], returns=[], stores=[], loads=[])
+    result = dict(calls=[], comparisons=[], branches=[], returns=[], stores=[], loads=[], addresses=[])
     for address in sorted(inputs):
         _, events = _transfer(graph[address], inputs[address], platform, static_loads, collect=True)
         for key in result:

@@ -1,0 +1,4 @@
+func_name: vgui2::IInput::GetAppModalSurface()
+vtable_name: vgui2::IInput
+vfunc_offset: '0x4c'
+vfunc_index: 19

@@ -1,0 +1,4 @@
+func_name: vgui2::ISchemeManager::ReloadSchemes()
+vtable_name: vgui2::ISchemeManager
+vfunc_offset: '0xc'
+vfunc_index: 3
