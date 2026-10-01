@@ -1,0 +1,8 @@
+func_name: vgui2::PropertySheet::DisablePage(char const*)
+func_va: '0x100a9cf8'
+func_rva: '0xa9cf8'
+func_size: '0x21'
+func_sig: 55 8B EC 51 89 4D ?? 6A 00 8B 45 ?? 50 8B 4D ?? 8B 11 8B 4D ?? FF 92 ?? ?? ?? ?? 8B E5 5D C2 04 00
+vtable_name: vgui2::PropertySheet
+vfunc_offset: '0x24c'
+vfunc_index: 147

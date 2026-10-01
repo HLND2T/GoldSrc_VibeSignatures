@@ -1,0 +1,9 @@
+func_name: vgui2::EditablePanel::GetFocusNavGroup()
+func_va: '0x1005ce20'
+func_rva: '0x5ce20'
+func_size: '0x2a'
+func_sig: 55 8B EC 83 EC 44 53 56 57 51 8D 7D ?? B9 11 00 00 00 B8 CC CC CC CC F3 AB 59 89 4D ?? 8B 45 ?? 83 C0 78 5F 5E 5B
+  8B E5 5D C3
+vtable_name: vgui2::EditablePanel
+vfunc_offset: '0x264'
+vfunc_index: 153

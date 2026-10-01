@@ -1,0 +1,8 @@
+func_name: vgui2::PropertySheet::GetTabTitle(int, char*, int)
+func_va: '0xbd4b0'
+func_rva: '0xbd4b0'
+func_size: '0x66'
+func_sig: 83 EC ?? 8B 44 24 ?? 8B 54 24 ?? 85 C0 78 ?? 3B 82 ?? ?? ?? ?? 7D ?? 8B 92 ?? ?? ?? ?? 8B 4C 24 ?? 8B 04 82 8B 10
+vtable_name: vgui2::PropertySheet
+vfunc_offset: '0x244'
+vfunc_index: 145

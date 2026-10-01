@@ -1,0 +1,8 @@
+func_name: vgui2::PropertySheet::SetActivePage(vgui2::Panel*)
+func_va: '0x10086fb0'
+func_rva: '0x86fb0'
+func_size: '0x47'
+func_sig: 55 8B EC 56 57 8B F9 33 D2 8B 77 ?? 85 F6 7E ?? 8B 87 ?? ?? ?? ?? 8B 4D ?? 0F 1F 80 ?? ?? ?? ?? 39 08 74 ??
+vtable_name: vgui2::PropertySheet
+vfunc_offset: '0x21c'
+vfunc_index: 135

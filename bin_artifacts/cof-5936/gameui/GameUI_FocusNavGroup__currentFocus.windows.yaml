@@ -1,0 +1,7 @@
+struct_name: vgui2::FocusNavGroup
+member_name: _currentFocus
+offset: '0xc'
+size: '0x4'
+offset_sig: 55 8B EC 83 EC 0C 89 4D ?? 8B 4D ?? 83 C1 0C E8 ?? ?? ?? ?? 25 FF 00 00 00 85 C0 74 ?? E8 ?? ?? ?? ?? 50
+offset_sig_disp: '0xc'
+offset_sig_ref_kind: immediate

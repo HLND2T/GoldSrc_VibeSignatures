@@ -1,0 +1,8 @@
+func_name: vgui2::Panel::SetProportional(bool)
+func_va: '0x15e480'
+func_rva: '0x15e480'
+func_size: '0xd7'
+func_sig: 55 57 56 53 83 EC ?? 8B 5C 24 ?? 8B 54 24 ?? 38 53 ?? 0F 84 ?? ?? ?? ?? 88 53 ?? 31 F6 EB ??
+vtable_name: vgui2::Panel
+vfunc_offset: '0x1c8'
+vfunc_index: 114

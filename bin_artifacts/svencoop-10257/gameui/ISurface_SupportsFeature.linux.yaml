@@ -1,0 +1,4 @@
+func_name: vgui2::ISurface::SupportsFeature(vgui2::ISurface::SurfaceFeature_e)
+vtable_name: vgui2::ISurface
+vfunc_offset: '0xcc'
+vfunc_index: 51

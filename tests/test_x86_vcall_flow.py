@@ -1,4 +1,5 @@
 import ast
+import builtins
 import unittest
 import sys
 from types import SimpleNamespace
@@ -7,6 +8,7 @@ from unittest.mock import patch
 from ida_preprocessor_scripts._x86_vcall_flow import trace_function, virtual_targets
 from ida_preprocessor_scripts import _engine_private_globals_common as common
 from ida_preprocessor_scripts._vgui_paint_common import IDA_FLOW
+from ida_preprocessor_scripts import _vgui_private_symbols_common as private_symbols
 from ida_analyze_util import _INSPECT_FUNCTION_PY_EVAL_TEMPLATE, _inspect_function_via_mcp
 
 
@@ -26,7 +28,173 @@ def mem(base, offset=0):
     return ("mem", base, offset, None, 1)
 
 
+class StagedPrivateWalkTests(unittest.IsolatedAsyncioTestCase):
+    async def test_stages_share_exact_objects_and_release_worker_state(self):
+        async def execute(session, body, values):
+            namespace = {"values": values}
+            try:
+                exec(body, namespace)
+                return namespace["result"]
+            except Exception as exc:
+                return {"error": str(exc)}
+
+        existing = {key for key in vars(builtins) if key.startswith("_vgui_private_")}
+        with patch.object(private_symbols, "walk", side_effect=execute):
+            result = await private_symbols.walk_stages(
+                None,
+                [
+                    "items = [values['number']]\noriginal = items",
+                    "items.append(2)\nassert original is items",
+                    "result = {'total': sum(items)}",
+                ],
+                {"number": 40},
+            )
+            self.assertEqual({"total": 42}, result)
+            with self.assertRaisesRegex(ValueError, "failed registration"):
+                await private_symbols.walk_stages(None, ["items = []", "raise ValueError('failed registration')"], {})
+        self.assertEqual(existing, {key for key in vars(builtins) if key.startswith("_vgui_private_")})
+
+
 class VcallFlowTests(unittest.TestCase):
+    def test_simd_registration_zero_and_copy_preserve_each_word(self):
+        vector = ("reg", "xmm0", 16)
+        source = ("mem", "esp", -32, None, 1, 16)
+        destination = ("mem", "ecx", 0, None, 1, 16)
+        code = [
+            instruction(1, "xorps", vector, vector),
+            instruction(2, "movaps", source, vector),
+            instruction(3, "movups", vector, source),
+            instruction(4, "movups", destination, vector),
+        ]
+        flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows", capture_stack=True)
+        copied = [s for s in flow["stores"] if s.get("copy_source")]
+        self.assertEqual([("stack", offset) for offset in (-32, -28, -24, -20)], [s["copy_source"] for s in copied])
+        self.assertEqual([("const", 0)] * 4, [s["value"] for s in copied])
+        self.assertEqual([4] * 4, [s["width"] for s in copied])
+        code.insert(3, instruction(35, "call", imm(100), direct=100))
+        flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows", capture_stack=True)
+        self.assertFalse(any(s.get("copy_source") for s in flow["stores"]))
+        self.assertEqual([None] * 4, [s["value"] for s in flow["stores"] if s["ea"] == 4])
+
+    def test_switch_decrements_preserve_zero_one_two_selector_provenance(self):
+        blocks = [
+            dict(
+                start=1,
+                succs=[10, 20],
+                insns=[
+                    instruction(1, "mov", reg("eax"), mem("ecx", 0x34)),
+                    instruction(2, "sub", reg("eax"), imm(0)),
+                    instruction(3, "jz", imm(20), branch=20),
+                ],
+            ),
+            dict(
+                start=10,
+                succs=[30, 40],
+                insns=[instruction(10, "dec", reg("eax")), instruction(11, "jz", imm(30), branch=30)],
+            ),
+            dict(
+                start=40,
+                succs=[50, 60],
+                insns=[instruction(40, "dec", reg("eax")), instruction(41, "jnz", imm(50), branch=50)],
+            ),
+            *[dict(start=ea, succs=[], insns=[instruction(ea, "ret")]) for ea in (20, 30, 50, 60)],
+        ]
+        condition = ("load", ("arg", 0), 0x34)
+        self.assertEqual(
+            [condition, ("address", condition, -1), ("address", condition, -2)],
+            [b["condition"] for b in trace_function(blocks, 1, "windows", arithmetic_conditions=True)["branches"]],
+        )
+        self.assertEqual([], trace_function(blocks, 1, "windows")["branches"])
+
+    def test_registration_snapshots_capture_the_record_at_consumption(self):
+        code = [
+            instruction(1, "mov", mem("esp", -40), imm(0xA000)),
+            instruction(2, "mov", mem("esp", -24), imm(0xB000)),
+            instruction(3, "lea", reg("esi"), mem("esp", -40)),
+            instruction(4, "mov", reg("edi"), reg("ecx")),
+            instruction(5, "mov", reg("ecx"), imm(12)),
+            instruction(6, "movsd", copy_width=4),
+            instruction(7, "call", imm(100), direct=100),
+        ]
+        blocks = [dict(start=1, succs=[], insns=code)]
+        flow = trace_function(blocks, 1, "windows", capture_stack=True)
+        copied = next(s for s in flow["stores"] if s.get("copy"))
+        self.assertEqual(("stack", -40), copied["value"])
+        self.assertEqual(("arg", 0), copied["address"])
+        self.assertEqual(("const", 12), copied["count"])
+        self.assertEqual(("const", 0xB000), copied["stack_values"][-24])
+        self.assertNotIn("stack_values", trace_function(blocks, 1, "windows")["calls"][0])
+
+    def test_registration_memory_join_preserves_original_and_reallocated_storage(self):
+        blocks = [
+            dict(start=1, succs=[10, 20], insns=[instruction(1, "mov", reg("esi"), reg("ecx"))]),
+            dict(start=10, succs=[30], insns=[instruction(10, "mov", mem("esi"), imm(0xA000))]),
+            dict(start=20, succs=[30], insns=[]),
+            dict(start=30, succs=[], insns=[instruction(30, "mov", reg("eax"), mem("esi")), instruction(31, "ret")]),
+        ]
+        flow = trace_function(blocks, 1, "windows", track_memory=True)
+        self.assertEqual(("choice", ("const", 0xA000), ("load", ("arg", 0), 0)), flow["returns"][0]["value"])
+        self.assertIsNone(trace_function(blocks, 1, "windows")["returns"][0]["value"])
+
+    def test_registration_pointer_sum_is_separate_from_indexed_getter_support(self):
+        code = [
+            instruction(1, "mov", reg("eax"), mem("ecx")),
+            instruction(2, "add", reg("eax"), reg("edx")),
+            instruction(3, "ret"),
+        ]
+        blocks = [dict(start=1, succs=[], insns=code)]
+        self.assertIsNone(trace_function(blocks, 1, "windows", symbolic_indices=True)["returns"][0]["value"])
+        self.assertEqual(
+            ("indexed", ("load", ("arg", 0), 0), None, 1),
+            trace_function(blocks, 1, "windows", symbolic_sums=True)["returns"][0]["value"],
+        )
+
+    def test_verified_constant_return_is_used_without_erasing_the_call(self):
+        code = [instruction(1, "call", imm(100), direct=100, return_value=("const", 0xA000)), instruction(2, "ret")]
+        flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows")
+        self.assertEqual(("const", 0xA000), flow["returns"][0]["value"])
+        self.assertEqual(100, flow["calls"][0]["direct"])
+
+    def test_verified_preserving_call_keeps_business_result_and_stack(self):
+        code = [
+            instruction(1, "call", imm(100), direct=100),
+            instruction(2, "push", reg("eax")),
+            instruction(3, "call", imm(200), sp=-4, direct=200, preserves_registers=True),
+            instruction(4, "push", reg("eax"), sp=-4),
+            instruction(5, "call", imm(300), sp=-8, after=0, direct=300),
+        ]
+        blocks = [dict(start=1, succs=[], insns=code)]
+        flow = trace_function(blocks, 1, "windows")
+        self.assertEqual([1, 5], [c["ea"] for c in flow["calls"]])
+        self.assertEqual([("result", 1), ("result", 1)], flow["calls"][-1]["stack_args"][:2])
+        code[2].pop("preserves_registers")
+        flow = trace_function(blocks, 1, "windows")
+        self.assertEqual([("result", 3), ("result", 1)], flow["calls"][-1]["stack_args"][:2])
+
+    def test_symbolic_container_index_is_opt_in_and_retains_base_and_argument(self):
+        code = [
+            instruction(1, "mov", reg("eax"), mem("ecx", 0x180)),
+            instruction(2, "mov", reg("edx"), mem("esp", 4)),
+            instruction(3, "mov", reg("eax"), ("mem", "eax", 0, "edx", 4, 4)),
+            instruction(4, "ret"),
+        ]
+        blocks = [dict(start=1, succs=[], insns=code)]
+        self.assertIsNone(trace_function(blocks, 1, "windows")["returns"][0]["value"])
+        expected = ("load", ("indexed", ("load", ("arg", 0), 0x180), ("arg", 1), 4), 0)
+        self.assertEqual(expected, trace_function(blocks, 1, "windows", symbolic_indices=True)["returns"][0]["value"])
+
+    def test_member_reference_records_lea_and_add_operand_kind(self):
+        code = [
+            instruction(1, "mov", reg("eax"), reg("ecx")),
+            instruction(2, "add", reg("eax"), imm(0x2A0)),
+            instruction(3, "lea", reg("edx"), mem("ecx", 0x2A0)),
+        ]
+        flow = trace_function([dict(start=1, succs=[], insns=code)], 1, "windows")
+        self.assertEqual(
+            [("immediate", ("address", ("arg", 0), 0x2A0)), ("displacement", ("address", ("arg", 0), 0x2A0))],
+            [(r["ref_kind"], r["value"]) for r in flow["addresses"]],
+        )
+
     def test_word_mask_preserves_character_argument_without_preserving_pointer(self):
         code = [
             instruction(1, "mov", reg("eax"), mem("esp", 4)),

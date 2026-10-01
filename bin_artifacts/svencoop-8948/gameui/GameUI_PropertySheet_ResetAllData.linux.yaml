@@ -1,0 +1,9 @@
+func_name: vgui2::PropertySheet::ResetAllData()
+func_va: '0xd5db0'
+func_rva: '0xd5db0'
+func_size: '0x13e'
+func_sig: 55 57 56 53 83 EC ?? 8B 74 24 ?? E8 80 D4 F6 FF 81 C3 ?? ?? ?? ?? 8B 46 ?? 85 C0 0F 8E ?? ?? ?? ?? 8D 83 ?? ?? ??
+  ?? 31 FF 89 44 24 ??
+vtable_name: vgui2::PropertySheet
+vfunc_offset: '0x22c'
+vfunc_index: 139

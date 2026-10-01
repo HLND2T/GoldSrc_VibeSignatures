@@ -1,0 +1,9 @@
+func_name: vgui2::PropertySheet::EnablePage(char const*)
+func_va: '0x100b6020'
+func_rva: '0xb6020'
+func_size: '0x4d'
+func_sig: 55 8B EC 83 EC 44 53 56 57 51 8D 7D ?? B9 11 00 00 00 B8 CC CC CC CC F3 AB 59 89 4D ?? 8B F4 6A 01 8B 45 ?? 50 8B
+  4D ?? 8B 11 8B 4D ?? FF 92 ?? ?? ?? ?? 3B F4 E8 39 E0 01 00 5F 5E 5B 83 C4 44 3B EC E8 ?? ?? ?? ?? 8B E5 5D C2 04 00
+vtable_name: vgui2::PropertySheet
+vfunc_offset: '0x250'
+vfunc_index: 148

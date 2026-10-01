@@ -1,0 +1,8 @@
+func_name: vgui2::FocusNavGroup::GetCurrentFocus()
+func_va: '0x10ecb0'
+func_rva: '0x10ecb0'
+func_size: '0x69'
+func_sig: 83 EC ?? 89 5C 24 ?? 8B 5C 24 ?? 89 74 24 ?? 89 7C 24 ?? 89 6C 24 ?? 83 C3 ?? 89 1C 24 E8 ?? ?? ?? ?? 89 C2
+vtable_name: vgui2::FocusNavGroup
+vfunc_offset: '0x1c'
+vfunc_index: 7

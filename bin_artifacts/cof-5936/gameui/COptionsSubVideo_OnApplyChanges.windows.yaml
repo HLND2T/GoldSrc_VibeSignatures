@@ -1,0 +1,9 @@
+func_name: COptionsSubVideo::OnApplyChanges()
+func_va: '0x1005717d'
+func_rva: '0x5717d'
+func_size: '0x79'
+func_sig: 55 8B EC 83 EC 0C 89 4D ?? 8B 45 ?? 8B 88 ?? ?? ?? ?? E8 ?? ?? ?? ?? 25 FF 00 00 00 85 C0 75 ?? 8B 4D ?? 8B 89 ??
+  ?? ?? ??
+vtable_name: COptionsSubVideo
+vfunc_offset: '0x27c'
+vfunc_index: 159

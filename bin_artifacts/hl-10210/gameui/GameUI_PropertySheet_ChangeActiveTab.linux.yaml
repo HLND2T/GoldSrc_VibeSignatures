@@ -1,0 +1,9 @@
+func_name: vgui2::PropertySheet::ChangeActiveTab(int)
+func_va: '0x105c80'
+func_rva: '0x105c80'
+func_size: '0x5c0'
+func_sig: 55 57 56 53 83 EC ?? 8B 5C 24 ?? 8B 6C 24 ?? 85 DB 0F 88 ?? ?? ?? ?? 3B 5D ?? 0F 8D ?? ?? ?? ?? 8D 04 9D ?? ?? ??
+  ?? 89 C1
+vtable_name: vgui2::PropertySheet
+vfunc_offset: '0x258'
+vfunc_index: 150

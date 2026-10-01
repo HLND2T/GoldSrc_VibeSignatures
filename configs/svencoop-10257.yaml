@@ -22,8 +22,14 @@ modules:
         expected_output:
           - vgui2_EditablePanel_CreateControlByName.{platform}.yaml
       - name: find-vgui2_Panel_Init
+        expected_input:
+          - ../gameui/ISurface_SupportsFeature.{platform}.yaml
+          - ../gameui/IInput_GetAppModalSurface.{platform}.yaml
+          - ../gameui/ISchemeManager_ReloadSchemes.{platform}.yaml
         expected_output:
           - vgui2_Panel_Init.{platform}.yaml
+          - vgui2_Panel_SetProportional.{platform}.yaml
+          - vgui2_EditablePanel_m_NavGroup.{platform}.yaml
       - name: find-vgui2_Panel_vtable
         expected_output:
           - vgui2_Panel_vtable.{platform}.yaml
@@ -2427,6 +2433,14 @@ modules:
         category: gv
       - name: Draw_FillRGBABuf
         category: func
+      - name: vgui2::EditablePanel
+        category: struct
+      - name: vgui2_Panel_SetProportional
+        category: vfunc
+      - name: vgui2_EditablePanel_m_NavGroup
+        category: structmember
+        struct: vgui2::EditablePanel
+        member: m_NavGroup
   - name: client
     module_windows: client.dll
     module_linux: client.so
@@ -2940,6 +2954,10 @@ modules:
       - name: find-GameUI-private-symbols
         expected_input:
           - CGameConsoleDialog_ctor.{platform}.yaml
+          - COptionsSubAudio_ctor.{platform}.yaml
+          - COptionsSubMultiplayer_ctor.{platform}.yaml
+          - CBasePanel_ctor.{platform}.yaml
+          - COptionsSubVideo_ApplyVidSettings.{platform}.yaml
         expected_output:
           - GameUI_TabCatchingTextEntry_vtable.{platform}.yaml
           - GameUI_TabCatchingTextEntry_OnKeyCodeTyped.{platform}.yaml
@@ -2956,6 +2974,35 @@ modules:
           - GameUI_MessageBox_ApplySchemeSettings.{platform}.yaml
           - GameUI_Panel_SetSize.{platform}.yaml
           - GameUI_MessageBox_ApplySchemeSettings_to_Panel_SetSize_callsite_0.{platform}.yaml
+          - vgui2_Panel_SetProportional.{platform}.yaml
+          - GameUI_EditablePanel_m_NavGroup.{platform}.yaml
+          - GameUI_EditablePanel_GetFocusNavGroup.{platform}.yaml
+          - GameUI_FocusNavGroup_GetCurrentFocus.{platform}.yaml
+          - GameUI_PropertySheet_AddPage.{platform}.yaml
+          - GameUI_PropertySheet_SetActivePage.{platform}.yaml
+          - GameUI_PropertySheet_SetTabWidth.{platform}.yaml
+          - GameUI_PropertySheet_GetActivePage.{platform}.yaml
+          - GameUI_PropertySheet_ResetAllData.{platform}.yaml
+          - GameUI_PropertySheet_ApplyChanges.{platform}.yaml
+          - GameUI_PropertySheet_GetPage.{platform}.yaml
+          - GameUI_PropertySheet_DeletePage.{platform}.yaml
+          - GameUI_PropertySheet_GetActiveTab.{platform}.yaml
+          - GameUI_PropertySheet_GetActiveTabTitle.{platform}.yaml
+          - GameUI_PropertySheet_GetTabTitle.{platform}.yaml
+          - GameUI_PropertySheet_GetActivePageNum.{platform}.yaml
+          - GameUI_PropertySheet_GetNumPages.{platform}.yaml
+          - GameUI_PropertySheet_DisablePage.{platform}.yaml
+          - GameUI_PropertySheet_EnablePage.{platform}.yaml
+          - GameUI_PropertySheet_ChangeActiveTab.{platform}.yaml
+          - COptionsSubAudio_OnApplyChanges.{platform}.yaml
+          - COptionsSubMultiplayer_OnApplyChanges.{platform}.yaml
+          - CBasePanel_ApplySchemeSettings.{platform}.yaml
+          - GameUI_FocusNavGroup__currentFocus.{platform}.yaml
+          - GameUI_PropertySheet__activePage.{platform}.yaml
+          - ISurface_SupportsFeature.{platform}.yaml
+          - IInput_GetAppModalSurface.{platform}.yaml
+          - ISchemeManager_ReloadSchemes.{platform}.yaml
+          - COptionsSubVideo_OnApplyChanges.{platform}.yaml
       - name: find-CTaskbar_QuitConfirmationOwner
         expected_output:
           - CTaskbar_QuitConfirmationOwner.{platform}.yaml
@@ -3052,6 +3099,76 @@ modules:
         category: func
       - name: QueryBox_ctor
         category: func
+      - name: vgui2::EditablePanel
+        category: struct
+      - name: vgui2::FocusNavGroup
+        category: struct
+      - name: vgui2::PropertySheet
+        category: struct
+      - name: vgui2_Panel_SetProportional
+        category: vfunc
+      - name: GameUI_EditablePanel_m_NavGroup
+        category: structmember
+        struct: vgui2::EditablePanel
+        member: m_NavGroup
+      - name: GameUI_EditablePanel_GetFocusNavGroup
+        category: vfunc
+      - name: GameUI_FocusNavGroup_GetCurrentFocus
+        category: vfunc
+      - name: GameUI_PropertySheet_AddPage
+        category: vfunc
+      - name: GameUI_PropertySheet_SetActivePage
+        category: vfunc
+      - name: GameUI_PropertySheet_SetTabWidth
+        category: vfunc
+      - name: GameUI_PropertySheet_GetActivePage
+        category: vfunc
+      - name: GameUI_PropertySheet_ResetAllData
+        category: vfunc
+      - name: GameUI_PropertySheet_ApplyChanges
+        category: vfunc
+      - name: GameUI_PropertySheet_GetPage
+        category: vfunc
+      - name: GameUI_PropertySheet_DeletePage
+        category: vfunc
+      - name: GameUI_PropertySheet_GetActiveTab
+        category: vfunc
+      - name: GameUI_PropertySheet_GetActiveTabTitle
+        category: vfunc
+      - name: GameUI_PropertySheet_GetTabTitle
+        category: vfunc
+      - name: GameUI_PropertySheet_GetActivePageNum
+        category: vfunc
+      - name: GameUI_PropertySheet_GetNumPages
+        category: vfunc
+      - name: GameUI_PropertySheet_DisablePage
+        category: vfunc
+      - name: GameUI_PropertySheet_EnablePage
+        category: vfunc
+      - name: GameUI_PropertySheet_ChangeActiveTab
+        category: vfunc
+      - name: COptionsSubAudio_OnApplyChanges
+        category: vfunc
+      - name: COptionsSubMultiplayer_OnApplyChanges
+        category: vfunc
+      - name: CBasePanel_ApplySchemeSettings
+        category: vfunc
+      - name: GameUI_FocusNavGroup__currentFocus
+        category: structmember
+        struct: vgui2::FocusNavGroup
+        member: _currentFocus
+      - name: GameUI_PropertySheet__activePage
+        category: structmember
+        struct: vgui2::PropertySheet
+        member: _activePage
+      - name: ISurface_SupportsFeature
+        category: vfunc
+      - name: IInput_GetAppModalSurface
+        category: vfunc
+      - name: ISchemeManager_ReloadSchemes
+        category: vfunc
+      - name: COptionsSubVideo_OnApplyChanges
+        category: vfunc
   - name: server
     module_windows: server.dll
     module_linux: server.so
@@ -3066,8 +3183,14 @@ modules:
     depot_linux: platform/servers/serverbrowser_linux.so
     skills:
       - name: find-vgui2_Panel_Init
+        expected_input:
+          - ../gameui/ISurface_SupportsFeature.{platform}.yaml
+          - ../gameui/IInput_GetAppModalSurface.{platform}.yaml
+          - ../gameui/ISchemeManager_ReloadSchemes.{platform}.yaml
         expected_output:
           - vgui2_Panel_Init.{platform}.yaml
+          - vgui2_Panel_SetProportional.{platform}.yaml
+          - vgui2_EditablePanel_m_NavGroup.{platform}.yaml
       - name: find-client-vgui-keyvalues
         expected_output:
           - KeyValues_vtable.{platform}.yaml
@@ -3079,3 +3202,11 @@ modules:
         category: vtable
       - name: KeyValues_LoadFromFile
         category: vfunc
+      - name: vgui2::EditablePanel
+        category: struct
+      - name: vgui2_Panel_SetProportional
+        category: vfunc
+      - name: vgui2_EditablePanel_m_NavGroup
+        category: structmember
+        struct: vgui2::EditablePanel
+        member: m_NavGroup

@@ -1,0 +1,9 @@
+func_name: vgui2::PropertySheet::GetActivePageNum()
+func_va: '0x10078350'
+func_rva: '0x78350'
+func_size: '0x36'
+func_sig: 56 8B 71 ?? 33 C0 57 85 F6 7E ?? 8B B9 ?? ?? ?? ?? 85 C0 7C ?? 3B 41 ?? 7D ?? 8B 91 ?? ?? ?? ?? 8B 14 82 EB ?? 33
+  D2
+vtable_name: vgui2::PropertySheet
+vfunc_offset: '0x244'
+vfunc_index: 145
