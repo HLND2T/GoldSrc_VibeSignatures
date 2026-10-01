@@ -357,6 +357,18 @@ def stack_check_preserves_registers(instructions):
     )
 
 
+def message_callback_constants(owner, labels):
+    """Collect callback candidates tied to a current message construction/call."""
+    stores = owner.get("flow", {}).get("stores", [])
+    blocks = {s["block"] for s in stores if s.get("block") is not None and s["value"] in labels}
+    callbacks = {s["value"] for s in stores if s.get("block") in blocks and s["value"] and s["value"][0] == "const"}
+    for call in method_calls(owner):
+        arguments = call["args"] + call["stack_args"]
+        if any(contains_value(arguments, label) for label in labels):
+            callbacks.update(v for v in arguments if isinstance(v, tuple) and v[0] == "const")
+    return callbacks
+
+
 def recover_setfocus_slot(data):
     slots = []
     labels = {("const", a) for a in data["literals"]["SetFocus"]["addresses"]}
@@ -364,15 +376,13 @@ def recover_setfocus_slot(data):
         owner = data["functions"][str(address)]
         stores = owner.get("flow", {}).get("stores", [])
         names = [s for s in stores if s["value"] in labels]
-        callbacks = []
+        callbacks = message_callback_constants(owner, labels) if data["platform"] == "windows" else set()
         # A registration is tied to its name by the same construction block,
         # or by arguments of the explicit AddToMap call. No byte window/field
         # position from another SDK is used.
         for name in names:
             record = [s for s in stores if s.get("block") == name.get("block")]
-            if data["platform"] == "windows":
-                callbacks.extend(s["value"] for s in record if s["value"] and s["value"][0] == "const")
-            else:
+            if data["platform"] == "linux":
                 candidates = []
                 for pfn in record:
                     value, pointer = pfn["value"], pfn["address"]
@@ -391,12 +401,7 @@ def recover_setfocus_slot(data):
                         candidates.append(index)
                 slots.append(sole(set(candidates), "SetFocus record virtual member"))
         for call in method_calls(owner):
-            if data["platform"] == "windows":
-                if any(contains_value(call["args"] + call["stack_args"], label) for label in labels):
-                    callbacks.extend(
-                        v for v in call["args"] + call["stack_args"] if isinstance(v, tuple) and v[0] == "const"
-                    )
-            elif call["direct"] and call["registers"]["eax"] in labels:
+            if data["platform"] == "linux" and call["direct"] and call["registers"]["eax"] in labels:
                 helper = data["functions"][str(call["direct"])]
                 if "Panel" not in {s[2] for s in helper.get("strings", [])}:
                     raise ValueError("SetFocus helper has no Panel map identity")

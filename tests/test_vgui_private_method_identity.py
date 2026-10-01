@@ -6,6 +6,7 @@ import unittest
 from ida_preprocessor_scripts._vgui_private_method_identity import (
     expand_leaf_returns,
     itanium_virtual_member_slot,
+    message_callback_constants,
     recover_factory_parent,
     recover_frame_focus,
     recover_private_methods,
@@ -343,6 +344,21 @@ def frame_focus_fixture():
 
 
 class StageIdentityTests(unittest.TestCase):
+    def test_callback_candidates_require_the_message_construction_block_or_call(self):
+        label = ("const", 0xA000)
+        owner = chain_method(
+            None,
+            0x9000,
+            stores=[
+                dict(block=1, address=("stack", -160), value=label),
+                dict(block=1, address=("stack", -44), value=("const", 0x8000)),
+                dict(block=2, address=("stack", -44), value=("const", 0x8100)),
+                dict(address=("stack", -44), value=("const", 0x8200)),
+            ],
+            calls=[call(20, THIS, label, ("const", 0x8300), direct=0x8400)],
+        )
+        self.assertEqual({label, ("const", 0x8000), ("const", 0x8300)}, message_callback_constants(owner, {label}))
+
     def test_frame_and_message_chains_agree_on_moved_slots_and_distinct_member_offsets(self):
         data, getvpanel = frame_focus_fixture()
         found = recover_frame_focus(data, getvpanel)

@@ -112,16 +112,20 @@ for cls, table in values['tables'].items():
         selected.add(address)
         roles.setdefault(address, []).append((cls, int(index)))
 
-# A verified current RTTI entry may point at unowned code in early IDBs.
-# Materialize that entry without replacing/splitting any existing function.
-for ea in selected:
+def materialize_entry(ea):
+    # Current RTTI entries and registered callbacks can be decoded code without
+    # a function object in warm IDBs. Never replace/split an existing function.
     segment = ida_segment.getseg(ea)
-    if (ida_funcs.get_func(ea) is None and roles.get(ea) and is_code_address(ea)
+    if (ida_funcs.get_func(ea) is None and is_code_address(ea)
             and segment.type != ida_segment.SEG_XTRN
             and (values['platform'] == 'windows' or ida_segment.get_segm_name(segment) == '.text')
             and ida_bytes.is_code(ida_bytes.get_full_flags(ea))):
         if not ida_funcs.add_func(ea):
-            raise ValueError('could not materialize RTTI entry ' + hex(ea))
+            raise ValueError('could not materialize current entry ' + hex(ea))
+
+for ea in selected:
+    if roles.get(ea):
+        materialize_entry(ea)
 ida_auto.auto_wait()
 
 preserved = set()
@@ -200,7 +204,16 @@ for f in list(functions.values()):
         value = store['value']
         if isinstance(value,tuple) and value[0] == 'const' and is_code_address(value[1]):
             extra.add(value[1])
-for ea in sorted(extra-selected):
+callbacks = set()
+if values['platform'] == 'windows':
+    labels = {('const',ea) for ea in literals['SetFocus']['addresses']}
+    for owner in roots['setfocus_all']:
+        callbacks.update(value[1] for value in message_callback_constants(functions[str(owner)],labels)
+                         if is_code_address(value[1]))
+    for ea in callbacks:
+        materialize_entry(ea)
+    ida_auto.auto_wait()
+for ea in sorted((extra | callbacks)-selected):
     functions[str(ea)] = safe_describe(ea)
 data = dict(platform=values['platform'], tables=values['tables'], literals=literals, roots=roots, functions=functions)
 factory = recover_factory_parent(data)

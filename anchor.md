@@ -399,6 +399,16 @@ uv run python tests/run_test_suite.py repository-contract -b --durations 30
 
 `uv run python format_repo_files.py --check` 退出 0（635 files already formatted，29 YAML unchanged）；Git whitespace check 退出 0。配置/依赖独立核验为 21/21 通过；第二个识别逻辑核验代理因运行错误未返回结论，关键逻辑改由主会话复核。
 
+### PR #317：CI warm-IDB 回归修复
+
+[首次 CI job](https://github.com/HLND2T/GoldSrc_VibeSignatures/actions/runs/36827440899/job/110259340618?pr=317) 在 `svencoop-8948 / engine / Windows` 的 SetFocus callback 身份处失败（1 个失败，后续 45 个节点未执行；此前 465 个成功）。本地已补充分析的 IDB 未暴露这个问题。
+
+用与 CI 缓存选择清单 SHA-256 一致的 hw.dll，在隔离目录仅运行仓库 warmup 自动分析，再通过 owned strict/no-save probe 复现：当前注册里的 callback 已是 decoded code，但没有 IDA function object，所以原 collector 的 `describe` 没有采集其 flow。没有把数据库状态差异当成目标不存在。
+
+修复将当前 SetFocus construction block / explicit registration call 的 callback 常量提取为共享 helper；对其中映射到已解码、未归属 code entry 的地址补建函数元数据。已有函数不拆分、不替换。随后仍验证实际 this 接收者、单个虚调用和当前 Panel/EditablePanel 表及 NavGroup 关系；没有加入 RVA、槽位、字节模式或缓存状态分支。
+
+修复后在同一份隔离 warm-IDB 恢复 SetFocus slot，并用生产 analyzer 按 CI 的前置顺序执行 7 个节点：批次 `analysis-batch-20261001T160819-5d9db5dbe13e40e384b7431bc9c25977`，**7 succeeded / 0 failed / 0 skipped**，artifacts 无内容差异。新增行为测试排除其他 construction block 和缺少 block 身份的 callback 候选；当前 unit **1320 项 OK（5 skipped）**，repository-contract **15 项 OK**，formatter / whitespace check 退出 0。修复推送后继续核对完整矩阵和 GitHub CI；后续状态在 PR 中报告。
+
 ## 附录 A：62 份输入身份与 SetProportional 结果
 
 每行均有一个通过状态写入/递归/布局失效条件的 Panel 候选。表 RVA 是 primary address point 的 RVA。`VA = image base + RVA`。
