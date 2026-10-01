@@ -126,6 +126,41 @@ def callee_stack_purge(start):
         raise ValueError('callee stack cleanup is unsupported')
     return purge
 
+def stack_check_helpers(functions, verify, checked=None, preserved=None):
+    # Collect only helpers whose current normal/trap paths preserve registers.
+    checked = set() if checked is None else checked
+    preserved = set() if preserved is None else preserved
+    for ea in functions:
+        for site in idautils.FuncItems(ea):
+            target = local_call_target(site) if idc.print_insn_mnem(site) == 'call' else None
+            if not target or target in checked:
+                continue
+            checked.add(target)
+            items = list(idautils.FuncItems(target))
+            mnemonics = [idc.print_insn_mnem(p) for p in items]
+            if not (len(items) >= 3 and mnemonics[:2] == ['jnz', 'retn']
+                    and mnemonics[-1] == 'retn' and 'int' in mnemonics):
+                continue
+            instructions = []
+            for p in items:
+                insn = idautils.DecodeInstruction(p)
+                m = idc.print_insn_mnem(p)
+                item = dict(ea=int(p), mnemonic=m)
+                if m in ('push', 'pop') and int(insn.ops[0].type) == idaapi.o_reg:
+                    item['register'] = reg4(insn.ops[0])
+                if m == 'int' and int(insn.ops[0].type) == idaapi.o_imm:
+                    item['trap'] = int(insn.ops[0].value)
+                elif m == 'int' and ida_bytes.get_byte(p) == 0xCC:
+                    item['trap'] = 3
+                if m in ('jnz', 'jne'):
+                    item['branch'] = int(insn.ops[0].addr)
+                if m in ('ret', 'retn'):
+                    item['purge'] = int(insn.ops[0].value) if int(insn.ops[0].type) == idaapi.o_imm else 0
+                instructions.append(item)
+            if verify(instructions):
+                preserved.add(target)
+    return preserved
+
 def reachable(graph, start):
     visited, pending = set(), [start]
     while pending:

@@ -25,7 +25,7 @@ from ida_analyze_util import (
     write_patch_yaml,
 )
 
-LOCATE_PY = (
+CALLSITE_SUPPORT_PY = (
     ELF_RESOLVER_PY
     + r"""
 import ida_bytes
@@ -39,8 +39,6 @@ import idc
 import json
 import traceback
 
-OWNER_EA = OWNER_EA_PLACEHOLDER
-CALLEE_EA = CALLEE_EA_PLACEHOLDER
 MIN_SIG_BYTES = 6
 MAX_SIG_BYTES = 96
 MAX_INSTRUCTIONS = 64
@@ -190,6 +188,14 @@ def is_direct_rel32_branch(ea):
     return bool(raw) and raw[0] in (0xE8, 0xE9)
 
 globals().update(locals())
+"""
+)
+
+LOCATE_PY = (
+    CALLSITE_SUPPORT_PY
+    + r"""
+OWNER_EA = OWNER_EA_PLACEHOLDER
+CALLEE_EA = CALLEE_EA_PLACEHOLDER
 
 try:
     if idaapi.inf_is_64bit():
@@ -243,6 +249,29 @@ except Exception as exc:
     result = json.dumps({'error': str(exc), 'trace': traceback.format_exc()})
 """
 )
+
+
+async def generate_callsite_signatures(session, addresses):
+    """Sign already proven direct CALL sites without rediscovering their identity."""
+    addresses = sorted(set(int(ea) for ea in addresses))
+    code = (
+        CALLSITE_SUPPORT_PY
+        + "\nADDRESSES = "
+        + repr(addresses)
+        + r"""
+rows = []
+for ea in ADDRESSES:
+    if not is_direct_rel32_branch(ea) or ida_bytes.get_byte(ea) != 0xE8:
+        raise ValueError('expected a direct CALL at %x' % ea)
+    generated, error = generate_patch_sig(ea)
+    if error:
+        raise ValueError('%x: %s' % (ea, error))
+    rows.append(dict(ea=ea, **generated))
+result = json.dumps(dict(sites=rows))
+"""
+    )
+    payload = parse_mcp_result(await session.call_tool("py_eval", {"code": code}))
+    return payload if isinstance(payload, dict) and "sites" in payload else None
 
 
 def _function_artifact_path(new_binary_dir, platform, func_name):

@@ -5,6 +5,11 @@ modules:
     depot_windows: czero/cl_dlls/client.dll
     depot_linux: czero/cl_dlls/client.so
     skills:
+      - name: find-vgui2_Panel-size-callsites
+        expected_input:
+          - ClientVGUI_Panel_Init.{platform}.yaml
+        expected_output:
+          - vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0.{platform}.yaml
       - name: find-client-viewport-singleton
         expected_output:
           - __g_CounterStrikeViewport_singleton.{platform}.yaml
@@ -113,6 +118,8 @@ modules:
           - CCSBackGroundPanel_YOffset.{platform}.yaml
           - ISurface_GetScreenSize.{platform}.yaml
     symbols:
+      - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0
+        category: patch
       - name: __g_CounterStrikeViewport_singleton
         category: gv
         artifact: __g_CounterStrikeViewport_singleton.{platform}.yaml

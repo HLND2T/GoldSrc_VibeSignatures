@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetSize_Const_callsite_10
+patch_va: '0x1a243c'
+patch_rva: '0x1a243c'
+patch_sig: E8 5F 7E FD FF 8B 83 ?? ?? ?? ??
+patch_sig_disp: '0x0'

@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetMinimumSize_Const_callsite_5
+patch_va: '0x15a918'
+patch_rva: '0x15a918'
+patch_sig: E8 93 3D FD FF B8 ?? ?? ?? ??
+patch_sig_disp: '0x0'
