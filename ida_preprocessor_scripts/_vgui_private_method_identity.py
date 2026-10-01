@@ -357,66 +357,123 @@ def stack_check_preserves_registers(instructions):
     )
 
 
-def message_callback_constants(owner, labels):
-    """Collect callback candidates tied to a current message construction/call."""
-    stores = owner.get("flow", {}).get("stores", [])
-    blocks = {s["block"] for s in stores if s.get("block") is not None and s["value"] in labels}
-    callbacks = {s["value"] for s in stores if s.get("block") in blocks and s["value"] and s["value"][0] == "const"}
-    for call in method_calls(owner):
-        arguments = call["args"] + call["stack_args"]
-        if any(contains_value(arguments, label) for label in labels):
-            callbacks.update(v for v in arguments if isinstance(v, tuple) and v[0] == "const")
-    return callbacks
+def map_storage_owned(value, roots, stored_values=(), project_result=lambda value: None, seen=()):
+    """Require every possible destination to originate in proven array storage.
+
+    Roots are the array loads recovered from dispatch, not the map object.
+    Stored values must have been written to those exact array fields.
+    """
+    if value is None or value in seen or value[0] == "const":
+        return False
+    if value in roots or any(value in (stored[1:] if stored[0] == "choice" else (stored,)) for stored in stored_values):
+        return True
+    seen = (*seen, value)
+    if value[0] == "choice":
+        return all(map_storage_owned(v, roots, stored_values, project_result, seen) for v in value[1:])
+    if value[0] in ("indexed", "address"):
+        return map_storage_owned(value[1], roots, stored_values, project_result, seen)
+    if value[0] == "result":
+        return map_storage_owned(project_result(value), roots, stored_values, project_result, seen)
+    return False
+
+
+def message_dispatch_layout(method):
+    """Derive the callback/count fields from the dispatcher's zero-argument arm."""
+    flow = method["flow"]
+    graph = {int(k): v for k, v in flow["blocks"].items()}
+
+    def reachable(start, stop):
+        visited, pending = set(), [start]
+        while pending:
+            node = pending.pop()
+            if node not in visited and node != stop:
+                visited.add(node)
+                pending.extend(graph.get(node, ()))
+        return visited
+
+    def variants(value):
+        return value[1:] if isinstance(value, tuple) and value[0] == "choice" else (value,)
+
+    layouts = set()
+    record_bases = {}
+    for branch in flow["branches"]:
+        condition = branch["condition"]
+        if not all(isinstance(v, tuple) and v[0] == "load" for v in variants(condition)):
+            continue
+        if not all(
+            any(c["values"] == [condition, ("const", n)] for c in flow["comparisons"])
+            or any(
+                set(variants(b["condition"])) == {("address", v, -n) for v in variants(condition)}
+                for b in flow["branches"]
+            )
+            for n in (1, 2)
+        ):
+            continue
+        counts = {
+            s["field_offset"] for s in flow["loads"] if s["value"] == condition and s.get("field_offset") is not None
+        }
+        if len(counts) != 1:
+            continue
+        count = next(iter(counts))
+        zero_arm = reachable(branch["zero"], branch["block"]) - reachable(branch["nonzero"], branch["block"])
+        used = [c["target"] for c in flow["calls"] if c["block"] in zero_arm and not c["direct"]]
+        # Itanium tests the low pfn bit before choosing direct/virtual dispatch.
+        used += [
+            c["values"][0][1] if c["values"][0] and c["values"][0][0] == "narrow" else c["values"][0]
+            for c in flow["comparisons"]
+            if c["block"] in zero_arm and c["values"][1] == ("const", 1)
+        ]
+        for load in flow["loads"]:
+            if load["value"] not in used:
+                continue
+            for value in variants(load["value"]):
+                if not isinstance(value, tuple) or value[0] != "load":
+                    continue
+                for num in variants(condition):
+                    if value[1] != num[1]:
+                        continue
+                    offset = count + value[2] - num[2]
+                    expected = {(v[0], v[1], v[2] + offset - count) for v in variants(condition)}
+                    if 0 < offset < count and set(variants(load["value"])) == expected:
+                        layouts.add((offset, count))
+                        record_bases.setdefault((offset, count), set()).update(v[1] for v in variants(condition))
+    callback, count = sole(layouts, "message dispatcher callback/count layout")
+    return dict(callback=callback, count=count, record_bases=tuple(sorted(record_bases[(callback, count)], key=repr)))
 
 
 def recover_setfocus_slot(data):
+    records = data.get("message_records", [])
+    roots = set(data["roots"]["setfocus_all"])
+    if not records or {record["root"] for record in records} != roots:
+        raise ValueError("SetFocus has no complete Panel-map registration evidence")
     slots = []
     labels = {("const", a) for a in data["literals"]["SetFocus"]["addresses"]}
-    for address in data["roots"]["setfocus_all"]:
-        owner = data["functions"][str(address)]
-        stores = owner.get("flow", {}).get("stores", [])
-        names = [s for s in stores if s["value"] in labels]
-        callbacks = message_callback_constants(owner, labels) if data["platform"] == "windows" else set()
-        # A registration is tied to its name by the same construction block,
-        # or by arguments of the explicit AddToMap call. No byte window/field
-        # position from another SDK is used.
-        for name in names:
-            record = [s for s in stores if s.get("block") == name.get("block")]
-            if data["platform"] == "linux":
-                candidates = []
-                for pfn in record:
-                    value, pointer = pfn["value"], pfn["address"]
-                    if not value or value[0] != "const" or not pointer or pointer[0] not in ("stack", "const"):
-                        continue
-                    deltas = [
-                        s for s in record if s["address"] == (pointer[0], pointer[1] + 4) and s["value"] == ("const", 0)
-                    ]
-                    if not deltas:
-                        continue
-                    try:
-                        index = itanium_virtual_member_slot(value[1], 0)
-                    except ValueError:
-                        continue
-                    if str(index) in data["tables"]["vgui2::Panel"]["vtable_entries"]:
-                        candidates.append(index)
-                slots.append(sole(set(candidates), "SetFocus record virtual member"))
-        for call in method_calls(owner):
-            if data["platform"] == "linux" and call["direct"] and call["registers"]["eax"] in labels:
-                helper = data["functions"][str(call["direct"])]
-                if "Panel" not in {s[2] for s in helper.get("strings", [])}:
-                    raise ValueError("SetFocus helper has no Panel map identity")
-                pfn, delta = call["registers"]["edx"], call["registers"]["ecx"]
-                if not pfn or pfn[0] != "const" or delta != ("const", 0):
-                    raise ValueError("unsupported SetFocus regparm arguments")
-                slots.append(itanium_virtual_member_slot(pfn[1], delta[1]))
-        if data["platform"] == "windows":
-            matches = set()
-            for callback in callbacks:
-                body = data["functions"].get(str(callback[1]), {})
-                calls = method_calls(body)
-                if len(calls) == 1 and (dispatch := virtual_dispatch(calls[0])) and dispatch[0] == THIS:
-                    matches.add(dispatch[1])
-            slots.append(sole(matches, "SetFocus callback thunk"))
+    for record in records:
+        fields = {int(k): v for k, v in record["fields"].items()}
+        callback, count = record["layout"]["callback"], record["layout"]["count"]
+        if (
+            fields.get(0) not in labels
+            or record["size"] < count + 4
+            or fields.get(count) != ("const", 0)
+            or not 0 < callback < count
+            or callback % 4
+            or count % 4
+            or any(fields.get(offset) != ("const", 0) for offset in range(callback + 4, count, 4))
+        ):
+            raise ValueError("SetFocus record name, parameter count or member-pointer adjustment is invalid")
+        pfn = fields.get(callback)
+        if not pfn or pfn[0] != "const":
+            raise ValueError("SetFocus record has no bound callback")
+        if data["platform"] == "linux":
+            index = itanium_virtual_member_slot(pfn[1], fields.get(callback + 4, (None, None))[1])
+        else:
+            calls = method_calls(data["functions"].get(str(pfn[1]), {}))
+            if len(calls) != 1 or not (dispatch := virtual_dispatch(calls[0])) or dispatch[0] != THIS:
+                raise ValueError("SetFocus callback thunk does not dispatch the original receiver")
+            index = dispatch[1]
+        if str(index) not in data["tables"]["vgui2::Panel"]["vtable_entries"]:
+            raise ValueError("SetFocus record virtual member is absent from the current Panel table")
+        slots.append(index)
     return sole(set(slots), "SetFocus registration agreement")
 
 
@@ -757,6 +814,31 @@ def recover_property_sheet(data, active_page, perform_index):
         ):
             widths.append(method)
     found["SetTabWidth"] = sole(widths, "tab width store and layout invalidation")
+
+    def returns_indexed_page(method):
+        values = set()
+
+        def collect(value):
+            if isinstance(value, tuple) and value[0] == "choice":
+                for part in value[1:]:
+                    collect(part)
+            else:
+                values.add(value)
+
+        for returned in method["flow"]["returns"]:
+            collect(returned["value"])
+        values.discard(("const", 0))
+        # A null bounds-check path is valid, but cannot prove the page getter.
+        # The array storage is independently used by both page-message loops;
+        # neither the storage/count spacing nor the slot is a layout constant.
+        if len(values) != 1:
+            return False
+        element = next(iter(values))
+        return any(
+            element == ("load", ("indexed", ("load", THIS, storage), ("arg", 1), 4), 0)
+            for storage in shared_pages - {page_count, active_page, active_tab}
+        )
+
     found["GetPage"] = sole(
         [
             m
@@ -767,6 +849,7 @@ def recover_property_sheet(data, active_page, perform_index):
             and not owned_labels(m)
             and not uses_argument(m, 2)
             and not any(s["address"] and s["address"][0] != "stack" for s in m["flow"]["stores"])
+            and returns_indexed_page(m)
         ],
         "indexed page return with bounds",
     )

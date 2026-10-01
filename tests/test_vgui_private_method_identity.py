@@ -6,7 +6,8 @@ import unittest
 from ida_preprocessor_scripts._vgui_private_method_identity import (
     expand_leaf_returns,
     itanium_virtual_member_slot,
-    message_callback_constants,
+    map_storage_owned,
+    message_dispatch_layout,
     recover_factory_parent,
     recover_frame_focus,
     recover_private_methods,
@@ -242,8 +243,8 @@ def sheet_fixture():
 
     add("AddPage", 31, labels=("tab", "ResetData"), loads=[load(width), load(count)])
     add("ChangeActiveTab", 7, labels=("PageHide", "PageShow", "PageChanged"), stores=[store(page), store(tab)])
-    add("ResetAllData", 25, labels=("ResetData",), loads=[load(count)])
-    add("ApplyChanges", 18, labels=("ApplyChanges",), loads=[load(count)])
+    add("ResetAllData", 25, labels=("ResetData",), loads=[load(count), load(0xE0)])
+    add("ApplyChanges", 18, labels=("ApplyChanges",), loads=[load(count), load(0xE0)])
     for name, index, offset in (("GetActivePage", 22, page), ("GetActiveTab", 16, tab), ("GetNumPages", 29, count)):
         add(name, index, returns=[dict(value=("load", THIS, offset))])
     add("GetActiveTabTitle", 11, calls=[call(100, ("load", THIS, tab), KEY, ("arg", 2), slot=400)])
@@ -339,25 +340,40 @@ def frame_focus_fixture():
         functions={str(m["ea"]): m for m in methods},
         roots={"stage2": [frame["ea"]], "setfocus_all": [owner["ea"]]},
         literals={"SetFocus": dict(addresses=[0xA000])},
+        message_records=[
+            dict(
+                root=owner["ea"],
+                layout=dict(callback=16, count=32),
+                size=64,
+                fields={
+                    0: ("const", 0xA000),
+                    16: ("const", wrapper["ea"]),
+                    20: ("const", 0),
+                    24: ("const", 0),
+                    28: ("const", 0),
+                    32: ("const", 0),
+                },
+            )
+        ],
     )
     return data, getvpanel
 
 
 class StageIdentityTests(unittest.TestCase):
-    def test_callback_candidates_require_the_message_construction_block_or_call(self):
-        label = ("const", 0xA000)
-        owner = chain_method(
-            None,
-            0x9000,
-            stores=[
-                dict(block=1, address=("stack", -160), value=label),
-                dict(block=1, address=("stack", -44), value=("const", 0x8000)),
-                dict(block=2, address=("stack", -44), value=("const", 0x8100)),
-                dict(address=("stack", -44), value=("const", 0x8200)),
-            ],
-            calls=[call(20, THIS, label, ("const", 0x8300), direct=0x8400)],
-        )
-        self.assertEqual({label, ("const", 0x8000), ("const", 0x8300)}, message_callback_constants(owner, {label}))
+    def test_message_copy_rejects_another_map_unknown_destination_and_scalar_stores(self):
+        panel = ("result", 10)
+        storage = ("load", panel, 0x24)
+        element = ("indexed", storage, None, 1)
+        self.assertTrue(map_storage_owned(element, {storage}))
+        self.assertFalse(map_storage_owned(element, {("load", ("result", 11), 0x24)}))
+        self.assertFalse(map_storage_owned(("choice", element, None), {storage}))
+        self.assertFalse(map_storage_owned(("const", 0), {storage}, {("const", 0)}))
+        self.assertTrue(map_storage_owned(("result", 20), {storage}, project_result=lambda _: element))
+        self.assertFalse(map_storage_owned(("result", 20), {storage}, project_result=lambda v: v))
+        grown = ("choice", ("result", 30), ("result", 31))
+        self.assertTrue(map_storage_owned(("choice", storage, *grown[1:]), {storage}, {grown}))
+        self.assertFalse(map_storage_owned(("load", panel, 0x28), {storage}))
+        self.assertFalse(map_storage_owned(("load", element, 4), {storage}))
 
     def test_frame_and_message_chains_agree_on_moved_slots_and_distinct_member_offsets(self):
         data, getvpanel = frame_focus_fixture()
@@ -421,6 +437,15 @@ class StageIdentityTests(unittest.TestCase):
             functions={str(f["ea"]): f for f in (wrapper, owner)},
             roots={"setfocus_all": [owner["ea"]]},
             literals={"SetFocus": dict(addresses=[0xA000])},
+            tables={"vgui2::Panel": dict(vtable_entries={"37": "0xB000"})},
+            message_records=[
+                dict(
+                    root=owner["ea"],
+                    layout=dict(callback=28, count=36),
+                    size=48,
+                    fields={0: ("const", 0xA000), 28: ("const", 0x8000), 32: ("const", 0), 36: ("const", 0)},
+                )
+            ],
         )
         self.assertEqual(37, recover_setfocus_slot(data))
         wrapper["flow"]["calls"][0] = call(10, KEY, slot=148)
@@ -443,10 +468,18 @@ class StageIdentityTests(unittest.TestCase):
             roots={"setfocus_all": [owner["ea"]]},
             literals={"SetFocus": dict(addresses=[0xA000])},
             tables={"vgui2::Panel": dict(vtable_entries={"37": "0xB000"})},
+            message_records=[
+                dict(
+                    root=owner["ea"],
+                    layout=dict(callback=28, count=36),
+                    size=48,
+                    fields={0: ("const", 0xA000), 28: ("const", 149), 32: ("const", 0), 36: ("const", 0)},
+                )
+            ],
         )
         self.assertEqual(37, recover_setfocus_slot(data))
-        owner["flow"]["stores"][-1]["value"] = ("const", 4)
-        with self.assertRaisesRegex(ValueError, "record virtual member"):
+        data["message_records"][0]["fields"][32] = ("const", 4)
+        with self.assertRaisesRegex(ValueError, "adjustment"):
             recover_setfocus_slot(data)
 
     def test_factory_tracks_created_receiver_through_parent_overload(self):
@@ -498,6 +531,86 @@ class StageIdentityTests(unittest.TestCase):
         data["tables"]["vgui2::PropertySheet"]["vtable_entries"]["55"] = hex(duplicate["ea"])
         with self.assertRaisesRegex(ValueError, "ResetAllData"):
             recover_property_sheet(data, page, 39)
+
+    def test_page_getter_requires_returned_element_from_the_shared_pages_container(self):
+        for failure in ("null_only", "unknown", "wrong_container", "wrong_index", "wrong_stride", "address_only"):
+            with self.subTest(failure=failure):
+                data, methods, page = sheet_fixture()
+                value = methods["GetPage"]["flow"]["returns"][0]["value"]
+                if failure == "null_only":
+                    value = ("const", 0)
+                elif failure == "unknown":
+                    value = None
+                elif failure == "wrong_container":
+                    value = ("load", ("indexed", ("load", THIS, 0xF0), KEY, 4), 0)
+                elif failure == "wrong_index":
+                    value = ("load", ("indexed", ("load", THIS, 0xE0), ("const", 1), 4), 0)
+                elif failure == "wrong_stride":
+                    value = ("load", ("indexed", ("load", THIS, 0xE0), KEY, 8), 0)
+                else:
+                    value = value[1]
+                methods["GetPage"]["flow"]["returns"][0]["value"] = value
+                with self.assertRaisesRegex(ValueError, "indexed page return"):
+                    recover_property_sheet(data, page, 39)
+
+    def test_page_getter_accepts_null_branch_and_proven_out_of_line_indexed_return(self):
+        data, methods, page = sheet_fixture()
+        getter = methods["GetPage"]
+        helper = chain_method(
+            None,
+            0x90000,
+            returns=[dict(value=("load", ("indexed", ("load", THIS, 0x20), KEY, 4), 0))],
+        )
+        data["functions"][str(helper["ea"])] = helper
+        getter["flow"]["calls"] = [call(110, ("address", THIS, 0xC0), KEY, direct=helper["ea"])]
+        getter["flow"]["returns"] = [dict(value=("choice", ("const", 0), ("result", 110)))]
+        found = recover_property_sheet(data, page, 39)
+        self.assertEqual(getter["ea"], found["GetPage"]["ea"])
+
+    def test_setfocus_rejects_unbound_callback_even_in_the_message_block(self):
+        data, getvpanel = frame_focus_fixture()
+        data["functions"][str(0x5700)]["flow"]["stores"][1]["address"] = ("stack", -4096)
+        data["message_records"] = []
+        with self.assertRaises(ValueError):
+            recover_frame_focus(data, getvpanel)
+
+    def test_setfocus_requires_name_callback_count_and_adjustment_in_the_consumed_record(self):
+        for failure in ("name", "callback", "count", "adjustment", "short_copy", "uncovered_root"):
+            with self.subTest(failure=failure):
+                data, getvpanel = frame_focus_fixture()
+                record = data["message_records"][0]
+                if failure == "name":
+                    record["fields"][0] = ("const", 0xA100)
+                elif failure == "callback":
+                    record["fields"][4096] = record["fields"].pop(16)
+                elif failure == "count":
+                    record["fields"][32] = ("const", 1)
+                elif failure == "adjustment":
+                    record["fields"][20] = ("const", 4)
+                elif failure == "short_copy":
+                    record["size"] = 32
+                else:
+                    data["roots"]["setfocus_all"].append(0x6000)
+                with self.assertRaises(ValueError):
+                    recover_frame_focus(data, getvpanel)
+
+    def test_dispatch_layout_uses_zero_argument_callback_not_reference_offsets(self):
+        entry = ("result", 10)
+        count = ("load", entry, 52)
+        callback = ("load", entry, 36)
+        method = dict(
+            flow=dict(
+                blocks={1: [2, 3], 2: [4], 3: [4], 4: []},
+                branches=[dict(block=1, condition=count, zero=2, nonzero=3)],
+                comparisons=[dict(block=1, values=[count, ("const", i)]) for i in (1, 2)],
+                loads=[dict(value=count, field_offset=52), dict(value=callback, field_offset=36)],
+                calls=[dict(block=2, target=callback, direct=None)],
+            )
+        )
+        self.assertEqual(dict(callback=36, count=52, record_bases=(entry,)), message_dispatch_layout(method))
+        method["flow"]["calls"][0]["block"] = 3
+        with self.assertRaisesRegex(ValueError, "dispatcher"):
+            message_dispatch_layout(method)
 
     def test_leaf_helper_rebases_member_and_preserves_unknown_or_side_effecting_results(self):
         helper = chain_method(0, 0x8000, returns=[dict(value=("load", THIS, 12))])

@@ -409,6 +409,20 @@ uv run python tests/run_test_suite.py repository-contract -b --durations 30
 
 修复后在同一份隔离 warm-IDB 恢复 SetFocus slot，并用生产 analyzer 按 CI 的前置顺序执行 7 个节点：批次 `analysis-batch-20261001T160819-5d9db5dbe13e40e384b7431bc9c25977`，**7 succeeded / 0 failed / 0 skipped**，artifacts 无内容差异。新增行为测试排除其他 construction block 和缺少 block 身份的 callback 候选；当前 unit **1320 项 OK（5 skipped）**，repository-contract **15 项 OK**，formatter / whitespace check 退出 0。修复推送后继续核对完整矩阵和 GitHub CI；后续状态在 PR 中报告。
 
+### PR #317 review：绑定实际注册记录与 GetPage 返回值
+
+2026-10-01 的 review 发现两处身份验证弱于已批准的方案：SetFocus 原先只收集同一 construction block 的常量，不能证明名称、callback 和零参数计数属于同一条被 Panel map 消费的记录；GetPage 原先只验证计数成员和输入参数的使用，可能接受始终返回 null 的候选。
+
+- SetFocus 现在从当前 Panel 消息分发器的零参数分支恢复 callback/count 字段位置，并从实际 GetMessageMap 返回值恢复 entries 数组字段。沿当前 `Panel` 查询和注册调用的真实寄存器/栈参数跟踪记录，要求完整字段被复制到该数组；支持 REP、逐字循环及 SSE 逐字段复制。名称、callback/PMF、零参数计数和 this adjustment 均取自同一条消费记录。只有绑定后的 Windows callback 才补建缺失的函数对象。
+- 内联 map 查询的非零路径和经过当前表验证的去虚拟化分支用于保留明确的 map 来源；复制目标不能仅因来自 map 的任意字段就被接受。没有添加版本、槽位或成员位置常量。
+- GetPage 必须实际返回由输入索引寻址的 pages 元素；pages 存储成员与 ResetAllData/ApplyChanges 一致。允许独立的越界 null 分支以及已验证的无副作用叶子 helper，拒绝仅返回 null、未知值、其他容器、错误索引/步长或元素地址的候选。
+- 回归测试覆盖缺失消费证据、错误名称/计数/PMF adjustment、不完整复制、未覆盖的注册 owner、错误 map/storage 来源、动态消息布局、SSE 字段复制和上述 GetPage 伪候选。
+- Sven-10257 Linux engine 的初次完整验证触及单次 IDA tool 请求的 60 秒累计期限。采集现按当前表、依赖方法、注册与身份验证拆为连续请求；使用同一 owned worker 中的唯一临时 namespace 保留原始对象，结束或失败时清理。规则与分析数据不因拆分改变，行为测试验证跨阶段状态及错误清理。
+
+最终代码使用两组互不重叠的 forced、owned strict restored/no-save 生产选择完成验证：`analysis-batch-20261001T192058-b2344548964a48e18837258aa5bf05df` 为 **55 succeeded / 0 failed / 0 skipped**；`analysis-batch-20261001T192010-a162e5773b84482ca5f71f175fa70af7` 为 **7 succeeded / 0 failed / 0 skipped**。独立集合检查确认二者恰好覆盖原 62 个目标；输出均通过 analyzer 验证。
+
+与已批准 Task 1 facts 的独立对比为 **580/580，ERRORS []**（含复用的 HL25 Windows Video），`bin_artifacts` 无内容差异。隔离 warm-only Sven-8948 Windows engine probe 恢复 SetFocus slot 89，owned session 正常释放。最终 unit **1332 项 OK（5 skipped）**、repository-contract **15 项 OK**；formatter 和 Git whitespace check 退出 0。临时探针、selection 和日志保留在仓库外。
+
 ## 附录 A：62 份输入身份与 SetProportional 结果
 
 每行均有一个通过状态写入/递归/布局失效条件的 Panel 候选。表 RVA 是 primary address point 的 RVA。`VA = image base + RVA`。

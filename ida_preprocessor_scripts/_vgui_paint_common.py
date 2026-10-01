@@ -42,7 +42,8 @@ def decoded_operand(op):
     return ('unknown',)
 
 def flow_at(start, platform, call_purges=None, entry_state=None, first_pass=False,
-            preserved_calls=(), symbolic_indices=False):
+            preserved_calls=(), symbolic_indices=False, capture_stack=False, nonzero_calls=(), call_returns=None,
+            symbolic_sums=False, track_memory=False, arithmetic_conditions=False, excluded_edges=()):
     function = ida_funcs.get_func(int(start))
     if function is None or function.start_ea != int(start) or idaapi.inf_is_64bit():
         raise ValueError('not an x86 function entry')
@@ -62,12 +63,17 @@ def flow_at(start, platform, call_purges=None, entry_state=None, first_pass=Fals
                                 if int(op.type)==idaapi.o_reg and changed_operand(insn,i)],
                         memory_writes=[decoded_operand(op) for i,op in enumerate(insn.ops)
                                        if int(op.type) in (idaapi.o_mem,idaapi.o_displ,idaapi.o_phrase) and changed_operand(insn,i)])
+            raw=ida_bytes.get_bytes(ea,insn.size)
+            if raw in (b'\xf3\xa5',b'\xf3\xa4'):
+                item['copy_width']=4 if raw[-1]==0xA5 else 1
             if mnemonic == 'call' or mnemonic == 'jmp':
                 if call_purges and ea in call_purges:
                     item['purge'] = call_purges[ea]
                 item['direct'] = local_call_target(ea)
                 if item['direct'] in preserved_calls:
                     item['preserves_registers'] = True
+                if call_returns and item['direct'] in call_returns:
+                    item['return_value'] = call_returns[item['direct']]
                 target = item['direct']
                 callee = ida_funcs.get_func(target) if target else None
                 item['tail'] = mnemonic == 'jmp' and (int(insn.ops[0].type) != idaapi.o_near or
@@ -87,9 +93,19 @@ def flow_at(start, platform, call_purges=None, entry_state=None, first_pass=Fals
         if is_got(segment_start):
             segment = ida_segment.getseg(segment_start)
             static_loads.update({ea:int(ida_bytes.get_dword(ea)) for ea in range(segment.start_ea,segment.end_ea,4)})
-    trace_blocks = first_pass_blocks(blocks, int(start)) if first_pass else blocks
+    observed = [dict(b,succs=[s for s in b['succs'] if (b['start'],s) not in excluded_edges]) for b in blocks]
+    trace_blocks = first_pass_blocks(observed, int(start)) if first_pass else observed
     traced = trace_function(trace_blocks, int(start), platform, static_loads, entry_state=entry_state,
-                            symbolic_indices=symbolic_indices)
+                            symbolic_indices=symbolic_indices, capture_stack=capture_stack,symbolic_sums=symbolic_sums,
+                            track_memory=track_memory,arithmetic_conditions=arithmetic_conditions)
+    if nonzero_calls:
+        forbidden = {(branch['block'],branch['zero']) for branch in traced['branches']
+                     if branch['condition'] in {('result',ea) for ea in nonzero_calls}}
+        trace_blocks = [dict(b,succs=[s for s in b['succs'] if (b['start'],s) not in forbidden])
+                        for b in trace_blocks]
+        traced = trace_function(trace_blocks,int(start),platform,static_loads,entry_state=entry_state,
+                                symbolic_indices=symbolic_indices,capture_stack=capture_stack,symbolic_sums=symbolic_sums,
+                                track_memory=track_memory,arithmetic_conditions=arithmetic_conditions)
     # Preserve the full CFG even for a restricted first-pass trace. Consumers
     # must not infer later-iteration values from first-pass events; the full
     # graph remains useful to check which side effects a guard can bypass.

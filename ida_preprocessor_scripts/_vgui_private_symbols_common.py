@@ -1,6 +1,7 @@
 """Shared current-binary collection and emission for the private VGUI chains."""
 
 from pathlib import Path
+from uuid import uuid4
 
 from ida_analyze_util import (
     _inspect_function_via_mcp,
@@ -51,6 +52,25 @@ SHEET_ARGUMENTS = {
 }
 
 
+async def walk_stages(session, stages, values):
+    """Keep one owned-worker namespace while bounding each IDA tool request."""
+    key = "_vgui_private_" + uuid4().hex
+    try:
+        for index, stage in enumerate(stages):
+            if index == 0:
+                body = f"import builtins\nsetattr(builtins, {key!r}, globals())\n" + stage
+            else:
+                body = f"import builtins\nns = getattr(builtins, {key!r})\nexec({stage!r}, ns)\nresult = ns['result']"
+            if index != len(stages) - 1:
+                body += "\nresult = {'ready': True}"
+            found = await walk(session, body, values)
+            if found.get("error"):
+                raise ValueError(found["error"])
+        return found
+    finally:
+        await walk(session, f"import builtins\nbuiltins.__dict__.pop({key!r}, None)\nresult = {{}}", {})
+
+
 async def function_payload(session, ea, image_base, name, *, table=None, index=None):
     candidate = None
     across = False
@@ -73,7 +93,274 @@ async def function_payload(session, ea, image_base, name, *, table=None, index=N
     return payload
 
 
-COLLECT = r"""
+REGISTRATION_COLLECT = r"""
+# These are traversal budgets, not instruction windows or message-field offsets.
+MAP_WRAPPER_DEPTH=2
+REGISTRATION_CALL_DEPTH=4
+RETURN_PROJECTION_DEPTH=3
+# Collect only the class-name/map wrappers reachable from anchored registration owners.
+frontier={c['direct'] for ea in roots['setfocus_all'] for c in method_calls(functions[str(ea)])
+          if c['direct'] and is_code_address(c['direct'])}
+for _ in range(MAP_WRAPPER_DEPTH):
+    following=set()
+    for ea in frontier:
+        if str(ea) not in functions:
+            functions[str(ea)]=safe_describe(ea)
+        following.update(c['direct'] for c in method_calls(functions[str(ea)])
+                         if c['direct'] and is_code_address(c['direct']))
+    frontier=following
+dispatchers = []
+for method in table_methods(data, 'vgui2::Panel'):
+    if "Message '%s', sent to '%s', has invalid parameter types\n" not in owned_labels(method):
+        continue
+    flow = flow_at(method['ea'],values['platform'],first_pass=True,
+                   symbolic_indices=True,preserved_calls=preserved,arithmetic_conditions=True,symbolic_sums=True)
+    excluded=[]
+    for comparison in flow['comparisons']:
+        target,address=comparison['values']
+        dispatch=virtual_dispatch(dict(target=target))
+        if not dispatch or dispatch[0]!=THIS or not address or address[0]!='const':continue
+        entry=values['tables']['vgui2::Panel']['vtable_entries'].get(str(dispatch[1]))
+        if entry is None or int(entry,0)!=address[1]:continue
+        body=functions.get(str(address[1]),{})
+        if 'Panel' not in owned_labels(body):continue
+        branch=idc.next_head(comparison['ea'])
+        if idc.print_insn_mnem(branch) not in ('jnz','jne'):continue
+        fallback=int(idautils.DecodeInstruction(branch).ops[0].addr)
+        successors=flow['blocks'].get(comparison['block'],[])
+        if fallback in successors:
+            excluded.extend((comparison['block'],s) for s in successors if s!=fallback)
+    if excluded:
+        # Verify the current-table devirtualization guard, then inspect its
+        # explicit getter dispatch. Cached/inlined map initialization can join
+        # unrelated allocation values and hide otherwise identical field uses.
+        flow=flow_at(method['ea'],values['platform'],first_pass=True,symbolic_indices=True,
+                     preserved_calls=preserved,arithmetic_conditions=True,symbolic_sums=True,excluded_edges=excluded)
+    for load in flow['loads']:
+        insn = idautils.DecodeInstruction(load['ea'])
+        operand = decoded_operand(insn.ops[1])
+        if (operand[0]=='mem' and operand[1] is not None and operand[3] is None
+                and load['address'] is not None and load['address'][0]!='stack'):
+            load['field_offset']=operand[2]
+    for call in flow['calls']:
+        insn=idautils.DecodeInstruction(call['ea'])
+        operand=decoded_operand(insn.ops[0])
+        if operand[0]=='mem' and operand[1] is not None and operand[3] is None:
+            flow['loads'].append(dict(ea=call['ea'],value=call['target'],field_offset=operand[2]))
+    try:
+        layout=message_dispatch_layout(dict(flow=flow))
+    except ValueError:
+        continue
+    getmaps=[]
+    for call in flow['calls']:
+        if virtual_dispatch(call) and virtual_dispatch(call)[0]==THIS:
+            body=dispatch_method(data,call)
+            if 'Panel' in owned_labels(body) or any(
+                    'Panel' in owned_labels(functions.get(str(c['direct']),{})) for c in method_calls(body)):
+                getmaps.append(body)
+    if len(getmaps)==1:
+        dispatchers.append((method['ea'],layout,getmaps[0],flow))
+dispatch_ea,layout,getmap,dispatch_flow=sole(dispatchers,'Panel message dispatcher and map getter')
+panel_labels={('const',a) for a in literals['Panel']['addresses']}
+
+constant_returns={}
+for f in functions.values():
+    ret={r['value'] for r in f.get('flow',{}).get('returns',[])}
+    if len(ret)==1 and next(iter(ret)) in panel_labels and not method_calls(f) and all(
+            s['address'] and s['address'][0]=='stack' for s in f['flow']['stores']):
+        constant_returns[f['ea']]=next(iter(ret))
+def traced(ea,entry_state=None,nonzero_calls=()):
+    # Use the existing-map path to prove the destination. Allocation paths need
+    # not be guessed from adjacent strings or unmodelled dictionary internals.
+    return flow_at(ea,values['platform'],entry_state=entry_state,preserved_calls=preserved,
+                   first_pass=True,symbolic_indices=True,capture_stack=True,nonzero_calls=nonzero_calls,
+                   call_returns=constant_returns,symbolic_sums=True,track_memory=True)
+
+def label_locations(call):
+    stack=[('stack',i) for i,v in enumerate(call['stack_args']) if v in panel_labels]
+    return tuple(stack[:1] or [('register',r) for r in ('eax','ecx','edx') if call['registers'][r] in panel_labels])
+
+providers={}
+pending=[]
+getter_flow=traced(getmap['ea'])
+for call in getter_flow['calls']:
+    if call['direct'] and label_locations(call):
+        pending.append((call,0))
+while pending:
+    call,depth=pending.pop()
+    if depth>REGISTRATION_CALL_DEPTH or call['direct'] in providers:
+        continue
+    providers[call['direct']]=label_locations(call)
+    flow=traced(call['direct'],entry_state_from_call(call))
+    returned=[r['value'] for r in flow['returns']]
+    for child in flow['calls']:
+        if child['direct'] and label_locations(child) and any(contains_value(v,('result',child['ea'])) for v in returned):
+            pending.append((child,depth+1))
+
+def is_provider(call):
+    return call['direct'] in providers and any(
+        (call['stack_args'][location] if kind=='stack' else call['registers'][location]) in panel_labels
+        for kind,location in providers[call['direct']])
+
+registrars=[]
+focus_labels={('const',a) for a in literals['SetFocus']['addresses']}
+for ea in roots['setfocus_all']:
+    owner=functions[str(ea)]
+    if any(s['value'] in focus_labels for s in owner.get('flow',{}).get('stores',[])):
+        registrars.append(dict(ea=ea,root=ea,flow=traced(ea)))
+    for call in method_calls(owner):
+        helper=functions.get(str(call['direct']),{})
+        panel_helper='Panel' in owned_labels(helper) or any(c['direct'] in constant_returns for c in method_calls(helper))
+        if call['direct'] and panel_helper and any(contains_value(call['stack_args']+list(call['registers'].values()),label)
+                                                  for label in focus_labels):
+            registrars.append(dict(ea=call['direct'],root=ea,caller=call['ea'],flow=traced(call['direct'],entry_state_from_call(call))))
+for registrar in registrars:
+    registrar['providers']=[c['ea'] for c in registrar['flow']['calls'] if is_provider(c)]
+    if registrar['providers']:
+        if registrar.get('caller'):
+            source=next(c for ea in roots['setfocus_all'] for c in method_calls(functions[str(ea)]) if c['ea']==registrar['caller'])
+            entry=entry_state_from_call(source)
+        else:
+            entry=None
+        registrar['flow']=traced(registrar['ea'],entry,registrar['providers'])
+
+def copy_loop_size(load,store):
+    source=idautils.DecodeInstruction(load['ea'])
+    dest=idautils.DecodeInstruction(store['ea'])
+    src,dst=decoded_operand(source.ops[1]),decoded_operand(dest.ops[0])
+    if (src[0]!='mem' or dst[0]!='mem' or not src[3] or src[3]!=dst[3] or src[4]!=dst[4]
+            or decoded_operand(source.ops[0]) != decoded_operand(dest.ops[1])):
+        return None
+    block=next((b for b in ida_gdl.FlowChart(ida_funcs.get_func(load['ea'])) if b.start_ea<=load['ea']<b.end_ea),None)
+    if not block or not block.start_ea<=store['ea']<block.end_ea:
+        return None
+    increment,limit,backedge=None,None,False
+    for ea in idautils.Heads(store['ea']+dest.size,block.end_ea):
+        insn=idautils.DecodeInstruction(ea);m=idc.print_insn_mnem(ea)
+        a,b=decoded_operand(insn.ops[0]),decoded_operand(insn.ops[1])
+        if m=='add' and a[:2]==('reg',src[3]) and b[0]=='imm':increment=b[1]
+        if m=='inc' and a[:2]==('reg',src[3]):increment=1
+        if m=='cmp' and a[:2]==('reg',src[3]) and b[0]=='imm':limit=b[1]
+        if m in ('jb','jnz','jne','jl') and int(insn.ops[0].addr)==load['ea']:backedge=True
+    return limit*src[4] if increment and increment*src[4]==4 and limit and backedge else None
+
+def record_fields(snapshot,base):
+    fields={int(k)-base[1]:v for k,v in snapshot.items()}
+    return fields if fields.get(0) in {('const',a) for a in literals['SetFocus']['addresses']} else None
+
+records=[]
+def project_return(call,depth=0):
+    if depth>RETURN_PROJECTION_DEPTH or not call['direct'] or not is_code_address(call['direct']):return None
+    try: body=traced(call['direct'],entry_state_from_call(call))
+    except ValueError:return None
+    calls={c['ea']:c for c in body['calls']}
+    def resolve(value):
+        if not isinstance(value,tuple):return value
+        if value[0]=='result' and value[1] in calls:return project_return(calls[value[1]],depth+1)
+        return tuple(resolve(v) for v in value)
+    returns={resolve(r['value']) for r in body['returns']}
+    return next(iter(returns)) if len(returns)==1 and None not in returns else None
+
+map_getter_calls={('result',c['ea']) for c in dispatch_flow['calls'] if virtual_dispatch(c)
+                  and virtual_dispatch(c)[0]==THIS and dispatch_method(data,c)['ea']==getmap['ea']}
+dispatch_calls={c['ea']:c for c in dispatch_flow['calls']}
+def entry_storage_offsets(value,depth=0):
+    if value is None or depth>RETURN_PROJECTION_DEPTH:return set()
+    if value[0]=='load' and value[1] in map_getter_calls:return {value[2]}
+    if value[0]=='choice':
+        parts=[entry_storage_offsets(v,depth+1) for v in value[1:]]
+        return set.union(*parts) if parts and all(parts) else set()
+    if value[0]=='address':return entry_storage_offsets(value[1],depth+1)
+    if value[0]=='indexed':
+        return entry_storage_offsets(value[1],depth+1) or entry_storage_offsets(value[2],depth+1)
+    if value[0]=='result' and value[1] in dispatch_calls:
+        return entry_storage_offsets(project_return(dispatch_calls[value[1]]),depth+1)
+    return set()
+storage_offsets=[entry_storage_offsets(base) for base in layout['record_bases']]
+if not storage_offsets or not all(storage_offsets):
+    raise ValueError('message dispatcher has no proven map entries array')
+entries_offset=sole(set.union(*storage_offsets),'message-map entries array field')
+
+def consume(ea,flow,maps,fields=None,record=None,depth=0,destinations=()):
+    if depth>REGISTRATION_CALL_DEPTH:return
+    if record is not None and any(s['address']==record or (
+            isinstance(s['address'],tuple) and s['address'][:2]==('address',record)) for s in flow['stores']):
+        raise ValueError('message consumer modifies its source record')
+    array_roots={('load',m,entries_offset) for m in maps}|set(destinations)
+    storage={s['value'] for s in flow['stores'] if s['value'] and any(
+        s['address']==(m if entries_offset==0 else ('address',m,entries_offset)) for m in maps)}
+    calls={c['ea']:c for c in flow['calls']}
+    projected={}
+    def project(value):
+        if value[0]=='result' and value[1] in calls:
+            if value not in projected:projected[value]=project_return(calls[value[1]])
+            return projected[value]
+        return None
+    def map_owned(value):
+        return map_storage_owned(value,array_roots,storage,project)
+    # Unrolled SIMD copies retain each lane's actual source address. Require
+    # contiguous source/destination coverage in one block, not a nearby literal.
+    lanes=[s for s in flow['stores'] if s.get('copy_source') and map_owned(s['address'])]
+    for first in lanes:
+        source=first['copy_source'];destination=first['address']
+        bound=fields if source==record and record is not None else record_fields(first['stack_values'],source) if source[0]=='stack' else None
+        if bound is None:continue
+        copied={offset for offset in range(0,layout['count']+4,4) if any(
+            s['block']==first['block'] and s['ea']>=first['ea'] and s['width']==4
+            and s['copy_source']==add_value(source,offset) and s['address']==add_value(destination,offset) for s in lanes)}
+        if copied==set(range(0,layout['count']+4,4)):
+            records.append(dict(owner=ea,site=first['ea'],fields=bound,size=layout['count']+4,layout=layout))
+    for store in flow['stores']:
+        if not map_owned(store['address']):continue
+        if store.get('copy'):
+            source=store['value'];count=store['count']
+            size=count[1]*store['width'] if count and count[0]=='const' else None
+            candidates=[(source,store.get('stack_values',{}),size)]
+        else:
+            candidates=[(load['address'],load.get('stack_values',{}),copy_loop_size(load,store))
+                        for load in flow['loads'] if load['value']==store['value'] and load['ea']<store['ea']]
+        for source,snapshot,size in candidates:
+            if not size or size<layout['count']+4:continue
+            bound=fields if source==record and record is not None else record_fields(snapshot,source) if source and source[0]=='stack' else None
+            if bound is not None:
+                records.append(dict(owner=ea,site=store['ea'],fields=bound,size=size,layout=layout))
+    for call in flow['calls']:
+        if not call['direct'] or not is_code_address(call['direct']):continue
+        inputs=call['args']+call['stack_args']+list(call['registers'].values())
+        if not any(v in maps or map_owned(v) for v in inputs if isinstance(v,tuple)):continue
+        candidates=[]
+        if record and record in inputs:candidates.append((record,fields))
+        for value in set(v for v in inputs if isinstance(v,tuple) and v[0]=='stack'):
+            bound=record_fields(call['stack_values'],value)
+            if bound is not None:candidates.append((value,bound))
+        for source,bound in candidates:
+            token=record if source==record else ('caller_stack',call['ea'],source[1])
+            entry=entry_state_from_call(call)
+            try: child=traced(call['direct'],entry)
+            except ValueError:continue
+            child_destinations=array_roots|{v for v in inputs if isinstance(v,tuple) and map_owned(v)}
+            consume(call['direct'],child,maps,bound,token,depth+1,child_destinations)
+
+for registrar in registrars:
+    if registrar['providers']:
+        start=len(records)
+        consume(registrar['ea'],registrar['flow'],{('result',ea) for ea in registrar['providers']})
+        for record in records[start:]:
+            record['root']=registrar['root']
+            record['fields']={offset:value for offset,value in record['fields'].items() if 0<=offset<record['size']}
+data['message_records']=records
+if values['platform']=='windows':
+    for record in records:
+        callback=record['fields'].get(record['layout']['callback'])
+        if callback and callback[0]=='const' and is_code_address(callback[1]):
+            materialize_entry(callback[1])
+            ida_auto.auto_wait()
+            functions[str(callback[1])]=safe_describe(callback[1])
+"""
+
+
+COLLECT = (
+    r"""
 import ida_auto, ida_name
 
 def literal_evidence(text):
@@ -204,18 +491,12 @@ for f in list(functions.values()):
         value = store['value']
         if isinstance(value,tuple) and value[0] == 'const' and is_code_address(value[1]):
             extra.add(value[1])
-callbacks = set()
-if values['platform'] == 'windows':
-    labels = {('const',ea) for ea in literals['SetFocus']['addresses']}
-    for owner in roots['setfocus_all']:
-        callbacks.update(value[1] for value in message_callback_constants(functions[str(owner)],labels)
-                         if is_code_address(value[1]))
-    for ea in callbacks:
-        materialize_entry(ea)
-    ida_auto.auto_wait()
-for ea in sorted((extra | callbacks)-selected):
+for ea in sorted(extra-selected):
     functions[str(ea)] = safe_describe(ea)
 data = dict(platform=values['platform'], tables=values['tables'], literals=literals, roots=roots, functions=functions)
+"""
+    + REGISTRATION_COLLECT
+    + r"""
 factory = recover_factory_parent(data)
 focus = recover_frame_focus(data, factory['getvpanel'])
 
@@ -297,6 +578,7 @@ if values.get('gameui'):
     result['options'] = {label:dict(ea=m['ea'],index=m['index']) for label,m in (
         ('COptionsSubVideo',video),('COptionsSubAudio',audio),('COptionsSubMultiplayer',multiplayer),('CBasePanel',base_apply))}
 """
+)
 
 
 async def private_payloads(
@@ -347,7 +629,17 @@ async def private_payloads(
             active_page=existing["active_page"],
             perform_index=existing["methods"]["perform"]["index"],
         )
-    found = await walk(session, Path(identity.__file__).read_text(encoding="utf-8") + COLLECT, values)
+    initial, remaining = COLLECT.split("extra = set()", 1)
+    dependencies, final = remaining.split(REGISTRATION_COLLECT, 1)
+    found = await walk_stages(
+        session,
+        [
+            Path(identity.__file__).read_text(encoding="utf-8") + initial,
+            "extra = set()" + dependencies,
+            REGISTRATION_COLLECT + final,
+        ],
+        values,
+    )
     if found.get("error"):
         raise ValueError(found["error"])
     payloads = {}

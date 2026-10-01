@@ -61,6 +61,8 @@ def load_value(address, state, static_loads):
     def load_one(value):
         if value is None:
             return None
+        if state.get("track_memory") == ("const", 1) and ("memory", value) in state:
+            return state[("memory", value)]
         if ("modified", value) in state:
             return None
         if value[0] == "stack":
@@ -166,13 +168,23 @@ def contains_narrow(value):
 
 def _join(states):
     keys = set().union(*(state.keys() for state in states))
-    return {key: choice(*(state.get(key) for state in states)) for key in keys}
+
+    def previous(key):
+        if isinstance(key, tuple) and key[0] == "memory":
+            address = key[1]
+            return ("load", address[1], address[2]) if address[0] == "address" else ("load", address, 0)
+        return None
+
+    return {key: choice(*(state.get(key, previous(key)) for state in states)) for key in keys}
 
 
 def _transfer(block, incoming, platform, static_loads, collect=False):
     state = incoming.copy()
     events = dict(calls=[], comparisons=[], branches=[], returns=[], stores=[], loads=[], addresses=[])
     condition = None
+
+    def stack_values():
+        return {key[1]: value for key, value in state.items() if isinstance(key, tuple) and key[0] == "stack"}
 
     def write(operand, value, ea):
         if operand[0] == "reg":
@@ -194,6 +206,8 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
                 state[address] = choice(narrow(value, width))
             elif address is not None:
                 state[("modified", address)] = ("const", 1)
+                if state.get("track_memory") == ("const", 1):
+                    state[("memory", address)] = value if len(operand) < 6 or operand[5] == WORD_SIZE else None
             if collect:
                 events["stores"].append(
                     dict(
@@ -240,7 +254,46 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
         sp = insn["sp"] + correction[1]
         state["esp"] = ("stack", sp)
         read = lambda operand: operand_value(operand, state, static_loads)
-        if mnemonic in ("mov", "movzx", "movsx") and len(operands) == 2:
+        if (
+            state.get("capture_stack") == ("const", 1)
+            and mnemonic in ("xorps", "xorpd", "pxor")
+            and len(operands) == 2
+            and operands[0] == operands[1]
+        ):
+            state[operands[0][1]] = ("vector", None, *(("const", 0),) * 4)
+        elif (
+            state.get("capture_stack") == ("const", 1)
+            and mnemonic in ("movaps", "movups", "movdqa", "movdqu")
+            and len(operands) == 2
+        ):
+            target, source = operands
+            if source[0] == "mem":
+                base = memory_address(source, state)
+                lanes = tuple(load_value(add_value(base, offset), state, static_loads) for offset in range(0, 16, 4))
+                state[target[1]] = ("vector", base, *lanes)
+                if collect:
+                    for offset, value in zip(range(0, 16, 4), lanes):
+                        events["loads"].append(
+                            dict(
+                                ea=ea,
+                                address=add_value(base, offset),
+                                value=value,
+                                width=4,
+                                stack_values=stack_values(),
+                            )
+                        )
+            elif target[0] == "mem":
+                vector = state.get(source[1])
+                lanes = vector[2:] if vector and vector[0] == "vector" else (None,) * 4
+                for offset, value in zip(range(0, 16, 4), lanes):
+                    write((*target[:2], target[2] + offset, *target[3:5], 4), value, ea)
+                    if collect and vector and vector[0] == "vector" and vector[1] is not None:
+                        events["stores"][-1].update(
+                            copy_source=add_value(vector[1], offset), stack_values=stack_values()
+                        )
+            else:
+                state[target[1]] = state.get(source[1])
+        elif mnemonic in ("mov", "movzx", "movsx") and len(operands) == 2:
             if collect and operands[1][0] == "mem":
                 events["loads"].append(
                     dict(
@@ -250,6 +303,8 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
                         width=operands[1][5] if len(operands[1]) > 5 else WORD_SIZE,
                     )
                 )
+                if state.get("capture_stack") == ("const", 1):
+                    events["loads"][-1]["stack_values"] = stack_values()
             write(operands[0], read(operands[1]), ea)
             if operands[0][:2] == ("reg", "esp"):
                 restored = state.get("esp")
@@ -271,9 +326,19 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
                 if value and value[0] == "const"
                 else None
             )
+            if result is None and mnemonic == "add" and state.get("symbolic_sums") == ("const", 1):
+                base = read(operands[0])
+                if base is not None or value is not None:
+                    result = ("indexed", base if base is not None else value, value if base is not None else base, 1)
             if collect and result is not None:
                 events["addresses"].append(dict(ea=ea, value=result, ref_kind="immediate"))
             write(operands[0], result, ea)
+            if state.get("arithmetic_conditions") == ("const", 1):
+                condition = result
+        elif mnemonic in ("inc", "dec") and state.get("arithmetic_conditions") == ("const", 1):
+            result = add_value(read(operands[0]), 1 if mnemonic == "inc" else -1)
+            write(operands[0], result, ea)
+            condition = result
         elif mnemonic == "xor" and len(operands) == 2 and operands[0] == operands[1]:
             write(operands[0], ("const", 0), ea)
         elif mnemonic == "and" and len(operands) == 2 and read(operands[1]) in (("const", 0xFF), ("const", 0xFFFF)):
@@ -316,25 +381,29 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
             else:
                 args = stack_args
             if collect:
-                events["calls"].append(
-                    dict(
-                        ea=ea,
-                        block=block["start"],
-                        target=target,
-                        direct=insn.get("direct"),
-                        args=[boolean_origin(v) for v in args],
-                        stack_args=[boolean_origin(v) for v in stack_args],
-                        this=state.get("ecx"),
-                        registers={name: state.get(name) for name in ("eax", "ecx", "edx", "ebx", "esi", "edi")},
-                        tail=tail,
-                    )
+                event = dict(
+                    ea=ea,
+                    block=block["start"],
+                    target=target,
+                    direct=insn.get("direct"),
+                    args=[boolean_origin(v) for v in args],
+                    stack_args=[boolean_origin(v) for v in stack_args],
+                    this=state.get("ecx"),
+                    registers={name: state.get(name) for name in ("eax", "ecx", "edx", "ebx", "esi", "edi")},
+                    tail=tail,
                 )
+                if state.get("capture_stack") == ("const", 1):
+                    event["stack_values"] = stack_values()
+                events["calls"].append(event)
             for value in stack_args:
                 for escaped in alternatives(value):
                     if escaped and escaped[0] == "stack":
                         state[escaped] = None
-            state["eax"] = ("result", ea)
+            state["eax"] = insn.get("return_value", ("result", ea))
             state["ecx"] = state["edx"] = None
+            for register in tuple(state):
+                if isinstance(register, str) and register.startswith("xmm"):
+                    state[register] = None
             for offset in range(sp, sp + purged, WORD_SIZE):
                 state.pop(("stack", offset), None)
             if "purge" in insn:
@@ -344,6 +413,19 @@ def _transfer(block, incoming, platform, static_loads, collect=False):
             if collect:
                 events["returns"].append(dict(ea=ea, value=state.get("eax")))
         else:
+            if collect and state.get("capture_stack") == ("const", 1) and insn.get("copy_width"):
+                events["stores"].append(
+                    dict(
+                        ea=ea,
+                        block=block["start"],
+                        address=state.get("edi"),
+                        value=state.get("esi"),
+                        width=insn["copy_width"],
+                        count=state.get("ecx"),
+                        copy=True,
+                        stack_values=stack_values(),
+                    )
+                )
             for register in insn.get("writes", []):
                 state[register] = None
             for operand in insn.get("memory_writes", []):
@@ -396,7 +478,19 @@ def first_pass_blocks(blocks, entry):
     return [dict(block, succs=[s for s in block["succs"] if (block["start"], s) not in removed]) for block in blocks]
 
 
-def trace_function(blocks, entry, platform, static_loads=None, *, entry_state=None, symbolic_indices=False):
+def trace_function(
+    blocks,
+    entry,
+    platform,
+    static_loads=None,
+    *,
+    entry_state=None,
+    symbolic_indices=False,
+    capture_stack=False,
+    symbolic_sums=False,
+    track_memory=False,
+    arithmetic_conditions=False,
+):
     """Compute bounded reaching values and collect dispatch/branch observations."""
     graph = {block["start"]: block for block in blocks}
     if entry not in graph or platform not in ("windows", "linux"):
@@ -412,6 +506,14 @@ def trace_function(blocks, entry, platform, static_loads=None, *, entry_state=No
     initial["stack_correction"] = ("const", 0)
     if symbolic_indices:
         initial["symbolic_indices"] = ("const", 1)
+    if capture_stack:
+        initial["capture_stack"] = ("const", 1)
+    if symbolic_sums:
+        initial["symbolic_sums"] = ("const", 1)
+    if track_memory:
+        initial["track_memory"] = ("const", 1)
+    if arithmetic_conditions:
+        initial["arithmetic_conditions"] = ("const", 1)
     predecessors = {address: [] for address in graph}
     for block in blocks:
         for successor in block["succs"]:
