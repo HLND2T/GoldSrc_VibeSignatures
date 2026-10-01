@@ -5,6 +5,11 @@ modules:
     depot_windows: hw.dll
     depot_linux: hw.so
     skills:
+      - name: find-vgui2_Panel-size-callsites
+        expected_input:
+          - vgui2_Panel_Init.{platform}.yaml
+        expected_output:
+          - vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0.{platform}.yaml
       - name: find-BaseUISurface_PaintTraverse
         expected_input:
           - ../gameui/ISurface_PaintTraverse.{platform}.yaml
@@ -1407,6 +1412,8 @@ modules:
         expected_output:
           - CL_IsDevOverviewMode.{platform}.yaml
     symbols:
+      - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0
+        category: patch
       - name: BaseUISurface_PaintTraverse
         category: vfunc
       - name: vgui2_IPanel_IsVisible
@@ -2441,6 +2448,22 @@ modules:
     depot_windows: valve/cl_dlls/GameUI.dll
     depot_linux: valve/cl_dlls/gameui.so
     skills:
+      - name: find-vgui2_Panel-size-callsites
+        expected_input:
+          - vgui2_Panel_Init.{platform}.yaml
+        expected_output:
+          - vgui2_Panel_SetSize_ScaledConst_callsite_0.{platform}.yaml
+          - vgui2_Panel_SetSize_ScaledConst_callsite_1.{platform}.yaml
+          - vgui2_Panel_SetSize_ScaledConst_callsite_2.{platform}.yaml
+          - vgui2_Panel_SetSize_ScaledConst_callsite_3.{platform}.yaml
+          - vgui2_Panel_SetSize_ScaledConst_callsite_4.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_ScaledConst_callsite_1.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_ScaledConst_callsite_2.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_ScaledConst_callsite_3.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_ScaledConst_callsite_4.{platform}.yaml
+        expected_output_windows:
+          - vgui2_Panel_SetMinimumSize_ScaledConst_callsite_5.{platform}.yaml
       - name: find-GameUI-base-taskbar
         expected_input:
           - CTaskbar_QuitConfirmationOwner.{platform}.yaml
@@ -2590,6 +2613,29 @@ modules:
         expected_output_linux:
           - COptionsSubVideo_OnApplyChanges.{platform}.yaml
     symbols:
+      - name: vgui2_Panel_SetSize_ScaledConst_callsite_0
+        category: patch
+      - name: vgui2_Panel_SetSize_ScaledConst_callsite_1
+        category: patch
+      - name: vgui2_Panel_SetSize_ScaledConst_callsite_2
+        category: patch
+      - name: vgui2_Panel_SetSize_ScaledConst_callsite_3
+        category: patch
+      - name: vgui2_Panel_SetSize_ScaledConst_callsite_4
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_1
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_2
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_3
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_4
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_5
+        category: patch
+        platform: windows
       - name: CBasePanel_ctor
         category: func
       - name: vgui2_Menu_vtable
@@ -2774,6 +2820,22 @@ modules:
     depot_windows: platform/servers/ServerBrowser.dll
     depot_linux: platform/servers/serverbrowser_linux.so
     skills:
+      - name: find-vgui2_Panel-size-callsites
+        expected_input:
+          - vgui2_Panel_Init.{platform}.yaml
+        expected_output:
+          - vgui2_Panel_SetSize_ScaledConst_callsite_0.{platform}.yaml
+          - vgui2_Panel_SetSize_ScaledConst_callsite_1.{platform}.yaml
+          - vgui2_Panel_SetSize_ScaledConst_callsite_2.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_ScaledConst_callsite_1.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_ScaledConst_callsite_2.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_ScaledConst_callsite_3.{platform}.yaml
+          - vgui2_Panel_SetMinimumSize_ScaledConst_callsite_4.{platform}.yaml
+        expected_output_linux:
+          - vgui2_Panel_SetMinimumSize_ScaledConst_callsite_5.{platform}.yaml
+        expected_output_windows:
+          - vgui2_Panel_SetSize_ScaledConst_callsite_3.{platform}.yaml
       - name: find-vgui2_Panel_Init
         expected_input:
           - ../gameui/ISurface_SupportsFeature.{platform}.yaml
@@ -2788,6 +2850,28 @@ modules:
           - KeyValues_vtable.{platform}.yaml
           - KeyValues_LoadFromFile.{platform}.yaml
     symbols:
+      - name: vgui2_Panel_SetSize_ScaledConst_callsite_0
+        category: patch
+      - name: vgui2_Panel_SetSize_ScaledConst_callsite_1
+        category: patch
+      - name: vgui2_Panel_SetSize_ScaledConst_callsite_2
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_0
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_1
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_2
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_3
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_4
+        category: patch
+      - name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_5
+        category: patch
+        platform: linux
+      - name: vgui2_Panel_SetSize_ScaledConst_callsite_3
+        category: patch
+        platform: windows
       - name: vgui2_Panel_Init
         category: func
       - name: KeyValues_vtable

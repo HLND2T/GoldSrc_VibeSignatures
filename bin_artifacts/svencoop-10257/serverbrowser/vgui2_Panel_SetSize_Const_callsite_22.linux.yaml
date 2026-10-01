@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetSize_Const_callsite_22
+patch_va: '0x95564'
+patch_rva: '0x95564'
+patch_sig: E8 B7 2C FF FF C7 86 ?? ?? ?? ?? ?? ?? ?? ??
+patch_sig_disp: '0x0'

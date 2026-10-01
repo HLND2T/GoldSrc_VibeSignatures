@@ -415,39 +415,7 @@ for ea in selected:
         materialize_entry(ea)
 ida_auto.auto_wait()
 
-preserved = set()
-for ea in selected:
-    for site in idautils.FuncItems(ea):
-        if idc.print_insn_mnem(site) != 'call':
-            continue
-        target = local_call_target(site)
-        if not target or target in preserved:
-            continue
-        items = list(idautils.FuncItems(target))
-        mnemonics = [idc.print_insn_mnem(p) for p in items]
-        # _chkesp: flags select an immediate normal ret; the error path saves
-        # and restores registers around int 3. Inspect the current helper body.
-        if not (len(items) >= 3 and mnemonics[:2] == ['jnz','retn']
-                and mnemonics[-1] == 'retn' and 'int' in mnemonics):
-            continue
-        instructions = []
-        for p in items:
-            insn = idautils.DecodeInstruction(p)
-            m = idc.print_insn_mnem(p)
-            item = dict(ea=int(p),mnemonic=m)
-            if m in ('push','pop') and int(insn.ops[0].type) == idaapi.o_reg:
-                item['register'] = reg4(insn.ops[0])
-            if m == 'int' and int(insn.ops[0].type) == idaapi.o_imm:
-                item['trap'] = int(insn.ops[0].value)
-            elif m == 'int' and ida_bytes.get_byte(p) == 0xCC:
-                item['trap'] = 3
-            if m in ('jnz','jne'):
-                item['branch'] = int(insn.ops[0].addr)
-            if m in ('ret','retn'):
-                item['purge'] = int(insn.ops[0].value) if int(insn.ops[0].type) == idaapi.o_imm else 0
-            instructions.append(item)
-        if stack_check_preserves_registers(instructions):
-            preserved.add(target)
+preserved = stack_check_helpers(selected, stack_check_preserves_registers)
 
 functions = {}
 def describe(ea):

@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetMinimumSize_Const_callsite_3
+patch_va: '0x10036599'
+patch_rva: '0x36599'
+patch_sig: E8 62 FA 00 00 68 ?? ?? ?? ??
+patch_sig_disp: '0x0'

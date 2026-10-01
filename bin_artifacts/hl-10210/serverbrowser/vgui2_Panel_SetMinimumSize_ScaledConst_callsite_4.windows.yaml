@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetMinimumSize_ScaledConst_callsite_4
+patch_va: '0x10031930'
+patch_rva: '0x31930'
+patch_sig: E8 DB 79 FE FF 8B CF
+patch_sig_disp: '0x0'

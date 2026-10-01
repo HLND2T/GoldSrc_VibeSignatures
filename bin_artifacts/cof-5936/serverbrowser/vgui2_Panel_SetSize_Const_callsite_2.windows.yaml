@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetSize_Const_callsite_2
+patch_va: '0x1000cfdb'
+patch_rva: '0xcfdb'
+patch_sig: E8 10 CB 00 00 6A ??
+patch_sig_disp: '0x0'

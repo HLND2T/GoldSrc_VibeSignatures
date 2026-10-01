@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetSize_Const_callsite_17
+patch_va: '0x10074a6e'
+patch_rva: '0x74a6e'
+patch_sig: E8 DD EC FC FF 8B 8E ?? ?? ?? ??
+patch_sig_disp: '0x0'
