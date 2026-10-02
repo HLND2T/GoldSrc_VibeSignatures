@@ -3083,6 +3083,10 @@ modules:
         expected_output:
           - ISurface_GetModalPanel.{platform}.yaml
           - ISurface_PaintTraverse.{platform}.yaml
+      - name: find-CContentControlDialog_ctor
+        platform: linux
+        expected_output:
+          - CContentControlDialog_ctor.{platform}.yaml
       - name: find-GameUI-dialog-constructors
         expected_output:
           - CGameConsoleDialog_ctor.{platform}.yaml
@@ -3429,6 +3433,9 @@ modules:
         category: func
       - name: COptionsDialog_ctor
         category: func
+      - name: CContentControlDialog_ctor
+        category: func
+        platform: linux
       - name: COptionsSubAudio_ctor
         category: func
       - name: COptionsSubVideo_ctor
