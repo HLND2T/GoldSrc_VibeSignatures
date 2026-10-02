@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetBounds_Const_callsite_6
+patch_va: '0xcc870'
+patch_rva: '0xcc870'
+patch_sig: E8 7B 14 06 00 B8 ?? ?? ?? ??
+patch_sig_disp: '0x0'

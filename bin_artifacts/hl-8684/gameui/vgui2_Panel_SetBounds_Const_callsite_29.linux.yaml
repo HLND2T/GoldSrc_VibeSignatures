@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetBounds_Const_callsite_29
+patch_va: '0xe2961'
+patch_rva: '0xe2961'
+patch_sig: E8 8A B3 04 00 31 D2
+patch_sig_disp: '0x0'

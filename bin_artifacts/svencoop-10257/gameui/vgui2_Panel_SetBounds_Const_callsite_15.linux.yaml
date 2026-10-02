@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetBounds_Const_callsite_15
+patch_va: '0x83c09'
+patch_rva: '0x83c09'
+patch_sig: E8 A2 A8 02 00 B8 ?? ?? ?? ??
+patch_sig_disp: '0x0'

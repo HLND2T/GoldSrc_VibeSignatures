@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetBounds_Const_callsite_20
+patch_va: '0xd0694'
+patch_rva: '0xd0694'
+patch_sig: E8 C7 5B FF FF C7 04 24 ?? ?? ?? ??
+patch_sig_disp: '0x0'

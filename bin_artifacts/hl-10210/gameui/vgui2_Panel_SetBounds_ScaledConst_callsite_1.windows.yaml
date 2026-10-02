@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetBounds_ScaledConst_callsite_1
+patch_va: '0x10024fcf'
+patch_rva: '0x24fcf'
+patch_sig: E8 EC 73 02 00 6A ??
+patch_sig_disp: '0x0'

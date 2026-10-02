@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetBounds_Const_callsite_25
+patch_va: '0xdefdb'
+patch_rva: '0xdefdb'
+patch_sig: E8 10 ED 04 00 85 F6
+patch_sig_disp: '0x0'

@@ -40,6 +40,7 @@ GROUP_FILES = {
         "test_x86_call_arguments.py",
         "test_x86_vcall_flow.py",
         "test_panel_size_identity.py",
+        "test_panel_bounds_identity.py",
         "test_x86_first_pass.py",
         "test_vgui_private_method_identity.py",
         "test_richtext_identity.py",
