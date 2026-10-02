@@ -2966,6 +2966,9 @@ modules:
           - vgui2_VPanelWrapper_PaintTraverse.{platform}.yaml
           - vgui2_VPanel_Client.{platform}.yaml
           - vgui2_IClientPanel_PaintTraverse.{platform}.yaml
+      - name: find-CInputWin32_PostKeyMessage
+        expected_output:
+          - CInputWin32_PostKeyMessage.{platform}.yaml
     symbols:
       - name: vgui2_VPanelWrapper_vtable
         category: vtable
@@ -2977,6 +2980,8 @@ modules:
         category: vfunc
       - name: vgui2_IClientPanel_PaintTraverse
         category: vfunc
+      - name: CInputWin32_PostKeyMessage
+        category: func
   - name: gameui
     module_windows: GameUI.dll
     module_linux: gameui.so
