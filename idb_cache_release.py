@@ -38,6 +38,7 @@ from idb_cache import (
 from idb_cache_leases import new_lease, validate_lease
 from idb_cache_locks import producer_lock
 from idb_cache_selection import (
+    SELECTION_SCHEMA_VERSION,
     IdbCacheSelectionError,
     entry_sort_key,
     prepare_selection_entries,
@@ -52,7 +53,7 @@ from idb_cache_selection import (
 from release_workflow_lib.hashing import canonical_json_bytes, sha256_bytes
 from warmup_memory import ProducerMemoryOwner, producer_memory_owner_from_environment
 
-RELEASE_SELECTION_SCHEMA_VERSION = 2
+RELEASE_SELECTION_SCHEMA_VERSION = SELECTION_SCHEMA_VERSION
 RELEASE_SELECTION_KEYS = {"schema_version", "cache_mode", "source_sha", "bin_commit", "entries", "lease"}
 COMMIT_SHA_RE = re.compile(r"^[0-9a-f]{40}$", re.ASCII)
 GITLINK_MODE = "160000"

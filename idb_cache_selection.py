@@ -2,7 +2,7 @@
 
 A *selection* is the immutable contract between an IDB cache producer and its consumers:
 the producer publishes immutable generations and records exactly which generation each
-``(tag, platform)`` group must use, and every consumer restores those exact generations.
+binary must use, and every consumer restores those exact generations.
 Consumers never re-probe ``READY.json``: READY is only a probe hint and another producer
 may legitimately advance it between the producer and consumer jobs.
 
@@ -36,6 +36,7 @@ from idb_cache_leases import (
     lease_reference,
     pin_generation,
     release_lease,
+    reference_sort_key,
     require_lease,
     seal_lease,
     validate_lease,
@@ -50,6 +51,7 @@ from release_workflow_lib.hashing import (
 from warmup_memory import ProducerMemoryOwner
 
 SELECTION_ENTRY_KEYS = {"tag", "platform", "cache_key", "generation", "manifest_sha256", "binaries"}
+SELECTION_SCHEMA_VERSION = 3
 
 
 class IdbCacheSelectionError(ValueError):
@@ -96,8 +98,26 @@ def validate_persisted_workspace(persisted_root: str | Path, checkout_root: str 
     return persisted
 
 
-def entry_sort_key(entry: dict) -> tuple[bytes, bytes]:
-    return (entry["tag"].encode("utf-8"), entry["platform"].encode("utf-8"))
+def binary_selection_key(tag: str, platform: str, binary: dict) -> tuple[str, str, str, str]:
+    return (tag, platform, binary["module"], binary["path"])
+
+
+def entry_sort_key(entry: dict) -> tuple[bytes, ...]:
+    return tuple(
+        part.encode("utf-8") for part in binary_selection_key(entry["tag"], entry["platform"], entry["binaries"][0])
+    )
+
+
+def per_binary_identities(identities: dict[tuple[str, str], dict]) -> dict[tuple[str, str, str, str], dict]:
+    """Project warming batches onto independent immutable binary cache identities."""
+    result = {}
+    for (tag, platform), identity in identities.items():
+        for binary in identity["binaries"]:
+            key = binary_selection_key(tag, platform, binary)
+            if key in result:
+                raise IdbCacheSelectionError("Expected cache identities contain a duplicate binary")
+            result[key] = {**identity, "binaries": [binary]}
+    return result
 
 
 def generation_selection(entry: dict) -> dict:
@@ -130,7 +150,7 @@ def validate_selection_entries(
     lease: dict,
     selection_sha256: str,
 ) -> None:
-    """Assert the entries cover exactly the expected groups and bind exact generations.
+    """Assert the entries cover exactly the expected binaries and bind exact generations.
 
     ``identities`` is rebuilt from the current workspace binaries and the pinned IDA runtime,
     so matching it proves the consumer sees the same inputs the producer cached.
@@ -140,22 +160,31 @@ def validate_selection_entries(
         or set(entry) != SELECTION_ENTRY_KEYS
         or not isinstance(entry["tag"], str)
         or not isinstance(entry["platform"], str)
+        or not isinstance(entry["binaries"], list)
+        or len(entry["binaries"]) != 1
+        or not isinstance(entry["binaries"][0], dict)
+        or not isinstance(entry["binaries"][0].get("module"), str)
+        or not isinstance(entry["binaries"][0].get("path"), str)
         for entry in entries
     ):
         raise IdbCacheSelectionError("Cache selection entry has unexpected fields")
     if entries != sorted(entries, key=entry_sort_key):
         raise IdbCacheSelectionError("Cache selection entries must use canonical order")
-    if len(entries) != len(identities):
-        raise IdbCacheSelectionError("Cache selection does not cover every expected binary group")
+    expected = per_binary_identities(identities)
+    if len(entries) != len(expected):
+        raise IdbCacheSelectionError("Cache selection does not cover every expected binary")
     seen = set()
     for entry in entries:
-        pair = (entry["tag"], entry["platform"])
-        if pair in seen or pair not in identities:
-            raise IdbCacheSelectionError("Cache selection contains an unexpected or duplicate tag/platform group")
-        seen.add(pair)
-        identity = identities[pair]
+        key = binary_selection_key(entry["tag"], entry["platform"], entry["binaries"][0])
+        if key in seen or key not in expected:
+            raise IdbCacheSelectionError("Cache selection contains an unexpected or duplicate binary")
+        seen.add(key)
+        identity = expected[key]
         if entry["binaries"] != identity["binaries"]:
             raise IdbCacheSelectionError("Cache selection binary identities do not match the expected workspace")
+    # Reject incomplete/duplicate identities before accessing any generation or lease.
+    for entry in entries:
+        identity = expected[binary_selection_key(entry["tag"], entry["platform"], entry["binaries"][0])]
         with tag_lock(persisted_root, entry["tag"], timeout_seconds=None):
             require_lease(
                 tag_root=_tag_root(persisted_root, entry["tag"]),
@@ -181,11 +210,11 @@ def prepare_selection_entries(
     producer_memory: ProducerMemoryOwner,
     lease: dict,
 ) -> list[dict]:
-    """Probe tags concurrently, then warm misses serially outside their publication locks.
+    """Probe/cache each binary independently; warm misses in bounded platform batches.
 
-    Platforms sharing a tag keep input order because READY and prune are tag-scoped.
-    Only the probe phase uses this pool: miss groups share a single process memory owner
-    and must not multiply the existing per-binary worker concurrency limit.
+    Tags probe concurrently. Miss batches run serially on the producer's single memory
+    owner, with per-binary worker concurrency inside each batch. Every selected binary
+    is pinned before unlocking; pruning visits each tag once after all its pins exist.
     """
     persisted = Path(persisted_root)
     concurrency = _resolved_max_concurrency(max_concurrency)
@@ -193,14 +222,30 @@ def prepare_selection_entries(
     if lease["run_id"] != run_id or lease["attempt"] != attempt:
         raise IdbCacheSelectionError("Preparing lease must belong to the current producer run/attempt")
     groups = tuple(groups)
+    binary_identities = per_binary_identities(identities)
     by_tag = {}
     for group in groups:
         by_tag.setdefault(group.tag, []).append(group)
 
-    def log_selection(group, selection, hit, elapsed):
+    def group_keys(group):
+        return [binary_selection_key(group.tag, group.platform, binary) for binary in group.binaries]
+
+    def binary_label(key):
+        tag, platform, module, path = key
+        return f"tag={tag}; platform={platform}; module={module}; binary={path}"
+
+    def pin(group, selection):
+        pin_generation(
+            tag_root=_tag_root(persisted, group.tag, create=True),
+            lease=lease,
+            reference=lease_reference({**selection, "platform": group.platform}),
+        )
+
+    def log_selection(key, selection, hit, elapsed):
+        tag, platform, module, path = key
         print(
-            f"IDB cache {'hit' if hit else 'miss'}: {group.tag}/{group.platform}; "
-            f"binaries={len(group.binaries)}; generation={selection['generation']}; "
+            f"IDB cache {'hit' if hit else 'miss'}: {tag}/{platform}; module={module}; binary={path}; "
+            f"binaries=1; generation={selection['generation']}; "
             f"manifest_sha256={selection['manifest_sha256']}; wall_seconds={elapsed:.3f}",
             flush=True,
         )
@@ -209,36 +254,31 @@ def prepare_selection_entries(
         results = {}
         protected = set()
         for group in tag_groups:
-            pair = (group.tag, group.platform)
-            label = f"tag={group.tag}; platform={group.platform}"
             started = time.monotonic()
             with tag_lock(persisted, group.tag, timeout_seconds=None):
                 print(
-                    f"IDB cache initial tag lock acquired: {label}; wait_seconds={time.monotonic() - started:.3f}",
+                    f"IDB cache initial tag lock acquired: tag={group.tag}; platform={group.platform}; "
+                    f"wait_seconds={time.monotonic() - started:.3f}",
                     flush=True,
                 )
-                with timed_stage(f"prepare_probe_verify; {label}"):
-                    selection = probe_generation(persisted_root=persisted, identity=identities[pair])
-                if selection is not None:
-                    # READY and fallback hits have already fully verified under this same lock.
-                    pin_generation(
-                        tag_root=_tag_root(persisted, group.tag, create=True),
-                        lease=lease,
-                        reference=lease_reference({**selection, "platform": group.platform}),
-                    )
-                    protected.add(selection["generation"])
-                    with timed_stage(f"prepare_prune; {label}"):
-                        prune_tag(persisted_root=persisted, tag=group.tag, protected_generations=protected)
-            elapsed = time.monotonic() - started
-            results[pair] = (selection, elapsed)
-            if selection is not None:
-                log_selection(group, selection, True, elapsed)
+                for key in group_keys(group):
+                    started = time.monotonic()
+                    with timed_stage(f"prepare_probe_verify; {binary_label(key)}"):
+                        selection = probe_generation(persisted_root=persisted, identity=binary_identities[key])
+                    if selection is not None:
+                        # Probe fully verified this exact binary under the same tag lock.
+                        pin(group, selection)
+                        protected.add(selection["generation"])
+                    elapsed = time.monotonic() - started
+                    results[key] = (selection, elapsed)
+                    if selection is not None:
+                        log_selection(key, selection, True, elapsed)
         return results, protected
 
     probed = {}
     protected_by_tag = {}
     if by_tag:
-        with timed_stage("prepare_parallel_probe_verify_prune"):
+        with timed_stage("prepare_parallel_probe_verify"):
             with ThreadPoolExecutor(max_workers=min(concurrency, len(by_tag))) as pool:
                 # Exiting the pool waits for every task, including on failure. No warm or
                 # selection publication starts until the complete probe phase succeeds.
@@ -248,14 +288,17 @@ def prepare_selection_entries(
 
     entries = []
     for group in groups:
-        identity = identities[(group.tag, group.platform)]
-        selection, probe_elapsed = probed[(group.tag, group.platform)]
-        if selection is None:
+        keys = group_keys(group)
+        misses = [key for key in keys if probed[key][0] is None]
+        if misses:
             started = time.monotonic()
             label = f"tag={group.tag}; platform={group.platform}"
             with timed_stage(f"prepare_warm; {label}"):
                 warm_group(
-                    identity=identity,
+                    identity={
+                        **identities[(group.tag, group.platform)],
+                        "binaries": [binary_identities[key]["binaries"][0] for key in misses],
+                    },
                     workspace_root=group.workspace_root,
                     ida_python_executable=ida_python_executable,
                     max_concurrency=concurrency,
@@ -269,39 +312,39 @@ def prepare_selection_entries(
                     f"wait_seconds={time.monotonic() - publish_lock_started:.3f}",
                     flush=True,
                 )
-                with timed_stage(f"prepare_publish_reprobe; {label}"):
-                    selection = probe_generation(persisted_root=persisted, identity=identity)
-                print(f"IDB cache publish re-probe: {label}; result={'hit' if selection else 'miss'}", flush=True)
-                if selection is None:
-                    with timed_stage(f"prepare_publish; {label}"):
-                        selection = publish_generation(
-                            persisted_root=persisted,
-                            identity=identity,
-                            workspace_root=group.workspace_root,
-                            run_id=run_id,
-                            attempt=attempt,
-                        )
-                with timed_stage(f"prepare_published_verify; {label}"):
-                    verify_selection(persisted_root=persisted, selection=selection)
-                protected_by_tag[group.tag].add(selection["generation"])
-                pin_generation(
-                    tag_root=_tag_root(persisted, group.tag, create=True),
-                    lease=lease,
-                    reference=lease_reference({**selection, "platform": group.platform}),
+                for key in misses:
+                    label = binary_label(key)
+                    with timed_stage(f"prepare_publish_reprobe; {label}"):
+                        selection = probe_generation(persisted_root=persisted, identity=binary_identities[key])
+                    print(f"IDB cache publish re-probe: {label}; result={'hit' if selection else 'miss'}", flush=True)
+                    if selection is None:
+                        with timed_stage(f"prepare_publish; {label}"):
+                            selection = publish_generation(
+                                persisted_root=persisted,
+                                identity=binary_identities[key],
+                                workspace_root=group.workspace_root,
+                                run_id=run_id,
+                                attempt=attempt,
+                            )
+                    with timed_stage(f"prepare_published_verify; {label}"):
+                        verify_selection(persisted_root=persisted, selection=selection)
+                    protected_by_tag[group.tag].add(selection["generation"])
+                    pin(group, selection)
+                    probe_elapsed = probed[key][1]
+                    probed[key] = (selection, probe_elapsed)
+                    log_selection(key, selection, False, probe_elapsed + time.monotonic() - started)
+        for key in keys:
+            entries.append(
+                selection_entry(
+                    tag=group.tag,
+                    platform=group.platform,
+                    selection=probed[key][0],
+                    binaries=binary_identities[key]["binaries"],
                 )
-                with timed_stage(f"prepare_prune; {label}"):
-                    prune_tag(
-                        persisted_root=persisted, tag=group.tag, protected_generations=protected_by_tag[group.tag]
-                    )
-            log_selection(group, selection, False, probe_elapsed + time.monotonic() - started)
-        entries.append(
-            selection_entry(
-                tag=group.tag,
-                platform=group.platform,
-                selection=selection,
-                binaries=identity["binaries"],
             )
-        )
+    for tag, protected in protected_by_tag.items():
+        with tag_lock(persisted, tag, timeout_seconds=None), timed_stage(f"prepare_prune; tag={tag}"):
+            prune_tag(persisted_root=persisted, tag=tag, protected_generations=protected)
     return sorted(entries, key=entry_sort_key)
 
 
@@ -354,7 +397,9 @@ def seal_selection_leases(*, document: dict, persisted_root: str | Path) -> None
     """Bind every preparing pin before publishing any selection/evidence files."""
     digest = sha256_bytes(canonical_json_bytes(document))
     for tag in sorted({entry["tag"] for entry in document["entries"]}):
-        references = [lease_reference(entry) for entry in document["entries"] if entry["tag"] == tag]
+        references = sorted(
+            (lease_reference(entry) for entry in document["entries"] if entry["tag"] == tag), key=reference_sort_key
+        )
         with tag_lock(persisted_root, tag, timeout_seconds=None):
             seal_lease(
                 tag_root=_tag_root(persisted_root, tag),

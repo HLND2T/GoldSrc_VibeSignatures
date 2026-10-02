@@ -202,7 +202,7 @@ class PrepareSelectionConcurrencyTests(unittest.TestCase):
                             else "2026-01-01T00:00:00Z",
                         )
                     historical = []
-                    for index, version in enumerate(("8.2", "8.3", "8.4"), start=2):
+                    for index, version in enumerate(("8.2", "8.3", "8.4", "8.5"), start=2):
                         historical.append(
                             publish_generation(
                                 persisted_root=persisted,
@@ -259,8 +259,18 @@ class PrepareSelectionConcurrencyTests(unittest.TestCase):
         )
 
     def _groups(self, root, pairs):
-        groups = [SelectedBinaryGroup(tag, platform, root / tag, ()) for tag, platform in pairs]
-        identities = {(g.tag, g.platform): {"tag": g.tag, "platform": g.platform, "binaries": []} for g in groups}
+        groups = [
+            SelectedBinaryGroup(
+                tag,
+                platform,
+                root / tag,
+                ({"module": "engine", "platform": platform, "path": "engine/hw.dll", "size": 1, "sha256": "a" * 64},),
+            )
+            for tag, platform in pairs
+        ]
+        identities = {
+            (g.tag, g.platform): {"tag": g.tag, "platform": g.platform, "binaries": list(g.binaries)} for g in groups
+        }
         return groups, identities
 
     @staticmethod
@@ -1450,8 +1460,11 @@ class IdbCacheReleaseTests(unittest.TestCase):
             self.assertEqual(self.BIN_COMMIT, document["bin_commit"])
             head = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
             self.assertEqual(head, document["source_sha"])
-            self.assertEqual([("game-1", "windows")], [(e["tag"], e["platform"]) for e in document["entries"]])
-            self.assertEqual(["client", "engine"], [record["module"] for record in document["entries"][0]["binaries"]])
+            self.assertEqual(
+                [("game-1", "windows", "client"), ("game-1", "windows", "engine")],
+                [(e["tag"], e["platform"], e["binaries"][0]["module"]) for e in document["entries"]],
+            )
+            self.assertTrue(all(len(entry["binaries"]) == 1 for entry in document["entries"]))
             raw = (root / "selection.json").read_bytes()
             self.assertEqual(canonical_json_bytes(document), raw)
             self.assertEqual(
@@ -1552,8 +1565,10 @@ class IdbCacheReleaseTests(unittest.TestCase):
                 "duplicate": {**document, "entries": [document["entries"][0], document["entries"][0]]},
                 "binaries": {
                     **document,
-                    "entries": [{**document["entries"][0], "binaries": document["entries"][0]["binaries"][:1]}],
+                    "entries": [{**document["entries"][0], "binaries": []}, *document["entries"][1:]],
                 },
+                "order": {**document, "entries": list(reversed(document["entries"]))},
+                "schema": {**document, "schema_version": 2},
             }
             for name, mutated in mutations.items():
                 with self.subTest(mutation=name):
@@ -1593,6 +1608,173 @@ class IdbCacheReleaseTests(unittest.TestCase):
                     output_sha256_path=root / "selection.sha256",
                     producer_memory=ProducerMemoryOwner(None),
                 )
+
+
+class PerBinarySelectionTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.workspace, self.persisted, self.engine, self.identity = cache_fixture(Path(temporary.name))
+        self.client = write_pe32(self.workspace / "client" / "client.dll", b"client-input")
+        self.warmed = []
+        warm = patch.object(idb_cache_selection, "warm_group", side_effect=self._warm)
+        warm.start()
+        self.addCleanup(warm.stop)
+
+    def _warm(self, **kwargs):
+        modules = [record["module"] for record in kwargs["identity"]["binaries"]]
+        self.warmed.append((modules, kwargs["max_concurrency"]))
+        for record in kwargs["identity"]["binaries"]:
+            Path(f"{self.workspace / record['path']}.i64").write_bytes(f"neutral-{record['module']}".encode())
+
+    def _groups(self, modules):
+        paths = {"client": "client/client.dll", "engine": "engine/hw.dll"}
+        records = [
+            build_binary_identity(
+                workspace_root=self.workspace, module=module, platform="windows", relative_path=paths[module]
+            )
+            for module in sorted(modules)
+        ]
+        identity = {**self.identity, "binaries": records}
+        groups = (SelectedBinaryGroup("game-1", "windows", self.workspace, tuple(records)),)
+        return groups, {("game-1", "windows"): identity}
+
+    def _prepare(self, modules=("client", "engine"), run_id="run-1"):
+        groups, identities = self._groups(modules)
+        lease = new_lease(repository="local", run_id=run_id, attempt=1)
+        with idb_cache.producer_lock(self.persisted):
+            entries = idb_cache_selection.prepare_selection_entries(
+                groups=groups,
+                identities=identities,
+                persisted_root=self.persisted,
+                run_id=run_id,
+                attempt=1,
+                lease=lease,
+                ida_python_executable=sys.executable,
+                max_concurrency=5,
+                worker_timeout_seconds=1,
+                producer_memory=ProducerMemoryOwner(None),
+            )
+            document = {"schema_version": 3, "entries": entries, "lease": lease}
+            idb_cache_selection.seal_selection_leases(document=document, persisted_root=self.persisted)
+        return document
+
+    @staticmethod
+    def _entries(document):
+        return {entry["binaries"][0]["module"]: entry for entry in document["entries"]}
+
+    def test_cold_binaries_warm_together_but_publish_independent_generations(self):
+        document = self._prepare()
+        self.assertEqual(2, len(document["entries"]))
+        self.assertEqual([(["client", "engine"], 5)], self.warmed)
+        for entry in document["entries"]:
+            self.assertEqual(1, len(entry["binaries"]))
+            manifest = verify_selection(persisted_root=self.persisted, selection=generation_selection(entry))
+            self.assertEqual(entry["binaries"], manifest["identity"]["binaries"])
+
+    def test_subset_and_expansion_reuse_each_unchanged_binary(self):
+        engine_only = self._prepare(("engine",))
+        expanded = self._prepare(run_id="run-2")
+        subset = self._prepare(("client",), run_id="run-3")
+        self.assertEqual([(["engine"], 5), (["client"], 5)], self.warmed)
+        self.assertEqual(self._entries(engine_only)["engine"], self._entries(expanded)["engine"])
+        self.assertEqual(self._entries(expanded)["client"], self._entries(subset)["client"])
+
+    def test_changed_binary_only_rebuilds_its_own_generation(self):
+        first = self._prepare()
+        write_pe32(self.engine, b"changed-engine")
+        second = self._prepare(run_id="run-2")
+        self.assertEqual([(["client", "engine"], 5), (["engine"], 5)], self.warmed)
+        self.assertEqual(self._entries(first)["client"], self._entries(second)["client"])
+        self.assertNotEqual(self._entries(first)["engine"]["cache_key"], self._entries(second)["engine"]["cache_key"])
+
+    def test_corrupt_binary_generation_does_not_rebuild_healthy_siblings(self):
+        first = self._prepare()
+        client = self._entries(first)["client"]
+        generation_root = idb_cache._tag_root(self.persisted, "game-1") / "generations" / client["generation"]
+        (generation_root / "payload/databases/client/client.dll.i64").write_bytes(b"corrupt")
+        second = self._prepare(run_id="run-2")
+        self.assertEqual([(["client", "engine"], 5), (["client"], 5)], self.warmed)
+        self.assertEqual(self._entries(first)["engine"], self._entries(second)["engine"])
+        self.assertNotEqual(client["generation"], self._entries(second)["client"]["generation"])
+
+    def test_exact_restore_keeps_all_binary_pins_after_partial_failure(self):
+        document = self._prepare()
+        groups, identities = self._groups(("client", "engine"))
+        digest = hashlib.sha256(canonical_json_bytes(document)).hexdigest()
+        idb_cache_selection.validate_selection_entries(
+            entries=document["entries"],
+            identities=identities,
+            persisted_root=self.persisted,
+            lease=document["lease"],
+            selection_sha256=digest,
+        )
+        arguments = dict(
+            entries=document["entries"],
+            groups=groups,
+            persisted_root=self.persisted,
+            lease=document["lease"],
+            selection_sha256=digest,
+        )
+        actual_restore = idb_cache_selection.restore_generation
+        engine_generation = self._entries(document)["engine"]["generation"]
+
+        def fail_engine(**kwargs):
+            if kwargs["selection"]["generation"] == engine_generation:
+                raise OSError("injected binary copy failure")
+            return actual_restore(**kwargs)
+
+        with patch.object(idb_cache_selection, "restore_generation", side_effect=fail_engine):
+            with self.assertRaisesRegex(OSError, "injected binary copy failure"):
+                restore_selection_entries(**arguments)
+        pins = idb_cache._tag_root(self.persisted, "game-1") / "leases" / f"{document['lease']['lease_id']}.json"
+        self.assertEqual(2, len(json.loads(pins.read_bytes())["references"]))
+        restore_selection_entries(**arguments)
+        self.assertFalse(pins.exists())
+        for binary, module in ((self.client, "client"), (self.engine, "engine")):
+            self.assertEqual(f"neutral-{module}".encode(), Path(f"{binary}.i64").read_bytes())
+
+    def test_prior_group_namespace_is_not_read_or_pruned(self):
+        with patch.object(idb_cache, "CACHE_DIRECTORY_NAME", "idb-cache-v2"):
+            old = publish_generation(
+                persisted_root=self.persisted,
+                identity=self.identity,
+                workspace_root=self.workspace,
+                run_id="old-producer",
+                attempt=1,
+            )
+            old_root = idb_cache._tag_root(self.persisted, "game-1")
+        self._prepare(("engine",))
+        self.assertEqual([(["engine"], 5)], self.warmed)
+        self.assertTrue((old_root / "generations" / old["generation"]).exists())
+        self.assertNotEqual(old_root, idb_cache._tag_root(self.persisted, "game-1"))
+
+    def test_prune_retains_history_for_each_binary_independently(self):
+        engine = publish_generation(
+            persisted_root=self.persisted,
+            identity=self.identity,
+            workspace_root=self.workspace,
+            run_id="engine-old",
+            attempt=1,
+            published_at="2026-01-01T00:00:00Z",
+        )
+        Path(f"{self.client}.i64").write_bytes(b"client-idb")
+        _groups, identities = self._groups(("client",))
+        client_identity = identities[("game-1", "windows")]
+        clients = [
+            publish_generation(
+                persisted_root=self.persisted,
+                identity={**client_identity, "ida_runtime": {"kernel_version": f"9.{index}"}},
+                workspace_root=self.workspace,
+                run_id=f"client-{index}",
+                attempt=1,
+                published_at=f"2026-01-0{index}T00:00:00Z",
+            )
+            for index in range(2, 6)
+        ]
+        removed = prune_tag(persisted_root=self.persisted, tag="game-1", now=datetime(2026, 2, 1, tzinfo=timezone.utc))
+        self.assertEqual([clients[0]["generation"]], removed)
+        self.assertNotIn(engine["generation"], removed)
 
 
 if __name__ == "__main__":

@@ -30,8 +30,12 @@ uv run python warmup_idb.py -gamever cstrike-10210 -python "<interpreter with id
 
 `warmup_idb.py` resolves `configs/<gamever>.yaml`, prepares every declared binary the way analysis does (a blob source is decrypted to its sibling `<stem>.decrypt<ext>` first), warms each one with a separate bare-idalib worker process, and skips a binary whose database already validates. `-platform` narrows the run, `-force` invalidates and re-warms everything, `-max-concurrency` overrides `IDB_WARMUP_MAX_CONCURRENCY`, and `IDB_WARMUP_MAX_MEMORY_MIB` enables aggregate memory admission.
 
-CI warmup across jobs uses schema-2 exact selections with persistent leases. Payloads, READY, and leases live in
-`PERSISTED_WORKSPACE/idb-cache-v2/<tag>/`, isolated from legacy pruners; first use rebuilds the cache.
+CI warmup across jobs uses schema-3 exact selections with one immutable generation per binary and persistent leases.
+PR subsets and release builds reuse the same binary cache when its identity, IDA kernel and warm worker agree;
+changing another selected module does not invalidate it. Only misses warm together within bounded platform batches.
+Payloads, READY, and schema-2 lease records live in `PERSISTED_WORKSPACE/idb-cache-v3/<tag>/`;
+first use warms the new namespace without importing old combination caches. Each tag is pruned once per Prepare,
+retaining the newest three valid generations per binary target plus READY, live pins and minimum-age protection.
 `idb-cache/.locks/` still coordinates old and new producers and must not be deleted with legacy payloads.
 
 Leases last 36 days from Prepare, with an additional one-hour pruning clock allowance, and are released immediately
@@ -39,6 +43,7 @@ after the complete selection restores successfully. Partial restore failure reta
 released, or expired, re-run the full workflow including warmup; retrying only the consumer cannot guarantee that its
 old selection remains available. See the [IDB cache operations runbook](../../memory/idb-cache-operations-runbook.md)
 for maintenance and real multi-runner acceptance requirements.
+Historical release evidence with selection schema 1/2 remains readable offline; active workflows require schema 3.
 
 ### Blob game binaries
 

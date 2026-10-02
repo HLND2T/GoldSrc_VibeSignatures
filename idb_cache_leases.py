@@ -17,8 +17,8 @@ from ida_database_paths import is_reparse_point
 from idb_cache_locks import IdbCacheError
 from release_workflow_lib.hashing import canonical_json_bytes, write_canonical_json
 
-CACHE_DIRECTORY_NAME = "idb-cache-v2"
-LEASE_SCHEMA_VERSION = 1
+CACHE_DIRECTORY_NAME = "idb-cache-v3"
+LEASE_SCHEMA_VERSION = 2
 # GitHub's whole-workflow limit is 35 days, including approval and queue time.
 # A fresh pin also covers the rest of Prepare; an extra day bounds clock/cleanup slack.
 LEASE_LIFETIME = timedelta(days=36)
@@ -108,10 +108,14 @@ def lease_reference(entry: dict) -> dict:
     return reference
 
 
+def reference_sort_key(reference: dict) -> tuple[str, str]:
+    return (reference["platform"], reference["cache_key"])
+
+
 def _validate_references(references: object) -> None:
     if not isinstance(references, list) or not references:
         raise IdbCacheError("Lease must protect at least one generation")
-    platforms = []
+    keys = []
     for reference in references:
         if not isinstance(reference, dict) or set(reference) != REFERENCE_KEYS:
             raise IdbCacheError("Lease generation reference has unexpected fields")
@@ -120,9 +124,9 @@ def _validate_references(references: object) -> None:
         _matches(COMPONENT_RE, reference["generation"], "generation")
         for field in ("cache_key", "manifest_sha256"):
             _matches(DIGEST_RE, reference[field], field)
-        platforms.append(reference["platform"])
-    if platforms != sorted(set(platforms)):
-        raise IdbCacheError("Lease references must have unique, sorted platforms")
+        keys.append(reference_sort_key(reference))
+    if keys != sorted(set(keys)):
+        raise IdbCacheError("Lease references must have unique, sorted platform/cache keys")
 
 
 def _plain(path: Path, *, directory: bool) -> bool:
@@ -196,7 +200,7 @@ def pin_generation(*, tag_root: Path, lease: dict, reference: dict) -> None:
             raise IdbCacheError("Cannot change a sealed or differently owned lease")
         if reference in record["references"]:
             return
-        references = sorted([*record["references"], reference], key=lambda ref: ref["platform"])
+        references = sorted([*record["references"], reference], key=reference_sort_key)
         _validate_references(references)
         record["references"] = references
     else:

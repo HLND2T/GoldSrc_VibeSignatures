@@ -38,9 +38,13 @@ uv run python warmup_idb.py -gamever cstrike-10210 -python "<带 idalib 的解�
 二进制。`-platform` 可收窄范围，`-force` 使全部数据库失效并重新预热，`-max-concurrency` 覆盖
 `IDB_WARMUP_MAX_CONCURRENCY`，`IDB_WARMUP_MAX_MEMORY_MIB` 启用 aggregate 内存准入。
 
-CI 的跨 job 预热使用 schema-2 exact selection 和持久化租约。缓存 payload、READY 和租约位于
-`PERSISTED_WORKSPACE/idb-cache-v2/<tag>/`，与旧版本清理程序隔离；首次使用会重新预热。
+CI 的跨 job 预热使用 schema-3 exact selection，每个 binary 对应独立 immutable generation 和租约引用。
+PR 子集与 release 可复用身份、IDA kernel 和 warm worker 相同的 binary 缓存；其他模块的增减不会使它失效。
+仅未命中的 binary 在各 platform batch 内有界并发预热。payload、READY 和 schema-2 租约记录位于
+`PERSISTED_WORKSPACE/idb-cache-v3/<tag>/`；首次使用会建立新缓存，不导入旧组合缓存。每次 Prepare 仅清理每个
+tag 一次，按 binary target 保留最新三个有效 generation，并继续保护 READY、有效租约和最小保留期内的缓存。
 `idb-cache/.locks/` 仍用于新旧 producer 的共同互斥，不应随旧缓存删除。
+历史 release evidence 的 selection schema 1/2 仍支持离线校验；新流程要求 schema 3。
 
 租约从 Prepare 创建起保留 36 天，清理另加 1 小时时钟容差；整个 selection 恢复成功后立即释放。
 部分恢复失败会保留全部保护。遇到租约缺失、已释放或过期，应重跑包含 warmup 的完整 workflow；

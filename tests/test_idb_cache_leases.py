@@ -66,7 +66,7 @@ class SelectionLeaseTests(unittest.TestCase):
                 worker_timeout_seconds=1,
                 producer_memory=ProducerMemoryOwner(None),
             )
-        document = {"schema_version": 2, "entries": entries, "lease": lease}
+        document = {"schema_version": selections.SELECTION_SCHEMA_VERSION, "entries": entries, "lease": lease}
         if seal:
             selections.seal_selection_leases(document=document, persisted_root=self.persisted)
         return document
@@ -329,7 +329,7 @@ restore_selection_entries(entries=document['entries'], groups=(group,), persiste
             b"broken",
             original.replace(b'"attempt":1', b'"attempt":NaN'),
             original.replace(b'"run_id":"run-a"', b'"run_id":"\\ud800"'),
-            original.replace(b'"schema_version":1', b'"schema_version":999'),
+            canonical_json_bytes({**record, "schema_version": 999}),
             original.replace(b'"tag":', b'"tag":"wrong","tag":'),
         ]
         for raw in mutations:

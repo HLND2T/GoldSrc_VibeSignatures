@@ -16,18 +16,17 @@ tags:
 Warm IDB cache is a rebuildable performance layer for neutral databases created after loader/auto-analysis and before any project finder, Preprocessor, or Agent mutation. It is never analysis or release truth.
 
 ## Responsibilities
-- Bind binary path/size/SHA-256, the non-empty IDA kernel version, an empty compatibility-only `normalized_ida_args`, and the canonical three-file warm-worker source contract.
-- Preserve exact schema-1 reads for legacy seven-field runtime identities and non-empty historical IDA arguments without projecting or rewriting them.
-- Warm one binary per bare-idalib process with bounded group concurrency and optional aggregate process-tree memory admission.
-- Publish immutable generations through verified `.incoming-*` directories and atomic rename.
+- Bind each binary's module/platform/path/size/SHA-256, tag, IDA kernel version, empty compatibility-only `normalized_ida_args`, and canonical three-file warm-worker source contract.
+- Warm only cache misses, using one bare-idalib process per binary and bounded concurrency within each tag/platform batch.
+- Publish one immutable generation per binary through verified `.incoming-*` directories and atomic rename.
 - Record the complete allowed `.i64`/`.idb` primary and side-file inventory; never publish active lock files.
-- Restore only an exact generation selected by cache key and manifest SHA-256.
-- Retain READY plus the newest three generations, with minimum-age protection and persistent cross-job selection leases.
-- Store payloads/READY/leases in `idb-cache-v2/<tag>/`, isolated from legacy pruning. Keep shared producer/tag locks in `idb-cache/.locks/`.
-- Bind schema-2 PR/release selections to unique repository/run/attempt lease descriptors. Pin each verified entry before unlocking or pruning, then seal every tag's pin to the complete selection digest before publishing evidence.
-- Require live sealed leases for consumer validation/restore. Release this selection's pins only after every entry copies successfully; read-only verify and partial restore retain them.
-- Reclaim abandoned pins after the 36-day lifetime plus one hour of pruning clock grace. Malformed/unreadable metadata aborts pruning before any deletion; late retries need a fresh producer selection.
-
+- Restore only exact generations selected by cache key and manifest SHA-256; consumers never re-probe or rebuild.
+- Retain READY, live leased generations, and the newest three valid generations per binary target, with minimum-age protection.
+- Store payloads/READY/schema-2 lease records in `idb-cache-v3/<tag>/`. Shared producer/tag locks remain in `idb-cache/.locks/`.
+- Bind schema-3 PR/release selections to unique repository/run/attempt leases. Pin each verified binary before unlocking; seal each tag's pin to the complete canonical selection digest before publishing evidence.
+- Release this selection's pins only after every entry restores successfully; read-only verify and partial failure retain all pins.
+- Reclaim abandoned pins after 36 days plus one hour of pruning clock grace. Malformed/unreadable metadata blocks pruning.
+- Keep historical release selection schema 1/2 readable offline; the active producer/consumer protocol requires schema 3.
 ## Involved Files & Symbols
 
 - `idb_warm_worker.py` — `ida_kernel_version()`, `warm_binary()`
@@ -41,13 +40,15 @@ Warm IDB cache is a rebuildable performance layer for neutral databases created 
 - `.github/workflows/warmup-idb.yml` — canonical IDA Python binding and producer configuration
 
 ## Architecture
-`ida_database_paths.py` owns the primary/side/lock and complete failure-cleanup path contract. `idb_warm_worker.py` is the only worker executable: it imports `idapro` only inside `--print-ida-version` or `run -binary`, then uses bare idalib to open, wait for analysis, save, and close one database. `auto_wait()` false is a failure and never saves.
+`ida_database_paths.py` owns primary/side/lock paths and failure cleanup. `idb_warm_worker.py` opens one binary through bare idalib, waits for auto-analysis, saves and closes its neutral database. `auto_wait()` false fails without saving.
 
-`idb_cache.py` owns schema-1 identity, key, manifest, READY, concurrent `warm_group`, publish, probe, verify, restore, and prune. It binds every worker and the version probe to one validated IDA Python executable, uses `ThreadPoolExecutor` for per-binary processes, and requires every process to exit successfully with a valid database set before publication. Worker timeout is explicit `kill -> wait -> owned-file invalidation`; siblings are not cancelled.
+`idb_cache.py` retains schema-1 identity/manifest validation, verified immutable publication, READY probe hints and exact restore. Official generations contain one binary. `warm_group()` remains a bounded worker batch and requires every admitted worker to finish successfully before its caller publishes any member. Pruning retains history independently by module/platform/path, including changed bytes or runtimes of the same target.
 
-`idb_cache_locks.py` owns a repository-wide producer-only SMB byte-range lock plus per-tag locks. High-level production is `short locked probe -> unlocked warm -> short locked re-probe/optional publish/verify/prune`; consumers retain `locked exact verify -> restore`. Only explicit lock contention is polled indefinitely. Storage, permission, handle, and unknown I/O errors fail closed.
+`idb_cache_selection.py` projects the PR/release tag/platform warming batches onto singleton identities. Tags probe in a bounded thread pool; verified hits are pinned under their tag lock. After the probe barrier, only missing binaries warm in serial tag/platform batches with bounded worker concurrency. Each miss is re-probed, independently published/verified and pinned under its tag lock. Each tag is pruned once after all selected members are pinned. Selection entries sort by tag/platform/module/path; lease references sort uniquely by platform/cache key.
 
-`warmup_memory.py` owns the optional process-level memory controller and a platform selector for it (`posix_memory.py` supplies the Linux cgroup v2 and per-worker tiers). The first miss binds at most one controller per producer process, every miss group takes a fresh baseline and launch gate, and the bound controller handle remains strongly owned until process exit.
+`idb_cache_locks.py` keeps the shared repository producer lock and short tag locks. Consumers hold the tag lock across exact verify/restore, and release all pins only after the complete selection copies successfully. New payloads live in `idb-cache-v3`, so older source revisions cannot prune them. First use warms the new namespace; prior group caches are not imported.
+
+`warmup_memory.py` retains one process-level memory owner, a fresh baseline/launch gate per missing platform batch, and the existing finite admission/worker failure authority.
 ## Strict consumer
 
 `IdaMcpLifecycle(database_policy="restored_strict", save_on_success=False)` requires an existing restored database. Identity mismatch fails without invalidation or cold rebuild. Successful selected-node changes are not saved back, so the immutable generation remains neutral.
@@ -74,36 +75,26 @@ Official producers share the repository-wide Actions concurrency group (`idb-war
 - **Correct approach:** Run one canonical bare-idalib worker per binary, bound to the same probed IDA Python executable. Bound concurrency with `IDB_WARMUP_MAX_CONCURRENCY` (default 2). When `IDB_WARMUP_MAX_MEMORY_MIB` is configured, admit through a finite per-task deadline on a reused process-level controller; otherwise retain each worker's own memory limit. The controller's tier decides the per-worker flag: an aggregate hard cap (Windows Job, Linux cgroup v2) disables the per-worker limit to avoid double counting, while the `reservation-only` tier keeps it and adds a resident-memory watchdog at the reservation.
 - **Failure authority:** Admission, preflight, and spawn failures do not grant failed-worker cleanup authority. After an actual worker starts, only its producer owner may invalidate `database_cleanup_paths()` and only after confirmed process exit. Startup `.id0` remains an active-lock signal. Windows WinError 5/32 deletion retries are bounded.
 - **Verification:** Unit tests cover `auto_wait=False`, explicit IDA executable binding, max concurrency, sibling isolation, timeout kill/wait-before-cleanup, stale lock cleanup, transient delete retry, producer/tag lock boundaries, legacy identity reads, and controller reuse. Production activation additionally requires real Windows Job, throughput, and cross-runner SMB3 evidence.
-- **Scope:** This changes only producer warming and shared cache identity construction. Consumer `IdaMcpLifecycle(database_policy="restored_strict", save_on_success=False)`, immutable generation payloads, exact restore, and group granularity remain unchanged.
+- **Scope:** Worker lifecycle and memory/concurrency controls remain shared by warming batches. Independent binary publication is described below; strict consumer policy and exact restore still apply.
 
 ## Cache group granularity and cross-scope reuse
+PR and release producers now publish one generation per binary, using schema-3 selection entries with singleton `binaries[]`. `per_binary_identities()` projects the existing tag/platform batches before probing, so adding/removing another module does not change this binary's cache key. PR subsets and release-all reuse the same singleton generations when tag, module/platform/path, binary bytes, runtime and worker contract agree.
 
-A cache generation is addressed per complete `(tag, platform, binaries[])` identity, not per individual binary. `cache_key()` hashes the canonical identity, including every binary's module, platform, relative path, size, and SHA-256. Probe accepts only an exact key and identity match; generations cannot be partially composed.
+A changed or corrupt binary is rebuilt independently while healthy siblings remain hits. Cold misses on the same platform still warm together, preserving worker concurrency and the single memory owner. Leases protect several distinct cache keys on one platform; prune retains three generations per binary target and runs once per tag after all pins exist.
 
-`bound-plan` and `release-all` intentionally construct different groups:
+- Trigger: neighboring PRs request different module sets but the selected binary records are unchanged.
+- Previous root cause: the old key bound the whole module set; a four-module generation could not satisfy a three-module selection.
+- Current approach: independent singleton keys/generations, exact per-binary coverage and lease references, isolated v3 payloads, no old-group migration.
+- Verification: deterministic tests cover cold batches with independent publication, subset/expansion hits, rebuilding only changed/corrupt binaries, partial restore pins, per-target retention and old namespace isolation. Real runner speedup remains unmeasured.
+- Scope: PR and release preparation/restore plus release evidence validation. Historical selection schemas 1/2 remain readable offline; active workflows require schema 3.
 
-- `idb_cache_workflow._selected_binary_groups()` includes only module/platform pairs required by the bound analysis nodes.
-- `idb_cache_release.release_binary_groups()` enumerates every configured binary target and groups the full set by tag/platform.
+Historical examples: on 2026-09-01 a singleton PR cache preceded a release requesting four-member groups and produced 15 misses covering 44 binaries. On 2026-10-02 run `36966414604` selected `engine + gameui + serverbrowser` where the earlier run had also selected `vgui2`; all 15 overlapping groups missed despite unchanged selected binary records. These describe the retired group cache behavior.
 
-Consequently, a bound-plan generation containing only `engine/hw.dll` does not satisfy a release-all identity containing `engine + client + gameui + server`, even when the engine binary, source tree, bin gitlink, IDA runtime, and warm-worker contract are unchanged. The group cardinality change produces a different cache key and forces an all-or-nothing rebuild for that group.
-
+See [[idb-cache-operations-runbook]] for first-use and lease recovery procedures and [[Release bundle publication and recovery]] for archived evidence.
 ### Diagnostic signature
-
-- Trigger signal: a nearby bound-plan warmup has many hits, followed by a release-all warmup with many misses.
-- Root cause check: compare producer scope and `binaries=N` before investigating corruption. If unchanged singleton groups still reuse old generation names while overlapping groups change from `binaries=1` to `binaries=4`, persisted storage and runtime identity are working; the miss is caused by group identity expansion.
-- Verification: confirm source Git tree, bin gitlink, IDA kernel, and warm-worker contract are unchanged; partition release results into unchanged exact groups, same tag/platform with changed binary cardinality, and groups absent from the earlier plan. A second identical release-all run should hit the generations published by the first unless identity or persisted bytes changed.
-- Scope: this explains cross-scope cache reuse only. GitHub Actions submodule/uv cache hits, misses, or archive-save failures are independent of `PERSISTED_WORKSPACE/idb-cache`.
-
-Observed example on 2026-09-01:
-
-- Game-symbol PR validation run `33468693517`, job `99733895794`, used bound-plan and reported 13 hits / 0 misses, with one binary per group.
-- Release run `33470204477`, job `99738282127`, used release-all and reported 6 hits / 15 misses. Six legacy Half-Life singleton groups were exact hits; seven overlapping groups expanded from one to four binaries; eight groups had not been requested by the earlier plan. The 15 misses covered 44 binaries and about 23m43s of reported warm time.
-- Both source commits had the same root Git tree, both used bin commit `43a1cd9500f137007db7ce7abb9bafebc2e518fb`, and both used IDA 9.3. This rules out source, binary, and IDA-version drift for that incident.
-
-### Optimization boundary
-
-The current behavior is correct for the implemented immutable group identity but may duplicate work across scopes. Improving reuse requires an explicit design change: either publish one independent generation per binary, or make bound-plan warm the complete release group whenever it selects any module/platform member. The former improves composability but expands selection/locking/restore contracts; the latter preserves existing contracts but deliberately warms binaries outside the immediate PR plan. See [[Release bundle publication and recovery]] for the release consumer boundary.
-
+These diagnostics apply to the retired combination cache only: changes to the selected module set changed the whole group's key even when its binary bytes were unchanged. The active schema-3 protocol probes each binary independently; its hit/miss log identifies module and path. Changes to another member no longer invalidate the selected binary.
+### Activation boundary
+The active v3 namespace is warmed on first use. It does not import old combination generations. Exact restore, binary/runtime/worker binding, live leases and immutable payload checks remain required. Historical release evidence uses its recorded schema and is verified offline without live pins; it is not an active cache selection.
 ## Failure and recovery
 A version mismatch, active startup lock, memory admission failure, worker timeout/failure, invalid database set, or partial cleanup publishes nothing for that group. Pending/running siblings finish; successful sibling databases remain available for retry. A started worker is killed and waited before only its own complete database set, including stale `.id0`, may be invalidated. Cleanup residue is appended to the original failure instead of replacing it.
 
@@ -112,3 +103,11 @@ A corrupt generation is never repaired in place. Probe may rebuild a damaged REA
 Repository tests cover kernel-only/current and seven-field/legacy identity validation, cache-key separation, canonical worker contract binding, exact generation publication/restore/prune, per-binary concurrency limits, `auto_wait()` false/exception behavior, worker exit and file-set checks, failure isolation, timeout kill/wait ordering, stale `.id0` invalidation, Windows sharing-violation retry, producer/tag lock scopes, LockFileEx interoperability with the former `msvcrt` byte range, finite memory admission, and process-level controller reuse.
 
 A local real-IDA 9.3 smoke validated one generated `client.dll.i64`; a two-binary run measured 49.234s serial versus 24.640s at concurrency 2 (2.00x), with every worker and database-set validation succeeding. Production real-runner acceptance remains separate: inject a worker failure and timeout, exercise aggregate memory admission across two miss groups in an isolated producer process, and prove on distinct SMB3 runners that consumer restore overlaps workspace warm while publish/prune remains mutually exclusive with exact restore.
+
+## Per-binary implementation verification (2026-10-02)
+
+- TDD: seven deterministic per-binary regressions failed against the group cache and passed after the change; archive schema-3 coverage received a separate regression.
+- Related cache/lease/release/warmup tests: 114 passed.
+- Required `uv run python tests/run_test_suite.py all -b --durations 30`: 1389 tests, exit 0, nine skips (three POSIX-only tests, two opt-in notes CLI tests, three Redis integration classes because no Redis service was available, and opt-in real IDA integration).
+- `uv run python format_repo_files.py --check`: exit 0; 648 Python and 29 YAML files checked. Independent read-only invariant review found no concrete regression.
+- These results establish local behavior/contract coverage. This change has no real-runner cold/warm wall-time measurement or cross-runner storage acceptance yet.

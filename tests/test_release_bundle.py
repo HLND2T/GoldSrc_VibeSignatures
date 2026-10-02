@@ -186,6 +186,54 @@ class ReleaseBundleTests(unittest.TestCase):
                     bundle_root=invalid_bundle, **self._verification_arguments(repo, generated, source_sha)
                 )
 
+    def test_single_binary_evidence_covers_modules_on_same_platform_exactly(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo, generated, source_sha = self.fixture(Path(temporary))
+            selection_path = generated / "evidence/cache-selection.json"
+            selection = json.loads(selection_path.read_bytes())
+            engine = selection["entries"][0]
+            client = {
+                **engine,
+                "cache_key": "b" * 64,
+                "generation": "generation-client",
+                "binaries": [{**engine["binaries"][0], "module": "client", "path": "client/client.dll"}],
+            }
+            selection.update(
+                schema_version=3,
+                lease=new_lease(repository="owner/repo", run_id="run-1", attempt=1),
+                entries=[client, engine],
+            )
+            arguments = dict(
+                bundle_root=generated,
+                source_sha=source_sha,
+                bin_gitlink_sha=selection["bin_commit"],
+                gamevers=("game-1",),
+                expected_cache_binaries=(("game-1", "windows", "client"), ("game-1", "windows", "engine")),
+            )
+
+            def validate(entries):
+                selection["entries"] = entries
+                selection_path.write_bytes(canonical_json_bytes(selection))
+                digest = sha256_file(selection_path)
+                release_bundle._validate_evidence(
+                    **arguments,
+                    cache_selection_sha256=digest,
+                    manifest={
+                        "ida_runtime_sha256": sha256_file(generated / "evidence/ida-runtime.json"),
+                        release_bundle.WARM_SELECTION_MANIFEST_KEY: digest,
+                    },
+                )
+
+            validate([client, engine])
+            for entries in (
+                [client, client],
+                [engine],
+                [engine, client],
+                [{**client, "binaries": [client["binaries"][0], engine["binaries"][0]]}],
+            ):
+                with self.subTest(entries=entries), self.assertRaises(ReleaseBundleError):
+                    validate(entries)
+
     def test_tracked_bundle_and_independent_binding_verification(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
