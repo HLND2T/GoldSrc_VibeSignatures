@@ -74,3 +74,13 @@ Final forced selected-node batch `analysis-batch-20261002T122328-9eb4b9793c7d456
 ## Callers
 
 Consumers may redirect selected CALL sites using the new gamedata artifacts. ScaledConst already denotes scaled arguments; consumers must not blindly scale those values again. No MetaHookSv consumer changes are included.
+
+### PR #322: cold IDB merged-function input failure
+
+Trigger: CI run 36966414604 attempt 3 stopped at `hl-3248/serverbrowser:windows:find-vgui2_Panel-size-callsites` input validation, before the finder ran. The `Panel::Init` artifact points to `0x10019240..0x100192d2`; fresh IDA analysis assigns that range to a merged function `0x10016610..0x10019516`. The existing local i64 has separate function boundaries, which concealed this in restored-IDB validation. The next 28 serial nodes were aborted, not independently failing.
+
+Root cause/constraint: extracting shared sizing identity code correctly selected the existing SetSize consumers for CI. The shared function-owner recovery rejected every interior entry, even an independently called, disconnected routine. Rebuilding a cold IDB reproduces the same failure, so merely retrying or replacing the cache is insufficient.
+
+Correct approach: `_recover_merged_function_entry` in `ida_analyze_util.py` requires an explicit size and matching non-wildcard signature, a bounded executable span, a single original main chunk, and an external direct CALL. The entry's reachable basic blocks must cover exactly the requested interval with no incoming predecessor from outside it and no outgoing CFG edge beyond it. Only then truncate the merged owner and define the entry; failed definition restores the original owner. No bytes are deleted and the owned validation database is not saved.
+
+Validation: isolated original binary cold analysis reproduced the CI owner; runtime input validation then recovered the entry, and the real SetSize preprocessor regenerated all declared ServerBrowser artifacts byte-identically. Behavioral unit cases cover connected/escaping/incomplete regions, missing calls or signature/size evidence, mismatched signatures and rollback. Applicable to artifact-backed function-entry recovery, not arbitrary interior addresses.

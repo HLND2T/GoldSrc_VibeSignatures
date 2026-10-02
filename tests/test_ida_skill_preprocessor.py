@@ -8,6 +8,7 @@ import math
 import os
 import runpy
 import struct
+import sys
 import tempfile
 import unittest
 from contextlib import asynccontextmanager, redirect_stderr
@@ -763,6 +764,90 @@ class PreprocessStatusTests(unittest.TestCase):
 
         self.assertIsNone(result)
         self.assertEqual([(entry_ea,)], add_func_calls)
+
+    def _merged_artifact_entry(self, **changes):
+        start, entry, end, owner_end = 0x1000, 0x1100, 0x1120, 0x1200
+        owner = SimpleNamespace(start_ea=start, end_ea=owner_end)
+        functions = {start: owner}
+        mutations = []
+        prefix = SimpleNamespace(start_ea=start, end_ea=entry)
+        block = SimpleNamespace(
+            start_ea=entry,
+            end_ea=changes.get("block_end", end),
+            preds=lambda: [prefix] if changes.get("reachable") else [],
+            succs=lambda: [prefix] if changes.get("escaping") else [],
+        )
+
+        def set_end(address, limit):
+            mutations.append(("end", address, limit))
+            functions[address].end_ea = limit
+            return True
+
+        def add(address, limit):
+            mutations.append(("add", address, limit))
+            if changes.get("add_fails"):
+                return False
+            functions[address] = SimpleNamespace(start_ea=address, end_ea=limit)
+            return True
+
+        namespace = {
+            "FUNCTION_RECOVERY_MAX_SPAN": 0x4000,
+            "ida_funcs": SimpleNamespace(
+                set_func_end=set_end,
+                add_func=add,
+                get_func=lambda address: functions.get(address),
+                del_func=lambda address: functions.pop(address, None) is not None,
+            ),
+            "idautils": SimpleNamespace(Chunks=lambda _start: [(start, owner_end)]),
+            "_same_executable_segment": lambda *_args: True,
+            "_signature_matches": lambda *_args: not changes.get("wrong_signature"),
+            "_direct_call_sources": lambda _entry: [] if changes.get("no_calls") else [start + 4],
+            "_verified_entry_function": lambda address, *_args: functions.get(address),
+        }
+        tree = ast.parse(ida_analyze_util._FUNCTION_OWNER_RECOVERY_PY_EVAL)
+        node = next(
+            node
+            for node in tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == "_recover_merged_function_entry"
+        )
+        exec(  # noqa: S102 - exercise the generated IDAPython helper with a synthetic CFG.
+            compile(ast.Module(body=[node], type_ignores=[]), "<merged-entry>", "exec"), namespace
+        )
+        with patch.dict(sys.modules, {"ida_gdl": SimpleNamespace(FlowChart=lambda _owner: [block])}):
+            result = namespace["_recover_merged_function_entry"](
+                owner, entry, entry, changes.get("expected_end", end), changes.get("signature", "53 56 ??")
+            )
+        return result, mutations, owner
+
+    def test_artifact_entry_recovers_disconnected_routine_in_merged_owner(self):
+        result, mutations, owner = self._merged_artifact_entry()
+        self.assertEqual((0x1100, 0x1120), (result.start_ea, result.end_ea))
+        self.assertEqual([("end", 0x1000, 0x1100), ("add", 0x1100, 0x1120)], mutations)
+        self.assertEqual(0x1100, owner.end_ea)
+
+    def test_artifact_entry_split_rejects_unproven_or_connected_regions_without_mutation(self):
+        for options in (
+            {"reachable": True},
+            {"escaping": True},
+            {"block_end": 0x1110},
+            {"block_end": 0x1130},
+            {"wrong_signature": True},
+            {"no_calls": True},
+            {"expected_end": None},
+            {"signature": None},
+            {"signature": "?? ??"},
+        ):
+            with self.subTest(options=options):
+                result, mutations, owner = self._merged_artifact_entry(**options)
+                self.assertIsNone(result)
+                self.assertEqual([], mutations)
+                self.assertEqual(0x1200, owner.end_ea)
+
+    def test_artifact_entry_split_restores_owner_when_definition_fails(self):
+        result, mutations, owner = self._merged_artifact_entry(add_fails=True)
+        self.assertIsNone(result)
+        self.assertEqual(0x1200, owner.end_ea)
+        self.assertEqual(("end", 0x1000, 0x1200), mutations[-1])
 
     def _overlapping_entry_recovery(self, *, reachable=False, referenced=True, add_succeeds=True):
         tree = ast.parse(DATA_REFERENCED_ENTRY_RECOVERY_PY)
