@@ -1056,15 +1056,26 @@ def prune_tag(
         try:
             manifest, _digest = _verify_generation_root(path, expected_generation=path.name)
             published = datetime.strptime(manifest["published_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-            valid.append((published, path))
+            # Retain history per binary target, including revisions of its bytes/runtime.
+            # A busy module must not evict another module's otherwise reusable database.
+            targets = tuple(
+                (binary["module"], binary["platform"], binary["path"]) for binary in manifest["identity"]["binaries"]
+            )
+            valid.append((published, path, targets))
         except IdbCacheError:
             continue
     valid.sort(key=lambda item: (item[0], item[1].name), reverse=True)
-    keep = {path.name for _published, path in valid[:keep_latest]}
+    retained = {}
+    keep = set()
+    for _published, path, targets in valid:
+        count = retained.get(targets, 0)
+        if count < keep_latest:
+            keep.add(path.name)
+        retained[targets] = count + 1
     keep.update(protected)
     if ready_generation is not None:
         keep.add(ready_generation)
-    for published, path in valid:
+    for published, path, _targets in valid:
         if path.name not in keep and now - published >= minimum_age:
             shutil.rmtree(path)
             removed.append(path.name)

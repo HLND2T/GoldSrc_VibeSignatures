@@ -53,7 +53,7 @@ branch therefore does not revalidate, matching base-branch advancement, which fi
 
 The reusable `warmup-idb` producer publishes an exact selection (see
 [[Immutable warm IDB cache generations]]); consumers verify and restore that selection and never warm or save. The IDB
-key binds binary/kernel/worker identity and intentionally does not bind `bin_artifacts` content.
+key binds one binary/kernel/worker identity and intentionally does not bind `bin_artifacts` content or the other selected modules. PR/release selection schema 3 contains one entry per binary; only misses warm in bounded platform batches, and each tag is pruned once. Payloads and schema-2 lease records use `idb-cache-v3`; old combination caches are not imported. Archived release evidence keeps schemas 1/2/3 readable offline.
 
 ## Release workflow and Pages deployment
 

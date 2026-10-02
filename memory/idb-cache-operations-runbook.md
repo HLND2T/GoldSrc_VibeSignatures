@@ -46,56 +46,25 @@ SHA-256, cache key, generation, manifest hash, worker counts, and wall times.
 Warm production runs in the reusable `warmup-idb` job; official and direct producers share the job-level concurrency
 group (`idb-warmup-<owner>/<repo>`, `cancel-in-progress: false`) plus the persisted `producer.lock`. A miss is probed
 under a short tag lock, warmed outside that lock by one bare-idalib process per binary, then re-probed/published/
-verified/pruned after reacquiring the tag lock. Consumers hold only the tag lock across `verify -> restore`, so they can
+verified after reacquiring the tag lock; pruning runs once per tag after all selected binaries are pinned. Consumers hold only the tag lock across `verify -> restore`, so they can
 restore while another producer warms but cannot race its publish/prune. A lock is held by an open handle, never by the
 lock file existing. Hit/miss selection semantics, `cache-selection.json` transport role, and strict no-save consumer
 analysis are documented in [[Immutable warm IDB cache generations]].
 
 ## Prepare performance
+PR and release producers probe individual binaries across tags in a bounded thread pool. The pool limit reuses `--max-concurrency` / `IDB_WARMUP_MAX_CONCURRENCY` (default `2`); platform batches within a tag keep input order and share its existing lock. A failed probe waits for the pool and aborts before warming or writing a selection.
 
-PR and release selection producers first probe/verify/prune different tags in a bounded thread pool. The limit reuses
-`--max-concurrency` / `IDB_WARMUP_MAX_CONCURRENCY` (default `2`, `1` for serial probes); platforms within one tag retain
-input order and share the existing tag lock. After every probe task finishes successfully, miss groups warm and publish
-one group at a time, retaining per-binary worker concurrency and the single process memory owner. A probe-task failure
-waits for the pool to finish and aborts preparation before warming or writing a selection.
+After the probe barrier, only missing binaries warm together within their tag/platform batch. Batches run serially using the single process memory owner, while each batch retains bounded per-binary worker concurrency. Each successful member is independently re-probed/published/verified and pinned. Prune runs once per tag after all selected hits and misses have pins, retaining READY, live pins, minimum-age protection and three valid generations per binary target.
 
-Each Prepare creates a unique schema-2 selection lease owned by repository/run/attempt. Verified hits and miss
-publications are pinned under their tag lock before pruning or releasing the lock. Preparing pins protect early entries
-while other groups warm; after all entries exist, every tag's lease is sealed to the canonical selection SHA-256 before
-any selection/evidence files are written. Persistent protection covers other producers and the downstream job queue.
-It does not bypass manifest/payload validation or ordinary retention for unleased generations.
+Each Prepare creates a schema-3 selection with one singleton entry per binary and a unique repository/run/attempt lease. Its on-disk schema-2 lease record supports several cache keys on one platform; references are uniquely sorted by platform/cache key. All tag pins are sealed to the canonical selection SHA-256 before selection/evidence files are written.
 
-The lease lasts 36 days from creation (the 35-day GitHub whole-workflow limit plus one day), and pruning adds one hour
-of clock-skew grace. The consumer rejects expired, missing, unsealed, or mismatched leases before copying. All entries
-must restore successfully before any of this selection's pins are released; partial failure keeps all pins. Independent
-verify never releases or renews pins. A cancelled producer, failed artifact upload, or killed consumer leaves pins for
-bounded expiry reclamation. Prune validates the complete lease inventory before any deletion; malformed, unreadable,
-unknown-version, or reparse-point metadata aborts pruning for that tag. Logs include pin/seal/release/expiry and every
-pruned generation and reason.
+Leases last 36 days, with an extra one-hour pruning clock allowance. All entries must restore successfully before any pins are released. Partial failure, producer cancellation or failed artifact upload retains pins for bounded expiry reclamation. Malformed, unreadable, unknown-version or linked lease metadata blocks pruning before any deletion.
 
-Payloads, READY, and leases now live under `PERSISTED_WORKSPACE/idb-cache-v2/<tag>/`. The old
-`idb-cache/.locks/` remains the shared producer/tag coordination namespace so old and new producers cannot warm
-concurrently. Old source revisions only prune their original payload directory and cannot delete v2 pins or generations.
-Initial v2 use rebuilds the cache; there is no automatic import or deletion of legacy payloads. Do not move or delete
-the old `.locks` directory during legacy-data maintenance.
+Payloads, READY and leases live in `PERSISTED_WORKSPACE/idb-cache-v3/<tag>/`. Existing `idb-cache/.locks/` coordinates all source revisions. New workflows use only the v3 payload namespace: first use warms each requested binary once, without importing prior combination caches. Older revisions can continue using their own payload directories and cannot prune v3 generations. Never move/delete the shared lock directory during maintenance.
 
-A successful full restore consumes its selection's lease. Retrying only a later failed consumer job is not guaranteed
-once that lease is released or expired: re-run the full workflow including its producer for a new selection and lease.
-Generation names identify historical creators; lease ownership identifies the current consumer's producer, including
-cache hits and different attempts. Archived release evidence accepts legacy schema 1 and leased schema 2 descriptors
-without consulting live pins, so releases remain verifiable after restore or expiry.
+A full restore consumes its lease. Re-run the entire workflow, including the producer, after a missing/released/expired pin; retrying only a consumer does not guarantee availability. Active consumers require selection schema 3. Archived release evidence accepts schemas 1/2/3 without live storage or pin lookups.
 
-Both READY and fallback hits still hash the complete generation inside the probe's tag lock; only the immediate second hit
-verification is removed. Prune also hashes historical generations, and final selection validation before and after writing
-still performs full verification. Entries remain canonically sorted regardless of thread completion order.
-
-Flushed `prepare_*` stage logs separate binding/binary identities, parallel probe wall time, per-group probe/verify, prune,
-warm, publish/re-probe/verification, selection validation, and writing. Lock acquisition logs report wait time. Per-group
-hit/miss durations exclude time queued behind other groups, so concurrent durations must not be summed as total wall time.
-Compare repeated runs on the same runner with the same selection and comparable cold/warm storage state; record manifest
-`files[].size` totals per group and distinguish prune's historical payload reads from the selected payload. Disk
-throughput determines the benefit — local unit tests do not establish production speedup.
-
+READY/fallback probes, historical prune, final selection validation and exact restore retain full payload verification. Entries sort by tag/platform/module/path. Logs identify each binary, separate parallel probe wall time, missing-batch warm time, per-binary publication, per-tag prune and final validation. Miss-entry durations include shared batch warm time and must not be summed as total wall time. Real storage/runner measurements are needed to establish production speedup.
 ## Accepted-bin and legacy-YAML maintenance
 
 Run these only under the same runner authority (full contract in [[Release bundle publication and recovery]]):
@@ -112,7 +81,7 @@ Run these only under the same runner authority (full contract in [[Release bundl
 `prune -persisted-root <root> -tag <tag>` runs only under the same runner authority. Direct `warm`, `publish`, and
 `prune` acquire the producer lock plus the relevant short tag lock; `restore` and `probe` acquire the tag lock; read-only
 `verify` is lock-free. Direct `warm` requires `--ida-python`, accepts `--max-concurrency`, and applies
-`--worker-timeout-seconds` to worker execution only. Prune keeps READY plus the newest three valid generations, honors
+`--worker-timeout-seconds` to worker execution only. Prune keeps READY plus the newest three valid generations per binary target, honors
 the minimum age, and visits only that tag.
 
 Retired tags require an offline maintenance window: stop new IDA jobs, acquire the tag authority, move the exact tag
@@ -143,7 +112,7 @@ Coverage for these procedures is exercised by the warm-cache test surface plus t
 - Root cause: producer serialization and tag locks protect operations, while the old in-memory protected set ended with one Prepare. Neither protected the handoff/queue between jobs.
 - Correct approach: persist and seal pins before publishing exact selections, consult all pins before pruning, release only after complete restore, and isolate v2 payloads from old source revisions' pruning.
 - Verification: the deterministic A-Prepare/B-Prepare/A-restore regression failed before the fix; local tests cover cross-process prune/restore into another workspace, hit/miss pins, multi-platform and multi-tag partial failure, independent owners/attempts, expiry/clock grace, malformed metadata, symlinks, publication failure, and legacy namespace isolation. Real Windows/SMB multi-runner acceptance remains a separate rollout gate; Linux process-lock tests do not establish SMB behavior.
-- Scope: shared PR/release IDB cache handoff. IDB identity, manifest, neutral payloads, and strict no-rebuild analysis remain intact. Archived release evidence validates schema 1 or schema 2 descriptors independently of live lease state or today's retention policy.
+- Scope: shared PR/release IDB cache handoff. IDB identity, manifest, neutral payloads, and strict no-rebuild analysis remain intact. Archived release evidence validates selection schemas 1, 2 and 3 independently of live lease state or today's retention policy.
 
 Corrupt lease recovery is deliberately manual: stop new work for the affected tag, identify and drain/cancel all possibly
 referencing producer/consumer runs, preserve the exact lease bytes and generation inventory for diagnosis, then under

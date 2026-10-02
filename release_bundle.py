@@ -253,8 +253,8 @@ def _configured_gamevers(repo_root: Path) -> tuple[str, ...]:
     return tuple(sorted(values))
 
 
-def _expected_cache_pairs(repo_root: Path, gamevers: tuple[str, ...]) -> tuple[tuple[str, str], ...]:
-    pairs = []
+def _expected_cache_binaries(repo_root: Path, gamevers: tuple[str, ...]) -> tuple[tuple[str, str, str], ...]:
+    binaries = []
     for gamever in gamevers:
         contract = load_contract(
             repo_root / "configs" / f"{gamever}.yaml",
@@ -262,10 +262,8 @@ def _expected_cache_pairs(repo_root: Path, gamevers: tuple[str, ...]) -> tuple[t
             repo_root / "bin",
             artifactdir=repo_root / "bin_artifacts",
         )
-        pairs.extend(
-            (gamever, platform) for platform in sorted({target.platform for target in contract.binary_targets.values()})
-        )
-    return tuple(sorted(pairs))
+        binaries.extend((gamever, platform, module) for module, platform in contract.binary_targets)
+    return tuple(sorted(binaries))
 
 
 def _copy_file(source: Path, target: Path) -> None:
@@ -565,7 +563,7 @@ def _validate_evidence(
     bin_gitlink_sha: str,
     cache_selection_sha256: str | None,
     gamevers: tuple[str, ...],
-    expected_cache_pairs: tuple[tuple[str, str], ...],
+    expected_cache_binaries: tuple[tuple[str, str, str], ...],
 ) -> None:
     runtime_path = bundle_root / "evidence/ida-runtime.json"
     runtime = _load_canonical_json(runtime_path, "IDA runtime evidence")
@@ -596,11 +594,11 @@ def _validate_evidence(
         raise ReleaseBundleError(str(exc)) from exc
     selection = _load_canonical_json(selection_path, "warm IDB selection evidence")
     selection_schema = selection.get("schema_version")
-    selection_keys = CACHE_SELECTION_KEYS | ({"lease"} if selection_schema == 2 else set())
+    selection_keys = CACHE_SELECTION_KEYS | ({"lease"} if selection_schema in (2, 3) else set())
     if (
         set(selection) != selection_keys
         or type(selection_schema) is not int
-        or selection_schema not in (1, 2)
+        or selection_schema not in (1, 2, 3)
         or selection.get("cache_mode") != "warm"
         or selection.get("source_sha") != source_sha
         or selection.get("bin_commit") != bin_gitlink_sha
@@ -608,7 +606,7 @@ def _validate_evidence(
         or not selection["entries"]
     ):
         raise ReleaseBundleError("Warm IDB selection evidence has an unexpected schema or identity")
-    if selection_schema == 2:
+    if selection_schema in (2, 3):
         # Archived evidence outlives the live restore lease. Validate its immutable
         # descriptor, without consulting persisted storage or requiring a live pin.
         try:
@@ -617,6 +615,7 @@ def _validate_evidence(
             raise ReleaseBundleError(f"Invalid warm IDB selection lease evidence: {exc}") from exc
     entries = selection["entries"]
     pairs: list[tuple[str, str]] = []
+    binary_keys: list[tuple[str, str, str]] = []
     for entry in entries:
         if not isinstance(entry, dict) or set(entry) != CACHE_SELECTION_ENTRY_KEYS:
             raise ReleaseBundleError("Warm IDB selection entry has unexpected fields")
@@ -634,6 +633,8 @@ def _validate_evidence(
         binaries = entry["binaries"]
         if not isinstance(binaries, list) or not binaries:
             raise ReleaseBundleError("Warm IDB selection entry must bind binaries")
+        if selection_schema == 3 and len(binaries) != 1:
+            raise ReleaseBundleError("Single-binary warm IDB selection entries must bind exactly one binary")
         binary_paths = []
         for binary in binaries:
             if not isinstance(binary, dict) or set(binary) != CACHE_BINARY_KEYS:
@@ -648,15 +649,19 @@ def _validate_evidence(
                 or not isinstance(binary["module"], str)
                 or not binary["module"]
                 or PurePosixPath(binary_path).parts[0] != binary["module"]
-                or not isinstance(binary["size"], int)
+                or type(binary["size"]) is not int
                 or binary["size"] <= 0
             ):
                 raise ReleaseBundleError("Warm IDB selection binary identity is invalid")
             binary_paths.append(binary_path)
+            binary_keys.append((tag, platform, binary["module"]))
         if binary_paths != sorted(binary_paths) or len({path.casefold() for path in binary_paths}) != len(binary_paths):
             raise ReleaseBundleError("Warm IDB selection binaries must use canonical unique order")
         pairs.append((tag, platform))
-    if tuple(pairs) != expected_cache_pairs:
+    if selection_schema == 3:
+        if tuple(binary_keys) != expected_cache_binaries:
+            raise ReleaseBundleError("Warm IDB selection entries do not cover the configured binary inventory")
+    elif tuple(pairs) != tuple(sorted({(tag, platform) for tag, platform, _module in expected_cache_binaries})):
         raise ReleaseBundleError("Warm IDB selection entries do not cover the configured tag/platform inventory")
     if (
         sha256_file(selection_path) != manifest[WARM_SELECTION_MANIFEST_KEY]
@@ -915,7 +920,7 @@ def verify_release_bundle(
         bin_gitlink_sha=bin_gitlink_sha,
         cache_selection_sha256=cache_selection_sha256,
         gamevers=gamevers,
-        expected_cache_pairs=_expected_cache_pairs(repo_root, gamevers),
+        expected_cache_binaries=_expected_cache_binaries(repo_root, gamevers),
     )
 
     expected_paths = {

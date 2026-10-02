@@ -25,6 +25,7 @@ from idb_cache_leases import new_lease, validate_lease
 from idb_cache_locks import producer_lock
 from idb_cache_selection import (
     SELECTION_ENTRY_KEYS,
+    SELECTION_SCHEMA_VERSION,
     IdbCacheSelectionError,
     entry_sort_key,
     prepare_selection_entries,
@@ -39,7 +40,7 @@ from idb_cache_selection import (
 from release_workflow_lib.hashing import canonical_json_bytes, sha256_bytes
 from warmup_memory import ProducerMemoryOwner, producer_memory_owner_from_environment
 
-CACHE_SELECTION_SCHEMA_VERSION = 2
+CACHE_SELECTION_SCHEMA_VERSION = SELECTION_SCHEMA_VERSION
 CACHE_SELECTION_KEYS = {
     "schema_version",
     "cache_mode",
