@@ -6,7 +6,7 @@ proves GetVPanel. Panel::Init forwards its third/fourth explicit arguments to
 IPanel::SetSize, identifying that slot independently of ABI slot numbers.
 """
 
-COLLECT = r"""
+IDENTIFY = r"""
 platform = values["platform"]
 THIS = ("arg", 0)
 init = values["init"]
@@ -163,6 +163,11 @@ if values["scaled"] and scale is None:
     raise ValueError("scaled mode requires a current proportional helper")
 if scale is not None and not proportional_helper_dispatches(flow_at(scale, platform), platform, virtual_targets):
     raise ValueError("proportional helper lacks identity/normal/HD scalar dispatches")
+"""
+
+COLLECT = (
+    IDENTIFY
+    + r"""
 sites = {k: [] for k in methods}
 rejects = []
 for kind, targets in methods.items():
@@ -193,3 +198,4 @@ for kind, targets in methods.items():
 result["sites"] = sites
 result["rejects"] = rejects
 """
+)

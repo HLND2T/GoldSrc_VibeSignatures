@@ -883,6 +883,65 @@ def _verified_entry_function(entry_ea, anchor_ea, expected_end, expected_signatu
         return None
     return function
 
+def _recover_merged_function_entry(owner, entry, anchor, end, signature):
+    # Fresh IDBs can merge independent, directly called routines into one main
+    # chunk. An artifact alone is not permission to split a reachable block.
+    import ida_gdl
+    if end is None or not signature or not any(token != '??' for token in str(signature).split()):
+        return None
+    start, owner_end = int(owner.start_ea), int(owner.end_ea)
+    if not (start < entry <= anchor < end <= owner_end):
+        return None
+    if end - entry > FUNCTION_RECOVERY_MAX_SPAN or not _same_executable_segment(entry, end):
+        return None
+    if not _signature_matches(entry, signature):
+        return None
+    if [(int(a), int(b)) for a, b in idautils.Chunks(start)] != [(start, owner_end)]:
+        return None
+    if not any(source < entry or source >= end for source in _direct_call_sources(entry)):
+        return None
+    blocks = {int(block.start_ea): block for block in ida_gdl.FlowChart(owner)}
+    if entry not in blocks:
+        return None
+    pending, visited = [entry], set()
+    while pending:
+        address = pending.pop()
+        if address in visited:
+            continue
+        block = blocks.get(address)
+        if block is None or not (entry <= address < int(block.end_ea) <= end):
+            return None
+        visited.add(address)
+        pending.extend(int(item.start_ea) for item in block.succs())
+    cursor = entry
+    for address in sorted(visited):
+        block = blocks[address]
+        if address != cursor or any(int(item.start_ea) not in visited for item in block.preds()):
+            return None
+        cursor = int(block.end_ea)
+    if cursor != end:
+        return None
+    # No byte deletion: retain instructions and restore the original owner if
+    # IDA refuses the split. Only this temporary analysis database is changed.
+    if not ida_funcs.set_func_end(start, entry):
+        return None
+    try:
+        if not ida_funcs.add_func(entry, end):
+            raise RuntimeError('failed to define independent entry')
+        recovered = _verified_entry_function(entry, anchor, end, signature)
+        if recovered is None:
+            raise RuntimeError('split entry did not retain its verified boundaries')
+    except Exception:
+        created = ida_funcs.get_func(entry)
+        if created is not None and int(created.start_ea) == entry:
+            if not ida_funcs.del_func(entry):
+                raise RuntimeError('failed to roll back split entry')
+        if not ida_funcs.set_func_end(start, owner_end):
+            raise RuntimeError('failed to restore merged owner')
+        return None
+    return recovered
+
+
 def _recover_function_entry(entry_ea, anchor_ea, expected_end, expected_signature):
     entry = int(entry_ea)
     anchor = int(anchor_ea)
@@ -892,7 +951,7 @@ def _recover_function_entry(entry_ea, anchor_ea, expected_end, expected_signatur
         return existing
     containing = ida_funcs.get_func(entry)
     if containing is not None and int(containing.start_ea) != entry:
-        return None
+        return _recover_merged_function_entry(containing, entry, anchor, expected_end, expected_signature)
     if not _is_executable_address(entry) or not _signature_matches(entry, expected_signature):
         return None
     try:

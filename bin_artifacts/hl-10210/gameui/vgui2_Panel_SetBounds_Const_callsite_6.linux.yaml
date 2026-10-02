@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetBounds_Const_callsite_6
+patch_va: '0xc5650'
+patch_rva: '0xc5650'
+patch_sig: E8 0B 20 03 00 31 FF
+patch_sig_disp: '0x0'

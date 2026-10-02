@@ -1,0 +1,5 @@
+patch_name: vgui2_Panel_SetBounds_Const_callsite_24
+patch_va: '0x10063d9d'
+patch_rva: '0x63d9d'
+patch_sig: E8 AE 3D FE FF 8B F4
+patch_sig_disp: '0x0'

@@ -2409,6 +2409,39 @@ modules:
     module_windows: GameUI.dll
     depot_windows: valve/cl_dlls/GameUI.dll
     skills:
+      - name: find-vgui2_Panel-bounds-callsites
+        expected_input:
+          - vgui2_Panel_Init.{platform}.yaml
+        expected_output:
+          - vgui2_Panel_SetBounds_Const_callsite_0.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_1.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_2.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_3.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_4.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_5.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_6.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_7.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_8.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_9.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_10.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_11.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_12.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_13.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_14.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_15.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_16.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_17.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_18.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_19.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_20.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_21.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_22.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_23.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_24.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_25.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_26.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_27.{platform}.yaml
+          - vgui2_Panel_SetBounds_Const_callsite_28.{platform}.yaml
       - name: find-vgui2_Panel-size-callsites
         expected_input:
           - vgui2_Panel_Init.{platform}.yaml
@@ -2597,6 +2630,64 @@ modules:
           - CCareerMapFrame_ctor.{platform}.yaml
           - CCareerBotFrame_ctor.{platform}.yaml
     symbols:
+      - name: vgui2_Panel_SetBounds_Const_callsite_0
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_1
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_2
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_3
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_4
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_5
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_6
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_7
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_8
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_9
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_10
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_11
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_12
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_13
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_14
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_15
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_16
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_17
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_18
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_19
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_20
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_21
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_22
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_23
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_24
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_25
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_26
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_27
+        category: patch
+      - name: vgui2_Panel_SetBounds_Const_callsite_28
+        category: patch
       - name: vgui2_Panel_SetSize_Const_callsite_0
         category: patch
       - name: vgui2_Panel_SetSize_Const_callsite_1
