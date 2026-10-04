@@ -1,0 +1,5 @@
+func_name: SVC_ServiceChallenge
+func_va: '0x1da6950'
+func_rva: '0xa6950'
+func_size: '0x1cb'
+func_sig: 55 8B EC 83 E4 F8 81 EC C8 00 00 00 A1 ?? ?? ?? ?? 33 C4 89 84 24 ?? ?? ?? ?? 56 BA FF FF FF 7F

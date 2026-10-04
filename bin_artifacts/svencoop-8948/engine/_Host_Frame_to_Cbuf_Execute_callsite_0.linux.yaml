@@ -1,0 +1,5 @@
+patch_name: _Host_Frame_to_Cbuf_Execute_callsite_0
+patch_va: '0xca016'
+patch_rva: '0xca016'
+patch_sig: E8 05 90 FD FF E8 ?? ?? ?? ??
+patch_sig_disp: '0x0'

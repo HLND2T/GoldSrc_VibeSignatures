@@ -5,6 +5,39 @@ modules:
     depot_windows: hw.dll
     depot_linux: hw.so
     skills:
+      - name: find-native-rcon-string-symbols
+        expected_output:
+          - SV_CheckChallenge.{platform}.yaml
+          - SVC_ServiceChallenge.{platform}.yaml
+          - SV_Rcon.{platform}.yaml
+          - SV_Rcon_Validate.{platform}.yaml
+          - SV_FlushRedirect.{platform}.yaml
+      - name: find-Host_InitializeGameDLL-rcon-decompiles
+        expected_input:
+          - Host_InitializeGameDLL.{platform}.yaml
+        expected_output:
+          - Cbuf_Execute.{platform}.yaml
+          - NET_Config.{platform}.yaml
+      - name: find-SV_CheckChallenge-rcon-decompiles
+        expected_input:
+          - SV_CheckChallenge.{platform}.yaml
+        expected_output:
+          - NET_IsLocalAddress.{platform}.yaml
+      - name: find-native-rcon-frame-symbols
+        expected_input:
+          - CEngine_Frame.{platform}.yaml
+          - Cbuf_Execute.{platform}.yaml
+          - SVC_ServiceChallenge.{platform}.yaml
+          - SV_Rcon.{platform}.yaml
+        expected_output:
+          - _Host_Frame.{platform}.yaml
+          - SV_CheckForRcon.{platform}.yaml
+      - name: find-_Host_Frame_to_Cbuf_Execute_callsite_0
+        expected_input:
+          - _Host_Frame.{platform}.yaml
+          - Cbuf_Execute.{platform}.yaml
+        expected_output:
+          - _Host_Frame_to_Cbuf_Execute_callsite_0.{platform}.yaml
       - name: find-vgui2_Panel-size-callsites
         expected_input:
           - vgui2_Panel_Init.{platform}.yaml
@@ -1504,6 +1537,30 @@ modules:
         expected_output:
           - CL_IsDevOverviewMode.{platform}.yaml
     symbols:
+      - name: Cbuf_Execute
+        category: func
+      - name: NET_Config
+        category: func
+      - name: NET_IsLocalAddress
+        category: func
+      - name: SVC_ServiceChallenge
+        category: func
+      - name: SV_Rcon
+        category: func
+      - name: SV_Rcon_Validate
+        category: func
+      - name: SV_FlushRedirect
+        category: func
+      - name: SV_CheckForRcon
+        category: func
+      - name: SV_CheckChallenge
+        category: func
+      - name: _Host_Frame
+        category: func
+        artifact: _Host_Frame.{platform}.yaml
+      - name: _Host_Frame_to_Cbuf_Execute_callsite_0
+        category: patch
+        artifact: _Host_Frame_to_Cbuf_Execute_callsite_0.{platform}.yaml
       - name: vgui2_Panel_SetSize_Const_callsite_0
         category: patch
       - name: vgui2_Panel_SetSize_Const_callsite_1

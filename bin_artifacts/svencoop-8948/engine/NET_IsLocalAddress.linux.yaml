@@ -1,0 +1,6 @@
+func_name: _Z18NET_IsLocalAddress8netadr_s
+func_va: '0x132e40'
+func_rva: '0x132e40'
+func_size: '0xb'
+func_sig: 31 C0 83 7C 24 ?? ?? 0F 94 C0 C3
+func_sig_allow_across_function_boundary: true

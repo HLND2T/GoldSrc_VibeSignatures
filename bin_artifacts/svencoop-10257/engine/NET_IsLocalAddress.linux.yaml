@@ -1,0 +1,6 @@
+func_name: NET_IsLocalAddress
+func_va: '0xe5860'
+func_rva: '0xe5860'
+func_size: '0xb'
+func_sig: 31 C0 83 7C 24 ?? ?? 0F 94 C0 C3
+func_sig_allow_across_function_boundary: true

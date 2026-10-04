@@ -1,0 +1,186 @@
+func_name: "Host_InitializeGameDLL"
+func_va: "0xac690"
+disasm_code: |-
+  .text:000AC690                 push    edi
+  .text:000AC691                 push    esi
+  .text:000AC692                 push    ebx
+  .text:000AC693                 sub     esp, 20h
+  .text:000AC696                 call    Cbuf_Execute; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:000AC69B                 xor     eax, eax
+  .text:000AC69D                 cmp     ds:svs.maxclients, 1
+  .text:000AC6A4                 setnle  al
+  .text:000AC6A7                 ; multiplayer
+  .text:000AC6A7                 mov     [esp+2Ch+multiplayer], eax; multiplayer
+  .text:000AC6AA                 call    NET_Config; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:000AC6AF                 mov     eax, ds:svs.dll_initialized
+  .text:000AC6B4                 test    eax, eax
+  .text:000AC6B6                 jnz     loc_AC7F0
+  .text:000AC6BC                 mov     eax, 1
+  .text:000AC6C1                 mov     edi, offset player_mins
+  .text:000AC6C6                 mov     ds:svs.dll_initialized, eax
+  .text:000AC6CB                 mov     eax, ds:host_parms.basedir
+  .text:000AC6D0                 mov     esi, offset player_maxs
+  .text:000AC6D5                 xor     ebx, ebx
+  .text:000AC6D7                 ; szBaseDir
+  .text:000AC6D7                 mov     [esp+2Ch+multiplayer], eax; szBaseDir
+  .text:000AC6DA                 call    LoadEntityDLLs
+  .text:000AC6DF                 call    ds:gEntityInterface.pfnGameInit
+  .text:000AC6E5                 mov     [esp+2Ch+multiplayer], offset g_svmove
+  .text:000AC6EC                 call    ds:gEntityInterface.pfnPM_Init
+  .text:000AC6F2                 call    ds:gEntityInterface.pfnRegisterEncoders
+  .text:000AC6F8                 call    SV_InitEncoders
+  .text:000AC6FD                 mov     [esp+2Ch+var_24], esi
+  .text:000AC701                 mov     [esp+2Ch+name], edi
+  .text:000AC705                 mov     [esp+2Ch+multiplayer], ebx
+  .text:000AC708                 call    ds:gEntityInterface.pfnGetHullBounds
+  .text:000AC70E                 test    eax, eax
+  .text:000AC710                 jz      short loc_AC71E
+  .text:000AC712                 inc     ebx
+  .text:000AC713                 add     edi, 0Ch
+  .text:000AC716                 add     esi, 0Ch
+  .text:000AC719                 cmp     ebx, 4
+  .text:000AC71C                 jnz     short loc_AC6FD
+  .text:000AC71E                 call    R_ResetSvBlending
+  .text:000AC723                 mov     eax, ds:g_iextdllMac
+  .text:000AC728                 xor     ebx, ebx
+  .text:000AC72A                 test    eax, eax
+  .text:000AC72C                 jle     loc_AC7E5
+  .text:000AC732                 lea     esi, [esi+0]
+  .text:000AC739                 lea     edi, [edi+0]
+  .text:000AC740                 mov     eax, offset aServerGetblend; "Server_GetBlendingInterface"
+  .text:000AC745                 ; name
+  .text:000AC745                 mov     [esp+2Ch+name], eax; name
+  .text:000AC749                 lea     eax, [ebx+ebx*2]
+  .text:000AC74C                 mov     eax, dword ptr ds:g_rgextdll.lDLLHandle[eax*4]
+  .text:000AC753                 ; handle
+  .text:000AC753                 mov     [esp+2Ch+multiplayer], eax; handle
+  .text:000AC756                 call    dlsym
+  .text:000AC75B                 test    eax, eax
+  .text:000AC75D                 jz      short loc_AC7A1
+  .text:000AC75F                 mov     edx, offset bonetransform
+  .text:000AC764                 mov     ecx, offset rotationmatrix
+  .text:000AC769                 mov     esi, offset server_studio_api
+  .text:000AC76E                 mov     edi, offset g_pSvBlendingAPI
+  .text:000AC773                 mov     [esp+2Ch+var_1C], edx
+  .text:000AC777                 mov     [esp+2Ch+var_20], ecx
+  .text:000AC77B                 mov     [esp+2Ch+var_24], esi
+  .text:000AC77F                 mov     [esp+2Ch+name], edi
+  .text:000AC783                 mov     [esp+2Ch+multiplayer], 1
+  .text:000AC78A                 call    eax
+  .text:000AC78C                 test    eax, eax
+  .text:000AC78E                 jnz     short loc_AC808
+  .text:000AC790                 mov     [esp+2Ch+multiplayer], offset aCouldnTGetServ; "Couldn't get server .dll studio model b"...
+  .text:000AC797                 call    Con_DPrintf
+  .text:000AC79C                 call    R_ResetSvBlending
+  .text:000AC7A1                 mov     eax, ds:g_iextdllMac
+  .text:000AC7A6                 inc     ebx
+  .text:000AC7A7                 cmp     ebx, eax
+  .text:000AC7A9                 jl      short loc_AC740
+  .text:000AC7AB                 test    eax, eax
+  .text:000AC7AD                 jle     short loc_AC7E5
+  .text:000AC7AF                 xor     ebx, ebx
+  .text:000AC7B1                 jmp     short loc_AC7C1
+  .text:000AC7B8                 inc     ebx
+  .text:000AC7B9                 cmp     ebx, ds:g_iextdllMac
+  .text:000AC7BF                 jge     short loc_AC7E5
+  .text:000AC7C1                 mov     eax, offset aSvSavegamecomm; "SV_SaveGameComment"
+  .text:000AC7C6                 ; name
+  .text:000AC7C6                 mov     [esp+2Ch+name], eax; name
+  .text:000AC7CA                 lea     eax, [ebx+ebx*2]
+  .text:000AC7CD                 mov     eax, dword ptr ds:g_rgextdll.lDLLHandle[eax*4]
+  .text:000AC7D4                 ; handle
+  .text:000AC7D4                 mov     [esp+2Ch+multiplayer], eax; handle
+  .text:000AC7D7                 call    dlsym
+  .text:000AC7DC                 test    eax, eax
+  .text:000AC7DE                 jz      short loc_AC7B8
+  .text:000AC7E0                 mov     g_pSaveGameCommentFunc, eax
+  .text:000AC7E5                 add     esp, 20h
+  .text:000AC7E8                 pop     ebx
+  .text:000AC7E9                 pop     esi
+  .text:000AC7EA                 pop     edi
+  .text:000AC7EB                 jmp     Cbuf_Execute; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:000AC7F0                 mov     [esp+2Ch+multiplayer], offset aSysInitializeg; "Sys_InitializeGameDLL called twice, ski"...
+  .text:000AC7F7                 call    Con_DPrintf
+  .text:000AC7FC                 add     esp, 20h
+  .text:000AC7FF                 pop     ebx
+  .text:000AC800                 pop     esi
+  .text:000AC801                 pop     edi
+  .text:000AC802                 retn
+  .text:000AC808                 mov     eax, ds:g_iextdllMac
+  .text:000AC80D                 jmp     short loc_AC7AB
+procedure: |-
+  // Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  void __cdecl Host_InitializeGameDLL()
+  {
+    float *v0; // edi
+    float *v1; // esi
+    int v2; // ebx
+    int v3; // ebx
+    int (__cdecl *v4)(int, sv_blending_interface_t **, server_studio_api_t *, float *, float *); // eax
+    int v5; // eax
+    int v6; // ebx
+    void (*v7)(char *, int); // eax
+
+    Cbuf_Execute();
+    NET_Config(svs.maxclients > 1);
+    if ( svs.dll_initialized )
+    {
+      Con_DPrintf("Sys_InitializeGameDLL called twice, skipping second call\n");
+      return;
+    }
+    v0 = player_mins[0];
+    svs.dll_initialized = 1;
+    v1 = player_maxs[0];
+    v2 = 0;
+    LoadEntityDLLs(host_parms.basedir);
+    gEntityInterface.pfnGameInit();
+    gEntityInterface.pfnPM_Init(&g_svmove);
+    gEntityInterface.pfnRegisterEncoders();
+    SV_InitEncoders();
+    do
+    {
+      if ( !gEntityInterface.pfnGetHullBounds(v2, v0, v1) )
+        break;
+      ++v2;
+      v0 += 3;
+      v1 += 3;
+    }
+    while ( v2 != 4 );
+    R_ResetSvBlending();
+    v3 = 0;
+    if ( g_iextdllMac <= 0 )
+      goto LABEL_15;
+    while ( 1 )
+    {
+      v4 = (int (__cdecl *)(int, sv_blending_interface_t **, server_studio_api_t *, float *, float *))dlsym(g_rgextdll[v3].lDLLHandle, "Server_GetBlendingInterface");
+      if ( v4 )
+        break;
+  LABEL_9:
+      v5 = g_iextdllMac;
+      if ( ++v3 >= g_iextdllMac )
+        goto LABEL_10;
+    }
+    if ( !v4(1, &g_pSvBlendingAPI, &server_studio_api, rotationmatrix[0], bonetransform[0][0]) )
+    {
+      Con_DPrintf("Couldn't get server .dll studio model blending interface. Version mismatch?\n");
+      R_ResetSvBlending();
+      goto LABEL_9;
+    }
+    v5 = g_iextdllMac;
+  LABEL_10:
+    if ( v5 > 0 )
+    {
+      v6 = 0;
+      while ( 1 )
+      {
+        v7 = (void (*)(char *, int))dlsym(g_rgextdll[v6].lDLLHandle, "SV_SaveGameComment");
+        if ( v7 )
+          break;
+        if ( ++v6 >= g_iextdllMac )
+          goto LABEL_15;
+      }
+      g_pSaveGameCommentFunc = v7;
+    }
+  LABEL_15:
+    Cbuf_Execute();
+  }
