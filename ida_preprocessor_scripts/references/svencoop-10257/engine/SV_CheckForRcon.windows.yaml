@@ -1,0 +1,117 @@
+func_name: "SV_CheckForRcon"
+func_va: "0x1da1320"
+disasm_code: |-
+  .text:01DA1320                 cmp     dword_90E7028, 0
+  .text:01DA1327                 jnz     locret_1DA1403
+  .text:01DA132D                 cmp     dword_20D7D70, 0
+  .text:01DA1334                 jnz     locret_1DA1403
+  .text:01DA133A                 cmp     dword_95D2238, 3
+  .text:01DA1341                 jz      locret_1DA1403
+  .text:01DA1347                 cmp     host_initialized, 0
+  .text:01DA134E                 jz      locret_1DA1403
+  .text:01DA1354                 ; sock
+  .text:01DA1354                 push    1; sock
+  .text:01DA1356                 ; NET_GetPacket: Boolean receive loop from engine NS_SERVER=1.
+  .text:01DA1356                 call    NET_GetPacket; NET_GetPacket: Boolean receive loop from engine NS_SERVER=1.
+  .text:01DA135B                 add     esp, 4
+  .text:01DA135E                 test    eax, eax
+  .text:01DA1360                 jz      locret_1DA1403
+  .text:01DA1366                 push    esi
+  .text:01DA1367                 ; SV_FilterPacket: nonzero rejection sends the native ban reply.
+  .text:01DA1367                 call    SV_FilterPacket; SV_FilterPacket: nonzero rejection sends the native ban reply.
+  .text:01DA136C                 test    eax, eax
+  .text:01DA136E                 jz      short loc_1DA1377
+  .text:01DA1370                 call    SV_SendBan
+  .text:01DA1375                 jmp     short loc_1DA13F0
+  .text:01DA1377                 mov     eax, net_message.data
+  .text:01DA137C                 cmp     dword ptr [eax], 0FFFFFFFFh
+  .text:01DA137F                 jnz     short loc_1DA13F0
+  .text:01DA1381                 call    MSG_BeginReading
+  .text:01DA1386                 call    MSG_ReadLong
+  .text:01DA138B                 call    MSG_ReadStringLine
+  .text:01DA1390                 ; text
+  .text:01DA1390                 push    eax; text
+  .text:01DA1391                 call    Cmd_TokenizeString
+  .text:01DA1396                 ; arg
+  .text:01DA1396                 push    0; arg
+  .text:01DA1398                 call    Cmd_Argv
+  .text:01DA139D                 mov     esi, eax
+  .text:01DA139F                 push    offset aGetchallenge; "getchallenge"
+  .text:01DA13A4                 push    esi
+  .text:01DA13A5                 call    Q_strcmp
+  .text:01DA13AA                 add     esp, 10h
+  .text:01DA13AD                 test    eax, eax
+  .text:01DA13AF                 jnz     short loc_1DA13B8
+  .text:01DA13B1                 call    SVC_GetChallenge
+  .text:01DA13B6                 jmp     short loc_1DA13F0
+  .text:01DA13B8                 push    offset aChallenge; "challenge"
+  .text:01DA13BD                 ; s1
+  .text:01DA13BD                 push    esi; s1
+  .text:01DA13BE                 call    Q_stricmp
+  .text:01DA13C3                 add     esp, 8
+  .text:01DA13C6                 test    eax, eax
+  .text:01DA13C8                 jnz     short loc_1DA13D1
+  .text:01DA13CA                 call    SVC_ServiceChallenge
+  .text:01DA13CF                 jmp     short loc_1DA13F0
+  .text:01DA13D1                 push    offset aRcon; "rcon"
+  .text:01DA13D6                 push    esi
+  .text:01DA13D7                 call    Q_strcmp
+  .text:01DA13DC                 add     esp, 8
+  .text:01DA13DF                 test    eax, eax
+  .text:01DA13E1                 jnz     short loc_1DA13F0
+  .text:01DA13E3                 ; from
+  .text:01DA13E3                 push    offset net_from; from
+  .text:01DA13E8                 call    SV_Rcon; Issue #326 Part B reference: verified current input, cdecl ABI and current call/dataflow. Native menu poller retains its dedicated/state guards. Inline filter/parser and authentication/redirect blocks are actual target code; separate retained helpers may be uncalled. Sven netadr trailing bytes are opaque; extra address-format/comparison arguments are target-specific.
+  .text:01DA13ED                 add     esp, 4
+  .text:01DA13F0                 ; sock
+  .text:01DA13F0                 push    1; sock
+  .text:01DA13F2                 ; NET_GetPacket: Boolean receive loop from engine NS_SERVER=1.
+  .text:01DA13F2                 call    NET_GetPacket; NET_GetPacket: Boolean receive loop from engine NS_SERVER=1.
+  .text:01DA13F7                 add     esp, 4
+  .text:01DA13FA                 test    eax, eax
+  .text:01DA13FC                 jnz     loc_1DA1367
+  .text:01DA1402                 pop     esi
+  .text:01DA1403                 retn
+procedure: |-
+  // Issue #326 Part B reference: verified current input, cdecl ABI and current call/dataflow. Native menu poller retains its dedicated/state guards. Inline filter/parser and authentication/redirect blocks are actual target code; separate retained helpers may be uncalled. Sven netadr trailing bytes are opaque; extra address-format/comparison arguments are target-specific.
+  void __cdecl SV_CheckForRcon()
+  {
+    char *StringLine; // eax
+    char *v1; // esi
+
+    if ( !dword_90E7028 && !dword_20D7D70 && dword_95D2238 != 3 && host_initialized && NET_GetPacket(1) )
+    {
+      do
+      {
+        if ( SV_FilterPacket() )
+        {
+          SV_SendBan();
+        }
+        else if ( *(_DWORD *)net_message.data == -1 )
+        {
+          MSG_BeginReading();
+          MSG_ReadLong();
+          StringLine = MSG_ReadStringLine();
+          Cmd_TokenizeString(StringLine);
+          v1 = (char *)Cmd_Argv(0);
+          if ( Q_strcmp(v1, "getchallenge") )
+          {
+            if ( Q_stricmp(v1, "challenge") )
+            {
+              if ( !Q_strcmp(v1, "rcon") )
+                SV_Rcon(&net_from);
+            }
+            else
+            {
+              SVC_ServiceChallenge();
+            }
+          }
+          else
+          {
+            SVC_GetChallenge();
+          }
+        }
+      }
+      while ( NET_GetPacket(1) );
+    }
+  }

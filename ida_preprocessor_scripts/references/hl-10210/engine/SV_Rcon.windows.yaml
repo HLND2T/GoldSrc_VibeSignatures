@@ -1,0 +1,436 @@
+func_name: "SV_Rcon"
+func_va: "0x1020ca10"
+disasm_code: |-
+  .text:1020CA10                 push    ebp
+  .text:1020CA11                 mov     ebp, esp
+  .text:1020CA13                 sub     esp, 604h
+  .text:1020CA19                 mov     eax, ___security_cookie
+  .text:1020CA1E                 xor     eax, ebp
+  .text:1020CA20                 mov     [ebp+var_4], eax
+  .text:1020CA23                 push    ebx
+  .text:1020CA24                 mov     ebx, [ebp+from]
+  .text:1020CA27                 push    esi
+  .text:1020CA28                 ; ArgList
+  .text:1020CA28                 push    edi; ArgList
+  .text:1020CA29                 call    Cmd_Argc
+  .text:1020CA2E                 cmp     eax, 3
+  .text:1020CA31                 jge     short loc_1020CA3D
+  .text:1020CA33                 mov     esi, 1
+  .text:1020CA38                 jmp     loc_1020CB8C
+  .text:1020CA3D                 ; s
+  .text:1020CA3D                 push    off_1031CB60; s
+  .text:1020CA43                 call    Q_strlen
+  .text:1020CA48                 add     esp, 4
+  .text:1020CA4B                 test    eax, eax
+  .text:1020CA4D                 jnz     short loc_1020CA57
+  .text:1020CA4F                 lea     esi, [eax+1]
+  .text:1020CA52                 jmp     loc_1020CB8C
+  .text:1020CA57                 xorps   xmm0, xmm0
+  .text:1020CA5A                 comiss  xmm0, dword_1031D06C
+  .text:1020CA61                 jbe     short loc_1020CA78
+  .text:1020CA63                 push    ecx
+  .text:1020CA64                 ; value
+  .text:1020CA64                 mov     [esp+614h+value], 0; value
+  .text:1020CA6B                 push    offset aSvRconBanpenal; "sv_rcon_banpenalty"
+  .text:1020CA70                 call    Cvar_SetValue
+  .text:1020CA75                 add     esp, 8
+  .text:1020CA78                 mov     esi, offset unk_10536774
+  .text:1020CA7D                 nop     dword ptr [eax]
+  .text:1020CA80                 cmp     dword ptr [esi-4], 0
+  .text:1020CA84                 jz      short loc_1020CAC0
+  .text:1020CA86                 movups  xmm0, xmmword ptr [esi+4]
+  .text:1020CA8A                 mov     eax, [esi+14h]
+  .text:1020CA8D                 sub     esp, 14h
+  .text:1020CA90                 mov     ecx, esp
+  .text:1020CA92                 sub     esp, 14h
+  .text:1020CA95                 movups  xmmword ptr [ecx], xmm0
+  .text:1020CA98                 mov     [ecx+10h], eax
+  .text:1020CA9B                 mov     ecx, esp
+  .text:1020CA9D                 movups  xmm0, xmmword ptr net_from.type
+  .text:1020CAA4                 mov     eax, dword ptr net_from.ipx+8
+  .text:1020CAA9                 movups  xmmword ptr [ecx], xmm0
+  .text:1020CAAC                 mov     [ecx+10h], eax
+  .text:1020CAAF                 call    NET_CompareAdr
+  .text:1020CAB4                 add     esp, 28h
+  .text:1020CAB7                 test    eax, eax
+  .text:1020CAB9                 jz      short loc_1020CAC0
+  .text:1020CABB                 cmp     dword ptr [esi], 0
+  .text:1020CABE                 jnz     short loc_1020CAF2
+  .text:1020CAC0                 add     esi, 74h ; 't'
+  .text:1020CAC3                 cmp     esi, offset byte_105375F4
+  .text:1020CAC9                 jl      short loc_1020CA80
+  .text:1020CACB                 ; arg
+  .text:1020CACB                 push    1; arg
+  .text:1020CACD                 call    Cmd_Argv
+  .text:1020CAD2                 ; s
+  .text:1020CAD2                 push    eax; s
+  .text:1020CAD3                 call    Q_atoi
+  .text:1020CAD8                 ; nChallengeValue
+  .text:1020CAD8                 push    eax; nChallengeValue
+  .text:1020CAD9                 ; adr
+  .text:1020CAD9                 push    offset net_from; adr
+  .text:1020CADE                 call    SV_CheckChallenge; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:1020CAE3                 add     esp, 10h
+  .text:1020CAE6                 test    eax, eax
+  .text:1020CAE8                 jnz     short loc_1020CB59
+  .text:1020CAEA                 lea     esi, [eax+2]
+  .text:1020CAED                 jmp     loc_1020CB8C
+  .text:1020CAF2                 movups  xmm0, xmmword ptr net_from.type
+  .text:1020CAF9                 mov     eax, dword ptr net_from.ipx+8
+  .text:1020CAFE                 sub     esp, 14h
+  .text:1020CB01                 mov     ecx, esp
+  .text:1020CB03                 movups  xmmword ptr [ecx], xmm0
+  .text:1020CB06                 mov     [ecx+10h], eax
+  .text:1020CB09                 call    NET_AdrToString
+  .text:1020CB0E                 ; ArgList
+  .text:1020CB0E                 push    eax; ArgList
+  .text:1020CB0F                 push    offset aBanningSForRco; "Banning %s for rcon hacking attempts\n"
+  .text:1020CB14                 call    Con_Printf
+  .text:1020CB19                 movups  xmm0, xmmword ptr net_from.type
+  .text:1020CB20                 mov     eax, dword ptr net_from.ipx+8
+  .text:1020CB25                 add     esp, 8
+  .text:1020CB28                 mov     ecx, esp
+  .text:1020CB2A                 movups  xmmword ptr [ecx], xmm0
+  .text:1020CB2D                 mov     [ecx+10h], eax
+  .text:1020CB30                 call    NET_BaseAdrToString
+  .text:1020CB35                 push    eax
+  .text:1020CB36                 cvttss2si eax, dword_1031D06C
+  .text:1020CB3E                 ; ArgList
+  .text:1020CB3E                 push    eax; ArgList
+  .text:1020CB3F                 push    offset aAddipIS; "addip %i %s\n"
+  .text:1020CB44                 call    va
+  .text:1020CB49                 ; text
+  .text:1020CB49                 push    eax; text
+  .text:1020CB4A                 call    Cbuf_AddText
+  .text:1020CB4F                 add     esp, 24h
+  .text:1020CB52                 mov     esi, 3
+  .text:1020CB57                 jmp     short loc_1020CB8C
+  .text:1020CB59                 push    off_1031CB60
+  .text:1020CB5F                 ; arg
+  .text:1020CB5F                 push    2; arg
+  .text:1020CB61                 call    Cmd_Argv
+  .text:1020CB66                 add     esp, 4
+  .text:1020CB69                 push    eax
+  .text:1020CB6A                 call    Q_strcmp
+  .text:1020CB6F                 add     esp, 8
+  .text:1020CB72                 test    eax, eax
+  .text:1020CB74                 jz      short loc_1020CB8A
+  .text:1020CB76                 ; adr
+  .text:1020CB76                 push    offset net_from; adr
+  .text:1020CB7B                 call    SV_AddFailedRcon
+  .text:1020CB80                 add     esp, 4
+  .text:1020CB83                 mov     esi, 1
+  .text:1020CB88                 jmp     short loc_1020CB8C
+  .text:1020CB8A                 xor     esi, esi
+  .text:1020CB8C                 push    offset aRcon; "rcon"
+  .text:1020CB91                 call    Q_strlen
+  .text:1020CB96                 mov     edi, net_message.cursize
+  .text:1020CB9C                 add     esp, 4
+  .text:1020CB9F                 sub     edi, eax
+  .text:1020CBA1                 lea     eax, [edi-1]
+  .text:1020CBA4                 cmp     eax, 1FDh
+  .text:1020CBA9                 ja      loc_1020CD2B
+  .text:1020CBAF                 push    edi
+  .text:1020CBB0                 push    offset aRcon; "rcon"
+  .text:1020CBB5                 call    Q_strlen
+  .text:1020CBBA                 add     eax, net_message.data
+  .text:1020CBC0                 add     esp, 4
+  .text:1020CBC3                 push    eax
+  .text:1020CBC4                 lea     eax, [ebp+rcon_buff]
+  .text:1020CBCA                 push    eax
+  .text:1020CBCB                 call    Q_memcpy
+  .text:1020CBD0                 add     esp, 0Ch
+  .text:1020CBD3                 cmp     edi, 200h
+  .text:1020CBD9                 jnb     loc_1020CD86
+  .text:1020CBDF                 movups  xmm0, xmmword ptr [ebx]
+  .text:1020CBE2                 lea     eax, [ebp+rcon_buff]
+  .text:1020CBE8                 mov     [ebp+edi+rcon_buff], 0
+  .text:1020CBF0                 push    eax
+  .text:1020CBF1                 mov     eax, [ebx+10h]
+  .text:1020CBF4                 sub     esp, 14h
+  .text:1020CBF7                 mov     ecx, esp
+  .text:1020CBF9                 movups  xmmword ptr [ecx], xmm0
+  .text:1020CBFC                 mov     [ecx+10h], eax
+  .text:1020CBFF                 call    NET_AdrToString
+  .text:1020CC04                 add     esp, 14h
+  .text:1020CC07                 ; ArgList
+  .text:1020CC07                 push    eax; ArgList
+  .text:1020CC08                 test    esi, esi
+  .text:1020CC0A                 jz      short loc_1020CC1D
+  .text:1020CC0C                 push    offset aBadRconFromSS; "Bad Rcon from %s:\n%s\n"
+  .text:1020CC11                 call    Con_Printf
+  .text:1020CC16                 mov     edi, offset aBadRconSFromS; "Bad Rcon: \"%s\" from \"%s\"\n"
+  .text:1020CC1B                 jmp     short loc_1020CC2C
+  .text:1020CC1D                 push    offset aRconFromSS; "Rcon from %s:\n%s\n"
+  .text:1020CC22                 call    Con_Printf
+  .text:1020CC27                 mov     edi, offset aRconSFromS; "Rcon: \"%s\" from \"%s\"\n"
+  .text:1020CC2C                 movups  xmm0, xmmword ptr [ebx]
+  .text:1020CC2F                 mov     eax, [ebx+10h]
+  .text:1020CC32                 sub     esp, 8
+  .text:1020CC35                 mov     ecx, esp
+  .text:1020CC37                 movups  xmmword ptr [ecx], xmm0
+  .text:1020CC3A                 mov     [ecx+10h], eax
+  .text:1020CC3D                 call    NET_AdrToString
+  .text:1020CC42                 add     esp, 14h
+  .text:1020CC45                 push    eax
+  .text:1020CC46                 lea     eax, [ebp+rcon_buff]
+  .text:1020CC4C                 ; ArgList
+  .text:1020CC4C                 push    eax; ArgList
+  .text:1020CC4D                 ; fmt
+  .text:1020CC4D                 push    edi; fmt
+  .text:1020CC4E                 call    Log_Printf
+  .text:1020CC53                 mov     sv_redirected, 2
+  .text:1020CC5D                 add     esp, 0Ch
+  .text:1020CC60                 movups  xmm0, xmmword ptr [ebx]
+  .text:1020CC63                 movups  xmmword ptr sv_redirectto.type, xmm0
+  .text:1020CC6A                 mov     eax, [ebx+10h]
+  .text:1020CC6D                 mov     dword ptr sv_redirectto.ipx+8, eax
+  .text:1020CC72                 mov     outputbuf, 0
+  .text:1020CC79                 test    esi, esi
+  .text:1020CC7B                 jz      loc_1020CCFF
+  .text:1020CC81                 sub     esi, 1
+  .text:1020CC84                 jz      short loc_1020CCB5
+  .text:1020CC86                 sub     esi, 1
+  .text:1020CC89                 jnz     short loc_1020CCB5
+  .text:1020CC8B                 mov     eax, offset aBadRconPasswor; "Bad rcon_password.\n"
+  .text:1020CC90                 ; fmt
+  .text:1020CC90                 push    eax; fmt
+  .text:1020CC91                 call    Con_Printf
+  .text:1020CC96                 add     esp, 4
+  .text:1020CC99                 call    SV_FlushRedirect
+  .text:1020CC9E                 mov     sv_redirected, esi
+  .text:1020CCA4                 pop     edi
+  .text:1020CCA5                 pop     esi
+  .text:1020CCA6                 pop     ebx
+  .text:1020CCA7                 mov     ecx, [ebp+var_4]
+  .text:1020CCAA                 ; StackCookie
+  .text:1020CCAA                 xor     ecx, ebp; StackCookie
+  .text:1020CCAC                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1020CCB1                 mov     esp, ebp
+  .text:1020CCB3                 pop     ebp
+  .text:1020CCB4                 retn
+  .text:1020CCB5                 mov     ecx, off_1031CB60
+  .text:1020CCBB                 lea     edx, [ecx+1]
+  .text:1020CCBE                 xchg    ax, ax
+  .text:1020CCC0                 mov     al, [ecx]
+  .text:1020CCC2                 inc     ecx
+  .text:1020CCC3                 test    al, al
+  .text:1020CCC5                 jnz     short loc_1020CCC0
+  .text:1020CCC7                 sub     ecx, edx
+  .text:1020CCC9                 mov     eax, offset aBadRconPasswor; "Bad rcon_password.\n"
+  .text:1020CCCE                 mov     edx, offset aBadRconPasswor_0; "Bad rcon_password.\nNo password set for"...
+  .text:1020CCD3                 cmovz   eax, edx
+  .text:1020CCD6                 ; fmt
+  .text:1020CCD6                 push    eax; fmt
+  .text:1020CCD7                 call    Con_Printf
+  .text:1020CCDC                 add     esp, 4
+  .text:1020CCDF                 call    SV_FlushRedirect
+  .text:1020CCE4                 mov     sv_redirected, 0
+  .text:1020CCEE                 pop     edi
+  .text:1020CCEF                 pop     esi
+  .text:1020CCF0                 pop     ebx
+  .text:1020CCF1                 mov     ecx, [ebp+var_4]
+  .text:1020CCF4                 ; StackCookie
+  .text:1020CCF4                 xor     ecx, ebp; StackCookie
+  .text:1020CCF6                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1020CCFB                 mov     esp, ebp
+  .text:1020CCFD                 pop     ebp
+  .text:1020CCFE                 retn
+  .text:1020CCFF                 lea     eax, [ebp+rcon_buff]
+  .text:1020CD05                 ; data
+  .text:1020CD05                 push    eax; data
+  .text:1020CD06                 call    COM_Parse
+  .text:1020CD0B                 ; data
+  .text:1020CD0B                 push    eax; data
+  .text:1020CD0C                 call    COM_Parse
+  .text:1020CD11                 ; data
+  .text:1020CD11                 push    eax; data
+  .text:1020CD12                 call    COM_Parse
+  .text:1020CD17                 add     esp, 0Ch
+  .text:1020CD1A                 test    eax, eax
+  .text:1020CD1C                 jnz     short loc_1020CD3C
+  .text:1020CD1E                 push    offset aEmptyRcon; "Empty rcon\n"
+  .text:1020CD23                 call    Con_Printf
+  .text:1020CD28                 add     esp, 4
+  .text:1020CD2B                 pop     edi
+  .text:1020CD2C                 pop     esi
+  .text:1020CD2D                 pop     ebx
+  .text:1020CD2E                 mov     ecx, [ebp+var_4]
+  .text:1020CD31                 ; StackCookie
+  .text:1020CD31                 xor     ecx, ebp; StackCookie
+  .text:1020CD33                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1020CD38                 mov     esp, ebp
+  .text:1020CD3A                 pop     ebp
+  .text:1020CD3B                 retn
+  .text:1020CD3C                 push    3FFh
+  .text:1020CD41                 push    eax
+  .text:1020CD42                 lea     eax, [ebp+remaining]
+  .text:1020CD48                 push    eax
+  .text:1020CD49                 call    Q_strncpy
+  .text:1020CD4E                 lea     eax, [ebp+remaining]
+  .text:1020CD54                 mov     [ebp+var_205], 0
+  .text:1020CD5B                 ; src
+  .text:1020CD5B                 push    1; src
+  .text:1020CD5D                 ; text
+  .text:1020CD5D                 push    eax; text
+  .text:1020CD5E                 ; Cmd_ExecuteString: synchronous src_command=1 inside native redirect scope.
+  .text:1020CD5E                 call    Cmd_ExecuteString; Cmd_ExecuteString: synchronous src_command=1 inside native redirect scope.
+  .text:1020CD63                 add     esp, 14h
+  .text:1020CD66                 call    SV_FlushRedirect
+  .text:1020CD6B                 mov     ecx, [ebp+var_4]
+  .text:1020CD6E                 pop     edi
+  .text:1020CD6F                 pop     esi
+  .text:1020CD70                 ; StackCookie
+  .text:1020CD70                 xor     ecx, ebp; StackCookie
+  .text:1020CD72                 mov     sv_redirected, 0
+  .text:1020CD7C                 pop     ebx
+  .text:1020CD7D                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1020CD82                 mov     esp, ebp
+  .text:1020CD84                 pop     ebp
+  .text:1020CD85                 retn
+  .text:1020CD86                 call    ___report_rangecheckfailure
+procedure: |-
+  // Issue #326 Part B reference: verified current input, cdecl ABI and current call/dataflow. Native menu poller retains its dedicated/state guards. Inline filter/parser and authentication/redirect blocks are actual target code; separate retained helpers may be uncalled. Sven netadr trailing bytes are opaque; extra address-format/comparison arguments are target-specific.
+  void __cdecl SV_Rcon(rcon_netadr_t *from)
+  {
+    int validation_result; // esi
+    char *v2; // esi
+    const char *v3; // eax
+    int v4; // eax
+    char *v5; // eax
+    char *v6; // eax
+    char *v7; // eax
+    char *v8; // eax
+    int count; // edi
+    int v10; // eax
+    __int128 v11; // xmm0
+    const char *v12; // edi
+    char *v13; // eax
+    unsigned int v14; // ecx
+    const char *v15; // eax
+    char *after_command; // eax
+    char *after_challenge; // eax
+    char *command_text; // eax
+    rcon_netadr_t v19; // [esp-14h] [ebp-628h]
+    char *v20; // [esp-4h] [ebp-618h]
+    char *value; // [esp+0h] [ebp-614h]
+    char remaining[1024]; // [esp+10h] [ebp-604h] BYREF
+    char rcon_buff[512]; // [esp+410h] [ebp-204h] BYREF
+
+    if ( Cmd_Argc() >= 3 )
+    {
+      if ( Q_strlen(off_1031CB60) )
+      {
+        if ( *(float *)&dword_1031D06C < 0.0 )
+          Cvar_SetValue("sv_rcon_banpenalty", 0.0);
+        v2 = (char *)&unk_10536774;
+        do
+        {
+          if ( *((_DWORD *)v2 - 1) && NET_CompareAdr(net_from, *(rcon_netadr_t *)(v2 + 4)) && *(_DWORD *)v2 )
+          {
+            v5 = NET_AdrToString(net_from);
+            Con_Printf("Banning %s for rcon hacking attempts\n", v5);
+            v6 = NET_BaseAdrToString(net_from);
+            v7 = va("addip %i %s\n", (int)*(float *)&dword_1031D06C, v6);
+            Cbuf_AddText(v7);
+            validation_result = 3;
+            goto LABEL_18;
+          }
+          v2 += 116;
+        }
+        while ( (int)v2 < (int)byte_105375F4 );
+        v3 = Cmd_Argv(1);
+        v4 = Q_atoi(v3);
+        if ( SV_CheckChallenge(&net_from, v4) )
+        {
+          value = off_1031CB60;
+          v8 = (char *)Cmd_Argv(2);
+          if ( Q_strcmp(v8, value) )
+          {
+            SV_AddFailedRcon(&net_from);
+            validation_result = 1;
+          }
+          else
+          {
+            validation_result = 0;
+          }
+        }
+        else
+        {
+          validation_result = 2;
+        }
+      }
+      else
+      {
+        validation_result = 1;
+      }
+    }
+    else
+    {
+      validation_result = 1;
+    }
+  LABEL_18:
+    count = net_message.cursize - Q_strlen("rcon");
+    if ( (unsigned int)(count - 1) <= 0x1FD )
+    {
+      v10 = Q_strlen("rcon");
+      Q_memcpy(rcon_buff, (int)&net_message.data[v10], count);
+      v11 = *(_OWORD *)&from->type;
+      rcon_buff[count] = 0;
+      *(_OWORD *)&v19.type = v11;
+      *(_DWORD *)&v19.ipx[8] = *(_DWORD *)&from->ipx[8];
+      v20 = NET_AdrToString(v19);
+      if ( validation_result )
+      {
+        Con_Printf("Bad Rcon from %s:\n%s\n", v20, rcon_buff);
+        v12 = "Bad Rcon: \"%s\" from \"%s\"\n";
+      }
+      else
+      {
+        Con_Printf("Rcon from %s:\n%s\n", v20, rcon_buff);
+        v12 = "Rcon: \"%s\" from \"%s\"\n";
+      }
+      v13 = NET_AdrToString(*from);
+      Log_Printf(v12, rcon_buff, v13);
+      sv_redirected = 2;
+      sv_redirectto = *from;
+      outputbuf = 0;
+      if ( validation_result )
+      {
+        if ( validation_result == 2 )
+        {
+          Con_Printf("Bad rcon_password.\n");
+          SV_FlushRedirect();
+          sv_redirected = 0;
+        }
+        else
+        {
+          v14 = strlen(off_1031CB60);
+          v15 = "Bad rcon_password.\n";
+          if ( !v14 )
+            v15 = "Bad rcon_password.\nNo password set for this server.\n";
+          Con_Printf(v15);
+          SV_FlushRedirect();
+          sv_redirected = 0;
+        }
+      }
+      else
+      {
+        after_command = COM_Parse(rcon_buff);
+        after_challenge = COM_Parse(after_command);
+        command_text = COM_Parse(after_challenge);
+        if ( command_text )
+        {
+          Q_strncpy(remaining, command_text, 1023);
+          remaining[1023] = 0;
+          Cmd_ExecuteString(remaining, 1);
+          SV_FlushRedirect();
+          sv_redirected = 0;
+        }
+        else
+        {
+          Con_Printf("Empty rcon\n");
+        }
+      }
+    }
+  }

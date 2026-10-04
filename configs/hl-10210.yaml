@@ -5,6 +5,52 @@ modules:
     depot_windows: hw.dll
     depot_linux: hw.so
     skills:
+      - name: find-native-rcon-path-string-symbols
+        expected_output:
+          - NET_SendPacket.{platform}.yaml
+          - SV_AddFailedRcon.{platform}.yaml
+      - name: find-SV_CheckForRcon-native-path-decompiles
+        expected_input:
+          - SV_CheckForRcon.{platform}.yaml
+        expected_output:
+          - NET_GetPacket.{platform}.yaml
+        expected_output_windows:
+          - SV_FilterPacket.windows.yaml
+      - name: find-SV_Rcon-native-path-decompiles
+        expected_input:
+          - SV_Rcon.{platform}.yaml
+        expected_output:
+          - Cmd_ExecuteString.{platform}.yaml
+      - name: find-native-rcon-packet-symbols
+        expected_input:
+          - NET_GetPacket.{platform}.yaml
+          - NET_SendPacket.{platform}.yaml
+          - SV_Rcon.{platform}.yaml
+          - SVC_ServiceChallenge.{platform}.yaml
+        expected_output:
+          - SV_SendBan.{platform}.yaml
+        expected_output_linux:
+          - SV_HandleRconPacket.linux.yaml
+      - name: find-native-rcon-redirect-symbols
+        platform: linux
+        expected_input:
+          - SV_FlushRedirect.{platform}.yaml
+        expected_output:
+          - SV_BeginRedirect.{platform}.yaml
+          - SV_EndRedirect.{platform}.yaml
+      - name: find-native-rcon-failure-symbols
+        platform: linux
+        expected_input:
+          - SV_AddFailedRcon.{platform}.yaml
+        expected_output:
+          - SV_CheckRconFailure.{platform}.yaml
+      - name: find-native-rcon-filter-symbols
+        platform: linux
+        expected_input:
+          - SV_CheckForRcon.{platform}.yaml
+          - NET_GetPacket.{platform}.yaml
+        expected_output:
+          - SV_FilterPacket.{platform}.yaml
       - name: find-native-rcon-string-symbols
         expected_output:
           - SV_CheckChallenge.{platform}.yaml
@@ -1446,6 +1492,30 @@ modules:
         expected_output:
           - CL_IsDevOverviewMode.{platform}.yaml
     symbols:
+      - name: NET_GetPacket
+        category: func
+      - name: SV_FilterPacket
+        category: func
+      - name: SV_SendBan
+        category: func
+      - name: SV_HandleRconPacket
+        category: func
+        platform: linux
+      - name: SV_CheckRconFailure
+        category: func
+        platform: linux
+      - name: SV_AddFailedRcon
+        category: func
+      - name: Cmd_ExecuteString
+        category: func
+      - name: SV_BeginRedirect
+        category: func
+        platform: linux
+      - name: SV_EndRedirect
+        category: func
+        platform: linux
+      - name: NET_SendPacket
+        category: func
       - name: Cbuf_Execute
         category: func
       - name: NET_Config

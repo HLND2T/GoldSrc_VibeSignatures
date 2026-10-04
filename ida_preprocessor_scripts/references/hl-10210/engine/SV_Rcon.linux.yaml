@@ -1,0 +1,264 @@
+func_name: "SV_Rcon"
+func_va: "0xe3db0"
+disasm_code: |-
+  .text:000E3DB0                 sub     esp, 64Ch
+  .text:000E3DB6                 mov     [esp+64Ch+var_10], ebx
+  .text:000E3DBD                 mov     ebx, [esp+64Ch+net_from]
+  .text:000E3DC4                 mov     [esp+64Ch+var_C], esi
+  .text:000E3DCB                 mov     [esp+64Ch+var_8], edi
+  .text:000E3DD2                 mov     eax, large gs:14h
+  .text:000E3DD8                 mov     [esp+64Ch+var_20], eax
+  .text:000E3DDF                 xor     eax, eax
+  .text:000E3DE1                 mov     [esp+64Ch+var_4], ebp
+  .text:000E3DE8                 call    SV_Rcon_Validate
+  .text:000E3DED                 mov     esi, ds:net_message.cursize
+  .text:000E3DF3                 ; str
+  .text:000E3DF3                 mov     [esp+64Ch+str], (offset aResetrcon+5); str
+  .text:000E3DFA                 mov     edi, eax
+  .text:000E3DFC                 call    Q_strlen
+  .text:000E3E01                 sub     esi, eax
+  .text:000E3E03                 lea     eax, [len-1]
+  .text:000E3E06                 cmp     eax, 1FDh
+  .text:000E3E0B                 jbe     short loc_E3E48
+  .text:000E3E0D                 mov     eax, [esp+64Ch+var_20]
+  .text:000E3E14                 xor     eax, large gs:14h
+  .text:000E3E1B                 jnz     loc_E4071
+  .text:000E3E21                 mov     ebx, [esp+64Ch+var_10]
+  .text:000E3E28                 mov     len, [esp+64Ch+var_C]
+  .text:000E3E2F                 mov     invalid, [esp+64Ch+var_8]
+  .text:000E3E36                 mov     ebp, [esp+64Ch+var_4]
+  .text:000E3E3D                 add     esp, 64Ch
+  .text:000E3E43                 retn
+  .text:000E3E48                 ; str
+  .text:000E3E48                 mov     [esp+64Ch+str], (offset aResetrcon+5); str
+  .text:000E3E4F                 mov     ebp, ds:net_message.data
+  .text:000E3E55                 call    Q_strlen
+  .text:000E3E5A                 ; count
+  .text:000E3E5A                 mov     [esp+64Ch+count], len; count
+  .text:000E3E5E                 add     eax, ebp
+  .text:000E3E60                 lea     ebp, [esp+64Ch+rcon_buff]
+  .text:000E3E64                 ; src
+  .text:000E3E64                 mov     [esp+64Ch+src], eax; src
+  .text:000E3E68                 ; dest
+  .text:000E3E68                 mov     [esp+64Ch+str], ebp; dest
+  .text:000E3E6B                 call    Q_memcpy
+  .text:000E3E70                 mov     eax, [ebx]
+  .text:000E3E72                 test    invalid, invalid
+  .text:000E3E74                 mov     [esp+len+64Ch+rcon_buff], 0
+  .text:000E3E79                 ; a
+  .text:000E3E79                 mov     [esp+64Ch+str], eax; a
+  .text:000E3E7C                 mov     eax, [ebx+4]
+  .text:000E3E7F                 mov     [esp+64Ch+src], eax
+  .text:000E3E83                 mov     eax, [ebx+8]
+  .text:000E3E86                 mov     [esp+64Ch+count], eax
+  .text:000E3E8A                 mov     eax, [ebx+0Ch]
+  .text:000E3E8D                 mov     [esp+64Ch+var_640], eax
+  .text:000E3E91                 mov     eax, [ebx+10h]
+  .text:000E3E94                 mov     [esp+64Ch+var_63C], eax
+  .text:000E3E98                 jnz     loc_E3F98
+  .text:000E3E9E                 call    NET_AdrToString
+  .text:000E3EA3                 mov     [esp+64Ch+count], ebp
+  .text:000E3EA7                 mov     [esp+64Ch+str], offset aRconFromS; "Rcon from %s:\n"
+  .text:000E3EAE                 mov     [esp+64Ch+src], eax
+  .text:000E3EB2                 call    Con_Printf
+  .text:000E3EB7                 mov     eax, [ebx]
+  .text:000E3EB9                 ; a
+  .text:000E3EB9                 mov     [esp+64Ch+str], eax; a
+  .text:000E3EBC                 mov     eax, [ebx+4]
+  .text:000E3EBF                 mov     [esp+64Ch+src], eax
+  .text:000E3EC3                 mov     eax, [ebx+8]
+  .text:000E3EC6                 mov     [esp+64Ch+count], eax
+  .text:000E3ECA                 mov     eax, [ebx+0Ch]
+  .text:000E3ECD                 mov     [esp+64Ch+var_640], eax
+  .text:000E3ED1                 mov     eax, [ebx+10h]
+  .text:000E3ED4                 mov     [esp+64Ch+var_63C], eax
+  .text:000E3ED8                 call    NET_AdrToString
+  .text:000E3EDD                 mov     [esp+64Ch+src], ebp
+  .text:000E3EE1                 ; fmt
+  .text:000E3EE1                 mov     [esp+64Ch+str], (offset aBadRconSFromS+4); fmt
+  .text:000E3EE8                 mov     [esp+64Ch+count], eax
+  .text:000E3EEC                 call    Log_Printf
+  .text:000E3EF1                 mov     eax, 2
+  .text:000E3EF6                 mov     ds:sv_redirected, eax
+  .text:000E3EFB                 mov     eax, [ebx]
+  .text:000E3EFD                 mov     ds:sv_redirectto.type, eax
+  .text:000E3F02                 mov     eax, [ebx+4]
+  .text:000E3F05                 mov     dword ptr ds:sv_redirectto.ip, eax
+  .text:000E3F0A                 mov     eax, [ebx+8]
+  .text:000E3F0D                 mov     dword ptr ds:sv_redirectto.ipx, eax
+  .text:000E3F12                 mov     eax, [ebx+0Ch]
+  .text:000E3F15                 mov     dword ptr ds:sv_redirectto.ipx+4, eax
+  .text:000E3F1A                 mov     eax, [ebx+10h]
+  .text:000E3F1D                 ; data
+  .text:000E3F1D                 mov     [esp+64Ch+str], ebp; data
+  .text:000E3F20                 mov     ds:outputbuf, 0
+  .text:000E3F27                 mov     dword ptr ds:sv_redirectto.ipx+8, eax
+  .text:000E3F2C                 call    COM_Parse
+  .text:000E3F31                 ; data
+  .text:000E3F31                 mov     [esp+64Ch+str], data; data
+  .text:000E3F34                 call    COM_Parse
+  .text:000E3F39                 ; data
+  .text:000E3F39                 mov     [esp+64Ch+str], data; data
+  .text:000E3F3C                 call    COM_Parse
+  .text:000E3F41                 test    data, data
+  .text:000E3F43                 jz      loc_E4060
+  .text:000E3F49                 mov     ecx, 3FFh
+  .text:000E3F4E                 lea     ebx, [esp+64Ch+remaining]
+  .text:000E3F55                 ; src
+  .text:000E3F55                 mov     [esp+64Ch+src], data; src
+  .text:000E3F59                 ; count
+  .text:000E3F59                 mov     [esp+64Ch+count], ecx; count
+  .text:000E3F5D                 ; dest
+  .text:000E3F5D                 mov     [esp+64Ch+str], ebx; dest
+  .text:000E3F60                 call    Q_strncpy
+  .text:000E3F65                 xor     eax, eax
+  .text:000E3F67                 mov     [esp+64Ch+remaining+3FFh], al
+  .text:000E3F6E                 mov     eax, 1
+  .text:000E3F73                 ; src
+  .text:000E3F73                 mov     [esp+64Ch+src], eax; src
+  .text:000E3F77                 ; text
+  .text:000E3F77                 mov     [esp+64Ch+str], ebx; text
+  .text:000E3F7A                 ; Cmd_ExecuteString: synchronous src_command=1 inside native redirect scope.
+  .text:000E3F7A                 call    Cmd_ExecuteString; Cmd_ExecuteString: synchronous src_command=1 inside native redirect scope.
+  .text:000E3F7F                 call    SV_FlushRedirect
+  .text:000E3F84                 xor     edx, edx
+  .text:000E3F86                 mov     ds:sv_redirected, edx
+  .text:000E3F8C                 jmp     loc_E3E0D
+  .text:000E3F98                 call    NET_AdrToString
+  .text:000E3F9D                 mov     [esp+64Ch+count], ebp
+  .text:000E3FA1                 mov     [esp+64Ch+str], offset aBad; "Bad "
+  .text:000E3FA8                 mov     [esp+64Ch+src], eax
+  .text:000E3FAC                 call    Con_Printf
+  .text:000E3FB1                 mov     eax, [ebx]
+  .text:000E3FB3                 ; a
+  .text:000E3FB3                 mov     [esp+64Ch+str], eax; a
+  .text:000E3FB6                 mov     eax, [ebx+4]
+  .text:000E3FB9                 mov     [esp+64Ch+src], eax
+  .text:000E3FBD                 mov     eax, [ebx+8]
+  .text:000E3FC0                 mov     [esp+64Ch+count], eax
+  .text:000E3FC4                 mov     eax, [ebx+0Ch]
+  .text:000E3FC7                 mov     [esp+64Ch+var_640], eax
+  .text:000E3FCB                 mov     eax, [ebx+10h]
+  .text:000E3FCE                 mov     [esp+64Ch+var_63C], eax
+  .text:000E3FD2                 call    NET_AdrToString
+  .text:000E3FD7                 mov     [esp+64Ch+src], ebp
+  .text:000E3FDB                 mov     [esp+64Ch+str], offset aBadRconSFromS; "Bad Rcon: \"%s\" from \"%s\"\n"
+  .text:000E3FE2                 mov     [esp+64Ch+count], eax
+  .text:000E3FE6                 call    Log_Printf
+  .text:000E3FEB                 mov     eax, 2
+  .text:000E3FF0                 cmp     invalid, 2
+  .text:000E3FF3                 mov     ds:sv_redirected, eax
+  .text:000E3FF8                 mov     eax, [ebx]
+  .text:000E3FFA                 mov     ds:sv_redirectto.type, eax
+  .text:000E3FFF                 mov     eax, [ebx+4]
+  .text:000E4002                 mov     dword ptr ds:sv_redirectto.ip, eax
+  .text:000E4007                 mov     eax, [ebx+8]
+  .text:000E400A                 mov     dword ptr ds:sv_redirectto.ipx, eax
+  .text:000E400F                 mov     eax, [ebx+0Ch]
+  .text:000E4012                 mov     dword ptr ds:sv_redirectto.ipx+4, eax
+  .text:000E4017                 mov     eax, [ebx+10h]
+  .text:000E401A                 mov     ds:outputbuf, 0
+  .text:000E4021                 mov     dword ptr ds:sv_redirectto.ipx+8, eax
+  .text:000E4026                 jz      short loc_E4048
+  .text:000E4028                 mov     eax, rcon_password.string
+  .text:000E402D                 cmp     byte ptr [eax], 0
+  .text:000E4030                 jnz     short loc_E4048
+  .text:000E4032                 mov     [esp+64Ch+str], offset aBadRconPasswor; "Bad rcon_password.\nNo password set for"...
+  .text:000E4039                 call    Con_Printf
+  .text:000E403E                 jmp     loc_E3F7F
+  .text:000E4048                 mov     [esp+64Ch+str], offset aBadRconPasswor_0; "Bad rcon_password.\n"
+  .text:000E404F                 call    Con_Printf
+  .text:000E4054                 jmp     loc_E3F7F
+  .text:000E4060                 mov     [esp+64Ch+str], offset aEmptyRcon; "Empty rcon\n"
+  .text:000E4067                 call    Con_Printf
+  .text:000E406C                 jmp     loc_E3E0D
+  .text:000E4071                 call    __stack_chk_fail
+procedure: |-
+  // Issue #326 Part B reference: verified current input, cdecl ABI and current call/dataflow. Native menu poller retains its dedicated/state guards. Inline filter/parser and authentication/redirect blocks are actual target code; separate retained helpers may be uncalled. Sven netadr trailing bytes are opaque; extra address-format/comparison arguments are target-specific.
+  void __cdecl SV_Rcon(rcon_netadr_t *from)
+  {
+    int v1; // eax
+    int cursize; // esi
+    int validation_result; // edi
+    int count; // esi
+    byte *data; // ebp
+    byte *src; // eax
+    int type; // eax
+    char *v8; // eax
+    const char *v9; // eax
+    int v10; // eax
+    char *after_command; // eax
+    char *after_challenge; // eax
+    char *command_text; // eax
+    char *v14; // eax
+    const char *v15; // eax
+    int v16; // eax
+    netadr_t str; // [esp+0h] [ebp-64Ch]
+    char rcon_buff[512]; // [esp+2Ch] [ebp-620h] BYREF
+    char remaining[1024]; // [esp+22Ch] [ebp-420h] BYREF
+    unsigned int v20; // [esp+62Ch] [ebp-20h]
+
+    v20 = __readgsdword(0x14u);
+    v1 = SV_Rcon_Validate();
+    cursize = net_message.cursize;
+    validation_result = v1;
+    count = cursize - Q_strlen("rcon");
+    if ( (unsigned int)(count - 1) <= 0x1FD )
+    {
+      data = net_message.data;
+      src = &data[Q_strlen("rcon")];
+      Q_memcpy(rcon_buff, src, count);
+      type = from->type;
+      rcon_buff[count] = 0;
+      str.type = type;
+      *(_DWORD *)str.ip = *(_DWORD *)from->ip;
+      *(_DWORD *)str.ipx = *(_DWORD *)from->ipx;
+      *(_QWORD *)&str.ipx[4] = *(_QWORD *)&from->ipx[4];
+      if ( validation_result )
+      {
+        v14 = NET_AdrToString(str);
+        Con_Printf(aBad, v14, rcon_buff);
+        v15 = NET_AdrToString((netadr_t)*from);
+        Log_Printf("Bad Rcon: \"%s\" from \"%s\"\n", rcon_buff, v15);
+        sv_redirected = RD_PACKET;
+        sv_redirectto.type = from->type;
+        *(_DWORD *)sv_redirectto.ip = *(_DWORD *)from->ip;
+        *(_DWORD *)sv_redirectto.ipx = *(_DWORD *)from->ipx;
+        *(_DWORD *)&sv_redirectto.ipx[4] = *(_DWORD *)&from->ipx[4];
+        v16 = *(_DWORD *)&from->ipx[8];
+        outputbuf[0] = 0;
+        *(_DWORD *)&sv_redirectto.ipx[8] = v16;
+        if ( validation_result == 2 || *rcon_password.string )
+          Con_Printf("Bad rcon_password.\n");
+        else
+          Con_Printf("Bad rcon_password.\nNo password set for this server.\n");
+        goto LABEL_5;
+      }
+      v8 = NET_AdrToString(str);
+      Con_Printf(aRconFromS, v8, rcon_buff);
+      v9 = NET_AdrToString((netadr_t)*from);
+      Log_Printf((char *)"Rcon: \"%s\" from \"%s\"\n", rcon_buff, v9);
+      sv_redirected = RD_PACKET;
+      sv_redirectto.type = from->type;
+      *(_DWORD *)sv_redirectto.ip = *(_DWORD *)from->ip;
+      *(_DWORD *)sv_redirectto.ipx = *(_DWORD *)from->ipx;
+      *(_DWORD *)&sv_redirectto.ipx[4] = *(_DWORD *)&from->ipx[4];
+      v10 = *(_DWORD *)&from->ipx[8];
+      outputbuf[0] = 0;
+      *(_DWORD *)&sv_redirectto.ipx[8] = v10;
+      after_command = COM_Parse(rcon_buff);
+      after_challenge = COM_Parse(after_command);
+      command_text = COM_Parse(after_challenge);
+      if ( command_text )
+      {
+        Q_strncpy(remaining, command_text, 1023);
+        remaining[1023] = 0;
+        Cmd_ExecuteString(remaining, 1);
+  LABEL_5:
+        SV_FlushRedirect();
+        sv_redirected = RD_NONE;
+        return;
+      }
+      Con_Printf("Empty rcon\n");
+    }
+  }

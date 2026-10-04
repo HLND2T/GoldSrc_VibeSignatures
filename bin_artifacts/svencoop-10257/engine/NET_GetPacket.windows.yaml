@@ -1,0 +1,5 @@
+func_name: NET_GetPacket
+func_va: '0x1d77840'
+func_rva: '0x77840'
+func_size: '0x27d'
+func_sig: DD 05 ?? ?? ?? ?? DD 05 ?? ?? ?? ?? D8 E9 D9 EE 53 56 57 8B 7C 24 ?? D8 D1 DF E0 F6 C4 41 74 ?? DD D8

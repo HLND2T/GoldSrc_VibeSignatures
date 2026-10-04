@@ -1,0 +1,315 @@
+func_name: "SV_CheckForRcon"
+func_va: "0xc3580"
+disasm_code: |-
+  .text:000C3580                 push    ebp
+  .text:000C3581                 push    edi
+  .text:000C3582                 push    esi
+  .text:000C3583                 push    ebx
+  .text:000C3584                 call    __x86_get_pc_thunk_bx
+  .text:000C3589                 add     ebx, (offset dbl_2EE000 - $)
+  .text:000C358F                 sub     esp, 8Ch
+  .text:000C3595                 mov     edi, ds:(dword_F9FF80 - 2EE000h)[ebx]
+  .text:000C359B                 test    edi, edi
+  .text:000C359D                 jnz     loc_C3760
+  .text:000C35A3                 lea     eax, (dword_1BE6220 - 2EE000h)[ebx]
+  .text:000C35A9                 mov     esi, [eax]
+  .text:000C35AB                 test    esi, esi
+  .text:000C35AD                 jnz     loc_C3760
+  .text:000C35B3                 lea     eax, (dword_D3F4A4 - 2EE000h)[ebx]
+  .text:000C35B9                 cmp     dword ptr [eax], 3
+  .text:000C35BC                 jz      loc_C3760
+  .text:000C35C2                 lea     eax, (dword_30A4C0 - 2EE000h)[ebx]
+  .text:000C35C8                 mov     ecx, [eax]
+  .text:000C35CA                 test    ecx, ecx
+  .text:000C35CC                 jz      loc_C3760
+  .text:000C35D2                 lea     ebp, (dbl_30A4B0 - 2EE000h)[ebx]
+  .text:000C35D8                 nop
+  .text:000C35D9                 lea     esi, [esi+0]
+  .text:000C35E0                 ; sock
+  .text:000C35E0                 mov     [esp+9Ch+dest], 1; sock
+  .text:000C35E7                 ; NET_GetPacket: Boolean receive loop from engine NS_SERVER=1.
+  .text:000C35E7                 call    NET_GetPacket; NET_GetPacket: Boolean receive loop from engine NS_SERVER=1.
+  .text:000C35EC                 test    eax, eax
+  .text:000C35EE                 jz      loc_C3760
+  .text:000C35F4                 lea     eax, (net_from.type - 2EE000h)[ebx]
+  .text:000C35FA                 mov     [esp+9Ch+from], eax
+  .text:000C35FE                 mov     edx, [eax+4]
+  .text:000C3601                 mov     eax, ds:(dword_E10B00 - 2EE000h)[ebx]
+  .text:000C3607                 mov     edi, eax
+  .text:000C3609                 dec     edi
+  .text:000C360A                 mov     [esp+9Ch+var_68], eax
+  .text:000C360E                 js      loc_C3770
+  .text:000C3614                 mov     eax, edi
+  .text:000C3616                 shl     eax, 4
+  .text:000C3619                 lea     esi, (dword_E10B20 - 2EE000h)[ebx+eax]
+  .text:000C3620                 jmp     short loc_C368D
+  .text:000C3628                 fld     qword ptr [ebp+0]
+  .text:000C362B                 fucomip st, st(1)
+  .text:000C362D                 fstp    st
+  .text:000C362F                 jb      short loc_C36AA
+  .text:000C3631                 mov     ecx, ds:(dword_E10B00 - 2EE000h)[ebx]
+  .text:000C3637                 lea     eax, [edi+1]
+  .text:000C363A                 cmp     ecx, eax
+  .text:000C363C                 jle     short loc_C366C
+  .text:000C363E                 lea     eax, [ecx+0FFFFFFFh]
+  .text:000C3644                 sub     eax, edi
+  .text:000C3646                 shl     eax, 4
+  .text:000C3649                 ; n
+  .text:000C3649                 mov     [esp+9Ch+n], eax; n
+  .text:000C364D                 lea     eax, [esi+10h]
+  .text:000C3650                 ; src
+  .text:000C3650                 mov     [esp+9Ch+src], eax; src
+  .text:000C3654                 ; dest
+  .text:000C3654                 mov     [esp+9Ch+dest], esi; dest
+  .text:000C3657                 mov     [esp+9Ch+var_64], edx
+  .text:000C365B                 mov     [esp+9Ch+var_68], ecx
+  .text:000C365F                 call    _memmove
+  .text:000C3664                 mov     ecx, [esp+9Ch+var_68]
+  .text:000C3668                 mov     edx, [esp+9Ch+var_64]
+  .text:000C366C                 dec     ecx
+  .text:000C366D                 mov     ds:(dword_E10B00 - 2EE000h)[ebx], ecx
+  .text:000C3673                 lea     esi, [esi+0]
+  .text:000C3679                 lea     edi, [edi+0]
+  .text:000C3680                 dec     edi
+  .text:000C3681                 sub     esi, 10h
+  .text:000C3684                 cmp     edi, 0FFFFFFFFh
+  .text:000C3687                 jz      loc_C3770
+  .text:000C368D                 mov     eax, [esi+4]
+  .text:000C3690                 cmp     eax, 0FFFFFFFFh
+  .text:000C3693                 jz      short loc_C36AA
+  .text:000C3695                 fld     dword ptr [esi+8]
+  .text:000C3698                 fldz
+  .text:000C369A                 fst     [esp+9Ch+var_68]
+  .text:000C369E                 fxch    st(1)
+  .text:000C36A0                 fucomi  st, st(1)
+  .text:000C36A2                 fstp    st(1)
+  .text:000C36A4                 jp      short loc_C3628
+  .text:000C36A6                 jnz     short loc_C3628
+  .text:000C36A8                 fstp    st
+  .text:000C36AA                 mov     ecx, [esi]
+  .text:000C36AC                 and     ecx, edx
+  .text:000C36AE                 cmp     eax, ecx
+  .text:000C36B0                 jnz     short loc_C3680
+  .text:000C36B2                 cvttss2si eax, (dword_2EFF98 - 2EE000h)[ebx]
+  .text:000C36BA                 test    eax, eax
+  .text:000C36BC                 jnz     loc_C3791
+  .text:000C36C2                 lea     eax, (net_message.buffername - 2EE000h)[ebx]
+  .text:000C36C8                 mov     eax, [eax+8]
+  .text:000C36CB                 cmp     dword ptr [eax], 0FFFFFFFFh
+  .text:000C36CE                 jnz     loc_C35E0
+  .text:000C36D4                 call    MSG_BeginReading
+  .text:000C36D9                 call    MSG_ReadLong
+  .text:000C36DE                 xchg    ax, ax
+  .text:000C36E0                 call    MSG_ReadStringLine
+  .text:000C36E5                 ; text
+  .text:000C36E5                 mov     [esp+9Ch+dest], eax; text
+  .text:000C36E8                 call    Cmd_TokenizeString
+  .text:000C36ED                 ; arg
+  .text:000C36ED                 mov     [esp+9Ch+dest], 0; arg
+  .text:000C36F4                 call    Cmd_Argv
+  .text:000C36F9                 mov     esi, eax
+  .text:000C36FB                 lea     eax, (aGetchallenge - 2EE000h)[ebx]; "getchallenge"
+  .text:000C3701                 mov     [esp+9Ch+src], eax
+  .text:000C3705                 mov     [esp+9Ch+dest], esi
+  .text:000C3708                 call    Q_strcmp
+  .text:000C370D                 test    eax, eax
+  .text:000C370F                 jz      loc_C3828
+  .text:000C3715                 lea     eax, (aGetchallenge+3 - 2EE000h)[ebx]; "challenge"
+  .text:000C371B                 ; s2
+  .text:000C371B                 mov     [esp+9Ch+src], eax; s2
+  .text:000C371F                 ; s1
+  .text:000C371F                 mov     [esp+9Ch+dest], esi; s1
+  .text:000C3722                 call    Q_stricmp
+  .text:000C3727                 test    eax, eax
+  .text:000C3729                 jz      loc_C3835
+  .text:000C372F                 lea     eax, (aResetrcon+5 - 2EE000h)[ebx]; "rcon"
+  .text:000C3735                 mov     [esp+9Ch+src], eax
+  .text:000C3739                 mov     [esp+9Ch+dest], esi
+  .text:000C373C                 call    Q_strcmp
+  .text:000C3741                 test    eax, eax
+  .text:000C3743                 jnz     loc_C35E0
+  .text:000C3749                 mov     eax, [esp+9Ch+from]
+  .text:000C374D                 ; from
+  .text:000C374D                 mov     [esp+9Ch+dest], eax; from
+  .text:000C3750                 call    SV_Rcon; Issue #326 Part B reference: verified current input, cdecl ABI and current call/dataflow. Native menu poller retains its dedicated/state guards. Inline filter/parser and authentication/redirect blocks are actual target code; separate retained helpers may be uncalled. Sven netadr trailing bytes are opaque; extra address-format/comparison arguments are target-specific.
+  .text:000C3755                 jmp     loc_C35E0
+  .text:000C3760                 add     esp, 8Ch
+  .text:000C3766                 pop     ebx
+  .text:000C3767                 pop     esi
+  .text:000C3768                 pop     edi
+  .text:000C3769                 pop     ebp
+  .text:000C376A                 retn
+  .text:000C3770                 fld     (dword_2EFF98 - 2EE000h)[ebx]
+  .text:000C3776                 xor     eax, eax
+  .text:000C3778                 mov     edx, 0
+  .text:000C377D                 fldz
+  .text:000C377F                 fucomip st, st(1)
+  .text:000C3781                 fstp    st
+  .text:000C3783                 setnp   al
+  .text:000C3786                 cmovnz  eax, edx
+  .text:000C3789                 test    eax, eax
+  .text:000C378B                 jz      loc_C36C2
+  .text:000C3791                 lea     edi, [esp+9Ch+s]
+  .text:000C3795                 xor     eax, eax
+  .text:000C3797                 mov     edx, ds:(dword_2656F4 - 2EE000h)[ebx+eax]
+  .text:000C379E                 mov     [edi+eax], edx
+  .text:000C37A1                 add     eax, 4
+  .text:000C37A4                 cmp     eax, 28h ; '('
+  .text:000C37A7                 jb      short loc_C3797
+  .text:000C37A9                 lea     esi, (net_message.buffername - 2EE000h)[ebx]
+  .text:000C37AF                 ; buf
+  .text:000C37AF                 mov     [esp+9Ch+dest], esi; buf
+  .text:000C37B2                 call    SZ_Clear
+  .text:000C37B7                 mov     eax, 0FFFFFFFFh
+  .text:000C37BC                 ; value
+  .text:000C37BC                 mov     [esp+9Ch+src], eax; value
+  .text:000C37C0                 ; buf
+  .text:000C37C0                 mov     [esp+9Ch+dest], esi; buf
+  .text:000C37C3                 call    MSG_WriteLong
+  .text:000C37C8                 mov     edx, 6Ch ; 'l'
+  .text:000C37CD                 ; value
+  .text:000C37CD                 mov     [esp+9Ch+src], edx; value
+  .text:000C37D1                 ; buf
+  .text:000C37D1                 mov     [esp+9Ch+dest], esi; buf
+  .text:000C37D4                 call    MSG_WriteByte
+  .text:000C37D9                 ; s
+  .text:000C37D9                 mov     [esp+9Ch+src], edi; s
+  .text:000C37DD                 ; buf
+  .text:000C37DD                 mov     [esp+9Ch+dest], esi; buf
+  .text:000C37E0                 call    MSG_WriteString
+  .text:000C37E5                 xor     eax, eax
+  .text:000C37E7                 mov     edx, [esp+9Ch+from]
+  .text:000C37EB                 mov     edx, [edx+eax]
+  .text:000C37EE                 ; to
+  .text:000C37EE                 mov     [esp+eax+9Ch+to.type], edx; to
+  .text:000C37F2                 add     eax, 4
+  .text:000C37F5                 cmp     eax, 24h ; '$'
+  .text:000C37F8                 jb      short loc_C37E7
+  .text:000C37FA                 mov     eax, [esi+8]
+  .text:000C37FD                 ; data
+  .text:000C37FD                 mov     [esp+9Ch+n], eax; data
+  .text:000C3801                 mov     eax, [esi+10h]
+  .text:000C3804                 ; sock
+  .text:000C3804                 mov     [esp+9Ch+dest], 1; sock
+  .text:000C380B                 ; length
+  .text:000C380B                 mov     [esp+9Ch+src], eax; length
+  .text:000C380F                 call    NET_SendPacket
+  .text:000C3814                 ; buf
+  .text:000C3814                 mov     [esp+9Ch+dest], esi; buf
+  .text:000C3817                 call    SZ_Clear
+  .text:000C381C                 jmp     loc_C35E0
+  .text:000C3828                 call    SVC_GetChallenge
+  .text:000C382D                 lea     esi, [esi+0]
+  .text:000C3830                 jmp     loc_C35E0
+  .text:000C3835                 call    SVC_ServiceChallenge
+  .text:000C383A                 lea     esi, [esi+0]
+  .text:000C3840                 jmp     loc_C35E0
+procedure: |-
+  // Issue #326 Part B reference: verified current input, cdecl ABI and current call/dataflow. Native menu poller retains its dedicated/state guards. Inline filter/parser and authentication/redirect blocks are actual target code; separate retained helpers may be uncalled. Sven netadr trailing bytes are opaque; extra address-format/comparison arguments are target-specific.
+  void __cdecl SV_CheckForRcon()
+  {
+    int v0; // edx
+    int v1; // edi
+    int *dest; // esi
+    int v3; // ecx
+    int v4; // eax
+    long double v5; // fst7
+    char *StringLine; // eax
+    char *v7; // esi
+    unsigned int i; // eax
+    unsigned int j; // eax
+    rcon_netadr_t to; // [esp+Ch] [ebp-90h]
+    float v11; // [esp+34h] [ebp-68h]
+    int v12; // [esp+38h] [ebp-64h]
+    rcon_netadr_t *from; // [esp+3Ch] [ebp-60h]
+    char s[92]; // [esp+40h] [ebp-5Ch] BYREF
+
+    if ( !dword_F9FF80 && !dword_1BE6220 && dword_D3F4A4 != 3 && dword_30A4C0 )
+    {
+      while ( 1 )
+      {
+        if ( !NET_GetPacket(1) )
+          return;
+        from = &net_from;
+        v0 = *(_DWORD *)net_from.opaque_address;
+        v1 = dword_E10B00 - 1;
+        v11 = *(float *)&dword_E10B00;
+        if ( dword_E10B00 - 1 < 0 )
+        {
+  LABEL_23:
+          if ( 0.0 != *(float *)&dword_2EFF98 )
+            goto LABEL_17;
+  LABEL_24:
+          for ( i = 0; i < 10; ++i )
+            *(_DWORD *)&s[i * 4] = dword_2656F4[i];
+          SZ_Clear(&net_message);
+          MSG_WriteLong(&net_message, -1);
+          MSG_WriteByte(&net_message, 108);
+          MSG_WriteString(&net_message, s);
+          for ( j = 0; j < 0x24; j += 4 )
+            *(int *)((char *)&to.type + j) = *(int *)((char *)&from->type + j);
+          NET_SendPacket(1, net_message.cursize, net_message.data, to);
+          SZ_Clear(&net_message);
+          continue;
+        }
+        dest = &dword_E10B20[4 * v1];
+        while ( 1 )
+        {
+          v4 = dest[1];
+          if ( v4 != -1 )
+          {
+            v5 = *((float *)dest + 2);
+            v11 = 0.0;
+            if ( v5 != 0.0 && dbl_30A4B0 >= v5 )
+            {
+              v3 = dword_E10B00;
+              if ( dword_E10B00 > v1 + 1 )
+              {
+                v12 = v0;
+                v11 = *(float *)&dword_E10B00;
+                memmove(dest, dest + 4, 16 * (dword_E10B00 + 0xFFFFFFF - v1));
+                v3 = LODWORD(v11);
+                v0 = v12;
+              }
+              dword_E10B00 = v3 - 1;
+              goto LABEL_12;
+            }
+          }
+          if ( v4 == (v0 & *dest) )
+            break;
+  LABEL_12:
+          --v1;
+          dest -= 4;
+          if ( v1 == -1 )
+            goto LABEL_23;
+        }
+        if ( (int)*(float *)&dword_2EFF98 )
+          goto LABEL_24;
+  LABEL_17:
+        if ( *(_DWORD *)net_message.data == -1 )
+        {
+          MSG_BeginReading();
+          MSG_ReadLong();
+          StringLine = MSG_ReadStringLine();
+          Cmd_TokenizeString(StringLine);
+          v7 = (char *)Cmd_Argv(0);
+          if ( Q_strcmp(v7, "getchallenge") )
+          {
+            if ( Q_stricmp(v7, "challenge") )
+            {
+              if ( !Q_strcmp(v7, "rcon") )
+                SV_Rcon(from);
+            }
+            else
+            {
+              SVC_ServiceChallenge();
+            }
+          }
+          else
+          {
+            SVC_GetChallenge();
+          }
+        }
+      }
+    }
+  }

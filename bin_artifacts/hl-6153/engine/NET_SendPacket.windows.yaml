@@ -1,0 +1,5 @@
+func_name: NET_SendPacket
+func_va: '0x1d66f30'
+func_rva: '0x66f30'
+func_size: '0x19f'
+func_sig: 55 8B EC 83 EC 10 8B 45 ?? 53 56 83 F8 01 57 75 ?? 8B 45 ?? 8B 55 ?? 83 EC 14 B9 05 00 00 00

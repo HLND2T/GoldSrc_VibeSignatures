@@ -17,6 +17,16 @@ SVEN_LINUX_NAMES = {
     "SV_CheckForRcon": "_Z15SV_CheckForRconv",
     "SV_CheckChallenge": "_Z17SV_CheckChallengeP8netadr_si",
     "_Host_Frame": "_Z11_Host_Framef",
+    "NET_GetPacket": "_Z13NET_GetPacket8netsrc_s",
+    "NET_SendPacket": "_Z14NET_SendPacket8netsrc_siPv8netadr_s",
+    "SV_FilterPacket": "_Z15SV_FilterPacketv",
+    "SV_SendBan": "_Z10SV_SendBanv",
+    "SV_HandleRconPacket": "_Z19SV_HandleRconPacketv",
+    "SV_CheckRconFailure": "_Z19SV_CheckRconFailureP8netadr_s",
+    "SV_AddFailedRcon": "_Z16SV_AddFailedRconP8netadr_s",
+    "Cmd_ExecuteString": "_Z17Cmd_ExecuteStringPc12cmd_source_t",
+    "SV_BeginRedirect": "_Z16SV_BeginRedirect10redirect_tP8netadr_s",
+    "SV_EndRedirect": "_Z14SV_EndRedirectv",
 }
 
 CALL_GRAPH_PY = r"""
