@@ -1,0 +1,8 @@
+gv_name: outputbuf
+gv_va: '0xb45fc0'
+gv_rva: '0xb45fc0'
+gv_sig: C6 05 ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 8B 5D ?? C9 C3
+gv_sig_va: '0xe3149'
+gv_inst_offset: '0x0'
+gv_inst_length: '0x7'
+gv_inst_disp: '0x2'

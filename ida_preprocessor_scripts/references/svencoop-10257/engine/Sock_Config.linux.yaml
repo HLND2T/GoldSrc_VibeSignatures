@@ -1,0 +1,197 @@
+func_name: "Sock_Config"
+func_va: "0xea090"
+disasm_code: |-
+  ; ip_sockets is the two-element IPv4 socket ARRAY BASE at NS_CLIENT=0, carried by the native close/zero loop. NS_SERVER=1, stride 4; base+4 is the server slot address, whose contents are the handle/fd. Reject the server slot or one-past-end sentinel as the base. Retain engine binding/port selection; unrenamed lock/config helpers are target-specific callees and do not identify this global by name.
+  .text:000EA090                 sub     esp, 3Ch
+  .text:000EA093                 mov     [esp+3Ch+var_C], ebx
+  .text:000EA097                 call    __x86_get_pc_thunk_bx
+  .text:000EA09C                 add     ebx, (offset dbl_2EE000 - $)
+  .text:000EA0A2                 mov     [esp+3Ch+var_4], edi
+  .text:000EA0A6                 xor     edi, edi
+  .text:000EA0A8                 mov     [esp+3Ch+var_8], esi
+  .text:000EA0AC                 mov     esi, [esp+3Ch+multiplayer]
+  .text:000EA0B0                 lea     eax, (aNoip - 2EE000h)[ebx]; "-noip"
+  .text:000EA0B6                 ; parm
+  .text:000EA0B6                 mov     [esp+3Ch+fd], eax; parm
+  .text:000EA0B9                 mov     ds:(dword_15BA7C0 - 2EE000h)[ebx], edi
+  .text:000EA0BF                 call    COM_CheckParm
+  .text:000EA0C4                 test    eax, eax
+  .text:000EA0C6                 jz      short loc_EA0D3
+  .text:000EA0C8                 mov     ecx, 1
+  .text:000EA0CD                 mov     ds:(dword_15BA7C0 - 2EE000h)[ebx], ecx
+  .text:000EA0D3                 cmp     (dword_2F0F98 - 2EE000h)[ebx], esi
+  .text:000EA0D9                 jz      short loc_EA11D
+  .text:000EA0DB                 test    esi, esi
+  .text:000EA0DD                 mov     (dword_2F0F98 - 2EE000h)[ebx], esi
+  .text:000EA0E3                 jle     short loc_EA130
+  .text:000EA0E5                 mov     edx, ds:(dword_15BA7C0 - 2EE000h)[ebx]
+  .text:000EA0EB                 test    edx, edx
+  .text:000EA0ED                 jz      loc_EA190
+  .text:000EA0F3                 mov     edx, (dword_2F0F94 - 2EE000h)[ebx]
+  .text:000EA0F9                 test    edx, edx
+  .text:000EA0FB                 jz      short loc_EA130
+  .text:000EA0FD                 xor     eax, eax
+  .text:000EA0FF                 mov     (dword_2F0F94 - 2EE000h)[ebx], eax
+  .text:000EA105                 lea     eax, (aIpNetworkingDi - 2EE000h)[ebx]; "IP networking disabled.\n"
+  .text:000EA10B                 ; fmt
+  .text:000EA10B                 mov     [esp+3Ch+fd], eax; fmt
+  .text:000EA10E                 call    Con_Printf
+  .text:000EA113                 mov     ecx, ds:(dword_15BA7C0 - 2EE000h)[ebx]
+  .text:000EA119                 test    ecx, ecx
+  .text:000EA11B                 jnz     short loc_EA130
+  .text:000EA11D                 mov     ebx, [esp+3Ch+var_C]
+  .text:000EA121                 mov     esi, [esp+3Ch+var_8]
+  .text:000EA125                 mov     edi, [esp+3Ch+var_4]
+  .text:000EA129                 add     esp, 3Ch
+  .text:000EA12C                 retn
+  .text:000EA130                 mov     eax, ds:(dword_15BA7C8 - 2EE000h)[ebx]
+  .text:000EA136                 test    eax, eax
+  .text:000EA138                 jnz     short loc_EA144
+  .text:000EA13A                 mov     eax, ds:(ip_sockets - 2EE000h)[ebx]
+  .text:000EA140                 test    eax, eax
+  .text:000EA142                 jz      short loc_EA11D
+  .text:000EA144                 call    sub_E51F0
+  .text:000EA149                 mov     eax, ds:(ip_sockets - 2EE000h)[ebx]
+  .text:000EA14F                 test    eax, eax
+  .text:000EA151                 jnz     loc_EA238
+  .text:000EA157                 mov     eax, ds:(dword_15BA7C8 - 2EE000h)[ebx]
+  .text:000EA15D                 test    eax, eax
+  .text:000EA15F                 jnz     loc_EA220
+  .text:000EA165                 call    sub_E5240
+  .text:000EA16A                 lea     eax, (aClosedIpNetwor - 2EE000h)[ebx]; "Closed IP networking.\n"
+  .text:000EA170                 ; fmt
+  .text:000EA170                 mov     [esp+3Ch+fd], eax; fmt
+  .text:000EA173                 call    Con_Printf
+  .text:000EA178                 mov     ebx, [esp+3Ch+var_C]
+  .text:000EA17C                 mov     esi, [esp+3Ch+var_8]
+  .text:000EA180                 mov     edi, [esp+3Ch+var_4]
+  .text:000EA184                 add     esp, 3Ch
+  .text:000EA187                 retn
+  .text:000EA190                 lea     eax, (aInitializingIp - 2EE000h)[ebx]; "Initializing IP networking.\n"
+  .text:000EA196                 ; fmt
+  .text:000EA196                 mov     [esp+3Ch+fd], eax; fmt
+  .text:000EA199                 call    Con_Printf
+  .text:000EA19E                 call    sub_E9C60
+  .text:000EA1A3                 mov     eax, (dword_2F0F94 - 2EE000h)[ebx]
+  .text:000EA1A9                 test    eax, eax
+  .text:000EA1AB                 jz      loc_EA113
+  .text:000EA1B1                 xor     eax, eax
+  .text:000EA1B3                 mov     (dword_2F0F94 - 2EE000h)[ebx], eax
+  .text:000EA1B9                 mov     eax, ds:(dword_15BA7C0 - 2EE000h)[ebx]
+  .text:000EA1BF                 test    eax, eax
+  .text:000EA1C1                 jnz     loc_EA105
+  .text:000EA1C7                 call    sub_E9E30
+  .text:000EA1CC                 mov     eax, ds:(dword_15BA7C0 - 2EE000h)[ebx]
+  .text:000EA1D2                 test    eax, eax
+  .text:000EA1D4                 jnz     loc_EA105
+  .text:000EA1DA                 mov     edi, (dword_2F0F9C - 2EE000h)[ebx]
+  .text:000EA1E0                 xor     eax, eax
+  .text:000EA1E2                 mov     esi, (dword_2F0FA0 - 2EE000h)[ebx]
+  .text:000EA1E8                 lea     edx, (dword_153A660 - 2EE000h)[ebx]
+  .text:000EA1EE                 mov     ecx, [edx+eax]
+  .text:000EA1F1                 mov     [esp+eax+3Ch+fd], ecx
+  .text:000EA1F4                 add     eax, 4
+  .text:000EA1F7                 cmp     eax, 24h ; '$'
+  .text:000EA1FA                 jb      short loc_EA1EE
+  .text:000EA1FC                 call    sub_E6270
+  .text:000EA201                 mov     [esp+3Ch+var_30], edi
+  .text:000EA205                 mov     [esp+3Ch+var_34], esi
+  .text:000EA209                 ; char
+  .text:000EA209                 mov     dword ptr [esp+3Ch+var_38], eax; char
+  .text:000EA20D                 lea     eax, (aLocalIpAddress - 2EE000h)[ebx]; "Local IP address: %s, SV port: %d, CL p"...
+  .text:000EA213                 ; fmt
+  .text:000EA213                 mov     [esp+3Ch+fd], eax; fmt
+  .text:000EA216                 call    Con_Printf
+  .text:000EA21B                 jmp     loc_EA113
+  .text:000EA220                 ; fd
+  .text:000EA220                 mov     [esp+3Ch+fd], eax; fd
+  .text:000EA223                 xor     esi, esi
+  .text:000EA225                 call    _close
+  .text:000EA22A                 mov     ds:(dword_15BA7C8 - 2EE000h)[ebx], esi
+  .text:000EA230                 jmp     loc_EA165
+  .text:000EA238                 ; fd
+  .text:000EA238                 mov     [esp+3Ch+fd], eax; fd
+  .text:000EA23B                 xor     edi, edi
+  .text:000EA23D                 call    _close
+  .text:000EA242                 mov     ds:(ip_sockets - 2EE000h)[ebx], edi
+  .text:000EA248                 jmp     loc_EA157
+procedure: |-
+  // ip_sockets is the two-element IPv4 socket ARRAY BASE at NS_CLIENT=0, carried by the native close/zero loop. NS_SERVER=1, stride 4; base+4 is the server slot address, whose contents are the handle/fd. Reject the server slot or one-past-end sentinel as the base. Retain engine binding/port selection; unrenamed lock/config helpers are target-specific callees and do not identify this global by name.
+  // Issue #326 Part C: current x86 operands verify the whole objects and field accesses. NS_SERVER=1; socket elements are 4 bytes. DLL_CLOSE=3; redirect modes 0/1/2. Sven address trailing bytes remain opaque. Original flush does not prove the reference fork UDP RCON fixes.
+  void __cdecl Sock_Config(int multiplayer)
+  {
+    int v1; // edi
+    unsigned int v2; // eax
+    int v3; // esi
+    int *v4; // eax
+    int fd; // [esp+0h] [ebp-3Ch]
+    char v6[4]; // [esp+4h] [ebp-38h]
+    int v7; // [esp+8h] [ebp-34h]
+    int v8; // [esp+Ch] [ebp-30h]
+    int v9; // [esp+10h] [ebp-2Ch]
+    int v10; // [esp+14h] [ebp-28h]
+    int v11; // [esp+18h] [ebp-24h]
+    int v12; // [esp+1Ch] [ebp-20h]
+    __int16 v13; // [esp+20h] [ebp-1Ch]
+
+    dword_15BA7C0 = COM_CheckParm("-noip") != 0;
+    if ( dword_2F0F98 == multiplayer )
+      return;
+    dword_2F0F98 = multiplayer;
+    if ( multiplayer > 0 )
+    {
+      if ( !dword_15BA7C0 )
+      {
+        Con_Printf("Initializing IP networking.\n");
+        sub_E9C60();
+        if ( dword_2F0F94 )
+        {
+          dword_2F0F94 = 0;
+          if ( dword_15BA7C0 )
+            goto LABEL_6;
+          sub_E9E30();
+          if ( dword_15BA7C0 )
+            goto LABEL_6;
+          v1 = dword_2F0F9C;
+          v2 = 0;
+          v3 = dword_2F0FA0;
+          do
+          {
+            *(_DWORD *)&v6[v2 * 4 - 4] = dword_153A660[v2];
+            ++v2;
+          }
+          while ( v2 < 9 );
+          v4 = sub_E6270(fd, *(int *)v6, v7, v8, v9, v10, v11, v12, v13);
+          Con_Printf("Local IP address: %s, SV port: %d, CL port: %d\n", v4, v3, v1);
+        }
+  LABEL_7:
+        if ( !dword_15BA7C0 )
+          return;
+        goto LABEL_9;
+      }
+      if ( dword_2F0F94 )
+      {
+        dword_2F0F94 = 0;
+  LABEL_6:
+        Con_Printf("IP networking disabled.\n");
+        goto LABEL_7;
+      }
+    }
+  LABEL_9:
+    if ( dword_15BA7C8 || ip_sockets[0] )
+    {
+      sub_E51F0();
+      if ( ip_sockets[0] )
+      {
+        close(ip_sockets[0]);
+        ip_sockets[0] = 0;
+      }
+      if ( dword_15BA7C8 )
+      {
+        close(dword_15BA7C8);
+        dword_15BA7C8 = 0;
+      }
+      sub_E5240();
+      Con_Printf("Closed IP networking.\n");
+    }
+  }

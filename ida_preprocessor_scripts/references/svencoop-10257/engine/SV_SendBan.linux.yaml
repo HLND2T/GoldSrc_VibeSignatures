@@ -1,0 +1,84 @@
+func_name: "SV_SendBan"
+func_va: "0xbc460"
+disasm_code: |-
+  ; net_message is the whole sizebuf object repeatedly passed to SZ_Clear/MSG_Write*. net_from is the whole incoming address copied by value to NET_SendPacket, not a pointer slot or an interior member. Scalar sizebuf_t_data_offset is the current send data-field address minus that object base; sizebuf_t_cursize_offset is the current send length-field address minus the base. This reference has offsets 8/16, each field width 4; independently derive each target offset from its own operands.
+  .text:000BC460                 sub     esp, 7Ch
+  .text:000BC463                 xor     eax, eax
+  .text:000BC465                 mov     [esp+7Ch+var_C], ebx
+  .text:000BC469                 call    __x86_get_pc_thunk_bx
+  .text:000BC46E                 add     ebx, (offset dbl_2EE000 - $)
+  .text:000BC474                 mov     [esp+7Ch+var_8], esi
+  .text:000BC478                 lea     esi, [esp+7Ch+s]
+  .text:000BC47C                 mov     [esp+7Ch+var_4], edi
+  .text:000BC480                 mov     edx, ds:(dword_2656F4 - 2EE000h)[ebx+eax]
+  .text:000BC487                 mov     [esi+eax], edx
+  .text:000BC48A                 add     eax, 4
+  .text:000BC48D                 cmp     eax, 28h ; '('
+  .text:000BC490                 jb      short loc_BC480
+  .text:000BC492                 lea     edi, (net_message.buffername - 2EE000h)[ebx]
+  .text:000BC498                 ; buf
+  .text:000BC498                 mov     [esp+7Ch+buf], edi; buf
+  .text:000BC49B                 call    SZ_Clear
+  .text:000BC4A0                 mov     eax, 0FFFFFFFFh
+  .text:000BC4A5                 ; value
+  .text:000BC4A5                 mov     [esp+7Ch+value], eax; value
+  .text:000BC4A9                 ; buf
+  .text:000BC4A9                 mov     [esp+7Ch+buf], edi; buf
+  .text:000BC4AC                 call    MSG_WriteLong
+  .text:000BC4B1                 mov     edx, 6Ch ; 'l'
+  .text:000BC4B6                 ; value
+  .text:000BC4B6                 mov     [esp+7Ch+value], edx; value
+  .text:000BC4BA                 ; buf
+  .text:000BC4BA                 mov     [esp+7Ch+buf], edi; buf
+  .text:000BC4BD                 call    MSG_WriteByte
+  .text:000BC4C2                 ; s
+  .text:000BC4C2                 mov     [esp+7Ch+value], esi; s
+  .text:000BC4C6                 ; buf
+  .text:000BC4C6                 mov     [esp+7Ch+buf], edi; buf
+  .text:000BC4C9                 call    MSG_WriteString
+  .text:000BC4CE                 lea     edx, (net_from.type - 2EE000h)[ebx]
+  .text:000BC4D4                 xor     eax, eax
+  .text:000BC4D6                 mov     ecx, [edx+eax]
+  .text:000BC4D9                 ; to
+  .text:000BC4D9                 mov     [esp+eax+7Ch+to.type], ecx; to
+  .text:000BC4DD                 add     eax, 4
+  .text:000BC4E0                 cmp     eax, 24h ; '$'
+  .text:000BC4E3                 jb      short loc_BC4D6
+  .text:000BC4E5                 mov     eax, [edi+8]
+  .text:000BC4E8                 ; sock
+  .text:000BC4E8                 mov     [esp+7Ch+buf], 1; sock
+  .text:000BC4EF                 ; data
+  .text:000BC4EF                 mov     [esp+7Ch+data], eax; data
+  .text:000BC4F3                 mov     eax, [edi+10h]
+  .text:000BC4F6                 ; length
+  .text:000BC4F6                 mov     [esp+7Ch+value], eax; length
+  .text:000BC4FA                 call    NET_SendPacket; Issue #326 Part C: current x86 operands verify the whole objects and field accesses. NS_SERVER=1; socket elements are 4 bytes. DLL_CLOSE=3; redirect modes 0/1/2. Sven address trailing bytes remain opaque. Original flush does not prove the reference fork UDP RCON fixes.
+  .text:000BC4FF                 ; buf
+  .text:000BC4FF                 mov     [esp+7Ch+buf], edi; buf
+  .text:000BC502                 call    SZ_Clear
+  .text:000BC507                 mov     ebx, [esp+7Ch+var_C]
+  .text:000BC50B                 mov     esi, [esp+7Ch+var_8]
+  .text:000BC50F                 mov     edi, [esp+7Ch+var_4]
+  .text:000BC513                 add     esp, 7Ch
+  .text:000BC516                 retn
+procedure: |-
+  // net_message is the whole sizebuf object repeatedly passed to SZ_Clear/MSG_Write*. net_from is the whole incoming address copied by value to NET_SendPacket, not a pointer slot or an interior member. Scalar sizebuf_t_data_offset is the current send data-field address minus that object base; sizebuf_t_cursize_offset is the current send length-field address minus the base. This reference has offsets 8/16, each field width 4; independently derive each target offset from its own operands.
+  // Issue #326 Part C: current x86 operands verify the whole objects and field accesses. NS_SERVER=1; socket elements are 4 bytes. DLL_CLOSE=3; redirect modes 0/1/2. Sven address trailing bytes remain opaque. Original flush does not prove the reference fork UDP RCON fixes.
+  void __cdecl SV_SendBan()
+  {
+    unsigned int i; // eax
+    unsigned int j; // eax
+    rcon_netadr_t to; // [esp+Ch] [ebp-70h]
+    char s[64]; // [esp+30h] [ebp-4Ch] BYREF
+
+    for ( i = 0; i < 10; ++i )
+      *(_DWORD *)&s[i * 4] = dword_2656F4[i];
+    SZ_Clear(&net_message);
+    MSG_WriteLong(&net_message, -1);
+    MSG_WriteByte(&net_message, 108);
+    MSG_WriteString(&net_message, s);
+    for ( j = 0; j < 0x24; j += 4 )
+      *(int *)((char *)&to.type + j) = *(int *)((char *)&net_from.type + j);
+    NET_SendPacket(1, net_message.cursize, net_message.data, to); // (structmember, struct=rcon_sizebuf_t, member=data) // (structmember, struct=rcon_sizebuf_t, member=cursize)
+    SZ_Clear(&net_message);
+  }

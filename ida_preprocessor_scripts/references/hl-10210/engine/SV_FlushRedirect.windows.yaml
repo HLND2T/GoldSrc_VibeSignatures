@@ -1,0 +1,116 @@
+func_name: "SV_FlushRedirect"
+func_va: "0x1020a560"
+disasm_code: |-
+  ; sv_redirected is the int32 redirect mode (RD_NONE=0, RD_CLIENT=1, RD_PACKET=2). sv_redirectto is the whole reply address copied by value to NS_SERVER NET_SendPacket. outputbuf is the text array base passed to Q_strlen/MSG_WriteString and cleared at byte zero, not a pointer slot; independent append-path evidence proves capacity 1400. The original binary body does not establish the reference fork 1200-byte splitting or recursive-send protection.
+  .text:1020A560                 push    ebp
+  .text:1020A561                 mov     ebp, esp
+  .text:1020A563                 sub     esp, 18h
+  .text:1020A566                 mov     eax, ___security_cookie
+  .text:1020A56B                 xor     eax, ebp
+  .text:1020A56D                 mov     [ebp+var_4], eax
+  .text:1020A570                 mov     eax, sv_redirected
+  .text:1020A575                 push    esi
+  .text:1020A576                 cmp     eax, 2
+  .text:1020A579                 jnz     loc_1020A618
+  .text:1020A57F                 ; s
+  .text:1020A57F                 push    offset outputbuf; s
+  .text:1020A584                 call    Q_strlen
+  .text:1020A589                 add     esp, 4
+  .text:1020A58C                 add     eax, 7
+  .text:1020A58F                 call    __alloca_probe_16
+  .text:1020A594                 mov     esi, esp
+  .text:1020A596                 mov     [ebp+data], offset aRedirectedText; "Redirected Text"
+  .text:1020A59D                 ; s
+  .text:1020A59D                 push    offset outputbuf; s
+  .text:1020A5A2                 call    Q_strlen
+  .text:1020A5A7                 add     eax, 7
+  .text:1020A5AA                 mov     [ebp+len], 0
+  .text:1020A5B1                 mov     [ebp+data+0Ch], eax
+  .text:1020A5B4                 mov     eax, 1
+  .text:1020A5B9                 mov     word ptr [ebp+data+4], ax
+  .text:1020A5BD                 lea     eax, [ebp+data]
+  .text:1020A5C0                 push    0FFFFFFFFh
+  .text:1020A5C2                 push    eax
+  .text:1020A5C3                 mov     [ebp+data+8], esi
+  .text:1020A5C6                 call    MSG_WriteLong
+  .text:1020A5CB                 lea     eax, [ebp+data]
+  .text:1020A5CE                 push    6Ch ; 'l'
+  .text:1020A5D0                 ; to
+  .text:1020A5D0                 push    eax; to
+  .text:1020A5D1                 call    MSG_WriteByte
+  .text:1020A5D6                 lea     eax, [ebp+data]
+  .text:1020A5D9                 push    offset outputbuf
+  .text:1020A5DE                 push    eax
+  .text:1020A5DF                 call    MSG_WriteString
+  .text:1020A5E4                 lea     eax, [ebp+data]
+  .text:1020A5E7                 push    0
+  .text:1020A5E9                 push    eax
+  .text:1020A5EA                 call    MSG_WriteByte
+  .text:1020A5EF                 movups  xmm0, xmmword ptr sv_redirectto.type
+  .text:1020A5F6                 mov     eax, dword ptr sv_redirectto.ipx+8
+  .text:1020A5FB                 add     esp, 10h
+  .text:1020A5FE                 mov     ecx, esp
+  .text:1020A600                 ; data
+  .text:1020A600                 push    [ebp+data+8]; data
+  .text:1020A603                 movups  xmmword ptr [ecx], xmm0
+  .text:1020A606                 mov     [ecx+10h], eax
+  .text:1020A609                 ; length
+  .text:1020A609                 push    [ebp+len]; length
+  .text:1020A60C                 ; sock
+  .text:1020A60C                 push    1; sock
+  .text:1020A60E                 call    NET_SendPacket; Issue #326 Part C: current x86 operands verify the whole objects and field accesses. NS_SERVER=1; socket elements are 4 bytes. DLL_CLOSE=3; redirect modes 0/1/2. Sven address trailing bytes remain opaque. Original flush does not prove the reference fork UDP RCON fixes.
+  .text:1020A613                 add     esp, 20h
+  .text:1020A616                 jmp     short loc_1020A643
+  .text:1020A618                 cmp     eax, 1
+  .text:1020A61B                 jnz     short loc_1020A643
+  .text:1020A61D                 mov     eax, dword_11249E90
+  .text:1020A622                 add     eax, 7Ch ; '|'
+  .text:1020A625                 push    8
+  .text:1020A627                 push    eax
+  .text:1020A628                 call    MSG_WriteByte
+  .text:1020A62D                 mov     eax, dword_11249E90
+  .text:1020A632                 add     eax, 7Ch ; '|'
+  .text:1020A635                 push    offset outputbuf
+  .text:1020A63A                 push    eax
+  .text:1020A63B                 call    MSG_WriteString
+  .text:1020A640                 add     esp, 10h
+  .text:1020A643                 mov     outputbuf, 0
+  .text:1020A64A                 lea     esp, [ebp-1Ch]
+  .text:1020A64D                 pop     esi
+  .text:1020A64E                 mov     ecx, [ebp+var_4]
+  .text:1020A651                 ; StackCookie
+  .text:1020A651                 xor     ecx, ebp; StackCookie
+  .text:1020A653                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:1020A658                 mov     esp, ebp
+  .text:1020A65A                 pop     ebp
+  .text:1020A65B                 retn
+procedure: |-
+  // sv_redirected is the int32 redirect mode (RD_NONE=0, RD_CLIENT=1, RD_PACKET=2). sv_redirectto is the whole reply address copied by value to NS_SERVER NET_SendPacket. outputbuf is the text array base passed to Q_strlen/MSG_WriteString and cleared at byte zero, not a pointer slot; independent append-path evidence proves capacity 1400. The original binary body does not establish the reference fork 1200-byte splitting or recursive-send protection.
+  // Issue #326 Part C: current x86 operands verify the whole objects and field accesses. NS_SERVER=1; socket elements are 4 bytes. DLL_CLOSE=3; redirect modes 0/1/2. Sven address trailing bytes remain opaque. Original flush does not prove the reference fork UDP RCON fixes.
+  void __cdecl SV_FlushRedirect()
+  {
+    void *v0; // esp
+    int v1; // [esp+0h] [ebp-1Ch] BYREF
+    rcon_sizebuf_t data; // [esp+4h] [ebp-18h] BYREF
+
+    if ( sv_redirected == 2 )
+    {
+      v0 = alloca(Q_strlen(outputbuf) + 7);
+      data.buffername = "Redirected Text";
+      data.cursize = 0;
+      data.maxsize = Q_strlen(outputbuf) + 7;
+      data.flags = 1;
+      data.data = (unsigned __int8 *)&v1;
+      MSG_WriteLong(&data, -1);
+      MSG_WriteByte(&data, 108);
+      MSG_WriteString(&data, outputbuf);
+      MSG_WriteByte(&data, 0);
+      NET_SendPacket(1, data.cursize, data.data, sv_redirectto);
+    }
+    else if ( sv_redirected == 1 )
+    {
+      MSG_WriteByte((rcon_sizebuf_t *)(dword_11249E90 + 124), 8);
+      MSG_WriteString((rcon_sizebuf_t *)(dword_11249E90 + 124), outputbuf);
+    }
+    outputbuf[0] = 0;
+  }

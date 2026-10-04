@@ -1,0 +1,8 @@
+gv_name: ip_sockets
+gv_va: '0x35e4d0'
+gv_rva: '0x35e4d0'
+gv_sig: 8B 2C BD ?? ?? ?? ?? 85 ED 74 ?? B8 ?? ?? ?? ?? 89 44 24 ?? 31 C0 89 44 24 ?? 8D 44 24 ?? 89 04 24 89 44 24 ??
+gv_sig_va: '0x168958'
+gv_inst_offset: '0x0'
+gv_inst_length: '0x7'
+gv_inst_disp: '0x3'

@@ -1,6 +1,7 @@
 func_name: "SV_CheckForRcon"
 func_va: "0xc3580"
 disasm_code: |-
+  ; sv is the whole server object, independently checked against its current Host_ClearMemory zero-fill base. sv_active_offset is the active guard address minus that base (reference: 0, width 4); derive the target numeric offset and do not publish sv.active as a global. giActive is the int32 engine state compared with DLL_CLOSE=3, independently checked in Host_Init. cls.state and host_initialized are separate guards. Keep all existing receive/filter annotations.
   .text:000C3580                 push    ebp
   .text:000C3581                 push    edi
   .text:000C3582                 push    esi
@@ -8,14 +9,14 @@ disasm_code: |-
   .text:000C3584                 call    __x86_get_pc_thunk_bx
   .text:000C3589                 add     ebx, (offset dbl_2EE000 - $)
   .text:000C358F                 sub     esp, 8Ch
-  .text:000C3595                 mov     edi, ds:(dword_F9FF80 - 2EE000h)[ebx]
+  .text:000C3595                 mov     edi, ds:(sv.active - 2EE000h)[ebx] ; (structmember, struct=rcon_server_prefix_t, member=active)
   .text:000C359B                 test    edi, edi
   .text:000C359D                 jnz     loc_C3760
   .text:000C35A3                 lea     eax, (dword_1BE6220 - 2EE000h)[ebx]
   .text:000C35A9                 mov     esi, [eax]
   .text:000C35AB                 test    esi, esi
   .text:000C35AD                 jnz     loc_C3760
-  .text:000C35B3                 lea     eax, (dword_D3F4A4 - 2EE000h)[ebx]
+  .text:000C35B3                 lea     eax, (giActive - 2EE000h)[ebx]
   .text:000C35B9                 cmp     dword ptr [eax], 3
   .text:000C35BC                 jz      loc_C3760
   .text:000C35C2                 lea     eax, (dword_30A4C0 - 2EE000h)[ebx]
@@ -205,6 +206,7 @@ disasm_code: |-
   .text:000C383A                 lea     esi, [esi+0]
   .text:000C3840                 jmp     loc_C35E0
 procedure: |-
+  // sv is the whole server object, independently checked against its current Host_ClearMemory zero-fill base. sv_active_offset is the active guard address minus that base (reference: 0, width 4); derive the target numeric offset and do not publish sv.active as a global. giActive is the int32 engine state compared with DLL_CLOSE=3, independently checked in Host_Init. cls.state and host_initialized are separate guards. Keep all existing receive/filter annotations.
   // Issue #326 Part B reference: verified current input, cdecl ABI and current call/dataflow. Native menu poller retains its dedicated/state guards. Inline filter/parser and authentication/redirect blocks are actual target code; separate retained helpers may be uncalled. Sven netadr trailing bytes are opaque; extra address-format/comparison arguments are target-specific.
   void __cdecl SV_CheckForRcon()
   {
@@ -224,7 +226,7 @@ procedure: |-
     rcon_netadr_t *from; // [esp+3Ch] [ebp-60h]
     char s[92]; // [esp+40h] [ebp-5Ch] BYREF
 
-    if ( !dword_F9FF80 && !dword_1BE6220 && dword_D3F4A4 != 3 && dword_30A4C0 )
+    if ( !sv.active && !dword_1BE6220 && giActive != 3 && dword_30A4C0 ) // (structmember, struct=rcon_server_prefix_t, member=active)
     {
       while ( 1 )
       {
@@ -248,7 +250,7 @@ procedure: |-
           MSG_WriteString(&net_message, s);
           for ( j = 0; j < 0x24; j += 4 )
             *(int *)((char *)&to.type + j) = *(int *)((char *)&from->type + j);
-          NET_SendPacket(1, net_message.cursize, net_message.data, to);
+          NET_SendPacket(1, net_message.cursize, net_message.data, to); // (structmember, struct=rcon_sizebuf_t, member=data) // (structmember, struct=rcon_sizebuf_t, member=cursize)
           SZ_Clear(&net_message);
           continue;
         }
@@ -286,7 +288,7 @@ procedure: |-
         if ( (int)*(float *)&dword_2EFF98 )
           goto LABEL_24;
   LABEL_17:
-        if ( *(_DWORD *)net_message.data == -1 )
+        if ( *(_DWORD *)net_message.data == -1 ) // (structmember, struct=rcon_sizebuf_t, member=data)
         {
           MSG_BeginReading();
           MSG_ReadLong();
