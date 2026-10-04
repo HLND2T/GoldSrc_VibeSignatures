@@ -1,0 +1,123 @@
+func_name: "SV_CheckForRcon"
+func_va: "0x102072f0"
+disasm_code: |-
+  .text:102072F0                 cmp     dword_10FD1000, 0
+  .text:102072F7                 jnz     locret_102073E2
+  .text:102072FD                 cmp     cls.state, 0
+  .text:10207304                 jnz     locret_102073E2
+  .text:1020730A                 cmp     dword_10F776A4, 3
+  .text:10207311                 jz      locret_102073E2
+  .text:10207317                 cmp     dword_104B8CCC, 0
+  .text:1020731E                 jz      locret_102073E2
+  .text:10207324                 ; sock
+  .text:10207324                 push    1; sock
+  .text:10207326                 ; NET_GetPacket: Boolean receive loop from engine NS_SERVER=1.
+  .text:10207326                 call    NET_GetPacket; NET_GetPacket: Boolean receive loop from engine NS_SERVER=1.
+  .text:1020732B                 add     esp, 4
+  .text:1020732E                 test    eax, eax
+  .text:10207330                 jz      locret_102073E2
+  .text:10207336                 push    esi
+  .text:10207337                 ; SV_FilterPacket: nonzero rejection sends the native ban reply.
+  .text:10207337                 call    SV_FilterPacket; SV_FilterPacket: nonzero rejection sends the native ban reply.
+  .text:1020733C                 test    eax, eax
+  .text:1020733E                 jz      short loc_10207356
+  .text:10207340                 call    SV_SendBan
+  .text:10207345                 ; adr
+  .text:10207345                 push    offset net_from; adr
+  .text:1020734A                 ; sock
+  .text:1020734A                 push    1; sock
+  .text:1020734C                 call    NET_CheckCleanupFakeIPConnection
+  .text:10207351                 add     esp, 8
+  .text:10207354                 jmp     short loc_102073CF
+  .text:10207356                 mov     eax, net_message.data
+  .text:1020735B                 cmp     dword ptr [eax], 0FFFFFFFFh
+  .text:1020735E                 jnz     short loc_102073CF
+  .text:10207360                 call    MSG_BeginReading
+  .text:10207365                 call    MSG_ReadLong
+  .text:1020736A                 call    MSG_ReadStringLine
+  .text:1020736F                 ; text
+  .text:1020736F                 push    eax; text
+  .text:10207370                 call    Cmd_TokenizeString
+  .text:10207375                 ; arg
+  .text:10207375                 push    0; arg
+  .text:10207377                 call    Cmd_Argv
+  .text:1020737C                 mov     esi, eax
+  .text:1020737E                 push    offset aGetchallenge; "getchallenge"
+  .text:10207383                 push    esi
+  .text:10207384                 call    Q_strcmp
+  .text:10207389                 add     esp, 10h
+  .text:1020738C                 test    eax, eax
+  .text:1020738E                 jnz     short loc_10207397
+  .text:10207390                 call    SVC_GetChallenge
+  .text:10207395                 jmp     short loc_102073CF
+  .text:10207397                 push    offset aChallenge; "challenge"
+  .text:1020739C                 push    esi
+  .text:1020739D                 call    Q_stricmp
+  .text:102073A2                 add     esp, 8
+  .text:102073A5                 test    eax, eax
+  .text:102073A7                 jnz     short loc_102073B0
+  .text:102073A9                 call    SVC_ServiceChallenge
+  .text:102073AE                 jmp     short loc_102073CF
+  .text:102073B0                 push    offset aRcon; "rcon"
+  .text:102073B5                 push    esi
+  .text:102073B6                 call    Q_strcmp
+  .text:102073BB                 add     esp, 8
+  .text:102073BE                 test    eax, eax
+  .text:102073C0                 jnz     short loc_102073CF
+  .text:102073C2                 ; from
+  .text:102073C2                 push    offset net_from; from
+  .text:102073C7                 call    SV_Rcon; Issue #326 Part B reference: verified current input, cdecl ABI and current call/dataflow. Native menu poller retains its dedicated/state guards. Inline filter/parser and authentication/redirect blocks are actual target code; separate retained helpers may be uncalled. Sven netadr trailing bytes are opaque; extra address-format/comparison arguments are target-specific.
+  .text:102073CC                 add     esp, 4
+  .text:102073CF                 ; sock
+  .text:102073CF                 push    1; sock
+  .text:102073D1                 ; NET_GetPacket: Boolean receive loop from engine NS_SERVER=1.
+  .text:102073D1                 call    NET_GetPacket; NET_GetPacket: Boolean receive loop from engine NS_SERVER=1.
+  .text:102073D6                 add     esp, 4
+  .text:102073D9                 test    eax, eax
+  .text:102073DB                 jnz     loc_10207337
+  .text:102073E1                 pop     esi
+  .text:102073E2                 retn
+procedure: |-
+  // Issue #326 Part B reference: verified current input, cdecl ABI and current call/dataflow. Native menu poller retains its dedicated/state guards. Inline filter/parser and authentication/redirect blocks are actual target code; separate retained helpers may be uncalled. Sven netadr trailing bytes are opaque; extra address-format/comparison arguments are target-specific.
+  void __cdecl SV_CheckForRcon()
+  {
+    char *StringLine; // eax
+    char *v1; // esi
+
+    if ( !dword_10FD1000 && cls.state == ca_dedicated && dword_10F776A4 != 3 && dword_104B8CCC && NET_GetPacket(1) )
+    {
+      do
+      {
+        if ( SV_FilterPacket() )
+        {
+          SV_SendBan();
+          NET_CheckCleanupFakeIPConnection(1, &net_from);
+        }
+        else if ( *(_DWORD *)net_message.data == -1 )
+        {
+          MSG_BeginReading();
+          MSG_ReadLong();
+          StringLine = MSG_ReadStringLine();
+          Cmd_TokenizeString(StringLine);
+          v1 = (char *)Cmd_Argv(0);
+          if ( Q_strcmp(v1, "getchallenge") )
+          {
+            if ( Q_stricmp(v1, "challenge") )
+            {
+              if ( !Q_strcmp(v1, "rcon") )
+                SV_Rcon(&net_from);
+            }
+            else
+            {
+              SVC_ServiceChallenge();
+            }
+          }
+          else
+          {
+            SVC_GetChallenge();
+          }
+        }
+      }
+      while ( NET_GetPacket(1) );
+    }
+  }

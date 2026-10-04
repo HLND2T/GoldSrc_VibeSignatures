@@ -1,0 +1,5 @@
+func_name: SV_CheckRconFailure
+func_va: '0x1da5700'
+func_rva: '0xa5700'
+func_size: '0x5e'
+func_sig: 53 55 8B 6C 24 ?? 56 57 BB ?? ?? ?? ?? 8B 43 ?? 85 C0 74 ?? 83 EC 14 8D 73 ?? B9 05 00 00 00 8B FC

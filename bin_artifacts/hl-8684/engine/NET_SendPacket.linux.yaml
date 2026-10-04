@@ -1,0 +1,5 @@
+func_name: NET_SendPacket
+func_va: '0x1688c0'
+func_rva: '0x1688c0'
+func_size: '0x2d5'
+func_sig: 83 EC ?? 89 5C 24 ?? 8B 5C 24 ?? 89 74 24 ?? 0F B7 74 24 ?? 89 7C 24 ?? 8B 7C 24 ?? 89 6C 24 ??

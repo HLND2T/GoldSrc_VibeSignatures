@@ -1,0 +1,5 @@
+func_name: SV_FilterPacket
+func_va: '0x1020a310'
+func_rva: '0x20a310'
+func_size: '0xc8'
+func_sig: 55 8B EC 83 EC 08 53 8B 1D ?? ?? ?? ?? 0F 57 C9 56 57 8D 4B ?? 89 4D ?? 85 C9 78 ?? F2 0F 10 15 ?? ?? ?? ??
