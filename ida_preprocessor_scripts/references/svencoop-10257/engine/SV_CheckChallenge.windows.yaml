@@ -1,0 +1,123 @@
+func_name: "SV_CheckChallenge"
+func_va: "0x1da5210"
+disasm_code: |-
+  .text:01DA5210                 mov     eax, [esp+adr]
+  .text:01DA5214                 push    ebx
+  .text:01DA5215                 push    ebp
+  .text:01DA5216                 push    esi
+  .text:01DA5217                 ; ArgList
+  .text:01DA5217                 push    edi; ArgList
+  .text:01DA5218                 test    eax, eax
+  .text:01DA521A                 jnz     short loc_1DA5230
+  .text:01DA521C                 push    offset aSvCheckchallen; "SV_CheckChallenge:  Null address\n"
+  .text:01DA5221                 call    Sys_Error
+  .text:01DA5226                 add     esp, 4
+  .text:01DA5229                 xor     eax, eax
+  .text:01DA522B                 pop     edi
+  .text:01DA522C                 pop     esi
+  .text:01DA522D                 pop     ebp
+  .text:01DA522E                 pop     ebx
+  .text:01DA522F                 retn
+  .text:01DA5230                 sub     esp, 24h
+  .text:01DA5233                 mov     esi, eax
+  .text:01DA5235                 mov     ecx, 9
+  .text:01DA523A                 mov     edi, esp
+  .text:01DA523C                 rep movsd
+  .text:01DA523E                 call    NET_IsLocalAddress; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:01DA5243                 add     esp, 24h
+  .text:01DA5246                 test    eax, eax
+  .text:01DA5248                 jnz     loc_1DA52D5
+  .text:01DA524E                 xor     ebp, ebp
+  .text:01DA5250                 mov     ebx, offset unk_90CF910
+  .text:01DA5255                 sub     esp, 24h
+  .text:01DA5258                 mov     ecx, 9
+  .text:01DA525D                 mov     edi, esp
+  .text:01DA525F                 mov     esi, ebx
+  .text:01DA5261                 rep movsd
+  .text:01DA5263                 sub     esp, 24h
+  .text:01DA5266                 mov     ecx, 9
+  .text:01DA526B                 mov     esi, offset adr
+  .text:01DA5270                 mov     edi, esp
+  .text:01DA5272                 rep movsd
+  .text:01DA5274                 call    NET_CompareBaseAdr; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:01DA5279                 add     esp, 48h
+  .text:01DA527C                 test    eax, eax
+  .text:01DA527E                 jnz     short loc_1DA52AD
+  .text:01DA5280                 add     ebx, 2Ch ; ','
+  .text:01DA5283                 inc     ebp
+  .text:01DA5284                 cmp     ebx, offset byte_90DA910
+  .text:01DA528A                 jl      short loc_1DA5255
+  .text:01DA528C                 cmp     ebp, 400h
+  .text:01DA5292                 jnz     short loc_1DA52D5
+  .text:01DA5294                 mov     eax, [esp+10h+adr]
+  .text:01DA5298                 push    offset aNoChallengeFor; "No challenge for your address.\n"
+  .text:01DA529D                 ; adr
+  .text:01DA529D                 push    eax; adr
+  .text:01DA529E                 call    SV_RejectConnection; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:01DA52A3                 add     esp, 8
+  .text:01DA52A6                 xor     eax, eax
+  .text:01DA52A8                 pop     edi
+  .text:01DA52A9                 pop     esi
+  .text:01DA52AA                 pop     ebp
+  .text:01DA52AB                 pop     ebx
+  .text:01DA52AC                 retn
+  .text:01DA52AD                 mov     eax, [esp+10h+nChallengeValue]
+  .text:01DA52B1                 imul    ecx, ebp, 2Ch ; ','
+  .text:01DA52B4                 cmp     eax, dword_90CF934[ecx]
+  .text:01DA52BA                 jz      short loc_1DA528C
+  .text:01DA52BC                 mov     eax, [esp+10h+adr]
+  .text:01DA52C0                 push    offset aBadChallenge; "Bad challenge.\n"
+  .text:01DA52C5                 ; adr
+  .text:01DA52C5                 push    eax; adr
+  .text:01DA52C6                 call    SV_RejectConnection; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:01DA52CB                 add     esp, 8
+  .text:01DA52CE                 xor     eax, eax
+  .text:01DA52D0                 pop     edi
+  .text:01DA52D1                 pop     esi
+  .text:01DA52D2                 pop     ebp
+  .text:01DA52D3                 pop     ebx
+  .text:01DA52D4                 retn
+  .text:01DA52D5                 pop     edi
+  .text:01DA52D6                 pop     esi
+  .text:01DA52D7                 pop     ebp
+  .text:01DA52D8                 mov     eax, 1
+  .text:01DA52DD                 pop     ebx
+  .text:01DA52DE                 retn
+procedure: |-
+  // Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  int __cdecl SV_CheckChallenge(rcon_netadr_t *adr, int nChallengeValue)
+  {
+    int v2; // ebp
+    char *v3; // ebx
+    rcon_netadr_t v5; // [esp-48h] [ebp-58h] BYREF
+    rcon_netadr_t v6; // [esp-24h] [ebp-34h] BYREF
+
+    if ( !adr )
+      Sys_Error("SV_CheckChallenge:  Null address\n");
+    qmemcpy(&v6, adr, sizeof(v6));
+    if ( NET_IsLocalAddress(v6) )
+      return 1;
+    v2 = 0;
+    v3 = (char *)&unk_90CF910;
+    while ( 1 )
+    {
+      qmemcpy(&v6, v3, sizeof(v6));
+      qmemcpy(&v5, &::adr, sizeof(v5));
+      if ( NET_CompareBaseAdr(v5, v6) )
+        break;
+      v3 += 44;
+      ++v2;
+      if ( (int)v3 >= (int)&byte_90DA910 )
+        goto LABEL_7;
+    }
+    if ( nChallengeValue != dword_90CF934[11 * v2] )
+    {
+      SV_RejectConnection(adr, "Bad challenge.\n");
+      return 0;
+    }
+  LABEL_7:
+    if ( v2 != 1024 )
+      return 1;
+    SV_RejectConnection(adr, "No challenge for your address.\n");
+    return 0;
+  }

@@ -1,0 +1,5 @@
+func_name: SV_CheckChallenge
+func_va: '0xe05a0'
+func_rva: '0xe05a0'
+func_size: '0x132'
+func_sig: 57 56 53 83 EC ?? 8B 74 24 ?? 85 F6 0F 84 ?? ?? ?? ?? 8B 06 89 04 24 8B 46 ?? 89 44 24 ?? 8B 46 ??

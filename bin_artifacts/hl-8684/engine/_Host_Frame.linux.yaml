@@ -1,0 +1,5 @@
+func_name: _Host_Frame
+func_va: '0x10f720'
+func_rva: '0x10f720'
+func_size: '0x4c1'
+func_sig: 57 56 53 83 C4 80 C7 04 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0 74 ?? 83 EC 80 5B 5E 5F C3

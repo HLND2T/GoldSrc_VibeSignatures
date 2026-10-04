@@ -1,0 +1,226 @@
+func_name: "Host_InitializeGameDLL"
+func_va: "0x7e3b0"
+disasm_code: |-
+  .text:0007E3B0                 push    ebp
+  .text:0007E3B1                 push    edi
+  .text:0007E3B2                 push    esi
+  .text:0007E3B3                 push    ebx
+  .text:0007E3B4                 call    __x86_get_pc_thunk_bx
+  .text:0007E3B9                 add     ebx, (offset dbl_2EE000 - $)
+  .text:0007E3BF                 sub     esp, 3Ch
+  .text:0007E3C2                 call    Cbuf_Execute; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:0007E3C7                 lea     edi, (dword_F9FEE0 - 2EE000h)[ebx]
+  .text:0007E3CD                 xor     eax, eax
+  .text:0007E3CF                 cmp     dword ptr [edi+8], 1
+  .text:0007E3D3                 setnle  al
+  .text:0007E3D6                 ; multiplayer
+  .text:0007E3D6                 mov     [esp+4Ch+fmt], eax; multiplayer
+  .text:0007E3D9                 call    NET_Config; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:0007E3DE                 mov     esi, [edi]
+  .text:0007E3E0                 test    esi, esi
+  .text:0007E3E2                 jnz     loc_7E568
+  .text:0007E3E8                 lea     eax, (unk_30A4C4 - 2EE000h)[ebx]
+  .text:0007E3EE                 xor     ebp, ebp
+  .text:0007E3F0                 mov     dword ptr [edi], 1
+  .text:0007E3F6                 mov     eax, [eax]
+  .text:0007E3F8                 ; baseDir
+  .text:0007E3F8                 mov     [esp+4Ch+fmt], eax; baseDir
+  .text:0007E3FB                 call    LoadEntityDLLs; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:0007E400                 lea     edi, (unk_D3EE00 - 2EE000h)[ebx]
+  .text:0007E406                 call    dword ptr [edi]
+  .text:0007E408                 lea     eax, (unk_F1AE40 - 2EE000h)[ebx]
+  .text:0007E40E                 mov     [esp+4Ch+fmt], eax
+  .text:0007E411                 call    dword ptr [edi+8Ch]
+  .text:0007E417                 call    dword ptr [edi+0A4h]
+  .text:0007E41D                 call    SV_InitEncoders; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:0007E422                 lea     ecx, (xmmword_2EF5E0 - 2EE000h)[ebx]
+  .text:0007E428                 lea     edx, (xmmword_2EF5A0 - 2EE000h)[ebx]
+  .text:0007E42E                 mov     [esp+4Ch+var_28], esi
+  .text:0007E432                 mov     esi, ecx
+  .text:0007E434                 mov     [esp+4Ch+var_44], edx
+  .text:0007E438                 mov     [esp+4Ch+var_48], esi
+  .text:0007E43C                 mov     [esp+4Ch+fmt], ebp
+  .text:0007E43F                 mov     [esp+4Ch+var_2C], edx
+  .text:0007E443                 call    dword ptr [edi+0B8h]
+  .text:0007E449                 test    eax, eax
+  .text:0007E44B                 jz      short loc_7E45D
+  .text:0007E44D                 mov     edx, [esp+4Ch+var_2C]
+  .text:0007E451                 inc     ebp
+  .text:0007E452                 add     esi, 0Ch
+  .text:0007E455                 add     edx, 0Ch
+  .text:0007E458                 cmp     ebp, 4
+  .text:0007E45B                 jnz     short loc_7E434
+  .text:0007E45D                 mov     esi, [esp+4Ch+var_28]
+  .text:0007E461                 call    R_ResetSvBlending; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:0007E466                 lea     eax, (dword_D3EEC8 - 2EE000h)[ebx]
+  .text:0007E46C                 mov     [esp+4Ch+var_2C], eax
+  .text:0007E470                 mov     eax, [eax]
+  .text:0007E472                 test    eax, eax
+  .text:0007E474                 jle     loc_7E555
+  .text:0007E47A                 lea     ecx, (unk_CE3E40 - 2EE000h)[ebx]
+  .text:0007E480                 xor     ebp, ebp
+  .text:0007E482                 lea     edi, (dword_D3EEE0 - 2EE000h)[ebx]
+  .text:0007E488                 lea     eax, (aServerGetblend - 2EE000h)[ebx]; "Server_GetBlendingInterface"
+  .text:0007E48E                 mov     [esp+4Ch+var_20], esi
+  .text:0007E492                 mov     esi, ebp
+  .text:0007E494                 mov     ebp, eax
+  .text:0007E496                 mov     [esp+4Ch+var_28], ecx
+  .text:0007E49A                 lea     ecx, (flt_CE5640 - 2EE000h)[ebx]
+  .text:0007E4A0                 mov     [esp+4Ch+var_24], ecx
+  .text:0007E4A4                 lea     esi, [esi+0]
+  .text:0007E4AA                 lea     edi, [edi+0]
+  .text:0007E4B0                 ; int
+  .text:0007E4B0                 mov     [esp+4Ch+var_48], ebp; int
+  .text:0007E4B4                 lea     eax, [esi+esi*2]
+  .text:0007E4B7                 mov     eax, [edi+eax*4]
+  .text:0007E4BA                 ; void *
+  .text:0007E4BA                 mov     [esp+4Ch+fmt], eax; void *
+  .text:0007E4BD                 call    sub_191CF0
+  .text:0007E4C2                 test    eax, eax
+  .text:0007E4C4                 jz      short loc_7E50E
+  .text:0007E4C6                 mov     edx, [esp+4Ch+var_28]
+  .text:0007E4CA                 lea     ecx, (off_2EF820 - 2EE000h)[ebx]
+  .text:0007E4D0                 mov     [esp+4Ch+fmt], 1
+  .text:0007E4D7                 mov     [esp+4Ch+var_3C], edx
+  .text:0007E4DB                 mov     edx, [esp+4Ch+var_24]
+  .text:0007E4DF                 mov     [esp+4Ch+var_44], ecx
+  .text:0007E4E3                 lea     ecx, (off_2EF7C8 - 2EE000h)[ebx]
+  .text:0007E4E9                 mov     [esp+4Ch+var_40], edx
+  .text:0007E4ED                 mov     [esp+4Ch+var_48], ecx
+  .text:0007E4F1                 call    eax
+  .text:0007E4F3                 test    eax, eax
+  .text:0007E4F5                 jnz     loc_7E580
+  .text:0007E4FB                 lea     eax, (aCouldnTGetServ - 2EE000h)[ebx]; "Couldn't get server .dll studio model b"...
+  .text:0007E501                 ; fmt
+  .text:0007E501                 mov     [esp+4Ch+fmt], eax; fmt
+  .text:0007E504                 call    Con_DPrintf
+  .text:0007E509                 call    R_ResetSvBlending; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:0007E50E                 mov     eax, [esp+4Ch+var_2C]
+  .text:0007E512                 inc     esi
+  .text:0007E513                 mov     eax, [eax]
+  .text:0007E515                 cmp     eax, esi
+  .text:0007E517                 jg      short loc_7E4B0
+  .text:0007E519                 mov     esi, [esp+4Ch+var_20]
+  .text:0007E51D                 test    eax, eax
+  .text:0007E51F                 jle     short loc_7E555
+  .text:0007E521                 lea     ebp, (aSvSavegamecomm - 2EE000h)[ebx]; "SV_SaveGameComment"
+  .text:0007E527                 jmp     short loc_7E539
+  .text:0007E530                 mov     eax, [esp+4Ch+var_2C]
+  .text:0007E534                 inc     esi
+  .text:0007E535                 cmp     [eax], esi
+  .text:0007E537                 jle     short loc_7E555
+  .text:0007E539                 ; int
+  .text:0007E539                 mov     [esp+4Ch+var_48], ebp; int
+  .text:0007E53D                 lea     eax, [esi+esi*2]
+  .text:0007E540                 mov     eax, [edi+eax*4]
+  .text:0007E543                 ; void *
+  .text:0007E543                 mov     [esp+4Ch+fmt], eax; void *
+  .text:0007E546                 call    sub_191CF0
+  .text:0007E54B                 test    eax, eax
+  .text:0007E54D                 jz      short loc_7E530
+  .text:0007E54F                 mov     (off_2EF4F8 - 2EE000h)[ebx], eax
+  .text:0007E555                 call    Cbuf_Execute; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:0007E55A                 add     esp, 3Ch
+  .text:0007E55D                 pop     ebx
+  .text:0007E55E                 pop     esi
+  .text:0007E55F                 pop     edi
+  .text:0007E560                 pop     ebp
+  .text:0007E561                 retn
+  .text:0007E568                 lea     eax, (aSysInitializeg - 2EE000h)[ebx]; "Sys_InitializeGameDLL called twice, ski"...
+  .text:0007E56E                 ; fmt
+  .text:0007E56E                 mov     [esp+4Ch+fmt], eax; fmt
+  .text:0007E571                 call    Con_DPrintf
+  .text:0007E576                 add     esp, 3Ch
+  .text:0007E579                 pop     ebx
+  .text:0007E57A                 pop     esi
+  .text:0007E57B                 pop     edi
+  .text:0007E57C                 pop     ebp
+  .text:0007E57D                 retn
+  .text:0007E580                 mov     eax, [esp+4Ch+var_2C]
+  .text:0007E584                 mov     esi, [esp+4Ch+var_20]
+  .text:0007E588                 mov     eax, [eax]
+  .text:0007E58A                 jmp     short loc_7E51D
+procedure: |-
+  // Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  void __cdecl Host_InitializeGameDLL()
+  {
+    int v0; // ebp
+    __int128 *v1; // edx
+    __int128 *v2; // esi
+    int v3; // esi
+    int (__cdecl *v4)(int, _UNKNOWN **, int (__cdecl **)(size_t, int), float *, void *); // eax
+    int v5; // eax
+    int v6; // esi
+    int (__cdecl *v7)(char *, int); // eax
+    __int128 *v8; // [esp+20h] [ebp-2Ch]
+
+    Cbuf_Execute();
+    NET_Config(dword_F9FEE8 > 1);
+    if ( dword_F9FEE0 )
+    {
+      Con_DPrintf("Sys_InitializeGameDLL called twice, skipping second call\n");
+      return;
+    }
+    v0 = 0;
+    dword_F9FEE0 = 1;
+    LoadEntityDLLs(unk_30A4C4);
+    unk_D3EE00();
+    unk_D3EE8C(&unk_F1AE40);
+    unk_D3EEA4();
+    SV_InitEncoders();
+    v1 = &xmmword_2EF5A0;
+    v2 = &xmmword_2EF5E0;
+    do
+    {
+      v8 = v1;
+      if ( !unk_D3EEB8(v0, v2, v1) )
+        break;
+      ++v0;
+      v2 = (__int128 *)((char *)v2 + 12);
+      v1 = (__int128 *)((char *)v8 + 12);
+    }
+    while ( v0 != 4 );
+    R_ResetSvBlending();
+    if ( dword_D3EEC8 <= 0 )
+      goto LABEL_17;
+    v3 = 0;
+    while ( 1 )
+    {
+      v4 = (int (__cdecl *)(int, _UNKNOWN **, int (__cdecl **)(size_t, int), float *, void *))sub_191CF0(
+                                                                                                (void *)dword_D3EEE0[3 * v3],
+                                                                                                (int)"Server_GetBlendingInterface");
+      if ( v4 )
+        break;
+  LABEL_10:
+      ++v3;
+      v5 = dword_D3EEC8;
+      if ( dword_D3EEC8 <= v3 )
+      {
+        v6 = 0;
+        goto LABEL_12;
+      }
+    }
+    if ( !v4(1, &off_2EF7C8, &off_2EF820, &flt_CE5640, &unk_CE3E40) )
+    {
+      Con_DPrintf("Couldn't get server .dll studio model blending interface. Version mismatch?\n");
+      R_ResetSvBlending();
+      goto LABEL_10;
+    }
+    v6 = 0;
+    v5 = dword_D3EEC8;
+  LABEL_12:
+    if ( v5 > 0 )
+    {
+      while ( 1 )
+      {
+        v7 = (int (__cdecl *)(char *, int))sub_191CF0((void *)dword_D3EEE0[3 * v6], (int)"SV_SaveGameComment");
+        if ( v7 )
+          break;
+        if ( dword_D3EEC8 <= ++v6 )
+          goto LABEL_17;
+      }
+      off_2EF4F8 = v7;
+    }
+  LABEL_17:
+    Cbuf_Execute();
+  }
