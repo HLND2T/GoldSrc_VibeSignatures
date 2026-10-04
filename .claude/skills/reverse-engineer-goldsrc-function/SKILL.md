@@ -36,14 +36,14 @@ Maintain a short visible task list while working. Keep only one mutation phase i
 
 ### 1. Establish the Target Session
 
-- Read Basic Memory [[idalib-mcp]] before opening IDA. Use one owned `IdaMcpLifecycle` for the exact target binary; do not launch `idalib-mcp` directly or bind an arbitrary active IDB.
-- Keep all IDA MCP analysis and mutations inside that owned lifecycle. On normal exit it saves the verified owned IDB with `idb_save`, requests targeted `qexit`, stops the supervisor, and waits for port release.
+- Read Basic Memory [[idalib-mcp]] before opening IDA and acquire the session in its priority order: `idb_list` the shared `13337` supervisor first, `idb_open` the exact target (binary or `.i64`, `mode="prefer_headless"`) if it is not already open, and fall back to one owned `IdaMcpLifecycle` only when that endpoint is unavailable. Do not launch `idalib-mcp` directly or bind an arbitrary active IDB.
+- Keep all IDA MCP analysis and mutations inside the acquired session. Finalize per tier: `idb_open` sessions require `idb_close(database=<session_id>, save=True)`; a session reused from `idb_list` is externally managed and must not be saved or closed; the owned `IdaMcpLifecycle` saves the verified owned IDB with `idb_save`, requests targeted `qexit`, stops the supervisor, and waits for port release on normal exit.
 - Call `server_health` before analysis.
 - Record the IDB path, input path, module, image base, processor, and target address.
 - Confirm the function belongs to the expected PE or ELF image and record its architecture and ABI.
 - If switching to another IDB to inspect a cross-platform peer, record both sessions and call `server_health` again immediately after switching back.
 
-Do not begin IDB mutations until the active target is unambiguous. Attach to an externally managed session only when the user explicitly requires it; never save or close that external worker.
+Do not begin IDB mutations until the active target is unambiguous. Reusing an already-open target session (tier 1) is the normal path; mutating a session you did not open still requires the user's explicit request, and never save or close such an external worker.
 
 ### 2. Gather Source, Binary, and Optional DWARF Evidence
 
@@ -135,7 +135,7 @@ Re-run analysis and require all applicable checks:
 - Final decompilation contains no unexplained `MEMORY[...]` or neighboring-array expression for any verified standalone global used by the target.
 - Any source/binary disagreement is visible and justified.
 
-Use `analyze_function`, `type_inspect`, `stack_frame`, `callees`, `disasm`, and `decompile` as appropriate. Before normal lifecycle exit, call `server_health` once more. Let the owned lifecycle save the active IDB in place and close IDA gracefully, then verify the final IDB on disk and its modification time. Use manual `idb_save` only for an intentional intermediate checkpoint.
+Use `analyze_function`, `type_inspect`, `stack_frame`, `callees`, `disasm`, and `decompile` as appropriate. Before finalizing the session, call `server_health` once more. Persist the active IDB according to how the session was acquired: call `idb_close(database=<session_id>, save=True)` for a session you opened via `idb_open`, or let the owned lifecycle save in place on normal exit. Never save or close a session reused from `idb_list`. Then verify the final IDB on disk and its modification time. Use manual `idb_save` only for an intentional intermediate checkpoint.
 
 ## Safety Rules
 
@@ -143,7 +143,7 @@ Use `analyze_function`, `type_inspect`, `stack_frame`, `callees`, `disasm`, and 
 - Never copy a full structure definition from one platform into another platform's IDB without independently validating its layout.
 - Never rename an anonymous callee from source order alone; corroborate it with arguments, strings, globals, control flow, or Linux symbols.
 - Never claim source-level recovery for an expression whose type or semantics remain ambiguous. Use a neutral type/name and record the uncertainty.
-- Do not create, copy, export, or save a pre-mutation backup IDB unless the user explicitly requests one. The owned lifecycle performs the final in-place `idb_save` on normal exit.
+- Do not create, copy, export, or save a pre-mutation backup IDB unless the user explicitly requests one. The final in-place save happens on `idb_close(save=True)` for `idb_open` sessions, or on normal exit for an owned `IdaMcpLifecycle`.
 - Preserve unrelated user changes in the IDB and repository.
 
 ## Completion Report
@@ -156,6 +156,6 @@ Report:
 - Restored prototype, callees, globals, structures, locals, enums, and inline annotations.
 - Important platform-layout or source/binary conflicts and their resolution.
 - Validation operations actually run and their results.
-- Lifecycle ownership, final IDB path and modification time, `idb_save` result, graceful worker close, and port-release result.
+- Session acquisition tier (`idb_list` reuse, `idb_open`, or owned lifecycle), final IDB path and modification time, and the matching finalization result — `idb_close(save=True)` for an `idb_open` session, or `idb_save`, graceful worker close, and port release for the owned lifecycle; state explicitly when an externally managed session was left untouched.
 
 Do not say the reconstruction is complete if the final IDB was not saved or the critical validation evidence could not be obtained.

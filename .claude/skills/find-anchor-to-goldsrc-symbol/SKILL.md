@@ -10,11 +10,12 @@ Locate a GoldSrc x86 symbol from deterministic evidence. For a function, anchor 
 ## Establish Evidence
 
 1. Identify the exact game tag, platform, module, binary path, requested symbol, and intended category (`func`, `gv`, `patch`, `vtable`, or another supported category).
-2. Read Basic Memory [[idalib-mcp]], then open one owned `IdaMcpLifecycle` for that exact binary. Keep every MCP operation inside it:
-   - Do not start `idalib-mcp` directly or bind an arbitrary active database. The lifecycle starts the supervisor, binds and verifies the exact IDB, and owns only its worker.
-   - Use `survey_binary` and `server_health` to record architecture, image base, input path, IDB path, and SHA-256 while the lifecycle is active.
-   - Finish anchor validation and call `server_health` before normal lifecycle exit. That exit automatically calls `idb_save`, requests targeted `qexit`, stops the supervisor, and waits for port release. Afterwards, verify the final IDB exists and record its modification time.
-   - Use manual `idb_save` only for an intentional intermediate checkpoint. Attach to an externally managed session only when the user explicitly requires it; never save or close that external worker.
+2. Read Basic Memory [[idalib-mcp]] and acquire the target session in its documented priority order:
+   - `mcp__ida-pro-mcp__idb_list` the shared `13337` supervisor first. If the exact target binary (or its `.i64`) is already open and `is_active`, reuse that `session_id`; do not start another worker against the same IDB lock.
+   - Otherwise `mcp__ida-pro-mcp__idb_open` the exact target (binary or `.i64`), keeping `mode="prefer_headless"` unless the user explicitly needs a GUI.
+   - Fall back to one owned `IdaMcpLifecycle` only when the `13337` endpoint or supervisor is unavailable. Do not start `idalib-mcp` directly or bind an arbitrary active database.
+   - Use `survey_binary` and `server_health` to record architecture, image base, input path, IDB path, and SHA-256 while the session is active.
+   - Finalize per tier: a session you opened via `idb_open` is persisted with `idb_close(database=<session_id>, save=True)`; a session reused from `idb_list` is externally managed — never save or close it; only the owned `IdaMcpLifecycle` auto-saves on normal exit (`idb_save`, targeted `qexit`, port release). Use manual `idb_save` only for an intentional intermediate checkpoint, then verify the final IDB and its modification time.
 3. Treat the current target binary as authoritative. Use `D:\HLND2T_official` to identify intent, exact literals, caller/callee roles, and global-storage semantics; do not assume its revision is byte-identical to the target.
 4. Read `D:\MetaHookSv\memory\metahook-privatevars.md` and relevant project artifacts only when they cover the target or provide a proven anchor.
 
@@ -197,9 +198,9 @@ Treat these values only as regression evidence for their exact SHA-256 inputs, n
   reference.
 - Pass `old_yaml_map=None` for string/float/signature/LLM discovery. The shared helper must validate the emitted category-appropriate signature after discovery, but must not use a prior artifact signature to locate the symbol.
 - Add `LLM_DECOMPILE` only for the explicit predecessor fallback described above. Its result section must match the target: `found_call` for functions and `found_gv` for globals.
-- Use the repository's owned lifecycle described in [[idalib-mcp]] on `127.0.0.1:13337`. The installed `ida-pro-mcp` command is an IDA plugin configurator, not this repository's HTTP supervisor.
+- Acquire the IDA session through [[idalib-mcp]]'s priority order: `idb_list` the shared `ida-pro-mcp` supervisor on `127.0.0.1:13337`, `idb_open` the target if absent, and use the repository's owned lifecycle only as fallback. The installed `ida-pro-mcp` command is an IDA plugin configurator, not this repository's HTTP supervisor.
 - Add Windows and Linux expected outputs, category-correct config symbols, and tests whenever the finder is registered in a production config.
 
 ## Report Completion
 
-Report the target binary hash, platform, module, requested category, selected anchor, number of matching strings and candidate owning functions, final VA/RVA, source files consulted, fallback status, and validation commands actually run. For globals, include the reference instruction VA, operand/displacement offset, decoded value, and whether the consumer needs the global value or the operand-field address. Include lifecycle ownership, final IDB path and modification time, `idb_save` result, graceful worker close, and port-release evidence. State any IDB identity or source-version mismatch explicitly.
+Report the target binary hash, platform, module, requested category, selected anchor, number of matching strings and candidate owning functions, final VA/RVA, source files consulted, fallback status, and validation commands actually run. For globals, include the reference instruction VA, operand/displacement offset, decoded value, and whether the consumer needs the global value or the operand-field address. Include the session acquisition tier (`idb_list` reuse, `idb_open`, or owned lifecycle), final IDB path and modification time, and the matching finalization evidence — `idb_close(save=True)` result for an `idb_open` session, or `idb_save` plus port-release for the owned lifecycle; state explicitly when an externally managed session was left untouched. State any IDB identity or source-version mismatch explicitly.

@@ -10,6 +10,16 @@ permalink: goldsrc-vibesignatures/idalib-mcp
 
 `idalib-mcp` is the repository-owned IDA runtime for one GoldSrc PE32/I386 or ELF32/I386 binary at a time. `IdaMcpLifecycle` starts, validates, saves, and closes the worker so an analysis task never binds an arbitrary or stale IDB.
 
+## Session acquisition priority (issue #329)
+
+Acquire the target IDA session in this order. Do not advance to a later tier while an earlier tier can still satisfy the request.
+
+1. **`idb_list` the shared supervisor first.** The project `.mcp.json` registers `ida-pro-mcp` on `http://127.0.0.1:13337/mcp`, exposed to the agent as `mcp__ida-pro-mcp__idb_list`. Call it before starting anything, and match `input_path` against the requested binary (or its `.i64`). An `is_active: true` session whose `input_path` is the target is already open — reuse it and bind to its `session_id`; do not open a second worker against the same IDB lock.
+2. **`idb_open` the exact target when it is not open.** Call `idb_open` with the binary path or the `.i64` (the supervisor normalizes both and adopts an already-open worker for either). Keep `mode="prefer_headless"` unless the user explicitly needs a GUI. Use the returned `session.session_id` for subsequent tools; re-run `idb_list` first if the endpoint may have restarted.
+3. **Fall back to the repository-owned `IdaMcpLifecycle` last.** Only when the shared endpoint is unusable — `13337` not listening, the supervisor not running, or MCP preflight failing — use the repository lifecycle, which allocates a dynamic port and starts its own worker. `ida_analyze_bin.py`, `generate_reference_yaml.py -auto_start_mcp`, and ad-hoc scripts all go through it; see [[idalib-mcp ad-hoc scripting pitfalls]] for the sync-`with` constraint.
+
+**Ownership and cleanup differ per tier.** A session opened through `idb_open` on the shared supervisor reports `owned: true` and `backend: "worker"` but `auto_started: false`, so the repository lifecycle never saves or closes it: finalize it explicitly with `idb_close(database=<session_id>, save=True)`, or the worker's idle-TTL self-exit (`idle_ttl_sec`, default 600s) drops unsaved IDB changes. A session reused from `idb_list` because it was already open is externally managed — never save or close it. Only the repository-owned `IdaMcpLifecycle` (tier 3) auto-saves and auto-quits on normal exit.
+
 ## Responsibilities
 
 - Start one owned `idalib-mcp` supervisor for the exact requested binary and wait for the MCP contract.
@@ -41,8 +51,8 @@ flowchart TD
 
 ## Dependencies
 
-- Local `idalib-mcp` executable. The analyzer allocates a free local port per binary lifecycle (`http://127.0.0.1:<dynamic-port>/mcp`) instead of pinning `13337`.
-- IDA MCP tools including `idb_list`, `survey_binary`, `idb_save`, and `py_eval`.
+- The shared `ida-pro-mcp` supervisor endpoint at `http://127.0.0.1:13337/mcp` (tiers 1–2), plus the local `idalib-mcp` executable for the owned lifecycle. The analyzer's own lifecycle allocates a free local port per binary (`http://127.0.0.1:<dynamic-port>/mcp`) instead of pinning `13337`, so tier 3 never collides with the shared endpoint.
+- IDA MCP tools including `idb_list`, `idb_open`, `idb_close`, `survey_binary`, `idb_save`, and `py_eval`.
 - The target binary and its IDB side files; `.id0` denotes an active IDB lock.
 
 ## Notes
