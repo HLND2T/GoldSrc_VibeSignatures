@@ -7,6 +7,9 @@ import subprocess
 from pathlib import Path
 
 EXCLUDED_FORMAT_PREFIXES = (".claude/", ".codex/")
+# Windows CreateProcess accepts at most 32767 UTF-16 units, including the NUL.
+# Leave headroom and use the same bounded batches on every platform.
+MAX_COMMAND_LINE_UNITS = 30000
 
 
 def _is_excluded_format_path(path: str) -> bool:
@@ -36,10 +39,33 @@ def repository_format_files() -> tuple[list[str], list[str]]:
     return python_files, yaml_files
 
 
+def _path_batches(command: list[str], paths: list[str]):
+    prefix_units = len(subprocess.list2cmdline(command).encode("utf-16-le")) // 2 + 1
+    batch = []
+    batch_units = prefix_units
+    for path in paths:
+        # Serialize each argument exactly as Popen does on Windows; include its
+        # separator, quotes, escaped backslashes and non-BMP UTF-16 characters.
+        path_units = len(subprocess.list2cmdline([path]).encode("utf-16-le")) // 2 + 1
+        if prefix_units + path_units > MAX_COMMAND_LINE_UNITS:
+            raise RuntimeError(f"Formatter argument exceeds command-line budget: {path}")
+        if batch and batch_units + path_units > MAX_COMMAND_LINE_UNITS:
+            yield batch
+            batch = []
+            batch_units = prefix_units
+        batch.append(path)
+        batch_units += path_units
+    if batch:
+        yield batch
+
+
 def _run(command: list[str], paths: list[str]) -> int:
-    if not paths:
-        return 0
-    return subprocess.run([*command, *paths], check=False).returncode
+    exit_code = 0
+    for batch in _path_batches(command, paths):
+        result = subprocess.run([*command, *batch], check=False).returncode
+        if result and not exit_code:
+            exit_code = result
+    return exit_code
 
 
 def main(argv=None):
@@ -48,12 +74,12 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         python_files, yaml_files = repository_format_files()
+        ruff = ["ruff", "format"] + (["--check"] if args.check else [])
+        yamlfix = ["yamlfix"] + (["--check"] if args.check else [])
+        results = (_run(ruff, python_files), _run(yamlfix, yaml_files))
     except RuntimeError as exc:
         print(f"Error: {exc}")
         return 1
-    ruff = ["ruff", "format"] + (["--check"] if args.check else [])
-    yamlfix = ["yamlfix"] + (["--check"] if args.check else [])
-    results = (_run(ruff, python_files), _run(yamlfix, yaml_files))
     return 1 if any(results) else 0
 
 
