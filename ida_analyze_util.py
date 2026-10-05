@@ -3331,6 +3331,19 @@ if (func is not None and (relative_operand is not None or (size == 6
                         )
                 elif segment is not None and not (segment.perm & ida_segment.SEGPERM_EXEC):
                     computed_targets.append(hex(target))
+# IDA includes immediate function pointers in DataRefsFrom. Preserve these for
+# function discovery, but distinguish confirmed executable function addresses
+# from the data slot when a MOV initializes a global callback.
+code_address_targets = []
+for value in list(operand_targets) + computed_targets + got_indirect_targets + list(idautils.DataRefsFrom(ea)):
+    address = int(value, 0) if isinstance(value, str) else int(value)
+    if not 0 <= address <= 0xffffffff:
+        continue
+    segment = ida_segment.getseg(address)
+    permissions = getattr(segment, 'perm', 0)
+    if (permissions and permissions & ida_segment.SEGPERM_EXEC
+            and ida_funcs.get_func(address) is not None):
+        code_address_targets.append(hex(address))
 result = json.dumps({
     'pointer_size': pointer_size,
     'size': int(size or 0),
@@ -3344,6 +3357,7 @@ result = json.dumps({
     'data_refs': [hex(int(value)) for value in idautils.DataRefsFrom(ea)
                   if 0 <= int(value) <= 0xFFFFFFFF and ida_segment.getseg(int(value)) is not None],
     'operand_targets': [hex(value) for value in operand_targets] + computed_targets,
+    'code_address_targets': list(dict.fromkeys(code_address_targets)),
     'displacements': [hex(value) for value in displacements],
     'operand_offsets': operand_offsets,
     'address_operand_offsets': address_operand_offsets,
@@ -3725,21 +3739,24 @@ def _llm_entry_instruction_is_valid(entry, detail, target_ranges, rules):
 def _llm_global_targets(detail, *, platform="linux"):
     """Prefer encoded absolute targets over IDA's offset-expression base xrefs.
 
-    PIC operands still need resolved data xrefs. Multiple encoded targets stay
-    ambiguous; an instruction with two real addresses cannot pick either one.
+    PIC operands still need resolved data xrefs. Confirmed executable function
+    addresses are not globals; multiple encoded data targets stay ambiguous.
     """
     if platform == "linux" and detail.get("relative_store_address") is not None:
         target = detail["relative_store_address"].get("target")
         return [target] if target is not None and _parse_int(target, "operand_target") != 0 else []
+    code_targets = {_parse_int(value, "code target") for value in detail.get("code_address_targets") or ()}
     if platform == "linux" and detail.get("got_indirect_targets"):
         return [
-            value for value in dict.fromkeys(detail["got_indirect_targets"]) if _parse_int(value, "operand_target") != 0
+            value
+            for value in dict.fromkeys(detail["got_indirect_targets"])
+            if _parse_int(value, "operand_target") != 0 and _parse_int(value, "operand_target") not in code_targets
         ]
     operands = list(dict.fromkeys(detail.get("operand_targets") or ()))
     candidates = [
         value
         for value in dict.fromkeys((detail.get("data_refs") or []) + operands)
-        if _parse_int(value, "operand_target") != 0
+        if _parse_int(value, "operand_target") != 0 and _parse_int(value, "operand_target") not in code_targets
     ]
     pic_flags = detail.get("operand_pic") or ()
     if any(pic_flags):
@@ -3926,13 +3943,29 @@ async def _preprocess_llm_target(
                 displacement = _gv_operand_displacement(detail)
                 if displacement is None:
                     continue
+                signature_va = _parse_int(function["func_va"], "func_va")
+                signature = function["func_sig"]
+                if insn_va < signature_va:
+                    # An owned tail chunk can precede the callable entry. The
+                    # artifact offset is unsigned, so anchor this verified
+                    # instruction with the existing unique instruction writer.
+                    if "gv_sig_allow_across_function_boundary" not in desired_fields:
+                        continue
+                    from ida_preprocessor_scripts._patch_signature_common import run_signature
+
+                    instruction_signature = await run_signature(session, insn_va)
+                    if instruction_signature is None:
+                        continue
+                    signature_va = insn_va
+                    signature = instruction_signature["patch_sig"]
+                    used_across_boundary_budget = True
                 candidate = {
                     "gv_name": symbol_name,
                     "gv_va": hex(gv_va),
                     "gv_rva": hex(gv_va - int(image_base)),
-                    "gv_sig": function["func_sig"],
-                    "gv_sig_va": function["func_va"],
-                    "gv_inst_offset": insn_va - _parse_int(function["func_va"], "func_va"),
+                    "gv_sig": signature,
+                    "gv_sig_va": hex(signature_va),
+                    "gv_inst_offset": insn_va - signature_va,
                     "gv_inst_length": detail["size"],
                     "gv_inst_disp": displacement,
                 }

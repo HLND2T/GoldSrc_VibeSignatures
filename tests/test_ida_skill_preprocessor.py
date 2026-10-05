@@ -1791,6 +1791,78 @@ class CommonPreprocessorContractTests(unittest.IsolatedAsyncioTestCase):
         }
         self.assertEqual(["0x2000", "0x3800"], ida_analyze_util._llm_global_targets(detail))
 
+    def test_global_pointer_store_distinguishes_code_from_another_data_address(self):
+        ea, slot, source = 0x1000, 0x3800, 0x2000
+        encoded = bytes.fromhex("C7 05") + slot.to_bytes(4, "little") + source.to_bytes(4, "little")
+        instruction = SimpleNamespace(
+            ops=[
+                SimpleNamespace(type=2, offb=2, addr=slot),
+                SimpleNamespace(type=5, offb=6, value=source),
+                SimpleNamespace(type=0),
+            ]
+        )
+        for source_perm, expected in ((5, [hex(slot)]), (6, [hex(source), hex(slot)])):
+            with self.subTest(source_perm=source_perm):
+                modules = {
+                    "ida_bytes": SimpleNamespace(
+                        get_dword=lambda address: slot if address == ea + 2 else source,
+                        get_bytes=lambda *args: encoded,
+                    ),
+                    "ida_fixup": SimpleNamespace(fixup_data_t=lambda: None, get_fixup=lambda *args: False),
+                    "ida_funcs": SimpleNamespace(
+                        get_func=lambda address: (
+                            SimpleNamespace(start_ea=source, end_ea=source + 0x100)
+                            if address == source and source_perm == 5
+                            else None
+                        ),
+                    ),
+                    "ida_lines": SimpleNamespace(tag_remove=lambda text: text),
+                    "ida_segment": SimpleNamespace(
+                        getseg=lambda address: SimpleNamespace(perm=source_perm if address == source else 6),
+                        SEGPERM_EXEC=1,
+                    ),
+                    "idaapi": SimpleNamespace(inf_is_64bit=lambda: False, BADADDR=0xFFFFFFFF),
+                    "ida_ua": SimpleNamespace(
+                        o_void=0,
+                        o_reg=1,
+                        o_mem=2,
+                        o_phrase=3,
+                        o_displ=4,
+                        o_imm=5,
+                        o_near=6,
+                        o_far=7,
+                        insn_t=lambda: instruction,
+                        decode_insn=lambda *args: len(encoded),
+                    ),
+                    "idautils": SimpleNamespace(
+                        DataRefsFrom=lambda address: [source, slot], CodeRefsFrom=lambda *args: []
+                    ),
+                    "idc": SimpleNamespace(
+                        generate_disasm_line=lambda *args: "mov dword ptr [3800h], offset source",
+                        print_insn_mnem=lambda address: "mov",
+                    ),
+                }
+                namespace = {}
+                with patch.dict("sys.modules", modules):
+                    exec(
+                        ida_analyze_util._INSPECT_LLM_INSTRUCTION_PY_EVAL.replace("EA_PLACEHOLDER", str(ea)),
+                        {},
+                        namespace,
+                    )
+                detail = json.loads(namespace["result"])
+                self.assertEqual(expected, ida_analyze_util._llm_global_targets(detail, platform="windows"))
+                self.assertEqual(2, ida_analyze_util._gv_operand_displacement(detail))
+
+    def test_global_targets_reject_an_executable_address_as_the_only_operand(self):
+        detail = {
+            "data_refs": ["0x2000"],
+            "operand_targets": ["0x2000"],
+            "operand_dwords": ["0x2000"],
+            "operand_pic": [False],
+            "code_address_targets": ["0x2000"],
+        }
+        self.assertEqual([], ida_analyze_util._llm_global_targets(detail, platform="windows"))
+
     def test_global_targets_preserve_pic_relocation_xrefs(self):
         detail = {
             "data_refs": ["0x3800"],
@@ -5252,6 +5324,50 @@ class PreprocessFuncSigViaMcpTests(unittest.IsolatedAsyncioTestCase):
 
 
 class GlobalSemanticAnchorTests(unittest.IsolatedAsyncioTestCase):
+    async def test_global_in_an_earlier_owned_chunk_uses_an_instruction_signature(self):
+        detail = {
+            "func_start": "0x3000",
+            "line": "mov dword ptr [8000h], eax",
+            "size": 5,
+            "operand_targets": ["0x8000"],
+            "operand_offsets": [1],
+            "operand_pic": [False],
+            "operand_dwords": ["0x8000"],
+        }
+        for signature in ({"patch_sig": "A3 ?? ?? ?? ?? C3", "patch_sig_disp": 0}, None):
+            with self.subTest(signature=signature):
+                with (
+                    patch("ida_analyze_util._inspect_llm_instruction", new=AsyncMock(return_value=detail)),
+                    patch(
+                        "ida_analyze_util._inspect_function_via_mcp",
+                        new=AsyncMock(return_value={"func_va": "0x3000", "func_sig": "55 8B EC"}),
+                    ),
+                    patch(
+                        "ida_preprocessor_scripts._patch_signature_common.run_signature",
+                        new=AsyncMock(return_value=signature),
+                    ) as anchor,
+                ):
+                    result = await _preprocess_llm_target(
+                        session=None,
+                        symbol_name="g_callback",
+                        category="gv",
+                        spec={},
+                        llm_config=None,
+                        new_binary_dir=Path("engine"),
+                        platform="windows",
+                        image_base=0,
+                        desired_fields=["gv_sig_allow_across_function_boundary"],
+                        llm_result={"found_gv": [{"gv_name": "g_callback", "insn_va": "0x2004"}]},
+                        target_ranges=[(0x3000, 0x3010), (0x2000, 0x2010)],
+                    )
+                if signature is None:
+                    self.assertIsNone(result)
+                else:
+                    self.assertEqual("0x2004", result["gv_sig_va"])
+                    self.assertEqual(0, result["gv_inst_offset"])
+                    self.assertEqual("0x8000", result["gv_va"])
+                anchor.assert_awaited_once_with(None, 0x2004)
+
     async def _finder_spec(self, finder, symbol, platform="linux"):
         namespace = runpy.run_path(str(Path(__file__).resolve().parents[1] / "ida_preprocessor_scripts" / finder))
         common = AsyncMock(return_value=True)

@@ -1,0 +1,209 @@
+func_name: "Sys_InitGame"
+func_va: "0x1dbc7c0"
+disasm_code: |-
+  .text:01DBC7C0                 ; SvEngine Sys_InitGame differs from the HLND2T source: timer/FPU setup is inlined, Host_Init has no parameters, and the GL_SetMode call has three arguments and is skipped for a dedicated server.
+  .text:01DBC7C0                 sub     esp, 8; SvEngine Sys_InitGame differs from the HLND2T source: timer/FPU setup is inlined, Host_Init has no parameters, and the GL_SetMode call has three arguments and is skipped for a dedicated server.
+  .text:01DBC7C3                 mov     host_initialized, 0
+  .text:01DBC7CD                 push    esi
+  .text:01DBC7CE                 ; ArgList
+  .text:01DBC7CE                 push    edi; ArgList
+  .text:01DBC7CF                 mov     edi, [esp+10h+bIsDedicated]
+  .text:01DBC7D3                 test    edi, edi
+  .text:01DBC7D5                 jnz     short loc_1DBC7EB
+  .text:01DBC7D7                 mov     ecx, dword_95D30E0
+  .text:01DBC7DD                 mov     eax, [esp+10h+pwnd]
+  .text:01DBC7E1                 mov     pmainwindow, eax
+  .text:01DBC7E6                 mov     eax, [ecx]
+  .text:01DBC7E8                 call    dword ptr [eax+28h]
+  .text:01DBC7EB                 push    0
+  .text:01DBC7ED                 push    offset aSysShutdown; "Sys_Shutdown()"
+  .text:01DBC7F2                 push    offset aSysInit; "Sys_Init()"
+  .text:01DBC7F7                 mov     isDedicated, edi
+  .text:01DBC7FD                 call    TraceInit
+  .text:01DBC802                 add     esp, 0Ch
+  .text:01DBC805                 cmp     dword_95D2660, 0
+  .text:01DBC80C                 jnz     short loc_1DBC823
+  .text:01DBC80E                 ; lpCriticalSection
+  .text:01DBC80E                 push    offset stru_95D2664; lpCriticalSection
+  .text:01DBC813                 call    ds:InitializeCriticalSection
+  .text:01DBC819                 mov     dword_95D2660, 1
+  .text:01DBC823                 ; SvEngine-specific floating-point control-word setup; no matching helper in the source revision.
+  .text:01DBC823                 call    sub_1DBB7E0; SvEngine-specific floating-point control-word setup; no matching helper in the source revision.
+  .text:01DBC828                 lea     eax, [esp+10h+Frequency]
+  .text:01DBC82C                 ; lpFrequency
+  .text:01DBC82C                 push    eax; lpFrequency
+  .text:01DBC82D                 call    ds:QueryPerformanceFrequency
+  .text:01DBC833                 test    eax, eax
+  .text:01DBC835                 jnz     short loc_1DBC844
+  .text:01DBC837                 push    offset aNoHardwareTime; "No hardware timer available"
+  .text:01DBC83C                 call    Sys_Error
+  .text:01DBC841                 add     esp, 4
+  .text:01DBC844                 mov     ecx, dword ptr [esp+10h+Frequency]
+  .text:01DBC848                 xor     edx, edx
+  .text:01DBC84A                 mov     esi, dword ptr [esp+10h+Frequency+4]
+  .text:01DBC84E                 xor     eax, eax
+  .text:01DBC850                 fld     ds:dbl_1E79068
+  .text:01DBC856                 mov     dword_95D2640, 0
+  .text:01DBC860                 test    esi, esi
+  .text:01DBC862                 jnz     short loc_1DBC883
+  .text:01DBC864                 mov     [esp+10h+bIsDedicated], ecx
+  .text:01DBC868                 fild    [esp+10h+bIsDedicated]
+  .text:01DBC86C                 test    ecx, ecx
+  .text:01DBC86E                 jns     short loc_1DBC876
+  .text:01DBC870                 fadd    ds:dbl_1E6DA50
+  .text:01DBC876                 fcom    st(1)
+  .text:01DBC878                 mov     edx, eax
+  .text:01DBC87A                 fnstsw  ax
+  .text:01DBC87C                 test    ah, 41h
+  .text:01DBC87F                 jnz     short loc_1DBC899
+  .text:01DBC881                 fstp    st
+  .text:01DBC883                 mov     eax, esi
+  .text:01DBC885                 shr     ecx, 1
+  .text:01DBC887                 shl     eax, 1Fh
+  .text:01DBC88A                 inc     edx
+  .text:01DBC88B                 or      ecx, eax
+  .text:01DBC88D                 mov     dword_95D2640, edx
+  .text:01DBC893                 shr     esi, 1
+  .text:01DBC895                 mov     eax, edx
+  .text:01DBC897                 jmp     short loc_1DBC860
+  .text:01DBC899                 fstp    st(1)
+  .text:01DBC89B                 fld1
+  .text:01DBC89D                 fdivrp  st(1), st
+  .text:01DBC89F                 fstp    dbl_95D2648
+  .text:01DBC8A5                 call    Sys_InitFloatTime
+  .text:01DBC8AA                 push    offset aLauncher; "Launcher"
+  .text:01DBC8AF                 call    FS_LogLevelLoadStarted
+  .text:01DBC8B4                 call    SeedRandomNumberGenerator
+  .text:01DBC8B9                 push    0
+  .text:01DBC8BB                 push    offset aSysShutdownmem; "Sys_ShutdownMemory()"
+  .text:01DBC8C0                 push    offset aSysInitmemory; "Sys_InitMemory()"
+  .text:01DBC8C5                 call    TraceInit
+  .text:01DBC8CA                 call    Sys_InitMemory
+  .text:01DBC8CF                 push    0
+  .text:01DBC8D1                 push    offset aSysShutdownlau; "Sys_ShutdownLauncherInterface()"
+  .text:01DBC8D6                 push    offset aSysInitlaunche; "Sys_InitLauncherInterface()"
+  .text:01DBC8DB                 call    TraceInit
+  .text:01DBC8E0                 add     esp, 1Ch
+  .text:01DBC8E3                 ; Launcher_ConsolePrintf (gv): store Legacy_Sys_Printf into the launcher console callback; Sys_InitLauncherInterface is inlined.
+  .text:01DBC8E3                 mov     Launcher_ConsolePrintf, offset Legacy_Sys_Printf; Launcher_ConsolePrintf (gv): store Legacy_Sys_Printf into the launcher console callback; Sys_InitLauncherInterface is inlined.
+  .text:01DBC8ED                 test    edi, edi
+  .text:01DBC8EF                 pop     edi
+  .text:01DBC8F0                 pop     esi
+  .text:01DBC8F1                 jnz     short loc_1DBC910
+  .text:01DBC8F3                 mov     eax, pmainwindow
+  .text:01DBC8F8                 ; pbaseRC
+  .text:01DBC8F8                 push    offset pbaseRC; pbaseRC
+  .text:01DBC8FD                 ; pmaindc
+  .text:01DBC8FD                 push    offset pmaindc; pmaindc
+  .text:01DBC902                 ; mainwindow
+  .text:01DBC902                 push    dword ptr [eax]; mainwindow
+  .text:01DBC904                 call    GL_SetMode; Current binary is authoritative. HLND2T_official is a semantic reference, not this exact source revision. Preserve platform-specific SDL/WGL, AA mode and frame-pacing paths.
+  .text:01DBC909                 add     esp, 0Ch
+  .text:01DBC90C                 test    eax, eax
+  .text:01DBC90E                 jz      short loc_1DBC932
+  .text:01DBC910                 push    0
+  .text:01DBC912                 push    offset aHostShutdown; "Host_Shutdown()"
+  .text:01DBC917                 push    offset aHostInit; "Host_Init()"
+  .text:01DBC91C                 call    TraceInit
+  .text:01DBC921                 add     esp, 0Ch
+  .text:01DBC924                 call    Host_Init
+  .text:01DBC929                 cmp     host_initialized, 0
+  .text:01DBC930                 jnz     short loc_1DBC938
+  .text:01DBC932                 xor     eax, eax
+  .text:01DBC934                 add     esp, 8
+  .text:01DBC937                 retn
+  .text:01DBC938                 push    0
+  .text:01DBC93A                 push    offset aSysShutdownaut; "Sys_ShutdownAuthentication()"
+  .text:01DBC93F                 push    offset aSysInitauthent; "Sys_InitAuthentication()"
+  .text:01DBC944                 call    TraceInit
+  .text:01DBC949                 push    offset aSteamAuthServe; "STEAM Auth Server\r\n"
+  .text:01DBC94E                 call    Sys_Printf
+  .text:01DBC953                 add     esp, 10h
+  .text:01DBC956                 cmp     isDedicated, 0
+  .text:01DBC95D                 jz      short loc_1DBC977
+  .text:01DBC95F                 call    Host_InitializeGameDLL; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:01DBC964                 ; multiplayer
+  .text:01DBC964                 push    1; multiplayer
+  .text:01DBC966                 call    NET_Config; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:01DBC96B                 add     esp, 4
+  .text:01DBC96E                 mov     eax, 1
+  .text:01DBC973                 add     esp, 8
+  .text:01DBC976                 retn
+  .text:01DBC977                 call    ClientDLL_ActivateMouse
+  .text:01DBC97C                 mov     eax, 1
+  .text:01DBC981                 add     esp, 8
+  .text:01DBC984                 retn
+procedure: |-
+  // SvEngine Sys_InitGame differs from the HLND2T source: timer/FPU setup is inlined, Host_Init has no parameters, and the GL_SetMode call has three arguments and is skipped for a dedicated server.
+  int __cdecl Sys_InitGame(char *lpOrgCmdLine, char *pBaseDir, void *pwnd, int bIsDedicated)
+  {
+    unsigned int LowPart; // ecx
+    int v5; // edx
+    unsigned int HighPart; // esi
+    int v7; // eax
+    double v8; // st6
+    LARGE_INTEGER Frequency; // [esp+8h] [ebp-8h] BYREF
+
+    host_initialized = 0;
+    if ( !bIsDedicated )
+    {
+      pmainwindow = (int)pwnd;
+      (*(void (__thiscall **)(int))(*(_DWORD *)dword_95D30E0 + 40))(dword_95D30E0);
+    }
+    isDedicated = bIsDedicated;
+    TraceInit((int)"Sys_Init()", (int)"Sys_Shutdown()", 0);
+    if ( !dword_95D2660 )
+    {
+      InitializeCriticalSection(&stru_95D2664);
+      dword_95D2660 = 1;
+    }
+    sub_1DBB7E0();                                // SvEngine-specific floating-point control-word setup; no matching helper in the source revision.
+    if ( !QueryPerformanceFrequency(&Frequency) )
+      Sys_Error("No hardware timer available");
+    LowPart = Frequency.LowPart;
+    v5 = 0;
+    HighPart = Frequency.HighPart;
+    v7 = 0;
+    dword_95D2640 = 0;
+    while ( 1 )
+    {
+      if ( !HighPart )
+      {
+        v8 = (double)LowPart;
+        v5 = v7;
+        if ( v8 <= 2000000.0 )
+          break;
+      }
+      ++v5;
+      LowPart = (HighPart << 31) | (LowPart >> 1);
+      dword_95D2640 = v5;
+      HighPart >>= 1;
+      v7 = v5;
+    }
+    dbl_95D2648 = 1.0 / v8;
+    Sys_InitFloatTime();
+    FS_LogLevelLoadStarted((int)"Launcher");
+    SeedRandomNumberGenerator();
+    TraceInit((int)"Sys_InitMemory()", (int)"Sys_ShutdownMemory()", 0);
+    Sys_InitMemory();
+    TraceInit((int)"Sys_InitLauncherInterface()", (int)"Sys_ShutdownLauncherInterface()", 0);
+    Launcher_ConsolePrintf = Legacy_Sys_Printf;   // Launcher_ConsolePrintf (gv): store Legacy_Sys_Printf into the launcher console callback; Sys_InitLauncherInterface is inlined.
+    if ( !bIsDedicated && !GL_SetMode(*(void **)pmainwindow, &pmaindc, &pbaseRC) )
+      return 0;
+    TraceInit((int)"Host_Init()", (int)"Host_Shutdown()", 0);
+    Host_Init();
+    if ( !host_initialized )
+      return 0;
+    TraceInit((int)"Sys_InitAuthentication()", (int)"Sys_ShutdownAuthentication()", 0);
+    Sys_Printf("STEAM Auth Server\r\n");
+    if ( isDedicated )
+    {
+      Host_InitializeGameDLL();
+      NET_Config(1);
+    }
+    else
+    {
+      ClientDLL_ActivateMouse();
+    }
+    return 1;
+  }

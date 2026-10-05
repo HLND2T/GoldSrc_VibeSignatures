@@ -1286,6 +1286,28 @@ modules:
           - Sys_InitGame.{platform}.yaml
           - pmainwindow.{platform}.yaml
           - maindc.{platform}.yaml
+      - name: find-Sys_InitGame-decompiles
+        expected_input:
+          - Sys_InitGame.{platform}.yaml
+        expected_output:
+          - Launcher_ConsolePrintf.{platform}.yaml
+      - name: find-native-launcher-initializers
+        platform: linux
+        expected_input:
+          - Launcher_ConsolePrintf.{platform}.yaml
+          - Sys_InitGame.{platform}.yaml
+        expected_output:
+          - Launcher_ConsolePrintf_Initializer_0.{platform}.yaml
+          - Launcher_ConsolePrintf_Initializer_1.{platform}.yaml
+      - name: find-Sys_Printf
+        expected_input:
+          - Launcher_ConsolePrintf.{platform}.yaml
+          - Sys_InitGame.{platform}.yaml
+        expected_input_linux:
+          - Launcher_ConsolePrintf_Initializer_0.{platform}.yaml
+          - Launcher_ConsolePrintf_Initializer_1.{platform}.yaml
+        expected_output:
+          - Sys_Printf.{platform}.yaml
       - name: find-Sys_ShutdownGame
         expected_output:
           - Sys_ShutdownGame.{platform}.yaml
@@ -2396,6 +2418,16 @@ modules:
         platform: windows
         category: func
       - name: Sys_InitGame
+        category: func
+      - name: Launcher_ConsolePrintf_Initializer_0
+        category: func
+        platform: linux
+      - name: Launcher_ConsolePrintf_Initializer_1
+        category: func
+        platform: linux
+      - name: Launcher_ConsolePrintf
+        category: gv
+      - name: Sys_Printf
         category: func
       - name: pmainwindow
         category: gv

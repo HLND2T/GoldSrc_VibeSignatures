@@ -1,0 +1,263 @@
+func_name: "Sys_InitGame"
+func_va: "0xb1700"
+disasm_code: |-
+  .text:000B1700                 ; SvEngine Sys_InitGame differs from the HLND2T source: Host_Init has no parameters and GL_SetMode has three arguments and is skipped for a dedicated server. The compiler duplicates callback initialization in both branches.
+  .text:000B1700                 push    ebp; SvEngine Sys_InitGame differs from the HLND2T source: Host_Init has no parameters and GL_SetMode has three arguments and is skipped for a dedicated server. The compiler duplicates callback initialization in both branches.
+  .text:000B1701                 push    edi
+  .text:000B1702                 push    esi
+  .text:000B1703                 push    ebx
+  .text:000B1704                 call    __x86_get_pc_thunk_bx
+  .text:000B1709                 add     ebx, (offset dbl_2EE000 - $)
+  .text:000B170F                 sub     esp, 23Ch
+  .text:000B1715                 mov     eax, [esp+24Ch+bIsDedicated]
+  .text:000B171C                 test    eax, eax
+  .text:000B171E                 lea     esi, (host_initialized - 2EE000h)[ebx]
+  .text:000B1724                 mov     dword ptr [esi], 0
+  .text:000B172A                 jz      loc_B1800
+  .text:000B1730                 lea     edi, (isDedicated - 2EE000h)[ebx]
+  .text:000B1736                 mov     [edi], eax
+  .text:000B1738                 xor     eax, eax
+  .text:000B173A                 mov     [esp+24Ch+format], eax
+  .text:000B173E                 lea     eax, (aSysShutdown - 2EE000h)[ebx]; "Sys_Shutdown()"
+  .text:000B1744                 mov     [esp+24Ch+locale], eax
+  .text:000B1748                 lea     eax, (aSysInit - 2EE000h)[ebx]; "Sys_Init()"
+  .text:000B174E                 mov     [esp+24Ch+category], eax
+  .text:000B1751                 call    TraceInit
+  .text:000B1756                 call    Sys_InitFloatTime
+  .text:000B175B                 lea     eax, (aLauncher - 2EE000h)[ebx]; "Launcher"
+  .text:000B1761                 mov     [esp+24Ch+category], eax
+  .text:000B1764                 call    FS_LogLevelLoadStarted
+  .text:000B1769                 call    SeedRandomNumberGenerator
+  .text:000B176E                 lea     eax, (aSysShutdownmem - 2EE000h)[ebx]; "Sys_ShutdownMemory()"
+  .text:000B1774                 xor     edx, edx
+  .text:000B1776                 mov     [esp+24Ch+locale], eax
+  .text:000B177A                 lea     eax, (aSysInitmemory - 2EE000h)[ebx]; "Sys_InitMemory()"
+  .text:000B1780                 mov     [esp+24Ch+format], edx
+  .text:000B1784                 mov     [esp+24Ch+category], eax
+  .text:000B1787                 call    TraceInit
+  .text:000B178C                 call    Sys_InitMemory
+  .text:000B1791                 lea     eax, (aSysShutdownlau - 2EE000h)[ebx]; "Sys_ShutdownLauncherInterface()"
+  .text:000B1797                 xor     ecx, ecx
+  .text:000B1799                 mov     [esp+24Ch+locale], eax
+  .text:000B179D                 lea     eax, (aSysInitlaunche - 2EE000h)[ebx]; "Sys_InitLauncherInterface()"
+  .text:000B17A3                 mov     [esp+24Ch+category], eax
+  .text:000B17A6                 mov     [esp+24Ch+format], ecx
+  .text:000B17AA                 call    TraceInit
+  .text:000B17AF                 lea     edx, (Launcher_ConsolePrintf - 2EE000h)[ebx]
+  .text:000B17B5                 lea     eax, (Legacy_Sys_Printf - 2EE000h)[ebx]
+  .text:000B17BB                 ; Launcher_ConsolePrintf (gv): dedicated branch stores Legacy_Sys_Printf into the launcher console callback slot.
+  .text:000B17BB                 mov     [edx], eax; Launcher_ConsolePrintf (gv): dedicated branch stores Legacy_Sys_Printf into the launcher console callback slot.
+  .text:000B17BD                 xor     eax, eax
+  .text:000B17BF                 mov     [esp+24Ch+format], eax
+  .text:000B17C3                 lea     eax, (aHostShutdown - 2EE000h)[ebx]; "Host_Shutdown()"
+  .text:000B17C9                 mov     [esp+24Ch+locale], eax
+  .text:000B17CD                 lea     eax, (aHostInit - 2EE000h)[ebx]; "Host_Init()"
+  .text:000B17D3                 mov     [esp+24Ch+category], eax
+  .text:000B17D6                 call    TraceInit
+  .text:000B17DB                 call    Host_Init
+  .text:000B17E0                 mov     edx, [esi]
+  .text:000B17E2                 test    edx, edx
+  .text:000B17E4                 jnz     loc_B18E0
+  .text:000B17EA                 xor     esi, esi
+  .text:000B17EC                 add     esp, 23Ch
+  .text:000B17F2                 mov     eax, esi
+  .text:000B17F4                 pop     ebx
+  .text:000B17F5                 pop     esi
+  .text:000B17F6                 pop     edi
+  .text:000B17F7                 pop     ebp
+  .text:000B17F8                 retn
+  .text:000B1800                 mov     eax, [esp+24Ch+pwnd]
+  .text:000B1807                 xor     ebp, ebp
+  .text:000B1809                 mov     ds:(pmainwindow - 2EE000h)[ebx], eax
+  .text:000B180F                 lea     eax, (dword_7AE14A0 - 2EE000h)[ebx]
+  .text:000B1815                 mov     eax, [eax]
+  .text:000B1817                 mov     edx, [eax]
+  .text:000B1819                 mov     [esp+24Ch+category], eax
+  .text:000B181C                 call    dword ptr [edx+28h]
+  .text:000B181F                 lea     edi, (isDedicated - 2EE000h)[ebx]
+  .text:000B1825                 lea     eax, (aSysShutdown - 2EE000h)[ebx]; "Sys_Shutdown()"
+  .text:000B182B                 xor     ecx, ecx
+  .text:000B182D                 mov     dword ptr [edi], 0
+  .text:000B1833                 mov     [esp+24Ch+locale], eax
+  .text:000B1837                 lea     eax, (aSysInit - 2EE000h)[ebx]; "Sys_Init()"
+  .text:000B183D                 mov     [esp+24Ch+format], ecx
+  .text:000B1841                 mov     [esp+24Ch+category], eax
+  .text:000B1844                 call    TraceInit
+  .text:000B1849                 call    Sys_InitFloatTime
+  .text:000B184E                 lea     eax, (aLauncher - 2EE000h)[ebx]; "Launcher"
+  .text:000B1854                 mov     [esp+24Ch+category], eax
+  .text:000B1857                 call    FS_LogLevelLoadStarted
+  .text:000B185C                 call    SeedRandomNumberGenerator
+  .text:000B1861                 lea     eax, (aSysShutdownmem - 2EE000h)[ebx]; "Sys_ShutdownMemory()"
+  .text:000B1867                 mov     [esp+24Ch+locale], eax
+  .text:000B186B                 lea     eax, (aSysInitmemory - 2EE000h)[ebx]; "Sys_InitMemory()"
+  .text:000B1871                 mov     [esp+24Ch+category], eax
+  .text:000B1874                 mov     [esp+24Ch+format], ebp
+  .text:000B1878                 call    TraceInit
+  .text:000B187D                 call    Sys_InitMemory
+  .text:000B1882                 xor     eax, eax
+  .text:000B1884                 mov     [esp+24Ch+format], eax
+  .text:000B1888                 lea     eax, (aSysShutdownlau - 2EE000h)[ebx]; "Sys_ShutdownLauncherInterface()"
+  .text:000B188E                 mov     [esp+24Ch+locale], eax
+  .text:000B1892                 lea     eax, (aSysInitlaunche - 2EE000h)[ebx]; "Sys_InitLauncherInterface()"
+  .text:000B1898                 mov     [esp+24Ch+category], eax
+  .text:000B189B                 call    TraceInit
+  .text:000B18A0                 lea     edx, (Launcher_ConsolePrintf - 2EE000h)[ebx]
+  .text:000B18A6                 lea     eax, (Legacy_Sys_Printf - 2EE000h)[ebx]
+  .text:000B18AC                 ; Launcher_ConsolePrintf (gv): client branch stores the same Legacy_Sys_Printf callback into the same global slot.
+  .text:000B18AC                 mov     [edx], eax; Launcher_ConsolePrintf (gv): client branch stores the same Legacy_Sys_Printf callback into the same global slot.
+  .text:000B18AE                 lea     eax, (baseRC - 2EE000h)[ebx]
+  .text:000B18B4                 ; pbaseRC
+  .text:000B18B4                 mov     [esp+24Ch+format], eax; pbaseRC
+  .text:000B18B8                 lea     eax, (maindc - 2EE000h)[ebx]
+  .text:000B18BE                 ; pmaindc
+  .text:000B18BE                 mov     [esp+24Ch+locale], eax; pmaindc
+  .text:000B18C2                 mov     eax, ds:(pmainwindow - 2EE000h)[ebx]
+  .text:000B18C8                 mov     eax, [eax]
+  .text:000B18CA                 ; mainwindow
+  .text:000B18CA                 mov     [esp+24Ch+category], eax; mainwindow
+  .text:000B18CD                 call    GL_SetMode; Current binary is authoritative. HLND2T_official is a semantic reference, not this exact source revision. Preserve platform-specific SDL/WGL, AA mode and frame-pacing paths.
+  .text:000B18D2                 test    eax, eax
+  .text:000B18D4                 jnz     loc_B17BD
+  .text:000B18DA                 jmp     loc_B17EA
+  .text:000B18E0                 xor     eax, eax
+  .text:000B18E2                 mov     [esp+24Ch+format], eax
+  .text:000B18E6                 lea     eax, (aSysShutdownaut - 2EE000h)[ebx]; "Sys_ShutdownAuthentication()"
+  .text:000B18EC                 mov     [esp+24Ch+locale], eax
+  .text:000B18F0                 lea     eax, (aSysInitauthent - 2EE000h)[ebx]; "Sys_InitAuthentication()"
+  .text:000B18F6                 mov     [esp+24Ch+category], eax
+  .text:000B18F9                 call    TraceInit
+  .text:000B18FE                 lea     eax, (aSteamAuthServe - 2EE000h)[ebx]; "STEAM Auth Server\r\n"
+  .text:000B1904                 ; char *
+  .text:000B1904                 mov     [esp+24Ch+category], eax; char *
+  .text:000B1907                 call    Sys_Printf
+  .text:000B190C                 mov     eax, [edi]
+  .text:000B190E                 test    eax, eax
+  .text:000B1910                 jz      loc_B19D8
+  .text:000B1916                 call    Host_InitializeGameDLL; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:000B191B                 ; multiplayer
+  .text:000B191B                 mov     [esp+24Ch+category], 1; multiplayer
+  .text:000B1922                 call    NET_Config; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:000B1927                 mov     eax, 54552E53h
+  .text:000B192C                 mov     ebp, 555F6E65h
+  .text:000B1931                 mov     [esp+24Ch+var_224], eax
+  .text:000B1935                 mov     eax, offset unk_382D46
+  .text:000B193A                 mov     esi, 1
+  .text:000B193F                 mov     [esp+24Ch+var_220], eax
+  .text:000B1943                 xor     eax, eax
+  .text:000B1945                 ; locale
+  .text:000B1945                 mov     [esp+24Ch+locale], eax; locale
+  .text:000B1949                 ; category
+  .text:000B1949                 mov     [esp+24Ch+category], 6; category
+  .text:000B1950                 mov     dword ptr [esp+24Ch+s2], ebp
+  .text:000B1954                 lea     ebp, [esp+24Ch+s2]
+  .text:000B1958                 call    _setlocale
+  .text:000B195D                 ; s2
+  .text:000B195D                 mov     [esp+24Ch+locale], ebp; s2
+  .text:000B1961                 test    eax, eax
+  .text:000B1963                 mov     edi, eax
+  .text:000B1965                 lea     eax, (aHuUUC+0Ah - 2EE000h)[ebx]; "c"
+  .text:000B196B                 cmovz   edi, eax
+  .text:000B196E                 ; s1
+  .text:000B196E                 mov     [esp+24Ch+category], edi; s1
+  .text:000B1971                 call    _strcasecmp
+  .text:000B1976                 test    eax, eax
+  .text:000B1978                 jz      loc_B17EC
+  .text:000B197E                 mov     [esp+24Ch+var_23C], edi
+  .text:000B1982                 mov     edi, 200h
+  .text:000B1987                 lea     eax, (aSetlocaleSFail - 2EE000h)[ebx]; "SetLocale('%s') failed. Using '%s'.\nYo"...
+  .text:000B198D                 ; maxlen
+  .text:000B198D                 mov     [esp+24Ch+locale], edi; maxlen
+  .text:000B1991                 lea     edi, [esp+24Ch+s]
+  .text:000B1995                 mov     [esp+24Ch+var_238], ebp
+  .text:000B1999                 mov     [esp+24Ch+var_240], ebp
+  .text:000B199D                 ; format
+  .text:000B199D                 mov     [esp+24Ch+format], eax; format
+  .text:000B19A1                 ; s
+  .text:000B19A1                 mov     [esp+24Ch+category], edi; s
+  .text:000B19A4                 call    _snprintf
+  .text:000B19A9                 mov     eax, ds:(pmainwindow - 2EE000h)[ebx]
+  .text:000B19AF                 mov     eax, [eax]
+  .text:000B19B1                 mov     [esp+24Ch+format], edi
+  .text:000B19B5                 mov     [esp+24Ch+category], 0
+  .text:000B19BC                 mov     [esp+24Ch+var_240], eax
+  .text:000B19C0                 lea     eax, (aWarning_0 - 2EE000h)[ebx]; "Warning"
+  .text:000B19C6                 mov     [esp+24Ch+locale], eax
+  .text:000B19CA                 call    _SDL_ShowSimpleMessageBox
+  .text:000B19CF                 jmp     loc_B17EC
+  .text:000B19D8                 call    ClientDLL_ActivateMouse
+  .text:000B19DD                 lea     esi, [esi+0]
+  .text:000B19E0                 jmp     loc_B1927
+procedure: |-
+  // SvEngine Sys_InitGame differs from the HLND2T source: Host_Init has no parameters and GL_SetMode has three arguments and is skipped for a dedicated server. The compiler duplicates callback initialization in both branches.
+  int __cdecl Sys_InitGame(char *lpOrgCmdLine, char *pBaseDir, void *pwnd, int bIsDedicated)
+  {
+    int v4; // esi
+    char *v6; // edi
+    char s2[8]; // [esp+24h] [ebp-228h] BYREF
+    void *v8; // [esp+2Ch] [ebp-220h]
+    char s[540]; // [esp+30h] [ebp-21Ch] BYREF
+
+    host_initialized = 0;
+    if ( bIsDedicated )
+    {
+      isDedicated = bIsDedicated;
+      TraceInit((int)"Sys_Init()", (int)"Sys_Shutdown()", 0);
+      Sys_InitFloatTime();
+      FS_LogLevelLoadStarted((int)"Launcher");
+      SeedRandomNumberGenerator();
+      TraceInit((int)"Sys_InitMemory()", (int)"Sys_ShutdownMemory()", 0);
+      Sys_InitMemory();
+      TraceInit((int)"Sys_InitLauncherInterface()", (int)"Sys_ShutdownLauncherInterface()", 0);
+      Launcher_ConsolePrintf = Legacy_Sys_Printf; // Launcher_ConsolePrintf (gv): dedicated branch stores Legacy_Sys_Printf into the launcher console callback slot.
+    }
+    else
+    {
+      pmainwindow = (int)pwnd;
+      (*(void (__cdecl **)(int))(*(_DWORD *)dword_7AE14A0 + 40))(dword_7AE14A0);
+      isDedicated = 0;
+      TraceInit((int)"Sys_Init()", (int)"Sys_Shutdown()", 0);
+      Sys_InitFloatTime();
+      FS_LogLevelLoadStarted((int)"Launcher");
+      SeedRandomNumberGenerator();
+      TraceInit((int)"Sys_InitMemory()", (int)"Sys_ShutdownMemory()", 0);
+      Sys_InitMemory();
+      TraceInit((int)"Sys_InitLauncherInterface()", (int)"Sys_ShutdownLauncherInterface()", 0);
+      Launcher_ConsolePrintf = Legacy_Sys_Printf; // Launcher_ConsolePrintf (gv): client branch stores the same Legacy_Sys_Printf callback into the same global slot.
+      if ( !GL_SetMode(*(void **)pmainwindow, (void **)&maindc, (void **)&baseRC) )
+        return 0;
+    }
+    TraceInit((int)"Host_Init()", (int)"Host_Shutdown()", 0);
+    Host_Init();
+    if ( !host_initialized )
+      return 0;
+    TraceInit((int)"Sys_InitAuthentication()", (int)"Sys_ShutdownAuthentication()", 0);
+    Sys_Printf("STEAM Auth Server\r\n");
+    if ( isDedicated )
+    {
+      Host_InitializeGameDLL();
+      NET_Config(1);
+    }
+    else
+    {
+      ClientDLL_ActivateMouse();
+    }
+    v4 = 1;
+    v8 = &unk_382D46;
+    qmemcpy(s2, "en_US.UT", sizeof(s2));
+    v6 = setlocale(6, nullptr);
+    if ( !v6 )
+      v6 = "c";
+    if ( strcasecmp(v6, s2) )
+    {
+      snprintf(
+        s,
+        0x200u,
+        "SetLocale('%s') failed. Using '%s'.\nYou may have limited glyph support.\nPlease install '%s' locale.",
+        s2,
+        v6,
+        s2);
+      SDL_ShowSimpleMessageBox(0, "Warning", s, *(_DWORD *)pmainwindow);
+    }
+    return v4;
+  }

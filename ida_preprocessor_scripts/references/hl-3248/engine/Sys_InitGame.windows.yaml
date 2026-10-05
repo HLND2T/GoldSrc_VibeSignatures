@@ -1,0 +1,171 @@
+func_name: "Sys_InitGame"
+func_va: "0x1dbb070"
+disasm_code: |-
+  .text:01DBB070                 ; Legacy Windows Sys_InitGame: launcher and legacy API initialization are not inlined. This binary also has Steam resource preload logic absent from the HLND2T source revision.
+  .text:01DBB070                 mov     eax, [esp+pwnd]; Legacy Windows Sys_InitGame: launcher and legacy API initialization are not inlined. This binary also has Steam resource preload logic absent from the HLND2T source revision.
+  .text:01DBB074                 mov     ecx, [esp+bIsDedicated]
+  .text:01DBB078                 sub     esp, 208h
+  .text:01DBB07E                 mov     pmainwindow, eax
+  .text:01DBB083                 xor     eax, eax
+  .text:01DBB085                 mov     isDedicated, ecx
+  .text:01DBB08B                 push    edi
+  .text:01DBB08C                 mov     ecx, 8Fh
+  .text:01DBB091                 mov     edi, offset dword_2506780
+  .text:01DBB096                 push    eax
+  .text:01DBB097                 push    offset aSysShutdown; "Sys_Shutdown()"
+  .text:01DBB09C                 push    offset aSysInit; "Sys_Init()"
+  .text:01DBB0A1                 rep stosd
+  .text:01DBB0A3                 mov     host_initialized, 0
+  .text:01DBB0AD                 call    TraceInit
+  .text:01DBB0B2                 call    sub_1DBAC00
+  .text:01DBB0B7                 push    offset aLauncher; "Launcher"
+  .text:01DBB0BC                 call    sub_1D3C760
+  .text:01DBB0C1                 call    sub_1D79C10
+  .text:01DBB0C6                 push    0
+  .text:01DBB0C8                 push    offset aSysShutdownmem; "Sys_ShutdownMemory()"
+  .text:01DBB0CD                 push    offset aSysInitmemory; "Sys_InitMemory()"
+  .text:01DBB0D2                 call    TraceInit
+  .text:01DBB0D7                 call    Sys_InitMemory
+  .text:01DBB0DC                 push    0
+  .text:01DBB0DE                 push    offset aSysShutdownlau; "Sys_ShutdownLauncherInterface()"
+  .text:01DBB0E3                 push    offset aSysInitlaunche; "Sys_InitLauncherInterface()"
+  .text:01DBB0E8                 ; Sys_InitLauncherInterface: initialize launcher callbacks before GL_SetMode.
+  .text:01DBB0E8                 call    TraceInit; Sys_InitLauncherInterface: initialize launcher callbacks before GL_SetMode.
+  .text:01DBB0ED                 call    Sys_InitLauncherInterface
+  .text:01DBB0F2                 mov     edx, [esp+234h+lpOrgCmdLine]
+  .text:01DBB0F9                 mov     eax, dword_23CD2AC
+  .text:01DBB0FE                 mov     ecx, pmainwindow
+  .text:01DBB104                 ; int
+  .text:01DBB104                 push    edx; int
+  .text:01DBB105                 push    offset aOpengl32Dll_1; "opengl32.dll"
+  .text:01DBB10A                 ; int
+  .text:01DBB10A                 push    eax; int
+  .text:01DBB10B                 mov     edx, [ecx]
+  .text:01DBB10D                 ; int
+  .text:01DBB10D                 push    offset dword_24917BC; int
+  .text:01DBB112                 ; int
+  .text:01DBB112                 push    offset dword_24917C0; int
+  .text:01DBB117                 ; hWnd
+  .text:01DBB117                 push    edx; hWnd
+  .text:01DBB118                 call    GL_SetModeLegacy
+  .text:01DBB11D                 add     esp, 40h
+  .text:01DBB120                 test    eax, eax
+  .text:01DBB122                 pop     edi
+  .text:01DBB123                 jnz     short loc_1DBB12C
+  .text:01DBB125                 add     esp, 208h
+  .text:01DBB12B                 retn
+  .text:01DBB12C                 push    0
+  .text:01DBB12E                 push    offset aHostShutdown_0; "Host_Shutdown()"
+  .text:01DBB133                 push    offset aHostInitHostPa; "Host_Init( &host_parms )"
+  .text:01DBB138                 call    TraceInit
+  .text:01DBB13D                 push    offset dword_280DF40
+  .text:01DBB142                 call    Host_Init
+  .text:01DBB147                 mov     eax, host_initialized
+  .text:01DBB14C                 add     esp, 10h
+  .text:01DBB14F                 test    eax, eax
+  .text:01DBB151                 jnz     short loc_1DBB15C
+  .text:01DBB153                 xor     eax, eax
+  .text:01DBB155                 add     esp, 208h
+  .text:01DBB15B                 retn
+  .text:01DBB15C                 lea     eax, [esp+208h+var_104]
+  .text:01DBB163                 push    eax
+  .text:01DBB164                 push    offset byte_2D5DA60
+  .text:01DBB169                 call    sub_1D2DD90
+  .text:01DBB16E                 push    offset aSteam_30; "-steam"
+  .text:01DBB173                 call    sub_1D2E0A0
+  .text:01DBB178                 add     esp, 0Ch
+  .text:01DBB17B                 test    eax, eax
+  .text:01DBB17D                 jz      short loc_1DBB1A3
+  .text:01DBB17F                 call    sub_1DBA870
+  .text:01DBB184                 push    eax
+  .text:01DBB185                 lea     ecx, [esp+20Ch+Buffer]
+  .text:01DBB189                 push    offset aReslistsSInter; "reslists\\%s\\internal_preloads.lst"
+  .text:01DBB18E                 ; Buffer
+  .text:01DBB18E                 push    ecx; Buffer
+  .text:01DBB18F                 call    _sprintf
+  .text:01DBB194                 lea     edx, [esp+214h+Buffer]
+  .text:01DBB198                 push    1
+  .text:01DBB19A                 push    edx
+  .text:01DBB19B                 call    sub_1D3C7A0
+  .text:01DBB1A0                 add     esp, 14h
+  .text:01DBB1A3                 push    0
+  .text:01DBB1A5                 push    offset aSysShutdownaut; "Sys_ShutdownAuthentication()"
+  .text:01DBB1AA                 push    offset aSysInitauthent; "Sys_InitAuthentication()"
+  .text:01DBB1AF                 call    TraceInit
+  .text:01DBB1B4                 add     esp, 0Ch
+  .text:01DBB1B7                 call    sub_1DBAF50
+  .text:01DBB1BC                 mov     eax, isDedicated
+  .text:01DBB1C1                 test    eax, eax
+  .text:01DBB1C3                 jz      short loc_1DBB1E0
+  .text:01DBB1C5                 call    sub_1D58F10
+  .text:01DBB1CA                 push    1
+  .text:01DBB1CC                 call    sub_1D69090
+  .text:01DBB1D1                 add     esp, 4
+  .text:01DBB1D4                 mov     eax, 1
+  .text:01DBB1D9                 add     esp, 208h
+  .text:01DBB1DF                 retn
+  .text:01DBB1E0                 call    sub_1D0E540
+  .text:01DBB1E5                 mov     eax, 1
+  .text:01DBB1EA                 add     esp, 208h
+  .text:01DBB1F0                 retn
+procedure: |-
+  // Legacy Windows Sys_InitGame: launcher and legacy API initialization are not inlined. This binary also has Steam resource preload logic absent from the HLND2T source revision.
+  int __cdecl Sys_InitGame(char *lpOrgCmdLine, char *pBaseDir, void *pwnd, int bIsDedicated)
+  {
+    int result; // eax
+    const char *v5; // eax
+    char Buffer[260]; // [esp+4h] [ebp-208h] BYREF
+    _BYTE v7[260]; // [esp+108h] [ebp-104h] BYREF
+
+    pmainwindow = (int)pwnd;
+    isDedicated = bIsDedicated;
+    memset(&dword_2506780, 0, 0x23Cu);
+    host_initialized = 0;
+    TraceInit((int)aSysInit, (int)aSysShutdown, 0);
+    sub_1DBAC00();
+    sub_1D3C760(aLauncher);
+    sub_1D79C10();
+    TraceInit((int)aSysInitmemory, (int)aSysShutdownmem, 0);
+    Sys_InitMemory();
+    TraceInit((int)aSysInitlaunche, (int)aSysShutdownlau, 0);// Sys_InitLauncherInterface: initialize launcher callbacks before GL_SetMode.
+    Sys_InitLauncherInterface();
+    result = GL_SetModeLegacy(
+               *(HWND *)pmainwindow,
+               (HDC *)&dword_24917C0,
+               &dword_24917BC,
+               dword_23CD2AC,
+               aOpengl32Dll_1,
+               lpOrgCmdLine);
+    if ( result )
+    {
+      TraceInit((int)aHostInitHostPa, (int)aHostShutdown_0, 0);
+      Host_Init(&dword_280DF40);
+      if ( host_initialized )
+      {
+        sub_1D2DD90(byte_2D5DA60, v7);
+        if ( sub_1D2E0A0(aSteam_30) )
+        {
+          v5 = (const char *)sub_1DBA870();
+          sprintf(Buffer, "reslists\\%s\\internal_preloads.lst", v5);
+          sub_1D3C7A0(Buffer, 1);
+        }
+        TraceInit((int)aSysInitauthent, (int)aSysShutdownaut, 0);
+        sub_1DBAF50();
+        if ( isDedicated )
+        {
+          sub_1D58F10();
+          sub_1D69090(1);
+        }
+        else
+        {
+          sub_1D0E540();
+        }
+        return 1;
+      }
+      else
+      {
+        return 0;
+      }
+    }
+    return result;
+  }

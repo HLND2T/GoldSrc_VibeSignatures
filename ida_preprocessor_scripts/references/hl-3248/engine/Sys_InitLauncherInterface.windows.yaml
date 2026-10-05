@@ -1,0 +1,16 @@
+func_name: "Sys_InitLauncherInterface"
+func_va: "0x1dbaf20"
+disasm_code: |-
+  .text:01DBAF20                 call    sub_1DBEF30
+  .text:01DBAF25                 push    offset aOpengl32Dll_0; "opengl32.dll"
+  .text:01DBAF2A                 mov     dword_2506628, eax
+  .text:01DBAF2F                 call    ds:GetModuleHandleA
+  .text:01DBAF35                 mov     dword_2492010, eax
+  .text:01DBAF3A                 jmp     Sys_SetupLegacyAPIs
+procedure: |-
+  void __cdecl Sys_InitLauncherInterface()
+  {
+    dword_2506628 = sub_1DBEF30();
+    dword_2492010 = (int)GetModuleHandleA(aOpengl32Dll_0);
+    Sys_SetupLegacyAPIs();
+  }
