@@ -7,8 +7,8 @@ from zero), so its code body can never be inlined away by a table reference.
 The table is anchored through four already-resolved studioapi members
 (GetCurrentEntity slot 6, StudioSetHeader slot 35, SetRenderModel slot 36,
 SetChromeOrigin slot 39). On CoF-era builds the slot holds the 9-line
-IsATISmoothing wrapper and R_GLStudioDrawPoints is its two-call branch with
-more direct callees; on GoldSrc/HL25/SvEngine LTCG merges the wrapper and the
+IsATISmoothing wrapper. Its ATI branch enables GL_PN_TRIANGLES_ATI; the other
+branch is R_GLStudioDrawPoints. On GoldSrc/HL25/SvEngine LTCG merges the wrapper and the
 GL body into one function which the slot references through a jmp thunk —
 either way the final function is validated to call the table's StudioSetupSkin
 (slot 29). No byte signature participates in discovery.
@@ -59,6 +59,17 @@ def callees(o):
         if tf is not None and tf == t and fsize(tf) > 16:
             out.add(tf)
     return out
+
+def uses_ati_pn_triangles(o):
+    # The ATI TruForm path enables this OpenGL capability. Both branches call
+    # StudioSetupSkin, and the ATI path may have MORE callees than ordinary GL.
+    GL_PN_TRIANGLES_ATI = 0x87F0
+    for pc in idautils.FuncItems(o):
+        for operand in range(2):
+            if (idc.get_operand_type(pc, operand) == idc.o_imm and
+                    idc.get_operand_value(pc, operand) == GL_PN_TRIANGLES_ATI):
+                return True
+    return False
 
 res = {"tables": []}
 primary = ANCHORS.pop("primary")
@@ -148,10 +159,13 @@ for base in sorted(table_bases):
             {c for c in callees(body) | jumps_out if fsize(c) > 100}
         )
         if len(branch) == 2:
-            scored = [(len(callees(c)), c) for c in branch]
-            scored.sort()
             ent["branches"] = [(hex(c), fsize(c), len(callees(c))) for c in branch]
-            ent["R_GLStudioDrawPoints"] = hex(scored[-1][1])
+            ordinary = [c for c in branch if not uses_ati_pn_triangles(c)]
+            if len(ordinary) != 1:
+                ent["error"] = "wrapper does not distinguish ordinary GL from ATI PN triangles"
+                res.setdefault("entries", []).append(ent)
+                continue
+            ent["R_GLStudioDrawPoints"] = hex(ordinary[0])
         elif len(branch) == 1:
             # Pre-ATI builds ship the wrapper without the ATINPatch branch;
             # the single large callee is R_GLStudioDrawPoints itself.
