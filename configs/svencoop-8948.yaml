@@ -799,6 +799,9 @@ modules:
       - name: find-Sys_Error
         expected_output:
           - Sys_Error.{platform}.yaml
+      - name: find-Sys_ErrorBox
+        expected_output:
+          - Sys_ErrorBox.{platform}.yaml
       - name: find-Sys_InitMemory-svencoop
         expected_output:
           - Sys_InitMemory.{platform}.yaml
@@ -1320,6 +1323,26 @@ modules:
           - Sys_InitGame.{platform}.yaml
           - pmainwindow.{platform}.yaml
           - maindc.{platform}.yaml
+      - name: find-Sys_InitGame-decompiles
+        expected_input:
+          - Sys_InitGame.{platform}.yaml
+        expected_output:
+          - Launcher_ConsolePrintf.{platform}.yaml
+      - name: find-native-launcher-initializers
+        expected_input:
+          - Launcher_ConsolePrintf.{platform}.yaml
+          - Sys_InitGame.{platform}.yaml
+        expected_output:
+          - Launcher_ConsolePrintf_Initializer_0.{platform}.yaml
+          - Launcher_ConsolePrintf_Initializer_1.{platform}.yaml
+      - name: find-Sys_Printf
+        expected_input:
+          - Launcher_ConsolePrintf.{platform}.yaml
+          - Sys_InitGame.{platform}.yaml
+          - Launcher_ConsolePrintf_Initializer_0.{platform}.yaml
+          - Launcher_ConsolePrintf_Initializer_1.{platform}.yaml
+        expected_output:
+          - Sys_Printf.{platform}.yaml
       - name: find-Sys_ShutdownGame
         expected_output:
           - Sys_ShutdownGame.{platform}.yaml
@@ -2216,6 +2239,8 @@ modules:
         category: func
       - name: Sys_Error
         category: func
+      - name: Sys_ErrorBox
+        category: func
       - name: Sys_InitMemory
         category: func
       - name: Sys_InitMemory_HeapLimitPatches_0
@@ -2568,6 +2593,14 @@ modules:
         category: func
         platform: windows
       - name: Sys_InitGame
+        category: func
+      - name: Launcher_ConsolePrintf_Initializer_0
+        category: func
+      - name: Launcher_ConsolePrintf_Initializer_1
+        category: func
+      - name: Launcher_ConsolePrintf
+        category: gv
+      - name: Sys_Printf
         category: func
       - name: pmainwindow
         category: gv

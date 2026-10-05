@@ -1,0 +1,15 @@
+func_name: "Sys_SetupLegacyAPIs"
+func_va: "0x1dbab30"
+disasm_code: |-
+  .text:01DBAB30                 mov     dword_25062CC, offset ?__CxxRestoreUnhandledExceptionFilter@@YAXXZ; __CxxRestoreUnhandledExceptionFilter(void) ...
+  .text:01DBAB3A                 mov     dword_2491BDC, offset sub_1DBA970
+  .text:01DBAB44                 ; Launcher_ConsolePrintf (gv): the global slot assigned Legacy_Sys_Printf, distinct from the video callback slots.
+  .text:01DBAB44                 mov     Launcher_ConsolePrintf, offset Legacy_Sys_Printf; Launcher_ConsolePrintf (gv): the global slot assigned Legacy_Sys_Printf, distinct from the video callback slots.
+  .text:01DBAB4E                 retn
+procedure: |-
+  void __cdecl Sys_SetupLegacyAPIs()
+  {
+    dword_25062CC = (int (*)(void))__CxxRestoreUnhandledExceptionFilter;
+    dword_2491BDC = (int)sub_1DBA970;
+    Launcher_ConsolePrintf = Legacy_Sys_Printf;   // Launcher_ConsolePrintf (gv): the global slot assigned Legacy_Sys_Printf, distinct from the video callback slots.
+  }

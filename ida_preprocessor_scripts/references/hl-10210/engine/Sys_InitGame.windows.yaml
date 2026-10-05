@@ -1,0 +1,381 @@
+func_name: "Sys_InitGame"
+func_va: "0x10220a90"
+disasm_code: |-
+  .text:10220A90                 ; Sys_InitGame, verified against engine/sys_dll2.cpp. This HL25 binary inlines Sys_InitMemory and Sys_SetupLegacyAPIs and does not copy the pBaseDir argument as the source revision does.
+  .text:10220A90                 push    ebp; Sys_InitGame, verified against engine/sys_dll2.cpp. This HL25 binary inlines Sys_InitMemory and Sys_SetupLegacyAPIs and does not copy the pBaseDir argument as the source revision does.
+  .text:10220A91                 mov     ebp, esp
+  .text:10220A93                 sub     esp, 0BCh
+  .text:10220A99                 mov     eax, ___security_cookie
+  .text:10220A9E                 xor     eax, ebp
+  .text:10220AA0                 mov     [ebp+var_4], eax
+  .text:10220AA3                 mov     eax, [ebp+pwnd]
+  .text:10220AA6                 push    ebx
+  .text:10220AA7                 push    esi
+  .text:10220AA8                 mov     esi, [ebp+bIsDedicated]
+  .text:10220AAB                 mov     host_initialized, 0
+  .text:10220AB5                 push    edi
+  .text:10220AB6                 mov     edi, [ebp+pszCmdLine]
+  .text:10220AB9                 mov     [ebp+var_BC], edi
+  .text:10220ABF                 test    esi, esi
+  .text:10220AC1                 jnz     short loc_10220AD3
+  .text:10220AC3                 mov     ecx, dword_105394C0
+  .text:10220AC9                 mov     pmainwindow, eax
+  .text:10220ACE                 mov     eax, [ecx]
+  .text:10220AD0                 call    dword ptr [eax+2Ch]
+  .text:10220AD3                 push    offset aDev; "-dev"
+  .text:10220AD8                 mov     isDedicated, esi
+  .text:10220ADE                 call    COM_CheckParm
+  .text:10220AE3                 add     esp, 4
+  .text:10220AE6                 test    eax, eax
+  .text:10220AE8                 jz      short loc_10220AF4
+  .text:10220AEA                 mov     developer_value, 3F800000h
+  .text:10220AF4                 ; Size
+  .text:10220AF4                 push    244h; Size
+  .text:10220AF9                 ; Val
+  .text:10220AF9                 push    0; Val
+  .text:10220AFB                 ; void *
+  .text:10220AFB                 push    offset gmodinfo; void *
+  .text:10220B00                 call    memset
+  .text:10220B05                 call    SV_ResetModInfo
+  .text:10220B0A                 push    0
+  .text:10220B0C                 push    offset aSysShutdown; "Sys_Shutdown()"
+  .text:10220B11                 push    offset aSysInit; "Sys_Init()"
+  .text:10220B16                 call    TraceInit
+  .text:10220B1B                 ; Size
+  .text:10220B1B                 push    90h; Size
+  .text:10220B20                 lea     eax, [ebp+VersionInformation.dwMajorVersion]
+  .text:10220B26                 ; Val
+  .text:10220B26                 push    0; Val
+  .text:10220B28                 ; void *
+  .text:10220B28                 push    eax; void *
+  .text:10220B29                 call    memset
+  .text:10220B2E                 add     esp, 24h
+  .text:10220B31                 mov     [ebp+VersionInformation.dwOSVersionInfoSize], 94h
+  .text:10220B3B                 lea     eax, [ebp+VersionInformation]
+  .text:10220B41                 ; lpVersionInformation
+  .text:10220B41                 push    eax; lpVersionInformation
+  .text:10220B42                 call    ds:GetVersionExA
+  .text:10220B48                 test    eax, eax
+  .text:10220B4A                 jnz     short loc_10220B59
+  .text:10220B4C                 push    offset aCouldnTGetOsIn; "Couldn't get OS info"
+  .text:10220B51                 call    Sys_Error
+  .text:10220B56                 add     esp, 4
+  .text:10220B59                 mov     ecx, [ebp+VersionInformation.dwMajorVersion]
+  .text:10220B5F                 mov     edx, 1
+  .text:10220B64                 cmp     ecx, 4
+  .text:10220B67                 sbb     eax, eax
+  .text:10220B69                 inc     eax
+  .text:10220B6A                 mov     dword_10F778C4, eax
+  .text:10220B6F                 cmp     [ebp+VersionInformation.dwPlatformId], edx
+  .text:10220B75                 jnz     short loc_10220BA1
+  .text:10220B77                 cmp     ecx, 4
+  .text:10220B7A                 jnz     short loc_10220BA1
+  .text:10220B7C                 mov     eax, [ebp+VersionInformation.dwMinorVersion]
+  .text:10220B82                 test    eax, eax
+  .text:10220B84                 jnz     short loc_10220B8E
+  .text:10220B86                 mov     dword_105390AC, edx
+  .text:10220B8C                 jmp     short loc_10220BA1
+  .text:10220B8E                 mov     ecx, dword_105390B0
+  .text:10220B94                 dec     eax
+  .text:10220B95                 cmp     eax, 58h ; 'X'
+  .text:10220B98                 cmovbe  ecx, edx
+  .text:10220B9B                 mov     dword_105390B0, ecx
+  .text:10220BA1                 call    Sys_Init
+  .text:10220BA6                 push    offset aLauncher; "Launcher"
+  .text:10220BAB                 call    FS_LogLevelLoadStarted
+  .text:10220BB0                 call    SeedRandomNumberGenerator
+  .text:10220BB5                 push    0
+  .text:10220BB7                 push    offset aSysShutdownmem; "Sys_ShutdownMemory()"
+  .text:10220BBC                 push    offset aSysInitmemory; "Sys_InitMemory()"
+  .text:10220BC1                 call    TraceInit
+  .text:10220BC6                 ; Sys_InitMemory is inlined in this Sys_InitGame build.
+  .text:10220BC6                 push    offset aHeapsize; Sys_InitMemory is inlined in this Sys_InitGame build.
+  .text:10220BCB                 call    COM_CheckParm
+  .text:10220BD0                 mov     ecx, eax
+  .text:10220BD2                 add     esp, 14h
+  .text:10220BD5                 test    ecx, ecx
+  .text:10220BD7                 jz      short loc_10220C02
+  .text:10220BD9                 mov     eax, dword_1124C168
+  .text:10220BDE                 dec     eax
+  .text:10220BDF                 cmp     ecx, eax
+  .text:10220BE1                 jge     short loc_10220C02
+  .text:10220BE3                 mov     eax, dword_1124C164
+  .text:10220BE8                 ; String
+  .text:10220BE8                 push    dword ptr [eax+ecx*4+4]; String
+  .text:10220BEC                 call    ds:atoi
+  .text:10220BF2                 mov     esi, eax
+  .text:10220BF4                 add     esp, 4
+  .text:10220BF7                 shl     esi, 0Ah
+  .text:10220BFA                 mov     host_parms.memsize, esi
+  .text:10220C00                 jmp     short loc_10220C08
+  .text:10220C02                 mov     esi, host_parms.memsize
+  .text:10220C08                 xor     bl, bl
+  .text:10220C0A                 cmp     esi, 0E00000h
+  .text:10220C10                 jge     short loc_10220C78
+  .text:10220C12                 lea     eax, [ebp+Buffer]
+  .text:10220C15                 mov     [ebp+Buffer.dwLength], 20h ; ' '
+  .text:10220C1C                 ; lpBuffer
+  .text:10220C1C                 push    eax; lpBuffer
+  .text:10220C1D                 call    ds:GlobalMemoryStatus
+  .text:10220C23                 mov     esi, [ebp+Buffer.dwTotalPhys]
+  .text:10220C26                 xor     edi, edi
+  .text:10220C28                 mov     bl, 1
+  .text:10220C2A                 test    esi, esi
+  .text:10220C2C                 jz      short loc_10220C67
+  .text:10220C2E                 cmp     esi, 0F00000h
+  .text:10220C34                 jnb     short loc_10220C4B
+  .text:10220C36                 push    host_parms.memsize
+  .text:10220C3C                 push    offset aAvailableMemor; "Available memory less than 15MB!!! %i\n"
+  .text:10220C41                 call    Sys_Error
+  .text:10220C46                 add     esp, 8
+  .text:10220C49                 jmp     short loc_10220C53
+  .text:10220C4B                 cmp     esi, 7FFFFFFFh
+  .text:10220C51                 ja      short loc_10220C67
+  .text:10220C53                 shrd    esi, edi, 1
+  .text:10220C57                 mov     eax, 0E00000h
+  .text:10220C5C                 cmp     esi, 0E00000h
+  .text:10220C62                 cmovb   esi, eax
+  .text:10220C65                 jmp     short loc_10220C6C
+  .text:10220C67                 mov     esi, 8000000h
+  .text:10220C6C                 mov     edi, [ebp+var_BC]
+  .text:10220C72                 mov     host_parms.memsize, esi
+  .text:10220C78                 cmp     isDedicated, 0
+  .text:10220C7F                 jz      short loc_10220C91
+  .text:10220C81                 test    bl, bl
+  .text:10220C83                 mov     eax, 2800000h
+  .text:10220C88                 cmovnz  esi, eax
+  .text:10220C8B                 mov     host_parms.memsize, esi
+  .text:10220C91                 cmp     esi, 8000000h
+  .text:10220C97                 jle     short loc_10220CA3
+  .text:10220C99                 mov     host_parms.memsize, 8000000h
+  .text:10220CA3                 push    offset aMinmemory; "-minmemory"
+  .text:10220CA8                 call    COM_CheckParm
+  .text:10220CAD                 mov     ecx, host_parms.memsize
+  .text:10220CB3                 add     esp, 4
+  .text:10220CB6                 test    eax, eax
+  .text:10220CB8                 mov     eax, 0E00000h
+  .text:10220CBD                 cmovnz  ecx, eax
+  .text:10220CC0                 ; dwBytes
+  .text:10220CC0                 push    ecx; dwBytes
+  .text:10220CC1                 ; uFlags
+  .text:10220CC1                 push    0; uFlags
+  .text:10220CC3                 mov     host_parms.memsize, ecx
+  .text:10220CC9                 call    ds:GlobalAlloc
+  .text:10220CCF                 mov     host_parms.membase, eax
+  .text:10220CD4                 test    eax, eax
+  .text:10220CD6                 jnz     short loc_10220D03
+  .text:10220CD8                 movd    xmm0, host_parms.memsize
+  .text:10220CE0                 sub     esp, 8
+  .text:10220CE3                 cvtdq2ps xmm0, xmm0
+  .text:10220CE6                 cvtps2pd xmm0, xmm0
+  .text:10220CE9                 mulsd   xmm0, ds:qword_102BED20
+  .text:10220CF1                 movsd   [esp+0D0h+var_D0], xmm0
+  .text:10220CF6                 push    offset aUnableToAlloca_0; "Unable to allocate %.2f MB\n"
+  .text:10220CFB                 call    Sys_Error
+  .text:10220D00                 add     esp, 0Ch
+  .text:10220D03                 push    0
+  .text:10220D05                 push    offset aSysShutdownlau; "Sys_ShutdownLauncherInterface()"
+  .text:10220D0A                 push    offset aSysInitlaunche; "Sys_InitLauncherInterface()"
+  .text:10220D0F                 call    TraceInit
+  .text:10220D14                 add     esp, 0Ch
+  .text:10220D17                 call    sub_10223090
+  .text:10220D1C                 push    offset pszDriver; "opengl32.dll"
+  .text:10220D21                 mov     dword_10F778C0, eax
+  .text:10220D26                 call    ds:GetModuleHandleA
+  .text:10220D2C                 ; pszCmdLine
+  .text:10220D2C                 push    edi; pszCmdLine
+  .text:10220D2D                 push    offset pszDriver; "opengl32.dll"
+  .text:10220D32                 ; fD3D
+  .text:10220D32                 push    fD3D; fD3D
+  .text:10220D38                 mov     dword_105390B4, eax
+  .text:10220D3D                 mov     eax, pmainwindow
+  .text:10220D42                 ; pbaseRC
+  .text:10220D42                 push    offset pbaseRC; pbaseRC
+  .text:10220D47                 mov     dword_10F77448, offset sub_10220EF0
+  .text:10220D51                 mov     dword_10539078, offset sub_10220990
+  .text:10220D5B                 ; Launcher_ConsolePrintf (gv): Sys_SetupLegacyAPIs inlined; store Legacy_Sys_Printf into the launcher console callback slot.
+  .text:10220D5B                 mov     Launcher_ConsolePrintf, offset Legacy_Sys_Printf; Launcher_ConsolePrintf (gv): Sys_SetupLegacyAPIs inlined; store Legacy_Sys_Printf into the launcher console callback slot.
+  .text:10220D65                 ; pmaindc
+  .text:10220D65                 push    offset pmaindc; pmaindc
+  .text:10220D6A                 ; mainwindow
+  .text:10220D6A                 push    dword ptr [eax]; mainwindow
+  .text:10220D6C                 call    GL_SetMode; Current binary is authoritative. HLND2T_official is a semantic reference, not this exact source revision. Preserve platform-specific SDL/WGL, AA mode and frame-pacing paths.
+  .text:10220D71                 add     esp, 18h
+  .text:10220D74                 pop     edi
+  .text:10220D75                 pop     esi
+  .text:10220D76                 pop     ebx
+  .text:10220D77                 test    eax, eax
+  .text:10220D79                 jz      loc_10220E07
+  .text:10220D7F                 push    0
+  .text:10220D81                 push    offset aHostShutdown; "Host_Shutdown()"
+  .text:10220D86                 push    offset aHostInitHostPa; "Host_Init( &host_parms )"
+  .text:10220D8B                 call    TraceInit
+  .text:10220D90                 push    offset host_parms
+  .text:10220D95                 call    Host_Init
+  .text:10220D9A                 add     esp, 10h
+  .text:10220D9D                 cmp     host_initialized, 0
+  .text:10220DA4                 jz      short loc_10220E07
+  .text:10220DA6                 push    0
+  .text:10220DA8                 push    offset aSysShutdownaut; "Sys_ShutdownAuthentication()"
+  .text:10220DAD                 push    offset aSysInitauthent; "Sys_InitAuthentication()"
+  .text:10220DB2                 call    TraceInit
+  .text:10220DB7                 push    offset aSteamAuthServe; "STEAM Auth Server\r\n"
+  .text:10220DBC                 call    Sys_Printf
+  .text:10220DC1                 add     esp, 10h
+  .text:10220DC4                 cmp     isDedicated, 0
+  .text:10220DCB                 jz      short loc_10220DEF
+  .text:10220DCD                 call    Host_InitializeGameDLL; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:10220DD2                 ; multiplayer
+  .text:10220DD2                 push    1; multiplayer
+  .text:10220DD4                 call    NET_Config; Issue #326 reference reconstruction: source role corroborated by current call arguments/control flow and HL 10210 Linux peer. netadr ABI verified in current machine code; SvEngine trailing address bytes intentionally opaque.
+  .text:10220DD9                 add     esp, 4
+  .text:10220DDC                 mov     eax, 1
+  .text:10220DE1                 mov     ecx, [ebp+var_4]
+  .text:10220DE4                 ; StackCookie
+  .text:10220DE4                 xor     ecx, ebp; StackCookie
+  .text:10220DE6                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10220DEB                 mov     esp, ebp
+  .text:10220DED                 pop     ebp
+  .text:10220DEE                 retn
+  .text:10220DEF                 call    ClientDLL_ActivateMouse
+  .text:10220DF4                 mov     eax, 1
+  .text:10220DF9                 mov     ecx, [ebp+var_4]
+  .text:10220DFC                 ; StackCookie
+  .text:10220DFC                 xor     ecx, ebp; StackCookie
+  .text:10220DFE                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10220E03                 mov     esp, ebp
+  .text:10220E05                 pop     ebp
+  .text:10220E06                 retn
+  .text:10220E07                 mov     ecx, [ebp+var_4]
+  .text:10220E0A                 xor     eax, eax
+  .text:10220E0C                 ; StackCookie
+  .text:10220E0C                 xor     ecx, ebp; StackCookie
+  .text:10220E0E                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:10220E13                 mov     esp, ebp
+  .text:10220E15                 pop     ebp
+  .text:10220E16                 retn
+procedure: |-
+  // Sys_InitGame, verified against engine/sys_dll2.cpp. This HL25 binary inlines Sys_InitMemory and Sys_SetupLegacyAPIs and does not copy the pBaseDir argument as the source revision does.
+  int __cdecl Sys_InitGame(char *lpOrgCmdLine, char *pBaseDir, void *pwnd, int bIsDedicated)
+  {
+    char *v4; // edi
+    int v5; // ecx
+    int v6; // ecx
+    int memsize; // esi
+    char v8; // bl
+    int v9; // eax
+    int v10; // ecx
+    struct _OSVERSIONINFOA VersionInformation; // [esp+18h] [ebp-B8h] BYREF
+    struct _MEMORYSTATUS Buffer; // [esp+ACh] [ebp-24h] BYREF
+
+    host_initialized = 0;
+    v4 = lpOrgCmdLine;
+    if ( !bIsDedicated )
+    {
+      pmainwindow = (void **)pwnd;
+      (*(void (__thiscall **)(int))(*(_DWORD *)dword_105394C0 + 44))(dword_105394C0);
+    }
+    isDedicated = bIsDedicated;
+    if ( COM_CheckParm("-dev") )
+      developer_value = 1.0;
+    memset(gmodinfo, 0, sizeof(gmodinfo));
+    SV_ResetModInfo();
+    TraceInit((int)"Sys_Init()", (int)"Sys_Shutdown()", 0);
+    memset(&VersionInformation.dwMajorVersion, 0, 0x90u);
+    VersionInformation.dwOSVersionInfoSize = 148;
+    if ( !GetVersionExA(&VersionInformation) )
+      Sys_Error("Couldn't get OS info");
+    dword_10F778C4 = VersionInformation.dwMajorVersion >= 4;
+    if ( VersionInformation.dwPlatformId == 1 && VersionInformation.dwMajorVersion == 4 )
+    {
+      if ( VersionInformation.dwMinorVersion )
+      {
+        v5 = dword_105390B0;
+        if ( VersionInformation.dwMinorVersion - 1 <= 0x58 )
+          v5 = 1;
+        dword_105390B0 = v5;
+      }
+      else
+      {
+        dword_105390AC = 1;
+      }
+    }
+    Sys_Init();
+    FS_LogLevelLoadStarted((int)"Launcher");
+    SeedRandomNumberGenerator();
+    TraceInit((int)"Sys_InitMemory()", (int)"Sys_ShutdownMemory()", 0);
+    v6 = COM_CheckParm("-heapsize");              // Sys_InitMemory is inlined in this Sys_InitGame build.
+    if ( v6 && v6 < dword_1124C168 - 1 )
+    {
+      memsize = atoi(*(const char **)(dword_1124C164 + 4 * v6 + 4)) << 10;
+      host_parms.memsize = memsize;
+    }
+    else
+    {
+      memsize = host_parms.memsize;
+    }
+    v8 = 0;
+    if ( memsize < 14680064 )
+    {
+      Buffer.dwLength = 32;
+      GlobalMemoryStatus(&Buffer);
+      v8 = 1;
+      if ( !Buffer.dwTotalPhys )
+        goto LABEL_26;
+      if ( Buffer.dwTotalPhys < 0xF00000 )
+        Sys_Error("Available memory less than 15MB!!! %i\n", host_parms.memsize);
+      if ( Buffer.dwTotalPhys <= 0x7FFFFFFF )
+      {
+        memsize = Buffer.dwTotalPhys >> 1;
+        if ( Buffer.dwTotalPhys >> 1 < 0xE00000 )
+          memsize = 14680064;
+      }
+      else
+      {
+  LABEL_26:
+        memsize = 0x8000000;
+      }
+      v4 = lpOrgCmdLine;
+      host_parms.memsize = memsize;
+    }
+    if ( isDedicated )
+    {
+      if ( v8 )
+        memsize = 41943040;
+      host_parms.memsize = memsize;
+    }
+    if ( memsize > 0x8000000 )
+      host_parms.memsize = 0x8000000;
+    v9 = COM_CheckParm("-minmemory");
+    v10 = host_parms.memsize;
+    if ( v9 )
+      v10 = 14680064;
+    host_parms.memsize = v10;
+    host_parms.membase = GlobalAlloc(0, v10);
+    if ( !host_parms.membase )
+      Sys_Error("Unable to allocate %.2f MB\n", (float)host_parms.memsize * 0.00000095367431640625);
+    TraceInit((int)"Sys_InitLauncherInterface()", (int)"Sys_ShutdownLauncherInterface()", 0);
+    dword_10F778C0 = sub_10223090();
+    dword_105390B4 = (int)GetModuleHandleA("opengl32.dll");
+    dword_10F77448 = sub_10220EF0;
+    dword_10539078 = (int)sub_10220990;
+    Launcher_ConsolePrintf = Legacy_Sys_Printf;   // Launcher_ConsolePrintf (gv): Sys_SetupLegacyAPIs inlined; store Legacy_Sys_Printf into the launcher console callback slot.
+    if ( !GL_SetMode(*pmainwindow, &pmaindc, &pbaseRC, fD3D, "opengl32.dll", v4) )
+      return 0;
+    TraceInit((int)"Host_Init( &host_parms )", (int)"Host_Shutdown()", 0);
+    Host_Init(&host_parms);
+    if ( !host_initialized )
+      return 0;
+    TraceInit((int)"Sys_InitAuthentication()", (int)"Sys_ShutdownAuthentication()", 0);
+    Sys_Printf("STEAM Auth Server\r\n");
+    if ( isDedicated )
+    {
+      Host_InitializeGameDLL();
+      NET_Config(1);
+    }
+    else
+    {
+      ClientDLL_ActivateMouse();
+    }
+    return 1;
+  }

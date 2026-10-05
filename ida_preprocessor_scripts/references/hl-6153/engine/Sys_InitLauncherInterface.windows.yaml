@@ -1,0 +1,24 @@
+func_name: "Sys_InitLauncherInterface"
+func_va: "0x1daa110"
+disasm_code: |-
+  .text:01DA9D20                 mov     dword_24F26F0, offset sub_1DA9B30
+  .text:01DA9D2A                 mov     dword_23C00D4, offset sub_1DA9B50
+  .text:01DA9D34                 mov     Launcher_ConsolePrintf, offset Legacy_Sys_Printf; Launcher_ConsolePrintf (gv): legacy console callback assigned in the initializer's owned tail chunk.
+  .text:01DA9D3E                 retn
+  .text:01DAA110                 ; Sys_InitLauncherInterface: legacy API setup is represented as an owned tail chunk. Unlike the HLND2T source revision, this binary also checks MMX support and loads the OpenGL module handle.
+  .text:01DAA110                 call    sub_1DADA00; legacy API setup is represented as an owned tail chunk.
+  .text:01DAA115                 push    offset aOpengl32Dll_0; "opengl32.dll"
+  .text:01DAA11A                 mov     dword_24F2A48, eax
+  .text:01DAA11F                 call    ds:__imp_GetModuleHandleA
+  .text:01DAA125                 mov     dword_23C0508, eax
+  .text:01DAA12A                 jmp     loc_1DA9D20
+procedure: |-
+  // Sys_InitLauncherInterface: legacy API setup is represented as an owned tail chunk. Unlike the HLND2T source revision, this binary also checks MMX support and loads the OpenGL module handle.
+  void __cdecl Sys_InitLauncherInterface()
+  {
+    dword_24F2A48 = sub_1DADA00();
+    dword_23C0508 = (int)GetModuleHandleA(aOpengl32Dll_0);
+    dword_24F26F0 = sub_1DA9B30;
+    dword_23C00D4 = (int)sub_1DA9B50;
+    Launcher_ConsolePrintf = Legacy_Sys_Printf; // Launcher_ConsolePrintf (gv): select the callback slot assigned in the initializer's owned tail chunk.
+  }

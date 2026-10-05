@@ -1269,6 +1269,33 @@ modules:
           - Sys_InitGame.{platform}.yaml
           - pmainwindow.{platform}.yaml
           - maindc.{platform}.yaml
+      - name: find-Sys_InitGame-launcher-decompiles
+        platform: windows
+        expected_input:
+          - Sys_InitGame.{platform}.yaml
+        expected_output:
+          - Sys_InitLauncherInterface.{platform}.yaml
+      - name: find-Sys_InitLauncherInterface-decompiles
+        platform: windows
+        expected_input:
+          - Sys_InitLauncherInterface.{platform}.yaml
+        expected_output:
+          - Sys_SetupLegacyAPIs.{platform}.yaml
+      - name: find-Sys_SetupLegacyAPIs-decompiles
+        platform: windows
+        expected_input:
+          - Sys_SetupLegacyAPIs.{platform}.yaml
+        expected_output:
+          - Launcher_ConsolePrintf.{platform}.yaml
+      - name: find-Sys_Printf
+        expected_input:
+          - Launcher_ConsolePrintf.{platform}.yaml
+          - Sys_InitGame.{platform}.yaml
+        optional_input:
+          - Sys_InitLauncherInterface.{platform}.yaml
+          - Sys_SetupLegacyAPIs.{platform}.yaml
+        expected_output:
+          - Sys_Printf.{platform}.yaml
       - name: find-Sys_ShutdownGame
         expected_output:
           - Sys_ShutdownGame.{platform}.yaml
@@ -2395,6 +2422,16 @@ modules:
       - name: GL_Shutdown
         category: func
       - name: Sys_InitGame
+        category: func
+      - name: Sys_InitLauncherInterface
+        category: func
+        platform: windows
+      - name: Sys_SetupLegacyAPIs
+        category: func
+        platform: windows
+      - name: Launcher_ConsolePrintf
+        category: gv
+      - name: Sys_Printf
         category: func
       - name: pmainwindow
         category: gv
