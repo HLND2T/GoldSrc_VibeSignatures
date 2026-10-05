@@ -9,6 +9,7 @@ from ida_preprocessor_scripts.renderer_elf_symbols import STT_FUNC, current_elf_
 SVEN_LINUX_NAMES = {
     "Cbuf_Execute": "_Z12Cbuf_Executev",
     "NET_Config": "_Z10NET_Configi",
+    "Sock_Config": "_Z11Sock_Configi",
     "NET_IsLocalAddress": "_Z18NET_IsLocalAddress8netadr_s",
     "SVC_ServiceChallenge": "_Z20SVC_ServiceChallengev",
     "SV_Rcon": "_Z7SV_RconP8netadr_s",

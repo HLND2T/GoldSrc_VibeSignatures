@@ -1,6 +1,7 @@
 func_name: "SV_CheckForRcon"
 func_va: "0xebbf0"
 disasm_code: |-
+  ; sv is the whole server object, independently checked against its current Host_ClearMemory zero-fill base. sv_active_offset is the active guard address minus that base (reference: 0, width 4); derive the target numeric offset and do not publish sv.active as a global. giActive is the int32 engine state compared with DLL_CLOSE=3, independently checked in Host_Init. cls.state and host_initialized are separate guards. Keep all existing receive/filter annotations.
   .text:000EBBF0                 push    ebp
   .text:000EBBF1                 push    edi
   .text:000EBBF2                 push    esi
@@ -9,7 +10,7 @@ disasm_code: |-
   .text:000EBBFA                 mov     eax, large gs:14h
   .text:000EBC00                 mov     [esp+9Ch+var_20], eax
   .text:000EBC04                 xor     eax, eax
-  .text:000EBC06                 mov     eax, ds:sv.active
+  .text:000EBC06                 mov     eax, ds:sv.active ; (structmember, struct=rcon_server_prefix_t, member=active)
   .text:000EBC0B                 test    eax, eax
   .text:000EBC0D                 jnz     loc_EBDB0
   .text:000EBC13                 mov     eax, ds:cls.state
@@ -88,7 +89,7 @@ disasm_code: |-
   .text:000EBD12                 mov     eax, dword ptr [esp+9Ch+var_7C]
   .text:000EBD16                 test    eax, eax
   .text:000EBD18                 jnz     loc_EBDF1
-  .text:000EBD1E                 mov     eax, ds:net_message.data
+  .text:000EBD1E                 mov     eax, ds:net_message.data ; (structmember, struct=rcon_sizebuf_t, member=data)
   .text:000EBD23                 cmp     dword ptr [eax], 0FFFFFFFFh
   .text:000EBD26                 jnz     loc_EBC40
   .text:000EBD2C                 call    MSG_BeginReading
@@ -189,10 +190,10 @@ disasm_code: |-
   .text:000EBE7B                 mov     dword ptr [esp+9Ch+to.ipx+4], eax
   .text:000EBE7F                 mov     eax, dword ptr ds:net_from.ipx+8
   .text:000EBE84                 mov     dword ptr [esp+9Ch+to.ipx+8], eax
-  .text:000EBE88                 mov     eax, ds:net_message.data
+  .text:000EBE88                 mov     eax, ds:net_message.data ; (structmember, struct=rcon_sizebuf_t, member=data)
   .text:000EBE8D                 ; data
   .text:000EBE8D                 mov     [esp+9Ch+n], eax; data
-  .text:000EBE91                 mov     eax, ds:net_message.cursize
+  .text:000EBE91                 mov     eax, ds:net_message.cursize ; (structmember, struct=rcon_sizebuf_t, member=cursize)
   .text:000EBE96                 ; length
   .text:000EBE96                 mov     [esp+9Ch+src], eax; length
   .text:000EBE9A                 call    NET_SendPacket
@@ -213,6 +214,7 @@ disasm_code: |-
   .text:000EBEDA                 lea     esi, [esi+0]
   .text:000EBEE0                 call    __stack_chk_fail
 procedure: |-
+  // sv is the whole server object, independently checked against its current Host_ClearMemory zero-fill base. sv_active_offset is the active guard address minus that base (reference: 0, width 4); derive the target numeric offset and do not publish sv.active as a global. giActive is the int32 engine state compared with DLL_CLOSE=3, independently checked in Host_Init. cls.state and host_initialized are separate guards. Keep all existing receive/filter annotations.
   // Issue #326 Part B reference: verified current input, cdecl ABI and current call/dataflow. Native menu poller retains its dedicated/state guards. Inline filter/parser and authentication/redirect blocks are actual target code; separate retained helpers may be uncalled. Sven netadr trailing bytes are opaque; extra address-format/comparison arguments are target-specific.
   void __cdecl SV_CheckForRcon()
   {
@@ -228,7 +230,7 @@ procedure: |-
     unsigned int v9; // [esp+7Ch] [ebp-20h]
 
     v9 = __readgsdword(0x14u);
-    if ( sv.active == false && cls.state == ca_dedicated && giActive != 3 && host_initialized )
+    if ( sv.active == false && cls.state == ca_dedicated && giActive != 3 && host_initialized ) // (structmember, struct=rcon_server_prefix_t, member=active)
     {
       while ( 1 )
       {
@@ -249,7 +251,7 @@ procedure: |-
           MSG_WriteLong(&net_message, -1);
           MSG_WriteByte(&net_message, 108);
           MSG_WriteString(&net_message, s);
-          NET_SendPacket(1, net_message.cursize, net_message.data, (rcon_netadr_t)net_from);
+          NET_SendPacket(1, net_message.cursize, net_message.data, (rcon_netadr_t)net_from); // (structmember, struct=rcon_sizebuf_t, member=data) // (structmember, struct=rcon_sizebuf_t, member=cursize)
           SZ_Clear(&net_message);
           NET_CheckCleanupFakeIPConnection(netsrc_s::NS_SERVER, &net_from);
           continue;
@@ -276,7 +278,7 @@ procedure: |-
         if ( (__int64)sv_filterban.value )
           goto LABEL_24;
   LABEL_17:
-        if ( *(_DWORD *)net_message.data == -1 )
+        if ( *(_DWORD *)net_message.data == -1 ) // (structmember, struct=rcon_sizebuf_t, member=data)
         {
           MSG_BeginReading();
           MSG_ReadLong();

@@ -1,0 +1,9 @@
+gv_name: sv_redirectto
+gv_va: '0x90dae88'
+gv_rva: '0x73dae88'
+gv_sig: BE ?? ?? ?? ?? FF 75 ?? F3 A5 6A 01 E8 ?? ?? ?? ?? 83 C4 30 EB ?? 83 F8 01 75 ?? A1 ?? ?? ?? ?? 05 8C 00 00 00 6A
+  08
+gv_sig_va: '0x1da6c9a'
+gv_inst_offset: '0x0'
+gv_inst_length: '0x5'
+gv_inst_disp: '0x1'

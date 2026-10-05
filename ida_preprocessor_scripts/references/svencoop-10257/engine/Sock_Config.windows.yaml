@@ -1,0 +1,409 @@
+func_name: "Sock_Config"
+func_va: "0x1d0d0d0"
+disasm_code: |-
+  ; ip_sockets is the two-element IPv4 socket ARRAY BASE at NS_CLIENT=0, carried by the native close/zero loop. NS_SERVER=1, stride 4; base+4 is the server slot address, whose contents are the handle/fd. Reject the server slot or one-past-end sentinel as the base. Retain engine binding/port selection; unrenamed lock/config helpers are target-specific callees and do not identify this global by name.
+  .text:01D0D0D0                 sub     esp, 218h
+  .text:01D0D0D6                 mov     eax, ___security_cookie
+  .text:01D0D0DB                 xor     eax, esp
+  .text:01D0D0DD                 mov     [esp+218h+var_4], eax
+  .text:01D0D0E4                 push    ebx
+  .text:01D0D0E5                 push    ebp
+  .text:01D0D0E6                 push    esi
+  .text:01D0D0E7                 ; ArgList
+  .text:01D0D0E7                 push    edi; ArgList
+  .text:01D0D0E8                 push    offset aNoip; "-noip"
+  .text:01D0D0ED                 mov     dword_204D39C, 0
+  .text:01D0D0F7                 call    COM_CheckParm
+  .text:01D0D0FC                 add     esp, 4
+  .text:01D0D0FF                 test    eax, eax
+  .text:01D0D101                 jz      short loc_1D0D10D
+  .text:01D0D103                 mov     dword_204D39C, 1
+  .text:01D0D10D                 mov     eax, [esp+228h+multiplayer]
+  .text:01D0D114                 cmp     dword_1EDE158, eax
+  .text:01D0D11A                 jz      loc_1D0D434
+  .text:01D0D120                 mov     dword_1EDE158, eax
+  .text:01D0D125                 cmp     eax, 1
+  .text:01D0D128                 jl      loc_1D0D3E6
+  .text:01D0D12E                 cmp     dword_204D39C, 0
+  .text:01D0D135                 jnz     loc_1D0D233
+  .text:01D0D13B                 push    offset aInitializingIp; "Initializing IP networking.\n"
+  .text:01D0D140                 call    Con_Printf
+  .text:01D0D145                 xor     ebx, ebx
+  .text:01D0D147                 add     esp, 4
+  .text:01D0D14A                 cmp     dword_20D7D70, ebx
+  .text:01D0D150                 setz    bl
+  .text:01D0D153                 call    sub_1D77380
+  .text:01D0D158                 cmp     dword_204D3A4, 0
+  .text:01D0D15F                 jnz     short loc_1D0D1C5
+  .text:01D0D161                 fld     flt_1EDE0D8
+  .text:01D0D167                 call    sub_1E2B450
+  .text:01D0D16C                 mov     esi, eax
+  .text:01D0D16E                 test    esi, esi
+  .text:01D0D170                 jnz     short loc_1D0D196
+  .text:01D0D172                 fld     flt_1EDE0EC
+  .text:01D0D178                 call    sub_1E2B450
+  .text:01D0D17D                 mov     esi, eax
+  .text:01D0D17F                 test    esi, esi
+  .text:01D0D181                 jnz     short loc_1D0D196
+  .text:01D0D183                 fld     flt_1EDE128
+  .text:01D0D189                 fst     flt_1EDE0EC
+  .text:01D0D18F                 call    sub_1E2B450
+  .text:01D0D194                 mov     esi, eax
+  .text:01D0D196                 ; hostshort
+  .text:01D0D196                 push    esi; hostshort
+  .text:01D0D197                 ; int
+  .text:01D0D197                 push    off_1EDE10C; int
+  .text:01D0D19D                 mov     dword_1EDE0C8, esi
+  .text:01D0D1A3                 call    sub_1D0D670
+  .text:01D0D1A8                 add     esp, 8
+  .text:01D0D1AB                 mov     dword_204D3A4, eax
+  .text:01D0D1B0                 test    eax, eax
+  .text:01D0D1B2                 jnz     short loc_1D0D1C5
+  .text:01D0D1B4                 test    ebx, ebx
+  .text:01D0D1B6                 jz      short loc_1D0D1C5
+  .text:01D0D1B8                 ; ArgList
+  .text:01D0D1B8                 push    esi; ArgList
+  .text:01D0D1B9                 push    offset aCouldnTAllocat_0; "Couldn't allocate dedicated server IP p"...
+  .text:01D0D1BE                 call    Sys_Error
+  .text:01D0D1C3                 jmp     short loc_1D0D22B
+  .text:01D0D1C5                 call    sub_1D773A0
+  .text:01D0D1CA                 test    ebx, ebx
+  .text:01D0D1CC                 jnz     short loc_1D0D233
+  .text:01D0D1CE                 call    sub_1D77380
+  .text:01D0D1D3                 cmp     ip_sockets, ebx
+  .text:01D0D1D9                 jnz     short loc_1D0D22E
+  .text:01D0D1DB                 fld     flt_1EDE13C
+  .text:01D0D1E1                 call    sub_1E2B450
+  .text:01D0D1E6                 test    eax, eax
+  .text:01D0D1E8                 jnz     short loc_1D0D1FC
+  .text:01D0D1EA                 fld     flt_1EDE150
+  .text:01D0D1F0                 call    sub_1E2B450
+  .text:01D0D1F5                 test    eax, eax
+  .text:01D0D1F7                 jnz     short loc_1D0D1FC
+  .text:01D0D1F9                 or      eax, 0FFFFFFFFh
+  .text:01D0D1FC                 ; hostshort
+  .text:01D0D1FC                 push    eax; hostshort
+  .text:01D0D1FD                 ; int
+  .text:01D0D1FD                 push    off_1EDE10C; int
+  .text:01D0D203                 mov     dword_1EDE0C4, eax
+  .text:01D0D208                 call    sub_1D0D670
+  .text:01D0D20D                 add     esp, 8
+  .text:01D0D210                 mov     ip_sockets, eax
+  .text:01D0D215                 test    eax, eax
+  .text:01D0D217                 jnz     short loc_1D0D22E
+  .text:01D0D219                 ; hostshort
+  .text:01D0D219                 push    0FFFFFFFFh; hostshort
+  .text:01D0D21B                 ; int
+  .text:01D0D21B                 push    off_1EDE10C; int
+  .text:01D0D221                 call    sub_1D0D670
+  .text:01D0D226                 mov     ip_sockets, eax
+  .text:01D0D22B                 add     esp, 8
+  .text:01D0D22E                 call    sub_1D773A0
+  .text:01D0D233                 cmp     dword_1EDE15C, 0
+  .text:01D0D23A                 jz      loc_1D0D3DD
+  .text:01D0D240                 cmp     dword_204D39C, 0
+  .text:01D0D247                 mov     dword_1EDE15C, 0
+  .text:01D0D251                 jnz     loc_1D0D3D0
+  .text:01D0D257                 ; count
+  .text:01D0D257                 push    24h ; '$'; count
+  .text:01D0D259                 ; c
+  .text:01D0D259                 push    0; c
+  .text:01D0D25B                 ; dest
+  .text:01D0D25B                 push    offset dword_844B320; dest
+  .text:01D0D260                 call    Q_memset
+  .text:01D0D265                 push    offset aLocalhost; "localhost"
+  .text:01D0D26A                 push    off_1EDE10C; "localhost"
+  .text:01D0D270                 call    Q_strcmp
+  .text:01D0D275                 add     esp, 14h
+  .text:01D0D278                 test    eax, eax
+  .text:01D0D27A                 jz      short loc_1D0D296
+  .text:01D0D27C                 ; count
+  .text:01D0D27C                 push    1FFh; count
+  .text:01D0D281                 ; src
+  .text:01D0D281                 push    off_1EDE10C; src
+  .text:01D0D287                 lea     eax, [esp+230h+name]
+  .text:01D0D28B                 ; dest
+  .text:01D0D28B                 push    eax; dest
+  .text:01D0D28C                 call    Q_strncpy
+  .text:01D0D291                 add     esp, 0Ch
+  .text:01D0D294                 jmp     short loc_1D0D2D8
+  .text:01D0D296                 cmp     ArgList, 2
+  .text:01D0D29D                 jl      short loc_1D0D2C8
+  .text:01D0D29F                 push    offset a0000; "0.0.0.0"
+  .text:01D0D2A4                 push    offset aIp; "ip"
+  .text:01D0D2A9                 call    Cvar_Set
+  .text:01D0D2AE                 ; count
+  .text:01D0D2AE                 push    1FFh; count
+  .text:01D0D2B3                 ; src
+  .text:01D0D2B3                 push    off_1EDE10C; src
+  .text:01D0D2B9                 lea     eax, [esp+238h+name]
+  .text:01D0D2BD                 ; dest
+  .text:01D0D2BD                 push    eax; dest
+  .text:01D0D2BE                 call    Q_strncpy
+  .text:01D0D2C3                 add     esp, 14h
+  .text:01D0D2C6                 jmp     short loc_1D0D2D8
+  .text:01D0D2C8                 ; namelen
+  .text:01D0D2C8                 push    200h; namelen
+  .text:01D0D2CD                 lea     eax, [esp+22Ch+name]
+  .text:01D0D2D1                 ; name
+  .text:01D0D2D1                 push    eax; name
+  .text:01D0D2D2                 call    ds:gethostname
+  .text:01D0D2D8                 lea     eax, [esp+228h+name]
+  .text:01D0D2DC                 mov     [esp+228h+var_5], 0
+  .text:01D0D2E4                 ; void *
+  .text:01D0D2E4                 push    offset dword_844B320; void *
+  .text:01D0D2E9                 ; Str
+  .text:01D0D2E9                 push    eax; Str
+  .text:01D0D2EA                 call    sub_1D78630
+  .text:01D0D2EF                 add     esp, 8
+  .text:01D0D2F2                 mov     [esp+228h+namelen], 10h
+  .text:01D0D2FA                 lea     eax, [esp+228h+namelen]
+  .text:01D0D2FE                 ; namelen
+  .text:01D0D2FE                 push    eax; namelen
+  .text:01D0D2FF                 lea     eax, [esp+22Ch+var_214]
+  .text:01D0D303                 ; name
+  .text:01D0D303                 push    eax; name
+  .text:01D0D304                 ; s
+  .text:01D0D304                 push    dword_204D3A4; s
+  .text:01D0D30A                 call    ds:getsockname
+  .text:01D0D310                 test    eax, eax
+  .text:01D0D312                 jz      short loc_1D0D357
+  .text:01D0D314                 mov     dword_204D39C, 1
+  .text:01D0D31E                 call    ds:__imp_WSAGetLastError
+  .text:01D0D324                 ; Arguments
+  .text:01D0D324                 push    0; Arguments
+  .text:01D0D326                 ; nSize
+  .text:01D0D326                 push    400h; nSize
+  .text:01D0D32B                 ; lpBuffer
+  .text:01D0D32B                 push    offset Buffer; lpBuffer
+  .text:01D0D330                 ; dwLanguageId
+  .text:01D0D330                 push    400h; dwLanguageId
+  .text:01D0D335                 ; dwMessageId
+  .text:01D0D335                 push    eax; dwMessageId
+  .text:01D0D336                 ; lpSource
+  .text:01D0D336                 push    0; lpSource
+  .text:01D0D338                 ; dwFlags
+  .text:01D0D338                 push    1200h; dwFlags
+  .text:01D0D33D                 call    ds:FormatMessageA
+  .text:01D0D343                 ; ArgList
+  .text:01D0D343                 push    offset Buffer; ArgList
+  .text:01D0D348                 push    offset aErrorCouldNotG; "ERROR: Could not get IP address. Reason"...
+  .text:01D0D34D                 call    Con_Printf
+  .text:01D0D352                 add     esp, 8
+  .text:01D0D355                 jmp     short loc_1D0D393
+  .text:01D0D357                 mov     ax, word ptr [esp+228h+var_214.sa_data]
+  .text:01D0D35C                 mov     ecx, 9
+  .text:01D0D361                 ; format
+  .text:01D0D361                 push    0; format
+  .text:01D0D363                 sub     esp, 24h
+  .text:01D0D366                 mov     word_844B342, ax
+  .text:01D0D36C                 mov     esi, offset dword_844B320
+  .text:01D0D371                 mov     edi, esp
+  .text:01D0D373                 rep movsd
+  .text:01D0D375                 call    NET_AdrToString
+  .text:01D0D37A                 ; ArgList
+  .text:01D0D37A                 push    eax; ArgList
+  .text:01D0D37B                 push    offset aS; "%s"
+  .text:01D0D380                 call    va
+  .text:01D0D385                 ; int
+  .text:01D0D385                 push    eax; int
+  .text:01D0D386                 push    offset aNetAddress; "net_address"
+  .text:01D0D38B                 call    Cvar_Set
+  .text:01D0D390                 add     esp, 38h
+  .text:01D0D393                 cmp     dword_204D39C, 0
+  .text:01D0D39A                 jnz     short loc_1D0D3D0
+  .text:01D0D39C                 mov     ebx, dword_1EDE0C4
+  .text:01D0D3A2                 sub     esp, 24h
+  .text:01D0D3A5                 mov     ebp, dword_1EDE0C8
+  .text:01D0D3AB                 mov     ecx, 9
+  .text:01D0D3B0                 mov     esi, offset dword_844B320
+  .text:01D0D3B5                 mov     edi, esp
+  .text:01D0D3B7                 rep movsd
+  .text:01D0D3B9                 call    NET_BaseAdrToString
+  .text:01D0D3BE                 push    ebx
+  .text:01D0D3BF                 push    ebp
+  .text:01D0D3C0                 ; ArgList
+  .text:01D0D3C0                 push    eax; ArgList
+  .text:01D0D3C1                 push    offset aLocalIpAddress; "Local IP address: %s, SV port: %d, CL p"...
+  .text:01D0D3C6                 call    Con_Printf
+  .text:01D0D3CB                 add     esp, 34h
+  .text:01D0D3CE                 jmp     short loc_1D0D3DD
+  .text:01D0D3D0                 push    offset aIpNetworkingDi; "IP networking disabled.\n"
+  .text:01D0D3D5                 call    Con_Printf
+  .text:01D0D3DA                 add     esp, 4
+  .text:01D0D3DD                 cmp     dword_204D39C, 0
+  .text:01D0D3E4                 jz      short loc_1D0D434
+  .text:01D0D3E6                 cmp     dword_204D3A4, 0
+  .text:01D0D3ED                 jnz     short loc_1D0D3F8
+  .text:01D0D3EF                 cmp     ip_sockets, 0
+  .text:01D0D3F6                 jz      short loc_1D0D434
+  .text:01D0D3F8                 call    sub_1D77380
+  .text:01D0D3FD                 mov     edi, ds:closesocket
+  .text:01D0D403                 mov     esi, offset ip_sockets
+  .text:01D0D408                 mov     eax, [esi]
+  .text:01D0D40A                 test    eax, eax
+  .text:01D0D40C                 jz      short loc_1D0D417
+  .text:01D0D40E                 ; s
+  .text:01D0D40E                 push    eax; s
+  .text:01D0D40F                 call    edi ; closesocket
+  .text:01D0D411                 mov     dword ptr [esi], 0
+  .text:01D0D417                 add     esi, 4
+  .text:01D0D41A                 cmp     esi, offset dword_204D3A8
+  .text:01D0D420                 jl      short loc_1D0D408
+  .text:01D0D422                 call    sub_1D773A0
+  .text:01D0D427                 push    offset aClosedIpNetwor; "Closed IP networking.\n"
+  .text:01D0D42C                 call    Con_Printf
+  .text:01D0D431                 add     esp, 4
+  .text:01D0D434                 mov     ecx, [esp+228h+var_4]
+  .text:01D0D43B                 pop     edi
+  .text:01D0D43C                 pop     esi
+  .text:01D0D43D                 pop     ebp
+  .text:01D0D43E                 pop     ebx
+  .text:01D0D43F                 ; StackCookie
+  .text:01D0D43F                 xor     ecx, esp; StackCookie
+  .text:01D0D441                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:01D0D446                 add     esp, 218h
+  .text:01D0D44C                 retn
+procedure: |-
+  // ip_sockets is the two-element IPv4 socket ARRAY BASE at NS_CLIENT=0, carried by the native close/zero loop. NS_SERVER=1, stride 4; base+4 is the server slot address, whose contents are the handle/fd. Reject the server slot or one-past-end sentinel as the base. Retain engine binding/port selection; unrenamed lock/config helpers are target-specific callees and do not identify this global by name.
+  // Issue #326 Part C: current x86 operands verify the whole objects and field accesses. NS_SERVER=1; socket elements are 4 bytes. DLL_CLOSE=3; redirect modes 0/1/2. Sven address trailing bytes remain opaque. Original flush does not prove the reference fork UDP RCON fixes.
+  void __cdecl Sock_Config(int multiplayer)
+  {
+    BOOL v1; // ebx
+    int v2; // esi
+    int v3; // eax
+    DWORD Error; // eax
+    char *v5; // eax
+    char *v6; // eax
+    int v7; // ebx
+    int v8; // ebp
+    char *v9; // eax
+    int *v10; // esi
+    _BYTE v11[40]; // [esp-28h] [ebp-250h] BYREF
+    int namelen; // [esp+10h] [ebp-218h] BYREF
+    struct sockaddr v13; // [esp+14h] [ebp-214h] BYREF
+    char name[512]; // [esp+24h] [ebp-204h] BYREF
+
+    dword_204D39C = COM_CheckParm("-noip") != 0;
+    if ( dword_1EDE158 != multiplayer )
+    {
+      dword_1EDE158 = multiplayer;
+      if ( multiplayer < 1 )
+        goto LABEL_34;
+      if ( !dword_204D39C )
+      {
+        Con_Printf("Initializing IP networking.\n");
+        v1 = dword_20D7D70 == 0;
+        sub_1D77380();
+        if ( !dword_204D3A4 )
+        {
+          v2 = sub_1E2B450(flt_1EDE0D8);
+          if ( !v2 )
+          {
+            v2 = sub_1E2B450(flt_1EDE0EC);
+            if ( !v2 )
+            {
+              flt_1EDE0EC = flt_1EDE128;
+              v2 = sub_1E2B450(flt_1EDE128);
+            }
+          }
+          dword_1EDE0C8 = v2;
+          dword_204D3A4 = sub_1D0D670((int)off_1EDE10C, v2);
+          if ( !dword_204D3A4 && v1 )
+            Sys_Error("Couldn't allocate dedicated server IP port %d.", v2);
+        }
+        sub_1D773A0();
+        if ( !v1 )
+        {
+          sub_1D77380();
+          if ( !ip_sockets[0] )
+          {
+            v3 = sub_1E2B450(flt_1EDE13C);
+            if ( !v3 )
+            {
+              v3 = sub_1E2B450(flt_1EDE150);
+              if ( !v3 )
+                v3 = -1;
+            }
+            dword_1EDE0C4 = v3;
+            ip_sockets[0] = sub_1D0D670((int)off_1EDE10C, v3);
+            if ( !ip_sockets[0] )
+              ip_sockets[0] = sub_1D0D670((int)off_1EDE10C, 0xFFFFu);
+          }
+          sub_1D773A0();
+        }
+      }
+      if ( dword_1EDE15C )
+      {
+        dword_1EDE15C = 0;
+        if ( dword_204D39C )
+          goto LABEL_31;
+        Q_memset(&dword_844B320, 0, 0x24u);
+        if ( Q_strcmp(off_1EDE10C, "localhost") )
+        {
+          Q_strncpy(name, off_1EDE10C, 0x1FFu);
+        }
+        else if ( *(int *)ArgList < 2 )
+        {
+          gethostname(name, 512);
+        }
+        else
+        {
+          Cvar_Set("ip", "0.0.0.0");
+          Q_strncpy(name, off_1EDE10C, 0x1FFu);
+        }
+        name[511] = 0;
+        sub_1D78630(name, &dword_844B320);
+        namelen = 16;
+        if ( getsockname(dword_204D3A4, &v13, &namelen) )
+        {
+          dword_204D39C = 1;
+          Error = WSAGetLastError();
+          FormatMessageA(0x1200u, nullptr, Error, 0x400u, Buffer, 0x400u, nullptr);
+          Con_Printf("ERROR: Could not get IP address. Reason: %s\n", Buffer);
+        }
+        else
+        {
+          word_844B342 = *(_WORD *)v13.sa_data;
+          qmemcpy(v11, &dword_844B320, 0x24u);
+          v5 = NET_AdrToString(*(rcon_netadr_t *)v11, 0);
+          v6 = va("%s", v5);
+          Cvar_Set("net_address", v6);
+        }
+        if ( dword_204D39C )
+        {
+  LABEL_31:
+          Con_Printf("IP networking disabled.\n");
+        }
+        else
+        {
+          v7 = dword_1EDE0C4;
+          v8 = dword_1EDE0C8;
+          qmemcpy(&v11[4], &dword_844B320, 0x24u);
+          v9 = NET_BaseAdrToString(*(rcon_netadr_t *)&v11[4]);
+          Con_Printf("Local IP address: %s, SV port: %d, CL port: %d\n", v9, v8, v7);
+        }
+      }
+      if ( dword_204D39C )
+      {
+  LABEL_34:
+        if ( dword_204D3A4 || ip_sockets[0] )
+        {
+          sub_1D77380();
+          v10 = ip_sockets;
+          do
+          {
+            if ( *v10 )
+            {
+              closesocket(*v10);
+              *v10 = 0;
+            }
+            ++v10;
+          }
+          while ( (int)v10 < (int)&dword_204D3A8 );
+          sub_1D773A0();
+          Con_Printf("Closed IP networking.\n");
+        }
+      }
+    }
+  }

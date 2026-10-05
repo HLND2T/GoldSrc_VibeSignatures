@@ -1,0 +1,295 @@
+func_name: "NET_SendPacket"
+func_va: "0x10cbc0"
+disasm_code: |-
+  ; ip_sockets is the IPv4 socket ARRAY BASE selected by the netsrc argument in NA_IP/NA_BROADCAST paths; exclude loopback queues and ipx_sockets. NS_SERVER=1, stride 4, three slots in this HL reference. Publish the array base; consumers compute base+4 then load the socket handle. Socket slot and array base are distinct locations.
+  .text:0010CBC0                 sub     esp, 7Ch
+  .text:0010CBC3                 mov     [esp+7Ch+var_C], esi
+  .text:0010CBC7                 mov     esi, [esp+7Ch+to_0.type]
+  .text:0010CBCE                 mov     eax, large gs:14h
+  .text:0010CBD4                 mov     [esp+7Ch+var_20], eax
+  .text:0010CBD8                 xor     eax, eax
+  .text:0010CBDA                 movzx   eax, [esp+7Ch+to_0.port]
+  .text:0010CBE2                 mov     [esp+7Ch+var_8], edi
+  .text:0010CBE6                 mov     edi, [esp+7Ch+data]
+  .text:0010CBED                 mov     [esp+7Ch+var_10], ebx
+  .text:0010CBF1                 cmp     to, 1
+  .text:0010CBF4                 mov     [esp+7Ch+var_4], ebp
+  .text:0010CBF8                 mov     [esp+7Ch+to_port], eax
+  .text:0010CBFC                 jz      loc_10CDB0
+  .text:0010CC02                 cmp     to_type, 2
+  .text:0010CC05                 jz      loc_10CCF0
+  .text:0010CC0B                 cmp     to_type, 3
+  .text:0010CC0E                 jz      loc_10CCA0
+  .text:0010CC14                 mov     [esp+7Ch+error], offset aNetSendpacketB; "NET_SendPacket: bad address type"
+  .text:0010CC1B                 lea     ebp, [esp+7Ch+addr]
+  .text:0010CC1F                 call    Sys_Error
+  .text:0010CC24                 mov     eax, 10h
+  .text:0010CC29                 ; count
+  .text:0010CC29                 mov     [esp+7Ch+buf], eax; count
+  .text:0010CC2D                 xor     eax, eax
+  .text:0010CC2F                 ; fill
+  .text:0010CC2F                 mov     [esp+7Ch+s], eax; fill
+  .text:0010CC33                 ; dest
+  .text:0010CC33                 mov     [esp+7Ch+error], ebp; dest
+  .text:0010CC36                 call    Q_memset
+  .text:0010CC3B                 mov     eax, [esp+7Ch+length]
+  .text:0010CC42                 mov     ecx, 10h
+  .text:0010CC47                 ; to
+  .text:0010CC47                 mov     [esp+7Ch+var_68], ebp; to
+  .text:0010CC4B                 xor     ebp, ebp
+  .text:0010CC4D                 ; tolen
+  .text:0010CC4D                 mov     [esp+7Ch+tolen], ecx; tolen
+  .text:0010CC51                 ; flags
+  .text:0010CC51                 mov     [esp+7Ch+flags], ebp; flags
+  .text:0010CC55                 ; len
+  .text:0010CC55                 mov     [esp+7Ch+len], eax; len
+  .text:0010CC59                 mov     eax, [esp+7Ch+sock]
+  .text:0010CC60                 ; buf
+  .text:0010CC60                 mov     [esp+7Ch+buf], edi; buf
+  .text:0010CC64                 ; s
+  .text:0010CC64                 mov     [esp+7Ch+s], ebx; s
+  .text:0010CC68                 ; sock
+  .text:0010CC68                 mov     [esp+7Ch+error], eax; sock
+  .text:0010CC6B                 call    NET_SendLong
+  .text:0010CC70                 inc     ret
+  .text:0010CC71                 jz      loc_10CD40
+  .text:0010CC77                 mov     eax, [esp+7Ch+var_20]
+  .text:0010CC7B                 xor     eax, large gs:14h
+  .text:0010CC82                 jnz     loc_10CEFD
+  .text:0010CC88                 mov     ebx, [esp+7Ch+var_10]
+  .text:0010CC8C                 mov     esi, [esp+7Ch+var_C]
+  .text:0010CC90                 mov     edi, [esp+7Ch+var_8]
+  .text:0010CC94                 mov     ebp, [esp+7Ch+var_4]
+  .text:0010CC98                 add     esp, 7Ch
+  .text:0010CC9B                 retn
+  .text:0010CCA0                 mov     eax, [esp+7Ch+sock]
+  .text:0010CCA7                 mov     ebx, ds:ip_sockets[eax*4]
+  .text:0010CCAE                 test    net_socket, net_socket
+  .text:0010CCB0                 jz      short loc_10CC77
+  .text:0010CCB2                 mov     eax, 10h
+  .text:0010CCB7                 xor     edx, edx
+  .text:0010CCB9                 lea     ebp, [esp+7Ch+addr]
+  .text:0010CCBD                 ; count
+  .text:0010CCBD                 mov     [esp+7Ch+buf], eax; count
+  .text:0010CCC1                 ; fill
+  .text:0010CCC1                 mov     [esp+7Ch+s], edx; fill
+  .text:0010CCC5                 ; dest
+  .text:0010CCC5                 mov     [esp+7Ch+error], ebp; dest
+  .text:0010CCC8                 call    Q_memset
+  .text:0010CCCD                 mov     ecx, dword ptr [esp+7Ch+to_0.ip]
+  .text:0010CCD4                 mov     eax, [esp+7Ch+to_port]
+  .text:0010CCD8                 mov     [esp+7Ch+addr.sa_family], 2
+  .text:0010CCDF                 mov     dword ptr [esp+7Ch+addr.sa_data+2], ecx
+  .text:0010CCE3                 mov     word ptr [esp+7Ch+addr.sa_data], ax
+  .text:0010CCE8                 jmp     loc_10CC3B
+  .text:0010CCF0                 mov     eax, [esp+7Ch+sock]
+  .text:0010CCF7                 mov     ebx, ds:ip_sockets[eax*4]
+  .text:0010CCFE                 test    net_socket, net_socket
+  .text:0010CD00                 jz      loc_10CC77
+  .text:0010CD06                 xor     ebp, ebp
+  .text:0010CD08                 mov     ecx, 10h
+  .text:0010CD0D                 ; fill
+  .text:0010CD0D                 mov     [esp+7Ch+s], ebp; fill
+  .text:0010CD11                 lea     ebp, [esp+7Ch+addr]
+  .text:0010CD15                 ; count
+  .text:0010CD15                 mov     [esp+7Ch+buf], ecx; count
+  .text:0010CD19                 ; dest
+  .text:0010CD19                 mov     [esp+7Ch+error], ebp; dest
+  .text:0010CD1C                 call    Q_memset
+  .text:0010CD21                 mov     eax, [esp+7Ch+to_port]
+  .text:0010CD25                 mov     [esp+7Ch+addr.sa_family], 2
+  .text:0010CD2C                 mov     word ptr [esp+7Ch+addr.sa_data], ax
+  .text:0010CD31                 mov     eax, 0FFFFFFFFh
+  .text:0010CD36                 mov     dword ptr [esp+7Ch+addr.sa_data+2], eax
+  .text:0010CD3A                 jmp     loc_10CC3B
+  .text:0010CD40                 call    __errno_location
+  .text:0010CD45                 mov     ebp, [eax]
+  .text:0010CD47                 cmp     err, 0Bh
+  .text:0010CD4A                 setz    dl
+  .text:0010CD4D                 cmp     err, 6Fh ; 'o'
+  .text:0010CD50                 setz    al
+  .text:0010CD53                 or      dl, al
+  .text:0010CD55                 jnz     loc_10CC77
+  .text:0010CD5B                 cmp     err, 68h ; 'h'
+  .text:0010CD5E                 jz      loc_10CC77
+  .text:0010CD64                 cmp     err, 63h ; 'c'
+  .text:0010CD67                 setz    al
+  .text:0010CD6A                 cmp     to_type, 2
+  .text:0010CD6D                 jnz     short loc_10CD77
+  .text:0010CD6F                 test    al, al
+  .text:0010CD71                 jnz     loc_10CC77
+  .text:0010CD77                 mov     edx, ds:cls.state
+  .text:0010CD7D                 test    edx, edx
+  .text:0010CD7F                 jz      loc_10CEE0
+  .text:0010CD85                 cmp     err, 69h ; 'i'
+  .text:0010CD88                 jz      loc_10CE10
+  .text:0010CD8E                 test    al, al
+  .text:0010CD90                 jnz     short loc_10CE10
+  .text:0010CD92                 ; errnum
+  .text:0010CD92                 mov     [esp+7Ch+error], err; errnum
+  .text:0010CD95                 call    strerror
+  .text:0010CD9A                 mov     [esp+7Ch+error], offset aNetSendpacketE; "NET_SendPacket ERROR: %s\n"
+  .text:0010CDA1                 mov     [esp+7Ch+s], eax
+  .text:0010CDA5                 call    Sys_Error
+  .text:0010CDAA                 jmp     loc_10CC77
+  .text:0010CDB0                 mov     ebx, [esp+7Ch+sock]
+  .text:0010CDB7                 mov     eax, [esp+7Ch+length]
+  .text:0010CDBE                 ; src
+  .text:0010CDBE                 mov     [esp+7Ch+s], edi; src
+  .text:0010CDC2                 xor     ebx, 1
+  .text:0010CDC5                 imul    ebx, 5E78h
+  .text:0010CDCB                 ; count
+  .text:0010CDCB                 mov     [esp+7Ch+buf], eax; count
+  .text:0010CDCF                 mov     edx, ds:loopbacks.send[ebx]
+  .text:0010CDD5                 mov     ecx, edx
+  .text:0010CDD7                 inc     edx
+  .text:0010CDD8                 and     ecx, 3
+  .text:0010CDDB                 imul    eax, ecx, 179Ch
+  .text:0010CDE1                 mov     ds:loopbacks.send[ebx], edx
+  .text:0010CDE7                 lea     ebx, loopbacks.msgs.data[ebx+eax]
+  .text:0010CDEE                 ; dest
+  .text:0010CDEE                 mov     [esp+7Ch+error], ebx; dest
+  .text:0010CDF1                 call    Q_memcpy
+  .text:0010CDF6                 mov     eax, [esp+7Ch+length]
+  .text:0010CDFD                 mov     [ebx+1798h], eax
+  .text:0010CE03                 jmp     loc_10CC77
+  .text:0010CE10                 movzx   eax, [esp+7Ch+to_0.ip]
+  .text:0010CE18                 ; dest
+  .text:0010CE18                 mov     [esp+7Ch+error], offset s_14016; dest
+  .text:0010CE1F                 movzx   ebx, [esp+7Ch+to_0.ip+3]
+  .text:0010CE27                 mov     [esp+7Ch+var_3D], al
+  .text:0010CE2B                 movzx   eax, [esp+7Ch+to_0.ip+1]
+  .text:0010CE33                 mov     [esp+7Ch+var_3F], al
+  .text:0010CE37                 movzx   eax, [esp+7Ch+to_0.ip+2]
+  .text:0010CE3F                 mov     [esp+7Ch+var_3E], al
+  .text:0010CE43                 mov     eax, 40h ; '@'
+  .text:0010CE48                 ; count
+  .text:0010CE48                 mov     [esp+7Ch+buf], eax; count
+  .text:0010CE4C                 xor     eax, eax
+  .text:0010CE4E                 ; fill
+  .text:0010CE4E                 mov     [esp+7Ch+s], eax; fill
+  .text:0010CE52                 call    Q_memset
+  .text:0010CE57                 cmp     to_type, 3
+  .text:0010CE5A                 jnz     short loc_10CEBA
+  .text:0010CE5C                 movzx   eax, [esp+7Ch+var_3E]
+  .text:0010CE61                 mov     ecx, offset aIIIII; "%i.%i.%i.%i:%i"
+  .text:0010CE66                 mov     to_type, 1
+  .text:0010CE6B                 mov     edi, [esp+7Ch+to_port]
+  .text:0010CE6F                 ror     di, 8
+  .text:0010CE73                 movzx   edi, di
+  .text:0010CE76                 mov     [esp+7Ch+var_60], eax
+  .text:0010CE7A                 movzx   eax, [esp+7Ch+var_3F]
+  .text:0010CE7F                 mov     [esp+7Ch+var_58], edi
+  .text:0010CE83                 mov     edi, 40h ; '@'
+  .text:0010CE88                 mov     [esp+7Ch+var_5C], ebx
+  .text:0010CE8C                 mov     ebx, 40h ; '@'
+  .text:0010CE91                 mov     [esp+7Ch+flags], ecx
+  .text:0010CE95                 mov     [esp+7Ch+tolen], eax
+  .text:0010CE99                 movzx   eax, [esp+7Ch+var_3D]
+  .text:0010CE9E                 mov     [esp+7Ch+len], ebx
+  .text:0010CEA2                 mov     [esp+7Ch+buf], esi
+  .text:0010CEA6                 mov     [esp+7Ch+s], edi
+  .text:0010CEAA                 mov     [esp+7Ch+var_68], eax
+  .text:0010CEAE                 mov     [esp+7Ch+error], offset s_14016
+  .text:0010CEB5                 call    __snprintf_chk
+  .text:0010CEBA                 ; errnum
+  .text:0010CEBA                 mov     [esp+7Ch+error], err; errnum
+  .text:0010CEBD                 call    strerror
+  .text:0010CEC2                 mov     edx, offset s_14016
+  .text:0010CEC7                 mov     [esp+7Ch+buf], edx
+  .text:0010CECB                 mov     [esp+7Ch+error], offset aNetSendpacketW; "NET_SendPacket Warning: %s : %s\n"
+  .text:0010CED2                 mov     [esp+7Ch+s], eax
+  .text:0010CED6                 call    Con_DPrintf
+  .text:0010CEDB                 jmp     loc_10CC77
+  .text:0010CEE0                 ; errnum
+  .text:0010CEE0                 mov     [esp+7Ch+error], err; errnum
+  .text:0010CEE3                 call    strerror
+  .text:0010CEE8                 mov     [esp+7Ch+error], offset aNetSendpacketE; "NET_SendPacket ERROR: %s\n"
+  .text:0010CEEF                 mov     [esp+7Ch+s], eax
+  .text:0010CEF3                 call    Con_Printf
+  .text:0010CEF8                 jmp     loc_10CC77
+  .text:0010CEFD                 call    __stack_chk_fail
+procedure: |-
+  // ip_sockets is the IPv4 socket ARRAY BASE selected by the netsrc argument in NA_IP/NA_BROADCAST paths; exclude loopback queues and ipx_sockets. NS_SERVER=1, stride 4, three slots in this HL reference. Publish the array base; consumers compute base+4 then load the socket handle. Socket slot and array base are distinct locations.
+  // Issue #326 Part C: current x86 operands verify the whole objects and field accesses. NS_SERVER=1; socket elements are 4 bytes. DLL_CLOSE=3; redirect modes 0/1/2. Sven address trailing bytes remain opaque. Original flush does not prove the reference fork UDP RCON fixes.
+  void __cdecl NET_SendPacket(int sock, int length, void *data, rcon_netadr_t to)
+  {
+    int s; // ebx
+    int v5; // ebp
+    char *v6; // eax
+    int v7; // ebx
+    int v8; // ecx
+    byte *v9; // ebx
+    char *v10; // eax
+    char *v11; // eax
+    sockaddr addr; // [esp+4Ch] [ebp-30h] BYREF
+    unsigned int v13; // [esp+5Ch] [ebp-20h]
+
+    v13 = __readgsdword(0x14u);
+    if ( to.type == 1 )
+    {
+      v7 = sock ^ 1;
+      v8 = loopbacks[v7].send++ & 3;
+      v9 = &loopbacks[0].msgs[v8].data[v7 * 24184];
+      Q_memcpy(v9, data, length);
+      *((_DWORD *)v9 + 1510) = length;
+      return;
+    }
+    if ( to.type == 2 )
+    {
+      s = ip_sockets[sock];
+      if ( !s )
+        return;
+      Q_memset(&addr, 0, 16);
+      addr.sa_family = 2;
+      *(_WORD *)addr.sa_data = to.port;
+      *(_DWORD *)&addr.sa_data[2] = -1;
+      goto LABEL_5;
+    }
+    if ( to.type != 3 )
+      Sys_Error("NET_SendPacket: bad address type");
+    s = ip_sockets[sock];
+    if ( s )
+    {
+      Q_memset(&addr, 0, 16);
+      addr.sa_family = 2;
+      *(_DWORD *)&addr.sa_data[2] = *(_DWORD *)to.ip;
+      *(_WORD *)addr.sa_data = to.port;
+  LABEL_5:
+      if ( NET_SendLong((netsrc_t)sock, s, (const char *)data, length, 0, &addr, 16) == -1 )
+      {
+        v5 = *_errno_location();
+        if ( v5 != 111 && v5 != 11 && v5 != 104 && (to.type != 2 || v5 != 99) )
+        {
+          if ( cls.state )
+          {
+            if ( v5 != 105 && v5 != 99 )
+            {
+              v6 = strerror(v5);
+              Sys_Error("NET_SendPacket ERROR: %s\n", v6);
+            }
+            Q_memset(s_14016, 0, 64);
+            if ( to.type == 3 )
+              _snprintf_chk(
+                s_14016,
+                64,
+                1,
+                64,
+                "%i.%i.%i.%i:%i",
+                to.ip[0],
+                to.ip[1],
+                to.ip[2],
+                to.ip[3],
+                (unsigned __int16)__ROR2__(to.port, 8));
+            v10 = strerror(v5);
+            Con_DPrintf("NET_SendPacket Warning: %s : %s\n", v10, s_14016);
+          }
+          else
+          {
+            v11 = strerror(v5);
+            Con_Printf("NET_SendPacket ERROR: %s\n", v11);
+          }
+        }
+      }
+    }
+  }

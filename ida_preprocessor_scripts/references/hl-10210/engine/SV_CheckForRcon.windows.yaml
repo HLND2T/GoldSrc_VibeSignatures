@@ -1,11 +1,12 @@
 func_name: "SV_CheckForRcon"
 func_va: "0x102072f0"
 disasm_code: |-
-  .text:102072F0                 cmp     dword_10FD1000, 0
+  ; sv is the whole server object, independently checked against its current Host_ClearMemory zero-fill base. sv_active_offset is the active guard address minus that base (reference: 0, width 4); derive the target numeric offset and do not publish sv.active as a global. giActive is the int32 engine state compared with DLL_CLOSE=3, independently checked in Host_Init. cls.state and host_initialized are separate guards. Keep all existing receive/filter annotations.
+  .text:102072F0                 cmp     sv.active, 0 ; (structmember, struct=rcon_server_prefix_t, member=active)
   .text:102072F7                 jnz     locret_102073E2
   .text:102072FD                 cmp     cls.state, 0
   .text:10207304                 jnz     locret_102073E2
-  .text:1020730A                 cmp     dword_10F776A4, 3
+  .text:1020730A                 cmp     giActive, 3
   .text:10207311                 jz      locret_102073E2
   .text:10207317                 cmp     dword_104B8CCC, 0
   .text:1020731E                 jz      locret_102073E2
@@ -29,7 +30,7 @@ disasm_code: |-
   .text:1020734C                 call    NET_CheckCleanupFakeIPConnection
   .text:10207351                 add     esp, 8
   .text:10207354                 jmp     short loc_102073CF
-  .text:10207356                 mov     eax, net_message.data
+  .text:10207356                 mov     eax, net_message.data ; (structmember, struct=rcon_sizebuf_t, member=data)
   .text:1020735B                 cmp     dword ptr [eax], 0FFFFFFFFh
   .text:1020735E                 jnz     short loc_102073CF
   .text:10207360                 call    MSG_BeginReading
@@ -78,13 +79,14 @@ disasm_code: |-
   .text:102073E1                 pop     esi
   .text:102073E2                 retn
 procedure: |-
+  // sv is the whole server object, independently checked against its current Host_ClearMemory zero-fill base. sv_active_offset is the active guard address minus that base (reference: 0, width 4); derive the target numeric offset and do not publish sv.active as a global. giActive is the int32 engine state compared with DLL_CLOSE=3, independently checked in Host_Init. cls.state and host_initialized are separate guards. Keep all existing receive/filter annotations.
   // Issue #326 Part B reference: verified current input, cdecl ABI and current call/dataflow. Native menu poller retains its dedicated/state guards. Inline filter/parser and authentication/redirect blocks are actual target code; separate retained helpers may be uncalled. Sven netadr trailing bytes are opaque; extra address-format/comparison arguments are target-specific.
   void __cdecl SV_CheckForRcon()
   {
     char *StringLine; // eax
     char *v1; // esi
 
-    if ( !dword_10FD1000 && cls.state == ca_dedicated && dword_10F776A4 != 3 && dword_104B8CCC && NET_GetPacket(1) )
+    if ( !sv.active && cls.state == ca_dedicated && giActive != 3 && dword_104B8CCC && NET_GetPacket(1) ) // (structmember, struct=rcon_server_prefix_t, member=active)
     {
       do
       {
@@ -93,7 +95,7 @@ procedure: |-
           SV_SendBan();
           NET_CheckCleanupFakeIPConnection(1, &net_from);
         }
-        else if ( *(_DWORD *)net_message.data == -1 )
+        else if ( *(_DWORD *)net_message.data == -1 ) // (structmember, struct=rcon_sizebuf_t, member=data)
         {
           MSG_BeginReading();
           MSG_ReadLong();

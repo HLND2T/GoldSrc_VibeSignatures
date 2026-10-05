@@ -2,6 +2,38 @@ modules:
   - name: engine
     module_windows: hw.dll
     skills:
+      - name: find-NET_SendPacket-ip_sockets-decompiles
+        expected_input:
+          - NET_SendPacket.{platform}.yaml
+          - NET_Config.{platform}.yaml
+        expected_output:
+          - ip_sockets.{platform}.yaml
+      - name: find-SV_SendBan-message-globals-decompiles
+        expected_input:
+          - SV_SendBan.{platform}.yaml
+          - NET_SendPacket.{platform}.yaml
+          - NET_GetPacket.{platform}.yaml
+        expected_output:
+          - net_from.{platform}.yaml
+          - net_message.{platform}.yaml
+          - sizebuf_t_data_offset.{platform}.yaml
+          - sizebuf_t_cursize_offset.{platform}.yaml
+      - name: find-SV_CheckForRcon-state-globals-decompiles
+        expected_input:
+          - SV_CheckForRcon.{platform}.yaml
+          - Host_ClearMemory.{platform}.yaml
+          - Host_Init.{platform}.yaml
+        expected_output:
+          - sv.{platform}.yaml
+          - giActive.{platform}.yaml
+          - sv_active_offset.{platform}.yaml
+      - name: find-SV_FlushRedirect-globals-decompiles
+        expected_input:
+          - SV_FlushRedirect.{platform}.yaml
+        expected_output:
+          - sv_redirected.{platform}.yaml
+          - sv_redirectto.{platform}.yaml
+          - outputbuf.{platform}.yaml
       - name: find-native-rcon-path-string-symbols
         expected_output:
           - NET_SendPacket.{platform}.yaml
@@ -1515,6 +1547,28 @@ modules:
         category: func
       - name: NET_SendPacket
         category: func
+      - name: ip_sockets
+        category: gv
+      - name: net_from
+        category: gv
+      - name: net_message
+        category: gv
+      - name: sv
+        category: gv
+      - name: giActive
+        category: gv
+      - name: sv_redirected
+        category: gv
+      - name: sv_redirectto
+        category: gv
+      - name: outputbuf
+        category: gv
+      - name: sv_active_offset
+        category: scalar
+      - name: sizebuf_t_data_offset
+        category: scalar
+      - name: sizebuf_t_cursize_offset
+        category: scalar
       - name: Cbuf_Execute
         category: func
       - name: NET_Config

@@ -1,0 +1,281 @@
+func_name: "NET_SendPacket"
+func_va: "0x101dfce0"
+disasm_code: |-
+  ; ip_sockets is the IPv4 socket ARRAY BASE selected by the netsrc argument in NA_IP/NA_BROADCAST paths; exclude loopback queues and ipx_sockets. NS_SERVER=1, stride 4, three slots in this HL reference. Publish the array base; consumers compute base+4 then load the socket handle. Socket slot and array base are distinct locations.
+  .text:101DFCE0                 push    ebp
+  .text:101DFCE1                 mov     ebp, esp
+  .text:101DFCE3                 sub     esp, 40h
+  .text:101DFCE6                 mov     eax, ___security_cookie
+  .text:101DFCEB                 xor     eax, ebp
+  .text:101DFCED                 mov     [ebp+var_4], eax
+  .text:101DFCF0                 movups  xmm0, xmmword ptr [ebp+arg_C.type]
+  .text:101DFCF4                 mov     eax, [ebp+data]
+  .text:101DFCF7                 push    ebx
+  .text:101DFCF8                 mov     ebx, [ebp+sock]
+  .text:101DFCFB                 push    esi
+  .text:101DFCFC                 push    edi
+  .text:101DFCFD                 movd    edi, xmm0
+  .text:101DFD01                 mov     [ebp+a.type], eax
+  .text:101DFD04                 mov     eax, dword ptr [ebp+arg_C.ipx+8]
+  .text:101DFD07                 mov     [ebp+var_30], eax
+  .text:101DFD0A                 mov     [ebp+var_18], eax
+  .text:101DFD0D                 movups  [ebp+var_40], xmm0
+  .text:101DFD11                 cmp     edi, 1
+  .text:101DFD14                 jnz     loc_101DFDAC
+  .text:101DFD1A                 cmp     dword_104BB8B4, 0
+  .text:101DFD21                 jz      short loc_101DFD37
+  .text:101DFD23                 cmp     dword_104BB8D8, 0
+  .text:101DFD2A                 jz      short loc_101DFD37
+  .text:101DFD2C                 ; lpCriticalSection
+  .text:101DFD2C                 push    offset CriticalSection; lpCriticalSection
+  .text:101DFD31                 call    ds:EnterCriticalSection
+  .text:101DFD37                 mov     esi, [ebp+len]
+  .text:101DFD3A                 xor     ebx, 1
+  .text:101DFD3D                 imul    edx, ebx, 5E78h
+  .text:101DFD43                 push    esi
+  .text:101DFD44                 push    [ebp+a.type]
+  .text:101DFD47                 add     edx, offset unk_104BB8E0
+  .text:101DFD4D                 mov     eax, [edx+5E74h]
+  .text:101DFD53                 mov     ecx, eax
+  .text:101DFD55                 and     ecx, 3
+  .text:101DFD58                 inc     eax
+  .text:101DFD59                 imul    edi, ecx, 179Ch
+  .text:101DFD5F                 mov     [edx+5E74h], eax
+  .text:101DFD65                 add     edi, edx
+  .text:101DFD67                 push    edi
+  .text:101DFD68                 call    Q_memcpy
+  .text:101DFD6D                 add     esp, 0Ch
+  .text:101DFD70                 mov     [edi+1798h], esi
+  .text:101DFD76                 cmp     dword_104BB8B4, 0
+  .text:101DFD7D                 jz      loc_101DFF1C
+  .text:101DFD83                 cmp     dword_104BB8D8, 0
+  .text:101DFD8A                 jz      loc_101DFF1C
+  .text:101DFD90                 ; lpCriticalSection
+  .text:101DFD90                 push    offset CriticalSection; lpCriticalSection
+  .text:101DFD95                 call    ds:LeaveCriticalSection
+  .text:101DFD9B                 pop     edi
+  .text:101DFD9C                 pop     esi
+  .text:101DFD9D                 pop     ebx
+  .text:101DFD9E                 mov     ecx, [ebp+var_4]
+  .text:101DFDA1                 ; StackCookie
+  .text:101DFDA1                 xor     ecx, ebp; StackCookie
+  .text:101DFDA3                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101DFDA8                 mov     esp, ebp
+  .text:101DFDAA                 pop     ebp
+  .text:101DFDAB                 retn
+  .text:101DFDAC                 cmp     edi, 2
+  .text:101DFDAF                 jnz     short loc_101DFDC2
+  .text:101DFDB1                 mov     esi, ip_sockets[ebx*4]
+  .text:101DFDB8                 test    esi, esi
+  .text:101DFDBA                 jz      loc_101DFF1C
+  .text:101DFDC0                 jmp     short loc_101DFDE8
+  .text:101DFDC2                 cmp     edi, 3
+  .text:101DFDC5                 jnz     short loc_101DFDD8
+  .text:101DFDC7                 mov     esi, ip_sockets[ebx*4]
+  .text:101DFDCE                 test    esi, esi
+  .text:101DFDD0                 jz      loc_101DFF1C
+  .text:101DFDD6                 jmp     short loc_101DFDE8
+  .text:101DFDD8                 push    offset aNetSendpacketB; "NET_SendPacket: bad address type"
+  .text:101DFDDD                 call    Sys_Error
+  .text:101DFDE2                 mov     esi, [ebp+var_30]
+  .text:101DFDE5                 add     esp, 4
+  .text:101DFDE8                 ; count
+  .text:101DFDE8                 push    10h; count
+  .text:101DFDEA                 lea     eax, [ebp+to]
+  .text:101DFDED                 ; fill
+  .text:101DFDED                 push    0; fill
+  .text:101DFDEF                 ; dest
+  .text:101DFDEF                 push    eax; dest
+  .text:101DFDF0                 call    Q_memset
+  .text:101DFDF5                 add     esp, 0Ch
+  .text:101DFDF8                 cmp     edi, 2
+  .text:101DFDFB                 jnz     short loc_101DFE06
+  .text:101DFDFD                 mov     dword ptr [ebp+to.sa_data+2], 0FFFFFFFFh
+  .text:101DFE04                 jmp     short loc_101DFE19
+  .text:101DFE06                 cmp     edi, 3
+  .text:101DFE09                 jnz     short loc_101DFE2A
+  .text:101DFE0B                 movups  xmm0, [ebp+var_40]
+  .text:101DFE0F                 psrldq  xmm0, 4
+  .text:101DFE14                 movd    dword ptr [ebp+to.sa_data+2], xmm0
+  .text:101DFE19                 mov     eax, 2
+  .text:101DFE1E                 mov     [ebp+to.sa_family], ax
+  .text:101DFE22                 mov     ax, word ptr [ebp+var_18+2]
+  .text:101DFE26                 mov     word ptr [ebp+to.sa_data], ax
+  .text:101DFE2A                 ; tolen
+  .text:101DFE2A                 push    10h; tolen
+  .text:101DFE2C                 lea     eax, [ebp+to]
+  .text:101DFE2F                 ; to
+  .text:101DFE2F                 push    eax; to
+  .text:101DFE30                 ; flags
+  .text:101DFE30                 push    0; flags
+  .text:101DFE32                 ; len
+  .text:101DFE32                 push    [ebp+len]; len
+  .text:101DFE35                 ; a
+  .text:101DFE35                 push    [ebp+a.type]; a
+  .text:101DFE38                 ; s
+  .text:101DFE38                 push    esi; s
+  .text:101DFE39                 ; int
+  .text:101DFE39                 push    ebx; int
+  .text:101DFE3A                 call    sub_101DFAC0
+  .text:101DFE3F                 add     esp, 1Ch
+  .text:101DFE42                 cmp     eax, 0FFFFFFFFh
+  .text:101DFE45                 jnz     loc_101DFF1C
+  .text:101DFE4B                 call    WSAGetLastError
+  .text:101DFE50                 mov     esi, eax
+  .text:101DFE52                 cmp     esi, 2733h
+  .text:101DFE58                 jz      loc_101DFF1C
+  .text:101DFE5E                 cmp     esi, 274Dh
+  .text:101DFE64                 jz      loc_101DFF1C
+  .text:101DFE6A                 cmp     esi, 2746h
+  .text:101DFE70                 jz      loc_101DFF1C
+  .text:101DFE76                 cmp     esi, 2741h
+  .text:101DFE7C                 jnz     short loc_101DFE87
+  .text:101DFE7E                 cmp     edi, 2
+  .text:101DFE81                 jz      loc_101DFF1C
+  .text:101DFE87                 cmp     cls.state, 0
+  .text:101DFE8E                 jnz     short loc_101DFEB5
+  .text:101DFE90                 push    esi
+  .text:101DFE91                 call    sub_101DE1F0
+  .text:101DFE96                 ; ArgList
+  .text:101DFE96                 push    eax; ArgList
+  .text:101DFE97                 push    offset aNetSendpacketE; "NET_SendPacket ERROR: %s\n"
+  .text:101DFE9C                 call    Con_Printf
+  .text:101DFEA1                 add     esp, 0Ch
+  .text:101DFEA4                 pop     edi
+  .text:101DFEA5                 pop     esi
+  .text:101DFEA6                 pop     ebx
+  .text:101DFEA7                 mov     ecx, [ebp+var_4]
+  .text:101DFEAA                 ; StackCookie
+  .text:101DFEAA                 xor     ecx, ebp; StackCookie
+  .text:101DFEAC                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101DFEB1                 mov     esp, ebp
+  .text:101DFEB3                 pop     ebp
+  .text:101DFEB4                 retn
+  .text:101DFEB5                 cmp     esi, 2741h
+  .text:101DFEBB                 jz      short loc_101DFEEA
+  .text:101DFEBD                 cmp     esi, 2747h
+  .text:101DFEC3                 jz      short loc_101DFEEA
+  .text:101DFEC5                 push    esi
+  .text:101DFEC6                 call    sub_101DE1F0
+  .text:101DFECB                 push    eax
+  .text:101DFECC                 push    offset aNetSendpacketE; "NET_SendPacket ERROR: %s\n"
+  .text:101DFED1                 call    Sys_Error
+  .text:101DFED6                 add     esp, 0Ch
+  .text:101DFED9                 pop     edi
+  .text:101DFEDA                 pop     esi
+  .text:101DFEDB                 pop     ebx
+  .text:101DFEDC                 mov     ecx, [ebp+var_4]
+  .text:101DFEDF                 ; StackCookie
+  .text:101DFEDF                 xor     ecx, ebp; StackCookie
+  .text:101DFEE1                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101DFEE6                 mov     esp, ebp
+  .text:101DFEE8                 pop     ebp
+  .text:101DFEE9                 retn
+  .text:101DFEEA                 movups  xmm0, [ebp+var_40]
+  .text:101DFEEE                 mov     ecx, [ebp+var_30]
+  .text:101DFEF1                 sub     esp, 14h
+  .text:101DFEF4                 mov     eax, esp
+  .text:101DFEF6                 movups  xmmword ptr [eax], xmm0
+  .text:101DFEF9                 mov     [eax+10h], ecx
+  .text:101DFEFC                 call    NET_AdrToString
+  .text:101DFF01                 add     esp, 14h
+  .text:101DFF04                 push    eax
+  .text:101DFF05                 push    esi
+  .text:101DFF06                 call    sub_101DE1F0
+  .text:101DFF0B                 add     esp, 4
+  .text:101DFF0E                 ; ArgList
+  .text:101DFF0E                 push    eax; ArgList
+  .text:101DFF0F                 push    offset aNetSendpacketW; "NET_SendPacket Warning: %s : %s\n"
+  .text:101DFF14                 call    Con_DPrintf
+  .text:101DFF19                 add     esp, 0Ch
+  .text:101DFF1C                 mov     ecx, [ebp+var_4]
+  .text:101DFF1F                 pop     edi
+  .text:101DFF20                 pop     esi
+  .text:101DFF21                 ; StackCookie
+  .text:101DFF21                 xor     ecx, ebp; StackCookie
+  .text:101DFF23                 pop     ebx
+  .text:101DFF24                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:101DFF29                 mov     esp, ebp
+  .text:101DFF2B                 pop     ebp
+  .text:101DFF2C                 retn
+procedure: |-
+  // ip_sockets is the IPv4 socket ARRAY BASE selected by the netsrc argument in NA_IP/NA_BROADCAST paths; exclude loopback queues and ipx_sockets. NS_SERVER=1, stride 4, three slots in this HL reference. Publish the array base; consumers compute base+4 then load the socket handle. Socket slot and array base are distinct locations.
+  // Issue #326 Part C: current x86 operands verify the whole objects and field accesses. NS_SERVER=1; socket elements are 4 bytes. DLL_CLOSE=3; redirect modes 0/1/2. Sven address trailing bytes remain opaque. Original flush does not prove the reference fork UDP RCON fixes.
+  void __cdecl NET_SendPacket(int sock, int length, void *data, rcon_netadr_t to)
+  {
+    int v4; // edi
+    char *v5; // edx
+    int v6; // ecx
+    char *v7; // edi
+    SOCKET v8; // esi
+    int Error; // eax
+    int v10; // esi
+    const char *v11; // eax
+    const char *v12; // eax
+    const char *v13; // eax
+    char *v14; // [esp-10h] [ebp-50h]
+    struct sockaddr toa; // [esp+2Ch] [ebp-14h] BYREF
+
+    v4 = _mm_cvtsi128_si32(*(__m128i *)&to.type);
+    if ( v4 == 1 )
+    {
+      if ( dword_104BB8B4 && dword_104BB8D8 )
+        EnterCriticalSection(&CriticalSection);
+      v5 = (char *)&unk_104BB8E0 + 24184 * (sock ^ 1);
+      v6 = (*((_DWORD *)v5 + 6045))++ & 3;
+      v7 = &v5[6044 * v6];
+      Q_memcpy(v7, (int)data, length);
+      *((_DWORD *)v7 + 1510) = length;
+      if ( dword_104BB8B4 )
+      {
+        if ( dword_104BB8D8 )
+          LeaveCriticalSection(&CriticalSection);
+      }
+      return;
+    }
+    if ( v4 == 2 )
+    {
+      v8 = ip_sockets[sock];
+      if ( !v8 )
+        return;
+      goto LABEL_15;
+    }
+    if ( v4 != 3 )
+      Sys_Error("NET_SendPacket: bad address type");
+    v8 = ip_sockets[sock];
+    if ( v8 )
+    {
+  LABEL_15:
+      Q_memset(&toa, 0, 16);
+      if ( v4 == 2 )
+        *(_DWORD *)&toa.sa_data[2] = -1;
+      else
+        *(_DWORD *)&toa.sa_data[2] = *(_DWORD *)to.ip;
+      toa.sa_family = 2;
+      *(_WORD *)toa.sa_data = to.port;
+      if ( sub_101DFAC0(sock, v8, (const char *)data, length, 0, &toa, 16) == -1 )
+      {
+        Error = WSAGetLastError();
+        v10 = Error;
+        if ( Error != 10035 && Error != 10061 && Error != 10054 && (Error != 10049 || v4 != 2) )
+        {
+          if ( cls.state )
+          {
+            if ( Error != 10049 && Error != 10055 )
+            {
+              v12 = sub_101DE1F0(Error);
+              Sys_Error("NET_SendPacket ERROR: %s\n", v12);
+            }
+            v14 = NET_AdrToString(to);
+            v13 = sub_101DE1F0(v10);
+            Con_DPrintf("NET_SendPacket Warning: %s : %s\n", v13, v14);
+          }
+          else
+          {
+            v11 = sub_101DE1F0(Error);
+            Con_Printf("NET_SendPacket ERROR: %s\n", v11);
+          }
+        }
+      }
+    }
+  }
