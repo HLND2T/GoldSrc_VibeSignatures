@@ -39,7 +39,7 @@ tags:
 4. Chase forwarding layers, up to 4 hops, while the current function is `< 100` bytes and has exactly one `jmp`/`call` exit: this covers the `E9` jump thunk, and legacy MSVC 35->37-byte call chains.
 5. Resolve the real body from the (possibly chased) function:
    - one large branch target (`> 100` bytes) and no further branching -> that target is `R_GLStudioDrawPoints` (pre-ATI builds ship the wrapper without the `ATINPatch` branch);
-   - exactly two large branch targets -> the one with **more direct callees** wins (the `IsATISmoothing` wrapper form);
+   - exactly two large branch targets -> identify the ATI path by its `GL_PN_TRIANGLES_ATI` (`0x87F0`) immediate and select the unique other branch; reject ambiguity rather than ranking by callee count;
    - no large branch and the body itself is `>= 800` bytes -> the body is the function.
 6. Semantic gate: the chosen candidate must call the `StudioSetupSkin` slot's function. Because slot 29 may hold a forced-face wrapper that `jmp`s to the shared inner skin routine, any direct jump target of the slotted function is also accepted as a skin target.
 7. Require exactly one surviving entry; emit the standard function fields (retrying with `allow_across_function_boundary` if the strict window fails).
@@ -48,5 +48,13 @@ tags:
 
 - The table anchor must come from the segment image. `DataRefsTo` is unreliable on ELF and would miss the table entirely.
 - Three distinct wrapper shapes must all be handled; a naive "slot 25 is the function" read yields the 9-line wrapper on CoF and a `jmp` thunk on HL25/SvEngine.
-- The `StudioSetupSkin` gate (with its jmp-target widening) is the only semantic check; the branch-count ranking alone could pick the wrong branch.
+- Both the ordinary and ATI paths call `StudioSetupSkin`; that gate alone cannot distinguish them. For a two-branch wrapper, require a unique non-ATI path using the `GL_PN_TRIANGLES_ATI` capability marker. Callee-count ranking is not a valid identity check.
 - The finder is not platform-gated, but only the three Linux-capable configs produce a `.linux.yaml`.
+
+## HL 3266 ATI branch regression (2026-10-05)
+
+- Trigger: MetaHookSv Renderer loaded CS3266 but crashed during map sign-on in the original studio vertex transform, writing through a null destination.
+- Root cause: the two-branch wrapper at `0x1D91BE0` dispatches ordinary GL to `0x1D90660` and ATI PN triangles to `0x1D91290`. The ATI body has 12 direct callees versus 10 for ordinary GL; ranking by callee count published the ATI function and left the ordinary render path unhooked.
+- Correct approach: identify the ATI OpenGL capability `GL_PN_TRIANGLES_ATI` (`0x87F0`), select the unique non-ATI branch, and retain the StudioSetupSkin semantic gate. Do not substitute hardcoded addresses or a reversed call-count heuristic.
+- Verification: five regression tests exercise the actual WALK template (including ambiguity and missing-skin rejection). The real hl-3266 Windows finder generated `func_rva=0x90660`, `func_size=0x85A`. A local schema-8 candidate was exported and pruned through Renderer’s consumer manifest; CS3266 then loaded de_dust2, produced a screenshot, changed to de_dust and quit with exit code 0, with all ten installed plugins enabled.
+- Scope: the finder correction is shared; the regenerated artifact and live game verification here cover hl-3266 Windows. Other published snapshots require their own regeneration before claiming corrected addresses. Local validation does not publish the remote catalog.
