@@ -1,0 +1,5 @@
+func_name: NET_Shutdown
+func_va: '0x10dee0'
+func_rva: '0x10dee0'
+func_size: '0x1f1'
+func_sig: 55 57 56 53 83 EC ?? 8B 1D ?? ?? ?? ?? 85 DB 75 ?? EB ??

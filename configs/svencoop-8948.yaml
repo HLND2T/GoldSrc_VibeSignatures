@@ -6,10 +6,12 @@ modules:
     depot_linux: hw.so
     skills:
       - name: find-native-rcon-shutdown-symbols
-        platform: windows
+        expected_input:
+          - NET_Config.{platform}.yaml
+          - ip_sockets.{platform}.yaml
         expected_output:
-          - Host_Shutdown.windows.yaml
-          - NET_Shutdown.windows.yaml
+          - Host_Shutdown.{platform}.yaml
+          - NET_Shutdown.{platform}.yaml
       - name: find-Sock_Config
         expected_input:
           - NET_Config.{platform}.yaml
@@ -1624,10 +1626,8 @@ modules:
     symbols:
       - name: Host_Shutdown
         category: func
-        platform: windows
       - name: NET_Shutdown
         category: func
-        platform: windows
       - name: NET_GetPacket
         category: func
       - name: SV_FilterPacket
