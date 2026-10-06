@@ -1,0 +1,5 @@
+func_name: NET_QueuePacket
+func_va: '0x1d67dd0'
+func_rva: '0x67dd0'
+func_size: '0x1b1'
+func_sig: 81 EC C4 0F 00 00 53 8B 9C 24 ?? ?? ?? ?? 56 57 33 FF 89 7C 24 ?? 85 FF 75 ?? 8B 04 9D ?? ?? ?? ?? EB ??

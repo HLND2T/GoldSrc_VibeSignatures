@@ -5,6 +5,10 @@ modules:
     depot_windows: hw.dll
     depot_linux: hw.so
     skills:
+      - name: find-NET_QueuePacket
+        platform: windows
+        expected_output:
+          - NET_QueuePacket.windows.yaml
       - name: find-NET_StartThread-symbols
         platform: windows
         expected_input:
@@ -1560,6 +1564,9 @@ modules:
         expected_output:
           - CL_IsDevOverviewMode.{platform}.yaml
     symbols:
+      - name: NET_QueuePacket
+        category: func
+        platform: windows
       - name: NET_ThreadFunc
         category: func
         platform: windows
