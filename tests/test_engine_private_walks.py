@@ -1,5 +1,7 @@
 """Behavioral regression fixtures for private-symbol instruction walks."""
 
+import contextlib
+import io
 import json
 import runpy
 import sys
@@ -14,6 +16,7 @@ REG, MEM, DISPL, PHRASE = 1, 2, 4, 3
 IMM = 5
 NEAR = 7
 REGISTERS = ("eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi")
+SETUP_TRIPLE_MARKER = "__R124_SETUP_TRIPLE__"
 
 
 def walk(name):
@@ -1036,6 +1039,97 @@ class HostParmsWalkTests(unittest.TestCase):
     def test_esp_slot_structural_decode_defeats_embedded_register_name(self):
         result = self.locate({"form": "mov-spill"})
         self.assertEqual("0x4000", result["gv"]["gv_ea"])
+
+
+class ForceCVarsSetupTripleWalkTests(unittest.TestCase):
+    """Reject a neighbouring Cvar_DirectSet that only mimics R_ForceCVars inlined.
+
+    The setup host's inlined force-cvar block ends with a two-argument
+    Cvar_DirectSet call directly before R_CheckVariables. The walk must not
+    report that call target as the standalone R_ForceCVars.
+    """
+
+    DSET = 0x4000
+    FORCE = 0x5000
+    RCV = 0x6000
+    ANIM = 0x7000
+
+    def locate(self, preceding):
+        """``preceding`` is the direct call issued just before R_CheckVariables."""
+        items = [0x1000, 0x1010, 0x1020, 0x1030, 0x1040, 0x1050]
+        targets = {
+            0x1000: 0x9000,
+            0x1010: self.DSET,
+            0x1020: 0x9000,
+            0x1030: preceding,
+            0x1040: self.RCV,
+            0x1050: self.ANIM,
+        }
+        sizes = {
+            self.DSET: 0x1A6,
+            self.FORCE: 0x2CD,
+            self.RCV: 0xBC,
+            self.ANIM: 0x5B,
+            0x9000: 0x100,
+        }
+        idautils = NS(
+            FuncItems=lambda owner: items,
+            CodeRefsTo=lambda ea, flags=0: [0x1000],
+            DataRefsTo=lambda ea: [],
+        )
+        ida_funcs = NS(
+            get_func=lambda ea: NS(start_ea=ea, end_ea=ea + sizes.get(ea, 0x40)),
+            calc_thunk_func_target=lambda function: (0xFFFFFFFF, 0xFFFFFFFF),
+        )
+        idc = NS(
+            print_insn_mnem=lambda ea: "call",
+            get_operand_value=lambda ea, index: targets[ea],
+            get_func_name=lambda ea: "sub",
+        )
+        ns = {
+            "MARKER": SETUP_TRIPLE_MARKER,
+            "RCV": self.RCV,
+            "DSET": self.DSET,
+            "MAX_GAP": 96,
+            "idautils": idautils,
+            "ida_funcs": ida_funcs,
+            "idc": idc,
+        }
+        code = (
+            walk("find-R_ForceCVars_R-AnimateLight.py")
+            .replace("@@MARKER@@", repr(SETUP_TRIPLE_MARKER))
+            .replace("@@RCV@@", repr(self.RCV))
+            .replace("@@DSET@@", repr(self.DSET))
+            .replace("@@MAX_GAP@@", "96")
+        )
+        modules = {
+            "idautils": idautils,
+            "ida_funcs": ida_funcs,
+            "idc": idc,
+            "ida_bytes": NS(is_loaded=lambda ea: False, get_dword=lambda ea: 0),
+            "ida_segment": NS(getseg=lambda ea: None, get_segm_name=lambda seg: "", SEGPERM_EXEC=1),
+            "idaapi": NS(BADADDR=0xFFFFFFFF),
+        }
+        capture = io.StringIO()
+        with patch.dict(sys.modules, modules):
+            with contextlib.redirect_stdout(capture):
+                exec(code, ns)
+        for line in capture.getvalue().splitlines():
+            if line.startswith(SETUP_TRIPLE_MARKER):
+                return json.loads(line[len(SETUP_TRIPLE_MARKER) :])
+        raise AssertionError("walk produced no result line")
+
+    def test_rejects_cvar_directset_alias_and_reports_inlined(self):
+        result = self.locate(self.DSET)
+        self.assertNotIn("error", result)
+        self.assertIsNone(result["R_ForceCVars"])
+        self.assertTrue(result["force_inlined"])
+        self.assertEqual(hex(self.ANIM), result["R_AnimateLight"]["va"])
+
+    def test_accepts_genuine_standalone_force_cvars(self):
+        result = self.locate(self.FORCE)
+        self.assertEqual(hex(self.FORCE), result["R_ForceCVars"]["va"])
+        self.assertEqual(hex(self.ANIM), result["R_AnimateLight"]["va"])
 
 
 if __name__ == "__main__":

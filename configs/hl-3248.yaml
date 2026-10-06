@@ -1435,8 +1435,8 @@ modules:
       - name: find-R_ForceCVars_R-AnimateLight
         expected_input:
           - R_CheckVariables.{platform}.yaml
+          - Cvar_DirectSet.{platform}.yaml
         expected_output:
-          - R_ForceCVars.{platform}.yaml
           - R_AnimateLight.{platform}.yaml
       - name: find-S_ExtraUpdate
         expected_input:
@@ -2513,8 +2513,6 @@ modules:
       - name: Draw_FillRGBABlend
         category: func
       - name: R_CheckVariables
-        category: func
-      - name: R_ForceCVars
         category: func
       - name: R_AnimateLight
         category: func

@@ -26,6 +26,7 @@ tags:
 ## Predecessors
 
 - `R_CheckVariables` (produced by `find-R_CheckVariables`, consumed via `expected_input`, field `func_va`).
+- `Cvar_DirectSet` (produced by `find-Cvar_DirectSet`, consumed via `expected_input`, field `func_va`) — used only by the sibling `R_ForceCVars` alias guard; `R_AnimateLight` itself does not read it.
 
 ## How it is located
 
@@ -39,4 +40,5 @@ tags:
 
 - The whole locator is order- and adjacency-based inside one host; it does not use a byte signature.
 - The 16-byte thunk filter and the 96-byte gap are load-bearing constants, not tunables.
-- If the `R_CheckVariables` host is ever not unique (a second caller appears, for instance through an inlined copy), `R_AnimateLight` and `R_ForceCVars` are both lost — the finder returns `False` and neither symbol is written.
+- If the `R_CheckVariables` host is ever not unique (a second caller appears, for instance through an inlined copy), `R_AnimateLight` is lost — the finder returns `False` and no symbol is written.
+- `R_AnimateLight` is required on every target and is unaffected by the sibling's inlined/absent handling; the `R_ForceCVars` alias guard only suppresses the `R_ForceCVars` write, and the four inlined snapshots simply do not declare `R_ForceCVars`.

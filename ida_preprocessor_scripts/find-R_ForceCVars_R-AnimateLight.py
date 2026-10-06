@@ -12,6 +12,13 @@ back to back, so inside the unique R_CheckVariables caller the direct internal
 call immediately before the R_CheckVariables call site is R_ForceCVars and the
 one immediately after it is R_AnimateLight. No byte signature participates in
 discovery; the shared helper validates and writes both functions.
+
+On builds that inline R_ForceCVars into the setup host the triple collapses:
+the inlined force-cvar block ends with a two-argument Cvar_DirectSet call that
+lands directly before R_CheckVariables, so the "preceding call" is Cvar_DirectSet
+itself and R_ForceCVars has no standalone body. Emitting that call as
+R_ForceCVars would alias the global cvar setter, so a verified Cvar_DirectSet
+artifact is used to reject the alias and report the inlined (absent) case.
 """
 
 from pathlib import Path
@@ -23,6 +30,7 @@ from ida_elf import ELF_RESOLVER_PY
 
 TARGETS = ("R_ForceCVars", "R_AnimateLight")
 RCV = "R_CheckVariables"
+DSET = "Cvar_DirectSet"
 MARKER = "__R124_SETUP_TRIPLE__"
 MAX_NEIGHBOR_GAP = 96
 
@@ -33,6 +41,7 @@ import idautils, ida_funcs, idc, ida_bytes, json
 
 MARKER = @@MARKER@@
 RCV = @@RCV@@
+DSET = @@DSET@@
 MAX_GAP = @@MAX_GAP@@
 
 def emit(d):
@@ -103,6 +112,13 @@ else:
                 if rcv_pc - prev_pc > MAX_GAP:
                     res["R_ForceCVars"] = None
                     res["force_absent"] = True
+                elif prev_t == DSET:
+                    # The setup host inlines R_ForceCVars, so the call preceding
+                    # R_CheckVariables is the block's final Cvar_DirectSet, not a
+                    # standalone R_ForceCVars. Emitting it would alias the global
+                    # cvar setter (see module docstring).
+                    res["R_ForceCVars"] = None
+                    res["force_inlined"] = True
                 else:
                     res["R_ForceCVars"] = {"va": hex(prev_t), "size": fsize(prev_t),
                                            "callers": [hex(c) for c in callers(prev_t)]}
@@ -147,9 +163,17 @@ async def preprocess_skill(
         return False
     rcv_va = u._parse_int(rcv_data["func_va"], "func_va")
 
+    dset_data = u._load_yaml_mapping(new_binary_dir / f"{DSET}.{platform}.yaml")
+    if not dset_data or dset_data.get("func_va") is None:
+        if debug:
+            print(f"{skill_name}: missing {DSET} artifact")
+        return False
+    dset_va = u._parse_int(dset_data["func_va"], "func_va")
+
     code = (
         WALK.replace("@@MARKER@@", repr(MARKER))
         .replace("@@RCV@@", repr(rcv_va))
+        .replace("@@DSET@@", repr(dset_va))
         .replace("@@MAX_GAP@@", str(MAX_NEIGHBOR_GAP))
     )
     stdout = await _eval(session, code)
