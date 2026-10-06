@@ -7,22 +7,28 @@ tags:
 - engine
 - network
 - windows
+- linux
 - issue-338
 ---
 
-# NET_StartThread / NET_ThreadFunc / dwNetThreadId (#338)
+# NET_StartThread / NET_ThreadFunc / thread storage (#338)
 
 ## 触发信号与交付 identity
 
 ThreadGuard 需要识别创建的网络线程及其 DWORD ID 存储,在已核验的循环末尾协调退出。
 本任务生产符号,不实现退出 hook。相关需求: GoldSrc_VibeSignatures #338、ThreadGuard #4、halflife-cli #6。
-开始时检查了现有 finder/config/artifacts:已有 Host_Shutdown/NET_Shutdown,没有本次三项符号。
+开始时检查了现有 finder/config/artifacts:已有 Host_Shutdown/NET_Shutdown,没有本次线程符号。
+后续按用户要求补充 Sven Linux 的四项 pthread 符号。
 
 | 模块 | Config category | Symbol / payload identity | Catalog record ID |
 | --- | --- | --- | --- |
 | engine | func | NET_StartThread / func_name | engine/NET_StartThread.windows.yaml |
 | engine | func | NET_ThreadFunc / func_name | engine/NET_ThreadFunc.windows.yaml |
 | engine | gv | dwNetThreadId / gv_name | engine/dwNetThreadId.windows.yaml |
+| engine | func | NET_StartThread / func_name | engine/NET_StartThread.linux.yaml |
+| engine | func | NET_ThreadFunc / func_name | engine/NET_ThreadFunc.linux.yaml |
+| engine | gv | netThread / gv_name | engine/netThread.linux.yaml |
+| engine | gv | netThreadId / gv_name | engine/netThreadId.linux.yaml |
 
 `dwNetThreadId` 是 `CreateThread(..., &dwNetThreadId)` 指向的四字节可写全局存储地址。
 消费者读取该地址处的 DWORD 得到运行时 ID;该符号没有发布运行时 ID 值或 hNetThread 句柄槽。
@@ -143,19 +149,77 @@ CoF 的不可达末尾有普通 RET,不将 IDA 推导的类型冒充该死代码
 超时分支 NET_Sleep_Timeout 使用非 NULL timeval。持续收包的内层循环也可能推迟末尾 Sleep。
 所以“存在安全退出边界”没有证明退出请求一定及时到达;消费者仍需验证唤醒/饥饿/等待可达性。
 
-## Linux 审查与排除原因
+## Linux pthread 覆盖 / 用户追加需求
 
-四个 ELF32 输入均审查了实际 NET_StartThread 或错误文案引用,不生成本次 Windows finder 的 Linux 产物。
+Windows 首次交付后,用户要求补上 .so 的 NET_StartThread、NET_ThreadFunc、netThread 和 netThreadId。
+新增 `find-NET_StartThread-pthread-symbols.py`,仅注册有真实 pthread 创建路径的两个 Sven ELF32 engine。
+它复用共享 x86 参数恢复、ELF PLT/GOT decoder、Sys_Error artifact 和 function/GV writer。
+Linux 正式 identity 见上表,两个函数的 kind 为 function,两个存储的 kind 为 global。
 
-| 快照 | 代码证据 | 结果 |
+`pthread_create(&netThread, NULL, NET_ThreadFunc, NULL)` 的第一个参数是 pthread_t 输出存储地址;
+`netThreadId = pthread_create(...)` 中 EAX 返回的是 int 错误码,成功为零。两个存储在这两个
+ELF32/glibc 镜像中均为四字节,不能推成所有 Linux ABI 的 pthread_t 大小或 Windows DWORD TID。
+参考 [POSIX pthread_create](https://pubs.opengroup.org/onlinepubs/9799919799/functions/pthread_create.html)。
+
+1. 精确 NUL 结尾字符串 `Couldn't initialize network thread, run with -nonetthread\n` 唯一,
+   但两版均有两个 code owner:独立创建函数与 queue initializer 的内联副本。
+   枚举真实字符串数据引用,核验创建路径,要求 callback/output/error/mutex 一致。
+2. 从 ELF 导入表(去除 GLIBC symbol version)确认 pthread_create 和 pthread_mutex_destroy,
+   沿 PLT/GOT 跳转解析;不使用 NET_* ELF 导出名发现,因此适用于 stripped 10257。
+3. 沿 MOV/LEA 和出参 stack slot 的 reaching definitions 恢复四个参数。callback 必须是
+   精确可执行函数入口;pthread_t 输出必须是可写、对齐的四字节对象地址,普通读取不是地址。
+4. 验证 EAX 保存到另一个全局,完整 int 的 TEST/JNZ 非零分支进入 mutex destroy/两个状态回滚/
+   已验证的 Sys_Error。MOV 可在 TEST 与 JNZ 之间;EAX 被覆盖、仅测 AL 或混淆两槽均失败。
+   CFG 验证初始化赋一、创建、结果保存、失败 guard、destroy 和两项回滚支配 fatal 路径。
+   use_thread 零/initialized 非零 guard 必须真的跳过创建,不能仅凭附近有两个全局读取命名。
+5. 最小 standalone body 只写两个状态和错误码槽。额外分配/写入/未知 call 的 owner 为 inline,
+   不发布为 NET_StartThread。GOT get-PC thunk 与有真实参数的 networking diagnostics 可保留。
+6. GV 签名使用唯一 owner 签名,两个引用位置分别是输出地址 LEA 和 EAX 错误码 store。
+   签名后的指令 offset 可超出签名长度,字段仍由 analyzer 解码核验。PIC displacement 通配,
+   `gv_pic_addend` 由共享 writer 根据当前镜像计算,没有跨版本硬编码地址。
+
+Linux 当前产物的字节解码规则(32-bit modulo):
+
+```cpp
+storage_address = module_load_base + gv_pic_addend
+                + *(uint32_t *)(match + gv_inst_offset + gv_inst_disp);
+```
+
+| 快照 / engine hw.so | NET_StartThread (func) | NET_ThreadFunc (func) | netThread (pthread_t gv) | netThreadId (int error gv) | pthread_create call | 结果 store | GOT addend |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| svencoop-8948 | 0x134720 | 0x1344b0 | 0x14d18c0 | 0x14d18bc | 0x13476d | 0x134774 | 0x33a000 |
+| svencoop-10257 | 0xe7ac0 | 0xe7850 | 0x14ba5a0 | 0x14ba59c | 0xe7b0d | 0xe7b14 | 0x2ee000 |
+
+这里纠正早期审查中将结果 store 的 RVA 误写成 pthread_create call 的记述。两版输出 LEA
+分别为 0x13475e 和 0xe7afe,gv_inst_offset=0x3e;错误 store offset=0x54。
+两条引用指令均 length=6/disp=2。新增八份正式 Linux artifacts。
+
+| 其他 ELF32 快照 | 代码证据 | 未覆盖原因 |
 | --- | --- | --- |
-| hl-8684 Linux | NET_StartThread RVA 0x1680d0 仅检查 use_thread 并置 initialized=true | 经典错误 anchor 不存在;无对应网络 CreateThread callback/DWORD 输出模型 |
-| hl-10210 Linux | NET_StartThread RVA 0x10c1e0 同上 | 不发布 Windows 线程 identity |
-| svencoop-8948 Linux | NET_StartThread RVA 0x134720;pthread_create call 0x134774,callback 0x1344b0 | netThreadId = pthread_create 返回错误码;pthread_t 输出到另一 netThread 存储 |
-| svencoop-10257 Linux | 错误文案 0x267c2c;独立 start 0xe7ac0;pthread_create call 0xe7b14,callback 0xe7850 | 返回错误码保存于 0x14ba59c,pthread_t 输出到 0x14ba5a0;不冒充 dwNetThreadId |
+| hl-8684 Linux | NET_StartThread RVA 0x1680d0 仅检查 use_thread 并置 initialized=true | 无此错误 anchor/网络 pthread 创建路径,不注册四项产出;stub 函数未另行生产 |
+| hl-10210 Linux | NET_StartThread RVA 0x10c1e0 同上 | 无对应 callback/pthread_t/error-code 存储,stub 函数未另行生产 |
 
-Sven Linux 的两个函数确实存在,但 pthread ABI、mutex 和错误码变量语义需独立 finder/交付,
-本次没有承诺 Linux 函数产出。Linux 原始 SHA-256:
+CoF/旧 HL 无配置 Linux engine;cstrike/czero/czeror 无 engine 模块,不适用。
+
+### Linux ABI 和末尾 Sleep 边界
+
+pthread_create 的第三参数契约为 `void *(*)(void *)`、单个 arg=NULL,使用 i386 POSIX C 调用 ABI。
+8948 的当前 ELF mangled name `_Z14NET_ThreadFuncPv` 独立交叉核验参数是 void*;
+10257 为 stripped,以真实 pthread 参数和函数体为证据。两版 callback 都是无限循环,
+不读取传入参数、没有返回路径,不能把 Hex-Rays `void __noreturn()` 推断作为返回类型证明。
+
+| Sven Linux | pthread_mutex_lock call | pthread_mutex_unlock call | Sys_Sleep(1) call | Sys_Sleep wrapper | usleep call |
+| --- | --- | --- | --- | --- | --- |
+| 8948 | 0x134580 | 0x13464a | 0x134697 | 0xfd7c0 | 0xfd7da |
+| 10257 | 0xe7920 | 0xe79ea | 0xe7a37 | 0xaece0 | 0xaecfa |
+
+两版都在同一 cs_mutex 内处理并转交消息,unlock 返回后才走到末尾 Sys_Sleep(1),wrapper 调用
+usleep(1000)。正常到达这个边界时,本轮队列/网络调用已返回、消息已链入全局队列、无观察到的
+待析构 C++ 局部对象。Enter/Leave 同样依赖 use_thread/initialized,消费者仍需保持这些 guard
+状态稳定。Sock_Sleep 与持续收包可能推迟边界到达;静态审查不证明及时退出或 POSIX cancellation
+安全性。本任务不运行游戏、不实现 pthread_exit/cancel 或 ThreadGuard hooks。
+
+Linux 原始 SHA-256(当前 IDA survey 与文件身份核验一致):
 
 - hl-8684: `1e775773292407106ac17c98bc19f0444e8f1525d46e592de5cc53afad2b89e1`
 - hl-10210: `fca6628b5a4d76a945e11b9796f327004edc65420d9f9cc23f883143508edd78`
@@ -209,5 +273,22 @@ BLOB 行是解密 PE,正式 snapshot/catalog 另记录原始 hw.dll 的 BLOB bin
   本次商业 IDA 证据由上述 11 个真实分析任务提供,不使用 skipped 测试作为证明。
 - `uv run python format_repo_files.py --check`:exit 0;680 Python、29 YAML checked。
 
-适用范围仅为上述已绑定哈希的 Windows/BLOB 快照及正式 config 注册。新镜像应重新生成符号,
+### Linux 追加交付的最终验证
+
+- 十个合成行为测试通过;状态 guard 方向及 AL 部分字宽两个反例先失败再修复。
+- 最终 exact batch 强制重建两个 `engine:linux:find-NET_StartThread-pthread-symbols` 节点:
+  Successful=2,Failed=0,Skipped=0,exit 0。八份产物的入口/签名/GV PIC 解码通过实际 IDA 验证,
+  与首次生成及 catalog payload 一致;没有 Agent fallback。
+- 两版完整 schema-8 snapshot/metadata build/guard、SnapshotSymbolStore.require、catalog JSON
+  build/guard 均通过。逐项验证八个 Linux record 的 id/module/platform/kind/symbolName/RVA,
+  schema-4 index 包含两个版本。临时派生产物未提交,正式发布沿用 release 流程。
+- 全量测试首次因新 artifacts 尚未加入 Git 索引,触发 tracked inventory 门禁而失败。
+  该门禁比较 config 承诺和 Git tracked 文件,因此生成新产物后应先暂存再运行该门禁。
+  暂存后重新运行 `uv run python tests/run_test_suite.py all -b --durations 30`:
+  1428 tests / 124.852s,exit 0,13 skips;skip 原因同上述 Windows 首次交付记录。
+- 最终 format check exit 0,681 Python 和 29 YAML;`git diff --cached --check` exit 0。
+- 交互 session 均按精确输入绑定,自己打开的 session 用 idb_close(save=True) 成功关闭,
+  最终 idb_list=[]。生产仍使用 restored_strict/no-save 生命周期,不提交 IDB。
+
+适用范围仅为上述已绑定哈希的 Windows/BLOB 和两个 Sven Linux 快照及正式 config 注册。新镜像应重新生成符号,
 并独立核验消费者使用的退出边界;catalog 覆盖不能代替实机 hook/死锁修复验收。

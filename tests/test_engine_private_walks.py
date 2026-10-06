@@ -1286,5 +1286,177 @@ class NetworkCreationWalkTests(unittest.TestCase):
         self.assertFalse(result["standalone"])
 
 
+class PthreadCreationWalkTests(unittest.TestCase):
+    """Check POSIX output/error-code roles, PIC provenance and failure flow."""
+
+    def locate(
+        self,
+        *,
+        runtime_output=False,
+        alias_error=False,
+        bypass_cleanup=False,
+        bypass_initialized=False,
+        clobber=False,
+        extra_work=False,
+        store_first=False,
+        swap_args=False,
+        wrong_state_guard=False,
+        partial_result=False,
+    ):
+        entries = []
+
+        def op(kind, value=0, reg=""):
+            return NS(type=kind, value=value, addr=value, reg=reg, dtype=4, offb=2, specflag1=0, specflag2=0)
+
+        def emit(mnem, *ops, targets=(), written=()):
+            ea = 0x1000 + len(entries) * 8
+            insn = NS(ops=[*ops, op(0)], size=8)
+            entry = dict(
+                ea=ea, len=8, insn=insn, mnem=mnem, targets=set(targets), written=set(written), disp=2, disasm=mnem
+            )
+            entries.append(entry)
+            return entry
+
+        def store(gv, source):
+            return emit("mov", op(DISPL, gv - 0x2000, "ebx"), source, targets=(gv,), written=(gv,))
+
+        state_guards = []
+        for gv, branch_kind in ((0x4000, "jz"), (0x4004, "jnz")):
+            emit("mov", op(REG, reg="eax"), op(DISPL, gv - 0x2000, "ebx"), targets=(gv,))
+            emit("test", op(REG, reg="eax"), op(REG, reg="eax"))
+            state_guards.append(emit("jz" if wrong_state_guard else branch_kind, op(NEAR)))
+        if extra_work:
+            emit("call", op(NEAR, 0x9100))
+        initialized = store(0x4004, op(IMM, 1))
+        for slot, gv in ((0, 0x3000 if swap_args else 0x6000), (8, 0x6000 if swap_args else 0x3000)):
+            emit(
+                "mov" if runtime_output and slot == 0 else "lea",
+                op(REG, reg="eax"),
+                op(DISPL, gv - 0x2000, "ebx"),
+                targets=(gv,),
+            )
+            emit("mov", op(DISPL, slot, "esp"), op(REG, reg="eax"))
+        for slot in (4, 12):
+            emit("mov", op(DISPL, slot, "esp"), op(IMM))
+        create = emit("call", op(NEAR, 0x8000))
+        if clobber:
+            emit("xor", op(REG, reg="eax"), op(REG, reg="eax"))
+        if store_first:
+            result_store = store(0x6000 if alias_error else 0x6004, op(REG, reg="eax"))
+        result_test = emit("test", op(REG, reg="eax"), op(REG, reg="eax"))
+        if partial_result:
+            result_test["insn"].ops[0].dtype = result_test["insn"].ops[1].dtype = 1
+        if not store_first:
+            result_store = store(0x6000 if alias_error else 0x6004, op(REG, reg="eax"))
+        branch = emit("jnz", op(NEAR))
+        success = emit("ret")
+        emit("lea", op(REG, reg="eax"), op(DISPL, 0x3000, "ebx"), targets=(0x5000,))
+        emit("mov", op(DISPL, 0, "esp"), op(REG, reg="eax"))
+        destroy = emit("call", op(NEAR, 0x8004))
+        reset = store(0x4004, op(IMM))
+        store(0x4000, op(IMM))
+        emit("lea", op(REG, reg="eax"), op(DISPL, 0x5000, "ebx"))
+        emit("mov", op(DISPL, 0, "esp"), op(REG, reg="eax"))
+        fatal = emit("call", op(NEAR, 0x9000))
+        emit("ret")
+        branch["insn"].ops[0].addr = success["ea"] + 8
+        by_ea = {e["ea"]: e for e in entries}
+        edges = {e["ea"]: ([] if e["mnem"] == "ret" else [e["ea"] + 8]) for e in entries}
+        edges[branch["ea"]].append(branch["insn"].ops[0].addr)
+        for guard in state_guards:
+            guard["insn"].ops[0].addr = success["ea"]
+            edges[guard["ea"]].append(success["ea"])
+        if bypass_cleanup:
+            edges[branch["ea"]].append(reset["ea"])
+        if bypass_initialized:
+            edges[entries[0]["ea"]].append(initialized["ea"] + 8)
+        ns = dict(
+            values={"fatal": 0x9000, "literal": "unused"},
+            scan=lambda _: entries,
+            got_anchor=lambda _: (0x2000, "ebx"),
+            reg4=lambda o: o.reg,
+            signed32=lambda v: v,
+            local_call_target=lambda ea: int(by_ea[ea]["insn"].ops[0].addr),
+            is_code_address=lambda ea: ea == 0x3000,
+            is_plt=lambda _: False,
+            is_got=lambda _: False,
+            is_writable_data=lambda ea: 0x4000 <= ea < 0x8000,
+            access=lambda e, gv: {"gv_ea": hex(gv), "insn_ea": hex(e["ea"])},
+            elf_data_refs_to=lambda _: [],
+        )
+        api = NS(
+            o_void=0,
+            o_reg=REG,
+            o_mem=MEM,
+            o_displ=DISPL,
+            o_phrase=PHRASE,
+            o_imm=IMM,
+            o_near=NEAR,
+            inf_is_64bit=lambda: False,
+        )
+        modules = {
+            "idaapi": api,
+            "ida_frame": NS(get_spd=lambda *_: 0),
+            "ida_nalt": NS(get_import_module_qty=lambda: 0),
+            "ida_funcs": NS(get_func=lambda ea: NS(start_ea=ea)),
+            "ida_ua": NS(get_dtype_size=lambda v: v),
+            "ida_segment": NS(getseg=lambda _: NS(end_ea=0x8000)),
+            "idautils": NS(Segments=lambda: [], CodeRefsTo=lambda *_: []),
+            "idc": NS(
+                get_operand_value=lambda ea, _: by_ea[ea]["insn"].ops[0].addr,
+                generate_disasm_line=lambda *_: "synthetic",
+            ),
+            "ida_bytes": NS(get_strlit_contents=lambda *_: None),
+        }
+        ns.update({k: v for k, v in modules.items() if k != "ida_frame"})
+        with patch.dict(sys.modules, modules):
+            exec(walk("find-NET_StartThread-pthread-symbols.py"), ns)
+            ns["api_name"] = lambda ea: {create["ea"]: "pthread_create", destroy["ea"]: "pthread_mutex_destroy"}.get(ea)
+            ns["decode_function_flow"] = lambda *_: edges
+            ns["changed_operand"] = lambda insn, i: (
+                insn.ops[0].type == REG
+                and by_ea[next(e["ea"] for e in entries if e["insn"] is insn)]["mnem"] not in ("test", "cmp")
+            )
+            return ns["inspect_path"](0x1000, 0x7000)
+
+    def test_recovers_pic_pthread_output_and_separate_error_code(self):
+        for store_first in (False, True):
+            result = self.locate(store_first=store_first)
+            self.assertIsNotNone(result)
+            self.assertEqual(0x3000, result["routine"])
+            self.assertEqual("0x6000", result["thread"]["gv_ea"])
+            self.assertEqual("0x6004", result["error_code"]["gv_ea"])
+            self.assertTrue(result["standalone"])
+
+    def test_rejects_runtime_value_in_output_argument(self):
+        self.assertIsNone(self.locate(runtime_output=True))
+
+    def test_rejects_error_store_aliasing_pthread_output(self):
+        self.assertIsNone(self.locate(alias_error=True))
+
+    def test_rejects_swapped_callback_and_output_arguments(self):
+        self.assertIsNone(self.locate(swap_args=True))
+
+    def test_rejects_branch_bypassing_mutex_cleanup(self):
+        self.assertIsNone(self.locate(bypass_cleanup=True))
+
+    def test_rejects_creation_bypassing_initialized_assignment(self):
+        self.assertIsNone(self.locate(bypass_initialized=True))
+
+    def test_rejects_clobbered_create_return_value(self):
+        self.assertIsNone(self.locate(clobber=True))
+
+    def test_rejects_inverted_initialized_guard(self):
+        self.assertIsNone(self.locate(wrong_state_guard=True))
+
+    def test_rejects_partial_width_return_test(self):
+        self.assertIsNone(self.locate(partial_result=True))
+
+    def test_does_not_publish_inline_host_as_start_function(self):
+        result = self.locate(extra_work=True)
+        self.assertIsNotNone(result)
+        self.assertFalse(result["standalone"])
+
+
 if __name__ == "__main__":
     unittest.main()

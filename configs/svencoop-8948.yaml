@@ -5,6 +5,15 @@ modules:
     depot_windows: hw.dll
     depot_linux: hw.so
     skills:
+      - name: find-NET_StartThread-pthread-symbols
+        platform: linux
+        expected_input:
+          - Sys_Error.linux.yaml
+        expected_output:
+          - NET_StartThread.linux.yaml
+          - NET_ThreadFunc.linux.yaml
+          - netThread.linux.yaml
+          - netThreadId.linux.yaml
       - name: find-NET_StartThread-symbols
         platform: windows
         expected_input:
@@ -1655,12 +1664,16 @@ modules:
         expected_output:
           - CL_IsDevOverviewMode.{platform}.yaml
     symbols:
+      - name: netThread
+        category: gv
+        platform: linux
+      - name: netThreadId
+        category: gv
+        platform: linux
       - name: NET_StartThread
         category: func
-        platform: windows
       - name: NET_ThreadFunc
         category: func
-        platform: windows
       - name: dwNetThreadId
         category: gv
         platform: windows
