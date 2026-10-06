@@ -34,6 +34,32 @@ The companion binds exact canonical snapshot bytes with lowercase raw SHA-256, c
 contract SHA-256. Alias strings normalize to a non-empty ordered list; empty, duplicate, non-string, unknown, or duplicate
 owners fail closed. Module/symbol order follows config declaration order; artifacts use fixed Windows then Linux order.
 
+### Module filenames (MetaHookSv issue #903)
+
+Analysis module declarations may set `alias_windows` / `alias_linux` to ordered filename lists. These are runtime binary
+filenames, separate from a symbol's display `alias`. The existing Windows client declarations list `client_orig.dll`,
+`client_original.dll`, and `client_org.dll`; engine and Linux defaults are unchanged. Empty lists are omitted from metadata.
+
+The schema-1 companion module optionally appends `binary_aliases: {windows: [...]}` after `symbols`. Such a module may have
+an empty `symbols` list. Parsing validates filenames, platform order, and the module/platform's presence in the bound
+snapshot binaries. Old companions retain their original representation. The JSON exporter reads only these frozen values
+and emits `binaries.<module>.<platform>.alias` in the schema-5 dataset; no snapshot/index schema bump or live-config lookup
+is involved. Config changes still change the existing config digest, requiring the normal snapshot/metadata rebuild.
+
+Trigger/constraint: a proxy `client.dll` can load an unchanged original under another name. The alias belongs to the same
+binary CRC64 and never supplies a proxy hash or an alternate RVA. Consumers must use the loaded alias module's image base
+after CRC64 verification. Published datasets remain immutable; regenerate through the ordinary release pipeline, never
+patch deployed JSON or historical release bytes. Metadata/JSON tests cover optional compatibility, invalid names, missing
+owners, and deterministic export after the live config changes.
+
+Local verification (2026-10-06): 60 metadata/JSON/candidate/snapshot-contract/release-bundle/repository tests and 109 planner
+tests passed. The real local `cstrike-10210` binary/artifacts successfully traversed snapshot packing, metadata generation,
+JSON export, and MetaHookSv's BulletPhysics/CaptionMod pruning and validation, retaining the three aliases and both reported
+symbols (`g_iUser1`, `g_LocationColor`). Pages passed 50 tests, 5 E2E cases, lint, build, and asset verification. Python format
+and the 15 changed YAML checks passed; an additional Ruff lint check still reports five pre-existing planner findings,
+confirmed against HEAD (import order, one unused variable, three pairwise suggestions). No actual csldr or release
+publication was performed.
+
 ## Validation
 
 Run metadata/candidate/release-bundle tests, repository-contract, and Pages test/lint/build/asset verification. A

@@ -1,6 +1,10 @@
 modules:
   - name: client
     module_windows: client.dll
+    alias_windows:
+      - client_orig.dll
+      - client_original.dll
+      - client_org.dll
     depot_windows: cstrike/cl_dlls/client.dll
     skills:
       - name: find-vgui2_Panel-size-callsites

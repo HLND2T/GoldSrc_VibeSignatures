@@ -173,6 +173,11 @@ def _attach_aliases(dataset: dict, metadata: dict, expected_game_version: str) -
     record_keys = {f"{record['module']}/{record['platform']}/{record['artifact']}" for record in dataset["records"]}
     aliases: dict[str, list[str]] = {}
     for module in metadata["modules"]:
+        for platform, filenames in module.get("binary_aliases", {}).items():
+            binary = dataset["binaries"].get(module["name"], {}).get(platform)
+            if binary is None:
+                raise GamesymbolsJsonError(f"binary alias owner {module['name']}/{platform} is absent from snapshot")
+            binary["alias"] = list(filenames)
         for symbol in module["symbols"]:
             for artifact in symbol["artifacts"]:
                 key = f"{module['name']}/{artifact['platform']}/{artifact['artifact']}"

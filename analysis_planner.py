@@ -256,6 +256,22 @@ def _parse_symbol(raw: object, context: str) -> dict:
     return result
 
 
+def module_alias_filenames(value: object, context: str) -> list[str]:
+    """Validate platform-specific module filenames, preserving lookup order."""
+    if not isinstance(value, list):
+        raise AnalysisPlanError(f"{context} must be a filename list")
+    for name in value:
+        if (
+            not isinstance(name, str)
+            or not name
+            or name in {".", ".."}
+            or name.endswith((".", " "))
+            or any(ord(char) < 32 or char in r'/\:<>"|?*' for char in name)
+        ):
+            raise AnalysisPlanError(f"{context} contains an invalid module filename: {name!r}")
+    return list(value)
+
+
 def parse_config_document(document: object) -> list[dict]:
     if not isinstance(document, dict) or not isinstance(document.get("modules"), list):
         raise AnalysisPlanError("Analysis config must contain a modules list")
@@ -295,6 +311,11 @@ def parse_config_document(document: object) -> list[dict]:
                 module[f"module_{platform}"] = module[f"path_{platform}"].rsplit("/", 1)[-1]
             else:
                 module[f"module_{platform}"] = None
+            alias_key = f"alias_{platform}"
+            if alias_key in raw:
+                module[alias_key] = module_alias_filenames(raw[alias_key], f"{context}.{alias_key}")
+                if module[alias_key] and module[f"module_{platform}"] is None:
+                    raise AnalysisPlanError(f"{context}.{alias_key} has no declared binary")
         if not any(module[f"path_{platform}"] or module[f"module_{platform}"] for platform in PLATFORMS):
             raise AnalysisPlanError(f"{context} must declare at least one platform-specific binary")
         raw_skills = raw.get("skills") or []
