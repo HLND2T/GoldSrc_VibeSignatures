@@ -10,9 +10,15 @@ from pathlib import Path
 
 import yaml
 
-from analysis_planner import PLATFORMS, load_config, module_declares_platform, symbol_artifact_filename
 from analysis_output_contract import ANALYSIS_OUTPUT_CONTRACT_VERSION
-from gamesymbol_snapshot_lib.codec import CanonicalDumper, DIGEST_PATTERN, SHA256_PATTERN, parse_snapshot_bytes
+from analysis_planner import (
+    PLATFORMS,
+    load_config,
+    module_alias_filenames,
+    module_declares_platform,
+    symbol_artifact_filename,
+)
+from gamesymbol_snapshot_lib.codec import DIGEST_PATTERN, SHA256_PATTERN, CanonicalDumper, parse_snapshot_bytes
 from gamesymbol_snapshot_lib.paths import metadata_path_for_snapshot, snapshot_tag_from_filename
 from gamesymbol_store import SnapshotSymbolStore
 from trusted_yaml import load_yaml
@@ -120,8 +126,14 @@ def build_metadata_document(
             if not artifacts:
                 raise MetadataContractError(f"Alias symbol has no snapshot owner: {module['name']}.{symbol['name']}")
             projected_symbols.append({"name": symbol["name"], "artifacts": artifacts, "alias": aliases})
-        if projected_symbols:
-            projected_modules.append({"name": module["name"], "symbols": projected_symbols})
+        binary_aliases = {
+            platform: module[f"alias_{platform}"] for platform in PLATFORMS if module.get(f"alias_{platform}")
+        }
+        if projected_symbols or binary_aliases:
+            projected_module = {"name": module["name"], "symbols": projected_symbols}
+            if binary_aliases:
+                projected_module["binary_aliases"] = binary_aliases
+            projected_modules.append(projected_module)
     if not DIGEST_PATTERN.fullmatch(store.config_sha256):
         raise MetadataContractError("Snapshot config digest is not sha256")
     return {
@@ -178,21 +190,40 @@ def parse_metadata_bytes(
     modules = document["modules"]
     if not isinstance(modules, list):
         raise MetadataContractError("Metadata modules must be a list")
-    snapshot_owners = (
-        _snapshot_owner_keys(parse_snapshot_bytes(snapshot_bytes, game_version)) if snapshot_bytes is not None else None
-    )
+    snapshot_document = parse_snapshot_bytes(snapshot_bytes, game_version) if snapshot_bytes is not None else None
+    snapshot_owners = _snapshot_owner_keys(snapshot_document) if snapshot_document is not None else None
     seen_modules: set[str] = set()
     seen_owners: set[tuple[str, str, str]] = set()
     for module_index, module in enumerate(modules):
-        if not isinstance(module, dict) or tuple(module) != ("name", "symbols"):
+        if not isinstance(module, dict) or tuple(module) not in {
+            ("name", "symbols"),
+            ("name", "symbols", "binary_aliases"),
+        }:
             raise MetadataContractError(f"modules[{module_index}] has unexpected fields")
         module_name = _component(module["name"], f"modules[{module_index}].name")
         if module_name.casefold() in seen_modules:
             raise MetadataContractError(f"Duplicate metadata module: {module_name}")
         seen_modules.add(module_name.casefold())
+        binary_aliases = module.get("binary_aliases", {})
+        if not isinstance(binary_aliases, dict) or ("binary_aliases" in module and not binary_aliases):
+            raise MetadataContractError(f"modules[{module_index}].binary_aliases must be a non-empty mapping")
+        if tuple(binary_aliases) != tuple(platform for platform in PLATFORMS if platform in binary_aliases):
+            raise MetadataContractError(f"modules[{module_index}].binary_aliases has invalid platform order or names")
+        for platform, aliases in binary_aliases.items():
+            context = f"modules[{module_index}].binary_aliases.{platform}"
+            try:
+                validated = module_alias_filenames(aliases, context)
+            except ValueError as exc:
+                raise MetadataContractError(str(exc)) from exc
+            if not validated:
+                raise MetadataContractError(f"{context} must not be empty")
+            if snapshot_document is not None and platform not in snapshot_document["binaries"].get(module_name, {}):
+                raise MetadataContractError(f"Metadata binary owner is absent from snapshot: {module_name}/{platform}")
         symbols = module["symbols"]
-        if not isinstance(symbols, list) or not symbols:
-            raise MetadataContractError(f"modules[{module_index}].symbols must be non-empty")
+        if not isinstance(symbols, list) or not symbols and not binary_aliases:
+            raise MetadataContractError(
+                f"modules[{module_index}].symbols must be non-empty unless binary_aliases exist"
+            )
         seen_symbols: set[str] = set()
         for symbol_index, symbol in enumerate(symbols):
             context = f"modules[{module_index}].symbols[{symbol_index}]"

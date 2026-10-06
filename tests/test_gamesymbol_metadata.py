@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 
+from gamesymbol_snapshot_lib.errors import SnapshotError
 from gamesymbol_snapshot_lib.metadata import (
     MetadataContractError,
     build_metadata_document,
@@ -16,13 +17,12 @@ from gamesymbol_snapshot_lib.metadata import (
     verify_metadata,
     write_metadata,
 )
-from gamesymbol_snapshot_lib.errors import SnapshotError
 from gamesymbol_snapshot_lib.operations import pack_snapshot
 from gamesymbol_snapshot_lib.paths import iter_snapshot_paths, metadata_path_for_snapshot
 from tests.test_support import write_config, write_elf32, write_pe32
 
 
-def metadata_fixture(root: Path, *, alias=None, artifact=None):
+def metadata_fixture(root: Path, *, alias=None, artifact=None, binary_alias=None):
     tag = "game-1"
     skill = {"name": "find", "expected_output": ["symbol.{platform}.yaml"]}
     symbol = {"name": "symbol", "category": "func"}
@@ -31,6 +31,10 @@ def metadata_fixture(root: Path, *, alias=None, artifact=None):
     if artifact is not None:
         symbol["artifact"] = artifact
     config = write_config(root / "config.yaml", skill=skill, symbols=[symbol])
+    if binary_alias is not None:
+        document = yaml.safe_load(config.read_bytes())
+        document["modules"][0]["alias_windows"] = binary_alias
+        config.write_text(yaml.safe_dump(document, sort_keys=False), encoding="utf-8")
     binary_module_dir = root / "bin" / tag / "engine"
     artifact_module_dir = root / "bin_artifacts" / tag / "engine"
     write_pe32(binary_module_dir / "hw.dll")
@@ -51,6 +55,39 @@ def metadata_fixture(root: Path, *, alias=None, artifact=None):
 
 
 class MetadataCodecTests(unittest.TestCase):
+    def test_binary_aliases_are_frozen_and_exported_without_symbol_aliases(self):
+        from gamesymbols_json import encode_dataset
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            aliases = ["client_orig.dll", "client_original.dll", "client_org.dll"]
+            tag, config, snapshot = metadata_fixture(root, binary_alias=aliases)
+            document = build_metadata_document(snapshot_path=snapshot, config_path=config, expected_game_version=tag)
+            self.assertEqual({"windows": aliases}, document["modules"][0]["binary_aliases"])
+            self.assertEqual([], document["modules"][0]["symbols"])
+            raw = canonical_metadata_bytes(document)
+            self.assertEqual(document, parse_metadata_bytes(raw, snapshot_bytes=snapshot.read_bytes()))
+            dataset = encode_dataset(snapshot.read_bytes(), raw, tag)
+            self.assertEqual(aliases, dataset["binaries"]["engine"]["windows"]["alias"])
+            self.assertNotIn("alias", dataset["binaries"]["engine"]["linux"])
+            config.write_text("modules: []\n", encoding="utf-8")
+            self.assertEqual(dataset, encode_dataset(snapshot.read_bytes(), raw, tag))
+
+    def test_binary_aliases_reject_invalid_filenames_and_unknown_owners(self):
+        for aliases in ("client.dll", [""], [".."], ["../client.dll"], [r"C:\client.dll"], ["x\0.dll"], [1]):
+            with (
+                self.subTest(aliases=aliases),
+                tempfile.TemporaryDirectory() as temporary,
+                self.assertRaises((ValueError, SnapshotError)),
+            ):
+                metadata_fixture(Path(temporary), binary_alias=aliases)
+        with tempfile.TemporaryDirectory() as temporary:
+            tag, config, snapshot = metadata_fixture(Path(temporary), binary_alias=["client_orig.dll"])
+            document = build_metadata_document(snapshot_path=snapshot, config_path=config, expected_game_version=tag)
+            document["modules"][0]["name"] = "missing"
+            with self.assertRaises(MetadataContractError):
+                parse_metadata_bytes(canonical_metadata_bytes(document), snapshot_bytes=snapshot.read_bytes())
+
     def test_projects_only_alias_fields_and_resolved_owner_identities(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
