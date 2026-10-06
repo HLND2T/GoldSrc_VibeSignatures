@@ -28,7 +28,11 @@ class ContextTests(unittest.TestCase):
         self.head = self.git("rev-parse", "HEAD").strip()
 
     def git(self, *args):
-        return subprocess.check_output(["git", "-C", str(self.root), *args], text=True)
+        # Fixture mutations must not leave background maintenance racing the
+        # explicit synchronous compaction in the read-only regression test.
+        return subprocess.check_output(
+            ["git", "-c", "gc.auto=0", "-c", "maintenance.auto=false", "-C", str(self.root), *args], text=True
+        )
 
     def commit(self, message):
         with (self.root / "code.cpp").open("a") as source:
@@ -77,13 +81,30 @@ class ContextTests(unittest.TestCase):
         self.git("add", ".")
         self.git("commit", "-qm", "fix a signature")
         head = self.git("rev-parse", "HEAD").strip()
-        before = {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
+
+        def snapshot():
+            # Git may compact objects or refresh internal metadata even when
+            # repository content and its logical state remain unchanged.
+            files = {
+                p.relative_to(self.root): p.read_bytes()
+                for p in self.root.rglob("*")
+                if ".git" not in p.relative_to(self.root).parts and p.is_file()
+            }
+            return {
+                "files": files,
+                "head": self.git("rev-parse", "HEAD"),
+                "refs": self.git("for-each-ref", "--format=%(refname) %(objectname)"),
+                "status": self.git("status", "--porcelain=v1", "--untracked-files=all"),
+            }
+
+        before = snapshot()
+        # Reproduce Git maintenance changing object storage while the worktree
+        # stays unchanged, without depending on the runner's background timing.
+        self.git("gc", "--quiet")
         context = release.build_context(self.root, [{"tag_name": "v1", "body": "style"}], "v20260910a", head)
         self.assertIn("symbol-evidence-marker", context)
         self.assertLessEqual(len(context.encode("utf-8")), release.INITIAL_CONTEXT_BYTES)
-        self.assertEqual(
-            before, {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
-        )
+        self.assertEqual(before, snapshot())
 
     def test_cli_explicit_source_without_current_tag_and_default_claude(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -5,6 +5,13 @@ modules:
     depot_windows: hw.dll
     depot_linux: hw.so
     skills:
+      - name: find-NET_StartThread-symbols
+        platform: windows
+        expected_input:
+          - Sys_Error.windows.yaml
+        expected_output:
+          - NET_ThreadFunc.windows.yaml
+          - dwNetThreadId.windows.yaml
       - name: find-native-rcon-shutdown-symbols
         expected_input:
           - NET_Config.{platform}.yaml
@@ -1553,6 +1560,12 @@ modules:
         expected_output:
           - CL_IsDevOverviewMode.{platform}.yaml
     symbols:
+      - name: NET_ThreadFunc
+        category: func
+        platform: windows
+      - name: dwNetThreadId
+        category: gv
+        platform: windows
       - name: Host_Shutdown
         category: func
       - name: NET_Shutdown

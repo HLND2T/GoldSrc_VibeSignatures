@@ -1132,5 +1132,331 @@ class ForceCVarsSetupTripleWalkTests(unittest.TestCase):
         self.assertEqual(hex(self.ANIM), result["R_AnimateLight"]["va"])
 
 
+class NetworkCreationWalkTests(unittest.TestCase):
+    """Exercise argument provenance, rollback control flow and inline rejection."""
+
+    def locate(
+        self,
+        *,
+        id_mode="address",
+        handle_before_test=True,
+        bypass_cleanup=False,
+        extra_work=False,
+        memory_result=False,
+        narrow_host_store=False,
+        bypass_initialized=False,
+    ):
+        from ida_preprocessor_scripts import x86_call_arguments
+
+        ns = {"LITERALS": (), "SYS_ERROR": 0x9000, "WANT_START": True}
+        api = NS(o_void=0, o_reg=REG, o_mem=MEM, o_displ=DISPL, o_phrase=PHRASE, o_imm=IMM, o_near=NEAR, o_far=6)
+        modules = {
+            name: NS()
+            for name in ("ida_auto", "ida_funcs", "ida_idp", "ida_nalt", "ida_segment", "ida_ua", "ida_bytes")
+        }
+        modules.update(
+            {
+                "idaapi": api,
+                "idautils": NS(Segments=lambda: []),
+                "idc": NS(),
+            }
+        )
+        modules["ida_nalt"].get_import_module_qty = lambda: 0
+        api.inf_is_64bit = lambda: False
+        with patch.dict(sys.modules, modules):
+            exec(walk("find-NET_StartThread-symbols.py"), ns)
+        ns.update(vars(x86_call_arguments))
+        entries, dwords = [], {}
+
+        def op(kind, value=0, *, width=4):
+            return NS(type=kind, value=value, addr=value, reg=value, dtype=width, offb=1, n=0)
+
+        def emit(mnem, *ops):
+            ea = 0x1000 + len(entries) * 8
+            for index, operand in enumerate(ops):
+                operand.n = index
+                if operand.type in (IMM, MEM):
+                    dwords[ea + operand.offb] = operand.value
+            insn = NS(ops=[*ops, op(0)], size=8)
+            entry = dict(ea=ea, size=8, insn=insn, mnem=mnem, successors=[ea + 8])
+            entries.append(entry)
+            return entry
+
+        def store(gv, val):
+            return emit("mov", op(MEM, gv), op(IMM, val))
+
+        def call(target):
+            return emit("call", op(MEM, target))
+
+        emit("cmp", op(MEM, 0x4000), op(IMM))
+        emit("cmp", op(MEM, 0x4004), op(IMM))
+        if extra_work:
+            call(0x9100)
+        if narrow_host_store:
+            emit("mov", op(MEM, 0x6008, width=2), op(REG, "eax", width=2))
+        initialize = store(0x4004, 1)
+        emit("push", op(IMM, 0x5000))
+        call(0x8000)
+        if id_mode == "register":
+            emit("mov", op(REG, "edx"), op(IMM, 0x6000))
+            emit("push", op(REG, "edx"))
+        elif id_mode == "runtime_value":
+            emit("push", op(MEM, 0x6000))
+        else:
+            emit("push", op(IMM, 0x6004 if id_mode == "handle" else 0x6000))
+        emit("push", op(IMM))
+        emit("push", op(IMM))
+        emit("push", op(IMM, 0x3000))
+        emit("push", op(IMM))
+        emit("push", op(IMM))
+        call(0x8004)
+        if handle_before_test:
+            emit("mov", op(MEM, 0x6004), op(REG, "eax"))
+        if memory_result:
+            emit("cmp", op(MEM, 0x6004), op(IMM))
+        else:
+            emit("test", op(REG, "eax"), op(REG, "eax"))
+        if not handle_before_test:
+            emit("mov", op(MEM, 0x6004), op(REG, "eax"))
+        branch = emit("jnz", op(NEAR))
+        emit("push", op(IMM, 0x5000))
+        delete = call(0x8008)
+        reset = store(0x4004, 0)
+        store(0x4000, 0)
+        site = emit("push", op(IMM, 0x7000))
+        call(0x9000)
+        end = emit("ret")
+        end["successors"] = []
+        branch["insn"].ops[0].addr = end["ea"]
+        branch["successors"].append(end["ea"])
+        if bypass_cleanup:
+            branch["successors"][0] = reset["ea"]
+        if bypass_initialized:
+            entries[0]["successors"] = [initialize["ea"] + 8]
+        ns["imports"] = {0x8000: "InitializeCriticalSection", 0x8004: "CreateThread", 0x8008: "DeleteCriticalSection"}
+        ns["raw_body"] = lambda _: entries
+        modules["ida_idp"].get_reg_name = lambda reg, _: reg
+        modules["ida_ua"].get_dtype_size = lambda dtype: dtype
+        modules["ida_bytes"].get_dword = lambda ea: dwords.get(ea, 0)
+        modules["ida_bytes"].get_strlit_contents = lambda *_: None
+        modules["ida_segment"].SEGPERM_WRITE, modules["ida_segment"].SEGPERM_EXEC = 2, 4
+        modules["ida_segment"].getseg = lambda ea: (
+            NS(perm=4, end_ea=0x4000) if ea == 0x3000 else NS(perm=2, end_ea=0x8000) if 0x4000 <= ea < 0x8000 else None
+        )
+        modules["idautils"].CodeRefsTo = lambda *_: []
+        modules["idautils"].DataRefsFrom = lambda ea: [
+            int(o.addr) for e in entries if e["ea"] == ea for o in e["insn"].ops if o.type == MEM
+        ]
+        modules["idc"].print_insn_mnem = lambda *_: ""
+        return ns["inspect_path"](0x1000, site["ea"], 0x7000)
+
+    def test_recovers_callback_and_thread_id_storage_with_register_transfer(self):
+        result = self.locate(id_mode="register")
+        self.assertIsNotNone(result)
+        self.assertEqual(0x3000, result["thread"])
+        self.assertEqual(0x6000, result["tid"])
+        self.assertEqual(0x6004, result["handle"])
+        self.assertTrue(result["standalone"])
+
+    def test_accepts_handle_store_between_result_test_and_branch(self):
+        self.assertIsNotNone(self.locate(handle_before_test=False))
+
+    def test_accepts_result_test_through_stored_handle(self):
+        self.assertIsNotNone(self.locate(memory_result=True))
+
+    def test_rejects_runtime_id_and_handle_slot_as_thread_id_storage(self):
+        for mode in ("runtime_value", "handle"):
+            with self.subTest(mode=mode):
+                self.assertIsNone(self.locate(id_mode=mode))
+
+    def test_rejects_failure_path_that_bypasses_cleanup(self):
+        self.assertIsNone(self.locate(bypass_cleanup=True))
+
+    def test_rejects_creation_path_that_bypasses_initialized_store(self):
+        self.assertIsNone(self.locate(bypass_initialized=True))
+
+    def test_does_not_label_host_with_extra_work_as_standalone_start(self):
+        result = self.locate(extra_work=True)
+        self.assertIsNotNone(result)
+        self.assertFalse(result["standalone"])
+
+    def test_recovers_inline_creation_despite_unrelated_word_store(self):
+        result = self.locate(narrow_host_store=True)
+        self.assertIsNotNone(result)
+        self.assertFalse(result["standalone"])
+
+
+class PthreadCreationWalkTests(unittest.TestCase):
+    """Check POSIX output/error-code roles, PIC provenance and failure flow."""
+
+    def locate(
+        self,
+        *,
+        runtime_output=False,
+        alias_error=False,
+        bypass_cleanup=False,
+        bypass_initialized=False,
+        clobber=False,
+        extra_work=False,
+        store_first=False,
+        swap_args=False,
+        wrong_state_guard=False,
+        partial_result=False,
+    ):
+        entries = []
+
+        def op(kind, value=0, reg=""):
+            return NS(type=kind, value=value, addr=value, reg=reg, dtype=4, offb=2, specflag1=0, specflag2=0)
+
+        def emit(mnem, *ops, targets=(), written=()):
+            ea = 0x1000 + len(entries) * 8
+            insn = NS(ops=[*ops, op(0)], size=8)
+            entry = dict(
+                ea=ea, len=8, insn=insn, mnem=mnem, targets=set(targets), written=set(written), disp=2, disasm=mnem
+            )
+            entries.append(entry)
+            return entry
+
+        def store(gv, source):
+            return emit("mov", op(DISPL, gv - 0x2000, "ebx"), source, targets=(gv,), written=(gv,))
+
+        state_guards = []
+        for gv, branch_kind in ((0x4000, "jz"), (0x4004, "jnz")):
+            emit("mov", op(REG, reg="eax"), op(DISPL, gv - 0x2000, "ebx"), targets=(gv,))
+            emit("test", op(REG, reg="eax"), op(REG, reg="eax"))
+            state_guards.append(emit("jz" if wrong_state_guard else branch_kind, op(NEAR)))
+        if extra_work:
+            emit("call", op(NEAR, 0x9100))
+        initialized = store(0x4004, op(IMM, 1))
+        for slot, gv in ((0, 0x3000 if swap_args else 0x6000), (8, 0x6000 if swap_args else 0x3000)):
+            emit(
+                "mov" if runtime_output and slot == 0 else "lea",
+                op(REG, reg="eax"),
+                op(DISPL, gv - 0x2000, "ebx"),
+                targets=(gv,),
+            )
+            emit("mov", op(DISPL, slot, "esp"), op(REG, reg="eax"))
+        for slot in (4, 12):
+            emit("mov", op(DISPL, slot, "esp"), op(IMM))
+        create = emit("call", op(NEAR, 0x8000))
+        if clobber:
+            emit("xor", op(REG, reg="eax"), op(REG, reg="eax"))
+        if store_first:
+            result_store = store(0x6000 if alias_error else 0x6004, op(REG, reg="eax"))
+        result_test = emit("test", op(REG, reg="eax"), op(REG, reg="eax"))
+        if partial_result:
+            result_test["insn"].ops[0].dtype = result_test["insn"].ops[1].dtype = 1
+        if not store_first:
+            result_store = store(0x6000 if alias_error else 0x6004, op(REG, reg="eax"))
+        branch = emit("jnz", op(NEAR))
+        success = emit("ret")
+        emit("lea", op(REG, reg="eax"), op(DISPL, 0x3000, "ebx"), targets=(0x5000,))
+        emit("mov", op(DISPL, 0, "esp"), op(REG, reg="eax"))
+        destroy = emit("call", op(NEAR, 0x8004))
+        reset = store(0x4004, op(IMM))
+        store(0x4000, op(IMM))
+        emit("lea", op(REG, reg="eax"), op(DISPL, 0x5000, "ebx"))
+        emit("mov", op(DISPL, 0, "esp"), op(REG, reg="eax"))
+        fatal = emit("call", op(NEAR, 0x9000))
+        emit("ret")
+        branch["insn"].ops[0].addr = success["ea"] + 8
+        by_ea = {e["ea"]: e for e in entries}
+        edges = {e["ea"]: ([] if e["mnem"] == "ret" else [e["ea"] + 8]) for e in entries}
+        edges[branch["ea"]].append(branch["insn"].ops[0].addr)
+        for guard in state_guards:
+            guard["insn"].ops[0].addr = success["ea"]
+            edges[guard["ea"]].append(success["ea"])
+        if bypass_cleanup:
+            edges[branch["ea"]].append(reset["ea"])
+        if bypass_initialized:
+            edges[entries[0]["ea"]].append(initialized["ea"] + 8)
+        ns = dict(
+            values={"fatal": 0x9000, "literal": "unused"},
+            scan=lambda _: entries,
+            got_anchor=lambda _: (0x2000, "ebx"),
+            reg4=lambda o: o.reg,
+            signed32=lambda v: v,
+            local_call_target=lambda ea: int(by_ea[ea]["insn"].ops[0].addr),
+            is_code_address=lambda ea: ea == 0x3000,
+            is_plt=lambda _: False,
+            is_got=lambda _: False,
+            is_writable_data=lambda ea: 0x4000 <= ea < 0x8000,
+            access=lambda e, gv: {"gv_ea": hex(gv), "insn_ea": hex(e["ea"])},
+            elf_data_refs_to=lambda _: [],
+        )
+        api = NS(
+            o_void=0,
+            o_reg=REG,
+            o_mem=MEM,
+            o_displ=DISPL,
+            o_phrase=PHRASE,
+            o_imm=IMM,
+            o_near=NEAR,
+            inf_is_64bit=lambda: False,
+        )
+        modules = {
+            "idaapi": api,
+            "ida_frame": NS(get_spd=lambda *_: 0),
+            "ida_nalt": NS(get_import_module_qty=lambda: 0),
+            "ida_funcs": NS(get_func=lambda ea: NS(start_ea=ea)),
+            "ida_ua": NS(get_dtype_size=lambda v: v),
+            "ida_segment": NS(getseg=lambda _: NS(end_ea=0x8000)),
+            "idautils": NS(Segments=lambda: [], CodeRefsTo=lambda *_: []),
+            "idc": NS(
+                get_operand_value=lambda ea, _: by_ea[ea]["insn"].ops[0].addr,
+                generate_disasm_line=lambda *_: "synthetic",
+            ),
+            "ida_bytes": NS(get_strlit_contents=lambda *_: None),
+        }
+        ns.update({k: v for k, v in modules.items() if k != "ida_frame"})
+        with patch.dict(sys.modules, modules):
+            exec(walk("find-NET_StartThread-pthread-symbols.py"), ns)
+            ns["api_name"] = lambda ea: {create["ea"]: "pthread_create", destroy["ea"]: "pthread_mutex_destroy"}.get(ea)
+            ns["decode_function_flow"] = lambda *_: edges
+            ns["changed_operand"] = lambda insn, i: (
+                insn.ops[0].type == REG
+                and by_ea[next(e["ea"] for e in entries if e["insn"] is insn)]["mnem"] not in ("test", "cmp")
+            )
+            return ns["inspect_path"](0x1000, 0x7000)
+
+    def test_recovers_pic_pthread_output_and_separate_error_code(self):
+        for store_first in (False, True):
+            result = self.locate(store_first=store_first)
+            self.assertIsNotNone(result)
+            self.assertEqual(0x3000, result["routine"])
+            self.assertEqual("0x6000", result["thread"]["gv_ea"])
+            self.assertEqual("0x6004", result["error_code"]["gv_ea"])
+            self.assertTrue(result["standalone"])
+
+    def test_rejects_runtime_value_in_output_argument(self):
+        self.assertIsNone(self.locate(runtime_output=True))
+
+    def test_rejects_error_store_aliasing_pthread_output(self):
+        self.assertIsNone(self.locate(alias_error=True))
+
+    def test_rejects_swapped_callback_and_output_arguments(self):
+        self.assertIsNone(self.locate(swap_args=True))
+
+    def test_rejects_branch_bypassing_mutex_cleanup(self):
+        self.assertIsNone(self.locate(bypass_cleanup=True))
+
+    def test_rejects_creation_bypassing_initialized_assignment(self):
+        self.assertIsNone(self.locate(bypass_initialized=True))
+
+    def test_rejects_clobbered_create_return_value(self):
+        self.assertIsNone(self.locate(clobber=True))
+
+    def test_rejects_inverted_initialized_guard(self):
+        self.assertIsNone(self.locate(wrong_state_guard=True))
+
+    def test_rejects_partial_width_return_test(self):
+        self.assertIsNone(self.locate(partial_result=True))
+
+    def test_does_not_publish_inline_host_as_start_function(self):
+        result = self.locate(extra_work=True)
+        self.assertIsNotNone(result)
+        self.assertFalse(result["standalone"])
+
+
 if __name__ == "__main__":
     unittest.main()
