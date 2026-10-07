@@ -1,0 +1,8 @@
+func_name: vgui2::VPanel::SetSize(int, int)
+func_va: '0x1e210'
+func_rva: '0x1e210'
+func_size: '0x6e'
+func_sig: 56 53 83 EC ?? 8B 44 24 ?? 8B 5C 24 ?? 8B 74 24 ?? 0F BF 50 ?? 39 D3 0F 4C DA 0F BF 50 ??
+vtable_name: vgui2::VPanel
+vfunc_offset: '0x34'
+vfunc_index: 13

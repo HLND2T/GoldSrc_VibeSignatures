@@ -1,0 +1,9 @@
+func_name: vgui2::EditablePanel::OnSizeChanged(int, int)
+func_va: '0x1004d3b0'
+func_rva: '0x4d3b0'
+func_size: '0x17f'
+func_sig: 83 EC 18 53 8B 5C 24 ?? 55 8B 6C 24 ?? 56 57 55 53 8B F9 E8 ?? ?? ?? ?? 8B 07 6A 00 6A 00
+func_sig_allow_across_function_boundary: true
+vtable_name: vgui2::EditablePanel
+vfunc_offset: '0x24'
+vfunc_index: 9

@@ -8,7 +8,7 @@ from ida_preprocessor_scripts._func_to_func_callsites_common import (
     expected_callsite_outputs,
     generate_callsite_signatures,
 )
-from ida_preprocessor_scripts._panel_bounds_collect import COLLECT
+from ida_preprocessor_scripts._panel_bounds_collect import COLLECT, IDENTIFY_BOUNDS
 from ida_preprocessor_scripts._panel_bounds_identity import (
     bounds_body_matches,
     bounds_constants,
@@ -24,8 +24,9 @@ from ida_preprocessor_scripts._vgui_paint_common import walk
 from ida_preprocessor_scripts._vgui_private_method_identity import stack_check_preserves_registers
 
 
-async def discover_bounds_callsites(session, platform, init):
-    source = "\n".join(
+def bounds_identity_source(tail):
+    """Worker source that proves the current Panel::SetBounds as `target`, then runs `tail`."""
+    return "\n".join(
         (
             inspect.getsource(stack_check_preserves_registers),
             IDENTITY_SOURCE,
@@ -37,9 +38,14 @@ async def discover_bounds_callsites(session, platform, init):
             inspect.getsource(constructor_vtable),
             inspect.getsource(calls_reached_after),
             IDENTIFY,
-            COLLECT,
+            IDENTIFY_BOUNDS,
+            tail,
         )
     )
+
+
+async def discover_bounds_callsites(session, platform, init):
+    source = bounds_identity_source(COLLECT)
     result = await walk(session, source, dict(platform=platform, init=init, scaled=False))
     if not isinstance(result, dict) or result.get("error") or "sites" not in result:
         raise ValueError(f"Panel bounds discovery failed: {result}")

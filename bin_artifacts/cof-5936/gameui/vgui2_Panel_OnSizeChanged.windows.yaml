@@ -1,0 +1,9 @@
+func_name: vgui2::Panel::OnSizeChanged(int, int)
+func_va: '0x1005ec92'
+func_rva: '0x5ec92'
+func_size: '0x1f'
+func_sig: 55 8B EC 51 89 4D ?? 6A 00 6A 00 8B 45 ?? 8B 10 8B 4D ?? FF 92 ?? ?? ?? ?? 8B E5 5D C2 08 00
+func_sig_allow_across_function_boundary: true
+vtable_name: vgui2::Panel
+vfunc_offset: '0x24'
+vfunc_index: 9

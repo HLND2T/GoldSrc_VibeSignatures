@@ -1,6 +1,6 @@
 """Extend current Panel method identities with SetPos/SetBounds and their callers."""
 
-COLLECT = r"""
+IDENTIFY_BOUNDS = r"""
 positions = dispatches(init, ("arg", 1), ("arg", 2), False, flow=init_flow)
 for c in init_flow["calls"]:
     if c["direct"] and args(c)[:3] == [THIS, ("arg", 1), ("arg", 2)]:
@@ -27,6 +27,9 @@ size_methods = set(methods["SetSize"])
 candidates = set(wrapper_owners)
 for target in position_methods | size_methods:
     candidates.update(owner for owner, _ in callers(target))
+if values.get("bounds_owner") is not None:
+    # A consumer scoped to one caller proves SetBounds among that caller's direct callees.
+    candidates &= {c["direct"] for c in flow_at(values["bounds_owner"], platform)["calls"] if c["direct"]}
 
 
 def bounds_body(ea):
@@ -47,6 +50,9 @@ for ea in sorted(candidates):
 if len(bounds) != 1:
     raise ValueError("non-unique Panel SetBounds: " + repr(bounds))
 target = bounds[0]
+"""
+
+COLLECT = r"""
 sites = []
 rejects = []
 unproven_cleanup = []

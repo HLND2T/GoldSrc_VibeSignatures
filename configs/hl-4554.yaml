@@ -2638,6 +2638,15 @@ modules:
       - name: find-CInputWin32_PostKeyMessage
         expected_output:
           - CInputWin32_PostKeyMessage.{platform}.yaml
+      - name: find-vgui2_VPanel_SetSize
+        expected_input:
+          - ../gameui/vgui2_IPanel_SetSize.{platform}.yaml
+          - vgui2_VPanelWrapper_vtable.{platform}.yaml
+          - vgui2_VPanel_vtable.{platform}.yaml
+          - vgui2_VPanel_Client.{platform}.yaml
+        expected_output:
+          - vgui2_VPanel_SetSize.{platform}.yaml
+          - vgui2_IClientPanel_OnSizeChanged.{platform}.yaml
     symbols:
       - name: vgui2_VPanelWrapper_vtable
         category: vtable
@@ -2651,6 +2660,10 @@ modules:
         category: vfunc
       - name: CInputWin32_PostKeyMessage
         category: func
+      - name: vgui2_VPanel_SetSize
+        category: vfunc
+      - name: vgui2_IClientPanel_OnSizeChanged
+        category: vfunc
   - name: gameui
     module_windows: GameUI.dll
     depot_windows: valve/cl_dlls/GameUI.dll
@@ -2878,6 +2891,22 @@ modules:
           - CCareerProfileFrame_ctor.{platform}.yaml
           - CCareerMapFrame_ctor.{platform}.yaml
           - CCareerBotFrame_ctor.{platform}.yaml
+      - name: find-vgui2_IPanel_SetSize
+        expected_input:
+          - vgui2_Panel_Init.{platform}.yaml
+        expected_output:
+          - vgui2_IPanel_SetSize.{platform}.yaml
+      - name: find-GameUI-OnSizeChanged
+        expected_input:
+          - vgui2_Panel_Init.{platform}.yaml
+          - ../vgui2/vgui2_IClientPanel_OnSizeChanged.{platform}.yaml
+        expected_output:
+          - vgui2_Panel_vtable.{platform}.yaml
+          - vgui2_EditablePanel_vtable.{platform}.yaml
+          - vgui2_Panel_OnSizeChanged.{platform}.yaml
+          - vgui2_EditablePanel_OnSizeChanged.{platform}.yaml
+          - vgui2_EditablePanel_OnSizeChanged_call_GetChild_callsite_0.{platform}.yaml
+          - vgui2_EditablePanel_OnSizeChanged_call_SetBounds_callsite_0.{platform}.yaml
     symbols:
       - name: vgui2_Panel_SetBounds_Const_callsite_0
         category: patch
@@ -3172,6 +3201,20 @@ modules:
         category: vfunc
       - name: COptionsSubVideo_OnApplyChanges
         category: vfunc
+      - name: vgui2_IPanel_SetSize
+        category: vfunc
+      - name: vgui2_Panel_vtable
+        category: vtable
+      - name: vgui2_EditablePanel_vtable
+        category: vtable
+      - name: vgui2_Panel_OnSizeChanged
+        category: vfunc
+      - name: vgui2_EditablePanel_OnSizeChanged
+        category: vfunc
+      - name: vgui2_EditablePanel_OnSizeChanged_call_GetChild_callsite_0
+        category: patch
+      - name: vgui2_EditablePanel_OnSizeChanged_call_SetBounds_callsite_0
+        category: patch
   - name: serverbrowser
     module_windows: ServerBrowser.dll
     depot_windows: platform/servers/ServerBrowser.dll
