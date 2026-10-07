@@ -8,6 +8,8 @@ import inspect
 
 from ida_preprocessor_scripts import x86_call_arguments
 
+MAX_PATH_INSTRUCTIONS = 128
+
 
 CALL_FLOW_PY = (
     inspect.getsource(x86_call_arguments)
@@ -138,6 +140,53 @@ def language_role(arguments, strings, literal_eas):
         if "DEFAULTGAME" in strings
         else "FileSystem_AddFallbackGameDir_V_strncpy_callsite_0"
     )
+
+
+def branch_tail_call(owner, code, primary_ea):
+    """Index of the first call on a sibling branch that rejoins the primary.
+
+    CoF duplicates the language copy per branch instead of sharing one tail:
+    the dispatch block tests the Steam language and branches to either its own
+    copy or the default-English copy. Whenever a block's successor set also
+    contains the primary call's block, the other successor is the sibling
+    branch; the first direct call reachable on it is the second copy. Merged
+    call tails (every other engine family) reach the primary block before any
+    call, so they yield None. The body is injected into the worker by
+    ``inspect.getsource``, so it must stay self-contained: it consumes the
+    caller's ``ida_funcs``, ``ida_gdl``, ``MAX_PATH_INSTRUCTIONS`` globals.
+    """
+    blocks = list(ida_gdl.FlowChart(ida_funcs.get_func(owner)))
+    primary = next((block for block in blocks if block.start_ea <= primary_ea < block.end_ea), None)
+    if primary is None:
+        return None
+    by_ea = {item["ea"]: index for index, item in enumerate(code)}
+    for block in blocks:
+        successors = list(block.succs())
+        if int(primary.start_ea) not in {int(target.start_ea) for target in successors}:
+            continue
+        for target in successors:
+            if int(target.start_ea) == int(primary.start_ea):
+                continue
+            index = by_ea.get(int(target.start_ea))
+            visited = set()
+            while index is not None and index < len(code) and len(visited) < MAX_PATH_INSTRUCTIONS:
+                if index in visited:
+                    break
+                visited.add(index)
+                item = code[index]
+                if item["ea"] == primary.start_ea:
+                    break
+                mnem = item["mnem"]
+                if mnem == "call":
+                    return index
+                if mnem == "jmp":
+                    operands = item["ops"]
+                    index = by_ea.get(operands[0][1]) if operands and operands[0][0] == "imm" else None
+                    continue
+                if mnem.startswith("j") or mnem.startswith("ret") or mnem.startswith("loop"):
+                    break
+                index += 1
+    return None
 
 
 def factory_origin(code, query_index):

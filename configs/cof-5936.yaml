@@ -812,6 +812,9 @@ modules:
         expected_output:
           - FileSystem_SetGameDirectory_V_strncpy_callsite_0.{platform}.yaml
           - FileSystem_AddFallbackGameDir_V_strncpy_callsite_0.{platform}.yaml
+        optional_output:
+          - FileSystem_SetGameDirectory_V_strncpy_callsite_1.{platform}.yaml
+          - FileSystem_AddFallbackGameDir_V_strncpy_callsite_1.{platform}.yaml
       - name: find-g_clmove
         expected_input:
           - ClientDLL_Init.{platform}.yaml
@@ -2167,6 +2170,10 @@ modules:
       - name: FileSystem_SetGameDirectory_V_strncpy_callsite_0
         category: patch
       - name: FileSystem_AddFallbackGameDir_V_strncpy_callsite_0
+        category: patch
+      - name: FileSystem_SetGameDirectory_V_strncpy_callsite_1
+        category: patch
+      - name: FileSystem_AddFallbackGameDir_V_strncpy_callsite_1
         category: patch
       - name: g_clmove
         category: gv

@@ -914,6 +914,58 @@ class EnginePatchDataflowTests(unittest.TestCase):
         ]
         self.assertIsNone(factory_origin(code, 2))
 
+    def branch_tail(self, code, blocks, primary_ea=0x100):
+        from ida_preprocessor_scripts import _engine_patch_common as common
+
+        with (
+            patch.object(common, "ida_funcs", NS(get_func=lambda _: object()), create=True),
+            patch.object(common, "ida_gdl", NS(FlowChart=lambda _: blocks), create=True),
+        ):
+            return common.branch_tail_call(0x100, code, primary_ea)
+
+    def test_branch_tail_call_finds_duplicate_copy_on_sibling_branch(self):
+        # Dispatch (0x100) branches to the sibling call (0x200) or the primary
+        # call's block (0x300), exactly CoF's per-branch duplication.
+        code = [
+            {"ea": 0x100, "mnem": "cmp", "ops": [("reg", "eax"), ("imm", 0)]},
+            {"ea": 0x110, "mnem": "jz", "ops": [("imm", 0x300)]},
+            {"ea": 0x200, "mnem": "call", "ops": [("imm", 0x9000)]},
+            {"ea": 0x210, "mnem": "jmp", "ops": [("imm", 0x310)]},
+            {"ea": 0x300, "mnem": "call", "ops": [("imm", 0x9000)]},
+        ]
+        blocks = [
+            NS(start_ea=0x100, end_ea=0x200, succs=lambda: [NS(start_ea=0x200), NS(start_ea=0x300)]),
+            NS(start_ea=0x200, end_ea=0x220, succs=lambda: [NS(start_ea=0x310)]),
+            NS(start_ea=0x300, end_ea=0x320, succs=lambda: []),
+        ]
+        self.assertEqual(2, self.branch_tail(code, blocks, primary_ea=0x300))
+
+    def test_branch_tail_call_ignores_merged_call_tail(self):
+        # Both arms reach the primary call's block before any call, as in every
+        # other engine family: there is no second copy to redirect.
+        code = [
+            {"ea": 0x100, "mnem": "cmp", "ops": [("reg", "eax"), ("imm", 0)]},
+            {"ea": 0x110, "mnem": "jz", "ops": [("imm", 0x300)]},
+            {"ea": 0x200, "mnem": "mov", "ops": [("reg", "ecx"), ("reg", "eax")]},
+            {"ea": 0x210, "mnem": "jmp", "ops": [("imm", 0x300)]},
+            {"ea": 0x300, "mnem": "call", "ops": [("imm", 0x9000)]},
+        ]
+        blocks = [
+            NS(start_ea=0x100, end_ea=0x200, succs=lambda: [NS(start_ea=0x200), NS(start_ea=0x300)]),
+            NS(start_ea=0x200, end_ea=0x220, succs=lambda: [NS(start_ea=0x300)]),
+            NS(start_ea=0x300, end_ea=0x320, succs=lambda: []),
+        ]
+        self.assertIsNone(self.branch_tail(code, blocks))
+
+    def test_callsite_name_numbers_duplicates_only(self):
+        finder = runpy.run_path(
+            str(ROOT / "ida_preprocessor_scripts" / "find-FileSystem_SetGameDirectory_V_strncpy_callsite_0.py")
+        )
+        callsite_name = finder["_callsite_name"]
+        name = "FileSystem_SetGameDirectory_V_strncpy_callsite_0"
+        self.assertEqual(name, callsite_name(name, 0))
+        self.assertEqual("FileSystem_SetGameDirectory_V_strncpy_callsite_1", callsite_name(name, 1))
+
 
 class HostParmsWalkTests(unittest.TestCase):
     """Exercise find-host_parms through decoded operands and real flow recovery.
