@@ -1,0 +1,5 @@
+func_name: COM_InitArgv
+func_va: '0x1d2dd80'
+func_rva: '0x2dd80'
+func_size: '0xda'
+func_sig: 53 55 8B 6C 24 ?? 56 57 8B 7C 24 ?? 33 C0 33 F6 B3 20 3B F5 7D ?? 3D FF 00 00 00

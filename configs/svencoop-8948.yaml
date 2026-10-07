@@ -1199,6 +1199,13 @@ modules:
           - RunListenServer.{platform}.yaml
         expected_output:
           - Sys_InitArgv.{platform}.yaml
+      - name: find-COM_InitArgv
+        expected_input:
+          - Sys_InitArgv.{platform}.yaml
+        expected_output:
+          - COM_InitArgv.{platform}.yaml
+          - com_argc.{platform}.yaml
+          - com_argv.{platform}.yaml
       - name: find-Key_Event
         expected_output:
           - Key_Event.{platform}.yaml
@@ -2509,6 +2516,12 @@ modules:
         category: func
       - name: Sys_InitArgv
         category: func
+      - name: COM_InitArgv
+        category: func
+      - name: com_argc
+        category: gv
+      - name: com_argv
+        category: gv
       - name: Key_Event
         category: func
       - name: eng
