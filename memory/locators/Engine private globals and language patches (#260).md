@@ -116,6 +116,46 @@ Require one site for each role. Consumers redirect both sites. Compiler-shared
 Steam/default-language call tails are followed, including Sven Linux's backward
 jump to the copy. Address order does not define either role.
 
+### Per-branch duplicates (`_callsite_1`, issue #341)
+
+Most compilers merge the `ISteamApps_GetCurrentGameLanguage` arm and the
+`english` fallback arm into one shared `call`: every merged engine's `_0`
+covers both arms. CoF (`cof-5936`) does not merge; its `SetGameDirectory` and
+`AddFallbackGameDir` each emit a **separate** `strncpy` per arm, and the `_0`
+(anchored on `push "english"`) only ever saw the fallback arm.
+
+`branch_tail_call` in `_engine_patch_common.py` finds the sibling copy
+structurally, without IDA names: whenever a block's successor set also contains
+the primary call's block, the other successor is the sibling branch, and the
+first direct call reachable on it is the second copy. Merged tails reach the
+primary block before any call and yield `None`. The recovered sibling must
+share the primary's destination buffer and 128-byte size; its source is the
+Steam language pointer rather than the literal, so source equality is *not*
+required.
+
+Verified contract: the first copy keeps `_0` (required); a duplicate is emitted
+as `..._callsite_1` and is **optional**, present only on `cof-5936`. CoF
+duplicates windows-only. `configs/cof-5936.yaml` therefore declares the two `_1`
+symbols and an `optional_output` block, while the five merged-call configs keep
+only the `_0` pair.
+
+CoF addresses (Windows, image base `0x1D00000`):
+
+| Symbol | VA | Owner |
+| --- | --- | --- |
+| `FileSystem_SetGameDirectory_V_strncpy_callsite_0` | `0x1d5c8c5` | `0x1d5c7bd` |
+| `FileSystem_SetGameDirectory_V_strncpy_callsite_1` | `0x1d5c8aa` | `0x1d5c7bd` |
+| `FileSystem_AddFallbackGameDir_V_strncpy_callsite_0` | `0x1d5cfa8` | `0x1d5cf5e` |
+| `FileSystem_AddFallbackGameDir_V_strncpy_callsite_1` | `0x1d5cf8d` | `0x1d5cf5e` |
+
+Consumer side: `Plugins/VGUI2Extension/src/privatefuncs.cpp`
+`Engine_PatchAddress_LanguageStrncpy` walks each owner's numbered prefix from
+`_0`, requiring `_0` and querying `_1` optionally (`GamedataResolvePtrIfAvailable`),
+stopping at the first missing index — the same pattern as
+`PatchPanelSizeCallsites`. The manifest's `G19` condition group keeps CoF's
+numbered set in the published catalog; the upstream catalog only carries `_1`
+after this repository's release workflow publishes the new artifacts.
+
 ## Pitfalls
 
 - **Wrong ABI despite a unique signature.** The interface query returns an
