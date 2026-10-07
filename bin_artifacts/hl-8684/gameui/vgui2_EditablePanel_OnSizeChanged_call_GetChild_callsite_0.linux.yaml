@@ -1,0 +1,5 @@
+patch_name: vgui2_EditablePanel_OnSizeChanged_call_GetChild_callsite_0
+patch_va: '0x10cd57'
+patch_rva: '0x10cd57'
+patch_sig: E8 C4 1A 02 00 85 C0
+patch_sig_disp: '0x0'

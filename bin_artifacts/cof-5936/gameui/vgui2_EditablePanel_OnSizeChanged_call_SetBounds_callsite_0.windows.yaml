@@ -1,0 +1,5 @@
+patch_name: vgui2_EditablePanel_OnSizeChanged_call_SetBounds_callsite_0
+patch_va: '0x1006c367'
+patch_rva: '0x6c367'
+patch_sig: E8 13 1E FF FF 6A ??
+patch_sig_disp: '0x0'
