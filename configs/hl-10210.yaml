@@ -1134,6 +1134,11 @@ modules:
         expected_output:
           - RunListenServer.{platform}.yaml
           - eng.{platform}.yaml
+      - name: find-Sys_InitArgv
+        expected_input:
+          - RunListenServer.{platform}.yaml
+        expected_output:
+          - Sys_InitArgv.{platform}.yaml
       - name: find-Key_Event
         expected_output:
           - Key_Event.{platform}.yaml
@@ -2306,6 +2311,8 @@ modules:
       - name: IVideoMode_UpdateWindowPosition
         category: vfunc
       - name: RunListenServer
+        category: func
+      - name: Sys_InitArgv
         category: func
       - name: Key_Event
         category: func
