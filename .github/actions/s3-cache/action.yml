@@ -49,7 +49,7 @@ runs:
     - name: restore S3 cache
       id: restore
       if: ${{ !cancelled() && steps.endpoint.outcome == 'success' && inputs.operation == 'restore' }}
-      uses: hzqst/actions-cache/restore@dceeeab53d941698fc84a157bed4ca595bdc3225 # Portable S3 object keys
+      uses: hzqst/actions-cache/restore@dceeeab53d941698fc84a157bed4ca595bdc3225  # Portable S3 object keys
       env:
         AWS_ACCESS_KEY_ID: ${{ inputs.access-key }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.secret-key }}
@@ -69,7 +69,7 @@ runs:
     - name: save S3 cache
       id: save
       if: ${{ !cancelled() && steps.endpoint.outcome == 'success' && inputs.operation == 'save' }}
-      uses: hzqst/actions-cache/save@dceeeab53d941698fc84a157bed4ca595bdc3225 # Portable S3 object keys
+      uses: hzqst/actions-cache/save@dceeeab53d941698fc84a157bed4ca595bdc3225  # Portable S3 object keys
       env:
         AWS_ACCESS_KEY_ID: ${{ inputs.access-key }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.secret-key }}
@@ -88,7 +88,7 @@ runs:
     - name: saved S3 cache
       id: saved
       if: ${{ !cancelled() && steps.save.outcome == 'success' && inputs.operation == 'save' }}
-      uses: hzqst/actions-cache/restore@dceeeab53d941698fc84a157bed4ca595bdc3225 # Portable S3 object keys
+      uses: hzqst/actions-cache/restore@dceeeab53d941698fc84a157bed4ca595bdc3225  # Portable S3 object keys
       env:
         AWS_ACCESS_KEY_ID: ${{ inputs.access-key }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.secret-key }}
