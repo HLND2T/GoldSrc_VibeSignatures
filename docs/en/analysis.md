@@ -33,10 +33,25 @@ uv run python warmup_idb.py -gamever cstrike-10210 -python "<interpreter with id
 CI warmup across jobs uses schema-3 exact selections with one immutable generation per binary and persistent leases.
 PR subsets and release builds reuse the same binary cache when its identity, IDA kernel and warm worker agree;
 changing another selected module does not invalidate it. Only misses warm together within bounded platform batches.
-Payloads, READY, and schema-2 lease records live in `PERSISTED_WORKSPACE/idb-cache-v3/<tag>/`;
-first use warms the new namespace without importing old combination caches. Each tag is pruned once per Prepare,
+Payloads, READY, and schema-2 lease records live in `IDB_CACHE_ROOT/idb-cache-v3/<tag>/`.
+CI restores private S3 snapshots into disposable staging outside the checkout, cleared for every job;
+the host's `PERSISTED_WORKSPACE` is no longer the cache backend. First use performs a cold warmup. Each tag is pruned once per Prepare,
 retaining the newest three valid generations per binary target plus READY, live pins and minimum-age protection.
-`idb-cache/.locks/` still coordinates old and new producers and must not be deleted with legacy payloads.
+`idb-cache/.locks/` coordinates local staging operations; workflow concurrency serializes this repository's producers.
+
+The `win64` environment requires `S3_ENDPOINT_URL`, `S3_ACCESS_KEY_ID`, and `S3_SECRET_ACCESS_KEY` secrets.
+The shared action uses `tespkg/actions-cache/restore@v1` and `save@v1` with bucket
+`actions-cache-goldsrc-vibesignatures` and GitHub cache fallback disabled. `http://HZVM:8333` becomes
+`endpoint=HZVM`, `port=8333`, `insecure=true`; HTTPS uses `insecure=false`.
+The producer discovers a previous snapshot under a repository/platform prefix, verifies and completes it,
+then saves a new run ID/attempt key and checks publication. Consumers require that exact key before
+the existing selection, lease, and payload checks. Snapshots contain the whole IDB store, including retained generations.
+
+Self-hosted selections, rebuilt artifacts, diagnostics, and release bundles are also archived in S3 per run/attempt.
+GitHub artifacts remain for transport to hosted runners, which cannot reach the private endpoint, and for publication digest checks.
+S3 retention is controlled by bucket lifecycle, not GitHub artifact retention-days; retain IDB snapshots for the lease window.
+Consumer lease releases affect only the local copy, never the immutable S3 snapshot.
+The old `PERSISTED_WORKSPACE` secret is used only by explicit `cleanup_legacy_yaml` runs; existing host caches are not migrated or deleted.
 
 Leases last 36 days from Prepare, with an additional one-hour pruning clock allowance, and are released immediately
 after the complete selection restores successfully. Partial restore failure retains every pin. If a lease is missing,
