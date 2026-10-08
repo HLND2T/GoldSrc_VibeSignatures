@@ -48,7 +48,8 @@ tag 一次，按 binary target 保留最新三个有效 generation，并继续�
 历史 release evidence 的 selection schema 1/2 仍支持离线校验；新流程要求 schema 3。
 
 `win64` environment 需要 `S3_ENDPOINT_URL`、`S3_ACCESS_KEY_ID`、`S3_SECRET_ACCESS_KEY` 三个 secrets。
-共享 action 使用 `tespkg/actions-cache/restore@v1` 和 `save@v1`，bucket 固定为
+共享 action 将 `hzqst/actions-cache/restore` 和 `save` 固定到 commit `dceeeab5`
+（可移植的 S3 object key），bucket 固定为
 `actions-cache-goldsrc-vibesignatures`，关闭 GitHub cache fallback。`http://HZVM:8333` 解析为
 `endpoint=HZVM`、`port=8333`、`insecure=true`；HTTPS 则为 `insecure=false`。
 producer 从仓库/平台隔离的前缀发现最近快照，校验并补齐后按 run ID/attempt 保存新快照，确认对象存在后
