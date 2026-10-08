@@ -17,9 +17,13 @@ def parse_endpoint(value: str) -> dict[str, str]:
         raise ValueError("S3_ENDPOINT_URL must be an HTTP(S) origin")
     parsed = urlsplit(value)
     if (
-        parsed.scheme not in ("http", "https") or not parsed.hostname
-        or parsed.username is not None or parsed.password is not None
-        or parsed.path not in ("", "/") or "?" in value or "#" in value
+        parsed.scheme not in ("http", "https")
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path not in ("", "/")
+        or "?" in value
+        or "#" in value
         or parsed.netloc.endswith(":")
     ):
         raise ValueError("S3_ENDPOINT_URL must contain only an HTTP(S) origin")
@@ -29,14 +33,17 @@ def parse_endpoint(value: str) -> dict[str, str]:
     host = parsed.hostname if parsed.netloc.startswith("[") else parsed.netloc.split(":")[0]
     if not re.fullmatch(r"[A-Za-z0-9.:-]+", host):
         raise ValueError("Invalid S3 endpoint hostname")
-    return {"endpoint": host, "port": str(port or (80 if parsed.scheme == "http" else 443)),
-            "insecure": str(parsed.scheme == "http").lower()}
+    return {
+        "endpoint": host,
+        "port": str(port or (80 if parsed.scheme == "http" else 443)),
+        "insecure": str(parsed.scheme == "http").lower(),
+    }
 
 
 def is_link(path: Path) -> bool:
-    return path.is_symlink() or (path.exists() and bool(
-        getattr(path.lstat(), "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
-    ))
+    return path.is_symlink() or (
+        path.exists() and bool(getattr(path.lstat(), "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT)
+    )
 
 
 def prepare(workspace: Path, repository: str, platform: str) -> dict[str, str]:
@@ -59,8 +66,11 @@ def prepare(workspace: Path, repository: str, platform: str) -> dict[str, str]:
     if staging.exists():
         shutil.rmtree(staging)
     staging.mkdir()
-    return {"cache-path": f"../{name}", "persisted-root": str(staging),
-            "prefix": f"gsvibe-s3-v1-{repository_id}-{platform.lower()}"}
+    return {
+        "cache-path": f"../{name}",
+        "persisted-root": str(staging),
+        "prefix": f"gsvibe-s3-v1-{repository_id}-{platform.lower()}",
+    }
 
 
 def main() -> None:
@@ -73,8 +83,9 @@ def main() -> None:
                 raise ValueError(f"{name} is required")
         outputs = parse_endpoint(os.environ.get("S3_ENDPOINT_URL", ""))
     else:
-        outputs = prepare(Path(os.environ["GITHUB_WORKSPACE"]), os.environ["GITHUB_REPOSITORY"],
-                          os.environ["RUNNER_OS"])
+        outputs = prepare(
+            Path(os.environ["GITHUB_WORKSPACE"]), os.environ["GITHUB_REPOSITORY"], os.environ["RUNNER_OS"]
+        )
         with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
             handle.write(f"IDB_CACHE_ROOT={outputs['persisted-root']}\n")
     with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:

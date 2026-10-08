@@ -7,19 +7,30 @@ from ci_s3_cache import parse_endpoint, prepare
 
 class EndpointTests(unittest.TestCase):
     def test_http_custom_port(self):
-        self.assertEqual({"endpoint": "HZVM", "port": "8333", "insecure": "true"},
-                         parse_endpoint("http://HZVM:8333"))
+        self.assertEqual({"endpoint": "HZVM", "port": "8333", "insecure": "true"}, parse_endpoint("http://HZVM:8333"))
 
     def test_https_and_default_ports(self):
-        self.assertEqual({"endpoint": "cache.local", "port": "443", "insecure": "false"},
-                         parse_endpoint("https://cache.local/"))
+        self.assertEqual(
+            {"endpoint": "cache.local", "port": "443", "insecure": "false"}, parse_endpoint("https://cache.local/")
+        )
         self.assertEqual("80", parse_endpoint("http://cache.local")["port"])
         self.assertEqual("8443", parse_endpoint("https://cache.local:8443")["port"])
 
     def test_invalid_origins(self):
-        for value in ("", "HZVM:8333", "ftp://host", "http://u:p@host", "http://host/path",
-                      "http://host?", "http://host#", "http://host:0", "http://host:65536",
-                      "http://host:", "http://host:abc", "http://host\n"):
+        for value in (
+            "",
+            "HZVM:8333",
+            "ftp://host",
+            "http://u:p@host",
+            "http://host/path",
+            "http://host?",
+            "http://host#",
+            "http://host:0",
+            "http://host:65536",
+            "http://host:",
+            "http://host:abc",
+            "http://host\n",
+        ):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 parse_endpoint(value)
 
