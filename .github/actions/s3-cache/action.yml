@@ -1,0 +1,114 @@
+name: Verified private S3 cache
+description: Explicit restore/save with required publication verification
+inputs:
+  endpoint-url:
+    description: S3 HTTP(S) origin
+    required: true
+  access-key:
+    description: S3 access key
+    required: true
+  secret-key:
+    description: S3 secret key
+    required: true
+  operation:
+    description: restore or save
+    required: true
+  key:
+    description: Immutable cache key
+    required: true
+  path:
+    description: Cache paths
+    required: true
+  restore-keys:
+    description: Producer discovery prefixes
+    default: ''
+  required:
+    description: Require an exact hit
+    default: 'false'
+outputs:
+  cache-hit:
+    description: Exact restore hit
+    value: ${{ steps.restore.outputs.cache-hit }}
+runs:
+  using: composite
+  steps:
+    - name: Parse endpoint
+      id: endpoint
+      if: ${{ !cancelled() }}
+      shell: pwsh
+      env:
+        S3_ENDPOINT_URL: ${{ inputs.endpoint-url }}
+        S3_ACCESS_KEY_ID: ${{ inputs.access-key }}
+        S3_SECRET_ACCESS_KEY: ${{ inputs.secret-key }}
+        CACHE_OPERATION: ${{ inputs.operation }}
+        CACHE_ACTION_PATH: ${{ github.action_path }}
+      run: |
+        if ($env:CACHE_OPERATION -notin @('restore', 'save')) { throw 'Invalid cache operation' }
+        python (Join-Path $env:CACHE_ACTION_PATH '../../../ci_s3_cache.py') endpoint
+        if ($LASTEXITCODE -ne 0) { throw 'Invalid S3 configuration' }
+    - name: restore S3 cache
+      id: restore
+      if: ${{ !cancelled() && steps.endpoint.outcome == 'success' && inputs.operation == 'restore' }}
+      uses: tespkg/actions-cache/restore@v1
+      env:
+        AWS_ACCESS_KEY_ID: ${{ inputs.access-key }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.secret-key }}
+        AWS_SESSION_TOKEN: ''
+      with:
+        endpoint: ${{ steps.endpoint.outputs.endpoint }}
+        port: ${{ steps.endpoint.outputs.port }}
+        insecure: ${{ steps.endpoint.outputs.insecure }}
+        accessKey: ${{ inputs.access-key }}
+        secretKey: ${{ inputs.secret-key }}
+        bucket: actions-cache-goldsrc-vibesignatures
+        use-fallback: 'false'
+        retry: 'true'
+        key: ${{ inputs.key }}
+        path: ${{ inputs.path }}
+        restore-keys: ${{ inputs.restore-keys }}
+    - name: save S3 cache
+      id: save
+      if: ${{ !cancelled() && steps.endpoint.outcome == 'success' && inputs.operation == 'save' }}
+      uses: tespkg/actions-cache/save@v1
+      env:
+        AWS_ACCESS_KEY_ID: ${{ inputs.access-key }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.secret-key }}
+        AWS_SESSION_TOKEN: ''
+      with:
+        endpoint: ${{ steps.endpoint.outputs.endpoint }}
+        port: ${{ steps.endpoint.outputs.port }}
+        insecure: ${{ steps.endpoint.outputs.insecure }}
+        accessKey: ${{ inputs.access-key }}
+        secretKey: ${{ inputs.secret-key }}
+        bucket: actions-cache-goldsrc-vibesignatures
+        use-fallback: 'false'
+        retry: 'true'
+        key: ${{ inputs.key }}
+        path: ${{ inputs.path }}
+    - name: saved S3 cache
+      id: saved
+      if: ${{ !cancelled() && steps.save.outcome == 'success' && inputs.operation == 'save' }}
+      uses: tespkg/actions-cache/restore@v1
+      env:
+        AWS_ACCESS_KEY_ID: ${{ inputs.access-key }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.secret-key }}
+        AWS_SESSION_TOKEN: ''
+      with:
+        endpoint: ${{ steps.endpoint.outputs.endpoint }}
+        port: ${{ steps.endpoint.outputs.port }}
+        insecure: ${{ steps.endpoint.outputs.insecure }}
+        accessKey: ${{ inputs.access-key }}
+        secretKey: ${{ inputs.secret-key }}
+        bucket: actions-cache-goldsrc-vibesignatures
+        use-fallback: 'false'
+        retry: 'true'
+        key: ${{ inputs.key }}
+        path: ${{ inputs.path }}
+        lookup-only: 'true'
+    - name: Require exact restore or verified publication
+      if: >-
+        !cancelled() && steps.endpoint.outcome == 'success' && (
+        (inputs.operation == 'restore' && inputs.required == 'true' && steps.restore.outputs.cache-hit != 'true') ||
+        (inputs.operation == 'save' && steps.saved.outputs.cache-hit != 'true'))
+      shell: pwsh
+      run: throw 'Required S3 cache object is unavailable'

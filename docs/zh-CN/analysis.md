@@ -41,10 +41,25 @@ uv run python warmup_idb.py -gamever cstrike-10210 -python "<带 idalib 的解�
 CI 的跨 job 预热使用 schema-3 exact selection，每个 binary 对应独立 immutable generation 和租约引用。
 PR 子集与 release 可复用身份、IDA kernel 和 warm worker 相同的 binary 缓存；其他模块的增减不会使它失效。
 仅未命中的 binary 在各 platform batch 内有界并发预热。payload、READY 和 schema-2 租约记录位于
-`PERSISTED_WORKSPACE/idb-cache-v3/<tag>/`；首次使用会建立新缓存，不导入旧组合缓存。每次 Prepare 仅清理每个
+`IDB_CACHE_ROOT/idb-cache-v3/<tag>/`；CI 从私有 S3 恢复到 checkout 外的临时目录，每次 job 清空暂存区，
+不再依赖宿主机 `PERSISTED_WORKSPACE` 缓存。首次使用会冷启动预热。每次 Prepare 仅清理每个
 tag 一次，按 binary target 保留最新三个有效 generation，并继续保护 READY、有效租约和最小保留期内的缓存。
-`idb-cache/.locks/` 仍用于新旧 producer 的共同互斥，不应随旧缓存删除。
+`idb-cache/.locks/` 用于暂存区内的互斥；workflow concurrency 串行化本仓库的 producer。
 历史 release evidence 的 selection schema 1/2 仍支持离线校验；新流程要求 schema 3。
+
+`win64` environment 需要 `S3_ENDPOINT_URL`、`S3_ACCESS_KEY_ID`、`S3_SECRET_ACCESS_KEY` 三个 secrets。
+共享 action 使用 `tespkg/actions-cache/restore@v1` 和 `save@v1`，bucket 固定为
+`actions-cache-goldsrc-vibesignatures`，关闭 GitHub cache fallback。`http://HZVM:8333` 解析为
+`endpoint=HZVM`、`port=8333`、`insecure=true`；HTTPS 则为 `insecure=false`。
+producer 从仓库/平台隔离的前缀发现最近快照，校验并补齐后按 run ID/attempt 保存新快照，确认对象存在后
+输出精确 key。consumer 必须命中该 key，再执行 selection、租约和 payload 校验，不能降级恢复其他快照。
+快照包含整个 IDB store；这减少传输层复杂度，但每次上传会包含仍保留的历史 generation。
+
+self-hosted 的 selection、重建 artifacts、诊断和 release bundle 按 run ID/attempt 另存 S3。
+GitHub-hosted runner 无法访问内网，因此原 GitHub artifacts 跨 job 传输及发布摘要验证继续保留。
+S3 不继承 GitHub artifact 的 retention-days；bucket 生命周期需由服务端管理，IDB 快照保留期应覆盖租约窗口。
+consumer 释放的租约只影响本地副本，不回写 immutable S3 快照。旧 `PERSISTED_WORKSPACE` secret
+仅供显式启用 `cleanup_legacy_yaml` 时清理历史 YAML，不会自动迁移或删除旧宿主机缓存。
 
 租约从 Prepare 创建起保留 36 天，清理另加 1 小时时钟容差；整个 selection 恢复成功后立即释放。
 部分恢复失败会保留全部保护。遇到租约缺失、已释放或过期，应重跑包含 warmup 的完整 workflow；

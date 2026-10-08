@@ -151,12 +151,35 @@ jobs:
         with:
           name: ${{ needs.warmup-idb.outputs.selection_artifact_name }}
           path: ${{ runner.temp }}/idb-cache-selection
+      - name: Checkout cache transport tooling
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .ci-tools
+          persist-credentials: false
+      - name: Prepare disposable S3 staging
+        id: s3-layout
+        shell: pwsh
+        run: |
+          python .ci-tools/ci_s3_cache.py prepare
+          if ($LASTEXITCODE -ne 0) { throw 'S3 staging preparation failed' }
+      - name: Restore exact producer IDB snapshot
+        if: inputs.source_artifact_mode != 'tracked'
+        uses: ./.ci-tools/.github/actions/s3-cache
+        with:
+          endpoint-url: ${{ secrets.S3_ENDPOINT_URL }}
+          access-key: ${{ secrets.S3_ACCESS_KEY_ID }}
+          secret-key: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+          operation: restore
+          key: ${{ needs.warmup-idb.outputs.cache_key }}
+          path: ${{ steps.s3-layout.outputs.cache-path }}
+          required: 'true'
       - name: Resolve IDA runtime identity
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if ([string]::IsNullOrWhiteSpace($env:PERSISTED_WORKSPACE) -or [string]::IsNullOrWhiteSpace($env:IDADIR)) {
-            throw 'PERSISTED_WORKSPACE and IDADIR are required'
+          if ([string]::IsNullOrWhiteSpace($env:IDADIR)) {
+            throw 'IDADIR is required'
           }
           $idalibMcp = (Get-Command idalib-mcp -ErrorAction Stop).Source
           $kernelVersion = (& python ida_runtime_probe.py --idalib-mcp $idalibMcp | Out-String).Trim()
@@ -182,13 +205,13 @@ jobs:
           $selectionSha = (Get-Content -Raw -LiteralPath (Join-Path $selectionRoot 'cache-selection.sha256')).Trim()
           if ($selectionSha -ne $env:PRODUCER_SELECTION_SHA256) { throw 'cache selection digest mismatch' }
           uv run python idb_cache_release.py verify -repo-root $env:GITHUB_WORKSPACE -bindir bin `
-            -persisted-root $env:PERSISTED_WORKSPACE -kernel-version $kernelVersion `
+            -persisted-root $env:IDB_CACHE_ROOT -kernel-version $kernelVersion `
             -source-sha "${{ needs.preflight.outputs.source_sha }}" `
             -selection (Join-Path $selectionRoot 'cache-selection.json') `
             -selection-sha256 (Join-Path $selectionRoot 'cache-selection.sha256')
           if ($LASTEXITCODE -ne 0) { throw 'warm IDB selection verification failed' }
           uv run python idb_cache_release.py restore -repo-root $env:GITHUB_WORKSPACE -bindir bin `
-            -persisted-root $env:PERSISTED_WORKSPACE -kernel-version $kernelVersion `
+            -persisted-root $env:IDB_CACHE_ROOT -kernel-version $kernelVersion `
             -source-sha "${{ needs.preflight.outputs.source_sha }}" `
             -selection (Join-Path $selectionRoot 'cache-selection.json') `
             -selection-sha256 (Join-Path $selectionRoot 'cache-selection.sha256')
@@ -329,6 +352,27 @@ jobs:
               --gamever $gamever --cutover-id bin-artifacts-v1
             if ($LASTEXITCODE -ne 0) { throw "legacy accepted-bin YAML cleanup failed for $gamever" }
           }
+      - name: Locate release artifacts for S3
+        id: s3-artifacts
+        if: always() && steps.s3-layout.outcome == 'success'
+        shell: pwsh
+        run: |
+          $paths = @((Join-Path $env:RUNNER_TEMP 'release-bundle'), (Join-Path $env:RUNNER_TEMP 'rebuilt-bin-artifacts'), (Join-Path $env:RUNNER_TEMP 'analysis-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}'))
+          $available = @($paths | Where-Object { Test-Path -LiteralPath $_ })
+          "available=$($available.Count -gt 0)" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
+      - name: Persist release artifacts to S3
+        if: always() && steps.s3-artifacts.outputs.available == 'True'
+        uses: ./.ci-tools/.github/actions/s3-cache
+        with:
+          endpoint-url: ${{ secrets.S3_ENDPOINT_URL }}
+          access-key: ${{ secrets.S3_ACCESS_KEY_ID }}
+          secret-key: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+          operation: save
+          key: ${{ steps.s3-layout.outputs.prefix }}-artifacts-release-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/release-bundle
+            ${{ runner.temp }}/rebuilt-bin-artifacts
+            ${{ runner.temp }}/analysis-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Remove generated binary analysis state
         if: always()
         shell: pwsh
