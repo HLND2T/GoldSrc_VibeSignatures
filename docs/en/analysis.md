@@ -40,8 +40,8 @@ retaining the newest three valid generations per binary target plus READY, live 
 `idb-cache/.locks/` coordinates local staging operations; workflow concurrency serializes this repository's producers.
 
 The `win64` environment requires `S3_ENDPOINT_URL`, `S3_ACCESS_KEY_ID`, and `S3_SECRET_ACCESS_KEY` secrets.
-The shared action pins `hzqst/actions-cache/restore` and `save` to commit `dceeeab5`
-(portable S3 object keys) with bucket
+The shared action pins `hzqst/actions-cache/restore` and `save` to commit `7128b4f7`
+(portable S3 object keys, zstd auto-detection) with bucket
 `actions-cache-goldsrc-vibesignatures` and GitHub cache fallback disabled. `http://HZVM:8333` becomes
 `endpoint=HZVM`, `port=8333`, `insecure=true`; HTTPS uses `insecure=false`.
 The producer discovers a previous snapshot under a repository/platform prefix, verifies and completes it,
