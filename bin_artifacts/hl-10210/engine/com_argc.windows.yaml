@@ -1,0 +1,8 @@
+gv_name: com_argc
+gv_va: '0x1124c168'
+gv_rva: '0x124c168'
+gv_sig: 55 8B EC 8B 55 ?? 33 C9 53 56 57 8B 7D ?? 33 DB 3B DA 7D ?? 33 D2 81 F9 FF 00 00 00
+gv_sig_va: '0x101b7de0'
+gv_inst_offset: '0x55'
+gv_inst_length: '0x6'
+gv_inst_disp: '0x2'
