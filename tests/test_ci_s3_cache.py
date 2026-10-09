@@ -36,7 +36,7 @@ class EndpointTests(unittest.TestCase):
 
 
 class StagingTests(unittest.TestCase):
-    def test_fresh_external_staging_and_stable_relative_path(self):
+    def test_fresh_external_staging_and_stable_absolute_path(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             checkout = root / "checkout"
@@ -51,7 +51,10 @@ class StagingTests(unittest.TestCase):
             self.assertEqual(first, second)
             self.assertEqual([], list(staging.iterdir()))
             self.assertEqual("keep", sentinel.read_text())
-            self.assertEqual(staging.resolve(), (checkout / second["cache-path"]).resolve())
+            # actions-cache rejects relative patterns, so cache-path must be absolute.
+            self.assertTrue(Path(second["cache-path"]).is_absolute())
+            self.assertEqual(str(staging), second["cache-path"])
+            self.assertEqual(second["persisted-root"], second["cache-path"])
             self.assertNotIn("/", first["prefix"])
             self.assertNotEqual(first["prefix"], prepare(checkout, "Owner/Other", "Windows")["prefix"])
 
