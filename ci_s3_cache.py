@@ -66,8 +66,10 @@ def prepare(workspace: Path, repository: str, platform: str) -> dict[str, str]:
     if staging.exists():
         shutil.rmtree(staging)
     staging.mkdir()
+    # hzqst/actions-cache rejects relative patterns ("." / ".."), so publish the
+    # absolute staging path that the disposable layout already guarantees.
     return {
-        "cache-path": f"../{name}",
+        "cache-path": str(staging),
         "persisted-root": str(staging),
         "prefix": f"gsvibe-s3-v1-{repository_id}-{platform.lower()}",
     }
