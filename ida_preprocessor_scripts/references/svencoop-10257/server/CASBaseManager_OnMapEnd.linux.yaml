@@ -1,0 +1,172 @@
+func_name: "CASBaseManager_OnMapEnd"
+func_va: "0x116764"
+disasm_code: |-
+  .text:00116764                 push    ebp
+  .text:00116765                 push    edi
+  .text:00116766                 push    esi
+  .text:00116767                 push    ebx
+  .text:00116768                 sub     esp, 4Ch
+  .text:0011676B                 call    sub_D4E81
+  .text:00116770                 add     edi, (offset qword_B14000 - $)
+  .text:00116776                 mov     esi, [esp+5Ch+self]
+  .text:0011677A                 cmp     byte ptr [esi+6], 0
+  .text:0011677E                 jnz     loc_116858
+  .text:00116784                 mov     byte ptr [esi+6], 0
+  .text:00116788                 mov     byte ptr [esi+5], 0
+  .text:0011678C                 mov     byte ptr [esi+4], 0
+  .text:00116790                 mov     ebp, [esi+14h]
+  .text:00116793                 test    ebp, ebp
+  .text:00116795                 jz      short loc_1167A9
+  .text:00116797                 mov     [esp+5Ch+var_5C], ebp
+  .text:0011679A                 mov     ebx, edi
+  .text:0011679C                 call    CASModuleHandle__dtor
+  .text:001167A1                 ; void *
+  .text:001167A1                 mov     [esp+5Ch+var_5C], ebp; void *
+  .text:001167A4                 call    __ZdlPv; operator delete(void *)
+  .text:001167A9                 mov     dword ptr [esi+14h], 0
+  .text:001167B0                 mov     ecx, [esi+18h]
+  .text:001167B3                 test    ecx, ecx
+  .text:001167B5                 jz      short loc_1167E8
+  .text:001167B7                 mov     ebp, ds:(CASLog_pInstance - 0B14000h)[edi]
+  .text:001167BD                 test    ebp, ebp
+  .text:001167BF                 jz      loc_1168B8
+  .text:001167C5                 lea     ebx, (aActiveModuleWa - 0B14000h)[edi]; "Active module was not set to null!\n"
+  .text:001167CB                 mov     [esp+5Ch+var_54], ebx
+  .text:001167CF                 mov     [esp+5Ch+var_58], 0
+  .text:001167D7                 mov     [esp+5Ch+var_5C], ebp
+  .text:001167DA                 mov     ebx, edi
+  .text:001167DC                 call    CASLog__Error
+  .text:001167E1                 mov     dword ptr [esi+18h], 0
+  .text:001167E8                 mov     ebp, [esi+1Ch]
+  .text:001167EB                 cmp     ebp, [esi+20h]
+  .text:001167EE                 jz      short loc_116803
+  .text:001167F0                 mov     eax, [ebp+0]
+  .text:001167F3                 mov     edx, [eax]
+  .text:001167F5                 mov     [esp+5Ch+var_5C], eax
+  .text:001167F8                 call    dword ptr [edx+0Ch]
+  .text:001167FB                 add     ebp, 4
+  .text:001167FE                 cmp     [esi+20h], ebp
+  .text:00116801                 jnz     short loc_1167F0
+  .text:00116803                 mov     ecx, [esi+0Ch]
+  .text:00116806                 mov     ebx, [ecx]
+  .text:00116808                 mov     [esp+5Ch+var_54], 1
+  .text:00116810                 mov     [esp+5Ch+var_58], 1
+  .text:00116818                 mov     [esp+5Ch+var_5C], ecx
+  .text:0011681B                 call    dword ptr [ebx+120h]
+  .text:00116821                 mov     [esp+5Ch+var_5C], esi
+  .text:00116824                 call    CASBaseManager__ClearObjectTypeCache
+  .text:00116829                 mov     ebp, ds:(CASLog_pInstance - 0B14000h)[edi]
+  .text:0011682F                 test    ebp, ebp
+  .text:00116831                 jz      short loc_116895
+  .text:00116833                 mov     [esp+5Ch+var_5C], ebp
+  .text:00116836                 mov     ebx, edi
+  .text:00116838                 call    CASLog__CloseLogFile
+  .text:0011683D                 mov     edi, [esi+28h]
+  .text:00116840                 mov     [esp+5Ch+var_5C], edi
+  .text:00116843                 call    CASVirtualFileSystem__MapChange
+  .text:00116848                 mov     dword ptr [esi+48h], 5
+  .text:0011684F                 add     esp, 4Ch
+  .text:00116852                 pop     ebx
+  .text:00116853                 pop     esi
+  .text:00116854                 pop     edi
+  .text:00116855                 pop     ebp
+  .text:00116856                 retn
+  .text:00116858                 mov     eax, [esp+5Ch+nextMapName]
+  .text:0011685C                 mov     [esp+5Ch+var_58], eax
+  .text:00116860                 lea     ebp, [esp+5Ch+var_40]
+  .text:00116864                 mov     [esp+5Ch+var_5C], ebp
+  .text:00116867                 mov     ebx, edi
+  .text:00116869                 call    CString__CString
+  .text:0011686E                 mov     [esp+5Ch+var_54], ebp
+  .text:00116872                 mov     [esp+5Ch+var_58], 0
+  .text:0011687A                 lea     edx, (g_MapChangeHook.next - 0B14000h)[edi]
+  .text:00116880                 mov     [esp+5Ch+var_5C], edx
+  .text:00116883                 ; CASHook_Call: CASHook_Call(int, ...), map-change hook receives &mapName in 5.16 before clearing map state.
+  .text:00116883                 call    CASHook_Call; CASHook_Call: CASHook_Call(int, ...), map-change hook receives &mapName in 5.16 before clearing map state.
+  .text:00116888                 mov     [esp+5Ch+var_5C], ebp
+  .text:0011688B                 call    CString__dtor
+  .text:00116890                 jmp     loc_116784
+  .text:00116895                 ; unsigned int
+  .text:00116895                 mov     [esp+5Ch+var_5C], 4; unsigned int
+  .text:0011689C                 mov     ebx, edi
+  .text:0011689E                 call    __Znwj; operator new(uint)
+  .text:001168A3                 mov     ebp, eax
+  .text:001168A5                 mov     [esp+5Ch+var_5C], eax
+  .text:001168A8                 call    CASLog__CASLog
+  .text:001168AD                 mov     ds:(CASLog_pInstance - 0B14000h)[edi], ebp
+  .text:001168B3                 jmp     loc_116833
+  .text:001168B8                 ; unsigned int
+  .text:001168B8                 mov     [esp+5Ch+var_5C], 4; unsigned int
+  .text:001168BF                 mov     ebx, edi
+  .text:001168C1                 call    __Znwj; operator new(uint)
+  .text:001168C6                 mov     ebp, eax
+  .text:001168C8                 mov     [esp+5Ch+var_5C], eax
+  .text:001168CB                 call    CASLog__CASLog
+  .text:001168D0                 mov     ds:(CASLog_pInstance - 0B14000h)[edi], ebp
+  .text:001168D6                 jmp     loc_1167C5
+  .text:001168DB                 mov     esi, eax
+  .text:001168DD                 ; void *
+  .text:001168DD                 mov     [esp+5Ch+var_5C], ebp; void *
+  .text:001168E0                 mov     ebx, edi
+  .text:001168E2                 call    __ZdlPv; operator delete(void *)
+  .text:001168E7                 mov     [esp+5Ch+var_5C], esi
+  .text:001168EA                 call    __Unwind_Resume
+  .text:001168EF                 mov     esi, eax
+  .text:001168F1                 mov     [esp+5Ch+var_5C], ebp
+  .text:001168F4                 mov     ebx, edi
+  .text:001168F6                 call    CString__dtor
+  .text:001168FB                 mov     [esp+5Ch+var_5C], esi
+  .text:001168FE                 call    __Unwind_Resume
+  .text:00116903                 jmp     short loc_1168DB
+procedure: |-
+  void __cdecl CASBaseManager::OnMapEnd(CASBaseManager *self, const char *nextMapName)
+  {
+    void *moduleHandle; // ebp
+    void *v3; // ebp
+    void **i; // ebp
+    void *v5; // ebp
+    CString v6; // [esp+1Ch] [ebp-40h] BYREF
+
+    if ( self->enabled )
+    {
+      CString::CString(&v6, nextMapName);
+      CASHook_Call(&g_MapChangeHook, 0, &v6);    // CASHook_Call: CASHook_Call(int, ...), map-change hook receives &mapName in 5.16 before clearing map state.
+      CString::dtor(&v6);
+    }
+    self->enabled = 0;
+    self->flag5 = 0;
+    self->flag4 = 0;
+    moduleHandle = self->moduleHandle;
+    if ( moduleHandle )
+    {
+      CASModuleHandle::dtor(self->moduleHandle);
+      operator delete(moduleHandle);
+    }
+    self->moduleHandle = nullptr;
+    if ( self->activeModule )
+    {
+      v3 = CASLog_pInstance;
+      if ( !CASLog_pInstance )
+      {
+        v3 = (void *)operator new(4u);
+        CASLog::CASLog(v3);
+        CASLog_pInstance = v3;
+      }
+      CASLog::Error(v3, 0, "Active module was not set to null!\n");
+      self->activeModule = nullptr;
+    }
+    for ( i = self->listenersBegin; self->listenersEnd != i; ++i )
+      (*(void (__cdecl **)(void *))(*(_DWORD *)*i + 12))(*i);
+    (*(void (__cdecl **)(void *, int, int))(*(_DWORD *)self->scriptEngine + 288))(self->scriptEngine, 1, 1);
+    CASBaseManager::ClearObjectTypeCache(self);
+    v5 = CASLog_pInstance;
+    if ( !CASLog_pInstance )
+    {
+      v5 = (void *)operator new(4u);
+      CASLog::CASLog(v5);
+      CASLog_pInstance = v5;
+    }
+    CASLog::CloseLogFile(v5);
+    CASVirtualFileSystem::MapChange(self->virtualFileSystem);
+    self->mapState = 5;
+  }

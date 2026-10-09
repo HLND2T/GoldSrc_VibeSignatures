@@ -1,0 +1,6 @@
+func_name: CASHook_Call
+func_va: '0x100a1460'
+func_rva: '0xa1460'
+func_size: '0x15'
+func_sig: 8B 4C 24 ?? 8D 44 24 ?? 50 FF 74 24 ?? 6A 00 E8 ?? ?? ?? ?? C3
+func_sig_resolve_jmp_thunk: true
