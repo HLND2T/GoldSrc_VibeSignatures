@@ -1,0 +1,329 @@
+func_name: RegisterSCScriptColor24
+func_va: '0x1b64f4'
+disasm_code: |-
+  .text:001B64F4                 push    ebp
+  .text:001B64F5                 push    edi
+  .text:001B64F6                 push    esi
+  .text:001B64F7                 push    ebx
+  .text:001B64F8                 sub     esp, 5Ch
+  .text:001B64FB                 call    __x86_get_pc_thunk_bx
+  .text:001B6500                 add     ebx, (offset qword_B14000 - $)
+  .text:001B6506                 mov     esi, [esp+6Ch+documentation]
+  .text:001B650A                 ; flags
+  .text:001B650A                 mov     [esp+6Ch+flags], 2; flags
+  .text:001B6512                 ; byteSize
+  .text:001B6512                 mov     [esp+6Ch+byteSize], 3; byteSize
+  .text:001B651A                 lea     edi, (aCopyConstructs+12h - 0B14000h)[ebx]; "color24"
+  .text:001B6520                 ; objectName
+  .text:001B6520                 mov     [esp+6Ch+src], edi; objectName
+  .text:001B6524                 lea     eax, (aColor24Structu - 0B14000h)[ebx]; "Color24 structure"
+  .text:001B652A                 ; docs
+  .text:001B652A                 mov     [esp+6Ch+docs], eax; docs
+  .text:001B652E                 ; documentation
+  .text:001B652E                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:001B6531                 call    CASDocumentation_RegisterObjectType
+  .text:001B6536                 lea     edx, [esp+6Ch+var_3C]
+  .text:001B653A                 lea     ebp, [esp+6Ch+var_3C.pointer+19h]
+  .text:001B653E                 lea     ecx, [esp+6Ch+var_3C.pointer+1]
+  .text:001B6542                 mov     byte ptr [ecx], 0
+  .text:001B6545                 mov     byte ptr [ecx+1], 0
+  .text:001B6549                 mov     byte ptr [ecx+2], 0
+  .text:001B654D                 mov     byte ptr [ecx+3], 0
+  .text:001B6551                 mov     byte ptr [ecx+4], 0
+  .text:001B6555                 mov     byte ptr [ecx+5], 0
+  .text:001B6559                 mov     byte ptr [ecx+6], 0
+  .text:001B655D                 mov     byte ptr [ecx+7], 0
+  .text:001B6561                 add     ecx, 8
+  .text:001B6564                 cmp     ecx, ebp
+  .text:001B6566                 jnz     short loc_1B6542
+  .text:001B6568                 mov     [esp+6Ch+var_3C.flag], 2
+  .text:001B656D                 lea     eax, (ConstructColor24 - 0B14000h)[ebx]
+  .text:001B6573                 mov     dword ptr [esp+6Ch+var_3C.pointer], eax
+  .text:001B6577                 ; auxiliary
+  .text:001B6577                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:001B657F                 ; callConvention
+  .text:001B657F                 mov     [esp+6Ch+callConvention], 4; callConvention
+  .text:001B6587                 ; functionPointer
+  .text:001B6587                 mov     [esp+6Ch+functionPointer], edx; functionPointer
+  .text:001B658B                 mov     [esp+6Ch+var_40], edx
+  .text:001B658F                 lea     edx, (aVoidColor24 - 0B14000h)[ebx]; "void color24()"
+  .text:001B6595                 ; declaration
+  .text:001B6595                 mov     [esp+6Ch+flags], edx; declaration
+  .text:001B6599                 ; behaviour
+  .text:001B6599                 mov     [esp+6Ch+byteSize], 0; behaviour
+  .text:001B65A1                 ; objectName
+  .text:001B65A1                 mov     [esp+6Ch+src], edi; objectName
+  .text:001B65A5                 lea     ecx, (aDefaultConstru_1 - 0B14000h)[ebx]; "Default constructs color24"
+  .text:001B65AB                 ; docs
+  .text:001B65AB                 mov     [esp+6Ch+docs], ecx; docs
+  .text:001B65AF                 ; documentation
+  .text:001B65AF                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:001B65B2                 call    CASDocumentation_RegisterObjectBehaviour
+  .text:001B65B7                 mov     edx, [esp+6Ch+var_40]
+  .text:001B65BB                 lea     eax, [edx+1]
+  .text:001B65BE                 mov     byte ptr [eax], 0
+  .text:001B65C1                 mov     byte ptr [eax+1], 0
+  .text:001B65C5                 mov     byte ptr [eax+2], 0
+  .text:001B65C9                 mov     byte ptr [eax+3], 0
+  .text:001B65CD                 mov     byte ptr [eax+4], 0
+  .text:001B65D1                 mov     byte ptr [eax+5], 0
+  .text:001B65D5                 mov     byte ptr [eax+6], 0
+  .text:001B65D9                 mov     byte ptr [eax+7], 0
+  .text:001B65DD                 add     eax, 8
+  .text:001B65E0                 cmp     eax, ebp
+  .text:001B65E2                 jnz     short loc_1B65BE
+  .text:001B65E4                 mov     [esp+6Ch+var_3C.flag], 2
+  .text:001B65E9                 lea     ecx, (CopyConstructColor24 - 0B14000h)[ebx]
+  .text:001B65EF                 mov     dword ptr [esp+6Ch+var_3C.pointer], ecx
+  .text:001B65F3                 ; auxiliary
+  .text:001B65F3                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:001B65FB                 ; callConvention
+  .text:001B65FB                 mov     [esp+6Ch+callConvention], 4; callConvention
+  .text:001B6603                 ; functionPointer
+  .text:001B6603                 mov     [esp+6Ch+functionPointer], edx; functionPointer
+  .text:001B6607                 mov     [esp+6Ch+var_40], edx
+  .text:001B660B                 lea     edx, (aVoidColor24Con - 0B14000h)[ebx]; "void color24(const color24& in color)"
+  .text:001B6611                 ; declaration
+  .text:001B6611                 mov     [esp+6Ch+flags], edx; declaration
+  .text:001B6615                 ; behaviour
+  .text:001B6615                 mov     [esp+6Ch+byteSize], 0; behaviour
+  .text:001B661D                 ; objectName
+  .text:001B661D                 mov     [esp+6Ch+src], edi; objectName
+  .text:001B6621                 lea     eax, (aCopyConstructs - 0B14000h)[ebx]; "Copy constructs a color24"
+  .text:001B6627                 ; docs
+  .text:001B6627                 mov     [esp+6Ch+docs], eax; docs
+  .text:001B662B                 ; documentation
+  .text:001B662B                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:001B662E                 call    CASDocumentation_RegisterObjectBehaviour
+  .text:001B6633                 mov     ecx, [esp+6Ch+var_40]
+  .text:001B6637                 lea     edx, [ecx+1]
+  .text:001B663A                 mov     byte ptr [edx], 0
+  .text:001B663D                 mov     byte ptr [edx+1], 0
+  .text:001B6641                 mov     byte ptr [edx+2], 0
+  .text:001B6645                 mov     byte ptr [edx+3], 0
+  .text:001B6649                 mov     byte ptr [edx+4], 0
+  .text:001B664D                 mov     byte ptr [edx+5], 0
+  .text:001B6651                 mov     byte ptr [edx+6], 0
+  .text:001B6655                 mov     byte ptr [edx+7], 0
+  .text:001B6659                 add     edx, 8
+  .text:001B665C                 cmp     edx, ebp
+  .text:001B665E                 jnz     short loc_1B663A
+  .text:001B6660                 mov     [esp+6Ch+var_3C.flag], 2
+  .text:001B6665                 lea     eax, (Byte3ConstructColor24 - 0B14000h)[ebx]
+  .text:001B666B                 mov     dword ptr [esp+6Ch+var_3C.pointer], eax
+  .text:001B666F                 ; auxiliary
+  .text:001B666F                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:001B6677                 ; callConvention
+  .text:001B6677                 mov     [esp+6Ch+callConvention], 4; callConvention
+  .text:001B667F                 ; functionPointer
+  .text:001B667F                 mov     [esp+6Ch+functionPointer], ecx; functionPointer
+  .text:001B6683                 mov     [esp+6Ch+var_40], ecx
+  .text:001B6687                 lea     ecx, (aVoidColor24Int - 0B14000h)[ebx]; "void color24(int8 r, int8 g, int8 b)"
+  .text:001B668D                 ; declaration
+  .text:001B668D                 mov     [esp+6Ch+flags], ecx; declaration
+  .text:001B6691                 ; behaviour
+  .text:001B6691                 mov     [esp+6Ch+byteSize], 0; behaviour
+  .text:001B6699                 ; objectName
+  .text:001B6699                 mov     [esp+6Ch+src], edi; objectName
+  .text:001B669D                 lea     edx, (aConstructsACol - 0B14000h)[ebx]; "Constructs a color24 from 3 bytes"
+  .text:001B66A3                 ; docs
+  .text:001B66A3                 mov     [esp+6Ch+docs], edx; docs
+  .text:001B66A7                 ; documentation
+  .text:001B66A7                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:001B66AA                 call    CASDocumentation_RegisterObjectBehaviour
+  .text:001B66AF                 mov     ecx, [esp+6Ch+var_40]
+  .text:001B66B3                 lea     eax, [ecx+1]
+  .text:001B66B6                 mov     byte ptr [eax], 0
+  .text:001B66B9                 mov     byte ptr [eax+1], 0
+  .text:001B66BD                 mov     byte ptr [eax+2], 0
+  .text:001B66C1                 mov     byte ptr [eax+3], 0
+  .text:001B66C5                 mov     byte ptr [eax+4], 0
+  .text:001B66C9                 mov     byte ptr [eax+5], 0
+  .text:001B66CD                 mov     byte ptr [eax+6], 0
+  .text:001B66D1                 mov     byte ptr [eax+7], 0
+  .text:001B66D5                 add     eax, 8
+  .text:001B66D8                 cmp     ebp, eax
+  .text:001B66DA                 jnz     short loc_1B66B6
+  .text:001B66DC                 mov     [esp+6Ch+var_3C.flag], 2
+  .text:001B66E1                 lea     ebp, (DestructColor24 - 0B14000h)[ebx]
+  .text:001B66E7                 mov     dword ptr [esp+6Ch+var_3C.pointer], ebp
+  .text:001B66EB                 ; auxiliary
+  .text:001B66EB                 mov     [esp+6Ch+auxiliary], 0; auxiliary
+  .text:001B66F3                 ; callConvention
+  .text:001B66F3                 mov     [esp+6Ch+callConvention], 4; callConvention
+  .text:001B66FB                 ; functionPointer
+  .text:001B66FB                 mov     [esp+6Ch+functionPointer], ecx; functionPointer
+  .text:001B66FF                 lea     edx, (aVoidDestructco - 0B14000h)[ebx]; "void Destructcolor24()"
+  .text:001B6705                 ; declaration
+  .text:001B6705                 mov     [esp+6Ch+flags], edx; declaration
+  .text:001B6709                 ; behaviour
+  .text:001B6709                 mov     [esp+6Ch+byteSize], 2; behaviour
+  .text:001B6711                 ; objectName
+  .text:001B6711                 mov     [esp+6Ch+src], edi; objectName
+  .text:001B6715                 lea     ecx, (aDestructor - 0B14000h)[ebx]; "Destructor"
+  .text:001B671B                 ; docs
+  .text:001B671B                 mov     [esp+6Ch+docs], ecx; docs
+  .text:001B671F                 ; documentation
+  .text:001B671F                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:001B6722                 call    CASDocumentation_RegisterObjectBehaviour
+  .text:001B6727                 ; byteOffset
+  .text:001B6727                 mov     [esp+6Ch+flags], 0; byteOffset
+  .text:001B672F                 lea     eax, (aUint8R+1 - 0B14000h)[ebx]; "int8 r"
+  .text:001B6735                 ; declaration
+  .text:001B6735                 mov     [esp+6Ch+byteSize], eax; declaration
+  .text:001B6739                 ; objectName
+  .text:001B6739                 mov     [esp+6Ch+src], edi; objectName
+  .text:001B673D                 lea     ebp, (aRedValue - 0B14000h)[ebx]; "Red value"
+  .text:001B6743                 ; docs
+  .text:001B6743                 mov     [esp+6Ch+docs], ebp; docs
+  .text:001B6747                 ; documentation
+  .text:001B6747                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:001B674A                 call    CASDocumentation_RegisterObjectProperty
+  .text:001B674F                 ; byteOffset
+  .text:001B674F                 mov     [esp+6Ch+flags], 1; byteOffset
+  .text:001B6757                 lea     edx, (aUint8G+1 - 0B14000h)[ebx]; "int8 g"
+  .text:001B675D                 ; declaration
+  .text:001B675D                 mov     [esp+6Ch+byteSize], edx; declaration
+  .text:001B6761                 ; objectName
+  .text:001B6761                 mov     [esp+6Ch+src], edi; objectName
+  .text:001B6765                 lea     ecx, (aGreenValue - 0B14000h)[ebx]; "Green value"
+  .text:001B676B                 ; docs
+  .text:001B676B                 mov     [esp+6Ch+docs], ecx; docs
+  .text:001B676F                 ; documentation
+  .text:001B676F                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:001B6772                 call    CASDocumentation_RegisterObjectProperty
+  .text:001B6777                 ; byteOffset
+  .text:001B6777                 mov     [esp+6Ch+flags], 2; byteOffset
+  .text:001B677F                 lea     eax, (aUint8B+1 - 0B14000h)[ebx]; "int8 b"
+  .text:001B6785                 ; declaration
+  .text:001B6785                 mov     [esp+6Ch+byteSize], eax; declaration
+  .text:001B6789                 ; objectName
+  .text:001B6789                 mov     [esp+6Ch+src], edi; objectName
+  .text:001B678D                 lea     edi, (aBlueValue - 0B14000h)[ebx]; "Blue value"
+  .text:001B6793                 ; docs
+  .text:001B6793                 mov     [esp+6Ch+docs], edi; docs
+  .text:001B6797                 ; documentation
+  .text:001B6797                 mov     [esp+6Ch+var_6C], esi; documentation
+  .text:001B679A                 call    CASDocumentation_RegisterObjectProperty
+  .text:001B679F                 add     esp, 5Ch
+  .text:001B67A2                 pop     ebx
+  .text:001B67A3                 pop     esi
+  .text:001B67A4                 pop     edi
+  .text:001B67A5                 pop     ebp
+  .text:001B67A6                 retn
+procedure: |-
+  // Direct CASDocumentation calls below identify method entries. SDK virtual calls and registered callback pointers are distinct.
+  // Reference reconstruction: private server source unavailable; names/arguments are based on current instructions and the symbolized 5.15 ELF peer. Registration return values are discarded here. Partial types describe only observed fields.
+  void __cdecl RegisterSCScriptColor24(CASDocumentationReference *documentation)
+  {
+    ASFunctionPointerReference *v1; // ecx
+    ASFunctionPointerReference *v2; // eax
+    ASFunctionPointerReference *v3; // edx
+    ASFunctionPointerReference *v4; // eax
+    ASFunctionPointerReference functionPointer; // [esp+30h] [ebp-3Ch] BYREF
+
+    CASDocumentation_RegisterObjectType(documentation, "Color24 structure", "color24", 3, 2u);
+    v1 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v1->pointer.storage[0] = 0;
+      v1->pointer.storage[1] = 0;
+      v1->pointer.storage[2] = 0;
+      v1->pointer.storage[3] = 0;
+      v1->pointer.storage[4] = 0;
+      v1->pointer.storage[5] = 0;
+      v1->pointer.storage[6] = 0;
+      v1->pointer.storage[7] = 0;
+      v1 = (ASFunctionPointerReference *)((char *)v1 + 8);
+    }
+    while ( v1 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ConstructColor24;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Default constructs color24",
+      "color24",
+      0,
+      "void color24()",
+      &functionPointer,
+      4u,
+      nullptr);
+    v2 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v2->pointer.storage[0] = 0;
+      v2->pointer.storage[1] = 0;
+      v2->pointer.storage[2] = 0;
+      v2->pointer.storage[3] = 0;
+      v2->pointer.storage[4] = 0;
+      v2->pointer.storage[5] = 0;
+      v2->pointer.storage[6] = 0;
+      v2->pointer.storage[7] = 0;
+      v2 = (ASFunctionPointerReference *)((char *)v2 + 8);
+    }
+    while ( v2 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())CopyConstructColor24;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Copy constructs a color24",
+      "color24",
+      0,
+      "void color24(const color24& in color)",
+      &functionPointer,
+      4u,
+      nullptr);
+    v3 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v3->pointer.storage[0] = 0;
+      v3->pointer.storage[1] = 0;
+      v3->pointer.storage[2] = 0;
+      v3->pointer.storage[3] = 0;
+      v3->pointer.storage[4] = 0;
+      v3->pointer.storage[5] = 0;
+      v3->pointer.storage[6] = 0;
+      v3->pointer.storage[7] = 0;
+      v3 = (ASFunctionPointerReference *)((char *)v3 + 8);
+    }
+    while ( v3 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())Byte3ConstructColor24;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Constructs a color24 from 3 bytes",
+      "color24",
+      0,
+      "void color24(int8 r, int8 g, int8 b)",
+      &functionPointer,
+      4u,
+      nullptr);
+    v4 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v4->pointer.storage[0] = 0;
+      v4->pointer.storage[1] = 0;
+      v4->pointer.storage[2] = 0;
+      v4->pointer.storage[3] = 0;
+      v4->pointer.storage[4] = 0;
+      v4->pointer.storage[5] = 0;
+      v4->pointer.storage[6] = 0;
+      v4->pointer.storage[7] = 0;
+      v4 = (ASFunctionPointerReference *)((char *)v4 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v4 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())DestructColor24;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Destructor",
+      "color24",
+      2,
+      "void Destructcolor24()",
+      &functionPointer,
+      4u,
+      nullptr);
+    CASDocumentation_RegisterObjectProperty(documentation, "Red value", "color24", "int8 r", 0);
+    CASDocumentation_RegisterObjectProperty(documentation, "Green value", "color24", "int8 g", 1);
+    CASDocumentation_RegisterObjectProperty(documentation, "Blue value", "color24", "int8 b", 2);
+  }

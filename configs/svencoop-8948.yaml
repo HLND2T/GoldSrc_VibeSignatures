@@ -3866,6 +3866,50 @@ modules:
     depot_windows: svencoop/dlls/server.dll
     depot_linux: svencoop/dlls/server.so
     skills:
+      - name: find-CASDocumentation-registration-callers
+        expected_output:
+          - RegisterSCScriptCustomEntityDependencies.{platform}.yaml
+          - RegisterSCScriptColor24.{platform}.yaml
+          - RegisterSCScriptOpenFileFlag.{platform}.yaml
+        expected_output_windows:
+          - RegisterSCScriptCharacterFunctions.windows.yaml
+        expected_output_linux:
+          - RegisterSCScriptVarious.linux.yaml
+      - name: find-CASDocumentation-diagnostics
+        platform: windows
+        expected_output_windows:
+          - CASDocumentation_RegisterObjectProperty.windows.yaml
+          - CASDocumentation_RegisterEnumValue.windows.yaml
+      - name: find-RegisterSCScriptCustomEntityDependencies-decompiles
+        expected_input:
+          - RegisterSCScriptCustomEntityDependencies.{platform}.yaml
+        expected_output:
+          - CASDocumentation_RegisterObjectType.{platform}.yaml
+          - CASDocumentation_RegisterGlobalProperty.{platform}.yaml
+          - CASDocumentation_RegisterObjectMethod.{platform}.yaml
+          - CASDocumentation_RegisterFuncDef.{platform}.yaml
+      - name: find-RegisterSCScriptColor24-decompiles
+        expected_input:
+          - RegisterSCScriptColor24.{platform}.yaml
+        expected_output:
+          - CASDocumentation_RegisterObjectBehaviour.{platform}.yaml
+        expected_output_linux:
+          - CASDocumentation_RegisterObjectProperty.linux.yaml
+      - name: find-CASDocumentation-character-functions-decompiles
+        expected_input_windows:
+          - RegisterSCScriptCharacterFunctions.windows.yaml
+        expected_input_linux:
+          - RegisterSCScriptVarious.linux.yaml
+        expected_output:
+          - CASDocumentation_RegisterGlobalFunction.{platform}.yaml
+      - name: find-RegisterSCScriptOpenFileFlag-decompiles
+        expected_input:
+          - RegisterSCScriptOpenFileFlag.{platform}.yaml
+        expected_output:
+          - CASDocumentation_RegisterEnum.{platform}.yaml
+          - CASDocumentation_SetDefaultNamespace.{platform}.yaml
+        expected_output_linux:
+          - CASDocumentation_RegisterEnumValue.linux.yaml
       - name: find-CASHook_CASHook
         expected_output:
           - CASHook_CASHook.{platform}.yaml
@@ -3878,6 +3922,38 @@ modules:
         expected_output:
           - CASHook_Call.{platform}.yaml
     symbols:
+      - name: CASDocumentation_RegisterObjectType
+        category: func
+      - name: CASDocumentation_RegisterObjectProperty
+        category: func
+      - name: CASDocumentation_RegisterGlobalProperty
+        category: func
+      - name: CASDocumentation_RegisterGlobalFunction
+        category: func
+      - name: CASDocumentation_RegisterObjectMethod
+        category: func
+      - name: CASDocumentation_RegisterObjectBehaviour
+        category: func
+      - name: CASDocumentation_RegisterFuncDef
+        category: func
+      - name: CASDocumentation_RegisterEnum
+        category: func
+      - name: CASDocumentation_RegisterEnumValue
+        category: func
+      - name: CASDocumentation_SetDefaultNamespace
+        category: func
+      - name: RegisterSCScriptCustomEntityDependencies
+        category: func
+      - name: RegisterSCScriptColor24
+        category: func
+      - name: RegisterSCScriptOpenFileFlag
+        category: func
+      - name: RegisterSCScriptCharacterFunctions
+        category: func
+        platform: windows
+      - name: RegisterSCScriptVarious
+        category: func
+        platform: linux
       - name: CASHook_CASHook
         category: func
       - name: CASBaseManager_OnMapEnd

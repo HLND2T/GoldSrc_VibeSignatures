@@ -1,0 +1,336 @@
+func_name: RegisterSCScriptColor24
+func_va: '0x268888'
+disasm_code: |-
+  .text:00268888                 push    ebp
+  .text:00268889                 push    edi
+  .text:0026888A                 push    esi
+  .text:0026888B                 push    ebx
+  .text:0026888C                 sub     esp, 48h
+  .text:0026888F                 call    __x86_get_pc_thunk_bx
+  .text:00268894                 add     ebx, (offset _GLOBAL_OFFSET_TABLE_ - $)
+  .text:0026889A                 mov     esi, [esp+58h+documentation]
+  .text:0026889E                 ; flags
+  .text:0026889E                 push    2; flags
+  .text:002688A0                 ; byteSize
+  .text:002688A0                 push    3; byteSize
+  .text:002688A2                 lea     edi, (aCopyConstructs+12h - 8B0000h)[ebx]; "color24"
+  .text:002688A8                 ; objectName
+  .text:002688A8                 push    edi; objectName
+  .text:002688A9                 lea     eax, (aColor24Structu - 8B0000h)[ebx]; "Color24 structure"
+  .text:002688AF                 ; docs
+  .text:002688AF                 push    eax; docs
+  .text:002688B0                 ; documentation
+  .text:002688B0                 push    esi; documentation
+  .text:002688B1                 call    CASDocumentation_RegisterObjectType; CASDocumentation_RegisterObjectType(char const*,char const*,int,ulong)
+  .text:002688B6                 lea     edx, [esp+6Ch+functionPointer]
+  .text:002688BA                 lea     ebp, [esp+6Ch+functionPointer.pointer+19h]
+  .text:002688BE                 add     esp, 20h
+  .text:002688C1                 lea     ecx, [esp+4Ch+functionPointer.pointer+1]
+  .text:002688C5                 mov     byte ptr [ecx], 0
+  .text:002688C8                 mov     byte ptr [ecx+1], 0
+  .text:002688CC                 mov     byte ptr [ecx+2], 0
+  .text:002688D0                 mov     byte ptr [ecx+3], 0
+  .text:002688D4                 mov     byte ptr [ecx+4], 0
+  .text:002688D8                 mov     byte ptr [ecx+5], 0
+  .text:002688DC                 mov     byte ptr [ecx+6], 0
+  .text:002688E0                 mov     byte ptr [ecx+7], 0
+  .text:002688E4                 add     ecx, 8
+  .text:002688E7                 cmp     ecx, ebp
+  .text:002688E9                 jnz     short loc_2688C5
+  .text:002688EB                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:002688F0                 mov     eax, ds:(_Z16ConstructColor24Pv_ptr - 8B0000h)[ebx]
+  .text:002688F6                 mov     dword ptr [esp+4Ch+functionPointer.pointer], eax
+  .text:002688FA                 ; auxiliary
+  .text:002688FA                 push    0; auxiliary
+  .text:002688FC                 ; callConvention
+  .text:002688FC                 push    4; callConvention
+  .text:002688FE                 ; functionPointer
+  .text:002688FE                 push    edx; functionPointer
+  .text:002688FF                 mov     [esp+58h+var_40], edx
+  .text:00268903                 lea     edx, (aVoidColor24 - 8B0000h)[ebx]; "void color24()"
+  .text:00268909                 ; declaration
+  .text:00268909                 push    edx; declaration
+  .text:0026890A                 ; behaviour
+  .text:0026890A                 push    0; behaviour
+  .text:0026890C                 ; objectName
+  .text:0026890C                 push    edi; objectName
+  .text:0026890D                 lea     ecx, (aDefaultConstru_1 - 8B0000h)[ebx]; "Default constructs color24"
+  .text:00268913                 ; docs
+  .text:00268913                 push    ecx; docs
+  .text:00268914                 ; documentation
+  .text:00268914                 push    esi; documentation
+  .text:00268915                 call    CASDocumentation_RegisterObjectBehaviour; CASDocumentation_RegisterObjectBehaviour(char const*,char const*,asEBehaviours,char const*,asSFuncPtr const&,ulong,void *)
+  .text:0026891A                 add     esp, 20h
+  .text:0026891D                 mov     edx, [esp+4Ch+var_40]
+  .text:00268921                 lea     eax, [edx+1]
+  .text:00268924                 mov     byte ptr [eax], 0
+  .text:00268927                 mov     byte ptr [eax+1], 0
+  .text:0026892B                 mov     byte ptr [eax+2], 0
+  .text:0026892F                 mov     byte ptr [eax+3], 0
+  .text:00268933                 mov     byte ptr [eax+4], 0
+  .text:00268937                 mov     byte ptr [eax+5], 0
+  .text:0026893B                 mov     byte ptr [eax+6], 0
+  .text:0026893F                 mov     byte ptr [eax+7], 0
+  .text:00268943                 add     eax, 8
+  .text:00268946                 cmp     eax, ebp
+  .text:00268948                 jnz     short loc_268924
+  .text:0026894A                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:0026894F                 mov     ecx, ds:(_Z20CopyConstructColor24RK7color24Pv_ptr - 8B0000h)[ebx]
+  .text:00268955                 mov     dword ptr [esp+4Ch+functionPointer.pointer], ecx
+  .text:00268959                 ; auxiliary
+  .text:00268959                 push    0; auxiliary
+  .text:0026895B                 ; callConvention
+  .text:0026895B                 push    4; callConvention
+  .text:0026895D                 ; functionPointer
+  .text:0026895D                 push    edx; functionPointer
+  .text:0026895E                 mov     [esp+58h+var_40], edx
+  .text:00268962                 lea     edx, (aVoidColor24Con - 8B0000h)[ebx]; "void color24(const color24& in color)"
+  .text:00268968                 ; declaration
+  .text:00268968                 push    edx; declaration
+  .text:00268969                 ; behaviour
+  .text:00268969                 push    0; behaviour
+  .text:0026896B                 ; objectName
+  .text:0026896B                 push    edi; objectName
+  .text:0026896C                 lea     eax, (aCopyConstructs - 8B0000h)[ebx]; "Copy constructs a color24"
+  .text:00268972                 ; docs
+  .text:00268972                 push    eax; docs
+  .text:00268973                 ; documentation
+  .text:00268973                 push    esi; documentation
+  .text:00268974                 call    CASDocumentation_RegisterObjectBehaviour; CASDocumentation_RegisterObjectBehaviour(char const*,char const*,asEBehaviours,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00268979                 add     esp, 20h
+  .text:0026897C                 mov     ecx, [esp+4Ch+var_40]
+  .text:00268980                 lea     edx, [ecx+1]
+  .text:00268983                 mov     byte ptr [edx], 0
+  .text:00268986                 mov     byte ptr [edx+1], 0
+  .text:0026898A                 mov     byte ptr [edx+2], 0
+  .text:0026898E                 mov     byte ptr [edx+3], 0
+  .text:00268992                 mov     byte ptr [edx+4], 0
+  .text:00268996                 mov     byte ptr [edx+5], 0
+  .text:0026899A                 mov     byte ptr [edx+6], 0
+  .text:0026899E                 mov     byte ptr [edx+7], 0
+  .text:002689A2                 add     edx, 8
+  .text:002689A5                 cmp     edx, ebp
+  .text:002689A7                 jnz     short loc_268983
+  .text:002689A9                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:002689AE                 mov     eax, ds:(_Z21Byte3ConstructColor24hhhP7color24_ptr - 8B0000h)[ebx]
+  .text:002689B4                 mov     dword ptr [esp+4Ch+functionPointer.pointer], eax
+  .text:002689B8                 ; auxiliary
+  .text:002689B8                 push    0; auxiliary
+  .text:002689BA                 ; callConvention
+  .text:002689BA                 push    4; callConvention
+  .text:002689BC                 ; functionPointer
+  .text:002689BC                 push    ecx; functionPointer
+  .text:002689BD                 mov     [esp+58h+var_40], ecx
+  .text:002689C1                 lea     ecx, (aVoidColor24Int - 8B0000h)[ebx]; "void color24(int8 r, int8 g, int8 b)"
+  .text:002689C7                 ; declaration
+  .text:002689C7                 push    ecx; declaration
+  .text:002689C8                 ; behaviour
+  .text:002689C8                 push    0; behaviour
+  .text:002689CA                 ; objectName
+  .text:002689CA                 push    edi; objectName
+  .text:002689CB                 lea     edx, (aConstructsACol - 8B0000h)[ebx]; "Constructs a color24 from 3 bytes"
+  .text:002689D1                 ; docs
+  .text:002689D1                 push    edx; docs
+  .text:002689D2                 ; documentation
+  .text:002689D2                 push    esi; documentation
+  .text:002689D3                 call    CASDocumentation_RegisterObjectBehaviour; CASDocumentation_RegisterObjectBehaviour(char const*,char const*,asEBehaviours,char const*,asSFuncPtr const&,ulong,void *)
+  .text:002689D8                 add     esp, 20h
+  .text:002689DB                 mov     ecx, [esp+4Ch+var_40]
+  .text:002689DF                 lea     eax, [ecx+1]
+  .text:002689E2                 mov     byte ptr [eax], 0
+  .text:002689E5                 mov     byte ptr [eax+1], 0
+  .text:002689E9                 mov     byte ptr [eax+2], 0
+  .text:002689ED                 mov     byte ptr [eax+3], 0
+  .text:002689F1                 mov     byte ptr [eax+4], 0
+  .text:002689F5                 mov     byte ptr [eax+5], 0
+  .text:002689F9                 mov     byte ptr [eax+6], 0
+  .text:002689FD                 mov     byte ptr [eax+7], 0
+  .text:00268A01                 add     eax, 8
+  .text:00268A04                 cmp     ebp, eax
+  .text:00268A06                 jnz     short loc_2689E2
+  .text:00268A08                 mov     [esp+4Ch+functionPointer.flag], 2
+  .text:00268A0D                 mov     ebp, ds:(_Z15DestructColor24Pv_ptr - 8B0000h)[ebx]
+  .text:00268A13                 mov     dword ptr [esp+4Ch+functionPointer.pointer], ebp
+  .text:00268A17                 ; auxiliary
+  .text:00268A17                 push    0; auxiliary
+  .text:00268A19                 ; callConvention
+  .text:00268A19                 push    4; callConvention
+  .text:00268A1B                 ; functionPointer
+  .text:00268A1B                 push    ecx; functionPointer
+  .text:00268A1C                 lea     edx, (aVoidDestructco - 8B0000h)[ebx]; "void Destructcolor24()"
+  .text:00268A22                 ; declaration
+  .text:00268A22                 push    edx; declaration
+  .text:00268A23                 ; behaviour
+  .text:00268A23                 push    2; behaviour
+  .text:00268A25                 ; objectName
+  .text:00268A25                 push    edi; objectName
+  .text:00268A26                 lea     ecx, (aDestructor - 8B0000h)[ebx]; "Destructor"
+  .text:00268A2C                 ; docs
+  .text:00268A2C                 push    ecx; docs
+  .text:00268A2D                 ; documentation
+  .text:00268A2D                 push    esi; documentation
+  .text:00268A2E                 call    CASDocumentation_RegisterObjectBehaviour; CASDocumentation_RegisterObjectBehaviour(char const*,char const*,asEBehaviours,char const*,asSFuncPtr const&,ulong,void *)
+  .text:00268A33                 add     esp, 14h
+  .text:00268A36                 ; byteOffset
+  .text:00268A36                 push    0; byteOffset
+  .text:00268A38                 lea     eax, (aUint8R+1 - 8B0000h)[ebx]; "int8 r"
+  .text:00268A3E                 ; declaration
+  .text:00268A3E                 push    eax; declaration
+  .text:00268A3F                 ; objectName
+  .text:00268A3F                 push    edi; objectName
+  .text:00268A40                 lea     ebp, (aRedValue - 8B0000h)[ebx]; "Red value"
+  .text:00268A46                 ; docs
+  .text:00268A46                 push    ebp; docs
+  .text:00268A47                 ; documentation
+  .text:00268A47                 push    esi; documentation
+  .text:00268A48                 call    CASDocumentation_RegisterObjectProperty; CASDocumentation_RegisterObjectProperty(char const*,char const*,char const*,int)
+  .text:00268A4D                 add     esp, 14h
+  .text:00268A50                 ; byteOffset
+  .text:00268A50                 push    1; byteOffset
+  .text:00268A52                 lea     edx, (aUint8G+1 - 8B0000h)[ebx]; "int8 g"
+  .text:00268A58                 ; declaration
+  .text:00268A58                 push    edx; declaration
+  .text:00268A59                 ; objectName
+  .text:00268A59                 push    edi; objectName
+  .text:00268A5A                 lea     ecx, (aGreenValue - 8B0000h)[ebx]; "Green value"
+  .text:00268A60                 ; docs
+  .text:00268A60                 push    ecx; docs
+  .text:00268A61                 ; documentation
+  .text:00268A61                 push    esi; documentation
+  .text:00268A62                 call    CASDocumentation_RegisterObjectProperty; CASDocumentation_RegisterObjectProperty(char const*,char const*,char const*,int)
+  .text:00268A67                 add     esp, 14h
+  .text:00268A6A                 ; byteOffset
+  .text:00268A6A                 push    2; byteOffset
+  .text:00268A6C                 lea     eax, (aUint8B+1 - 8B0000h)[ebx]; "int8 b"
+  .text:00268A72                 ; declaration
+  .text:00268A72                 push    eax; declaration
+  .text:00268A73                 ; objectName
+  .text:00268A73                 push    edi; objectName
+  .text:00268A74                 lea     edi, (aBlueValue - 8B0000h)[ebx]; "Blue value"
+  .text:00268A7A                 ; docs
+  .text:00268A7A                 push    edi; docs
+  .text:00268A7B                 ; documentation
+  .text:00268A7B                 push    esi; documentation
+  .text:00268A7C                 call    CASDocumentation_RegisterObjectProperty; CASDocumentation_RegisterObjectProperty(char const*,char const*,char const*,int)
+  .text:00268A81                 add     esp, 5Ch
+  .text:00268A84                 pop     ebx
+  .text:00268A85                 pop     esi
+  .text:00268A86                 pop     edi
+  .text:00268A87                 pop     ebp
+  .text:00268A88                 retn
+procedure: |-
+  // Direct CASDocumentation calls below identify method entries. SDK virtual calls and registered callback pointers are distinct.
+  // Reference reconstruction: private server source unavailable; names/arguments are based on current instructions and the symbolized 5.15 ELF peer. Registration return values are discarded here. Partial types describe only observed fields.
+  void __cdecl RegisterSCScriptColor24(CASDocumentationReference *documentation)
+  {
+    ASFunctionPointerReference *v1; // ecx
+    ASFunctionPointerReference *v2; // eax
+    ASFunctionPointerReference *v3; // edx
+    ASFunctionPointerReference *v4; // eax
+    ASFunctionPointerReference functionPointer; // [esp+1Ch] [ebp-3Ch] BYREF
+
+    CASDocumentation_RegisterObjectType(documentation, "Color24 structure", "color24", 3, 2u);
+    v1 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v1->pointer.storage[0] = 0;
+      v1->pointer.storage[1] = 0;
+      v1->pointer.storage[2] = 0;
+      v1->pointer.storage[3] = 0;
+      v1->pointer.storage[4] = 0;
+      v1->pointer.storage[5] = 0;
+      v1->pointer.storage[6] = 0;
+      v1->pointer.storage[7] = 0;
+      v1 = (ASFunctionPointerReference *)((char *)v1 + 8);
+    }
+    while ( v1 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())ConstructColor24;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Default constructs color24",
+      "color24",
+      0,
+      "void color24()",
+      &functionPointer,
+      4u,
+      nullptr);
+    v2 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v2->pointer.storage[0] = 0;
+      v2->pointer.storage[1] = 0;
+      v2->pointer.storage[2] = 0;
+      v2->pointer.storage[3] = 0;
+      v2->pointer.storage[4] = 0;
+      v2->pointer.storage[5] = 0;
+      v2->pointer.storage[6] = 0;
+      v2->pointer.storage[7] = 0;
+      v2 = (ASFunctionPointerReference *)((char *)v2 + 8);
+    }
+    while ( v2 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())CopyConstructColor24;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Copy constructs a color24",
+      "color24",
+      0,
+      "void color24(const color24& in color)",
+      &functionPointer,
+      4u,
+      nullptr);
+    v3 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v3->pointer.storage[0] = 0;
+      v3->pointer.storage[1] = 0;
+      v3->pointer.storage[2] = 0;
+      v3->pointer.storage[3] = 0;
+      v3->pointer.storage[4] = 0;
+      v3->pointer.storage[5] = 0;
+      v3->pointer.storage[6] = 0;
+      v3->pointer.storage[7] = 0;
+      v3 = (ASFunctionPointerReference *)((char *)v3 + 8);
+    }
+    while ( v3 != (ASFunctionPointerReference *)&functionPointer.pointer.storage[25] );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())Byte3ConstructColor24;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Constructs a color24 from 3 bytes",
+      "color24",
+      0,
+      "void color24(int8 r, int8 g, int8 b)",
+      &functionPointer,
+      4u,
+      nullptr);
+    v4 = (ASFunctionPointerReference *)((char *)&functionPointer.pointer.function + 1);
+    do
+    {
+      v4->pointer.storage[0] = 0;
+      v4->pointer.storage[1] = 0;
+      v4->pointer.storage[2] = 0;
+      v4->pointer.storage[3] = 0;
+      v4->pointer.storage[4] = 0;
+      v4->pointer.storage[5] = 0;
+      v4->pointer.storage[6] = 0;
+      v4->pointer.storage[7] = 0;
+      v4 = (ASFunctionPointerReference *)((char *)v4 + 8);
+    }
+    while ( &functionPointer.pointer.storage[25] != (char *)v4 );
+    functionPointer.flag = 2;
+    functionPointer.pointer.function = (void (*)())DestructColor24;
+    CASDocumentation_RegisterObjectBehaviour(
+      documentation,
+      "Destructor",
+      "color24",
+      2,
+      "void Destructcolor24()",
+      &functionPointer,
+      4u,
+      nullptr);
+    CASDocumentation_RegisterObjectProperty(documentation, "Red value", "color24", "int8 r", 0);
+    CASDocumentation_RegisterObjectProperty(documentation, "Green value", "color24", "int8 g", 1);
+    CASDocumentation_RegisterObjectProperty(documentation, "Blue value", "color24", "int8 b", 2);
+  }

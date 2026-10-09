@@ -1,0 +1,7 @@
+func_name: CASDocumentation::RegisterEnum(char const*, char const*, CASDocumentation::ENUM_TYPE)
+func_va: '0x100abca0'
+func_rva: '0xabca0'
+func_size: '0x52'
+func_sig: 56 8B F1 57 8B 7C 24 ?? 57 8B 4E ?? 8B 01 FF 50 ?? 85 C0 78 ?? 80 7E ?? ?? 74 ?? 6A 18 E8 ?? ?? ?? ?? 8B 4C 24 ??
+func_sig_allow_across_function_boundary: true
+func_sig_resolve_jmp_thunk: true

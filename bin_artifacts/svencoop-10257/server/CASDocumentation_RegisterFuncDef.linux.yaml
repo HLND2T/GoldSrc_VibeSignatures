@@ -1,0 +1,7 @@
+func_name: CASDocumentation::RegisterFuncDef(char const*, char const*)
+func_va: '0x119bf2'
+func_rva: '0x119bf2'
+func_size: '0x66'
+func_sig: 55 57 56 53 83 EC ?? E8 ?? ?? ?? ?? 81 C3 ?? ?? ?? ?? 8B 74 24 ?? 8B 6C 24 ?? 8B 46 ?? 8B 10 89 6C 24 ?? 89 04 24
+func_sig_allow_across_function_boundary: true
+func_sig_resolve_jmp_thunk: true

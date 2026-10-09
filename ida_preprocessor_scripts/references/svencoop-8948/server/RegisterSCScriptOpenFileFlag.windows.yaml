@@ -1,0 +1,134 @@
+func_name: RegisterSCScriptOpenFileFlag
+func_va: '0x100c5430'
+disasm_code: |-
+  .text:100C5430                 push    ebp
+  .text:100C5431                 mov     ebp, esp
+  .text:100C5433                 push    0FFFFFFFFh
+  .text:100C5435                 push    offset SEH_100C5430
+  .text:100C543A                 mov     eax, large fs:0
+  .text:100C5440                 push    eax
+  .text:100C5441                 sub     esp, 28h
+  .text:100C5444                 mov     eax, ___security_cookie
+  .text:100C5449                 xor     eax, ebp
+  .text:100C544B                 mov     [ebp+var_10], eax
+  .text:100C544E                 push    esi
+  .text:100C544F                 push    eax
+  .text:100C5450                 lea     eax, [ebp+var_C]
+  .text:100C5453                 mov     large fs:0, eax
+  .text:100C5459                 mov     esi, [ebp+documentation]
+  .text:100C545C                 ; documentation
+  .text:100C545C                 mov     ecx, esi; documentation
+  .text:100C545E                 call    CASDocumentation__GetDefaultNamespace
+  .text:100C5463                 ; text
+  .text:100C5463                 push    eax; text
+  .text:100C5464                 ; self
+  .text:100C5464                 lea     ecx, [ebp+self]; self
+  .text:100C5467                 call    CString__CString
+  .text:100C546C                 push    offset namespaceName; "OpenFile"
+  .text:100C5471                 ; documentation
+  .text:100C5471                 mov     ecx, esi; documentation
+  .text:100C5473                 mov     [ebp+var_4], 0
+  .text:100C547A                 call    CASDocumentation_SetDefaultNamespace
+  .text:100C547F                 ; enumType
+  .text:100C547F                 push    0; enumType
+  .text:100C5481                 push    offset namespaceName; "OpenFile"
+  .text:100C5486                 push    offset aFlagsPassedToF; "Flags passed to FileSystem::OpenFile."
+  .text:100C548B                 ; documentation
+  .text:100C548B                 mov     ecx, esi; documentation
+  .text:100C548D                 call    CASDocumentation_RegisterEnum
+  .text:100C5492                 ; value
+  .text:100C5492                 push    1; value
+  .text:100C5494                 push    offset aRead; "READ"
+  .text:100C5499                 push    offset namespaceName; "OpenFile"
+  .text:100C549E                 push    offset aOpenFileForRea; "Open file for reading."
+  .text:100C54A3                 ; documentation
+  .text:100C54A3                 mov     ecx, esi; documentation
+  .text:100C54A5                 call    CASDocumentation_RegisterEnumValue
+  .text:100C54AA                 ; value
+  .text:100C54AA                 push    2; value
+  .text:100C54AC                 push    offset aWrite; "WRITE"
+  .text:100C54B1                 push    offset namespaceName; "OpenFile"
+  .text:100C54B6                 push    offset aOpenFileForWri; "Open file for writing."
+  .text:100C54BB                 ; documentation
+  .text:100C54BB                 mov     ecx, esi; documentation
+  .text:100C54BD                 call    CASDocumentation_RegisterEnumValue
+  .text:100C54C2                 ; value
+  .text:100C54C2                 push    4; value
+  .text:100C54C4                 push    offset aAppend; "APPEND"
+  .text:100C54C9                 push    offset namespaceName; "OpenFile"
+  .text:100C54CE                 push    offset aOpenFileForApp; "Open file for appending."
+  .text:100C54D3                 ; documentation
+  .text:100C54D3                 mov     ecx, esi; documentation
+  .text:100C54D5                 call    CASDocumentation_RegisterEnumValue
+  .text:100C54DA                 ; value
+  .text:100C54DA                 push    8; value
+  .text:100C54DC                 push    offset aBinary; "BINARY"
+  .text:100C54E1                 push    offset namespaceName; "OpenFile"
+  .text:100C54E6                 push    offset aOpenInBinaryMo; "Open in binary mode."
+  .text:100C54EB                 ; documentation
+  .text:100C54EB                 mov     ecx, esi; documentation
+  .text:100C54ED                 call    CASDocumentation_RegisterEnumValue
+  .text:100C54F2                 ; namespaceName
+  .text:100C54F2                 push    [ebp+self.data]; namespaceName
+  .text:100C54F5                 ; documentation
+  .text:100C54F5                 mov     ecx, esi; documentation
+  .text:100C54F7                 call    CASDocumentation_SetDefaultNamespace
+  .text:100C54FC                 push    offset aUint8; "uint8"
+  .text:100C5501                 push    offset aOpenfileflagsT; "OpenFileFlags_t"
+  .text:100C5506                 push    offset aOpenFileFlags; "Open File Flags"
+  .text:100C550B                 ; documentation
+  .text:100C550B                 mov     ecx, esi; documentation
+  .text:100C550D                 call    CASDocumentation__RegisterTypedef
+  .text:100C5512                 ; self
+  .text:100C5512                 lea     ecx, [ebp+self]; self
+  .text:100C5515                 call    CString___CString
+  .text:100C551A                 mov     ecx, [ebp+var_C]
+  .text:100C551D                 mov     large fs:0, ecx
+  .text:100C5524                 pop     ecx
+  .text:100C5525                 pop     esi
+  .text:100C5526                 mov     ecx, [ebp+var_10]
+  .text:100C5529                 ; StackCookie
+  .text:100C5529                 xor     ecx, ebp; StackCookie
+  .text:100C552B                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:100C5530                 mov     esp, ebp
+  .text:100C5532                 pop     ebp
+  .text:100C5533                 retn
+  .text:103846B0                 ; self
+  .text:103846B0                 lea     ecx, [ebp+self]; self
+  .text:103846B3                 jmp     CString___CString
+  .text:103846BD                 nop
+  .text:103846BE                 nop
+  .text:103846BF                 mov     edx, [esp-4+arg_4]
+  .text:103846C3                 lea     eax, [edx+0Ch]
+  .text:103846C6                 mov     ecx, [edx-30h]
+  .text:103846C9                 ; StackCookie
+  .text:103846C9                 xor     ecx, eax; StackCookie
+  .text:103846CB                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:103846D0                 mov     ecx, [edx-4]
+  .text:103846D3                 ; StackCookie
+  .text:103846D3                 xor     ecx, eax; StackCookie
+  .text:103846D5                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:103846DA                 mov     eax, offset stru_10463378
+  .text:103846DF                 jmp     ___CxxFrameHandler3
+procedure: |-
+  // Direct CASDocumentation calls below identify method entries. SDK virtual calls and registered callback pointers are distinct.
+  // Reference reconstruction: private server source unavailable; names/arguments are based on current instructions and the symbolized 5.15 ELF peer. Registration return values are discarded here. Partial types describe only observed fields.
+  void __cdecl RegisterSCScriptOpenFileFlag(CASDocumentationReference *documentation)
+  {
+    const char *DefaultNamespace; // eax
+    CStringReference self; // [esp+8h] [ebp-34h] BYREF
+    int v3; // [esp+38h] [ebp-4h]
+
+    DefaultNamespace = CASDocumentation::GetDefaultNamespace(documentation);
+    CString::CString(&self, DefaultNamespace);
+    v3 = 0;
+    CASDocumentation_SetDefaultNamespace(documentation, "OpenFile");
+    CASDocumentation_RegisterEnum(documentation, "Flags passed to FileSystem::OpenFile.", "OpenFile", 0);
+    CASDocumentation_RegisterEnumValue(documentation, "Open file for reading.", "OpenFile", "READ", 1);
+    CASDocumentation_RegisterEnumValue(documentation, "Open file for writing.", "OpenFile", "WRITE", 2);
+    CASDocumentation_RegisterEnumValue(documentation, "Open file for appending.", "OpenFile", "APPEND", 4);
+    CASDocumentation_RegisterEnumValue(documentation, "Open in binary mode.", "OpenFile", "BINARY", 8);
+    CASDocumentation_SetDefaultNamespace(documentation, self.data);
+    CASDocumentation::RegisterTypedef(documentation, "Open File Flags", "OpenFileFlags_t", "uint8");
+    CString::_CString(&self);
+  }

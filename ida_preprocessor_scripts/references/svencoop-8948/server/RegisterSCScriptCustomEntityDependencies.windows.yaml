@@ -1,0 +1,298 @@
+func_name: RegisterSCScriptCustomEntityDependencies
+func_va: '0x102abf60'
+disasm_code: |-
+  .text:102ABF60                 sub     esp, 2Ch
+  .text:102ABF63                 mov     eax, ___security_cookie
+  .text:102ABF68                 xor     eax, esp
+  .text:102ABF6A                 mov     [esp+2Ch+var_4], eax
+  .text:102ABF6E                 push    esi
+  .text:102ABF6F                 push    edi
+  .text:102ABF70                 mov     edi, [esp+34h+documentation]
+  .text:102ABF74                 ; documentation
+  .text:102ABF74                 mov     ecx, edi; documentation
+  .text:102ABF76                 push    offset aVoidThinkfunct; "void ThinkFunction()"
+  .text:102ABF7B                 push    offset aFunctionDefini; "Function definition for custom entity T"...
+  .text:102ABF80                 call    CASDocumentation_RegisterFuncDef
+  .text:102ABF85                 push    offset aVoidUsefunctio; "void UseFunction(CBaseEntity@ pActivato"...
+  .text:102ABF8A                 push    offset aFunctionDefini_0; "Function definition for custom entity U"...
+  .text:102ABF8F                 ; documentation
+  .text:102ABF8F                 mov     ecx, edi; documentation
+  .text:102ABF91                 call    CASDocumentation_RegisterFuncDef
+  .text:102ABF96                 push    offset aVoidTouchfunct; "void TouchFunction(CBaseEntity@ pOther)"
+  .text:102ABF9B                 push    offset aFunctionDefini_1; "Function definition for custom entity T"...
+  .text:102ABFA0                 ; documentation
+  .text:102ABFA0                 mov     ecx, edi; documentation
+  .text:102ABFA2                 call    CASDocumentation_RegisterFuncDef
+  .text:102ABFA7                 push    offset aVoidBlockedfun; "void BlockedFunction(CBaseEntity@ pOthe"...
+  .text:102ABFAC                 push    offset aFunctionDefini_2; "Function definition for custom entity B"...
+  .text:102ABFB1                 ; documentation
+  .text:102ABFB1                 mov     ecx, edi; documentation
+  .text:102ABFB3                 call    CASDocumentation_RegisterFuncDef
+  .text:102ABFB8                 ; flags
+  .text:102ABFB8                 push    40001h; flags
+  .text:102ABFBD                 ; byteSize
+  .text:102ABFBD                 push    1Ch; byteSize
+  .text:102ABFBF                 push    offset aCustomentityca_0; "CustomEntityCallbackHandler"
+  .text:102ABFC4                 push    offset aCustomEntityCa; "Custom entity callback handler. Is used"...
+  .text:102ABFC9                 ; documentation
+  .text:102ABFC9                 mov     ecx, edi; documentation
+  .text:102ABFCB                 call    CASDocumentation_RegisterObjectType
+  .text:102ABFD0                 ; callConvention
+  .text:102ABFD0                 push    3; callConvention
+  .text:102ABFD2                 lea     eax, [esp+38h+storage]
+  .text:102ABFD6                 ; function
+  .text:102ABFD6                 push    offset CustomEntityCallbackHandler__SetThinkFunction; function
+  .text:102ABFDB                 ; storage
+  .text:102ABFDB                 push    eax; storage
+  .text:102ABFDC                 call    asMethodPtr
+  .text:102ABFE1                 add     esp, 8
+  .text:102ABFE4                 ; documentation
+  .text:102ABFE4                 mov     ecx, edi; documentation
+  .text:102ABFE6                 ; functionPointer
+  .text:102ABFE6                 push    eax; functionPointer
+  .text:102ABFE7                 push    offset aVoidSetthinkfu; "void SetThinkFunction(ThinkFunction@ pF"...
+  .text:102ABFEC                 push    offset aCustomentityca_0; "CustomEntityCallbackHandler"
+  .text:102ABFF1                 push    offset aSetsTheThinkFu; "Sets the think function for this handle"...
+  .text:102ABFF6                 call    CASDocumentation_RegisterObjectMethod
+  .text:102ABFFB                 ; callConvention
+  .text:102ABFFB                 push    3; callConvention
+  .text:102ABFFD                 lea     eax, [esp+38h+storage]
+  .text:102AC001                 ; function
+  .text:102AC001                 push    offset CustomEntityCallbackHandler__SetTouchFunction; function
+  .text:102AC006                 ; storage
+  .text:102AC006                 push    eax; storage
+  .text:102AC007                 call    asMethodPtr
+  .text:102AC00C                 add     esp, 8
+  .text:102AC00F                 ; documentation
+  .text:102AC00F                 mov     ecx, edi; documentation
+  .text:102AC011                 ; functionPointer
+  .text:102AC011                 push    eax; functionPointer
+  .text:102AC012                 push    offset aVoidSettouchfu; "void SetTouchFunction(TouchFunction@ pF"...
+  .text:102AC017                 push    offset aCustomentityca_0; "CustomEntityCallbackHandler"
+  .text:102AC01C                 push    offset aSetsTheTouchFu; "Sets the touch function for this handle"...
+  .text:102AC021                 call    CASDocumentation_RegisterObjectMethod
+  .text:102AC026                 ; callConvention
+  .text:102AC026                 push    3; callConvention
+  .text:102AC028                 lea     eax, [esp+38h+storage]
+  .text:102AC02C                 ; function
+  .text:102AC02C                 push    offset CustomEntityCallbackHandler__SetBlockedFunction; function
+  .text:102AC031                 ; storage
+  .text:102AC031                 push    eax; storage
+  .text:102AC032                 call    asMethodPtr
+  .text:102AC037                 add     esp, 8
+  .text:102AC03A                 ; documentation
+  .text:102AC03A                 mov     ecx, edi; documentation
+  .text:102AC03C                 ; functionPointer
+  .text:102AC03C                 push    eax; functionPointer
+  .text:102AC03D                 push    offset aVoidSetblocked; "void SetBlockedFunction(BlockedFunction"...
+  .text:102AC042                 push    offset aCustomentityca_0; "CustomEntityCallbackHandler"
+  .text:102AC047                 push    offset aSetsTheBlocked; "Sets the blocked function for this hand"...
+  .text:102AC04C                 call    CASDocumentation_RegisterObjectMethod
+  .text:102AC051                 ; callConvention
+  .text:102AC051                 push    3; callConvention
+  .text:102AC053                 lea     eax, [esp+38h+storage]
+  .text:102AC057                 ; function
+  .text:102AC057                 push    offset CustomEntityCallbackHandler__SetUseFunction; function
+  .text:102AC05C                 ; storage
+  .text:102AC05C                 push    eax; storage
+  .text:102AC05D                 call    asMethodPtr
+  .text:102AC062                 add     esp, 8
+  .text:102AC065                 ; documentation
+  .text:102AC065                 mov     ecx, edi; documentation
+  .text:102AC067                 ; functionPointer
+  .text:102AC067                 push    eax; functionPointer
+  .text:102AC068                 push    offset aVoidSetusefunc; "void SetUseFunction(UseFunction@ pFunct"...
+  .text:102AC06D                 push    offset aCustomentityca_0; "CustomEntityCallbackHandler"
+  .text:102AC072                 push    offset aSetsTheUseFunc; "Sets the use function for this handler'"...
+  .text:102AC077                 call    CASDocumentation_RegisterObjectMethod
+  .text:102AC07C                 ; mask
+  .text:102AC07C                 push    3; mask
+  .text:102AC07E                 ; documentation
+  .text:102AC07E                 mov     ecx, edi; documentation
+  .text:102AC080                 call    CASDocumentation__SetDefaultAccessMask
+  .text:102AC085                 ; flags
+  .text:102AC085                 push    40001h; flags
+  .text:102AC08A                 ; byteSize
+  .text:102AC08A                 push    0; byteSize
+  .text:102AC08C                 push    offset aCcustomentityf_4; "CCustomEntityFuncs"
+  .text:102AC091                 mov     esi, eax
+  .text:102AC093                 push    offset aCustomEntityFu; "Custom entity functions."
+  .text:102AC098                 ; documentation
+  .text:102AC098                 mov     ecx, edi; documentation
+  .text:102AC09A                 call    CASDocumentation_RegisterObjectType
+  .text:102AC09F                 ; callConvention
+  .text:102AC09F                 push    3; callConvention
+  .text:102AC0A1                 lea     eax, [esp+38h+storage]
+  .text:102AC0A5                 ; function
+  .text:102AC0A5                 push    offset CCustomEntityFuncs__IsCustomEntity; function
+  .text:102AC0AA                 ; storage
+  .text:102AC0AA                 push    eax; storage
+  .text:102AC0AB                 call    asMethodPtr
+  .text:102AC0B0                 add     esp, 8
+  .text:102AC0B3                 ; documentation
+  .text:102AC0B3                 mov     ecx, edi; documentation
+  .text:102AC0B5                 ; functionPointer
+  .text:102AC0B5                 push    eax; functionPointer
+  .text:102AC0B6                 push    offset aBoolIscustomen; "bool IsCustomEntity(const string& in sz"...
+  .text:102AC0BB                 push    offset aCcustomentityf_4; "CCustomEntityFuncs"
+  .text:102AC0C0                 push    offset aReturnsWhether_94; "Returns whether the given entity name i"...
+  .text:102AC0C5                 call    CASDocumentation_RegisterObjectMethod
+  .text:102AC0CA                 ; callConvention
+  .text:102AC0CA                 push    3; callConvention
+  .text:102AC0CC                 lea     eax, [esp+38h+storage]
+  .text:102AC0D0                 ; function
+  .text:102AC0D0                 push    offset CCustomEntityFuncs__RegisterCustomEntity; function
+  .text:102AC0D5                 ; storage
+  .text:102AC0D5                 push    eax; storage
+  .text:102AC0D6                 call    asMethodPtr
+  .text:102AC0DB                 add     esp, 8
+  .text:102AC0DE                 ; documentation
+  .text:102AC0DE                 mov     ecx, edi; documentation
+  .text:102AC0E0                 ; functionPointer
+  .text:102AC0E0                 push    eax; functionPointer
+  .text:102AC0E1                 push    offset aVoidRegistercu; "void RegisterCustomEntity(const string&"...
+  .text:102AC0E6                 push    offset aCcustomentityf_4; "CCustomEntityFuncs"
+  .text:102AC0EB                 push    offset aRegistersAClas; "Registers a class called szClassname as"...
+  .text:102AC0F0                 call    CASDocumentation_RegisterObjectMethod
+  .text:102AC0F5                 ; callConvention
+  .text:102AC0F5                 push    3; callConvention
+  .text:102AC0F7                 lea     eax, [esp+38h+storage]
+  .text:102AC0FB                 ; function
+  .text:102AC0FB                 push    offset CCustomEntityFuncs__UnRegisterCustomEntity; function
+  .text:102AC100                 ; storage
+  .text:102AC100                 push    eax; storage
+  .text:102AC101                 call    asMethodPtr
+  .text:102AC106                 add     esp, 8
+  .text:102AC109                 ; documentation
+  .text:102AC109                 mov     ecx, edi; documentation
+  .text:102AC10B                 ; functionPointer
+  .text:102AC10B                 push    eax; functionPointer
+  .text:102AC10C                 push    offset aVoidUnregister_0; "void UnRegisterCustomEntity(const strin"...
+  .text:102AC111                 push    offset aCcustomentityf_4; "CCustomEntityFuncs"
+  .text:102AC116                 push    offset aUnregistersACu; "Unregisters a custom entity by the give"...
+  .text:102AC11B                 call    CASDocumentation_RegisterObjectMethod
+  .text:102AC120                 call    CCustomEntityFuncs__GetInstance
+  .text:102AC125                 ; pointer
+  .text:102AC125                 push    eax; pointer
+  .text:102AC126                 push    offset aCcustomentityf_5; "CCustomEntityFuncs g_CustomEntityFuncs"
+  .text:102AC12B                 push    offset aCustomEntityFu_0; "Custom entity functions global instance"...
+  .text:102AC130                 ; documentation
+  .text:102AC130                 mov     ecx, edi; documentation
+  .text:102AC132                 call    CASDocumentation_RegisterGlobalProperty
+  .text:102AC137                 ; mask
+  .text:102AC137                 push    esi; mask
+  .text:102AC138                 ; documentation
+  .text:102AC138                 mov     ecx, edi; documentation
+  .text:102AC13A                 call    CASDocumentation__SetDefaultAccessMask
+  .text:102AC13F                 mov     ecx, [esp+34h+var_4]
+  .text:102AC143                 pop     edi
+  .text:102AC144                 pop     esi
+  .text:102AC145                 ; StackCookie
+  .text:102AC145                 xor     ecx, esp; StackCookie
+  .text:102AC147                 call    @__security_check_cookie@4; __security_check_cookie(x)
+  .text:102AC14C                 add     esp, 2Ch
+  .text:102AC14F                 retn
+procedure: |-
+  // Direct CASDocumentation calls below identify method entries. SDK virtual calls and registered callback pointers are distinct.
+  // Reference reconstruction: private server source unavailable; names/arguments are based on current instructions and the symbolized 5.15 ELF peer. Registration return values are discarded here. Partial types describe only observed fields.
+  void __cdecl RegisterSCScriptCustomEntityDependencies(CASDocumentationReference *documentation)
+  {
+    ASFunctionPointerReference *v1; // eax
+    ASFunctionPointerReference *v2; // eax
+    ASFunctionPointerReference *v3; // eax
+    ASFunctionPointerReference *v4; // eax
+    unsigned int v5; // esi
+    ASFunctionPointerReference *v6; // eax
+    ASFunctionPointerReference *v7; // eax
+    ASFunctionPointerReference *v8; // eax
+    void *Instance; // eax
+    ASFunctionPointerReference storage; // [esp+8h] [ebp-2Ch] BYREF
+
+    CASDocumentation_RegisterFuncDef(
+      documentation,
+      "Function definition for custom entity Think functions",
+      "void ThinkFunction()");
+    CASDocumentation_RegisterFuncDef(
+      documentation,
+      "Function definition for custom entity Use functions",
+      "void UseFunction(CBaseEntity@ pActivator, CBaseEntity@ pCaller, USE_TYPE useType, float flValue)");
+    CASDocumentation_RegisterFuncDef(
+      documentation,
+      "Function definition for custom entity Touch functions",
+      "void TouchFunction(CBaseEntity@ pOther)");
+    CASDocumentation_RegisterFuncDef(
+      documentation,
+      "Function definition for custom entity Blocked functions",
+      "void BlockedFunction(CBaseEntity@ pOther)");
+    CASDocumentation_RegisterObjectType(
+      documentation,
+      "Custom entity callback handler. Is used to set callbacks to methods",
+      "CustomEntityCallbackHandler",
+      28,
+      0x40001u);
+    v1 = asMethodPtr(&storage, CustomEntityCallbackHandler::SetThinkFunction);
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Sets the think function for this handler's owning instance.",
+      "CustomEntityCallbackHandler",
+      "void SetThinkFunction(ThinkFunction@ pFunction)",
+      v1,
+      3u);
+    v2 = asMethodPtr(&storage, CustomEntityCallbackHandler::SetTouchFunction);
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Sets the touch function for this handler's owning instance.",
+      "CustomEntityCallbackHandler",
+      "void SetTouchFunction(TouchFunction@ pFunction)",
+      v2,
+      3u);
+    v3 = asMethodPtr(&storage, CustomEntityCallbackHandler::SetBlockedFunction);
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Sets the blocked function for this handler's owning instance.",
+      "CustomEntityCallbackHandler",
+      "void SetBlockedFunction(BlockedFunction@ pFunction)",
+      v3,
+      3u);
+    v4 = asMethodPtr(&storage, CustomEntityCallbackHandler::SetUseFunction);
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Sets the use function for this handler's owning instance.",
+      "CustomEntityCallbackHandler",
+      "void SetUseFunction(UseFunction@ pFunction)",
+      v4,
+      3u);
+    v5 = CASDocumentation::SetDefaultAccessMask(documentation, 3u);
+    CASDocumentation_RegisterObjectType(documentation, "Custom entity functions.", "CCustomEntityFuncs", 0, 0x40001u);
+    v6 = asMethodPtr(&storage, CASCustomEntityFuncs::IsCustomEntity);
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Returns whether the given entity name is a registered custom entity",
+      "CCustomEntityFuncs",
+      "bool IsCustomEntity(const string& in szEntityname) const",
+      v6,
+      3u);
+    v7 = asMethodPtr(&storage, CASCustomEntityFuncs::RegisterCustomEntity);
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Registers a class called szClassname as a custom entity named szEntityname. The class must inherit from a script entity base class.",
+      "CCustomEntityFuncs",
+      "void RegisterCustomEntity(const string& in szClassname, const string& in szEntityname)",
+      v7,
+      3u);
+    v8 = asMethodPtr(&storage, CASCustomEntityFuncs::UnRegisterCustomEntity);
+    CASDocumentation_RegisterObjectMethod(
+      documentation,
+      "Unregisters a custom entity by the given name",
+      "CCustomEntityFuncs",
+      "void UnRegisterCustomEntity(const string& in szEntityname)",
+      v8,
+      3u);
+    Instance = GetCustomEntityFuncsInstance();
+    CASDocumentation_RegisterGlobalProperty(
+      documentation,
+      "Custom entity functions global instance.",
+      "CCustomEntityFuncs g_CustomEntityFuncs",
+      Instance);
+    CASDocumentation::SetDefaultAccessMask(documentation, v5);
+  }

@@ -1,0 +1,146 @@
+func_name: RegisterSCScriptOpenFileFlag
+func_va: '0x15dad8'
+disasm_code: |-
+  .text:0015DAD8                 push    ebp
+  .text:0015DAD9                 push    edi
+  .text:0015DADA                 push    esi
+  .text:0015DADB                 push    ebx
+  .text:0015DADC                 sub     esp, 6Ch
+  .text:0015DADF                 call    __x86_get_pc_thunk_si
+  .text:0015DAE4                 add     esi, (offset qword_B14000 - $)
+  .text:0015DAEA                 mov     edi, [esp+7Ch+documentation]
+  .text:0015DAF1                 ; documentation
+  .text:0015DAF1                 mov     [esp+7Ch+self], edi; documentation
+  .text:0015DAF4                 mov     ebx, esi
+  .text:0015DAF6                 call    CASDocumentation__GetDefaultNamespace
+  .text:0015DAFB                 ; text
+  .text:0015DAFB                 mov     [esp+7Ch+text], eax; text
+  .text:0015DAFF                 lea     eax, [esp+7Ch+var_40]
+  .text:0015DB03                 mov     [esp+7Ch+var_50], eax
+  .text:0015DB07                 ; self
+  .text:0015DB07                 mov     [esp+7Ch+self], eax; self
+  .text:0015DB0A                 call    CString__CString
+  .text:0015DB0F                 lea     ebp, (aOpenfile - 0B14000h)[esi]; "OpenFile"
+  .text:0015DB15                 ; namespaceName
+  .text:0015DB15                 mov     [esp+7Ch+text], ebp; namespaceName
+  .text:0015DB19                 ; documentation
+  .text:0015DB19                 mov     [esp+7Ch+self], edi; documentation
+  .text:0015DB1C                 call    CASDocumentation_SetDefaultNamespace
+  .text:0015DB21                 ; enumType
+  .text:0015DB21                 mov     [esp+7Ch+enumType], 0; enumType
+  .text:0015DB29                 ; enumName
+  .text:0015DB29                 mov     [esp+7Ch+enumName], ebp; enumName
+  .text:0015DB2D                 lea     edx, (aFlagsPassedToF - 0B14000h)[esi]; "Flags passed to FileSystem::OpenFile."
+  .text:0015DB33                 ; docs
+  .text:0015DB33                 mov     [esp+7Ch+text], edx; docs
+  .text:0015DB37                 ; documentation
+  .text:0015DB37                 mov     [esp+7Ch+self], edi; documentation
+  .text:0015DB3A                 call    CASDocumentation_RegisterEnum
+  .text:0015DB3F                 ; value
+  .text:0015DB3F                 mov     [esp+7Ch+value], 1; value
+  .text:0015DB47                 lea     ecx, (aRead - 0B14000h)[esi]; "READ"
+  .text:0015DB4D                 ; valueName
+  .text:0015DB4D                 mov     [esp+7Ch+enumType], ecx; valueName
+  .text:0015DB51                 ; enumName
+  .text:0015DB51                 mov     [esp+7Ch+enumName], ebp; enumName
+  .text:0015DB55                 lea     eax, (aOpenFileForRea - 0B14000h)[esi]; "Open file for reading."
+  .text:0015DB5B                 ; docs
+  .text:0015DB5B                 mov     [esp+7Ch+text], eax; docs
+  .text:0015DB5F                 ; documentation
+  .text:0015DB5F                 mov     [esp+7Ch+self], edi; documentation
+  .text:0015DB62                 call    CASDocumentation_RegisterEnumValue
+  .text:0015DB67                 ; value
+  .text:0015DB67                 mov     [esp+7Ch+value], 2; value
+  .text:0015DB6F                 lea     edx, (aWrite - 0B14000h)[esi]; "WRITE"
+  .text:0015DB75                 ; valueName
+  .text:0015DB75                 mov     [esp+7Ch+enumType], edx; valueName
+  .text:0015DB79                 ; enumName
+  .text:0015DB79                 mov     [esp+7Ch+enumName], ebp; enumName
+  .text:0015DB7D                 lea     ecx, (aOpenFileForWri - 0B14000h)[esi]; "Open file for writing."
+  .text:0015DB83                 ; docs
+  .text:0015DB83                 mov     [esp+7Ch+text], ecx; docs
+  .text:0015DB87                 ; documentation
+  .text:0015DB87                 mov     [esp+7Ch+self], edi; documentation
+  .text:0015DB8A                 call    CASDocumentation_RegisterEnumValue
+  .text:0015DB8F                 ; value
+  .text:0015DB8F                 mov     [esp+7Ch+value], 4; value
+  .text:0015DB97                 lea     eax, (aAppend - 0B14000h)[esi]; "APPEND"
+  .text:0015DB9D                 ; valueName
+  .text:0015DB9D                 mov     [esp+7Ch+enumType], eax; valueName
+  .text:0015DBA1                 ; enumName
+  .text:0015DBA1                 mov     [esp+7Ch+enumName], ebp; enumName
+  .text:0015DBA5                 lea     edx, (aOpenFileForApp - 0B14000h)[esi]; "Open file for appending."
+  .text:0015DBAB                 ; docs
+  .text:0015DBAB                 mov     [esp+7Ch+text], edx; docs
+  .text:0015DBAF                 ; documentation
+  .text:0015DBAF                 mov     [esp+7Ch+self], edi; documentation
+  .text:0015DBB2                 call    CASDocumentation_RegisterEnumValue
+  .text:0015DBB7                 ; value
+  .text:0015DBB7                 mov     [esp+7Ch+value], 8; value
+  .text:0015DBBF                 lea     ecx, (aBinary - 0B14000h)[esi]; "BINARY"
+  .text:0015DBC5                 ; valueName
+  .text:0015DBC5                 mov     [esp+7Ch+enumType], ecx; valueName
+  .text:0015DBC9                 ; enumName
+  .text:0015DBC9                 mov     [esp+7Ch+enumName], ebp; enumName
+  .text:0015DBCD                 lea     ebp, (aOpenInBinaryMo - 0B14000h)[esi]; "Open in binary mode."
+  .text:0015DBD3                 ; docs
+  .text:0015DBD3                 mov     [esp+7Ch+text], ebp; docs
+  .text:0015DBD7                 ; documentation
+  .text:0015DBD7                 mov     [esp+7Ch+self], edi; documentation
+  .text:0015DBDA                 call    CASDocumentation_RegisterEnumValue
+  .text:0015DBDF                 mov     eax, [esp+7Ch+var_40.data]
+  .text:0015DBE3                 ; namespaceName
+  .text:0015DBE3                 mov     [esp+7Ch+text], eax; namespaceName
+  .text:0015DBE7                 ; documentation
+  .text:0015DBE7                 mov     [esp+7Ch+self], edi; documentation
+  .text:0015DBEA                 call    CASDocumentation_SetDefaultNamespace
+  .text:0015DBEF                 lea     edx, (aUint8 - 0B14000h)[esi]; "uint8"
+  .text:0015DBF5                 ; underlyingType
+  .text:0015DBF5                 mov     [esp+7Ch+enumType], edx; underlyingType
+  .text:0015DBF9                 lea     ecx, (aOpenfileflagsT - 0B14000h)[esi]; "OpenFileFlags_t"
+  .text:0015DBFF                 ; name
+  .text:0015DBFF                 mov     [esp+7Ch+enumName], ecx; name
+  .text:0015DC03                 lea     ebp, (aOpenFileFlags - 0B14000h)[esi]; "Open File Flags"
+  .text:0015DC09                 ; docs
+  .text:0015DC09                 mov     [esp+7Ch+text], ebp; docs
+  .text:0015DC0D                 ; documentation
+  .text:0015DC0D                 mov     [esp+7Ch+self], edi; documentation
+  .text:0015DC10                 call    CASDocumentation__RegisterTypedef
+  .text:0015DC15                 mov     esi, [esp+7Ch+var_50]
+  .text:0015DC19                 ; self
+  .text:0015DC19                 mov     [esp+7Ch+self], esi; self
+  .text:0015DC1C                 call    CString__dtor
+  .text:0015DC21                 add     esp, 6Ch
+  .text:0015DC24                 pop     ebx
+  .text:0015DC25                 pop     esi
+  .text:0015DC26                 pop     edi
+  .text:0015DC27                 pop     ebp
+  .text:0015DC28                 retn
+  .text:0015DC29                 mov     edi, eax
+  .text:0015DC2B                 mov     ebx, [esp+arg_28]
+  .text:0015DC2F                 ; self
+  .text:0015DC2F                 mov     [esp+0], ebx; self
+  .text:0015DC32                 mov     ebx, esi
+  .text:0015DC34                 call    CString__dtor
+  .text:0015DC39                 mov     [esp+0], edi
+  .text:0015DC3C                 call    __Unwind_Resume
+procedure: |-
+  // Direct CASDocumentation calls below identify method entries. SDK virtual calls and registered callback pointers are distinct.
+  // Reference reconstruction: private server source unavailable; names/arguments are based on current instructions and the symbolized 5.15 ELF peer. Registration return values are discarded here. Partial types describe only observed fields.
+  void __cdecl RegisterSCScriptOpenFileFlag(CASDocumentationReference *documentation)
+  {
+    const char *text; // eax
+    CString self; // [esp+3Ch] [ebp-40h] BYREF
+
+    text = CASDocumentation::GetDefaultNamespace(documentation);
+    CString::CString((CStringReference *)&self, text);
+    CASDocumentation_SetDefaultNamespace(documentation, "OpenFile");
+    CASDocumentation_RegisterEnum(documentation, "Flags passed to FileSystem::OpenFile.", "OpenFile", 0);
+    CASDocumentation_RegisterEnumValue(documentation, "Open file for reading.", "OpenFile", "READ", 1);
+    CASDocumentation_RegisterEnumValue(documentation, "Open file for writing.", "OpenFile", "WRITE", 2);
+    CASDocumentation_RegisterEnumValue(documentation, "Open file for appending.", "OpenFile", "APPEND", 4);
+    CASDocumentation_RegisterEnumValue(documentation, "Open in binary mode.", "OpenFile", "BINARY", 8);
+    CASDocumentation_SetDefaultNamespace(documentation, self.data);
+    CASDocumentation::RegisterTypedef(documentation, "Open File Flags", "OpenFileFlags_t", "uint8");
+    CString::dtor((CStringReference *)&self);
+  }
